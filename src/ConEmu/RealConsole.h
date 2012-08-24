@@ -433,6 +433,7 @@ class CRealConsole
 		void SetTabs(ConEmuTab* tabs, int tabsCount);
 		void DoRenameTab();
 		void RenameTab(LPCWSTR asNewTabText = NULL);
+		void RenameWindow(LPCWSTR asNewWindowText = NULL);
 		int GetTabCount(BOOL abVisibleOnly = FALSE);
 		int GetActiveTab();
 		CEFarWindowType GetActiveTabType();

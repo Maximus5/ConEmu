@@ -703,8 +703,11 @@ struct Settings
 		//reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
 		bool mb_HideCaptionAlways;
 		public:
+		void SetHideCaptionAlways(bool bHideCaptionAlways);
+		void SwitchHideCaptionAlways();
 		bool isHideCaptionAlways(); //<<mb_HideCaptionAlways
 		bool isForcedHideCaptionAlways(); // true, если mb_HideCaptionAlways отключать нельзя
+		bool isCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);
 		//reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
 		BYTE nHideCaptionAlwaysFrame;
 		//reg->Load(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
@@ -744,6 +747,8 @@ struct Settings
 		bool isCTSAutoCopy;
 		//reg->Load(L"CTS.EndOnTyping", isCTSEndOnTyping);
 		BYTE isCTSEndOnTyping;
+		//reg->Load(L"CTS.EndOnKeyPress", isCTSEndOnKeyPress);
+		bool isCTSEndOnKeyPress; // +isCTSEndOnTyping. +все, что не генерит WM_CHAR (стрелки и пр.)
 		//reg->Load(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		bool isCTSFreezeBeforeSelect;
 		//reg->Load(L"CTS.SelectBlock", isCTSSelectBlock);

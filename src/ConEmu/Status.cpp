@@ -109,6 +109,20 @@ static struct StatusColInfo {
 						L"ConEmu window work area size",
 						L"Width x Height: ConEmu work area size (virtual consoles place)"},
 
+	{csi_WindowStyle,	L"StatusBar.Hide.Style",
+						L"ConEmu window style",
+						L"GWL_STYLE: ConEmu window style"},
+	{csi_WindowStyleEx,	L"StatusBar.Hide.StyleEx",
+						L"ConEmu window extended styles",
+						L"GWL_EXSTYLE: ConEmu window extended styles"},
+
+	{csi_HwndFore,		L"StatusBar.Hide.hFore",
+						L"Foreground HWND",
+						L"Foreground HWND"},
+	{csi_HwndFocus,		L"StatusBar.Hide.hFocus",
+						L"Focus HWND",
+						L"Focus HWND"},
+
 	{csi_ActiveBuffer,	L"StatusBar.Hide.ABuf",
 						L"Active console buffer",
 						L"PRI/ALT/SEL/FND/DMP: Active console buffer"},
@@ -196,12 +210,20 @@ CStatus::CStatus()
 	m_ClickedItemDesc = csi_Last;
 	mb_InSetupMenu = false;
 
+	mn_Style = mn_ExStyle = 0;
+	mh_Fore = mh_Focus = NULL;
+	ms_ForeInfo[0] = ms_FocusInfo[0] = 0;
+
+	mb_Caps = mb_Num = mb_Scroll = false;
+	mhk_Locale = 0;
+
 	ZeroStruct(m_Items);
 	ZeroStruct(m_Values);
 	ZeroStruct(mrc_LastStatus);
 
 	//mn_BmpSize; -- не важно
 	mb_OldBmp = mh_Bmp = NULL; mh_MemDC = NULL;
+	ZeroStruct(mn_BmpSize);
 
 	for (int i = csi_Info; i < csi_Last; i++)
 	{
@@ -296,6 +318,8 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 
 	// Проверить клавиатуру
 	IsKeyboardChanged();
+	// И статусы окна
+	IsWindowChanged();
 
 	if (!mh_MemDC || (nStatusWidth != mn_BmpSize.cx) || (nStatusHeight != mn_BmpSize.cy))
 	{
@@ -487,6 +511,26 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 					wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
 				}
 				
+				break;
+
+			case csi_WindowStyle:
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", mn_Style);
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
+				break;
+			case csi_WindowStyleEx:
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", mn_ExStyle);
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
+				break;
+
+			case csi_HwndFore:
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", (DWORD)mh_Fore);
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
+				m_Values[nID].sHelp = ms_ForeInfo;
+				break;
+			case csi_HwndFocus:
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", (DWORD)mh_Focus);
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
+				m_Values[nID].sHelp = ms_FocusInfo;
 				break;
 
 			default:
@@ -736,6 +780,9 @@ void CStatus::OnTimer()
 	if (/*!mb_Invalidated &&*/ !mb_DataChanged && IsKeyboardChanged())
 		mb_DataChanged = true; // Изменения в клавиатуре
 
+	if (!mb_DataChanged && IsWindowChanged())
+		mb_DataChanged = true; // измения в стилях или текущем фокусе
+
 	if (mb_DataChanged /*&& !mb_Invalidated*/)
 		UpdateStatusBar(true);
 }
@@ -971,38 +1018,55 @@ void CStatus::ShowStatusSetupMenu()
 	AppendMenu(hPopup, MF_STRING|(gpSet->isStatusBarShow ? MF_CHECKED : MF_UNCHECKED), 1, gStatusCols[0].sName);
 	AppendMenu(hPopup, MF_STRING, (int)countof(gStatusCols)+1, L"Setup...");
 
-	mb_InSetupMenu = true;
-	int nCmd = gpConEmu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_LEFTALIGN|TPM_RETURNCMD, ptCur.x, ptCur.y, 0, ghWnd, NULL);
-	mb_InSetupMenu = false;
-
-	if (nCmd == ((int)countof(gStatusCols)+1))
+	while (true)
 	{
-		CSettings::Dialog(IDD_SPG_STATUSBAR);
-	}
-	else if ((nCmd >= 1) && (nCmd <= countof(gStatusCols)))
-	{
-		if (nCmd == 1)
+		mb_InSetupMenu = true;
+		int nCmd = gpConEmu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_LEFTALIGN|TPM_RETURNCMD, ptCur.x, ptCur.y, 0, ghWnd, NULL);
+		mb_InSetupMenu = false;
+
+		if (nCmd == ((int)countof(gStatusCols)+1))
 		{
-			gpConEmu->StatusCommand(csc_ShowHide);
-			//gpSet->isStatusBarShow = !gpSet->isStatusBarShow;
-			//// Должна справиться с reposition элементов
-			//gpConEmu->OnSize();
+			CSettings::Dialog(IDD_SPG_STATUSBAR);
 		}
-		else
+		else if ((nCmd >= 1) && (nCmd <= countof(gStatusCols)))
 		{
-			int nIdx = gStatusCols[nCmd-1].nID;
-			gpSet->isStatusColumnHidden[nIdx] = !gpSet->isStatusColumnHidden[nIdx];
-			
-			UpdateStatusBar(true);
+			if (nCmd == 1)
+			{
+				gpConEmu->StatusCommand(csc_ShowHide);
+				//gpSet->isStatusBarShow = !gpSet->isStatusBarShow;
+				//// Должна справиться с reposition элементов
+				//gpConEmu->OnSize();
+			}
+			else
+			{
+				int nIdx = gStatusCols[nCmd-1].nID;
+				gpSet->isStatusColumnHidden[nIdx] = !gpSet->isStatusColumnHidden[nIdx];
+				
+				MENUITEMINFO mi = {sizeof(mi), MIIM_STATE|MIIM_ID};
+				mi.wID = nCmd;
+				GetMenuItemInfo(hPopup, nCmd, FALSE, &mi);
+				if (gpSet->isStatusColumnHidden[nIdx])
+					mi.fState &= ~MF_CHECKED;
+				else
+					mi.fState |= MF_CHECKED;
+				SetMenuItemInfo(hPopup, nCmd, FALSE, &mi);
+
+				UpdateStatusBar(true);
+			}
+
+			if (ghOpWnd && IsWindow(ghOpWnd))
+			{
+				_ASSERTE(L"Refresh status page!");
+			}
+			else
+			{
+				gpSet->mb_StatusSettingsWasChanged = true;
+			}
 		}
 
-		if (ghOpWnd && IsWindow(ghOpWnd))
+		if (nCmd <= 1)
 		{
-			_ASSERTE(L"Refresh status page!");
-		}
-		else
-		{
-			gpSet->mb_StatusSettingsWasChanged = true;
+			break;
 		}
 	}
 
@@ -1359,6 +1423,62 @@ bool CStatus::IsKeyboardChanged()
 	if (hkl != mhk_Locale)
 	{
 		mhk_Locale = hkl; bChanged = true;
+	}
+
+	return bChanged;
+}
+
+bool CStatus::IsWindowChanged()
+{
+	if (gpSet->isStatusColumnHidden[csi_WindowStyle]
+		&& gpSet->isStatusColumnHidden[csi_WindowStyleEx]
+		&& gpSet->isStatusColumnHidden[csi_HwndFore]
+		&& gpSet->isStatusColumnHidden[csi_HwndFocus])
+	{
+		// Если ни одна позиция не показана - то и делать нечего
+		return false;
+	}
+	_ASSERTE(gpConEmu->isMainThread());
+
+	bool bChanged = false;
+	DWORD n; HWND h;
+
+	if (!gpSet->isStatusColumnHidden[csi_WindowStyle])
+	{
+		n = GetWindowLong(ghWnd, GWL_STYLE);
+		if (n != mn_Style)
+		{
+			mn_Style = n; bChanged = true;
+		}
+	}
+
+	if (!gpSet->isStatusColumnHidden[csi_WindowStyleEx])
+	{
+		n = GetWindowLong(ghWnd, GWL_EXSTYLE);
+		if (n != mn_ExStyle)
+		{
+			mn_ExStyle = n; bChanged = true;
+		}
+	}
+
+	if (!gpSet->isStatusColumnHidden[csi_HwndFore])
+	{
+		h = getForegroundWindow();
+		if (h != mh_Fore)
+		{
+			mh_Fore = h; bChanged = true;
+			::getWindowInfo(h, ms_ForeInfo);
+		}
+	}
+
+	if (!gpSet->isStatusColumnHidden[csi_HwndFocus])
+	{
+		h = ::GetFocus();
+		if (h != mh_Focus)
+		{
+			mh_Focus = h; bChanged = true;
+			::getWindowInfo(h, ms_FocusInfo);
+		}
 	}
 
 	return bChanged;

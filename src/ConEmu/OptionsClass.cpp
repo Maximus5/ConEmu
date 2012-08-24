@@ -812,11 +812,11 @@ void CSettings::SettingsLoaded()
 
 	if (ghWnd == NULL)
 	{
-		gpConEmu->WindowMode = gpSet->_WindowMode;
+		gpConEmu->WindowMode = (ConEmuWindowMode)gpSet->_WindowMode;
 	}
 	else
 	{
-		gpConEmu->SetWindowMode(gpSet->_WindowMode);
+		gpConEmu->SetWindowMode((ConEmuWindowMode)gpSet->_WindowMode);
 	}
 
 	if (ghWnd == NULL)
@@ -1949,6 +1949,8 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 
 	CheckDlgButton(hWnd2, cbCTSAutoCopy, gpSet->isCTSAutoCopy);
 	CheckDlgButton(hWnd2, cbCTSEndOnTyping, gpSet->isCTSEndOnTyping);
+	CheckDlgButton(hWnd2, cbCTSEndOnKeyPress, (gpSet->isCTSEndOnTyping != 0) && gpSet->isCTSEndOnKeyPress);
+	EnableWindow(GetDlgItem(hWnd2, cbCTSEndOnKeyPress), gpSet->isCTSEndOnTyping!=0);
 	CheckDlgButton(hWnd2, cbCTSFreezeBeforeSelect, gpSet->isCTSFreezeBeforeSelect);
 	CheckDlgButton(hWnd2, cbCTSBlockSelection, gpSet->isCTSSelectBlock);
 	DWORD VkMod = gpSet->GetHotkeyById(vkCTSVkBlock);
@@ -3711,7 +3713,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					SetFocus(GetDlgItem(hWnd2, rNormal));
 
 					if (gpConEmu->isZoomed() || gpConEmu->isIconic() || gpConEmu->isFullScreen())
-						gpConEmu->SetWindowMode(rNormal);
+						gpConEmu->SetWindowMode(wmNormal);
 
 					SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 
@@ -3725,14 +3727,14 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					SetFocus(GetDlgItem(hWnd2, rMaximized));
 
 					if (!gpConEmu->isZoomed())
-						gpConEmu->SetWindowMode(rMaximized);
+						gpConEmu->SetWindowMode(wmMaximized);
 				}
 				else if (IsChecked(hWnd2, rFullScreen) == BST_CHECKED)
 				{
 					SetFocus(GetDlgItem(hWnd2, rFullScreen));
 
 					if (!gpConEmu->isFullScreen())
-						gpConEmu->SetWindowMode(rFullScreen);
+						gpConEmu->SetWindowMode(wmFullScreen);
 				}
 
 				// «апомнить "идеальный" размер окна, выбранный пользователем
@@ -3966,7 +3968,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					CheckDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
 				}
 
-				DWORD nNewWindowMode = rNormal;
+				ConEmuWindowMode nNewWindowMode = wmNormal;
 
 				if (gpSet->isQuakeStyle && !bPrevStyle)
 				{
@@ -4003,7 +4005,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isHideCaption = IsChecked(hWnd2, cbHideCaption);
 			break;
 		case cbHideCaptionAlways:
-			gpSet->mb_HideCaptionAlways = IsChecked(hWnd2, cbHideCaptionAlways);
+			gpSet->SetHideCaptionAlways(0!=IsChecked(hWnd2, cbHideCaptionAlways));
 
 			if (gpSet->isHideCaptionAlways())
 			{
@@ -4742,6 +4744,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbCTSEndOnTyping:
 			gpSet->isCTSEndOnTyping = IsChecked(hWnd2,CB);
+			EnableWindow(GetDlgItem(hWnd2, cbCTSEndOnKeyPress), gpSet->isCTSEndOnTyping!=0);
+			CheckDlgButton(hWnd2, cbCTSEndOnKeyPress, gpSet->isCTSEndOnKeyPress);
+			break;
+		case cbCTSEndOnKeyPress:
+			gpSet->isCTSEndOnKeyPress = IsChecked(hWnd2,CB);
 			break;
 		case cbCTSBlockSelection:
 			gpSet->isCTSSelectBlock = IsChecked(hWnd2,CB);
@@ -11656,7 +11663,7 @@ bool CSettings::PrepareBackground(CVirtualConsole* apVCon, HDC* phBgDc, COORD* p
 		{
 			RECT rcWnd, rcWork; GetClientRect(ghWnd, &rcWnd);
 			WARNING("DoubleView: тут непон€тно, какой и чей размер, видимо, нужно ветвитьс€, и хранить Background в самих VCon");
-			rcWork = gpConEmu->CalcRect(CER_BACK, rcWnd, CER_MAINCLIENT);
+			rcWork = gpConEmu->CalcRect(CER_WORKSPACE, rcWnd, CER_MAINCLIENT);
 
 			// —мотрим дальше
 			if (gpSet->bgOperation == eStretch)

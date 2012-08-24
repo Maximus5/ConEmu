@@ -2431,13 +2431,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (!WindowPrm)
 	{
 		if (nCmdShow == SW_SHOWMAXIMIZED)
-			gpConEmu->WindowMode = rMaximized;
+			gpConEmu->WindowMode = wmMaximized;
 		else if (nCmdShow == SW_SHOWMINIMIZED || nCmdShow == SW_SHOWMINNOACTIVE)
 			gpConEmu->WindowStartMinimized = true;
 	}
 	else
 	{
-		gpConEmu->WindowMode = WindowModeVal;
+		gpConEmu->WindowMode = (ConEmuWindowMode)WindowModeVal;
 	}
 
 	if (MultiConPrm)

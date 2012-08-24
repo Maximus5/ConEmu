@@ -752,6 +752,7 @@ void TabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	if (!mh_Rebar)
 	{
 		CreateRebar();
+		OnCaptionHidden();
 	}
 
 	_active = true;
@@ -1528,21 +1529,27 @@ void TabBarClass::Invalidate()
 		InvalidateRect(mh_Rebar, NULL, TRUE);
 }
 
-void TabBarClass::OnCaptionHidden()
+void TabBarClass::OnCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 {
 	if (!this) return;
 
 	if (mh_Toolbar)
 	{
-		BOOL lbHide = !(gpSet->isHideCaptionAlways()
-		                || gpConEmu->mb_isFullScreen
-		                || (gpConEmu->isZoomed() && gpSet->isHideCaption));
+		BOOL lbHide = !gpSet->isCaptionHidden(wmNewMode);
+			//!(gpSet->isHideCaptionAlways()
+			//            || gpConEmu->mb_isFullScreen
+			//            || (gpConEmu->isZoomed() && gpSet->isHideCaption));
+		OnWindowStateChanged();
 		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE_SEP, lbHide);
 		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE, lbHide);
 		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MAXIMIZE, lbHide);
 		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_APPCLOSE, lbHide);
 		SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0);
-		UpdateToolbarPos();
+
+		//if (abUpdatePos)
+		{
+			UpdateToolbarPos();
+		}
 	}
 }
 
@@ -1555,7 +1562,7 @@ void TabBarClass::OnWindowStateChanged()
 		TBBUTTONINFO tbi = {sizeof(TBBUTTONINFO), TBIF_IMAGE};
 		tbi.iImage = (gpConEmu->mb_isFullScreen || gpConEmu->isZoomed()) ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX;
 		SendMessage(mh_Toolbar, TB_SETBUTTONINFO, TID_MAXIMIZE, (LPARAM)&tbi);
-		OnCaptionHidden();
+		//OnCaptionHidden();
 	}
 }
 

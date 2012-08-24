@@ -35,7 +35,7 @@ enum CEStatusFlags
 };
 
 
-// Добавлять нужно в конец, чтобы у пользователей не слетали настройки!!!
+// Добавлять можно в любое место, настройки именованые
 enum CEStatusItems
 {
 	csi_Info = 0,
@@ -51,6 +51,10 @@ enum CEStatusItems
 	csi_WindowSize,
 	csi_WindowClient,
 	csi_WindowWork,
+	csi_WindowStyle,
+	csi_WindowStyleEx,
+	csi_HwndFore,
+	csi_HwndFocus,
 
 	csi_ActiveBuffer,
 	csi_ConsolePos,
@@ -135,6 +139,11 @@ private:
 	bool mb_Caps, mb_Num, mb_Scroll;
 	DWORD_PTR mhk_Locale; // CConEmuMain::GetActiveKeyboardLayout()
 	bool IsKeyboardChanged();
+
+	DWORD mn_Style, mn_ExStyle;
+	HWND mh_Fore, mh_Focus;
+	wchar_t ms_ForeInfo[1024], ms_FocusInfo[1024];
+	bool IsWindowChanged();
 
 	bool ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly);
 

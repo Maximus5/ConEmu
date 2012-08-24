@@ -2445,6 +2445,8 @@ HRGN CVConGroup::GetExclusionRgn(bool abTestOnly/*=false*/)
 
 RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, const RECT* prDC/*=NULL*/, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
 {
+	_ASSERTE(prDC==NULL); // Изжить пережитки
+
 	RECT rc = rFrom;
 	RECT rcShift = MakeRect(0,0);
 
@@ -2459,33 +2461,49 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 	// Теперь rc должен соответствовать CER_MAINCLIENT/CER_BACK
 	RECT rcAddShift = MakeRect(0,0);
 
-	if (prDC)
+	if ((tWhat == CER_DC) && (tFrom != CER_CONSOLE_CUR))
 	{
+		_ASSERTE(pVCon!=NULL);
 		WARNING("warning: DoubleView - тут нужно допиливать");
-		RECT rcCalcDC = rFrom;
-		_ASSERTE(tFrom==CER_BACK);
-		// Если передали реальный размер окна отрисовки - нужно посчитать дополнительные сдвиги
-		if (tFrom != CER_BACK && tFrom != CER_DC)
+		RECT rcCalcBack = rFrom;
+		// нужно посчитать дополнительные сдвиги
+		if (tFrom != CER_BACK)
 		{
-			rcCalcDC = CalcRect(CER_DC, rFrom, tFrom, NULL /*prDC*/);
+			_ASSERTE(tFrom==CER_BACK);
+			rcCalcBack = gpConEmu->CalcRect(CER_BACK, pVCon);
 		}
-		// расчетный НЕ ДОЛЖЕН быть меньше переданного
-		#ifdef MSGLOGGER
-		_ASSERTE((rcCalcDC.right - rcCalcDC.left)>=(prDC->right - prDC->left));
-		_ASSERTE((rcCalcDC.bottom - rcCalcDC.top)>=(prDC->bottom - prDC->top));
-		#endif
-
-		// считаем доп.сдвиги. ТОЧНО
-		if ((rcCalcDC.right - rcCalcDC.left)!=(prDC->right - prDC->left))
+		//--// расчетный НЕ ДОЛЖЕН быть меньше переданного
+		//#ifdef MSGLOGGER
+		//_ASSERTE((rcCalcDC.right - rcCalcDC.left)>=(prDC->right - prDC->left));
+		//_ASSERTE((rcCalcDC.bottom - rcCalcDC.top)>=(prDC->bottom - prDC->top));
+		//#endif
+		RECT rcCalcCon = rFrom;
+		if (tFrom != CER_CONSOLE_CUR)
 		{
-			rcAddShift.left = (rcCalcDC.right - rcCalcDC.left - (prDC->right - prDC->left))/2;
-			rcAddShift.right = (rcCalcDC.right - rcCalcDC.left - (prDC->right - prDC->left)) - rcAddShift.left;
+			rcCalcCon = CalcRect(CER_CONSOLE_CUR, rcCalcBack, CER_BACK, pVCon);
 		}
+		// Расчетное DC (размер)
+		_ASSERTE(rcCalcCon.left==0 && rcCalcCon.top==0);
+		RECT rcCalcDC = MakeRect(0,0,rcCalcCon.right*gpSetCls->FontWidth(), rcCalcCon.bottom*gpSetCls->FontHeight());
 
-		if ((rcCalcDC.bottom - rcCalcDC.top)!=(prDC->bottom - prDC->top))
+		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
+		gpConEmu->AddMargins(rcCalcBack, rcScroll, FALSE);
+
+		// Теперь сдвиги
+		if (gpSet->isTryToCenter)
 		{
-			rcAddShift.top = (rcCalcDC.bottom - rcCalcDC.top - (prDC->bottom - prDC->top))/2;
-			rcAddShift.bottom = (rcCalcDC.bottom - rcCalcDC.top - (prDC->bottom - prDC->top)) - rcAddShift.top;
+			// считаем доп.сдвиги. ТОЧНО
+			if ((rcCalcDC.right - rcCalcDC.left) < (rcCalcBack.right - rcCalcBack.left))
+			{
+				rcAddShift.left = ((rcCalcBack.right - rcCalcBack.left) - (rcCalcDC.right - rcCalcDC.left))/2;
+				rcAddShift.right = ((rcCalcBack.right - rcCalcBack.left) - (rcCalcDC.right - rcCalcDC.left)) - rcAddShift.left;
+			}
+
+			if ((rcCalcDC.bottom - rcCalcDC.top) < (rcCalcBack.bottom - rcCalcBack.top))
+			{
+				rcAddShift.top = ((rcCalcBack.bottom - rcCalcBack.top) - (rcCalcDC.bottom - rcCalcDC.top))/2;
+				rcAddShift.bottom = ((rcCalcBack.bottom - rcCalcBack.top) - (rcCalcDC.bottom - rcCalcDC.top)) - rcAddShift.top;
+			}
 		}
 	}
 	
@@ -2509,6 +2527,8 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		case CER_CONSOLE_CUR: // switch (tWhat)
 		case CER_CONSOLE_NTVDMOFF: // switch (tWhat)
 		{
+			_ASSERTE(tWhat!=CER_DC || (tFrom==CER_BACK || tFrom==CER_CONSOLE_CUR)); // CER_DC должен считаться от CER_BACK
+
 			if (tFrom == CER_MAINCLIENT)
 			{
 				// Учесть высоту закладок (табов)
@@ -2595,7 +2615,8 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			{
 				//2009-07-09 - ClientToConsole использовать нельзя, т.к. после его
 				//  приближений высота может получиться больше Ideal, а ширина - меньше
-				int nW = (rc.right - rc.left + 1) / gpSetCls->FontWidth();
+				//120822 - было "(rc.right - rc.left + 1)"
+				int nW = (rc.right - rc.left) / gpSetCls->FontWidth();
 				int nH = (rc.bottom - rc.top) / gpSetCls->FontHeight();
 				rc.left = 0; rc.top = 0; rc.right = nW; rc.bottom = nH;
 
@@ -2638,7 +2659,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			}
 			else
 			{
-				_ASSERTE(tWhat==CER_DC); // корректировка, центрирование
+				// корректировка, центрирование
 				CConEmuMain::AddMargins(rc, rcAddShift);
 			}
 		}

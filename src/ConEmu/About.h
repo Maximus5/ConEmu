@@ -162,11 +162,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==1: paste first line\r\n" \
 	L"     Cmd==2: paste all lines, without confirmations\r\n" \
 	L"     Cmd==3: paste first line, without confirmations\r\n" \
+	L"Print([\"<Text>\"])\r\n" \
+	L"  - Alias for Paste(2,\"<Text>\")\r\n" \
 	L"Progress(<Type>[,<Value>])\r\n" \
 	L"  - Set progress state on taskbar and ConEmu title\r\n" \
 	L"     Type=0: remove progress\r\n" \
 	L"     Type=1: set progress value to <Value> (0-100)\r\n" \
 	L"     Type=2: set error state in progress\r\n" \
+	L"Rename(<Type>,[\"<Title>\"])\r\n" \
+	L"  - Rename tab (Type=0) or console title (Type=1)\r\n" \
 	L"Shell(\"<Verb>\",\"<File>\"[,\"<Parms>\"[,\"<Dir>\"[,<ShowCmd>]]])\r\n" \
 	L"  - Verb can be \"open\", \"print\" and so on, or special value \"new_console\",\r\n" \
 	L"     which starts File in the new tab of ConEmu window. Examples:\r\n" \

@@ -109,6 +109,7 @@ public:
 	static bool WINAPI key_ScreenshotFull(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_ShowStatusBar(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_ShowTabBar(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
+	static bool WINAPI key_ShowCaption(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_AlwaysOnTop(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	// System (predefined, fixed)
 	static bool WINAPI key_About(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);

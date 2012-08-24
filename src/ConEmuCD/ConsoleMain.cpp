@@ -7164,7 +7164,7 @@ BOOL cmd_SetFullScreen(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
-BOOL cmd_SetConSolors(CESERVER_REQ& in, CESERVER_REQ** out)
+BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 	//ghConOut
@@ -7325,6 +7325,27 @@ BOOL cmd_SetConSolors(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_SetConTitle(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = FALSE;
+	//ghConOut
+
+
+	size_t cbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_SETCONTITLE, cbReplySize);
+
+	if ((*out) != NULL)
+	{
+		(*out)->dwData[0] = SetConsoleTitle((wchar_t*)in.wData);
+	}
+	else
+	{
+		lbRc = FALSE;
+	}
+
+	return lbRc;
+}
+
 BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -7467,7 +7488,11 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		} break;
 		case CECMD_SETCONCOLORS:
 		{
-			lbRc = cmd_SetConSolors(in, out);
+			lbRc = cmd_SetConColors(in, out);
+		} break;
+		case CECMD_SETCONTITLE:
+		{
+			lbRc = cmd_SetConTitle(in, out);
 		} break;
 	}
 

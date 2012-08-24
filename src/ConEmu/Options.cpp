@@ -164,6 +164,12 @@ const CONEMUDEFCOLORS DefColors[] =
 			0x007f7f7f, 0x00ff5c5c, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
 		}
 	},
+	{
+		L"<Twilight>", {
+			0x00141414, 0x004c6acf, 0x00619083, 0x0069a8ce, 0x00a68775, 0x009d859b, 0x00b3a605, 0x00d7d7d7,
+			0x00666666, 0x00a68775, 0x004da459, 0x00e6e60a, 0x00520ad8, 0x008b00e6, 0x003eeee1, 0x00e6e6e6
+		}
+	},
 };
 //const DWORD *dwDefColors = DefColors[0].dwDefColors;
 //DWORD gdwLastColors[0x10] = {0};
@@ -486,6 +492,7 @@ void Settings::InitSettings()
 	isConsoleTextSelection = 1; // Always
 	isCTSAutoCopy = true;
 	isCTSEndOnTyping = false;
+	isCTSEndOnKeyPress = false;
 	isCTSFreezeBeforeSelect = false;
 	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // по умолчанию - блок выдел€етс€ c LAlt
 	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
@@ -517,6 +524,10 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_WindowSize] = true;
 	isStatusColumnHidden[csi_WindowClient] = true;
 	isStatusColumnHidden[csi_WindowWork] = true;
+	isStatusColumnHidden[csi_WindowStyle] = true;
+	isStatusColumnHidden[csi_WindowStyleEx] = true;
+	isStatusColumnHidden[csi_HwndFore] = true;
+	isStatusColumnHidden[csi_HwndFocus] = true;
 	isStatusColumnHidden[csi_ConEmuPID] = true;
 	isStatusColumnHidden[csi_CursorInfo] = true;
 	isStatusColumnHidden[csi_ConEmuHWND] = true;
@@ -2115,6 +2126,7 @@ void Settings::LoadSettings()
 
 		reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
 		reg->Load(L"CTS.EndOnTyping", isCTSEndOnTyping); MinMax(isCTSEndOnTyping, 2);
+		reg->Load(L"CTS.EndOnKeyPress", isCTSEndOnKeyPress);
 		reg->Load(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		reg->Load(L"CTS.SelectBlock", isCTSSelectBlock);
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
@@ -2950,6 +2962,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
 		reg->Save(L"CTS.AutoCopy", isCTSAutoCopy);
 		reg->Save(L"CTS.EndOnTyping", isCTSEndOnTyping);
+		reg->Save(L"CTS.EndOnKeyPress", isCTSEndOnKeyPress);
 		reg->Save(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		reg->Save(L"CTS.SelectBlock", isCTSSelectBlock);
 		//reg->Save(L"CTS.VkBlock", isCTSVkBlock);
@@ -3958,6 +3971,16 @@ void Settings::GetSettingsType(wchar_t (&szType)[8], bool& ReadOnly)
 	wcscpy_c(szType, pszType);
 }
 
+void Settings::SetHideCaptionAlways(bool bHideCaptionAlways)
+{
+	mb_HideCaptionAlways = bHideCaptionAlways;
+}
+
+void Settings::SwitchHideCaptionAlways()
+{
+	mb_HideCaptionAlways = !mb_HideCaptionAlways;
+}
+
 bool Settings::isHideCaptionAlways()
 {
 	return mb_HideCaptionAlways || (!mb_HideCaptionAlways && isUserScreenTransparent) || isQuakeStyle;
@@ -3966,6 +3989,25 @@ bool Settings::isHideCaptionAlways()
 bool Settings::isForcedHideCaptionAlways()
 {
 	return (isUserScreenTransparent || isQuakeStyle);
+}
+
+bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
+{
+	bool bCaptionHidden = gpSet->isHideCaptionAlways(); // <== Quake & UserScreen here.
+	if (!bCaptionHidden)
+	{
+		if (wmNewMode == wmCurrent || wmNewMode == wmNotChanging)
+		{
+			bCaptionHidden = gpConEmu->mb_isFullScreen
+				|| (gpConEmu->isZoomed() && gpSet->isHideCaption);
+		}
+		else
+		{
+			bCaptionHidden = (wmNewMode == wmFullScreen)
+				|| ((wmNewMode == wmMaximized) && gpSet->isHideCaption);
+		}
+	}
+	return bCaptionHidden;
 }
 
 int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)
@@ -4822,6 +4864,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkScreenshotFull, chk_User,  NULL,    L"ScreenshotFullKey",     MakeHotKey('H',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_ScreenshotFull/*, true/ *OnKeyUp*/},
 		{vkShowStatusBar,  chk_User,  NULL,    L"ShowStatusBarKey",      MakeHotKey('S',VK_APPS), CConEmuCtrl::key_ShowStatusBar},
 		{vkShowTabBar,     chk_User,  NULL,    L"ShowTabBarKey",         MakeHotKey('T',VK_APPS), CConEmuCtrl::key_ShowTabBar},
+		{vkShowCaption,    chk_User,  NULL,    L"ShowCaptionKey",        MakeHotKey('C',VK_APPS), CConEmuCtrl::key_ShowCaption},
 		{vkAlwaysOnTop,    chk_User,  NULL,    L"AlwaysOnTopKey",        0, CConEmuCtrl::key_AlwaysOnTop},
 		{vkAppsSpace,      chk_User,  NULL,    L"Key.TabMenu",           MakeHotKey(VK_SPACE,VK_APPS), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
 		{vkAltF9,          chk_User,  NULL,    L"Key.Maximize",          MakeHotKey(VK_F9,VK_MENU), CConEmuCtrl::key_AltF9}, // Maximize window

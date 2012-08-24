@@ -158,8 +158,12 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 			pszResult = IsConsoleActive(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Paste"))
 			pszResult = Paste(asMacro, apRCon);
+		else if (!lstrcmpi(szFunction, L"Print"))
+			pszResult = Print(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Progress"))
 			pszResult = Progress(asMacro, apRCon);
+		else if (!lstrcmpi(szFunction, L"Rename"))
+			pszResult = Rename(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Shell") || !lstrcmpi(szFunction, L"ShellExecute"))
 			pszResult = Shell(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Tab") || !lstrcmpi(szFunction, L"Tabs") || !lstrcmpi(szFunction, L"TabControl"))
@@ -594,12 +598,12 @@ LPWSTR CConEmuMacro::WindowMode(LPWSTR asArgs, CRealConsole* apRCon)
 		if (lstrcmpi(pszMode, sFS) == 0)
 		{
 			pszRc = sFS;
-			gpConEmu->SetWindowMode(rFullScreen);
+			gpConEmu->SetWindowMode(wmFullScreen);
 		}
 		else if (lstrcmpi(pszMode, sMAX) == 0)
 		{
 			pszRc = sMAX;
-			gpConEmu->SetWindowMode(rMaximized);
+			gpConEmu->SetWindowMode(wmMaximized);
 		}
 		else if (lstrcmpi(pszMode, sMIN) == 0)
 		{
@@ -614,7 +618,7 @@ LPWSTR CConEmuMacro::WindowMode(LPWSTR asArgs, CRealConsole* apRCon)
 		else //if (lstrcmpi(pszMode, sNOR) == 0)
 		{
 			pszRc = sNOR;
-			gpConEmu->SetWindowMode(rNormal);
+			gpConEmu->SetWindowMode(wmNormal);
 		}
 	}
 
@@ -742,6 +746,28 @@ LPWSTR CConEmuMacro::Paste(LPWSTR asArgs, CRealConsole* apRCon)
 	return lstrdup(L"InvalidArg");
 }
 
+// print("<Text>") - alias for Paste(2,"<Text>")
+LPWSTR CConEmuMacro::Print(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	if (!apRCon)
+		return lstrdup(L"InvalidArg");
+
+	LPWSTR pszText = NULL;
+	if (GetNextString(asArgs, pszText))
+	{
+		if (!*pszText)
+			return lstrdup(L"InvalidArg");
+	}
+	else
+	{
+		pszText = NULL;
+	}
+
+	apRCon->Paste(false, pszText, true);
+
+	return lstrdup(L"OK");
+}
+
 // Progress(<Type>[,<Value>])
 LPWSTR CConEmuMacro::Progress(LPWSTR asArgs, CRealConsole* apRCon)
 {
@@ -761,6 +787,43 @@ LPWSTR CConEmuMacro::Progress(LPWSTR asArgs, CRealConsole* apRCon)
 		GetNextInt(asArgs, nValue);
 
 		apRCon->SetProgress(nType, nValue);
+
+		return lstrdup(L"OK");
+	}
+
+	return lstrdup(L"InvalidArg");
+}
+
+// Rename(<Type>,"<Title>")
+LPWSTR CConEmuMacro::Rename(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	int nType = 0;
+	LPWSTR pszTitle = NULL;
+
+	if (!apRCon)
+		return lstrdup(L"InvalidArg");
+
+	if (GetNextInt(asArgs, nType))
+	{
+		if (!(nType == 0 || nType == 1))
+		{
+			return lstrdup(L"InvalidArg");
+		}
+
+		if (!GetNextString(asArgs, pszTitle) || !*pszTitle)
+		{
+			pszTitle = NULL;
+		}
+
+		switch (nType)
+		{
+		case 0:
+			apRCon->RenameTab(pszTitle);
+			break;
+		case 1:
+			apRCon->RenameWindow(pszTitle);
+			break;
+		}
 
 		return lstrdup(L"OK");
 	}

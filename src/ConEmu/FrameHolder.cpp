@@ -998,7 +998,39 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	point.x = (int)(short)LOWORD(lParam) - wr.left;
 	point.y = (int)(short)HIWORD(lParam) - wr.top;
 	//MapWindowPoints(NULL, hWnd, &point, 1);
-	
+
+	// При скрытии окна заголовка убирается стиль WS_CAPTION,
+	// но чтобы можно было оставить возможность ресайза за рамку -
+	// ставится стиль WS_DLGFRAME а не WS_THICKFRAME
+	// Ресайз "сам" не заработает, коррекция l_result в Win8 не помогает
+	#if 0
+	if (l_result == HTBORDER)
+	{
+		int nFrame = GetSystemMetrics(SM_CYDLGFRAME);
+		int nShift = GetSystemMetrics(SM_CXSMICON);
+		int nWidth = wr.right - wr.left;
+		int nHeight = wr.bottom - wr.top;
+
+		if (point.x <= nFrame && point.y <= nShift)
+			l_result = HTTOPLEFT;
+		else if (point.y <= nFrame && point.x <= nShift)
+			l_result = HTTOPLEFT;
+		else if (point.x >= (nWidth-nFrame) && point.y <= nShift)
+			l_result = HTTOPRIGHT;
+		else if (point.x >= (nWidth-nFrame-nShift) && point.y <= nFrame)
+			l_result = HTTOPRIGHT;
+		else if (point.x <= nFrame)
+			l_result = HTLEFT;
+		else if (point.x >= (nWidth-nFrame))
+			l_result = HTRIGHT;
+		else if (point.y <= nFrame)
+			l_result = HTTOP;
+		else if (point.y >= (nHeight-nFrame))
+			l_result = HTBOTTOM;
+
+	}
+	else
+	#endif
 	if (gpConEmu->DrawType() == fdt_Aero)
 	{
 		if (point.y < gpConEmu->GetDwmClientRectTopOffset())

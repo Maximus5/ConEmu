@@ -137,7 +137,7 @@ HWND CConEmuChild::CreateView()
 	DWORD styleEx = 0;
 	
 	RECT rcBack = gpConEmu->CalcRect(CER_BACK, pVCon);
-	RECT rc = gpConEmu->CalcRect(CER_DC, pVCon);
+	RECT rc = gpConEmu->CalcRect(CER_DC, rcBack, CER_BACK, pVCon);
 
 	mh_WndBack = CreateWindowEx(styleEx, gsClassNameBack, 0, style,
 		rcBack.left, rcBack.top, rcBack.right - rcBack.left, rcBack.bottom - rcBack.top, hParent, NULL, (HINSTANCE)g_hInstance, pVCon);
@@ -947,9 +947,9 @@ void CConEmuChild::SetVConSizePos(RECT arcBack, bool abReSize /*= true*/)
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	RECT rcBack = arcBack;
 	TODO("Оптимизировать");
-	RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, arcBack, CER_BACK, pVCon);
-	RECT rcTmp = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE_CUR, pVCon);
-	RECT rcDC = gpConEmu->CalcRect(CER_DC, arcBack, CER_BACK, pVCon, &rcTmp);
+	//RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, arcBack, CER_BACK, pVCon);
+	//RECT rcTmp = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE_CUR, pVCon);
+	RECT rcDC = gpConEmu->CalcRect(CER_DC, arcBack, CER_BACK, pVCon/*, &rcTmp*/);
 
 	if (abReSize)
 	{

@@ -323,6 +323,15 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 		}
 	}
 
+	if ((nState == cvk_Win) && (vk == VK_DOWN))
+	{
+		//120821 - в режиме HideCaption почему-то не выходит из Maximized по Win+Down
+		if (gpSet->isCaptionHidden() && ::IsZoomed(ghWnd)/*тут нужен реальный Zoomed*/)
+		{
+			gpConEmu->SetWindowMode(wmNormal);
+		}
+	}
+
 	return (pHotKey != NULL);
 }
 
@@ -1084,7 +1093,8 @@ void CConEmuCtrl::ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /
 // ¬се параметры могут быть NULL - вызов из GuiMacro
 bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
-	if (pRCon && pRCon->GetFarPID(true))
+	// 120820 - не будем требовать наличи€ плагина дл€ F12 в Far
+	if (pRCon && pRCon->GetFarPID(false))
 	{
 		TODO("ѕеределать на команду сервера");
 		//if (TestOnly)
@@ -1221,6 +1231,24 @@ bool CConEmuCtrl::key_ShowTabBar(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 		return true;
 
 	gpConEmu->TabCommand(ctc_ShowHide);
+
+	return true;
+}
+
+bool CConEmuCtrl::key_ShowCaption(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	gpSet->SwitchHideCaptionAlways();
+	gpConEmu->OnHideCaption();
+
+	if (ghOpWnd)
+	{
+		if (gpSetCls->mh_Tabs[CSettings::thi_Ext])
+			CheckDlgButton(gpSetCls->mh_Tabs[CSettings::thi_Ext], cbHideCaptionAlways, gpSet->isHideCaptionAlways());
+		apiSetForegroundWindow(ghOpWnd);
+	}
 
 	return true;
 }

@@ -86,6 +86,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) LogFocusInfo(s)
+#define DEBUGSTRFOCUS2(s) //LogFocusInfo(s)
 #define DEBUGSTRFOREGROUND(s) //DEBUGSTR(s)
 #define DEBUGSTRLLKB(s) //DEBUGSTR(s)
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
@@ -121,6 +122,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RCLICKAPPSDELTA 3
 
 #define TOUCH_DBLCLICK_DELTA 1000 // 1sec
+
+#define FIXPOSAFTERSTYLE_DELTA 2500
 
 const wchar_t* gsHomePage = L"http://conemu-maximus5.googlecode.com";
 const wchar_t* gsReportBug = L"http://code.google.com/p/conemu-maximus5/issues/entry";
@@ -166,7 +169,7 @@ CConEmuMain::CConEmuMain()
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
 	mn_MainThreadId = GetCurrentThreadId();
 	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
-	WindowMode = rNormal; WindowStartMinimized = false; ForceMinimizeToTray = false;
+	WindowMode = wmNormal; WindowStartMinimized = false; ForceMinimizeToTray = false;
 	wndX = gpSet->_wndX; wndY = gpSet->_wndY;
 	wndWidth = gpSet->_wndWidth; wndHeight = gpSet->_wndHeight;
 	mn_QuakePercent = 0; // 0 - отключен
@@ -178,7 +181,7 @@ CConEmuMain::CConEmuMain()
 	mh_InsideParentRoot = mh_InsideParentWND = mh_InsideParentRel = NULL;
 	mh_InsideParentPath = mh_InsideParentCD = NULL; ms_InsideParentPath[0] = 0;
 	mh_InsideSysMenu = NULL;
-	mb_PassSysCommand = false; change2WindowMode = -1;
+	mb_PassSysCommand = false; change2WindowMode = wmNotChanging;
 	mb_isFullScreen = false;
 	mb_ExternalHidden = FALSE;
 	memset(&mrc_StoredNormalRect, 0, sizeof(mrc_StoredNormalRect));
@@ -207,6 +210,9 @@ CConEmuMain::CConEmuMain()
 	m_ProcCount=0;
 	mb_ProcessCreated = FALSE; /*mn_StartTick = 0;*/ mb_WorkspaceErasedOnClose = FALSE;
 	mb_IgnoreSizeChange = false;
+	mb_InCaptionChange = false;
+	m_FixPosAfterStyle = 0;
+	ZeroStruct(mrc_FixPosAfterStyle);
 	//mb_IgnoreStoreNormalRect = false;
 	//mn_CurrentKeybLayout = (DWORD_PTR)GetKeyboardLayout(0);
 	//mpsz_RecreateCmd = NULL;
@@ -230,7 +236,7 @@ CConEmuMain::CConEmuMain()
 	mn_TrackMenuPlace = tmp_None;
 	mb_LastRgnWasNull = TRUE;
 	mb_LockWindowRgn = FALSE;
-	mb_CaptionWasRestored = FALSE; mb_ForceShowFrame = FALSE;
+	m_ForceShowFrame = fsf_Hide;
 	mh_CursorWait = LoadCursor(NULL, IDC_WAIT);
 	mh_CursorArrow = LoadCursor(NULL, IDC_ARROW);
 	mh_CursorMove = LoadCursor(NULL, IDC_SIZEALL);
@@ -895,7 +901,7 @@ RECT CConEmuMain::GetDefaultRect()
 
 	if (m_InsideIntegration)
 	{
-		WindowMode = rNormal;
+		WindowMode = wmNormal;
 		RECT rcParent = {}, rcRelative = {};
 		GetClientRect(mh_InsideParentWND, &rcParent);
 		if (m_InsideIntegration == ii_Simple)
@@ -1257,9 +1263,9 @@ void CConEmuMain::UpdateSysMenu(HMENU hSysMenu)
 }
 
 // Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE
-DWORD_PTR CConEmuMain::GetWindowStyle()
+DWORD CConEmuMain::GetWindowStyle()
 {
-	DWORD_PTR style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+	DWORD style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
 
 	if (m_InsideIntegration)
 	{
@@ -1271,6 +1277,7 @@ DWORD_PTR CConEmuMain::GetWindowStyle()
 		//	style |= WS_POPUPWINDOW | WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 		//else
 		style |= WS_OVERLAPPEDWINDOW;
+		style = FixWindowStyle(style);
 		//if (gpSet->isTabsOnTaskBar() && gOSVer.dwMajorVersion <= 5)
 		//{
 		//	style |= WS_POPUP;
@@ -1291,10 +1298,38 @@ DWORD_PTR CConEmuMain::GetWindowStyle()
 	return style;
 }
 
-// Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE_EX
-DWORD_PTR CConEmuMain::GetWindowStyleEx()
+DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 {
-	DWORD_PTR styleEx = 0;
+	if ((wmNewMode == wmFullScreen) || gpSet->isCaptionHidden(wmNewMode))
+	{
+		if ((wmNewMode == wmFullScreen)
+			|| ((wmNewMode == wmMaximized) || gpSet->isCaptionHidden(wmNewMode)))
+		{
+			dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
+		}
+		else if (m_ForceShowFrame == fsf_Show)
+		{
+			dwStyle &= ~(WS_CAPTION);
+			dwStyle |= WS_THICKFRAME;
+		}
+		else
+		{
+			dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
+			dwStyle |= WS_DLGFRAME;
+		}
+	}
+	else
+	{
+		/* WS_CAPTION == WS_BORDER | WS_DLGFRAME  */
+		dwStyle |= WS_CAPTION|WS_THICKFRAME;
+	}
+	return dwStyle;
+}
+
+// Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE_EX
+DWORD CConEmuMain::GetWindowStyleEx()
+{
+	DWORD styleEx = 0;
 
 	if (m_InsideIntegration)
 	{
@@ -1438,7 +1473,7 @@ BOOL CConEmuMain::CreateMainWindow()
 
 	HWND hParent = m_InsideIntegration ? mh_InsideParentWND : ghWndApp;
 
-	//if (gpConEmu->WindowMode == rMaximized) style |= WS_MAXIMIZE;
+	//if (gpConEmu->WindowMode == wmMaximized) style |= WS_MAXIMIZE;
 	//style |= WS_VISIBLE;
 	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
 	WARNING("На ноуте вылезает за пределы рабочей области");
@@ -1460,7 +1495,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	DWORD styleEx2 = GetWindowLongPtr(ghWnd, GWL_EXSTYLE);
 #endif
 	OnTransparent();
-	//if (gpConEmu->WindowMode == rFullScreen || gpConEmu->WindowMode == rMaximized)
+	//if (gpConEmu->WindowMode == wmFullScreen || gpConEmu->WindowMode == wmMaximized)
 	//	gpConEmu->SetWindowMode(gpConEmu->WindowMode);
 	UpdateGuiInfoMapping();
 	return TRUE;
@@ -2557,7 +2592,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 	else
 	{
 		// Normal
-		if (gpSet->isHideCaptionAlways())
+		if (gpSet->isCaptionHidden())
 		{
 			if ((mn_QuakePercent != 0) || !isMouseOverFrame())
 			{
@@ -2988,7 +3023,14 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg /*, CVirtualConsole
 		//{
 		RECT rcTest = MakeRect(100,100);
 
-		if (AdjustWindowRectEx(&rcTest, dwStyle, FALSE, dwStyleEx))
+		// AdjustWindowRectEx НЕ должно вызываться в FullScreen. Глючит. А рамки с заголовком нет, расширять нечего.
+		if ((change2WindowMode == wmFullScreen)
+			|| ((change2WindowMode == wmNotChanging) && (WindowMode == wmFullScreen)))
+		{
+			// Для FullScreen полностью убираются рамки и заголовок
+			_ASSERTE(rc.left==0 && rc.top==0 && rc.right==0 && rc.bottom==0);
+		}
+		else if (AdjustWindowRectEx(&rcTest, dwStyle, FALSE, dwStyleEx))
 		{
 			rc.left = -rcTest.left;
 			rc.top = -rcTest.top;
@@ -3002,7 +3044,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg /*, CVirtualConsole
 			_ASSERTE(FALSE);
 			rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
 			rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
-			rc.top = rc.bottom + GetSystemMetrics(SM_CYCAPTION);
+			rc.top = rc.bottom + (gpSet->isCaptionHidden() ? 0 : GetSystemMetrics(SM_CYCAPTION));
 			//	+ (gpSet->isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
 		}
 
@@ -3108,7 +3150,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 		GetWindowPlacement(ghWnd, &wpl);
 		
 		TODO("Если окно было свернуто из Maximized состояние? Нужно брать не rcNormalPosition а Maximized?");
-		_ASSERTE(WindowMode!=rMaximized);
+		_ASSERTE(WindowMode!=wmMaximized);
 
 		rcMain = wpl.rcNormalPosition;
 	}
@@ -3130,6 +3172,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 	RECT rc = rFrom; // инициализация, если уж не получится...
 	RECT rcShift = MakeRect(0,0);
 	enum ConEmuRect tFromNow = tFrom;
+
+	_ASSERTE(prDC==NULL); // Изжить пережитки
 
 	// tTabAction обязан включать и флаг CEM_TAB
 	_ASSERTE((tTabAction & CEM_TAB)==CEM_TAB);
@@ -3361,10 +3405,10 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 						rc.left -= rcFrame.left;
 						rc.right += rcFrame.right;
 
-						if (gpSet->isHideCaption || gpSet->isHideCaptionAlways())
-							rc.top -= rcFrame.top;
-						else
-							rc.top -= rcFrame.bottom; // top включает и заголовок, а это нам не нужно
+						//if (gpSet->isHideCaption || gpSet->isHideCaptionAlways())
+						rc.top -= rcFrame.top;
+						//else
+						//	rc.top -= rcFrame.bottom; // top включает и заголовок, а это нам не нужно
 
 						rc.bottom += rcFrame.bottom;
 						//if (gpSet->isHideCaption && gpConEmu->mb_MaximizedHideCaption && !gpSet->isHideCaptionAlways)
@@ -3425,8 +3469,9 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					{
 						rc = MakeRect(GetSystemMetrics(SM_CXMAXIMIZED),GetSystemMetrics(SM_CYMAXIMIZED));
 
-						if (gpSet->isHideCaption && gpConEmu->mb_MaximizedHideCaption && !gpSet->isHideCaptionAlways())
-							rc.top -= GetSystemMetrics(SM_CYCAPTION);
+						//120814 - ~WS_CAPTION
+						//if (gpSet->isHideCaption && gpConEmu->mb_MaximizedHideCaption && !gpSet->isHideCaptionAlways())
+						//	rc.top -= GetSystemMetrics(SM_CYCAPTION);
 
 					} break;
 					case CER_RESTORE:
@@ -3796,7 +3841,7 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 
 	// Обновить коордианты в gpSet, если требуется
 	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
-	if ((change2WindowMode == (DWORD)-1) && !mb_isFullScreen && !isZoomed() && !isIconic())
+	if ((change2WindowMode == wmNotChanging) && !mb_isFullScreen && !isZoomed() && !isIconic())
 	{
 		RECT rcNormal = {};
 		if (prcWnd)
@@ -3847,11 +3892,11 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow)
 	return lbRc;
 }
 
-// inMode: rNormal, rMaximized, rFullScreen
-bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFirstShow /*= FALSE*/)
+// inMode: wmNormal, wmMaximized, wmFullScreen
+bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*/, BOOL abFirstShow /*= FALSE*/)
 {
-	if (inMode != rNormal && inMode != rMaximized && inMode != rFullScreen)
-		inMode = rNormal; // ошибка загрузки настроек?
+	if (inMode != wmNormal && inMode != wmMaximized && inMode != wmFullScreen)
+		inMode = wmNormal; // ошибка загрузки настроек?
 
 	if (!isMainThread())
 	{
@@ -3859,10 +3904,10 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 		return false;
 	}
 
-	if (inMode == rFullScreen && gpSet->isDesktopMode)
-		inMode = (mb_isFullScreen || isZoomed()) ? rNormal : rMaximized; // FullScreen на Desktop-е невозможен
+	if (inMode == wmFullScreen && gpSet->isDesktopMode)
+		inMode = (mb_isFullScreen || isZoomed()) ? wmNormal : wmMaximized; // FullScreen на Desktop-е невозможен
 
-	if ((inMode != rFullScreen) && mb_isFullScreen)
+	if ((inMode != wmFullScreen) && mb_isFullScreen)
 	{
 		OnForcedFullScreen(false);
 	}
@@ -3889,7 +3934,10 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 	// Сброс флагов ресайза мышкой
 	mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 
-	if (bWasSetFullscreen && inMode != rFullScreen)
+	bool bOldFullScreen = mb_isFullScreen || gpSet->isQuakeStyle;
+	bool bNewFullScreen = (inMode == wmFullScreen) || gpSet->isQuakeStyle;
+
+	if (bWasSetFullscreen && !bNewFullScreen)
 	{
 		if (mp_TaskBar2)
 		{
@@ -3904,17 +3952,20 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 	GetActiveVCon(&VCon);
 	CRealConsole* pRCon = (gpSetCls->isAdvLogging!=0) ? (VCon.VCon() ? VCon.VCon()->RCon() : NULL) : NULL;
 
-	if (pRCon) pRCon->LogString((inMode==rNormal) ? "SetWindowMode(rNormal)" :
-		                           (inMode==rMaximized) ? "SetWindowMode(rMaximized)" :
-		                           (inMode==rFullScreen) ? "SetWindowMode(rFullScreen)" : "SetWindowMode(INVALID)",
+	if (pRCon) pRCon->LogString((inMode==wmNormal) ? "SetWindowMode(wmNormal)" :
+		                           (inMode==wmMaximized) ? "SetWindowMode(wmMaximized)" :
+		                           (inMode==wmFullScreen) ? "SetWindowMode(wmFullScreen)" : "SetWindowMode(INVALID)",
 		                           TRUE);
+
+	OnHideCaption(inMode);
 
 	//!!!
 	switch (inMode)
 	{
-		case rNormal:
+		case wmNormal:
 		{
-			DEBUGLOGFILE("SetWindowMode(rNormal)\n");
+			DEBUGLOGFILE("SetWindowMode(wmNormal)\n");
+			AutoSizeFont(mrc_Ideal, CER_MAIN);
 			// Расчитать размер по оптимальному WindowRect
 			if (!CVConGroup::PreReSize(inMode, mrc_Ideal))
 			{
@@ -3930,7 +3981,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 			if (isIconic() || (isZoomed() && !mb_MaximizedHideCaption))
 			{
 				//apiShow Window(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
-				mb_IgnoreSizeChange = TRUE;
+				mb_IgnoreSizeChange = true;
 
 				if (gpSet->isDesktopMode)
 				{
@@ -4002,7 +4053,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 			GetWindowPlacement(ghWnd, &wpl);
 			#endif
 
-			gpSetCls->UpdateWindowMode(rNormal);
+			gpSetCls->UpdateWindowMode(wmNormal);
 
 			mb_isFullScreen = false;
 
@@ -4029,16 +4080,19 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 			//GetWindowPlacement(ghWnd, &wpl);
 			//UpdateWindow(ghWnd);
 			//#endif
-		} break;
-		case rMaximized:
+		} break; //wmNormal
+
+		case wmMaximized:
 		{
-			DEBUGLOGFILE("SetWindowMode(rMaximized)\n");
+			DEBUGLOGFILE("SetWindowMode(wmMaximized)\n");
 
 			// Обновить коордианты в gpSet, если требуется
 			if (!mb_isFullScreen && !isZoomed() && !isIconic())
 				StoreNormalRect(&rcWnd);
 
-			if (!gpSet->isHideCaption && !gpSet->isHideCaptionAlways())
+			mb_isFullScreen = false;
+
+			//if (!gpSet->isHideCaption && !gpSet->isHideCaptionAlways())
 			{
 				RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
 
@@ -4052,7 +4106,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 
 				if (mb_MaximizedHideCaption || !::IsZoomed(ghWnd))
 				{
-					mb_IgnoreSizeChange = TRUE;
+					mb_IgnoreSizeChange = true;
 					InvalidateAll();
 					if (!gpSet->isDesktopMode)
 					{
@@ -4075,20 +4129,20 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 							SWP_NOCOPYBITS|SWP_SHOWWINDOW);
 					}
 					mb_IgnoreSizeChange = FALSE;
-					RePaint();
+
+					//RePaint();
+					InvalidateAll();
 
 					if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("OnSize(false).2");
 
 					OnSize(false); // консоль уже изменила свой размер
 				}
 
-				gpSetCls->UpdateWindowMode(rMaximized);
-
-				mb_isFullScreen = false;
+				gpSetCls->UpdateWindowMode(wmMaximized);
 
 				if (!IsWindowVisible(ghWnd))
 				{
-					mb_IgnoreSizeChange = TRUE;
+					mb_IgnoreSizeChange = true;
 					ShowWindow(SW_SHOWMAXIMIZED);
 					mb_IgnoreSizeChange = FALSE;
 
@@ -4099,6 +4153,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 
 				UpdateWindowRgn();
 			} // if (!gpSet->isHideCaption)
+			#if 0
 			else
 			{	// Здесь у нас обработка режима "Без заголовка"
 				// (!gpSet->isHideCaption && !gpSet->isHideCaptionAlways())
@@ -4183,7 +4238,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 					                   ptFullScreenSize.x,ptFullScreenSize.y,
 					                   SWP_NOZORDER);
 
-					gpSetCls->UpdateWindowMode(rMaximized);
+					gpSetCls->UpdateWindowMode(wmMaximized);
 				}
 
 				mb_isFullScreen = false;
@@ -4201,9 +4256,12 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 
 				UpdateWindowRgn();
 			} // (gpSet->isHideCaption)
-		} break;
-		case rFullScreen:
-			DEBUGLOGFILE("SetWindowMode(rFullScreen)\n");
+			#endif
+		} break; //wmMaximized
+
+		case wmFullScreen:
+		{
+			DEBUGLOGFILE("SetWindowMode(wmFullScreen)\n");
 
 			// Обновить коордианты в gpSet, если требуется
 			if (!mb_isFullScreen && !isZoomed() && !isIconic())
@@ -4222,7 +4280,8 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 				}
 
 				mb_isFullScreen = true;
-				isWndNotFSMaximized = isZoomed();
+				//120820 - т.к. FullScreen теперь SW_SHOWMAXIMIZED, то здесь нужно смотреть на WindowMode
+				isWndNotFSMaximized = (WindowMode == wmMaximized);
 				RECT rcShift = CalcMargins(CEM_FRAME);
 				//GetCWShift(ghWnd, &rcShift); // Обновить, на всякий случай
 				// Умолчания
@@ -4241,17 +4300,20 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 					}
 				}
 
-				if (isIconic() || isZoomed())
+				//120820 - Тут нужно проверять реальный IsZoomed
+				if (isIconic() || !::IsZoomed(ghWnd))
 				{
-					mb_IgnoreSizeChange = TRUE;
-					ShowWindow(SW_SHOWNORMAL);
+	 					mb_IgnoreSizeChange = true;
+					//120820 для четкости, в FullScreen тоже ставим Maximized, а не Normal
+					ShowWindow(SW_SHOWMAXIMIZED);
 
 					// Сбросить
 					if (mb_MaximizedHideCaption)
 						mb_MaximizedHideCaption = FALSE;
 
 					mb_IgnoreSizeChange = FALSE;
-					RePaint();
+					//120820 - лишняя перерисовка?
+					//-- RePaint();
 				}
 
 				if (mp_TaskBar2)
@@ -4279,12 +4341,12 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 				                   ptFullScreenSize.x,ptFullScreenSize.y,
 				                   SWP_NOZORDER);
 
-				gpSetCls->UpdateWindowMode(rFullScreen);
+				gpSetCls->UpdateWindowMode(wmFullScreen);
 			}
 
 			if (!IsWindowVisible(ghWnd))
 			{
-				mb_IgnoreSizeChange = TRUE;
+				mb_IgnoreSizeChange = true;
 				ShowWindow(SW_SHOWNORMAL);
 				mb_IgnoreSizeChange = FALSE;
 
@@ -4293,13 +4355,14 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 				OnSize(false);  // консоль уже изменила свой размер
 			}
 
-			break;
+		} break; //wmFullScreen
+
 	}
 
 	if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("SetWindowMode done");
 
 	WindowMode = inMode; // Запомним!
-	canEditWindowSizes = inMode == rNormal;
+	canEditWindowSizes = inMode == wmNormal;
 
 	if (VCon.VCon())
 	{
@@ -4322,12 +4385,13 @@ wrap:
 	// полноэкранности у панели задач. Вернем его...
 	if (mp_TaskBar2)
 	{
-		if (bWasSetFullscreen != mb_isFullScreen)
+		bNewFullScreen = mb_isFullScreen || gpSet->isQuakeStyle;
+		if (bWasSetFullscreen != bNewFullScreen)
 		{
 			if (!gpSet->isDesktopMode)
-				mp_TaskBar2->MarkFullscreenWindow(ghWnd, mb_isFullScreen);
+				mp_TaskBar2->MarkFullscreenWindow(ghWnd, bNewFullScreen);
 
-			bWasSetFullscreen = mb_isFullScreen;
+			bWasSetFullscreen = bNewFullScreen;
 		}
 	}
 
@@ -4335,7 +4399,7 @@ wrap:
 #ifdef _DEBUG
 	dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 #endif
-	change2WindowMode = -1;
+	change2WindowMode = wmNotChanging;
 	TODO("Что-то курсор иногда остается APPSTARTING...");
 	SetCursor(LoadCursor(NULL,IDC_ARROW));
 	//PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
@@ -4400,20 +4464,25 @@ bool CConEmuMain::isZoomed()
 	if (mb_InRestore)
 		return false;
 
+	//120820 для строгости, для FullScreen тоже ставим WS_MAXIMIZED
+	if (mb_isFullScreen)
+		return false;
+
 	bool bZoomed = (mb_MaximizedHideCaption && !::IsIconic(ghWnd)) || ::IsZoomed(ghWnd);
 	return bZoomed;
 }
 
 bool CConEmuMain::isFullScreen()
 {
-	if (mb_isFullScreen)
-	{
-		if (isZoomed())
-		{
-			_ASSERTE(mb_isFullScreen==false && isZoomed());
-			return false;
-		}
-	}
+	//120820 для строгости, для FullScreen тоже ставим WS_MAXIMIZED
+	//-- if (mb_isFullScreen)
+	//-- {
+	//-- 	if (isZoomed())
+	//-- 	{
+	//-- 		_ASSERTE(mb_isFullScreen==false && isZoomed());
+	//-- 		return false;
+	//-- 	}
+	//-- }
 	return mb_isFullScreen;
 }
 
@@ -4692,6 +4761,8 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 		return 0;
 	}
 
+	UpdateWindowRgn();
+
 #ifdef _DEBUG
 	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 #endif
@@ -4713,7 +4784,7 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 	RECT mainClient = MakeRect(newClientWidth,newClientHeight);
 	RECT work = CalcRect(CER_WORKSPACE, mainClient, CER_MAINCLIENT);
 	_ASSERTE(ghWndWork && GetParent(ghWndWork)==ghWnd); // пока расчитано на дочерний режим
-	MoveWindow(ghWndWork, work.left, work.top, work.right-work.left, work.bottom-work.top, FALSE);
+	MoveWindow(ghWndWork, work.left, work.top, work.right-work.left, work.bottom-work.top, TRUE);
 
 	// Запомнить "идеальный" размер окна, выбранный пользователем
 	if (isSizing() && !mb_isFullScreen && !isZoomed() && !isIconic())
@@ -5090,11 +5161,25 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
 	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X) style=0x%08X%s\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle, zoomed ? L" (zoomed)" : L"");
 	DEBUGSTRSIZE(szDbg);
+	DWORD nCurTick = GetTickCount();
 	static int cx, cy;
 
 	if (!(p->flags & SWP_NOSIZE) && (cx != p->cx || cy != p->cy))
 	{
 		cx = p->cx; cy = p->cy;
+	}
+
+	if (m_FixPosAfterStyle)
+	{
+		if ((nCurTick - m_FixPosAfterStyle) < FIXPOSAFTERSTYLE_DELTA)
+		{
+			p->flags &= ~(SWP_NOMOVE|SWP_NOSIZE);
+			p->x = mrc_FixPosAfterStyle.left;
+			p->y = mrc_FixPosAfterStyle.top;
+			p->cx = mrc_FixPosAfterStyle.right - mrc_FixPosAfterStyle.left;
+			p->cy = mrc_FixPosAfterStyle.bottom - mrc_FixPosAfterStyle.top;
+		}
+		m_FixPosAfterStyle = 0;
 	}
 
 	#ifdef CATCH_TOPMOST_SET
@@ -5107,12 +5192,27 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	#endif
 
 	#endif
+
+	//120821 - Размер мог быть изменен извне (Win+Up например)
+	if (!mb_InCaptionChange && !(p->flags & (SWP_NOSIZE|SWP_NOMOVE))
+		&& (change2WindowMode == wmNotChanging) && !gpSet->isQuakeStyle)
+	{
+		// В этом случае нужно проверить, может быть требуется коррекция стилей окна?
+		if (zoomed != (WindowMode == wmMaximized || WindowMode == wmFullScreen))
+		{
+			// В режимах Maximized/FullScreen должен быть WS_MAXIMIZED
+			WindowMode = zoomed ? wmMaximized : wmNormal;
+			// Установив WindowMode мы вызываем все необходимые действия
+			// по смене стилей, обновлении регионов, и т.п.
+			OnHideCaption();
+		}
+	}
 	
-	// Если у нас режим скрытия заголовка (при максимизации)
+	// Если у нас режим скрытия заголовка (при максимизации/фулскрине)
 	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE))
-		&& (gpSet->isQuakeStyle ||
-			((change2WindowMode == (DWORD)-1)
-			&& (mb_MaximizedHideCaption || (gpSet->isHideCaptionAlways() && zoomed)))))
+		&& (gpSet->isQuakeStyle || gpSet->isCaptionHidden(change2WindowMode)))
+			//((change2WindowMode == wmNotChanging)
+			//&& (mb_MaximizedHideCaption || (gpSet->isHideCaptionAlways() && zoomed)))))
 	{
 		if (gpSet->isQuakeStyle)
 		{
@@ -5121,12 +5221,55 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			p->y = rc.top;
 			p->cx = rc.right - rc.left + 1;
 		}
-		else if (zoomed/*isZoomed()*/)
+		else if (zoomed/*isZoomed()*/ || mb_isFullScreen)
 		{
-			// Нужно скорректировать размеры, а то при смене разрешения монитора (в частности при повороте экрана) глюки лезут
-			p->flags |= (SWP_NOSIZE|SWP_NOMOVE);
-			// И обновить размер насильно
-			SetWindowMode(rMaximized, TRUE);
+			HMONITOR hMon = NULL;
+			RECT rcNew = {}; GetWindowRect(ghWnd, &rcNew);
+			if (!(p->flags & SWP_NOSIZE) && !(p->flags & SWP_NOMOVE))
+			{
+				// Меняются и размер и положение
+				rcNew = MakeRect(p->x, p->y, p->x+p->cx, p->y+p->cy);
+			}
+			else if (!(p->flags & SWP_NOSIZE))
+			{
+				// Меняется только размер
+				rcNew.right = rcNew.left + p->cx;
+				rcNew.bottom = rcNew.top + p->cy;
+			}
+			else
+			{
+				// Меняется только положение
+				rcNew = MakeRect(p->x, p->y, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top);
+			}
+
+			hMon = MonitorFromRect(&rcNew, MONITOR_DEFAULTTONEAREST);
+			MONITORINFO mi = {sizeof(mi)};
+			if (GetMonitorInfo(hMon, &mi))
+			{
+				if (mb_isFullScreen)
+				{
+					p->x = mi.rcMonitor.left;
+					p->y = mi.rcMonitor.top;
+					p->cx = mi.rcMonitor.right-mi.rcMonitor.left;
+					p->cy = mi.rcMonitor.bottom-mi.rcMonitor.top;
+				}
+				else
+				{
+					p->x = mi.rcWork.left;
+					p->y = mi.rcWork.top;
+					p->cx = mi.rcWork.right-mi.rcWork.left;
+					p->cy = mi.rcWork.bottom-mi.rcWork.top;
+				}
+			}
+			else
+			{
+				_ASSERTE(FALSE && "GetMonitorInfo failed");
+			}
+
+			//// Нужно скорректировать размеры, а то при смене разрешения монитора (в частности при повороте экрана) глюки лезут
+			//p->flags |= (SWP_NOSIZE|SWP_NOMOVE);
+			//// И обновить размер насильно
+			//SetWindowMode(wmMaximized, TRUE);
 		}
 	}
 
@@ -7398,11 +7541,22 @@ void CConEmuMain::UpdateProgress()
 		SetWindowText(ghWndApp, psTitle);
 }
 
-void CConEmuMain::StopForceShowFrame()
+void CConEmuMain::StartForceShowFrame()
 {
-	mb_ForceShowFrame = FALSE;
 	KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID);
 	KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
+	m_ForceShowFrame = fsf_Show;
+	OnHideCaption();
+	//UpdateWindowRgn();
+}
+
+void CConEmuMain::StopForceShowFrame()
+{
+	m_ForceShowFrame = fsf_Hide;
+	KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID);
+	KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
+	OnHideCaption();
+	//UpdateWindowRgn();
 }
 
 void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth/*=-1*/, int anWndHeight/*=-1*/)
@@ -7417,7 +7571,7 @@ void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 	//	KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
 	//}
 
-	if (mb_ForceShowFrame)
+	if (m_ForceShowFrame == fsf_Show)
 		hRgn = NULL; // Иначе при ресайзе получаются некрасивые (без XP Theme) кнопки в заголовке
 	else if (anWndWidth != -1 && anWndHeight != -1)
 		hRgn = CreateWindowRgn(false, false, anX, anY, anWndWidth, anWndHeight);
@@ -7439,7 +7593,10 @@ void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 
 	// Облом получается при двукратном SetWindowRgn(ghWnd, NULL, TRUE);
 	// Причем после следующего ресайза - рамка приходит в норму
-	SetWindowRgn(ghWnd, hRgn, TRUE);
+	BOOL bRc = SetWindowRgn(ghWnd, hRgn, TRUE);
+	DWORD dwErr = bRc ? 0 : GetLastError();
+	UNREFERENCED_PARAMETER(dwErr);
+	UNREFERENCED_PARAMETER(bRc);
 }
 
 #ifndef _WIN64
@@ -8171,6 +8328,8 @@ void CConEmuMain::PaintGaps(HDC hDC)
 
 void CConEmuMain::RePaint()
 {
+	mb_SkipSyncSize = true;
+
 	gpConEmu->mp_TabBar->RePaint();
 	//m_Back->RePaint();
 	HDC hDc = GetDC(ghWnd);
@@ -8180,6 +8339,8 @@ void CConEmuMain::RePaint()
 	ReleaseDC(ghWnd, hDc);
 
 	CVConGroup::RePaint();
+
+	mb_SkipSyncSize = false;
 }
 
 void CConEmuMain::Update(bool isForce /*= false*/)
@@ -8409,7 +8570,7 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 
 bool CConEmuMain::isMouseOverFrame(bool abReal)
 {
-	if (mb_CaptionWasRestored && isSizing())
+	if (m_ForceShowFrame && isSizing())
 	{
 		if (!isPressed(VK_LBUTTON))
 		{
@@ -8427,14 +8588,16 @@ bool CConEmuMain::isMouseOverFrame(bool abReal)
 	{
 		POINT ptMouse; GetCursorPos(&ptMouse);
 		RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
-		// чтобы область активации рамки была чуть побольше
-		rcWnd.left--; rcWnd.right++; rcWnd.bottom++;
+		// чтобы область активации рамки была чуть побольше, увеличим регион
+		int nAdd = 2;
+		rcWnd.top -= nAdd; rcWnd.left -= nAdd; rcWnd.right += nAdd; rcWnd.bottom += nAdd;
 
 		if (PtInRect(&rcWnd, ptMouse))
 		{
 			RECT rcClient = GetGuiClientRect();
-			// чтобы область активации рамки была чуть побольше
-			rcClient.left++; rcClient.right--; rcClient.bottom--;
+			// чтобы область активации рамки была чуть побольше, уменьшим регион
+			int nSub = 1;
+			rcClient.top += nSub; rcClient.left += nSub; rcClient.right -= nSub; rcClient.bottom -= nSub;
 			MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcClient, 2);
 
 			if (!PtInRect(&rcClient, ptMouse))
@@ -8443,7 +8606,7 @@ bool CConEmuMain::isMouseOverFrame(bool abReal)
 	}
 	else
 	{
-		bCurForceShow = mb_ForceShowFrame;
+		bCurForceShow = (m_ForceShowFrame == fsf_Show);
 	}
 
 	return bCurForceShow;
@@ -8491,9 +8654,9 @@ bool CConEmuMain::isVisible(CVirtualConsole* apVCon)
 
 bool CConEmuMain::isWindowNormal()
 {
-	if (change2WindowMode != (DWORD)-1)
+	if (change2WindowMode != wmNotChanging)
 	{
-		return (change2WindowMode == rNormal);
+		return (change2WindowMode == wmNormal);
 	}
 
 	if (mb_isFullScreen || isZoomed() || isIconic())
@@ -9362,7 +9525,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 	if (!abRecieved)
 	{
-		//if (gpConEmu->WindowMode == rFullScreen || gpConEmu->WindowMode == rMaximized) {
+		//if (gpConEmu->WindowMode == wmFullScreen || gpConEmu->WindowMode == wmMaximized) {
 #ifdef MSGLOGGER
 		WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length = sizeof(wpl);
 		GetWindowPlacement(ghWnd, &wpl);
@@ -9895,7 +10058,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			HWND hFocus = GetFocus();
 			wchar_t szInfo[128];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Focus event skipped, lbSetFocus=%u, mb_LastConEmuFocusState=%u, ghWnd=x%08X, hFore=x%08X, hFocus=x%08X", lbSetFocus, mb_LastConEmuFocusState, (DWORD)ghWnd, (DWORD)hNewFocus, (DWORD)hFocus);
-			DEBUGSTRFOCUS(szInfo);
+			DEBUGSTRFOCUS2(szInfo);
 			#endif
 			// Не дергаться
 			return 0;
@@ -10023,7 +10186,10 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 	if (pVCon && pVCon->RCon())
+	{
+		// Здесь будет вызван CRealConsole::UpdateServerActive
 		pVCon->RCon()->OnGuiFocused(lbSetFocus, (messg == WM_ACTIVATEAPP));
+	}
 
 	if ((gpSet->isQuakeStyle == 2)
 		&& (!lbSetFocus && !isMeForeground(true,true)) && !isIconic()
@@ -10147,7 +10313,7 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	//pInfo->ptMinTrackSize.y = srctWindow.Y * (gpSet->Log Font.lfHeight ? gpSet->Log Font.lfHeight : 6)
 	//  + p.y + shiftRect.top + shiftRect.bottom;
 
-	if (mb_isFullScreen || gpSet->isQuakeStyle || mb_MaximizedHideCaption)
+	if (mb_isFullScreen /*|| gpSet->isQuakeStyle || mb_MaximizedHideCaption*/)
 	{
 		if (pInfo->ptMaxTrackSize.x < ptFullScreenSize.x)
 			pInfo->ptMaxTrackSize.x = ptFullScreenSize.x;
@@ -10155,25 +10321,42 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 		if (pInfo->ptMaxTrackSize.y < ptFullScreenSize.y)
 			pInfo->ptMaxTrackSize.y = ptFullScreenSize.y;
 
-		if (pInfo->ptMaxSize.x < ptFullScreenSize.x)
-			pInfo->ptMaxSize.x = ptFullScreenSize.x;
+		//if (pInfo->ptMaxSize.x < ptFullScreenSize.x)
+		//	pInfo->ptMaxSize.x = ptFullScreenSize.x;
 
-		if (pInfo->ptMaxSize.y < ptFullScreenSize.y)
-			pInfo->ptMaxSize.y = ptFullScreenSize.y;
+		//if (pInfo->ptMaxSize.y < ptFullScreenSize.y)
+		//	pInfo->ptMaxSize.y = ptFullScreenSize.y;
 	}
-
-	if (gpSet->isHideCaption && !gpSet->isHideCaptionAlways())
+	else if (gpSet->isQuakeStyle)
 	{
-		int yCapt = GetSystemMetrics(SM_CYCAPTION);
-		pInfo->ptMaxPosition.y -= yCapt;
-		//if (!mb_isFullScreen)
-		//	pInfo->ptMaxSize.y += yCapt;
-		//HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTOPRIMARY);
-		//MONITORINFO mi = {sizeof(mi)};
-		//GetMonitorInfo(hMon, &mi);
-		if (pInfo->ptMaxTrackSize.y < (pInfo->ptMaxSize.y + yCapt))
-			pInfo->ptMaxTrackSize.y = (pInfo->ptMaxSize.y + yCapt);
+		HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+		MONITORINFO mi = {sizeof(mi)};
+		if (GetMonitorInfo(hMon, &mi))
+		{
+			if (pInfo->ptMaxTrackSize.x < (mi.rcMonitor.right - mi.rcMonitor.left))
+				pInfo->ptMaxTrackSize.x = (mi.rcMonitor.right - mi.rcMonitor.left);
+
+			if (pInfo->ptMaxTrackSize.y < (mi.rcMonitor.bottom - mi.rcMonitor.top))
+				pInfo->ptMaxTrackSize.y = (mi.rcMonitor.bottom - mi.rcMonitor.top);
+		}
 	}
+	else
+	{
+	}
+
+	// 120814 - ~WS_CAPTION
+	//if (gpSet->isHideCaption && !gpSet->isHideCaptionAlways())
+	//{
+	//	int yCapt = GetSystemMetrics(SM_CYCAPTION);
+	//	pInfo->ptMaxPosition.y -= yCapt;
+	//	//if (!mb_isFullScreen)
+	//	//	pInfo->ptMaxSize.y += yCapt;
+	//	//HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTOPRIMARY);
+	//	//MONITORINFO mi = {sizeof(mi)};
+	//	//GetMonitorInfo(hMon, &mi);
+	//	if (pInfo->ptMaxTrackSize.y < (pInfo->ptMaxSize.y + yCapt))
+	//		pInfo->ptMaxTrackSize.y = (pInfo->ptMaxSize.y + yCapt);
+	//}
 
 #ifdef _DEBUG
 	_wsprintf(szMinMax, SKIPLEN(countof(szMinMax)) L"OnGetMinMaxInfo[after]  MaxSize={%i,%i}, MaxPos={%i,%i}, MinTrack={%i,%i}, MaxTrack={%i,%i}\n",
@@ -10186,16 +10369,103 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	return result;
 }
 
-void CConEmuMain::OnHideCaption()
+void CConEmuMain::OnHideCaption(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 {
-	mp_TabBar->OnCaptionHidden();
+	mp_TabBar->OnCaptionHidden(wmNewMode);
 
-	if (isZoomed())
+	//if (isZoomed())
+	//{
+	//	SetWindowMode(wmMaximized, TRUE);
+	//}
+
+	bool bHideCaption = gpSet->isCaptionHidden();
+	DWORD nStyle = GetWindowLong(ghWnd, GWL_STYLE);
+	DWORD nNewStyle = FixWindowStyle(nStyle, wmNewMode);
+	DWORD nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
+	bool bNeedCorrect = (!isIconic() /*&& !isZoomed()*/ && !isFullScreen() && !(wmNewMode == wmFullScreen));
+	
+	if (nNewStyle != nStyle)
 	{
-		SetWindowMode(rMaximized, TRUE);
+		mb_IgnoreSizeChange = true;
+
+		RECT rcClient = {}, rcBefore = {}, rcAfter = {};
+		if (bNeedCorrect)
+		{
+			// AdjustWindowRectEx НЕ должно вызываться в FullScreen. Глючит. А рамки с заголовком нет, расширять нечего.
+			_ASSERTE(!isFullScreen() || (wmNewMode==wmNormal || wmNewMode==wmMaximized));
+
+			// Тут нужен "натуральный" ClientRect
+			::GetClientRect(ghWnd, &rcClient);
+			rcBefore = rcClient;
+			MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcBefore, 2);
+			rcAfter = rcBefore;
+			AdjustWindowRectEx(&rcBefore, nStyle, FALSE, nStyleEx);
+			if (isZoomed())
+			{
+				int nCapY = GetSystemMetrics(SM_CYCAPTION);
+				if (gpSet->isCaptionHidden())
+					rcAfter.top -= nCapY;
+				else
+					rcAfter.top += nCapY;
+			}
+			AdjustWindowRectEx(&rcAfter, nNewStyle, FALSE, nStyleEx);
+		}
+
+		//nStyle &= ~(WS_CAPTION|WS_THICKFRAME|WS_DLGFRAME);
+		//SetWindowLongPtr(ghWnd, GWL_STYLE, (DWORD)nStyle);
+		//nStyle = FixWindowStyle(nStyle);
+		//POINT ptBefore = {}; ClientToScreen(ghWnd, &ptBefore);
+
+		if (bNeedCorrect && (rcBefore.left != rcAfter.left || rcBefore.top != rcAfter.top))
+		{
+			m_FixPosAfterStyle = GetTickCount();
+			mrc_FixPosAfterStyle = rcAfter;
+			//DWORD nFlags = SWP_NOSIZE|SWP_NOZORDER;
+			/////nFlags |= SWP_DRAWFRAME;
+			//SetWindowPos(ghWnd, NULL, rcAfter.left, rcAfter.top, 0,0, nFlags);
+		}
+		else
+		{
+			m_FixPosAfterStyle = 0;
+		}
+
+		mb_InCaptionChange = true;
+
+		SetWindowLong(ghWnd, GWL_STYLE, nNewStyle);
+
+		mb_InCaptionChange = false;
+
+		//POINT ptAfter = {}; ClientToScreen(ghWnd, &ptAfter);
+		//if ((!isIconic() && !isZoomed() && !isFullScreen())
+		//	&& (ptBefore.x != ptAfter.x || ptBefore.y != ptAfter.y))
+		//{
+		//	RECT rcPos = {}; GetWindowRect(ghWnd, &rcPos);
+		//	SetWindowPos(ghWnd, NULL, rcPos.left+ptBefore.x-ptAfter.x, rcPos.top+ptBefore.y-ptAfter.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		//}
+		//if (bNeedCorrect && (rcBefore.left != rcAfter.left || rcBefore.top != rcAfter.top))
+		//{
+		//	m_FixPosAfterStyle = GetTickCount();
+		//	mrc_FixPosAfterStyle = rcAfter;
+		//	//DWORD nFlags = SWP_NOSIZE|SWP_NOZORDER;
+		//	/////nFlags |= SWP_DRAWFRAME;
+		//	//SetWindowPos(ghWnd, NULL, rcAfter.left, rcAfter.top, 0,0, nFlags);
+		//}
+		//else
+		//{
+		//	m_FixPosAfterStyle = 0;
+		//}
+		mb_IgnoreSizeChange = FALSE;
+
+		if (wmNewMode == wmCurrent)
+		{
+			ReSize(TRUE);
+		}
 	}
 
-	UpdateWindowRgn();
+	if (wmNewMode == wmCurrent)
+	{
+		UpdateWindowRgn();
+	}
 	//DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 	//if (gpSet->isHideCaptionAlways)
 	//	dwStyle &= ~(WS_CAPTION/*|WS_THICKFRAME*/);
@@ -10283,11 +10553,11 @@ void CConEmuMain::OnTaskbarSettingsChanged()
 void CConEmuMain::OnAltEnter()
 {
 	if (!mb_isFullScreen)
-		gpConEmu->SetWindowMode(rFullScreen);
+		gpConEmu->SetWindowMode(wmFullScreen);
 	else if (gpSet->isDesktopMode && (mb_isFullScreen || gpConEmu->isZoomed()))
-		gpConEmu->SetWindowMode(rNormal);
+		gpConEmu->SetWindowMode(wmNormal);
 	else
-		gpConEmu->SetWindowMode(gpConEmu->isWndNotFSMaximized ? rMaximized : rNormal);
+		gpConEmu->SetWindowMode(gpConEmu->isWndNotFSMaximized ? wmMaximized : wmNormal);
 }
 
 void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
@@ -10300,7 +10570,7 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 
 	StoreNormalRect(NULL); // Сама разберется, надо/не надо
 
-	gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(mb_isFullScreen/*&&gpConEmu->isWndNotFSMaximized*/)) ? rNormal : rMaximized);
+	gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(mb_isFullScreen/*&&gpConEmu->isWndNotFSMaximized*/)) ? wmNormal : wmMaximized);
 }
 
 void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= sih_None*/)
@@ -10533,7 +10803,7 @@ void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 		}
 	}
 
-	SetWindowMode(rFullScreen);
+	SetWindowMode(wmFullScreen);
 
 	if (!isMeForeground())
 	{
@@ -10558,6 +10828,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	}
 
 	WORD bVK = (WORD)(wParam & 0xFF);
+	//-- некорректно. сработало на LCtrl+LAlt
+	//bool bAltGr = (messg == WM_KEYDOWN && bVK == VK_MENU);
+	//_ASSERTE(!bAltGr);
 
 	#ifdef _DEBUG
 	wchar_t szDebug[255];
@@ -11575,7 +11848,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 #endif
 
 	//gpSet->IsModifierPressed(vkWndDragKey, false))
-	if ((messg == WM_LBUTTONDOWN) && ProcessHotKeyMsg(WM_KEYDOWN, VK_LBUTTON, 0, NULL, NULL))
+	if ((messg == WM_LBUTTONDOWN)
+		// 120820 - двигать можно только в "Normal"
+		&& !(isZoomed() || isFullScreen() || gpSet->isQuakeStyle)
+		&& ProcessHotKeyMsg(WM_KEYDOWN, VK_LBUTTON, 0, NULL, NULL))
 	{
 		mouse.state |= MOUSE_WINDOW_DRAG;
 		GetCursorPos(&mouse.ptWndDragStart);
@@ -13446,7 +13722,7 @@ void CConEmuMain::OnDesktopMode()
 		}
 
 		if (mb_isFullScreen)  // этот режим с Desktop несовместим
-			SetWindowMode(rMaximized);
+			SetWindowMode(wmMaximized);
 
 		if (!hShellWnd)
 		{
@@ -14026,11 +14302,11 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		} // case ID_CONPROP:
 
 		case SC_MAXIMIZE_SECRET:
-			SetWindowMode(rMaximized);
+			SetWindowMode(wmMaximized);
 			break;
 			
 		case SC_RESTORE_SECRET:
-			SetWindowMode(rNormal);
+			SetWindowMode(wmNormal);
 			break;
 			
 		case SC_CLOSE:
@@ -14048,7 +14324,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					break;
 				#endif
 				
-				SetWindowMode(rMaximized);
+				SetWindowMode(wmMaximized);
 			}
 			else
 			{
@@ -14075,7 +14351,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					break;
 				}
 
-				if (!SetWindowMode(isIconic() ? WindowMode : rNormal))
+				if (!SetWindowMode(isIconic() ? WindowMode : wmNormal))
 					result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
 			}
 			else
@@ -14343,14 +14619,13 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 			}
 
 			// режим полного скрытия заголовка
-			if (gpSet->isHideCaptionAlways())
+			if (gpSet->isCaptionHidden())
 			{
 				if (!bForeground)
 				{
-					if (mb_ForceShowFrame)
+					if (m_ForceShowFrame)
 					{
 						StopForceShowFrame();
-						UpdateWindowRgn();
 					}
 				}
 				else
@@ -14361,24 +14636,23 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 					{
 						TODO("Не наколоться бы с предыдущим статусом при ресайзе?");
 						//static bool bPrevForceShow = false;
-						BOOL bCurForceShow = isMouseOverFrame(true);
+						bool bCurForceShow = isMouseOverFrame(true);
 
-						if (bCurForceShow != mb_CaptionWasRestored)
+						if (bCurForceShow != (m_ForceShowFrame != fsf_Hide))
 						{
-							mb_CaptionWasRestored = bCurForceShow;
-							//if (gpSet->nHideCaptionAlwaysDelay && bCurForceShow) {
-							KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID); KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
+							m_ForceShowFrame = bCurForceShow ? fsf_WaitShow : fsf_Hide;
+							KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID);
+							KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
 							WORD nID = bCurForceShow ? TIMER_CAPTION_APPEAR_ID : TIMER_CAPTION_DISAPPEAR_ID;
 							DWORD nDelay = bCurForceShow ? gpSet->nHideCaptionAlwaysDelay : gpSet->nHideCaptionAlwaysDisappear;
 
+							// Если просили показывать с задержкой - то по таймеру
 							if (nDelay)
 								SetTimer(ghWnd, nID, nDelay, NULL);
+							else if (bCurForceShow)
+								StartForceShowFrame();
 							else
-								UpdateWindowRgn();
-
-							//} else {
-							//	UpdateWindowRgn();
-							//}
+								StopForceShowFrame();
 						}
 					}
 				}
@@ -14453,8 +14727,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		case TIMER_CAPTION_DISAPPEAR_ID:
 		{
 			KillTimer(ghWnd, wParam);
-			mb_ForceShowFrame = isMouseOverFrame(true);
-			UpdateWindowRgn();
+			if (isMouseOverFrame(true))
+				StartForceShowFrame();
+			else
+				StopForceShowFrame();
 		} break;
 		case TIMER_RCLICKPAINT:
 		{
@@ -15258,7 +15534,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgSetWindowMode)
 			{
-				gpConEmu->SetWindowMode(wParam);
+				gpConEmu->SetWindowMode((ConEmuWindowMode)wParam);
 				return 0;
 			}
 			else if (messg == gpConEmu->mn_MsgUpdateTitle)

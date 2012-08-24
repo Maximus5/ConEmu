@@ -169,7 +169,7 @@ class CSettings
 			DWORD wndWidth, wndHeight; // Консоль
 			DWORD wndX, wndY; // GUI
 			DWORD nFrame;
-			DWORD WindowMode;
+			ConEmuWindowMode WindowMode;
 		} m_QuakePrevSize;
 	public:
 		//bool isFontAutoSize;

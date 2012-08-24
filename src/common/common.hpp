@@ -284,6 +284,7 @@ const CECMD
 	CECMD_SETTABTITLE    = 63, // wData - это LPCWSTR, посылается в GUI
 	CECMD_SETPROGRESS    = 64, // wData[0]: 0 - remove, 1 - set, 2 - error. Для "1": wData[1] - 0..100%.
 	CECMD_SETCONCOLORS   = 65, // CESERVER_REQ_SETCONSOLORS
+	CECMD_SETCONTITLE    = 66, // wData - это LPCWSTR, посылается в Server
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,

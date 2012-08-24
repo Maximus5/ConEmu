@@ -335,7 +335,7 @@ enum ConEmuRect
 	// Далее все координаты считаются относительно клиенсткой области {0,0}
 	CER_MAINCLIENT, // клиентская область главного окна (БЕЗ отрезания табов, прокруток, DoubleView и прочего. Целиком)
 	CER_TAB,        // положение контрола с закладками (всего)
-	CER_WORKSPACE,  // рабочая область ConEmu. В ней располагаются VCon/GUI apps. Но после DoubleView будет БОЛЬШЕ чем CER_BACK, т.к. это все видимые VCon.
+	CER_WORKSPACE,  // рабочая область ConEmu. В ней располагаются все видимые VCon/GUI apps. (БОЛЬШЕ чем CER_BACK при SplitScreen/DoubleView).
 	CER_BACK,       // область, отведенная под VCon. Тут нужна вся область, без отрезания прокруток и округлений размеров под знакоместо
 	CER_SCROLL,     // положение полосы прокрутки
 	CER_DC,         // положение окна отрисовки
@@ -367,4 +367,13 @@ enum TrackMenuPlace
 	tmp_TabsList,
 	tmp_PasteCmdLine,
 	tmp_StatusBarCols,
+};
+
+enum ConEmuWindowMode
+{
+	wmCurrent = 0,
+	wmNotChanging = -1,
+	wmNormal = rNormal,
+	wmMaximized = rMaximized,
+	wmFullScreen = rFullScreen,
 };

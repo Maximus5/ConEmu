@@ -163,7 +163,7 @@ class TabBarClass //: public CToolTip
 		void UpdateWidth();
 		void OnConsoleActivated(int nConNumber); //0-based
 		void UpdateToolConsoles(bool abForcePos=false);
-		void OnCaptionHidden();
+		void OnCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);
 		void OnWindowStateChanged();
 		void OnBufferHeight(BOOL abBufferHeight);
 		void OnAlternative(BOOL abAlternative);

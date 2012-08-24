@@ -3965,7 +3965,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			// Завершение выделения по KeyPress?
 			if (mp_ABuf->isSelfSelectMode())
 			{
-				if (gpSet->isCTSEndOnTyping && (pszChars && *pszChars))
+				if ((gpSet->isCTSEndOnTyping && (pszChars && *pszChars))
+					|| gpSet->isCTSEndOnKeyPress) // +все, что не генерит символы (стрелки, Fn, и т.п.)
 				{
 					// 2 - end only, do not copy
 					mp_ABuf->DoSelectionFinalize((gpSet->isCTSEndOnTyping == 1));
@@ -6914,6 +6915,35 @@ void CRealConsole::RenameTab(LPCWSTR asNewTabText /*= NULL*/)
 
 	lstrcpyn(ms_RenameFirstTab, asNewTabText ? asNewTabText : L"", countof(ms_RenameFirstTab));
 	gpConEmu->mp_TabBar->Update();
+}
+
+void CRealConsole::RenameWindow(LPCWSTR asNewWindowText /*= NULL*/)
+{
+	if (!this)
+		return;
+
+	DWORD dwServerPID = GetServerPID(true);
+	if (!dwServerPID)
+		return;
+
+	if (!asNewWindowText || !*asNewWindowText)
+		asNewWindowText = gpConEmu->GetDefaultTitle();
+
+	int cchMax = lstrlen(asNewWindowText)+1;
+	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETCONTITLE, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t)*cchMax);
+	if (pIn)
+	{
+		_wcscpy_c((wchar_t*)pIn->wData, cchMax, asNewWindowText);
+
+		DWORD dwTickStart = timeGetTime();
+		
+		CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
+		
+		gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+
+		ExecuteFreeResult(pOut);
+		ExecuteFreeResult(pIn);
+	}
 }
 
 int CRealConsole::GetTabCount(BOOL abVisibleOnly /*= FALSE*/)

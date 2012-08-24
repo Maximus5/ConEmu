@@ -59,6 +59,7 @@ class CGestures;
 class CVConGuard;
 class CVConGroup;
 class CStatus;
+enum ConEmuWindowMode;
 
 
 struct MsgSrvStartedArg
@@ -171,10 +172,10 @@ class CConEmuMain :
 		POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
 		//DWORD gnLastProcessCount;
 		//uint cBlinkNext;
-		DWORD WindowMode;        // rNormal/rMaximized/rFullScreen
+		ConEmuWindowMode WindowMode;        // rNormal/rMaximized/rFullScreen
 		DWORD wndWidth, wndHeight;
 		int   wndX, wndY; // в пикселях
-		DWORD change2WindowMode; // -1/rNormal/rMaximized/rFullScreen
+		ConEmuWindowMode change2WindowMode; // -1/rNormal/rMaximized/rFullScreen
 		bool WindowStartMinimized, ForceMinimizeToTray;
 		bool DisableAutoUpdate;
 		bool DisableKeybHooks;
@@ -254,6 +255,9 @@ class CConEmuMain :
 		//LPARAM lastMML;
 		//COORD m_LastConSize; // console size after last resize (in columns and lines)
 		bool mb_IgnoreSizeChange;
+		bool mb_InCaptionChange;
+		DWORD m_FixPosAfterStyle;
+		RECT mrc_FixPosAfterStyle;
 		//bool mb_IgnoreStoreNormalRect;
 		//TCHAR szConEmuVersion[32];
 		DWORD m_ProcCount;
@@ -292,14 +296,18 @@ class CConEmuMain :
 		//CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
 		CAttachDlg *mp_AttachDlg;
 		CRecreateDlg *mp_RecreateDlg;
-		bool mb_PassSysCommand;
+		bool mb_SkipSyncSize, mb_PassSysCommand;
 		BOOL mb_WaitCursor;
 		//BOOL mb_InTrackSysMenu; -> mn_TrackMenuPlace
 		TrackMenuPlace mn_TrackMenuPlace;
 		BOOL mb_LastRgnWasNull;
 		BOOL mb_LockWindowRgn;
-		BOOL mb_CaptionWasRestored; // заголовок восстановлен на время ресайза
-		BOOL mb_ForceShowFrame;     // восстановить заголовок по таймауту
+		enum {
+			fsf_Hide = 0,     // Рамка и заголовок спрятаны
+			fsf_WaitShow = 1, // Запущен таймер показа рамки
+			fsf_Show = 2,     // Рамка показана
+		} m_ForceShowFrame;
+		void StartForceShowFrame();
 		void StopForceShowFrame();
 		//wchar_t *mpsz_RecreateCmd;
 		//ITaskbarList3 *mp_TaskBar3;
@@ -486,10 +494,11 @@ class CConEmuMain :
 		void UpdateSysMenu(HMENU hSysMenu);
 	public:
 		RECT GetVirtualScreenRect(BOOL abFullScreen);
-		DWORD_PTR GetWindowStyle();
-		DWORD_PTR GetWindowStyleEx();
-		DWORD_PTR GetWorkWindowStyle();
-		DWORD_PTR GetWorkWindowStyleEx();
+		DWORD GetWindowStyle();
+		DWORD FixWindowStyle(DWORD dwExStyle, ConEmuWindowMode wmNewMode = wmCurrent);
+		DWORD GetWindowStyleEx();
+		DWORD GetWorkWindowStyle();
+		DWORD GetWorkWindowStyleEx();
 		LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync, CVirtualConsole* apVCon);
 		BOOL Init();
 		void InitInactiveDC(CVirtualConsole* apVCon);
@@ -560,7 +569,7 @@ class CConEmuMain :
 		void SetDragCursor(HCURSOR hCur);
 		void SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);
-		bool SetWindowMode(uint inMode, BOOL abForce = FALSE, BOOL abFirstShow = FALSE);
+		bool SetWindowMode(ConEmuWindowMode inMode, BOOL abForce = FALSE, BOOL abFirstShow = FALSE);
 		void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
 		void ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags);
 		BOOL ShowWindow(int anCmdShow);
@@ -620,7 +629,7 @@ class CConEmuMain :
 		LRESULT OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon);
 		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom = NULL);
 		LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
-		void OnHideCaption();
+		void OnHideCaption(ConEmuWindowMode wmNewMode = wmCurrent);
 		void OnInfo_About(LPCWSTR asPageName = NULL);
 		void OnInfo_Help();
 		void OnInfo_HomePage();

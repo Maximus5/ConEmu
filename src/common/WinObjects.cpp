@@ -66,7 +66,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifdef _DEBUG
 void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 {
 //#ifdef CONEMU_MINIMAL
@@ -113,7 +112,6 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 	}
 //#endif
 }
-#endif
 
 #ifndef CONEMU_MINIMAL
 BOOL apiSetForegroundWindow(HWND ahWnd)
