@@ -1361,16 +1361,16 @@ DWORD CConEmuMain::GetWindowStyleEx()
 }
 
 // Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE
-DWORD_PTR CConEmuMain::GetWorkWindowStyle()
+DWORD CConEmuMain::GetWorkWindowStyle()
 {
-	DWORD_PTR style = WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
+	DWORD style = WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
 	return style;
 }
 
 // Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE_EX
-DWORD_PTR CConEmuMain::GetWorkWindowStyleEx()
+DWORD CConEmuMain::GetWorkWindowStyleEx()
 {
-	DWORD_PTR styleEx = 0;
+	DWORD styleEx = 0;
 	return styleEx;
 }
 
@@ -3295,6 +3295,9 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			rc = MakeRect((rFrom.right-rFrom.left) * gpSetCls->FontWidth(),
 			              (rFrom.bottom-rFrom.top) * gpSetCls->FontHeight());
 
+			RECT rcScroll = CalcMargins(CEM_SCROLL);
+			AddMargins(rc, rcScroll, TRUE);
+
 			if (tWhat != CER_DC)
 				rc = CalcRect(tWhat, rc, CER_DC);
 
@@ -4646,9 +4649,9 @@ BOOL CConEmuMain::TrackMouse()
 	return lbCapture;
 }
 
-void CConEmuMain::OnAlwaysShowScrollbar()
+void CConEmuMain::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 {
-	CVConGroup::OnAlwaysShowScrollbar();
+	CVConGroup::OnAlwaysShowScrollbar(abSync);
 }
 
 void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
@@ -9539,7 +9542,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		if (gpSet->isDesktopMode)
 			OnDesktopMode();
 
-		SetWindowMode(WindowMode, FALSE, TRUE);
+		SetWindowMode((ConEmuWindowMode)gpSet->_WindowMode, FALSE, TRUE);
 
 		PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
 
@@ -15548,7 +15551,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			else if (messg == gpConEmu->mn_MsgSrvStarted)
 			{
 				MsgSrvStartedArg *pArg = (MsgSrvStartedArg*)lParam;
-				HWND hWndDC = NULL;
+				HWND hWndDC = NULL, hWndBack = NULL;
 				//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
 
 				DWORD nServerPID = pArg->nSrcPID;
@@ -15557,7 +15560,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 				DWORD t1, t2, t3; int iFound = -1;
 
-				hWndDC = CVConGroup::DoSrvCreated(nServerPID, hWndCon, t1, t2, t3, iFound);
+				hWndDC = CVConGroup::DoSrvCreated(nServerPID, hWndCon, t1, t2, t3, iFound, hWndBack);
+
+				pArg->hWndDc = hWndDC;
+				pArg->hWndBack = hWndBack;
 
 				pArg->timeFin = timeGetTime();
 				if (hWndDC == NULL)

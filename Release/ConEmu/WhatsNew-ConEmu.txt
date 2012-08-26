@@ -13,14 +13,23 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
-[*] GuiMacro.
-    Close(<What>[,<Flags>])
-      close current console (0), without confirmation (0,1),
-      terminate active process (1), without confirmation (1,1),
-      close ConEmu window (2)
+2012.08.26
+[+] GuiMacro.
+    * Print(["<Text>"])
+      - Alias for Paste(2,"<Text>")
+    * Rename(<Type>,["<Title>"])
+      - Rename tab (Type=0) or console title (Type=1)
+    * Close(<What>[,<Flags>])
+      - close current console (0), without confirmation (0,1),
+      - terminate active process (1), without confirmation (1,1),
+      - close ConEmu window (2)
 [*] Internal changes in child windows.
 [%] When «Show & store current window size and position» is off, size and pos was not displayed on «Size & Pos» page.
+[%] CmdAutoAttach failed, if ConEmu.exe not installed.
+[+] «Show was hidden warning» option on «Features» page. «On» by default. May be turned «Off» for use with some desktop switchers (Dexpot e.g.).
 [%] Issue 674: Tab macro function going to console doesn't handle 1-based offsets properly.
+[%] После показа/скрытия TabBar (3-е состояние флажка) или StatusBar менялась высота окна ConEmu.
+[+] <Twilight> and <Zenburn> color palettes.
 
 
 2012.08.06

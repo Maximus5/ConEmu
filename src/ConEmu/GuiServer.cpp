@@ -316,7 +316,9 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				//	SMTO_BLOCK, 5000, &dwRc);
 				//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
 				MsgSrvStartedArg arg = {hConWnd, pIn->hdr.nSrcPID, nStartTick};
-				HWND hWndDC = (HWND)SendMessage(ghWnd, gpConEmu->mn_MsgSrvStarted, 0, (LPARAM)&arg);
+				SendMessage(ghWnd, gpConEmu->mn_MsgSrvStarted, 0, (LPARAM)&arg);
+				HWND hWndDC = arg.hWndDc;
+				HWND hWndBack = arg.hWndBack;
 				_ASSERTE(hWndDC!=NULL);
 
 				#ifdef _DEBUG
@@ -335,7 +337,8 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				//pIn->dwData[1] = (DWORD)dwRc; //-V205
 				//pIn->dwData[0] = (l == 0) ? 0 : 1;
 				ppReply->StartStopRet.hWnd = ghWnd;
-				ppReply->StartStopRet.hWndDC = hWndDC;
+				ppReply->StartStopRet.hWndDc = hWndDC;
+				ppReply->StartStopRet.hWndBack = hWndBack;
 				ppReply->StartStopRet.dwPID = GetCurrentProcessId();
 			}
 			else if (pIn->dwData[0] == 101)
@@ -429,14 +432,15 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			if (pRCon)
 			{
 				RECT rcPrev = ppReply->AttachGuiApp.rcWindow;
-				HWND hView = pRCon->GetView();
-				// –азмер должен быть независим от возможности наличи€ прокрутки в VCon
-				GetWindowRect(hView, &ppReply->AttachGuiApp.rcWindow);
-				ppReply->AttachGuiApp.rcWindow.right -= ppReply->AttachGuiApp.rcWindow.left;
-				ppReply->AttachGuiApp.rcWindow.bottom -= ppReply->AttachGuiApp.rcWindow.top;
-				ppReply->AttachGuiApp.rcWindow.left = ppReply->AttachGuiApp.rcWindow.top = 0;
-				//MapWindowPoints(NULL, hView, (LPPOINT)&ppReply->AttachGuiApp.rcWindow, 2);
-				pRCon->CorrectGuiChildRect(ppReply->AttachGuiApp.nStyle, ppReply->AttachGuiApp.nStyleEx, ppReply->AttachGuiApp.rcWindow);
+				HWND hBack = pRCon->VCon()->GetBack();
+
+				//// –азмер должен быть независим от возможности наличи€ прокрутки в VCon
+				//GetWindowRect(hBack, &ppReply->AttachGuiApp.rcWindow);
+				//ppReply->AttachGuiApp.rcWindow.right -= ppReply->AttachGuiApp.rcWindow.left;
+				//ppReply->AttachGuiApp.rcWindow.bottom -= ppReply->AttachGuiApp.rcWindow.top;
+				//ppReply->AttachGuiApp.rcWindow.left = ppReply->AttachGuiApp.rcWindow.top = 0;
+				////MapWindowPoints(NULL, hBack, (LPPOINT)&ppReply->AttachGuiApp.rcWindow, 2);
+				//pRCon->CorrectGuiChildRect(ppReply->AttachGuiApp.nStyle, ppReply->AttachGuiApp.nStyleEx, ppReply->AttachGuiApp.rcWindow);
 				
 				// ”ведомить RCon и ConEmuC, что гуй подцепилс€
 				// ¬ызываетс€ два раза. ѕервый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создани€ окна
@@ -444,7 +448,8 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 				ppReply->AttachGuiApp.nFlags = agaf_Success;
 				ppReply->AttachGuiApp.nPID = pRCon->GetServerPID();
-				ppReply->AttachGuiApp.hConEmuWndDC = pRCon->GetView();
+				ppReply->AttachGuiApp.hConEmuDc = pRCon->GetView();
+				ppReply->AttachGuiApp.hConEmuBack = hBack;
 				ppReply->AttachGuiApp.hConEmuWnd = ghWnd;
 				ppReply->AttachGuiApp.hAppWindow = pIn->AttachGuiApp.hAppWindow;
 				ppReply->AttachGuiApp.hSrvConWnd = pRCon->ConWnd();

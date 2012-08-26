@@ -546,12 +546,12 @@ void CVConGroup::OnDestroyConEmu()
 	}
 }
 
-void CVConGroup::OnAlwaysShowScrollbar()
+void CVConGroup::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		if (gp_VCon[i])
-			gp_VCon[i]->OnAlwaysShowScrollbar();
+			gp_VCon[i]->OnAlwaysShowScrollbar(abSync);
 	}
 }
 
@@ -1900,7 +1900,7 @@ void CVConGroup::OnUpdateProcessDisplay(HWND hInfo)
 }
 
 // Возвращает HWND окна отрисовки
-HWND CVConGroup::DoSrvCreated(DWORD nServerPID, HWND hWndCon, DWORD& t1, DWORD& t2, DWORD& t3, int& iFound)
+HWND CVConGroup::DoSrvCreated(DWORD nServerPID, HWND hWndCon, DWORD& t1, DWORD& t2, DWORD& t3, int& iFound, HWND& hWndBack)
 {
 	HWND hWndDC = NULL;
 
@@ -1922,6 +1922,7 @@ HWND CVConGroup::DoSrvCreated(DWORD nServerPID, HWND hWndCon, DWORD& t1, DWORD& 
 				t2 = timeGetTime();
 				
 				hWndDC = pVCon->GetView();
+				hWndBack = pVCon->GetBack();
 
 				t3 = timeGetTime();
 				break;
@@ -2489,21 +2490,32 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
 		gpConEmu->AddMargins(rcCalcBack, rcScroll, FALSE);
 
+		int nDeltaX = (rcCalcBack.right - rcCalcBack.left) - (rcCalcDC.right - rcCalcDC.left);
+		int nDeltaY = (rcCalcBack.bottom - rcCalcBack.top) - (rcCalcDC.bottom - rcCalcDC.top);
+
 		// Теперь сдвиги
 		if (gpSet->isTryToCenter)
 		{
 			// считаем доп.сдвиги. ТОЧНО
-			if ((rcCalcDC.right - rcCalcDC.left) < (rcCalcBack.right - rcCalcBack.left))
+			if (nDeltaX > 0)
 			{
-				rcAddShift.left = ((rcCalcBack.right - rcCalcBack.left) - (rcCalcDC.right - rcCalcDC.left))/2;
-				rcAddShift.right = ((rcCalcBack.right - rcCalcBack.left) - (rcCalcDC.right - rcCalcDC.left)) - rcAddShift.left;
+				rcAddShift.left = nDeltaX >> 1;
+				rcAddShift.right = nDeltaX - rcAddShift.left;
 			}
 
-			if ((rcCalcDC.bottom - rcCalcDC.top) < (rcCalcBack.bottom - rcCalcBack.top))
+			if (nDeltaY > 0)
 			{
-				rcAddShift.top = ((rcCalcBack.bottom - rcCalcBack.top) - (rcCalcDC.bottom - rcCalcDC.top))/2;
-				rcAddShift.bottom = ((rcCalcBack.bottom - rcCalcBack.top) - (rcCalcDC.bottom - rcCalcDC.top)) - rcAddShift.top;
+				rcAddShift.top = nDeltaY >> 1;
+				rcAddShift.bottom = nDeltaY - rcAddShift.top;
 			}
+		}
+		else
+		{
+			if (nDeltaX > 0)
+				rcAddShift.right = nDeltaX;
+
+			if (nDeltaY > 0)
+				rcAddShift.bottom = nDeltaY;
 		}
 	}
 	

@@ -129,6 +129,7 @@ BOOL    gbTerminateOnExit = FALSE;
 HWND    ghConWnd = NULL;
 HWND    ghConEmuWnd = NULL; // Root! window
 HWND    ghConEmuWndDC = NULL; // ConEmu DC window
+HWND    ghConEmuWndBack = NULL; // ConEmu Back window
 DWORD   gnMainServerPID = 0;
 DWORD   gnAltServerPID = 0;
 BOOL    gbLogProcess = FALSE;
@@ -324,8 +325,11 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 						if (pInfo->hConEmuRoot && IsWindow(pInfo->hConEmuRoot))
 						{
 							ghConEmuWnd = pInfo->hConEmuRoot;
-							if (pInfo->hConEmuWnd && IsWindow(pInfo->hConEmuWnd))
-								ghConEmuWndDC = pInfo->hConEmuWnd;
+							if (pInfo->hConEmuWndDc && IsWindow(pInfo->hConEmuWndDc)
+								&& pInfo->hConEmuWndBack && IsWindow(pInfo->hConEmuWndBack))
+							{
+								SetConEmuWindows(pInfo->hConEmuWndDc, pInfo->hConEmuWndBack);
+							}
 						}
 						if (pInfo->nServerPID && pInfo->nServerPID != gnSelfPID)
 						{
@@ -2891,7 +2895,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				CESERVER_CONSOLE_MAPPING_HDR* pInfo = (CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(*pInfo));
 				if (pInfo && LoadSrvMapping(ghConWnd, *pInfo))
 				{
-					hWnd = pInfo->hConEmuWnd;
+					hWnd = pInfo->hConEmuWndDc;
 					if (hWnd && IsWindow(hWnd))
 					{
 						switch (eStateCheck)
@@ -4095,7 +4099,7 @@ void SendStarted()
 			BOOL  bAlreadyBufferHeight = pOut->StartStopRet.bWasBufferHeight;
 			DWORD nGuiPID = pOut->StartStopRet.dwPID;
 			ghConEmuWnd = pOut->StartStopRet.hWnd;
-			ghConEmuWndDC = pOut->StartStopRet.hWndDC;
+			SetConEmuWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
 			if (gpSrv)
 			{
 				gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
@@ -6536,7 +6540,7 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	
 	gpSrv->bWasDetached = TRUE;
 	ghConEmuWnd = NULL;
-	ghConEmuWndDC = NULL;
+	SetConEmuWindows(NULL, NULL);
 	gpSrv->dwGuiPID = 0;
 	UpdateConsoleMapHeader();
 
@@ -6813,7 +6817,8 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		(*out)->StartStopRet.bWasBufferHeight = (gnBufferHeight != 0);
 		(*out)->StartStopRet.hWnd = ghConEmuWnd;
-		(*out)->StartStopRet.hWndDC = ghConEmuWndDC;
+		(*out)->StartStopRet.hWndDc = ghConEmuWndDC;
+		(*out)->StartStopRet.hWndBack = ghConEmuWndBack;
 		(*out)->StartStopRet.dwPID = gpSrv->dwGuiPID;
 		(*out)->StartStopRet.nBufferHeight = gnBufferHeight;
 		(*out)->StartStopRet.nWidth = gpSrv->sbi.dwSize.X;

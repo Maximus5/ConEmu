@@ -61,7 +61,6 @@ extern DWORD   gnHookMainThreadId;
 extern BOOL    gbHooksTemporaryDisabled;
 
 /* ************ Globals for SetHook ************ */
-//HWND ghConEmuWndDC = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
 extern HWND    ghConWnd;      // RealConsole
 extern HWND    ghConEmuWnd;   // Root! ConEmu window
 extern HWND    ghConEmuWndDC; // ConEmu DC window

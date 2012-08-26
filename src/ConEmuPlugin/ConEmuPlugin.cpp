@@ -348,7 +348,7 @@ void CheckConEmuDetached()
 
 		if (ConMap.Open())
 		{
-			if (ConMap.Ptr()->hConEmuWnd == NULL)
+			if (ConMap.Ptr()->hConEmuWndDc == NULL)
 			{
 				ConEmuHwnd = NULL;
 			}
@@ -3422,10 +3422,10 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 		if (!gbWasDetached && !ConEmuHwnd)
 		{
 			// ConEmu могло подцепиться
-			if (gpConMapInfo && gpConMapInfo->hConEmuWnd)
+			if (gpConMapInfo && gpConMapInfo->hConEmuWndDc)
 			{
 				gbWasDetached = FALSE;
-				ConEmuHwnd = (HWND)gpConMapInfo->hConEmuWnd;
+				ConEmuHwnd = (HWND)gpConMapInfo->hConEmuWndDc;
 			}
 
 			//MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;

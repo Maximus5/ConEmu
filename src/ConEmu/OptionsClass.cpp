@@ -186,6 +186,7 @@ namespace SettingsNS
 	};
 	const WCHAR* szCRLF[] = {L"CR+LF", L"LF", L"CR"};
 	const DWORD  nCRLF[] =  {0, 1, 2};
+	const WORD nSizeCtrlId[] = {tWndWidth, stWndWidth, tWndHeight, stWndHeight};
 };
 
 #define FillListBox(hDlg,nDlgID,Items,Values,Value) \
@@ -3680,14 +3681,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rNormal:
 		case rFullScreen:
 		case rMaximized:
-			//gpConEmu->SetWindowMode(wParam);
 			EnableWindow(GetDlgItem(hWnd2, cbApplyPos), TRUE);
-			//EnableWindow(GetDlgItem(hWnd2, tWndWidth), CB == rNormal);
-			//EnableWindow(GetDlgItem(hWnd2, tWndHeight), CB == rNormal);
-			//EnableWindow(GetDlgItem(hWnd2, tWndX), CB == rNormal);
-			//EnableWindow(GetDlgItem(hWnd2, tWndY), CB == rNormal);
-			//EnableWindow(GetDlgItem(hWnd2, rFixed), CB == rNormal);
-			//EnableWindow(GetDlgItem(hWnd2, rCascade), CB == rNormal);
+			for (size_t i = 0; i < countof(SettingsNS::nSizeCtrlId); i++)
+				EnableWindow(GetDlgItem(hWnd2, SettingsNS::nSizeCtrlId[i]), CB == rNormal);
 			break;
 		case cbApplyPos:
 			{
@@ -4052,9 +4048,13 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbAlwaysShowScrollbar:
 			gpSet->isAlwaysShowScrollbar = IsChecked(hWnd2, cbAlwaysShowScrollbar);
-			if (!gpSet->isAlwaysShowScrollbar) gpConEmu->OnAlwaysShowScrollbar();
-			CVConGroup::SetAllConsoleWindowsSize(MakeCoord(gpConEmu->wndWidth, gpConEmu->wndHeight), /*true,*/ true, true);
-			if (gpSet->isAlwaysShowScrollbar) gpConEmu->OnAlwaysShowScrollbar();
+			if (!gpSet->isAlwaysShowScrollbar) gpConEmu->OnAlwaysShowScrollbar(false);
+			if (gpConEmu->isZoomed() || gpConEmu->isFullScreen())
+				gpConEmu->SyncConsoleToWindow();
+			else
+				CVConGroup::SetAllConsoleWindowsSize(MakeCoord(gpConEmu->wndWidth, gpConEmu->wndHeight), /*true,*/ true, true);
+			if (gpSet->isAlwaysShowScrollbar) gpConEmu->OnAlwaysShowScrollbar(false);
+			gpConEmu->ReSize();
 			//gpConEmu->OnSize(true);
 			gpConEmu->InvalidateAll();
 			break;
@@ -8736,6 +8736,13 @@ void CSettings::UpdateSize(UINT w, UINT h)
 		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndWidth, gpSet->isUseCurrentSizePos ? gpConEmu->wndWidth : gpSet->_wndWidth, FALSE);
 		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndHeight, gpSet->isUseCurrentSizePos ? gpConEmu->wndHeight : gpSet->_wndHeight, FALSE);
 		mb_IgnoreEditChanged = FALSE;
+
+		// Во избежание недоразумений - запретим элементы размера для Max/Fullscreen
+		BOOL bNormalChecked = IsChecked(mh_Tabs[thi_SizePos], rNormal);
+		for (size_t i = 0; i < countof(SettingsNS::nSizeCtrlId); i++)
+		{
+			EnableWindow(GetDlgItem(mh_Tabs[thi_SizePos], SettingsNS::nSizeCtrlId[i]), bNormalChecked);
+		}
 	}
 }
 

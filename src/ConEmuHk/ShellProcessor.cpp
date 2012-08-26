@@ -202,13 +202,13 @@ DWORD CShellProc::GetUseInjects()
 BOOL CShellProc::LoadGuiMapping()
 {
 	_ASSERTEX(user);
-	if (!m_SrvMapping.cbSize || (m_SrvMapping.hConEmuWnd && !user->isWindow(m_SrvMapping.hConEmuWnd)))
+	if (!m_SrvMapping.cbSize || (m_SrvMapping.hConEmuWndDc && !user->isWindow(m_SrvMapping.hConEmuWndDc)))
 	{
 		if (!::LoadSrvMapping(ghConWnd, m_SrvMapping))
 			return FALSE;
 	}
 
-	if (!m_SrvMapping.hConEmuWnd || !user->isWindow(m_SrvMapping.hConEmuWnd))
+	if (!m_SrvMapping.hConEmuWndDc || !user->isWindow(m_SrvMapping.hConEmuWndDc))
 		return FALSE;
 
 	return TRUE;

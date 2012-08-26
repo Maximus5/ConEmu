@@ -1631,9 +1631,9 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 		if (pHdr)
 		{
 #if 1 // затычка для 110721
-			if (pHdr->cbSize == 2164 && pHdr->nProtocolVersion == 67 && IsWindow(pHdr->hConEmuWnd))
+			if (pHdr->cbSize == 2164 && pHdr->nProtocolVersion == 67 && IsWindow(pHdr->hConEmuWndDc))
 			{
-				Parm.hGUI = pHdr->hConEmuWnd; // DC
+				Parm.hGUI = pHdr->hConEmuWndDc; // DC
 				Parm.hGUIRoot = pHdr->hConEmuRoot; // Main window
 				if (!CheckBuffers())
 				{
@@ -1648,14 +1648,14 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 #endif
 			if ((pHdr->cbSize < sizeof(*pHdr))
 				|| (pHdr->nProtocolVersion != CESERVER_REQ_VER) 
-				|| !IsWindow(pHdr->hConEmuWnd))
+				|| !IsWindow(pHdr->hConEmuWndDc))
 			{
 				if ((pHdr->cbSize >= sizeof(*pHdr)) 
-					&& pHdr->hConEmuWnd && IsWindow(pHdr->hConEmuWnd)
-					&& IsWindowVisible(pHdr->hConEmuWnd))
+					&& pHdr->hConEmuWndDc && IsWindow(pHdr->hConEmuWndDc)
+					&& IsWindowVisible(pHdr->hConEmuWndDc))
 				{
 					// Это все-таки может быть окно ConEmu
-					Parm.hGUI = pHdr->hConEmuWnd; // DC
+					Parm.hGUI = pHdr->hConEmuWndDc; // DC
 					if (IsWindow(pHdr->hConEmuRoot) && IsWindowVisible(pHdr->hConEmuRoot))
 						Parm.hGUIRoot = pHdr->hConEmuRoot; // Main window
 				}
@@ -1663,7 +1663,7 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 			}
 			else
 			{
-				Parm.hGUI = pHdr->hConEmuWnd; // DC
+				Parm.hGUI = pHdr->hConEmuWndDc; // DC
 				Parm.hGUIRoot = pHdr->hConEmuRoot; // Main window
 				if (!pHdr->bUseTrueColor)
 				{

@@ -63,7 +63,7 @@ class CConEmuChild
 		void CheckPostRedraw();
 
 		BOOL TrackMouse();
-		void OnAlwaysShowScrollbar();
+		void OnAlwaysShowScrollbar(bool abSync = true);
 		
 		int IsDcLocked(RECT* CurrentConLockedRect);
 		void LockDcRect(bool bLock, RECT* Rect = NULL);
@@ -122,6 +122,7 @@ class CConEmuChild
 		void ShowScroll(BOOL abImmediate);
 		void HideScroll(BOOL abImmediate);
 		void MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue);
+		void UpdateScrollRgn();
 		
 		struct LockDcInfo
 		{

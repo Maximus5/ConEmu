@@ -57,7 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
-#define DEBUGSTRCON(s) //DEBUGSTR(s)
+#define DEBUGSTRCON(s) DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRLOG(s) //OutputDebugStringA(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
@@ -836,7 +836,8 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	//SetConsoleSize(rcCon.right,rcCon.bottom);
 	pRet->bWasBufferHeight = bCurBufHeight;
 	pRet->hWnd = ghWnd;
-	pRet->hWndDC = mp_VCon->GetView();
+	pRet->hWndDc = mp_VCon->GetView();
+	pRet->hWndBack = mp_VCon->GetBack();
 	pRet->dwPID = GetCurrentProcessId();
 	pRet->nBufferHeight = bCurBufHeight ? lsbi.dwSize.Y : 0;
 	pRet->nWidth = rcCon.right;
@@ -3617,6 +3618,7 @@ void CRealConsole::StopSignal()
 
 	if (!mn_InRecreate)
 	{
+		hGuiWnd = NULL;
 		// Чтобы при закрытии не было попытка активировать
 		// другую вкладку ЭТОЙ консоли
 		mn_tabsCount = 0;
@@ -5500,6 +5502,8 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 
 	hConWnd = ahConWnd;
 	SetWindowLongPtr(mp_VCon->GetView(), 0, (LONG_PTR)ahConWnd);
+	SetWindowLong(mp_VCon->GetBack(), 0, (DWORD)ahConWnd);
+	SetWindowLong(mp_VCon->GetBack(), 4, (DWORD)mp_VCon->GetView());
 	//if (mb_Detached && ahConWnd) // Не сбрасываем, а то нить может не успеть!
 	//  mb_Detached = FALSE; // Сброс флажка, мы уже подключились
 	//OpenColorMapping();
@@ -9056,6 +9060,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	setGuiWndPID(anAppPID, PointToName(asAppFileName));
 	mn_GuiWndStyle = anStyle; mn_GuiWndStylEx = anStyleEx;
 	mb_GuiExternMode = FALSE;
+	ShowWindow(GetView(), SW_HIDE); // Остается видим только Back, в нем создается GuiClient
 
 #ifdef _DEBUG
 	mp_VCon->CreateDbgDlg();
@@ -9075,7 +9080,8 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 
 	In.AttachGuiApp.nFlags = anFlags;
 	In.AttachGuiApp.hConEmuWnd = ghWnd;
-	In.AttachGuiApp.hConEmuWndDC = GetView();
+	In.AttachGuiApp.hConEmuDc = GetView();
+	In.AttachGuiApp.hConEmuBack = mp_VCon->GetBack();
 	In.AttachGuiApp.hAppWindow = ahGuiWnd;
 	In.AttachGuiApp.nStyle = anStyle;
 	In.AttachGuiApp.nStyleEx = anStyleEx;
@@ -9129,6 +9135,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 
 void CRealConsole::CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 {
+	//WARNING!! Same as "GuiAttach.cpp: CorrectGuiChildRect"
 	int nX = 0, nY = 0;
 	if (anStyle & WS_THICKFRAME)
 	{

@@ -49,6 +49,7 @@ public:
 	HWND     getParent(HWND hWnd);
 	HWND     setParent(HWND hWndChild, HWND hWndNewParent);
 	BOOL     getWindowRect(HWND hWnd, LPRECT lpRect);
+	int      getSystemMetrics(int nIndex);
 	BOOL     systemParametersInfoW(UINT uiAction, UINT uiParam, PVOID pvParam, UINT fWinIni);
 	BOOL     setWindowTextW(HWND hWnd, LPCWSTR lpString);
 	BOOL     endDialog(HWND hDlg, INT_PTR nResult);
@@ -96,6 +97,8 @@ private:
 	setParent_t setParent_f;
 	typedef BOOL     (WINAPI* getWindowRect_t)(HWND hWnd, LPRECT lpRect);
 	getWindowRect_t getWindowRect_f;
+	typedef int      (WINAPI* getSystemMetrics_t)(int nIndex);
+	getSystemMetrics_t getSystemMetrics_f;
 	typedef BOOL     (WINAPI* systemParametersInfoW_t)(UINT uiAction, UINT uiParam, PVOID pvParam, UINT fWinIni);
 	systemParametersInfoW_t systemParametersInfoW_f;
 	typedef BOOL     (WINAPI* setWindowTextW_t)(HWND hWnd, LPCWSTR lpString);

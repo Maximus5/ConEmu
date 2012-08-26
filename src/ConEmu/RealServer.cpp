@@ -269,7 +269,8 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 
 		// ¬ принципе, альт. сервер уже все знает, но вернем...
 		pOut->StartStopRet.hWnd = ghWnd;
-		pOut->StartStopRet.hWndDC = mp_RCon->mp_VCon->GetView();
+		pOut->StartStopRet.hWndDc = mp_RCon->mp_VCon->GetView();
+		pOut->StartStopRet.hWndBack = mp_RCon->mp_VCon->GetBack();
 		pOut->StartStopRet.dwPID = GetCurrentProcessId();
 		if (lbWasBuffer != mp_RCon->isBufferHeight())
 		{
@@ -328,7 +329,8 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		//}
 		//pOut->StartStopRet.bWasBufferHeight = FALSE;// (nStarted == 2) && (nParentPID == 0); // comspec должен уведомить о завершении
 		pOut->StartStopRet.hWnd = ghWnd;
-		pOut->StartStopRet.hWndDC = mp_RCon->mp_VCon->GetView();
+		pOut->StartStopRet.hWndDc = mp_RCon->mp_VCon->GetView();
+		pOut->StartStopRet.hWndBack = mp_RCon->mp_VCon->GetBack();
 		pOut->StartStopRet.dwPID = GetCurrentProcessId();
 		if (nStarted == sst_ServerStart)
 		{

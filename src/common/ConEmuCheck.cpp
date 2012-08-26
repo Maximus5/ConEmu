@@ -1054,12 +1054,13 @@ HWND myGetConsoleWindow()
 //  aiType==0: Gui console DC window
 //        ==1: Gui Main window
 //        ==2: Console window
+//        ==3: Back window
 HWND GetConEmuHWND(int aiType)
 {
 	//CESERVER_REQ *pIn = NULL;
 	//CESERVER_REQ *pOut = NULL;
 	DWORD nLastErr = GetLastError();
-	HWND FarHwnd = NULL, ConEmuHwnd = NULL, ConEmuRoot = NULL;
+	HWND FarHwnd = NULL, ConEmuHwnd = NULL, ConEmuRoot = NULL, ConEmuBack = NULL;
 	size_t cchMax = 128;
 	wchar_t *szGuiPipeName = NULL;
 
@@ -1103,7 +1104,8 @@ HWND GetConEmuHWND(int aiType)
 		{
 			// Успешно
 			ConEmuRoot = p->hConEmuRoot;
-			ConEmuHwnd = p->hConEmuWnd;
+			ConEmuHwnd = p->hConEmuWndDc;
+			ConEmuBack = p->hConEmuWndBack;
 		}
 
 		if (p)
@@ -1153,12 +1155,17 @@ wrap:
 	if (szGuiPipeName)
 		free(szGuiPipeName);
 
-	if (aiType == 2)
+	switch (aiType)
+	{
+	case 3:
+		return ConEmuBack;
+	case 2:
 		return FarHwnd;
-	else if (aiType == 0)
+	case 0:
 		return ConEmuHwnd;
-	else // aiType == 1
+	default: // aiType == 1
 		return ConEmuRoot;
+	}
 }
 
 

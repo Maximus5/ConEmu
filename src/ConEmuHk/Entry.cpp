@@ -161,6 +161,8 @@ DWORD   gnGuiPID = 0;
 HWND    ghConWnd = NULL; // Console window
 HWND    ghConEmuWnd = NULL; // Root! window
 HWND    ghConEmuWndDC = NULL; // ConEmu DC window
+HWND    ghConEmuWndBack = NULL; // ConEmu Back window - holder for GUI client
+void    SetConEmuHkWindows(HWND hDcWnd, HWND hBackWnd);
 BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
 DWORD   gnImageSubsystem = 0;
@@ -226,6 +228,12 @@ HANDLE ghStartThread = NULL;
 DWORD  gnStartThreadID = 0;
 #endif
 
+void SetConEmuHkWindows(HWND hDcWnd, HWND hBackWnd)
+{
+	ghConEmuWndDC = hDcWnd;
+	ghConEmuWndBack = hBackWnd;
+}
+
 
 MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap = NULL;
 CESERVER_CONSOLE_MAPPING_HDR* gpConInfo = NULL;
@@ -262,8 +270,9 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 			gnGuiPID = gpConInfo->nGuiPID;
 			ghConEmuWnd = gpConInfo->hConEmuRoot;
 			_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
-			ghConEmuWndDC = gpConInfo->hConEmuWnd;
+			SetConEmuHkWindows(gpConInfo->hConEmuWndDc, gpConInfo->hConEmuWndBack);
 			_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
+			_ASSERTE(ghConEmuWndBack && user->isWindow(ghConEmuWndBack));
 			gnServerPID = gpConInfo->nServerPID;
 		}
 		else
@@ -628,7 +637,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 							_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
 							_ASSERTE(pOut->AttachGuiApp.hConEmuWnd==(HWND)dwConEmuHwnd);
 							ghConEmuWnd = pOut->AttachGuiApp.hConEmuWnd;
-							ghConEmuWndDC = pOut->AttachGuiApp.hConEmuWndDC;
+							SetConEmuHkWindows(pOut->AttachGuiApp.hConEmuDc, pOut->AttachGuiApp.hConEmuBack);
 							ghConWnd = pOut->AttachGuiApp.hSrvConWnd;
 							_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 							grcConEmuClient = pOut->AttachGuiApp.rcWindow;
@@ -1220,8 +1229,9 @@ void SendStarted()
 				gnGuiPID = pOut->StartStopRet.dwPID;
 				ghConEmuWnd = pOut->StartStopRet.hWnd;
 				_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
-				ghConEmuWndDC = pOut->StartStopRet.hWndDC;
+				SetConEmuHkWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
 				_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
+				_ASSERTE(ghConEmuWndBack && user->isWindow(ghConEmuWndBack));
 
 				gnServerPID = pOut->StartStopRet.dwMainSrvPID;
 				ExecuteFreeResult(pOut); pOut = NULL;
@@ -1305,7 +1315,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 		{
 			// При 'внешнем' аттаче инициированном юзером из ConEmu
 			_ASSERTEX(pCmd->AttachGuiApp.hConEmuWnd && ghConEmuWnd==pCmd->AttachGuiApp.hConEmuWnd);
-			//ghConEmuWndDC = pOut->AttachGuiApp.hConEmuWndDC; -- еще нету
+			//ghConEmuWndDC -- еще нету
 			AttachGuiWindow(pCmd->AttachGuiApp.hAppWindow);
 			// Результат
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
@@ -1340,7 +1350,9 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			if (pCmd->SetGuiExtern.bExtern && pCmd->SetGuiExtern.bDetach)
 			{
 				gbAttachGuiClient = gbGuiClientAttached = FALSE;
-				ghAttachGuiClient = ghConEmuWndDC = ghConEmuWnd = NULL;
+				ghAttachGuiClient = NULL;
+				ghConEmuWnd = NULL;
+				SetConEmuHkWindows(NULL, NULL);
 				gnServerPID = 0;
 			}
 

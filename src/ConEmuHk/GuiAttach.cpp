@@ -40,8 +40,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WinObjects.h"
 
 extern HMODULE ghOurModule;
-extern HWND    ghConEmuWnd;   // Root! ConEmu window
-extern HWND    ghConEmuWndDC; // ConEmu DC window
+extern HWND    ghConEmuWnd;     // Root! ConEmu window
+extern HWND    ghConEmuWndDC;   // ConEmu DC window
+extern HWND    ghConEmuWndBack; // ConEmu Back window - holder for GUI client
 extern DWORD   gnHookMainThreadId;
 
 // Этот TID может отличаться от основного потока.
@@ -58,7 +59,7 @@ DWORD 	gnAttachGuiClientStyle = 0, gnAttachGuiClientStyleEx = 0;
 BOOL  	gbAttachGuiClientStyleOk = FALSE;
 BOOL 	gbForceShowGuiClient = FALSE; // --
 //HMENU ghAttachGuiClientMenu = NULL;
-RECT 	grcAttachGuiClientPos = {};
+RECT 	grcAttachGuiClientOrig = {0,0,100,100};
 #ifdef _DEBUG
 HHOOK 	ghGuiClientRetHook = NULL;
 #endif
@@ -104,7 +105,7 @@ LRESULT CALLBACK GuiClientRetHook(int nCode, WPARAM wParam, LPARAM lParam)
 					{
 						if ((wp->x > 0 || wp->y > 0) && !isPressed(VK_LBUTTON))
 						{
-							if (user->getParent(p->hwnd) == ghConEmuWndDC)
+							if (user->getParent(p->hwnd) == ghConEmuWndBack)
 							{
 								//_ASSERTEX(!(wp->x > 0 || wp->y > 0));
 								break;
@@ -138,7 +139,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	GetStartupInfo(&si);
 #endif
 	
-	if (gbAttachGuiClient && ghConEmuWndDC)
+	if (gbAttachGuiClient && ghConEmuWndBack)
 	{
 		#ifdef _DEBUG
 		WNDCLASS wc = {}; BOOL lbClass = FALSE;
@@ -173,7 +174,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 			if (lbCanAttach)
 			{
 				// Родительское окно - ConEmu DC
-				// -- hWndParent = ghConEmuWndDC; // Надо ли его ставить сразу, если не включаем WS_CHILD?
+				// -- hWndParent = ghConEmuWndBack; // Надо ли его ставить сразу, если не включаем WS_CHILD?
 
 				// WS_CHILDWINDOW перед созданием выставлять нельзя, т.к. например у WordPad.exe сносит крышу:
 				// все его окна создаются нормально, но он показывает ошибку "Не удалось создать новый документ"
@@ -266,8 +267,6 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 		return;
 	}
 
-	RECT rcGui = grcAttachGuiClientPos;
-
 	DWORD_PTR dwStyle = user->getWindowLongPtrW(ghAttachGuiClient, GWL_STYLE);
 	DWORD_PTR dwStyleEx = user->getWindowLongPtrW(ghAttachGuiClient, GWL_EXSTYLE);
 
@@ -276,6 +275,11 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 		gbAttachGuiClientStyleOk = TRUE;
 		gnAttachGuiClientStyle = (DWORD)dwStyle;
 		gnAttachGuiClientStyleEx = (DWORD)dwStyleEx;
+	}
+
+	if (grcAttachGuiClientOrig.left==grcAttachGuiClientOrig.right && grcAttachGuiClientOrig.bottom==grcAttachGuiClientOrig.top)
+	{
+		user->getWindowRect(ghAttachGuiClient, &grcAttachGuiClientOrig);
 	}
 	
 	if (!gbGuiClientExternMode)
@@ -297,11 +301,13 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 		*/
 
 		HWND hCurParent = user->getParent(ghAttachGuiClient);
-		_ASSERTEX(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
-		if (hCurParent != ghConEmuWndDC)
+		_ASSERTEX(ghConEmuWndBack && user->isWindow(ghConEmuWndBack));
+		if (hCurParent != ghConEmuWndBack)
 		{
-			user->setParent(ghAttachGuiClient, ghConEmuWndDC);
+			user->setParent(ghAttachGuiClient, ghConEmuWndBack);
 		}
+
+		RECT rcGui = AttachGuiClientPos();
 		
 		if (user->setWindowPos(ghAttachGuiClient, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 			SWP_DRAWFRAME | SWP_NOCOPYBITS | /*SWP_FRAMECHANGED |*/ (abStyleHidden ? SWP_SHOWWINDOW : 0)))
@@ -515,10 +521,11 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 
             BOOL lbRc = FALSE;
 
-			_ASSERTE((ghConEmuWndDC==NULL) || (pOut->AttachGuiApp.hConEmuWndDC==ghConEmuWndDC));
+			_ASSERTE(pOut->AttachGuiApp.hConEmuBack && pOut->AttachGuiApp.hConEmuDc && (HWND)pOut->AttachGuiApp.hConEmuDc!=(HWND)pOut->AttachGuiApp.hConEmuBack);
+			_ASSERTE((ghConEmuWndBack==NULL) || (pOut->AttachGuiApp.hConEmuBack==ghConEmuWndBack));
 			_ASSERTE(ghConEmuWnd && (ghConEmuWnd==pOut->AttachGuiApp.hConEmuWnd));
 			ghConEmuWnd = pOut->AttachGuiApp.hConEmuWnd;
-			ghConEmuWndDC = pOut->AttachGuiApp.hConEmuWndDC;
+			SetConEmuHkWindows(pOut->AttachGuiApp.hConEmuDc, pOut->AttachGuiApp.hConEmuBack);
             
 			#ifdef _DEBUG
             HWND hFocus = user->getFocus();
@@ -543,7 +550,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 				UNREFERENCED_PARAMETER(lbRc);
 			}
 
-            grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
+            //grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
             ReplaceGuiAppWindow(abStyleHidden);
 
 			//// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
@@ -562,7 +569,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 			//	}
 			//	else
 			//	{
-			//		SetParent(hWindow, ghConEmuWndDC);
+			//		SetParent(hWindow, ghConEmuWndBack);
 			//	}
 			//}
 			//
@@ -632,7 +639,7 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach)
 		//	nCmdShow = SW_SHOWNORMAL;
 
 		HWND hCurParent = user->getParent(hWnd);
-		if (hCurParent != ghConEmuWndDC)
+		if (hCurParent != ghConEmuWndBack)
 		{
 			DWORD nCurStyle = (DWORD)user->getWindowLongPtrW(hWnd, GWL_STYLE);
 			DWORD nCurStyleEx = (DWORD)user->getWindowLongPtrW(hWnd, GWL_EXSTYLE);
@@ -657,17 +664,17 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach)
 			{
 				if (pOut->hdr.cbSize > sizeof(CESERVER_REQ_HDR) && (pOut->AttachGuiApp.nFlags & agaf_Success))
 				{
-					grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
+					//grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
 
-					_ASSERTE((ghConEmuWndDC==NULL) || (pOut->AttachGuiApp.hConEmuWndDC==ghConEmuWndDC));
+					_ASSERTE((ghConEmuWndBack==NULL) || (pOut->AttachGuiApp.hConEmuBack==ghConEmuWndBack));
 					_ASSERTE(ghConEmuWnd && (ghConEmuWnd==pOut->AttachGuiApp.hConEmuWnd));
 					ghConEmuWnd = pOut->AttachGuiApp.hConEmuWnd;
-					ghConEmuWndDC = pOut->AttachGuiApp.hConEmuWndDC;
+					SetConEmuHkWindows(pOut->AttachGuiApp.hConEmuDc, pOut->AttachGuiApp.hConEmuBack);
 				}
 				ExecuteFreeResult(pOut);
 			}
 
-			//OnSetParent(hWnd, ghConEmuWndDC);
+			//OnSetParent(hWnd, ghConEmuWndBack);
 		}
 
         ReplaceGuiAppWindow(FALSE);
@@ -684,27 +691,71 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach)
 
 void OnPostShowGuiClientWindow(HWND hWnd, int nCmdShow)
 {
-	//SetFocus(ghConEmuWnd);
-	RECT rcGui = grcAttachGuiClientPos;
-	//user->setWindowPos(hWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
-	//	SWP_FRAMECHANGED|SWP_SHOWWINDOW);
+	RECT rcGui = {0,0,grcAttachGuiClientOrig.right-grcAttachGuiClientOrig.left,grcAttachGuiClientOrig.bottom-grcAttachGuiClientOrig.top};
 	user->getClientRect(hWnd, &rcGui);
 	user->sendMessageW(hWnd, WM_SIZE, SIZE_RESTORED, MAKELONG((rcGui.right-rcGui.left),(rcGui.bottom-rcGui.top)));
+}
+
+void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
+{
+	//WARNING!! Same as "CRealConsole::CorrectGuiChildRect"
+	int nX = 0, nY = 0;
+	if (anStyle & WS_THICKFRAME)
+	{
+		nX = user->getSystemMetrics(SM_CXSIZEFRAME);
+		nY = user->getSystemMetrics(SM_CXSIZEFRAME);
+	}
+	else if (anStyleEx & WS_EX_WINDOWEDGE)
+	{
+		nX = user->getSystemMetrics(SM_CXFIXEDFRAME);
+		nY = user->getSystemMetrics(SM_CXFIXEDFRAME);
+	}
+	else if (anStyle & WS_DLGFRAME)
+	{
+		nX = user->getSystemMetrics(SM_CXEDGE);
+		nY = user->getSystemMetrics(SM_CYEDGE);
+	}
+	else if (anStyle & WS_BORDER)
+	{
+		nX = user->getSystemMetrics(SM_CXBORDER);
+		nY = user->getSystemMetrics(SM_CYBORDER);
+	}
+	else
+	{
+		nX = user->getSystemMetrics(SM_CXFIXEDFRAME);
+		nY = user->getSystemMetrics(SM_CXFIXEDFRAME);
+	}
+	rcGui.left -= nX; rcGui.right += nX; rcGui.top -= nY; rcGui.bottom += nY;
+}
+
+RECT AttachGuiClientPos(DWORD anStyle /*= 0*/, DWORD anStyleEx /*= 0*/)
+{
+	RECT rcPos = {0,0,grcAttachGuiClientOrig.right-grcAttachGuiClientOrig.left,grcAttachGuiClientOrig.bottom-grcAttachGuiClientOrig.top};
+	if (ghConEmuWndBack)
+	{
+		user->getClientRect(ghConEmuWndBack, &rcPos);
+		_ASSERTEX(ghAttachGuiClient!=NULL);
+		DWORD nStyle = (anStyle || anStyleEx) ? anStyle : (DWORD)user->getWindowLongPtrW(ghAttachGuiClient, GWL_STYLE);
+		DWORD nStyleEx = (anStyle || anStyleEx) ? anStyleEx : (DWORD)user->getWindowLongPtrW(ghAttachGuiClient, GWL_EXSTYLE);
+		CorrectGuiChildRect(nStyle, nStyleEx, rcPos);
+	}
+	return rcPos;
 }
 
 bool OnSetGuiClientWindowPos(HWND hWnd, HWND hWndInsertAfter, int &X, int &Y, int &cx, int &cy, UINT uFlags)
 {
 	bool lbChanged = false;
 	// GUI приложениями запрещено самостоятельно двигаться внутри ConEmu
-	if (ghAttachGuiClient && hWnd == ghAttachGuiClient && grcAttachGuiClientPos.right)
+	if (ghAttachGuiClient && hWnd == ghAttachGuiClient)
 	{
 		// -- что-то GetParent возвращает NULL (для cifirica по крайней мере)
-		//if (user->getParent(hWnd) == ghConEmuWndDC)
+		//if (user->getParent(hWnd) == ghConEmuWndBack)
 		{
-			X = grcAttachGuiClientPos.left;
-			Y = grcAttachGuiClientPos.top;
-			cx = grcAttachGuiClientPos.right - X;
-			cy = grcAttachGuiClientPos.bottom - Y;
+			RECT rcGui = AttachGuiClientPos();
+			X = rcGui.left;
+			Y = rcGui.top;
+			cx = rcGui.right - X;
+			cy = rcGui.bottom - Y;
 			lbChanged = true;
 		}
 	}

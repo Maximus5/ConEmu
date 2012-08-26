@@ -89,6 +89,7 @@ BOOL UserImp::loadExportsFrom(HMODULE hModule)
 		getParent_f = (getParent_t)GetProcAddress(hUser32, "GetParent");
 		setParent_f = (setParent_t)GetProcAddress(hUser32, "SetParent");
 		getWindowRect_f = (getWindowRect_t)GetProcAddress(hUser32, "GetWindowRect");
+		getSystemMetrics_f = (getSystemMetrics_t)GetProcAddress(hUser32, "GetSystemMetrics");
 		systemParametersInfoW_f = (systemParametersInfoW_t)GetProcAddress(hUser32, "SystemParametersInfoW");
 		setWindowTextW_f = (setWindowTextW_t)GetProcAddress(hUser32, "SetWindowTextW");
 		endDialog_f = (endDialog_t)GetProcAddress(hUser32, "EndDialog");
@@ -112,7 +113,7 @@ BOOL UserImp::loadExportsFrom(HMODULE hModule)
 		registerWindowMessageW_f = (registerWindowMessageW_t)GetProcAddress(hUser32, "RegisterWindowMessageW");
 		_ASSERTEX(allowSetForegroundWindow_f && setForegroundWindow_f && getForegroundWindow_f && getWindowThreadProcessId_f);
 		_ASSERTEX(setWindowPos_f && getWindowLongPtrW_f && setWindowLongPtrW_f && getParent_f && setParent_f && getWindowRect_f);
-		_ASSERTEX(systemParametersInfoW_f && setWindowTextW_f && endDialog_f && postMessageW_f && sendMessageW_f);
+		_ASSERTEX(getSystemMetrics_f && systemParametersInfoW_f && setWindowTextW_f && endDialog_f && postMessageW_f && sendMessageW_f);
 		_ASSERTEX(dialogBoxIndirectParamW_f && getClassNameW_f && getClientRect_f && getMenu_f && attachThreadInput_f);
 		_ASSERTEX(getFocus_f && getWindowRect_f && isWindow_f && isWindowVisible_f && showWindow_f && getKeyState_f);
 		_ASSERTEX(callNextHookEx_f && setWindowsHookExW_f && unhookWindowsHookEx_f && mapWindowPoints_f && registerWindowMessageW_f);
@@ -336,6 +337,26 @@ BOOL UserImp::getWindowRect(HWND hWnd, LPRECT lpRect)
 		_ASSERTEX(getWindowRect_f!=NULL);
 	}
 	return bRc;
+}
+
+BOOL UserImp::getSystemMetrics(int nIndex)
+{
+	if (!bUserLoaded && !loadExports(bAllowLoadLibrary))
+	{
+		_ASSERTEX(hUser32!=NULL);
+		return FALSE;
+	}
+	
+	int iRc = 0;
+	if (getSystemMetrics_f)
+	{
+		iRc = getSystemMetrics_f(nIndex);
+	}
+	else
+	{
+		_ASSERTEX(getSystemMetrics_f!=NULL);
+	}
+	return iRc;
 }
 
 BOOL UserImp::systemParametersInfoW(UINT uiAction, UINT uiParam, PVOID pvParam, UINT fWinIni)

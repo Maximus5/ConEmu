@@ -17,3 +17,5 @@ void OnPostShowGuiClientWindow(HWND hWnd, int nCmdShow);
 bool OnSetGuiClientWindowPos(HWND hWnd, HWND hWndInsertAfter, int &X, int &Y, int &cx, int &cy, UINT uFlags);
 void SetGuiExternMode(BOOL abUseExternMode, LPRECT prcOldPos = NULL);
 void AttachGuiWindow(HWND hOurWindow);
+RECT AttachGuiClientPos(DWORD anStyle = 0, DWORD anStyleEx = 0);
+void SetConEmuHkWindows(HWND hDcWnd, HWND hBackWnd);

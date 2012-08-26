@@ -69,6 +69,8 @@ struct MsgSrvStartedArg
 	DWORD timeStart;
 	DWORD timeRecv;
 	DWORD timeFin;
+	HWND  hWndDc;
+	HWND  hWndBack;
 };
 
 #include "DwmHelper.h"
@@ -615,7 +617,7 @@ class CConEmuMain :
 		void OnMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
 		void OnForcedFullScreen(bool bSet = true);
 		void OnAlwaysOnTop();
-		void OnAlwaysShowScrollbar();
+		void OnAlwaysShowScrollbar(bool abSync = true);
 		void OnBufferHeight();
 		bool DoClose();
 		BOOL OnCloseQuery();

@@ -325,7 +325,7 @@ enum ConEmuMargins
 	CEM_STATUS = 0x0008, // Высота строки статуса
 	CEM_PAD = 0x0010, // Ширина "отступа" от краев
 	// Маска для получения всех отступов
-	CEM_ALL_MARGINS = CEM_FRAME|CEM_TAB|CEM_SCROLL|CEM_STATUS|CEM_PAD,
+	CEM_ALL_MARGINS = CEM_FRAME|CEM_TAB|/*CEM_SCROLL|*/CEM_STATUS|CEM_PAD,
 	CEM_CLIENT_MARGINS = CEM_TAB|/*CEM_SCROLL|*/CEM_STATUS|CEM_PAD,
 };
 

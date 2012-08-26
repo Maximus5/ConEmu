@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    106
+#define CESERVER_REQ_VER    107
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1165,7 +1165,9 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	// Root(!) ConEmu window
 	HWND2 hConEmuRoot;
 	// DC ConEmu window
-	HWND2 hConEmuWnd;
+	HWND2 hConEmuWndDc;
+	// Back ConEmu window
+	HWND2 hConEmuWndBack;
 
 	DWORD nLoggingType;  // enum GuiLoggingType
 	BOOL  bDosBox;       // DosBox установлен, можно пользоваться
@@ -1422,7 +1424,8 @@ struct CESERVER_REQ_STARTSTOPRET
 {
 	BOOL  bWasBufferHeight;
 	HWND2 hWnd; // при возврате в консоль - GUI (главное окно)
-	HWND2 hWndDC;
+	HWND2 hWndDc;
+	HWND2 hWndBack;
 	DWORD dwPID; // при возврате в консоль - PID ConEmu.exe
 	DWORD nBufferHeight, nWidth, nHeight;
 	DWORD dwMainSrvPID;
@@ -1573,10 +1576,12 @@ struct CESERVER_REQ_ATTACHGUIAPP
 	DWORD nPID;
 	DWORD hkl;
 	HWND2 hConEmuWnd;   // Root
-	HWND2 hConEmuWndDC; // DC Window
+	HWND2 hConEmuDc;    // DC Window
+	HWND2 hConEmuBack;  // Back - holder for GUI
 	HWND2 hAppWindow;   // NULL - проверка можно ли, HWND - когда создан
 	HWND2 hSrvConWnd;
-	RECT  rcWindow; // координаты
+	RECT  rcWindow;     // координаты
+	DWORD Reserved;     // зарезервировано под флаги, вроде "Показывать заголовок"
 	DWORD nStyle, nStyleEx;
 	wchar_t sAppFileName[MAX_PATH*2];
 };

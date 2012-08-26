@@ -139,10 +139,10 @@ HWND CConEmuChild::CreateView()
 	RECT rcBack = gpConEmu->CalcRect(CER_BACK, pVCon);
 	RECT rc = gpConEmu->CalcRect(CER_DC, rcBack, CER_BACK, pVCon);
 
-	mh_WndBack = CreateWindowEx(styleEx, gsClassNameBack, 0, style,
+	mh_WndBack = CreateWindowEx(styleEx, gsClassNameBack, L"BackWND", style,
 		rcBack.left, rcBack.top, rcBack.right - rcBack.left, rcBack.bottom - rcBack.top, hParent, NULL, (HINSTANCE)g_hInstance, pVCon);
 
-	mh_WndDC = CreateWindowEx(styleEx, gsClassName, 0, style,
+	mh_WndDC = CreateWindowEx(styleEx, gsClassName, L"DrawWND", style,
 		rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hParent, NULL, (HINSTANCE)g_hInstance, pVCon);
 
 	if (!mh_WndDC || !mh_WndBack)
@@ -211,6 +211,11 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 	{
 		bRc = ShowWindow(mh_WndBack, nShowCmd);
 		bRc = ShowWindow(mh_WndDC, nShowCmd);
+		if (nShowCmd)
+		{
+			SetWindowPos(mh_WndDC, HWND_TOP, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
+			SetWindowPos(mh_WndBack, mh_WndDC, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
+		}
 	}
 	return bRc;
 }
@@ -540,6 +545,14 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 	switch (messg)
 	{
+	case WM_SHOWWINDOW:
+			if (wParam)
+			{
+				HWND hView = pVCon->GetView();
+				SetWindowPos(hView, HWND_TOP, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
+				SetWindowPos(hWnd, hView, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
+			}
+			break; // DefaultProc
 		case WM_SETFOCUS:
 			// Если в консоли работает "GUI" окно (GUI режим), то фокус нужно отдать туда.
 			{
@@ -956,15 +969,15 @@ void CConEmuChild::SetVConSizePos(RECT arcBack, bool abReSize /*= true*/)
 		_ASSERTE((rcBack.right > rcBack.left) && (rcBack.bottom > rcBack.top));
 		_ASSERTE((rcDC.right > rcDC.left) && (rcDC.bottom > rcDC.top));
 		// Двигаем/ресайзим окошко DC
-		MoveWindow(mh_WndBack, rcBack.left, rcBack.top, rcBack.right - rcBack.left, rcBack.bottom - rcBack.top, 1);
-		MoveWindow(mh_WndDC, rcDC.left, rcDC.top, rcDC.right - rcDC.left, rcDC.bottom - rcDC.top, 1);
+		SetWindowPos(mh_WndDC, HWND_TOP, rcDC.left, rcDC.top, rcDC.right - rcDC.left, rcDC.bottom - rcDC.top, 0);
+		SetWindowPos(mh_WndBack, mh_WndDC, rcBack.left, rcBack.top, rcBack.right - rcBack.left, rcBack.bottom - rcBack.top, 0);
 		Invalidate();
 	}
 	else
 	{
 		// Двигаем окошко DC
-		SetWindowPos(mh_WndBack, NULL, rcBack.left, rcBack.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-		SetWindowPos(mh_WndDC, NULL, rcDC.left, rcDC.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		SetWindowPos(mh_WndDC, HWND_TOP, rcDC.left, rcDC.top, 0,0, SWP_NOSIZE);
+		SetWindowPos(mh_WndBack, mh_WndDC, rcBack.left, rcBack.top, 0,0, SWP_NOSIZE);
 	}
 }
 
@@ -1040,7 +1053,7 @@ void CConEmuChild::Validate()
 	//if ('ghWnd DC') ValidateRect(ghWnd, NULL);
 }
 
-void CConEmuChild::OnAlwaysShowScrollbar()
+void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 {
 	if (m_LastAlwaysShowScrollbar != gpSet->isAlwaysShowScrollbar)
 	{
@@ -1054,7 +1067,7 @@ void CConEmuChild::OnAlwaysShowScrollbar()
 		else
 			TrackMouse();
 
-		if (pVCon->isVisible())
+		if (abSync && pVCon->isVisible())
 		{
 			if (gpConEmu->isZoomed() || gpConEmu->isFullScreen())
 				pVCon->RCon()->SyncConsole2Window();
@@ -1283,7 +1296,7 @@ void CConEmuChild::MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue)
 
 	if (/*!mb_ScrollVisible &&*/ !m_si.nMax && (gpSet->isAlwaysShowScrollbar == 1))
 	{
-		ShowScrollBar(mh_WndDC, SB_VERT, TRUE);
+		ShowScrollBar(mh_WndBack, SB_VERT, TRUE);
 		// Прокрутка всегда показывается! Скрывать нельзя!
 		si.nPage = 1;
 		si.nMax = 100;
@@ -1291,21 +1304,40 @@ void CConEmuChild::MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue)
 
 	si.fMask |= SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/;
 
-	SetScrollInfo(mh_WndDC, SB_VERT, &si, TRUE);
+	SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);
 
 	if (abSetEnabled)
 	{
 		if (abEnableValue)
 		{
-			EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
+			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
 			mb_ScrollDisabled = FALSE;
 		}
 		else
 		{
-			EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
+			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
 			mb_ScrollDisabled = TRUE;
 		}
 	}
+}
+
+void CConEmuChild::UpdateScrollRgn()
+{
+	HRGN hRgn = NULL;
+	if (mb_ScrollVisible && (gpSet->isAlwaysShowScrollbar == 2))
+	{
+		RECT rcDc = {}; GetClientRect(mh_WndDC, &rcDc);
+		RECT rcScroll = {}; GetWindowRect(mh_WndBack, &rcScroll);
+		MapWindowPoints(NULL, mh_WndDC, (LPPOINT)&rcScroll, 2);
+		rcScroll.left = rcScroll.right - GetSystemMetrics(SM_CXVSCROLL);
+		TODO("Horizontal scrolling");
+		hRgn = CreateRectRgn(rcDc.left, rcDc.top, rcDc.right, rcDc.bottom);
+		HRGN hScrlRgn = CreateRectRgn(rcScroll.left, rcScroll.top, rcScroll.right, rcScroll.bottom);
+		int iRc = CombineRgn(hRgn, hRgn, hScrlRgn, RGN_DIFF);
+		DeleteObject(hScrlRgn);
+		UNREFERENCED_PARAMETER(iRc);
+	}
+	SetWindowRgn(mh_WndDC, hRgn, FALSE);
 }
 
 void CConEmuChild::ShowScroll(BOOL abImmediate)
@@ -1319,14 +1351,14 @@ void CConEmuChild::ShowScroll(BOOL abImmediate)
 			// Прокрутка всегда показывается! Скрывать нельзя!
 			//m_si.nMax = (gpSet->isAlwaysShowScrollbar == 1) ? 1 : 0;
 			SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1};
-			SetScrollInfo(mh_WndDC, SB_VERT, &si, TRUE);
+			SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);
 		}
 
 		mb_ScrollVisible = TRUE; mb_Scroll2Visible = TRUE;
 
 		#ifdef _DEBUG
 		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE};
-		GetScrollInfo(mh_WndDC, SB_VERT, &si);
+		GetScrollInfo(mh_WndBack, SB_VERT, &si);
 		#endif
 
 		int nCurPos = -1;
@@ -1338,25 +1370,25 @@ void CConEmuChild::ShowScroll(BOOL abImmediate)
 
 		if (mb_ScrollDisabled && m_si.nMax > 1)
 		{
-			EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
+			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
 			mb_ScrollDisabled = FALSE;
 		}
 		else if (!mb_ScrollDisabled && !m_si.nMax)
 		{
-			EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
+			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
 			mb_ScrollDisabled = TRUE;
 		}
 
-		ShowScrollBar(mh_WndDC, SB_VERT, TRUE);
+		ShowScrollBar(mh_WndBack, SB_VERT, TRUE);
 
 		#ifdef _DEBUG
-		GetScrollInfo(mh_WndDC, SB_VERT, &si);
+		GetScrollInfo(mh_WndBack, SB_VERT, &si);
 		#endif
 
 		TODO("Scroll: Horizontal");
 
 		#ifdef _DEBUG
-		DWORD dwStyle = GetWindowLong(mh_WndDC, GWL_STYLE);
+		DWORD dwStyle = GetWindowLong(mh_WndBack, GWL_STYLE);
 		//if (!(dwStyle & WS_VSCROLL))
 		//	SetWindowLong(mh_WndDC, GWL_STYLE, dwStyle | WS_VSCROLL);
 		#endif
@@ -1376,6 +1408,8 @@ void CConEmuChild::ShowScroll(BOOL abImmediate)
 		mb_Scroll2Visible = TRUE;
 		bTShow = true;
 	}
+
+	UpdateScrollRgn();
 
 	#ifndef SKIP_HIDE_TIMER
 	if (bTCheck)
@@ -1408,10 +1442,10 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 	{
 		// Прокрутка всегда показывается! Скрывать нельзя!
 		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1};
-		SetScrollInfo(mh_WndDC, SB_VERT, &si, TRUE);
+		SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);
 		if (!mb_ScrollDisabled)
 		{
-			EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
+			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
 			mb_ScrollDisabled = TRUE;
 		}
 		Invalidate();
@@ -1422,13 +1456,13 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 		mb_Scroll2Visible = FALSE;
 
 		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE};
-		int nCurPos = SetScrollInfo(mh_WndDC, SB_VERT, &si, TRUE);  UNREFERENCED_PARAMETER(nCurPos);
+		int nCurPos = SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);  UNREFERENCED_PARAMETER(nCurPos);
 
 		TODO("Scroll: Horizontal");
 		#ifdef _DEBUG
-		DWORD dwStyle = GetWindowLong(mh_WndDC, GWL_STYLE);
+		DWORD dwStyle = GetWindowLong(mh_WndBack, GWL_STYLE);
 		//if (dwStyle & WS_VSCROLL)
-		//	SetWindowLong(mh_WndDC, GWL_STYLE, dwStyle & ~WS_VSCROLL);
+		//	SetWindowLong(mh_WndBack, GWL_STYLE, dwStyle & ~WS_VSCROLL);
 		#endif
 
 		Invalidate();
@@ -1446,6 +1480,8 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 		bTHide = true;
 		//m_TScrollHide.Start(TIMER_SCROLL_HIDE_DELAY);
 	}
+
+	UpdateScrollRgn();
 
 	#ifndef SKIP_HIDE_TIMER
 	if (m_TScrollCheck.IsStarted())
