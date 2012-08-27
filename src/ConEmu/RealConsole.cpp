@@ -5256,7 +5256,7 @@ void CRealConsole::ShowConsoleOrGuiClient(int nMode) // -1 Toggle 0 - Hide 1 - S
 	// Но только в том случае, если НЕ включен "буферный" режим (GUI скрыто, показан текст консоли сервера)
 	if (hGuiWnd && isGuiVisible())
 	{
-		ShowGuiClient(nMode);
+		ShowGuiClientExt(nMode);
 	}
 	else
 	{
@@ -5264,8 +5264,23 @@ void CRealConsole::ShowConsoleOrGuiClient(int nMode) // -1 Toggle 0 - Hide 1 - S
 	}
 }
 
+void CRealConsole::ShowGuiClientInt(bool bShow)
+{
+	if (bShow && hGuiWnd && IsWindow(hGuiWnd))
+	{
+		ShowOtherWindow(hGuiWnd, SW_SHOW);
+		ShowWindow(GetView(), SW_HIDE);
+	}
+	else
+	{
+		ShowWindow(GetView(), SW_SHOW);
+		if (hGuiWnd && IsWindow(hGuiWnd))
+			ShowOtherWindow(hGuiWnd, SW_HIDE);
+		mp_VCon->Invalidate();
+	}
+}
 
-void CRealConsole::ShowGuiClient(int nMode, BOOL bDetach /*= FALSE*/) // -1 Toggle 0 - Hide 1 - Show
+void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 Toggle 0 - Hide 1 - Show
 {
 	if (this == NULL) return;
 
@@ -10012,7 +10027,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 			GetWindowRect(hGuiWnd, &rcGui); // Логичнее все же оставить приложение в том же месте
 			rcPreGuiWndRect = rcGui;
 
-			ShowGuiClient(1, TRUE);
+			ShowGuiClientExt(1, TRUE);
 
 			ShowOtherWindow(hGuiWnd, SW_HIDE, FALSE/*синхронно*/);
 			SetOtherWindowParent(hGuiWnd, NULL);
@@ -10031,7 +10046,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 		//RECT rcGui = rcPreGuiWndRect;
 		//GetWindowRect(hGuiWnd, &rcGui); // Логичнее все же оставить приложение в том же месте
 
-		//ShowGuiClient(1, TRUE);
+		//ShowGuiClientExt(1, TRUE);
 	
 		//ShowOtherWindow(lhGuiWnd, SW_HIDE, FALSE/*синхронно*/);
 		//SetOtherWindowParent(lhGuiWnd, NULL);

@@ -400,7 +400,8 @@ class CRealConsole
 		void CtrlWinAltSpace();
 		void ShowConsoleOrGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
-		void ShowGuiClient(int nMode, BOOL bDetach = FALSE); // -1 Toggle, 0 - Hide, 1 - Show
+		void ShowGuiClientExt(int nMode, BOOL bDetach = FALSE); // -1 Toggle, 0 - Hide, 1 - Show
+		void ShowGuiClientInt(bool bShow);
 		BOOL isDetached();
 		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		BOOL RecreateProcess(RConStartArgs *args);

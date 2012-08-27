@@ -13,6 +13,10 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+
+[*] Internal changes in child windows.
+
+
 2012.08.26
 [+] GuiMacro.
     * Print(["<Text>"])

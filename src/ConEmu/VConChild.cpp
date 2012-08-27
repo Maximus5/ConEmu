@@ -204,8 +204,9 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 
 	if ((GetCurrentThreadId() != nTID) || (hChildGUI != NULL))
 	{
+		BOOL bGuiVisible = (hChildGUI && nShowCmd) ? pVCon->RCon()->isGuiVisible() : FALSE;
 		bRc = ShowWindowAsync(mh_WndBack, nShowCmd);
-		bRc = ShowWindowAsync(mh_WndDC, nShowCmd);
+		bRc = ShowWindowAsync(mh_WndDC, bGuiVisible ? SW_HIDE : nShowCmd);
 	}
 	else
 	{

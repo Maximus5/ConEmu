@@ -3,41 +3,51 @@ ConEmu - Windows Console Emulator
 
 About ConEmu
 
-    ConEmu-Maximus5 is a Windows console emulator with tabs, which represents
-    multiple consoles and simple GUI applications as one customizable GUI window
-    with various features.
-    Basic application - joint use with Far Manager.
-    Far (File and Archive) Manager is a console program for managing files and
-    archives in Windows operating systems.
+    ConEmu-Maximus5 is a Windows console emulator with tabs, which presents
+    multiple consoles and simple GUI applications as one customizable GUI
+    window with various features.
 
-    This fork grew up from ConEmu by Zoin. 
+    Initially, the program was created as a companion to Far Manager,
+    my favorite shell replacement - file and archive management,
+    command history and completion, powerful editor.
+
+    Today, ConEmu can be used with any other console application or simple
+    GUI tools (like PuTTY for example).
+    
+    ConEmu is an active project, open to suggestions.
+    http://code.google.com/p/conemu-maximus5/issues/list
 
 
 Description
 
     ConEmu starts a console program in hidden console window and provides an
     alternative customizable GUI window with various features:
+
     * smooth and friendly window resizing;
     * tabs for editors, viewers, panels and consoles;
     * run simple GUI apps in tabs;
-    * easy run old DOS applications (games) in Windows 7 or 64bit OS;
+    * Windows 7 Jump Lists and Progress on Taskbar buttons;
+    * easily run old DOS applications (games) in Windows 7 or 64-bit OS;
     * thumbnails and tiles in Far Manager;
-    * normal, maximized and full screen window graphic modes;
-    * window font anti-aliasing: standard, clear type, disabled;
+    * normal, maximized and full screen graphical window modes;
+    * window font anti-aliasing: standard, ClearType, disabled;
     * window fonts: family, height, width, bold, italic, etc.;
-    * BDF fonts limited support;
-    * using normal/bold/italic fonts for different parts of console simultaneously;
-    * using 24bit colors in Far Manager 3.x;
-    * cursor: standard console (horisontal) or GUI (vertical);
-    * optional settings (e.g. pallette) for selected applications;
-    * for BufferHeight mode: vertical scrolling using keyboard;
-    * show full output (1K+ lines) of last command in editor/viewer;
+    * Chinese verions of Windows supported;
+    * using normal/bold/italic fonts for different parts of the console simultaneously;
+    * using 24-bit colors in Far Manager 3.x;
+    * ANSI X3.64 and Xterm 256 colors;
+    * cursor: standard console (horizontal) or GUI (vertical);
+    * optional per-application settings (e.g. palette);
+    * vertical console buffer scrolling using the keyboard (BufferHeight mode);
+    * show full output (1K+ lines) of last command in Far Manager's editor/viewer;
     * customizable Far Manager right click behaviour (long click opens context menu);
     * drag and drop (explorer style) of files and folders in Far Manager;
+    * limited support of BDF fonts;
     * user friendly text and block selection;
     * transparency and desktop mode;
     * customizable starting tabs;
-    * and more, and more... take a look at Settings dialog, WhatsNew and Settings.reg 
+    * configurable and clickable status bar;
+    * and more, and more... take a look at the Settings dialog, WhatsNew-ConEmu.txt and Settings.reg
 
     All settings are read from the registry or xml file (multiple named
     configurations are supported) and after that the command line parameters
@@ -111,6 +121,7 @@ Parameters
 
 	/Cmd <commandline>
 	/Cmd @<commandfile>
+	/Cmd {taskname}
 	This MUST be the LAST switch.
     The rest (<commandline>) is treated as a command to start and its
     parameters. By default ConEmu uses a command from saved configuration, if
@@ -118,6 +129,7 @@ Parameters
     /BufferHeight mode.
     You may use @<commandfile> instead of <commandline> to start several
     consoles simultaneously in one ConEmu instance.
+    Alternatively, you may start predefined (in Settings window) named task.
     Sample startfile.txt:
       >"C:\Program Files\Far\far.exe"
       */BufferHeight 400 cmd

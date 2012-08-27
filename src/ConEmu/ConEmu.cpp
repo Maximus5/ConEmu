@@ -2900,9 +2900,7 @@ void CConEmuMain::AskChangeBufferHeight()
 	HWND hGuiClient = pRCon->GuiWnd();
 	if (hGuiClient)
 	{
-		int nNewShow = (GetWindowLongPtr(hGuiClient, GWL_STYLE) & WS_VISIBLE) ? SW_HIDE : SW_SHOW;
-		pRCon->ShowOtherWindow(hGuiClient, nNewShow);
-		pVCon->Invalidate();
+		pRCon->ShowGuiClientInt(!pRCon->isGuiVisible());
 		return;
 	}
 
