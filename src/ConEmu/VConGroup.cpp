@@ -2784,8 +2784,13 @@ void CVConGroup::SetConsoleSizes(const COORD& size, bool abSync)
 		RECT rcCon = MakeRect(size.X,size.Y);
 		if (VCon.VCon() && VCon->RCon())
 		{
-			if (!VCon->RCon()->SetConsoleSize(size.X,size.Y, 0/*don't change*/, abSync ? CECMD_SETSIZESYNC : CECMD_SETSIZENOSYNC))
-				rcCon = MakeRect(VCon->TextWidth,VCon->TextHeight);
+			CRealConsole* pRCon = VCon->RCon();
+			COORD CurSize = {(SHORT)pRCon->TextWidth(), (SHORT)pRCon->TextHeight()};
+			if ((CurSize.X != size.X) || (CurSize.Y != size.Y))
+			{
+				if (!VCon->RCon()->SetConsoleSize(size.X,size.Y, 0/*don't change*/, abSync ? CECMD_SETSIZESYNC : CECMD_SETSIZENOSYNC))
+					rcCon = MakeRect(VCon->TextWidth,VCon->TextHeight);
+			}
 		}
 
 

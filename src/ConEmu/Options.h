@@ -946,6 +946,9 @@ struct Settings
 		bool isTabRecent;
 		//reg->Load(L"TabLazy", isTabLazy);
 		bool isTabLazy;
+
+		//reg->Load(L"TabDblClick", nTabDblClickAction);
+		DWORD nTabDblClickAction; // 0-None, 1-Auto, 2-Maximize/Restore, 3-NewTab.
 		
 		//TODO:
 		bool isTabsInCaption;

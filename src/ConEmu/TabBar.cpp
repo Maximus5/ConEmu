@@ -545,8 +545,8 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 		/*case WM_RBUTTONDOWN:*/ case WM_RBUTTONUP: //case WM_RBUTTONDBLCLK:
 
 			if (((uMsg == WM_RBUTTONUP)
-					|| gpSet->isHideCaptionAlways() || gpConEmu->mb_isFullScreen
-					|| (gpConEmu->isZoomed() && gpSet->isHideCaption))
+					|| ((uMsg == WM_LBUTTONDBLCLK) && gpSet->nTabDblClickAction)
+					|| gpSet->isCaptionHidden())
 				&& gpSet->isTabs)
 			{
 				if (TabHitTest(true)==HTCAPTION)
@@ -557,11 +557,20 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 
 					if (uMsg == WM_LBUTTONDBLCLK)
 					{
-						// Чтобы клик случайно не провалился в консоль
-						gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
-						// Аналог AltF9
-						//gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(gpConEmu->mb_isFullScreen&&gpConEmu->isWndNotFSMaximized)) ? rNormal : rMaximized);
-						gpConEmu->OnAltF9(TRUE);
+						if ((gpSet->nTabDblClickAction == 2)
+							|| ((gpSet->nTabDblClickAction == 1) && gpSet->isCaptionHidden()))
+						{
+							// Чтобы клик случайно не провалился в консоль
+							gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
+							// Аналог AltF9
+							//gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(gpConEmu->mb_isFullScreen&&gpConEmu->isWndNotFSMaximized)) ? rNormal : rMaximized);
+							gpConEmu->OnAltF9(TRUE);
+						}
+						else if ((gpSet->nTabDblClickAction == 3)
+							|| ((gpSet->nTabDblClickAction == 1) && !gpSet->isCaptionHidden()))
+						{
+							gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+						}
 					}
 					else if (uMsg == WM_RBUTTONUP)
 					{

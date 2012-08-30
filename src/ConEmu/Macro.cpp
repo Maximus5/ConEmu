@@ -842,7 +842,18 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 	if (GetNextString(asArgs, pszOper))
 	{
 		CVConGuard VCon(apRCon ? apRCon->VCon() : NULL);
-		if ((!GetNextString(asArgs, pszFile) || !*pszFile) && apRCon)
+
+		if (GetNextString(asArgs, pszFile))
+		{
+			if (!GetNextString(asArgs, pszParm))
+				pszParm = NULL;
+			else if (!GetNextString(asArgs, pszDir))
+				pszDir = NULL;
+			else if (!GetNextInt(asArgs, nShowCmd))
+				nShowCmd = SW_SHOWNORMAL;
+		}
+
+		if (!(pszFile && *pszFile) && !(pszParm && *pszParm) && apRCon)
 		{
 			LPCWSTR pszCmd = apRCon->GetCmd();
 			if (pszCmd && *pszCmd)
@@ -852,14 +863,14 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 			}
 		}
 
-		if (pszFile && *pszFile)
+		if (!pszFile)
 		{
-			if (!GetNextString(asArgs, pszParm))
-				pszParm = NULL;
-			else if (!GetNextString(asArgs, pszDir))
-				pszDir = NULL;
-			else if (!GetNextInt(asArgs, nShowCmd))
-				nShowCmd = SW_SHOWNORMAL;
+			pszBuf = lstrdup(L"");
+			pszFile = pszBuf;
+		}
+
+		if ((pszFile && *pszFile) || (pszParm && *pszParm))
+		{
 
 			bool bNewTaskGroup = false;
 
@@ -873,7 +884,8 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 				}
 			}
 			
-			bool bNewOper = bNewTaskGroup || (wmemcmp(pszOper, L"new_console", 11) == 0);
+			// 120830 - пусть shell("","cmd") запускает новую вкладку в ConEmu
+			bool bNewOper = bNewTaskGroup || (*pszOper == 0) || (wmemcmp(pszOper, L"new_console", 11) == 0);
 
 			if (bNewOper || (pszParm && wcsstr(pszParm, L"-new_console")))
 			{
@@ -899,17 +911,21 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 					}
 					
 					pArgs->pszSpecialCmd = (wchar_t*)malloc(nAllLen*sizeof(wchar_t));
+					pArgs->pszSpecialCmd[0] = 0;
 					
-					if (*pszFile != L'"')
+					if (*pszFile)
 					{
-						pArgs->pszSpecialCmd[0] = L'"';
-						_wcscpy_c(pArgs->pszSpecialCmd+1, nAllLen-1, pszFile);
-						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L"\" ");
-					}
-					else if (*pszFile)
-					{
-						_wcscpy_c(pArgs->pszSpecialCmd, nAllLen, pszFile);
-						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" ");
+						if (*pszFile != L'"')
+						{
+							pArgs->pszSpecialCmd[0] = L'"';
+							_wcscpy_c(pArgs->pszSpecialCmd+1, nAllLen-1, pszFile);
+							_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L"\" ");
+						}
+						else
+						{
+							_wcscpy_c(pArgs->pszSpecialCmd, nAllLen, pszFile);
+							_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" ");
+						}
 					}
 					
 					if (pszParm && *pszParm)

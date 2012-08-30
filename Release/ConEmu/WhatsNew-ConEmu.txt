@@ -1,6 +1,7 @@
 ﻿You can read online version of this file
 English: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=en
 Russian: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=ru
+SVN: http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt
 
 Please, vote for ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
@@ -16,6 +17,16 @@ Questions about usablity of "-new_console:s".
 
 [*] Internal changes in child windows.
 [%] Some fixes for DBCS.
+[*] GuiMacro. Changes in Shell function. All following examples runs "cmd" in new tab:
+    «Shell("new_console","cmd")» or «Shell("","cmd")» or «Shell("","","cmd")».
+    Memorial. Other verbs, like «Shell("open","cmd")» runs "cmd" outside of ConEmu window.
+[*] Safe Far close. From current build, this option may be used for «Unsafe» console closing.
+    Type "#Close(1,1)" (without quotas) in Safe Far close macro field
+    and turn on checkbox. Now, click on the cross-button in ConEmu title provokes
+    «Terminate active process» in all opened consoles, regardless of «Far» it is or not.
+    Warning! Use on your own responsibility, this method may damage console applications data!
+[+] Far Manager & TabletPC. Tap on clock+1row (upper-right corner) show/hide panels.
+[+] DoubleClick on TabBar free area acts as click on [+] button.
 
 
 2012.08.26

@@ -748,6 +748,9 @@ void CStatus::UpdateStatusBar(bool abForce /*= false*/)
 
 void CStatus::InvalidateStatusBar()
 {
+	if (gpConEmu->isIconic())
+		return;
+
 	RECT rcClient = {};
 	if (!GetStatusBarClientRect(&rcClient))
 		return;
@@ -1114,7 +1117,9 @@ void CStatus::OnWindowReposition(const RECT *prcNew)
 		if (gpConEmu->isIconic())
 			return; // все равно ничего не видно
 
-		GetWindowRect(ghWnd, &rcTmp);
+		//-- GetWindowRect может вернуть еще минимизированные размеры
+		//GetWindowRect(ghWnd, &rcTmp);
+		rcTmp = gpConEmu->CalcRect(CER_MAIN);
 	}
 
 	// csi_ConEmuHWND

@@ -115,6 +115,8 @@ const wchar_t gsCloseAny[] = L"Confirm closing console?";
 const wchar_t gsCloseEditor[] = L"Confirm closing Far editor?";
 const wchar_t gsCloseViewer[] = L"Confirm closing Far viewer?";
 
+#define GUI_MACRO_PREFIX L'#'
+
 #define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
 #define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
 
@@ -153,6 +155,8 @@ void CRealConsole::Construct(CVirtualConsole* apVCon)
 	mb_MouseButtonDown = FALSE;
 	mb_BtnClicked = FALSE; mrc_BtnClickPos = MakeCoord(-1,-1);
 	mcr_LastMouseEventPos = MakeCoord(-1,-1);
+	mb_MouseTapChanged = FALSE;
+	mcr_MouseTapReal = mcr_MouseTapChanged = MakeCoord(-1,-1);
 	//m_DetectedDialogs.Count = 0;
 	//mn_DetectCallCount = 0;
 	wcscpy_c(Title, gpConEmu->GetDefaultTitle());
@@ -2872,6 +2876,54 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	
 	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
 		return; // В консоль не пересылать, событие обработал "сам буфер"
+
+
+	if (isFar() && gpConEmu->IsGesturesEnabled())
+	{
+		//120830 - для Far Manager: облегчить "попадание"
+		if (messg == WM_LBUTTONDOWN)
+		{
+			bool bChanged = false;
+			mcr_MouseTapReal = crMouse;
+
+			// Клик мышкой в {0x0} гасит-показывает панели, но на планшете - фиг попадешь.
+			// Тап в область часов будет делать то же самое
+			// Считаем, что если тап пришелся на 2-ю строку - тоже.
+			// В редакторе/вьювере не дергаться - там смысла нет.
+			if (!(isEditor() || isViewer()) && (crMouse.Y <= 1) && ((crMouse.X + 5) >= (int)TextWidth()))
+			{
+				bChanged = true;
+				mcr_MouseTapChanged = MakeCoord(0,0);
+			}
+
+			if (bChanged)
+			{
+				crMouse = mcr_MouseTapChanged;
+				mb_MouseTapChanged = TRUE;
+			}
+			else
+			{
+				mb_MouseTapChanged = FALSE;
+			}
+
+		}
+		else if (mb_MouseTapChanged && (messg == WM_LBUTTONUP || messg == WM_MOUSEMOVE))
+		{
+			if (mcr_MouseTapReal.X == crMouse.X && mcr_MouseTapReal.Y == crMouse.Y)
+			{
+				crMouse = mcr_MouseTapChanged;
+			}
+			else
+			{
+				mb_MouseTapChanged = FALSE;
+			}
+		}
+	}
+	else
+	{
+		mb_MouseTapChanged = FALSE;
+	}
+
 
 	const Settings::AppSettings* pApp = NULL;
 	if ((messg == WM_LBUTTONDOWN) //&& gpSet->isCTSClickPromptPosition
@@ -7986,39 +8038,42 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 	{
 		if (gpSet->isSafeFarClose && !abForceTerminate)
 		{
+			LPCWSTR pszMacro = gpSet->SafeFarCloseMacro();
+			_ASSERTE(pszMacro && *pszMacro);
+
 			BOOL lbExecuted = FALSE;
 			DWORD nFarPID = GetFarPID(TRUE/*abPluginRequired*/);
 
-			if (nFarPID && isAlive())
+			// GuiMacro выполняется безотносительно "фар/не фар"
+			if (*pszMacro == GUI_MACRO_PREFIX/*L'#'*/)
 			{
-				CConEmuPipe pipe(nFarPID, CONEMUREADYTIMEOUT);
+				// Для удобства. Она сама позовет CConEmuMacro::ExecuteMacro
+				PostMacro(pszMacro, TRUE);
+				lbExecuted = TRUE;
+			}
 
-				//if (pipe.Init(_T("CRealConsole::CloseConsole"), TRUE))
+			// FarMacro выполняется асинхронно, так что не будем смотреть на "isAlive"
+			if (!lbExecuted && nFarPID /*&& isAlive()*/)
+			{
+				mb_InCloseConsole = TRUE;
+				gpConEmu->DebugStep(_T("ConEmu: Execute SafeFarCloseMacro"));
+
+				if (!lbCleared)
 				{
-					mb_InCloseConsole = TRUE;
-					//DWORD cbWritten=0;
-					gpConEmu->DebugStep(_T("ConEmu: ACTL_QUIT"));
-					//lbExecuted = pipe.Execute(CMD_QUITFAR);
-					LPCWSTR pszMacro = gpSet->SafeFarCloseMacro();
-					_ASSERTE(pszMacro && *pszMacro);
-
-					if (!lbCleared)
-					{
-						lbCleared = true;
-						mp_VCon->SetBackgroundImageData(&BackClear);
-					}
-
-					// Async, иначе ConEmu зависнуть может
-					PostMacro(pszMacro, TRUE);
-					//lbExecuted = pipe.Execute(CMD_POSTMACRO, pszMacro, (_tcslen(pszMacro)+1)*2);
-					lbExecuted = TRUE;
-
-					gpConEmu->DebugStep(NULL);
+					lbCleared = true;
+					mp_VCon->SetBackgroundImageData(&BackClear);
 				}
 
-				if (lbExecuted)
-					return;
+				// Async, иначе ConEmu зависнуть может
+				PostMacro(pszMacro, TRUE);
+
+				lbExecuted = TRUE;
+
+				gpConEmu->DebugStep(NULL);
 			}
+
+			if (lbExecuted)
+				return;
 		}
 
 		if (abForceTerminate && GetActivePID() && !mn_InRecreate)
@@ -9977,6 +10032,20 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 {
 	if (!this || !asMacro || !*asMacro)
 		return;
+
+	if (*asMacro == GUI_MACRO_PREFIX/*L'#'*/)
+	{
+		// Значит это GuiMacro, а не FarMacro.
+		if (asMacro[1])
+		{
+			LPWSTR pszGui = lstrdup(asMacro+1);
+			LPWSTR pszRc = CConEmuMacro::ExecuteMacro(pszGui, this);
+			TODO("Показать результат в статусной строке?");
+			SafeFree(pszGui);
+			SafeFree(pszRc);
+		}
+		return;
+	}
 
 	DWORD nPID = GetFarPID(TRUE/*abPluginRequired*/);
 

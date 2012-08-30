@@ -315,17 +315,19 @@ typedef BOOL (WINAPI* GetLayeredWindowAttributes_t)(HWND hwnd, COLORREF *pcrKey,
 enum ConEmuMargins
 {
 	// Разница между размером всего окна и клиентской области окна (рамка + заголовок)
-	CEM_FRAME = 0x0001,
+	CEM_FRAMEONLY = 0x0001,
+	CEM_CAPTION = 0x0002,
+	CEM_FRAMECAPTION = (CEM_FRAMEONLY|CEM_CAPTION),
 	// Высота таба (пока только .top)
-	CEM_TAB = 0x0002,
-	CEM_TABACTIVATE = 0x1002,   // Принудительно считать, что таб есть (при включении таба)
-	CEM_TABDEACTIVATE = 0x2002, // Принудительно считать, что таба нет (при отключении таба)
+	CEM_TAB = 0x0004,
+	CEM_TABACTIVATE = 0x1004,   // Принудительно считать, что таб есть (при включении таба)
+	CEM_TABDEACTIVATE = 0x2004, // Принудительно считать, что таба нет (при отключении таба)
 	CEM_TAB_MASK = (CEM_TAB|CEM_TABACTIVATE|CEM_TABDEACTIVATE),
-	CEM_SCROLL = 0x0004, // Если полоса прокрутки всегда (!!!) видна - то ее ширина/высота
-	CEM_STATUS = 0x0008, // Высота строки статуса
-	CEM_PAD = 0x0010, // Ширина "отступа" от краев
+	CEM_SCROLL = 0x0008, // Если полоса прокрутки всегда (!!!) видна - то ее ширина/высота
+	CEM_STATUS = 0x0010, // Высота строки статуса
+	CEM_PAD = 0x0020, // Ширина "отступа" от краев
 	// Маска для получения всех отступов
-	CEM_ALL_MARGINS = CEM_FRAME|CEM_TAB|/*CEM_SCROLL|*/CEM_STATUS|CEM_PAD,
+	CEM_ALL_MARGINS = CEM_FRAMECAPTION|CEM_TAB|/*CEM_SCROLL|*/CEM_STATUS|CEM_PAD,
 	CEM_CLIENT_MARGINS = CEM_TAB|/*CEM_SCROLL|*/CEM_STATUS|CEM_PAD,
 };
 

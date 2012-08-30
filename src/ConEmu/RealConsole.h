@@ -761,6 +761,9 @@ class CRealConsole
 		//
 		BOOL mb_MouseButtonDown;
 		COORD mcr_LastMouseEventPos;
+		// для Far Manager: облегчить "попадание" тапами
+		BOOL mb_MouseTapChanged;
+		COORD mcr_MouseTapReal, mcr_MouseTapChanged;
 		//
 		SHELLEXECUTEINFO *mp_sei;
 		//

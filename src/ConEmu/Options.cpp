@@ -540,7 +540,7 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_ConEmuView] = true;
 	isStatusColumnHidden[csi_ServerHWND] = true;
 
-	isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
+	isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true; nTabDblClickAction = 1;
 	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
 	isTabsInCaption = false; //cbTabsInCaption
@@ -2337,6 +2337,7 @@ void Settings::LoadSettings()
 		reg->Load(L"TabSelf", isTabSelf);
 		reg->Load(L"TabLazy", isTabLazy);
 		reg->Load(L"TabRecent", isTabRecent);
+		reg->Load(L"TabDblClick", nTabDblClickAction); MinMax(nTabDblClickAction, 3);
 		reg->Load(L"TabsOnTaskBar", m_isTabsOnTaskBar);
 
 		if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { SafeFree(sTabCloseMacro); }
@@ -3044,6 +3045,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"TabSelf", isTabSelf);
 		reg->Save(L"TabLazy", isTabLazy);
 		reg->Save(L"TabRecent", isTabRecent);
+		reg->Load(L"TabDblClick", nTabDblClickAction);
 		reg->Save(L"TabsOnTaskBar", m_isTabsOnTaskBar);
 		reg->Save(L"TabCloseMacro", sTabCloseMacro);
 		reg->Save(L"TabFontFace", sTabFontFace);
