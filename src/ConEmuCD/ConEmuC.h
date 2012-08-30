@@ -250,6 +250,7 @@ void LogString(LPCSTR asText);
 void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo=NULL);
 BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RECT& rgn);
 BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn);
+LPCSTR GetCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize);
 
 
 #if defined(__GNUC__)

@@ -1387,6 +1387,20 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 		bDBCS_Checked = true;
 	}
 
+	bool   bDBCS_CP = bDBCS;
+	LPCSTR szLeads = NULL;
+	UINT   MaxCharSize = 0;
+	DWORD  nCP = GetConsoleOutputCP();
+
+	if (bDBCS)
+	{
+		szLeads = GetCpInfoLeads(nCP, &MaxCharSize);
+		if (!szLeads || !*szLeads || MaxCharSize < 2)
+		{
+			bDBCS_CP = false;
+		}
+	}
+
 	size_t nBufWidth = bufSize.X;
 	int nWidth = (rgn.Right - rgn.Left + 1);
 	int nHeight = (rgn.Bottom - rgn.Top + 1);
@@ -1409,7 +1423,7 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 	COORD bufCoord = {0,0};
 	DWORD dwErrCode = 0;
 
-	if (!bDBCS && (nCurSize <= MAX_CONREAD_SIZE))
+	if (!bDBCS_CP && (nCurSize <= MAX_CONREAD_SIZE))
 	{
 		if (ReadConsoleOutputW(hOut, pData, bufSize, bufCoord, &rgn))
 			lbRc = TRUE;
@@ -1431,7 +1445,7 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 		int Y2 = rgn.Bottom;
 
 		CHAR_INFO* pLine = pData;
-		if (!bDBCS)
+		if (!bDBCS_CP)
 		{
 			for (int y = Y1; y <= Y2; y++, rgn.Top++, pLine+=nBufWidth)
 			{
@@ -1450,27 +1464,37 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 			DWORD nAttrsMax = bufSize.X;
 			DWORD nCharsMax = nAttrsMax/* *4 */; // -- максимум там вроде на некоторых CP - 4 байта
 			wchar_t* pszChars = (wchar_t*)malloc(nCharsMax*sizeof(*pszChars));
+			char* pszCharsA = (char*)malloc(nCharsMax*sizeof(*pszCharsA));
 			WORD* pnAttrs = (WORD*)malloc(bufSize.X*sizeof(*pnAttrs));
-			if (pszChars && pnAttrs)
+			if (pszChars && pszCharsA && pnAttrs)
 			{
 				COORD crRead = {rgn.Left,Y1};
-				DWORD nChars, nAttrs;
+				DWORD nChars, nAttrs, nCharsA;
 				CHAR_INFO* pLine = pData;
 				for (; crRead.Y <= Y2; crRead.Y++, pLine+=nBufWidth)
 				{
 					rgn.Bottom = rgn.Top;
 					
-					lbRc = ReadConsoleOutputCharacterW(hOut, pszChars, nCharsMax, crRead, &nChars)
+					lbRc = ReadConsoleOutputCharacterA(hOut, pszCharsA, nCharsMax, crRead, &nCharsA)
 						&& ReadConsoleOutputAttribute(hOut, pnAttrs, bufSize.X, crRead, &nAttrs);
 
 					if (!lbRc)
 					{
 						dwErrCode = GetLastError();
 						_ASSERTE(FALSE && "ReadConsoleOutputAttribute failed in MyReadConsoleOutput");
+
+						CHAR_INFO* p = pLine;
+						for (size_t i = 0; i < nAttrsMax; ++i, ++p)
+						{
+							p->Attributes = 4; // red on black
+							p->Char.UnicodeChar = 0xFFFE; // not a character
+						}
+
 						break;
 					}
 					else
 					{
+						nChars = MultiByteToWideChar(nCP, 0, pszCharsA, nCharsA, pszChars, nCharsMax);
 						CHAR_INFO* p = pLine;
 						wchar_t* psz = pszChars;
 						WORD* pn = pnAttrs;
@@ -1485,18 +1509,24 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 						size_t x2 = nAttrsMax;
 						for (size_t i = 0; i < x1; ++i, ++p)
 						{
-							p->Attributes = *(pn++);
-							p->Char.UnicodeChar = *(psz++);
+							p->Attributes = *pn;
+							p->Char.UnicodeChar = *psz;
+
+							WARNING("Ќекорректно! pn может указывать на начало блока DBCS/QBCS");
+							pn++; // += MaxCharSize;
+							psz++;
 						}
+						WORD nLastAttr = pnAttrs[max(0,(int)nAttrs-1)];
 						for (size_t i = x1; i < x2; ++i, ++p)
 						{
-							p->Attributes = *(pn++);
+							p->Attributes = nLastAttr;
 							p->Char.UnicodeChar = L' ';
 						}
 					}
 				}
 			}
 			SafeFree(pszChars);
+			SafeFree(pszCharsA);
 			SafeFree(pnAttrs);
 		}
 	}

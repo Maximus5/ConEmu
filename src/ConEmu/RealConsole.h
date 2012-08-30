@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../Common/ConsoleAnnotation.h"
 #include "../Common/RgnDetect.h"
 //#include "../Common/WinObjects.h"
+#include "../Common/MArray.h"
 
 #define DEFINE_EXIT_DESC
 #include "../ConEmuCD/ExitCodes.h"
@@ -635,7 +636,7 @@ class CRealConsole
 		} m_ServerClosing;
 		//
 		MSection csPRC; //DWORD ncsTPRC;
-		std::vector<ConProcess> m_Processes;
+		MArray<ConProcess> m_Processes;
 		int mn_ProcessCount;
 		DWORD m_FarPlugPIDs[128];
 		UINT mn_FarPlugPIDsCount;

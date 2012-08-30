@@ -4352,7 +4352,7 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc)
 	}
 
 	MSectionLock SPRC; SPRC.Lock(&csPRC);
-	int dwProcCount = m_Processes.size();
+	int dwProcCount = (int)m_Processes.size();
 
 	if (dwProcCount > 0)
 	{
@@ -4363,11 +4363,13 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc)
 			return dwProcCount;
 		}
 		
-		std::vector<ConProcess>::iterator end = m_Processes.end();
-		int i = 0;
-		for (std::vector<ConProcess>::iterator iter = m_Processes.begin(); iter != end; ++iter, ++i)
+		//std::vector<ConProcess>::iterator end = m_Processes.end();
+		//int i = 0;
+		//for (std::vector<ConProcess>::iterator iter = m_Processes.begin(); iter != end; ++iter, ++i)
+		for (int i = 0; i < dwProcCount; i++)
 		{
-			(*ppPrc)[i] = *iter;
+			//(*ppPrc)[i] = *iter;
+			(*ppPrc)[i] = m_Processes[i];
 		}
 	}
 	else
@@ -4552,9 +4554,11 @@ bool CRealConsole::ReopenServerPipes()
 	wchar_t szDbgInfo[512]; szDbgInfo[0] = 0;
 
 	MSectionLock SC; SC.Lock(&csPRC);
-	std::vector<ConProcess>::iterator i;
-	for (i = m_Processes.begin(); i != m_Processes.end(); ++i)
+	//std::vector<ConProcess>::iterator i;
+	//for (i = m_Processes.begin(); i != m_Processes.end(); ++i)
+	for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
 	{
+		ConProcess* i = &(m_Processes[ii]);
 		if (i->ProcessID == nSrvPID)
 		{
 			_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"==> Active server changed to '%s' PID=%u\n", i->Name, nSrvPID);
@@ -4733,9 +4737,11 @@ int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName/*=NULL*/)
 	{
 		MSectionLock SC; SC.Lock(&csPRC);
 
-		std::vector<ConProcess>::iterator i;
-		for (i = m_Processes.begin(); i != m_Processes.end(); ++i)
+		//std::vector<ConProcess>::iterator i;
+		//for (i = m_Processes.begin(); i != m_Processes.end(); ++i)
+		for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
 		{
+			ConProcess* i = &(m_Processes[ii]);
 			if (i->ProcessID == nPID)
 			{
 				pszName = i->Name;
@@ -4781,53 +4787,56 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	if (bIsNtvdm && mn_Comspec4Ntvdm)
 		bIsCmd = true;
 
-	std::vector<ConProcess>::reverse_iterator iter = m_Processes.rbegin();
-	std::vector<ConProcess>::reverse_iterator rend = m_Processes.rend();
-	
-	while (iter != rend)
+	//std::vector<ConProcess>::reverse_iterator iter = m_Processes.rbegin();
+	//std::vector<ConProcess>::reverse_iterator rend = m_Processes.rend();
+	//
+	//while (iter != rend)
+	for (INT_PTR ii = (m_Processes.size() - 1); ii >= 0; ii--)
 	{
-		ConProcess cp = *iter;
+		ConProcess* iter = &(m_Processes[ii]);
+		//ConProcess cp = *iter;
+
 		// Корневой процесс ConEmuC не учитываем!
-		if (cp.ProcessID != mn_MainSrv_PID)
+		if (iter->ProcessID != mn_MainSrv_PID)
 		{
 			if (!bIsFar)
 			{
-				if (cp.IsFar)
+				if (iter->IsFar)
 				{
 					bIsFar = true;
 				}
-				else if (cp.ProcessID == mn_FarPID_PluginDetected)
+				else if (iter->ProcessID == mn_FarPID_PluginDetected)
 				{
 					bIsFar = true;
 					iter->IsFar = iter->IsFarPlugin = true;
 				}
 			}
 
-			if (!bIsTelnet && cp.IsTelnet)
+			if (!bIsTelnet && iter->IsTelnet)
 				bIsTelnet = true;
 
-			//if (!bIsNtvdm && cp.IsNtvdm) bIsNtvdm = true;
-			if (!bIsFar && !bIsCmd && cp.IsCmd)
+			//if (!bIsNtvdm && iter->IsNtvdm) bIsNtvdm = true;
+			if (!bIsFar && !bIsCmd && iter->IsCmd)
 				bIsCmd = true;
 
-			//if (!bIsCmd && mn_Comspec4Ntvdm && cp.ProcessID == mn_Comspec4Ntvdm)
+			//if (!bIsCmd && mn_Comspec4Ntvdm && iter->ProcessID == mn_Comspec4Ntvdm)
 			//	bIsCmd = bIsNtvdm = true;
 
 			//
-			if (!dwFarPID && cp.IsFar)
+			if (!dwFarPID && iter->IsFar)
 			{
-				dwFarPID = cp.ProcessID;
-				//dwInputTID = cp.InputTID;
+				dwFarPID = iter->ProcessID;
+				//dwInputTID = iter->InputTID;
 			}
 			
 			// "условно активный процесс"
 			if (!dwActivePID)
-				dwActivePID = cp.ProcessID;
-			else if (dwActivePID == cp.ParentPID)
-				dwActivePID = cp.ProcessID;
+				dwActivePID = iter->ProcessID;
+			else if (dwActivePID == iter->ParentPID)
+				dwActivePID = iter->ProcessID;
 		}
 
-		++iter;
+		//++iter;
 	}
 
 	TODO("Однако, наверное cmd.exe/tcc.exe может быть запущен и в 'фоне'? Например из Update");
@@ -4862,7 +4871,7 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	if (mn_ProgramStatus != nNewProgramStatus)
 		SetProgramStatus(nNewProgramStatus);
 
-	mn_ProcessCount = m_Processes.size();
+	mn_ProcessCount = (int)m_Processes.size();
 
 	if (dwFarPID && mn_FarPID != dwFarPID)
 		AllowSetForegroundWindow(dwFarPID);
@@ -4930,7 +4939,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 
 	DWORD PID[40]; memmove(PID, apPID, anCount*sizeof(DWORD));
 	UINT i = 0;
-	std::vector<ConProcess>::iterator iter, end;
+	//std::vector<ConProcess>::iterator iter, end;
 	//BOOL bAlive = FALSE;
 	BOOL bProcessChanged = FALSE, bProcessNew = FALSE, bProcessDel = FALSE;
 
@@ -4967,18 +4976,24 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 	}
 
 	// поставить пометочку на все процессы, вдруг кто уже убился
-	iter = m_Processes.begin();
-	end = m_Processes.end();
-	while (iter != end)
+	for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
 	{
-		iter->inConsole = false;
-		++iter;
+		m_Processes[ii].inConsole = false;
 	}
+	//iter = m_Processes.begin();
+	//end = m_Processes.end();
+	//while (iter != end)
+	//{
+	//	iter->inConsole = false;
+	//	++iter;
+	//}
 
 	// Проверяем, какие процессы уже есть в нашем списке
-	iter = m_Processes.begin();
-	while (iter != end)
+	//iter = m_Processes.begin();
+	//while (iter != end)
+	for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
 	{
+		ConProcess* iter = &(m_Processes[ii]);
 		for (i = 0; i < anCount; i++)
 		{
 			if (PID[i] && PID[i] == iter->ProcessID)
@@ -4989,7 +5004,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 			}
 		}
 
-		++iter;
+		//++iter;
 	}
 
 	// Проверяем, есть ли изменения
@@ -5001,15 +5016,18 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 		}
 	}
 
-	iter = m_Processes.begin();
-	while (iter != end)
+	//iter = m_Processes.begin();
+	//while (iter != end)
+	for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
 	{
+		ConProcess* iter = &(m_Processes[ii]);
+
 		if (iter->inConsole == false)
 		{
 			bProcessDel = TRUE; break;
 		}
 
-		++iter;
+		//++iter;
 	}
 
 	// Теперь нужно добавить новый процесс
@@ -5030,13 +5048,17 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 		{
 			//Snapshoot создан, поехали
 			// Перед добавлением нового - поставить пометочку на все процессы, вдруг кто уже убился
-			iter = m_Processes.begin();
-			end = m_Processes.end();
-			while (iter != end)
+			for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
 			{
-				iter->Alive = false;
-				++iter;
+				m_Processes[ii].Alive = false;
 			}
+			//iter = m_Processes.begin();
+			//end = m_Processes.end();
+			//while (iter != end)
+			//{
+			//	iter->Alive = false;
+			//	++iter;
+			//}
 
 			PROCESSENTRY32 p; memset(&p, 0, sizeof(p)); p.dwSize = sizeof(p);
 			BOOL TerminatedPIDsExist[128] = {};
@@ -5085,10 +5107,13 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 
 					// Перебираем запомненные процессы - поставить флажок Alive
 					// сохранить имя для тех процессов, которым ранее это сделать не удалось
-					iter = m_Processes.begin();
-					end = m_Processes.end();
-					while (iter != end)
+					//iter = m_Processes.begin();
+					//end = m_Processes.end();
+					//while (iter != end)
+					//{
+					for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
 					{
+						ConProcess* iter = &(m_Processes[ii]);
 						if (iter->ProcessID == p.th32ProcessID)
 						{
 							iter->Alive = true;
@@ -5105,7 +5130,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 							}
 						}
 
-						++iter;
+						//++iter;
 					}
 
 					// Следущий процесс
@@ -5126,17 +5151,21 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 	}
 
 	// Убрать процессы, которых уже нет
-	iter = m_Processes.begin();
-	end = m_Processes.end();
-	while (iter != end)
+	//iter = m_Processes.begin();
+	//end = m_Processes.end();
+	//while (iter != end)
+	INT_PTR ii = 0;
+	while (ii < m_Processes.size())
 	{
+		ConProcess* iter = &(m_Processes[ii]);
 		if (!iter->Alive || !iter->inConsole)
 		{
 			if (!bProcessChanged) bProcessChanged = TRUE;
 
 			SPRC.RelockExclusive(300); // Если уже нами заблокирован - просто вернет FALSE
-			iter = m_Processes.erase(iter);
-			end = m_Processes.end();
+			//iter = m_Processes.erase(iter);
+			//end = m_Processes.end();
+			m_Processes.erase(ii);
 		}
 		else
 		{
@@ -5144,7 +5173,8 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 			//    && iter->ProcessID == mn_FarPID_PluginDetected
 			//    && iter->InputTID == 0)
 			//    iter->InputTID = mn_Far_PluginInputThreadId;
-			++iter;
+			//++iter;
+			ii++;
 		}
 	}
 

@@ -15,6 +15,7 @@ Questions about usablity of "-new_console:s".
 
 
 [*] Internal changes in child windows.
+[%] Some fixes for DBCS.
 
 
 2012.08.26

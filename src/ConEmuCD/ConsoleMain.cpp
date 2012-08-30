@@ -7510,6 +7510,46 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 
 
 
+LPCSTR GetCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize)
+{
+	LPCSTR pszLeads = NULL;
+	static CPINFOEX cpinfo = {};
+	static char szLeads[256] = {};
+
+	if (cpinfo.CodePage != nCP)
+	{
+		if (!GetCPInfoEx(nCP, 0, &cpinfo) || (cpinfo.MaxCharSize <= 1))
+		{
+			ZeroStruct(szLeads);
+		}
+		else
+		{
+			int c = 0;
+			_ASSERTE(countof(cpinfo.LeadByte)>=10);
+			for (int i = 0; (i < 5) && cpinfo.LeadByte[i*2]; i++)
+			{
+				BYTE c1 = cpinfo.LeadByte[i*2];
+				BYTE c2 = cpinfo.LeadByte[i*2+1];
+				for (BYTE j = c1; (j <= c2) && (c < 254); j++, c++)
+				{
+					szLeads[c] = j;
+				}
+			}
+			_ASSERTE(c && c <= 255);
+			szLeads[c] = 0;
+			pszLeads = szLeads;
+		}
+	}
+	else if (cpinfo.MaxCharSize > 1)
+	{
+		pszLeads = szLeads;
+	}
+
+	if (pnMaxCharSize)
+		*pnMaxCharSize = cpinfo.MaxCharSize;
+
+	return pszLeads;
+}
 
 
 // Действует аналогично функции WinApi (GetConsoleScreenBufferInfo), но в режиме сервера:
@@ -7733,38 +7773,16 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		DWORD nCP = GetConsoleOutputCP();
 		if ((nCP != CP_UTF8) && (nCP != CP_UTF7))
 		{
-			static CPINFOEX cpinfo = {};
-			static char szLeads[256] = {};
-			if (cpinfo.CodePage != nCP)
-			{
-				if (!GetCPInfoEx(nCP, 0, &cpinfo) || (cpinfo.MaxCharSize <= 1))
-				{
-					ZeroStruct(szLeads);
-				}
-				else
-				{
-					int c = 0;
-					_ASSERTE(countof(cpinfo.LeadByte)>=10);
-					for (int i = 0; (i < 5) && cpinfo.LeadByte[i*2]; i++)
-					{
-						BYTE c1 = cpinfo.LeadByte[i*2];
-						BYTE c2 = cpinfo.LeadByte[i*2+1];
-						for (BYTE j = c1; (j <= c2) && (c < 254); j++, c++)
-						{
-							szLeads[c] = j;
-						}
-					}
-					_ASSERTE(c && c <= 128);
-					szLeads[c] = 0;
-				}
-			}
+			UINT MaxCharSize = 0;
+			LPCSTR szLeads = GetCpInfoLeads(nCP, &MaxCharSize);
 
-			if (*szLeads && (cpinfo.MaxCharSize > 1))
+			if (szLeads && *szLeads && (MaxCharSize > 1))
 			{
-				_ASSERTE(cpinfo.MaxCharSize==2); // может быть 4?
+				_ASSERTE(MaxCharSize==2 || MaxCharSize==4);
 				char szLine[512];
 				COORD crRead = {0, csbi.dwCursorPosition.Y};
-				DWORD nRead = 0, cchMax = min((int)countof(szLine)-1, csbi.dwSize.X*cpinfo.MaxCharSize);
+				//120830 - DBCS uses 2 or 4 cells per hieroglyph
+				DWORD nRead = 0, cchMax = min((int)countof(szLine)-1, csbi.dwSize.X/* *cpinfo.MaxCharSize */);
 				if (ReadConsoleOutputCharacterA(ahConOut, szLine, cchMax, crRead, &nRead) && nRead)
 				{
 					_ASSERTE(nRead<((int)countof(szLine)-1));
@@ -7775,7 +7793,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 					while (((psz = strpbrk(psz, szLeads)) != NULL) && (psz < pszEnd))
 					{
 						nXShift++;
-						psz += cpinfo.MaxCharSize;
+						psz += MaxCharSize;
 					}
 					_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
 					apsc->dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
