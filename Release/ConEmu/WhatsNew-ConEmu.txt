@@ -15,6 +15,7 @@ Questions about usablity of "-new_console:s".
 
 
 
+2012.08.30
 [*] Internal changes in child windows.
 [%] Some fixes for DBCS.
 [*] GuiMacro. Changes in Shell function. All following examples runs "cmd" in new tab:
