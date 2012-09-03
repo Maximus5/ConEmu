@@ -122,6 +122,7 @@ class CConEmuChild
 		void ShowScroll(BOOL abImmediate);
 		void HideScroll(BOOL abImmediate);
 		void MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue);
+		bool mb_ScrollRgnWasSet;
 		void UpdateScrollRgn();
 		
 		struct LockDcInfo

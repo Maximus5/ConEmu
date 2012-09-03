@@ -3045,7 +3045,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"TabSelf", isTabSelf);
 		reg->Save(L"TabLazy", isTabLazy);
 		reg->Save(L"TabRecent", isTabRecent);
-		reg->Load(L"TabDblClick", nTabDblClickAction);
+		reg->Save(L"TabDblClick", nTabDblClickAction);
 		reg->Save(L"TabsOnTaskBar", m_isTabsOnTaskBar);
 		reg->Save(L"TabCloseMacro", sTabCloseMacro);
 		reg->Save(L"TabFontFace", sTabFontFace);

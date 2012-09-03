@@ -1300,10 +1300,11 @@ DWORD CConEmuMain::GetWindowStyle()
 
 DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 {
-	if ((wmNewMode == wmFullScreen) || gpSet->isCaptionHidden(wmNewMode))
+	if (gpSet->isCaptionHidden(wmNewMode))
 	{
-		if ((wmNewMode == wmFullScreen)
-			|| ((wmNewMode == wmMaximized) || gpSet->isCaptionHidden(wmNewMode)))
+		/* WS_CAPTION == (WS_BORDER | WS_DLGFRAME) */
+		if ((wmNewMode == wmFullScreen) || (wmNewMode == wmMaximized)
+			|| ((wmNewMode == wmCurrent) && ((WindowMode == wmFullScreen) || (WindowMode == wmMaximized))))
 		{
 			dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
 		}
@@ -3025,6 +3026,8 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg /*, CVirtualConsole
 		const int nTestWidth = 100, nTestHeight = 100;
 		RECT rcTest = MakeRect(nTestWidth,nTestHeight);
 
+		bool bHideCaption = gpSet->isCaptionHidden((change2WindowMode == wmNotChanging) ? WindowMode : change2WindowMode);
+
 		// AdjustWindowRectEx НЕ должно вызываться в FullScreen. Глючит. А рамки с заголовком нет, расширять нечего.
 		if ((change2WindowMode == wmFullScreen)
 			|| ((change2WindowMode == wmNotChanging) && (WindowMode == wmFullScreen)))
@@ -3037,26 +3040,21 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg /*, CVirtualConsole
 			rc.left = -rcTest.left;
 			rc.right = rcTest.right - nTestWidth;
 			rc.bottom = rcTest.bottom - nTestHeight;
-			if (mg & ((DWORD)CEM_CAPTION))
+			if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption)
 				rc.top = -rcTest.top;
 			else
 				rc.top = rc.bottom;
 			_ASSERTE(rc.top >= 0 && rc.left >= 0 && rc.right >= 0 && rc.bottom >= 0);
-			//dwLastStyle = dwStyle; dwLastStyleEx = dwStyleEx;
-			//rcLastRect = rc;
 		}
 		else
 		{
 			_ASSERTE(FALSE);
 			rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
 			rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
-			rc.top = rc.bottom;
-			if (mg & ((DWORD)CEM_CAPTION))
-				rc.top += (gpSet->isCaptionHidden() ? 0 : GetSystemMetrics(SM_CYCAPTION));
-			//	+ (gpSet->isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
+			rc.top = rc.bottom; // рамка
+			if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption) // если есть заголовок - добавим и его
+				rc.top += GetSystemMetrics(SM_CYCAPTION);
 		}
-
-		//}
 	}
 
 	// Сколько занимают табы (по идее меняется только rc.top)
@@ -3178,14 +3176,12 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 // Для точного расчета размеров - требуется (размер главного окна) и (размер окна отрисовки) для корректировки
 // на x64 возникают какие-то глюки с ",RECT rFrom,". Отладчик показывает мусор в rFrom,
 // но тем не менее, после "RECT rc = rFrom;", rc получает правильные значения >:|
-RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, const RECT* prDC/*=NULL*/, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
+RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
 {
 	_ASSERTE(this!=NULL);
 	RECT rc = rFrom; // инициализация, если уж не получится...
 	RECT rcShift = MakeRect(0,0);
 	enum ConEmuRect tFromNow = tFrom;
-
-	_ASSERTE(prDC==NULL); // Изжить пережитки
 
 	// tTabAction обязан включать и флаг CEM_TAB
 	_ASSERTE((tTabAction & CEM_TAB)==CEM_TAB);
@@ -3334,32 +3330,6 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 	//// Теперь rc должен соответствовать CER_MAINCLIENT
 	//RECT rcAddShift = MakeRect(0,0);
 
-	if (prDC)
-	{
-		_ASSERTE(tWhat==CER_SCROLL || tWhat==CER_DC || tWhat==CER_CONSOLE_ALL || tWhat==CER_CONSOLE_CUR || tWhat==CER_CONSOLE_NTVDMOFF);
-
-		//// Если передали реальный размер окна отрисовки - нужно посчитать дополнительные сдвиги
-		//RECT rcCalcDC = CalcRect(CER_DC, rFrom, CER_MAINCLIENT, NULL /*prDC*/);
-		//// расчетный НЕ ДОЛЖЕН быть меньше переданного
-		//#ifdef MSGLOGGER
-		//_ASSERTE((rcCalcDC.right - rcCalcDC.left)>=(prDC->right - prDC->left));
-		//_ASSERTE((rcCalcDC.bottom - rcCalcDC.top)>=(prDC->bottom - prDC->top));
-		//#endif
-
-		//// считаем доп.сдвиги. ТОЧНО
-		//if ((rcCalcDC.right - rcCalcDC.left)!=(prDC->right - prDC->left))
-		//{
-		//	rcAddShift.left = (rcCalcDC.right - rcCalcDC.left - (prDC->right - prDC->left))/2;
-		//	rcAddShift.right = rcCalcDC.right - rcCalcDC.left - rcAddShift.left;
-		//}
-
-		//if ((rcCalcDC.bottom - rcCalcDC.top)!=(prDC->bottom - prDC->top))
-		//{
-		//	rcAddShift.top = (rcCalcDC.bottom - rcCalcDC.top - (prDC->bottom - prDC->top))/2;
-		//	rcAddShift.bottom = rcCalcDC.bottom - rcCalcDC.top - rcAddShift.top;
-		//}
-	}
-
 	// если мы дошли сюда - значит tFrom==CER_MAINCLIENT
 
 	switch (tWhat)
@@ -3380,7 +3350,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		case CER_CONSOLE_CUR: // switch (tWhat)
 		case CER_CONSOLE_NTVDMOFF: // switch (tWhat)
 		{
-			rc = CVConGroup::CalcRect(tWhat, rc, tFromNow, pVCon, prDC, tTabAction);
+			rc = CVConGroup::CalcRect(tWhat, rc, tFromNow, pVCon, tTabAction);
 			return rc;
 		} break;
 		case CER_MONITOR:    // switch (tWhat)
@@ -3813,7 +3783,7 @@ bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
 // Изменить размер консоли по размеру окна (главного)
 void CConEmuMain::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/)
 {
-	CVConGroup::SyncConsoleToWindow();
+	CVConGroup::SyncConsoleToWindow(prcNewWnd);
 }
 
 void CConEmuMain::SyncNtvdm()
@@ -4001,6 +3971,10 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 		case wmNormal:
 		{
 			DEBUGLOGFILE("SetWindowMode(wmNormal)\n");
+			bool bWasInRestore = mb_InRestore;
+			mb_InRestore = TRUE;
+			mb_isFullScreen = false;
+
 			AutoSizeFont(mrc_Ideal, CER_MAIN);
 			// Расчитать размер по оптимальному WindowRect
 			if (!CVConGroup::PreReSize(inMode, mrc_Ideal))
@@ -4103,13 +4077,16 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			#endif
 
 			// Если это во время загрузки - то до первого ShowWindow - isIconic возвращает FALSE
-			if (!(abFirstShow && WindowStartMinimized) && (isIconic() || isZoomed()))
+			// Нужен реальный IsZoomed (FullScreen теперь тоже Zoomed)
+			if (!(abFirstShow && WindowStartMinimized) && (isIconic() || ::IsZoomed(ghWnd)))
 			{
 				ShowWindow(SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
 				// что-то после AltF9, AltF9 уголки остаются не срезанными...
 				//hRgn = CreateWindowRgn();
 				//SetWindowRgn(ghWnd, hRgn, TRUE);
 			}
+
+			mb_InRestore = bWasInRestore;
 
 			OnSize(false); // подровнять ТОЛЬКО дочерние окошки
 

@@ -9,6 +9,8 @@
 
   <?define RegKeyOld = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ConEmu" ?>
   <?define RegKey = "SOFTWARE\ConEmu" ?>
+  <?define AppRegKey32 = "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\ConEmu.exe" ?>
+  <?define AppRegKey64 = "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\ConEmu64.exe" ?>
 
   <?if $(var.Platform) = x86 ?>
     <?define Win64 = "no" ?>

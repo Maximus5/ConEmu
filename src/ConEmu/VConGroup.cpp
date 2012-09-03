@@ -2444,10 +2444,8 @@ HRGN CVConGroup::GetExclusionRgn(bool abTestOnly/*=false*/)
 	return hExclusion;
 }
 
-RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, const RECT* prDC/*=NULL*/, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
+RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
 {
-	_ASSERTE(prDC==NULL); // Изжить пережитки
-
 	RECT rc = rFrom;
 	RECT rcShift = MakeRect(0,0);
 
@@ -2494,7 +2492,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		int nDeltaY = (rcCalcBack.bottom - rcCalcBack.top) - (rcCalcDC.bottom - rcCalcDC.top);
 
 		// Теперь сдвиги
-		if (gpSet->isTryToCenter)
+		if (gpSet->isTryToCenter && (gpConEmu->isZoomed() || gpConEmu->isFullScreen() || gpSet->isQuakeStyle))
 		{
 			// считаем доп.сдвиги. ТОЧНО
 			if (nDeltaX > 0)
@@ -2502,7 +2500,15 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				rcAddShift.left = nDeltaX >> 1;
 				rcAddShift.right = nDeltaX - rcAddShift.left;
 			}
+		}
+		else
+		{
+			if (nDeltaX > 0)
+				rcAddShift.right = nDeltaX;
+		}
 
+		if (gpSet->isTryToCenter && (gpConEmu->isZoomed() || gpConEmu->isFullScreen()))
+		{
 			if (nDeltaY > 0)
 			{
 				rcAddShift.top = nDeltaY >> 1;
@@ -2511,9 +2517,6 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		}
 		else
 		{
-			if (nDeltaX > 0)
-				rcAddShift.right = nDeltaX;
-
 			if (nDeltaY > 0)
 				rcAddShift.bottom = nDeltaY;
 		}
@@ -2908,7 +2911,7 @@ void CVConGroup::LockSyncConsoleToWindow(bool abLockSync)
 }
 
 // Изменить размер консоли по размеру окна (главного)
-void CVConGroup::SyncConsoleToWindow()
+void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/)
 {
 	if (gb_SkipSyncSize || isNtvdm())
 		return;
@@ -2928,7 +2931,11 @@ void CVConGroup::SyncConsoleToWindow()
 
 	//gp_VActive->RCon()->SyncConsole2Window();
 
-	RECT rcWnd = gpConEmu->CalcRect(CER_MAINCLIENT, VCon.VCon());
+	RECT rcWnd;
+	if (prcNewWnd)
+		rcWnd = gpConEmu->CalcRect(CER_MAINCLIENT, *prcNewWnd, CER_MAIN, VCon.VCon());
+	else
+		rcWnd = gpConEmu->CalcRect(CER_MAINCLIENT, VCon.VCon());
 
 	SyncAllConsoles2Window(rcWnd, CER_MAINCLIENT);
 }

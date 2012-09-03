@@ -4,9 +4,15 @@
     <DirectoryRef Id="APPLICATIONFOLDER">
       <Component Id="ConEmuGui32" Guid="$(var.Guid.ConEmuGui32)" Win64="$(var.Win64)">
         <File Id="ConEmu.exe" Source="..\..\Release\ConEmu.exe"  KeyPath="yes" />
+        <!--<Component Id="ConEmuGuiReg32">-->
+          <RegistryValue Root="HKMU" Key="$(var.AppRegKey32)" Value="[APPLICATIONFOLDER]ConEmu.exe" Type="string"/>
+        <!--</Component>-->
       </Component>
       <Component Id="ConEmuGui64" Guid="$(var.Guid.ConEmuGui64)" Win64="$(var.Win64)">
         <File Id="ConEmu64.exe" Source="..\..\Release\ConEmu64.exe"  KeyPath="yes" />
+        <!--<Component Id="ConEmuGuiReg64">-->
+          <RegistryValue Root="HKMU" Key="$(var.AppRegKey64)" Value="[APPLICATIONFOLDER]ConEmu64.exe" Type="string"/>
+        <!--</Component>-->
       </Component>
     </DirectoryRef>
     <DirectoryRef Id="CONEMUBASEDIR">

@@ -14,6 +14,13 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.09.02
+[%] Fixed regression of «Auto show scrollbar».
+[%] Issue 696: «Frame width» does not works (with «Hide caption always»).
+[%] Some excess and wrong console resizes removed on window state change.
+[%] Successive show/hide tab bar descrease window height.
+[+] Installer creates "ConEmu.exe" and "ConEmu64.exe" in AppPaths (HKLM).
+
 
 2012.08.30
 [*] Internal changes in child windows.

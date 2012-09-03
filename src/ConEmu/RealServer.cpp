@@ -762,7 +762,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 			if (lbCurrentActive != lbNewActive)
 			{
 				enum ConEmuMargins tTabAction = lbNewActive ? CEM_TABACTIVATE : CEM_TABDEACTIVATE;
-				RECT rcConsole = gpConEmu->CalcRect(CER_CONSOLE_CUR, gpConEmu->GetIdealRect(), CER_MAIN, NULL, NULL, tTabAction);
+				RECT rcConsole = gpConEmu->CalcRect(CER_CONSOLE_CUR, gpConEmu->GetIdealRect(), CER_MAIN, NULL, tTabAction);
 
 				_ASSERTE(FALSE && "Must change size of all active group consoles");
 				

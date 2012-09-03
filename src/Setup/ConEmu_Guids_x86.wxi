@@ -16,7 +16,9 @@
 	<?define Guid.UninstallShortcut = "4D5CC6F3-9816-4A21-BF74-043FDE3BC1BB" ?>
 <!-- files -->
 	<?define Guid.ConEmuGui32 = "549CE04A-9CE7-4572-88AA-AA919F4D3F1D" ?>
+	<?define Guid.ConEmuGuiReg32 = "227BFB10-143F-457A-A7C9-36C014845B46" ?>
 	<?define Guid.ConEmuGui64 = "80B41CD6-361B-4C9C-8731-CC000FDB3650" ?>
+	<?define Guid.ConEmuGuiReg64 = "47343DCA-D895-4EDA-930A-92E9370335A3" ?>
 	<?define Guid.ConEmuLicense = "001DA42D-7E22-4BC9-8D7F-4AEEC71C0F6F" ?>
 	<!-- Console Server and Hooks -->
 	<?define Guid.ConEmuC.exe = "0C23EE37-C11E-415E-88D0-14ACFE561459" ?>

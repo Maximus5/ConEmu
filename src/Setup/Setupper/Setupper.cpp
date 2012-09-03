@@ -400,7 +400,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	int nInstallVer = 0;
 	
 	wsprintf(gsTitle, L"ConEmu %s installer", CONEMUVERL);
-	lstrcpyn(gsRunAsAdm, L"Run as administrator", countof(gsRunAsAdm));
+	lstrcpyn(gsRunAsAdm, L"Run installer as administrator", countof(gsRunAsAdm));
 
 	wchar_t szArg[MAX_PATH+1];
 	LPCWSTR pszCmdToken = GetCommandLine();

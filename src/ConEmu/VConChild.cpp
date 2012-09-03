@@ -86,6 +86,7 @@ CConEmuChild::CConEmuChild()
 	m_si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE /*| SIF_DISABLENOSCROLL*/;
 	mb_ScrollDisabled = FALSE;
 	m_LastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
+	mb_ScrollRgnWasSet = false;
 	
 	ZeroStruct(m_LockDc);
 }
@@ -1324,6 +1325,11 @@ void CConEmuChild::MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue)
 
 void CConEmuChild::UpdateScrollRgn()
 {
+	bool bNeedRgn = (mb_ScrollVisible && (gpSet->isAlwaysShowScrollbar == 2));
+
+	if (bNeedRgn == mb_ScrollRgnWasSet)
+		return;
+
 	HRGN hRgn = NULL;
 	if (mb_ScrollVisible && (gpSet->isAlwaysShowScrollbar == 2))
 	{
@@ -1338,7 +1344,15 @@ void CConEmuChild::UpdateScrollRgn()
 		DeleteObject(hScrlRgn);
 		UNREFERENCED_PARAMETER(iRc);
 	}
-	SetWindowRgn(mh_WndDC, hRgn, FALSE);
+
+	SetWindowRgn(mh_WndDC, hRgn, TRUE);
+
+	mb_ScrollRgnWasSet = (hRgn != NULL);
+
+	if (hRgn)
+	{
+		InvalidateRect(mh_WndBack, NULL, FALSE);
+	}
 }
 
 void CConEmuChild::ShowScroll(BOOL abImmediate)
