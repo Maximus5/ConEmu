@@ -804,6 +804,12 @@
 #define vkShowCaption                   2437
 #define stWndWidth                      2438
 #define stWndHeight                     2439
+#define gbRecreateSplit                 2440
+#define rbRecreateSplitNone             2441
+#define rbRecreateSplit2Right           2442
+#define rbRecreateSplit2Bottom          2443
+#define tRecreateSplit                  2444
+#define stRecreateSplit                 2445
 
 // Next default values for new objects
 // 
@@ -811,7 +817,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2440
+#define _APS_NEXT_CONTROL_VALUE         2446
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

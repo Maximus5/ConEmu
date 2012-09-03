@@ -644,7 +644,7 @@ BEGIN
 END
 
 IDD_RESTART DIALOGEX 0, 0, 310, 167
-STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "ConEmu"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
@@ -658,8 +658,8 @@ BEGIN
     PUSHBUTTON      "...",IDC_CHOOSE,284,19,14,13
     PUSHBUTTON      "...",IDC_CHOOSE_DIR,284,46,14,13
     GROUPBOX        "",IDC_STATIC,4,61,300,73
-    CONTROL         "Run as current &user <UserName>",rbCurrentUser,"Button",BS_AUTORADIOBUTTON,11,70,199,8
-    CONTROL         "Restricte&d current user",cbRunAsRestricted,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,83,140,10
+    CONTROL         "Run as current &user <UserName>",rbCurrentUser,"Button",BS_AUTORADIOBUTTON,11,70,150,8
+    CONTROL         "Restricte&d current user",cbRunAsRestricted,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,83,137,10
     CONTROL         "&Another user",rbAnotherUser,"Button",BS_AUTORADIOBUTTON,11,100,60,8
     LTEXT           "User &name:",IDC_STATIC,23,114,40,8
     COMBOBOX        tRunAsUser,67,112,93,30,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
@@ -669,6 +669,13 @@ BEGIN
     CONTROL         "&Run as administrator",cbRunAsAdmin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,61,149,82,8
     CONTROL         "New &window",cbRunInNewWindow,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,149,60,8
     CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,129,157,8
+    GROUPBOX        "Split active console",gbRecreateSplit,206,61,98,40
+    CONTROL         "Do&n't",rbRecreateSplitNone,"Button",BS_AUTORADIOBUTTON,261,87,38,8
+    CONTROL         "To ri&ght",rbRecreateSplit2Right,"Button",BS_AUTORADIOBUTTON,261,73,39,8
+    CONTROL         "To &bottom",rbRecreateSplit2Bottom,"Button",BS_AUTORADIOBUTTON,210,73,49,8
+    RTEXT           "New console size:",IDC_STATIC,187,136,65,8
+    EDITTEXT        tRecreateSplit,224,84,31,12,ES_AUTOHSCROLL
+    RTEXT           "%:",stRecreateSplit,209,87,11,8
 END
 
 IDD_MORE_HIDE DIALOG  0, 0, 128, 54

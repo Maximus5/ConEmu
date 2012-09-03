@@ -173,50 +173,32 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			LPCWSTR pszCmd = pArgs->pszSpecialCmd
 			                 ? pArgs->pszSpecialCmd
 			                 : pRCon ? pRCon->GetCmd() : NULL;
-			//int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszCmd);
-			//if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszCmd);
+
 			LPCWSTR pszSystem = gpSet->GetCmd();
-			//if (pszSystem != pszCmd && (pszSystem && pszCmd && (lstrcmpi(pszSystem, pszCmd) != 0)))
-			//{
-			//	nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszSystem);
-			//	if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, pArgs->pszSpecialCmd ? -1 : 0, (LPARAM)pszSystem);
-			//}
-			//LPCWSTR pszHistory = gpSet->HistoryGet();
-			//if (pszHistory)
-			//{
-			//	while (*pszHistory)
-			//	{
-			//		nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszHistory);
-			//		if (nId < 0)
-			//			SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pszHistory);
-			//		pszHistory += _tcslen(pszHistory)+1;
-			//	}
-			//}
-			////// ќбновить группы команд
-			////gpSet->LoadCmdTasks(NULL);
-			//int nGroup = 0;
-			//const Settings::CommandTasks* pGrp = NULL;
-			//while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
-			//{
-			//	nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pGrp->pszName);
-			//	if (nId < 0)
-			//		SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pGrp->pszName);
-			//}
 
 			if (pArgs->aRecreate == cra_RecreateTab)
 			{
 				SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
 				SetDlgItemText(hDlg, IDC_STARTUP_DIR, pRCon ? pRCon->GetDir() : L"");
+				// Hide Split's
+				ShowWindow(GetDlgItem(hDlg, gbRecreateSplit), SW_HIDE);
+				ShowWindow(GetDlgItem(hDlg, rbRecreateSplitNone), SW_HIDE);
+				ShowWindow(GetDlgItem(hDlg, rbRecreateSplit2Right), SW_HIDE);
+				ShowWindow(GetDlgItem(hDlg, rbRecreateSplit2Bottom), SW_HIDE);
+				ShowWindow(GetDlgItem(hDlg, stRecreateSplit), SW_HIDE);
+				ShowWindow(GetDlgItem(hDlg, tRecreateSplit), SW_HIDE);
 			}
 			else
 			{
 				SetDlgItemText(hDlg, IDC_RESTART_CMD, pArgs->pszSpecialCmd ? pArgs->pszSpecialCmd : pszSystem);
 				SetDlgItemText(hDlg, IDC_STARTUP_DIR, pArgs->pszStartupDir ? pArgs->pszStartupDir : L"");
+				// Fill splits
+				SetDlgItemInt(hDlg, tRecreateSplit, pArgs->nSplitValue/10, FALSE);
+				CheckRadioButton(hDlg, rbRecreateSplitNone, rbRecreateSplit2Bottom, rbRecreateSplitNone+pArgs->eSplit);
+				EnableWindow(GetDlgItem(hDlg, tRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
+				EnableWindow(GetDlgItem(hDlg, stRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
 			}
-			//EnableWindow(GetDlgItem(hDlg, IDC_STARTUP_DIR), FALSE);
-			//#ifndef _DEBUG
-			//EnableWindow(GetDlgItem(hDlg, IDC_CHOOSE_DIR), FALSE);
-			//#endif
+
 			const wchar_t *pszUser, *pszDomain; BOOL bResticted;
 			int nChecked = rbCurrentUser;
 			wchar_t szCurUser[MAX_PATH*2+1]; DWORD nUserNameLen = countof(szCurUser);
@@ -530,7 +512,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			if (HIWORD(wParam) == BN_CLICKED)
 			{
-				switch(LOWORD(wParam))
+				switch (LOWORD(wParam))
 				{
 					case IDC_CHOOSE:
 					{
@@ -616,6 +598,24 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						RecreateDlgProc(hDlg, UM_USER_CONTROLS, LOWORD(wParam), 0);
 						return 1;
 					}
+					case rbRecreateSplitNone:
+					case rbRecreateSplit2Right:
+					case rbRecreateSplit2Bottom:
+					{
+						RConStartArgs* pArgs = pDlg->mp_Args;
+						switch (LOWORD(wParam))
+						{
+						case rbRecreateSplitNone:
+							pArgs->eSplit = RConStartArgs::eSplitNone; break;
+						case rbRecreateSplit2Right:
+							pArgs->eSplit = RConStartArgs::eSplitHorz; break;
+						case rbRecreateSplit2Bottom:
+							pArgs->eSplit = RConStartArgs::eSplitVert; break;
+						}
+						EnableWindow(GetDlgItem(hDlg, tRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
+						EnableWindow(GetDlgItem(hDlg, stRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
+						return 1;
+					}
 					case IDC_START:
 					{
 						RConStartArgs* pArgs = pDlg->mp_Args;
@@ -669,6 +669,16 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 								pArgs->aRecreate = cra_CreateWindow;
 							else
 								pArgs->aRecreate = cra_CreateTab;
+						}
+						if ((pArgs->aRecreate == cra_CreateTab) && (pArgs->eSplit != RConStartArgs::eSplitNone))
+						{
+							BOOL bOk = FALSE;
+							int nPercent = GetDlgItemInt(hDlg, tRecreateSplit, &bOk, FALSE);
+							if (bOk && (nPercent >= 1) && (nPercent <= 99))
+							{
+								pArgs->nSplitValue = nPercent * 10;
+							}						
+							//pArgs->nSplitPane = 0; —брасывать не будем?
 						}
 						pDlg->mn_DlgRc = IDC_START;
 						EndDialog(hDlg, IDC_START);
