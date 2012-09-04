@@ -193,7 +193,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetDlgItemText(hDlg, IDC_RESTART_CMD, pArgs->pszSpecialCmd ? pArgs->pszSpecialCmd : pszSystem);
 				SetDlgItemText(hDlg, IDC_STARTUP_DIR, pArgs->pszStartupDir ? pArgs->pszStartupDir : L"");
 				// Fill splits
-				SetDlgItemInt(hDlg, tRecreateSplit, pArgs->nSplitValue/10, FALSE);
+				SetDlgItemInt(hDlg, tRecreateSplit, (1000-pArgs->nSplitValue)/10, FALSE);
 				CheckRadioButton(hDlg, rbRecreateSplitNone, rbRecreateSplit2Bottom, rbRecreateSplitNone+pArgs->eSplit);
 				EnableWindow(GetDlgItem(hDlg, tRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
 				EnableWindow(GetDlgItem(hDlg, stRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
@@ -676,7 +676,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 							int nPercent = GetDlgItemInt(hDlg, tRecreateSplit, &bOk, FALSE);
 							if (bOk && (nPercent >= 1) && (nPercent <= 99))
 							{
-								pArgs->nSplitValue = nPercent * 10;
+								pArgs->nSplitValue = (100-nPercent) * 10;
 							}						
 							//pArgs->nSplitPane = 0; —брасывать не будем?
 						}

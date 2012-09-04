@@ -14,6 +14,7 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.09.03
 [+] SplitScreen options in «Create new console» dialog.
 
 
