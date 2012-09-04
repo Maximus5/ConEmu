@@ -3101,8 +3101,17 @@ RECT CVConGroup::AllTextRect(bool abMinimal /*= false*/)
 				// При ресайзе через окно настройки - gp_VActive еще не перерисовался
 				// так что и TextWidth/TextHeight не обновился
 				//-- gpSetCls->UpdateSize(gp_VActive->TextWidth, gp_VActive->TextHeight);
-				rcText.right = gp_VActive->RCon()->TextWidth();
-				rcText.bottom = gp_VActive->RCon()->TextHeight();
+				int nWidth = gp_VActive->RCon()->TextWidth();
+				int nHeight = gp_VActive->RCon()->TextHeight();
+				if (nWidth <= 0 || nHeight <= 0)
+				{
+					_ASSERTE(FALSE && "gp_VActive->RCon()->TextWidth()>=0 && gp_VActive->RCon()->TextHeight()>=0");
+				}
+				else
+				{
+					rcText.right = nWidth;
+					rcText.bottom = nHeight;
+				}
 			}
 		}
 	}

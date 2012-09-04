@@ -1463,9 +1463,10 @@ BOOL CConEmuMain::CreateMainWindow()
 		//nHeight = conSize.Y * gpSetCls->FontHeight() + nShiftY
 		//	+ ((gpSet->isTabs == 1) ? (gpSet->rcTabMargins.top+gpSet->rcTabMargins.bottom) : 0);
 		//mrc_Ideal = MakeRect(gpSet->wndX, gpSet->wndY, gpSet->wndX+nWidth, gpSet->wndY+nHeight);
-		mrc_Ideal = GetDefaultRect();
-		nWidth = mrc_Ideal.right - mrc_Ideal.left;
-		nHeight = mrc_Ideal.bottom - mrc_Ideal.top;
+		RECT rcWnd = GetDefaultRect();
+		UpdateIdealRect(rcWnd);
+		nWidth = rcWnd.right - rcWnd.left;
+		nHeight = rcWnd.bottom - rcWnd.top;
 	}
 	else
 	{
@@ -1996,9 +1997,10 @@ void CConEmuMain::InsideUpdatePlacement()
 			|| ((m_InsideIntegration != ii_Simple) && memcmp(&mrc_InsideParentRel, &rcRelative, sizeof(rcRelative))))
 		{
 			// –асчитать
-			mrc_Ideal = GetDefaultRect();
+			RECT rcWnd = GetDefaultRect();
+			UpdateIdealRect(rcWnd);
 			// ѕодвинуть
-			SetWindowPos(ghWnd, HWND_TOP, mrc_Ideal.left, mrc_Ideal.top, mrc_Ideal.right-mrc_Ideal.left, mrc_Ideal.bottom-mrc_Ideal.top, 0);
+			SetWindowPos(ghWnd, HWND_TOP, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
 			//MoveWindow(ghWnd, mrc_Ideal.left, mrc_Ideal.top, mrc_Ideal.right-mrc_Ideal.left, mrc_Ideal.bottom-mrc_Ideal.top, TRUE);
 		}
 	}
@@ -3167,6 +3169,11 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 	else
 	{
 		GetWindowRect(ghWnd, &rcMain);
+	}
+
+	if (tWhat == CER_MAIN)
+	{
+		return rcMain;
 	}
 
 	return CalcRect(tWhat, rcMain, CER_MAIN, pVCon);
@@ -4525,7 +4532,10 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 
 			// ѕользователи жалуютс€ на смену размера консоли
-			#if 1
+
+			#if 0
+			// -- не годитс€. при запуске новой консоли и автопоказе табов
+			// -- размер "CVConGroup::AllTextRect()" --> {0x0}
 			RECT rcConsole = {}, rcCompWnd = {};
 			TODO("DoubleView: нужно с учетом видимых консолией");
 			if (isVConExists(0))
@@ -4538,12 +4548,14 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			{
 				rcCompWnd = rcWnd; // не мен€ть?
 			}
+			#endif
 
-			#else
+			#if 1
 			// ¬ыполн€ем всегда, даже если размер уже соответсвует...
+			// Ѕез учета DoubleView/SplitScreen
 			AutoSizeFont(mrc_Ideal, CER_MAIN);
-			RECT rcConsole = CalcRect(CER_CONSOLE, mrc_Ideal, CER_MAIN);
-			RECT rcCompWnd = CalcRect(CER_MAIN, rcConsole, CER_CONSOLE);
+			RECT rcConsole = CalcRect(CER_CONSOLE_ALL, mrc_Ideal, CER_MAIN);
+			RECT rcCompWnd = CalcRect(CER_MAIN, rcConsole, CER_CONSOLE_ALL);
 			#endif
 
 			// ѕри показе/скрытии табов высота консоли может "прыгать"
@@ -5786,17 +5798,26 @@ void CConEmuMain::UpdateIdealRect(BOOL abAllowUseConSize/*=FALSE*/)
 	// «апомнить "идеальный" размер окна, выбранный пользователем
 	if (!mb_isFullScreen && !isZoomed() && !isIconic())
 	{
-		GetWindowRect(ghWnd, &mrc_Ideal);
+		RECT rcWnd = {};
+		GetWindowRect(ghWnd, &rcWnd);
+		UpdateIdealRect(rcWnd);
 	}
 	else if (abAllowUseConSize)
 	{
-		if (isVConExists(0))
-			return;
+		//if (isVConExists(0))
+		//	return;
 
-		RECT rcCon = CVConGroup::AllTextRect();
+		//RECT rcCon = CVConGroup::AllTextRect();
+		//RECT rcCon = CalcRect(CER_CONSOLE_ALL);
+		RECT rcCon = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
 		RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE_ALL);
-		mrc_Ideal = rcWnd;
+		UpdateIdealRect(rcWnd);
 	}
+}
+
+void CConEmuMain::UpdateIdealRect(RECT rcNewIdeal)
+{
+	mrc_Ideal = rcNewIdeal;
 }
 
 void CConEmuMain::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)
@@ -9148,10 +9169,16 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//	}
 	//}
 
-	if (!mrc_Ideal.right)
+	// lpCreate->cx/cy может содержать CW_USEDEFAULT
+	RECT rcWnd = CalcRect(CER_MAIN);
+	//GetWindowRect(ghWnd, &rcWnd);
+
+	// ≈сли mrc_Ideal еще не задавалс€, или оказалс€ больше чем смогли создать
+	if (!mrc_Ideal.right
+		|| ((mrc_Ideal.right - mrc_Ideal.left) > (rcWnd.right - rcWnd.left))
+		|| ((mrc_Ideal.bottom - mrc_Ideal.top) > (rcWnd.bottom - rcWnd.top)))
 	{
-		// lpCreate->cx/cy может содержать CW_USEDEFAULT
-		GetWindowRect(ghWnd, &mrc_Ideal);
+		UpdateIdealRect(rcWnd);
 	}
 
 	StoreNormalRect(NULL);

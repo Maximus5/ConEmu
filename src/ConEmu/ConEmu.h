@@ -602,6 +602,9 @@ class CConEmuMain :
 		void UpdateActiveGhost(CVirtualConsole* apVCon);
 		void UpdateFarSettings();
 		void UpdateIdealRect(BOOL abAllowUseConSize=FALSE);
+	protected:
+		void UpdateIdealRect(RECT rcNewIdeal);
+	public:
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 		void UpdateTitle(/*LPCTSTR asNewTitle*/);
 		void UpdateProgress(/*BOOL abUpdateTitle*/);

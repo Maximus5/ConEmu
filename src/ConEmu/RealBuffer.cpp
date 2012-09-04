@@ -99,7 +99,7 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 	m_Type = aType;
 	mn_LastRgnFlags = -1;
 	
-	ZeroStruct(con); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&csCON);
+	ZeroStruct(con);
 	con.hInSetSize = CreateEvent(0,TRUE,TRUE,0);
 	
 	mb_BuferModeChangeLocked = FALSE;
@@ -784,10 +784,19 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					mp_RCon->mn_LastConsolePacketIdx--;
 					mp_RCon->SetMonitorThreadEvent();
 					DWORD nWaitTimeout = SETSYNCSIZEAPPLYTIMEOUT;
+					
 					#ifdef _DEBUG
-					nWaitTimeout = 30000;
-					#endif
+					nWaitTimeout = SETSYNCSIZEAPPLYTIMEOUT*4; //30000;
 					nWait = WaitForSingleObject(mp_RCon->mh_ApplyFinished, nWaitTimeout);
+					if (nWait == WAIT_TIMEOUT)
+					{
+						_ASSERTE(FALSE && "SETSYNCSIZEAPPLYTIMEOUT");
+						//nWait = WaitForSingleObject(mp_RCon->mh_ApplyFinished, nWaitTimeout);
+					}
+					#else
+					nWait = WaitForSingleObject(mp_RCon->mh_ApplyFinished, nWaitTimeout);
+					#endif
+					
 					COORD crDebugCurSize = con.m_sbi.dwSize;
 
 					if (crDebugCurSize.X != sizeX)
@@ -1171,6 +1180,8 @@ BOOL CRealBuffer::PreInit()
 	{
 		con.m_sbi.dwSize = MakeCoord(rcCon.right,rcCon.bottom);
 	}
+	con.nTextWidth = rcCon.right;
+	con.nTextHeight = rcCon.bottom;
 
 	con.m_sbi.wAttributes = 7;
 	con.m_sbi.srWindow.Right = rcCon.right-1; con.m_sbi.srWindow.Bottom = rcCon.bottom-1;
@@ -1354,6 +1365,7 @@ int CRealBuffer::TextWidth()
 	if (con.nChange2TextWidth!=-1 && con.nChange2TextWidth!=0)
 		return con.nChange2TextWidth;
 
+	_ASSERTE(con.nTextWidth>=MIN_CON_WIDTH);
 	return con.nTextWidth;
 }
 
@@ -1383,14 +1395,13 @@ int CRealBuffer::TextHeight()
 	else
 		nRet = con.nTextHeight;
 
-#ifdef _DEBUG
-
-	if (nRet > 200)
+	#ifdef _DEBUG
+	if (nRet <= MIN_CON_HEIGHT || nRet > 200)
 	{
-		_ASSERTE(nRet<=200);
+		_ASSERTE(nRet>=MIN_CON_HEIGHT && nRet<=200);
 	}
+	#endif
 
-#endif
 	return nRet;
 }
 
@@ -1400,7 +1411,7 @@ int CRealBuffer::GetTextHeight()
 
 	if (!this) return MIN_CON_HEIGHT;
 	
-	_ASSERTE(/*con.nTextHeight>=MIN_CON_HEIGHT &&*/ con.nTextHeight<=200);
+	_ASSERTE(con.nTextHeight>=MIN_CON_HEIGHT && con.nTextHeight<=200);
 	return con.nTextHeight;
 }
 

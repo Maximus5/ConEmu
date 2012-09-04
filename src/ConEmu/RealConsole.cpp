@@ -281,8 +281,10 @@ void CRealConsole::Construct(CVirtualConsole* apVCon)
 	lstrcpy(ms_TempPanel, L"{Temporary panel");
 	MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, countof(ms_TempPanelRus));
 	//lstrcpy(ms_NameTitle, L"Name");
-	SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
 	PreInit(); // просто инициализировать переменные размеров...
+
+	// -- т.к. автопоказ табов может вызвать ресайз - то табы в самом конце инициализации!
+	SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
 	MCHKHEAP;
 }
 

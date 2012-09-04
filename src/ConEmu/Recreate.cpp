@@ -614,6 +614,8 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						}
 						EnableWindow(GetDlgItem(hDlg, tRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
 						EnableWindow(GetDlgItem(hDlg, stRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
+						if (pArgs->eSplit != pArgs->eSplitNone)
+							SetFocus(GetDlgItem(hDlg, tRecreateSplit));
 						return 1;
 					}
 					case IDC_START:

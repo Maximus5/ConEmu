@@ -669,13 +669,12 @@ BEGIN
     CONTROL         "&Run as administrator",cbRunAsAdmin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,61,149,82,8
     CONTROL         "New &window",cbRunInNewWindow,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,149,60,8
     CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,129,157,8
-    GROUPBOX        "Split active console",gbRecreateSplit,206,61,98,40
-    CONTROL         "Do&n't",rbRecreateSplitNone,"Button",BS_AUTORADIOBUTTON,261,87,38,8
+    GROUPBOX        "New console split",gbRecreateSplit,206,61,98,40
+    CONTROL         "&Layered",rbRecreateSplitNone,"Button",BS_AUTORADIOBUTTON,261,87,39,8
     CONTROL         "To ri&ght",rbRecreateSplit2Right,"Button",BS_AUTORADIOBUTTON,261,73,39,8
     CONTROL         "To &bottom",rbRecreateSplit2Bottom,"Button",BS_AUTORADIOBUTTON,210,73,49,8
-    RTEXT           "New console size:",IDC_STATIC,187,136,65,8
-    EDITTEXT        tRecreateSplit,224,84,31,12,ES_AUTOHSCROLL
     RTEXT           "%:",stRecreateSplit,209,87,11,8
+    EDITTEXT        tRecreateSplit,224,84,31,12,ES_AUTOHSCROLL
 END
 
 IDD_MORE_HIDE DIALOG  0, 0, 128, 54
