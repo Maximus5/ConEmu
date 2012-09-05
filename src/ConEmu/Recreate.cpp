@@ -696,6 +696,16 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						return 1;
 				}
 			}
+			else if ((HIWORD(wParam) == EN_SETFOCUS) && lParam)
+			{
+				switch (LOWORD(wParam))
+				{
+				case tRecreateSplit:
+				case tRunAsPassword:
+					PostMessage((HWND)lParam, EM_SETSEL, 0, SendMessage((HWND)lParam, WM_GETTEXTLENGTH, 0,0));
+					break;
+				}
+			}
 
 			break;
 		default:
