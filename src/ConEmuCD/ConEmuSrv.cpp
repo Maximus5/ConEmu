@@ -629,6 +629,8 @@ int ServerInitGuiTab()
 				_ASSERTE(lbCallRc && (dwErr==ERROR_FILE_NOT_FOUND) && "GUI was not initialized yet?");
 				Sleep(250);
 			}
+
+			UNREFERENCED_PARAMETER(dwErr);
 		}
 
 
@@ -1651,7 +1653,7 @@ bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*
 		pHdr->CurrentIndex++;
 		lbNeedRecreate = true;
 	}
-	DWORD nNewIndex = pHdr->CurrentIndex;
+	int nNewIndex = pHdr->CurrentIndex;
 
 	// Проверить, если мэппинг уже открывался ранее, может его нужно переоткрыть - сменился индекс (создан в другом сервере)
 	if (!lbNeedRecreate && gpSrv->pStoredOutputItem)
@@ -3151,6 +3153,7 @@ static BOOL ReadConsoleData()
 	DWORD nNewScroll = 0;
 	int TextWidth = 0, TextHeight = 0;
 	BOOL bSuccess = ::GetConWindowSize(gpSrv->sbi, gcrVisibleSize.X, gcrVisibleSize.Y, nCurScroll, &TextWidth, &TextHeight, &nNewScroll);
+	UNREFERENCED_PARAMETER(bSuccess);
 	//TextWidth  = gpSrv->sbi.dwSize.X;
 	//TextHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
 	TextLen = TextWidth * TextHeight;

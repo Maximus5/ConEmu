@@ -147,7 +147,7 @@ extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnGuiPID;
 HDC ghTempHDC = NULL;
 GetConsoleWindow_T gfGetRealConsoleWindow = NULL;
-extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
+//extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
 extern HANDLE ghCurrentOutBuffer;
 HANDLE ghStdOutHandle = NULL;
 extern HANDLE ghLastAnsiCapable, ghLastAnsiNotCapable;
@@ -916,7 +916,7 @@ HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPC
 {
 	typedef HANDLE (WINAPI* OnOpenFileMappingW_t)(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
 	ORIGINALFAST(OpenFileMappingW);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 	HANDLE hRc = FALSE;
 
 	if (ghConEmuWndDC && lpName && *lpName)
@@ -960,7 +960,7 @@ LPVOID WINAPI OnMapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, 
 {
 	typedef LPVOID (WINAPI* OnMapViewOfFile_t)(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap);
 	ORIGINALFAST(MapViewOfFile);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 	LPVOID ptr = NULL;
 
 	if (gpAnnotationHeader && (hFileMappingObject == (HANDLE)gpAnnotationHeader))
@@ -980,7 +980,7 @@ BOOL WINAPI OnUnmapViewOfFile(LPCVOID lpBaseAddress)
 {
 	typedef BOOL (WINAPI* OnUnmapViewOfFile_t)(LPCVOID lpBaseAddress);
 	ORIGINALFAST(UnmapViewOfFile);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
     BOOL lbRc = FALSE;
 
 	if (gpAnnotationHeader && (lpBaseAddress == gpAnnotationHeader))
@@ -999,7 +999,7 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 {
 	typedef BOOL (WINAPI* OnCloseHandle_t)(HANDLE hObject);
 	ORIGINALFAST(CloseHandle);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
 	if (ghLastAnsiCapable && (ghLastAnsiCapable == hObject))
@@ -1064,7 +1064,7 @@ BOOL WINAPI OnSetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext)
 {
 	typedef BOOL (WINAPI* OnSetThreadContext_t)(HANDLE hThread, CONST CONTEXT *lpContext);
 	ORIGINALFAST(SetThreadContext);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
 	if (ghSkipSetThreadContextForThread && (hThread == ghSkipSetThreadContextForThread))
@@ -2832,7 +2832,7 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 				WORD vk = bHomeEnd ? ((nChars < 0) ? VK_HOME : VK_END) :
 					((nChars < 0) ? VK_LEFT : VK_RIGHT);
 				HKL hkl = GetKeyboardLayout(gReadConsoleInfo.InReadConsoleTID ? gReadConsoleInfo.InReadConsoleTID : gReadConsoleInfo.LastReadConsoleInputTID);
-				WORD sc = MapVirtualKeyEx(vk, MAPVK_VK_TO_VSC, hkl);
+				WORD sc = MapVirtualKeyEx(vk, 0/*MAPVK_VK_TO_VSC*/, hkl);
 				if (!sc)
 				{
 					sc = (vk == VK_LEFT)  ? 0x4B :
@@ -2979,6 +2979,8 @@ BOOL WINAPI OnReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead
 		SetLastError(nErr);
 	}
 
+	UNREFERENCED_PARAMETER(bMainThread);
+
 	return lbRc;
 }
 
@@ -2996,6 +2998,8 @@ BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 
 	OnReadConsoleEnd(lbRc, FALSE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 	SetLastError(nErr);
+
+	UNREFERENCED_PARAMETER(bMainThread);
 
 	return lbRc;
 }
@@ -3719,7 +3723,9 @@ BOOL WINAPI OnAllocConsole(void)
 				//specified width and height cannot be less than the width and height of the console screen buffer's window
 				SMALL_RECT rNewRect = {0, 0, crLocked.X-1, crLocked.Y-1};
 				OnSetConsoleWindowInfo(hStdOut, TRUE, &rNewRect);
+				#ifdef _DEBUG
 				COORD crNewSize = {crLocked.X, max(crLocked.Y, csbi.dwSize.Y)};
+				#endif
 				SetConsoleScreenBufferSize(hStdOut, crLocked);
 			}
 		}
@@ -4450,7 +4456,7 @@ DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSiz
 {
 	typedef DWORD (WINAPI* OnGetEnvironmentVariableA_t)(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
 	ORIGINALFAST(GetEnvironmentVariableA);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 
 	if (lpName && (
 			(lstrcmpiA(lpName, ENV_CONEMUANSI_VAR_A) == 0)
@@ -4463,6 +4469,7 @@ DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSiz
 	}
 
 	BOOL lbRc = F(GetEnvironmentVariableA)(lpName, lpBuffer, nSize);
+
 	return lbRc;
 }
 
@@ -4470,7 +4477,7 @@ DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nS
 {
 	typedef DWORD (WINAPI* OnGetEnvironmentVariableW_t)(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 	ORIGINALFAST(GetEnvironmentVariableW);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 
 	if (lpName && (
 			(lstrcmpiW(lpName, ENV_CONEMUANSI_VAR_W) == 0)
@@ -4504,7 +4511,7 @@ LPWCH WINAPI OnGetEnvironmentStringsW()
 {
 	typedef LPWCH (WINAPI* OnGetEnvironmentStringsW_t)();
 	ORIGINALFAST(GetEnvironmentStringsW);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 
 	CheckVariables();
 
@@ -4844,7 +4851,7 @@ int WINAPI OnStretchDIBits(HDC hdc, int XDest, int YDest, int nDestWidth, int nD
 		iRc = F(StretchDIBits)(hdc, XDest, YDest, nDestWidth, nDestHeight, XSrc, YSrc, nSrcWidth, nSrcHeight, lpBits, lpBitsInfo, iUsage, dwRop);
 
 	// Если рисуют _прямо_ на канвасе ConEmu
-	if (iRc != GDI_ERROR && hdc && hdc == ghTempHDC)
+	if (iRc != (int)GDI_ERROR && hdc && hdc == ghTempHDC)
 	{
 		// Уведомить GUI, что у него прямо на канвасе кто-то что-то нарисовал :)
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LOCKDC, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_LOCKDC));
@@ -4966,8 +4973,8 @@ BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUF
 	static DWORD s_LastCheckTick = 0;
 	static CONSOLE_SCREEN_BUFFER_INFO s_csbi = {};
 	static HANDLE s_hConOut = NULL;
-	DWORD nTickDelta = 0;
-	const DWORD TickDeltaMax = 250;
+	//DWORD nTickDelta = 0;
+	//const DWORD TickDeltaMax = 250;
 
 	if (hConsoleOutput == NULL)
 	{

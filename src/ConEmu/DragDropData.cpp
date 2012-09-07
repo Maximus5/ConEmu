@@ -184,7 +184,7 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
     //if (mp_TargetHelper && !abSelfDrag)
     //	lbCanUseHelper = true;
 
-	HRESULT hr = S_FALSE;
+	//HRESULT hr = S_FALSE;
 
 	if (!abSelfDrag)
 	{
@@ -195,7 +195,7 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 			if (pHelper)
 			{
 				//	hr = pHelper->QueryInterface(__uuidof(mp_SourceHelper), (void**)&mp_SourceHelper);
-				hr = pHelper->QueryInterface(__uuidof(mp_TargetHelper), (void**)&mp_TargetHelper);
+				hr = pHelper->QueryInterface(IID_IDropTargetHelper/*__uuidof(mp_TargetHelper)*/, (void**)&mp_TargetHelper);
 				pHelper->Release();
 				pHelper = NULL;
 			}
@@ -984,6 +984,7 @@ void CDragDropData::RetrieveDragToInfo()
 
 	CEFarWindowType tabType = pRCon->GetActiveTabType();
 	DWORD nFarPID = pRCon->GetFarPID(TRUE);
+	UNREFERENCED_PARAMETER(tabType);
 
 	if (nFarPID == 0)
 	{
@@ -1766,7 +1767,7 @@ void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 		p.x = p.y = -32000;
 	}
 
-	POINT p2 = {0, 0};
+	//POINT p2 = {0, 0};
 	SIZE  sz = {MAX_OVERLAY_WIDTH, MAX_OVERLAY_HEIGHT};
 
 	if (mp_Bits)

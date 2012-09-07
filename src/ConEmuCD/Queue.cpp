@@ -80,14 +80,18 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 			if (lbProcessEvent)
 			{
 				BOOL lbRc = FALSE;
+				#if 0
 				DWORD dwEvent = (r.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
+				#endif
 				//&& (gpSrv->dwConsoleMode & ENABLE_PROCESSED_INPUT)
 
-#if 1
+				#if 1
 				// Issue 590: GenerateConsoleCtrlEvent нифига не прерывает функцию ReadConsoleW
 				SendMessage(ghConWnd, WM_KEYDOWN, r.Event.KeyEvent.wVirtualKeyCode, 0);
 				lbRc = TRUE;
-#else
+				#endif
+
+				#if 0
 				//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer,
 				//so CTRL+C is reported as keyboard input rather than as a signal.
 				// CTRL+BREAK is always treated as a signal
@@ -103,7 +107,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 					lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
 					// Это событие (Ctrl+C) в буфер помещается(!) иначе до фара не дойдет собственно клавиша C с нажатым Ctrl
 				}
-#endif
+				#endif
 			}
 
 			if (lbIngoreKey)

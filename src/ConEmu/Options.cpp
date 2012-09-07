@@ -464,7 +464,7 @@ void Settings::InitSettings()
 	_WindowMode = rNormal;
 	isUseCurrentSizePos = true; // Show in settings dialog and save current window size/pos
 	//isFullScreen = false;
-	isHideCaption = mb_HideCaptionAlways = isQuakeStyle = false;
+	isHideCaption = false; mb_HideCaptionAlways = false; isQuakeStyle = false;
 	nHideCaptionAlwaysFrame = 1; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
 	isDesktopMode = false;
 	isSnapToDesktopEdges = false;
@@ -500,7 +500,8 @@ void Settings::InitSettings()
 	//wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] `%p` *" /* L"[%s] *" */);
 	//wcscpy_c(szTabViewer, L"<%c.%i>[%s] `%p`" /* L"{%s}" */);
 	wcscpy_c(szTabConsole, L"<%c> %s");
-	wcscpy_c(szTabSkipWords, L"Administrator:|Администратор:");
+	//wcscpy_c(szTabSkipWords, L"Administrator:|Администратор:");
+	MultiByteToWideChar(1251/*rus*/, 0, "Administrator:|Администратор:", -1, szTabSkipWords, countof(szTabSkipWords));
 	wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
 	wcscpy_c(szTabEditor, L"<%c.%i>{%s}");
 	wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] *");
@@ -1027,7 +1028,7 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 
 	if (lbOpened && CmdTasks && CmdTaskCount > 0)
 	{
-		int nSucceeded = 0;
+		//int nSucceeded = 0;
 		for (int i = 0; i < CmdTaskCount; i++)
 		{
 			_wsprintf(pszCmdKey, SKIPLEN(32) L"\\Task%i", i+1); // 1-based
@@ -1075,7 +1076,7 @@ bool Settings::SaveCmdTask(SettingsBase* reg, CommandTasks* pTask)
 			wchar_t* pszEnd = wcschr(pszCmd, L'\n');
 			if (pszEnd && (*(pszEnd-1) == L'\r'))
 				pszEnd--;
-			wchar_t chSave;
+			wchar_t chSave = 0;
 			if (pszEnd)
 			{
 				chSave = *pszEnd;

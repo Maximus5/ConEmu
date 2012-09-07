@@ -34,6 +34,18 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	// starting a 64-bit process
 	LPCWSTR		pszDllName = L"\\ConEmuHk64.dll";
 #endif
+
+	typedef struct _UNICODE_STRING {
+		USHORT Length;
+		USHORT MaximumLength;
+		#ifdef _WIN64
+		DWORD  Pad;
+		#endif
+		PWSTR  Buffer;
+	} USTR, *PUSTR;
+
+	PUSTR pStr = NULL;
+
 	//OSVERSIONINFO osv = {sizeof(osv)};
 	//GetVersionEx(&osv);
 	//DWORD nOsVer = (osv.dwMajorVersion << 8) | (osv.dwMinorVersion & 0xFF);
@@ -108,15 +120,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	code = (BYTE*)malloc(codeSize + memLen + pstrLen);
 	memmove(code + codeSize, strHookDllPath, memLen);
 
-	typedef struct _UNICODE_STRING {
-		USHORT Length;
-		USHORT MaximumLength;
-		#ifdef _WIN64
-		DWORD  Pad;
-		#endif
-		PWSTR  Buffer;
-	} USTR, *PUSTR;
-	PUSTR pStr = (PUSTR)((((DWORD_PTR)(code + codeSize + memLen + 7))>>3)<<3);
+	pStr = (PUSTR)((((DWORD_PTR)(code + codeSize + memLen + 7))>>3)<<3);
 	pStr->Length = 24; pStr->MaximumLength = 26;
 	#ifdef _WIN64
 	pStr->Pad = 0;

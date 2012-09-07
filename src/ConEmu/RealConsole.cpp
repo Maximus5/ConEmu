@@ -2972,7 +2972,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	if (gpSet->isDisableMouse)
 		return;
 
-	BOOL lbFarBufferSupported = isFarBufferSupported();
+	BOOL lbFarBufferSupported = isFarBufferSupported(); UNREFERENCED_PARAMETER(lbFarBufferSupported);
 
 	// Если консоль в режиме с прокруткой - не посылать мышь в консоль
 	// Иначе получаются казусы. Если во время выполнения команды (например "dir c: /s")
@@ -4052,14 +4052,14 @@ void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, con
 {
 	INPUT_RECORD r = {KEY_EVENT};
 
-	WORD nCaps = 1 & (WORD)GetKeyState(VK_CAPITAL);
-	WORD nNum = 1 & (WORD)GetKeyState(VK_NUMLOCK);
-	WORD nScroll = 1 & (WORD)GetKeyState(VK_SCROLL);
-	WORD nLAlt = 0x8000 & (WORD)GetKeyState(VK_LMENU);
-	WORD nRAlt = 0x8000 & (WORD)GetKeyState(VK_RMENU);
-	WORD nLCtrl = 0x8000 & (WORD)GetKeyState(VK_LCONTROL);
-	WORD nRCtrl = 0x8000 & (WORD)GetKeyState(VK_RCONTROL);
-	WORD nShift = 0x8000 & (WORD)GetKeyState(VK_SHIFT);
+	//WORD nCaps = 1 & (WORD)GetKeyState(VK_CAPITAL);
+	//WORD nNum = 1 & (WORD)GetKeyState(VK_NUMLOCK);
+	//WORD nScroll = 1 & (WORD)GetKeyState(VK_SCROLL);
+	//WORD nLAlt = 0x8000 & (WORD)GetKeyState(VK_LMENU);
+	//WORD nRAlt = 0x8000 & (WORD)GetKeyState(VK_RMENU);
+	//WORD nLCtrl = 0x8000 & (WORD)GetKeyState(VK_LCONTROL);
+	//WORD nRCtrl = 0x8000 & (WORD)GetKeyState(VK_RCONTROL);
+	//WORD nShift = 0x8000 & (WORD)GetKeyState(VK_SHIFT);
 
 	//if (messg == WM_CHAR || messg == WM_SYSCHAR) {
 	//    if (((WCHAR)wParam) <= 32 || mn_LastVKeyPressed == 0)
@@ -4579,7 +4579,7 @@ bool CRealConsole::ReopenServerPipes()
 	if (m_ConDataChanged.Open() == NULL)
 	{
 		bool bSrvClosed = (WaitForSingleObject(hSrvHandle, 0) == WAIT_OBJECT_0);
-		Assert(mb_InCloseConsole && "m_ConDataChanged.Open() != NULL");
+		Assert(mb_InCloseConsole && "m_ConDataChanged.Open() != NULL"); UNREFERENCED_PARAMETER(bSrvClosed);
 		return false;
 	}
 
@@ -4589,7 +4589,7 @@ bool CRealConsole::ReopenServerPipes()
 	if (!bOpened)
 	{
 		bool bSrvClosed = (WaitForSingleObject(hSrvHandle, 0) == WAIT_OBJECT_0);
-		Assert((bOpened || mb_InCloseConsole) && "m_GetDataPipe.Open() failed");
+		Assert((bOpened || mb_InCloseConsole) && "m_GetDataPipe.Open() failed"); UNREFERENCED_PARAMETER(bSrvClosed);
 		return false;
 	}
 
@@ -6641,7 +6641,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 	mb_ThawRefreshThread = abFocus || !gpSet->isSleepInBackground;
 
 
-	BOOL lbNeedChange = FALSE;
+	//BOOL lbNeedChange = FALSE;
 	// Разрешит "заморозку" серверной нити и обновит hdr.bConsoleActive в мэппинге
 	if (m_ConsoleMap.IsValid() && ms_MainSrv_Pipe[0])
 	{
@@ -6781,7 +6781,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 	DEBUGSTRTABS(szDbg);
 #endif
 	ConEmuTab* lpTmpTabs = NULL;
-	const size_t nMaxTabName = countof(tabs->Name);
+	//const size_t nMaxTabName = countof(tabs->Name);
 	// Табы нужно проверить и подготовить
 	int nActiveTab = 0, i;
 
@@ -7356,6 +7356,8 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	if (!this)
 		return 0;
 
+	WARNING("CantActivateInfo: Хорошо бы при отображении хинта 'Can't activate tab' сказать 'почему'");
+
 	DWORD dwPID = GetFarPID();
 
 	if (!dwPID)
@@ -7420,14 +7422,14 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 		return 0; // если активирован доп.буфер - менять окна нельзя
 	}
 
-	BOOL lbMenuActive = FALSE;
+	BOOL lbMenuOrMacro = FALSE;
 
 	if (mp_tabs && mn_ActiveTab >= 0 && mn_ActiveTab < mn_tabsCount)
 	{
 		// Меню может быть только в панелях
 		if (mp_tabs[mn_ActiveTab].Type == 1/*WTYPE_PANELS*/)
 		{
-			lbMenuActive = mp_RBuf->isFarMenuActive();
+			lbMenuOrMacro = mp_RBuf->isFarMenuOrMacro();
 		}
 	}
 
@@ -7438,9 +7440,9 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	// Наличие активного меню определяем по количеству цветов в первой строке.
 	// Неактивное меню отображается всегда одним цветом - в активном подсвечиваются хоткеи и выбранный пункт
 
-	if (lbMenuActive)
+	if (lbMenuOrMacro)
 	{
-		AssertCantActivate(lbMenuActive==FALSE);
+		AssertCantActivate(lbMenuOrMacro==FALSE);
 		return 0;
 	}
 
@@ -7472,7 +7474,7 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 	}
 
 	BOOL lbRc = FALSE;
-	DWORD nWait = -1;
+	//DWORD nWait = -1;
 	CConEmuPipe pipe(dwPID, 100);
 
 	if (pipe.Init(_T("CRealConsole::ActivateFarWindow")))

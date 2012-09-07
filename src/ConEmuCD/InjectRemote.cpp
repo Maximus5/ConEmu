@@ -65,15 +65,14 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		goto wrap;
 	}
 
-	if (lstrlen(asConEmuHk) >= countof(dat.szConEmuHk))
+	if (lstrlen(asConEmuHk) >= (int)countof(dat.szConEmuHk))
 	{
 		iRc = -101;
 		goto wrap;
 	}
 
 	// Исполняемый код загрузки библиотеки
-	pRemoteProc = (LPTHREAD_START_ROUTINE)
-		VirtualAllocEx(
+	pRemoteProc = (LPTHREAD_START_ROUTINE) VirtualAllocEx(
 		hProcess,	// Target process
 		NULL,		// Let the VMM decide where
 		cbCode,		// Size
@@ -86,7 +85,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 	}
 	if (!WriteProcessMemory(
 		hProcess,		// Target process
-		pRemoteProc,	// Source for code
+		(void*)pRemoteProc,	// Source for code
 		ptrCode,		// The code
 		cbCode,			// Code length
 		NULL))			// We don't care
@@ -191,7 +190,7 @@ wrap:
 	if (hThread)
 		CloseHandle(hThread);
 	if(pRemoteProc)
-		VirtualFreeEx(hProcess, pRemoteProc, cbCode, MEM_RELEASE);
+		VirtualFreeEx(hProcess, (void*)pRemoteProc, cbCode, MEM_RELEASE);
 	if(pRemoteDat)
 		VirtualFreeEx(hProcess, pRemoteDat, sizeof(InfiltrateArg), MEM_RELEASE);
 	return iRc;

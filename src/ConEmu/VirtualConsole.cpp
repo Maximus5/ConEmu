@@ -2647,8 +2647,8 @@ void CVirtualConsole::UpdateText()
 		int j2=j+1;
 
 		bool NextDialog = true;
-		int NextDialogX = -1, CurDialogX1, CurDialogX2, CurDialogI;
-		DWORD CurDialogFlags;
+		int NextDialogX = -1, CurDialogX1 = 0, CurDialogX2 = 0, CurDialogI = 0;
+		DWORD CurDialogFlags = 0;
 
 		for(; j < end; j = j2)
 		{

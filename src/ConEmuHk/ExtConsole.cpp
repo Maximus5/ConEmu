@@ -82,6 +82,7 @@ struct ExtCurrentAttr
 } gExtCurrentAttr;
 
 
+#if 0
 static bool isCharSpace(wchar_t inChar)
 {
 	// Сюда пихаем все символы, которые можно отрисовать пустым фоном (как обычный пробел)
@@ -90,6 +91,7 @@ static bool isCharSpace(wchar_t inChar)
 		|| inChar == 0x2060 || inChar == 0x3000 || inChar == 0xFEFF*/);
 	return isSpace;
 }
+#endif
 
 
 static BOOL ExtGetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWork)
@@ -149,10 +151,12 @@ static BOOL ExtCheckBuffers(HANDLE h)
 		}
 		else
 		{
+			#ifdef _DEBUG
 			SHORT nWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
 			SHORT nHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 			_ASSERTE((nWidth <= csbi.dwSize.X) && (nHeight <= csbi.dwSize.Y));
 			//gbFarBufferMode = (nWidth < csbi.dwSize.X) || (nHeight < csbi.dwSize.Y);
+			#endif
 			gbInitialized = true;
 		}
 	}
@@ -993,7 +997,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	_ASSERTE(srWork.Bottom == (csbi.dwSize.Y - 1));
 	// Размер TrueColor буфера
 	SHORT nWindowWidth  = srWork.Right - srWork.Left + 1;
-	SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1;
+	SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1; UNREFERENCED_PARAMETER(nWindowHeight);
 	SHORT YShift = csbi.dwCursorPosition.Y - srWork.Top;
 
 	BOOL lbRc = TRUE;
@@ -1184,13 +1188,13 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 	_ASSERTE(srWork.Bottom == (csbi.dwSize.Y - 1));
 	// Размер TrueColor буфера
 	SHORT nWindowWidth  = srWork.Right - srWork.Left + 1;
-	SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1;
+	SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1; UNREFERENCED_PARAMETER(nWindowHeight);
 	//SHORT YShift = csbi.dwCursorPosition.Y - srWork.Top;
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
 	//AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * YShift) : NULL); //-V104
-
+	UNREFERENCED_PARAMETER(pTrueColorEnd);
 
 
 	if (Info->Flags & efof_Attribute)
@@ -1287,7 +1291,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 	BOOL lbRc = TRUE;
 	CHAR_INFO Buf[200];
-	CHAR_INFO* pBuf = (csbi.dwSize.X <= countof(Buf)) ? Buf : (CHAR_INFO*)malloc(csbi.dwSize.X*sizeof(*pBuf));
+	CHAR_INFO* pBuf = (csbi.dwSize.X <= (int)countof(Buf)) ? Buf : (CHAR_INFO*)malloc(csbi.dwSize.X*sizeof(*pBuf));
 	COORD crSize = {csbi.dwSize.X,1};
 	COORD cr0 = {};
 	SMALL_RECT rcRgn = {0,0,csbi.dwSize.X-1,0};

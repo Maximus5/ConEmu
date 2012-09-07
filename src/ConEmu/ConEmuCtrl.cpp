@@ -1383,6 +1383,11 @@ void CConEmuCtrl::TabCommand(ConEmuTabCommand nTabCmd)
 		{
 			gpConEmu->mp_TabBar->SwitchCommit();
 		} break;
+
+		default:
+		{
+			_ASSERTE(FALSE && "Not handled command");
+		}
 	};
 }
 

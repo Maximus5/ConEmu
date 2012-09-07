@@ -372,7 +372,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			// Теперь мы гарантированно знаем дескриптор окна консоли
 			mp_RCon->SetHwnd(hWnd, TRUE);
 			// Открыть мэппинги, выставить KeyboardLayout, и т.п.
-			mp_RCon->OnServerStarted(pIn->StartStop.dwPID, (HANDLE)(DWORD_PTR)pIn->StartStop.hServerProcessHandle);
+			mp_RCon->OnServerStarted(pIn->StartStop.dwPID, hServerProcessHandle);
 		}
 
 		AllowSetForegroundWindow(nPID);
@@ -688,7 +688,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 	DEBUGSTRCMD(L"GUI recieved CECMD_TABSCHANGED\n");
 	
 	BOOL fSuccess = FALSE;
-	DWORD cbWritten = 0;
+	//DWORD cbWritten = 0;
 
 	if (nDataSize == 0)
 	{

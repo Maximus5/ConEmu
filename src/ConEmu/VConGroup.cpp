@@ -77,7 +77,7 @@ CVConGroup* CVConGroup::CreateVConGroup()
 	return pGroup;
 }
 
-CVConGroup* CVConGroup::SplitVConGroup(RConStartArgs::SplitType aSplitType /*eSplitHorz/*eSplitVert*/, UINT anPercent10 /*= 500*/)
+CVConGroup* CVConGroup::SplitVConGroup(RConStartArgs::SplitType aSplitType /*eSplitHorz/eSplitVert*/, UINT anPercent10 /*= 500*/)
 {
 	if (!this || !(aSplitType == RConStartArgs::eSplitHorz || aSplitType == RConStartArgs::eSplitVert))
 	{
@@ -652,7 +652,7 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2)
 	}
 
 	UINT nSplit = max(1,min(mn_SplitPercent10,999));
-	UINT nPadSizeX = 0, nPadSizeY = 0;
+	//UINT nPadSizeX = 0, nPadSizeY = 0;
 	if (m_SplitType == RConStartArgs::eSplitHorz)
 	{
 		UINT nWidth = rcNewCon.right - rcNewCon.left;
@@ -808,8 +808,8 @@ void CVConGroup::MoveAllVCon(CVirtualConsole* pVConCurrent, RECT rcNewCon)
 		return;
 	}
 
-	bool lbPosChanged = false;
-	RECT rcCurCon = {};
+	//bool lbPosChanged = false;
+	//RECT rcCurCon = {};
 	CVConGroup* pRoots[MAX_CONSOLE_COUNT+1] = {pGroup};
 	CVConGuard VCon(pVConCurrent);
 
@@ -909,7 +909,7 @@ bool CVConGroup::isValid(CVirtualConsole* apVCon)
 
 bool CVConGroup::isVConExists(int nIdx)
 {
-	if (nIdx < 0 || nIdx >= countof(gp_VCon))
+	if (nIdx < 0 || nIdx >= (int)countof(gp_VCon))
 		return false;
 	return (gp_VCon[nIdx] != NULL);
 }
@@ -2311,7 +2311,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, BOOL abAllowScripts 
 		args->bRunAsAdministrator = true;
 	}
 
-	wchar_t* pszScript = NULL; //, szScript[MAX_PATH];
+	//wchar_t* pszScript = NULL; //, szScript[MAX_PATH];
 
 	if (args->pszSpecialCmd
 		&& (*args->pszSpecialCmd == CmdFilePrefix

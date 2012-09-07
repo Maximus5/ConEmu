@@ -375,6 +375,7 @@ void AttachGuiWindow(HWND hOurWindow)
 		AttachMsgArg args = {gnAttachMsgId, 0, ghConEmuWnd, hOurWindow};
 		LRESULT lRc = user->sendMessageW(hOurWindow, gnAttachMsgId, gnAttachMsgId, (LPARAM)&args);
 		_ASSERTEX(args.Result == gnAttachMsgId);
+		UNREFERENCED_PARAMETER(lRc);
 
 		user->unhookWindowsHookEx(ghAttachMsgHook);
 		ghAttachMsgHook = NULL;
@@ -505,6 +506,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	_ASSERTEX(nTID==gnHookMainThreadId || nTID==gnAttachGuiClientThreadId);
 	BOOL bAttachRc = user->attachThreadInput(nTID, nConEmuTID, TRUE);
 	DWORD nAttachErr = GetLastError();
+	UNREFERENCED_PARAMETER(bAttachRc); UNREFERENCED_PARAMETER(nAttachErr);
 
 
 	CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 0/*Default timeout*/, NULL);

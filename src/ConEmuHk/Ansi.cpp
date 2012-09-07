@@ -66,7 +66,7 @@ extern HWND    ghConEmuWnd;   // Root! ConEmu window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnGuiPID;
 extern GetConsoleWindow_T gfGetRealConsoleWindow;
-extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
+//extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
 extern HANDLE ghCurrentOutBuffer;
 extern HANDLE ghStdOutHandle;
 extern wchar_t gsInitConTitle[512];
@@ -329,7 +329,7 @@ BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT
 {
 	typedef BOOL (WINAPI* OnScrollConsoleScreenBufferA_t)(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
 	ORIGINALFAST(ScrollConsoleScreenBufferA);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
 	if (IsOutputHandle(hConsoleOutput))
@@ -348,7 +348,7 @@ BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT
 {
 	typedef BOOL (WINAPI* OnScrollConsoleScreenBufferW_t)(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
 	ORIGINALFAST(ScrollConsoleScreenBufferW);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
 	if (IsOutputHandle(hConsoleOutput))
@@ -367,7 +367,7 @@ BOOL WINAPI OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWr
 {
 	typedef BOOL (WINAPI* OnWriteFile_t)(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 	ORIGINALFAST(WriteFile);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
 	if (lpBuffer && nNumberOfBytesToWrite && IsAnsiCapable(hFile))
@@ -382,7 +382,7 @@ BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 {
 	typedef BOOL (WINAPI* OnWriteConsoleA_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 	ORIGINALFAST(WriteConsoleA);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
 	if (lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput))
@@ -427,7 +427,7 @@ BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpChara
 {
 	typedef BOOL (WINAPI* OnWriteConsoleOutputCharacterA_t)(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
 	ORIGINALFAST(WriteConsoleOutputCharacterA);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 
 	ExtFillOutputParm fll = {sizeof(fll),
 		efof_Attribute|(gDisplayParm.WasSet ? efof_Current : efof_ResetExt),
@@ -443,7 +443,7 @@ BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpChar
 {
 	typedef BOOL (WINAPI* OnWriteConsoleOutputCharacterW_t)(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
 	ORIGINALFAST(WriteConsoleOutputCharacterW);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 
 	ExtFillOutputParm fll = {sizeof(fll),
 		efof_Attribute|(gDisplayParm.WasSet ? efof_Current : efof_ResetExt),
@@ -461,7 +461,7 @@ BOOL WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR 
 	DWORD /*nWritten = 0,*/ nTotalWritten = 0;
 
 	ExtWriteTextParm write = {sizeof(write), ewtf_Current, hConsoleOutput};
-	write.Private = _WriteConsoleW;
+	write.Private = (void*)(FARPROC)_WriteConsoleW;
 
 	if (gDisplayOpt.WrapWasSet && (gDisplayOpt.WrapAt > 0))
 	{
@@ -491,7 +491,7 @@ BOOL WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR 
 BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
 {
 	ORIGINALFAST(WriteConsoleW);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 	//ExtWriteTextParm wrt = {sizeof(wrt), ewtf_None, hConsoleOutput};
 	bool bIsConOut = false;
@@ -682,7 +682,9 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 						Code.cchArgSZ = 0;
 						{
 							int nValue = 0, nDigits = 0;
+							#ifdef _DEBUG
 							LPCWSTR pszSaveStart = lpBuffer;
+							#endif
 
 							while (lpBuffer < lpEnd)
 							{
@@ -696,7 +698,7 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 
 								case L';':
 									// Даже если цифр не было - default "0"
-									if (Code.ArgC < countof(Code.ArgV))
+									if (Code.ArgC < (int)countof(Code.ArgV))
 										Code.ArgV[Code.ArgC++] = nValue; // save argument
 									nDigits = nValue = 0;
 									break;
@@ -706,7 +708,7 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 									{
 										// Fin
 										Code.Action = wc;
-										if (nDigits && (Code.ArgC < countof(Code.ArgV)))
+										if (nDigits && (Code.ArgC < (int)countof(Code.ArgV)))
 										{
 											Code.ArgV[Code.ArgC++] = nValue;
 										}
@@ -717,7 +719,7 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 									}
 									else
 									{
-										if ((Code.PvtLen+1) < countof(Code.Pvt))
+										if ((Code.PvtLen+1) < (int)countof(Code.Pvt))
 										{
 											Code.Pvt[Code.PvtLen++] = wc; // Skip private symbols
 											Code.Pvt[Code.PvtLen] = 0;
@@ -929,7 +931,9 @@ BOOL PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi)
 {
 	BOOL lbRc = FALSE;
 	COORD crFrom = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y};
+	#ifdef _DEBUG
 	DWORD nCount = csbi.dwSize.X - csbi.dwCursorPosition.X; //, nWritten;
+	#endif
 
 	/*
 	lbRc = FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nCount, crFrom, &nWritten)
@@ -1750,7 +1754,7 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 {
 	typedef BOOL (WINAPI* OnSetConsoleMode_t)(HANDLE hConsoleHandle, DWORD dwMode);
 	ORIGINALFAST(SetConsoleMode);
-	BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
 	#if 0

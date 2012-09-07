@@ -970,6 +970,23 @@ BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 	return TRUE;
 }
 
+wchar_t* LoadCurrentPathEnvVar()
+{
+	wchar_t* pszEnvPathStore = (wchar_t*)malloc(1024*sizeof(*pszEnvPathStore));
+	if (pszEnvPathStore)
+	{
+		DWORD cbPathSize = GetEnvironmentVariable(L"PATH", pszEnvPathStore, 1024);
+		if (cbPathSize > 1024)
+		{
+			pszEnvPathStore = (wchar_t*)realloc(pszEnvPathStore, cbPathSize*sizeof(*pszEnvPathStore));
+			if (pszEnvPathStore)
+			{
+				cbPathSize = GetEnvironmentVariable(L"PATH", pszEnvPathStore, cbPathSize);
+			}
+		}
+	}
+	return pszEnvPathStore;
+}
 
 #ifndef CONEMU_MINIMAL
 void RemoveOldComSpecC()
@@ -2531,7 +2548,7 @@ void MSection::Process_Unlock()
 }
 void MSection::ThreadTerminated(DWORD dwTID)
 {
-	for (int i=1; i<countof(mn_LockedTID); i++)
+	for (size_t i = 1; i < countof(mn_LockedTID); i++)
 	{
 		if (mn_LockedTID[i] == dwTID)
 		{
@@ -2571,7 +2588,7 @@ void MSection::AddRef(DWORD dwTID)
 	ResetEvent(mh_ReleaseEvent); // На всякий случай сбросим Event
 	int j = -1; // будет -2, если ++ на существующий, иначе - +1 на пустой
 
-	for (int i=1; i<countof(mn_LockedTID); i++)
+	for (size_t i = 1; i < countof(mn_LockedTID); i++)
 	{
 		if (mn_LockedTID[i] == dwTID)
 		{
@@ -2584,7 +2601,7 @@ void MSection::AddRef(DWORD dwTID)
 
 	if (j == -1)
 	{
-		for (int i=1; i<countof(mn_LockedTID); i++)
+		for (size_t i = 1; i < countof(mn_LockedTID); i++)
 		{
 			if (mn_LockedTID[i] == 0)
 			{
@@ -2619,7 +2636,7 @@ int MSection::ReleaseRef(DWORD dwTID)
 		SetEvent(mh_ReleaseEvent); // Больше nonexclusive locks не осталось
 	}
 
-	for (int i=1; i<countof(mn_LockedTID); i++)
+	for (size_t i = 1; i < countof(mn_LockedTID); i++)
 	{
 		if (mn_LockedTID[i] == dwTID)
 		{
@@ -2664,7 +2681,7 @@ void MSection::WaitUnlocked(DWORD dwTID, DWORD anTimeout)
 	DWORD dwStartTick = GetTickCount();
 	int nSelfCount = 0;
 
-	for (int i=1; i<countof(mn_LockedTID); i++)
+	for (size_t i = 1; i < countof(mn_LockedTID); i++)
 	{
 		if (mn_LockedTID[i] == dwTID)
 		{
@@ -3607,6 +3624,7 @@ COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
 	COORD crMax = GetLargestConsoleWindowSize(hConsoleOutput);
 	DWORD dwErr = (crMax.X && crMax.Y) ? 0 : GetLastError();
+	UNREFERENCED_PARAMETER(dwErr);
 	// Wine BUG
 	//if (!crMax.X || !crMax.Y)
 	if ((crMax.X == 80 && crMax.Y == 24) && IsWine())
@@ -4276,7 +4294,7 @@ void CorrectConsolePos(HWND hConWnd)
 	{
 		HMONITOR hMon = MonitorFromWindow(hConWnd, MONITOR_DEFAULTTOPRIMARY);
 		MONITORINFO mi = {sizeof(mi)};
-		int nMaxX = 0, nMaxY = 0;
+		//int nMaxX = 0, nMaxY = 0;
 		if (GetMonitorInfo(hMon, &mi))
 		{
 			int newW = (rcNew.right-rcNew.left), newH = (rcNew.bottom-rcNew.top);

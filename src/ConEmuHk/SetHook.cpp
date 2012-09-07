@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/MArray.h"
 #include "ShellProcessor.h"
 #include "SetHook.h"
+#include "ConEmuHooks.h"
 #include "UserImp.h"
 
 //#include <WinInet.h>
@@ -572,7 +573,7 @@ bool InitHooksLibrary()
 		gpHooks[gnHookedFuncs].NewAddress = pProc; \
 		gpHooks[gnHookedFuncs].Name = szName; \
 		gpHooks[gnHookedFuncs].DllName = szDll; \
-		if (pProc) gnHookedFuncs++;
+		/*if (pProc)*/ gnHookedFuncs++;
 	/* ************************ */
 	ADDFUNC((void*)OnGetProcAddress,		szGetProcAddress,		kernel32); // eGetProcAddress, ...
 	ADDFUNC((void*)OnLoadLibraryA,			szLoadLibraryA,			kernel32); // ...
@@ -668,7 +669,7 @@ FARPROC WINAPI GetLoadLibraryW()
 	#endif
 
 	HookItem* ph;
-	return (FARPROC)GetOriginalAddress(OnLoadLibraryW, LoadLibraryW, FALSE, &ph);
+	return (FARPROC)GetOriginalAddress((void*)(FARPROC)OnLoadLibraryW, (void*)(FARPROC)LoadLibraryW, FALSE, &ph);
 }
 
 FARPROC WINAPI GetWriteConsoleW()
@@ -683,7 +684,7 @@ FARPROC WINAPI GetWriteConsoleW()
 
 	//#ifdef HOOK_ANSI_SEQUENCES
 	HookItem* ph;
-	return (FARPROC)GetOriginalAddress(OnWriteConsoleW, WriteConsoleW, FALSE, &ph);
+	return (FARPROC)GetOriginalAddress((void*)(FARPROC)OnWriteConsoleW, (void*)(FARPROC)WriteConsoleW, FALSE, &ph);
 	//#else
 	//return (FARPROC)WriteConsoleW;
 	//#endif
@@ -1043,7 +1044,9 @@ extern BOOL gbInCommonShutdown;
 
 bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
 {
+	#ifdef _DEBUG
 	DWORD nCurTID = GetCurrentThreadId();
+	#endif
 
 	//while (nHookMutexWait != WAIT_OBJECT_0)
 	BOOL lbLockHooksSection = FALSE;
@@ -1869,8 +1872,8 @@ bool UnsetHookInt(HMODULE Module)
 		if (Module == INVALID_HANDLE_VALUE || !Import)
 			goto wrap;
 		
-		size_t i, s;
-		size_t nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
+		size_t i, s, nCount;
+		nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
 		
 		//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
 		for (s = 0; s <= 1; s++)

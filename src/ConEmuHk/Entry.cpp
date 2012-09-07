@@ -99,7 +99,6 @@ DWORD gnLastShowExeTick = 0;
 #if defined(__GNUC__)
 extern "C" {
 	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
-	//LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam);
 #endif
 	//__declspec(dllexport) HHOOK ghKeyHook = 0;
 	//__declspec(dllexport) DWORD gnVkWinFix = 0xF0;
@@ -153,6 +152,7 @@ extern HHOOK ghGuiClientRetHook;
 //extern bool gbAllowAssertThread;
 #endif
 
+wchar_t* gpszEnvPathStore = NULL;
 DWORD   gnSelfPID = 0;
 BOOL    gbSelfIsRootConsoleProcess = FALSE;
 DWORD   gnServerPID = 0;
@@ -903,6 +903,10 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			#endif
 			HeapInitialize();
 			
+			/* *** DEBUG PURPOSES */
+			gpszEnvPathStore = LoadCurrentPathEnvVar();
+			/* *** DEBUG PURPOSES */
+
 			ghOurModule = (HMODULE)hModule;
 			ghConWnd = GetConsoleWindow();
 			if (ghConWnd)

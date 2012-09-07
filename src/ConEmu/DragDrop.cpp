@@ -1012,7 +1012,7 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 
 HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
-	HRESULT hrHelper; UNREFERENCED_PARAMETER(hrHelper);
+	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
 
 	mb_DragWithinNow = FALSE;
 	DestroyDragImageBits();
@@ -1316,7 +1316,7 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
-	HRESULT hrHelper; UNREFERENCED_PARAMETER(hrHelper);
+	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
 	HRESULT hr = DragOverInt(grfKeyState, pt, pdwEffect);
 
 	#ifdef USE_DROP_HELPER
@@ -1468,7 +1468,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
-	HRESULT hrHelper; UNREFERENCED_PARAMETER(hrHelper);
+	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
 
 	mb_selfdrag = (pDataObject == mp_DataObject);
 	mb_DragWithinNow = TRUE;
@@ -1527,7 +1527,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 {
-	HRESULT hrHelper; UNREFERENCED_PARAMETER(hrHelper);
+	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
 
 	mb_DragWithinNow = FALSE;
 

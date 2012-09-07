@@ -29,9 +29,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include <commctrl.h>
-#include <shobjidl.h>
 #include <shlobj.h>
+#ifndef __GNUC__
+#include <shobjidl.h>
 #include <propkey.h>
+#else
+//
+#endif
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
 #include "Options.h"
@@ -83,6 +87,7 @@ HICON hClassIcon = NULL, hClassIconSm = NULL;
 BOOL gbDontEnable = FALSE;
 BOOL gbDebugLogStarted = FALSE;
 BOOL gbDebugShowRects = FALSE;
+wchar_t* gpszEnvPathStore = NULL;
 
 
 const TCHAR *const gsClassName = VirtualConsoleClass; // окна отрисовки
@@ -1281,6 +1286,7 @@ void ResetConman()
 	}
 }
 
+#ifndef __GNUC__
 // Creates a CLSID_ShellLink to insert into the Tasks section of the Jump List.  This type of Jump
 // List item allows the specification of an explicit command line to execute the task.
 HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle, IShellLink **ppsl)
@@ -1347,7 +1353,7 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 	}
 
     IShellLink *psl;
-    HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&psl));
+    HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void**)&psl);
     if (SUCCEEDED(hr))
     {
         // Determine our executable's file path so the task will execute this application
@@ -1455,7 +1461,7 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 HRESULT _CreateSeparatorLink(IShellLink **ppsl)
 {
     IPropertyStore *pps;
-    HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pps));
+    HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IPropertyStore, (void**)&pps);
     if (SUCCEEDED(hr))
     {
 		PROPVARIANT propvar = {VT_BOOL};
@@ -1475,6 +1481,7 @@ HRESULT _CreateSeparatorLink(IShellLink **ppsl)
     }
     return hr;
 }
+#endif
 
 void UpdateWin7TaskList(bool bForce)
 {
@@ -1487,6 +1494,9 @@ void UpdateWin7TaskList(bool bForce)
 	if (!bForce)
 		return; // сохранять не просили
 
+#ifdef __GNUC__
+	MBoxA(L"Sorry, UpdateWin7TaskList is not availbale in GCC!");
+#else
 	SetCursor(LoadCursor(NULL, IDC_WAIT));
 
 	LPCWSTR pszTasks[32] = {};
@@ -1547,12 +1557,12 @@ void UpdateWin7TaskList(bool bForce)
 	}
 
 
-	bool lbRc = false;
+	//bool lbRc = false;
 
     // The visible categories are controlled via the ICustomDestinationList interface.  If not customized,
     // applications will get the Recent category by default.
     ICustomDestinationList *pcdl = NULL;
-    HRESULT hr = CoCreateInstance(CLSID_DestinationList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pcdl));
+    HRESULT hr = CoCreateInstance(CLSID_DestinationList, NULL, CLSCTX_INPROC_SERVER, IID_ICustomDestinationList, (void**)&pcdl);
     if (FAILED(hr) || !pcdl)
     {
     	DisplayLastError(L"ICustomDestinationList create failed", (DWORD)hr);
@@ -1758,6 +1768,7 @@ void UpdateWin7TaskList(bool bForce)
 	#endif
 
 	SetCursor(LoadCursor(NULL, IDC_ARROW));
+#endif
 }
 
 
@@ -1769,6 +1780,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
 	HeapInitialize();
 	RemoveOldComSpecC();
+
+	/* *** DEBUG PURPOSES */
+	gpszEnvPathStore = LoadCurrentPathEnvVar();
+	/* *** DEBUG PURPOSES */
 
 	gbIsWine = IsWine(); // В общем случае, на флажок ориентироваться нельзя. Это для информации.
 	if (gbIsWine)
@@ -1957,7 +1972,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 				if (lbTurnOn)
 				{
-					BOOL bNeedFree = FALSE;
+					//BOOL bNeedFree = FALSE;
 
 					//if (*curCommand!=_T('"') && _tcschr(curCommand, _T(' ')))
 					//{

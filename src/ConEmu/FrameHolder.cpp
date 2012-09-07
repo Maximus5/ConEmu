@@ -237,7 +237,9 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 				else if (gpConEmu->mn_SysMenuCloseTick && (nCloseDelay < (nDoubleTime/2)))
 				{
 					// Пропустить - кликом закрыли меню
+					#ifdef _DEBUG
 					int nDbg = 0;
+					#endif
 				}
 				else
 				{

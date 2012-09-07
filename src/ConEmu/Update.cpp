@@ -37,6 +37,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TrayIcon.h"
 #include "version.h"
 
+#ifdef __GNUC__
+typedef struct {
+    DWORD dwMajorVersion;
+    DWORD dwMinorVersion;
+} HTTP_VERSION_INFO, * LPHTTP_VERSION_INFO;
+#define INTERNET_OPTION_HTTP_VERSION 59
+#endif
+
 CConEmuUpdate* gpUpd = NULL;
 
 #define UPDATETHREADTIMEOUT 2500
@@ -302,7 +310,7 @@ CConEmuUpdate::~CConEmuUpdate()
 
 void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 {
-	DWORD nWait = WAIT_OBJECT_0;
+	//DWORD nWait = WAIT_OBJECT_0;
 	
 	if (InUpdate() != us_NotStarted)
 	{
@@ -490,7 +498,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	wchar_t *pszSource, *pszEnd, *pszFileName;
 	DWORD nSrcLen, nSrcCRC, nLocalCRC = 0;
 	bool lbSourceLocal;
-	INT_PTR nShellRc = 0;
+	//INT_PTR nShellRc = 0;
 
 #ifdef _DEBUG
 	// Чтобы успел сервер проинититься и не ругался под отладчиком...
@@ -1098,6 +1106,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 	bool lbInet = !IsLocalFile(asSource);
 	bool lbTargetLocal = IsLocalFile(asTarget);
 	_ASSERTE(lbTargetLocal);
+	UNREFERENCED_PARAMETER(lbTargetLocal);
 	DWORD cchDataMax = 64*1024;
 	BYTE* ptrData = (BYTE*)malloc(cchDataMax);
 	//DWORD nTotalSize = 0;
@@ -1155,7 +1164,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			goto wrap;
 		}
 		LPCWSTR pszSlash = wcschr(asSource+7, L'/');
-		if (!pszSlash || (pszSlash == (asSource+7)) || ((pszSlash - (asSource+7)) >= countof(szServer)))
+		if (!pszSlash || (pszSlash == (asSource+7)) || ((pszSlash - (asSource+7)) >= (INT_PTR)countof(szServer)))
 		{
 			ReportError(L"Invalid server specified!\n%s", asSource, 0);
 			goto wrap;

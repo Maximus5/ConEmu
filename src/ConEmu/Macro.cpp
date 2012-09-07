@@ -772,8 +772,6 @@ LPWSTR CConEmuMacro::Print(LPWSTR asArgs, CRealConsole* apRCon)
 LPWSTR CConEmuMacro::Progress(LPWSTR asArgs, CRealConsole* apRCon)
 {
 	int nType = 0, nValue = 0;
-	LPWSTR pszText = NULL;
-
 	if (!apRCon)
 		return lstrdup(L"InvalidArg");
 

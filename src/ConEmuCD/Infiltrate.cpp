@@ -34,6 +34,7 @@ Look at InfiltrateProc for source
 
 #include <windows.h>
 #include "Infiltrate.h"
+#include "../common/defines.h"
 
 #define USE_STATIC_CODES
 
@@ -74,7 +75,7 @@ size_t GetInfiltrateProc(void** ppCode)
 		0x55, 0x08, 0x89, 0x42, 0x10, 0x8b, 0x45, 0x08, 0x8b, 0x40, 0x10, 0x5f, 0x5e, 0x5b, 0x8b, 0xe5,
 		0x5d, 0xc2, 0x04, 0x00
 	};
-	cbProcSize = ARRAYSIZE(Infiltrate_x86);
+	cbProcSize = countof(Infiltrate_x86);
 	if (ppCode)
 		*ppCode = (void*)Infiltrate_x86;
 	#else

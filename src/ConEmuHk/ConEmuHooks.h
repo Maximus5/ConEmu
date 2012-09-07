@@ -83,7 +83,7 @@ extern ConEmuHkDllState gnDllState;
 extern int gnDllThreadCount;
 extern BOOL gbDllStopCalled;
 
-int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
+//int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
 struct AnnotationHeader;
 extern AnnotationHeader* gpAnnotationHeader;
 extern HANDLE ghCurrentOutBuffer;
@@ -123,3 +123,12 @@ bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
 void GuiSetProgress(WORD st, WORD pr);
 BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo, BOOL bForced = FALSE);
 BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced = FALSE);
+
+#if defined(__GNUC__)
+extern "C" {
+	HWND WINAPI GetRealConsoleWindow();
+	FARPROC WINAPI GetWriteConsoleW();
+	int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
+	FARPROC WINAPI GetLoadLibraryW();
+};
+#endif

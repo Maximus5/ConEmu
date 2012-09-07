@@ -66,6 +66,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
 
+#ifndef CONSOLE_MOUSE_DOWN
+#define CONSOLE_MOUSE_DOWN 8
+#endif
+
 #define Free SafeFree
 #define Alloc calloc
 
@@ -154,13 +158,12 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	bool lbRc = false;
 	HANDLE hFile = NULL;
 	LARGE_INTEGER liSize;
-	COORD cr = {}; //, crSize, crCursor;
-	//WCHAR* pszBuffers[3];
-	//void*  pnBuffers[3];
+	COORD cr = {};
 	wchar_t* pszDumpTitle, *pszRN, *pszSize;
-	//SetWindowText(FarHwnd, L"ConEmu screen dump");
-	//pszDumpTitle = pszText;
-	//pszRN = wcschr(pszDumpTitle, L'\r');
+	uint nX = 0;
+	uint nY = 0;
+	DWORD dwConDataBufSize = 0;
+	DWORD dwConDataBufSizeEx = 0;
 	
 	con.m_sel.dwFlags = 0;
 	dump.Close();
@@ -228,8 +231,6 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	dump.pszBlock1 = pszRN + 2;
 	
 	pszSize += 6;
-	//if ((pszRN = wcschr(pszSize, L'x'))==NULL) return;
-	//*pszRN = 0;
 	dump.crSize.X = (SHORT)wcstol(pszSize, &pszRN, 10);
 
 	if (!pszRN || *pszRN!=L'x')
@@ -239,8 +240,6 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	}
 
 	pszSize = pszRN + 1;
-	//if ((pszRN = wcschr(pszSize, L'\r'))==NULL) return;
-	//*pszRN = 0;
 	dump.crSize.Y = (SHORT)wcstol(pszSize, &pszRN, 10);
 
 	if (!pszRN || (*pszRN!=L' ' && *pszRN!=L'\r'))
@@ -277,14 +276,8 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 		}
 	}
 
-	//pszTitle = (WCHAR*)calloc(lstrlenW(pszDumpTitle)+200,2);
-	DWORD dwConDataBufSize = dump.crSize.X * dump.crSize.Y;
-	DWORD dwConDataBufSizeEx = dump.crSize.X * dump.crSize.Y * sizeof(CharAttr);
-	//pnBuffers[0] = (void*)(((WORD*)(pszBuffers[0])) + dwConDataBufSize);
-	//pszBuffers[1] = (WCHAR*)(((LPBYTE)(pnBuffers[0])) + dwConDataBufSizeEx);
-	//pnBuffers[1] = (void*)(((WORD*)(pszBuffers[1])) + dwConDataBufSize);
-	//pszBuffers[2] = (WCHAR*)(((LPBYTE)(pnBuffers[1])) + dwConDataBufSizeEx);
-	//pnBuffers[2] = (void*)(((WORD*)(pszBuffers[2])) + dwConDataBufSize);
+	dwConDataBufSize = dump.crSize.X * dump.crSize.Y;
+	dwConDataBufSizeEx = dump.crSize.X * dump.crSize.Y * sizeof(CharAttr);
 	
 	dump.pcaBlock1 = (CharAttr*)(((WORD*)(dump.pszBlock1)) + dwConDataBufSize);
 	dump.Block1 = (((LPBYTE)(((LPBYTE)(dump.pcaBlock1)) + dwConDataBufSizeEx)) - dump.ptrData) <= (INT_PTR)dump.cbDataSize;
@@ -300,8 +293,8 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	
 	// При активации дополнительного буфера нельзя выполнять SyncWindow2Console.
 	// Привести видимую область буфера к текущей.
-	uint nX = mp_RCon->TextWidth();
-	uint nY = mp_RCon->TextHeight();
+	nX = mp_RCon->TextWidth();
+	nY = mp_RCon->TextHeight();
 
 	
 	// Почти все готово, осталась инициализация
@@ -367,7 +360,9 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 {
 	bool lbRc = false;
 	LARGE_INTEGER liSize;
-	COORD cr = {};
+	//COORD cr = {};
+	uint nX = 0;
+	uint nY = 0;
 
 	dump.Close();
 
@@ -411,8 +406,8 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	
 	// При активации дополнительного буфера нельзя выполнять SyncWindow2Console.
 	// Привести видимую область буфера к текущей.
-	uint nX = mp_RCon->TextWidth();
-	uint nY = mp_RCon->TextHeight();
+	nX = mp_RCon->TextWidth();
+	nY = mp_RCon->TextHeight();
 
 	
 	// Почти все готово, осталась инициализация
@@ -598,6 +593,8 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	BOOL lbRc = FALSE;
 	BOOL fSuccess = FALSE;
 	DWORD dwRead = 0;
+	DWORD dwTickStart = 0;
+	DWORD nCallTimeout = 0;
 	int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE);
 	int nOutSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_RETSIZE);
 	CESERVER_REQ* pIn = ExecuteNewCmd(anCmdID, nInSize);
@@ -708,17 +705,16 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		mp_RCon->LogString(szInfo, TRUE);
 	}
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	wchar_t szDbgCmd[128]; _wsprintf(szDbgCmd, SKIPLEN(countof(szDbgCmd)) L"SetConsoleSize.CallNamedPipe(cx=%i, cy=%i, buf=%i, cmd=%i)\n",
 	                                 sizeX, sizeY, sizeBuffer, anCmdID);
 	DEBUGSTRSIZE(szDbgCmd);
-#endif
-	DWORD dwTickStart = timeGetTime();
+	#endif
+
+	dwTickStart = timeGetTime();
 	// С таймаутом
-	DWORD nCallTimeout = 500;
-#ifdef _DEBUG
-	nCallTimeout = 30000;
-#endif
+	nCallTimeout = RELEASEDEBUGTEST(500,30000);
+
 	fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);
 	gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, mp_RCon->ms_ConEmuC_Pipe, pOut);
 
@@ -1091,14 +1087,18 @@ bool CRealBuffer::isInitialized()
 	return true;
 }
 
-bool CRealBuffer::isFarMenuActive()
+bool CRealBuffer::isFarMenuOrMacro()
 {
 	BOOL lbMenuActive = false;
 	MSectionLock cs; cs.Lock(&csCON);
 
-	if (con.pConChar)
+	WARNING("CantActivateInfo: Хорошо бы при отображении хинта 'Can't activate tab' сказать 'почему'");
+
+	if (con.pConChar && con.pConAttr)
 	{
-		if (con.pConChar[0] == L'R' || con.pConChar[0] == L'P')
+		TODO("Хорошо бы реально у фара узнать, выполняет ли он макрос");
+		if (((con.pConChar[0] == L'R') && ((con.pConAttr[0] & 0xFF) == 0x4F))
+			|| ((con.pConChar[0] == L'P') && ((con.pConAttr[0] & 0xFF) == 0x2F)))
 		{
 			// Запись макроса. Запретим наверное переключаться?
 			lbMenuActive = true;
@@ -2348,8 +2348,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 					nLen--;
 				}
 				while ((nLen > 0)
-					&& ((szText[nLen-1] >= L'0') && (szText[nLen-1] <= L'9'))
-						|| ((szText[nLen-1] == L',') && ((szText[nLen] >= L'0') && (szText[nLen] <= L'9'))))
+					&& (((szText[nLen-1] >= L'0') && (szText[nLen-1] <= L'9'))
+						|| ((szText[nLen-1] == L',') && ((szText[nLen] >= L'0') && (szText[nLen] <= L'9')))))
 				{
 					nLen--;
 				}
@@ -2429,7 +2429,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 									wchar_t* pszCmd = ExpandMacroValues(gpSet->sFarGotoEditor, pszVal, countof(pszVal));
 									if (!pszCmd)
 									{
-										DisplayLastError(L"Invalid command specified in «External editor»", -1);
+										DisplayLastError(L"Invalid command specified in \"External editor\"", -1);
 									}
 									else
 									{
@@ -4526,7 +4526,9 @@ void CRealBuffer::FindPanels()
 			if (lbIsMenu)
 				nY ++; // скорее всего, первая строка - меню
 		}
-		else if ((con.pConChar[0] == L'R' || con.pConChar[0] == L'P') && con.pConChar[1] == L' ')
+		else if ((((con.pConChar[0] == L'R') && ((con.pConAttr[0] & 0xFF) == 0x4F))
+					|| ((con.pConChar[0] == L'P') && ((con.pConAttr[0] & 0xFF) == 0x2F)))
+			&& con.pConChar[1] == L' ')
 		{
 			for(int i=1; i<con.nTextWidth; i++)
 			{
@@ -4544,8 +4546,8 @@ void CRealBuffer::FindPanels()
 		// Левая панель
 		BOOL bFirstCharOk = (nY == 0)
 		                    && (
-		                        (con.pConChar[0] == L'R' && (con.pConAttr[0] & 0x4F) == 0x4F) // символ записи макроса
-		                        || (con.pConChar[0] == L'P' && con.pConAttr[0] == 0x2F) // символ воспроизведения макроса
+		                        (con.pConChar[0] == L'R' && (con.pConAttr[0] & 0xFF) == 0x4F) // символ записи макроса
+		                        || (con.pConChar[0] == L'P' && (con.pConAttr[0] & 0xFF) == 0x2F) // символ воспроизведения макроса
 		                    );
 
 		BOOL bFarShowColNames = TRUE;

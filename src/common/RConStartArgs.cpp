@@ -36,6 +36,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "WinObjects.h"
 
+#ifdef __GNUC__
+#define SecureZeroMemory(p,s) memset(p,0,s)
+#endif
+
 #define DefaultSplitValue 500
 
 RConStartArgs::RConStartArgs()

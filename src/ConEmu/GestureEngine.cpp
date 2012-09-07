@@ -45,12 +45,75 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "TabBar.h"
 
+#define LODWORD(ull) ((DWORD)((ULONGLONG)(ull) & 0x00000000ffffffff))
+#define HIDWORD(ull) ((DWORD)(ull>>32))
+
+#ifdef __GNUC__
+	/*
+	 * Gesture flags - GESTUREINFO.dwFlags
+	 */
+	#define GF_BEGIN                        0x00000001
+	#define GF_INERTIA                      0x00000002
+	#define GF_END                          0x00000004
+	
+	/*
+	 * Gesture IDs
+	 */
+	#define GID_BEGIN                       1
+	#define GID_END                         2
+	#define GID_ZOOM                        3
+	#define GID_PAN                         4
+	#define GID_ROTATE                      5
+	#define GID_TWOFINGERTAP                6
+	#define GID_PRESSANDTAP                 7
+	#define GID_ROLLOVER                    GID_PRESSANDTAP
+
+	/*
+	 * Gesture configuration flags - GESTURECONFIG.dwWant or GESTURECONFIG.dwBlock
+	 */
+
+	/*
+	 * Common gesture configuration flags - set GESTURECONFIG.dwID to zero
+	 */
+	#define GC_ALLGESTURES                              0x00000001
+
+	/*
+	 * Zoom gesture configuration flags - set GESTURECONFIG.dwID to GID_ZOOM
+	 */
+	#define GC_ZOOM                                     0x00000001
+
+	/*
+	 * Pan gesture configuration flags - set GESTURECONFIG.dwID to GID_PAN
+	 */
+	#define GC_PAN                                      0x00000001
+	#define GC_PAN_WITH_SINGLE_FINGER_VERTICALLY        0x00000002
+	#define GC_PAN_WITH_SINGLE_FINGER_HORIZONTALLY      0x00000004
+	#define GC_PAN_WITH_GUTTER                          0x00000008
+	#define GC_PAN_WITH_INERTIA                         0x00000010
+
+	/*
+	 * Rotate gesture configuration flags - set GESTURECONFIG.dwID to GID_ROTATE
+	 */
+	#define GC_ROTATE                                   0x00000001
+
+	/*
+	 * Two finger tap gesture configuration flags - set GESTURECONFIG.dwID to GID_TWOFINGERTAP
+	 */
+	#define GC_TWOFINGERTAP                             0x00000001
+
+	/*
+	 * PressAndTap gesture configuration flags - set GESTURECONFIG.dwID to GID_PRESSANDTAP
+	 */
+	#define GC_PRESSANDTAP                              0x00000001
+	#define GC_ROLLOVER                                 GC_PRESSANDTAP
+
+#endif
+
+
 #ifndef GID_PRESSANDTAP
     #define GID_PRESSANDTAP GID_ROLLOVER
 #endif
 
-#define LODWORD(ull) ((DWORD)((ULONGLONG)(ull) & 0x00000000ffffffff))
-#define HIDWORD(ull) ((DWORD)(ull>>32))
 
 // Default constructor of the class.
 CGestures::CGestures()

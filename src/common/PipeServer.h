@@ -623,7 +623,7 @@ struct PipeServer
 				if (!mb_Overlapped)
 					ReleaseSemaphore(hWait[1], 1, NULL);
 
-				bool lbFail = false;
+				//bool lbFail = false;
 				if (mb_Overlapped)
 				{
 					// Overlapped ConnectNamedPipe should return zero.
@@ -730,7 +730,7 @@ struct PipeServer
 			_ASSERTEX(this && pPipe && pPipe->pServer==this);
 			BOOL fConnected = FALSE;
 			BOOL fNewCheckStart = (mn_PipesToCreate > 0);
-			DWORD dwErr = 0;
+			//DWORD dwErr = 0;
 			HANDLE hWait[2] = {NULL,NULL}; // без Overlapped - используется только при ожидании свободного сервера
 			DWORD dwTID = GetCurrentThreadId();
 			// The main loop creates an instance of the named pipe and
@@ -799,6 +799,7 @@ struct PipeServer
 							// Стартуем новый instance
 							bool bStartNewInstance = StartPipeInstance(&(m_Pipes[j]));
 							_ASSERTEX(bStartNewInstance==true);
+							UNREFERENCED_PARAMETER(bStartNewInstance);
 							break;
 						}
 					}
@@ -915,6 +916,7 @@ struct PipeServer
 				_Disconnect(pPipe, false, true, false);
 			}
 
+			UNREFERENCED_PARAMETER(dwTID);
 			return 0;
 		};
 		bool StartPipeInstance(PipeInst* pPipe)
@@ -1068,7 +1070,7 @@ struct PipeServer
 			
 			if (mn_MaxCount < 1)
 				mn_MaxCount = 1;
-			if (mn_DummyAnswerSize <= 0 || mn_DummyAnswerSize > sizeof(T))
+			if (mn_DummyAnswerSize <= 0 || mn_DummyAnswerSize > (int)sizeof(T))
 				mn_DummyAnswerSize = sizeof(T);
 				
 			m_Pipes = (PipeInst*)calloc(mn_MaxCount,sizeof(*m_Pipes));

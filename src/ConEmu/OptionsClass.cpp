@@ -1599,7 +1599,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 	{
 	case WM_INITDIALOG:
 		{
-			BOOL bInitial = (lParam != 0);
+			BOOL bInitial = (lParam != 0); UNREFERENCED_PARAMETER(bInitial);
 
 			CheckRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp+gpSet->nStartType);
 
@@ -2505,7 +2505,7 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 	SetWindowPos(hTip, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 
 	// ”бедитьс€, что поле клавиши идет поверх выпадающего списка
-	HWND hHk = GetDlgItem(hWnd2, hkHotKeySelect);
+	//HWND hHk = GetDlgItem(hWnd2, hkHotKeySelect);
 	SendDlgItemMessage(hWnd2, hkHotKeySelect, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
 
 	// —оздать колонки
@@ -2812,7 +2812,7 @@ LRESULT CSettings::OnInitDialog_Tasks(HWND hWnd2, bool abForceReload)
 		lstrcpyn(szItem+nPrefix, pGrp->pszName, countof(szItem)-nPrefix);
 
 		INT_PTR iIndex = SendDlgItemMessage(hWnd2, lbCmdTasks, LB_ADDSTRING, 0, (LPARAM)szItem);
-
+		UNREFERENCED_PARAMETER(iIndex);
 		//SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETITEMDATA, iIndex, (LPARAM)pGrp);
 
 		nGroup++;
@@ -3351,7 +3351,7 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 				GetDlgItemText(hDlg, tInsideIcon, szIcon, countof(szIcon));
 				RegisterShell(szName, L"/inside", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
 			}
-			else if (szName && *szName)
+			else if (*szName)
 			{
 				UnregisterShell(szName);
 			}
@@ -3370,7 +3370,7 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 				GetDlgItemText(hDlg, tHereIcon, szIcon, countof(szIcon));
 				RegisterShell(szName, NULL, SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
 			}
-			else if (szName && *szName)
+			else if (*szName)
 			{
 				UnregisterShell(szName);
 			}
@@ -7005,7 +7005,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		_ASSERTE(p->PageIndex>=0 && p->PageIndex<countof(gpSetCls->mh_Tabs) && gpSetCls->mh_Tabs[p->PageIndex]!=NULL && gpSetCls->mh_Tabs[p->PageIndex]==hWnd2);
 
 		// «десь можно обновить контролы страничек при активации вкладки
-		switch (((ConEmuSetupPages*)lParam)->PageID)
+		switch (p->PageID)
 		{
 		case IDD_SPG_MAIN:    /*gpSetCls->OnInitDialog_Main(hWnd2);*/   break;
 		case IDD_SPG_WNDSIZEPOS:
@@ -7506,7 +7506,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			lstrcpyn(szItem+nPrefix, pApp->AppNames, countof(szItem)-nPrefix);
 
 			INT_PTR iIndex = SendDlgItemMessage(hWnd2, lbAppDistinct, LB_ADDSTRING, 0, (LPARAM)szItem);
-
+			UNREFERENCED_PARAMETER(iIndex);
 			//SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETITEMDATA, iIndex, (LPARAM)pApp);
 
 			nApp++;
@@ -12060,7 +12060,7 @@ bool CSettings::CheckConsoleFontFast()
 			{
 				GetExitCodeProcess(pi.hProcess, &nCheckResult);
 
-				if (nCheckResult == CERR_UNICODE_CHK_OKAY)
+				if ((int)nCheckResult == CERR_UNICODE_CHK_OKAY)
 				{
 					gpSetCls->nConFontError = 0;
 				}

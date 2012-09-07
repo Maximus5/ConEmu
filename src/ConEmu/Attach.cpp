@@ -470,7 +470,11 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 			pDlg->mp_ProcessData = new CProcessData;
 
+			CVConGroup::LogString(L"CAttachDlg::AttachDlgEnumWin::Begin", TRUE);
+
 			EnumWindows(AttachDlgEnumWin, (LPARAM)pDlg);
+
+			CVConGroup::LogString(L"CAttachDlg::AttachDlgEnumWin::End", TRUE);
 
 			delete pDlg->mp_ProcessData;
 			pDlg->mp_ProcessData = NULL;

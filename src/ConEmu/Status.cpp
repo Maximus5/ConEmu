@@ -255,8 +255,8 @@ CStatus::CStatus()
 	OnTransparency();
 
 	_ASSERTE(gpConEmu && *gpConEmu->ms_ConEmuBuild);
-	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) _T(" Ђ %s%s"), 
-		gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"[32]",L"[64]"));
+	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L" %c %s%s", 
+		0x00AB/* Ђ */, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"[32]",L"[64]"));
 }
 
 CStatus::~CStatus()
@@ -299,6 +299,7 @@ bool CStatus::LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMa
 		_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u"), nPID);
 		//_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u Ђ %s%s"), 
 		//	nPID, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x86",L"x64"));
+		UNREFERENCED_PARAMETER(nCchLeft);
 		lbRc = true;
 	}
 
@@ -310,7 +311,9 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 	// —разу сбросим
 	//mb_Invalidated = false;
 
+	#ifdef _DEBUG
 	bool bDataChanged = mb_DataChanged;
+	#endif
 	mb_DataChanged = false;
 
 	int nStatusWidth = rcStatus.right-rcStatus.left+1;
@@ -379,6 +382,7 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
 	RealBufferType tBuffer = rbt_Undefined;
 	SIZE szTemp;
+	int x = 0;
 
 	if (pRCon)
 	{
@@ -390,14 +394,14 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 	int nGapWidth = 2;
 	int nDashWidth = 1;
 	int nMinInfoWidth = 80;
-	int nTotalWidth = nGapWidth, nWidth = 0;
+	int nTotalWidth = nGapWidth;
 	int iInfoID = -1;
 	SIZE szVerSize = {};
 
 	GetTextExtentPoint32(mh_MemDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &szVerSize);
 
 	//while (nID <= ces_Last)
-	for (int ii = 0; ii < countof(gStatusCols); ii++)
+	for (size_t ii = 0; ii < countof(gStatusCols); ii++)
 	{
 		CEStatusItems nID = gStatusCols[ii].nID;
 		_ASSERTE(nID < countof(m_Values));
@@ -584,8 +588,6 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 
 	//nTotalWidth += nGapWidth;
 
-	int x = 0;
-
 	// —брос неиспользуемых €чеек
 	for (size_t i = nDrawCount; i < countof(m_Items); i++)
 	{
@@ -674,6 +676,8 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 		case csi_ScrollLock:
 			SetTextColor(mh_MemDC, mb_Scroll ? crText : crDash);
 			break;
+		default:
+			;
 		}
 
 		RECT rcText = {rcField.left+1, rcField.top+1, rcField.right-1, rcField.bottom-1};
@@ -697,6 +701,8 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 		case csi_ScrollLock:
 			SetTextColor(mh_MemDC, crText);
 			break;
+		default:
+			;
 		}
 
 		if ((gpSet->isStatusBarFlags & csf_VertDelim) && ((i+1) < nDrawCount))
@@ -903,6 +909,8 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 					keybd_event(VK_SCROLL, 0, 0, 0);
 					keybd_event(VK_SCROLL, 0, KEYEVENTF_KEYUP, 0);
 					break;
+				default:
+					;
 				}
 			}
 			else if (uMsg == WM_RBUTTONUP)
@@ -958,7 +966,7 @@ void CStatus::ShowStatusSetupMenu()
 	int nClickedID = -1;
 
 	// m_Items содержит только видимые элементы, поэтому индексы не совпадают, надо искать
-	for (int j = 0; j < countof(m_Items); j++)
+	for (size_t j = 0; j < countof(m_Items); j++)
 	{
 		if (m_Items[j].bShow && PtInRect(&m_Items[j].rcClient, ptClient))
 		{
@@ -1031,7 +1039,7 @@ void CStatus::ShowStatusSetupMenu()
 		{
 			CSettings::Dialog(IDD_SPG_STATUSBAR);
 		}
-		else if ((nCmd >= 1) && (nCmd <= countof(gStatusCols)))
+		else if ((nCmd >= 1) && (nCmd <= (int)countof(gStatusCols)))
 		{
 			if (nCmd == 1)
 			{
@@ -1527,6 +1535,8 @@ void CStatus::ProcessMenuHighlight(HMENU hMenu, WORD nID, WORD nFlags)
 					gpConEmu->OnTransparent();
 			}
 			break;
+		default:
+			;
 	}
 }
 
@@ -1548,7 +1558,7 @@ bool CStatus::ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly)
 
 	if (nCmd >= 1)
 	{
-		for (int i = 0; i < countof(gTranspOpt); i++)
+		for (size_t i = 0; i < countof(gTranspOpt); i++)
 		{
 			if (gTranspOpt[i].nMenuID == nCmd)
 			{
@@ -1618,7 +1628,7 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 
 	int nCurrent = -1;
 
-	for (int i = 0; i < countof(gTranspOpt); i++)
+	for (size_t i = 0; i < countof(gTranspOpt); i++)
 	{
 		bool bChecked = false;
 		if (!gTranspOpt[i].nMenuID)

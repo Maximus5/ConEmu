@@ -98,6 +98,8 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 
 COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput);
 
+wchar_t* LoadCurrentPathEnvVar();
+
 #ifndef CONEMU_MINIMAL
 HANDLE DuplicateProcessHandle(DWORD anTargetPID);
 void ChangeScreenBufferSize(CONSOLE_SCREEN_BUFFER_INFO& sbi, SHORT VisibleX, SHORT VisibleY, SHORT BufferX, SHORT BufferY);

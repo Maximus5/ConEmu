@@ -287,7 +287,7 @@ BYTE ConEmuUpdateSettings::UpdateDownloadSetup()
 	{
 		HKEY hk;
 		LONG lRc;
-		bool bUseSetupExe = false;
+		//bool bUseSetupExe = false;
 		wchar_t szInstallDir[MAX_PATH+2], szExeDir[MAX_PATH+2];
 
 		wcscpy_c(szExeDir, gpConEmu->ms_ConEmuExeDir);

@@ -17,6 +17,7 @@ SRCS = Entry.cpp \
        ../common/MSecurity.cpp \
        ../common/MStrSafe.cpp \
        ../common/Memory.cpp \
+       ../common/RConStartArgs.cpp \
        ../common/WinObjects.cpp
 
 
@@ -128,15 +129,16 @@ MAP = $(patsubst %.$(EXT),%.map,$(DLLFULLNAME))
 
 
 .PHONY: all
-all: build
-#all: iclean build
+#all: build
+all: iclean build
 #	@$(MAKE) -f makefile_gcc build 
 # clean
 
 .PHONY: iclean
 iclean:
 	@echo prebuild cleaning
-	@$(RM) $(OBJDIR)/*.* $(COMDIR)/*.*
+	@$(RM) $(COMDIR)/*.*
+#	@$(RM) $(OBJDIR)/*.*
 
 .PHONY: build
 build: $(DLLFULLNAME)

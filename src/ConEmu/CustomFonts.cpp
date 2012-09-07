@@ -147,7 +147,7 @@ private:
 			RGBQUAD white;
 		};
 
-		MyBitmap b = {0};
+		MyBitmap b = {};
 		b.bmi.bmiHeader.biSize        = sizeof(b.bmi.bmiHeader);
 		b.bmi.bmiHeader.biWidth       = m_Width * 256;
 		b.bmi.bmiHeader.biHeight      = -m_Height * 256;
@@ -259,8 +259,8 @@ public:
 		BDFFont* b = new BDFFont;
 
 		int iCharIndex = -1;
-		int iXOffset, iYOffset;
-		int iCharWidth, iCharHeight, iCharXOffset, iCharYOffset;
+		int iXOffset = 0, iYOffset = 0;
+		int iCharWidth = 0, iCharHeight = 0, iCharXOffset = 0, iCharYOffset = 0;
 
 
 		while ((pszCur < pszFileEnd) && *pszCur)
@@ -386,7 +386,7 @@ public:
 			if (memcmp(szLine, FAMILY_NAME, FAMILY_NAME_LEN) == 0)
 			{
 				//familyName = s.substr(FAMILY_NAME.size(), s.size()-1-FAMILY_NAME.size());
-				lstrcpynA(szFamilyName, szLine + FAMILY_NAME_LEN, ARRAYSIZE(szFamilyName));
+				lstrcpynA(szFamilyName, szLine + FAMILY_NAME_LEN, countof(szFamilyName));
 				char *psz = strchr(szFamilyName, '"');
 				if (psz)
 					*psz = 0;
@@ -408,15 +408,15 @@ public:
 					NextWord(szLine, szWord);
 					//getline(iss, word, '-');
 				//familyName = word;
-				//lstrcpynA(szFamilyName, word.c_str(), ARRAYSIZE(szFamilyName));
-				lstrcpynA(szFamilyName, szWord, ARRAYSIZE(szFamilyName));
+				//lstrcpynA(szFamilyName, word.c_str(), countof(szFamilyName));
+				lstrcpynA(szFamilyName, szWord, countof(szFamilyName));
 
 				// Keep looking for FAMILY_NAME
 			}
 		}
 
 wrap:
-		MultiByteToWideChar(CP_ACP, 0, szFamilyName, -1, rsFamilyName, ARRAYSIZE(rsFamilyName));
+		MultiByteToWideChar(CP_ACP, 0, szFamilyName, -1, rsFamilyName, countof(rsFamilyName));
 		return (rsFamilyName[0] != 0);
 	}
 
@@ -652,22 +652,38 @@ BOOL CEDC::ExtTextOut(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lp
 
 BOOL CEDC::ExtTextOutA(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lpString, UINT cbCount, const INT *lpDx)
 {
+	BOOL lbRc = FALSE;
+
 	switch (m_Font.iType)
 	{
 	case CEFONT_GDI:
 	case CEFONT_NONE:
-		return ::ExtTextOutA(hDC, X, Y, fuOptions, lprc, lpString, cbCount, lpDx);
+		{
+			lbRc = ::ExtTextOutA(hDC, X, Y, fuOptions, lprc, lpString, cbCount, lpDx);
+			break;
+		}
 	case CEFONT_CUSTOM:
 		{
-			wchar_t* lpWString = (wchar_t*)alloca(cbCount * sizeof(wchar_t));
-			for (UINT cb=0; cb<cbCount; cb++)
-				lpWString[cb] = lpString[cb];  // WideCharToMultiByte?
-			return ExtTextOut(X, Y, fuOptions, lprc, lpWString, cbCount, lpDx);
+			wchar_t* lpWString = (wchar_t*)malloc((cbCount+1) * sizeof(wchar_t));
+			if (lpWString)
+			{
+				//for (UINT cb=0; cb<cbCount; cb++)
+				//	lpWString[cb] = lpString[cb];  // WideCharToMultiByte?
+				MultiByteToWideChar(CP_OEMCP, 0, lpString, -1, lpWString, cbCount);
+				lpWString[cbCount] = 0; // AsciiZ в принципе не требуется, но для удобства.
+
+				lbRc = ExtTextOut(X, Y, fuOptions, lprc, lpWString, cbCount, lpDx);
+
+				free(lpWString);
+			}
+			break;
 		}
 	default:
-		_ASSERT(0);
-		return FALSE;
+		{
+			_ASSERT(FALSE && "Invalid iType");
+		}
 	}
+	return lbRc;
 }
 
 BOOL CEDC::GetTextExtentPoint32(LPCTSTR ch, int c, LPSIZE sz)

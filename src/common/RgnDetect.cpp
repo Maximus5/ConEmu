@@ -959,12 +959,12 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 			n = nFromY*nWidth+nFromX;
 			n2 = nMostBottom*nWidth+nFromX;
 
-			while(nFromX > nMinMargin)
+			while (nFromX > nMinMargin)
 			{
 				n--; n2--;
 
 				// ƒиалоги в фаре можно "таскать" с клавиатуры через CtrlF5. ”глы диалога помечаютс€ слешами.
-				if ((pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace) || pChar[n] == L'\\')
+				if ((pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace) || (pChar[n] == L'\\'))
 					&& (pAttr[n2].crBackColor == nColor && (pChar[n2] == L' ' || pChar[n2] == ucNoBreakSpace)))
 				{
 					nFromX--;

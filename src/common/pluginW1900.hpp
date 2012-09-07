@@ -1145,7 +1145,7 @@ struct ProcessMacroInfo
 {
 	size_t StructSize;
 	enum FAR_MACROINFOTYPE Type;
-	union {
+	union __Value {
 		struct ProcessMacroFuncInfo Func;
 		struct __Info {
 			int MacroFunctionNumber;

@@ -101,7 +101,6 @@ enum SetTerminateEventPlace
 extern SetTerminateEventPlace gTerminateEventPlace;
 void SetTerminateEvent(SetTerminateEventPlace eFrom);
 
-BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 int AttachDebuggingProcess();
 
 /*  Global  */
@@ -255,7 +254,10 @@ LPCSTR GetCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize);
 
 #if defined(__GNUC__)
 extern "C" {
+#endif
 	BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
+	int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
+#if defined(__GNUC__)
 };
 #endif
 

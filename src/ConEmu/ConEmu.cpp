@@ -5590,7 +5590,28 @@ BOOL CConEmuMain::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* p
 
 CRealConsole* CConEmuMain::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID)
 {
+	wchar_t szLogInfo[MAX_PATH];
+
+	if (gpSetCls->isAdvLogging!=0)
+	{
+		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. AppPID=%u, FileName=", anAppPID);
+		lstrcpyn(szLogInfo+_tcslen(szLogInfo), asAppFileName ? asAppFileName : L"<NULL>", 128);
+		CVConGroup::LogString(szLogInfo);
+	}
+
 	CRealConsole* pRCon = CVConGroup::AttachRequestedGui(asAppFileName, anAppPID);
+
+	if (gpSetCls->isAdvLogging!=0)
+	{
+		wchar_t szRc[64];
+		if (pRCon)
+			_wsprintf(szRc, SKIPLEN(countof(szRc)) L"Succeeded. ServerPID=%u", pRCon->GetServerPID());
+		else
+			wcscpy_c(szRc, L"Rejected");
+		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. AppPID=%u. %s", anAppPID, szRc);
+		CVConGroup::LogString(szLogInfo);
+	}
+
 	return pRCon;
 }
 

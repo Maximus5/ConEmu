@@ -1,7 +1,7 @@
 ALLDIRS = ConEmu \
           ConEmuC \
-          ConEmuHk \
-          ConEmuPlugin
+          ConEmuCD \
+          ConEmuHk
 
 
 all: preclean $(ALLDIRS) clean
@@ -11,6 +11,7 @@ $(FICTIVE):
 
 $(ALLDIRS): $(FICTIVE)
 	@echo ===========$@
+	@rm -f ../gcc/common/*.*
 	@$(MAKE) -C $@ -f makefile_gcc
 
 .PHONY: preclean

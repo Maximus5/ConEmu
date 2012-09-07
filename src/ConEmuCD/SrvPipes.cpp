@@ -307,7 +307,7 @@ void WINAPI CmdServerFree(CESERVER_REQ* pReply, LPARAM lParam)
 BOOL WINAPI DataServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
 	BOOL lbRc = FALSE;
-	CESERVER_REQ *pOut = NULL;
+	//CESERVER_REQ *pOut = NULL;
 	//ExecuteFreeResult(ppReply);
 
 	if ((pIn->hdr.nVersion != CESERVER_REQ_VER)

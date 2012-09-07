@@ -14,7 +14,8 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
-[+] New option: Add UNC paths...
+[+] Settings -> ComSpec: «Support UNC paths in cmd.exe». The beginning. Checkbox turn on "DisableUNCCheckC".
+[+] GCC Build updated. ConEmu, ConEmuC, ConEmuCD, ConEmuHk. 32-bit versions only was tested in GCC.
 
 
 2012.09.04

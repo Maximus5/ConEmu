@@ -296,7 +296,7 @@ bool SettingsINI::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 // эта функция, если значения нет (или тип некорректный) *value НЕ трогает
 bool SettingsINI::Load(const wchar_t *regName, wchar_t **value)
 {
-	DWORD len = 0;
+	//DWORD len = 0;
 
 
 	return false;
@@ -305,7 +305,7 @@ bool SettingsINI::Load(const wchar_t *regName, wchar_t **value)
 bool SettingsINI::Load(const wchar_t *regName, wchar_t *value, int maxLen)
 {
 	_ASSERTE(maxLen>1);
-	DWORD len = 0, dwType = 0;
+	//DWORD len = 0, dwType = 0;
 
 	return false;
 }

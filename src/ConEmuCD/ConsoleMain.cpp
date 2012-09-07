@@ -122,6 +122,7 @@ MConHandle ghConOut(L"CONOUT$");
 #define CLOSE_CONSOLE_TIMEOUT 4000
 
 /*  Global  */
+wchar_t* gpszEnvPathStore = NULL;
 HMODULE ghOurModule = NULL; // ConEmuCD.dll
 DWORD   gnSelfPID = 0;
 BOOL    gbTerminateOnExit = FALSE;
@@ -576,6 +577,10 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	//#ifdef _DEBUG
 	//InitializeCriticalSection(&gcsHeap);
 	//#endif
+
+	/* *** DEBUG PURPOSES */
+	gpszEnvPathStore = LoadCurrentPathEnvVar();
+	/* *** DEBUG PURPOSES */
 
 	if (!anWorkMode)
 	{
@@ -1621,6 +1626,7 @@ wrap:
 	if (szDebugCmdLine[0] != 0)
 	{
 		int nLen = lstrlen(szDebugCmdLine);
+		UNREFERENCED_PARAMETER(nLen);
 	}
 
 	// Если режим ComSpec - вернуть код возврата из запущенного процесса
@@ -2173,8 +2179,8 @@ int CheckUnicodeFont()
 			msprintf(sAttrWrite+i, 2, L"%X", aWrite[i]);
 		}
 
-		COORD crSize = {(SHORT)nLen,1}, cr0 = {0,0};
-		SMALL_RECT rcWrite = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, csbi.dwCursorPosition.X+(SHORT)nLen-1, csbi.dwCursorPosition.Y};
+		COORD /*crSize = {(SHORT)nLen,1},*/ cr0 = {0,0};
+		//SMALL_RECT rcWrite = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, csbi.dwCursorPosition.X+(SHORT)nLen-1, csbi.dwCursorPosition.Y};
 		if ((bWrite = WriteConsoleOutputCharacterW(hOut, szText, nLen, csbi.dwCursorPosition, &nWrite)) != FALSE)
         //if ((bWrite = WriteConsoleOutputW(hOut, cWrite, crSize, cr0, &rcWrite)) != FALSE)
 		{
@@ -2258,7 +2264,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	LPCWSTR pszArgStarts = NULL;
 	//wchar_t szComSpec[MAX_PATH+1] = {0};
 	LPCWSTR pwszCopy = NULL;
-	wchar_t* psFilePart = NULL;
+	//wchar_t* psFilePart = NULL;
 	//BOOL bViaCmdExe = TRUE;
 	gbRunViaCmdExe = TRUE;
 	gbRootIsCmdExe = TRUE;
@@ -2906,6 +2912,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 						case ec_IsAnsi:
 							bOn = (pInfo->bProcessAnsi != FALSE);
 							break;
+						default:
+							;
 						}
 					}
 				}
@@ -2915,6 +2923,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		case ec_IsTerm:
 			bOn = isTerminalMode();
 			break;
+		default:
+			;
 		}
 
 		// И сразу на выход
@@ -3517,6 +3527,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 #ifdef _DEBUG
 	OutputDebugString(gpszRunCmd); OutputDebugString(L"\n");
 #endif
+	UNREFERENCED_PARAMETER(pwszStartCmdLine);
 	return 0;
 }
 
@@ -4017,6 +4028,7 @@ void SendStarted()
 	  			{
 	  				pIn = NULL; // Освободит сама SendStartedThreadProc
 	  			}
+	  			UNREFERENCED_PARAMETER(nErrCode);
   			}
   			_ASSERTE(pOut == NULL); // нада
 		}
@@ -5061,7 +5073,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	_ASSERTE(gpSrv->hRootProcess!=NULL && "Process handle must be opened");
 
 	DWORD nWait = WAIT_TIMEOUT;
-	DWORD nExternalExitCode = -1;
+	//DWORD nExternalExitCode = -1;
 	wchar_t szInfo[1024];
 
 	// Битность отладчика должна соответствовать битности приложения!
@@ -7080,7 +7092,7 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
-	DWORD nPrevAltServer = 0;
+	//DWORD nPrevAltServer = 0;
 
 	// В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!
 	// В итоге, буфер вывода telnet'а схлопывается!
@@ -7156,7 +7168,7 @@ BOOL cmd_SetFullScreen(CESERVER_REQ& in, CESERVER_REQ** out)
 		}
 		else
 		{
-			(*out)->FullScreenRet.bSucceeded = _SetConsoleDisplayMode(ghConOut, CONSOLE_FULLSCREEN_MODE, &(*out)->FullScreenRet.crNewSize);
+			(*out)->FullScreenRet.bSucceeded = _SetConsoleDisplayMode(ghConOut, 1/*CONSOLE_FULLSCREEN_MODE*/, &(*out)->FullScreenRet.crNewSize);
 			if (!(*out)->FullScreenRet.bSucceeded)
 				(*out)->FullScreenRet.nErrCode = GetLastError();
 		}
@@ -7280,7 +7292,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 
 					bool bStarted = false;
 					COORD crFrom = crRead;
-					SHORT nLines = (SHORT)(nReady / csbi5.dwSize.X);
+					//SHORT nLines = (SHORT)(nReady / csbi5.dwSize.X);
 					DWORD i = 0, iStarted = 0, iWritten;
 					while (i < nReady)
 					{
@@ -7637,10 +7649,12 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		//     }
 		// Если прокрутки быть не должно - по возможности уберем ее, иначе при запуске FAR
 		// запустится только в ВИДИМОЙ области
-		BOOL lbNeedCorrect = FALSE, lbNeedUpdateSrvMap = FALSE;
+		BOOL lbNeedCorrect = FALSE; // lbNeedUpdateSrvMap = FALSE;
 
+		#ifdef _DEBUG
 		SHORT nWidth = (csbi.srWindow.Right - csbi.srWindow.Left + 1);
 		SHORT nHeight = (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+		#endif
 
 		// Приложениям запрещено менять размер видимой области.
 		// Размер буфера - могут менять, но не менее чем текущая видимая область

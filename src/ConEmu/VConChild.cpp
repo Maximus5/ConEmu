@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "RealConsole.h"
 #include "VConGroup.h"
+#include "GestureEngine.h"
 
 #if defined(__GNUC__)
 #define EXT_GNUC_LOG
@@ -1046,6 +1047,8 @@ void CConEmuChild::Invalidate()
 	{
 		_ASSERTE(mh_WndDC != NULL);
 	}
+
+	UNREFERENCED_PARAMETER(pVCon);
 }
 
 void CConEmuChild::Validate()
@@ -1376,7 +1379,7 @@ void CConEmuChild::ShowScroll(BOOL abImmediate)
 		GetScrollInfo(mh_WndBack, SB_VERT, &si);
 		#endif
 
-		int nCurPos = -1;
+		//int nCurPos = -1;
 		if (m_si.nMax || (gpSet->isAlwaysShowScrollbar == 1))
 		{
 			MySetScrollInfo(FALSE, FALSE);

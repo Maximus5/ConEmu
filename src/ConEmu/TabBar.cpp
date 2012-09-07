@@ -481,6 +481,8 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 		if (mb_InKeySwitching) Update();  // показать реальное положение дел
 	}
 
+	UNREFERENCED_PARAMETER(nCallStart);
+
 	return pVCon;
 }
 

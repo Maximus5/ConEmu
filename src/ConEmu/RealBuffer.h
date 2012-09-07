@@ -75,7 +75,7 @@ public:
 	COORD GetMaxSize();
 	
 	bool isInitialized();
-	bool isFarMenuActive();
+	bool isFarMenuOrMacro();
 	
 	BOOL PreInit();
 	void ResetBuffer();
