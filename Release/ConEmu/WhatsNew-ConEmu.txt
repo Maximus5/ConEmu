@@ -14,6 +14,9 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+[+] New option: Add UNC paths...
+
+
 2012.09.04
 [%] When «Auto tabs» is on, creating new console shrinked ConEmu size.
 [%] SplitScreen, dialog fixes.

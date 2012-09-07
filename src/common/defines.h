@@ -150,6 +150,12 @@ bool isKey(DWORD wp,DWORD vk);
 	#define RELEASEDEBUGTEST(rel,dbg) rel
 	#define DEBUGTEST(dbg)
 #endif
+// GNU
+#ifndef __GNUC__
+	#define VCGCCTEST(vc,gcc) vc
+#else
+	#define VCGCCTEST(vc,gcc) gcc
+#endif
 
 #ifdef CONEMU_MINIMAL
 #undef SHOWDEBUGSTR

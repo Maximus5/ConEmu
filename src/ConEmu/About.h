@@ -30,20 +30,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../ConEmuCD/ConsoleHelp.h"
 
-//L"Console emulation program.\r\n" \
-//L"Home page: http://conemu-maximus5.googlecode.com\r\n" \
-//L"http://code.google.com/p/conemu-maximus5/wiki/Command_Line\r\n"\
-//"\r\n" \
+//L"Console emulation program.\r\n"
+//L"Home page: http://conemu-maximus5.googlecode.com\r\n"
+//L"http://code.google.com/p/conemu-maximus5/wiki/Command_Line\r\n"
+//"\r\n"
 
 #define pCmdLine \
 	L"Command line examples\r\n" \
-	L"––––––––––––––––––––––\r\n" \
+	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"ConEmu.exe /cmd Far.exe /w\r\n" \
 	L"ConEmu.exe /font \"Lucida Console\" /size 16 /bufferheight 9999 /cmd powershell\r\n" \
 	L"ConEmu.exe /config \"Hiew\" /cmd \"C:\\Tools\\HIEW32.EXE\"\r\n" \
 	L"ConEmu.exe /cmd {Shells}\r\n" \
 	L"ConEmu.exe /tsa /min /icon \"cmd.exe\" /cmd cmd /c dir c:\\ /s\r\n" \
-	L"\r\n" \
+	L"\r\n"\
 	L"By default (started without args) this program launches \"Far.exe\", \"tcc.exe\" or \"cmd.exe\" (which can be found).\r\n" \
 	L"\r\n" \
 	L"Command line switches:\r\n" \
@@ -55,7 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/icon <file> - Take icon from file (exe, dll, ico).\r\n" \
 	L"/multi | /nomulti - Enable or disable multiconsole features.\r\n" \
 	L"/single - New console will be started in new tab of existing ConEmu.\r\n" \
-	L"/showhide | /showhideTSA - Works like «Minimize/Restore» global hotkey.\r\n" \
+	L"/showhide | /showhideTSA - Works like \"Minimize/Restore\" global hotkey.\r\n" \
 	L"/noupdate - Disable automatic checking for updates on startup\r\n" \
 	L"/ct[0|1] - Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - cleartype.\r\n" \
 	L"/font <fontname> - Specify the font name.\r\n" \
@@ -67,14 +67,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/cmd <commandline>|@<taskfile>|{taskname} - Command line to start. This must be the last used switch.\r\n" \
 	L"\r\n" \
 	L"Read more online: http://code.google.com/p/conemu-maximus5/wiki/Command_Line\r\n"
-	//L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n" \
-	//CECOPYRIGHTSTRING_W /*\x00A9 2009-2011 ConEmu.Maximus5@gmail.com*/ L"\r\n" \
+	//L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n"
+	//CECOPYRIGHTSTRING_W /*\x00A9 2009-2011 ConEmu.Maximus5@gmail.com*/ L"\r\n"
 
 #define pAboutContributors \
 	L"Thanks to all testers and reporters! You help to make the ConEmu better.\r\n" \
 	L"\r\n" \
 	L"Special Thanks\r\n" \
-	L"––––––––––––––––––––––\r\n" \
+	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"thecybershadow: bdf support, Documentation\r\n" \
 	L"NightRoman: drawing optimization, BufferHeight and other fixes\r\n" \
 	L"dolzenko_: windows switching via GUI tabs\r\n" \
@@ -125,13 +125,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define pDosBoxHelpFull \
 	L"ConEmu supports DosBox, read more online:\r\n" \
 	L"http://code.google.com/p/conemu-maximus5/wiki/DosBox\r\n" \
-	L"––––––––––––––––––––––\r\n" \
+	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	pDosBoxHelp
 
 #define pGuiMacro \
 	L"Sort of simple macro language, read more online:\r\n" \
 	L"http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
-	L"––––––––––––––––––––––\r\n" \
+	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"Close(<What>[,<Flags>])\r\n" \
 	L"  - close current console (0), without confirmation (0,1),\r\n" \
 	L"    terminate active process (1), without confirmation (1,1)\r\n" \

@@ -554,7 +554,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Used command processor",gbComspec,4,1,319,131
+    GROUPBOX        "Used command processor",gbComspec,4,1,319,169
     CONTROL         "Auto (tcc - if installed, %ComSpec% - otherwise)",rbComspecAuto,
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,9,12,178,8
     CONTROL         "%ComSpec% (env.var.)",rbComspecEnvVar,"Button",BS_AUTORADIOBUTTON,189,12,98,8
@@ -573,6 +573,8 @@ BEGIN
     LTEXT           "Cmd.exe output codepage:",IDC_STATIC,11,100,94,8
     COMBOBOX        lbCmdOutputCP,108,98,81,30,CBS_DROPDOWNLIST | WS_TABSTOP
     CONTROL         "Add %ConEmuBaseDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,117,309,8
+    CONTROL         "Support UNC paths in cmd.exe (\\\\server\\share\\folder)",cbComspecUncPaths,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,130,309,8
 END
 
 IDD_SPG_CMDOUTPUT DIALOGEX 0, 0, 328, 235
@@ -633,14 +635,15 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Shell activity",gbActivityLog,4,1,319,230
     CONTROL         "&Disabled",rbActivityDisabled,"Button",BS_AUTORADIOBUTTON,9,14,43,8
-    CONTROL         "Sh&ell and processes",rbActivityShell,"Button",BS_AUTORADIOBUTTON,54,14,79,8
-    CONTROL         "&Input",rbActivityInput,"Button",BS_AUTORADIOBUTTON,135,14,35,8
-    CONTROL         "Cmd",rbActivityCmd,"Button",BS_AUTORADIOBUTTON,171,14,29,8
+    CONTROL         "Sh&ell",rbActivityShell,"Button",BS_AUTORADIOBUTTON,54,14,30,8
+    CONTROL         "&Input",rbActivityInput,"Button",BS_AUTORADIOBUTTON,86,14,35,8
+    CONTROL         "Cmd",rbActivityCmd,"Button",BS_AUTORADIOBUTTON,122,14,29,8
     PUSHBUTTON      "&Reset",cbActivityReset,215,10,50,14
     PUSHBUTTON      "Save &as...",cbActivitySaveAs,269,10,50,14
     CONTROL         "List1",lbActivityLog,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,28,311,135
     EDITTEXT        ebActivityApp,8,166,311,14,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        ebActivityParm,8,182,311,44,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL
+    CONTROL         "Debug",rbActivityDebug,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,154,14,37,8
 END
 
 IDD_RESTART DIALOGEX 0, 0, 310, 167
@@ -981,7 +984,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "ConEmu hotkeys list",IDC_STATIC,4,1,319,161
+    GROUPBOX        "",IDC_STATIC,4,1,319,161
     CONTROL         "List1",lbConEmuHotKeys,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,8,12,311,111
     RTEXT           "Choose hotkey:",stHotKeySelect,9,130,64,8,WS_DISABLED
     CONTROL         "",hkHotKeySelect,"msctls_hotkey32",WS_DISABLED | WS_BORDER | WS_TABSTOP,77,128,47,13
@@ -1006,6 +1009,10 @@ BEGIN
     COMBOBOX        lbHotKeyMod3,281,128,38,30,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Description:",stGuiMacro,9,146,64,8,WS_DISABLED
     PUSHBUTTON      "?",cbGuiMacroHelp,303,143,16,14,WS_DISABLED
+    CONTROL         "&All hotkeys",rbHotkeysAll,"Button",BS_AUTORADIOBUTTON,9,1,51,8
+    CONTROL         "&User defined",rbHotkeysUser,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,64,1,57,8
+    CONTROL         "&System",rbHotkeysSystem,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,124,1,39,8
+    CONTROL         "&Macros",rbHotkeysMacros,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,168,1,39,8
 END
 
 IDD_SPG_UPDATE DIALOGEX 0, 0, 328, 235

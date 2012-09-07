@@ -29,6 +29,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #include <windows.h>
 
+#ifdef __GNUC__
+#define HGESTUREINFO HANDLE
+typedef struct tagGESTURECONFIG {
+    DWORD dwID;                     // gesture ID
+    DWORD dwWant;                   // settings related to gesture ID that are to be turned on
+    DWORD dwBlock;                  // settings related to gesture ID that are to be turned off
+} GESTURECONFIG, *PGESTURECONFIG;
+typedef struct tagGESTUREINFO {
+    UINT cbSize;                    // size, in bytes, of this structure (including variable length Args field)
+    DWORD dwFlags;                  // see GF_* flags
+    DWORD dwID;                     // gesture ID, see GID_* defines
+    HWND hwndTarget;                // handle to window targeted by this gesture
+    POINTS ptsLocation;             // current location of this gesture
+    DWORD dwInstanceID;             // internally used
+    DWORD dwSequenceID;             // internally used
+    ULONGLONG ullArguments;         // arguments for gestures whose arguments fit in 8 BYTES
+    UINT cbExtraArgs;               // size, in bytes, of extra arguments, if any, that accompany this gesture
+} GESTUREINFO, *PGESTUREINFO;
+#endif
+
 class CGestures
 {
 public:

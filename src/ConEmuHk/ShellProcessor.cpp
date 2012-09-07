@@ -1336,6 +1336,15 @@ BOOL CShellProc::PrepareExecuteParms(
 		//	}
 		//}
 	}
+
+	if (lstrcmpi(ms_ExeTmp, L"ANSI-LLW.exe") == 0)
+	{
+		_ASSERTEX(FALSE && "Trying to start 'ANSI-LLW.exe'");
+	}
+	else if (lstrcmpi(ms_ExeTmp, L"ansicon.exe") == 0)
+	{
+		_ASSERTEX(FALSE && "Trying to start 'ansicon.exe'");
+	}
 	
 	BOOL lbChanged = FALSE;
 	mb_NeedInjects = FALSE;

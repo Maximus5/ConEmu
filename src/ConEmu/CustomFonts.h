@@ -28,8 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <windows.h>
-#include <crtdbg.h>
+#include "Header.h"
 
 #define CE_BDF_SUFFIX L" [BDF]"
 #define CE_BDF_SUFFIX_LEN 6
@@ -127,25 +126,8 @@ struct CEFONT
 	}
 };
 
-static bool operator== (const CEFONT &a, const CEFONT &b)
-{
-	if (a.iType != b.iType)
-		return false;
-	switch (a.iType)
-	{
-	case CEFONT_GDI:
-		return a.hFont == b.hFont;
-	case CEFONT_CUSTOM:
-		return a.pCustomFont == b.pCustomFont;
-	}
-	_ASSERT(0);
-	return FALSE;
-}
-
-static bool operator!= (const CEFONT &a, const CEFONT &b)
-{
-	return !(a == b);
-}
+bool operator== (const CEFONT &a, const CEFONT &b);
+bool operator!= (const CEFONT &a, const CEFONT &b);
 
 // CachedBrush (for CEDC)
 
@@ -166,7 +148,7 @@ struct CEDC
 	HDC hDC;
 	COLORREF* pPixels; LONG iWidth;
 
-	CEDC(HDC hDC) : hDC(hDC), pPixels(NULL), m_Font(CEFONT()), m_TextColor(CLR_INVALID), m_BkColor(CLR_INVALID), m_BkMode(-1) {}
+	CEDC(HDC hDC) : hDC(hDC), pPixels(NULL), m_Font(CEFONT()), m_BkColor(CLR_INVALID), m_TextColor(CLR_INVALID), m_BkMode(-1) {}
 	operator HDC() const { return hDC; }
 
 	CEFONT SelectObject(CEFONT font);

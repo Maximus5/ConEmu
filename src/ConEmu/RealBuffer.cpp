@@ -5046,7 +5046,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 								};
 			const wchar_t* pszSpacing = L" \t\xB7\x2192"; //B7 - режим "Show white spaces", 2192 - символ табуляции там же
 			const wchar_t* pszSeparat = L" \t:(";
-			const wchar_t* pszTermint = L":)";
+			const wchar_t* pszTermint = L":),";
 			const wchar_t* pszDigits  = L"0123456789";
 			const wchar_t* pszSlashes = L"/\\";
 			const wchar_t* pszUrl = L":/%#ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz;?@&=+$,-_.!~*'()0123456789";
@@ -5251,8 +5251,8 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 							bWasSeparator = (wcschr(pszSeparat, pChar[crTo.X]) != NULL);
 					}
 
-					// Расчитано на закрывающие : или )
-					_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==0);
+					// Расчитано на закрывающие : или ) или ,
+					_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L',' && pszTermint[3]==0);
 					if (bDigits && wcschr(pszTermint, pChar[crTo.X]) /*pChar[crTo.X] == L':'*/)
 					{
 						// Если номер строки обрамлен скобками - скобки должны быть сбалансированы

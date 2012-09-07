@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // ¬ерси€ интерфейса
-#define CESERVER_REQ_VER    107
+#define CESERVER_REQ_VER    108
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -848,6 +848,7 @@ enum GuiLoggingType
 	glt_Processes = 1,
 	glt_Input = 2,
 	glt_Commands = 3,
+	glt_Debugger = 4,
 	// glt_Files, ...
 };
 
@@ -877,6 +878,7 @@ struct ConEmuComspec
 	ComSpecBits  csBits;
 	BOOL         isUpdateEnv;
 	BOOL         isAddConEmu2Path;
+	BOOL         isAllowUncPaths;
 	wchar_t      ComspecExplicit[MAX_PATH]; // этот - хранитс€ в настройке
 	wchar_t      Comspec32[MAX_PATH]; // развернутые, готовые к использованию
 	wchar_t      Comspec64[MAX_PATH]; // развернутые, готовые к использованию

@@ -224,6 +224,9 @@ class CConEmuMain :
 			UINT nWheelScrollChars, nWheelScrollLines;
 			void  ReloadWheelScroll()
 			{
+				#ifndef SPI_GETWHEELSCROLLCHARS
+				#define SPI_GETWHEELSCROLLCHARS   0x006C
+				#endif
 				if (!SystemParametersInfo(SPI_GETWHEELSCROLLCHARS, 0, &nWheelScrollChars, 0) || !nWheelScrollChars)
 					nWheelScrollChars = 3;
 				if (!SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &nWheelScrollLines, 0) || !nWheelScrollLines)

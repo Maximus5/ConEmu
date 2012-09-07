@@ -792,6 +792,11 @@ void CSettings::SettingsLoaded()
 
 	wcscpy_c(gpSet->ComSpec.ConEmuBaseDir, gpConEmu->ms_ConEmuBaseDir);
 	UpdateComspec(&gpSet->ComSpec);
+	// Обновить реестр на предмет поддержки UNC путей в cmd.exe
+	if (gpSet->ComSpec.isAllowUncPaths)
+	{
+		UpdateComSpecUncSupport();
+	}
 	
 	// Инициализация кастомной палитры для диалога выбора цвета
 	memmove(acrCustClr, gpSet->Colors, sizeof(COLORREF)*16);
@@ -1879,6 +1884,17 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	return 0;
 }
 
+void CSettings::UpdateComSpecUncSupport()
+{
+	// Обновить реестр на предмет поддержки UNC путей в cmd.exe
+	SettingsRegistry UncChk;
+	if (UncChk.OpenKey(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", KEY_WRITE))
+	{
+		DWORD DisableUNCCheck = gpSet->ComSpec.isAllowUncPaths ? 1 : 0;
+		UncChk.Save(L"DisableUNCCheck", (LPBYTE)&DisableUNCCheck, REG_DWORD, DisableUNCCheck);
+	}
+}
+
 LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 {
 	_ASSERTE((rbComspecAuto+cst_Explicit)==rbComspecExplicit && (rbComspecAuto+cst_Cmd)==rbComspecCmd  && (rbComspecAuto+cst_EnvVar)==rbComspecEnvVar);
@@ -1892,6 +1908,7 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 
 	CheckDlgButton(hWnd2, cbComspecUpdateEnv, gpSet->ComSpec.isUpdateEnv ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(hWnd2, cbAddConEmu2Path, gpSet->ComSpec.isAddConEmu2Path ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(hWnd2, cbComspecUncPaths, gpSet->ComSpec.isAllowUncPaths ? BST_CHECKED : BST_UNCHECKED);
 
 	// Cmd.exe output cp
 	if (abInitial)
@@ -3875,6 +3892,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbAddConEmu2Path:
 			gpSet->ComSpec.isAddConEmu2Path = IsChecked(hWnd2, cbAddConEmu2Path);
 			gpConEmu->OnGlobalSettingsChanged();
+			break;
+		case cbComspecUncPaths:
+			gpSet->ComSpec.isAllowUncPaths = IsChecked(hWnd2, cbComspecUncPaths);
+			UpdateComSpecUncSupport();
 			break;
 		case cbBold:
 		case cbItalic:

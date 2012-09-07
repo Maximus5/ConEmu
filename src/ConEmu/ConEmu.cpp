@@ -711,7 +711,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 		return ms_ConEmuC32Full;
 	}
 
-	LPCWSTR pszServer = ms_ConEmuC32Full;
+	//LPCWSTR pszServer = ms_ConEmuC32Full;
 	bool lbCmd = false, lbFound = false;
 	int Bits = IsWindows64() ? 64 : 32;
 
@@ -1578,7 +1578,7 @@ HWND  CConEmuMain::InsideFindConEmu(HWND hFrom)
 {
 	wchar_t szClass[128];
 	HWND hChild = NULL, hNext = NULL;
-	HWND hXpView = NULL, hXpPlace = NULL;
+	//HWND hXpView = NULL, hXpPlace = NULL;
 
 	while ((hChild = FindWindowEx(hFrom, hChild, NULL, NULL)) != NULL)
 	{
@@ -1705,6 +1705,7 @@ bool CConEmuMain::InsideFindShellView(HWND hFrom)
 HWND CConEmuMain::InsideFindParent()
 {
 	bool bFirstStep = true;
+	DWORD nParentPID = 0;
 
 	if (!m_InsideIntegration)
 	{
@@ -1750,7 +1751,6 @@ HWND CConEmuMain::InsideFindParent()
 
 	_ASSERTE(m_InsideIntegration!=ii_Simple);
 
-	DWORD nParentPID = 0;
 	if (gpConEmu->mn_InsideParentPID)
 	{
 		PROCESSENTRY32 pi = {sizeof(pi)};
@@ -1939,7 +1939,7 @@ void CConEmuMain::InsideUpdateDir()
         	if (pszPath && *pszPath && (lstrcmpi(ms_InsideParentPath, pszPath) != 0))
         	{
         		int nLen = lstrlen(pszPath);
-        		if (nLen >= countof(ms_InsideParentPath))
+        		if (nLen >= (int)countof(ms_InsideParentPath))
         		{
         			_ASSERTE((nLen<countof(ms_InsideParentPath)) && "Too long path?");
         		}
@@ -3947,7 +3947,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	// —брос флагов ресайза мышкой
 	mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 
-	bool bOldFullScreen = mb_isFullScreen || gpSet->isQuakeStyle;
+	//bool bOldFullScreen = mb_isFullScreen || gpSet->isQuakeStyle;
 	bool bNewFullScreen = (inMode == wmFullScreen) || gpSet->isQuakeStyle;
 
 	if (bWasSetFullscreen && !bNewFullScreen)
@@ -4381,6 +4381,8 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 		} break; //wmFullScreen
 
+	default:
+		_ASSERTE(FALSE && "Unsupported mode");
 	}
 
 	if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("SetWindowMode done");
@@ -4831,7 +4833,7 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 
 	BOOL lbIsPicView = isPictureView();		UNREFERENCED_PARAMETER(lbIsPicView);
 
-	if (bResizeRCon && change2WindowMode == (DWORD)-1 && mn_InResize <= 1)
+	if (bResizeRCon && change2WindowMode == wmNotChanging && mn_InResize <= 1)
 	{
 		CVConGroup::SyncAllConsoles2Window(mainClient, CER_MAINCLIENT, true);
 	}
@@ -5185,10 +5187,12 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 	bool zoomed = ::IsZoomed(ghWnd);
 	bool iconic = ::IsIconic(ghWnd);
-	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 
+	#ifdef _DEBUG
+	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	_ASSERTE(zoomed == ((dwStyle & WS_MAXIMIZE) == WS_MAXIMIZE));
 	_ASSERTE(iconic == ((dwStyle & WS_MINIMIZE) == WS_MINIMIZE));
+	#endif
 
 	#ifdef _DEBUG
 	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
@@ -10428,7 +10432,9 @@ void CConEmuMain::OnHideCaption(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 	//	SetWindowMode(wmMaximized, TRUE);
 	//}
 
+	#ifdef _DEBUG
 	bool bHideCaption = gpSet->isCaptionHidden();
+	#endif
 	DWORD nStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD nNewStyle = FixWindowStyle(nStyle, wmNewMode);
 	DWORD nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
@@ -11948,8 +11954,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	if (m_InsideIntegration && ((messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN)))
 	{
+		#ifdef _DEBUG
 		HWND hFocus = GetFocus();
 		HWND hFore = GetForegroundWindow();
+		#endif
 		SetForegroundWindow(ghWnd);
 		SetFocus(ghWnd);
 	}
@@ -13592,7 +13600,7 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 
 				if (!hWnd) return 0;
 
-				DWORD dwPID = 0, dwParentPID = 0, dwFarPID = 0;
+				DWORD dwPID = 0, dwParentPID = 0; // dwFarPID = 0;
 				GetWindowThreadProcessId(hWnd, &dwPID);
 
 				if (dwPID && dwPID != GetCurrentProcessId())
@@ -13949,7 +13957,7 @@ INT_PTR CConEmuMain::aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 			if ((nmhdr->code == TCN_SELCHANGE) && (nmhdr->idFrom == tbAboutTabs))
 			{
 				int iPage = TabCtrl_GetCurSel(nmhdr->hwndFrom);
-				if ((iPage >= 0) && (iPage < countof(Pages)))
+				if ((iPage >= 0) && (iPage < (int)countof(Pages)))
 					SetDlgItemText(hWnd2, tAboutText, Pages[iPage].Text);
 			}
 			break;
@@ -15224,6 +15232,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				return 0;
 			case tmp_None:
 				break;
+			default:
+				; // Take no action
 			}
 			// Else ...
 			return 0;

@@ -309,6 +309,19 @@ void Settings::InitSettings()
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
 	nCmdOutputCP = 0;
 	ComSpec.isAddConEmu2Path = TRUE;
+	{
+		ComSpec.isAllowUncPaths = FALSE;
+		// Load defaults from windows registry (Command Processor settings)
+		SettingsRegistry UncChk;
+		if (UncChk.OpenKey(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", KEY_READ))
+		{
+			DWORD DisableUNCCheck = 0;
+			if (UncChk.Load(L"DisableUNCCheck", (LPBYTE)&DisableUNCCheck, sizeof(DisableUNCCheck)))
+			{
+				ComSpec.isAllowUncPaths = (DisableUNCCheck == 1);
+			}
+		}
+	}
 
 	bool bIsDbcs = (GetSystemMetrics(SM_DBCSENABLED) != 0);
 
@@ -341,7 +354,7 @@ void Settings::InitSettings()
 	isTryToCenter = false;
 	nCenterConsolePad = 0;
 	isAlwaysShowScrollbar = 2;
-	nScrollBarAppearDelay = 1000;
+	nScrollBarAppearDelay = 100;
 	nScrollBarDisappearDelay = 1000;
 	isTabFrame = true;
 	//isForceMonospace = false; isProportional = false;
@@ -2113,15 +2126,23 @@ void Settings::LoadSettings()
 		BYTE nVal = ComSpec.csType;
 		reg->Load(L"ComSpec.Type", nVal);
 		if (nVal <= cst_Last) ComSpec.csType = (ComSpecType)nVal;
+		//
 		nVal = ComSpec.csBits;
 		reg->Load(L"ComSpec.Bits", nVal);
 		if (nVal <= csb_Last) ComSpec.csBits = (ComSpecBits)nVal;
+		//
 		nVal = ComSpec.isUpdateEnv;
 		reg->Load(L"ComSpec.UpdateEnv", nVal);
 		ComSpec.isUpdateEnv = (nVal != 0);
+		//
 		nVal = ComSpec.isAddConEmu2Path;
 		reg->Load(L"ComSpec.EnvAddPath", nVal);
 		ComSpec.isAddConEmu2Path = (nVal != 0);
+		//
+		nVal = ComSpec.isAllowUncPaths;
+		reg->Load(L"ComSpec.UncPaths", nVal);
+		ComSpec.isAllowUncPaths = (nVal != 0);
+		//
 		reg->Load(L"ComSpec.Path", ComSpec.ComspecExplicit, countof(ComSpec.ComspecExplicit));
 		//-- wcscpy_c(ComSpec.ComspecInitial, gpConEmu->ms_ComSpecInitial);
 		// ќбработать 32/64 (найти tcc.exe и т.п.)
@@ -2965,6 +2986,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ComSpec.Bits", (BYTE)ComSpec.csBits);
 		reg->Save(L"ComSpec.UpdateEnv", (bool)ComSpec.isUpdateEnv);
 		reg->Save(L"ComSpec.EnvAddPath", (bool)ComSpec.isAddConEmu2Path);
+		reg->Save(L"ComSpec.UncPaths", (bool)ComSpec.isAllowUncPaths);
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
 		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
 		reg->Save(L"CTS.AutoCopy", isCTSAutoCopy);

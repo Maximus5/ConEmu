@@ -43,6 +43,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#undef DEBUG_BDF_DRAW
 #endif
 
+bool operator== (const CEFONT &a, const CEFONT &b)
+{
+	if (a.iType != b.iType)
+		return false;
+	switch (a.iType)
+	{
+	case CEFONT_GDI:
+		return a.hFont == b.hFont;
+	case CEFONT_CUSTOM:
+		return a.pCustomFont == b.pCustomFont;
+	}
+	_ASSERT(0);
+	return FALSE;
+}
+
+bool operator!= (const CEFONT &a, const CEFONT &b)
+{
+	return !(a == b);
+}
+
+
 // CustomFontFamily
 
 struct CustomFontFamily::Impl

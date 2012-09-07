@@ -379,3 +379,11 @@ enum ConEmuWindowMode
 	wmMaximized = rMaximized,
 	wmFullScreen = rFullScreen,
 };
+
+enum ExpandTextRangeType
+{
+	etr_None = 0,
+	etr_Word = 1,
+	etr_FileAndLine = 2,
+	etr_Url = 3,
+};

@@ -46,14 +46,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define CONSOLE_MOUSE_SELECTION         0x0004   // selecting with mouse
 #endif
 
-enum ExpandTextRangeType
-{
-	etr_None = 0,
-	etr_Word = 1,
-	etr_FileAndLine = 2,
-	etr_Url = 3,
-};
-
 #include "Options.h"
 
 class CRealBuffer

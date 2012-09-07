@@ -31,6 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Tlhelp32.h>
 #include "ConEmu.h"
 #include "Attach.h"
+#include "OptionsClass.h"
+#include "VConGroup.h"
 #include "../common/WinObjects.h"
 #include "../common/ProcList.h"
 #include "../ConEmuCD/ExitCodes.h"
@@ -262,12 +264,21 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 		if (lbCan && gpConEmu->m_InsideIntegration && (hFind == gpConEmu->mh_InsideParentRoot))
 			lbCan = false;
 
+		wchar_t szClass[MAX_PATH], szTitle[MAX_PATH];
+		GetClassName(hFind, szClass, countof(szClass));
+		GetWindowText(hFind, szTitle, countof(szTitle));
+
+		if (gpSetCls->isAdvLogging)
+		{
+			wchar_t szLogInfo[MAX_PATH*3];
+			_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"Attach:%s x%08X/x%08X/x%08X {%s} \"%s\"", (DWORD)hFind, nStyle, nStyleEx, szClass, szTitle);
+			CVConGroup::LogString(szLogInfo);
+		}
+
 		if (lbCan)
 		{
-			wchar_t szClass[MAX_PATH], szTitle[4096], szPid[32], szHwnd[32], szType[16]; szClass[0] = szTitle[0] = szPid[0] = szHwnd[0] = szType[0] = 0;
+			wchar_t szPid[32], szHwnd[32], szType[16]; szClass[0] = szTitle[0] = szPid[0] = szHwnd[0] = szType[0] = 0;
 			wchar_t szExeName[MAX_PATH], szExePathName[MAX_PATH*4]; szExeName[0] = szExePathName[0] = 0;
-			GetClassName(hFind, szClass, countof(szClass));
-			GetWindowText(hFind, szTitle, countof(szTitle));
 
 			#ifndef ALLOW_GUI_ATTACH
 			if (!isConsoleClass(szClass))
@@ -707,7 +718,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	GetExitCodeProcess(pi.hProcess, &nWrapperResult);
 	CloseHandle(pi.hProcess);
 	if (pi.hThread) CloseHandle(pi.hThread);
-	if (nWrapperResult != CERR_HOOKS_WAS_SET)
+	if ((int)nWrapperResult != CERR_HOOKS_WAS_SET)
 	{
 		goto wrap;
 	}

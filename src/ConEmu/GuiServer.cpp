@@ -108,7 +108,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 	CGuiServer* pGSrv = (CGuiServer*)lParam;
 
 	
-	gpSetCls->debugLogCommand(pIn, TRUE, timeGetTime(), 0, pGSrv->ms_ServerPipe);
+	gpSetCls->debugLogCommand(pIn, TRUE, timeGetTime(), 0, pGSrv ? pGSrv->ms_ServerPipe : NULL);
 
 	#ifdef _DEBUG
 	UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);

@@ -484,6 +484,7 @@ class CSettings
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
+		void UpdateComSpecUncSupport();
 	public:
 		void FindTextDialog();
 		static INT_PTR CALLBACK findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
