@@ -573,7 +573,7 @@ bool InitHooksLibrary()
 		gpHooks[gnHookedFuncs].NewAddress = pProc; \
 		gpHooks[gnHookedFuncs].Name = szName; \
 		gpHooks[gnHookedFuncs].DllName = szDll; \
-		/*if (pProc)*/ gnHookedFuncs++;
+		if (pProc/*need to be, ignore GCC warn*/) gnHookedFuncs++;
 	/* ************************ */
 	ADDFUNC((void*)OnGetProcAddress,		szGetProcAddress,		kernel32); // eGetProcAddress, ...
 	ADDFUNC((void*)OnLoadLibraryA,			szLoadLibraryA,			kernel32); // ...

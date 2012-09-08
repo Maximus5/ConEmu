@@ -126,9 +126,11 @@ BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced = 
 
 #if defined(__GNUC__)
 extern "C" {
+#endif
 	HWND WINAPI GetRealConsoleWindow();
 	FARPROC WINAPI GetWriteConsoleW();
 	int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
 	FARPROC WINAPI GetLoadLibraryW();
+#if defined(__GNUC__)
 };
 #endif
