@@ -207,12 +207,13 @@ class CSettings
 		//LPTSTR psCurCmd;
 	private:
 		/* 'Default' command line (if nor Registry, nor /cmd specified) */
-		WCHAR  szDefCmd[MAX_PATH];
+		WCHAR  szDefCmd[MAX_PATH+32];
 	public:
 		/* "Active" command line */
 		//LPCTSTR GetCmd();
 		/* "Default" command line "far/cmd", based on /BufferHeight switch */
 		LPCTSTR GetDefaultCmd();
+		void    SetDefaultCmd(LPCWSTR asCmd);
 		/* OUR(!) startup info */
 		STARTUPINFOW ourSI;
 		

@@ -1245,7 +1245,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 		gpConEmu->mpsz_ConEmuArgs = lstrdup(cmdLine);
 
 		// Теперь проверяем наличие слеша
-		if (*pszStart != L'/' && !wcschr(pszStart, L'/'))
+		if (*pszStart != L'/' && *pszStart != L'-' && !wcschr(pszStart, L'/'))
 		{
 			params = (uint)-1;
 			cmdNew = cmdLine;
@@ -1940,444 +1940,467 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		while (i < params && curCommand && *curCommand)
 		{
-			if (!klstricmp(curCommand, _T("/autosetup")))
+			bool lbNotFound = false;
+			bool lbSwitchChanged = false;
+
+			if (*curCommand == L'-' && curCommand[1] && !wcspbrk(curCommand+1, L"\\//|.&<>:^"))
 			{
-				BOOL lbTurnOn = TRUE;
+				// Seems this is to be the "switch" too
+				*curCommand = L'/';
+				lbSwitchChanged = true;
+			}
 
-				if ((i + 1) >= params)
-					return 101;
-
-				curCommand += _tcslen(curCommand) + 1; i++;
-
-				if (*curCommand == _T('0'))
-					lbTurnOn = FALSE;
-				else
+			if (*curCommand == L'/')
+			{
+				if (!klstricmp(curCommand, _T("/autosetup")))
 				{
+					BOOL lbTurnOn = TRUE;
+
 					if ((i + 1) >= params)
 						return 101;
 
 					curCommand += _tcslen(curCommand) + 1; i++;
-					DWORD dwAttr = GetFileAttributes(curCommand);
 
-					if (dwAttr == (DWORD)-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
-						return 102;
-				}
-
-				HKEY hk = NULL; DWORD dw;
-				int nSetupRc = 100;
-
-				if (0 != RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Command Processor"),
-				                       NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
-					return 103;
-
-				if (lbTurnOn)
-				{
-					//BOOL bNeedFree = FALSE;
-
-					//if (*curCommand!=_T('"') && _tcschr(curCommand, _T(' ')))
-					//{
-					//	TCHAR* psz = (TCHAR*)calloc(_tcslen(curCommand)+3, sizeof(TCHAR));
-					//	*psz = _T('"');
-					//	_tcscpy(psz+1, curCommand);
-					//	_tcscat(psz, _T("\""));
-					//	curCommand = psz;
-					//}
-
-					size_t cchMax = _tcslen(curCommand);
-					LPCWSTR pszArg1 = NULL;
-					if ((i + 1) < params)
+					if (*curCommand == _T('0'))
+						lbTurnOn = FALSE;
+					else
 					{
-						// Здесь может быть "/GHWND=NEW"
-						pszArg1 = curCommand + cchMax + 1;
-						if (!*pszArg1)
-							pszArg1 = NULL;
-						else
-							cchMax += _tcslen(pszArg1);
+						if ((i + 1) >= params)
+							return 101;
+
+						curCommand += _tcslen(curCommand) + 1; i++;
+						DWORD dwAttr = GetFileAttributes(curCommand);
+
+						if (dwAttr == (DWORD)-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
+							return 102;
 					}
-					cchMax += 16; // + кавычки и пробелы всякие
 
-					wchar_t* pszCmd = (wchar_t*)calloc(cchMax, sizeof(*pszCmd));
-					_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\"%s%s%s", curCommand,
-						pszArg1 ? L" \"" : L"", pszArg1 ? pszArg1 : L"", pszArg1 ? L"\"" : L"");
-					
+					HKEY hk = NULL; DWORD dw;
+					int nSetupRc = 100;
 
-					if (0 == RegSetValueEx(hk, _T("AutoRun"), NULL, REG_SZ, (LPBYTE)pszCmd,
-					                    (DWORD)sizeof(TCHAR)*(_tcslen(pszCmd)+1))) //-V220
-						nSetupRc = 1;
+					if (0 != RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Command Processor"),
+										   NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
+						return 103;
 
-					free(pszCmd);
-				}
-				else
-				{
-					if (0==RegDeleteValue(hk, _T("AutoRun")))
-						nSetupRc = 1;
-				}
-
-				RegCloseKey(hk);
-				// сбрость CreateInNewEnvironment для ConMan
-				ResetConman();
-				return nSetupRc;
-			}
-			else if (!klstricmp(curCommand, _T("/multi")))
-			{
-				MultiConValue = true; MultiConPrm = true;
-			}
-			else if (!klstricmp(curCommand, _T("/nomulti")))
-			{
-				MultiConValue = false; MultiConPrm = true;
-			}
-			else if (!klstricmp(curCommand, _T("/visible")))
-			{
-				VisValue = true; VisPrm = true;
-			}
-			else if (!klstricmp(curCommand, _T("/detached")))
-			{
-				gpConEmu->mb_StartDetached = TRUE;
-			}
-			else if (!klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype"))
-				|| !klstricmp(curCommand, _T("/ct0")) || !klstricmp(curCommand, _T("/ct1")) || !klstricmp(curCommand, _T("/ct2")))
-			{
-				ClearTypePrm = true;
-				switch (curCommand[3])
-				{
-				case L'0':
-					ClearTypeVal = NONANTIALIASED_QUALITY; break;
-				case L'1':
-					ClearTypeVal = ANTIALIASED_QUALITY; break;
-				default:
-					ClearTypeVal = CLEARTYPE_NATURAL_QUALITY;
-				}
-			}
-			// имя шрифта
-			else if (!klstricmp(curCommand, _T("/font")) && i + 1 < params)
-			{
-				curCommand += _tcslen(curCommand) + 1; i++;
-
-				if (!FontPrm)
-				{
-					FontPrm = true;
-					FontVal = curCommand;
-				}
-			}
-			// Высота шрифта
-			else if (!klstricmp(curCommand, _T("/size")) && i + 1 < params)
-			{
-				curCommand += _tcslen(curCommand) + 1; i++;
-
-				if (!SizePrm)
-				{
-					SizePrm = true;
-					SizeVal = klatoi(curCommand);
-				}
-			}
-#if 0
-			//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
-			else if (!klstricmp(curCommand, _T("/attach")) /*&& i + 1 < params*/)
-			{
-				//curCommand += _tcslen(curCommand) + 1; i++;
-				if (!AttachPrm)
-				{
-					AttachPrm = true; AttachVal = -1;
-
-					if ((i + 1) < params)
+					if (lbTurnOn)
 					{
-						TCHAR *nextCommand = curCommand + _tcslen(curCommand) + 1;
+						//BOOL bNeedFree = FALSE;
 
-						if (*nextCommand != _T('/'))
+						//if (*curCommand!=_T('"') && _tcschr(curCommand, _T(' ')))
+						//{
+						//	TCHAR* psz = (TCHAR*)calloc(_tcslen(curCommand)+3, sizeof(TCHAR));
+						//	*psz = _T('"');
+						//	_tcscpy(psz+1, curCommand);
+						//	_tcscat(psz, _T("\""));
+						//	curCommand = psz;
+						//}
+
+						size_t cchMax = _tcslen(curCommand);
+						LPCWSTR pszArg1 = NULL;
+						if ((i + 1) < params)
 						{
-							curCommand = nextCommand; i++;
-							AttachVal = klatoi(curCommand);
+							// Здесь может быть "/GHWND=NEW"
+							pszArg1 = curCommand + cchMax + 1;
+							if (!*pszArg1)
+								pszArg1 = NULL;
+							else
+								cchMax += _tcslen(pszArg1);
 						}
-					}
+						cchMax += 16; // + кавычки и пробелы всякие
 
-					// интеллектуальный аттач - если к текущей консоли уже подцеплена другая копия
-					if (AttachVal == -1)
-					{
-						HWND hCon = GetForegroundWindow();
+						wchar_t* pszCmd = (wchar_t*)calloc(cchMax, sizeof(*pszCmd));
+						_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\"%s%s%s", curCommand,
+							pszArg1 ? L" \"" : L"", pszArg1 ? pszArg1 : L"", pszArg1 ? L"\"" : L"");
+						
 
-						if (!hCon)
-						{
-							// консоли нет
-							return 100;
-						}
-						else
-						{
-							TCHAR sClass[128];
+						if (0 == RegSetValueEx(hk, _T("AutoRun"), NULL, REG_SZ, (LPBYTE)pszCmd,
+											(DWORD)sizeof(TCHAR)*(_tcslen(pszCmd)+1))) //-V220
+							nSetupRc = 1;
 
-							if (GetClassName(hCon, sClass, 128))
-							{
-								if (_tcscmp(sClass, VirtualConsoleClassMain)==0)
-								{
-									// Сверху УЖЕ другая копия ConEmu
-									return 1;
-								}
-
-								// Если на самом верху НЕ консоль - это может быть панель проводника,
-								// или другое плавающее окошко... Поищем ВЕРХНЮЮ консоль
-								if (isConsoleClass(sClass))
-								{
-									wcscpy_c(sClass, RealConsoleClass);
-									hCon = FindWindow(RealConsoleClass, NULL);
-									if (!hCon)
-										hCon = FindWindow(WineConsoleClass, NULL);
-
-									if (!hCon)
-										return 100;
-								}
-
-								if (isConsoleClass(sClass))
-								{
-									// перебрать все ConEmu, может кто-то уже подцеплен?
-									HWND hEmu = NULL;
-
-									while((hEmu = FindWindowEx(NULL, hEmu, VirtualConsoleClassMain, NULL)) != NULL)
-									{
-										if (hCon == (HWND)GetWindowLongPtr(hEmu, GWLP_USERDATA))
-										{
-											// к этой консоли уже подцеплен ConEmu
-											return 1;
-										}
-									}
-								}
-								else
-								{
-									// верхнее окно - НЕ консоль
-									return 100;
-								}
-							}
-						}
-
-						gpSetCls->hAttachConWnd = hCon;
-					}
-				}
-			}
-#endif
-			//Start ADD fontname; by Mors
-			else if (!klstricmp(curCommand, _T("/fontfile")) && i + 1 < params)
-			{
-				curCommand += _tcslen(curCommand) + 1; i++;
-				//if (!FontFilePrm)
-				{
-					//FontFilePrm = true;
-					INT_PTR nLen = _tcslen(curCommand);
-
-					if (nLen >= MAX_PATH)
-					{
-						INT_PTR nCchSize = nLen+100;
-						wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
-						_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /FontFile name (%u chars).\r\n", (DWORD)nLen);
-						_wcscat_c(psz, nCchSize, curCommand);
-						MBoxA(psz);
-						free(psz); free(cmdLine);
-						return 100;
-					}
-
-					//FontFile = curCommand;
-					gpSetCls->RegisterFont(curCommand, TRUE);
-				}
-			}
-			//End ADD fontname; by Mors
-			else if (!klstricmp(curCommand, _T("/fs")))
-			{
-				WindowModeVal = rFullScreen; WindowPrm = true;
-			}
-			else if (!klstricmp(curCommand, _T("/max")))
-			{
-				WindowModeVal = rMaximized; WindowPrm = true;
-			}
-			else if (!klstricmp(curCommand, _T("/min")))
-			{
-				gpConEmu->WindowStartMinimized = true;
-			}
-			else if (!klstricmp(curCommand, _T("/tsa")) || !klstricmp(curCommand, _T("/tray")))
-			{
-				gpConEmu->ForceMinimizeToTray = true;
-			}
-			else if (!klstricmp(curCommand, _T("/noupdate")))
-			{
-				gpConEmu->DisableAutoUpdate = true;
-			}
-			else if (!klstricmp(curCommand, _T("/nokeyhooks")))
-			{
-				gpConEmu->DisableKeybHooks = true;
-			}
-			else if (!klstricmp(curCommand, _T("/inside")))
-			{
-				gpConEmu->m_InsideIntegration = CConEmuMain::ii_Auto;
-				gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
-			}
-			else if (!klstricmp(curCommand, _T("/insidepid")) && ((i + 1) < params))
-			{
-				curCommand += _tcslen(curCommand) + 1; i++;
-
-				wchar_t* pszEnd;
-				gpConEmu->mn_InsideParentPID = wcstol(curCommand, &pszEnd, 10);
-				if (gpConEmu->mn_InsideParentPID)
-				{
-					// Здесь указывается PID, в который нужно внедриться.
-					gpConEmu->m_InsideIntegration = CConEmuMain::ii_Auto;
-					gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
-				}
-			}
-			else if (!klstricmp(curCommand, _T("/insidewnd")) && ((i + 1) < params))
-			{
-				curCommand += _tcslen(curCommand) + 1; i++;
-				if (curCommand[0] == L'0' && (curCommand[1] == L'x' || curCommand[1] == L'X'))
-					curCommand += 2;
-				else if (curCommand[0] == L'x' || curCommand[0] == L'X')
-					curCommand ++;
-
-				wchar_t* pszEnd;
-				HWND hParent = (HWND)wcstol(curCommand, &pszEnd, 16);
-				if (hParent && IsWindow(hParent))
-				{
-					// Здесь указывается HWND, в котором нужно создаваться.
-					gpConEmu->m_InsideIntegration = CConEmuMain::ii_Simple;
-					gpConEmu->mh_InsideParentWND = hParent;
-					gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
-				}
-			}
-			else if (!klstricmp(curCommand, _T("/icon")) && ((i + 1) < params))
-			{
-				curCommand += _tcslen(curCommand) + 1; i++;
-
-				if (!IconPrm && *curCommand)
-				{
-					IconPrm = true;
-					gpConEmu->mps_IconPath = lstrdup(curCommand);
-				}
-			}
-			else if (!klstricmp(curCommand, _T("/dir")) && i + 1 < params)
-			{
-				curCommand += _tcslen(curCommand) + 1; i++;
-
-				if (*curCommand)
-				{
-					// Например, "%USERPROFILE%"
-					wchar_t* pszExpand = NULL;
-					if (wcschr(curCommand, L'%') && ((pszExpand = ExpandEnvStr(curCommand)) != NULL))
-					{
-						SetCurrentDirectory(pszExpand);
-						SafeFree(pszExpand);
+						free(pszCmd);
 					}
 					else
 					{
-						SetCurrentDirectory(curCommand);
+						if (0==RegDeleteValue(hk, _T("AutoRun")))
+							nSetupRc = 1;
 					}
-					gpConEmu->RefreshConEmuCurDir();
+
+					RegCloseKey(hk);
+					// сбрость CreateInNewEnvironment для ConMan
+					ResetConman();
+					return nSetupRc;
 				}
-			}
-			else if (!klstricmp(curCommand, _T("/updatejumplist")))
-			{
-				gpConEmu->mb_UpdateJumpListOnStartup = true;
-			}
-			else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0")  || !klstricmp(curCommand, L"/log1"))
-			{
-				gpSetCls->isAdvLogging = 1;
-			}
-			else if (!klstricmp(curCommand, _T("/log2")))
-			{
-				gpSetCls->isAdvLogging = 2;
-			}
-			else if (!klstricmp(curCommand, _T("/log3")))
-			{
-				gpSetCls->isAdvLogging = 3;
-			}
-			else if (!klstricmp(curCommand, _T("/single")))
-			{
-				gpSetCls->SingleInstanceArg = true;
-			}
-			else if (!klstricmp(curCommand, _T("/showhide")) || !klstricmp(curCommand, _T("/showhideTSA")))
-			{
-				gpSetCls->SingleInstanceArg = true;
-				gpSetCls->SingleInstanceShowHide = !klstricmp(curCommand, _T("/showhide"))
-					? sih_ShowMinimize : sih_ShowHideTSA;
-			}
-			//else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
-			//{
-			//    setParentDisabled = true;
-			//}
-			//else if ( !klstricmp(curCommand, _T("/SetParent")) )
-			//{
-			//    gpConEmu->setParent = true;
-			//}
-			//else if ( !klstricmp(curCommand, _T("/SetParent2")) )
-			//{
-			//    gpConEmu->setParent = true; gpConEmu->setParent2 = true;
-			//}
-			else if (!klstricmp(curCommand, _T("/BufferHeight")) && i + 1 < params)
-			{
-				curCommand += _tcslen(curCommand) + 1; i++;
-
-				if (!BufferHeightPrm)
+				else if (!klstricmp(curCommand, _T("/multi")))
 				{
-					BufferHeightPrm = true;
-					BufferHeightVal = klatoi(curCommand);
-
-					if (BufferHeightVal < 0)
+					MultiConValue = true; MultiConPrm = true;
+				}
+				else if (!klstricmp(curCommand, _T("/nomulti")))
+				{
+					MultiConValue = false; MultiConPrm = true;
+				}
+				else if (!klstricmp(curCommand, _T("/visible")))
+				{
+					VisValue = true; VisPrm = true;
+				}
+				else if (!klstricmp(curCommand, _T("/detached")))
+				{
+					gpConEmu->mb_StartDetached = TRUE;
+				}
+				else if (!klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype"))
+					|| !klstricmp(curCommand, _T("/ct0")) || !klstricmp(curCommand, _T("/ct1")) || !klstricmp(curCommand, _T("/ct2")))
+				{
+					ClearTypePrm = true;
+					switch (curCommand[3])
 					{
-						//setParent = true; -- Maximus5 - нефиг, все ручками
-						BufferHeightVal = -BufferHeightVal;
+					case L'0':
+						ClearTypeVal = NONANTIALIASED_QUALITY; break;
+					case L'1':
+						ClearTypeVal = ANTIALIASED_QUALITY; break;
+					default:
+						ClearTypeVal = CLEARTYPE_NATURAL_QUALITY;
 					}
-
-					if (BufferHeightVal < LONGOUTPUTHEIGHT_MIN)
-						BufferHeightVal = LONGOUTPUTHEIGHT_MIN;
-					else if (BufferHeightVal > LONGOUTPUTHEIGHT_MAX)
-						BufferHeightVal = LONGOUTPUTHEIGHT_MAX;
 				}
-			}
-			else if (!klstricmp(curCommand, _T("/Config")) && i + 1 < params)
-			{
-				curCommand += _tcslen(curCommand) + 1; i++;
-
-				//if (!ConfigPrm) -- используем последний из параметров, если их несколько
+				// имя шрифта
+				else if (!klstricmp(curCommand, _T("/font")) && i + 1 < params)
 				{
-					ConfigPrm = true;
-					const int maxConfigNameLen = 127;
+					curCommand += _tcslen(curCommand) + 1; i++;
+
+					if (!FontPrm)
+					{
+						FontPrm = true;
+						FontVal = curCommand;
+					}
+				}
+				// Высота шрифта
+				else if (!klstricmp(curCommand, _T("/size")) && i + 1 < params)
+				{
+					curCommand += _tcslen(curCommand) + 1; i++;
+
+					if (!SizePrm)
+					{
+						SizePrm = true;
+						SizeVal = klatoi(curCommand);
+					}
+				}
+				#if 0
+				//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
+				else if (!klstricmp(curCommand, _T("/attach")) /*&& i + 1 < params*/)
+				{
+					//curCommand += _tcslen(curCommand) + 1; i++;
+					if (!AttachPrm)
+					{
+						AttachPrm = true; AttachVal = -1;
+
+						if ((i + 1) < params)
+						{
+							TCHAR *nextCommand = curCommand + _tcslen(curCommand) + 1;
+
+							if (*nextCommand != _T('/'))
+							{
+								curCommand = nextCommand; i++;
+								AttachVal = klatoi(curCommand);
+							}
+						}
+
+						// интеллектуальный аттач - если к текущей консоли уже подцеплена другая копия
+						if (AttachVal == -1)
+						{
+							HWND hCon = GetForegroundWindow();
+
+							if (!hCon)
+							{
+								// консоли нет
+								return 100;
+							}
+							else
+							{
+								TCHAR sClass[128];
+
+								if (GetClassName(hCon, sClass, 128))
+								{
+									if (_tcscmp(sClass, VirtualConsoleClassMain)==0)
+									{
+										// Сверху УЖЕ другая копия ConEmu
+										return 1;
+									}
+
+									// Если на самом верху НЕ консоль - это может быть панель проводника,
+									// или другое плавающее окошко... Поищем ВЕРХНЮЮ консоль
+									if (isConsoleClass(sClass))
+									{
+										wcscpy_c(sClass, RealConsoleClass);
+										hCon = FindWindow(RealConsoleClass, NULL);
+										if (!hCon)
+											hCon = FindWindow(WineConsoleClass, NULL);
+
+										if (!hCon)
+											return 100;
+									}
+
+									if (isConsoleClass(sClass))
+									{
+										// перебрать все ConEmu, может кто-то уже подцеплен?
+										HWND hEmu = NULL;
+
+										while((hEmu = FindWindowEx(NULL, hEmu, VirtualConsoleClassMain, NULL)) != NULL)
+										{
+											if (hCon == (HWND)GetWindowLongPtr(hEmu, GWLP_USERDATA))
+											{
+												// к этой консоли уже подцеплен ConEmu
+												return 1;
+											}
+										}
+									}
+									else
+									{
+										// верхнее окно - НЕ консоль
+										return 100;
+									}
+								}
+							}
+
+							gpSetCls->hAttachConWnd = hCon;
+						}
+					}
+				}
+				#endif
+				//Start ADD fontname; by Mors
+				else if (!klstricmp(curCommand, _T("/fontfile")) && i + 1 < params)
+				{
+					curCommand += _tcslen(curCommand) + 1; i++;
+					//if (!FontFilePrm)
+					{
+						//FontFilePrm = true;
+						INT_PTR nLen = _tcslen(curCommand);
+
+						if (nLen >= MAX_PATH)
+						{
+							INT_PTR nCchSize = nLen+100;
+							wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
+							_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /FontFile name (%u chars).\r\n", (DWORD)nLen);
+							_wcscat_c(psz, nCchSize, curCommand);
+							MBoxA(psz);
+							free(psz); free(cmdLine);
+							return 100;
+						}
+
+						//FontFile = curCommand;
+						gpSetCls->RegisterFont(curCommand, TRUE);
+					}
+				}
+				//End ADD fontname; by Mors
+				else if (!klstricmp(curCommand, _T("/fs")))
+				{
+					WindowModeVal = rFullScreen; WindowPrm = true;
+				}
+				else if (!klstricmp(curCommand, _T("/max")))
+				{
+					WindowModeVal = rMaximized; WindowPrm = true;
+				}
+				else if (!klstricmp(curCommand, _T("/min")))
+				{
+					gpConEmu->WindowStartMinimized = true;
+				}
+				else if (!klstricmp(curCommand, _T("/tsa")) || !klstricmp(curCommand, _T("/tray")))
+				{
+					gpConEmu->ForceMinimizeToTray = true;
+				}
+				else if (!klstricmp(curCommand, _T("/noupdate")))
+				{
+					gpConEmu->DisableAutoUpdate = true;
+				}
+				else if (!klstricmp(curCommand, _T("/nokeyhooks")))
+				{
+					gpConEmu->DisableKeybHooks = true;
+				}
+				else if (!klstricmp(curCommand, _T("/inside")))
+				{
+					gpConEmu->m_InsideIntegration = CConEmuMain::ii_Auto;
+					gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
+				}
+				else if (!klstricmp(curCommand, _T("/insidepid")) && ((i + 1) < params))
+				{
+					curCommand += _tcslen(curCommand) + 1; i++;
+
+					wchar_t* pszEnd;
+					gpConEmu->mn_InsideParentPID = wcstol(curCommand, &pszEnd, 10);
+					if (gpConEmu->mn_InsideParentPID)
+					{
+						// Здесь указывается PID, в который нужно внедриться.
+						gpConEmu->m_InsideIntegration = CConEmuMain::ii_Auto;
+						gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
+					}
+				}
+				else if (!klstricmp(curCommand, _T("/insidewnd")) && ((i + 1) < params))
+				{
+					curCommand += _tcslen(curCommand) + 1; i++;
+					if (curCommand[0] == L'0' && (curCommand[1] == L'x' || curCommand[1] == L'X'))
+						curCommand += 2;
+					else if (curCommand[0] == L'x' || curCommand[0] == L'X')
+						curCommand ++;
+
+					wchar_t* pszEnd;
+					HWND hParent = (HWND)wcstol(curCommand, &pszEnd, 16);
+					if (hParent && IsWindow(hParent))
+					{
+						// Здесь указывается HWND, в котором нужно создаваться.
+						gpConEmu->m_InsideIntegration = CConEmuMain::ii_Simple;
+						gpConEmu->mh_InsideParentWND = hParent;
+						gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
+					}
+				}
+				else if (!klstricmp(curCommand, _T("/icon")) && ((i + 1) < params))
+				{
+					curCommand += _tcslen(curCommand) + 1; i++;
+
+					if (!IconPrm && *curCommand)
+					{
+						IconPrm = true;
+						gpConEmu->mps_IconPath = lstrdup(curCommand);
+					}
+				}
+				else if (!klstricmp(curCommand, _T("/dir")) && i + 1 < params)
+				{
+					curCommand += _tcslen(curCommand) + 1; i++;
+
+					if (*curCommand)
+					{
+						// Например, "%USERPROFILE%"
+						wchar_t* pszExpand = NULL;
+						if (wcschr(curCommand, L'%') && ((pszExpand = ExpandEnvStr(curCommand)) != NULL))
+						{
+							SetCurrentDirectory(pszExpand);
+							SafeFree(pszExpand);
+						}
+						else
+						{
+							SetCurrentDirectory(curCommand);
+						}
+						gpConEmu->RefreshConEmuCurDir();
+					}
+				}
+				else if (!klstricmp(curCommand, _T("/updatejumplist")))
+				{
+					gpConEmu->mb_UpdateJumpListOnStartup = true;
+				}
+				else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0")  || !klstricmp(curCommand, L"/log1"))
+				{
+					gpSetCls->isAdvLogging = 1;
+				}
+				else if (!klstricmp(curCommand, _T("/log2")))
+				{
+					gpSetCls->isAdvLogging = 2;
+				}
+				else if (!klstricmp(curCommand, _T("/log3")))
+				{
+					gpSetCls->isAdvLogging = 3;
+				}
+				else if (!klstricmp(curCommand, _T("/single")))
+				{
+					gpSetCls->SingleInstanceArg = true;
+				}
+				else if (!klstricmp(curCommand, _T("/showhide")) || !klstricmp(curCommand, _T("/showhideTSA")))
+				{
+					gpSetCls->SingleInstanceArg = true;
+					gpSetCls->SingleInstanceShowHide = !klstricmp(curCommand, _T("/showhide"))
+						? sih_ShowMinimize : sih_ShowHideTSA;
+				}
+				//else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
+				//{
+				//    setParentDisabled = true;
+				//}
+				//else if ( !klstricmp(curCommand, _T("/SetParent")) )
+				//{
+				//    gpConEmu->setParent = true;
+				//}
+				//else if ( !klstricmp(curCommand, _T("/SetParent2")) )
+				//{
+				//    gpConEmu->setParent = true; gpConEmu->setParent2 = true;
+				//}
+				else if (!klstricmp(curCommand, _T("/BufferHeight")) && i + 1 < params)
+				{
+					curCommand += _tcslen(curCommand) + 1; i++;
+
+					if (!BufferHeightPrm)
+					{
+						BufferHeightPrm = true;
+						BufferHeightVal = klatoi(curCommand);
+
+						if (BufferHeightVal < 0)
+						{
+							//setParent = true; -- Maximus5 - нефиг, все ручками
+							BufferHeightVal = -BufferHeightVal;
+						}
+
+						if (BufferHeightVal < LONGOUTPUTHEIGHT_MIN)
+							BufferHeightVal = LONGOUTPUTHEIGHT_MIN;
+						else if (BufferHeightVal > LONGOUTPUTHEIGHT_MAX)
+							BufferHeightVal = LONGOUTPUTHEIGHT_MAX;
+					}
+				}
+				else if (!klstricmp(curCommand, _T("/Config")) && i + 1 < params)
+				{
+					curCommand += _tcslen(curCommand) + 1; i++;
+
+					//if (!ConfigPrm) -- используем последний из параметров, если их несколько
+					{
+						ConfigPrm = true;
+						const int maxConfigNameLen = 127;
+						int nLen = _tcslen(curCommand);
+
+						if (nLen > maxConfigNameLen)
+						{
+							int nCchSize = nLen+100;
+							wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
+							_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /Config name (%i chars).\r\n", nLen);
+							_wcscat_c(psz, nCchSize, curCommand);
+							MBoxA(psz);
+							free(psz); free(cmdLine);
+							return 100;
+						}
+
+						ConfigVal = curCommand;
+					}
+				}
+				else if (!klstricmp(curCommand, _T("/Title")) && i + 1 < params)
+				{
+					curCommand += _tcslen(curCommand) + 1; i++;
+
+					const int maxTitleNameLen = 127;
 					int nLen = _tcslen(curCommand);
 
-					if (nLen > maxConfigNameLen)
+					if (nLen > maxTitleNameLen)
 					{
 						int nCchSize = nLen+100;
 						wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
-						_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /Config name (%i chars).\r\n", nLen);
+						_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /Title name (%i chars).\r\n", nLen);
 						_wcscat_c(psz, nCchSize, curCommand);
 						MBoxA(psz);
 						free(psz); free(cmdLine);
 						return 100;
 					}
 
-					ConfigVal = curCommand;
+					gpConEmu->SetTitleTemplate(curCommand);
 				}
-			}
-			else if (!klstricmp(curCommand, _T("/Title")) && i + 1 < params)
-			{
-				curCommand += _tcslen(curCommand) + 1; i++;
-
-				const int maxTitleNameLen = 127;
-				int nLen = _tcslen(curCommand);
-
-				if (nLen > maxTitleNameLen)
+				else if (!klstricmp(curCommand, _T("/?")) || !klstricmp(curCommand, _T("/h")) || !klstricmp(curCommand, _T("/help")))
 				{
-					int nCchSize = nLen+100;
-					wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
-					_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /Title name (%i chars).\r\n", nLen);
-					_wcscat_c(psz, nCchSize, curCommand);
-					MBoxA(psz);
-					free(psz); free(cmdLine);
-					return 100;
+					//MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);
+					gpConEmu->OnInfo_About();
+					free(cmdLine);
+					return -1;
 				}
+				else
+				{
+					lbNotFound = true;
 
-				gpConEmu->SetTitleTemplate(curCommand);
+					if (lbSwitchChanged)
+					{
+						*curCommand = L'-';
+					}
+				}
 			}
-			else if (!klstricmp(curCommand, _T("/?")))
-			{
-				//MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);
-				gpConEmu->OnInfo_About();
-				free(cmdLine);
-				return -1; // NightRoman
-			}
-			else if (i>0 && !psUnknown && *curCommand)
+
+			if (lbNotFound && /*i>0 &&*/ !psUnknown && (*curCommand == L'-' || *curCommand == L'/'))
 			{
 				// ругнуться на неизвестную команду
 				psUnknown = curCommand;
@@ -2394,7 +2417,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (psUnknown)
 	{
 		TCHAR* psMsg = (TCHAR*)calloc(_tcslen(psUnknown)+100,sizeof(TCHAR));
-		_tcscpy(psMsg, _T("Unknown command specified:\r\n"));
+		_tcscpy(psMsg, _T("Unknown switch specified:\r\n"));
 		_tcscat(psMsg, psUnknown);
 		MBoxA(psMsg);
 		free(psMsg);
@@ -2525,23 +2548,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			lstrcat(pszReady, L" ");
 			lstrcat(pszReady, SkipNonPrintable(cmdNew));
 
-			// Запомним в истории!
-			gpSet->HistoryAdd(pszReady);
+			if (pszReady[0] != L'/' && pszReady[0] != L'-')
+			{
+				// Запомним в истории!
+				gpSet->HistoryAdd(pszReady);
+			}
 		}
 		else if (params == (uint)-1)
 		{
 			*pszReady = DropLnkPrefix; // Признак того, что это передача набрасыванием на ярлык
 			lstrcpy(pszReady+1, SkipNonPrintable(cmdNew));
 
-			// Запомним в истории!
-			gpSet->HistoryAdd(pszReady+1);
+			if (pszReady[1] != L'/' && pszReady[1] != L'-')
+			{
+				// Запомним в истории!
+				gpSet->HistoryAdd(pszReady+1);
+			}
 		}
 		else
 		{
 			lstrcpy(pszReady, SkipNonPrintable(cmdNew));
 
-			// Запомним в истории!
-			gpSet->HistoryAdd(pszReady);
+			if (pszReady[0] != L'/' && pszReady[0] != L'-')
+			{
+				// Запомним в истории!
+				gpSet->HistoryAdd(pszReady);
+			}
 		}
 
 		MCHKHEAP

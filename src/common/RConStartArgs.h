@@ -33,32 +33,34 @@ enum RecreateActionParm
 	cra_CreateTab    = 0,
 	cra_RecreateTab  = 1,
 	cra_CreateWindow = 2,
+	cra_EditTab      = 3,
 };
 
 struct RConStartArgs
 {
-	BOOL     bDetached;
-	wchar_t* pszSpecialCmd;
-	wchar_t* pszStartupDir;
+	BOOL     bDetached; // internal use
+	wchar_t* pszSpecialCmd; // собственно, command line
+	wchar_t* pszStartupDir; // "-new_console:d:<dir>"
 	
-	BOOL     bRunAsAdministrator, bRunAsRestricted;
-	wchar_t* pszUserName, *pszDomain, szUserPassword[MAX_PATH];
-	BOOL     bForceUserDialog;
+	BOOL     bRunAsAdministrator; // -new_console:a
+	BOOL     bRunAsRestricted;    // -new_console:r
+	wchar_t* pszUserName, *pszDomain, szUserPassword[MAX_PATH]; // "-new_console:u:<user>:<pwd>"
+	BOOL     bForceUserDialog;    // -new_console:u
 	
-	BOOL     bBackgroundTab;
+	BOOL     bBackgroundTab;      // -new_console:b
 	
-	BOOL     bBufHeight;
-	UINT     nBufHeight;
+	BOOL     bBufHeight;          // -new_console:h<lines>
+	UINT     nBufHeight;          //
 
  	enum {
  		eConfDefault = 0,
- 		eConfAlways = 1,
- 		eConfNever = 2,
+ 		eConfAlways  = 1,         // -new_console:c
+ 		eConfNever   = 2,         // -new_console:n
  	} eConfirmation;
 
-	BOOL     bForceDosBox; // useful with .bat files.
+	BOOL     bForceDosBox;        // -new_console:x (may be useful with .bat files)
 
-	enum SplitType {
+	enum SplitType {              // -new_console:s[<SplitTab>T][<Percents>](H|V)
 		eSplitNone = 0,
 		eSplitHorz = 1,
 		eSplitVert = 2,
@@ -74,4 +76,6 @@ struct RConStartArgs
 	BOOL CheckUserToken(HWND hPwd);
 
 	int ProcessNewConArg();
+
+	wchar_t* CreateCommandLine();
 };

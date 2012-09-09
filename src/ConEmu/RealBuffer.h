@@ -131,6 +131,7 @@ public:
 	void UpdateSelection();
 	BOOL isConSelectMode();
 	BOOL isSelfSelectMode();
+	BOOL isStreamSelection();
 	bool OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 	
 	COORD GetDefaultNtvdmHeight();

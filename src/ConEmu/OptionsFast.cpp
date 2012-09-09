@@ -68,9 +68,19 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 			CheckDlgButton(hDlg, cbInjectConEmuHkFast, gpSet->isUseInjects);
 
-			if (gpSet->UpdSet.isUpdateUseBuilds != 0)
-				CheckDlgButton(hDlg, cbEnableAutoUpdateFast, gpSet->UpdSet.isUpdateCheckOnStartup|gpSet->UpdSet.isUpdateCheckHourly);
-			CheckRadioButton(hDlg, rbAutoUpdateStableFast, rbAutoUpdateDeveloperFast, (gpSet->UpdSet.isUpdateUseBuilds == 1) ? rbAutoUpdateStableFast : rbAutoUpdateDeveloperFast);
+			if (gpConEmu->mb_MingwMode)
+			{
+				EnableWindow(GetDlgItem(hDlg, cbEnableAutoUpdateFast), FALSE);
+				EnableWindow(GetDlgItem(hDlg, rbAutoUpdateStableFast), FALSE);
+				EnableWindow(GetDlgItem(hDlg, rbAutoUpdateDeveloperFast), FALSE);
+				EnableWindow(GetDlgItem(hDlg, stEnableAutoUpdateFast), FALSE);
+			}
+			else
+			{
+				if (gpSet->UpdSet.isUpdateUseBuilds != 0)
+					CheckDlgButton(hDlg, cbEnableAutoUpdateFast, gpSet->UpdSet.isUpdateCheckOnStartup|gpSet->UpdSet.isUpdateCheckHourly);
+				CheckRadioButton(hDlg, rbAutoUpdateStableFast, rbAutoUpdateDeveloperFast, (gpSet->UpdSet.isUpdateUseBuilds == 1) ? rbAutoUpdateStableFast : rbAutoUpdateDeveloperFast);
+			}
 
 			if (!bCheckIme)
 			{

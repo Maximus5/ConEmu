@@ -68,6 +68,119 @@ RConStartArgs::~RConStartArgs()
 	//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
 }
 
+wchar_t* RConStartArgs::CreateCommandLine()
+{
+	wchar_t* pszFull = NULL;
+	size_t cchMaxLen =
+				 (pszSpecialCmd ? (lstrlen(pszSpecialCmd) + 3) : 0); // только команда
+	cchMaxLen += (pszStartupDir ? (lstrlen(pszStartupDir) + 20) : 0); // "-new_console:d:..."
+	cchMaxLen += (bRunAsAdministrator ? 15 : 0); // -new_console:a
+	cchMaxLen += (bRunAsRestricted ? 15 : 0); // -new_console:r
+	cchMaxLen += (pszUserName ? (lstrlen(pszUserName) + 32 // "-new_console:u:<user>:<pwd>"
+						+ (pszDomain ? lstrlen(pszDomain) : 0)
+						+ (szUserPassword ? lstrlen(szUserPassword) : 0)) : 0);
+	cchMaxLen += (bForceUserDialog ? 15 : 0); // -new_console:u
+	cchMaxLen += (bBackgroundTab ? 15 : 0); // -new_console:b
+	cchMaxLen += (bBufHeight ? 32 : 0); // -new_console:h<lines>
+	cchMaxLen += (eConfirmation ? 15 : 0); // -new_console:c / -new_console:n
+	cchMaxLen += (bForceDosBox ? 15 : 0); // -new_console:x
+	cchMaxLen += (eSplit ? 64 : 0); // -new_console:s[<SplitTab>T][<Percents>](H|V)
+
+	pszFull = (wchar_t*)malloc(cchMaxLen*sizeof(*pszFull));
+	if (!pszFull)
+	{
+		_ASSERTE(pszFull!=NULL);
+		return NULL;
+	}
+
+	if (pszSpecialCmd)
+	{
+		// Не окавычиваем. Этим должен озаботиться пользователь
+		_wcscpy_c(pszFull, cchMaxLen, pszSpecialCmd);
+		_wcscat_c(pszFull, cchMaxLen, L" ");
+	}
+	else
+	{
+		*pszFull = 0;
+	}
+
+	wchar_t szAdd[128] = L"";
+	if (bRunAsAdministrator)
+		wcscat_c(szAdd, L"a");
+	else if (bRunAsRestricted)
+		wcscat_c(szAdd, L"r");
+	
+	if (bForceUserDialog)
+		wcscat_c(szAdd, L"u");
+	if (bBackgroundTab)
+		wcscat_c(szAdd, L"b");
+	if (bForceDosBox)
+		wcscat_c(szAdd, L"x");
+
+	if (bForceDosBox)
+		wcscat_c(szAdd, L"x");
+	
+	if (eConfirmation == eConfAlways)
+		wcscat_c(szAdd, L"c");
+	else if (eConfirmation == eConfNever)
+		wcscat_c(szAdd, L"n");
+
+	if (bBufHeight)
+	{
+		if (nBufHeight)
+			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"h%u", nBufHeight);
+		else
+			wcscat_c(szAdd, L"h");
+	}
+
+	// -new_console:s[<SplitTab>T][<Percents>](H|V)
+	if (eSplit)
+	{
+		wcscat_c(szAdd, L"s");
+		if (nSplitPane)
+			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"%uT", nSplitPane);
+		if ((int)(nSplitValue/10) != 0)
+			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"%u", (int)(nSplitValue/10));
+		wcscat_c(szAdd, (eSplit == eSplitHorz) ? L"H" : L"V");
+	}
+
+	if (szAdd[0])
+	{
+		_wcscat_c(pszFull, cchMaxLen, L" -new_console:");
+		_wcscat_c(pszFull, cchMaxLen, szAdd);
+	}
+
+	// "-new_console:d:..."
+	if (pszStartupDir && *pszStartupDir)
+	{
+		bool bQuot = wcschr(pszStartupDir, L' ') != NULL;
+		_wcscat_c(pszFull, cchMaxLen, bQuot ? L" \"-new_console:d:" : L" -new_console:d:");
+		_wcscat_c(pszFull, cchMaxLen, pszStartupDir);
+		if (bQuot)
+			_wcscat_c(pszFull, cchMaxLen, L"\"");
+	}
+
+	// "-new_console:u:<user>:<pwd>"
+	if (pszUserName && *pszUserName)
+	{
+		_wcscat_c(pszFull, cchMaxLen, L" \"-new_console:u:");
+		if (pszDomain && *pszDomain)
+		{
+			_wcscat_c(pszFull, cchMaxLen, pszDomain);
+			_wcscat_c(pszFull, cchMaxLen, L"\\");
+		}
+		_wcscat_c(pszFull, cchMaxLen, pszUserName);
+		if (szUserPassword)
+		{
+			_wcscat_c(pszFull, cchMaxLen, L":");
+			_wcscat_c(pszFull, cchMaxLen, szUserPassword);
+		}
+		_wcscat_c(pszFull, cchMaxLen, L"\"");
+	}
+
+	return pszFull;
+}
+
 BOOL RConStartArgs::CheckUserToken(HWND hPwd)
 {
 	//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }

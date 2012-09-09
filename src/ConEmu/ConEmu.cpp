@@ -317,40 +317,61 @@ CConEmuMain::CConEmuMain()
 	wcscpy_c(ms_ConEmuExeDir, ms_ConEmuExe);
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 	*pszSlash = 0;
+
 	bool lbBaseFound = false;
-	wchar_t szBaseFile[MAX_PATH+12];
-	wcscpy_c(szBaseFile, ms_ConEmuExeDir);
+
+	// Mingw/msys installation?
+	wchar_t szBashFile[MAX_PATH+64];
+	wcscpy_c(szBashFile, ms_ConEmuExeDir);
+	pszSlash = wcsrchr(szBashFile, L'\\');
+	if (pszSlash) *pszSlash = 0;
+	wcscat_c(szBashFile, L"\\msys\\1.0\\bin\\sh.exe");
+	mb_MSysStartup = FileExists(szBashFile);
+
 	// Сначала проверяем подпапку
-	pszSlash = szBaseFile + _tcslen(szBaseFile);
-	lstrcpy(pszSlash, L"\\ConEmu\\ConEmuC.exe");
+	wcscpy_c(ms_ConEmuBaseDir, ms_ConEmuExeDir);
+	wcscat_c(ms_ConEmuBaseDir, L"\\ConEmu");
+	lbBaseFound = CheckBaseDir();
 
-	if (FileExists(szBaseFile))
-	{
-		wcscpy_c(ms_ConEmuBaseDir, ms_ConEmuExeDir);
-		wcscat_c(ms_ConEmuBaseDir, L"\\ConEmu");
-		lbBaseFound = true;
-	}
-
-#ifdef WIN64
 
 	if (!lbBaseFound)
 	{
-		lstrcpy(pszSlash, L"\\ConEmu\\ConEmuC64.exe");
+		// Если не нашли - то в той же папке, что и GUI
+		wcscpy_c(ms_ConEmuBaseDir, ms_ConEmuExeDir);
+		lbBaseFound = CheckBaseDir();
+	}
 
-		if (FileExists(szBaseFile))
+	if (!lbBaseFound)
+	{
+		// Если все-равно не нашли - промерить, может это mingw?
+		pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
+		if (pszSlash && (lstrcmpi(pszSlash, L"\\bin") == 0))
 		{
-			lstrcpy(ms_ConEmuBaseDir, ms_ConEmuExeDir);
-			lstrcat(ms_ConEmuBaseDir, L"\\ConEmu");
-			lbBaseFound = true;
+			// -> $MINGW_ROOT/libexec/ConEmu
+			size_t cch = pszSlash - ms_ConEmuExeDir;
+			wmemmove(ms_ConEmuBaseDir, ms_ConEmuExeDir, cch);
+			ms_ConEmuBaseDir[cch] = 0;
+			wcscat_c(ms_ConEmuBaseDir, L"\\libexec\\ConEmu");
+			// Last chance
+			lbBaseFound = CheckBaseDir();
+			if (lbBaseFound)
+			{
+				mb_MingwMode = lbBaseFound;
+			}
+			else
+			{
+				// Fail, revert to ExeDir
+				wcscpy_c(ms_ConEmuBaseDir, ms_ConEmuExeDir);
+			}
 		}
 	}
 
-#endif
-
-	if (!lbBaseFound)
+	if (mb_MingwMode && mb_MSysStartup)
 	{
-		wcscpy_c(ms_ConEmuBaseDir, ms_ConEmuExeDir);
+		// This is example. Will be replaced with full path.
+		gpSetCls->SetDefaultCmd(L"sh.exe --login -i");
 	}
+
 
 	// Добавить в окружение переменную с папкой к ConEmu.exe
 	SetEnvironmentVariable(ENV_CONEMUDIR_VAR_W, ms_ConEmuExeDir);
@@ -646,6 +667,35 @@ bool CConEmuMain::CheckRequiredFiles()
 	return true; // Можно продолжать
 }
 
+bool CConEmuMain::CheckBaseDir()
+{
+	bool lbBaseFound = false;
+	wchar_t szBaseFile[MAX_PATH+12];
+
+	lstrcpyn(szBaseFile, ms_ConEmuBaseDir, countof(szBaseFile));
+	wchar_t *pszSlash = szBaseFile + _tcslen(szBaseFile);
+	lstrcpy(pszSlash, L"\\ConEmuC.exe");
+
+	if (FileExists(szBaseFile))
+	{
+		lbBaseFound = true;
+	}
+
+	#ifdef WIN64
+	if (!lbBaseFound)
+	{
+		lstrcpy(pszSlash, L"\\ConEmuC64.exe");
+
+		if (FileExists(szBaseFile))
+		{
+			lbBaseFound = true;
+		}
+	}
+	#endif
+
+	return lbBaseFound;
+}
+
 LPWSTR CConEmuMain::ConEmuXml()
 {
 	if (ms_ConEmuXml[0])
@@ -653,6 +703,8 @@ LPWSTR CConEmuMain::ConEmuXml()
 		if (FileExists(ms_ConEmuXml))
 			return ms_ConEmuXml;
 	}
+
+	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
 
 	// Ищем файл портабельных настроек. Сначала пробуем в BaseDir
 	wcscpy_c(ms_ConEmuXml, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
@@ -681,6 +733,8 @@ LPWSTR CConEmuMain::ConEmuIni()
 		if (FileExists(ms_ConEmuIni))
 			return ms_ConEmuIni;
 	}
+
+	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
 
 	// Ищем файл портабельных настроек. Сначала пробуем в BaseDir
 	wcscpy_c(ms_ConEmuIni, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuIni, L"\\ConEmu.ini");
@@ -9164,10 +9218,14 @@ HMENU CConEmuMain::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 HMENU CConEmuMain::CreateHelpMenuPopup()
 {
 	HMENU hHelp = CreatePopupMenu();
-	if (gpUpd && gpUpd->InUpdate())
-		AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_STOPUPDATE, _T("&Stop updates checking"));
-	else
-		AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_CHECKUPDATE, _T("&Check for updates"));
+
+	if (!gpConEmu->mb_MingwMode)
+	{
+		if (gpUpd && gpUpd->InUpdate())
+			AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_STOPUPDATE, _T("&Stop updates checking"));
+		else
+			AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_CHECKUPDATE, _T("&Check for updates"));
+	}
 	
 	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HOMEPAGE, _T("&Visit home page"));
 	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_REPORTBUG, _T("&Report a bug..."));
@@ -13274,6 +13332,9 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 
 void CConEmuMain::CheckUpdates(BOOL abShowMessages)
 {
+	if (gpConEmu->mb_MingwMode)
+		return;
+
 	if (!gpUpd)
 		gpUpd = new CConEmuUpdate;
 	

@@ -99,6 +99,8 @@ class CConEmuMain :
 		wchar_t ms_ComSpecInitial[MAX_PATH];
 		wchar_t *mps_IconPath;
 		BOOL mb_DosBoxExists;
+		BOOL mb_MingwMode;   // ConEmu установлен как пакет MinGW
+		BOOL mb_MSysStartup; // найден баш из msys: "%ConEmuDir%\..\msys\1.0\bin\sh.exe" (MinGW mode)
 		// Portable Far Registry
 		BOOL mb_PortableRegExist;
 		wchar_t ms_PortableRegHive[MAX_PATH]; // полный путь к "Portable.S-x-x-..."
@@ -138,6 +140,7 @@ class CConEmuMain :
 		void  InsideUpdateDir();
 		void  InsideUpdatePlacement();
 	private:
+		bool CheckBaseDir();
 		BOOL CheckDosBoxExists();
 		void CheckPortableReg();
 		void FinalizePortableReg();

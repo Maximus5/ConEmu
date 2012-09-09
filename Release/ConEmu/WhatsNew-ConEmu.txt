@@ -14,8 +14,24 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
-[+] Settings -> ComSpec: «Support UNC paths in cmd.exe». The beginning. Checkbox turn on "DisableUNCCheckC".
+2012.09.09
+[+] Settings -> Tasks: more intuitive configuration for Tasks edit box, new buttons.
+    "Add Tab" - opens standard dialog with "Save" button, which append new line to Tasks edit box.
+    "Add startup dir" - simplifying insertion of "-new_console:d:<dir>" with GUI dialog.
+    "Add file path" - inserts path to any file (GUI dialog too).
+[+] Settings -> ComSpec: «Support UNC paths in cmd.exe». The beginning. Checkbox turn on "DisableUNCCheck".
 [+] GCC Build updated. ConEmu, ConEmuC, ConEmuCD, ConEmuHk. 32-bit versions only was tested in GCC.
+[+] MinGW. ConEmu files MAY be stored in MinGW compatible locations:
+    $MINGW_ROOT/bin/
+      ConEmu.exe, ConEmu64.exe
+    $MINGW_ROOT/libexec/conemu/
+      ConEmuC.exe, ConEmuHk.dll and others
+      ConEmu.xml - contains some defaults for MinGW environment
+    $MINGW_ROOT/share/conemu/
+      WhatsNew-ConEmu.txt and others
+[!] AutoUpdate is disabled in MinGW mode.
+[*] Minor changes in command line parser.
+[%] Selection ended unexpectedly when Modifier for selection start was set and 
 
 
 2012.09.04

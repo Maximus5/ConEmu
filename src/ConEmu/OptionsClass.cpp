@@ -52,6 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TrayIcon.h"
 #include "LoadImg.h"
 #include "Status.h"
+#include "Recreate.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "version.h"
@@ -282,7 +283,7 @@ CSettings::CSettings()
 	ConfigName[0] = 0;
 	//Type[0] = 0;
 	//gpSet->psCmd = NULL; gpSet->psCurCmd = NULL;
-	wcscpy_c(szDefCmd, L"far");
+	SetDefaultCmd(L"far");
 	//gpSet->psCmdHistory = NULL; gpSet->nCmdHistorySize = 0;
 	
 	m_ThSetMap.InitName(CECONVIEWSETNAME, GetCurrentProcessId());
@@ -700,6 +701,14 @@ void CSettings::InitVars_Pages()
 
 	m_Pages = (ConEmuSetupPages*)malloc(sizeof(Pages));
 	memmove(m_Pages, Pages, sizeof(Pages));
+	//ConEmuSetupPages* p = m_Pages;
+	//for (int i = 0; i < countof(Pages); i++)
+	//{
+	//	// Если установлено как пакет MinGW - стандартное обновление через googlecode не работает.
+	//	if ((Pages[i].PageID == IDD_SPG_UPDATE) && gpConEmu->mb_MingwMode)
+	//		continue;
+	//	*(p++) = Pages[i];
+	//}
 }
 
 void CSettings::ReleaseHandles()
@@ -1261,6 +1270,12 @@ LRESULT CSettings::OnInitDialog()
 		bool bExpanded = false;
 		for (size_t i = 0; m_Pages[i].PageID; i++)
 		{
+			if ((m_Pages[i].PageID == IDD_SPG_UPDATE) && gpConEmu->mb_MingwMode)
+			{
+				m_Pages[i].hTI = NULL;
+				continue;
+			}
+
 			ti.hParent = m_Pages[i].Level ? hLastRoot : TVI_ROOT;
 			ti.item.pszText = m_Pages[i].PageName;
 			
@@ -4918,6 +4933,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCmdTasksDown:
 		case cbCmdGroupApp:
 		case cbCmdTasksParm:
+		case cbCmdTasksDir:
 		case cbCmdTasksReload:
 		case cbCmdTaskbarTasks:
 		case cbCmdTaskbarCommands:
@@ -5192,13 +5208,81 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 	case cbCmdGroupApp:
 		{
 			// Добавить команду в группу
-			wchar_t temp[MAX_PATH+10];
+			RConStartArgs args;
+			args.aRecreate = cra_EditTab;
+			int nDlgRc = gpConEmu->RecreateDlg(&args);
+
+			if (nDlgRc == IDC_START)
+			{
+				wchar_t* pszCmd = args.CreateCommandLine();
+				if (!pszCmd || !*pszCmd)
+				{
+					DisplayLastError(L"Can't compile command line for new tab\nAll fields are empty?", -1);
+				}
+				else
+				{
+					//SendDlgItemMessage(hWnd2, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszName);
+					wchar_t* pszFull = GetDlgItemText(hWnd2, tCmdGroupCommands);
+					if (!pszFull || !*pszFull)
+					{
+						SafeFree(pszFull);
+						pszFull = pszCmd;
+					}
+					else
+					{
+						size_t cchLen = _tcslen(pszFull);
+						size_t cchMax = cchLen + 7 + _tcslen(pszCmd);
+						pszFull = (wchar_t*)realloc(pszFull, cchMax*sizeof(*pszFull));
+
+						int nRN = 0;
+						if (cchLen >= 2)
+						{
+							if (pszFull[cchLen-2] == L'\r' && pszFull[cchLen-1] == L'\n')
+							{
+								nRN++;
+								if (cchLen >= 4)
+								{
+									if (pszFull[cchLen-4] == L'\r' && pszFull[cchLen-3] == L'\n')
+									{
+										nRN++;
+									}
+								}
+							}
+						}
+
+						if (nRN < 2)
+							_wcscat_c(pszFull, cchMax, nRN ? L"\r\n" : L"\r\n\r\n");
+
+						_wcscat_c(pszFull, cchMax, pszCmd);
+					}
+
+					if (pszFull)
+					{
+						SetDlgItemText(hWnd2, tCmdGroupCommands, pszFull);
+						OnEditChanged(hWnd2, MAKELPARAM(tCmdGroupCommands,EN_CHANGE), 0);
+					}
+					else
+					{
+						_ASSERTE(pszFull);
+					}
+					SafeFree(pszFull);
+				}
+				SafeFree(pszCmd);
+			}
+		}
+		break;
+
+	case cbCmdTasksParm:
+		{
+			// Добавить файл
+			wchar_t temp[MAX_PATH+10] = {};
 			OPENFILENAME ofn = {sizeof(ofn)};
 			ofn.hwndOwner = ghOpWnd;
-			ofn.lpstrFilter = L"Executables (*.exe,*.com,*.bat,*.cmd)\0*.exe;*.com;*.bat;*.cmd\0Scripts (*.vbs,*.vbe,*.js,*.jse)\0*.vbs;*.vbe;*.js;*.jse\0All files (*.*)\0*.*\0\0";
+			ofn.lpstrFilter = L"All files (*.*)\0*.*\0Text files (*.txt,*.ini,*.log)\0*.txt;*.ini;*.log\0Executables (*.exe,*.com,*.bat,*.cmd)\0*.exe;*.com;*.bat;*.cmd\0Scripts (*.vbs,*.vbe,*.js,*.jse)\0*.vbs;*.vbe;*.js;*.jse\0\0";
+			//ofn.lpstrFilter = L"All files (*.*)\0*.*\0\0";
 			ofn.lpstrFile = temp+1;
 			ofn.nMaxFile = countof(temp)-10;
-			ofn.lpstrTitle = L"Choose application";
+			ofn.lpstrTitle = L"Choose file";
 			ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
 			            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
 
@@ -5215,15 +5299,43 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 				{
 					temp[0] = L' ';
 				}
-				wcscat_c(temp, L"\r\n\r\n");
+				//wcscat_c(temp, L"\r\n\r\n");
 
 				SendDlgItemMessage(hWnd2, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszName);
 			}
-		}
+		} // cbCmdTasksParm
 		break;
 
-	case cbCmdTasksParm:
-		//TODO: Добавить "-new_console:xxxx" в команду
+	case cbCmdTasksDir:
+		{
+			BROWSEINFO bi = {ghOpWnd};
+			wchar_t szFolder[MAX_PATH+1] = {0};
+			TODO("Извлечь текущий каталог запуска");
+			bi.pszDisplayName = szFolder;
+			wchar_t szTitle[100];
+			bi.lpszTitle = wcscpy(szTitle, L"Choose tab startup directory");
+			bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
+			bi.lpfn = CRecreateDlg::BrowseCallbackProc;
+			bi.lParam = (LPARAM)szFolder;
+			LPITEMIDLIST pRc = SHBrowseForFolder(&bi);
+
+			if (pRc)
+			{
+				if (SHGetPathFromIDList(pRc, szFolder))
+				{
+					wchar_t szFull[MAX_PATH+32];
+					bool bQuot = wcschr(szFolder, L' ') != NULL;
+					wcscpy_c(szFull, bQuot ? L" \"-new_console:d:" : L" -new_console:d:");
+					wcscat_c(szFull, szFolder);
+					if (bQuot)
+						wcscat_c(szFull, L"\"");
+				
+					SendDlgItemMessage(hWnd2, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)szFull);
+				}
+
+				CoTaskMemFree(pRc);
+			}
+		}
 		break;
 
 	case cbCmdTasksReload:
@@ -6196,7 +6308,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			EnableWindow(GetDlgItem(hWnd2, tCmdGroupGuiArg), TRUE);
 			EnableWindow(GetDlgItem(hWnd2, tCmdGroupCommands), TRUE);
 			EnableWindow(GetDlgItem(hWnd2, cbCmdGroupApp), TRUE);
-			EnableWindow(GetDlgItem(hWnd2, cbCmdTasksParm), FALSE); // not still working
+			EnableWindow(GetDlgItem(hWnd2, cbCmdTasksParm), TRUE);
 		}
 		else
 		{
@@ -10109,14 +10221,41 @@ void CSettings::SetArgBufferHeight(int anBufferHeight)
 	nForceBufferHeight = anBufferHeight;
 	if (anBufferHeight==0)
 	{
-		wcscpy_c(szDefCmd, L"far");
+		SetDefaultCmd(L"far");
 	}
 	else
 	{
 		wchar_t* pszComspec = GetComspec(&gpSet->ComSpec);
 		_ASSERTE(pszComspec!=NULL);
-		wcscpy_c(szDefCmd, pszComspec ? pszComspec : L"cmd");
+		SetDefaultCmd(pszComspec ? pszComspec : L"cmd");
 		SafeFree(pszComspec);
+	}
+}
+
+void CSettings::SetDefaultCmd(LPCWSTR asCmd)
+{
+	if (gpConEmu && gpConEmu->mb_MingwMode && gpConEmu->mb_MSysStartup)
+	{
+		wchar_t szSearch[MAX_PATH+32], *pszFile;
+		wcscpy_c(szSearch, gpConEmu->ms_ConEmuExeDir);
+		pszFile = wcsrchr(szSearch, L'\\');
+		if (pszFile)
+			*pszFile = 0;
+		wcscat_c(szSearch, L"\\msys\\1.0\\bin\\sh.exe");
+		if (!FileExists(szSearch))
+		{
+			wcscpy_c(szSearch, L"sh.exe");
+		}
+
+		_wsprintf(szDefCmd, SKIPLEN(countof(szDefCmd))
+			(wcschr(szSearch, L' ') != NULL)
+				? L"\"%s\" --login -i -new_console:n"
+				: L"%s --login -i -new_console:n",
+			szSearch);
+	}
+	else
+	{
+		wcscpy_c(szDefCmd, asCmd ? asCmd : L"cmd");
 	}
 }
 
@@ -10134,93 +10273,6 @@ void CSettings::ResetCmdArg()
 	// Сбросить нужно только gpSet->psCurCmd, gpSet->psCmd не меняется - загружается только из настройки
 	SafeFree(gpSet->psCurCmd);
 }
-
-//LPCTSTR CSettings::GetCmd()
-//{
-//	if (gpSet->psCurCmd && *gpSet->psCurCmd)
-//		return gpSet->psCurCmd;
-//
-//	if (gpSet->psCmd && *gpSet->psCmd)
-//		return gpSet->psCmd;
-//
-//	SafeFree(gpSet->psCurCmd); // впринципе, эта строка скорее всего не нужна, но на всякий случай...
-//	// Хорошо бы более корректно определить версию фара, но это не всегда просто
-//	// Например x64 файл сложно обработать в x86 ConEmu.
-//	DWORD nFarSize = 0;
-//
-//	if (lstrcmpi(gpSet->szDefCmd, L"far") == 0)
-//	{
-//		// Ищем фар. (1) В папке ConEmu, (2) в текущей директории, (2) на уровень вверх от папки ConEmu
-//		wchar_t szFar[MAX_PATH*2], *pszSlash;
-//		szFar[0] = L'"';
-//		wcscpy_add(1, szFar, gpConEmu->ms_ConEmuExeDir); // Теперь szFar содержит путь запуска программы
-//		pszSlash = szFar + _tcslen(szFar);
-//		_ASSERTE(pszSlash > szFar);
-//		BOOL lbFound = FALSE;
-//
-//		// (1) В папке ConEmu
-//		if (!lbFound)
-//		{
-//			wcscpy_add(pszSlash, szFar, L"\\Far.exe");
-//
-//			if (FileExists(szFar+1, &nFarSize))
-//				lbFound = TRUE;
-//		}
-//
-//		// (2) в текущей директории
-//		if (!lbFound && lstrcmpi(gpConEmu->ms_ConEmuCurDir, gpConEmu->ms_ConEmuExeDir))
-//		{
-//			szFar[0] = L'"';
-//			wcscpy_add(1, szFar, gpConEmu->ms_ConEmuCurDir);
-//			wcscat_add(1, szFar, L"\\Far.exe");
-//
-//			if (FileExists(szFar+1, &nFarSize))
-//				lbFound = TRUE;
-//		}
-//
-//		// (3) на уровень вверх
-//		if (!lbFound)
-//		{
-//			szFar[0] = L'"';
-//			wcscpy_add(1, szFar, gpConEmu->ms_ConEmuExeDir);
-//			pszSlash = szFar + _tcslen(szFar);
-//			*pszSlash = 0;
-//			pszSlash = wcsrchr(szFar, L'\\');
-//
-//			if (pszSlash)
-//			{
-//				wcscpy_add(pszSlash+1, szFar, L"Far.exe");
-//
-//				if (FileExists(szFar+1, &nFarSize))
-//					lbFound = TRUE;
-//			}
-//		}
-//
-//		if (lbFound)
-//		{
-//			// 110124 - нафиг, если пользователю надо - сам или параметр настроит, или реестр
-//			//// far чаще всего будет установлен в "Program Files", поэтому для избежания проблем - окавычиваем
-//			//// Пока тупо - если far.exe > 1200K - считаем, что это Far2
-//			//wcscat_c(szFar, (nFarSize>1228800) ? L"\" /w" : L"\"");
-//			wcscat_c(szFar, L"\"");
-//		}
-//		else
-//		{
-//			// Если Far.exe не найден рядом с ConEmu - запустить cmd.exe
-//			wcscpy_c(szFar, L"cmd");
-//		}
-//
-//		// Finally - Result
-//		gpSet->psCurCmd = lstrdup(szFar);
-//	}
-//	else
-//	{
-//		// Simple Copy
-//		gpSet->psCurCmd = lstrdup(gpSet->szDefCmd);
-//	}
-//
-//	return gpSet->psCurCmd;
-//}
 
 LPCWSTR CSettings::FontFaceName()
 {

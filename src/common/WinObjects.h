@@ -729,6 +729,7 @@ class MSetter
 				// st_DWORD
 				DWORD *mdw_DwordVal; DWORD mdw_OldDwordValue, mdw_NewDwordValue;
 			};
+			DWORD DataPtr[4];
 		};
 	public:
 		MSetter(BOOL* st);

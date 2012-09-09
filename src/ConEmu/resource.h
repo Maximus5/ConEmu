@@ -816,6 +816,7 @@
 #define rbHotkeysSystem                 2449
 #define rbHotkeysMacros                 2450
 #define cbComspecUncPaths               2451
+#define cbCmdTasksDir                   2452
 
 // Next default values for new objects
 // 
@@ -823,7 +824,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2452
+#define _APS_NEXT_CONTROL_VALUE         2453
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

@@ -2466,25 +2466,25 @@ HANDLE MEvent::GetHandle()
 
 
 #ifndef CONEMU_MINIMAL
-MSetter::MSetter(BOOL* st) :
-	mp_BOOLVal(NULL), mp_boolVal(NULL), mdw_DwordVal(NULL)
+MSetter::MSetter(BOOL* st)
 {
+	DEBUGTEST(ZeroStruct(DataPtr));
 	type = st_BOOL;
 	mp_BOOLVal = st;
 
 	if (mp_BOOLVal) *mp_BOOLVal = TRUE;
 }
-MSetter::MSetter(bool* st) :
-	mp_BOOLVal(NULL), mp_boolVal(NULL), mdw_DwordVal(NULL)
+MSetter::MSetter(bool* st)
 {
+	DEBUGTEST(ZeroStruct(DataPtr));
 	type = st_bool;
 	mp_boolVal = st;
 
 	if (mp_boolVal) *mp_boolVal = true;
 }
-MSetter::MSetter(DWORD* st, DWORD setValue) :
-	mp_BOOLVal(NULL), mp_boolVal(NULL), mdw_DwordVal(NULL)
+MSetter::MSetter(DWORD* st, DWORD setValue)
 {
+	DEBUGTEST(ZeroStruct(DataPtr));
 	type = st_DWORD; mdw_OldDwordValue = *st; *st = setValue;
 	mdw_DwordVal = st;
 }

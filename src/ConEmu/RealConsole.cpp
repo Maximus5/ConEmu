@@ -4021,8 +4021,12 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			// Завершение выделения по KeyPress?
 			if (mp_ABuf->isSelfSelectMode())
 			{
+				// буквы/цифры/символы/...
 				if ((gpSet->isCTSEndOnTyping && (pszChars && *pszChars))
-					|| gpSet->isCTSEndOnKeyPress) // +все, что не генерит символы (стрелки, Fn, и т.п.)
+					// +все, что не генерит символы (стрелки, Fn, и т.п.)
+					|| (gpSet->isCTSEndOnKeyPress
+						&& !gpSet->IsModifierPressed(mp_ABuf->isStreamSelection() ? vkCTSVkText : vkCTSVkBlock, false)
+					))
 				{
 					// 2 - end only, do not copy
 					mp_ABuf->DoSelectionFinalize((gpSet->isCTSEndOnTyping == 1));

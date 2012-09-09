@@ -221,14 +221,6 @@ Settings::Settings()
 	// Сброс переменных (struct, допустимо)
 	memset(this, 0, sizeof(*this));
 
-	// -- уже memset
-	//// Некоторые вещи нужно делать вне InitSettings, т.к. она может быть
-	//// вызвана потом из интерфейса диалога настроек
-	//Type[0] = 0;
-	//psCmd = psCurCmd = NULL;
-	////wcscpy_c(szDefCmd, L"far");
-	//psCmdHistory = NULL; nCmdHistorySize = 0;
-
 	// Умолчания устанавливаются в CSettings::CSettings
 	//-- // Теперь установим умолчания настроек	
 	//-- InitSettings();
@@ -4887,7 +4879,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkMultiCmd,       chk_User, &isMulti, L"Multi.CmdKey",          /*&vmMultiCmd,*/ MakeHotKey('X',VK_LWIN), CConEmuCtrl::key_MultiCmd},
 		{vkCTSVkBlockStart,chk_User,  NULL,    L"CTS.VkBlockStart",      /*&vmCTSVkBlockStart,*/ 0, CConEmuCtrl::key_CTSVkBlockStart}, // запуск выделения блока
 		{vkCTSVkTextStart, chk_User,  NULL,    L"CTS.VkTextStart",       /*&vmCTSVkTextStart,*/ 0, CConEmuCtrl::key_CTSVkTextStart},   // запуск выделения текста
-		{vkShowTabsList,   chk_User,  NULL,    L"Multi.ShowTabsList",    MakeHotKey(VK_F12), CConEmuCtrl::key_ShowTabsList},
+		{vkShowTabsList,   chk_User,  NULL,    L"Multi.ShowTabsList",    /*MakeHotKey(VK_F12)*/ 0, CConEmuCtrl::key_ShowTabsList},
 		{vkPasteText,      chk_User,  NULL,    L"ClipboardVkAllLines",   MakeHotKey(VK_INSERT,VK_SHIFT), CConEmuCtrl::key_PasteText},
 		{vkPasteFirstLine, chk_User,  NULL,    L"ClipboardVkFirstLine",  MakeHotKey('V',VK_CONTROL), CConEmuCtrl::key_PasteFirstLine},
 		{vkFindTextDlg,    chk_User,  NULL,    L"FindTextKey",           MakeHotKey('F',VK_APPS), CConEmuCtrl::key_FindTextDlg},

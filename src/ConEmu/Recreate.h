@@ -34,6 +34,7 @@ protected:
 	HWND   mh_Dlg;
 	int    mn_DlgRc;
 	RConStartArgs* mp_Args;
+	HWND   mh_Parent;
 public:
 	CRecreateDlg();
 	~CRecreateDlg();

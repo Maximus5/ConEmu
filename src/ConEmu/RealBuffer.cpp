@@ -3593,6 +3593,13 @@ BOOL CRealBuffer::isSelfSelectMode()
 	return (con.m_sel.dwFlags != 0);
 }
 
+BOOL CRealBuffer::isStreamSelection()
+{
+	if (!this) return false;
+	
+	return ((con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION);
+}
+
 // true/false - true-сменился буфер (вернули rbt_Primary)
 bool CRealBuffer::DoSelectionFinalize(bool abCopy, WPARAM wParam)
 {

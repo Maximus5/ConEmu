@@ -41,6 +41,7 @@ CRecreateDlg::CRecreateDlg()
 	: mh_Dlg(NULL)
 	, mn_DlgRc(0)
 	, mp_Args(NULL)
+	, mh_Parent(NULL)
 {
 }
 
@@ -71,7 +72,7 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 
 	if (mh_Dlg && IsWindow(mh_Dlg))
 	{
-		_ASSERTE(mh_Dlg == NULL);
+		DisplayLastError(L"Close previous 'Create dialog' first, please!", -1);
 		return IDCANCEL;
 	}
 	
@@ -88,8 +89,10 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 	mn_DlgRc = IDCANCEL;
 	mp_Args = apArgs;
 
+	mh_Parent = (apArgs->aRecreate == cra_EditTab) ? ghOpWnd : ghWnd;
+
 	gpConEmu->SetSkipOnFocus(TRUE);
-	int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, (LPARAM)this);
+	int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), mh_Parent, RecreateDlgProc, (LPARAM)this);
 	UNREFERENCED_PARAMETER(nRc);
 	gpConEmu->SetSkipOnFocus(FALSE);
 
@@ -197,6 +200,11 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				CheckRadioButton(hDlg, rbRecreateSplitNone, rbRecreateSplit2Bottom, rbRecreateSplitNone+pArgs->eSplit);
 				EnableWindow(GetDlgItem(hDlg, tRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
 				EnableWindow(GetDlgItem(hDlg, stRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
+				if (pArgs->aRecreate == cra_EditTab)
+				{
+					// Спрятать флажок "New window"
+					ShowWindow(GetDlgItem(hDlg, cbRunInNewWindow), SW_HIDE);
+				}
 			}
 
 			const wchar_t *pszUser, *pszDomain; BOOL bResticted;
@@ -312,7 +320,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				MapWindowPoints(GetDlgItem(hDlg, IDC_TERMINATE), hDlg, &pt, 1);
 				DestroyWindow(GetDlgItem(hDlg, IDC_TERMINATE));
 				SetWindowPos(GetDlgItem(hDlg, IDC_START), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-				SetDlgItemText(hDlg, IDC_START, L"&Start");
+				SetDlgItemText(hDlg, IDC_START, (pArgs->aRecreate == cra_EditTab) ? L"&Save" : L"&Start");
 				DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
 				// Выровнять флажок по кнопке
 				GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
@@ -331,7 +339,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
 			}
 
-			if (pArgs->aRecreate != cra_RecreateTab)
+			if ((pArgs->aRecreate != cra_RecreateTab) && (pArgs->aRecreate != cra_EditTab))
 			{
 				POINT pt = {};
 				MapWindowPoints(GetDlgItem(hDlg, cbRunAsAdmin), hDlg, &pt, 1);
@@ -343,7 +351,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			RECT rect;
 			GetWindowRect(hDlg, &rect);
 			RECT rcParent;
-			GetWindowRect(ghWnd, &rcParent);
+			GetWindowRect(pDlg->mh_Parent, &rcParent);
 			MoveWindow(hDlg,
 			           (rcParent.left+rcParent.right-rect.right+rect.left)/2,
 			           (rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2,
@@ -549,7 +557,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 					}
 					case IDC_CHOOSE_DIR:
 					{
-						BROWSEINFO bi = {ghWnd};
+						BROWSEINFO bi = {hDlg};
 						wchar_t szFolder[MAX_PATH+1] = {0};
 						GetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder, countof(szFolder));
 						bi.pszDisplayName = szFolder;
@@ -579,7 +587,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 						if (gOSVer.dwMajorVersion >= 6)
 						{
-							SendDlgItemMessage(hDlg, IDC_START, 5644/*BCM_SETSHIELD*/, 0, bRunAs);
+							SendDlgItemMessage(hDlg, IDC_START, 5644/*BCM_SETSHIELD*/, 0, bRunAs && (pDlg->mp_Args->aRecreate != cra_EditTab));
 						}
 
 						if (bRunAs)
@@ -665,14 +673,15 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						}
 						// Vista+ (As Admin...)
 						pArgs->bRunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
-						if (pArgs->aRecreate != cra_RecreateTab)
+						if ((pArgs->aRecreate != cra_RecreateTab) && (pArgs->aRecreate != cra_EditTab))
 						{
 							if (SendDlgItemMessage(hDlg, cbRunInNewWindow, BM_GETCHECK, 0, 0))
 								pArgs->aRecreate = cra_CreateWindow;
 							else
 								pArgs->aRecreate = cra_CreateTab;
 						}
-						if ((pArgs->aRecreate == cra_CreateTab) && (pArgs->eSplit != RConStartArgs::eSplitNone))
+						if (((pArgs->aRecreate == cra_CreateTab) || (pArgs->aRecreate == cra_EditTab))
+							&& (pArgs->eSplit != RConStartArgs::eSplitNone))
 						{
 							BOOL bOk = FALSE;
 							int nPercent = GetDlgItemInt(hDlg, tRecreateSplit, &bOk, FALSE);
