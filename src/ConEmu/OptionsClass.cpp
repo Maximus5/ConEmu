@@ -5308,6 +5308,8 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 
 	case cbCmdTasksDir:
 		{
+			TODO("Извлечь текущий каталог запуска");
+
 			BROWSEINFO bi = {ghOpWnd};
 			wchar_t szFolder[MAX_PATH+1] = {0};
 			TODO("Извлечь текущий каталог запуска");
@@ -10249,8 +10251,8 @@ void CSettings::SetDefaultCmd(LPCWSTR asCmd)
 
 		_wsprintf(szDefCmd, SKIPLEN(countof(szDefCmd))
 			(wcschr(szSearch, L' ') != NULL)
-				? L"\"%s\" --login -i -new_console:n"
-				: L"%s --login -i -new_console:n",
+				? L"\"%s\" --login -i" /* -new_console:n" */
+				: L"%s --login -i" /* -new_console:n" */,
 			szSearch);
 	}
 	else

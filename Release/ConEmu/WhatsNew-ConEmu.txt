@@ -14,6 +14,12 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+[*] Some more diagnostic info on failed to start root command (shell).
+[+] GuiMacro.
+    Paste(4[,<Title>]) - choose file and paste full pathname
+    Paste(5[,<Title>]) - choose folder and paste full path
+
+
 2012.09.09
 [+] Settings -> Tasks: more intuitive configuration for Tasks edit box, new buttons.
     "Add Tab" - opens standard dialog with "Save" button, which append new line to Tasks edit box.

@@ -1495,6 +1495,10 @@ wrap:
 				if (gbRootAliveLess10sec && (gnConfirmExitParm != 1))  // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
 				{
 					static wchar_t szMsg[255];
+					if (gnExitCode)
+					{
+						PrintExecuteError(gpszRunCmd, 0, L"\n");
+					}
 					_wsprintf(szMsg, SKIPLEN(countof(szMsg))
 						L"\n\nConEmuC: Root process was alive less than 10 sec, ExitCode=%u.\nPress Enter or Esc to close console...",
 						gnExitCode);

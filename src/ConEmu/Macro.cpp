@@ -720,14 +720,16 @@ LPWSTR CConEmuMacro::Paste(LPWSTR asArgs, CRealConsole* apRCon)
 
 	if (GetNextInt(asArgs, nCommand))
 	{
-		if (!(nCommand == 0 || nCommand == 1 || nCommand == 2 || nCommand == 3))
+		wchar_t* pszChooseBuf = NULL;
+
+		if (!(nCommand == 0 || nCommand == 1 || nCommand == 2 || nCommand == 3 || nCommand == 4 || nCommand == 5))
 		{
 			return lstrdup(L"InvalidArg");
 		}
 
 		if (GetNextString(asArgs, pszText))
 		{
-			if (!*pszText)
+			if (!*pszText && !(nCommand == 4 || nCommand == 5))
 				return lstrdup(L"InvalidArg");
 		}
 		else
@@ -735,11 +737,25 @@ LPWSTR CConEmuMacro::Paste(LPWSTR asArgs, CRealConsole* apRCon)
 			pszText = NULL;
 		}
 
+		if (nCommand == 4 || nCommand == 5)
+		{
+			if (nCommand == 4)
+				pszChooseBuf = SelectFile(L"Choose file pathname for paste", pszText);
+			else
+				pszChooseBuf = SelectFolder(L"Choose folder path for paste", pszText);
+
+			if (!pszChooseBuf)
+				return lstrdup(L"Cancelled");
+
+			pszText = pszChooseBuf;
+		}
+
 		bool bFirstLineOnly = (nCommand & 1) != 0;
 		bool bNoConfirm = (nCommand & 2) != 0;
 
 		apRCon->Paste(bFirstLineOnly, pszText, bNoConfirm);
 
+		SafeFree(pszChooseBuf);
 		return lstrdup(L"OK");
 	}
 

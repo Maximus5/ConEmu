@@ -4408,7 +4408,7 @@ void CVirtualConsole::Box(LPCTSTR szText)
 #ifdef _DEBUG
 	_ASSERT(FALSE);
 #endif
-	MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
+	MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
 }
 
 RECT CVirtualConsole::GetRect()

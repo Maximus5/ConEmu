@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DwmHelper.h"
 #include "ConEmuApp.h"
 #include "Update.h"
+#include "Recreate.h"
 
 #ifdef _DEBUG
 //	#define SHOW_STARTED_MSGBOX
@@ -613,6 +614,86 @@ BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString, bool bEscapes
 	return lbRc;
 }
 
+wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, bool bAutoQuote /*= true*/)
+{
+	wchar_t* pszResult = NULL;
+
+	BROWSEINFO bi = {hParent};
+	wchar_t szFolder[MAX_PATH+1] = {0};
+	bi.pszDisplayName = szFolder;
+	wchar_t szTitle[100];
+	bi.lpszTitle = wcscpy(szTitle, asTitle ? asTitle : L"Choose folder");
+	bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
+	bi.lpfn = CRecreateDlg::BrowseCallbackProc;
+	bi.lParam = (LPARAM)szFolder;
+	LPITEMIDLIST pRc = SHBrowseForFolder(&bi);
+
+	if (pRc)
+	{
+		if (SHGetPathFromIDList(pRc, szFolder))
+		{
+			if (bAutoQuote && (wcschr(szFolder, L' ') != NULL))
+			{
+				size_t cchLen = _tcslen(szFolder);
+				pszResult = (wchar_t*)malloc((cchLen+3)*sizeof(*pszResult));
+				if (pszResult)
+				{
+					pszResult[0] = L'"';
+					_wcscpy_c(pszResult+1, cchLen+1, szFolder);
+					pszResult[cchLen+1] = L'"';
+					pszResult[cchLen+2] = 0;
+				}
+			}
+			else
+			{
+				pszResult = lstrdup(szFolder);
+			}
+		}
+
+		CoTaskMemFree(pRc);
+	}
+
+	return pszResult;
+}
+
+wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, bool abAutoQuote /*= true*/)
+{
+	wchar_t* pszResult = NULL;
+
+	wchar_t temp[MAX_PATH+10] = {};
+	OPENFILENAME ofn = {sizeof(ofn)};
+	ofn.hwndOwner = ghOpWnd;
+	ofn.lpstrFilter = L"All files (*.*)\0*.*\0Text files (*.txt,*.ini,*.log)\0*.txt;*.ini;*.log\0Executables (*.exe,*.com,*.bat,*.cmd)\0*.exe;*.com;*.bat;*.cmd\0Scripts (*.vbs,*.vbe,*.js,*.jse)\0*.vbs;*.vbe;*.js;*.jse\0\0";
+	//ofn.lpstrFilter = L"All files (*.*)\0*.*\0\0";
+	ofn.lpstrFile = temp+1;
+	ofn.nMaxFile = countof(temp)-10;
+	ofn.lpstrTitle = asTitle ? asTitle : L"Choose file";
+	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+	            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
+
+	if (GetOpenFileName(&ofn))
+	{
+		LPCWSTR pszName = temp+1;
+		if (abAutoQuote && (wcschr(pszName, L' ') != NULL))
+		{
+			temp[0] = L'"';
+			wcscat_c(temp, L"\"");
+			pszName = temp;
+		}
+		else
+		{
+			temp[0] = L' ';
+		}
+
+		pszResult = lstrdup(pszName);
+	}
+
+	return pszResult;
+}
+
+
+
+
 bool isKey(DWORD wp,DWORD vk)
 {
 	bool bEq = ((wp==vk)
@@ -832,7 +913,6 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 	MCHKHEAP
 	return nBtn;
 }
-
 
 
 //BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, LPTSTR rsFontName)

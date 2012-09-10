@@ -728,7 +728,10 @@ int CRecreateDlg::BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM
 {
 	if (uMsg==BFFM_INITIALIZED)
 	{
-		SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
+		if (lpData && *(LPCWSTR)lpData)
+		{
+			SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
+		}
 	}
 
 	return 0;

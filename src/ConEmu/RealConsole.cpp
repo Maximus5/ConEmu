@@ -3808,7 +3808,7 @@ void CRealConsole::Box(LPCTSTR szText)
 #ifdef _DEBUG
 	_ASSERTE(FALSE);
 #endif
-	MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
+	MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
 }
 
 bool CRealConsole::InScroll()

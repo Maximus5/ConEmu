@@ -102,6 +102,89 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Debug_E|x64"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="version.lib"
+				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.64.vc\plugins\ConEmu\Background\ConEmuBg.x64.dll"
+				LinkIncremental="2"
+				GenerateManifest="true"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
+				SubSystem="2"
+				TurnOffAssemblyGeneration="false"
+				ImportLibrary=""
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			IntermediateDirectory="$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
@@ -185,6 +268,88 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Release|x64"
+			OutputDirectory="$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS;HIDE_TODO"
+				RuntimeLibrary="0"
+				StructMemberAlignment="0"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="version.lib"
+				OutputFile="..\..\Release\plugins\ConEmu\Background\ConEmuBg.x64.dll"
+				LinkIncremental="1"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
 			Name="Debug_C|Win32"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
@@ -239,6 +404,86 @@
 				MapExports="true"
 				SubSystem="2"
 				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug_C|x64"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS;_CRT_SECURE_NO_WARNINGS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="version.lib"
+				OutputFile="C:\FAR\FARx64\Plugins\ConEmu\Background\ConEmuBg.x64.dll"
+				LinkIncremental="2"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
+				SubSystem="2"
+				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -345,6 +590,88 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Instrument|x64"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS;HIDE_TODO"
+				RuntimeLibrary="0"
+				StructMemberAlignment="0"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="version.lib"
+				OutputFile="..\..\Release.x64\plugins\ConEmu\Background\ConEmuBg.x64.dll"
+				LinkIncremental="1"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
 			Name="Debug_R|Win32"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
@@ -424,6 +751,86 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Debug_R|x64"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="version.lib"
+				OutputFile="Z:\Plugins\ConEmu\Background\ConEmuBg.x64.dll"
+				LinkIncremental="2"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
+				SubSystem="2"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
 			Name="Debug_F|Win32"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
@@ -478,6 +885,86 @@
 				MapExports="true"
 				SubSystem="2"
 				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug_F|x64"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="version.lib"
+				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\Plugins\ConEmu\Background\ConEmuBg.x64.dll"
+				LinkIncremental="2"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
+				SubSystem="2"
+				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -586,651 +1073,6 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug_F2|Win32"
-			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				StructMemberAlignment="0"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="4"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="shlwapi.lib version.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\Plugins\ConEmu\Background\ConEmuBg.dll"
-				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="true"
-				GenerateMapFile="true"
-				MapExports="true"
-				SubSystem="2"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug_F3|Win32"
-			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				StructMemberAlignment="0"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="4"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="shlwapi.lib version.lib"
-				OutputFile="\Far3\Plugins\ConEmu\Background\ConEmuBg.dll"
-				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="true"
-				GenerateMapFile="true"
-				MapExports="true"
-				SubSystem="2"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug_E|x64"
-			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				StructMemberAlignment="0"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.64.vc\plugins\ConEmu\Background\ConEmuBg.x64.dll"
-				LinkIncremental="2"
-				GenerateManifest="true"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="true"
-				GenerateMapFile="true"
-				MapExports="true"
-				SubSystem="2"
-				TurnOffAssemblyGeneration="false"
-				ImportLibrary=""
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
-			IntermediateDirectory="$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS;HIDE_TODO"
-				RuntimeLibrary="0"
-				StructMemberAlignment="0"
-				EnableFunctionLevelLinking="true"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="..\..\Release\plugins\ConEmu\Background\ConEmuBg.x64.dll"
-				LinkIncremental="1"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="true"
-				GenerateMapFile="true"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug_C|x64"
-			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS;_CRT_SECURE_NO_WARNINGS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				StructMemberAlignment="0"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="C:\FAR\FARx64\Plugins\ConEmu\Background\ConEmuBg.x64.dll"
-				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="true"
-				GenerateMapFile="true"
-				MapExports="true"
-				SubSystem="2"
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
-			Name="Instrument|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS;HIDE_TODO"
-				RuntimeLibrary="0"
-				StructMemberAlignment="0"
-				EnableFunctionLevelLinking="true"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="..\..\Release.x64\plugins\ConEmu\Background\ConEmuBg.x64.dll"
-				LinkIncremental="1"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="true"
-				GenerateMapFile="true"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug_R|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				StructMemberAlignment="0"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="Z:\Plugins\ConEmu\Background\ConEmuBg.x64.dll"
-				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="true"
-				GenerateMapFile="true"
-				MapExports="true"
-				SubSystem="2"
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug_F|x64"
-			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				StructMemberAlignment="0"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\Plugins\ConEmu\Background\ConEmuBg.x64.dll"
-				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="true"
-				GenerateMapFile="true"
-				MapExports="true"
-				SubSystem="2"
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
 			Name="Release_PDB|x64"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
@@ -1288,6 +1130,85 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug_F2|Win32"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="4"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="shlwapi.lib version.lib"
+				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\Plugins\ConEmu\Background\ConEmuBg.dll"
+				LinkIncremental="2"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
+				SubSystem="2"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -1393,6 +1314,85 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Debug_F3|Win32"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="4"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="shlwapi.lib version.lib"
+				OutputFile="\Far3\Plugins\ConEmu\Background\ConEmuBg.dll"
+				LinkIncremental="2"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
+				SubSystem="2"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
 			Name="Debug_F3|x64"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
@@ -1472,6 +1472,165 @@
 				CommandLine=""
 			/>
 		</Configuration>
+		<Configuration
+			Name="Debug_M|Win32"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="4"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="shlwapi.lib version.lib"
+				OutputFile="Z:\Plugins\ConEmu\Background\ConEmuBg.dll"
+				LinkIncremental="2"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
+				SubSystem="2"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug_M|x64"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="version.lib"
+				OutputFile="Z:\Plugins\ConEmu\Background\ConEmuBg.x64.dll"
+				LinkIncremental="2"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
+				SubSystem="2"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -1508,35 +1667,14 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug_R|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F2|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F3|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Debug_C|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug_R|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1550,7 +1688,21 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Debug_F|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Debug_F|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug_F2|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1564,7 +1716,28 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Debug_F3|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Debug_F3|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug_M|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug_M|x64"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1662,90 +1835,18 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Debug_E|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Updating $(TargetDir)$(InputFileName)"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="$(TargetDir)$(InputFileName)"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Release|Win32"
 				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(TargetDir)$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug_C|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(TargetDir)$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Instrument|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(TargetDir)$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug_R|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(TargetDir)$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug_F|Win32"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(TargetDir)$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release_PDB|Win32"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(TargetDir)$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug_F2|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(TargetDir)$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug_F3|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(TargetDir)$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug_E|x64"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
@@ -1766,7 +1867,27 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Debug_C|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Updating $(TargetDir)$(InputFileName)"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="$(TargetDir)$(InputFileName)"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Debug_C|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Updating $(TargetDir)$(InputFileName)"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="$(TargetDir)$(InputFileName)"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Instrument|Win32"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
@@ -1786,6 +1907,16 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Debug_R|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Updating $(TargetDir)$(InputFileName)"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="$(TargetDir)$(InputFileName)"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Debug_R|x64"
 				>
 				<Tool
@@ -1796,7 +1927,29 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Debug_F|Win32"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Updating $(TargetDir)$(InputFileName)"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="$(TargetDir)$(InputFileName)"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Debug_F|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Updating $(TargetDir)$(InputFileName)"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="$(TargetDir)$(InputFileName)"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release_PDB|Win32"
+				ExcludedFromBuild="true"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
@@ -1817,6 +1970,16 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Debug_F2|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Updating $(TargetDir)$(InputFileName)"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="$(TargetDir)$(InputFileName)"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Debug_F2|x64"
 				>
 				<Tool
@@ -1827,7 +1990,37 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Debug_F3|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Updating $(TargetDir)$(InputFileName)"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="$(TargetDir)$(InputFileName)"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Debug_F3|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Updating $(TargetDir)$(InputFileName)"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="$(TargetDir)$(InputFileName)"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_M|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Updating $(TargetDir)$(InputFileName)"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="$(TargetDir)$(InputFileName)"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_M|x64"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
@@ -1851,7 +2044,26 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Debug_E|x64"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuBg_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd&#x0D;&#x0A;"
+					Outputs="ConEmuBg_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|x64"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
@@ -1870,6 +2082,16 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Debug_C|x64"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuBg_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Instrument|Win32"
 				>
 				<Tool
@@ -1879,7 +2101,26 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Instrument|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuBg_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Debug_R|Win32"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuBg_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_R|x64"
 				ExcludedFromBuild="true"
 				>
 				<Tool
@@ -1899,6 +2140,16 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Debug_F|x64"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuBg_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Release_PDB|Win32"
 				>
 				<Tool
@@ -1908,7 +2159,26 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Release_PDB|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd&#x0D;&#x0A;"
+					Outputs="ConEmuBg_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Debug_F2|Win32"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuBg_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_F2|x64"
 				ExcludedFromBuild="true"
 				>
 				<Tool
@@ -1928,84 +2198,27 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Debug_E|x64"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="ConEmuBg_Lang.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release|x64"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd&#x0D;&#x0A;"
-					Outputs="ConEmuBg_Lang.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug_C|x64"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="ConEmuBg_Lang.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Instrument|x64"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="ConEmuBg_Lang.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug_R|x64"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="ConEmuBg_Lang.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug_F|x64"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="ConEmuBg_Lang.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release_PDB|x64"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd&#x0D;&#x0A;"
-					Outputs="ConEmuBg_Lang.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug_F2|x64"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="ConEmuBg_Lang.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
 				Name="Debug_F3|x64"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuBg_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_M|Win32"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuBg_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_M|x64"
 				ExcludedFromBuild="true"
 				>
 				<Tool

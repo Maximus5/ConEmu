@@ -29,18 +29,8 @@
 			<value name="CTS.ColorIndex" type="hex" data="e0"/>
 			<value name="ClipboardConfirmEnter" type="hex" data="01"/>
 			<value name="ClipboardConfirmLonger" type="dword" data="000000c8"/>
-			<value name="KeyMacro01" type="dword" data="000011d0"/>
-			<value name="KeyMacro01.Text" type="string" data="FontSetSize(1,2)"/>
-			<value name="KeyMacro02" type="dword" data="000011d1"/>
-			<value name="KeyMacro02.Text" type="string" data="FontSetSize(1,-2)"/>
-			<value name="KeyMacro03" type="dword" data="00005d7b"/>
-			<value name="KeyMacro03.Text" type="string" data="Tabs(8)"/>
-			<value name="KeyMacro04" type="dword" data="0010114f"/>
-			<value name="KeyMacro04.Text" type="string" data="shell(&quot;new_console:sH&quot;)"/>
-			<value name="KeyMacro05" type="dword" data="00101145"/>
-			<value name="KeyMacro05.Text" type="string" data="shell(&quot;new_console:sV&quot;)"/>
-			<value name="KeyMacro06" type="dword" data="00001144"/>
-			<value name="KeyMacro06.Text" type="string" data="print(&quot;exit
+			<value name="KeyMacro01" type="dword" data="00001144"/>
+			<value name="KeyMacro01.Text" type="string" data="print(&quot;exit
 &quot;)"/>
 			<value name="WndDragKey" type="dword" data="00121101"/>
 			<key name="Tasks" modified="2012-09-09 21:10:21">
