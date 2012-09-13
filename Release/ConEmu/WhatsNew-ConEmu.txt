@@ -21,6 +21,8 @@ Questions about usablity of "-new_console:s".
 [+] New switches in "-new_console".
     "-new_console:o" - don't enable 'Long console output' when starting command from Far Manager.
     "-new_console:i" - don't inject ConEmuHk into starting process.
+[%] ConEmu hungs on exit, when F-Secure is installed.
+[%] Attach does not catch console windows (regression of 120909).
 
 
 2012.09.09
@@ -41,6 +43,7 @@ Questions about usablity of "-new_console:s".
 [!] AutoUpdate is disabled in MinGW mode.
 [*] Minor changes in command line parser.
 [%] Selection ended unexpectedly when Modifier for selection start was set and 
+[%] Some GUI windows was ignored by Attach.
 
 
 2012.09.04

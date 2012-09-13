@@ -277,7 +277,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 
 		if (lbCan)
 		{
-			wchar_t szPid[32], szHwnd[32], szType[16]; szClass[0] = szTitle[0] = szPid[0] = szHwnd[0] = szType[0] = 0;
+			wchar_t szPid[32], szHwnd[32], szType[16]; szPid[0] = szHwnd[0] = szType[0] = 0;
 			wchar_t szExeName[MAX_PATH], szExePathName[MAX_PATH*4]; szExeName[0] = szExePathName[0] = 0;
 
 			#ifndef ALLOW_GUI_ATTACH
