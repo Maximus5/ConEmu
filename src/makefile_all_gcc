@@ -22,5 +22,4 @@ preclean:
 .PHONY: clean
 clean:
 	@echo final cleaning
-	@rm -f ../gcc/common/*.* ../gcc/conemu/*.* ../gcc/conemuc/*.* ../gcc/conemuhk/*.* ../gcc/plugin/*.* ../gcc/*.*
-	@rmdir ../gcc/common ../gcc/conemu ../gcc/conemuc ../gcc/conemuhk ../gcc/plugin ../gcc
+	@rmdir /q /s ../gcc

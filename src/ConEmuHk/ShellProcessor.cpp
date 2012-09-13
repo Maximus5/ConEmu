@@ -347,8 +347,9 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 }
 
 BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole,
-				LPCWSTR asFile, LPCWSTR asParam, /*LPCWSTR asBaseDir,*/
-				LPCWSTR asExeFile, DWORD& ImageBits, DWORD& ImageSubsystem,
+				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asExeFile,
+				const RConStartArgs& args,
+				DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam)
 {
 	if (!LoadGuiMapping())
@@ -484,51 +485,6 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 								}
 							}
 						}
-
-						//// asFile уже проверен, так что эта ветка выполняется только если в asFile был указан путь
-						//if (pszFileOnly && (pszFileOnly != asFile))
-						//{
-						//	// Пробуем с откидыванием пути
-						//	nLen = lstrlen(pszFileOnly)+1;
-						//	_wcscpyn_c(pszTest, nLen, pszParam, nLen); //-V501
-						//	pszTest[nLen-1] = 0;
-						//	// Сравнить asFile с первым аргументом в asParam
-						//	if (lstrcmpi(pszTest, pszFileOnly) == 0)
-						//	{
-						//		// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
-						//		// -- asFile = NULL; -- трогать нельзя, только он содержит полный путь!
-						//		asParam = pszParam+nLen-(lbSkipEndQuote?0:1);
-						//		pszFileOnly = NULL;
-						//	}
-						//}
-
-						//// Last chance
-						//if (pszFileOnly)
-						//{
-						//	// а теперь, с откидыванием расширения
-						//	wchar_t szTmpFileOnly[MAX_PATH+1]; szTmpFileOnly[0] = 0;
-						//	_wcscpyn_c(szTmpFileOnly, countof(szTmpFileOnly), pszFileOnly, countof(szTmpFileOnly)); //-V501
-						//	wchar_t* pszExt = wcsrchr(szTmpFileOnly, L'.');
-						//	if (pszExt)
-						//	{
-						//		*pszExt = 0;
-						//		nLen = lstrlen(szTmpFileOnly);
-						//		int nParmLen = lstrlen(pszParam);
-						//		if ((nParmLen >= nLen) && ((pszParam[nLen] == 0) || wcschr(L" /\"", pszParam[nLen])))
-						//		{
-						//			_wcscpyn_c(pszTest, nLen+1, pszParam, nLen+1); //-V501
-						//			pszTest[nLen] = 0;
-						//			// Сравнить asFile с первым аргументом в asParam
-						//			if (lstrcmpi(pszTest, szTmpFileOnly) == 0)
-						//			{
-						//				// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
-						//				// -- asFile = NULL; -- трогать нельзя, только он содержит полный путь!
-						//				asParam = pszParam+nLen-(lbSkipEndQuote?0:1);
-						//				pszFileOnly =  NULL;
-						//			}
-						//		}
-						//	}
-						//}
 					}
 
 					free(pszTest);
@@ -547,29 +503,10 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		goto wrap;
 	}
 
-	//if (GetEnvironmentVariable(L"ComSpec", szComspec, (DWORD)cchComspec))
-	//{
-	//	// Не должен быть (даже случайно) ConEmuC.exe
-	//	const wchar_t* pszName = PointToName(szComspec);
-	//	if (!pszName || !lstrcmpi(pszName, L"ConEmuC.exe") || !lstrcmpi(pszName, L"ConEmuC64.exe"))
-	//		szComspec[0] = 0;
-	//}
-	//// Если не удалось определить через переменную окружения - пробуем обычный "cmd.exe" из System32
-	//if (szComspec[0] == 0)
-	//{
-	//	int n = GetWindowsDirectory(szComspec, MAX_PATH);
-	//	if (n > 0 && n < MAX_PATH)
-	//	{
-	//		// Добавить \System32\cmd.exe
-	//		WARNING("TCC/ComSpec");
-	//		wcscat_c(szComspec, (szComspec[n-1] == L'\\') ? L"System32\\cmd.exe" : L"\\System32\\cmd.exe");
-	//	}
-	//}
-
 	// Если удалось определить "ComSpec"
 	if (asParam)
 	{
-		BOOL lbNewCmdCheck = NULL;
+		BOOL lbNewCmdCheck = FALSE;
 		const wchar_t* psz = SkipNonPrintable(asParam);
 		// Если запускают cmd.exe без параметров - не отбрасывать его!
 		if (psz && *psz && szComspec[0])
@@ -591,28 +528,21 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 						lbComSpecK = (psz[1] == L'K' || psz[1] == L'k');
 						asFile = NULL;
 						asParam = SkipNonPrintable(psz+2); // /C или /K добавляется к ConEmuC.exe
-						lbNewCmdCheck = TRUE;
-					}
+						lbNewCmdCheck = FALSE;
 
-					//BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
-					//BOOL lbNeedCutStartEndQuot = FALSE;
-					//DWORD nFileAttrs = (DWORD)-1;
-					//ms_ExeTmp[0] = 0;
-					//IsNeedCmd(asParam, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
-					//// это может быть команда ком.процессора!
-					//// поэтому, наверное, искать и проверять битность будем только для
-					//// файлов с указанным расширением.
-					//// cmd.exe /c echo -> НЕ искать
-					//// cmd.exe /c echo.exe -> можно и поискать
-					//if (ms_ExeTmp[0] && (wcschr(ms_ExeTmp, L'.') || wcschr(ms_ExeTmp, L'\\')))
-					//{
-					//	DWORD nCheckSybsystem = 0, nCheckBits = 0;
-					//	if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem, nCheckBits, nFileAttrs))
-					//	{
-					//		ImageSubsystem = nCheckSybsystem;
-					//		ImageBits = nCheckBits;
-					//	}
-					//}
+						wcscpy_c(ms_ExeTmp, szComspec);
+						DWORD nCheckSybsystem1 = 0, nCheckBits1 = 0, nFileAttrs1 = 0;
+						if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem1, nCheckBits1, nFileAttrs1))
+						{
+							ImageSubsystem = nCheckSybsystem1;
+							ImageBits = nCheckBits1;
+							
+						}
+						else
+						{
+							_ASSERTEX(FALSE && "Can't determine ComSpec subsystem");
+						}
+					}
 
 					lbComSpec = TRUE;
 				}
@@ -716,42 +646,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		}
 	}
 
-	//wchar_t szNewExe[MAX_PATH+1];
-	//const wchar_t* pszExeExt = NULL;
-	//// Проверить, может запускается батник?
-	//if (/*lbComSpec &&*/ !asFile && asParam)
-	//{
-	//	const wchar_t* pszTemp = asParam;
-	//	if (0 == NextArg(&pszTemp, szNewExe))
-	//	{
-	//		pszExeExt = PointToExt(szNewExe);
-	//	}
-	//}
-	// Пока не будем ничего менять, пусть работает "как в фаре"
-	//if (pszExeExt && (!lstrcmpi(pszExeExt, L".cmd") || !lstrcmpi(pszExeExt, L".bat")))
-	//{
-	//	ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
-	//	// Будем выполнять "батники" в нативной битности
-	//	#ifdef _WIN64
-	//	ImageBits = 64;
-	//	#else
-	//	ImageBits = 32;
-	//	#endif
-	//}
 	
-//#ifdef _DEBUG
-//	// Если запускается батник - попробовать "нативную" битность?
-//	if (ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE)
-//	{
-//		#ifdef _WIN64
-//		ImageBits = 64;
-//		#else
-//		ImageBits = 32;
-//		#endif
-//	}
-//#endif
-
-
 
 	lbUseDosBox = FALSE;
 	szDosBoxExe = (wchar_t*)calloc(cchDosBoxExe, sizeof(*szDosBoxExe));
@@ -859,6 +754,11 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
 		nCchSize += 128;
 	}
+	if (args.bInjectsDisable)
+	{
+		// добавить " /NOINJECT"
+		nCchSize += 12;
+	}
 
 	if (gFarMode.cbSize && gFarMode.bFarHookMode)
 	{
@@ -900,6 +800,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		wchar_t szParentFar[64];
 		msprintf(szParentFar, countof(szParentFar), L" /PARENTFARPID=%u", GetCurrentProcessId());
 		_wcscat_c((*psParam), nCchSize, szParentFar);
+	}
+
+	if (args.bInjectsDisable)
+	{
+		// добавить " /NOINJECT"
+		_wcscat_c((*psParam), nCchSize, L" /NOINJECT");
 	}
 
 	// 111211 - "-new_console" передается в GUI
@@ -1222,7 +1128,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	{
 		// -- зависимо только от флажка "Use Injects", иначе нельзя управлять добавлением "ConEmuC.exe" из ConEmu --
 		// Настройка в ConEmu ConEmuGuiMapping.bUseInjects, или gFarMode.bFarHookMode. Иначе - сразу выходим
-		if (!(gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput))
+		if (!bLongConsoleOutput)
 		{
 			return FALSE;
 		}
@@ -1389,29 +1295,29 @@ BOOL CShellProc::PrepareExecuteParms(
 	
 	if (asParam)
 	{
-		const wchar_t* sNewConsole = L"-new_console";
-		const wchar_t* sCurConsole = L"-cur_console";
-		int nNewConsoleLen = lstrlen(sNewConsole);
-		const wchar_t* pszFind = wcsstr(asParam, sNewConsole);
-		// 111211 - после "-new_console:" теперь допускаются аргументы
-		if (pszFind && ((pszFind == asParam) || (*(pszFind-1) == L' ') || (*(pszFind-1) == L'"'))
-			&& ((pszFind[nNewConsoleLen] == 0) || (pszFind[nNewConsoleLen] == L' ') || (pszFind[nNewConsoleLen] == L':') || (pszFind[nNewConsoleLen] == L'"')))
+		args.pszSpecialCmd = lstrdup(asParam);
+		if (args.ProcessNewConArg() > 0)
 		{
-			bNewConsoleArg = true;
-		}
-		else if (wcsstr(asParam, sCurConsole) != NULL)
-		{
-			// А вот "-cur_console" нужно обрабатывать _здесь_
-			args.pszSpecialCmd = lstrdup(asParam);
-			if (args.ProcessNewConArg() > 0)
+			if (args.bNewConsole)
 			{
+				bNewConsoleArg = true;
+			}
+			else
+			{
+				// А вот "-cur_console" нужно обрабатывать _здесь_
 				bCurConsoleArg = true;
+
 				if (args.bForceDosBox && m_SrvMapping.cbSize && m_SrvMapping.bDosBox)
 				{
 					mn_ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
 					mn_ImageSubsystem = 16;
 					bLongConsoleOutput = FALSE;
 					lbGuiApp = FALSE;
+				}
+
+				if (args.bLongOutputDisable)
+				{
+					bLongConsoleOutput = FALSE;
 				}
 			}
 		}
@@ -1530,7 +1436,9 @@ BOOL CShellProc::PrepareExecuteParms(
 		|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хотят GUI прицепить к новуй вкладке в ConEmu, или новую консоль из GUI
 		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
 		|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
-			&& (bNewConsoleArg || (aCmd == eShellExecute) 
+			&& (bNewConsoleArg
+				|| (bLongConsoleOutput && (aCmd == eShellExecute))
+				|| (bCurConsoleArg && !args.bLongOutputDisable)
 				#ifdef _DEBUG
 				|| lbAlwaysAddConEmuC
 				#endif
@@ -1539,12 +1447,13 @@ BOOL CShellProc::PrepareExecuteParms(
 		|| ((mn_ImageBits == 16) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
 		    && m_SrvMapping.cbSize && m_SrvMapping.bDosBox))
 	{
-		lbChanged = ChangeExecuteParms(aCmd, bNewConsoleArg, asFile, asParam, /*szBaseDir, */
-						ms_ExeTmp, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
+		lbChanged = ChangeExecuteParms(aCmd, bNewConsoleArg, asFile, asParam,
+						ms_ExeTmp, args, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 		if (!lbChanged)
 		{
 			// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
-			mb_NeedInjects = (mn_ImageBits != 16);
+			// И если просили не ставить хуки (-new_console:i) - тоже
+			mb_NeedInjects = (mn_ImageBits != 16) && !args.bInjectsDisable;
 		}
 		else
 		{
@@ -1600,11 +1509,21 @@ BOOL CShellProc::PrepareExecuteParms(
 		//lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, pszBaseDir, 
 		//				ms_ExeTmp, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 		// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
-		mb_NeedInjects = (aCmd == eCreateProcess) && (mn_ImageBits != 16);
+		// И если просили не ставить хуки (-new_console:i) - тоже
+		mb_NeedInjects = (aCmd == eCreateProcess) && (mn_ImageBits != 16) && !args.bInjectsDisable;
+
+		// Параметр -cur_console / -new_console нужно вырезать
+		if (bNewConsoleArg || bCurConsoleArg)
+		{
+			_ASSERTEX(args.pszSpecialCmd!=NULL && "Must be replaced already!");
+
+			// явно выставим в TRUE, т.к. это мог быть -new_console
+			bCurConsoleArg = TRUE;
+		}
 	}
 
 wrap:
-	if (bCurConsoleArg)
+	if (bCurConsoleArg && (aCmd != eShellExecute))
 	{
 		if (lbChanged)
 		{
@@ -1612,14 +1531,17 @@ wrap:
 		}
 		else
 		{
-			// Если не было обработано
+			// Указание рабочей папки
 			if (args.pszStartupDir)
 			{
 				*psStartDir = args.pszStartupDir;
 				args.pszStartupDir = NULL;
 			}
+
+			// Подмена параметров (вырезаны -cur_console, -new_console)
 			*psParam = args.pszSpecialCmd;
 			args.pszSpecialCmd = NULL;
+
 			// Высота буфера!
 			if (args.bBufHeight && gnServerPID)
 			{

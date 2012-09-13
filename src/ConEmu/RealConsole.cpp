@@ -2441,7 +2441,7 @@ BOOL CRealConsole::StartProcess()
 
 		int nCurLen = 0;
 		int nLen = _tcslen(lpszCmd);
-		nLen += _tcslen(gpConEmu->ms_ConEmuExe) + 300 + MAX_PATH;
+		nLen += _tcslen(gpConEmu->ms_ConEmuExe) + 310 + MAX_PATH;
 		MCHKHEAP;
 		psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 		_ASSERTE(psCurCmd);
@@ -2489,6 +2489,9 @@ BOOL CRealConsole::StartProcess()
 			_wcscat_c(psCurCmd, nLen, L" /CONFIRM");
 		else if (m_Args.eConfirmation == RConStartArgs::eConfNever)
 			_wcscat_c(psCurCmd, nLen, L" /NOCONFIRM");
+
+		if (m_Args.bInjectsDisable)
+			_wcscat_c(psCurCmd, nLen, L" /NOINJECT");
 
 		_wcscat_c(psCurCmd, nLen, L" /ROOT ");
 		_wcscat_c(psCurCmd, nLen, lpszCmd);
@@ -5667,6 +5670,13 @@ void CRealConsole::OnFocus(BOOL abFocused)
 
 		// Сразу, иначе по окончании PostConsoleEvent RCon может разрушиться?
 		mn_Focused = abFocused ? 1 : 0;
+
+		if (m_ServerClosing.nServerPID
+			&& m_ServerClosing.nServerPID == mn_MainSrv_PID)
+		{
+			return;
+		}
+
 		INPUT_RECORD r = {FOCUS_EVENT};
 		r.Event.FocusEvent.bSetFocus = abFocused;
 		PostConsoleEvent(&r);

@@ -39,6 +39,7 @@ enum RecreateActionParm
 struct RConStartArgs
 {
 	BOOL     bDetached; // internal use
+	BOOL     bNewConsole; // TRUE==-new_console, FALSE==-cur_console
 	wchar_t* pszSpecialCmd; // собственно, command line
 	wchar_t* pszStartupDir; // "-new_console:d:<dir>"
 	
@@ -51,6 +52,9 @@ struct RConStartArgs
 	
 	BOOL     bBufHeight;          // -new_console:h<lines>
 	UINT     nBufHeight;          //
+
+	BOOL     bLongOutputDisable;  // -new_console:o
+	BOOL     bInjectsDisable;     // -new_console:i
 
  	enum {
  		eConfDefault = 0,

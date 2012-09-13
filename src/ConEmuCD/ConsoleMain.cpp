@@ -122,7 +122,7 @@ MConHandle ghConOut(L"CONOUT$");
 #define CLOSE_CONSOLE_TIMEOUT 4000
 
 /*  Global  */
-wchar_t* gpszEnvPathStore = NULL;
+CEStartupEnv* gpStartEnv = NULL;
 HMODULE ghOurModule = NULL; // ConEmuCD.dll
 DWORD   gnSelfPID = 0;
 BOOL    gbTerminateOnExit = FALSE;
@@ -171,6 +171,7 @@ HANDLE ghFarInExecuteEvent;
 RunMode gnRunMode = RM_UNDEFINED;
 
 BOOL  gbNoCreateProcess = FALSE;
+BOOL  gbDontInjectConEmuHk = FALSE;
 BOOL  gbDebugProcess = FALSE;
 int   gnDebugDumpProcess = 0; // 1 - ask user, 2 - minidump, 3 - fulldump
 //wchar_t szDebugDumpPath[MAX_PATH] = {}; // Может быть указана папка, в которую нужно складировать дампы
@@ -286,6 +287,10 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 			HeapInitialize();
 			
+			/* *** DEBUG PURPOSES */
+			gpStartEnv = LoadStartupEnv();
+			/* *** DEBUG PURPOSES */
+
 			// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
 			// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
 			//gfnLoadLibrary = (UINT_PTR)::GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "LoadLibraryW");
@@ -577,10 +582,6 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	//#ifdef _DEBUG
 	//InitializeCriticalSection(&gcsHeap);
 	//#endif
-
-	/* *** DEBUG PURPOSES */
-	gpszEnvPathStore = LoadCurrentPathEnvVar();
-	/* *** DEBUG PURPOSES */
 
 	if (!anWorkMode)
 	{
@@ -1054,69 +1055,83 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		if (lbRc) // && (gnRunMode == RM_SERVER))
 		{
 			nExitPlaceStep = 400;
-			TODO("Не только в сервере, но и в ComSpec, чтобы дочерние КОНСОЛЬНЫЕ процессы могли пользоваться редиректами");
-			//""F:\VCProject\FarPlugin\ConEmu\Bugs\DOS\TURBO.EXE ""
-			TODO("При выполнении DOS приложений - VirtualAllocEx(hProcess, обламывается!");
-			TODO("В принципе - завелось, но в сочетании с Anamorphosis получается странное зацикливание far->conemu->anamorph->conemu");
 
 			#ifdef SHOW_INJECT_MSGBOX
 			wchar_t szDbgMsg[128], szTitle[128];
 			swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-			swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC, PID=%u\nInjecting hooks into PID=%u", GetCurrentProcessId(), pi.dwProcessId);
-			MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+			szDbgMsg[0] = 0;
 			#endif
 
-			//BOOL gbLogProcess = FALSE;
-			//TODO("Получить из мэппинга glt_Process");
-			//#ifdef _DEBUG
-			//gbLogProcess = TRUE;
-			//#endif
-			int iHookRc = -1;
-			if (((gnImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE) || (gnImageBits == 16))
-				&& !gbUseDosBox)
+			if (gbDontInjectConEmuHk)
 			{
-				// Если запускается ntvdm.exe - все-равно хук поставить не даст
-				iHookRc = 0;
+				#ifdef SHOW_INJECT_MSGBOX
+				swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC, PID=%u\nConEmuHk injects skipped, PID=%u", GetCurrentProcessId(), pi.dwProcessId);
+				#endif
 			}
 			else
 			{
-				// Чтобы модуль хуков в корневом процессе знал, что оно корневое
-				_ASSERTE(ghRootProcessFlag==NULL);
-				wchar_t szEvtName[64];
-				msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, pi.dwProcessId);
-				ghRootProcessFlag = CreateEvent(LocalSecurity(), TRUE, TRUE, szEvtName);
-				if (ghRootProcessFlag)
+				TODO("Не только в сервере, но и в ComSpec, чтобы дочерние КОНСОЛЬНЫЕ процессы могли пользоваться редиректами");
+				//""F:\VCProject\FarPlugin\ConEmu\Bugs\DOS\TURBO.EXE ""
+				TODO("При выполнении DOS приложений - VirtualAllocEx(hProcess, обламывается!");
+				TODO("В принципе - завелось, но в сочетании с Anamorphosis получается странное зацикливание far->conemu->anamorph->conemu");
+
+				#ifdef SHOW_INJECT_MSGBOX
+				swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC, PID=%u\nInjecting hooks into PID=%u", GetCurrentProcessId(), pi.dwProcessId);
+				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+				#endif
+
+				//BOOL gbLogProcess = FALSE;
+				//TODO("Получить из мэппинга glt_Process");
+				//#ifdef _DEBUG
+				//gbLogProcess = TRUE;
+				//#endif
+				int iHookRc = -1;
+				if (((gnImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE) || (gnImageBits == 16))
+					&& !gbUseDosBox)
 				{
-					SetEvent(ghRootProcessFlag);
+					// Если запускается ntvdm.exe - все-равно хук поставить не даст
+					iHookRc = 0;
 				}
 				else
 				{
-					_ASSERTE(ghRootProcessFlag!=NULL);
+					// Чтобы модуль хуков в корневом процессе знал, что оно корневое
+					_ASSERTE(ghRootProcessFlag==NULL);
+					wchar_t szEvtName[64];
+					msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, pi.dwProcessId);
+					ghRootProcessFlag = CreateEvent(LocalSecurity(), TRUE, TRUE, szEvtName);
+					if (ghRootProcessFlag)
+					{
+						SetEvent(ghRootProcessFlag);
+					}
+					else
+					{
+						_ASSERTE(ghRootProcessFlag!=NULL);
+					}
+
+					// Теперь ставим хуки
+					iHookRc = InjectHooks(pi, FALSE, gbLogProcess);
 				}
 
-				// Теперь ставим хуки
-				iHookRc = InjectHooks(pi, FALSE, gbLogProcess);
-			}
-
-			if (iHookRc != 0)
-			{
-				DWORD nErrCode = GetLastError();
-				//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
-				wchar_t szDbgMsg[255], szTitle[128];
-				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.M, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
-				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-			}
-			
-			if (gbUseDosBox)
-			{
-				// Если запустился - то сразу добавим в список процессов (хотя он и не консольный)
-				ghDosBoxProcess = pi.hProcess; gnDosBoxPID = pi.dwProcessId;
-				//ProcessAdd(pi.dwProcessId);
+				if (iHookRc != 0)
+				{
+					DWORD nErrCode = GetLastError();
+					//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
+					wchar_t szDbgMsg[255], szTitle[128];
+					_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+					_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.M, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
+					MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+				}
+				
+				if (gbUseDosBox)
+				{
+					// Если запустился - то сразу добавим в список процессов (хотя он и не консольный)
+					ghDosBoxProcess = pi.hProcess; gnDosBoxPID = pi.dwProcessId;
+					//ProcessAdd(pi.dwProcessId);
+				}
 			}
 
 			#ifdef SHOW_INJECT_MSGBOX
-			wcscat_c(szDbgMsg, L"\nPress OK to resume hooked process");
+			wcscat_c(szDbgMsg, L"\nPress OK to resume started process");
 			MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 			#endif
 
@@ -2825,6 +2840,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 			return CERR_HOOKS_FAILED;
 		}
+		else if (lstrcmpi(szArg, L"/NOINJECT")==0)
+		{
+			gbDontInjectConEmuHk = TRUE;
+		}
 		else if (lstrcmpi(szArg, L"/GUIMACRO")==0)
 		{
 			// Все что в asCmdLine - выполнить в Gui
@@ -2869,7 +2888,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 			if (gnRunMode == RM_UNDEFINED && szArg[4] == 0
 			        && ((szArg[2] & ~0x20) == L'M') && ((szArg[3] & ~0x20) == L'D'))
+			{
+				_ASSERTE(FALSE && "'/cmd' obsolete switch. use /c, /k, /root");
 				gnRunMode = RM_SERVER;
+			}
 
 			// Если тип работа до сих пор не определили - считаем что режим ComSpec
 			// и команда начинается сразу после /c (может быть "cmd /cecho xxx")

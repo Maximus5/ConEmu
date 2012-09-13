@@ -44,12 +44,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RConStartArgs::RConStartArgs()
 {
-	bDetached = bRunAsAdministrator = bRunAsRestricted = FALSE;
+	bDetached = bRunAsAdministrator = bRunAsRestricted = bNewConsole = FALSE;
 	bForceUserDialog = bBackgroundTab = bForceDosBox = FALSE;
 	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = /*pszUserPassword =*/ NULL;
-	bBufHeight = FALSE; nBufHeight = 0;
+	bBufHeight = FALSE; nBufHeight = 0; bLongOutputDisable = FALSE;
+	bInjectsDisable = FALSE;
 	eConfirmation = eConfDefault;
 	szUserPassword[0] = 0;
 	//hLogonToken = NULL;
@@ -82,6 +83,8 @@ wchar_t* RConStartArgs::CreateCommandLine()
 	cchMaxLen += (bForceUserDialog ? 15 : 0); // -new_console:u
 	cchMaxLen += (bBackgroundTab ? 15 : 0); // -new_console:b
 	cchMaxLen += (bBufHeight ? 32 : 0); // -new_console:h<lines>
+	cchMaxLen += (bLongOutputDisable ? 15 : 0); // -new_console:o
+	cchMaxLen += (bInjectsDisable ? 15 : 0); // -new_console:i
 	cchMaxLen += (eConfirmation ? 15 : 0); // -new_console:c / -new_console:n
 	cchMaxLen += (bForceDosBox ? 15 : 0); // -new_console:x
 	cchMaxLen += (eSplit ? 64 : 0); // -new_console:s[<SplitTab>T][<Percents>](H|V)
@@ -125,6 +128,12 @@ wchar_t* RConStartArgs::CreateCommandLine()
 	else if (eConfirmation == eConfNever)
 		wcscat_c(szAdd, L"n");
 
+	if (bLongOutputDisable)
+		wcscat_c(szAdd, L"o");
+	
+	if (bInjectsDisable)
+		wcscat_c(szAdd, L"i");
+	
 	if (bBufHeight)
 	{
 		if (nBufHeight)
@@ -146,7 +155,7 @@ wchar_t* RConStartArgs::CreateCommandLine()
 
 	if (szAdd[0])
 	{
-		_wcscat_c(pszFull, cchMaxLen, L" -new_console:");
+		_wcscat_c(pszFull, cchMaxLen, bNewConsole ? L" -new_console:" : L" -cur_console:");
 		_wcscat_c(pszFull, cchMaxLen, szAdd);
 	}
 
@@ -154,8 +163,14 @@ wchar_t* RConStartArgs::CreateCommandLine()
 	if (pszStartupDir && *pszStartupDir)
 	{
 		bool bQuot = wcschr(pszStartupDir, L' ') != NULL;
-		_wcscat_c(pszFull, cchMaxLen, bQuot ? L" \"-new_console:d:" : L" -new_console:d:");
+
+		if (bQuot)
+			_wcscat_c(pszFull, cchMaxLen, bNewConsole ? L" \"-new_console:d:" : L" \"-cur_console:d:");
+		else
+			_wcscat_c(pszFull, cchMaxLen, bNewConsole ? L" -new_console:d:" : L" -cur_console:d:");
+			
 		_wcscat_c(pszFull, cchMaxLen, pszStartupDir);
+
 		if (bQuot)
 			_wcscat_c(pszFull, cchMaxLen, L"\"");
 	}
@@ -163,7 +178,7 @@ wchar_t* RConStartArgs::CreateCommandLine()
 	// "-new_console:u:<user>:<pwd>"
 	if (pszUserName && *pszUserName)
 	{
-		_wcscat_c(pszFull, cchMaxLen, L" \"-new_console:u:");
+		_wcscat_c(pszFull, cchMaxLen, bNewConsole ? L" \"-new_console:u:" : L" \"-cur_console:u:");
 		if (pszDomain && *pszDomain)
 		{
 			_wcscat_c(pszFull, cchMaxLen, pszDomain);
@@ -223,6 +238,8 @@ BOOL RConStartArgs::CheckUserToken(HWND hPwd)
 // -1 - error
 int RConStartArgs::ProcessNewConArg()
 {
+	bNewConsole = FALSE;
+
 	if (!pszSpecialCmd || !*pszSpecialCmd)
 	{
 		_ASSERTE(pszSpecialCmd && *pszSpecialCmd);
@@ -255,13 +272,17 @@ int RConStartArgs::ProcessNewConArg()
 	LPCWSTR pszCurCon = L"-cur_console";
 	int nNewConLen = lstrlen(pszNewCon);
 	_ASSERTE(lstrlen(pszCurCon)==nNewConLen);
-	wchar_t* pszFind;
 	bool bStop = false;
 
-	while (!bStop
-		&& ((pszFind = wcsstr(pszSpecialCmd, pszNewCon)) != NULL || (pszFind = wcsstr(pszSpecialCmd, pszCurCon)) != NULL)
-		)
+	while (!bStop)
 	{
+		wchar_t* pszFindNew = wcsstr(pszSpecialCmd, pszNewCon);
+		wchar_t* pszFind = pszFindNew ? pszFindNew : wcsstr(pszSpecialCmd, pszCurCon);
+		if (pszFindNew)
+			bNewConsole = TRUE;
+		else if (!pszFind)
+			break;
+
 		// Проверка валидности
 		_ASSERTE(pszFind > pszSpecialCmd);
 		if (((pszFind == pszSpecialCmd) || (*(pszFind-1) == L'"') || (*(pszFind-1) == L' ')) // начало аргумента
@@ -327,6 +348,16 @@ int RConStartArgs::ProcessNewConArg()
 						bRunAsRestricted = TRUE;
 						break;
 						
+					case L'o':
+						// o - disable "Long output" for next command (Far Manager)
+						bLongOutputDisable = TRUE;
+						break;
+
+					case L'i':
+						// i - don't inject ConEmuHk into the starting application
+						bInjectsDisable = TRUE;
+						break;
+
 					case L'h':
 						// "h0" - отключить буфер, "h9999" - включить буфер в 9999 строк
 						{
@@ -535,6 +566,8 @@ int RConStartArgs::ProcessNewConArg()
 
 			if (pszEnd > pszFind)
 			{
+				// pszEnd должен указывать на конец -new_console[:...] / -cur_console[:...]
+				// и включать обрамляющую кавычку, если он окавычен
 				if (lbQuot)
 				{
 					if (*pszEnd == L'"' && *(pszEnd-1) != L'"')
@@ -546,8 +579,13 @@ int RConStartArgs::ProcessNewConArg()
 						pszEnd--;
 				}
 
-				while (((pszFind - 1) > pszSpecialCmd) && (*(pszFind-1) == L' ') && (*(pszFind-2) == L' '))
+				// Откусить лишние пробелы, которые стоят ПЕРЕД -new_console[:...] / -cur_console[:...]
+				while (((pszFind - 1) > pszSpecialCmd)
+					&& (*(pszFind-1) == L' ')
+					&& ((*(pszFind-2) == L' ') || (*pszEnd == L'"' || *pszEnd == 0 || *pszEnd == L' ')))
+				{
 					pszFind--;
+				}
 				//wmemset(pszFind, L' ', pszEnd - pszFind);
 				wmemmove(pszFind, pszEnd, (lstrlen(pszEnd)+1));
 				nChanges++;

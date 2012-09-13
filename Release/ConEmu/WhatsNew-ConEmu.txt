@@ -18,6 +18,9 @@ Questions about usablity of "-new_console:s".
 [+] GuiMacro.
     Paste(4[,<Title>]) - choose file and paste full pathname
     Paste(5[,<Title>]) - choose folder and paste full path
+[+] New switches in "-new_console".
+    "-new_console:o" - don't enable 'Long console output' when starting command from Far Manager.
+    "-new_console:i" - don't inject ConEmuHk into starting process.
 
 
 2012.09.09

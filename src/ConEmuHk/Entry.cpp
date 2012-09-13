@@ -152,7 +152,7 @@ extern HHOOK ghGuiClientRetHook;
 //extern bool gbAllowAssertThread;
 #endif
 
-wchar_t* gpszEnvPathStore = NULL;
+CEStartupEnv* gpStartEnv = NULL;
 DWORD   gnSelfPID = 0;
 BOOL    gbSelfIsRootConsoleProcess = FALSE;
 DWORD   gnServerPID = 0;
@@ -904,7 +904,15 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			HeapInitialize();
 			
 			/* *** DEBUG PURPOSES */
-			gpszEnvPathStore = LoadCurrentPathEnvVar();
+			gpStartEnv = LoadStartupEnv();
+			//if (gpStartEnv && gpStartEnv->hIn.hStd && !(gpStartEnv->hIn.nMode & 0x80000000))
+			//{
+			//	if ((gpStartEnv->hIn.nMode & 0xF0) == 0xE0)
+			//	{
+			//		_ASSERTE(FALSE && "ENABLE_MOUSE_INPUT was disabled! Enabling...");
+			//		SetConsoleMode(gpStartEnv->hIn.hStd, gpStartEnv->hIn.nMode|ENABLE_MOUSE_INPUT);
+			//	}
+			//}
 			/* *** DEBUG PURPOSES */
 
 			ghOurModule = (HMODULE)hModule;

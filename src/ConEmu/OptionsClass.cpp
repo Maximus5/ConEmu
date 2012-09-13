@@ -2242,7 +2242,22 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 		else
 		{
 			if (!LoadString(g_hInstance, ppHK->DescrLangID, szDescr, countof(szDescr)))
-				_wsprintf(szDescr, SKIPLEN(countof(szDescr)) L"%i", ppHK->DescrLangID);
+			{
+				if ((ppHK->HkType == chk_User) && ppHK->GuiMacro && *ppHK->GuiMacro)
+					lstrcpyn(szDescr, ppHK->GuiMacro, countof(szDescr));
+				else
+					_wsprintf(szDescr, SKIPLEN(countof(szDescr)) L"%i", ppHK->DescrLangID);
+			}
+			else if ((ppHK->HkType == chk_User) && ppHK->GuiMacro && *ppHK->GuiMacro)
+			{
+				int nLen = lstrlen(szDescr);
+				if ((nLen + 64) < countof(szDescr))
+				{
+					wcscat_c(szDescr, L": ");
+					nLen -= 2;
+					lstrcpyn(szDescr + nLen, ppHK->GuiMacro, countof(szDescr) - nLen - 1);
+				}
+			}
 			ListView_SetItemText(hList, nItem, klc_Desc, szDescr);
 		}
 	}

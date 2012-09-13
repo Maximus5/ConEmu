@@ -88,7 +88,7 @@ HICON hClassIcon = NULL, hClassIconSm = NULL;
 BOOL gbDontEnable = FALSE;
 BOOL gbDebugLogStarted = FALSE;
 BOOL gbDebugShowRects = FALSE;
-wchar_t* gpszEnvPathStore = NULL;
+CEStartupEnv* gpStartEnv = NULL;
 
 
 const TCHAR *const gsClassName = VirtualConsoleClass; // окна отрисовки
@@ -1862,7 +1862,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	RemoveOldComSpecC();
 
 	/* *** DEBUG PURPOSES */
-	gpszEnvPathStore = LoadCurrentPathEnvVar();
+	gpStartEnv = LoadStartupEnv();
 	/* *** DEBUG PURPOSES */
 
 	gbIsWine = IsWine(); // В общем случае, на флажок ориентироваться нельзя. Это для информации.

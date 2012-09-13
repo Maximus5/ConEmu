@@ -970,22 +970,133 @@ BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 	return TRUE;
 }
 
-wchar_t* LoadCurrentPathEnvVar()
+typedef BOOL (WINAPI* GetConsoleHistoryInfo_t)(CE_CONSOLE_HISTORY_INFO* lpConsoleHistoryInfo);
+
+CEStartupEnv* LoadStartupEnv()
 {
+	CEStartupEnv* pEnv = NULL;
+
+	STARTUPINFOW si = {sizeof(si)};
+	GetStartupInfoW(&si);
+
 	wchar_t* pszEnvPathStore = (wchar_t*)malloc(1024*sizeof(*pszEnvPathStore));
 	if (pszEnvPathStore)
 	{
-		DWORD cbPathSize = GetEnvironmentVariable(L"PATH", pszEnvPathStore, 1024);
-		if (cbPathSize > 1024)
+		DWORD cbPathMax = 1024;
+		DWORD cbPathSize = GetEnvironmentVariable(L"PATH", pszEnvPathStore, cbPathMax);
+		if (cbPathSize >= 1024)
 		{
-			pszEnvPathStore = (wchar_t*)realloc(pszEnvPathStore, cbPathSize*sizeof(*pszEnvPathStore));
+			cbPathMax = cbPathSize+1;
+			pszEnvPathStore = (wchar_t*)realloc(pszEnvPathStore, cbPathMax*sizeof(*pszEnvPathStore));
 			if (pszEnvPathStore)
 			{
-				cbPathSize = GetEnvironmentVariable(L"PATH", pszEnvPathStore, cbPathSize);
+				cbPathSize = GetEnvironmentVariable(L"PATH", pszEnvPathStore, (cbPathSize+1));
 			}
 		}
+
+		if (pszEnvPathStore)
+		{
+			pszEnvPathStore[min(cbPathSize,cbPathMax-1)] = 0;
+		}
 	}
-	return pszEnvPathStore;
+
+	LPCWSTR pszCmdLine = GetCommandLine();
+
+	wchar_t* pszExecMod = (wchar_t*)calloc(MAX_PATH*2,sizeof(*pszExecMod));
+	GetModuleFileName(NULL, pszExecMod, MAX_PATH*2);
+
+	wchar_t* pszWorkDir = (wchar_t*)calloc(MAX_PATH*2,sizeof(*pszExecMod));
+	GetCurrentDirectory(MAX_PATH*2, pszWorkDir);
+
+	size_t cchTotal = sizeof(*pEnv);
+
+	size_t cchEnv = pszEnvPathStore ? (lstrlen(pszEnvPathStore)+1) : 0;
+	cchTotal += cchEnv*sizeof(wchar_t);
+
+	size_t cchExe = pszExecMod ? (lstrlen(pszExecMod)+1) : 0;
+	cchTotal += cchExe*sizeof(wchar_t);
+
+	size_t cchCmd = pszCmdLine ? (lstrlen(pszCmdLine)+1) : 0;
+	cchTotal += cchCmd*sizeof(wchar_t);
+
+	size_t cchDir = pszWorkDir ? (lstrlen(pszWorkDir)+1) : 0;
+	cchTotal += cchDir*sizeof(wchar_t);
+
+	size_t cchTtl = si.lpTitle ? (lstrlen(si.lpTitle)+1) : 0;
+	cchTotal += cchTtl*sizeof(wchar_t);
+
+	pEnv = (CEStartupEnv*)calloc(cchTotal,1);
+	if (pEnv)
+	{
+		pEnv->cbSize = cchTotal;
+		pEnv->si = si;
+
+		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+		if (hKernel)
+		{
+			// Функция есть только в Vista+
+			GetConsoleHistoryInfo_t _GetConsoleHistoryInfo = (GetConsoleHistoryInfo_t)GetProcAddress(hKernel, "GetConsoleHistoryInfo");
+			if (_GetConsoleHistoryInfo)
+			{
+				pEnv->hi.cbSize = sizeof(pEnv->hi);
+				if (!_GetConsoleHistoryInfo(&pEnv->hi))
+				{
+					pEnv->hi.cbSize = GetLastError() | 0x80000000;
+				}
+			}
+		}
+
+		struct { CE_HANDLE_INFO* p; DWORD nId; }
+			lHandles[] = {{&pEnv->hIn, STD_INPUT_HANDLE}, {&pEnv->hOut, STD_OUTPUT_HANDLE}, {&pEnv->hErr, STD_ERROR_HANDLE}};
+		for (size_t i = 0; i < countof(lHandles); i++)
+		{
+			lHandles[i].p->hStd = GetStdHandle(lHandles[i].nId);
+			if (!GetConsoleMode(lHandles[i].p->hStd, &lHandles[i].p->nMode))
+				lHandles[i].p->nMode = (DWORD)-1;
+		}
+
+		wchar_t* psz = (wchar_t*)(pEnv+1);
+
+		if (pszCmdLine)
+		{
+			_wcscpy_c(psz, cchCmd, pszCmdLine);
+			pEnv->pszCmdLine = psz;
+			psz += cchCmd;
+		}
+
+		if (pszExecMod)
+		{
+			_wcscpy_c(psz, cchExe, pszExecMod);
+			pEnv->pszExecMod = psz;
+			psz += cchExe;
+		}
+
+		if (pszWorkDir)
+		{
+			_wcscpy_c(psz, cchDir, pszWorkDir);
+			pEnv->pszWorkDir = psz;
+			psz += cchDir;
+		}
+
+		if (pszEnvPathStore)
+		{
+			_wcscpy_c(psz, cchEnv, pszEnvPathStore);
+			pEnv->pszPathEnv = psz;
+			pEnv->cchPathLen = cchEnv;
+			psz += cchEnv;
+		}
+
+		if (si.lpTitle)
+		{
+			_wcscpy_c(psz, cchTtl, si.lpTitle);
+			pEnv->si.lpTitle = psz;
+			psz += cchTtl;
+		}
+	}
+
+	SafeFree(pszEnvPathStore);
+	SafeFree(pszExecMod);
+	return pEnv;
 }
 
 #ifndef CONEMU_MINIMAL
@@ -2586,7 +2697,7 @@ void MSection::AddRef(DWORD dwTID)
 	mn_Locked ++; // увеличиваем счетчик nonexclusive locks
 	_ASSERTEX(mn_Locked>0);
 	ResetEvent(mh_ReleaseEvent); // На всякий случай сбросим Event
-	int j = -1; // будет -2, если ++ на существующий, иначе - +1 на пустой
+	INT_PTR j = -1; // будет -2, если ++ на существующий, иначе - +1 на пустой
 
 	for (size_t i = 1; i < countof(mn_LockedTID); i++)
 	{

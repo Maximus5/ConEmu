@@ -70,11 +70,16 @@ struct PipeServer
 			CLOSING_STATE,
 			CLOSED_STATE,
 			TERMINATED_STATE,
+			TERMINATE_CALL_STATE,
 		};
 		struct PipeInst
 		{
 			// Common
 			HANDLE hPipeInst; // Pipe Handle
+
+			// Server Thread
+			HANDLE hThread;
+			DWORD nThreadId;
 
 			#ifdef _DEBUG
 			BOOL   bFlagged;
@@ -95,6 +100,7 @@ struct PipeServer
 			OVERLAPPED oOverlap;
 			BOOL fPendingIO;
 			PipeState dwState;
+			BOOL bSkipTerminate;
 			
 			wchar_t sErrorMsg[128];
 
@@ -138,10 +144,7 @@ struct PipeServer
 			// Pointer to object
 			PipeServer *pServer;
 
-			// Server thread.
-			HANDLE hThread;
-			DWORD nThreadId;
-			HANDLE hThreadEnd;
+			//HANDLE hThreadEnd;
 		};
 	public:
 		typedef BOOL (WINAPI* PipeServerConnected_t)(LPVOID pInst, LPARAM lParam);
@@ -942,11 +945,11 @@ struct PipeServer
 			}
 
 			_ASSERTEX(pPipe->hThread == NULL);
-			_ASSERTEX(pPipe->hThreadEnd == NULL);
+			//_ASSERTEX(pPipe->hThreadEnd == NULL);
 
 			pPipe->pServer = this;
 			pPipe->nThreadId = 0;
-			pPipe->hThreadEnd = CreateEvent(NULL, TRUE, FALSE, NULL);
+			//pPipe->hThreadEnd = CreateEvent(NULL, TRUE, FALSE, NULL);
 			pPipe->hThread = CreateThread(NULL, 0, _PipeServerThread, pPipe, 0, &pPipe->nThreadId);
 			if (pPipe->hThread == NULL)
 			{
@@ -975,11 +978,16 @@ struct PipeServer
 
 			pPipe->dwState = TERMINATED_STATE;
 			
+			// When "C:\Program Files (x86)\F-Secure\apps\ComputerSecurity\HIPS\fshook64.dll"
+			// is loaded, possible TerminateThread locks together
+#if 0
 			// Force thread termination cause of unknown attached dll's.
-			if (pPipe->pServer->mb_Terminate)
+			if (pPipe->pServer->mb_Terminate && !pPipe->bSkipTerminate)
 			{
+				pPipe->dwState = TERMINATE_CALL_STATE;
 				TerminateThread(GetCurrentThread(), 100);
 			}
+#endif
 			return nResult;
 		};
 	//public:
@@ -1146,8 +1154,9 @@ struct PipeServer
 						nTimeout = 5000;
 					#endif
 
-					HANDLE hEvt[2] = {m_Pipes[i].hThread, m_Pipes[i].hThreadEnd};
-					nWait = (m_Pipes[i].dwState == STARTING_STATE) ? WAIT_FAILED : WaitForMultipleObjects(countof(hEvt), hEvt, FALSE, nTimeout);
+					//HANDLE hEvt[2] = {m_Pipes[i].hThread, m_Pipes[i].hThreadEnd};
+					//nWait = (m_Pipes[i].dwState == STARTING_STATE) ? WAIT_FAILED : WaitForMultipleObjects(countof(hEvt), hEvt, FALSE, nTimeout);
+					nWait = (m_Pipes[i].dwState == STARTING_STATE) ? WAIT_FAILED : WaitForSingleObject(m_Pipes[i].hThread, nTimeout);
 
 					if (nWait != WAIT_OBJECT_0)
 					{
@@ -1160,17 +1169,23 @@ struct PipeServer
 							}
 						#endif
 
-						TerminateThread(m_Pipes[i].hThread, 100);
+						// When "C:\Program Files (x86)\F-Secure\apps\ComputerSecurity\HIPS\fshook64.dll"
+						// is loaded, possible TerminateThread locks together
+						m_Pipes[i].bSkipTerminate = TRUE;
+						if (m_Pipes[i].dwState != TERMINATE_CALL_STATE)
+						{
+							TerminateThread(m_Pipes[i].hThread, 100);
+						}
 					}
 
 					CloseHandle(m_Pipes[i].hThread);
 					m_Pipes[i].hThread = NULL;
 				}
-				if (m_Pipes[i].hThreadEnd)
-				{
-					CloseHandle(m_Pipes[i].hThreadEnd);
-					m_Pipes[i].hThreadEnd = NULL;
-				}
+				//if (m_Pipes[i].hThreadEnd)
+				//{
+				//	CloseHandle(m_Pipes[i].hThreadEnd);
+				//	m_Pipes[i].hThreadEnd = NULL;
+				//}
 
 				if (m_Pipes[i].hPipeInst && (m_Pipes[i].hPipeInst != INVALID_HANDLE_VALUE))
 				{

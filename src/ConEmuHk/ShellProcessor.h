@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+struct RConStartArgs;
 
 class CShellProc
 {
@@ -72,8 +73,9 @@ private:
 				HANDLE* lphStdIn, HANDLE* lphStdOut, HANDLE* lphStdErr,
 				LPWSTR* psFile, LPWSTR* psParam, LPWSTR* psStartDir);
 	BOOL ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole,
-				LPCWSTR asFile, LPCWSTR asParam, /*LPCWSTR asBaseDir,*/
-				LPCWSTR asExeFile, DWORD& ImageBits, DWORD& ImageSubsystem,
+				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asExeFile,
+				const RConStartArgs& args,
+				DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam);
 	BOOL FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd);
 public:

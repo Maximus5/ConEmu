@@ -98,7 +98,34 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 
 COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput);
 
-wchar_t* LoadCurrentPathEnvVar();
+struct CE_CONSOLE_HISTORY_INFO
+{
+	UINT  cbSize;
+	UINT  HistoryBufferSize;
+	UINT  NumberOfHistoryBuffers;
+	DWORD dwFlags;
+};
+
+struct CE_HANDLE_INFO
+{
+	HANDLE hStd;
+	DWORD  nMode;
+};
+
+struct CEStartupEnv
+{
+	size_t cbSize;
+	STARTUPINFO si;
+	CE_CONSOLE_HISTORY_INFO hi;
+	CE_HANDLE_INFO hIn, hOut, hErr;
+	LPCWSTR pszCmdLine;
+	LPCWSTR pszExecMod;
+	LPCWSTR pszWorkDir;
+	LPCWSTR pszPathEnv;
+	size_t  cchPathLen;
+};
+
+CEStartupEnv* LoadStartupEnv();
 
 #ifndef CONEMU_MINIMAL
 HANDLE DuplicateProcessHandle(DWORD anTargetPID);

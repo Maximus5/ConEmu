@@ -208,4 +208,5 @@ endif
 clean:
 	@echo final cleaning
 	@$(RM) $(OBJS)
-	@$(RMDIR) $(OBJDIR) ../../gcc/common ../../gcc/conemu ../../gcc/ConEmuPlugin ../../gcc
+	@$(RMDIR) $(OBJDIR)
+	@$(RMDIR) /Q /S ../../gcc
