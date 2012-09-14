@@ -2289,7 +2289,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpConEmu->DisableAutoUpdate = true;
 				}
-				else if (!klstricmp(curCommand, _T("/nokeyhooks")))
+				else if (!klstricmp(curCommand, _T("/nokeyhook"))
+					|| !klstricmp(curCommand, _T("/nokeyhooks"))
+					|| !klstricmp(curCommand, _T("/nokeybhook"))
+					|| !klstricmp(curCommand, _T("/nokeybhooks")))
 				{
 					gpConEmu->DisableKeybHooks = true;
 				}

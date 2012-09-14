@@ -5694,7 +5694,7 @@ void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
 	PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon+1, (LPARAM)pArgs);
 }
 
-CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts /*= FALSE*/)
+CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)
 {
 	_ASSERTE(args!=NULL);
 	if (!gpConEmu->isMainThread())
@@ -5704,7 +5704,7 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts
 		return NULL;
 	}
 
-	CVirtualConsole* pVCon = CVConGroup::CreateCon(args, abAllowScripts);
+	CVirtualConsole* pVCon = CVConGroup::CreateCon(args, abAllowScripts, abForceCurConsole);
 
 	return pVCon;
 }
@@ -5779,7 +5779,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, BOOL abForceAsA
 				args.pszSpecialCmd = lstrdup(pszLine);
 				args.pszStartupDir = (asStartupDir && *asStartupDir) ? lstrdup(asStartupDir) : NULL;
 				args.bRunAsAdministrator = lbRunAdmin;
-				pVCon = CreateCon(&args);
+				pVCon = CreateCon(&args, false, true);
 
 				if (!pVCon)
 				{

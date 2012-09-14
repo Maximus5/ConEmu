@@ -42,6 +42,7 @@ protected:
 	UINT mn_SplitPercent10; // (0.1% - 99.9%)*10
 	CVConGroup *mp_Grp1, *mp_Grp2; // —сылки на "дочерние" панели
 	CVConGroup *mp_Parent; // —сылка на "родительскую" панель
+	RECT mrc_Splitter;
 	bool mb_ResizeFlag; // взводитс€ в true дл€ корн€, когда в группе что-то мен€етс€
 	void SetResizeFlags();
 
@@ -50,7 +51,7 @@ protected:
 	CVConGroup* GetAnotherGroup();
 	void MoveToParent(CVConGroup* apParent);
 	void RepositionVCon(RECT rcNewCon, bool bVisible);
-	void CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2);
+	void CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter);
 	void CalcSplitRootRect(RECT rcAll, RECT& rcCon, CVConGroup* pTarget = NULL);
 	void CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2);
 	void ShowAllVCon(int nShowCmd);
@@ -86,7 +87,7 @@ public:
 public:
 	static void Initialize();
 	static void Deinitialize();
-	static CVirtualConsole* CreateCon(RConStartArgs *args, BOOL abAllowScripts = FALSE);
+	static CVirtualConsole* CreateCon(RConStartArgs *args, bool abAllowScripts = false, bool abForceCurConsole = false);
 	static void OnVConDestroyed(CVirtualConsole* apVCon);
 
 public:

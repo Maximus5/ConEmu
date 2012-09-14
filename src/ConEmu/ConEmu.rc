@@ -1010,9 +1010,9 @@ BEGIN
     RTEXT           "Description:",stGuiMacro,9,146,64,8,WS_DISABLED
     PUSHBUTTON      "?",cbGuiMacroHelp,303,143,16,14,WS_DISABLED
     CONTROL         "&All hotkeys",rbHotkeysAll,"Button",BS_AUTORADIOBUTTON,9,1,51,8
-    CONTROL         "&User defined",rbHotkeysUser,"Button",BS_AUTORADIOBUTTON,64,1,57,8
-    CONTROL         "&System",rbHotkeysSystem,"Button",BS_AUTORADIOBUTTON,124,1,39,8
-    CONTROL         "&Macros",rbHotkeysMacros,"Button",BS_AUTORADIOBUTTON,168,1,39,8
+    CONTROL         "&User defined",rbHotkeysUser,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,64,1,57,8
+    CONTROL         "&System",rbHotkeysSystem,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,124,1,39,8
+    CONTROL         "&Macros",rbHotkeysMacros,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,168,1,39,8
 END
 
 IDD_SPG_UPDATE DIALOGEX 0, 0, 328, 235

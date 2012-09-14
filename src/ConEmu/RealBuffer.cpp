@@ -5012,6 +5012,116 @@ DWORD CRealBuffer::GetConsoleOutputCP()
 	return con.m_dwConsoleOutputCP;
 }
 
+bool CRealBuffer::FindRangeStart(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out]*/, bool& bUrlMode, LPCWSTR pszBreak, LPCWSTR pszUrlDelim, LPCWSTR pszSpacing, LPCWSTR pszUrl, LPCWSTR pszProtocol, LPCWSTR pChar, int nLen)
+{
+	bool lbRc = false;
+
+	// Курсор над комментарием?
+	// Попробуем найти начало имени файла
+	while ((crFrom.X) > 0 && !wcschr(bUrlMode ? pszUrlDelim : pszBreak, pChar[crFrom.X-1]))
+	{
+		if (!bUrlMode && pChar[crFrom.X] == L'/')
+		{
+			if ((crFrom.X >= 2) && ((crFrom.X + 1) < nLen)
+				&& ((pChar[crFrom.X+1] == L'/') && (pChar[crFrom.X-1] == L':')
+					&& wcschr(pszUrl, pChar[crFrom.X-2]))) // как минимум одна буква на протокол
+			{
+				crFrom.X++;
+			}
+
+			if ((crFrom.X >= 3)
+				&& ((pChar[crFrom.X-1] == L'/') && (pChar[crFrom.X-2] == L':')
+					&& wcschr(pszUrl, pChar[crFrom.X-3]))) // как минимум одна буква на протокол
+			{
+				bUrlMode = true;
+				crTo.X = crFrom.X-2;
+				crFrom.X -= 3;
+				while ((crFrom.X > 0) && wcschr(pszProtocol, pChar[crFrom.X-1]))
+					crFrom.X--;
+				break;
+			}
+			else if ((pChar[crFrom.X] == L'/') && (crFrom.X >= 1) && (pChar[crFrom.X-1] == L'/'))
+			{	
+				crFrom.X++;
+				break; // Комментарий в строке?
+			}
+		}
+		crFrom.X--;
+		if (pChar[crFrom.X] == L':')
+		{
+			if (pChar[crFrom.X+1] == L' ')
+			{
+				// ASM - подсвечивать нужно "test.asasm(1,1)"
+				// object.Exception@assembler.d(1239): test.asasm(1,1):
+				crFrom.X += 2;
+				break;
+			}
+			else if (pChar[crFrom.X+1] != L'\\' && pChar[crFrom.X+1] != L'/')
+			{
+				goto wrap; // Не оно
+			}
+		}
+	}
+	while (((crFrom.X+1) < nLen) && wcschr(pszSpacing, pChar[crFrom.X]))
+		crFrom.X++;
+	if (crFrom.X > crTo.X)
+	{
+		goto wrap; // Fail?
+	}
+
+	lbRc = true;
+wrap:
+	return lbRc;
+}
+
+bool CRealBuffer::CheckValidUrl(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out]*/, bool& bUrlMode, LPCWSTR pszUrlDelim, LPCWSTR pszUrl, LPCWSTR pszProtocol, LPCWSTR pChar, int nLen)
+{
+	bool lbRc = false;
+
+	// URL? (Курсор мог стоять над протоколом)
+	while ((crTo.X < nLen) && wcschr(pszProtocol, pChar[crTo.X]))
+		crTo.X++;
+	if (((crTo.X+1) < nLen) && (pChar[crTo.X] == L':'))
+	{
+		if (((crTo.X+4) < nLen) && (pChar[crTo.X+1] == L'/') && (pChar[crTo.X+2] == L'/'))
+		{
+			bUrlMode = true;
+			if (wcschr(pszUrl+2 /*пропустить ":/"*/, pChar[crTo.X+3]))
+			{
+				if (((crTo.X+4) < nLen) // типа file://c:\xxx ?
+					&& ((pChar[crTo.X+3] >= L'a' && pChar[crTo.X+3] <= L'z')
+						|| (pChar[crTo.X+3] >= L'A' && pChar[crTo.X+3] <= L'Z'))
+					&& (pChar[crTo.X+4] == L':'))
+				{
+					if (((crTo.X+5) < nLen) && (pChar[crTo.X+5] == L'\\'))
+					{
+						_ASSERTE(*pszUrlDelim == L'\\');
+						pszUrlDelim++;
+					}
+					crTo.X += 3;
+					crFrom = crTo;
+					bUrlMode = false;
+				}
+
+				if (bUrlMode)
+				{
+					crFrom = crTo;
+					while ((crFrom.X > 0) && wcschr(pszProtocol, pChar[crFrom.X-1]))
+						crFrom.X--;
+				}
+			}
+			else
+			{
+				goto wrap; // Fail
+			}
+		}
+	}
+
+	lbRc = true;
+wrap:
+	return lbRc;
+}
+
 ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText /*= NULL*/, size_t cchTextMax /*= 0*/)
 {
 	ExpandTextRangeType result = etr_None;
@@ -5051,8 +5161,8 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 								ucBoxSinglUpLeft, ucBoxSinglDownDblHorz, ucBoxSinglUpDblHorz, ucBoxDblDownDblHorz,
 								ucBoxDblUpDblHorz, ucBoxSinglDownHorz, ucBoxSinglUpHorz, ucBoxDblDownSinglHorz,
 								ucBoxDblUpSinglHorz, ucBoxDblVertRight, ucBoxDblVertLeft, 
-								ucBoxSinglVertRight, ucBoxSinglVertLeft, ucBoxDblVertHorz
-								};
+								ucBoxSinglVertRight, ucBoxSinglVertLeft, ucBoxDblVertHorz,
+								0};
 			const wchar_t* pszSpacing = L" \t\xB7\x2192"; //B7 - режим "Show white spaces", 2192 - символ табуляции там же
 			const wchar_t* pszSeparat = L" \t:(";
 			const wchar_t* pszTermint = L":),";
@@ -5065,96 +5175,25 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			int nColons = 0;
 			bool bUrlMode = false, bMaybeMail = false;
 			SHORT MailX = -1;
+
 			// Курсор над комментарием?
 			// Попробуем найти начало имени файла
-			const wchar_t* pszMyBreak = pszBreak;
-			while ((crFrom.X) > 0 && !wcschr(pszMyBreak, pChar[crFrom.X-1]))
-			{
-				if (!bUrlMode && pChar[crFrom.X] == L'/')
-				{
-					if ((crFrom.X >= 2) && ((crFrom.X + 1) < nLen)
-						&& ((pChar[crFrom.X+1] == L'/') && (pChar[crFrom.X-1] == L':')
-							&& wcschr(pszUrl, pChar[crFrom.X-2]))) // как минимум одна буква на протокол
-					{
-						crFrom.X++;
-					}
-
-					if ((crFrom.X >= 3)
-						&& ((pChar[crFrom.X-1] == L'/') && (pChar[crFrom.X-2] == L':')
-							&& wcschr(pszUrl, pChar[crFrom.X-3]))) // как минимум одна буква на протокол
-					{
-						bUrlMode = true;
-						pszMyBreak = pszUrlDelim;
-						crTo.X = crFrom.X-2;
-						crFrom.X -= 3;
-						while ((crFrom.X > 0) && wcschr(pszProtocol, pChar[crFrom.X-1]))
-							crFrom.X--;
-						break;
-					}
-					else if ((pChar[crFrom.X] == L'/') && (crFrom.X >= 1) && (pChar[crFrom.X-1] == L'/'))
-					{	
-						crFrom.X++;
-						break; // Комментарий в строке?
-					}
-				}
-				crFrom.X--;
-				if (pChar[crFrom.X] == L':')
-				{
-					if (pChar[crFrom.X+1] == L' ')
-					{
-						// ASM - подсвечивать нужно "test.asasm(1,1)"
-						// object.Exception@assembler.d(1239): test.asasm(1,1):
-						crFrom.X += 2;
-						break;
-					}
-					else if (pChar[crFrom.X+1] != L'\\' && pChar[crFrom.X+1] != L'/')
-					{
-						goto wrap; // Не оно
-					}
-				}
-			}
-			while (((crFrom.X+1) < nLen) && wcschr(pszSpacing, pChar[crFrom.X]))
-				crFrom.X++;
-			if (crFrom.X > crTo.X)
-			{
-				goto wrap; // Fail?
-			}
+			if (!FindRangeStart(crFrom, crTo, bUrlMode, pszBreak, pszUrlDelim, pszSpacing, pszUrl, pszProtocol, pChar, nLen))
+				goto wrap;
 
 			// URL? (Курсор мог стоять над протоколом)
-			while ((crTo.X < nLen) && wcschr(pszProtocol, pChar[crTo.X]))
-				crTo.X++;
-			if (((crTo.X+1) < nLen) && (pChar[crTo.X] == L':'))
-			{
-				if (((crTo.X+4) < nLen) && (pChar[crTo.X+1] == L'/') && (pChar[crTo.X+2] == L'/'))
-				{
-					bUrlMode = true;
-					if (wcschr(pszUrl+2 /*пропустить ":/"*/, pChar[crTo.X+3]))
-					{
-						if (((crTo.X+4) < nLen) // типа file://c:\xxx ?
-							&& ((pChar[crTo.X+3] >= L'a' && pChar[crTo.X+3] <= L'z')
-								|| (pChar[crTo.X+3] >= L'A' && pChar[crTo.X+3] <= L'Z'))
-							&& (pChar[crTo.X+4] == L':'))
-						{
-							if (((crTo.X+5) < nLen) && (pChar[crTo.X+5] == L'\\'))
-							{
-								_ASSERTE(*pszUrlDelim == L'\\');
-								pszUrlDelim++;
-							}
-							crTo.X += 5;
-						}
-					}
-					else
-					{
-						goto wrap; // Fail
-					}
-				}
-			}
+			if (!CheckValidUrl(crFrom, crTo, bUrlMode, pszUrlDelim, pszUrl, pszProtocol, pChar, nLen))
+				goto wrap;
 
 
 			// Чтобы корректно флаги обработались (типа наличие расширения и т.п.)
 			crTo.X = crFrom.X;
 
-			// Теперь - найти конец. Считаем, что конец это двоеточие, после которого идет описание ошибки
+			// Теперь - найти конец.
+			// Считаем, что для файлов конец это двоеточие, после которого идет описание ошибки
+			// Для протоколов (http/...) - первый недопустимый символ
+
+			TODO("Можно бы и просто открытие файлов прикрутить, без требования 'строки с ошибкой'");
 
 			// -- VC
 			// 1>t:\vcproject\conemu\realconsole.cpp(8104) : error C2065: 'qqq' : undeclared identifier
@@ -5175,6 +5214,8 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			// -- URL's
 			// file://c:\temp\qqq.html
 			// http://www.farmanager.com
+			// $ http://www.KKK.ru - левее слеша - не срабатывает
+			// C:\ConEmu>http://www.KKK.ru - ...
 			// -- False detects
 			// 29.11.2011 18:31:47
 			// C:\VC\unicode_far\macro.cpp  1251 Ln 5951/8291 Col 51 Ch 39 0043h 13:54
@@ -5310,7 +5351,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 					break;
 
 				crTo.X++;
-				if (wcschr(pszMyBreak, pChar[crTo.X]))
+				if (wcschr(bUrlMode ? pszUrlDelim : pszBreak, pChar[crTo.X]))
 				{
 					if (bMaybeMail)
 						break;

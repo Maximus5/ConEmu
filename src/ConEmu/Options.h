@@ -198,6 +198,44 @@ struct ConEmuHotKey
 		return false;
 	};
 
+	LPCWSTR GetDescription(wchar_t* pszDescr, int cchMaxLen, bool bAddMacroIndex = false) const
+	{
+		if (!pszDescr)
+			return L"";
+
+		LPCWSTR pszRc = pszDescr;
+		bool lbColon = false;
+
+		if (bAddMacroIndex && (HkType == chk_Macro))
+		{
+			_wsprintf(pszDescr, SKIPLEN(cchMaxLen) L"Macro %02i: ", DescrLangID-vkGuMacro01+1);
+			int nLen = lstrlen(pszDescr);
+			pszDescr += nLen;
+			cchMaxLen -= nLen;
+			lbColon = true;
+		}
+
+		if ((HkType != chk_Macro) && !LoadString(g_hInstance, DescrLangID, pszDescr, cchMaxLen))
+		{
+			if ((HkType == chk_User) && GuiMacro && *GuiMacro)
+				lstrcpyn(pszDescr, GuiMacro, cchMaxLen);
+			else
+				_wsprintf(pszDescr, SKIPLEN(cchMaxLen) L"#%i", DescrLangID);
+		}
+		else if ((cchMaxLen >= 16) && GuiMacro && *GuiMacro)
+		{
+			if (!lbColon)
+			{
+				lstrcpyn(pszDescr, L": ", cchMaxLen);
+				pszDescr += 2;
+				cchMaxLen -= 2;
+			}
+			lstrcpyn(pszDescr, GuiMacro, cchMaxLen);
+		}
+
+		return pszRc;
+	};
+
 	void Free()
 	{
 		SafeFree(GuiMacro);

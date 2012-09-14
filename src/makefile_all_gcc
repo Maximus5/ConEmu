@@ -4,7 +4,7 @@ ALLDIRS = ConEmu \
           ConEmuHk
 
 
-all: preclean $(ALLDIRS) clean
+all: preclean dirs $(ALLDIRS) clean
 
 FICTIVE=_fictive_
 $(FICTIVE):
@@ -19,7 +19,11 @@ preclean:
 	@echo prebuild cleaning
 	@rm -f ../ConEmu.exe ../ConEmuC.exe ../ConEmuHk.dll ../plugins/ConEmu/ConEmu.dll ../gcc/common/*.* ../gcc/conemu/*.* ../gcc/conemuc/*.* ../gcc/conemuhk/*.* ../gcc/ConEmuPlugin/*.* ../gcc/Plugin/*.* ../gcc/*.*
 
+.PHONY: dirs
+dirs:
+	mkdir ../Release ../Release/ConEmu
+
 .PHONY: clean
 clean:
 	@echo final cleaning
-	@rmdir /q /s ../gcc
+	@rm -rf ../gcc

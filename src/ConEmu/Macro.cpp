@@ -851,6 +851,7 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 {
 	LPWSTR pszOper = NULL, pszFile = NULL, pszParm = NULL, pszDir = NULL;
 	LPWSTR pszBuf = NULL;
+	bool bDontQuote = false;
 	int nShowCmd = SW_SHOWNORMAL;
 	
 	if (GetNextString(asArgs, pszOper))
@@ -874,6 +875,7 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 			{
 				pszBuf = lstrdup(pszCmd);
 				pszFile = pszBuf;
+				bDontQuote = true;
 			}
 		}
 
@@ -929,16 +931,19 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 					
 					if (*pszFile)
 					{
-						if (*pszFile != L'"')
+						if (!bDontQuote && (*pszFile != L'"') && (wcschr(pszFile, L' ') != NULL))
 						{
 							pArgs->pszSpecialCmd[0] = L'"';
 							_wcscpy_c(pArgs->pszSpecialCmd+1, nAllLen-1, pszFile);
-							_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L"\" ");
+							_wcscat_c(pArgs->pszSpecialCmd, nAllLen, (pszParm && *pszParm) ? L"\" " : L"\"");
 						}
 						else
 						{
 							_wcscpy_c(pArgs->pszSpecialCmd, nAllLen, pszFile);
-							_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" ");
+							if (pszParm && *pszParm)
+							{
+								_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" ");
+							}
 						}
 					}
 					

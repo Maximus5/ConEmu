@@ -79,7 +79,7 @@ struct RConStartArgs
 
 	BOOL CheckUserToken(HWND hPwd);
 
-	int ProcessNewConArg();
+	int ProcessNewConArg(bool bForceCurConsole = false);
 
 	wchar_t* CreateCommandLine();
 };

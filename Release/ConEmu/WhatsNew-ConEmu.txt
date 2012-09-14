@@ -14,7 +14,10 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.09.13
+[!] I'm bored to tell «Read Disclaimer #2». Option «Inject ConEmuHk» is off for now by default.
 [*] Some more diagnostic info on failed to start root command (shell).
+[*] Some default hotkeys are moved from Macros to User area, not to occupy Macros cells.
 [+] GuiMacro.
     Paste(4[,<Title>]) - choose file and paste full pathname
     Paste(5[,<Title>]) - choose folder and paste full path
@@ -23,6 +26,8 @@ Questions about usablity of "-new_console:s".
     "-new_console:i" - don't inject ConEmuHk into starting process.
 [%] ConEmu hungs on exit, when F-Secure is installed.
 [%] Attach does not catch console windows (regression of 120909).
+[%] Hyperlinks detector fixes.
+[%] In some cases (e.g. "far /x"), split console (Ctrl+Shift+O/E) starts program via "cmd.exe" as root console app.
 
 
 2012.09.09

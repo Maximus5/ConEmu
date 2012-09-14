@@ -236,7 +236,9 @@ BOOL RConStartArgs::CheckUserToken(HWND hPwd)
 // Returns ">0" - when changes was made
 //  0 - no changes
 // -1 - error
-int RConStartArgs::ProcessNewConArg()
+// bForceCurConsole==true, если разбор параметров идет 
+//   при запуске Tasks из GUI
+int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 {
 	bNewConsole = FALSE;
 
@@ -289,8 +291,10 @@ int RConStartArgs::ProcessNewConArg()
 			&& (pszFind[nNewConLen] == L' ' || pszFind[nNewConLen] == L':' 
 				|| pszFind[nNewConLen] == L'"' || pszFind[nNewConLen] == 0))
 		{
-			// ѕо умолчанию, принудительно включить "Press Enter or Esc to close console"
-			eConfirmation = eConfAlways;
+			// -- не будем пока, мешает. например, при запуске задач
+			//// ѕо умолчанию, принудительно включить "Press Enter or Esc to close console"
+			//if (!bForceCurConsole)
+			//	eConfirmation = eConfAlways;
 		
 			bool lbQuot = (*(pszFind-1) == L'"');
 			const wchar_t* pszEnd = pszFind+nNewConLen;

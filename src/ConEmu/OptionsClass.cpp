@@ -2241,23 +2241,24 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 		}
 		else
 		{
-			if (!LoadString(g_hInstance, ppHK->DescrLangID, szDescr, countof(szDescr)))
-			{
-				if ((ppHK->HkType == chk_User) && ppHK->GuiMacro && *ppHK->GuiMacro)
-					lstrcpyn(szDescr, ppHK->GuiMacro, countof(szDescr));
-				else
-					_wsprintf(szDescr, SKIPLEN(countof(szDescr)) L"%i", ppHK->DescrLangID);
-			}
-			else if ((ppHK->HkType == chk_User) && ppHK->GuiMacro && *ppHK->GuiMacro)
-			{
-				int nLen = lstrlen(szDescr);
-				if ((nLen + 64) < countof(szDescr))
-				{
-					wcscat_c(szDescr, L": ");
-					nLen -= 2;
-					lstrcpyn(szDescr + nLen, ppHK->GuiMacro, countof(szDescr) - nLen - 1);
-				}
-			}
+			ppHK->GetDescription(szDescr, countof(szDescr));
+			//if (!LoadString(g_hInstance, ppHK->DescrLangID, szDescr, countof(szDescr)))
+			//{
+			//	if ((ppHK->HkType == chk_User) && ppHK->GuiMacro && *ppHK->GuiMacro)
+			//		lstrcpyn(szDescr, ppHK->GuiMacro, countof(szDescr));
+			//	else
+			//		_wsprintf(szDescr, SKIPLEN(countof(szDescr)) L"%i", ppHK->DescrLangID);
+			//}
+			//else if ((ppHK->HkType == chk_User) && ppHK->GuiMacro && *ppHK->GuiMacro)
+			//{
+			//	int nLen = lstrlen(szDescr);
+			//	if ((nLen + 64) < countof(szDescr))
+			//	{
+			//		wcscat_c(szDescr, L": ");
+			//		nLen -= 2;
+			//		lstrcpyn(szDescr + nLen, ppHK->GuiMacro, countof(szDescr) - nLen - 1);
+			//	}
+			//}
 			ListView_SetItemText(hList, nItem, klc_Desc, szDescr);
 		}
 	}
@@ -2522,6 +2523,8 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 		FillHotKeysList(hWnd2, abInitial);
 		return 0;
 	}
+
+	CheckDlgButton(hWnd2, rbHotkeysAll, BST_CHECKED);
 
 	for (int i = 0; m_HotKeys[i].DescrLangID; i++)
 	{

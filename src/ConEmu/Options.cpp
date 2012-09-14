@@ -474,7 +474,7 @@ void Settings::InitSettings()
 	wndCascade = true;
 	isAutoSaveSizePos = false; mb_SizePosAutoSaved = false;
 	isConVisible = false; //isLockRealConsolePos = false;
-	isUseInjects = true;
+	isUseInjects = false; // гррр... Disclaimer#2
 	isProcessAnsi = true;
 	mb_UseClink = true;
 	#ifdef USEPORTABLEREGISTRY
@@ -4768,30 +4768,48 @@ void Settings::CheckHotkeyUnique()
 				|| (ppHK2->DescrLangID == vkCtrlTab_Down))
 				continue;
 
-			if (ppHK1->VkMod == ppHK2->VkMod)
+			// Хоткеи различаются?
+			if (ppHK1->VkMod != ppHK2->VkMod)
+				continue;
+
+			// Если совпадают - может быть это макрос, переехавший в системную область?
+			if (((ppHK1->HkType == chk_Macro) || (ppHK2->HkType == chk_Macro))
+				&& ppHK1->GuiMacro && *ppHK1->GuiMacro && ppHK2->GuiMacro && *ppHK2->GuiMacro)
 			{
-				wchar_t szDescr1[512], szDescr2[512], szKey[128];
-
-				if (ppHK1->HkType == chk_Macro)
-					_wsprintf(szDescr1, SKIPLEN(countof(szDescr1)) L"Macro %02i", ppHK1->DescrLangID-vkGuMacro01+1);
-				else if (!LoadString(g_hInstance, ppHK1->DescrLangID, szDescr1, countof(szDescr1)))
-					_wsprintf(szDescr1, SKIPLEN(countof(szDescr1)) L"%i", ppHK1->DescrLangID);
-
-				if (ppHK2->HkType == chk_Macro)
-					_wsprintf(szDescr2, SKIPLEN(countof(szDescr2)) L"Macro %02i", ppHK2->DescrLangID-vkGuMacro01+1);
-				else if (!LoadString(g_hInstance, ppHK2->DescrLangID, szDescr2, countof(szDescr2)))
-					_wsprintf(szDescr2, SKIPLEN(countof(szDescr2)) L"%i", ppHK2->DescrLangID);
-
-				GetHotkeyName(ppHK1, szKey);
-
-				int nAllLen = lstrlen(szDescr1) + lstrlen(szDescr2) + lstrlen(szKey) + 256;
-				pszFailMsg = (wchar_t*)malloc(nAllLen*sizeof(*pszFailMsg));
-				_wsprintf(pszFailMsg, SKIPLEN(nAllLen)
-					L"Hotkey <%s> is not unique\n%s\n%s",
-					szKey, szDescr1, szDescr2);
-
-				goto wrap;
+				if (lstrcmp(ppHK1->GuiMacro, ppHK2->GuiMacro) == 0)
+				{
+					if (ppHK1->HkType == chk_Macro)
+						ppHK1->VkMod = 0;
+					else
+						ppHK2->VkMod = 0;
+					continue;
+				}
 			}
+
+			wchar_t szDescr1[512], szDescr2[512], szKey[128];
+
+			ppHK1->GetDescription(szDescr1, countof(szDescr1), true);
+			ppHK2->GetDescription(szDescr2, countof(szDescr2), true);
+
+			//if (ppHK1->HkType == chk_Macro)
+			//	_wsprintf(szDescr1, SKIPLEN(countof(szDescr1)) L"Macro %02i", ppHK1->DescrLangID-vkGuMacro01+1);
+			//else if (!LoadString(g_hInstance, ppHK1->DescrLangID, szDescr1, countof(szDescr1)))
+			//	_wsprintf(szDescr1, SKIPLEN(countof(szDescr1)) L"%i", ppHK1->DescrLangID);
+
+			//if (ppHK2->HkType == chk_Macro)
+			//	_wsprintf(szDescr2, SKIPLEN(countof(szDescr2)) L"Macro %02i", ppHK2->DescrLangID-vkGuMacro01+1);
+			//else if (!LoadString(g_hInstance, ppHK2->DescrLangID, szDescr2, countof(szDescr2)))
+			//	_wsprintf(szDescr2, SKIPLEN(countof(szDescr2)) L"%i", ppHK2->DescrLangID);
+
+			GetHotkeyName(ppHK1, szKey);
+
+			int nAllLen = lstrlen(szDescr1) + lstrlen(szDescr2) + lstrlen(szKey) + 256;
+			pszFailMsg = (wchar_t*)malloc(nAllLen*sizeof(*pszFailMsg));
+			_wsprintf(pszFailMsg, SKIPLEN(nAllLen)
+				L"Hotkey <%s> is not unique\n%s\n%s",
+				szKey, szDescr1, szDescr2);
+
+			goto wrap;
 		}
 	}
 wrap:

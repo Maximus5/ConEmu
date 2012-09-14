@@ -209,4 +209,4 @@ clean:
 	@echo final cleaning
 	@$(RM) $(OBJS)
 	@$(RMDIR) $(OBJDIR)
-	@$(RMDIR) /Q /S ../../gcc
+	@$(RMDIR) ../../gcc

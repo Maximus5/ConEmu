@@ -113,6 +113,7 @@ CVConGroup* CVConGroup::SplitVConGroup(RConStartArgs::SplitType aSplitType /*eSp
 	// Параметры разбиения
 	m_SplitType = aSplitType; // eSplitNone/eSplitHorz/eSplitVert
 	mn_SplitPercent10 = max(1,min(anPercent10,999)); // (0.1% - 99.9%)*10
+	mrc_Splitter = MakeRect(0,0);
 
 	// Перенести в mp_Grp1 текущий VCon, mp_Grp2 - будет новый пустой (пока) панелью
 	mp_Grp1->mp_Item = mp_Item;
@@ -199,6 +200,7 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 	//apVCon->mp_Group = this;
 	m_SplitType = RConStartArgs::eSplitNone;
 	mn_SplitPercent10 = 500; // Default - пополам
+	mrc_Splitter = MakeRect(0,0);
 	mp_Grp1 = mp_Grp2 = NULL; // Ссылки на "дочерние" панели
 	mp_Parent = apParent; // Ссылка на "родительскую" панель
 
@@ -347,6 +349,7 @@ void CVConGroup::MoveToParent(CVConGroup* apParent)
 	apParent->mp_Item = mp_Item;
 	apParent->m_SplitType = m_SplitType; // eSplitNone/eSplitHorz/eSplitVert
 	apParent->mn_SplitPercent10 = mn_SplitPercent10; // (0.1% - 99.9%)*10
+	apParent->mrc_Splitter = mrc_Splitter;
 
 	// Ссылки на "дочерние" панели
 	apParent->mp_Grp1 = mp_Grp1;
@@ -616,9 +619,10 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 	}
 	else if (mp_Grp1 && mp_Grp2)
 	{
-		RECT rcCon1, rcCon2;
-		CalcSplitRect(rcNewCon, rcCon1, rcCon2);
+		RECT rcCon1, rcCon2, rcSplitter;
+		CalcSplitRect(rcNewCon, rcCon1, rcCon2, rcSplitter);
 
+		mrc_Splitter = rcSplitter;
 		mp_Grp1->RepositionVCon(rcCon1, bVisible);
 		mp_Grp2->RepositionVCon(rcCon2, bVisible);
 	}
@@ -629,10 +633,11 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 }
 
 // Разбиение в координатах DC (pixels)
-void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2)
+void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter)
 {
 	rcCon1 = rcNewCon;
 	rcCon2 = rcNewCon;
+	rcSplitter = MakeRect(0,0);
 
 	if (!this)
 	{
@@ -673,6 +678,7 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2)
 		}
 		UINT nScreenWidth = (nWidth * nSplit / 1000);
 		LONG nCellWidth = gpSetCls->FontWidth();
+		LONG nCon2Width;
 		if (nCellWidth > 0)
 		{
 			UINT nTotalCellCountX = nWidth / nCellWidth;
@@ -683,14 +689,19 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2)
 				nCellCountX = nTotalCellCountX - 1;
 			}
 			nScreenWidth = nCellCountX * nCellWidth;
+			nCon2Width = (nTotalCellCountX - nCellCountX) * nCellWidth;
+			_ASSERTE(nCon2Width > 0);
 		}
 		else
 		{
 			_ASSERTE(nCellWidth > 0);
+			nCon2Width = rcNewCon.right - (rcCon1.right+nPadX+rcScroll.right);
+			_ASSERTE(nCon2Width > 0);
 		}
 
 		rcCon1 = MakeRect(rcNewCon.left, rcNewCon.top, rcNewCon.left + nScreenWidth, rcNewCon.bottom);
-		rcCon2 = MakeRect(rcCon1.right+nPadX+rcScroll.right, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
+		rcCon2 = MakeRect(rcNewCon.right - nCon2Width, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
+		rcSplitter = MakeRect(rcCon1.right+1, rcCon1.top, rcCon2.left, rcCon2.bottom);
 	}
 	else
 	{
@@ -712,6 +723,7 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2)
 		}
 		UINT nScreenHeight = (nHeight * nSplit / 1000);
 		LONG nCellHeight = gpSetCls->FontHeight();
+		LONG nCon2Height;
 		if (nCellHeight > 0)
 		{
 			UINT nTotalCellCountY = nHeight / nCellHeight;
@@ -722,14 +734,18 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2)
 				nCellCountY = nTotalCellCountY - 1;
 			}
 			nScreenHeight = nCellCountY * nCellHeight;
+			nCon2Height = (nTotalCellCountY - nCellCountY) * nCellHeight;
+			_ASSERTE(nCon2Height > 0);
 		}
 		else
 		{
 			_ASSERTE(nCellHeight > 0);
+			nCon2Height = rcNewCon.bottom - (rcCon1.bottom+nPadY+rcScroll.bottom);
 		}
 
 		rcCon1 = MakeRect(rcNewCon.left, rcNewCon.top, rcNewCon.right, rcNewCon.top + nScreenHeight);
-		rcCon2 = MakeRect(rcCon1.left, rcCon1.bottom+nPadY+rcScroll.bottom, rcNewCon.right, rcNewCon.bottom);
+		rcCon2 = MakeRect(rcCon1.left, rcNewCon.bottom - nCon2Height, rcNewCon.right, rcNewCon.bottom);
+		rcSplitter = MakeRect(rcCon1.left, rcCon1.bottom, rcCon2.right, rcCon2.top);
 	}
 }
 
@@ -762,8 +778,8 @@ void CVConGroup::CalcSplitRootRect(RECT rcAll, RECT& rcCon, CVConGroup* pTarget 
 	}
 	else
 	{
-		RECT rc1, rc2;
-		CalcSplitRect(rc, rc1, rc2);
+		RECT rc1, rc2, rcSplitter;
+		CalcSplitRect(rc, rc1, rc2, rcSplitter);
 
 		_ASSERTE(pTarget == mp_Grp1 || pTarget == mp_Grp2);
 		rcCon = (pTarget == mp_Grp2) ? rc2 : rc1;
@@ -2290,7 +2306,7 @@ bool CVConGroup::ConActivate(int nCon)
 	return false;
 }
 
-CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, BOOL abAllowScripts /*= FALSE*/)
+CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)
 {
 	_ASSERTE(args!=NULL);
 	if (!gpConEmu->isMainThread())
@@ -2303,7 +2319,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, BOOL abAllowScripts 
 	CVirtualConsole* pVCon = NULL;
 
 	if (args->pszSpecialCmd)
-		args->ProcessNewConArg();
+		args->ProcessNewConArg(abForceCurConsole);
 
 	if (gpConEmu->m_InsideIntegration && gpConEmu->mb_InsideIntegrationShift)
 	{
@@ -2707,8 +2723,8 @@ void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
 			rcPixels.bottom -= gpSet->nSplitHeight;
 	}
 
-	RECT rc1 = rcPixels, rc2 = rcPixels;
-	CalcSplitRect(rcPixels, rc1, rc2);
+	RECT rc1 = rcPixels, rc2 = rcPixels, rcSplitter;
+	CalcSplitRect(rcPixels, rc1, rc2, rcSplitter);
 
 	RECT rcCon1 = CVConGroup::CalcRect(CER_CONSOLE_CUR, rc1, CER_BACK, gp_VActive);
 	RECT rcCon2 = CVConGroup::CalcRect(CER_CONSOLE_CUR, rc2, CER_BACK, gp_VActive);
