@@ -1010,12 +1010,29 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		//if (!gbSkipWowChange) wow.Disable();
 		////#endif
 
+		LPCWSTR pszRunCmpApp = NULL;
+
+		#ifdef _DEBUG
+		wchar_t szExeName[MAX_PATH+1];
+		{
+			LPCWSTR pszStart = gpszRunCmd;
+			if (NextArg(&pszStart, szExeName) == 0)
+			{
+				if (FileExists(szExeName))
+				{
+					pszRunCmpApp = szExeName;
+					pszRunCmpApp = NULL;
+				}
+			}
+		}
+		#endif
+
 		LPSECURITY_ATTRIBUTES lpSec = LocalSecurity();
 		//#ifdef _DEBUG
 		//		lpSec = NULL;
 		//#endif
 		// Ќе будем разрешать наследование, если нужно - сделаем DuplicateHandle
-		lbRc = createProcess(!gbSkipWowChange, NULL, gpszRunCmd, lpSec,lpSec, lbInheritHandle,
+		lbRc = createProcess(!gbSkipWowChange, pszRunCmpApp, gpszRunCmd, lpSec,lpSec, lbInheritHandle,
 		                      NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
 		                      |CREATE_SUSPENDED/*((gnRunMode == RM_SERVER) ? CREATE_SUSPENDED : 0)*/,
 		                      NULL, pszCurDir, &si, &pi);
@@ -3474,7 +3491,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	{
 		CheckUnicodeMode();
 
-		if (wcschr(gszComSpec, L' '))
+		// -- дл€ унификации - окавычиваем всегда
+		//if (wcschr(gszComSpec, L' '))
 		{
 			gpszRunCmd[0] = L'"';
 			_wcscpy_c(gpszRunCmd+1, nCchLen-1, gszComSpec);
@@ -3484,15 +3502,15 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 			_wcscat_c(gpszRunCmd, nCchLen, gpSrv->bK ? L"\" /K " : L"\" /C ");
 		}
-		else
-		{
-			_wcscpy_c(gpszRunCmd, nCchLen, gszComSpec);
+		//else
+		//{
+		//	_wcscpy_c(gpszRunCmd, nCchLen, gszComSpec);
 
-			if (gnCmdUnicodeMode)
-				_wcscat_c(gpszRunCmd, nCchLen, (gnCmdUnicodeMode == 2) ? L" /U" : L" /A");
+		//	if (gnCmdUnicodeMode)
+		//		_wcscat_c(gpszRunCmd, nCchLen, (gnCmdUnicodeMode == 2) ? L" /U" : L" /A");
 
-			_wcscat_c(gpszRunCmd, nCchLen, gpSrv->bK ? L" /K " : L" /C ");
-		}
+		//	_wcscat_c(gpszRunCmd, nCchLen, gpSrv->bK ? L" /K " : L" /C ");
+		//}
 
 		// Ќаверное можно положитьс€ на фар, и не кавычить самосто€тельно
 		//BOOL lbNeedQuatete = FALSE;

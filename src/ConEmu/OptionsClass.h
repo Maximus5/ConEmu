@@ -310,6 +310,7 @@ class CSettings
 		enum TabHwndIndex {
 			thi_Main = 0,
 			thi_SizePos,
+			thi_Appearance,
 			thi_Cursor,
 			thi_Startup,
 			thi_Ext,
@@ -318,6 +319,7 @@ class CSettings
 			thi_Selection,
 			thi_Far,
 			thi_Keys,
+			thi_KeybMouse,
 			thi_Tabs,
 			thi_Status,
 			thi_Colors,
@@ -437,6 +439,7 @@ class CSettings
 		// OnInitDialogPage_t: IDD_SPG_MAIN, è ò.ä.
 		LRESULT OnInitDialog_Main(HWND hWnd2);
 		LRESULT OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial);
+		LRESULT OnInitDialog_Show(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Cursor(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Startup(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
@@ -445,6 +448,7 @@ class CSettings
 		LRESULT OnInitDialog_Selection(HWND hWnd2);
 		LRESULT OnInitDialog_Far(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Keys(HWND hWnd2, BOOL abInitial);
+		LRESULT OnInitDialog_Control(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
 		LRESULT OnInitDialog_Status(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Color(HWND hWnd2);
@@ -529,6 +533,8 @@ class CSettings
 		//wchar_t temp[MAX_PATH];
 		UINT mn_MsgRecreateFont;
 		UINT mn_MsgLoadFontFromMain;
+		static int checkDlgButton(HWND hParent, WORD nCtrlId, UINT uCheck);
+		static int checkRadioButton(HWND hParent, int nIDFirstButton, int nIDLastButton, int nIDCheckButton);
 		static int IsChecked(HWND hParent, WORD nCtrlId);
 		static int GetNumber(HWND hParent, WORD nCtrlId);
 		static INT_PTR GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCWSTR asNoDefault = NULL);

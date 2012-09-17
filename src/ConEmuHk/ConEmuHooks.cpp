@@ -27,7 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-
+#define HOOKS_VIRTUAL_ALLOC
 #define DROP_SETCP_ON_WIN2K3R2
 //#define SHOWDEBUGSTR -- специально отключено, CONEMU_MINIMAL, OutputDebugString могут нарушать работу процессов
 
@@ -438,16 +438,19 @@ bool InitHooksCommon()
 		{(void*)OnGetCurrentConsoleFont, "GetCurrentConsoleFont", kernel32},
 		{(void*)OnGetConsoleFontSize,    "GetConsoleFontSize",    kernel32},
 		/* ************************ */
+
 		#ifdef _DEBUG
 		#ifndef HOOKS_COMMON_PROCESS_ONLY
 		{(void*)OnCreateNamedPipeW,		"CreateNamedPipeW",		kernel32},
 		#endif
 		#endif
+
 		#ifdef _DEBUG
-		#ifdef HOOKS_VIRTUAL_ALLOC
+		//#ifdef HOOKS_VIRTUAL_ALLOC
 		{(void*)OnVirtualAlloc,			"VirtualAlloc",			kernel32},
+		//#endif
 		#endif
-		#endif
+
 		// Microsoft bug?
 		// http://code.google.com/p/conemu-maximus5/issues/detail?id=60
 		#ifndef HOOKS_COMMON_PROCESS_ONLY
@@ -4227,15 +4230,13 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 	if (lpResult == NULL)
 	{
 		DWORD nErr = GetLastError();
-		_ASSERTE(lpResult != NULL);
-		/*
+		//_ASSERTE(lpResult != NULL);
 		wchar_t szText[MAX_PATH*2], szTitle[64];
-		msprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-		msprintf(szText, SKIPLEN(countof(szText)) L"VirtualAlloc failed (0x%08X..0x%08X)\nErrorCode=0x%08X\n\nWarning! This will be an error in Release!\n\n",
+		msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+		msprintf(szText, countof(szText), L"VirtualAlloc failed (0x%08X..0x%08X)\nErrorCode=0x%08X\n\nWarning! This will be an error in Release!\n\n",
 			(DWORD)lpAddress, (DWORD)((LPBYTE)lpAddress+dwSize));
 		GetModuleFileName(NULL, szText+lstrlen(szText), MAX_PATH);
-		Message BoxW(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OK|MB_ICONSTOP);
-		*/
+		GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OK|MB_ICONSTOP);
 		SetLastError(nErr);
 		lpResult = F(VirtualAlloc)(NULL, dwSize, flAllocationType, flProtect);
 	}

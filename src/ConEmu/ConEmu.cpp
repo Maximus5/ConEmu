@@ -321,6 +321,7 @@ CConEmuMain::CConEmuMain()
 	bool lbBaseFound = false;
 
 	// Mingw/msys installation?
+	mb_MingwMode = FALSE; // проверка ниже
 	wchar_t szBashFile[MAX_PATH+64];
 	wcscpy_c(szBashFile, ms_ConEmuExeDir);
 	pszSlash = wcsrchr(szBashFile, L'\\');
@@ -2947,7 +2948,7 @@ void CConEmuMain::AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand/*=FALSE*/
 void CConEmuMain::AskChangeBufferHeight()
 {
 	CVConGuard VCon;
-	if (GetActiveVCon(&VCon) <= 0)
+	if (GetActiveVCon(&VCon) < 0)
 		return;
 	CVirtualConsole *pVCon = VCon.VCon();
 	CRealConsole *pRCon = pVCon->RCon();
@@ -3018,7 +3019,7 @@ void CConEmuMain::AskChangeBufferHeight()
 void CConEmuMain::AskChangeAlternative()
 {
 	CVConGuard VCon;
-	if (GetActiveVCon(&VCon) <= 0)
+	if (GetActiveVCon(&VCon) < 0)
 		return;
 	CVirtualConsole *pVCon = VCon.VCon();
 	CRealConsole *pRCon = pVCon->RCon();

@@ -676,7 +676,7 @@ bool CConEmuCtrl::key_BufferScroll(bool TestOnly, BYTE vk, CRealConsole* pRCon)
 {
 	if (!pRCon
 		|| !pRCon->isBufferHeight()
-		|| pRCon->isFarBufferSupported())
+		|| ((pRCon->GetActiveBufferType() == rbt_Primary) && pRCon->isFarBufferSupported()))
 	{
 		return false;
 	}

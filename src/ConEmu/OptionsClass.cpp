@@ -657,6 +657,7 @@ void CSettings::InitVars_Pages()
 		// ѕри добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
 		{IDD_SPG_MAIN,        0, L"Main",           thi_Main/*,    OnInitDialog_Main*/},
 		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos/*, OnInitDialog_WndPosSize*/},
+		{IDD_SPG_SHOW,  1, L"Appearance",     thi_Appearance/*, OnInitDialog_Show*/},
 		{IDD_SPG_UPDATE,      1, L"Update",         thi_Update/*,  OnInitDialog_Update*/},
 		{IDD_SPG_STARTUP,     0, L"Startup",        thi_Startup/*, OnInitDialog_Startup*/},
 		{IDD_SPG_CMDTASKS,    1, L"Tasks",          thi_Tasks/*,   OnInitDialog_CmdTasks*/},
@@ -671,6 +672,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_INTEGRATION, 1, L"Integration",    thi_Integr/*,  OnInitDialog_Integr*/},
 		{IDD_SPG_APPDISTINCT, 1, L"App distinct",   thi_Apps/*,    OnInitDialog_CmdTasks*/},
 		{IDD_SPG_KEYS,        0, L"Keys & Macro",   thi_Keys/*,    OnInitDialog_Keys*/},
+		{IDD_SPG_CONTROL,  1, L"Controls",       thi_KeybMouse/*,OnInitDialog_Control*/},
 		{IDD_SPG_SELECTION,   1, L"Mark & Paste",   thi_Selection/*OnInitDialog_Selection*/},
 		{IDD_SPG_FEATURE_FAR, 0, L"Far Manager",    thi_Far/*,     OnInitDialog_Ext*/},
 		{IDD_SPG_VIEWS,       1, L"Views",          thi_Views/*,   OnInitDialog_Views*/},
@@ -1417,7 +1419,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 			SendDlgItemMessage(hWnd2, lbExtendFontNormalIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
 		}
 
-		CheckDlgButton(hWnd2, cbExtendFonts, gpSet->AppStd.isExtendFonts);
+		checkDlgButton(hWnd2, cbExtendFonts, gpSet->AppStd.isExtendFonts);
 
 		_wsprintf(temp, SKIPLEN(countof(temp))(gpSet->AppStd.nFontBoldColor<16) ? L"%2i" : L"None", gpSet->AppStd.nFontBoldColor);
 		SelectStringExact(hWnd2, lbExtendFontBoldIdx, temp);
@@ -1426,7 +1428,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 		_wsprintf(temp, SKIPLEN(countof(temp))(gpSet->AppStd.nFontNormalColor<16) ? L"%2i" : L"None", gpSet->AppStd.nFontNormalColor);
 		SelectStringExact(hWnd2, lbExtendFontNormalIdx, temp);
 
-		CheckDlgButton(hWnd2, cbFontAuto, gpSet->isFontAutoSize);
+		checkDlgButton(hWnd2, cbFontAuto, gpSet->isFontAutoSize);
 
 		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", CurFontSizeY);
 		//upToFontHeight = LogFont.lfHeight;
@@ -1454,9 +1456,9 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	
 	MCHKHEAP
 	SetDlgItemText(hWnd2, tBgImage, gpSet->sBgImage);
-	//CheckDlgButton(hWnd2, rBgSimple, BST_CHECKED);
+	//checkDlgButton(hWnd2, rBgSimple, BST_CHECKED);
 
-	CheckDlgButton(mh_Tabs[thi_Main], rbBgReplaceIndexes, BST_CHECKED);
+	checkDlgButton(mh_Tabs[thi_Main], rbBgReplaceIndexes, BST_CHECKED);
 	FillBgImageColors();
 
 	TCHAR tmp[255];
@@ -1489,31 +1491,75 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	SendDlgItemMessage(hWnd2, slDarker, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(0, 255));
 	SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
 	
-	//CheckDlgButton(hWnd2, rBgUpLeft+(UINT)gpSet->bgOperation, BST_CHECKED);
+	//checkDlgButton(hWnd2, rBgUpLeft+(UINT)gpSet->bgOperation, BST_CHECKED);
 	BYTE b = gpSet->bgOperation;
 	FillListBoxByte(hWnd2, lbBgPlacement, SettingsNS::szBgOper, SettingsNS::nBgOper, b);
 
-	CheckDlgButton(hWnd2, cbBgAllowPlugin, BST(gpSet->isBgPluginAllowed));
+	checkDlgButton(hWnd2, cbBgAllowPlugin, BST(gpSet->isBgPluginAllowed));
 
-	CheckDlgButton(hWnd2, cbBgImage, BST(gpSet->isShowBgImage));
+	checkDlgButton(hWnd2, cbBgImage, BST(gpSet->isShowBgImage));
 	EnableWindow(GetDlgItem(hWnd2, tBgImage), gpSet->isShowBgImage);
 	EnableWindow(GetDlgItem(hWnd2, bBgImage), gpSet->isShowBgImage);
 
-	CheckRadioButton(hWnd2, rNoneAA, rCTAA,
+	checkRadioButton(hWnd2, rNoneAA, rCTAA,
 		(LogFont.lfQuality == CLEARTYPE_NATURAL_QUALITY) ? rCTAA :
 		(LogFont.lfQuality == ANTIALIASED_QUALITY) ? rStandardAA : rNoneAA);
 
 
 	// 3d state - force center symbols in cells
-	CheckDlgButton(hWnd2, cbMonospace, BST(gpSet->isMonospace));
+	checkDlgButton(hWnd2, cbMonospace, BST(gpSet->isMonospace));
 
-	CheckDlgButton(hWnd2, cbBold, (LogFont.lfWeight == FW_BOLD) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbBold, (LogFont.lfWeight == FW_BOLD) ? BST_CHECKED : BST_UNCHECKED);
 
-	CheckDlgButton(hWnd2, cbItalic, LogFont.lfItalic ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbItalic, LogFont.lfItalic ? BST_CHECKED : BST_UNCHECKED);
 
-	CheckDlgButton(hWnd2, cbFixFarBorders, BST(gpSet->isFixFarBorders));
+	checkDlgButton(hWnd2, cbFixFarBorders, BST(gpSet->isFixFarBorders));
 
 	mn_LastChangingFontCtrlId = 0;
+	RegisterTipsFor(hWnd2);
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
+{
+	checkDlgButton(hWnd2, cbMinToTray, gpSet->isMinToTray);
+	EnableWindow(GetDlgItem(hWnd2, cbMinToTray), !gpConEmu->ForceMinimizeToTray);
+
+	checkDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon);
+
+	//checkDlgButton(hWnd2, cbTabsOnTaskBar, gpSet->m_isTabsOnTaskBar);
+	checkRadioButton(hWnd2, rbTaskbarBtnActive, rbTaskbarBtnWin7, 
+		(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
+		(gpSet->m_isTabsOnTaskBar == 1) ? rbTaskbarBtnAll
+		: rbTaskbarBtnActive);
+
+	checkDlgButton(hWnd2, cbHideCaption, gpSet->isHideCaption);
+
+	checkDlgButton(hWnd2, cbHideCaptionAlways, gpSet->isHideCaptionAlways());
+	EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
+
+	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
+	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
+	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
+
+	checkDlgButton(hWnd2, cbEnhanceGraphics, gpSet->isEnhanceGraphics);
+	
+	//checkDlgButton(hWnd2, cbEnhanceButtons, gpSet->isEnhanceButtons);
+
+	checkDlgButton(hWnd2, cbAlwaysShowScrollbar, gpSet->isAlwaysShowScrollbar);
+	SetDlgItemInt(hWnd2, tScrollAppearDelay, gpSet->nScrollBarAppearDelay, FALSE);
+	SetDlgItemInt(hWnd2, tScrollDisappearDelay, gpSet->nScrollBarDisappearDelay, FALSE);
+
+	checkDlgButton(hWnd2, cbDesktopMode, gpSet->isDesktopMode);
+
+	checkDlgButton(hWnd2, cbAlwaysOnTop, gpSet->isAlwaysOnTop);
+
+	#ifdef _DEBUG
+	checkDlgButton(hWnd2, cbTabsInCaption, gpSet->isTabsInCaption);
+	#else
+	ShowWindow(GetDlgItem(hWnd2, cbTabsInCaption), SW_HIDE);
+	#endif
+
 	RegisterTipsFor(hWnd2);
 	return 0;
 }
@@ -1522,18 +1568,18 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 {
 	_ASSERTE(mh_Tabs[thi_SizePos] == hWnd2);
 
-	CheckDlgButton(hWnd2, cbAutoSaveSizePos, gpSet->isAutoSaveSizePos);
+	checkDlgButton(hWnd2, cbAutoSaveSizePos, gpSet->isAutoSaveSizePos);
 
-	CheckDlgButton(hWnd2, cbUseCurrentSizePos, gpSet->isUseCurrentSizePos);
+	checkDlgButton(hWnd2, cbUseCurrentSizePos, gpSet->isUseCurrentSizePos);
 
 	if (!gpSet->isUseCurrentSizePos)
-		CheckRadioButton(hWnd2, rNormal, rFullScreen, gpSet->_WindowMode);
+		checkRadioButton(hWnd2, rNormal, rFullScreen, gpSet->_WindowMode);
 	else if (gpConEmu->isFullScreen())
-		CheckRadioButton(hWnd2, rNormal, rFullScreen, rFullScreen);
+		checkRadioButton(hWnd2, rNormal, rFullScreen, rFullScreen);
 	else if (gpConEmu->isZoomed())
-		CheckRadioButton(hWnd2, rNormal, rFullScreen, rMaximized);
+		checkRadioButton(hWnd2, rNormal, rFullScreen, rMaximized);
 	else
-		CheckRadioButton(hWnd2, rNormal, rFullScreen, rNormal);
+		checkRadioButton(hWnd2, rNormal, rFullScreen, rNormal);
 
 	//swprintf_c(temp, L"%i", wndWidth);   SetDlgItemText(hWnd2, tWndWidth, temp);
 	SendDlgItemMessage(hWnd2, tWndWidth, EM_SETLIMITTEXT, 3, 0);
@@ -1549,10 +1595,10 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 
 	UpdatePos(gpConEmu->wndX, gpConEmu->wndY, true);
 
-	CheckRadioButton(hWnd2, rCascade, rFixed, gpSet->wndCascade ? rCascade : rFixed);
+	checkRadioButton(hWnd2, rCascade, rFixed, gpSet->wndCascade ? rCascade : rFixed);
 
 
-	CheckDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
+	checkDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
 	TODO("Ќадо бы увеличить, но нужно сервер допиливать");
 	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 4, 0);
 	SetDlgItemInt(hWnd2, tLongOutputHeight, gpSet->DefaultBufferHeight, FALSE);
@@ -1571,21 +1617,32 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_SETCURSEL, !gpSet->ntvdmHeight ? 0 :
 	                   ((gpSet->ntvdmHeight == 25) ? 1 : ((gpSet->ntvdmHeight == 28) ? 2 : ((gpSet->ntvdmHeight == 43) ? 3 : 4))), 0); //-V112
 
+
+	checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
+	SetDlgItemInt(hWnd2, tPadSize, gpSet->nCenterConsolePad, FALSE);
+
+	checkDlgButton(hWnd2, cbSnapToDesktopEdges, gpSet->isSnapToDesktopEdges);
+
+	checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbQuakeAutoHide, (gpSet->isQuakeStyle == 2) ? BST_CHECKED : BST_UNCHECKED);
+	EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
+
+
 	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
 LRESULT CSettings::OnInitDialog_Cursor(HWND hWnd2, BOOL abInitial)
 {
-	CheckRadioButton(hWnd2, rCursorV, rCursorH, gpSet->AppStd.isCursorV ? rCursorV : rCursorH);
+	checkRadioButton(hWnd2, rCursorV, rCursorH, gpSet->AppStd.isCursorV ? rCursorV : rCursorH);
 
-	CheckDlgButton(hWnd2, cbCursorColor, gpSet->AppStd.isCursorColor);
+	checkDlgButton(hWnd2, cbCursorColor, gpSet->AppStd.isCursorColor);
 
-	CheckDlgButton(hWnd2, cbCursorBlink, gpSet->AppStd.isCursorBlink);
+	checkDlgButton(hWnd2, cbCursorBlink, gpSet->AppStd.isCursorBlink);
 
-	CheckDlgButton(hWnd2, cbBlockInactiveCursor, gpSet->AppStd.isCursorBlockInactive);
+	checkDlgButton(hWnd2, cbBlockInactiveCursor, gpSet->AppStd.isCursorBlockInactive);
 
-	CheckDlgButton(hWnd2, cbCursorIgnoreSize, gpSet->AppStd.isCursorIgnoreSize);
+	checkDlgButton(hWnd2, cbCursorIgnoreSize, gpSet->AppStd.isCursorIgnoreSize);
 
 	SetDlgItemInt(hWnd2, tCursorFixedSize, gpSet->AppStd.nCursorFixedSize, FALSE);
 	SetDlgItemInt(hWnd2, tCursorMinSize, gpSet->AppStd.nCursorMinSize, FALSE);
@@ -1616,7 +1673,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 		{
 			BOOL bInitial = (lParam != 0); UNREFERENCED_PARAMETER(bInitial);
 
-			CheckRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp+gpSet->nStartType);
+			checkRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp+gpSet->nStartType);
 
 			SetDlgItemText(hWnd2, tCmdLine, gpSet->psStartSingleApp ? gpSet->psStartSingleApp : L"");
 
@@ -1636,7 +1693,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 					// 0 -- csNoTask
 					// «адачи с таким именем больше нет - прыгаем на " омандную строку"
 					gpSet->nStartType = 0;
-					CheckRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp);
+					checkRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp);
 				}
 			}
 
@@ -1758,7 +1815,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 								SafeFree(pszName);
 								// «адачи с таким именем больше нет - прыгаем на " омандную строку"
 								gpSet->nStartType = 0;
-								CheckRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp);
+								checkRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp);
 								pageOpProc_Start(hWnd2, WM_COMMAND, rbStartSingleApp+gpSet->nStartType, 0);
 							}
 
@@ -1804,71 +1861,40 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 
 LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 {
-	CheckDlgButton(hWnd2, cbMinToTray, gpSet->isMinToTray);
-	EnableWindow(GetDlgItem(hWnd2, cbMinToTray), !gpConEmu->ForceMinimizeToTray);
+	checkDlgButton(hWnd2, cbAutoRegFonts, gpSet->isAutoRegisterFonts);
 
-	CheckDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
+	checkDlgButton(hWnd2, cbDebugSteps, gpSet->isDebugSteps);
 
-	CheckDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon);
+	checkDlgButton(hWnd2, cbMonitorConsoleLang, gpSet->isMonitorConsoleLang);
 
-	CheckDlgButton(hWnd2, cbAutoRegFonts, gpSet->isAutoRegisterFonts);
+	//checkDlgButton(hWnd2, cbConsoleTextSelection, gpSet->isConsoleTextSelection);
 
-	CheckDlgButton(hWnd2, cbDebugSteps, gpSet->isDebugSteps);
+	checkDlgButton(hWnd2, cbSleepInBackground, gpSet->isSleepInBackground);
 
-	CheckDlgButton(hWnd2, cbEnhanceGraphics, gpSet->isEnhanceGraphics);
-	
-	CheckDlgButton(hWnd2, cbEnhanceButtons, gpSet->isEnhanceButtons);
+	checkDlgButton(hWnd2, cbVisible, gpSet->isConVisible);
 
-	CheckDlgButton(hWnd2, cbFixAltOnAltTab, gpSet->isFixAltOnAltTab);
+	checkDlgButton(hWnd2, cbUseInjects, gpSet->isUseInjects);
 
-	CheckDlgButton(hWnd2, cbEnableMouse, !gpSet->isDisableMouse);
-	CheckDlgButton(hWnd2, cbSkipActivation, gpSet->isMouseSkipActivation);
-	CheckDlgButton(hWnd2, cbSkipMove, gpSet->isMouseSkipMoving);
+	checkDlgButton(hWnd2, cbProcessAnsi, gpSet->isProcessAnsi);
 
-	CheckDlgButton(hWnd2, cbMonitorConsoleLang, gpSet->isMonitorConsoleLang);
+	checkDlgButton(hWnd2, cbUseClink, gpSet->isUseClink());
 
-	CheckDlgButton(hWnd2, cbSkipFocusEvents, gpSet->isSkipFocusEvents);
-
-	//CheckDlgButton(hWnd2, cbConsoleTextSelection, gpSet->isConsoleTextSelection);
-
-	CheckDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
-	SetDlgItemInt(hWnd2, tPadSize, gpSet->nCenterConsolePad, FALSE);
-
-	CheckDlgButton(hWnd2, cbAlwaysShowScrollbar, gpSet->isAlwaysShowScrollbar);
-	SetDlgItemInt(hWnd2, tScrollAppearDelay, gpSet->nScrollBarAppearDelay, FALSE);
-	SetDlgItemInt(hWnd2, tScrollDisappearDelay, gpSet->nScrollBarDisappearDelay, FALSE);
-
-	CheckDlgButton(hWnd2, cbDesktopMode, gpSet->isDesktopMode);
-
-	CheckDlgButton(hWnd2, cbSnapToDesktopEdges, gpSet->isSnapToDesktopEdges);
-
-	CheckDlgButton(hWnd2, cbAlwaysOnTop, gpSet->isAlwaysOnTop);
-
-	CheckDlgButton(hWnd2, cbSleepInBackground, gpSet->isSleepInBackground);
-
-	CheckDlgButton(hWnd2, cbDisableAllFlashing, gpSet->isDisableAllFlashing);
-
-	CheckDlgButton(hWnd2, cbVisible, gpSet->isConVisible);
-
-	CheckDlgButton(hWnd2, cbUseInjects, gpSet->isUseInjects);
-
-	CheckDlgButton(hWnd2, cbShowWasHiddenMsg, gpSet->isDownShowHiddenMessage ? BST_UNCHECKED : BST_CHECKED);
-
-	CheckDlgButton(hWnd2, cbProcessAnsi, gpSet->isProcessAnsi);
-
-	CheckDlgButton(hWnd2, cbUseClink, gpSet->isUseClink());
-
-	CheckDlgButton(hWnd2, cbDosBox, gpConEmu->mb_DosBoxExists);
+	checkDlgButton(hWnd2, cbDosBox, gpConEmu->mb_DosBoxExists);
 	// изменение пока запрещено
 	// или чтобы ругнутьс€, если DosBox не установлен
 	EnableWindow(GetDlgItem(hWnd2, cbDosBox), !gpConEmu->mb_DosBoxExists);
 	//EnableWindow(GetDlgItem(hWnd2, bDosBoxSettings), FALSE); // изменение пока запрещено
 	ShowWindow(GetDlgItem(hWnd2, bDosBoxSettings), SW_HIDE);
 
+	checkDlgButton(hWnd2, cbShowWasHiddenMsg, gpSet->isDownShowHiddenMessage ? BST_UNCHECKED : BST_CHECKED);
+
+	checkDlgButton(hWnd2, cbDisableAllFlashing, gpSet->isDisableAllFlashing);
+
+
 	#ifdef USEPORTABLEREGISTRY
 	if (gpConEmu->mb_PortableRegExist)
 	{
-		CheckDlgButton(hWnd2, cbPortableRegistry, gpSet->isPortableReg);
+		checkDlgButton(hWnd2, cbPortableRegistry, gpSet->isPortableReg);
 		EnableWindow(GetDlgItem(hWnd2, bPortableRegistrySettings), FALSE); // изменение пока запрещено
 	}
 	else
@@ -1878,23 +1904,6 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 		EnableWindow(GetDlgItem(hWnd2, bPortableRegistrySettings), FALSE); // изменение пока запрещено
 	}
 	
-	#ifdef _DEBUG
-	CheckDlgButton(hWnd2, cbTabsInCaption, gpSet->isTabsInCaption);
-	#else
-	ShowWindow(GetDlgItem(hWnd2, cbTabsInCaption), SW_HIDE);
-	#endif
-
-	CheckDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle);
-
-	CheckDlgButton(hWnd2, cbHideCaption, gpSet->isHideCaption);
-
-	CheckDlgButton(hWnd2, cbHideCaptionAlways, gpSet->isHideCaptionAlways());
-	EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
-
-	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
-	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
-	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
-
 	RegisterTipsFor(hWnd2);
 	return 0;
 }
@@ -1913,17 +1922,17 @@ void CSettings::UpdateComSpecUncSupport()
 LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 {
 	_ASSERTE((rbComspecAuto+cst_Explicit)==rbComspecExplicit && (rbComspecAuto+cst_Cmd)==rbComspecCmd  && (rbComspecAuto+cst_EnvVar)==rbComspecEnvVar);
-	CheckRadioButton(hWnd2, rbComspecAuto, rbComspecExplicit, rbComspecAuto+gpSet->ComSpec.csType);
+	checkRadioButton(hWnd2, rbComspecAuto, rbComspecExplicit, rbComspecAuto+gpSet->ComSpec.csType);
 
 	SetDlgItemText(hWnd2, tComspecExplicit, gpSet->ComSpec.ComspecExplicit);
 	SendDlgItemMessage(hWnd2, tComspecExplicit, EM_SETLIMITTEXT, countof(gpSet->ComSpec.ComspecExplicit)-1, 0);
 
 	_ASSERTE((rbComspec_OSbit+csb_SameApp)==rbComspec_AppBit && (rbComspec_OSbit+csb_x32)==rbComspec_x32);
-	CheckRadioButton(hWnd2, rbComspec_OSbit, rbComspec_x32, rbComspec_OSbit+gpSet->ComSpec.csBits);
+	checkRadioButton(hWnd2, rbComspec_OSbit, rbComspec_x32, rbComspec_OSbit+gpSet->ComSpec.csBits);
 
-	CheckDlgButton(hWnd2, cbComspecUpdateEnv, gpSet->ComSpec.isUpdateEnv ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(hWnd2, cbAddConEmu2Path, gpSet->ComSpec.isAddConEmu2Path ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(hWnd2, cbComspecUncPaths, gpSet->ComSpec.isAllowUncPaths ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbComspecUpdateEnv, gpSet->ComSpec.isUpdateEnv ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbAddConEmu2Path, gpSet->ComSpec.isAddConEmu2Path ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbComspecUncPaths, gpSet->ComSpec.isAllowUncPaths ? BST_CHECKED : BST_UNCHECKED);
 
 	// Cmd.exe output cp
 	if (abInitial)
@@ -1941,7 +1950,7 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 
 //LRESULT CSettings::OnInitDialog_Output(HWND hWnd2, bool abInitial)
 //{
-//	CheckDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
+//	checkDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
 //	
 //	wchar_t sz[16];
 //	TODO("Ќадо бы увеличить, но нужно сервер допиливать");
@@ -1976,22 +1985,22 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 
 LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 {
-	CheckRadioButton(hWnd2, rbCTSNever, rbCTSBufferOnly,
+	checkRadioButton(hWnd2, rbCTSNever, rbCTSBufferOnly,
 		(gpSet->isConsoleTextSelection == 0) ? rbCTSNever :
 		(gpSet->isConsoleTextSelection == 1) ? rbCTSAlways : rbCTSBufferOnly);
 
-	CheckDlgButton(hWnd2, cbCTSAutoCopy, gpSet->isCTSAutoCopy);
-	CheckDlgButton(hWnd2, cbCTSEndOnTyping, gpSet->isCTSEndOnTyping);
-	CheckDlgButton(hWnd2, cbCTSEndOnKeyPress, (gpSet->isCTSEndOnTyping != 0) && gpSet->isCTSEndOnKeyPress);
+	checkDlgButton(hWnd2, cbCTSAutoCopy, gpSet->isCTSAutoCopy);
+	checkDlgButton(hWnd2, cbCTSEndOnTyping, gpSet->isCTSEndOnTyping);
+	checkDlgButton(hWnd2, cbCTSEndOnKeyPress, (gpSet->isCTSEndOnTyping != 0) && gpSet->isCTSEndOnKeyPress);
 	EnableWindow(GetDlgItem(hWnd2, cbCTSEndOnKeyPress), gpSet->isCTSEndOnTyping!=0);
-	CheckDlgButton(hWnd2, cbCTSFreezeBeforeSelect, gpSet->isCTSFreezeBeforeSelect);
-	CheckDlgButton(hWnd2, cbCTSBlockSelection, gpSet->isCTSSelectBlock);
+	checkDlgButton(hWnd2, cbCTSFreezeBeforeSelect, gpSet->isCTSFreezeBeforeSelect);
+	checkDlgButton(hWnd2, cbCTSBlockSelection, gpSet->isCTSSelectBlock);
 	DWORD VkMod = gpSet->GetHotkeyById(vkCTSVkBlock);
 	FillListBoxByte(hWnd2, lbCTSBlockSelection, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
-	CheckDlgButton(hWnd2, cbCTSTextSelection, gpSet->isCTSSelectText);
+	checkDlgButton(hWnd2, cbCTSTextSelection, gpSet->isCTSSelectText);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkText);
 	FillListBoxByte(hWnd2, lbCTSTextSelection, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
-	CheckDlgButton(hWnd2, (gpSet->isCTSActMode==1)?rbCTSActAlways:rbCTSActBufferOnly, BST_CHECKED);
+	checkDlgButton(hWnd2, (gpSet->isCTSActMode==1)?rbCTSActAlways:rbCTSActBufferOnly, BST_CHECKED);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkAct);
 
 	FillListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
@@ -2005,26 +2014,20 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 		SettingsNS::szColorIdx, SettingsNS::nColorIdx, idxBack);
 
 	// Prompt click
-	CheckDlgButton(hWnd2, cbCTSClickPromptPosition, gpSet->AppStd.isCTSClickPromptPosition);
+	checkDlgButton(hWnd2, cbCTSClickPromptPosition, gpSet->AppStd.isCTSClickPromptPosition);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkPromptClk);
 	FillListBoxByte(hWnd2, lbCTSClickPromptPosition, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 
-	// Ќе совсем выделение, но в том же диалоге
-	CheckDlgButton(hWnd2, cbFarGotoEditor, gpSet->isFarGotoEditor);
-	VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
-	FillListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
-	SetDlgItemText(hWnd2, tGotoEditorCmd, gpSet->sFarGotoEditor);
-
-	CheckDlgButton(hWnd2, cbCTSDetectLineEnd, gpSet->AppStd.isCTSDetectLineEnd);
-	CheckDlgButton(hWnd2, cbCTSBashMargin, gpSet->AppStd.isCTSBashMargin);
-	CheckDlgButton(hWnd2, cbCTSTrimTrailing, gpSet->AppStd.isCTSTrimTrailing);
+	checkDlgButton(hWnd2, cbCTSDetectLineEnd, gpSet->AppStd.isCTSDetectLineEnd);
+	checkDlgButton(hWnd2, cbCTSBashMargin, gpSet->AppStd.isCTSBashMargin);
+	checkDlgButton(hWnd2, cbCTSTrimTrailing, gpSet->AppStd.isCTSTrimTrailing);
 	BYTE b = gpSet->AppStd.isCTSEOL;
 	FillListBoxByte(hWnd2, lbCTSEOL, SettingsNS::szCRLF, SettingsNS::nCRLF, b);
 
-	CheckDlgButton(hWnd2, cbClipShiftIns, gpSet->AppStd.isPasteAllLines);
-	CheckDlgButton(hWnd2, cbClipCtrlV, gpSet->AppStd.isPasteFirstLine);
-	CheckDlgButton(hWnd2, cbClipConfirmEnter, gpSet->isPasteConfirmEnter);
-	CheckDlgButton(hWnd2, cbClipConfirmLimit, (gpSet->nPasteConfirmLonger!=0));
+	checkDlgButton(hWnd2, cbClipShiftIns, gpSet->AppStd.isPasteAllLines);
+	checkDlgButton(hWnd2, cbClipCtrlV, gpSet->AppStd.isPasteFirstLine);
+	checkDlgButton(hWnd2, cbClipConfirmEnter, gpSet->isPasteConfirmEnter);
+	checkDlgButton(hWnd2, cbClipConfirmLimit, (gpSet->nPasteConfirmLonger!=0));
 	SetDlgItemInt(hWnd2, tClipConfirmLimit, gpSet->nPasteConfirmLonger, FALSE);
 
 	CheckSelectionModifiers();
@@ -2036,7 +2039,7 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 
 void CSettings::CheckSelectionModifiers()
 {
-	WORD nCtrlID[] = {lbCTSBlockSelection, lbCTSTextSelection, lbCTSClickPromptPosition, lbFarGotoEditorVk};
+	WORD nCtrlID[] = {lbCTSBlockSelection, lbCTSTextSelection, lbCTSClickPromptPosition/*, lbFarGotoEditorVk*/};
 	bool bEnabled[] = {gpSet->isCTSSelectBlock, gpSet->isCTSSelectText, gpSet->AppStd.isCTSClickPromptPosition, gpSet->isFarGotoEditor};
 	BYTE Vk[] = {0,0,0,0};
 	LPCWSTR Descr[] = {L"Block selection", L"Text selection", L"Prompt position", L"Highlight and goto"};
@@ -2090,48 +2093,48 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 		return 0;
 
 	_ASSERTE(gpSet->isRClickSendKey==0 || gpSet->isRClickSendKey==1 || gpSet->isRClickSendKey==2);
-	CheckDlgButton(hWnd2, cbRClick, gpSet->isRClickSendKey);
+	checkDlgButton(hWnd2, cbRClick, gpSet->isRClickSendKey);
 	SetDlgItemText(hWnd2, tRClickMacro, gpSet->RClickMacro());
 
-	CheckDlgButton(hWnd2, cbSafeFarClose, gpSet->isSafeFarClose);
+	checkDlgButton(hWnd2, cbSafeFarClose, gpSet->isSafeFarClose);
 	SetDlgItemText(hWnd2, tSafeFarCloseMacro, gpSet->SafeFarCloseMacro());
 
 	SetDlgItemText(hWnd2, tCloseTabMacro, gpSet->TabCloseMacro());
 	
 	SetDlgItemText(hWnd2, tSaveAllMacro, gpSet->SaveAllMacro());
 
-	CheckDlgButton(hWnd2, cbFARuseASCIIsort, gpSet->isFARuseASCIIsort);
+	checkDlgButton(hWnd2, cbFARuseASCIIsort, gpSet->isFARuseASCIIsort);
 
-	CheckDlgButton(hWnd2, cbShellNoZoneCheck, gpSet->isShellNoZoneCheck);
+	checkDlgButton(hWnd2, cbShellNoZoneCheck, gpSet->isShellNoZoneCheck);
 
-	CheckDlgButton(hWnd2, cbKeyBarRClick, gpSet->isKeyBarRClick);
+	checkDlgButton(hWnd2, cbKeyBarRClick, gpSet->isKeyBarRClick);
 
-	CheckDlgButton(hWnd2, cbFarHourglass, gpSet->isFarHourglass);
+	checkDlgButton(hWnd2, cbFarHourglass, gpSet->isFarHourglass);
 
-	CheckDlgButton(hWnd2, cbExtendUCharMap, gpSet->isExtendUCharMap);
+	checkDlgButton(hWnd2, cbExtendUCharMap, gpSet->isExtendUCharMap);
 
-	CheckDlgButton(hWnd2, cbDragL, (gpSet->isDragEnabled & DRAG_L_ALLOWED) ? BST_CHECKED : BST_UNCHECKED);
-    CheckDlgButton(hWnd2, cbDragR, (gpSet->isDragEnabled & DRAG_R_ALLOWED) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbDragL, (gpSet->isDragEnabled & DRAG_L_ALLOWED) ? BST_CHECKED : BST_UNCHECKED);
+    checkDlgButton(hWnd2, cbDragR, (gpSet->isDragEnabled & DRAG_R_ALLOWED) ? BST_CHECKED : BST_UNCHECKED);
 
     _ASSERTE(gpSet->isDropEnabled==0 || gpSet->isDropEnabled==1 || gpSet->isDropEnabled==2);
-	CheckDlgButton(hWnd2, cbDropEnabled, gpSet->isDropEnabled);
+	checkDlgButton(hWnd2, cbDropEnabled, gpSet->isDropEnabled);
 
-	CheckDlgButton(hWnd2, cbDnDCopy, gpSet->isDefCopy);
+	checkDlgButton(hWnd2, cbDnDCopy, gpSet->isDefCopy);
 
-	CheckDlgButton(hWnd2, cbDropUseMenu, gpSet->isDropUseMenu);
+	checkDlgButton(hWnd2, cbDropUseMenu, gpSet->isDropUseMenu);
 
 	// Overlay
-	CheckDlgButton(hWnd2, cbDragImage, gpSet->isDragOverlay);
+	checkDlgButton(hWnd2, cbDragImage, gpSet->isDragOverlay);
 
-	CheckDlgButton(hWnd2, cbDragIcons, gpSet->isDragShowIcons);
+	checkDlgButton(hWnd2, cbDragIcons, gpSet->isDragShowIcons);
 
-	CheckDlgButton(hWnd2, cbRSelectionFix, gpSet->isRSelFix);
+	checkDlgButton(hWnd2, cbRSelectionFix, gpSet->isRSelFix);
 
-	CheckDlgButton(hWnd2, cbDragPanel, gpSet->isDragPanel);
-	CheckDlgButton(hWnd2, cbDragPanelBothEdges, gpSet->isDragPanelBothEdges);
+	checkDlgButton(hWnd2, cbDragPanel, gpSet->isDragPanel);
+	checkDlgButton(hWnd2, cbDragPanelBothEdges, gpSet->isDragPanelBothEdges);
 
 	_ASSERTE(gpSet->isDisableFarFlashing==0 || gpSet->isDisableFarFlashing==1 || gpSet->isDisableFarFlashing==2);
-	CheckDlgButton(hWnd2, cbDisableFarFlashing, gpSet->isDisableFarFlashing);
+	checkDlgButton(hWnd2, cbDisableFarFlashing, gpSet->isDisableFarFlashing);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -2145,12 +2148,23 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 		return;
 	}
 
+	static UINT nLastShowType = rbHotkeysAll;
+	UINT nShowType = rbHotkeysAll;
+	if (IsChecked(hWnd2, rbHotkeysUser))
+		nShowType = rbHotkeysUser;
+	else if (IsChecked(hWnd2, rbHotkeysMacros))
+		nShowType = rbHotkeysMacros;
+	else if (IsChecked(hWnd2, rbHotkeysSystem))
+		nShowType = rbHotkeysSystem;
+
 	// Ќаселить список всеми хотке€ми
 	HWND hList = GetDlgItem(hWnd2, lbConEmuHotKeys);
-	if (abInitial)
+	if (abInitial || (nLastShowType != nShowType))
 	{
 		ListView_DeleteAllItems(hList);
+		abInitial = TRUE;
 	}
+	nLastShowType = nShowType;
 
 
 	wchar_t szName[128], szDescr[512];
@@ -2172,6 +2186,25 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 			if (!ppHK->DescrLangID)
 				break; // кончились
 			nItem = -1; // если -1 то будет добавлен новый
+
+			switch (nShowType)
+			{
+			case rbHotkeysUser:
+				if ((ppHK->HkType != chk_User) && (ppHK->HkType != chk_Global)
+					&& (ppHK->HkType != chk_Modifier) && (ppHK->HkType != chk_Modifier2))
+					continue;
+				break;
+			case rbHotkeysMacros:
+				if ((ppHK->HkType != chk_Macro) && !ppHK->GuiMacro)
+					continue;
+				break;
+			case rbHotkeysSystem:
+				if ((ppHK->HkType != chk_System) && (ppHK->HkType != chk_ArrHost) && (ppHK->HkType != chk_NumHost))
+					continue;
+				break;
+			default:
+				; // OK
+			}
 		}
 		else
 		{
@@ -2413,7 +2446,7 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		//{
 		//	BOOL bEnabled = (mp_ActiveHotKey && bModifiersEnabled);
 		//	BOOL bChecked = bEnabled ? gpSet->HasModifier(VkMod, HostkeyVkIds[n]) : false;
-		//	CheckDlgButton(hWnd2, HostkeyCtrlIds[n], bChecked);
+		//	checkDlgButton(hWnd2, HostkeyCtrlIds[n], bChecked);
 		//	EnableWindow(GetDlgItem(hWnd2, HostkeyCtrlIds[n]), bEnabled);
 		//}
 		//}
@@ -2516,6 +2549,40 @@ int CSettings::HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 	return nCmp;
 }
 
+LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, BOOL abInitial)
+{
+	checkDlgButton(hWnd2, cbEnableMouse, !gpSet->isDisableMouse);
+	checkDlgButton(hWnd2, cbSkipActivation, gpSet->isMouseSkipActivation);
+	checkDlgButton(hWnd2, cbSkipMove, gpSet->isMouseSkipMoving);
+
+	checkDlgButton(hWnd2, cbInstallKeybHooks,
+	               (gpSet->m_isKeyboardHooks == 1) ? BST_CHECKED :
+	               ((gpSet->m_isKeyboardHooks == 0) ? BST_INDETERMINATE : BST_UNCHECKED));
+	
+	checkDlgButton(hWnd2, cbUseWinNumber, gpSet->isUseWinNumber);
+	checkDlgButton(hWnd2, cbUseWinTab, gpSet->isUseWinTab);
+	checkDlgButton(hWnd2, cbUseWinArrows, gpSet->isUseWinArrows);
+
+	checkDlgButton(hWnd2, cbSendAltTab, gpSet->isSendAltTab);
+	checkDlgButton(hWnd2, cbSendAltEsc, gpSet->isSendAltEsc);
+	checkDlgButton(hWnd2, cbSendAltPrintScrn, gpSet->isSendAltPrintScrn);
+	checkDlgButton(hWnd2, cbSendPrintScrn, gpSet->isSendPrintScrn);
+	checkDlgButton(hWnd2, cbSendCtrlEsc, gpSet->isSendCtrlEsc);
+
+	checkDlgButton(hWnd2, cbFixAltOnAltTab, gpSet->isFixAltOnAltTab);
+
+	checkDlgButton(hWnd2, cbSkipFocusEvents, gpSet->isSkipFocusEvents);
+
+	// Ќе совсем выделение, но в том же диалоге
+	checkDlgButton(hWnd2, cbFarGotoEditor, gpSet->isFarGotoEditor);
+	DWORD VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
+	FillListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+	SetDlgItemText(hWnd2, tGotoEditorCmd, gpSet->sFarGotoEditor);
+
+	RegisterTipsFor(hWnd2);
+	return 0;
+}
+
 LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 {
 	if (!abInitial)
@@ -2524,7 +2591,7 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 		return 0;
 	}
 
-	CheckDlgButton(hWnd2, rbHotkeysAll, BST_CHECKED);
+	checkRadioButton(hWnd2, rbHotkeysAll, rbHotkeysMacros, rbHotkeysAll);
 
 	for (int i = 0; m_HotKeys[i].DescrLangID; i++)
 	{
@@ -2558,25 +2625,6 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 
 	FillHotKeysList(hWnd2, abInitial);
 		
-	//SetupHotkeyChecks(hWnd2);
-
-	CheckDlgButton(hWnd2, cbUseWinArrows, gpSet->isUseWinArrows);
-	CheckDlgButton(hWnd2, cbUseWinNumber, gpSet->isUseWinNumber);
-	CheckDlgButton(hWnd2, cbUseWinTab, gpSet->isUseWinTab);
-
-	CheckDlgButton(hWnd2, cbInstallKeybHooks,
-	               (gpSet->m_isKeyboardHooks == 1) ? BST_CHECKED :
-	               ((gpSet->m_isKeyboardHooks == 0) ? BST_INDETERMINATE : BST_UNCHECKED));
-	
-	//CheckDlgButton(hWnd2, cbSendAltEnter, gpSet->isSendAltEnter);
-	//CheckDlgButton(hWnd2, cbSendAltSpace, gpSet->isSendAltSpace);
-	CheckDlgButton(hWnd2, cbSendAltTab, gpSet->isSendAltTab);
-	CheckDlgButton(hWnd2, cbSendAltEsc, gpSet->isSendAltEsc);
-	CheckDlgButton(hWnd2, cbSendAltPrintScrn, gpSet->isSendAltPrintScrn);
-	CheckDlgButton(hWnd2, cbSendPrintScrn, gpSet->isSendPrintScrn);
-	CheckDlgButton(hWnd2, cbSendCtrlEsc, gpSet->isSendCtrlEsc);
-	//CheckDlgButton(hWnd2, cbSendAltF9, gpSet->isSendAltF9);
-
 	BYTE b = 0;
 	FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
 	FillListBoxByte(hWnd2, lbHotKeyMod2, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
@@ -2588,21 +2636,23 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 
 LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 {
-	CheckDlgButton(hWnd2, cbTabs, gpSet->isTabs);
+	checkDlgButton(hWnd2, cbMultiCon, gpSet->isMulti);
+	checkDlgButton(hWnd2, cbNewConfirm, gpSet->isMultiNewConfirm);
+	checkDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
+	checkDlgButton(hWnd2, cbMultiLeaveOnClose, gpSet->isMultiLeaveOnClose);
 
-	CheckDlgButton(hWnd2, cbTabSelf, gpSet->isTabSelf);
+	//checkDlgButton(hWnd2, cbTabs, gpSet->isTabs);
+	checkRadioButton(hWnd2, rbTabsAlways, rbTabsNone, (gpSet->isTabs == 2) ? rbTabsAuto : gpSet->isTabs ? rbTabsAlways : rbTabsNone);
 
-	CheckDlgButton(hWnd2, cbTabRecent, gpSet->isTabRecent);
+	checkDlgButton(hWnd2, cbTabSelf, gpSet->isTabSelf);
 
-	CheckDlgButton(hWnd2, cbTabLazy, gpSet->isTabLazy);
+	checkDlgButton(hWnd2, cbTabRecent, gpSet->isTabRecent);
 
-	CheckDlgButton(hWnd2, cbTabsOnTaskBar, gpSet->m_isTabsOnTaskBar);
+	checkDlgButton(hWnd2, cbTabLazy, gpSet->isTabLazy);
 
-	CheckDlgButton(hWnd2, cbHideInactiveConTabs, gpSet->bHideInactiveConsoleTabs);
-	CheckDlgButton(hWnd2, cbHideDisabledTabs, gpSet->bHideDisabledTabs);
-	CheckDlgButton(hWnd2, cbShowFarWindows, gpSet->bShowFarWindows);
-
-	CheckDlgButton(hWnd2, cbMultiLeaveOnClose, gpSet->isMultiLeaveOnClose);
+	checkDlgButton(hWnd2, cbHideInactiveConTabs, gpSet->bHideInactiveConsoleTabs);
+	checkDlgButton(hWnd2, cbHideDisabledTabs, gpSet->bHideDisabledTabs);
+	checkDlgButton(hWnd2, cbShowFarWindows, gpSet->bShowFarWindows);
 
 	SetDlgItemText(hWnd2, tTabFontFace, gpSet->sTabFontFace);
 
@@ -2614,11 +2664,8 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 
 	FillListBoxCharSet(hWnd2, tTabFontCharset, gpSet->nTabFontCharSet);
 
-	CheckDlgButton(hWnd2, cbMultiCon, gpSet->isMulti);
+	checkDlgButton(hWnd2, cbMultiIterate, gpSet->isMultiIterate);
 
-	CheckDlgButton(hWnd2, cbMultiIterate, gpSet->isMultiIterate);
-
-	CheckDlgButton(hWnd2, cbNewConfirm, gpSet->isMultiNewConfirm);
 
 	//
 	//SetupHotkeyChecks(hTabs);
@@ -2638,7 +2685,7 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	//SendDlgItemMessage(hTabs, hkBufferMode, HKM_SETHOTKEY, gpSet->icMultiBuffer, 0);
 	// SendDlgItemMessage(hTabs, hkMinimizeRestore, HKM_SETHOTKEY, gpSet->icMinimizeRestore, 0);
 	//if (gpSet->isUseWinNumber)
-	//	CheckDlgButton(hTabs, cbUseWinNumber, BST_CHECKED);
+	//	checkDlgButton(hTabs, cbUseWinNumber, BST_CHECKED);
 
 	SetDlgItemText(hWnd2, tTabConsole, gpSet->szTabConsole);
 	SetDlgItemText(hWnd2, tTabSkipWords, gpSet->szTabSkipWords);
@@ -2648,7 +2695,7 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	SetDlgItemText(hWnd2, tTabEditorMod, gpSet->szTabEditorModified);
 	SetDlgItemInt(hWnd2, tTabLenMax, gpSet->nTabLenMax, FALSE);
 
-	CheckRadioButton(hWnd2, rbAdminShield, rbAdminSuffix, gpSet->bAdminShield ? rbAdminShield : rbAdminSuffix);
+	checkRadioButton(hWnd2, rbAdminShield, rbAdminSuffix, gpSet->bAdminShield ? rbAdminShield : rbAdminSuffix);
 	SetDlgItemText(hWnd2, tAdminSuffix, gpSet->szAdminTitleSuffix);
 
 	RegisterTipsFor(hWnd2);
@@ -2671,13 +2718,13 @@ LRESULT CSettings::OnInitDialog_Status(HWND hWnd2, bool abInitial)
 	for (uint c = c35; c <= c37; c++)
 		ColorSetEdit(hWnd2, c);
 
-	CheckDlgButton(hWnd2, cbStatusVertSep, (gpSet->isStatusBarFlags & csf_VertDelim) ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(hWnd2, cbStatusHorzSep, (gpSet->isStatusBarFlags & csf_HorzDelim) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbStatusVertSep, (gpSet->isStatusBarFlags & csf_VertDelim) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbStatusHorzSep, (gpSet->isStatusBarFlags & csf_HorzDelim) ? BST_CHECKED : BST_UNCHECKED);
 
-	CheckDlgButton(hWnd2, cbShowStatusBar, gpSet->isStatusBarShow);
+	checkDlgButton(hWnd2, cbShowStatusBar, gpSet->isStatusBarShow);
 	for (size_t i = 0; i < countof(SettingsNS::StatusItems); i++)
 	{
-		CheckDlgButton(hWnd2, SettingsNS::StatusItems[i].nDlgID, !gpSet->isStatusColumnHidden[SettingsNS::StatusItems[i].stItem]);
+		checkDlgButton(hWnd2, SettingsNS::StatusItems[i].nDlgID, !gpSet->isStatusColumnHidden[SettingsNS::StatusItems[i].stItem]);
 	}
 
 	RegisterTipsFor(hWnd2);
@@ -2730,10 +2777,10 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 	nVal = gpSet->AppStd.nExtendColorIdx;
 	FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
 	gpSet->AppStd.nExtendColorIdx = nVal;
-	CheckDlgButton(hWnd2, cbExtendColors, gpSet->AppStd.isExtendColors ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbExtendColors, gpSet->AppStd.isExtendColors ? BST_CHECKED : BST_UNCHECKED);
 	OnButtonClicked(hWnd2, cbExtendColors, 0);
-	CheckDlgButton(hWnd2, cbTrueColorer, gpSet->isTrueColorer ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(hWnd2, cbFadeInactive, gpSet->isFadeInactive ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbTrueColorer, gpSet->isTrueColorer ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbFadeInactive, gpSet->isFadeInactive ? BST_CHECKED : BST_UNCHECKED);
 	SetDlgItemInt(hWnd2, tFadeLow, gpSet->mn_FadeLow, FALSE);
 	SetDlgItemInt(hWnd2, tFadeHigh, gpSet->mn_FadeHigh, FALSE);
 
@@ -2794,19 +2841,19 @@ LRESULT CSettings::OnInitDialog_Transparent(HWND hWnd2)
 	// +Color key
 	ColorSetEdit(hWnd2, c38);
 
-	CheckDlgButton(hWnd2, cbTransparent, (gpSet->nTransparent!=255) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbTransparent, (gpSet->nTransparent!=255) ? BST_CHECKED : BST_UNCHECKED);
 	SendDlgItemMessage(hWnd2, slTransparent, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_ALPHA_VALUE, 255));
 	SendDlgItemMessage(hWnd2, slTransparent, TBM_SETPOS  , (WPARAM) true, (LPARAM) gpSet->nTransparent);
-	CheckDlgButton(hWnd2, cbTransparentSeparate, gpSet->isTransparentSeparate ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbTransparentSeparate, gpSet->isTransparentSeparate ? BST_CHECKED : BST_UNCHECKED);
 	//EnableWindow(GetDlgItem(hWnd2, cbTransparentInactive), gpSet->isTransparentSeparate);
-	//CheckDlgButton(hWnd2, cbTransparentInactive, (gpSet->nTransparentInactive!=255) ? BST_CHECKED : BST_UNCHECKED);
+	//checkDlgButton(hWnd2, cbTransparentInactive, (gpSet->nTransparentInactive!=255) ? BST_CHECKED : BST_UNCHECKED);
 	EnableWindow(GetDlgItem(hWnd2, slTransparentInactive), gpSet->isTransparentSeparate);
 	EnableWindow(GetDlgItem(hWnd2, stTransparentInactive1), gpSet->isTransparentSeparate);
 	EnableWindow(GetDlgItem(hWnd2, stTransparentInactive2), gpSet->isTransparentSeparate);
 	SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_INACTIVE_ALPHA_VALUE, 255));
 	SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS  , (WPARAM) true, (LPARAM) gpSet->isTransparentSeparate ? gpSet->nTransparentInactive : gpSet->nTransparent);
-	CheckDlgButton(hWnd2, cbUserScreenTransparent, gpSet->isUserScreenTransparent ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(hWnd2, cbColorKeyTransparent, gpSet->isColorKeyTransparent);
+	checkDlgButton(hWnd2, cbUserScreenTransparent, gpSet->isUserScreenTransparent ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbColorKeyTransparent, gpSet->isColorKeyTransparent);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -2855,8 +2902,8 @@ LRESULT CSettings::OnInitDialog_Tasks(HWND hWnd2, bool abForceReload)
 
 	mb_IgnoreCmdGroupEdit = false;
 
-	CheckDlgButton(hWnd2, cbCmdTaskbarTasks, gpSet->isStoreTaskbarkTasks);
-	CheckDlgButton(hWnd2, cbCmdTaskbarCommands, gpSet->isStoreTaskbarCommands);
+	checkDlgButton(hWnd2, cbCmdTaskbarTasks, gpSet->isStoreTaskbarkTasks);
+	checkDlgButton(hWnd2, cbCmdTaskbarCommands, gpSet->isStoreTaskbarCommands);
 	EnableWindow(GetDlgItem(hWnd2, cbCmdTaskbarUpdate), (gnOsVer >= 0x601));
 
 	RegisterTipsFor(hWnd2);
@@ -2934,7 +2981,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				//SetDlgItemText(hWnd2, tInsideIcon, szIcon);
 				SetDlgItemText(hWnd2, tInsideIcon, L"powershell.exe");
 			}
-			CheckDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mb_InsideSynchronizeCurDir);
+			checkDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mb_InsideSynchronizeCurDir);
 
 			if (pszCurHere)
 			{
@@ -3189,7 +3236,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			}
 			
 			SetDlgItemText(hWnd2, tCmdAutoAttach, pszCmd);
-			CheckDlgButton(hWnd2, cbCmdAutorunNewWnd, bForceNewWnd);
+			checkDlgButton(hWnd2, cbCmdAutorunNewWnd, bForceNewWnd);
 
 			free(pszCmd);
 		}
@@ -3412,7 +3459,7 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 	case ShellIntgr_CmdAuto:
 		{
 			BOOL bForceNewWnd = IsChecked(hDlg, cbCmdAutorunNewWnd);
-				//CheckDlgButton(, (StrStrI(pszCmd, L"/GHWND=NEW") != NULL));
+				//checkDlgButton(, (StrStrI(pszCmd, L"/GHWND=NEW") != NULL));
 
 			HKEY hkCmd = NULL;
 			if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ|KEY_WRITE, &hkCmd))
@@ -3502,30 +3549,30 @@ LRESULT CSettings::OnInitDialog_Views(HWND hWnd2)
 
 	nVal = gpSet->ThSet.crBackground.ColorIdx;
 	FillListBox(hWnd2, lbThumbBackColorIdx, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
-	CheckRadioButton(hWnd2, rbThumbBackColorIdx, rbThumbBackColorRGB,
+	checkRadioButton(hWnd2, rbThumbBackColorIdx, rbThumbBackColorRGB,
 	                 gpSet->ThSet.crBackground.UseIndex ? rbThumbBackColorIdx : rbThumbBackColorRGB);
-	CheckDlgButton(hWnd2, cbThumbPreviewBox, gpSet->ThSet.nPreviewFrame ? 1 : 0);
+	checkDlgButton(hWnd2, cbThumbPreviewBox, gpSet->ThSet.nPreviewFrame ? 1 : 0);
 	nVal = gpSet->ThSet.crPreviewFrame.ColorIdx;
 	FillListBox(hWnd2, lbThumbPreviewBoxColorIdx, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
-	CheckRadioButton(hWnd2, rbThumbPreviewBoxColorIdx, rbThumbPreviewBoxColorRGB,
+	checkRadioButton(hWnd2, rbThumbPreviewBoxColorIdx, rbThumbPreviewBoxColorRGB,
 	                 gpSet->ThSet.crPreviewFrame.UseIndex ? rbThumbPreviewBoxColorIdx : rbThumbPreviewBoxColorRGB);
-	CheckDlgButton(hWnd2, cbThumbSelectionBox, gpSet->ThSet.nSelectFrame ? 1 : 0);
+	checkDlgButton(hWnd2, cbThumbSelectionBox, gpSet->ThSet.nSelectFrame ? 1 : 0);
 	nVal = gpSet->ThSet.crSelectFrame.ColorIdx;
 	FillListBox(hWnd2, lbThumbSelectionBoxColorIdx, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
-	CheckRadioButton(hWnd2, rbThumbSelectionBoxColorIdx, rbThumbSelectionBoxColorRGB,
+	checkRadioButton(hWnd2, rbThumbSelectionBoxColorIdx, rbThumbSelectionBoxColorRGB,
 	                 gpSet->ThSet.crSelectFrame.UseIndex ? rbThumbSelectionBoxColorIdx : rbThumbSelectionBoxColorRGB);
 
 	if ((gpSet->ThSet.bLoadPreviews & 3) == 3)
-		CheckDlgButton(hWnd2, cbThumbLoadFiles, BST_CHECKED);
+		checkDlgButton(hWnd2, cbThumbLoadFiles, BST_CHECKED);
 	else if ((gpSet->ThSet.bLoadPreviews & 3) == 1)
-		CheckDlgButton(hWnd2, cbThumbLoadFiles, BST_INDETERMINATE);
+		checkDlgButton(hWnd2, cbThumbLoadFiles, BST_INDETERMINATE);
 	else
-		CheckDlgButton(hWnd2, cbThumbLoadFiles, BST_UNCHECKED);
+		checkDlgButton(hWnd2, cbThumbLoadFiles, BST_UNCHECKED);
 
-	CheckDlgButton(hWnd2, cbThumbLoadFolders, gpSet->ThSet.bLoadFolders);
+	checkDlgButton(hWnd2, cbThumbLoadFolders, gpSet->ThSet.bLoadFolders);
 	SetDlgItemInt(hWnd2, tThumbLoadingTimeout, gpSet->ThSet.nLoadTimeout, FALSE);
-	CheckDlgButton(hWnd2, cbThumbUsePicView2, gpSet->ThSet.bUsePicView2);
-	CheckDlgButton(hWnd2, cbThumbRestoreOnStartup, gpSet->ThSet.bRestoreOnStartup);
+	checkDlgButton(hWnd2, cbThumbUsePicView2, gpSet->ThSet.bUsePicView2);
+	checkDlgButton(hWnd2, cbThumbRestoreOnStartup, gpSet->ThSet.bRestoreOnStartup);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -3591,7 +3638,7 @@ LRESULT CSettings::OnInitDialog_Debug(HWND hWnd2)
 	//LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
 	//wchar_t szTitle[64]; col.pszText = szTitle;
 
-	CheckDlgButton(hWnd2, rbActivityDisabled, BST_CHECKED);
+	checkDlgButton(hWnd2, rbActivityDisabled, BST_CHECKED);
 
 	HWND hList = GetDlgItem(hWnd2, lbActivityLog);
 	ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
@@ -3647,13 +3694,13 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2)
 	// „ерез интерфейс - не редактируетс€
 	SetDlgItemText(hWnd2, tUpdateVerLocation, p->UpdateVerLocation());
 	
-	CheckDlgButton(hWnd2, cbUpdateCheckOnStartup, p->isUpdateCheckOnStartup);
-	CheckDlgButton(hWnd2, cbUpdateCheckHourly, p->isUpdateCheckHourly);
-	CheckDlgButton(hWnd2, cbUpdateConfirmDownload, !p->isUpdateConfirmDownload);
-	CheckRadioButton(hWnd2, rbUpdateStableOnly, rbUpdateLatestAvailable, (p->isUpdateUseBuilds==1) ? rbUpdateStableOnly : rbUpdateLatestAvailable);
-	CheckRadioButton(hWnd2, rbUpdateUseExe, rbUpdateUseArc, (p->UpdateDownloadSetup()==1) ? rbUpdateUseExe : rbUpdateUseArc);
+	checkDlgButton(hWnd2, cbUpdateCheckOnStartup, p->isUpdateCheckOnStartup);
+	checkDlgButton(hWnd2, cbUpdateCheckHourly, p->isUpdateCheckHourly);
+	checkDlgButton(hWnd2, cbUpdateConfirmDownload, !p->isUpdateConfirmDownload);
+	checkRadioButton(hWnd2, rbUpdateStableOnly, rbUpdateLatestAvailable, (p->isUpdateUseBuilds==1) ? rbUpdateStableOnly : rbUpdateLatestAvailable);
+	checkRadioButton(hWnd2, rbUpdateUseExe, rbUpdateUseArc, (p->UpdateDownloadSetup()==1) ? rbUpdateUseExe : rbUpdateUseArc);
 	
-	CheckDlgButton(hWnd2, cbUpdateUseProxy, p->isUpdateUseProxy);
+	checkDlgButton(hWnd2, cbUpdateUseProxy, p->isUpdateUseProxy);
 	OnButtonClicked(hWnd2, cbUpdateUseProxy, 0); // Enable/Disable proxy fields
 	SetDlgItemText(hWnd2, tUpdateProxy, p->szUpdateProxy);
 	SetDlgItemText(hWnd2, tUpdateProxyUser, p->szUpdateProxyUser);
@@ -3663,7 +3710,7 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2)
 	SetDlgItemText(hWnd2, tUpdateArcCmdLine, p->UpdateArcCmdLine());
 	SetDlgItemText(hWnd2, tUpdatePostUpdateCmd, p->szUpdatePostUpdateCmd);
 	
-	CheckDlgButton(hWnd2, cbUpdateLeavePackages, p->isUpdateLeavePackages);
+	checkDlgButton(hWnd2, cbUpdateLeavePackages, p->isUpdateLeavePackages);
 	SetDlgItemText(hWnd2, tUpdateDownloadPath, p->szUpdateDownloadPath);
 
 	RegisterTipsFor(hWnd2);
@@ -3812,7 +3859,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			        && !wcsncmp(LogFont.lfFaceName+1, RASTER_FONTS_NAME, _tcslen(RASTER_FONTS_NAME)))
 			{
 				gpSet->isFontAutoSize = false;
-				CheckDlgButton(hWnd2, cbFontAuto, BST_UNCHECKED);
+				checkDlgButton(hWnd2, cbFontAuto, BST_UNCHECKED);
 				ShowFontErrorTip(szRasterAutoError);
 			}
 
@@ -3894,7 +3941,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					{
 						wcscpy_c(gpSet->ComSpec.ComspecExplicit, temp);
 						gpSet->ComSpec.csType = cst_Explicit;
-						CheckRadioButton(hWnd2, rbComspecAuto, rbComspecExplicit, rbComspecExplicit);
+						checkRadioButton(hWnd2, rbComspecAuto, rbComspecExplicit, rbComspecExplicit);
 						gpConEmu->OnGlobalSettingsChanged();
 					}
 				}
@@ -4002,20 +4049,26 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			Icon.SettingsChanged();
 			break;
 		case cbQuakeStyle:
+		case cbQuakeAutoHide:
 			{
 				BYTE bPrevStyle = gpSet->isQuakeStyle;
-				gpSet->isQuakeStyle = IsChecked(hWnd2, cbQuakeStyle);
+				gpSet->isQuakeStyle = IsChecked(hWnd2, cbQuakeStyle)
+					? IsChecked(hWnd2, cbQuakeAutoHide) ? 2 : 1 : 0;
+				EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
 
-				if (gpSet->isHideCaptionAlways())
+				if (mh_Tabs[thi_Ext])
 				{
-					CheckDlgButton(hWnd2, cbHideCaptionAlways, BST_CHECKED);
+					if (gpSet->isHideCaptionAlways())
+					{
+						checkDlgButton(mh_Tabs[thi_Ext], cbHideCaptionAlways, BST_CHECKED);
+					}
+					EnableWindow(GetDlgItem(mh_Tabs[thi_Ext], cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 				}
-				EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 
 				if (gpSet->isQuakeStyle)
 				{
 					gpSet->isTryToCenter = true;
-					CheckDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
+					checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
 				}
 
 				ConEmuWindowMode nNewWindowMode = wmNormal;
@@ -4059,7 +4112,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 			if (gpSet->isHideCaptionAlways())
 			{
-				CheckDlgButton(hWnd2, cbHideCaptionAlways, BST_CHECKED);
+				checkDlgButton(hWnd2, cbHideCaptionAlways, BST_CHECKED);
 				//TODO("показать тултип, что скрытие об€зательно при прозрачности");
 			}
 			EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
@@ -4158,20 +4211,41 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isEnhanceButtons = IsChecked(hWnd2, cbEnhanceButtons);
 			gpConEmu->Update(true);
 			break;
-		case cbTabs:
+		//case cbTabs:
+		case rbTabsNone:
+		case rbTabsAlways:
+		case rbTabsAuto:
 
-			switch (IsChecked(hWnd2, cbTabs))
+			if (IsChecked(hWnd2, rbTabsAuto))
 			{
-				case BST_UNCHECKED:
-					gpSet->isTabs = 0; break;
-				case BST_CHECKED:
-					gpSet->isTabs = 1; break;
-				case BST_INDETERMINATE:
-					gpSet->isTabs = 2; break;
+				gpSet->isTabs = 2;
 			}
+			else if (IsChecked(hWnd2, rbTabsAlways))
+			{
+				gpSet->isTabs = 1;
+				gpConEmu->ForceShowTabs(TRUE);
+			}
+			else
+			{
+				gpSet->isTabs = 0;
+				gpConEmu->ForceShowTabs(FALSE);
+			}
+			
+			gpConEmu->mp_TabBar->Update();
+			gpConEmu->UpdateWindowRgn();
 
-			TODO("’орошо бы сразу видимость табов мен€ть");
-			//gpConEmu->mp_TabBar->Update(TRUE); -- это как-то неправильно работает.
+			//switch (IsChecked(hWnd2, cbTabs))
+			//{
+			//	case BST_UNCHECKED:
+			//		gpSet->isTabs = 0; break;
+			//	case BST_CHECKED:
+			//		gpSet->isTabs = 1; break;
+			//	case BST_INDETERMINATE:
+			//		gpSet->isTabs = 2; break;
+			//}
+
+			//TODO("’орошо бы сразу видимость табов мен€ть");
+			////gpConEmu->mp_TabBar->Update(TRUE); -- это как-то неправильно работает.
 			break;
 		case cbTabSelf:
 			gpSet->isTabSelf = IsChecked(hWnd2, cbTabSelf);
@@ -4182,9 +4256,13 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbTabLazy:
 			gpSet->isTabLazy = IsChecked(hWnd2, cbTabLazy);
 			break;
-		case cbTabsOnTaskBar:
+		//case cbTabsOnTaskBar:
+		case rbTaskbarBtnActive:
+		case rbTaskbarBtnAll:
+		case rbTaskbarBtnWin7:
 			// 3state: BST_UNCHECKED/BST_CHECKED/BST_INDETERMINATE
-			gpSet->m_isTabsOnTaskBar = IsChecked(hWnd2, cbTabsOnTaskBar);
+			gpSet->m_isTabsOnTaskBar = IsChecked(hWnd2, rbTaskbarBtnAll) ? 1
+				: IsChecked(hWnd2, rbTaskbarBtnWin7) ? 2 : 0;
 			gpConEmu->OnTaskbarSettingsChanged();
 			break;
 		case cbRSelectionFix:
@@ -4329,7 +4407,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->mb_UseClink = IsChecked(hWnd2, cbUseClink);
 			if (gpSet->mb_UseClink && !gpSet->isUseClink())
 			{
-				CheckDlgButton(hWnd2, cbUseClink, BST_UNCHECKED);
+				checkDlgButton(hWnd2, cbUseClink, BST_UNCHECKED);
 				MessageBox(L"Clink was not found in '%ConEmuBaseDir%\\clink'\nDownload and unpack clink files\nhttp://code.google.com/p/clink/", MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
 			}
 			gpConEmu->OnGlobalSettingsChanged();
@@ -4341,7 +4419,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			if (!gpConEmu->PreparePortableReg())
 			{
 				gpSet->isPortableReg = false;
-				CheckDlgButton(hWnd2, cbPortableRegistry, BST_UNCHECKED);
+				checkDlgButton(hWnd2, cbPortableRegistry, BST_UNCHECKED);
 			}
 			else
 			{
@@ -4431,23 +4509,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 		//case cbUseWinNumber:
 		//	gpSet->isUseWinNumber = IsChecked(hWnd2, cbUseWinNumber);
-		//	if (hWnd2) CheckDlgButton(hWnd2, cbUseWinNumberK, gpSet->isUseWinNumber ? BST_CHECKED : BST_UNCHECKED);
+		//	if (hWnd2) checkDlgButton(hWnd2, cbUseWinNumberK, gpSet->isUseWinNumber ? BST_CHECKED : BST_UNCHECKED);
 		//	gpConEmu->UpdateWinHookSettings();
 		//	break;
 
-		//case cbSendAltEnter:
-		//	// хуков не требует
-		//	gpSet->isSendAltEnter = IsChecked(hWnd2, cbSendAltEnter);
-		//	break;
-		//case cbSendAltSpace:
-		//	// хуков не требует
-		//	gpSet->isSendAltSpace = IsChecked(hWnd2, cbSendAltSpace);
-		//	break;
-		//case cbSendAltF9:
-		//	// хуков не требует
-		//	gpSet->isSendAltF9 = IsChecked(hWnd2, cbSendAltF9);
-		//	break;
-			
 		case cbSendAltTab:
 		case cbSendAltEsc:
 		case cbSendAltPrintScrn:
@@ -4468,6 +4533,14 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			}
 			gpConEmu->UpdateWinHookSettings();
 			break;
+
+		case rbHotkeysAll:
+		case rbHotkeysUser:
+		case rbHotkeysSystem:
+		case rbHotkeysMacros:
+			gpSetCls->FillHotKeysList(hWnd2, TRUE);
+			break;
+
 			
 		case cbInstallKeybHooks:
 			switch (IsChecked(hWnd2,cbInstallKeybHooks))
@@ -4484,12 +4557,12 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbDosBox:
 			if (gpConEmu->mb_DosBoxExists)
 			{
-				CheckDlgButton(hWnd2, cbDosBox, BST_CHECKED);
+				checkDlgButton(hWnd2, cbDosBox, BST_CHECKED);
 				EnableWindow(GetDlgItem(hWnd2, cbDosBox), FALSE); // изменение пока запрещено
 			}
 			else
 			{
-				CheckDlgButton(hWnd2, cbDosBox, BST_UNCHECKED);
+				checkDlgButton(hWnd2, cbDosBox, BST_UNCHECKED);
 				size_t nMaxCCH = MAX_PATH*3;
 				wchar_t* pszErrInfo = (wchar_t*)malloc(nMaxCCH*sizeof(wchar_t));
 				_wsprintf(pszErrInfo, SKIPLEN(nMaxCCH) L"DosBox is not installed!\n"
@@ -4741,7 +4814,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				EnableWindow(GetDlgItem(hWnd2, slTransparentInactive), gpSet->isTransparentSeparate);
 				EnableWindow(GetDlgItem(hWnd2, stTransparentInactive1), gpSet->isTransparentSeparate);
 				EnableWindow(GetDlgItem(hWnd2, stTransparentInactive2), gpSet->isTransparentSeparate);
-				//CheckDlgButton(hWnd2, cbTransparentInactive, (gpSet->nTransparentInactive!=255) ? BST_CHECKED : BST_UNCHECKED);
+				//checkDlgButton(hWnd2, cbTransparentInactive, (gpSet->nTransparentInactive!=255) ? BST_CHECKED : BST_UNCHECKED);
 				SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->isTransparentSeparate ? gpSet->nTransparentInactive : gpSet->nTransparent);
 				gpConEmu->OnTransparent();
 			} break;
@@ -4767,7 +4840,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				gpSet->isUserScreenTransparent = IsChecked(hWnd2, cbUserScreenTransparent);
 
-				if (hWnd2) CheckDlgButton(hWnd2, cbHideCaptionAlways, gpSet->isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
+				if (hWnd2) checkDlgButton(hWnd2, cbHideCaptionAlways, gpSet->isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
 				EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 
 				gpConEmu->OnHideCaption(); // при прозрачности - об€зательно скрытие заголовка + кнопки
@@ -4785,7 +4858,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rbCTSAlways:
 		case rbCTSBufferOnly:
 			gpSet->isConsoleTextSelection = (CB==rbCTSNever) ? 0 : (CB==rbCTSAlways) ? 1 : 2;
-			//CheckDlgButton(gpSetCls->hExt, cbConsoleTextSelection, gpSet->isConsoleTextSelection);
+			//checkDlgButton(gpSetCls->hExt, cbConsoleTextSelection, gpSet->isConsoleTextSelection);
 			break;
 		case rbCTSActAlways: case rbCTSActBufferOnly:
 			gpSet->isCTSActMode = (CB==rbCTSActAlways) ? 1 : 2;
@@ -4799,7 +4872,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCTSEndOnTyping:
 			gpSet->isCTSEndOnTyping = IsChecked(hWnd2,CB);
 			EnableWindow(GetDlgItem(hWnd2, cbCTSEndOnKeyPress), gpSet->isCTSEndOnTyping!=0);
-			CheckDlgButton(hWnd2, cbCTSEndOnKeyPress, gpSet->isCTSEndOnKeyPress);
+			checkDlgButton(hWnd2, cbCTSEndOnKeyPress, gpSet->isCTSEndOnKeyPress);
 			break;
 		case cbCTSEndOnKeyPress:
 			gpSet->isCTSEndOnKeyPress = IsChecked(hWnd2,CB);
@@ -5049,17 +5122,17 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					if (CB == c32)
 					{
 						gpSet->ThSet.crBackground.UseIndex = 0;
-						CheckRadioButton(hWnd2, rbThumbBackColorIdx, rbThumbBackColorRGB, rbThumbBackColorRGB);
+						checkRadioButton(hWnd2, rbThumbBackColorIdx, rbThumbBackColorRGB, rbThumbBackColorRGB);
 					}
 					else if (CB == c33)
 					{
 						gpSet->ThSet.crPreviewFrame.UseIndex = 0;
-						CheckRadioButton(hWnd2, rbThumbPreviewBoxColorIdx, rbThumbPreviewBoxColorRGB, rbThumbPreviewBoxColorRGB);
+						checkRadioButton(hWnd2, rbThumbPreviewBoxColorIdx, rbThumbPreviewBoxColorRGB, rbThumbPreviewBoxColorRGB);
 					}
 					else if (CB == c34)
 					{
 						gpSet->ThSet.crSelectFrame.UseIndex = 0;
-						CheckRadioButton(hWnd2, rbThumbSelectionBoxColorIdx, rbThumbSelectionBoxColorRGB, rbThumbSelectionBoxColorRGB);
+						checkRadioButton(hWnd2, rbThumbSelectionBoxColorIdx, rbThumbSelectionBoxColorRGB, rbThumbSelectionBoxColorRGB);
 					}
 
 					InvalidateRect(GetDlgItem(hWnd2, CB), 0, 1);
@@ -5125,6 +5198,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				}
 				/* *** Status bar options *** */
 			} // else if (hWnd2 && (hWnd2 == mh_Tabs[thi_Status]))
+
+			else
+			{
+				_ASSERTE(FALSE && "Button click was not processed");
+			}
 
 		} // default:
 	}
@@ -5765,7 +5843,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		BOOL lbValOk = FALSE;
 		gpSet->nPasteConfirmLonger = GetDlgItemInt(hWnd2, tClipConfirmLimit, &lbValOk, FALSE);
 		if (IsChecked(hWnd2, cbClipConfirmLimit) != (gpSet->nPasteConfirmLonger!=0))
-			CheckDlgButton(hWnd2, cbClipConfirmLimit, (gpSet->nPasteConfirmLonger!=0));
+			checkDlgButton(hWnd2, cbClipConfirmLimit, (gpSet->nPasteConfirmLonger!=0));
 		if (lbValOk && (gpSet->nPasteConfirmLonger == 0))
 		{
 			SetFocus(GetDlgItem(hWnd2, cbClipConfirmLimit));
@@ -6024,7 +6102,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						if (gpSet->nCenterConsolePad && !IsChecked(hWnd2, cbTryToCenter))
 						{
 							gpSet->isTryToCenter = true;
-							CheckDlgButton(hWnd2, cbTryToCenter, BST_CHECKED);
+							checkDlgButton(hWnd2, cbTryToCenter, BST_CHECKED);
 						}
 						// Update window/console size
 						if (gpSet->isTryToCenter)
@@ -6524,7 +6602,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
 					gpSet->AppStd.nExtendColorIdx = nVal;
 					gpSet->AppStd.isExtendColors = pPal->isExtendColors;
-					CheckDlgButton(hWnd2, cbExtendColors, pPal->isExtendColors ? BST_CHECKED : BST_UNCHECKED);
+					checkDlgButton(hWnd2, cbExtendColors, pPal->isExtendColors ? BST_CHECKED : BST_UNCHECKED);
 					OnButtonClicked(hWnd2, cbExtendColors, 0);
 				}
 				else return 0;
@@ -6765,14 +6843,14 @@ void CSettings::OnClose()
 {
 	ApplyStartupOptions();
 
-	if (gpSet->isTabs==1)
-		gpConEmu->ForceShowTabs(TRUE);
-	else if (gpSet->isTabs==0)
-		gpConEmu->ForceShowTabs(FALSE);
-	//else
-	
-	gpConEmu->mp_TabBar->Update();
-	gpConEmu->UpdateWindowRgn();
+	//if (gpSet->isTabs==1)
+	//	gpConEmu->ForceShowTabs(TRUE);
+	//else if (gpSet->isTabs==0)
+	//	gpConEmu->ForceShowTabs(FALSE);
+	////else
+	//
+	//gpConEmu->mp_TabBar->Update();
+	//gpConEmu->UpdateWindowRgn();
 
 	gpConEmu->OnPanelViewSettingsChanged();
 	//gpConEmu->UpdateGuiInfoMapping();
@@ -7059,6 +7137,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_WNDSIZEPOS:
 			gpSetCls->OnInitDialog_WndPosSize(hWnd2, true);
 			break;
+		case IDD_SPG_SHOW:
+			gpSetCls->OnInitDialog_Show(hWnd2, true);
+			break;
 		case IDD_SPG_CURSOR:
 			gpSetCls->OnInitDialog_Cursor(hWnd2, TRUE);
 			break;
@@ -7086,6 +7167,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Keys(hWnd2, TRUE);
 			bSkipSelChange = lbOld;
 			}
+			break;
+		case IDD_SPG_CONTROL:
+			gpSetCls->OnInitDialog_Control(hWnd2, TRUE);
 			break;
 		case IDD_SPG_TABS:
 			gpSetCls->OnInitDialog_Tabs(hWnd2);
@@ -7143,6 +7227,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_WNDSIZEPOS:
 			gpSetCls->OnInitDialog_WndPosSize(hWnd2, false);
 			break;
+		case IDD_SPG_SHOW:
+			gpSetCls->OnInitDialog_Show(hWnd2, false);
+			break;
 		case IDD_SPG_CURSOR:
 			gpSetCls->OnInitDialog_Cursor(hWnd2, FALSE);
 			break;
@@ -7166,6 +7253,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Keys(hWnd2, FALSE);
 			bSkipSelChange = lbOld;
 			}
+			break;
+		case IDD_SPG_CONTROL:
+			gpSetCls->OnInitDialog_Control(hWnd2, FALSE);
 			break;
 		case IDD_SPG_TABS:    /*gpSetCls->OnInitDialog_Tabs(hWnd2);*/   break;
 		case IDD_SPG_STATUSBAR:
@@ -7287,7 +7377,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 					if (newV != gpSet->nTransparent)
 					{
-						CheckDlgButton(gpSetCls->mh_Tabs[thi_Transparent], cbTransparent, (newV!=255) ? BST_CHECKED : BST_UNCHECKED);
+						checkDlgButton(gpSetCls->mh_Tabs[thi_Transparent], cbTransparent, (newV!=255) ? BST_CHECKED : BST_UNCHECKED);
 						gpSet->nTransparent = newV;
 						if (!gpSet->isTransparentSeparate)
 							SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->nTransparent);
@@ -7300,7 +7390,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 					if (gpSet->isTransparentSeparate && (newV != gpSet->nTransparentInactive))
 					{
-						//CheckDlgButton(gpSetCls->mh_Tabs[thi_Transparent], cbTransparentInactive, (newV!=255) ? BST_CHECKED : BST_UNCHECKED);
+						//checkDlgButton(gpSetCls->mh_Tabs[thi_Transparent], cbTransparentInactive, (newV!=255) ? BST_CHECKED : BST_UNCHECKED);
 						gpSet->nTransparentInactive = newV;
 						gpConEmu->OnTransparent();
 					}
@@ -7659,15 +7749,15 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 		{
 			const Settings::AppSettings* pApp = (const Settings::AppSettings*)lParam;
 
-			CheckRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore,
+			checkRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore,
 				(pApp->Elevated == 1) ? rbAppDistinctElevatedOn :
 				(pApp->Elevated == 2) ? rbAppDistinctElevatedOff : rbAppDistinctElevatedIgnore);
 
 			BYTE b;
 			wchar_t temp[MAX_PATH];
 
-			CheckDlgButton(hChild, cbExtendFontsOverride, pApp->OverrideExtendFonts);
-			CheckDlgButton(hChild, cbExtendFonts, pApp->isExtendFonts);
+			checkDlgButton(hChild, cbExtendFontsOverride, pApp->OverrideExtendFonts);
+			checkDlgButton(hChild, cbExtendFonts, pApp->isExtendFonts);
 			_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontBoldColor<16) ? L"%2i" : L"None", pApp->nFontBoldColor);
 			SelectStringExact(hChild, lbExtendFontBoldIdx, temp);
 			_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontItalicColor<16) ? L"%2i" : L"None", pApp->nFontItalicColor);
@@ -7675,34 +7765,34 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontNormalColor<16) ? L"%2i" : L"None", pApp->nFontNormalColor);
 			SelectStringExact(hChild, lbExtendFontNormalIdx, temp);
 
-			CheckDlgButton(hChild, cbCursorOverride, pApp->OverrideCursor);
-			CheckRadioButton(hChild, rCursorV, rCursorH, pApp->isCursorV ? rCursorV : rCursorH);
-			CheckDlgButton(hChild, cbCursorColor, pApp->isCursorColor);
-			CheckDlgButton(hChild, cbCursorBlink, pApp->isCursorBlink);
-			CheckDlgButton(hChild, cbBlockInactiveCursor, pApp->isCursorBlockInactive);
-			CheckDlgButton(hChild, cbCursorIgnoreSize, pApp->isCursorIgnoreSize);
+			checkDlgButton(hChild, cbCursorOverride, pApp->OverrideCursor);
+			checkRadioButton(hChild, rCursorV, rCursorH, pApp->isCursorV ? rCursorV : rCursorH);
+			checkDlgButton(hChild, cbCursorColor, pApp->isCursorColor);
+			checkDlgButton(hChild, cbCursorBlink, pApp->isCursorBlink);
+			checkDlgButton(hChild, cbBlockInactiveCursor, pApp->isCursorBlockInactive);
+			checkDlgButton(hChild, cbCursorIgnoreSize, pApp->isCursorIgnoreSize);
 			SetDlgItemInt(hChild, tCursorFixedSize, pApp->nCursorFixedSize, FALSE);
 			SetDlgItemInt(hChild, tCursorMinSize, pApp->nCursorMinSize, FALSE);
 
-			CheckDlgButton(hChild, cbColorsOverride, pApp->OverridePalette);
+			checkDlgButton(hChild, cbColorsOverride, pApp->OverridePalette);
 			SelectStringExact(hChild, lbColorsOverride, pApp->szPaletteName);
 
-			CheckDlgButton(hChild, cbClipboardOverride, pApp->OverrideClipboard);
+			checkDlgButton(hChild, cbClipboardOverride, pApp->OverrideClipboard);
 			//
-			CheckDlgButton(hChild, cbCTSDetectLineEnd, pApp->isCTSDetectLineEnd);
-			CheckDlgButton(hChild, cbCTSBashMargin, pApp->isCTSBashMargin);
-			CheckDlgButton(hChild, cbCTSTrimTrailing, pApp->isCTSTrimTrailing);
+			checkDlgButton(hChild, cbCTSDetectLineEnd, pApp->isCTSDetectLineEnd);
+			checkDlgButton(hChild, cbCTSBashMargin, pApp->isCTSBashMargin);
+			checkDlgButton(hChild, cbCTSTrimTrailing, pApp->isCTSTrimTrailing);
 			b = pApp->isCTSEOL;
 			FillListBoxByte(hChild, lbCTSEOL, SettingsNS::szCRLF, SettingsNS::nCRLF, b);
 			//
-			CheckDlgButton(hChild, cbClipShiftIns, pApp->isPasteAllLines);
-			CheckDlgButton(hChild, cbClipCtrlV, pApp->isPasteFirstLine);
+			checkDlgButton(hChild, cbClipShiftIns, pApp->isPasteAllLines);
+			checkDlgButton(hChild, cbClipCtrlV, pApp->isPasteFirstLine);
 			//
-			CheckDlgButton(hChild, cbCTSClickPromptPosition, pApp->isCTSClickPromptPosition);
+			checkDlgButton(hChild, cbCTSClickPromptPosition, pApp->isCTSClickPromptPosition);
 
 
-			CheckDlgButton(hChild, cbBgImageOverride, pApp->OverrideBgImage);
-			CheckDlgButton(hChild, cbBgImage, BST(pApp->isShowBgImage));
+			checkDlgButton(hChild, cbBgImageOverride, pApp->OverrideBgImage);
+			checkDlgButton(hChild, cbBgImage, BST(pApp->isShowBgImage));
 			SetDlgItemText(hChild, tBgImage, pApp->sBgImage);
 			b = pApp->nBgOperation;
 			FillListBoxByte(hChild, lbBgPlacement, SettingsNS::szBgOper, SettingsNS::nBgOper, b);
@@ -7741,7 +7831,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 				{
 					EnableWindow(GetDlgItem(hDlg, DistinctControls[i].nOverrideID), bAllowed);
 					if (!bAllowed)
-						CheckDlgButton(hDlg, DistinctControls[i].nOverrideID, BST_UNCHECKED);
+						checkDlgButton(hDlg, DistinctControls[i].nOverrideID, BST_UNCHECKED);
 				}
 
 				_ASSERTE(DistinctControls[i].nCtrls[countof(DistinctControls[i].nCtrls)-1]==0 && "Overflow check of nCtrls[]")
@@ -8183,7 +8273,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 					else
 					{
 						SetDlgItemText(hWnd2, tAppDistinctName, L"");
-						CheckRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore, rbAppDistinctElevatedIgnore);
+						checkRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore, rbAppDistinctElevatedIgnore);
 					}
 					
 					bool lbOld = bSkipSelChange; bSkipSelChange = true;
@@ -8830,7 +8920,7 @@ void CSettings::UpdateWindowMode(WORD WndMode)
 
 	if (ghOpWnd && mh_Tabs[thi_SizePos] && gpSet->isUseCurrentSizePos)
 	{
-		CheckRadioButton(gpSetCls->mh_Tabs[thi_SizePos], rNormal, rFullScreen, WndMode);
+		checkRadioButton(gpSetCls->mh_Tabs[thi_SizePos], rNormal, rFullScreen, WndMode);
 	}
 }
 
@@ -8914,7 +9004,7 @@ void CSettings::UpdateTTF(BOOL bNewTTF)
 		gpSet->isMonospace = bNewTTF ? 0 : isMonospaceSelected;
 
 		if (mh_Tabs[thi_Main])
-			CheckDlgButton(mh_Tabs[thi_Main], cbMonospace, gpSet->isMonospace); // 3state
+			checkDlgButton(mh_Tabs[thi_Main], cbMonospace, gpSet->isMonospace); // 3state
 	}
 }
 
@@ -9719,7 +9809,7 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			gpSet->isFontAutoSize = false;
 
 			if (mh_Tabs[thi_Main])
-				CheckDlgButton(mh_Tabs[thi_Main], cbFontAuto, BST_UNCHECKED);
+				checkDlgButton(mh_Tabs[thi_Main], cbFontAuto, BST_UNCHECKED);
 
 			ShowFontErrorTip(szRasterAutoError);
 		}
@@ -10021,6 +10111,43 @@ void CSettings::DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINET
 	}
 
 	DEBUGSTRFONT(szFontDump);
+}
+
+int CSettings::checkDlgButton(HWND hParent, WORD nCtrlId, UINT uCheck)
+{
+#ifdef _DEBUG
+	if (!hParent)
+	{
+		_ASSERTE(hParent!=NULL);
+	}
+	else
+	{
+		HWND hCheckBox = GetDlgItem(hParent, nCtrlId);
+		_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
+	}
+#endif
+	// јналог CheckDlgButton
+	BOOL bRc = CheckDlgButton(hParent, nCtrlId, uCheck);
+	return bRc;
+}
+
+int CSettings::checkRadioButton(HWND hParent, int nIDFirstButton, int nIDLastButton, int nIDCheckButton)
+{
+#ifdef _DEBUG
+	if (!hParent)
+	{
+		_ASSERTE(hParent!=NULL);
+	}
+	else
+	{
+		_ASSERTE(GetDlgItem(hParent, nIDFirstButton) && "Checkbox not found in hParent dlg");
+		_ASSERTE(GetDlgItem(hParent, nIDLastButton) && "Checkbox not found in hParent dlg");
+		_ASSERTE(GetDlgItem(hParent, nIDCheckButton) && "Checkbox not found in hParent dlg");
+	}
+#endif
+	// јналог CheckRadioButton
+	BOOL bRc = CheckRadioButton(hParent, nIDFirstButton, nIDLastButton, nIDCheckButton);
+	return bRc;
 }
 
 // FALSE - выключена
@@ -12766,13 +12893,13 @@ INT_PTR CSettings::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 
 			SetClassLongPtr(hWnd2, GCLP_HICON, (LONG_PTR)hClassIcon);
 			SetDlgItemText(hWnd2, tFindText, gpSet->FindOptions.pszText ? gpSet->FindOptions.pszText : L"");
-			CheckDlgButton(hWnd2, cbFindMatchCase, gpSet->FindOptions.bMatchCase);
-			CheckDlgButton(hWnd2, cbFindWholeWords, gpSet->FindOptions.bMatchWholeWords);
-			CheckDlgButton(hWnd2, cbFindFreezeConsole, gpSet->FindOptions.bFreezeConsole);
+			checkDlgButton(hWnd2, cbFindMatchCase, gpSet->FindOptions.bMatchCase);
+			checkDlgButton(hWnd2, cbFindWholeWords, gpSet->FindOptions.bMatchWholeWords);
+			checkDlgButton(hWnd2, cbFindFreezeConsole, gpSet->FindOptions.bFreezeConsole);
 			#if 0
-			CheckDlgButton(hWnd2, cbFindHighlightAll, gpSet->FindOptions.bHighlightAll);
+			checkDlgButton(hWnd2, cbFindHighlightAll, gpSet->FindOptions.bHighlightAll);
 			#endif
-			CheckDlgButton(hWnd2, cbFindTransparent, gpSet->FindOptions.bTransparent);
+			checkDlgButton(hWnd2, cbFindTransparent, gpSet->FindOptions.bTransparent);
 
 			if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
 				SendDlgItemMessage(hWnd2, tFindText, EM_SETSEL, 0, lstrlen(gpSet->FindOptions.pszText));

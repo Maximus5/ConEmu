@@ -21,7 +21,7 @@ preclean:
 
 .PHONY: dirs
 dirs:
-	mkdir ../Release ../Release/ConEmu
+	mkdir -p ../Release/ConEmu
 
 .PHONY: clean
 clean:

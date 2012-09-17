@@ -2553,7 +2553,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 	BOOL lbFarBufferSupported = mp_RCon->isFarBufferSupported();
 
-	if (con.bBufferHeight && !lbFarBufferSupported)
+	if (con.bBufferHeight && ((m_Type != rbt_Primary) || !lbFarBufferSupported))
 	{
 		if (messg == WM_MOUSEWHEEL)
 		{

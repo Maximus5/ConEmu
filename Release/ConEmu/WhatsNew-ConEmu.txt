@@ -14,6 +14,12 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.09.16
+[!] Settings dialog redesigned. New pages created. Some options renamed.
+[%] Regression. Can't activate alternative mode for tab #1.
+[%] Alternative buffer of "far /w" was not scrollable.
+
+
 2012.09.13
 [!] I'm bored to tell «Read Disclaimer #2». Option «Inject ConEmuHk» is off for now by default.
 [*] Some more diagnostic info on failed to start root command (shell).

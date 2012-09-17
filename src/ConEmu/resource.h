@@ -35,15 +35,16 @@
 #define IDD_SPG_TRANSPARENT             165
 #define IDD_SPG_CMDOUTPUT               166
 #define IDD_SPG_WNDSIZEPOS              167
-#define IDD_MORE_HIDE                   200
-#define IDD_SPG_SELECTION               204
-#define IDD_SPG_TABS                    206
-#define IDD_SPG_VIEWS                   208
+#define IDD_SPG_SELECTION               168
+#define IDD_SPG_TABS                    169
+#define IDD_SPG_VIEWS                   170
+#define IDD_SPG_KEYS                    171
+#define IDD_SPG_UPDATE                  172
+#define IDD_SPG_CONTROL              173
+#define IDD_SPG_SHOW                    174
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
-#define IDD_SPG_KEYS                    211
 #define IDD_ATTACHDLG                   212
-#define IDD_SPG_UPDATE                  214
 #define IDD_FAST_CONFIG                 215
 #define IDD_FIND                        217
 #define IDD_ABOUT                       218
@@ -340,7 +341,6 @@
 #define bConFontAdd2HKLM                1730
 #define tConsoleFontHklmNote            1731
 #define tConsoleFontConsoleNote         1732
-#define cbSendAltSpace                  1733
 #define cbBgAllowPlugin                 1734
 #define cbTabsInCaption                 1735
 #define cbAlwaysShowTrayIcon            1736
@@ -384,7 +384,6 @@
 #define cbSendPrintScrn                 1780
 #define cbSendCtrlEsc                   1781
 #define cbDosBoxForceConfig             1783
-#define cbSendAltF9                     1784
 #define vkMinimizeRestore               2000
 #define vkMultiNew                      2001
 #define vkMultiNext                     2002
@@ -664,7 +663,6 @@
 #define cbMonospace                     2283
 #define tFontSizeX2                     2284
 #define slDarker                        2285
-#define cbSendAltEnter                  2286
 #define cbDnDCopy                       2287
 #define cbTabs                          2288
 #define cbEnhanceGraphics               2289
@@ -822,6 +820,23 @@
 #define vkShowTabsList2                 2455
 #define vkNewConSplitV                  2456
 #define vkNewConSplitH                  2457
+#define cbClipStartBlockSelection       2458
+#define cbClipStartTextSelection        2459
+#define lbClipStartBlockSelection       2460
+#define lbClipStartTextSelection        2461
+#define vkClipStartBlockSelection       2462
+#define vkClipStartTextSelection        2463
+#define cbQuakeAutoHide                 2466
+#define cbFullscreenNoBars              2468
+#define cbFullscreenFixedConSize        2469
+#define tFullScreenWidth                2470
+#define tFullScreenHeight               2471
+#define rbTaskbarBtnActive              2472
+#define rbTaskbarBtnAll                 2473
+#define rbTaskbarBtnWin7                2474
+#define rbTabsAlways                    2476
+#define rbTabsAuto                      2477
+#define rbTabsNone                      2478
 
 // Next default values for new objects
 // 
@@ -829,7 +844,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2458
+#define _APS_NEXT_CONTROL_VALUE         2479
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

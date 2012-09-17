@@ -1,12 +1,15 @@
 You can choose any method:
 
 1. Use Visual C++ 2008 and solution file CE.sln from this folder
+   ! Visual C++ related files are available on project`s svn:
+   ! http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/
 
 2. Use Visual C++ nmake (2008) and makefile_all_vc.
    Example: nmake /F makefile_all_vc
    ! This method requires libCRT.lib (libCRT64.lib),
    ! placed in 'common' subfolder.
    ! Theese files must be compiled from Far 3 sources.
+   ! http://farmanager.com/svn/trunk/plugins  -->  common folder
    ! Windows SDK 7.0 required, check version in registry:
    ! HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows
 
