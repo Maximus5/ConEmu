@@ -339,7 +339,7 @@ class CRealConsole
 		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false);
+		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false, bool abFromTouch = false);
 		void OnFocus(BOOL abFocused);
 
 		void StopSignal();

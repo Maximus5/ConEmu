@@ -14,9 +14,18 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+[+] Dir sync settings.
+[%] RClick & Far 3 & "Far /w" does not select panel items.
+[*] Minor changes in splitter`s painting.
+[%] Issue 689: Progress stuck at 100% in powershell.
+[+] New switch: "ConEmu.exe /reset" starts without loading settings (a'la fresh config).
+[+] New option on "Caption" page: "Always show numbers [n/m]".
+[*] Touchscreen. Ignore SPI_GETWHEELSCROLLLINES.
+
+
 2012.09.16
 [!] Settings dialog redesigned. New pages created. Some options renamed.
-[%] Regression. Can't activate alternative mode for tab #1.
+[%] Regression fixed. Can't activate alternative mode for tab #1.
 [%] Alternative buffer of "far /w" was not scrollable.
 
 

@@ -177,7 +177,9 @@ CConEmuMain::CConEmuMain()
 	DisableKeybHooks = false;
 	mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	m_InsideIntegration = ii_None; mb_InsideIntegrationShift = false; mn_InsideParentPID = 0;
-	mb_InsideSynchronizeCurDir = true;
+	mb_InsideSynchronizeCurDir = false;
+	ms_InsideSynchronizeCurDir = NULL;
+	mb_InsidePaneWasForced = false;
 	mh_InsideParentRoot = mh_InsideParentWND = mh_InsideParentRel = NULL;
 	mh_InsideParentPath = mh_InsideParentCD = NULL; ms_InsideParentPath[0] = 0;
 	mh_InsideSysMenu = NULL;
@@ -1045,14 +1047,51 @@ RECT CConEmuMain::GetDefaultRect()
 		if (!GetMonitorInfo(hMon, &mi))
 			SystemParametersInfo(SPI_GETWORKAREA, 0, &mi.rcWork, 0);
 
+		bool bChange = false;
+
 		// Если успешно - подгоняем по экрану
 		if (mi.rcWork.right > mi.rcWork.left)
 		{
-			rcWnd.left = mi.rcWork.left - rcFrameMargin.left;
-			rcWnd.right = mi.rcWork.right + rcFrameMargin.right;
-			rcWnd.top = mi.rcWork.top - rcFrameMargin.top;
-			rcWnd.bottom = rcWnd.top + nHeight;
+			switch (gpSet->_WindowMode)
+			{
+				case wmMaximized:
+				{
+					rcWnd.left = mi.rcWork.left - rcFrameMargin.left;
+					rcWnd.right = mi.rcWork.right + rcFrameMargin.right;
+					rcWnd.top = mi.rcWork.top - rcFrameMargin.top;
+					rcWnd.bottom = rcWnd.top + nHeight;
 
+					bChange = true;
+					break;
+				}
+
+				case wmFullScreen:
+				{
+					rcWnd.left = mi.rcMonitor.left - rcFrameMargin.left;
+					rcWnd.right = mi.rcMonitor.right + rcFrameMargin.right;
+					rcWnd.top = mi.rcMonitor.top - rcFrameMargin.top;
+					rcWnd.bottom = rcWnd.top + nHeight;
+
+					bChange = true;
+					break;
+				}
+
+				case wmNormal:
+				{
+					int nWidth = rcWnd.right - rcWnd.left;
+					rcWnd.left = max(mi.rcWork.left,((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
+					rcWnd.right = min(mi.rcWork.right,(rcWnd.left + nWidth));
+					rcWnd.top = mi.rcWork.top - rcFrameMargin.top;
+					rcWnd.bottom = rcWnd.top + nHeight;
+
+					bChange = true;
+					break;
+				}
+			}
+		}
+
+		if (bChange)
+		{
 			ptFullScreenSize.x = rcWnd.right - rcWnd.left + 1;
 			ptFullScreenSize.y = mi.rcMonitor.bottom - mi.rcMonitor.top + nShiftY;
 
@@ -1355,11 +1394,18 @@ DWORD CConEmuMain::GetWindowStyle()
 
 DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 {
-	if (gpSet->isCaptionHidden(wmNewMode))
+	/* WS_CAPTION == (WS_BORDER | WS_DLGFRAME) */
+
+	if (m_InsideIntegration)
 	{
-		/* WS_CAPTION == (WS_BORDER | WS_DLGFRAME) */
-		if ((wmNewMode == wmFullScreen) || (wmNewMode == wmMaximized)
-			|| ((wmNewMode == wmCurrent) && ((WindowMode == wmFullScreen) || (WindowMode == wmMaximized))))
+		dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
+		dwStyle |= WS_CHILD|WS_SYSMENU;
+	}
+	else if (gpSet->isCaptionHidden(wmNewMode))
+	{
+		if (!gpSet->isQuakeStyle
+			&& (((wmNewMode == wmFullScreen) || (wmNewMode == wmMaximized)
+				|| ((wmNewMode == wmCurrent) && ((WindowMode == wmFullScreen) || (WindowMode == wmMaximized))))))
 		{
 			dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
 		}
@@ -1379,6 +1425,7 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 		/* WS_CAPTION == WS_BORDER | WS_DLGFRAME  */
 		dwStyle |= WS_CAPTION|WS_THICKFRAME;
 	}
+
 	return dwStyle;
 }
 
@@ -1883,7 +1930,70 @@ RepeatCheck:
 				if (nBtn == IDYES)
 				{
 					DWORD_PTR nRc;
-					SendMessageTimeout(mh_InsideParentRoot, WM_COMMAND, 41536, 0, SMTO_NOTIMEOUTIFNOTHUNG, 2500, &nRc);
+					LRESULT lSendRc;
+
+				#if 0
+
+					HWND hWorker = GetDlgItem(mh_InsideParentRoot, 0xA005);
+
+					#ifdef _DEBUG
+					if (hWorker)
+					{
+						HWND hReBar = FindWindowEx(hWorker, NULL, L"ReBarWindow32", NULL);
+						if (hReBar)
+						{
+							POINT pt = {4,4};
+							HWND hTool = ChildWindowFromPoint(hReBar, pt);
+							if (hTool)
+							{
+								//TBBUTTON tb = {};
+								//lSendRc = SendMessageTimeout(mh_InsideParentRoot, TB_GETBUTTON, 2, (LPARAM)&tb, SMTO_NOTIMEOUTIFNOTHUNG, 500, &nRc);
+								//if (tb.idCommand)
+								//{
+								//	NMTOOLBAR nm = {{hTool, 0, TBN_DROPDOWN}, 32896/*tb.idCommand*/};
+								//	lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_NOTIFY, 0, (LPARAM)&nm, SMTO_NOTIMEOUTIFNOTHUNG, 500, &nRc);
+								//}
+								lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_COMMAND, 32896, 0, SMTO_NOTIMEOUTIFNOTHUNG, 500, &nRc);
+							}
+						}
+					}
+					// There is no way to force "Tip pane" in WinXP
+					// if popup menu "View -> Explorer bar" was not _shown_ at least once
+					// In that case, Explorer ignores WM_COMMAND(41536) and does not reveal tip pane.
+					HMENU hMenu1 = GetMenu(mh_InsideParentRoot), hMenu2 = NULL, hMenu3 = NULL;
+					if (hMenu1)
+					{
+						hMenu2 = GetSubMenu(hMenu1, 2);
+						//if (!hMenu2)
+						//{
+						//	lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_MENUSELECT, MAKELONG(2,MF_POPUP), (LPARAM)hMenu1, SMTO_NOTIMEOUTIFNOTHUNG, 1500, &nRc);
+						//	hMenu2 = GetSubMenu(hMenu1, 2);
+						//}
+
+						if (hMenu2)
+						{
+							hMenu3 = GetSubMenu(hMenu2, 2);
+						}
+					}
+					#endif
+				#endif
+
+					//INPUT keys[4] = {INPUT_KEYBOARD,INPUT_KEYBOARD,INPUT_KEYBOARD,INPUT_KEYBOARD};
+					//keys[0].ki.wVk = VK_F10; keys[0].ki.dwFlags = 0; //keys[0].ki.wScan = MapVirtualKey(VK_F10,MAPVK_VK_TO_VSC);
+					//keys[1].ki.wVk = VK_F10; keys[1].ki.dwFlags = KEYEVENTF_KEYUP; //keys[0].ki.wScan = MapVirtualKey(VK_F10,MAPVK_VK_TO_VSC);
+					//keys[1].ki.wVk = 'V';
+					//keys[2].ki.wVk = 'E';
+					//keys[3].ki.wVk = 'T';
+
+					//LRESULT lSentRc = 0;
+					//SetForegroundWindow(mh_InsideParentRoot);
+					//LRESULT lSentRc = SendInput(2/*countof(keys)*/, keys, sizeof(keys[0]));
+					//lSentRc = SendMessageTimeout(mh_InsideParentRoot, WM_SYSKEYUP, 'V', 0, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &nRc);
+
+					lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_COMMAND, 41536, 0, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &nRc);
+					UNREFERENCED_PARAMETER(lSendRc);
+
+					mb_InsidePaneWasForced = true;
 					// Подготовим сообщение если не удастся
 					wcscpy_c(szAddMsg, L"Forcing Explorer to show Tip pane failed.\nShow pane yourself and recall ConEmu.\n\n");
 				}
@@ -2000,8 +2110,9 @@ void CConEmuMain::InsideUpdateDir()
         		}
         		else //if (VCon->RCon())
         		{
-        			// Подготовить команду для выполнения в Shell
+        			// Запомнить для сравнения
         			lstrcpyn(ms_InsideParentPath, pszPath, countof(ms_InsideParentPath));
+        			// Подготовить команду для выполнения в Shell
         			VCon->RCon()->PostPromptCmd(true, pszPath);
         		}
         	}
@@ -4027,8 +4138,10 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 	OnHideCaption(inMode);
 
+	ConEmuWindowMode NewMode = (gpSet->isQuakeStyle || m_InsideIntegration) ? wmNormal : inMode;
+
 	//!!!
-	switch (inMode)
+	switch (NewMode)
 	{
 		case wmNormal:
 		{
@@ -5722,6 +5835,8 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, BOOL abForceAsA
 	CVirtualConsole *pSetActive = NULL, *pVCon = NULL, *pLastVCon = NULL;
 	BOOL lbSetActive = FALSE, lbOneCreated = FALSE, lbRunAdmin = FALSE;
 
+	CVConGroup::OnCreateGroupBegin();
+
 	while (*pszLine)
 	{
 		lbSetActive = FALSE;
@@ -5845,6 +5960,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, BOOL abForceAsA
 	pVConResult = (pSetActive ? pSetActive : pLastVCon);
 wrap:
 	SafeFree(pszDataW);
+	CVConGroup::OnCreateGroupEnd();
 	return pVConResult;
 }
 
@@ -7636,17 +7752,17 @@ void CConEmuMain::UpdateProgress()
 		wsprintf(MultiTitle+_tcslen(MultiTitle), L"{*%i%%} ", mn_Progress);
 	}
 
-	if (gpSet->isMulti && !gpConEmu->mp_TabBar->IsTabsShown())
+	if (gpSet->isMulti && (gpSet->isNumberInCaption || !gpConEmu->mp_TabBar->IsTabsShown()))
 	{
 		int nCur = 1, nCount = 0;
 
 		nCur = GetActiveVCon(NULL, &nCount);
 		if (nCur < 0)
-			nCur = 1;
+			nCur = (nCount > 0) ? 1 : 0;
 		else
 			nCur++;
 
-		if (nCount > 1)
+		if (gpSet->isNumberInCaption || (nCount > 1))
 		{
 			psTitle = MultiTitle;
 			wsprintf(MultiTitle+_tcslen(MultiTitle), L"[%i/%i] ", nCur, nCount);
@@ -8137,8 +8253,8 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 			//	//WARNING("!!! Заменить на CMD_LEFTCLKSYNC?");
 			//}
 		}
-		else if (gpSet->isRClickSendKey > 1 && (mouse.state & MOUSE_R_LOCKED)
-			&& m_RightClickingFrames > 0 && mh_RightClickingBmp)
+		else if ((gpSet->isRClickSendKey > 1) && (mouse.state & MOUSE_R_LOCKED)
+			&& (m_RightClickingFrames > 0) && mh_RightClickingBmp)
 		{
 			//WORD nRDown = GetKeyState(VK_RBUTTON);
 			//POINT ptCur; GetCursorPos(&ptCur);
@@ -8146,7 +8262,6 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 			bool bRDown = isPressed(VK_RBUTTON);
 
 			if (bRDown)
-				//&& PtDiffTest(Rcursor, ptCur.x, ptCur.y, RCLICKAPPSDELTA))
 			{
 				DWORD dwCurTick = TimeGetTime(); //GetTickCount();
 				DWORD dwDelta = dwCurTick - mouse.RClkTick;
@@ -15213,21 +15328,23 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			PAINTSTRUCT ps = {};
 			BeginPaint(hWnd, &ps);
 
-			int nAppId = -1;
-			CVConGuard VCon;
-			if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())
-			{
-				nAppId = VCon->RCon()->GetActiveAppSettingsId();
-			}
+			CVConGroup::PaintGaps(ps.hdc);
 
-			int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
-			HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(nAppId, !gpConEmu->isMeForeground())[nColorIdx]);
-			if (hBrush)
-			{
-				FillRect(ps.hdc, &ps.rcPaint, hBrush);
+			//int nAppId = -1;
+			//CVConGuard VCon;
+			//if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())
+			//{
+			//	nAppId = VCon->RCon()->GetActiveAppSettingsId();
+			//}
 
-				DeleteObject(hBrush);
-			}
+			//int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
+			//HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(nAppId, !gpConEmu->isMeForeground())[nColorIdx]);
+			//if (hBrush)
+			//{
+			//	FillRect(ps.hdc, &ps.rcPaint, hBrush);
+
+			//	DeleteObject(hBrush);
+			//}
 
 			EndPaint(hWnd, &ps);
 		} // WM_PAINT
@@ -15729,12 +15846,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			else if (messg == gpConEmu->mn_MsgVConTerminated)
 			{
 				#ifdef _DEBUG
+				int i = -100;
+				wchar_t szDbg[200];
 				{
-					wchar_t szDbg[200];
 					lstrcpy(szDbg, L"OnVConClosed");
 					CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
 
-					int i = isVConValid(pVCon);
+					i = isVConValid(pVCon);
 					if (i >= 1)
 					{
 						ConEmuTab tab = {0};

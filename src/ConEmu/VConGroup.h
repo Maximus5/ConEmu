@@ -90,6 +90,9 @@ public:
 	static CVirtualConsole* CreateCon(RConStartArgs *args, bool abAllowScripts = false, bool abForceCurConsole = false);
 	static void OnVConDestroyed(CVirtualConsole* apVCon);
 
+	static void OnCreateGroupBegin();
+	static void OnCreateGroupEnd();
+
 public:
 	static bool isActive(CVirtualConsole* apVCon, bool abAllowGroup = true);
 	static bool isVisible(CVirtualConsole* apVCon);

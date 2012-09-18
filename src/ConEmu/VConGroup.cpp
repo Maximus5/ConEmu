@@ -49,6 +49,7 @@ static CVirtualConsole* gp_VCon[MAX_CONSOLE_COUNT] = {};
 
 static CVirtualConsole* gp_VActive = NULL;
 static bool gb_CreatingActive = false, gb_SkipSyncSize = false;
+static UINT gn_CreateGroupStartVConIdx = 0;
 
 static CRITICAL_SECTION gcs_VGroups;
 static CVConGroup* gp_VGroups[MAX_CONSOLE_COUNT*2] = {}; // на каждое разбиение добавляется +Parent
@@ -158,7 +159,7 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 	if (gp_VActive && args->eSplit)
 	{
 		CVConGuard VCon;
-		if (((args->nSplitPane && GetVCon(args->nSplitPane-1, &VCon))
+		if (((args->nSplitPane && GetVCon(gn_CreateGroupStartVConIdx+args->nSplitPane-1, &VCon))
 				|| (GetActiveVCon(&VCon) >= 0))
 			&& VCon->mp_Group)
 		{
@@ -699,7 +700,8 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 			_ASSERTE(nCon2Width > 0);
 		}
 
-		rcCon1 = MakeRect(rcNewCon.left, rcNewCon.top, rcNewCon.left + nScreenWidth, rcNewCon.bottom);
+		rcCon1 = MakeRect(rcNewCon.left, rcNewCon.top,
+			max(rcNewCon.left + nScreenWidth,rcNewCon.right - nCon2Width - nPadX), rcNewCon.bottom);
 		rcCon2 = MakeRect(rcNewCon.right - nCon2Width, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
 		rcSplitter = MakeRect(rcCon1.right+1, rcCon1.top, rcCon2.left, rcCon2.bottom);
 	}
@@ -743,7 +745,8 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 			nCon2Height = rcNewCon.bottom - (rcCon1.bottom+nPadY+rcScroll.bottom);
 		}
 
-		rcCon1 = MakeRect(rcNewCon.left, rcNewCon.top, rcNewCon.right, rcNewCon.top + nScreenHeight);
+		rcCon1 = MakeRect(rcNewCon.left, rcNewCon.top,
+			rcNewCon.right, max(rcNewCon.top + nScreenHeight,rcNewCon.bottom - nCon2Height - nPadY));
 		rcCon2 = MakeRect(rcCon1.left, rcNewCon.bottom - nCon2Height, rcNewCon.right, rcNewCon.bottom);
 		rcSplitter = MakeRect(rcCon1.left, rcCon1.bottom, rcCon2.right, rcCon2.top);
 	}
@@ -1803,10 +1806,15 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 {
 	ShutdownGuiStep(L"OnVConClosed");
 
+	bool bDbg1 = false, bDbg2 = false, bDbg3 = false, bDbg4 = false;
+	int iDbg1 = -100, iDbg2 = -100, iDbg3 = -100;
+
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		if (gp_VCon[i] == apVCon)
 		{
+			iDbg1 = i;
+
 			// Сначала нужно обновить закладки, иначе в закрываемой консоли
 			// может быть несколько вкладок и вместо активации другой консоли
 			// будет попытка активировать другую вкладку закрываемой консоли
@@ -1817,6 +1825,7 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 			{
 				if (gpConEmu->GetVCon(1))
 				{
+					bDbg1 = true;
 					gpConEmu->mp_TabBar->SwitchRollback();
 					gpConEmu->mp_TabBar->SwitchNext();
 					gpConEmu->mp_TabBar->SwitchCommit();
@@ -1829,10 +1838,13 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 
 			if (gp_VActive == apVCon)
 			{
-				for(int j=(i-1); j>=0; j--)
+				bDbg2 = true;
+
+				for (int j=(i-1); j>=0; j--)
 				{
 					if (gp_VCon[j])
 					{
+						iDbg2 = j;
 						ConActivate(j);
 						break;
 					}
@@ -1840,10 +1852,13 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 
 				if (gp_VActive == apVCon)
 				{
+					bDbg3 = true;
+
 					for (size_t j = (i+1); j < countof(gp_VCon); j++)
 					{
 						if (gp_VCon[j])
 						{
+							iDbg3 = j;
 							ConActivate(j);
 							break;
 						}
@@ -1859,7 +1874,10 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 			gp_VCon[countof(gp_VCon)-1] = NULL;
 
 			if (gp_VActive == apVCon)
+			{
+				bDbg4 = true;
 				gp_VActive = NULL;
+			}
 
 			apVCon->Release();
 			break;
@@ -2304,6 +2322,25 @@ bool CVConGroup::ConActivate(int nCon)
 	}
 
 	return false;
+}
+
+void CVConGroup::OnCreateGroupBegin()
+{
+	UINT nFreeCell = 0;
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		if (gp_VCon[i] == NULL)
+		{
+			nFreeCell = i;
+			break;
+		}
+	}
+	gn_CreateGroupStartVConIdx = nFreeCell;
+}
+
+void CVConGroup::OnCreateGroupEnd()
+{
+	gn_CreateGroupStartVConIdx = 0;
 }
 
 CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)
@@ -3271,75 +3308,86 @@ void CVConGroup::PaintGaps(HDC hDC)
 		lbReleaseDC = true;
 	}
 
-	int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
-	int nAppId = -1;
-	if (gp_VActive && gp_VActive->RCon())
-	{
-		nAppId = gp_VActive->RCon()->GetActiveAppSettingsId();
-	}
-	HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(nAppId, !gpConEmu->isMeForeground())[nColorIdx]);
+	HBRUSH hBrush = NULL;
 
-	//RECT rcClient = GetGuiClientRect(); // Клиентская часть главного окна
-	RECT rcClient = gpConEmu->CalcRect(CER_WORKSPACE);
+
+	bool lbFade = gpSet->isFadeInactive && !gpConEmu->isMeForeground(true);
+
+
+	////RECT rcClient = GetGuiClientRect(); // Клиентская часть главного окна
+	//RECT rcClient = gpConEmu->CalcRect(CER_WORKSPACE);
+
+	_ASSERTE(ghWndWork!=NULL);
+	RECT rcClient = {};
+	GetClientRect(ghWndWork, &rcClient);
 
 	//HWND hView = gp_VActive ? gp_VActive->GetView() : NULL;
 
 	//if (!hView || !IsWindowVisible(hView))
 	if (!isVConExists(0))
 	{
+		int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
+		HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(-1, lbFade)[nColorIdx]);
+
 		FillRect(hDC, &rcClient, hBrush);
 	}
 	else
 	{
-		TODO("DoubleView: заливать с учетом, что видимых окон - два, и может быть промежуток между ними");
+		COLORREF crBack = lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarBack) : gpSet->nStatusBarBack;
+		COLORREF crText = lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarLight) : gpSet->nStatusBarLight;
+		COLORREF crDash = lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarDark) : gpSet->nStatusBarDark;
 
-		int iRc = SIMPLEREGION;
+		hBrush = CreateSolidBrush(crBack);
 
-		RECT rc = {};
-		GetClientRect(ghWnd, &rc);
-		HRGN h = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+		TODO("DoubleView: красивая отрисовка выпуклых сплиттеров");
 
-		TODO("DoubleView");
-		if ((iRc != NULLREGION) && gpConEmu->mp_TabBar->GetRebarClientRect(&rc))
-		{
-			HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
-			iRc = CombineRgn(h, h, h2, RGN_DIFF);
-			DeleteObject(h2);
-		}
+		FillRect(hDC, &rcClient, hBrush);
 
-		if ((iRc != NULLREGION) && gpConEmu->mp_Status->GetStatusBarClientRect(&rc))
-		{
-			HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
-			CombineRgn(h, h, h2, RGN_DIFF);
-			DeleteObject(h2);
-		}
+		//int iRc = SIMPLEREGION;
 
-		// Теперь - VConsole (все видимые!)
-		if (iRc != NULLREGION)
-		{
-			for (size_t i = 0; i < countof(gp_VCon); i++)
-			{
-				CVConGuard VCon(gp_VCon[i]);
-				if (VCon.VCon() && VCon->isVisible())
-				{
-					HWND hView = VCon.VCon() ? VCon->GetView() : NULL;
-					if (hView && GetWindowRect(hView, &rc))
-					{
-						MapWindowPoints(NULL, ghWnd, (LPPOINT)&rc, 2);
-						HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
-						iRc = CombineRgn(h, h, h2, RGN_DIFF);
-						DeleteObject(h2);
-						if (iRc == NULLREGION)
-							break;
-					}
-				}
-			}
-		}
+		//HRGN h = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
 
-		if (iRc != NULLREGION)
-			FillRgn(hDC, h, hBrush);
+		//TODO("DoubleView");
+		//if ((iRc != NULLREGION) && gpConEmu->mp_TabBar->GetRebarClientRect(&rc))
+		//{
+		//	HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+		//	iRc = CombineRgn(h, h, h2, RGN_DIFF);
+		//	DeleteObject(h2);
+		//}
 
-		DeleteObject(h);
+		//if ((iRc != NULLREGION) && gpConEmu->mp_Status->GetStatusBarClientRect(&rc))
+		//{
+		//	HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+		//	CombineRgn(h, h, h2, RGN_DIFF);
+		//	DeleteObject(h2);
+		//}
+
+		//// Теперь - VConsole (все видимые!)
+		//if (iRc != NULLREGION)
+		//{
+		//	for (size_t i = 0; i < countof(gp_VCon); i++)
+		//	{
+		//		CVConGuard VCon(gp_VCon[i]);
+		//		if (VCon.VCon() && VCon->isVisible())
+		//		{
+		//			HWND hView = VCon.VCon() ? VCon->GetView() : NULL;
+		//			if (hView && GetWindowRect(hView, &rc))
+		//			{
+		//				MapWindowPoints(NULL, ghWnd, (LPPOINT)&rc, 2);
+		//				HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+		//				iRc = CombineRgn(h, h, h2, RGN_DIFF);
+		//				DeleteObject(h2);
+		//				if (iRc == NULLREGION)
+		//					break;
+		//			}
+		//		}
+		//	}
+		//}
+
+		//if (iRc != NULLREGION)
+		//	FillRgn(hDC, h, hBrush);
+
+		//DeleteObject(h);
 
 		////RECT rcMargins = gpConEmu->CalcMargins(CEM_TAB); // Откусить площадь, занятую строкой табов
 		////AddMargins(rcClient, rcMargins, FALSE);
@@ -3434,8 +3482,10 @@ void CVConGroup::PaintGaps(HDC hDC)
 		////GdiFlush();
 		//#endif
 
-		DeleteObject(hBrush);
 	}
+
+	if (hBrush)
+		DeleteObject(hBrush);
 
 	if (lbReleaseDC)
 		ReleaseDC(ghWnd, hDC);

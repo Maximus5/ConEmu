@@ -657,7 +657,7 @@ void CSettings::InitVars_Pages()
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
 		{IDD_SPG_MAIN,        0, L"Main",           thi_Main/*,    OnInitDialog_Main*/},
 		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos/*, OnInitDialog_WndPosSize*/},
-		{IDD_SPG_SHOW,  1, L"Appearance",     thi_Appearance/*, OnInitDialog_Show*/},
+		{IDD_SPG_SHOW,  1, L"Appearance",     thi_Show/*, OnInitDialog_Show*/},
 		{IDD_SPG_UPDATE,      1, L"Update",         thi_Update/*,  OnInitDialog_Update*/},
 		{IDD_SPG_STARTUP,     0, L"Startup",        thi_Startup/*, OnInitDialog_Startup*/},
 		{IDD_SPG_CMDTASKS,    1, L"Tasks",          thi_Tasks/*,   OnInitDialog_CmdTasks*/},
@@ -1560,6 +1560,8 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	ShowWindow(GetDlgItem(hWnd2, cbTabsInCaption), SW_HIDE);
 	#endif
 
+	checkDlgButton(hWnd2, cbNumberInCaption, gpSet->isNumberInCaption);
+
 	RegisterTipsFor(hWnd2);
 	return 0;
 }
@@ -1572,7 +1574,7 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbUseCurrentSizePos, gpSet->isUseCurrentSizePos);
 
-	if (!gpSet->isUseCurrentSizePos)
+	if (gpSet->isQuakeStyle || !gpSet->isUseCurrentSizePos)
 		checkRadioButton(hWnd2, rNormal, rFullScreen, gpSet->_WindowMode);
 	else if (gpConEmu->isFullScreen())
 		checkRadioButton(hWnd2, rNormal, rFullScreen, rFullScreen);
@@ -2980,8 +2982,9 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				SetDlgItemText(hWnd2, tInsideShell, L"powershell -cur_console:n");
 				//SetDlgItemText(hWnd2, tInsideIcon, szIcon);
 				SetDlgItemText(hWnd2, tInsideIcon, L"powershell.exe");
+				checkDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mb_InsideSynchronizeCurDir);
+				SetDlgItemText(hWnd2, tInsideSyncDir, L""); // Auto
 			}
-			checkDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mb_InsideSynchronizeCurDir);
 
 			if (pszCurHere)
 			{
@@ -3031,6 +3034,21 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				}
 			}
 			break; // BN_CLICKED
+		case EN_CHANGE:
+			{
+				WORD EB = LOWORD(wParam);
+				switch (EB)
+				{
+				case tInsideSyncDir:
+					if (gpConEmu->m_InsideIntegration)
+					{
+						SafeFree(gpConEmu->ms_InsideSynchronizeCurDir);
+                        gpConEmu->ms_InsideSynchronizeCurDir = GetDlgItemText(hWnd2, tInsideSyncDir);
+					}
+					break;
+				}
+			}
+			break; // EN_CHANGE
 		case CBN_SELCHANGE:
 			{
 				WORD CB = LOWORD(wParam);
@@ -3040,7 +3058,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				case cbHereName:
 					if (!bSkipCbSel)
 					{
-						wchar_t *pszCfg = NULL, *pszIco = NULL, *pszFull = NULL;
+						wchar_t *pszCfg = NULL, *pszIco = NULL, *pszFull = NULL, *pszDirSync = NULL;
 						LPCWSTR pszCmd = NULL;
 						INT_PTR iSel = SendDlgItemMessage(hWnd2, CB, CB_GETCURSEL, 0,0);
 						if (iSel >= 0)
@@ -3082,7 +3100,11 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 
 												if (lstrcmpi(szArg, L"/inside") == 0)
 												{
-													//TODO: Sync?
+													// Nop
+												}
+												else if (lstrcmpni(szArg, L"/inside=", 8) == 0)
+												{
+													pszDirSync = lstrdup(szArg+8); // may be empty!
 												}
 												else if (lstrcmpi(szArg, L"/config") == 0)
 												{
@@ -3120,9 +3142,16 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 						SetDlgItemText(hWnd2, (CB==cbInsideName) ? tInsideIcon : tHereIcon,
 							pszIco ? pszIco : L"");
 
+						if (CB==cbInsideName)
+						{
+							SetDlgItemText(hWnd2, tInsideSyncDir, pszDirSync ? pszDirSync : L"");
+							checkDlgButton(hWnd2, cbInsideSyncDir, (pszDirSync && *pszDirSync) ? BST_CHECKED : BST_UNCHECKED);
+						}
+
 						SafeFree(pszCfg);
 						SafeFree(pszFull);
 						SafeFree(pszIco);
+						SafeFree(pszDirSync);
 					}
 					break;
 				}
@@ -3257,7 +3286,7 @@ void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, L
 	asCmd = SkipNonPrintable(asCmd);
 
 	size_t cchMax = _tcslen(gpConEmu->ms_ConEmuExe)
-		+ (asOpt ? (_tcslen(asOpt) + 1) : 0)
+		+ (asOpt ? (_tcslen(asOpt) + 3) : 0)
 		+ (asConfig ? (_tcslen(asConfig) + 16) : 0)
 		+ _tcslen(asCmd) + 32;
 	wchar_t* pszCmd = (wchar_t*)malloc(cchMax*sizeof(*pszCmd));
@@ -3295,8 +3324,10 @@ void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, L
 		_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\" ", gpConEmu->ms_ConEmuExe);
 		if (asOpt && *asOpt)
 		{
+			bool bQ = (wcschr(pszCmd, L' ') != NULL);
+			if (bQ) _wcscat_c(pszCmd, cchMax, L"\"");
 			_wcscat_c(pszCmd, cchMax, asOpt);
-			_wcscat_c(pszCmd, cchMax, L" ");
+			_wcscat_c(pszCmd, cchMax, bQ ? L"\" " : L" ");
 		}
 		if (asConfig && *asConfig)
 		{
@@ -3424,12 +3455,24 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 			GetDlgItemText(hDlg, cbInsideName, szName, countof(szName));
 			if (bEnabled)
 			{
-				wchar_t szConfig[MAX_PATH] = {}, szShell[MAX_PATH] = {}, szIcon[MAX_PATH+16];
+				wchar_t szConfig[MAX_PATH] = {}, szShell[MAX_PATH] = {}, szIcon[MAX_PATH+16] = {}, szOpt[130] = {};
 				GetDlgItemText(hDlg, tInsideConfig, szConfig, countof(szConfig));
 				GetDlgItemText(hDlg, tInsideShell, szShell, countof(szShell));
+
+				if (IsChecked(hDlg, cbInsideSyncDir))
+				{
+					wcscpy_c(szOpt, L"/inside=");
+					int nOL = lstrlen(szOpt); _ASSERTE(nOL==8);
+					GetDlgItemText(hDlg, tInsideSyncDir, szOpt+nOL, countof(szShell)-nOL);
+					if (szOpt[8] == 0)
+					{
+						szOpt[0] = 0;
+					}
+				}
+
 				//_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,0", gpConEmu->ms_ConEmuExe);
 				GetDlgItemText(hDlg, tInsideIcon, szIcon, countof(szIcon));
-				RegisterShell(szName, L"/inside", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
+				RegisterShell(szName, szOpt[0] ? szOpt : L"/inside", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
 			}
 			else if (*szName)
 			{
@@ -3778,60 +3821,74 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rNormal:
 		case rFullScreen:
 		case rMaximized:
-			EnableWindow(GetDlgItem(hWnd2, cbApplyPos), TRUE);
-			for (size_t i = 0; i < countof(SettingsNS::nSizeCtrlId); i++)
-				EnableWindow(GetDlgItem(hWnd2, SettingsNS::nSizeCtrlId[i]), CB == rNormal);
+			if (gpSet->isQuakeStyle)
+			{
+				gpSet->_WindowMode = CB;
+				RECT rcWnd = gpConEmu->GetDefaultRect();
+				//gpConEmu->SetWindowMode((ConEmuWindowMode)CB);
+				SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOZORDER);
+				apiSetForegroundWindow(ghOpWnd);
+			}
+			else
+			{
+				EnableWindow(GetDlgItem(hWnd2, cbApplyPos), TRUE);
+				for (size_t i = 0; i < countof(SettingsNS::nSizeCtrlId); i++)
+					EnableWindow(GetDlgItem(hWnd2, SettingsNS::nSizeCtrlId[i]), CB == rNormal);
+			}
 			break;
 		case cbApplyPos:
 			{
-				if (IsChecked(hWnd2, rNormal) == BST_CHECKED)
+				if (!gpSet->isQuakeStyle)
 				{
-					int newX, newY;
-					DWORD newW, newH;
-					//wchar_t temp[MAX_PATH];
-					//GetDlgItemText(hWnd2, tWndWidth, temp, countof(temp));  newW = klatoi(temp);
-					//GetDlgItemText(hWnd2, tWndHeight, temp, countof(temp)); newH = klatoi(temp);
-					BOOL lbOk;
+					if (IsChecked(hWnd2, rNormal) == BST_CHECKED)
+					{
+						int newX, newY;
+						DWORD newW, newH;
+						//wchar_t temp[MAX_PATH];
+						//GetDlgItemText(hWnd2, tWndWidth, temp, countof(temp));  newW = klatoi(temp);
+						//GetDlgItemText(hWnd2, tWndHeight, temp, countof(temp)); newH = klatoi(temp);
+						BOOL lbOk;
 
-					newW = GetDlgItemInt(hWnd2, tWndWidth, &lbOk, FALSE);
-					if (!lbOk) newW = gpConEmu->wndWidth;
-					newH = GetDlgItemInt(hWnd2, tWndHeight, &lbOk, FALSE);
-					if (!lbOk) newH = gpConEmu->wndHeight;
+						newW = GetDlgItemInt(hWnd2, tWndWidth, &lbOk, FALSE);
+						if (!lbOk) newW = gpConEmu->wndWidth;
+						newH = GetDlgItemInt(hWnd2, tWndHeight, &lbOk, FALSE);
+						if (!lbOk) newH = gpConEmu->wndHeight;
 
-					newX = (int)GetDlgItemInt(hWnd2, tWndX, &lbOk, TRUE);
-					if (!lbOk) newX = gpConEmu->wndX;
-					newY = (int)GetDlgItemInt(hWnd2, tWndY, &lbOk, TRUE);
-					if (!lbOk) newY = gpConEmu->wndY;
+						newX = (int)GetDlgItemInt(hWnd2, tWndX, &lbOk, TRUE);
+						if (!lbOk) newX = gpConEmu->wndX;
+						newY = (int)GetDlgItemInt(hWnd2, tWndY, &lbOk, TRUE);
+						if (!lbOk) newY = gpConEmu->wndY;
 
-					SetFocus(GetDlgItem(hWnd2, rNormal));
+						SetFocus(GetDlgItem(hWnd2, rNormal));
 
-					if (gpConEmu->isZoomed() || gpConEmu->isIconic() || gpConEmu->isFullScreen())
-						gpConEmu->SetWindowMode(wmNormal);
+						if (gpConEmu->isZoomed() || gpConEmu->isIconic() || gpConEmu->isFullScreen())
+							gpConEmu->SetWindowMode(wmNormal);
 
-					SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+						SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 
-					// Установить размер
-					CVConGroup::SetAllConsoleWindowsSize(MakeCoord(newW, newH), /*true,*/ true, true);
+						// Установить размер
+						CVConGroup::SetAllConsoleWindowsSize(MakeCoord(newW, newH), /*true,*/ true, true);
 
-					SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+						SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+					}
+					else if (IsChecked(hWnd2, rMaximized) == BST_CHECKED)
+					{
+						SetFocus(GetDlgItem(hWnd2, rMaximized));
+
+						if (!gpConEmu->isZoomed())
+							gpConEmu->SetWindowMode(wmMaximized);
+					}
+					else if (IsChecked(hWnd2, rFullScreen) == BST_CHECKED)
+					{
+						SetFocus(GetDlgItem(hWnd2, rFullScreen));
+
+						if (!gpConEmu->isFullScreen())
+							gpConEmu->SetWindowMode(wmFullScreen);
+					}
+
+					// Запомнить "идеальный" размер окна, выбранный пользователем
+					gpConEmu->UpdateIdealRect(TRUE);
 				}
-				else if (IsChecked(hWnd2, rMaximized) == BST_CHECKED)
-				{
-					SetFocus(GetDlgItem(hWnd2, rMaximized));
-
-					if (!gpConEmu->isZoomed())
-						gpConEmu->SetWindowMode(wmMaximized);
-				}
-				else if (IsChecked(hWnd2, rFullScreen) == BST_CHECKED)
-				{
-					SetFocus(GetDlgItem(hWnd2, rFullScreen));
-
-					if (!gpConEmu->isFullScreen())
-						gpConEmu->SetWindowMode(wmFullScreen);
-				}
-
-				// Запомнить "идеальный" размер окна, выбранный пользователем
-				gpConEmu->UpdateIdealRect(TRUE);
 				EnableWindow(GetDlgItem(hWnd2, cbApplyPos), FALSE);
 				apiSetForegroundWindow(ghOpWnd);
 			} // cbApplyPos
@@ -4060,9 +4117,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				{
 					if (gpSet->isHideCaptionAlways())
 					{
-						checkDlgButton(mh_Tabs[thi_Ext], cbHideCaptionAlways, BST_CHECKED);
+						checkDlgButton(mh_Tabs[thi_Show], cbHideCaptionAlways, BST_CHECKED);
 					}
-					EnableWindow(GetDlgItem(mh_Tabs[thi_Ext], cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
+					EnableWindow(GetDlgItem(mh_Tabs[thi_Show], cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 				}
 
 				if (gpSet->isQuakeStyle)
@@ -4071,7 +4128,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
 				}
 
-				ConEmuWindowMode nNewWindowMode = wmNormal;
+				ConEmuWindowMode nNewWindowMode = 
+					IsChecked(hWnd2, rMaximized) ? wmMaximized :
+					IsChecked(hWnd2, rFullScreen) ? wmFullScreen : 
+					wmNormal;
+				gpSet->_WindowMode = nNewWindowMode;
 
 				if (gpSet->isQuakeStyle && !bPrevStyle)
 				{
@@ -4095,7 +4156,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				}
 
 				RECT rcWnd = gpConEmu->GetDefaultRect();
-				gpConEmu->SetWindowMode(nNewWindowMode);
+				gpConEmu->SetWindowMode(nNewWindowMode, TRUE);
 
 				gpConEmu->OnHideCaption();
 
@@ -4463,6 +4524,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			//SendMessage(ghWnd, WM_NCACTIVATE, 0, 0);
 			//SendMessage(ghWnd, WM_NCPAINT, 0, 0);
 			gpConEmu->RedrawTabPanel();
+			break;
+		case cbNumberInCaption:
+			gpSet->isNumberInCaption = IsChecked(hWnd2, cbNumberInCaption);
+			gpConEmu->UpdateTitle();
 			break;
 		case rbAdminShield:
 		case rbAdminSuffix:
@@ -8913,6 +8978,11 @@ void CSettings::UpdateWindowMode(WORD WndMode)
 {
 	_ASSERTE(WndMode==rNormal || WndMode==rMaximized || WndMode==rFullScreen);
 
+	if (gpSet->isQuakeStyle)
+	{
+		return;
+	}
+
 	if (gpSet->isUseCurrentSizePos)
 	{
 		gpSet->_WindowMode = WndMode;
@@ -10116,14 +10186,22 @@ void CSettings::DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINET
 int CSettings::checkDlgButton(HWND hParent, WORD nCtrlId, UINT uCheck)
 {
 #ifdef _DEBUG
+	HWND hCheckBox = NULL;
 	if (!hParent)
 	{
 		_ASSERTE(hParent!=NULL);
 	}
 	else
 	{
-		HWND hCheckBox = GetDlgItem(hParent, nCtrlId);
-		_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
+		hCheckBox = GetDlgItem(hParent, nCtrlId);
+		if (!hCheckBox)
+		{
+			_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
+		}
+		else
+		{
+			_ASSERTE(uCheck==BST_UNCHECKED || uCheck==BST_CHECKED || (uCheck==BST_INDETERMINATE && (BS_3STATE&GetWindowLong(hCheckBox,GWL_STYLE))));
+		}
 	}
 #endif
 	// Аналог CheckDlgButton

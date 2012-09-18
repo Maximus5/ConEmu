@@ -1009,23 +1009,143 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 		}
 		else
 		{
+			LPCWSTR pszFormat = NULL;
+			
 			// \e cd /d "%s" \n
 			cchMax += 32;
+
+			if (CD)
+			{
+				pszFormat = gpConEmu->ms_InsideSynchronizeCurDir; // \ecd /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
+				if (!pszFormat || !*pszFormat)
+				{
+					LPCWSTR pszExe = GetActiveProcessName();
+					if (pszExe && (lstrcmpi(pszExe, L"powershell.exe") == 0))
+					{
+						//_wsprintf(psz, SKIPLEN(cchMax) L"%ccd \"%s\"%c", 27, asCmd, L'\n');
+						pszFormat = L"\\ecd %1\\n";
+					}
+					else if (pszExe && (lstrcmpi(pszExe, L"bash.exe") == 0 || lstrcmpi(pszExe, L"sh.exe") == 0))
+					{
+						pszFormat = L"\\e\\bcd %2\\n";
+					}
+					else
+					{
+						//_wsprintf(psz, SKIPLEN(cchMax) L"%ccd /d \"%s\"%c", 27, asCmd, L'\n');
+						pszFormat = L"\\ecd /d %1\\n";
+					}
+				}
+
+				cchMax += _tcslen(pszFormat);
+			}
+
 			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_PROMPTCMD, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t)*cchMax);
 			if (pIn)
 			{
 				wchar_t* psz = (wchar_t*)pIn->wData;
 				if (CD)
 				{
-					LPCWSTR pszExe = GetActiveProcessName();
-					if (pszExe && (lstrcmpi(pszExe, L"powershell.exe") == 0))
+					_ASSERTE(pszFormat!=NULL); // уже должен был быть подготовлен выше
+					// \ecd /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
+
+					wchar_t* pszDst = psz;
+					wchar_t* pszEnd = pszDst + cchMax - 1;
+
+					while (*pszFormat && (pszDst < pszEnd))
 					{
-						_wsprintf(psz, SKIPLEN(cchMax) L"%ccd \"%s\"%c", 27, asCmd, L'\n');
+						switch (*pszFormat)
+						{
+						case L'%':
+							pszFormat++;
+							switch (*pszFormat)
+							{
+							case L'1':
+								if ((pszDst+3) < pszEnd)
+								{
+									_ASSERTE(asCmd && (*asCmd != L'"'));
+									LPCWSTR pszText = asCmd;
+
+									*(pszDst++) = L'"';
+
+									while (*pszText && (pszDst < pszEnd))
+									{
+										*(pszDst++) = *(pszText++);
+									}
+
+									// Done, quote
+									if (pszDst < pszEnd)
+									{
+										*(pszDst++) = L'"';
+									}
+								}
+								break;
+							case L'2':
+								// bash style - "/c/user/dir/..."
+								if ((pszDst+4) < pszEnd)
+								{
+									_ASSERTE(asCmd && (*asCmd != L'"') && (*asCmd != L'/'));
+									LPCWSTR pszText = asCmd;
+
+									*(pszDst++) = L'"';
+
+									if (pszText[0] && (pszText[1] == L':'))
+									{
+										*(pszDst++) = L'/';
+										*(pszDst++) = pszText[0];
+										pszText += 2;
+									}
+									else
+									{
+										// А bash понимает сетевые пути?
+										_ASSERTE(pszText[0] == L'\\' && pszText[1] == L'\\');
+									}
+
+									while (*pszText && (pszDst < pszEnd))
+									{
+										if (*pszText == L'\\')
+										{
+											*(pszDst++) = L'/';
+											pszText++;
+										}
+										else
+										{
+											*(pszDst++) = *(pszText++);
+										}
+									}
+
+									// Done, quote
+									if (pszDst < pszEnd)
+									{
+										*(pszDst++) = L'"';
+									}
+								}
+								break;
+							default:
+								*(pszDst++) = *(pszFormat++);
+							}
+							break;
+						case L'\\':
+							pszFormat++;
+							switch (*pszFormat)
+							{
+							case L'e': case L'E':
+								*(pszDst++) = 27;
+								break;
+							case L'b': case L'B':
+								*(pszDst++) = 8;
+								break;
+							case L'n': case L'N':
+								*(pszDst++) = L'\n';
+								break;
+							default:
+								*(pszDst++) = *(pszFormat++);
+							}
+							break;
+						default:
+							*(pszDst++) = *(pszFormat++);
+						}
 					}
-					else
-					{
-						_wsprintf(psz, SKIPLEN(cchMax) L"%ccd /d \"%s\"%c", 27, asCmd, L'\n');
-					}
+					*pszDst = 0;
 				}
 				else
 				{
@@ -2854,7 +2974,7 @@ bool CRealConsole::ProcessFarHyperlink(UINT messg, COORD crFrom)
 
 // x,y - экранные координаты
 // Если abForceSend==true - не проверять на "повторность" события, и не проверять "isPressed(VK_?BUTTON)"
-void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend /*= false*/)
+void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend /*= false*/, bool abFromTouch /*= false*/)
 {
 #ifndef WM_MOUSEHWHEEL
 #define WM_MOUSEHWHEEL                  0x020E
@@ -2879,7 +2999,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	// Получить известные координаты символов
 	COORD crMouse = ScreenToBuffer(mp_VCon->ClientToConsole(x,y, bStrictMonospace));
 	
-	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
+	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse, abFromTouch))
 		return; // В консоль не пересылать, событие обработал "сам буфер"
 
 
@@ -3122,11 +3242,16 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 			}
 			else
 			{
+				COORD crVisible = mp_ABuf->BufferToScreen(crMouse,true);
 				// Координата попадает в панель (включая правую/левую рамку)?
-				if (CoordInPanel(crMouse, TRUE) && !(r.Event.MouseEvent.dwControlKeyState & (SHIFT_PRESSED|RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED)))
+				if (CoordInPanel(crVisible, TRUE))
 				{
-					lbNormalRBtnMode = true;
-					r.Event.MouseEvent.dwControlKeyState |= RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED;
+					if (!(r.Event.MouseEvent.dwControlKeyState & (SHIFT_PRESSED|RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED)))
+					{
+						lbNormalRBtnMode = true;
+						// 18.09.2012 Maks - LEFT_CTRL_PRESSED -> RIGHT_CTRL_PRESSED, cause of AltGr
+						r.Event.MouseEvent.dwControlKeyState |= RIGHT_ALT_PRESSED|RIGHT_CTRL_PRESSED;
+					}
 				}
 			}
 		}
@@ -9296,8 +9421,17 @@ int CRealConsole::GetStatusLineCount(int nLeftPanelEdge)
 // abIncludeEdges - включать 
 int CRealConsole::CoordInPanel(COORD cr, BOOL abIncludeEdges /*= FALSE*/)
 {
-	if (!this || mp_ABuf != mp_RBuf)
+	if (!this || !mp_ABuf || (mp_ABuf != mp_RBuf))
 		return 0;
+
+#ifdef _DEBUG
+	// Для отлова некорретных координат для "far /w"
+	int nVisibleHeight = mp_ABuf->GetTextHeight();
+	if (cr.Y > (nVisibleHeight+16))
+	{
+		_ASSERTE(cr.Y <= nVisibleHeight);
+	}
+#endif
 
 	RECT rcPanel;
 

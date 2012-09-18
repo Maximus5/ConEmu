@@ -223,7 +223,7 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,152,117,8
     CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,152,79,8
-    GROUPBOX        "Caption and border options",gbFeatureCaption,4,139,319,44
+    GROUPBOX        "Caption and border options",gbFeatureCaption,4,139,319,59
     RTEXT           "Frame width:",IDC_STATIC,9,167,54,8
     RTEXT           "Appear delay:",IDC_STATIC,125,167,50,8
     RTEXT           "Disappear:",IDC_STATIC,227,167,43,8
@@ -250,6 +250,7 @@ BEGIN
     CONTROL         "Show all tabs (Win 7 and higher)",rbTaskbarBtnWin7,
                     "Button",BS_AUTORADIOBUTTON,10,49,125,8
     CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,152,94,8
+    CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,182,117,8
 END
 
 IDD_SPG_CURSOR DIALOGEX 0, 0, 328, 235
@@ -284,8 +285,8 @@ BEGIN
     EDITTEXT        tInsideShell,54,29,263,13,ES_AUTOHSCROLL
     LTEXT           "Icon file:",IDC_STATIC,11,47,39,8
     EDITTEXT        tInsideIcon,54,45,263,13,ES_AUTOHSCROLL
-    CONTROL         "Sync current directory (Explorer -> ConEmu)",cbInsideSyncDir,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,64,159,10
+    CONTROL         "Sync dir",cbInsideSyncDir,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,64,39,10
+    EDITTEXT        tInsideSyncDir,54,61,144,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Register",bInsideRegister,212,61,50,14
     PUSHBUTTON      "Unregister",bInsideUnregister,267,61,50,14
     GROUPBOX        "ConEmu Here - Explorer context menu integration",IDC_STATIC,4,84,319,81

@@ -110,13 +110,14 @@ public:
 	BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll);
 	
 	COORD ScreenToBuffer(COORD crMouse);
+	COORD BufferToScreen(COORD crMouse, bool bVertOnly = false);
 	bool ProcessFarHyperlink(UINT messg, COORD crFrom);
 	bool ProcessFarHyperlink(UINT messg=WM_USER);
 	ExpandTextRangeType GetLastTextRangeType();
 	
 	void ShowKeyBarHint(WORD nID);
 
-	bool OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse);
+	bool OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse, bool abFromTouch = false);
 	
 	BOOL GetRBtnDrag(COORD* pcrMouse);
 	void SetRBtnDrag(BOOL abRBtnDrag, const COORD* pcrMouse = NULL);

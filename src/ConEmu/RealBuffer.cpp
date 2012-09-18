@@ -2241,6 +2241,21 @@ COORD CRealBuffer::ScreenToBuffer(COORD crMouse)
 	return crMouse;
 }
 
+COORD CRealBuffer::BufferToScreen(COORD crMouse, bool bVertOnly /*= false*/)
+{
+	if (!this)
+		return crMouse;
+
+	if (isScroll())
+	{
+		if (!bVertOnly)
+			crMouse.X = max(0,crMouse.X-con.m_sbi.srWindow.Left);
+		crMouse.Y = max(0,crMouse.Y-con.m_sbi.srWindow.Top);
+	}
+
+	return crMouse;
+}
+
 ExpandTextRangeType CRealBuffer::GetLastTextRangeType()
 {
 	if (!this)
@@ -2487,7 +2502,7 @@ void CRealBuffer::ShowKeyBarHint(WORD nID)
 // x,y - экранные координаты
 // crMouse - ScreenToBuffer
 // Возвращает true, если мышку обработал "сам буфер"
-bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse)
+bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse, bool abFromTouch /*= false*/)
 {
 #ifndef WM_MOUSEHWHEEL
 #define WM_MOUSEHWHEEL                  0x020E
@@ -2560,7 +2575,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			SHORT nDir = (SHORT)HIWORD(wParam);
 			BOOL lbCtrl = isPressed(VK_CONTROL);
 
-			UINT nCount = gpConEmu->mouse.GetWheelScrollLines();
+			UINT nCount = abFromTouch ? 1 : gpConEmu->mouse.GetWheelScrollLines();
 
 			if (nDir > 0)
 			{

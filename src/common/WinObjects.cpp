@@ -1195,21 +1195,22 @@ const wchar_t* PointToExt(const wchar_t* asFullPath)
 	return pszExt;
 }
 
-// !!! Μενÿες asPath !!!
-const wchar_t* Unquote(wchar_t* asPath)
+// !!! Μενÿες asParm !!!
+// Cut leading and trailing quotas
+const wchar_t* Unquote(wchar_t* asParm)
 {
-	if (!asPath)
+	if (!asParm)
 		return NULL;
-	if (*asPath != L'"')
-		return asPath;
-	wchar_t* pszEndQ = wcsrchr(asPath, L'"');
-	if (!pszEndQ || (pszEndQ == asPath))
+	if (*asParm != L'"')
+		return asParm;
+	wchar_t* pszEndQ = wcsrchr(asParm, L'"');
+	if (!pszEndQ || (pszEndQ == asParm))
 	{
-		*asPath = 0;
-		return asPath;
+		*asParm = 0;
+		return asParm;
 	}
 	*pszEndQ = 0;
-	return (asPath+1);
+	return (asParm+1);
 }
 
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount)

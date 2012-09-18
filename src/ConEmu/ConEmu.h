@@ -123,6 +123,8 @@ class CConEmuMain :
 		} m_InsideIntegration;
 		bool  mb_InsideIntegrationShift;
 		bool  mb_InsideSynchronizeCurDir;
+		wchar_t* ms_InsideSynchronizeCurDir; // \ecd /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
+		bool  mb_InsidePaneWasForced;
 		DWORD mn_InsideParentPID;  // PID "родительского" процесса режима интеграции
 		HWND  mh_InsideParentWND; // Это окно используется как родительское в режиме интеграции
 		HWND  mh_InsideParentRoot; // Корневое окно режима интеграции (для проверки isMeForeground)

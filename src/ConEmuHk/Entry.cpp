@@ -798,6 +798,15 @@ void DllStop()
 	print_timings(L"DllStop");
 	//gbDllStopCalled = TRUE; -- в конце
 
+
+	// Issue 689: Progress stuck at 100%
+	if (gbPowerShellMonitorProgress && (gnPowerShellProgressValue != -1))
+	{
+		gnPowerShellProgressValue = -1;
+		GuiSetProgress(0,0);
+	}
+
+
 	#ifdef HOOK_USE_DLLTHREAD
 	DllThreadClose();
 	#endif

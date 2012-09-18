@@ -310,7 +310,7 @@ class CSettings
 		enum TabHwndIndex {
 			thi_Main = 0,
 			thi_SizePos,
-			thi_Appearance,
+			thi_Show,
 			thi_Cursor,
 			thi_Startup,
 			thi_Ext,

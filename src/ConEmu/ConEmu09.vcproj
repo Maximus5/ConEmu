@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmu"
 	ProjectGUID="{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
 	RootNamespace="conemu"
@@ -1381,7 +1381,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(TargetPath) T:\MinGW\bin\"
+				CommandLine="echo Copying ConEmu.exe to T:\MinGW\bin\&#x0D;&#x0A;copy $(TargetPath) T:\MinGW\bin\"
 			/>
 		</Configuration>
 		<Configuration

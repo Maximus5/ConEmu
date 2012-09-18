@@ -466,7 +466,7 @@ bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 				if (hWnd != VCon->GetView())
 					MapWindowPoints(hWnd, VCon->GetView(), &pt, 1);
 				
-				pRCon->OnMouse(WM_MOUSEWHEEL, MAKELPARAM(0,Delta), pt.x, pt.y, true);
+				pRCon->OnMouse(WM_MOUSEWHEEL, MAKELPARAM(0,Delta), pt.x, pt.y, true, true);
 
 				lbSent = true; // «апомнить обработанную координату
 			}

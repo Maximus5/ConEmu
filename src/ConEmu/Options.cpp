@@ -276,6 +276,7 @@ void Settings::InitSettings()
 	nHostkeyNumberModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyNumberModifier);
 	nHostkeyArrowModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyArrowModifier);
 	isMulti = true;
+	isNumberInCaption = false;
 	//vmMultiNew = 'W' | (nMultiHotkeyModifier << 8);
 	//vmMultiNext = 'Q' | (nMultiHotkeyModifier << 8);
 	//vmMultiRecreate = 192/*VK_тильда*/ | (nMultiHotkeyModifier << 8);
@@ -286,7 +287,7 @@ void Settings::InitSettings()
 	isMultiAutoCreate = false; isMultiLeaveOnClose = false; isMultiIterate = true;
 	isMultiNewConfirm = true; isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false;
 	nSplitWidth = nSplitHeight = 4;
-	nSplitClr1 = nSplitClr2 = RGB(160,160,160);
+	//nSplitClr1 = nSplitClr2 = RGB(160,160,160);
 	m_isKeyboardHooks = 0;
 	isFARuseASCIIsort = false; isFixAltOnAltTab = false; isShellNoZoneCheck = false;
 	isFadeInactive = true; mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; mb_FadeInitialized = false;
@@ -2035,6 +2036,7 @@ void Settings::LoadSettings()
 
 		reg->Load(L"CmdLineHistory", &psCmdHistory); nCmdHistorySize = 0; HistoryCheck();
 		reg->Load(L"Multi", isMulti);
+		reg->Load(L"Multi.NumberInCaption", isNumberInCaption);
 		//LoadVkMod(reg, L"Multi.NewConsole", vmMultiNew, vmMultiNew);
 		//LoadVkMod(reg, L"Multi.NewConsoleShift", vmMultiNewShift, SetModifier(vmMultiNew,VK_SHIFT, true/*Xor*/));
 		//LoadVkMod(reg, L"Multi.Next", vmMultiNext, vmMultiNext);
@@ -2054,8 +2056,8 @@ void Settings::LoadSettings()
 		//LoadVkMod(reg, L"MinimizeRestore", vmMinimizeRestore, vmMinimizeRestore);
 		reg->Load(L"Multi.SplitWidth", nSplitWidth); MinMax(nSplitWidth, MAX_SPLITTER_SIZE);
 		reg->Load(L"Multi.SplitHeight", nSplitHeight); MinMax(nSplitHeight, MAX_SPLITTER_SIZE);
-		reg->Load(L"Multi.SplitClr1", nSplitClr1);
-		reg->Load(L"Multi.SplitClr2", nSplitClr2);
+		//reg->Load(L"Multi.SplitClr1", nSplitClr1);
+		//reg->Load(L"Multi.SplitClr2", nSplitClr2);
 
 		reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 
@@ -2889,6 +2891,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 			reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
 
 		reg->Save(L"Multi", isMulti);
+		reg->Save(L"Multi.NumberInCaption", isNumberInCaption);
 		//reg->Save(L"Multi.NewConsole", vmMultiNew);
 		//reg->Save(L"Multi.NewConsoleShift", vmMultiNewShift);
 		//reg->Save(L"Multi.Next", vmMultiNext);
@@ -2907,8 +2910,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"Multi.Iterate", isMultiIterate);
 		reg->Save(L"Multi.SplitWidth", nSplitWidth);
 		reg->Save(L"Multi.SplitHeight", nSplitHeight);
-		reg->Save(L"Multi.SplitClr1", nSplitClr1);
-		reg->Save(L"Multi.SplitClr2", nSplitClr2);
+		//reg->Save(L"Multi.SplitClr1", nSplitClr1);
+		//reg->Save(L"Multi.SplitClr2", nSplitClr2);
 
 		//reg->Save(L"MinimizeRestore", vmMinimizeRestore);
 		_ASSERTE(m_isKeyboardHooks!=0);

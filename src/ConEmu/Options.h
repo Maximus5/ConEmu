@@ -1069,6 +1069,8 @@ struct Settings
 		//DWORD vmMinimizeRestore;
 		//reg->Load(L"Multi", isMulti);
 		bool isMulti;
+		//reg->Load(L"NumberInCaption", isMulti);
+		bool isNumberInCaption;
 		private:
 		//reg->Load(L"Multi.Modifier", nHostkeyModifier); TestHostkeyModifiers();
 		DWORD nHostkeyNumberModifier; // Используется для 0..9, WinSize
@@ -1112,10 +1114,10 @@ struct Settings
 		BYTE nSplitWidth;
 		//reg->Load(L"Multi.SplitHeight", nSplitHeight);
 		BYTE nSplitHeight;
-		//reg->Load(L"Multi.SplitClr1", nSplitClr1);
-		DWORD nSplitClr1;
-		//reg->Load(L"Multi.SplitClr2", nSplitClr2);
-		DWORD nSplitClr2;
+		////reg->Load(L"Multi.SplitClr1", nSplitClr1);
+		//DWORD nSplitClr1;
+		////reg->Load(L"Multi.SplitClr2", nSplitClr2);
+		//DWORD nSplitClr2;
 		//reg->Load(L"FARuseASCIIsort", isFARuseASCIIsort);
 		bool isFARuseASCIIsort;
 		//reg->Load(L"FixAltOnAltTab", isFixAltOnAltTab);
@@ -1215,7 +1217,7 @@ struct Settings
 		//bool isLangChangeWsPlugin;
 		
 		//reg->Load(L"MonitorConsoleLang", isMonitorConsoleLang);
-		char isMonitorConsoleLang;
+		bool isMonitorConsoleLang;
 		
 		//reg->Load(L"SleepInBackground", isSleepInBackground);
 		bool isSleepInBackground;

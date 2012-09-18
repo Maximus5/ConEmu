@@ -1973,6 +1973,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #endif
 	bool MultiConPrm = false, MultiConValue = false;
 	bool VisPrm = false, VisValue = false;
+	bool ResetSettings = false;
 	//bool SingleInstance = false;
 	gpSetCls->SingleInstanceArg = false;
 	gpSetCls->SingleInstanceShowHide = sih_None;
@@ -2296,10 +2297,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpConEmu->DisableKeybHooks = true;
 				}
-				else if (!klstricmp(curCommand, _T("/inside")))
+				else if (!klstricmp(curCommand, _T("/inside"))
+					|| !lstrcmpni(curCommand, _T("/inside="), 8))
 				{
 					gpConEmu->m_InsideIntegration = CConEmuMain::ii_Auto;
 					gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
+					if (curCommand[7] == _T('='))
+					{
+						gpConEmu->mb_InsideSynchronizeCurDir = true;
+						gpConEmu->ms_InsideSynchronizeCurDir = lstrdup(curCommand+8); // \eCD /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
+					}
+					else
+					{
+						gpConEmu->mb_InsideSynchronizeCurDir = false;
+					}
 				}
 				else if (!klstricmp(curCommand, _T("/insidepid")) && ((i + 1) < params))
 				{
@@ -2387,6 +2398,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					gpSetCls->SingleInstanceArg = true;
 					gpSetCls->SingleInstanceShowHide = !klstricmp(curCommand, _T("/showhide"))
 						? sih_ShowMinimize : sih_ShowHideTSA;
+				}
+				else if (!klstricmp(curCommand, _T("/reset")))
+				{
+					ResetSettings = true;
 				}
 				//else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
 				//{
@@ -2520,8 +2535,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpSetCls->SetConfigName(ConfigVal);
 	}
 
-	// load settings from registry
-	gpSet->LoadSettings();
+	if (!ResetSettings)
+	{
+		// load settings from registry
+		gpSet->LoadSettings();
+	}
 
 	// Если в режиме "Inside" подходящего окна не нашли и юзер отказался от "обычного" режима
 	if (gpConEmu->m_InsideIntegration && (gpConEmu->mh_InsideParentWND == (HWND)-1))
