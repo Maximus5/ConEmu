@@ -799,6 +799,7 @@ BEGIN
     CONTROL         "Always show",rbTabsAlways,"Button",BS_AUTORADIOBUTTON,10,62,65,8
     CONTROL         "Auto show",rbTabsAuto,"Button",BS_AUTORADIOBUTTON,80,62,57,8
     CONTROL         "Don't show",rbTabsNone,"Button",BS_AUTORADIOBUTTON,162,62,64,8
+    CONTROL         "Tabs on bottom",cbTabsLocationBottom,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,233,62,75,8
     CONTROL         "Close console confirmation",cbCloseConsoleConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,27,147,8
 END

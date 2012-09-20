@@ -50,6 +50,8 @@ WARNING("не меняются табы при переключении на другую консоль");
 
 TODO("Для WinXP можно поиграться стилем WS_EX_COMPOSITED");
 
+WARNING("isTabFrame на удаление");
+
 //TabBarClass TabBar;
 //const int TAB_FONT_HEIGTH = 16;
 //wchar_t TAB_FONT_FACE[] = L"Tahoma";
@@ -188,10 +190,33 @@ void TabBarClass::RePaint()
 	RECT client, self;
 	client = gpConEmu->GetGuiClientRect();
 	GetWindowRect(mh_Rebar, &self);
+	MapWindowPoints(NULL, ghWnd, (LPPOINT)&self, 2);
 
-	if (client.right != (self.right - self.left))
+	int nNewY;
+	if (gpSet->nTabsLocation == 1)
 	{
-		MoveWindow(mh_Rebar, 0, 0, client.right, self.bottom-self.top, 1);
+		int nStatusHeight = gpSet->isStatusBarShow ? gpSet->StatusBarHeight() : 0;
+		nNewY = client.bottom-nStatusHeight-(self.bottom-self.top);
+	}
+	else
+	{
+		nNewY = 0;
+	}
+
+	if ((client.right != (self.right - self.left))
+		|| (nNewY != self.top))
+	{
+		Reposition();
+
+		#if 0
+		MoveWindow(mh_Rebar, 0, nNewY, client.right, self.bottom-self.top, 1);
+
+		if (gpSet->nTabsLocation == 1)
+			m_Margins = MakeRect(0,0,0,_tabHeight);
+		else
+			m_Margins = MakeRect(0,_tabHeight,0,0);
+		gpSet->UpdateMargins(m_Margins);
+		#endif
 	}
 
 	UpdateWindow(mh_Rebar);
@@ -1091,6 +1116,21 @@ void TabBarClass::AddTab2VCon(VConTabs& vct)
 
 RECT TabBarClass::GetMargins()
 {
+	if (_tabHeight && IsTabsShown())
+	{
+		RECT rcNewMargins;
+		if (gpSet->nTabsLocation == 1)
+			rcNewMargins = MakeRect(0,0,0,_tabHeight);
+		else
+			rcNewMargins = MakeRect(0,_tabHeight,0,0);
+
+		if (memcmp(&rcNewMargins, &m_Margins, sizeof(m_Margins)) != 0)
+		{
+			m_Margins = rcNewMargins;
+			gpSet->UpdateMargins(m_Margins);
+		}
+	}
+
 	return m_Margins;
 }
 
@@ -1156,7 +1196,7 @@ void TabBarClass::UpdatePosition()
 	}
 }
 
-void TabBarClass::UpdateWidth()
+void TabBarClass::Reposition()
 {
 	if (!_active)
 	{
@@ -1192,7 +1232,44 @@ void TabBarClass::UpdateWidth()
 			}
 		}
 
-		MoveWindow(mh_Rebar, 0, 0, client.right, _tabHeight, 1);
+		if (gpSet->nTabsLocation == 1)
+		{
+			int nStatusHeight = gpSet->isStatusBarShow ? gpSet->StatusBarHeight() : 0;
+			MoveWindow(mh_Rebar, 0, client.bottom-nStatusHeight-_tabHeight, client.right, _tabHeight, 1);
+		}
+		else
+		{
+			MoveWindow(mh_Rebar, 0, 0, client.right, _tabHeight, 1);
+		}
+
+		// Не будем пока трогать. Некрасиво табы рисуются. Нужно на OwnerDraw переходить.
+		#if 0
+		DWORD nCurStyle = GetWindowLong(mh_Tabbar, GWL_STYLE);
+		DWORD nNeedStyle = (gpSet->nTabsLocation == 1) ? (nCurStyle | TCS_BOTTOM) : (nCurStyle & ~TCS_BOTTOM);
+		if (nNeedStyle != nCurStyle)
+		{
+			SetWindowLong(mh_Tabbar, GWL_STYLE, nNeedStyle);
+
+			//_ASSERTE(!gpSet->isTabFrame);
+			if (gpSet->nTabsLocation == 1)
+			{
+				RECT rcTab = client;
+				GetWindowRect(mh_Tabbar, &rcTab);
+				SetWindowPos(mh_Tabbar, NULL, 0, client.bottom - (rcTab.bottom-rcTab.top), 0,0, SWP_NOSIZE);
+			}
+			else
+			{
+				SetWindowPos(mh_Tabbar, NULL, 0,0, 0,0, SWP_NOSIZE);
+			}
+		}
+		#endif
+
+		if (gpSet->nTabsLocation == 1)
+			m_Margins = MakeRect(0,0,0,_tabHeight);
+		else
+			m_Margins = MakeRect(0,_tabHeight,0,0);
+		gpSet->UpdateMargins(m_Margins);
+
 
 		if (lbWideEnough && nBarIndex != 1)
 		{
@@ -1703,7 +1780,10 @@ HWND TabBarClass::CreateToolbar()
 		return mh_Toolbar; // Уже создали
 
 	mh_Toolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL,
-	                            WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT|CCS_NOPARENTALIGN|CCS_NORESIZE|CCS_NODIVIDER|TBSTYLE_TOOLTIPS|TBSTYLE_TRANSPARENT, 0, 0, 0, 0, mh_Rebar,
+	                            WS_CHILD|WS_VISIBLE|
+	                            TBSTYLE_FLAT|CCS_NOPARENTALIGN|CCS_NORESIZE|CCS_NODIVIDER|
+	                            TBSTYLE_TOOLTIPS|TBSTYLE_TRANSPARENT,
+	                            0, 0, 0, 0, mh_Rebar,
 	                            NULL, NULL, NULL);
 	_defaultToolProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)ToolProc);
 	DWORD lExStyle = ((DWORD)SendMessage(mh_Toolbar, TB_GETEXTENDEDSTYLE, 0, 0)) | TBSTYLE_EX_DRAWDDARROWS;
@@ -1861,7 +1941,10 @@ HWND TabBarClass::CreateTabbar()
 	if (!mh_TabbarP) return NULL;*/
 	RECT rcClient;
 	rcClient = gpConEmu->GetGuiClientRect();
-	DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE/*|TCS_BUTTONS*//*|TCS_TOOLTIPS*/;
+	
+	DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE/*|TCS_BUTTONS*//*|TCS_TOOLTIPS*/
+			|((gpSet->nTabsLocation == 1) ? TCS_BOTTOM : 0);
+
 	mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CHILD | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0,
 	                         rcClient.right, 0, mh_Rebar, NULL, g_hInstance, NULL);
 
@@ -2016,9 +2099,13 @@ void TabBarClass::CreateRebar()
 
 	RECT rc;
 	GetWindowRect(mh_Rebar, &rc);
+
 	//GetWindowRect(mh_Rebar, &rc);
 	//_tabHeight = rc.bottom - rc.top;
-	m_Margins = MakeRect(0,_tabHeight,0,0);
+	if (gpSet->nTabsLocation == 1)
+		m_Margins = MakeRect(0,0,0,_tabHeight);
+	else
+		m_Margins = MakeRect(0,_tabHeight,0,0);
 	gpSet->UpdateMargins(m_Margins);
 	//_hwndTab = mh_Rebar; // пока...
 }

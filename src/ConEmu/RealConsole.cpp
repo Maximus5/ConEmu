@@ -2965,6 +2965,13 @@ COORD CRealConsole::ScreenToBuffer(COORD crMouse)
 	return mp_ABuf->ScreenToBuffer(crMouse);
 }
 
+COORD CRealConsole::BufferToScreen(COORD crMouse, bool bVertOnly /*= false*/)
+{
+	if (!this)
+		return crMouse;
+	return mp_ABuf->BufferToScreen(crMouse, bVertOnly);
+}
+
 bool CRealConsole::ProcessFarHyperlink(UINT messg, COORD crFrom)
 {
 	if (!this)
@@ -4068,6 +4075,21 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 	//LRESULT result = 0;
 	_ASSERTE(pszChars!=NULL);
+
+	if ((messg == WM_CHAR) || (messg == WM_SYSCHAR) || (messg == WM_IME_CHAR))
+	{
+		_ASSERTE((messg != WM_CHAR) && (messg != WM_SYSCHAR) && (messg != WM_IME_CHAR));
+	}
+	else
+	{
+		if ((wParam == VK_KANJI) || (wParam == VK_PROCESSKEY))
+		{
+			// Don't send to real console
+			return;
+		}
+		// Dead key? debug
+		_ASSERTE(wParam != VK_PACKET);
+	}
 
 	#ifdef _DEBUG
 	if (wParam != VK_LCONTROL && wParam != VK_RCONTROL && wParam != VK_CONTROL &&

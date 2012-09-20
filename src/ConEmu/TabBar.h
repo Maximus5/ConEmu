@@ -160,7 +160,7 @@ class TabBarClass //: public CToolTip
 		BOOL NeedPostUpdate();
 		void UpdatePosition();
 		void UpdateTabFont();
-		void UpdateWidth();
+		void Reposition();
 		void OnConsoleActivated(int nConNumber); //0-based
 		void UpdateToolConsoles(bool abForcePos=false);
 		void OnCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);

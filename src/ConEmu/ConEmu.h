@@ -80,6 +80,13 @@ struct MsgSrvStartedArg
 #include "GestureEngine.h"
 #include "ConEmuCtrl.h"
 
+// IME support (WinXP or later)
+typedef BOOL (WINAPI* ImmSetCompositionFontW_t)(HIMC hIMC, LPLOGFONT lplf);
+typedef BOOL (WINAPI* ImmSetCompositionWindow_t)(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm);
+typedef HIMC (WINAPI* ImmGetContext_t)(HWND hWnd);
+
+
+
 
 class CConEmuMain :
 	public CDwmHelper,
@@ -612,6 +619,7 @@ class CConEmuMain :
 		void UpdateIdealRect(BOOL abAllowUseConSize=FALSE);
 	protected:
 		void UpdateIdealRect(RECT rcNewIdeal);
+		void UpdateImeComposition();
 	public:
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 		void UpdateTitle(/*LPCTSTR asNewTitle*/);
@@ -698,6 +706,12 @@ class CConEmuMain :
 		#ifdef __GNUC__
 		SetLayeredWindowAttributes_t SetLayeredWindowAttributes;
 		#endif
+
+		// IME support (WinXP or later)
+		HMODULE mh_Imm32;
+		ImmSetCompositionFontW_t _ImmSetCompositionFont;
+		ImmSetCompositionWindow_t _ImmSetCompositionWindow;
+		ImmGetContext_t _ImmGetContext;
 };
 
 extern CConEmuMain *gpConEmu;

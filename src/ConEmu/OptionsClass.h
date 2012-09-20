@@ -85,6 +85,7 @@ class CSettings
 		BOOL FontClearType();
 		BYTE FontQuality();
 		HFONT CreateOtherFont(const wchar_t* asFontName);
+		void GetMainLogFont(LOGFONT& lf);
 	private:
 		//struct CEFontRange
 		//{

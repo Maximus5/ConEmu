@@ -14,13 +14,15 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+[+] IME. Composition window placed inside ConEmu.
 [+] Dir sync settings.
 [%] RClick & Far 3 & "Far /w" does not select panel items.
 [*] Minor changes in splitter`s painting.
 [%] Issue 689: Progress stuck at 100% in powershell.
 [+] New switch: "ConEmu.exe /reset" starts without loading settings (a'la fresh config).
-[+] New option on "Caption" page: "Always show numbers [n/m]".
+[+] New option on «Caption» page: «Always show numbers [n/m]».
 [*] Touchscreen. Ignore SPI_GETWHEELSCROLLLINES.
+[+] New option on «Tabs» page: «Tabs on bottom»
 
 
 2012.09.16

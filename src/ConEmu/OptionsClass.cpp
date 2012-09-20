@@ -1867,7 +1867,7 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbDebugSteps, gpSet->isDebugSteps);
 
-	checkDlgButton(hWnd2, cbMonitorConsoleLang, gpSet->isMonitorConsoleLang);
+	checkDlgButton(hWnd2, cbMonitorConsoleLang, gpSet->isMonitorConsoleLang ? BST_CHECKED : BST_UNCHECKED);
 
 	//checkDlgButton(hWnd2, cbConsoleTextSelection, gpSet->isConsoleTextSelection);
 
@@ -2645,6 +2645,8 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 
 	//checkDlgButton(hWnd2, cbTabs, gpSet->isTabs);
 	checkRadioButton(hWnd2, rbTabsAlways, rbTabsNone, (gpSet->isTabs == 2) ? rbTabsAuto : gpSet->isTabs ? rbTabsAlways : rbTabsNone);
+
+	checkDlgButton(hWnd2, cbTabsLocationBottom, (gpSet->nTabsLocation == 1) ? BST_CHECKED : BST_UNCHECKED);
 
 	checkDlgButton(hWnd2, cbTabSelf, gpSet->isTabSelf);
 
@@ -4308,6 +4310,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			//TODO("Хорошо бы сразу видимость табов менять");
 			////gpConEmu->mp_TabBar->Update(TRUE); -- это как-то неправильно работает.
 			break;
+		case cbTabsLocationBottom:
+			gpSet->nTabsLocation = IsChecked(hWnd2, cbTabsLocationBottom);
+			gpConEmu->OnSize();
+			break;
 		case cbTabSelf:
 			gpSet->isTabSelf = IsChecked(hWnd2, cbTabSelf);
 			break;
@@ -4339,7 +4345,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isMouseSkipMoving = IsChecked(hWnd2, cbSkipMove);
 			break;
 		case cbMonitorConsoleLang:
-			gpSet->isMonitorConsoleLang = IsChecked(hWnd2, cbMonitorConsoleLang);
+			// "|2" reserved for "One layout for all consoles", always on
+			gpSet->isMonitorConsoleLang = IsChecked(hWnd2, cbMonitorConsoleLang) ? 3 : 0;
 			break;
 		case cbSkipFocusEvents:
 			gpSet->isSkipFocusEvents = IsChecked(hWnd2, cbSkipFocusEvents);
@@ -10497,6 +10504,11 @@ void CSettings::ResetCmdArg()
 	SingleInstanceArg = false;
 	// Сбросить нужно только gpSet->psCurCmd, gpSet->psCmd не меняется - загружается только из настройки
 	SafeFree(gpSet->psCurCmd);
+}
+
+void CSettings::GetMainLogFont(LOGFONT& lf)
+{
+	lf = LogFont;
 }
 
 LPCWSTR CSettings::FontFaceName()

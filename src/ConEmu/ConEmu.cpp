@@ -78,7 +78,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRRCLICK(s) //DEBUGSTR(s)
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
-#define DEBUGSTRIME(s) //DEBUGSTR(s)
+#define DEBUGSTRIME(s) DEBUGSTR(s)
 #define DEBUGSTRCHAR(s) //DEBUGSTR(s)
 #define DEBUGSTRSETCURSOR(s) //OutputDebugString(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
@@ -313,6 +313,31 @@ CConEmuMain::CConEmuMain()
 	// SetLayeredWindowAttributes есть в Win2k, только про него не знает GCC
 	SetLayeredWindowAttributes = (SetLayeredWindowAttributes_t)(hUser32 ? GetProcAddress(hUser32, "SetLayeredWindowAttributes") : NULL);
 	#endif
+
+	// IME support (WinXP or later)
+	mh_Imm32 = NULL;
+	_ImmSetCompositionFont = NULL;
+	_ImmSetCompositionWindow = NULL;
+	_ImmGetContext = NULL;
+	if (gnOsVer >= 0x501)
+	{
+		mh_Imm32 = LoadLibrary(L"Imm32.dll");
+		if (mh_Imm32)
+		{
+			_ImmSetCompositionFont = (ImmSetCompositionFontW_t)GetProcAddress(mh_Imm32, "ImmSetCompositionFontW");
+			_ImmSetCompositionWindow = (ImmSetCompositionWindow_t)GetProcAddress(mh_Imm32, "ImmSetCompositionWindow");
+			_ImmGetContext = (ImmGetContext_t)GetProcAddress(mh_Imm32, "ImmGetContext");
+			if (!_ImmSetCompositionFont || !_ImmSetCompositionWindow || !_ImmGetContext)
+			{
+				_ASSERTE(_ImmSetCompositionFont && _ImmSetCompositionWindow && _ImmGetContext);
+				_ImmSetCompositionFont = NULL;
+				_ImmSetCompositionWindow = NULL;
+				_ImmGetContext = NULL;
+				FreeLibrary(mh_Imm32);
+				mh_Imm32 = NULL;
+			}
+		}
+	}
 
 	//LoadVersionInfo(ms_ConEmuExe);
 	// ѕапка программы
@@ -3237,7 +3262,11 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg /*, CVirtualConsole
 			if (lbTabActive)  //TODO: + IsAllowed()?
 			{
 				RECT rcTab = gpConEmu->mp_TabBar->GetMargins();
-				AddMargins(rc, rcTab, FALSE);
+				// !!! AddMargins использовать нельз€! он расчитан на вычитание
+				//AddMargins(rc, rcTab, FALSE);
+				_ASSERTE(rcTab.top==0 || rcTab.bottom==0);
+				rc.top += rcTab.top;
+				rc.bottom += rcTab.bottom;
 			}// else { -- раз таба нет - значит дополнительные отступы не нужны
 
 			//    rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
@@ -3249,16 +3278,29 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg /*, CVirtualConsole
 			if (gpSet->isTabs == 1)
 			{
 				RECT rcTab = gpSet->rcTabMargins; // умолчательные отступы таба
+				// —разу оба - быть не должны. Ћибо сверху, либо снизу.
+				_ASSERTE(rcTab.top==0 || rcTab.bottom==0);
 
 				if (!gpSet->isTabFrame)
 				{
 					// ќт таба остаетс€ только заголовок (закладки)
 					//rc.left=0; rc.right=0; rc.bottom=0;
-					rc.top += rcTab.top;
+					if (gpSet->nTabsLocation == 1)
+					{
+						rc.bottom += rcTab.top ? rcTab.top : rcTab.bottom;
+					}
+					else
+					{
+						rc.top += rcTab.top ? rcTab.top : rcTab.bottom;
+					}
 				}
 				else
 				{
-					AddMargins(rc, rcTab, FALSE);
+					_ASSERTE(FALSE && "For deletion!");
+					// !!! AddMargins использовать нельз€! он расчитан на вычитание
+					//AddMargins(rc, rcTab, FALSE);
+					rc.top += rcTab.top;
+					rc.bottom += rcTab.bottom;
 				}
 			}// else { -- раз таба нет - значит дополнительные отступы не нужны
 
@@ -4993,7 +5035,7 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 	}
 
 	if (gpConEmu->mp_TabBar->IsTabsActive())
-		gpConEmu->mp_TabBar->UpdateWidth();
+		gpConEmu->mp_TabBar->Reposition();
 
 	// Background - должен зан€ть все клиентское место под тулбаром
 	// “ам же ресайзитс€ ScrollBar
@@ -7230,7 +7272,7 @@ void CConEmuMain::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
 		cRect = GetGuiClientRect();
 		WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
 		int nTabShift =
-		    ((gpSet->isHideCaptionAlways() || mb_isFullScreen) && gpConEmu->mp_TabBar->IsTabsShown())
+		    ((gpSet->isHideCaptionAlways() || mb_isFullScreen) && gpConEmu->mp_TabBar->IsTabsShown() && (gpSet->nTabsLocation != 1))
 		    ? gpConEmu->mp_TabBar->GetTabbarHeight() : 0;
 
 		if (x == -32000)
@@ -11462,6 +11504,38 @@ bool CConEmuMain::isInImeComposition()
 	return mb_InImeComposition;
 }
 
+void CConEmuMain::UpdateImeComposition()
+{
+	if (!mh_Imm32)
+		return;
+
+	CVConGuard VCon;
+	if (GetActiveVCon(&VCon) >= 0)
+	{
+		HWND hView = VCon->GetView();
+
+		CONSOLE_CURSOR_INFO ci = {};
+		CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+		CRealConsole* pRCon = VCon->RCon();
+		pRCon->GetConsoleCursorInfo(&ci);
+		pRCon->GetConsoleScreenBufferInfo(&sbi);
+		COORD crVisual = pRCon->BufferToScreen(sbi.dwCursorPosition);
+		crVisual.X = max(0,min(crVisual.X,(int)pRCon->TextWidth()));
+		crVisual.Y = max(0,min(crVisual.Y,(int)pRCon->TextHeight()));
+		POINT ptCurPos = VCon->ConsoleToClient(crVisual.X, crVisual.Y);
+
+		MapWindowPoints(hView, ghWnd, &ptCurPos, 1);
+
+		COMPOSITIONFORM cf = {CFS_POINT, ptCurPos};
+
+		HIMC hImc = _ImmGetContext(ghWnd/*hView?*/);
+		_ImmSetCompositionWindow(hImc, &cf);
+
+		LOGFONT lf; gpSetCls->GetMainLogFont(lf);
+		_ImmSetCompositionFont(hImc, &lf);
+	}
+}
+
 LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
@@ -11471,6 +11545,7 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 	{
 		case WM_IME_CHAR:
 			{
+				// ѕосылаетс€ в RealConsole (это ввод из окошка IME)
 				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_CHAR: char=%c, wParam=%u, lParam=0x%08X\n", (wchar_t)wParam, (DWORD)wParam, (DWORD)lParam);
 				DEBUGSTRIME(szDbgMsg);
 				CVConGuard VCon;
@@ -11483,6 +11558,7 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		case WM_IME_COMPOSITION:
 			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_COMPOSITION: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
+			UpdateImeComposition();
 			//if (lParam & GCS_RESULTSTR) 
 			//{
 			//	HIMC hIMC = ImmGetContext(hWnd);
@@ -11583,6 +11659,7 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		case WM_IME_STARTCOMPOSITION:
 			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_STARTCOMPOSITION: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
+			UpdateImeComposition();
 			// Ќачало IME. “еперь нужно игнорировать обычные нажати€ (не посылать в консоль)
 			mb_InImeComposition = true;
 			break;

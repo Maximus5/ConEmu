@@ -978,6 +978,8 @@ struct Settings
 		
 		//reg->Load(L"Tabs", isTabs);
 		char isTabs;
+		//reg->Load(L"TabsLocation", nTabsLocation);
+		BYTE nTabsLocation;
 		//reg->Load(L"TabSelf", isTabSelf);
 		bool isTabSelf;
 		//reg->Load(L"TabRecent", isTabRecent);
@@ -1217,7 +1219,7 @@ struct Settings
 		//bool isLangChangeWsPlugin;
 		
 		//reg->Load(L"MonitorConsoleLang", isMonitorConsoleLang);
-		bool isMonitorConsoleLang;
+		BYTE isMonitorConsoleLang;
 		
 		//reg->Load(L"SleepInBackground", isSleepInBackground);
 		bool isSleepInBackground;

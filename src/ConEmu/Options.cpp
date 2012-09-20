@@ -547,7 +547,8 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_ConEmuView] = true;
 	isStatusColumnHidden[csi_ServerHWND] = true;
 
-	isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true; nTabDblClickAction = 1;
+	isTabs = 1; nTabsLocation = 0;
+	isTabSelf = true; isTabRecent = true; isTabLazy = true; nTabDblClickAction = 1;
 	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
 	isTabsInCaption = false; //cbTabsInCaption
@@ -2350,6 +2351,7 @@ void Settings::LoadSettings()
 
 		//reg->Load(L"GUIpb", isGUIpb);
 		reg->Load(L"Tabs", isTabs);
+		reg->Load(L"TabsLocation", nTabsLocation);
 		reg->Load(L"TabSelf", isTabSelf);
 		reg->Load(L"TabLazy", isTabLazy);
 		reg->Load(L"TabRecent", isTabRecent);
@@ -2551,8 +2553,17 @@ void Settings::LoadSettings()
 
 	if (rcTabMargins.top > 100) rcTabMargins.top = 100;
 
-	_ASSERTE(!rcTabMargins.bottom && !rcTabMargins.left && !rcTabMargins.right);
-	rcTabMargins.bottom = rcTabMargins.left = rcTabMargins.right = 0;
+	_ASSERTE((rcTabMargins.bottom == 0 || rcTabMargins.top == 0) && !rcTabMargins.left && !rcTabMargins.right);
+	rcTabMargins.left = rcTabMargins.right = 0;
+	int nTabHeight = rcTabMargins.top ? rcTabMargins.top : rcTabMargins.bottom;
+	if (nTabsLocation == 1)
+	{
+		rcTabMargins.top = 0; rcTabMargins.bottom = nTabHeight;
+	}
+	else
+	{
+		rcTabMargins.top = nTabHeight; rcTabMargins.bottom = 0;
+	}
 
 	if (!psCmdHistory)
 	{
@@ -3060,6 +3071,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		//reg->Save(L"GUIpb", isGUIpb);
 		SaveStatusSettings(reg);
 		reg->Save(L"Tabs", isTabs);
+		reg->Save(L"TabsLocation", nTabsLocation);
 		reg->Save(L"TabSelf", isTabSelf);
 		reg->Save(L"TabLazy", isTabLazy);
 		reg->Save(L"TabRecent", isTabRecent);
