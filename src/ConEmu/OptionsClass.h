@@ -164,14 +164,6 @@ class CSettings
 		void SaveFontSizes(LOGFONT *pCreated, bool bAuto, bool bSendChanges);
 		LPOUTLINETEXTMETRIC LoadOutline(HDC hDC, HFONT hFont);
 		void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);
-	private:
-		struct {
-			bool bWasSaved;
-			DWORD wndWidth, wndHeight; // Консоль
-			DWORD wndX, wndY; // GUI
-			DWORD nFrame;
-			ConEmuWindowMode WindowMode;
-		} m_QuakePrevSize;
 	public:
 		//bool isFontAutoSize;
 		//bool isAutoRegisterFonts;
@@ -534,6 +526,7 @@ class CSettings
 		//wchar_t temp[MAX_PATH];
 		UINT mn_MsgRecreateFont;
 		UINT mn_MsgLoadFontFromMain;
+	public:
 		static int checkDlgButton(HWND hParent, WORD nCtrlId, UINT uCheck);
 		static int checkRadioButton(HWND hParent, int nIDFirstButton, int nIDLastButton, int nIDCheckButton);
 		static int IsChecked(HWND hParent, WORD nCtrlId);
@@ -542,6 +535,7 @@ class CSettings
 		static INT_PTR GetSelectedString(HWND hParent, WORD nListCtrlId, wchar_t** ppszStr);
 		static int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 		static int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
+	private:
 		BOOL mb_TabHotKeyRegistered;
 		void RegisterTabs();
 		void UnregisterTabs();

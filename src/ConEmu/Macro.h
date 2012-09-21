@@ -80,6 +80,8 @@ class CConEmuMacro
 		static LPWSTR Progress(LPWSTR asArgs, CRealConsole* apRCon);
 		// Rename(<Type>,"<Title>")
 		static LPWSTR Rename(LPWSTR asArgs, CRealConsole* apRCon);
+		// SetOption("<Name>",<Value>)
+		static LPWSTR SetOption(LPWSTR asArgs, CRealConsole* apRCon);
 		// Shell (ShellExecute)
 		static LPWSTR Shell(LPWSTR asArgs, CRealConsole* apRCon);
 		// Status

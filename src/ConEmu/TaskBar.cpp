@@ -234,9 +234,6 @@ HRESULT CTaskBar::Taskbar_AddTabXP(HWND hBtn)
 {
 	HRESULT hr;
 
-	// 111127 на Vista тоже кнопку "убирать" нужно
-	_ASSERTE(gpConEmu && (gOSVer.dwMajorVersion <= 5 || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)));
-
 	if (mp_TaskBar1)
 	{
 		hr = mp_TaskBar1->AddTab(hBtn);

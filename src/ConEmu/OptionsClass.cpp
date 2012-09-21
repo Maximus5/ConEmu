@@ -275,7 +275,7 @@ CSettings::CSettings()
 	mb_ThemingEnabled = (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1));
 	//isFullScreen = false;
 	isMonospaceSelected = 0;
-	ZeroStruct(m_QuakePrevSize);
+	//ZeroStruct(m_QuakePrevSize);
 	
 	// Некоторые вещи нужно делать вне InitSettings, т.к. она может быть
 	// вызвана потом из интерфейса диалога настроек
@@ -1522,13 +1522,14 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 {
-	checkDlgButton(hWnd2, cbMinToTray, gpSet->isMinToTray);
+	checkDlgButton(hWnd2, cbMinToTray, gpSet->mb_MinToTray);
 	EnableWindow(GetDlgItem(hWnd2, cbMinToTray), !gpConEmu->ForceMinimizeToTray);
 
 	checkDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon);
 
 	//checkDlgButton(hWnd2, cbTabsOnTaskBar, gpSet->m_isTabsOnTaskBar);
-	checkRadioButton(hWnd2, rbTaskbarBtnActive, rbTaskbarBtnWin7, 
+	checkRadioButton(hWnd2, rbTaskbarBtnActive, rbTaskbarBtnHidden, 
+		(gpSet->m_isTabsOnTaskBar == 3) ? rbTaskbarBtnHidden :
 		(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
 		(gpSet->m_isTabsOnTaskBar == 1) ? rbTaskbarBtnAll
 		: rbTaskbarBtnActive);
@@ -4098,7 +4099,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isSafeFarClose = IsChecked(hWnd2, cbSafeFarClose);
 			break;
 		case cbMinToTray:
-			gpSet->isMinToTray = IsChecked(hWnd2, cbMinToTray);
+			gpSet->mb_MinToTray = IsChecked(hWnd2, cbMinToTray);
 			break;
 		case cbCloseConsoleConfirm:
 			gpSet->isCloseConsoleConfirm = IsChecked(hWnd2, cbCloseConsoleConfirm);
@@ -4110,61 +4111,13 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbQuakeStyle:
 		case cbQuakeAutoHide:
 			{
-				BYTE bPrevStyle = gpSet->isQuakeStyle;
-				gpSet->isQuakeStyle = IsChecked(hWnd2, cbQuakeStyle)
+				BYTE NewQuakeMode = IsChecked(hWnd2, cbQuakeStyle)
 					? IsChecked(hWnd2, cbQuakeAutoHide) ? 2 : 1 : 0;
-				EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
-
-				if (mh_Tabs[thi_Ext])
-				{
-					if (gpSet->isHideCaptionAlways())
-					{
-						checkDlgButton(mh_Tabs[thi_Show], cbHideCaptionAlways, BST_CHECKED);
-					}
-					EnableWindow(GetDlgItem(mh_Tabs[thi_Show], cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
-				}
-
-				if (gpSet->isQuakeStyle)
-				{
-					gpSet->isTryToCenter = true;
-					checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
-				}
-
-				ConEmuWindowMode nNewWindowMode = 
+				ConEmuWindowMode NewWindowMode = 
 					IsChecked(hWnd2, rMaximized) ? wmMaximized :
 					IsChecked(hWnd2, rFullScreen) ? wmFullScreen : 
 					wmNormal;
-				gpSet->_WindowMode = nNewWindowMode;
-
-				if (gpSet->isQuakeStyle && !bPrevStyle)
-				{
-					m_QuakePrevSize.bWasSaved = true;
-					m_QuakePrevSize.wndWidth = gpConEmu->wndWidth;
-					m_QuakePrevSize.wndHeight = gpConEmu->wndHeight;
-					m_QuakePrevSize.wndX = gpConEmu->wndX;
-					m_QuakePrevSize.wndY = gpConEmu->wndY;
-					m_QuakePrevSize.nFrame = gpSet->nHideCaptionAlwaysFrame;
-					m_QuakePrevSize.WindowMode = gpConEmu->WindowMode;
-					gpSet->nHideCaptionAlwaysFrame = 0;
-				}
-				else if (!gpSet->isQuakeStyle && m_QuakePrevSize.bWasSaved)
-				{
-					gpConEmu->wndWidth = m_QuakePrevSize.wndWidth;
-					gpConEmu->wndHeight = m_QuakePrevSize.wndHeight;
-					gpConEmu->wndX = m_QuakePrevSize.wndX;
-					gpConEmu->wndY = m_QuakePrevSize.wndY;
-					gpSet->nHideCaptionAlwaysFrame = m_QuakePrevSize.nFrame;
-					nNewWindowMode = m_QuakePrevSize.WindowMode;
-				}
-
-				RECT rcWnd = gpConEmu->GetDefaultRect();
-				gpConEmu->SetWindowMode(nNewWindowMode, TRUE);
-
-				gpConEmu->OnHideCaption();
-
-				SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
-
-				apiSetForegroundWindow(ghOpWnd);
+				gpConEmu->SetQuakeMode(NewQuakeMode, NewWindowMode);
 			}
 			break;
 		case cbHideCaption:
@@ -4327,9 +4280,16 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rbTaskbarBtnActive:
 		case rbTaskbarBtnAll:
 		case rbTaskbarBtnWin7:
+		case rbTaskbarBtnHidden:
 			// 3state: BST_UNCHECKED/BST_CHECKED/BST_INDETERMINATE
 			gpSet->m_isTabsOnTaskBar = IsChecked(hWnd2, rbTaskbarBtnAll) ? 1
-				: IsChecked(hWnd2, rbTaskbarBtnWin7) ? 2 : 0;
+				: IsChecked(hWnd2, rbTaskbarBtnWin7) ? 2
+				: IsChecked(hWnd2, rbTaskbarBtnHidden) ? 3 : 0;
+			if ((gpSet->m_isTabsOnTaskBar == 3) && !gpSet->mb_MinToTray)
+			{
+				gpSet->mb_MinToTray = true;
+				checkDlgButton(hWnd2, cbMinToTray, BST_CHECKED);
+			}
 			gpConEmu->OnTaskbarSettingsChanged();
 			break;
 		case cbRSelectionFix:

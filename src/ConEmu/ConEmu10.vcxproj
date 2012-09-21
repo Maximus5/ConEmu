@@ -620,7 +620,7 @@
       <AdditionalDependencies>comctl32.lib;Shlwapi.lib;version.lib;gdiplus.lib;Winmm.lib;Netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>Z:\ConEmu.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <GenerateMapFile>true</GenerateMapFile>
+      <GenerateMapFile>false</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
       <KeyFile>
@@ -1044,6 +1044,7 @@
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="!ToDo.!000!.txt" />
     <None Include="Circles.bmp" />
     <CustomBuildStep Include="ConEmu.ico" />
     <None Include="ConEmu.rc2" />

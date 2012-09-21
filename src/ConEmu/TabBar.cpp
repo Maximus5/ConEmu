@@ -114,9 +114,10 @@ TabBarClass::TabBarClass()
 {
 	_active = false;
 	_tabHeight = 0;
+	mb_ForceRecalcHeight = false;
 	mb_DisableRedraw = FALSE;
 	//memset(&m_Margins, 0, sizeof(m_Margins));
-	m_Margins = gpSet->rcTabMargins; // !! Значения отступов
+	//m_Margins = gpSet->rcTabMargins; // !! Значения отступов
 	_titleShouldChange = false;
 	_prevTab = -1;
 	mb_ChangeAllowed = FALSE;
@@ -1116,22 +1117,36 @@ void TabBarClass::AddTab2VCon(VConTabs& vct)
 
 RECT TabBarClass::GetMargins()
 {
-	if (_tabHeight && IsTabsShown())
-	{
-		RECT rcNewMargins;
-		if (gpSet->nTabsLocation == 1)
-			rcNewMargins = MakeRect(0,0,0,_tabHeight);
-		else
-			rcNewMargins = MakeRect(0,_tabHeight,0,0);
+	_ASSERTE(this);
+	RECT rcNewMargins = {0,0};
 
-		if (memcmp(&rcNewMargins, &m_Margins, sizeof(m_Margins)) != 0)
+	if (_active || (gpSet->isTabs == 1))
+	{
+		if (!_tabHeight)
 		{
-			m_Margins = rcNewMargins;
-			gpSet->UpdateMargins(m_Margins);
+			// Вычислить высоту
+			GetTabbarHeight();
+		}
+
+		if (_tabHeight /*&& IsTabsShown()*/)
+		{
+			_ASSERTE(_tabHeight!=0 && "Height must be evaluated already!");
+			
+			if (gpSet->nTabsLocation == 1)
+				rcNewMargins = MakeRect(0,0,0,_tabHeight);
+			else
+				rcNewMargins = MakeRect(0,_tabHeight,0,0);
+
+			//if (memcmp(&rcNewMargins, &m_Margins, sizeof(m_Margins)) != 0)
+			//{
+			//	m_Margins = rcNewMargins;
+			//	gpSet->UpdateMargins(m_Margins);
+			//}
 		}
 	}
+	//return m_Margins;
 
-	return m_Margins;
+	return rcNewMargins;
 }
 
 void TabBarClass::UpdatePosition()
@@ -1164,10 +1179,10 @@ void TabBarClass::UpdatePosition()
 			if (!IsWindowVisible(mh_Tabbar))
 				apiShowWindow(mh_Tabbar, SW_SHOW);
 
-			if (gpSet->isTabFrame)
-				MoveWindow(mh_Tabbar, 0, 0, client.right, client.bottom, 1);
-			else
-				MoveWindow(mh_Tabbar, 0, 0, client.right, _tabHeight, 1);
+			//if (gpSet->isTabFrame)
+			//	MoveWindow(mh_Tabbar, 0, 0, client.right, client.bottom, 1);
+			//else
+			MoveWindow(mh_Tabbar, 0, 0, client.right, _tabHeight, 1);
 		}
 
 		#ifdef _DEBUG
@@ -1264,11 +1279,11 @@ void TabBarClass::Reposition()
 		}
 		#endif
 
-		if (gpSet->nTabsLocation == 1)
-			m_Margins = MakeRect(0,0,0,_tabHeight);
-		else
-			m_Margins = MakeRect(0,_tabHeight,0,0);
-		gpSet->UpdateMargins(m_Margins);
+		//if (gpSet->nTabsLocation == 1)
+		//	m_Margins = MakeRect(0,0,0,_tabHeight);
+		//else
+		//	m_Margins = MakeRect(0,_tabHeight,0,0);
+		//gpSet->UpdateMargins(m_Margins);
 
 
 		if (lbWideEnough && nBarIndex != 1)
@@ -1283,10 +1298,10 @@ void TabBarClass::Reposition()
 			SendMessage(mh_Rebar, RB_SHOWBAND, nBarIndex, 1);
 		}
 	}
-	else if (gpSet->isTabFrame)
-	{
-		MoveWindow(mh_Tabbar, 0, 0, client.right, client.bottom, 1);
-	}
+	//else if (gpSet->isTabFrame)
+	//{
+	//	MoveWindow(mh_Tabbar, 0, 0, client.right, client.bottom, 1);
+	//}
 	else
 	{
 		MoveWindow(mh_Tabbar, 0, 0, client.right, _tabHeight, 1);
@@ -1896,20 +1911,55 @@ int TabBarClass::GetTabbarHeight()
 {
 	if (!this) return NULL;
 
+	_ASSERTE(gpSet->isTabs!=0);
+
+	if (mb_ForceRecalcHeight || (_tabHeight == 0))
+	{
+		// Нужно пересчитать высоту таба
+
+		HWND hTabs = mh_Tabbar;
+		bool bDummyCreate = (hTabs == NULL);
+		
+		if (bDummyCreate)
+		{
+			hTabs = CreateTabbar(true);
+		}
+
+		if (hTabs)
+		{
+			// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
+			RECT rcClient = MakeRect(600, 400);
+			//rcClient = gpConEmu->GetGuiClientRect();
+			TabCtrl_AdjustRect(hTabs, FALSE, &rcClient);
+			_tabHeight = rcClient.top - mn_ThemeHeightDiff;
+		}
+		else
+		{
+			_ASSERTE((hTabs!=NULL) && "Creating of a dummy tab control failed");
+			_tabHeight = gpSet->nTabFontHeight + 8;
+		}
+
+		if (bDummyCreate && hTabs)
+		{
+			DestroyWindow(hTabs);
+			mh_Tabbar = NULL;
+		}
+	}
+
 	return _tabHeight;
 }
 
-HWND TabBarClass::CreateTabbar()
+HWND TabBarClass::CreateTabbar(bool abDummyCreate /*= false*/)
 {
 	gpSetCls->CheckTheming();
 
-	if (!mh_Rebar)
-		return NULL; // нет табов - нет и тулбара
+	if (!mh_Rebar && !abDummyCreate)
+		return NULL; // Табы создаются только как Band в ReBar
 
 	if (mh_Tabbar)
 		return mh_Tabbar; // Уже создали
 
-	if (!mh_TabIcons)
+	if (!abDummyCreate && !mh_TabIcons)
 	{
 		mh_TabIcons = ImageList_LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_SHIELD), 14, 1, RGB(128,0,0), IMAGE_BITMAP, LR_CREATEDIBSECTION);
 		mn_AdminIcon = (gOSVer.dwMajorVersion >= 6) ? 0 : 1;
@@ -1939,13 +1989,20 @@ HWND TabBarClass::CreateTabbar()
 	/*mh_TabbarP = CreateWindow(_T("VirtualConsoleClassBar"), _T(""),
 	        WS_VISIBLE|WS_CHILD, 0,0,340,22, ghWnd, 0, 0, 0);
 	if (!mh_TabbarP) return NULL;*/
-	RECT rcClient;
-	rcClient = gpConEmu->GetGuiClientRect();
+	RECT rcClient = {-32000, -32000, -32000+300, -32000+100};
+	if (ghWnd)
+	{
+		rcClient = gpConEmu->GetGuiClientRect();
+	}
+	else
+	{
+		_ASSERTE(abDummyCreate);
+	}
 	
-	DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE/*|TCS_BUTTONS*//*|TCS_TOOLTIPS*/
-			|((gpSet->nTabsLocation == 1) ? TCS_BOTTOM : 0);
+	DWORD nPlacement = TCS_SINGLELINE|(abDummyCreate ? 0 : (WS_VISIBLE | WS_CHILD))/*|TCS_BUTTONS*//*|TCS_TOOLTIPS*/;
+			//|((gpSet->nTabsLocation == 1) ? TCS_BOTTOM : 0);
 
-	mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CHILD | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0,
+	mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0,
 	                         rcClient.right, 0, mh_Rebar, NULL, g_hInstance, NULL);
 
 	if (mh_Tabbar == NULL)
@@ -1953,23 +2010,27 @@ HWND TabBarClass::CreateTabbar()
 		return NULL;
 	}
 
-#if !defined(__GNUC__)
-#pragma warning (disable : 4312)
-#endif
-	// Надо
-	_defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)TabProc);
-	SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)mh_TabIcons);
-
-	if (!mh_TabTip || !IsWindow(mh_TabTip))
+	if (!abDummyCreate)
 	{
-		mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-		                           WS_POPUP | TTS_ALWAYSTIP /*| TTS_BALLOON*/ | TTS_NOPREFIX,
-		                           CW_USEDEFAULT, CW_USEDEFAULT,
-		                           CW_USEDEFAULT, CW_USEDEFAULT,
-		                           mh_Tabbar, NULL,
-		                           g_hInstance, NULL);
-		SetWindowPos(mh_TabTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
-		TabCtrl_SetToolTips(mh_Tabbar, mh_TabTip);
+		//#if !defined(__GNUC__)
+		//#pragma warning (disable : 4312)
+		//#endif
+
+		// Надо
+		_defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)TabProc);
+		SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)mh_TabIcons);
+
+		if (!mh_TabTip || !IsWindow(mh_TabTip))
+		{
+			mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+									   WS_POPUP | TTS_ALWAYSTIP /*| TTS_BALLOON*/ | TTS_NOPREFIX,
+									   CW_USEDEFAULT, CW_USEDEFAULT,
+									   CW_USEDEFAULT, CW_USEDEFAULT,
+									   mh_Tabbar, NULL,
+									   g_hInstance, NULL);
+			SetWindowPos(mh_TabTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+			TabCtrl_SetToolTips(mh_Tabbar, mh_TabTip);
+		}
 	}
 
 	UpdateTabFont();
@@ -1977,7 +2038,7 @@ HWND TabBarClass::CreateTabbar()
 	//                         CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gpSet->sTabFontFace);
 	//SendMessage(mh_Tabbar, WM_SETFONT, WPARAM(hFont), TRUE);
 
-	if (!mh_Balloon || !IsWindow(mh_Balloon))
+	if (!abDummyCreate && (!mh_Balloon || !IsWindow(mh_Balloon)))
 	{
 		mh_Balloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
 		                            WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
@@ -2005,7 +2066,9 @@ HWND TabBarClass::CreateTabbar()
 	// Добавляет закладку, или меняет (при необходимости) заголовок существующей
 	//AddTab(gpConEmu->isFar() ? gpSet->szTabPanels : gpSet->pszTabConsole, 0);
 	AddTab(gpConEmu->GetLastTitle(), 0, false);
-	rcClient = gpConEmu->GetGuiClientRect();
+	// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
+	rcClient = MakeRect(600, 400);
+	//rcClient = gpConEmu->GetGuiClientRect();
 	TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
 	_tabHeight = rcClient.top - mn_ThemeHeightDiff;
 	return mh_Tabbar;
@@ -2013,14 +2076,24 @@ HWND TabBarClass::CreateTabbar()
 
 void TabBarClass::CreateRebar()
 {
-	RECT rcWnd = gpConEmu->GetGuiClientRect();
+	RECT rcWnd = {-32000, -32000, -32000+300, -32000+100};
+	if (ghWnd)
+	{
+		rcWnd = gpConEmu->GetGuiClientRect();
+	}
+	else
+	{
+		_ASSERTE(ghWnd!=NULL); // вроде ReBar для теста не создается.
+	}
+
 	gpSetCls->CheckTheming();
 
 	if (NULL == (mh_Rebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
-	                                      WS_VISIBLE |WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|
-	                                      /*CCS_NORESIZE|*/CCS_NOPARENTALIGN|
-	                                      RBS_FIXEDORDER|RBS_AUTOSIZE|/*RBS_VARHEIGHT|*/CCS_NODIVIDER,
-	                                      0,0,rcWnd.right,16, ghWnd, NULL, g_hInstance, NULL)))
+								(ghWnd ? (WS_VISIBLE | WS_CHILD) : 0)
+								|WS_CLIPSIBLINGS|WS_CLIPCHILDREN
+	                            |/*CCS_NORESIZE|*/CCS_NOPARENTALIGN
+	                            |RBS_FIXEDORDER|RBS_AUTOSIZE|/*RBS_VARHEIGHT|*/CCS_NODIVIDER,
+	                            0,0,rcWnd.right,16, ghWnd, NULL, g_hInstance, NULL)))
 		return;
 
 #if !defined(__GNUC__)
@@ -2029,7 +2102,7 @@ void TabBarClass::CreateRebar()
 	// Надо
 	_defaultReBarProc = (WNDPROC)SetWindowLongPtr(mh_Rebar, GWLP_WNDPROC, (LONG_PTR)ReBarProc);
 	REBARINFO     rbi= {sizeof(REBARINFO)};
-	REBARBANDINFO rbBand= {80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+	REBARBANDINFO rbBand = {80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
 
 	if (!SendMessage(mh_Rebar, RB_SETBARINFO, 0, (LPARAM)&rbi))
 	{
@@ -2097,16 +2170,17 @@ void TabBarClass::CreateRebar()
 		//}
 	}
 
+#ifdef _DEBUG
 	RECT rc;
 	GetWindowRect(mh_Rebar, &rc);
-
+#endif
 	//GetWindowRect(mh_Rebar, &rc);
 	//_tabHeight = rc.bottom - rc.top;
-	if (gpSet->nTabsLocation == 1)
-		m_Margins = MakeRect(0,0,0,_tabHeight);
-	else
-		m_Margins = MakeRect(0,_tabHeight,0,0);
-	gpSet->UpdateMargins(m_Margins);
+	//if (gpSet->nTabsLocation == 1)
+	//	m_Margins = MakeRect(0,0,0,_tabHeight);
+	//else
+	//	m_Margins = MakeRect(0,_tabHeight,0,0);
+	//gpSet->UpdateMargins(m_Margins);
 	//_hwndTab = mh_Rebar; // пока...
 }
 

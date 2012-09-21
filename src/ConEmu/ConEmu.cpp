@@ -137,6 +137,7 @@ static struct RegisteredHotKeys
 gRegisteredHotKeys[] = {
 	{vkMinimizeRestore},
 	{vkMinimizeRestor2},
+	{vkGlobalRestore},
 	{vkForceFullScreen},
 };
 
@@ -267,6 +268,7 @@ CConEmuMain::CConEmuMain()
 	mb_LastConEmuFocusState = false;
 	mb_CloseGuiConfirmed = false;
 	mb_UpdateJumpListOnStartup = false;
+	ZeroStruct(m_QuakePrevSize);
 
 	mps_IconPath = NULL;
 
@@ -552,7 +554,6 @@ CConEmuMain::CConEmuMain()
 	mn_MsgTabSwitchFromHook = RegisterWindowMessage(CONEMUMSG_SWITCHCON); //mb_InWinTabSwitch = FALSE;
 	mn_MsgWinKeyFromHook = RegisterWindowMessage(CONEMUMSG_HOOKEDKEY);
 	//mn_MsgConsoleHookedKey = RegisterWindowMessage(CONEMUMSG_CONSOLEHOOKEDKEY);
-	mn_MsgSheelHook = RegisterWindowMessage(L"SHELLHOOK");
 	mn_ShellExecuteEx = ++nAppMsg;
 	mn_PostConsoleResize = ++nAppMsg;
 	mn_ConsoleLangChanged = ++nAppMsg;
@@ -572,8 +573,10 @@ CConEmuMain::CConEmuMain()
 	mn_MsgInitVConGhost = ++nAppMsg;
 	mn_MsgCreateCon = ++nAppMsg;
 	mn_MsgRequestUpdate = ++nAppMsg;
-	mn_MsgTaskBarCreated = RegisterWindowMessage(L"TaskbarCreated");
 	mn_MsgPanelViewMapCoord = RegisterWindowMessage(CONEMUMSG_PNLVIEWMAPCOORD);
+	mn_MsgTaskBarCreated = RegisterWindowMessage(L"TaskbarCreated");
+	mn_MsgTaskBarBtnCreated = RegisterWindowMessage(L"TaskbarButtonCreated");
+	mn_MsgSheelHook = RegisterWindowMessage(L"SHELLHOOK");
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 
@@ -1049,11 +1052,12 @@ RECT CConEmuMain::GetDefaultRect()
 	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS);
 	int nShiftX = rcFrameMargin.left + rcFrameMargin.right;
 	int nShiftY = rcFrameMargin.top + rcFrameMargin.bottom;
+	RECT rcTabMargins = mp_TabBar->GetMargins();
 	// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
 	nWidth  = conSize.X * gpSetCls->FontWidth() + nShiftX
-	          + ((gpSet->isTabs == 1) ? (gpSet->rcTabMargins.left+gpSet->rcTabMargins.right) : 0);
+	          + ((gpSet->isTabs == 1) ? (rcTabMargins.left+rcTabMargins.right) : 0);
 	nHeight = conSize.Y * gpSetCls->FontHeight() + nShiftY
-	          + ((gpSet->isTabs == 1) ? (gpSet->rcTabMargins.top+gpSet->rcTabMargins.bottom) : 0);
+	          + ((gpSet->isTabs == 1) ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
 	rcWnd = MakeRect(gpConEmu->wndX, gpConEmu->wndY, gpConEmu->wndX+nWidth, gpConEmu->wndY+nHeight);
 
 	if (gpSet->isQuakeStyle)
@@ -1473,7 +1477,7 @@ DWORD CConEmuMain::GetWindowStyleEx()
 		if (gpSet->isAlwaysOnTop)
 			styleEx |= WS_EX_TOPMOST;
 
-		if (gpSet->isTabsOnTaskBar() && !IsWindows7)
+		if (!gpSet->isWindowOnTaskBar(true))
 		{
 			styleEx &= ~WS_EX_APPWINDOW;
 			//styleEx |= WS_EX_TOOLWINDOW;
@@ -3277,31 +3281,34 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg /*, CVirtualConsole
 			// Иначе нужно смотреть по настройкам
 			if (gpSet->isTabs == 1)
 			{
-				RECT rcTab = gpSet->rcTabMargins; // умолчательные отступы таба
+				//RECT rcTab = gpSet->rcTabMargins; // умолчательные отступы таба
+				RECT rcTab = mp_TabBar->GetMargins();
 				// Сразу оба - быть не должны. Либо сверху, либо снизу.
 				_ASSERTE(rcTab.top==0 || rcTab.bottom==0);
 
-				if (!gpSet->isTabFrame)
+				//if (!gpSet->isTabFrame)
+				//{
+
+				// От таба остается только заголовок (закладки)
+				//rc.left=0; rc.right=0; rc.bottom=0;
+				if (gpSet->nTabsLocation == 1)
 				{
-					// От таба остается только заголовок (закладки)
-					//rc.left=0; rc.right=0; rc.bottom=0;
-					if (gpSet->nTabsLocation == 1)
-					{
-						rc.bottom += rcTab.top ? rcTab.top : rcTab.bottom;
-					}
-					else
-					{
-						rc.top += rcTab.top ? rcTab.top : rcTab.bottom;
-					}
+					rc.bottom += rcTab.top ? rcTab.top : rcTab.bottom;
 				}
 				else
 				{
-					_ASSERTE(FALSE && "For deletion!");
-					// !!! AddMargins использовать нельзя! он расчитан на вычитание
-					//AddMargins(rc, rcTab, FALSE);
-					rc.top += rcTab.top;
-					rc.bottom += rcTab.bottom;
+					rc.top += rcTab.top ? rcTab.top : rcTab.bottom;
 				}
+
+				//}
+				//else
+				//{
+				//	_ASSERTE(FALSE && "For deletion!");
+				//	// !!! AddMargins использовать нельзя! он расчитан на вычитание
+				//	//AddMargins(rc, rcTab, FALSE);
+				//	rc.top += rcTab.top;
+				//	rc.bottom += rcTab.bottom;
+				//}
 			}// else { -- раз таба нет - значит дополнительные отступы не нужны
 
 			//    rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
@@ -4113,6 +4120,78 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow)
 	return lbRc;
 }
 
+bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode /*= wmNotChanging*/)
+{
+	BYTE bPrevStyle = gpSet->isQuakeStyle;
+	gpSet->isQuakeStyle = NewQuakeMode;
+	if (gpSet->isQuakeStyle)
+	{
+		gpSet->isTryToCenter = true;
+	}
+
+	HWND hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_SizePos] : NULL; // Страничка с настройками
+
+	if (hWnd2)
+	{
+		EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
+		gpSetCls->checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle!=0);
+		gpSetCls->checkDlgButton(hWnd2, cbQuakeAutoHide, gpSet->isQuakeStyle==2);
+		gpSetCls->checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
+	}
+
+	HWND hTabsPg = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Ext] : NULL; // Страничка с настройками
+	if (hTabsPg)
+	{
+		if (gpSet->isHideCaptionAlways())
+		{
+			gpSetCls->checkDlgButton(hTabsPg, cbHideCaptionAlways, BST_CHECKED);
+		}
+		EnableWindow(GetDlgItem(hTabsPg, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
+	}
+
+	//ConEmuWindowMode nNewWindowMode = 
+	//	IsChecked(hWnd2, rMaximized) ? wmMaximized :
+	//	IsChecked(hWnd2, rFullScreen) ? wmFullScreen : 
+	//	wmNormal;
+	if (nNewWindowMode == wmNotChanging || nNewWindowMode == wmCurrent)
+		nNewWindowMode = (ConEmuWindowMode)gpSet->_WindowMode;
+	else
+		gpSet->_WindowMode = nNewWindowMode;
+
+	if (gpSet->isQuakeStyle && !bPrevStyle)
+	{
+		m_QuakePrevSize.bWasSaved = true;
+		m_QuakePrevSize.wndWidth = gpConEmu->wndWidth;
+		m_QuakePrevSize.wndHeight = gpConEmu->wndHeight;
+		m_QuakePrevSize.wndX = gpConEmu->wndX;
+		m_QuakePrevSize.wndY = gpConEmu->wndY;
+		m_QuakePrevSize.nFrame = gpSet->nHideCaptionAlwaysFrame;
+		m_QuakePrevSize.WindowMode = gpConEmu->WindowMode;
+		gpSet->nHideCaptionAlwaysFrame = 0;
+	}
+	else if (!gpSet->isQuakeStyle && m_QuakePrevSize.bWasSaved)
+	{
+		gpConEmu->wndWidth = m_QuakePrevSize.wndWidth;
+		gpConEmu->wndHeight = m_QuakePrevSize.wndHeight;
+		gpConEmu->wndX = m_QuakePrevSize.wndX;
+		gpConEmu->wndY = m_QuakePrevSize.wndY;
+		gpSet->nHideCaptionAlwaysFrame = m_QuakePrevSize.nFrame;
+		nNewWindowMode = m_QuakePrevSize.WindowMode;
+	}
+
+	RECT rcWnd = gpConEmu->GetDefaultRect();
+	gpConEmu->SetWindowMode(nNewWindowMode, TRUE);
+
+	gpConEmu->OnHideCaption();
+
+	if (hWnd2)
+		SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
+
+	apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
+
+	return true;
+}
+
 // inMode: wmNormal, wmMaximized, wmFullScreen
 bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*/, BOOL abFirstShow /*= FALSE*/)
 {
@@ -4304,6 +4383,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			}
 
 			mb_InRestore = bWasInRestore;
+			WindowMode = inMode; // Запомним!
 
 			OnSize(false); // подровнять ТОЛЬКО дочерние окошки
 
@@ -4371,6 +4451,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				}
 
 				gpSetCls->UpdateWindowMode(wmMaximized);
+				WindowMode = inMode; // Запомним!
 
 				if (!IsWindowVisible(ghWnd))
 				{
@@ -4512,6 +4593,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				}
 
 				mb_isFullScreen = true;
+				WindowMode = inMode; // Запомним!
 				//120820 - т.к. FullScreen теперь SW_SHOWMAXIMIZED, то здесь нужно смотреть на WindowMode
 				isWndNotFSMaximized = (WindowMode == wmMaximized);
 				RECT rcShift = CalcMargins(CEM_FRAMEONLY);
@@ -4583,6 +4665,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				mb_IgnoreSizeChange = true;
 				ShowWindow(SW_SHOWNORMAL);
 				mb_IgnoreSizeChange = FALSE;
+				WindowMode = inMode; // Запомним!
 
 				if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("OnSize(false).5");
 
@@ -5380,7 +5463,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	}
 
 	// Если окошко сворачивалось кнопками Win+Down (Win7) то SC_MINIMIZE не приходит
-	if ((gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray) && isIconic() && IsWindowVisible(ghWnd))
+	if ((gpSet->isMinToTray() || gpConEmu->ForceMinimizeToTray) && isIconic() && IsWindowVisible(ghWnd))
 	{
 		Icon.HideWindowToTray();
 	}
@@ -6770,6 +6853,9 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 				case vkMinimizeRestore:
 				case vkMinimizeRestor2:
 					OnMinimizeRestore();
+					break;
+				case vkGlobalRestore:
+					OnMinimizeRestore(sih_Show);
 					break;
 				case vkForceFullScreen:
 					OnForcedFullScreen(true);
@@ -9401,6 +9487,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 {
 	ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
 
+	OnTaskbarButtonCreated();
+
 	//DWORD_PTR dwStyle = GetWindowLongPtr(hWnd, GWL_STYLE);
 	//if (gpSet->isHideCaptionAlways) {
 	//	if ((dwStyle & (WS_CAPTION|WS_THICKFRAME)) != 0) {
@@ -10833,12 +10921,57 @@ void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 	}
 }
 
+void CConEmuMain::OnTaskbarCreated()
+{
+	Icon.OnTaskbarCreated();
+	if (mp_DragDrop)
+		mp_DragDrop->OnTaskbarCreated();
+}
+
+void CConEmuMain::OnTaskbarButtonCreated()
+{
+	if (!gpSet->isWindowOnTaskBar())
+	{
+		DWORD styleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
+		if (styleEx & WS_EX_APPWINDOW)
+		{
+			styleEx &= ~WS_EX_APPWINDOW;
+			SetWindowLong(ghWnd, GWL_EXSTYLE, styleEx);
+		}
+
+		// Если оно вдруг таки показано на таскбаре
+		Taskbar_DeleteTabXP(ghWnd);
+	}
+}
+
 void CConEmuMain::OnTaskbarSettingsChanged()
 {
 	CVConGroup::OnTaskbarSettingsChanged();
 
 	if (!gpSet->isTabsOnTaskBar())
 		OnAllGhostClosed();
+
+	DWORD styleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
+	if (!gpSet->isWindowOnTaskBar())
+	{
+		if (styleEx & WS_EX_APPWINDOW)
+		{
+			styleEx &= ~WS_EX_APPWINDOW;
+			SetWindowLong(ghWnd, GWL_EXSTYLE, styleEx);
+			// Если оно вдруг таки показано на таскбаре
+			Taskbar_DeleteTabXP(ghWnd);
+		}
+	}
+	else
+	{
+		if (!(styleEx & WS_EX_APPWINDOW))
+		{
+			styleEx |= WS_EX_APPWINDOW;
+			SetWindowLong(ghWnd, GWL_EXSTYLE, styleEx);
+			// Показать на таскбаре
+			Taskbar_AddTabXP(ghWnd);
+		}
+	}
 
 	apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
 }
@@ -10901,7 +11034,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	if (ShowHideType == sih_None)
 	{
 		// По настройкам
-		ShowHideType = (gpSet->isMinToTray || gpSet->isQuakeStyle) ? sih_ShowHideTSA : sih_ShowMinimize;
+		ShowHideType = (gpSet->isMinToTray() || gpSet->isQuakeStyle) ? sih_ShowHideTSA : sih_ShowMinimize;
 	}
 
 	// Go
@@ -14711,7 +14844,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				gpConEmu->OnMinimizeRestore(sih_HideTSA);
 				break;
 			}
-			else if (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
+			else if (gpSet->isMinToTray() || gpConEmu->ForceMinimizeToTray)
 			{
 				Icon.HideWindowToTray();
 				break;
@@ -15240,14 +15373,14 @@ void CConEmuMain::OnGhostCreated(CVirtualConsole* apVCon, HWND ahGhost)
 		{
 			SetWindowLong(ghWnd, GWL_STYLE, style);
 			SetWindowLong(ghWnd, GWL_EXSTYLE, styleEx);
-			Taskbar_DeleteTabXP(ghWnd);
 		}
+		Taskbar_DeleteTabXP(ghWnd);
 	}
 }
 
 void CConEmuMain::OnAllGhostClosed()
 {
-	if (gpConEmu->m_InsideIntegration)
+	if (!gpSet->isWindowOnTaskBar(true))
 		return;
 
 	DWORD curStyle = GetWindowLong(ghWnd, GWL_STYLE);
@@ -15258,6 +15391,7 @@ void CConEmuMain::OnAllGhostClosed()
 	{
 		SetWindowLong(ghWnd, GWL_STYLE, style);
 		SetWindowLong(ghWnd, GWL_EXSTYLE, styleEx);
+
 		Taskbar_AddTabXP(ghWnd);
 	}
 }
@@ -16130,9 +16264,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgTaskBarCreated)
 			{
-				Icon.OnTaskbarCreated();
-				if (mp_DragDrop)
-					mp_DragDrop->OnTaskbarCreated();
+				gpConEmu->OnTaskbarCreated();
+			}
+			else if (messg == gpConEmu->mn_MsgTaskBarBtnCreated)
+			{
+				gpConEmu->OnTaskbarButtonCreated();
 			}
 
 			//else if (messg == gpConEmu->mn_MsgCmdStarted || messg == gpConEmu->mn_MsgCmdStopped) {

@@ -436,6 +436,7 @@ class CConEmuMain :
 		UINT mn_MsgRequestUpdate;
 		UINT mn_MsgTaskBarCreated;
 		UINT mn_MsgPanelViewMapCoord;
+		UINT mn_MsgTaskBarBtnCreated;
 
 		//
 		virtual void OnUseGlass(bool abEnableGlass);
@@ -587,6 +588,16 @@ class CConEmuMain :
 		void SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);
 		bool SetWindowMode(ConEmuWindowMode inMode, BOOL abForce = FALSE, BOOL abFirstShow = FALSE);
+		bool SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode = wmNotChanging);
+	private:
+		struct {
+			bool bWasSaved;
+			DWORD wndWidth, wndHeight; // Консоль
+			DWORD wndX, wndY; // GUI
+			DWORD nFrame;
+			ConEmuWindowMode WindowMode;
+		} m_QuakePrevSize;
+	public:
 		void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
 		void ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags);
 		BOOL ShowWindow(int anCmdShow);
@@ -694,6 +705,8 @@ class CConEmuMain :
 		LRESULT OnUpdateScrollInfo(BOOL abPosted = FALSE);
 		void OnPanelViewSettingsChanged(BOOL abSendChanges=TRUE);
 		void OnGlobalSettingsChanged();
+		void OnTaskbarCreated();
+		void OnTaskbarButtonCreated();
 		void OnTaskbarSettingsChanged();
 		#ifdef __GNUC__
 		AlphaBlend_t GdiAlphaBlend;

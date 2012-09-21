@@ -360,6 +360,17 @@ bool CConEmuCtrl::key_MinimizeRestore(DWORD VkMod, bool TestOnly, const ConEmuHo
 }
 
 // pRCon may be NULL
+bool CConEmuCtrl::key_GlobalRestore(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+	// Должно обрабатываться через WM_HOTKEY
+	_ASSERTE(FALSE && "CConEmuCtrl::key_GlobalRestore");
+	gpConEmu->OnMinimizeRestore(sih_Show);
+	return true;
+}
+
+// pRCon may be NULL
 bool CConEmuCtrl::key_MultiNew(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)

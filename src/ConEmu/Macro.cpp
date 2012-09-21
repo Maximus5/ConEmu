@@ -166,6 +166,8 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 			pszResult = Rename(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Shell") || !lstrcmpi(szFunction, L"ShellExecute"))
 			pszResult = Shell(asMacro, apRCon);
+		else if (!lstrcmpi(szFunction, L"SetOption"))
+			pszResult = SetOption(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Tab") || !lstrcmpi(szFunction, L"Tabs") || !lstrcmpi(szFunction, L"TabControl"))
 			pszResult = Tab(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Task"))
@@ -843,6 +845,33 @@ LPWSTR CConEmuMacro::Rename(LPWSTR asArgs, CRealConsole* apRCon)
 	}
 
 	return lstrdup(L"InvalidArg");
+}
+
+// SetOption("<Name>",<Value>)
+LPWSTR CConEmuMacro::SetOption(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	LPWSTR pszName = NULL;
+	int nValue = 0;
+
+	if (!GetNextString(asArgs, pszName))
+		return lstrdup(L"InvalidArg");
+
+	if (!lstrcmpi(pszName, L"QuakeAutoHide"))
+	{
+		// SetOption("QuakeAutoHide",0) - Hide on demand only
+		// SetOption("QuakeAutoHide",1) - Enable autohide on focus lose
+		GetNextInt(asArgs, nValue);
+		if (gpSet->isQuakeStyle)
+		{
+			gpConEmu->SetQuakeMode(nValue ? 2 : 1);
+		}
+	}
+	else
+	{
+		//TODO: More options on demand
+	}
+	
+	return lstrdup(L"UnknownOption");
 }
 
 // ShellExecute

@@ -239,6 +239,7 @@ BEGIN
     vkLDragKey              "LDrag modifier"
     vkMinimizeRestore       "Minimize/Restore"
 	vkMinimizeRestor2       "Minimize/Restore (alternative)"
+	vkGlobalRestore         "Restore (bring to front)"
     vkMultiAltCon           "Show alternative console buffer (last command output)"
     vkMultiBuffer           "Switch bufferheight mode"
     vkMultiClose            "Close active console"

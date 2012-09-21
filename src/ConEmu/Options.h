@@ -897,7 +897,10 @@ struct Settings
 		//bool isSendAltF9;
 		
 		//reg->Load(L"Min2Tray", isMinToTray);
-		bool isMinToTray;
+		private:
+		bool mb_MinToTray;
+		public:
+		bool isMinToTray();
 		//reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
 		bool isAlwaysShowTrayIcon;
 		//bool isForceMonospace, isProportional;
@@ -998,9 +1001,10 @@ struct Settings
 
 		protected:
 		//reg->Load(L"TabsOnTaskBar", m_isTabsOnTaskBar);
-		char m_isTabsOnTaskBar;
+		BYTE m_isTabsOnTaskBar; // 0 - ConEmu only, 1 - all tabs & all OS, 2 - all tabs & Win 7, 3 - DON'T SHOW
 		public:
 		bool isTabsOnTaskBar();
+		bool isWindowOnTaskBar(bool bStrictOnly = false);
 		
 		//reg->Load(L"TabFontFace", sTabFontFace, countof(sTabFontFace));
 		wchar_t sTabFontFace[LF_FACESIZE];
@@ -1062,10 +1066,10 @@ struct Settings
 		//reg->Load(L"ScrollBarDisappearDelay", nScrollBarDisappearDelay);
 		DWORD nScrollBarDisappearDelay;
 		
-		//reg->Load(L"TabMargins", rcTabMargins);
-		RECT rcTabMargins;
-		//reg->Load(L"TabFrame", isTabFrame);
-		bool isTabFrame;
+		////reg->Load(L"TabMargins", rcTabMargins);
+		//RECT rcTabMargins;
+		////reg->Load(L"TabFrame", isTabFrame);
+		//bool isTabFrame;
 
 		//reg->Load(L"MinimizeRestore", vmMinimizeRestore);
 		//DWORD vmMinimizeRestore;
@@ -1292,7 +1296,7 @@ struct Settings
 		void SaveSizePosOnExit();
 		void SaveConsoleFont();
 		void SaveFindOptions(SettingsBase* reg = NULL);
-		void UpdateMargins(RECT arcMargins);
+		//void UpdateMargins(RECT arcMargins);
 	public:
 		void HistoryCheck();
 		void HistoryAdd(LPCWSTR asCmd);

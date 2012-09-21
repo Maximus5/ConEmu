@@ -70,8 +70,9 @@ class TabBarClass //: public CToolTip
 		bool mb_InNewConPopup;
 		bool _active;
 		int _tabHeight;
+		bool mb_ForceRecalcHeight;
 		int mn_ThemeHeightDiff;
-		RECT m_Margins;
+		//RECT m_Margins;
 		bool _titleShouldChange;
 		int _prevTab;
 		BOOL mb_ChangeAllowed; //, mb_Enabled;
@@ -148,7 +149,7 @@ class TabBarClass //: public CToolTip
 		RECT GetMargins();
 		void Activate(BOOL abPreSyncConsole=FALSE);
 		HWND CreateToolbar();
-		HWND CreateTabbar();
+		HWND CreateTabbar(bool abDummyCreate = false);
 		HWND GetTabbar();
 		int GetTabbarHeight();
 		void CreateRebar();

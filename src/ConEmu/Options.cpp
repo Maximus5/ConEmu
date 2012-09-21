@@ -349,14 +349,14 @@ void Settings::InitSettings()
 	isAlwaysShowScrollbar = 2;
 	nScrollBarAppearDelay = 100;
 	nScrollBarDisappearDelay = 1000;
-	isTabFrame = true;
+	//isTabFrame = true;
 	//isForceMonospace = false; isProportional = false;
 	
 	//Issue 577: Для иероглифов - по умолчанию отключим моноширность
 	isMonospace = bIsDbcs ? 0 : 1;
 
-	isMinToTray = false; isAlwaysShowTrayIcon = false;
-	memset(&rcTabMargins, 0, sizeof(rcTabMargins));
+	mb_MinToTray = false; isAlwaysShowTrayIcon = false;
+	//memset(&rcTabMargins, 0, sizeof(rcTabMargins));
 	//isFontAutoSize = false; mn_AutoFontWidth = mn_AutoFontHeight = -1;
 	
 	ConsoleFont.lfHeight = 5;
@@ -2258,7 +2258,7 @@ void Settings::LoadSettings()
 		reg->Load(L"SendAltF9", bSendAltF9);
 
 		
-		reg->Load(L"Min2Tray", isMinToTray);
+		reg->Load(L"Min2Tray", mb_MinToTray);
 		reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
 		
 		reg->Load(L"SafeFarClose", isSafeFarClose);
@@ -2366,8 +2366,8 @@ void Settings::LoadSettings()
 
 		if (!reg->Load(L"SaveAllEditors", &sSaveAllMacro) || (sSaveAllMacro && !*sSaveAllMacro)) { SafeFree(sSaveAllMacro); }
 
-		reg->Load(L"TabFrame", isTabFrame);
-		reg->Load(L"TabMargins", rcTabMargins);
+		//reg->Load(L"TabFrame", isTabFrame);
+		//reg->Load(L"TabMargins", rcTabMargins);
 		
 		reg->Load(L"ToolbarAddSpace", nToolbarAddSpace);
 		if (nToolbarAddSpace<0 || nToolbarAddSpace>100) nToolbarAddSpace = 0;
@@ -2551,19 +2551,18 @@ void Settings::LoadSettings()
 		_WindowMode = rNormal;
 	}
 
-	if (rcTabMargins.top > 100) rcTabMargins.top = 100;
-
-	_ASSERTE((rcTabMargins.bottom == 0 || rcTabMargins.top == 0) && !rcTabMargins.left && !rcTabMargins.right);
-	rcTabMargins.left = rcTabMargins.right = 0;
-	int nTabHeight = rcTabMargins.top ? rcTabMargins.top : rcTabMargins.bottom;
-	if (nTabsLocation == 1)
-	{
-		rcTabMargins.top = 0; rcTabMargins.bottom = nTabHeight;
-	}
-	else
-	{
-		rcTabMargins.top = nTabHeight; rcTabMargins.bottom = 0;
-	}
+	//if (rcTabMargins.top > 100) rcTabMargins.top = 100;
+	//_ASSERTE((rcTabMargins.bottom == 0 || rcTabMargins.top == 0) && !rcTabMargins.left && !rcTabMargins.right);
+	//rcTabMargins.left = rcTabMargins.right = 0;
+	//int nTabHeight = rcTabMargins.top ? rcTabMargins.top : rcTabMargins.bottom;
+	//if (nTabsLocation == 1)
+	//{
+	//	rcTabMargins.top = 0; rcTabMargins.bottom = nTabHeight;
+	//}
+	//else
+	//{
+	//	rcTabMargins.top = nTabHeight; rcTabMargins.bottom = 0;
+	//}
 
 	if (!psCmdHistory)
 	{
@@ -2714,22 +2713,22 @@ void Settings::SaveFindOptions(SettingsBase* reg/* = NULL*/)
 	}
 }
 
-void Settings::UpdateMargins(RECT arcMargins)
-{
-	if (memcmp(&arcMargins, &rcTabMargins, sizeof(rcTabMargins))==0)
-		return;
-
-	rcTabMargins = arcMargins;
-	SettingsBase* reg = CreateSettings();
-
-	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
-	{
-		reg->Save(L"TabMargins", rcTabMargins);
-		reg->CloseKey();
-	}
-
-	delete reg;
-}
+//void Settings::UpdateMargins(RECT arcMargins)
+//{
+//	if (memcmp(&arcMargins, &rcTabMargins, sizeof(rcTabMargins))==0)
+//		return;
+//
+//	rcTabMargins = arcMargins;
+//	SettingsBase* reg = CreateSettings();
+//
+//	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+//	{
+//		reg->Save(L"TabMargins", rcTabMargins);
+//		reg->CloseKey();
+//	}
+//
+//	delete reg;
+//}
 
 void Settings::SaveAppSettings(SettingsBase* reg)
 {
@@ -3043,7 +3042,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"SendPrintScrn", isSendPrintScrn);
 		reg->Save(L"SendCtrlEsc", isSendCtrlEsc);
 		//reg->Save(L"SendAltF9", isSendAltF9);
-		reg->Save(L"Min2Tray", isMinToTray);
+		reg->Save(L"Min2Tray", mb_MinToTray);
 		reg->Save(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
 		reg->Save(L"SafeFarClose", isSafeFarClose);
 		reg->Save(L"SafeFarCloseMacro", sSafeFarCloseMacro);
@@ -3082,8 +3081,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"TabFontCharSet", nTabFontCharSet);
 		reg->Save(L"TabFontHeight", nTabFontHeight);
 		reg->Save(L"SaveAllEditors", sSaveAllMacro);
-		reg->Save(L"TabFrame", isTabFrame);
-		reg->Save(L"TabMargins", rcTabMargins);
+		//reg->Save(L"TabFrame", isTabFrame);
+		//reg->Save(L"TabMargins", rcTabMargins);
 		reg->Save(L"ToolbarAddSpace", nToolbarAddSpace);
 		reg->Save(L"TabConsole", szTabConsole);
 		reg->Save(L"TabSkipWords", szTabSkipWords);
@@ -4029,6 +4028,12 @@ bool Settings::isForcedHideCaptionAlways()
 	return (isUserScreenTransparent || isQuakeStyle);
 }
 
+bool Settings::isMinToTray()
+{
+	// Если на таскбаре кнопка не показана - тоже в TSA сворачивать
+	return (mb_MinToTray || (m_isTabsOnTaskBar == 3));
+}
+
 bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 {
 	bool bCaptionHidden = gpSet->isHideCaptionAlways(); // <== Quake & UserScreen here.
@@ -4377,21 +4382,53 @@ bool Settings::IsModifierPressed(int nDescrID, bool bAllowEmpty)
 
 bool Settings::NeedCreateAppWindow()
 {
+	// Если просили не показывать на таскбаре - создать скрытое родительское окно
+	// m_isTabsOnTaskBar: 0 - ConEmu only, 1 - all tabs & all OS, 2 - all tabs & Win 7, 3 - DON'T SHOW
+	if (m_isTabsOnTaskBar == 3)
+		return true;
+
 	// Пока что, окно для Application нужно создавать только для XP и ниже
 	// в том случае, если на таскбаре отображаются кнопки запущенных консолей
 	// Это для того, чтобы при Alt-Tab не светилась "лишняя" иконка главного окна
 	if (!IsWindows7 && isTabsOnTaskBar())
-		return TRUE;
-	return FALSE;
-}
-
-bool Settings::isTabsOnTaskBar()
-{
-	if (isDesktopMode)
-		return false;
-	if ((m_isTabsOnTaskBar == 1) || (((BYTE)m_isTabsOnTaskBar > 1) && IsWindows7))
 		return true;
 	return false;
+}
+
+// Показывать табы на таскбаре? (для каждой консоли - своя кнопка)
+bool Settings::isTabsOnTaskBar()
+{
+	if (isDesktopMode || (m_isTabsOnTaskBar == 3) || gpConEmu->m_InsideIntegration)
+		return false;
+	if ((m_isTabsOnTaskBar == 1) || ((m_isTabsOnTaskBar == 2) && IsWindows7))
+		return true;
+	return false;
+}
+
+// Показывать ConEmu (ghWnd) на таскбаре
+bool Settings::isWindowOnTaskBar(bool bStrictOnly /*= false*/)
+{
+	// m_isTabsOnTaskBar: 0 - ConEmu only, 1 - all tabs & all OS, 2 - all tabs & Win 7, 3 - DON'T SHOW
+
+	if (isDesktopMode || (m_isTabsOnTaskBar == 3) || gpConEmu->m_InsideIntegration)
+		return false;
+
+	if (bStrictOnly)
+		return true;
+
+	if (IsWindows7)
+	{
+		// Реализовано через API таскбара
+		if ((m_isTabsOnTaskBar == 1) || (m_isTabsOnTaskBar == 2))
+			return true;
+	}
+	else
+	{
+		// в старых OS - нужно создавать фейковые окна, а ghWnd на таскбаре не показывать
+		if (m_isTabsOnTaskBar == 1)
+			return false;
+	}
+	return true;
 }
 
 bool Settings::isRClickTouchInvert()
@@ -4889,9 +4926,10 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 
 	ConEmuHotKey HotKeys[] =
 	{
-		// User (Keys, Global)
+		// User (Keys, Global) -- Добавить chk_Global недостаточно, нужно еще и gRegisteredHotKeys обработать
 		{vkMinimizeRestore,chk_Global, NULL,   L"MinimizeRestore",       MakeHotKey('C',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MinimizeRestore},
 		{vkMinimizeRestor2,chk_Global, NULL,   L"MinimizeRestore2",      0, CConEmuCtrl::key_MinimizeRestore},
+		{vkGlobalRestore,  chk_Global, NULL,   L"GlobalRestore",         0, CConEmuCtrl::key_GlobalRestore},
 		{vkForceFullScreen,chk_Global, NULL,   L"ForcedFullScreen",      MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL,VK_MENU), CConEmuCtrl::key_ForcedFullScreen},
 		// User (Keys)
 		{vkMultiNew,       chk_User, &isMulti, L"Multi.NewConsole",      MakeHotKey('W',VK_LWIN), CConEmuCtrl::key_MultiNew},

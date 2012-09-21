@@ -834,6 +834,7 @@
 #define rbTaskbarBtnActive              2472
 #define rbTaskbarBtnAll                 2473
 #define rbTaskbarBtnWin7                2474
+#define rbTaskbarBtnHidden              2475
 #define rbTabsAlways                    2476
 #define rbTabsAuto                      2477
 #define rbTabsNone                      2478
@@ -842,6 +843,7 @@
 #define cbTabsLocationBottom            2481
 #define rbTabsLocationTop               2482
 #define rbTabsLocationBottom            2483
+#define vkGlobalRestore                 2484
 
 // Next default values for new objects
 // 
@@ -849,7 +851,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2484
+#define _APS_NEXT_CONTROL_VALUE         2485
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

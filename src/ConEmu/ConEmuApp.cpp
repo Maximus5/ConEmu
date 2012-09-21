@@ -2774,7 +2774,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///| Create taskbar window |//////////////////////////////////////////////
 //------------------------------------------------------------------------
 
-	// Тут создается кнопка на таскбаре (если надо)
+	// Тут создается окошко чтобы не показывать кнопку на таскбаре
 	if (!CheckCreateAppWindow())
 	{
 		return 100;

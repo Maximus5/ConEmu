@@ -23,6 +23,8 @@ Questions about usablity of "-new_console:s".
 [+] New option on «Caption» page: «Always show numbers [n/m]».
 [*] Touchscreen. Ignore SPI_GETWHEELSCROLLLINES.
 [+] New option on «Tabs» page: «Tabs on bottom»
+[+] Issue 716: GuiMacro: SetOption("QuakeAutoHide",Value). Value=1 - Enable autohide, Value=2 - disable.
+[+] Issue 717: New global hotkey for «Restore (bring to front)». Unassigned by default.
 
 
 2012.09.16
