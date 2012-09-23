@@ -175,6 +175,7 @@ class CConEmuMain :
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
 		int mn_QuakePercent; // 0 - отключен
+		bool mb_InCreateWindow;
 	public:
 		//CConEmuChild *m_Child;
 		//CConEmuBack  *m_Back;
@@ -184,20 +185,21 @@ class CConEmuMain :
 		CToolTip *mp_Tip;
 		//POINT cwShift; // difference between window size and client area size for main ConEmu window
 		POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
-		//DWORD gnLastProcessCount;
-		//uint cBlinkNext;
-		ConEmuWindowMode WindowMode;        // rNormal/rMaximized/rFullScreen
+
+		ConEmuWindowMode WindowMode;           // wmNormal/wmMaximized/wmFullScreen
+		ConEmuWindowMode changeFromWindowMode; // wmNotChanging/rmNormal/rmMaximized/rmFullScreen
+		bool isWndNotFSMaximized; // ставитс€ в true, если при переходе в FullScreen - был Maximized
+
 		DWORD wndWidth, wndHeight;
 		int   wndX, wndY; // в пиксел€х
-		ConEmuWindowMode change2WindowMode; // -1/rNormal/rMaximized/rFullScreen
 		bool WindowStartMinimized, ForceMinimizeToTray;
 		bool DisableAutoUpdate;
 		bool DisableKeybHooks;
-		bool mb_isFullScreen;
+		//bool mb_isFullScreen;
 		BOOL mb_ExternalHidden;
 		//HANDLE hPipe;
 		//HANDLE hPipeEvent;
-		bool isWndNotFSMaximized;
+		
 		BOOL mb_StartDetached;
 		//bool isShowConsole;
 		//bool mb_FullWindowDrag;
@@ -334,8 +336,8 @@ class CConEmuMain :
 		BOOL mn_InResize;
 		RECT mrc_StoredNormalRect;
 		void StoreNormalRect(RECT* prcWnd);
-		BOOL mb_MaximizedHideCaption; // в режиме HideCaption
-		BOOL mb_InRestore; // во врем€ восстановлени€ из Maximized
+		//BOOL mb_MaximizedHideCaption; // в режиме HideCaption
+		//BOOL mb_InRestore; // во врем€ восстановлени€ из Maximized
 		BOOL mb_MouseCaptured;
 		//BYTE m_KeybStates[256];
 		DWORD_PTR m_ActiveKeybLayout;
@@ -481,7 +483,7 @@ class CConEmuMain :
 		BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
 		void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
-		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg /*, CVirtualConsole* apVCon=NULL*/);
+		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode = wmCurrent);
 		RECT CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon=NULL);
 		RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 		POINT CalcTabMenuPos(CVirtualConsole* apVCon);
@@ -592,6 +594,7 @@ class CConEmuMain :
 	private:
 		struct {
 			bool bWasSaved;
+			bool bWaitReposition; // “ребуетс€ смена позиции при OnHideCaption
 			DWORD wndWidth, wndHeight; //  онсоль
 			DWORD wndX, wndY; // GUI
 			DWORD nFrame;
@@ -619,7 +622,7 @@ class CConEmuMain :
 		//wchar_t ms_LogCreateProcess[MAX_PATH]; bool mb_CreateProcessLogged;
 		void SyncConsoleToWindow(LPRECT prcNewWnd=NULL);
 		void SyncNtvdm();
-		void SyncWindowToConsole();
+		void SyncWindowToConsole(); // -- функци€ пуста€, игнорируетс€
 		void SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout);
 		//void TabCommand(UINT nTabCmd);
 		BOOL TrackMouse();
@@ -661,7 +664,7 @@ class CConEmuMain :
 		LRESULT OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon);
 		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom = NULL);
 		LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
-		void OnHideCaption(ConEmuWindowMode wmNewMode = wmCurrent);
+		void OnHideCaption();
 		void OnInfo_About(LPCWSTR asPageName = NULL);
 		void OnInfo_Help();
 		void OnInfo_HomePage();

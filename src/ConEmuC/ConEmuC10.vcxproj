@@ -442,7 +442,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>C:\Far3\ConEmu\ConEmuC.exe</OutputFile>
+      <OutputFile>C:\ConEmu\ConEmu\ConEmuC.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -467,7 +467,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>C:\Far3\ConEmu\ConEmuC64.exe</OutputFile>
+      <OutputFile>C:\ConEmu\ConEmu\ConEmuC64.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>

@@ -860,10 +860,22 @@ LPWSTR CConEmuMacro::SetOption(LPWSTR asArgs, CRealConsole* apRCon)
 	{
 		// SetOption("QuakeAutoHide",0) - Hide on demand only
 		// SetOption("QuakeAutoHide",1) - Enable autohide on focus lose
+		// SetOption("QuakeAutoHide",2) - Switch autohide
 		GetNextInt(asArgs, nValue);
 		if (gpSet->isQuakeStyle)
 		{
-			gpConEmu->SetQuakeMode(nValue ? 2 : 1);
+			switch (nValue)
+			{
+			case 0:
+				gpConEmu->SetQuakeMode(1);
+				break;
+			case 1:
+				gpConEmu->SetQuakeMode(2);
+				break;
+			case 2:
+				gpConEmu->SetQuakeMode((gpSet->isQuakeStyle == 1) ? 2 : 1);
+				break;
+			}
 		}
 	}
 	else

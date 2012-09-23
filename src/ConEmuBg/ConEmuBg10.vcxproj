@@ -484,10 +484,10 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>shlwapi.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\Far3\Plugins\ConEmu\Background\ConEmuBg.dll</OutputFile>
+      <OutputFile>C:\ConEmu\Plugins\ConEmu\Background\ConEmuBg.dll</OutputFile>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <GenerateMapFile>true</GenerateMapFile>
+      <GenerateMapFile>false</GenerateMapFile>
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -517,7 +517,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\FAR\FARx64\Plugins\ConEmu\Background\ConEmuBg.x64.dll</OutputFile>
+      <OutputFile>C:\ConEmu\Plugins\ConEmu\Background\ConEmuBg.x64.dll</OutputFile>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>

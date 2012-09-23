@@ -514,8 +514,7 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 
 LRESULT TabBarClass::TabHitTest(bool abForce /*= false*/)
 {
-	if ((abForce || gpSet->isHideCaptionAlways() || gpConEmu->mb_isFullScreen || (gpConEmu->isZoomed() && gpSet->isHideCaption))
-	        && gpSet->isTabs)
+	if (gpSet->isTabs && (abForce || gpSet->isCaptionHidden()))
 	{
 		if (gpConEmu->mp_TabBar->IsTabsShown())
 		{
@@ -558,9 +557,10 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 		}
 		case WM_SETCURSOR:
 
-			if (gpSet->isHideCaptionAlways() && gpSet->isTabs && !gpConEmu->mb_isFullScreen && !gpConEmu->isZoomed())
+			if (gpSet->isTabs && (gpConEmu->WindowMode == wmNormal)
+				&& gpSet->isCaptionHidden())
 			{
-				if (TabHitTest()==HTCAPTION)
+				if (TabHitTest() == HTCAPTION)
 				{
 					SetCursor(gpConEmu->mh_CursorMove);
 					return TRUE;
@@ -591,7 +591,6 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 							// Чтобы клик случайно не провалился в консоль
 							gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
 							// Аналог AltF9
-							//gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(gpConEmu->mb_isFullScreen&&gpConEmu->isWndNotFSMaximized)) ? rNormal : rMaximized);
 							gpConEmu->OnAltF9(TRUE);
 						}
 						else if ((gpSet->nTabDblClickAction == 3)
@@ -604,7 +603,7 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 					{
 						gpConEmu->ShowSysmenu(ptScr.x, ptScr.y/*-32000*/);
 					}
-					else if (!gpConEmu->mb_isFullScreen && !gpConEmu->isZoomed())
+					else if (gpConEmu->WindowMode == wmNormal)
 					{
 						lRc = gpConEmu->WndProc(ghWnd, uMsg-(WM_MOUSEMOVE-WM_NCMOUSEMOVE), HTCAPTION, lParam);
 					}
@@ -793,7 +792,7 @@ void TabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	}
 
 	_active = true;
-	if (abPreSyncConsole && !(gpConEmu->isZoomed() || gpConEmu->isFullScreen()))
+	if (abPreSyncConsole && (gpConEmu->WindowMode == wmNormal))
 	{
 		RECT rcIdeal = gpConEmu->GetIdealRect();
 		gpConEmu->SyncConsoleToWindow(&rcIdeal);
@@ -1632,16 +1631,14 @@ void TabBarClass::Invalidate()
 		InvalidateRect(mh_Rebar, NULL, TRUE);
 }
 
-void TabBarClass::OnCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
+void TabBarClass::OnCaptionHidden()
 {
 	if (!this) return;
 
 	if (mh_Toolbar)
 	{
-		BOOL lbHide = !gpSet->isCaptionHidden(wmNewMode);
-			//!(gpSet->isHideCaptionAlways()
-			//            || gpConEmu->mb_isFullScreen
-			//            || (gpConEmu->isZoomed() && gpSet->isHideCaption));
+		BOOL lbHide = !gpSet->isCaptionHidden();
+
 		OnWindowStateChanged();
 		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE_SEP, lbHide);
 		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE, lbHide);
@@ -1663,7 +1660,7 @@ void TabBarClass::OnWindowStateChanged()
 	if (mh_Toolbar)
 	{
 		TBBUTTONINFO tbi = {sizeof(TBBUTTONINFO), TBIF_IMAGE};
-		tbi.iImage = (gpConEmu->mb_isFullScreen || gpConEmu->isZoomed()) ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX;
+		tbi.iImage = (gpConEmu->WindowMode != wmNormal) ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX;
 		SendMessage(mh_Toolbar, TB_SETBUTTONINFO, TID_MAXIMIZE, (LPARAM)&tbi);
 		//OnCaptionHidden();
 	}
@@ -1888,7 +1885,7 @@ HWND TabBarClass::CreateToolbar()
 	// Min,Max,Close
 	btn.iBitmap = nFirst + BID_MINIMIZE_IDX; btn.idCommand = TID_MINIMIZE; btn.fsState = TBSTATE_ENABLED|TBSTATE_HIDDEN;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
-	btn.iBitmap = nFirst + (gpConEmu->isZoomed() ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX); btn.idCommand = TID_MAXIMIZE;
+	btn.iBitmap = nFirst + ((gpConEmu->WindowMode != wmNormal) ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX); btn.idCommand = TID_MAXIMIZE;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	btn.iBitmap = nFirst + BID_APPCLOSE_IDX; btn.idCommand = TID_APPCLOSE;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);

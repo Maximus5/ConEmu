@@ -346,7 +346,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>WinInet.lib;Winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\Far3\ConEmu\ConEmuCD.dll</OutputFile>
+      <OutputFile>C:\ConEmu\ConEmu\ConEmuCD.dll</OutputFile>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -373,7 +373,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>WinInet.lib;Winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\Far3\ConEmu\ConEmuCD64.dll</OutputFile>
+      <OutputFile>C:\ConEmu\ConEmu\ConEmuCD64.dll</OutputFile>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>

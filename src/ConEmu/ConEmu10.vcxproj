@@ -482,9 +482,9 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Shlwapi.lib;version.lib;gdiplus.lib;Winmm.lib;Netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\Tools\Utils\Far\conemu.exe</OutputFile>
+      <OutputFile>C:\ConEmu\ConEmu.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <GenerateMapFile>true</GenerateMapFile>
+      <GenerateMapFile>false</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
       <KeyFile>
@@ -516,7 +516,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Shlwapi.lib;version.lib;gdiplus.lib;Winmm.lib;Netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\FAR\FARx64\ConEmu64.exe</OutputFile>
+      <OutputFile>C:\ConEmu\ConEmu64.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>

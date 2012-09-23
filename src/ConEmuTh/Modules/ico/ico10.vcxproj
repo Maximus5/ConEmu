@@ -342,7 +342,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\Far3\Plugins\ConEmu\Thumbs\ico.t32</OutputFile>
+      <OutputFile>C:\ConEmu\Plugins\ConEmu\Thumbs\ico.t32</OutputFile>
       <ModuleDefinitionFile>ico.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -367,7 +367,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\FAR\FARx64\Plugins\ConEmu\Thumbs\ico.t64</OutputFile>
+      <OutputFile>C:\ConEmu\Plugins\ConEmu\Thumbs\ico.t64</OutputFile>
       <ModuleDefinitionFile>ico.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>

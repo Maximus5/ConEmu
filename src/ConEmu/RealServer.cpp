@@ -517,7 +517,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			int nNewWidth=0, nNewHeight=0;
 
 			if ((mp_RCon->mn_ProgramStatus & CES_NTVDM) == 0
-			        && !(gpConEmu->mb_isFullScreen || gpConEmu->isZoomed()))
+			        && (gpConEmu->WindowMode == wmNormal))
 			{
 				pOut->StartStopRet.bWasBufferHeight = FALSE;
 

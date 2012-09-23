@@ -14,16 +14,18 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+[!] Internal window resize changes.
+[*] Touchscreen. Ignore SPI_GETWHEELSCROLLLINES.
 [+] IME. Composition window placed inside ConEmu.
 [+] Dir sync settings.
 [%] RClick & Far 3 & "Far /w" does not select panel items.
 [*] Minor changes in splitter`s painting.
 [%] Issue 689: Progress stuck at 100% in powershell.
 [+] New switch: "ConEmu.exe /reset" starts without loading settings (a'la fresh config).
+[+] New option on «Show» page: «Don't show ConEmu window on Taskbar».
 [+] New option on «Caption» page: «Always show numbers [n/m]».
-[*] Touchscreen. Ignore SPI_GETWHEELSCROLLLINES.
-[+] New option on «Tabs» page: «Tabs on bottom»
-[+] Issue 716: GuiMacro: SetOption("QuakeAutoHide",Value). Value=1 - Enable autohide, Value=2 - disable.
+[+] New option on «Tabs» page: «Tabs on bottom».
+[+] Issue 716: GuiMacro: SetOption("QuakeAutoHide",Value). Where Value: 2 - switch autohide, 1 - enable, 0 - disable.
 [+] Issue 717: New global hotkey for «Restore (bring to front)». Unassigned by default.
 
 

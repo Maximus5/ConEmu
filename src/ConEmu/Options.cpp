@@ -4040,15 +4040,10 @@ bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 	if (!bCaptionHidden)
 	{
 		if (wmNewMode == wmCurrent || wmNewMode == wmNotChanging)
-		{
-			bCaptionHidden = gpConEmu->mb_isFullScreen
-				|| (gpConEmu->isZoomed() && gpSet->isHideCaption);
-		}
-		else
-		{
-			bCaptionHidden = (wmNewMode == wmFullScreen)
+			wmNewMode = gpConEmu->WindowMode;
+
+		bCaptionHidden = (wmNewMode == wmFullScreen)
 				|| ((wmNewMode == wmMaximized) && gpSet->isHideCaption);
-		}
 	}
 	return bCaptionHidden;
 }

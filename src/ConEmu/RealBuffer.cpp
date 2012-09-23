@@ -1008,7 +1008,6 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 		if (!mp_RCon->isNtvdm())
 		{
 			// update size info
-			//if (!gpConEmu->mb_isFullScreen && !gpConEmu->isZoomed() && !gpConEmu->isIconic())
 			if (gpConEmu->isWindowNormal())
 			{
 				int nHeight = TextHeight();

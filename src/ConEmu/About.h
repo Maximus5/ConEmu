@@ -171,6 +171,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Type=2: set error state in progress\r\n" \
 	L"Rename(<Type>,[\"<Title>\"])\r\n" \
 	L"  - Rename tab (Type=0) or console title (Type=1)\r\n" \
+	L"SetOption(\"<Name>\",<Value>)\r\n" \
+	L"  - Name = \"QuakeAutoHide\": auto hide on focus lose, Quake mode\r\n" \
+	L"      Value: 2 - switch auto-hide, 1 - enable, 0 - disable\r\n" \
 	L"Shell(\"<Verb>\",\"<File>\"[,\"<Parms>\"[,\"<Dir>\"[,<ShowCmd>]]])\r\n" \
 	L"  - Verb can be \"open\", \"print\" and so on, or special value \"new_console\",\r\n" \
 	L"     which starts File in the new tab of ConEmu window. Examples:\r\n" \

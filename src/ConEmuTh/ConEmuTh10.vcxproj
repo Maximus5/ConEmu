@@ -479,10 +479,10 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>shlwapi.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\Far3\Plugins\ConEmu\Thumbs\ConEmuTh.dll</OutputFile>
+      <OutputFile>C:\ConEmu\Plugins\ConEmu\Thumbs\ConEmuTh.dll</OutputFile>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <GenerateMapFile>true</GenerateMapFile>
+      <GenerateMapFile>false</GenerateMapFile>
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -513,7 +513,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     </ClCompile>
     <Link>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\FAR\FARx64\Plugins\ConEmu\Thumbs\ConEmuTh.x64.dll</OutputFile>
+      <OutputFile>C:\ConEmu\Plugins\ConEmu\Thumbs\ConEmuTh.x64.dll</OutputFile>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>

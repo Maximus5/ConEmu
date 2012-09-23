@@ -412,7 +412,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\Far3\Plugins\ConEmu\Thumbs\pe.t32</OutputFile>
+      <OutputFile>C:\ConEmu\Plugins\ConEmu\Thumbs\pe.t32</OutputFile>
       <ModuleDefinitionFile>pe.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -437,7 +437,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\FAR\FARx64\Plugins\ConEmu\Thumbs\pe.t64</OutputFile>
+      <OutputFile>C:\ConEmu\Plugins\ConEmu\Thumbs\pe.t64</OutputFile>
       <ModuleDefinitionFile>pe.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>

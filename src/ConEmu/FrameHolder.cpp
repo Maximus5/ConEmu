@@ -977,6 +977,13 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		}
 	}
 
+	// При смене режимов (особенно при смене HideCaption/NotHideCaption)
+	// требовать полную перерисовку клиентской области
+	if (gpConEmu->changeFromWindowMode != wmNotChanging)
+	{
+		lRc = WVR_REDRAW;
+	}
+
 	return lRc;
 }
 

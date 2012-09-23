@@ -8995,6 +8995,9 @@ void CSettings::UpdatePos(int x, int y, bool bGetRect)
 
 void CSettings::UpdateSize(UINT w, UINT h)
 {
+	bool bUserCurSize = gpSet->isUseCurrentSizePos;
+	bool bIgnoreWidth = (gpSet->isQuakeStyle != 0) && (gpSet->_WindowMode != wmNormal);
+
 	if (w>=MIN_CON_WIDTH && h>=MIN_CON_HEIGHT)
 	{
 		if (w!=gpConEmu->wndWidth || h!=gpConEmu->wndHeight)
@@ -9003,9 +9006,10 @@ void CSettings::UpdateSize(UINT w, UINT h)
 			gpConEmu->wndHeight = h;
 		}
 
-		if (gpSet->isUseCurrentSizePos && (w!=gpSet->_wndWidth || h!=gpSet->_wndHeight))
+		if (bUserCurSize && (w!=gpSet->_wndWidth || h!=gpSet->_wndHeight))
 		{
-			gpSet->_wndWidth = w;
+			if (!bIgnoreWidth)
+				gpSet->_wndWidth = w;
 			gpSet->_wndHeight = h;
 		}
 	}
@@ -9013,8 +9017,8 @@ void CSettings::UpdateSize(UINT w, UINT h)
 	if (ghOpWnd && mh_Tabs[thi_SizePos])
 	{
 		mb_IgnoreEditChanged = TRUE;
-		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndWidth, gpSet->isUseCurrentSizePos ? gpConEmu->wndWidth : gpSet->_wndWidth, FALSE);
-		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndHeight, gpSet->isUseCurrentSizePos ? gpConEmu->wndHeight : gpSet->_wndHeight, FALSE);
+		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndWidth, bUserCurSize ? gpConEmu->wndWidth : gpSet->_wndWidth, FALSE);
+		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndHeight, bUserCurSize ? gpConEmu->wndHeight : gpSet->_wndHeight, FALSE);
 		mb_IgnoreEditChanged = FALSE;
 
 		// Во избежание недоразумений - запретим элементы размера для Max/Fullscreen
@@ -9295,8 +9299,8 @@ void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WOR
 		SaveFontSizes(&LF, (mn_AutoFontWidth == -1), true);
 		gpConEmu->Update(true);
 
-		if (!gpConEmu->isFullScreen() && !gpConEmu->isZoomed())
-			gpConEmu->SyncWindowToConsole();
+		if (gpConEmu->WindowMode == wmNormal)
+			gpConEmu->SyncWindowToConsole(); // -- функция пустая, игнорируется
 		else
 			gpConEmu->SyncConsoleToWindow();
 
@@ -9389,8 +9393,8 @@ void CSettings::RecreateFont(WORD wFromID)
 		SaveFontSizes(&LF, (mn_AutoFontWidth == -1), true);
 		gpConEmu->Update(true);
 
-		if (!gpConEmu->isFullScreen() && !gpConEmu->isZoomed())
-			gpConEmu->SyncWindowToConsole();
+		if (gpConEmu->WindowMode == wmNormal)
+			gpConEmu->SyncWindowToConsole(); // -- функция пустая, игнорируется
 		else
 			gpConEmu->SyncConsoleToWindow();
 

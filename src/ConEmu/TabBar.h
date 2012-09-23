@@ -164,7 +164,7 @@ class TabBarClass //: public CToolTip
 		void Reposition();
 		void OnConsoleActivated(int nConNumber); //0-based
 		void UpdateToolConsoles(bool abForcePos=false);
-		void OnCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);
+		void OnCaptionHidden();
 		void OnWindowStateChanged();
 		void OnBufferHeight(BOOL abBufferHeight);
 		void OnAlternative(BOOL abAlternative);

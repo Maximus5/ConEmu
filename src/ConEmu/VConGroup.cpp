@@ -2316,7 +2316,7 @@ bool CVConGroup::ConActivate(int nCon)
 		pVCon->RCon()->OnActivate(nCon, nOldConNum);
 
 		if (!lbSizeOK)
-			SyncWindowToConsole();
+			SyncWindowToConsole(); // -- функция пустая, игнорируется
 
 		ShowActiveGroup(pOldActive);
 	}
@@ -2976,9 +2976,10 @@ void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/)
 	_ASSERTE(gpConEmu->mn_InResize <= 1);
 
 	#ifdef _DEBUG
-	if (gpConEmu->change2WindowMode!=(DWORD)-1)
+	// Не должно вызываться в процессе изменения режима окна
+	if (gpConEmu->changeFromWindowMode!=wmNotChanging)
 	{
-		_ASSERTE(gpConEmu->change2WindowMode==(DWORD)-1);
+		_ASSERTE(gpConEmu->changeFromWindowMode==wmNotChanging);
 	}
 	#endif
 
@@ -2993,6 +2994,7 @@ void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/)
 	SyncAllConsoles2Window(rcWnd, CER_MAINCLIENT);
 }
 
+// -- функция пустая, игнорируется
 // Установить размер основного окна по текущему размеру gp_VActive
 void CVConGroup::SyncWindowToConsole()
 {
@@ -3578,8 +3580,8 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 			}
 			else
 			{
-				if (!gpConEmu->mb_isFullScreen && !gpConEmu->isZoomed() && !abSizingToDo)
-					SyncWindowToConsole();
+				if ((gpConEmu->WindowMode == wmNormal) && !abSizingToDo)
+					SyncWindowToConsole(); // -- функция пустая, игнорируется
 				else
 					SyncConsoleToWindow();
 
@@ -3628,55 +3630,6 @@ void CVConGroup::ReSizePanes(RECT mainClient)
 	CVirtualConsole* pVCon = VCon.VCon();
 
 	RECT rcNewCon = {};
-
-	WARNING("warning: Need to be corrected for release / DoubleView");
-#if 0
-	PRAGMA_ERROR("Need to be corrected");
-	TODO("DoubleView");
-	RECT dcSize = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, pVCon);
-	RECT client = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, pVCon, &dcSize);
-	WARNING("Вынести в CalcRect");
-	
-
-	TODO("Для DoubleView - некорректно");
-	if (gpSet->isAlwaysShowScrollbar == 1)
-		client.right += GetSystemMetrics(SM_CXVSCROLL);
-
-	if (pVCon && pVCon->Width && pVCon->Height)
-	{
-		if (pVCon->GuiWnd() && pVCon->RCon()->isGuiOverCon())
-		{
-			// Если работает в режиме "GUI во вкладке" - занять всю доступную область
-			rcNewCon = dcSize;
-		}
-		else
-		{
-			// Иначе - "консольную" область возможно придется отцентрировать (по настройке)
-			if ((gpSet->isTryToCenter && (gpConEmu->isZoomed() || gpConEmu->mb_isFullScreen || gpSet->isQuakeStyle))
-					|| isNtvdm())
-			{
-				rcNewCon.left = (client.right + client.left - (int)pVCon->Width)/2;
-				if (!gpSet->isQuakeStyle)
-					rcNewCon.top = (client.bottom + client.top - (int)pVCon->Height)/2;
-			}
-
-			if (rcNewCon.left<client.left) rcNewCon.left=client.left;
-
-			if (rcNewCon.top<client.top) rcNewCon.top=client.top;
-
-			rcNewCon.right = rcNewCon.left + pVCon->Width + ((gpSet->isAlwaysShowScrollbar == 1) ? GetSystemMetrics(SM_CXVSCROLL) : 0);
-			rcNewCon.bottom = rcNewCon.top + pVCon->Height;
-
-			if (rcNewCon.right>client.right) rcNewCon.right=client.right;
-
-			if (rcNewCon.bottom>client.bottom) rcNewCon.bottom=client.bottom;
-		}
-	}
-	else
-	{
-		rcNewCon = client;
-	}
-#endif
 
 	rcNewCon = gpConEmu->CalcRect(CER_WORKSPACE, mainClient, CER_MAINCLIENT, pVCon);
 
