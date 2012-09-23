@@ -4195,11 +4195,11 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	{
 		//SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOZORDER);
 		m_QuakePrevSize.bWaitReposition = true;
+		gpConEmu->UpdateIdealRect(rcWnd);
+		mrc_StoredNormalRect = rcWnd;
 	}
 
 	gpConEmu->SetWindowMode(nNewWindowMode, TRUE);
-
-	gpConEmu->OnHideCaption();
 
 	if (m_QuakePrevSize.bWaitReposition)
 		m_QuakePrevSize.bWaitReposition = false;
@@ -4274,7 +4274,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	}
 
 	// Обновить коордианты в gpSet, если требуется
-	if (isWindowNormal() && !isIconic())
+	if ((inMode != wmNormal) && isWindowNormal() && !isIconic())
 		StoreNormalRect(&rcWnd);
 
 	// Коррекция для Quake
@@ -4310,8 +4310,8 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				goto wrap;
 			}
 
-
-			if (isIconic() || isZoomed() || isFullScreen())
+			// Тут именно "::IsZoomed(ghWnd)"
+			if (isIconic() || ::IsZoomed(ghWnd))
 			{
 				//apiShow Window(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
 				mb_IgnoreSizeChange = true;
