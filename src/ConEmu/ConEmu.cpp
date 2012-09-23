@@ -4295,6 +4295,8 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 	OnHideCaption(); // inMode из параметров убрал, т.к. WindowMode уже изменен
 
+	DEBUGTEST(BOOL bIsVisible = IsWindowVisible(ghWnd););
+
 	//!!!
 	switch (NewMode)
 	{
@@ -4481,16 +4483,16 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				//OnSize(false); // консоль уже изменила свой размер
 
 				gpSetCls->UpdateWindowMode(wmMaximized);
-
-				if (!IsWindowVisible(ghWnd))
-				{
-					mb_IgnoreSizeChange = true;
-					ShowWindow(SW_SHOWMAXIMIZED);
-					mb_IgnoreSizeChange = FALSE;
-
-					if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("OnSize(false).3");
-				}
 			} // if (!gpSet->isHideCaption)
+
+			if (!IsWindowVisible(ghWnd))
+			{
+				mb_IgnoreSizeChange = true;
+				ShowWindow(SW_SHOWMAXIMIZED);
+				mb_IgnoreSizeChange = FALSE;
+
+				if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("OnSize(false).3");
+			}
 
 			OnSize(false); // консоль уже изменила свой размер
 

@@ -14,10 +14,10 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.09.23
 [!] Internal window resize changes.
 [*] Touchscreen. Ignore SPI_GETWHEELSCROLLLINES.
 [+] IME. Composition window placed inside ConEmu.
-[+] Dir sync settings.
 [%] RClick & Far 3 & "Far /w" does not select panel items.
 [*] Minor changes in splitter`s painting.
 [%] Issue 689: Progress stuck at 100% in powershell.
