@@ -68,7 +68,7 @@ BEGIN
     cbInstallKeybHooks      "Allows interception of Win+Number, Win+Arrows, Alt+Esc, Alt+Tab, etc."
     cbItalic                "Main font italic"
     cbLongOutput            "Autoexpand bufferheight to specified\nnumber of lines, while Far executes\nconsole commands. Full console output\n(up to specified count of lines) will be\navailable via Far macro (CtrlO.reg)"
-    cbMinToTray             "Auto minimize to Taskbar Status Area (TSA)\nRight click on «Close window button»\nin ConEmu title for minimize to TSA,\nwhen this checkbox is OFF.\n3s - Always show notification icon"
+    cbMinToTray             "Auto minimize to Taskbar Status Area (TSA)\nRight click on «Close window button»\nin ConEmu title for minimize to TSA,\nwhen this checkbox is OFF"
     cbMonitorConsoleLang    "Monitor input language change in real\nconsole (i.e. XLat switching support)"
     cbMonospace             "Check it for non proportional (monospaced) fonts, 3s - center symbols in the cells"
     cbMultiCon              "Turn on MultiConsole\n(several consoles in one ConEmu)\nConEmu restart required"

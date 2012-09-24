@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <commctrl.h>
 #include <shlobj.h>
+#include <tlhelp32.h>
 #ifndef __GNUC__
 #include <shobjidl.h>
 #include <propkey.h>
@@ -2540,6 +2541,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// load settings from registry
 		gpSet->LoadSettings();
 	}
+	else
+	{
+		// раз загрузка не выполнялась, выполнить дополнительные действия в классе настроек здесь
+		gpSetCls->SettingsLoaded();
+	}
+	// Для gpSet->isQuakeStyle - принудительно включается gpSetCls->SingleInstanceArg
+
 
 	// Если в режиме "Inside" подходящего окна не нашли и юзер отказался от "обычного" режима
 	if (gpConEmu->m_InsideIntegration && (gpConEmu->mh_InsideParentWND == (HWND)-1))
@@ -2714,9 +2722,46 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (gpSetCls->SingleInstanceArg)
 	{
+		HWND hConEmuHwnd = FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
 		// При запуске серии закладок из cmd файла второму экземпляру лучше чуть-чуть подождать
-		if (gpSetCls->SingleInstanceShowHide == sih_None)
-			Sleep(1000); // чтобы успело "появиться" главное окно ConEmu
+		// чтобы успело "появиться" главное окно ConEmu
+		if ((hConEmuHwnd == NULL) && (gpSetCls->SingleInstanceShowHide == sih_None))
+		{
+			// Если окна нет, и других процессов (ConEmu.exe, ConEmu64.exe) нет
+			// то ждать смысла нет
+			bool bOtherExists = false;
+
+			HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+			if (h && (h != INVALID_HANDLE_VALUE))
+			{
+				PROCESSENTRY32 PI = {sizeof(PI)};
+				DWORD nSelfPID = GetCurrentProcessId();
+				if (Process32First(h, &PI))
+				{
+					do {
+						if (PI.th32ProcessID != nSelfPID)
+						{
+							LPCWSTR pszName = PointToName(PI.szExeFile);
+							if (pszName
+								&& ((lstrcmpi(pszName, L"ConEmu.exe") == 0)
+									|| (lstrcmpi(pszName, L"ConEmu64.exe") == 0)))
+							{
+								bOtherExists = true;
+								break;
+							}
+						}
+					} while (Process32Next(h, &PI));
+				}
+
+				CloseHandle(h);
+			}
+
+			// Ждать имеет смысл только если есть другие процессы "ConEmu.exe"/"ConEmu64.exe"
+			if (bOtherExists)
+			{
+				Sleep(1000); // чтобы успело "появиться" главное окно ConEmu
+			}
+		}
 
 		// Поехали
 		DWORD dwStart = GetTickCount();

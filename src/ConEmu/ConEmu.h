@@ -174,8 +174,10 @@ class CConEmuMain :
 		MFileMapping<ConEmuGuiMapping> m_GuiAttachMapping;
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
-		int mn_QuakePercent; // 0 - отключен
+		int mn_QuakePercent; // 0 - отключен, иначе (>0 && <=100) - идет анимация Quake
 		bool mb_InCreateWindow;
+	public:
+		bool InQuakeAnimation();
 	public:
 		//CConEmuChild *m_Child;
 		//CConEmuBack  *m_Back;
@@ -189,24 +191,20 @@ class CConEmuMain :
 		ConEmuWindowMode WindowMode;           // wmNormal/wmMaximized/wmFullScreen
 		ConEmuWindowMode changeFromWindowMode; // wmNotChanging/rmNormal/rmMaximized/rmFullScreen
 		bool isWndNotFSMaximized; // ставится в true, если при переходе в FullScreen - был Maximized
+		bool isQuakeMinimized;    // изврат, для случая когда "Quake" всегда показывается на таскбаре
 
-		DWORD wndWidth, wndHeight;
-		int   wndX, wndY; // в пикселях
-		bool WindowStartMinimized, ForceMinimizeToTray;
-		bool DisableAutoUpdate;
-		bool DisableKeybHooks;
-		//bool mb_isFullScreen;
-		BOOL mb_ExternalHidden;
-		//HANDLE hPipe;
-		//HANDLE hPipeEvent;
+		DWORD wndWidth, wndHeight;  // в символах
+		int   wndX, wndY;           // в пикселях
+
+		bool  WindowStartMinimized; // ключик "/min" или "Свернуть" в свойствах ярлыка
+		bool  ForceMinimizeToTray;  // ключики "/tsa" или "/tray"
+		bool  DisableAutoUpdate;    // ключик "/noupdate"
+		bool  DisableKeybHooks;     // ключик "/nokeyhook"
+
+		BOOL  mb_ExternalHidden;
 		
-		BOOL mb_StartDetached;
-		//bool isShowConsole;
-		//bool mb_FullWindowDrag;
-		//bool isLBDown, /*isInDrag,*/ isDragProcessed,
-		//mb_InSizing, -> state&MOUSE_SIZING
-		//mb_IgnoreMouseMove;
-		//bool isRBDown, ibSkipRDblClk; DWORD dwRBDownTick;
+		BOOL  mb_StartDetached;
+
 		struct
 		{
 			WORD  state;
@@ -538,7 +536,7 @@ class CConEmuMain :
 		bool isFirstInstance();
 		bool isFullScreen();
 		//bool IsGlass();		
-		bool isIconic();		
+		bool isIconic(bool abRaw = false);
 		bool isInImeComposition();		
 		bool isLBDown();
 		bool isMainThread();
@@ -590,7 +588,7 @@ class CConEmuMain :
 		void SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);
 		bool SetWindowMode(ConEmuWindowMode inMode, BOOL abForce = FALSE, BOOL abFirstShow = FALSE);
-		bool SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode = wmNotChanging);
+		bool SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode = wmNotChanging, bool bFromDlg = false);
 	private:
 		struct {
 			bool bWasSaved;

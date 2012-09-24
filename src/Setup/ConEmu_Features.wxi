@@ -190,7 +190,7 @@
   <!-- ConEmu Far Plugins -->
   <Feature Id="FConEmuFarPlugins" AllowAdvertise="no" Title="Far Manager plugins" Level="1"
            ConfigurableDirectory="FARPLUGINSCONEMU"
-           Description="Far Manager Plugins: ConEmu, PanelViews, Underlines">
+           Description="Far Manager Plugins: ConEmu, PanelViews, Underlines. Default path: &quot;%FARHOME%\Plugins\ConEmu&quot;.">
     <ComponentRef Id="CEFarPluginsDir" />
     <ComponentRef Id="PluginReadme.txt"/>
     <ComponentRef Id="ConEmu.dll"/>

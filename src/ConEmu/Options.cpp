@@ -4028,10 +4028,20 @@ bool Settings::isForcedHideCaptionAlways()
 	return (isUserScreenTransparent || isQuakeStyle);
 }
 
-bool Settings::isMinToTray()
+bool Settings::isMinToTray(bool bRawOnly /*= false*/)
 {
-	// Если на таскбаре кнопка не показана - тоже в TSA сворачивать
-	return (mb_MinToTray || (m_isTabsOnTaskBar == 3));
+	// Сворачивать в TSA только если включен флажок. Юзер его мог принудительно отключить.
+	return (mb_MinToTray || /*(m_isTabsOnTaskBar == 3) ||*/ gpConEmu->ForceMinimizeToTray);
+}
+
+void Settings::SetMinToTray(bool bMinToTray)
+{
+	gpSet->mb_MinToTray = bMinToTray;
+
+	if (ghOpWnd && gpSetCls->mh_Tabs[CSettings::thi_Show])
+	{
+		gpSetCls->checkDlgButton(gpSetCls->mh_Tabs[CSettings::thi_Show], cbMinToTray, gpSet->mb_MinToTray);
+	}
 }
 
 bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
@@ -4389,6 +4399,21 @@ bool Settings::NeedCreateAppWindow()
 		return true;
 	return false;
 }
+
+//void Settings::SetTabsOnTaskBar(BYTE nTabsOnTaskBar)
+//{
+//	_ASSERTE(nTabsOnTaskBar<=3);
+//	gpSet->m_isTabsOnTaskBar = nTabsOnTaskBar;
+//
+//	if (ghOpWnd && gpSetCls->mh_Tabs[CSettings::thi_Show])
+//	{
+//		gpSetCls->checkRadioButton(gpSetCls->mh_Tabs[CSettings::thi_Show], rbTaskbarBtnActive, rbTaskbarBtnHidden, 
+//			(gpSet->m_isTabsOnTaskBar == 3) ? rbTaskbarBtnHidden :
+//			(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
+//			(gpSet->m_isTabsOnTaskBar == 1) ? rbTaskbarBtnAll
+//			: rbTaskbarBtnActive);
+//	}
+//}
 
 // Показывать табы на таскбаре? (для каждой консоли - своя кнопка)
 bool Settings::isTabsOnTaskBar()

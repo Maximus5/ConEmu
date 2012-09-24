@@ -801,6 +801,12 @@ void CSettings::SettingsLoaded()
 {
 	MCHKHEAP
 
+	if (!SingleInstanceArg && gpSet->isQuakeStyle)
+	{
+		_ASSERTE(SingleInstanceShowHide == sih_None);
+		SingleInstanceArg = true;
+	}
+
 	wcscpy_c(gpSet->ComSpec.ConEmuBaseDir, gpConEmu->ms_ConEmuBaseDir);
 	UpdateComspec(&gpSet->ComSpec);
 	// ќбновить реестр на предмет поддержки UNC путей в cmd.exe
@@ -1527,7 +1533,6 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon);
 
-	//checkDlgButton(hWnd2, cbTabsOnTaskBar, gpSet->m_isTabsOnTaskBar);
 	checkRadioButton(hWnd2, rbTaskbarBtnActive, rbTaskbarBtnHidden, 
 		(gpSet->m_isTabsOnTaskBar == 3) ? rbTaskbarBtnHidden :
 		(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
@@ -4117,7 +4122,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					IsChecked(hWnd2, rMaximized) ? wmMaximized :
 					IsChecked(hWnd2, rFullScreen) ? wmFullScreen : 
 					wmNormal;
-				gpConEmu->SetQuakeMode(NewQuakeMode, NewWindowMode);
+				// здесь мен€ютс€ gpSet->isQuakeStyle, gpSet->isTryToCenter, gpSet->SetMinToTray
+				gpConEmu->SetQuakeMode(NewQuakeMode, NewWindowMode, true);
 			}
 			break;
 		case cbHideCaption:
@@ -4287,8 +4293,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				: IsChecked(hWnd2, rbTaskbarBtnHidden) ? 3 : 0;
 			if ((gpSet->m_isTabsOnTaskBar == 3) && !gpSet->mb_MinToTray)
 			{
-				gpSet->mb_MinToTray = true;
-				checkDlgButton(hWnd2, cbMinToTray, BST_CHECKED);
+				gpSet->SetMinToTray(true);
 			}
 			gpConEmu->OnTaskbarSettingsChanged();
 			break;

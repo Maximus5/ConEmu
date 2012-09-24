@@ -132,38 +132,48 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			// Приходит из другой копии ConEmu.exe, когда она запущена с ключом /single, /showhide, /showhideTSA
 			DEBUGSTR(L"GUI recieved CECMD_NEWCMD\n");
 
-			//if (gpConEmu->isIconic())
-			//	SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
-			//apiSetForegroundWindow(ghWnd);
+			BOOL bAccepted = FALSE;
 
-			gpConEmu->OnMinimizeRestore((pIn->NewCmd.ShowHide == sih_None) ? sih_SetForeground : pIn->NewCmd.ShowHide);
-
-			// Может быть пусто
-			if ((pIn->NewCmd.ShowHide == sih_None) && pIn->NewCmd.szCommand[0])
+			if (pIn->NewCmd.szConEmu[0])
 			{
-				RConStartArgs *pArgs = new RConStartArgs;
-				pArgs->pszSpecialCmd = lstrdup(pIn->NewCmd.szCommand);
-				if (pIn->NewCmd.szCurDir[0] == 0)
-				{
-					_ASSERTE(pIn->NewCmd.szCurDir[0] != 0);
-				}
-				else
-				{
-					pArgs->pszStartupDir = lstrdup(pIn->NewCmd.szCurDir);
-				}
-
-				gpConEmu->PostCreateCon(pArgs);
+				bAccepted = (lstrcmpi(gpConEmu->ms_ConEmuExeDir, pIn->NewCmd.szConEmu) == 0);
 			}
 			else
 			{
-				_ASSERTE(pIn->NewCmd.ShowHide==sih_ShowMinimize || pIn->NewCmd.ShowHide==sih_ShowHideTSA || pIn->NewCmd.ShowHide==sih_Show);
+				bAccepted = TRUE;
+			}
+
+			if (bAccepted)
+			{
+				gpConEmu->OnMinimizeRestore((pIn->NewCmd.ShowHide == sih_None) ? sih_SetForeground : pIn->NewCmd.ShowHide);
+
+				// Может быть пусто
+				if ((pIn->NewCmd.ShowHide == sih_None) && pIn->NewCmd.szCommand[0])
+				{
+					RConStartArgs *pArgs = new RConStartArgs;
+					pArgs->pszSpecialCmd = lstrdup(pIn->NewCmd.szCommand);
+					if (pIn->NewCmd.szCurDir[0] == 0)
+					{
+						_ASSERTE(pIn->NewCmd.szCurDir[0] != 0);
+					}
+					else
+					{
+						pArgs->pszStartupDir = lstrdup(pIn->NewCmd.szCurDir);
+					}
+
+					gpConEmu->PostCreateCon(pArgs);
+				}
+				else
+				{
+					_ASSERTE(pIn->NewCmd.ShowHide==sih_ShowMinimize || pIn->NewCmd.ShowHide==sih_ShowHideTSA || pIn->NewCmd.ShowHide==sih_Show);
+				}
 			}
 
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(BYTE);
 			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize);
 			if (lbRc)
 			{
-				ppReply->Data[0] = TRUE;
+				ppReply->Data[0] = bAccepted;
 			}
 
 			break;

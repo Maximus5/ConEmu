@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    108
+#define CESERVER_REQ_VER    109
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1281,12 +1281,14 @@ enum SingleInstanceShowHideType
 	sih_Show = 3,
 	sih_SetForeground = 4,
 	sih_HideTSA = 5,
+	sih_Minimize = 6,
 };
 
 struct CESERVER_REQ_NEWCMD // CECMD_NEWCMD
 {
 	HWND2   hFromConWnd;
 	SingleInstanceShowHideType ShowHide;
+	wchar_t szConEmu[MAX_PATH]; // Для идентификации, чтобы можно было выполнять команду в instance по тому же пути (путь к папке с ConEmu.exe без слеша)
 	wchar_t szCurDir[MAX_PATH];
 	// Внимание! Может содержать параметр -new_console. GUI его должен вырезать перед запуском сервера!
 	wchar_t szCommand[1]; // На самом деле - variable_size !!!

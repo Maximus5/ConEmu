@@ -896,11 +896,11 @@ struct Settings
 		////reg->Load(L"SendAltF9", isSendAltF9);
 		//bool isSendAltF9;
 		
-		//reg->Load(L"Min2Tray", isMinToTray);
-		private:
-		bool mb_MinToTray;
+		//reg->Load(L"Min2Tray", mb_MinToTray);
 		public:
-		bool isMinToTray();
+		bool mb_MinToTray;
+		bool isMinToTray(bool bRawOnly = false);
+		void SetMinToTray(bool bMinToTray);
 		//reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
 		bool isAlwaysShowTrayIcon;
 		//bool isForceMonospace, isProportional;
@@ -1005,6 +1005,7 @@ struct Settings
 		public:
 		bool isTabsOnTaskBar();
 		bool isWindowOnTaskBar(bool bStrictOnly = false);
+		//void SetTabsOnTaskBar(BYTE nTabsOnTaskBar);
 		
 		//reg->Load(L"TabFontFace", sTabFontFace, countof(sTabFontFace));
 		wchar_t sTabFontFace[LF_FACESIZE];

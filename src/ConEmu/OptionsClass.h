@@ -59,8 +59,8 @@ class CSettings
 
 		wchar_t szFontError[512];
 
-		bool SingleInstanceArg;
-		SingleInstanceShowHideType SingleInstanceShowHide;
+		bool SingleInstanceArg; // по умолчанию = false, но дл€ Quake переключаетс€ на = true
+		SingleInstanceShowHideType SingleInstanceShowHide; // по умолчанию = sih_None
 		void ResetCmdArg();
 
 		//int DefaultBufferHeight;
