@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="Far.ExtendedConsole"
 	ProjectGUID="{0F3AA494-98BA-425A-941D-AC18C29EFC15}"
 	RootNamespace="ConEmuDw"
@@ -143,7 +143,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile=".\Test\ConEmu\ExtendedConsole64.dll"
+				OutputFile="C:\ConEmu\ConEmu\ExtendedConsole64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"

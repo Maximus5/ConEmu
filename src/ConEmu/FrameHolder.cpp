@@ -454,13 +454,13 @@ LRESULT CFrameHolder::NC_Wrapper(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 	//Turn OFF WS_VISIBLE, so that WM_NCACTIVATE does not
 	//paint our window caption...
-	SetWindowLong(hWnd, GWL_STYLE, dwStyle & ~WS_VISIBLE);
+	gpConEmu->SetWindowStyle(hWnd, dwStyle & ~WS_VISIBLE);
 	
 	//Do the default thing..
 	ret = DefWindowProc(hWnd, uMsg, wParam, lParam);
 	
 	//Restore the original style
-	SetWindowLong(hWnd, GWL_STYLE, dwStyle);
+	gpConEmu->SetWindowStyle(hWnd, dwStyle);
 
 	//Paint the whole window frame + caption
 	//Caption_NCPaint(ctp, hWnd, (HRGN)1);

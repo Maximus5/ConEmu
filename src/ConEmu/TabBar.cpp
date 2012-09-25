@@ -1188,8 +1188,11 @@ void TabBarClass::UpdatePosition()
 		dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 		#endif
 
-		//gpConEmu->Sync ConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
-		gpConEmu->ReSize(TRUE);
+		if (!gpConEmu->InCreateWindow())
+		{
+			//gpConEmu->Sync ConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
+			gpConEmu->ReSize(TRUE);
+		}
 	}
 	else
 	{

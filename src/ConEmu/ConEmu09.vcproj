@@ -469,7 +469,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib Netapi32.lib"
-				OutputFile="C:\FAR\FARx64\ConEmu64.exe"
+				OutputFile="C:\ConEmu\ConEmu64.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
@@ -1381,7 +1381,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="echo Copying ConEmu.exe to T:\MinGW\bin\&#x0D;&#x0A;copy $(TargetPath) T:\MinGW\bin\"
+				CommandLine="echo Copying ConEmu.exe to T:\MinGW\bin\&#x0D;&#x0A;copy $(TargetPath) T:\MinGW\bin\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration

@@ -1387,6 +1387,17 @@ void CConEmuMain::UpdateSysMenu(HMENU hSysMenu)
 	}
 }
 
+void CConEmuMain::SetWindowStyle(DWORD anStyle)
+{
+	SetWindowStyle(ghWnd, anStyle);
+}
+
+void CConEmuMain::SetWindowStyle(HWND ahWnd, DWORD anStyle)
+{
+	LONG lRc = SetWindowLong(ahWnd, GWL_STYLE, anStyle);
+	UNREFERENCED_PARAMETER(lRc);
+}
+
 // Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE
 DWORD CConEmuMain::GetWindowStyle()
 {
@@ -1462,6 +1473,17 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 	}
 
 	return dwStyle;
+}
+
+void CConEmuMain::SetWindowStyleEx(DWORD anStyleEx)
+{
+	SetWindowStyleEx(ghWnd, anStyleEx);
+}
+
+void CConEmuMain::SetWindowStyleEx(HWND ahWnd, DWORD anStyleEx)
+{
+	LONG lRc = SetWindowLong(ahWnd, GWL_EXSTYLE, anStyleEx);
+	UNREFERENCED_PARAMETER(lRc);
 }
 
 // Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE_EX
@@ -4334,7 +4356,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 					RECT rcNormal = CalcRect(CER_RESTORE, MakeRect(0,0), CER_RESTORE);
 					DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 					if (dwStyle & WS_MAXIMIZE)
-						SetWindowLong(ghWnd, GWL_STYLE, (dwStyle&~WS_MAXIMIZE));
+						SetWindowStyle(dwStyle&~WS_MAXIMIZE);
 					SetWindowPos(ghWnd, HWND_TOP, 
 						rcNormal.left, rcNormal.top, 
 						rcNormal.right-rcNormal.left, rcNormal.bottom-rcNormal.top,
@@ -4477,7 +4499,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 					wpl.ptMaxPosition.y = rcMax.top;
 					SetWindowPlacement(ghWnd, &wpl);*/
 					DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
-					SetWindowLong(ghWnd, GWL_STYLE, (dwStyle|WS_MAXIMIZE));
+					SetWindowStyle(dwStyle|WS_MAXIMIZE);
 					SetWindowPos(ghWnd, HWND_TOP, 
 						rcMax.left, rcMax.top, 
 						rcMax.right-rcMax.left, rcMax.bottom-rcMax.top,
@@ -5323,7 +5345,7 @@ void CConEmuMain::CheckTopMostState()
 	{
 		if (IDYES == MessageBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
 		{
-	        //SetWindowLong(ghWnd, GWL_EXSTYLE, (dwStyleEx & ~WS_EX_TOPMOST));
+	        //SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
 			OnAlwaysOnTop();
 		}
 		else
@@ -5372,7 +5394,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	{
 		CheckTopMostState();
 		//_ASSERTE(((dwStyleEx & WS_EX_TOPMOST) == 0) && "Determined TopMost in OnWindowPosChanged");
-		//SetWindowLong(ghWnd, GWL_EXSTYLE, (dwStyleEx & ~WS_EX_TOPMOST));
+		//SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
 	}
 
 	//if (WindowPosStackCount == 1)
@@ -5516,6 +5538,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			p->y = rc.top;
 			p->cx = rc.right - rc.left + 1;
 		}
+	#ifdef _DEBUG
 		else if (isWindowNormal())
 		{
 			HMONITOR hMon = NULL;
@@ -5541,20 +5564,20 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			MONITORINFO mi = {sizeof(mi)};
 			if (GetMonitorInfo(hMon, &mi))
 			{
-				if (WindowMode == wmFullScreen)
-				{
-					p->x = mi.rcMonitor.left;
-					p->y = mi.rcMonitor.top;
-					p->cx = mi.rcMonitor.right-mi.rcMonitor.left;
-					p->cy = mi.rcMonitor.bottom-mi.rcMonitor.top;
-				}
-				else
-				{
-					p->x = mi.rcWork.left;
-					p->y = mi.rcWork.top;
-					p->cx = mi.rcWork.right-mi.rcWork.left;
-					p->cy = mi.rcWork.bottom-mi.rcWork.top;
-				}
+				//if (WindowMode == wmFullScreen)
+				//{
+				//	p->x = mi.rcMonitor.left;
+				//	p->y = mi.rcMonitor.top;
+				//	p->cx = mi.rcMonitor.right-mi.rcMonitor.left;
+				//	p->cy = mi.rcMonitor.bottom-mi.rcMonitor.top;
+				//}
+				//else
+				//{
+				//	p->x = mi.rcWork.left;
+				//	p->y = mi.rcWork.top;
+				//	p->cx = mi.rcWork.right-mi.rcWork.left;
+				//	p->cy = mi.rcWork.bottom-mi.rcWork.top;
+				//}
 			}
 			else
 			{
@@ -5566,6 +5589,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			//// И обновить размер насильно
 			//SetWindowMode(wmMaximized, TRUE);
 		}
+	#endif
 	}
 
 	//if (gpSet->isDontMinimize) {
@@ -5578,7 +5602,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	//		result = 0;
 	//		if ((dwStyle & WS_MINIMIZE) == WS_MINIMIZE) {
 	//			dwStyle &= ~WS_MINIMIZE;
-	//			SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
+	//			SetWindowStyle(dwStyle);
 	//			gpConEmu->InvalidateAll();
 	//		}
 	//		break;
@@ -9444,6 +9468,7 @@ HMENU CConEmuMain::CreateHelpMenuPopup()
 
 LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 {
+	_ASSERTE(ghWnd == hWnd); // Уже должно было быть выставлено (CConEmuMain::MainWndProc)
 	ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
 
 	OnTaskbarButtonCreated();
@@ -9453,7 +9478,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//	if ((dwStyle & (WS_CAPTION|WS_THICKFRAME)) != 0) {
 	//		lpCreate->style &= ~(WS_CAPTION|WS_THICKFRAME);
 	//		dwStyle = lpCreate->style;
-	//		SetWindowLongPtr(hWnd, GWL_STYLE, dwStyle);
+	//		SetWindowStyle(dwStyle);
 	//	}
 	//}
 
@@ -9470,6 +9495,18 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	}
 
 	StoreNormalRect(NULL);
+
+	// Win глючит? Просил создать БЕЗ WS_CAPTION, а создается С WS_CAPTION
+	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+	DWORD dwNewStyle = FixWindowStyle(dwStyle, WindowMode);
+	DEBUGTEST(WINDOWPLACEMENT wpl1 = {sizeof(wpl1)}; GetWindowPlacement(ghWnd, &wpl1););
+	if (dwStyle != dwNewStyle)
+	{
+		//TODO: Проверить, чтобы в этот момент окошко не пыталось куда-то уехать
+		SetWindowStyle(dwNewStyle);
+	}
+	DEBUGTEST(WINDOWPLACEMENT wpl2 = {sizeof(wpl2)}; GetWindowPlacement(ghWnd, &wpl2););
+
 
 	Icon.LoadIcon(hWnd, gpSet->nIconID/*IDI_ICON1*/);
 	// Позволяет реагировать на запросы FlashWindow из фара и запуск приложений
@@ -9526,12 +9563,28 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//           ID_AUTOSCROLL, _T("Auto scro&ll"));
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_NEWCONSOLE, _T("&New console..."));
+
 #ifdef _DEBUG
-	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 #endif
 
+	_ASSERTE(InCreateWindow() == true);
+
 	if (gpSet->isTabs==1)  // "Табы всегда"
+	{
 		ForceShowTabs(TRUE); // Показать табы
+
+		// Расчет высоты таббара был выполнен "примерно"
+		if ((WindowMode == wmNormal) && !m_InsideIntegration)
+		{
+			RECT rcWnd = GetDefaultRect();
+			SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOZORDER);
+			UpdateIdealRect(rcWnd);
+		}
+	}
+
+	// Причесать размеры напоследок
+	gpConEmu->ReSize(TRUE);
 
 	//CreateCon();
 	// Запустить серверную нить
@@ -10789,7 +10842,7 @@ void CConEmuMain::OnHideCaption()
 		}
 
 		//nStyle &= ~(WS_CAPTION|WS_THICKFRAME|WS_DLGFRAME);
-		//SetWindowLongPtr(ghWnd, GWL_STYLE, (DWORD)nStyle);
+		//SetWindowStyle(nStyle);
 		//nStyle = FixWindowStyle(nStyle);
 		//POINT ptBefore = {}; ClientToScreen(ghWnd, &ptBefore);
 
@@ -10808,7 +10861,7 @@ void CConEmuMain::OnHideCaption()
 
 		mb_InCaptionChange = true;
 
-		SetWindowLong(ghWnd, GWL_STYLE, nNewStyle);
+		SetWindowStyle(nNewStyle);
 
 		mb_InCaptionChange = false;
 
@@ -10835,6 +10888,7 @@ void CConEmuMain::OnHideCaption()
 
 		if (changeFromWindowMode == wmNotChanging)
 		{
+			//TODO: Поменять на FALSE
 			ReSize(TRUE);
 		}
 	}
@@ -10911,7 +10965,7 @@ void CConEmuMain::OnTaskbarButtonCreated()
 		if (styleEx & WS_EX_APPWINDOW)
 		{
 			styleEx &= ~WS_EX_APPWINDOW;
-			SetWindowLong(ghWnd, GWL_EXSTYLE, styleEx);
+			SetWindowStyleEx(styleEx);
 		}
 
 		// Если оно вдруг таки показано на таскбаре
@@ -10932,7 +10986,7 @@ void CConEmuMain::OnTaskbarSettingsChanged()
 		if (styleEx & WS_EX_APPWINDOW)
 		{
 			styleEx &= ~WS_EX_APPWINDOW;
-			SetWindowLong(ghWnd, GWL_EXSTYLE, styleEx);
+			SetWindowStyleEx(styleEx);
 			// Если оно вдруг таки показано на таскбаре
 			Taskbar_DeleteTabXP(ghWnd);
 		}
@@ -10942,7 +10996,7 @@ void CConEmuMain::OnTaskbarSettingsChanged()
 		if (!(styleEx & WS_EX_APPWINDOW))
 		{
 			styleEx |= WS_EX_APPWINDOW;
-			SetWindowLong(ghWnd, GWL_EXSTYLE, styleEx);
+			SetWindowStyleEx(styleEx);
 			// Показать на таскбаре
 			Taskbar_AddTabXP(ghWnd);
 		}
@@ -10984,6 +11038,11 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 	StoreNormalRect(NULL); // Сама разберется, надо/не надо
 
 	gpConEmu->SetWindowMode((WindowMode != wmMaximized) ? wmMaximized : wmNormal);
+}
+
+bool CConEmuMain::InCreateWindow()
+{
+	return mb_InCreateWindow;
 }
 
 bool CConEmuMain::InQuakeAnimation()
@@ -14186,8 +14245,8 @@ void CConEmuMain::OnDesktopMode()
 
 	if (dwNewStyleEx != dwStyleEx || dwNewStyle != dwStyle)
 	{
-		SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
-		SetWindowLong(ghWnd, GWL_EXSTYLE, dwStyleEx);
+		SetWindowStyle(dwStyle);
+		SetWindowStyleEx(dwStyleEx);
 		SyncWindowToConsole(); // -- функция пустая, игнорируется
 		UpdateWindowRgn();
 	}
@@ -14298,7 +14357,7 @@ void CConEmuMain::OnDesktopMode()
 			apiSetForegroundWindow(ghOpWnd);
 	}
 
-	//SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
+	//SetWindowStyle(dwStyle);
 #endif
 }
 
@@ -15350,7 +15409,7 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 		{
 			dwExStyle &= ~WS_EX_LAYERED;
 			SetLayeredWindowAttributes(ahWnd, 0, 255, LWA_ALPHA);
-			SetWindowLongPtr(ahWnd, GWL_EXSTYLE, dwExStyle);
+			SetWindowStyleEx(ahWnd, dwExStyle);
 			lbChanged = true;
 		}
 	}
@@ -15359,7 +15418,7 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 		if ((dwExStyle & WS_EX_LAYERED) == 0)
 		{
 			dwExStyle |= WS_EX_LAYERED;
-			SetWindowLongPtr(ahWnd, GWL_EXSTYLE, dwExStyle);
+			SetWindowStyleEx(ahWnd, dwExStyle);
 			bNeedRedrawOp = TRUE;
 			lbChanged = true;
 		}
@@ -15453,8 +15512,8 @@ void CConEmuMain::OnGhostCreated(CVirtualConsole* apVCon, HWND ahGhost)
 		DWORD styleEx = (curStyleEx & ~WS_EX_APPWINDOW);
 		if (style != curStyle || styleEx != curStyleEx)
 		{
-			SetWindowLong(ghWnd, GWL_STYLE, style);
-			SetWindowLong(ghWnd, GWL_EXSTYLE, styleEx);
+			SetWindowStyle(style);
+			SetWindowStyleEx(styleEx);
 		}
 		Taskbar_DeleteTabXP(ghWnd);
 	}
@@ -15471,8 +15530,8 @@ void CConEmuMain::OnAllGhostClosed()
 	DWORD styleEx = (curStyleEx | WS_EX_APPWINDOW);
 	if (style != curStyle || styleEx != curStyleEx)
 	{
-		SetWindowLong(ghWnd, GWL_STYLE, style);
-		SetWindowLong(ghWnd, GWL_EXSTYLE, styleEx);
+		SetWindowStyle(style);
+		SetWindowStyleEx(styleEx);
 
 		Taskbar_AddTabXP(ghWnd);
 	}

@@ -177,6 +177,7 @@ class CConEmuMain :
 		int mn_QuakePercent; // 0 - отключен, иначе (>0 && <=100) - идет анимация Quake
 		bool mb_InCreateWindow;
 	public:
+		bool InCreateWindow();
 		bool InQuakeAnimation();
 	public:
 		//CConEmuChild *m_Child;
@@ -514,7 +515,11 @@ class CConEmuMain :
 		RECT GetVirtualScreenRect(BOOL abFullScreen);
 		DWORD GetWindowStyle();
 		DWORD FixWindowStyle(DWORD dwExStyle, ConEmuWindowMode wmNewMode = wmCurrent);
+		void SetWindowStyle(DWORD anStyle);
+		void SetWindowStyle(HWND ahWnd, DWORD anStyle);
 		DWORD GetWindowStyleEx();
+		void SetWindowStyleEx(DWORD anStyleEx);
+		void SetWindowStyleEx(HWND ahWnd, DWORD anStyleEx);
 		DWORD GetWorkWindowStyle();
 		DWORD GetWorkWindowStyleEx();
 		LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync, CVirtualConsole* apVCon);

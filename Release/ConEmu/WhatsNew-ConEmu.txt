@@ -14,10 +14,14 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.09.25
+[%] Issue 721: Window is not resizable in Normal mode with caption hidden.
+
+
 2012.09.24
 [!] Internal window resize changes (continuation).
 [!] ConEmuHk compiled with "/DYNAMICBASE".
-[*] Switch "/single" takes care of the path, from exsisting ConEmu instance was started.
+[*] Switch "/single" takes care of the path, from existing ConEmu instance was started.
 [*] For «Quake style» switch "/single" implied.
 
 
