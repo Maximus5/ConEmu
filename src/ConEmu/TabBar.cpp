@@ -1918,12 +1918,12 @@ int TabBarClass::GetTabbarHeight()
 		// Нужно пересчитать высоту таба
 
 		HWND hTabs = mh_Tabbar;
-		bool bDummyCreate = (hTabs == NULL);
-		
-		if (bDummyCreate)
-		{
-			hTabs = CreateTabbar(true);
-		}
+		//bool bDummyCreate = (hTabs == NULL);
+		//
+		//if (bDummyCreate)
+		//{
+		//	hTabs = CreateTabbar(true);
+		//}
 
 		if (hTabs)
 		{
@@ -1935,15 +1935,16 @@ int TabBarClass::GetTabbarHeight()
 		}
 		else
 		{
-			_ASSERTE((hTabs!=NULL) && "Creating of a dummy tab control failed");
-			_tabHeight = gpSet->nTabFontHeight + 8;
+			// Не будем создавать TabBar. Все равно вне окно ConEmu оценка получается неточной
+			//_ASSERTE((hTabs!=NULL) && "Creating of a dummy tab control failed");
+			_tabHeight = gpSet->nTabFontHeight + 9;
 		}
 
-		if (bDummyCreate && hTabs)
-		{
-			DestroyWindow(hTabs);
-			mh_Tabbar = NULL;
-		}
+		//if (bDummyCreate && hTabs)
+		//{
+		//	DestroyWindow(hTabs);
+		//	mh_Tabbar = NULL;
+		//}
 	}
 
 	return _tabHeight;

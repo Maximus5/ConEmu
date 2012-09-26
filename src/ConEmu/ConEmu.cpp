@@ -177,6 +177,7 @@ CConEmuMain::CConEmuMain()
 	WindowStartMinimized = false;
 	ForceMinimizeToTray = false;
 	mb_InCreateWindow = true;
+	mh_MinFromMonitor = NULL;
 	
 	wndX = gpSet->_wndX; wndY = gpSet->_wndY;
 	wndWidth = gpSet->_wndWidth; wndHeight = gpSet->_wndHeight;
@@ -3618,49 +3619,54 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		case CER_RESTORE:    // switch (tWhat)
 			//case CER_CORRECTED:
 		{
-			HMONITOR hMonitor = NULL;
+			//HMONITOR hMonitor = NULL;
+			_ASSERTE(tFrom==tWhat || tFrom==CER_MAIN);
 
 			bool bIconic = isIconic();
 
-			if (ghWnd)
-			{
-				WINDOWPLACEMENT wpl = {sizeof(wpl)};
-				GetWindowPlacement(ghWnd, &wpl);
-				if (bIconic)
-				{
-					RECT rcRestored;
-					if (WindowMode == wmNormal)
-						rcRestored = wpl.rcNormalPosition;
-					else
-						rcRestored = MakeRect(wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, wpl.ptMaxPosition.x + GetSystemMetrics(SM_CXMAXIMIZED), wpl.ptMaxPosition.y + GetSystemMetrics(SM_CYMAXIMIZED));
-					// Go
-					hMonitor = MonitorFromRect(&rFrom, MONITOR_DEFAULTTONEAREST);
-				}
-				else
-				{
-					hMonitor = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
-				}
-			}
-			else
-			{
-				hMonitor = MonitorFromRect(&rFrom, MONITOR_DEFAULTTONEAREST);
-			}
+			//if (ghWnd)
+			//{
+			//	WINDOWPLACEMENT wpl = {sizeof(wpl)};
+			//	GetWindowPlacement(ghWnd, &wpl);
+			//	if (bIconic)
+			//	{
+			//		RECT rcRestored;
+			//		if (WindowMode == wmNormal)
+			//			rcRestored = wpl.rcNormalPosition;
+			//		else
+			//			rcRestored = MakeRect(wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, wpl.ptMaxPosition.x + GetSystemMetrics(SM_CXMAXIMIZED), wpl.ptMaxPosition.y + GetSystemMetrics(SM_CYMAXIMIZED));
+			//		// Go
+			//		hMonitor = MonitorFromRect(&rFrom, MONITOR_DEFAULTTONEAREST);
+			//	}
+			//	else
+			//	{
+			//		hMonitor = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+			//	}
+			//}
+			//else
+			//{
+			//	hMonitor = MonitorFromRect(&rFrom, MONITOR_DEFAULTTONEAREST);
+			//}
 
 			//if (tWhat != CER_CORRECTED)
 			//    tFrom = tWhat;
-			MONITORINFO mi; mi.cbSize = sizeof(mi);
+			MONITORINFO mi = {sizeof(mi)};
+			HMONITOR hMonitor = GetNearestMonitor(&mi);
 
-			if (GetMonitorInfo(hMonitor, &mi))
+			//if (GetMonitorInfo(hMonitor, &mi))
 			{
-				switch (tFrom)
+				//switch (tFrom) // --было
+				switch (tWhat)
 				{
 					case CER_MONITOR:
 					{
 						rc = mi.rcWork;
+
 					} break;
 					case CER_FULLSCREEN:
 					{
 						rc = mi.rcMonitor;
+
 					} break;
 					case CER_MAXIMIZED:
 					{
@@ -3669,20 +3675,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 						// Скорректируем размер окна до видимого на мониторе (рамка при максимизации уезжает за пределы экрана)
 						rc.left -= rcFrame.left;
 						rc.right += rcFrame.right;
-
-						//if (gpSet->isHideCaption || gpSet->isHideCaptionAlways())
 						rc.top -= rcFrame.top;
-						//else
-						//	rc.top -= rcFrame.bottom; // top включает и заголовок, а это нам не нужно
-
 						rc.bottom += rcFrame.bottom;
-						//if (gpSet->isHideCaption && gpConEmu->mb_MaximizedHideCaption && !gpSet->isHideCaptionAlways)
-						//	rc.top -= GetSystemMetrics(SM_CYCAPTION);
-						//// Скорректируем размер окна до видимого на мониторе (рамка при максимизации уезжает за пределы экрана)
-						//rc.left -= GetSystemMetrics(SM_CXSIZEFRAME);
-						//rc.right += GetSystemMetrics(SM_CXSIZEFRAME);
-						//rc.top -= GetSystemMetrics(SM_CYSIZEFRAME);
-						//rc.bottom += GetSystemMetrics(SM_CYSIZEFRAME);
 						
 					} break;
 					case CER_RESTORE:
@@ -3715,69 +3709,71 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 						}
 					} break;
 					default:
-						_ASSERTE(tFrom==CER_FULLSCREEN || tFrom==CER_MAXIMIZED);
+					{
+						_ASSERTE(tWhat==CER_FULLSCREEN || tWhat==CER_MAXIMIZED);
+					}
 				}
 			}
-			else
-			{
-				switch(tFrom)
-				{
-					case CER_MONITOR:
-					{
-						SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
-					} break;
-					case CER_FULLSCREEN:
-					{
-						rc = MakeRect(GetSystemMetrics(SM_CXFULLSCREEN),GetSystemMetrics(SM_CYFULLSCREEN));
-					} break;
-					case CER_MAXIMIZED:
-					{
-						rc = MakeRect(GetSystemMetrics(SM_CXMAXIMIZED),GetSystemMetrics(SM_CYMAXIMIZED));
+			//else
+			//{
+			//	switch(tFrom)
+			//	{
+			//		case CER_MONITOR:
+			//		{
+			//			SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
+			//		} break;
+			//		case CER_FULLSCREEN:
+			//		{
+			//			rc = MakeRect(GetSystemMetrics(SM_CXFULLSCREEN),GetSystemMetrics(SM_CYFULLSCREEN));
+			//		} break;
+			//		case CER_MAXIMIZED:
+			//		{
+			//			rc = MakeRect(GetSystemMetrics(SM_CXMAXIMIZED),GetSystemMetrics(SM_CYMAXIMIZED));
 
-						//120814 - ~WS_CAPTION
-						//if (gpSet->isHideCaption && gpConEmu->mb_MaximizedHideCaption && !gpSet->isHideCaptionAlways())
-						//	rc.top -= GetSystemMetrics(SM_CYCAPTION);
+			//			//120814 - ~WS_CAPTION
+			//			//if (gpSet->isHideCaption && gpConEmu->mb_MaximizedHideCaption && !gpSet->isHideCaptionAlways())
+			//			//	rc.top -= GetSystemMetrics(SM_CYCAPTION);
 
-					} break;
-					case CER_RESTORE:
-					{
-						RECT work;
-						SystemParametersInfo(SPI_GETWORKAREA, 0, &work, 0);
-						RECT rcNormal = {0};
-						if (gpConEmu)
-							rcNormal = gpConEmu->mrc_StoredNormalRect;
-						int w = rcNormal.right - rcNormal.left;
-						int h = rcNormal.bottom - rcNormal.top;
-						if ((w > 0) && (h > 0))
-						{
-							rc = rcNormal;
+			//		} break;
+			//		case CER_RESTORE:
+			//		{
+			//			RECT work;
+			//			SystemParametersInfo(SPI_GETWORKAREA, 0, &work, 0);
+			//			RECT rcNormal = {0};
+			//			if (gpConEmu)
+			//				rcNormal = gpConEmu->mrc_StoredNormalRect;
+			//			int w = rcNormal.right - rcNormal.left;
+			//			int h = rcNormal.bottom - rcNormal.top;
+			//			if ((w > 0) && (h > 0))
+			//			{
+			//				rc = rcNormal;
 
-							// Если после последней максимизации была изменена 
-							// конфигурация мониторов - нужно поправить видимую область
-							if (((rc.right + 30) <= work.left)
-								|| ((rc.left + 30) >= work.right))
-							{
-								rc.left = work.left; rc.right = rc.left + w;
-							}
-							if (((rc.bottom + 30) <= work.top)
-								|| ((rc.top + 30) >= work.bottom))
-							{
-								rc.top = work.top; rc.bottom = rc.top + h;
-							}
-						}
-						else
-						{
-							WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)};
-							if (ghWnd && GetWindowPlacement(ghWnd, &wpl))
-								rc = wpl.rcNormalPosition;
-							else
-								rc = work;
-						}
-					} break;
-					default:
-						_ASSERTE(tFrom==CER_FULLSCREEN || tFrom==CER_MAXIMIZED);
-				}
-			}
+			//				// Если после последней максимизации была изменена 
+			//				// конфигурация мониторов - нужно поправить видимую область
+			//				if (((rc.right + 30) <= work.left)
+			//					|| ((rc.left + 30) >= work.right))
+			//				{
+			//					rc.left = work.left; rc.right = rc.left + w;
+			//				}
+			//				if (((rc.bottom + 30) <= work.top)
+			//					|| ((rc.top + 30) >= work.bottom))
+			//				{
+			//					rc.top = work.top; rc.bottom = rc.top + h;
+			//				}
+			//			}
+			//			else
+			//			{
+			//				WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)};
+			//				if (ghWnd && GetWindowPlacement(ghWnd, &wpl))
+			//					rc = wpl.rcNormalPosition;
+			//				else
+			//					rc = work;
+			//			}
+			//		} break;
+			//		default:
+			//			_ASSERTE(tFrom==CER_FULLSCREEN || tFrom==CER_MAXIMIZED);
+			//	}
+			//}
 
 			//if (tWhat == CER_CORRECTED)
 			//{
@@ -4461,7 +4457,10 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			_ASSERTE((rcShift.left==0 && rcShift.right==0 && rcShift.bottom==0 && rcShift.top==0) || !gpSet->isCaptionHidden());
 			#endif
 
-			RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
+			#ifdef _DEBUG // было
+			CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
+			#endif
+			RECT rcMax = CalcRect(CER_MAXIMIZED);
 
 			WARNING("Может обломаться из-за максимального размера консоли");
 			// в этом случае хорошо бы установить максимально возможный и отцентрировать ее в ConEmu
@@ -9978,6 +9977,17 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 		RegisterHotKeys();
 
+		// Если вдруг оказалось, что хоткей (из ярлыка) назначился для
+		// окна отличного от главного
+		if (!gnWndSetHotkeyOk && gnWndSetHotkey)
+		{
+			if (ghWndApp)
+			{
+				SendMessage(ghWndApp, WM_SETHOTKEY, 0, 0);
+			}
+			SendMessage(ghWnd, WM_SETHOTKEY, gnWndSetHotkey, 0);
+		}
+
 		//TODO: Возможно, стоит отложить запуск секунд на 5, чтобы не мешать инициализации?
 		if (gpSet->UpdSet.isUpdateCheckOnStartup && !DisableAutoUpdate)
 			CheckUpdates(FALSE); // Не показывать сообщение "You are using latest available version"
@@ -10679,6 +10689,79 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	return 0;
 }
 
+HMONITOR CConEmuMain::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/)
+{
+	HMONITOR hMon = NULL;
+	MONITORINFO mi = {sizeof(mi)};
+	BOOL bRc = FALSE;
+	if (!ghWnd || (gpSet->isQuakeStyle && isIconic()))
+	{
+		_ASSERTE(gpConEmu->wndWidth>0 && gpConEmu->wndHeight>0);
+		COORD conSize = MakeCoord(gpConEmu->wndWidth,gpConEmu->wndHeight);
+		RECT rcEvalWnd = MakeRect(gpConEmu->wndX, gpConEmu->wndY, gpConEmu->wndX + conSize.X * gpSetCls->FontWidth(), gpConEmu->wndY + conSize.Y * gpSetCls->FontHeight());
+
+		hMon = MonitorFromRect(&rcEvalWnd, MONITOR_DEFAULTTONEAREST);
+	}
+	else if (!isIconic())
+	{
+		hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+	}
+	else
+	{
+		_ASSERTE(!m_InsideIntegration); // По идее, для "Inside" вызываться не должен
+
+		if (mh_MinFromMonitor && GetMonitorInfo(mh_MinFromMonitor, &mi))
+		{
+			hMon = mh_MinFromMonitor;
+		}
+		
+		if (!hMon)
+		{
+			WINDOWPLACEMENT wpl = {sizeof(wpl)};
+			bRc = GetWindowPlacement(ghWnd, &wpl);
+			UNREFERENCED_PARAMETER(bRc);
+
+			hMon = MonitorFromRect(&wpl.rcNormalPosition, MONITOR_DEFAULTTONEAREST);
+		}
+	}
+
+	mi.cbSize = sizeof(mi);
+
+	if (!hMon || !GetMonitorInfo(hMon, &mi))
+	{
+		_ASSERTE(FALSE && "GetMonitorInfo failed");
+		// Если облом с мониторами - берем данные по Primary
+		ZeroStruct(mi);
+		SystemParametersInfo(SPI_GETWORKAREA, 0, &mi.rcWork, 0);
+		mi.rcMonitor = MakeRect(0,0, GetSystemMetrics(SM_CXFULLSCREEN), GetSystemMetrics(SM_CYFULLSCREEN));
+	}
+
+	if (pmi)
+	{
+		*pmi = mi;
+	}
+	return hMon;
+}
+
+HMONITOR CConEmuMain::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
+{
+	MONITORINFO mi = {sizeof(mi)};
+	RECT rcMonitor = MakeRect(0,0, GetSystemMetrics(SM_CXFULLSCREEN), GetSystemMetrics(SM_CYFULLSCREEN));
+
+	HMONITOR hMon = MonitorFromRect(&rcMonitor, MONITOR_DEFAULTTOPRIMARY);
+
+	if (!hMon || !GetMonitorInfo(hMon, &mi))
+	{
+		_ASSERTE(FALSE && "GetMonitorInfo failed");
+		// Если облом с мониторами - берем данные по умолчанию
+		ZeroStruct(mi);
+		SystemParametersInfo(SPI_GETWORKAREA, 0, &mi.rcWork, 0);
+		mi.rcMonitor = rcMonitor;
+	}
+
+	return hMon;
+}
+
 LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 {
 	#ifdef _DEBUG
@@ -10691,6 +10774,14 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	DEBUGSTRSIZE(szMinMax);
 	#endif
 
+
+	MONITORINFO mi = {sizeof(mi)}, prm = {sizeof(prm)};
+	GetNearestMonitor(&mi);
+	if (gnOsVer >= 0x600)
+		prm = mi;
+	else
+		GetPrimaryMonitor(&prm);
+		
 
 	// *** Минимально допустимые размеры консоли
 	RECT rcMin = MakeRect(MIN_CON_WIDTH,MIN_CON_HEIGHT);
@@ -10725,60 +10816,42 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 		_ASSERTE(::IsZoomed(ghWnd) == FALSE); // Стиль WS_MAXIMIZE для Quake выставляться НЕ ДОЛЖЕН!
 		// Поэтому здесь нас интересует только "Normal"
 
-		HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
-		MONITORINFO mi = {sizeof(mi)};
-		if (GetMonitorInfo(hMon, &mi))
+		RECT rcWork;
+		if (gpSet->_WindowMode == wmFullScreen)
 		{
-			RECT rcWork;
-			if (gpSet->_WindowMode == wmFullScreen)
-			{
-				rcWork = mi.rcMonitor;
-			}
-			else
-			{
-				rcWork = mi.rcWork;
-			}
-
-			if (pInfo->ptMaxTrackSize.x < (rcWork.right - rcWork.left))
-				pInfo->ptMaxTrackSize.x = (rcWork.right - rcWork.left);
-
-			if (pInfo->ptMaxTrackSize.y < (rcWork.bottom - rcWork.top))
-				pInfo->ptMaxTrackSize.y = (rcWork.bottom - rcWork.top);
+			rcWork = mi.rcMonitor;
 		}
 		else
 		{
-			_ASSERTE(FALSE && "GetMonitorInfo failed, using defaults");
-			pInfo->ptMaxPosition.x = 0;
-			pInfo->ptMaxPosition.y = 0;
-			pInfo->ptMaxSize.x = GetSystemMetrics(SM_CXFULLSCREEN);
-			pInfo->ptMaxSize.y = GetSystemMetrics(SM_CYFULLSCREEN);
-			pInfo->ptMaxTrackSize = pInfo->ptMaxSize;
+			rcWork = mi.rcWork;
 		}
+
+		if (pInfo->ptMaxTrackSize.x < (rcWork.right - rcWork.left))
+			pInfo->ptMaxTrackSize.x = (rcWork.right - rcWork.left);
+
+		if (pInfo->ptMaxTrackSize.y < (rcWork.bottom - rcWork.top))
+			pInfo->ptMaxTrackSize.y = (rcWork.bottom - rcWork.top);
 	}
 	else //if (WindowMode == wmMaximized)
 	{
 		RECT rcShift = CalcMargins(CEM_FRAMEONLY, (WindowMode == wmNormal) ? wmMaximized : WindowMode);
-		RECT rcWork = {};
 
-		if (SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0))
+		if (gnOsVer >= 0x600)
 		{
-			if (gnOsVer >= 0x600)
-			{
-				pInfo->ptMaxPosition.x = rcWork.left - rcShift.left;
-				pInfo->ptMaxPosition.y = rcWork.top - rcShift.top;
-			}
-			else
-			{
-				// Issue 721: WinXP, TaskBar on top of screen. Assuming, rcWork as {0,0,...}
-				pInfo->ptMaxPosition.x = /*rcWork.left*/ - rcShift.left;
-				pInfo->ptMaxPosition.y = /*rcWork.top*/ - rcShift.top;
-			}
-			pInfo->ptMaxSize.x = rcWork.right - rcWork.left + (rcShift.left + rcShift.right);
-			pInfo->ptMaxSize.y = rcWork.bottom - rcWork.top + (rcShift.top + rcShift.bottom);
+			pInfo->ptMaxPosition.x = (mi.rcWork.left - mi.rcMonitor.left) - rcShift.left;
+			pInfo->ptMaxPosition.y = (mi.rcWork.top - mi.rcMonitor.top) - rcShift.top;
+
+			pInfo->ptMaxSize.x = mi.rcWork.right - mi.rcWork.left + (rcShift.left + rcShift.right);
+			pInfo->ptMaxSize.y = mi.rcWork.bottom - mi.rcWork.top + (rcShift.top + rcShift.bottom);
 		}
 		else
 		{
-			_ASSERTE(FALSE && "SystemParametersInfo(SPI_GETWORKAREA, ...) failed");
+			// Issue 721: WinXP, TaskBar on top of screen. Assuming, mi.rcWork as {0,0,...}
+			pInfo->ptMaxPosition.x = /*mi.rcWork.left*/ - rcShift.left;
+			pInfo->ptMaxPosition.y = /*mi.rcWork.top*/ - rcShift.top;
+
+			pInfo->ptMaxSize.x = prm.rcWork.right - prm.rcWork.left + (rcShift.left + rcShift.right);
+			pInfo->ptMaxSize.y = prm.rcWork.bottom - prm.rcWork.top + (rcShift.top + rcShift.bottom);
 		}
 	}
 
@@ -14616,6 +14689,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 #ifdef _DEBUG
 	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand (%i(0x%X), %i)\n", (DWORD)wParam, (DWORD)wParam, (DWORD)lParam);
 	DEBUGSTRSIZE(szDbg);
+	if (wParam == SC_HOTKEY)
+	{
+		_ASSERTE(wParam!=SC_HOTKEY);
+	}
 #endif
 	LRESULT result = 0;
 
@@ -14963,6 +15040,12 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			if (!bInScMinimize)
 			{
 				bInScMinimize = true;
+
+				// Запомним, на каком мониторе мы были до минимзации
+				if (!isIconic())
+				{
+					mh_MinFromMonitor = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+				}
 
 				// Если "фокус" в дочернем Gui приложении - нужно перед скрытием ConEmu "поднять" его
 				CVConGuard VCon;
@@ -15746,6 +15829,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_CREATE:
 			result = gpConEmu->OnCreate(hWnd, (LPCREATESTRUCT)lParam);
 			break;
+
+		case WM_SETHOTKEY:
+			gnWndSetHotkeyOk = wParam;
+			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
+			break;
+
 		case WM_NOTIFY:
 		{
 			if (gpConEmu->mp_TabBar)

@@ -176,6 +176,7 @@ class CConEmuMain :
 		void UpdateGuiInfoMapping();
 		int mn_QuakePercent; // 0 - отключен, иначе (>0 && <=100) - идет анимация Quake
 		bool mb_InCreateWindow;
+		HMONITOR mh_MinFromMonitor;
 	public:
 		bool InCreateWindow();
 		bool InQuakeAnimation();
@@ -193,6 +194,8 @@ class CConEmuMain :
 		ConEmuWindowMode changeFromWindowMode; // wmNotChanging/rmNormal/rmMaximized/rmFullScreen
 		bool isWndNotFSMaximized; // ставится в true, если при переходе в FullScreen - был Maximized
 		bool isQuakeMinimized;    // изврат, для случая когда "Quake" всегда показывается на таскбаре
+		HMONITOR GetNearestMonitor(MONITORINFO* pmi = NULL);
+		HMONITOR GetPrimaryMonitor(MONITORINFO* pmi = NULL);
 
 		DWORD wndWidth, wndHeight;  // в символах
 		int   wndX, wndY;           // в пикселях

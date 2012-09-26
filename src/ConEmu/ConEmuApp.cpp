@@ -27,6 +27,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
+#define SHOWDEBUGSTR
+
 #include "Header.h"
 #include <commctrl.h>
 #include <shlobj.h>
@@ -50,10 +52,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //	#define SHOW_STARTED_MSGBOX
 //	#define WAIT_STARTED_DEBUGGER
+//	#define DEBUG_MSG_HOOKS
 #endif
 
 #define DEBUGSTRMOVE(s) //DEBUGSTR(s)
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
+#define DEBUGSTRSETHOTKEY(s) DEBUGSTR(s)
 
 WARNING("Заменить все MBoxAssert, _ASSERT, _ASSERTE на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 
@@ -77,6 +81,8 @@ wchar_t gszDbgModLabel[6] = {0};
 //externs
 HINSTANCE g_hInstance=NULL;
 HWND ghWnd=NULL, ghWndWork=NULL, ghWndApp=NULL;
+// Если для ярлыка назначен shortcut - может случиться, что в главное окно он не дойдет
+WPARAM gnWndSetHotkey = 0, gnWndSetHotkeyOk = 0;
 #ifdef _DEBUG
 HWND ghConWnd=NULL;
 #endif
@@ -615,12 +621,60 @@ BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString, bool bEscapes
 	return lbRc;
 }
 
-wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, bool bAutoQuote /*= true*/)
+static wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote)
+{
+	if (bAutoQuote && (wcschr(asWinPath, L' ') == NULL))
+		bAutoQuote = false;
+
+	size_t cchLen = _tcslen(asWinPath) + (bAutoQuote ? 3 : 1);
+	wchar_t* pszResult = (wchar_t*)malloc(cchLen*sizeof(*pszResult));
+	if (!pszResult)
+		return NULL;
+	wchar_t* psz = pszResult;
+
+	if (bAutoQuote)
+		*(psz++) = L'"';
+
+	if (asWinPath[0] && (asWinPath[1] == L':'))
+	{
+		*(psz++) = L'/';
+		*(psz++) = asWinPath[0];
+		psz += 2;
+	}
+	else
+	{
+		// А bash понимает сетевые пути?
+		_ASSERTE(psz[0] == L'\\' && psz[1] == L'\\');
+	}
+
+	while (*asWinPath)
+	{
+		if (*asWinPath == L'\\')
+		{
+			*(psz++) = L'/';
+			asWinPath++;
+		}
+		else
+		{
+			*(psz++) = *(asWinPath++);
+		}
+	}
+	
+	if (bAutoQuote)
+		*(psz++) = L'"';
+	*psz = 0;
+
+	return pszResult;
+}
+
+wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, bool bAutoQuote /*= true*/, bool bCygwin /*= false*/)
 {
 	wchar_t* pszResult = NULL;
 
 	BROWSEINFO bi = {hParent};
 	wchar_t szFolder[MAX_PATH+1] = {0};
+	if (asDefFolder)
+		wcscpy_c(szFolder, asDefFolder);
 	bi.pszDisplayName = szFolder;
 	wchar_t szTitle[100];
 	bi.lpszTitle = wcscpy(szTitle, asTitle ? asTitle : L"Choose folder");
@@ -633,7 +687,11 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 	{
 		if (SHGetPathFromIDList(pRc, szFolder))
 		{
-			if (bAutoQuote && (wcschr(szFolder, L' ') != NULL))
+			if (bCygwin)
+			{
+				pszResult = DupCygwinPath(szFolder, bAutoQuote);
+			}
+			else if (bAutoQuote && (wcschr(szFolder, L' ') != NULL))
 			{
 				size_t cchLen = _tcslen(szFolder);
 				pszResult = (wchar_t*)malloc((cchLen+3)*sizeof(*pszResult));
@@ -657,11 +715,14 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 	return pszResult;
 }
 
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, bool abAutoQuote /*= true*/)
+wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, bool abAutoQuote /*= true*/, bool bCygwin /*= false*/)
 {
 	wchar_t* pszResult = NULL;
 
 	wchar_t temp[MAX_PATH+10] = {};
+	if (asDefFile)
+		_wcscpy_c(temp+1, countof(temp)-1, asDefFile);
+
 	OPENFILENAME ofn = {sizeof(ofn)};
 	ofn.hwndOwner = ghOpWnd;
 	ofn.lpstrFilter = L"All files (*.*)\0*.*\0Text files (*.txt,*.ini,*.log)\0*.txt;*.ini;*.log\0Executables (*.exe,*.com,*.bat,*.cmd)\0*.exe;*.com;*.bat;*.cmd\0Scripts (*.vbs,*.vbe,*.js,*.jse)\0*.vbs;*.vbe;*.js;*.jse\0\0";
@@ -675,18 +736,26 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent 
 	if (GetOpenFileName(&ofn))
 	{
 		LPCWSTR pszName = temp+1;
-		if (abAutoQuote && (wcschr(pszName, L' ') != NULL))
+
+		if (bCygwin)
 		{
-			temp[0] = L'"';
-			wcscat_c(temp, L"\"");
-			pszName = temp;
+			pszResult = DupCygwinPath(pszName, abAutoQuote);
 		}
 		else
 		{
-			temp[0] = L' ';
-		}
+			if (abAutoQuote && (wcschr(pszName, L' ') != NULL))
+			{
+				temp[0] = L'"';
+				wcscat_c(temp, L"\"");
+				pszName = temp;
+			}
+			else
+			{
+				temp[0] = L' ';
+			}
 
-		pszResult = lstrdup(pszName);
+			pszResult = lstrdup(pszName);
+		}
 	}
 
 	return pszResult;
@@ -705,11 +774,31 @@ bool isKey(DWORD wp,DWORD vk)
 }
 
 
+#ifdef DEBUG_MSG_HOOKS
+HHOOK ghDbgHook = NULL;
+LRESULT CALLBACK DbgCallWndProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode == HC_ACTION)
+	{
+		CWPSTRUCT* p = (CWPSTRUCT*)lParam;
+		if (p->message == WM_SETHOTKEY)
+		{
+			DEBUGSTRSETHOTKEY(L"WM_SETHOTKEY triggered");
+		}
+	}
+	return CallNextHookEx(ghDbgHook, nCode, wParam, lParam);
+}
+#endif
 
 
 LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
+
+	if (messg == WM_SETHOTKEY)
+	{
+		gnWndSetHotkey = wParam;
+	}
 
 	if (messg == WM_CREATE)
 	{
@@ -792,6 +881,11 @@ LRESULT CALLBACK SkipShowWindowProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 {
 	LRESULT result = 0;
 	//static UINT nMsgBtnCreated = 0;
+
+	if (messg == WM_SETHOTKEY)
+	{
+		gnWndSetHotkey = wParam;
+	}
 
 	switch (messg)
 	{
@@ -1957,6 +2051,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if (!IsDebuggerPresent()) MBoxA(L"Conemu started");
 		}
 #endif
+
+#ifdef DEBUG_MSG_HOOKS
+	ghDbgHook = SetWindowsHookEx(WH_CALLWNDPROC, DbgCallWndProc, NULL, GetCurrentThreadId());
+#endif
+
 
 	//pVCon = NULL;
 	//bool setParentDisabled=false;

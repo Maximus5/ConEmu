@@ -44,6 +44,10 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 {
 	switch (messg)
 	{
+	case WM_SETHOTKEY:
+		gnWndSetHotkey = wParam;
+		break;
+
 	case WM_INITDIALOG:
 		{
 			LRESULT lbRc = FALSE;

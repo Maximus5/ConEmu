@@ -156,14 +156,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"MsgBox(\"<Text>\",\"<Title>\",<ButtonType>)\r\n" \
 	L"  - Show modal GUI MessageBox, returns clicked button name (\"Ok\", \"Cancel\", \"Retry\", etc.),\r\n" \
 	L"     ButtonType (number) is from Windows SDK.\r\n" \
-	L"Paste(<Cmd>[,\"<Text>\"[,\"<Parm1>\",[\"<Parm2\"]]])\r\n" \
+	L"Paste(<Cmd>[,\"<Text>])\r\n" \
 	L"  - When <Text> is omitted - paste from Windows clipboard, otherwise - paste <Text>\r\n" \
 	L"     Cmd==0: paste all lines\r\n" \
 	L"     Cmd==1: paste first line\r\n" \
 	L"     Cmd==2: paste all lines, without confirmations\r\n" \
 	L"     Cmd==3: paste first line, without confirmations\r\n" \
-	L"     Cmd==4: select and parse file pathname, Parm1 - default, Parm2 - masks\r\n" \
-	L"     Cmd==5: select and parse folder pathname, Parm1 - default\r\n" \
+	L"     Cmd==4: select and parse file pathname, Text - default\r\n" \
+	L"     Cmd==5: select and parse folder pathname, Text - default\r\n" \
+	L"     Cmd==6: select and parse cygwin file pathname, Text - default\r\n" \
+	L"     Cmd==7: select and parse cygwin folder pathname, Text - default\r\n" \
 	L"Print([\"<Text>\"])\r\n" \
 	L"  - Alias for Paste(2,\"<Text>\")\r\n" \
 	L"Progress(<Type>[,<Value>])\r\n" \

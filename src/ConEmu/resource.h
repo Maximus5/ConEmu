@@ -844,6 +844,8 @@
 #define rbTabsLocationTop               2482
 #define rbTabsLocationBottom            2483
 #define vkGlobalRestore                 2484
+#define vkPasteFilePath                 2485
+#define vkPasteDirectory                2486
 
 // Next default values for new objects
 // 
@@ -851,7 +853,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2485
+#define _APS_NEXT_CONTROL_VALUE         2487
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

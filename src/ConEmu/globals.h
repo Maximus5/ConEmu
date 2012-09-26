@@ -53,6 +53,7 @@ extern CConEmuMain *gpConEmu;
 //extern TCHAR Title[0x400];
 //extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
 extern HWND ghWnd, ghWndWork, ghWndApp;
+extern WPARAM gnWndSetHotkey, gnWndSetHotkeyOk;
 extern HWND ghOpWnd;
 #ifdef _DEBUG
 extern HWND ghConWnd;

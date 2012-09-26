@@ -9893,6 +9893,11 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		wcscpy_c(tmpFont.lfFaceName, L"Terminal");
 	}
 
+	if (gpSet->isMonospace)
+	{
+		tmpFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+	}
+
 	hFont = CreateFontIndirect(&tmpFont);
 	
 	
