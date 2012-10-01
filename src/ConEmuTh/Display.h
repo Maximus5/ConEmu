@@ -122,7 +122,9 @@ struct CeFullPanelInfo
 	                    FILETIME         ftLastWriteTime,
 	                    unsigned __int64 anFileSize,
 	                    BOOL             abVirtualItem,
+						HANDLE           ahPlugin,
 	                    DWORD_PTR        apUserData,
+						FARPROC          afFreeUserData,
 	                    unsigned __int64 anFlags,
 	                    DWORD            anNumberOfLinks);
 	BOOL BisItem2CeItem(INT_PTR anIndex,

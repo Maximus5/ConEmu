@@ -1649,6 +1649,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ConEmuBg2800.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuBg995.cpp"
 				>
 			</File>
@@ -1818,6 +1822,10 @@
 			</File>
 			<File
 				RelativePath="..\common\pluginW1900.hpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pluginW2800.hpp"
 				>
 			</File>
 		</Filter>

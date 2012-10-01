@@ -395,11 +395,11 @@ void ComspecDone(int aiRc)
 					SMALL_RECT rc = {0};
 					sbi2.dwSize.Y = nNeedHeight;
 
-					if (ghLogSize) LogSize(&sbi2.dwSize, ":ComspecDone.RetSize.before");
+					if (gpLogSize) LogSize(&sbi2.dwSize, ":ComspecDone.RetSize.before");
 
 					SetConsoleSize(0, sbi2.dwSize, rc, "ComspecDone.Force");
 
-					if (ghLogSize) LogSize(NULL, ":ComspecDone.RetSize.after");
+					if (gpLogSize) LogSize(NULL, ":ComspecDone.RetSize.after");
 				}
 			}
 		}

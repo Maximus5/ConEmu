@@ -30,6 +30,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef FAR_UNICODE
 	#if FAR_UNICODE>=1867
+		#if FARMANAGERVERSION_BUILD>=2800
+			#define FAR_INT intptr_t
+		#else
+			#define FAR_INT int
+		#endif
 		#define InfoT InfoW1900
 		#define _GetCheck(i) (int)InfoW1900->SendDlgMessage(hDlg,DM_GETCHECK,i,0)
 		#define GetDataPtr(i) ((const wchar_t *)InfoW1900->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
@@ -43,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		#define strlenT lstrlenW
 		#define FAR_PTR void*
 	#else
+		#define FAR_INT int
 		#define InfoT InfoW995
 		#define _GetCheck(i) (int)InfoW995->SendDlgMessage(hDlg,DM_GETCHECK,i,0)
 		#define GetDataPtr(i) ((const wchar_t *)InfoW995->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
@@ -57,6 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		#define FAR_PTR LONG_PTR
 	#endif
 #else
+	#define FAR_INT int
 	#define InfoT InfoA
 	#define _GetCheck(i) items[i].Selected
 	#define GetDataPtr(i) items[i].Data
@@ -85,7 +92,7 @@ enum
 extern bool gbGdiPlusInitialized;
 
 #if FAR_UNICODE>=1867
-static INT_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, FAR_PTR Param2)
+static INT_PTR WINAPI ConfigDlgProc(HANDLE hDlg, FAR_INT Msg, FAR_INT Param1, FAR_PTR Param2)
 #else
 static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 #endif
@@ -175,7 +182,7 @@ static int ConfigureProc(int ItemNumber)
 #endif
 	SETTEXT(items[cfgOk], GetMsgT(CEBtnOK));
 	SETTEXT(items[cfgCancel], GetMsgT(CEBtnCancel));
-	int dialog_res = 0;
+	FAR_INT dialog_res = 0;
 	// Запомнить текущие значения, чтобы восстановить их если Esc нажат
 	BOOL bCurBackgroundEnabled = gbBackgroundEnabled;
 	wchar_t szCurXmlConfigFile[MAX_PATH]; lstrcpyn(szCurXmlConfigFile, gsXmlConfigFile, countof(szCurXmlConfigFile));

@@ -125,11 +125,11 @@ void ServerInitFont()
 	}
 	else if (!gbAlienMode || gOSVer.dwMajorVersion >= 6)
 	{
-		if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
+		if (gpLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
 
 		SetConsoleFontSizeTo(ghConWnd, gpSrv->nConFontHeight, gpSrv->nConFontWidth, gpSrv->szConsoleFont, gnDefTextColors, gnDefPopupColors);
 
-		if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+		if (gpLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
 	}
 }
 
@@ -2083,9 +2083,9 @@ bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
 	//if (lbNeedSetFont) {
 	//	lbNeedSetFont = FALSE;
 	//
-	//    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
+	//    if (gpLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
 	//    SetConsoleFontSizeTo(ghConWnd, gpSrv->nConFontHeight, gpSrv->nConFontWidth, gpSrv->szConsoleFont);
-	//    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+	//    if (gpLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
 	//}
 	// Если GUI запущен не от имени админа - то он обломается при попытке
 	// открыть дескриптор процесса сервера. Нужно будет ему помочь.
@@ -2546,7 +2546,7 @@ int CreateMapHeader()
 	//gpSrv->pConsole->cbActiveSize = ((LPBYTE)&(gpSrv->pConsole->data)) - ((LPBYTE)gpSrv->pConsole);
 	//gpSrv->pConsole->bChanged = TRUE; // Initially == changed
 	gpSrv->pConsole->hdr.cbSize = sizeof(gpSrv->pConsole->hdr);
-	gpSrv->pConsole->hdr.nLogLevel = (ghLogSize!=NULL) ? 1 : 0;
+	gpSrv->pConsole->hdr.nLogLevel = (gpLogSize!=NULL) ? 1 : 0;
 	gpSrv->pConsole->hdr.crMaxConSize = crMax;
 	gpSrv->pConsole->hdr.bDataReady = FALSE;
 	gpSrv->pConsole->hdr.hConWnd = ghConWnd; _ASSERTE(ghConWnd!=NULL);
@@ -3042,7 +3042,7 @@ static int ReadConsoleInfo()
 
 #endif
 
-			if (ghLogSize) LogSize(NULL, ":ReadConsoleInfo");
+			if (gpLogSize) LogSize(NULL, ":ReadConsoleInfo");
 
 			gpSrv->sbi = lsbi;
 			lbChanged = TRUE;
@@ -3633,7 +3633,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		{
 			bThaw = bNewThaw;
 
-			if (ghLogSize)
+			if (gpLogSize)
 			{
 				char szInfo[128];
 				_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: RefreshThread: Thaw changed, speed(%s)", bNewThaw ? "high" : "low");

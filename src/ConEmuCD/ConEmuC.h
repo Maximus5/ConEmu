@@ -561,8 +561,10 @@ extern BOOL  gbParmVisibleSize, gbParmBufSize;
 extern SHORT gnBufferHeight, gnBufferWidth;
 extern wchar_t* gpszPrevConTitle;
 
-extern HANDLE ghLogSize;
-extern wchar_t* wpszLogSizeFile;
+//extern HANDLE ghLogSize;
+//extern wchar_t* wpszLogSizeFile;
+class MFileLog;
+extern MFileLog* gpLogSize;
 
 
 extern BOOL gbInRecreateRoot;

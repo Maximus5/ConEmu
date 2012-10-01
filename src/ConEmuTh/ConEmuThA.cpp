@@ -394,15 +394,8 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	pcefpi->nFarColors[col_CommandLineUserScreen] = FarConsoleColors[COL_COMMANDLINEUSERSCREEN];
 	pcefpi->nFarColors[col_PanelScreensNumber] = FarConsoleColors[COL_PANELSCREENSNUMBER];
 	pcefpi->nFarColors[col_KeyBarNum] = FarConsoleColors[COL_KEYBARNUM];
-	//int nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
-	//if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
-	//{
-	//	if (pcefpi->nFarColors) free(pcefpi->nFarColors);
-	//	pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
-	//	pcefpi->nMaxFarColors = nColorSize;
-	//}
-	//nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
-	
+
+
 	// Текущая папка панели
 	int nSize = lstrlenA(pi.CurDir); //-V303
 	pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
@@ -411,12 +404,7 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	MultiByteToWideChar(CP_OEMCP, 0, pi.CurDir, nSize+1, pcefpi->pszPanelDir, nSize + MAX_PATH);
 	// Готовим буфер для информации об элементах
 	pcefpi->ReallocItems(pcefpi->ItemsNumber);
-	//if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < pcefpi->ItemsNumber))
-	//{
-	//	if (pcefpi->ppItems) free(pcefpi->ppItems);
-	//	pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + немножно про запас
-	//	pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->nMaxItemsNumber, sizeof(LPVOID));
-	//}
+
 	// Копирование элементов панели в нашу внутреннюю структуру
 	wchar_t szName[MAX_PATH+1], szDescription[255];
 	LARGE_INTEGER liFileSize;
@@ -439,7 +427,9 @@ BOOL LoadPanelInfoA(BOOL abActive)
 		                       ppi->FindData.ftLastWriteTime,
 		                       liFileSize.QuadPart,
 		                       (pcefpi->bPlugin && (pi.Flags & CEPFLAGS_REALNAMES) == 0) /*abVirtualItem*/,
+							   NULL,
 		                       ppi->UserData,
+							   NULL,
 		                       ppi->Flags,
 		                       ppi->NumberOfLinks);
 	}

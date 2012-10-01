@@ -769,18 +769,25 @@ class MSetter
 #endif
 
 #ifndef CONEMU_MINIMAL
+struct CEStartupEnv;
+
 class MFileLog
 {
 	protected:
 		wchar_t* ms_FilePathName;
+		wchar_t* ms_FileName;
+		wchar_t* ms_DefPath;
 		HANDLE   mh_LogFile;
+		HRESULT  InitFileName(LPCWSTR asName = NULL, DWORD anPID = 0);
 	public:
 		MFileLog(LPCWSTR asName, LPCWSTR asDir = NULL, DWORD anPID = 0);
 		~MFileLog();
-		HRESULT CreateLogFile(); // Returns 0 if succeeded, otherwise - GetLastError() code
+		void CloseLogFile();
+		HRESULT CreateLogFile(LPCWSTR asName = NULL, DWORD anPID = 0); // Returns 0 if succeeded, otherwise - GetLastError() code
 		LPCWSTR GetLogFileName();
-		void LogString(LPCSTR asText, BOOL abWriteTime = TRUE, LPCSTR asThreadName = NULL);
-		void LogString(LPCWSTR asText, BOOL abWriteTime = TRUE, LPCWSTR asThreadName = NULL);
+		void LogString(LPCSTR asText, bool abWriteTime = true, LPCSTR asThreadName = NULL, bool abNewLine = true, UINT anCP = CP_ACP);
+		void LogString(LPCWSTR asText, bool abWriteTime = true, LPCWSTR asThreadName = NULL, bool abNewLine = true);
+		void LogStartEnv(CEStartupEnv* apStartEnv);
 };
 #endif
 

@@ -1642,6 +1642,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ConEmuLn2800.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuLn995.cpp"
 				>
 			</File>

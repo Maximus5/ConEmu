@@ -1536,13 +1536,13 @@ int WINAPI ProcessSynchroEventW(int Event,void *Param)
 void WINAPI ExitFARW(void);
 void WINAPI ExitFARW3(void*);
 int WINAPI ProcessEditorEventW(int Event, void *Param);
-int WINAPI ProcessEditorEventW3(void*);
+INT_PTR WINAPI ProcessEditorEventW3(void*);
 int WINAPI ProcessViewerEventW(int Event, void *Param);
-int WINAPI ProcessViewerEventW3(void*);
+INT_PTR WINAPI ProcessViewerEventW3(void*);
 int WINAPI ProcessDialogEventW(int Event, void *Param);
-int WINAPI ProcessDialogEventW3(void*);
+INT_PTR WINAPI ProcessDialogEventW3(void*);
 int WINAPI ProcessSynchroEventW(int Event,void *Param);
-int WINAPI ProcessSynchroEventW3(void*);
+INT_PTR WINAPI ProcessSynchroEventW3(void*);
 
 #include "../common/SetExport.h"
 ExportFunc Far3Func[] =
@@ -5552,7 +5552,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 			if (pOut && (pOut->GetAllTabs.Count > 0))
 			{
-				int nMenuRc = -1;
+				INT_PTR nMenuRc = -1;
 
 				int Count = pOut->GetAllTabs.Count;
 				int AllCount = Count + pOut->GetAllTabs.Tabs[Count-1].ConsoleIdx;

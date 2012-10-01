@@ -34,7 +34,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "MAssert.h"
 #include "WinObjects.h"
+#include "../ConEmu/version.h"
 #include <TlHelp32.h>
+#ifndef CONEMU_MINIMAL
+#include <shlobj.h>
+#endif
 
 #ifdef _DEBUG
 	//#define WARN_NEED_CMD
@@ -59,9 +63,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #define DebugString(x) //OutputDebugString(x)
 #define DebugStringA(x) //OutputDebugStringA(x)
+#define DEBUGSTRLOG(x) //OutputDebugStringA(x)
 #else
 #define DebugString(x) //OutputDebugString(x)
 #define DebugStringA(x) //OutputDebugStringA(x)
+#define DEBUGSTRLOG(x)
 #endif
 
 
@@ -3194,69 +3200,178 @@ BOOL MSectionLock::isLocked(BOOL abExclusiveOnly/*=FALSE*/)
 MFileLog::MFileLog(LPCWSTR asName, LPCWSTR asDir /*= NULL*/, DWORD anPID /*= 0*/)
 {
 	mh_LogFile = NULL;
+	ms_FilePathName = NULL;
+	ms_DefPath = (asDir && *asDir) ? lstrdup(asDir) : NULL;
+	InitFileName(asName, anPID);
+}
 
+HRESULT MFileLog::InitFileName(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/)
+{
 	if (!anPID) anPID = GetCurrentProcessId();
 
-	wchar_t szTemp[MAX_PATH]; szTemp[0] = 0;
-	GetTempPath(MAX_PATH-16, szTemp);
+	if (!asName || !*asName) asName = L"LogFile";
 
-	if (!asDir || !*asDir)
+	size_t cchMax = lstrlen(asName)+16;
+	ms_FileName = (wchar_t*)malloc(cchMax*sizeof(*ms_FileName));
+	if (!ms_FileName)
 	{
-		wcscat_c(szTemp, L"ConEmuLog");
-		CreateDirectoryW(szTemp, NULL);
-		wcscat_c(szTemp, L"\\");
-		asDir = szTemp;
+		_ASSERTEX(ms_FileName);
+		return E_UNEXPECTED;
 	}
 
-	int nDirLen = lstrlenW(asDir);
-	wchar_t szFile[MAX_PATH*2];
-	_wsprintf(szFile, SKIPLEN(countof(szFile)) L"%s-%u.log", asName ? asName : L"LogFile", anPID);
-	int nFileLen = lstrlenW(szFile);
-	int nCchMax = nDirLen+nFileLen+3;
-	ms_FilePathName = (wchar_t*)calloc(nCchMax,2);
-	_wcscpy_c(ms_FilePathName, nCchMax, asDir);
+	_wsprintf(ms_FileName, SKIPLEN(cchMax) L"%s-%u.log", asName, anPID);
 
-	if (nDirLen > 0 && ms_FilePathName[nDirLen-1] != L'\\')
-		_wcscat_c(ms_FilePathName, nCchMax, L"\\");
+	return S_OK;
 
-	_wcscat_c(ms_FilePathName, nCchMax, szFile);
+	//wchar_t szTemp[MAX_PATH]; szTemp[0] = 0;
+	//GetTempPath(MAX_PATH-16, szTemp);
+
+	//if (!asDir || !*asDir)
+	//{
+	//	wcscat_c(szTemp, L"ConEmuLog");
+	//	CreateDirectoryW(szTemp, NULL);
+	//	wcscat_c(szTemp, L"\\");
+	//	asDir = szTemp;
+	//}
+
+	//int nDirLen = lstrlenW(asDir);
+	//wchar_t szFile[MAX_PATH*2];
+	//_wsprintf(szFile, SKIPLEN(countof(szFile)) L"%s-%u.log", asName ? asName : L"LogFile", anPID);
+	//int nFileLen = lstrlenW(szFile);
+	//int nCchMax = nDirLen+nFileLen+3;
+	//ms_FilePathName = (wchar_t*)calloc(nCchMax,2);
+	//_wcscpy_c(ms_FilePathName, nCchMax, asDir);
+
+	//if (nDirLen > 0 && ms_FilePathName[nDirLen-1] != L'\\')
+	//	_wcscat_c(ms_FilePathName, nCchMax, L"\\");
+
+	//_wcscat_c(ms_FilePathName, nCchMax, szFile);
 }
 MFileLog::~MFileLog()
 {
-	if (mh_LogFile && mh_LogFile != INVALID_HANDLE_VALUE)
-	{
-		CloseHandle(mh_LogFile);
-		mh_LogFile = NULL;
-	}
+	CloseLogFile();
+	SafeFree(ms_DefPath);
+}
+void MFileLog::CloseLogFile()
+{
+	SafeCloseHandle(mh_LogFile);
 
-	if (ms_FilePathName)
-	{
-		free(ms_FilePathName);
-		ms_FilePathName = NULL;
-	}
+	SafeFree(ms_FilePathName);
+	SafeFree(ms_FileName);
 }
 // Returns 0 if succeeded, otherwise - GetLastError() code
-HRESULT MFileLog::CreateLogFile()
+HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/)
 {
 	if (!this)
 		return -1;
 
+	// ms_FileName мог быть проинициализирован в конструкторе, поэтому CloseLogFile не зовем
 	if (mh_LogFile && mh_LogFile != INVALID_HANDLE_VALUE)
 	{
-		CloseHandle(mh_LogFile);
+		SafeCloseHandle(mh_LogFile);
 	}
 
-	if (!ms_FilePathName || !*ms_FilePathName)
+	if (asName)
+	{
+		// А вот если указали новое имя - нужно все передернуть
+		CloseLogFile();
+
+		HRESULT hr = InitFileName(asName, anPID);
+		if (FAILED(hr))
+			return -1;
+	}
+
+	if (!ms_FileName || !*ms_FileName)
+	{
 		return -1;
+	}
 
-	mh_LogFile = CreateFileW(ms_FilePathName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	DWORD dwErr = (DWORD)-1;
 
-	if (mh_LogFile == INVALID_HANDLE_VALUE)
+	wchar_t szVer[2] = {MVV_4a[0],0}, szConEmu[64];
+	_wsprintf(szConEmu, SKIPLEN(countof(szConEmu)) L"ConEmu %u%02u%02u%s log", MVV_1,MVV_2,MVV_3,szVer);
+
+	if (!ms_FilePathName)
+	{
+		// Первое открытие. нужно сформировать путь к лог-файлу
+		mh_LogFile = NULL;
+
+		size_t cchMax, cchNamLen = lstrlen(ms_FileName);
+
+		if (ms_DefPath && *ms_DefPath)
+		{
+			size_t cchDirLen = lstrlen(ms_DefPath);
+            cchMax = cchDirLen + cchNamLen + 3;
+
+            ms_FilePathName = (wchar_t*)calloc(cchMax,sizeof(*ms_FilePathName));
+            if (!ms_FilePathName)
+            	return -1;
+
+        	_wcscpy_c(ms_FilePathName, cchMax, ms_DefPath);
+        	if (ms_DefPath[cchMax-1] != L'\\')
+        		_wcscat_c(ms_FilePathName, cchMax, L"\\");
+    		_wcscat_c(ms_FilePathName, cchMax, ms_FileName);
+
+
+    		mh_LogFile = CreateFileW(ms_FilePathName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    		// Нет прав на запись в текущую папку?
+			if (mh_LogFile == INVALID_HANDLE_VALUE)
+			{
+				dwErr = GetLastError();
+				if (dwErr == ERROR_ACCESS_DENIED/*5*/)
+					mh_LogFile = NULL;
+				SafeFree(ms_FilePathName);
+			}
+		}
+
+		if (mh_LogFile == NULL)
+		{
+			wchar_t szDesktop[MAX_PATH+1] = L"";
+			if (S_OK == SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, szDesktop))
+			{
+				size_t cchDirLen = lstrlen(szDesktop);
+	            cchMax = cchDirLen + cchNamLen + 32;
+
+	            ms_FilePathName = (wchar_t*)calloc(cchMax,sizeof(*ms_FilePathName));
+	            if (!ms_FilePathName)
+	            	return -1;
+				
+	        	_wcscpy_c(ms_FilePathName, cchMax, szDesktop);
+	        	_wcscat_c(ms_FilePathName, cchMax, (szDesktop[cchMax-1] != L'\\') ? L"\\ConEmuLogs" : L"ConEmuLogs");
+				CreateDirectory(ms_FilePathName, NULL);
+				_wcscat_c(ms_FilePathName, cchMax, L"\\");
+	    		_wcscat_c(ms_FilePathName, cchMax, ms_FileName);
+
+	    		mh_LogFile = CreateFileW(ms_FilePathName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	    		// Нет прав на запись в текущую папку?
+				if (mh_LogFile == INVALID_HANDLE_VALUE)
+				{
+					dwErr = GetLastError();
+					mh_LogFile = NULL;
+				}
+			}
+		}
+	}
+	else
+	{
+		if (!ms_FilePathName || !*ms_FilePathName)
+			return -1;
+
+		mh_LogFile = CreateFileW(ms_FilePathName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (mh_LogFile == INVALID_HANDLE_VALUE)
+		{
+			mh_LogFile = NULL;
+			dwErr = GetLastError();
+		}
+	}
+
+	if (!mh_LogFile || (mh_LogFile == INVALID_HANDLE_VALUE))
 	{
 		mh_LogFile = NULL;
-		DWORD dwErr = GetLastError();
 		return (dwErr ? dwErr : -1);
 	}
+
+	LogString(szConEmu, true);
 
 	return 0; // OK
 }
@@ -3267,7 +3382,7 @@ LPCWSTR MFileLog::GetLogFileName()
 
 	return (ms_FilePathName ? ms_FilePathName : L"<NullFileName>");
 }
-void MFileLog::LogString(LPCSTR asText, BOOL abWriteTime /*= TRUE*/, LPCSTR asThreadName /*= NULL*/)
+void MFileLog::LogString(LPCSTR asText, bool abWriteTime /*= true*/, LPCSTR asThreadName /*= NULL*/, bool abNewLine /*= true*/, UINT anCP /*= CP_ACP*/)
 {
 	if (!this)
 		return;
@@ -3276,24 +3391,113 @@ void MFileLog::LogString(LPCSTR asText, BOOL abWriteTime /*= TRUE*/, LPCSTR asTh
 		return;
 
 	wchar_t szInfo[460]; szInfo[0] = 0;
+	wchar_t* pszBuf = szInfo;
 	wchar_t szThread[32]; szThread[0] = 0;
 
 	if (asText)
 	{
-		MultiByteToWideChar(CP_OEMCP, 0, asText, -1, szInfo, countof(szInfo));
-		szInfo[countof(szInfo)-1] = 0;
+		UINT nLen = lstrlenA(asText);
+		if (nLen < countof(szInfo))
+		{
+			pszBuf = szInfo;
+		}
+		else
+		{
+			//Too large, need more memory
+			pszBuf = (wchar_t*)malloc((nLen+1)*sizeof(*pszBuf));
+		}
+
+		if (pszBuf)
+		{
+			MultiByteToWideChar(anCP, 0, asText, -1, pszBuf, nLen);
+			pszBuf[nLen] = 0;
+		}
 	}
 
 	if (asThreadName)
 	{
-		MultiByteToWideChar(CP_OEMCP, 0, asThreadName, -1, szThread, countof(szThread));
+		MultiByteToWideChar(anCP, 0, asThreadName, -1, szThread, countof(szThread));
 		szThread[countof(szThread)-1] = 0;
 	}
 
-	LogString(szInfo, abWriteTime, szThread);
+	LogString(pszBuf, abWriteTime, szThread);
+
+	if (pszBuf && (pszBuf != szInfo))
+	{
+		SafeFree(pszBuf);
+	}
 }
-void MFileLog::LogString(LPCWSTR asText, BOOL abWriteTime /*= TRUE*/, LPCWSTR asThreadName /*= NULL*/)
+void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR asThreadName /*= NULL*/, bool abNewLine /*= true*/)
 {
+	if (!this) return;
+
+	if (!asText) return;
+
+	size_t cchTextLen = asText ? lstrlen(asText) : 0;
+	size_t cchThrdLen = asThreadName ? lstrlen(asThreadName) : 0;
+	size_t cchMax = (cchTextLen + cchThrdLen)*3 + 32;
+	char szBuffer[1024];
+	char* pszBuffer;
+	if (cchMax < countof(szBuffer))
+	{
+		pszBuffer = szBuffer;
+	}
+	else
+	{
+		pszBuffer = (char*)malloc(cchMax);
+	}
+	if (!pszBuffer)
+		return;
+
+	size_t cchCur = 0, dwLen;
+
+	if (abWriteTime)
+	{
+		SYSTEMTIME st; GetLocalTime(&st);
+		char szTime[32];
+		_wsprintfA(szTime, SKIPLEN(countof(szTime)) "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		dwLen = lstrlenA(szTime);
+		memmove(pszBuffer+cchCur, szTime, dwLen);
+		cchCur += dwLen;
+	}
+
+	if (asThreadName && *asThreadName)
+	{
+		int nLen = WideCharToMultiByte(CP_UTF8, 0, asThreadName, -1, pszBuffer+cchCur, (int)cchThrdLen*3+1, NULL, NULL);
+		if (nLen > 1) // including terminating null char
+			cchCur += (nLen-1);
+	}
+
+	if (asText && *asText)
+	{
+		int nLen = WideCharToMultiByte(CP_UTF8, 0, asText, -1, pszBuffer+cchCur, (int)cchTextLen*3+1, NULL, NULL);
+		if (nLen > 1) // including terminating null char
+			cchCur += (nLen-1);
+	}
+
+	if (abNewLine)
+	{
+		memmove(pszBuffer+cchCur, "\r\n", 2);
+		cchCur += 2;
+	}
+
+	pszBuffer[cchCur] = 0;
+
+	if (mh_LogFile)
+	{
+		DWORD dwLen = (DWORD)cchCur;
+
+		WriteFile(mh_LogFile, pszBuffer, dwLen, &dwLen, 0);
+		FlushFileBuffers(mh_LogFile);
+	}
+	else
+	{
+		#ifdef _DEBUG
+		DEBUGSTRLOG(asText);
+		#endif
+	}
+
+#if 0
 	if (!this)
 		return;
 
@@ -3323,6 +3527,38 @@ void MFileLog::LogString(LPCWSTR asText, BOOL abWriteTime /*= TRUE*/, LPCWSTR as
 	DWORD dwLen = 0;
 	WriteFile(mh_LogFile, szInfo, nCur*2, &dwLen, 0);
 	FlushFileBuffers(mh_LogFile);
+#endif
+}
+void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
+{
+	if (!apStartEnv || (apStartEnv->cbSize != sizeof(*apStartEnv)))
+	{
+		LogString(L"LogStartEnv failed, invalid apStartEnv");
+		return;
+	}
+
+	// Пишем инфу
+	wchar_t szSI[MAX_PATH*4], szDesktop[128], szTitle[128];
+	lstrcpyn(szDesktop, apStartEnv->si.lpDesktop ? apStartEnv->si.lpDesktop : L"", countof(szDesktop));
+	lstrcpyn(szTitle, apStartEnv->si.lpTitle ? apStartEnv->si.lpTitle : L"", countof(szTitle));
+
+	wchar_t cVer = MVV_4a[0];
+	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\n\tDesktop: %s\n\tTitle: %s\n\tSize: {%u,%u},{%u,%u}\n"
+		L"\tFlags: 0x%08X, ShowWindow: %u\n\tHandles: 0x%08X, 0x%08X, 0x%08X",
+		szDesktop, szTitle,
+		apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
+		apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow,
+		(DWORD)apStartEnv->si.hStdInput, (DWORD)apStartEnv->si.hStdOutput, (DWORD)apStartEnv->si.hStdError);
+	LogString(szSI, true);
+	
+	LogString("CmdLine:", false, NULL, false);
+	LogString(apStartEnv->pszCmdLine ? apStartEnv->pszCmdLine : L"<NULL>", false, NULL, true);
+	LogString("ExecMod:", false, NULL, false);
+	LogString(apStartEnv->pszExecMod ? apStartEnv->pszExecMod : L"<NULL>", false, NULL, true);
+	LogString("WorkDir:", false, NULL, false);
+	LogString(apStartEnv->pszWorkDir ? apStartEnv->pszWorkDir : L"<NULL>", false, NULL, true);
+	LogString("PathEnv:", false, NULL, false);
+	LogString(apStartEnv->pszPathEnv ? apStartEnv->pszPathEnv : L"<NULL>", false, NULL, true);
 }
 #endif
 

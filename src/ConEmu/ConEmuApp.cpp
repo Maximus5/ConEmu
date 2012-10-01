@@ -621,10 +621,21 @@ BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString, bool bEscapes
 	return lbRc;
 }
 
-static wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote)
+wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote)
 {
-	if (bAutoQuote && (wcschr(asWinPath, L' ') == NULL))
-		bAutoQuote = false;
+	if (!asWinPath)
+	{
+		_ASSERTE(asWinPath!=NULL);
+		return NULL;
+	}
+
+	if (bAutoQuote)
+	{
+		if ((asWinPath[0] == L'"') || (wcschr(asWinPath, L' ') == NULL))
+		{
+			bAutoQuote = false;
+		}
+	}
 
 	size_t cchLen = _tcslen(asWinPath) + (bAutoQuote ? 3 : 1);
 	wchar_t* pszResult = (wchar_t*)malloc(cchLen*sizeof(*pszResult));
@@ -633,7 +644,13 @@ static wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote)
 	wchar_t* psz = pszResult;
 
 	if (bAutoQuote)
+	{
 		*(psz++) = L'"';
+	}
+	else if (asWinPath[0] == L'"')
+	{
+		*(psz++) = *(asWinPath++);
+	}
 
 	if (asWinPath[0] && (asWinPath[1] == L':'))
 	{
@@ -795,6 +812,11 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
 
+	if (gpSetCls->isAdvLogging >= 4)
+	{
+		gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
+	}
+
 	if (messg == WM_SETHOTKEY)
 	{
 		gnWndSetHotkey = wParam;
@@ -861,6 +883,10 @@ BOOL CheckCreateAppWindow()
 	if (!RegisterClassEx(&wc))
 		return FALSE;
 
+
+	gpConEmu->LogString(L"Creating app window", false);
+
+
 	//ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gpSet->wndX, gpSet->wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
 	DWORD style = WS_OVERLAPPEDWINDOW | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
 	int nWidth=100, nHeight=100, nX = -32000, nY = -32000;
@@ -870,8 +896,17 @@ BOOL CheckCreateAppWindow()
 
 	if (!ghWndApp)
 	{
-		MBoxA(_T("Can't create application window!"));
+		LPCWSTR pszMsg = _T("Can't create application window!");
+		gpConEmu->LogString(pszMsg, false);
+		MBoxA(pszMsg);
 		return FALSE;
+	}
+
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szCreated[128];
+		_wsprintf(szCreated, SKIPLEN(countof(szCreated)) L"App window created, HWND=0x%08X\r\n", (DWORD)ghWndApp);
+		gpConEmu->LogString(szCreated, false, false);
 	}
 
 	return TRUE;
@@ -938,6 +973,10 @@ void SkipOneShowWindow()
 	if (!RegisterClassEx(&wc))
 		return;
 
+
+	gpConEmu->LogString(L"SkipOneShowWindow");
+
+
 	gpConEmu->Taskbar_Init();
 
 	//ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gpSet->wndX, gpSet->wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
@@ -954,6 +993,13 @@ void SkipOneShowWindow()
 		ShowWindow(hSkip, SW_SHOWNORMAL);
 		gpConEmu->Taskbar_DeleteTabXP(hSkip);
 		DestroyWindow(hSkip);
+
+		if (gpSetCls->isAdvLogging)
+		{
+			wchar_t szInfo[128];
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Skip window 0x%08X was created and destroyed", (DWORD)hSkip);
+			gpConEmu->LogString(szInfo);
+		}
 	}
 
 	// Класс более не нужен
@@ -2477,17 +2523,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpConEmu->mb_UpdateJumpListOnStartup = true;
 				}
-				else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0")  || !klstricmp(curCommand, L"/log1"))
+				else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0"))
 				{
 					gpSetCls->isAdvLogging = 1;
 				}
-				else if (!klstricmp(curCommand, _T("/log2")))
+				else if (!klstricmp(curCommand, L"/log1") || !klstricmp(curCommand, L"/log2")
+					|| !klstricmp(curCommand, L"/log3") || !klstricmp(curCommand, L"/log4"))
 				{
-					gpSetCls->isAdvLogging = 2;
-				}
-				else if (!klstricmp(curCommand, _T("/log3")))
-				{
-					gpSetCls->isAdvLogging = 3;
+					gpSetCls->isAdvLogging = (BYTE)(curCommand[4] - L'0'); // 1..4
 				}
 				else if (!klstricmp(curCommand, _T("/single")))
 				{
@@ -2608,6 +2651,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 	}
 
+	if (gpSetCls->isAdvLogging)
+	{
+		gpConEmu->CreateLog();
+	}
+
 	//if (setParentDisabled && (gpConEmu->setParent || gpConEmu->setParent2)) {
 	//    gpConEmu->setParent=false; gpConEmu->setParent2=false;
 	//}
@@ -2617,6 +2665,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		TCHAR* psMsg = (TCHAR*)calloc(_tcslen(psUnknown)+100,sizeof(TCHAR));
 		_tcscpy(psMsg, _T("Unknown switch specified:\r\n"));
 		_tcscat(psMsg, psUnknown);
+		gpConEmu->LogString(psMsg, false, false);
 		MBoxA(psMsg);
 		free(psMsg);
 		return 100;
@@ -2647,6 +2696,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	// Для gpSet->isQuakeStyle - принудительно включается gpSetCls->SingleInstanceArg
 
+	gpConEmu->LogString(L"SettingsLoaded");
 
 	// Если в режиме "Inside" подходящего окна не нашли и юзер отказался от "обычного" режима
 	if (gpConEmu->m_InsideIntegration && (gpConEmu->mh_InsideParentWND == (HWND)-1))
@@ -2810,6 +2860,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//		FontFile = gpSet->FontFile;
 	//	}
 	//}
+
+	gpConEmu->LogString(L"Registering fonts");
+
 	gpSetCls->RegisterFonts();
 	gpSetCls->InitFont(
 	    FontPrm ? FontVal : NULL,
@@ -2821,6 +2874,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (gpSetCls->SingleInstanceArg)
 	{
+		gpConEmu->LogString(L"SingleInstanceArg", false);
+
 		HWND hConEmuHwnd = FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
 		// При запуске серии закладок из cmd файла второму экземпляру лучше чуть-чуть подождать
 		// чтобы успело "появиться" главное окно ConEmu

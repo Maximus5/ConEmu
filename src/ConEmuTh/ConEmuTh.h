@@ -57,9 +57,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // X - меньшая, Y - большая
 #define FAR_X_VER 995
-#define FAR_Y_VER 1900
+#define FAR_Y1_VER 1900
+#define FAR_Y2_VER 2800
 #define FUNC_X(fn) fn##995
-#define FUNC_Y(fn) fn##1900
+#define FUNC_Y1(fn) fn##1900
+#define FUNC_Y2(fn) fn##2800
 
 
 #define ConEmuTh_SysID 0x43455568 // 'CETh'
@@ -109,7 +111,9 @@ struct CePluginPanelItem
 	DWORD			 cbSize;
 	CEFAR_FIND_DATA  FindData;
 	BOOL             bVirtualItem;
+	HANDLE           hPlugin;
 	DWORD_PTR        UserData;
+	FARPROC          FreeUserDataCallback;
 	ImgLoadType      PreviewLoaded; // пытались ли уже загружать превьюшку, и что удалось загрузить
 	const wchar_t*   pszFullName; // Для упрощения отрисовки - ссылка на временный буфер
 	const wchar_t*   pszDescription; // ссылка на данные в этом CePluginPanelItem
@@ -126,6 +130,9 @@ struct CePluginPanelItem
 		COLORREF BackgroundColor;
 		int PosX, PosY; // 1-based, relative to Far workspace
 	} BisInfo;
+	//
+	void FreeItem();
+	void FreeUserData();
 };
 
 struct CePluginPanelItemColor
@@ -272,7 +279,8 @@ extern DWORD gnRgnDetectFlags;
 //} SynchroArg;
 
 void FUNC_X(GetPluginInfoW)(void* piv);
-void FUNC_Y(GetPluginInfoW)(void* piv);
+void FUNC_Y1(GetPluginInfoW)(void* piv);
+void FUNC_Y2(GetPluginInfoW)(void* piv);
 
 HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro);
 HANDLE WINAPI OpenPluginW1(int OpenFrom,INT_PTR Item);
@@ -282,16 +290,19 @@ BOOL SettingsLoad(LPCWSTR pszName, DWORD* pValue);
 BOOL SettingsLoadReg(LPCWSTR pszRegKey, LPCWSTR pszName, DWORD* pValue);
 BOOL SettingsLoadA(LPCWSTR pszName, DWORD* pValue);
 BOOL FUNC_X(SettingsLoadW)(LPCWSTR pszName, DWORD* pValue);
-BOOL FUNC_Y(SettingsLoadW)(LPCWSTR pszName, DWORD* pValue);
+BOOL FUNC_Y1(SettingsLoadW)(LPCWSTR pszName, DWORD* pValue);
+BOOL FUNC_Y2(SettingsLoadW)(LPCWSTR pszName, DWORD* pValue);
 void SettingsLoadOther(LPCWSTR pszRegKey);
 void SettingsLoadOtherA();
 void FUNC_X(SettingsLoadOtherW)();
-void FUNC_Y(SettingsLoadOtherW)();
+void FUNC_Y1(SettingsLoadOtherW)();
+void FUNC_Y2(SettingsLoadOtherW)();
 void SettingsSave(LPCWSTR pszName, DWORD* pValue);
 void SettingsSaveReg(LPCWSTR pszRegKey, LPCWSTR pszName, DWORD* pValue);
 void SettingsSaveA(LPCWSTR pszName, DWORD* pValue);
 void FUNC_X(SettingsSaveW)(LPCWSTR pszName, DWORD* pValue);
-void FUNC_Y(SettingsSaveW)(LPCWSTR pszName, DWORD* pValue);
+void FUNC_Y1(SettingsSaveW)(LPCWSTR pszName, DWORD* pValue);
+void FUNC_Y2(SettingsSaveW)(LPCWSTR pszName, DWORD* pValue);
 void SavePanelViewState(BOOL bLeftPanel, DWORD dwMode);
 
 bool isPreloadByDefault();
@@ -301,44 +312,55 @@ BOOL LoadFarVersion();
 void StartPlugin(BOOL abManual);
 void ExitPlugin(void);
 void FUNC_X(ExitFARW)(void);
-void FUNC_Y(ExitFARW)(void);
+void FUNC_Y1(ExitFARW)(void);
+void FUNC_Y2(ExitFARW)(void);
 void FUNC_X(SetStartupInfoW)(void *aInfo);
-void FUNC_Y(SetStartupInfoW)(void *aInfo);
+void FUNC_Y1(SetStartupInfoW)(void *aInfo);
+void FUNC_Y2(SetStartupInfoW)(void *aInfo);
 int ShowMessage(int aiMsg, int aiButtons);
 int ShowMessageA(int aiMsg, int aiButtons);
 int FUNC_X(ShowMessageW)(int aiMsg, int aiButtons);
-int FUNC_Y(ShowMessageW)(int aiMsg, int aiButtons);
+int FUNC_Y1(ShowMessageW)(int aiMsg, int aiButtons);
+int FUNC_Y2(ShowMessageW)(int aiMsg, int aiButtons);
 int ShowMessageA(LPCSTR asMsg, int aiButtons);
 int FUNC_X(ShowMessageW)(LPCWSTR asMsg, int aiButtons);
-int FUNC_Y(ShowMessageW)(LPCWSTR asMsg, int aiButtons);
+int FUNC_Y1(ShowMessageW)(LPCWSTR asMsg, int aiButtons);
+int FUNC_Y2(ShowMessageW)(LPCWSTR asMsg, int aiButtons);
 void PostMacro(wchar_t* asMacro);
 void PostMacroA(char* asMacro);
 void FUNC_X(PostMacroW)(wchar_t* asMacro);
-void FUNC_Y(PostMacroW)(wchar_t* asMacro);
+void FUNC_Y1(PostMacroW)(wchar_t* asMacro);
+void FUNC_Y2(PostMacroW)(wchar_t* asMacro);
 LPCWSTR GetMsgW(int aiMsg);
 const wchar_t* GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/);
-LPCWSTR FUNC_Y(GetMsgW)(int aiMsg);
+LPCWSTR FUNC_Y1(GetMsgW)(int aiMsg);
+LPCWSTR FUNC_Y2(GetMsgW)(int aiMsg);
 LPCWSTR FUNC_X(GetMsgW)(int aiMsg);
 int ShowPluginMenu();
 int ShowPluginMenuA();
-int FUNC_Y(ShowPluginMenuW)();
+int FUNC_Y1(ShowPluginMenuW)();
+int FUNC_Y2(ShowPluginMenuW)();
 int FUNC_X(ShowPluginMenuW)();
 BOOL IsMacroActive();
 BOOL IsMacroActiveA();
 BOOL FUNC_X(IsMacroActiveW)();
-BOOL FUNC_Y(IsMacroActiveW)();
+BOOL FUNC_Y1(IsMacroActiveW)();
+BOOL FUNC_Y2(IsMacroActiveW)();
 int GetMacroArea();
 int FUNC_X(GetMacroAreaW)();
-int FUNC_Y(GetMacroAreaW)();
+int FUNC_Y1(GetMacroAreaW)();
+int FUNC_Y2(GetMacroAreaW)();
 //CeFullPanelInfo* LoadPanelInfo(BOOL abActive);
 CeFullPanelInfo* GetActivePanel();
 BOOL LoadPanelInfoA(BOOL abActive);
 BOOL FUNC_X(LoadPanelInfoW)(BOOL abActive);
-BOOL FUNC_Y(LoadPanelInfoW)(BOOL abActive);
+BOOL FUNC_Y1(LoadPanelInfoW)(BOOL abActive);
+BOOL FUNC_Y2(LoadPanelInfoW)(BOOL abActive);
 void ReloadPanelsInfo();
 void ReloadPanelsInfoA();
 void FUNC_X(ReloadPanelsInfoW)();
-void FUNC_Y(ReloadPanelsInfoW)();
+void FUNC_Y1(ReloadPanelsInfoW)();
+void FUNC_Y2(ReloadPanelsInfoW)();
 //BOOL IsLeftPanelActive();
 //BOOL IsLeftPanelActiveA();
 //BOOL FUNC_X(IsLeftPanelActive)();
@@ -346,14 +368,16 @@ void FUNC_Y(ReloadPanelsInfoW)();
 void LoadPanelItemInfo(CeFullPanelInfo* pi, INT_PTR nItem);
 void LoadPanelItemInfoA(CeFullPanelInfo* pi, INT_PTR nItem);
 void FUNC_X(LoadPanelItemInfoW)(CeFullPanelInfo* pi, INT_PTR nItem);
-void FUNC_Y(LoadPanelItemInfoW)(CeFullPanelInfo* pi, INT_PTR nItem);
+void FUNC_Y1(LoadPanelItemInfoW)(CeFullPanelInfo* pi, INT_PTR nItem);
+void FUNC_Y2(LoadPanelItemInfoW)(CeFullPanelInfo* pi, INT_PTR nItem);
 bool CheckWindows();
 //bool CheckWindowsA();
 //bool FUNC_X(CheckWindows)();
 //bool FUNC_Y(CheckWindows)();
 bool CheckFarPanelsA();
 bool FUNC_X(CheckFarPanelsW)();
-bool FUNC_Y(CheckFarPanelsW)();
+bool FUNC_Y1(CheckFarPanelsW)();
+bool FUNC_Y2(CheckFarPanelsW)();
 
 // Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
 //void DisplayReloadPanel(CeFullPanelInfo* pi);
@@ -366,11 +390,13 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired);
 BOOL CheckPanelSettings(BOOL abSilence);
 BOOL CheckPanelSettingsA(BOOL abSilence);
 BOOL FUNC_X(CheckPanelSettingsW)(BOOL abSilence);
-BOOL FUNC_Y(CheckPanelSettingsW)(BOOL abSilence);
+BOOL FUNC_Y1(CheckPanelSettingsW)(BOOL abSilence);
+BOOL FUNC_Y2(CheckPanelSettingsW)(BOOL abSilence);
 
 BOOL GetFarRect(SMALL_RECT* prcFarRect);
 void FUNC_X(GetFarRectW)(SMALL_RECT* prcFarRect);
-void FUNC_Y(GetFarRectW)(SMALL_RECT* prcFarRect);
+void FUNC_Y1(GetFarRectW)(SMALL_RECT* prcFarRect);
+void FUNC_Y2(GetFarRectW)(SMALL_RECT* prcFarRect);
 
 typedef struct
 {
@@ -386,13 +412,15 @@ extern bool gbSynchoRedrawPanelRequested;
 extern ConEmuThSynchroArg* gpLastSynchroArg;
 void ExecuteInMainThread(ConEmuThSynchroArg* pCmd);
 void FUNC_X(ExecuteInMainThreadW)(ConEmuThSynchroArg* pCmd);
-void FUNC_Y(ExecuteInMainThreadW)(ConEmuThSynchroArg* pCmd);
+void FUNC_Y1(ExecuteInMainThreadW)(ConEmuThSynchroArg* pCmd);
+void FUNC_Y2(ExecuteInMainThreadW)(ConEmuThSynchroArg* pCmd);
 //int WINAPI ProcessSynchroEventW(int Event, void *Param);
 
 #define SYNCHRO_REDRAW_PANEL ((ConEmuThSynchroArg*)1)
 void SetCurrentPanelItemA(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem);
 void FUNC_X(SetCurrentPanelItemW)(BOOL bLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem);
-void FUNC_Y(SetCurrentPanelItemW)(BOOL bLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem);
+void FUNC_Y1(SetCurrentPanelItemW)(BOOL bLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem);
+void FUNC_Y2(SetCurrentPanelItemW)(BOOL bLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem);
 
 #define SYNCHRO_RELOAD_PANELS ((ConEmuThSynchroArg*)2)
 

@@ -241,6 +241,7 @@ BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString, bool bEscapes
 
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 
+wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote);
 wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder = NULL, HWND hParent = ghWnd, bool bAutoQuote = true, bool bCygwin = false);
 wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = NULL, HWND hParent = ghWnd, LPCWSTR asFilter = NULL, bool abAutoQuote = true, bool bCygwin = false);
 

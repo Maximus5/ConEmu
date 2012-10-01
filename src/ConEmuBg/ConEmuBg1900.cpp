@@ -49,32 +49,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct PluginStartupInfo *InfoW1900 = NULL;
 struct FarStandardFunctions *FSFW1900 = NULL;
 
-GUID guid_ConEmuBg = { /* f02bbf1c-25af-4c90-bb5b-a4140227df40 */
-    0xf02bbf1c,
-    0x25af,
-    0x4c90,
-    {0xbb, 0x5b, 0xa4, 0x14, 0x02, 0x27, 0xdf, 0x40}
-  };
-GUID guid_ConEmuBgCfgDlg = { /* b7359b6b-662e-4b90-aaac-d1720a1d020b */
-    0xb7359b6b,
-    0x662e,
-    0x4b90,
-    {0xaa, 0xac, 0xd1, 0x72, 0x0a, 0x1d, 0x02, 0x0b}
-  };
-GUID guid_ConEmuBgPluginMenu = { /* 394c5ba1-268f-41fd-b0f3-6a4e1c716eca */
-    0x394c5ba1,
-    0x268f,
-    0x41fd,
-    {0xb0, 0xf3, 0x6a, 0x4e, 0x1c, 0x71, 0x6e, 0xca}
-  };
-GUID guid_ConEmuBgPluginConfig = { /* 513f9204-9368-4f4c-90d3-9b5e37244f31 */
-    0x513f9204,
-    0x9368,
-    0x4f4c,
-    {0x90, 0xd3, 0x9b, 0x5e, 0x37, 0x24, 0x4f, 0x31}
-  };
+extern GUID guid_ConEmuBg;
+extern GUID guid_ConEmuBgCfgDlg;
+extern GUID guid_ConEmuBgPluginMenu;
+extern GUID guid_ConEmuBgPluginConfig;
 
 
+#if 0
 void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 {
 	//static wchar_t szTitle[16]; _wcscpy_c(szTitle, L"ConEmu");
@@ -93,6 +74,7 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	Info->Description = L"Paint Far panels background in the ConEmu window";
 	Info->Author = L"ConEmu.Maximus5@gmail.com";
 }
+#endif
 
 void GetPluginInfoW1900(void *piv)
 {

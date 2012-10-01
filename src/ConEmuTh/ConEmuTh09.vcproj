@@ -1646,6 +1646,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ConEmuTh2800.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuTh995.cpp"
 				>
 			</File>

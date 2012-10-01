@@ -1670,6 +1670,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\ConEmuPlugin2800.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuPlugin995.cpp"
 				>
 			</File>

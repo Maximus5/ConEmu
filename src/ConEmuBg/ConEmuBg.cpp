@@ -1053,7 +1053,7 @@ bool CompareNames(LPCWSTR asMaskList, LPWSTR asPath)
 		LPCWSTR pszSep = wcschr(asMaskList, L'|');
 		if (pszSep)
 		{
-			int nLen = min(countof(szMask)-1,pszSep-asMaskList);
+			int nLen = (int)min((INT_PTR)countof(szMask)-1,(INT_PTR)(pszSep-asMaskList));
 			lstrcpyn(szMask, asMaskList, nLen+1);
 			szMask[nLen] = 0;
 		}

@@ -48,31 +48,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct PluginStartupInfo *InfoW1900=NULL;
 struct FarStandardFunctions *FSFW1900=NULL;
 
-GUID guid_ConEmuTh = { /* bd454d48-448e-46cc-909d-b6cf789c2d65 */
-    0xbd454d48,
-    0x448e,
-    0x46cc,
-    {0x90, 0x9d, 0xb6, 0xcf, 0x78, 0x9c, 0x2d, 0x65}
-};
-GUID guid_ConEmuThPluginMenu = { /* 128414a5-68a2-44d2-b092-c9c5225324e1 */
-    0x128414a5,
-    0x68a2,
-    0x44d2,
-    {0xb0, 0x92, 0xc9, 0xc5, 0x22, 0x53, 0x24, 0xe1}
-};
-//INTERFACENAME = { /* 81b782cf-1d4e-4269-aeca-f3d7ac759363 */
-//    0x81b782cf,
-//    0x1d4e,
-//    0x4269,
-//    {0xae, 0xca, 0xf3, 0xd7, 0xac, 0x75, 0x93, 0x63}
-//  };
-//INTERFACENAME = { /* 857d6089-5fc7-4284-b66a-ce54dfae7efc */
-//    0x857d6089,
-//    0x5fc7,
-//    0x4284,
-//    {0xb6, 0x6a, 0xce, 0x54, 0xdf, 0xae, 0x7e, 0xfc}
-//  };
+extern GUID guid_ConEmuTh;
+extern GUID guid_ConEmuThPluginMenu;
 
+
+#if 0
 void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 {
 	//static wchar_t szTitle[16]; _wcscpy_c(szTitle, L"ConEmu");
@@ -91,6 +71,7 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	Info->Description = L"Thumbnails and Tiles in ConEmu window";
 	Info->Author = L"ConEmu.Maximus5@gmail.com";
 }
+#endif
 
 void GetPluginInfoW1900(void *piv)
 {
@@ -141,8 +122,9 @@ void SetStartupInfoW1900(void *aInfo)
 }
 
 extern BOOL gbInfoW_OK;
-HANDLE WINAPI OpenW(const struct OpenInfo *Info)
+HANDLE OpenW1900(const void* aInfo)
 {
+	const struct OpenInfo *Info = (OpenInfo*)aInfo;
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;
 

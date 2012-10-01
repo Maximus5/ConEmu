@@ -301,56 +301,11 @@ void LoadPanelItemInfoW995(CeFullPanelInfo* pi, INT_PTR nItem)
 	                   ppi->FindData.ftLastWriteTime,
 	                   ppi->FindData.nFileSize,
 	                   (pi->bPlugin && (pi->Flags & CEPFLAGS_REALNAMES) == 0) /*abVirtualItem*/,
+					   NULL,
 	                   ppi->UserData,
+					   NULL,
 	                   ppi->Flags,
 	                   ppi->NumberOfLinks);
-	// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
-	//// Необходимый размер буфера для хранения элемента
-	//nSize = sizeof(CePluginPanelItem)
-	//	+(lstrlen(ppi->FindData.lpwszFileName)+1)*2
-	//	+((ppi->Description ? lstrlen(ppi->Description) : 0)+1)*2;
-	//
-	//// Уже может быть выделено достаточно памяти под этот элемент
-	//if ((pi->ppItems[nItem] == NULL) || (pi->ppItems[nItem]->cbSize < (DWORD_PTR)nSize)) {
-	//	if (pi->ppItems[nItem]) free(pi->ppItems[nItem]);
-	//	nSize += 32;
-	//	pi->ppItems[nItem] = (CePluginPanelItem*)calloc(nSize, 1);
-	//	pi->ppItems[nItem]->cbSize = (int)nSize;
-	//}
-	//
-	//// Лучше сбросить, чтобы мусор не оставался, да и поля в стуктуру могут добавляться, чтобы не забылось...
-	//Если содержимое полей не менялось (атрибуты размеры и пр.), то не обнулять структуру!
-	//// Иначе сбрасываются цвета элементов...
-	//memset(((LPBYTE)pi->ppItems[nItem])+sizeof(pi->ppItems[nItem]->cbSize), 0, pi->ppItems[nItem]->cbSize-sizeof(pi->ppItems[nItem]->cbSize));
-	//
-	//// Копируем
-	//if (pi->bPlugin && (pi->Flags & CEPFLAGS_REALNAMES) == 0) {
-	//	pi->ppItems[nItem]->bVirtualItem = TRUE;
-	//} else {
-	//	pi->ppItems[nItem]->bVirtualItem = FALSE;
-	//}
-	//pi->ppItems[nItem]->UserData = ppi->UserData;
-	//pi->ppItems[nItem]->Flags = ppi->Flags;
-	//pi->ppItems[nItem]->NumberOfLinks = ppi->NumberOfLinks;
-	//pi->ppItems[nItem]->FindData.dwFileAttributes = ppi->FindData.dwFileAttributes;
-	//pi->ppItems[nItem]->FindData.ftLastWriteTime = ppi->FindData.ftLastWriteTime;
-	//pi->ppItems[nItem]->FindData.nFileSize = ppi->FindData.nFileSize;
-	//wchar_t* psz = (wchar_t*)(pi->ppItems[nItem]+1);
-	//lstrcpy(psz, ppi->FindData.lpwszFileName);
-	//pi->ppItems[nItem]->FindData.lpwszFileName = psz;
-	//pi->ppItems[nItem]->FindData.lpwszFileNamePart = wcsrchr(psz, L'\\');
-	//if (pi->ppItems[nItem]->FindData.lpwszFileNamePart == NULL)
-	//	pi->ppItems[nItem]->FindData.lpwszFileNamePart = psz;
-	//pi->ppItems[nItem]->FindData.lpwszFileExt = wcsrchr(pi->ppItems[nItem]->FindData.lpwszFileNamePart, L'.');
-	//// Description
-	//psz += lstrlen(psz)+1;
-	//if (ppi->Description)
-	//	lstrcpy(psz, ppi->Description);
-	//else
-	//	psz[0] = 0;
-	//pi->ppItems[nItem]->pszDescription = psz;
-	//
-	//// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
 }
 
 static void LoadFarSettingsW995(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel)
@@ -482,12 +437,7 @@ BOOL LoadPanelInfo995(BOOL abActive)
 
 	// Готовим буфер для информации об элементах
 	pcefpi->ReallocItems(pcefpi->ItemsNumber);
-	//if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < pcefpi->ItemsNumber))
-	//{
-	//	if (pcefpi->ppItems) free(pcefpi->ppItems);
-	//	pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + немножно про запас
-	//	pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->nMaxItemsNumber, sizeof(LPVOID));
-	//}
+
 	// и буфер для загрузки элемента из FAR
 	nSize = sizeof(PluginPanelItem)+6*MAX_PATH;
 

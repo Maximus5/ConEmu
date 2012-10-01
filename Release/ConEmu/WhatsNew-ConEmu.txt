@@ -14,6 +14,12 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.09.30
+[+] GuiMacro: Paste(8) - paste path from clipboard converted to CygWin style.
+[*] When started with "/logN" switch and program folder is write-protected, log files will be created on Desktop\ConEmuLogs.
+[%] Bugfix: "/single" switch.
+
+
 2012.09.26
 [%] Issue 727: Shortcut opens multiple instances.
 [%] Issue 724: Internal window resize changes (continuation).

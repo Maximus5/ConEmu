@@ -94,7 +94,7 @@ static bool ChangeExports( const ExportFunc* Funcs, HMODULE Module )
                 for (size_t j = 0; Funcs[j].Name; j++)
 				{
 					DWORD PtrFunc = (DWORD)((DWORD_PTR)(Funcs[j].OldAddress) - (DWORD_PTR)Module);
-                    if (Funcs[j].NewAddress 
+					if (Funcs[j].NewAddress
 						//&& !lstrcmpiA(Funcs[j].Name, (char*)Module + (DWORD)Name[i])
 						&& PtrFunc == Ptr[i]
 						)

@@ -722,16 +722,20 @@ LPWSTR CConEmuMacro::Paste(LPWSTR asArgs, CRealConsole* apRCon)
 
 	if (GetNextInt(asArgs, nCommand))
 	{
+		bool bFirstLineOnly = (nCommand & 1) != 0;
+		bool bNoConfirm = (nCommand & 2) != 0;
+
 		wchar_t* pszChooseBuf = NULL;
 
-		if (!(nCommand >= 0 && nCommand <= 7))
+		if (!(nCommand >= 0 && nCommand <= 8))
 		{
 			return lstrdup(L"InvalidArg");
 		}
 
 		if (GetNextString(asArgs, pszText))
 		{
-			if (!*pszText && !(nCommand == 4 || nCommand == 5))
+			// Пустая строка допускается только при выборе файла/папки для вставки
+			if (!*pszText && !((nCommand >= 4) && (nCommand <= 7)))
 				return lstrdup(L"InvalidArg");
 		}
 		else
@@ -750,12 +754,16 @@ LPWSTR CConEmuMacro::Paste(LPWSTR asArgs, CRealConsole* apRCon)
 				return lstrdup(L"Cancelled");
 
 			pszText = pszChooseBuf;
+			bFirstLineOnly = true;
+			bNoConfirm = true;
+		}
+		else if (nCommand == 8)
+		{
+			bFirstLineOnly = true;
+			bNoConfirm = true;
 		}
 
-		bool bFirstLineOnly = (nCommand & 1) != 0;
-		bool bNoConfirm = (nCommand & 2) != 0;
-
-		apRCon->Paste(bFirstLineOnly, pszText, bNoConfirm);
+		apRCon->Paste(bFirstLineOnly, pszText, bNoConfirm, (nCommand == 8)/*abCygWin*/);
 
 		SafeFree(pszChooseBuf);
 		return lstrdup(L"OK");

@@ -166,6 +166,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==5: select and parse folder pathname, Text - default\r\n" \
 	L"     Cmd==6: select and parse cygwin file pathname, Text - default\r\n" \
 	L"     Cmd==7: select and parse cygwin folder pathname, Text - default\r\n" \
+	L"     Cmd==8: paste path from clipboard converted to CygWin style\r\n" \
 	L"Print([\"<Text>\"])\r\n" \
 	L"  - Alias for Paste(2,\"<Text>\")\r\n" \
 	L"Progress(<Type>[,<Value>])\r\n" \

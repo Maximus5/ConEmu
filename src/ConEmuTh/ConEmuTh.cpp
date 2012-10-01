@@ -328,7 +328,7 @@ DWORD GetMainThreadId()
 void WINAPI _export ExitFARW(void);
 void WINAPI _export ExitFARW3(void*);
 int WINAPI ProcessSynchroEventW(int Event, void *Param);
-int WINAPI ProcessSynchroEventW3(void*);
+INT_PTR WINAPI ProcessSynchroEventW3(void*);
 
 #include "../common/SetExport.h"
 ExportFunc Far3Func[] =
@@ -576,7 +576,13 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	StartPlugin(FALSE);
 }
 
-
+HANDLE WINAPI _export OpenW(const struct OpenInfo *Info)
+{
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		FUNC_Y2(SetStartupInfoW)((void*)Info);
+	else
+		FUNC_Y1(SetStartupInfoW)((void*)Info);
+}
 
 
 
@@ -2446,5 +2452,34 @@ void SettingsLoadOther(LPCWSTR pszRegKey)
 		}
 
 		free(pszTabsKey);
+	}
+}
+
+// Far3+
+void FreePanelItemUserData2800(HANDLE hPlugin, DWORD_PTR UserData, FARPROC FreeUserDataCallback);
+
+void CePluginPanelItem::FreeUserData()
+{
+	if (this)
+	{
+		if (gFarVersion.dwVerMajor >= 3)
+		{
+			if (hPlugin && UserData && FreeUserDataCallback)
+			{
+				FreePanelItemUserData2800(hPlugin, UserData, FreeUserDataCallback);
+			}
+			hPlugin = NULL;
+			UserData = NULL;
+			FreeUserDataCallback = NULL;
+		}
+	}
+}
+void CePluginPanelItem::FreeItem()
+{
+	CePluginPanelItem* p = this;
+	if (p)
+	{
+		FreeUserData();
+		free(p);
 	}
 }

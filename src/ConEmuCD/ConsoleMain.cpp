@@ -207,8 +207,7 @@ SHORT gnBufferHeight = 0;
 SHORT gnBufferWidth = 0; // Определяется в MyGetConsoleScreenBufferInfo
 wchar_t* gpszPrevConTitle = NULL;
 
-HANDLE ghLogSize = NULL;
-wchar_t* wpszLogSizeFile = NULL;
+MFileLog* gpLogSize = NULL;
 
 
 BOOL gbInRecreateRoot = FALSE;
@@ -1633,13 +1632,13 @@ wrap:
 	LogSize(NULL, "Shutdown");
 	//ghConIn.Close();
 	ghConOut.Close();
-	SafeCloseHandle(ghLogSize);
+	SafeDelete(gpLogSize);
 
-	if (wpszLogSizeFile)
-	{
-		//DeleteFile(wpszLogSizeFile);
-		free(wpszLogSizeFile); wpszLogSizeFile = NULL;
-	}
+	//if (wpszLogSizeFile)
+	//{
+	//	//DeleteFile(wpszLogSizeFile);
+	//	free(wpszLogSizeFile); wpszLogSizeFile = NULL;
+	//}
 
 #ifdef _DEBUG
 	SafeCloseHandle(ghFarInExecuteEvent);
@@ -4377,10 +4376,11 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 WARNING("Добавить LogInput(INPUT_RECORD* pRec) но имя файла сделать 'ConEmuC-input-%i.log'");
 void CreateLogSizeFile(int nLevel)
 {
-	if (ghLogSize) return;  // уже
+	if (gpLogSize) return;  // уже
 
 	DWORD dwErr = 0;
-	wchar_t szFile[MAX_PATH+64], *pszDot;
+	wchar_t szFile[MAX_PATH+64], *pszDot, *pszName, *pszDir = NULL;
+	wchar_t szDir[MAX_PATH+16];
 
 	if (!GetModuleFileName(NULL, szFile, MAX_PATH))
 	{
@@ -4389,75 +4389,104 @@ void CreateLogSizeFile(int nLevel)
 		return; // не удалось
 	}
 
-	if ((pszDot = wcsrchr(szFile, L'.')) == NULL)
+	pszName = (wchar_t*)PointToName(szFile);
+
+	if ((pszDot = wcsrchr(pszName, L'.')) == NULL)
 	{
 		_printf("wcsrchr failed!\n", 0, szFile); //-V576
 		return; // ошибка
 	}
 
-	_wsprintf(pszDot, SKIPLEN(countof(szFile)-(pszDot-szFile)) L"-size-%i.log", gnSelfPID);
-	ghLogSize = CreateFileW(szFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	if (ghLogSize == INVALID_HANDLE_VALUE)
+	if (pszName > szFile)
 	{
-		ghLogSize = NULL;
-		dwErr = GetLastError();
-		_printf("Create console log file failed! ErrCode=0x%08X\n", dwErr, szFile); //-V576
+		*(pszName-1) = 0;
+		wcscpy_c(szDir, szFile);
+		pszDir = wcsrchr(szDir, L'\\');
+		if (!pszDir || (lstrcmpi(pszDir, L"\\ConEmu") != 0))
+		{
+			// Если ConEmuC.exe лежит НЕ в папке "ConEmu"
+			pszDir = szDir; // писать в текущую папку или на десктоп
+		}
+		else
+		{
+			// Иначе - попытаться найти соответствующий файл GUI
+			wcscat_c(szDir, WIN3264TEST(L"\\ConEmu.exe", L"\\ConEmu64.exe"));
+			if (FileExists(szDir))
+			{
+				pszDir = szFile; // GUI лежит в той же папке, что и "сервер"
+			}
+			else
+			{
+				// На уровень выше?
+				*pszDir = 0;
+				wcscat_c(szDir, WIN3264TEST(L"\\ConEmu.exe", L"\\ConEmu64.exe"));
+				if (FileExists(szDir))
+				{
+					*pszDir = 0;
+					pszDir = szDir; // GUI лежит в родительской папке
+				}
+				else
+				{
+					pszDir = szFile; // GUI не нашли
+				}
+			}
+		}
+	}
+
+	_wcscpy_c(pszDot, 16, L"-size");
+	gpLogSize = new MFileLog(pszName, pszDir, GetCurrentProcessId());
+
+	if (!gpLogSize)
+		return;
+
+	dwErr = (DWORD)gpLogSize->CreateLogFile();
+	if (dwErr != 0)
+	{
+		_printf("Create console log file failed! ErrCode=0x%08X\n", dwErr, gpLogSize->GetLogFileName()); //-V576
+		SafeDelete(gpLogSize);
 		return;
 	}
 
-	int nCchLen = lstrlen(szFile)+1;
-	wpszLogSizeFile = /*lstrdup(szFile);*/(wchar_t*)calloc(nCchLen,2);
-	_wcscpy_c(wpszLogSizeFile, nCchLen, szFile);
-	// OK, лог создали
-	LPCSTR pszCmdLine = GetCommandLineA();
-
-	if (pszCmdLine)
-	{
-		WriteFile(ghLogSize, pszCmdLine, (DWORD)strlen(pszCmdLine), &dwErr, 0);
-		WriteFile(ghLogSize, "\r\n", 2, &dwErr, 0);
-	}
+	gpLogSize->LogStartEnv(gpStartEnv);
 
 	LogSize(NULL, "Startup");
 }
 
 void LogString(LPCSTR asText)
 {
-	if (!ghLogSize) return;
+	if (!gpLogSize) return;
 
 	char szInfo[255]; szInfo[0] = 0;
-	LPCSTR pszThread = "<unknown thread>";
+	LPCSTR pszThread = " <unknown thread>";
 	DWORD dwId = GetCurrentThreadId();
 
 	if (dwId == gdwMainThreadId)
-		pszThread = "MainThread";
+		pszThread = " MainThread";
 	else if (gpSrv->CmdServer.IsPipeThread(dwId))
-		pszThread = "ServerThread";
+		pszThread = " ServerThread";
 	else if (dwId == gpSrv->dwRefreshThread)
-		pszThread = "RefreshThread";
+		pszThread = " RefreshThread";
 	//#ifdef USE_WINEVENT_SRV
 	//else if (dwId == gpSrv->dwWinEventThread)
-	//	pszThread = "WinEventThread";
+	//	pszThread = " WinEventThread";
 	//#endif
 	else if (gpSrv->InputServer.IsPipeThread(dwId))
-		pszThread = "InputPipeThread";
+		pszThread = " InputPipeThread";
 	else if (gpSrv->DataServer.IsPipeThread(dwId))
-		pszThread = "DataPipeThread";
+		pszThread = " DataPipeThread";
 
 	SYSTEMTIME st; GetLocalTime(&st);
 	_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%i:%02i:%02i.%03i ",
 	           st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 	int nCur = lstrlenA(szInfo);
 	lstrcpynA(szInfo+nCur, asText ? asText : "", 255-nCur-3);
-	StringCchCatA(szInfo, countof(szInfo), "\r\n");
-	DWORD dwLen = 0;
-	WriteFile(ghLogSize, szInfo, (DWORD)strlen(szInfo), &dwLen, 0);
-	FlushFileBuffers(ghLogSize);
+	//StringCchCatA(szInfo, countof(szInfo), "\r\n");
+	gpLogSize->LogString(szInfo, false, pszThread);
 }
 
 void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 {
-	if (!ghLogSize) return;
+	if (!gpLogSize) return;
 
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
 	// В дебажный лог помещаем реальный значения
@@ -4493,21 +4522,20 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 
 	if (pcrSize)
 	{
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%i:%02i:%02i.%03i CurSize={%ix%i} ChangeTo={%ix%i} %s %s\r\n",
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%i:%02i:%02i.%03i CurSize={%ix%i} ChangeTo={%ix%i} %s %s",
 		           st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
 		           lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, pszThread, (pszLabel ? pszLabel : ""));
 	}
 	else
 	{
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%i:%02i:%02i.%03i CurSize={%ix%i} %s %s\r\n",
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%i:%02i:%02i.%03i CurSize={%ix%i} %s %s",
 		           st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
 		           lsbi.dwSize.X, lsbi.dwSize.Y, pszThread, (pszLabel ? pszLabel : ""));
 	}
 
 	//if (hInp) CloseDesktop ( hInp );
 	DWORD dwLen = 0;
-	WriteFile(ghLogSize, szInfo, (DWORD)strlen(szInfo), &dwLen, 0);
-	FlushFileBuffers(ghLogSize);
+	gpLogSize->LogString(szInfo, false, NULL, true);
 }
 
 
@@ -6289,7 +6317,7 @@ BOOL cmd_PostConMsg(CESERVER_REQ& in, CESERVER_REQ** out)
 		DEBUGLOGLANG(szDbg);
 		#endif
 
-		if (ghLogSize)
+		if (gpLogSize)
 		{
 			char szInfo[255];
 			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: %s(0x%08X, %s, CP:%i, HKL:0x%08I64X)",
@@ -6425,7 +6453,7 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 		gpSrv->pConsole->hdr.bConsoleActive = in.dwData[0];
 		gpSrv->pConsole->hdr.bThawRefreshThread = in.dwData[1];
 
-		if (ghLogSize)
+		if (gpLogSize)
 		{
 			char szInfo[128];
 			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: cmd_OnActivation(active=%u, speed=%s)", in.dwData[0], in.dwData[1] ? "high" : "low");
@@ -7947,7 +7975,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		return FALSE;
 	}
 
-	if (ghLogSize) LogSize(&crNewSize, asLabel);
+	if (gpLogSize) LogSize(&crNewSize, asLabel);
 
 	_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
 
@@ -8277,11 +8305,6 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 		}
 	}
 
-	/*SafeCloseHandle(ghLogSize);
-	if (wpszLogSizeFile) {
-		DeleteFile(wpszLogSizeFile);
-		free(wpszLogSizeFile); wpszLogSizeFile = NULL;
-	}*/
 	return TRUE;
 }
 
@@ -8494,7 +8517,7 @@ void CheckKeyboardLayout()
 				OutputDebugString(szDbg);
 #endif
 
-				if (ghLogSize)
+				if (gpLogSize)
 				{
 					char szInfo[128]; wchar_t szWide[128];
 					_wsprintf(szWide, SKIPLEN(countof(szWide)) L"ConEmuC: ConsKeybLayout changed from %s to %s", gpSrv->szKeybLayout, szCurKeybLayout);

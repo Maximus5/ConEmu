@@ -252,7 +252,8 @@ void CRealConsole::Construct(CVirtualConsole* apVCon)
 	//hFileMapping = NULL; pConsoleData = NULL;
 	mn_Focused = -1;
 	mn_LastVKeyPressed = 0;
-	mh_LogInput = NULL; mpsz_LogInputFile = NULL; //mpsz_LogPackets = NULL; mn_LogPackets = 0;
+	mp_Log = NULL;
+	//mh_LogInput = NULL; mpsz_LogInputFile = NULL; //mpsz_LogPackets = NULL; mn_LogPackets = 0;
 	//mh_FileMapping = mh_FileMappingData = mh_FarFileMapping =
 	//mh_FarAliveEvent = NULL;
 	//mp_ConsoleInfo = NULL;
@@ -5832,50 +5833,89 @@ void CRealConsole::OnFocus(BOOL abFocused)
 
 void CRealConsole::CreateLogFiles()
 {
-	if (!m_UseLogs || mh_LogInput) return;  // уже
+	if (!m_UseLogs) return;
 
-	DWORD dwErr = 0;
-	wchar_t szFile[MAX_PATH+64], *pszDot;
-	_ASSERTE(gpConEmu->ms_ConEmuExe[0]);
-	lstrcpyW(szFile, gpConEmu->ms_ConEmuExe);
-
-	if ((pszDot = wcsrchr(szFile, L'\\')) == NULL)
+	if (!mp_Log)
 	{
-		DisplayLastError(L"wcsrchr failed!");
-		return; // ошибка
+		mp_Log = new MFileLog(L"ConEmu-input", gpConEmu->ms_ConEmuExeDir, mn_MainSrv_PID);
 	}
 
-	*pszDot = 0;
-	//mpsz_LogPackets = (wchar_t*)calloc(pszDot - szFile + 64, 2);
-	//lstrcpyW(mpsz_LogPackets, szFile);
-	//swprintf_c(mpsz_LogPackets+(pszDot-szFile), L"\\ConEmu-recv-%i-%%i.con", mn_MainSrv_PID); // ConEmu-recv-<ConEmuC_PID>-<index>.con
-	_wsprintf(pszDot, SKIPLEN(countof(szFile)-(pszDot-szFile)) L"\\ConEmu-input-%i.log", mn_MainSrv_PID);
-	mh_LogInput = CreateFileW(szFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	if (mh_LogInput == INVALID_HANDLE_VALUE)
+	HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-input", mn_MainSrv_PID) : E_UNEXPECTED;
+	if (hr != 0)
 	{
-		mh_LogInput = NULL;
-		dwErr = GetLastError();
 		wchar_t szError[MAX_PATH*2];
-		_wsprintf(szError, SKIPLEN(countof(szError)) L"Create log file failed! ErrCode=0x%08X\n%s\n", dwErr, szFile);
+		_wsprintf(szError, SKIPLEN(countof(szError)) L"Create log file failed! ErrCode=0x%08X\n%s\n", (DWORD)hr, mp_Log->GetLogFileName());
 		MBoxA(szError);
+		SafeDelete(mp_Log);
 		return;
 	}
 
-	mpsz_LogInputFile = lstrdup(szFile);
-	// OK, лог создали
+	//mp_Log->LogStartEnv(gpStartEnv);
+
+	//DWORD dwErr = 0;
+	//wchar_t szFile[MAX_PATH+64], *pszDot;
+	//_ASSERTE(gpConEmu->ms_ConEmuExe[0]);
+	//lstrcpyW(szFile, gpConEmu->ms_ConEmuExe);
+	//
+	//if ((pszDot = wcsrchr(szFile, L'\\')) == NULL)
+	//{
+	//	DisplayLastError(L"wcsrchr failed!");
+	//	return; // ошибка
+	//}
+	//
+	//*pszDot = 0;
+	////mpsz_LogPackets = (wchar_t*)calloc(pszDot - szFile + 64, 2);
+	////lstrcpyW(mpsz_LogPackets, szFile);
+	////swprintf_c(mpsz_LogPackets+(pszDot-szFile), L"\\ConEmu-recv-%i-%%i.con", mn_MainSrv_PID); // ConEmu-recv-<ConEmuC_PID>-<index>.con
+	//_wsprintf(pszDot, SKIPLEN(countof(szFile)-(pszDot-szFile)) L"\\ConEmu-input-%i.log", mn_MainSrv_PID);
+	//mh_LogInput = CreateFileW(szFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	//
+	//if (mh_LogInput == INVALID_HANDLE_VALUE)
+	//{
+	//	mh_LogInput = NULL;
+	//	dwErr = GetLastError();
+	//	wchar_t szError[MAX_PATH*2];
+	//	_wsprintf(szError, SKIPLEN(countof(szError)) L"Create log file failed! ErrCode=0x%08X\n%s\n", dwErr, szFile);
+	//	MBoxA(szError);
+	//	return;
+	//}
+	//
+	//mpsz_LogInputFile = lstrdup(szFile);
+	//// OK, лог создали
+	//
+	//// Пишем инфу
+	//wchar_t szSI[MAX_PATH*4];
+	//_wsprintf(szSI, SKIPLEN(countof(szSI)) L"ConEmu startup info\n\tDesktop: %s\n\tTitle: %s\n\tSize: {%u,%u},{%u,%u}\n"
+	//	"\tFlags: 0x%08X, ShowWindow: %u\n\tHandles: 0x%08X, 0x%08X, 0x%08X",
+	//	gpStartEnv->si.lpDesktop ? gpStartEnv->si.lpDesktop : L"",
+	//	gpStartEnv->si.lpTitle ? gpStartEnv->si.lpTitle : L"",
+	//	gpStartEnv->si.dwX, gpStartEnv->si.Y, gpStartEnv->si.dwXSize, gpStartEnv->si.dwYSize,
+	//	gpStartEnv->si.dwFlags, (DWORD)gpStartEnv->si.wShowWindow,
+	//	(DWORD)gpStartEnv->si.hStdInput, (DWORD)gpStartEnv->si.hStdOutput, (DWORD)gpStartEnv->si.hStdError);
+	//LogString(szSI, TRUE);
+	//
+	//LogString("CmdLine:");
+	//LogString(gpStartEnv->pszCmdLine ? gpStartEnv->pszCmdLine : L"<NULL>");
+	//LogString("ExecMod:");
+	//LogString(gpStartEnv->pszExecMod ? gpStartEnv->pszExecMod : L"<NULL>");
+	//LogString("WorkDir:");
+	//LogString(gpStartEnv->pszWorkDir ? gpStartEnv->pszWorkDir : L"<NULL>");
+	//LogString("PathEnv:");
+	//LogString(gpStartEnv->pszPathEnv ? gpStartEnv->pszPathEnv : L"<NULL>");
 }
 
 void CRealConsole::LogString(LPCWSTR asText, BOOL abShowTime /*= FALSE*/)
 {
 	if (!this) return;
 
-	if (!asText || !mh_LogInput) return;
+	if (!asText || !mp_Log) return;
 
-	char chAnsi[512];
-	WideCharToMultiByte(CP_UTF8, 0, asText, -1, chAnsi, countof(chAnsi)-1, 0,0);
-	chAnsi[countof(chAnsi)-1] = 0;
-	LogString(chAnsi, abShowTime);
+	mp_Log->LogString(asText, abShowTime!=0);
+
+	//char chAnsi[512];
+	//WideCharToMultiByte(CP_UTF8, 0, asText, -1, chAnsi, countof(chAnsi)-1, 0,0);
+	//chAnsi[countof(chAnsi)-1] = 0;
+	//LogString(chAnsi, abShowTime);
 }
 
 void CRealConsole::LogString(LPCSTR asText, BOOL abShowTime /*= FALSE*/)
@@ -5884,37 +5924,39 @@ void CRealConsole::LogString(LPCSTR asText, BOOL abShowTime /*= FALSE*/)
 
 	if (!asText) return;
 
-	if (mh_LogInput)
+	if (mp_Log)
 	{
-		DWORD dwLen;
+		mp_Log->LogString(asText, abShowTime!=0);
 
-		if (abShowTime)
-		{
-			SYSTEMTIME st; GetLocalTime(&st);
-			char szTime[32];
-			_wsprintfA(szTime, SKIPLEN(countof(szTime)) "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-			dwLen = strlen(szTime);
-			WriteFile(mh_LogInput, szTime, dwLen, &dwLen, 0);
-		}
-
-		if ((dwLen = strlen(asText))>0)
-			WriteFile(mh_LogInput, asText, dwLen, &dwLen, 0);
-
-		WriteFile(mh_LogInput, "\r\n", 2, &dwLen, 0);
-		FlushFileBuffers(mh_LogInput);
+		//DWORD dwLen;
+		//
+		//if (abShowTime)
+		//{
+		//	SYSTEMTIME st; GetLocalTime(&st);
+		//	char szTime[32];
+		//	_wsprintfA(szTime, SKIPLEN(countof(szTime)) "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		//	dwLen = strlen(szTime);
+		//	WriteFile(mh_LogInput, szTime, dwLen, &dwLen, 0);
+		//}
+		//
+		//if ((dwLen = strlen(asText))>0)
+		//	WriteFile(mh_LogInput, asText, dwLen, &dwLen, 0);
+		//
+		//WriteFile(mh_LogInput, "\r\n", 2, &dwLen, 0);
+		//FlushFileBuffers(mh_LogInput);
 	}
 	else
 	{
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		DEBUGSTRLOG(asText); DEBUGSTRLOG("\n");
-#endif
+		#endif
 	}
 }
 
 void CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars /*= NULL*/)
 {
 	// Есть еще вообще-то и WM_UNICHAR, но ввод UTF-32 у нас пока не поддерживается
-	if (!this || !mh_LogInput || !m_UseLogs)
+	if (!this || !mp_Log || !m_UseLogs)
 		return;
 	if (!(uMsg == WM_KEYDOWN || uMsg == WM_KEYUP || uMsg == WM_CHAR
 		|| uMsg == WM_SYSCHAR || uMsg == WM_DEADCHAR || uMsg == WM_SYSDEADCHAR
@@ -5991,15 +6033,16 @@ void CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR psz
 
 	if (*pszAdd)
 	{
-		DWORD dwLen = 0;
-		WriteFile(mh_LogInput, szInfo, strlen(szInfo), &dwLen, 0);
-		FlushFileBuffers(mh_LogInput);
+		mp_Log->LogString(szInfo, false);
+		//DWORD dwLen = 0;
+		//WriteFile(mh_LogInput, szInfo, strlen(szInfo), &dwLen, 0);
+		//FlushFileBuffers(mh_LogInput);
 	}
 }
 
 void CRealConsole::LogInput(INPUT_RECORD* pRec)
 {
-	if (!this || !mh_LogInput || !m_UseLogs) return;
+	if (!this || !mp_Log || !m_UseLogs) return;
 
 	char szInfo[192] = {0};
 	SYSTEMTIME st; GetLocalTime(&st);
@@ -6072,21 +6115,24 @@ void CRealConsole::LogInput(INPUT_RECORD* pRec)
 
 	if (*pszAdd)
 	{
-		DWORD dwLen = 0;
-		WriteFile(mh_LogInput, szInfo, strlen(szInfo), &dwLen, 0);
-		FlushFileBuffers(mh_LogInput);
+		mp_Log->LogString(szInfo, false, NULL, false);
+		//DWORD dwLen = 0;
+		//WriteFile(mh_LogInput, szInfo, strlen(szInfo), &dwLen, 0);
+		//FlushFileBuffers(mh_LogInput);
 	}
 }
 
 void CRealConsole::CloseLogFiles()
 {
-	SafeCloseHandle(mh_LogInput);
+	SafeDelete(mp_Log);
 
-	if (mpsz_LogInputFile)
-	{
-		//DeleteFile(mpsz_LogInputFile);
-		free(mpsz_LogInputFile); mpsz_LogInputFile = NULL;
-	}
+	//SafeCloseHandle(mh_LogInput);
+
+	//if (mpsz_LogInputFile)
+	//{
+	//	//DeleteFile(mpsz_LogInputFile);
+	//	free(mpsz_LogInputFile); mpsz_LogInputFile = NULL;
+	//}
 
 	//if (mpsz_LogPackets) {
 	//    //wchar_t szMask[MAX_PATH*2]; wcscpy(szMask, mpsz_LogPackets);
@@ -7958,7 +8004,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 	PostConsoleMessage(hConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, (LPARAM)dwNewKeyboardLayout);
 }
 
-void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NULL*/, bool abNoConfirm /*= false*/)
+void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NULL*/, bool abNoConfirm /*= false*/, bool abCygWin /*= false*/)
 {
 	if (!this)
 		return;
@@ -8020,6 +8066,16 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 			if (*szErr)
 				DisplayLastError(szErr, nErrCode);
 			return;
+		}
+	}
+
+	if (abCygWin && pszBuf && *pszBuf)
+	{
+		wchar_t* pszCygWin = DupCygwinPath(pszBuf, false);
+		if (pszCygWin)
+		{
+			SafeFree(pszBuf);
+			pszBuf = pszCygWin;
 		}
 	}
 

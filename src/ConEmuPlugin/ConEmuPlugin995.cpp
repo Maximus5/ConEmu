@@ -62,7 +62,7 @@ static wchar_t* GetPanelDir(HANDLE hPanel)
 	{
 		pszDir = (wchar_t*)calloc(nSize, sizeof(*pszDir));
 		if (pszDir)
-			nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, nSize, (LONG_PTR)pszDir);
+			nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, (DWORD)nSize, (LONG_PTR)pszDir);
 	}
 	_ASSERTE(nSize>0);
 	return pszDir;

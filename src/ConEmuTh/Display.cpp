@@ -2075,7 +2075,10 @@ void CeFullPanelInfo::FinalRelease()
 	if (ppItems)
 	{
 		for(int i=0; i<ItemsNumber; i++)
-			if (ppItems[i]) free(ppItems[i]);
+		{
+			if (ppItems[i])
+				ppItems[i]->FreeItem();
+		}
 
 		free(ppItems);
 		ppItems = NULL;
@@ -2202,7 +2205,9 @@ BOOL CeFullPanelInfo::FarItem2CeItem(INT_PTR anIndex,
                                      FILETIME         ftLastWriteTime,
                                      unsigned __int64 anFileSize,
                                      BOOL             abVirtualItem,
+                                     HANDLE           ahPlugin,
                                      DWORD_PTR        apUserData,
+                                     FARPROC          afFreeUserData,
                                      unsigned __int64 anFlags,
                                      DWORD            anNumberOfLinks)
 {
@@ -2212,10 +2217,23 @@ BOOL CeFullPanelInfo::FarItem2CeItem(INT_PTR anIndex,
 	               +(lstrlen(asName)+1)*2
 	               +((asDesc ? lstrlen(asDesc) : 0)+1)*2;
 
+	if ((ppItems[anIndex] != NULL) &&
+			(ppItems[anIndex]->hPlugin != ahPlugin ||
+			 ppItems[anIndex]->UserData != apUserData ||
+			 ppItems[anIndex]->FreeUserDataCallback != afFreeUserData
+			)
+		)
+	{
+		ppItems[anIndex]->FreeUserData();
+	}
+
 	// Уже может быть выделено достаточно памяти под этот элемент
 	if ((ppItems[anIndex] == NULL) || (ppItems[anIndex]->cbSize < (DWORD_PTR)nSize))
 	{
-		if (ppItems[anIndex]) free(ppItems[anIndex]);
+		if (ppItems[anIndex])
+		{
+			free(ppItems[anIndex]);
+		}
 
 		nSize += 32; //-V112
 		ppItems[anIndex] = (CePluginPanelItem*)calloc(nSize, 1);
@@ -2234,7 +2252,9 @@ BOOL CeFullPanelInfo::FarItem2CeItem(INT_PTR anIndex,
 
 	if (ppItems[anIndex]->bIsCurrent != (CurrentItem == anIndex) ||
 	        ppItems[anIndex]->bVirtualItem != abVirtualItem ||
+	        ppItems[anIndex]->hPlugin != ahPlugin ||
 	        ppItems[anIndex]->UserData != apUserData ||
+	        ppItems[anIndex]->FreeUserDataCallback != afFreeUserData ||
 	        ppItems[anIndex]->Flags != anFlags ||
 	        ppItems[anIndex]->NumberOfLinks != anNumberOfLinks ||
 	        ppItems[anIndex]->FindData.dwFileAttributes != dwFileAttributes ||
@@ -2252,7 +2272,9 @@ BOOL CeFullPanelInfo::FarItem2CeItem(INT_PTR anIndex,
 	// Копируем
 	ppItems[anIndex]->bIsCurrent = (CurrentItem == anIndex);
 	ppItems[anIndex]->bVirtualItem = abVirtualItem;
+	ppItems[anIndex]->hPlugin = ahPlugin;
 	ppItems[anIndex]->UserData = apUserData;
+	ppItems[anIndex]->FreeUserDataCallback = afFreeUserData;
 	ppItems[anIndex]->Flags = anFlags;
 	ppItems[anIndex]->NumberOfLinks = anNumberOfLinks;
 	ppItems[anIndex]->FindData.dwFileAttributes = dwFileAttributes;

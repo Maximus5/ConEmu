@@ -46,36 +46,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define SHOW_DEBUG_EVENTS
 #endif
 
-GUID guid_ConEmu = { /* 4b675d80-1d4a-4ea9-8436-fdc23f2fc14b */
-	0x4b675d80,
-	0x1d4a,
-	0x4ea9,
-	{0x84, 0x36, 0xfd, 0xc2, 0x3f, 0x2f, 0xc1, 0x4b}
-};
-GUID guid_ConEmuPluginItems = { /* 3836ad1f-5130-4a13-93d8-15fefbdc3185 */
-	0x3836ad1f,
-	0x5130,
-	0x4a13,
-	{0x93, 0xd8, 0x15, 0xfe, 0xfb, 0xdc, 0x31, 0x85}
-};
-GUID guid_ConEmuPluginMenu = { /* 830d40da-ccf3-417b-b378-87f9441c4c95 */
-	0x830d40da,
-	0xccf3,
-	0x417b,
-	{0xb3, 0x78, 0x87, 0xf9, 0x44, 0x1c, 0x4c, 0x95}
-};
-GUID guid_ConEmuGuiMacroDlg = { /* a0484f91-a800-4e3a-abac-aed4485da79d */
-	0xa0484f91,
-	0xa800,
-	0x4e3a,
-	{0xab, 0xac, 0xae, 0xd4, 0x48, 0x5d, 0xa7, 0x9d}
-};
-GUID guid_ConEmuWaitEndSynchro = { /* e93fba92-d7de-4651-9be1-c9b064254f65 */
-	0xe93fba92,
-	0xd7de,
-	0x4651,
-	{0x9b, 0xe1, 0xc9, 0xb0, 0x64, 0x25, 0x4f, 0x65}
-};
+extern GUID guid_ConEmu;
+extern GUID guid_ConEmuPluginItems;
+extern GUID guid_ConEmuPluginMenu;
+extern GUID guid_ConEmuGuiMacroDlg;
+extern GUID guid_ConEmuWaitEndSynchro;
 
 struct PluginStartupInfo *InfoW1900=NULL;
 struct FarStandardFunctions *FSFW1900=NULL;
@@ -1765,6 +1740,7 @@ void GuiMacroDlgW1900()
 //						    {0xbf, 0x9e, 0xc4, 0x86, 0xfc, 0xce, 0x45, 0x53}
 //				  };
 
+#if 0
 void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 {
 	//static wchar_t szTitle[16]; _wcscpy_c(szTitle, L"ConEmu");
@@ -1783,6 +1759,7 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	Info->Description = L"ConEmu support for Far Manager";
 	Info->Author = L"ConEmu.Maximus5@gmail.com";
 }
+#endif
 
 extern BOOL gbInfoW_OK;
 HANDLE WINAPI OpenW(const struct OpenInfo *Info)

@@ -187,6 +187,12 @@ class CConEmuMain :
 		TabBarClass *mp_TabBar;
 		CStatus *mp_Status;
 		CToolTip *mp_Tip;
+		MFileLog *mp_Log;
+		void CreateLog();
+		void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
+		void LogString(LPCSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
+		void LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		void LogWindowPos(LPCWSTR asPrefix);
 		//POINT cwShift; // difference between window size and client area size for main ConEmu window
 		POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
 

@@ -227,6 +227,11 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 {
 	LRESULT result = 0;
 
+	if (gpSetCls->isAdvLogging >= 4)
+	{
+		gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
+	}
+
 	CVirtualConsole* pVCon = NULL;
 	if (messg == WM_CREATE || messg == WM_NCCREATE)
 	{
@@ -516,6 +521,11 @@ wrap:
 LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
+
+	if (gpSetCls->isAdvLogging >= 4)
+	{
+		gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
+	}
 
 	CVirtualConsole* pVCon = NULL;
 	if (messg == WM_CREATE || messg == WM_NCCREATE)
