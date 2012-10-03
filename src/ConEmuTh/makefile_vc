@@ -26,6 +26,7 @@ LINK_OBJS = \
 $(OBJDIR)\ConEmuTh.obj \
 $(OBJDIR)\ConEmuTh995.obj \
 $(OBJDIR)\ConEmuTh1900.obj \
+$(OBJDIR)\ConEmuTh2800.obj \
 $(OBJDIR)\ConEmuThA.obj \
 $(OBJDIR)\Display.obj \
 $(OBJDIR)\ImgCache.obj \
@@ -209,6 +210,8 @@ $(OBJDIR)\ConEmuTh.obj: ConEmuTh.cpp
 $(OBJDIR)\ConEmuTh995.obj: ConEmuTh995.cpp
 
 $(OBJDIR)\ConEmuTh1900.obj: ConEmuTh1900.cpp
+
+$(OBJDIR)\ConEmuTh2800.obj: ConEmuTh2800.cpp
 
 $(OBJDIR)\ConEmuThA.obj: ConEmuThA.cpp
 

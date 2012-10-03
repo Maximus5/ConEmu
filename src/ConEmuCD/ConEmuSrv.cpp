@@ -2362,6 +2362,7 @@ HWND Attach2Gui(DWORD nTimeout)
 	pIn->StartStop.nStarted = sst_ServerStart;
 	pIn->StartStop.hWnd = ghConWnd;
 	pIn->StartStop.dwPID = gnSelfPID;
+	pIn->StartStop.dwAID = gpSrv->dwGuiAID;
 	//pIn->StartStop.dwInputTID = gpSrv->dwInputPipeThreadId;
 	pIn->StartStop.nSubSystem = gnImageSubsystem;
 

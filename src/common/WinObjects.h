@@ -123,6 +123,11 @@ struct CEStartupEnv
 	LPCWSTR pszWorkDir;
 	LPCWSTR pszPathEnv;
 	size_t  cchPathLen;
+	BOOL    bIsWine; // Информационно!
+	BOOL    bIsDbcs;
+	UINT    nAnsiCP, nOEMCP;
+	// HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
+	LPCWSTR pszRegConFonts; // "Index/CP ~t Name ~t Index/CP ..."
 };
 
 CEStartupEnv* LoadStartupEnv();

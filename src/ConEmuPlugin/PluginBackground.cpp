@@ -383,8 +383,10 @@ void CPluginBackground::CheckPanelFolders(int anForceSetPlace /*= 0*/)
 {
 	if (gFarVersion.dwVerMajor==1 || gFarVersion.dwBuild < 1348)
 		FillUpdateBackgroundA(&m_Default);
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(FillUpdateBackgroundW)(&m_Default);
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		FUNC_Y2(FillUpdateBackgroundW)(&m_Default);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		FUNC_Y1(FillUpdateBackgroundW)(&m_Default);
 	else
 		FUNC_X(FillUpdateBackgroundW)(&m_Default);
 

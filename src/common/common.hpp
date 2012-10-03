@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    109
+#define CESERVER_REQ_VER    110
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1359,6 +1359,7 @@ struct CESERVER_REQ_STARTSTOP
 {
 	StartStopType nStarted;
 	HWND2 hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
+	DWORD dwAID; // ConEmu internal ID of started CRealConsole
 	DWORD dwPID; //, dwInputTID;
 	DWORD nSubSystem; // 255 для DOS программ, 0x100 - аттач из FAR плагина
 	DWORD nImageBits; // 16/32/64

@@ -99,7 +99,7 @@ BEGIN
     cbTabLazy               "When checked - real window switching\nwill be performed on Ctrl depress"
     cbTabRecent             "Switch first between recent tabs.\nYou may still switch between tabs in\nstandard manner using Left/Right\n(after CtrlTab), while Ctrl is still presses."
     cbTabs                  "Show tabs (all opened panels, editors and viewers)\non the top of ConEmu window"
-    cbTabSelf               "Handle CtrlTab and CtrlShiftTab internally\n(by ConEmu). This keystrokes will not be sent\nto console window, bu You can easily\nswitch between consoles (panels)."
+    cbTabSelf               "Handle CtrlTab and CtrlShiftTab internally\n(by ConEmu). These keystrokes will not be sent\nto console window, but You can easily\nswitch between consoles (panels)."
     cbTabsOnTaskBar         "Represent each console on taskbar\n3s - Windows 7 and higher"
     cbThumbLoadFiles        "Generate previews for files"
     cbThumbLoadFolders      "Generate previews for folders (by first 4 files)"

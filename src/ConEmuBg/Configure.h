@@ -32,13 +32,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#if FAR_UNICODE>=1867
 		#if FARMANAGERVERSION_BUILD>=2800
 			#define FAR_INT intptr_t
+			#define InfoT InfoW2800
 		#else
 			#define FAR_INT int
+			#define InfoT InfoW1900
 		#endif
-		#define InfoT InfoW1900
-		#define _GetCheck(i) (int)InfoW1900->SendDlgMessage(hDlg,DM_GETCHECK,i,0)
-		#define GetDataPtr(i) ((const wchar_t *)InfoW1900->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
-		#define GetTextPtr(i) ((const wchar_t *)InfoW1900->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
+		#define _GetCheck(i) (int)InfoT->SendDlgMessage(hDlg,DM_GETCHECK,i,0)
+		#define GetDataPtr(i) ((const wchar_t *)InfoT->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
+		#define GetTextPtr(i) ((const wchar_t *)InfoT->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
 		#define SETTEXT(itm,txt) itm.Data = txt
 		#define wsprintfT wsprintfW
 		#define GetMsgT GetMsgW

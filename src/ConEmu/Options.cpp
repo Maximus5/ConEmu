@@ -2624,6 +2624,8 @@ void Settings::SaveSizePosOnExit()
 	if (mb_SizePosAutoSaved)
 		return;
 	mb_SizePosAutoSaved = true;
+
+	gpConEmu->LogWindowPos(L"SaveSizePosOnExit");
 		
 	SettingsBase* reg = CreateSettings();
 

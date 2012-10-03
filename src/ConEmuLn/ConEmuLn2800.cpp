@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif
-#include "../common/pluginW1900.hpp" // Far3
+#include "../common/pluginW2800.hpp" // Far3
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif
@@ -46,16 +46,35 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOW_DEBUG_EVENTS
 #endif
 
-struct PluginStartupInfo *InfoW1900 = NULL;
-struct FarStandardFunctions *FSFW1900 = NULL;
+struct PluginStartupInfo *InfoW2800 = NULL;
+struct FarStandardFunctions *FSFW2800 = NULL;
 
-extern GUID guid_ConEmuLn;
-extern GUID guid_ConEmuLnCfgDlg;
-extern GUID guid_ConEmuLnPluginMenu;
-extern GUID guid_ConEmuLnPluginConfig;
+GUID guid_ConEmuLn = { /* e71f78e4-585c-4ca7-9508-71d1966f7b1e */
+    0xe71f78e4,
+    0x585c,
+    0x4ca7,
+    {0x95, 0x08, 0x71, 0xd1, 0x96, 0x6f, 0x7b, 0x1e}
+  };
+GUID guid_ConEmuLnCfgDlg = { /* d381193b-8196-4240-942c-e1589da0dc00 */
+    0xd381193b,
+    0x8196,
+    0x4240,
+    {0x94, 0x2c, 0xe1, 0x58, 0x9d, 0xa0, 0xdc, 0x00}
+  };
+GUID guid_ConEmuLnPluginMenu = { /* d119555c-1291-4ae7-ad9b-f8a4df454c98 */
+	0xd119555c,
+	0x1291,
+	0x4ae7,
+	{0xad, 0x9b, 0xf8, 0xa4, 0xdf, 0x45, 0x4c, 0x98}
+};
+GUID guid_ConEmuLnPluginConfig = { /* e3fc38bf-e634-4340-9933-77267c1a8a1b */
+    0xe3fc38bf,
+    0xe634,
+    0x4340,
+    {0x99, 0x33, 0x77, 0x26, 0x7c, 0x1a, 0x8a, 0x1b}
+  };
 
 
-#if 0
 void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 {
 	//static wchar_t szTitle[16]; _wcscpy_c(szTitle, L"ConEmu");
@@ -64,7 +83,10 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 
 	//Info->StructSize = sizeof(GlobalInfo);
 	_ASSERTE(Info->StructSize >= sizeof(GlobalInfo));
-	Info->MinFarVersion = FARMANAGERVERSION;
+	if (gFarVersion.dwBuild >= FAR_Y2_VER)
+		Info->MinFarVersion = FARMANAGERVERSION;
+	else
+		Info->MinFarVersion = MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR, FARMANAGERVERSION_REVISION, 2578, FARMANAGERVERSION_STAGE);
 
 	// Build: YYMMDDX (YY - две цифры года, MM - мес€ц, DD - день, X - 0 и выше-номер подсборки)
 	Info->Version = MAKEFARVERSION(MVV_1,MVV_2,MVV_3,((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10),VS_RELEASE);
@@ -74,9 +96,8 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	Info->Description = L"Paint underlined background in the ConEmu window";
 	Info->Author = L"ConEmu.Maximus5@gmail.com";
 }
-#endif
 
-void GetPluginInfoW1900(void *piv)
+void GetPluginInfoW2800(void *piv)
 {
 	PluginInfo *pi = (PluginInfo*)piv;
 	//memset(pi, 0, sizeof(PluginInfo));
@@ -96,12 +117,12 @@ void GetPluginInfoW1900(void *piv)
 	pi->PluginConfig.Count = 1;
 }
 
-void SetStartupInfoW1900(void *aInfo)
+void SetStartupInfoW2800(void *aInfo)
 {
-	INIT_FAR_PSI(::InfoW1900, ::FSFW1900, (PluginStartupInfo*)aInfo);
+	INIT_FAR_PSI(::InfoW2800, ::FSFW2800, (PluginStartupInfo*)aInfo);
 
 	VersionInfo FarVer = {0};
-	if (InfoW1900->AdvControl(&guid_ConEmuLn, ACTL_GETFARMANAGERVERSION, 0, &FarVer))
+	if (InfoW2800->AdvControl(&guid_ConEmuLn, ACTL_GETFARMANAGERVERSION, 0, &FarVer))
 	{
 		if (FarVer.Major == 3)
 		{
@@ -117,12 +138,12 @@ void SetStartupInfoW1900(void *aInfo)
 		}
 	}
 	
-	//int nLen = lstrlenW(InfoW1900->RootKey)+16;
+	//int nLen = lstrlenW(InfoW2800->RootKey)+16;
 
 	//if (gszRootKey) free(gszRootKey);
 
 	//gszRootKey = (wchar_t*)calloc(nLen,2);
-	//lstrcpyW(gszRootKey, InfoW1900->RootKey);
+	//lstrcpyW(gszRootKey, InfoW2800->RootKey);
 	//WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
 
 	//if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
@@ -131,7 +152,7 @@ void SetStartupInfoW1900(void *aInfo)
 }
 
 extern BOOL gbInfoW_OK;
-HANDLE WINAPI OpenW1900(const void* apInfo)
+HANDLE WINAPI OpenW2800(const void* apInfo)
 {
 	const struct OpenInfo *Info = (const struct OpenInfo*)apInfo;
 
@@ -141,45 +162,45 @@ HANDLE WINAPI OpenW1900(const void* apInfo)
 	return OpenPluginWcmn(Info->OpenFrom, Info->Data);
 }
 
-void ExitFARW1900(void)
+void ExitFARW2800(void)
 {
-	if (InfoW1900)
+	if (InfoW2800)
 	{
-		free(InfoW1900);
-		InfoW1900=NULL;
+		free(InfoW2800);
+		InfoW2800=NULL;
 	}
 
-	if (FSFW1900)
+	if (FSFW2800)
 	{
-		free(FSFW1900);
-		FSFW1900=NULL;
+		free(FSFW2800);
+		FSFW2800=NULL;
 	}
 }
 
-LPCWSTR GetMsgW1900(int aiMsg)
+LPCWSTR GetMsgW2800(int aiMsg)
 {
-	if (!InfoW1900 || !InfoW1900->GetMsg)
+	if (!InfoW2800 || !InfoW2800->GetMsg)
 		return L"";
 
-	return InfoW1900->GetMsg(&guid_ConEmuLn,aiMsg);
+	return InfoW2800->GetMsg(&guid_ConEmuLn,aiMsg);
 }
 
 #define FAR_UNICODE 1867
 #include "Configure.h"
 
-int ConfigureW1900(int ItemNumber)
+int ConfigureW2800(int ItemNumber)
 {
-	if (!InfoW1900)
+	if (!InfoW2800)
 		return false;
 
 	return ConfigureProc(ItemNumber);
 }
 
-void SettingsLoadW1900()
+void SettingsLoadW2800()
 {
 	FarSettingsCreate sc = {sizeof(FarSettingsCreate), guid_ConEmuLn, INVALID_HANDLE_VALUE};
 	FarSettingsItem fsi = {0};
-	if (InfoW1900->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
+	if (InfoW2800->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
 	{
 		//BYTE cVal; DWORD nVal;
 
@@ -193,7 +214,7 @@ void SettingsLoadW1900()
 				fsi.Type = FST_DATA;
 				//fsi.Data.Size = 1; 
 				//fsi.Data.Data = &cVal;
-				if (InfoW1900->SettingsControl(sc.Handle, SCTL_GET, 0, &fsi) && (fsi.Data.Size == sizeof(BYTE)))
+				if (InfoW2800->SettingsControl(sc.Handle, SCTL_GET, 0, &fsi) && (fsi.Data.Size == sizeof(BYTE)))
 					*((BOOL*)p->pValue) = (*((BYTE*)fsi.Data.Data) != 0);
 			}
 			else if (p->nValueType == REG_DWORD)
@@ -203,22 +224,22 @@ void SettingsLoadW1900()
 				fsi.Type = FST_DATA;
 				//fsi.Data.Size = 4;
 				//fsi.Data.Data = &nVal;
-				if (InfoW1900->SettingsControl(sc.Handle, SCTL_GET, 0, &fsi) && (fsi.Data.Size == sizeof(DWORD)))
+				if (InfoW2800->SettingsControl(sc.Handle, SCTL_GET, 0, &fsi) && (fsi.Data.Size == sizeof(DWORD)))
 					*((DWORD*)p->pValue) = *((DWORD*)fsi.Data.Data);
 			}
 		}
 
-		InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
+		InfoW2800->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
 	}
 }
-void SettingsSaveW1900()
+void SettingsSaveW2800()
 {
-	if (!InfoW1900)
+	if (!InfoW2800)
 		return;
 
 	FarSettingsCreate sc = {sizeof(FarSettingsCreate), guid_ConEmuLn, INVALID_HANDLE_VALUE};
 	FarSettingsItem fsi = {0};
-	if (InfoW1900->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
+	if (InfoW2800->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
 	{
 		BYTE cVal;
 		for (ConEmuLnSettings *p = gSettings; p->pszValueName; p++)
@@ -231,7 +252,7 @@ void SettingsSaveW1900()
 				fsi.Type = FST_DATA;
 				fsi.Data.Size = 1; 
 				fsi.Data.Data = &cVal;
-				InfoW1900->SettingsControl(sc.Handle, SCTL_SET, 0, &fsi);
+				InfoW2800->SettingsControl(sc.Handle, SCTL_SET, 0, &fsi);
 			}
 			else if (p->nValueType == REG_DWORD)
 			{
@@ -240,10 +261,10 @@ void SettingsSaveW1900()
 				fsi.Type = FST_DATA;
 				fsi.Data.Size = 4;
 				fsi.Data.Data = p->pValue;
-				InfoW1900->SettingsControl(sc.Handle, SCTL_SET, 0, &fsi);
+				InfoW2800->SettingsControl(sc.Handle, SCTL_SET, 0, &fsi);
 			}
 		}
 
-		InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
+		InfoW2800->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
 	}
 }

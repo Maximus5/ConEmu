@@ -8966,8 +8966,10 @@ void CSettings::UpdateWindowMode(WORD WndMode)
 	}
 }
 
-void CSettings::UpdatePos(int x, int y, bool bGetRect)
+void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 {
+	int x = ax, y = ay;
+
 	if (!gpConEmu->isFullScreen() && !gpConEmu->isZoomed())
 	{
 		if (!gpConEmu->isIconic())
@@ -8995,6 +8997,13 @@ void CSettings::UpdatePos(int x, int y, bool bGetRect)
 		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndX, gpSet->isUseCurrentSizePos ? gpConEmu->wndX : gpSet->_wndX, TRUE);
 		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndY, gpSet->isUseCurrentSizePos ? gpConEmu->wndY : gpSet->_wndY, TRUE);
 		mb_IgnoreEditChanged = FALSE;
+	}
+
+	if (isAdvLogging >= 2)
+	{
+		wchar_t szLabel[128];
+		_wsprintf(szLabel, SKIPLEN(countof(szLabel)) L"UpdatePos A={%i,%i} C={%i,%i} S={%i,%i}", ax,ay, gpConEmu->wndX, gpConEmu->wndY, gpSet->_wndX, gpSet->_wndY);
+		gpConEmu->LogWindowPos(szLabel);
 	}
 }
 
@@ -9032,6 +9041,13 @@ void CSettings::UpdateSize(UINT w, UINT h)
 		{
 			EnableWindow(GetDlgItem(mh_Tabs[thi_SizePos], SettingsNS::nSizeCtrlId[i]), bNormalChecked);
 		}
+	}
+
+	if (isAdvLogging >= 2)
+	{
+		wchar_t szLabel[128];
+		_wsprintf(szLabel, SKIPLEN(countof(szLabel)) L"UpdateSize A={%i,%i} C={%i,%i} S={%i,%i}", w,h, gpConEmu->wndWidth, gpConEmu->wndHeight, gpSet->_wndWidth, gpSet->_wndHeight);
+		gpConEmu->LogWindowPos(szLabel);
 	}
 }
 
@@ -12203,22 +12219,44 @@ bool CSettings::CheckConsoleFontRegistry(LPCWSTR asFaceName)
 {
 	bool lbFound = false;
 	HKEY hk;
+	DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
 
 	if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
-	                  0, KEY_READ, &hk))
+	                  0, nRights, &hk))
 	{
-		wchar_t szId[32] = {0}, szFont[255]; DWORD dwLen, dwType;
+		wchar_t szId[32] = {0}, szFont[255]; DWORD dwLen, dwType; LONG iRc;
 
-		for(DWORD i = 0; i <20; i++)
+		if (gbIsDBCS)
 		{
-			szId[i] = L'0'; szId[i+1] = 0; wmemset(szFont, 0, 255);
-
-			if (RegQueryValueExW(hk, szId, NULL, &dwType, (LPBYTE)szFont, &(dwLen = 255*2)))
-				break;
-
-			if (lstrcmpi(szFont, asFaceName) == 0)
+			DWORD idx = 0, cchName = countof(szId), dwLen = sizeof(szFont)-2;
+			while ((iRc = RegEnumValue(hk, idx++, szId, &cchName, NULL, &dwType, (LPBYTE)szFont, &dwLen)) == 0)
 			{
-				lbFound = true; break;
+				szId[min(countof(szId)-1,cchName)] = 0; szFont[min(countof(szFont)-1,dwLen/2)] = 0;
+				wchar_t* pszEnd;
+				if (wcstoul(szId, &pszEnd, 10) && *szFont)
+				{
+					if (lstrcmpi((szFont[0] == L'*') ? (szFont+1) : szFont, asFaceName) == 0)
+					{
+						lbFound = true; break;
+					}
+				}
+				cchName = countof(szId); dwLen = sizeof(szFont)-2;
+			}
+		}
+
+		if (!lbFound)
+		{
+			for (DWORD i = 0; i < 20; i++)
+			{
+				szId[i] = L'0'; szId[i+1] = 0; wmemset(szFont, 0, 255);
+
+				if (RegQueryValueExW(hk, szId, NULL, &dwType, (LPBYTE)szFont, &(dwLen = 255*2)))
+					break;
+
+				if (lstrcmpi(szFont, asFaceName) == 0)
+				{
+					lbFound = true; break;
+				}
 			}
 		}
 
@@ -12255,7 +12293,7 @@ bool CSettings::CheckConsoleFontFast()
 
 			// Интересуют только TrueType (вроде только для TTF доступен lpOutl - проверить
 			if (pszFamilyName[0] != L'@'
-			        && IsAlmostMonospace(pszFamilyName, lpOutl->otmTextMetrics.tmMaxCharWidth, lpOutl->otmTextMetrics.tmAveCharWidth, lpOutl->otmTextMetrics.tmHeight)
+			        && (gbIsDBCS || IsAlmostMonospace(pszFamilyName, lpOutl->otmTextMetrics.tmMaxCharWidth, lpOutl->otmTextMetrics.tmAveCharWidth, lpOutl->otmTextMetrics.tmHeight))
 			        && lpOutl->otmPanoseNumber.bProportion == PAN_PROP_MONOSPACED
 			        && lstrcmpi(pszFamilyName, gpSet->ConsoleFont.lfFaceName) == 0
 			  )
@@ -12348,40 +12386,80 @@ bool CSettings::CheckConsoleFontFast()
 
 bool CSettings::CheckConsoleFont(HWND ahDlg)
 {
-	gpSetCls->nConFontError = ConFontErr_NonSystem|ConFontErr_NonRegistry;
-	bool bLoaded = false;
-
-	if (ahDlg && (GetSystemMetrics(SM_DBCSENABLED) != 0))
+	if (gbIsDBCS)
 	{
-		// Chinese
-		HKEY hk = NULL;
-		if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont", 0, KEY_READ, &hk))
-		{
-			DWORD dwIndex = 0;
-			wchar_t szName[255], szValue[255] = {};
-			DWORD cchName = countof(szName), cbData = sizeof(szValue)-2, dwType;
-			while (!RegEnumValue(hk, dwIndex++, szName, &cchName, NULL, &dwType, (LPBYTE)szValue, &cbData))
-			{
-            	if ((dwType == REG_DWORD) && *szName && *szValue)
-            	{
-            		SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM)szValue);
-            		bLoaded = true;
-            	}
+		// В DBCS IsAlmostMonospace работает неправильно
+		gpSetCls->CheckConsoleFontFast();
 
-				// Next
-				cchName = countof(szName); cbData = sizeof(szValue);
-				ZeroStruct(szValue);
+		// Заполнить список шрифтами из реестра
+		HKEY hk;
+		DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
+
+		if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
+						  0, nRights, &hk))
+		{
+			wchar_t szId[32] = {0}, szFont[255]; DWORD dwType; LONG iRc;
+
+			DWORD idx = 0, cchName = countof(szId), dwLen = sizeof(szFont)-2;
+			while ((iRc = RegEnumValue(hk, idx++, szId, &cchName, NULL, &dwType, (LPBYTE)szFont, &dwLen)) == 0)
+			{
+				szId[min(countof(szId)-1,cchName)] = 0; szFont[min(countof(szFont)-1,dwLen/2)] = 0;
+				if (*szFont)
+				{
+					LPCWSTR pszFaceName = (szFont[0] == L'*') ? (szFont+1) : szFont;
+					if (SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) pszFaceName)==-1)
+					{
+						int nIdx;
+						nIdx = SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM) pszFaceName); //-V103
+					}
+				}
+				cchName = countof(szId); dwLen = sizeof(szFont)-2;
 			}
-			RegCloseKey(hk);
 		}
 	}
-
-	if (!bLoaded)
+	else
 	{
-		// Сначала загрузить имена шрифтов, установленных в систему
-		HDC hdc = GetDC(NULL);
-		EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumConFamCallBack, (LPARAM) ahDlg);
-		DeleteDC(hdc);
+		gpSetCls->nConFontError = ConFontErr_NonSystem|ConFontErr_NonRegistry;
+
+		bool bLoaded = false;
+
+		if (ahDlg && (GetSystemMetrics(SM_DBCSENABLED) != 0))
+		{
+			// Chinese
+			HKEY hk = NULL;
+			DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
+			if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont", 0, nRights, &hk))
+			{
+				DWORD dwIndex = 0;
+				wchar_t szName[255], szValue[255] = {};
+				DWORD cchName = countof(szName), cbData = sizeof(szValue)-2, dwType;
+				while (!RegEnumValue(hk, dwIndex++, szName, &cchName, NULL, &dwType, (LPBYTE)szValue, &cbData))
+				{
+            		if ((dwType == REG_DWORD) && *szName && *szValue)
+            		{
+            			SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM)szValue);
+            			bLoaded = true;
+            		}
+
+					// Next
+					cchName = countof(szName); cbData = sizeof(szValue);
+					ZeroStruct(szValue);
+				}
+				RegCloseKey(hk);
+			}
+		}
+
+		if (!bLoaded)
+		{
+			// Сначала загрузить имена шрифтов, установленных в систему
+			HDC hdc = GetDC(NULL);
+			EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumConFamCallBack, (LPARAM) ahDlg);
+			DeleteDC(hdc);
+		}
+
+		// Проверить реестр
+		if (CheckConsoleFontRegistry(gpSet->ConsoleFont.lfFaceName))
+			gpSetCls->nConFontError &= ~(DWORD)ConFontErr_NonRegistry;
 	}
 
 	// Показать текущий шрифт
@@ -12390,10 +12468,6 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 		if (SelectString(ahDlg, tConsoleFontFace, gpSet->ConsoleFont.lfFaceName)<0)
 			SetDlgItemText(ahDlg, tConsoleFontFace, gpSet->ConsoleFont.lfFaceName);
 	}
-
-	// Проверить реестр
-	if (CheckConsoleFontRegistry(gpSet->ConsoleFont.lfFaceName))
-		gpSetCls->nConFontError &= ~(DWORD)ConFontErr_NonRegistry;
 
 	return (gpSetCls->nConFontError == 0);
 }
@@ -12534,9 +12608,10 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					bool lbFound = false;
 					GetDlgItemText(hWnd2, tConsoleFontFace, szFaceName, countof(szFaceName));
 					HKEY hk;
+					DWORD nRights = KEY_ALL_ACCESS|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
 
 					if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
-					                  0, KEY_ALL_ACCESS, &hk))
+					                  0, nRights, &hk))
 					{
 						wchar_t szId[32] = {0}, szFont[255]; DWORD dwLen, dwType;
 

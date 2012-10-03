@@ -71,7 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#endif
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
@@ -559,6 +559,8 @@ CConEmuMain::CConEmuMain()
 	mn_MsgWinKeyFromHook = RegisterWindowMessage(CONEMUMSG_HOOKEDKEY);
 	//mn_MsgConsoleHookedKey = RegisterWindowMessage(CONEMUMSG_CONSOLEHOOKEDKEY);
 	mn_ShellExecuteEx = ++nAppMsg;
+		InitializeCriticalSection(&mcs_ShellExecuteEx);
+		mb_InShellExecuteQueue = false;
 	mn_PostConsoleResize = ++nAppMsg;
 	mn_ConsoleLangChanged = ++nAppMsg;
 	mn_MsgPostOnBufferHeight = ++nAppMsg;
@@ -1670,6 +1672,19 @@ BOOL CConEmuMain::CreateMainWindow()
 	}
 
 	HWND hParent = m_InsideIntegration ? mh_InsideParentWND : ghWndApp;
+
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szCreate[128];
+		_wsprintf(szCreate, SKIPLEN(countof(szCreate)) L"Creating main window.%s%s%s Parent=x%08X X=%i Y=%i W=%i H=%i style=x%08X exStyle=x%08X Mode=%u",
+			(DWORD)hParent,
+			gpSet->isQuakeStyle ? L" Quake" : L"",
+			gpConEmu->m_InsideIntegration ? L" Inside" : L"",
+			gpSet->isDesktopMode ? L" Desktop" : L"",
+			gpConEmu->wndX, gpConEmu->wndY, nWidth, nHeight, style, styleEx,
+			gpSet->isQuakeStyle ? gpSet->_WindowMode : WindowMode);
+		LogString(szCreate);
+	}
 
 	//if (gpConEmu->WindowMode == wmMaximized) style |= WS_MAXIMIZE;
 	//style |= WS_VISIBLE;
@@ -3090,6 +3105,8 @@ CConEmuMain::~CConEmuMain()
 	m_GuiServer.Stop(true);
 
 	CVConGroup::Deinitialize();
+
+	DeleteCriticalSection(&mcs_ShellExecuteEx);
 	
 	// По идее, уже должен был быть вызван в OnDestroy
 	FinalizePortableReg();
@@ -5314,6 +5331,9 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 			}
 		}
 
+	if (gpSetCls->isAdvLogging)
+		LogWindowPos(L"OnSizing.end");
+
 	return result;
 }
 
@@ -5377,6 +5397,9 @@ LRESULT CConEmuMain::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 	{
 		TODO("Desktop mode?");
 		MoveWindow(ghWnd, rcWnd.left, rcWnd.right, nWidth+1, nHeight+1, TRUE);
+
+		if (gpSetCls->isAdvLogging)
+			LogWindowPos(L"OnMoving.end");
 	}
 	else
 	{
@@ -5424,6 +5447,17 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	WINDOWPOS *p = (WINDOWPOS*)lParam;
 	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
+
+	if (gpSetCls->isAdvLogging >= 2)
+	{
+		wchar_t szInfo[255];
+		wcscpy_c(szInfo, L"OnWindowPosChanged:");
+		if (dwStyle & WS_MAXIMIZE) wcscpy_c(szInfo, L" (zoomed)");
+		if (dwStyle & WS_MINIMIZE) wcscpy_c(szInfo, L" (iconic)");
+		size_t cchLen = wcslen(szInfo);
+		_wsprintf(szInfo+cchLen, SKIPLEN(countof(szInfo)-cchLen) L" x%08X x%08X (F:x%08X X:%i Y:%i W:%i H:%i)", dwStyle, dwStyleEx, p->flags, p->x, p->y, p->cx, p->cy);
+		LogString(szInfo);
+	}
 
 	#ifdef _DEBUG
 	static int cx, cy;
@@ -5530,46 +5564,61 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	bool zoomed = ::IsZoomed(ghWnd);
 	bool iconic = ::IsIconic(ghWnd);
 
-	#ifdef _DEBUG
 	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
+
+
+	#ifdef _DEBUG
 	_ASSERTE(zoomed == ((dwStyle & WS_MAXIMIZE) == WS_MAXIMIZE));
 	_ASSERTE(iconic == ((dwStyle & WS_MINIMIZE) == WS_MINIMIZE));
 	#endif
 
+
+	wchar_t szInfo[255];
+	if (gpSetCls->isAdvLogging >= 2)
+	{
+		wcscpy_c(szInfo, L"OnWindowPosChanging:");
+		if (zoomed) wcscpy_c(szInfo, L" (zoomed)");
+		if (iconic) wcscpy_c(szInfo, L" (iconic)");
+		size_t cchLen = wcslen(szInfo);
+		_wsprintf(szInfo+cchLen, SKIPLEN(countof(szInfo)-cchLen) L" x%08X x%08X (F:x%08X X:%i Y:%i W:%i H:%i)", dwStyle, dwStyleEx, p->flags, p->x, p->y, p->cx, p->cy);
+	}
+
+
 	#ifdef _DEBUG
-	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
-	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X) style=0x%08X%s\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle, zoomed ? L" (zoomed)" : L"");
-	DEBUGSTRSIZE(szDbg);
-	DWORD nCurTick = GetTickCount();
-	static int cx, cy;
-
-	if (!(p->flags & SWP_NOSIZE) && (cx != p->cx || cy != p->cy))
 	{
-		cx = p->cx; cy = p->cy;
-	}
+		wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X) style=0x%08X%s\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle, zoomed ? L" (zoomed)" : L"");
+		DEBUGSTRSIZE(szDbg);
+		DWORD nCurTick = GetTickCount();
+		static int cx, cy;
 
-	if (m_FixPosAfterStyle)
-	{
-		if ((nCurTick - m_FixPosAfterStyle) < FIXPOSAFTERSTYLE_DELTA)
+		if (!(p->flags & SWP_NOSIZE) && (cx != p->cx || cy != p->cy))
 		{
-			p->flags &= ~(SWP_NOMOVE|SWP_NOSIZE);
-			p->x = mrc_FixPosAfterStyle.left;
-			p->y = mrc_FixPosAfterStyle.top;
-			p->cx = mrc_FixPosAfterStyle.right - mrc_FixPosAfterStyle.left;
-			p->cy = mrc_FixPosAfterStyle.bottom - mrc_FixPosAfterStyle.top;
+			cx = p->cx; cy = p->cy;
 		}
-		m_FixPosAfterStyle = 0;
+
+		if (m_FixPosAfterStyle)
+		{
+			if ((nCurTick - m_FixPosAfterStyle) < FIXPOSAFTERSTYLE_DELTA)
+			{
+				p->flags &= ~(SWP_NOMOVE|SWP_NOSIZE);
+				p->x = mrc_FixPosAfterStyle.left;
+				p->y = mrc_FixPosAfterStyle.top;
+				p->cx = mrc_FixPosAfterStyle.right - mrc_FixPosAfterStyle.left;
+				p->cy = mrc_FixPosAfterStyle.bottom - mrc_FixPosAfterStyle.top;
+			}
+			m_FixPosAfterStyle = 0;
+		}
+
+			#ifdef CATCH_TOPMOST_SET
+			// Отлов неожиданной установки "AlwaysOnTop"
+			static bool bWasTopMost = false;
+			_ASSERTE(((p->flags & SWP_NOZORDER) || (p->hwndInsertAfter!=HWND_TOPMOST)) && "OnWindowPosChanging");
+			_ASSERTE(((dwStyleEx & WS_EX_TOPMOST) == 0) && "OnWindowPosChanging");
+			_ASSERTE((bWasTopMost || gpSet->isAlwaysOnTop || ((dwStyleEx & WS_EX_TOPMOST)==0)) && "TopMost mode detected in OnWindowPosChanging");
+			bWasTopMost = ((dwStyleEx & WS_EX_TOPMOST)==WS_EX_TOPMOST);
+			#endif
 	}
-
-	#ifdef CATCH_TOPMOST_SET
-	// Отлов неожиданной установки "AlwaysOnTop"
-	static bool bWasTopMost = false;
-	_ASSERTE(((p->flags & SWP_NOZORDER) || (p->hwndInsertAfter!=HWND_TOPMOST)) && "OnWindowPosChanging");
-	_ASSERTE(((dwStyleEx & WS_EX_TOPMOST) == 0) && "OnWindowPosChanging");
-	_ASSERTE((bWasTopMost || gpSet->isAlwaysOnTop || ((dwStyleEx & WS_EX_TOPMOST)==0)) && "TopMost mode detected in OnWindowPosChanging");
-	bWasTopMost = ((dwStyleEx & WS_EX_TOPMOST)==WS_EX_TOPMOST);
-	#endif
-
 	#endif
 
 	//120821 - Размер мог быть изменен извне (Win+Up например)
@@ -5706,6 +5755,13 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	// Иначе не вызвутся события WM_SIZE/WM_MOVE
 	result = DefWindowProc(hWnd, uMsg, wParam, lParam);
 	p = (WINDOWPOS*)lParam;
+
+	if (gpSetCls->isAdvLogging >= 2)
+	{
+		size_t cchLen = wcslen(szInfo);
+		_wsprintf(szInfo+cchLen, SKIPLEN(countof(szInfo)-cchLen) L" --> (F:x%08X X:%i Y:%i W:%i H:%i)", p->flags, p->x, p->y, p->cx, p->cy);
+		LogString(szInfo);
+	}
 
 	return result;
 }
@@ -6258,44 +6314,111 @@ void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
 	lstrcpyn(TitleTemplate, asTemplate ? asTemplate : L"", countof(TitleTemplate));
 }
 
-struct GuiShellExecuteExArg
-{
-	CVirtualConsole* pVCon;
-	BOOL bAllowAsync;
-};
-
-LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync, CVirtualConsole* apVCon)
+LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, CVirtualConsole* apVCon)
 {
 	LRESULT lRc = 0;
 
 	if (!isMainThread())
 	{
-		GuiShellExecuteExArg* pArg = (GuiShellExecuteExArg*)malloc(sizeof(*pArg));
+		GuiShellExecuteExArg* pArg = (GuiShellExecuteExArg*)calloc(1,sizeof(*pArg));
 		pArg->pVCon = apVCon;
-		pArg->bAllowAsync = abAllowAsync;
+		pArg->lpShellExecute = lpShellExecute;
+		pArg->hReadyEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-		if (abAllowAsync)
-			lRc = PostMessage(ghWnd, mn_ShellExecuteEx, (WPARAM)pArg, (LPARAM)lpShellExecute);
-		else
-			lRc = SendMessage(ghWnd, mn_ShellExecuteEx, (WPARAM)pArg, (LPARAM)lpShellExecute);
+		EnterCriticalSection(&mcs_ShellExecuteEx);
+		m_ShellExecuteQueue.push_back(pArg);
+		LeaveCriticalSection(&mcs_ShellExecuteEx);
+
+		PostMessage(ghWnd, mn_ShellExecuteEx, 0, 0);
+
+		if (ghWnd && IsWindow(ghWnd))
+		{
+			WaitForSingleObject(pArg->hReadyEvent, INFINITE);
+
+			lRc = pArg->bResult;
+		}
+
+		SafeCloseHandle(pArg->hReadyEvent);
 	}
 	else
 	{
-		/*if (IsDebuggerPresent()) { -- не требуется. был баг с памятью
-			int nBtn = MessageBox(ghWnd, L"Debugger active!\nShellExecuteEx(runas) my fails, when VC IDE\ncatches Microsoft C++ exceptions.\nContinue?", GetDefaultTitle(), MB_ICONASTERISK|MB_YESNO|MB_DEFBUTTON2);
-			if (nBtn != IDYES)
-				return (FALSE);
-		}*/
-		lRc = ::ShellExecuteEx(lpShellExecute);
-
-		//120429 - если мы были в Recreate - то наверное не закрывать, пусть болванка висит?
-		if (abAllowAsync && (lRc == 0) && (isValid(apVCon) && !apVCon->RCon()->InRecreate()))
-		{
-			apVCon->RCon()->CloseConsole(false, false);
-		}
+		_ASSERTE(FALSE && "GuiShellExecuteEx must not be called in Main thread!");
 	}
 
 	return lRc;
+}
+
+void CConEmuMain::GuiShellExecuteExQueue()
+{
+	if (mb_InShellExecuteQueue)
+	{
+		// Очередь уже обрабатывается!
+		return;
+	}
+
+	_ASSERTE(isMainThread()); // Должно выполняться в основном потоке!
+
+	mb_InShellExecuteQueue = true;
+
+	while (m_ShellExecuteQueue.size() != 0)
+	{
+		GuiShellExecuteExArg* pArg = NULL;
+
+		EnterCriticalSection(&mcs_ShellExecuteEx);
+		for (INT_PTR i = 0; i < m_ShellExecuteQueue.size(); i++)
+		{
+			if (m_ShellExecuteQueue[i]->bInProcess)
+			{
+				_ASSERTE(m_ShellExecuteQueue[i]->bInProcess == FALSE); // TRUE - должен быть убран из очереди!
+			}
+			else
+			{
+				m_ShellExecuteQueue[i]->bInProcess = TRUE;
+				pArg = m_ShellExecuteQueue[i];
+				m_ShellExecuteQueue.erase(i);
+				break;
+			}
+		}
+		LeaveCriticalSection(&mcs_ShellExecuteEx);
+
+		if (!pArg)
+		{
+			break; // очередь обработана?
+		}
+
+		SHELLEXECUTEINFO seiPre = *pArg->lpShellExecute;
+
+		BOOL lRc = ::ShellExecuteEx(pArg->lpShellExecute);
+
+		SHELLEXECUTEINFO seiPst = *pArg->lpShellExecute;
+		DWORD dwErr = (lRc == FALSE) ? GetLastError() : 0;
+
+		pArg->bResult = lRc;
+		pArg->dwErrCode = dwErr;		
+
+		if (lRc != FALSE)
+		{
+			// OK, но нам нужен хэндл запущенного процесса
+			_ASSERTE(seiPst.hProcess != NULL);
+			_ASSERTE(pArg->lpShellExecute->hProcess != NULL);
+		}
+		else // Ошибка
+		{
+			//120429 - если мы были в Recreate - то наверное не закрывать, пусть болванка висит?
+			if ((isValid(pArg->pVCon) && !pArg->pVCon->RCon()->InRecreate()))
+			{
+				pArg->pVCon->RCon()->CloseConsole(false, false);
+			}
+		}
+
+		SetEvent(pArg->hReadyEvent);
+
+		UNREFERENCED_PARAMETER(seiPre.cbSize);
+		UNREFERENCED_PARAMETER(seiPst.cbSize);
+		UNREFERENCED_PARAMETER(dwErr);
+	}
+
+	mb_InShellExecuteQueue = false;
 }
 
 //BOOL CConEmuMain::HandlerRoutine(DWORD dwCtrlType)
@@ -10858,15 +10981,23 @@ HMONITOR CConEmuMain::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
 
 LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 {
-	#ifdef _DEBUG
+	bool bLog = RELEASEDEBUGTEST((gpSetCls->isAdvLogging >= 2),true);
 	wchar_t szMinMax[255];
-	_wsprintf(szMinMax, SKIPLEN(countof(szMinMax)) L"OnGetMinMaxInfo[before] MaxSize={%i,%i}, MaxPos={%i,%i}, MinTrack={%i,%i}, MaxTrack={%i,%i}\n",
+	RECT rcWnd;
+
+	if (bLog)
+	{
+		GetWindowRect(ghWnd, &rcWnd);
+		_wsprintf(szMinMax, SKIPLEN(countof(szMinMax)) L"OnGetMinMaxInfo[before] MaxSize={%i,%i}, MaxPos={%i,%i}, MinTrack={%i,%i}, MaxTrack={%i,%i}, Cur={%i,%i}-{%i,%i}\n",
 	          pInfo->ptMaxSize.x, pInfo->ptMaxSize.y,
 	          pInfo->ptMaxPosition.x, pInfo->ptMaxPosition.y,
 	          pInfo->ptMinTrackSize.x, pInfo->ptMinTrackSize.y,
-	          pInfo->ptMaxTrackSize.x, pInfo->ptMaxTrackSize.y);
-	DEBUGSTRSIZE(szMinMax);
-	#endif
+	          pInfo->ptMaxTrackSize.x, pInfo->ptMaxTrackSize.y,
+			  rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
+		if (gpSetCls->isAdvLogging >= 2)
+			LogString(szMinMax);
+		DEBUGSTRSIZE(szMinMax);
+	}
 
 
 	MONITORINFO mi = {sizeof(mi)}, prm = {sizeof(prm)};
@@ -10951,14 +11082,19 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 
 
 	// Что получилось...
-	#ifdef _DEBUG
-	_wsprintf(szMinMax, SKIPLEN(countof(szMinMax)) L"OnGetMinMaxInfo[after]  MaxSize={%i,%i}, MaxPos={%i,%i}, MinTrack={%i,%i}, MaxTrack={%i,%i}\n",
+	if (bLog)
+	{
+		_wsprintf(szMinMax, SKIPLEN(countof(szMinMax)) L"OnGetMinMaxInfo[after]  MaxSize={%i,%i}, MaxPos={%i,%i}, MinTrack={%i,%i}, MaxTrack={%i,%i}, Cur={%i,%i}-{%i,%i}\n",
 	          pInfo->ptMaxSize.x, pInfo->ptMaxSize.y,
 	          pInfo->ptMaxPosition.x, pInfo->ptMaxPosition.y,
 	          pInfo->ptMinTrackSize.x, pInfo->ptMinTrackSize.y,
-	          pInfo->ptMaxTrackSize.x, pInfo->ptMaxTrackSize.y);
-	DEBUGSTRSIZE(szMinMax);
-	#endif
+	          pInfo->ptMaxTrackSize.x, pInfo->ptMaxTrackSize.y,
+			  rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
+		if (gpSetCls->isAdvLogging >= 2)
+			LogString(szMinMax);
+		DEBUGSTRSIZE(szMinMax);
+	}
+
 
 	// If an application processes this message, it should return zero.
 	return 0;
@@ -15773,7 +15909,7 @@ void CConEmuMain::LogWindowPos(LPCWSTR asPrefix)
 {
 	if (gpSetCls->isAdvLogging)
 	{
-		wchar_t szInfo[160];
+		wchar_t szInfo[255];
 		RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
 		MONITORINFO mi;
 		HMONITOR hMon = GetNearestMonitor(&mi);
@@ -16086,11 +16222,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 			RECT* pRc = (RECT*)lParam;
 			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SIZING (Edge%i, {%i-%i}-{%i-%i})\n", (DWORD)wParam, pRc->left, pRc->top, pRc->right, pRc->bottom);
-			LogString(szDbg, true, false);
-			DEBUGSTRSIZE(szDbg);
 
 			if (!isIconic())
 				result = gpConEmu->OnSizing(wParam, lParam);
+
+			size_t cchLen = wcslen(szDbg);
+			_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i-%i}-{%i-%i})\n", pRc->left, pRc->top, pRc->right, pRc->bottom);
+			LogString(szDbg, true, false);
+			DEBUGSTRSIZE(szDbg);
 		} break;
 
 		case WM_MOVING:
@@ -16098,11 +16237,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			RECT* pRc = (RECT*)lParam;
 			if (pRc)
 			{
-				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_MOVING {%i-%i}-{%i-%i}\n", pRc->left, pRc->top, pRc->right, pRc->bottom);
-				LogString(szDbg, true, false);
-				DEBUGSTRSIZE(szDbg);
+				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_MOVING ({%i-%i}-{%i-%i})", pRc->left, pRc->top, pRc->right, pRc->bottom);
 
 				result = gpConEmu->OnMoving(pRc, true);
+
+				size_t cchLen = wcslen(szDbg);
+				_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i-%i}-{%i-%i})", pRc->left, pRc->top, pRc->right, pRc->bottom);
+				LogString(szDbg, true, false);
+				DEBUGSTRSIZE(szDbg);
 			}
 		} break;
 
@@ -16563,13 +16705,16 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_ShellExecuteEx)
 			{
-				GuiShellExecuteExArg* pArg = (GuiShellExecuteExArg*)wParam;
-				if (pArg && (wParam != TRUE))
-				{
-					result = gpConEmu->GuiShellExecuteEx((SHELLEXECUTEINFO*)lParam, pArg->bAllowAsync, pArg->pVCon);
-					SafeFree(pArg);
-				}
-				return result;
+				gpConEmu->GuiShellExecuteExQueue();
+				return 0;
+				//GuiShellExecuteExArg* pArg = (GuiShellExecuteExArg*)wParam;
+				//if (pArg && (wParam != TRUE))
+				//{
+				//	_ASSERTE(pArg->lpShellExecute == (SHELLEXECUTEINFO*)lParam);
+				//	result = gpConEmu->GuiShellExecuteEx(pArg->lpShellExecute, pArg->pVCon);
+				//	SafeFree(pArg);
+				//}
+				//return result;
 			}
 			else if (messg == gpConEmu->mn_PostConsoleResize)
 			{

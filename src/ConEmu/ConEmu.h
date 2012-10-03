@@ -79,12 +79,23 @@ struct MsgSrvStartedArg
 #include "GuiServer.h"
 #include "GestureEngine.h"
 #include "ConEmuCtrl.h"
+#include "../common/MArray.h"
 
 // IME support (WinXP or later)
 typedef BOOL (WINAPI* ImmSetCompositionFontW_t)(HIMC hIMC, LPLOGFONT lplf);
 typedef BOOL (WINAPI* ImmSetCompositionWindow_t)(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm);
 typedef HIMC (WINAPI* ImmGetContext_t)(HWND hWnd);
 
+
+struct GuiShellExecuteExArg
+{
+	CVirtualConsole* pVCon;
+	SHELLEXECUTEINFO* lpShellExecute;
+	HANDLE hReadyEvent;
+	BOOL bInProcess;
+	BOOL bResult;
+	DWORD dwErrCode;
+};
 
 
 
@@ -459,6 +470,12 @@ class CConEmuMain :
 		HWND mh_AboutDlg;
 		static INT_PTR CALLBACK aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 
+		//
+		CRITICAL_SECTION mcs_ShellExecuteEx;
+		MArray<GuiShellExecuteExArg*> m_ShellExecuteQueue;
+		void GuiShellExecuteExQueue();
+		bool mb_InShellExecuteQueue;
+
 	public:
 		DWORD CheckProcesses();
 		DWORD GetFarPID(BOOL abPluginRequired=FALSE);
@@ -531,7 +548,7 @@ class CConEmuMain :
 		void SetWindowStyleEx(HWND ahWnd, DWORD anStyleEx);
 		DWORD GetWorkWindowStyle();
 		DWORD GetWorkWindowStyleEx();
-		LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync, CVirtualConsole* apVCon);
+		LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, CVirtualConsole* apVCon);
 		BOOL Init();
 		void InitInactiveDC(CVirtualConsole* apVCon);
 		void Invalidate(CVirtualConsole* apVCon);

@@ -60,7 +60,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "../common/WinObjects.h"
 #include "../common/TerminalMode.h"
-#include "..\ConEmu\version.h"
+#include "../common/FarVersion.h"
+#include "../ConEmu/version.h"
 #include "PluginHeader.h"
 #include "PluginBackground.h"
 #include <Tlhelp32.h>
@@ -312,8 +313,10 @@ bool pcc_Disabled(PluginMenuCommands nMenuID)
 
 void WINAPI GetPluginInfoWcmn(void *piv)
 {
-	if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(GetPluginInfoW)(piv);
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		FUNC_Y2(GetPluginInfoW)(piv);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		FUNC_Y1(GetPluginInfoW)(piv);
 	else
 		FUNC_X(GetPluginInfoW)(piv);
 
@@ -370,8 +373,10 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 
 	if (OpenFrom == OPEN_COMMANDLINE && Item)
 	{
-		if (gFarVersion.dwBuild>=FAR_Y_VER)
-			FUNC_Y(ProcessCommandLineW)((wchar_t*)Item);
+		if (gFarVersion.dwBuild>=FAR_Y2_VER)
+			FUNC_Y2(ProcessCommandLineW)((wchar_t*)Item);
+		else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+			FUNC_Y1(ProcessCommandLineW)((wchar_t*)Item);
 		else
 			FUNC_X(ProcessCommandLineW)((wchar_t*)Item);
 
@@ -1449,8 +1454,10 @@ int WINAPI ProcessSynchroEventW(int Event,void *Param)
 
 		if (gbSynchroProhibited && (gnSynchroCount == 0))
 		{
-			if (gFarVersion.dwBuild>=FAR_Y_VER)
-				FUNC_Y(StopWaitEndSynchroW)();
+			if (gFarVersion.dwBuild>=FAR_Y2_VER)
+				FUNC_Y2(StopWaitEndSynchroW)();
+			else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+				FUNC_Y1(StopWaitEndSynchroW)();
 			else
 				FUNC_X(StopWaitEndSynchroW)();
 		}
@@ -1590,7 +1597,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ghWorkingModule = (u64)hModule;
 			gnSelfPID = GetCurrentProcessId();
 			HeapInitialize();
-			_ASSERTE(FAR_X_VER<=FAR_Y_VER);
+			_ASSERTE(FAR_X_VER<FAR_Y1_VER && FAR_Y1_VER<FAR_Y2_VER);
 #ifdef SHOW_STARTED_MSGBOX
 
 			if (!IsDebuggerPresent())
@@ -1789,70 +1796,11 @@ void WINAPI GetFarVersion(FarVersion* pfv)
 
 BOOL LoadFarVersion()
 {
-	BOOL lbRc=FALSE;
-	WCHAR FarPath[MAX_PATH+1], ErrText[512]; ErrText[0] = 0; DWORD dwErr = 0;
-
-	if (GetModuleFileName(0,FarPath,MAX_PATH))
-	{
-		DWORD dwRsrvd = 0;
-		DWORD dwSize = GetFileVersionInfoSize(FarPath, &dwRsrvd);
-
-		if (dwSize>0)
-		{
-			void *pVerData = Alloc(dwSize, 1);
-
-			if (pVerData)
-			{
-				VS_FIXEDFILEINFO *lvs = NULL;
-				UINT nLen = sizeof(lvs);
-
-				if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData))
-				{
-					TCHAR szSlash[3]; lstrcpyW(szSlash, L"\\");
-
-					if (VerQueryValue((void*)pVerData, szSlash, (void**)&lvs, &nLen))
-					{
-						gFarVersion.dwVer = lvs->dwFileVersionMS;
-						gFarVersion.dwBuild = lvs->dwFileVersionLS;
-						lbRc = TRUE;
-					}
-					else
-					{
-						dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadFarVersion.VerQueryValue(\"\\\") failed!\n");
-					}
-				}
-				else
-				{
-					dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadFarVersion.GetFileVersionInfo() failed!\n");
-				}
-
-				Free(pVerData);
-			}
-			else
-			{
-				_wsprintf(ErrText, SKIPLEN(countof(ErrText)) L"LoadFarVersion failed! Can't allocate %n bytes!\n", dwSize);
-			}
-		}
-		else
-		{
-			dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadFarVersion.GetFileVersionInfoSize() failed!\n");
-		}
-
-		if (ErrText[0]) lstrcatW(ErrText, FarPath);
-	}
-	else
-	{
-		dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadFarVersion.GetModuleFileName() failed!");
-	}
+	wchar_t ErrText[512]; ErrText[0] = 0;
+	BOOL lbRc = LoadFarVersion(gFarVersion, ErrText);
 
 	if (ErrText[0])
 	{
-		if (dwErr)
-		{
-			int nCurLen = lstrlen(ErrText);
-			_wsprintf(ErrText+nCurLen, SKIPLEN(countof(ErrText)-nCurLen) L"\nErrCode=0x%08X", dwErr);
-		}
-
 		MessageBox(0, ErrText, L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 	}
 
@@ -2149,8 +2097,10 @@ void ExecuteSynchro()
 		}
 
 		//psi.AdvControl(psi.ModuleNumber,ACTL_SYNCHRO,NULL);
-		if (gFarVersion.dwBuild>=FAR_Y_VER)
-			FUNC_Y(ExecuteSynchroW)();
+		if (gFarVersion.dwBuild>=FAR_Y2_VER)
+			FUNC_Y2(ExecuteSynchroW)();
+		else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+			FUNC_Y1(ExecuteSynchroW)();
 		else
 			FUNC_X(ExecuteSynchroW)();
 	}
@@ -2640,10 +2590,15 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				ProcessDragFromA();
 				ProcessDragToA();
 			}
-			else if (gFarVersion.dwBuild>=FAR_Y_VER)
+			else if (gFarVersion.dwBuild>=FAR_Y2_VER)
 			{
-				FUNC_Y(ProcessDragFromW)();
-				FUNC_Y(ProcessDragToW)();
+				FUNC_Y2(ProcessDragFromW)();
+				FUNC_Y2(ProcessDragToW)();
+			}
+			else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+			{
+				FUNC_Y1(ProcessDragFromW)();
+				FUNC_Y1(ProcessDragToW)();
 			}
 			else
 			{
@@ -2657,8 +2612,10 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		{
 			if (gFarVersion.dwVerMajor==1)
 				ProcessDragToA();
-			else if (gFarVersion.dwBuild>=FAR_Y_VER)
-				FUNC_Y(ProcessDragToW)();
+			else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+				FUNC_Y2(ProcessDragToW)();
+			else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+				FUNC_Y1(ProcessDragToW)();
 			else
 				FUNC_X(ProcessDragToW)();
 
@@ -2690,8 +2647,10 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				}
 				else
 				{
-					if (gFarVersion.dwBuild>=FAR_Y_VER)
-						FUNC_Y(SetWindowW)(nTab);
+					if (gFarVersion.dwBuild>=FAR_Y2_VER)
+						FUNC_Y2(SetWindowW)(nTab);
+					else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+						FUNC_Y1(SetWindowW)(nTab);
 					else
 						FUNC_X(SetWindowW)(nTab);
 				}
@@ -3697,8 +3656,10 @@ void WINAPI SetStartupInfoW(void *aInfo)
 	FreeLibrary(h);
 #endif
 
-	if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(SetStartupInfoW)(aInfo);
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		FUNC_Y2(SetStartupInfoW)(aInfo);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		FUNC_Y1(SetStartupInfoW)(aInfo);
 	else
 		FUNC_X(SetStartupInfoW)(aInfo);
 
@@ -4225,8 +4186,10 @@ BOOL ReloadFarInfo(BOOL abForce)
 		else
 		{
 			// Нужно проверить
-			if (gFarVersion.dwBuild>=FAR_Y_VER)
-				gpFarInfo->bBufferSupport = FUNC_Y(CheckBufferEnabledW)();
+			if (gFarVersion.dwBuild>=FAR_Y2_VER)
+				gpFarInfo->bBufferSupport = FUNC_Y2(CheckBufferEnabledW)();
+			else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+				gpFarInfo->bBufferSupport = FUNC_Y1(CheckBufferEnabledW)();
 			else
 				gpFarInfo->bBufferSupport = FUNC_X(CheckBufferEnabledW)();
 		}
@@ -4261,8 +4224,10 @@ BOOL ReloadFarInfo(BOOL abForce)
 
 	if (gFarVersion.dwVerMajor==1)
 		lbSucceded = ReloadFarInfoA(/*abFull*/);
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		lbSucceded = FUNC_Y(ReloadFarInfoW)();
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		lbSucceded = FUNC_Y2(ReloadFarInfoW)();
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		lbSucceded = FUNC_Y1(ReloadFarInfoW)();
 	else
 		lbSucceded = FUNC_X(ReloadFarInfoW)();
 
@@ -4292,11 +4257,14 @@ bool UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Par
 
 	MSectionLock SC; SC.Lock(csTabs);
 	extern bool FUNC_X(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
-	extern bool FUNC_Y(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
+	extern bool FUNC_Y1(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
+	extern bool FUNC_Y2(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
 	bool lbCh;
 
-	if (gFarVersion.dwBuild>=FAR_Y_VER)
-		lbCh = FUNC_Y(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		lbCh = FUNC_Y2(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		lbCh = FUNC_Y1(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
 	else
 		lbCh = FUNC_X(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
 
@@ -4567,8 +4535,10 @@ int WINAPI ProcessEditorInputW(void* Rec)
 {
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
 	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
-	if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(ProcessEditorInputW)((LPCVOID)Rec);
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(ProcessEditorInputW)((LPCVOID)Rec);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(ProcessEditorInputW)((LPCVOID)Rec);
 	else
 		return FUNC_X(ProcessEditorInputW)((LPCVOID)Rec);
 }
@@ -4973,6 +4943,54 @@ int WINAPI ProcessDialogEventW(int Event, void *Param)
 	return FALSE; // разрешение обработки фаром/другими плагинами
 }
 
+HANDLE WINAPI OpenW(const void* Info)
+{
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(OpenW)(Info);
+	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(OpenW)(Info);
+}
+
+INT_PTR WINAPI ProcessConsoleInputW(void *Info)
+{
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(ProcessConsoleInputW)(Info);
+	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(ProcessConsoleInputW)(Info);
+}
+
+INT_PTR WINAPI ProcessEditorEventW3(void* p)
+{
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(ProcessEditorEventW)(p);
+	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(ProcessEditorEventW)(p);
+}
+
+INT_PTR WINAPI ProcessViewerEventW3(void* p)
+{
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(ProcessViewerEventW)(p);
+	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(ProcessViewerEventW)(p);
+}
+
+INT_PTR WINAPI ProcessDialogEventW3(void* p)
+{
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(ProcessDialogEventW)(p);
+	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(ProcessDialogEventW)(p);
+}
+
+INT_PTR WINAPI ProcessSynchroEventW3(void* p)
+{
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(ProcessSynchroEventW)(p);
+	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(ProcessSynchroEventW)(p);
+}
+
 void ExitFarCmn()
 {
 	ShutdownPluginStep(L"ExitFarCmn");
@@ -4992,8 +5010,10 @@ void   WINAPI ExitFARW(void)
 
 	if (gbInfoW_OK)
 	{
-		if (gFarVersion.dwBuild>=FAR_Y_VER)
-			FUNC_Y(ExitFARW)();
+		if (gFarVersion.dwBuild>=FAR_Y2_VER)
+			FUNC_Y2(ExitFARW)();
+		else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+			FUNC_Y1(ExitFARW)();
 		else
 			FUNC_X(ExitFARW)();
 	}
@@ -5009,8 +5029,10 @@ void WINAPI ExitFARW3(void*)
 
 	if (gbInfoW_OK)
 	{
-		if (gFarVersion.dwBuild>=FAR_Y_VER)
-			FUNC_Y(ExitFARW)();
+		if (gFarVersion.dwBuild>=FAR_Y2_VER)
+			FUNC_Y2(ExitFARW)();
+		else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+			FUNC_Y1(ExitFARW)();
 		else
 			FUNC_X(ExitFARW)();
 	}
@@ -5237,8 +5259,10 @@ int ShowMessage(int aiMsg, int aiButtons)
 {
 	if (gFarVersion.dwVerMajor==1)
 		return ShowMessageA(aiMsg, aiButtons);
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(ShowMessageW)(aiMsg, aiButtons);
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(ShowMessageW)(aiMsg, aiButtons);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(ShowMessageW)(aiMsg, aiButtons);
 	else
 		return FUNC_X(ShowMessageW)(aiMsg, aiButtons);
 }
@@ -5256,8 +5280,10 @@ int ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
 		free(psz);
 		return nBtn;
 	}
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(ShowMessageW)(asMsg, aiButtons, bWarning);
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(ShowMessageW)(asMsg, aiButtons, bWarning);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(ShowMessageW)(asMsg, aiButtons, bWarning);
 	else
 		return FUNC_X(ShowMessageW)(asMsg, aiButtons, bWarning);
 }
@@ -5293,8 +5319,10 @@ LPCWSTR GetMsgW(int aiMsg)
 {
 	if (gFarVersion.dwVerMajor==1)
 		return L"";
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(GetMsgW)(aiMsg);
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(GetMsgW)(aiMsg);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(GetMsgW)(aiMsg);
 	else
 		return FUNC_X(GetMsgW)(aiMsg);
 }
@@ -5329,9 +5357,13 @@ void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec)
 			Free(pszMacro);
 		}
 	}
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
 	{
-		FUNC_Y(PostMacroW)(asMacro, apRec);
+		FUNC_Y2(PostMacroW)(asMacro, apRec);
+	}
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+	{
+		FUNC_Y1(PostMacroW)(asMacro, apRec);
 	}
 	else
 	{
@@ -5457,10 +5489,15 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			SHOWDBGINFO(L"*** calling ShowPluginMenuA\n");
 			nItem = ShowPluginMenuA(items, nCount);
 		}
-		else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		else if (gFarVersion.dwBuild>=FAR_Y2_VER)
 		{
 			SHOWDBGINFO(L"*** calling ShowPluginMenuWY\n");
-			nItem = FUNC_Y(ShowPluginMenuW)(items, nCount);
+			nItem = FUNC_Y2(ShowPluginMenuW)(items, nCount);
+		}
+		else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		{
+			SHOWDBGINFO(L"*** calling ShowPluginMenuWY\n");
+			nItem = FUNC_Y1(ShowPluginMenuW)(items, nCount);
 		}
 		else
 		{
@@ -5503,8 +5540,10 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 
 					if (gFarVersion.dwVerMajor==1)
 						lbRc = EditOutputA(pOut->OutputFile.szFilePathName, (nItem==1));
-					else if (gFarVersion.dwBuild>=FAR_Y_VER)
-						lbRc = FUNC_Y(EditOutputW)(pOut->OutputFile.szFilePathName, (nItem==1));
+					else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+						lbRc = FUNC_Y2(EditOutputW)(pOut->OutputFile.szFilePathName, (nItem==1));
+					else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+						lbRc = FUNC_Y1(EditOutputW)(pOut->OutputFile.szFilePathName, (nItem==1));
 					else
 						lbRc = FUNC_X(EditOutputW)(pOut->OutputFile.szFilePathName, (nItem==1));
 
@@ -5576,8 +5615,10 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 					}
 					if (gFarVersion.dwVerMajor==1)
 						nMenuRc = ShowPluginMenuA(pItems, AllCount);
-					else if (gFarVersion.dwBuild>=FAR_Y_VER)
-						nMenuRc = FUNC_Y(ShowPluginMenuW)(pItems, AllCount);
+					else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+						nMenuRc = FUNC_Y2(ShowPluginMenuW)(pItems, AllCount);
+					else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+						nMenuRc = FUNC_Y1(ShowPluginMenuW)(pItems, AllCount);
 					else
 						nMenuRc = FUNC_X(ShowPluginMenuW)(pItems, AllCount);
 
@@ -5634,8 +5675,10 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 		{
 			if (gFarVersion.dwVerMajor==1)
 				GuiMacroDlgA();
-			else if (gFarVersion.dwBuild>=FAR_Y_VER)
-				FUNC_Y(GuiMacroDlgW)();
+			else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+				FUNC_Y2(GuiMacroDlgW)();
+			else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+				FUNC_Y1(GuiMacroDlgW)();
 			else
 				FUNC_X(GuiMacroDlgW)();
 		} break;
@@ -6078,8 +6121,10 @@ BOOL IsMacroActive()
 
 	if (gFarVersion.dwVerMajor==1)
 		lbActive = IsMacroActiveA();
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		lbActive = FUNC_Y(IsMacroActiveW)();
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		lbActive = FUNC_Y2(IsMacroActiveW)();
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		lbActive = FUNC_Y1(IsMacroActiveW)();
 	else
 		lbActive = FUNC_X(IsMacroActiveW)();
 
@@ -6095,8 +6140,10 @@ int GetMacroArea()
 		_ASSERTE(gFarVersion.dwVerMajor>1);
 		nMacroArea = 1; // в Far 1.7x не поддерживается
 	}
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		nMacroArea = FUNC_Y(GetMacroAreaW)();
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		nMacroArea = FUNC_Y2(GetMacroAreaW)();
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		nMacroArea = FUNC_Y1(GetMacroAreaW)();
 	else
 		nMacroArea = FUNC_X(GetMacroAreaW)();
 
@@ -6110,8 +6157,10 @@ void RedrawAll()
 
 	if (gFarVersion.dwVerMajor==1)
 		RedrawAllA();
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(RedrawAllW)();
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		FUNC_Y2(RedrawAllW)();
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		FUNC_Y1(RedrawAllW)();
 	else
 		FUNC_X(RedrawAllW)();
 }
@@ -6120,8 +6169,10 @@ DWORD GetEditorModifiedState()
 {
 	if (gFarVersion.dwVerMajor==1)
 		return GetEditorModifiedStateA();
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(GetEditorModifiedStateW)();
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(GetEditorModifiedStateW)();
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(GetEditorModifiedStateW)();
 	else
 		return FUNC_X(GetEditorModifiedStateW)();
 }
@@ -6130,8 +6181,10 @@ int GetActiveWindowType()
 {
 	if (gFarVersion.dwVerMajor==1)
 		return GetActiveWindowTypeA();
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(GetActiveWindowTypeW)();
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(GetActiveWindowTypeW)();
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(GetActiveWindowTypeW)();
 	else
 		return FUNC_X(GetActiveWindowTypeW)();
 }

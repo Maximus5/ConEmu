@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/xmllite.h"
 #include "../common/MStream.h"
 #include "../common/UnicodeChars.h"
+#include "../common/FarVersion.h"
 #include "ConEmuBg.h"
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
@@ -104,8 +105,10 @@ int WINAPI GetMinFarVersionW(void)
 
 void WINAPI GetPluginInfoWcmn(void *piv)
 {
-	if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(GetPluginInfoW)(piv);
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		FUNC_Y2(GetPluginInfoW)(piv);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		FUNC_Y1(GetPluginInfoW)(piv);
 	else
 		FUNC_X(GetPluginInfoW)(piv);
 }
@@ -182,39 +185,8 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 
 BOOL LoadFarVersion()
 {
-	BOOL lbRc=FALSE;
-	WCHAR FarPath[MAX_PATH+1];
-
-	if (GetModuleFileName(0,FarPath,MAX_PATH))
-	{
-		DWORD dwRsrvd = 0;
-		DWORD dwSize = GetFileVersionInfoSize(FarPath, &dwRsrvd);
-
-		if (dwSize>0)
-		{
-			void *pVerData = calloc(dwSize, 1);
-
-			if (pVerData)
-			{
-				VS_FIXEDFILEINFO *lvs = NULL;
-				UINT nLen = sizeof(lvs);
-
-				if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData))
-				{
-					wchar_t szSlash[3]; wcscpy_c(szSlash, L"\\");
-
-					if (VerQueryValue((void*)pVerData, szSlash, (void**)&lvs, &nLen))
-					{
-						gFarVersion.dwVer = lvs->dwFileVersionMS;
-						gFarVersion.dwBuild = lvs->dwFileVersionLS;
-						lbRc = TRUE;
-					}
-				}
-
-				free(pVerData);
-			}
-		}
-	}
+	wchar_t ErrText[512]; ErrText[0] = 0;
+	BOOL lbRc = LoadFarVersion(gFarVersion, ErrText);
 
 	if (!lbRc)
 	{
@@ -232,8 +204,10 @@ void WINAPI SetStartupInfoW(void *aInfo)
 
 	if (!gFarVersion.dwVerMajor) LoadFarVersion();
 
-	if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(SetStartupInfoW)(aInfo);
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		FUNC_Y2(SetStartupInfoW)(aInfo);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		FUNC_Y1(SetStartupInfoW)(aInfo);
 	else
 		FUNC_X(SetStartupInfoW)(aInfo);
 
@@ -2796,8 +2770,10 @@ void SettingsLoad()
 
 	if (gFarVersion.dwVerMajor == 1)
 		SettingsLoadA();
-	else if (gFarVersion.dwBuild >= FAR_Y_VER)
-		FUNC_Y(SettingsLoadW)();
+	else if (gFarVersion.dwBuild >= FAR_Y2_VER)
+		FUNC_Y2(SettingsLoadW)();
+	else if (gFarVersion.dwBuild >= FAR_Y1_VER)
+		FUNC_Y1(SettingsLoadW)();
 	else
 		FUNC_X(SettingsLoadW)();
 }
@@ -2840,8 +2816,10 @@ void SettingsSave()
 {
 	if (gFarVersion.dwVerMajor == 1)
 		SettingsSaveA();
-	else if (gFarVersion.dwBuild >= FAR_Y_VER)
-		FUNC_Y(SettingsSaveW)();
+	else if (gFarVersion.dwBuild >= FAR_Y2_VER)
+		FUNC_Y2(SettingsSaveW)();
+	else if (gFarVersion.dwBuild >= FAR_Y1_VER)
+		FUNC_Y1(SettingsSaveW)();
 	else
 		FUNC_X(SettingsSaveW)();
 }
@@ -2953,8 +2931,10 @@ void   WINAPI ExitFARW(void)
 {
 	ExitPlugin();
 
-	if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(ExitFARW)();
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		FUNC_Y2(ExitFARW)();
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		FUNC_Y1(ExitFARW)();
 	else
 		FUNC_X(ExitFARW)();
 }
@@ -2963,8 +2943,10 @@ void WINAPI ExitFARW3(void*)
 {
 	ExitPlugin();
 
-	if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(ExitFARW)();
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		FUNC_Y2(ExitFARW)();
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		FUNC_Y1(ExitFARW)();
 	else
 		FUNC_X(ExitFARW)();
 }
@@ -2975,10 +2957,21 @@ LPCWSTR GetMsgW(int aiMsg)
 {
 	if (gFarVersion.dwVerMajor==1)
 		return L"";
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(GetMsgW)(aiMsg);
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(GetMsgW)(aiMsg);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(GetMsgW)(aiMsg);
 	else
 		return FUNC_X(GetMsgW)(aiMsg);
+}
+
+
+HANDLE WINAPI OpenW(const void* Info)
+{
+	if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(OpenW)(Info);
+	else
+		return FUNC_Y1(OpenW)(Info);
 }
 
 
@@ -2986,8 +2979,10 @@ int WINAPI ConfigureW(int ItemNumber)
 {
 	if (gFarVersion.dwVerMajor==1)
 		return false;
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(ConfigureW)(ItemNumber);
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(ConfigureW)(ItemNumber);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(ConfigureW)(ItemNumber);
 	else
 		return FUNC_X(ConfigureW)(ItemNumber);
 }
@@ -2996,8 +2991,10 @@ int WINAPI ConfigureW3(void*)
 {
 	if (gFarVersion.dwVerMajor==1)
 		return false;
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(ConfigureW)(0);
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(ConfigureW)(0);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(ConfigureW)(0);
 	else
 		return FUNC_X(ConfigureW)(0);
 }
@@ -3040,8 +3037,10 @@ bool FMatch(LPCWSTR asMask, LPWSTR asPath)
 			free(pszPath);
 		return lbRc;
 	}
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(FMatchW)(asMask, asPath);
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		return FUNC_Y2(FMatchW)(asMask, asPath);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		return FUNC_Y1(FMatchW)(asMask, asPath);
 	else
 		return FUNC_X(FMatchW)(asMask, asPath);
 }
@@ -3055,8 +3054,10 @@ int GetMacroArea()
 		_ASSERTE(gFarVersion.dwVerMajor>1);
 		nMacroArea = 1; // в Far 1.7x не поддерживается
 	}
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		nMacroArea = FUNC_Y(GetMacroAreaW)();
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		nMacroArea = FUNC_Y2(GetMacroAreaW)();
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		nMacroArea = FUNC_Y1(GetMacroAreaW)();
 	else
 		nMacroArea = FUNC_X(GetMacroAreaW)();
 

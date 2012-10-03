@@ -2,6 +2,7 @@ NAME = ConEmuBg
 SRCS = ConEmuBg.cpp \
        ConEmuBg995.cpp \
        ConEmuBg1900.cpp \
+       ConEmuBg2800.cpp \
        ConEmuBgA.cpp \
        ../common/MAssert.cpp \
        ../common/Memory.cpp \

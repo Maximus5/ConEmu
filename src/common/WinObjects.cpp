@@ -1009,10 +1009,45 @@ CEStartupEnv* LoadStartupEnv()
 	LPCWSTR pszCmdLine = GetCommandLine();
 
 	wchar_t* pszExecMod = (wchar_t*)calloc(MAX_PATH*2,sizeof(*pszExecMod));
-	GetModuleFileName(NULL, pszExecMod, MAX_PATH*2);
+	if (pszExecMod)
+		GetModuleFileName(NULL, pszExecMod, MAX_PATH*2);
 
-	wchar_t* pszWorkDir = (wchar_t*)calloc(MAX_PATH*2,sizeof(*pszExecMod));
-	GetCurrentDirectory(MAX_PATH*2, pszWorkDir);
+	wchar_t* pszWorkDir = (wchar_t*)calloc(MAX_PATH*2,sizeof(*pszWorkDir));
+	if (pszWorkDir)
+		GetCurrentDirectory(MAX_PATH*2, pszWorkDir);
+
+	// Enum registered Console Fonts
+	// HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
+	int nLenMax = 2048;
+	wchar_t* pszFonts = (wchar_t*)calloc(nLenMax,sizeof(*pszFonts));
+	if (pszFonts)
+	{
+		HKEY hk;
+		DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
+		if (0 == RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont", 0, nRights, &hk))
+		{
+			wchar_t szName[64], szValue[64];
+			DWORD idx = 0, cchName = countof(szName), cchValue = sizeof(szValue)-2, dwType;
+			LONG iRc;
+			wchar_t* psz = pszFonts;
+			while ((iRc = RegEnumValue(hk, idx++, szName, &cchName, NULL, &dwType, (LPBYTE)szValue, &cchValue)) == 0)
+			{
+				szName[min(countof(szName)-1,cchName)] = 0; szValue[min(countof(szValue)-1,cchValue/2)] = 0;
+				int nNameLen = lstrlen(szName);
+				int nValLen = lstrlen(szValue);
+				int nLen = nNameLen+nValLen+3;
+				if (nLen < nLenMax)
+				{
+					if (idx > 1) *(psz++) = L'\t';
+					lstrcpy(psz, szName); psz+= nNameLen;
+					*(psz++) = L'\t';
+					lstrcpy(psz, szValue); psz+= nValLen;
+				}
+				cchName = countof(szName); cchValue = sizeof(szValue)-2;
+			}
+			RegCloseKey(hk);
+		}
+	}
 
 	size_t cchTotal = sizeof(*pEnv);
 
@@ -1031,11 +1066,19 @@ CEStartupEnv* LoadStartupEnv()
 	size_t cchTtl = si.lpTitle ? (lstrlen(si.lpTitle)+1) : 0;
 	cchTotal += cchTtl*sizeof(wchar_t);
 
+	size_t cchFnt = pszFonts ? (lstrlen(pszFonts)+1) : 0;
+	cchTotal += cchFnt*sizeof(wchar_t);
+
 	pEnv = (CEStartupEnv*)calloc(cchTotal,1);
 	if (pEnv)
 	{
 		pEnv->cbSize = cchTotal;
 		pEnv->si = si;
+
+		pEnv->bIsDbcs = IsDbcs();
+		pEnv->bIsWine = IsWine();
+		pEnv->nAnsiCP = GetACP();
+		pEnv->nOEMCP = GetOEMCP();
 
 		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 		if (hKernel)
@@ -1098,10 +1141,18 @@ CEStartupEnv* LoadStartupEnv()
 			pEnv->si.lpTitle = psz;
 			psz += cchTtl;
 		}
+
+		if (pszFonts)
+		{
+			_wcscpy_c(psz, cchFnt, pszFonts);
+			pEnv->pszRegConFonts = psz;
+			psz += cchFnt;
+		}
 	}
 
 	SafeFree(pszEnvPathStore);
 	SafeFree(pszExecMod);
+	SafeFree(pszFonts);
 	return pEnv;
 }
 
@@ -3420,7 +3471,7 @@ void MFileLog::LogString(LPCSTR asText, bool abWriteTime /*= true*/, LPCSTR asTh
 		szThread[countof(szThread)-1] = 0;
 	}
 
-	LogString(pszBuf, abWriteTime, szThread);
+	LogString(pszBuf, abWriteTime, szThread, abNewLine);
 
 	if (pszBuf && (pszBuf != szInfo))
 	{
@@ -3531,7 +3582,7 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 }
 void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 {
-	if (!apStartEnv || (apStartEnv->cbSize != sizeof(*apStartEnv)))
+	if (!apStartEnv || (apStartEnv->cbSize < sizeof(*apStartEnv)))
 	{
 		LogString(L"LogStartEnv failed, invalid apStartEnv");
 		return;
@@ -3544,21 +3595,25 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 
 	wchar_t cVer = MVV_4a[0];
 	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\n\tDesktop: %s\n\tTitle: %s\n\tSize: {%u,%u},{%u,%u}\n"
-		L"\tFlags: 0x%08X, ShowWindow: %u\n\tHandles: 0x%08X, 0x%08X, 0x%08X",
+		L"\tFlags: 0x%08X, ShowWindow: %u\n\tHandles: 0x%08X, 0x%08X, 0x%08X\n"
+		L"\tDBCS: %u, WINE: %u, ACP: %u, OEMCP: %u",
 		szDesktop, szTitle,
 		apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
 		apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow,
-		(DWORD)apStartEnv->si.hStdInput, (DWORD)apStartEnv->si.hStdOutput, (DWORD)apStartEnv->si.hStdError);
+		(DWORD)apStartEnv->si.hStdInput, (DWORD)apStartEnv->si.hStdOutput, (DWORD)apStartEnv->si.hStdError,
+		apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->nAnsiCP, apStartEnv->nOEMCP);
 	LogString(szSI, true);
 	
-	LogString("CmdLine:", false, NULL, false);
+	LogString("CmdLine: ", false, NULL, false);
 	LogString(apStartEnv->pszCmdLine ? apStartEnv->pszCmdLine : L"<NULL>", false, NULL, true);
-	LogString("ExecMod:", false, NULL, false);
+	LogString("ExecMod: ", false, NULL, false);
 	LogString(apStartEnv->pszExecMod ? apStartEnv->pszExecMod : L"<NULL>", false, NULL, true);
-	LogString("WorkDir:", false, NULL, false);
+	LogString("WorkDir: ", false, NULL, false);
 	LogString(apStartEnv->pszWorkDir ? apStartEnv->pszWorkDir : L"<NULL>", false, NULL, true);
-	LogString("PathEnv:", false, NULL, false);
+	LogString("PathEnv: ", false, NULL, false);
 	LogString(apStartEnv->pszPathEnv ? apStartEnv->pszPathEnv : L"<NULL>", false, NULL, true);
+	LogString("ConFont: ", false, NULL, false);
+	LogString(apStartEnv->pszRegConFonts ? apStartEnv->pszRegConFonts : L"<NULL>", false, NULL, true);
 }
 #endif
 

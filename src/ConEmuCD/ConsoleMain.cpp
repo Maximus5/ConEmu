@@ -1934,9 +1934,10 @@ void RegisterConsoleFontHKLM(LPCWSTR pszFontFace)
 		return;
 
 	HKEY hk;
+	DWORD nRights = KEY_ALL_ACCESS|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
 
 	if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
-	                  0, KEY_ALL_ACCESS, &hk))
+	                  0, nRights, &hk))
 	{
 		wchar_t szId[32] = {0}, szFont[255]; DWORD dwLen, dwType;
 
@@ -2579,6 +2580,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
 			}
+		}
+		else if (wcsncmp(szArg, L"/AID=", 5)==0)
+		{
+			wchar_t* pszEnd = NULL;
+			gpSrv->dwGuiAID = wcstoul(szArg+5, &pszEnd, 10);
 		}
 		else if (wcsncmp(szArg, L"/GHWND=", 7)==0)
 		{

@@ -22,6 +22,7 @@ LINK_OBJS = \
 $(OBJDIR)\ConEmuBg.obj \
 $(OBJDIR)\ConEmuBg995.obj \
 $(OBJDIR)\ConEmuBg1900.obj \
+$(OBJDIR)\ConEmuBg2800.obj \
 $(OBJDIR)\ConEmuBgA.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\Memory.obj \
@@ -209,6 +210,8 @@ $(OBJDIR)\ConEmuBg.obj: ConEmuBg.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_La
 $(OBJDIR)\ConEmuBg995.obj: ConEmuBg995.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
 
 $(OBJDIR)\ConEmuBg1900.obj: ConEmuBg1900.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
+
+$(OBJDIR)\ConEmuBg2800.obj: ConEmuBg2800.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
 
 $(OBJDIR)\ConEmuBgA.obj: ConEmuBgA.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
 

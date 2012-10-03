@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="Far.ConEmuPlugin"
 	ProjectGUID="{21152801-8744-4787-83F4-BE4564A367B4}"
 	RootNamespace="ConEmuPlugin"
@@ -2251,6 +2251,10 @@
 			</File>
 			<File
 				RelativePath="..\common\ConEmuColors3.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\FarVersion.h"
 				>
 			</File>
 			<File

@@ -2,6 +2,7 @@ NAME = ConEmuLn
 SRCS = ConEmuLn.cpp \
        ConEmuLn995.cpp \
        ConEmuLn1900.cpp \
+       ConEmuLn2800.cpp \
        ConEmuLnA.cpp \
        ../common/Memory.cpp
 

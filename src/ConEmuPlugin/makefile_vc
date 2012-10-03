@@ -29,6 +29,7 @@ $(OBJDIR)\ConEmuInjects.obj \
 $(OBJDIR)\ConEmuPlugin.obj \
 $(OBJDIR)\ConEmuPlugin995.obj \
 $(OBJDIR)\ConEmuPlugin1900.obj \
+$(OBJDIR)\ConEmuPlugin2800.obj \
 $(OBJDIR)\ConEmuPluginA.obj \
 $(OBJDIR)\PluginBackground.obj \
 $(OBJDIR)\PluginSrv.obj \
@@ -239,6 +240,8 @@ $(OBJDIR)\ConEmuPlugin.obj: ConEmuPlugin.cpp
 $(OBJDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
 
 $(OBJDIR)\ConEmuPlugin1900.obj: ConEmuPlugin1900.cpp
+
+$(OBJDIR)\ConEmuPlugin2800.obj: ConEmuPlugin2800.cpp
 
 $(OBJDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
 

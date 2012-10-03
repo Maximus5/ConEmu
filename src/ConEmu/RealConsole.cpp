@@ -822,12 +822,13 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	//    DisplayLastError(L"Can't create event!");
 	//    return FALSE;
 	//}
-	SetHwnd(ahConWnd);
-	ProcessUpdate(&anConemuC_PID, 1);
-	
+
 	//mh_MainSrv = hProcess;
 	//mn_MainSrv_PID = anConemuC_PID;
 	SetMainSrvPID(anConemuC_PID, hProcess);
+
+	SetHwnd(ahConWnd);
+	ProcessUpdate(&anConemuC_PID, 1);
 
 	CreateLogFiles();
 	// Инициализировать имена пайпов, событий, мэппингов и т.п.
@@ -2592,10 +2593,11 @@ BOOL CRealConsole::StartProcess()
 		
 		nCurLen = _tcslen(psCurCmd);
 		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen)
-		          L"/GID=%i /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i /TA=%08X",
-		          GetCurrentProcessId(), (DWORD)ghWnd, nWndWidth, nWndHeight, mn_DefaultBufferHeight,
+		          L"/GID=%u /AID=%u /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i /TA=%08X",
+		          GetCurrentProcessId(), GetCurrentThreadId(), (DWORD)ghWnd, nWndWidth, nWndHeight, mn_DefaultBufferHeight,
 		          gpSet->ConsoleFont.lfFaceName, gpSet->ConsoleFont.lfWidth, gpSet->ConsoleFont.lfHeight,
 		          nColors);
+		_ASSERTE(mn_MonitorThreadID == GetCurrentThreadId());
 
 		/*if (gpSet->FontFile[0]) { --  РЕГИСТРАЦИЯ ШРИФТА НА КОНСОЛЬ НЕ РАБОТАЕТ!
 		    wcscat(psCurCmd, L" \"/FF=");
@@ -2790,7 +2792,7 @@ BOOL CRealConsole::StartProcess()
 				//mp_sei->nShow = gpSet->isConVisible ? SW_SHOWNORMAL : SW_HIDE;
 				mp_sei->nShow = SW_SHOWMINIMIZED;
 				SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", true);
-				lbRc = gpConEmu->GuiShellExecuteEx(mp_sei, TRUE, mp_VCon);
+				lbRc = gpConEmu->GuiShellExecuteEx(mp_sei, mp_VCon);
 				// ошибку покажем дальше
 				dwLastError = GetLastError();
 			}
@@ -4631,6 +4633,13 @@ bool CRealConsole::isServerClosing()
 	return false;
 }
 
+DWORD CRealConsole::GetMonitorThreadID()
+{
+	if (!this)
+		return 0;
+	return mn_MonitorThreadID;
+}
+
 DWORD CRealConsole::GetServerPID(bool bMainOnly /*= false*/)
 {
 	if (!this)
@@ -5776,7 +5785,9 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 		m_RConServer.Start();
 	}
 
+#if 0
 	ShowConsole(gpSet->isConVisible ? 1 : 0); // установить консольному окну флаг AlwaysOnTop или спрятать его
+#endif
 
 	//else if (isAdministrator())
 	//	ShowConsole(0); // В Win7 оно таки появляется видимым - проверка вынесена в ConEmuC

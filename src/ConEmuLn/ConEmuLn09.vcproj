@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="Far.ConEmuLn"
 	ProjectGUID="{64DB4963-B19E-43E2-B6A5-C659F632E655}"
 	RootNamespace="ConEmuLn"
@@ -1801,6 +1801,10 @@
 		<Filter
 			Name="Far-Api"
 			>
+			<File
+				RelativePath="..\common\FarVersion.h"
+				>
+			</File>
 			<File
 				RelativePath="..\common\plugin_helper.h"
 				>

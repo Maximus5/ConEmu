@@ -2070,15 +2070,27 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 	// Может быть какой-то VCon ждет аттача?
 	if (!pVCon)
 	{
+		_ASSERTE(pStartStop->dwAID!=0);
+
 		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
 			if (gp_VCon[i] && (pRCon = gp_VCon[i]->RCon()) != NULL)
 			{
-				if (pRCon->GetServerPID() == pStartStop->dwPID)
+				if (pStartStop->dwAID)
 				{
-					//_ASSERTE(pRCon->GetServerPID() != pStartStop.dwPID);
-					pVCon = gp_VCon[i];
-					break;
+					if (pRCon->GetMonitorThreadID() == pStartStop->dwAID)
+					{
+						pVCon = gp_VCon[i];
+						break;
+					}
+				}
+				else
+				{
+					if (pRCon->GetServerPID() == pStartStop->dwPID)
+					{
+						pVCon = gp_VCon[i];
+						break;
+					}
 				}
 			}
 		}
@@ -2394,11 +2406,16 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 	// Ok, Теперь смотрим свободную ячейку в gp_VCon и запускаемся
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		if (gp_VCon[i] && gp_VCon[i]->RCon() && gp_VCon[i]->RCon()->isDetached())
+		if (gp_VCon[i])
 		{
-			// isDetached() means, that ConEmu.exe was started with "/detached" flag
-			// so, it is safe to close "dummy" console, that was created on GUI startup
-			gp_VCon[i]->RCon()->CloseConsole(false, false);
+			CVConGuard VCon(gp_VCon[i]);
+			CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
+			if (pRCon && !pRCon->InCreateRoot() && pRCon->isDetached())
+			{
+				// isDetached() means, that ConEmu.exe was started with "/detached" flag
+				// so, it is safe to close "dummy" console, that was created on GUI startup
+				pRCon->CloseConsole(false, false);
+			}
 		}
 
 		if (!gp_VCon[i])

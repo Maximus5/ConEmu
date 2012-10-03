@@ -378,6 +378,7 @@ class CRealConsole
 		DWORD GetProgramStatus();
 		DWORD GetFarStatus();
 		DWORD GetServerPID(bool bMainOnly = false);
+		DWORD GetMonitorThreadID();
 		bool isServerCreated();
 		bool isServerAvailable();
 		bool isServerClosing();

@@ -147,8 +147,10 @@ void SetStartupInfoW1900(void *aInfo)
 }
 
 extern BOOL gbInfoW_OK;
-HANDLE WINAPI OpenW(const struct OpenInfo *Info)
+HANDLE WINAPI OpenW1900(const void* apInfo)
 {
+	const struct OpenInfo *Info = (const struct OpenInfo*)apInfo;
+
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;
 

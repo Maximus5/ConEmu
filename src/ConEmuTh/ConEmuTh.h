@@ -317,6 +317,8 @@ void FUNC_Y2(ExitFARW)(void);
 void FUNC_X(SetStartupInfoW)(void *aInfo);
 void FUNC_Y1(SetStartupInfoW)(void *aInfo);
 void FUNC_Y2(SetStartupInfoW)(void *aInfo);
+HANDLE FUNC_Y1(OpenW)(const void* aInfo);
+HANDLE FUNC_Y2(OpenW)(const void* aInfo);
 int ShowMessage(int aiMsg, int aiButtons);
 int ShowMessageA(int aiMsg, int aiButtons);
 int FUNC_X(ShowMessageW)(int aiMsg, int aiButtons);

@@ -14,6 +14,13 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.10.02
+[!] Far 3 build 2848 supported.
+[%] Two elevated in task.
+[%] DBCS bugfixes (default font in real console).
+[*] More information in logs.
+
+
 2012.09.30
 [+] GuiMacro: Paste(8) - paste path from clipboard converted to CygWin style.
 [*] When started with "/logN" switch and program folder is write-protected, log files will be created on Desktop\ConEmuLogs.
