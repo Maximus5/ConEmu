@@ -807,6 +807,7 @@ void CSettings::SettingsLoaded()
 		SingleInstanceArg = true;
 	}
 
+	//wcscpy_c(gpSet->ComSpec.ConEmuDir, gpConEmu->ms_ConEmuDir);
 	wcscpy_c(gpSet->ComSpec.ConEmuBaseDir, gpConEmu->ms_ConEmuBaseDir);
 	UpdateComspec(&gpSet->ComSpec);
 	// Обновить реестр на предмет поддержки UNC путей в cmd.exe

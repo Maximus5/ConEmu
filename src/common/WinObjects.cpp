@@ -3593,15 +3593,22 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 	lstrcpyn(szDesktop, apStartEnv->si.lpDesktop ? apStartEnv->si.lpDesktop : L"", countof(szDesktop));
 	lstrcpyn(szTitle, apStartEnv->si.lpTitle ? apStartEnv->si.lpTitle : L"", countof(szTitle));
 
+	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
+	GetVersionEx(&osv);
+
 	wchar_t cVer = MVV_4a[0];
-	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\n\tDesktop: %s\n\tTitle: %s\n\tSize: {%u,%u},{%u,%u}\n"
-		L"\tFlags: 0x%08X, ShowWindow: %u\n\tHandles: 0x%08X, 0x%08X, 0x%08X\n"
-		L"\tDBCS: %u, WINE: %u, ACP: %u, OEMCP: %u",
+	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\r\n"
+		L"\tOsVer: %u.%u.%u, DBCS: %u, WINE: %u, ACP: %u, OEMCP: %u\r\n"
+		L"\tDesktop: %s\r\n\tTitle: %s\r\n\tSize: {%u,%u},{%u,%u}\r\n"
+		L"\tFlags: 0x%08X, ShowWindow: %u\r\n\tHandles: 0x%08X, 0x%08X, 0x%08X"
+		,
+		osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber,
+		apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->nAnsiCP, apStartEnv->nOEMCP,
 		szDesktop, szTitle,
 		apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
 		apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow,
-		(DWORD)apStartEnv->si.hStdInput, (DWORD)apStartEnv->si.hStdOutput, (DWORD)apStartEnv->si.hStdError,
-		apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->nAnsiCP, apStartEnv->nOEMCP);
+		(DWORD)apStartEnv->si.hStdInput, (DWORD)apStartEnv->si.hStdOutput, (DWORD)apStartEnv->si.hStdError
+		);
 	LogString(szSI, true);
 	
 	LogString("CmdLine: ", false, NULL, false);

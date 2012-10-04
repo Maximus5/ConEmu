@@ -1293,7 +1293,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	//wchar_t* pszExecFile = (wchar_t*)pOut->OnCreateProcRet.wsValue;
 	//wchar_t* pszBaseDir = (wchar_t*)(pOut->OnCreateProcRet.wsValue); // + pOut->OnCreateProcRet.nFileLen);
 	
-	if (asParam)
+	if (asParam && *asParam)
 	{
 		args.pszSpecialCmd = lstrdup(asParam);
 		if (args.ProcessNewConArg() > 0)

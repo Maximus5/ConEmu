@@ -2690,8 +2690,9 @@ void CConEmuMain::UpdateGuiInfoMapping()
 		// Сначала - обработать что что поменяли (найти tcc и т.п.)
 		SetEnvVarExpanded(L"ComSpec", ms_ComSpecInitial); // т.к. функции могут ориентироваться на окружение
 		FindComspec(&gpSet->ComSpec);
+		//wcscpy_c(gpSet->ComSpec.ConEmuDir, gpConEmu->ms_ConEmuDir);
 		wcscpy_c(gpSet->ComSpec.ConEmuBaseDir, gpConEmu->ms_ConEmuBaseDir);
-		UpdateComspec(&gpSet->ComSpec); // установит переменную окружения, если просили
+		UpdateComspec(&gpSet->ComSpec); // установит переменную окружения, если просили (isAddConEmu2Path)
 
 		// Скопируем всю структуру сначала, потом будет "править" то что нужно
 		m_GuiInfo.ComSpec = gpSet->ComSpec;
@@ -5452,8 +5453,8 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	{
 		wchar_t szInfo[255];
 		wcscpy_c(szInfo, L"OnWindowPosChanged:");
-		if (dwStyle & WS_MAXIMIZE) wcscpy_c(szInfo, L" (zoomed)");
-		if (dwStyle & WS_MINIMIZE) wcscpy_c(szInfo, L" (iconic)");
+		if (dwStyle & WS_MAXIMIZE) wcscat_c(szInfo, L" (zoomed)");
+		if (dwStyle & WS_MINIMIZE) wcscat_c(szInfo, L" (iconic)");
 		size_t cchLen = wcslen(szInfo);
 		_wsprintf(szInfo+cchLen, SKIPLEN(countof(szInfo)-cchLen) L" x%08X x%08X (F:x%08X X:%i Y:%i W:%i H:%i)", dwStyle, dwStyleEx, p->flags, p->x, p->y, p->cx, p->cy);
 		LogString(szInfo);
@@ -5578,8 +5579,8 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	if (gpSetCls->isAdvLogging >= 2)
 	{
 		wcscpy_c(szInfo, L"OnWindowPosChanging:");
-		if (zoomed) wcscpy_c(szInfo, L" (zoomed)");
-		if (iconic) wcscpy_c(szInfo, L" (iconic)");
+		if (zoomed) wcscat_c(szInfo, L" (zoomed)");
+		if (iconic) wcscat_c(szInfo, L" (iconic)");
 		size_t cchLen = wcslen(szInfo);
 		_wsprintf(szInfo+cchLen, SKIPLEN(countof(szInfo)-cchLen) L" x%08X x%08X (F:x%08X X:%i Y:%i W:%i H:%i)", dwStyle, dwStyleEx, p->flags, p->x, p->y, p->cx, p->cy);
 	}
@@ -10962,12 +10963,14 @@ HMONITOR CConEmuMain::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/)
 
 HMONITOR CConEmuMain::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
 {
+	wchar_t szInfo[128];
 	MONITORINFO mi = {sizeof(mi)};
 	RECT rcMonitor = MakeRect(0,0, GetSystemMetrics(SM_CXFULLSCREEN), GetSystemMetrics(SM_CYFULLSCREEN));
 
 	HMONITOR hMon = MonitorFromRect(&rcMonitor, MONITOR_DEFAULTTOPRIMARY);
+	BOOL bMonOk = hMon ? GetMonitorInfo(hMon, &mi) : FALSE;
 
-	if (!hMon || !GetMonitorInfo(hMon, &mi))
+	if (!bMonOk)
 	{
 		_ASSERTE(FALSE && "GetMonitorInfo failed");
 		// Если облом с мониторами - берем данные по умолчанию
@@ -10976,6 +10979,19 @@ HMONITOR CConEmuMain::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
 		mi.rcMonitor = rcMonitor;
 	}
 
+	if (gpSetCls->isAdvLogging >= 2)
+	{
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"  GetPrimaryMonitor=%u -> hMon=x%08X Work=({%i,%i}-{%i,%i}) Area=({%i,%i}-{%i,%i})",
+			bMonOk, (DWORD)hMon,
+			mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom,
+            mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom);
+        LogString(szInfo);
+	}
+
+	if (pmi)
+	{
+		*pmi = mi;
+	}
 	return hMon;
 }
 
@@ -10995,7 +11011,7 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	          pInfo->ptMaxTrackSize.x, pInfo->ptMaxTrackSize.y,
 			  rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
 		if (gpSetCls->isAdvLogging >= 2)
-			LogString(szMinMax);
+			LogString(szMinMax, true, false);
 		DEBUGSTRSIZE(szMinMax);
 	}
 
@@ -11091,7 +11107,7 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	          pInfo->ptMaxTrackSize.x, pInfo->ptMaxTrackSize.y,
 			  rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
 		if (gpSetCls->isAdvLogging >= 2)
-			LogString(szMinMax);
+			LogString(szMinMax, true, false);
 		DEBUGSTRSIZE(szMinMax);
 	}
 

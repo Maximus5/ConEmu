@@ -882,7 +882,6 @@ struct ConEmuComspec
 	wchar_t      ComspecExplicit[MAX_PATH]; // этот - хранится в настройке
 	wchar_t      Comspec32[MAX_PATH]; // развернутые, готовые к использованию
 	wchar_t      Comspec64[MAX_PATH]; // развернутые, готовые к использованию
-	//wchar_t      ComspecInitial[MAX_PATH]; // то, что было до запуска ConEmu
 	wchar_t      ConEmuBaseDir[MAX_PATH]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 };
 

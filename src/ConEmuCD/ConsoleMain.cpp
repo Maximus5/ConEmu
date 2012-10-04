@@ -2980,6 +2980,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		return bOn ? CERR_CHKSTATE_ON : CERR_CHKSTATE_OFF;
 	}
 
+	if ((gnRunMode == RM_SERVER) && gpSrv->hGuiWnd)
+	{
+		ReloadGuiSettings(NULL);
+	}
+
 	// Issue 364, например, идет билд в VS, запускается CustomStep, в этот момент автоаттач нафиг не нужен
 	// Теоретически, в Студии не должно бы быть запуска ConEmuC.exe, но он может оказаться в "COMSPEC", так что проверим.
 	if (gbAttachMode && (gnRunMode == RM_SERVER) && (gpSrv->dwGuiPID == 0))

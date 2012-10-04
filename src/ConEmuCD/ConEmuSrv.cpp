@@ -136,11 +136,13 @@ void ServerInitFont()
 BOOL LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
 {
 	BOOL lbRc = FALSE;
-	if (ghConEmuWnd && IsWindow(ghConEmuWnd))
+	HWND hGuiWnd = ghConEmuWnd ? ghConEmuWnd : gpSrv->hGuiWnd;
+
+	if (hGuiWnd && IsWindow(hGuiWnd))
 	{
 		DWORD dwGuiThreadId, dwGuiProcessId;
 		MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
-		dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId);
+		dwGuiThreadId = GetWindowThreadProcessId(hGuiWnd, &dwGuiProcessId);
 
 		if (!dwGuiThreadId)
 		{
@@ -184,7 +186,7 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 	{
 		gbLogProcess = (gpSrv->guiSettings.nLoggingType == glt_Processes);
 
-		UpdateComspec(&gpSrv->guiSettings.ComSpec);
+		UpdateComspec(&gpSrv->guiSettings.ComSpec); // isAddConEmu2Path, ...
 
 		SetEnvironmentVariableW(ENV_CONEMUDIR_VAR_W, gpSrv->guiSettings.sConEmuDir);
 		SetEnvironmentVariableW(ENV_CONEMUBASEDIR_VAR_W, gpSrv->guiSettings.sConEmuBaseDir);
