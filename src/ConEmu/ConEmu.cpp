@@ -2670,6 +2670,14 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.bProcessAnsi = (gpSet->isProcessAnsi ? 1 : 0);
 	m_GuiInfo.bUseClink = (gpSet->isUseClink() ? 1 : 0);
 
+	m_GuiInfo.bSleepInBackg = gpSet->isSleepInBackground;
+	m_GuiInfo.bGuiActive = isMeForeground(true, true);
+	{
+	CVConGuard VCon;
+	m_GuiInfo.hActiveCon = (GetActiveVCon(&VCon) >= 0) ? VCon->RCon()->ConWnd() : NULL;
+	}
+	m_GuiInfo.dwActiveTick = GetTickCount();
+
 	mb_DosBoxExists = CheckDosBoxExists();
 	m_GuiInfo.bDosBox = mb_DosBoxExists;
 	
@@ -2809,6 +2817,27 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	}
 	#endif
 	
+}
+
+void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive)
+{
+	ConEmuGuiMapping* pData = m_GuiInfoMapping.Ptr();
+	
+	if (pData)
+	{
+		CVConGuard VCon;
+		HWND hActiveRCon = (GetActiveVCon(&VCon) >= 0) ? VCon->RCon()->ConWnd() : NULL;
+
+		if ((pData->bSleepInBackg != (BOOL)gpSet->isSleepInBackground)
+			|| (pData->bGuiActive != (BOOL)bActive)
+			|| (pData->hActiveCon != hActiveRCon))
+		{
+			pData->bSleepInBackg = gpSet->isSleepInBackground;
+			pData->bGuiActive = bActive;
+			pData->hActiveCon = hActiveRCon;
+			pData->dwActiveTick = GetTickCount();
+		}
+	}
 }
 
 HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
@@ -5944,6 +5973,8 @@ void CConEmuMain::OnActiveConWndStore(HWND hConWnd)
 	{	
 		SetWindowLongPtr(ghWndWork, GWLP_USERDATA, (LONG_PTR)hConWnd);
 	}
+
+	UpdateGuiInfoMappingActive(isMeForeground(true,true));
 }
 
 BOOL CConEmuMain::Activate(CVirtualConsole* apVCon)
@@ -10783,6 +10814,8 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	/****************************************************************/
 	/******      Done, Processing Activation/Deactivation      ******/
 	/****************************************************************/
+
+	UpdateGuiInfoMappingActive(lbSetFocus);
 
 	mb_LastConEmuFocusState = lbSetFocus;
 	DEBUGSTRFOCUS(lbSetFocus ? L"mb_LastConEmuFocusState set to TRUE" : L"mb_LastConEmuFocusState set to FALSE");

@@ -92,6 +92,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CONSOLEPROGRESSWARNTIMEOUT 2000 // поставил 2с, т.к. при минимизации консоль обновляется раз в секунду
 #define CONSOLEINACTIVERGNTIMEOUT 500
 #define SERVERCLOSETIMEOUT 2000
+#define UPDATESERVERACTIVETIMEOUT 2500
 
 /*#pragma pack(push, 1)
 
@@ -429,7 +430,7 @@ class CRealConsole
 		void OnDeactivate(int nNewNum);
 		void ShowHideViews(BOOL abShow);
 		void OnGuiFocused(BOOL abFocus, BOOL abForceChild = FALSE);
-		void UpdateServerActive(BOOL abActive, BOOL abImmediate = FALSE);
+		void UpdateServerActive(BOOL abImmediate = FALSE);
 		BOOL CheckBufferSize();
 		//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
 		BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
@@ -565,7 +566,8 @@ class CRealConsole
 		HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
 		HANDLE mh_MonitorThreadEvent;
 		HANDLE mh_UpdateServerActiveEvent;
-		BOOL mb_UpdateServerActive;
+		//BOOL mb_UpdateServerActive;
+		DWORD mn_LastUpdateServerActive;
 		// Для пересылки событий ввода в консоль
 		//static DWORD WINAPI InputThread(LPVOID lpParameter);
 		//HANDLE mh_InputThread; DWORD mn_InputThreadID;
@@ -629,7 +631,7 @@ class CRealConsole
 		//	#endif
 		//} con;
 		
-		BOOL mb_ThawRefreshThread;
+		//BOOL mb_ThawRefreshThread;
 		struct ServerClosing
 		{
 			DWORD  nServerPID;     // PID закрывающегося сервера

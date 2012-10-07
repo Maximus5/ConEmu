@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    110
+#define CESERVER_REQ_VER    111
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -904,6 +904,11 @@ struct ConEmuGuiMapping
 	BOOL     bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
 	BOOL     bUseClink;     // использовать расширение командной строки (ReadConsole)
 
+	BOOL     bSleepInBackg; // Sleep in background
+	BOOL     bGuiActive;    // Gui is In focus or Not
+	HWND2    hActiveCon;    // Active Real console HWND
+	DWORD    dwActiveTick;  // Tick, when hActiveCon/bGuiActive was changed
+
 	/* Основной шрифт в GUI */
 	struct ConEmuMainFont MainFont;
 	
@@ -1150,9 +1155,9 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	DWORD nServerPID;  //
 	DWORD nGuiPID;     // !! на них ориентируется PicViewWrapper   !!
 	//
-	DWORD bConsoleActive;
+	DWORD Reserved1; //bConsoleActive;
 	DWORD nProtocolVersion; // == CESERVER_REQ_VER
-	DWORD bThawRefreshThread; // FALSE - увеличивает интервал опроса консоли (GUI теряет фокус)
+	DWORD Reserved2; //bThawRefreshThread; // FALSE - увеличивает интервал опроса консоли (GUI теряет фокус)
 	//
 	DWORD nActiveFarPID; // PID последнего активного фара
 	//
@@ -1386,6 +1391,8 @@ struct CESERVER_REQ_STARTSTOP
 	BOOL bRunInBackgroundTab;
 	// При запуске в режиме RM_COMSPEC, сохранение "длинного вывода"
 	DWORD nParentFarPID;
+	// Если был успешный вызов функций типа ReadConsole/ReadConsoleInput
+	BOOL bWasSucceededInRead;
 	// CmdLine
 	wchar_t sCmdLine[1]; // variable length
 };

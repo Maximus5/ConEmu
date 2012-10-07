@@ -187,7 +187,7 @@ void CRealConsole::Construct(CVirtualConsole* apVCon)
 	mh_TermEvent = CreateEvent(NULL,TRUE/*MANUAL - используется в нескольких нитях!*/,FALSE,NULL); ResetEvent(mh_TermEvent);
 	mh_MonitorThreadEvent = CreateEvent(NULL,TRUE,FALSE,NULL); //2009-09-09 Поставил Manual. Нужно для определения, что можно убирать флаг Detached
 	mh_UpdateServerActiveEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
-	mb_UpdateServerActive = FALSE;
+	//mb_UpdateServerActive = FALSE;
 	mh_ApplyFinished = CreateEvent(NULL,TRUE,FALSE,NULL);
 	//mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	//WARNING("mh_Sync2WindowEvent убрать");
@@ -223,7 +223,8 @@ void CRealConsole::Construct(CVirtualConsole* apVCon)
 	
 	m_RConServer.Init(this);
 
-	mb_ThawRefreshThread = FALSE;
+	//mb_ThawRefreshThread = FALSE;
+	mn_LastUpdateServerActive = 0;
 	
 	//mb_BuferModeChangeLocked = FALSE;
 	
@@ -1771,10 +1772,10 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 		if (nWait == IDEVENT_UPDATESERVERACTIVE)
 		{
-			BOOL lb = pRCon->mb_UpdateServerActive;
-			pRCon->UpdateServerActive(lb, TRUE);
-			if (lb == pRCon->mb_UpdateServerActive)
-				ResetEvent(pRCon->mh_UpdateServerActiveEvent);
+			//BOOL lb = pRCon->mb_UpdateServerActive;
+			pRCon->UpdateServerActive(TRUE);
+			//if (lb == pRCon->mb_UpdateServerActive)
+			ResetEvent(pRCon->mh_UpdateServerActiveEvent);
 		}
 
 		// Это событие теперь ManualReset
@@ -4766,7 +4767,7 @@ bool CRealConsole::ReopenServerPipes()
 	if (bActive)
 		gpConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
 
-	UpdateServerActive(bActive, TRUE);
+	UpdateServerActive(TRUE);
 
 #ifdef _DEBUG
 	wchar_t szDbgInfo[512]; szDbgInfo[0] = 0;
@@ -6806,8 +6807,8 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 		#ifdef _DEBUG
 		wchar_t szInfo[128];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
-			L"CRealConsole::OnGuiFocused(%u) skipped, mb_InSetFocus=1, mb_ThawRefreshThread=%u, mb_LastConEmuFocusState=%u)",
-			abFocus, mb_ThawRefreshThread, gpConEmu->mb_LastConEmuFocusState);
+			L"CRealConsole::OnGuiFocused(%u) skipped, mb_InSetFocus=1, mb_LastConEmuFocusState=%u)",
+			abFocus, gpConEmu->mb_LastConEmuFocusState);
 		DEBUGSTRFOCUS(szInfo);
 		#endif
 		return;
@@ -6855,13 +6856,14 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 		}
 	}
 
-	// Если FALSE - сервер увеличивает интервал опроса консоли (GUI теряет фокус)
-	mb_ThawRefreshThread = abFocus || !gpSet->isSleepInBackground;
+	//// Если FALSE - сервер увеличивает интервал опроса консоли (GUI теряет фокус)
+	//mb_ThawRefreshThread = abFocus || !gpSet->isSleepInBackground;
 
-
-	//BOOL lbNeedChange = FALSE;
-	// Разрешит "заморозку" серверной нити и обновит hdr.bConsoleActive в мэппинге
-	if (m_ConsoleMap.IsValid() && ms_MainSrv_Pipe[0])
+	// 121007 - сервер теперь дергаем только при АКТИВАЦИИ окна
+	////BOOL lbNeedChange = FALSE;
+	//// Разрешит "заморозку" серверной нити и обновит hdr.bConsoleActive в мэппинге
+	//if (m_ConsoleMap.IsValid() && ms_MainSrv_Pipe[0])
+	if (abFocus)
 	{
 		BOOL lbActive = isActive();
 
@@ -6877,7 +6879,10 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 		//}
 		//if (lbNeedChange)
 
-		UpdateServerActive(lbActive);
+		if (lbActive)
+		{
+			UpdateServerActive();
+		}
 	}
 
 #ifdef _DEBUG
@@ -6889,14 +6894,18 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 
 // Обновить в сервере флаги Active & ThawRefreshThread,
 // а заодно заставить перечитать содержимое консоли (если abActive == TRUE)
-void CRealConsole::UpdateServerActive(BOOL abActive, BOOL abImmediate /*= FALSE*/)
+void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 {
 	if (!this) return;
 
-	mb_UpdateServerActive = abActive;
+	//mb_UpdateServerActive = abActive;
+	BOOL bActiveNonSleep = isActive() && (!gpSet->isSleepInBackground || gpConEmu->isMeForeground(true, true));
 
-	DWORD nTID = GetCurrentThreadId();
-	if (!abImmediate && (mn_MonitorThreadID && (nTID != mn_MonitorThreadID)))
+	if (!bActiveNonSleep)
+		return; // команду в сервер посылаем только при активации
+
+	//DWORD nTID = GetCurrentThreadId();
+	if (!abImmediate && (mn_MonitorThreadID && (GetCurrentThreadId() != mn_MonitorThreadID)))
 	{
 		DEBUGSTRFOCUS(L"UpdateServerActive - delayed, event");
 		_ASSERTE(mh_UpdateServerActiveEvent!=NULL);
@@ -6909,14 +6918,14 @@ void CRealConsole::UpdateServerActive(BOOL abActive, BOOL abImmediate /*= FALSE*
 	// -- всегда строго в главном сервере
 	if (ms_MainSrv_Pipe[0])
 	{
-		size_t nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2;
+		size_t nInSize = sizeof(CESERVER_REQ_HDR); //+sizeof(DWORD)*2;
 		DWORD dwRead = 0;
 		//CESERVER_REQ lIn = {{nInSize}}, lOut = {};
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ONACTIVATION, nInSize);
 		CESERVER_REQ* pOut = ExecuteNewCmd(CECMD_ONACTIVATION, sizeof(CESERVER_REQ));
 		if (pIn && pOut)
 		{
-			#ifdef _DEBUG
+			#if 0
 			wchar_t szInfo[255];
 			bool bFore = gpConEmu->isMeForeground(true, true);
 			HWND hFore = GetForegroundWindow(), hFocus = GetFocus();
@@ -6927,23 +6936,26 @@ void CRealConsole::UpdateServerActive(BOOL abActive, BOOL abImmediate /*= FALSE*
 				szForeWnd, (DWORD)hFocus);
 			#endif
 
-			bool lbThaw = mb_ThawRefreshThread;
-			if (abActive && !lbThaw && gpConEmu->isMeForeground(true, true))
-			{
-				mb_ThawRefreshThread = lbThaw = true;
-			}
-			pIn->dwData[0] = abActive;
-			pIn->dwData[1] = lbThaw;
+			//bool lbThaw = mb_ThawRefreshThread;
+			//if (abActive && !lbThaw && gpConEmu->isMeForeground(true, true))
+			//{
+			//	mb_ThawRefreshThread = lbThaw = true;
+			//}
+			//pIn->dwData[0] = abActive;
+			//pIn->dwData[1] = lbThaw;
 
 			//ExecutePrepareCmd(&lIn.hdr, CECMD_ONACTIVATION, lIn.hdr.cbSize);
 			DWORD dwTickStart = timeGetTime();
+			mn_LastUpdateServerActive = GetTickCount();
 			WARNING("Таймаут, чтобы не зависнуть");
 			fSuccess = CallNamedPipe(ms_MainSrv_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, 500);
 			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_MainSrv_Pipe, pOut);
 
-			#ifdef _DEBUG
+			#if 0
 			DEBUGSTRFOCUS(szInfo);
 			#endif
+
+			mn_LastUpdateServerActive = GetTickCount();
 		}
 		ExecuteFreeResult(pIn);
 		ExecuteFreeResult(pOut);
@@ -6955,8 +6967,8 @@ void CRealConsole::UpdateServerActive(BOOL abActive, BOOL abImmediate /*= FALSE*
 
 #ifdef _DEBUG
 	wchar_t szDbgInfo[512];
-	_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"--> Updating active(%i) and thaw(%i) %s: %s\n",
-		abActive, mb_ThawRefreshThread, fSuccess ? L"OK" : L"Failed!", ms_MainSrv_Pipe+18);
+	_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"--> Updating active(%i) %s: %s\n",
+		bActiveNonSleep, fSuccess ? L"OK" : L"Failed!", ms_MainSrv_Pipe+18);
 	DEBUGSTRALTSRV(szDbgInfo);
 #endif
 }
@@ -7740,7 +7752,8 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 
 			pipe.Close();
 			// Теперь нужно передернуть сервер, чтобы он перечитал содержимое консоли
-			UpdateServerActive(TRUE, TRUE);
+			UpdateServerActive(); // пусть будет асинхронно, задержки раздражают
+
 			// И MonitorThread, чтобы он получил новое содержимое
 			ResetEvent(mh_ApplyFinished);
 			mn_LastConsolePacketIdx--;

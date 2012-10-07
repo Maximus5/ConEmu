@@ -1058,8 +1058,8 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	
 
 	_ASSERTE(gpSrv->pConsole!=NULL);
-	gpSrv->pConsole->hdr.bConsoleActive = TRUE;
-	gpSrv->pConsole->hdr.bThawRefreshThread = TRUE;
+	//gpSrv->pConsole->hdr.bConsoleActive = TRUE;
+	//gpSrv->pConsole->hdr.bThawRefreshThread = TRUE;
 
 	// ≈сли указаны параметры (gbParmBufferSize && gcrVisibleSize.X && gcrVisibleSize.Y) - установить размер
 	// »наче - получить текущие размеры из консольного окна
@@ -2561,9 +2561,9 @@ int CreateMapHeader()
 	gpSrv->pConsole->hdr.hConEmuWndDc = ghConEmuWndDC;
 	gpSrv->pConsole->hdr.hConEmuWndBack = ghConEmuWndBack;
 	_ASSERTE(gpSrv->pConsole->hdr.hConEmuRoot==NULL || gpSrv->pConsole->hdr.nGuiPID!=0);
-	gpSrv->pConsole->hdr.bConsoleActive = TRUE; // пока - TRUE (это на старте сервера)
+	//gpSrv->pConsole->hdr.bConsoleActive = TRUE; // пока - TRUE (это на старте сервера)
 	gpSrv->pConsole->hdr.nServerInShutdown = 0;
-	gpSrv->pConsole->hdr.bThawRefreshThread = TRUE; // пока - TRUE (это на старте сервера)
+	//gpSrv->pConsole->hdr.bThawRefreshThread = TRUE; // пока - TRUE (это на старте сервера)
 	gpSrv->pConsole->hdr.nProtocolVersion = CESERVER_REQ_VER;
 	gpSrv->pConsole->hdr.nActiveFarPID = gpSrv->nActiveFarPID; // PID последнего активного фара
 
@@ -3394,8 +3394,10 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	DWORD dwAltTimeout = 100;
 	//BOOL  bForceRefreshSetSize = FALSE; // ѕосле изменени€ размера нужно сразу перечитать консоль без задержек
 	BOOL lbWasSizeChange = FALSE;
-	BOOL bThaw = TRUE; // ≈сли FALSE - снизить нагрузку на conhost
+	//BOOL bThaw = TRUE; // ≈сли FALSE - снизить нагрузку на conhost
+	BOOL bFellInSleep = FALSE; // ≈сли TRUE - снизить нагрузку на conhost
 	BOOL bConsoleActive = TRUE;
+	DWORD nLastConsoleActiveTick = 0;
 
 	while (TRUE)
 	{
@@ -3615,31 +3617,48 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//lbEventualChange = (nWait == (WAIT_OBJECT_0+1))/* || lbProcessChanged*/;
 		//lbForceSend = (nWait == (WAIT_OBJECT_0+1));
 
-		WARNING("gpSrv->pConsole->hdr.bConsoleActive и gpSrv->pConsole->hdr.bThawRefreshThread могут быть неактуальными!");
+		//WARNING("gpSrv->pConsole->hdr.bConsoleActive и gpSrv->pConsole->hdr.bThawRefreshThread могут быть неактуальными!");
 		//if (gpSrv->pConsole->hdr.bConsoleActive && gpSrv->pConsoleMap)
 		//{
-		BOOL bNewThaw = TRUE;
+		//BOOL bNewThaw = TRUE;
+		BOOL bNewActive = TRUE;
+		BOOL bNewFellInSleep = FALSE;
 
-		if (gpSrv->pConsoleMap->IsValid())
+		if (!nLastConsoleActiveTick || ((GetTickCount() - nLastConsoleActiveTick) >= REFRESH_FELL_SLEEP_TIMEOUT))
 		{
-			CESERVER_CONSOLE_MAPPING_HDR* p = gpSrv->pConsoleMap->Ptr();
-			bNewThaw = p->bThawRefreshThread;
-			bConsoleActive = p->bConsoleActive;
+			ReloadGuiSettings(NULL);
 		}
+
+		if ((ghConWnd == gpSrv->guiSettings.hActiveCon) || (gpSrv->guiSettings.hActiveCon == NULL))
+			bNewActive = gpSrv->guiSettings.bGuiActive;
 		else
-		{
-			bNewThaw = bConsoleActive = TRUE;
-		}
-		//}
+			bNewActive = FALSE;
 
-		if (bNewThaw != bThaw)
+		bNewFellInSleep = gpSrv->guiSettings.bSleepInBackg && !bNewActive;
+
+		//if (gpSrv->pConsoleMap->IsValid())
+		//{
+		//	CESERVER_CONSOLE_MAPPING_HDR* p = gpSrv->pConsoleMap->Ptr();
+		//	bNewThaw = p->bThawRefreshThread;
+		//	bConsoleActive = p->bConsoleActive;
+		//}
+		//else
+		//{
+		//	bNewThaw = bConsoleActive = TRUE;
+		//}
+		////}
+
+		//if (bNewThaw != bThaw)
+		if ((bNewActive != bConsoleActive) || (bNewFellInSleep != bFellInSleep))
 		{
-			bThaw = bNewThaw;
+			//bThaw = bNewThaw;
+			bConsoleActive = bNewActive;
+			bFellInSleep = bNewFellInSleep;
 
 			if (gpLogSize)
 			{
 				char szInfo[128];
-				_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: RefreshThread: Thaw changed, speed(%s)", bNewThaw ? "high" : "low");
+				_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: RefreshThread: Sleep changed, speed(%s)", bNewFellInSleep ? "high" : "low");
 				LogString(szInfo);
 			}
 		}
@@ -3653,7 +3672,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		        //  онсоль не активна
 		        && (!bConsoleActive
 		            // или активна, но сам ConEmu GUI не в фокусе
-		            || (bConsoleActive && !bThaw))
+		            || bFellInSleep)
 		        // и не дернули событие gpSrv->hRefreshEvent
 		        && (nWait != (WAIT_OBJECT_0+1))
 				&& !gpSrv->bWasReattached)
@@ -3669,14 +3688,12 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			}
 		}
 
-#ifdef _DEBUG
-
+		#ifdef _DEBUG
 		if (nWait == (WAIT_OBJECT_0+1))
 		{
 			DEBUGSTR(L"*** hRefreshEvent was set, checking console...\n");
 		}
-
-#endif
+		#endif
 
 		if (ghConEmuWnd && !IsWindow(ghConEmuWnd))
 		{

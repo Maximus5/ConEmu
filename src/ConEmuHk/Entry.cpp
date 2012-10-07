@@ -157,6 +157,7 @@ DWORD   gnSelfPID = 0;
 BOOL    gbSelfIsRootConsoleProcess = FALSE;
 DWORD   gnServerPID = 0;
 DWORD   gnPrevAltServerPID = 0;
+BOOL    gbWasSucceededInRead = FALSE;
 DWORD   gnGuiPID = 0;
 HWND    ghConWnd = NULL; // Console window
 HWND    ghConEmuWnd = NULL; // Root! window
@@ -1288,6 +1289,7 @@ void SendStopped()
 		pIn->StartStop.nSubSystem = gnImageSubsystem;
 		pIn->StartStop.bWasBufferHeight = gbWasBufferHeight;
 		pIn->StartStop.nOtherPID = gnPrevAltServerPID;
+		pIn->StartStop.bWasSucceededInRead = gbWasSucceededInRead;
 
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 

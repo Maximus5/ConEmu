@@ -185,6 +185,7 @@ class CConEmuMain :
 		MFileMapping<ConEmuGuiMapping> m_GuiAttachMapping;
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
+		void UpdateGuiInfoMappingActive(bool bActive);
 		int mn_QuakePercent; // 0 - отключен, иначе (>0 && <=100) - идет анимация Quake
 		bool mb_InCreateWindow;
 		HMONITOR mh_MinFromMonitor;

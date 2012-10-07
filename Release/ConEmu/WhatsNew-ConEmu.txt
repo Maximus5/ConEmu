@@ -14,6 +14,10 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+[*] Changes in "Sleep in background".
+[*] Some more AI in "Press Enter or Esc to close console".
+
+
 2012.10.04
 [%] BugFix. "%ConEmuDir%" does not works for elevated consoles.
 [%] BugFix. Maximize fails on WinXP.

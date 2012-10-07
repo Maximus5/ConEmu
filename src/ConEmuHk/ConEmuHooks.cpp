@@ -145,6 +145,7 @@ extern HWND    ghConWnd;      // RealConsole
 extern HWND    ghConEmuWnd;   // Root! ConEmu window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnGuiPID;
+extern BOOL    gbWasSucceededInRead;
 HDC ghTempHDC = NULL;
 GetConsoleWindow_T gfGetRealConsoleWindow = NULL;
 //extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
@@ -2647,6 +2648,9 @@ void OnReadConsoleStart(BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 
 void OnReadConsoleEnd(BOOL bSucceeded, BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
 {
+	if (bSucceeded && !gbWasSucceededInRead && lpNumberOfCharsRead && *lpNumberOfCharsRead)
+		gbWasSucceededInRead = TRUE;
+
 	if (gReadConsoleInfo.InReadConsoleTID)
 	{
 		gReadConsoleInfo.LastReadConsoleTID = gReadConsoleInfo.InReadConsoleTID;
@@ -3311,6 +3315,9 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 
 	if (nRead)
 	{
+		if (!gbWasSucceededInRead)
+			gbWasSucceededInRead = TRUE;
+
 		// —брос кешированных значений
 		GetConsoleScreenBufferInfoCached(NULL, NULL);
 	}

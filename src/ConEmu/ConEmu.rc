@@ -279,30 +279,30 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "ConEmu Inside - Explorer context menu integration",IDC_STATIC,4,1,319,81
-    LTEXT           "Menu item:",IDC_STATIC,11,14,39,8
-    COMBOBOX        cbInsideName,54,12,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Configuration:",IDC_STATIC,173,14,59,8
-    EDITTEXT        tInsideConfig,238,12,79,13,ES_AUTOHSCROLL
-    LTEXT           "Command:",IDC_STATIC,11,31,39,8
-    EDITTEXT        tInsideShell,54,29,263,13,ES_AUTOHSCROLL
-    LTEXT           "Icon file:",IDC_STATIC,11,47,39,8
-    EDITTEXT        tInsideIcon,54,45,263,13,ES_AUTOHSCROLL
-    CONTROL         "Sync dir",cbInsideSyncDir,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,64,39,10
-    EDITTEXT        tInsideSyncDir,54,61,144,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Register",bInsideRegister,212,61,50,14
-    PUSHBUTTON      "Unregister",bInsideUnregister,267,61,50,14
-    GROUPBOX        "ConEmu Here - Explorer context menu integration",IDC_STATIC,4,84,319,81
+    GROUPBOX        "ConEmu Inside - Explorer context menu integration",IDC_STATIC,4,84,319,81
     LTEXT           "Menu item:",IDC_STATIC,11,97,39,8
-    COMBOBOX        cbHereName,54,95,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        cbInsideName,54,95,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Configuration:",IDC_STATIC,173,97,59,8
-    EDITTEXT        tHereConfig,238,95,79,13,ES_AUTOHSCROLL
+    EDITTEXT        tInsideConfig,238,95,79,13,ES_AUTOHSCROLL
     LTEXT           "Command:",IDC_STATIC,11,114,39,8
-    EDITTEXT        tHereShell,54,112,263,13,ES_AUTOHSCROLL
-    LTEXT           "Icon file:",IDC_STATIC,11,132,39,8
-    EDITTEXT        tHereIcon,54,129,263,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Register",bHereRegister,213,145,50,14
-    PUSHBUTTON      "Unregister",bHereUnregister,267,145,50,14
+    EDITTEXT        tInsideShell,54,112,263,13,ES_AUTOHSCROLL
+    LTEXT           "Icon file:",IDC_STATIC,11,130,39,8
+    EDITTEXT        tInsideIcon,54,128,263,13,ES_AUTOHSCROLL
+    CONTROL         "Sync dir",cbInsideSyncDir,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,147,39,10
+    EDITTEXT        tInsideSyncDir,54,144,144,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Register",bInsideRegister,212,144,50,14
+    PUSHBUTTON      "Unregister",bInsideUnregister,267,144,50,14
+    GROUPBOX        "ConEmu Here - Explorer context menu integration",IDC_STATIC,4,1,319,81
+    LTEXT           "Menu item:",IDC_STATIC,11,14,39,8
+    COMBOBOX        cbHereName,54,11,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Configuration:",IDC_STATIC,173,14,59,8
+    EDITTEXT        tHereConfig,238,11,79,13,ES_AUTOHSCROLL
+    LTEXT           "Command:",IDC_STATIC,11,31,39,8
+    EDITTEXT        tHereShell,54,29,263,13,ES_AUTOHSCROLL
+    LTEXT           "Icon file:",IDC_STATIC,11,49,39,8
+    EDITTEXT        tHereIcon,54,46,263,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Register",bHereRegister,213,62,50,14
+    PUSHBUTTON      "Unregister",bHereUnregister,267,62,50,14
     GROUPBOX        "Automatic attach of cmd && Tcc/Le to ConEmu (new window will be started if not found)",IDC_STATIC,4,168,319,65
     LTEXT           "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\nCurrent command stored in registry «AutoRun» (HKLM value is not processed here):",IDC_STATIC,11,178,308,16
     EDITTEXT        tCmdAutoAttach,9,197,308,13,ES_AUTOHSCROLL | ES_READONLY
@@ -1268,6 +1268,11 @@ BEGIN
         RIGHTMARGIN, 314
         TOPMARGIN, 4
         BOTTOMMARGIN, 181
+    END
+
+    IDD_SPG_INTEGRATION, DIALOG
+    BEGIN
+        RIGHTMARGIN, 328
     END
 
     IDD_SPG_COLORS, DIALOG
