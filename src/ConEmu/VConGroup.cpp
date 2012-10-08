@@ -568,7 +568,7 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 	}
 
 	bool lbPosChanged = false;
-	RECT rcCurCon = {};
+	RECT rcCurCon = {}, rcCurBack = {};
 
 	CVConGuard VConI(mp_Item);
 	if (m_SplitType == RConStartArgs::eSplitNone)
@@ -579,20 +579,28 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 		//gpConEmu->AddMargins(rcNewCon, rcScroll);
 		
 		HWND hWndDC = mp_Item ? VConI->GetView() : NULL;
+		HWND hBack = mp_Item ? VConI->GetBack() : NULL;
 		if (hWndDC)
 		{
 			GetWindowRect(hWndDC, &rcCurCon);
+			GetWindowRect(hBack, &rcCurBack);
+
 			_ASSERTE(GetParent(hWndDC) == ghWnd && ghWnd);
 			MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcCurCon, 2);
+			MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcCurBack, 2);
+
+			RECT rcDC = gpConEmu->CalcRect(CER_DC, rcNewCon, CER_BACK, VConI.VCon());
 
 			if (bVisible)
 			{
-				lbPosChanged = memcmp(&rcCurCon, &rcNewCon, sizeof(RECT))!=0;
+				lbPosChanged = memcmp(&rcCurCon, &rcDC, sizeof(RECT))!=0
+					|| memcmp(&rcCurBack, &rcNewCon, sizeof(RECT))!=0;
 			}
 			else
 			{
 				// Тут нас интересует только X/Y
-				lbPosChanged = memcmp(&rcCurCon, &rcNewCon, sizeof(POINT))!=0;
+				lbPosChanged = memcmp(&rcCurCon, &rcDC, sizeof(POINT))!=0
+					|| memcmp(&rcCurBack, &rcNewCon, sizeof(RECT))!=0;
 			}
 
 			// Двигаем/ресайзим
@@ -2517,7 +2525,7 @@ HRGN CVConGroup::GetExclusionRgn(bool abTestOnly/*=false*/)
 RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
 {
 	RECT rc = rFrom;
-	RECT rcShift = MakeRect(0,0);
+	//RECT rcShift = MakeRect(0,0);
 
 	CVConGuard VCon(pVCon);
 	if (!pVCon && (GetActiveVCon(&VCon) >= 0))
@@ -2555,8 +2563,8 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		_ASSERTE(rcCalcCon.left==0 && rcCalcCon.top==0);
 		RECT rcCalcDC = MakeRect(0,0,rcCalcCon.right*gpSetCls->FontWidth(), rcCalcCon.bottom*gpSetCls->FontHeight());
 
-		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
-		gpConEmu->AddMargins(rcCalcBack, rcScroll, FALSE);
+		RECT rcScrollPad = gpConEmu->CalcMargins(CEM_SCROLL|CEM_PAD);
+		gpConEmu->AddMargins(rcCalcBack, rcScrollPad, FALSE);
 
 		int nDeltaX = (rcCalcBack.right - rcCalcBack.left) - (rcCalcDC.right - rcCalcDC.left);
 		int nDeltaY = (rcCalcBack.bottom - rcCalcBack.top) - (rcCalcDC.bottom - rcCalcDC.top);
@@ -2597,12 +2605,12 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		case CER_BACK: // switch (tWhat)
 		{
 			TODO("DoubleView");
-			rcShift = gpConEmu->CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
+			RECT rcShift = gpConEmu->CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
 			CConEmuMain::AddMargins(rc, rcShift);
 		} break;
 		case CER_SCROLL: // switch (tWhat)
 		{
-			rcShift = gpConEmu->CalcMargins(tTabAction);
+			RECT rcShift = gpConEmu->CalcMargins(tTabAction);
 			CConEmuMain::AddMargins(rc, rcShift);
 			rc.left = rc.right - GetSystemMetrics(SM_CXVSCROLL);
 			return rc; // Иначе внизу еще будет коррекция по DC (rcAddShift)
@@ -2617,7 +2625,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			if (tFrom == CER_MAINCLIENT)
 			{
 				// Учесть высоту закладок (табов)
-				rcShift = gpConEmu->CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
+				RECT rcShift = gpConEmu->CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
 				CConEmuMain::AddMargins(rc, rcShift);
 			}
 			else if (tFrom == CER_BACK || tFrom == CER_WORKSPACE)
@@ -2632,16 +2640,28 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				_ASSERTE(tFrom == CER_MAINCLIENT);
 			}
 
+			// Теперь обработка SplitScreen/DoubleView/....
 			RECT rcAll = rc;
 			if (pGroup && (tWhat != CER_CONSOLE_ALL)
 				&& (tFrom == CER_MAINCLIENT || tFrom == CER_WORKSPACE))
 			{
+				//
 				pGroup->CalcSplitRootRect(rcAll, rc);
 			}
 
+			// Коррекция отступов
 			if (tFrom == CER_MAINCLIENT || tFrom == CER_BACK || tFrom == CER_WORKSPACE)
 			{
-				rcShift = gpConEmu->CalcMargins(CEM_SCROLL);
+				// Прокрутка. Пока только справа (планируется и внизу)
+				RECT rcShift = gpConEmu->CalcMargins(CEM_SCROLL);
+				CConEmuMain::AddMargins(rc, rcShift);
+			}
+
+			TODO("Вообще, для CER_CONSOLE_ALL CEM_PAD считать не нужно, но т.к. пока используется SetAllConsoleWindowsSize - оставим");
+			if (tWhat == CER_DC || tWhat == CER_CONSOLE_CUR || tWhat == CER_CONSOLE_ALL)
+			{
+				// Pad. Отступ от всех краев (gpSet->nCenterConsolePad)
+				RECT rcShift = gpConEmu->CalcMargins(CEM_PAD);
 				CConEmuMain::AddMargins(rc, rcShift);
 			}
 
@@ -2655,6 +2675,8 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			//if (rcShift.top || rcShift.bottom || )
 			//nShift = (gpSetCls->FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
 
+			// Если активен NTVDM.
+			TODO("Вообще это нужно расширить. Размер может менять и любое консольное приложение.");
 			if (tWhat != CER_CONSOLE_NTVDMOFF && pVCon && pVCon->RCon() && pVCon->RCon()->isNtvdm())
 			{
 				// NTVDM устанавливает ВЫСОТУ экранного буфера... в 25/28/43/50 строк
@@ -2667,6 +2689,8 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 					rc1.bottom = (rc.bottom - rc.top); // Если размер вылез за текущий - обрежем снизу :(
 
 				int nS = rc.right - rc.left - rc1.right;
+
+				RECT rcShift = {0,0,0,0};
 
 				if (nS>=0)
 				{

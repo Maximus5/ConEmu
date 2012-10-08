@@ -56,6 +56,7 @@ public:
 	bool IsThemed();
 	void EnableGlass(bool abGlass);
 	void EnableTheming(bool abTheme);
+	void EnableBlurBehind(bool abBlurBehindClient);
 	void ExtendWindowFrame();
 	void CheckGlassAttribute();
 	int GetDwmClientRectTopOffset();
@@ -104,6 +105,8 @@ private:
 	DwmSetIconicLivePreviewBitmap_t _DwmSetIconicLivePreviewBitmap;
 	typedef HRESULT (WINAPI* DwmInvalidateIconicBitmaps_t)(HWND hwnd);
 	DwmInvalidateIconicBitmaps_t _DwmInvalidateIconicBitmaps;
+	typedef HRESULT (WINAPI* DwmEnableBlurBehindWindow_t)(HWND hWnd, const void/*DWM_BLURBEHIND*/ *pBlurBehind);
+	DwmEnableBlurBehindWindow_t _DwmEnableBlurBehindWindow;
 	// XP+ Theming
 	HMODULE mh_UxTheme;
 	typedef BOOL (WINAPI* AppThemed_t)();

@@ -452,17 +452,6 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 
 		m_Args.bDetached = TRUE;
 	}
-	//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
-	//else if (gpSetCls->nAttachPID)
-	//{
-	//	// Attach - only once
-	//	DWORD dwPID = gpSetCls->nAttachPID; gpSetCls->nAttachPID = 0;
-
-	//	if (!AttachPID(dwPID))
-	//	{
-	//		return FALSE;
-	//	}
-	//}
 	else
 	{
 		mb_NeedStartProcess = TRUE;
@@ -4533,6 +4522,7 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc)
 		if (dwDelta > CON_RECREATE_TIMEOUT)
 		{
 			mn_InRecreate = 0;
+			m_Args.bDetached = TRUE; // „тобы GUI не захлопнулс€
 		}
 		else if (ppPrc == NULL)
 		{
@@ -6301,16 +6291,26 @@ BOOL CRealConsole::RecreateProcessStart()
 		ms_VConServer_Pipe[0] = 0;
 		m_RConServer.Stop();
 
-		if (!StartProcess())
+		ResetEvent(mh_TermEvent);
+		mb_NeedStartProcess = TRUE;
+		lbRc = StartMonitorThread();
+
+		if (!lbRc)
 		{
 			mn_InRecreate = 0;
 			mb_ProcessRestarted = FALSE;
 		}
-		else
-		{
-			ResetEvent(mh_TermEvent);
-			lbRc = StartMonitorThread();
-		}
+
+		//if (!StartProcess())
+		//{
+		//	mn_InRecreate = 0;
+		//	mb_ProcessRestarted = FALSE;
+		//}
+		//else
+		//{
+		//	ResetEvent(mh_TermEvent);
+		//	lbRc = StartMonitorThread();
+		//}
 	}
 
 	return lbRc;
@@ -8447,6 +8447,17 @@ void CRealConsole::CloseTab()
 	if (!this)
 	{
 		_ASSERTE(this);
+		return;
+	}
+
+	// ≈сли консоль "зависла" после рестарта (или на старте)
+	// “о нет смысла пытатьс€ что-то послать в сервер, которого нет
+	if (!mn_MainSrv_PID && !mh_MainSrv)
+	{
+		//Sleep(500); // ѕодождать чуть-чуть, может сервер все-таки по€витс€?
+
+		StopSignal();
+
 		return;
 	}
 

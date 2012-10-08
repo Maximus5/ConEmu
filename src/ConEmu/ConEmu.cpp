@@ -15739,6 +15739,11 @@ void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*=
 		bForceLayered = true;
 	}
 
+	TODO("EnableBlurBehind: tabs and toolbar must be rewritten, all parts of GUI must be drawn with Alpha channel");
+#if 0
+	EnableBlurBehind((nAlpha < 255));
+#endif
+
 	// return true - when state was changes
 	if (SetTransparent(ghWnd, nAlpha, bColorKey, gpSet->nColorKeyValue, bForceLayered))
 	{

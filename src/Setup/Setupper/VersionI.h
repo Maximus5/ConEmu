@@ -1,5 +1,5 @@
-#define CONEMUVERN 12,10,4,0
-#define CONEMUVERS "121004"
-#define CONEMUVERL L"121004"
-#define MSI86 "../ConEmu.121004.x86.msi"
-#define MSI64 "../ConEmu.121004.x64.msi"
+#define CONEMUVERN 12,10,8,0
+#define CONEMUVERS "121008"
+#define CONEMUVERL L"121008"
+#define MSI86 "../ConEmu.121008.x86.msi"
+#define MSI64 "../ConEmu.121008.x64.msi"

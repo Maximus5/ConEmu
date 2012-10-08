@@ -14,8 +14,11 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
-[*] Changes in "Sleep in background".
-[*] Some more AI in "Press Enter or Esc to close console".
+2012.10.08
+[*] Changes in «Sleep in background».
+[*] Some more AI in «Press Enter or Esc to close console» (successfull ReadLn takes into account).
+[%] Changes of «Pad size» was ignored.
+[%] Bugfix: Restart as Administrator fails.
 
 
 2012.10.04

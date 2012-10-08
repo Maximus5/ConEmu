@@ -126,6 +126,7 @@ void CDwmHelper::InitDwm()
 	_DwmSetIconicThumbnail = NULL;
 	_DwmSetIconicLivePreviewBitmap = NULL;
 	_DwmInvalidateIconicBitmaps = NULL;
+	_DwmEnableBlurBehindWindow = NULL;
 	mb_ThemeAllowed = false;
 	mb_BufferedAllowed = false;
 	mh_UxTheme = NULL;
@@ -170,6 +171,7 @@ void CDwmHelper::InitDwm()
 			_DwmSetIconicThumbnail = (DwmSetIconicThumbnail_t)GetProcAddress(mh_DwmApi, "DwmSetIconicThumbnail");
 			_DwmSetIconicLivePreviewBitmap = (DwmSetIconicLivePreviewBitmap_t)GetProcAddress(mh_DwmApi, "DwmSetIconicLivePreviewBitmap");
 			_DwmInvalidateIconicBitmaps = (DwmInvalidateIconicBitmaps_t)GetProcAddress(mh_DwmApi, "DwmInvalidateIconicBitmaps");
+			_DwmEnableBlurBehindWindow = (DwmEnableBlurBehindWindow_t)GetProcAddress(mh_DwmApi, "DwmEnableBlurBehindWindow");
 
 			mb_DwmAllowed = (_DwmIsCompositionEnabled != NULL)
 				&& (_DwmGetWindowAttribute != NULL) && (_DwmSetWindowAttribute != NULL)
@@ -262,6 +264,50 @@ void CDwmHelper::EnableTheming(bool abTheme)
 	mb_EnableTheming = abTheme && mb_ThemeAllowed;
 	OnUseTheming(mb_EnableTheming);
 	CheckGlassAttribute();
+}
+
+void CDwmHelper::EnableBlurBehind(bool abBlurBehindClient)
+{
+	HRESULT hr = E_NOINTERFACE;
+	if (_DwmEnableBlurBehindWindow)
+	{
+		// ¬озможно, ghWndWork впоследствии будет отдельным окном (WS_POPUP?)
+		// чтобы реализовать прозрачность только клиентской части
+		HWND hWnd = ghWnd;
+		_ASSERTE(ghWndWork!=NULL);
+		if (ghWndWork && !(GetWindowLong(ghWndWork, GWL_STYLE) & WS_CHILD))
+			hWnd = ghWndWork;
+		
+		RECT rcWnd = {};
+		if (abBlurBehindClient)
+		{
+			GetWindowRect(ghWndWork, &rcWnd);
+			MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcWnd, 2);
+		}
+
+		// Create and populate the blur-behind structure.
+		struct
+		{
+			DWORD dwFlags;
+			BOOL fEnable;
+			HRGN hRgnBlur;
+			BOOL fTransitionOnMaximized;
+		} bb = {0};
+
+		// Specify blur-behind and blur region.
+		bb.fEnable = abBlurBehindClient;
+		//bb.hRgnBlur = abBlurBehindClient ? CreateRectRgn(rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom) : NULL;
+		//bb.fTransitionOnMaximized = true;
+		bb.dwFlags = 1/*DWM_BB_ENABLE*/; // | (bb.hRgnBlur ? 2/*DWM_BB_BLURREGION*/ : 0); // | 4/*DWM_BB_TRANSITIONONMAXIMIZED*/;
+
+
+		// Enable blur-behind.
+		hr = _DwmEnableBlurBehindWindow(hWnd, &bb);
+
+		if (bb.hRgnBlur)
+			DeleteObject(bb.hRgnBlur);
+	}
+    UNREFERENCED_PARAMETER(hr);
 }
 
 void CDwmHelper::CheckGlassAttribute()

@@ -5670,7 +5670,28 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			EnableWindow(GetDlgItem(hWnd2, cbApplyPos), TRUE);
 		break;
 	} // case tWndX: case tWndY: case tWndWidth: case tWndHeight:
-	
+
+	case tPadSize:
+	{
+		BOOL bPadOk = FALSE;
+		UINT nNewPad = GetDlgItemInt(hWnd2, TB, &bPadOk, FALSE);
+
+		if (nNewPad >= CENTERCONSOLEPAD_MIN && nNewPad <= CENTERCONSOLEPAD_MAX)
+			gpSet->nCenterConsolePad = nNewPad;
+		else if (nNewPad > CENTERCONSOLEPAD_MAX)
+			SetDlgItemInt(hWnd2, tPadSize, CENTERCONSOLEPAD_MAX, FALSE);
+		// Если юзер ставит "бордюр" то нужно сразу включить опцию, чтобы он работал
+		if (gpSet->nCenterConsolePad && !IsChecked(hWnd2, cbTryToCenter))
+		{
+			gpSet->isTryToCenter = true;
+			checkDlgButton(hWnd2, cbTryToCenter, BST_CHECKED);
+		}
+		// Update window/console size
+		if (gpSet->isTryToCenter)
+			gpConEmu->OnSize();
+		break;
+	}
+
 	case tDarker:
 	{
 		DWORD newV;
@@ -6131,20 +6152,6 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						else if (nNewVal > SCROLLBAR_DELAY_MAX)
 							SetDlgItemInt(hWnd2, tScrollDisappearDelay, SCROLLBAR_DELAY_MAX, FALSE);
 						break;
-					case tPadSize:
-						if (nNewVal >= CENTERCONSOLEPAD_MIN && nNewVal <= CENTERCONSOLEPAD_MAX)
-							gpSet->nCenterConsolePad = nNewVal;
-						else if (nNewVal > CENTERCONSOLEPAD_MAX)
-							SetDlgItemInt(hWnd2, tPadSize, CENTERCONSOLEPAD_MAX, FALSE);
-						// Если юзер ставит "бордюр" то нужно сразу включить опцию, чтобы он работал
-						if (gpSet->nCenterConsolePad && !IsChecked(hWnd2, cbTryToCenter))
-						{
-							gpSet->isTryToCenter = true;
-							checkDlgButton(hWnd2, cbTryToCenter, BST_CHECKED);
-						}
-						// Update window/console size
-						if (gpSet->isTryToCenter)
-							gpConEmu->OnSize();
 					}
 				}
 			}
