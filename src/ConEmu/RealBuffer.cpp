@@ -2566,8 +2566,17 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	}
 
 	BOOL lbFarBufferSupported = mp_RCon->isFarBufferSupported();
+	BOOL lbMouseOverScroll = FALSE;
+	// Проверять мышку имеет смысл только если она пересылается в фар, а не работает на прокрутку
+	if ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL))
+	{
+		if (con.bBufferHeight && (m_Type == rbt_Primary) && lbFarBufferSupported)
+		{
+			lbMouseOverScroll = mp_RCon->mp_VCon->CheckMouseOverScroll(true);
+		}
+	}
 
-	if (con.bBufferHeight && ((m_Type != rbt_Primary) || !lbFarBufferSupported))
+	if (con.bBufferHeight && ((m_Type != rbt_Primary) || !lbFarBufferSupported || lbMouseOverScroll))
 	{
 		if (messg == WM_MOUSEWHEEL)
 		{
@@ -2584,11 +2593,14 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			{
 				OnScroll(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN, -1, nCount);
 			}
+
+			return true; // уже обработано
 		}
 		else if (messg == WM_MOUSEHWHEEL)
 		{
 			TODO("WM_MOUSEHWHEEL - горизонтальная прокрутка");
 			_ASSERTE(FALSE && "Horz scrolling! WM_MOUSEHWHEEL");
+			//return true; -- когда будет готово - return true;
 		}
 
 		if (!isConSelectMode())
@@ -5758,7 +5770,7 @@ LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/, UINT nCo
 			WARNING("Переделать в команду пайпа");
 			mp_RCon->PostConsoleMessage(mp_RCon->hConWnd, WM_VSCROLL, wParm, NULL);
 
-			if ((nCount <= 1) || (nDirection != SB_LINEUP && nDirection != SB_LINEDOWN) || mp_RCon->isFar())
+			if ((nCount <= 1) || (nDirection != SB_LINEUP && nDirection != SB_LINEDOWN) /*|| mp_RCon->isFar()*/)
 				break;
 			nCount--;
 		}

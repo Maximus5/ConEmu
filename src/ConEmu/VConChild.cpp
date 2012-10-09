@@ -1142,8 +1142,21 @@ BOOL CConEmuChild::TrackMouse()
 	return lbCapture;
 }
 
-BOOL CConEmuChild::CheckMouseOverScroll()
+BOOL CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 {
+	if (abCheckVisible)
+	{
+		if (gpSet->isAlwaysShowScrollbar == 0)
+		{
+			return FALSE; // не показывается вообще
+		}
+		else if ((gpSet->isAlwaysShowScrollbar != 1) // 1 -- показывать всегда
+			&& !mb_ScrollVisible)
+		{
+			return FALSE; // не показывается сейчас
+		}
+	}
+
 	BOOL lbOverVScroll = FALSE;
 
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;

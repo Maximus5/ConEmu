@@ -14,6 +14,11 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.10.09
+[%] Changes of numbers on «Appearance» page was ignored.
+[*] Far Manager: when "far /w" and mouse over visible scrollbar - mouse wheel scrolls console.
+
+
 2012.10.08
 [*] Changes in «Sleep in background».
 [*] Some more AI in «Press Enter or Esc to close console» (successfull ReadLn takes into account).

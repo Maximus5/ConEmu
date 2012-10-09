@@ -6118,7 +6118,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				}
 			}
 		} // else if (hWnd2 == mh_Tabs[thi_Status])
-		else if (hWnd2 == mh_Tabs[thi_Ext])
+		else if (hWnd2 == mh_Tabs[thi_Show])
 		{
 			if (HIWORD(wParam) == EN_CHANGE)
 			{
