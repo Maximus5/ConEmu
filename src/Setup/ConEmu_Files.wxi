@@ -133,6 +133,9 @@
       <Component Id="AnsiColors16.ans" Guid="$(var.Guid.AnsiColors16.ans)" Win64="$(var.Win64)">
         <File Id="AnsiColors16.ans" Source="..\..\Release\ConEmu\Addons\AnsiColors16.ans"  KeyPath="yes" />
       </Component>
+      <Component Id="AnsiColors16t.ans" Guid="$(var.Guid.AnsiColors16t.ans)" Win64="$(var.Win64)">
+        <File Id="AnsiColors16t.ans" Source="..\..\Release\ConEmu\Addons\AnsiColors16t.ans"  KeyPath="yes" />
+      </Component>
       <Component Id="AnsiColors256.ans" Guid="$(var.Guid.AnsiColors256.ans)" Win64="$(var.Win64)">
         <File Id="AnsiColors256.ans" Source="..\..\Release\ConEmu\Addons\AnsiColors256.ans"  KeyPath="yes" />
       </Component>

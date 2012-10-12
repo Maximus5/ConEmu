@@ -319,6 +319,7 @@ class CRealConsole
 		BOOL SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground);
 		HWND SetOtherWindowParent(HWND hWnd, HWND hParent);
 		BOOL SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOOL bRedraw);
+		void PostDragCopy(BOOL abMove);
 		void PostMacro(LPCWSTR asMacro, BOOL abAsync = FALSE);
 	private:
 		struct PostMacroAnyncArg

@@ -1660,7 +1660,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 
 			if (!gbExitFarCalled)
 			{
-				_ASSERTE(gbExitFarCalled == TRUE);
+				_ASSERTE(FALSE && "ExitFar was not called. Unsupported Far<->Plugin builds?");
 				ExitFarCmn();
 			}
 
@@ -2695,7 +2695,8 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				#ifdef _DEBUG
 				//r.Event.MouseEvent.dwMousePosition.X = 5;
 				#endif
-				PostMacro(L"MsLClick", &r);
+				
+				PostMacro((gFarVersion.dwBuild <= 2850) ? L"MsLClick" : L"Keys('MsLClick')", &r);
 			}
 			else
 			{
@@ -2759,7 +2760,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			if (pszUserMacro && *pszUserMacro)
 				pszMacro = pszUserMacro;
 			else
-				pszMacro = FarRClickMacroDefault; //L"@$If (!CmdLine.Empty) %Flg_Cmd=1; %CmdCurPos=CmdLine.ItemCount-CmdLine.CurPos+1; %CmdVal=CmdLine.Value; Esc $Else %Flg_Cmd=0; $End $Text \"rclk_gui:\" Enter $If (%Flg_Cmd==1) $Text %CmdVal %Flg_Cmd=0; %Num=%CmdCurPos; $While (%Num!=0) %Num=%Num-1; CtrlS $End $End";
+				pszMacro = IsFarLua ? FarRClickMacroDefault3 : FarRClickMacroDefault2; //L"@$If (!CmdLine.Empty) %Flg_Cmd=1; %CmdCurPos=CmdLine.ItemCount-CmdLine.CurPos+1; %CmdVal=CmdLine.Value; Esc $Else %Flg_Cmd=0; $End $Text \"rclk_gui:\" Enter $If (%Flg_Cmd==1) $Text %CmdVal %Flg_Cmd=0; %Num=%CmdCurPos; $While (%Num!=0) %Num=%Num-1; CtrlS $End $End";
 
 			INPUT_RECORD r = {MOUSE_EVENT};
 			r.Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;

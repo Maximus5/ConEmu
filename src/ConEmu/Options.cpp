@@ -216,7 +216,7 @@ const CONEMUDEFCOLORS DefColors[] =
 
 Settings::Settings()
 {
-	gpSet = this; // сразу!
+	//gpSet = this; // -- нельзя. Settings может использоваться как копия настроек (!= gpSet)
 	
 	// Сброс переменных (struct, допустимо)
 	memset(this, 0, sizeof(*this));
@@ -1658,13 +1658,13 @@ DWORD Settings::GetModifier(DWORD VkMod, int idx)
 		// Только для цифирок!
 		WARNING("CConEmuCtrl:: Убрать пережиток F11/F12");
 		_ASSERTE((((VkMod & 0xFF)>='0' && ((VkMod & 0xFF)<='9'))) /*((VkMod & 0xFF)==VK_F11 || (VkMod & 0xFF)==VK_F12)*/);
-		Mod = (gpSet->nHostkeyNumberModifier << 8);
+		Mod = (nHostkeyNumberModifier << 8);
 	}
 	else if (Mod == CEHOTKEY_ARRHOSTKEY)
 	{
 		// Только для стрелок!
 		_ASSERTE(((VkMod & 0xFF)==VK_LEFT) || ((VkMod & 0xFF)==VK_RIGHT) || ((VkMod & 0xFF)==VK_UP) || ((VkMod & 0xFF)==VK_DOWN));
-		Mod = (gpSet->nHostkeyArrowModifier << 8);
+		Mod = (nHostkeyArrowModifier << 8);
 	}
 
 	switch (idx)
@@ -1723,11 +1723,11 @@ LPCWSTR Settings::GetHotkeyName(const ConEmuHotKey* ppHK, wchar_t (&szFull)[128]
 		break;
 	case chk_NumHost:
 		_ASSERTE((ppHK->VkMod & CEHOTKEY_MODMASK) == CEHOTKEY_NUMHOSTKEY);
-		VkMod = (ppHK->VkMod & 0xFF) | (gpSet->nHostkeyNumberModifier << 8);
+		VkMod = (ppHK->VkMod & 0xFF) | (nHostkeyNumberModifier << 8);
 		break;
 	case chk_ArrHost:
 		_ASSERTE((ppHK->VkMod & CEHOTKEY_MODMASK) == CEHOTKEY_ARRHOSTKEY);
-		VkMod = (ppHK->VkMod & 0xFF) | (gpSet->nHostkeyArrowModifier << 8);
+		VkMod = (ppHK->VkMod & 0xFF) | (nHostkeyArrowModifier << 8);
 		break;
 	case chk_System:
 		VkMod = ppHK->VkMod;
@@ -4038,24 +4038,24 @@ bool Settings::isMinToTray(bool bRawOnly /*= false*/)
 
 void Settings::SetMinToTray(bool bMinToTray)
 {
-	gpSet->mb_MinToTray = bMinToTray;
+	mb_MinToTray = bMinToTray;
 
 	if (ghOpWnd && gpSetCls->mh_Tabs[CSettings::thi_Show])
 	{
-		gpSetCls->checkDlgButton(gpSetCls->mh_Tabs[CSettings::thi_Show], cbMinToTray, gpSet->mb_MinToTray);
+		gpSetCls->checkDlgButton(gpSetCls->mh_Tabs[CSettings::thi_Show], cbMinToTray, mb_MinToTray);
 	}
 }
 
 bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 {
-	bool bCaptionHidden = gpSet->isHideCaptionAlways(); // <== Quake & UserScreen here.
+	bool bCaptionHidden = isHideCaptionAlways(); // <== Quake & UserScreen here.
 	if (!bCaptionHidden)
 	{
 		if (wmNewMode == wmCurrent || wmNewMode == wmNotChanging)
 			wmNewMode = gpConEmu->WindowMode;
 
 		bCaptionHidden = (wmNewMode == wmFullScreen)
-				|| ((wmNewMode == wmMaximized) && gpSet->isHideCaption);
+				|| ((wmNewMode == wmMaximized) && isHideCaption);
 	}
 	return bCaptionHidden;
 }
@@ -4402,21 +4402,6 @@ bool Settings::NeedCreateAppWindow()
 	return false;
 }
 
-//void Settings::SetTabsOnTaskBar(BYTE nTabsOnTaskBar)
-//{
-//	_ASSERTE(nTabsOnTaskBar<=3);
-//	gpSet->m_isTabsOnTaskBar = nTabsOnTaskBar;
-//
-//	if (ghOpWnd && gpSetCls->mh_Tabs[CSettings::thi_Show])
-//	{
-//		gpSetCls->checkRadioButton(gpSetCls->mh_Tabs[CSettings::thi_Show], rbTaskbarBtnActive, rbTaskbarBtnHidden, 
-//			(gpSet->m_isTabsOnTaskBar == 3) ? rbTaskbarBtnHidden :
-//			(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
-//			(gpSet->m_isTabsOnTaskBar == 1) ? rbTaskbarBtnAll
-//			: rbTaskbarBtnActive);
-//	}
-//}
-
 // Показывать табы на таскбаре? (для каждой консоли - своя кнопка)
 bool Settings::isTabsOnTaskBar()
 {
@@ -4468,7 +4453,7 @@ LPCWSTR Settings::RClickMacro()
 LPCWSTR Settings::RClickMacroDefault()
 {
 	// L"@$If (!CmdLine.Empty) %Flg_Cmd=1; %CmdCurPos=CmdLine.ItemCount-CmdLine.CurPos+1; %CmdVal=CmdLine.Value; Esc $Else %Flg_Cmd=0; $End $Text \"rclk_gui:\" Enter $If (%Flg_Cmd==1) $Text %CmdVal %Flg_Cmd=0; %Num=%CmdCurPos; $While (%Num!=0) %Num=%Num-1; CtrlS $End $End"
-	static LPCWSTR pszDefaultMacro = FarRClickMacroDefault;
+	static LPCWSTR pszDefaultMacro = FarRClickMacroDefault2;
 	return pszDefaultMacro;
 }
 
@@ -4482,7 +4467,7 @@ LPCWSTR Settings::SafeFarCloseMacro()
 LPCWSTR Settings::SafeFarCloseMacroDefault()
 {
 	// L"@$while (Dialog||Editor||Viewer||Menu||Disks||MainMenu||UserMenu||Other||Help) $if (Editor) ShiftF10 $else Esc $end $end  Esc  $if (Shell) F10 $if (Dialog) Enter $end $Exit $end  F10"
-	static LPCWSTR pszDefaultMacro = FarSafeCloseMacroDefault;
+	static LPCWSTR pszDefaultMacro = FarSafeCloseMacroDefault2;
 	return pszDefaultMacro;
 }
 
@@ -4496,7 +4481,7 @@ LPCWSTR Settings::TabCloseMacro()
 LPCWSTR Settings::TabCloseMacroDefault()
 {
 	// L"@$if (Shell) F10 $if (Dialog) Enter $end $else F10 $end";
-	static LPCWSTR pszDefaultMacro = FarTabCloseMacroDefault;
+	static LPCWSTR pszDefaultMacro = FarTabCloseMacroDefault2;
 	return pszDefaultMacro;
 }
 
@@ -4510,7 +4495,7 @@ LPCWSTR Settings::SaveAllMacro()
 LPCWSTR Settings::SaveAllMacroDefault()
 {
 	// L"@F2 $If (!Editor) $Exit $End %i0=-1; F12 %cur = CurPos; Home Down %s = Menu.Select(\" * \",3,2); $While (%s > 0) $If (%s == %i0) MsgBox(\"FAR SaveAll\",\"Asterisk in menuitem for already processed window\",0x10001) $Exit $End Enter $If (Editor) F2 $If (!Editor) $Exit $End $Else $If (!Viewer) $Exit $End $End %i0 = %s; F12 %s = Menu.Select(\" * \",3,2); $End $If (Menu && Title==\"Screens\") Home $Rep (%cur-1) Down $End Enter $End $Exit"
-	static LPCWSTR pszDefaultMacro = FarSaveAllMacroDefault;
+	static LPCWSTR pszDefaultMacro = FarSaveAllMacroDefault2;
 	return pszDefaultMacro;
 }
 
@@ -4939,7 +4924,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 	// Горячие клавиши
 
 	TODO("Дополнить системные комбинации");
-	WARNING("У gpSet->nLDragKey,gpSet->nRDragKey был тип DWORD");
+	WARNING("У nLDragKey,nRDragKey был тип DWORD");
 
 	WARNING("ConEmuHotKey: Убрать нафиг все ссылки на переменные, обработка будет прозрачная, а нажатость chk_Modifier можно по DescrLangID определять");
 

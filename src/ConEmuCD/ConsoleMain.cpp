@@ -6887,32 +6887,39 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			}
 		}
 
-		CESERVER_REQ *pGuiIn = NULL, *pGuiOut = NULL;
-		int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
-		pGuiIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP, nSize);
-
-		if (!pGuiIn)
+		if (!ghConEmuWnd || !IsWindow(ghConEmuWnd))
 		{
-			_ASSERTE(pGuiIn!=NULL && "Memory allocation failed");
+			_ASSERTE(FALSE && "ConEmu GUI was terminated? Invalid ghConEmuWnd");
 		}
 		else
 		{
-			pGuiIn->StartStop = in.StartStop;
-			pGuiIn->StartStop.dwPID = nAltServerWasStarted ? nAltServerWasStarted : nAltServerWasStopped;
-			pGuiIn->StartStop.hServerProcessHandle = NULL; // для GUI смысла не имеет
-			pGuiIn->StartStop.nStarted = nAltServerWasStarted ? sst_AltServerStart : sst_AltServerStop;
-			if (pGuiIn->StartStop.nStarted == sst_AltServerStop)
+			CESERVER_REQ *pGuiIn = NULL, *pGuiOut = NULL;
+			int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
+			pGuiIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP, nSize);
+
+			if (!pGuiIn)
 			{
-				// Если это был последний процесс в консоли, то главный сервер тоже закрывается
-				// Переоткрывать пайпы в ConEmu нельзя
-				pGuiIn->StartStop.bMainServerClosing = gbQuit || (WaitForSingleObject(ghExitQueryEvent,0) == WAIT_OBJECT_0);
+				_ASSERTE(pGuiIn!=NULL && "Memory allocation failed");
 			}
+			else
+			{
+				pGuiIn->StartStop = in.StartStop;
+				pGuiIn->StartStop.dwPID = nAltServerWasStarted ? nAltServerWasStarted : nAltServerWasStopped;
+				pGuiIn->StartStop.hServerProcessHandle = NULL; // для GUI смысла не имеет
+				pGuiIn->StartStop.nStarted = nAltServerWasStarted ? sst_AltServerStart : sst_AltServerStop;
+				if (pGuiIn->StartStop.nStarted == sst_AltServerStop)
+				{
+					// Если это был последний процесс в консоли, то главный сервер тоже закрывается
+					// Переоткрывать пайпы в ConEmu нельзя
+					pGuiIn->StartStop.bMainServerClosing = gbQuit || (WaitForSingleObject(ghExitQueryEvent,0) == WAIT_OBJECT_0);
+				}
 
-			pGuiOut = ExecuteGuiCmd(ghConWnd, pGuiIn, ghConWnd);
+				pGuiOut = ExecuteGuiCmd(ghConWnd, pGuiIn, ghConWnd);
 
-			_ASSERTE(pGuiOut!=NULL && "Can not switch GUI to alt server?"); // успешное выполнение?
-			ExecuteFreeResult(pGuiIn);
-			ExecuteFreeResult(pGuiOut);
+				_ASSERTE(pGuiOut!=NULL && "Can not switch GUI to alt server?"); // успешное выполнение?
+				ExecuteFreeResult(pGuiOut);
+				ExecuteFreeResult(pGuiIn);
+			}
 		}
 	}
 

@@ -1704,16 +1704,18 @@ HRESULT _CreateSeparatorLink(IShellLink **ppsl)
 }
 #endif
 
-void UpdateWin7TaskList(bool bForce)
+bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 {
 	// ƒобал€ем Tasks, они есть только в Win7+
 	if (gnOsVer < 0x601)
-		return;
+		return false;
 
 	// -- т.к. работа с TaskList занимает некоторое врем€ - обновление будет делать только по запросу
 	//if (!bForce && !gpSet->isStoreTaskbarkTasks && !gpSet->isStoreTaskbarCommands)
 	if (!bForce)
-		return; // сохран€ть не просили
+		return false; // сохран€ть не просили
+
+	bool bSucceeded = false;
 
 #ifdef __GNUC__
 	MBoxA(L"Sorry, UpdateWin7TaskList is not availbale in GCC!");
@@ -1725,7 +1727,6 @@ void UpdateWin7TaskList(bool bForce)
 	LPCWSTR pszHistory[32] = {};
 	LPCWSTR pszCurCmd = NULL, pszCurCmdTitle = NULL;
 	size_t nTasksCount = 0, nHistoryCount = 0;
-
 
 	if (gpSet->isStoreTaskbarCommands)
 	{
@@ -1933,7 +1934,12 @@ void UpdateWin7TaskList(bool bForce)
 							}
 							else
 							{
-								MessageBox(ghOpWnd, L"Taskbar jump list was updated successfully", gpConEmu->GetDefaultTitle(), MB_ICONINFORMATION);
+								if (!bNoSuccMsg)
+								{
+									MessageBox(ghOpWnd, L"Taskbar jump list was updated successfully", gpConEmu->GetDefaultTitle(), MB_ICONINFORMATION);
+								}
+
+								bSucceeded = true;
 							}
 						}
 						poa->Release();
@@ -1990,11 +1996,52 @@ void UpdateWin7TaskList(bool bForce)
 
 	SetCursor(LoadCursor(NULL, IDC_ARROW));
 #endif
+
+	return bSucceeded;
+}
+
+bool GetCfgParm(uint& i, TCHAR*& curCommand, bool& Prm, TCHAR*& Val, int nMaxLen)
+{
+	if (!curCommand || !*curCommand)
+	{
+		_ASSERTE(curCommand && *curCommand);
+		return false;
+	}
+
+	// —охраним, может дл€ сообщени€ об ошибке понадобитс€
+	TCHAR* pszName = curCommand;
+
+	curCommand += _tcslen(curCommand) + 1; i++;
+
+	int nLen = _tcslen(curCommand);
+
+	if (nLen >= nMaxLen)
+	{
+		int nCchSize = nLen+100+_tcslen(pszName);
+		wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
+		if (psz)
+		{
+			_wsprintf(psz, SKIPLEN(nCchSize) L"Too long %s value (%i chars).\r\n", pszName, nLen);
+			_wcscat_c(psz, nCchSize, curCommand);
+			MBoxA(psz);
+			free(psz);
+		}
+		//free(cmdLine);
+		return false;
+	}
+
+	// Ok
+	Prm = true;
+	Val = curCommand;
+
+	return true;
 }
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	int iMainRc = 0;
+
 	_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
 	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
 	GetVersionEx(&gOSVer);
@@ -2114,6 +2161,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool ConfigPrm = false; TCHAR* ConfigVal = NULL;
 	//bool FontFilePrm = false; TCHAR* FontFile = NULL; //ADD fontname; by Mors
 	bool WindowPrm = false; int WindowModeVal = 0;
+	bool LoadCfgFilePrm = false; TCHAR* LoadCfgFile = NULL;
+	bool SaveCfgFilePrm = false; TCHAR* SaveCfgFile = NULL;
+	bool ExitAfterActionPrm = false;
 #if 0
 	//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
 	bool AttachPrm = false; LONG AttachVal=0;
@@ -2395,26 +2445,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				//Start ADD fontname; by Mors
 				else if (!klstricmp(curCommand, _T("/fontfile")) && i + 1 < params)
 				{
-					curCommand += _tcslen(curCommand) + 1; i++;
-					//if (!FontFilePrm)
+					bool bOk = false; TCHAR* pszFile = NULL;
+					if (!GetCfgParm(i, curCommand, bOk, pszFile, MAX_PATH))
 					{
-						//FontFilePrm = true;
-						INT_PTR nLen = _tcslen(curCommand);
-
-						if (nLen >= MAX_PATH)
-						{
-							INT_PTR nCchSize = nLen+100;
-							wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
-							_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /FontFile name (%u chars).\r\n", (DWORD)nLen);
-							_wcscat_c(psz, nCchSize, curCommand);
-							MBoxA(psz);
-							free(psz); free(cmdLine);
-							return 100;
-						}
-
-						//FontFile = curCommand;
-						gpSetCls->RegisterFont(curCommand, TRUE);
+						return 100;
 					}
+					gpSetCls->RegisterFont(pszFile, TRUE);
 				}
 				//End ADD fontname; by Mors
 				else if (!klstricmp(curCommand, _T("/fs")))
@@ -2522,6 +2558,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/updatejumplist")))
 				{
+					// Copy current Task list to Win7 Jump list (Taskbar icon)
 					gpConEmu->mb_UpdateJumpListOnStartup = true;
 				}
 				else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0"))
@@ -2582,47 +2619,40 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/Config")) && i + 1 < params)
 				{
-					curCommand += _tcslen(curCommand) + 1; i++;
-
 					//if (!ConfigPrm) -- используем последний из параметров, если их несколько
+					if (!GetCfgParm(i, curCommand, ConfigPrm, ConfigVal, 127))
 					{
-						ConfigPrm = true;
-						const int maxConfigNameLen = 127;
-						int nLen = _tcslen(curCommand);
-
-						if (nLen > maxConfigNameLen)
-						{
-							int nCchSize = nLen+100;
-							wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
-							_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /Config name (%i chars).\r\n", nLen);
-							_wcscat_c(psz, nCchSize, curCommand);
-							MBoxA(psz);
-							free(psz); free(cmdLine);
-							return 100;
-						}
-
-						ConfigVal = curCommand;
+						return 100;
 					}
+				}
+				else if (!klstricmp(curCommand, _T("/LoadCfgFile")) && i + 1 < params)
+				{
+					// используем последний из параметров, если их несколько
+					if (!GetCfgParm(i, curCommand, LoadCfgFilePrm, LoadCfgFile, MAX_PATH))
+					{
+						return 100;
+					}
+				}
+				else if (!klstricmp(curCommand, _T("/SaveCfgFile")) && i + 1 < params)
+				{
+					// используем последний из параметров, если их несколько
+					if (!GetCfgParm(i, curCommand, SaveCfgFilePrm, SaveCfgFile, MAX_PATH))
+					{
+						return 100;
+					}
+				}
+				else if (!klstricmp(curCommand, _T("/Exit")))
+				{
+					ExitAfterActionPrm = true;
 				}
 				else if (!klstricmp(curCommand, _T("/Title")) && i + 1 < params)
 				{
-					curCommand += _tcslen(curCommand) + 1; i++;
-
-					const int maxTitleNameLen = 127;
-					int nLen = _tcslen(curCommand);
-
-					if (nLen > maxTitleNameLen)
+					bool bOk = false; TCHAR* pszTitle = NULL;
+					if (!GetCfgParm(i, curCommand, bOk, pszTitle, 127))
 					{
-						int nCchSize = nLen+100;
-						wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
-						_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /Title name (%i chars).\r\n", nLen);
-						_wcscat_c(psz, nCchSize, curCommand);
-						MBoxA(psz);
-						free(psz); free(cmdLine);
 						return 100;
 					}
-
-					gpConEmu->SetTitleTemplate(curCommand);
+					gpConEmu->SetTitleTemplate(pszTitle);
 				}
 				else if (!klstricmp(curCommand, _T("/?")) || !klstricmp(curCommand, _T("/h")) || !klstricmp(curCommand, _T("/help")))
 				{
@@ -2685,6 +2715,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpSetCls->SetConfigName(ConfigVal);
 	}
 
+	// special config file
+	if (LoadCfgFilePrm)
+	{
+		// ѕри ошибке - не выходим, просто покажем ее пользователю
+		gpConEmu->SetConfigFile(LoadCfgFile);
+	}
+
+	// preparing settings
 	if (!ResetSettings)
 	{
 		// load settings from registry
@@ -2698,6 +2736,51 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// ƒл€ gpSet->isQuakeStyle - принудительно включаетс€ gpSetCls->SingleInstanceArg
 
 	gpConEmu->LogString(L"SettingsLoaded");
+
+
+//------------------------------------------------------------------------
+///| Processing actions |/////////////////////////////////////////////////
+//------------------------------------------------------------------------
+	// gpConEmu->mb_UpdateJumpListOnStartup - ќбновить JumpLists
+	// SaveCfgFilePrm, SaveCfgFile - сохранить настройки в xml-файл (можно использовать вместе с ResetSettings)
+	// ExitAfterActionPrm - сразу выйти после выполнени€ действий
+	// не наколотьс€ бы с isAutoSaveSizePos
+
+	if (gpConEmu->mb_UpdateJumpListOnStartup && ExitAfterActionPrm)
+	{
+		if (!UpdateWin7TaskList(true/*bForce*/, true/*bNoSuccMsg*/))
+		{
+			if (!iMainRc) iMainRc = 10;
+		}
+	}
+
+	// special config file
+	if (SaveCfgFilePrm)
+	{
+		// —охран€ть конфиг только если получилось сменить путь (создать файл)
+		if (!gpConEmu->SetConfigFile(SaveCfgFile, true/*abWriteReq*/))
+		{
+			if (!iMainRc) iMainRc = 11;
+		}
+		else
+		{
+			if (!gpSet->SaveSettings())
+			{
+				if (!iMainRc) iMainRc = 12;
+			}
+		}
+	}
+
+	// Actions done
+	if (ExitAfterActionPrm)
+	{
+		goto wrap;
+	}
+
+
+//------------------------------------------------------------------------
+///| Continue normal work mode  |/////////////////////////////////////////
+//------------------------------------------------------------------------
 
 	// ≈сли в режиме "Inside" подход€щего окна не нашли и юзер отказалс€ от "обычного" режима
 	if (gpConEmu->m_InsideIntegration && (gpConEmu->mh_InsideParentWND == (HWND)-1))
@@ -2943,7 +3026,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 ///| Allocating console |/////////////////////////////////////////////////
 //------------------------------------------------------------------------
-	BOOL lbConsoleAllocated = FALSE;
 
 #if 0
 	//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
@@ -3010,9 +3092,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//if (FontFilePrm) RemoveFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
 	gpSetCls->UnregisterFonts();
 
-	if (lbConsoleAllocated)
-		FreeConsole();
-
 	free(cmdLine);
 	//CoUninitialize();
 	OleUninitialize();
@@ -3037,7 +3116,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	ShutdownGuiStep(L"Gui terminated");
 
+wrap:
 	// Ќельз€. ≈ще живут глобальные объекты
 	//HeapDeinitialize();
-	return 0;
+	return iMainRc;
 }

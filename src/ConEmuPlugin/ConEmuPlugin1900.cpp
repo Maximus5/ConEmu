@@ -957,28 +957,45 @@ void PostMacroW1900(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	if (apRec)
 		mcr.AKey = *apRec;
 
+	mcr.Flags |= KMFLAGS_SILENTCHECK;
+
 	if (!InfoW1900->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, MSSC_CHECK, &mcr))
 	{
+		wchar_t* pszErrText = NULL;
 		size_t iRcSize = InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETLASTERROR, 0, NULL);
-		MacroParseResult* Result = (MacroParseResult*)calloc(iRcSize,1);
+		MacroParseResult* Result = iRcSize ? (MacroParseResult*)calloc(iRcSize,1) : NULL;
 		if (Result)
 		{
 			Result->StructSize = sizeof(*Result);
+			_ASSERTE(FALSE && "Check MCTL_GETLASTERROR");
 			InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETLASTERROR, iRcSize, Result);
-			wchar_t* pszErrText = NULL;
+			
 			size_t cchMax = (Result->ErrSrc ? lstrlen(Result->ErrSrc) : 0) + lstrlen(asMacro) + 255;
 			pszErrText = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
 			_wsprintf(pszErrText, SKIPLEN(cchMax)
-				L"Error in Macro. Code: %u, Line: %u, Col: %u%s%s\n----------------------------------\n%s",
+				L"Error in Macro. Far %u.%u build %u r%u\nCode: %u, Line: %u, Col: %u%s%s\n----------------------------------\n%s",
+				gFarVersion.dwVerMajor, gFarVersion.dwVerMinor, gFarVersion.dwBuild, gFarVersion.Bis ? 1 : 0,
 				Result->ErrCode, (UINT)(int)Result->ErrPos.Y+1, (UINT)(int)Result->ErrPos.X+1,
 				Result->ErrSrc ? L", Hint: " : L"", Result->ErrSrc ? Result->ErrSrc : L"",
 				asMacro);
 
+			SafeFree(Result);
+		}
+		else
+		{
+			size_t cchMax = lstrlen(asMacro) + 255;
+			pszErrText = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
+			_wsprintf(pszErrText, SKIPLEN(cchMax)
+				L"Error in Macro. Far %u.%u build %u r%u\n----------------------------------\n%s",
+				gFarVersion.dwVerMajor, gFarVersion.dwVerMinor, gFarVersion.dwBuild, gFarVersion.Bis ? 1 : 0,
+				asMacro);
+		}
+
+		if (pszErrText)
+		{
 			DWORD nTID;
 			HANDLE h = CreateThread(NULL, 0, BackgroundMacroError, pszErrText, 0, &nTID);
 			SafeCloseHandle(h);
-
-			SafeFree(Result);
 		}
 	}
 	else

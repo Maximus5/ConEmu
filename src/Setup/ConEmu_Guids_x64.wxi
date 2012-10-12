@@ -108,6 +108,7 @@
 	<?define Guid.Disable_ConIme.reg = "8CB0AC7F-C11F-4608-BCBD-7E7E00733087" ?>
 	
 	<?define Guid.AnsiColors16.ans = "5E6CA67A-6EBD-4103-A36B-82DD4ADD45F2" ?>
+	<?define Guid.AnsiColors16t.ans = "C6471B71-252F-4BDF-B83A-7551F7C325CB" ?>
 	<?define Guid.AnsiColors256.ans = "225399DB-2D24-4F5A-A202-A583F3CDD4D5" ?>
 
 	<?define Guid.Blues16.bmp = "4DA5C1F8-896C-4093-A5FA-C5CBD3A80886" ?>

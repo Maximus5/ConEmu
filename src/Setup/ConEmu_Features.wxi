@@ -142,6 +142,7 @@
       <Feature Id="FConEmuAnsiSamples" AllowAdvertise="no" Title="ANSI X3.64 exapmles" Level="1"
                Description="Sample ANSI X3.64 files">
         <ComponentRef Id="AnsiColors16.ans"/>
+        <ComponentRef Id="AnsiColors16t.ans"/>
         <ComponentRef Id="AnsiColors256.ans"/>
       </Feature>
       <Feature Id="FConEmuAddonsBackground" AllowAdvertise="no" Title="Background images" Level="1"

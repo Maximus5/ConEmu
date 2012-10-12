@@ -10293,6 +10293,45 @@ void CRealConsole::PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData)
 	return;
 }
 
+void CRealConsole::PostDragCopy(BOOL abMove)
+{
+	const CEFAR_INFO_MAPPING* pFarVer = GetFarInfo();
+
+	wchar_t *mcr = (wchar_t*)calloc(128, sizeof(wchar_t));
+	//2010-02-18 Ќе было префикса '@'
+	//2010-03-26 префикс '@' ставить нельз€, ибо тогда процесса копировани€ видно не будет при отсутствии подтверждени€
+
+	if (pFarVer && ((pFarVer->FarVer.dwVerMajor > 3) || ((pFarVer->FarVer.dwVerMajor == 3) && (pFarVer->FarVer.dwBuild > 2850))))
+	{
+		// ≈сли т€нули ".." то перед копированием на другую панель сначала необходимо выйти на верхний уровень
+		lstrcpyW(mcr, L"if APanel.SelCount==0 and APanel.Current==\"..\" then Keys('CtrlPgUp') end ");
+
+		// “еперь собственно клавиша запуска
+		// » если просили копировать сразу без подтверждени€
+		if (gpSet->isDropEnabled==2)
+		{
+			lstrcatW(mcr, abMove ? L"Keys('F6 Enter')" : L"Keys('F5 Enter')");
+		}
+		else
+		{
+			lstrcatW(mcr, abMove ? L"Keys('F6')" : L"Keys('F5')");
+		}
+	}
+	else
+	{
+		// ≈сли т€нули ".." то перед копированием на другую панель сначала необходимо выйти на верхний уровень
+		lstrcpyW(mcr, L"$If (APanel.SelCount==0 && APanel.Current==\"..\") CtrlPgUp $End ");
+		// “еперь собственно клавиша запуска
+		lstrcatW(mcr, abMove ? L"F6" : L"F5");
+
+		// » если просили копировать сразу без подтверждени€
+		if (gpSet->isDropEnabled==2)
+			lstrcatW(mcr, L" Enter "); //$MMode 1");
+	}
+
+	PostMacro(mcr, TRUE/*abAsync*/);
+}
+
 void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 {
 	if (!this || !asMacro || !*asMacro)

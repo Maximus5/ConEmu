@@ -3595,14 +3595,15 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 
 	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
 	GetVersionEx(&osv);
+	BOOL bWin64 = IsWindows64();
 
 	wchar_t cVer = MVV_4a[0];
 	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\r\n"
-		L"\tOsVer: %u.%u.%u, DBCS: %u, WINE: %u, ACP: %u, OEMCP: %u\r\n"
+		L"\tOsVer: %u.%u.%u.x%u, DBCS: %u, WINE: %u, ACP: %u, OEMCP: %u\r\n"
 		L"\tDesktop: %s\r\n\tTitle: %s\r\n\tSize: {%u,%u},{%u,%u}\r\n"
 		L"\tFlags: 0x%08X, ShowWindow: %u\r\n\tHandles: 0x%08X, 0x%08X, 0x%08X"
 		,
-		osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber,
+		osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, bWin64 ? 64 : 32,
 		apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->nAnsiCP, apStartEnv->nOEMCP,
 		szDesktop, szTitle,
 		apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,

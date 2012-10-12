@@ -176,6 +176,7 @@ CConEmuMain::CConEmuMain()
 	
 	WindowMode = wmNormal;
 	changeFromWindowMode = wmNotChanging;
+	isRestoreFromMinimized = false;
 	WindowStartMinimized = false;
 	ForceMinimizeToTray = false;
 	mb_InCreateWindow = true;
@@ -727,6 +728,92 @@ bool CConEmuMain::CheckBaseDir()
 	#endif
 
 	return lbBaseFound;
+}
+
+bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/)
+{
+	LPCWSTR pszExt = asFilePath ? PointToExt(asFilePath) : NULL;
+	int nLen = lstrlen(asFilePath);
+
+	if (!asFilePath || !*asFilePath || !pszExt || !*pszExt || (nLen > MAX_PATH))
+	{
+		DisplayLastError(L"Invalid file path specified in CConEmuMain::SetConfigFile", -1);
+		return false;
+	}
+
+	wchar_t szPath[MAX_PATH+1] = L"";
+	int nFileType = 0;
+
+	if (lstrcmpi(pszExt, L".ini") == 0)
+	{
+		_ASSERTE(countof(ms_ConEmuIni)==countof(szPath));
+		nFileType = 1;
+	}
+	else if (lstrcmpi(pszExt, L".xml") == 0)
+	{
+		_ASSERTE(countof(ms_ConEmuXml)==countof(szPath));
+		nFileType = 0;
+	}
+	else
+	{
+		DisplayLastError(L"Unsupported file extension specified in CConEmuMain::SetConfigFile", -1);
+		return false;
+	}
+
+
+	//wcscpy_c(szPath, asFilePath);
+	wchar_t* pszFilePart;
+	nLen = GetFullPathName(asFilePath, countof(szPath), szPath, &pszFilePart);
+	if ((nLen <= 0) || (nLen >= countof(szPath)))
+	{
+		DisplayLastError(L"Failed to expand specified file path in CConEmuMain::SetConfigFile");
+		return false;
+	}
+	
+	wchar_t* pszDirEnd = wcsrchr(szPath, L'\\');
+
+	if (!pszDirEnd || (nLen > MAX_PATH))
+	{
+		DisplayLastError(L"Invalid file path specified in CConEmuMain::SetConfigFile (backslash not found)", -1);
+		return false;
+	}
+
+
+	// Папки может не быть
+	*pszDirEnd = 0;
+	// Создадим, если нету
+	MyCreateDirectory(szPath);
+	*pszDirEnd = L'\\';
+
+	// Нужно создать файл, если его нету.
+	// Если просили доступ на запись - то однозначно CreateFile
+	if (abWriteReq || !FileExists(szPath))
+	{
+		HANDLE hFile = CreateFile(szPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (!hFile || (hFile == INVALID_HANDLE_VALUE))
+		{
+			DWORD nErrCode = GetLastError();
+			wchar_t szErrMsg[MAX_PATH*2];
+			wcscpy_c(szErrMsg, L"Failed to create configuration file:\r\n");
+			wcscat_c(szErrMsg, szPath);
+			DisplayLastError(szErrMsg, nErrCode);
+			return false;
+		}
+		CloseHandle(hFile);
+	}
+
+	if (nFileType == 1)
+	{
+		ms_ConEmuXml[0] = 0;
+		wcscpy_c(ms_ConEmuIni, asFilePath);
+	}
+	else
+	{
+		ms_ConEmuIni[0] = 0;
+		wcscpy_c(ms_ConEmuXml, asFilePath);
+	}
+
+	return true;
 }
 
 LPWSTR CConEmuMain::ConEmuXml()
@@ -3483,7 +3570,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 {
 	_ASSERTE(ghWnd!=NULL);
 	RECT rcMain = {};
-	if (isIconic())
+	if (isIconic() || isRestoreFromMinimized)
 	{
 		if (gpSet->isQuakeStyle)
 		{
@@ -4373,7 +4460,6 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 	//WindowPlacement -- использовать нельзя, т.к. он работает в координатах Workspace, а не Screen!
 	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
-	RECT consoleSize = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
 
 	//bool canEditWindowSizes = false;
 	bool lbRc = false;
@@ -4394,14 +4480,17 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 		}
 	}
 
+	bool bIconic = isIconic();
+
 	// Обновить коордианты в gpSet, если требуется
-	if ((inMode != wmNormal) && isWindowNormal() && !isIconic())
+	if ((inMode != wmNormal) && isWindowNormal() && !bIconic)
 		StoreNormalRect(&rcWnd);
 
 	// Коррекция для Quake
 	ConEmuWindowMode NewMode = (gpSet->isQuakeStyle || m_InsideIntegration) ? wmNormal : inMode;
 	// И сразу запоминаем _новый_ режим
 	changeFromWindowMode = WindowMode;
+	isRestoreFromMinimized = bIconic;
 	WindowMode = inMode;
 
 
@@ -4424,6 +4513,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 		case wmNormal:
 		{
 			DEBUGLOGFILE("SetWindowMode(wmNormal)\n");
+			RECT consoleSize;
 
 			AutoSizeFont(mrc_Ideal, CER_MAIN);
 			// Расчитать размер по оптимальному WindowRect
@@ -4432,6 +4522,8 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				mb_PassSysCommand = false;
 				goto wrap;
 			}
+
+			consoleSize = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
 
 			// Тут именно "::IsZoomed(ghWnd)"
 			if (isIconic() || ::IsZoomed(ghWnd))
@@ -4487,8 +4579,17 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				//int nHeight = rcNew.bottom-rcNew.top;
 				//rcNew.left+=gpConEmu->wndX; rcNew.top+=gpConEmu->wndY;
 				//rcNew.right+=gpConEmu->wndX; rcNew.bottom+=gpConEmu->wndY;
-				rcNew.left+=mrc_StoredNormalRect.left; rcNew.top+=mrc_StoredNormalRect.top;
-				rcNew.right+=mrc_StoredNormalRect.left; rcNew.bottom+=mrc_StoredNormalRect.top;
+				if ((mrc_StoredNormalRect.right > mrc_StoredNormalRect.left) && (mrc_StoredNormalRect.bottom > mrc_StoredNormalRect.top))
+				{
+					rcNew.left+=mrc_StoredNormalRect.left; rcNew.top+=mrc_StoredNormalRect.top;
+					rcNew.right+=mrc_StoredNormalRect.left; rcNew.bottom+=mrc_StoredNormalRect.top;
+				}
+				else
+				{
+					MONITORINFO mi; GetNearestMonitor(&mi);
+					rcNew.left+=mi.rcWork.left; rcNew.top+=mi.rcWork.top;
+					rcNew.right+=mi.rcWork.left; rcNew.bottom+=mi.rcWork.top;
+				}
 			}
 			// 2010-02-14 Проверку делаем ТОЛЬКО при загрузке настроек и включенном каскаде
 			//// Параметры именно такие, результат - просто подгонка rcNew под рабочую область текущего монитора
@@ -4563,7 +4664,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			}
 
 			//if (mb_MaximizedHideCaption || !::IsZoomed(ghWnd))
-			if (isIconic() || (changeFromWindowMode != wmMaximized))
+			if (bIconic || (changeFromWindowMode != wmMaximized))
 			{
 				mb_IgnoreSizeChange = true;
 				InvalidateAll();
@@ -4764,6 +4865,7 @@ wrap:
 		WindowMode = changeFromWindowMode;
 	}
 	changeFromWindowMode = wmNotChanging;
+	isRestoreFromMinimized = false;
 
 	// В случае облома изменения размера консоли - может слететь признак
 	// полноэкранности у панели задач. Вернем его...
@@ -5668,15 +5770,24 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		}
 	}
 	
-	// Если у нас режим скрытия заголовка (при максимизации/фулскрине)
-	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && gpSet->isCaptionHidden())
+	// -- // Если у нас режим скрытия заголовка (при максимизации/фулскрине)
+	// При любой смене. Т.к. мы меняем WM_GETMINMAXINFO - нужно корректировать и размеры :(
+	// Иначе возможны глюки
+	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) /*&& gpSet->isCaptionHidden()*/)
 	{
 		if (gpSet->isQuakeStyle)
 		{
 			RECT rc = GetDefaultRect();
 			p->x = rc.left;
 			p->y = rc.top;
-			p->cx = rc.right - rc.left + 1;
+			p->cx = rc.right - rc.left; // + 1;
+		}
+		else if (zoomed)
+		{
+			RECT rc = CalcRect((WindowMode == wmFullScreen) ? CER_FULLSCREEN : CER_MAXIMIZED, NULL);
+			p->x = rc.left;
+			p->y = rc.top;
+			p->cx = rc.right - rc.left; // + 1;
 		}
 	#ifdef _DEBUG
 		else if (isWindowNormal())
@@ -6587,16 +6698,21 @@ void CConEmuMain::OnCopyingState()
 	TODO("CConEmuMain::OnCopyingState()");
 }
 
-void CConEmuMain::PostCopy(wchar_t* apszMacro, BOOL abRecieved/*=FALSE*/)
+void CConEmuMain::PostDragCopy(BOOL abMove, BOOL abRecieved/*=FALSE*/)
 {
 	if (!abRecieved)
 	{
-		PostMessage(ghWnd, mn_MsgPostCopy, 0, (LPARAM)apszMacro);
+		PostMessage(ghWnd, mn_MsgPostCopy, 0, (LPARAM)abMove);
 	}
 	else
 	{
-		PostMacro(apszMacro);
-		free(apszMacro);
+		//PostMacro(apszMacro);
+		//free(apszMacro);
+		CVConGuard VCon;
+		if (GetActiveVCon(&VCon) >= 0)
+		{
+			VCon->RCon()->PostDragCopy(abMove);
+		}
 	}
 }
 
@@ -16601,7 +16717,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgPostCopy)
 			{
-				gpConEmu->PostCopy((wchar_t*)lParam, TRUE);
+				gpConEmu->PostDragCopy(lParam!=0, TRUE);
 				return 0;
 			}
 			else if (messg == gpConEmu->mn_MsgMyDestroy)

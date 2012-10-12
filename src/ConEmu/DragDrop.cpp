@@ -1077,19 +1077,22 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	if (!lbDropFileNamesOnly && !lbActive && mb_selfdrag
 	        && (*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE))
 	{
-		wchar_t *mcr = (wchar_t*)calloc(128, sizeof(wchar_t));
-		//2010-02-18 Не было префикса '@'
-		//2010-03-26 префикс '@' ставить нельзя, ибо тогда процесса копирования видно не будет при отсутствии подтверждения
-		// Если тянули ".." то перед копированием на другую панель сначала необходимо выйти на верхний уровень
-		lstrcpyW(mcr, L"$If (APanel.SelCount==0 && APanel.Current==\"..\") CtrlPgUp $End ");
-		// Теперь собственно клавиша запуска
-		lstrcatW(mcr, (*pdwEffect == DROPEFFECT_MOVE) ? L"F6" : L"F5");
+		//wchar_t *mcr = (wchar_t*)calloc(128, sizeof(wchar_t));
+		////2010-02-18 Не было префикса '@'
+		////2010-03-26 префикс '@' ставить нельзя, ибо тогда процесса копирования видно не будет при отсутствии подтверждения
+		//// Если тянули ".." то перед копированием на другую панель сначала необходимо выйти на верхний уровень
+		//lstrcpyW(mcr, L"$If (APanel.SelCount==0 && APanel.Current==\"..\") CtrlPgUp $End ");
+		//// Теперь собственно клавиша запуска
+		//lstrcatW(mcr, (*pdwEffect == DROPEFFECT_MOVE) ? L"F6" : L"F5");
 
-		// И если просили копировать сразу без подтверждения
-		if (gpSet->isDropEnabled==2)
-			lstrcatW(mcr, L" Enter "); //$MMode 1");
+		//// И если просили копировать сразу без подтверждения
+		//if (gpSet->isDropEnabled==2)
+		//	lstrcatW(mcr, L" Enter "); //$MMode 1");
 
-		gpConEmu->PostCopy(mcr);
+		//gpConEmu->PostCopy(mcr);
+
+		gpConEmu->PostDragCopy((*pdwEffect == DROPEFFECT_MOVE));
+
 		return S_OK; // Тащим внутри ФАРа
 	}
 

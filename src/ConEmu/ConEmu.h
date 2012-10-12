@@ -167,6 +167,7 @@ class CConEmuMain :
 		wchar_t ms_ConEmuXml[MAX_PATH+1];       // полный путь к портабельным настройкам
 		wchar_t ms_ConEmuIni[MAX_PATH+1];       // полный путь к портабельным настройкам
 	public:
+		bool SetConfigFile(LPCWSTR asFilePath, bool abWriteReq = false);
 		LPWSTR ConEmuXml();
 		LPWSTR ConEmuIni();
 		wchar_t ms_ConEmuChm[MAX_PATH+1];       // полный путь к chm-файлу (help)
@@ -210,6 +211,7 @@ class CConEmuMain :
 
 		ConEmuWindowMode WindowMode;           // wmNormal/wmMaximized/wmFullScreen
 		ConEmuWindowMode changeFromWindowMode; // wmNotChanging/rmNormal/rmMaximized/rmFullScreen
+		bool isRestoreFromMinimized;
 		bool isWndNotFSMaximized; // ставится в true, если при переходе в FullScreen - был Maximized
 		bool isQuakeMinimized;    // изврат, для случая когда "Quake" всегда показывается на таскбаре
 		HMONITOR GetNearestMonitor(MONITORINFO* pmi = NULL);
@@ -596,7 +598,7 @@ class CConEmuMain :
 		void InvalidateGaps();
 		void PaintGaps(HDC hDC);
 		void PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
-		void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
+		void PostDragCopy(BOOL abMove, BOOL abRecieved=FALSE);
 		void PostCreate(BOOL abRecieved=FALSE);
 		void PostCreateCon(RConStartArgs *pArgs);
 		HWND PostCreateView(CConEmuChild* pChild);

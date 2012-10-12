@@ -46,23 +46,28 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"\r\n"\
 	L"By default (started without args) this program launches \"Far.exe\", \"tcc.exe\" or \"cmd.exe\" (which can be found).\r\n" \
 	L"\r\n" \
-	L"Command line switches:\r\n" \
+	L"Command line switches (case insensitive):\r\n" \
 	L"/? - This help screen.\r\n" \
-	L"/config <configname> - Use alternative named configuration.\r\n" \
-	L"/dir <workdir> - Set startup directory for ConEmu and consoles.\r\n" \
-	L"/fs | /max | /min - (Full screen), (Maximized) or (Minimized) mode.\r\n" \
-	L"/tsa - Override (enable) minimize to taskbar status area.\r\n" \
-	L"/icon <file> - Take icon from file (exe, dll, ico).\r\n" \
-	L"/multi | /nomulti - Enable or disable multiconsole features.\r\n" \
-	L"/single - New console will be started in new tab of existing ConEmu.\r\n" \
-	L"/showhide | /showhideTSA - Works like \"Minimize/Restore\" global hotkey.\r\n" \
-	L"/noupdate - Disable automatic checking for updates on startup\r\n" \
-	L"/ct[0|1] - Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - cleartype.\r\n" \
-	L"/font <fontname> - Specify the font name.\r\n" \
-	L"/size <fontsize> - Specify the font size.\r\n" \
-	L"/fontfile <fontfilename> - Loads fonts from file.\r\n" \
+	L"/Config <configname> - Use alternative named configuration.\r\n" \
+	L"/Dir <workdir> - Set startup directory for ConEmu and consoles.\r\n" \
+	L"/FS | /max | /min - (Full screen), (Maximized) or (Minimized) mode.\r\n" \
+	L"/TSA - Override (enable) minimize to taskbar status area.\r\n" \
+	L"/Icon <file> - Take icon from file (exe, dll, ico).\r\n" \
+	L"/Multi | /NoMulti - Enable or disable multiconsole features.\r\n" \
+	L"/Single - New console will be started in new tab of existing ConEmu.\r\n" \
+	L"/ShowHide | /ShowHideTSA - Works like \"Minimize/Restore\" global hotkey.\r\n" \
+	L"/NoUpdate - Disable automatic checking for updates on startup\r\n" \
+	L"/CT[0|1] - Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - cleartype.\r\n" \
+	L"/Font <fontname> - Specify the font name.\r\n" \
+	L"/Size <fontsize> - Specify the font size.\r\n" \
+	L"/FontFile <fontfilename> - Loads fonts from file.\r\n" \
 	L"/BufferHeight <lines> - Set console buffer height.\r\n" \
 	L"/Log[1|2] - Used to create debug log files.\r\n" \
+	L"/Reset - Don't load settings from registry/xml.\r\n" \
+	L"/UpdateJumpList - Update Windows 7 taskbar jump list.\r\n" \
+	L"/LoadCfgFile <file> - Use specified xml file as configuration storage.\r\n" \
+	L"/SaveCfgFile <file> - Save configuration to the specified xml file.\r\n" \
+	L"/Exit - Don't create ConEmu window, exit after actions.\r\n" \
 	/* L"/Attach [PID] - intercept console of specified process\n" */ \
 	L"/cmd <commandline>|@<taskfile>|{taskname} - Command line to start. This must be the last used switch.\r\n" \
 	L"\r\n" \

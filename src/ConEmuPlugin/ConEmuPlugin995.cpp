@@ -725,6 +725,8 @@ void PostMacroW995(const wchar_t* asMacro, INPUT_RECORD* apRec)
 		asMacro ++;
 	}
 
+	mcr.Param.PlainText.Flags |= KSFLAGS_SILENTCHECK;
+
 	mcr.Param.PlainText.SequenceText = asMacro;
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 	//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(

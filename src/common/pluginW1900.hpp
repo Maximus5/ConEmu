@@ -44,7 +44,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
 #define FARMANAGERVERSION_BUILD 2578
-#define FARMANAGERVERSION_STAGE VS_BIS
+#define FARMANAGERVERSION_STAGE VS_RELEASE //VS_BIS
 
 #ifndef RC_INVOKED
 

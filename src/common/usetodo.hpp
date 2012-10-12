@@ -1,2 +1,4 @@
 #pragma once 
-//#define HIDE_TODO 
+#ifndef HIDE_TODO 
+#define HIDE_TODO 
+#endif 

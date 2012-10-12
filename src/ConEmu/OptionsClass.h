@@ -583,7 +583,7 @@ class CSettings
 		static void CenterMoreDlg(HWND hWnd2);
 		static bool IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight);
 	private:
-		DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0) { return Settings::MakeHotKey(Vk, vkMod1, vkMod2, vkMod3); };
+		DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0) { return gpSet->MakeHotKey(Vk, vkMod1, vkMod2, vkMod3); };
 		//#define MAKEMODIFIER2(vk1,vk2) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)
 		//#define MAKEMODIFIER3(vk1,vk2,vk3) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)|(((DWORD)vk3&0xFF)<<16)
 		ConEmuHotKey *m_HotKeys;

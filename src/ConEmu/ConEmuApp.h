@@ -35,6 +35,6 @@ BOOL CheckCreateAppWindow();
 
 void SkipOneShowWindow();
 
-void UpdateWin7TaskList(bool bForce);
+bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg = false);
 
 int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine);

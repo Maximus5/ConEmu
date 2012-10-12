@@ -1146,20 +1146,20 @@ struct Settings
 		// VkMod = LOBYTE - VK, старшие три байта - модификаторы (тоже VK)
 
 		// Задать или сбросить модификатор в VkMod
-		static DWORD SetModifier(DWORD VkMod, BYTE Mod/*VK*/, bool Xor=true);
+		DWORD SetModifier(DWORD VkMod, BYTE Mod/*VK*/, bool Xor=true);
 		// Сервисная функция для инициализации. Формирует готовый VkMod
-		static DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
+		DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
 		// Вернуть назначенные модификаторы (idx = 1..3). Возвращает 0 (нету) или VK
-		static DWORD GetModifier(DWORD VkMod, int idx/*1..3*/);
+		DWORD GetModifier(DWORD VkMod, int idx/*1..3*/);
 		// Вернуть имя модификатора (типа "Apps+Space")
-		static LPCWSTR GetHotkeyName(const ConEmuHotKey* ppHK, wchar_t (&szFull)[128]);
-		static void GetVkKeyName(BYTE vk, wchar_t (&szName)[32]);
+		LPCWSTR GetHotkeyName(const ConEmuHotKey* ppHK, wchar_t (&szFull)[128]);
+		void GetVkKeyName(BYTE vk, wchar_t (&szName)[32]);
 		// Извлечь сам VK
-		static DWORD GetHotkey(DWORD VkMod);
+		DWORD GetHotkey(DWORD VkMod);
 		// набор флагов MOD_xxx для RegisterHotKey
-		static DWORD GetHotKeyMod(DWORD VkMod);
+		DWORD GetHotKeyMod(DWORD VkMod);
 		// Есть ли в этом (VkMod) хоткее - модификатор Mod (VK)
-		static bool  HasModifier(DWORD VkMod, BYTE Mod/*VK*/);
+		bool  HasModifier(DWORD VkMod, BYTE Mod/*VK*/);
 		// Вернуть заданный VkMod, или 0 если не задан. nDescrID = vkXXX (e.g. vkMinimizeRestore)
 		DWORD GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK = NULL);
 		// Проверить, задан ли этот hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore)

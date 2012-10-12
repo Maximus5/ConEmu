@@ -14,6 +14,18 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+[*] Far 3 build 2851 supported. Builds from 2799 to 2850 (inclusively) not supported.
+[%] Incorrect startup position when maximized and hide caption.
+[*] AnsiColors16.ans changed, AnsiColors16t.ans created.
+[%] Some resize bugfixes.
+
+	L"/Reset - Don't load settings from registry/xml.\r\n" \
+	L"/UpdateJumpList - Update Windows 7 taskbar jump list.\r\n" \
+	L"/LoadCfgFile <file> - Use specified xml file as configuration storage.\r\n" \
+	L"/SaveCfgFile <file> - Save configuration to the specified xml file.\r\n" \
+	L"/Exit - Don't create ConEmu window, exit after actions.\r\n" \
+
+
 2012.10.09
 [%] Changes of numbers on «Appearance» page was ignored.
 [*] Far Manager: when "far /w" and mouse over visible scrollbar - mouse wheel scrolls console.
