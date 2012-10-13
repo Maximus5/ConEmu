@@ -193,7 +193,9 @@ void TrayIcon::RestoreWindowFromTray(BOOL abIconOnly /*= FALSE*/)
 		gpConEmu->SetWindowMode(gpConEmu->WindowMode);
 
 		if (!IsWindowVisible(ghWnd))
+		{
 			gpConEmu->ShowWindow(SW_SHOW);
+		}
 
 		apiSetForegroundWindow(ghWnd);
 	}
@@ -271,8 +273,18 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 				}
 				gpConEmu->OnMinimizeRestore(sih);
 			}
+			else if (gpSet->isAlwaysShowTrayIcon && IsWindowVisible(ghWnd))
+			{
+				if (gpSet->isMinToTray())
+					Icon.HideWindowToTray();
+				else
+					SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+			}
 			else
+			{
 				Icon.RestoreWindowFromTray();
+			}
+
 			if (m_MsgSource == tsa_Source_Updater)
 			{
 				m_MsgSource = tsa_Source_None;

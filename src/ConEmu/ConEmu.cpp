@@ -91,6 +91,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRLLKB(s) //DEBUGSTR(s)
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
 #define DEBUGSTRMSG(s) //DEBUGSTR(s)
+#define DEBUGSTRANIMATE(s) DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -125,6 +126,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TOUCH_DBLCLICK_DELTA 1000 // 1sec
 
 #define FIXPOSAFTERSTYLE_DELTA 2500
+
+#define CONEMU_ANIMATE_DURATION 200
+#define CONEMU_ANIMATE_DURATION_MAX 5000
 
 const wchar_t* gsHomePage = L"http://conemu-maximus5.googlecode.com";
 const wchar_t* gsReportBug = L"http://code.google.com/p/conemu-maximus5/issues/entry";
@@ -2908,13 +2912,18 @@ void CConEmuMain::UpdateGuiInfoMapping()
 
 void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive)
 {
+	CVConGuard VCon;
+	HWND hActiveRCon = (GetActiveVCon(&VCon) >= 0) ? VCon->RCon()->ConWnd() : NULL;
+
+	m_GuiInfo.bSleepInBackg = gpSet->isSleepInBackground;
+	m_GuiInfo.bGuiActive = bActive;
+	m_GuiInfo.hActiveCon = hActiveRCon;
+	m_GuiInfo.dwActiveTick = GetTickCount();
+
 	ConEmuGuiMapping* pData = m_GuiInfoMapping.Ptr();
-	
+
 	if (pData)
 	{
-		CVConGuard VCon;
-		HWND hActiveRCon = (GetActiveVCon(&VCon) >= 0) ? VCon->RCon()->ConWnd() : NULL;
-
 		if ((pData->bSleepInBackg != (BOOL)gpSet->isSleepInBackground)
 			|| (pData->bGuiActive != (BOOL)bActive)
 			|| (pData->hActiveCon != hActiveRCon))
@@ -2922,7 +2931,7 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive)
 			pData->bSleepInBackg = gpSet->isSleepInBackground;
 			pData->bGuiActive = bActive;
 			pData->hActiveCon = hActiveRCon;
-			pData->dwActiveTick = GetTickCount();
+			pData->dwActiveTick = m_GuiInfo.dwActiveTick;
 		}
 	}
 }
@@ -4302,26 +4311,46 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 	}
 }
 
-BOOL CConEmuMain::ShowWindow(int anCmdShow)
+BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= 0*/)
 {
-#if 0
-	STARTUPINFO si = {sizeof(si)};
-	GetStartupInfo(&si);
-#endif
+	BOOL lbRc = FALSE;
+	bool bUseApi = true;
 
-	BOOL lbRc = apiShowWindow(ghWnd, anCmdShow);
-
-#if 0
-	if (anCmdShow == SW_SHOWNORMAL)
+	if (!gpSet->isQuakeStyle)
 	{
-		if (((gpSet->isHideCaption || gpSet->isHideCaptionAlways()) && isZoomed()))
+		if (anCmdShow == SW_HIDE)
 		{
-			// Если в свойствах ярлыка указано "Maximized"/"Iconic" - то первый ShowWindow ИГНОРИРУЕТСЯ
-			_ASSERTE(si.wShowWindow == SW_SHOWMAXIMIZED);
-			lbRc = apiShowWindow(ghWnd, anCmdShow);
+			bUseApi = false; // можно AnimateWindow
+		}
+		else if (anCmdShow == SW_SHOWMAXIMIZED)
+		{
+			if (::IsZoomed(ghWnd)) // тут нужно "RAW" значение zoomed
+				bUseApi = false; // можно AnimateWindow
+		}
+		else if (anCmdShow == SW_SHOWNORMAL)
+		{
+			if (!::IsZoomed(ghWnd) && !::IsIconic(ghWnd)) // тут нужно "RAW" значение zoomed
+				bUseApi = false; // можно AnimateWindow
 		}
 	}
-#endif
+
+	if (bUseApi)
+	{
+		lbRc = apiShowWindow(ghWnd, anCmdShow);
+	}
+	else
+	{
+		DWORD nFlags = AW_BLEND;
+		if (anCmdShow == SW_HIDE)
+			nFlags |= AW_HIDE;
+
+		if (nAnimationMS == 0)
+			nAnimationMS = CONEMU_ANIMATE_DURATION;
+		else if (nAnimationMS > CONEMU_ANIMATE_DURATION_MAX)
+			nAnimationMS = CONEMU_ANIMATE_DURATION_MAX;
+
+		AnimateWindow(ghWnd, nAnimationMS, nFlags);
+	}
 
 	return lbRc;
 }
@@ -4342,6 +4371,8 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	if (hWnd2)
 	{
 		EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
+		EnableWindow(GetDlgItem(hWnd2, tHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
+		EnableWindow(GetDlgItem(hWnd2, stHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
 		gpSetCls->checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle!=0);
 		gpSetCls->checkDlgButton(hWnd2, cbQuakeAutoHide, gpSet->isQuakeStyle==2);
 		gpSetCls->checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
@@ -4375,7 +4406,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		m_QuakePrevSize.wndY = gpConEmu->wndY;
 		m_QuakePrevSize.nFrame = gpSet->nHideCaptionAlwaysFrame;
 		m_QuakePrevSize.WindowMode = gpConEmu->WindowMode;
-		gpSet->nHideCaptionAlwaysFrame = 0;
+		//gpSet->nHideCaptionAlwaysFrame = 0;
 	}
 	else if (!gpSet->isQuakeStyle && m_QuakePrevSize.bWasSaved)
 	{
@@ -4632,9 +4663,9 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			}
 
 
+			UpdateWindowRgn();
 			OnSize(false); // подровнять ТОЛЬКО дочерние окошки
 
-			UpdateWindowRgn();
 			//#ifdef _DEBUG
 			//GetWindowPlacement(ghWnd, &wpl);
 			//UpdateWindow(ghWnd);
@@ -5717,7 +5748,8 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	}
 
 
-	#ifdef _DEBUG
+	//#ifdef _DEBUG
+	#if 0
 	{
 		wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X) style=0x%08X%s\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle, zoomed ? L" (zoomed)" : L"");
 		DEBUGSTRSIZE(szDbg);
@@ -5727,19 +5759,6 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		if (!(p->flags & SWP_NOSIZE) && (cx != p->cx || cy != p->cy))
 		{
 			cx = p->cx; cy = p->cy;
-		}
-
-		if (m_FixPosAfterStyle)
-		{
-			if ((nCurTick - m_FixPosAfterStyle) < FIXPOSAFTERSTYLE_DELTA)
-			{
-				p->flags &= ~(SWP_NOMOVE|SWP_NOSIZE);
-				p->x = mrc_FixPosAfterStyle.left;
-				p->y = mrc_FixPosAfterStyle.top;
-				p->cx = mrc_FixPosAfterStyle.right - mrc_FixPosAfterStyle.left;
-				p->cy = mrc_FixPosAfterStyle.bottom - mrc_FixPosAfterStyle.top;
-			}
-			m_FixPosAfterStyle = 0;
 		}
 
 			#ifdef CATCH_TOPMOST_SET
@@ -5752,6 +5771,21 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			#endif
 	}
 	#endif
+
+	if (m_FixPosAfterStyle)
+	{
+		DWORD nCurTick = GetTickCount();
+
+		if ((nCurTick - m_FixPosAfterStyle) < FIXPOSAFTERSTYLE_DELTA)
+		{
+			p->flags &= ~(SWP_NOMOVE|SWP_NOSIZE);
+			p->x = mrc_FixPosAfterStyle.left;
+			p->y = mrc_FixPosAfterStyle.top;
+			p->cx = mrc_FixPosAfterStyle.right - mrc_FixPosAfterStyle.left;
+			p->cy = mrc_FixPosAfterStyle.bottom - mrc_FixPosAfterStyle.top;
+		}
+		m_FixPosAfterStyle = 0;
+	}
 
 	//120821 - Размер мог быть изменен извне (Win+Up например)
 	//120830 - только если не "Minimized"
@@ -5788,8 +5822,10 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			p->x = rc.left;
 			p->y = rc.top;
 			p->cx = rc.right - rc.left; // + 1;
+			p->cy = rc.bottom - rc.top;
 		}
-	#ifdef _DEBUG
+	//#ifdef _DEBUG
+	#if 0
 		else if (isWindowNormal())
 		{
 			HMONITOR hMon = NULL;
@@ -8309,8 +8345,10 @@ void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 
 	// Облом получается при двукратном SetWindowRgn(ghWnd, NULL, TRUE);
 	// Причем после следующего ресайза - рамка приходит в норму
+	bool b = SetDontPreserveClient(true);
 	BOOL bRc = SetWindowRgn(ghWnd, hRgn, TRUE);
 	DWORD dwErr = bRc ? 0 : GetLastError();
+	SetDontPreserveClient(b);
 	UNREFERENCED_PARAMETER(dwErr);
 	UNREFERENCED_PARAMETER(bRc);
 }
@@ -11280,7 +11318,7 @@ void CConEmuMain::OnHideCaption()
 	DWORD nStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD nNewStyle = FixWindowStyle(nStyle, WindowMode);
 	DWORD nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
-	bool bNeedCorrect = (!isIconic() && (WindowMode == wmNormal)) && !m_QuakePrevSize.bWaitReposition;
+	bool bNeedCorrect = (!isIconic() && (WindowMode != wmFullScreen)) && !m_QuakePrevSize.bWaitReposition;
 	
 	if (nNewStyle != nStyle)
 	{
@@ -11361,16 +11399,17 @@ void CConEmuMain::OnHideCaption()
 		//}
 		mb_IgnoreSizeChange = FALSE;
 
-		if (changeFromWindowMode == wmNotChanging)
-		{
-			//TODO: Поменять на FALSE
-			ReSize(TRUE);
-		}
+		//if (changeFromWindowMode == wmNotChanging)
+		//{
+		//	//TODO: Поменять на FALSE
+		//	ReSize(TRUE);
+		//}
 	}
 
 	if (changeFromWindowMode == wmNotChanging)
 	{
 		UpdateWindowRgn();
+		ReSize(FALSE);
 	}
 }
 
@@ -11830,6 +11869,47 @@ void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+#ifdef _DEBUG
+	#if 1
+	if (messg == WM_KEYDOWN || messg == WM_KEYUP)
+	{
+		if (wParam >= VK_F1 && wParam <= VK_F4)
+		{
+			if (messg == WM_KEYUP)
+			{
+				DWORD nFlags = 0;
+				switch ((DWORD)wParam)
+				{
+				case VK_F1:
+					nFlags = AW_SLIDE|AW_HIDE|AW_HOR_NEGATIVE|AW_VER_NEGATIVE;
+					break;
+				case VK_F2:
+					nFlags = AW_SLIDE|AW_HOR_POSITIVE|AW_VER_POSITIVE;
+					break;
+				case VK_F3:
+					nFlags = AW_BLEND|AW_HIDE|AW_CENTER;
+					break;
+				case VK_F4:
+					nFlags = AW_BLEND|AW_CENTER;
+					break;
+				}
+				BOOL b = AnimateWindow(ghWnd, 500, nFlags);
+				DWORD nErr = GetLastError();
+				wchar_t szErr[128];
+				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"AnimateWindow(%08x)=%u, Err=%u\n", nFlags, b, nErr);
+				DEBUGSTRANIMATE(szErr);
+			}
+			return 0;
+		}
+	}
+	#endif
+#endif
+
+	if (!m_GuiInfo.bGuiActive)
+	{
+		UpdateGuiInfoMappingActive(true);
+	}
+
 	if (mb_ImeMethodChanged)
 	{
 		if (messg == WM_SYSKEYDOWN || messg == WM_SYSKEYUP)
@@ -15591,6 +15671,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 			}
 
 			bool bForeground = isMeForeground();
+			if (bForeground && !m_GuiInfo.bGuiActive)
+			{
+				UpdateGuiInfoMappingActive(true);
+			}
 
 			DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
 			#ifdef CATCH_TOPMOST_SET
@@ -16224,9 +16308,12 @@ LPCWSTR CConEmuMain::MenuAccel(int DescrID, LPCWSTR asText)
 	return szTemp;
 }
 
+// Window procedure for ghWndWork
 LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
+
+	_ASSERTE(ghWndWork==NULL || ghWndWork==hWnd);
 
 	if (gpSetCls->isAdvLogging >= 4)
 	{
@@ -16275,6 +16362,8 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	return result;
 }
 
+// Window procedure for ghWnd
+// BUT! It may be called from child windows, e.g. for keyboard processing
 LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
@@ -16385,6 +16474,16 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		//case WM_PAINT:
 		//	result = gpConEmu->OnPaint(wParam, lParam);
 		//	break;
+		case WM_PRINTCLIENT:
+			DefWindowProc(hWnd, messg, wParam, lParam);
+			if (wParam && (hWnd == ghWnd) && gpSet->isStatusBarShow && (lParam & PRF_CLIENT))
+			{
+				int nHeight = gpSet->StatusBarHeight();
+				RECT wr = CalcRect(CER_MAINCLIENT);
+				RECT rcStatus = {wr.left, wr.bottom - nHeight, wr.right, wr.bottom};
+				mp_Status->PaintStatus((HDC)wParam, rcStatus);
+			}
+			break;
 		case WM_TIMER:
 			result = gpConEmu->OnTimer(wParam, lParam);
 			break;
@@ -16615,8 +16714,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			if (gpSet->isHideCaptionAlways())
 			{
 				KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
-				gpConEmu->OnTimer(TIMER_CAPTION_APPEAR_ID,0);
-				UpdateWindowRgn();
+				// -- если уж пришел WM_NCLBUTTONDOWN - значит рамка уже показана?
+				//gpConEmu->OnTimer(TIMER_CAPTION_APPEAR_ID,0);
+				//UpdateWindowRgn();
 			}
 
 			result = DefWindowProc(hWnd, messg, wParam, lParam);

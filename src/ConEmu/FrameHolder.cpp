@@ -917,72 +917,127 @@ LRESULT CFrameHolder::OnNcActivate(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	return lRc;
 }
 
+bool CFrameHolder::SetDontPreserveClient(bool abSwitch)
+{
+	bool b = mb_DontPreserveClient;
+	mb_DontPreserveClient = abSwitch;
+	return b;
+}
+
 LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	RecalculateFrameSizes();
 
 	LRESULT lRc = 0;
+
+	// ¬ Aero (Glass) важно, чтобы клиенска€ область начиналась с верхнего кра€ окна,
+	// иначе не получитс€ "рисовать по стеклу"
 	FrameDrawStyle fdt = gpConEmu->DrawType();
-	NCCALCSIZE_PARAMS* pParm = wParam ? ((NCCALCSIZE_PARAMS*)lParam) : NULL;
-	LPRECT nccr = wParam
-			? pParm->rgrc
-			: (RECT*)lParam;
-			
-	if (!gpSet->isTabsInCaption)
+
+	// ≈сли nCaption == 0, то при fdt_Aero текст в заголовке окна не отрисовываетс€
+	int nCaption = GetCaptionHeight();
+
+	if (wParam)
 	{
-		lRc = DefWindowProc(hWnd, uMsg, wParam, lParam);
+		// lParam points to an NCCALCSIZE_PARAMS structure that contains information
+		// an application can use to calculate the new size and position of the client rectangle. 
+		// The application should indicate which part of the client area contains valid information!
+		NCCALCSIZE_PARAMS* pParm = wParam ? ((NCCALCSIZE_PARAMS*)lParam) : NULL;
+		// r[0] contains the new coordinates of a window that has been moved or resized,
+		//      that is, it is the proposed new window coordinates
+		// r[1] contains the coordinates of the window before it was moved or resized
+		// r[2] contains the coordinates of the window's client area before the window was moved or resized
+		RECT r[3] = {pParm->rgrc[0], pParm->rgrc[1], pParm->rgrc[2]};
+
+		RECT rcWnd = {0,0, r[0].right-r[0].left, r[0].bottom-r[0].top};
+		RECT rcClient = gpConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
+		_ASSERTE(rcClient.left==0 && rcClient.top==0);
+
+		int nDX = ((rcWnd.right - rcClient.right) >> 1);
+		int nDY = ((rcWnd.bottom - rcClient.bottom - nCaption) >> 1);
+		// Need screen coordinates!
+		OffsetRect(&rcClient, r[0].left + nDX, r[0].top + nDY + nCaption);
+
+		// pParm->rgrc[0] contains the coordinates of the new client rectangle resulting from the move or resize
+		// pParm->rgrc[1] rectangle contains the valid destination rectangle
+		// pParm->rgrc[2] rectangle contains the valid source rectangle
+		pParm->rgrc[0] = rcClient;
+		//TODO:
+		pParm->rgrc[1] = MakeRect(0,0);
+		pParm->rgrc[2] = MakeRect(0,0);
+
+		// ѕри смене режимов (особенно при смене HideCaption/NotHideCaption)
+		// требовать полную перерисовку клиентской области
+		if (mb_DontPreserveClient || (gpConEmu->changeFromWindowMode != wmNotChanging))
+		{
+			lRc = WVR_REDRAW;
+		}
 	}
 	else
 	{
-		if (!gpSet->isTabs || !gpSet->isTabsInCaption)
-		{
-			lRc = DefWindowProc(hWnd, uMsg, wParam, lParam);
-		}
-		else
-		{
-			RECT r[3];
-			r[0] = *nccr;
-			if (wParam)
-			{
-				r[1] = pParm->rgrc[1];
-				r[2] = pParm->rgrc[2];
-			}
-				
-			if (fdt == fdt_Aero)
-			{
-				// ¬ Aero (Glass) важно, чтобы клиенска€ область начиналась с верхнего кра€ окна,
-				// иначе не получитс€ "рисовать по стеклу"
-				nccr->top = r->top; // нада !!!
-				nccr->left = r->left + GetFrameWidth();
-				nccr->right = r->right - GetFrameWidth();
-				nccr->bottom = r->bottom - GetFrameHeight();
-			}
-			else
-			{
-				//TODO: “емы!!! ¬ XP ширина/высота рамки может быть больше
-				nccr->top = r->top + GetFrameHeight() + GetCaptionHeight();
-				nccr->left = r->left + GetFrameWidth();
-				nccr->right = r->right - GetFrameWidth();
-				nccr->bottom = r->bottom - GetFrameHeight();
-			}
-		}
+		// lParam points to a RECT structure. On entry, the structure contains the proposed window
+		// rectangle for the window. On exit, the structure should contain the screen coordinates
+		// of the corresponding window client area.
+		LPRECT nccr = (LPRECT)lParam;
+		RECT rcWnd = {0,0, nccr->right-nccr->left, nccr->bottom-nccr->top};
+		RECT rcClient = gpConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
+		_ASSERTE(rcClient.left==0 && rcClient.top==0);
 
-		// Ќаверное имеет смысл сбрасывать всегда, чтобы Win не пыталась
-		// отрисовать невалидное содержимое консоли (она же размер мен€ет)
-		if (wParam)
-		{
-			//pParm->rgrc[1] = *nccr;
-			//pParm->rgrc[2] = r[2];
-			memset(pParm->rgrc+1, 0, sizeof(RECT)*2);
-		}
+		// Need screen coordinates!
+		int nDX = ((rcWnd.right - rcClient.right) >> 1);
+		int nDY = ((rcWnd.bottom - rcClient.bottom - nCaption) >> 1);
+		OffsetRect(&rcClient, nccr->left + nDX, nccr->top + nDY + nCaption);
+		*nccr = rcClient;
 	}
 
-	// ѕри смене режимов (особенно при смене HideCaption/NotHideCaption)
-	// требовать полную перерисовку клиентской области
-	if (gpConEmu->changeFromWindowMode != wmNotChanging)
-	{
-		lRc = WVR_REDRAW;
-	}
+	//if (!gpSet->isTabsInCaption)
+	//{
+	//	lRc = DefWindowProc(hWnd, uMsg, wParam, lParam);
+	//}
+	//else
+	//{
+	//	if (!gpSet->isTabs || !gpSet->isTabsInCaption)
+	//	{
+	//		lRc = DefWindowProc(hWnd, uMsg, wParam, lParam);
+	//	}
+	//	else
+	//	{
+	//		RECT r[3];
+	//		r[0] = *nccr;
+	//		if (wParam)
+	//		{
+	//			r[1] = pParm->rgrc[1];
+	//			r[2] = pParm->rgrc[2];
+	//		}
+	//			
+	//		if (fdt == fdt_Aero)
+	//		{
+	//			// ¬ Aero (Glass) важно, чтобы клиенска€ область начиналась с верхнего кра€ окна,
+	//			// иначе не получитс€ "рисовать по стеклу"
+	//			nccr->top = r->top; // нада !!!
+	//			nccr->left = r->left + GetFrameWidth();
+	//			nccr->right = r->right - GetFrameWidth();
+	//			nccr->bottom = r->bottom - GetFrameHeight();
+	//		}
+	//		else
+	//		{
+	//			//TODO: “емы!!! ¬ XP ширина/высота рамки может быть больше
+	//			nccr->top = r->top + GetFrameHeight() + GetCaptionHeight();
+	//			nccr->left = r->left + GetFrameWidth();
+	//			nccr->right = r->right - GetFrameWidth();
+	//			nccr->bottom = r->bottom - GetFrameHeight();
+	//		}
+	//	}
+
+	//	// Ќаверное имеет смысл сбрасывать всегда, чтобы Win не пыталась
+	//	// отрисовать невалидное содержимое консоли (она же размер мен€ет)
+	//	if (wParam)
+	//	{
+	//		//pParm->rgrc[1] = *nccr;
+	//		//pParm->rgrc[2] = r[2];
+	//		memset(pParm->rgrc+1, 0, sizeof(RECT)*2);
+	//	}
+	//}
 
 	return lRc;
 }
@@ -1121,7 +1176,11 @@ void CFrameHolder::RecalculateFrameSizes()
 	if (nHeightIdeal < 19) nHeightIdeal = 19;
 	mn_TabsHeight = min(nHeightIdeal,mn_OurCaptionHeight);
 
-	if (gpSet->isTabsInCaption && gpConEmu->mp_TabBar->IsTabsActive())
+	if (gpSet->isCaptionHidden())
+	{
+		mn_OurCaptionHeight = 0;
+	}
+	else if (gpSet->isTabsInCaption && gpConEmu->mp_TabBar->IsTabsActive())
 	{
 		if ((GetCaptionDragHeight() == 0) && (mn_TabsHeight > mn_WinCaptionHeight))
 		{
@@ -1178,7 +1237,7 @@ int CFrameHolder::GetFrameHeight()
 // высота ЌјЎ≈√ќ заголовка (с учетом табов)
 int CFrameHolder::GetCaptionHeight()
 {
-	_ASSERTE(mb_Initialized && mn_OurCaptionHeight > 0);
+	_ASSERTE(mb_Initialized && ((mn_OurCaptionHeight > 0) || gpSet->isCaptionHidden()));
 	return mn_OurCaptionHeight;
 }
 

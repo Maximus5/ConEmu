@@ -1545,6 +1545,7 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbHideCaptionAlways, gpSet->isHideCaptionAlways());
 	EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 
+	// копия на вкладке "Size & Pos"
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
@@ -1553,7 +1554,8 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	
 	//checkDlgButton(hWnd2, cbEnhanceButtons, gpSet->isEnhanceButtons);
 
-	checkDlgButton(hWnd2, cbAlwaysShowScrollbar, gpSet->isAlwaysShowScrollbar);
+	//checkDlgButton(hWnd2, cbAlwaysShowScrollbar, gpSet->isAlwaysShowScrollbar);
+	checkRadioButton(hWnd2, rbScrollbarHide, rbScrollbarAuto, (gpSet->isAlwaysShowScrollbar==0) ? rbScrollbarHide : (gpSet->isAlwaysShowScrollbar==1) ? rbScrollbarShow : rbScrollbarAuto);
 	SetDlgItemInt(hWnd2, tScrollAppearDelay, gpSet->nScrollBarAppearDelay, FALSE);
 	SetDlgItemInt(hWnd2, tScrollDisappearDelay, gpSet->nScrollBarDisappearDelay, FALSE);
 
@@ -1635,7 +1637,10 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbQuakeAutoHide, (gpSet->isQuakeStyle == 2) ? BST_CHECKED : BST_UNCHECKED);
 	EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
-
+	// копия на вкладке "Show"
+	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
+	EnableWindow(GetDlgItem(hWnd2, tHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
+	EnableWindow(GetDlgItem(hWnd2, stHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -4176,8 +4181,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpConEmu->OnSize(false);
 			gpConEmu->InvalidateAll();
 			break;
-		case cbAlwaysShowScrollbar:
-			gpSet->isAlwaysShowScrollbar = IsChecked(hWnd2, cbAlwaysShowScrollbar);
+		case rbScrollbarHide:
+		case rbScrollbarShow:
+		case rbScrollbarAuto:
+			gpSet->isAlwaysShowScrollbar = CB - rbScrollbarHide;
 			if (!gpSet->isAlwaysShowScrollbar) gpConEmu->OnAlwaysShowScrollbar(false);
 			if (gpConEmu->isZoomed() || gpConEmu->isFullScreen())
 				gpConEmu->SyncConsoleToWindow();
@@ -5997,6 +6004,47 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case tHideCaptionAlwaysFrame: // копия на вкладке "Show" & "Size & Pos"
+	case tHideCaptionAlwaysDelay:
+	case tHideCaptionAlwaysDissapear:
+	case tScrollAppearDelay:
+	case tScrollDisappearDelay:
+		if (HIWORD(wParam) == EN_CHANGE)
+		{
+			WORD TB = LOWORD(wParam);
+			BOOL lbOk = FALSE;
+			UINT nNewVal = GetDlgItemInt(hWnd2, TB, &lbOk, FALSE);
+
+			if (lbOk)
+			{
+				switch (TB)
+				{
+				case tHideCaptionAlwaysFrame:
+					gpSet->nHideCaptionAlwaysFrame = nNewVal;
+					gpConEmu->UpdateWindowRgn();
+					break;
+				case tHideCaptionAlwaysDelay:
+					gpSet->nHideCaptionAlwaysDelay = nNewVal;
+					break;
+				case tHideCaptionAlwaysDissapear:
+					gpSet->nHideCaptionAlwaysDisappear = nNewVal;
+					break;
+				case tScrollAppearDelay:
+					if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
+						gpSet->nScrollBarAppearDelay = nNewVal;
+					else if (nNewVal > SCROLLBAR_DELAY_MAX)
+						SetDlgItemInt(hWnd2, tScrollAppearDelay, SCROLLBAR_DELAY_MAX, FALSE);
+					break;
+				case tScrollDisappearDelay:
+					if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
+						gpSet->nScrollBarDisappearDelay = nNewVal;
+					else if (nNewVal > SCROLLBAR_DELAY_MAX)
+						SetDlgItemInt(hWnd2, tScrollDisappearDelay, SCROLLBAR_DELAY_MAX, FALSE);
+					break;
+				}
+			}
+		}
+		break;
 	
 	default:
 	
@@ -6118,44 +6166,45 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				}
 			}
 		} // else if (hWnd2 == mh_Tabs[thi_Status])
-		else if (hWnd2 == mh_Tabs[thi_Show])
-		{
-			if (HIWORD(wParam) == EN_CHANGE)
-			{
-				WORD TB = LOWORD(wParam);
-				BOOL lbOk = FALSE;
-				UINT nNewVal = GetDlgItemInt(hWnd2, TB, &lbOk, FALSE);
 
-				if (lbOk)
-				{
-					switch (TB)
-					{
-					case tHideCaptionAlwaysFrame:
-						gpSet->nHideCaptionAlwaysFrame = nNewVal;
-						gpConEmu->UpdateWindowRgn();
-						break;
-					case tHideCaptionAlwaysDelay:
-						gpSet->nHideCaptionAlwaysDelay = nNewVal;
-						break;
-					case tHideCaptionAlwaysDissapear:
-						gpSet->nHideCaptionAlwaysDisappear = nNewVal;
-						break;
-					case tScrollAppearDelay:
-						if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
-							gpSet->nScrollBarAppearDelay = nNewVal;
-						else if (nNewVal > SCROLLBAR_DELAY_MAX)
-							SetDlgItemInt(hWnd2, tScrollAppearDelay, SCROLLBAR_DELAY_MAX, FALSE);
-						break;
-					case tScrollDisappearDelay:
-						if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
-							gpSet->nScrollBarDisappearDelay = nNewVal;
-						else if (nNewVal > SCROLLBAR_DELAY_MAX)
-							SetDlgItemInt(hWnd2, tScrollDisappearDelay, SCROLLBAR_DELAY_MAX, FALSE);
-						break;
-					}
-				}
-			}
-		} // else if (hWnd2 == mh_Tabs[thi_Ext])
+		//else if (hWnd2 == mh_Tabs[thi_Show])
+		//{
+		//	if (HIWORD(wParam) == EN_CHANGE)
+		//	{
+		//		WORD TB = LOWORD(wParam);
+		//		BOOL lbOk = FALSE;
+		//		UINT nNewVal = GetDlgItemInt(hWnd2, TB, &lbOk, FALSE);
+
+		//		if (lbOk)
+		//		{
+		//			switch (TB)
+		//			{
+		//			case tHideCaptionAlwaysFrame:
+		//				gpSet->nHideCaptionAlwaysFrame = nNewVal;
+		//				gpConEmu->UpdateWindowRgn();
+		//				break;
+		//			case tHideCaptionAlwaysDelay:
+		//				gpSet->nHideCaptionAlwaysDelay = nNewVal;
+		//				break;
+		//			case tHideCaptionAlwaysDissapear:
+		//				gpSet->nHideCaptionAlwaysDisappear = nNewVal;
+		//				break;
+		//			case tScrollAppearDelay:
+		//				if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
+		//					gpSet->nScrollBarAppearDelay = nNewVal;
+		//				else if (nNewVal > SCROLLBAR_DELAY_MAX)
+		//					SetDlgItemInt(hWnd2, tScrollAppearDelay, SCROLLBAR_DELAY_MAX, FALSE);
+		//				break;
+		//			case tScrollDisappearDelay:
+		//				if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
+		//					gpSet->nScrollBarDisappearDelay = nNewVal;
+		//				else if (nNewVal > SCROLLBAR_DELAY_MAX)
+		//					SetDlgItemInt(hWnd2, tScrollDisappearDelay, SCROLLBAR_DELAY_MAX, FALSE);
+		//				break;
+		//			}
+		//		}
+		//	}
+		//} // else if (hWnd2 == mh_Tabs[thi_Ext])
 		
 	// end of default:
 	} // switch (TB)

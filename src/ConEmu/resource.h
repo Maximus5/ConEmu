@@ -346,7 +346,6 @@
 #define cbAlwaysShowTrayIcon            1736
 #define rbCTSActAlways                  1737
 #define rbCTSActBufferOnly              1738
-#define cbAlwaysShowScrollbar           1739
 #define cbLogShellActivity              1740
 #define cbLogInputActivity              1741
 #define lbActivityLog                   1742
@@ -846,6 +845,10 @@
 #define vkGlobalRestore                 2484
 #define vkPasteFilePath                 2485
 #define vkPasteDirectory                2486
+#define rbScrollbarHide                 2487
+#define rbScrollbarShow                 2488
+#define rbScrollbarAuto                 2489
+#define stHideCaptionAlwaysFrame        2490
 
 // Next default values for new objects
 // 
@@ -853,7 +856,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2487
+#define _APS_NEXT_CONTROL_VALUE         2491
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

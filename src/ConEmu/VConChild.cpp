@@ -287,6 +287,13 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		case WM_PAINT:
 			result = pVCon->OnPaint();
 			break;
+		case WM_PRINTCLIENT:
+			if (wParam && (lParam & PRF_CLIENT))
+			{
+				RECT rcClient = pVCon->GetDcClientRect();
+				pVCon->Paint((HDC)wParam, rcClient);
+			}
+			break;
 		case WM_SIZE:
 			result = pVCon->OnSize(wParam, lParam);
 			break;

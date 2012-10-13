@@ -200,7 +200,7 @@ BEGIN
     GROUPBOX        "DOS applications (ntvdm)",IDC_STATIC,185,85,130,32
     GROUPBOX        "Quake style",IDC_STATIC,9,163,306,29
     CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,176,100,8
-    CONTROL         "Auto-hide on focus lose",cbQuakeAutoHide,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,123,176,98,8
+    CONTROL         "Auto-hide on focus lose",cbQuakeAutoHide,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,123,176,94,8
     CONTROL         "Center console in ConEmu workspace",cbTryToCenter,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,131,149,8
     RTEXT           "Pad size:",IDC_STATIC,156,131,45,8
@@ -214,6 +214,8 @@ BEGIN
     EDITTEXT        tFullScreenWidth,210,206,39,12,ES_AUTOHSCROLL | WS_DISABLED
     EDITTEXT        tFullScreenHeight,269,206,39,12,ES_AUTOHSCROLL | WS_DISABLED
     CTEXT           "x",IDC_STATIC,255,207,8,8,WS_DISABLED
+    RTEXT           "Frame width:",stHideCaptionAlwaysFrame,215,176,50,8
+    EDITTEXT        tHideCaptionAlwaysFrame,269,174,39,12,ES_AUTOHSCROLL
 END
 
 IDD_SPG_SHOW DIALOGEX 0, 0, 328, 235
@@ -235,10 +237,9 @@ BEGIN
     GROUPBOX        "Appearance",gbFeatureAppear,4,86,319,29
     CONTROL         "Enhance progress- and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,99,119,8
-    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,99,78,8
+    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,99,73,8
     CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,234,99,78,8
     GROUPBOX        "Scrollbar",IDC_STATIC,4,121,319,29
-    CONTROL         "Always show scrollbar",cbAlwaysShowScrollbar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,134,100,8
     RTEXT           "Appear delay:",IDC_STATIC,129,134,50,8
     EDITTEXT        tScrollAppearDelay,183,132,40,12,ES_AUTOHSCROLL
     RTEXT           "Disappear:",IDC_STATIC,230,134,43,8
@@ -254,6 +255,9 @@ BEGIN
     RTEXT           "Disappear:",IDC_STATIC,227,184,43,8
     EDITTEXT        tHideCaptionAlwaysDissapear,273,182,40,12,ES_AUTOHSCROLL
     CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,199,117,8
+    CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON,10,134,30,8
+    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,48,134,35,8
+    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,92,134,33,8
 END
 
 IDD_SPG_CURSOR DIALOGEX 0, 0, 328, 235
@@ -1268,11 +1272,6 @@ BEGIN
         RIGHTMARGIN, 314
         TOPMARGIN, 4
         BOTTOMMARGIN, 181
-    END
-
-    IDD_SPG_INTEGRATION, DIALOG
-    BEGIN
-        RIGHTMARGIN, 328
     END
 
     IDD_SPG_COLORS, DIALOG
