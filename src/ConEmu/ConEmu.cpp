@@ -1738,6 +1738,9 @@ BOOL CConEmuMain::CreateMainWindow()
 	////	style &= ~(WS_CAPTION);
 	int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
 
+	// In principle, this MUST be wmNormal on startup, even if started in Maximized/FullScreen/Iconic
+	_ASSERTE(WindowMode==wmNormal);
+
 	// Расчет размеров окна в Normal режиме
 	if ((gpConEmu->wndWidth && gpConEmu->wndHeight) || m_InsideIntegration)
 	{
@@ -4280,6 +4283,12 @@ void CConEmuMain::AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom)
 	}
 }
 
+void CConEmuMain::StoreIdealRect()
+{
+	RECT rcWnd = CalcRect(CER_MAIN);
+	UpdateIdealRect(rcWnd);
+}
+
 void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 {
 	mouse.bCheckNormalRect = false;
@@ -4515,7 +4524,8 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 	bool bIconic = isIconic();
 
-	// Обновить коордианты в gpSet, если требуется
+	// When changing more to smth else than wmNormal, and current mode is wmNormal
+	// save current window rect for futher usage (when restoring from wmMaximized for example)
 	if ((inMode != wmNormal) && isWindowNormal() && !bIconic)
 		StoreNormalRect(&rcWnd);
 
@@ -5671,13 +5681,15 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 	if (hWnd == ghWnd /*&& ghOpWnd*/)  //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
 	{
-		if (!gpConEmu->mb_IgnoreSizeChange && !gpConEmu->isFullScreen() && !gpConEmu->isZoomed() && !gpConEmu->isIconic())
+		if (!gpConEmu->mb_IgnoreSizeChange && !gpConEmu->isIconic())
 		{
 			RECT rc; GetWindowRect(ghWnd, &rc);
 			mp_Status->OnWindowReposition(&rc);
 
-			//gpSet->UpdatePos(rc.left, rc.top);
-			gpConEmu->StoreNormalRect(&rc);
+			if (isWindowNormal())
+			{
+				StoreNormalRect(&rc);
+			}
 
 			if (gpConEmu->hPictureView)
 			{
@@ -9156,6 +9168,15 @@ int CConEmuMain::GetActiveVCon(CVConGuard* pVCon /*= NULL*/, int* pAllCount /*= 
 	return CVConGroup::GetActiveVCon(pVCon, pAllCount);
 }
 
+bool CConEmuMain::IsActiveConAdmin()
+{
+	CVConGuard VCon;
+	bool bAdmin = (gpConEmu->GetActiveVCon(&VCon) >= 0)
+		? VCon->RCon()->isAdministrator()
+		: gpConEmu->mb_IsUacAdmin;
+	return bAdmin;
+}
+
 // bFromCycle = true, для перебора в циклах (например, в CSettings::UpdateWinHookSettings), чтобы не вылезали ассерты
 CVirtualConsole* CConEmuMain::GetVCon(int nIdx, bool bFromCycle /*= false*/)
 {
@@ -9875,17 +9896,13 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//}
 
 	// lpCreate->cx/cy может содержать CW_USEDEFAULT
-	RECT rcWnd = CalcRect(CER_MAIN);
+	//RECT rcWnd = CalcRect(CER_MAIN);
 	//GetWindowRect(ghWnd, &rcWnd);
 
-	// Если mrc_Ideal еще не задавался, или оказался больше чем смогли создать
-	if (!mrc_Ideal.right
-		|| ((mrc_Ideal.right - mrc_Ideal.left) > (rcWnd.right - rcWnd.left))
-		|| ((mrc_Ideal.bottom - mrc_Ideal.top) > (rcWnd.bottom - rcWnd.top)))
-	{
-		UpdateIdealRect(rcWnd);
-	}
+	// It's better to store current mrc_Ideal values now, after real window creation
+	UpdateIdealRect();
 
+	// Used for restoring from Maximized/Fullscreen/Iconic. Remember current Pos/Size.
 	StoreNormalRect(NULL);
 
 	// Win глючит? Просил создать БЕЗ WS_CAPTION, а создается С WS_CAPTION
@@ -10577,7 +10594,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		n = SetTimer(ghWnd, TIMER_CONREDRAW_ID, CON_REDRAW_TIMOUT*2, NULL);
 		UNREFERENCED_PARAMETER(n);
 
-		if (gpConEmu->mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
+		if (gpSet->isTaskbarShield && gpConEmu->mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
 		{
 			// Bug in Win7? Sometimes after startup "As Admin" sheild does not appeears.
 			SetTimer(ghWnd, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE, NULL);
@@ -11568,7 +11585,8 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 		return;
 	}
 
-	StoreNormalRect(NULL); // Сама разберется, надо/не надо
+	// -- this will be done in SetWindowMode
+	//StoreNormalRect(NULL); // Сама разберется, надо/не надо
 
 	gpConEmu->SetWindowMode((WindowMode != wmMaximized) ? wmMaximized : wmNormal);
 }
@@ -15934,12 +15952,12 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		case TIMER_ADMSHIELD_ID:
 		{
 			static int nStep = 0;
-			if (mb_IsUacAdmin)
+			if (gpSet->isTaskbarShield)
 			{
-				Taskbar_SetShield(true);
+				Taskbar_UpdateOverlay();
+				nStep++;
 			}
-			nStep++;
-			if (nStep >= 5)
+			if ((nStep >= 5) || !gpSet->isTaskbarShield)
 			{
 				KillTimer(ghWnd, TIMER_ADMSHIELD_ID);
 			}

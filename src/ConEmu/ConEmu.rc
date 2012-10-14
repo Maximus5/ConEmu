@@ -226,38 +226,40 @@ BEGIN
     GROUPBOX        "Taskbar status area (TSA)",IDC_STATIC,4,1,319,29
     CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,89,8
     CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,14,89,8
-    GROUPBOX        "Taskbar buttons",IDC_STATIC,4,35,319,46
+    GROUPBOX        "Taskbar buttons",IDC_STATIC,4,35,319,59
     CONTROL         "Show all consoles (Win7 and higher)",rbTaskbarBtnWin7,
                     "Button",BS_AUTORADIOBUTTON,11,50,137,8
     CONTROL         "Show all consoles (all OS)",rbTaskbarBtnAll,"Button",BS_AUTORADIOBUTTON,158,50,160,8
     CONTROL         "Active console only (ConEmu window)",rbTaskbarBtnActive,
-                    "Button",BS_AUTORADIOBUTTON,11,65,140,8
+                    "Button",BS_AUTORADIOBUTTON,11,63,140,8
     CONTROL         "Don't show ConEmu window on Taskbar",rbTaskbarBtnHidden,
-                    "Button",BS_AUTORADIOBUTTON,158,65,159,8
-    GROUPBOX        "Appearance",gbFeatureAppear,4,86,319,29
+                    "Button",BS_AUTORADIOBUTTON,158,63,159,8
+    GROUPBOX        "Appearance",gbFeatureAppear,4,99,319,29
     CONTROL         "Enhance progress- and scrollbars",cbEnhanceGraphics,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,99,119,8
-    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,99,73,8
-    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,234,99,78,8
-    GROUPBOX        "Scrollbar",IDC_STATIC,4,121,319,29
-    RTEXT           "Appear delay:",IDC_STATIC,129,134,50,8
-    EDITTEXT        tScrollAppearDelay,183,132,40,12,ES_AUTOHSCROLL
-    RTEXT           "Disappear:",IDC_STATIC,230,134,43,8
-    EDITTEXT        tScrollDisappearDelay,277,132,40,12,ES_AUTOHSCROLL
-    GROUPBOX        "Caption and border options",gbFeatureCaption,4,156,319,59
-    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,169,117,8
-    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,169,79,8
-    CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,169,94,8
-    RTEXT           "Frame width:",IDC_STATIC,9,184,54,8
-    EDITTEXT        tHideCaptionAlwaysFrame,67,182,40,12,ES_AUTOHSCROLL
-    RTEXT           "Appear delay:",IDC_STATIC,125,184,50,8
-    EDITTEXT        tHideCaptionAlwaysDelay,179,182,40,12,ES_AUTOHSCROLL
-    RTEXT           "Disappear:",IDC_STATIC,227,184,43,8
-    EDITTEXT        tHideCaptionAlwaysDissapear,273,182,40,12,ES_AUTOHSCROLL
-    CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,199,117,8
-    CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON,10,134,30,8
-    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,48,134,35,8
-    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,92,134,33,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,112,119,8
+    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,112,73,8
+    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,234,112,78,8
+    GROUPBOX        "Scrollbar",IDC_STATIC,4,134,319,29
+    RTEXT           "Appear delay:",IDC_STATIC,129,147,50,8
+    EDITTEXT        tScrollAppearDelay,183,145,40,12,ES_AUTOHSCROLL
+    RTEXT           "Disappear:",IDC_STATIC,230,147,43,8
+    EDITTEXT        tScrollDisappearDelay,277,145,40,12,ES_AUTOHSCROLL
+    GROUPBOX        "Caption and border options",gbFeatureCaption,4,169,319,59
+    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,182,117,8
+    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,182,79,8
+    CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,182,94,8
+    RTEXT           "Frame width:",IDC_STATIC,9,197,54,8
+    EDITTEXT        tHideCaptionAlwaysFrame,67,195,40,12,ES_AUTOHSCROLL
+    RTEXT           "Appear delay:",IDC_STATIC,125,197,50,8
+    EDITTEXT        tHideCaptionAlwaysDelay,179,195,40,12,ES_AUTOHSCROLL
+    RTEXT           "Disappear:",IDC_STATIC,227,197,43,8
+    EDITTEXT        tHideCaptionAlwaysDissapear,273,195,40,12,ES_AUTOHSCROLL
+    CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,212,117,8
+    CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON,10,147,30,8
+    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,48,147,35,8
+    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,92,147,33,8
+    CONTROL         "Show Shield overlay (Win7 and higher)",cbTaskbarShield,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,78,143,8
 END
 
 IDD_SPG_CURSOR DIALOGEX 0, 0, 328, 235

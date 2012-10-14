@@ -25,6 +25,8 @@ Questions about usablity of "-new_console:s".
 	/LoadCfgFile <file> - Use specified xml file as configuration storage.
 	/SaveCfgFile <file> - Save configuration to the specified xml file.
 	/Exit - Don't create ConEmu window, exit after actions.
+[%] Issue 760: Shield overlay icon appears only on tab-change on Taskbar.
+[+] New option: «Appearance» -> «Show Shield overlay (Win7 or higher)».
 
 
 2012.10.09

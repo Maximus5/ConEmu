@@ -551,6 +551,7 @@ void Settings::InitSettings()
 	isTabSelf = true; isTabRecent = true; isTabLazy = true; nTabDblClickAction = 1;
 	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
+	isTaskbarShield = true;
 	isTabsInCaption = false; //cbTabsInCaption
 	wcscpy_c(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
 	sTabCloseMacro = sSaveAllMacro = NULL;
@@ -2357,6 +2358,7 @@ void Settings::LoadSettings()
 		reg->Load(L"TabRecent", isTabRecent);
 		reg->Load(L"TabDblClick", nTabDblClickAction); MinMax(nTabDblClickAction, 3);
 		reg->Load(L"TabsOnTaskBar", m_isTabsOnTaskBar);
+		reg->Load(L"TaskBarOverlay", isTaskbarShield);
 
 		if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { SafeFree(sTabCloseMacro); }
 
@@ -3078,6 +3080,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"TabRecent", isTabRecent);
 		reg->Save(L"TabDblClick", nTabDblClickAction);
 		reg->Save(L"TabsOnTaskBar", m_isTabsOnTaskBar);
+		reg->Save(L"TaskBarOverlay", isTaskbarShield);
 		reg->Save(L"TabCloseMacro", sTabCloseMacro);
 		reg->Save(L"TabFontFace", sTabFontFace);
 		reg->Save(L"TabFontCharSet", nTabFontCharSet);

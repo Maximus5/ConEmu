@@ -849,6 +849,8 @@
 #define rbScrollbarShow                 2488
 #define rbScrollbarAuto                 2489
 #define stHideCaptionAlwaysFrame        2490
+#define IDC_CHECK1                      2491
+#define cbTaskbarShield                 2491
 
 // Next default values for new objects
 // 
@@ -856,7 +858,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2491
+#define _APS_NEXT_CONTROL_VALUE         2492
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

@@ -1006,6 +1006,7 @@ struct Settings
 		bool isTabsOnTaskBar();
 		bool isWindowOnTaskBar(bool bStrictOnly = false);
 		//void SetTabsOnTaskBar(BYTE nTabsOnTaskBar);
+		bool isTaskbarShield;
 		
 		//reg->Load(L"TabFontFace", sTabFontFace, countof(sTabFontFace));
 		wchar_t sTabFontFace[LF_FACESIZE];

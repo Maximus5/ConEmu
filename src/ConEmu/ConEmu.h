@@ -306,6 +306,7 @@ class CConEmuMain :
 		//TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
 		//OSVERSIONINFO m_osv;
 		BOOL mb_IsUacAdmin;
+		bool IsActiveConAdmin();
 		HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove;
 		HCURSOR mh_SplitV, mh_SplitH;
 		HCURSOR mh_DragCursor;
@@ -355,6 +356,13 @@ class CConEmuMain :
 		//ITaskbarList2 *mp_TaskBar2;
 		typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
 		RECT mrc_Ideal;
+		struct IdealRectInfo
+		{
+			RECT  rcClientMargins; // (TabBar + StatusBar) at storing moment
+			COORD crConsole;       // Console size in cells at storing moment
+			SIZE  csFont;          // VCon Font size (Width, Height) at storing moment
+		} mr_Ideal;
+		void StoreIdealRect();
 		BOOL mn_InResize;
 		RECT mrc_StoredNormalRect;
 		void StoreNormalRect(RECT* prcWnd);

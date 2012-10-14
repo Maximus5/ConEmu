@@ -1539,6 +1539,7 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 		(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
 		(gpSet->m_isTabsOnTaskBar == 1) ? rbTaskbarBtnAll
 		: rbTaskbarBtnActive);
+	checkDlgButton(hWnd2, cbTaskbarShield, gpSet->isTaskbarShield);
 
 	checkDlgButton(hWnd2, cbHideCaption, gpSet->isHideCaption);
 
@@ -4291,6 +4292,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isTabLazy = IsChecked(hWnd2, cbTabLazy);
 			break;
 		//case cbTabsOnTaskBar:
+		case cbTaskbarShield:
+			gpSet->isTaskbarShield = IsChecked(hWnd2, CB);
+			gpConEmu->Taskbar_UpdateOverlay();
+			break;
 		case rbTaskbarBtnActive:
 		case rbTaskbarBtnAll:
 		case rbTaskbarBtnWin7:

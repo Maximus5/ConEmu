@@ -86,4 +86,5 @@ public:
 	bool Taskbar_GhostSnapshootRequired();
 
 	void Taskbar_SetShield(bool abShield);
+	void Taskbar_UpdateOverlay();
 };

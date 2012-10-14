@@ -321,12 +321,23 @@ void CTaskBar::Taskbar_SetShield(bool abShield)
 
 	HRESULT hr;
 
-	//hr = mp_TaskBar3->SetOverlayIcon(ghWnd, NULL, NULL);
-	//if (abShield)
-	//{
-	//	Sleep(100);
 	hr = mp_TaskBar3->SetOverlayIcon(ghWnd, abShield ? mh_Shield : NULL, NULL);
-	//}
+
 	_ASSERTE(hr==S_OK);
 	UNREFERENCED_PARAMETER(hr);
+}
+
+void CTaskBar::Taskbar_UpdateOverlay()
+{
+	if (!IsWindows7)
+		return;
+
+	bool bAdmin = false;
+
+	if (gpSet->isTaskbarShield)
+	{
+		bAdmin = gpConEmu->IsActiveConAdmin();
+	}
+
+	Taskbar_SetShield(bAdmin);
 }
