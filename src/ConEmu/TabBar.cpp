@@ -1010,7 +1010,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 			AddTab2VCon(vct);
 			// ƒобавл€ет закладку, или мен€ет (при необходимости) заголовок существующей
-			AddTab(tab.Name, tabIdx, (tab.Type & 0x100)==0x100);
+			AddTab(tab.Name, tabIdx, (tab.Type & fwt_Elevated)==fwt_Elevated);
 
 			if (lbActive && tab.Current)
 				nCurTab = tabIdx;
@@ -1032,12 +1032,13 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 	if (tabIdx == 0)  // хот€ бы "Console" покажем
 	{
+		ZeroStruct(tab);
 		PrepareTab(&tab, NULL);
 		vct.pVCon = NULL;
 		vct.nFarWindowId = 0;
 		AddTab2VCon(vct); //2009-06-14. Ќе было!
 		// ƒобавл€ет закладку, или мен€ет (при необходимости) заголовок существующей
-		AddTab(tab.Name, tabIdx, (tab.Type & 0x100)==0x100);
+		AddTab(tab.Name, tabIdx, (tab.Type & fwt_Elevated)==fwt_Elevated);
 		nCurTab = tabIdx;
 		tabIdx++;
 	}
@@ -2066,7 +2067,7 @@ HWND TabBarClass::CreateTabbar(bool abDummyCreate /*= false*/)
 
 	// ƒобавл€ет закладку, или мен€ет (при необходимости) заголовок существующей
 	//AddTab(gpConEmu->isFar() ? gpSet->szTabPanels : gpSet->pszTabConsole, 0);
-	AddTab(gpConEmu->GetLastTitle(), 0, false);
+	AddTab(gpConEmu->GetLastTitle(), 0, gpConEmu->mb_IsUacAdmin);
 	// нас интересует смещение клиентской области. “.е. начало - из 0. ќстальное не важно
 	rcClient = MakeRect(600, 400);
 	//rcClient = gpConEmu->GetGuiClientRect();
@@ -2215,6 +2216,9 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 		//_tcscpy(szFormat, _T("%s"));
 		lstrcpyn(szFormat, bIsFar ? gpSet->szTabPanels : gpSet->szTabConsole, countof(szFormat));
 		nMaxLen = gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
+
+		if (apVCon && gpConEmu->mb_IsUacAdmin)
+			pTab->Type |= fwt_Elevated;
 
 		if (pTab->Name[0] == 0)
 		{

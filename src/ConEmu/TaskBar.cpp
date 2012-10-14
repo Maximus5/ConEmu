@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "header.h"
 #include "TaskBar.h"
 #include "ConEmu.h"
+#include "Options.h"
 
 // COM TaskBarList interface support
 #include "ShObjIdl_Part.h"
@@ -121,6 +122,11 @@ void CTaskBar::Taskbar_Init()
 	{
 		hr = mp_TaskBar2->QueryInterface(IID_ITaskbarList4, (void**)&mp_TaskBar4);
 	}
+
+	//if (gpConEmu->mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
+	//{
+	//	Taskbar_SetShield(true);
+	//}
 }
 
 void CTaskBar::Taskbar_Release()
@@ -299,6 +305,7 @@ HRESULT CTaskBar::Taskbar_SetProgressState(TBPFLAG nState)
 
 void CTaskBar::Taskbar_SetShield(bool abShield)
 {
+	//_ASSERTE(abShield);
 	if (!mp_TaskBar3)
 		return;
 
@@ -306,9 +313,20 @@ void CTaskBar::Taskbar_SetShield(bool abShield)
 	{
 		mh_Shield = (HICON)LoadImage(g_hInstance, MAKEINTRESOURCE(IDI_SHIELD), IMAGE_ICON, 16,16, 0);
 		if (!mh_Shield)
+		{
+			_ASSERTE(mh_Shield!=NULL);
 			return;
+		}
 	}
 
-	HRESULT hr = mp_TaskBar3->SetOverlayIcon(ghWnd, abShield ? mh_Shield : NULL, NULL);
+	HRESULT hr;
+
+	//hr = mp_TaskBar3->SetOverlayIcon(ghWnd, NULL, NULL);
+	//if (abShield)
+	//{
+	//	Sleep(100);
+	hr = mp_TaskBar3->SetOverlayIcon(ghWnd, abShield ? mh_Shield : NULL, NULL);
+	//}
+	_ASSERTE(hr==S_OK);
 	UNREFERENCED_PARAMETER(hr);
 }

@@ -198,6 +198,7 @@ void CRealConsole::Construct(CVirtualConsole* apVCon)
 	//mb_Detached = FALSE;
 	//m_Args.pszSpecialCmd = NULL; -- не требуется
 	mb_FullRetrieveNeeded = FALSE;
+	//mb_AdminShieldChecked = FALSE;
 	memset(&m_LastMouse, 0, sizeof(m_LastMouse));
 	memset(&m_LastMouseGuiPos, 0, sizeof(m_LastMouseGuiPos));
 	mb_DataChanged = FALSE;
@@ -5123,6 +5124,14 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 		//2009-09-10
 		//gpConEmu->mp_TabBar->Refresh(mn_ProgramStatus & CES_FARACTIVE);
 		gpConEmu->mp_TabBar->Update();
+
+		//if (!mb_AdminShieldChecked)
+		//{
+		//	mb_AdminShieldChecked = TRUE;
+
+		//	if ((gOSVer.dwMajorVersion > 6) || ((gOSVer.dwMajorVersion == 6) && (gOSVer.dwMinorVersion >= 1)))
+		//		gpConEmu->Taskbar_SetShield(true);
+		//}
 	}
 
 	return lbChanged;
@@ -5217,7 +5226,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 	}
 
 	// Проверяем, есть ли изменения
-	for(i = 0; i < anCount; i++)
+	for (i = 0; i < anCount; i++)
 	{
 		if (PID[i])
 		{
@@ -9689,10 +9698,16 @@ void CRealConsole::GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
 // под разными аккаунтами (точнее elevated/non elevated)
 bool CRealConsole::isAdministrator()
 {
-	if (!this) return false;
+	if (!this)
+		return false;
 
-	//
-	return m_Args.bRunAsAdministrator;
+	if (m_Args.bRunAsAdministrator)
+		return true;
+
+	if (gpConEmu->mb_IsUacAdmin && !m_Args.bRunAsAdministrator && !m_Args.bRunAsRestricted && !m_Args.pszUserName)
+		return true;
+
+	return false;
 }
 
 BOOL CRealConsole::isMouseButtonDown()

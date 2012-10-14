@@ -576,6 +576,7 @@ class CRealConsole
 		HANDLE mh_TermEvent, mh_ApplyFinished;
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
+		//BOOL mb_AdminShieldChecked;
 		//wchar_t* ms_SpecialCmd;
 		//BOOL mb_RunAsAdministrator;
 

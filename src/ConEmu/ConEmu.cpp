@@ -114,6 +114,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TIMER_CAPTION_DISAPPEAR_ID 4
 #define TIMER_RCLICKPAINT 5
 #define TIMER_RCLICKPAINT_ELAPSE 20
+#define TIMER_ADMSHIELD_ID 7
+#define TIMER_ADMSHIELD_ELAPSE 1000
 
 #define HOTKEY_CTRLWINALTSPACE_ID 0x0201 // this is wParam for WM_HOTKEY
 #define HOTKEY_GLOBAL_START      0x1001 // this is wParam for WM_HOTKEY
@@ -10574,6 +10576,12 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		#endif
 		n = SetTimer(ghWnd, TIMER_CONREDRAW_ID, CON_REDRAW_TIMOUT*2, NULL);
 		UNREFERENCED_PARAMETER(n);
+
+		if (gpConEmu->mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
+		{
+			// Bug in Win7? Sometimes after startup "As Admin" sheild does not appeears.
+			SetTimer(ghWnd, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE, NULL);
+		}
 	}
 
 	if (gpSetCls->isAdvLogging)
@@ -11473,6 +11481,9 @@ void CConEmuMain::OnTaskbarCreated()
 
 void CConEmuMain::OnTaskbarButtonCreated()
 {
+	// May be not initialized yet
+	Taskbar_Init();
+
 	if (!gpSet->isWindowOnTaskBar())
 	{
 		DWORD styleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
@@ -11484,6 +11495,14 @@ void CConEmuMain::OnTaskbarButtonCreated()
 
 		// Если оно вдруг таки показано на таскбаре
 		Taskbar_DeleteTabXP(ghWnd);
+	}
+	else
+	{
+		if (gpConEmu->mb_IsUacAdmin)
+		{
+			// Bug in Win7? Sometimes after startup "As Admin" sheild does not appeears.
+			SetTimer(ghWnd, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE, NULL);
+		}
 	}
 }
 
@@ -15911,6 +15930,19 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		case TIMER_RCLICKPAINT:
 		{
 			RightClickingPaint(NULL, NULL);
+		} break;
+		case TIMER_ADMSHIELD_ID:
+		{
+			static int nStep = 0;
+			if (mb_IsUacAdmin)
+			{
+				Taskbar_SetShield(true);
+			}
+			nStep++;
+			if (nStep >= 5)
+			{
+				KillTimer(ghWnd, TIMER_ADMSHIELD_ID);
+			}
 		} break;
 	}
 

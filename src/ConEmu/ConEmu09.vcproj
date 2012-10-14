@@ -710,6 +710,7 @@
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
+				CommandLine="del &quot;$(TargetPath)&quot;"
 			/>
 			<Tool
 				Name="VCLinkerTool"
