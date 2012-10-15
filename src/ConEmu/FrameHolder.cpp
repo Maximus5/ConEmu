@@ -57,6 +57,8 @@ CFrameHolder::CFrameHolder()
 	mb_WasGlassDraw = FALSE;
 	mn_RedrawLockCount = 0;
 	mb_RedrawRequested = false;
+	mb_AllowPreserveClient = false;
+	mb_DontPreserveClient = false;
 }
 
 CFrameHolder::~CFrameHolder()
@@ -924,6 +926,13 @@ bool CFrameHolder::SetDontPreserveClient(bool abSwitch)
 	return b;
 }
 
+bool CFrameHolder::SetAllowPreserveClient(bool abSwitch)
+{
+	bool b = mb_AllowPreserveClient;
+	mb_AllowPreserveClient = abSwitch;
+	return b;
+}
+
 LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	RecalculateFrameSizes();
@@ -948,6 +957,11 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		// r[1] contains the coordinates of the window before it was moved or resized
 		// r[2] contains the coordinates of the window's client area before the window was moved or resized
 		RECT r[3] = {pParm->rgrc[0], pParm->rgrc[1], pParm->rgrc[2]};
+		bool bAllowPreserveClient = mb_AllowPreserveClient && (memcmp(r, r+1, sizeof(*r)) == 0);
+
+		#ifdef _DEBUG
+		LRESULT lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+		#endif
 
 		RECT rcWnd = {0,0, r[0].right-r[0].left, r[0].bottom-r[0].top};
 		RECT rcClient = gpConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
@@ -963,12 +977,16 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		// pParm->rgrc[2] rectangle contains the valid source rectangle
 		pParm->rgrc[0] = rcClient;
 		//TODO:
-		pParm->rgrc[1] = MakeRect(0,0);
-		pParm->rgrc[2] = MakeRect(0,0);
+		pParm->rgrc[1] = r[0];
+		pParm->rgrc[2] = r[2];
 
+		if (bAllowPreserveClient)
+		{
+			lRc = WVR_VALIDRECTS;
+		}
 		// При смене режимов (особенно при смене HideCaption/NotHideCaption)
 		// требовать полную перерисовку клиентской области
-		if (mb_DontPreserveClient || (gpConEmu->changeFromWindowMode != wmNotChanging))
+		else if (mb_DontPreserveClient || (gpConEmu->changeFromWindowMode != wmNotChanging))
 		{
 			lRc = WVR_REDRAW;
 		}

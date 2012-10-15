@@ -235,7 +235,7 @@ CConEmuMain::CConEmuMain()
 	m_FixPosAfterStyle = 0;
 	ZeroStruct(mrc_FixPosAfterStyle);
 	mb_InImeComposition = false; mb_ImeMethodChanged = false;
-	ZeroStruct(mrc_Ideal);
+	ZeroStruct(mr_Ideal);
 	mn_InResize = 0;
 	mb_MouseCaptured = FALSE;
 	mb_HotKeyRegistered = FALSE;
@@ -4239,54 +4239,68 @@ void CConEmuMain::SyncWindowToConsole()
 	CVConGroup::SyncWindowToConsole();
 }
 
-void CConEmuMain::AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom)
+void CConEmuMain::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
 {
-	if (gpSet->isFontAutoSize)
+	if (!gpSet->isFontAutoSize)
+		return;
+
+	// В 16бит режиме - не заморачиваться пока
+	if (isNtvdm())
+		return;
+
+	if (!wndWidth || !wndHeight)
 	{
-		// В 16бит режиме - не заморачиваться пока
-		if (!isNtvdm())
-		{
-			if (!wndWidth || !wndHeight)
-			{
-				MBoxAssert(wndWidth!=0 && wndHeight!=0);
-			}
-			else
-			{
-				RECT rc = rFrom;
-
-				if (tFrom == CER_MAIN)
-				{
-					rc = CalcRect(CER_DC, rFrom, CER_MAIN);
-				}
-				else if (tFrom == CER_MAINCLIENT)
-				{
-					rc = CalcRect(CER_DC, rFrom, CER_MAINCLIENT);
-				}
-				else
-				{
-					MBoxAssert(tFrom==CER_MAINCLIENT || tFrom==CER_MAIN);
-					return;
-				}
-
-				// !!! Для CER_DC размер в rc.right
-				int nFontW = (rc.right - rc.left) / wndWidth;
-
-				if (nFontW < 5) nFontW = 5;
-
-				int nFontH = (rc.bottom - rc.top) / wndHeight;
-
-				if (nFontH < 8) nFontH = 8;
-
-				gpSetCls->AutoRecreateFont(nFontW, nFontH);
-			}
-		}
+		MBoxAssert(wndWidth!=0 && wndHeight!=0);
+		return;
 	}
+
+	//GO
+
+	RECT rc = arFrom;
+
+	if (tFrom == CER_MAIN)
+	{
+		rc = CalcRect(CER_DC, arFrom, CER_MAIN);
+	}
+	else if (tFrom == CER_MAINCLIENT)
+	{
+		rc = CalcRect(CER_DC, arFrom, CER_MAINCLIENT);
+	}
+	else
+	{
+		MBoxAssert(tFrom==CER_MAINCLIENT || tFrom==CER_MAIN);
+		return;
+	}
+
+	// !!! Для CER_DC размер в rc.right
+	int nFontW = (rc.right - rc.left) / wndWidth;
+
+	if (nFontW < 5) nFontW = 5;
+
+	int nFontH = (rc.bottom - rc.top) / wndHeight;
+
+	if (nFontH < 8) nFontH = 8;
+
+	gpSetCls->AutoRecreateFont(nFontW, nFontH);
 }
 
 void CConEmuMain::StoreIdealRect()
 {
+	if ((WindowMode != wmNormal) || m_InsideIntegration)
+		return;
+
 	RECT rcWnd = CalcRect(CER_MAIN);
 	UpdateIdealRect(rcWnd);
+}
+
+RECT CConEmuMain::GetIdealRect()
+{
+	RECT rcIdeal = mr_Ideal.rcIdeal;
+	if (m_InsideIntegration || (rcIdeal.right <= rcIdeal.left) || (rcIdeal.bottom <= rcIdeal.top))
+	{
+		rcIdeal = GetDefaultRect();
+	}
+	return rcIdeal;
 }
 
 void CConEmuMain::StoreNormalRect(RECT* prcWnd)
@@ -4327,8 +4341,14 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= 0*/)
 	BOOL lbRc = FALSE;
 	bool bUseApi = true;
 
-	if (!gpSet->isQuakeStyle)
+	// In Quake mode - animation proceeds with SetWindowRgn
+	//   yes, it is possible to use Slide, but ConEmu may hold
+	//   many child windows (outprocess), which don't support
+	//   WM_PRINTCLIENT. So, our choice - "trim" window with RGN
+	// When Caption is visible - Windows animates window itself.
+	if (!gpSet->isQuakeStyle && gpSet->isCaptionHidden())
 	{
+		// Well, Caption is hidden, Windows does not animates our window.
 		if (anCmdShow == SW_HIDE)
 		{
 			bUseApi = false; // можно AnimateWindow
@@ -4347,10 +4367,38 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= 0*/)
 
 	if (bUseApi)
 	{
+		bool b, bAllowPreserve = false;
+		if (anCmdShow == SW_SHOWMAXIMIZED)
+		{
+			if (::IsZoomed(ghWnd)) // тут нужно "RAW" значение zoomed
+				bAllowPreserve = true;
+		}
+		else if (anCmdShow == SW_SHOWNORMAL)
+		{
+			if (!::IsZoomed(ghWnd) && !::IsIconic(ghWnd)) // тут нужно "RAW" значение zoomed
+				bAllowPreserve = true;
+		}
+		// Allowed?
+		if (bAllowPreserve)
+		{
+			b = SetAllowPreserveClient(true);
+		}
+
+		//GO
 		lbRc = apiShowWindow(ghWnd, anCmdShow);
+
+		if (bAllowPreserve)
+		{
+			SetAllowPreserveClient(b);
+		}
 	}
 	else
 	{
+		// Use animation only when Caption is hidden.
+		// Otherwise - artifacts comes: while animation - theming does not applies
+		// (Win7, Glass - caption style changes while animation)
+		_ASSERTE(gpSet->isCaptionHidden());
+
 		DWORD nFlags = AW_BLEND;
 		if (anCmdShow == SW_HIDE)
 			nFlags |= AW_HIDE;
@@ -4417,6 +4465,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		m_QuakePrevSize.wndY = gpConEmu->wndY;
 		m_QuakePrevSize.nFrame = gpSet->nHideCaptionAlwaysFrame;
 		m_QuakePrevSize.WindowMode = gpConEmu->WindowMode;
+		m_QuakePrevSize.rcIdealInfo = mr_Ideal;
 		//gpSet->nHideCaptionAlwaysFrame = 0;
 	}
 	else if (!gpSet->isQuakeStyle && m_QuakePrevSize.bWasSaved)
@@ -4427,6 +4476,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpConEmu->wndY = m_QuakePrevSize.wndY;
 		gpSet->nHideCaptionAlwaysFrame = m_QuakePrevSize.nFrame;
 		nNewWindowMode = m_QuakePrevSize.WindowMode;
+		mr_Ideal = m_QuakePrevSize.rcIdealInfo;
 	}
 
 	RECT rcWnd = gpConEmu->GetDefaultRect();
@@ -4449,6 +4499,9 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 
 	if (hWnd2)
 		SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
+
+	// Save current rect, JIC
+	StoreIdealRect();
 
 	apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
 
@@ -4558,9 +4611,10 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			DEBUGLOGFILE("SetWindowMode(wmNormal)\n");
 			RECT consoleSize;
 
-			AutoSizeFont(mrc_Ideal, CER_MAIN);
+			RECT rcIdeal = GetIdealRect();
+			AutoSizeFont(rcIdeal, CER_MAIN);
 			// Расчитать размер по оптимальному WindowRect
-			if (!CVConGroup::PreReSize(inMode, mrc_Ideal))
+			if (!CVConGroup::PreReSize(inMode, rcIdeal))
 			{
 				mb_PassSysCommand = false;
 				goto wrap;
@@ -4614,8 +4668,12 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			//if (mb_MaximizedHideCaption)
 			//	mb_MaximizedHideCaption = FALSE;
 
-			RECT rcNew = mrc_Ideal;
-			if (!m_InsideIntegration)
+			RECT rcNew;
+			if (m_InsideIntegration)
+			{
+				rcNew = GetDefaultRect();
+			}
+			else
 			{
 				rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE_ALL);
 				//int nWidth = rcNew.right-rcNew.left;
@@ -5083,8 +5141,9 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			#if 1
 			// Выполняем всегда, даже если размер уже соответсвует...
 			// Без учета DoubleView/SplitScreen
-			AutoSizeFont(mrc_Ideal, CER_MAIN);
-			RECT rcConsole = CalcRect(CER_CONSOLE_ALL, mrc_Ideal, CER_MAIN);
+			RECT rcIdeal = GetIdealRect();
+			AutoSizeFont(rcIdeal, CER_MAIN);
+			RECT rcConsole = CalcRect(CER_CONSOLE_ALL, rcIdeal, CER_MAIN);
 			RECT rcCompWnd = CalcRect(CER_MAIN, rcConsole, CER_CONSOLE_ALL);
 			#endif
 
@@ -5349,7 +5408,8 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 	if (isSizing() && isWindowNormal())
 	{
 		//GetWindowRect(ghWnd, &mrc_Ideal);
-		UpdateIdealRect();
+		//UpdateIdealRect();
+		StoreIdealRect();
 	}
 
 	if (gpConEmu->mp_TabBar->IsTabsActive())
@@ -6411,31 +6471,38 @@ void CConEmuMain::UpdateFarSettings()
 	CVConGroup::OnUpdateFarSettings();
 }
 
-void CConEmuMain::UpdateIdealRect(BOOL abAllowUseConSize/*=FALSE*/)
-{
-	// Запомнить "идеальный" размер окна, выбранный пользователем
-	if (isWindowNormal())
-	{
-		RECT rcWnd = {};
-		GetWindowRect(ghWnd, &rcWnd);
-		UpdateIdealRect(rcWnd);
-	}
-	else if (abAllowUseConSize)
-	{
-		//if (isVConExists(0))
-		//	return;
-
-		//RECT rcCon = CVConGroup::AllTextRect();
-		//RECT rcCon = CalcRect(CER_CONSOLE_ALL);
-		RECT rcCon = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
-		RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE_ALL);
-		UpdateIdealRect(rcWnd);
-	}
-}
+//void CConEmuMain::UpdateIdealRect(BOOL abAllowUseConSize/*=FALSE*/)
+//{
+//	// Запомнить "идеальный" размер окна, выбранный пользователем
+//	if (isWindowNormal())
+//	{
+//		RECT rcWnd = {};
+//		GetWindowRect(ghWnd, &rcWnd);
+//		UpdateIdealRect(rcWnd);
+//	}
+//	else if (abAllowUseConSize)
+//	{
+//		//if (isVConExists(0))
+//		//	return;
+//
+//		//RECT rcCon = CVConGroup::AllTextRect();
+//		//RECT rcCon = CalcRect(CER_CONSOLE_ALL);
+//		RECT rcCon = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
+//		RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE_ALL);
+//		UpdateIdealRect(rcWnd);
+//	}
+//}
 
 void CConEmuMain::UpdateIdealRect(RECT rcNewIdeal)
 {
-	mrc_Ideal = rcNewIdeal;
+#ifdef _DEBUG
+	RECT rc = rcNewIdeal;
+	_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
+	if (memcmp(&mr_Ideal.rcIdeal, &rc, sizeof(rc)) == 0)
+		return;
+#endif
+
+	mr_Ideal.rcIdeal = rcNewIdeal;
 }
 
 void CConEmuMain::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)
@@ -9900,7 +9967,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//GetWindowRect(ghWnd, &rcWnd);
 
 	// It's better to store current mrc_Ideal values now, after real window creation
-	UpdateIdealRect();
+	StoreIdealRect();
+	//UpdateIdealRect();
 
 	// Used for restoring from Maximized/Fullscreen/Iconic. Remember current Pos/Size.
 	StoreNormalRect(NULL);
@@ -11765,7 +11833,8 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 		if (bVis && !bIsIconic)
 		{
-			UpdateIdealRect();
+			//UpdateIdealRect();
+			StoreIdealRect();
 		}
 
 		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)

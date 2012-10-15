@@ -1333,19 +1333,25 @@ void CConEmuCtrl::StatusCommand(ConEmuStatusCommand nStatusCmd, int IntParm, LPC
 	switch (nStatusCmd)
 	{
 	case csc_ShowHide:
-		if (IntParm == 1)
-			gpSet->isStatusBarShow = true;
-		else if (IntParm == 2)
-			gpSet->isStatusBarShow = false;
-		else
-			gpSet->isStatusBarShow = !gpSet->isStatusBarShow;
-		if (!gpConEmu->isZoomed() && !gpConEmu->isFullScreen())
 		{
+			// Retrieve IdealRect BEFORE changing of StatusBar visibility
 			RECT rcIdeal = gpConEmu->GetIdealRect();
-			gpConEmu->SyncConsoleToWindow(&rcIdeal);
+
+			if (IntParm == 1)
+				gpSet->isStatusBarShow = true;
+			else if (IntParm == 2)
+				gpSet->isStatusBarShow = false;
+			else
+				gpSet->isStatusBarShow = !gpSet->isStatusBarShow;
+
+			if (!gpConEmu->isZoomed() && !gpConEmu->isFullScreen())
+			{
+				gpConEmu->SyncConsoleToWindow(&rcIdeal);
+			}
+
+			gpConEmu->ReSize(TRUE);
+			gpConEmu->InvalidateGaps();
 		}
-		gpConEmu->ReSize(TRUE);
-		gpConEmu->InvalidateGaps();
 		break;
 
 	case csc_SetStatusText:

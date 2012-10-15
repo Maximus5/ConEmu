@@ -3902,7 +3902,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					}
 
 					// Запомнить "идеальный" размер окна, выбранный пользователем
-					gpConEmu->UpdateIdealRect(TRUE);
+					gpConEmu->StoreIdealRect();
+					//gpConEmu->UpdateIdealRect(TRUE);
 				}
 				EnableWindow(GetDlgItem(hWnd2, cbApplyPos), FALSE);
 				apiSetForegroundWindow(ghOpWnd);

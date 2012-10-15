@@ -3635,9 +3635,9 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 				g_LastConSize = MakeCoord(gp_VActive->TextWidth,gp_VActive->TextHeight);
 			}
 
-			// Запомнить "идеальный" размер окна, выбранный пользователем
-			if (abSizingToDo)
-				gpConEmu->UpdateIdealRect();
+			//// Запомнить "идеальный" размер окна, выбранный пользователем
+			//if (abSizingToDo)
+			//	gpConEmu->UpdateIdealRect();
 
 			//if (lbSizingToDo && !mb_isFullScreen && !isZoomed() && !isIconic()) {
 			//	GetWindowRect(ghWnd, &mrc_Ideal);

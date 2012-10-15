@@ -36,6 +36,7 @@ class CFrameHolder
 private:
 	BOOL mb_Initialized;
 	BOOL mb_WasGlassDraw;
+	bool mb_AllowPreserveClient;// по возможности(!) - разрешить сохранение клиентской области (имеет приоритет перед mb_DontPreserveClient)
 	bool mb_DontPreserveClient; // запретить сохранение клиентской области при ресайзе
 public:
 	BOOL mb_NcActive;
@@ -51,6 +52,7 @@ public:
 	// returns false if message not handled
 	bool ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult);
 	bool SetDontPreserveClient(bool abSwitch);
+	bool SetAllowPreserveClient(bool abSwitch);
 public:
 	// Next functions must me defined in the ancestor
 	virtual void ShowSysmenu(int x=-32000, int y=-32000, bool bAlignUp = false) = 0;

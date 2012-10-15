@@ -355,14 +355,19 @@ class CConEmuMain :
 		//ITaskbarList3 *mp_TaskBar3;
 		//ITaskbarList2 *mp_TaskBar2;
 		typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
-		RECT mrc_Ideal;
 		struct IdealRectInfo
 		{
+			// Current Ideal rect
+			RECT  rcIdeal;
+			// TODO: Reserved fields
 			RECT  rcClientMargins; // (TabBar + StatusBar) at storing moment
 			COORD crConsole;       // Console size in cells at storing moment
 			SIZE  csFont;          // VCon Font size (Width, Height) at storing moment
 		} mr_Ideal;
+	public:
 		void StoreIdealRect();
+		RECT GetIdealRect();
+	protected:
 		BOOL mn_InResize;
 		RECT mrc_StoredNormalRect;
 		void StoreNormalRect(RECT* prcWnd);
@@ -518,7 +523,7 @@ class CConEmuMain :
 		void AskChangeAlternative();
 		BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
-		void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
+		void AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom);
 		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode = wmCurrent);
 		RECT CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon=NULL);
 		RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
@@ -544,7 +549,6 @@ class CConEmuMain :
 		DWORD_PTR GetActiveKeyboardLayout();
 		RECT GetDefaultRect();
 		RECT GetGuiClientRect();
-		RECT GetIdealRect() { return mrc_Ideal; };
 		HMENU GetSysMenu(BOOL abInitial = FALSE);
 	protected:
 		void UpdateSysMenu(HMENU hSysMenu);
@@ -639,6 +643,7 @@ class CConEmuMain :
 			DWORD wndX, wndY; // GUI
 			DWORD nFrame;
 			ConEmuWindowMode WindowMode;
+			IdealRectInfo rcIdealInfo;
 		} m_QuakePrevSize;
 	public:
 		void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
@@ -670,7 +675,7 @@ class CConEmuMain :
 		void Update(bool isForce = false);
 		void UpdateActiveGhost(CVirtualConsole* apVCon);
 		void UpdateFarSettings();
-		void UpdateIdealRect(BOOL abAllowUseConSize=FALSE);
+		//void UpdateIdealRect(BOOL abAllowUseConSize=FALSE);
 	protected:
 		void UpdateIdealRect(RECT rcNewIdeal);
 		void UpdateImeComposition();
