@@ -214,7 +214,7 @@ class CConEmuMain :
 		bool isRestoreFromMinimized;
 		bool isWndNotFSMaximized; // ставится в true, если при переходе в FullScreen - был Maximized
 		bool isQuakeMinimized;    // изврат, для случая когда "Quake" всегда показывается на таскбаре
-		HMONITOR GetNearestMonitor(MONITORINFO* pmi = NULL);
+		HMONITOR GetNearestMonitor(MONITORINFO* pmi = NULL, LPRECT prcWnd = NULL);
 		HMONITOR GetPrimaryMonitor(MONITORINFO* pmi = NULL);
 
 		DWORD wndWidth, wndHeight;  // в символах
@@ -527,6 +527,7 @@ class CConEmuMain :
 		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode = wmCurrent);
 		RECT CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon=NULL);
 		RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
+		bool FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBorders */);
 		POINT CalcTabMenuPos(CVirtualConsole* apVCon);
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
@@ -604,7 +605,7 @@ class CConEmuMain :
 		bool isZoomed();
 		void LoadIcons();
 		//bool LoadVersionInfo(wchar_t* pFullPath);
-		RECT MapRect(RECT rFrom, BOOL bFrame2Client);
+		//RECT MapRect(RECT rFrom, BOOL bFrame2Client);
 		void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
 		//void PaintCon(HDC hPaintDC);
 		void InvalidateGaps();
@@ -633,6 +634,7 @@ class CConEmuMain :
 		void SetDragCursor(HCURSOR hCur);
 		void SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);
+		ConEmuWindowMode GetWindowMode();
 		bool SetWindowMode(ConEmuWindowMode inMode, BOOL abForce = FALSE, BOOL abFirstShow = FALSE);
 		bool SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode = wmNotChanging, bool bFromDlg = false);
 	private:

@@ -3179,27 +3179,85 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 	return lbRc;
 }
 
-bool Settings::isUseClink()
+DWORD Settings::isUseClink(bool abCheckVersion /*= false*/)
 {
 	if (!mb_UseClink)
 		return false;
 
 	wchar_t szClink32[MAX_PATH+30], szClink64[MAX_PATH+30];
+	
 	wcscpy_c(szClink32, gpConEmu->ms_ConEmuBaseDir);
 	wcscat_c(szClink32, L"\\clink\\clink_dll_x86.dll");
+	if (!FileExists(szClink32))
+		szClink32[0] = 0;
+
+	#ifdef _WIN64
 	wcscpy_c(szClink64, gpConEmu->ms_ConEmuBaseDir);
 	wcscat_c(szClink64, L"\\clink\\clink_dll_x64.dll");
+	if (!FileExists(szClink64))
+		szClink64[0] = 0;
+	#else
+		szClink64[0] = 0;
+	#endif
 
-	if (!FileExists(szClink32)
-		#ifdef _WIN64
-		&& !FileExists(szClink64)
-		#endif
-		)
+	if (!szClink32[0] && !szClink64[0])
 	{
 		return false;
 	}
 
-	return true;
+	static int nVersionChecked = 0;
+	static VS_FIXEDFILEINFO vi = {};
+
+	if (nVersionChecked == 0)
+	{
+		//DWORD nErrCode;
+		//HMODULE hLib = LoadLibraryEx(WIN3264TEST(szClink32,szClink64), NULL, LOAD_LIBRARY_AS_DATAFILE|LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+		//if (!hLib)
+		//{
+		//	nVersionChecked = -1;
+		//	nErrCode = GetLastError();
+		//	DisplayLastError(L"Failed to load clink library as DataFile", nErrCode);
+		//	return false;
+		//}
+		//FreeLibrary(hLib);
+
+		LPCTSTR pszPath = WIN3264TEST(szClink32,szClink64[0] ? szClink64 : szClink32);
+
+		DWORD dwRsrvd = 0;
+		DWORD dwSize = GetFileVersionInfoSize(pszPath, &dwRsrvd);
+
+		if (dwSize == 0)
+		{
+			nVersionChecked = 1; // clink ver 0.1.1
+		}
+		else
+		{
+			void *pVerData = calloc(dwSize, 1);
+
+			if (pVerData)
+			{
+				VS_FIXEDFILEINFO *lvs = NULL;
+				UINT nLen = sizeof(lvs);
+
+				if (GetFileVersionInfo(pszPath, 0, dwSize, pVerData))
+				{
+					wchar_t szSlash[3]; lstrcpyW(szSlash, L"\\");
+
+					if (VerQueryValue((void*)pVerData, szSlash, (void**)&lvs, &nLen))
+					{
+						vi = *lvs;
+						nVersionChecked = 2;
+					}
+				}
+
+				free(pVerData);
+			}
+		}
+	}
+
+	if (nVersionChecked != 1 && nVersionChecked != 2)
+		return false;
+	return (DWORD)nVersionChecked;
 }
 
 bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/)

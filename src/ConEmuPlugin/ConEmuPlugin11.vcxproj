@@ -272,14 +272,14 @@
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">
-    <OutDir>C:\Far3\Plugins\ConEmu\</OutDir>
+    <OutDir>C:\ConEmu\Plugins\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmu</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
-    <OutDir>C:\FAR\FARx64\Plugins\ConEmu\</OutDir>
+    <OutDir>C:\ConEmu\Plugins\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmu.x64</TargetName>
     <TargetExt>.dll</TargetExt>

@@ -354,6 +354,17 @@ enum ConEmuRect
 //	CER_CORRECTED   // скорректированное положение (чтобы окно было видно на текущем мониторе)
 };
 
+enum ConEmuBorders
+{
+	CEB_TOP = 1,
+	CEB_LEFT = 2,
+	CEB_BOTTOM = 4,
+	CEB_RIGHT = 8,
+	CEB_ALL = CEB_TOP|CEB_LEFT|CEB_BOTTOM|CEB_RIGHT,
+	// Next means "place window OnScreen when it out of screen totally"
+	CEB_PARTIAL = CEB_ALL,
+};
+
 enum DragPanelBorder
 {
 	DPB_NONE = 0,

@@ -1892,7 +1892,7 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbProcessAnsi, gpSet->isProcessAnsi);
 
-	checkDlgButton(hWnd2, cbUseClink, gpSet->isUseClink());
+	checkDlgButton(hWnd2, cbUseClink, gpSet->isUseClink() ? BST_CHECKED : BST_UNCHECKED);
 
 	checkDlgButton(hWnd2, cbDosBox, gpConEmu->mb_DosBoxExists);
 	// изменение пока запрещено

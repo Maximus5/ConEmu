@@ -1239,7 +1239,7 @@ struct Settings
 		bool isProcessAnsi; // ANSI X3.64 & XTerm-256-colors Support
 		//reg->Load(L"UseClink", mb_UseClink);
 		bool mb_UseClink; // использовать расширение командной строки (ReadConsole)
-		bool isUseClink();
+		DWORD isUseClink(bool abCheckVersion = false);
 		//reg->Load(L"PortableReg", isPortableReg);
 		bool isPortableReg;
 

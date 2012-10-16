@@ -496,8 +496,8 @@ BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 	//ExtWriteTextParm wrt = {sizeof(wrt), ewtf_None, hConsoleOutput};
 	bool bIsConOut = false;
 
-	// Store prompt(?) for clink
-	if (nNumberOfCharsToWrite && lpBuffer && gpszLastWriteConsole && gcchLastWriteConsoleMax)
+	// Store prompt(?) for clink 0.1.1
+	if ((gnAllowClinkUsage == 1) && nNumberOfCharsToWrite && lpBuffer && gpszLastWriteConsole && gcchLastWriteConsoleMax)
 	{
 		size_t cchMax = min(gcchLastWriteConsoleMax-1,nNumberOfCharsToWrite);
 		gpszLastWriteConsole[cchMax] = 0;

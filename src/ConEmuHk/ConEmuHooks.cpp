@@ -167,6 +167,8 @@ size_t   gcchLastWriteConsoleMax = 0;
 wchar_t *gpszLastWriteConsole = NULL;
 HMODULE  ghClinkDll = NULL;
 call_readline_t gpfnClinkReadLine = NULL;
+bool     gbClinkInitialized = false;
+DWORD    gnAllowClinkUsage = 0; // cmd.exe only
 /* ************ Globals for clink ************ */
 
 /* ************ Globals for powershell ************ */
@@ -179,6 +181,10 @@ int  gnPowerShellProgressValue = -1;
 struct ReadConsoleInfo gReadConsoleInfo = {};
 
 int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
+
+// Только для cmd.exe (clink)
+LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+
 
 //
 //static BOOL WINAPI OnHttpSendRequestA(LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
@@ -577,6 +583,31 @@ bool InitHooksFar()
 	return true;
 }
 
+bool InitHooksClink()
+{
+	if (!gnAllowClinkUsage)
+		return true;
+
+	HookItem HooksCmdOnly[] =
+	{
+		{(void*)OnRegQueryValueExW, "RegQueryValueExW", kernel32},
+		{0, 0, 0}
+	};
+
+	// Для Vista и ниже - AdvApi32.dll
+	// Причем, в WinXP этот модуль не прилинкован статически
+	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
+	GetVersionEx(&osv);
+	if ((osv.dwMajorVersion <= 5) || (osv.dwMajorVersion == 6 && osv.dwMinorVersion == 0))
+	{
+		HooksCmdOnly[0].DllName = advapi32;
+	}
+
+	InitHooks(HooksCmdOnly);
+
+	return true;
+}
+
 
 
 //static HookItem HooksCommon[] =
@@ -744,6 +775,10 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	
 	// Far only functions
 	InitHooksFar();
+
+	// Cmd.exe only functions
+	if (gnAllowClinkUsage)
+		InitHooksClink();
 
 	// Реестр
 	InitHooksReg();
@@ -3011,29 +3046,102 @@ BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 	return lbRc;
 }
 
-bool InitializeClink(CESERVER_CONSOLE_MAPPING_HDR* pConMap)
+bool InitializeClink()
 {
-	if (!pConMap || !pConMap->bUseClink)
+	if (gbClinkInitialized)
+		return true;
+	gbClinkInitialized = true; // Single
+
+	if (!gnAllowClinkUsage)
 		return false;
 
-	if (!ghClinkDll)
+	CESERVER_CONSOLE_MAPPING_HDR* pConMap = GetConMap();
+	if (!pConMap || !pConMap->bUseClink)
 	{
-		wchar_t szClinkModule[MAX_PATH+30];
-		_wsprintf(szClinkModule, SKIPLEN(countof(szClinkModule)) L"%s\\clink\\%s",
-			pConMap->sConEmuBaseDir, WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
-		
-		ghClinkDll = LoadLibrary(szClinkModule);
-		if (!ghClinkDll)
-			return false;
+		gnAllowClinkUsage = 0;
+		return false;
 	}
 
-	if (!gpfnClinkReadLine)
+	// Запомнить режим
+	gnAllowClinkUsage = pConMap->bUseClink;
+
+	BOOL bRunRc = FALSE;
+	DWORD nErrCode = 0;
+
+	if (pConMap->bUseClink == 2)
 	{
-		gpfnClinkReadLine = (call_readline_t)GetProcAddress(ghClinkDll, "call_readline");
-		_ASSERTEX(gpfnClinkReadLine!=NULL);
+		// New style. TODO
+		wchar_t szClinkDir[MAX_PATH+32], szClinkArgs[MAX_PATH+64];
+
+		wcscpy_c(szClinkDir, pConMap->sConEmuBaseDir);
+		wcscat_c(szClinkDir, L"\\clink");
+
+		wcscpy_c(szClinkArgs, L"\"");
+		wcscat_c(szClinkArgs, szClinkDir);
+		wcscat_c(szClinkArgs, WIN3264TEST(L"\\clink_x86.exe",L"\\clink_x64.exe"));
+		wcscat_c(szClinkArgs, L"\" inject");
+
+		STARTUPINFO si = {sizeof(si)};
+		PROCESS_INFORMATION pi = {};
+		bRunRc = CreateProcess(NULL, szClinkArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, szClinkDir, &si, &pi);
+		
+		if (bRunRc)
+		{
+			WaitForSingleObject(pi.hProcess, INFINITE);
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+		}
+		else
+		{
+			nErrCode = GetLastError();
+			_ASSERTEX(FALSE && "Clink loader failed");
+			UNREFERENCED_PARAMETER(nErrCode);
+			UNREFERENCED_PARAMETER(bRunRc);
+		}
+	}
+	else if (pConMap->bUseClink == 1)
+	{
+		if (!ghClinkDll)
+		{
+			wchar_t szClinkModule[MAX_PATH+30];
+			_wsprintf(szClinkModule, SKIPLEN(countof(szClinkModule)) L"%s\\clink\\%s",
+				pConMap->sConEmuBaseDir, WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
+			
+			ghClinkDll = LoadLibrary(szClinkModule);
+			if (!ghClinkDll)
+				return false;
+		}
+
+		if (!gpfnClinkReadLine)
+		{
+			gpfnClinkReadLine = (call_readline_t)GetProcAddress(ghClinkDll, "call_readline");
+			_ASSERTEX(gpfnClinkReadLine!=NULL);
+		}
 	}
 
 	return (gpfnClinkReadLine != NULL);
+}
+
+// cmd.exe only!
+LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
+{
+	typedef LONG (WINAPI* OnRegQueryValueExW_t)(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+	ORIGINALFASTEX(RegQueryValueExW,NULL);
+	BOOL bMainThread = TRUE; // Does not care
+	LONG lRc = -1;
+
+	if (!gbClinkInitialized && hKey && lpValueName)
+	{
+		if (lstrcmpi(lpValueName, L"AutoRun") == 0)
+		{
+			InitializeClink();
+		}
+	}
+
+	if (F(RegQueryValueExW))
+		lRc = F(RegQueryValueExW)(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData);
+
+	return lRc;
 }
 
 BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
@@ -3048,47 +3156,44 @@ BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 
 	// Запускаемся только в главном потоке
 	// Попытка стартовать в telnet.exe (запущенном без параметров в Win7 x64) привела к зависанию
-	if (bMainThread && (nNumberOfCharsToRead > 1))
+	if ((gnAllowClinkUsage == 1) && bMainThread && (nNumberOfCharsToRead > 1))
 	{
 		DWORD nConIn = 0;
 		if (GetConsoleMode(hConsoleInput, &nConIn)
 			&& (nConIn & ENABLE_ECHO_INPUT) && (nConIn & ENABLE_LINE_INPUT))
 		{
-			CESERVER_CONSOLE_MAPPING_HDR* pConMap = GetConMap();
-			if (pConMap && pConMap->bUseClink)
+			if (!gbClinkInitialized)
 			{
-				if (!gpfnClinkReadLine)
+				InitializeClink();
+			}
+
+			// Old style (clink 0.1.1)
+			if (gpfnClinkReadLine)
+			{
+				lbProcessed = TRUE;
+				*((wchar_t*)lpBuffer) = 0;
+
+				gpfnClinkReadLine(gpszLastWriteConsole, (wchar_t*)lpBuffer, nNumberOfCharsToRead);
+
+				// Copy from clink_dll.c::hooked_read_console
 				{
-					InitializeClink(pConMap);
-				}
+				    // Check for control codes and convert them.
+				    if (((wchar_t*)lpBuffer)[0] == L'\x03')
+				    {
+				        // Fire a Ctrl-C exception. Cmd.exe sets a global variable (CtrlCSeen)
+				        // and ReadConsole() would normally set error code 0x3e3. Sleep() is to
+				        // yield the thread so the global gets set (guess work...).
+				        GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
+				        SetLastError(0x3e3);
+				        Sleep(0);
 
-				if (gpfnClinkReadLine)
-				{
-					lbProcessed = TRUE;
-					*((wchar_t*)lpBuffer) = 0;
-
-					gpfnClinkReadLine(gpszLastWriteConsole, (wchar_t*)lpBuffer, nNumberOfCharsToRead);
-
-					// Copy from clink_dll.c::hooked_read_console
-					{
-					    // Check for control codes and convert them.
-					    if (((wchar_t*)lpBuffer)[0] == L'\x03')
-					    {
-					        // Fire a Ctrl-C exception. Cmd.exe sets a global variable (CtrlCSeen)
-					        // and ReadConsole() would normally set error code 0x3e3. Sleep() is to
-					        // yield the thread so the global gets set (guess work...).
-					        GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
-					        SetLastError(0x3e3);
-					        Sleep(0);
-
-					        ((wchar_t*)lpBuffer)[0] = '\0';
-					    }
+				        ((wchar_t*)lpBuffer)[0] = '\0';
 				    }
+			    }
 
-					if (lpNumberOfCharsRead)
-						*lpNumberOfCharsRead = lstrlen((wchar_t*)lpBuffer);
-					lbRc = TRUE;
-				}
+				if (lpNumberOfCharsRead)
+					*lpNumberOfCharsRead = lstrlen((wchar_t*)lpBuffer);
+				lbRc = TRUE;
 			}
 		}
 	}

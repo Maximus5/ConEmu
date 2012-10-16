@@ -132,6 +132,7 @@ extern const wchar_t *user32  ;// = L"user32.dll";
 //extern const wchar_t *advapi32;// = L"Advapi32.dll";
 //extern const wchar_t *comdlg32;// = L"comdlg32.dll";
 extern bool gbHookExecutableOnly;
+extern DWORD gnAllowClinkUsage;
 
 ConEmuHkDllState gnDllState = ds_Undefined;
 int gnDllThreadCount = 0;
@@ -416,6 +417,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				gnConsolePopupColors = 0;
 			}
 		}
+	}
+	else if ((lstrcmpi(pszName, L"cmd.exe") == 0) || (lstrcmpi(pszName, L"cmd") == 0))
+	{
+		gnAllowClinkUsage = 1; // пока не известно
 	}
 
 	// ѕоскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес

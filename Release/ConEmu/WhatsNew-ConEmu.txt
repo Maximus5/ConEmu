@@ -14,6 +14,13 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.10.15
+[+] Option «Use Clink in prompt» supports loading of clink version 0.2 (recommended).
+    There is no need to set up «clink autorun» when this option is checked.
+[%] Issue 763: Maximizing puts ConEmu on the second monitor.
+[+] Issue 764: Enable same FG/BG color when BG color is background image.
+
+
 2012.10.14
 [*] Far 3 build 2851 supported. Builds from 2799 to 2850 (inclusively) not supported.
 [%] Incorrect startup position when maximized and hide caption.

@@ -292,14 +292,14 @@
     <_ProjectFileVersion>11.0.50214.1</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">
-    <OutDir>C:\Far3\Plugins\ConEmu\Thumbs\</OutDir>
+    <OutDir>C:\ConEmu\Plugins\ConEmu\Thumbs\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>pe</TargetName>
     <TargetExt>.t32</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
-    <OutDir>C:\FAR\FARx64\Plugins\ConEmu\Thumbs\</OutDir>
+    <OutDir>C:\ConEmu\Plugins\ConEmu\Thumbs\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>pe</TargetName>
     <TargetExt>.t64</TargetExt>

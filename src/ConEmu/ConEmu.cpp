@@ -2764,7 +2764,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0) ; // ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
 	m_GuiInfo.bUseTrueColor = gpSet->isTrueColorer;
 	m_GuiInfo.bProcessAnsi = (gpSet->isProcessAnsi ? 1 : 0);
-	m_GuiInfo.bUseClink = (gpSet->isUseClink() ? 1 : 0);
+	m_GuiInfo.bUseClink = gpSet->isUseClink(); // использовать расширение командной строки (ReadConsole). 0 - нет, 1 - стара€ верси€ (0.1.1), 2 - нова€ верси€
 
 	m_GuiInfo.bSleepInBackg = gpSet->isSleepInBackground;
 	m_GuiInfo.bGuiActive = isMeForeground(true, true);
@@ -3618,6 +3618,118 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 	return CalcRect(tWhat, rcMain, CER_MAIN, pVCon);
 }
 
+// Return true, when rect was changed
+bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBorders */)
+{
+	RECT rcStore = rcWnd;
+	RECT rcWork;
+
+	// When we live inside parent window - size must be strict
+	if (m_InsideIntegration)
+	{
+		rcWork = GetDefaultRect();
+		bool bChanged = (memcmp(&rcWork, &rcWnd) != 0);
+		rcWnd = rcWork;
+		return bChanged;
+	}
+
+	ConEmuWindowMode wndMode = GetWindowMode();
+
+	if (wndMode == wmMaximized || wndMode == wmFullScreen)
+	{
+		nBorders |= CEB_TOP|CEB_LEFT|CEB_RIGHT|CEB_BOTTOM;
+	}
+
+	
+
+	// We prefer monitor, nearest to upper-left part of window
+	RECT rcFind = {rcStore.left, rcStore.right, rcStore.left+(rcStore.right-rcStore.left)/3, rcStore.top+(rcStore.bottom-rcStore.top)/3};
+	MONITORINFO mi; GetNearestMonitor(&mi, &rcFind);
+	// Get work area (may be FullScreen)
+	rcWork = (wndMode == wmFullScreen) ? mi.rcMonitor : mi.rcWork;
+
+
+	RECT rcInter = rcWnd;
+	BOOL bIn = IntersectRect(&rcInter, &rcWork, &rcStore);
+
+	if (bIn && EqualRect(&rcInter, &rcStore))
+	{
+		// Nothing must be changed
+		return false;
+	}
+
+	// Calculate border sizes (even though one of left/top/right/bottom requested)
+	RECT rcMargins = (nBorders & CEB_ALL) ? CalcMargins(CEM_FRAMEONLY) : MakeRect(0,0);
+	if (!(nBorders & CEB_LEFT))
+		rcMargins.left = 0;
+	if (!(nBorders & CEB_TOP))
+		rcMargins.top = 0;
+	if (!(nBorders & CEB_RIGHT))
+		rcMargins.right = 0;
+	if (!(nBorders & CEB_BOTTOM))
+		rcMargins.bottom = 0;
+
+	if (!IsRectEmpty(&rcMargins))
+	{
+		// May be work rect will cover our window without margins?
+		RECT rcTest = rcWork;
+		AddMargins(rcTest, rcMargins, FALSE);
+
+		BOOL bIn2 = IntersectRect(&rcInter, &rcTest, &rcStore);
+		if (bIn2 && EqualRect(&rcInter, &rcStore))
+		{
+			// Ok, it covers, nothing must be changed
+			return false;
+		}
+	}
+
+	bool bChanged = false;
+
+	if (!bIn)
+	{
+		// All is bad. Windows is totally out of screen.
+		rcWnd.left = max(rcWork.left-rcMargins.left,rcStore.left);
+		rcWnd.top = max(rcWork.top-rcMargins.top,rcStore.top);
+
+		// Add Width/Height. They may exceeds monitor in wmNormal.
+		if ((wndMode == wmNormal) && !gpSet->isQuakeStyle && !m_InsideIntegration)
+		{
+			rcWnd.right = rcWork.left+rcStore.right-rcStore.left;
+			rcWnd.bottom = rcWork.top+rcStore.bottom-rcStore.top;
+
+			// Ideally, we must detects most right/bottom monitor to limit our window
+			if (!PtInRect(&rcWork, MakePoint(rcWnd.right, rcWnd.bottom)))
+			{
+				// Yes, right-bottom corner is out-of-screen
+				RECT rcTest = {rcWnd.right, rcWnd.bottom, rcWnd.right, rcWnd.bottom};
+				
+				MONITORINFO mi2; GetNearestMonitor(&mi2, &rcTest);
+				RECT rcWork2 = (wndMode == wmFullScreen) ? mi2.rcMonitor : mi2.rcWork;
+
+				rcWnd.right = min(rcWork2.right+rcMargins.right,rcWnd.right);
+				rcWnd.bottom = min(rcWork2.bottom+rcMargins.bottom,rcWnd.bottom);
+			}
+		}
+		else
+		{
+			// Maximized/FullScreen. Window CAN'T exceeds active monitor!
+			rcWnd.right = min(rcWork.right+rcMargins.right,rcWork.left+rcStore.right-rcStore.left);
+			rcWnd.bottom = min(rcWork.bottom+rcMargins.bottom,rcWork.top+rcStore.bottom-rcStore.top);
+		}
+
+		bChanged = (memcmp(&rcWnd, &rcStore) != 0);
+	}
+	else
+	{
+		if (
+
+
+		TODO("CConEmuMain::FixWindowRect - All other borders");
+	}
+
+	return bChanged;
+}
+
 // ƒл€ приблизительного расчета размеров - нужен только (размер главного окна)|(размер консоли)
 // ƒл€ точного расчета размеров - требуетс€ (размер главного окна) и (размер окна отрисовки) дл€ корректировки
 // на x64 возникают какие-то глюки с ",RECT rFrom,". ќтладчик показывает мусор в rFrom,
@@ -4046,6 +4158,7 @@ POINT CConEmuMain::CalcTabMenuPos(CVirtualConsole* apVCon)
 	return ptCur;
 }
 
+#if 0
 /*!!!static!!*/
 // ѕолучить размер (правый нижний угол) окна по его клиентской области и наоборот
 RECT CConEmuMain::MapRect(RECT rFrom, BOOL bFrame2Client)
@@ -4070,6 +4183,7 @@ RECT CConEmuMain::MapRect(RECT rFrom, BOOL bFrame2Client)
 
 	return rFrom;
 }
+#endif
 
 bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
 {
@@ -4506,6 +4620,12 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
 
 	return true;
+}
+
+ConEmuWindowMode CConEmuMain::GetWindowMode()
+{
+	ConEmuWindowMode wndMode = gpSet->isQuakeStyle ? ((ConEmuWindowMode)gpSet->_WindowMode) : WindowMode;
+	return wndMode;
 }
 
 // inMode: wmNormal, wmMaximized, wmFullScreen
@@ -11187,12 +11307,17 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	return 0;
 }
 
-HMONITOR CConEmuMain::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/)
+HMONITOR CConEmuMain::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPRECT prcWnd /*= NULL*/)
 {
 	HMONITOR hMon = NULL;
 	MONITORINFO mi = {sizeof(mi)};
 	BOOL bRc = FALSE;
-	if (!ghWnd || (gpSet->isQuakeStyle && isIconic()))
+
+	if (prcWnd)
+	{
+		hMon = MonitorFromRect(prcWnd, MONITOR_DEFAULTTONEAREST);
+	}
+	else if (!ghWnd || (gpSet->isQuakeStyle && isIconic()))
 	{
 		_ASSERTE(gpConEmu->wndWidth>0 && gpConEmu->wndHeight>0);
 		COORD conSize = MakeCoord(gpConEmu->wndWidth,gpConEmu->wndHeight);
@@ -11200,7 +11325,7 @@ HMONITOR CConEmuMain::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/)
 
 		hMon = MonitorFromRect(&rcEvalWnd, MONITOR_DEFAULTTONEAREST);
 	}
-	else if (!isIconic())
+	else if (!isRestoreFromMinimized && !isIconic())
 	{
 		hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
 	}
@@ -11976,7 +12101,7 @@ void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 #ifdef _DEBUG
-	#if 1
+	#if 0
 	if (messg == WM_KEYDOWN || messg == WM_KEYUP)
 	{
 		if (wParam >= VK_F1 && wParam <= VK_F4)

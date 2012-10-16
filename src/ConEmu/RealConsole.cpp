@@ -2399,8 +2399,12 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 	{
 		if (nTextColorIdx >= 16) nTextColorIdx = 7;
 		if (nBackColorIdx >= 16) nBackColorIdx = 0;
-		if (nTextColorIdx == nBackColorIdx)
+		if ((nTextColorIdx == nBackColorIdx)
+			&& gpSetCls->IsBackgroundEnabled(mp_VCon)
+			&& !(gpSet->nBgImageColors & (1 << nBackColorIdx)))  // bg color is an image
+		{
 			nBackColorIdx = nTextColorIdx ? 0 : 7;
+		}
 		//si.dwFlags |= STARTF_USEFILLATTRIBUTE;
 		//si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
 		mn_TextColorIdx = nTextColorIdx;

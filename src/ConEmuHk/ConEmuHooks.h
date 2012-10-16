@@ -111,6 +111,9 @@ extern InQueue gInQueue;
 /* ************ Globals for clink ************ */
 extern size_t   gcchLastWriteConsoleMax;
 extern wchar_t *gpszLastWriteConsole;
+extern bool     gbClinkInitialized;
+extern DWORD    gnAllowClinkUsage;
+extern bool     InitializeClink();
 /* ************ Globals for clink ************ */
 
 /* ************ Globals for powershell ************ */

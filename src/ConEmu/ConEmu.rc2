@@ -107,7 +107,7 @@ BEGIN
     cbThumbUsePicView2      "Try to use PicView2 plugin to generate previews (FAR2 only)"
     cbTrueColorer           "Colorer truemod support"
     cbTryToCenter           "Draw console content in center of ConEmu window. Use together with «Pad size»"
-    cbUseClink              "Use clink to extend command prompt\n(supported in cmd.exe, powershell.exe)\nhttp://code.google.com/p/clink/"
+    cbUseClink              "Use clink to extend command prompt (cmd.exe)\nhttp://code.google.com/p/clink/"
     cbUseInjects            "Allow injecting ConEmuHk.dll in every process of ConEmu console window.\n3s - inject ConEmuHk into exe-module only."
     cbUserScreenTransparent "Turn on «User screen» transparency, when panel(s) is lifted up or hided. You may temporary reveal «User screen» by depressing Ctrl-Alt-Shift."
     cbUseWinArrows          "Resize ConEmu window with arrow keys"

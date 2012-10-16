@@ -902,7 +902,7 @@ struct ConEmuGuiMapping
 	DWORD    bUseInjects;   // 0-off, 1-on, 3-exe only. Далее могут быть (пока не используется) доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	BOOL     bUseTrueColor; // включен флажок "TrueMod support"
 	BOOL     bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
-	BOOL     bUseClink;     // использовать расширение командной строки (ReadConsole)
+	DWORD    bUseClink;     // использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
 
 	BOOL     bSleepInBackg; // Sleep in background
 	BOOL     bGuiActive;    // Gui is In focus or Not
@@ -1180,7 +1180,7 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	DWORD bUseInjects;   // 0-off, 1-on, 3-exe only. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	BOOL  bUseTrueColor; // включен флажок "TrueMod support"
 	BOOL  bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
-	BOOL  bUseClink;     // использовать расширение командной строки (ReadConsole)
+	DWORD bUseClink;     // использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
 	
 	// Перехват реестра
 	DWORD   isHookRegistry; // bitmask. 1 - supported, 2 - current
