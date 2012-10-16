@@ -3628,7 +3628,7 @@ bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	if (m_InsideIntegration)
 	{
 		rcWork = GetDefaultRect();
-		bool bChanged = (memcmp(&rcWork, &rcWnd) != 0);
+		bool bChanged = (memcmp(&rcWork, &rcWnd, sizeof(rcWnd)) != 0);
 		rcWnd = rcWork;
 		return bChanged;
 	}
@@ -3673,7 +3673,7 @@ bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	{
 		// May be work rect will cover our window without margins?
 		RECT rcTest = rcWork;
-		AddMargins(rcTest, rcMargins, FALSE);
+		AddMargins(rcTest, rcMargins, TRUE);
 
 		BOOL bIn2 = IntersectRect(&rcInter, &rcTest, &rcStore);
 		if (bIn2 && EqualRect(&rcInter, &rcStore))
@@ -3685,7 +3685,9 @@ bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 
 	bool bChanged = false;
 
-	if (!bIn)
+	// We come here when at least part of ConEmu is "Out-of-screen"
+	// "bIn == false" when ConEmu is totally "Out-of-screen"
+	if (!bIn || !(nBorders & CEB_ALLOW_PARTIAL))
 	{
 		// All is bad. Windows is totally out of screen.
 		rcWnd.left = max(rcWork.left-rcMargins.left,rcStore.left);
@@ -3717,14 +3719,7 @@ bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 			rcWnd.bottom = min(rcWork.bottom+rcMargins.bottom,rcWork.top+rcStore.bottom-rcStore.top);
 		}
 
-		bChanged = (memcmp(&rcWnd, &rcStore) != 0);
-	}
-	else
-	{
-		if (
-
-
-		TODO("CConEmuMain::FixWindowRect - All other borders");
+		bChanged = (memcmp(&rcWnd, &rcStore, sizeof(rcWnd)) != 0);
 	}
 
 	return bChanged;
@@ -6015,8 +6010,20 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			RECT rc = CalcRect((WindowMode == wmFullScreen) ? CER_FULLSCREEN : CER_MAXIMIZED, NULL);
 			p->x = rc.left;
 			p->y = rc.top;
-			p->cx = rc.right - rc.left; // + 1;
+			p->cx = rc.right - rc.left;
 			p->cy = rc.bottom - rc.top;
+		}
+		else // normal only
+		{
+			_ASSERTE(GetWindowMode() == wmNormal);
+			RECT rc = {p->x, p->y, p->x + p->cx, p->y + p->cy};
+			if (FixWindowRect(rc, CEB_ALL|CEB_ALLOW_PARTIAL))
+			{
+				p->x = rc.left;
+				p->y = rc.top;
+				p->cx = rc.right - rc.left;
+				p->cy = rc.bottom - rc.top;
+			}
 		}
 	//#ifdef _DEBUG
 	#if 0
@@ -11530,9 +11537,7 @@ void CConEmuMain::OnHideCaption()
 	//	SetWindowMode(wmMaximized, TRUE);
 	//}
 
-	#ifdef _DEBUG
 	bool bHideCaption = gpSet->isCaptionHidden();
-	#endif
 	DWORD nStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD nNewStyle = FixWindowStyle(nStyle, WindowMode);
 	DWORD nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
@@ -11570,6 +11575,13 @@ void CConEmuMain::OnHideCaption()
 					rcAfter.top += nCapY;
 			}
 			AdjustWindowRectEx(&rcAfter, nNewStyle, FALSE, nStyleEx);
+
+			// When switching from "No caption" to "Caption"
+			if (WindowMode == wmNormal)
+			{
+				// we need to check window location, caption must not be "Out-of-screen"
+				FixWindowRect(rcAfter, 0);
+			}
 		}
 
 		//nStyle &= ~(WS_CAPTION|WS_THICKFRAME|WS_DLGFRAME);

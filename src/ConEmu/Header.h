@@ -362,7 +362,7 @@ enum ConEmuBorders
 	CEB_RIGHT = 8,
 	CEB_ALL = CEB_TOP|CEB_LEFT|CEB_BOTTOM|CEB_RIGHT,
 	// Next means "place window OnScreen when it out of screen totally"
-	CEB_PARTIAL = CEB_ALL,
+	CEB_ALLOW_PARTIAL = 16,
 };
 
 enum DragPanelBorder

@@ -5412,6 +5412,8 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 					{
 						_ASSERTE(pszFull);
 					}
+					if (pszCmd == pszFull)
+						pszCmd = NULL;
 					SafeFree(pszFull);
 				}
 				SafeFree(pszCmd);

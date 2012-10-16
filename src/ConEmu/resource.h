@@ -849,8 +849,8 @@
 #define rbScrollbarShow                 2488
 #define rbScrollbarAuto                 2489
 #define stHideCaptionAlwaysFrame        2490
-#define IDC_CHECK1                      2491
 #define cbTaskbarShield                 2491
+#define vkPasteCygwin                   2492
 
 // Next default values for new objects
 // 

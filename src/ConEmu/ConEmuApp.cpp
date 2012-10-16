@@ -656,12 +656,12 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote)
 	{
 		*(psz++) = L'/';
 		*(psz++) = asWinPath[0];
-		psz += 2;
+		asWinPath += 2;
 	}
 	else
 	{
 		// А bash понимает сетевые пути?
-		_ASSERTE(psz[0] == L'\\' && psz[1] == L'\\');
+		_ASSERTE((psz[0] == L'\\' && psz[1] == L'\\') || (wcschr(psz, L'\\')==NULL));
 	}
 
 	while (*asWinPath)

@@ -4089,7 +4089,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			bool lbStoreBackLast = false;
 			if (bExtendColors)
 			{
-				attrBackLast = lcaTable[(*pnSrc) & 0xFF].nBackIdx;
+				BYTE FirstBackAttr = lcaTable[(*pnSrc) & 0xFF].nBackIdx;
+				if (FirstBackAttr != nExtendColorIdx)
+					attrBackLast = FirstBackAttr;
 
 				const CEFAR_INFO_MAPPING* pFarInfo = lbIsFar ? mp_RCon->GetFarInfo() : NULL;
 				if (pFarInfo)
@@ -4099,8 +4101,15 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					//   сожалению, таким образом нельз€ заменить только цвета дл€ элемента под курсором.
 					if (((pFarInfo->nFarColors[col_PanelText] & 0xF0) >> 4) != nExtendColorIdx)
 						lbStoreBackLast = true;
+					else
+						attrBackLast = FirstBackAttr;
+
 					if (pFarInfo->FarInterfaceSettings.AlwaysShowMenuBar || mp_RCon->isEditor() || mp_RCon->isViewer())
 						nExtendStartsY = 1; // пропустить обработку строки меню 
+				}
+				else
+				{
+					lbStoreBackLast = true;
 				}
 			}
 

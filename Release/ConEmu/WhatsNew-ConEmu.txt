@@ -14,6 +14,17 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.10.16
+[!] ConEmu on Reddit! http://redd.it/11k5oy Please, vote ;)
+[*] Internal resize changes.
+[%] Issue 736: ConEmu crashes on saving a task when creating the new one.
+[%] Pasting CygWin paths fails.
+[%] Fixes in «Extend foreground color with background».
+[%] User palettes was not saved with «Save settings» button.
+[*] Apps+Insert - paste file pathname from cliboard, converted to CygWin style.
+[*] App distinct: When there is no explicit settings for current application - root application settings applied.
+
+
 2012.10.15
 [+] Option «Use Clink in prompt» supports loading of clink version 0.2 (recommended).
     There is no need to set up «clink autorun» when this option is checked.

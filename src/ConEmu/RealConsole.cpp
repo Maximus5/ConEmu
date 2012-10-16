@@ -4966,7 +4966,8 @@ int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName/*=NULL*/)
 
 	lstrcpyn(ms_LastProcessName, pszName ? pszName : L"", countof(ms_LastProcessName));
 	mn_LastProcessNamePID = nPID;
-	mn_LastAppSettingsId = gpSet->GetAppSettingsId(pszName, isAdministrator());
+	int nSetggingsId = gpSet->GetAppSettingsId(pszName, isAdministrator());
+	mn_LastAppSettingsId = (nSetggingsId != -1) ? nSetggingsId : GetDefaultAppSettingsId();
 
 	if (ppProcessName)
 		*ppProcessName = ms_LastProcessName;
