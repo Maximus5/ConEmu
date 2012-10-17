@@ -937,7 +937,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 {
 	RecalculateFrameSizes();
 
-	LRESULT lRc = 0;
+	LRESULT lRc = 0, lRcDef = 0;
 
 	// В Aero (Glass) важно, чтобы клиенская область начиналась с верхнего края окна,
 	// иначе не получится "рисовать по стеклу"
@@ -959,9 +959,8 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		RECT r[3] = {pParm->rgrc[0], pParm->rgrc[1], pParm->rgrc[2]};
 		bool bAllowPreserveClient = mb_AllowPreserveClient && (memcmp(r, r+1, sizeof(*r)) == 0);
 
-		#ifdef _DEBUG
-		LRESULT lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
-		#endif
+		// We need to call this, otherwise some parts of window may be broken
+		lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 		RECT rcWnd = {0,0, r[0].right-r[0].left, r[0].bottom-r[0].top};
 		RECT rcClient = gpConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
@@ -997,14 +996,18 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		// rectangle for the window. On exit, the structure should contain the screen coordinates
 		// of the corresponding window client area.
 		LPRECT nccr = (LPRECT)lParam;
-		RECT rcWnd = {0,0, nccr->right-nccr->left, nccr->bottom-nccr->top};
+		RECT rc = *nccr;
+		RECT rcWnd = {0,0, rc.right-rc.left, rc.bottom-rc.top};
 		RECT rcClient = gpConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
 		_ASSERTE(rcClient.left==0 && rcClient.top==0);
+
+		// Call default function JIC
+		lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 		// Need screen coordinates!
 		int nDX = ((rcWnd.right - rcClient.right) >> 1);
 		int nDY = ((rcWnd.bottom - rcClient.bottom - nCaption) >> 1);
-		OffsetRect(&rcClient, nccr->left + nDX, nccr->top + nDY + nCaption);
+		OffsetRect(&rcClient, rc.left + nDX, rc.top + nDY + nCaption);
 		*nccr = rcClient;
 	}
 
