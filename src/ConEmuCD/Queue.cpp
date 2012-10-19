@@ -79,7 +79,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 
 			if (lbProcessEvent)
 			{
-				BOOL lbRc = FALSE;
+				//BOOL lbRc = FALSE;
 				#if 0
 				DWORD dwEvent = (r.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
 				#endif
@@ -88,7 +88,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 				#if 1
 				// Issue 590: GenerateConsoleCtrlEvent нифига не прерывает функцию ReadConsoleW
 				SendMessage(ghConWnd, WM_KEYDOWN, r.Event.KeyEvent.wVirtualKeyCode, 0);
-				lbRc = TRUE;
+				//lbRc = TRUE;
 				#endif
 
 				#if 0

@@ -480,7 +480,7 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText, 
 		hEdit = hDlg;
 
 	if (!hEdit)
-		return NULL;
+		return 0;
 
 	//
 	int nLen = GetWindowTextLength(hEdit);
@@ -1501,7 +1501,7 @@ void ResetConman()
 	//        NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
 	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"), 0, KEY_ALL_ACCESS, &hk))
 	{
-		RegSetValueEx(hk, _T("CreateInNewEnvironment"), NULL, REG_DWORD,
+		RegSetValueEx(hk, _T("CreateInNewEnvironment"), 0, REG_DWORD,
 		              (LPBYTE)&(dw=0), sizeof(dw));
 		RegCloseKey(hk);
 	}
@@ -1833,6 +1833,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 			{
 				IShellLink * psl = NULL;
 				bool bNeedSeparator = false;
+				bool bEmpty = true;
 
 				// ≈сли просили - добавл€ем наши внутренние "Tasks"
 				if (SUCCEEDED(hr) && gpSet->isStoreTaskbarkTasks && nTasksCount)
@@ -1846,7 +1847,10 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 							hr = poc->AddObject(psl);
 							psl->Release();
 							if (SUCCEEDED(hr))
+							{
 								bNeedSeparator = true;
+								bEmpty = false;
+							}
 						}
 
 						if (FAILED(hr))
@@ -1868,6 +1872,8 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 						{
 							hr = poc->AddObject(psl);
 							psl->Release();
+							if (SUCCEEDED(hr))
+								bEmpty = false;
 						}
 					}
 
@@ -1879,6 +1885,8 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 						{
 							hr = poc->AddObject(psl);
 							psl->Release();
+							if (SUCCEEDED(hr))
+								bEmpty = false;
 						}
 
 						if (FAILED(hr))
@@ -1895,6 +1903,8 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 						{
 							hr = poc->AddObject(psl);
 							psl->Release();
+							if (SUCCEEDED(hr))
+								bEmpty = false;
 						}
 
 						if (FAILED(hr))
@@ -1919,7 +1929,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 						// Add the tasks to the Jump List. Tasks always appear in the canonical "Tasks"
 						// category that is displayed at the bottom of the Jump List, after all other
 						// categories.
-						hr = pcdl->AddUserTasks(poa);
+						hr = bEmpty ? S_OK : pcdl->AddUserTasks(poa);
 						if (FAILED(hr))
 						{
 							DisplayLastError(L"pcdl->AddUserTasks(poa) failed", (DWORD)hr);
@@ -2256,7 +2266,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					int nSetupRc = 100;
 
 					if (0 != RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Command Processor"),
-										   NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
+										   0, NULL, 0, KEY_ALL_ACCESS, NULL, &hk, &dw))
 						return 103;
 
 					if (lbTurnOn)
@@ -2290,7 +2300,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 							pszArg1 ? L" \"" : L"", pszArg1 ? pszArg1 : L"", pszArg1 ? L"\"" : L"");
 						
 
-						if (0 == RegSetValueEx(hk, _T("AutoRun"), NULL, REG_SZ, (LPBYTE)pszCmd,
+						if (0 == RegSetValueEx(hk, _T("AutoRun"), 0, REG_SZ, (LPBYTE)pszCmd,
 											(DWORD)sizeof(TCHAR)*(_tcslen(pszCmd)+1))) //-V220
 							nSetupRc = 1;
 

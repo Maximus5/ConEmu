@@ -1078,7 +1078,7 @@ void CConEmuCtrl::ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /
 		Align = TPM_LEFTALIGN|TPM_TOPALIGN;
 
 	int nTab = gpConEmu->trackPopupMenu(tmp_TabsList, hPopup, Align|TPM_RETURNCMD,
-		pt.x, pt.y, 0, ghWnd, NULL);
+		pt.x, pt.y, ghWnd);
 
 	if (nTab >= IDM_VCON_FIRST && nTab <= IDM_VCON_LAST)
 	{

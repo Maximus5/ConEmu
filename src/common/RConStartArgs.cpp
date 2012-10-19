@@ -69,7 +69,7 @@ RConStartArgs::~RConStartArgs()
 	//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
 }
 
-wchar_t* RConStartArgs::CreateCommandLine()
+wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 {
 	wchar_t* pszFull = NULL;
 	size_t cchMaxLen =
@@ -98,8 +98,13 @@ wchar_t* RConStartArgs::CreateCommandLine()
 
 	if (pszSpecialCmd)
 	{
+		if (bRunAsAdministrator && abForTasks)
+			_wcscpy_c(pszFull, cchMaxLen, L"*");
+		else
+			*pszFull = 0;						
+
 		// Не окавычиваем. Этим должен озаботиться пользователь
-		_wcscpy_c(pszFull, cchMaxLen, pszSpecialCmd);
+		_wcscat_c(pszFull, cchMaxLen, pszSpecialCmd);
 		_wcscat_c(pszFull, cchMaxLen, L" ");
 	}
 	else

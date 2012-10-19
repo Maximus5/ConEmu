@@ -3471,7 +3471,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 						else
 						{
 							pGuiIn->StartStop.dwPID = nAltServerWasStarted ? nAltServerWasStarted : nAltServerWasStopped;
-							pGuiIn->StartStop.hServerProcessHandle = NULL; // для GUI смысла не имеет
+							pGuiIn->StartStop.hServerProcessHandle = 0; // для GUI смысла не имеет
 							pGuiIn->StartStop.nStarted = nAltServerWasStarted ? sst_AltServerStart : sst_AltServerStop;
 
 							pGuiOut = ExecuteGuiCmd(ghConWnd, pGuiIn, ghConWnd);

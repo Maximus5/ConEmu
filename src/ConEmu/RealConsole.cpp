@@ -245,6 +245,7 @@ void CRealConsole::Construct(CVirtualConsole* apVCon)
 	
 	ZeroStruct(m_ServerClosing);
 	ZeroStruct(m_Args);
+	ms_RootProcessName[0] = 0;
 	mn_LastInvalidateTick = 0;
 
 	hConWnd = NULL;
@@ -4891,8 +4892,12 @@ int CRealConsole::GetDefaultAppSettingsId()
 		lpszCmd = m_Args.pszSpecialCmd;
 	else
 		lpszCmd = gpSet->GetCmd();
+
 	if (!lpszCmd || !*lpszCmd)
+	{
+		ms_RootProcessName[0] = 0;
 		return -1;
+	}
 
 	LPCWSTR pszName = NULL;;
 	wchar_t szExe[MAX_PATH+1];
@@ -4911,7 +4916,11 @@ int CRealConsole::GetDefaultAppSettingsId()
 	}
 
 	if (!pszName)
+	{
+		ms_RootProcessName[0] = 0;
 		return -1;
+	}
+
 	if (wcschr(pszName, L'.') == NULL)
 	{
 		// Если расширение не указано - предположим, что это .exe
@@ -4920,10 +4929,15 @@ int CRealConsole::GetDefaultAppSettingsId()
 		pszName = szName;
 	}
 
+	lstrcpyn(ms_RootProcessName, pszName, countof(ms_RootProcessName));
+
 	int iAppId = gpSet->GetAppSettingsId(pszName, m_Args.bRunAsAdministrator);
 	return iAppId;
 }
 
+// ppProcessName используется в функции GetActiveProcessName()
+// возвращать должен реальное имя процесса, вне зависимости от того
+// была подмена на корневой ИД или нет.
 int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName/*=NULL*/)
 {
 	if (!this)
@@ -4966,11 +4980,22 @@ int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName/*=NULL*/)
 
 	lstrcpyn(ms_LastProcessName, pszName ? pszName : L"", countof(ms_LastProcessName));
 	mn_LastProcessNamePID = nPID;
-	int nSetggingsId = gpSet->GetAppSettingsId(pszName, isAdministrator());
-	mn_LastAppSettingsId = (nSetggingsId != -1) ? nSetggingsId : GetDefaultAppSettingsId();
+	
+	bool isAdmin = isAdministrator();
+
+	int nSetggingsId = gpSet->GetAppSettingsId(pszName, isAdmin);
+
+	_ASSERTE((nSetggingsId != -1) || (*ms_RootProcessName));
+	// When explicit AppDistinct not found - take settings for the root process
+	// ms_RootProcessName must be processed in prev. GetDefaultAppSettingsId/PrepareDefaultColors
+	if ((nSetggingsId == -1) && (*ms_RootProcessName))
+		mn_LastAppSettingsId = gpSet->GetAppSettingsId(ms_RootProcessName, isAdmin);
+	else
+		mn_LastAppSettingsId = nSetggingsId;
 
 	if (ppProcessName)
 		*ppProcessName = ms_LastProcessName;
+
 	return mn_LastAppSettingsId;
 }
 
@@ -8235,10 +8260,10 @@ bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation)
 		DontEnable de;
 		//nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
 		nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL,
-			asConfirmation ? asConfirmation : gsCloseAny, Title, MB_ICONEXCLAMATION|MB_YESNO);
+			asConfirmation ? asConfirmation : gsCloseAny, Title, MB_OKCANCEL|MB_ICONEXCLAMATION);
 	}
 
-	if (nBtn != IDYES)
+	if (nBtn != IDOK)
 	{
 		CloseConfirmReset();
 		return false;
@@ -8802,7 +8827,11 @@ void CRealConsole::OnTitleChanged()
 	{
 		// mn_ConsoleProgress обновляется в FindPanels, должен быть уже вызван
 		// mn_AppProgress обновляется через Esc-коды, GuiMacro или через команду пайпа
-		short nConProgr = ((mn_AppProgressState == 1) || (mn_AppProgressState == 2)) ? mn_AppProgress : mn_ConsoleProgress;
+		short nConProgr =
+			((mn_AppProgressState == 1) || (mn_AppProgressState == 2)) ? mn_AppProgress
+			: (mn_AppProgressState == 3) ? 0 // Indeterminate
+			: mn_ConsoleProgress;
+
 		if ((nConProgr >= 0) && (nConProgr <= 100))
 		{
 			// Обработка прогресса NeroCMD и пр. консольных программ
@@ -8995,6 +9024,15 @@ LPCWSTR CRealConsole::GetDir()
 		return gpConEmu->ms_ConEmuCurDir;
 }
 
+wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)
+{
+	if (!this) return NULL;
+
+	wchar_t* pszCmd = m_Args.CreateCommandLine(abForTasks);
+
+	return pszCmd;
+}
+
 BOOL CRealConsole::GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, BOOL* pbRestricted)
 {
 	if (m_Args.bRunAsRestricted)
@@ -9017,16 +9055,16 @@ BOOL CRealConsole::GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDoma
 	return FALSE;
 }
 
-short CRealConsole::GetProgress(BOOL *rpbError, BOOL* rpbNotFromTitle)
+short CRealConsole::GetProgress(int* rpnState/*1-error,2-ind*/, BOOL* rpbNotFromTitle)
 {
 	if (!this)
 		return -1;
 
-	if ((mn_AppProgressState == 1) || (mn_AppProgressState == 2))
+	if (mn_AppProgressState > 0)
 	{
-		if (rpbError)
+		if (rpnState)
 		{
-			*rpbError = (mn_AppProgressState == 2);
+			*rpnState = (mn_AppProgressState == 2) ? 1 : (mn_AppProgressState == 3) ? 2 : 0;
 		}
 		if (rpbNotFromTitle)
 		{
@@ -9054,10 +9092,9 @@ short CRealConsole::GetProgress(BOOL *rpbError, BOOL* rpbNotFromTitle)
 	{
 		// mn_PreWarningProgress - это последнее значение прогресса (0..100)
 		// по после завершения процесса - он может еще быть не сброшен
-		if (rpbError)
+		if (rpnState)
 		{
-			//*rpbError = TRUE; --
-			*rpbError = (mn_FarStatus & CES_OPER_ERROR) == CES_OPER_ERROR;
+			*rpnState = ((mn_FarStatus & CES_OPER_ERROR) == CES_OPER_ERROR) ? 1 : 0;
 		}
 
 		//if (mn_LastProgressTick != 0 && rpbError) {
@@ -9072,12 +9109,19 @@ short CRealConsole::GetProgress(BOOL *rpbError, BOOL* rpbNotFromTitle)
 	return -1;
 }
 
-bool CRealConsole::SetProgress(short nState, short nValue)
+bool CRealConsole::SetProgress(short nState, short nValue, LPCWSTR pszName /*= NULL*/)
 {
 	if (!this)
 		return false;
 
 	bool lbOk = false;
+
+	//SetProgress 3
+	//  -- Set progress indeterminate state
+	//SetProgress 4 <Name>
+	//  -- Start progress for some long process
+	//SetProgress 5 <Name>
+	//  -- Stop progress started with "3"
 
 	switch (nState)
 	{
@@ -9092,8 +9136,18 @@ bool CRealConsole::SetProgress(short nState, short nValue)
         break;
     case 2:
     	mn_AppProgressState = 2;
+    	if (nValue > 0)
+    		mn_AppProgress = min(max(nValue,0),100);
     	lbOk = true;
     	break;
+    case 3:
+    	mn_AppProgressState = 3;
+    	lbOk = true;
+    	break;
+	case 4:
+	case 5:
+		_ASSERTE(FALSE && "TODO: Estimation of process duration");
+		break;
 	}
 
 	if (lbOk)

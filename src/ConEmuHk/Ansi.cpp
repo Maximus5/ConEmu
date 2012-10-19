@@ -1606,26 +1606,33 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 									else if (Code.ArgSZ[2] == L'4')
 									{
 										WORD st = 0, pr = 0;
+										LPCWSTR pszName = NULL;
 										if (Code.ArgSZ[3] == L';')
 										{
 											switch (Code.ArgSZ[4])
 											{
 											case L'0':
 												break;
-											case L'1':
-												st = 1;
+											case L'1': // Normal
+											case L'2': // Error
+												st = Code.ArgSZ[4] - L'0';
 												if (Code.ArgSZ[5] == L';')
 												{
 													LPCWSTR pszValue = Code.ArgSZ + 6;
 													pr = NextNumber(pszValue);
 												}
 												break;
-											case L'2':
-												st = 2;
+											case L'3':
+												st = 3; // Indeterminate
+												break;
+											case L'4':
+											case L'5':
+												st = Code.ArgSZ[4] - L'0';
+												pszName = (Code.ArgSZ[5] == L';') ? (Code.ArgSZ + 6) : NULL;
 												break;
 											}
 										}
-										GuiSetProgress(st,pr);
+										GuiSetProgress(st,pr,pszName);
 									}
 									else if (Code.ArgSZ[2] == L'5')
 									{

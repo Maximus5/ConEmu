@@ -1593,7 +1593,8 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 
 			if (wcschr(szExe, L'%') && !FileExists(szExe))
 			{
-				bool bFound = false;
+				DEBUGTEST(bool bFound = false);
+
 				// Переменные окружения
 				wchar_t* pszExpand = ExpandEnvStr(szExe);
 				if (pszExpand && FileExists(pszExpand))
@@ -1603,7 +1604,8 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 
 					if (rsArguments)
 						*rsArguments = pwszCopy;
-					bFound = true;
+
+					DEBUGTEST(bFound = true);
 				}
 			}
 		}
@@ -3378,7 +3380,7 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/)
 		if (mh_LogFile == NULL)
 		{
 			wchar_t szDesktop[MAX_PATH+1] = L"";
-			if (S_OK == SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, szDesktop))
+			if (S_OK == SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, NULL, 0/*SHGFP_TYPE_CURRENT*/, szDesktop))
 			{
 				size_t cchDirLen = lstrlen(szDesktop);
 	            cchMax = cchDirLen + cchNamLen + 32;
@@ -3597,7 +3599,7 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 	GetVersionEx(&osv);
 	BOOL bWin64 = IsWindows64();
 
-	wchar_t cVer = MVV_4a[0];
+	//wchar_t cVer = MVV_4a[0];
 	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\r\n"
 		L"\tOsVer: %u.%u.%u.x%u, DBCS: %u, WINE: %u, ACP: %u, OEMCP: %u\r\n"
 		L"\tDesktop: %s\r\n\tTitle: %s\r\n\tSize: {%u,%u},{%u,%u}\r\n"
@@ -3923,7 +3925,7 @@ void WINAPI ShutdownConsole()
 //
 BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 {
-	DWORD   dwConsoleOwnerPid, dwCurProcId, dwConsoleThreadId;
+	DWORD   dwConsoleOwnerPid, dwCurProcId;
 	PVOID   ptrView = 0;
 	DWORD   dwLastError=0;
 	WCHAR   ErrText[255];
@@ -3931,7 +3933,9 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	//	Retrieve the process which "owns" the console
 	//
 	dwCurProcId = GetCurrentProcessId();
-	dwConsoleThreadId = GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
+	
+	DEBUGTEST(DWORD dwConsoleThreadId =)
+	GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
 
 	// We'll fail, if console was created by other process
 	if (dwConsoleOwnerPid != dwCurProcId)
@@ -3953,6 +3957,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 		}
 		//_ASSERTE(dwConsoleOwnerPid == dwCurProcId);
 		#endif
+
 		return FALSE;
 	}
 
@@ -4008,17 +4013,17 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 
 		memcpy(ptrView, pci, pci->Length); //-V106
 		UnmapViewOfFile(ptrView);
+
 		//  Send console window the "update" message
-		LRESULT dwConInfoRc = 0;
-		DWORD dwConInfoErr = 0;
-		dwConInfoRc = SendMessage(hwndConsole, WM_SETCONSOLEINFO, (WPARAM)ghConsoleSection, 0);
-		dwConInfoErr = GetLastError();
+		DEBUGTEST(LRESULT dwConInfoRc =)
+		SendMessage(hwndConsole, WM_SETCONSOLEINFO, (WPARAM)ghConsoleSection, 0);
+
+		DEBUGTEST(DWORD dwConInfoErr = GetLastError());
 
 		if (!lbWasVisible && IsWindowVisible(hwndConsole))
 		{
-#ifdef _DEBUG
-			//Sleep(10);
-#endif
+			//DEBUGTEST(Sleep(10));
+
 			ShowWindow(hwndConsole, SW_HIDE);
 			//SetWindowPos(hwndConsole, NULL, rcOldPos.left, rcOldPos.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 			// -- чтобы на некоторых системах не возникала проблема с позиционированием -> {0,0}
@@ -4033,6 +4038,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 
 COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
+	// В Wine не работает
 	COORD crMax = GetLargestConsoleWindowSize(hConsoleOutput);
 	DWORD dwErr = (crMax.X && crMax.Y) ? 0 : GetLastError();
 	UNREFERENCED_PARAMETER(dwErr);
@@ -4311,14 +4317,16 @@ BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BU
 		bFuncChecked = true;
 	}
 
-	BOOL lbRc = FALSE, lbWnd = FALSE;
+	BOOL lbRc = FALSE;
+	DEBUGTEST(BOOL lbWnd = FALSE);
 
 	if (SetConsoleScreenBufferInfoEx_f)
 	{
 		lbRc = SetConsoleScreenBufferInfoEx_f(hConsoleOutput, lpConsoleScreenBufferInfoEx);
 
 		// Win7 x64 - глюк. после вызова этой функции идет срыв размеров видимой области.
-		lbWnd = SetConsoleWindowInfo(hConsoleOutput, TRUE, &lpConsoleScreenBufferInfoEx->srWindow);
+		DEBUGTEST(lbWnd =)
+		SetConsoleWindowInfo(hConsoleOutput, TRUE, &lpConsoleScreenBufferInfoEx->srWindow);
 	}
 
 	return lbRc;
@@ -4635,7 +4643,8 @@ void SetUserFriendlyFont(HWND hConWnd)
 
 			if (apiGetConsoleFontSize(hOutput, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
 			{
-				COORD crLargest = MyGetLargestConsoleWindowSize(hOutput);
+				DEBUGTEST(COORD crLargest = MyGetLargestConsoleWindowSize(hOutput));
+
 				HMONITOR hMon = MonitorFromWindow(hConWnd, MONITOR_DEFAULTTOPRIMARY);
 				MONITORINFO mi = {sizeof(mi)};
 				int nMaxX = 0, nMaxY = 0;

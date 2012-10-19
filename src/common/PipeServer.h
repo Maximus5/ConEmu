@@ -734,14 +734,15 @@ struct PipeServer
 			BOOL fConnected = FALSE;
 			BOOL fNewCheckStart = (mn_PipesToCreate > 0);
 			//DWORD dwErr = 0;
-			HANDLE hWait[2] = {NULL,NULL}; // без Overlapped - используется только при ожидании свободного сервера
 			DWORD dwTID = GetCurrentThreadId();
 			// The main loop creates an instance of the named pipe and
 			// then waits for a client to connect to it. When the client
 			// connects, a thread is created to handle communications
 			// with that client, and the loop is repeated.
-			hWait[0] = mh_TermEvent;
-			hWait[1] = mh_ServerSemaphore;
+
+			//HANDLE hWait[2]; // без Overlapped - используется только при ожидании свободного сервера
+			//hWait[0] = mh_TermEvent;
+			//hWait[1] = mh_ServerSemaphore;
 
 			// debuging purposes
 			pPipe->dwState = STARTING_STATE;
@@ -912,6 +913,7 @@ struct PipeServer
 
 				// Перейти к открытию нового instance пайпа
 
+				UNREFERENCED_PARAMETER(fWriteSuccess);
 			} // Пока не затребовано завершение сервера while (!mb_Terminate)
 
 			if (pPipe->hPipeInst && (pPipe->hPipeInst != INVALID_HANDLE_VALUE))

@@ -14,6 +14,16 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.10.17
+[*] Removing GCC warnings.
+[+] Tasks page: New button «Active tabs» will add all current tabs into selected task.
+[+] Button «No» in close confirmation dialog. It will close active console only.
+[%] Confirmation dialog was not shown when single console was opened.
+[*] Don't show «Press Enter or Esc to close console» after killing root process.
+[%] Issue 774: ConEmu window size breaks when moved across monitors.
+[%] Issue 775: Failed to update Windows 7 Jump list when no tasks are left in the list.
+
+
 2012.10.16
 [!] ConEmu on Reddit! http://redd.it/11k5oy Please, vote ;)
 [*] Internal resize changes.

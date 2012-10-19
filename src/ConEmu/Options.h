@@ -257,7 +257,6 @@ struct FindTextOptions
 	bool     bTransparent;
 };
 
-
 struct Settings
 {
 	public:
@@ -574,6 +573,25 @@ struct Settings
 		void PaletteDelete(LPCWSTR asName); // Delete named palette
 		void PaletteSetStdIndexes();
 
+
+		// 
+		struct ConEmuProgressStore
+		{
+			// This two are stored in settings
+			wchar_t* pszName;
+			DWORD    nDuration;
+			// Following are used in runtime
+			DWORD    nStartTick;
+
+			void FreePtr()
+			{
+				SafeFree(pszName);
+			};
+		};
+
+		DWORD ProgressesGetDuration(LPCWSTR asName);
+		void ProgressesSetDuration(LPCWSTR asName, DWORD anDuration);
+
 	protected:
 		AppSettings AppStd;
 		int AppCount;
@@ -592,11 +610,16 @@ struct Settings
 
 		int PaletteCount;
 		ColorPalette** Palettes;
-		void FreePalettes();
-
 		int PaletteGetIndex(LPCWSTR asName);
 		void SavePalettes(SettingsBase* reg);
 		void SortPalettes();
+		void FreePalettes();
+
+		int ProgressesCount;
+		ConEmuProgressStore** Progresses;
+		bool LoadProgress(SettingsBase* reg, ConEmuProgressStore* &pProgress);
+		bool SaveProgress(SettingsBase* reg, ConEmuProgressStore* pProgress);
+		void FreeProgresses();
 
 		void SaveStatusSettings(SettingsBase* reg);
 
@@ -1292,9 +1315,11 @@ struct Settings
 		void InitSettings();
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadPalettes(SettingsBase* reg);
+		void LoadProgresses(SettingsBase* reg);
 		BOOL SaveSettings(BOOL abSilent = FALSE);
 		void SaveAppSettings(SettingsBase* reg);
 		bool SaveCmdTasks(SettingsBase* reg);
+		bool SaveProgresses(SettingsBase* reg);
 		void SaveSizePosOnExit();
 		void SaveConsoleFont();
 		void SaveFindOptions(SettingsBase* reg = NULL);

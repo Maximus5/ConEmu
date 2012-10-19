@@ -1173,13 +1173,15 @@ int CVConGroup::GetVConIndex(CVirtualConsole* apVCon)
 	return -1;
 }
 
-bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, BOOL* pbWasError)
+bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, BOOL* pbWasError, BOOL* pbWasIndeterminate)
 {
 	short nProgress = -1;
 	short nUpdateProgress = gpUpd ? gpUpd->GetUpdateProgress() : -1;
 	short n;
 	BOOL bActiveHasProgress = FALSE;
 	BOOL bWasError = FALSE;
+	BOOL bWasIndeterminate = FALSE;
+	int  nState = 0;
 
 	if (gp_VActive)
 	{
@@ -1188,8 +1190,10 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 		{
 			_ASSERTE(isValid(gp_VActive));
 		}
-		else if ((nProgress = gp_VActive->RCon()->GetProgress(&bWasError, &lbNotFromTitle)) >= 0)
+		else if ((nProgress = gp_VActive->RCon()->GetProgress(&nState, &lbNotFromTitle)) >= 0)
 		{
+			bWasError = (nState & 1) == 1;
+			bWasIndeterminate = (nState & 2) == 2;
 			//mn_Progress = max(nProgress, nUpdateProgress);
 			bActiveHasProgress = TRUE;
 			_ASSERTE(lbNotFromTitle==FALSE); // CRealConsole должен проценты добавлять в GetTitle сам
@@ -1207,11 +1211,13 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 	{
 		if (gp_VCon[i])
 		{
-			BOOL bCurError = FALSE;
-			n = gp_VCon[i]->RCon()->GetProgress(&bCurError);
+			int nCurState = 0;
+			n = gp_VCon[i]->RCon()->GetProgress(&nCurState);
 
-			if (bCurError)
+			if ((nCurState & 1) == 1)
 				bWasError = TRUE;
+			if ((nCurState & 2) == 2)
+				bWasIndeterminate = TRUE;
 
 			if (!bActiveHasProgress && n > nProgress)
 				nProgress = n;
@@ -1224,6 +1230,8 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 		*pbActiveHasProgress = bActiveHasProgress;
 	if (pbWasError)
 		*pbWasError = bWasError;
+	if (pbWasIndeterminate)
+		*pbWasIndeterminate = bWasIndeterminate;
 
 	return (nProgress >= 0);
 }
@@ -1537,9 +1545,11 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 //	return false;
 //}
 
-bool CVConGroup::OnCloseQuery()
+bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
 {
 	int nEditors = 0, nProgress = 0, i, nConsoles = 0;
+	if (rbMsgConfirmed)
+		*rbMsgConfirmed = false;
 
 	for (i = ((int)countof(gp_VCon)-1); i >= 0; i--)
 	{
@@ -1564,23 +1574,49 @@ bool CVConGroup::OnCloseQuery()
 
 	if (nProgress || nEditors || (gpSet->isCloseConsoleConfirm && (nConsoles > 1)))
 	{
-		wchar_t szText[255], *pszText;
+		wchar_t szText[360], *pszText;
 		//wcscpy_c(szText, L"Close confirmation.\r\n\r\n");
-		_wsprintf(szText, SKIPLEN(countof(szText)) L"About to close %u console%s.\r\n\r\n", nConsoles, (nConsoles>1)?L"s":L"");
+		_wsprintf(szText, SKIPLEN(countof(szText)) L"About to close %u console%s.\r\n", nConsoles, (nConsoles>1)?L"s":L"");
 		pszText = szText+_tcslen(szText);
 
-		if (nProgress) { _wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", nProgress); pszText += _tcslen(pszText); }
+		if (nProgress || nEditors)
+		{
+			*(pszText++) = L'\r'; *(pszText++) = L'\n'; *(pszText) = 0;
 
-		if (nEditors) { _wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", nEditors); pszText += _tcslen(pszText); }
+			if (nProgress)
+			{
+				_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", nProgress);
+				pszText += _tcslen(pszText);
+			}
+			if (nEditors)
+			{
+				_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", nEditors);
+				pszText += _tcslen(pszText);
+			}
+		}
 
-		lstrcpy(pszText, L"\r\nProceed with close ConEmu?");
-		int nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), MB_OKCANCEL|MB_ICONEXCLAMATION);
+		lstrcpy(pszText,
+				L"\r\nPress button <No> to close active console only\r\n"
+				L"\r\nProceed with close ConEmu?");
 
-		if (nBtn != IDOK)
+		int nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), MB_YESNOCANCEL|MB_ICONEXCLAMATION);
+
+		if (nBtn == IDNO)
+		{
+			if (gp_VActive)
+			{
+				gp_VActive->RCon()->CloseConsole(false, false);
+			}
+			return false; // Don't close others!
+		}
+		else if (nBtn != IDYES)
 		{
 			gpConEmu->mb_CloseGuiConfirmed = false;
 			return false; // не закрывать
 		}
+
+		if (rbMsgConfirmed)
+			*rbMsgConfirmed = true;
 
 		gpConEmu->mb_CloseGuiConfirmed = true;
 	}
@@ -1722,6 +1758,15 @@ bool CVConGroup::OnScClose()
 {
 	bool lbAllowed = false;
 	int nConCount = 0, nDetachedCount = 0;
+	bool lbProceed = false, lbMsgConfirmed = false;
+
+	if (!OnCloseQuery(&lbMsgConfirmed))
+		return false; // не закрывать
+
+	bool bConfirmEach = (lbMsgConfirmed || !gpSet->isCloseConsoleConfirm) ? false : true;
+
+	// Сохраним размер перед закрытием консолей, а то они могут напакостить и "вернуть" старый размер
+	gpSet->SaveSizePosOnExit();
 		
 	for (int i = (int)(countof(gp_VCon)-1); i >= 0; i--)
 	{
@@ -1737,7 +1782,7 @@ bool CVConGroup::OnScClose()
 
 			if (gp_VCon[i]->RCon()->ConWnd())
 			{
-				gp_VCon[i]->RCon()->CloseConsole(false, false);
+				gp_VCon[i]->RCon()->CloseConsole(false, bConfirmEach);
 			}
 		}
 	}
@@ -3675,4 +3720,77 @@ void CVConGroup::ReSizePanes(RECT mainClient)
 	rcNewCon = gpConEmu->CalcRect(CER_WORKSPACE, mainClient, CER_MAINCLIENT, pVCon);
 
 	CVConGroup::MoveAllVCon(pVCon, rcNewCon);
+}
+
+bool CVConGroup::isInGroup(CVirtualConsole* apVCon, CVConGroup* apGroup)
+{
+	if (!apVCon)
+		return false;
+	if (!apGroup)
+		return true;
+
+	CVConGroup* pGr = ((CVConGroup*)apVCon->mp_Group);
+	while (pGr)
+	{
+		if (pGr == apGroup)
+			return true;
+		pGr = pGr->mp_Parent;
+	}
+
+	return false;
+}
+
+wchar_t* CVConGroup::GetTasks(CVConGroup* apRoot /*= NULL*/)
+{
+	wchar_t* pszAll = NULL;
+	wchar_t* pszTask[MAX_CONSOLE_COUNT] = {};
+	size_t nTaskLen[MAX_CONSOLE_COUNT] = {};
+	size_t t = 0, i, nAllLen = 0;
+
+	for (i = 0; i < countof(gp_VCon); i++)
+	{
+		CVConGuard VCon;
+		if (!GetVCon(i, &VCon))
+			break;
+		if (!isInGroup(VCon.VCon(), apRoot))
+			continue;
+
+		wchar_t* pszCmd = VCon->RCon()->CreateCommandLine(true);
+		if (!pszCmd)
+			continue;
+		if (!*pszCmd)
+		{
+			SafeFree(pszCmd);
+			continue;
+		}
+
+		size_t nLen = nTaskLen[t] = _tcslen(pszCmd);
+		pszTask[t++] = pszCmd;
+		nAllLen += nLen + 4; // + "\r\n\r\n"
+	}
+
+	if (nAllLen == NULL)
+		return NULL; // Nothing to return
+
+	nAllLen += 2;
+	pszAll = (wchar_t*)malloc(nAllLen*sizeof(*pszAll));
+	if (!pszAll)
+		return NULL;
+	wchar_t* psz = pszAll;
+
+	for (i = 0; i < countof(gp_VCon) && pszTask[i]; i++)
+	{
+		if (i)
+			_wcscpy_c(psz, 3, L"\r\n");
+		if (gp_VCon[i] == gp_VActive)
+			*(psz++) = L'>';
+		_wcscpy_c(psz, nTaskLen[i]+1, pszTask[i]);
+		psz += nTaskLen[i];
+		_wcscpy_c(psz, 3, L"\r\n");
+		psz += _tcslen(psz);
+		SafeFree(pszTask[i]);
+	}
+
+	*psz = 0; // ASCIIZ
+	return pszAll;
 }

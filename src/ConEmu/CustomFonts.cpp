@@ -260,7 +260,10 @@ public:
 
 		int iCharIndex = -1;
 		int iXOffset = 0, iYOffset = 0;
-		int iCharWidth = 0, iCharHeight = 0, iCharXOffset = 0, iCharYOffset = 0;
+		DEBUGTEST(int iCharWidth = 0);
+		int iCharHeight = 0;
+		int iCharXOffset = 0;
+		int iCharYOffset = 0;
 
 
 		while ((pszCur < pszFileEnd) && *pszCur)
@@ -308,11 +311,7 @@ public:
 			else
 			if (lstrcmpA(szWord, "BBX") == 0)
 			{
-				//getline(iss, word, ' '); iCharWidth = atoi(word.c_str());
-				//getline(iss, word, ' '); iCharHeight = atoi(word.c_str());
-				//getline(iss, word, ' '); iCharXOffset = atoi(word.c_str());
-				//getline(iss, word, ' '); iCharYOffset = atoi(word.c_str());
-				NextWord(szLine, szWord); iCharWidth = strtol(szWord, &pszEnd, 10);
+				NextWord(szLine, szWord); DEBUGTEST(iCharWidth = strtol(szWord, &pszEnd, 10));
 				NextWord(szLine, szWord); iCharHeight = strtol(szWord, &pszEnd, 10);
 				NextWord(szLine, szWord); iCharXOffset = strtol(szWord, &pszEnd, 10);
 				NextWord(szLine, szWord); iCharYOffset = strtol(szWord, &pszEnd, 10);
@@ -326,7 +325,7 @@ public:
 				int x = b->m_Width  * (iCharIndex % 256) + iCharXOffset + iXOffset;
 				int y = b->m_Height * (iCharIndex / 256) + b->m_Height - iCharYOffset + iYOffset - iCharHeight;
 
-				for (int iRow=0; iRow<iCharHeight; iRow++)
+				for (int iRow = 0; iRow < iCharHeight; iRow++)
 				{
 					int by = y*b->m_Width*256;
 					NextLine(pszCur, szLine);
@@ -368,9 +367,6 @@ public:
 		if (!pszCur)
 			return false;
 
-		//familyName.clear();
-		//std::string s;
-		//static const std::string FAMILY_NAME("FAMILY_NAME \"");
 		const char* FAMILY_NAME = "FAMILY_NAME \"";
 		int FAMILY_NAME_LEN = lstrlenA(FAMILY_NAME);
 		//static const std::string FONT("FONT ");
@@ -381,34 +377,23 @@ public:
 		while ((pszCur < pszFileEnd) && *pszCur)
 		{
 			NextLine(pszCur, szLine);
-			//getline(f, s);
-			//if (s.compare(0, FAMILY_NAME.size(), FAMILY_NAME)==0)
+
 			if (memcmp(szLine, FAMILY_NAME, FAMILY_NAME_LEN) == 0)
 			{
-				//familyName = s.substr(FAMILY_NAME.size(), s.size()-1-FAMILY_NAME.size());
 				lstrcpynA(szFamilyName, szLine + FAMILY_NAME_LEN, countof(szFamilyName));
 				char *psz = strchr(szFamilyName, '"');
 				if (psz)
 					*psz = 0;
 				goto wrap;
 			}
-			//else
-			//if (s.compare(0, FONT.size(), FONT)==0)
 			else if (memcmp(szLine, FONT, FONT_LEN) == 0)
 			{
-				//s.erase(0, FONT.size());
-
-				//std::istringstream iss(s);
-				//std::istringstream iss(szLine + FONT_LEN);
-				//std::string word;
 				// из строки
 				// FONT -Schumacher-Clean-Medium-R-Normal--12-120-75-75-C-60-ISO10646-1
 				// нам нужно выкусить "Clean"
 				for (int n=0; n<3; n++)
 					NextWord(szLine, szWord);
-					//getline(iss, word, '-');
-				//familyName = word;
-				//lstrcpynA(szFamilyName, word.c_str(), countof(szFamilyName));
+
 				lstrcpynA(szFamilyName, szWord, countof(szFamilyName));
 
 				// Keep looking for FAMILY_NAME
@@ -522,29 +507,17 @@ wrap:
 
 BOOL BDF_GetFamilyName(LPCTSTR lpszFilePath, wchar_t (&rsFamilyName)[LF_FACESIZE])
 {
-	//std::ifstream f(lpszFilePath);
-	//if (!f.is_open())
-	//	return FALSE;
-
 	if (!BDFFont::GetFamilyName(lpszFilePath, rsFamilyName))
 	{
 		lstrcpyn(rsFamilyName, PointToName(lpszFilePath), LF_FACESIZE);
 		return TRUE;
 	}
 
-	//if (familyName.size() >= LF_FACESIZE)
-	//	familyName.erase(LF_FACESIZE-1);
-	//std::copy(familyName.begin(), familyName.end(), rsFamilyName);
-	//rsFamilyName[familyName.size()] = 0;
 	return TRUE;
 }
 
 CustomFont* BDF_Load( LPCTSTR lpszFilePath )
 {
-	//std::ifstream f(lpszFilePath);
-	//if (!f.is_open())
-	//	return NULL;
-	//return BDFFont::Load(f);
 	return BDFFont::Load(lpszFilePath);
 }
 

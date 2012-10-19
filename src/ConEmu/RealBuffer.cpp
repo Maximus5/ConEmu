@@ -1852,7 +1852,11 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 	const CESERVER_REQ_CONINFO_INFO* pInfo = NULL;
 	CESERVER_REQ_HDR cmd; ExecutePrepareCmd(&cmd, CECMD_CONSOLEDATA, sizeof(cmd));
 
-	if (!mp_RCon->m_ConsoleMap.IsValid())
+	if (mp_RCon->mb_SwitchActiveServer)
+	{
+		// Skip this step. Waiting for new console server.
+	}
+	else if (!mp_RCon->m_ConsoleMap.IsValid())
 	{
 		_ASSERTE(mp_RCon->m_ConsoleMap.IsValid());
 	}
@@ -2709,8 +2713,10 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 				AppendMenu(h, MF_STRING|((!(i % 4)) ? MF_MENUBREAK : 0), i+1, szText);
 			}
 
+			RECT rcExcl = {con.ptRClick4KeyBar.x-1,con.ptRClick4KeyBar.y-1,con.ptRClick4KeyBar.x+1,con.ptRClick4KeyBar.y+1};
+
 			int i = gpConEmu->trackPopupMenu(tmp_KeyBar, h, TPM_LEFTALIGN|TPM_BOTTOMALIGN|/*TPM_NONOTIFY|*/TPM_RETURNCMD|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
-						con.ptRClick4KeyBar.x, con.ptRClick4KeyBar.y, 0, ghWnd, NULL);
+						con.ptRClick4KeyBar.x, con.ptRClick4KeyBar.y, ghWnd, &rcExcl);
 			DestroyMenu(h);
 
 			if ((i > 0) && (i <= (int)countof(gnKeyBarFlags)))

@@ -176,6 +176,7 @@ public:
 	LPCWSTR GetSettingName(CEStatusItems nID);
 
 	bool GetStatusBarClientRect(RECT* rc);
+	bool GetStatusBarItemRect(CEStatusItems nID, RECT* rc);
 
 	void UpdateStatusFont();
 };

@@ -660,9 +660,9 @@ class CConEmuMain :
 		HMENU CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly);
 		HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew, HMENU& hTerminate);
 		void setFocus();
-		void StartDebugLogConsole();
-		void StartDebugActiveProcess();
-		void MemoryDumpActiveProcess();
+		bool StartDebugLogConsole();
+		bool StartDebugActiveProcess();
+		bool MemoryDumpActiveProcess();
 		//void StartLogCreateProcess();
 		//void StopLogCreateProcess();
 		//void UpdateLogCreateProcess();
@@ -673,7 +673,7 @@ class CConEmuMain :
 		void SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout);
 		//void TabCommand(UINT nTabCmd);
 		BOOL TrackMouse();
-		int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, RECT *prcRect);
+		int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, HWND hWnd, RECT *prcRect = NULL);
 		void Update(bool isForce = false);
 		void UpdateActiveGhost(CVirtualConsole* apVCon);
 		void UpdateFarSettings();
@@ -700,7 +700,6 @@ class CConEmuMain :
 		void OnAlwaysShowScrollbar(bool abSync = true);
 		void OnBufferHeight();
 		bool DoClose();
-		BOOL OnCloseQuery();
 		//BOOL mb_InConsoleResize;
 		void OnConsoleKey(WORD vk, LPARAM Mods);
 		void OnConsoleResize(BOOL abPosted=FALSE);

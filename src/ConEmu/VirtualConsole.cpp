@@ -4874,7 +4874,7 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur, DWORD Align /* = TPM_LEFTALIGN 
 	
 	int nCmd = gpConEmu->trackPopupMenu(tmp_VCon, mh_PopupMenu,
 	                          Align | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
-	                          ptCur.x, ptCur.y, 0, ghWnd, NULL);
+	                          ptCur.x, ptCur.y, ghWnd);
 
 	if (!nCmd)
 		return; // отмена

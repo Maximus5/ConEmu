@@ -960,6 +960,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		bool bAllowPreserveClient = mb_AllowPreserveClient && (memcmp(r, r+1, sizeof(*r)) == 0);
 
 		// We need to call this, otherwise some parts of window may be broken
+		// If don't - system will not draw window caption when theming is off
 		lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 		RECT rcWnd = {0,0, r[0].right-r[0].left, r[0].bottom-r[0].top};

@@ -243,7 +243,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		if (hPipe != INVALID_HANDLE_VALUE)
 			break; // OK, открыли
 
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		if (gbPipeDebugBoxes)
 		{
 			szDbgMsg[0] = 0;
@@ -254,7 +254,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 			if (nBtn == IDCANCEL)
 				return NULL;
 		}
-#endif
+		#endif
 
 		nDuration = GetTickCount() - dwStartTick;
 
@@ -263,6 +263,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 			if ((nTries > 0) && (nDuration < nOpenPipeTimeout))
 			{
 				bWaitCalled = TRUE;
+
 				// All pipe instances are busy, so wait for 500 ms.
 				bWaitPipeRc = WaitNamedPipe(szPipeName, 500);
 				nWaitPipeErr = GetLastError();
@@ -370,6 +371,9 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		return NULL;
 	}
 #endif
+
+	UNREFERENCED_PARAMETER(bWaitCalled);
+	UNREFERENCED_PARAMETER(fSuccess);
 
 	return hPipe;
 }
@@ -531,7 +535,7 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 	bool bEnabled = false;
 	if (!pSrvMap)
 	{
-		static bool bWasEnabled = false;
+		DEBUGTEST(static bool bWasEnabled = false);
 		static DWORD nLastWasEnabledTick = 0;
 
 		// „тобы проверки слишком часто не делать
@@ -550,7 +554,7 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 			nLastWasEnabledTick = GetTickCount();
 		}
 
-		bWasEnabled = bEnabled;
+		DEBUGTEST(bWasEnabled = bEnabled);
 	}
 	else
 	{

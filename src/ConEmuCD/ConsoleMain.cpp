@@ -7029,6 +7029,12 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 		}
 	}
 
+	if (lbRc)
+	{
+		// Иначе если прихлопывается процесс - будет "Press enter to close console"
+		DisableAutoConfirmExit();
+	}
+
 	int nOutSize = sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD);
 	*out = ExecuteNewCmd(CECMD_TERMINATEPID,nOutSize);
 

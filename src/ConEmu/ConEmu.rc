@@ -1130,8 +1130,8 @@ BEGIN
     EDITTEXT        tCmdGroupName,109,29,208,12,ES_AUTOHSCROLL
     LTEXT           "Commands (application, arguments, ""-new_console"" params)\nDelimit commands with empty lines\nEach command creates tab in ConEmu when group started\nMark active console tab with '>' sign\nStart console 'As Administrator' with '*' sign",stCmdGroupCommands,111,71,208,41
     EDITTEXT        tCmdGroupCommands,109,113,208,64,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
-    PUSHBUTTON      "&Add Tab...",cbCmdGroupApp,109,180,57,14
-    PUSHBUTTON      "Add file path...",cbCmdTasksParm,249,180,68,14
+    PUSHBUTTON      "Tab...",cbCmdGroupApp,132,180,34,14
+    PUSHBUTTON      "File path...",cbCmdTasksParm,221,180,47,14
     PUSHBUTTON      "+",cbCmdTasksAdd,9,180,17,14
     PUSHBUTTON      "-",cbCmdTasksDel,27,180,17,14
     PUSHBUTTON      "Up",cbCmdTasksUp,47,180,27,14
@@ -1144,7 +1144,9 @@ BEGIN
     PUSHBUTTON      "Update Now!",cbCmdTaskbarUpdate,259,211,58,14
     LTEXT           "Task parameters. Example: /dir ""C:\\"" /icon ""cmd.exe"" /single",stCmdGroupGuiArg,111,44,208,8
     EDITTEXT        tCmdGroupGuiArg,110,54,208,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "Add startup dir...",cbCmdTasksDir,171,180,73,14
+    PUSHBUTTON      "Startup dir...",cbCmdTasksDir,167,180,53,14
+    RTEXT           "Add:",stCmdTaskAdd,106,184,21,8
+    PUSHBUTTON      "Active tabs",cbCmdTasksActive,270,180,49,14
 END
 
 IDD_SPG_APPDISTINCT DIALOGEX 0, 0, 328, 235

@@ -175,7 +175,7 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 		else if (!lstrcmpi(szFunction, L"Status") || !lstrcmpi(szFunction, L"StatusBar") || !lstrcmpi(szFunction, L"StatusControl"))
 			pszResult = Status(asMacro, apRCon);
 		else
-			pszResult = NULL; // Неизвестная функция
+			pszResult = lstrdup(L"UnknownMacro"); // Неизвестная функция
 
 		if (!pszAllResult)
 		{
@@ -798,19 +798,23 @@ LPWSTR CConEmuMacro::Print(LPWSTR asArgs, CRealConsole* apRCon)
 LPWSTR CConEmuMacro::Progress(LPWSTR asArgs, CRealConsole* apRCon)
 {
 	int nType = 0, nValue = 0;
+	LPWSTR pszName = NULL;
 	if (!apRCon)
 		return lstrdup(L"InvalidArg");
 
 	if (GetNextInt(asArgs, nType))
 	{
-		if (!(nType == 0 || nType == 1 || nType == 2))
+		if (!(nType >= 0 && nType <= 5))
 		{
 			return lstrdup(L"InvalidArg");
 		}
 
-		GetNextInt(asArgs, nValue);
+		if (nType <= 2)
+			GetNextInt(asArgs, nValue);
+		else if (nType == 4 || nType == 5)
+			GetNextString(asArgs, pszName);
 
-		apRCon->SetProgress(nType, nValue);
+		apRCon->SetProgress(nType, nValue, pszName);
 
 		return lstrdup(L"OK");
 	}

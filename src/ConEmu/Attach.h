@@ -57,7 +57,7 @@ protected:
 	CProcessData *mp_ProcessData;
 	BOOL  mb_IsWin64;
 protected:
-	void OnStartAttach();
+	bool OnStartAttach();
 	static bool StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType, BOOL abAltMode);
 public:
 	static DWORD WINAPI StartAttachThread(AttachParm* lpParam);

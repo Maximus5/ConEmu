@@ -1032,7 +1032,8 @@ void CStatus::ShowStatusSetupMenu()
 	while (true)
 	{
 		mb_InSetupMenu = true;
-		int nCmd = gpConEmu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_LEFTALIGN|TPM_RETURNCMD, ptCur.x, ptCur.y, 0, ghWnd, NULL);
+		// Popup menu with columns list
+		int nCmd = gpConEmu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_LEFTALIGN|TPM_RETURNCMD, ptCur.x, ptCur.y, ghWnd);
 		mb_InSetupMenu = false;
 
 		if (nCmd == ((int)countof(gStatusCols)+1))
@@ -1680,7 +1681,13 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 	_ASSERTE(m_ClickedItemDesc == csi_Transparency);
 	m_ClickedItemDesc = csi_Transparency;
 
-	int nCmd = gpConEmu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_RIGHTALIGN|TPM_RETURNCMD, pt.x, pt.y, 0, ghWnd, NULL);
+	RECT rcExcl;
+	if (!GetStatusBarItemRect(csi_Transparency, &rcExcl))
+		rcExcl = MakeRect(pt.x-1, pt.y-1, pt.x+1, pt.y+1);
+	else
+		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcExcl, 2);
+
+	int nCmd = gpConEmu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_RIGHTALIGN|TPM_RETURNCMD, pt.x, pt.y, ghWnd, &rcExcl);
 
 	bool bSelected = ProcessTransparentMenuId(nCmd, false);
 
@@ -1737,4 +1744,26 @@ bool CStatus::GetStatusBarClientRect(RECT* rc)
 
 	*rc = rcClient;
 	return true;
+}
+
+// Прямоугольник в клиентских координатах ghWnd!
+bool CStatus::GetStatusBarItemRect(CEStatusItems nID, RECT* rc)
+{
+	if (!gpSet->isStatusBarShow)
+		return false;
+
+	for (size_t i = 0; i < countof(m_Items); i++)
+	{
+		if (m_Items[i].bShow && (m_Items[i].nID == nID))
+		{
+			if (rc)
+				*rc = m_Items[i].rcClient;
+			return true;
+		}
+	}
+
+	if (rc)
+		GetStatusBarClientRect(rc);
+
+	return false;
 }

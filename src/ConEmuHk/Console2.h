@@ -52,7 +52,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 
 
 	if (ptrAllocated)
-		*ptrAllocated = NULL;
+		*ptrAllocated = 0;
 	if (pnAllocated)
 		*pnAllocated = 0;
 
@@ -392,6 +392,8 @@ wrap:
 		_ASSERTE(iRc == 0);
 	}
 #endif
+
+	UNREFERENCED_PARAMETER(dwErrCode);
 
 	return iRc;
 }

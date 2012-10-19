@@ -1354,7 +1354,9 @@ CESERVER_REQ* CRealServer::cmdSetProgress(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 	bool lbOk = false;
 	if (nDataSize >= 2*sizeof(pIn->wData[0]))
 	{
-		mp_RCon->SetProgress(pIn->wData[0], pIn->wData[1]);
+		LPCWSTR pszName = (nDataSize >= 4*sizeof(pIn->wData[0])) ? (LPCWSTR)(pIn->wData+2) : NULL;
+
+		mp_RCon->SetProgress(pIn->wData[0], pIn->wData[1], pszName);
 	}
 	
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));

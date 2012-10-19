@@ -118,7 +118,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 #ifndef CONEMUHK_EXPORTS
 	_ASSERTE(FALSE)
 #endif
-	DWORD dwErr = 0; //, dwWait = 0;
+	//DWORD dwErr = 0; //, dwWait = 0;
 	wchar_t szPluginPath[MAX_PATH*2], *pszSlash;
 	//HANDLE hFile = NULL;
 	//wchar_t* pszPathInProcess = NULL;
@@ -126,17 +126,18 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	//HANDLE hThread = NULL; DWORD nThreadID = 0;
 	//LPTHREAD_START_ROUTINE ptrLoadLibrary = NULL;
 	_ASSERTE(ghOurModule!=NULL);
-	BOOL is64bitOs = FALSE, isWow64process = FALSE;
+	BOOL is64bitOs = FALSE;
+	//BOOL isWow64process = FALSE;
 	int  ImageBits = 32; //-V112
 	//DWORD ImageSubsystem = 0;
-	isWow64process = FALSE;
+	//isWow64process = FALSE;
 #ifdef WIN64
 	is64bitOs = TRUE;
 #endif
 	// для проверки IsWow64Process
 	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 	HMODULE hNtDll = NULL;
-	int iFindAddress = 0;
+	DEBUGTEST(int iFindAddress = 0);
 	//bool lbInj = false;
 	//UINT_PTR fnLoadLibrary = NULL;
 	//DWORD fLoadLibrary = 0;
@@ -178,9 +179,9 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	if (!GetModuleFileName(ghOurModule, szPluginPath, MAX_PATH))
 	{
 		#ifdef _DEBUG
+		DWORD dwErr = GetLastError();
 		_CrtDbgBreak();
 		#endif
-		dwErr = GetLastError();
 		//_printf("GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
 		iRc = -501;
 		goto wrap;
@@ -267,7 +268,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 			_ASSERTE(dwPidWait != WAIT_OBJECT_0);
 		}
 		// Требуется 64битный(32битный?) comspec для установки хука
-		iFindAddress = -1;
+		DEBUGTEST(iFindAddress = -1);
 		HANDLE hProcess = NULL, hThread = NULL;
 		DuplicateHandle(GetCurrentProcess(), pi.hProcess, GetCurrentProcess(), &hProcess, 0, TRUE, DUPLICATE_SAME_ACCESS);
 		DuplicateHandle(GetCurrentProcess(), pi.hThread, GetCurrentProcess(), &hThread, 0, TRUE, DUPLICATE_SAME_ACCESS);
@@ -375,7 +376,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 			//IMAGE_DOS_HEADER dos_hdr = {}; SIZE_T cch_dos_read = 0;
 			//BOOL bRead = ::ReadProcessMemory(pi.hProcess, (LPVOID)(DWORD_PTR)hKernel, &dos_hdr, sizeof(dos_hdr), &cch_dos_read);
 
-			DWORD_PTR ptrAllocated = NULL; DWORD nAllocated = 0;
+			DWORD_PTR ptrAllocated = 0; DWORD nAllocated = 0;
 			//iRc = bRead ? InjectHookDLL(pi, gfnLoadLibrary, ImageBits, szPluginPath, &ptrAllocated, &nAllocated) : -1000;
 			InjectHookFunctions fnArg = {hKernel, gfnLoadLibrary, hNtDll, gfnLdrGetDllHandleByName};
 			iRc = InjectHookDLL(pi, &fnArg, ImageBits, szPluginPath, &ptrAllocated, &nAllocated);

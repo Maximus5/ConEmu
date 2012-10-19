@@ -177,6 +177,10 @@ WORD gnConsolePopupColors = 0x003E;
 int  gnPowerShellProgressValue = -1;
 /* ************ Globals for powershell ************ */
 
+/* ************ Globals for bash ************ */
+bool gbIsBashProcess = false;
+/* ************ Globals for bash ************ */
+
 
 struct ReadConsoleInfo gReadConsoleInfo = {};
 
@@ -243,6 +247,7 @@ BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuf
 BOOL WINAPI OnAllocConsole(void);
 BOOL WINAPI OnFreeConsole(void);
 HWND WINAPI OnGetConsoleWindow();
+BOOL WINAPI OnGetConsoleMode(HANDLE hConsoleHandle,LPDWORD lpMode);
 BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes);
@@ -349,6 +354,7 @@ bool InitHooksCommon()
 		/* ***** MOST CALLED ***** */
 		#ifndef HOOKS_COMMON_PROCESS_ONLY
 		{(void*)OnGetConsoleWindow,     "GetConsoleWindow",     kernel32},
+		{(void*)OnGetConsoleMode,		"GetConsoleMode",		kernel32},
 		//{(void*)OnWriteConsoleOutputWx,	"WriteConsoleOutputW",  kernel32},
 		//{(void*)OnWriteConsoleOutputAx,	"WriteConsoleOutputA",  kernel32},
 		{(void*)OnWriteConsoleOutputW,	"WriteConsoleOutputW",  kernel32},
@@ -3917,6 +3923,28 @@ HWND WINAPI OnGetConsoleWindow(void)
 	HWND h;
 	h = F(GetConsoleWindow)();
 	return h;
+}
+
+BOOL WINAPI OnGetConsoleMode(HANDLE hConsoleHandle,LPDWORD lpMode)
+{
+	typedef BOOL (WINAPI* OnGetConsoleMode_t)(HANDLE,LPDWORD);
+	ORIGINALFAST(GetConsoleMode);
+	BOOL b;
+
+	#if 0
+	if (gbIsBashProcess)
+	{
+		if (lpMode)
+			*lpMode = 0;
+		b = FALSE;
+	}
+	else
+	#endif
+	{
+		b = F(GetConsoleMode)(hConsoleHandle,lpMode);
+	}
+
+	return b;
 }
 
 

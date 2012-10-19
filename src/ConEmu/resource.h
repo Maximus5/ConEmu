@@ -851,6 +851,9 @@
 #define stHideCaptionAlwaysFrame        2490
 #define cbTaskbarShield                 2491
 #define vkPasteCygwin                   2492
+#define stCmdTaskAdd                    2492
+#define IDC_BUTTON1                     2493
+#define cbCmdTasksActive                2493
 
 // Next default values for new objects
 // 
@@ -858,7 +861,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2492
+#define _APS_NEXT_CONTROL_VALUE         2494
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

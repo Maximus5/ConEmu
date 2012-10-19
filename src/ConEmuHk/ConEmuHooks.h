@@ -122,8 +122,12 @@ extern WORD gnConsolePopupColors;
 extern int  gnPowerShellProgressValue;
 /* ************ Globals for powershell ************ */
 
+/* ************ Globals for bash ************ */
+extern bool gbIsBashProcess;
+/* ************ Globals for bash ************ */
+
 bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
-void GuiSetProgress(WORD st, WORD pr);
+void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName = NULL);
 BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo, BOOL bForced = FALSE);
 BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced = FALSE);
 

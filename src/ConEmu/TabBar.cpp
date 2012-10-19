@@ -3002,6 +3002,7 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 	}
 
 	RECT rcBtnRect = {0};
+	LPRECT lpExcl = NULL;
 	DWORD nAlign = TPM_RIGHTALIGN|TPM_TOPALIGN;
 
 	if (ptWhere)
@@ -3015,6 +3016,7 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 	{
 		SendMessage(mh_Toolbar, TB_GETRECT, TID_CREATE_CON, (LPARAM)&rcBtnRect);
 		MapWindowPoints(mh_Toolbar, NULL, (LPPOINT)&rcBtnRect, 2);
+		lpExcl = &rcBtnRect;
 	}
 	else
 	{
@@ -3026,7 +3028,7 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 
 	mb_InNewConPopup = true;
 	int nId = gpConEmu->trackPopupMenu(tmp_Cmd, hPopup, nAlign|TPM_RETURNCMD/*|TPM_NONOTIFY*/,
-	                         rcBtnRect.right,rcBtnRect.bottom, 0, ghWnd, NULL);
+	                         rcBtnRect.right,rcBtnRect.bottom, ghWnd, lpExcl);
 	mb_InNewConPopup = false;
 	//gpConEmu->mp_Tip->HideTip();
 	

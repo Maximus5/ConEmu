@@ -188,6 +188,7 @@ namespace SettingsNS
 	const WCHAR* szCRLF[] = {L"CR+LF", L"LF", L"CR"};
 	const DWORD  nCRLF[] =  {0, 1, 2};
 	const WORD nSizeCtrlId[] = {tWndWidth, stWndWidth, tWndHeight, stWndHeight};
+	const WORD nTaskCtrlId[] = {tCmdGroupName, tCmdGroupGuiArg, tCmdGroupCommands, stCmdTaskAdd, cbCmdGroupApp, cbCmdTasksDir, cbCmdTasksParm, cbCmdTasksActive};
 };
 
 #define FillListBox(hDlg,nDlgID,Items,Values,Value) \
@@ -5076,6 +5077,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCmdGroupApp:
 		case cbCmdTasksParm:
 		case cbCmdTasksDir:
+		case cbCmdTasksActive:
 		case cbCmdTasksReload:
 		case cbCmdTaskbarTasks:
 		case cbCmdTaskbarCommands:
@@ -5485,6 +5487,17 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 				}
 
 				CoTaskMemFree(pRc);
+			}
+		}
+		break;
+
+	case cbCmdTasksActive:
+		{
+			wchar_t* pszTasks = CVConGroup::GetTasks(NULL); // вернуть все открытые таски
+			if (pszTasks)
+			{
+				SendDlgItemMessage(hWnd2, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszTasks);
+				SafeFree(pszTasks);
 			}
 		}
 		break;
@@ -6494,6 +6507,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		int iCur = (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCURSEL, 0,0);
 		if (iCur >= 0)
 			pCmd = gpSet->CmdTaskGet(iCur);
+		BOOL lbEnable = FALSE;
 		if (pCmd)
 		{
 			_ASSERTE(pCmd->pszName);
@@ -6504,23 +6518,16 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			SafeFree(pszNoBrk);
 			SetDlgItemText(hWnd2, tCmdGroupGuiArg, pCmd->pszGuiArgs ? pCmd->pszGuiArgs : L"");
 			SetDlgItemText(hWnd2, tCmdGroupCommands, pCmd->pszCommands ? pCmd->pszCommands : L"");
-			EnableWindow(GetDlgItem(hWnd2, tCmdGroupName), TRUE);
-			EnableWindow(GetDlgItem(hWnd2, tCmdGroupGuiArg), TRUE);
-			EnableWindow(GetDlgItem(hWnd2, tCmdGroupCommands), TRUE);
-			EnableWindow(GetDlgItem(hWnd2, cbCmdGroupApp), TRUE);
-			EnableWindow(GetDlgItem(hWnd2, cbCmdTasksParm), TRUE);
+			lbEnable = TRUE;
 		}
 		else
 		{
 			SetDlgItemText(hWnd2, tCmdGroupName, L"");
 			SetDlgItemText(hWnd2, tCmdGroupGuiArg, L"");
 			SetDlgItemText(hWnd2, tCmdGroupCommands, L"");
-			EnableWindow(GetDlgItem(hWnd2, tCmdGroupName), FALSE);
-			EnableWindow(GetDlgItem(hWnd2, tCmdGroupGuiArg), FALSE);
-			EnableWindow(GetDlgItem(hWnd2, tCmdGroupCommands), FALSE);
-			EnableWindow(GetDlgItem(hWnd2, cbCmdGroupApp), FALSE);
-			EnableWindow(GetDlgItem(hWnd2, cbCmdTasksParm), FALSE);
 		}
+		for (size_t i = 0; i < countof(SettingsNS::nTaskCtrlId); i++)
+			EnableWindow(GetDlgItem(hWnd2, SettingsNS::nTaskCtrlId[i]), lbEnable);
 		mb_IgnoreCmdGroupEdit = false;
 
 		break;

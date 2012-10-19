@@ -99,6 +99,7 @@ public:
 	static bool isValid(CRealConsole* apRCon);
 	static bool isValid(CVirtualConsole* apVCon);
 	static bool isVConExists(int nIdx);
+	static bool isInGroup(CVirtualConsole* apVCon, CVConGroup* apGroup);
 	static bool isConSelectMode();
 	static bool isFilePanel(bool abPluginAllowed=false);
 	static bool isNtvdm(BOOL abCheckAllConsoles=FALSE);
@@ -117,7 +118,7 @@ public:
 	static int  GetVConIndex(CVirtualConsole* apVCon);
 	static bool GetVCon(int nIdx, CVConGuard* pVCon = NULL);
 	static bool GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon = NULL);
-	static bool GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, BOOL* pbWasError);
+	static bool GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, BOOL* pbWasError, BOOL* pbWasIndeterminate);
 
 	static void StopSignalAll();
 	static void DestroyAllVCon();
@@ -125,7 +126,7 @@ public:
 	static void OnUpdateScrollInfo();
 	static void OnUpdateFarSettings();
 	static void OnUpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
-	static bool OnCloseQuery();
+	static bool OnCloseQuery(bool* rbMsgConfirmed = NULL);
 	static bool OnScClose();
 	static void OnDestroyConEmu();
 	static void OnVConClosed(CVirtualConsole* apVCon);
@@ -183,6 +184,8 @@ public:
 	static uint TextHeight();
 
 	static RECT AllTextRect(bool abMinimal = false);
+
+	static wchar_t* GetTasks(CVConGroup* apRoot = NULL);
 
 //public:
 //	bool ResizeConsoles(const RECT &rFrom, enum ConEmuRect tFrom);

@@ -153,7 +153,7 @@ void CAttachDlg::Close()
 	}
 }
 
-void CAttachDlg::OnStartAttach()
+bool CAttachDlg::OnStartAttach()
 {
 	bool lbRc = false;
 	// Тут нужно получить инфу из списка и дернуть собственно аттач
@@ -234,6 +234,8 @@ void CAttachDlg::OnStartAttach()
 wrap:
 	if (hThread)
 		CloseHandle(hThread);
+
+	return lbRc;
 }
 
 BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
@@ -755,6 +757,8 @@ DoExecute:
 
 	lbRc = true;
 wrap:
+	UNREFERENCED_PARAMETER(nErrCode);
+	UNREFERENCED_PARAMETER(nWrapperWait);
 	ExecuteFreeResult(pIn);
 	ExecuteFreeResult(pOut);
 	return lbRc;

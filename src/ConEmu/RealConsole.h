@@ -469,9 +469,10 @@ class CRealConsole
 		//bool isPackets();
 		LPCWSTR GetCmd();
 		LPCWSTR GetDir();
+		wchar_t* CreateCommandLine(bool abForTasks = false);
 		BOOL GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, BOOL* pbRestricted);
-		short GetProgress(BOOL* rpbError, BOOL* rpbNotFromTitle = NULL);
-		bool SetProgress(short nState, short nValue);
+		short GetProgress(int* rpnState/*1-error,2-ind*/, BOOL* rpbNotFromTitle = NULL);
+		bool SetProgress(short nState, short nValue, LPCWSTR pszName = NULL);
 		void UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo);
 		void UpdateFarSettings(DWORD anFarPID=0);
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
@@ -576,6 +577,7 @@ class CRealConsole
 		HANDLE mh_TermEvent, mh_ApplyFinished;
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
+		wchar_t ms_RootProcessName[MAX_PATH];
 		//BOOL mb_AdminShieldChecked;
 		//wchar_t* ms_SpecialCmd;
 		//BOOL mb_RunAsAdministrator;

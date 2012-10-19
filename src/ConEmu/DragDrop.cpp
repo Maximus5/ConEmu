@@ -91,7 +91,7 @@ CDragDrop::~CDragDrop()
 			EnterCriticalSection(&m_CrThreads);
 			std::vector<ThInfo>::iterator iter = m_OpThread.begin();
 
-			while(iter != m_OpThread.end())
+			while (iter != m_OpThread.end())
 			{
 				HANDLE hThread = iter->hThread;
 				TerminateThread(hThread, 100);
@@ -103,10 +103,10 @@ CDragDrop::~CDragDrop()
 		}
 		else
 		{
-			// Будем ждать до посинения
+			// Wait until finished
 			BOOL lbActive = TRUE;
 
-			while (TRUE)
+			while (lbActive)
 			{
 				Sleep(100);
 				EnterCriticalSection(&m_CrThreads);
@@ -799,7 +799,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		SetForegroundWindow(ghWnd);
 
 		int nId = gpConEmu->trackPopupMenu(tmp_PasteCmdLine, hPopup, TPM_LEFTALIGN|TPM_BOTTOMALIGN|TPM_RETURNCMD/*|TPM_NONOTIFY*/,
-	                         ptCur.x,ptCur.y, 0, ghWnd, NULL);
+	                         ptCur.x,ptCur.y, ghWnd);
 		DestroyMenu(hPopup);
 
 		lbAddGoto = lbAddEdit = lbAddView = FALSE;

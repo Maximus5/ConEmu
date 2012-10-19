@@ -422,6 +422,15 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	{
 		gnAllowClinkUsage = 1; // пока не известно
 	}
+	else if ((lstrcmpi(pszName, L"sh.exe") == 0) || (lstrcmpi(pszName, L"sh") == 0)
+		|| (lstrcmpi(pszName, L"bash.exe") == 0) || (lstrcmpi(pszName, L"bash") == 0)
+		|| (lstrcmpi(pszName, L"isatty.exe") == 0)
+		)
+	{
+		//_ASSERTEX(FALSE && "settings gbIsBashProcess");
+		gbIsBashProcess = true;
+		TODO("Start redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
+	}
 
 	// ѕоскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
 	// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
@@ -1580,13 +1589,18 @@ wrap:
 // When _st_ is 0: remove progress.
 // When _st_ is 1: set progress value to _pr_ (number, 0-100).
 // When _st_ is 2: set error state in progress on Windows 7 taskbar
-void GuiSetProgress(WORD st, WORD pr)
+void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName /*= NULL*/)
 {
-	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETPROGRESS, sizeof(CESERVER_REQ_HDR)+sizeof(WORD)*2);
+	int nLen = pszName ? (lstrlen(pszName) + 1) : 1;
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETPROGRESS, sizeof(CESERVER_REQ_HDR)+sizeof(WORD)*(2+nLen));
 	if (pIn)
 	{
 		pIn->wData[0] = st;
 		pIn->wData[1] = pr;
+		if (pszName)
+		{
+			lstrcpy((wchar_t*)(pIn->wData+2), pszName);
+		}
 
 		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 		ExecuteFreeResult(pIn);
