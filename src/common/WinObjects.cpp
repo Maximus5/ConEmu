@@ -3342,7 +3342,7 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/)
 	DWORD dwErr = (DWORD)-1;
 
 	wchar_t szVer[2] = {MVV_4a[0],0}, szConEmu[64];
-	_wsprintf(szConEmu, SKIPLEN(countof(szConEmu)) L"ConEmu %u%02u%02u%s log", MVV_1,MVV_2,MVV_3,szVer);
+	_wsprintf(szConEmu, SKIPLEN(countof(szConEmu)) L"ConEmu %u%02u%02u%s[%s] log", MVV_1,MVV_2,MVV_3,szVer,WIN3264TEST(L"32",L"64"));
 
 	if (!ms_FilePathName)
 	{

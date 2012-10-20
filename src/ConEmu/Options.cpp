@@ -288,7 +288,8 @@ void Settings::InitSettings()
 	//vmMultiClose = VK_DELETE | (nMultiHotkeyModifier << 8);
 	//vmMultiCmd = 'X' | (nMultiHotkeyModifier << 8);
 	isMultiAutoCreate = false; isMultiLeaveOnClose = false; isMultiIterate = true;
-	isMultiNewConfirm = true; isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false;
+	isMultiNewConfirm = true;
+	isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false;
 	nSplitWidth = nSplitHeight = 4;
 	//nSplitClr1 = nSplitClr2 = RGB(160,160,160);
 	m_isKeyboardHooks = 0;
@@ -635,7 +636,7 @@ bool Settings::isIntegralSize()
 	if (isQuakeStyle || gpConEmu->m_InsideIntegration)
 		return false;
 
-	#ifdef _DEBUG
+	#if 0
 	if ((1 & (WORD)GetKeyState(VK_NUMLOCK)) == 0)
 		return false;
 	#endif
@@ -1413,6 +1414,7 @@ void Settings::PaletteSetStdIndexes()
 	}
 }
 
+// Returns Zero-based palette index, or "-1" when not found
 int Settings::PaletteGetIndex(LPCWSTR asName)
 {
 	if (!Palettes || (PaletteCount < 1) || !asName || !*asName)
@@ -1428,6 +1430,34 @@ int Settings::PaletteGetIndex(LPCWSTR asName)
 	}
 
 	return -1;
+}
+
+// Returns Zero-based palette index, or "-1" when not found
+int Settings::PaletteSetActive(LPCWSTR asName)
+{
+	int nPalIdx = PaletteGetIndex(asName);
+
+	const Settings::ColorPalette* pPal = (nPalIdx != -1) ? PaletteGet(nPalIdx) : NULL;
+
+	if (pPal)
+	{
+		uint nCount = countof(pPal->Colors);
+
+		for (uint i = 0; i < nCount; i++)
+		{
+			Colors[i] = pPal->Colors[i]; //-V108
+		}
+
+		AppStd.nTextColorIdx = pPal->nTextColorIdx;
+		AppStd.nBackColorIdx = pPal->nBackColorIdx;
+		AppStd.nPopTextColorIdx = pPal->nPopTextColorIdx;
+		AppStd.nPopBackColorIdx = pPal->nPopBackColorIdx;
+
+		AppStd.nExtendColorIdx = pPal->nExtendColorIdx;
+		AppStd.isExtendColors = pPal->isExtendColors;
+	}
+
+	return nPalIdx;
 }
 
 // Save active colors to named palette
@@ -3888,6 +3918,11 @@ LPCTSTR Settings::GetCmd()
 	return psCurCmd;
 }
 
+RecreateActionParm Settings::GetDefaultCreateAction()
+{
+	return isMulti ? cra_CreateTab : cra_CreateWindow;
+}
+
 void Settings::HistoryCheck()
 {
 	if (!psCmdHistory || !*psCmdHistory)
@@ -5252,24 +5287,24 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkGlobalRestore,  chk_Global, NULL,   L"GlobalRestore",         0, CConEmuCtrl::key_GlobalRestore},
 		{vkForceFullScreen,chk_Global, NULL,   L"ForcedFullScreen",      MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL,VK_MENU), CConEmuCtrl::key_ForcedFullScreen},
 		// User (Keys)
-		{vkMultiNew,       chk_User, &isMulti, L"Multi.NewConsole",      MakeHotKey('W',VK_LWIN), CConEmuCtrl::key_MultiNew},
-		{vkMultiNewShift,  chk_User, &isMulti, L"Multi.NewConsoleShift", MakeHotKey('W',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNewShift},
-		{vkMultiNewPopup,  chk_User, &isMulti, L"Multi.NewConsolePopup", MakeHotKey('N',VK_LWIN), CConEmuCtrl::key_MultiNewPopup},
-		{vkMultiNewWnd,    chk_User, &isMulti, L"Multi.NewWindow",       0, CConEmuCtrl::key_MultiNewWindow},
-		{vkNewConSplitV,   chk_User, &isMulti, L"Multi.NewSplitV",       MakeHotKey('O',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Shell(\"new_console:sVn\")")},
-		{vkNewConSplitH,   chk_User, &isMulti, L"Multi.NewSplitH",       MakeHotKey('E',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Shell(\"new_console:sHn\")")},
-		{vkMultiNewAttach, chk_User, &isMulti, L"Multi.NewAttach",       MakeHotKey('G',VK_LWIN), CConEmuCtrl::key_MultiNewAttach, true/*OnKeyUp*/},
-		{vkMultiNext,      chk_User, &isMulti, L"Multi.Next",            /*&vmMultiNext,*/ MakeHotKey('Q',VK_LWIN), CConEmuCtrl::key_MultiNext},
-		{vkMultiNextShift, chk_User, &isMulti, L"Multi.NextShift",       /*&vmMultiNextShift,*/ MakeHotKey('Q',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNextShift},
-		{vkMultiRecreate,  chk_User, &isMulti, L"Multi.Recreate",        /*&vmMultiRecreate,*/ MakeHotKey(192/*VK_тильда*/,VK_LWIN), CConEmuCtrl::key_MultiRecreate},
+		{vkMultiNew,       chk_User,  NULL,    L"Multi.NewConsole",      MakeHotKey('W',VK_LWIN), CConEmuCtrl::key_MultiNew},
+		{vkMultiNewShift,  chk_User,  NULL,    L"Multi.NewConsoleShift", MakeHotKey('W',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNewShift},
+		{vkMultiNewPopup,  chk_User,  NULL,    L"Multi.NewConsolePopup", MakeHotKey('N',VK_LWIN), CConEmuCtrl::key_MultiNewPopup},
+		{vkMultiNewWnd,    chk_User,  NULL,    L"Multi.NewWindow",       0, CConEmuCtrl::key_MultiNewWindow},
+		{vkNewConSplitV,   chk_User,  NULL,    L"Multi.NewSplitV",       MakeHotKey('O',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Shell(\"new_console:sVn\")")},
+		{vkNewConSplitH,   chk_User,  NULL,    L"Multi.NewSplitH",       MakeHotKey('E',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Shell(\"new_console:sHn\")")},
+		{vkMultiNewAttach, chk_User,  NULL,    L"Multi.NewAttach",       MakeHotKey('G',VK_LWIN), CConEmuCtrl::key_MultiNewAttach, true/*OnKeyUp*/},
+		{vkMultiNext,      chk_User,  NULL,    L"Multi.Next",            /*&vmMultiNext,*/ MakeHotKey('Q',VK_LWIN), CConEmuCtrl::key_MultiNext},
+		{vkMultiNextShift, chk_User,  NULL,    L"Multi.NextShift",       /*&vmMultiNextShift,*/ MakeHotKey('Q',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNextShift},
+		{vkMultiRecreate,  chk_User,  NULL,    L"Multi.Recreate",        /*&vmMultiRecreate,*/ MakeHotKey(192/*VK_тильда*/,VK_LWIN), CConEmuCtrl::key_MultiRecreate},
 		{vkMultiAltCon,    chk_User,  NULL,    L"Multi.AltCon",          /*&vmMultiBuffer,*/ MakeHotKey('A',VK_LWIN), CConEmuCtrl::key_AlternativeBuffer},
 		{vkMultiBuffer,    chk_User,  NULL,    L"Multi.Scroll",          MakeHotKey('S',VK_LWIN), CConEmuCtrl::key_MultiBuffer},
-		{vkMultiClose,     chk_User, &isMulti, L"Multi.Close",           MakeHotKey(VK_DELETE,VK_LWIN), CConEmuCtrl::key_MultiClose},
-		{vkRenameTab,      chk_User, &isMulti, L"Multi.Rename",          MakeHotKey('R',VK_APPS), CConEmuCtrl::key_RenameTab, true/*OnKeyUp*/},
-		{vkMoveTabLeft,    chk_User, &isMulti, L"Multi.MoveLeft",        MakeHotKey(VK_LEFT,VK_LWIN,VK_MENU), CConEmuCtrl::key_MoveTabLeft},
-		{vkMoveTabRight,   chk_User, &isMulti, L"Multi.MoveRight",       MakeHotKey(VK_RIGHT,VK_LWIN,VK_MENU), CConEmuCtrl::key_MoveTabRight},
+		{vkMultiClose,     chk_User,  NULL,    L"Multi.Close",           MakeHotKey(VK_DELETE,VK_LWIN), CConEmuCtrl::key_MultiClose},
+		{vkRenameTab,      chk_User,  NULL,    L"Multi.Rename",          MakeHotKey('R',VK_APPS), CConEmuCtrl::key_RenameTab, true/*OnKeyUp*/},
+		{vkMoveTabLeft,    chk_User,  NULL,    L"Multi.MoveLeft",        MakeHotKey(VK_LEFT,VK_LWIN,VK_MENU), CConEmuCtrl::key_MoveTabLeft},
+		{vkMoveTabRight,   chk_User,  NULL,    L"Multi.MoveRight",       MakeHotKey(VK_RIGHT,VK_LWIN,VK_MENU), CConEmuCtrl::key_MoveTabRight},
 		{vkTerminateApp,   chk_User,  NULL,    L"TerminateProcessKey",   MakeHotKey(VK_DELETE,VK_LWIN,VK_SHIFT), CConEmuCtrl::key_TerminateProcess},
-		{vkMultiCmd,       chk_User, &isMulti, L"Multi.CmdKey",          /*&vmMultiCmd,*/ MakeHotKey('X',VK_LWIN), CConEmuCtrl::key_MultiCmd},
+		{vkMultiCmd,       chk_User,  NULL,    L"Multi.CmdKey",          /*&vmMultiCmd,*/ MakeHotKey('X',VK_LWIN), CConEmuCtrl::key_MultiCmd},
 		{vkCTSVkBlockStart,chk_User,  NULL,    L"CTS.VkBlockStart",      /*&vmCTSVkBlockStart,*/ 0, CConEmuCtrl::key_CTSVkBlockStart}, // запуск выделения блока
 		{vkCTSVkTextStart, chk_User,  NULL,    L"CTS.VkTextStart",       /*&vmCTSVkTextStart,*/ 0, CConEmuCtrl::key_CTSVkTextStart},   // запуск выделения текста
 		{vkShowTabsList,   chk_User,  NULL,    L"Multi.ShowTabsList",    /*MakeHotKey(VK_F12)*/ 0, CConEmuCtrl::key_ShowTabsList},

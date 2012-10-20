@@ -180,6 +180,7 @@ CConEmuMain::CConEmuMain()
 	mn_MainThreadId = GetCurrentThreadId();
 	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
 	
+	mn_StartupFinished = ss_Starting;
 	WindowMode = wmNormal;
 	changeFromWindowMode = wmNotChanging;
 	isRestoreFromMinimized = false;
@@ -3874,7 +3875,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			rc = MakeRect((rFrom.right-rFrom.left) * gpSetCls->FontWidth(),
 			              (rFrom.bottom-rFrom.top) * gpSetCls->FontHeight());
 
-			RECT rcScroll = CalcMargins(CEM_SCROLL);
+			RECT rcScroll = CalcMargins(CEM_SCROLL|CEM_PAD);
 			AddMargins(rc, rcScroll, TRUE);
 
 			if (tWhat != CER_DC)
@@ -4865,6 +4866,8 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				//SetWindowRgn(ghWnd, hRgn, TRUE);
 			}
 
+			// Already resored, need to clear the flag to avoid incorrect sizing
+			isRestoreFromMinimized = false;
 
 			UpdateWindowRgn();
 			OnSize(false); // подровнять ТОЛЬКО дочерние окошки
@@ -4952,6 +4955,9 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				if (gpSetCls->isAdvLogging) LogString("OnSize(false).3");
 			}
 
+			// Already resored, need to clear the flag to avoid incorrect sizing
+			isRestoreFromMinimized = false;
+
 			OnSize(false); // консоль уже изменила свой размер
 
 			UpdateWindowRgn();
@@ -5029,6 +5035,9 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				char szInfo[128]; wsprintfA(szInfo, "SetWindowPos(X=%i, Y=%i, W=%i, H=%i)", -rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top, ptFullScreenSize.x,ptFullScreenSize.y);
 				LogString(szInfo);
 			}
+
+			// Already resored, need to clear the flag to avoid incorrect sizing
+			isRestoreFromMinimized = false;
 
 			OnSize(false); // подровнять ТОЛЬКО дочерние окошки
 
@@ -5653,6 +5662,10 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 			if (bNeedFixSize)
 			{
 				calcRect = CalcRect(CER_MAIN, srctWindow, CER_CONSOLE_ALL);
+				#ifdef _DEBUG
+				RECT rcRev = CalcRect(CER_CONSOLE_ALL, calcRect, CER_MAIN);
+				_ASSERTE(rcRev.right==srctWindow.right && rcRev.bottom==srctWindow.bottom);
+				#endif
 				restrictRect.right = pRect->left + calcRect.right;
 				restrictRect.bottom = pRect->top + calcRect.bottom;
 				restrictRect.left = pRect->right - calcRect.right;
@@ -5956,7 +5969,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 
 	//#ifdef _DEBUG
-	#if 0
+	#if 1
 	{
 		wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X) style=0x%08X%s\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle, zoomed ? L" (zoomed)" : L"");
 		DEBUGSTRSIZE(szDbg);
@@ -6433,6 +6446,83 @@ void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
 {
 	_ASSERTE((pArgs->pszStartupDir == NULL) || (*pArgs->pszStartupDir != 0));
 	PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon+1, (LPARAM)pArgs);
+}
+
+bool CConEmuMain::CreateWnd(RConStartArgs *args)
+{
+	if (!args->pszSpecialCmd || !*args->pszSpecialCmd)
+	{
+		_ASSERTE(args->pszSpecialCmd && *args->pszSpecialCmd);
+		return false;
+	}
+
+	BOOL bStart = FALSE;
+
+	// Start new ConEmu.exe process with choosen arguments...
+	STARTUPINFO si = {sizeof(si)};
+	PROCESS_INFORMATION pi = {};
+	wchar_t* pszCmdLine = NULL;
+	LPCWSTR pszConfig = gpSetCls->GetConfigName();
+	size_t cchMaxLen = _tcslen(ms_ConEmuExe)
+		+ _tcslen(args->pszSpecialCmd)
+		+ (pszConfig ? (_tcslen(pszConfig) + 32) : 0)
+		+ 128; // на всякие флажки и -new_console
+	if ((pszCmdLine = (wchar_t*)malloc(cchMaxLen*sizeof(*pszCmdLine))) == NULL)
+	{
+		_ASSERTE(pszCmdLine);
+	}
+	else
+	{
+		pszCmdLine[0] = L'"'; pszCmdLine[1] = 0;
+		_wcscat_c(pszCmdLine, cchMaxLen, ms_ConEmuExe);
+		_wcscat_c(pszCmdLine, cchMaxLen, L"\" ");
+		if (pszConfig && *pszConfig)
+		{
+			_wcscat_c(pszCmdLine, cchMaxLen, L"/config \"");
+			_wcscat_c(pszCmdLine, cchMaxLen, pszConfig);
+			_wcscat_c(pszCmdLine, cchMaxLen, L"\" ");
+		}
+		_wcscat_c(pszCmdLine, cchMaxLen, L"/cmd ");
+		_wcscat_c(pszCmdLine, cchMaxLen, args->pszSpecialCmd);
+		if (args->bRunAsAdministrator || args->bRunAsRestricted || args->pszUserName)
+		{
+			if (args->bRunAsAdministrator)
+			{
+				// Create ConEmu.exe with current credentials, implying elevation for the console
+				_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:a");
+			}
+			else if (args->bRunAsRestricted)
+			{
+				_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:r");
+			}
+			//else if (args->pszUserName)
+			//{
+			//	_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:u:");
+			//	_wcscat_c(pszCmdLine, cchMaxLen, args->pszUserName);
+			//}
+		}
+
+		if (!args->bRunAsAdministrator && !args->bRunAsRestricted && (args->pszUserName && *args->pszUserName))
+			bStart = CreateProcessWithLogonW(args->pszUserName, args->pszDomain, args->szUserPassword,
+		                           LOGON_WITH_PROFILE, NULL, pszCmdLine,
+		                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
+		                           , NULL, args->pszStartupDir, &si, &pi);
+		else
+			bStart = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, args->pszStartupDir, &si, &pi);
+
+		if (!bStart)
+		{
+			DWORD nErr = GetLastError();
+			DisplayLastError(pszCmdLine, nErr, MB_ICONSTOP, L"Failed to start new ConEmu window");
+		}
+		else
+		{
+			SafeCloseHandle(pi.hProcess);
+			SafeCloseHandle(pi.hThread);
+		}
+	}
+
+	return (bStart != FALSE);
 }
 
 CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)
@@ -7477,7 +7567,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 		// Создать новую консоль
 		BOOL lbSlotFound = (args.aRecreate == cra_CreateWindow);
 
-		if (args.aRecreate == cra_CreateWindow)
+		if (args.aRecreate == cra_CreateWindow && gpSet->isMulti)
 			abConfirm = TRUE;
 
 		if (args.aRecreate == cra_CreateTab)
@@ -7521,77 +7611,24 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 		if (args.aRecreate == cra_CreateTab)
 		{
 			//Собственно, запуск
-			CreateCon(&args, TRUE);
+			CreateCon(&args, true);
 		}
 		else
 		{
-			_ASSERTE(args.pszSpecialCmd && *args.pszSpecialCmd);
-			LPCWSTR pszCmd = args.pszSpecialCmd ? args.pszSpecialCmd : gpSet->GetCmd();
-			if (!pszCmd || !pszCmd)
+			if (!args.pszSpecialCmd || !*args.pszSpecialCmd)
 			{
-				_ASSERTE(pszCmd && *pszCmd);
+				_ASSERTE((args.pszSpecialCmd && *args.pszSpecialCmd) || !abConfirm);
+				args.pszSpecialCmd = lstrdup(gpSet->GetCmd());
+			}
+
+			if (!args.pszSpecialCmd || !*args.pszSpecialCmd)
+			{
+				_ASSERTE(args.pszSpecialCmd && *args.pszSpecialCmd);
 			}
 			else
 			{
 				// Start new ConEmu.exe process with choosen arguments...
-				STARTUPINFO si = {sizeof(si)};
-				PROCESS_INFORMATION pi = {};
-				wchar_t* pszCmdLine = NULL;
-				LPCWSTR pszConfig = gpSetCls->GetConfigName();
-				size_t cchMaxLen = _tcslen(ms_ConEmuExe)
-					+ _tcslen(pszCmd)
-					+ (pszConfig ? (_tcslen(pszConfig) + 32) : 0)
-					+ 128; // на всякие флажки и -new_console
-				if ((pszCmdLine = (wchar_t*)malloc(cchMaxLen*sizeof(*pszCmdLine))) == NULL)
-				{
-					_ASSERTE(pszCmdLine);
-				}
-				else
-				{
-					pszCmdLine[0] = L'"'; pszCmdLine[1] = 0;
-					_wcscat_c(pszCmdLine, cchMaxLen, ms_ConEmuExe);
-					_wcscat_c(pszCmdLine, cchMaxLen, L"\" ");
-					if (pszConfig && *pszConfig)
-					{
-						_wcscat_c(pszCmdLine, cchMaxLen, L"/config \"");
-						_wcscat_c(pszCmdLine, cchMaxLen, pszConfig);
-						_wcscat_c(pszCmdLine, cchMaxLen, L"\" ");
-					}
-					_wcscat_c(pszCmdLine, cchMaxLen, L"/cmd ");
-					_wcscat_c(pszCmdLine, cchMaxLen, pszCmd);
-					if (args.bRunAsAdministrator || args.bRunAsRestricted || args.pszUserName)
-					{
-						if (args.bRunAsAdministrator)
-							_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:a");
-						else if (args.bRunAsRestricted)
-							_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:r");
-						//else if (args.pszUserName)
-						//{
-						//	_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:u:");
-						//	_wcscat_c(pszCmdLine, cchMaxLen, args.pszUserName);
-						//}
-					}
-
-					BOOL bStart;
-					if (!args.bRunAsAdministrator && !args.bRunAsRestricted && (args.pszUserName && *args.pszUserName))
-						bStart = CreateProcessWithLogonW(args.pszUserName, args.pszDomain, args.szUserPassword,
-					                           LOGON_WITH_PROFILE, NULL, pszCmdLine,
-					                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
-					                           , NULL, args.pszStartupDir, &si, &pi);
-					else
-						bStart = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, args.pszStartupDir, &si, &pi);
-
-					if (!bStart)
-					{
-						DWORD nErr = GetLastError();
-						DisplayLastError(pszCmdLine, nErr, MB_ICONSTOP, L"Failed to start new ConEmu window");
-					}
-					else
-					{
-						SafeCloseHandle(pi.hProcess);
-						SafeCloseHandle(pi.hThread);
-					}
-				}
+				CreateWnd(&args);
 			}
 		}
 	}
@@ -10540,6 +10577,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		LogString(abRecieved ? L"PostCreate.2.begin" : L"PostCreate.1.begin");
 	}
 
+	mn_StartupFinished = abRecieved ? ss_PostCreate2Called : ss_PostCreate1Called;
+
 	// First ShowWindow forced to use nCmdShow. This may be weird...
 	SkipOneShowWindow();
 
@@ -10815,6 +10854,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			SetTimer(ghWnd, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE, NULL);
 		}
 	}
+
+	mn_StartupFinished = abRecieved ? ss_PostCreate2Finished : ss_PostCreate1Finished;
 
 	if (gpSetCls->isAdvLogging)
 	{
@@ -15471,7 +15512,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		case ID_NEWCONSOLE:
 			// Создать новую консоль
-			RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+			RecreateAction(gpSet->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			return 0;
 			
 		case IDM_ATTACHTO:

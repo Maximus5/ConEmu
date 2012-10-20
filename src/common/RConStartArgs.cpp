@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DefaultSplitValue 500
 
+// If you add some members - don't forget them in RConStartArgs::AssignFrom!
 RConStartArgs::RConStartArgs()
 {
 	bDetached = bRunAsAdministrator = bRunAsRestricted = bNewConsole = FALSE;
@@ -54,6 +55,67 @@ RConStartArgs::RConStartArgs()
 	eConfirmation = eConfDefault;
 	szUserPassword[0] = 0;
 	//hLogonToken = NULL;
+}
+
+bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
+{
+	_ASSERTE(args!=NULL);
+
+	if (args->pszSpecialCmd)
+	{
+		SafeFree(this->pszSpecialCmd);
+
+		_ASSERTE(args->bDetached == FALSE);
+		this->pszSpecialCmd = lstrdup(args->pszSpecialCmd);
+
+		if (!this->pszSpecialCmd)
+			return false;
+	}
+
+	// Директория запуска. В большинстве случаев совпадает с CurDir в conemu.exe,
+	// но может быть задана из консоли, если запуск идет через "-new_console"
+	_ASSERTE(this->pszStartupDir==NULL);
+	SafeFree(this->pszStartupDir);
+	if (args->pszStartupDir)
+	{
+		this->pszStartupDir = lstrdup(args->pszStartupDir);
+
+		if (!this->pszStartupDir)
+			return false;
+	}
+
+	this->bRunAsRestricted = args->bRunAsRestricted;
+	this->bRunAsAdministrator = args->bRunAsAdministrator;
+	SafeFree(this->pszUserName); //SafeFree(this->pszUserPassword);
+	SafeFree(this->pszDomain);
+
+	//if (this->hLogonToken) { CloseHandle(this->hLogonToken); this->hLogonToken = NULL; }
+	if (args->pszUserName)
+	{
+		this->pszUserName = lstrdup(args->pszUserName);
+		if (args->pszDomain)
+			this->pszDomain = lstrdup(args->pszDomain);
+		lstrcpy(this->szUserPassword, args->szUserPassword);
+		
+		//SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
+
+		//this->pszUserPassword = lstrdup(args->pszUserPassword ? args->pszUserPassword : L"");
+		//this->hLogonToken = args->hLogonToken; args->hLogonToken = NULL;
+		if (!this->pszUserName || !*this->szUserPassword)
+			return false;
+	}
+
+	this->bBackgroundTab = args->bBackgroundTab;
+	this->bBufHeight = args->bBufHeight;
+	this->nBufHeight = args->nBufHeight;
+	this->eConfirmation = args->eConfirmation;
+	this->bForceUserDialog = args->bForceUserDialog;
+
+	this->eSplit = args->eSplit;
+	this->nSplitValue = args->nSplitValue;
+    this->nSplitPane = args->nSplitPane;
+
+	return true;
 }
 
 RConStartArgs::~RConStartArgs()

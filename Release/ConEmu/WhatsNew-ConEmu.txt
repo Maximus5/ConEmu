@@ -14,7 +14,21 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
-2012.10.17
+2012.10.20
+[%] Filter had not works as expected on «Keys & Macro» page.
+[*] Minor changes in ConEmu initialization process.
+[*] Create new console dialog, field «Another user». Preferring build-in Administrator,
+    another user from Administrators group, or just another user.
+[%] Recreating console as another user did not works.
+[+] Issue 767: «Tabs» page, if «Multiple consoles in one ConEmu window» is off
+    then creating new tasks in new ConEmu window by default.
+[+] New ConEmu.exe command line switch:
+    /Palette <Name> - Choose named color palette.
+[%] Issue 764: Enable same FG/BG color when BG color is background image.
+[%] Issue 777: Resizing only works right from corners when «Pad size» is set.
+
+
+2012.10.18
 [*] Removing GCC warnings.
 [+] Tasks page: New button «Active tabs» will add all current tabs into selected task.
 [+] Button «No» in close confirmation dialog. It will close active console only.

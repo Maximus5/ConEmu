@@ -1020,7 +1020,7 @@ int MessageBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND hP
 
 BOOL gbInDisplayLastError = FALSE;
 
-int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /* =0 */, LPCWSTR asTitle /*= NULL*/)
+int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /* =0 */, LPCWSTR asTitle /*= NULL*/, HWND hParent /*= NULL*/)
 {
 	int nBtn = 0;
 	DWORD dw = dwError ? dwError : GetLastError();
@@ -1036,14 +1036,14 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 		_wsprintf(out, SKIPLEN(nLen) _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
 	}
 
-	if (gbMessagingStarted) apiSetForegroundWindow(ghWnd);
+	if (gbMessagingStarted) apiSetForegroundWindow(hParent ? hParent : ghWnd);
 
 	if (!dwMsgFlags) dwMsgFlags = MB_SYSTEMMODAL | MB_ICONERROR;
 
 	WARNING("!!! Заменить MessageBox на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 
 	BOOL lb = gbInDisplayLastError; gbInDisplayLastError = TRUE;
-	nBtn = MessageBox(out ? out : asLabel, dwMsgFlags, asTitle);
+	nBtn = MessageBox(out ? out : asLabel, dwMsgFlags, asTitle, hParent);
 	gbInDisplayLastError = lb;
 
 	MCHKHEAP
@@ -2168,6 +2168,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool SizePrm = false; LONG SizeVal = 0;
 	bool BufferHeightPrm = false; int BufferHeightVal = 0;
 	bool ConfigPrm = false; TCHAR* ConfigVal = NULL;
+	bool PalettePrm = false; TCHAR* PaletteVal = NULL;
 	//bool FontFilePrm = false; TCHAR* FontFile = NULL; //ADD fontname; by Mors
 	bool WindowPrm = false; int WindowModeVal = 0;
 	bool LoadCfgFilePrm = false; TCHAR* LoadCfgFile = NULL;
@@ -2634,6 +2635,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return 100;
 					}
 				}
+				else if (!klstricmp(curCommand, _T("/Palette")) && i + 1 < params)
+				{
+					//if (!ConfigPrm) -- используем последний из параметров, если их несколько
+					if (!GetCfgParm(i, curCommand, PalettePrm, PaletteVal, MAX_PATH))
+					{
+						return 100;
+					}
+				}
 				else if (!klstricmp(curCommand, _T("/LoadCfgFile")) && i + 1 < params)
 				{
 					// используем последний из параметров, если их несколько
@@ -2743,6 +2752,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpSetCls->SettingsLoaded();
 	}
 	// Для gpSet->isQuakeStyle - принудительно включается gpSetCls->SingleInstanceArg
+
+	// When "/Palette <name>" is specified
+	if (PalettePrm)
+	{
+		gpSet->PaletteSetActive(PaletteVal);
+	}
 
 	gpConEmu->LogString(L"SettingsLoaded");
 

@@ -82,4 +82,6 @@ struct RConStartArgs
 	int ProcessNewConArg(bool bForceCurConsole = false);
 
 	wchar_t* CreateCommandLine(bool abForTasks = false);
+
+	bool AssignFrom(const struct RConStartArgs* args);
 };

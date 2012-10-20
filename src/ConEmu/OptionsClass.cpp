@@ -2267,7 +2267,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 		if (nItem == -1)
 		{
 			lvi.iItem = ItemsCount + 1; // в конец
-			lvi.lParam = (LPARAM)(m_HotKeys+ItemsCount);
+			lvi.lParam = (LPARAM)ppHK;
 			nItem = ListView_InsertItem(hList, &lvi);
 			//_ASSERTE(nItem==ItemsCount && nItem>=0);
 			ItemsCount++;
@@ -6624,7 +6624,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				if (gpSet->AppStd.nPopTextColorIdx != gpSet->AppStd.nPopBackColorIdx)
 					UpdateTextColorSettings(FALSE, TRUE);
 			}
-			else if (wId==lbDefaultColors)
+			else if (wId == lbDefaultColors)
 			{
 				HWND hList = GetDlgItem(hWnd2, lbDefaultColors);
 				INT_PTR nIdx = SendMessage(hList, CB_GETCURSEL, 0, 0);
@@ -6714,7 +6714,10 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					checkDlgButton(hWnd2, cbExtendColors, pPal->isExtendColors ? BST_CHECKED : BST_UNCHECKED);
 					OnButtonClicked(hWnd2, cbExtendColors, 0);
 				}
-				else return 0;
+				else
+				{
+					return 0;
+				}
 			}
 
 			gpConEmu->Update(true);
@@ -7244,7 +7247,11 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Main(hWnd2);
 			break;
 		case IDD_SPG_WNDSIZEPOS:
+			{
+			bool lbOld = bSkipSelChange; bSkipSelChange = true;
 			gpSetCls->OnInitDialog_WndPosSize(hWnd2, true);
+			bSkipSelChange = lbOld;
+			}
 			break;
 		case IDD_SPG_SHOW:
 			gpSetCls->OnInitDialog_Show(hWnd2, true);
@@ -7334,7 +7341,11 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		{
 		case IDD_SPG_MAIN:    /*gpSetCls->OnInitDialog_Main(hWnd2);*/   break;
 		case IDD_SPG_WNDSIZEPOS:
+			{
+			bool lbOld = bSkipSelChange; bSkipSelChange = true;
 			gpSetCls->OnInitDialog_WndPosSize(hWnd2, false);
+			bSkipSelChange = lbOld;
+			}
 			break;
 		case IDD_SPG_SHOW:
 			gpSetCls->OnInitDialog_Show(hWnd2, false);
@@ -7426,7 +7437,8 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 				}
 				else if (HIWORD(wParam) == EN_CHANGE)
 				{
-					gpSetCls->OnEditChanged(hWnd2, wParam, lParam);
+					if (!bSkipSelChange)
+						gpSetCls->OnEditChanged(hWnd2, wParam, lParam);
 				}
 				else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE/*LBN_SELCHANGE*/)
 				{

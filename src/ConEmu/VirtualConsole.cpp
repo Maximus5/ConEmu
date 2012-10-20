@@ -204,7 +204,7 @@ CVirtualConsole::CVirtualConsole()
 	mh_WndDC = NULL;
 }
 
-void CVirtualConsole::Constructor(const RConStartArgs *args)
+bool CVirtualConsole::Constructor(RConStartArgs *args)
 {
 	//mh_WndDC = NULL;
 	//CreateView();
@@ -322,7 +322,7 @@ void CVirtualConsole::Constructor(const RConStartArgs *args)
 		if ((pszDot = wcsrchr(szFile, L'\\')) == NULL)
 		{
 			DisplayLastError(L"wcsrchr failed!");
-			return; // ошибка
+			return false; // ошибка
 		}
 
 		*pszDot = 0;
@@ -334,7 +334,7 @@ void CVirtualConsole::Constructor(const RConStartArgs *args)
 	CreateView();
 	mp_RCon = new CRealConsole();
 	_ASSERTE(mp_RCon);
-	mp_RCon->Construct(this);
+	return mp_RCon->Construct(this, args);
 	
 	//if (gpSet->isTabsOnTaskBar())
 	//{
@@ -4923,7 +4923,7 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 
 			break;
 		case ID_NEWCONSOLE:
-			gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+			gpConEmu->RecreateAction(gpSet->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			break;
 		case IDM_ATTACHTO:
 			gpConEmu->OnSysCommand(ghWnd, IDM_ATTACHTO, 0);

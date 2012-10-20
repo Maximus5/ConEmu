@@ -666,12 +666,12 @@ BEGIN
     CONTROL         "Sh&ell",rbActivityShell,"Button",BS_AUTORADIOBUTTON,54,14,30,8
     CONTROL         "&Input",rbActivityInput,"Button",BS_AUTORADIOBUTTON,86,14,35,8
     CONTROL         "Cmd",rbActivityCmd,"Button",BS_AUTORADIOBUTTON,122,14,29,8
+    CONTROL         "Debug",rbActivityDebug,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,154,14,37,8
     PUSHBUTTON      "&Reset",cbActivityReset,215,10,50,14
     PUSHBUTTON      "Save &as...",cbActivitySaveAs,269,10,50,14
     CONTROL         "List1",lbActivityLog,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,28,311,135
     EDITTEXT        ebActivityApp,8,166,311,14,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        ebActivityParm,8,182,311,44,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL
-    CONTROL         "Debug",rbActivityDebug,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,154,14,37,8
 END
 
 IDD_RESTART DIALOGEX 0, 0, 310, 167
@@ -764,51 +764,51 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,49,319,75
-    CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,76,64,8
-    CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,76,66,8
-    CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,162,76,59,8
-    CONTROL         "Far windows",cbShowFarWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,90,56,8
-    CONTROL         "Active console only",cbHideInactiveConTabs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,90,77,8
-    CONTROL         "Hide disabled tabs",cbHideDisabledTabs,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,233,76,75,8
+    GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,50,319,75
+    CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,77,64,8
+    CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,77,66,8
+    CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,162,77,59,8
+    CONTROL         "Far windows",cbShowFarWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,91,56,8
+    CONTROL         "Active console only",cbHideInactiveConTabs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,91,77,8
+    CONTROL         "Hide disabled tabs",cbHideDisabledTabs,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,233,77,75,8
     CONTROL         "Don't close ConEmu on last console close",cbMultiLeaveOnClose,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,15,150,8
-    RTEXT           "Tabs font:",IDC_STATIC,21,106,42,8
-    COMBOBOX        tTabFontFace,69,104,107,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
-    CTEXT           "x",IDC_STATIC,181,106,8,8
-    COMBOBOX        tTabFontHeight,192,104,29,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Charset:",IDC_STATIC,226,106,32,8
-    COMBOBOX        tTabFontCharset,264,104,54,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Tab templates",IDC_STATIC,4,130,319,85
-    RTEXT           "Panels:",IDC_STATIC,8,179,30,8
-    EDITTEXT        tTabConsole,42,160,40,12,ES_AUTOHSCROLL
-    RTEXT           "Viewer:",IDC_STATIC,85,179,29,8
-    EDITTEXT        tTabViewer,119,177,40,12,ES_AUTOHSCROLL
-    RTEXT           "Editor:",IDC_STATIC,166,179,22,8
-    EDITTEXT        tTabEditor,192,177,40,12,ES_AUTOHSCROLL
-    RTEXT           "Modified:",IDC_STATIC,237,179,36,8
-    EDITTEXT        tTabEditorMod,278,177,40,12,ES_AUTOHSCROLL
-    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %n - Name of active process, %% - %,\n%i - Far window number (you can see it in standard F12 menu)",IDC_STATIC,10,141,309,17
-    RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,199,107,8
-    EDITTEXT        tTabLenMax,119,197,40,12,ES_AUTOHSCROLL
-    EDITTEXT        tAdminSuffix,261,197,57,12,ES_AUTOHSCROLL
+    RTEXT           "Tabs font:",IDC_STATIC,21,107,42,8
+    COMBOBOX        tTabFontFace,69,105,107,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    CTEXT           "x",IDC_STATIC,181,107,8,8
+    COMBOBOX        tTabFontHeight,192,105,29,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Charset:",IDC_STATIC,226,107,32,8
+    COMBOBOX        tTabFontCharset,264,105,54,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Tab templates",IDC_STATIC,4,131,319,85
+    RTEXT           "Panels:",IDC_STATIC,8,180,30,8
+    EDITTEXT        tTabConsole,42,161,40,12,ES_AUTOHSCROLL
+    RTEXT           "Viewer:",IDC_STATIC,85,180,29,8
+    EDITTEXT        tTabViewer,119,178,40,12,ES_AUTOHSCROLL
+    RTEXT           "Editor:",IDC_STATIC,166,180,22,8
+    EDITTEXT        tTabEditor,192,178,40,12,ES_AUTOHSCROLL
+    RTEXT           "Modified:",IDC_STATIC,237,180,36,8
+    EDITTEXT        tTabEditorMod,278,178,40,12,ES_AUTOHSCROLL
+    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %n - Name of active process, %% - %,\n%i - Far window number (you can see it in standard F12 menu)",IDC_STATIC,10,142,309,17
+    RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,200,107,8
+    EDITTEXT        tTabLenMax,119,198,40,12,ES_AUTOHSCROLL
+    EDITTEXT        tAdminSuffix,261,198,57,12,ES_AUTOHSCROLL
     CONTROL         "«Host-key»+Number iterates Far windows",cbMultiIterate,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,162,90,155,8
-    CONTROL         "Admin shield",rbAdminShield,"Button",BS_AUTORADIOBUTTON,167,199,55,8
-    CONTROL         "suffix",rbAdminSuffix,"Button",BS_AUTORADIOBUTTON,223,199,34,8
-    RTEXT           "Console:",IDC_STATIC,8,163,30,8
-    EDITTEXT        tTabPanels,42,177,40,12,ES_AUTOHSCROLL
-    LTEXT           "Skip words from title:",IDC_STATIC,91,163,69,8
-    EDITTEXT        tTabSkipWords,162,160,156,12,ES_AUTOHSCROLL
-    GROUPBOX        "Multi console",IDC_STATIC,4,1,319,41
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,162,91,155,8
+    CONTROL         "Admin shield",rbAdminShield,"Button",BS_AUTORADIOBUTTON,167,200,55,8
+    CONTROL         "suffix",rbAdminSuffix,"Button",BS_AUTORADIOBUTTON,223,200,34,8
+    RTEXT           "Console:",IDC_STATIC,8,164,30,8
+    EDITTEXT        tTabPanels,42,178,40,12,ES_AUTOHSCROLL
+    LTEXT           "Skip words from title:",IDC_STATIC,91,164,69,8
+    EDITTEXT        tTabSkipWords,162,161,156,12,ES_AUTOHSCROLL
+    GROUPBOX        "Multi console",IDC_STATIC,4,1,319,43
     CONTROL         "Multiple consoles in one ConEmu window",cbMultiCon,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,15,155,8
     CONTROL         "Create confirmation ( Win+W, toolbar [+] )",cbNewConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,155,8
-    CONTROL         "Always show",rbTabsAlways,"Button",BS_AUTORADIOBUTTON,10,62,65,8
-    CONTROL         "Auto show",rbTabsAuto,"Button",BS_AUTORADIOBUTTON,80,62,57,8
-    CONTROL         "Don't show",rbTabsNone,"Button",BS_AUTORADIOBUTTON,162,62,64,8
-    CONTROL         "Tabs on bottom",cbTabsLocationBottom,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,233,62,75,8
+    CONTROL         "Always show",rbTabsAlways,"Button",BS_AUTORADIOBUTTON,10,63,65,8
+    CONTROL         "Auto show",rbTabsAuto,"Button",BS_AUTORADIOBUTTON,80,63,57,8
+    CONTROL         "Don't show",rbTabsNone,"Button",BS_AUTORADIOBUTTON,162,63,64,8
+    CONTROL         "Tabs on bottom",cbTabsLocationBottom,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,233,63,75,8
     CONTROL         "Close console confirmation",cbCloseConsoleConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,27,147,8
 END
@@ -1098,7 +1098,7 @@ BEGIN
     LTEXT           "Required for some keyboard combinations. When checked, ConEmu will install keyboard hook when ConEmu is foreground window. So, You must allow that in antiviral software (AVP for example).",stUseKeyboardHooksFast1,20,18,292,25
     LTEXT           "You can change this later on 'Keys' page of Settings dialog later",stUseKeyboardHooksFast2,20,45,292,8,SS_NOPREFIX
     GROUPBOX        "",IDC_STATIC,3,57,316,57
-    CONTROL         " Inject ConEmuHk.dll into all processes started in ConEmu tabs",cbInjectConEmuHkFast,
+    CONTROL         " Inject ConEmuHk.dll into all processes started in ConEmu tabs (may cause lags)",cbInjectConEmuHkFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,64,295,10
     LTEXT           "Required for some features (-new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (dialogs and menus behind of ConEmu window, chcp hungs, and so on...)",stInjectConEmuHkFast1,20,75,292,25
     LTEXT           "You can change this later on 'Features' page of Settings dialog later",stInjectConEmuHkFast2,20,101,292,8,SS_NOPREFIX

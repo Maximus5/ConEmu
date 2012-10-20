@@ -229,6 +229,15 @@ class CConEmuMain :
 		
 		BOOL  mb_StartDetached;
 
+		enum StartupStage {
+			ss_Starting,
+			ss_PostCreate1Called,
+			ss_PostCreate1Finished,
+			ss_PostCreate2Called,
+			ss_PostCreate2Finished,
+			ss_Started = ss_PostCreate2Finished
+		} mn_StartupFinished;
+
 		struct
 		{
 			WORD  state;
@@ -305,7 +314,7 @@ class CConEmuMain :
 		//DWORD mn_ActiveStatus;
 		//TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
 		//OSVERSIONINFO m_osv;
-		BOOL mb_IsUacAdmin;
+		BOOL mb_IsUacAdmin; // ConEmu itself is started elevated
 		bool IsActiveConAdmin();
 		HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove;
 		HCURSOR mh_SplitV, mh_SplitH;
@@ -537,6 +546,7 @@ class CConEmuMain :
 		bool ConActivateNext(BOOL abNext);
 		//bool CorrectWindowPos(WINDOWPOS *wp);
 		//void CheckGuiBarsCreated();
+		bool CreateWnd(RConStartArgs *args);
 		CVirtualConsole* CreateCon(RConStartArgs *args, bool abAllowScripts = false, bool abForceCurConsole = false);
 		CVirtualConsole* CreateConGroup(LPCWSTR apszScript, BOOL abForceAsAdmin = FALSE, LPCWSTR asStartupDir = NULL);
 		void CreateGhostVCon(CVirtualConsole* apVCon);

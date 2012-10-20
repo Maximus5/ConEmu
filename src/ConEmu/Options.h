@@ -572,6 +572,7 @@ struct Settings
 		void PaletteSaveAs(LPCWSTR asName); // Save active colors to named palette
 		void PaletteDelete(LPCWSTR asName); // Delete named palette
 		void PaletteSetStdIndexes();
+		int PaletteSetActive(LPCWSTR asName);
 
 
 		// 
@@ -731,6 +732,8 @@ struct Settings
 	public:
 		/* "Active" command line */
 		LPCTSTR GetCmd();
+
+		RecreateActionParm GetDefaultCreateAction();
 
 		//reg->Load(L"FontName", inFont, countof(inFont))
 		wchar_t inFont[LF_FACESIZE];

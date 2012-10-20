@@ -35,6 +35,7 @@ protected:
 	int    mn_DlgRc;
 	RConStartArgs* mp_Args;
 	HWND   mh_Parent;
+	wchar_t ms_CurUser[MAX_PATH*2+1];
 public:
 	CRecreateDlg();
 	~CRecreateDlg();

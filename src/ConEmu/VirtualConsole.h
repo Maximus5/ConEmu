@@ -57,7 +57,7 @@ class CVirtualConsole :
 		void* mp_Group; // For internal use of CVConGroup
 	protected:
 		CVirtualConsole();
-		void Constructor(const RConStartArgs *args);
+		bool Constructor(RConStartArgs *args);
 	public:
 		//static CVirtualConsole* CreateVCon(RConStartArgs *args); --> VConGroup
 		void InitGhost();

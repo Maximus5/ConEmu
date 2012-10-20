@@ -1535,7 +1535,7 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (gpConEmu->IsGesturesEnabled())
 			OnNewConPopup();
 		else
-			gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+			gpConEmu->RecreateAction(gpSet->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 	}
 	else if (wParam == TID_ALTERNATIVE)
 	{
@@ -3034,7 +3034,7 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 	
 	if (nId == nCreateID)
 	{
-		gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, TRUE);
+		gpConEmu->RecreateAction(gpSet->GetDefaultCreateAction(), TRUE);
 	}
 	else if (nId == nSetupID)
 	{
@@ -3077,7 +3077,10 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 		}
 
 		//Собственно, запуск
-		gpConEmu->CreateCon(&con, TRUE);
+		if (gpSet->isMulti)
+			gpConEmu->CreateCon(&con, TRUE);
+		else
+			gpConEmu->CreateWnd(&con);
 	}
 
 wrap:

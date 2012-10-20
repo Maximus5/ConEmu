@@ -43,6 +43,7 @@ CRecreateDlg::CRecreateDlg()
 	, mp_Args(NULL)
 	, mh_Parent(NULL)
 {
+	ms_CurUser[0] = 0;
 }
 
 CRecreateDlg::~CRecreateDlg()
@@ -209,12 +210,12 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			const wchar_t *pszUser, *pszDomain; BOOL bResticted;
 			int nChecked = rbCurrentUser;
-			wchar_t szCurUser[MAX_PATH*2+1]; DWORD nUserNameLen = countof(szCurUser);
+			DWORD nUserNameLen = countof(pDlg->ms_CurUser);
 
-			if (!GetUserName(szCurUser, &nUserNameLen)) szCurUser[0] = 0;
+			if (!GetUserName(pDlg->ms_CurUser, &nUserNameLen)) pDlg->ms_CurUser[0] = 0;
 
 			wchar_t szRbCaption[MAX_PATH*3];
-			lstrcpy(szRbCaption, L"Run as current &user: "); lstrcat(szRbCaption, szCurUser);
+			lstrcpy(szRbCaption, L"Run as current &user: "); lstrcat(szRbCaption, pDlg->ms_CurUser);
 			SetDlgItemText(hDlg, rbCurrentUser, szRbCaption);
 
 			if ((pArgs->aRecreate == cra_RecreateTab) && pVCon && pVCon->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted))
@@ -234,27 +235,27 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 							// ≈сли в имени домена есть точка - используем нотацию user@domain
 							// ѕо идее, мы сюда не попадаем, т.к. при вводе имени в таком формате
 							// pszDomain не заполн€етс€, и "UPN format" остаетс€ в pszUser
-							lstrcpyn(szCurUser, pszUser, MAX_PATH);
-							wcscat_c(szCurUser, L"@");
-							lstrcpyn(szCurUser+_tcslen(szCurUser), pszDomain, MAX_PATH);
+							lstrcpyn(pDlg->ms_CurUser, pszUser, MAX_PATH);
+							wcscat_c(pDlg->ms_CurUser, L"@");
+							lstrcpyn(pDlg->ms_CurUser+_tcslen(pDlg->ms_CurUser), pszDomain, MAX_PATH);
 						}
 						else
 						{
 							// "—тара€" нотаци€ domain\user
-							lstrcpyn(szCurUser, pszDomain, MAX_PATH);
-							wcscat_c(szCurUser, L"\\");
-							lstrcpyn(szCurUser+_tcslen(szCurUser), pszUser, MAX_PATH);
+							lstrcpyn(pDlg->ms_CurUser, pszDomain, MAX_PATH);
+							wcscat_c(pDlg->ms_CurUser, L"\\");
+							lstrcpyn(pDlg->ms_CurUser+_tcslen(pDlg->ms_CurUser), pszUser, MAX_PATH);
 						}
 					}
 					else
 					{
-						lstrcpyn(szCurUser, pszUser, countof(szCurUser));
+						lstrcpyn(pDlg->ms_CurUser, pszUser, countof(pDlg->ms_CurUser));
 					}
 					SetDlgItemText(hDlg, tRunAsPassword, L"");
 				}
 			}
 
-			SetDlgItemText(hDlg, tRunAsUser, szCurUser);
+			SetDlgItemText(hDlg, tRunAsUser, (nChecked == rbAnotherUser) ? pDlg->ms_CurUser : L"");
 			CheckRadioButton(hDlg, rbCurrentUser, rbAnotherUser, nChecked);
 			RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
 
@@ -302,7 +303,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				//GCC hack. иначе не собираетс€
 				SetDlgItemTextA(hDlg, IDC_RESTART_MSG,  "Create new console");
 
-				CheckDlgButton(hDlg, cbRunInNewWindow, (pArgs->aRecreate == cra_CreateWindow) ? BST_CHECKED : BST_UNCHECKED);
+				CheckDlgButton(hDlg, cbRunInNewWindow, (pArgs->aRecreate == cra_CreateWindow || !gpSet->isMulti) ? BST_CHECKED : BST_UNCHECKED);
 				//if (pArgs->aRecreate == cra_CreateWindow)
 				//{
 				//	SetWindowText(hDlg, L"ConEmu - Create new window");
@@ -467,22 +468,45 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 					if (nStatus == NERR_Success)
 					{
-						for(DWORD i = 0; i < dwEntriesRead; ++i)
+						wchar_t *pszAdmin = NULL, *pszLikeAdmin = NULL, *pszOtherUser = NULL;
+
+						for (DWORD i = 0; i < dwEntriesRead; ++i)
 						{
 							// usri3_logon_server	"\\*"	wchar_t *
-							if ((info[i].usri3_flags & UF_ACCOUNTDISABLE) == 0)
+							if (!(info[i].usri3_flags & UF_ACCOUNTDISABLE) && info[i].usri3_name && *info[i].usri3_name)
+							{
 								SendDlgItemMessage(hDlg, tRunAsUser, CB_ADDSTRING, 0, (LPARAM)info[i].usri3_name);
+
+								if (info[i].usri3_priv == 2/*USER_PRIV_ADMIN*/)
+								{
+									if (!pszAdmin && (info[i].usri3_user_id == 500))
+										pszAdmin = lstrdup(info[i].usri3_name);
+									else if (!pszLikeAdmin && (lstrcmpi(pDlg->ms_CurUser, info[i].usri3_name) != 0))
+										pszLikeAdmin = lstrdup(info[i].usri3_name);
+								}
+								else if (!pszOtherUser
+									&& (info[i].usri3_priv == 1/*USER_PRIV_USER*/)
+									&& (lstrcmpi(pDlg->ms_CurUser, info[i].usri3_name) != 0))
+								{
+									pszOtherUser = lstrdup(info[i].usri3_name);
+								}
+							}
+						}
+
+						if (GetWindowTextLength(GetDlgItem(hDlg, tRunAsUser)) == 0)
+						{
+							// Try to suggest "Administrator" account
+							SetDlgItemText(hDlg, tRunAsUser, pszAdmin ? pszAdmin : pszLikeAdmin ? pszLikeAdmin : pszOtherUser ? pszOtherUser : pDlg->ms_CurUser);
 						}
 
 						::NetApiBufferFree(info);
+						SafeFree(pszAdmin);
+						SafeFree(pszLikeAdmin);
 					}
 					else
 					{
 						// ƒобавить хот€ бы текущего
-						wchar_t szCurUser[MAX_PATH];
-
-						if (GetWindowText(GetDlgItem(hDlg, tRunAsUser), szCurUser, countof(szCurUser)))
-							SendDlgItemMessage(hDlg, tRunAsUser, CB_ADDSTRING, 0, (LPARAM)szCurUser);
+						SendDlgItemMessage(hDlg, tRunAsUser, CB_ADDSTRING, 0, (LPARAM)pDlg->ms_CurUser);
 					}
 				}
 
@@ -644,7 +668,11 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 								//pArgs->pszUserPassword = GetDlgItemText(hDlg, tRunAsPassword);
 								// ѕопытатьс€ проверить правильность введенного парол€ и возможность запуска
 								if (!pArgs->CheckUserToken(GetDlgItem(hDlg, tRunAsPassword)))
+								{
+									DWORD nErr = GetLastError();
+									DisplayLastError(L"Invalid user name or password was specified!", nErr, MB_ICONSTOP, NULL, hDlg);
 									return 1;
+								}
 							}
 						}
 						else

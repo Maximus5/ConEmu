@@ -98,7 +98,7 @@ bool SettingsRegistry::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 	{
 		// если тип раньше был DWORD а стал - BYTE
 		DWORD nData = 0;
-		lRc = RegQueryValueEx(regMy, regName, NULL, NULL, (LPBYTE)value, &nNewSize);
+		lRc = RegQueryValueEx(regMy, regName, NULL, NULL, (LPBYTE)&nData, &nNewSize);
 		if (lRc == ERROR_SUCCESS)
 		{
 			*value = (BYTE)(nData & 0xFF);
@@ -1250,7 +1250,7 @@ bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 			DWORD lVal = 0;
 			lbRc = true;
 			
-			while(*pszCur && nSize)
+			while (*pszCur && nSize)
 			{
 				lVal = 0;
 				cHex = *(pszCur++);

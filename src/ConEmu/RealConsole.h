@@ -272,7 +272,7 @@ class CRealConsole
 		void    CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui);
 
 		CRealConsole();
-		void Construct(CVirtualConsole* apVCon);
+		bool Construct(CVirtualConsole* apVCon, RConStartArgs *args);
 		~CRealConsole();
 
 		CVirtualConsole* VCon();
@@ -413,6 +413,8 @@ class CRealConsole
 		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 		ExpandTextRangeType GetLastTextRangeType();
 	private:
+		bool PreCreate(RConStartArgs *args);
+
 		BOOL GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData);
 		//enum ExpandTextRangeType
 		//{
@@ -495,9 +497,6 @@ class CRealConsole
 		int GetStatusLineCount(int nLeftPanelEdge);
 
 	public:
-		// Вызываются из CVirtualConsole
-		BOOL PreCreate(RConStartArgs *args);
-		//(BOOL abDetached, LPCWSTR asNewCmd = NULL, BOOL abAsAdmin = FALSE);
 		BOOL IsConsoleThread();
 		void SetForceRead();
 		//DWORD WaitEndUpdate(DWORD dwTimeout=1000);

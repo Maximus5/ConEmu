@@ -126,7 +126,7 @@ CRealConsole::CRealConsole()
 {
 }
 
-void CRealConsole::Construct(CVirtualConsole* apVCon)
+bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 {
 	MCHKHEAP;
 	SetConStatus(L"Initializing ConEmu..", true, true);
@@ -287,9 +287,14 @@ void CRealConsole::Construct(CVirtualConsole* apVCon)
 	//lstrcpy(ms_NameTitle, L"Name");
 	PreInit(); // просто инициализировать переменные размеров...
 
+	if (!PreCreate(args))
+		return false;
+
 	// -- т.к. автопоказ табов может вызвать ресайз - то табы в самом конце инициализации!
 	SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
 	MCHKHEAP;
+
+	return true;
 }
 
 CRealConsole::~CRealConsole()
@@ -360,17 +365,31 @@ CVirtualConsole* CRealConsole::VCon()
 	return this ? mp_VCon : NULL;
 }
 
-BOOL CRealConsole::PreCreate(RConStartArgs *args)
-//(BOOL abDetached, LPCWSTR asNewCmd /*= NULL*/, , BOOL abAsAdmin /*= FALSE*/)
+bool CRealConsole::PreCreate(RConStartArgs *args)
 {
 	_ASSERTE(args!=NULL);
 
+	bool bCopied = m_Args.AssignFrom(args);
+
+	// Don't leave security information (passwords) in memory
+	if (args->pszUserName)
+	{
+		SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
+	}
+
+	if (!bCopied)
+		return false;
+
 	// 111211 - здесь может быть передан "-new_console:..."
-	if (args->pszSpecialCmd)
+	if (m_Args.pszSpecialCmd)
 	{
 		// Должен быть обработан в вызывающей функции (CVirtualConsole::CreateVCon?)
 		_ASSERTE(wcsstr(args->pszSpecialCmd, L"-new_console")==NULL);
-		args->ProcessNewConArg();
+		m_Args.ProcessNewConArg();
+	}
+	else
+	{
+		_ASSERTE(args->pszSpecialCmd && *args->pszSpecialCmd && "Command line must be specified already!");
 	}
 
 	mb_NeedStartProcess = FALSE;
@@ -381,58 +400,12 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 		// Если реестр обломался, или юзер сказал "не продолжать"
 		if (!gpConEmu->PreparePortableReg())
 		{
-			return FALSE;
+			return false;
 		}
 	}
 
-	if (args->pszSpecialCmd /*&& !m_Args.pszSpecialCmd*/)
-	{
-		SafeFree(m_Args.pszSpecialCmd);
-		_ASSERTE(args->bDetached == FALSE);
-		m_Args.pszSpecialCmd = lstrdup(args->pszSpecialCmd);
 
-		if (!m_Args.pszSpecialCmd)
-			return FALSE;
-	}
-
-	// Директория запуска. В большинстве случаев совпадает с CurDir в conemu.exe,
-	// но может быть задана из консоли, если запуск идет через "-new_console"
-	_ASSERTE(m_Args.pszStartupDir==NULL);
-	SafeFree(m_Args.pszStartupDir);
-	if (args->pszStartupDir)
-	{
-		m_Args.pszStartupDir = lstrdup(args->pszStartupDir);
-
-		if (!m_Args.pszStartupDir)
-			return FALSE;
-	}
-
-	m_Args.bRunAsRestricted = args->bRunAsRestricted;
-	m_Args.bRunAsAdministrator = args->bRunAsAdministrator;
-	SafeFree(m_Args.pszUserName); //SafeFree(m_Args.pszUserPassword);
-	SafeFree(m_Args.pszDomain);
-
-	//if (m_Args.hLogonToken) { CloseHandle(m_Args.hLogonToken); m_Args.hLogonToken = NULL; }
-	if (args->pszUserName)
-	{
-		m_Args.pszUserName = lstrdup(args->pszUserName);
-		if (args->pszDomain)
-			m_Args.pszDomain = lstrdup(args->pszDomain);
-		lstrcpy(m_Args.szUserPassword, args->szUserPassword);
-		SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
-
-		//m_Args.pszUserPassword = lstrdup(args->pszUserPassword ? args->pszUserPassword : L"");
-		//m_Args.hLogonToken = args->hLogonToken; args->hLogonToken = NULL;
-		if (!m_Args.pszUserName || !*m_Args.szUserPassword)
-			return FALSE;
-	}
-
-	m_Args.bBackgroundTab = args->bBackgroundTab;
-	m_Args.bBufHeight = args->bBufHeight;
-	m_Args.nBufHeight = args->nBufHeight;
-	m_Args.eConfirmation = args->eConfirmation;
-	m_Args.bForceUserDialog = args->bForceUserDialog;
-
+	// Go
 	if (m_Args.bBufHeight)
 	{
 		mn_DefaultBufferHeight = m_Args.nBufHeight;
@@ -449,7 +422,7 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 		// Пока ничего не делаем - просто создается серверная нить
 		if (!PreInit())  //TODO: вообще-то PreInit() уже наверное вызван...
 		{
-			return FALSE;
+			return false;
 		}
 
 		m_Args.bDetached = TRUE;
@@ -466,13 +439,13 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 
 	if (!StartMonitorThread())
 	{
-		return FALSE;
+		return false;
 	}
 	
 	// В фоновой вкладке?
 	args->bBackgroundTab = m_Args.bBackgroundTab;
 
-	return TRUE;
+	return true;
 }
 
 RealBufferType CRealConsole::GetActiveBufferType()
@@ -2401,10 +2374,10 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 		if (nTextColorIdx >= 16) nTextColorIdx = 7;
 		if (nBackColorIdx >= 16) nBackColorIdx = 0;
 		if ((nTextColorIdx == nBackColorIdx)
-			&& gpSetCls->IsBackgroundEnabled(mp_VCon)
-			&& !(gpSet->nBgImageColors & (1 << nBackColorIdx)))  // bg color is an image
+			&& (!gpSetCls->IsBackgroundEnabled(mp_VCon)
+				|| !(gpSet->nBgImageColors & (1 << nBackColorIdx))))  // bg color is an image
 		{
-			nBackColorIdx = nTextColorIdx ? 0 : 7;
+			nTextColorIdx = nBackColorIdx ? 0 : 7;
 		}
 		//si.dwFlags |= STARTF_USEFILLATTRIBUTE;
 		//si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
@@ -4887,22 +4860,44 @@ int CRealConsole::GetDefaultAppSettingsId()
 	if (!this)
 		return -1;
 
+	int iAppId = -1;
 	LPCWSTR lpszCmd = NULL;
+	wchar_t* pszBuffer = NULL;
+	LPCWSTR pszName = NULL;
+	wchar_t szExe[MAX_PATH+1];
+	wchar_t szName[MAX_PATH+1];
+	LPCWSTR pszTemp = NULL;
+	bool bAsAdmin = false;
+
 	if (m_Args.pszSpecialCmd)
+	{
 		lpszCmd = m_Args.pszSpecialCmd;
+	}
 	else
+	{
+		// Some tricky, but while starting we need to show at least one "empty" tab,
+		// otherwise tabbar without tabs looks weird. Therefore on starting stage
+		// m_Args.pszSpecialCmd may be NULL. This is not so good, because GetCmd()
+		// may return task name instead of real command.
+		_ASSERTE(m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd && "Command line must be specified already!");
+
 		lpszCmd = gpSet->GetCmd();
+		
+		// May be this is batch?
+		pszBuffer = gpConEmu->LoadConsoleBatch(lpszCmd);
+		if (pszBuffer && *pszBuffer)
+			lpszCmd = pszBuffer;
+	}
 
 	if (!lpszCmd || !*lpszCmd)
 	{
 		ms_RootProcessName[0] = 0;
-		return -1;
+		goto wrap;
 	}
 
-	LPCWSTR pszName = NULL;;
-	wchar_t szExe[MAX_PATH+1];
-	wchar_t szName[MAX_PATH+1];
-	LPCWSTR pszTemp = lpszCmd;
+	// Parse command line
+	pszTemp = lpszCmd;
+
 	if (0 == NextArg(&pszTemp, szExe))
 	{
 		pszName = PointToName(szExe);
@@ -4918,7 +4913,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	if (!pszName)
 	{
 		ms_RootProcessName[0] = 0;
-		return -1;
+		goto wrap;
 	}
 
 	if (wcschr(pszName, L'.') == NULL)
@@ -4931,7 +4926,14 @@ int CRealConsole::GetDefaultAppSettingsId()
 
 	lstrcpyn(ms_RootProcessName, pszName, countof(ms_RootProcessName));
 
-	int iAppId = gpSet->GetAppSettingsId(pszName, m_Args.bRunAsAdministrator);
+	// In fact, m_Args.bRunAsAdministrator may be not true on startup
+	bAsAdmin = m_Args.pszSpecialCmd ? m_Args.bRunAsAdministrator : gpConEmu->mb_IsUacAdmin;
+
+	// Done. Get AppDistinct ID
+	iAppId = gpSet->GetAppSettingsId(pszName, bAsAdmin);
+
+wrap:
+	SafeFree(pszBuffer);
 	return iAppId;
 }
 
@@ -6237,36 +6239,49 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 		return false;
 	}
 
-	if (args->pszSpecialCmd && *args->pszSpecialCmd)
+	bool bCopied = m_Args.AssignFrom(args);
+
+	// Don't leave security information (passwords) in memory
+	if (args->pszUserName)
 	{
-		if (m_Args.pszSpecialCmd) Free(m_Args.pszSpecialCmd);
-
-		int nLen = _tcslen(args->pszSpecialCmd);
-		m_Args.pszSpecialCmd = (wchar_t*)Alloc(nLen+1,2);
-
-		if (!m_Args.pszSpecialCmd)
-		{
-			Box(_T("Can't allocate memory..."));
-			return FALSE;
-		}
-
-		lstrcpyW(m_Args.pszSpecialCmd, args->pszSpecialCmd);
+		SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
 	}
 
-	if (args->pszStartupDir)
+	if (!bCopied)
 	{
-		if (m_Args.pszStartupDir) Free(m_Args.pszStartupDir);
-
-		int nLen = _tcslen(args->pszStartupDir);
-		m_Args.pszStartupDir = (wchar_t*)Alloc(nLen+1,2);
-
-		if (!m_Args.pszStartupDir)
-			return FALSE;
-
-		lstrcpyW(m_Args.pszStartupDir, args->pszStartupDir);
+		Box(_T("Failed to copy args (CRealConsole::RecreateProcess)"));
+		return false;
 	}
 
-	m_Args.bRunAsAdministrator = args->bRunAsAdministrator;
+	//if (args->pszSpecialCmd && *args->pszSpecialCmd)
+	//{
+	//	if (m_Args.pszSpecialCmd) Free(m_Args.pszSpecialCmd);
+
+	//	int nLen = _tcslen(args->pszSpecialCmd);
+	//	m_Args.pszSpecialCmd = (wchar_t*)Alloc(nLen+1,2);
+
+	//	if (!m_Args.pszSpecialCmd)
+	//	{
+	//		Box(_T("Can't allocate memory..."));
+	//		return FALSE;
+	//	}
+
+	//	lstrcpyW(m_Args.pszSpecialCmd, args->pszSpecialCmd);
+	//}
+	//if (args->pszStartupDir)
+	//{
+	//	if (m_Args.pszStartupDir) Free(m_Args.pszStartupDir);
+
+	//	int nLen = _tcslen(args->pszStartupDir);
+	//	m_Args.pszStartupDir = (wchar_t*)Alloc(nLen+1,2);
+
+	//	if (!m_Args.pszStartupDir)
+	//		return FALSE;
+
+	//	lstrcpyW(m_Args.pszStartupDir, args->pszStartupDir);
+	//}
+	//m_Args.bRunAsAdministrator = args->bRunAsAdministrator;
+
 	//DWORD nWait = 0;
 	mb_ProcessRestarted = FALSE;
 	mn_InRecreate = GetTickCount();

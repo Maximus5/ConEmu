@@ -177,21 +177,24 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 			return NULL;
 	}
 
-	CVirtualConsole* pCon = new CVirtualConsole();
-	ppVConI = pCon;
-	pGroup->mp_Item = pCon;
-	pCon->mp_Group = pGroup;
-	pCon->Constructor(args);
+	CVirtualConsole* pVCon = new CVirtualConsole();
+	ppVConI = pVCon;
+	pGroup->mp_Item = pVCon;
+	pVCon->mp_Group = pGroup;
 
-	if (!pCon->mp_RCon->PreCreate(args))
+	//pVCon->Constructor(args);
+	//if (!pVCon->mp_RCon->PreCreate(args))
+
+	if (!pVCon->Constructor(args))
 	{
-		delete pCon;
+		ppVConI = NULL;
+		delete pVCon;
 		return NULL;
 	}
 
 	pGroup->GetRootGroup()->InvalidateAll();
 
-	return pCon;
+	return pVCon;
 }
 
 
@@ -2420,8 +2423,20 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 
 	CVirtualConsole* pVCon = NULL;
 
+	// When no command specified - choose default one. Now!
+	if (!args->pszSpecialCmd || !*args->pszSpecialCmd)
+	{
+		_ASSERTE(args->pszSpecialCmd==NULL);
+
+		args->pszSpecialCmd = lstrdup(gpSet->GetCmd());
+
+		_ASSERTE(args->pszSpecialCmd && *args->pszSpecialCmd);
+	}
+
 	if (args->pszSpecialCmd)
+	{
 		args->ProcessNewConArg(abForceCurConsole);
+	}
 
 	if (gpConEmu->m_InsideIntegration && gpConEmu->mb_InsideIntegrationShift)
 	{
