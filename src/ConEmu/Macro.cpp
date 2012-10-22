@@ -148,6 +148,8 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 			pszResult = WindowMode(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"MsgBox"))
 			pszResult = MsgBox(asMacro, apRCon);
+		else if (!lstrcmpi(szFunction, L"Menu"))
+			pszResult = Menu(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"FontSetSize"))
 			pszResult = FontSetSize(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"FontSetName"))
@@ -632,6 +634,39 @@ LPWSTR CConEmuMacro::WindowMode(LPWSTR asArgs, CRealConsole* apRCon)
 		sNOR;
 
 	return lstrdup(pszRc);
+}
+
+// Menu(Type)
+LPWSTR CConEmuMacro::Menu(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	int nType = 0;
+	GetNextInt(asArgs, nType);
+
+	POINT ptCur = {-32000,-32000};
+
+	if (isPressed(VK_LBUTTON) || isPressed(VK_MBUTTON) || isPressed(VK_RBUTTON))
+		GetCursorPos(&ptCur);
+
+	switch (nType)
+	{
+	case 0:
+		WARNING("учитывать gpCurrentHotKey, если оно по клику мышки - показывать в позиции курсора");
+		gpConEmu->ShowSysmenu(ptCur.x, ptCur.y);
+		return lstrdup(L"OK");
+
+	case 1:
+		if (apRCon)
+		{
+			WARNING("учитывать gpCurrentHotKey, если оно по клику мышки - показывать в позиции курсора");
+			if (ptCur.x == -32000)
+				ptCur = gpConEmu->CalcTabMenuPos(apRCon->VCon());
+			apRCon->VCon()->ShowPopupMenu(ptCur);
+			return lstrdup(L"OK");
+		}
+		break;
+	}
+
+	return lstrdup(L"InvalidArg");
 }
 
 // MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]

@@ -2136,6 +2136,13 @@ void Settings::GetVkKeyName(BYTE vk, wchar_t (&szName)[32])
 	case VK_WHEEL_RIGHT:
 		wcscat_c(szName, L"WheelRight"); break;
 
+	case VK_LBUTTON:
+		wcscat_c(szName, L"LButton"); break;
+	case VK_RBUTTON:
+		wcscat_c(szName, L"RButton"); break;
+	case VK_MBUTTON:
+		wcscat_c(szName, L"MButton"); break;
+
 	default:
 		if (vk >= VK_F1 && vk <= VK_F24)
 		{
@@ -2761,9 +2768,9 @@ void Settings::LoadSettings()
 		{
 			ConEmuHotKey* pHK;
 			// Если раньше был включен флажок "Send Alt+Space to console"
-			if (bSendAltSpace && GetHotkeyById(vkAltSpace, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == MakeHotKey(VK_SPACE,VK_MENU)))
+			if (bSendAltSpace && GetHotkeyById(vkSystemMenu, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == MakeHotKey(VK_SPACE,VK_MENU)))
 			{
-				pHK->VkMod = 0; // Сбросить VkMod для vkAltSpace
+				pHK->VkMod = 0; // Сбросить VkMod для vkSystemMenu (раньше назывался vkAltSpace)
 			}
 			// Если раньше был включен флажок "Send Alt+Enter to console"
 			if (bSendAltEnter && GetHotkeyById(vkAltEnter, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == MakeHotKey(VK_RETURN,VK_MENU)))
@@ -5318,10 +5325,12 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkShowTabBar,     chk_User,  NULL,    L"ShowTabBarKey",         MakeHotKey('T',VK_APPS), CConEmuCtrl::key_ShowTabBar},
 		{vkShowCaption,    chk_User,  NULL,    L"ShowCaptionKey",        MakeHotKey('C',VK_APPS), CConEmuCtrl::key_ShowCaption},
 		{vkAlwaysOnTop,    chk_User,  NULL,    L"AlwaysOnTopKey",        0, CConEmuCtrl::key_AlwaysOnTop},
-		{vkAppsSpace,      chk_User,  NULL,    L"Key.TabMenu",           MakeHotKey(VK_SPACE,VK_APPS), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
+		{vkTabMenu,        chk_User,  NULL,    L"Key.TabMenu",           MakeHotKey(VK_SPACE,VK_APPS), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
+		{vkTabMenu2,       chk_User,  NULL,    L"Key.TabMenu2",          MakeHotKey(VK_RBUTTON,VK_SHIFT), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
 		{vkAltF9,          chk_User,  NULL,    L"Key.Maximize",          MakeHotKey(VK_F9,VK_MENU), CConEmuCtrl::key_AltF9}, // Maximize window
 		{vkAltEnter,       chk_User,  NULL,    L"Key.FullScreen",        MakeHotKey(VK_RETURN,VK_MENU), CConEmuCtrl::key_AltEnter}, // Full screen
-		{vkAltSpace,       chk_User,  NULL,    L"Key.SysMenu",           MakeHotKey(VK_SPACE,VK_MENU), CConEmuCtrl::key_AltSpace, true/*OnKeyUp*/}, // System menu
+		{vkSystemMenu,     chk_User,  NULL,    L"Key.SysMenu",           MakeHotKey(VK_SPACE,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
+		{vkSystemMenu2,    chk_User,  NULL,    L"Key.SysMenu2",          MakeHotKey(VK_RBUTTON,VK_CONTROL), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
 		{vkCtrlUp,         chk_User,  NULL,    L"Key.BufUp",             MakeHotKey(VK_UP,VK_CONTROL), CConEmuCtrl::key_BufferScrollUp}, // Buffer scroll
 		{vkCtrlDown,       chk_User,  NULL,    L"Key.BufDn",             MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_BufferScrollDown}, // Buffer scroll
 		{vkCtrlPgUp,       chk_User,  NULL,    L"Key.BufPgUp",           MakeHotKey(VK_PRIOR,VK_CONTROL), CConEmuCtrl::key_BufferScrollPgUp}, // Buffer scroll

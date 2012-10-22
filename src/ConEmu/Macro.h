@@ -70,6 +70,8 @@ class CConEmuMacro
 		static LPWSTR IsConsoleActive(LPWSTR asArgs, CRealConsole* apRCon);
 		// Проверка, видима ли RealConsole
 		static LPWSTR IsRealVisible(LPWSTR asArgs, CRealConsole* apRCon);
+		// Menu(Type)
+		static LPWSTR Menu(LPWSTR asArgs, CRealConsole* apRCon);
 		// MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
 		static LPWSTR MsgBox(LPWSTR asArgs, CRealConsole* apRCon);
 		// Paste (<Cmd>[,"<Text>"])

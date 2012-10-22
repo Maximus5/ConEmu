@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/execute.h"
 #endif
 #include "../common/PipeServer.h"
+#include "../common/ConEmuInOut.h"
 
 #ifdef _DEBUG
 #include "DbgHooks.h"
@@ -170,6 +171,10 @@ BOOL    gbNonGuiMode = FALSE;
 DWORD   gnImageSubsystem = 0;
 DWORD   gnImageBits = WIN3264TEST(32,64); //-V112
 wchar_t gsInitConTitle[512] = {};
+
+ConEmuInOutPipe *gpCEIO_In = NULL, *gpCEIO_Out = NULL, *gpCEIO_Err = NULL;
+void StartPTY();
+void StopPTY();
 
 HMODULE ghSrvDll = NULL;
 //typedef int (__stdcall* RequestLocalServer_t)(AnnotationHeader** ppAnnotation, HANDLE* ppOutBuffer);
@@ -429,7 +434,15 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	{
 		//_ASSERTEX(FALSE && "settings gbIsBashProcess");
 		gbIsBashProcess = true;
+		
 		TODO("Start redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
+		#if 0
+		StartPTY();
+		#endif
+	}
+	else if ((lstrcmpi(pszName, L"hiew32.exe") == 0) || (lstrcmpi(pszName, L"hiew32") == 0))
+	{
+		gbIsHiewProcess = true;
 	}
 
 	// ѕоскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
@@ -808,6 +821,11 @@ void DllStop()
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
 		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	#endif
+
+	TODO("Stop redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
+	#ifdef _DEBUG
+	StopPTY();
 	#endif
 
 	print_timings(L"DllStop");
@@ -1322,6 +1340,94 @@ void SendStopped()
 			ExecuteFreeResult(pOut);
 			pOut = NULL;
 		}
+	}
+}
+
+void StartPTY()
+{
+	if (gpCEIO_In)
+	{
+		_ASSERTEX(gpCEIO_In==NULL);
+		return;
+	}
+
+	gpCEIO_In = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1); 
+	gpCEIO_Out = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1); 
+	gpCEIO_Err = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1);
+
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
+
+	if (!hIn || !gpCEIO_In
+		|| !gpCEIO_In->CEIO_Initialize(hIn, false)
+		|| !gpCEIO_In->CEIO_RunThread())
+	{
+		SafeFree(gpCEIO_In);
+	}
+	else
+	{
+		SetStdHandle(STD_INPUT_HANDLE, gpCEIO_In->hRead);
+	}
+
+	if (!hOut || !gpCEIO_Out
+		|| !gpCEIO_Out->CEIO_Initialize(hOut, true)
+		|| !gpCEIO_Out->CEIO_RunThread())
+	{
+		SafeFree(gpCEIO_Out);
+	}
+	else
+	{
+		SetStdHandle(STD_OUTPUT_HANDLE, gpCEIO_Out->hWrite);
+	}
+
+	if (!hErr || (hErr == hOut) || !gpCEIO_Err
+		|| !gpCEIO_Err->CEIO_Initialize(hIn, true)
+		|| !gpCEIO_Err->CEIO_RunThread())
+	{
+		SafeFree(gpCEIO_Err);
+		if (gpCEIO_In)
+		{
+			SetStdHandle(STD_ERROR_HANDLE, gpCEIO_Out->hWrite);
+		}
+	}
+	else
+	{
+		SetStdHandle(STD_ERROR_HANDLE, gpCEIO_Err->hWrite);
+	}
+}
+
+void StopPTY()
+{
+	if (gpCEIO_In)
+	{
+		gpCEIO_In->CEIO_Terminate();
+		
+		SetStdHandle(STD_INPUT_HANDLE, gpCEIO_In->hStd);
+		
+		SafeFree(gpCEIO_In);
+	}
+
+	if (gpCEIO_Out || gpCEIO_Err)
+	{
+		if (gpCEIO_Out)
+		{
+			gpCEIO_Out->CEIO_Terminate();
+			SetStdHandle(STD_OUTPUT_HANDLE, gpCEIO_Out->hStd);
+		}
+
+		if (gpCEIO_Err)
+		{
+			gpCEIO_Err->CEIO_Terminate();
+			SetStdHandle(STD_ERROR_HANDLE, gpCEIO_Err->hStd);
+		}
+		else if (gpCEIO_Out)
+		{
+			SetStdHandle(STD_ERROR_HANDLE, gpCEIO_Out->hStd);
+		}
+
+		SafeFree(gpCEIO_Out);
+		SafeFree(gpCEIO_Err);
 	}
 }
 

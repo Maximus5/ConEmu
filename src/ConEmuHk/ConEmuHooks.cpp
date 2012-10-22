@@ -181,6 +181,9 @@ int  gnPowerShellProgressValue = -1;
 bool gbIsBashProcess = false;
 /* ************ Globals for bash ************ */
 
+/* ************ Globals for HIEW32.EXE ************ */
+bool gbIsHiewProcess = false;
+/* ************ Globals for HIEW32.EXE ************ */
 
 struct ReadConsoleInfo gReadConsoleInfo = {};
 
@@ -234,6 +237,7 @@ BOOL WINAPI OnReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead
 BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl);
 BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl);
 BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents);
+BOOL WINAPI OnFlushConsoleInputBuffer(HANDLE hConsoleInput);
 BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
@@ -413,6 +417,11 @@ bool InitHooksCommon()
 		{
 			(void*)OnGetNumberOfConsoleInputEvents,
 			"GetNumberOfConsoleInputEvents",
+			kernel32
+		},
+		{
+			(void*)OnFlushConsoleInputBuffer,
+			"FlushConsoleInputBuffer",
 			kernel32
 		},
 		{
@@ -3239,11 +3248,32 @@ BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNum
 
 	lbRc = F(GetNumberOfConsoleInputEvents)(hConsoleInput, lpcNumberOfEvents);
 
+	// Hiew fails pasting from clipboard on high speed
+	if (gbIsHiewProcess && lpcNumberOfEvents && (*lpcNumberOfEvents > 1))
+	{
+		*lpcNumberOfEvents = 1;
+	}
+
 	if (ph && ph->PostCallBack)
 	{
 		SETARGS2(&lbRc,hConsoleInput,lpcNumberOfEvents);
 		ph->PostCallBack(&args);
 	}
+
+	return lbRc;
+}
+
+BOOL WINAPI OnFlushConsoleInputBuffer(HANDLE hConsoleInput)
+{
+	typedef BOOL (WINAPI* OnFlushConsoleInputBuffer_t)(HANDLE hConsoleInput);
+	SUPPRESSORIGINALSHOWCALL;
+	ORIGINALFAST(FlushConsoleInputBuffer);
+	BOOL lbRc = FALSE;
+
+	//_ASSERTEX(FALSE && "calling FlushConsoleInputBuffer");
+	DebugString(L"### calling FlushConsoleInputBuffer\n");
+
+	lbRc = F(FlushConsoleInputBuffer)(hConsoleInput);
 
 	return lbRc;
 }

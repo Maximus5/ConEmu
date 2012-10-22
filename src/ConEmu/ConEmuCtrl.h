@@ -33,6 +33,8 @@ struct ConEmuHotKey;
 // Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
 extern const ConEmuHotKey* ConEmuSkipHotKey; // = ((ConEmuHotKey*)INVALID_HANDLE_VALUE)
 
+// Текущая обрабатываемая клавиша
+extern const ConEmuHotKey* gpCurrentHotKey;
 
 class CConEmuCtrl
 {
@@ -42,6 +44,7 @@ public:
 
 	bool ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, CRealConsole* pRCon);
 	const ConEmuHotKey* ProcessHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars, CRealConsole* pRCon);
+	DWORD VkModFromVk(DWORD Vk);
 
 	void UpdateControlKeyState();
 	DWORD GetControlKeyState(LPARAM lParam);
@@ -115,7 +118,6 @@ public:
 	// System (predefined, fixed)
 	static bool WINAPI key_About(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_Settings(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
-	static bool WINAPI key_AltSpace(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_SystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_TabMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_AltF9(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);

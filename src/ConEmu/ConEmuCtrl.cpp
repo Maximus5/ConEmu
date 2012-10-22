@@ -43,7 +43,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRAPPS(s) DEBUGSTR(s)
 
 
+// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
 const ConEmuHotKey* ConEmuSkipHotKey = ((ConEmuHotKey*)INVALID_HANDLE_VALUE);
+
+// Текущая обрабатываемая клавиша
+const ConEmuHotKey* gpCurrentHotKey = NULL;
 
 bool CConEmuCtrl::mb_SkipOneAppsRelease = false;
 HHOOK CConEmuCtrl::mh_SkipOneAppsRelease = NULL;
@@ -72,6 +76,7 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, con
 		ResetDoubleKeyConsoleNum();
 
 	const ConEmuHotKey* pHotKey = gpSetCls->GetHotKeyInfo(VkState, bKeyDown, pRCon);
+	gpCurrentHotKey = pHotKey;
 
 	if (pHotKey && (pHotKey != ConEmuSkipHotKey))
 	{
@@ -99,6 +104,8 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, con
 			_ASSERTE(pHotKey->fkey!=NULL);
 		}
 	}
+
+	gpCurrentHotKey = NULL;
 
 	return pHotKey;
 }
@@ -267,30 +274,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 		return false;
 	}
 
-	DWORD nState = 0;
-
-	if (bWin)
-		nState |= cvk_Win;
-
-	if ((vk != VK_APPS) && bApps)
-		nState |= cvk_Apps;
-
-	if (bLCtrl)
-		nState |= cvk_LCtrl|cvk_Ctrl;
-	if (bRCtrl)
-		nState |= cvk_RCtrl|cvk_Ctrl;
-
-	if (bLAlt)
-		nState |= cvk_LAlt|cvk_Alt;
-	if (bRAlt)
-		nState |= cvk_RAlt|cvk_Alt;
-
-	if (bLShift)
-		nState |= cvk_LShift|cvk_Shift;
-	if (bRShift)
-		nState |= cvk_RShift|cvk_Shift;
-
-	DWORD VkMod = nState | vk;
+	DWORD VkMod = VkModFromVk(vk);
 	
 	if (bKeyDown)
 		m_SkippedMsg = 0;
@@ -302,7 +286,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 	{
 		mb_LastSingleModifier = TRUE;
 	}
-	else if (!pHotKey && !(nState & (cvk_Ctrl|cvk_Alt|cvk_Shift)))
+	else if (!pHotKey && !(VkMod & (cvk_Ctrl|cvk_Alt|cvk_Shift)))
 	{
 		if (bKeyDown)
 		{
@@ -323,16 +307,56 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 		}
 	}
 
-	if ((nState == cvk_Win) && (vk == VK_DOWN))
+	if (((VkMod & cvk_ALLMASK) == cvk_Win)
+		&& (vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT))
 	{
 		//120821 - в режиме HideCaption почему-то не выходит из Maximized по Win+Down
-		if (gpSet->isCaptionHidden() && ::IsZoomed(ghWnd)/*тут нужен реальный Zoomed*/)
+		if (gpSet->isCaptionHidden())
 		{
-			gpConEmu->SetWindowMode(wmNormal);
+			if (vk == VK_DOWN)
+			{
+				if (::IsZoomed(ghWnd)/*тут нужен реальный Zoomed*/)
+				{
+					gpConEmu->SetWindowMode(wmNormal);
+				}
+			}
 		}
 	}
 
 	return (pHotKey != NULL);
+}
+
+// Warning! UpdateControlKeyState() must be called already!
+DWORD CConEmuCtrl::VkModFromVk(DWORD Vk)
+{
+	_ASSERTE((Vk & 0xFF) == Vk);
+
+	DWORD nState = 0;
+
+	if (bWin)
+		nState |= cvk_Win;
+
+	if ((Vk != VK_APPS) && bApps)
+		nState |= cvk_Apps;
+
+	if (bLCtrl)
+		nState |= cvk_LCtrl|cvk_Ctrl;
+	if (bRCtrl)
+		nState |= cvk_RCtrl|cvk_Ctrl;
+
+	if (bLAlt)
+		nState |= cvk_LAlt|cvk_Alt;
+	if (bRAlt)
+		nState |= cvk_RAlt|cvk_Alt;
+
+	if (bLShift)
+		nState |= cvk_LShift|cvk_Shift;
+	if (bRShift)
+		nState |= cvk_RShift|cvk_Shift;
+
+	DWORD VkMod = nState | (Vk & 0xFF);
+
+	return VkMod;
 }
 
 void CConEmuCtrl::FixSingleModifier(DWORD Vk, CRealConsole* pRCon)
@@ -551,25 +575,24 @@ bool CConEmuCtrl::key_Settings(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_AltSpace(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	//if (gpSet->isSendAltSpace)
-	//	return false;
-
-	if (TestOnly)
-		return true;
-
-	gpConEmu->ShowSysmenu();
-	return true;
-}
-
-// pRCon may be NULL
 bool CConEmuCtrl::key_SystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
+
+	POINT ptCur = {-32000,-32000}; // Default pos of Alt+Space
+	if (gpCurrentHotKey)
+	{
+		DWORD vk = gpSet->GetHotkey(gpCurrentHotKey->VkMod);
+		if (vk == VK_LBUTTON || vk == VK_RBUTTON || vk == VK_MBUTTON)
+		{
+			GetCursorPos(&ptCur);
+		}
+	}
+	
 	//Win-Alt-Space
-	gpConEmu->ShowSysmenu();
+	gpConEmu->ShowSysmenu(ptCur.x, ptCur.y);
+
 	return true;
 }
 
@@ -581,8 +604,19 @@ bool CConEmuCtrl::key_TabMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 	if (TestOnly)
 		return true;
 
+	POINT ptCur = {-32000,-32000};
+	if (gpCurrentHotKey)
+	{
+		DWORD vk = gpSet->GetHotkey(gpCurrentHotKey->VkMod);
+		if (vk == VK_LBUTTON || vk == VK_RBUTTON || vk == VK_MBUTTON)
+		{
+			GetCursorPos(&ptCur);
+		}
+	}
+	if (ptCur.x == -32000)
+		ptCur = gpConEmu->CalcTabMenuPos(pRCon->VCon());
+
 	//Win-Apps
-	POINT ptCur = gpConEmu->CalcTabMenuPos(pRCon->VCon());
 	pRCon->VCon()->ShowPopupMenu(ptCur);
 	return true;
 }

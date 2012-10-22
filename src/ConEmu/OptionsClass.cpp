@@ -154,8 +154,8 @@ namespace SettingsNS
 	const DWORD  nModifiers[] =  {0,    VK_LWIN, VK_APPS,  VK_CONTROL, VK_LCONTROL, VK_RCONTROL,  VK_MENU, VK_LMENU, VK_RMENU,  VK_SHIFT, VK_LSHIFT, VK_RSHIFT};
 	const WCHAR* szKeysAct[] = {L"<Always>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
 	const DWORD  nKeysAct[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
-	const WCHAR* szKeysHot[] = {L"", L"Esc", L"Delete", L"Tab", L"Enter", L"Space", L"Backspace", L"Pause", L"Wheel Up", L"Wheel Down", L"Wheen Left", L"Wheel Right"};
-	const DWORD  nKeysHot[] =  {0, VK_ESCAPE, VK_DELETE, VK_TAB, VK_RETURN, VK_SPACE, VK_BACK, VK_PAUSE, VK_WHEEL_UP, VK_WHEEL_DOWN, VK_WHEEL_LEFT, VK_WHEEL_RIGHT};
+	const WCHAR* szKeysHot[] = {L"", L"Esc", L"Delete", L"Tab", L"Enter", L"Space", L"Backspace", L"Pause", L"Wheel Up", L"Wheel Down", L"Wheel Left", L"Wheel Right", L"LButton", L"RButton", L"MButton"};
+	const DWORD  nKeysHot[] =  {0, VK_ESCAPE, VK_DELETE, VK_TAB, VK_RETURN, VK_SPACE, VK_BACK, VK_PAUSE, VK_WHEEL_UP, VK_WHEEL_DOWN, VK_WHEEL_LEFT, VK_WHEEL_RIGHT, VK_LBUTTON, VK_RBUTTON, VK_MBUTTON};
 	const DWORD  FSizes[] = {0, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
 	const DWORD  FSizesSmall[] = {5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32};
 	const WCHAR* szClipAct[] = {L"<None>", L"Copy", L"Paste", L"Auto"};
@@ -10547,10 +10547,18 @@ void CSettings::SetDefaultCmd(LPCWSTR asCmd)
 		pszFile = wcsrchr(szSearch, L'\\');
 		if (pszFile)
 			*pszFile = 0;
+		pszFile = szSearch + _tcslen(szSearch);
 		wcscat_c(szSearch, L"\\msys\\1.0\\bin\\sh.exe");
 		if (!FileExists(szSearch))
 		{
-			wcscpy_c(szSearch, L"sh.exe");
+			// Git-Bash mode
+			*pszFile = 0;
+			wcscat_c(szSearch, L"\\bin\\sh.exe");
+			if (!FileExists(szSearch))
+			{
+				// Last chance, without path
+				wcscpy_c(szSearch, L"sh.exe");
+			}
 		}
 
 		_wsprintf(szDefCmd, SKIPLEN(countof(szDefCmd))

@@ -126,6 +126,10 @@ extern int  gnPowerShellProgressValue;
 extern bool gbIsBashProcess;
 /* ************ Globals for bash ************ */
 
+/* ************ Globals for HIEW32.EXE ************ */
+extern bool gbIsHiewProcess;
+/* ************ Globals for HIEW32.EXE ************ */
+
 bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
 void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName = NULL);
 BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo, BOOL bForced = FALSE);

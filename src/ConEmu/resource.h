@@ -401,7 +401,7 @@
 #define vkAltF9                         2015
 #define vkCtrlWinAltSpace               2016
 #define vkAltEnter                      2017
-#define vkAltSpace                      2018
+#define vkSystemMenu                    2018
 #define vkCtrlUp                        2019
 #define vkCtrlDown                      2020
 #define vkCtrlPgUp                      2021
@@ -489,7 +489,7 @@
 #define tTabFontCharset                 2108
 #define rbAdminShield                   2109
 #define rbAdminSuffix                   2110
-#define vkAppsSpace                     2111
+#define vkTabMenu                       2111
 #define vkCTSVkBlockStart               2112
 #define vkCTSVkTextStart                2113
 #define cbKeyBarRClick                  2114
@@ -852,8 +852,9 @@
 #define cbTaskbarShield                 2491
 #define vkPasteCygwin                   2492
 #define stCmdTaskAdd                    2492
-#define IDC_BUTTON1                     2493
 #define cbCmdTasksActive                2493
+#define vkTabMenu2                      2494
+#define vkSystemMenu2                   2495
 
 // Next default values for new objects
 // 
@@ -861,7 +862,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2494
+#define _APS_NEXT_CONTROL_VALUE         2496
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

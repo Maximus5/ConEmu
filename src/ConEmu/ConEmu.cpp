@@ -367,8 +367,16 @@ CConEmuMain::CConEmuMain()
 	wcscpy_c(szBashFile, ms_ConEmuExeDir);
 	pszSlash = wcsrchr(szBashFile, L'\\');
 	if (pszSlash) *pszSlash = 0;
+	pszSlash = szBashFile + _tcslen(szBashFile);
 	wcscat_c(szBashFile, L"\\msys\\1.0\\bin\\sh.exe");
 	mb_MSysStartup = FileExists(szBashFile);
+	if (!mb_MSysStartup)
+	{
+		// Git-bash mode
+		*pszSlash = 0;
+		wcscat_c(szBashFile, L"\\bin\\sh.exe");
+		mb_MSysStartup = FileExists(szBashFile);
+	}
 
 	// Сначала проверяем подпапку
 	wcscpy_c(ms_ConEmuBaseDir, ms_ConEmuExeDir);
@@ -13377,6 +13385,35 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		// Зовем "виртуальное" кнопочное нажатие (если назначено)
 		if (vk && ProcessHotKeyMsg(WM_KEYDOWN, vk, 0, NULL, pRCon))
 		{
+			// назначено, в консоль не пропускаем
+			return 0;
+		}
+	}
+	else if (messg >= WM_LBUTTONDOWN && messg <= WM_MBUTTONDBLCLK)
+	{
+		BYTE vk;
+		if (messg >= WM_LBUTTONDOWN && messg <= WM_LBUTTONDBLCLK)
+			vk = VK_LBUTTON;
+		else if (messg >= WM_RBUTTONDOWN && messg <= WM_RBUTTONDBLCLK)
+			vk = VK_RBUTTON;
+		else
+			vk = VK_MBUTTON;
+
+		UpdateControlKeyState();
+
+		bool bDn = (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_MBUTTONDOWN);
+		bool bUp = (messg == WM_LBUTTONUP || messg == WM_RBUTTONUP || messg == WM_MBUTTONUP);
+
+		const ConEmuHotKey* pHotKey = gpSetCls->GetHotKeyInfo(VkModFromVk(vk), bDn, pRCon);
+
+		if (pHotKey)
+		{
+			if ((pHotKey != ConEmuSkipHotKey) && (bDn || bUp))
+			{
+				// Зовем "виртуальное" кнопочное нажатие
+				ProcessHotKeyMsg(bDn ? WM_KEYDOWN : WM_KEYUP, vk, 0, NULL, pRCon);
+			}
+
 			// назначено, в консоль не пропускаем
 			return 0;
 		}
