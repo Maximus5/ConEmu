@@ -8338,7 +8338,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 	{
 		if (gpSet->isSafeFarClose && !abForceTerminate)
 		{
-			LPCWSTR pszMacro = gpSet->SafeFarCloseMacro();
+			LPCWSTR pszMacro = gpSet->SafeFarCloseMacro(fmv_Default);
 			_ASSERTE(pszMacro && *pszMacro);
 
 			BOOL lbExecuted = FALSE;
@@ -8579,7 +8579,7 @@ void CRealConsole::CloseTab()
 
 
 		if (bCanCloseMacro)
-			PostMacro(gpSet->TabCloseMacro(), TRUE/*async*/);
+			PostMacro(gpSet->TabCloseMacro(fmv_Default), TRUE/*async*/);
 		else
 			PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
 	}
@@ -10445,6 +10445,25 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 
 	if (!nPID)
 		return;
+
+	const CEFAR_INFO_MAPPING* pInfo = GetFarInfo();
+	if (!pInfo)
+	{
+		_ASSERTE(pInfo!=NULL);
+		return;
+	}
+	
+	if (pInfo->FarVer.IsFarLua())
+	{
+		if (lstrcmpi(asMacro, gpSet->RClickMacroDefault(fmv_Standard)) == 0)
+			asMacro = gpSet->RClickMacroDefault(fmv_Lua);
+		else if (lstrcmpi(asMacro, gpSet->SafeFarCloseMacroDefault(fmv_Standard)) == 0)
+			asMacro = gpSet->SafeFarCloseMacroDefault(fmv_Lua);
+		else if (lstrcmpi(asMacro, gpSet->TabCloseMacroDefault(fmv_Standard)) == 0)
+			asMacro = gpSet->TabCloseMacroDefault(fmv_Lua);
+		else if (lstrcmpi(asMacro, gpSet->SaveAllMacroDefault(fmv_Standard)) == 0)
+			asMacro = gpSet->SaveAllMacroDefault(fmv_Lua);
+	}
 
 	if (abAsync)
 	{

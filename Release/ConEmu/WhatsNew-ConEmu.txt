@@ -14,6 +14,10 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+[%] Fixed default Far Manager macros for Lua (Far 3 build 2851).
+[%] Sometimes "-new_console" was removed with excess spaces.
+
+
 2012.10.22
 [+] New default hotkeys: Ctrl+RClick - system menu, Shift+RClick - active tab menu.
 [+] New GuiMacro.

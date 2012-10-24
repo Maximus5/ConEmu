@@ -232,6 +232,7 @@ extern DWORD gnSelfPID, gnMainThreadId;
 //extern HWND ConEmuHwnd;
 //extern HWND FarHwnd;
 extern FarVersion gFarVersion;
+//#define IsFarLua ((gFarVersion.dwVerMajor > 3) || ((gFarVersion.dwVerMajor == 3) && (gFarVersion.dwBuild >= 2851)))
 //extern int lastModifiedStateW;
 ////extern HANDLE hEventCmd[MAXCMDCOUNT];
 //extern HANDLE hThread;

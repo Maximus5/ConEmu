@@ -906,12 +906,18 @@ void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 		asMacro ++;
 	}
 
+	// This macro was not adopted to Lua?
+	_ASSERTE(*asMacro && *asMacro != L'$');
+
 	wchar_t* pszMacroCopy = NULL;
 
 	//Far3 build 2576: удален $Text
 	//т.к. макросы у нас фаро-независимые - нужны танцы с бубном
 	pszMacroCopy = lstrdup(asMacro);
 	CharUpperBuff(pszMacroCopy, lstrlen(pszMacroCopy));
+	// Вообще говоря, если тут попадается макрос в старом формате - то мы уже ничего не сделаем...
+	// Начиная с Far 3 build 2851 - все макросы переведены на Lua
+	#if 0
 	if (wcsstr(pszMacroCopy, L"$TEXT") && !InfoW2800->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, MSSC_CHECK, &mcr))
 	{
 		SafeFree(pszMacroCopy);
@@ -990,6 +996,7 @@ void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 		if (pszMacroCopy)
 			asMacro = pszMacroCopy;
 	}
+	#endif
 
 	mcr.SequenceText = asMacro;
 	if (apRec)
@@ -1838,8 +1845,8 @@ HANDLE WINAPI OpenW2800(const void* apInfo)
 				{
 				case FMVT_INTEGER:
 					Item = (INT_PTR)p->Values[0].Integer; break;
-				//case FMVT_DOUBLE:
-				//	Item = (INT_PTR)p->Values[0].Double; break;
+				case FMVT_DOUBLE: // LUA!
+					Item = (INT_PTR)p->Values[0].Double; break;
 				case FMVT_STRING:
 					_ASSERTE(p->Values[0].String!=NULL);
 					Item = (INT_PTR)p->Values[0].String; break;

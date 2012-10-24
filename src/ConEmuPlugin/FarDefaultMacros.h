@@ -42,21 +42,3 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define FarSaveAllMacroDefault2 L"@F2 $If (!Editor) $Exit $End %i0=-1; F12 %cur = CurPos; Home Down %s = Menu.Select(\" * \",3,2); $While (%s > 0) $If (%s == %i0) MsgBox(\"FAR SaveAll\",\"Asterisk in menuitem for already processed window\",0x10001) $Exit $End Enter $If (Editor) F2 $If (!Editor) $Exit $End $Else $If (!Viewer) $Exit $End $End %i0 = %s; F12 %s = Menu.Select(\" * \",3,2); $End $If (Menu && Title==\"Screens\") Home $Rep (%cur-1) Down $End Enter $End $Exit"
 #define FarSaveAllMacroDefault3 L"@Keys(\"F2\") if not Area.Editor then exit() end i0=-1; Keys(\"F12\") cur = Object.CurPos; Keys(\"Home Down\") s = Menu.Select(\" * \",3,2); while s > 0 do if s == i0 then msgbox(\"FAR SaveAll\",\"Asterisk in menuitem for already processed window\",0x10001) exit() end Keys(\"Enter\") if Area.Editor then Keys(\"F2\") if not Area.Editor then exit() end else if not Area.Viewer then exit() end end i0 = s; Keys(\"F12\") s = Menu.Select(\" * \",3,2); end if Area.Menu and Object.Title==\"Screens\" then Keys(\"Home\") for RCounter= cur-1,1,-1 do Keys(\"Down\") end Keys(\"Enter\") end exit()"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

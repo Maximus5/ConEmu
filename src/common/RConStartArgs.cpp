@@ -42,6 +42,68 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DefaultSplitValue 500
 
+#ifdef _DEBUG
+void RConStartArgs::RunArgTests()
+{
+	struct { LPCWSTR pszArg, pszNeed; } cTests[] = {
+		{
+			L"\"c:\\cmd.exe\" \"-new_console\" \"c:\\file.txt\"",
+			L"\"c:\\cmd.exe\" \"c:\\file.txt\""
+		},
+		{
+			L"\"c:\\cmd.exe\" -new_console:n \"c:\\file.txt\"",
+			L"\"c:\\cmd.exe\" \"c:\\file.txt\""
+		},
+		{
+			L"\"c:\\cmd.exe\" \"-new_console:n\" \"c:\\file.txt\"",
+			L"\"c:\\cmd.exe\" \"c:\\file.txt\""
+		},
+		{
+			L"c:\\cmd.exe \"-new_console:n\" \"c:\\file.txt\"",
+			L"c:\\cmd.exe \"c:\\file.txt\""
+		},
+		{
+			L"\"c:\\cmd.exe\" \"-new_console:n\" c:\\file.txt",
+			L"\"c:\\cmd.exe\" c:\\file.txt"
+		},
+		{
+			L"c:\\file.txt -cur_console",
+			L"c:\\file.txt"
+		},
+		{
+			L"\"c:\\file.txt\" -cur_console",
+			L"\"c:\\file.txt\""
+		},
+		{
+			L" -cur_console \"c:\\file.txt\"",
+			L" \"c:\\file.txt\""
+		},
+		{
+			L"-cur_console \"c:\\file.txt\"",
+			L"\"c:\\file.txt\""
+		},
+		{
+			L"-cur_console c:\\file.txt",
+			L"c:\\file.txt"
+		},
+	};
+
+	for (size_t i = 0; i < countof(cTests); i++)
+	{
+		RConStartArgs arg;
+		arg.pszSpecialCmd = lstrdup(cTests[i].pszArg);
+		arg.ProcessNewConArg();
+		if (lstrcmp(arg.pszSpecialCmd, cTests[i].pszNeed) != 0)
+		{
+			//_ASSERTE(FALSE && "arg.ProcessNewConArg failed");
+			OutputDebugString(L"arg.ProcessNewConArg failed\n");
+		}
+		int nDbg = 0;
+	}
+}
+#endif
+
+
 // If you add some members - don't forget them in RConStartArgs::AssignFrom!
 RConStartArgs::RConStartArgs()
 {
@@ -353,7 +415,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			break;
 
 		// Проверка валидности
-		_ASSERTE(pszFind > pszSpecialCmd);
+		_ASSERTE(pszFind >= pszSpecialCmd);
 		if (((pszFind == pszSpecialCmd) || (*(pszFind-1) == L'"') || (*(pszFind-1) == L' ')) // начало аргумента
 			&& (pszFind[nNewConLen] == L' ' || pszFind[nNewConLen] == L':' 
 				|| pszFind[nNewConLen] == L'"' || pszFind[nNewConLen] == 0))
@@ -653,11 +715,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 				// Откусить лишние пробелы, которые стоят ПЕРЕД -new_console[:...] / -cur_console[:...]
 				while (((pszFind - 1) > pszSpecialCmd)
 					&& (*(pszFind-1) == L' ')
-					&& ((*(pszFind-2) == L' ') || (*pszEnd == L'"' || *pszEnd == 0 || *pszEnd == L' ')))
+					&& ((*(pszFind-2) == L' ') || (/**pszEnd == L'"' ||*/ *pszEnd == 0 || *pszEnd == L' ')))
 				{
 					pszFind--;
 				}
-				//wmemset(pszFind, L' ', pszEnd - pszFind);
+
 				wmemmove(pszFind, pszEnd, (lstrlen(pszEnd)+1));
 				nChanges++;
 			}

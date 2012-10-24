@@ -436,8 +436,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		gbIsBashProcess = true;
 		
 		TODO("Start redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
-		#if 0
-		StartPTY();
+		#ifdef _DEBUG
+		if (lstrcmpi(pszName, L"isatty.exe") == 0)
+			StartPTY();
 		#endif
 	}
 	else if ((lstrcmpi(pszName, L"hiew32.exe") == 0) || (lstrcmpi(pszName, L"hiew32") == 0))

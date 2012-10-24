@@ -4798,61 +4798,69 @@ bool Settings::isRClickTouchInvert()
 	return gpConEmu->IsGesturesEnabled() && (isRClickSendKey == 2);
 }
 
-LPCWSTR Settings::RClickMacro()
+#define IsLuaMacroOk(psz,def) ((fmv != fmv_Lua) || (lstrcmpi(psz,def) != 0))
+
+LPCWSTR Settings::RClickMacro(FarMacroVersion fmv)
 {
-	if (sRClickMacro && *sRClickMacro)
+	if (sRClickMacro && *sRClickMacro && IsLuaMacroOk(sRClickMacro,FarRClickMacroDefault2))
 		return sRClickMacro;
-	return RClickMacroDefault();
+	return RClickMacroDefault(fmv);
 }
 
-LPCWSTR Settings::RClickMacroDefault()
+LPCWSTR Settings::RClickMacroDefault(FarMacroVersion fmv)
 {
 	// L"@$If (!CmdLine.Empty) %Flg_Cmd=1; %CmdCurPos=CmdLine.ItemCount-CmdLine.CurPos+1; %CmdVal=CmdLine.Value; Esc $Else %Flg_Cmd=0; $End $Text \"rclk_gui:\" Enter $If (%Flg_Cmd==1) $Text %CmdVal %Flg_Cmd=0; %Num=%CmdCurPos; $While (%Num!=0) %Num=%Num-1; CtrlS $End $End"
 	static LPCWSTR pszDefaultMacro = FarRClickMacroDefault2;
-	return pszDefaultMacro;
+	static LPCWSTR pszDefaultMacroL = FarRClickMacroDefault3;
+	return (fmv == fmv_Lua) ? pszDefaultMacroL : pszDefaultMacro;
 }
 
-LPCWSTR Settings::SafeFarCloseMacro()
+LPCWSTR Settings::SafeFarCloseMacro(FarMacroVersion fmv)
 {
-	if (sSafeFarCloseMacro && *sSafeFarCloseMacro)
+	if (sSafeFarCloseMacro && *sSafeFarCloseMacro && IsLuaMacroOk(sSafeFarCloseMacro,FarSafeCloseMacroDefault2))
 		return sSafeFarCloseMacro;
-	return SafeFarCloseMacroDefault();
+	return SafeFarCloseMacroDefault(fmv);
 }
 
-LPCWSTR Settings::SafeFarCloseMacroDefault()
+LPCWSTR Settings::SafeFarCloseMacroDefault(FarMacroVersion fmv)
 {
 	// L"@$while (Dialog||Editor||Viewer||Menu||Disks||MainMenu||UserMenu||Other||Help) $if (Editor) ShiftF10 $else Esc $end $end  Esc  $if (Shell) F10 $if (Dialog) Enter $end $Exit $end  F10"
 	static LPCWSTR pszDefaultMacro = FarSafeCloseMacroDefault2;
-	return pszDefaultMacro;
+	static LPCWSTR pszDefaultMacroL = FarSafeCloseMacroDefault3;
+	return (fmv == fmv_Lua) ? pszDefaultMacroL : pszDefaultMacro;
 }
 
-LPCWSTR Settings::TabCloseMacro()
+LPCWSTR Settings::TabCloseMacro(FarMacroVersion fmv)
 {
-	if (sTabCloseMacro && *sTabCloseMacro)
+	if (sTabCloseMacro && *sTabCloseMacro && IsLuaMacroOk(sTabCloseMacro,FarTabCloseMacroDefault2))
 		return sTabCloseMacro;
-	return TabCloseMacroDefault();
+	return TabCloseMacroDefault(fmv);
 }
 
-LPCWSTR Settings::TabCloseMacroDefault()
+LPCWSTR Settings::TabCloseMacroDefault(FarMacroVersion fmv)
 {
 	// L"@$if (Shell) F10 $if (Dialog) Enter $end $else F10 $end";
 	static LPCWSTR pszDefaultMacro = FarTabCloseMacroDefault2;
-	return pszDefaultMacro;
+	static LPCWSTR pszDefaultMacroL = FarTabCloseMacroDefault3;
+	return (fmv == fmv_Lua) ? pszDefaultMacroL : pszDefaultMacro;
 }
 
-LPCWSTR Settings::SaveAllMacro()
+LPCWSTR Settings::SaveAllMacro(FarMacroVersion fmv)
 {
-	if (sSaveAllMacro && *sSaveAllMacro)
+	if (sSaveAllMacro && *sSaveAllMacro && IsLuaMacroOk(sSaveAllMacro,FarSaveAllMacroDefault2))
 		return sSaveAllMacro;
-	return SaveAllMacroDefault();
+	return SaveAllMacroDefault(fmv);
 }
 
-LPCWSTR Settings::SaveAllMacroDefault()
+LPCWSTR Settings::SaveAllMacroDefault(FarMacroVersion fmv)
 {
 	// L"@F2 $If (!Editor) $Exit $End %i0=-1; F12 %cur = CurPos; Home Down %s = Menu.Select(\" * \",3,2); $While (%s > 0) $If (%s == %i0) MsgBox(\"FAR SaveAll\",\"Asterisk in menuitem for already processed window\",0x10001) $Exit $End Enter $If (Editor) F2 $If (!Editor) $Exit $End $Else $If (!Viewer) $Exit $End $End %i0 = %s; F12 %s = Menu.Select(\" * \",3,2); $End $If (Menu && Title==\"Screens\") Home $Rep (%cur-1) Down $End Enter $End $Exit"
 	static LPCWSTR pszDefaultMacro = FarSaveAllMacroDefault2;
-	return pszDefaultMacro;
+	static LPCWSTR pszDefaultMacroL = FarSaveAllMacroDefault3;
+	return (fmv == fmv_Lua) ? pszDefaultMacroL : pszDefaultMacro;
 }
+
+#undef IsLuaMacroOk
 
 const Settings::CommandTasks* Settings::CmdTaskGet(int anIndex)
 {

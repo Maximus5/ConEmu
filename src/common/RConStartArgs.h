@@ -84,4 +84,8 @@ struct RConStartArgs
 	wchar_t* CreateCommandLine(bool abForTasks = false);
 
 	bool AssignFrom(const struct RConStartArgs* args);
+
+#ifdef _DEBUG
+	static void RunArgTests();
+#endif
 };

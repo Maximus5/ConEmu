@@ -646,14 +646,19 @@ void OnMainThreadActivated()
 			wchar_t szMacro[255];
 			DWORD nTabShift = SETWND_CALLPLUGIN_BASE + *((DWORD*)gpReqCommandData);
 			// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
-			if (gFarVersion.dwVerMajor==2)
+			if (gFarVersion.dwVerMajor == 2)
 			{
 				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"$if (Search) Esc $end $if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
 					  ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
 			}
-			else
+			else if (!gFarVersion.IsFarLua())
 			{
 				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"$if (Search) Esc $end $if (Shell||Viewer||Editor) callplugin(\"%s\",%i) $else callplugin(\"%s\",%i) $end",
+					  ConEmu_GuidS, nTabShift, ConEmu_GuidS, SETWND_CALLPLUGIN_SENDTABS);
+			}
+			else
+			{
+				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"if Area.Search then Keys(\"Esc\") end if Area.Shell or Area.Viewer or Area.Editor then Plugin.Call(\"%s\",%i) else Plugin.Call(\"%s\",%i) end",
 					  ConEmu_GuidS, nTabShift, ConEmu_GuidS, SETWND_CALLPLUGIN_SENDTABS);
 			}
 			gnReqCommand = -1;
@@ -2678,7 +2683,10 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		}
 		case(CMD_CLOSEQSEARCH):
 		{
-			PostMacro(L"$if (Search) Esc $end", NULL);
+			if (!gFarVersion.IsFarLua())
+				PostMacro(L"$if (Search) Esc $end", NULL);
+			else
+				PostMacro(L"if Area.Search Keys(\"Esc\") end", NULL);
 			break;
 		}
 		case(CMD_LEFTCLKSYNC):
@@ -2760,7 +2768,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			if (pszUserMacro && *pszUserMacro)
 				pszMacro = pszUserMacro;
 			else
-				pszMacro = IsFarLua ? FarRClickMacroDefault3 : FarRClickMacroDefault2; //L"@$If (!CmdLine.Empty) %Flg_Cmd=1; %CmdCurPos=CmdLine.ItemCount-CmdLine.CurPos+1; %CmdVal=CmdLine.Value; Esc $Else %Flg_Cmd=0; $End $Text \"rclk_gui:\" Enter $If (%Flg_Cmd==1) $Text %CmdVal %Flg_Cmd=0; %Num=%CmdCurPos; $While (%Num!=0) %Num=%Num-1; CtrlS $End $End";
+				pszMacro = gFarVersion.IsFarLua() ? FarRClickMacroDefault3 : FarRClickMacroDefault2; //L"@$If (!CmdLine.Empty) %Flg_Cmd=1; %CmdCurPos=CmdLine.ItemCount-CmdLine.CurPos+1; %CmdVal=CmdLine.Value; Esc $Else %Flg_Cmd=0; $End $Text \"rclk_gui:\" Enter $If (%Flg_Cmd==1) $Text %CmdVal %Flg_Cmd=0; %Num=%CmdCurPos; $While (%Num!=0) %Num=%Num-1; CtrlS $End $End";
 
 			INPUT_RECORD r = {MOUSE_EVENT};
 			r.Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;

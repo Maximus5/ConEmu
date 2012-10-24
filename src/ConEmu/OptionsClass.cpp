@@ -923,13 +923,13 @@ void CSettings::SettingsPreSave()
 	gpSet->isItalic = (LogFont.lfItalic != 0);
 
 	// ћакросы, совпадающие с "умолчательными" - не пишем
-	if (gpSet->sRClickMacro && lstrcmp(gpSet->sRClickMacro, gpSet->RClickMacroDefault()) == 0)
+	if (gpSet->sRClickMacro && (lstrcmp(gpSet->sRClickMacro, gpSet->RClickMacroDefault(fmv_Default)) == 0 || lstrcmp(gpSet->sRClickMacro, gpSet->RClickMacroDefault(fmv_Lua)) == 0))
 		SafeFree(gpSet->sRClickMacro);
-	if (gpSet->sSafeFarCloseMacro && lstrcmp(gpSet->sSafeFarCloseMacro, gpSet->SafeFarCloseMacroDefault()) == 0)
+	if (gpSet->sSafeFarCloseMacro && (lstrcmp(gpSet->sSafeFarCloseMacro, gpSet->SafeFarCloseMacroDefault(fmv_Default)) == 0 || lstrcmp(gpSet->sSafeFarCloseMacro, gpSet->SafeFarCloseMacroDefault(fmv_Lua)) == 0))
 		SafeFree(gpSet->sSafeFarCloseMacro);
-	if (gpSet->sTabCloseMacro && lstrcmp(gpSet->sTabCloseMacro, gpSet->TabCloseMacroDefault()) == 0)
+	if (gpSet->sTabCloseMacro && (lstrcmp(gpSet->sTabCloseMacro, gpSet->TabCloseMacroDefault(fmv_Default)) == 0 || lstrcmp(gpSet->sTabCloseMacro, gpSet->TabCloseMacroDefault(fmv_Lua)) == 0))
 		SafeFree(gpSet->sTabCloseMacro);
-	if (gpSet->sSaveAllMacro && lstrcmp(gpSet->sSaveAllMacro, gpSet->SaveAllMacroDefault()) == 0)
+	if (gpSet->sSaveAllMacro && (lstrcmp(gpSet->sSaveAllMacro, gpSet->SaveAllMacroDefault(fmv_Default)) == 0 || lstrcmp(gpSet->sSaveAllMacro, gpSet->SaveAllMacroDefault(fmv_Lua)) == 0))
 		SafeFree(gpSet->sSaveAllMacro);
 
 	ApplyStartupOptions();
@@ -2110,14 +2110,14 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 
 	_ASSERTE(gpSet->isRClickSendKey==0 || gpSet->isRClickSendKey==1 || gpSet->isRClickSendKey==2);
 	checkDlgButton(hWnd2, cbRClick, gpSet->isRClickSendKey);
-	SetDlgItemText(hWnd2, tRClickMacro, gpSet->RClickMacro());
+	SetDlgItemText(hWnd2, tRClickMacro, gpSet->RClickMacro(fmv_Default));
 
 	checkDlgButton(hWnd2, cbSafeFarClose, gpSet->isSafeFarClose);
-	SetDlgItemText(hWnd2, tSafeFarCloseMacro, gpSet->SafeFarCloseMacro());
+	SetDlgItemText(hWnd2, tSafeFarCloseMacro, gpSet->SafeFarCloseMacro(fmv_Default));
 
-	SetDlgItemText(hWnd2, tCloseTabMacro, gpSet->TabCloseMacro());
+	SetDlgItemText(hWnd2, tCloseTabMacro, gpSet->TabCloseMacro(fmv_Default));
 	
-	SetDlgItemText(hWnd2, tSaveAllMacro, gpSet->SaveAllMacro());
+	SetDlgItemText(hWnd2, tSaveAllMacro, gpSet->SaveAllMacro(fmv_Default));
 
 	checkDlgButton(hWnd2, cbFARuseASCIIsort, gpSet->isFARuseASCIIsort);
 
@@ -5903,25 +5903,25 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	
 	case tRClickMacro:
 	{
-		GetString(hWnd2, tRClickMacro, &gpSet->sRClickMacro, gpSet->RClickMacroDefault());
+		GetString(hWnd2, tRClickMacro, &gpSet->sRClickMacro, gpSet->RClickMacroDefault(fmv_Default));
 		break;
 	} // case tRClickMacro:
 	
 	case tSafeFarCloseMacro:
 	{
-		GetString(hWnd2, tSafeFarCloseMacro, &gpSet->sSafeFarCloseMacro, gpSet->SafeFarCloseMacroDefault());
+		GetString(hWnd2, tSafeFarCloseMacro, &gpSet->sSafeFarCloseMacro, gpSet->SafeFarCloseMacroDefault(fmv_Default));
 		break;
 	} // case tSafeFarCloseMacro:
 	
 	case tCloseTabMacro:
 	{
-		GetString(hWnd2, tCloseTabMacro, &gpSet->sTabCloseMacro, gpSet->TabCloseMacroDefault());
+		GetString(hWnd2, tCloseTabMacro, &gpSet->sTabCloseMacro, gpSet->TabCloseMacroDefault(fmv_Default));
 		break;
 	} // case tCloseTabMacro:
 	
 	case tSaveAllMacro:
 	{
-		GetString(hWnd2, tSaveAllMacro, &gpSet->sSaveAllMacro, gpSet->SaveAllMacroDefault());
+		GetString(hWnd2, tSaveAllMacro, &gpSet->sSaveAllMacro, gpSet->SaveAllMacroDefault(fmv_Default));
 		break;
 	} // case tSaveAllMacro:
 

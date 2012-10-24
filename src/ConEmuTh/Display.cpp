@@ -2062,8 +2062,11 @@ void CeFullPanelInfo::RequestSetPos(INT_PTR anCurrentItem, INT_PTR anTopItem, BO
 	{
 		ConEmuThSynchroArg *pCmd = (ConEmuThSynchroArg*)LocalAlloc(LPTR, sizeof(ConEmuThSynchroArg)+128);
 		pCmd->bValid = 1; pCmd->bExpired = 0; pCmd->nCommand = ConEmuThSynchroArg::eExecuteMacro;
-		wsprintfW((wchar_t*)pCmd->Data, L"$If (%cPanel.Left) Tab $End",
-		          this->bLeftPanel ? L'P' : L'A');
+		wsprintfW((wchar_t*)pCmd->Data,
+			gFarVersion.IsFarLua()
+				? L"if %cPanel.Left Keys(\"Tab\") end"
+				: L"$If (%cPanel.Left) Tab $End",
+			this->bLeftPanel ? L'P' : L'A');
 		ExecuteInMainThread(pCmd);
 	}
 }

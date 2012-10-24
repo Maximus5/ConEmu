@@ -2047,6 +2047,13 @@ bool GetCfgParm(uint& i, TCHAR*& curCommand, bool& Prm, TCHAR*& Val, int nMaxLen
 	return true;
 }
 
+#ifdef _DEBUG
+void UnitTests()
+{
+	RConStartArgs::RunArgTests();
+}
+#endif
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	int iMainRc = 0;
@@ -2112,6 +2119,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//wchar_t szDbg[64];
 	//msprintf(szDbg, countof(szDbg), L"xx=0x%X.", 0);
 	#endif
+
+	DEBUGTEST(UnitTests());
 
 //#ifdef _DEBUG
 //	wchar_t* pszShort = GetShortFileNameEx(L"T:\\VCProject\\FarPlugin\\ConEmu\\Maximus5\\Debug\\Far2x86\\ConEmu\\ConEmu.exe");

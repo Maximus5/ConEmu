@@ -802,6 +802,11 @@ struct FarVersion
 		};
 	};
 	DWORD dwBuild;
+
+	bool IsFarLua() const
+	{
+		return ((dwVerMajor > 3) || ((dwVerMajor == 3) && (dwBuild >= 2851)));
+	};
 };
 
 

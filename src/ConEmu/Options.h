@@ -88,6 +88,13 @@ typedef struct tagMYRGB
 } MYRGB, MYCOLORREF;
 #include <poppack.h>
 
+enum FarMacroVersion
+{
+	fmv_Default = 0,
+	fmv_Standard,
+	fmv_Lua,
+};
+
 enum BackgroundOp
 {
 	eUpLeft = 0,
@@ -895,16 +902,16 @@ struct Settings
 		bool isRClickTouchInvert();
 		//reg->Load(L"RightClickMacro2", &sRClickMacro);
 		wchar_t *sRClickMacro;
-		LPCWSTR RClickMacro();
-		LPCWSTR RClickMacroDefault();
+		LPCWSTR RClickMacro(FarMacroVersion fmv);
+		LPCWSTR RClickMacroDefault(FarMacroVersion fmv);
 		
 		//reg->Load(L"SafeFarClose", isSafeFarClose);
 		bool isSafeFarClose;
 		//reg->Load(L"SafeFarCloseMacro", &sSafeFarCloseMacro);
 		wchar_t *sSafeFarCloseMacro;
-		LPCWSTR SafeFarCloseMacro();
-		LPCWSTR SafeFarCloseMacroDefault();
-		
+		LPCWSTR SafeFarCloseMacro(FarMacroVersion fmv);
+		LPCWSTR SafeFarCloseMacroDefault(FarMacroVersion fmv);
+
 		////reg->Load(L"AltEnter", isSendAltEnter);
 		//bool isSendAltEnter;
 		////reg->Load(L"AltSpace", isSendAltSpace);
@@ -1043,13 +1050,13 @@ struct Settings
 		
 		//if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { if (sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; } }
 		wchar_t *sTabCloseMacro;
-		LPCWSTR TabCloseMacro();
-		LPCWSTR TabCloseMacroDefault();
+		LPCWSTR TabCloseMacro(FarMacroVersion fmv);
+		LPCWSTR TabCloseMacroDefault(FarMacroVersion fmv);
 		
 		//if (!reg->Load(L"SaveAllEditors", &sSaveAllMacro)) { sSaveAllMacro = lstrdup(L"...
 		wchar_t *sSaveAllMacro;
-		LPCWSTR SaveAllMacro();
-		LPCWSTR SaveAllMacroDefault();
+		LPCWSTR SaveAllMacro(FarMacroVersion fmv);
+		LPCWSTR SaveAllMacroDefault(FarMacroVersion fmv);
 		
 		//reg->Load(L"ToolbarAddSpace", nToolbarAddSpace);
 		int nToolbarAddSpace;
