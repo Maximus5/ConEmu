@@ -2327,6 +2327,37 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					ResetConman();
 					return nSetupRc;
 				}
+				else if (!klstricmp(curCommand, _T("/bypass")))
+				{
+					if (!cmdNew || !*cmdNew)
+					{
+						DisplayLastError(L"Invalid cmd line. '/bypass' exists, '/cmd' not", -1);
+						return 100;
+					}
+
+					// Information
+					#ifdef _DEBUG
+					STARTUPINFO siOur = {sizeof(siOur)};
+					GetStartupInfo(&siOur);
+					#endif
+
+					STARTUPINFO si = {sizeof(si)};
+					si.dwFlags = STARTF_USESHOWWINDOW;
+
+					PROCESS_INFORMATION pi = {};
+
+					BOOL b = CreateProcess(NULL, cmdNew, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
+					if (b)
+					{
+						CloseHandle(pi.hProcess);
+						CloseHandle(pi.hThread);
+						return 0;
+					}
+
+					// Failed
+					DisplayLastError(cmdNew);
+					return 100;
+				}
 				else if (!klstricmp(curCommand, _T("/multi")))
 				{
 					MultiConValue = true; MultiConPrm = true;

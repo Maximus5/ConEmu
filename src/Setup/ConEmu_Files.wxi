@@ -61,6 +61,9 @@
       <Component Id="ColorPrompt.cmd" Guid="$(var.Guid.ColorPrompt.cmd)" Win64="$(var.Win64)">
         <File Id="ColorPrompt.cmd" Source="..\..\Release\ConEmu\ColorPrompt.cmd"  KeyPath="yes" />
       </Component>
+      <Component Id="csudo.cmd" Guid="$(var.Guid.csudo.cmd)" Win64="$(var.Win64)">
+        <File Id="csudo.cmd" Source="..\..\Release\ConEmu\csudo.cmd"  KeyPath="yes" />
+      </Component>
       <Component Id="IsConEmu.cmd" Guid="$(var.Guid.IsConEmu.cmd)" Win64="$(var.Win64)">
         <File Id="IsConEmu.cmd" Source="..\..\Release\ConEmu\IsConEmu.cmd"  KeyPath="yes" />
       </Component>

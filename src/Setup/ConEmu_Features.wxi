@@ -53,6 +53,7 @@
       <ComponentRef Id="Attach.cmd" />
       <ComponentRef Id="Cmd_Autorun.cmd" />
       <ComponentRef Id="ColorPrompt.cmd" />
+      <ComponentRef Id="csudo.cmd" />
       <ComponentRef Id="IsConEmu.cmd" />
       <ComponentRef Id="RenameTab.cmd" />
       <ComponentRef Id="SetConTitle.cmd" />

@@ -6901,9 +6901,12 @@ void CConEmuMain::GuiShellExecuteExQueue()
 
 		if (lRc != FALSE)
 		{
-			// OK, но нам нужен хэндл запущенного процесса
-			_ASSERTE(seiPst.hProcess != NULL);
-			_ASSERTE(pArg->lpShellExecute->hProcess != NULL);
+			if (pArg->lpShellExecute->fMask & SEE_MASK_NOCLOSEPROCESS)
+			{
+				// OK, но нам нужен хэндл запущенного процесса
+				_ASSERTE(seiPst.hProcess != NULL);
+				_ASSERTE(pArg->lpShellExecute->hProcess != NULL);
+			}
 		}
 		else // Ошибка
 		{

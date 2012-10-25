@@ -103,6 +103,7 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #define FORCE_INVALIDATE_TIMEOUT 300
 #endif
 
+#define CHECK_CONHWND_TIMEOUT 500
 
 static BOOL gbInSendConEvent = FALSE;
 
@@ -700,26 +701,46 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	// Процесс запущен через ShellExecuteEx под другим пользователем (Administrator)
 	if (mp_sei)
 	{
-		// в некоторых случаях (10% на x64) hProcess не успевает заполниться (еще не отработала функция?)
-		if (!mp_sei->hProcess)
+		if (rStartStop->hServerProcessHandle)
 		{
-			DWORD dwStart = GetTickCount();
-			DWORD dwDelay = 2000;
-
-			do
+			// Переделали. Запуск идет через GUI, чтобы окошко не мелькало.
+			// mp_sei->hProcess не заполняется
+			hProcess = (HANDLE)rStartStop->hServerProcessHandle;
+			DWORD nWait = WaitForSingleObject(hProcess, 0);
+			if (nWait != WAIT_TIMEOUT)
 			{
-				Sleep(100);
+				DisplayLastError(L"Invalid server process handle recieved!");
+				hProcess = NULL;
 			}
-			while((GetTickCount() - dwStart) < dwDelay);
 
-			_ASSERTE(mp_sei->hProcess!=NULL);
+			_ASSERTE(mp_sei->hProcess==NULL);
 		}
-
-		// поехали
-		if (mp_sei->hProcess)
+		else
 		{
-			hProcess = mp_sei->hProcess;
-			mp_sei->hProcess = NULL; // более не требуется. хэндл закроется в другом месте
+			// Handle must be sended from server to GUI
+			_ASSERTE(rStartStop->hServerProcessHandle!=0);
+
+			// в некоторых случаях (10% на x64) hProcess не успевает заполниться (еще не отработала функция?)
+			if (!mp_sei->hProcess)
+			{
+				DWORD dwStart = GetTickCount();
+				DWORD dwDelay = 2000;
+
+				do
+				{
+					Sleep(100);
+				}
+				while((GetTickCount() - dwStart) < dwDelay);
+
+				_ASSERTE(mp_sei->hProcess!=NULL);
+			}
+
+			// поехали
+			if (mp_sei->hProcess)
+			{
+				hProcess = mp_sei->hProcess;
+				mp_sei->hProcess = NULL; // более не требуется. хэндл закроется в другом месте
+			}
 		}
 	}
 	else
@@ -1645,6 +1666,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	DWORD nTimeout = 0;
 	CRealBuffer* pLastBuf = NULL;
 	bool lbActiveBufferChanged = false;
+	DWORD nConWndCheckTick = GetTickCount();
 
 	while (TRUE)
 	{
@@ -1669,6 +1691,20 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				_ASSERTE(bDetached == FALSE);
 				nWait = IDEVENT_SERVERPH;
 				break;
+			}
+		}
+		else if (pRCon->hConWnd)
+		{
+			DWORD nDelta = (GetTickCount() - nConWndCheckTick);
+			if (nDelta >= CHECK_CONHWND_TIMEOUT)
+			{
+				if (!IsWindow(pRCon->hConWnd))
+				{
+					_ASSERTE(FALSE && "Console window was abnormally terminated?");
+					nWait = IDEVENT_SERVERPH;
+					break;
+				}
+				nConWndCheckTick = GetTickCount();
 			}
 		}
 
@@ -2532,11 +2568,20 @@ BOOL CRealConsole::StartProcess()
 
 		int nCurLen = 0;
 		int nLen = _tcslen(lpszCmd);
-		nLen += _tcslen(gpConEmu->ms_ConEmuExe) + 310 + MAX_PATH;
+		nLen += _tcslen(gpConEmu->ms_ConEmuExe) + 330 + MAX_PATH*2;
 		MCHKHEAP;
 		psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 		_ASSERTE(psCurCmd);
-		_wcscpy_c(psCurCmd, nLen, L"\"");
+		*psCurCmd = 0;
+
+		if (m_Args.bRunAsAdministrator)
+		{
+			_wcscat_c(psCurCmd, nLen, L"\"");
+			_wcscat_c(psCurCmd, nLen, gpConEmu->ms_ConEmuExe);
+			_wcscat_c(psCurCmd, nLen, L"\" /bypass /cmd ");
+		}
+
+		_wcscat_c(psCurCmd, nLen, L"\"");
 		_wcscat_c(psCurCmd, nLen, gpConEmu->ConEmuCExeFull(lpszCmd));
 		//lstrcat(psCurCmd, L"\\");
 		//lstrcpy(psCurCmd, gpConEmu->ms_ConEmuCExeName);
@@ -2738,7 +2783,10 @@ BOOL CRealConsole::StartProcess()
 				mp_sei->cbSize = sizeof(SHELLEXECUTEINFO);
 				mp_sei->hwnd = ghWnd;
 				//mp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
-				mp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NOASYNC;
+
+				// 121025 - remove SEE_MASK_NOCLOSEPROCESS
+				mp_sei->fMask = SEE_MASK_NO_CONSOLE|/*SEE_MASK_NOCLOSEPROCESS|*/SEE_MASK_NOASYNC;
+
 				mp_sei->lpVerb = (wchar_t*)(mp_sei+1);
 				wcscpy((wchar_t*)mp_sei->lpVerb, L"runas");
 				mp_sei->lpFile = mp_sei->lpVerb + _tcslen(mp_sei->lpVerb) + 2;
@@ -2759,7 +2807,9 @@ BOOL CRealConsole::StartProcess()
 					mp_sei->lpDirectory = NULL;
 
 				//mp_sei->nShow = gpSet->isConVisible ? SW_SHOWNORMAL : SW_HIDE;
-				mp_sei->nShow = SW_SHOWMINIMIZED;
+				//mp_sei->nShow = SW_SHOWMINIMIZED;
+				mp_sei->nShow = SW_SHOWNORMAL;
+
 				SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", true);
 				lbRc = gpConEmu->GuiShellExecuteEx(mp_sei, mp_VCon);
 				// ошибку покажем дальше
@@ -4528,6 +4578,15 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc)
 	if (ppPrc == NULL || mn_ProcessCount == 0)
 	{
 		if (ppPrc) *ppPrc = NULL;
+
+		if (hConWnd && !mh_MainSrv)
+		{
+			if (!IsWindow(hConWnd))
+			{
+				_ASSERTE(FALSE && "Console window was abnormally terminated?");
+				return 0;
+			}
+		}
 
 		return mn_ProcessCount;
 	}
@@ -8336,6 +8395,12 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 
 	if (hConWnd)
 	{
+		if (!IsWindow(hConWnd))
+		{
+			_ASSERTE(FALSE && "Console window was abnormally terminated?");
+			return;
+		}
+
 		if (gpSet->isSafeFarClose && !abForceTerminate)
 		{
 			LPCWSTR pszMacro = gpSet->SafeFarCloseMacro(fmv_Default);

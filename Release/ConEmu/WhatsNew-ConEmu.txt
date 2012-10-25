@@ -16,13 +16,18 @@ Questions about usablity of "-new_console:s".
 
 [%] Fixed default Far Manager macros for Lua (Far 3 build 2851).
 [%] Sometimes "-new_console" was removed with excess spaces.
+[+] *nix like «sudo» command. Batch file "%ConEmuBaseDir%\csudo.cmd".
+    When checkbox «Add %ConEmuBaseDir% to %PATH%» is On («ComSpec» page),
+    you may just type csudo in non-elevated prompt, for example:
+    csudo dism /online /enable-feature /featurename:NetFX3 /All /Source:D:\sources\sxs /LimitAccess
+[%] Some fixes in closing ConEmu window.
 
 
 2012.10.22
 [+] New default hotkeys: Ctrl+RClick - system menu, Shift+RClick - active tab menu.
 [+] New GuiMacro.
     Menu(<Type>) - pop up System (Type=0) or Tab (Type=1) menu.
-[+] Now you may use LButton, RButton, MButton in "Keys & Macro".
+[+] Now you may use LButton, RButton, MButton in «Keys & Macro».
     Note. When you use Alt+Btn for Menu() - release Alt before Btn to avoid menu cancelling.
 [+] Added default support of GIT-bash directory structure, read ConEmuFolders#MinGW_structure for details.
 [%] Hiew32 fails to paste more than 1 char at once.

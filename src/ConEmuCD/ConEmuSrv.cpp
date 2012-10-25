@@ -2081,6 +2081,7 @@ void CheckConEmuHwnd()
 bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
 {
 	bool bConnected = false;
+	DWORD nDupErrCode = 0;
 
 	//if (lbNeedSetFont) {
 	//	lbNeedSetFont = FALSE;
@@ -2101,22 +2102,34 @@ bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
 		{
 			HANDLE hGuiHandle = OpenProcess(PROCESS_DUP_HANDLE, FALSE, nGuiPid);
 
-			if (hGuiHandle)
+			if (!hGuiHandle)
+			{
+				nDupErrCode = GetLastError();
+				_ASSERTE((hGuiHandle!=NULL) && "Failed to transfer server process handle to GUI");
+			}
+			else
 			{
 				HANDLE hDupHandle = NULL;
 
 				if (DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(),
-				                   hGuiHandle, &hDupHandle, PROCESS_QUERY_INFORMATION|SYNCHRONIZE,
+				                   hGuiHandle, &hDupHandle, MY_PROCESS_ALL_ACCESS/*PROCESS_QUERY_INFORMATION|SYNCHRONIZE*/,
 				                   FALSE, 0)
 				        && hDupHandle)
 				{
 					pIn->StartStop.hServerProcessHandle = (u64)hDupHandle;
+				}
+				else
+				{
+					nDupErrCode = GetLastError();
+					_ASSERTE((hGuiHandle!=NULL) && "Failed to transfer server process handle to GUI");
 				}
 
 				CloseHandle(hGuiHandle);
 			}
 		}
 	}
+
+	UNREFERENCED_PARAMETER(nDupErrCode);
 
 	wchar_t szPipe[64];
 	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEGUIPIPENAME, L".", (DWORD)hGui); //-V205

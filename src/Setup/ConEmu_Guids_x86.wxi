@@ -34,6 +34,7 @@
 	<?define Guid.Attach.cmd = "A3007778-A4CE-4E61-BED5-B5A31B638549" ?>
 	<?define Guid.Cmd_Autorun.cmd = "FFA943E1-0E3A-4B97-A142-1678CFE82935" ?>
 	<?define Guid.ColorPrompt.cmd = "318DFA50-3987-4ABC-A3F5-524F963BA5BE" ?>
+	<?define Guid.csudo.cmd = "BAE56189-FB6F-40E9-A716-943FBE276898" ?>
 	<?define Guid.IsConEmu.cmd = "CF06CB3D-2686-4CDE-8B70-740ADF91886F" ?>
 	<?define Guid.RenameTab.cmd = "39671AC8-9A58-4F50-99EE-AFC200C054DD" ?>
 	<?define Guid.SetConTitle.cmd = "9229F284-2896-4294-AEAD-46AC72F6E169" ?>
