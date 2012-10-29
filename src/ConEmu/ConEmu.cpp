@@ -244,6 +244,7 @@ CConEmuMain::CConEmuMain()
 	mb_InImeComposition = false; mb_ImeMethodChanged = false;
 	ZeroStruct(mr_Ideal);
 	mn_InResize = 0;
+	mb_InScMinimize = false;
 	mb_MouseCaptured = FALSE;
 	mb_HotKeyRegistered = FALSE;
 	mh_LLKeyHookDll = NULL;
@@ -6041,7 +6042,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	// -- // Если у нас режим скрытия заголовка (при максимизации/фулскрине)
 	// При любой смене. Т.к. мы меняем WM_GETMINMAXINFO - нужно корректировать и размеры :(
 	// Иначе возможны глюки
-	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) /*&& gpSet->isCaptionHidden()*/)
+	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && !mb_InScMinimize)
 	{
 		if (gpSet->isQuakeStyle)
 		{
@@ -6554,9 +6555,29 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, bool abAllowScripts
 	return pVCon;
 }
 
+LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, bool* rpbSetActive)
+{
+	if (!apszLine)
+	{
+		_ASSERTE(apszLine!=NULL);
+		return NULL;
+	}
+
+	while (*apszLine == L'>' || *apszLine == L'*' || *apszLine == L' ' || *apszLine == L'\t')
+	{
+		if (*apszLine == L'>' && rpbSetActive) *rpbSetActive = true;
+
+		if (*apszLine == L'*' && rpbAsAdmin) *rpbAsAdmin = true;
+
+		apszLine++;
+	}
+
+	return apszLine;
+}
+
 // Возвращает указатель на АКТИВНУЮ консоль (при создании группы)
 // apszScript содержит строки команд, разделенные \r\n
-CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, BOOL abForceAsAdmin /*= FALSE*/, LPCWSTR asStartupDir /*= NULL*/)
+CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsAdmin /*= false*/, LPCWSTR asStartupDir /*= NULL*/)
 {
 	CVirtualConsole* pVConResult = NULL;
 	// Поехали
@@ -6564,23 +6585,17 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, BOOL abForceAsA
 	wchar_t *pszLine = pszDataW;
 	wchar_t *pszNewLine = wcschr(pszLine, L'\n');
 	CVirtualConsole *pSetActive = NULL, *pVCon = NULL, *pLastVCon = NULL;
-	BOOL lbSetActive = FALSE, lbOneCreated = FALSE, lbRunAdmin = FALSE;
+	bool lbSetActive = false, lbOneCreated = false, lbRunAdmin = false;
 
 	CVConGroup::OnCreateGroupBegin();
 
 	while (*pszLine)
 	{
-		lbSetActive = FALSE;
+		lbSetActive = false;
 		lbRunAdmin = abForceAsAdmin;
 
-		while (*pszLine == L'>' || *pszLine == L'*' || *pszLine == L' ' || *pszLine == L'\t')
-		{
-			if (*pszLine == L'>') lbSetActive = TRUE;
-
-			if (*pszLine == L'*') lbRunAdmin = TRUE;
-
-			pszLine++;
-		}
+		// Task pre-options, for example ">*cmd"
+		pszLine = (wchar_t*)ParseScriptLineOptions(pszLine, &lbRunAdmin, &lbSetActive);
 
 		if (pszNewLine)
 		{
@@ -9876,12 +9891,12 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 }
 
 
-bool CConEmuMain::DoClose()
-{
-	bool lbProceed = CVConGroup::OnScClose();
-
-	return lbProceed;
-}
+//bool CConEmuMain::DoClose()
+//{
+//	bool lbProceed = CVConGroup::OnScClose();
+//
+//	return lbProceed;
+//}
 
 bool CConEmuMain::isCloseConfirmed()
 {
@@ -15806,7 +15821,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			break;
 			
 		case SC_CLOSE:
-			DoClose();
+			CVConGroup::OnScClose();
 			break;
 		
 		case SC_MAXIMIZE:
@@ -15864,11 +15879,9 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 			bool bMin2TSA = gpSet->isMinToTray();
 
-			static bool bInScMinimize = false;
-
-			if (!bInScMinimize)
+			if (!mb_InScMinimize)
 			{
-				bInScMinimize = true;
+				mb_InScMinimize = true;
 
 				// Запомним, на каком мониторе мы были до минимзации
 				if (!isIconic())
@@ -15895,13 +15908,13 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				if (bMin2TSA)
 				{
 					// Окошко уже "спрятано", минимизировать не нужно
-					bInScMinimize = false;
+					mb_InScMinimize = false;
 					break;
 				}
 
 				result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
 
-				bInScMinimize = false;
+				mb_InScMinimize = false;
 			}
 			else
 			{
@@ -17069,7 +17082,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			break;
 		case WM_CLOSE:
 			_ASSERTE(FALSE && "WM_CLOSE is not called in normal behavior");
-			gpConEmu->DoClose();
+			CVConGroup::OnScClose();
 			result = 0;
 			break;
 		case WM_SYSCOMMAND:

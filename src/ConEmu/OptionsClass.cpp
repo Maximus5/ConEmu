@@ -189,6 +189,7 @@ namespace SettingsNS
 	const DWORD  nCRLF[] =  {0, 1, 2};
 	const WORD nSizeCtrlId[] = {tWndWidth, stWndWidth, tWndHeight, stWndHeight};
 	const WORD nTaskCtrlId[] = {tCmdGroupName, tCmdGroupGuiArg, tCmdGroupCommands, stCmdTaskAdd, cbCmdGroupApp, cbCmdTasksDir, cbCmdTasksParm, cbCmdTasksActive};
+	const WORD nStatusColorIds[] = {stStatusColorBack, tc35, c35, stStatusColorLight, tc36, c36, stStatusColorDark, tc37, c37};
 };
 
 #define FillListBox(hDlg,nDlgID,Items,Values,Value) \
@@ -1506,8 +1507,8 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	checkDlgButton(hWnd2, cbBgAllowPlugin, BST(gpSet->isBgPluginAllowed));
 
 	checkDlgButton(hWnd2, cbBgImage, BST(gpSet->isShowBgImage));
-	EnableWindow(GetDlgItem(hWnd2, tBgImage), gpSet->isShowBgImage);
-	EnableWindow(GetDlgItem(hWnd2, bBgImage), gpSet->isShowBgImage);
+	WORD nImgCtrls[] = {tBgImage, bBgImage};
+	EnableDlgItems(hWnd2, nImgCtrls, countof(nImgCtrls), gpSet->isShowBgImage);
 
 	checkRadioButton(hWnd2, rNoneAA, rCTAA,
 		(LogFont.lfQuality == CLEARTYPE_NATURAL_QUALITY) ? rCTAA :
@@ -1638,11 +1639,14 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbQuakeAutoHide, (gpSet->isQuakeStyle == 2) ? BST_CHECKED : BST_UNCHECKED);
-	EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
+	//EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
 	// копи€ на вкладке "Show"
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
-	EnableWindow(GetDlgItem(hWnd2, tHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
-	EnableWindow(GetDlgItem(hWnd2, stHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
+	//EnableWindow(GetDlgItem(hWnd2, tHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
+	//EnableWindow(GetDlgItem(hWnd2, stHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
+
+	WORD nCtrls[] = {cbQuakeAutoHide, tHideCaptionAlwaysFrame, stHideCaptionAlwaysFrame};
+	EnableDlgItems(hWnd2, nCtrls, countof(nCtrls), gpSet->isQuakeStyle);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -2738,6 +2742,9 @@ LRESULT CSettings::OnInitDialog_Status(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbStatusVertSep, (gpSet->isStatusBarFlags & csf_VertDelim) ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbStatusHorzSep, (gpSet->isStatusBarFlags & csf_HorzDelim) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbStatusSystemColors, (gpSet->isStatusBarFlags & csf_SystemColors) ? BST_CHECKED : BST_UNCHECKED);
+
+	EnableDlgItems(hWnd2, SettingsNS::nStatusColorIds, countof(SettingsNS::nStatusColorIds), !(gpSet->isStatusBarFlags & csf_SystemColors));
 
 	checkDlgButton(hWnd2, cbShowStatusBar, gpSet->isStatusBarShow);
 	for (size_t i = 0; i < countof(SettingsNS::StatusItems); i++)
@@ -3848,8 +3855,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			else
 			{
 				EnableWindow(GetDlgItem(hWnd2, cbApplyPos), TRUE);
-				for (size_t i = 0; i < countof(SettingsNS::nSizeCtrlId); i++)
-					EnableWindow(GetDlgItem(hWnd2, SettingsNS::nSizeCtrlId[i]), CB == rNormal);
+				//for (size_t i = 0; i < countof(SettingsNS::nSizeCtrlId); i++)
+				//	EnableWindow(GetDlgItem(hWnd2, SettingsNS::nSizeCtrlId[i]), CB == rNormal);
+				EnableDlgItems(hWnd2, SettingsNS::nSizeCtrlId, countof(SettingsNS::nSizeCtrlId), CB == rNormal);
 			}
 			break;
 		case cbApplyPos:
@@ -5237,6 +5245,15 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpSet->isStatusBarFlags &= ~csf_HorzDelim;
 					gpConEmu->mp_Status->UpdateStatusBar(true);
 				}
+				else if (CB == cbStatusSystemColors)
+				{
+					if (IsChecked(hWnd2,CB))
+						gpSet->isStatusBarFlags |= csf_SystemColors;
+					else
+						gpSet->isStatusBarFlags &= ~csf_SystemColors;
+					EnableDlgItems(hWnd2, SettingsNS::nStatusColorIds, countof(SettingsNS::nStatusColorIds), !(gpSet->isStatusBarFlags & csf_SystemColors));
+					gpConEmu->mp_Status->UpdateStatusBar(true);
+				}
 				else
 				{
 					for (size_t i = 0; i < countof(SettingsNS::StatusItems); i++)
@@ -6526,8 +6543,9 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			SetDlgItemText(hWnd2, tCmdGroupGuiArg, L"");
 			SetDlgItemText(hWnd2, tCmdGroupCommands, L"");
 		}
-		for (size_t i = 0; i < countof(SettingsNS::nTaskCtrlId); i++)
-			EnableWindow(GetDlgItem(hWnd2, SettingsNS::nTaskCtrlId[i]), lbEnable);
+		//for (size_t i = 0; i < countof(SettingsNS::nTaskCtrlId); i++)
+		//	EnableWindow(GetDlgItem(hWnd2, SettingsNS::nTaskCtrlId[i]), lbEnable);
+		EnableDlgItems(hWnd2, SettingsNS::nTaskCtrlId, countof(SettingsNS::nTaskCtrlId), lbEnable);
 		mb_IgnoreCmdGroupEdit = false;
 
 		break;
@@ -7957,10 +7975,11 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 
 				_ASSERTE(DistinctControls[i].nCtrls[countof(DistinctControls[i].nCtrls)-1]==0 && "Overflow check of nCtrls[]")
 
-				for (size_t j = 0; j < countof(DistinctControls[i].nCtrls) && DistinctControls[i].nCtrls[j]; j++)
-				{
-					EnableWindow(GetDlgItem(hDlg, DistinctControls[i].nCtrls[j]), bEnabled);
-				}
+				//for (size_t j = 0; j < countof(DistinctControls[i].nCtrls) && DistinctControls[i].nCtrls[j]; j++)
+				//{
+				//	EnableWindow(GetDlgItem(hDlg, DistinctControls[i].nCtrls[j]), bEnabled);
+				//}
+				EnableDlgItems(hDlg, DistinctControls[i].nCtrls, countof(DistinctControls[i].nCtrls), bEnabled);
 			}
 
 			InvalidateRect(hChild, NULL, FALSE);
@@ -9121,10 +9140,11 @@ void CSettings::UpdateSize(UINT w, UINT h)
 
 		// ¬о избежание недоразумений - запретим элементы размера дл€ Max/Fullscreen
 		BOOL bNormalChecked = IsChecked(mh_Tabs[thi_SizePos], rNormal);
-		for (size_t i = 0; i < countof(SettingsNS::nSizeCtrlId); i++)
-		{
-			EnableWindow(GetDlgItem(mh_Tabs[thi_SizePos], SettingsNS::nSizeCtrlId[i]), bNormalChecked);
-		}
+		//for (size_t i = 0; i < countof(SettingsNS::nSizeCtrlId); i++)
+		//{
+		//	EnableWindow(GetDlgItem(mh_Tabs[thi_SizePos], SettingsNS::nSizeCtrlId[i]), bNormalChecked);
+		//}
+		EnableDlgItems(mh_Tabs[thi_SizePos], SettingsNS::nSizeCtrlId, countof(SettingsNS::nSizeCtrlId), bNormalChecked);
 	}
 
 	if (isAdvLogging >= 2)
@@ -10333,6 +10353,31 @@ int CSettings::IsChecked(HWND hParent, WORD nCtrlId)
 		nChecked = 0;
 
 	return nChecked;
+}
+
+void CSettings::EnableDlgItem(HWND hParent, WORD nCtrlId, BOOL bEnabled)
+{
+#ifdef _DEBUG
+	if (!hParent)
+	{
+		_ASSERTE(hParent!=NULL);
+	}
+	else
+	{
+		HWND hDlgItem = GetDlgItem(hParent, nCtrlId);
+		_ASSERTE(hDlgItem!=NULL && "Control not found in hParent dlg");
+	}
+#endif
+
+	EnableWindow(GetDlgItem(hParent, nCtrlId), bEnabled);
+}
+
+void CSettings::EnableDlgItems(HWND hParent, const WORD* pnCtrlIds, size_t nCount, BOOL bEnabled)
+{
+	for (;nCount-- && *pnCtrlIds; ++pnCtrlIds)
+	{
+		EnableDlgItem(hParent, *pnCtrlIds, bEnabled);
+	}
 }
 
 int CSettings::GetNumber(HWND hParent, WORD nCtrlId)

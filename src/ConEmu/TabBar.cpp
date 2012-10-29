@@ -3190,18 +3190,25 @@ void TabBarClass::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 			PostMessage(hMenuWnd, WM_CLOSE, 0, 0);
 		}
 
+		bool bRunAs = false;
+		LPCWSTR pszCmd = gpConEmu->ParseScriptLineOptions(pszLines[nRetID-nStartID-1], &bRunAs, NULL);
+
 		// Well, start selected line from Task
 		RConStartArgs con;
-		con.pszSpecialCmd = lstrdup(pszLines[nRetID-nStartID-1]);
+		con.pszSpecialCmd = lstrdup(pszCmd);
 		if (!con.pszSpecialCmd)
 		{
 			_ASSERTE(con.pszSpecialCmd!=NULL);
 		}
 		else
 		{
+			con.bRunAsAdministrator = bRunAs; // May be set in style ">*powershell"
+
 			// May be directory was set in task properties?
 			pGrp->ParseGuiArgs(&con.pszStartupDir, NULL);
 
+			con.ProcessNewConArg();
+			
 			if (isPressed(VK_SHIFT))
 			{
 				int nRc = gpConEmu->RecreateDlg(&con);

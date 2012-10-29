@@ -218,7 +218,10 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			lstrcpy(szRbCaption, L"Run as current &user: "); lstrcat(szRbCaption, pDlg->ms_CurUser);
 			SetDlgItemText(hDlg, rbCurrentUser, szRbCaption);
 
-			if ((pArgs->aRecreate == cra_RecreateTab) && pVCon && pVCon->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted))
+			wchar_t szOtherUser[MAX_PATH*2+1]; szOtherUser[0] = 0;
+
+			if ((pArgs->pszUserName && *pArgs->pszUserName)
+				|| ((pArgs->aRecreate == cra_RecreateTab) && pVCon && pVCon->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted)))
 			{
 				nChecked = rbAnotherUser;
 
@@ -228,6 +231,11 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				}
 				else
 				{
+					if (pArgs->pszUserName && *pArgs->pszUserName)
+						lstrcpyn(szOtherUser, pArgs->pszUserName, countof(szOtherUser));
+					else
+						lstrcpyn(szOtherUser, pDlg->ms_CurUser, countof(szOtherUser));
+
 					if (pszDomain)
 					{
 						if (wcschr(pszDomain, L'.'))
@@ -235,27 +243,28 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 							// Если в имени домена есть точка - используем нотацию user@domain
 							// По идее, мы сюда не попадаем, т.к. при вводе имени в таком формате
 							// pszDomain не заполняется, и "UPN format" остается в pszUser
-							lstrcpyn(pDlg->ms_CurUser, pszUser, MAX_PATH);
-							wcscat_c(pDlg->ms_CurUser, L"@");
-							lstrcpyn(pDlg->ms_CurUser+_tcslen(pDlg->ms_CurUser), pszDomain, MAX_PATH);
+							lstrcpyn(szOtherUser, pszUser, MAX_PATH);
+							wcscat_c(szOtherUser, L"@");
+							lstrcpyn(szOtherUser+_tcslen(szOtherUser), pszDomain, MAX_PATH);
 						}
 						else
 						{
 							// "Старая" нотация domain\user
-							lstrcpyn(pDlg->ms_CurUser, pszDomain, MAX_PATH);
-							wcscat_c(pDlg->ms_CurUser, L"\\");
-							lstrcpyn(pDlg->ms_CurUser+_tcslen(pDlg->ms_CurUser), pszUser, MAX_PATH);
+							lstrcpyn(szOtherUser, pszDomain, MAX_PATH);
+							wcscat_c(szOtherUser, L"\\");
+							lstrcpyn(szOtherUser+_tcslen(szOtherUser), pszUser, MAX_PATH);
 						}
 					}
 					else
 					{
-						lstrcpyn(pDlg->ms_CurUser, pszUser, countof(pDlg->ms_CurUser));
+						lstrcpyn(szOtherUser, pszUser, countof(szOtherUser));
 					}
-					SetDlgItemText(hDlg, tRunAsPassword, L"");
+
+					SetDlgItemText(hDlg, tRunAsPassword, pArgs->szUserPassword);
 				}
 			}
 
-			SetDlgItemText(hDlg, tRunAsUser, (nChecked == rbAnotherUser) ? pDlg->ms_CurUser : L"");
+			SetDlgItemText(hDlg, tRunAsUser, (nChecked == rbAnotherUser) ? szOtherUser : L"");
 			CheckRadioButton(hDlg, rbCurrentUser, rbAnotherUser, nChecked);
 			RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
 
@@ -325,7 +334,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
 				// Выровнять флажок по кнопке
 				GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
-				SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
+				//SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
 			}
 
 			if (rcBtnBox.left)
@@ -337,7 +346,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				pt.x = rcBtnBox.left - (rcBox.right - rcBox.left) - 5;
 				pt.y = rcBtnBox.top + ((rcBtnBox.bottom-rcBtnBox.top) - (rcBox.bottom-rcBox.top))/2;
 				SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-				SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
+				//SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
 			}
 
 			if ((pArgs->aRecreate != cra_RecreateTab) && (pArgs->aRecreate != cra_EditTab))
@@ -359,6 +368,15 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			           rect.right - rect.left, rect.bottom - rect.top, false);
 
 			PostMessage(hDlg, (WM_APP+1), 0,0);
+
+
+			if (pArgs->aRecreate == cra_RecreateTab)
+				SetFocus(GetDlgItem(hDlg, IDC_START)); // Win+~ (Recreate tab), Focus on "Restart" button"
+			else if ((pArgs->pszUserName && *pArgs->pszUserName) && !*pArgs->szUserPassword)
+				SetFocus(GetDlgItem(hDlg, tRunAsPassword)); // We need password, all other fields are ready
+			else
+				SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD)); // Set focus in command-line field
+
 			return lbRc;
 		}
 		case (WM_APP+1):

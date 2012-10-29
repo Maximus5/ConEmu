@@ -32,6 +32,7 @@ enum CEStatusFlags
 {
 	csf_VertDelim           = 0x00000001,
 	csf_HorzDelim           = 0x00000002,
+	csf_SystemColors        = 0x00000004,
 };
 
 

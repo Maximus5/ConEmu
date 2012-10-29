@@ -14,6 +14,19 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.10.29
+[+] New option: Settings -> Status bar -> System colors.
+[!] Issue 791: Rollback changes in «Run As Administrator».
+[*] Issue 700: Forcing ConEmu's console to larger history buffer count.
+    Small count causes «Up arrow don't work in prompt» for long console trees,
+    for example: cmd -> Far -> ConEmuC -> cmd -> vim -> cmd -> ...
+    Forcing values in HKEY_CURRENT_USER\Console\ConEmu:
+    History buffer size - min=16, default=50; Count - min=16, default=32.
+[+] In the Tasks popup menu (Win+N or down arrow near to [+]) you may RClick on the task and
+    get submenu with task contents. You may click task command to start particular command.
+[%] Issue 794: Names of renamed tabs should appear on taskbar.
+
+
 2012.10.28
 [!] Issue 526: Optimization of «Inject ConEmuHk». Hope on great speedup and no new bugs.
 [*] Changed «Run As Administrator» startup style to avoid flickering of real console.

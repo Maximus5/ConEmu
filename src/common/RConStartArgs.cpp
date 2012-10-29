@@ -163,7 +163,8 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 
 		//this->pszUserPassword = lstrdup(args->pszUserPassword ? args->pszUserPassword : L"");
 		//this->hLogonToken = args->hLogonToken; args->hLogonToken = NULL;
-		if (!this->pszUserName || !*this->szUserPassword)
+		// -- Do NOT fail when password is empty !!!
+		if (!this->pszUserName /*|| !*this->szUserPassword*/)
 			return false;
 	}
 

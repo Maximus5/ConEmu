@@ -2100,6 +2100,7 @@ bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
 
 		if (GetWindowThreadProcessId(hGui, &nGuiPid) && nGuiPid)
 		{
+			// Issue 791: Fails, when GUI started under different credentials (login) as server
 			HANDLE hGuiHandle = OpenProcess(PROCESS_DUP_HANDLE, FALSE, nGuiPid);
 
 			if (!hGuiHandle)

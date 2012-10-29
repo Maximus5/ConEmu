@@ -188,7 +188,8 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 	if (!pVCon->Constructor(args))
 	{
 		ppVConI = NULL;
-		delete pVCon;
+		CVConGroup::OnVConClosed(pVCon);
+		pVCon->Release();
 		return NULL;
 	}
 
@@ -1795,13 +1796,23 @@ bool CVConGroup::OnScClose()
 		if (nDetachedCount > 0)
 		{
 			if (MessageBox(ghWnd, L"ConEmu is waiting for console attach.\nIt was started in 'Detached' mode.\nDo You want to cancel waiting?",
-			              gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONQUESTION) != IDYES)
+			              gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONQUESTION) == IDYES)
         	{
-        		lbAllowed = false;
+				for (int i = (int)(countof(gp_VCon)-1); i >= 0; i--)
+				{
+					if (gp_VCon[i] && gp_VCon[i]->RCon())
+					{
+						if (gp_VCon[i]->RCon()->isDetached())
+							gp_VCon[i]->RCon()->StopSignal();
+					}
+				}
+        		lbAllowed = true;
 			}
 		}
-
-		lbAllowed = true;
+		else
+		{
+			lbAllowed = true;
+		}
 	}
 
 	return lbAllowed;
@@ -1943,8 +1954,20 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 	if (gp_VActive == apVCon)
 	{
 		// —юда вообще попадать не должны, но на вс€кий случай, сбрасываем gp_VActive
-		_ASSERTE(gp_VActive == NULL && gp_VCon[0] == NULL);
-		gp_VActive = NULL;
+		// —юда можем попасть если не удалось создать активную консоль (облом с паролем, например)
+		_ASSERTE((gp_VActive == NULL && gp_VCon[0] == NULL) || gb_CreatingActive);
+
+		CVirtualConsole* pNewActive = NULL;
+		for (size_t i = countof(gp_VCon); i--;)
+		{
+			if (gp_VCon[i] && gp_VCon[i] != apVCon)
+			{
+				pNewActive = gp_VCon[i];
+				break;
+			}
+		}
+
+		gp_VActive = pNewActive;
 	}
 
 	if (gp_VActive)

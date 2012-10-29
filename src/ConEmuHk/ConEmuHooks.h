@@ -152,8 +152,8 @@ extern "C" {
 
 
 #ifdef _DEBUG
-	#define USEHOOKLOG
-	//#undef USEHOOKLOG
+	//#define USEHOOKLOG
+	#undef USEHOOKLOG
 #else
 	#undef USEHOOKLOG
 #endif

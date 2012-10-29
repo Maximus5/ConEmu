@@ -536,6 +536,8 @@ class CSettings
 		static INT_PTR GetSelectedString(HWND hParent, WORD nListCtrlId, wchar_t** ppszStr);
 		static int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 		static int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
+		static void EnableDlgItem(HWND hParent, WORD nCtrlId, BOOL bEnabled);
+		static void EnableDlgItems(HWND hParent, const WORD* pnCtrlIds, size_t nCount, BOOL bEnabled);
 	private:
 		BOOL mb_TabHotKeyRegistered;
 		void RegisterTabs();

@@ -499,7 +499,9 @@ LPCWSTR CTaskBarGhost::CheckTitle(BOOL abSkipValidation /*= FALSE*/)
 	LPCWSTR pszTitle = NULL;
 	TODO("Разбивка по табам консоли");
 	if (mp_VCon && (abSkipValidation || gpConEmu->isValid(mp_VCon)) && mp_VCon->RCon())
-		pszTitle = mp_VCon->RCon()->GetTitle();
+	{
+		pszTitle = mp_VCon->RCon()->GetTitle(true);
+	}
 	if (!pszTitle)
 	{
 		pszTitle = gpConEmu->GetDefaultTitle();

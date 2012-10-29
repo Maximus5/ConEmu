@@ -378,6 +378,7 @@ class CConEmuMain :
 		RECT GetIdealRect();
 	protected:
 		BOOL mn_InResize;
+		bool mb_InScMinimize;
 		RECT mrc_StoredNormalRect;
 		void StoreNormalRect(RECT* prcWnd);
 		//BOOL mb_MaximizedHideCaption; // в режиме HideCaption
@@ -548,7 +549,8 @@ class CConEmuMain :
 		//void CheckGuiBarsCreated();
 		bool CreateWnd(RConStartArgs *args);
 		CVirtualConsole* CreateCon(RConStartArgs *args, bool abAllowScripts = false, bool abForceCurConsole = false);
-		CVirtualConsole* CreateConGroup(LPCWSTR apszScript, BOOL abForceAsAdmin = FALSE, LPCWSTR asStartupDir = NULL);
+		CVirtualConsole* CreateConGroup(LPCWSTR apszScript, bool abForceAsAdmin = false, LPCWSTR asStartupDir = NULL);
+		LPCWSTR ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, bool* rpbSetActive);
 		void CreateGhostVCon(CVirtualConsole* apVCon);
 		BOOL CreateMainWindow();
 		BOOL CreateWorkWindow();
@@ -709,7 +711,7 @@ class CConEmuMain :
 		void OnAlwaysOnTop();
 		void OnAlwaysShowScrollbar(bool abSync = true);
 		void OnBufferHeight();
-		bool DoClose();
+		//bool DoClose();
 		//BOOL mb_InConsoleResize;
 		void OnConsoleKey(WORD vk, LPARAM Mods);
 		void OnConsoleResize(BOOL abPosted=FALSE);
@@ -785,6 +787,8 @@ class CConEmuMain :
 		ImmSetCompositionWindow_t _ImmSetCompositionWindow;
 		ImmGetContext_t _ImmGetContext;
 };
+
+#include <intrin.h>
 
 // Message Logger
 // Originally from http://preshing.com/20120522/lightweight-in-memory-logging

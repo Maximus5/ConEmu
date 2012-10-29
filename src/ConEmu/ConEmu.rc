@@ -839,15 +839,15 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,183,123,8
     CONTROL         "Console cursor information",cbStatusCursorInfo,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,195,123,8
     CONTROL         "Server PID",cbStatusServer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,99,50,8
-    RTEXT           "Back:",IDC_STATIC,17,41,22,8
-    LTEXT           "",c35,92,40,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "Back:",stStatusColorBack,17,41,22,8
     EDITTEXT        tc35,44,40,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
-    RTEXT           "Light:",IDC_STATIC,109,41,31,8
-    LTEXT           "",c36,193,40,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c35,92,40,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "Light:",stStatusColorLight,109,41,31,8
     EDITTEXT        tc36,145,40,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
-    RTEXT           "Dark:",IDC_STATIC,222,41,23,8
-    LTEXT           "",c37,298,40,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c36,193,40,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "Dark:",stStatusColorDark,222,41,23,8
     EDITTEXT        tc37,250,40,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    LTEXT           "",c37,298,40,12,12,SS_NOTIFY | SS_SUNKEN
     GROUPBOX        "Font and color",IDC_STATIC,9,12,307,59
     GROUPBOX        "Enabled columns",IDC_STATIC,9,73,307,150
     CONTROL         "ConEmu window client area",cbStatusWindowClient,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,159,123,8
@@ -865,9 +865,10 @@ BEGIN
     CONTROL         "Create new console popup menu",cbStatusNewVCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,123,123,8
     CONTROL         "Active process info",cbStatusActiveProcess,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,99,123,8
     CONTROL         "Show console title",cbStatusConsoleTitle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,87,123,8
-    CONTROL         "Vertical separator",cbStatusVertSep,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,58,89,8
-    CONTROL         "Horizontal separators",cbStatusHorzSep,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,44,58,96,8
     RTEXT           "Style:",IDC_STATIC,17,58,22,8
+    CONTROL         "Horizontal separator",cbStatusHorzSep,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,44,58,96,8
+    CONTROL         "Vertical separators",cbStatusVertSep,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,58,89,8
+    CONTROL         "System colors",cbStatusSystemColors,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,250,58,61,8
 END
 
 IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319

@@ -373,9 +373,20 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 	bool bCopied = m_Args.AssignFrom(args);
 
 	// Don't leave security information (passwords) in memory
-	if (args->pszUserName)
+	if (bCopied && args->pszUserName)
 	{
+		_ASSERTE(*args->pszUserName);
+
 		SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
+
+		// When User name was set, but password - Not...
+		if (!*m_Args.szUserPassword)
+		{
+			int nRc = gpConEmu->RecreateDlg(&m_Args);
+
+			if (nRc != IDC_START)
+				bCopied = false;
+		}
 	}
 
 	if (!bCopied)
@@ -701,18 +712,29 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	// Процесс запущен через ShellExecuteEx под другим пользователем (Administrator)
 	if (mp_sei)
 	{
-		_ASSERTE(mp_sei->hProcess==NULL);
+		// Issue 791: Console server fails to duplicate self Process handle to GUI
+		// _ASSERTE(mp_sei->hProcess==NULL);
 
 		if (!rStartStop->hServerProcessHandle)
 		{
-			_ASSERTE(rStartStop->hServerProcessHandle!=0);
+			if (mp_sei->hProcess)
+			{
+				hProcess = mp_sei->hProcess;
+			}
+			else
+			{
+				_ASSERTE(rStartStop->hServerProcessHandle!=0);
+				_ASSERTE(mp_sei->hProcess!=NULL);
+				DisplayLastError(L"Server process handle was not recieved!", -1);
+			}
 		}
 		else
 		{
 			_ASSERTE(FALSE && "Continue to AttachConEmuC");
 
-			// Переделали. Запуск идет через GUI, чтобы окошко не мелькало.
-			// mp_sei->hProcess не заполняется
+			// Пока не все хорошо.
+			// --Переделали. Запуск идет через GUI, чтобы окошко не мелькало.
+			// --mp_sei->hProcess не заполняется
 			HANDLE hRecv = (HANDLE)(DWORD_PTR)rStartStop->hServerProcessHandle;
 			DWORD nWait = WaitForSingleObject(hRecv, 0);
 
@@ -727,7 +749,6 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 			if (nWait != WAIT_TIMEOUT)
 			{
 				DisplayLastError(L"Invalid server process handle recieved!");
-				hProcess = NULL;
 			}
 		}
 	}
@@ -739,7 +760,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 		m_Args.pszSpecialCmd = lstrdup(rStartStop->sCmdLine);
 	}
 
-	_ASSERTE(hProcess==NULL);
+	_ASSERTE(hProcess==NULL || (mp_sei && mp_sei->hProcess));
 	_ASSERTE(rStartStop->hServerProcessHandle!=NULL || mh_MainSrv!=NULL);
 
 	if (rStartStop->hServerProcessHandle && (hProcess != (HANDLE)(DWORD_PTR)rStartStop->hServerProcessHandle))
@@ -752,6 +773,12 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 		{
 			CloseHandle((HANDLE)(DWORD_PTR)rStartStop->hServerProcessHandle);
 		}
+	}
+
+	if (mp_sei && mp_sei->hProcess)
+	{
+		_ASSERTE(mp_sei->hProcess == hProcess);
+		mp_sei->hProcess = NULL;
 	}
 
 	// Иначе - отркрываем как обычно
@@ -2539,8 +2566,39 @@ BOOL CRealConsole::StartProcess()
 	_ASSERTE((m_Args.pszStartupDir == NULL) || (*m_Args.pszStartupDir != 0));
 
 	HKEY hkConsole = NULL;
-	if (0 != RegCreateKeyEx(HKEY_CURRENT_USER, L"Console\\ConEmu", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConsole, NULL))
+	LONG lRegRc;
+	if (0 == (lRegRc = RegCreateKeyEx(HKEY_CURRENT_USER, L"Console\\ConEmu", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConsole, NULL)))
+	{
+		DWORD nSize = sizeof(DWORD), nValue, nType;
+		struct {
+			LPCWSTR pszName;
+			DWORD nMin, nMax, nDef;
+		} BufferValues[] = {
+			{L"HistoryBufferSize", 16, 999, 50},
+			{L"NumberOfHistoryBuffers", 16, 999, 32}
+		};
+		for (size_t i = 0; i < countof(BufferValues); ++i)
+		{
+			lRegRc = RegQueryValueEx(hkConsole, BufferValues[i].pszName, NULL, &nType, (LPBYTE)&nValue, &nSize);
+			if ((lRegRc != 0) || (nType != REG_DWORD) || (nSize != sizeof(DWORD)) || (nValue < BufferValues[i].nMin) || (nValue > BufferValues[i].nMax))
+			{
+				if (!lRegRc && (nValue < BufferValues[i].nMin))
+					nValue = BufferValues[i].nMin;
+				else if (!lRegRc && (nValue > BufferValues[i].nMax))
+					nValue = BufferValues[i].nMax;
+				else
+					nValue = BufferValues[i].nDef;
+
+				// Issue 700: Default history buffers count too small.
+				lRegRc = RegSetValueEx(hkConsole, BufferValues[i].pszName, NULL, REG_DWORD, (LPBYTE)&nValue, sizeof(nValue));
+			}
+		}
+	}
+	else
+	{
+		DisplayLastError(L"Failed to create/open registry key 'HKCU\\Console\\ConEmu'", lRegRc);
 		hkConsole = NULL;
+	}
 	BYTE nTextColorIdx = 7, nBackColorIdx = 0, nPopTextColorIdx = 5, nPopBackColorIdx = 15;
 	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);
 	//if (nTextColorIdx <= 15 || nBackColorIdx <= 15) -- всегда, иначе может снести крышу от старых данных
@@ -2594,12 +2652,15 @@ BOOL CRealConsole::StartProcess()
 		_ASSERTE(psCurCmd);
 		*psCurCmd = 0;
 
+#if 0
+		// Issue 791: Server fails, when GUI started under different credentials (login) as server
 		if (m_Args.bRunAsAdministrator)
 		{
 			_wcscat_c(psCurCmd, nLen, L"\"");
 			_wcscat_c(psCurCmd, nLen, gpConEmu->ms_ConEmuExe);
 			_wcscat_c(psCurCmd, nLen, L"\" /bypass /cmd ");
 		}
+#endif
 
 		_wcscat_c(psCurCmd, nLen, L"\"");
 		_wcscat_c(psCurCmd, nLen, gpConEmu->ConEmuCExeFull(lpszCmd));
@@ -2805,7 +2866,9 @@ BOOL CRealConsole::StartProcess()
 				//mp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
 
 				// 121025 - remove SEE_MASK_NOCLOSEPROCESS
-				mp_sei->fMask = SEE_MASK_NO_CONSOLE|/*SEE_MASK_NOCLOSEPROCESS|*/SEE_MASK_NOASYNC;
+				mp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOASYNC;
+				// Issue 791: Console server fails to duplicate self Process handle to GUI
+				mp_sei->fMask |= SEE_MASK_NOCLOSEPROCESS;
 
 				mp_sei->lpVerb = (wchar_t*)(mp_sei+1);
 				wcscpy((wchar_t*)mp_sei->lpVerb, L"runas");
@@ -4072,11 +4135,16 @@ BOOL CRealConsole::isWindowVisible()
 	return IsWindowVisible(hConWnd);
 }
 
-LPCTSTR CRealConsole::GetTitle()
+LPCTSTR CRealConsole::GetTitle(bool abGetRenamed/*=false*/)
 {
 	// На старте mn_ProcessCount==0, а кнопку в тулбаре показывать уже нужно
 	if (!this /*|| !mn_ProcessCount*/)
 		return NULL;
+
+	if (abGetRenamed && *ms_RenameFirstTab)
+	{
+		return ms_RenameFirstTab;
+	}
 		
 	if (isAdministrator() && gpSet->szAdminTitleSuffix[0])
 	{
@@ -7415,6 +7483,7 @@ void CRealConsole::RenameTab(LPCWSTR asNewTabText /*= NULL*/)
 
 	lstrcpyn(ms_RenameFirstTab, asNewTabText ? asNewTabText : L"", countof(ms_RenameFirstTab));
 	gpConEmu->mp_TabBar->Update();
+	mp_VCon->OnTitleChanged();
 }
 
 void CRealConsole::RenameWindow(LPCWSTR asNewWindowText /*= NULL*/)
@@ -9785,7 +9854,7 @@ bool CRealConsole::isFarInStack()
 {
 	if (mn_FarPID || mn_FarPID_PluginDetected || (mn_ProgramStatus & CES_FARINSTACK))
 	{
-		if (mn_ActivePID && (mn_ActivePID == mn_FarPID || mn_ActivePID == mn_FarPID))
+		if (mn_ActivePID && (mn_ActivePID == mn_FarPID || mn_ActivePID == mn_FarPID_PluginDetected))
 		{
 			return false;
 		}

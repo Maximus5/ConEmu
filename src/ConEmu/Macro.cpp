@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TrayIcon.h"
 #include "ConEmuPipe.h"
 #include "Macro.h"
+#include "VConGroup.h"
 
 
 // Общая функция, для обработки любого известного макроса
@@ -412,7 +413,7 @@ LPWSTR CConEmuMacro::Close(LPWSTR asArgs, CRealConsole* apRCon)
 		}
 		break;
 	case 2:
-		if (gpConEmu->DoClose())
+		if (CVConGroup::OnScClose())
 			pszResult = lstrdup(L"OK");
 		break;
 	}

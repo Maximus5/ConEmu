@@ -855,6 +855,10 @@
 #define cbCmdTasksActive                2493
 #define vkTabMenu2                      2494
 #define vkSystemMenu2                   2495
+#define cbStatusSystemColors            2496
+#define stStatusColorBack               2497
+#define stStatusColorLight              2498
+#define stStatusColorDark               2499
 
 // Next default values for new objects
 // 
@@ -862,7 +866,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2496
+#define _APS_NEXT_CONTROL_VALUE         2500
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
