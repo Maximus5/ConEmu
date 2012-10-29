@@ -415,12 +415,12 @@ bool CConEmuCtrl::key_MultiNewShift(DWORD VkMod, bool TestOnly, const ConEmuHotK
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiNewPopup(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiNewPopupMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
 	// Создать новую консоль
-	gpConEmu->mp_TabBar->OnNewConPopup();
+	gpConEmu->mp_TabBar->OnNewConPopupMenu();
 	return true;
 }
 

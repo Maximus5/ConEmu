@@ -379,6 +379,7 @@ class CRealConsole
 		void ResetActiveAppSettingsId();
 		DWORD GetProgramStatus();
 		DWORD GetFarStatus();
+		bool isServerAlive();
 		DWORD GetServerPID(bool bMainOnly = false);
 		DWORD GetMonitorThreadID();
 		bool isServerCreated();

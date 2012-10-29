@@ -201,6 +201,7 @@ extern "C" {
 
 	// apHooks->Name && apHooks->DllName MUST be static for a lifetime
 	bool __stdcall InitHooks(HookItem* apHooks);
+	void __stdcall InitHooksSort();
 
 	// All *aszExcludedModules must be valid all time
 	bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules, BOOL abForceHooks);

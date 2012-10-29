@@ -786,4 +786,21 @@ class CConEmuMain :
 		ImmGetContext_t _ImmGetContext;
 };
 
+// Message Logger
+// Originally from http://preshing.com/20120522/lightweight-in-memory-logging
+namespace ConEmuMsgLogger
+{
+	static const int BUFFER_SIZE = RELEASEDEBUGTEST(0x1000,0x1000);   // Must be a power of 2
+	extern MSG g_events[BUFFER_SIZE];
+	extern LONG g_pos;
+ 
+	inline void Log(const MSG& msg)
+	{
+		// Get next message index
+		LONG i = _InterlockedIncrement(&g_pos);
+		// Write a message at this index
+		g_events[i & (BUFFER_SIZE - 1)] = msg; // Wrap to buffer size
+	}
+}
+
 extern CConEmuMain *gpConEmu;

@@ -10588,6 +10588,16 @@ void CSettings::ResetCmdArg()
 	SafeFree(gpSet->psCurCmd);
 }
 
+bool CSettings::ResetCmdHistory(HWND hParent)
+{
+	if (IDYES != MessageBox(L"Clear command history?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), hParent ? hParent : ghWnd))
+		return false;
+
+	gpSet->HistoryReset();
+
+	return true;
+}
+
 void CSettings::GetMainLogFont(LOGFONT& lf)
 {
 	lf = LogFont;

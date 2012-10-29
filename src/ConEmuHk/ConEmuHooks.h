@@ -130,6 +130,10 @@ extern bool gbIsBashProcess;
 extern bool gbIsHiewProcess;
 /* ************ Globals for HIEW32.EXE ************ */
 
+/* ************ Globals for DosBox.EXE ************ */
+extern bool gbDosBoxProcess;
+/* ************ Globals for DosBox.EXE ************ */
+
 bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
 void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName = NULL);
 BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo, BOOL bForced = FALSE);
@@ -144,4 +148,126 @@ extern "C" {
 	FARPROC WINAPI GetLoadLibraryW();
 #if defined(__GNUC__)
 };
+#endif
+
+
+#ifdef _DEBUG
+	#define USEHOOKLOG
+	//#undef USEHOOKLOG
+#else
+	#undef USEHOOKLOG
+#endif
+
+#ifdef USEHOOKLOG
+	#include <intrin.h>
+
+	#define getThreadId() WIN3264TEST(((DWORD*) __readfsdword(24))[9],GetCurrentThreadId())
+
+	#if !defined(_DEBUG)
+		#define getTime GetTickCount
+	#elif defined(__GNUC__)
+		#define getTime GetTickCount
+	#else
+		#define getTime timeGetTime
+		#pragma comment(lib, "winmm.lib")
+	#endif
+
+	// Originally from http://preshing.com/20120522/lightweight-in-memory-logging
+	namespace HookLogger
+	{
+		struct Event
+		{
+			#ifdef _DEBUG
+			DWORD tid;       // Thread ID
+			DWORD dur;       // Step duration
+			#endif
+			const char* msg; // Info
+			DWORD param;
+			#ifdef _DEBUG
+			LARGE_INTEGER cntr, cntr1; // PerformanceCounters
+			#endif
+		};
+	 
+		static const int BUFFER_SIZE = RELEASEDEBUGTEST(256,0x100000);   // Must be a power of 2
+		extern Event g_events[BUFFER_SIZE];
+		extern LONG g_pos;
+		extern LARGE_INTEGER g_freq;
+
+		static const int CRITICAL_BUFFER_SIZE = 256;
+		struct CritInfo
+		{
+			u64 total;
+			DWORD count;
+			
+			#ifdef _WIN64
+			DWORD pad;
+			#endif
+
+			const char* msg;
+		};
+		extern CritInfo g_crit[CRITICAL_BUFFER_SIZE];
+	 
+		inline Event* Log(const char* msg, DWORD param)
+		{
+			// Get next event index
+			LONG i = _InterlockedIncrement(&g_pos);
+			// Write an event at this index
+			Event* e = g_events + (i & (BUFFER_SIZE - 1));  // Wrap to buffer size
+			#ifdef _DEBUG
+			e->tid = getThreadId();
+			//e->tick = getTime();
+			QueryPerformanceCounter(&e->cntr);
+			//e->tick = e->cntr.LowPart;
+			//Event* ep = g_events + ((i-1) & (BUFFER_SIZE - 1));  // Wrap to buffer size
+			//ep->dur = (DWORD)(e->cntr.QuadPart - ep->cntr.QuadPart);
+			e->cntr1.QuadPart = 0;
+			#endif
+			e->msg = msg;
+			e->param = param;
+			return e;
+		}
+
+		extern void RunAnalyzer();
+	}
+
+	#undef getThreadId
+	#undef getTime
+#endif
+
+#if defined(USEHOOKLOG) && !defined(SKIPHOOKLOG)
+	#define HLOG0(m,p) HookLogger::Event* es = HookLogger::Log(m,p);
+	#define HLOG(m,p) es = HookLogger::Log(m,p);
+	#define HLOGEND() QueryPerformanceCounter(&es->cntr1);
+	#define HLOG1(m,p) HookLogger::Event* es1 = HookLogger::Log(m,p);
+	#define HLOG1_(m,p) es1 = HookLogger::Log(m,p);
+	#define HLOGEND1() QueryPerformanceCounter(&es1->cntr1);
+	#define HLOG2(m,p) HookLogger::Event* es2 = HookLogger::Log(m,p);
+	#define HLOG2_(m,p) es2 = HookLogger::Log(m,p);
+	#define HLOGEND2() QueryPerformanceCounter(&es2->cntr1);
+#else
+	#define HLOG0(m,p)
+	#define HLOG(m,p)
+	#define HLOGEND()
+	#define HLOG1(m,p)
+	#define HLOG1_(m,p)
+	#define HLOGEND1()
+	#define HLOG2(m,p)
+	#define HLOG2_(m,p)
+	#define HLOGEND2()
+#endif
+
+#if defined(USEHOOKLOG) && !defined(SKIPDLLLOG)
+	#define DLOG0(m,p) HookLogger::Event* es = HookLogger::Log(m,p);
+	#define DLOG(m,p) es = HookLogger::Log(m,p);
+	#define DLOGEND() QueryPerformanceCounter(&es->cntr1);
+	#define DLOG1(m,p) HookLogger::Event* es1 = HookLogger::Log(m,p);
+	#define DLOG1_(m,p) es1 = HookLogger::Log(m,p);
+	#define DLOGEND1() QueryPerformanceCounter(&es1->cntr1);
+#else
+	#define DLOG0(m,p)
+	#define DLOG(m,p)
+	#define DLOGEND()
+	#define DLOG1(m,p)
+	#define DLOG1_(m,p)
+	#define DLOGEND1()
 #endif

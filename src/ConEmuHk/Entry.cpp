@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"bincmp.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"xxxx.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -147,7 +147,7 @@ extern BOOL StartupHooks(HMODULE ahOurDll);
 extern void ShutdownHooks();
 extern void InitializeHookedModules();
 extern void FinalizeHookedModules();
-extern DWORD GetMainThreadId();
+extern DWORD GetMainThreadId(bool bUseCurrentAsMain);
 //HMODULE ghPsApi = NULL;
 #ifdef _DEBUG
 extern HHOOK ghGuiClientRetHook;
@@ -186,6 +186,70 @@ HANDLE ghCurrentOutBuffer = NULL; // Устанавливается при SetConsoleActiveScreenB
 bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL);
 
 
+#ifdef USEPIPELOG
+namespace PipeServerLogger
+{
+    Event g_events[BUFFER_SIZE];
+    LONG g_pos = -1;
+}
+#endif
+
+#ifdef USEHOOKLOG
+namespace HookLogger
+{
+	Event g_events[BUFFER_SIZE];
+	LONG g_pos = -1;
+	LARGE_INTEGER g_freq = {0};
+	CritInfo g_crit[CRITICAL_BUFFER_SIZE];
+
+	void RunAnalyzer()
+	{
+		ZeroStruct(g_crit);
+		LONG iFrom = 0, iTo = min(BUFFER_SIZE,(ULONG)g_pos);
+		for (LONG i = iFrom; i < iTo; ++i)
+		{
+			Event* e = g_events + i;
+			if (!e->cntr1.QuadPart)
+				continue;
+			e->dur = (DWORD)(e->cntr1.QuadPart - e->cntr.QuadPart);
+
+			LONG j = 0;
+			while (j < CRITICAL_BUFFER_SIZE)
+			{
+				if (!g_crit[j].msg || g_crit[j].msg == e->msg)
+					break;
+				j++;
+			}
+
+			if (j < CRITICAL_BUFFER_SIZE)
+			{
+				g_crit[j].msg = e->msg;
+				g_crit[j].count++;
+				g_crit[j].total += e->dur;
+			}
+		}
+
+		// Sort for clear analyzing
+		for (LONG i = 0; i < (CRITICAL_BUFFER_SIZE-1); i++)
+		{
+			if (!g_crit[i].count) break;
+			LONG m = i;
+			for (LONG j = i+1; i < CRITICAL_BUFFER_SIZE; j++)
+			{
+				if (!g_crit[j].count) break;
+				if (g_crit[j].total > g_crit[m].total)
+					m = j;
+			}
+			if (m != i)
+			{
+				CritInfo c = g_crit[m];
+				g_crit[m] = g_crit[i];
+				g_crit[i] = c;
+			}
+		}
+	}
+}
+#endif
 
 #ifdef _DEBUG
 	#ifdef UseDebugExceptionFilter
@@ -349,6 +413,8 @@ bool gbShowExeMsgBox = false;
 
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
+	//DLOG0("DllStart",0);
+
 	wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
 	if (!GetModuleFileName(NULL, szModule, MAX_PATH+1))
 		_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
@@ -436,7 +502,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		gbIsBashProcess = true;
 		
 		TODO("Start redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
-		#ifdef _DEBUG
+		#if 0
 		if (lstrcmpi(pszName, L"isatty.exe") == 0)
 			StartPTY();
 		#endif
@@ -444,6 +510,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	else if ((lstrcmpi(pszName, L"hiew32.exe") == 0) || (lstrcmpi(pszName, L"hiew32") == 0))
 	{
 		gbIsHiewProcess = true;
+	}
+	else if ((lstrcmpi(pszName, L"dosbox.exe") == 0) || (lstrcmpi(pszName, L"dosbox") == 0))
+	{
+		gbDosBoxProcess = true;
 	}
 
 	// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
@@ -549,7 +619,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		if (!gpHookServer->StartPipeServer(szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady))
 		{
 			_ASSERTEX(FALSE); // Ошибка запуска Pipes?
-			gpHookServer->StopPipeServer();
+			gpHookServer->StopPipeServer(true);
 			free(gpHookServer);
 			gpHookServer = NULL;
 		}
@@ -707,9 +777,11 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		//{
 		#endif
 
+		DLOG0("StartupHooks",0);
 		print_timings(L"StartupHooks");
 		gbHooksWasSet = StartupHooks(ghOurModule);
 		print_timings(L"StartupHooks - done");
+		DLOGEND();
 
 		#ifdef _DEBUG
 		//}
@@ -718,8 +790,14 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		// Если NULL - значит это "Detached" консольный процесс, посылать "Started" в сервер смысла нет
 		if (ghConWnd != NULL)
 		{
-			print_timings(L"SendStarted");
-			SendStarted();
+			if (gbSelfIsRootConsoleProcess)
+			{
+				// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
+				DLOG("SendStarted",0);
+				print_timings(L"SendStarted");
+				SendStarted();
+				DLOGEND();
+			}
 
 			//#ifdef _DEBUG
 			//// Здесь это приводит к обвалу _chkstk,
@@ -751,6 +829,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//	SetEvent(hStartedEvent);
 
 	print_timings(L"DllStart - done");
+
+	//DLOGEND();
 	
 	return 0;
 }
@@ -819,6 +899,8 @@ void FlushMouseEvents()
 
 void DllStop()
 {
+	//DLOG0("DllStop",0);
+
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
 		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -836,8 +918,10 @@ void DllStop()
 	// Issue 689: Progress stuck at 100%
 	if (gbPowerShellMonitorProgress && (gnPowerShellProgressValue != -1))
 	{
+		DLOG0("GuiSetProgress(0,0)",0);
 		gnPowerShellProgressValue = -1;
 		GuiSetProgress(0,0);
+		DLOGEND();
 	}
 
 
@@ -860,61 +944,84 @@ void DllStop()
 	// успеть дернуть мышкой - то при возврате в ФАР сразу пойдет фаровский драг
 	if (ghConWnd)
 	{
+		DLOG0("FlushMouseEvents",0);
 		print_timings(L"FlushMouseEvents");
 		FlushMouseEvents();
+		DLOGEND();
 	}
 
 
 #ifdef USE_PIPE_SERVER
 	if (gpHookServer)
 	{
+		DLOG0("StopPipeServer",0);
 		print_timings(L"StopPipeServer");
-		gpHookServer->StopPipeServer();
+		gpHookServer->StopPipeServer(true);
 		free(gpHookServer);
 		gpHookServer = NULL;
+		DLOGEND();
 	}
 #endif
 	
 	#ifdef _DEBUG
 	if (ghGuiClientRetHook)
 	{
+		DLOG0("unhookWindowsHookEx",0);
 		print_timings(L"unhookWindowsHookEx");
 		user->unhookWindowsHookEx(ghGuiClientRetHook);
+		DLOGEND();
 	}
 	#endif
 
 	if (/*!gbSkipInjects &&*/ gbHooksWasSet)
 	{
+		DLOG0("ShutdownHooks",0);
 		print_timings(L"ShutdownHooks");
 		gbHooksWasSet = FALSE;
 		// Завершить работу с реестром
 		DoneHooksReg();
 		// "Закрыть" хуки
 		ShutdownHooks();
+		DLOGEND();
 	}
 
-	//if (gnRunMode == RM_APPLICATION)
-	//{
-	print_timings(L"SendStopped");
-	SendStopped();
-	//}
+	if (gbSelfIsRootConsoleProcess)
+	{
+		// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
+		DLOG0("SendStopped",0);
+		print_timings(L"SendStopped");
+		SendStopped();
+		DLOGEND();
+	}
 
 	if (gpConMap)
 	{
+		DLOG0("gpConMap->CloseMap",0);
 		print_timings(L"gpConMap->CloseMap");
 		gpConMap->CloseMap();
 		gpConInfo = NULL;
 		delete gpConMap;
 		gpConMap = NULL;
+		DLOGEND();
 	}
 	
-	//#ifndef TESTLINK
-	print_timings(L"CommonShutdown");
-	CommonShutdown();
+	// CommonShutdown
+	{
+		DLOG0("CommonShutdown",0);
+		//#ifndef TESTLINK
+		print_timings(L"CommonShutdown");
+		CommonShutdown();
+		DLOGEND();
+	}
 
 	
-	print_timings(L"FinalizeHookedModules");
-	FinalizeHookedModules();
+	// FinalizeHookedModules
+	{
+		DLOG0("FinalizeHookedModules",0);
+		print_timings(L"FinalizeHookedModules");
+		FinalizeHookedModules();
+		DLOGEND();
+	}
 
 #ifndef _DEBUG
 	HeapDeinitialize();
@@ -930,24 +1037,39 @@ void DllStop()
 
 	gbDllStopCalled = TRUE;
 	print_timings(L"DllStop - Done");
+
+	//DLOGEND();
 }
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
 	BOOL lbAllow = TRUE;
 
+#if defined(_DEBUG) && !defined(_WIN64)
+	// pThreadInfo[9] -> GetCurrentThreadId();
+	DWORD* pThreadInfo = ((DWORD*) __readfsdword(24));
+#endif
+
 	switch(ul_reason_for_call)
 	{
 		case DLL_PROCESS_ATTACH:
 		{
+			DLOG0("DllMain.DLL_PROCESS_ATTACH",ul_reason_for_call);
+
+			#ifdef USEHOOKLOG
+			QueryPerformanceFrequency(&HookLogger::g_freq);
+			#endif
+
 			gnDllState = ds_DllProcessAttach;
 			#ifdef _DEBUG
 			HANDLE hProcHeap = GetProcessHeap();
 			#endif
 			HeapInitialize();
 			
+			DLOG1("DllMain.LoadStartupEnv",ul_reason_for_call);
 			/* *** DEBUG PURPOSES */
 			gpStartEnv = LoadStartupEnv();
+			DLOGEND1();
 			//if (gpStartEnv && gpStartEnv->hIn.hStd && !(gpStartEnv->hIn.nMode & 0x80000000))
 			//{
 			//	if ((gpStartEnv->hIn.nMode & 0xF0) == 0xE0)
@@ -958,6 +1080,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			//}
 			/* *** DEBUG PURPOSES */
 
+			DLOG1_("DllMain.Console",ul_reason_for_call);
 			ghOurModule = (HMODULE)hModule;
 			ghConWnd = GetConsoleWindow();
 			if (ghConWnd)
@@ -966,11 +1089,47 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ghWorkingModule = (u64)hModule;
 			gfGetRealConsoleWindow = GetConsoleWindow;
 			user = (UserImp*)calloc(1, sizeof(*user));
-			GetMainThreadId(); // Инициализировать gnHookMainThreadId
+			DLOGEND1();
+
+
+
+			DLOG1_("DllMain.RootEvents",ul_reason_for_call);
+			bool bCurrentThreadIsMain = false;
+
+			wchar_t szEvtName[64];
+			msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, gnSelfPID);
+			HANDLE hRootProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+			DWORD nWaitRoot = -1;
+			if (hRootProcessFlag)
+			{
+				nWaitRoot = WaitForSingleObject(hRootProcessFlag, 0);
+				gbSelfIsRootConsoleProcess = (nWaitRoot == WAIT_OBJECT_0);
+			}
+			SafeCloseHandle(hRootProcessFlag);
+
+			msprintf(szEvtName, countof(szEvtName), CECONEMUROOTTHREAD, gnSelfPID);
+			hRootProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+			if (hRootProcessFlag)
+			{
+				nWaitRoot = WaitForSingleObject(hRootProcessFlag, 0);
+				bCurrentThreadIsMain = (nWaitRoot == WAIT_OBJECT_0);
+			}
+			SafeCloseHandle(hRootProcessFlag);
+			DLOGEND1();
+
+
+
+			DLOG1_("DllMain.MainThreadId",ul_reason_for_call);
+			GetMainThreadId(bCurrentThreadIsMain); // Инициализировать gnHookMainThreadId
+			DLOGEND1();
+
+			DLOG1_("DllMain.InQueue",ul_reason_for_call);
 			gcchLastWriteConsoleMax = 4096;
 			gpszLastWriteConsole = (wchar_t*)calloc(gcchLastWriteConsoleMax,sizeof(*gpszLastWriteConsole));
 			gInQueue.Initialize(512, NULL);
+			DLOGEND1();
 
+			DLOG1_("DllMain.Misc",ul_reason_for_call);
 			#ifdef _DEBUG
 			gAllowAssertThread = am_Pipe;
 			#endif
@@ -991,22 +1150,13 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			DWORD dwConMode = -1;
 			GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwConMode);
 			#endif
+			DLOGEND1();
 
 			//_ASSERTE(ghHeap == NULL);
 			//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 
-			wchar_t szEvtName[64];
-			msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, gnSelfPID);
-			HANDLE hRootProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-			DWORD nWaitRoot = -1;
-			if (hRootProcessFlag)
-			{
-				nWaitRoot = WaitForSingleObject(hRootProcessFlag, 0);
-				gbSelfIsRootConsoleProcess = (nWaitRoot == WAIT_OBJECT_0);
-			}
-			SafeCloseHandle(hRootProcessFlag);
-
 			
+			DLOG1_("DllMain.DllStart",ul_reason_for_call);
 			#ifdef HOOK_USE_DLLTHREAD
 			_ASSERTEX(FALSE && "Hooks starting in background thread?");
 			//HANDLE hEvents[2];
@@ -1032,20 +1182,28 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			#else
 			DllStart(NULL);
 			#endif
+			DLOGEND1();
 			
 			user->setAllowLoadLibrary();
+
+			DLOGEND();
 		}
-		break;
+		break; // DLL_PROCESS_ATTACH
 		
 		case DLL_THREAD_ATTACH:
 		{
+			DLOG0("DllMain.DLL_THREAD_ATTACH",ul_reason_for_call);
 			gnDllThreadCount++;
 			if (gbHooksWasSet)
 				InitHooksRegThread();
+			DLOGEND();
 		}
-		break;
+		break; // DLL_THREAD_ATTACH
+
 		case DLL_THREAD_DETACH:
 		{
+			DLOG0("DllMain.DLL_THREAD_DETACH",ul_reason_for_call);
+
 			#ifdef SHOW_SHUTDOWN_STEPS
 			gnDbgPresent = 0;
 			ShutdownStep(L"DLL_THREAD_DETACH");
@@ -1057,16 +1215,22 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			if (gnHookMainThreadId && (GetCurrentThreadId() == gnHookMainThreadId) && !gbDllDeinitialized)
 			{
 				gbDllDeinitialized = true;
+				DLOG1("DllMain.DllStop",ul_reason_for_call);
 				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
 				DllStop();
+				DLOGEND1();
 			}
 			gnDllThreadCount--;
 			ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", gnDllThreadCount);
+
+			DLOGEND();
 		}
-		break;
+		break; // DLL_THREAD_DETACH
 		
 		case DLL_PROCESS_DETACH:
 		{
+			DLOG0("DllMain.DLL_PROCESS_DETACH",ul_reason_for_call);
+
 			ShutdownStep(L"DLL_PROCESS_DETACH");
 			gnDllState = ds_DllProcessDetach;
 			if (gbHooksWasSet)
@@ -1075,14 +1239,22 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			if (!gbDllDeinitialized)
 			{
 				gbDllDeinitialized = true;
+				DLOG1("DllMain.DllStop",ul_reason_for_call);
 				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
 				DllStop();
+				DLOGEND1();
 			}
 			// -- free не нужен, т.к. уже вызван HeapDeinitialize()
 			//free(user);
 			ShutdownStep(L"DLL_PROCESS_DETACH done");
+
+			#ifdef USEHOOKLOG
+			DLOGEND();
+			HookLogger::RunAnalyzer();
+			_ASSERTEX(FALSE && "Hooks terminated");
+			#endif
 		}
-		break;
+		break; // DLL_PROCESS_DETACH
 	}
 
 	return lbAllow;
@@ -1241,6 +1413,11 @@ void SendStarted()
 		return; // Режим ComSpec, но сервера нет, соответственно, в GUI ничего посылать не нужно
 	}
 
+	// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
+	_ASSERTEX(gbSelfIsRootConsoleProcess);
+
+	//_ASSERTE(FALSE && "Continue to SendStarted");
+
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
 	size_t nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP); //-V119
 	pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP, nSize);
@@ -1306,6 +1483,11 @@ void SendStopped()
 	if (gbNonGuiMode || !gnServerPID)
 		return;
 	
+	// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
+	_ASSERTEX(gbSelfIsRootConsoleProcess);
+
+	//_ASSERTE(FALSE && "Continue to SendStopped");
+
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
 	size_t nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
 	pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP,nSize);

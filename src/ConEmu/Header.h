@@ -379,6 +379,7 @@ enum TrackMenuPlace
 	tmp_System,
 	tmp_VCon,
 	tmp_Cmd,
+	tmp_CmdPopup,
 	tmp_KeyBar,
 	tmp_TabsList,
 	tmp_PasteCmdLine,
@@ -401,3 +402,6 @@ enum ExpandTextRangeType
 	etr_FileAndLine = 2,
 	etr_Url = 3,
 };
+
+bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval);
+#define LockFrequentExecute(Interval) static DWORD LastExecuteTick; if (CheckLockFrequentExecute(LastExecuteTick,Interval))

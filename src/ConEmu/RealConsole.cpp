@@ -701,66 +701,68 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	// Процесс запущен через ShellExecuteEx под другим пользователем (Administrator)
 	if (mp_sei)
 	{
-		if (rStartStop->hServerProcessHandle)
+		_ASSERTE(mp_sei->hProcess==NULL);
+
+		if (!rStartStop->hServerProcessHandle)
 		{
+			_ASSERTE(rStartStop->hServerProcessHandle!=0);
+		}
+		else
+		{
+			_ASSERTE(FALSE && "Continue to AttachConEmuC");
+
 			// Переделали. Запуск идет через GUI, чтобы окошко не мелькало.
 			// mp_sei->hProcess не заполняется
-			hProcess = (HANDLE)rStartStop->hServerProcessHandle;
-			DWORD nWait = WaitForSingleObject(hProcess, 0);
+			HANDLE hRecv = (HANDLE)(DWORD_PTR)rStartStop->hServerProcessHandle;
+			DWORD nWait = WaitForSingleObject(hRecv, 0);
+
+			#ifdef _DEBUG
+			DWORD nSrvPID = 0;
+			typedef DWORD (WINAPI* GetProcessId_t)(HANDLE);
+			GetProcessId_t getProcessId = (GetProcessId_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetProcessId");
+			if (getProcessId)
+				nSrvPID = getProcessId(hRecv);
+			#endif
+
 			if (nWait != WAIT_TIMEOUT)
 			{
 				DisplayLastError(L"Invalid server process handle recieved!");
 				hProcess = NULL;
 			}
-
-			_ASSERTE(mp_sei->hProcess==NULL);
-		}
-		else
-		{
-			// Handle must be sended from server to GUI
-			_ASSERTE(rStartStop->hServerProcessHandle!=0);
-
-			// в некоторых случаях (10% на x64) hProcess не успевает заполниться (еще не отработала функция?)
-			if (!mp_sei->hProcess)
-			{
-				DWORD dwStart = GetTickCount();
-				DWORD dwDelay = 2000;
-
-				do
-				{
-					Sleep(100);
-				}
-				while((GetTickCount() - dwStart) < dwDelay);
-
-				_ASSERTE(mp_sei->hProcess!=NULL);
-			}
-
-			// поехали
-			if (mp_sei->hProcess)
-			{
-				hProcess = mp_sei->hProcess;
-				mp_sei->hProcess = NULL; // более не требуется. хэндл закроется в другом месте
-			}
 		}
 	}
-	else
+
+	if (rStartStop->sCmdLine && *rStartStop->sCmdLine)
 	{
 		SafeFree(m_Args.pszSpecialCmd);
 		_ASSERTE(m_Args.bDetached == TRUE);
 		m_Args.pszSpecialCmd = lstrdup(rStartStop->sCmdLine);
 	}
 
-	if (rStartStop->hServerProcessHandle)
+	_ASSERTE(hProcess==NULL);
+	_ASSERTE(rStartStop->hServerProcessHandle!=NULL || mh_MainSrv!=NULL);
+
+	if (rStartStop->hServerProcessHandle && (hProcess != (HANDLE)(DWORD_PTR)rStartStop->hServerProcessHandle))
 	{
-		if (hProcess)
-			CloseHandle((HANDLE)rStartStop->hServerProcessHandle);
-		else if (!hProcess)
-			hProcess = (HANDLE)rStartStop->hServerProcessHandle;
+		if (!hProcess)
+		{
+			hProcess = (HANDLE)(DWORD_PTR)rStartStop->hServerProcessHandle;
+		}
+		else
+		{
+			CloseHandle((HANDLE)(DWORD_PTR)rStartStop->hServerProcessHandle);
+		}
 	}
 
 	// Иначе - отркрываем как обычно
 	if (!hProcess)
-		hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, anConemuC_PID);
+	{
+		hProcess = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, anConemuC_PID);
+		if (!hProcess || hProcess == INVALID_HANDLE_VALUE)
+		{
+			hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, anConemuC_PID);
+		}
+	}
 
 	if (!hProcess)
 	{
@@ -1568,6 +1570,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 //
 //    MSG msg;
 //    while (GetMessage(&msg,0,0,0)) {
+//		ConEmuMsgLogger::Log(msg);
 //    	if (msg.message == WM_QUIT) break;
 //    	if (WaitForSingleObject(pRCon->mh_TermEvent, 0) == WAIT_OBJECT_0) break;
 //
@@ -1712,7 +1715,14 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		// в минимизированном/неактивном режиме - сократить расходы
 		nTimeout = bIconic ? max(1000,nInactiveElapse) : !bActive ? nInactiveElapse : nElapse;
 		nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, nTimeout);
-		_ASSERTE(nWait!=(DWORD)-1);
+		if (nWait == (DWORD)-1)
+		{
+			DWORD nWaitItems[EVENTS_COUNT] = {99,99,99,99,99};
+			for (size_t i = 0; i < nEvents; i++)
+				nWaitItems[i] = WaitForSingleObject(hEvents[i], 0);
+			_ASSERTE(nWait!=(DWORD)-1);
+			int nDbg = nWaitItems[EVENTS_COUNT-1];
+		}
 
 		//if ((nWait == IDEVENT_SERVERPH) && (hEvents[IDEVENT_SERVERPH] != pRCon->mh_MainSrv))
 		//{
@@ -1753,6 +1763,15 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			//{
 			//	DEBUGSTRPROC(L"### ConEmuC.exe was terminated\n");
 			//}
+			#ifdef _DEBUG
+			DWORD nSrvExitPID = 0, nSrvPID = 0, nFErr;
+			BOOL bFRc = GetExitCodeProcess(hEvents[IDEVENT_SERVERPH], &nSrvExitPID);
+			nFErr = GetLastError();
+			typedef DWORD (WINAPI* GetProcessId_t)(HANDLE);
+			GetProcessId_t getProcessId = (GetProcessId_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetProcessId");
+			if (getProcessId)
+				nSrvPID = getProcessId(hEvents[IDEVENT_SERVERPH]);
+			#endif
 
 			break; // требование завершения нити
 		}
@@ -1772,9 +1791,10 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 		if (nWait == IDEVENT_UPDATESERVERACTIVE)
 		{
-			//BOOL lb = pRCon->mb_UpdateServerActive;
-			pRCon->UpdateServerActive(TRUE);
-			//if (lb == pRCon->mb_UpdateServerActive)
+			if (pRCon->isServerCreated())
+			{
+				pRCon->UpdateServerActive(TRUE);
+			}
 			ResetEvent(pRCon->mh_UpdateServerActiveEvent);
 		}
 
@@ -3590,19 +3610,16 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount /*= 1*/)
 	DWORD dwErr = 0; //, dwMode = 0;
 	bool lbOk = false;
 	BOOL fSuccess = FALSE;
-#ifdef _DEBUG
 
+	#ifdef _DEBUG
 	if (gbInSendConEvent)
 	{
 		_ASSERTE(!gbInSendConEvent);
 	}
+	#endif
 
-#endif
 	// Пайп есть. Проверим, что ConEmuC жив
-	DWORD dwExitCode = 0;
-	fSuccess = GetExitCodeProcess(mh_MainSrv, &dwExitCode);
-
-	if (dwExitCode!=STILL_ACTIVE)
+	if (!isServerAlive())
 	{
 		//DisplayLastError(L"ConEmuC was terminated");
 		return false;
@@ -3723,9 +3740,7 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount /*= 1*/)
 			if (dwErr == ERROR_NO_DATA/*0x000000E8*//*The pipe is being closed.*/
 				|| dwErr == ERROR_PIPE_NOT_CONNECTED/*No process is on the other end of the pipe.*/)
 			{
-				fSuccess = GetExitCodeProcess(mh_MainSrv, &dwExitCode);
-
-				if (fSuccess && dwExitCode!=STILL_ACTIVE)
+				if (!isServerAlive())
 					goto wrap;
 
 				if (OpenConsoleEventPipe())
@@ -4559,7 +4574,7 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc)
 			{
 				DWORD dwExitCode = 0;
 
-				if (GetExitCodeProcess(mh_MainSrv, &dwExitCode) && dwExitCode != STILL_ACTIVE)
+				if (!isServerAlive())
 				{
 					RecreateProcessStart();
 				}
@@ -4640,6 +4655,38 @@ DWORD CRealConsole::GetFarStatus()
 	return mn_FarStatus;
 }
 
+bool CRealConsole::isServerAlive()
+{
+	if (!this || !mh_MainSrv || mh_MainSrv == INVALID_HANDLE_VALUE)
+		return false;
+
+#ifdef _DEBUG
+	DWORD dwExitCode = 0, nSrvPID = 0, nErrCode = 0;
+	LockFrequentExecute(500)
+	{
+		SetLastError(0);
+		BOOL fSuccess = GetExitCodeProcess(mh_MainSrv, &dwExitCode);
+		nErrCode = GetLastError();
+
+		typedef DWORD (WINAPI* GetProcessId_t)(HANDLE);
+		static GetProcessId_t getProcessId;
+		if (!getProcessId)
+			getProcessId = (GetProcessId_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetProcessId");
+		if (getProcessId)
+		{
+			SetLastError(0);
+			nSrvPID = getProcessId(mh_MainSrv);
+			nErrCode = GetLastError();
+		}
+	}
+#endif
+
+	DWORD nServerWait = WaitForSingleObject(mh_MainSrv, 0);
+	DEBUGTEST(DWORD nWaitErr = GetLastError());
+
+	return (nServerWait == WAIT_TIMEOUT);
+}
+
 bool CRealConsole::isServerAvailable()
 {
 	if (isServerClosing())
@@ -4692,11 +4739,17 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 	_ASSERTE((mh_MainSrv==NULL || mh_MainSrv==ahMainSrv) && "mh_MainSrv must be closed before!");
 	_ASSERTE((anMainSrvPID!=0 || mn_AltSrv_PID==0) && "AltServer must be closed before!");
 
+	DEBUGTEST(isServerAlive());
+
 	mh_MainSrv = ahMainSrv;
 	mn_MainSrv_PID = anMainSrvPID;
 
+	DEBUGTEST(isServerAlive());
+
 	if (isActive())
 		gpConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
+
+	DEBUGTEST(isServerAlive());
 }
 
 void CRealConsole::SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/)
@@ -7082,7 +7135,7 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 #ifdef _DEBUG
 	wchar_t szDbgInfo[512];
 	_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"--> Updating active(%i) %s: %s\n",
-		bActiveNonSleep, fSuccess ? L"OK" : L"Failed!", ms_MainSrv_Pipe+18);
+		bActiveNonSleep, fSuccess ? L"OK" : L"Failed!", *ms_MainSrv_Pipe ? (ms_MainSrv_Pipe+18) : L"<NoPipe>");
 	DEBUGSTRALTSRV(szDbgInfo);
 #endif
 }

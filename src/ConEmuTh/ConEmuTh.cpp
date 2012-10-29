@@ -328,6 +328,7 @@ DWORD GetMainThreadId()
 	return nThreadID;
 }
 
+
 void WINAPI _export ExitFARW(void);
 void WINAPI _export ExitFARW3(void*);
 int WINAPI ProcessSynchroEventW(int Event, void *Param);

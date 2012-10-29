@@ -570,6 +570,51 @@ struct Settings
 
 				_wcscpy_c(pszCommands, cchCmdMax, asCommands);
 			};
+
+			void ParseGuiArgs(wchar_t** pszDir, wchar_t** pszIcon) const
+			{
+				if (!pszGuiArgs)
+					return;
+				LPCWSTR pszArgs = pszGuiArgs;
+				wchar_t szArg[MAX_PATH+1];
+				while (0 == NextArg(&pszArgs, szArg))
+				{
+					if (lstrcmpi(szArg, L"/DIR") == 0)
+					{
+						if (0 != NextArg(&pszArgs, szArg))
+							break;
+						if (*szArg && pszDir)
+						{
+							wchar_t* pszExpand = NULL;
+
+							// Например, "%USERPROFILE%"
+							if (wcschr(szArg, L'%'))
+							{
+								pszExpand = ExpandEnvStr(szArg);
+							}
+
+							*pszDir = pszExpand ? pszExpand : lstrdup(szArg);
+						}
+					}
+					else if (lstrcmpi(szArg, L"/ICON") == 0)
+					{
+						if (0 != NextArg(&pszArgs, szArg))
+							break;
+						if (*szArg && pszIcon)
+						{
+							wchar_t* pszExpand = NULL;
+
+							// Например, "%USERPROFILE%"
+							if (wcschr(szArg, L'%'))
+							{
+								pszExpand = ExpandEnvStr(szArg);
+							}
+
+							*pszIcon = pszExpand ? pszExpand : lstrdup(szArg);
+						}
+					}
+				}
+			};
 		};
 		const CommandTasks* CmdTaskGet(int anIndex); // 0-based, index of CmdTasks. "-1" == autosaved task
 		void CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR asCommands); // 0-based, index of CmdTasks

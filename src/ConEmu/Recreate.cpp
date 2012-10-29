@@ -523,9 +523,8 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		case WM_SYSCOMMAND:
 			if (LOWORD(wParam) == ID_RESETCMDHISTORY)
 			{
-				if (IDYES == MessageBox(hDlg, L"Clear command history?", gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2))
+				if (gpSetCls->ResetCmdHistory(hDlg))
 				{
-                	gpSet->HistoryReset();
                 	wchar_t* pszCmd = GetDlgItemText(hDlg, IDC_RESTART_CMD);
                 	SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_RESETCONTENT, 0,0);
                 	SendMessage(hDlg, UM_FILL_CMDLIST, FALSE, 0);

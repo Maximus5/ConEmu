@@ -1289,6 +1289,7 @@ void MessageLoop()
 
 	while (GetMessage(&Msg, NULL, 0, 0))
 	{
+		ConEmuMsgLogger::Log(Msg);
 		#ifdef _DEBUG
 		if (Msg.message == WM_TIMER)
 		{
@@ -2045,6 +2046,18 @@ bool GetCfgParm(uint& i, TCHAR*& curCommand, bool& Prm, TCHAR*& Val, int nMaxLen
 	Val = curCommand;
 
 	return true;
+}
+
+bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval)
+{
+	DWORD CurTick = GetTickCount();
+	bool bUnlock = false;
+	if ((CurTick - Tick) >= Interval)
+	{
+		Tick = CurTick;
+		bUnlock = true;
+	}
+	return bUnlock;
 }
 
 #ifdef _DEBUG

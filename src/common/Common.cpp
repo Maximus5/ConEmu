@@ -35,6 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Возвращает 0, если успешно, иначе - ошибка
 int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar_t** rsArgStart/*=NULL*/)
 {
+	if (!asCmdLine)
+		return CERR_CMDLINEEMPTY;
+
 	LPCWSTR psCmdLine = *asCmdLine, pch = NULL;
 	wchar_t ch = *psCmdLine;
 	size_t nArgLen = 0;

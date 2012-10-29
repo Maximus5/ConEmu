@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HOOKS_VIRTUAL_ALLOC
 #define DROP_SETCP_ON_WIN2K3R2
 //#define SHOWDEBUGSTR -- специально отключено, CONEMU_MINIMAL, OutputDebugString могут нарушать работу процессов
+//#define SKIPHOOKLOG
 
 #undef SHOWCREATEPROCESSTICK
 #undef SHOWCREATEBUFFERINFO
@@ -184,6 +185,10 @@ bool gbIsBashProcess = false;
 /* ************ Globals for HIEW32.EXE ************ */
 bool gbIsHiewProcess = false;
 /* ************ Globals for HIEW32.EXE ************ */
+
+/* ************ Globals for DosBox.EXE ************ */
+bool gbDosBoxProcess = false;
+/* ************ Globals for DosBox.EXE ************ */
 
 struct ReadConsoleInfo gReadConsoleInfo = {};
 
@@ -745,9 +750,10 @@ void __stdcall SetFarHookMode(struct HookModeFar *apFarMode)
 // Эту функцию нужно позвать из DllMain
 BOOL StartupHooks(HMODULE ahOurDll)
 {
+	//HLOG0("StartupHooks",0);
 #ifdef _DEBUG
 	// Консольное окно уже должно быть иницализировано в DllMain
-	_ASSERTE(gbAttachGuiClient || (ghConWnd != NULL && ghConWnd == GetRealConsoleWindow()));
+	_ASSERTE(gbAttachGuiClient || gbDosBoxProcess || (ghConWnd != NULL && ghConWnd == GetRealConsoleWindow()));
 	wchar_t sClass[128];
 	if (ghConWnd)
 	{
@@ -783,27 +789,47 @@ BOOL StartupHooks(HMODULE ahOurDll)
 		gfGetProcessId = (GetProcessId_t)GetProcAddress(ghKernel32, "GetProcessId");
 
 	// Общие
+	HLOG1("StartupHooks.InitHooks",0);
 	InitHooksCommon();
+	HLOGEND1();
 
 	// user32 & gdi32
+	HLOG1_("StartupHooks.InitHooks",1);
 	InitHooksUser32();
+	HLOGEND1();
 	
 	// Far only functions
+	HLOG1_("StartupHooks.InitHooks",2);
 	InitHooksFar();
+	HLOGEND1();
 
 	// Cmd.exe only functions
 	if (gnAllowClinkUsage)
+	{
+		HLOG1_("StartupHooks.InitHooks",3);
 		InitHooksClink();
+		HLOGEND1();
+	}
 
 	// Реестр
+	HLOG1_("StartupHooks.InitHooks",4);
 	InitHooksReg();
+	HLOGEND1();
+
+	HLOG1_("InitHooksSort",0);
+	InitHooksSort();
+	HLOGEND1();
 
 	print_timings(L"SetAllHooks");
-	
+
 	// Теперь можно обработать модули
+	HLOG1_("SetAllHooks",0);
 	bool lbRc = SetAllHooks(ahOurDll, NULL, TRUE);
+	HLOGEND1();
 
 	print_timings(L"SetAllHooks - done");
+
+	//HLOGEND(); // StartupHooks - done
 
 	return lbRc;
 }
@@ -4406,9 +4432,13 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 		msprintf(szText, countof(szText), L"VirtualAlloc failed (0x%08X..0x%08X)\nErrorCode=0x%08X\n\nWarning! This will be an error in Release!\n\n",
 			(DWORD)lpAddress, (DWORD)((LPBYTE)lpAddress+dwSize));
 		GetModuleFileName(NULL, szText+lstrlen(szText), MAX_PATH);
+#if 0
 		GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OK|MB_ICONSTOP);
 		SetLastError(nErr);
 		lpResult = F(VirtualAlloc)(NULL, dwSize, flAllocationType, flProtect);
+#else
+		SetLastError(nErr);
+#endif
 	}
 	return lpResult;
 }

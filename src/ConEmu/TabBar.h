@@ -67,7 +67,8 @@ class TabBarClass //: public CToolTip
 			LPCWSTR pszCmd;
 			wchar_t szShort[32];
 		} m_CmdPopupMenu[MAX_CMD_HISTORY+1]; // структура для меню выбора команды новой консоли
-		bool mb_InNewConPopup;
+		bool mb_InNewConPopup, mb_InNewConRPopup;
+		int mn_FirstTaskID, mn_LastTaskID; // MenuItemID for Tasks, when mb_InNewConPopup==true
 		bool _active;
 		int _tabHeight;
 		bool mb_ForceRecalcHeight;
@@ -170,7 +171,8 @@ class TabBarClass //: public CToolTip
 		void OnAlternative(BOOL abAlternative);
 		LRESULT OnNotify(LPNMHDR nmhdr);
 		void OnChooseTabPopup();
-		void OnNewConPopup(POINT* ptWhere = NULL, DWORD nFlags = 0);
+		void OnNewConPopupMenu(POINT* ptWhere = NULL, DWORD nFlags = 0);
+		void OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos);
 		void OnCommand(WPARAM wParam, LPARAM lParam);
 		void OnMouse(int message, int x, int y);
 		// Переключение табов

@@ -27,6 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define DROP_SETCP_ON_WIN2K3R2
+//#define SKIPHOOKLOG
 
 // Иначе не опередяется GetConsoleAliases (хотя он должен быть доступен в Win2k)
 #undef _WIN32_WINNT
@@ -47,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include <Tlhelp32.h>
+#include <intrin.h>
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/WinObjects.h"
@@ -83,6 +85,7 @@ bool gbSkipCheckProcessModules = false;
 bool gbHookExecutableOnly = false;
 
 
+//!!!All dll names MUST BE LOWER CASE!!!
 //!!!WARNING!!! Добавляя в этот список - не забыть добавить и в GetPreloadModules() !!!
 const wchar_t *kernelbase = L"kernelbase.dll",	*kernelbase_noext = L"kernelbase";
 const wchar_t *kernel32 = L"kernel32.dll",	*kernel32_noext = L"kernel32";
@@ -459,6 +462,38 @@ VOID WINAPI OnSetLastError(DWORD dwErrCode);
 
 HookItem *gpHooks = NULL;
 size_t gnHookedFuncs = 0;
+bool gbHooksSorted = false;
+
+struct HookItemNode
+{
+	const char* Name;
+	HookItem *p;
+	HookItemNode *pLeft;
+	HookItemNode *pRight;
+#ifdef _DEBUG
+	size_t nLeftCount;
+	size_t nRightCount;
+#endif
+};
+HookItemNode *gpHooksTree = NULL; // [MAX_HOOKED_PROCS]
+HookItemNode *gpHooksRoot = NULL; // Pointer to the "root" item in gpHooksTree
+
+//struct HookItemNodePtr
+//{
+//	const void* Address;
+//	HookItem *p;
+//	HookItemNodePtr *pLeft;
+//	HookItemNodePtr *pRight;
+//#ifdef _DEBUG
+//	size_t nLeftCount;
+//	size_t nRightCount;
+//#endif
+//};
+//HookItemNodePtr *gpHooksTreePtr = NULL; // [MAX_HOOKED_PROCS]
+//HookItemNodePtr *gpHooksRootPtr = NULL; // Pointer to the "root" item in gpHooksTreePtr
+//CRITICAL_SECTION* gpcsHooksRootPtr = NULL;
+//HookItemNodePtr *gpHooksTreeNew = NULL; // [MAX_HOOKED_PROCS]
+//HookItemNodePtr *gpHooksRootNew = NULL; // Pointer to the "root" item in gpHooksTreePtr
 
 const char *szGetProcAddress = "GetProcAddress";
 const char *szLoadLibraryA = "LoadLibraryA";
@@ -725,10 +760,22 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	size_t i, j;
 	bool skip;
 
+	if (gbHooksSorted && apHooks)
+	{
+		_ASSERTEX(FALSE && "Hooks are already initialized and blocked");
+		return false;
+	}
+
 	if (!gpHookCS)
 	{
 		gpHookCS = new MSection;
 	}
+
+	//if (!gpcsHooksRootPtr)
+	//{
+	//	gpcsHooksRootPtr = (LPCRITICAL_SECTION)calloc(1,sizeof(*gpcsHooksRootPtr));
+	//	InitializeCriticalSection(gpcsHooksRootPtr);
+	//}
 
 
 	if (gpHooks == NULL)
@@ -767,15 +814,16 @@ bool __stdcall InitHooks(HookItem* apHooks)
 
 			while (gpHooks[j].NewAddress)
 			{
-				if (!lstrcmpiA(gpHooks[j].Name, apHooks[i].Name)
-				        && !lstrcmpiW(gpHooks[j].DllName, apHooks[i].DllName))
+				if (!strcmp(gpHooks[j].Name, apHooks[i].Name)
+				        && !wcscmp(gpHooks[j].DllName, apHooks[i].DllName))
 				{
 					// Не должно быть такого - функции должны только добавляться
 					_ASSERTEX(lstrcmpiA(gpHooks[j].Name, apHooks[i].Name) && lstrcmpiW(gpHooks[j].DllName, apHooks[i].DllName));
 					gpHooks[j].NewAddress = apHooks[i].NewAddress;
 					if (j >= gnHookedFuncs)
 						gnHookedFuncs = j+1;
-					skip = true; break;
+					skip = true;
+					break;
 				}
 
 				j++;
@@ -807,7 +855,10 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	for (i = 0; gpHooks[i].NewAddress; i++)
 	{
 		if (gpHooks[i].DllNameA[0] == 0)
-			WideCharToMultiByte(CP_ACP, 0, gpHooks[i].DllName, -1, gpHooks[i].DllNameA, (int)countof(gpHooks[i].DllNameA), 0,0);
+		{
+			int nLen = WideCharToMultiByte(CP_ACP, 0, gpHooks[i].DllName, -1, gpHooks[i].DllNameA, (int)countof(gpHooks[i].DllNameA), 0,0);
+			if (nLen > 0) CharLowerBuffA(gpHooks[i].DllNameA, nLen);
+		}
 
 		if (!gpHooks[i].OldAddress)
 		{
@@ -834,6 +885,10 @@ bool __stdcall InitHooks(HookItem* apHooks)
 				{
 					_ASSERTE(gpHooks[i].OldAddress != NULL);
 				}
+				//else
+				//{
+				//	gpHooksRootPtr = NULL; // Сброс
+				//}
 				gpHooks[i].hDll = mod;
 			}
 		}
@@ -875,6 +930,496 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	return true;
 }
 
+#if 0
+void AddHooksNode(HookItemNode* pRoot, HookItem* p, HookItemNode*& ppNext)
+{
+	int iCmp = strcmp(p->Name, pRoot->Name);
+	_ASSERTEX(iCmp!=0); // All function names must be unique!
+
+	if (iCmp < 0)
+	{
+		pRoot->nLeftCount++;
+		if (!pRoot->pLeft)
+		{
+			ppNext->p = p;
+			ppNext->Name = p->Name;
+			pRoot->pLeft = ppNext++;
+			return;
+		}
+		AddHooksNode(pRoot->pLeft, p, ppNext);
+	}
+	else
+	{
+		pRoot->nRightCount++;
+		if (!pRoot->pRight)
+		{
+			ppNext->p = p;
+			ppNext->Name = p->Name;
+			pRoot->pRight = ppNext++;
+			return;
+		}
+		AddHooksNode(pRoot->pRight, p, ppNext);
+	}
+}
+#endif
+
+void BuildTree(HookItemNode*& pRoot, HookItem** pSorted, size_t nCount, HookItemNode*& ppNext)
+{
+	size_t n = nCount>>1;
+
+	// Init root
+	pRoot = ppNext++;
+	pRoot->p = pSorted[n];
+	pRoot->Name = pSorted[n]->Name;
+
+	if (n > 0)
+	{
+		BuildTree(pRoot->pLeft, pSorted, n, ppNext);
+		#ifdef _DEBUG
+		_ASSERTEX(pRoot->pLeft!=NULL);
+		pRoot->nLeftCount = 1 + pRoot->pLeft->nLeftCount + pRoot->pLeft->nRightCount;
+		#endif
+	}
+
+	if ((n + 1) < nCount)
+	{
+		BuildTree(pRoot->pRight, pSorted+n+1, nCount-n-1, ppNext);
+		#ifdef _DEBUG
+		_ASSERTEX(pRoot->pRight!=NULL);
+		pRoot->nRightCount = 1 + pRoot->pRight->nLeftCount + pRoot->pRight->nRightCount;
+		#endif
+	}
+}
+
+//void BuildTreePtr(HookItemNodePtr*& pRoot, HookItem** pSorted, size_t nCount, HookItemNodePtr*& ppNext)
+//{
+//	size_t n = nCount>>1;
+//
+//	// Init root
+//	pRoot = ppNext++;
+//	pRoot->p = pSorted[n];
+//	pRoot->Address = pSorted[n]->OldAddress;
+//
+//	if (n > 0)
+//	{
+//		BuildTreePtr(pRoot->pLeft, pSorted, n, ppNext);
+//		#ifdef _DEBUG
+//		_ASSERTEX(pRoot->pLeft!=NULL);
+//		pRoot->nLeftCount = 1 + pRoot->pLeft->nLeftCount + pRoot->pLeft->nRightCount;
+//		#endif
+//	}
+//	else
+//	{
+//		pRoot->pLeft = NULL;
+//		#ifdef _DEBUG
+//		pRoot->nLeftCount = 0;
+//		#endif
+//	}
+//
+//	if ((n + 1) < nCount)
+//	{
+//		BuildTreePtr(pRoot->pRight, pSorted+n+1, nCount-n-1, ppNext);
+//		#ifdef _DEBUG
+//		_ASSERTEX(pRoot->pRight!=NULL);
+//		pRoot->nRightCount = 1 + pRoot->pRight->nLeftCount + pRoot->pRight->nRightCount;
+//		#endif
+//	}
+//	else
+//	{
+//		pRoot->pRight = NULL;
+//		#ifdef _DEBUG
+//		pRoot->nRightCount = 0;
+//		#endif
+//	}
+//}
+
+//void BuildTreeNew(HookItemNodePtr*& pRoot, HookItem** pSorted, size_t nCount, HookItemNodePtr*& ppNext)
+//{
+//	size_t n = nCount>>1;
+//
+//	// Init root
+//	pRoot = ppNext++;
+//	pRoot->p = pSorted[n];
+//	pRoot->Address = pSorted[n]->NewAddress;
+//
+//	if (n > 0)
+//	{
+//		BuildTreeNew(pRoot->pLeft, pSorted, n, ppNext);
+//		#ifdef _DEBUG
+//		_ASSERTEX(pRoot->pLeft!=NULL);
+//		pRoot->nLeftCount = 1 + pRoot->pLeft->nLeftCount + pRoot->pLeft->nRightCount;
+//		#endif
+//	}
+//	else
+//	{
+//		pRoot->pLeft = NULL;
+//		#ifdef _DEBUG
+//		pRoot->nLeftCount = 0;
+//		#endif
+//	}
+//
+//	if ((n + 1) < nCount)
+//	{
+//		BuildTreeNew(pRoot->pRight, pSorted+n+1, nCount-n-1, ppNext);
+//		#ifdef _DEBUG
+//		_ASSERTEX(pRoot->pRight!=NULL);
+//		pRoot->nRightCount = 1 + pRoot->pRight->nLeftCount + pRoot->pRight->nRightCount;
+//		#endif
+//	}
+//	else
+//	{
+//		pRoot->pRight = NULL;
+//		#ifdef _DEBUG
+//		pRoot->nRightCount = 0;
+//		#endif
+//	}
+//}
+
+HookItemNode* FindFunctionNode(HookItemNode* pRoot, const char* pszFuncName)
+{
+	if (!pRoot)
+		return NULL;
+
+	int nCmp = strcmp(pszFuncName, pRoot->Name);
+	if (!nCmp)
+		return pRoot;
+
+	// BinTree is sorted
+
+	HookItemNode* pc;
+	if (nCmp < 0)
+	{
+		pc = FindFunctionNode(pRoot->pLeft, pszFuncName);
+		//#ifdef _DEBUG
+		//if (!pc)
+		//	_ASSERTEX(FindFunctionNode(pRoot->pRight, pszFuncName)==NULL);
+		//#endif
+	}
+	else
+	{
+		pc = FindFunctionNode(pRoot->pRight, pszFuncName);
+		//#ifdef _DEBUG
+		//if (!pc)
+		//	_ASSERTEX(FindFunctionNode(pRoot->pLeft, pszFuncName)==NULL);
+		//#endif
+	}
+
+	return pc;
+}
+
+//HookItemNodePtr* FindFunctionNodePtr(HookItemNodePtr* pRoot, const void* ptrFunc)
+//{
+//	if (!pRoot)
+//		return NULL;
+//
+//	if (ptrFunc == pRoot->Address)
+//		return pRoot;
+//
+//	// BinTree is sorted
+//
+//	HookItemNodePtr* pc;
+//	if (ptrFunc < pRoot->Address)
+//	{
+//		pc = FindFunctionNodePtr(pRoot->pLeft, ptrFunc);
+//		#ifdef _DEBUG
+//		if (!pc)
+//			_ASSERTEX(FindFunctionNodePtr(pRoot->pRight, ptrFunc)==NULL);
+//		#endif
+//	}
+//	else
+//	{
+//		pc = FindFunctionNodePtr(pRoot->pRight, ptrFunc);
+//		#ifdef _DEBUG
+//		if (!pc)
+//			_ASSERTEX(FindFunctionNodePtr(pRoot->pLeft, ptrFunc)==NULL);
+//		#endif
+//	}
+//
+//	return pc;
+//}
+
+HookItem* FindFunction(const char* pszFuncName)
+{
+	HookItemNode* pc = FindFunctionNode(gpHooksRoot, pszFuncName);
+	if (pc)
+		return pc->p;
+	return NULL;
+}
+
+//HookItem* FindFunctionPtr(HookItemNodePtr *pRoot, const void* ptrFunction)
+//{
+//	HookItemNodePtr* pc = FindFunctionNodePtr(pRoot, ptrFunction);
+//	if (pc)
+//		return pc->p;
+//	return NULL;
+//}
+
+//// Unfortunately, tree must be rebuilded when new modules are loaded
+//// (e.g. "shell32.dll", when it is not statically linked to exe)
+//void InitHooksSortAddress()
+//{
+//	if (!gpHooks)
+//	{
+//		_ASSERTEX(gpHooks!=NULL);
+//		return;
+//	}
+//	_ASSERTEX(gpHooks && gpHooks->Name);
+//
+//	HLOG0("InitHooksSortAddress",gnHookedFuncs);
+//
+//	// *** !!! ***
+//	EnterCriticalSection(gpcsHooksRootPtr);
+//
+//	// Sorted by address vector
+//	HookItem** pSort = (HookItem**)malloc(gnHookedFuncs*sizeof(*pSort));
+//	if (!pSort)
+//	{
+//		LeaveCriticalSection(gpcsHooksRootPtr);
+//		_ASSERTEX(pSort!=NULL && "Memory allocation failed");
+//		return;
+//	}
+//	size_t iMax = 0;
+//	for (size_t i = 0; i < gnHookedFuncs; i++)
+//	{
+//		if (gpHooks[i].OldAddress)
+//			pSort[iMax++] = (gpHooks+i);
+//	}
+//	if (iMax) iMax--;
+//	// Go sorting
+//	for (size_t i = 0; i < iMax; i++)
+//	{
+//		size_t m = i;
+//		const void* ptrM = pSort[i]->OldAddress;
+//		for (size_t j = i+1; j <= iMax; j++)
+//		{
+//			_ASSERTEX(pSort[j]->OldAddress != ptrM && pSort[j]->OldAddress);
+//			if (pSort[j]->OldAddress < ptrM)
+//			{
+//				m = j; ptrM = pSort[j]->OldAddress;
+//			}
+//		}
+//		if (m != i)
+//		{
+//			HookItem* p = pSort[i];
+//			pSort[i] = pSort[m];
+//			pSort[m] = p;
+//		}
+//	}
+//
+//	if (!gpHooksTreePtr)
+//	{
+//		gpHooksTreePtr = (HookItemNodePtr*)calloc(gnHookedFuncs,sizeof(HookItemNodePtr));
+//		if (!gpHooksTreePtr)
+//		{
+//			LeaveCriticalSection(gpcsHooksRootPtr);
+//			return;
+//		}
+//	}
+//
+//	// Go to building
+//	HookItemNodePtr *ppNext = gpHooksTreePtr;
+//	BuildTreePtr(gpHooksRootPtr, pSort, iMax, ppNext);
+//
+//	free(pSort);
+//
+//#ifdef _DEBUG
+//	// Validate tree
+//	_ASSERTEX(gpHooksRoot->nLeftCount>0 && gpHooksRoot->nRightCount>0);
+//	_ASSERTEX((gpHooksRoot->nLeftCount<gpHooksRoot->nRightCount) ? ((gpHooksRoot->nRightCount-gpHooksRoot->nLeftCount)<=2) : ((gpHooksRoot->nLeftCount-gpHooksRoot->nRightCount)<=2));
+//	_ASSERTEX(FindFunction("Not Existed")==NULL);
+//	for (size_t i = 0; i < gnHookedFuncs; i++)
+//	{
+//		HookItem* pFind = FindFunction(gpHooks[i].Name);
+//		_ASSERTEX(pFind == (gpHooks+i));
+//	}
+//#endif
+//
+//	HLOGEND();
+//
+//	LeaveCriticalSection(gpcsHooksRootPtr);
+//}
+//
+//void InitHooksSortNewAddress()
+//{
+//	if (!gpHooks)
+//	{
+//		_ASSERTEX(gpHooks!=NULL);
+//		return;
+//	}
+//	_ASSERTEX(gpHooks && gpHooks->Name);
+//
+//	HLOG0("InitHooksSortNewAddress",gnHookedFuncs);
+//
+//
+//	// Sorted by address vector
+//	HookItem** pSort = (HookItem**)malloc(gnHookedFuncs*sizeof(*pSort));
+//	if (!pSort)
+//	{
+//		_ASSERTEX(pSort!=NULL && "Memory allocation failed");
+//		return;
+//	}
+//	
+//	for (size_t i = 0; i < gnHookedFuncs; i++)
+//	{
+//		pSort[i] = (gpHooks+i);
+//	}
+//	size_t iMax = gnHookedFuncs - 1;
+//	// Go sorting
+//	for (size_t i = 0; i < iMax; i++)
+//	{
+//		size_t m = i;
+//		const void* ptrM = pSort[i]->NewAddress;
+//		for (size_t j = i+1; j < gnHookedFuncs; j++)
+//		{
+//			_ASSERTEX(pSort[j]->NewAddress != ptrM && pSort[j]->NewAddress);
+//			if (pSort[j]->NewAddress < ptrM)
+//			{
+//				m = j; ptrM = pSort[j]->NewAddress;
+//			}
+//		}
+//		if (m != i)
+//		{
+//			HookItem* p = pSort[i];
+//			pSort[i] = pSort[m];
+//			pSort[m] = p;
+//		}
+//	}
+//
+//	if (!gpHooksTreeNew)
+//	{
+//		gpHooksTreeNew = (HookItemNodePtr*)calloc(gnHookedFuncs,sizeof(HookItemNodePtr));
+//		if (!gpHooksTreeNew)
+//		{
+//			return;
+//		}
+//	}
+//
+//	// Go to building
+//	HookItemNodePtr *ppNext = gpHooksTreeNew;
+//	BuildTreeNew(gpHooksRootNew, pSort, iMax, ppNext);
+//
+//	free(pSort);
+//
+//#ifdef _DEBUG
+//	// Validate tree
+//	_ASSERTEX(gpHooksRoot->nLeftCount>0 && gpHooksRoot->nRightCount>0);
+//	_ASSERTEX((gpHooksRoot->nLeftCount<gpHooksRoot->nRightCount) ? ((gpHooksRoot->nRightCount-gpHooksRoot->nLeftCount)<=2) : ((gpHooksRoot->nLeftCount-gpHooksRoot->nRightCount)<=2));
+//	_ASSERTEX(FindFunction("Not Existed")==NULL);
+//	for (size_t i = 0; i < gnHookedFuncs; i++)
+//	{
+//		HookItem* pFind = FindFunction(gpHooks[i].Name);
+//		_ASSERTEX(pFind == (gpHooks+i));
+//	}
+//#endif
+//
+//	HLOGEND();
+//}
+
+void __stdcall InitHooksSort()
+{
+	if (!gpHooks)
+	{
+		_ASSERTEX(gpHooks!=NULL);
+		return;
+	}
+	if (gbHooksSorted)
+	{
+		_ASSERTEX(FALSE && "Hooks are already sorted");
+		return;
+	}
+	gbHooksSorted = true;
+	_ASSERTEX(gpHooks && gpHooks->Name);
+
+	HLOG0("InitHooksSort",gnHookedFuncs);
+
+#if 1
+	// Sorted by name vector
+	HookItem** pSort = (HookItem**)malloc(gnHookedFuncs*sizeof(*pSort));
+	if (!pSort)
+	{
+		_ASSERTEX(pSort!=NULL && "Memory allocation failed");
+		return;
+	}
+	for (size_t i = 0; i < gnHookedFuncs; i++)
+	{
+		pSort[i] = (gpHooks+i);
+	}
+	// Go sorting
+	size_t iMax = (gnHookedFuncs-1);
+	for (size_t i = 0; i < iMax; i++)
+	{
+		size_t m = i;
+		LPCSTR pszM = pSort[i]->Name;
+		for (size_t j = i+1; j < gnHookedFuncs; j++)
+		{
+			int iCmp = strcmp(pSort[j]->Name, pszM);
+			_ASSERTEX(iCmp!=0);
+			if (iCmp < 0)
+			{
+				m = j; pszM = pSort[j]->Name;
+			}
+		}
+		if (m != i)
+		{
+			HookItem* p = pSort[i];
+			pSort[i] = pSort[m];
+			pSort[m] = p;
+		}
+	}
+
+	gpHooksTree = (HookItemNode*)calloc(gnHookedFuncs,sizeof(HookItemNode));
+	if (!gpHooksTree)
+		return;
+
+	// Go to building
+	HookItemNode *ppNext = gpHooksTree;
+	BuildTree(gpHooksRoot, pSort, gnHookedFuncs, ppNext);
+
+	free(pSort);
+
+#else
+
+	gpHooksTree = (HookItemNode*)calloc(MAX_HOOKED_PROCS,sizeof(HookItemNode));
+
+	// Init root
+	gpHooksRoot = gpHooksTree;
+	gpHooksRoot->p = gpHooks;
+	gpHooksRoot->Name = gpHooks->Name;
+
+	HookItemNode *ppNext = gpHooksTree+1;
+
+	// Go to building
+	for (size_t i = 1; i < MAX_HOOKED_PROCS; ++i)
+	{
+		if (!gpHooks[i].Name)
+			break;
+		AddHooksNode(gpHooksRoot, gpHooks+i, ppNext);
+	}
+
+#endif
+
+#ifdef _DEBUG
+	// Validate tree
+	_ASSERTEX(gpHooksRoot->nLeftCount>0 && gpHooksRoot->nRightCount>0);
+	_ASSERTEX((gpHooksRoot->nLeftCount<gpHooksRoot->nRightCount) ? ((gpHooksRoot->nRightCount-gpHooksRoot->nLeftCount)<=2) : ((gpHooksRoot->nLeftCount-gpHooksRoot->nRightCount)<=2));
+	_ASSERTEX(FindFunction("Not Existed")==NULL);
+	for (size_t i = 0; i < gnHookedFuncs; i++)
+	{
+		HookItem* pFind = FindFunction(gpHooks[i].Name);
+		_ASSERTEX(pFind == (gpHooks+i));
+	}
+#endif
+
+	HLOGEND();
+
+	//// Tree with our NewAddress
+	//InitHooksSortNewAddress();
+
+	//// First call to address tree. But it may be rebuilded...
+	//InitHooksSortAddress();
+}
+
+
 void ShutdownHooks()
 {
 	UnsetAllHooks();
@@ -898,6 +1443,12 @@ void ShutdownHooks()
 		gpHookCS = NULL;
 		delete p;
 	}
+
+	//if (gpcsHooksRootPtr)
+	//{
+	//	DeleteCriticalSection(gpcsHooksRootPtr);
+	//	SafeFree(gpcsHooksRootPtr);
+	//}
 
 	FinalizeHookedModules();
 }
@@ -926,7 +1477,7 @@ bool __stdcall SetHookCallbacks(const char* ProcName, const wchar_t* DllName, HM
 	{
 		for (int i = 0; i<MAX_HOOKED_PROCS && gpHooks[i].NewAddress; i++)
 		{
-			if (!lstrcmpA(gpHooks[i].Name, ProcName) && !lstrcmpW(gpHooks[i].DllName,DllName))
+			if (!strcmp(gpHooks[i].Name, ProcName) && !lstrcmpW(gpHooks[i].DllName,DllName))
 			{
 				gpHooks[i].hCallbackModule = hCallbackModule;
 				gpHooks[i].PreCallBack = PreCallBack;
@@ -1167,7 +1718,7 @@ bool SetExportsSEH(HMODULE Module)
 					{
 						if ((Module == gKernelFuncs[j].hLib)
 							&& gKernelFuncs[j].NewAddress
-							&& !lstrcmpA(gKernelFuncs[j].Name, pszExpName))
+							&& !strcmp(gKernelFuncs[j].Name, pszExpName))
 						{
 							gKernelFuncs[j].OldAddress = (FARPROC)ptrOldAddr;
 							INT_PTR NewShift = ((BYTE*)gKernelFuncs[j].NewAddress) - ((BYTE*)Module);
@@ -1305,6 +1856,8 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
 	IMAGE_NT_HEADERS* nt_header = NULL;
 
+	HLOG0("SetHook.Init",(DWORD)Module);
+
 	// Валидность адреса размером sizeof(IMAGE_DOS_HEADER) проверяется в IsModuleValid.
 	if (dos_header->e_magic == IMAGE_DOS_SIGNATURE /*'ZM'*/)
 	{
@@ -1323,6 +1876,7 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 			Size = nt_header->OptionalHeader.
 			       DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size;
 		}
+		HLOGEND();
 	}
 	else
 		return false;
@@ -1346,33 +1900,40 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 #endif
 	//DWORD nHookMutexWait = WaitForSingleObject(ghHookMutex, 10000);
 
+	HLOG("SetHook.Lock",(DWORD)Module);
 	MSectionLock CS;
 	if (!gpHookCS->isLockedExclusive() && !LockHooks(Module, L"install", &CS))
 		return false;
+	HLOGEND();
 
 	if (!p)
 	{
+		HLOG("SetHook.Add",(DWORD)Module);
 		p = AddHookedModule(Module, asModule);
+		HLOGEND();
 		if (!p)
 			return false;
 	}
-		
 
+	HLOG("SetHook.Prepare",(DWORD)Module);
 	TODO("!!! Сохранять ORDINAL процедур !!!");
 	bool res = false, bHooked = false;
 	//INT_PTR i;
 	INT_PTR nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
 	bool bFnNeedHook[MAX_HOOKED_PROCS] = {};
-
 	// в отдельной функции, т.к. __try
 	res = SetHookPrep(asModule, Module, abForceHooks, bExecutable, Import, nCount, bFnNeedHook, p);
+	HLOGEND();
 
+	HLOG("SetHook.Change",(DWORD)Module);
 	// в отдельной функции, т.к. __try
 	bHooked = SetHookChange(asModule, Module, abForceHooks, bFnNeedHook, p);
+	HLOGEND();
 	
 	#ifdef _DEBUG
 	if (bHooked)
 	{
+		HLOG("SetHook.FindModuleFileName",(DWORD)Module);
 		wchar_t* szDbg = (wchar_t*)calloc(MAX_PATH*3, 2);
 		wchar_t* szModPath = (wchar_t*)calloc(MAX_PATH*2, 2);
 		FindModuleFileName(Module, szModPath, MAX_PATH*2);
@@ -1382,16 +1943,21 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 		DebugString(szDbg);
 		free(szDbg);
 		free(szModPath);
+		HLOGEND();
 	}
 	#endif
 
+	HLOG("SetHook.Unlock",(DWORD)Module);
 	//ReleaseMutex(ghHookMutex);
 	CS.Unlock();
+	HLOGEND();
 
 	// Плагин ConEmu может выполнить дополнительные действия
 	if (gfOnLibraryLoaded)
 	{
+		HLOG("SetHook.gfOnLibraryLoaded",(DWORD)Module);
 		gfOnLibraryLoaded(Module);
+		HLOGEND();
 	}
 
 	return res;
@@ -1406,25 +1972,58 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 	//api-ms-win-core-console-l1-1-0.dll
 	//...
 	char szCore[18];
-	const char szCorePrefix[] = "api-ms-win-core-";
+	const char szCorePrefix[] = "api-ms-win-core-"; // MUST BE LOWER CASE!
 	const int nCorePrefLen = lstrlenA(szCorePrefix);
 	_ASSERTE((nCorePrefLen+1)<countof(szCore));
-	bool lbIsCodeModule = false;
+	bool lbIsCoreModule = false;
+	char mod_name[MAX_PATH];
 
 	//_ASSERTEX(lstrcmpi(asModule, L"dsound.dll"));
 	
 	SAFETRY
 	{
+		HLOG0("SetHookPrep.Begin",ImportCount);
+
+		//if (!gpHooksRootPtr)
+		//{
+		//	InitHooksSortAddress();
+		//}
+
 		//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
 		for (i = 0; i < ImportCount; i++)
 		{
 			if (Import[i].Name == 0)
 				break;
 
+			HLOG0("SetHookPrep.Import",i);
+
+			HLOG1("SetHookPrep.CheckModuleName",i);
 			//DebugString( ToTchar( (char*)Module + Import[i].Name ) );
-			char* mod_name = (char*)Module + Import[i].Name;
+			char* mod_name_ptr = (char*)Module + Import[i].Name;
 			DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
 			DWORD_PTR rvaIAT = Import[i].FirstThunk; //-V101
+			lstrcpynA(mod_name, mod_name_ptr, countof(mod_name));
+			CharLowerBuffA(mod_name, lstrlenA(mod_name)); // MUST BE LOWER CASE!
+			lstrcpynA(szCore, mod_name, nCorePrefLen+1);
+			lbIsCoreModule = (strcmp(szCore, szCorePrefix) == 0);
+
+			bool bHookExists = false;
+			for (size_t j = 0; gpHooks[j].Name; j++)
+			{
+				if ((strcmp(mod_name, gpHooks[j].DllNameA) != 0)
+					&& !(lbIsCoreModule && (gpHooks[j].DllName == kernel32)))
+					// Имя модуля не соответствует
+					continue;
+				bHookExists = true;
+				break;
+			}
+			// Этот модуль вообще не хукается
+			if (!bHookExists)
+			{
+				HLOGEND1();
+				HLOGEND();
+				continue;
+			}
 
 			if (rvaINT == 0)      // No Characteristics field?
 			{
@@ -1434,6 +2033,8 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 				if (rvaINT == 0)       // No FirstThunk field?  Ooops!!!
 				{
 					_ASSERTE(rvaINT!=0);
+					HLOGEND1();
+					HLOGEND();
 					break;
 				}
 			}
@@ -1448,18 +2049,22 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 			if (!thunk ||  !thunkO)
 			{
 				_ASSERTE(thunk && thunkO);
+				HLOGEND1();
+				HLOGEND();
 				continue;
 			}
+			HLOGEND1();
 
-			size_t f, s, j;
+			// ***** >>>>>> go
+
+			HLOG1_("SetHookPrep.ImportThunksSteps",i);
+			size_t f, s;
 			for (s = 0; s <= 1; s++)
 			{
 				if (s)
 				{
 					thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaIAT, nt_header, (PBYTE)Module);
 					thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaINT, nt_header, (PBYTE)Module);
-					lstrcpynA(szCore, mod_name, nCorePrefLen+1);
-					lbIsCodeModule = (lstrcmpiA(szCore, szCorePrefix) == 0);
 				}
 
 				for (f = 0;; thunk++, thunkO++, f++)
@@ -1467,6 +2072,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 					//111127 - ..\GIT\lib\perl5\site_perl\5.8.8\msys\auto\SVN\_Core\_Core.dll
 					//         похоже, в этой длл кривая таблица импортов
 					#ifndef USE_SEH
+					HLOG("SetHookPrep.lbBadThunk",f);
 					BOOL lbBadThunk = IsBadReadPtr(thunk, sizeof(*thunk));
 					if (lbBadThunk)
 					{
@@ -1479,6 +2085,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 						break;
 					
 					#ifndef USE_SEH
+					HLOG("SetHookPrep.lbBadThunkO",f);
 					BOOL lbBadThunkO = IsBadReadPtr(thunkO, sizeof(*thunkO));
 					if (lbBadThunkO)
 					{
@@ -1490,144 +2097,199 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 					const char* pszFuncName = NULL;
 					//ULONGLONG ordinalO = -1;
 
-					if (thunk->u1.Function != thunkO->u1.Function)
-					{
-						//// Ordinal у нас пока не используется
-						////if (IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal))
-						////{
-						////	WARNING("Это НЕ ORDINAL, это Hint!!!");
-						////	ordinalO = IMAGE_ORDINAL(thunkO->u1.Ordinal);
-						////	pOrdinalNameO = NULL;
-						////}
+					
+					// Получили адрес функции, и (на втором шаге) имя функции
+					// Теперь нужно подобрать (если есть) адрес перехвата
+					HookItem* ph = gpHooks;
+					INT_PTR jj = -1;
 
-						
-						// искать имя функции
-						if (s)
+					if (!s)
+					{
+						HLOG1("SetHookPrep.ImportThunks0",s);
+
+						//HLOG2("SetHookPrep.FuncTreeNew",f);
+						//ph = FindFunctionPtr(gpHooksRootNew, (void*)thunk->u1.Function);
+						//HLOGEND2();
+						//if (ph)
+						//{
+						//	// Already hooked, this is our function address
+						//	HLOGEND1();
+						//	continue;
+						//}
+
+
+						//HLOG2_("SetHookPrep.FuncTreeOld",f);
+						//ph = FindFunctionPtr(gpHooksRootPtr, (void*)thunk->u1.Function);
+						//HLOGEND2();
+						//if (!ph)
+						//{
+						//	// This address (Old) does not exists in our tables
+						//	HLOGEND1();
+						//	continue;
+						//}
+
+						//jj = (ph - gpHooks);
+
+						for (size_t j = 0; ph->Name; ++j, ++ph)
 						{
-							if (!IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal))
+							_ASSERTEX(j<gnHookedFuncs && gnHookedFuncs<=MAX_HOOKED_PROCS);
+						
+							// Если не удалось определить оригинальный адрес процедуры (kernel32/WriteConsoleOutputW, и т.п.)
+							if (ph->OldAddress == NULL)
 							{
-								pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
-								
-								#ifdef USE_SEH
-									pszFuncName = (LPCSTR)pOrdinalNameO->Name;
-								#else
-									//WARNING!!! Множественные вызовы IsBad???Ptr могут глючить и тормозить
-									BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
+								continue;
+							}
+							
+							// Если адрес импорта в модуле уже совпадает с адресом одной из наших функций
+							if (ph->NewAddress == (void*)thunk->u1.Function)
+							{
+								res = true; // это уже захучено
+								break;
+							}
+							
+							#ifdef _DEBUG
+							//const void* ptrNewAddress = ph->NewAddress;
+							//const void* ptrOldAddress = (void*)thunk->u1.Function;
+							#endif
+
+							// Проверяем адрес перехватываемой функции
+							if ((void*)thunk->u1.Function == ph->OldAddress)
+							{
+								jj = j;
+								break; // OK, Hook it!
+							}
+						} // for (size_t j = 0; ph->Name; ++j, ++ph), (s==0)
+
+						HLOGEND1();
+					}
+					else
+					{
+						HLOG1("SetHookPrep.ImportThunks1",s);
+
+						if (!abForceHooks)
+						{
+							//_ASSERTEX(abForceHooks);
+							//HLOGEND1();
+							HLOG2("!!!Function skipped of (!abForceHooks)",f);
+							continue; // запрещен перехват, если текущий адрес в модуле НЕ совпадает с оригинальным экспортом!
+						}
+
+						// искать имя функции
+						if ((thunk->u1.Function != thunkO->u1.Function)
+							&& !IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal))
+						{
+							pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
+							
+							#ifdef USE_SEH
+								pszFuncName = (LPCSTR)pOrdinalNameO->Name;
+							#else
+								HLOG("SetHookPrep.pOrdinalNameO",f);
+								//WARNING!!! Множественные вызовы IsBad???Ptr могут глючить и тормозить
+								BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
+								_ASSERTE(lbValidPtr);
+
+								if (lbValidPtr)
+								{
+									lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
 									_ASSERTE(lbValidPtr);
 
 									if (lbValidPtr)
-									{
-										lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
-										_ASSERTE(lbValidPtr);
-
-										if (lbValidPtr)
-											pszFuncName = (LPCSTR)pOrdinalNameO->Name;
-									}
-								#endif
-							}
+										pszFuncName = (LPCSTR)pOrdinalNameO->Name;
+								}
+							#endif
 						}
-					}
 
-					// Получили адрес функции, и (на втором шаге) имя функции
-					// Теперь нужно подобрать (если есть) адрес перехвата
-					for (j = 0; gpHooks[j].Name; j++)
-					{
-						_ASSERTEX(j<gnHookedFuncs && gnHookedFuncs<=MAX_HOOKED_PROCS);
-					
-						// Если не удалось определить оригинальный адрес процедуры (kernel32/WriteConsoleOutputW, и т.п.)
-						if (gpHooks[j].OldAddress == NULL)
+						if (!pszFuncName || !*pszFuncName)
 						{
+							continue; // This import does not have "Function name"
+						}
+
+						HLOG2("SetHookPrep.FuncTree",f);
+						ph = FindFunction(pszFuncName);
+						HLOGEND2();
+						if (!ph)
+						{
+							HLOGEND1();
 							continue;
 						}
-						
-						// Если адрес импорта в модуле уже совпадает с адресом одной из наших функций
-						if (gpHooks[j].NewAddress == (void*)thunk->u1.Function)
+
+						// Имя модуля
+						HLOG2_("SetHookPrep.Module",f);
+						if ((strcmp(mod_name, ph->DllNameA) != 0)
+							&& !(lbIsCoreModule && (ph->DllName == kernel32)))
 						{
-							res = true; // это уже захучено
-							break;
+							HLOGEND2();
+							HLOGEND1();
+							// Имя модуля не соответствует
+							continue; // И дубли имен функций не допускаются. Пропускаем
 						}
+						HLOGEND2();
+
+						jj = (ph - gpHooks);
+
+						HLOGEND1();
+					}
 						
-						#ifdef _DEBUG
-						const void* ptrNewAddress = gpHooks[j].NewAddress;
-						const void* ptrOldAddress = (void*)thunk->u1.Function;
-						#endif
 
-						// Проверяем адрес перехватываемой функции
-						if ((void*)thunk->u1.Function != gpHooks[j].OldAddress)
+					if (jj >= 0)
+					{
+						HLOG1("SetHookPrep.WorkExport",f);
+
+						if (bExecutable && !ph->ExeOldAddress)
 						{
-							// pszFuncName заполняется на втором шаге
-							if (!pszFuncName /*|| !bExecutable*/)
-							{
-								continue; // Если имя импорта определить не удалось - пропускаем
-							}
-							else
-							{
-								// Имя модуля
-								if ((lstrcmpiA(mod_name, gpHooks[j].DllNameA) != 0)
-									&& !(lbIsCodeModule && (gpHooks[j].DllName == kernel32)))
-									// Имя модуля не соответствует
-									continue;
+							// OldAddress уже может отличаться от оригинального экспорта библиотеки
+							//// Это происходит например с PeekConsoleIntputW при наличии плагина Anamorphosis
+							// Про Anamorphosis несколько устарело. При включенном "Inject ConEmuHk"
+							// хуки ставятся сразу при запуске процесса.
+							// Но, теоретически, кто-то может успеть раньше, или флажок "Inject" выключен.
 
-								// Проверяем, имя функции совпадает с перехватываемыми?
-								if (lstrcmpA(pszFuncName, gpHooks[j].Name))
-									continue;
-							}
+							// Также это может быть в новой архитектуре Win7 ("api-ms-win-core-..." и др.)
 
-							if (!abForceHooks)
-							{
-								//_ASSERTEX(abForceHooks);
-								continue; // запрещен перехват, если текущий адрес в модуле НЕ совпадает с оригинальным экспортом!
-							}
-							else if (bExecutable && !gpHooks[j].ExeOldAddress)
-							{
-								// OldAddress уже может отличаться от оригинального экспорта библиотеки
-								//// Это происходит например с PeekConsoleIntputW при наличии плагина Anamorphosis
-								// Про Anamorphosis несколько устарело. При включенном "Inject ConEmuHk"
-								// хуки ставятся сразу при запуске процесса.
-								// Но, теоретически, кто-то может успеть раньше, или флажок "Inject" выключен.
-
-								// Также это может быть в новой архитектуре Win7 ("api-ms-win-core-..." и др.)
-
-								gpHooks[j].ExeOldAddress = (void*)thunk->u1.Function;
-							}
+							ph->ExeOldAddress = (void*)thunk->u1.Function;
 						}
 
-						if (p->Addresses[j].ppAdr != NULL)
+						// When we get here - jj matches pszFuncName or FuncPtr
+						if (p->Addresses[jj].ppAdr != NULL)
+						{
+							HLOGEND1();
 							break; // уже обработали, следующий импорт
-						
+						}
+
 						//#ifdef _DEBUG
 						//// Это НЕ ORDINAL, это Hint!!!
-						//if (gpHooks[j].nOrdinal == 0 && ordinalO != (ULONGLONG)-1)
-						//	gpHooks[j].nOrdinal = (DWORD)ordinalO;
+						//if (ph->nOrdinal == 0 && ordinalO != (ULONGLONG)-1)
+						//	ph->nOrdinal = (DWORD)ordinalO;
 						//#endif
 
 
 						_ASSERTE(sizeof(thunk->u1.Function)==sizeof(DWORD_PTR));
 						
-						if (thunk->u1.Function == (DWORD_PTR)gpHooks[j].NewAddress)
+						if (thunk->u1.Function == (DWORD_PTR)ph->NewAddress)
 						{
 							// оказалось захучено в другой нити? такого быть не должно, блокируется секцией
 							// Но может быть захучено в прошлый раз, если не все модули были загружены при старте
-							_ASSERTE(thunk->u1.Function != (DWORD_PTR)gpHooks[j].NewAddress);
+							_ASSERTE(thunk->u1.Function != (DWORD_PTR)ph->NewAddress);
 						}
 						else
 						{
-							bFnNeedHook[j] = true;
-							p->Addresses[j].ppAdr = &thunk->u1.Function;
+							bFnNeedHook[jj] = true;
+							p->Addresses[jj].ppAdr = &thunk->u1.Function;
 							#ifdef _DEBUG
-							p->Addresses[j].ppAdrCopy1 = (DWORD_PTR)p->Addresses[j].ppAdr;
-							p->Addresses[j].ppAdrCopy2 = (DWORD_PTR)*p->Addresses[j].ppAdr;
-							p->Addresses[j].pModulePtr = (DWORD_PTR)p->hModule;
+							p->Addresses[jj].ppAdrCopy1 = (DWORD_PTR)p->Addresses[jj].ppAdr;
+							p->Addresses[jj].ppAdrCopy2 = (DWORD_PTR)*p->Addresses[jj].ppAdr;
+							p->Addresses[jj].pModulePtr = (DWORD_PTR)p->hModule;
 							IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)p->hModule + ((IMAGE_DOS_HEADER*)p->hModule)->e_lfanew);
-							p->Addresses[j].nModuleSize = nt_header->OptionalHeader.SizeOfImage;
+							p->Addresses[jj].nModuleSize = nt_header->OptionalHeader.SizeOfImage;
 							#endif
 							//Для проверки, а то при UnsetHook("cscapi.dll") почему-то возникла ошибка ERROR_INVALID_PARAMETER в VirtualProtect
 							_ASSERTEX(p->hModule==Module);
-							_ASSERTEX(CheckCallbackPtr(p->hModule, 1, (FARPROC*)&p->Addresses[j].ppAdr, TRUE));
-							p->Addresses[j].pOld = thunk->u1.Function;
-							p->Addresses[j].pOur = (DWORD_PTR)gpHooks[j].NewAddress;
+							HLOG2("SetHookPrep.CheckCallbackPtr.1",f);
+							_ASSERTEX(CheckCallbackPtr(p->hModule, 1, (FARPROC*)&p->Addresses[jj].ppAdr, TRUE));
+							HLOGEND2();
+							p->Addresses[jj].pOld = thunk->u1.Function;
+							p->Addresses[jj].pOur = (DWORD_PTR)ph->NewAddress;
 							#ifdef _DEBUG
-							lstrcpynA(p->Addresses[j].sName, gpHooks[j].Name, countof(p->Addresses[j].sName));
+							lstrcpynA(p->Addresses[jj].sName, ph->Name, countof(p->Addresses[jj].sName));
 							#endif
 							
 							_ASSERTEX(p->nAdrUsed < countof(p->Addresses));
@@ -1636,17 +2298,23 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 
 						#ifdef _DEBUG
 						if (bExecutable)
-							gpHooks[j].ReplacedInExe = TRUE;
+							ph->ReplacedInExe = TRUE;
 						#endif
-							
-						//DebugString( ToTchar( gpHooks[j].Name ) );
-						res = true;
 
-						break;
-					} // for (j = 0; gpHooks[j].Name; j++)
+						//DebugString( ToTchar( ph->Name ) );
+						res = true;
+						HLOGEND1();
+					} // if (jj >= 0)
+					HLOGEND1();
+
 				} // for (f = 0;; thunk++, thunkO++, f++)
+
 			} // for (s = 0; s <= 1; s++)
+			HLOGEND1();
+
+			HLOGEND();
 		} // for (i = 0; i < nCount; i++)
+		HLOGEND();
 	} SAFECATCH {
 	}
 	
@@ -1704,34 +2372,41 @@ bool SetHookChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool (&b
 	return bHooked;
 }
 
-DWORD GetMainThreadId()
+DWORD GetMainThreadId(bool bUseCurrentAsMain)
 {
 	// Найти ID основной нити
 	if (!gnHookMainThreadId)
 	{
-		DWORD dwPID = GetCurrentProcessId();
-		HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
-
-		if (snapshot != INVALID_HANDLE_VALUE)
+		if (bUseCurrentAsMain)
 		{
-			THREADENTRY32 module = {sizeof(THREADENTRY32)};
+			gnHookMainThreadId = GetCurrentThreadId();
+		}
+		else
+		{
+			DWORD dwPID = GetCurrentProcessId();
+			HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
 
-			if (Thread32First(snapshot, &module))
+			if (snapshot != INVALID_HANDLE_VALUE)
 			{
-				while (!gnHookMainThreadId)
+				THREADENTRY32 module = {sizeof(THREADENTRY32)};
+
+				if (Thread32First(snapshot, &module))
 				{
-					if (module.th32OwnerProcessID == dwPID)
+					while (!gnHookMainThreadId)
 					{
-						gnHookMainThreadId = module.th32ThreadID;
-						break;
+						if (module.th32OwnerProcessID == dwPID)
+						{
+							gnHookMainThreadId = module.th32ThreadID;
+							break;
+						}
+
+						if (!Thread32Next(snapshot, &module))
+							break;
 					}
-
-					if (!Thread32Next(snapshot, &module))
-						break;
 				}
-			}
 
-			CloseHandle(snapshot);
+				CloseHandle(snapshot);
+			}
 		}
 	}
 
@@ -1746,9 +2421,21 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 	// т.к. SetAllHooks может быть вызван из разных dll - запоминаем однократно
 	if (!ghOurModule) ghOurModule = ahOurDll;
 
-	InitHooks(NULL);
 	if (!gpHooks)
-		return false;
+	{
+		HLOG1("SetAllHooks.InitHooks",0);
+		InitHooks(NULL);
+		if (!gpHooks)
+			return false;
+		HLOGEND1();
+	}
+
+	if (!gbHooksSorted)
+	{
+		HLOG1("InitHooksSort",0);
+		InitHooksSort();
+		HLOGEND1();
+	}
 
 	#ifdef _DEBUG
 	wchar_t szHookProc[128];
@@ -1800,9 +2487,11 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 	HMODULE hExecutable = GetModuleHandle(0);
 	HANDLE snapshot;
 
+	HLOG0("SetAllHooks.GetMainThreadId",0);
 	// Найти ID основной нити
-	GetMainThreadId();
+	GetMainThreadId(false);
 	_ASSERTE(gnHookMainThreadId!=0);
+	HLOGEND();
 
 	// Если просили хукать только exe-шник
 	if (gbHookExecutableOnly)
@@ -1811,27 +2500,40 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 		GetModuleFileName(NULL, szExeName, countof(szExeName));
 		// Go
 		DebugString(szExeName);
+		HLOG("SetAllHooks.SetHook(exe)",0);
 		SetHook(szExeName, hExecutable, abForceHooks);
+		HLOGEND();
 	}
 	else
 	{
+		HLOG("SetAllHooks.CreateSnap",0);
 		// Начались замены во всех загруженных (linked) модулях
 		snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
+		HLOGEND();
 
 		if (snapshot != INVALID_HANDLE_VALUE)
 		{
 			MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
+			HLOG("SetAllHooks.EnumStart",0);
 
+			HLOG("SetAllHooks.Module32First/Module32Next",0);
 			for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
 			{
+				HLOGEND();
 				if (module.hModule && !IsModuleExcluded(module.hModule, NULL, module.szModule))
 				{
 					DebugString(module.szModule);
+					HLOG1("SetAllHooks.SetHook",(DWORD)module.hModule);
 					SetHook(module.szModule, module.hModule/*, (module.hModule == hExecutable)*/, abForceHooks);
+					HLOGEND1();
 				}
+				HLOG("SetAllHooks.Module32First/Module32Next",0);
 			}
+			HLOGEND();
 
+			HLOG("SetAllHooks.CloseSnap",0);
 			CloseHandle(snapshot);
+			HLOGEND();
 		}
 	}
 
@@ -1993,7 +2695,7 @@ bool UnsetHookInt(HMODULE Module)
 							}
 							else
 							{
-								if (lstrcmpA(pszFuncName, gpHooks[j].Name))
+								if (strcmp(pszFuncName, gpHooks[j].Name))
 									continue;
 							}
 			
@@ -2701,7 +3403,7 @@ FARPROC WINAPI OnGetProcAddressWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 					// The spelling and case of a function name pointed to by lpProcName must be identical
 					// to that in the EXPORTS statement of the source DLL's module-definition (.Def) file
 					if (gpHooks[i].hDll == hModule
-							&& lstrcmpA(gpHooks[i].Name, lpProcName) == 0)
+							&& strcmp(gpHooks[i].Name, lpProcName) == 0)
 					{
 						lpfnRc = (FARPROC)gpHooks[i].NewAddress;
 						break;

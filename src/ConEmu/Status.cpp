@@ -888,7 +888,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 					break;
 				case csi_NewVCon:
 					if (uMsg == WM_LBUTTONDOWN)
-						gpConEmu->mp_TabBar->OnNewConPopup((POINT*)&rcClient, TPM_LEFTALIGN|TPM_BOTTOMALIGN);
+						gpConEmu->mp_TabBar->OnNewConPopupMenu((POINT*)&rcClient, TPM_LEFTALIGN|TPM_BOTTOMALIGN);
 					break;
 				case csi_Transparency:
 					if (uMsg == WM_LBUTTONDOWN)
@@ -921,7 +921,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				{
 				case csi_ActiveVCon:
 				case csi_NewVCon:
-					//gpConEmu->mp_TabBar->OnNewConPopup((POINT*)&rcClient, TPM_LEFTALIGN|TPM_BOTTOMALIGN);
+					//gpConEmu->mp_TabBar->OnNewConPopupMenu((POINT*)&rcClient, TPM_LEFTALIGN|TPM_BOTTOMALIGN);
 					{
 						CVConGuard VCon;
 						if (CVConGroup::GetActiveVCon(&VCon) >= 0)

@@ -83,6 +83,13 @@ extern HMODULE ghOurModule;
 WARNING("Обязательно после запуска сделать apiSetForegroundWindow на GUI окно, если в фокусе консоль");
 WARNING("Обязательно получить код и имя родительского процесса");
 
+#ifdef USEPIPELOG
+namespace PipeServerLogger
+{
+    Event g_events[BUFFER_SIZE];
+    LONG g_pos = -1;
+}
+#endif
 
 #ifdef _DEBUG
 wchar_t gszDbgModLabel[6] = {0};

@@ -1956,6 +1956,7 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 	//MSG Msg = {NULL};
 	//while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE))
 	//{
+	//	ConEmuMsgLogger::Log(Msg);
 	//	TranslateMessage(&Msg);
 	//	DispatchMessage(&Msg);
 	//}
@@ -2124,8 +2125,9 @@ DWORD CDragDropData::DragThread(LPVOID lpParameter)
 
 	// Чтобы драг жил - запускаем обработку сообщений
 	// Сама обработка (Оконная процедура) происходит в DragProc (ниже)
-	while(GetMessage(&msg, 0,0,0))
+	while (GetMessage(&msg, 0,0,0))
 	{
+		ConEmuMsgLogger::Log(msg);
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}

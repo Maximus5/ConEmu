@@ -148,6 +148,12 @@ gRegisteredHotKeys[] = {
 	{vkForceFullScreen},
 };
 
+namespace ConEmuMsgLogger
+{
+	MSG g_events[BUFFER_SIZE];
+	LONG g_pos = -1;
+}
+
 CConEmuMain::CConEmuMain()
 {
 	gpConEmu = this; // сразу!
@@ -6650,6 +6656,8 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, BOOL abForceAsA
 			MSG Msg;
 			while (PeekMessage(&Msg,0,0,0,PM_REMOVE))
 			{
+				ConEmuMsgLogger::Log(Msg);
+
 				if (Msg.message == WM_QUIT)
 					goto wrap;
 
@@ -7946,6 +7954,14 @@ LRESULT CConEmuMain::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 int CConEmuMain::trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, HWND hWnd, RECT *prcRect /* = NULL*/)
 {
 	mp_Tip->HideTip();
+	TrackMenuPlace prevPlace = mn_TrackMenuPlace;
+	if (prevPlace == place)
+	{
+		_ASSERTE(prevPlace==tmp_System);
+		prevPlace = tmp_None; 
+	}
+	_ASSERTE(prevPlace==tmp_None || prevPlace==tmp_Cmd);
+
 	mn_TrackMenuPlace = place;
 
 	TPMPARAMS ex = {sizeof(ex)};
@@ -7959,7 +7975,7 @@ int CConEmuMain::trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, 
 
 	int cmd = TrackPopupMenuEx(hMenu, uFlags, x, y, hWnd, &ex);
 
-	mn_TrackMenuPlace = tmp_None;
+	mn_TrackMenuPlace = prevPlace;
 
 	mp_Tip->HideTip();
 
@@ -10522,31 +10538,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 				pszDataW = lstrdup(pGrp->pszCommands);
 				if (ppszStartupDir && !*ppszStartupDir && pGrp->pszGuiArgs)
 				{
-					LPCWSTR pszArgs = pGrp->pszGuiArgs;
-					wchar_t szArg[MAX_PATH+1];
-					while (0 == NextArg(&pszArgs, szArg))
-					{
-						if (lstrcmpi(szArg, L"/DIR") == 0)
-						{
-							if (0 == NextArg(&pszArgs, szArg) && *szArg)
-							{
-								_ASSERTE(*ppszStartupDir == NULL); // Если юзер ввел папку сам - не менять
-								
-								wchar_t* pszExpand = NULL;
-								// Например, "%USERPROFILE%"
-								if (wcschr(szArg, L'%'))
-								{
-									pszExpand = ExpandEnvStr(szArg);
-								}
-
-								if (!pszExpand)
-								{
-									*ppszStartupDir = lstrdup(szArg);
-								}
-							}
-							break;
-						}
-					}
+					pGrp->ParseGuiArgs(ppszStartupDir, NULL);
 				}
 				break;
 			}
@@ -12310,6 +12302,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 			if (GetMessage(&msg1, 0,0,0))  // убрать из буфера
 			{
+				ConEmuMsgLogger::Log(msg1);
 				_ASSERTE(msg1.message == msg.message && msg1.wParam == msg.wParam && msg1.lParam == msg.lParam);
 				msgList[++iAddMsgList] = msg1;
 
@@ -13256,9 +13249,17 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (gpSetCls->isAdvLogging)
 		CVConGroup::LogInput(messg, wParam, lParam);
 
-	if (mn_TrackMenuPlace != tmp_None && mp_Tip)
+	if (mn_TrackMenuPlace != tmp_None)
 	{
-		mp_Tip->HideTip();
+		if (mp_Tip)
+		{
+			mp_Tip->HideTip();
+		}
+
+		if (gpSetCls->isAdvLogging)
+			LogString("Mouse event skipped due to (mn_TrackMenuPlace != tmp_None)");
+
+		return 0;
 	}
 
 	//2010-05-20 все-таки будем ориентироваться на lParam, потому что
@@ -16815,6 +16816,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				; // Take no action
 			}
 			// Else ...
+			return 0;
+		}
+		case WM_MENURBUTTONUP:
+		{
+			if (gpConEmu->mn_TrackMenuPlace == tmp_Cmd)
+			{
+				gpConEmu->mp_TabBar->OnNewConPopupMenuRClick((HMENU)lParam, (UINT)wParam);
+			}
 			return 0;
 		}
 		case WM_ERASEBKGND:

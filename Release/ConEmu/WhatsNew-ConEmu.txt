@@ -14,6 +14,9 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.10.28
+[!] Issue 526: Optimization of «Inject ConEmuHk». Hope on great speedup and no new bugs.
+[*] Changed «Run As Administrator» startup style to avoid flickering of real console.
 [%] Fixed default Far Manager macros for Lua (Far 3 build 2851).
 [%] Sometimes "-new_console" was removed with excess spaces.
 [+] *nix like «sudo» command. Batch file "%ConEmuBaseDir%\csudo.cmd".

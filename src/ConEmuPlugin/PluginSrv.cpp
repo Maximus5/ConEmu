@@ -65,6 +65,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/PipeServer.h"
 
+#ifdef USEPIPELOG
+namespace PipeServerLogger
+{
+    Event g_events[BUFFER_SIZE];
+    LONG g_pos = -1;
+}
+#endif
+
 #define Free free
 #define Alloc calloc
 
@@ -269,7 +277,7 @@ void PlugServerStop(bool abDelete)
 {
 	if (gpPlugServer)
 	{
-		gpPlugServer->StopPipeServer();
+		gpPlugServer->StopPipeServer(true);
 		
 		if (abDelete)
 		{

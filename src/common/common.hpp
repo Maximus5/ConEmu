@@ -133,6 +133,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 //#define CEHOOKDISABLEEVENT  L"ConEmuSkipHooks.%u"
 #define CEGHOSTSKIPACTIVATE L"ConEmuGhostActivate.%u"
 #define CECONEMUROOTPROCESS L"ConEmuRootProcess.%u" // Если Event взведен - значит это корневой процесс, облегченную версию хуков не использовать!
+#define CECONEMUROOTTHREAD  L"ConEmuRootThread.%u"  // Если Event взведен - ConEmuHk загружен в главной нити, гонять snapshoot в GetMainThreadId не требуется
 
 #define CESECURITYNAME       "ConEmuLocalData"
 

@@ -135,7 +135,7 @@ void CRealServer::Stop(bool abDeinitialize/*=false*/)
 
 	if (mp_RConServer)
 	{
-		mp_RConServer->StopPipeServer();
+		mp_RConServer->StopPipeServer(false);
 		
 		if (abDeinitialize)
 		{

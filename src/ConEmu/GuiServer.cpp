@@ -35,6 +35,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "../common/PipeServer.h"
 
+#ifdef USEPIPELOG
+namespace PipeServerLogger
+{
+    Event g_events[BUFFER_SIZE];
+    LONG g_pos = -1;
+}
+#endif
+
 #ifdef _DEBUG
 //	#define ALLOW_WINE_MSG
 #else
@@ -88,7 +96,7 @@ void CGuiServer::Stop(bool abDeinitialize/*=false*/)
 	{
 		ShutdownGuiStep(L"mp_GuiServer->StopPipeServer");
 
-		mp_GuiServer->StopPipeServer();
+		mp_GuiServer->StopPipeServer(false);
 
 		if (abDeinitialize)
 		{

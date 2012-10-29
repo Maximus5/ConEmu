@@ -28,6 +28,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#ifdef _DEBUG
+	#define USEPIPELOG
+	//#undef USEPIPELOG
+#else
+	#undef USEPIPELOG
+#endif
+
 #ifndef PIPEBUFSIZE
 #define PIPEBUFSIZE 4096
 #endif
@@ -48,6 +55,79 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define PipeOutputDbg(x) OutputDebugStringW(x)
 #endif
 
+enum PipeState
+{
+	STARTING_STATE = 0,
+	STARTED_STATE = 1,
+	CREATEPIPE_STATE = 2,
+	PIPECREATED_STATE = 3,
+	CONNECTING_STATE = 4,
+	CONNECTED_STATE = 5,
+	READING_STATE = 6,
+	WRITING_STATE = 7,
+	DISCONNECTING_STATE = 100,
+	DISCONNECTED_STATE = 101,
+	CLOSING_STATE = 200,
+	CLOSED_STATE = 201,
+	TERMINATED_STATE = 255,
+	//TERMINATE_CALL_STATE,
+	THREAD_FINISHED_STATE = 256,
+};
+
+
+#ifdef USEPIPELOG
+	#include <intrin.h>
+
+	#define getThreadId() WIN3264TEST(((DWORD*) __readfsdword(24))[9],GetCurrentThreadId())
+
+	// Originally from http://preshing.com/20120522/lightweight-in-memory-logging
+	namespace PipeServerLogger
+	{
+		struct Event
+		{
+			#ifdef _DEBUG
+			DWORD tid;       // Thread ID
+			#endif
+			const char* msg; // Info
+			int pipe;
+			DWORD param;
+			#ifdef _DEBUG
+			DWORD tick;      // Current tick
+			#endif
+		};
+	 
+		static const int BUFFER_SIZE = 256;   // Must be a power of 2
+		extern Event g_events[BUFFER_SIZE];
+		extern LONG g_pos;
+	 
+		inline void Log(int pipe, const char* msg, DWORD param)
+		{
+			// Get next event index
+			LONG i = _InterlockedIncrement(&g_pos);
+			// Write an event at this index
+			Event* e = g_events + (i & (BUFFER_SIZE - 1));  // Wrap to buffer size
+			#ifdef _DEBUG
+			e->tid = getThreadId();
+			e->tick = _GetTime();
+			#endif
+			e->msg = msg;
+			e->pipe = pipe;
+			e->param = param;
+		}
+	}
+
+	#undef getThreadId
+
+	#define PLOG(m) PipeServerLogger::Log(pPipe->nIndex,m,pPipe->dwState)
+	#define PLOG2(m,v) PipeServerLogger::Log(pPipe->nIndex,m,v)
+	#define PLOG3(i,m,v) PipeServerLogger::Log(i,m,v)
+#else
+	#define PLOG(m)
+	#define PLOG2(m,v)
+	#define PLOG3(i,m,v)
+#endif
+
+
 // struct - для того, чтобы выделять память простым calloc. "new" не прокатывает, т.к. Crt может быть не инициализирован (ConEmuHk).
 
 // Класс предполагает, что первый DWORD в (T*) это размер передаваемого блока в байтах!
@@ -55,25 +135,10 @@ template <class T>
 struct PipeServer
 {
 	protected:
-		enum PipeState
-		{
-			STARTING_STATE = 0,
-			STARTED_STATE,
-			CREATEPIPE_STATE,
-			PIPECREATED_STATE,
-			CONNECTING_STATE,
-			CONNECTED_STATE,
-			READING_STATE,
-			WRITING_STATE,
-			DISCONNECTING_STATE,
-			DISCONNECTED_STATE,
-			CLOSING_STATE,
-			CLOSED_STATE,
-			TERMINATED_STATE,
-			TERMINATE_CALL_STATE,
-		};
 		struct PipeInst
 		{
+			DWORD  nIndex; // Index in m_Pipes
+
 			// Common
 			HANDLE hPipeInst; // Pipe Handle
 
@@ -100,7 +165,7 @@ struct PipeServer
 			OVERLAPPED oOverlap;
 			BOOL fPendingIO;
 			PipeState dwState;
-			BOOL bSkipTerminate;
+			//BOOL bSkipTerminate;
 			
 			wchar_t sErrorMsg[128];
 
@@ -152,6 +217,7 @@ struct PipeServer
 	protected:
 		bool mb_Initialized;
 		bool mb_Terminate;
+		bool mb_StopFromDllMain;
 		bool mb_Overlapped;
 		bool mb_LoopCommands;
 		bool mb_InputOnly;
@@ -198,6 +264,9 @@ struct PipeServer
 		{
 			wchar_t sTitle[128], sText[MAX_PATH*2];
 			DWORD dwErr = GetLastError();
+
+			PLOG("DumpError");
+
 			msprintf(pPipe->sErrorMsg, countof(pPipe->sErrorMsg), asFormat/*i.e. L"ConnectNamedPipe failed with 0x%08X."*/, dwErr);
 
 			if (abShow)
@@ -226,20 +295,26 @@ struct PipeServer
 			if (bDisconnect)
 			{
 				pPipe->dwState = DISCONNECTING_STATE;
+				PLOG("DisconnectNamedPipe");
 				DisconnectNamedPipe(pPipe->hPipeInst);
+				PLOG("DisconnectNamedPipe done");
 				pPipe->dwState = DISCONNECTED_STATE;
 			}
 
 			if (bClose)
 			{
+				#if 0
 				// Wait a little
 				if (bDelayBeforeClose && !mb_Terminate)
 				{
 					Sleep(10);
 				}
+				#endif
 
 				pPipe->dwState = CLOSING_STATE;
+				PLOG("CloseHandle");
 				CloseHandle(pPipe->hPipeInst);
+				PLOG("CloseHandle done");
 				pPipe->hPipeInst = NULL;
 				pPipe->dwState = CLOSED_STATE;
 			}
@@ -257,7 +332,9 @@ struct PipeServer
 
 			while (!mb_Terminate)
 			{
+				PLOG("WaitOverlapped.WaitMulti");
 				nWait = WaitForMultipleObjects(2, hConnWait, FALSE, nTimeout);
+				PLOG("WaitOverlapped.WaitMulti done");
 				nDuration = (GetTickCount() - nStartTick);
 
 				if (nWait == WAIT_OBJECT_0)
@@ -265,7 +342,9 @@ struct PipeServer
 					_ASSERTEX(mb_Terminate==true);
 					DWORD t1 = _GetTime();
 					TODO("Подозрение на длительную обработку");
+					PLOG("WaitOverlapped.Disconnect");
 					_Disconnect(pPipe, true, false);
+					PLOG("WaitOverlapped.Disconnect done");
 					DWORD t2 = _GetTime();
 					pPipe->nTerminateDelay1 = (t2 - t1);
 					pPipe->nTerminateDelay += pPipe->nTerminateDelay1;
@@ -273,8 +352,10 @@ struct PipeServer
 				}
 				else if (nWait == (WAIT_OBJECT_0+1))
 				{
+					PLOG("WaitOverlapped.Overlapped");
 					fSuccess = GetOverlappedResult(pPipe->hPipeInst, &pPipe->oOverlap, pcbDataSize, FALSE);
 					dwErr = GetLastError();
+					PLOG("WaitOverlapped.Overlapped done");
 
 					if (fSuccess || dwErr == ERROR_MORE_DATA)
 						return 1; // OK, клиент подключился
@@ -287,8 +368,10 @@ struct PipeServer
 				}
 				else if (nWait == WAIT_TIMEOUT)
 				{
+					PLOG("WaitOverlapped.Overlapped2");
 					fSuccess = GetOverlappedResult(pPipe->hPipeInst, &pPipe->oOverlap, pcbDataSize, FALSE);
 					dwErrT = GetLastError();
+					PLOG("WaitOverlapped.Overlapped2 done");
 
 					if (fSuccess || dwErrT == ERROR_MORE_DATA)
 						return 1; // OK, клиент подключился
@@ -328,7 +411,9 @@ struct PipeServer
 				}
 
 				// Force client disconnect (error on server side)
+				PLOG("WaitOverlapped.Disconnect2");
 				_Disconnect(pPipe, true, true);
+				PLOG("WaitOverlapped.Disconnect2 done");
 				return 2; // ошибка, пробуем еще раз
 			}
 
@@ -347,6 +432,7 @@ struct PipeServer
 			DWORD In[32];
 			T *pIn = NULL;
 			SetLastError(0);
+			PLOG("PipeServerRead.ReadFile");
 			// Send a message to the pipe server and read the response.
 			fSuccess = ReadFile(
 			               pPipe->hPipeInst, // pipe handle
@@ -355,24 +441,29 @@ struct PipeServer
 			               &cbRead,          // bytes read
 			               mb_Overlapped ? &pPipe->oOverlap : NULL);
 			dwErr = GetLastError();
+			PLOG("PipeServerRead.ReadFile done");
 
 			if (mb_Overlapped)
 			{
 				if (!fSuccess || !cbRead)
 				{
+					PLOG("PipeServerRead.WaitOverlapped");
 					nOverRc = WaitOverlapped(pPipe, &cbRead);
 					if (nOverRc == 1)
 					{
 						dwErr = GetLastError();
 						fSuccess = TRUE;
+						PLOG("PipeServerRead.WaitOverlapped done");
 					}
 					else if (nOverRc == 2)
 					{
+						PLOG("PipeServerRead.WaitOverlapped break");
 						BreakConnection(pPipe);
 						return FALSE;
 					}
 					else
 					{
+						PLOG("PipeServerRead.WaitOverlapped failed");
 						_ASSERTEX(mb_Terminate);
 						return FALSE; // terminate
 					}
@@ -383,11 +474,13 @@ struct PipeServer
 			{
 				// Сервер закрывается?
 				//DEBUGSTRPROC(L"!!! ReadFile(pipe) failed - console in close?\n");
+				PLOG("PipeServerRead.FALSE1");
 				return FALSE;
 			}
 			
 			cbWholeSize = In[0];
 
+			PLOG("PipeServerRead.Alloc");
 			if (cbWholeSize <= cbRead)
 			{
 				_ASSERTEX(cbWholeSize >= cbRead);
@@ -399,6 +492,7 @@ struct PipeServer
 				}
 				memmove(pIn, In, cbRead);
 				pPipe->cbReadSize = cbRead;
+				PLOG("PipeServerRead.memmoved");
 			}
 			else
 			{
@@ -412,6 +506,8 @@ struct PipeServer
 				memmove(pIn, In, cbRead);
 				LPBYTE ptrData = ((LPBYTE)pIn)+cbRead;
 				nAllSize -= cbRead;
+
+				PLOG("PipeServerRead.ReadingData");
 
 				while (nAllSize>0)
 				{
@@ -454,17 +550,21 @@ struct PipeServer
 					nAllSize -= cbRead;
 				}
 
+				PLOG("PipeServerRead.DataReaded");
+
 				TODO("Mozhet vozniknutj ASSERT, esli konsolj byla zakryta v processe chtenija");
 
 				if (nAllSize>0)
 				{
 					_ASSERTEX(nAllSize==0);
+					PLOG("PipeServerRead.FALSE2");
 					return FALSE; // удалось считать не все данные
 				}
 
 				pPipe->cbReadSize = (DWORD)(ptrData - ((LPBYTE)pIn));
 			}
 
+			PLOG("PipeServerRead.OK");
 			return TRUE;
 		}
 		
@@ -484,10 +584,13 @@ struct PipeServer
 			
 			if (!bDelayed || lpBuffer)
 			{
+				PLOG("PipeServerWrite.Write");
 				pPipe->fWriteSuccess = fWriteSuccess = WriteFile(pPipe->hPipeInst, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, mb_Overlapped ? &pPipe->oOverlap : NULL);
 
 				// The write operation is still pending?
 				pPipe->dwWriteErr = dwErr = GetLastError();
+
+				PLOG("PipeServerWrite.Write done");
 			}
 			else if (bDelayed)
 			{
@@ -503,7 +606,9 @@ struct PipeServer
 					if (bDelayed)
 						return 1;
 
+					PLOG("PipeServerWrite.Wait");
 					int nOverRc = WaitOverlapped(pPipe, lpNumberOfBytesWritten);
+					PLOG("PipeServerWrite.Wait done");
 					if (nOverRc == 0)
 						return 0;
 					else if (nOverRc == 1)
@@ -513,8 +618,10 @@ struct PipeServer
 				}
 				else if (fWriteSuccess)
 				{
+					PLOG("PipeServerWrite.Overlapped");
 					fSuccess = GetOverlappedResult(pPipe->hPipeInst, &pPipe->oOverlap, lpNumberOfBytesWritten, FALSE);
 					_ASSERTEX(fSuccess);
+					PLOG("PipeServerWrite.Overlapped done");
 					return fSuccess ? 1 : 2;
 				}
 				else
@@ -537,10 +644,12 @@ struct PipeServer
 			// Цикл ожидания подключения
 			while (!mb_Terminate)
 			{
+				PLOG("WaitForClient.WaitMulti");
 				// !!! Переносить проверку семафора ПОСЛЕ CreateNamedPipe нельзя, т.к. в этом случае
 				//     нити дерутся и клиент не может подцепиться к серверу
 				// Дождаться разрешения семафора, или завершения сервера
 				pPipe->dwConnWait = WaitForMultipleObjects(2, hWait, FALSE, INFINITE);
+				PLOG2("WaitForClient.WaitMulti done",pPipe->dwConnWait);
 
 				if (pPipe->dwConnWait == WAIT_OBJECT_0)
 				{
@@ -575,14 +684,19 @@ struct PipeServer
 
 					_ASSERTEX(mlp_Sec!=NULL);
 					pPipe->dwState = CREATEPIPE_STATE;
+					PLOG("WaitForClient.Create");
 					pPipe->hPipeInst = CreateNamedPipeW(ms_PipeName, dwOpenMode, dwPipeMode, InstanceCount, nOutSize, nInSize, 0, mlp_Sec);
 					pPipe->dwState = PIPECREATED_STATE;
+					PLOG("WaitForClient.Create done");
 
 					// Сервер закрывается?
 					if (mb_Terminate)
 					{
 						if (mb_Overlapped)
+						{
+							PLOG("WaitForClient.ReleaseOnTerminate");
 							ReleaseSemaphore(hWait[1], 1, NULL);
+						}
 						break;
 					}
 
@@ -598,6 +712,7 @@ struct PipeServer
 						// Wait a little
 						Sleep(10);
 						// Разрешить этой или другой нити создать серверный пайп
+						PLOG("WaitForClient.ReleaseOnError");
 						ReleaseSemaphore(hWait[1], 1, NULL);
 						// Try again
 						continue;
@@ -619,12 +734,17 @@ struct PipeServer
 				// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
 				SetLastError(0);
 				pPipe->dwState = CONNECTING_STATE;
+				PLOG("WaitForClient.Connect");
 				fConnected = ConnectNamedPipe(pPipe->hPipeInst, mb_Overlapped ? &pPipe->oOverlap : NULL);
 				pPipe->dwConnErr = GetLastError();
+				PLOG("WaitForClient.Connect done");
 				//? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED);
 				// сразу разрешить другой нити принять вызов
 				if (!mb_Overlapped)
+				{
+					PLOG("WaitForClient.ReleaseOnConnect1");
 					ReleaseSemaphore(hWait[1], 1, NULL);
+				}
 
 				//bool lbFail = false;
 				if (mb_Overlapped)
@@ -633,7 +753,9 @@ struct PipeServer
 					if (fConnected)
 					{
 						DumpError(pPipe, L"PipeServerThread:ConnectNamedPipe failed with 0x%08X", FALSE);
+						PLOG("WaitForClient.Sleeping-100");
 						Sleep(100);
+						PLOG("WaitForClient.ReleaseOnConnect2");
 						ReleaseSemaphore(hWait[1], 1, NULL);
 						continue;
 					}
@@ -650,7 +772,10 @@ struct PipeServer
 				if (mb_Terminate)
 				{
 					if (mb_Overlapped)
+					{
+						PLOG("WaitForClient.ReleaseOnTerminate2");
 						ReleaseSemaphore(hWait[1], 1, NULL);
+					}
 					break;
 				}
 
@@ -662,6 +787,7 @@ struct PipeServer
 					int nOverRc = (pPipe->dwConnErr == ERROR_PIPE_CONNECTED) ? 1 : WaitOverlapped(pPipe, &cbOver);
 					
 					DWORD t1 = _GetTime();
+					PLOG("WaitForClient.ReleaseOnConnect3");
 					ReleaseSemaphore(hWait[1], 1, NULL);
 					DWORD t2 = _GetTime();
 
@@ -894,7 +1020,9 @@ struct PipeServer
 					if (!mb_Terminate)
 					{
 						// Function does not return until the client process has read all the data.
+						PLOG("WaitForClient.FlushFileBuffers");
 						FlushFileBuffers(pPipe->hPipeInst);
+						PLOG("WaitForClient.FlushFileBuffers done");
 					}
 				}
 				
@@ -926,6 +1054,7 @@ struct PipeServer
 		};
 		bool StartPipeInstance(PipeInst* pPipe)
 		{
+			PLOG("StartPipeInstance");
 			if (mb_Overlapped)
 			{
 				if (pPipe->hEvent == NULL)
@@ -952,6 +1081,7 @@ struct PipeServer
 			pPipe->pServer = this;
 			pPipe->nThreadId = 0;
 			//pPipe->hThreadEnd = CreateEvent(NULL, TRUE, FALSE, NULL);
+			PLOG("StartPipeInstance.Thread");
 			pPipe->hThread = CreateThread(NULL, 0, _PipeServerThread, pPipe, 0, &pPipe->nThreadId);
 			if (pPipe->hThread == NULL)
 			{
@@ -962,6 +1092,7 @@ struct PipeServer
 			if (mn_Priority)
 				::SetThreadPriority(pPipe->hThread, mn_Priority);
 
+			PLOG("StartPipeInstance.Done");
 			return true;
 		};
 		static DWORD WINAPI _PipeServerThread(LPVOID lpvParam)
@@ -971,6 +1102,7 @@ struct PipeServer
 			_ASSERTEX(pPipe!=NULL && pPipe->pServer!=NULL);
 
 			pPipe->dwState = STARTED_STATE;
+			PLOG("_PipeServerThread.Started");
 
 			if (!pPipe->pServer->mb_Terminate)
 			{
@@ -979,17 +1111,27 @@ struct PipeServer
 			}
 
 			pPipe->dwState = TERMINATED_STATE;
+			PLOG("_PipeServerThread.Finished");
+
+			// When StopPipeServer is called from DllMain
+			// we possibly get in deadlock on "normal" thread termination
+			// LdrShutdownThread in THIS thread fails to enter into critical section,
+			// because it already locked by MAIN thread (DllMain)
+			// So, StopPipeServer will fails on wait for pipe threads
+			if (pPipe->pServer->mb_StopFromDllMain)
+			{
+				//WaitForSingleObject(pPipe->hThread, INFINITE); -- don't enter infinite lock
+				Sleep(RELEASEDEBUGTEST(1000,5000)); // just wait a little, main thread may be in time to terminate this thread
+			}
 			
 			// When "C:\Program Files (x86)\F-Secure\apps\ComputerSecurity\HIPS\fshook64.dll"
 			// is loaded, possible TerminateThread locks together
-#if 0
-			// Force thread termination cause of unknown attached dll's.
-			if (pPipe->pServer->mb_Terminate && !pPipe->bSkipTerminate)
-			{
-				pPipe->dwState = TERMINATE_CALL_STATE;
-				TerminateThread(GetCurrentThread(), 100);
-			}
-#endif
+			//// Force thread termination cause of unknown attached dll's.
+			//if (pPipe->pServer->mb_Terminate && !pPipe->bSkipTerminate)
+			//{
+			//	pPipe->dwState = TERMINATE_CALL_STATE;
+			//	TerminateThread(GetCurrentThread(), 100);
+			//}
 			return nResult;
 		};
 	//public:
@@ -1136,84 +1278,145 @@ struct PipeServer
 			return true;
 		};
 
-		void StopPipeServer()
+		void StopPipeServer(bool bFromDllMain)
 		{
 			if (!mb_Initialized)
 				return;
 
 			DWORD nWait;
+
+			PLOG3(-1,"StopPipeServer",0);
 			
+			mb_StopFromDllMain = bFromDllMain;
 			mb_Terminate = true;
 			if (mh_TermEvent)
 				SetEvent(mh_TermEvent);
 
-			for (int i = 0; i < mn_MaxCount; i++)
-			{
-				if (m_Pipes[i].hThread)
+			DWORD nTimeout = RELEASEDEBUGTEST(250,5000);
+			DWORD nStartTick = GetTickCount();
+			int nLeft = 0, nWaitLeft = 0;
+
+			PLOG3(-1,"WaitFor TERMINATED_STATE",0);
+
+			// Waiting for TERMINATED_STATE for all threads
+			do {
+				nLeft = nWaitLeft = 0;
+				for (int i = 0; i < mn_MaxCount; i++)
 				{
-					DWORD nTimeout = 250;
-					#ifdef _DEBUG
-						nTimeout = 5000;
-					#endif
-
-					//HANDLE hEvt[2] = {m_Pipes[i].hThread, m_Pipes[i].hThreadEnd};
-					//nWait = (m_Pipes[i].dwState == STARTING_STATE) ? WAIT_FAILED : WaitForMultipleObjects(countof(hEvt), hEvt, FALSE, nTimeout);
-					nWait = (m_Pipes[i].dwState == STARTING_STATE) ? WAIT_FAILED : WaitForSingleObject(m_Pipes[i].hThread, nTimeout);
-
-					if (nWait != WAIT_OBJECT_0)
+					if (m_Pipes[i].hThread)
 					{
-						#ifdef _DEBUG
-							if (m_Pipes[i].dwState != STARTING_STATE)
-							{
-								SuspendThread(m_Pipes[i].hThread);
-								_ASSERTEX(nWait == WAIT_OBJECT_0 && ("Ожидание завершения пайпа"));
-								ResumeThread(m_Pipes[i].hThread);
-							}
-						#endif
-
-						// When "C:\Program Files (x86)\F-Secure\apps\ComputerSecurity\HIPS\fshook64.dll"
-						// is loaded, possible TerminateThread locks together
-						m_Pipes[i].bSkipTerminate = TRUE;
-						if (m_Pipes[i].dwState != TERMINATE_CALL_STATE)
+						if (m_Pipes[i].dwState == STARTING_STATE)
 						{
+							// CreateThread was called, but thread routine was not entered yet.
+							PLOG3(i,"TerminateThread/STARTING_STATE",0);
 							TerminateThread(m_Pipes[i].hThread, 100);
+							m_Pipes[i].dwState = THREAD_FINISHED_STATE;
+							PLOG3(i,"TerminateThread/STARTING_STATE done",0);
+						}
+						else if ((m_Pipes[i].dwState == TERMINATED_STATE) && mb_StopFromDllMain)
+						{
+							// Don't wait for "normal" termination.
+							// Its deadlock when StopPipeServer is called from DllMain.
+							PLOG3(i,"TerminateThread/TERMINATED_STATE",TERMINATED_STATE);
+							nLeft++;
+						}
+						else if (m_Pipes[i].dwState != THREAD_FINISHED_STATE)
+						{
+							nWait = WaitForSingleObject(m_Pipes[i].hThread, 5);
+							if (nWait == WAIT_OBJECT_0)
+							{
+								m_Pipes[i].dwState = THREAD_FINISHED_STATE;
+							}
+							else
+							{
+								nLeft++;
+								nWaitLeft++;
+							}
 						}
 					}
+				}
+			} while ((nWaitLeft > 0) && ((GetTickCount() - nStartTick) < nTimeout));
 
+			// Non terminated threads exists?
+			if (nLeft > 0)
+			{
+				PLOG3(-1,"Timeout TERMINATED_STATE",nLeft);
+
+				// Unfortunately, waiting for server thread failed with timeout. Forcing termination
+				for (int i = 0; i < mn_MaxCount; i++)
+				{
+					if (m_Pipes[i].hThread && (m_Pipes[i].dwState != THREAD_FINISHED_STATE))
+					{
+						nWait = mb_StopFromDllMain ? WAIT_TIMEOUT : WaitForSingleObject(m_Pipes[i].hThread, 1);
+						if (nWait != WAIT_OBJECT_0)
+						{
+							PLOG3(i,"TerminateThread/Timeout",m_Pipes[i].dwState);
+
+							#ifdef _DEBUG
+							// When StopPipeServer is called from DllMain
+							// we possibly get in deadlock on "normal" thread termination
+							// LdrShutdownThread in PIPE thread fails to enter into critical section,
+							// because it already locked by THIS thread (DllMain)
+							// So, StopPipeServer will fails on wait for pipe threads
+							if (!mb_StopFromDllMain)
+							{
+								SuspendThread(m_Pipes[i].hThread);
+								_ASSERTEX(nWait == WAIT_OBJECT_0 && ("Waiting for pipe thread termination failed"));
+								ResumeThread(m_Pipes[i].hThread);
+							}
+							#endif
+
+							// When "C:\Program Files (x86)\F-Secure\apps\ComputerSecurity\HIPS\fshook64.dll"
+							// is loaded, possible TerminateThread locks together
+							TerminateThread(m_Pipes[i].hThread, 100);
+							m_Pipes[i].dwState = THREAD_FINISHED_STATE;
+							PLOG3(i,"TerminateThread/Timeout done",m_Pipes[i].dwState);
+						}
+					}
+					PLOG3(i,"CloseThreadHandle",m_Pipes[i].dwState);
 					CloseHandle(m_Pipes[i].hThread);
 					m_Pipes[i].hThread = NULL;
+					PLOG3(i,"CloseThreadHandle done",m_Pipes[i].dwState);
 				}
-				//if (m_Pipes[i].hThreadEnd)
-				//{
-				//	CloseHandle(m_Pipes[i].hThreadEnd);
-				//	m_Pipes[i].hThreadEnd = NULL;
-				//}
+			}
 
+			PLOG3(-1,"FinalizingPipes",0);
+
+			// Finalizing pipes...
+			for (int i = 0; i < mn_MaxCount; i++)
+			{
+				// Done. Closing pipe instances...
 				if (m_Pipes[i].hPipeInst && (m_Pipes[i].hPipeInst != INVALID_HANDLE_VALUE))
 				{
 					_Disconnect(&(m_Pipes[i]), true, true, false);
 				}
 				m_Pipes[i].hPipeInst = NULL;
 				
+				// And handles
 				if (m_Pipes[i].hEvent)
 				{
 					CloseHandle(m_Pipes[i].hEvent);
 					m_Pipes[i].hEvent = NULL;
 				}
 				
+				// Release buffers memory
 				if (m_Pipes[i].ptrRequest)
 				{
 					free(m_Pipes[i].ptrRequest);
 					m_Pipes[i].ptrRequest = NULL;
 				}
 				
+				// Callbacks
 				if (m_Pipes[i].ptrReply && mfn_PipeServerFree)
 				{
 					mfn_PipeServerFree(m_Pipes[i].ptrReply, m_lParam);
 					m_Pipes[i].ptrReply = NULL;
 				}
 			}
+
+			PLOG3(-1,"FinalizingPipes done",0);
 			
+			// Final release
 			if (mh_ServerSemaphore)
 			{
 				CloseHandle(mh_ServerSemaphore);
@@ -1229,6 +1432,8 @@ struct PipeServer
 			m_Pipes = NULL;
 
 			mb_Initialized = FALSE;
+
+			PLOG3(-1,"StopPipeServer done",0);
 		};
 
 		bool DelayedWrite(LPVOID pInstance, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite)
@@ -1245,6 +1450,7 @@ struct PipeServer
 		void BreakConnection(LPVOID pInstance)
 		{
 			PipeInst* pPipe = (PipeInst*)pInstance;
+			PLOG("BreakConnection");
 			pPipe->bBreakConnection = true;
 		};
 
@@ -1267,3 +1473,7 @@ struct PipeServer
 			return false;
 		};
 };
+
+#undef PLOG
+#undef PLOG2
+#undef PLOG3

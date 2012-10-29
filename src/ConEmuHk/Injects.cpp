@@ -31,18 +31,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
 #include "../ConEmuCD/ExitCodes.h"
-#include "ConEmuHooks.h"
-
+#include "../common/WinObjects.h"
+//#include "ConEmuHooks.h"
 #include "Console2.h"
 
 extern HMODULE ghOurModule;
+extern HWND ghConWnd;
 UINT_PTR gfnLoadLibrary = 0;
 UINT_PTR gfnLdrGetDllHandleByName = 0;
 //extern HMODULE ghPsApi;
 
 HANDLE ghSkipSetThreadContextForThread = NULL;
 
-HANDLE ghInjectsLiteEvent = NULL;
+HANDLE ghInjectsInMainThread = NULL;
 
 // ѕроверить, что gfnLoadLibrary лежит в пределах модул€ hKernel!
 UINT_PTR GetLoadLibraryAddress()
@@ -493,5 +494,21 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	//
 wrap:
 //#endif
+	if (iRc == 0)
+	{
+		SafeCloseHandle(ghInjectsInMainThread);
+
+		wchar_t szEvtName[64];
+		msprintf(szEvtName, countof(szEvtName), CECONEMUROOTTHREAD, pi.dwProcessId);
+		ghInjectsInMainThread = CreateEvent(LocalSecurity(), TRUE, TRUE, szEvtName);
+		if (ghInjectsInMainThread)
+		{
+			SetEvent(ghInjectsInMainThread);
+		}
+		else
+		{
+			_ASSERTEX(ghInjectsInMainThread!=NULL);
+		}
+	}
 	return iRc;
 }

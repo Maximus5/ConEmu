@@ -62,6 +62,7 @@ class CSettings
 		bool SingleInstanceArg; // по умолчанию = false, но дл€ Quake переключаетс€ на = true
 		SingleInstanceShowHideType SingleInstanceShowHide; // по умолчанию = sih_None
 		void ResetCmdArg();
+		bool ResetCmdHistory(HWND hParent = NULL);
 
 		//int DefaultBufferHeight;
 		bool bForceBufferHeight; int nForceBufferHeight;
