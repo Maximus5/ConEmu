@@ -564,6 +564,62 @@ wrap:
 	return pBkImgData;
 }
 
+BITMAPFILEHEADER* CreateSolidImage(COLORREF clr, UINT lWidth, UINT lHeight)
+{
+	BITMAPFILEHEADER* pBkImgData = NULL;
+
+	{
+		_ASSERTE(lWidth == 128); // Some predefined size...
+		UINT lWidth0 = lWidth; //((lWidth + 7) >> 3) << 3;
+		UINT lStride = lWidth0*3;
+		size_t nAllSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + lHeight*lStride; //(bmd.Stride>0?bmd.Stride:-bmd.Stride);
+	
+		pBkImgData = (BITMAPFILEHEADER*)malloc(nAllSize);
+		if (pBkImgData)
+		{
+			BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(pBkImgData+1);
+			// Заполняем данными
+			pBkImgData->bfType = 0x4D42/*BM*/;
+			pBkImgData->bfSize = (DWORD)nAllSize;
+			pBkImgData->bfReserved1 = pBkImgData->bfReserved2 = 0;
+			pBkImgData->bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO);
+			pBmp->biSize = sizeof(BITMAPINFOHEADER);
+			pBmp->biWidth = lWidth0;
+			pBmp->biHeight = lHeight;
+			pBmp->biPlanes = 1;
+			pBmp->biBitCount = 24;
+			pBmp->biCompression = BI_RGB;
+			pBmp->biSizeImage = 0;
+			pBmp->biXPelsPerMeter = 72;
+			pBmp->biYPelsPerMeter = 72;
+			pBmp->biClrUsed = 0;
+			pBmp->biClrImportant = 0;
+
+			//DWORD  n3 = (clr & 0xFFFFFF);
+			//DWORD  nColors[3] = { (n3 | ((n3 & 0xFF) << 24)), ((n3 >> 8) | ((n3 & 0xFFFF) << 16)) , ((n3 >> 16) | (n3 << 8)) };
+			DWORD  n1 = (clr & 0x0000FF);
+			DWORD  n2 = (clr & 0x00FF00)>>8;
+			DWORD  n3 = (clr & 0xFF0000)>>16;
+			DWORD  nColors[3] = { (n3)|(n2<<8)|(n1<<16)|(n3<<24), (n2)|(n1<<8)|(n3<<16)|(n2<<24), (n1)|(n3<<8)|(n2<<16)|(n1<<24) };
+
+			LPDWORD pDst = (LPDWORD)(((LPBYTE)(pBkImgData)) + pBkImgData->bfOffBits);
+			size_t nMax = (lHeight*lStride) >> 2; // Size of data in DWORDs
+			size_t i = 0;
+			while (i < nMax)
+			{
+				*(pDst++) = nColors[0];
+				*(pDst++) = nColors[1];
+				*(pDst++) = nColors[2];
+				i += 3;
+			}
+
+			pBmp->biWidth = lWidth;
+		}
+	}
+
+	return pBkImgData;
+}
+
 void LoadImageFinalize()
 {
 	if (hGdi)

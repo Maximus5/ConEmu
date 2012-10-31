@@ -247,8 +247,6 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 		wcscat_c(szAdd, L"u");
 	if (bBackgroundTab)
 		wcscat_c(szAdd, L"b");
-	if (bForceDosBox)
-		wcscat_c(szAdd, L"x");
 
 	if (bForceDosBox)
 		wcscat_c(szAdd, L"x");
@@ -279,7 +277,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 		if (nSplitPane)
 			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"%uT", nSplitPane);
 		if ((int)(nSplitValue/10) != 0)
-			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"%u", (int)(nSplitValue/10));
+			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"%u", (UINT)(nSplitValue/10));
 		wcscat_c(szAdd, (eSplit == eSplitHorz) ? L"H" : L"V");
 	}
 

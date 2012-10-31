@@ -657,6 +657,49 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		goto wrap;
 	}
 
+	if ((ImageBits != 16) && lbComSpec && asParam && *asParam)
+	{
+		int nLen = lstrlen(asParam);
+
+		// ћожет это запускаетс€ Dos-приложение через "cmd /c ..."?
+		for (int i = 0; (i <= 1) && (ImageSubsystem != IMAGE_SUBSYSTEM_DOS_EXECUTABLE); i++)
+		{
+			LPCWSTR pszCmdLine = asParam;
+
+			if (i == 0)
+			{
+				// —начала отрезать кавычки, если так
+				// asFile='cmd.exe' asParam='/C "C:\Lan\Turbo.exe File.pas"'
+				// '/C' - уже отброшен при проверке lbComSpec
+				if (nLen > 2 && pszCmdLine[0] == L'"' && pszCmdLine[nLen-1] == L'"')
+					pszCmdLine++;
+				else
+					continue;
+			}
+			else
+			{
+			}
+
+			if (NextArg(&pszCmdLine, ms_ExeTmp) == 0)
+			{
+				LPCWSTR pszExt = PointToExt(ms_ExeTmp);
+				if (pszExt && (lstrcmpi(pszExt, L".exe") == 0 || lstrcmpi(pszExt, L".com") == 0))
+				{
+					DWORD nCheckSybsystem = 0, nCheckBits = 0, nFileAttrs;
+					if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem, nCheckBits, nFileAttrs))
+					{
+						if (nCheckSybsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE && nCheckBits == 16)
+						{
+							ImageSubsystem = nCheckSybsystem;
+							ImageBits = nCheckBits;
+							_ASSERTEX(asFile==NULL);
+						}
+					}
+				}
+			}
+		}
+	}
+
 	if (ImageBits == 32) //-V112
 	{
 		wcscat_c(szConEmuC, L"ConEmuC.exe");
@@ -1310,7 +1353,7 @@ BOOL CShellProc::PrepareExecuteParms(
 				if (args.bForceDosBox && m_SrvMapping.cbSize && m_SrvMapping.bDosBox)
 				{
 					mn_ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
-					mn_ImageSubsystem = 16;
+					mn_ImageBits = 16;
 					bLongConsoleOutput = FALSE;
 					lbGuiApp = FALSE;
 				}
@@ -1433,7 +1476,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	// ≈сли это ‘ар - однозначно вставл€ем ConEmuC.exe
 	// -- bFarHookMode заменен на bLongConsoleOutput --
 	if ((bLongConsoleOutput)
-		|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хот€т GUI прицепить к новуй вкладке в ConEmu, или новую консоль из GUI
+		|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хот€т GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
 		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
 		|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
 			&& (bNewConsoleArg

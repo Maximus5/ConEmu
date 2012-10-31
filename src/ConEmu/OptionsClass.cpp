@@ -5554,37 +5554,50 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 }
 
 // Возвращает TRUE, если значение распознано и отличается от старого
-BOOL CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
+bool CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 {
-	BOOL result = FALSE;
-	int r = 0, g = 0, b = 0;
+	bool result = false;
+	//int r = 0, g = 0, b = 0;
 	wchar_t temp[MAX_PATH];
-	wchar_t *pch, *pchEnd;
+	//wchar_t *pch, *pchEnd;
 
 	if (!GetDlgItemText(hDlg, TB, temp, countof(temp)) || !*temp)
-		return FALSE;
+		return false;
 
-	if ((temp[0] == L'#') || (temp[0] == L'x' || temp[0] == L'X') || (temp[0] == L'0' && (temp[1] == L'x' || temp[1] == L'X')))
+	return GetColorRef(temp, pCR);
+}
+
+bool CSettings::GetColorRef(LPCWSTR pszText, COLORREF* pCR)
+{
+	if (!pszText || !*pszText)
+		return false;
+
+	bool result = false;
+	int r = 0, g = 0, b = 0;
+	const wchar_t *pch;
+	wchar_t *pchEnd;
+
+	if ((pszText[0] == L'#') || (pszText[0] == L'x' || pszText[0] == L'X') || (pszText[0] == L'0' && (pszText[1] == L'x' || pszText[1] == L'X')))
 	{
-		pch = (temp[0] == L'0') ? (temp+2) : (temp+1);
+		pch = (pszText[0] == L'0') ? (pszText+2) : (pszText+1);
 		// Считаем значение 16-ричным rgb кодом
 		pchEnd = NULL;
 		COLORREF clr = wcstoul(pch, &pchEnd, 16);
-		if (clr && (temp[0] == L'#'))
+		if (clr && (pszText[0] == L'#'))
 		{
 			// "#rrggbb", обменять местами rr и gg, нам нужен COLORREF (bbggrr)
 			clr = ((clr & 0xFF)<<16) | ((clr & 0xFF00)) | ((clr & 0xFF0000)>>16);
 		}
 		// Done
-		if (pchEnd && (pchEnd > (temp+1)) && (clr <= 0xFFFFFF) && (*pCR != clr))
+		if (pchEnd && (pchEnd > (pszText+1)) && (clr <= 0xFFFFFF) && (*pCR != clr))
 		{
 			*pCR = clr;
-			result = TRUE;
+			result = true;
 		}
 	}
 	else
 	{
-		pch = (wchar_t*)wcspbrk(temp, L"0123456789");
+		pch = (wchar_t*)wcspbrk(pszText, L"0123456789");
 		pchEnd = NULL;
 		r = pch ? wcstol(pch, &pchEnd, 10) : 0;
 		if (pchEnd && (pchEnd > pch))
@@ -5604,32 +5617,10 @@ BOOL CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 			if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && *pCR != RGB(r, g, b))
 			{
 				*pCR = RGB(r, g, b);
-				result = TRUE;
+				result = true;
 			}
 		}
 	}
-
-	//TCHAR *sp1 = wcschr(temp, ' '), *sp2;
-
-	//if (sp1 && *(sp1+1) && *(sp1+1) != ' ')
-	//{
-	//	sp2 = wcschr(sp1+1, ' ');
-
-	//	if (sp2 && *(sp2+1) && *(sp2+1) != ' ')
-	//	{
-	//		*sp1 = 0;
-	//		sp1++;
-	//		*sp2 = 0;
-	//		sp2++;
-	//		r = klatoi(temp); g = klatoi(sp1), b = klatoi(sp2);
-
-	//		if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && *pCR != RGB(r, g, b))
-	//		{
-	//			*pCR = RGB(r, g, b);
-	//			result = TRUE;
-	//		}
-	//	}
-	//}
 
 	return result;
 }
@@ -12053,7 +12044,8 @@ bool CSettings::PollBackgroundFile()
 {
 	bool lbChanged = false;
 
-	if (gpSet->isShowBgImage && gpSet->sBgImage[0] && (GetTickCount() - nBgModifiedTick) > BACKGROUND_FILE_POLL)
+	if (gpSet->isShowBgImage && gpSet->sBgImage[0] && ((GetTickCount() - nBgModifiedTick) > BACKGROUND_FILE_POLL)
+		&& wcspbrk(gpSet->sBgImage, L"%\\.")) // только для файлов!
 	{
 		WIN32_FIND_DATA fnd = {0};
 		HANDLE hFind = FindFirstFile(gpSet->sBgImage, &fnd);
@@ -12277,26 +12269,42 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 		return false;
 	}
 
-	TCHAR exPath[MAX_PATH + 2];
-
-	if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH))
-	{
-		if (abShowErrors)
-		{
-			wchar_t szError[MAX_PATH*2];
-			DWORD dwErr = GetLastError();
-			_wsprintf(szError, SKIPLEN(countof(szError)) L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
-			          inPath, dwErr);
-			MBoxA(szError);
-		}
-
-		return false;
-	}
-
 	_ASSERTE(gpConEmu->isMainThread());
 	bool lRes = false;
 	BY_HANDLE_FILE_INFORMATION inf = {0};
-	BITMAPFILEHEADER* pBkImgData = LoadImageEx(exPath, inf);
+	BITMAPFILEHEADER* pBkImgData = NULL;
+
+	if (wcspbrk(inPath, L"%\\.") == NULL)
+	{
+		// May be "Solid color"
+		COLORREF clr = (COLORREF)-1;
+		if (GetColorRef(inPath, &clr))
+		{
+			pBkImgData = CreateSolidImage(clr, 128, 128);
+		}
+	}
+	
+	if (!pBkImgData)
+	{
+		TCHAR exPath[MAX_PATH + 2];
+
+		if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH))
+		{
+			if (abShowErrors)
+			{
+				wchar_t szError[MAX_PATH*2];
+				DWORD dwErr = GetLastError();
+				_wsprintf(szError, SKIPLEN(countof(szError)) L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
+				          inPath, dwErr);
+				MBoxA(szError);
+			}
+
+			return false;
+		}
+
+		pBkImgData = LoadImageEx(exPath, inf);
+	}
+
 	if (pBkImgData)
 	{
 		ftBgModified = inf.ftLastWriteTime;

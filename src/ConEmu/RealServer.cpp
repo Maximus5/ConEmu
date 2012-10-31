@@ -1192,7 +1192,7 @@ CESERVER_REQ* CRealServer::cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT
 	if (pIn->OnCreateProc.nImageBits > 0)
 	{
 		TODO("!!! DosBox allowed?");
-		_ASSERTE(lbDos==FALSE); //WARNING("Зачем (lbDos && FALSE)?");
+		_ASSERTE(lbDos==FALSE || gpConEmu->mb_DosBoxExists); //WARNING("Зачем (lbDos && FALSE)?");
 		
 		if (gpSet->AutoBufferHeight // LongConsoleOutput
 			|| (lbDos && FALSE)) // DosBox!!!

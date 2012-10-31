@@ -346,7 +346,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Standard colors (""red green blue"")",gbStandardColors,4,1,319,86
+    GROUPBOX        "Standard colors: «RRR GGG BBB» (dec), «#RRGGBB» (hex), «0xBBGGRR» (hex)",gbStandardColors,4,1,319,86
     RTEXT           "0.",IDC_STATIC,12,15,8,8
     LTEXT           "",c0,24,12,12,12,SS_NOTIFY | SS_SUNKEN
     RTEXT           "1.",IDC_STATIC,12,28,8,8
@@ -395,7 +395,7 @@ BEGIN
     RTEXT           "13.",IDC_STATIC,239,28,13,8
     RTEXT           "14.",IDC_STATIC,239,41,13,8
     RTEXT           "15.",IDC_STATIC,239,54,13,8
-    GROUPBOX        "Extended foreground colors (""red green blue"")",IDC_STATIC,4,92,319,83
+    GROUPBOX        "Extended foreground colors (same format as Standard colors)",IDC_STATIC,4,92,319,83
     RTEXT           "16.",IDC_STATIC,7,121,13,8
     LTEXT           "",c16,24,118,12,12,SS_NOTIFY | SS_SUNKEN
     RTEXT           "17.",IDC_STATIC,7,134,13,8

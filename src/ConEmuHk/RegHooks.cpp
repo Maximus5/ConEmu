@@ -935,7 +935,7 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 			//			_strcat_c(lpTemp, nSrcLen, lpSubKeyTmp+nLen);
 			int nGuidLen = 38;
 			// !!! ANSI !!!
-			if (memcmp(pszDot+1, VIRTUAL_REGISTRY_GUID_A, nGuidLen))
+			if (memcmp(pszDot+1, VIRTUAL_REGISTRY_GUID_A, nGuidLen)!=0)
 				return true; // не он
 			// Выбросить из lpSubKey GUID для обращения к реальному реестру
 			int nLen = lstrlenA(lpSubKey);
@@ -1163,7 +1163,7 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 			//			_strcat_c(lpTemp, nSrcLen, lpSubKeyTmp+nLen);
 			int nGuidLen = 38;
 			// !!! UNICODE !!!
-			if (memcmp(pszDot+1, VIRTUAL_REGISTRY_GUID, nGuidLen*2))
+			if (memcmp(pszDot+1, VIRTUAL_REGISTRY_GUID, nGuidLen*2)!=0)
 				return true; // не он
 			// Выбросить из lpSubKey GUID для обращения к реальному реестру
 			int nLen = lstrlen(lpSubKey);

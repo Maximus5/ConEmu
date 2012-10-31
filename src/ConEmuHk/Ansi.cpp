@@ -1674,7 +1674,7 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 									else if (Code.ArgSZ[2] == L'6' && Code.ArgSZ[3] == L';')
 									{
 										CESERVER_REQ* pOut = NULL;
-										CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(sizeof(CESERVER_REQ_GUIMACRO))+sizeof(wchar_t)*(Code.cchArgSZ));
+										CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+sizeof(wchar_t)*(Code.cchArgSZ));
 
 										if (pIn)
 										{

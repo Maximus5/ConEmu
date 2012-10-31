@@ -322,7 +322,8 @@ bool CBackgroundFile::PollBackgroundFile()
 {
 	bool lbChanged = false;
 
-	if (gpSet->isShowBgImage && sBgImage[0] && ((GetTickCount() - nBgModifiedTick) > BACKGROUND_FILE_POLL))
+	if (gpSet->isShowBgImage && sBgImage[0] && ((GetTickCount() - nBgModifiedTick) > BACKGROUND_FILE_POLL)
+		&& wcspbrk(sBgImage, L"%\\.")) // только для файлов!
 	{
 		WIN32_FIND_DATA fnd = {0};
 		HANDLE hFind = FindFirstFile(gpSet->sBgImage, &fnd);
@@ -355,26 +356,42 @@ bool CBackgroundFile::LoadBackgroundFile(const wchar_t* inPath, bool abShowError
 		return false;
 	}
 
-	TCHAR exPath[MAX_PATH + 2];
-
-	if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH))
-	{
-		if (abShowErrors)
-		{
-			wchar_t szError[MAX_PATH*2];
-			DWORD dwErr = GetLastError();
-			_wsprintf(szError, SKIPLEN(countof(szError)) L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
-			          inPath, dwErr);
-			MBoxA(szError);
-		}
-
-		return false;
-	}
-
 	_ASSERTE(gpConEmu->isMainThread());
 	bool lRes = false;
 	BY_HANDLE_FILE_INFORMATION inf = {0};
-	BITMAPFILEHEADER* pBkImgData = LoadImageEx(exPath, inf);
+	BITMAPFILEHEADER* pBkImgData = NULL;
+
+	if (wcspbrk(inPath, L"%\\.") == NULL)
+	{
+		// May be "Solid color"
+		COLORREF clr = (COLORREF)-1;
+		if (GetColorRef(inPath, &clr))
+		{
+			pBkImgData = CreateSolidImage(clr, 128, 128)
+		}
+	}
+	
+	if (!pBkImgData)
+	{
+		TCHAR exPath[MAX_PATH + 2];
+
+		if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH))
+		{
+			if (abShowErrors)
+			{
+				wchar_t szError[MAX_PATH*2];
+				DWORD dwErr = GetLastError();
+				_wsprintf(szError, SKIPLEN(countof(szError)) L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
+				          inPath, dwErr);
+				MBoxA(szError);
+			}
+
+			return false;
+		}
+
+		pBkImgData = LoadImageEx(exPath, inf);
+	}
+
 	if (pBkImgData)
 	{
 		ftBgModified = inf.ftLastWriteTime;

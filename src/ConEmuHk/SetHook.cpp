@@ -831,23 +831,21 @@ bool __stdcall InitHooks(HookItem* apHooks)
 
 			if (skip) continue;
 
-			if (j >= 0)
-			{
-				if ((j+1) >= MAX_HOOKED_PROCS)
-				{
-					// Превышено допустимое количество
-					_ASSERTE((j+1) < MAX_HOOKED_PROCS);
-					continue; // может какие другие хуки удастся обновить, а не добавить
-				}
 
-				gpHooks[j].Name = apHooks[i].Name;
-				gpHooks[j].DllName = apHooks[i].DllName;
-				gpHooks[j].NewAddress = apHooks[i].NewAddress;
-				_ASSERTEX(j >= gnHookedFuncs);
-				gnHookedFuncs = j+1;
-				gpHooks[j+1].Name = NULL; // на всякий
-				gpHooks[j+1].NewAddress = NULL; // на всякий
+			if ((j+1) >= MAX_HOOKED_PROCS)
+			{
+				// Превышено допустимое количество
+				_ASSERTE((j+1) < MAX_HOOKED_PROCS);
+				continue; // может какие другие хуки удастся обновить, а не добавить
 			}
+
+			gpHooks[j].Name = apHooks[i].Name;
+			gpHooks[j].DllName = apHooks[i].DllName;
+			gpHooks[j].NewAddress = apHooks[i].NewAddress;
+			_ASSERTEX(j >= gnHookedFuncs);
+			gnHookedFuncs = j+1;
+			gpHooks[j+1].Name = NULL; // на всякий
+			gpHooks[j+1].NewAddress = NULL; // на всякий
 		}
 	}
 
@@ -2695,7 +2693,7 @@ bool UnsetHookInt(HMODULE Module)
 							}
 							else
 							{
-								if (strcmp(pszFuncName, gpHooks[j].Name))
+								if (strcmp(pszFuncName, gpHooks[j].Name)!=0)
 									continue;
 							}
 			

@@ -93,6 +93,11 @@ struct CONEMUDEFCOLORS
 	const wchar_t* pszTitle;
 	DWORD dwDefColors[0x10];
 	BYTE  nIndexes[4]; // Text/Back/PopupText/PopupBack
+	struct {
+	bool  isBackground;
+	DWORD clrBackground;
+	} Bk;
+
 	bool isIndexes() const { return (nIndexes[0] && nIndexes[1] && nIndexes[2] && nIndexes[3]); };
 };
 
@@ -175,6 +180,12 @@ const CONEMUDEFCOLORS DefColors[] =
 			0x003f3f3f, 0x00af6464, 0x00008000, 0x00808000, 0x00232333, 0x00aa50aa, 0x0000dcdc, 0x00ccdcdc,
 			0x008080c0, 0x00ffafaf, 0x007f9f7f, 0x00d3d08c, 0x007071e3, 0x00c880c8, 0x00afdff0, 0x00ffffff
 		},
+	},
+	{
+		L"<Ubuntu>", { // Need to set up backround "picture" with colorfill #300A24
+			0x0036342e, 0x00a46534, 0x00069a4e, 0x009a9806, 0x000000cc, 0x007b5075, 0x0000a0c4, 0x00cfd7d3,
+			0x00535755, 0x00cf9f72, 0x0034e28a, 0x00e2e234, 0x002929ef, 0x00a87fad, 0x004fe9fc, 0x00eceeee			
+		}, {15, 0, 0, 0}, {true, 0x00240A30}
 	},
 };
 //const DWORD *dwDefColors = DefColors[0].dwDefColors;
@@ -5297,7 +5308,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 	ConEmuHotKey HotKeys[] =
 	{
 		// User (Keys, Global) -- ƒобавить chk_Global недостаточно, нужно еще и gRegisteredHotKeys обработать
-		{vkMinimizeRestore,chk_Global, NULL,   L"MinimizeRestore",       MakeHotKey('C',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MinimizeRestore},
+		{vkMinimizeRestore,chk_Global, NULL,   L"MinimizeRestore",       MakeHotKey(VK_OEM_3/*~*/,VK_CONTROL), CConEmuCtrl::key_MinimizeRestore},
 		{vkMinimizeRestor2,chk_Global, NULL,   L"MinimizeRestore2",      0, CConEmuCtrl::key_MinimizeRestore},
 		{vkGlobalRestore,  chk_Global, NULL,   L"GlobalRestore",         0, CConEmuCtrl::key_GlobalRestore},
 		{vkForceFullScreen,chk_Global, NULL,   L"ForcedFullScreen",      MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL,VK_MENU), CConEmuCtrl::key_ForcedFullScreen},

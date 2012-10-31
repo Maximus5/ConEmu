@@ -14,6 +14,14 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+[%] Sometimes DosBox do not starts from Far command prompt (doom.exe -warp 10).
+[+] Background: you may set «solid color». Just type in «Path» field ColorRef value
+    (e.g. «#300A24» without quotas) instead background picture file. Supported formats are:
+    «#RRGGBB» (hex), «0xBBGGRR» (hex), «xBBGGRR» (hex), «RRR,GGG,BBB» (dec), «RRR GGG BBB» (dec).
+[+] New predefined color scheme: <Ubuntu>. If you need purple background, set background color to #300A24 on «Main» page.
+[*] Decided to change default hotkey for «Minimize/Restore» - it's now Ctrl+~.
+
+
 2012.10.29
 [+] New option: Settings -> Status bar -> System colors.
 [!] Issue 791: Rollback changes in «Run As Administrator».

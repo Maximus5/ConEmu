@@ -565,7 +565,8 @@ class CSettings
 		//DWORD mn_FadeMul;
 		//COLORREF mn_LastFadeSrc, mn_LastFadeDst;
 		//COLORREF ColorsFade[0x20];
-		BOOL GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
+		bool GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
+		bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
 		//inline BYTE GetFadeColorItem(BYTE c);
 		//
 		bool mb_ThemingEnabled;
