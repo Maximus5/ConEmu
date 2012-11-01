@@ -225,6 +225,14 @@ enum RealBufferType
 	rbt_DumpScreen,
 };
 
+enum LoadAltMode
+{
+	lam_Default = 0,    // режим выбирается автоматически
+	lam_LastOutput = 1, // имеет смысл только для фара и "Long console output"
+	lam_FullBuffer = 2, // снимок экрана - полный буфер с прокруткой
+	lam_Primary = 3,    // TODO: для быстрого начала выделения - копия буфера rbt_Primary
+};
+
 enum ExpandTextRangeType;
 
 #include "RealServer.h"
@@ -291,7 +299,7 @@ class CRealConsole
 		BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZESYNC);
 	private:
 		bool SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEvent = true);
-		bool LoadAlternativeConsole(bool abForceLoadCurrent = false);
+		bool LoadAlternativeConsole(LoadAltMode iMode = lam_Default);
 		BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	private:
 		//void SendConsoleEvent(INPUT_RECORD* piRec);

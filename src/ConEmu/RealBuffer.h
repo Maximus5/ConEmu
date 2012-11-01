@@ -59,7 +59,7 @@ public:
 	void DumpConsole(HANDLE ahFile);
 	bool LoadDumpConsole(LPCWSTR asDumpFile);
 
-	bool LoadAlternativeConsole(int iMode = 0);
+	bool LoadAlternativeConsole(LoadAltMode iMode = lam_Default);
 
 	void ReleaseMem();
 	void PreFillBuffers();

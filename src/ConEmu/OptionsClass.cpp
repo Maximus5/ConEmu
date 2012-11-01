@@ -81,6 +81,8 @@ const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed 
 #define FAILED_CONFONT_TIMEOUT 30000
 #define FAILED_SELMOD_TIMEOUT 5000
 
+#define DEFAULT_FINDDLG_ALPHA 180
+
 //const WORD HostkeyCtrlIds[] = {cbHostWin, cbHostApps, cbHostLCtrl, cbHostRCtrl, cbHostLAlt, cbHostRAlt, cbHostLShift, cbHostRShift};
 //const BYTE HostkeyVkIds[]   = {VK_LWIN,   VK_APPS,    VK_LCONTROL, VK_RCONTROL, VK_LMENU,   VK_RMENU,   VK_LSHIFT,    VK_RSHIFT};
 //int upToFontHeight=0;

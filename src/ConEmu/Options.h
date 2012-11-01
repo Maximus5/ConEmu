@@ -59,7 +59,6 @@ void MinMax(T &a, int v2)
 
 #define MIN_ALPHA_VALUE 40
 #define MIN_INACTIVE_ALPHA_VALUE 0
-#define DEFAULT_FINDDLG_ALPHA 180
 #define MAX_FONT_STYLES 8  //normal/(bold|italic|underline)
 #define MAX_FONT_GROUPS 20 // Main, Borders, Japan, Cyrillic, ...
 

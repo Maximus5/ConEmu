@@ -493,19 +493,19 @@ wrap:
 }
 
 // 1 - Last long console output, 2 - current console "image", 3 - copy of rbt_Primary
-bool CRealBuffer::LoadAlternativeConsole(int iMode /*= 0*/)
+bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 {
 	bool lbRc = false;
 	
 	con.m_sel.dwFlags = 0;
 	dump.Close();
 
-	if (iMode == 0)
+	if (iMode == lam_Default)
 	{
-		iMode = (mp_RCon->isFar() && gpSet->AutoBufferHeight) ? 1 : 2;
+		iMode = (mp_RCon->isFar() && gpSet->AutoBufferHeight) ? lam_LastOutput : lam_FullBuffer;
 	}
 
-	if (iMode == 1)
+	if (iMode == lam_LastOutput)
 	{
 		MFileMapping<CESERVER_CONSAVE_MAPHDR> StoredOutputHdr;
 		MFileMapping<CESERVER_CONSAVE_MAP> StoredOutputItem;
@@ -543,7 +543,7 @@ bool CRealBuffer::LoadAlternativeConsole(int iMode /*= 0*/)
 
 		lbRc = LoadDataFromDump(storedSbi, pData->Data, cchMaxBufferSize);
 	}
-	else if (iMode == 2)
+	else if (iMode == lam_FullBuffer)
 	{
 		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_CONSOLEFULL, sizeof(CESERVER_REQ_HDR));
 		if (pIn)
@@ -561,7 +561,8 @@ bool CRealBuffer::LoadAlternativeConsole(int iMode /*= 0*/)
 	}
 	else
 	{
-		_ASSERTE(iMode==1 || iMode==2);
+		// Unsupported yet...
+		_ASSERTE(iMode==lam_LastOutput || iMode==lam_FullBuffer);
 	}
 
 wrap:
@@ -1003,6 +1004,7 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 	con.bInSetSize = FALSE; SetEvent(con.hInSetSize);
 	HEAPVAL;
 
+#if 0
 	if (lbRc && mp_RCon->isActive())
 	{
 		if (!mp_RCon->isNtvdm())
@@ -1018,6 +1020,7 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 		// -- должно срабатывать при ApplyData
 		//gpConEmu->UpdateStatusBar();
 	}
+#endif
 
 	HEAPVAL;
 	DEBUGSTRSIZE(L"SetConsoleSize.finalizing\n");
@@ -2928,25 +2931,34 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 {
 	bool bFound = false;
 	COORD crStart = {}, crEnd = {};
-	LPCWSTR pszFrom = NULL, pszDataStart = NULL;
+	LPCWSTR pszFrom = NULL, pszDataStart = NULL, pszEnd = NULL;
+	LPCWSTR pszFrom1 = NULL, pszEnd1 = NULL;
 	size_t nWidth = 0, nHeight = 0;
 
 	if (m_Type == rbt_Primary)
 	{
-		pszDataStart = pszFrom = con.pConChar;
+		pszDataStart = pszFrom = pszFrom1 = con.pConChar;
 		nWidth = this->GetTextWidth();
 		nHeight = this->GetTextHeight();
 		_ASSERTE(pszFrom[nWidth*nHeight] == 0); // Должно быть ASCIIZ
+		pszEnd = pszEnd1 = pszFrom + (nWidth * nHeight);
 	}
 	else if (dump.pszBlock1)
 	{
-		WARNING("Доработать для режима с прокруткой");
+		//WARNING("Доработать для режима с прокруткой");
 		nWidth = dump.crSize.X;
 		nHeight = dump.crSize.Y;
 		_ASSERTE(dump.pszBlock1[nWidth*nHeight] == 0); // Должно быть ASCIIZ
 
-		pszDataStart = pszFrom = dump.pszBlock1 + con.m_sbi.srWindow.Top * nWidth;
-		nHeight = min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1));
+		pszDataStart = dump.pszBlock1;
+		pszEnd = pszDataStart + (nWidth * nHeight);
+
+		pszFrom = pszFrom1 = dump.pszBlock1 + con.m_sbi.srWindow.Top * nWidth;
+
+		// Search in whole buffer
+		//nHeight = min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1));
+		// But remember visible area
+		pszEnd1 = pszFrom + (nWidth * min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1)));
 	}
 
 	WARNING("TODO: bFindNext");
@@ -2954,10 +2966,10 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 	if (pszFrom && asText && *asText && nWidth && nHeight)
 	{
 		int nFindLen = lstrlen(asText);
-		LPCWSTR pszEnd = pszFrom + (nWidth * nHeight);
 		const wchar_t* szWordDelim = L"~!%^&*()+|{}:\"<>?`-=\\[];',./";
 		LPCWSTR pszFound = NULL;
 		int nStepMax = 0;
+		INT_PTR nFrom = -1;
 
 		if (nDirection > 1)
 			nDirection = 1;
@@ -2966,10 +2978,12 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 
 		if (isSelectionPresent())
 		{
-			size_t nFrom = con.m_sel.srSelection.Left + (con.m_sel.srSelection.Top * nWidth);
+			nFrom = con.m_sel.srSelection.Left + (con.m_sel.srSelection.Top * nWidth);
+			_ASSERTE(nFrom>=0);
+
 			if (nDirection >= 0)
 			{
-				if ((nFrom + nDirection) >= (nWidth * nHeight))
+				if ((nFrom + nDirection) >= (INT_PTR)(nWidth * nHeight))
 					goto done; // считаем, что не нашли
 				pszFrom += (nFrom + nDirection);
 			}
@@ -2977,7 +2991,7 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 			{
 				pszEnd = pszFrom + nFrom;
 			}
-			nStepMax = 1;
+			nStepMax = ((m_Type == rbt_Primary) || (nDirection >= 0)) ? 1 : 2;
 		}
 
 		for (int i = 0; i <= nStepMax; i++)
@@ -3035,10 +3049,22 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 			if (pszFrom && bFound)
 				break;
 
-			if (!i)
+			if (!nStepMax)
+				break;
+
+
+			pszFrom = pszDataStart;
+			pszEnd = pszDataStart + (nWidth * nHeight);
+			if ((nDirection < 0) && (nFrom >= 0))
 			{
-				pszFrom = pszDataStart;
-				pszEnd = pszFrom + (nWidth * nHeight);
+				if (i == 0)
+				{
+					pszEnd = pszFrom1 + nFrom;
+				}
+				else
+				{
+					pszFrom = pszFrom1 + nFrom + 1;
+				}
 			}
 		}
 
@@ -3047,6 +3073,38 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 		{
 			// Нашли
 			size_t nCharIdx = (pszFrom - pszDataStart);
+
+			WARNING("Переделать выделение на поддержку прокрутки, а не только видимой области");
+
+			// А пока - возможная коррекция видимой области, если нашли "за пределами"
+			if (m_Type != rbt_Primary)
+			{
+				int nRows = con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top; // Для удобства
+
+				if (pszFrom < pszFrom1)
+				{
+					// Прокрутить буфер вверх
+					con.nTopVisibleLine = con.m_sbi.srWindow.Top = max(0,((int)(nCharIdx / nWidth))-1);
+					con.m_sbi.srWindow.Bottom = min((con.m_sbi.srWindow.Top + nRows), con.m_sbi.dwSize.Y-1);
+				}
+				else if (pszFrom >= pszEnd1)
+				{
+					// Прокрутить буфер вниз
+					con.m_sbi.srWindow.Bottom = min((nCharIdx / nWidth)+1, (UINT)con.m_sbi.dwSize.Y-1);
+					con.nTopVisibleLine = con.m_sbi.srWindow.Top = max(0, con.m_sbi.srWindow.Bottom-nRows);
+				}
+
+				if (nCharIdx >= (size_t)(con.m_sbi.srWindow.Top*nWidth))
+				{
+					nCharIdx -= con.m_sbi.srWindow.Top*nWidth;
+				}
+			}
+			else
+			{
+				// Для rbt_Primary - прокрутки быть не должно (не рассчитано здесь на это)
+				_ASSERTE(pszDataStart == pszFrom1);
+			}
+
 			WARNING("тут бы на ширину буфера ориентироваться, а не видимой области...");
 			if (nCharIdx < (nWidth*nHeight))
 			{
@@ -3057,7 +3115,8 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 				crEnd.X = (nCharIdx + nFindLen - 1) - (nWidth * crEnd.Y);
 			}
 		}
-	}
+
+	} // if (pszFrom && asText && *asText && nWidth && nHeight)
 
 done:
 	if (!bFound)
@@ -3083,7 +3142,7 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	{
 		if (m_Type == rbt_Primary)
 		{
-			if (mp_RCon->LoadAlternativeConsole(true) && (mp_RCon->mp_ABuf != this))
+			if (mp_RCon->LoadAlternativeConsole(lam_FullBuffer) && (mp_RCon->mp_ABuf != this))
 			{
 				// Сменился буфер (переключились на альтернативную консоль)
 				// Поэтому дальнейшие действия - в этом буфере

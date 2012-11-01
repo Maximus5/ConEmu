@@ -500,7 +500,7 @@ bool CRealConsole::LoadDumpConsole(LPCWSTR asDumpFile)
 	return true;
 }
 
-bool CRealConsole::LoadAlternativeConsole(bool abForceLoadCurrent /*= false*/)
+bool CRealConsole::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 {
 	if (!this)
 		return false;
@@ -515,7 +515,7 @@ bool CRealConsole::LoadAlternativeConsole(bool abForceLoadCurrent /*= false*/)
 		}
 	}
 	
-	if (!mp_SBuf->LoadAlternativeConsole(abForceLoadCurrent ? 2 : 0))
+	if (!mp_SBuf->LoadAlternativeConsole(iMode))
 	{
 		SetActiveBuffer(mp_RBuf);
 		return false;
@@ -3505,7 +3505,7 @@ void CRealConsole::DoFindText(int nDirection)
 	{
 		if (mp_ABuf->m_Type == rbt_Primary)
 		{
-			if (LoadAlternativeConsole(true) && (mp_ABuf->m_Type != rbt_Primary))
+			if (LoadAlternativeConsole(lam_FullBuffer) && (mp_ABuf->m_Type != rbt_Primary))
 			{
 				mp_ABuf->m_Type = rbt_Find;
 			}

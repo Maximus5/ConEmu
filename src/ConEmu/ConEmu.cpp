@@ -16313,7 +16313,7 @@ void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*=
 	}
 
 	TODO("EnableBlurBehind: tabs and toolbar must be rewritten, all parts of GUI must be drawn with Alpha channel");
-#if 0
+#ifdef _DEBUG
 	EnableBlurBehind((nAlpha < 255));
 #endif
 
