@@ -794,16 +794,55 @@ class CConEmuMain :
 // Originally from http://preshing.com/20120522/lightweight-in-memory-logging
 namespace ConEmuMsgLogger
 {
+	enum Source {
+		msgCommon,
+		msgMain,
+		msgWork,
+		msgApp,
+		msgCanvas,
+		msgBack,
+		msgGhost,
+	};
 	static const int BUFFER_SIZE = RELEASEDEBUGTEST(0x1000,0x1000);   // Must be a power of 2
-	extern MSG g_events[BUFFER_SIZE];
-	extern LONG g_pos;
+	extern MSG g_msg[BUFFER_SIZE];
+	extern LONG g_msgidx;
+
+	static const int BUFFER_POS_SIZE = RELEASEDEBUGTEST(0x100,0x100);   // Must be a power of 2
+	struct Event {
+		short x, y, w, h;
+		enum {
+			Empty,
+			WindowPosChanging,
+			WindowPosChanged,
+			Sizing,
+			Size,
+			Moving,
+			Move,
+		} msg;
+		DWORD time;
+		HWND hwnd;
+	};
+	extern Event g_pos[BUFFER_POS_SIZE];
+	extern LONG g_posidx;
+	extern void LogPos(const MSG& msg, Source from);
  
-	inline void Log(const MSG& msg)
+	inline void Log(const MSG& msg, Source from)
 	{
 		// Get next message index
-		LONG i = _InterlockedIncrement(&g_pos);
+		LONG i = _InterlockedIncrement(&g_msgidx);
 		// Write a message at this index
-		g_events[i & (BUFFER_SIZE - 1)] = msg; // Wrap to buffer size
+		g_msg[i & (BUFFER_SIZE - 1)] = msg; // Wrap to buffer size
+		switch (msg.message)
+		{
+		case WM_WINDOWPOSCHANGING:
+		case WM_WINDOWPOSCHANGED:
+		case WM_MOVE:
+		case WM_SIZE:
+		case WM_SIZING:
+		case WM_MOVING:
+			LogPos(msg, from);
+			break;
+		}
 	}
 }
 

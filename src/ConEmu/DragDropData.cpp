@@ -2127,7 +2127,7 @@ DWORD CDragDropData::DragThread(LPVOID lpParameter)
 	// Сама обработка (Оконная процедура) происходит в DragProc (ниже)
 	while (GetMessage(&msg, 0,0,0))
 	{
-		ConEmuMsgLogger::Log(msg);
+		ConEmuMsgLogger::Log(msg, ConEmuMsgLogger::msgCommon);
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}

@@ -777,7 +777,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 
 	if (mp_sei && mp_sei->hProcess)
 	{
-		_ASSERTE(mp_sei->hProcess == hProcess);
+		_ASSERTE(mp_sei->hProcess == hProcess || hProcess == (HANDLE)(DWORD_PTR)rStartStop->hServerProcessHandle);
 		mp_sei->hProcess = NULL;
 	}
 

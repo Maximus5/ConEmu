@@ -227,6 +227,10 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 {
 	LRESULT result = 0;
 
+	// Logger
+	MSG msgStr = {hWnd, messg, wParam, lParam};
+	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgCanvas);
+
 	if (gpSetCls->isAdvLogging >= 4)
 	{
 		gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
@@ -295,6 +299,13 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			}
 			break;
 		case WM_SIZE:
+			#ifdef _DEBUG
+			{
+				RECT rc; GetClientRect(hWnd, &rc);
+				short cx = LOWORD(lParam);
+				rc.left = rc.left;
+			}
+			#endif
 			result = pVCon->OnSize(wParam, lParam);
 			break;
 		case WM_CREATE:
@@ -528,6 +539,10 @@ wrap:
 LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
+
+	// Logger
+	MSG msgStr = {hWnd, messg, wParam, lParam};
+	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgBack);
 
 	if (gpSetCls->isAdvLogging >= 4)
 	{
@@ -989,7 +1004,9 @@ void CConEmuChild::SetVConSizePos(RECT arcBack, bool abReSize /*= true*/)
 		_ASSERTE((rcBack.right > rcBack.left) && (rcBack.bottom > rcBack.top));
 		_ASSERTE((rcDC.right > rcDC.left) && (rcDC.bottom > rcDC.top));
 		// Двигаем/ресайзим окошко DC
+		DEBUGTEST(RECT rc1; GetClientRect(mh_WndDC, &rc1););
 		SetWindowPos(mh_WndDC, HWND_TOP, rcDC.left, rcDC.top, rcDC.right - rcDC.left, rcDC.bottom - rcDC.top, 0);
+		DEBUGTEST(RECT rc2; GetClientRect(mh_WndDC, &rc2););
 		SetWindowPos(mh_WndBack, mh_WndDC, rcBack.left, rcBack.top, rcBack.right - rcBack.left, rcBack.bottom - rcBack.top, 0);
 		Invalidate();
 	}
@@ -999,6 +1016,9 @@ void CConEmuChild::SetVConSizePos(RECT arcBack, bool abReSize /*= true*/)
 		SetWindowPos(mh_WndDC, HWND_TOP, rcDC.left, rcDC.top, 0,0, SWP_NOSIZE);
 		SetWindowPos(mh_WndBack, mh_WndDC, rcBack.left, rcBack.top, 0,0, SWP_NOSIZE);
 	}
+
+	// Обновить регион скролла, если он есть
+	UpdateScrollRgn(true);
 }
 
 void CConEmuChild::SetRedraw(BOOL abRedrawEnabled)
@@ -1356,11 +1376,11 @@ void CConEmuChild::MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue)
 	}
 }
 
-void CConEmuChild::UpdateScrollRgn()
+void CConEmuChild::UpdateScrollRgn(bool abForce /*= false*/)
 {
 	bool bNeedRgn = (mb_ScrollVisible && (gpSet->isAlwaysShowScrollbar == 2));
 
-	if (bNeedRgn == mb_ScrollRgnWasSet)
+	if ((bNeedRgn == mb_ScrollRgnWasSet) && !abForce)
 		return;
 
 	HRGN hRgn = NULL;

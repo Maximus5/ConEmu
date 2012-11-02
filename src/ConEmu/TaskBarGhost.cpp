@@ -542,6 +542,10 @@ LRESULT CALLBACK CTaskBarGhost::GhostStatic(HWND hWnd, UINT message, WPARAM wPar
 {
     LRESULT lResult = 0;
 
+	// Logger
+	MSG msgStr = {hWnd, message, wParam, lParam};
+	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgGhost);
+
     CTaskBarGhost *pWnd = (CTaskBarGhost*)::GetWindowLongPtr(hWnd, GWLP_USERDATA);
     if (pWnd == NULL && message == WM_NCCREATE)
     {

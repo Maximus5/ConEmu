@@ -1289,7 +1289,9 @@ void MessageLoop()
 
 	while (GetMessage(&Msg, NULL, 0, 0))
 	{
-		ConEmuMsgLogger::Log(Msg);
+		// Может быть некоторые дублирование с логированием в самих функциях
+		ConEmuMsgLogger::Log(Msg, ConEmuMsgLogger::msgCommon);
+
 		#ifdef _DEBUG
 		if (Msg.message == WM_TIMER)
 		{

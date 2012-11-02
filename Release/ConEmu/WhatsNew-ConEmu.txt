@@ -14,6 +14,9 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+[%] Resize bugfix: when maximizing scrolling window (e.g. "dir c:\ /s") «viewport» enlarges after delay.
+
+
 2012.11.01
 [+] Searching in full console (not only visible area). Checkbox «Freeze console» must be turned on. To be continued...
 [%] Sometimes DosBox do not starts from Far command prompt (doom.exe -warp 10).

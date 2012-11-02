@@ -150,8 +150,92 @@ gRegisteredHotKeys[] = {
 
 namespace ConEmuMsgLogger
 {
-	MSG g_events[BUFFER_SIZE];
-	LONG g_pos = -1;
+	MSG g_msg[BUFFER_SIZE];
+	LONG g_msgidx = -1;
+
+	Event g_pos[BUFFER_POS_SIZE];
+	LONG g_posidx = -1;
+
+	void LogPos(const MSG& msg, Source from)
+	{
+		#ifdef _DEBUG
+		if (from != msgCanvas)
+			return;
+		#endif
+
+		// Get next message index
+		LONG i = _InterlockedIncrement(&g_posidx);
+		// Write a message at this index
+		Event& e = g_pos[i & (BUFFER_POS_SIZE - 1)]; // Wrap to buffer size
+
+		e.hwnd = msg.hwnd;
+		e.time = GetTickCount(); // msg.time == 0 скорее всего
+
+		switch (msg.message)
+		{
+		case WM_WINDOWPOSCHANGING:
+			e.msg = Event::WindowPosChanging;
+			break;
+		case WM_WINDOWPOSCHANGED:
+			e.msg = Event::WindowPosChanged;
+			break;
+		case WM_MOVE:
+			e.msg = Event::Move;
+			break;
+		case WM_SIZE:
+			e.msg = Event::Size;
+			break;
+		case WM_MOVING:
+			e.msg = Event::Moving;
+			break;
+		case WM_SIZING:
+			e.msg = Event::Sizing;
+			break;
+		}
+
+		switch (msg.message)
+		{
+		case WM_WINDOWPOSCHANGING:
+		case WM_WINDOWPOSCHANGED:
+			if (((WINDOWPOS*)msg.lParam)->flags & SWP_NOMOVE)
+			{
+				e.x = e.y = 0;
+			}
+			else
+			{
+				e.x = ((WINDOWPOS*)msg.lParam)->x;
+				e.y = ((WINDOWPOS*)msg.lParam)->y;
+			}
+			if (((WINDOWPOS*)msg.lParam)->flags & SWP_NOSIZE)
+			{
+				e.w = e.h = 0;
+			}
+			else
+			{
+				e.w = ((WINDOWPOS*)msg.lParam)->cx;
+				e.h = ((WINDOWPOS*)msg.lParam)->cy;
+			}
+			break;
+		case WM_MOVE:
+			e.x = (int)(short)LOWORD(msg.lParam);
+			e.y = (int)(short)HIWORD(msg.lParam);
+			e.w = e.h = 0;
+			break;
+		case WM_SIZE:
+			e.x = e.y = 0;
+			e.w = LOWORD(msg.lParam);
+			e.h = HIWORD(msg.lParam);
+			break;
+		case WM_MOVING:
+		case WM_SIZING:
+			e.msg = Event::Sizing;
+			e.x = ((LPRECT)msg.lParam)->left;
+			e.y = ((LPRECT)msg.lParam)->top;
+			e.w = ((LPRECT)msg.lParam)->right - e.x;
+			e.h = ((LPRECT)msg.lParam)->bottom - e.y;
+			break;
+		}
+	} // void LogPos(const MSG& msg)
 }
 
 CConEmuMain::CConEmuMain()
@@ -6671,7 +6755,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 			MSG Msg;
 			while (PeekMessage(&Msg,0,0,0,PM_REMOVE))
 			{
-				ConEmuMsgLogger::Log(Msg);
+				ConEmuMsgLogger::Log(Msg, ConEmuMsgLogger::msgCommon);
 
 				if (Msg.message == WM_QUIT)
 					goto wrap;
@@ -12317,7 +12401,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 			if (GetMessage(&msg1, 0,0,0))  // убрать из буфера
 			{
-				ConEmuMsgLogger::Log(msg1);
+				ConEmuMsgLogger::Log(msg1, ConEmuMsgLogger::msgCommon);
 				_ASSERTE(msg1.message == msg.message && msg1.wParam == msg.wParam && msg1.lParam == msg.lParam);
 				msgList[++iAddMsgList] = msg1;
 
@@ -16688,6 +16772,10 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 	_ASSERTE(ghWndWork==NULL || ghWndWork==hWnd);
 
+	// Logger
+	MSG msgStr = {hWnd, uMsg, wParam, lParam};
+	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgWork);
+
 	if (gpSetCls->isAdvLogging >= 4)
 	{
 		gpConEmu->LogMessage(hWnd, uMsg, wParam, lParam);
@@ -16741,6 +16829,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 {
 	LRESULT result = 0;
 	//MCHKHEAP
+
+	// Logger
+	MSG msgStr = {hWnd, messg, wParam, lParam};
+	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgMain);
 
 	if (gpSetCls->isAdvLogging >= 4)
 	{
