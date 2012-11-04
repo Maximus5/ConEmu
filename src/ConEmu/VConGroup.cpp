@@ -3088,7 +3088,7 @@ void CVConGroup::LockSyncConsoleToWindow(bool abLockSync)
 }
 
 // Изменить размер консоли по размеру окна (главного)
-void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/)
+void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/, bool bSync/*=false*/)
 {
 	if (gb_SkipSyncSize || isNtvdm())
 		return;
@@ -3115,7 +3115,7 @@ void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/)
 	else
 		rcWnd = gpConEmu->CalcRect(CER_MAINCLIENT, VCon.VCon());
 
-	SyncAllConsoles2Window(rcWnd, CER_MAINCLIENT);
+	SyncAllConsoles2Window(rcWnd, CER_MAINCLIENT, bSync);
 }
 
 // -- функция пустая, игнорируется

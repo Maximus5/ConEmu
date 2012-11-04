@@ -14,6 +14,8 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.11.04
+[%] Issue 786: Failed to input Chinese in PuTTY.
 [%] Resize bugfix: when maximizing scrolling window (e.g. "dir c:\ /s") «viewport» enlarges after delay.
 
 

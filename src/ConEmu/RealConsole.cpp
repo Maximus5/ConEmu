@@ -1377,7 +1377,7 @@ bool CRealConsole::PostLeftClickSync(COORD crDC)
 	return lbOk;
 }
 
-bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
+bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false*/)
 {
 	if (!this)
 		return false;
@@ -1392,7 +1392,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 	{
 		if (piRec->EventType == KEY_EVENT)
 		{
-			UINT msg = WM_CHAR;
+			UINT msg = bFromIME ? WM_IME_CHAR : WM_CHAR;
 			WPARAM wParam = 0;
 			LPARAM lParam = 0;
 			
@@ -4417,6 +4417,14 @@ void CRealConsole::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	if (messg != WM_IME_CHAR)
 		return;
 
+	// Do not run excess ops when routing our msg to GUI application
+	if (hGuiWnd)
+	{
+		PostConsoleMessage(hGuiWnd, messg, wParam, lParam);
+		return;
+	}
+
+
 	INPUT_RECORD r = {KEY_EVENT};
 	WORD nCaps = 1 & (WORD)GetKeyState(VK_CAPITAL);
 	WORD nNum = 1 & (WORD)GetKeyState(VK_NUMLOCK);
@@ -4465,7 +4473,7 @@ void CRealConsole::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	if (nShift & 0x8000)
 		r.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
 
-	PostConsoleEvent(&r);
+	PostConsoleEvent(&r, true);
 }
 
 void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)

@@ -307,7 +307,7 @@ class CRealConsole
 	public:
 		COORD ScreenToBuffer(COORD crMouse);
 		COORD BufferToScreen(COORD crMouse, bool bVertOnly = false);
-		bool PostConsoleEvent(INPUT_RECORD* piRec);
+		bool PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME = false);
 		bool PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		bool PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		bool PostLeftClickSync(COORD crDC);

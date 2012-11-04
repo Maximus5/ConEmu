@@ -4449,9 +4449,9 @@ bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
 //}
 
 // »зменить размер консоли по размеру окна (главного)
-void CConEmuMain::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/)
+void CConEmuMain::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/, bool bSync/*=false*/)
 {
-	CVConGroup::SyncConsoleToWindow(prcNewWnd);
+	CVConGroup::SyncConsoleToWindow(prcNewWnd, bSync);
 }
 
 void CConEmuMain::SyncNtvdm()

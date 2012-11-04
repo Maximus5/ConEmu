@@ -679,7 +679,7 @@ class CConEmuMain :
 		//void StopLogCreateProcess();
 		//void UpdateLogCreateProcess();
 		//wchar_t ms_LogCreateProcess[MAX_PATH]; bool mb_CreateProcessLogged;
-		void SyncConsoleToWindow(LPRECT prcNewWnd=NULL);
+		void SyncConsoleToWindow(LPRECT prcNewWnd=NULL, bool bSync=false);
 		void SyncNtvdm();
 		void SyncWindowToConsole(); // -- функция пустая, игнорируется
 		void SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout);
