@@ -2293,6 +2293,548 @@ int CheckUnicodeFont()
 	return iRc;
 }
 
+enum ConEmuStateCheck
+{
+	ec_None = 0,
+	ec_IsConEmu,
+	ec_IsTerm,
+	ec_IsAnsi,
+};
+
+bool DoStateCheck(ConEmuStateCheck eStateCheck)
+{
+	bool bOn = false;
+
+	switch (eStateCheck)
+	{
+	case ec_IsConEmu:
+	case ec_IsAnsi:
+		if (ghConWnd)
+		{
+			CESERVER_CONSOLE_MAPPING_HDR* pInfo = (CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(*pInfo));
+			if (pInfo && LoadSrvMapping(ghConWnd, *pInfo))
+			{
+				HWND hWnd = pInfo->hConEmuWndDc;
+				if (hWnd && IsWindow(hWnd))
+				{
+					switch (eStateCheck)
+					{
+					case ec_IsConEmu:
+						bOn = true;
+						break;
+					case ec_IsAnsi:
+						bOn = (pInfo->bProcessAnsi != FALSE);
+						break;
+					default:
+						;
+					}
+				}
+			}
+			SafeFree(pInfo);
+		}
+		break;
+	case ec_IsTerm:
+		bOn = isTerminalMode();
+		break;
+	default:
+		_ASSERTE(FALSE && "Unsupported StateCheck code");
+	}
+
+	return bOn;
+}
+
+enum ConEmuExecAction
+{
+	ea_None = 0,
+	ea_RegConFont, // RegisterConsoleFontHKLM
+	ea_InjectHooks,
+	ea_InjectRemote,
+	ea_GuiMacro,
+	ea_CheckUnicodeFont,
+	ea_ExportCon,  // export env.vars to processes of active console
+	ea_ExportGui,  // ea_ExportCon + ConEmu window
+	ea_ExportAll,  // export env.vars to all opened tabs of current ConEmu window
+};
+
+int DoInjectHooks(LPWSTR asCmdArg)
+{
+	#ifdef SHOW_INJECT_MSGBOX
+	wchar_t szDbgMsg[128], szTitle[128];
+	swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
+	swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s\nConEmuHk, PID=%u", szArg, GetCurrentProcessId());
+	MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	#endif
+	gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
+	gnRunMode = RM_SETHOOK64;
+	LPWSTR pszNext = asCmdArg;
+	LPWSTR pszEnd = NULL;
+	BOOL lbForceGui = FALSE;
+	PROCESS_INFORMATION pi = {NULL};
+	pi.hProcess = (HANDLE)wcstoul(pszNext, &pszEnd, 16);
+
+	if (pi.hProcess && pszEnd && *pszEnd)
+	{
+		pszNext = pszEnd+1;
+		pi.dwProcessId = wcstoul(pszNext, &pszEnd, 10);
+	}
+
+	if (pi.dwProcessId && pszEnd && *pszEnd)
+	{
+		pszNext = pszEnd+1;
+		pi.hThread = (HANDLE)wcstoul(pszNext, &pszEnd, 16);
+	}
+
+	if (pi.hThread && pszEnd && *pszEnd)
+	{
+		pszNext = pszEnd+1;
+		pi.dwThreadId = wcstoul(pszNext, &pszEnd, 10);
+	}
+
+	if (pi.dwThreadId && pszEnd && *pszEnd)
+	{
+		pszNext = pszEnd+1;
+		lbForceGui = wcstoul(pszNext, &pszEnd, 10);
+	}
+	
+	if (pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId)
+	{
+		//BOOL gbLogProcess = FALSE;
+		//TODO("Получить из мэппинга glt_Process");
+		//#ifdef _DEBUG
+		//gbLogProcess = TRUE;
+		//#endif
+		int iHookRc = InjectHooks(pi, lbForceGui, gbLogProcess);
+
+		if (iHookRc == 0)
+		{
+			return CERR_HOOKS_WAS_SET;
+		}
+
+		// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
+		DWORD nErrCode = GetLastError();
+		//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
+		wchar_t szDbgMsg[255], szTitle[128];
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
+		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	}
+	else
+	{
+		//_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
+		wchar_t szDbgMsg[512], szTitle[128];
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u,%u,%u,%u,%u)!\n%s",
+			GetCurrentProcessId(), (DWORD)pi.hProcess, (DWORD)pi.hThread, pi.dwProcessId, pi.dwThreadId, lbForceGui, //-V205
+			asCmdArg);
+		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	}
+
+	return CERR_HOOKS_FAILED;
+}
+
+int DoInjectRemote(LPWSTR asCmdArg)
+{
+	gnRunMode = RM_SETHOOK64;
+	LPWSTR pszNext = asCmdArg;
+	LPWSTR pszEnd = NULL;
+	DWORD nRemotePID = wcstoul(pszNext, &pszEnd, 10);
+	
+	if (nRemotePID)
+	{
+		#if defined(SHOW_ATTACH_MSGBOX)
+		if (!IsDebuggerPresent())
+		{
+			wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i) /INJECT", gnSelfPID);
+			const wchar_t* pszCmdLine = GetCommandLineW();
+			MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
+		}
+		#endif
+
+		int iHookRc = InjectRemote(nRemotePID);
+
+		if (iHookRc == 0)
+		{
+			return CERR_HOOKS_WAS_SET;
+		}
+
+		// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
+		DWORD nErrCode = GetLastError();
+		//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
+		wchar_t szDbgMsg[255], szTitle[128];
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nInjecting remote into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), nRemotePID, iHookRc, nErrCode);
+		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	}
+	else
+	{
+		//_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
+		wchar_t szDbgMsg[512], szTitle[128];
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u)!\n%s",
+			GetCurrentProcessId(), nRemotePID,
+			asCmdArg);
+		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	}
+
+	return CERR_HOOKS_FAILED;
+}
+
+int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = false)
+{
+	int iRc = CERR_CARGUMENT;
+	size_t cchMax = 0x4000, nCount = 0;
+	struct ProcInfo {
+		DWORD nPID, nParentPID;
+		DWORD_PTR Flags;
+	};
+	ProcInfo* pList = NULL;
+	LPWSTR pszAllVars = NULL, pszSrc;
+	CESERVER_REQ *pIn = NULL;
+	DWORD nPID = GetCurrentProcessId();
+	DWORD nParentPID;
+	DWORD nSrvPID = 0;
+	CESERVER_CONSOLE_MAPPING_HDR test = {};
+	BOOL lbMapExist = false;
+	HANDLE h;
+	size_t cchMaxEnvLen = 0;
+	wchar_t* pszBuffer;
+
+	#define ExpFailedPref "ConEmuC: can't export environment"
+
+	if (!ghConWnd)
+	{
+		_ASSERTE(ghConWnd);
+		if (!bSilent)
+			_printf(ExpFailedPref ", ghConWnd was not set\n");
+		goto wrap;
+	}
+
+
+
+	// Query current environment
+	pszAllVars = GetEnvironmentStringsW();
+	if (!pszAllVars || !*pszAllVars)
+	{
+		if (!bSilent)
+			_printf(ExpFailedPref ", GetEnvironmentStringsW failed, code=%u\n", GetLastError());
+		goto wrap;
+	}
+
+	// Parse variables block, determining MAX length
+	pszSrc = pszAllVars;
+	while (*pszSrc)
+	{
+		LPWSTR pszName = pszSrc;
+		LPWSTR pszVal = pszName + lstrlen(pszName) + 1;
+		pszSrc = pszVal + lstrlen(pszVal) + 1;
+	}
+	cchMaxEnvLen = pszSrc - pszAllVars + 1;
+	
+	// Preparing buffer
+	pIn = ExecuteNewCmd(CECMD_EXPORTVARS, sizeof(CESERVER_REQ_HDR)+cchMaxEnvLen*sizeof(wchar_t));
+	if (!pIn)
+	{
+		if (!bSilent)
+			_printf(ExpFailedPref ", pIn allocation failed\n");
+		goto wrap;
+	}
+	pszBuffer = (wchar_t*)pIn->wData;
+
+	asCmdArg = SkipNonPrintable(asCmdArg);
+
+	//_ASSERTE(FALSE && "Continue to export");
+
+	// Copy variables to buffer
+	if (!asCmdArg || !*asCmdArg || (lstrcmp(asCmdArg, L"*")==0) || (lstrcmp(asCmdArg, L"\"*\"")==0)
+		|| (wcsncmp(asCmdArg, L"* ", 2)==0) || (wcsncmp(asCmdArg, L"\"*\" ", 4)==0))
+	{
+		// transfer ALL variables, except of ConEmu's internals
+		pszSrc = pszAllVars;
+		while (*pszSrc)
+		{
+			// may be "=C:=C:\Program Files\..."
+			LPWSTR pszEq = wcschr(pszSrc+1, L'=');
+			if (!pszEq)
+			{
+				pszSrc = pszSrc + lstrlen(pszSrc) + 1;
+				continue;
+			}
+			*pszEq = 0;
+			LPWSTR pszName = pszSrc;
+			LPWSTR pszVal = pszName + lstrlen(pszName) + 1;
+			LPWSTR pszNext = pszVal + lstrlen(pszVal) + 1;
+			if (lstrcmpni(pszName, L"ConEmu", 6) != 0)
+			{
+				// Non ConEmu's internals, transfer it
+				size_t cchAdd = pszNext - pszName;
+				wmemmove(pszBuffer, pszName, cchAdd);
+				pszBuffer += cchAdd;
+				_ASSERTE(*pszBuffer == 0);
+			}
+			*pszEq = L'=';
+			pszSrc = pszNext;
+		}
+	}
+	else
+	{
+		wchar_t szTest[MAX_PATH+1];
+		while (0==NextArg(&asCmdArg, szTest))
+		{
+			if (!*szTest || *szTest == L'*')
+			{
+				if (!bSilent)
+					_printf(ExpFailedPref ", invalid name mask\n");
+				goto wrap;
+			}
+
+			size_t cchLeft = cchMaxEnvLen - 1;
+			// Loop through variable names
+			pszSrc = pszAllVars;
+			while (*pszSrc)
+			{
+				// may be "=C:=C:\Program Files\..."
+				LPWSTR pszEq = wcschr(pszSrc+1, L'=');
+				if (!pszEq)
+				{
+					pszSrc = pszSrc + lstrlen(pszSrc) + 1;
+					continue;
+				}
+				*pszEq = 0;
+				LPWSTR pszName = pszSrc;
+				LPWSTR pszVal = pszName + lstrlen(pszName) + 1;
+				LPWSTR pszNext = pszVal + lstrlen(pszVal) + 1;
+				if (lstrcmpni(pszName, L"ConEmu", 6) != 0
+					&& CompareFileMask(pszName, szTest)) // limited
+				{
+					// Non ConEmu's internals, transfer it
+					size_t cchAdd = pszNext - pszName;
+					if (cchAdd >= cchLeft)
+					{
+						*pszEq = L'=';
+						if (!bSilent)
+							_printf(ExpFailedPref ", too many variables\n");
+						goto wrap;
+					}
+					wmemmove(pszBuffer, pszName, cchAdd);
+					pszBuffer += cchAdd;
+					_ASSERTE(*pszBuffer == 0);
+					cchLeft -= cchAdd;
+				}
+				*pszEq = L'=';
+				pszSrc = pszNext;
+			}
+		}
+	}
+
+	if (pszBuffer == (wchar_t*)pIn->wData)
+	{
+		if (!bSilent)
+			_printf(ExpFailedPref ", nothing to export\n");
+		goto wrap;
+	}
+	_ASSERTE(*pszBuffer==0 && *(pszBuffer-1)==0); // Must be ASCIIZZ
+	_ASSERTE((INT_PTR)cchMaxEnvLen >= (pszBuffer - (wchar_t*)pIn->wData + 1));
+
+	// Precise buffer size
+	cchMaxEnvLen = pszBuffer - (wchar_t*)pIn->wData + 1;
+	_ASSERTE(!(cchMaxEnvLen>>20));
+	pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR)+(DWORD)cchMaxEnvLen*sizeof(wchar_t);
+
+	// Find current server (even if no server or no GUI - apply environment to parent tree)
+	lbMapExist = LoadSrvMapping(ghConWnd, test);
+	if (lbMapExist)
+		nSrvPID = test.nServerPID;
+
+	// Allocate memory for process tree
+	pList = (ProcInfo*)malloc(cchMax*sizeof(*pList));
+	if (!pList)
+	{
+		if (!bSilent)
+			_printf(ExpFailedPref ", pList allocation failed\n");
+		goto wrap;
+	}
+
+	// Go, build tree (first step - query all running PIDs in the system)
+	nParentPID = nPID;
+	h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (h && (h != INVALID_HANDLE_VALUE))
+	{
+		PROCESSENTRY32 PI = {sizeof(PI)};
+		if (Process32First(h, &PI))
+		{
+			do {
+				if (PI.th32ProcessID == nPID)
+				{
+					// On the first step we'll get our parent process
+					nParentPID = PI.th32ParentProcessID;
+				}
+				CharUpperBuff(PI.szExeFile, lstrlen(PI.szExeFile));
+				LPCWSTR pszName = PointToName(PI.szExeFile);
+				pList[nCount].nPID = PI.th32ProcessID;
+				pList[nCount].nParentPID = PI.th32ParentProcessID;
+				pList[nCount].Flags = ((lstrcmp(pszName, L"CONEMUC.EXE") == 0) || (lstrcmp(pszName, L"CONEMUC64.EXE") == 0)) ? 1 : 0;
+				nCount++;
+				if (nCount == cchMax)
+				{
+					size_t cchNew = cchMax+0x4000;
+					ProcInfo* pNew = (ProcInfo*)realloc(pList, cchNew*sizeof(*pList));
+					if (!pNew)
+					{
+						_ASSERTE(pNew);
+						break;
+					}
+					cchMax = cchNew;
+					pList = pNew;
+				}
+			} while (Process32Next(h, &PI));
+		}
+
+		CloseHandle(h);
+	}
+
+	// Send to parents tree
+	if (nCount && (nParentPID != nPID))
+	{
+		DWORD nOurParentPID = nParentPID;
+		// Loop while parent is found
+		bool bParentFound = true, bFirst = true;
+		while ((nParentPID != nSrvPID) && bParentFound)
+		{
+			nPID = nParentPID;
+			bParentFound = false;
+			// find next parent
+			size_t i = 0;
+			while (i < nCount)
+			{
+				if (pList[i].nPID == nPID)
+				{
+					nParentPID = pList[i].nParentPID;
+					if (pList[i].Flags & 1)
+					{
+						// ConEmuC - пропустить
+						i = 0;
+						nPID = nParentPID;
+						continue;
+					}
+					bParentFound = true;
+					break;
+				}
+				i++;
+			}
+
+			if (bParentFound && (nPID != nSrvPID) && (nPID != nOurParentPID))
+			{
+				// go
+				CESERVER_REQ *pOut = ExecuteHkCmd(nPID, pIn, ghConWnd);
+				if (!pOut)
+				{
+					if (!bSilent)
+						_printf(ExpFailedPref " to PID=%u, check <Inject ConEmuHk>\n", nPID);
+				}
+				else
+				{
+					bFirst = false;
+					ExecuteFreeResult(pOut);
+				}
+			}
+		}
+	}
+
+	// Если просили во все табы - тогда досылаем и в GUI
+	if ((eExecAction != ea_ExportCon) && lbMapExist && test.hConEmuRoot && IsWindow((HWND)test.hConEmuRoot))
+	{
+		if (eExecAction == ea_ExportAll)
+			pIn->hdr.nCmd = CECMD_EXPORTVARSALL;
+		ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, TRUE);
+	}
+
+wrap:
+	// Fin
+	if (pszAllVars)
+		FreeEnvironmentStringsW((LPWCH)pszAllVars);
+	if (pIn)
+		ExecuteFreeResult(pIn);
+	if (pList)
+		free(pList);
+
+	return iRc;
+}
+
+int DoGuiMacro(LPCWSTR asCmdArg)
+{
+	// Все что в asCmdArg - выполнить в Gui
+	int iRc = CERR_GUIMACRO_FAILED;
+	int nLen = lstrlen(asCmdArg);
+	//SetEnvironmentVariable(CEGUIMACRORETENVVAR, NULL);
+	CESERVER_REQ *pIn = NULL, *pOut = NULL;
+	pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
+	lstrcpyW(pIn->GuiMacro.sMacro, asCmdArg);
+	pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+	if (pOut)
+	{
+		if (pOut->GuiMacro.nSucceeded)
+		{
+			// Передать переменную в родительский процесс
+			// Сработает только если включены хуки (Inject ConEmuHk)
+			// И может игнорироваться некоторыми шеллами (если победить не удастся)
+			DoExportEnv(CEGUIMACRORETENVVAR, ea_ExportCon, true/*bSilent*/);
+
+			// Show macro result in StdOutput	
+			_wprintf(pOut->GuiMacro.sMacro);
+			iRc = CERR_GUIMACRO_SUCCEEDED; // OK
+		}
+		ExecuteFreeResult(pOut);
+	}
+	ExecuteFreeResult(pIn);
+	return iRc;
+}
+
+int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */)
+{
+	int iRc = CERR_CARGUMENT;
+
+	switch (eExecAction)
+	{
+	case ea_RegConFont:
+		{
+			RegisterConsoleFontHKLM(asCmdArg);
+			iRc = CERR_EMPTY_COMSPEC_CMDLINE;
+			break;
+		}
+	case ea_InjectHooks:
+		{
+			iRc = DoInjectHooks((LPWSTR)asCmdArg);
+			break;
+		}
+	case ea_InjectRemote:
+		{
+			iRc = DoInjectRemote((LPWSTR)asCmdArg);
+			break;
+		}
+	case ea_GuiMacro:
+		{
+			iRc = DoGuiMacro(asCmdArg);
+			break;
+		}
+	case ea_CheckUnicodeFont:
+		{
+			iRc = CheckUnicodeFont();
+			break;
+		}
+	case ea_ExportCon:
+	case ea_ExportGui:
+	case ea_ExportAll:
+		{
+			iRc = DoExportEnv(asCmdArg, eExecAction);
+			break;
+		}
+	default:
+		_ASSERTE(FALSE && "Unsupported ExecAction code");
+	}
+
+	return iRc;
+}
+
 // Разбор параметров командной строки
 int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/)
 {
@@ -2316,12 +2858,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	LPCWSTR pwszStartCmdLine = asCmdLine;
 	BOOL lbNeedCutStartEndQuot = FALSE;
 
-	enum {
-		ec_None = 0,
-		ec_IsConEmu,
-		ec_IsTerm,
-		ec_IsAnsi,
-	} eStateCheck = ec_None;
+	ConEmuStateCheck eStateCheck = ec_None;
+	ConEmuExecAction eExecAction = ea_None;
 
 	if (!asCmdLine || !*asCmdLine)
 	{
@@ -2357,8 +2895,57 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 		if (wcsncmp(szArg, L"/REGCONFONT=", 12)==0)
 		{
-			RegisterConsoleFontHKLM(szArg+12);
-			return CERR_EMPTY_COMSPEC_CMDLINE;
+			eExecAction = ea_RegConFont;
+			asCmdLine = szArg+12;
+			break;
+		}
+		else if (wcsncmp(szArg, L"/SETHOOKS=", 10) == 0)
+		{
+			eExecAction = ea_InjectHooks;
+			asCmdLine = szArg+10;
+			break;
+		}
+		else if (wcsncmp(szArg, L"/INJECT=", 8) == 0)
+		{
+			eExecAction = ea_InjectRemote;
+			asCmdLine = szArg+8;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/GUIMACRO")==0)
+		{
+			// Все что в asCmdLine - выполнить в Gui
+			eExecAction = ea_GuiMacro;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/CHECKUNICODE")==0)
+		{
+			eExecAction = ea_CheckUnicodeFont;
+			break;
+		}
+		else if (lstrcmpni(szArg, L"/EXPORT", 7)==0)
+		{
+			if (lstrcmpi(szArg, L"/EXPORT=ALL")==0 || lstrcmpi(szArg, L"/EXPORTALL")==0)
+				eExecAction = ea_ExportAll;
+			else if (lstrcmpi(szArg, L"/EXPORT=CON")==0 || lstrcmpi(szArg, L"/EXPORTCON")==0)
+				eExecAction = ea_ExportCon;
+			else
+				eExecAction = ea_ExportGui;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/IsConEmu")==0)
+		{
+			eStateCheck = ec_IsConEmu;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/IsTerm")==0)
+		{
+			eStateCheck = ec_IsTerm;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/IsAnsi")==0)
+		{
+			eStateCheck = ec_IsAnsi;
+			break;
 		}
 		else if (wcscmp(szArg, L"/CONFIRM")==0)
 		{
@@ -2731,180 +3318,19 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			gnCmdUnicodeMode = 2;
 		}
-		else if (lstrcmpi(szArg, L"/IsConEmu")==0)
-		{
-			eStateCheck = ec_IsConEmu;
-		}
-		else if (lstrcmpi(szArg, L"/IsTerm")==0)
-		{
-			eStateCheck = ec_IsTerm;
-		}
-		else if (lstrcmpi(szArg, L"/IsAnsi")==0)
-		{
-			eStateCheck = ec_IsAnsi;
-		}
 		// После этих аргументов - идет то, что передается в CreateProcess!
 		else if (wcscmp(szArg, L"/ROOT")==0 || wcscmp(szArg, L"/root")==0)
 		{
 			gnRunMode = RM_SERVER; gbNoCreateProcess = FALSE;
 			break; // asCmdLine уже указывает на запускаемую программу
 		}
-		else if (wcsncmp(szArg, L"/SETHOOKS=", 10) == 0)
-		{
-			#ifdef SHOW_INJECT_MSGBOX
-			wchar_t szDbgMsg[128], szTitle[128];
-			swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
-			swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s\nConEmuHk, PID=%u", szArg, GetCurrentProcessId());
-			MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-			#endif
-			gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
-			gnRunMode = RM_SETHOOK64;
-			LPWSTR pszNext = szArg+10;
-			LPWSTR pszEnd = NULL;
-			BOOL lbForceGui = FALSE;
-			PROCESS_INFORMATION pi = {NULL};
-			pi.hProcess = (HANDLE)wcstoul(pszNext, &pszEnd, 16);
-
-			if (pi.hProcess && pszEnd && *pszEnd)
-			{
-				pszNext = pszEnd+1;
-				pi.dwProcessId = wcstoul(pszNext, &pszEnd, 10);
-			}
-
-			if (pi.dwProcessId && pszEnd && *pszEnd)
-			{
-				pszNext = pszEnd+1;
-				pi.hThread = (HANDLE)wcstoul(pszNext, &pszEnd, 16);
-			}
-
-			if (pi.hThread && pszEnd && *pszEnd)
-			{
-				pszNext = pszEnd+1;
-				pi.dwThreadId = wcstoul(pszNext, &pszEnd, 10);
-			}
-
-			if (pi.dwThreadId && pszEnd && *pszEnd)
-			{
-				pszNext = pszEnd+1;
-				lbForceGui = wcstoul(pszNext, &pszEnd, 10);
-			}
-			
-			if (pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId)
-			{
-				//BOOL gbLogProcess = FALSE;
-				//TODO("Получить из мэппинга glt_Process");
-				//#ifdef _DEBUG
-				//gbLogProcess = TRUE;
-				//#endif
-				int iHookRc = InjectHooks(pi, lbForceGui, gbLogProcess);
-
-				if (iHookRc == 0)
-					return CERR_HOOKS_WAS_SET;
-
-				// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
-				DWORD nErrCode = GetLastError();
-				//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
-				wchar_t szDbgMsg[255], szTitle[128];
-				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
-				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-			}
-			else
-			{
-				//_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
-				wchar_t szDbgMsg[512], szTitle[128];
-				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u,%u,%u,%u,%u)!\n%s",
-					GetCurrentProcessId(), (DWORD)pi.hProcess, (DWORD)pi.hThread, pi.dwProcessId, pi.dwThreadId, lbForceGui, //-V205
-					szArg);
-				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-				//return CERR_HOOKS_FAILED;
-			}
-
-			return CERR_HOOKS_FAILED;
-		}
-		else if (wcsncmp(szArg, L"/INJECT=", 8) == 0)
-		{
-			gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
-			gnRunMode = RM_SETHOOK64;
-			LPWSTR pszNext = szArg+8;
-			LPWSTR pszEnd = NULL;
-			DWORD nRemotePID = wcstoul(pszNext, &pszEnd, 10);
-			
-			if (nRemotePID)
-			{
-				#if defined(SHOW_ATTACH_MSGBOX)
-				if (!IsDebuggerPresent())
-				{
-					wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i) /INJECT", gnSelfPID);
-					const wchar_t* pszCmdLine = GetCommandLineW();
-					MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
-				}
-				#endif
-
-				int iHookRc = InjectRemote(nRemotePID);
-
-				if (iHookRc == 0)
-					return CERR_HOOKS_WAS_SET;
-
-				// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
-				DWORD nErrCode = GetLastError();
-				//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
-				wchar_t szDbgMsg[255], szTitle[128];
-				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nInjecting remote into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), nRemotePID, iHookRc, nErrCode);
-				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-			}
-			else
-			{
-				//_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
-				wchar_t szDbgMsg[512], szTitle[128];
-				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u)!\n%s",
-					GetCurrentProcessId(), nRemotePID,
-					szArg);
-				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-				//return CERR_HOOKS_FAILED;
-			}
-
-			return CERR_HOOKS_FAILED;
-		}
 		else if (lstrcmpi(szArg, L"/NOINJECT")==0)
 		{
 			gbDontInjectConEmuHk = TRUE;
 		}
-		else if (lstrcmpi(szArg, L"/GUIMACRO")==0)
-		{
-			// Все что в asCmdLine - выполнить в Gui
-			int iRc = CERR_GUIMACRO_FAILED;
-			int nLen = lstrlen(asCmdLine);
-			//SetEnvironmentVariable(CEGUIMACRORETENVVAR, NULL);
-			CESERVER_REQ *pIn = NULL, *pOut = NULL;
-			pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
-			lstrcpyW(pIn->GuiMacro.sMacro, asCmdLine);
-			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-			if (pOut)
-			{
-				if (pOut->GuiMacro.nSucceeded)
-				{
-					// Смысла нет, переменная в родительский процесс все-равно не попадет
-					//SetEnvironmentVariable(CEGUIMACRORETENVVAR,
-					//	pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : NULL);
-					_wprintf(pOut->GuiMacro.sMacro);
-					iRc = CERR_GUIMACRO_SUCCEEDED;
-				}
-				ExecuteFreeResult(pOut);
-			}
-			ExecuteFreeResult(pIn);
-			return iRc;
-		}
 		else if (lstrcmpi(szArg, L"/DOSBOX")==0)
 		{
 			gbUseDosBox = TRUE;
-		}
-		else if (lstrcmpi(szArg, L"/CHECKUNICODE")==0)
-		{
-			return CheckUnicodeFont();
 		}
 		// После этих аргументов - идет то, что передается в COMSPEC (CreateProcess)!
 		//if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0 || wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0) {
@@ -2942,50 +3368,27 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 	}
 
-	if (eStateCheck)
-	{
-		bool bOn = false;
-		HWND hWnd = NULL;
 
-		switch (eStateCheck)
+	// Some checks or actions
+	if (eStateCheck || eExecAction)
+	{
+		int iFRc = CERR_CARGUMENT;
+
+		if (eStateCheck)
 		{
-		case ec_IsConEmu:
-		case ec_IsAnsi:
-			if (ghConWnd)
-			{
-				CESERVER_CONSOLE_MAPPING_HDR* pInfo = (CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(*pInfo));
-				if (pInfo && LoadSrvMapping(ghConWnd, *pInfo))
-				{
-					hWnd = pInfo->hConEmuWndDc;
-					if (hWnd && IsWindow(hWnd))
-					{
-						switch (eStateCheck)
-						{
-						case ec_IsConEmu:
-							bOn = true;
-							break;
-						case ec_IsAnsi:
-							bOn = (pInfo->bProcessAnsi != FALSE);
-							break;
-						default:
-							;
-						}
-					}
-				}
-				SafeFree(pInfo);
-			}
-			break;
-		case ec_IsTerm:
-			bOn = isTerminalMode();
-			break;
-		default:
-			;
+			bool bOn = DoStateCheck(eStateCheck);
+			iFRc = bOn ? CERR_CHKSTATE_ON : CERR_CHKSTATE_OFF;
+		}
+		else if (eExecAction)
+		{
+			iFRc = DoExecAction(eExecAction, asCmdLine);
 		}
 
 		// И сразу на выход
 		gbInShutdown = TRUE;
-		return bOn ? CERR_CHKSTATE_ON : CERR_CHKSTATE_OFF;
+		return iFRc;
 	}
+
 
 	if ((gnRunMode == RM_SERVER) && gpSrv->hGuiWnd)
 	{

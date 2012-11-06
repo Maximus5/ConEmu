@@ -665,7 +665,7 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 //CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner);
 
 // Выполнить в GUI (в CRealConsole)
-CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner)
+CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult /*= FALSE*/)
 {
 	wchar_t szGuiPipeName[128];
 
@@ -723,7 +723,7 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL
 }
 
 // Выполнить в ConEmuHk
-CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner)
+CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult /*= FALSE*/)
 {
 	wchar_t szPipeName[128];
 
@@ -733,7 +733,7 @@ CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner)
 	DWORD nLastErr = GetLastError();
 	//_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", (DWORD)dwHkPID);
-	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, 1000, hOwner);
+	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, 1000, hOwner, bAsyncNoResult);
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
 	return lpRet;
 }

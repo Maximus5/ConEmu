@@ -78,7 +78,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRRCLICK(s) //DEBUGSTR(s)
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
-#define DEBUGSTRIME(s) DEBUGSTR(s)
+#define DEBUGSTRIME(s) //DEBUGSTR(s)
 #define DEBUGSTRCHAR(s) //DEBUGSTR(s)
 #define DEBUGSTRSETCURSOR(s) //OutputDebugString(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
@@ -91,7 +91,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRLLKB(s) //DEBUGSTR(s)
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
 #define DEBUGSTRMSG(s) //DEBUGSTR(s)
-#define DEBUGSTRANIMATE(s) DEBUGSTR(s)
+#define DEBUGSTRANIMATE(s) //DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -1649,7 +1649,7 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 		{
 			dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
 		}
-		else if (m_ForceShowFrame == fsf_Show)
+		else if ((m_ForceShowFrame == fsf_Show) || !gpSet->isFrameHidden())
 		{
 			dwStyle &= ~(WS_CAPTION);
 			dwStyle |= WS_THICKFRAME;

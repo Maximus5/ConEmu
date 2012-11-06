@@ -823,6 +823,7 @@ struct Settings
 		bool isHideCaptionAlways(); //<<mb_HideCaptionAlways
 		bool isForcedHideCaptionAlways(); // true, если mb_HideCaptionAlways отключать нельзя
 		bool isCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);
+		bool isFrameHidden();
 		//reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
 		BYTE nHideCaptionAlwaysFrame;
 		//reg->Load(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);

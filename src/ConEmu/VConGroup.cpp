@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "../common/common.hpp"
 #include "../common/WinObjects.h"
+#include "../common/ConEmuCheck.h"
 #include "ConEmu.h"
 #include "VConGroup.h"
 #include "VConChild.h"
@@ -1702,6 +1703,42 @@ bool CVConGroup::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
 	}
 
 	return lbFound;
+}
+
+void CVConGroup::ExportEnvVarAll(CESERVER_REQ* pIn, CRealConsole* pExceptRCon)
+{
+	// Просто перебить заголовок на наши данные
+	ExecutePrepareCmd(&pIn->hdr, CECMD_EXPORTVARS, pIn->hdr.cbSize);
+
+	// и пробежаться по табам
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		CVConGuard VCon(gp_VCon[i]);
+		if (VCon.VCon() == NULL)
+			continue;
+		CRealConsole* pRCon = VCon->RCon();
+		if (pRCon == pExceptRCon)
+			continue;
+		DWORD nSrvPID = pRCon->GetServerPID(true);
+		if (!nSrvPID)
+			continue;
+
+		ConProcess* pP = NULL;
+		int nCount = pRCon->GetProcesses(&pP);
+		if (nCount && pP)
+		{
+			// Apply to all processes in this tab (console)
+			for (int i = 0; i < nCount; i++)
+			{
+				if (pP[i].ProcessID != nSrvPID)
+				{
+					CESERVER_REQ* pOut = ExecuteHkCmd(pP[i].ProcessID, pIn, ghWnd);
+					ExecuteFreeResult(pOut);
+				}
+			}
+			free(pP);
+		}
+	}
 }
 
 void CVConGroup::OnUpdateGuiInfoMapping(ConEmuGuiMapping* apGuiInfo)

@@ -2380,9 +2380,7 @@ void Settings::LoadSettings()
 		reg->Load(L"HideCaption", isHideCaption);
 		// грузим именно в mb_HideCaptionAlways, т.к. прозрачность сбивает темы в заголовке, поэтому возврат идет через isHideCaptionAlways()
 		reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
-		reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
-
-		if (nHideCaptionAlwaysFrame > 10) nHideCaptionAlwaysFrame = 10;
+		reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame); MinMax(nHideCaptionAlwaysFrame,99);
 
 		reg->Load(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
 
@@ -4424,6 +4422,21 @@ bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 				|| ((wmNewMode == wmMaximized) && isHideCaption);
 	}
 	return bCaptionHidden;
+}
+
+// Функция НЕ учитывает isCaptionHidden.
+// Возвращает true, если 'Frame width' меньше системной для ThickFame
+// иначе - false, меняем рамку на "NonResizable"
+bool Settings::isFrameHidden()
+{
+	if (!nHideCaptionAlwaysFrame)
+		return true;
+
+	UINT nSysFrame = GetSystemMetrics(SM_CXSIZEFRAME);
+	if (nSysFrame > nHideCaptionAlwaysFrame)
+		return true;
+
+	return false;
 }
 
 int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)

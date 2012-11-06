@@ -561,6 +561,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						// Пример: "s3T30H" - разбить 3-ий таб. будет создан новый Pane справа, шириной 30% от 3-го таба.
 						{
 							UINT nTab = 0 /*active*/, nValue = /*пополам*/DefaultSplitValue/10;
+							bool bDisableSplit = false;
 							while (*pszEnd)
 							{
 								if (isDigit(*pszEnd))
@@ -596,17 +597,31 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 	                            	eSplit = (*pszEnd == L'H') ? eSplitHorz : eSplitVert;
 	                            	pszEnd++;
 								}
+								else if (*pszEnd == L'N')
+								{
+									bDisableSplit = true;
+									pszEnd++;
+									break;
+								}
 								else
 								{
 									break;
 								}
 							}
-							if (!eSplit)
-								eSplit = eSplitHorz;
-							// Для удобства, пользователь задает размер НОВОЙ части
-							nSplitValue = 1000-max(1,min(nValue*10,999)); // проценты
-							_ASSERTE(nSplitValue>=1 && nSplitValue<1000);
-							nSplitPane = nTab;
+
+							if (bDisableSplit)
+							{
+								eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
+							}
+							else
+							{
+								if (!eSplit)
+									eSplit = eSplitHorz;
+								// Для удобства, пользователь задает размер НОВОЙ части
+								nSplitValue = 1000-max(1,min(nValue*10,999)); // проценты
+								_ASSERTE(nSplitValue>=1 && nSplitValue<1000);
+								nSplitPane = nTab;
+							}
 						} // L's'
 						break;
 						

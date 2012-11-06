@@ -2063,9 +2063,38 @@ bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval)
 }
 
 #ifdef _DEBUG
+void UnitMaskTests()
+{
+	struct {
+		LPCWSTR asFileName, asMask;
+		bool Result;
+	} Tests[] = {
+		{L"FileName.txt", L"FileName.txt", true},
+		{L"FileName.txt", L"FileName", false},
+		{L"FileName.txt", L"FileName.doc", false},
+		{L"FileName.txt", L"*", true},
+		{L"FileName.txt", L"FileName*", true},
+		{L"FileName.txt", L"FileName*txt", true},
+		{L"FileName.txt", L"FileName*.txt", true},
+		{L"FileName.txt", L"FileName*e.txt", false},
+		{L"FileName.txt", L"File*qqq", false},
+		{L"FileName.txt", L"File*txt", true},
+		{L"FileName.txt", L"Name*txt", false},
+		{NULL}
+	};
+	bool bCheck;
+	for (size_t i = 0; Tests[i].asFileName; i++)
+	{
+		bCheck = CompareFileMask(Tests[i].asFileName, Tests[i].asMask);
+		_ASSERTE(bCheck == Tests[i].Result);
+	}
+	bCheck = true;
+}
+
 void UnitTests()
 {
 	RConStartArgs::RunArgTests();
+	UnitMaskTests();
 }
 #endif
 

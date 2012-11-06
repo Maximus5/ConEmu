@@ -81,9 +81,9 @@ CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, size_t nSize);
 BOOL ExecuteNewCmd(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, DWORD nCmd, size_t nSize);
 void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, size_t cbSize);
 void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, size_t cbSize);
-CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner);
+CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult = FALSE);
 CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult = FALSE, DWORD nTimeout = 0);
-CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner);
+CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult = FALSE);
 CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult = FALSE, DWORD nServerPID = 0);
 void ExecuteFreeResult(CESERVER_REQ* &pOut);
 

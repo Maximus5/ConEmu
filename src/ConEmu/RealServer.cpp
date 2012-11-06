@@ -1376,6 +1376,36 @@ CESERVER_REQ* CRealServer::cmdSetProgress(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 //	return pOut;
 //}
 
+CESERVER_REQ* CRealServer::cmdExportEnvVarAll(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	DWORD nCmd = pIn->hdr.nCmd;
+	DEBUGSTRCMD((nCmd==CECMD_EXPORTVARSALL) ? L"GUI recieved CECMD_EXPORTVARSALL\n" : L"GUI recieved CECMD_EXPORTVARS\n");
+
+	// В свой процесс тоже засосать переменные, чтобы для новых табов применялись
+	LPCWSTR pszSrc = (LPCWSTR)pIn->wData;
+	while (*pszSrc)
+	{
+		LPCWSTR pszName = pszSrc;
+		LPCWSTR pszVal = pszName + lstrlen(pszName) + 1;
+		LPCWSTR pszNext = pszVal + lstrlen(pszVal) + 1;
+		// Skip ConEmu's internals!
+		if (lstrcmpni(pszName, L"ConEmu", 6) != 0)
+		{
+			SetEnvironmentVariableW(pszName, pszVal);
+		}
+		pszSrc = pszNext;
+	}
+
+	// Применить переменные во всех открытых табах (кроме mp_RCon)
+	CVConGroup::ExportEnvVarAll(pIn, mp_RCon);
+
+	// pIn->hdr.nCmd перебивается на CECMD_EXPORTVARS, поэтому возвращаем сохраненный ID
+	CESERVER_REQ* pOut = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+	if (pOut)
+		pOut->dwData[0] = TRUE;
+	return pOut;
+}
+
 // Эта функция пайп не закрывает!
 //void CRealServer::ServerThreadCommand(HANDLE hPipe)
 BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
@@ -1386,40 +1416,6 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 	
 	ExecuteFreeResult(ppReply);
 	CESERVER_REQ *pOut = NULL;
-
-//	CESERVER_REQ in= {{0}}, *pIn=NULL;
-//	DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
-//	BOOL fSuccess = FALSE;
-//#ifdef _DEBUG
-//	HANDLE lhConEmuC = mh_MainSrv;
-//#endif
-//	MCHKHEAP;
-//	// Send a message to the pipe server and read the response.
-//	fSuccess = ReadFile(
-//	               hPipe,            // pipe handle
-//	               &in,              // buffer to receive reply
-//	               sizeof(in),       // size of read buffer
-//	               &cbRead,          // bytes read
-//	               NULL);            // not overlapped
-//
-//	if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA))
-//	{
-//#ifdef _DEBUG
-//		// Если консоль закрывается - MonitorThread в ближайшее время это поймет
-//		DEBUGSTRPROC(L"!!! ReadFile(pipe) failed - console in close?\n");
-//		//DWORD dwWait = WaitForSingleObject ( mh_TermEvent, 0 );
-//		//if (dwWait == WAIT_OBJECT_0) return;
-//		//Sleep(1000);
-//		//if (lhConEmuC != mh_MainSrv)
-//		//	dwWait = WAIT_OBJECT_0;
-//		//else
-//		//	dwWait = WaitForSingleObject ( mh_MainSrv, 0 );
-//		//if (dwWait == WAIT_OBJECT_0) return;
-//		//_ASSERTE("ReadFile(pipe) failed"==NULL);
-//#endif
-//		//CloseHandle(hPipe);
-//		return;
-//	}
 
 	if (pIn->hdr.nVersion != CESERVER_REQ_VER)
 	{
@@ -1436,85 +1432,10 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 	}
 
 	DWORD dwTimeStart = timeGetTime();
-	//gpSetCls->debugLogCommand(pIn, TRUE, timeGetTime(), 0, ms_VConServer_Pipe, NULL/*pOut*/);
-
-	//if (in.hdr.cbSize <= cbRead)
-	//{
-	//	pIn = &in; // выделение памяти не требуется
-	//}
-	//else
-	//{
-	//	int nAllSize = in.hdr.cbSize;
-	//	pIn = (CESERVER_REQ*)calloc(nAllSize,1);
-	//	_ASSERTE(pIn!=NULL);
-	//	memmove(pIn, &in, cbRead);
-	//	_ASSERTE(pIn->hdr.nVersion==CESERVER_REQ_VER);
-	//	LPBYTE ptrData = ((LPBYTE)pIn)+cbRead;
-	//	nAllSize -= cbRead;
-
-	//	while(nAllSize>0)
-	//	{
-	//		//_tprintf(TEXT("%s\n"), chReadBuf);
-
-	//		// Break if TransactNamedPipe or ReadFile is successful
-	//		if (fSuccess)
-	//			break;
-
-	//		// Read from the pipe if there is more data in the message.
-	//		fSuccess = ReadFile(
-	//		               hPipe,      // pipe handle
-	//		               ptrData,    // buffer to receive reply
-	//		               nAllSize,   // size of buffer
-	//		               &cbRead,    // number of bytes read
-	//		               NULL);      // not overlapped
-
-	//		// Exit if an error other than ERROR_MORE_DATA occurs.
-	//		if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA))
-	//			break;
-
-	//		ptrData += cbRead;
-	//		nAllSize -= cbRead;
-	//	}
-
-	//	TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
-	//	_ASSERTE(nAllSize==0);
-
-	//	if (nAllSize>0)
-	//	{
-	//		//CloseHandle(hPipe);
-	//		return; // удалось считать не все данные
-	//	}
-	//}
 
 	int nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
 
 	// Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
-
-	//  //if (pIn->hdr.nCmd == CECMD_GETFULLINFO /*|| pIn->hdr.nCmd == CECMD_GETSHORTINFO*/) {
-	//  if (pIn->hdr.nCmd == CECMD_GETCONSOLEINFO) {
-	//  	_ASSERTE(pIn->hdr.nCmd != CECMD_GETCONSOLEINFO);
-	//// только если мы НЕ в цикле ресайза. иначе не страшно, устаревшие пакеты пропустит PopPacket
-	////if (!con.bInSetSize && !con.bBufferHeight && pIn->ConInfo.inf.sbi.dwSize.Y > 200) {
-	////	_ASSERTE(con.bBufferHeight || pIn->ConInfo.inf.sbi.dwSize.Y <= 200);
-	////}
-	////#ifdef _DEBUG
-	////wchar_t szDbg[255]; swprintf_c(szDbg, L"GUI recieved %s, PktID=%i, Tick=%i\n",
-	////	(pIn->hdr.nCmd == CECMD_GETFULLINFO) ? L"CECMD_GETFULLINFO" : L"CECMD_GETSHORTINFO",
-	////	pIn->ConInfo.inf.nPacketId, pIn->hdr.nCreateTick);
-	//      //DEBUGSTRCMD(szDbg);
-	////#endif
-	//      ////ApplyConsoleInfo(pIn);
-	//      //if (((LPVOID)&in)==((LPVOID)pIn)) {
-	//      //    // Это фиксированная память - переменная (in)
-	//      //    _ASSERTE(in.hdr.cbSize>0);
-	//      //    // Для его обработки нужно создать копию памяти, которую освободит PopPacket
-	//      //    pIn = (CESERVER_REQ*)calloc(in.hdr.cbSize,1);
-	//      //    memmove(pIn, &in, in.hdr.cbSize);
-	//      //}
-	//      //PushPacket(pIn);
-	//      //pIn = NULL;
-
-	//  } else
 
 	switch (pIn->hdr.nCmd)
 	{
@@ -1586,11 +1507,15 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 	case CECMD_SETPROGRESS:
 		pOut = pRSrv->cmdSetProgress(pInst, pIn, nDataSize);
 		break;
+	case CECMD_EXPORTVARS:
+	case CECMD_EXPORTVARSALL:
+		pOut = pRSrv->cmdExportEnvVarAll(pInst, pIn, nDataSize);
+		break;
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(pInst, pIn, nDataSize);
 	default:
 		// Неизвестная команда
-		_ASSERTE(pIn->hdr.nCmd == CECMD_CMDSTARTSTOP);
+		_ASSERTE(FALSE && "Unsupported command pIn->hdr.nCmd");
 
 		// Хотя бы "пустую" команду в ответ кинуть, а то ошибка (Pipe was closed) у клиента возникает
 		// 0 - чтобы assert-ами ловить необработанные команды

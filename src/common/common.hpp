@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    111
+#define CESERVER_REQ_VER    112
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -286,6 +286,8 @@ const CECMD
 	CECMD_SETPROGRESS    = 64, // wData[0]: 0 - remove, 1 - set, 2 - error. Для "1": wData[1] - 0..100%.
 	CECMD_SETCONCOLORS   = 65, // CESERVER_REQ_SETCONSOLORS
 	CECMD_SETCONTITLE    = 66, // wData - это LPCWSTR, посылается в Server
+	CECMD_EXPORTVARS     = 67, // wData - same as GetEnvironmentStringsW returns, but may be less (selected vars only)
+	CECMD_EXPORTVARSALL  = 68, // same as CECMD_EXPORTVARS, but apply environment to all tabs
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1781,6 +1783,8 @@ struct CESERVER_REQ
 int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar_t** rsArgStart=NULL);
 int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsArgStart=NULL);
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
+bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
+
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64::MsgStr* pMsg);
 BOOL UnpackInputRecord(const MSG64::MsgStr* piMsg, INPUT_RECORD* pRec);
 void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD* rDown, INPUT_RECORD* rUp);

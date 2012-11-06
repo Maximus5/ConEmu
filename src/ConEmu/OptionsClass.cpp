@@ -6052,6 +6052,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				{
 				case tHideCaptionAlwaysFrame:
 					gpSet->nHideCaptionAlwaysFrame = nNewVal;
+					gpConEmu->OnHideCaption();
 					gpConEmu->UpdateWindowRgn();
 					break;
 				case tHideCaptionAlwaysDelay:

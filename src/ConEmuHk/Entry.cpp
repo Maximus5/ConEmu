@@ -1777,6 +1777,31 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			}
 		} // CECMD_STARTSERVER
 		break;
+	case CECMD_EXPORTVARS:
+		{
+			LPCWSTR pszSrc = (LPCWSTR)pCmd->wData;
+			while (*pszSrc)
+			{
+				LPCWSTR pszName = pszSrc;
+				LPCWSTR pszVal = pszName + lstrlen(pszName) + 1;
+				LPCWSTR pszNext = pszVal + lstrlen(pszVal) + 1;
+				// Skip ConEmu's internals!
+				if (lstrcmpni(pszName, L"ConEmu", 6) != 0)
+				{
+					SetEnvironmentVariableW(pszName, pszVal);
+				}
+				pszSrc = pszNext;
+			}
+
+			lbRc = true; // Вернуть результат однозначно
+
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
+			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
+			{
+				ppReply->dwData[0] = TRUE;
+			}
+		} // CECMD_EXPORTVARS
+		break;
 	}
 	
 	// Если (lbRc == FALSE) - в пайп будет отдана "пустышка" ((DWORD)0)

@@ -178,6 +178,8 @@ public:
 
 	static bool OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon);
 
+	static void ExportEnvVarAll(CESERVER_REQ* pIn, CRealConsole* pExceptRCon);
+
 	// Это некие сводные размеры, соответствующие тому, как если бы была
 	// только одна активная консоль, БЕЗ Split-screen
 	static uint TextWidth();

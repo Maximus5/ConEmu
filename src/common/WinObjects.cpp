@@ -1787,6 +1787,47 @@ const wchar_t* SkipNonPrintable(const wchar_t* asParams)
 	return psz;
 }
 
+// One trailing (or middle) asterisk allowed
+bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask)
+{
+	if (!asFileName || !*asFileName || !asMask || !*asMask)
+		return false;
+	// Any file?
+	if (*asMask == L'*' && *(asMask+1) == 0)
+		return true;
+
+	int iCmp = -1;
+	
+	wchar_t sz1[MAX_PATH+1], sz2[MAX_PATH+1];
+	lstrcpyn(sz1, asFileName, countof(sz1));
+	size_t nLen1 = lstrlen(sz1);
+	CharUpperBuffW(sz1, (DWORD)nLen1);
+	lstrcpyn(sz2, asMask, countof(sz2));
+	size_t nLen2 = lstrlen(sz2);
+	CharUpperBuffW(sz2, (DWORD)nLen2);
+
+	wchar_t* pszAst = wcschr(sz2, L'*');
+	if (!pszAst)
+	{
+		iCmp = lstrcmp(sz1, sz2);
+	}
+	else
+	{
+		*pszAst = 0;
+		size_t nLen = pszAst - sz2;
+		size_t nRight = lstrlen(pszAst+1);
+		if (wcsncmp(sz1, sz2, nLen) == 0)
+		{
+			if (!nRight)
+				iCmp = 0;
+			else if (nLen1 >= (nRight + nLen))
+				iCmp = lstrcmp(sz1+nLen1-nRight, pszAst+1);
+		}
+	}
+
+	return (iCmp == 0);
+}
+
 
 //// Вернуть путь к папке, содержащей ConEmuC.exe
 //BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1])
