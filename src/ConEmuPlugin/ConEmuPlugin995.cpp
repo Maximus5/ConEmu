@@ -496,16 +496,28 @@ bool UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 	if (!InfoW995 || !InfoW995->AdvControl || gbIgnoreUpdateTabs)
 		return false;
 
-	BOOL lbCh = FALSE;
+	BOOL lbCh = FALSE, lbDummy = FALSE;
 	WindowInfo WInfo = {0};
 	wchar_t szWNameBuffer[CONEMUTABMAX];
 	//WInfo.Name = szWNameBuffer;
 	//WInfo.NameSize = CONEMUTABMAX;
 	int windowCount = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
+	if ((windowCount == 0) && !gpFarInfo->bFarPanelAllowed)
+	{
+		windowCount = 1; lbDummy = TRUE;
+	}
 	lbCh = (lastWindowCount != windowCount);
 
 	if (!CreateTabs(windowCount))
 		return false;
+
+	int tabCount = 0;
+
+	if (lbDummy)
+	{
+		AddTab(tabCount, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
+		return (lbCh != FALSE);
+	}
 
 	//EditorInfo ei = {0};
 	//if (editorSave)
@@ -522,7 +534,6 @@ bool UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 		InfoW995->ViewerControl(VCTL_GETINFO, &vi);
 	}
 
-	int tabCount = 0;
 	BOOL lbActiveFound = FALSE;
 
 	for(int i = 0; i < windowCount; i++)

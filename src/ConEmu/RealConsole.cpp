@@ -198,6 +198,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	//mh_CursorChanged = NULL;
 	//mb_Detached = FALSE;
 	//m_Args.pszSpecialCmd = NULL; -- не требуется
+	mpsz_CmdBuffer = NULL;
 	mb_FullRetrieveNeeded = FALSE;
 	//mb_AdminShieldChecked = FALSE;
 	memset(&m_LastMouse, 0, sizeof(m_LastMouse));
@@ -353,6 +354,8 @@ CRealConsole::~CRealConsole()
 	//CloseMapping();
 	CloseMapHeader(); // CloseMapData() & CloseFarMapData() зовет сам CloseMapHeader
 	CloseColorMapping(); // Colorer data
+
+	SafeFree(mpsz_CmdBuffer);
 
 	//if (mp_Rgn)
 	//{
@@ -2494,6 +2497,50 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 	}
 }
 
+wchar_t* CRealConsole::ParseConEmuSubst(LPCWSTR asCmd)
+{
+	if (!this || !mp_VCon || !asCmd || !*asCmd)
+		return NULL;
+
+	wchar_t* pszChange = lstrdup(asCmd);
+	LPCWSTR szNames[] = {ENV_CONEMUHWND_VAR_W, ENV_CONEMUDRAW_VAR_W, ENV_CONEMUBACK_VAR_W};
+	HWND hWnd[] = {ghWnd, mp_VCon->GetView(), mp_VCon->GetBack()};
+	bool bChanged = false;
+
+	for (size_t i = 0; i < countof(szNames); ++i)
+	{
+		wchar_t szReplace[16];
+		_wsprintf(szReplace, SKIPLEN(countof(szReplace)) L"0x%08X", (DWORD)(DWORD_PTR)(hWnd[i]));
+		size_t rLen = _tcslen(szReplace); _ASSERTE(rLen==10);
+
+		size_t iLen = _tcslen(szNames[i]); _ASSERTE(iLen>=rLen);
+
+		wchar_t* pszStart = StrStrI(pszChange, szNames[i]);
+		if (!pszStart || pszStart == pszChange)
+			continue;
+		while (pszStart)
+		{
+			if ((pszStart > pszChange)
+				&& ((*(pszStart-1) == L'!' && *(pszStart+iLen) == L'!')
+					|| (*(pszStart-1) == L'%' && *(pszStart+iLen) == L'%')))
+			{
+				bChanged = true;
+				pszStart--;
+				memmove(pszStart, szReplace, rLen*sizeof(*szReplace));
+				wchar_t* pszEnd = pszStart + iLen+2;
+				_ASSERTE(*(pszEnd-1)==L'!' || *(pszEnd-1)==L'%');
+				size_t cchLeft = _tcslen(pszEnd)+1;
+				memmove(pszStart+rLen, pszEnd, cchLeft*sizeof(*pszEnd));
+			}
+			pszStart = StrStrI(pszStart+2, szNames[i]);
+		}
+	}
+
+	if (!bChanged)
+		SafeFree(pszChange);
+	return pszChange;
+}
+
 BOOL CRealConsole::StartProcess()
 {
 	if (!this)
@@ -2629,17 +2676,20 @@ BOOL CRealConsole::StartProcess()
 		hkConsole = NULL;
 	}
 
+	// Prepare cmd line
+	LPCWSTR lpszRawCmd = (m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd) ? m_Args.pszSpecialCmd : gpSet->GetCmd();
+	_ASSERTE(lpszRawCmd && *lpszRawCmd);
+	SafeFree(mpsz_CmdBuffer);
+	mpsz_CmdBuffer = ParseConEmuSubst(lpszRawCmd);
+	LPCWSTR lpszCmd = mpsz_CmdBuffer ? mpsz_CmdBuffer : lpszRawCmd;
+	
+
+
+	// Go
 	while (nStep <= 2)
 	{
 		MCHKHEAP;
 		MCHKHEAP;
-		LPCWSTR lpszCmd = NULL;
-
-		if (m_Args.pszSpecialCmd)
-			lpszCmd = m_Args.pszSpecialCmd;
-		else
-			lpszCmd = gpSet->GetCmd();
-		_ASSERTE(lpszCmd && *lpszCmd);
 
 
 		DWORD nColors = (nTextColorIdx) | (nBackColorIdx << 8) | (nPopTextColorIdx << 16) | (nPopBackColorIdx << 24);

@@ -547,16 +547,28 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 	if (!InfoW1900 || !InfoW1900->AdvControl || gbIgnoreUpdateTabs)
 		return false;
 
-	BOOL lbCh = FALSE;
+	BOOL lbCh = FALSE, lbDummy = FALSE;
 	WindowInfo WInfo = {sizeof(WindowInfo)};
 	wchar_t szWNameBuffer[CONEMUTABMAX];
 	//WInfo.Name = szWNameBuffer;
 	//WInfo.NameSize = CONEMUTABMAX;
 	int windowCount = (int)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWCOUNT, 0, NULL);
+	if ((windowCount == 0) && !gpFarInfo->bFarPanelAllowed)
+	{
+		windowCount = 1; lbDummy = TRUE;
+	}
 	lbCh = (lastWindowCount != windowCount);
 
 	if (!CreateTabs(windowCount))
 		return false;
+
+	int tabCount = 0;
+
+	if (lbDummy)
+	{
+		AddTab(tabCount, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
+		return (lbCh != FALSE);
+	}
 
 	//EditorInfo ei = {0};
 	//if (editorSave)
@@ -573,7 +585,6 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 		InfoW1900->ViewerControl(-1/*Active viewer*/, VCTL_GETINFO, 0, &vi);
 	}
 
-	int tabCount = 0;
 	BOOL lbActiveFound = FALSE;
 
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);

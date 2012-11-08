@@ -3841,7 +3841,7 @@ wchar_t* CVConGroup::GetTasks(CVConGroup* apRoot /*= NULL*/)
 
 		size_t nLen = nTaskLen[t] = _tcslen(pszCmd);
 		pszTask[t++] = pszCmd;
-		nAllLen += nLen + 4; // + "\r\n\r\n"
+		nAllLen += nLen + 6; // + "\r\n\r\n"
 	}
 
 	if (nAllLen == NULL)
@@ -3856,13 +3856,22 @@ wchar_t* CVConGroup::GetTasks(CVConGroup* apRoot /*= NULL*/)
 	for (i = 0; i < countof(gp_VCon) && pszTask[i]; i++)
 	{
 		if (i)
+		{
 			_wcscpy_c(psz, 3, L"\r\n");
+			psz += 2;
+		}
+
 		if (gp_VCon[i] == gp_VActive)
+		{
 			*(psz++) = L'>';
+		}
+
 		_wcscpy_c(psz, nTaskLen[i]+1, pszTask[i]);
 		psz += nTaskLen[i];
+
 		_wcscpy_c(psz, 3, L"\r\n");
 		psz += _tcslen(psz);
+
 		SafeFree(pszTask[i]);
 	}
 

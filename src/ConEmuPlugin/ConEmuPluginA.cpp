@@ -584,14 +584,26 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 		CheckResources(FALSE);
 
 	MSectionLock SC; SC.Lock(csTabs);
-	BOOL lbCh = FALSE;
+	BOOL lbCh = FALSE, lbDummy = FALSE;
 	WindowInfo WInfo;
 	WCHAR* pszName = gszDir1; pszName[0] = 0; //(WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
 	int windowCount = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
+	if ((windowCount == 0) && !gpFarInfo->bFarPanelAllowed)
+	{
+		windowCount = 1; lbDummy = TRUE;
+	}
 	lbCh = (lastWindowCount != windowCount);
 
 	if (!CreateTabs(windowCount))
 		return false;
+
+	int tabCount = 0;
+
+	if (lbDummy)
+	{
+		AddTab(tabCount, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
+		return (lbCh != FALSE);
+	}
 
 	//EditorInfo ei = {0}; BOOL bEditorRetrieved = FALSE;
 	//WCHAR* pszFileName = NULL;
@@ -613,7 +625,6 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 	//	if (vi.FileName)
 	//		MultiByteToWideChar(CP_OEMCP, 0, vi.FileName, lstrlenA(vi.FileName)+1, pszFileName, CONEMUTABMAX);
 	//}
-	int tabCount = 0;
 	BOOL lbActiveFound = FALSE;
 
 	for(int i = 0; i < windowCount; i++)

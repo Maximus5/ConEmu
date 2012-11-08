@@ -14,6 +14,14 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.11.08
+[*] Settings: Group of controls «Automatic attach of cmd ...» moved to «ComSpec» page.
+[+] New environment variables: "ConEmuDrawHWND" and "ConEmuBackHWND".
+[+] HWND environment variables ("ConEmuHWND", "ConEmuDrawHWND", "ConEmuBackHWND") are processed
+    when creating new console. For example, you may start gvim from cmd running in ConEmu:
+	gvim --windowid !ConEmuBackHWND! -new_console:sH
+
+
 2012.11.06
 [+] New ConEmuC command: Export environment variables to parent processes.
     Syntax (case insensitive):

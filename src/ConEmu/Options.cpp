@@ -986,7 +986,10 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 				wchar_t* psz = pTask->pszCommands; // dest script
 				for (int k = 0; k < iCmdCount; k++)
 				{
-					if ((k+1) == nActive)
+					bool bActive = false;
+					gpConEmu->ParseScriptLineOptions(pszCommands[k], NULL, &bActive);
+
+					if (((k+1) == nActive) && !bActive)
 						*(psz++) = L'>';
 
 					lstrcpy(psz, pszCommands[k]);
@@ -1097,7 +1100,7 @@ bool Settings::SaveCmdTask(SettingsBase* reg, CommandTasks* pTask)
 
 			if (*pszCmd == L'>')
 			{
-				pszCmd++;
+				//pszCmd++;
 				nActive = iCmdCount; // 1-based
 			}
 

@@ -586,6 +586,9 @@ class CRealConsole
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
 		wchar_t ms_RootProcessName[MAX_PATH];
+		// Replace in asCmd some env.vars (!ConEmuBackHWND! and so on)
+		wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
+		wchar_t* mpsz_CmdBuffer;
 		//BOOL mb_AdminShieldChecked;
 		//wchar_t* ms_SpecialCmd;
 		//BOOL mb_RunAsAdministrator;
@@ -668,7 +671,7 @@ class CRealConsole
 		int mn_LastAppSettingsId;
 		//
 		ConEmuTab* mp_tabs;
-		wchar_t    ms_RenameFirstTab[128];
+		wchar_t    ms_RenameFirstTab[MAX_RENAME_TAB_LEN/*128*/];
 		MSection   msc_Tabs;
 		int mn_tabsCount, mn_MaxTabs, mn_ActiveTab;
 		BOOL mb_TabsWasChanged;

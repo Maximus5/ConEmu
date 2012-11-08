@@ -6639,7 +6639,7 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, bool abAllowScripts
 	return pVCon;
 }
 
-LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, bool* rpbSetActive)
+LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, bool* rpbSetActive, size_t cchNameMax, wchar_t* rsName/*[MAX_RENAME_TAB_LEN]*/)
 {
 	if (!apszLine)
 	{
@@ -6647,11 +6647,34 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, 
 		return NULL;
 	}
 
-	while (*apszLine == L'>' || *apszLine == L'*' || *apszLine == L' ' || *apszLine == L'\t')
-	{
-		if (*apszLine == L'>' && rpbSetActive) *rpbSetActive = true;
+	// !!! Don't Reset values (rpbSetActive, rpbAsAdmin, rsName)
+	// !!! They may be defined in the other place
 
-		if (*apszLine == L'*' && rpbAsAdmin) *rpbAsAdmin = true;
+	// Go
+	while (*apszLine == L'>' || *apszLine == L'*' || *apszLine == L'?' || *apszLine == L' ' || *apszLine == L'\t')
+	{
+		if (*apszLine == L'>' && rpbSetActive)
+			*rpbSetActive = true;
+
+		if (*apszLine == L'*' && rpbAsAdmin)
+			*rpbAsAdmin = true;
+
+		if (*apszLine == L'?')
+		{
+			LPCWSTR pszStart = apszLine+1;
+			LPCWSTR pszEnd = wcschr(pszStart, L'?');
+			if (!pszEnd) pszEnd = pszStart + _tcslen(pszStart);
+
+			if (rsName && (pszEnd > pszStart) && (cchNameMax > 1))
+			{
+				UINT nLen = min((INT_PTR)cchNameMax, (pszEnd-pszStart+1));
+				lstrcpyn(rsName, pszStart, nLen);
+			}
+
+			apszLine = pszEnd;
+			if (!*pszEnd)
+				break;
+		}
 
 		apszLine++;
 	}
@@ -15946,12 +15969,20 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					break;
 				}
 
-				if (!SetWindowMode(isIconic() ? WindowMode : wmNormal))
-					result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
+				if (SetWindowMode(isIconic() ? WindowMode : wmNormal))
+					break;
 			}
-			else
+			
+			// ***
 			{
+				bool bIconic = ::IsIconic(hWnd);
+				bool bPrev = isRestoreFromMinimized;
+				if (bIconic)
+					isRestoreFromMinimized = true;
+
 				result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
+
+				isRestoreFromMinimized = bPrev;
 			}
 
 			break;

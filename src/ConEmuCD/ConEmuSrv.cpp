@@ -1986,6 +1986,28 @@ void SetConEmuWindows(HWND hDcWnd, HWND hBackWnd)
 	_ASSERTE(ghConEmuWnd!=NULL || (hDcWnd==NULL && hBackWnd==NULL));
 	ghConEmuWndDC = hDcWnd;
 	ghConEmuWndBack = hBackWnd;
+
+	wchar_t szHWND[16];
+
+	if (ghConEmuWndDC)
+	{
+		_wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", (DWORD)(DWORD_PTR)ghConEmuWndDC);
+		SetEnvironmentVariableW(ENV_CONEMUDRAW_VAR_W, szHWND);
+	}
+	else
+	{
+		SetEnvironmentVariableW(ENV_CONEMUDRAW_VAR_W, NULL);
+	}
+
+	if (ghConEmuWndBack)
+	{
+		_wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", (DWORD)(DWORD_PTR)ghConEmuWndBack);
+		SetEnvironmentVariableW(ENV_CONEMUBACK_VAR_W, szHWND);
+	}
+	else
+	{
+		SetEnvironmentVariableW(ENV_CONEMUBACK_VAR_W, NULL);
+	}
 }
 
 void CheckConEmuHwnd()
