@@ -212,6 +212,8 @@ struct ConEmuHotKey
 		LPCWSTR pszRc = pszDescr;
 		bool lbColon = false;
 
+		*pszDescr = 0;
+
 		if (bAddMacroIndex && (HkType == chk_Macro))
 		{
 			_wsprintf(pszDescr, SKIPLEN(cchMaxLen) L"Macro %02i: ", DescrLangID-vkGuMacro01+1);
@@ -230,7 +232,11 @@ struct ConEmuHotKey
 		}
 		else if ((cchMaxLen >= 16) && GuiMacro && *GuiMacro)
 		{
-			if (!lbColon)
+			size_t nLen = _tcslen(pszDescr);
+			pszDescr += nLen;
+			cchMaxLen -= nLen;
+
+			if (!lbColon && (cchMaxLen > 2))
 			{
 				lstrcpyn(pszDescr, L": ", cchMaxLen);
 				pszDescr += 2;

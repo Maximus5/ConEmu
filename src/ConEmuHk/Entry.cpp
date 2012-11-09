@@ -686,6 +686,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			bAttachExistingWindow = gbAttachGuiClient = TRUE;
 			//ghAttachGuiClient = 
 		}
+		else
+		{
+			_ASSERTEX(FALSE && "LoadGuiMapping failed");
+		}
 		SafeFree(GuiMapping);
 
 		// Если аттачим существующее окно - таб в ConEmu еще не готов
@@ -1614,6 +1618,80 @@ void StopPTY()
 	}
 }
 
+int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
+{
+	if (!gpStartEnv)
+		return -1;
+	if (!gpStartEnv->pszCmdLine || !*gpStartEnv->pszCmdLine)
+		return -2;
+	if (!Duplicate->hGuiWnd || !Duplicate->nGuiPID || !Duplicate->nAID)
+		return -3;
+
+	ConEmuGuiMapping* GuiMapping = (ConEmuGuiMapping*)calloc(1,sizeof(*GuiMapping));
+	if (!GuiMapping || !LoadGuiMapping(Duplicate->nGuiPID, *GuiMapping))
+	{
+		SafeFree(GuiMapping);
+		return -4;
+	}
+
+	int iRc = -10;
+	// go
+	STARTUPINFO si = {sizeof(si)};
+	PROCESS_INFORMATION pi = {};
+	size_t cchCmdLine = 255 + lstrlen(GuiMapping->sConEmuBaseDir) + lstrlen(gpStartEnv->pszCmdLine);
+	wchar_t *pszCmd, *pszName;
+	BOOL bSrvFound;
+
+	pszCmd = (wchar_t*)malloc(cchCmdLine*sizeof(*pszCmd));
+	if (!pszCmd)
+	{
+		iRc = -11;
+		goto wrap;
+	}
+
+	*pszCmd = L'"';
+	lstrcpy(pszCmd+1, GuiMapping->sConEmuBaseDir);
+	pszName = pszCmd + lstrlen(pszCmd);
+	lstrcpy(pszName, WIN3264TEST(L"\\ConEmuC.exe",L"\\ConEmuC64.exe"));
+	bSrvFound = FileExists(pszCmd+1);
+	#ifdef _WIN64
+	if (!bSrvFound)
+	{
+		// On 64-bit OS may be "ConEmuC64.exe" was not installed? (weird, but possible)
+		lstrcpy(pszName, L"\\ConEmuC.exe");
+		bSrvFound = FileExists(pszCmd+1);
+	}
+	#endif
+	if (!bSrvFound)
+	{
+		iRc = -12;
+		goto wrap;
+	}
+
+	TODO("Цвета консоли, шрифт/размер, размер консоли, размер буфера");
+
+	pszName = pszCmd + lstrlen(pszCmd);
+	msprintf(pszName, cchCmdLine-(pszName-pszCmd),
+		L"\" /ATTACH /GID=%u /GHWND=%08X /AID=%u /HIDE /ROOT %s",
+		Duplicate->nGuiPID, (DWORD)Duplicate->hGuiWnd, Duplicate->nAID, gpStartEnv->pszCmdLine);
+
+	si.dwFlags = STARTF_USESHOWWINDOW;
+
+	if (!CreateProcess(NULL, pszCmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi))
+	{
+		iRc = GetLastError();
+		goto wrap;
+	}
+
+	iRc = 0;
+wrap:
+	SafeFree(GuiMapping);
+	SafeFree(pszCmd);
+	SafeCloseHandle(pi.hProcess);
+	SafeCloseHandle(pi.hThread);
+	return iRc;
+}
+
 // GetConsoleWindow хукается, поэтому, для получения реального консольного окна
 // можно дергать эту экспортируемую функцию
 HWND WINAPI GetRealConsoleWindow()
@@ -1801,6 +1879,18 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				ppReply->dwData[0] = TRUE;
 			}
 		} // CECMD_EXPORTVARS
+		break;
+	case CECMD_DUPLICATE:
+		{
+			int nFRc = DuplicateRoot(&pCmd->Duplicate);
+
+			lbRc = true; // вернуть результат
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
+			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
+			{
+				ppReply->dwData[0] = nFRc;
+			}
+		} // CECMD_DUPLICATE
 		break;
 	}
 	

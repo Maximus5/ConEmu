@@ -4902,6 +4902,9 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 		case IDM_RENAMETAB:
 			mp_RCon->DoRenameTab();
 			break;
+		case IDM_DUPLICATE:
+			mp_RCon->DuplicateRoot();
+			break;
 		case IDM_TERMINATEPRC:
 			mp_RCon->CloseConsole(true, false);
 			break;

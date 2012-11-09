@@ -416,6 +416,13 @@ LPWSTR CConEmuMacro::Close(LPWSTR asArgs, CRealConsole* apRCon)
 		if (CVConGroup::OnScClose())
 			pszResult = lstrdup(L"OK");
 		break;
+	case 3:
+		if (apRCon)
+		{
+			apRCon->CloseTab();
+			pszResult = lstrdup(L"OK");
+		}
+		break;
 	}
 
 	if (!pszResult)
@@ -1212,6 +1219,13 @@ LPWSTR CConEmuMacro::Tab(LPWSTR asArgs, CRealConsole* apRCon)
 			break;
 		case ctc_ShowTabsList: // 
 			CConEmuCtrl::key_ShowTabsList(0, false, NULL, NULL/*чтобы не зависимо от фара показала меню*/);
+			break;
+		case ctc_CloseTab:
+			if (apRCon)
+			{
+				apRCon->CloseTab();
+				pszResult = lstrdup(L"OK");
+			}
 			break;
 		}
 	}

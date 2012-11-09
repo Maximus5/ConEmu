@@ -2116,7 +2116,7 @@ bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
 	// открыть дескриптор процесса сервера. Нужно будет ему помочь.
 	pIn->StartStop.hServerProcessHandle = NULL;
 
-	if (pIn->StartStop.bUserIsAdmin)
+	if (pIn->StartStop.bUserIsAdmin || gbAttachMode)
 	{
 		DWORD  nGuiPid = 0;
 

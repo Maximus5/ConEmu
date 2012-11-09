@@ -149,7 +149,9 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_tabsCount = 0; ms_PanelTitle[0] = 0; mn_ActiveTab = 0;
 	mn_MaxTabs = 20; mb_TabsWasChanged = FALSE;
 	mp_tabs = (ConEmuTab*)Alloc(mn_MaxTabs, sizeof(ConEmuTab));
-	ms_RenameFirstTab[0] = 0;
+	
+	lstrcpyn(ms_RenameFirstTab, args->pszRenameTab ? args->pszRenameTab : L"", countof(ms_RenameFirstTab));
+
 	_ASSERTE(mp_tabs!=NULL);
 	//memset(&m_PacketQueue, 0, sizeof(m_PacketQueue));
 	mn_FlushIn = mn_FlushOut = 0;
@@ -2735,11 +2737,14 @@ BOOL CRealConsole::StartProcess()
 		int nWndHeight = mp_RBuf->GetTextHeight();
 		/*было - GetConWindowSize(con.m_sbi, nWndWidth, nWndHeight);*/
 		_ASSERTE(nWndWidth>0 && nWndHeight>0);
+
+		DWORD nAID = GetMonitorThreadID();
+		_ASSERTE(nAID == GetCurrentThreadId());
 		
 		nCurLen = _tcslen(psCurCmd);
 		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen)
-		          L"/GID=%u /AID=%u /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i /TA=%08X",
-		          GetCurrentProcessId(), GetCurrentThreadId(), (DWORD)ghWnd, nWndWidth, nWndHeight, mn_DefaultBufferHeight,
+		          L"/AID=%u /GID=%u /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i /TA=%08X",
+		          nAID, GetCurrentProcessId(), (DWORD)ghWnd, nWndWidth, nWndHeight, mn_DefaultBufferHeight,
 		          gpSet->ConsoleFont.lfFaceName, gpSet->ConsoleFont.lfWidth, gpSet->ConsoleFont.lfHeight,
 		          nColors);
 		_ASSERTE(mn_MonitorThreadID == GetCurrentThreadId());
@@ -5110,6 +5115,10 @@ int CRealConsole::GetDefaultAppSettingsId()
 	if (m_Args.pszSpecialCmd)
 	{
 		lpszCmd = m_Args.pszSpecialCmd;
+	}
+	else if (m_Args.bDetached)
+	{
+		goto wrap; 
 	}
 	else
 	{
@@ -7532,6 +7541,71 @@ void CRealConsole::DoRenameTab()
 	{
 		//gpConEmu->mp_TabBar->Update(); -- уже, в RenameTab(...)
 	}
+}
+
+void CRealConsole::DuplicateRoot()
+{
+	ConProcess* pProc = NULL, *p = NULL;
+	int nCount = GetProcesses(&pProc);
+	if (nCount < 2)
+	{
+		SafeFree(pProc);
+		DisplayLastError(L"Nothing to duplicate, root process not found", -1);
+		return;
+	}
+	DWORD nServerPID = GetServerPID(true);
+	for (int k = 0; k <= 1 && !p; k++)
+	{
+		for (int i = 0; i < nCount; i++)
+		{
+			if (pProc[i].ProcessID == nServerPID)
+				continue;
+			if (lstrcmpi(pProc[i].Name, L"ConEmuC.exe") == 0 || lstrcmpi(pProc[i].Name, L"ConEmuC64.exe") == 0)
+				continue;
+			if (!k)
+			{
+				if (pProc[i].ParentPID != nServerPID)
+					continue;
+			}
+			p = pProc+i;
+			break;
+		}
+	}
+	if (!p)
+	{
+		DisplayLastError(L"Can't find root process in the active console", -1);
+	}
+	else
+	{
+		wchar_t szConfirm[255];
+		_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Do you want to duplicate tab with root '%s'?", p->Name);
+		if (MessageBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)
+		{
+			RConStartArgs args;
+			args.AssignFrom(&m_Args);
+			args.bDetached = TRUE;
+			CVirtualConsole *pVCon = gpConEmu->CreateCon(&args);
+
+			if (pVCon)
+			{
+				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DUPLICATE, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_DUPLICATE));
+				pIn->Duplicate.hGuiWnd = ghWnd;
+				pIn->Duplicate.nGuiPID = GetCurrentProcessId();
+				pIn->Duplicate.nAID = pVCon->RCon()->GetMonitorThreadID();
+
+				CESERVER_REQ* pOut = ExecuteHkCmd(p->ProcessID, pIn, ghWnd);
+				int nFRc = (pOut->DataSize() >= sizeof(DWORD)) ? (int)(pOut->dwData[0]) : -100;
+				if (nFRc != 0)
+				{
+					_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Duplicate tab with root '%s' failed, code=%i?", p->Name, nFRc);
+					DisplayLastError(szConfirm, -1);
+				}
+				ExecuteFreeResult(pOut);
+				ExecuteFreeResult(pIn);
+			}
+		}
+	}
+	SafeFree(pProc);
 }
 
 void CRealConsole::RenameTab(LPCWSTR asNewTabText /*= NULL*/)

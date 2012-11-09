@@ -14,6 +14,13 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.11.09
+[+] Fast access to «Keys & Macro» (hotkeys) settings page. Win+Alt+K or SystemMenu -> Help -> Hotkeys.
+[+] New hotkeys: Win+Alt+Del - close active tab, Win+F4 - close all tabs (same as «Cross» click).
+[%] When closing tab from Win7 taskbar thumbnail - closing confirmation was not appears onscreen.
+[+] New menu item «Duplicate root...» in tab menu. It tries to create new tab with root process and same directory/environment. Hotkey available but not assigned by default.
+
+
 2012.11.08
 [*] Settings: Group of controls «Automatic attach of cmd ...» moved to «ComSpec» page.
 [+] New environment variables: "ConEmuDrawHWND" and "ConEmuBackHWND".

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    112
+#define CESERVER_REQ_VER    114
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -173,6 +173,7 @@ enum ConEmuTabCommand
 	ctc_SwitchConsoleDirect = 6,
 	ctc_ActivateConsole = 7,
 	ctc_ShowTabsList = 8,
+	ctc_CloseTab = 9,
 };
 
 enum ConEmuStatusCommand
@@ -292,6 +293,7 @@ const CECMD
 	CECMD_SETCONTITLE    = 66, // wData - это LPCWSTR, посылается в Server
 	CECMD_EXPORTVARS     = 67, // wData - same as GetEnvironmentStringsW returns, but may be less (selected vars only)
 	CECMD_EXPORTVARSALL  = 68, // same as CECMD_EXPORTVARS, but apply environment to all tabs
+	CECMD_DUPLICATE      = 69, // CESERVER_REQ_DUPLICATE. sent to root console process (cmd, far, powershell), processed with ConEmuHk - Create new tab reproducing current state.
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1670,6 +1672,13 @@ struct CESERVER_REQ_SETCONSOLORS
 	BOOL  ReFillConsole;
 };
 
+struct CESERVER_REQ_DUPLICATE
+{
+	HWND2 hGuiWnd;
+	DWORD nGuiPID;
+	DWORD nAID; // внутренний ID в ConEmu
+};
+
 struct CESERVER_REQ
 {
 	CESERVER_REQ_HDR hdr;
@@ -1715,6 +1724,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_GETALLTABS GetAllTabs;
 		CESERVER_REQ_FULLSCREEN FullScreenRet;
 		CESERVER_REQ_SETCONSOLORS SetConColor;
+		CESERVER_REQ_DUPLICATE Duplicate;
 	};
 
 	DWORD DataSize() { return this ? (hdr.cbSize - sizeof(hdr)) : 0; };

@@ -669,7 +669,6 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_STARTUP,     0, L"Startup",        thi_Startup/*, OnInitDialog_Startup*/},
 		{IDD_SPG_CMDTASKS,    1, L"Tasks",          thi_Tasks/*,   OnInitDialog_CmdTasks*/},
 		{IDD_SPG_COMSPEC,     1, L"ComSpec",        thi_Comspec/*, OnInitDialog_Comspec*/},
-		//{IDD_SPG_CMDOUTPUT, 1, L"Output",         thi_Output/*,  OnInitDialog_Output*/},
 		{IDD_SPG_FEATURE,     0, L"Features",       thi_Ext/*,     OnInitDialog_Ext*/},
 		{IDD_SPG_CURSOR,      1, L"Text cursor",    thi_Cursor/*,  OnInitDialog_Cursor*/},
 		{IDD_SPG_COLORS,      1, L"Colors",         thi_Colors/*,  OnInitDialog_Color*/},
@@ -1975,41 +1974,6 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 	RegisterTipsFor(hWnd2);
 	return 0;
 }
-
-//LRESULT CSettings::OnInitDialog_Output(HWND hWnd2, bool abInitial)
-//{
-//	checkDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
-//	
-//	wchar_t sz[16];
-//	TODO("Ќадо бы увеличить, но нужно сервер допиливать");
-//	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
-//	SetDlgItemText(hWnd2, tLongOutputHeight, _ltow(gpSet->DefaultBufferHeight, sz, 10));
-//	EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
-//
-//	// 16bit Height
-//	if (abInitial)
-//	{
-//		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"Auto");
-//		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"25 lines");
-//		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"28 lines");
-//		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"43 lines");
-//		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"50 lines");
-//	}
-//	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_SETCURSEL, !gpSet->ntvdmHeight ? 0 :
-//	                   ((gpSet->ntvdmHeight == 25) ? 1 : ((gpSet->ntvdmHeight == 28) ? 2 : ((gpSet->ntvdmHeight == 43) ? 3 : 4))), 0); //-V112
-//	// Cmd.exe output cp
-//	if (abInitial)
-//	{
-//		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Undefined");
-//		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Automatic");
-//		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Unicode");
-//		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM");
-//	}
-//	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_SETCURSEL, gpSet->nCmdOutputCP, 0);
-//
-//	RegisterTipsFor(hWnd2);
-//	return 0;
-//}
 
 LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 {
@@ -7409,9 +7373,6 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_COMSPEC:
 			gpSetCls->OnInitDialog_Comspec(hWnd2, true);
 			break;
-		//case IDD_SPG_CMDOUTPUT:
-		//	gpSetCls->OnInitDialog_Output(hWnd2, true);
-		//	break;
 		case IDD_SPG_SELECTION:
 			gpSetCls->OnInitDialog_Selection(hWnd2);
 			break;
@@ -7501,9 +7462,6 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_COMSPEC:
 			gpSetCls->OnInitDialog_Comspec(hWnd2, false);
 			break;
-		//case IDD_SPG_CMDOUTPUT:
-		//	gpSetCls->OnInitDialog_Output(hWnd2, false);
-		//	break;
 		case IDD_SPG_SELECTION: /*gpSetCls->OnInitDialog_Selection(hWnd2);*/    break;
 		case IDD_SPG_FEATURE_FAR:
 			gpSetCls->OnInitDialog_Far(hWnd2, FALSE);

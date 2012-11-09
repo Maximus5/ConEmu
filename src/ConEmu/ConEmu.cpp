@@ -1479,7 +1479,7 @@ HMENU CConEmuMain::GetSysMenu(BOOL abInitial /*= FALSE*/)
 				DestroyMenu(mh_InsideSysMenu);
 
 			mh_InsideSysMenu = CreatePopupMenu();
-			AppendMenu(mh_InsideSysMenu, MF_STRING | MF_ENABLED, SC_CLOSE, L"&Close ConEmu");
+			AppendMenu(mh_InsideSysMenu, MF_STRING | MF_ENABLED, SC_CLOSE, MenuAccel(vkCloseConEmu,L"&Close ConEmu"));
 		}
 		hwndMain = mh_InsideSysMenu;
 	}
@@ -1518,6 +1518,11 @@ void CConEmuMain::UpdateSysMenu(HMENU hSysMenu)
 		if (psz)
 		{
 			*psz = 0;
+			//SetMenuItemInfo(hSysMenu, SC_CLOSE, FALSE, &mi);
+		}
+		mi.dwTypeData = (LPWSTR)MenuAccel(vkCloseConEmu,szText);
+		if (lstrcmp(mi.dwTypeData, szText) != 0)
+		{
 			SetMenuItemInfo(hSysMenu, SC_CLOSE, FALSE, &mi);
 		}
 	}
@@ -1534,7 +1539,7 @@ void CConEmuMain::UpdateSysMenu(HMENU hSysMenu)
 		}
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
 		
-		//InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About"));
+		//InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About / Help"));
 		if (mh_HelpPopup) DestroyMenu(mh_HelpPopup);
 		mh_HelpPopup = CreateHelpMenuPopup();
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_HelpPopup, _T("Hel&p"));
@@ -3419,7 +3424,6 @@ void CConEmuMain::AskChangeBufferHeight()
 	if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1)
 		return;
 
-	CVConGuard guard(pVCon);
 
 	BOOL lbBufferHeight = pRCon->isBufferHeight();
 
@@ -3474,12 +3478,16 @@ void CConEmuMain::AskChangeAlternative()
 		return;
 	CVirtualConsole *pVCon = VCon.VCon();
 	CRealConsole *pRCon = pVCon->RCon();
-	if (!pRCon || pRCon->GuiWnd())
+	if (!pRCon) return;
+
+
+	HWND hGuiClient = pRCon->GuiWnd();
+	if (hGuiClient)
 	{
+		pRCon->ShowGuiClientInt(!pRCon->isGuiVisible());
 		return;
 	}
 
-	CVConGuard guard(pVCon);
 
 	// Переключиться на альтернативный/основной буфер
 	RealBufferType CurBuffer = pRCon->GetActiveBufferType();
@@ -6651,7 +6659,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, 
 	// !!! They may be defined in the other place
 
 	// Go
-	while (*apszLine == L'>' || *apszLine == L'*' || *apszLine == L'?' || *apszLine == L' ' || *apszLine == L'\t')
+	while (*apszLine == L'>' || *apszLine == L'*' /*|| *apszLine == L'?'*/ || *apszLine == L' ' || *apszLine == L'\t')
 	{
 		if (*apszLine == L'>' && rpbSetActive)
 			*rpbSetActive = true;
@@ -6659,22 +6667,22 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, 
 		if (*apszLine == L'*' && rpbAsAdmin)
 			*rpbAsAdmin = true;
 
-		if (*apszLine == L'?')
-		{
-			LPCWSTR pszStart = apszLine+1;
-			LPCWSTR pszEnd = wcschr(pszStart, L'?');
-			if (!pszEnd) pszEnd = pszStart + _tcslen(pszStart);
+		//if (*apszLine == L'?')
+		//{
+		//	LPCWSTR pszStart = apszLine+1;
+		//	LPCWSTR pszEnd = wcschr(pszStart, L'?');
+		//	if (!pszEnd) pszEnd = pszStart + _tcslen(pszStart);
 
-			if (rsName && (pszEnd > pszStart) && (cchNameMax > 1))
-			{
-				UINT nLen = min((INT_PTR)cchNameMax, (pszEnd-pszStart+1));
-				lstrcpyn(rsName, pszStart, nLen);
-			}
+		//	if (rsName && (pszEnd > pszStart) && (cchNameMax > 1))
+		//	{
+		//		UINT nLen = min((INT_PTR)cchNameMax, (pszEnd-pszStart+1));
+		//		lstrcpyn(rsName, pszStart, nLen);
+		//	}
 
-			apszLine = pszEnd;
-			if (!*pszEnd)
-				break;
-		}
+		//	apszLine = pszEnd;
+		//	if (!*pszEnd)
+		//		break;
+		//}
 
 		apszLine++;
 	}
@@ -10150,8 +10158,9 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		
 		TODO("Добавить пункт IDM_ADMIN_DUPLICATE");
 		
-		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_CLOSE,     L"&Close");
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_CLOSE,     MenuAccel(vkCloseTab,L"&Close tab"));
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_DETACH,    L"Detach");
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_DUPLICATE, MenuAccel(vkDuplicateRoot,L"Duplica&te root..."));
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RENAMETAB, MenuAccel(vkRenameTab,L"Rena&me tab"));
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATECON, MenuAccel(vkMultiClose,L"&Console"));
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
@@ -10189,6 +10198,7 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 
 		EnableMenuItem(hMenu, IDM_CLOSE, MF_BYCOMMAND | (lbCanCloseTab ? MF_ENABLED : MF_GRAYED));
 		EnableMenuItem(hMenu, IDM_DETACH, MF_BYCOMMAND | MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_DUPLICATE, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hMenu, IDM_RENAMETAB, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATECON, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRC, MF_BYCOMMAND | MF_ENABLED);
@@ -10202,6 +10212,7 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 	{
 		EnableMenuItem(hMenu, IDM_CLOSE, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hMenu, IDM_DETACH, MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_DUPLICATE, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hMenu, IDM_RENAMETAB, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATECON, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRC, MF_BYCOMMAND | MF_GRAYED);
@@ -10274,7 +10285,8 @@ HMENU CConEmuMain::CreateHelpMenuPopup()
 		AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
 
 	AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);	
-	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_ABOUT, MenuAccel(vkWinAltA,L"&About"));
+	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HOTKEYS, MenuAccel(vkWinAltK,L"Hot&keys"));
+	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_ABOUT, MenuAccel(vkWinAltA,L"&About / Help"));
 	
 	return hHelp;
 }
@@ -10357,7 +10369,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About"));
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About / Help"));
 
 	//if (ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
 	//	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
@@ -15837,6 +15849,12 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				gpUpd->StopChecking();
 			return 0;
 		
+		case ID_HOTKEYS:
+		{
+			CSettings::Dialog(IDD_SPG_KEYS);
+			return 0;
+		}
+
 		case ID_ABOUT:
 		{
 			gpConEmu->OnInfo_About();

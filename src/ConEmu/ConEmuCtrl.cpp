@@ -502,6 +502,18 @@ bool CConEmuCtrl::key_MultiClose(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 	return true;
 }
 
+//// pRCon may be NULL
+//bool CConEmuCtrl::key_CloseTab(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+//{
+//	if (!pRCon)
+//		return false;
+//	if (TestOnly)
+//		return true;
+//
+//	pRCon->CloseTab();
+//	return true;
+//}
+
 // pRCon may be NULL
 bool CConEmuCtrl::key_TerminateProcess(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
@@ -513,6 +525,30 @@ bool CConEmuCtrl::key_TerminateProcess(DWORD VkMod, bool TestOnly, const ConEmuH
 	pRCon->CloseConsole(true, true);
 	return true;
 }
+
+// pRCon may be NULL
+bool CConEmuCtrl::key_DuplicateRoot(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (!pRCon)
+		return false;
+	if (TestOnly)
+		return true;
+
+	pRCon->DuplicateRoot();
+	return true;
+}
+
+//// pRCon may be NULL
+//bool CConEmuCtrl::key_CloseConEmu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+//{
+//	if (!pRCon)
+//		return false;
+//	if (TestOnly)
+//		return true;
+//
+//	PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+//	return true;
+//}
 
 // pRCon may be NULL
 bool CConEmuCtrl::key_MultiCmd(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
@@ -560,6 +596,17 @@ bool CConEmuCtrl::key_About(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, 
 		return true;
 	//KeyUp!
 	gpConEmu->OnInfo_About();
+	return true;
+}
+
+// System (predefined, fixed)
+// pRCon may be NULL
+bool CConEmuCtrl::key_Hotkeys(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+	//KeyUp!
+	CSettings::Dialog(IDD_SPG_KEYS);
 	return true;
 }
 

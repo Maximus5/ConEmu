@@ -33,7 +33,6 @@
 #define IDD_SPG_CURSOR                  163
 #define IDD_SPG_INTEGRATION             164
 #define IDD_SPG_TRANSPARENT             165
-#define IDD_SPG_CMDOUTPUT               166
 #define IDD_SPG_WNDSIZEPOS              167
 #define IDD_SPG_SELECTION               168
 #define IDD_SPG_TABS                    169
@@ -859,6 +858,10 @@
 #define stStatusColorBack               2497
 #define stStatusColorLight              2498
 #define stStatusColorDark               2499
+#define vkWinAltK                       2500
+#define vkCloseTab                      2501
+#define vkCloseConEmu                   2502
+#define vkDuplicateRoot                 2503
 
 // Next default values for new objects
 // 
@@ -866,7 +869,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2500
+#define _APS_NEXT_CONTROL_VALUE         2504
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

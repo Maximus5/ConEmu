@@ -111,7 +111,7 @@ RConStartArgs::RConStartArgs()
 	bForceUserDialog = bBackgroundTab = bForceDosBox = FALSE;
 	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
-	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = /*pszUserPassword =*/ NULL;
+	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = /*pszUserPassword =*/ pszRenameTab = NULL;
 	bBufHeight = FALSE; nBufHeight = 0; bLongOutputDisable = FALSE;
 	bInjectsDisable = FALSE;
 	eConfirmation = eConfDefault;
@@ -127,7 +127,7 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 	{
 		SafeFree(this->pszSpecialCmd);
 
-		_ASSERTE(args->bDetached == FALSE);
+		//_ASSERTE(args->bDetached == FALSE); -- Allowed. While duplicating root.
 		this->pszSpecialCmd = lstrdup(args->pszSpecialCmd);
 
 		if (!this->pszSpecialCmd)
@@ -143,6 +143,15 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 		this->pszStartupDir = lstrdup(args->pszStartupDir);
 
 		if (!this->pszStartupDir)
+			return false;
+	}
+
+	SafeFree(this->pszRenameTab);
+	if (args->pszRenameTab)
+	{
+		this->pszRenameTab = lstrdup(args->pszRenameTab);
+
+		if (!this->pszRenameTab)
 			return false;
 	}
 
@@ -185,6 +194,7 @@ RConStartArgs::~RConStartArgs()
 {
 	SafeFree(pszSpecialCmd); // именно SafeFree
 	SafeFree(pszStartupDir); // именно SafeFree
+	SafeFree(pszRenameTab);
 	SafeFree(pszUserName);
 	SafeFree(pszDomain);
 
@@ -200,6 +210,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	size_t cchMaxLen =
 				 (pszSpecialCmd ? (lstrlen(pszSpecialCmd) + 3) : 0); // только команда
 	cchMaxLen += (pszStartupDir ? (lstrlen(pszStartupDir) + 20) : 0); // "-new_console:d:..."
+	cchMaxLen += (pszRenameTab  ? (lstrlen(pszRenameTab) + 20) : 0); // "-new_console:t:..."
 	cchMaxLen += (bRunAsAdministrator ? 15 : 0); // -new_console:a
 	cchMaxLen += (bRunAsRestricted ? 15 : 0); // -new_console:r
 	cchMaxLen += (pszUserName ? (lstrlen(pszUserName) + 32 // "-new_console:u:<user>:<pwd>"
@@ -298,6 +309,22 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 			_wcscat_c(pszFull, cchMaxLen, bNewConsole ? L" -new_console:d:" : L" -cur_console:d:");
 			
 		_wcscat_c(pszFull, cchMaxLen, pszStartupDir);
+
+		if (bQuot)
+			_wcscat_c(pszFull, cchMaxLen, L"\"");
+	}
+
+	// "-new_console:t:..."
+	if (pszRenameTab && *pszRenameTab)
+	{
+		bool bQuot = wcschr(pszRenameTab, L' ') != NULL;
+
+		if (bQuot)
+			_wcscat_c(pszFull, cchMaxLen, bNewConsole ? L" \"-new_console:t:" : L" \"-cur_console:t:");
+		else
+			_wcscat_c(pszFull, cchMaxLen, bNewConsole ? L" -new_console:t:" : L" -cur_console:t:");
+			
+		_wcscat_c(pszFull, cchMaxLen, pszRenameTab);
 
 		if (bQuot)
 			_wcscat_c(pszFull, cchMaxLen, L"\"");
@@ -555,7 +582,29 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							}
 						} // L'd':
 						break;
-						
+
+					case L't':
+						// t:<TabName>. MUST be last options
+						{
+							if (*pszEnd == L':')
+								pszEnd++;
+							const wchar_t* pszTab = pszEnd;
+							while ((*pszEnd) && (lbQuot || *pszEnd != L' ') && (*pszEnd != L'"'))
+								pszEnd++;
+							if (pszEnd > pszTab)
+							{
+								size_t cchLen = pszEnd - pszTab;
+								SafeFree(pszRenameTab);
+								pszRenameTab = (wchar_t*)malloc((cchLen+1)*sizeof(*pszRenameTab));
+								if (pszRenameTab)
+								{
+									wmemmove(pszRenameTab, pszTab, cchLen);
+									pszRenameTab[cchLen] = 0;
+								}
+							}
+						} // L't':
+						break;
+
 					case L's':
 						// s[<SplitTab>T][<Percents>](H|V)
 						// Пример: "s3T30H" - разбить 3-ий таб. будет создан новый Pane справа, шириной 30% от 3-го таба.
