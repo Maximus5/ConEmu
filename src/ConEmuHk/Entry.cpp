@@ -407,9 +407,7 @@ void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 PipeServer<CESERVER_REQ> *gpHookServer = NULL;
 #endif
 
-#ifdef _DEBUG
 bool gbShowExeMsgBox = false;
-#endif
 
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
@@ -419,6 +417,20 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	if (!GetModuleFileName(NULL, szModule, MAX_PATH+1))
 		_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
 	const wchar_t* pszName = PointToName(szModule);
+	wchar_t szMsg[128];
+
+	// For reporting purposes. Users may define env.var and run program.
+	// When ConEmuHk.dll loaded in that process - it'll show msg box
+	// Example (for cmd.exe prompt):
+	// set ConEmuReportExe=sh.exe
+	// sh.exe --login -i
+	if (pszName && GetEnvironmentVariableW(ENV_CONEMUREPORTEXE_VAR_W, szMsg, countof(szMsg)) && *szMsg)
+	{
+		if (lstrcmpi(szMsg, pszName) == 0)
+		{
+			gbShowExeMsgBox = true;
+		}
+	}
 
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
 		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
@@ -438,29 +450,28 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//HANDLE hStartedEvent = (HANDLE)apParm;
 
 
-	#if defined(SHOW_EXE_MSGBOX)
-		if (gbShowExeMsgBox)
+	if (gbShowExeMsgBox)
+	{
+		STARTUPINFO si = {sizeof(si)};
+		GetStartupInfo(&si);
+		LPCWSTR pszCmd = GetCommandLineW();
+		// GuiMessageBox еще не прокатит, ничего не инициализировано
+		HMODULE hUser = LoadLibrary(user32);
+		typedef int (WINAPI* MessageBoxW_t)(HWND hWnd,LPCTSTR lpText,LPCTSTR lpCaption,UINT uType);
+		if (hUser)
 		{
-			STARTUPINFO si = {sizeof(si)};
-			GetStartupInfo(&si);
-			LPCWSTR pszCmd = GetCommandLineW();
-			// GuiMessageBox еще не прокатит, ничего не инициализировано
-			HMODULE hUser = LoadLibrary(user32);
-			typedef int (WINAPI* MessageBoxW_t)(HWND hWnd,LPCTSTR lpText,LPCTSTR lpCaption,UINT uType);
-			if (hUser)
+			MessageBoxW_t MsgBox = (MessageBoxW_t)GetProcAddress(hUser, "MessageBoxW");
+			if (MsgBox)
 			{
-				MessageBoxW_t MsgBox = (MessageBoxW_t)GetProcAddress(hUser, "MessageBoxW");
-				if (MsgBox)
-				{
-					wchar_t szMsg[128]; lstrcpyn(szMsg, pszName, 96); lstrcat(szMsg, L" loaded!");
-					wchar_t szTitle[64]; msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-					MsgBox(NULL, szMsg, szTitle, MB_SYSTEMMODAL);
-				}
-				FreeLibrary(hUser);
+				lstrcpyn(szMsg, pszName, 96); lstrcat(szMsg, L" loaded!");
+				wchar_t szTitle[64]; msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+				MsgBox(NULL, szMsg, szTitle, MB_SYSTEMMODAL);
 			}
+			FreeLibrary(hUser);
 		}
-	#endif
-	
+	}
+
+
 	#ifdef _DEBUG
 	{
 		wchar_t szCpInfo[128];

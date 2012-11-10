@@ -95,6 +95,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMUANSI_BUILD_W L"ConEmuBuild"
 #define ENV_CONEMUANSI_CONFIG_W L"ConEmuConfig"
 #define ENV_CONEMUANSI_WAITKEY L"ConEmuWaitKey"
+#define ENV_CONEMUREPORTEXE_VAR_W L"ConEmuReportExe"
 
 
 

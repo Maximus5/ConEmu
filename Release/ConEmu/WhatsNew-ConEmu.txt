@@ -14,6 +14,15 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+[+] For debug purposes. User may define environment variable "ConEmuReportExe".
+    ConEmuHk (when it is injected in the process with defined name) will show message box.
+    It is right moment to take memory dump of this infiltrated process.
+    For example (for cmd.exe command prompt):
+    set ConEmuReportExe=sh.exe
+    "C:\Program Files (x86)\Git\bin\sh.exe" --login -i
+[%] Issue 811: Unable to change Highlight & goto shortcut.
+
+
 2012.11.09
 [+] Fast access to «Keys & Macro» (hotkeys) settings page. Win+Alt+K or SystemMenu -> Help -> Hotkeys.
 [+] New hotkeys: Win+Alt+Del - close active tab, Win+F4 - close all tabs (same as «Cross» click).

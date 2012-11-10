@@ -738,11 +738,11 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent 
 
 	wchar_t temp[MAX_PATH+10] = {};
 	if (asDefFile)
-		_wcscpy_c(temp+1, countof(temp)-1, asDefFile);
+		_wcscpy_c(temp+1, countof(temp)-2, asDefFile);
 
 	OPENFILENAME ofn = {sizeof(ofn)};
 	ofn.hwndOwner = ghOpWnd;
-	ofn.lpstrFilter = L"All files (*.*)\0*.*\0Text files (*.txt,*.ini,*.log)\0*.txt;*.ini;*.log\0Executables (*.exe,*.com,*.bat,*.cmd)\0*.exe;*.com;*.bat;*.cmd\0Scripts (*.vbs,*.vbe,*.js,*.jse)\0*.vbs;*.vbe;*.js;*.jse\0\0";
+	ofn.lpstrFilter = asFilter ? asFilter : L"All files (*.*)\0*.*\0Text files (*.txt,*.ini,*.log)\0*.txt;*.ini;*.log\0Executables (*.exe,*.com,*.bat,*.cmd)\0*.exe;*.com;*.bat;*.cmd\0Scripts (*.vbs,*.vbe,*.js,*.jse)\0*.vbs;*.vbe;*.js;*.jse\0\0";
 	//ofn.lpstrFilter = L"All files (*.*)\0*.*\0\0";
 	ofn.lpstrFile = temp+1;
 	ofn.nMaxFile = countof(temp)-10;

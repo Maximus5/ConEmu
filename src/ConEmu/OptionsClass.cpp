@@ -1762,27 +1762,25 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 							if (!GetDlgItemText(hWnd2, (CB==cbCmdLine)?tCmdLine:tStartTasksFile, edt, countof(edt)))
 								edt[0] = 0;
 							ExpandEnvironmentStrings(edt, temp, countof(temp));
-							OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
-							ofn.lStructSize=sizeof(ofn);
-							ofn.hwndOwner = ghOpWnd;
+
+							LPCWSTR pszFilter, pszTitle;
 							if (CB==cbCmdLine)
 							{
-								ofn.lpstrFilter = L"Executables (*.exe)\0*.exe\0All files (*.*)\0*.*\0\0";
-								ofn.lpstrTitle = L"Choose application";
+								pszFilter = L"Executables (*.exe)\0*.exe\0All files (*.*)\0*.*\0\0";
+								pszTitle = L"Choose application";
 							}
 							else
 							{
-								ofn.lpstrFilter = L"Text files (*.txt)\0*.txt\0All files (*.*)\0*.*\0\0";
-								ofn.lpstrTitle = L"Choose command file";
+								pszFilter = L"Text files (*.txt)\0*.txt\0All files (*.*)\0*.*\0\0";
+								pszTitle = L"Choose command file";
 							}
-							ofn.lpstrFile = temp;
-							ofn.nMaxFile = countof(temp);
-							ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-										| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
 
-							if (GetOpenFileName(&ofn))
+							wchar_t* pszRet = SelectFile(pszTitle, temp, ghOpWnd, pszFilter, (CB==cbCmdLine)/*abAutoQuote*/);
+
+							if (pszRet)
 							{
-								SetDlgItemText(hWnd2, (CB==cbCmdLine)?tCmdLine:tStartTasksFile, temp);
+								SetDlgItemText(hWnd2, (CB==cbCmdLine)?tCmdLine:tStartTasksFile, pszRet);
+								SafeFree(pszRet);
 							}
 						}
 						break;
@@ -6891,6 +6889,15 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF) | ((nBack & 0xF) << 4);
 						gpConEmu->Update(true);
 					} break;
+				}
+			} // if (HIWORD(wParam) == CBN_SELCHANGE)
+		} // else if (hWnd2 == hSelection)
+		else if (hWnd2 == mh_Tabs[thi_KeybMouse])
+		{
+			if (HIWORD(wParam) == CBN_SELCHANGE)
+			{
+				switch (wId)
+				{
 				case lbFarGotoEditorVk:
 					{
 						BYTE VkMod = 0;
@@ -6899,7 +6906,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					} break;
 				}
 			} // if (HIWORD(wParam) == CBN_SELCHANGE)
-		} // else if (hWnd2 == hSelection)
+		} // else if (hWnd2 == mh_Tabs[thi_KeybMouse])
 	} // switch (wId)
 	return 0;
 }
