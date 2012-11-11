@@ -262,7 +262,7 @@ class CRealConsole
 		wchar_t ms_GuiWndProcess[MAX_PATH];
 		BYTE    m_ConsoleKeyShortcuts;
 		BYTE    mn_TextColorIdx, mn_BackColorIdx, mn_PopTextColorIdx, mn_PopBackColorIdx;
-		void    PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx, BYTE& nPopTextColorIdx, BYTE& nPopBackColorIdx);
+		void    PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx, BYTE& nPopTextColorIdx, BYTE& nPopBackColorIdx, bool bUpdateRegistry = false, HKEY hkConsole = NULL);
 		//HANDLE  hFileMapping;
 		//CESERVER_REQ_CONINFO* pConsoleData;
 		//void CloseMapping();
@@ -449,7 +449,7 @@ class CRealConsole
 		void UpdateScrollInfo();
 		void SetTabs(ConEmuTab* tabs, int tabsCount);
 		void DoRenameTab();
-		void DuplicateRoot();
+		bool DuplicateRoot(bool bSkipMsg = false, LPCWSTR asAddArgs = NULL, bool bRunAsAdmin = false);
 		void RenameTab(LPCWSTR asNewTabText = NULL);
 		void RenameWindow(LPCWSTR asNewWindowText = NULL);
 		int GetTabCount(BOOL abVisibleOnly = FALSE);

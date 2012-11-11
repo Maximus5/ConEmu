@@ -1553,7 +1553,7 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 
 	// копия на вкладке "Size & Pos"
-	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
+	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
 
@@ -1645,7 +1645,7 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbQuakeAutoHide, (gpSet->isQuakeStyle == 2) ? BST_CHECKED : BST_UNCHECKED);
 	//EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
 	// копия на вкладке "Show"
-	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
+	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 	//EnableWindow(GetDlgItem(hWnd2, tHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
 	//EnableWindow(GetDlgItem(hWnd2, stHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
 
@@ -2371,16 +2371,18 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				//EnableWindow(GetDlgItem(hWnd2, lbHotKeyList), TRUE);
 				//EnableWindow(hHk, (pk->Type == 0));
 
-				if (bMacroEnabled)
-				{
-					pszDescription = pk->GuiMacro;
-				}
-				else
-				{
-					if (!LoadString(g_hInstance, pk->DescrLangID, szDescTemp, countof(szDescTemp)))
-						szDescTemp[0] = 0;
-					pszDescription = szDescTemp;
-				}
+				//if (bMacroEnabled)
+				//{
+				//	pszDescription = pk->GuiMacro;
+				//}
+				//else
+				//{
+				//	if (!LoadString(g_hInstance, pk->DescrLangID, szDescTemp, countof(szDescTemp)))
+				//		szDescTemp[0] = 0;
+				//	pszDescription = szDescTemp;
+				//}
+				// -- use function
+				pszDescription = pk->GetDescription(szDescTemp, countof(szDescTemp));
 
 				//nVK = pk ? *pk->VkPtr : 0;
 				//if ((pk->Type == 0) || (pk->Type == 2))
@@ -6127,6 +6129,19 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case tHideCaptionAlwaysFrame: // копия на вкладке "Show" & "Size & Pos"
+		{
+			WORD TB = LOWORD(wParam);
+			BOOL lbOk = FALSE;
+			int nNewVal = GetDlgItemInt(hWnd2, TB, &lbOk, TRUE);
+
+			if (lbOk && (gpSet->nHideCaptionAlwaysFrame != ((nNewVal < 0) ? 255 : (BYTE)nNewVal)))
+			{
+				gpSet->nHideCaptionAlwaysFrame = (nNewVal < 0) ? 255 : (BYTE)nNewVal;
+				gpConEmu->OnHideCaption();
+				gpConEmu->UpdateWindowRgn();
+			}
+		}
+		break;
 	case tHideCaptionAlwaysDelay:
 	case tHideCaptionAlwaysDissapear:
 	case tScrollAppearDelay:
@@ -6141,11 +6156,6 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				switch (TB)
 				{
-				case tHideCaptionAlwaysFrame:
-					gpSet->nHideCaptionAlwaysFrame = nNewVal;
-					gpConEmu->OnHideCaption();
-					gpConEmu->UpdateWindowRgn();
-					break;
 				case tHideCaptionAlwaysDelay:
 					gpSet->nHideCaptionAlwaysDelay = nNewVal;
 					break;

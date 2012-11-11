@@ -430,7 +430,7 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 	}
 
 
-	BYTE nTextColorIdx = 7, nBackColorIdx = 0, nPopTextColorIdx = 5, nPopBackColorIdx = 15;
+	BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
 	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);
 
 
@@ -2448,8 +2448,10 @@ BOOL CRealConsole::StartMonitorThread()
 	return lbRc;
 }
 
-void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx, BYTE& nPopTextColorIdx, BYTE& nPopBackColorIdx)
+void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx, BYTE& nPopTextColorIdx, BYTE& nPopBackColorIdx, bool bUpdateRegistry /*= false*/, HKEY hkConsole /*= NULL*/)
 {
+	//nTextColorIdx = 7; nBackColorIdx = 0; nPopTextColorIdx = 5; nPopBackColorIdx = 15;
+
 	// Тут берем именно "GetDefaultAppSettingsId", а не "GetActiveAppSettingsId"
 	// т.к. довольно стремно менять АТРИБУТЫ консоли при выполнении пакетников и пр.
 	const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetDefaultAppSettingsId());
@@ -2496,6 +2498,49 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 		nPopTextColorIdx = nPopBackColorIdx = 16;
 		mn_PopTextColorIdx = 5;
 		mn_PopBackColorIdx = 15;
+	}
+
+
+	if (bUpdateRegistry)
+	{
+		bool bNeedClose = false;
+		if (hkConsole == NULL)
+		{
+			LONG lRegRc;
+			if (0 != (lRegRc = RegCreateKeyEx(HKEY_CURRENT_USER, L"Console\\ConEmu", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConsole, NULL)))
+			{
+				DisplayLastError(L"Failed to create/open registry key 'HKCU\\Console\\ConEmu'", lRegRc);
+				hkConsole = NULL;
+			}
+			else
+			{
+				bNeedClose = true;
+			}
+		}
+
+		if (nTextColorIdx > 15)
+			nTextColorIdx = GetDefaultTextColorIdx();
+		if (nBackColorIdx > 15)
+			nBackColorIdx = GetDefaultBackColorIdx();
+		DWORD nColors = (nBackColorIdx << 4) | nTextColorIdx;
+		if (hkConsole)
+		{
+			RegSetValueEx(hkConsole, L"ScreenColors", 0, REG_DWORD, (LPBYTE)&nColors, sizeof(nColors));
+		}
+
+		if (nPopTextColorIdx <= 15 || nPopBackColorIdx <= 15)
+		{
+			if (hkConsole)
+			{
+				DWORD nColors = ((mn_PopBackColorIdx & 0xF) << 4) | (mn_PopTextColorIdx & 0xF);
+				RegSetValueEx(hkConsole, L"PopupColors", 0, REG_DWORD, (LPBYTE)&nColors, sizeof(nColors));
+			}
+		}
+
+		if (bNeedClose)
+		{
+			RegCloseKey(hkConsole);
+		}
 	}
 }
 
@@ -2648,30 +2693,32 @@ BOOL CRealConsole::StartProcess()
 		DisplayLastError(L"Failed to create/open registry key 'HKCU\\Console\\ConEmu'", lRegRc);
 		hkConsole = NULL;
 	}
-	BYTE nTextColorIdx = 7, nBackColorIdx = 0, nPopTextColorIdx = 5, nPopBackColorIdx = 15;
-	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);
+	BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
+	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, true, hkConsole);
+	si.dwFlags |= STARTF_USEFILLATTRIBUTE;
+	si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
 	//if (nTextColorIdx <= 15 || nBackColorIdx <= 15) -- всегда, иначе может снести крышу от старых данных
-	{
-		if (nTextColorIdx > 15)
-			nTextColorIdx = GetDefaultTextColorIdx();
-		if (nBackColorIdx > 15)
-			nBackColorIdx = GetDefaultBackColorIdx();
-		si.dwFlags |= STARTF_USEFILLATTRIBUTE;
-		si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
-		if (hkConsole)
-		{
-			DWORD nColors = si.dwFillAttribute;
-			RegSetValueEx(hkConsole, L"ScreenColors", 0, REG_DWORD, (LPBYTE)&nColors, sizeof(nColors));
-		}
-	}
-	if (nPopTextColorIdx <= 15 || nPopBackColorIdx <= 15)
-	{
-		if (hkConsole)
-		{
-			DWORD nColors = ((mn_PopBackColorIdx & 0xF) << 4) | (mn_PopTextColorIdx & 0xF);
-			RegSetValueEx(hkConsole, L"PopupColors", 0, REG_DWORD, (LPBYTE)&nColors, sizeof(nColors));
-		}
-	}
+	//{
+	//	if (nTextColorIdx > 15)
+	//		nTextColorIdx = GetDefaultTextColorIdx();
+	//	if (nBackColorIdx > 15)
+	//		nBackColorIdx = GetDefaultBackColorIdx();
+	//	si.dwFlags |= STARTF_USEFILLATTRIBUTE;
+	//	si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
+	//	if (hkConsole)
+	//	{
+	//		DWORD nColors = si.dwFillAttribute;
+	//		RegSetValueEx(hkConsole, L"ScreenColors", 0, REG_DWORD, (LPBYTE)&nColors, sizeof(nColors));
+	//	}
+	//}
+	//if (nPopTextColorIdx <= 15 || nPopBackColorIdx <= 15)
+	//{
+	//	if (hkConsole)
+	//	{
+	//		DWORD nColors = ((mn_PopBackColorIdx & 0xF) << 4) | (mn_PopTextColorIdx & 0xF);
+	//		RegSetValueEx(hkConsole, L"PopupColors", 0, REG_DWORD, (LPBYTE)&nColors, sizeof(nColors));
+	//	}
+	//}
 	if (hkConsole)
 	{
 		RegCloseKey(hkConsole);
@@ -3061,7 +3108,7 @@ BOOL CRealConsole::StartProcess()
 		if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
 
 		// Изменилась команда, пересчитать настройки
-		PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);
+		PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, true);
 		if (nTextColorIdx <= 15 || nBackColorIdx <= 15)
 		{
 			si.dwFlags |= STARTF_USEFILLATTRIBUTE;
@@ -7543,16 +7590,28 @@ void CRealConsole::DoRenameTab()
 	}
 }
 
-void CRealConsole::DuplicateRoot()
+// Запустить Elevated копию фара с теми же папками на панелях
+void CRealConsole::AdminDuplicate()
+{
+	if (!this) return;
+
+	DuplicateRoot(false, NULL, true);
+}
+
+bool CRealConsole::DuplicateRoot(bool bSkipMsg/* = false*/, LPCWSTR asAddArgs /*= NULL*/, bool bRunAsAdmin /*= false*/)
 {
 	ConProcess* pProc = NULL, *p = NULL;
 	int nCount = GetProcesses(&pProc);
 	if (nCount < 2)
 	{
 		SafeFree(pProc);
-		DisplayLastError(L"Nothing to duplicate, root process not found", -1);
-		return;
+		if (!bSkipMsg)
+		{
+			DisplayLastError(L"Nothing to duplicate, root process not found", -1);
+		}
+		return false;
 	}
+	bool bOk = false;
 	DWORD nServerPID = GetServerPID(true);
 	for (int k = 0; k <= 1 && !p; k++)
 	{
@@ -7573,32 +7632,62 @@ void CRealConsole::DuplicateRoot()
 	}
 	if (!p)
 	{
-		DisplayLastError(L"Can't find root process in the active console", -1);
+		if (!bSkipMsg)
+		{
+			DisplayLastError(L"Can't find root process in the active console", -1);
+		}
 	}
 	else
 	{
 		wchar_t szConfirm[255];
 		_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Do you want to duplicate tab with root '%s'?", p->Name);
-		if (MessageBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)
+		if (bSkipMsg || ((MessageBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)))
 		{
 			RConStartArgs args;
 			args.AssignFrom(&m_Args);
+			if (asAddArgs && *asAddArgs)
+			{
+				wchar_t* psz = lstrmerge(args.pszSpecialCmd, L" ", asAddArgs);
+				if (psz)
+				{
+					SafeFree(args.pszSpecialCmd);
+					args.pszSpecialCmd = psz;
+				}
+			}
 			args.bDetached = TRUE;
 			CVirtualConsole *pVCon = gpConEmu->CreateCon(&args);
 
 			if (pVCon)
 			{
+				CRealConsole* pRCon = pVCon->RCon();
+
 				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DUPLICATE, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_DUPLICATE));
 				pIn->Duplicate.hGuiWnd = ghWnd;
 				pIn->Duplicate.nGuiPID = GetCurrentProcessId();
-				pIn->Duplicate.nAID = pVCon->RCon()->GetMonitorThreadID();
+				pIn->Duplicate.nAID = pRCon->GetMonitorThreadID();
+				pIn->Duplicate.bRunAs = bRunAsAdmin;
+				pIn->Duplicate.nWidth = pRCon->mp_RBuf->TextWidth();
+				pIn->Duplicate.nHeight = pRCon->mp_RBuf->TextWidth();
+				pIn->Duplicate.nBufferHeight = pRCon->mp_RBuf->GetBufferHeight();
+
+				BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
+				pRCon->PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, true);
+				pIn->Duplicate.nColors = (nTextColorIdx) | (nBackColorIdx << 8) | (nPopTextColorIdx << 16) | (nPopBackColorIdx << 24);
+
 
 				CESERVER_REQ* pOut = ExecuteHkCmd(p->ProcessID, pIn, ghWnd);
 				int nFRc = (pOut->DataSize() >= sizeof(DWORD)) ? (int)(pOut->dwData[0]) : -100;
 				if (nFRc != 0)
 				{
-					_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Duplicate tab with root '%s' failed, code=%i?", p->Name, nFRc);
-					DisplayLastError(szConfirm, -1);
+					if (!bSkipMsg)
+					{
+						_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Duplicate tab with root '%s' failed, code=%i?", p->Name, nFRc);
+						DisplayLastError(szConfirm, -1);
+					}
+				}
+				else
+				{
+					bOk = true;
 				}
 				ExecuteFreeResult(pOut);
 				ExecuteFreeResult(pIn);
@@ -7606,6 +7695,7 @@ void CRealConsole::DuplicateRoot()
 		}
 	}
 	SafeFree(pProc);
+	return bOk;
 }
 
 void CRealConsole::RenameTab(LPCWSTR asNewTabText /*= NULL*/)
@@ -9647,7 +9737,7 @@ void CRealConsole::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL 
 {
 	if (!this) return;
 
-	BYTE nTextColorIdx = 7, nBackColorIdx = 0, nPopTextColorIdx = 5, nPopBackColorIdx = 15;
+	BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
 	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);
 
 	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETCONCOLORS, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETCONSOLORS));
@@ -10950,14 +11040,6 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	m_Args.bDetached = TRUE;
 	
 	gpConEmu->OnVConClosed(mp_VCon);
-}
-
-// Запустить Elevated копию фара с теми же папками на панелях
-void CRealConsole::AdminDuplicate()
-{
-	if (!this) return;
-
-	TODO("Запустить Elevated фар с параметрами - текущими путями");
 }
 
 const CEFAR_INFO_MAPPING* CRealConsole::GetFarInfo()

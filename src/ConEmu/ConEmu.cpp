@@ -3129,11 +3129,13 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 					bRoundTitle = false;
 				}
 
+				int nFrame = gpSet->HideCaptionAlwaysFrame();
+
 				hRgn = CreateWindowRgn(abTestOnly, bRoundTitle,
-				                       rcFrame.left-gpSet->nHideCaptionAlwaysFrame,
-				                       rcFrame.top-gpSet->nHideCaptionAlwaysFrame,
-				                       rcClient.right+2*gpSet->nHideCaptionAlwaysFrame,
-				                       rcClient.bottom+2*gpSet->nHideCaptionAlwaysFrame);
+				                       rcFrame.left-nFrame,
+				                       rcFrame.top-nFrame,
+				                       rcClient.right+2*nFrame,
+				                       rcClient.bottom+2*nFrame);
 			}
 		}
 
@@ -4733,7 +4735,9 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		m_QuakePrevSize.bWaitReposition = false;
 
 	if (hWnd2)
-		SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
+		SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
+	if (ghOpWnd && gpSetCls->mh_Tabs[CSettings::thi_Show])
+		SetDlgItemInt(gpSetCls->mh_Tabs[CSettings::thi_Show], tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 
 	// Save current rect, JIC
 	StoreIdealRect();
@@ -10156,11 +10160,10 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
         MENUITEM "Save &all",                   IDM_SAVEALL
 		*/
 		
-		TODO("Добавить пункт IDM_ADMIN_DUPLICATE");
-		
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_CLOSE,     MenuAccel(vkCloseTab,L"&Close tab"));
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_DETACH,    L"Detach");
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_DUPLICATE, MenuAccel(vkDuplicateRoot,L"Duplica&te root..."));
+		//AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_ADMIN_DUPLICATE, MenuAccel(vkDuplicateRootAs,L"Duplica&te as Admin..."));
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RENAMETAB, MenuAccel(vkRenameTab,L"Rena&me tab"));
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATECON, MenuAccel(vkMultiClose,L"&Console"));
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");

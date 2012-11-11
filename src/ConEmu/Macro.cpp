@@ -945,9 +945,10 @@ LPWSTR CConEmuMacro::SetOption(LPWSTR asArgs, CRealConsole* apRCon)
 // <oper>,<app>[,<parm>[,<dir>[,<showcmd>]]]
 LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 {
+	wchar_t* pszRc = NULL;
 	LPWSTR pszOper = NULL, pszFile = NULL, pszParm = NULL, pszDir = NULL;
 	LPWSTR pszBuf = NULL;
-	bool bDontQuote = false;
+	bool bDontQuote = false, bDupShell = false;
 	int nShowCmd = SW_SHOWNORMAL;
 	
 	if (GetNextString(asArgs, pszOper))
@@ -966,7 +967,21 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 
 		if (!(pszFile && *pszFile) && !(pszParm && *pszParm) && apRCon)
 		{
-			LPCWSTR pszCmd = apRCon->GetCmd();
+			LPCWSTR pszCmd;
+
+			if (pszOper && (wmemcmp(pszOper, L"new_console", 11) == 0))
+			{
+				wchar_t* pszAddArgs = lstrmerge(L"\"-", pszOper, L"\"");
+				bool bOk = apRCon->DuplicateRoot(true, pszAddArgs);
+				SafeFree(pszAddArgs);
+				if (bOk)
+				{
+					pszRc = lstrdup(L"OK");
+					goto wrap;
+				}
+			}
+
+			pszCmd = apRCon->GetCmd();
 			if (pszCmd && *pszCmd)
 			{
 				pszBuf = lstrdup(pszCmd);
@@ -1062,27 +1077,28 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 			
 				gpConEmu->PostCreateCon(pArgs);
 				
-				return lstrdup(L"OK");
+				pszRc = lstrdup(L"OK");
+				goto wrap;
 			}
 			else
 			{
 				int nRc = (int)ShellExecuteW(ghWnd, pszOper, pszFile, pszParm, pszDir, nShowCmd);
 				
 				size_t cchSize = 16;
-				LPWSTR pszResult = (LPWSTR)malloc(2*cchSize);
+				pszRc = (LPWSTR)malloc(2*cchSize);
 
 				if (nRc <= 32)
-					_wsprintf(pszResult, SKIPLEN(cchSize) L"Failed:%i", nRc);
+					_wsprintf(pszRc, SKIPLEN(cchSize) L"Failed:%i", nRc);
 				else
-					lstrcpyn(pszResult, L"OK", cchSize);
+					lstrcpyn(pszRc, L"OK", cchSize);
 				
-				return pszResult;
+				goto wrap;
 			}
 		}
 	}
 
+wrap:
 	SafeFree(pszBuf);
-
 	return lstrdup(L"InvalidArg");
 }
 

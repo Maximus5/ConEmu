@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    114
+#define CESERVER_REQ_VER    115
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1678,6 +1678,10 @@ struct CESERVER_REQ_DUPLICATE
 	HWND2 hGuiWnd;
 	DWORD nGuiPID;
 	DWORD nAID; // внутренний ID в ConEmu
+	BOOL  bRunAs;
+	DWORD nWidth, nHeight;
+	DWORD nBufferHeight;
+	DWORD nColors;
 };
 
 struct CESERVER_REQ

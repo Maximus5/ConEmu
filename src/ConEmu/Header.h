@@ -241,6 +241,8 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText, bool bEscapes = false);
 BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString, bool bEscapes = false);
 
+wchar_t* lstrmerge(LPCWSTR asStr1, LPCWSTR asStr2, LPCWSTR asStr3 = NULL, LPCWSTR asStr4 = NULL);
+
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 
 wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote);

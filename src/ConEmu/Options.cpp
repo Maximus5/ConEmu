@@ -473,7 +473,7 @@ void Settings::InitSettings()
 	isUseCurrentSizePos = true; // Show in settings dialog and save current window size/pos
 	//isFullScreen = false;
 	isHideCaption = false; mb_HideCaptionAlways = false; isQuakeStyle = false;
-	nHideCaptionAlwaysFrame = 1; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
+	nHideCaptionAlwaysFrame = 255; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
 	isDesktopMode = false;
 	isSnapToDesktopEdges = false;
 	isAlwaysOnTop = false;
@@ -2383,7 +2383,7 @@ void Settings::LoadSettings()
 		reg->Load(L"HideCaption", isHideCaption);
 		// грузим именно в mb_HideCaptionAlways, т.к. прозрачность сбивает темы в заголовке, поэтому возврат идет через isHideCaptionAlways()
 		reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
-		reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame); MinMax(nHideCaptionAlwaysFrame,99);
+		reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame); if (nHideCaptionAlwaysFrame > 0x7F) nHideCaptionAlwaysFrame = 255;
 
 		reg->Load(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
 
@@ -4434,7 +4434,10 @@ bool Settings::isFrameHidden()
 {
 	if (!nHideCaptionAlwaysFrame)
 		return true;
+	if (nHideCaptionAlwaysFrame > 0x7F)
+		return false; // sure
 
+	// otherwise - need to check system settings
 	UINT nSysFrame = GetSystemMetrics(SM_CXSIZEFRAME);
 	if (nSysFrame > nHideCaptionAlwaysFrame)
 		return true;
@@ -5345,6 +5348,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkCloseTab,       chk_User,  NULL,    L"CloseTabKey",           MakeHotKey(VK_DELETE,VK_LWIN,VK_MENU), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Close(3)")},
 		{vkTerminateApp,   chk_User,  NULL,    L"TerminateProcessKey",   MakeHotKey(VK_DELETE,VK_LWIN,VK_SHIFT), CConEmuCtrl::key_TerminateProcess/*sort of Close*/},
 		{vkDuplicateRoot,  chk_User,  NULL,    L"DuplicateRootKey",      0, CConEmuCtrl::key_DuplicateRoot},
+		//{vkDuplicateRootAs,chk_User,  NULL,    L"DuplicateRootAsKey",    0, CConEmuCtrl::key_DuplicateRootAs},
 		{vkCloseConEmu,    chk_User,  NULL,    L"CloseConEmuKey",        MakeHotKey(VK_F4,VK_LWIN), /*sort of AltF4 for GUI apps*/CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Close(2)")},
 		{vkRenameTab,      chk_User,  NULL,    L"Multi.Rename",          MakeHotKey('R',VK_APPS), CConEmuCtrl::key_RenameTab, true/*OnKeyUp*/},
 		{vkMoveTabLeft,    chk_User,  NULL,    L"Multi.MoveLeft",        MakeHotKey(VK_LEFT,VK_LWIN,VK_MENU), CConEmuCtrl::key_MoveTabLeft},

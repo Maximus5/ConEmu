@@ -1035,6 +1035,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	{
 		ZeroStruct(tab);
 		PrepareTab(&tab, NULL);
+		wcscpy_c(tab.Name, gpConEmu->GetDefaultTitle());
 		vct.pVCon = NULL;
 		vct.nFarWindowId = 0;
 		AddTab2VCon(vct); //2009-06-14. Не было!

@@ -538,6 +538,18 @@ bool CConEmuCtrl::key_DuplicateRoot(DWORD VkMod, bool TestOnly, const ConEmuHotK
 	return true;
 }
 
+// pRCon may be NULL
+bool CConEmuCtrl::key_DuplicateRootAs(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (!pRCon)
+		return false;
+	if (TestOnly)
+		return true;
+
+	pRCon->AdminDuplicate();
+	return true;
+}
+
 //// pRCon may be NULL
 //bool CConEmuCtrl::key_CloseConEmu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 //{

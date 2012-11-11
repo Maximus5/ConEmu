@@ -1852,6 +1852,13 @@ bool CVConGroup::OnScClose()
 		}
 	}
 
+	// Если просили НЕ закрывать ConEmu при закрытии последнего таба - закрыть окно вообще нельзя
+	if (lbAllowed && gpSet->isMultiLeaveOnClose && !nConCount && !nDetachedCount)
+	{
+		// Поэтому проверяем, и если никого не осталось, то по крестику - прибиваемся
+		gpConEmu->Destroy();
+	}
+
 	return lbAllowed;
 }
 

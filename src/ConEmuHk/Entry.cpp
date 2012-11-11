@@ -1649,7 +1649,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	// go
 	STARTUPINFO si = {sizeof(si)};
 	PROCESS_INFORMATION pi = {};
-	size_t cchCmdLine = 255 + lstrlen(GuiMapping->sConEmuBaseDir) + lstrlen(gpStartEnv->pszCmdLine);
+	size_t cchCmdLine = 300 + lstrlen(GuiMapping->sConEmuBaseDir) + lstrlen(gpStartEnv->pszCmdLine);
 	wchar_t *pszCmd, *pszName;
 	BOOL bSrvFound;
 
@@ -1679,12 +1679,19 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 		goto wrap;
 	}
 
-	TODO("Цвета консоли, шрифт/размер, размер консоли, размер буфера");
-
 	pszName = pszCmd + lstrlen(pszCmd);
+
+	if (!Duplicate->bRunAs)
+	{
+		*(pszName++) = L'"';
+		*pszName = 0;
+	}
+	
 	msprintf(pszName, cchCmdLine-(pszName-pszCmd),
-		L"\" /ATTACH /GID=%u /GHWND=%08X /AID=%u /HIDE /ROOT %s",
-		Duplicate->nGuiPID, (DWORD)Duplicate->hGuiWnd, Duplicate->nAID, gpStartEnv->pszCmdLine);
+		L" /ATTACH /GID=%u /GHWND=%08X /AID=%u /TA=%08X /BW=%i /BH=%i /BZ=%i /HIDE /ROOT %s",
+		Duplicate->nGuiPID, (DWORD)Duplicate->hGuiWnd, Duplicate->nAID,
+		Duplicate->nColors, Duplicate->nWidth, Duplicate->nHeight, Duplicate->nBufferHeight,
+		gpStartEnv->pszCmdLine);
 
 	si.dwFlags = STARTF_USESHOWWINDOW;
 

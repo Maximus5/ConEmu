@@ -4903,7 +4903,11 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 			mp_RCon->DoRenameTab();
 			break;
 		case IDM_DUPLICATE:
-			mp_RCon->DuplicateRoot();
+		case IDM_ADMIN_DUPLICATE:
+			if ((nCmd == IDM_ADMIN_DUPLICATE) || isPressed(VK_SHIFT))
+				mp_RCon->AdminDuplicate();
+			else
+				mp_RCon->DuplicateRoot();
 			break;
 		case IDM_TERMINATEPRC:
 			mp_RCon->CloseConsole(true, false);
@@ -4930,9 +4934,6 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 			break;
 		case IDM_ATTACHTO:
 			gpConEmu->OnSysCommand(ghWnd, IDM_ATTACHTO, 0);
-			break;
-		case IDM_ADMIN_DUPLICATE:
-			mp_RCon->AdminDuplicate();
 			break;
 		case IDM_SAVE:
 			mp_RCon->PostMacro(L"F2");

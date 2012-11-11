@@ -779,6 +779,38 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent 
 }
 
 
+wchar_t* lstrmerge(LPCWSTR asStr1, LPCWSTR asStr2, LPCWSTR asStr3 /*= NULL*/, LPCWSTR asStr4 /*= NULL*/)
+{
+	size_t cchMax = 1;
+	const size_t Count = 4;
+	size_t cch[Count] = {};
+	LPCWSTR pszStr[Count] = {asStr1, asStr2, asStr3, asStr4};
+
+	for (size_t i = 0; i < Count; i++)
+	{
+		cch[i] = pszStr[i] ? lstrlen(pszStr[i]) : 0;
+		cchMax += cch[i];
+	}
+
+	wchar_t* pszRet = (wchar_t*)malloc(cchMax*sizeof(*pszRet));
+	if (!pszRet)
+		return NULL;
+	*pszRet = 0;
+	wchar_t* psz = pszRet;
+
+	for (size_t i = 0; i < Count; i++)
+	{
+		if (!cch[i])
+			continue;
+
+		_wcscpy_c(psz, cch[i]+1, pszStr[i]);
+		psz += cch[i];
+	}
+
+	return pszRet;
+}
+
+
 
 
 bool isKey(DWORD wp,DWORD vk)
