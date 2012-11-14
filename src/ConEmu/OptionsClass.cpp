@@ -178,18 +178,18 @@ namespace SettingsNS
 		L"GB 2312", L"Greek", L"Hebrew", L"Hangul", L"Johab", L"Mac", L"OEM", L"Russian", L"Shiftjis",
 		L"Symbol", L"Thai", L"Turkish", L"Vietnamese"
 	};
-	const struct StatusBarIds { CEStatusItems stItem; UINT nDlgID; } StatusItems[] = 
-	{
-		{csi_ActiveProcess, cbStatusActiveProcess}, {csi_ConsoleTitle, cbStatusConsoleTitle},
-		{csi_ActiveVCon, cbStatusActiveVCon}, {csi_NewVCon, cbStatusNewVCon}, {csi_CapsLock, cbStatusCapsLock}, {csi_NumLock, cbStatusNumLock},
-		{csi_ScrollLock, cbStatusScrlLock}, {csi_InputLocale, cbStatusInputLang}, {csi_WindowPos, cbStatusWindowPos},
-		{csi_WindowSize, cbStatusWindowSize}, {csi_WindowClient, cbStatusWindowClient}, {csi_WindowWork, cbStatusWindowWorkspace},
-		{csi_ActiveBuffer, cbStatusActiveBuffer}, {csi_ConsolePos, cbStatusConsolePos}, {csi_ConsoleSize, cbStatusConsoleSize},
-		{csi_BufferSize, cbStatusBufferSize}, {csi_CursorX, cbStatusCursorX}, {csi_CursorY, cbStatusCursorY},
-		{csi_CursorSize, cbStatusCursorSize}, {csi_CursorInfo, cbStatusCursorInfo}, {csi_ConEmuPID, cbStatusGuiPID},
-		{csi_ConEmuHWND, cbStatusGuiHwnd}, {csi_ConEmuView, cbStatusViewHwnd}, {csi_Server, cbStatusServer},
-		{csi_ServerHWND, cbStatusRealHwnd}, {csi_Transparency, cbStatusTransparency}
-	};
+	//const struct StatusBarIds { CEStatusItems stItem; UINT nDlgID; } StatusItems[] = 
+	//{
+	//	{csi_ActiveProcess, cbStatusActiveProcess}, {csi_ConsoleTitle, cbStatusConsoleTitle},
+	//	{csi_ActiveVCon, cbStatusActiveVCon}, {csi_NewVCon, cbStatusNewVCon}, {csi_CapsLock, cbStatusCapsLock}, {csi_NumLock, cbStatusNumLock},
+	//	{csi_ScrollLock, cbStatusScrlLock}, {csi_InputLocale, cbStatusInputLang}, {csi_WindowPos, cbStatusWindowPos},
+	//	{csi_WindowSize, cbStatusWindowSize}, {csi_WindowClient, cbStatusWindowClient}, {csi_WindowWork, cbStatusWindowWorkspace},
+	//	{csi_ActiveBuffer, cbStatusActiveBuffer}, {csi_ConsolePos, cbStatusConsolePos}, {csi_ConsoleSize, cbStatusConsoleSize},
+	//	{csi_BufferSize, cbStatusBufferSize}, {csi_CursorX, cbStatusCursorX}, {csi_CursorY, cbStatusCursorY},
+	//	{csi_CursorSize, cbStatusCursorSize}, {csi_CursorInfo, cbStatusCursorInfo}, {csi_ConEmuPID, cbStatusGuiPID},
+	//	{csi_ConEmuHWND, cbStatusGuiHwnd}, {csi_ConEmuView, cbStatusViewHwnd}, {csi_Server, cbStatusServer},
+	//	{csi_ServerHWND, cbStatusRealHwnd}, {csi_Transparency, cbStatusTransparency}
+	//};
 	const WCHAR* szCRLF[] = {L"CR+LF", L"LF", L"CR"};
 	const DWORD  nCRLF[] =  {0, 1, 2};
 	const WORD nSizeCtrlId[] = {tWndWidth, stWndWidth, tWndHeight, stWndHeight};
@@ -2719,13 +2719,58 @@ LRESULT CSettings::OnInitDialog_Status(HWND hWnd2, bool abInitial)
 	EnableDlgItems(hWnd2, SettingsNS::nStatusColorIds, countof(SettingsNS::nStatusColorIds), !(gpSet->isStatusBarFlags & csf_SystemColors));
 
 	checkDlgButton(hWnd2, cbShowStatusBar, gpSet->isStatusBarShow);
-	for (size_t i = 0; i < countof(SettingsNS::StatusItems); i++)
-	{
-		checkDlgButton(hWnd2, SettingsNS::StatusItems[i].nDlgID, !gpSet->isStatusColumnHidden[SettingsNS::StatusItems[i].stItem]);
-	}
+
+	//for (size_t i = 0; i < countof(SettingsNS::StatusItems); i++)
+	//{
+	//	checkDlgButton(hWnd2, SettingsNS::StatusItems[i].nDlgID, !gpSet->isStatusColumnHidden[SettingsNS::StatusItems[i].stItem]);
+	//}
+
+	OnInitDialog_StatusItems(hWnd2);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
+}
+
+void CSettings::OnInitDialog_StatusItems(HWND hWnd2)
+{
+	HWND hAvail = GetDlgItem(hWnd2, lbStatusAvailable); _ASSERTE(hAvail!=NULL);
+	INT_PTR iMaxAvail = -1, iCurAvail = SendMessage(hAvail, LB_GETCURSEL, 0, 0);
+	DEBUGTEST(INT_PTR iCountAvail = SendMessage(hAvail, LB_GETCOUNT, 0, 0));
+	HWND hSeltd = GetDlgItem(hWnd2, lbStatusSelected); _ASSERTE(hSeltd!=NULL);
+	INT_PTR iMaxSeltd = -1, iCurSeltd = SendMessage(hSeltd, LB_GETCURSEL, 0, 0);
+	DEBUGTEST(INT_PTR iCountSeltd = SendMessage(hSeltd, LB_GETCOUNT, 0, 0));
+
+	SendMessage(hAvail, LB_RESETCONTENT, 0, 0);
+	SendMessage(hSeltd, LB_RESETCONTENT, 0, 0);
+
+	StatusColInfo* pColumns = NULL;
+	size_t nCount = CStatus::GetAllStatusCols(&pColumns);
+	_ASSERTE(pColumns!=NULL);
+
+	for (size_t i = 0; i < nCount; i++)
+	{
+		CEStatusItems nID = pColumns[i].nID;
+		if ((nID == csi_Info) || (pColumns[i].sSettingName == NULL))
+			continue;
+
+		if (gpSet->isStatusColumnHidden[nID])
+		{
+			iMaxAvail = SendMessage(hAvail, LB_ADDSTRING, 0, (LPARAM)pColumns[i].sName);
+			if (iMaxAvail >= 0)
+				SendMessage(hAvail, LB_SETITEMDATA, iMaxAvail, nID);
+		}
+		else
+		{
+			iMaxSeltd = SendMessage(hSeltd, LB_ADDSTRING, 0, (LPARAM)pColumns[i].sName);
+			if (iMaxSeltd >= 0)
+				SendMessage(hSeltd, LB_SETITEMDATA, iMaxSeltd, nID);
+		}
+	}
+
+	if (iCurAvail >= 0 && iMaxAvail >= 0)
+		SendMessage(hAvail, LB_SETCURSEL, (iCurAvail <= iMaxAvail) ? iCurAvail : iMaxAvail, 0);
+	if (iCurSeltd >= 0 && iMaxSeltd >= 0)
+		SendMessage(hSeltd, LB_SETCURSEL, (iCurSeltd <= iMaxSeltd) ? iCurSeltd : iMaxSeltd, 0);
 }
 
 void CSettings::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)
@@ -5320,47 +5365,109 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			else if (hWnd2 && (hWnd2 == mh_Tabs[thi_Status]))
 			{
 				/* *** Status bar options *** */
-				if (CB == cbShowStatusBar)
+				switch (CB)
 				{
+				case cbShowStatusBar:
 					gpConEmu->StatusCommand(csc_ShowHide, IsChecked(hWnd2,CB) ? 1 : 2);
-				}
-				else if (CB == cbStatusVertSep)
-				{
+					break;
+
+				case cbStatusVertSep:
 					if (IsChecked(hWnd2,CB))
 						gpSet->isStatusBarFlags |= csf_VertDelim;
 					else
 						gpSet->isStatusBarFlags &= ~csf_VertDelim;
 					gpConEmu->mp_Status->UpdateStatusBar(true);
-				}
-				else if (CB == cbStatusHorzSep)
-				{
+					break;
+
+				case cbStatusHorzSep:
 					if (IsChecked(hWnd2,CB))
 						gpSet->isStatusBarFlags |= csf_HorzDelim;
 					else
 						gpSet->isStatusBarFlags &= ~csf_HorzDelim;
 					gpConEmu->mp_Status->UpdateStatusBar(true);
-				}
-				else if (CB == cbStatusSystemColors)
-				{
+					break;
+
+				case cbStatusSystemColors:
 					if (IsChecked(hWnd2,CB))
 						gpSet->isStatusBarFlags |= csf_SystemColors;
 					else
 						gpSet->isStatusBarFlags &= ~csf_SystemColors;
 					EnableDlgItems(hWnd2, SettingsNS::nStatusColorIds, countof(SettingsNS::nStatusColorIds), !(gpSet->isStatusBarFlags & csf_SystemColors));
 					gpConEmu->mp_Status->UpdateStatusBar(true);
-				}
-				else
+				break;
+
+				case cbStatusAddAll:
+				case cbStatusAddSelected:
+				case cbStatusDelSelected:
+				case cbStatusDelAll:
 				{
-					for (size_t i = 0; i < countof(SettingsNS::StatusItems); i++)
+					HWND hList = GetDlgItem(hWnd2, (CB == cbStatusAddAll || CB == cbStatusAddSelected) ? lbStatusAvailable : lbStatusSelected);
+					_ASSERTE(hList!=NULL);
+					INT_PTR iCurAvail = SendMessage(hList, LB_GETCURSEL, 0, 0);
+					INT_PTR iData = (iCurAvail >= 0) ? SendMessage(hList, LB_GETITEMDATA, iCurAvail, 0) : -1;
+
+					bool bChanged = false;
+
+					// gpSet->isStatusColumnHidden[SettingsNS::StatusItems[i].stItem] = ...
+					StatusColInfo* pColumns = NULL;
+					size_t nCount = CStatus::GetAllStatusCols(&pColumns);
+					_ASSERTE(pColumns!=NULL);
+
+					switch (CB)
 					{
-						if (CB == SettingsNS::StatusItems[i].nDlgID)
+					case cbStatusAddSelected:
+						if (iData >= 0 && iData < countof(gpSet->isStatusColumnHidden) && gpSet->isStatusColumnHidden[iData])
 						{
-							gpSet->isStatusColumnHidden[SettingsNS::StatusItems[i].stItem] = !IsChecked(hWnd2,CB);
-							gpConEmu->mp_Status->UpdateStatusBar(true);
-							break;
+							gpSet->isStatusColumnHidden[iData] = false;
+							bChanged = true;
 						}
+						break;
+					case cbStatusDelSelected:
+						if (iData >= 0 && iData < countof(gpSet->isStatusColumnHidden) && !gpSet->isStatusColumnHidden[iData])
+						{
+							gpSet->isStatusColumnHidden[iData] = true;
+							bChanged = true;
+						}
+						break;
+					case cbStatusAddAll:
+					case cbStatusDelAll:
+						{
+							bool bHide = (CB == cbStatusDelAll);
+							for (size_t i = 0; i < nCount; i++)
+							{
+								CEStatusItems nID = pColumns[i].nID;
+								if ((nID == csi_Info) || (pColumns[i].sSettingName == NULL))
+									continue;
+								if (gpSet->isStatusColumnHidden[nID] != bHide)
+								{
+									gpSet->isStatusColumnHidden[nID] = bHide;
+									bChanged = true;
+								}
+							}
+						}
+						break;
 					}
+
+					if (bChanged)
+					{
+						OnInitDialog_StatusItems(hWnd2);
+						gpConEmu->mp_Status->UpdateStatusBar(true);
+					}
+					break;
 				}
+				//else
+				//{
+				//	for (size_t i = 0; i < countof(SettingsNS::StatusItems); i++)
+				//	{
+				//		if (CB == SettingsNS::StatusItems[i].nDlgID)
+				//		{
+				//			gpSet->isStatusColumnHidden[SettingsNS::StatusItems[i].stItem] = !IsChecked(hWnd2,CB);
+				//			gpConEmu->mp_Status->UpdateStatusBar(true);
+				//			break;
+				//		}
+				//	}
+				//}
+				} // switch (CB)
 				/* *** Status bar options *** */
 			} // else if (hWnd2 && (hWnd2 == mh_Tabs[thi_Status]))
 
@@ -6921,6 +7028,23 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+LRESULT CSettings::OnListBoxDblClk(HWND hWnd2, WPARAM wParam, LPARAM lParam)
+{
+	WORD wId = LOWORD(wParam);
+	
+	switch (wId)
+	{
+	case lbStatusAvailable:
+		OnButtonClicked(hWnd2, cbStatusAddSelected, 0);
+		break;
+	case lbStatusSelected:
+		OnButtonClicked(hWnd2, cbStatusDelSelected, 0);
+		break;
+	}
+
+	return 0;	
+}
+
 void CSettings::SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost /*= false*/)
 {
 	HTREEITEM hParent = TreeView_GetParent(hTree, hItem);
@@ -7547,30 +7671,43 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 		case WM_COMMAND:
 			{
-				if (HIWORD(wParam) == BN_CLICKED)
+				switch (HIWORD(wParam))
 				{
+				case BN_CLICKED:
 					gpSetCls->OnButtonClicked(hWnd2, wParam, lParam);
-				}
-				else if (HIWORD(wParam) == EN_CHANGE)
-				{
+					return 0;
+				
+				case EN_CHANGE:
 					if (!bSkipSelChange)
 						gpSetCls->OnEditChanged(hWnd2, wParam, lParam);
-				}
-				else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE/*LBN_SELCHANGE*/)
-				{
+					return 0;
+				
+				case CBN_EDITCHANGE:
+				case CBN_SELCHANGE/*LBN_SELCHANGE*/:
 					if (!bSkipSelChange)
 						gpSetCls->OnComboBox(hWnd2, wParam, lParam);
-				}
-				else if (HIWORD(wParam) == CBN_KILLFOCUS && gpSetCls->mn_LastChangingFontCtrlId && LOWORD(wParam) == gpSetCls->mn_LastChangingFontCtrlId)
-				{
-					_ASSERTE(hWnd2 == gpSetCls->mh_Tabs[thi_Main]);
-					PostMessage(hWnd2, gpSetCls->mn_MsgRecreateFont, gpSetCls->mn_LastChangingFontCtrlId, 0);
-					gpSetCls->mn_LastChangingFontCtrlId = 0;
-				}
-				else if (HIWORD(wParam) == 0xFFFF && LOWORD(wParam) == lbConEmuHotKeys)
-				{
-					gpSetCls->OnHotkeysNotify(hWnd2, wParam, NULL);
-				}
+					return 0;
+
+				case LBN_DBLCLK:
+					gpSetCls->OnListBoxDblClk(hWnd2, wParam, lParam);
+					return 0;
+				
+				case CBN_KILLFOCUS:
+					if (gpSetCls->mn_LastChangingFontCtrlId && LOWORD(wParam) == gpSetCls->mn_LastChangingFontCtrlId)
+					{
+						_ASSERTE(hWnd2 == gpSetCls->mh_Tabs[thi_Main]);
+						PostMessage(hWnd2, gpSetCls->mn_MsgRecreateFont, gpSetCls->mn_LastChangingFontCtrlId, 0);
+						gpSetCls->mn_LastChangingFontCtrlId = 0;
+						return 0;
+					}
+					break;
+
+				default:
+					if (HIWORD(wParam) == 0xFFFF && LOWORD(wParam) == lbConEmuHotKeys)
+					{
+						gpSetCls->OnHotkeysNotify(hWnd2, wParam, NULL);
+					}
+				} // switch (HIWORD(wParam))
 			} // WM_COMMAND
 			break;
 		case WM_MEASUREITEM:

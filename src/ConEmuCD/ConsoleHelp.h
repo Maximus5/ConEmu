@@ -62,12 +62,11 @@ _DBGHLP(L"     /INJECT=PID{10}\r\n") \
 _DBGHLP(L"     /DOSBOX -> use DosBox\r\n") \
 	    L"\r\n" \
 	    L"When you run application from ConEmu console, you may use one or more\r\n" \
-_DBGHLP(L"  Switch: -new_console[:abcd[:dir]h[N]rx[N]y[N]u[:user:pwd]]\r\n") \
-		L"  Switch: -new_console[:abcd[:dir]h[N][s<...>(H|V)]ru[:user:pwd]]\r\n" \
+      /*L"  Switch: -new_console[:abcd[:dir]h[N]rx[N]y[N]u[:user:pwd]]\r\n")*/ \
+		L"  Switch: -new_console[:switches]\r\n" \
         L"     a - RunAs shell verb (as Admin on Vista+, login/passw in Win2k and WinXP)\r\n" \
         L"     b - Create background tab\r\n" \
         L"     c - force enable 'Press Enter or Esc to close console' (default)\r\n" \
-		L"     d - specify working directory, MUST BE LAST OPTION\r\n" \
         L"     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\r\n" \
         L"     i - don't inject ConEmuHk into starting process\r\n" \
 _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
@@ -77,7 +76,12 @@ _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
         L"     s[<SplitTab>T][<Percents>](H|V)\r\n" \
 _DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r\n") \
         L"     u - ConEmu choose user dialog\r\n" \
-        L"     u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST OPTION\r\n" \
+		L"  Switch: \"-new_console:d:dir\"\r\n" \
+		L"       - specify working directory, MUST BE LAST or single OPTION\r\n" \
+		L"  Switch: \"-new_console:t:tabname\"\r\n" \
+		L"       - rename new created tab, MUST BE LAST or single OPTION\r\n" \
+		L"  Switch: \"-new_console:u:user:pwd\"\r\n" \
+        L"       - specify user/pwd in args, MUST BE LAST or single OPTION\r\n" \
         L"  Warning: Option 'Inject ConEmuHk' must be enabled in ConEmu settings!\r\n" \
 		L"  Example: dir \"-new_console:bh9999c\" \"-new_console:dC:\\\"  c:\\Users /s\r\n" \
 		L"  Note: Some switches may be used in similar \"-cur_console:...\"\r\n"

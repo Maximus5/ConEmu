@@ -81,6 +81,14 @@ enum CEStatusItems
 	csi_Last
 };
 
+struct StatusColInfo
+{
+	CEStatusItems nID;
+	LPCWSTR sSettingName;
+	LPCWSTR sName; // Shown in menu (select active columns)
+	LPCWSTR sHelp; // Shown in Info, when hover over item
+};
+
 class CRealConsole;
 
 class CStatus
@@ -155,6 +163,8 @@ private:
 public:
 	CStatus();
 	virtual ~CStatus();
+
+	static size_t GetAllStatusCols(StatusColInfo** ppColumns);
 
 public:
 	void PaintStatus(HDC hPaint, RECT rcStatus);

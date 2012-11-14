@@ -445,6 +445,7 @@ class CSettings
 		LRESULT OnInitDialog_Control(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
 		LRESULT OnInitDialog_Status(HWND hWnd2, bool abInitial);
+		void OnInitDialog_StatusItems(HWND hWnd2);
 		LRESULT OnInitDialog_Color(HWND hWnd2);
 		LRESULT OnInitDialog_Transparent(HWND hWnd2);
 		LRESULT OnInitDialog_Tasks(HWND hWnd2, bool abForceReload);
@@ -470,6 +471,7 @@ class CSettings
 		//LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
 		LRESULT OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
 		LRESULT OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		LRESULT OnListBoxDblClk(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnPage(LPNMHDR phdr);
 		INT_PTR OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);

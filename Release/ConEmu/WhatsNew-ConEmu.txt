@@ -23,6 +23,9 @@ Questions about usablity of "-new_console:s".
 [%] Issue 811: Unable to change Highlight & goto shortcut.
 [%] When «Don't close ConEmu on last console close» is on it was impossible to close empty ConEmu window.
 [*] Split key macros (default as Ctrl+Shift+O & Ctrl+Shift+E) works now like «Duplicate root...» menu item.
+[+] Settings page «Status bar» redesigned: two listboxes (available and selected) instead of checkboxes.
+[%] Issue 814: макрос на переход по "гиперссылке" на ошибки компиляции в Far3 build 2949.
+[+] New switch: "-new_console:t:tabname". Allows rename new created tab.
 
 
 2012.11.09

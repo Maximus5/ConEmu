@@ -563,7 +563,7 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 			{
 				if (TabHitTest() == HTCAPTION)
 				{
-					SetCursor(gpConEmu->mh_CursorMove);
+					SetCursor(gpSet->isQuakeStyle ? gpConEmu->mh_CursorArrow : gpConEmu->mh_CursorMove);
 					return TRUE;
 				}
 			}

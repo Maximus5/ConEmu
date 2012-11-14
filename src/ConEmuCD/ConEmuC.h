@@ -324,9 +324,7 @@ void CloseMapHeader();
 void UpdateConsoleMapHeader();
 BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd);
 
-//void EmergencyShow();
-
-//int CreateColorerHeader();
+int CreateColorerHeader(bool bForceRecreate = false);
 
 void DisableAutoConfirmExit(BOOL abFromFarPlugin=FALSE);
 
@@ -464,6 +462,7 @@ struct SrvInfo
 	InQueue InputQueue;
 	// TrueColorer buffer
 	//HANDLE hColorerMapping;
+	CRITICAL_SECTION csColorerMappingCreate;
 	MFileMapping<const AnnotationHeader>* pColorerMapping; // поддержка Colorer TrueMod
 	AnnotationHeader ColorerHdr; // для сравнения индексов
 	//
@@ -521,6 +520,16 @@ struct SrvInfo
 	wchar_t szSelfName[32];
 	wchar_t *pszPreAliases;
 	DWORD nPreAliasSize;
+
+	void InitFields()
+	{
+		InitializeCriticalSection(&csColorerMappingCreate);
+		AltServers.Init();
+	};
+	void FinalizeFields()
+	{
+		DeleteCriticalSection(&csColorerMappingCreate);
+	};
 };
 
 extern SrvInfo *gpSrv;

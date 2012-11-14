@@ -4432,7 +4432,7 @@ bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 // иначе - false, меняем рамку на "NonResizable"
 bool Settings::isFrameHidden()
 {
-	if (!nHideCaptionAlwaysFrame)
+	if (!nHideCaptionAlwaysFrame || isQuakeStyle)
 		return true;
 	if (nHideCaptionAlwaysFrame > 0x7F)
 		return false; // sure

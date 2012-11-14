@@ -1649,8 +1649,9 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 	}
 	else if (gpSet->isCaptionHidden(wmNewMode))
 	{
-		if ((gpSet->isQuakeStyle == 0) // не для Quake. Для него нужна рамка, чтобы ресайзить
-			&& ((wmNewMode == wmFullScreen) || (wmNewMode == wmMaximized)))
+		//Win& & Quake - не работает "Slide up/down" если есть ThickFrame
+		//if ((gpSet->isQuakeStyle == 0) // не для Quake. Для него нужна рамка, чтобы ресайзить
+		if ((wmNewMode == wmFullScreen) || (wmNewMode == wmMaximized))
 		{
 			dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
 		}
@@ -3130,12 +3131,16 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				}
 
 				int nFrame = gpSet->HideCaptionAlwaysFrame();
+				if (gpSet->isQuakeStyle && mn_QuakePercent && (nFrame < 0))
+				{
+					nFrame = GetSystemMetrics(SM_CXSIZEFRAME);
+				}
 
-				hRgn = CreateWindowRgn(abTestOnly, bRoundTitle,
+				hRgn = (nFrame >= 0) ? CreateWindowRgn(abTestOnly, bRoundTitle,
 				                       rcFrame.left-nFrame,
 				                       rcFrame.top-nFrame,
 				                       rcClient.right+2*nFrame,
-				                       rcClient.bottom+2*nFrame);
+									   rcClient.bottom+2*nFrame) : NULL;
 			}
 		}
 

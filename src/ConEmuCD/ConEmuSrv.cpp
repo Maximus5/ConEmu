@@ -64,7 +64,7 @@ extern OSVERSIONINFO gOSVer;
 //BOOL IsInputQueueEmpty();
 //BOOL WaitConsoleReady(BOOL abReqEmpty); // Дождаться, пока консольный буфер готов принять события ввода. Возвращает FALSE, если сервер закрывается!
 //DWORD WINAPI InputThread(LPVOID lpvParam);
-int CreateColorerHeader();
+//int CreateColorerHeader();
 
 
 // Установить мелкий шрифт, иначе может быть невозможно увеличение размера GUI окна
@@ -2656,14 +2656,8 @@ void UpdateConsoleMapHeader()
 		{
 			if (ghConEmuWndDC && (!gpSrv->pColorerMapping || (gpSrv->pConsole->hdr.hConEmuWndDc != ghConEmuWndDC)))
 			{
-				if (gpSrv->pColorerMapping && (gpSrv->pConsole->hdr.hConEmuWndDc != ghConEmuWndDC))
-				{
-					// По идее, не должно быть пересоздания TrueColor мэппинга
-					_ASSERTE(gpSrv->pColorerMapping);
-					delete gpSrv->pColorerMapping;
-					gpSrv->pColorerMapping = NULL;
-				}
-				CreateColorerHeader();
+				bool bRecreate = (gpSrv->pColorerMapping && (gpSrv->pConsole->hdr.hConEmuWndDc != ghConEmuWndDC));
+				CreateColorerHeader(bRecreate);
 			}
 			gpSrv->pConsole->hdr.nServerPID = GetCurrentProcessId();
 		}
@@ -2721,16 +2715,44 @@ void UpdateConsoleMapHeader()
 	}
 }
 
-int CreateColorerHeader()
+int CreateColorerHeader(bool bForceRecreate /*= false*/)
 {
+	if (!gpSrv)
+	{
+		_ASSERTE(gpSrv!=NULL);
+		return -1;
+	}
+
 	int iRc = -1;
-	//wchar_t szMapName[64];
 	DWORD dwErr = 0;
-	//int nConInfoSize = sizeof(CESERVER_CONSOLE_MAPPING_HDR);
-	//int nMapCells = 0;
-	//DWORD nMapSize = 0;
 	HWND lhConWnd = NULL;
+
+	EnterCriticalSection(&gpSrv->csColorerMappingCreate);
+
 	_ASSERTE(gpSrv->pColorerMapping == NULL);
+
+	if (bForceRecreate)
+	{
+		if (gpSrv->pColorerMapping)
+		{
+			// По идее, не должно быть пересоздания TrueColor мэппинга
+			_ASSERTE(FALSE && "Recreating pColorerMapping?");
+			delete gpSrv->pColorerMapping;
+			gpSrv->pColorerMapping = NULL;
+		}
+		else
+		{
+			// Если уж был запрос на пересоздание - должно быть уже создано
+			_ASSERTE(gpSrv->pColorerMapping!=NULL);
+		}
+	}
+	else if (gpSrv->pColorerMapping != NULL)
+	{
+		_ASSERTE(FALSE && "pColorerMapping was already created");
+		iRc = 0;
+		goto wrap;
+	}
+
 	// 111101 - было "GetConEmuHWND(2)", но GetConsoleWindow теперь перехватывается.
 	lhConWnd = ghConEmuWndDC; // GetConEmuHWND(2);
 
@@ -2740,7 +2762,8 @@ int CreateColorerHeader()
 		dwErr = GetLastError();
 		_printf("Can't create console data file mapping. ConEmu DC window is NULL.\n");
 		//iRc = CERR_COLORERMAPPINGERR; -- ошибка не критическая и не обрабатывается
-		return 0;
+		iRc = 0;
+		goto wrap;
 	}
 
 	//COORD crMaxSize = MyGetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
@@ -2807,6 +2830,8 @@ int CreateColorerHeader()
 
 	//}
 
+wrap:
+	LeaveCriticalSection(&gpSrv->csColorerMappingCreate);
 	return iRc;
 }
 

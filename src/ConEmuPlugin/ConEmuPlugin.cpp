@@ -2864,7 +2864,8 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			lbSucceeded = TRUE;
 			// Может потом на API переделать?
 			CESERVER_REQ_FAREDITOR *pCmd = (CESERVER_REQ_FAREDITOR*)pCommandData;
-			INT_PTR cchMax = MAX_PATH*4; //-V112
+			LPCWSTR pSrc = pCmd->szFile;
+			INT_PTR cchMax = MAX_PATH*4 + lstrlenW(pSrc); //-V112
 			wchar_t* pszMacro = (wchar_t*)malloc(cchMax*sizeof(*pszMacro));
 			if (!pszMacro)
 			{
@@ -2874,10 +2875,11 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			{
 				if (gFarVersion.dwVerMajor==1)
 					_wcscpy_c(pszMacro, cchMax, L"@$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 \"");
-				else
+				else if (!gFarVersion.IsFarLua())
 					_wcscpy_c(pszMacro, cchMax, L"@$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 print(\"");
+				else
+					_wcscpy_c(pszMacro, cchMax, L"@if Area.Viewer || Area.Editor then Keys(\"F12 0\") end if Area.Shell then Keys(\"ShiftF4\") print(\"");
 				wchar_t* pDst = pszMacro + lstrlen(pszMacro);
-				LPCWSTR  pSrc = pCmd->szFile;
 				while (*pSrc)
 				{
 					*(pDst++) = *pSrc;
@@ -2888,19 +2890,23 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				*pDst = 0;
 				if (gFarVersion.dwVerMajor==1)
 					_wcscat_c(pszMacro, cchMax, L"\" Enter ");
-				else
+				else if (!gFarVersion.IsFarLua())
 					_wcscat_c(pszMacro, cchMax, L"\") Enter ");
+				else
+					_wcscat_c(pszMacro, cchMax, L"\") Keys(\"Enter\") ");
 
 				if (pCmd->nLine > 0)
 				{
 					int nCurLen = lstrlen(pszMacro);
 					if (gFarVersion.dwVerMajor==1)
 						_wsprintf(pszMacro+nCurLen, SKIPLEN(cchMax-nCurLen) L" $if(Editor) AltF8 \"%i:%i\" Enter $end", pCmd->nLine, pCmd->nColon);
-					else
+					else if (!gFarVersion.IsFarLua())
 						_wsprintf(pszMacro+nCurLen, SKIPLEN(cchMax-nCurLen) L" $if(Editor) AltF8 print(\"%i:%i\") Enter $end", pCmd->nLine, pCmd->nColon);
+					else
+						_wsprintf(pszMacro+nCurLen, SKIPLEN(cchMax-nCurLen) L" if Area.Editor then Keys(\"AltF8\") print(\"%i:%i\") Keys(\"Enter\") end", pCmd->nLine, pCmd->nColon);
 				}
 
-				_wcscat_c(pszMacro, cchMax, L" $end");
+				_wcscat_c(pszMacro, cchMax, (!gFarVersion.IsFarLua()) ? L" $end" : L" end");
 				PostMacro(pszMacro, NULL);
 				free(pszMacro);
 			}

@@ -49,13 +49,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 const wchar_t gsReady[] = L"Waiting...";
 
-// Информация по колонкам
-static struct StatusColInfo {
-	CEStatusItems nID;
-	LPCWSTR sSettingName;
-	LPCWSTR sName; // Shown in menu (select active columns)
-	LPCWSTR sHelp; // Shown in Info, when hover over item
-} gStatusCols[] = {
+//Информация по колонкам
+//{
+//	CEStatusItems nID;
+//	LPCWSTR sSettingName;
+//	LPCWSTR sName; // Shown in menu (select active columns)
+//	LPCWSTR sHelp; // Shown in Info, when hover over item
+//}
+static StatusColInfo gStatusCols[] =
+{
 	// строго первая, НЕ отключаемая
 	{csi_Info,  NULL,   L"Show status bar",
 						L"Hide status bar, you may restore it later from 'Settings...'"},
@@ -267,6 +269,14 @@ CStatus::~CStatus()
 		DeleteObject(mh_Bmp);
 		DeleteDC(mh_MemDC);
 	}
+}
+
+// static
+size_t CStatus::GetAllStatusCols(StatusColInfo** ppColumns)
+{
+	if (ppColumns)
+		*ppColumns = gStatusCols;
+	return countof(gStatusCols);
 }
 
 // true = text changed
@@ -1040,15 +1050,13 @@ void CStatus::ShowStatusSetupMenu()
 		if (nCmd == ((int)countof(gStatusCols)+1))
 		{
 			CSettings::Dialog(IDD_SPG_STATUSBAR);
+			break;
 		}
 		else if ((nCmd >= 1) && (nCmd <= (int)countof(gStatusCols)))
 		{
 			if (nCmd == 1)
 			{
 				gpConEmu->StatusCommand(csc_ShowHide);
-				//gpSet->isStatusBarShow = !gpSet->isStatusBarShow;
-				//// Должна справиться с reposition элементов
-				//gpConEmu->OnSize();
 			}
 			else
 			{

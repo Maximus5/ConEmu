@@ -1200,9 +1200,8 @@ bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 	// 120820 - не будем требовать наличия плагина для F12 в Far
 	if (pRCon && pRCon->GetFarPID(false))
 	{
-		TODO("Переделать на команду сервера");
-		//if (TestOnly)
-		//	return true;
+		// Для Far Manager - не обрабатывать.
+		// Если юзеру нужно ConEmu-шное меню для списка табов - есть vkShowTabsList2 и GuiMacro "Tabs(8)"
 		return false;
 	}
 	else

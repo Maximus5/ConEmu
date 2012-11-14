@@ -575,8 +575,6 @@ extern "C" {
 };
 #endif
 
-int CreateColorerHeader();
-
 // Main entry point for ConEmuC.exe
 int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserved*/)
 {
@@ -614,8 +612,8 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	gpSrv = (SrvInfo*)calloc(sizeof(SrvInfo),1);
 	if (gpSrv)
 	{
-		gpSrv->AltServers.Init();
-
+		gpSrv->InitFields();
+		
 		if (ghConEmuWnd)
 		{
 			GetWindowThreadProcessId(ghConEmuWnd, &gpSrv->dwGuiPID);
@@ -1680,6 +1678,7 @@ wrap:
 #endif
 	if (gpSrv)
 	{
+		gpSrv->FinalizeFields();
 		free(gpSrv);
 		gpSrv = NULL;
 	}
