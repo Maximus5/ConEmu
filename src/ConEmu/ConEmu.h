@@ -399,8 +399,10 @@ class CConEmuMain :
 		} m_TranslatedChars[256];
 		BYTE mn_LastPressedVK;
 		bool mb_InImeComposition, mb_ImeMethodChanged;
-		wchar_t ms_ConEmuAliveEvent[MAX_PATH+64];
-		HANDLE mh_ConEmuAliveEvent; BOOL mb_ConEmuAliveOwned, mb_AliveInitialized;
+		wchar_t ms_ConEmuAliveEvent[MAX_PATH];
+		BOOL mb_AliveInitialized;
+		HANDLE mh_ConEmuAliveEvent; bool mb_ConEmuAliveOwned; DWORD mn_ConEmuAliveEventErr;
+		HANDLE mh_ConEmuAliveEventNoDir; bool mb_ConEmuAliveOwnedNoDir; DWORD mn_ConEmuAliveEventErrNoDir;
 		//
 		BOOL mb_HotKeyRegistered;
 		HHOOK mh_LLKeyHook;
@@ -592,7 +594,7 @@ class CConEmuMain :
 		bool isFar(bool abPluginRequired=false);
 		bool isFarExist(CEFarWindowType anWindowType=fwt_Any, LPWSTR asName=NULL, CVConGuard* rpVCon=NULL);
 		bool isFilePanel(bool abPluginAllowed=false);
-		bool isFirstInstance();
+		bool isFirstInstance(bool bFolderIgnore = false);
 		bool isFullScreen();
 		//bool IsGlass();		
 		bool isIconic(bool abRaw = false);

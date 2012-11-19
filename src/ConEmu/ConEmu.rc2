@@ -213,6 +213,7 @@ BEGIN
     vkAlwaysOnTop           "Switch «Always on top» window mode"
     vkCloseConEmu           "Close all tabs (same as «Cross» click)"
     vkCloseTab              "Close current tab"
+    vkCloseGroup            "Close tabs of the active group"
     vkConsole_1             "Activate console by number (Use «Host-key»+Number to switch consoles)"
     vkConsole_10            "Activate console by number (Use «Host-key»+Number to switch consoles)"
     vkConsole_2             "Activate console by number (Use «Host-key»+Number to switch consoles)"

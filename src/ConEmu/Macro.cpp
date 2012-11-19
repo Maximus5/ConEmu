@@ -423,6 +423,13 @@ LPWSTR CConEmuMacro::Close(LPWSTR asArgs, CRealConsole* apRCon)
 			pszResult = lstrdup(L"OK");
 		}
 		break;
+	case 4:
+		if (apRCon)
+		{
+			CVConGroup::CloseGroup(apRCon->VCon());
+			pszResult = lstrdup(L"OK");
+		}
+		break;
 	}
 
 	if (!pszResult)

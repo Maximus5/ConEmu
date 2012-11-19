@@ -47,6 +47,7 @@
 #define IDM_ATTACHTO 0xABDA
 #define IDM_RENAMETAB 0xABDB
 #define IDM_DUPLICATE 0xABDC
+#define IDM_TERMINATEGROUP 0xABDD // Terminate -> Close (group)
 #define IDM_VCONCMD_LAST IDM_DUPLICATE
 // Consoles // DWORD MAKELONG(WORD wLow,WORD wHigh);
 #define IDM_VCON_FIRST MAKELONG(1,1)

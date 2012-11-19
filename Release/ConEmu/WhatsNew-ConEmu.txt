@@ -11,6 +11,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.11.19
+[%] Bugfix. 10 sec delay when starting Quake-style or "/single" ConEmu.
+[*] Apps+Tab and Apps+Shift+Tab switches between visible split-panes.
+[+] New item in tab popup menu: Terminate -> Active group. Also available from System menu -> Active console.
+[+] New hotkey (unassigned by default) for close of active group.
+
+
 2012.11.18
 [+] For debug purposes. User may define environment variable "ConEmuReportExe".
     ConEmuHk (when it is injected in the process with defined name) will show message box.

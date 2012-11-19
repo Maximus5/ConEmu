@@ -1556,18 +1556,28 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 //	return false;
 //}
 
-bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
+bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/, bool* rbCloseGuiConfirmed /*= NULL*/)
 {
 	int nEditors = 0, nProgress = 0, i, nConsoles = 0;
 	if (rbMsgConfirmed)
 		*rbMsgConfirmed = false;
 
-	for (i = ((int)countof(gp_VCon)-1); i >= 0; i--)
+	if (rpPanes)
+		i = (int)rpPanes->size() - 1;
+	else
+		i = (int)countof(gp_VCon) - 1;
+
+	while (i >= 0)
 	{
 		CRealConsole* pRCon = NULL;
-		//ConEmuTab tab = {0};
 
-		if (gp_VCon[i] && (pRCon = gp_VCon[i]->RCon())!=NULL)
+		CVirtualConsole* pVCon;
+		if (rpPanes)
+			pVCon = (*rpPanes)[i--]->VCon();
+		else
+			pVCon = gp_VCon[i--];
+
+		if (pVCon && ((pRCon = pVCon->RCon()) != NULL))
 		{
 			nConsoles++;
 
@@ -1606,11 +1616,14 @@ bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
 			}
 		}
 
-		lstrcpy(pszText,
+		if (rpPanes)
+			wcscat_c(szText, L"\r\nProceed with close group?");
+		else
+    		wcscat_c(szText,
 				L"\r\nPress button <No> to close active console only\r\n"
 				L"\r\nProceed with close ConEmu?");
 
-		int nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), MB_YESNOCANCEL|MB_ICONEXCLAMATION);
+		int nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), (rpPanes ? MB_OKCANCEL : MB_YESNOCANCEL)|MB_ICONEXCLAMATION);
 
 		if (nBtn == IDNO)
 		{
@@ -1620,17 +1633,27 @@ bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
 			}
 			return false; // Don't close others!
 		}
-		else if (nBtn != IDYES)
+		else if ((nBtn != IDYES) && (nBtn != IDOK))
 		{
-			gpConEmu->mb_CloseGuiConfirmed = false;
+			if (rbCloseGuiConfirmed)
+				*rbCloseGuiConfirmed = false;
 			return false; // не закрывать
 		}
 
 		if (rbMsgConfirmed)
 			*rbMsgConfirmed = true;
 
-		gpConEmu->mb_CloseGuiConfirmed = true;
+		if (rbCloseGuiConfirmed)
+			*rbCloseGuiConfirmed = true;
 	}
+
+	return true; // можно
+}
+
+bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
+{
+	if (!CloseQuery(NULL, rbMsgConfirmed, &gpConEmu->mb_CloseGuiConfirmed))
+		return false;
 
 	#ifdef _DEBUG
 	if (gbInMyAssertTrap)
@@ -1866,6 +1889,36 @@ bool CVConGroup::OnScClose()
 	}
 
 	return lbAllowed;
+}
+
+void CVConGroup::CloseGroup(CVirtualConsole* apVCon/*may be null*/)
+{
+	CVConGuard VCon(gp_VActive);
+	if (!gp_VActive)
+		return;
+
+	CVConGroup* pActiveGroup = GetRootOfVCon(apVCon ? apVCon : gp_VActive);
+	if (!pActiveGroup)
+		return;
+
+	MArray<CVConGuard*> Panes;
+	int nCount = pActiveGroup->GetGroupPanes(Panes);
+	if (nCount > 0)
+	{
+		if (CloseQuery(&Panes, NULL, NULL))
+		{
+			for (int i = (nCount - 1); i >= 0; i--)
+			{
+				CVirtualConsole* pVCon = Panes[i]->VCon();
+				if (pVCon)
+				{
+					pVCon->RCon()->CloseConsole(false, false);
+				}
+			}
+		}
+	}
+
+	FreePanesArray(Panes);
 }
 
 void CVConGroup::OnUpdateScrollInfo()

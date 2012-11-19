@@ -143,6 +143,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    terminate active process (1), without confirmation (1,1)\r\n" \
 	L"    close ConEmu window (2)\r\n" \
 	L"    close active tab (3)\r\n" \
+	L"    close active group (4)\r\n" \
 	L"FindEditor(\"<FullEditFileName>\")\r\n" \
 	L"FindViewer(\"<FullViewerFileName>\")\r\n" \
 	L"FindFarWindow(<WindowType>,\"<WindowTitle>\")\r\n" \
@@ -200,16 +201,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"  - Set status bar text\r\n" \
 	L"Tab(<Cmd>[,<Parm>])\r\n" \
 	L"  - Control ConEmu tabs\r\n" \
-	L"     Cmd==0 - show/hide tabs\r\n" \
-	L"     Cmd==1 - commit lazy changes\r\n" \
-	L"     Cmd==2 - switch next (eq. CtrlTab)\r\n" \
-	L"     Cmd==3 - switch prev (eq. CtrlShiftTab)\r\n" \
-	L"     Cmd==4 - switch tab direct (no recent mode), Parm=(1,-1)\r\n" \
-	L"     Cmd==5 - switch tab recent, Parm=(1,-1)\r\n" \
-	L"     Cmd==6 - switch console direct (no recent mode), Parm=(1,-1)\r\n" \
-	L"     Cmd==7 - activate console by number, Parm=(1-based console index)\r\n" \
-	L"     Cmd==8 - show tabs list menu (indiffirent Far/Not Far)\r\n" \
-	L"     Cmd==9 - close active tab, same as Close(3)\r\n" \
+	L"     Cmd==0: show/hide tabs\r\n" \
+	L"     Cmd==1: commit lazy changes\r\n" \
+	L"     Cmd==2: switch next (eq. CtrlTab)\r\n" \
+	L"     Cmd==3: switch prev (eq. CtrlShiftTab)\r\n" \
+	L"     Cmd==4: switch tab direct (no recent mode), Parm=(1,-1)\r\n" \
+	L"     Cmd==5: switch tab recent, Parm=(1,-1)\r\n" \
+	L"     Cmd==6: switch console direct (no recent mode), Parm=(1,-1)\r\n" \
+	L"     Cmd==7: activate console by number, Parm=(1-based console index)\r\n" \
+	L"     Cmd==8: show tabs list menu (indiffirent Far/Not Far)\r\n" \
+	L"     Cmd==9: close active tab, same as Close(3)\r\n" \
+	L"     Cmd==10: switches visible split-panes, Parm=(1,-1)\r\n" \
 	L"Task(Index[,\"Dir\"])\r\n" \
 	L"  - start task with 1-based index\r\n" \
 	L"Task(\"Name\"[,\"Dir\"])\r\n" \

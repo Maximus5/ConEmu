@@ -266,7 +266,11 @@ CConEmuMain::CConEmuMain()
 
 	mp_TabBar = NULL; /*m_Macro = NULL;*/ mp_Tip = NULL;
 	mp_Status = new CStatus;
-	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
+	
+	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE;
+	mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = false; mn_ConEmuAliveEventErr = 0;
+	mh_ConEmuAliveEventNoDir = NULL; mb_ConEmuAliveOwnedNoDir = false; mn_ConEmuAliveEventErrNoDir = 0;
+
 	mn_MainThreadId = GetCurrentThreadId();
 	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
 	
@@ -7349,7 +7353,7 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 				}
 				else
 				{
-					if (isFirstInstance())
+					if (isFirstInstance(true))
 					{
 						// -- При одновременном запуске двух копий - велики шансы, что они подерутся
 						// -- наверное вообще не будем показывать ошибку
@@ -9673,44 +9677,100 @@ bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 	return CVConGroup::isFilePanel(abPluginAllowed);
 }
 
-bool CConEmuMain::isFirstInstance()
+bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 {
 	if (!mb_AliveInitialized)
 	{
+		//создадим событие, чтобы не было проблем с ключем /SINGLE
 		mb_AliveInitialized = TRUE;
-		// создадим событие, чтобы не было проблем с ключем /SINGLE
-		lstrcpy(ms_ConEmuAliveEvent, CEGUI_ALIVE_EVENT);
-		DWORD nSize = MAX_PATH;
-		// Добавим имя текущего юзера. Нам не нужны конфликты при наличии нескольких юзеров.
-		GetUserName(ms_ConEmuAliveEvent+_tcslen(ms_ConEmuAliveEvent), &nSize);
-		WARNING("Event не работает, если conemu.exe запущен под другим пользователем");
-		mh_ConEmuAliveEvent = CreateEvent(NULL, TRUE, TRUE, ms_ConEmuAliveEvent);
-		nSize = GetLastError();
 
-		// имя пользователя теоретически может содержать символы, которые недопустимы в имени Event
-		if (!mh_ConEmuAliveEvent /* || nSize == ERROR_PATH_NOT_FOUND */)
+		wchar_t* pszSlash;
+		wchar_t szConfig[64]; _ASSERTE(gpSetCls->GetConfigName()!=NULL);
+		// Trim config name to max 63 chars
+		lstrcpyn(szConfig, gpSetCls->GetConfigName(), countof(szConfig));
+		
+		wchar_t szPath[MAX_PATH+1];
+		DWORD cchMaxSize = MAX_PATH/*max event name len*/ - 2 - _tcslen(CEGUI_ALIVE_EVENT);
+		if (*szConfig)
 		{
-			lstrcpy(ms_ConEmuAliveEvent, CEGUI_ALIVE_EVENT);
-			mh_ConEmuAliveEvent = CreateEvent(NULL, TRUE, TRUE, ms_ConEmuAliveEvent);
-			nSize = GetLastError();
+			// When config name exists - append it (trimmed to 63 chars) + one separator-char
+			cchMaxSize -= _tcslen(szConfig)+1;
+			// Event name can contain any character except the backslash character (\).
+			pszSlash = szConfig;
+			while ((pszSlash = wcschr(pszSlash, L'\\')) != NULL)
+			{
+				*pszSlash = L'/';
+			}
 		}
 
-		mb_ConEmuAliveOwned = mh_ConEmuAliveEvent && (nSize!=ERROR_ALREADY_EXISTS);
+		// Trim program folder path to available length
+		lstrcpyn(szPath, ms_ConEmuBaseDir, cchMaxSize);
+		CharLowerBuff(szPath, lstrlen(szPath));
+		// Event name can contain any character except the backslash character (\).
+		pszSlash = szPath;
+		while ((pszSlash = wcschr(pszSlash, L'\\')) != NULL)
+		{
+			*pszSlash = L'/';
+		}
+
+		wcscpy_c(ms_ConEmuAliveEvent, CEGUI_ALIVE_EVENT);
+		wcscat_c(ms_ConEmuAliveEvent, L"_");
+		if (*szConfig)
+		{
+			wcscat_c(ms_ConEmuAliveEvent, L"_");
+			wcscat_c(ms_ConEmuAliveEvent, szConfig);
+		}
+		wcscat_c(ms_ConEmuAliveEvent, szPath);
+
+		//Events by default are created in "Local\\" kernel namespace.
+		//GetUserName(ms_ConEmuAliveEvent+_tcslen(ms_ConEmuAliveEvent), &nSize);
+		//WARNING("Event не работает, если conemu.exe запущен под другим пользователем");
+		
+		// Create event distinct by program folder and config name
+		SetLastError(0);
+		mh_ConEmuAliveEvent = CreateEvent(NULL, TRUE, TRUE, ms_ConEmuAliveEvent);
+		mn_ConEmuAliveEventErr = GetLastError();
+		_ASSERTE(mh_ConEmuAliveEvent!=NULL);
+
+		// -- name can contain any character except the backslash character (\).
+
+		mb_ConEmuAliveOwned = (mh_ConEmuAliveEvent != NULL) && (mn_ConEmuAliveEventErr != ERROR_ALREADY_EXISTS);
+
+		// Теперь - глобальное
+		SetLastError(0);
+		mh_ConEmuAliveEventNoDir = CreateEvent(NULL, TRUE, TRUE, CEGUI_ALIVE_EVENT);
+		mn_ConEmuAliveEventErrNoDir = GetLastError();
+		mb_ConEmuAliveOwnedNoDir = (mh_ConEmuAliveEventNoDir != NULL) && (mn_ConEmuAliveEventErrNoDir != ERROR_ALREADY_EXISTS);
+		_ASSERTE(mh_ConEmuAliveEventNoDir!=NULL);
 	}
 
+
+	// Попытка регистрации - по локальному событию. Ошибку показывать - только по глобальному.
 	if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
 	{
 		if (WaitForSingleObject(mh_ConEmuAliveEvent,0) == WAIT_TIMEOUT)
 		{
 			SetEvent(mh_ConEmuAliveEvent);
-			mb_ConEmuAliveOwned = TRUE;
+			mb_ConEmuAliveOwned = true;
 
 			// Этот экземпляр становится "Основным" (другой, ранее бывший основным, был закрыт)
 			RegisterMinRestore(true);
 		}
 	}
 
-	return mb_ConEmuAliveOwned;
+	if (mh_ConEmuAliveEventNoDir && !mb_ConEmuAliveOwnedNoDir)
+	{
+		if (WaitForSingleObject(mh_ConEmuAliveEventNoDir,0) == WAIT_TIMEOUT)
+		{
+			SetEvent(mh_ConEmuAliveEventNoDir);
+			mb_ConEmuAliveOwnedNoDir = true;
+		}
+	}
+
+	// 
+
+	// Смотря что просили
+	return bFolderIgnore ? mb_ConEmuAliveOwnedNoDir : mb_ConEmuAliveOwned;
 }
 
 bool CConEmuMain::isEditor()
@@ -10171,6 +10231,7 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		//AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_ADMIN_DUPLICATE, MenuAccel(vkDuplicateRootAs,L"Duplica&te as Admin..."));
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RENAMETAB, MenuAccel(vkRenameTab,L"Rena&me tab"));
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATECON, MenuAccel(vkMultiClose,L"&Console"));
+		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEGROUP, MenuAccel(vkCloseGroup,L"Active &group"));
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEPRC, MenuAccel(vkTerminateApp,L"&Active process"));
 		AppendMenu(hMenu, MF_POPUP | MF_ENABLED, (UINT_PTR)hTerminate, L"&Terminate");
@@ -10209,6 +10270,7 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		EnableMenuItem(hMenu, IDM_DUPLICATE, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hMenu, IDM_RENAMETAB, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATECON, MF_BYCOMMAND | MF_ENABLED);
+		EnableMenuItem(hTerminate, IDM_TERMINATEGROUP, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRC, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hMenu, IDM_RESTART, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hMenu, IDM_RESTARTAS, MF_BYCOMMAND | MF_ENABLED);
@@ -10223,6 +10285,7 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		EnableMenuItem(hMenu, IDM_DUPLICATE, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hMenu, IDM_RENAMETAB, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATECON, MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(hTerminate, IDM_TERMINATEGROUP, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRC, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hMenu, IDM_RESTART, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hMenu, IDM_RESTARTAS, MF_BYCOMMAND | MF_GRAYED);

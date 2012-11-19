@@ -2849,6 +2849,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpSetCls->SetConfigName(ConfigVal);
 	}
 
+	// Сразу инициализировать событие для SingleInstance. Кто первый схватит.
+	gpConEmu->isFirstInstance();
+
 	// special config file
 	if (LoadCfgFilePrm)
 	{
@@ -3096,7 +3099,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 ///////////////////////////////////
 
-	if (gpSetCls->SingleInstanceArg)
+	// Нет смысла проверять и искать, если наш экземпляр - первый.
+	if (gpSetCls->SingleInstanceArg && !gpConEmu->isFirstInstance())
 	{
 		gpConEmu->LogString(L"SingleInstanceArg");
 
@@ -3165,11 +3169,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if ((GetTickCount() - dwStart) > 10*1000)
 				break;
 		}
-	}
-	else
-	{
-		// Иницилизировать событие все-равно нужно
-		gpConEmu->isFirstInstance();
 	}
 
 //------------------------------------------------------------------------

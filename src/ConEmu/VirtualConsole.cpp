@@ -4916,6 +4916,10 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 			//mp_RCon->CloseConsoleWindow();
 			mp_RCon->CloseConsole(false, true);
 			break;
+		case IDM_TERMINATEGROUP:
+			//mp_RCon->CloseConsoleWindow();
+			CVConGroup::CloseGroup(this);
+			break;
 		case IDM_RESTART:
 		case IDM_RESTARTAS:
 

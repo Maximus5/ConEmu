@@ -871,6 +871,7 @@
 #define cbStatusDelSelected             2510
 #define vkTabPane                       2511
 #define vkTabPaneShift                  2512
+#define vkCloseGroup                    2513
 
 // Next default values for new objects
 // 
@@ -878,7 +879,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2513
+#define _APS_NEXT_CONTROL_VALUE         2514
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
