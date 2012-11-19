@@ -3098,7 +3098,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (gpSetCls->SingleInstanceArg)
 	{
-		gpConEmu->LogString(L"SingleInstanceArg", false);
+		gpConEmu->LogString(L"SingleInstanceArg");
 
 		HWND hConEmuHwnd = FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
 		// При запуске серии закладок из cmd файла второму экземпляру лучше чуть-чуть подождать
@@ -3108,6 +3108,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			// Если окна нет, и других процессов (ConEmu.exe, ConEmu64.exe) нет
 			// то ждать смысла нет
 			bool bOtherExists = false;
+
+			gpConEmu->LogString(L"TH32CS_SNAPPROCESS");
 
 			HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 			if (h && (h != INVALID_HANDLE_VALUE))
@@ -3141,13 +3143,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
+		gpConEmu->LogString(L"isFirstInstance");
+
 		// Поехали
 		DWORD dwStart = GetTickCount();
 
 		while (!gpConEmu->isFirstInstance())
 		{
+			gpConEmu->LogString(L"Waiting for RunSingleInstance");
+
 			if (gpConEmu->RunSingleInstance())
+			{
+				gpConEmu->LogString(L"Passed to first instance, exiting");
 				return 0; // командная строка успешно запущена в существующем экземпляре
+			}
 
 			// Если передать не удалось (может первый экземпляр еще в процессе инициализации?)
 			Sleep(250);
@@ -3185,6 +3194,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 ///| Initializing |///////////////////////////////////////////////////////
 //------------------------------------------------------------------------
+
+	gpConEmu->LogString(L"gpConEmu->Init");
 
 	// Тут загружаются иконки, Affinity, и т.п.
 	if (!gpConEmu->Init())
