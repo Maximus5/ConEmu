@@ -161,7 +161,6 @@ extern wchar_t gszDbgModLabel[6];
 #define MAX_FORCEREFRESH_INTERVAL 500
 #define MAX_SYNCSETSIZE_WAIT 1000
 #define GUI_PIPE_TIMEOUT 300
-#define MAX_CONREAD_SIZE 30000 // в байтах
 #define RELOAD_INFO_TIMEOUT 500
 #define EXTCONCOMMIT_TIMEOUT 500
 #define REQSIZE_TIMEOUT 5000
@@ -250,7 +249,7 @@ void LogString(LPCSTR asText);
 void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo=NULL);
 BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RECT& rgn);
 BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn);
-LPCSTR GetCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize);
+//LPCSTR GetCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize);
 
 
 #if defined(__GNUC__)

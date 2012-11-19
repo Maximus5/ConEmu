@@ -67,6 +67,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuHk/Injects.h"
 #include "../common/RConStartArgs.h"
 #include "../common/ConsoleAnnotation.h"
+#include "../common/ConsoleRead.h"
 #include "TokenHelper.h"
 #include "ConsoleHelp.h"
 #include "UnicodeTest.h"
@@ -8040,46 +8041,6 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 
 
 
-LPCSTR GetCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize)
-{
-	LPCSTR pszLeads = NULL;
-	static CPINFOEX cpinfo = {};
-	static char szLeads[256] = {};
-
-	if (cpinfo.CodePage != nCP)
-	{
-		if (!GetCPInfoEx(nCP, 0, &cpinfo) || (cpinfo.MaxCharSize <= 1))
-		{
-			ZeroStruct(szLeads);
-		}
-		else
-		{
-			int c = 0;
-			_ASSERTE(countof(cpinfo.LeadByte)>=10);
-			for (int i = 0; (i < 5) && cpinfo.LeadByte[i*2]; i++)
-			{
-				BYTE c1 = cpinfo.LeadByte[i*2];
-				BYTE c2 = cpinfo.LeadByte[i*2+1];
-				for (BYTE j = c1; (j <= c2) && (c < 254); j++, c++)
-				{
-					szLeads[c] = j;
-				}
-			}
-			_ASSERTE(c && c <= 255);
-			szLeads[c] = 0;
-			pszLeads = szLeads;
-		}
-	}
-	else if (cpinfo.MaxCharSize > 1)
-	{
-		pszLeads = szLeads;
-	}
-
-	if (pnMaxCharSize)
-		*pnMaxCharSize = cpinfo.MaxCharSize;
-
-	return pszLeads;
-}
 
 
 // Действует аналогично функции WinApi (GetConsoleScreenBufferInfo), но в режиме сервера:

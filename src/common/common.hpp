@@ -175,6 +175,7 @@ enum ConEmuTabCommand
 	ctc_ActivateConsole = 7,
 	ctc_ShowTabsList = 8,
 	ctc_CloseTab = 9,
+	ctc_SwitchPaneDirect = 10,
 };
 
 enum ConEmuStatusCommand

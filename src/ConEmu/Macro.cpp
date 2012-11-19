@@ -1243,6 +1243,16 @@ LPWSTR CConEmuMacro::Tab(LPWSTR asArgs, CRealConsole* apRCon)
 				pszResult = lstrdup(L"OK");
 			}
 			break;
+		case ctc_SwitchPaneDirect: // switch visible panes direct (no recent mode), parm=(1,-1), like ctc_SwitchConsoleDirect but for Splits
+			if (apRCon && (nParm == 1 || nParm == -1))
+			{
+				bool bNext = (nParm == 1);
+				if (CVConGroup::PaneActivateNext(bNext))
+				{
+					pszResult = lstrdup(L"OK");
+				}
+			}
+			break;
 		}
 	}
 

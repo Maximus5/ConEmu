@@ -799,6 +799,7 @@
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="ConEmuC.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
+    <ClInclude Include="..\common\ConsoleRead.h" />
     <ClInclude Include="..\common\defines.h" />
     <ClInclude Include="..\common\Execute.h" />
     <ClInclude Include="ExitCodes.h" />
@@ -1101,6 +1102,7 @@
   <ItemGroup>
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
+    <ClCompile Include="..\common\ConsoleRead.cpp" />
     <ClCompile Include="ConEmuCmd.cpp" />
     <ClCompile Include="ConEmuSrv.cpp" />
     <ClCompile Include="ConsoleMain.cpp" />

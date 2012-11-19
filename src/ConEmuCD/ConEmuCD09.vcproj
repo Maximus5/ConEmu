@@ -1607,6 +1607,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\ConsoleRead.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\defines.h"
 				>
 			</File>
@@ -1704,6 +1708,10 @@
 			</File>
 			<File
 				RelativePath=".\ConsoleMain.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\ConsoleRead.cpp"
 				>
 			</File>
 			<File

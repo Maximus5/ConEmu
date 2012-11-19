@@ -236,7 +236,7 @@ struct ConEmuHotKey
 			pszDescr += nLen;
 			cchMaxLen -= nLen;
 
-			if (!lbColon && (cchMaxLen > 2))
+			if (!lbColon && (cchMaxLen > 2) && (pszDescr > pszRc))
 			{
 				lstrcpyn(pszDescr, L": ", cchMaxLen);
 				pszDescr += 2;

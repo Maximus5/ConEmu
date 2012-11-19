@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include "../common/pluginW1900.hpp"
 #include "../common/ConsoleAnnotation.h"
+#include "../common/ConsoleRead.h"
 #include "../common/ConEmuColors3.h"
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
@@ -742,7 +743,7 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 
 	SMALL_RECT rcRead = *ReadRegion;
 	COORD MyBufferSize = {BufferSize.X, 1};
-	COORD MyBufferCoord = {BufferCoord.X, 0};
+	//COORD MyBufferCoord = {BufferCoord.X, 0};
 	SHORT YShift = gbFarBufferMode ? (csbi.dwSize.Y - (srWork.Bottom - srWork.Top + 1)) : 0;
 	SHORT Y1 = ReadRegion->Top + YShift;
 	SHORT Y2 = ReadRegion->Bottom + YShift;
@@ -768,7 +769,7 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 	for (rcRead.Top = Y1; rcRead.Top <= Y2; rcRead.Top++)
 	{
 		rcRead.Bottom = rcRead.Top;
-		BOOL lbRead = ReadConsoleOutputW(h, pcReadBuf, MyBufferSize, MyBufferCoord, &rcRead);
+		BOOL lbRead = ReadConsoleOutputEx(h, pcReadBuf, MyBufferSize, /*MyBufferCoord,*/ rcRead);
 
 		CHAR_INFO* pc = pcReadBuf + BufferCoord.X;
 		FAR_CHAR_INFO* pFar = Buffer + (rcRead.Top - BufferShift + BufferCoord.Y)*BufferSize.X + BufferCoord.X; //-V104

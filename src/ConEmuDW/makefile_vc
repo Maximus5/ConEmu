@@ -35,6 +35,7 @@ LINK_OBJS = \
 	$(OBJDIR)\ConEmuDw.obj \
 	$(OBJDIR)\Common.obj \
 	$(OBJDIR)\ConEmuCheck.obj \
+	$(OBJDIR)\ConsoleRead.obj \
 	$(OBJDIR)\MAssert.obj \
 	$(OBJDIR)\Memory.obj \
 	$(OBJDIR)\MSecurity.obj \
@@ -250,6 +251,8 @@ $(OBJDIR)\ConEmuDw.obj: ConEmuDw.cpp
 $(OBJDIR)\Common.obj: ../common/Common.cpp
 
 $(OBJDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp
+
+$(OBJDIR)\ConsoleRead.obj: ../common/ConsoleRead.cpp ../common/ConsoleRead.h
 
 $(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
 

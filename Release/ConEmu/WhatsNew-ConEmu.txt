@@ -10,10 +10,8 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
-Questions about usablity of "-new_console:s".
-* Mouse wheel. What console to send? Active or «Under cursor»?
 
-
+2012.11.18
 [+] For debug purposes. User may define environment variable "ConEmuReportExe".
     ConEmuHk (when it is injected in the process with defined name) will show message box.
     It is right moment to take memory dump of this infiltrated process.
@@ -26,6 +24,8 @@ Questions about usablity of "-new_console:s".
 [+] Settings page «Status bar» redesigned: two listboxes (available and selected) instead of checkboxes.
 [%] Issue 814: макрос на переход по "гиперссылке" на ошибки компиляции в Far3 build 2949.
 [+] New switch: "-new_console:t:tabname". Allows rename new created tab.
+[+] GuiMacro: Tab(10,1) and Tab(10,-1) cycle switches visible split-panes.
+[%] Issue 818: More DBCS console bugfixes.
 
 
 2012.11.09

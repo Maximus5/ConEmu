@@ -5369,6 +5369,8 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkAlwaysOnTop,    chk_User,  NULL,    L"AlwaysOnTopKey",        0, CConEmuCtrl::key_AlwaysOnTop},
 		{vkTabMenu,        chk_User,  NULL,    L"Key.TabMenu",           MakeHotKey(VK_SPACE,VK_APPS), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
 		{vkTabMenu2,       chk_User,  NULL,    L"Key.TabMenu2",          MakeHotKey(VK_RBUTTON,VK_SHIFT), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
+		{vkTabPane,        chk_User,  NULL,    L"Key.TabPane",           MakeHotKey(VK_TAB,VK_APPS), CConEmuCtrl::key_GuiMacro, false/*OnKeyUp*/, lstrdup(L"Tab(10,1)")}, // Next visible pane
+		{vkTabPaneShift,   chk_User,  NULL,    L"Key.TabPane",           MakeHotKey(VK_TAB,VK_APPS,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false/*OnKeyUp*/, lstrdup(L"Tab(10,-1)")}, // Prev visible pane
 		{vkAltF9,          chk_User,  NULL,    L"Key.Maximize",          MakeHotKey(VK_F9,VK_MENU), CConEmuCtrl::key_AltF9}, // Maximize window
 		{vkAltEnter,       chk_User,  NULL,    L"Key.FullScreen",        MakeHotKey(VK_RETURN,VK_MENU), CConEmuCtrl::key_AltEnter}, // Full screen
 		{vkSystemMenu,     chk_User,  NULL,    L"Key.SysMenu",           MakeHotKey(VK_SPACE,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu

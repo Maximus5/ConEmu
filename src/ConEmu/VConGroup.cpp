@@ -297,6 +297,12 @@ CVConGroup* CVConGroup::GetRootGroup()
 
 CVConGroup* CVConGroup::GetRootOfVCon(CVirtualConsole* apVCon)
 {
+	if (!apVCon)
+	{
+		_ASSERTE(apVCon != NULL);
+		return NULL;
+	}
+
 	CVConGuard VCon(apVCon);
 
 	if (!apVCon || !apVCon->mp_Group)
@@ -2299,7 +2305,7 @@ DWORD CVConGroup::CheckProcesses()
 	return dwAllCount;
 }
 
-bool CVConGroup::ConActivateNext(BOOL abNext)
+bool CVConGroup::ConActivateNext(bool abNext)
 {
 	int nActive = ActiveConNum(), i, j, n1, n2, n3;
 
@@ -2342,6 +2348,101 @@ bool CVConGroup::ConActivateNext(BOOL abNext)
 	}
 
 	return false;
+}
+
+int CVConGroup::GetGroupPanes(MArray<CVConGuard*> &rPanes)
+{
+	if (!this)
+	{
+		_ASSERTE(this);
+		return 0;
+	}
+
+	int nAdd = 0;
+
+	_ASSERTE((m_SplitType==RConStartArgs::eSplitNone && mp_Item!=NULL) || (m_SplitType!=RConStartArgs::eSplitNone && (mp_Grp1 || mp_Grp2)));
+
+	if (m_SplitType==RConStartArgs::eSplitNone)
+	{
+		if (mp_Item)
+		{
+			CVConGuard* pVConG = new CVConGuard(mp_Item);
+			rPanes.push_back(pVConG);
+			nAdd++;
+		}
+	}
+	else
+	{
+		if (mp_Grp1)
+			nAdd += mp_Grp1->GetGroupPanes(rPanes);
+		if (mp_Grp2)
+			nAdd += mp_Grp2->GetGroupPanes(rPanes);
+	}
+
+	return nAdd;
+}
+
+void CVConGroup::FreePanesArray(MArray<CVConGuard*> &rPanes)
+{
+	for (int i = rPanes.size(); i--;)
+	{
+		CVConGuard* p = rPanes[i];
+		rPanes.erase(i);
+		SafeDelete(p);
+	}
+	_ASSERTE(rPanes.size()==0);
+	rPanes.clear();
+}
+
+bool CVConGroup::PaneActivateNext(bool abNext)
+{
+	CVConGuard VCon(gp_VActive);
+	if (!gp_VActive)
+		return false;
+
+	bool bOk = false;
+	CVirtualConsole* pVCon = VCon.VCon();
+	CVConGroup* pActiveGroup = GetRootOfVCon(gp_VActive);
+	MArray<CVConGuard*> Panes;
+	
+	int nCount = pActiveGroup->GetGroupPanes(Panes);
+	
+	if (nCount > 1)
+	{
+		CVirtualConsole* pVNext = NULL;
+
+		if (abNext)
+		{
+			for (int i = 0; i < nCount; i++)
+			{
+				if (Panes[i]->VCon() == pVCon)
+				{
+					pVNext = Panes[((i+1) < nCount) ? (i+1) : 0]->VCon();
+					break;
+				}
+			}
+		}
+		else
+		{
+			for (int i = nCount; i--;)
+			{
+				if (Panes[i]->VCon() == pVCon)
+				{
+					pVNext = Panes[i ? (i-1) : (nCount-1)]->VCon();
+					break;
+				}
+			}
+		}
+
+		
+		if (pVNext)
+		{
+			bOk = Activate(pVNext);
+		}
+	}
+
+	FreePanesArray(Panes);
+	return bOk;
 }
 
 void CVConGroup::ShowActiveGroup(CVirtualConsole* pOldActive)

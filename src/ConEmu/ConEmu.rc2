@@ -295,6 +295,8 @@ BEGIN
     vkSystemMenu2           "Show ConEmu System menu"
     vkTabMenu               "Show Tab context menu"
     vkTabMenu2              "Show Tab context menu"
+    vkTabPane               "Switch to next visible pane (SplitScreen)"
+    vkTabPaneShift          "Switch to previous visible pane (SplitScreen)"
     vkTerminateApp          "Terminate active process in current console"
     vkWinAltA               "Show «About» dialog"
     vkWinAltK               "Show «Hotkeys»"

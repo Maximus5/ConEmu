@@ -11,6 +11,7 @@ SRCS = ConsoleMain.cpp \
        ../ConEmuHk/Injects.cpp \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp \
+       ../common/ConsoleRead.cpp \
        ../common/Execute.cpp \
        ../common/InQueue.cpp \
        ../common/MAssert.cpp \

@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "VConRelease.h"
 #include "../common/RConStartArgs.h"
+#include "../common/MArray.h"
 
 class CVirtualConsole;
 class CVConGuard;
@@ -78,6 +79,8 @@ private:
 	
 	static CVConGroup* CreateVConGroup();
 	CVConGroup* SplitVConGroup(RConStartArgs::SplitType aSplitType = RConStartArgs::eSplitHorz/*eSplitVert*/, UINT anPercent10 = 500);
+	int GetGroupPanes(MArray<CVConGuard*> &rPanes);
+	static void FreePanesArray(MArray<CVConGuard*> &rPanes);
 	
 	CVConGroup(CVConGroup *apParent);
 
@@ -149,7 +152,8 @@ public:
 	static void MoveAllVCon(CVirtualConsole* pVConCurrent, RECT rcNewCon);
 	static HRGN GetExclusionRgn(bool abTestOnly = false);
 	static bool ConActivate(int nCon);
-	static bool ConActivateNext(BOOL abNext);
+	static bool ConActivateNext(bool abNext);
+	static bool PaneActivateNext(bool abNext);
 	static DWORD CheckProcesses();
 	static CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
 	static BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);

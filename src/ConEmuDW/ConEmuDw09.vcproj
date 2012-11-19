@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="Far.ExtendedConsole"
 	ProjectGUID="{0F3AA494-98BA-425A-941D-AC18C29EFC15}"
 	RootNamespace="ConEmuDw"
@@ -1671,6 +1671,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\ConsoleRead.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\MAssert.h"
 				>
 			</File>
@@ -1888,6 +1892,10 @@
 			</File>
 			<File
 				RelativePath=".\ConEmuDw.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\ConsoleRead.cpp"
 				>
 			</File>
 			<File
