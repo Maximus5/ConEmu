@@ -2147,14 +2147,18 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 	else if (IsChecked(hWnd2, rbHotkeysSystem))
 		nShowType = rbHotkeysSystem;
 
+	static bool bLastHideEmpties = false;
+	bool bHideEmpties = (IsChecked(hWnd2, cbHotkeysAssignedOnly) == BST_CHECKED);
+
 	// Населить список всеми хоткеями
 	HWND hList = GetDlgItem(hWnd2, lbConEmuHotKeys);
-	if (abInitial || (nLastShowType != nShowType))
+	if (abInitial || (nLastShowType != nShowType) || (bLastHideEmpties != bHideEmpties))
 	{
 		ListView_DeleteAllItems(hList);
 		abInitial = TRUE;
 	}
 	nLastShowType = nShowType;
+	bLastHideEmpties = bHideEmpties;
 
 
 	wchar_t szName[128], szDescr[512];
@@ -2195,6 +2199,13 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 			default:
 				; // OK
 			}
+
+			if (bHideEmpties)
+			{
+				if (ppHK->VkMod == 0)
+					continue;
+			}
+
 		}
 		else
 		{
@@ -4738,7 +4749,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rbHotkeysUser:
 		case rbHotkeysSystem:
 		case rbHotkeysMacros:
+		case cbHotkeysAssignedOnly:
 			gpSetCls->FillHotKeysList(hWnd2, TRUE);
+			gpSetCls->OnHotkeysNotify(hWnd2, MAKELONG(lbConEmuHotKeys,0xFFFF), NULL);
 			break;
 
 			

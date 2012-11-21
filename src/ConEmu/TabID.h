@@ -40,30 +40,51 @@ class MSectionLock;
 class CTabStack;
 
 
-enum TabType
-{
-	// Эти три флага - не битовая маска, а тип панели, получающийся из (nFlags & 0xFF)
-	etfPanels      = 1,
-	etfViewer      = 2,
-	etfEditor      = 3,
-};
+/* **********************************
+typedef unsigned int CEFarWindowType;
+static const CEFarWindowType
+	fwt_Any            = 0,
+	fwt_Panels         = 1,
+	fwt_Viewer         = 2,
+	fwt_Editor         = 3,
+	fwt_TypeMask       = 0x00FF,
 
-enum TabInfoFlags
-{
-	// Эти три флага - не битовая маска, а тип панели, получающийся из (nFlags & 0xFF)
-	//etfPanels    = 1, --> enum TabType
-	//etfViewer    = 2, --> enum TabType
-	//etfEditor    = 3, --> enum TabType
-	// Далее идут флаги, состояния консоли
-	etfAdmin       = 0x0100, // вкладка запущена с повышенными полномочиями
-	etfUser        = 0x0200, // вкладка запущена под другим пользователем
-	etfRestricted  = 0x0400, // вкладка запущена под ограниченной учетной записью
-	etfNonRespond  = 0x0800, // вкладка не отвечает, или только запускается
-	// Флаги отображения вкладки
-	etfActive      = 0x1000, // активная вкладка. она может быть в НЕ активной консоли
-	etfDisabled    = 0x2000, // вкладка недоступна (заблокирована модальным диалогом, cmd.exe, и пр.)
-	etfFlash       = 0x4000, // мигающая вкладка (вкладка ожидает действия пользователя)
-};
+	fwt_Elevated       = 0x0100,
+	fwt_NonElevated    = 0x0200, // Аргумент для поиска окна
+	fwt_Modal          = 0x0400,
+	fwt_NonModal       = 0x0800, // Аргумент для поиска окна
+	fwt_PluginRequired = 0x1000, // Аргумент для поиска окна
+	fwt_ActivateFound  = 0x2000, // Активировать найденный таб. Аргумент для поиска окна
+	fwt_Disabled       = 0x4000, // Таб заблокирован другим модальным табом (или диалогом?)
+	fwt_Renamed        = 0x8000  // Таб был принудительно переименован пользователем
+	;
+  ********************************** */
+
+//enum TabType
+//{
+//	// Эти три флага - не битовая маска, а тип панели, получающийся из (nFlags & 0xFF)
+//	etfPanels      = 1,
+//	etfViewer      = 2,
+//	etfEditor      = 3,
+//};
+//
+//enum TabInfoFlags
+//{
+//	// Эти три флага - не битовая маска, а тип панели, получающийся из (nFlags & 0xFF)
+//	//etfPanels    = 1, --> enum TabType
+//	//etfViewer    = 2, --> enum TabType
+//	//etfEditor    = 3, --> enum TabType
+//	// Далее идут флаги, состояния консоли
+//	etfAdmin       = 0x0100, // вкладка запущена с повышенными полномочиями
+//	etfUser        = 0x0200, // вкладка запущена под другим пользователем
+//	etfRestricted  = 0x0400, // вкладка запущена под ограниченной учетной записью
+//	etfNonRespond  = 0x0800, // вкладка не отвечает, или только запускается
+//	// Флаги отображения вкладки
+//	etfActive      = 0x1000, // активная вкладка. она может быть в НЕ активной консоли
+//	etfDisabled    = 0x2000, // вкладка недоступна (заблокирована модальным диалогом, cmd.exe, и пр.)
+//	etfFlash       = 0x4000, // мигающая вкладка (вкладка ожидает действия пользователя)
+//};
+
 
 enum TabIdState
 {
@@ -77,10 +98,9 @@ enum TabIdState
 struct TabName
 {
 private:
-	int nMaxLen, nLen;
+	int nLen;
 	wchar_t sz[CONEMUTABMAX];
 public:
-	LPCWSTR Init(LPCWSTR asName);
 	LPCWSTR Set(LPCWSTR asName);
 	void Release();
 	LPCWSTR Upper();
@@ -102,7 +122,7 @@ struct TabInfo
 {
 	enum TabIdState Status;
 	int  Type; // TabType { etfPanels/etfEditor/etfViewer }
-	UINT Flags; // enum of TabInfoFlags
+	CEFarWindowType Flags; // enum of CEFarWindowType
 	
 	CVirtualConsole* pVCon;
 	
@@ -122,7 +142,7 @@ protected:
 	~CTabID();
 public:
 	TabInfo Info;
-	UINT Flags();
+	CEFarWindowType Flags() { return Info.Flags; };
 	//enum TabIdState Status;
 	//int  Type; // TabType { etfPanels/etfEditor/etfViewer }
 	//UINT Flags; // enum of TabInfoFlags
@@ -138,8 +158,8 @@ public:
 	// Для внутреннего использования
 	TabDrawInfo DrawInfo;
 
-	CTabID(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, UINT anFlags);
-	void Set(LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, UINT anFlags);
+	CTabID(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags);
+	void Set(LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags);
 
 	int AddRef();
 	int Release();
@@ -182,7 +202,7 @@ public:
 	CTabStack();
 	~CTabStack();
 	
-	//const CTabID* CreateOrFind(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, UINT anFlags);
+	//const CTabID* CreateOrFind(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags);
 	
 	int GetCount();
 	bool GetTabInfoByIndex(int anIndex, /*OUT*/ TabInfo& rInfo);
@@ -195,7 +215,7 @@ public:
 	void LockTabs(MSectionLock* pLock);
 	
 	HANDLE UpdateBegin();
-	void UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, UINT anFlags);
+	void UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags);
 	void UpdateAppend(HANDLE hUpdate, CTab& Tab, BOOL abMoveFirst);
 	void UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst);
 	void UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail);

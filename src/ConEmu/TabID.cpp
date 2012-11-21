@@ -30,30 +30,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "TabID.h"
 #include "../common/WinObjects.h"
+#include "ConEmu.h"
 
-/* Simple string class { struct } */
-LPCWSTR TabName::Init(LPCWSTR asName)
+/* Simple fixed-max-length string class { struct } */
+LPCWSTR TabName::Set(LPCWSTR asName)
 {
-	nLen = 0; nMaxLen = 0;
-	return Set(asName);
+	#ifdef _DEBUG
+	nLen = asName ? lstrlenW(asName) : 6;
+	#endif
+
+	lstrcpynW(sz, asName ? asName : gpConEmu->GetDefaultTitle(), countof(sz));
+	
+	nLen = lstrlenW(sz);
+	return sz;
 }
 void TabName::Release()
 {
 	sz[0] = 0;
-	nLen = 0; nMaxLen = 0;
-}
-LPCWSTR TabName::Set(LPCWSTR asName)
-{
-	nLen = asName ? lstrlenW(asName) : 6;
-	//if (!psz || (nLen > nMaxLen))
-	//{
-	//	nMaxLen = nLen+MAX_PATH;
-	//	if (psz) free(psz);
-	//	psz = (wchar_t*)malloc((nMaxLen+1)*2);
-	//}
-	lstrcpynW(sz, asName ? asName : L"ConEmu", countof(sz));
-	nLen = lstrlenW(sz);
-	return sz;
+	nLen = 0;
 }
 LPCWSTR TabName::Upper()
 {
@@ -82,7 +76,7 @@ int TabName::Length() const
 
 
 /* Uniqualizer for Each tab */
-CTabID::CTabID(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, UINT anFlags)
+CTabID::CTabID(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
 {
 	mn_RefCount = 0;
 	memset(&Info, 0, sizeof(Info));
@@ -104,7 +98,7 @@ CTabID::CTabID(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, i
 	//Upper.Init(asName);
 	//Upper.Upper();
 }
-void CTabID::Set(LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, UINT anFlags)
+void CTabID::Set(LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
 {
 	//bExisted = true;
 	Info.Status = tisValid;
@@ -114,8 +108,8 @@ void CTabID::Set(LPCWSTR asName, int anType, int anPID, int anFarWindowID, int a
 	Info.nFarWindowID = anFarWindowID;
 	Info.nViewEditID = anViewEditID;
 	// Name
-	Name.Init(asName);
-	Upper.Init(asName);
+	Name.Set(asName);
+	Upper.Set(asName);
 	Upper.Upper();
 }
 CTabID::~CTabID()
@@ -252,10 +246,10 @@ bool CTabID::IsEqual(const CTabID* pTabId, bool abIgnoreWindowId /*= false*/)
 	//// OK, различия не найдены, закладки совпадают
 	//return true;
 }
-UINT CTabID::Flags()
-{
-	return Info.Flags;
-}
+//UINT CTabID::Flags()
+//{
+//	return Info.Flags;
+//}
 
 
 
@@ -296,7 +290,7 @@ CTabStack::~CTabStack()
 		mp_Section = NULL;
 	}
 }
-//const CTabID* CTabStack::CreateOrFind(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, UINT anFlags)
+//const CTabID* CTabStack::CreateOrFind(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
 //{
 //	CTabID* pTab = NULL;
 //	
@@ -558,7 +552,7 @@ HANDLE CTabStack::UpdateBegin()
 //}
 
 // Должен вызываться только из CRealConsole!
-void CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, UINT anFlags)
+void CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
 {
 	MSectionLock* pUpdateLock = (MSectionLock*)hUpdate;
 	
@@ -598,7 +592,7 @@ void CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 	// 1. Новая вкладка в ФАР может появиться ТОЛЬКО в конце
 	// 2. Закрыта может быть любая вкладка
 
-	TabName upr; upr.Init(asName); upr.Upper();
+	TabName upr; upr.Set(asName); upr.Upper();
 
 	pTab = NULL;
 	int i = 0;
@@ -761,7 +755,7 @@ void CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 	if (mn_UpdatePos == 0)
 	{
 		// Фукнция UpdateFarWindow должна была быть вызвана хотя бы раз!
-		//UpdateFarWindow(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, UINT anFlags)
+		//UpdateFarWindow(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
 		_ASSERTE(mn_UpdatePos>0);
 		pUpdateLock->Unlock();
 		delete pUpdateLock;

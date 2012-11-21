@@ -4586,7 +4586,37 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		gpConsoleInfoStr->PopupColors				= anPopupColors; //MAKEWORD(0x5, 0xf);
 		gpConsoleInfoStr->HistoryNoDup				= FALSE;
 		gpConsoleInfoStr->HistoryBufferSize			= 50;
-		gpConsoleInfoStr->NumberOfHistoryBuffers	= 4; //-V112
+		gpConsoleInfoStr->NumberOfHistoryBuffers	= 32; //-V112
+
+		// Issue 700: Default history buffers count too small.
+		HKEY hkConsole = NULL;
+		LONG lRegRc;
+		if (0 == (lRegRc = RegCreateKeyEx(HKEY_CURRENT_USER, L"Console\\ConEmu", 0, NULL, 0, KEY_READ, NULL, &hkConsole, NULL)))
+		{
+			DWORD nSize = sizeof(DWORD), nValue, nType;
+			struct {
+				LPCWSTR pszName;
+				DWORD nMin, nMax;
+				ULONG *pnVal;
+			} BufferValues[] = {
+				{L"HistoryBufferSize", 16, 999, &gpConsoleInfoStr->HistoryBufferSize},
+				{L"NumberOfHistoryBuffers", 16, 999, &gpConsoleInfoStr->NumberOfHistoryBuffers}
+			};
+			for (size_t i = 0; i < countof(BufferValues); ++i)
+			{
+				lRegRc = RegQueryValueEx(hkConsole, BufferValues[i].pszName, NULL, &nType, (LPBYTE)&nValue, &nSize);
+				if ((lRegRc == 0) && (nType == REG_DWORD) && (nSize == sizeof(DWORD)))
+				{
+					if (nValue < BufferValues[i].nMin)
+						nValue = BufferValues[i].nMin;
+					else if (nValue > BufferValues[i].nMax)
+						nValue = BufferValues[i].nMax;
+
+					if (nValue != *BufferValues[i].pnVal)
+						*BufferValues[i].pnVal = nValue;
+				}
+			}
+		}
 
 		// color table
 		for(i = 0; i < 16; i++)
@@ -4595,6 +4625,8 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		gpConsoleInfoStr->CodePage					= GetConsoleOutputCP();//0;//0x352;
 		gpConsoleInfoStr->Hwnd						= inConWnd;
 		gpConsoleInfoStr->ConsoleTitle[0] = 0;
+
+		// Send data to console window
 		SetConsoleInfo(inConWnd, gpConsoleInfoStr);
 	}
 }

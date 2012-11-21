@@ -2622,6 +2622,7 @@ BOOL CRealConsole::StartProcess()
 	CloseConfirmReset();
 	mb_InCreateRoot = TRUE;
 	mb_InCloseConsole = FALSE;
+	mb_SwitchActiveServer = false;
 	ZeroStruct(m_ServerClosing);
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
@@ -4965,20 +4966,33 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 
 		HANDLE hWait[] = {mh_ActiveServerSwitched, mh_MonitorThread, mh_MainSrv, mh_TermEvent};
 		DWORD nWait = WAIT_TIMEOUT;
+		DEBUGTEST(DWORD nStartWait = GetTickCount());
 
-		#ifdef _DEBUG
-		nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, 5000);
-		if (nWait == WAIT_TIMEOUT)
+		// mh_TermEvent выставляется после реального закрытия консоли
+		// но если инициировано закрытие консоли - ожидание завершения смены
+		// сервера может привести к блокировке, поэтому isServerClosing
+		while ((nWait == WAIT_TIMEOUT) && !isServerClosing())
 		{
-			_ASSERTE((nWait == WAIT_OBJECT_0) && "Switching Monitor thread to altarnative server takes more than 1000ms");
+			nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, 100);
+
+			#ifdef _DEBUG
+			if ((nWait == WAIT_TIMEOUT) && nStartWait && ((GetTickCount() - nStartWait) > 2000))
+			{
+				_ASSERTE((nWait == WAIT_OBJECT_0) && "Switching Monitor thread to altarnative server takes more than 2000ms");
+			}
+			#endif
 		}
-		#endif
 
-		if (nWait == WAIT_TIMEOUT)
-			nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, INFINITE);
+		if (nWait == WAIT_OBJECT_0)
+		{
+			_ASSERTE(mb_SwitchActiveServer==false && "Must be dropped by MonitorThread");
+			mb_SwitchActiveServer = false;
+		}
+		else
+		{
+			_ASSERTE(isServerClosing());
+		}
 
-		_ASSERTE(mb_SwitchActiveServer==false && "Must be dropped by MonitorThread");
-		mb_SwitchActiveServer = false;
 		bOk = (nWait == WAIT_OBJECT_0);
 	}
 
