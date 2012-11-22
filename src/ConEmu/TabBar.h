@@ -29,11 +29,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#ifdef _DEBUG
+#include "TabBarEx.h"
+#endif
+
+#if !defined(CONEMU_TABBAR_EX)
+
 #include <vector>
 #include <commctrl.h>
 #include "../common/WinObjects.h"
 
-#define CONEMUMSG_UPDATETABS _T("ConEmuMain::UpdateTabs")
+//#define CONEMUMSG_UPDATETABS _T("ConEmuMain::UpdateTabs")
 
 #define HT_CONEMUTAB HTBORDER
 
@@ -121,7 +127,7 @@ class TabBarClass //: public CToolTip
 		BOOL mb_PostUpdateCalled, mb_PostUpdateRequested;
 		DWORD mn_PostUpdateTick;
 		void RequestPostUpdate();
-		UINT mn_MsgUpdateTabs;
+		//UINT mn_MsgUpdateTabs;
 		int mn_CurSelTab;
 		int GetIndexByTab(VConTabs tab);
 		int mn_InUpdate;
@@ -198,3 +204,5 @@ class TabBarClass //: public CToolTip
 		int TabFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
 		int TabBtnFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
 };
+
+#endif // #if !defined(CONEMU_TABBAR_EX)

@@ -273,8 +273,10 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		{
 			gpConEmu->mp_TabBar->HoverTab(-1);
 		}
+		#if defined(USE_CONEMU_TOOLBAR)
 		// Ќу и с кнопок убрать подсветку, если была
 		gpConEmu->mp_TabBar->Toolbar_UnHover();
+		#endif
 		RedrawUnlock();
 		return false;
 		

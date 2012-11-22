@@ -1203,7 +1203,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ExtendedConsole.dll"
+				OutputFile="\Far20\ConEmu\ExtendedConsole.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"

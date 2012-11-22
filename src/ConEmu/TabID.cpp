@@ -127,12 +127,12 @@ void CTabID::ReleaseDrawRegion()
 }
 int CTabID::AddRef()
 {
-	mn_RefCount++;
-	return mn_RefCount;
+	int nNewCount = InterlockedIncrement(&mn_RefCount);
+	return nNewCount;
 }
 int CTabID::Release()
 {
-	int n = --mn_RefCount;
+	int n = InterlockedDecrement(&mn_RefCount);
 	if (n <= 0)
 		delete this;
 	return n;

@@ -71,6 +71,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "Options.h"
 #include "Background.h"
 #include "ConEmuPipe.h"
+#include "TabID.h"
 #include "TabBar.h"
 #include "TaskBarGhost.h"
 #include "VConGroup.h"
@@ -546,6 +547,18 @@ int CVirtualConsole::GetActiveTab()
 		return 0;
 	}
 	return mp_RCon->GetActiveTab();
+}
+
+bool CVirtualConsole::GetTab(int tabIdx, /*OUT*/ CTab* pTab)
+{
+	ConEmuTab tab = {};
+	if (!GetTab(tabIdx, &tab))
+		return false;
+
+	CTabID* id = new CTabID(this, *tab.Name ? tab.Name : gpConEmu->GetDefaultTitle(), tab.Type & fwt_TypeMask/*убить*/, 0/*anPID*/, tab.Pos/*anFarWindowID*/, tab.EditViewId, tab.Type);
+	pTab->Init(id);
+	//id->Release(); -- ???
+	return true;
 }
 
 bool CVirtualConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)

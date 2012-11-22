@@ -11,8 +11,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Issue 825: ANSI X3.64 sequences don't works with Gow ls.
+
+
 2012.11.21
-[+] Settings -> Keys & Macro. Checkbox «Hide unassigned» temporarily hides from list actions and macros without hokeys.
+[+] Settings -> Keys & Macro. Checkbox «Hide unassigned» temporarily hides from list actions and macros without hotkeys.
 [%] Issue 700: WinXP, Default history buffers count too small.
 
 

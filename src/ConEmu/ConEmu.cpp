@@ -663,7 +663,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgSrvStarted = ++nAppMsg; //RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
 	mn_MsgVConTerminated = ++nAppMsg;
 	mn_MsgUpdateScrollInfo = ++nAppMsg;
-	mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
+	mn_MsgUpdateTabs = ++nAppMsg; //RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 	mn_MsgOldCmdVer = ++nAppMsg; mb_InShowOldCmdVersion = FALSE;
 	mn_MsgTabCommand = ++nAppMsg;
 	mn_MsgTabSwitchFromHook = RegisterWindowMessage(CONEMUMSG_SWITCHCON); //mb_InWinTabSwitch = FALSE;
@@ -14946,6 +14946,11 @@ void CConEmuMain::RequestExitUpdate()
 	}
 }
 
+void CConEmuMain::RequestPostUpdateTabs()
+{
+	PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
+}
+
 enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 {
 	if (!gpSet->isDragPanel || isPictureView())
@@ -17000,8 +17005,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		case WM_NOTIFY:
 		{
+			#if !defined(CONEMU_TABBAR_EX)
 			if (gpConEmu->mp_TabBar)
 				result = gpConEmu->mp_TabBar->OnNotify((LPNMHDR)lParam);
+			#endif
 
 			break;
 		}

@@ -640,6 +640,7 @@ class CConEmuMain :
 		bool ReportUpdateConfirmation();
 		void ReportUpdateError();
 		void RequestExitUpdate();
+		void RequestPostUpdateTabs();
 		void ReSize(BOOL abCorrect2Ideal = FALSE);
 		//void ResizeChildren();
 		BOOL RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);

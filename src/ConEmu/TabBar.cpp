@@ -26,9 +26,19 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #define HIDE_USE_EXCEPTION_INFO
 
 #define SHOWDEBUGSTR
+
+#ifdef _DEBUG
+#include "TabBarEx.h"
+#endif
+
+#if defined(CONEMU_TABBAR_EX)
+#include "TabBarEx.cpp"
+#else
+
 
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 
@@ -127,7 +137,7 @@ TabBarClass::TabBarClass()
 	mb_PostUpdateCalled = FALSE;
 	mb_PostUpdateRequested = FALSE;
 	mn_PostUpdateTick = 0;
-	mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
+	//mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 	memset(&m_Tab4Tip, 0, sizeof(m_Tab4Tip));
 	mb_InKeySwitching = FALSE;
 	ms_TmpTabText[0] = 0;
@@ -416,7 +426,8 @@ void TabBarClass::RequestPostUpdate()
 	{
 		mb_PostUpdateCalled = TRUE;
 		DEBUGSTRTABS(L"   Posting TabBarClass::Update\n");
-		PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
+		//PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
+		gpConEmu->RequestPostUpdateTabs();
 		mn_PostUpdateTick = GetTickCount();
 	}
 }
@@ -3397,3 +3408,9 @@ void TabBarClass::GetActiveTabRect(RECT* rcTab)
 		rcTab->left = max(rcTab->left-2, rcBar.left);
 	}
 }
+
+
+
+
+
+#endif // #if !defined(CONEMU_TABBAR_EX)

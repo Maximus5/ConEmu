@@ -496,6 +496,14 @@ bool InitHooksCommon()
 		{0}
 	};
 	InitHooks(HooksCommon);
+
+	#if 0
+	// Проверка, как реагирует на дубли
+	HooksCommon[1].NewAddress = NULL;
+	_ASSERTEX(FALSE && "Testing");
+	InitHooks(HooksCommon);
+	#endif
+
 #endif
 	return true;
 }
@@ -816,9 +824,11 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	InitHooksReg();
 	HLOGEND1();
 
+#if 0
 	HLOG1_("InitHooksSort",0);
 	InitHooksSort();
 	HLOGEND1();
+#endif
 
 	print_timings(L"SetAllHooks");
 

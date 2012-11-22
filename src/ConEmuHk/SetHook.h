@@ -130,6 +130,12 @@ struct HookItem
 	const char*     Name;
 	const wchar_t*  DllName;
 	char DllNameA[32];
+
+	DWORD NameCRC;
+
+#ifdef _WIN64
+	DWORD Pad1;
+#endif
 	
 	//HookExeOnly     ExeOnly;    // Some functions must be separated for Far.exe and Plugins
 	//const wchar_t*  ModuleOnly; // others - only for the one module.

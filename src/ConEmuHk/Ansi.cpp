@@ -607,9 +607,12 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 		if (*gsPrevAnsiPart == 27)
 		{
 			_ASSERTE(gnPrevAnsiPart < 79);
-			INT_PTR nAdd = min((lpEnd-lpBuffer),(INT_PTR)countof(gsPrevAnsiPart)-gnPrevAnsiPart);
-			wmemcpy(gsPrevAnsiPart+gnPrevAnsiPart, lpBuffer, nAdd);
-			gsPrevAnsiPart[gnPrevAnsiPart+nAdd] = 0;
+			INT_PTR nCurPrevLen = gnPrevAnsiPart;
+			INT_PTR nAdd = min((lpEnd-lpBuffer),(INT_PTR)countof(gsPrevAnsiPart)-nCurPrevLen);
+			// Need to check buffer overflow!!!
+			_ASSERTE((INT_PTR)countof(gsPrevAnsiPart)>(nCurPrevLen+(lpEnd-lpBuffer)));
+			wmemcpy(gsPrevAnsiPart+nCurPrevLen, lpBuffer, nAdd);
+			gsPrevAnsiPart[nCurPrevLen+nAdd] = 0;
 
 			LPCWSTR lpReStart, lpReNext;
 			int iCall = NextEscCode(gsPrevAnsiPart, gsPrevAnsiPart+nAdd+gnPrevAnsiPart, lpReStart, lpReNext, Code, TRUE);
@@ -630,6 +633,12 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 				gnPrevAnsiPart = 0;
 				gsPrevAnsiPart[0] = 0;
 				return 1;
+			}
+			else if (iCall == 2)
+			{
+				gnPrevAnsiPart = nCurPrevLen+nAdd;
+				_ASSERTE(gsPrevAnsiPart[nCurPrevLen+nAdd] == 0);
+				return 2;
 			}
 
 			_ASSERTE((iCall == 1) && "Invalid esc sequence, need dump to screen?");
@@ -816,10 +825,27 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 				{
 					if (ReEntrance)
 					{
-						_ASSERTE(!ReEntrance && "Need to be checked!");
+						//_ASSERTE(!ReEntrance && "Need to be checked!");
+
+						// gsPrevAnsiPart2 stored for debug purposes only (fully excess)
 						wmemmove(gsPrevAnsiPart2, lpEscStart, nLeft);
 						gsPrevAnsiPart2[nLeft] = 0;
 						gnPrevAnsiPart2 = nLeft;
+
+						//INT_PTR nCurPart = gnPrevAnsiPart;
+						//if (nLeft < (countof(gsPrevAnsiPart) - nCurPart))
+						//{
+						//	wmemmove(gsPrevAnsiPart+nCurPart, lpEscStart, nLeft);
+						//	gsPrevAnsiPart[nCurPart+nLeft] = 0;
+						//	gnPrevAnsiPart = nCurPart+nLeft;
+						//}
+						//else
+						//{
+						//	_ASSERTE(FALSE && "Esc reentrance, Not enough buffer for sequence, Need to be checked!");
+						//	wmemmove(gsPrevAnsiPart2, lpEscStart, nLeft);
+						//	gsPrevAnsiPart2[nLeft] = 0;
+						//	gnPrevAnsiPart2 = nLeft;
+						//}
 					}
 					else
 					{
@@ -827,6 +853,10 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 						gsPrevAnsiPart[nLeft] = 0;
 						gnPrevAnsiPart = nLeft;
 					}
+				}
+				else
+				{
+					_ASSERTE(FALSE && "Too long Esc-sequence part, Need to be checked!");
 				}
 
 				lpStart = lpEscStart;

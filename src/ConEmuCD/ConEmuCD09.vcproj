@@ -1158,7 +1158,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="WinInet.lib Winmm.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ConEmuCD.dll"
+				OutputFile="\Far20\ConEmu\ConEmuCD.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -1236,7 +1236,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="WinInet.lib Winmm.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ConEmuCD64.dll"
+				OutputFile="\Far20\ConEmu\ConEmuCD64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

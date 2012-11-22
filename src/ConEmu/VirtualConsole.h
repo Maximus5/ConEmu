@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CBackground;
 class CTaskBarGhost;
 class CVConGroup;
+class CTab;
 
 class CVirtualConsole :
 	public CVConRelease,
@@ -72,6 +73,7 @@ class CVirtualConsole :
 		int GetTabCount();
 		int GetActiveTab();
 		bool GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
+		bool GetTab(int tabIdx, /*OUT*/ CTab* pTab);
 	public:
 		WARNING("Сделать protected!");
 		uint TextWidth, TextHeight; // размер в символах

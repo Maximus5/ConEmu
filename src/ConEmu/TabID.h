@@ -138,7 +138,7 @@ struct TabInfo
 class CTabID
 {
 protected:
-	int mn_RefCount;
+	LONG mn_RefCount;
 	~CTabID();
 public:
 	TabInfo Info;
