@@ -2878,7 +2878,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				else if (!gFarVersion.IsFarLua())
 					_wcscpy_c(pszMacro, cchMax, L"@$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 print(\"");
 				else
-					_wcscpy_c(pszMacro, cchMax, L"@if Area.Viewer || Area.Editor then Keys(\"F12 0\") end if Area.Shell then Keys(\"ShiftF4\") print(\"");
+					_wcscpy_c(pszMacro, cchMax, L"@if Area.Viewer or Area.Editor then Keys(\"F12 0\") end if Area.Shell then Keys(\"ShiftF4\") print(\"");
 				wchar_t* pDst = pszMacro + lstrlen(pszMacro);
 				while (*pSrc)
 				{
