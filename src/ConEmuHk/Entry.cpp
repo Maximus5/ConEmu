@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"xxxx.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"geledger.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -615,42 +615,49 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	
 #ifdef USE_PIPE_SERVER
 	_ASSERTEX(gpHookServer==NULL);
-	print_timings(L"gpHookServer");
-	gpHookServer = (PipeServer<CESERVER_REQ>*)calloc(1,sizeof(*gpHookServer));
-	if (gpHookServer)
+	if (!gbPrepareDefaultTerminal)
 	{
-		wchar_t szPipeName[128];
-		msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", GetCurrentProcessId());
-		
-		gpHookServer->SetMaxCount(3);
-		gpHookServer->SetOverlapped(true);
-		gpHookServer->SetLoopCommands(false);
-		gpHookServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
-		
-		if (!gpHookServer->StartPipeServer(szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady))
+		print_timings(L"gpHookServer");
+		gpHookServer = (PipeServer<CESERVER_REQ>*)calloc(1,sizeof(*gpHookServer));
+		if (gpHookServer)
 		{
-			_ASSERTEX(FALSE); // Ошибка запуска Pipes?
-			gpHookServer->StopPipeServer(true);
-			free(gpHookServer);
-			gpHookServer = NULL;
+			wchar_t szPipeName[128];
+			msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", GetCurrentProcessId());
+			
+			gpHookServer->SetMaxCount(3);
+			gpHookServer->SetOverlapped(true);
+			gpHookServer->SetLoopCommands(false);
+			gpHookServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
+			
+			if (!gpHookServer->StartPipeServer(szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady))
+			{
+				_ASSERTEX(FALSE); // Ошибка запуска Pipes?
+				gpHookServer->StopPipeServer(true);
+				free(gpHookServer);
+				gpHookServer = NULL;
+			}
 		}
-	}
-	else
-	{
-		_ASSERTEX(gpHookServer!=NULL);
+		else
+		{
+			_ASSERTEX(gpHookServer!=NULL);
+		}
 	}
 #endif
 
 	
-
-	WARNING("Попробовать не ломиться в мэппинг, а взять все из переменной ConEmuData");
-	if (ghConWnd)
+	if (gbPrepareDefaultTerminal)
 	{
+		TODO("Дополнительная инициализация, если нужно, для установки перехватов под DefaultTerminal");
+		gbSelfIsRootConsoleProcess = true;
+	}
+	else if (ghConWnd)
+	{
+		WARNING("Попробовать не ломиться в мэппинг, а взять все из переменной ConEmuData");
 		print_timings(L"CShellProc");
 		CShellProc* sp = new CShellProc;
 		if (sp)
 		{
-			if (sp->LoadGuiMapping())
+			if (sp->LoadSrvMapping())
 			{
 			
 				wchar_t *szExeName = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
@@ -779,7 +786,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		#ifdef _DEBUG
 		//wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
 		//GetModuleFileName(NULL, szModule, countof(szModule));
-		_ASSERTE((gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0) || gbAttachGuiClient);
+		_ASSERTE((gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0) || gbAttachGuiClient || gbPrepareDefaultTerminal);
 		//if (!lstrcmpi(pszName, L"far.exe") || !lstrcmpi(pszName, L"mingw32-make.exe"))
 		//if (!lstrcmpi(pszName, L"as.exe"))
 		//	MessageBoxW(NULL, L"as.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
@@ -1130,6 +1137,18 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 				bCurrentThreadIsMain = (nWaitRoot == WAIT_OBJECT_0);
 			}
 			SafeCloseHandle(hRootProcessFlag);
+
+			if (!gbSelfIsRootConsoleProcess)
+			{
+				msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOK, gnSelfPID);
+				hRootProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+				if (hRootProcessFlag)
+				{
+					nWaitRoot = WaitForSingleObject(hRootProcessFlag, 0);
+					gbPrepareDefaultTerminal = (nWaitRoot == WAIT_OBJECT_0);
+				}
+				SafeCloseHandle(hRootProcessFlag);
+			}
 			DLOGEND1();
 
 
@@ -1169,6 +1188,9 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 
 			//_ASSERTE(ghHeap == NULL);
 			//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
+
+			if (gbPrepareDefaultTerminal)
+				user->setAllowLoadLibrary();
 
 			
 			DLOG1_("DllMain.DllStart",ul_reason_for_call);

@@ -175,6 +175,7 @@ private:
 
 	HANDLE/*HTHEME*/ mh_Theme;
 
+	void PaintCaption_Plain(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
 	void PaintCaption_2k(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
 	void PaintCaption_XP(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
 	void PaintCaption_Aero(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);

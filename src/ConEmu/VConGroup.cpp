@@ -3622,6 +3622,7 @@ wrap:
 	DeleteObject(h);
 }
 
+// Должно вызываться ТОЛЬКО для DC в ghWndWork!!!
 void CVConGroup::PaintGaps(HDC hDC)
 {
 	bool lbReleaseDC = false;
@@ -3644,6 +3645,7 @@ void CVConGroup::PaintGaps(HDC hDC)
 	_ASSERTE(ghWndWork!=NULL);
 	RECT rcClient = {};
 	GetClientRect(ghWndWork, &rcClient);
+	//MapWindowPoints(ghWndWork, ghWnd, (LPPOINT)&rcClient, 2);
 
 	//HWND hView = gp_VActive ? gp_VActive->GetView() : NULL;
 

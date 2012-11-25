@@ -159,7 +159,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 	case WM_PAINT:
 		DBGFUNCTION(L"WM_PAINT \n");
-		lResult = OnPaint(hWnd, FALSE); return true;
+		lResult = OnPaint(hWnd, NULL/*use BeginPaint,EndPaint*/); return true;
 
 	case WM_NCPAINT:
 		DBGFUNCTION(L"WM_NCPAINT \n");
@@ -215,9 +215,15 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		if ((uMsg == WM_NCMOUSEMOVE) || (uMsg == WM_NCLBUTTONUP))
 			gpConEmu->isSizing(); // могло не сброситься, проверим
 
+		#if 1
+		// Табов чисто в заголовке - нет
+			lbRc = false;
+		#else
 		RedrawLock();
 		lbRc = gpConEmu->mp_TabBar->ProcessTabMouseEvent(hWnd, uMsg, wParam, lParam, lResult);
 		RedrawUnlock();
+		#endif
+
 		if (!lbRc)
 		{
 			if ((wParam == HTSYSMENU && uMsg == WM_NCLBUTTONDOWN)
@@ -268,6 +274,8 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		
 	case WM_MOUSEMOVE:
 		DBGFUNCTION(L"WM_MOUSEMOVE \n");
+		// Табов чисто в заголовке - нет
+		#if 0
 		RedrawLock();
 		if (gpConEmu->mp_TabBar->GetHoverTab() != -1)
 		{
@@ -278,6 +286,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		gpConEmu->mp_TabBar->Toolbar_UnHover();
 		#endif
 		RedrawUnlock();
+		#endif
 		return false;
 		
 	case WM_NCLBUTTONDBLCLK:
@@ -288,6 +297,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		
 		if (wParam == HT_CONEMUTAB)
 		{
+			_ASSERTE(FALSE && "There is not tabs in 'Caption'");
 			//RedrawLock(); -- чтобы отрисовать "клик" по кнопке
 			lbRc = gpConEmu->mp_TabBar->ProcessTabMouseEvent(hWnd, uMsg, wParam, lParam, lResult);
 			//RedrawUnlock();
@@ -545,17 +555,40 @@ void CFrameHolder::PaintFrame2k(HWND hWnd, HDC hdc, RECT &cr)
 }
 #endif
 
-LRESULT CFrameHolder::OnPaint(HWND hWnd, BOOL abForceGetDc)
+LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 {
-	HDC hdc;
-	PAINTSTRUCT ps = {0};
+	// Если "завис" PostUpdate
+	if (gpConEmu->mp_TabBar->NeedPostUpdate())
+		gpConEmu->mp_TabBar->Update();
+
+	if (hdc == NULL)
+	{
+		LRESULT lRc = 0;
+		PAINTSTRUCT ps = {0};
+		hdc = BeginPaint(hWnd, &ps);
+
+		if (hdc != NULL)
+		{
+			lRc = OnPaint(hWnd, hdc);
+
+			EndPaint(hWnd, &ps);
+		}
+		else
+		{
+			_ASSERTE(hdc != NULL);
+		}
+
+		return lRc;
+	}
+
+	// Go
+
 	RECT wr, cr, tr;
 	
 	RecalculateFrameSizes();
 
-	hdc = BeginPaint(hWnd, &ps);
-
-	GetClientRect(hWnd, &wr);
+	wr = gpConEmu->GetGuiClientRect();
+	//GetClientRect(hWnd, &wr);
 
 	if (gpSet->isStatusBarShow)
 	{
@@ -570,7 +603,21 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, BOOL abForceGetDc)
 
 	cr = wr;
 
-	if (gpConEmu->DrawType() == fdt_Aero)
+	if (!gpSet->isTabsInCaption)
+	{
+		_ASSERTE(gpConEmu->GetDwmClientRectTopOffset() == 0); // CheckIt, must be zero
+
+		if (gpSet->isTabs)
+		{
+			RECT captrect = gpConEmu->CalcRect(CER_TAB, wr, CER_MAINCLIENT);
+			//CalculateCaptionPosition(cr, &captrect);
+			CalculateTabPosition(cr, captrect, &tr);
+
+			gpConEmu->mp_TabBar->PaintTabs(hdc, captrect, tr);
+		}
+
+	}
+	else if (gpConEmu->DrawType() == fdt_Aero)
 	{
 		int nOffset = gpConEmu->GetDwmClientRectTopOffset();
 		// "Рамка" расширена на клиентскую область, поэтому
@@ -598,18 +645,20 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, BOOL abForceGetDc)
 	WARNING("Пока табы рисуем не сами и ExtendDWM отсутствует - дополнительные изыски с временным DC не нужны");
 	if (!gpSet->isTabsInCaption)
 	{
-		OnPaintClient(hdc, nWidth, nHeight);
+		//OnPaintClient(hdc/*, nWidth, nHeight*/);
 	}
 	else
 
 	// Создадим временный DC, для удобства отрисовки в Glass-режиме и для фикса глюка DWM(?) см.ниже
 	// В принципе, для режима Win2k/XP временный DC можно не создавать, если это будет тормозить
 	{
+		_ASSERTE(FALSE && "Need to be rewritten");
+
 		HDC hdcPaint = CreateCompatibleDC(hdc);
 		HBITMAP hbmp = CreateCompatibleBitmap(hdc, nWidth, nHeight);
 		HBITMAP hOldBmp = (HBITMAP)SelectObject(hdcPaint, hbmp);
 
-		OnPaintClient(hdcPaint, nWidth, nHeight);
+		//OnPaintClient(hdcPaint/*, nWidth, nHeight*/);
 
 		if ((gpConEmu->DrawType() == fdt_Aero) || !(mb_WasGlassDraw && gpConEmu->isZoomed()))
 		{
@@ -665,7 +714,6 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, BOOL abForceGetDc)
 		DeleteDC(hdcPaint);
 	}
 
-	EndPaint(hWnd, &ps);
 
 	return 0;
 }
@@ -702,13 +750,20 @@ void CFrameHolder::CalculateTabPosition(const RECT &rcWindow, const RECT &rcCapt
 {
 	int nBtnWidth = GetSystemMetrics(SM_CXSIZE);
 
-	rcTabs->left = rcCaption.left + GetSystemMetrics(SM_CXSMICON) + 3;
+	bool bCaptionHidden = gpSet->isCaptionHidden();
+
+	rcTabs->left = rcCaption.left;
+	if (bCaptionHidden)
+		rcTabs->left += GetSystemMetrics(SM_CXSMICON) + 3;
 	rcTabs->bottom = rcCaption.bottom - 1;
 	rcTabs->top = max((rcCaption.bottom - GetTabsHeight()/*nHeightIdeal*/), rcCaption.top);
 
+	if (!bCaptionHidden)
+	{
+		rcTabs->right = rcCaption.right;
+	}
 	// TODO: определить ширину кнопок + Shift из настроек юзера
-
-	if (gpConEmu->DrawType() == fdt_Aero)
+	else if (gpConEmu->DrawType() == fdt_Aero)
 	{
 		RECT rcButtons = {0};
 		HRESULT hr = gpConEmu->DwmGetWindowAttribute(ghWnd, DWMWA_CAPTION_BUTTON_BOUNDS, &rcButtons, sizeof(rcButtons));

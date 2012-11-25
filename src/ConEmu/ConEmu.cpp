@@ -63,6 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Update.h"
 #include "LoadImg.h"
 #include "Status.h"
+#include "DefaultTerm.h"
 #include "../ConEmuCD/RegPrepare.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../common/execute.h"
@@ -266,6 +267,7 @@ CConEmuMain::CConEmuMain()
 
 	mp_TabBar = NULL; /*m_Macro = NULL;*/ mp_Tip = NULL;
 	mp_Status = new CStatus;
+	mp_DefTrm = new CDefaultTerminal;
 	
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE;
 	mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = false; mn_ConEmuAliveEventErr = 0;
@@ -289,6 +291,7 @@ CConEmuMain::CConEmuMain()
 	mn_QuakePercent = 0; // 0 - отключен
 	DisableAutoUpdate = false;
 	DisableKeybHooks = false;
+	DisableSetDefTerm = false;
 	mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	m_InsideIntegration = ii_None; mb_InsideIntegrationShift = false; mn_InsideParentPID = 0;
 	mb_InsideSynchronizeCurDir = false;
@@ -3268,6 +3271,8 @@ CConEmuMain::~CConEmuMain()
 	_ASSERTE(ghWnd==NULL || !IsWindow(ghWnd));
 	//ghWnd = NULL;
 
+	SafeDelete(mp_DefTrm);
+
 	SafeDelete(mp_AttachDlg);
 	SafeDelete(mp_RecreateDlg);
 
@@ -4026,7 +4031,16 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 	{
 		case CER_TAB: // switch (tWhat)
 		{
-			// Отступы ДО таба могут появиться только от корректировки
+			_ASSERTE(tFrom==CER_MAINCLIENT);
+			if (gpSet->nTabsLocation == 1)
+			{
+				int nStatusHeight = gpSet->isStatusBarShow ? gpSet->StatusBarHeight() : 0;
+				rc.top = rc.bottom - nStatusHeight - mp_TabBar->GetTabbarHeight();
+			}
+			else
+			{
+				rc.bottom = rc.top + mp_TabBar->GetTabbarHeight();
+			}
 		} break;
 		case CER_WORKSPACE: // switch (tWhat)
 		{
@@ -9416,77 +9430,27 @@ LRESULT CConEmuMain::RightClickingProc(HWND hWnd, UINT messg, WPARAM wParam, LPA
 	return ::DefWindowProc(hWnd, messg, wParam, lParam);
 }
 
-void CConEmuMain::OnPaintClient(HDC hdc, int width, int height)
-{
-	// Если "завис" PostUpdate
-	if (mp_TabBar->NeedPostUpdate())
-		mp_TabBar->Update();
-
-#ifdef _DEBUG
-	RECT rcDbgSize; GetWindowRect(ghWnd, &rcDbgSize);
-	wchar_t szSize[255]; _wsprintf(szSize, SKIPLEN(countof(szSize)) L"WM_PAINT -> Window size (X=%i, Y=%i, W=%i, H=%i)\n",
-	                               rcDbgSize.left, rcDbgSize.top, (rcDbgSize.right-rcDbgSize.left), (rcDbgSize.bottom-rcDbgSize.top));
-	DEBUGSTRSIZE(szSize);
-	static RECT rcDbgSize1;
-
-	if (memcmp(&rcDbgSize1, &rcDbgSize, sizeof(rcDbgSize1)))
-	{
-		rcDbgSize1 = rcDbgSize;
-	}
-#endif
-
-	PaintGaps(hdc);
-}
-
-#if 0
-LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
-{
-	LRESULT result = 0;
-
-	// Если "завис" PostUpdate
-	if (mp_TabBar->NeedPostUpdate())
-		mp_TabBar->Update();
-
-#ifdef _DEBUG
-	RECT rcDbgSize; GetWindowRect(ghWnd, &rcDbgSize);
-	wchar_t szSize[255]; _wsprintf(szSize, SKIPLEN(countof(szSize)) L"WM_PAINT -> Window size (X=%i, Y=%i, W=%i, H=%i)\n",
-	                               rcDbgSize.left, rcDbgSize.top, (rcDbgSize.right-rcDbgSize.left), (rcDbgSize.bottom-rcDbgSize.top));
-	DEBUGSTRSIZE(szSize);
-	static RECT rcDbgSize1;
-
-	if (memcmp(&rcDbgSize1, &rcDbgSize, sizeof(rcDbgSize1)))
-	{
-		rcDbgSize1 = rcDbgSize;
-	}
-#endif
-
-
-	PAINTSTRUCT ps;
-	#ifdef _DEBUG
-	HDC hDc =
-	#endif
-	BeginPaint(ghWnd, &ps);
-	//RECT rcClient; Get ClientRect(ghWnd, &rcClient);
-	//RECT rcTabMargins = CalcMargins(CEM_TAB);
-	//AddMargins(rcClient, rcTabMargins, FALSE);
-	//HDC hdc = GetDC(ghWnd);
-	PaintGaps(ps.hdc);
-	//PaintCon(ps.hdc);
-
-	// Отрисовка идет в hView
-	//if (mb_RightClickingPaint)
-	//{
-	//	// Нарисует кружочек, или сбросит таймер, если кнопку отпустили
-	//	RightClickingPaint(ps.hdc);
-	//}
-
-	EndPaint(ghWnd, &ps);
-	//result = DefWindowProc(ghWnd, WM_PAINT, wParam, lParam);
-	//ReleaseDC(ghWnd, hdc);
-	//ValidateRect(ghWnd, &rcClient);
-	return result;
-}
-#endif
+//void CConEmuMain::OnPaintClient(HDC hdc/*, int width, int height*/)
+//{
+//	// Если "завис" PostUpdate
+//	if (mp_TabBar->NeedPostUpdate())
+//		mp_TabBar->Update();
+//
+//#ifdef _DEBUG
+//	RECT rcDbgSize; GetWindowRect(ghWnd, &rcDbgSize);
+//	wchar_t szSize[255]; _wsprintf(szSize, SKIPLEN(countof(szSize)) L"WM_PAINT -> Window size (X=%i, Y=%i, W=%i, H=%i)\n",
+//	                               rcDbgSize.left, rcDbgSize.top, (rcDbgSize.right-rcDbgSize.left), (rcDbgSize.bottom-rcDbgSize.top));
+//	DEBUGSTRSIZE(szSize);
+//	static RECT rcDbgSize1;
+//
+//	if (memcmp(&rcDbgSize1, &rcDbgSize, sizeof(rcDbgSize1)))
+//	{
+//		rcDbgSize1 = rcDbgSize;
+//	}
+//#endif
+//
+//	//PaintGaps(hdc);
+//}
 
 void CConEmuMain::InvalidateGaps()
 {
@@ -9496,10 +9460,10 @@ void CConEmuMain::InvalidateGaps()
 	CVConGroup::InvalidateGaps();
 }
 
-void CConEmuMain::PaintGaps(HDC hDC)
-{
-	CVConGroup::PaintGaps(hDC);
-}
+//void CConEmuMain::PaintGaps(HDC hDC)
+//{
+//	CVConGroup::PaintGaps(hDC);
+//}
 
 //void CConEmuMain::PaintCon(HDC hPaintDC)
 //{
@@ -9531,22 +9495,22 @@ void CConEmuMain::PaintGaps(HDC hDC)
 //#endif
 //}
 
-void CConEmuMain::RePaint()
-{
-	mb_SkipSyncSize = true;
-
-	gpConEmu->mp_TabBar->RePaint();
-	//m_Back->RePaint();
-	HDC hDc = GetDC(ghWnd);
-	//mp_ VActive->Paint(hDc); // если mp_ VActive==NULL - будет просто выполнена заливка фоном.
-	PaintGaps(hDc);
-	//PaintCon(hDc);
-	ReleaseDC(ghWnd, hDc);
-
-	CVConGroup::RePaint();
-
-	mb_SkipSyncSize = false;
-}
+//void CConEmuMain::RePaint()
+//{
+//	mb_SkipSyncSize = true;
+//
+//	gpConEmu->mp_TabBar->RePaint();
+//	//m_Back->RePaint();
+//	HDC hDc = GetDC(ghWnd);
+//	//mp_ VActive->Paint(hDc); // если mp_ VActive==NULL - будет просто выполнена заливка фоном.
+//	PaintGaps(hDc);
+//	//PaintCon(hDc);
+//	ReleaseDC(ghWnd, hDc);
+//
+//	CVConGroup::RePaint();
+//
+//	mb_SkipSyncSize = false;
+//}
 
 void CConEmuMain::Update(bool isForce /*= false*/)
 {
@@ -9833,6 +9797,13 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 		hLastFore = h;
 		bLastRealAlso = abRealAlso;
 		bLastDialogsAlso = abDialogsAlso;
+
+		if (!isMe && nForePID && mp_DefTrm && gpSet->isSetDefaultTerminal && gpConEmu->isMainThread())
+		{
+			// If user want to use ConEmu as default terminal for CUI apps
+			// we need to hook GUI applications (e.g. explorer)
+			mp_DefTrm->CheckForeground(h, nForePID);
+		}
 	}
 
 	return isMe;
@@ -11061,6 +11032,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			// Bug in Win7? Sometimes after startup "As Admin" sheild does not appeears.
 			SetTimer(ghWnd, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE, NULL);
 		}
+
+		mp_DefTrm->PostCreated();
 	}
 
 	mn_StartupFinished = abRecieved ? ss_PostCreate2Finished : ss_PostCreate1Finished;
@@ -13351,7 +13324,7 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 	else // Для остальных lParam содержит клиентские координаты
 		ClientToScreen(ghWnd, &ptCurScreen);
 
-	if (mb_MouseCaptured || (messg == WM_LBUTTONDOWN))
+	if (mb_MouseCaptured || (messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN) || (messg == WM_MBUTTONDOWN))
 	{
 		HWND hChild = ::ChildWindowFromPointEx(ghWnd, ptCurClient, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
 		CVConGuard VCon;
@@ -13362,11 +13335,39 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 			_ASSERTE(lstrcmp(szClass, VirtualConsoleClass)==0 && "This must be VCon DC window");
 			#endif
 
+			//bool bSkipThisEvent = false;
+
 			WARNING("Тут строго, без учета активности группы!");
 			if (VCon.VCon() && isVisible(VCon.VCon()) && !isActive(VCon.VCon(), false))
 			{
 				Activate(VCon.VCon());
+
+				if (gpSet->isMouseSkipActivation)
+				{
+					if (messg == WM_LBUTTONDOWN)
+					{
+						gpConEmu->mouse.nSkipEvents[0] = WM_LBUTTONDOWN;
+						gpConEmu->mouse.nSkipEvents[1] = WM_LBUTTONUP;
+						gpConEmu->mouse.nReplaceDblClk = WM_LBUTTONDBLCLK;
+						//bSkipThisEvent = true;
+					}
+					else if (messg == WM_RBUTTONDOWN)
+					{
+						gpConEmu->mouse.nSkipEvents[0] = WM_RBUTTONDOWN;
+						gpConEmu->mouse.nSkipEvents[1] = WM_RBUTTONUP;
+						gpConEmu->mouse.nReplaceDblClk = WM_RBUTTONDBLCLK;
+						//bSkipThisEvent = true;
+					}
+					else if (messg == WM_MBUTTONDOWN)
+					{
+						gpConEmu->mouse.nSkipEvents[0] = WM_MBUTTONDOWN;
+						gpConEmu->mouse.nSkipEvents[1] = WM_MBUTTONUP;
+						gpConEmu->mouse.nReplaceDblClk = WM_MBUTTONDBLCLK;
+						//bSkipThisEvent = true;
+					}
+				}
 			}
+
 
 			// Если активны PanelView - они могут транслировать координаты
 			POINT ptVConCoord = ptCurClient;
@@ -16919,6 +16920,7 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			// По идее, видимых частей ghWndWork быть не должно, но если таки есть - зальем
 			PAINTSTRUCT ps = {};
 			BeginPaint(hWnd, &ps);
+			_ASSERTE(ghWndWork == hWnd);
 
 			CVConGroup::PaintGaps(ps.hdc);
 
@@ -17078,10 +17080,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			DefWindowProc(hWnd, messg, wParam, lParam);
 			if (wParam && (hWnd == ghWnd) && gpSet->isStatusBarShow && (lParam & PRF_CLIENT))
 			{
-				int nHeight = gpSet->StatusBarHeight();
-				RECT wr = CalcRect(CER_MAINCLIENT);
-				RECT rcStatus = {wr.left, wr.bottom - nHeight, wr.right, wr.bottom};
-				mp_Status->PaintStatus((HDC)wParam, rcStatus);
+				OnPaint(hWnd, (HDC)wParam);
+
+				//int nHeight = gpSet->StatusBarHeight();
+				//RECT wr = CalcRect(CER_MAINCLIENT);
+				//RECT rcStatus = {wr.left, wr.bottom - nHeight, wr.right, wr.bottom};
+				//mp_Status->PaintStatus((HDC)wParam, rcStatus);
 			}
 			break;
 		case WM_TIMER:

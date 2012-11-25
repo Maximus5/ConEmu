@@ -62,6 +62,10 @@ private:
 	BOOL mb_InShellExecuteEx;
 
 	CESERVER_CONSOLE_MAPPING_HDR m_SrvMapping;
+	ConEmuGuiMapping m_GuiMapping;
+
+	HWND mh_PreConEmuWnd, mh_PreConEmuWndDC;
+	BOOL mb_TempConEmuWnd;
 
 private:
 	wchar_t* str2wcs(const char* psz, UINT anCP);
@@ -85,8 +89,9 @@ public:
 				int nImageBits, int nImageSubsystem,
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr
 				/*wchar_t (&szBaseDir)[MAX_PATH+2], BOOL& bDosBoxAllowed*/);
-	BOOL LoadGuiMapping();
+	BOOL LoadSrvMapping(BOOL bLightCheck = FALSE);
 	DWORD GetUseInjects();
+	BOOL GetLogLibraries();
 public:
 	CShellProc();
 	~CShellProc();

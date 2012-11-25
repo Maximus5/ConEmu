@@ -496,9 +496,9 @@ wrap:
 //#endif
 	if (iRc == 0)
 	{
-		SafeCloseHandle(ghInjectsInMainThread);
-
 		wchar_t szEvtName[64];
+		SafeCloseHandle(ghInjectsInMainThread);
+		
 		msprintf(szEvtName, countof(szEvtName), CECONEMUROOTTHREAD, pi.dwProcessId);
 		ghInjectsInMainThread = CreateEvent(LocalSecurity(), TRUE, TRUE, szEvtName);
 		if (ghInjectsInMainThread)

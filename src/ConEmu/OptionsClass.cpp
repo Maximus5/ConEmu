@@ -3148,6 +3148,12 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				SetDlgItemText(hWnd2, tHereIcon, szIcon);
 			}
 
+			// Default terminal apps
+			wchar_t* pszApps = gpSet->GetDefaultTerminalApps();
+			_ASSERTE(pszApps!=NULL);
+			SetDlgItemText(hWnd2, tDefaultTerminal, pszApps);
+			SafeFree(pszApps);
+
 			bSkipCbSel = false;
 		}
 		break; // WM_INITDIALOG
@@ -3173,6 +3179,9 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 					ShellIntegration(hWnd2, ShellIntgr_Here, CB==bHereRegister);
 					pageOpProc_Integr(hWnd2, UM_RELOAD_HERE_LIST, UM_RELOAD_HERE_LIST, 0);
 					break;
+				case cbDefaultTerminal:
+					gpSet->isSetDefaultTerminal = IsChecked(hWnd2, cbDefaultTerminal);
+					break;
 				}
 			}
 			break; // BN_CLICKED
@@ -3186,6 +3195,14 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 					{
 						SafeFree(gpConEmu->ms_InsideSynchronizeCurDir);
                         gpConEmu->ms_InsideSynchronizeCurDir = GetDlgItemText(hWnd2, tInsideSyncDir);
+					}
+					break;
+				case tDefaultTerminal:
+					if (!bSkipCbSel)
+					{
+						wchar_t* pszApps = GetDlgItemText(hWnd2, tDefaultTerminal);
+						gpSet->SetDefaultTerminalApps(pszApps);
+						SafeFree(pszApps);
 					}
 					break;
 				}

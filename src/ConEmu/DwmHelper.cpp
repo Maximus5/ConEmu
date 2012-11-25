@@ -222,6 +222,8 @@ void CDwmHelper::InitDwm()
 
 bool CDwmHelper::IsDwm()
 {
+	if (IsWindows8)
+		return false;
 	if (!mb_DwmAllowed)
 		return false;
 	BOOL composition_enabled = FALSE;
@@ -231,11 +233,15 @@ bool CDwmHelper::IsDwm()
 
 bool CDwmHelper::IsDwmAllowed()
 {
+	if (IsWindows8)
+		return false;
 	return mb_DwmAllowed;
 }
 
 bool CDwmHelper::IsGlass()
 {
+	if (IsWindows8)
+		return false;
 	if (!mb_DwmAllowed || !mb_EnableGlass)
 		return false;
 	return IsDwm();

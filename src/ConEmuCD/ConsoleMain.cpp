@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
 //	#define SHOW_INJECT_MSGBOX
+	#define SHOW_INJECTREM_MSGBOX
 //	#define SHOW_ATTACH_MSGBOX
 //  #define SHOW_ROOT_STARTED
 	#define WINE_PRINT_PROC_INFO
@@ -2349,6 +2350,7 @@ enum ConEmuExecAction
 	ea_RegConFont, // RegisterConsoleFontHKLM
 	ea_InjectHooks,
 	ea_InjectRemote,
+	ea_InjectDefTrm,
 	ea_GuiMacro,
 	ea_CheckUnicodeFont,
 	ea_ExportCon,  // export env.vars to processes of active console
@@ -2361,9 +2363,10 @@ int DoInjectHooks(LPWSTR asCmdArg)
 	#ifdef SHOW_INJECT_MSGBOX
 	wchar_t szDbgMsg[128], szTitle[128];
 	swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
-	swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s\nConEmuHk, PID=%u", szArg, GetCurrentProcessId());
+	swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s\nConEmuHk, PID=%u", asCmdArg ? asCmdArg : L"", GetCurrentProcessId());
 	MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 	#endif
+
 	gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
 	gnRunMode = RM_SETHOOK64;
 	LPWSTR pszNext = asCmdArg;
@@ -2432,8 +2435,15 @@ int DoInjectHooks(LPWSTR asCmdArg)
 	return CERR_HOOKS_FAILED;
 }
 
-int DoInjectRemote(LPWSTR asCmdArg)
+int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 {
+	#ifdef SHOW_INJECTREM_MSGBOX
+	wchar_t szDbgMsg[128], szTitle[128];
+	swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
+	swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s\nConEmuHk, PID=%u", asCmdArg ? asCmdArg : L"", GetCurrentProcessId());
+	MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	#endif
+
 	gnRunMode = RM_SETHOOK64;
 	LPWSTR pszNext = asCmdArg;
 	LPWSTR pszEnd = NULL;
@@ -2450,7 +2460,54 @@ int DoInjectRemote(LPWSTR asCmdArg)
 		}
 		#endif
 
-		int iHookRc = InjectRemote(nRemotePID);
+		// Preparing Events
+		wchar_t szName[64]; HANDLE hEvent;
+		if (!abDefTermOnly)
+		{
+			// When running in normal mode (NOT set up as default terminal)
+			// we need full initialization procedure, not a light one when hooking explorer.exe
+			_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOK, nRemotePID);
+			hEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szName);
+			if (hEvent)
+			{
+				ResetEvent(hEvent);
+				CloseHandle(hEvent);
+			}
+		}
+		// Creating as remote thread, need to determine MainThread?
+		_wsprintf(szName, SKIPLEN(countof(szName)) CECONEMUROOTTHREAD, nRemotePID);
+		hEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szName);
+		if (hEvent)
+		{
+			ResetEvent(hEvent);
+			CloseHandle(hEvent);
+		}
+
+		int iHookRc = -1;
+		// Hey, may be ConEmuHk.dll is already loaded?
+		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nRemotePID);
+		MODULEENTRY32 mi = {sizeof(mi)};
+		if (hSnap && Module32First(hSnap, &mi))
+		{
+			LPCWSTR pszConEmuHk = WIN3264TEST(L"ConEmuHk.dll", L"ConEmuHk64.dll");
+			do {
+				LPCWSTR pszName = PointToName(mi.szModule);
+				if (pszName && (lstrcmpi(pszName, pszConEmuHk) == 0))
+				{
+					// Yes! ConEmuHk.dll already loaded into nRemotePID!
+					iHookRc = 0;
+					break;
+				}
+			} while (Module32Next(hSnap, &mi));
+		}
+		SafeCloseHandle(hSnap);
+
+
+		// Go to hook
+		if (iHookRc == -1)
+		{
+			iHookRc = InjectRemote(nRemotePID);
+		}
 
 		if (iHookRc == 0)
 		{
@@ -2807,8 +2864,9 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			break;
 		}
 	case ea_InjectRemote:
+	case ea_InjectDefTrm:
 		{
-			iRc = DoInjectRemote((LPWSTR)asCmdArg);
+			iRc = DoInjectRemote((LPWSTR)asCmdArg, (eExecAction == ea_InjectDefTrm));
 			break;
 		}
 	case ea_GuiMacro:
@@ -2908,6 +2966,12 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (wcsncmp(szArg, L"/INJECT=", 8) == 0)
 		{
 			eExecAction = ea_InjectRemote;
+			asCmdLine = szArg+8;
+			break;
+		}
+		else if (wcsncmp(szArg, L"/DEFTRM=", 8) == 0)
+		{
+			eExecAction = ea_InjectDefTrm;
 			asCmdLine = szArg+8;
 			break;
 		}

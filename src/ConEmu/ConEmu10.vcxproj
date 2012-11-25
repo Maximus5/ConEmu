@@ -944,6 +944,7 @@
     <ClCompile Include="ConEmuCtrl.cpp" />
     <ClCompile Include="ConEmuPipe.cpp" />
     <ClCompile Include="CustomFonts.cpp" />
+    <ClCompile Include="DefaultTerm.cpp" />
     <ClCompile Include="DragDrop.cpp" />
     <ClCompile Include="DragDropData.cpp" />
     <ClCompile Include="DwmHelper.cpp" />
@@ -995,6 +996,7 @@
     <ClInclude Include="..\common\ConsoleAnnotation.h" />
     <ClInclude Include="CustomFonts.h" />
     <ClInclude Include="..\common\defines.h" />
+    <ClInclude Include="DefaultTerm.h" />
     <ClInclude Include="DragDrop.h" />
     <ClInclude Include="DragDropData.h" />
     <ClInclude Include="DwmHelper.h" />

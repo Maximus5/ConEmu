@@ -296,6 +296,14 @@ struct Settings
 
 		ConEmuComspec ComSpec;
 
+		// Replace default terminal
+		bool isSetDefaultTerminal;
+		wchar_t* GetDefaultTerminalApps(); // "|" delimited
+		const wchar_t* GetDefaultTerminalAppsMSZ(); // "\0" delimited
+		void SetDefaultTerminalApps(const wchar_t* apszApps); // "|" delimited
+	private:
+		wchar_t* psDefaultTerminalApps; // MSZ
+
 	public:
 		struct ColorPalette
 		{

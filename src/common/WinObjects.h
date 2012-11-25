@@ -73,7 +73,7 @@ bool IsWine();
 bool IsDbcs();
 BOOL IsWindows64();
 int GetProcessBits(DWORD nPID, HANDLE hProcess = NULL);
-BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo);
+BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL = FALSE);
 bool IsModuleValid(HMODULE module);
 typedef struct tagPROCESSENTRY32W PROCESSENTRY32W;
 bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);

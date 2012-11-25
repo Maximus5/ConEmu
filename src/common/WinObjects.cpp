@@ -706,6 +706,9 @@ BOOL IsWindows64()
 // Check running process bits - 32/64
 int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
 {
+	if (!IsWindows64())
+		return 32;
+
 	int ImageBits = WIN3264TEST(32,64); //-V112
 
 	typedef BOOL (WINAPI* IsWow64Process_t)(HANDLE, PBOOL);
@@ -920,7 +923,7 @@ bool IsModuleValid(HMODULE module)
 #endif
 }
 
-BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo)
+BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL)
 {
 	if ((hModule == NULL) || (hModule == INVALID_HANDLE_VALUE) || LDR_IS_RESOURCE(hModule))
 	{
@@ -937,6 +940,14 @@ BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 	DWORD_PTR nModuleSize = (4<<20);
 	//BOOL lbModuleInformation = FALSE;
 
+	DWORD_PTR nModulePtr2 = 0;
+	DWORD_PTR nModuleSize2 = 0;
+	if (abAllowNTDLL)
+	{
+		nModulePtr2 = (DWORD_PTR)GetModuleHandle(L"ntdll.dll");
+		nModuleSize2 = (4<<20);
+	}
+
 	// Если разрешили - попробовать определить размер модуля, чтобы CallBack не выпал из его тела
 	if (abCheckModuleInfo)
 	{
@@ -950,6 +961,12 @@ BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 
 		// Получить размер модуля из OptionalHeader
 		nModuleSize = nt_header->OptionalHeader.SizeOfImage;
+
+		if (nModulePtr2)
+		{
+			nt_header = (IMAGE_NT_HEADERS*)((char*)nModulePtr2 + ((IMAGE_DOS_HEADER*)nModulePtr2)->e_lfanew);
+			nModuleSize2 = nt_header->OptionalHeader.SizeOfImage;
+		}
 	}
 
 	for (size_t i = 0; i < ProcCount; i++)
@@ -960,13 +977,15 @@ BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 			return FALSE;
 		}
 
-		if (((DWORD_PTR)(CallBack[i])) < nModulePtr)
+		if ((((DWORD_PTR)(CallBack[i])) < nModulePtr)
+			&& (!nModulePtr2 || (((DWORD_PTR)(CallBack[i])) < nModulePtr2)))
 		{
 			_ASSERTE(((DWORD_PTR)(CallBack[i])) >= nModulePtr);
 			return FALSE;
 		}
 
-		if (((DWORD_PTR)(CallBack[i])) > (nModuleSize + nModulePtr))
+		if ((((DWORD_PTR)(CallBack[i])) > (nModuleSize + nModulePtr))
+			&& (!nModulePtr2 || (((DWORD_PTR)(CallBack[i])) > (nModuleSize2 + nModulePtr2))))
 		{
 			_ASSERTE(((DWORD_PTR)(CallBack[i])) <= (nModuleSize + nModulePtr));
 			return FALSE;

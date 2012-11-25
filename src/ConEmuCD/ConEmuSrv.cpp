@@ -3479,6 +3479,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	//BOOL bThaw = TRUE; // Если FALSE - снизить нагрузку на conhost
 	BOOL bFellInSleep = FALSE; // Если TRUE - снизить нагрузку на conhost
 	BOOL bConsoleActive = TRUE;
+	BOOL bConsoleVisible = TRUE;
 	DWORD nLastConsoleActiveTick = 0;
 
 	while (TRUE)
@@ -3709,10 +3710,11 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		if (!nLastConsoleActiveTick || ((GetTickCount() - nLastConsoleActiveTick) >= REFRESH_FELL_SLEEP_TIMEOUT))
 		{
 			ReloadGuiSettings(NULL);
+			bConsoleVisible = IsWindowVisible(ghConEmuWndDC);
 		}
 
-		if ((ghConWnd == gpSrv->guiSettings.hActiveCon) || (gpSrv->guiSettings.hActiveCon == NULL))
-			bNewActive = gpSrv->guiSettings.bGuiActive;
+		if ((ghConWnd == gpSrv->guiSettings.hActiveCon) || (gpSrv->guiSettings.hActiveCon == NULL) || bConsoleVisible)
+			bNewActive = gpSrv->guiSettings.bGuiActive || !gpSrv->guiSettings.bSleepInBackg;
 		else
 			bNewActive = FALSE;
 

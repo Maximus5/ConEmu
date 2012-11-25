@@ -60,6 +60,7 @@ class CVConGuard;
 class CVConGroup;
 class CStatus;
 enum ConEmuWindowMode;
+class CDefaultTerminal;
 
 
 struct MsgSrvStartedArg
@@ -201,6 +202,7 @@ class CConEmuMain :
 		CStatus *mp_Status;
 		CToolTip *mp_Tip;
 		MFileLog *mp_Log;
+		CDefaultTerminal *mp_DefTrm;
 		void CreateLog();
 		void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
 		void LogString(LPCSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
@@ -224,6 +226,7 @@ class CConEmuMain :
 		bool  ForceMinimizeToTray;  // ключики "/tsa" или "/tray"
 		bool  DisableAutoUpdate;    // ключик "/noupdate"
 		bool  DisableKeybHooks;     // ключик "/nokeyhook"
+		bool  DisableSetDefTerm;    // ключик "/nodeftrm"
 
 		BOOL  mb_ExternalHidden;
 		
@@ -623,7 +626,7 @@ class CConEmuMain :
 		void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
 		//void PaintCon(HDC hPaintDC);
 		void InvalidateGaps();
-		void PaintGaps(HDC hDC);
+		//void PaintGaps(HDC hDC);
 		void PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
 		void PostDragCopy(BOOL abMove, BOOL abRecieved=FALSE);
 		void PostCreate(BOOL abRecieved=FALSE);
@@ -636,7 +639,7 @@ class CConEmuMain :
 		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 		void RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, BOOL abRunAs = FALSE);
 		int RecreateDlg(RConStartArgs* apArg);
-		void RePaint();
+		//void RePaint();
 		bool ReportUpdateConfirmation();
 		void ReportUpdateError();
 		void RequestExitUpdate();
@@ -745,10 +748,7 @@ class CConEmuMain :
 		LRESULT OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
 		LRESULT OnMouse_RBtnDblClk(CVirtualConsole* pVCon, HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
 		BOOL OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam);
-		//LRESULT OnNcMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-		//LRESULT OnNcPaint(HRGN hRgn);
-		//LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
-		virtual void OnPaintClient(HDC hdc, int width, int height);
+		//virtual void OnPaintClient(HDC hdc/*, int width, int height*/);
 		LRESULT OnSetCursor(WPARAM wParam=-1, LPARAM lParam=-1);
 		LRESULT OnSize(bool bResizeRCon=true, WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
 		LRESULT OnSizing(WPARAM wParam, LPARAM lParam);

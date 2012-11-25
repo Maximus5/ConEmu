@@ -128,7 +128,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		// Проверим, что адреса этих функций действительно лежат в модуле Kernel32.dll
 		// и не были кем-то перехвачены до нас.
 		FARPROC proc[] = {(FARPROC)dat._GetLastError, (FARPROC)dat._SetLastError, (FARPROC)dat._LoadLibraryW};
-		if (!CheckCallbackPtr(hKernel, countof(proc), proc, TRUE))
+		if (!CheckCallbackPtr(hKernel, countof(proc), proc, TRUE, TRUE))
 		{
 			// Если функции перехвачены - попытка выполнить код по этим адресам
 			// скорее всего приведет к ошибке доступа, что не есть гут.

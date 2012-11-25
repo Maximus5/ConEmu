@@ -57,7 +57,7 @@ public:
 	// Next functions must me defined in the ancestor
 	virtual void ShowSysmenu(int x=-32000, int y=-32000, bool bAlignUp = false) = 0;
 	//virtual void ShowTabMenu(int anConsole, int anTab, int x, int y) = 0;
-	virtual void OnPaintClient(HDC hdc, int width, int height) = 0;
+	//virtual void OnPaintClient(HDC hdc/*, int width, int height*/) = 0;
 	virtual void CalculateTabPosition(const RECT &rcWindow, const RECT &rcCaption, RECT* rcTabs);
 	virtual void CalculateCaptionPosition(const RECT &rcWindow, RECT* rcCaption);
 protected:
@@ -69,7 +69,7 @@ protected:
 	LRESULT OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnNcActivate(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnPaint(HWND hWnd, BOOL abForceGetDc);
+	LRESULT OnPaint(HWND hWnd, HDC hdc);
 	// NC helpers
 	LRESULT NC_Wrapper(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	// NC Invalidating

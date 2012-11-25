@@ -134,6 +134,10 @@ extern bool gbIsHiewProcess;
 extern bool gbDosBoxProcess;
 /* ************ Globals for DosBox.EXE ************ */
 
+/* ************ Globals for "Default terminal ************ */
+extern bool gbPrepareDefaultTerminal;
+/* ************ Globals for "Default terminal ************ */
+
 bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
 void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName = NULL);
 BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo, BOOL bForced = FALSE);

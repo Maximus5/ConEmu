@@ -252,6 +252,7 @@ void Settings::ReleasePointers()
 	SafeFree(psStartTasksName);
 	SafeFree(psCurCmd);
 	SafeFree(psCmdHistory);
+	SafeFree(psDefaultTerminalApps);
 
 	FreeCmdTasks();
 	CmdTaskCount = 0;
@@ -2280,6 +2281,14 @@ void Settings::LoadSettings()
 		
 		reg->Load(L"UseInjects", isUseInjects); //MinMax(isUseInjects, BST_INDETERMINATE);
 
+		reg->Load(L"SetDefaultTerminal", isSetDefaultTerminal);
+		{
+		wchar_t* pszApps = NULL;
+		reg->Load(L"DefaultTerminalApps", &pszApps);
+		SetDefaultTerminalApps(pszApps); // "|"-delimited string -> MSZ
+		SafeFree(pszApps);
+		}
+
 		reg->Load(L"ProcessAnsi", isProcessAnsi);
 
 		reg->Load(L"UseClink", mb_UseClink);
@@ -3180,6 +3189,13 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ConInMode", nConInMode);
 		
 		reg->Save(L"UseInjects", isUseInjects);
+
+		reg->Save(L"SetDefaultTerminal", isSetDefaultTerminal);
+		{
+		wchar_t* pszApps = GetDefaultTerminalApps(); // MSZ -> "|"-delimited string
+		reg->Save(L"DefaultTerminalApps", pszApps);
+		SafeFree(pszApps);
+		}
 
 		reg->Save(L"ProcessAnsi", isProcessAnsi);
 
@@ -4987,6 +5003,101 @@ bool Settings::CmdTaskXch(int anIndex1, int anIndex2)
 
 	return true;
 }
+
+// "\0" delimited
+const wchar_t* Settings::GetDefaultTerminalAppsMSZ()
+{
+	return psDefaultTerminalApps;
+}
+
+// "|" delimited
+wchar_t* Settings::GetDefaultTerminalApps()
+{
+	if (!psDefaultTerminalApps || !*psDefaultTerminalApps)
+	{
+		return lstrdup(L"");
+	}
+	// Evaluate required len
+	INT_PTR nTotalLen = 0, nLen;
+	const wchar_t* psz = psDefaultTerminalApps;
+	while (*psz)
+	{
+		nLen = _tcslen(psz)+1;
+		psz += nLen;
+		nTotalLen += nLen;
+	}
+	// Buffer
+	wchar_t* pszRet = (wchar_t*)malloc((nTotalLen+1)*sizeof(*pszRet));
+	if (!pszRet)
+	{
+		_ASSERTE(pszRet);
+		return lstrdup(L"");
+	}
+	// Conversion
+	wchar_t* pszDst = pszRet; psz = psDefaultTerminalApps;
+	while (*psz)
+	{
+		nLen = _tcslen(psz);
+		wmemmove(pszDst, psz, nLen);
+		psz += nLen+1;
+		pszDst += nLen;
+		if (*psz)
+		{
+			*(pszDst++) = L'|';
+		}
+		else
+		{
+			*(pszDst++) = 0;
+			break;
+		}
+	}
+	*pszDst = 0;
+
+	return pszRet;
+}
+// "|" delimited
+void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
+{
+	SafeFree(psDefaultTerminalApps);
+	if (!apszApps || !*apszApps)
+		apszApps = L"explorer.exe";
+
+	// "|" delimited String -> MSZ
+	INT_PTR nLen = _tcslen(apszApps);
+	if (nLen > 0)
+	{
+		wchar_t* pszDst = (wchar_t*)malloc((nLen+3)*sizeof(*pszDst));
+
+		if (pszDst)
+		{
+			wchar_t* psz = pszDst;
+			while (*apszApps)
+			{
+				const wchar_t* pszNext = wcschr(apszApps, L'|');
+				if (!pszNext) pszNext = apszApps + _tcslen(apszApps);
+				
+				if (pszNext > apszApps)
+				{
+					wchar_t* pszLwr = psz;
+					wmemmove(psz, apszApps, pszNext-apszApps);
+					psz += pszNext-apszApps;
+					*(psz++) = 0;
+					CharLowerBuff(pszLwr, pszNext-apszApps);
+				}
+
+				if (!*pszNext)
+					break;
+				apszApps = pszNext + 1;
+			}
+			*(psz++) = 0;
+			*(psz++) = 0; // дл€ гарантии
+
+			psDefaultTerminalApps = pszDst;
+		}
+	}
+}
+
+
 
 // ¬ернуть заданный VkMod, или 0 если не задан
 // nDescrID = vkXXX (e.g. vkMinimizeRestore)

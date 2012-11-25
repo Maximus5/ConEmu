@@ -2606,6 +2606,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpConEmu->DisableKeybHooks = true;
 				}
+				else if (!klstricmp(curCommand, _T("/nodeftrm"))
+					|| !klstricmp(curCommand, _T("/nodefterm")))
+				{
+					gpConEmu->DisableSetDefTerm = true;
+				}
 				else if (!klstricmp(curCommand, _T("/inside"))
 					|| !lstrcmpni(curCommand, _T("/inside="), 8))
 				{

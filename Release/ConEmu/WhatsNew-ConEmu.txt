@@ -11,7 +11,21 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.11.24
+[!] Experimental! ConEmu may set up itself as default terminal for console applications.
+    Warning! This feature may raise false alarms in some antiviral programs!
+    Warning! Autoupdate with 7z package may fails if this feature is enabled!
+    Settings -> Integration -> Force ConEmu...
+    Note! In the current build active ConEmu window required for processing interception.
+    TechInfo: When enabling this feature ConEmu calls CreateRemoteThread for injecting
+    ConEmuHk.dll into selected processes (explorer.exe by default). This allows to
+    intercept CreateProcess WinAPI function and replace it with ConEmu.exe...
+    There is new ConEmu.exe switch "/nodefterm" - don't start initialization procedure.
 [%] Issue 825: ANSI X3.64 sequences don't works with Gow ls.
+[%] Issue 819: Regressions in hooks (build 121028).
+[*] Options «Skip click on activation» applies to the click on the inactive split-pane.
+[%] Issue 667: (May be fixed) ConEmu has incorrect Z-order in 'Vista Switcher'.
+[%] Issue 827: Can't disable «Sleep in background».
 
 
 2012.11.21

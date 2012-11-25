@@ -8,6 +8,7 @@ SRCS =  \
 		ConEmuCtrl.cpp     \
 		ConEmuPipe.cpp     \
 		CustomFonts.cpp    \
+		DefaultTerm.cpp    \
 		DragDrop.cpp       \
 		DragDropData.cpp   \
 		DwmHelper.cpp      \

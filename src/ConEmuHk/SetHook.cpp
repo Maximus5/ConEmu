@@ -2348,7 +2348,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 						if (p->Addresses[jj].ppAdr != NULL)
 						{
 							HLOGEND1();
-							break; // уже обработали, следующий импорт
+							continue; // уже обработали, следующий импорт
 						}
 
 						//#ifdef _DEBUG
@@ -2970,7 +2970,7 @@ void LoadModuleFailed(LPCSTR asModuleA, LPCWSTR asModuleW)
 		if (sp)
 		{
 			gnLastLogSetChange = GetTickCount();
-			gbLogLibraries = sp->LoadGuiMapping();
+			gbLogLibraries = sp->LoadSrvMapping() && sp->GetLogLibraries();
 			delete sp;
 		}
 		SetLastError(dwErrCode);
@@ -3074,7 +3074,7 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		if (!gnLastLogSetChange || ((GetTickCount() - gnLastLogSetChange) > 2000))
 		{
 			gnLastLogSetChange = GetTickCount();
-			gbLogLibraries = sp->LoadGuiMapping();
+			gbLogLibraries = sp->LoadSrvMapping(TRUE) && sp->GetLogLibraries();
 		}
 
 		if (gbLogLibraries)
@@ -3563,7 +3563,7 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMOD
 	if (gbLogLibraries && !gbDllStopCalled)
 	{
 		CShellProc* sp = new CShellProc();
-		if (sp->LoadGuiMapping())
+		if (sp->LoadSrvMapping())
 		{
 			CESERVER_REQ* pIn = NULL;
 			szModule[0] = 0;

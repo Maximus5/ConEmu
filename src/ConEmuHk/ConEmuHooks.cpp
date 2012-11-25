@@ -190,6 +190,10 @@ bool gbIsHiewProcess = false;
 bool gbDosBoxProcess = false;
 /* ************ Globals for DosBox.EXE ************ */
 
+/* ************ Globals for "Default terminal ************ */
+bool gbPrepareDefaultTerminal = false;
+/* ************ Globals for "Default terminal ************ */
+
 struct ReadConsoleInfo gReadConsoleInfo = {};
 
 int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
@@ -508,6 +512,20 @@ bool InitHooksCommon()
 	return true;
 }
 
+bool InitHooksDefaultTrm()
+{
+	// Хуки требующиеся для установки ConEmu как терминала по умолчанию
+	HookItem HooksCommon[] =
+	{
+		{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
+		/* ************************ */
+		{0}
+	};
+	InitHooks(HooksCommon);
+
+	return true;
+}
+
 // user32 & gdi32
 bool InitHooksUser32()
 {
@@ -761,7 +779,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	//HLOG0("StartupHooks",0);
 #ifdef _DEBUG
 	// Консольное окно уже должно быть иницализировано в DllMain
-	_ASSERTE(gbAttachGuiClient || gbDosBoxProcess || (ghConWnd != NULL && ghConWnd == GetRealConsoleWindow()));
+	_ASSERTE(gbAttachGuiClient || gbDosBoxProcess || gbPrepareDefaultTerminal || (ghConWnd != NULL && ghConWnd == GetRealConsoleWindow()));
 	wchar_t sClass[128];
 	if (ghConWnd)
 	{
@@ -796,33 +814,42 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	if (ghKernel32)
 		gfGetProcessId = (GetProcessId_t)GetProcAddress(ghKernel32, "GetProcessId");
 
-	// Общие
-	HLOG1("StartupHooks.InitHooks",0);
-	InitHooksCommon();
-	HLOGEND1();
-
-	// user32 & gdi32
-	HLOG1_("StartupHooks.InitHooks",1);
-	InitHooksUser32();
-	HLOGEND1();
-	
-	// Far only functions
-	HLOG1_("StartupHooks.InitHooks",2);
-	InitHooksFar();
-	HLOGEND1();
-
-	// Cmd.exe only functions
-	if (gnAllowClinkUsage)
+	if (gbPrepareDefaultTerminal)
 	{
-		HLOG1_("StartupHooks.InitHooks",3);
-		InitHooksClink();
+		HLOG1("StartupHooks.InitHooks",0);
+		InitHooksDefaultTrm();
 		HLOGEND1();
 	}
+	else
+	{
+		// Общие
+		HLOG1("StartupHooks.InitHooks",0);
+		InitHooksCommon();
+		HLOGEND1();
 
-	// Реестр
-	HLOG1_("StartupHooks.InitHooks",4);
-	InitHooksReg();
-	HLOGEND1();
+		// user32 & gdi32
+		HLOG1_("StartupHooks.InitHooks",1);
+		InitHooksUser32();
+		HLOGEND1();
+		
+		// Far only functions
+		HLOG1_("StartupHooks.InitHooks",2);
+		InitHooksFar();
+		HLOGEND1();
+
+		// Cmd.exe only functions
+		if (gnAllowClinkUsage)
+		{
+			HLOG1_("StartupHooks.InitHooks",3);
+			InitHooksClink();
+			HLOGEND1();
+		}
+
+		// Реестр
+		HLOG1_("StartupHooks.InitHooks",4);
+		InitHooksReg();
+		HLOGEND1();
+	}
 
 #if 0
 	HLOG1_("InitHooksSort",0);

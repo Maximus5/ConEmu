@@ -125,10 +125,37 @@ CShellProc::CShellProc()
 	mb_InShellExecuteEx = FALSE;
 	//mb_DosBoxAllowed = FALSE;
 	m_SrvMapping.cbSize = 0;
+	m_GuiMapping.cbSize = 0;
+
+	mb_TempConEmuWnd = FALSE;
+	mh_PreConEmuWnd = ghConEmuWnd; mh_PreConEmuWndDC = ghConEmuWndDC;
+	if (gbPrepareDefaultTerminal)
+	{
+		HWND h = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
+		if (h)
+		{
+			ghConEmuWnd = h;
+			HWND hWork = FindWindowEx(h, NULL, VirtualConsoleClassWork, NULL);
+			_ASSERTEX(hWork!=NULL && "Workspace must be inside ConEmu"); // код расчитан на это
+			ghConEmuWndDC = FindWindowEx(h, NULL, VirtualConsoleClass, NULL);
+			if (!ghConEmuWndDC)
+			{
+				// This may be, if ConEmu was started in "Detached" more,
+				// or is not closing on last tab close.
+				ghConEmuWndDC = h;
+			}
+			mb_TempConEmuWnd = TRUE;
+		}
+	}
 }
 
 CShellProc::~CShellProc()
 {
+	if (mb_TempConEmuWnd)
+	{
+		ghConEmuWnd = mh_PreConEmuWnd; ghConEmuWndDC = mh_PreConEmuWndDC;
+	}
+
 	if (mb_InShellExecuteEx && gnInShellExecuteEx)
 	{
 		gnInShellExecuteEx--;
@@ -199,9 +226,56 @@ DWORD CShellProc::GetUseInjects()
 	return 0;
 }
 
-BOOL CShellProc::LoadGuiMapping()
+BOOL CShellProc::GetLogLibraries()
+{
+	if (m_SrvMapping.cbSize)
+		return (m_SrvMapping.nLoggingType == glt_Processes);
+	return FALSE;
+}
+
+BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 {
 	_ASSERTEX(user);
+
+	if (gbPrepareDefaultTerminal)
+	{
+		_ASSERTEX(ghConWnd==NULL);
+		if (!ghConEmuWnd || !user->isWindow(ghConEmuWnd))
+		{
+			_ASSERTEX(bLightCheck && "LoadGuiMapping failed, no active ConEmu window");
+			return FALSE;
+		}
+
+		DWORD nGuiPID;
+		if (!user->getWindowThreadProcessId(ghConEmuWnd, &nGuiPID) || !nGuiPID)
+		{
+			_ASSERTEX(FALSE && "LoadGuiMapping failed, getWindowThreadProcessId failed");
+			return FALSE;
+		}
+
+		if (!::LoadGuiMapping(nGuiPID, m_GuiMapping))
+		{
+			_ASSERTEX(FALSE && "LoadGuiMapping failed");
+			return FALSE;
+		}
+
+		ZeroStruct(m_SrvMapping);
+		m_SrvMapping.cbSize = sizeof(m_SrvMapping);
+
+		m_SrvMapping.nGuiPID = nGuiPID;
+		m_SrvMapping.nProtocolVersion = m_GuiMapping.nProtocolVersion;
+		lstrcpy(m_SrvMapping.sConEmuExe, m_GuiMapping.sConEmuExe);
+		lstrcpy(m_SrvMapping.sConEmuBaseDir, m_GuiMapping.sConEmuBaseDir);
+		m_SrvMapping.hConEmuRoot = ghConEmuWnd;
+		m_SrvMapping.hConEmuWndDc = NULL/*ghConEmuWndDC*/; // ???
+		m_SrvMapping.hConEmuWndBack = NULL;
+		m_SrvMapping.bDosBox = m_GuiMapping.bDosBox;       // DosBox установлен, можно пользоваться
+		m_SrvMapping.bUseInjects = 1;   // 0-off, 1-on, 3-exe only. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
+		m_SrvMapping.ComSpec = m_GuiMapping.ComSpec;
+
+		return TRUE;
+	}
+
 	if (!m_SrvMapping.cbSize || (m_SrvMapping.hConEmuWndDc && !user->isWindow(m_SrvMapping.hConEmuWndDc)))
 	{
 		if (!::LoadSrvMapping(ghConWnd, m_SrvMapping))
@@ -249,7 +323,7 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 	//szBaseDir[0] = 0;
 
 	// Проверим, а надо ли?
-	if (!LoadGuiMapping())
+	if (!LoadSrvMapping())
 		return NULL;
 
 	//	bDosBoxAllowed = pInfo->bDosBox;
@@ -352,7 +426,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam)
 {
-	if (!LoadGuiMapping())
+	if (!LoadSrvMapping())
 		return FALSE;
 
 	BOOL lbRc = FALSE;
@@ -375,8 +449,17 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		_ASSERTE(szConEmuC!=NULL);
 		goto wrap;
 	}
-	_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.sConEmuBaseDir);
-	_wcscat_c(szConEmuC, cchConEmuC, L"\\");
+
+	if (gbPrepareDefaultTerminal)
+	{
+		_ASSERTEX(ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
+		_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.sConEmuExe);
+	}
+	else
+	{
+		_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.sConEmuBaseDir);
+		_wcscat_c(szConEmuC, cchConEmuC, L"\\");
+	}
 	
 	_ASSERTE(aCmd==eShellExecute || aCmd==eCreateProcess);
 
@@ -700,7 +783,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		}
 	}
 
-	if (ImageBits == 32) //-V112
+	if (gbPrepareDefaultTerminal)
+	{
+		// szConEmuC already has m_SrvMapping.sConEmuExe);
+		lbUseDosBox = FALSE; // Don't set now
+	}
+	else if (ImageBits == 32) //-V112
 	{
 		wcscat_c(szConEmuC, L"ConEmuC.exe");
 	}
@@ -783,7 +871,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 	// Если запускается новый GUI как вкладка, или консольное приложения из GUI как вкладки
 	lbNewGuiConsole = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ghAttachGuiClient != NULL);
-	lbNewConsoleFromGui = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) && (ghAttachGuiClient != NULL);
+	lbNewConsoleFromGui = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) && (gbPrepareDefaultTerminal || (ghAttachGuiClient != NULL));
 
 	#if 0
 	if (lbNewGuiConsole)
@@ -839,20 +927,26 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 	if (gFarMode.cbSize && gFarMode.bFarHookMode)
 	{
+		_ASSERTEX(!gbPrepareDefaultTerminal);
 		// Добавить /PARENTFAR=%u
 		wchar_t szParentFar[64];
 		msprintf(szParentFar, countof(szParentFar), L" /PARENTFARPID=%u", GetCurrentProcessId());
 		_wcscat_c((*psParam), nCchSize, szParentFar);
 	}
 
-	if (args.bInjectsDisable)
+	TODO("Disable inject for gbPrepareDefaultTerminal?");
+	if (args.bInjectsDisable && !gbPrepareDefaultTerminal)
 	{
 		// добавить " /NOINJECT"
 		_wcscat_c((*psParam), nCchSize, L" /NOINJECT");
 	}
 
+	if (gbPrepareDefaultTerminal)
+	{
+		_wcscat_c((*psParam), nCchSize, L" /single /cmd ");
+	}
 	// 111211 - "-new_console" передается в GUI
-	if (lbNewConsoleFromGui)
+	else if (lbNewConsoleFromGui)
 	{
 		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
 		int nCurLen = lstrlen(*psParam);
@@ -870,6 +964,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	WARNING("###: Перенести обработку параметров DosBox в ConEmuC!");
 	if (lbUseDosBox)
 	{
+		_ASSERTEX(!gbPrepareDefaultTerminal);
 		lbEndQuote = TRUE;
 		_wcscat_c((*psParam), nCchSize, L"\"\"");
 		_wcscat_c((*psParam), nCchSize, szDosBoxExe);
@@ -1060,7 +1155,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		}
 	}
 #endif
-		
+
 	//if (aCmd == eShellExecute)
 	//{
 	//	if (asFile && *asFile)
@@ -1167,7 +1262,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	}
 	
 	// Проверяем настройку ConEmuGuiMapping.bUseInjects
-	if (!LoadGuiMapping() || !(m_SrvMapping.bUseInjects & 1))
+	if (!LoadSrvMapping() || !(m_SrvMapping.cbSize && ((m_SrvMapping.bUseInjects & 1) || gbPrepareDefaultTerminal)))
 	{
 		// -- зависимо только от флажка "Use Injects", иначе нельзя управлять добавлением "ConEmuC.exe" из ConEmu --
 		// Настройка в ConEmu ConEmuGuiMapping.bUseInjects, или gFarMode.bFarHookMode. Иначе - сразу выходим
@@ -1476,6 +1571,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	// Если это Фар - однозначно вставляем ConEmuC.exe
 	// -- bFarHookMode заменен на bLongConsoleOutput --
 	if ((bLongConsoleOutput)
+		|| (gbPrepareDefaultTerminal && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)) // set up default terminal
 		|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хотят GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
 		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
 		|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
@@ -1863,7 +1959,7 @@ void CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 		(*anCreationFlags) |= CREATE_SUSPENDED;
 	if (lbRc)
 	{
-		if (lpSI->wShowWindow != nShowCmd)
+		if ((lpSI->wShowWindow != nShowCmd) && !gbPrepareDefaultTerminal)
 		{
 			lpSI->wShowWindow = (WORD)nShowCmd;
 			if (!(lpSI->dwFlags & STARTF_USESHOWWINDOW))

@@ -570,6 +570,21 @@ void TabBarClass::PaintFlush()
 #endif
 }
 
+// Чистый фон
+void TabBarClass::PaintCaption_Plain(HDC hdc, const RECT &rcCaption, const RECT &rcTabs)
+{
+	TODO("Настройка цвета TabBar");
+
+	bool lbSysColor = (gpSet->isStatusBarFlags & csf_SystemColors) == csf_SystemColors;
+	bool lbFade = lbSysColor ? false : gpSet->isFadeInactive && !gpConEmu->isMeForeground(true);
+
+	COLORREF crBack = lbSysColor ? GetSysColor(COLOR_3DFACE) : lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarBack) : gpSet->nStatusBarBack;
+
+	HBRUSH hBr = CreateSolidBrush(crBack);
+	FillRect(hdc, &rcCaption, hBr);
+	DeleteObject(hBr);
+}
+
 void TabBarClass::PaintCaption_2k(HDC hdc, const RECT &rcCaption, const RECT &rcTabs)
 {
 	//// Мог мусор остаться от Aero
@@ -792,6 +807,8 @@ void TabBarClass::PaintCaption_Aero(HDC hdc, const RECT &rcCaption, const RECT &
 
 void TabBarClass::PaintCaption_Icon(HDC hdc, int X, int Y)
 {
+	_ASSERTE(gpSet->isCaptionHidden()); // Должна вызываться только при скрытом заголовке!
+
 	int nW = GetSystemMetrics(SM_CXSMICON);
 	int nH = GetSystemMetrics(SM_CYSMICON);
 
@@ -980,17 +997,25 @@ void TabBarClass::PaintTabs_Common(HDC hdc, const RECT &rcCaption, const RECT &r
 
 	CreateStockObjects(hdcPaint, rcTabs);
 
-	
-	switch (m_TabDrawStyle)
+	bool bCaptionHidden = gpSet->isCaptionHidden();
+
+	if (!bCaptionHidden)
 	{
-	case fdt_Aero:
-		PaintCaption_Aero(hdcPaint, rcCaption, rcTabs);
-		break;
-	case fdt_Themed:
-		PaintCaption_XP(hdcPaint, rcCaption, rcTabs);
-		break;
-	default:
-		PaintCaption_2k(hdcPaint, rcCaption, rcTabs);
+		PaintCaption_Plain(hdcPaint, rcCaption, rcTabs);
+	}
+	else
+	{
+		switch (m_TabDrawStyle)
+		{
+		case fdt_Aero:
+			PaintCaption_Aero(hdcPaint, rcCaption, rcTabs);
+			break;
+		case fdt_Themed:
+			PaintCaption_XP(hdcPaint, rcCaption, rcTabs);
+			break;
+		default:
+			PaintCaption_2k(hdcPaint, rcCaption, rcTabs);
+		}
 	}
 
 	RECT rcActive = {}; //TODO: Лучше бы конечно регионом, т.к. захватится кусочек от неактивного таба?
@@ -1544,6 +1569,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
         return;
     }
 
+	mb_PostUpdateCalled = FALSE;
+
 	//TODO: Обновить mn_ActiveTab & mn_HoverTab=-1
 	mn_InUpdate++;
 
@@ -1597,6 +1624,13 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 	mn_InUpdate--;
 	
+	if (mb_PostUpdateRequested)
+	{
+		mb_PostUpdateCalled = FALSE;
+		mb_PostUpdateRequested = FALSE;
+		RequestPostUpdate();
+	}
+
 	TODO("Проверить, а нужно ли обновлять табы?");
 	gpConEmu->RedrawTabPanel();
 }
@@ -1725,6 +1759,8 @@ bool TabBarClass::CanSelectTab(int anNewTab, const TabInfo& ti)
 
 bool TabBarClass::ProcessTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult)
 {
+	_ASSERTE(FALSE && "There is no tabs in 'Caption'");
+
 	switch (uMsg)
 	{
 	//TODO: А если табы в клиентской области? Ничего не провалится?

@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TabID.h"
 #include "../common/WinObjects.h"
 #include "ConEmu.h"
+#include "VConGroup.h"
 
 /* Simple fixed-max-length string class { struct } */
 LPCWSTR TabName::Set(LPCWSTR asName)
@@ -754,14 +755,21 @@ void CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 
 	if (mn_UpdatePos == 0)
 	{
-		// Фукнция UpdateFarWindow должна была быть вызвана хотя бы раз!
-		//UpdateFarWindow(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
-		_ASSERTE(mn_UpdatePos>0);
-		pUpdateLock->Unlock();
-		delete pUpdateLock;
-		//mp_UpdateLock = NULL;
-		mn_UpdatePos = -1;
-		return;
+		if (!CVConGroup::isVConExists(0))
+		{
+			abForceReleaseTail = TRUE;
+		}
+		else
+		{
+			// Фукнция UpdateFarWindow должна была быть вызвана хотя бы раз!
+			//UpdateFarWindow(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
+			_ASSERTE(mn_UpdatePos>0 || CVConGroup::GetConCount()==0);
+			pUpdateLock->Unlock();
+			delete pUpdateLock;
+			//mp_UpdateLock = NULL;
+			mn_UpdatePos = -1;
+			return;
+		}
 	}
 
 	if (!abForceReleaseTail && mn_UpdatePos > 1)
