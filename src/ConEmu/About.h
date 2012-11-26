@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/ShowHide | /ShowHideTSA - Works like \"Minimize/Restore\" global hotkey.\r\n" \
 	L"/NoDefTerm - Don't start initialization procedure for setting up ConEmu as default terminal.\r\n" \
 	L"/NoKeyHooks - Disable !SetWindowsHookEx and global hotkeys.\r\n" \
+	L"/NoRegFonts - Disable auto register fonts (font files from ConEmu folder).\r\n" \
 	L"/NoUpdate - Disable automatic checking for updates on startup\r\n" \
 	L"/CT[0|1] - Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - cleartype.\r\n" \
 	L"/Font <fontname> - Specify the font name.\r\n" \

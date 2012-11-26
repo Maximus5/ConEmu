@@ -2357,6 +2357,7 @@ void Settings::LoadSettings()
 		//LoadVkMod(reg, L"Multi.Recreate", vmMultiRecreate, vmMultiRecreate);
 		//LoadVkMod(reg, L"Multi.Close", vmMultiClose, vmMultiClose);
 		reg->Load(L"Multi.CloseConfirm", isCloseConsoleConfirm);
+		reg->Load(L"Multi.CloseEditViewConfirm", isCloseEditViewConfirm);
 		//LoadVkMod(reg, L"Multi.CmdKey", vmMultiCmd, vmMultiCmd);
 		reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);
 		//LoadVkMod(reg, L"Multi.Buffer", vmMultiBuffer, vmMultiBuffer);
@@ -3229,6 +3230,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		//reg->Save(L"Multi.Recreate", vmMultiRecreate);
 		//reg->Save(L"Multi.Close", vmMultiClose);
 		reg->Save(L"Multi.CloseConfirm", isCloseConsoleConfirm);
+		reg->Save(L"Multi.CloseEditViewConfirm", isCloseEditViewConfirm);
 		//reg->Save(L"Multi.CmdKey", vmMultiCmd);
 		reg->Save(L"Multi.NewConfirm", isMultiNewConfirm);
 		//reg->Save(L"Multi.Buffer", vmMultiBuffer);

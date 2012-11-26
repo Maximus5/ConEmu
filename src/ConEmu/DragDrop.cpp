@@ -1118,7 +1118,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	STGMEDIUM stgMediumMap = { 0 };
 	FORMATETC fmtetcMap = { RegisterClipboardFormat(CFSTR_FILENAMEMAPW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 	hDrop = (HDROP)stgMedium.hGlobal;
-	int iQuantity = DragQueryFile(hDrop,(UINT)-1,NULL,NULL);
+	int iQuantity = DragQueryFile(hDrop,(UINT)-1,NULL,0);
 
 	if (iQuantity < 1)
 	{

@@ -1118,6 +1118,8 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	//	}
 	//}
 
+	UNREFERENCED_PARAMETER(lRcDef);
+	UNREFERENCED_PARAMETER(fdt);
 	return lRc;
 }
 

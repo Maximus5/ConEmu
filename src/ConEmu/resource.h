@@ -874,8 +874,8 @@
 #define vkCloseGroup                    2513
 #define cbHotkeysAssignedOnly           2514
 #define cbDefaultTerminal               2515
-#define IDC_EDIT1                       2516
 #define tDefaultTerminal                2516
+#define cbCloseEditViewConfirm          2517
 
 // Next default values for new objects
 // 
@@ -883,7 +883,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2517
+#define _APS_NEXT_CONTROL_VALUE         2518
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

@@ -49,6 +49,7 @@ struct RConStartArgs
 	BOOL     bRunAsRestricted;    // -new_console:r
 	wchar_t* pszUserName, *pszDomain, szUserPassword[MAX_PATH]; // "-new_console:u:<user>:<pwd>"
 	BOOL     bForceUserDialog;    // -new_console:u
+	//wchar_t* pszUserProfile;      // %USERPROFILE%
 	
 	BOOL     bBackgroundTab;      // -new_console:b
 	
@@ -80,6 +81,7 @@ struct RConStartArgs
 	~RConStartArgs();
 
 	BOOL CheckUserToken(HWND hPwd);
+	HANDLE CheckUserToken();
 
 	int ProcessNewConArg(bool bForceCurConsole = false);
 

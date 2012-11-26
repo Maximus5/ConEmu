@@ -801,8 +801,8 @@ BEGIN
     CONTROL         "Auto show",rbTabsAuto,"Button",BS_AUTORADIOBUTTON,80,63,57,8
     CONTROL         "Don't show",rbTabsNone,"Button",BS_AUTORADIOBUTTON,162,63,64,8
     CONTROL         "Tabs on bottom",cbTabsLocationBottom,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,233,63,75,8
-    CONTROL         "Close console confirmation",cbCloseConsoleConfirm,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,27,147,8
+    CONTROL         "Close confirmation",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,27,77,8
+    CONTROL         "Far Editor/Viewer",cbCloseEditViewConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,246,27,72,8
 END
 
 IDD_SPG_STATUSBAR DIALOGEX 0, 0, 328, 235

@@ -292,6 +292,7 @@ CConEmuMain::CConEmuMain()
 	DisableAutoUpdate = false;
 	DisableKeybHooks = false;
 	DisableSetDefTerm = false;
+	DisableRegisterFonts = false;
 	mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	m_InsideIntegration = ii_None; mb_InsideIntegrationShift = false; mn_InsideParentPID = 0;
 	mb_InsideSynchronizeCurDir = false;
@@ -3779,7 +3780,7 @@ bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	RECT rcInter = rcWnd;
 	BOOL bIn = IntersectRect(&rcInter, &rcWork, &rcStore);
 
-	if (bIn && (EqualRect(&rcInter, &rcStore)) || (nBorders & CEB_ALLOW_PARTIAL))
+	if (bIn && ((EqualRect(&rcInter, &rcStore)) || (nBorders & CEB_ALLOW_PARTIAL)))
 	{
 		// Nothing must be changed
 		return false;
@@ -6102,8 +6103,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	}
 
 
-	//#ifdef _DEBUG
-	#if 1
+	#ifdef _DEBUG
 	{
 		wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X) style=0x%08X%s\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle, zoomed ? L" (zoomed)" : L"");
 		DEBUGSTRSIZE(szDbg);

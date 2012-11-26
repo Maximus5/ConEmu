@@ -2642,6 +2642,7 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	checkDlgButton(hWnd2, cbMultiCon, gpSet->isMulti);
 	checkDlgButton(hWnd2, cbNewConfirm, gpSet->isMultiNewConfirm);
 	checkDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
+	checkDlgButton(hWnd2, cbCloseEditViewConfirm, gpSet->isCloseEditViewConfirm);
 	checkDlgButton(hWnd2, cbMultiLeaveOnClose, gpSet->isMultiLeaveOnClose);
 
 	//checkDlgButton(hWnd2, cbTabs, gpSet->isTabs);
@@ -3520,7 +3521,7 @@ void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, L
 		if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, pszRoot, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkRoot, NULL))
 		{
 			HKEY hkConEmu;
-			if (0 == RegCreateKeyEx(hkRoot, asName, NULL, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConEmu, NULL))
+			if (0 == RegCreateKeyEx(hkRoot, asName, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConEmu, NULL))
 			{
 				// Если задана "иконка"
 				if (asIcon)
@@ -3530,7 +3531,7 @@ void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, L
 
 				// Команда
 				HKEY hkCmd;
-				if (0 == RegCreateKeyEx(hkConEmu, L"command", NULL, NULL, 0, KEY_ALL_ACCESS, NULL, &hkCmd, NULL))
+				if (0 == RegCreateKeyEx(hkConEmu, L"command", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkCmd, NULL))
 				{
 					if (0 == RegSetValueEx(hkCmd, NULL, 0, REG_SZ, (LPBYTE)pszCmd, (lstrlen(pszCmd)+1)*sizeof(*pszCmd)))
 						iSucceeded++;
@@ -4294,6 +4295,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCloseConsoleConfirm:
 			gpSet->isCloseConsoleConfirm = IsChecked(hWnd2, cbCloseConsoleConfirm);
 			break;
+		case cbCloseEditViewConfirm:
+			gpSet->isCloseEditViewConfirm = IsChecked(hWnd2, cbCloseEditViewConfirm);
+			break;
 		case cbAlwaysShowTrayIcon:
 			gpSet->isAlwaysShowTrayIcon = IsChecked(hWnd2, cbAlwaysShowTrayIcon);
 			Icon.SettingsChanged();
@@ -4768,7 +4772,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rbHotkeysMacros:
 		case cbHotkeysAssignedOnly:
 			gpSetCls->FillHotKeysList(hWnd2, TRUE);
-			gpSetCls->OnHotkeysNotify(hWnd2, MAKELONG(lbConEmuHotKeys,0xFFFF), NULL);
+			gpSetCls->OnHotkeysNotify(hWnd2, MAKELONG(lbConEmuHotKeys,0xFFFF), 0);
 			break;
 
 			
@@ -5446,14 +5450,14 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					switch (CB)
 					{
 					case cbStatusAddSelected:
-						if (iData >= 0 && iData < countof(gpSet->isStatusColumnHidden) && gpSet->isStatusColumnHidden[iData])
+						if (iData >= 0 && iData < (INT_PTR)countof(gpSet->isStatusColumnHidden) && gpSet->isStatusColumnHidden[iData])
 						{
 							gpSet->isStatusColumnHidden[iData] = false;
 							bChanged = true;
 						}
 						break;
 					case cbStatusDelSelected:
-						if (iData >= 0 && iData < countof(gpSet->isStatusColumnHidden) && !gpSet->isStatusColumnHidden[iData])
+						if (iData >= 0 && iData < (INT_PTR)countof(gpSet->isStatusColumnHidden) && !gpSet->isStatusColumnHidden[iData])
 						{
 							gpSet->isStatusColumnHidden[iData] = true;
 							bChanged = true;
@@ -5788,7 +5792,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 // Возвращает TRUE, если значение распознано и отличается от старого
 bool CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 {
-	bool result = false;
+	//bool result = false;
 	//int r = 0, g = 0, b = 0;
 	wchar_t temp[MAX_PATH];
 	//wchar_t *pch, *pchEnd;
@@ -7735,7 +7739,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 				default:
 					if (HIWORD(wParam) == 0xFFFF && LOWORD(wParam) == lbConEmuHotKeys)
 					{
-						gpSetCls->OnHotkeysNotify(hWnd2, wParam, NULL);
+						gpSetCls->OnHotkeysNotify(hWnd2, wParam, 0);
 					}
 				} // switch (HIWORD(wParam))
 			} // WM_COMMAND
@@ -8032,7 +8036,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 		if ((messg == WM_INITDIALOG) || (messg == mn_ActivateTabMsg))
 		{
 			hChild = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
-							MAKEINTRESOURCE(IDD_SPG_APPDISTINCT2), hWnd2, pageOpProc_AppsChild, NULL);
+							MAKEINTRESOURCE(IDD_SPG_APPDISTINCT2), hWnd2, pageOpProc_AppsChild, 0);
 			if (!hChild)
 			{
 				EnableWindow(hWnd2, FALSE);
@@ -9611,7 +9615,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 		BOOL lbRc = FALSE;
 		TCHAR szText[0x200];
 
-		while((hChild = FindWindowEx(hChildDlg, hChild, NULL, NULL)) != NULL)
+		while ((hChild = FindWindowEx(hChildDlg, hChild, NULL, NULL)) != NULL)
 		{
 			LONG wID = GetWindowLong(hChild, GWL_ID);
 
@@ -9651,6 +9655,8 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 				}*/
 			}
 		}
+
+		UNREFERENCED_PARAMETER(lbRc);
 
 		SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
 	}
@@ -10774,7 +10780,7 @@ int CSettings::SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 	_ASSERTE(hChild!=NULL);
 #endif
 	// Осуществляет поиск по _началу_ (!) строки
-	int nIdx = SendDlgItemMessage(hParent, nCtrlId, CB_SELECTSTRING, -1, (LPARAM)asText);
+	int nIdx = (int)SendDlgItemMessage(hParent, nCtrlId, CB_SELECTSTRING, -1, (LPARAM)asText);
 	return nIdx;
 }
 
@@ -11297,7 +11303,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 
 void CSettings::RegisterFonts()
 {
-	if (!gpSet->isAutoRegisterFonts)
+	if (!gpSet->isAutoRegisterFonts || gpConEmu->DisableRegisterFonts)
 		return; // Если поиск шрифтов не требуется
 
 	// Сначала - регистрация шрифтов в папке программы
@@ -12830,6 +12836,7 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 			wchar_t szId[32] = {0}, szFont[255]; DWORD dwType; LONG iRc;
 
 			DWORD idx = 0, cchName = countof(szId), dwLen = sizeof(szFont)-2;
+			INT_PTR nIdx = -1;
 			while ((iRc = RegEnumValue(hk, idx++, szId, &cchName, NULL, &dwType, (LPBYTE)szFont, &dwLen)) == 0)
 			{
 				szId[min(countof(szId)-1,cchName)] = 0; szFont[min(countof(szFont)-1,dwLen/2)] = 0;
@@ -12838,12 +12845,12 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 					LPCWSTR pszFaceName = (szFont[0] == L'*') ? (szFont+1) : szFont;
 					if (SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) pszFaceName)==-1)
 					{
-						int nIdx;
 						nIdx = SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM) pszFaceName); //-V103
 					}
 				}
 				cchName = countof(szId); dwLen = sizeof(szFont)-2;
 			}
+			UNREFERENCED_PARAMETER(nIdx);
 		}
 	}
 	else
@@ -13363,14 +13370,15 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 	if (lstrcmpi(LF.lfFaceName, gpSet->ConsoleFont.lfFaceName) == 0)
 		gpSetCls->nConFontError &= ~(DWORD)ConFontErr_NonSystem;
 
+	INT_PTR nIdx = -1;
 	if (hWnd2)
 	{
 		if (SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) LF.lfFaceName)==-1)
 		{
-			int nIdx;
 			nIdx = SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM) LF.lfFaceName); //-V103
 		}
 	}
+	UNREFERENCED_PARAMETER(nIdx);
 
 	if (gpSetCls->sDefaultConFontName[0] == 0)
 	{
@@ -13404,7 +13412,7 @@ void CSettings::FindTextDialog()
 
 	gpConEmu->SkipOneAppsRelease(true);
 	
-	mh_FindDlg = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_FIND), ghWnd, findTextProc, NULL/*Param*/);
+	mh_FindDlg = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_FIND), ghWnd, findTextProc, 0/*Param*/);
 	if (!mh_FindDlg)
 	{
 		DisplayLastError(L"Can't create Find text dialog", GetLastError());

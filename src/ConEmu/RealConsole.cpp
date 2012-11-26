@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include <Tlhelp32.h>
+#include <ShlObj.h>
 #include "../common/ConEmuCheck.h"
 #include "../common/RgnDetect.h"
 #include "../common/Execute.h"
@@ -2831,10 +2832,43 @@ BOOL CRealConsole::StartProcess()
 
 			if (m_Args.pszUserName != NULL)
 			{
+				// When starting under another credentials - try to use %USERPROFILE% instead of "system32"
+				LPCWSTR pszStartupDir = m_Args.pszStartupDir;
+				wchar_t szProfilePath[MAX_PATH+1] = {};
+				if (!pszStartupDir || !*pszStartupDir)
+				{
+					HANDLE hLogonToken = m_Args.CheckUserToken();
+					if (hLogonToken)
+					{
+						HRESULT hr;
+
+						// Windows 2000 - hLogonToken - not supported
+						if (gOSVer.dwMajorVersion <= 5 && gOSVer.dwMinorVersion == 0)
+						{
+							if (ImpersonateLoggedOnUser(hLogonToken))
+							{
+								hr = SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, SHGFP_TYPE_CURRENT, szProfilePath);
+								RevertToSelf();
+							}
+						}
+						else
+						{
+							hr = SHGetFolderPath(NULL, CSIDL_PROFILE, hLogonToken, SHGFP_TYPE_CURRENT, szProfilePath);
+						}
+
+						if (SUCCEEDED(hr) && *szProfilePath)
+						{
+							pszStartupDir = szProfilePath;
+						}
+
+						CloseHandle(hLogonToken);
+					}
+				}
+
 				if (CreateProcessWithLogonW(m_Args.pszUserName, m_Args.pszDomain, m_Args.szUserPassword,
 				                           LOGON_WITH_PROFILE, NULL, psCurCmd,
 				                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-				                           , NULL, m_Args.pszStartupDir, &si, &pi))
+				                           , NULL, pszStartupDir, &si, &pi))
 					//if (CreateProcessAsUser(m_Args.hLogonToken, NULL, psCurCmd, NULL, NULL, FALSE,
 					//	NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 					//	, NULL, m_Args.pszStartupDir, &si, &pi))
@@ -8983,6 +9017,7 @@ void CRealConsole::CloseTab()
 		}
 		else
 		{
+			bool bSkipConfirm = false;
 			LPCWSTR pszConfirmText = gsCloseCon;
 			if (bCanCloseMacro)
 			{
@@ -8991,9 +9026,16 @@ void CRealConsole::CloseTab()
 					((tabtype & fwt_TypeMask) == fwt_Editor) ? gsCloseEditor :
 					((tabtype & fwt_TypeMask) == fwt_Viewer) ? gsCloseViewer :
 					gsCloseCon;
+				if (!gpSet->isCloseEditViewConfirm)
+				{
+					if (((tabtype & fwt_TypeMask) == fwt_Editor) || ((tabtype & fwt_TypeMask) == fwt_Viewer))
+					{
+						bSkipConfirm = true;
+					}
+				}
 			}
 
-			if (!isCloseConfirmed(pszConfirmText))
+			if (!bSkipConfirm && !isCloseConfirmed(pszConfirmText))
 			{
 				// Отмена
 				return;

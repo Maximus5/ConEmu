@@ -694,7 +694,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="FORCE_HEAP_CHECK;WIN32;_DEBUG;_WINDOWS;MSGLOGGER;HIDE_TODO"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MSGLOGGER;HIDE_TODO"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="1"

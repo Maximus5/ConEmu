@@ -2747,6 +2747,7 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	int iRc = -1;
 	DWORD dwErr = 0;
 	HWND lhConWnd = NULL;
+	const AnnotationHeader* pHdr = NULL;
 
 	EnterCriticalSection(&gpSrv->csColorerMappingCreate);
 
@@ -2813,7 +2814,7 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	// Заголовок мэппинга содержит информацию о размере, нужно заполнить!
 	//AnnotationHeader* pHdr = (AnnotationHeader*)MapViewOfFile(gpSrv->hColorerMapping, FILE_MAP_ALL_ACCESS,0,0,0);
 	// 111101 - было "Create(nMapSize);"
-	const AnnotationHeader* pHdr = gpSrv->pColorerMapping->Open();
+	pHdr = gpSrv->pColorerMapping->Open();
 
 	if (!pHdr)
 	{

@@ -11,6 +11,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.11.25
+[%] GCC warnings and errors.
+[+] Empty passwords are allowed when «Run as user» (if they are allowed by local policy of course).
+[+] When «Run as user» trying to use %USERPROFILE% instead of "System32".
+
+
 2012.11.24
 [!] Experimental! ConEmu may set up itself as default terminal for console applications.
     Warning! This feature may raise false alarms in some antiviral programs!

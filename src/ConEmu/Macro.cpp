@@ -955,7 +955,7 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 	wchar_t* pszRc = NULL;
 	LPWSTR pszOper = NULL, pszFile = NULL, pszParm = NULL, pszDir = NULL;
 	LPWSTR pszBuf = NULL;
-	bool bDontQuote = false, bDupShell = false;
+	bool bDontQuote = false;
 	int nShowCmd = SW_SHOWNORMAL;
 	
 	if (GetNextString(asArgs, pszOper))

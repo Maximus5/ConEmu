@@ -88,7 +88,7 @@ CDragDropData::CDragDropData()
 	mb_DragDropRegistered = FALSE;
 	/* Unlocked drag support */
 	mb_DragStarting = FALSE;
-	ms_SourceClass[0] = 0; mh_SourceClass = NULL;
+	ms_SourceClass[0] = 0; mh_SourceClass = 0;
 	#ifdef USE_DROP_HELPER
 	mp_TargetHelper = NULL;
 	mb_TargetHelperFailed = false;
@@ -170,6 +170,7 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 	}
 
 	bool lbCanUseHelper = false;
+	HRESULT hr = 0;
 	
 	#ifdef USE_DROP_HELPER
 	if (gnOsVer >= 0x601/*Windows7*/)
@@ -191,8 +192,8 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 		if (!mp_TargetHelper)
 		{
 			IUnknown* pHelper = NULL;
-			HRESULT hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
-			if (pHelper)
+			hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
+			if (SUCCEEDED(hr) && pHelper)
 			{
 				//	hr = pHelper->QueryInterface(__uuidof(mp_SourceHelper), (void**)&mp_SourceHelper);
 				hr = pHelper->QueryInterface(IID_IDropTargetHelper/*__uuidof(mp_TargetHelper)*/, (void**)&mp_TargetHelper);
@@ -208,6 +209,7 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 	}
     #endif
 
+    UNREFERENCED_PARAMETER(hr);
     return lbCanUseHelper;
 }
 
@@ -1381,7 +1383,7 @@ BOOL CDragDropData::DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int
 		return FALSE;
 
 	SHFILEINFO sfi = {0};
-	DWORD nDrawRC = 0;
+	DWORD nDrawRC;
 	wchar_t* pszText = wcsrchr(pszFile, L'\\');
 	if (!pszText) pszText = pszFile; else pszText++;
 
@@ -1426,6 +1428,7 @@ BOOL CDragDropData::DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int
 		DestroyIcon(sfi.hIcon); sfi.hIcon = NULL;
 	}
 
+	UNREFERENCED_PARAMETER(nDrawRC);
 	return TRUE;
 }
 
@@ -1708,7 +1711,7 @@ BOOL CDragDropData::CreateDragImageWindow()
 #else
 		DestroyDragImageBits();
 #endif
-		return NULL;
+		return FALSE;
 	}
 
 	#ifdef PERSIST_OVL
@@ -1896,7 +1899,7 @@ BOOL CDragDropData::InDragDrop()
 
 void CDragDropData::DragFeedBack(DWORD dwEffect)
 {
-	HRESULT hrHelper; UNREFERENCED_PARAMETER(hrHelper);
+	HRESULT hrHelper = 0;
 #ifdef _DEBUG
 	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"DragFeedBack(%i)\n", (int)dwEffect);
 	DEBUGSTRBACK(szDbg);
@@ -1960,6 +1963,8 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 	//	TranslateMessage(&Msg);
 	//	DispatchMessage(&Msg);
 	//}
+
+	UNREFERENCED_PARAMETER(hrHelper);
 }
 
 

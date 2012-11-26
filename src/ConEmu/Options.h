@@ -1195,6 +1195,7 @@ struct Settings
 		//DWORD vmMultiClose;
 		//reg->Load(L"Multi.CloseConfirm", isCloseConsoleConfirm);
 		bool isCloseConsoleConfirm;
+		bool isCloseEditViewConfirm;
 		//reg->Load(L"Multi.CmdKey", vmMultiCmd);
 		//DWORD vmMultiCmd;
 		//reg->Load(L"Multi.AutoCreate", isMultiAutoCreate);

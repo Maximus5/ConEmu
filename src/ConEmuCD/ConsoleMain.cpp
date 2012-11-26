@@ -660,7 +660,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	GetStartupInfo(&si);
 	DWORD dwErr = 0, nWait = 0, nWaitExitEvent = -1, nWaitDebugExit = -1, nWaitComspecExit = -1;
 	BOOL lbRc = FALSE;
-	DWORD mode = 0;
+	//DWORD mode = 0;
 	//BOOL lb = FALSE;
 	//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 	memset(&gOSVer, 0, sizeof(gOSVer));
@@ -883,7 +883,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	//SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
 	//SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
 	//SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-	mode = 0;
+	//mode = 0;
 	/*lb = GetConsoleMode(ghConIn, &mode);
 	if (!(mode & ENABLE_MOUSE_INPUT)) {
 		mode |= ENABLE_MOUSE_INPUT;
@@ -1415,7 +1415,7 @@ wait:
 		xf_validate(NULL);
 		#endif
 
-		DWORD dwWait = 0;
+		DWORD dwWait;
 		dwWait = nWaitComspecExit = WaitForSingleObject(pi.hProcess, INFINITE);
 
 		#ifdef _DEBUG
@@ -1687,6 +1687,7 @@ wrap:
 AltServerDone:
 	ShutdownSrvStep(L"Finalizing done");
 	UNREFERENCED_PARAMETER(gpszCheck4NeedCmd);
+	UNREFERENCED_PARAMETER(nWaitDebugExit);
 	return iRc;
 }
 
@@ -1902,6 +1903,7 @@ void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=NULL*
 		_printf("Can't create process, ErrCode=0x%08X, Description:\n", dwErr);
 		_wprintf((lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
 		if (lpMsgBuf) LocalFree(lpMsgBuf);
+		UNREFERENCED_PARAMETER(nFmtErr);
 	}
 
 	size_t nCchMax = MAX_PATH*2+32;
@@ -2116,7 +2118,8 @@ int CheckUnicodeFont()
 	
 
 	wchar_t szText[80] = UnicodeTestString;
-	CHAR_INFO cWrite[80], cRead[80] = {};
+	CHAR_INFO cWrite[80];
+	CHAR_INFO cRead[80] = {};
 	WORD aWrite[80], aRead[80] = {};
 	wchar_t sAttrWrite[80] = {}, sAttrRead[80] = {}, sAttrBlock[80] = {};
 	wchar_t szInfo[1024]; DWORD nTmp;

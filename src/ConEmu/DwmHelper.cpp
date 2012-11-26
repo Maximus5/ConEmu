@@ -157,6 +157,7 @@ void CDwmHelper::InitDwm()
 		{
 			lbDbg = _ChangeWindowMessageFilter(WM_DWMSENDICONICTHUMBNAIL, MSGFLT_ADD);
 			lbDbg = _ChangeWindowMessageFilter(WM_DWMSENDICONICLIVEPREVIEWBITMAP, MSGFLT_ADD);
+			UNREFERENCED_PARAMETER(lbDbg);
 		}
 		
 		mh_DwmApi = LoadLibrary(_T("dwmapi.dll"));

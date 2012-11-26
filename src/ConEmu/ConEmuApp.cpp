@@ -2611,6 +2611,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpConEmu->DisableSetDefTerm = true;
 				}
+				else if (!klstricmp(curCommand, _T("/noregfont"))
+					|| !klstricmp(curCommand, _T("/noregfonts")))
+				{
+					gpConEmu->DisableRegisterFonts = true;
+				}
 				else if (!klstricmp(curCommand, _T("/inside"))
 					|| !lstrcmpni(curCommand, _T("/inside="), 8))
 				{

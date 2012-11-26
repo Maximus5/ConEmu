@@ -49,6 +49,8 @@ CDefaultTerminal::~CDefaultTerminal()
 	ClearProcessed(true);
 
 	DeleteCriticalSection(&mcs);
+
+	SafeCloseHandle(mh_SignEvent);
 }
 
 void CDefaultTerminal::ClearThreads(bool bForceTerminate)
@@ -334,7 +336,7 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 	GetExitCodeProcess(pi.hProcess, &nResult);
 	CloseHandle(pi.hProcess);
 	// And what?
-	if (nResult == CERR_HOOKS_WAS_SET)
+	if (nResult == (UINT)CERR_HOOKS_WAS_SET)
 	{
 		mh_LastWnd = hFore;
 		ProcessInfo inf = {};

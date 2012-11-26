@@ -227,6 +227,7 @@ class CConEmuMain :
 		bool  DisableAutoUpdate;    // ключик "/noupdate"
 		bool  DisableKeybHooks;     // ключик "/nokeyhook"
 		bool  DisableSetDefTerm;    // ключик "/nodeftrm"
+		bool  DisableRegisterFonts; // ключик "/noregfont"
 
 		BOOL  mb_ExternalHidden;
 		
@@ -791,7 +792,11 @@ class CConEmuMain :
 		ImmGetContext_t _ImmGetContext;
 };
 
+#ifndef __GNUC__
 #include <intrin.h>
+#else
+#define _InterlockedIncrement InterlockedIncrement
+#endif
 
 // Message Logger
 // Originally from http://preshing.com/20120522/lightweight-in-memory-logging
