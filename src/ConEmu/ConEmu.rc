@@ -309,12 +309,17 @@ BEGIN
     EDITTEXT        tHereIcon,54,46,263,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Register",bHereRegister,213,62,50,14
     PUSHBUTTON      "Unregister",bHereUnregister,267,62,50,14
-    GROUPBOX        "Replace default Windows terminal",IDC_STATIC,4,168,319,64
-    LTEXT           "WARNING!!! Enabling this option may cause false alarms in antiviral programs!!!",IDC_STATIC,10,179,308,8
+    GROUPBOX        "WARNING!!! Enabling this option may cause false alarms in antiviral programs!!!",IDC_STATIC,4,168,319,64
     CONTROL         "Force ConEmu as default terminal when starting console applications",cbDefaultTerminal,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,191,311,8
-    EDITTEXT        tDefaultTerminal,9,213,308,13,ES_AUTOHSCROLL
-    LTEXT           "List of hooked executables delimited with ""|"" (e.g. ""explorer.exe|totalcmd.exe""):",IDC_STATIC,10,202,306,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,179,311,8
+    LTEXT           "List of hooked executables delimited with ""|"" (e.g. ""explorer.exe|devenv.exe|totalcmd.exe""):",IDC_STATIC,10,190,306,8
+    EDITTEXT        tDefaultTerminal,9,201,308,13,ES_AUTOHSCROLL
+    CONTROL         "Don't use ConEmuHk.dll in started console",cbDefaultTerminalNoInjects,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,219,152,8
+    LTEXT           "Confirm close:",IDC_STATIC,10,219,51,8
+    CONTROL         "Auto",rbDefaultTerminalConfAuto,"Button",BS_AUTORADIOBUTTON,60,219,31,8
+    CONTROL         "Always",rbDefaultTerminalConfAlways,"Button",BS_AUTORADIOBUTTON,92,219,38,8
+    CONTROL         "Never",rbDefaultTerminalConfNever,"Button",BS_AUTORADIOBUTTON,131,219,34,8
 END
 
 IDD_SPG_STARTUP DIALOGEX 0, 0, 328, 235

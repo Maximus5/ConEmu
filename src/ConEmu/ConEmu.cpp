@@ -2901,6 +2901,33 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	wcscpy_c(m_GuiInfo.sConEmuBaseDir, ms_ConEmuBaseDir);
 	_wcscpyn_c(m_GuiInfo.sConEmuArgs, countof(m_GuiInfo.sConEmuArgs), mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(m_GuiInfo.sConEmuArgs));
 
+	/* Default terminal begin */
+	m_GuiInfo.bUseDefaultTerminal = gpSet->isSetDefaultTerminal;
+	wchar_t szOpt[16] = {}; wchar_t* pszOpt = szOpt;
+	LPCWSTR pszConfig = gpSetCls->GetConfigName();
+	switch (gpSet->nDefaultTerminalConfirmClose)
+	{
+		case 0: break; // auto
+		case 1: *(pszOpt++) = L'c'; break; // always
+		case 2: *(pszOpt++) = L'n'; break; // never
+	}
+	if (gpSet->isDefaultTerminalNoInjects)
+		*(pszOpt++) = L'i';
+	// Preparing arguments
+	m_GuiInfo.sDefaultTermArg[0] = 0;
+	if (pszConfig && *pszConfig)
+	{
+		wcscat_c(m_GuiInfo.sDefaultTermArg, L"/config \"");
+		wcscat_c(m_GuiInfo.sDefaultTermArg, pszConfig);
+		wcscat_c(m_GuiInfo.sDefaultTermArg, L"\" ");
+	}
+	if (*szOpt)
+	{
+		wcscat_c(m_GuiInfo.sDefaultTermArg, L"-new_console:");
+		wcscat_c(m_GuiInfo.sDefaultTermArg, szOpt);
+	}
+	/* Default terminal end */
+
 	// *********************
 	// *** ComSpec begin ***
 	// *********************
@@ -4122,6 +4149,36 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 						rc.right += rcFrame.right;
 						rc.top -= rcFrame.top;
 						rc.bottom += rcFrame.bottom;
+
+						// Issue 828: When taskbar is auto-hidden
+						APPBARDATA state = {sizeof(state)}; RECT rcTaskbar, rcMatch;
+						while ((state.hWnd = FindWindowEx(NULL, state.hWnd, L"Shell_TrayWnd", NULL)) != NULL)
+						{
+							if (GetWindowRect(state.hWnd, &rcTaskbar)
+								&& IntersectRect(&rcMatch, &rcTaskbar, &mi.rcMonitor))
+							{
+								break; // OK, taskbar match monitor
+							}
+						}
+						// Ok, Is task-bar found on current monitor?
+						if (state.hWnd)
+						{
+							LRESULT lState = SHAppBarMessage(ABM_GETSTATE, &state);
+							if (lState & ABS_AUTOHIDE)
+							{
+								APPBARDATA pos = {sizeof(pos), state.hWnd};
+								if (SHAppBarMessage(ABM_GETTASKBARPOS, &pos))
+								{
+									switch (pos.uEdge)
+									{
+										case ABE_LEFT:   rc.left   += 1; break;
+										case ABE_RIGHT:  rc.right  -= 1; break;
+										case ABE_TOP:    rc.top    += 1; break;
+										case ABE_BOTTOM: rc.bottom -= 1; break;
+									}
+								}
+							}
+						}
 						
 					} break;
 					case CER_RESTORE:

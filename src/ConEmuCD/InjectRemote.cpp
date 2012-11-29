@@ -31,6 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WinObjects.h"
 #include "Infiltrate.h"
 #include "../ConEmuHk/Injects.h"
+#include "../ConEmu/version.h"
+#include <shlobj.h>
 
 // 0 - OK, иначе - ошибка
 int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
@@ -196,16 +198,84 @@ wrap:
 	return iRc;
 }
 
-int InjectRemote(DWORD nRemotePID)
+int PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
+{
+	int iRc = -251;
+	wchar_t szNewPath[MAX_PATH+16] = {}, szAddName[32] = {}, szVer[2] = {};
+	INT_PTR nLen = 0;
+
+	// Copy szModule to CSIDL_LOCAL_APPDATA and return new path
+	HRESULT hr = SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, szNewPath);
+	if ((hr != S_OK) || !*szNewPath)
+	{
+		iRc = -251;
+		goto wrap;
+	}
+
+	szVer[0] = MVV_4a[0];
+	_wsprintf(szAddName, SKIPLEN(countof(szAddName)) L"\\ConEmuHk%s.%02u%02u%02u%s.dll", WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szVer);
+
+	nLen = lstrlen(szNewPath);
+	if (szNewPath[nLen-1] != L'\\')
+	{
+		szNewPath[nLen++] = L'\\'; szNewPath[nLen] = 0;
+	}
+
+	if ((nLen + lstrlen(szAddName) + 8) >= countof(szNewPath))
+	{
+		iRc = -252;
+		goto wrap;
+	}
+
+	wcscat_c(szNewPath, L"ConEmu");
+	if (!DirectoryExists(szNewPath))
+	{
+		if (!CreateDirectory(szNewPath, NULL))
+		{
+			iRc = -253;
+			goto wrap;
+		}
+	}
+
+	wcscat_c(szNewPath, szAddName);
+
+	if (FileExists(szNewPath) && FileCompare(szNewPath, szModule))
+	{
+		// OK, file exists and match the required
+	}
+	else
+	{
+		if (!CopyFile(szModule, szNewPath, FALSE))
+		{
+			iRc = -254;
+			goto wrap;
+		}
+	}
+
+	wcscpy_c(szModule, szNewPath);
+	iRc = 0;
+wrap:
+	return iRc;
+}
+
+int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 {
 	int iRc = -1;
 	BOOL lbWin64 = WIN3264TEST(IsWindows64(),TRUE);
 	BOOL is32bit;
 	DWORD nWrapperWait = (DWORD)-1, nWrapperResult = (DWORD)-1;
 	HANDLE hProc = NULL;
-	wchar_t szSelf[MAX_PATH+16], *pszNamePtr, szArgs[32];
+	wchar_t szSelf[MAX_PATH+16], szHooks[MAX_PATH+16];
+	wchar_t *pszNamePtr, szArgs[32];
 
-	if (!GetModuleFileName(NULL, szSelf, MAX_PATH) || !(pszNamePtr = (wchar_t*)PointToName(szSelf)))
+	if (!GetModuleFileName(NULL, szSelf, MAX_PATH))
+	{
+		iRc = -200;
+		goto wrap;
+	}
+	wcscpy_c(szHooks, szSelf);
+	pszNamePtr = (wchar_t*)PointToName(szHooks);
+	if (!pszNamePtr)
 	{
 		iRc = -200;
 		goto wrap;
@@ -284,12 +354,29 @@ int InjectRemote(DWORD nRemotePID)
 
 	// Поехали
 	_wcscpy_c(pszNamePtr, 16, is32bit ? L"ConEmuHk.dll" : L"ConEmuHk64.dll");
-	if (!FileExists(szSelf))
+	if (!FileExists(szHooks))
 	{
 		iRc = -250;
+		goto wrap;
 	}
 
-	iRc = InfiltrateDll(hProc, szSelf);
+	if (abDefTermOnly)
+	{
+		int iFRc = PrepareHookModule(szHooks);
+		if (iFRc != 0)
+		{
+			iRc = iFRc;
+			goto wrap;
+		}
+	}
+
+	iRc = InfiltrateDll(hProc, szHooks);
+
+	// Если создавали временную копию - запланировать ее удаление
+	if (abDefTermOnly && (lstrcmpi(szHooks, szSelf) != 0))
+	{
+		MoveFileEx(szHooks, NULL, MOVEFILE_DELAY_UNTIL_REBOOT);
+	}
 wrap:
 	if (hProc != NULL)
 		CloseHandle(hProc);

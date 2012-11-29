@@ -1694,10 +1694,18 @@ AltServerDone:
 int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 {
 	int iRc = 0;
+	wchar_t szName[64];
+
 	if (!Parm || (Parm->StructSize != sizeof(*Parm)))
 	{
 		iRc = CERR_CARGUMENT;
 		goto wrap;
+	}
+
+	// Если больше ничего кроме регистрации событий нет
+	if ((Parm->Flags & (slsf_GetFarCommitEvent|slsf_FarCommitForce|slsf_GetCursorEvent)) == Parm->Flags)
+	{
+		goto DoEvents;
 	}
 
 	Parm->pAnnotation = NULL;
@@ -1759,6 +1767,32 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	}
 
 	TODO("Инициализация TrueColor буфера - Parm->ppAnnotation");
+
+DoEvents:
+	if (Parm->Flags & slsf_GetFarCommitEvent)
+	{
+		_ASSERTE(gpSrv->hFarCommitEvent != NULL); // Уже должно быть создано!
+
+		_wsprintf(szName, SKIPLEN(countof(szName)) CEFARWRITECMTEVENT, gnSelfPID);
+		Parm->hFarCommitEvent = OpenEvent(EVENT_MODIFY_STATE, FALSE, szName);
+		_ASSERTE(Parm->hFarCommitEvent!=NULL);
+
+		if (Parm->Flags & slsf_FarCommitForce)
+		{
+			gpSrv->bFarCommitRegistered = TRUE;
+		}
+	}
+
+	if (Parm->Flags & slsf_GetCursorEvent)
+	{
+		_ASSERTE(gpSrv->hCursorChangeEvent != NULL); // Уже должно быть создано!
+
+		_wsprintf(szName, SKIPLEN(countof(szName)) CECURSORCHANGEEVENT, gnSelfPID);
+		Parm->hCursorChangeEvent = OpenEvent(EVENT_MODIFY_STATE, FALSE, szName);
+		_ASSERTE(Parm->hCursorChangeEvent!=NULL);
+
+		gpSrv->bCursorChangeRegistered = TRUE;
+	}
 
 wrap:
 	return iRc;
@@ -2363,13 +2397,6 @@ enum ConEmuExecAction
 
 int DoInjectHooks(LPWSTR asCmdArg)
 {
-	#ifdef SHOW_INJECT_MSGBOX
-	wchar_t szDbgMsg[128], szTitle[128];
-	swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
-	swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s\nConEmuHk, PID=%u", asCmdArg ? asCmdArg : L"", GetCurrentProcessId());
-	MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-	#endif
-
 	gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
 	gnRunMode = RM_SETHOOK64;
 	LPWSTR pszNext = asCmdArg;
@@ -2377,6 +2404,17 @@ int DoInjectHooks(LPWSTR asCmdArg)
 	BOOL lbForceGui = FALSE;
 	PROCESS_INFORMATION pi = {NULL};
 	pi.hProcess = (HANDLE)wcstoul(pszNext, &pszEnd, 16);
+
+
+	#ifdef SHOW_INJECT_MSGBOX
+	wchar_t szDbgMsg[512], szTitle[128];
+	PROCESSENTRY32 pinf;
+	GetProcessInfo(nRemotePID, &pinf);
+	swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuCD PID=%u", GetCurrentProcessId());
+	swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"InjectsTo PID=%s {%s}\nConEmuCD PID=%u", asCmdArg ? asCmdArg : L"", pinf.szExeFile, GetCurrentProcessId());
+	MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	#endif
+
 
 	if (pi.hProcess && pszEnd && *pszEnd)
 	{
@@ -2440,17 +2478,25 @@ int DoInjectHooks(LPWSTR asCmdArg)
 
 int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 {
-	#ifdef SHOW_INJECTREM_MSGBOX
-	wchar_t szDbgMsg[128], szTitle[128];
-	swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
-	swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s\nConEmuHk, PID=%u", asCmdArg ? asCmdArg : L"", GetCurrentProcessId());
-	MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-	#endif
-
+	gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
 	gnRunMode = RM_SETHOOK64;
 	LPWSTR pszNext = asCmdArg;
 	LPWSTR pszEnd = NULL;
 	DWORD nRemotePID = wcstoul(pszNext, &pszEnd, 10);
+
+
+	#ifdef SHOW_INJECTREM_MSGBOX
+	wchar_t szDbgMsg[512], szTitle[128];
+	PROCESSENTRY32 pinf;
+	GetProcessInfo(nRemotePID, &pinf);
+	swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuCD PID=%u", GetCurrentProcessId());
+	swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"Hooking PID=%s {%s}\nConEmuCD PID=%u. Continue with injects?", asCmdArg ? asCmdArg : L"", pinf.szExeFile, GetCurrentProcessId());
+	if (MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL) != IDOK)
+	{
+		return CERR_HOOKS_FAILED;
+	}
+	#endif
+
 	
 	if (nRemotePID)
 	{
@@ -2492,14 +2538,21 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		MODULEENTRY32 mi = {sizeof(mi)};
 		if (hSnap && Module32First(hSnap, &mi))
 		{
-			LPCWSTR pszConEmuHk = WIN3264TEST(L"ConEmuHk.dll", L"ConEmuHk64.dll");
+			LPCWSTR pszConEmuHk = WIN3264TEST(L"conemuhk.", L"conemuhk64.");
 			do {
 				LPCWSTR pszName = PointToName(mi.szModule);
-				if (pszName && (lstrcmpi(pszName, pszConEmuHk) == 0))
+				// Name of hooked module may be changed (copied to %APPDATA%)
+				if (pszName && *pszName)
 				{
-					// Yes! ConEmuHk.dll already loaded into nRemotePID!
-					iHookRc = 0;
-					break;
+					wchar_t szName[64]; lstrcpyn(szName, pszName, countof(szName));
+					CharLowerBuff(szName, lstrlen(szName));
+					if (wmemcmp(szName, pszConEmuHk, lstrlen(pszConEmuHk)) == 0
+						&& wmemcmp(szName+lstrlen(szName)-4, L".dll", 4) == 0)
+					{
+						// Yes! ConEmuHk.dll already loaded into nRemotePID!
+						iHookRc = 0;
+						break;
+					}
 				}
 			} while (Module32Next(hSnap, &mi));
 		}
@@ -2509,7 +2562,7 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		// Go to hook
 		if (iHookRc == -1)
 		{
-			iHookRc = InjectRemote(nRemotePID);
+			iHookRc = InjectRemote(nRemotePID, abDefTermOnly);
 		}
 
 		if (iHookRc == 0)
@@ -5037,6 +5090,7 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 	if (!pCS)
 		CS.Lock(gpSrv->csProc);
 
+#ifdef USE_COMMIT_EVENT
 	// Если кто-то регистрировался как "ExtendedConsole.dll"
 	// то проверить, а не свалился ли процесс его вызвавший
 	if (gpSrv && gpSrv->nExtConsolePID)
@@ -5060,6 +5114,7 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 			gpSrv->nExtConsolePID = 0;
 		}
 	}
+#endif
 
 #ifndef WIN64
 	// Найти "ntvdm.exe"
@@ -7585,8 +7640,11 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 	return TRUE;
 }
 
+#ifdef USE_COMMIT_EVENT
 BOOL cmd_RegExtConsole(CESERVER_REQ& in, CESERVER_REQ** out)
 {
+	PRAGMA_ERROR("CECMD_REGEXTCONSOLE is deprecated!");
+
 	BOOL lbRc = FALSE;
 
 	if (!gpSrv)
@@ -7625,6 +7683,7 @@ BOOL cmd_RegExtConsole(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	return TRUE;
 }
+#endif
 
 BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 {
@@ -8073,10 +8132,12 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 			*out = ExecuteNewCmd(CECMD_ALIVE, sizeof(CESERVER_REQ_HDR));
 			lbRc = TRUE;
 		} break;
+		#ifdef USE_COMMIT_EVENT
 		case CECMD_REGEXTCONSOLE:
 		{
 			lbRc = cmd_RegExtConsole(in, out);
 		} break;
+		#endif
 		case CECMD_FREEZEALTSRV:
 		{
 			lbRc = cmd_FreezeAltServer(in, out);

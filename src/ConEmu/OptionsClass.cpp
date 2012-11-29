@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LoadImg.h"
 #include "Status.h"
 #include "Recreate.h"
+#include "DefaultTerm.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "version.h"
@@ -3150,6 +3151,9 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			}
 
 			// Default terminal apps
+			CheckDlgButton(hWnd2, cbDefaultTerminal, gpSet->isSetDefaultTerminal);
+			CheckDlgButton(hWnd2, cbDefaultTerminalNoInjects, gpSet->isDefaultTerminalNoInjects);
+			CheckRadioButton(hWnd2, rbDefaultTerminalConfAuto, rbDefaultTerminalConfNever, rbDefaultTerminalConfAuto+gpSet->nDefaultTerminalConfirmClose);
 			wchar_t* pszApps = gpSet->GetDefaultTerminalApps();
 			_ASSERTE(pszApps!=NULL);
 			SetDlgItemText(hWnd2, tDefaultTerminal, pszApps);
@@ -3164,6 +3168,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 		{
 		case BN_CLICKED:
 			{
+				bool bUpdateGuiMapping = false;
 				WORD CB = LOWORD(wParam);
 				switch (CB)
 				{
@@ -3182,7 +3187,30 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 					break;
 				case cbDefaultTerminal:
 					gpSet->isSetDefaultTerminal = IsChecked(hWnd2, cbDefaultTerminal);
+					bUpdateGuiMapping = true;
 					break;
+				case cbDefaultTerminalNoInjects:
+					gpSet->isDefaultTerminalNoInjects = IsChecked(hWnd2, cbDefaultTerminalNoInjects);
+					bUpdateGuiMapping = true;
+					break;
+				case rbDefaultTerminalConfAuto:
+				case rbDefaultTerminalConfAlways:
+				case rbDefaultTerminalConfNever:
+					gpSet->nDefaultTerminalConfirmClose = 
+						IsChecked(hWnd2, rbDefaultTerminalConfAuto) ? 0 : 
+						IsChecked(hWnd2, rbDefaultTerminalConfAlways) ? 1 : 2;
+					bUpdateGuiMapping = true;
+					break;
+				}
+
+				if (bUpdateGuiMapping)
+				{
+					gpConEmu->OnGlobalSettingsChanged();
+				}
+				if (gpSet->isSetDefaultTerminal && (CB == cbDefaultTerminal))
+				{
+					// Инициировать эксплорер, если он еще не был обработан
+					gpConEmu->mp_DefTrm->PostCreated();
 				}
 			}
 			break; // BN_CLICKED

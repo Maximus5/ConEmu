@@ -307,7 +307,7 @@ void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
 #endif
 HWND Attach2Gui(DWORD nTimeout);
 
-int InjectRemote(DWORD nRemotePID);
+int InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false);
 int InfiltrateDll(HANDLE hProcess, LPCWSTR dll);
 
 int ParseCommandLine(LPCWSTR asCmdLine /*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/); // –азбор параметров командной строки
@@ -478,8 +478,14 @@ struct SrvInfo
 	HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменени€ - отослать в GUI
 	HANDLE hRefreshDoneEvent; // ServerMode, выставл€етс€ после hRefreshEvent
 	HANDLE hDataReadyEvent; // ‘лаг, что в сервере есть изменени€ (GUI должен перечитать данные)
+	HANDLE hFarCommitEvent; // ServerMode, перечитать консоль, т.к. Far вызвал Commit в ExtConsole, - отослать в GUI
+	HANDLE hCursorChangeEvent; // ServerMode, перечитать консоль (облегченный режим), т.к. был изменен курсор, - отослать в GUI
+	BOOL   bFarCommitRegistered; // «агружен (в этом! процессе) ExtendedConsole.dll
+	BOOL   bCursorChangeRegistered; // «агружен (в этом! процессе) ExtendedConsole.dll
+	#ifdef USE_COMMIT_EVENT
 	HANDLE hExtConsoleCommit; // Event дл€ синхронизации (выставл€етс€ по Commit);
 	DWORD  nExtConsolePID;
+	#endif
 	BOOL bForceConsoleRead; // ѕнуть нить опроса консоли RefreshThread чтобы она без задержек перечитала содержимое
 	// —мена размера консоли через RefreshThread
 	int nRequestChangeSize;

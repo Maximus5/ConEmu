@@ -76,6 +76,7 @@ _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
         L"     s[<SplitTab>T][<Percents>](H|V)\r\n" \
 _DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r\n") \
         L"     u - ConEmu choose user dialog\r\n" \
+		L"     z - Don't use 'Default terminal' feature for this command\r\n" \
 		L"  Switch: \"-new_console:d:dir\"\r\n" \
 		L"       - specify working directory, MUST BE LAST or single OPTION\r\n" \
 		L"  Switch: \"-new_console:t:tabname\"\r\n" \

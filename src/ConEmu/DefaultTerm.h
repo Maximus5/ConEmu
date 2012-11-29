@@ -61,6 +61,7 @@ private:
 	static DWORD WINAPI PostCreatedThread(LPVOID lpParameter);
 	static DWORD WINAPI PostCheckThread(LPVOID lpParameter);
 	DWORD mn_PostThreadId;
+	bool  mb_PostCreatedThread;
 	MArray<HANDLE> m_Threads;
 	CRITICAL_SECTION mcs;
 	void ClearThreads(bool bForceTerminate);

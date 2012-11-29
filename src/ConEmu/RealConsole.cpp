@@ -386,7 +386,7 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 		SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
 
 		// When User name was set, but password - Not...
-		if (!*m_Args.szUserPassword)
+		if (!*m_Args.szUserPassword && !m_Args.bUseEmptyPassword)
 		{
 			int nRc = gpConEmu->RecreateDlg(&m_Args);
 

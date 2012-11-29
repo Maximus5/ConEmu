@@ -415,3 +415,30 @@ int lstrcmpni(LPCWSTR asStr1, LPCWSTR asStr2, int cchMax)
 
 	return nCmp;
 }
+
+
+#if defined(_DEBUG) && !defined(STRSAFE_DISABLE)
+int swprintf_c(wchar_t* Buffer, INT_PTR size, const wchar_t *Format, ...)
+{
+	_ASSERTE(Buffer!=Format);
+	if (size < 0)
+		DebugBreak();
+	va_list argList;
+	va_start(argList, Format);
+	int nRc;
+	nRc = StringCchVPrintfW(Buffer, size, Format, argList);
+	return nRc;
+}
+
+int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...)
+{
+	_ASSERTE(Buffer!=Format);
+	if (size < 0)
+		DebugBreak();
+	va_list argList;
+	va_start(argList, Format);
+	int nRc;
+	nRc = StringCchVPrintfA(Buffer, size, Format, argList);
+	return nRc;
+}
+#endif // #if defined(_DEBUG) && !defined(STRSAFE_DISABLE)

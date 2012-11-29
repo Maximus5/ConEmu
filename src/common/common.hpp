@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    115
+#define CESERVER_REQ_VER    116
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -127,6 +127,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECONOUTPUTITEMNAME L"ConEmuLastOutputMapping.%08X.%u" // --> CESERVER_CONSAVE_MAP ( %X == (DWORD)ghConWnd, %u = CESERVER_CONSAVE_MAPHDR.nCurrentIndex )
 
 #define CEDATAREADYEVENT    L"ConEmuSrvDataReady.%u"
+#define CEFARWRITECMTEVENT  L"ConEmuSrvFarWriteCommit.%u"
+#define CECURSORCHANGEEVENT L"ConEmuSrvCursorChanged.%u"
 #define CEFARALIVEEVENT     L"ConEmuFarAliveEvent.%u"
 //#define CECONMAPNAMESIZE    (sizeof(CESERVER_REQ_CONINFO)+(MAXCONMAPCELLS*sizeof(CHAR_INFO)))
 //#define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
@@ -283,7 +285,9 @@ const CECMD
 	CECMD_ALIVE          = 53, // просто проверка
 	CECMD_STARTSERVER    = 54, // CESERVER_REQ_START. Запустить в консоли ConEmuC.exe в режиме сервера
 	CECMD_LOCKDC         = 55, // CESERVER_REQ_LOCKDC
+	#ifdef USE_COMMIT_EVENT
 	CECMD_REGEXTCONSOLE  = 56, // CESERVER_REQ_REGEXTCON. Регистрация процесса, использующего ExtendedConsole.dll
+	#endif
 	CECMD_GETALLTABS     = 57, // CESERVER_REQ_GETALLTABS. Вернуть список всех табов, для показа в Far и использовании в макросах.
 	CECMD_ACTIVATETAB    = 58, // dwData[0]=0-based Console, dwData[1]=0-based Tab
 	CECMD_FREEZEALTSRV   = 59, // dwData[0]=1-Freeze, 0-Thaw; dwData[1]=New Alt server PID
@@ -915,6 +919,9 @@ struct ConEmuGuiMapping
 	wchar_t  sConEmuDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
 	wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 	wchar_t  sConEmuArgs[MAX_PATH*2];
+
+	wchar_t  sDefaultTermArg[MAX_PATH]; // "/config", параметры для "confirm" и "no-injects"
+	BOOL     bUseDefaultTerminal;
 
 	DWORD    bUseInjects;   // 0-off, 1-on, 3-exe only. Далее могут быть (пока не используется) доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	BOOL     bUseTrueColor; // включен флажок "TrueMod support"
@@ -1823,21 +1830,28 @@ typedef BOOL (WINAPI* ExtendedConsoleWriteText_t)(HANDLE hConsoleOutput, const A
 typedef void (WINAPI* ExtendedConsoleCommit_t)();
 typedef DWORD RequestLocalServerFlags;
 const RequestLocalServerFlags
-	slsf_SetOutHandle     = 1,
-	slsf_RequestTrueColor = 2,
-	slsf_PrevAltServerPID = 4,
-	slsf_AltServerStopped = 8,
-	slsf_None             = 0;
+	slsf_SetOutHandle      = 1,
+	slsf_RequestTrueColor  = 2,
+	slsf_PrevAltServerPID  = 4,
+	slsf_AltServerStopped  = 8,
+	slsf_GetFarCommitEvent = 16,
+	slsf_FarCommitForce    = 32,
+	slsf_GetCursorEvent    = 64,
+	slsf_None              = 0;
 struct RequestLocalServerParm
 {
 	DWORD     StructSize;
+	
 	RequestLocalServerFlags Flags;
+
 	/*[IN]*/  HANDLE* ppConOutBuffer;
 	/*[OUT]*/ AnnotationHeader* pAnnotation;
 	/*[OUT]*/ RequestLocalServer_t fRequestLocalServer;
 	/*[OUT]*/ ExtendedConsoleWriteText_t fExtendedConsoleWriteText;
 	/*[OUT]*/ ExtendedConsoleCommit_t fExtendedConsoleCommit;
-	/*[OUT]*/ DWORD nPrevAltServerPID;
+	/*[OUT]*/ DWORD_PTR nPrevAltServerPID; // alignment
+	/*[OUT]*/ HANDLE hFarCommitEvent;
+	/*[OUT]*/ HANDLE hCursorChangeEvent;
 };
 
 

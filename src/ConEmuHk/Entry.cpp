@@ -409,6 +409,14 @@ PipeServer<CESERVER_REQ> *gpHookServer = NULL;
 
 bool gbShowExeMsgBox = false;
 
+void InitDefaultTerm()
+{
+	gpDefaultTermParm = (ConEmuGuiMapping*)calloc(sizeof(*gpDefaultTermParm),1);
+
+	CShellProc sp;
+	sp.LoadSrvMapping(TRUE);
+}
+
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
 	//DLOG0("DllStart",0);
@@ -777,6 +785,11 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				}
 			}
 		}
+	}
+
+	if (gbPrepareDefaultTerminal)
+	{
+		InitDefaultTerm();
 	}
 
 	//if (!gbSkipInjects)

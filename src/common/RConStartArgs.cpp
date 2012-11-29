@@ -108,7 +108,7 @@ void RConStartArgs::RunArgTests()
 RConStartArgs::RConStartArgs()
 {
 	bDetached = bRunAsAdministrator = bRunAsRestricted = bNewConsole = FALSE;
-	bForceUserDialog = bBackgroundTab = bForceDosBox = FALSE;
+	bForceUserDialog = bBackgroundTab = bNoDefaultTerm = bForceDosBox = FALSE;
 	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = pszRenameTab = NULL;
@@ -116,6 +116,7 @@ RConStartArgs::RConStartArgs()
 	bInjectsDisable = FALSE;
 	eConfirmation = eConfDefault;
 	szUserPassword[0] = 0;
+	bUseEmptyPassword = FALSE;
 	//hLogonToken = NULL;
 }
 
@@ -168,6 +169,7 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 		if (args->pszDomain)
 			this->pszDomain = lstrdup(args->pszDomain);
 		lstrcpy(this->szUserPassword, args->szUserPassword);
+		this->bUseEmptyPassword = args->bUseEmptyPassword;
 		//this->pszUserProfile = args->pszUserProfile ? lstrdup(args->pszUserProfile) : NULL;
 		
 		//SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
@@ -180,10 +182,13 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 	}
 
 	this->bBackgroundTab = args->bBackgroundTab;
+	this->bNoDefaultTerm = args->bNoDefaultTerm; _ASSERTE(args->bNoDefaultTerm == FALSE);
 	this->bBufHeight = args->bBufHeight;
 	this->nBufHeight = args->nBufHeight;
 	this->eConfirmation = args->eConfirmation;
 	this->bForceUserDialog = args->bForceUserDialog;
+	this->bInjectsDisable = args->bInjectsDisable;
+	this->bLongOutputDisable = args->bLongOutputDisable;
 
 	this->eSplit = args->eSplit;
 	this->nSplitValue = args->nSplitValue;
@@ -357,6 +362,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 BOOL RConStartArgs::CheckUserToken(HWND hPwd)
 {
 	//SafeFree(pszUserProfile);
+	bUseEmptyPassword = FALSE;
 
 	//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
 	if (!pszUserName || !*pszUserName)
@@ -366,7 +372,10 @@ BOOL RConStartArgs::CheckUserToken(HWND hPwd)
 	//szUserPassword[0] = 0;
 
 	if (!GetWindowText(hPwd, szUserPassword, MAX_PATH-1))
+	{
 		szUserPassword[0] = 0;
+		bUseEmptyPassword = TRUE;
+	}
 
 	SafeFree(pszDomain);
 	wchar_t* pszSlash = wcschr(pszUserName, L'\\');
@@ -540,6 +549,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					case L'b':
 						// b - background, не активировать таб
 						bBackgroundTab = TRUE;
+						break;
+
+					case L'z':
+						// z - don't use "Default terminal" feature
+						bNoDefaultTerm = TRUE;
 						break;
 						
 					case L'a':

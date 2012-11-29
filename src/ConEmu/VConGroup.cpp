@@ -190,7 +190,15 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 	{
 		ppVConI = NULL;
 		CVConGroup::OnVConClosed(pVCon);
-		pVCon->Release();
+		#ifdef _DEBUG
+		//-- must be already released!
+		#ifndef _WIN64
+		_ASSERTE((DWORD_PTR)pVCon->mp_RCon==0xFEEEFEEE);
+		#else
+		_ASSERTE((DWORD_PTR)pVCon->mp_RCon==0xFEEEFEEEFEEEFEEELL);
+		#endif
+		//pVCon->Release();
+		#endif
 		return NULL;
 	}
 

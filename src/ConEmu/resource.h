@@ -876,6 +876,11 @@
 #define cbDefaultTerminal               2515
 #define tDefaultTerminal                2516
 #define cbCloseEditViewConfirm          2517
+#define cbDefaultTerminalNoInjects      2518
+#define rbDefaultTerminalConfAuto       2519
+#define rbDefaultTerminalConfAlways     2520
+#define rbDefaultTerminalConfNever      2521
+
 
 // Next default values for new objects
 // 
@@ -883,7 +888,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2518
+#define _APS_NEXT_CONTROL_VALUE         2522
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

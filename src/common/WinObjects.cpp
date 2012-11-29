@@ -174,6 +174,53 @@ BOOL isWindow(HWND hWnd)
 	return TRUE;
 }
 
+BOOL FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2)
+{
+	BOOL bMatch = FALSE;
+	HANDLE hFile1, hFile2 = NULL;
+	LPBYTE pBuf1 = NULL, pBuf2 = NULL;
+	LARGE_INTEGER lSize1 = {}, lSize2 = {};
+	DWORD nRead1 = 0, nRead2 = 0;
+	BOOL bRead1, bRead2;
+
+	hFile1 = CreateFile(asFilePath1, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	if (!hFile1 || hFile1 == INVALID_HANDLE_VALUE)
+		goto wrap;
+	hFile2 = CreateFile(asFilePath2, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	if (!hFile2 || hFile2 == INVALID_HANDLE_VALUE)
+		goto wrap;
+
+	if (!GetFileSizeEx(hFile1, &lSize1) || !lSize1.QuadPart || lSize1.HighPart)
+		goto wrap;
+	if (!GetFileSizeEx(hFile2, &lSize2) || !lSize2.QuadPart || lSize2.HighPart)
+		goto wrap;
+	if (lSize1.QuadPart != lSize2.QuadPart)
+		goto wrap;
+
+	// Need binary comparision
+	pBuf1 = (LPBYTE)malloc(lSize1.LowPart);
+	pBuf2 = (LPBYTE)malloc(lSize2.LowPart);
+	if (!pBuf1 || !pBuf2)
+		goto wrap;
+
+	bRead1 = ReadFile(hFile1, pBuf1, lSize1.LowPart, &nRead1, NULL);
+	bRead2 = ReadFile(hFile2, pBuf2, lSize2.LowPart, &nRead2, NULL);
+
+	if (!bRead1 || !bRead2 || nRead1 != lSize1.LowPart || nRead2 != nRead1)
+		goto wrap;
+
+	// Comparision
+	bMatch = (memcmp(pBuf1, pBuf2, lSize1.LowPart) == 0);
+wrap:
+	if (hFile1 && hFile1 != INVALID_HANDLE_VALUE)
+		CloseHandle(hFile1);
+	if (hFile2 && hFile2 != INVALID_HANDLE_VALUE)
+		CloseHandle(hFile2);
+	SafeFree(pBuf1);
+	SafeFree(pBuf2);
+	return bMatch;
+}
+
 // pnSize заполн€етс€ только в том случае, если файл найден
 BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 {

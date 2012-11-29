@@ -40,6 +40,9 @@ struct RConStartArgs
 {
 	BOOL     bDetached; // internal use
 	BOOL     bNewConsole; // TRUE==-new_console, FALSE==-cur_console
+	BOOL     bBackgroundTab;      // -new_console:b
+	BOOL     bNoDefaultTerm;      // -new_console:z - не использовать фичу "Default terminal". Ќе пишетс€ в CreateCommandLine()
+
 	wchar_t* pszSpecialCmd; // собственно, command line
 	wchar_t* pszStartupDir; // "-new_console:d:<dir>"
 
@@ -48,10 +51,9 @@ struct RConStartArgs
 	BOOL     bRunAsAdministrator; // -new_console:a
 	BOOL     bRunAsRestricted;    // -new_console:r
 	wchar_t* pszUserName, *pszDomain, szUserPassword[MAX_PATH]; // "-new_console:u:<user>:<pwd>"
+	BOOL     bUseEmptyPassword;   // дл€ GUI
 	BOOL     bForceUserDialog;    // -new_console:u
 	//wchar_t* pszUserProfile;      // %USERPROFILE%
-	
-	BOOL     bBackgroundTab;      // -new_console:b
 	
 	BOOL     bBufHeight;          // -new_console:h<lines>
 	UINT     nBufHeight;          //

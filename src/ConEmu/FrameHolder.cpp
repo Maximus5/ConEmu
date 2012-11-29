@@ -1325,8 +1325,12 @@ int CFrameHolder::GetCaptionHeight()
 // высота табов
 int CFrameHolder::GetTabsHeight()
 {
+#ifndef CONEMU_TABBAR_EX
+	return gpConEmu->mp_TabBar->GetTabbarHeight();
+#else
 	_ASSERTE(mb_Initialized && mn_TabsHeight > 0);
 	return mn_TabsHeight;
+#endif
 }
 
 // высота части заголовка, который оставляем для "таскания" окна

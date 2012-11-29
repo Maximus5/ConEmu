@@ -492,6 +492,12 @@ void Settings::InitSettings()
 	isAutoSaveSizePos = false; mb_SizePosAutoSaved = false;
 	isConVisible = false; //isLockRealConsolePos = false;
 	isUseInjects = false; // דנננ... Disclaimer#2
+
+	isSetDefaultTerminal = false;
+	isDefaultTerminalNoInjects = false;
+	nDefaultTerminalConfirmClose = 1 /* Always */;
+	SetDefaultTerminalApps(NULL/* to default value */); // "|"-delimited string -> MSZ
+
 	isProcessAnsi = true;
 	mb_UseClink = true;
 	#ifdef USEPORTABLEREGISTRY
@@ -2282,6 +2288,8 @@ void Settings::LoadSettings()
 		reg->Load(L"UseInjects", isUseInjects); //MinMax(isUseInjects, BST_INDETERMINATE);
 
 		reg->Load(L"SetDefaultTerminal", isSetDefaultTerminal);
+		reg->Load(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
+		reg->Load(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
 		wchar_t* pszApps = NULL;
 		reg->Load(L"DefaultTerminalApps", &pszApps);
@@ -3192,6 +3200,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"UseInjects", isUseInjects);
 
 		reg->Save(L"SetDefaultTerminal", isSetDefaultTerminal);
+		reg->Save(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
+		reg->Save(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
 		wchar_t* pszApps = GetDefaultTerminalApps(); // MSZ -> "|"-delimited string
 		reg->Save(L"DefaultTerminalApps", pszApps);

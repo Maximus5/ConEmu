@@ -121,6 +121,7 @@ CShellProc::CShellProc()
 	mlp_SaveExecInfoA = NULL; mlp_SaveExecInfoW = NULL;
 	mb_WasSuspended = FALSE;
 	mb_NeedInjects = FALSE;
+	mb_DebugWasRequested = FALSE;
 	// int CShellProc::mn_InShellExecuteEx = 0; <-- static
 	mb_InShellExecuteEx = FALSE;
 	//mb_DosBoxAllowed = FALSE;
@@ -129,23 +130,11 @@ CShellProc::CShellProc()
 
 	mb_TempConEmuWnd = FALSE;
 	mh_PreConEmuWnd = ghConEmuWnd; mh_PreConEmuWndDC = ghConEmuWndDC;
+
 	if (gbPrepareDefaultTerminal)
 	{
-		HWND h = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
-		if (h)
-		{
-			ghConEmuWnd = h;
-			HWND hWork = FindWindowEx(h, NULL, VirtualConsoleClassWork, NULL);
-			_ASSERTEX(hWork!=NULL && "Workspace must be inside ConEmu"); // код расчитан на это
-			ghConEmuWndDC = FindWindowEx(h, NULL, VirtualConsoleClass, NULL);
-			if (!ghConEmuWndDC)
-			{
-				// This may be, if ConEmu was started in "Detached" more,
-				// or is not closing on last tab close.
-				ghConEmuWndDC = h;
-			}
-			mb_TempConEmuWnd = TRUE;
-		}
+		ZeroStruct(m_GuiMapping);
+		FindCheckConEmuWindow();
 	}
 }
 
@@ -186,6 +175,41 @@ CShellProc::~CShellProc()
 		free(mlp_ExecInfoA);
 	if (mlp_ExecInfoW)
 		free(mlp_ExecInfoW);
+}
+
+HWND CShellProc::FindCheckConEmuWindow()
+{
+	if (!gbPrepareDefaultTerminal)
+		return NULL;
+
+	if (ghConEmuWnd)
+	{
+		if (user->isWindow(ghConEmuWnd))
+		{
+			return ghConEmuWnd; // OK, живое
+		}
+
+		// Сброс, ищем заново
+		ghConEmuWnd = ghConEmuWndDC = NULL;
+		mb_TempConEmuWnd = TRUE;
+	}
+
+	HWND h = user->findWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
+	if (h)
+	{
+		ghConEmuWnd = h;
+		HWND hWork = user->findWindowEx(h, NULL, VirtualConsoleClassWork, NULL);
+		_ASSERTEX(hWork!=NULL && "Workspace must be inside ConEmu"); // код расчитан на это
+		ghConEmuWndDC = user->findWindowEx(h, NULL, VirtualConsoleClass, NULL);
+		if (!ghConEmuWndDC)
+		{
+			// This may be, if ConEmu was started in "Detached" more,
+			// or is not closing on last tab close.
+			ghConEmuWndDC = h;
+		}
+		mb_TempConEmuWnd = TRUE;
+	}
+	return h;
 }
 
 wchar_t* CShellProc::str2wcs(const char* psz, UINT anCP)
@@ -240,29 +264,54 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 	if (gbPrepareDefaultTerminal)
 	{
 		_ASSERTEX(ghConWnd==NULL);
-		if (!ghConEmuWnd || !user->isWindow(ghConEmuWnd))
+
+		if (!gpDefaultTermParm)
 		{
-			_ASSERTEX(bLightCheck && "LoadGuiMapping failed, no active ConEmu window");
+			_ASSERTEX(gpDefaultTermParm!=NULL);
 			return FALSE;
 		}
 
-		DWORD nGuiPID;
-		if (!user->getWindowThreadProcessId(ghConEmuWnd, &nGuiPID) || !nGuiPID)
+		if (!FindCheckConEmuWindow())
 		{
-			_ASSERTEX(FALSE && "LoadGuiMapping failed, getWindowThreadProcessId failed");
-			return FALSE;
-		}
+			// May be parameters was loaded already?
+			if (!isDefaultTerminalEnabled())
+			{
+				_ASSERTEX(bLightCheck && "LoadGuiMapping failed, no active ConEmu window");
+				return FALSE;
+			}
 
-		if (!::LoadGuiMapping(nGuiPID, m_GuiMapping))
+			// Разрешить запуск с запомненными параметрами
+			_ASSERTEX(gpDefaultTermParm);
+			m_GuiMapping = *gpDefaultTermParm;
+		}
+		else
 		{
-			_ASSERTEX(FALSE && "LoadGuiMapping failed");
-			return FALSE;
+			DWORD nGuiPID;
+			if (!user->getWindowThreadProcessId(ghConEmuWnd, &nGuiPID) || !nGuiPID)
+			{
+				_ASSERTEX(FALSE && "LoadGuiMapping failed, getWindowThreadProcessId failed");
+				return FALSE;
+			}
+
+			if (!::LoadGuiMapping(nGuiPID, m_GuiMapping))
+			{
+				_ASSERTEX(FALSE && "LoadGuiMapping failed");
+				return FALSE;
+			}
+
+			*gpDefaultTermParm = m_GuiMapping;
+
+			// Checking loaded settings
+			if (!isDefaultTerminalEnabled())
+			{
+				return FALSE; // disabled now
+			}
 		}
 
 		ZeroStruct(m_SrvMapping);
 		m_SrvMapping.cbSize = sizeof(m_SrvMapping);
 
-		m_SrvMapping.nGuiPID = nGuiPID;
+		m_SrvMapping.nGuiPID = m_GuiMapping.nGuiPID;
 		m_SrvMapping.nProtocolVersion = m_GuiMapping.nProtocolVersion;
 		lstrcpy(m_SrvMapping.sConEmuExe, m_GuiMapping.sConEmuExe);
 		lstrcpy(m_SrvMapping.sConEmuBaseDir, m_GuiMapping.sConEmuBaseDir);
@@ -452,7 +501,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 	if (gbPrepareDefaultTerminal)
 	{
-		_ASSERTEX(ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
+		_ASSERTEX(ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE);
 		_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.sConEmuExe);
 	}
 	else
@@ -591,6 +640,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	{
 		BOOL lbNewCmdCheck = FALSE;
 		const wchar_t* psz = SkipNonPrintable(asParam);
+
 		// Если запускают cmd.exe без параметров - не отбрасывать его!
 		if (psz && *psz && szComspec[0])
 		{
@@ -685,7 +735,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 			BOOL lbNeedCutStartEndQuot = FALSE;
 			DWORD nFileAttrs = (DWORD)-1;
 			ms_ExeTmp[0] = 0;
-			IsNeedCmd(asParam, NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
+			IsNeedCmd(SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
 			// это может быть команда ком.процессора!
 			// поэтому, наверное, искать и проверять битность будем только для
 			// файлов с указанным расширением.
@@ -896,6 +946,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		// Добавить /PARENTFARPID=%u
 		nCchSize += 32;
 	}
+
+	if (gbPrepareDefaultTerminal)
+	{
+		// reserve space for m_GuiMapping.sDefaultTermArg
+		nCchSize += lstrlen(m_GuiMapping.sDefaultTermArg)+2;
+	}
 	
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
 	// /C или /K в обоих случаях нужно пихать в psParam
@@ -934,7 +990,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		_wcscat_c((*psParam), nCchSize, szParentFar);
 	}
 
-	TODO("Disable inject for gbPrepareDefaultTerminal?");
+	// Don't add when gbPrepareDefaultTerminal - we are calling "ConEmu.exe", not "ConEmuC.exe"
 	if (args.bInjectsDisable && !gbPrepareDefaultTerminal)
 	{
 		// добавить " /NOINJECT"
@@ -943,7 +999,35 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 	if (gbPrepareDefaultTerminal)
 	{
+		LPCWSTR pszNewCon = NULL;
+
+		if (m_GuiMapping.sDefaultTermArg[0] == L'/')
+		{
+			// "/config", параметры для "confirm" и "no-injects"
+			_wcscat_c((*psParam), nCchSize, L" ");
+			pszNewCon = wcsstr(m_GuiMapping.sDefaultTermArg, L"-new_console");
+			if (!pszNewCon)
+			{
+				_wcscat_c((*psParam), nCchSize, m_GuiMapping.sDefaultTermArg);
+			}
+			else
+			{
+				// sDefaultTermArg contains something like this:
+				// "/config CfgName -new_console:c"
+				lstrcpyn((*psParam)+lstrlen(*psParam), m_GuiMapping.sDefaultTermArg, (pszNewCon - m_GuiMapping.sDefaultTermArg + 1));
+			}
+		}
+		else if (m_GuiMapping.sDefaultTermArg[0] == L'-')
+		{
+			pszNewCon = m_GuiMapping.sDefaultTermArg;
+		}
+
 		_wcscat_c((*psParam), nCchSize, L" /single /cmd ");
+
+		if (pszNewCon)
+		{
+			_wcscat_c((*psParam), nCchSize, pszNewCon);
+		}
 	}
 	// 111211 - "-new_console" передается в GUI
 	else if (lbNewConsoleFromGui)
@@ -1011,7 +1095,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
 				BOOL lbNeedCutStartEndQuot = FALSE;
 				ms_ExeTmp[0] = 0;
-				IsNeedCmd(asParam, NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
+				IsNeedCmd(SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
 
 				if (ms_ExeTmp[0])
 				{
@@ -1224,8 +1308,10 @@ BOOL CShellProc::PrepareExecuteParms(
 	// !!! anFlags может быть NULL;
 	// !!! asAction может быть NULL;
 	_ASSERTE(*psFile==NULL && *psParam==NULL);
-	if (!ghConEmuWndDC)
+	if (!ghConEmuWndDC && !isDefaultTerminalEnabled())
 		return FALSE; // Перехватывать только под ConEmu
+
+	BOOL bGoChangeParm = FALSE;
 
 	// Для логирования - запомним сразу
 	HANDLE hIn  = lphStdIn  ? *lphStdIn  : NULL;
@@ -1236,6 +1322,9 @@ BOOL CShellProc::PrepareExecuteParms(
 	bool bNewConsoleArg = false, bForceNewConsole = false, bCurConsoleArg = false;
 	// Service object
 	RConStartArgs args;
+
+	BOOL bDebugWasRequested = FALSE;
+	mb_DebugWasRequested = FALSE;
 		
 	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить
 	//            левый хэндл (hStdOutput = 0x00010001), иногда получается 0x00060265
@@ -1272,6 +1361,29 @@ BOOL CShellProc::PrepareExecuteParms(
 		}
 	}
 
+	// Some additional checks for "Default terminal" mode
+	if (gbPrepareDefaultTerminal)
+	{
+		_ASSERTEX(aCmd == eCreateProcess); // Пока расчитано только на него
+
+		if ((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS))
+		{
+			// Creating process without console window, not our case
+			return FALSE;
+		}
+
+		if (anShowCmd && (*anShowCmd == SW_HIDE))
+		{
+			// Creating process with window initially hidden, not our case
+			return FALSE;
+		}
+
+		if ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS))
+		{
+			bDebugWasRequested = TRUE;
+			// Пока продолжим, нам нужно определить, а консольное ли это приложение?
+		}
+	}
 		
 	//wchar_t *szTest = (wchar_t*)malloc(MAX_PATH*2*sizeof(wchar_t)); //[MAX_PATH*2]
 	//wchar_t *szExe = (wchar_t*)malloc((MAX_PATH+1)*sizeof(wchar_t)); //[MAX_PATH+1];
@@ -1307,7 +1419,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	else
 	{
 		BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
-		IsNeedCmd(asParam, NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
+		IsNeedCmd(SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
 	}
 	
 	if (ms_ExeTmp[0])
@@ -1570,24 +1682,43 @@ BOOL CShellProc::PrepareExecuteParms(
 	_ASSERTE(mn_ImageBits!=0);
 	// Если это Фар - однозначно вставляем ConEmuC.exe
 	// -- bFarHookMode заменен на bLongConsoleOutput --
-	if ((bLongConsoleOutput)
-		|| (gbPrepareDefaultTerminal && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)) // set up default terminal
-		|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хотят GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
-		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
-		|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
-			&& (bNewConsoleArg
-				|| (bLongConsoleOutput && (aCmd == eShellExecute))
-				|| (bCurConsoleArg && !args.bLongOutputDisable)
-				#ifdef _DEBUG
-				|| lbAlwaysAddConEmuC
-				#endif
-				))
-		// если это Дос-приложение - то если включен DosBox, вставляем ConEmuC.exe /DOSBOX
-		|| ((mn_ImageBits == 16) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
-		    && m_SrvMapping.cbSize && m_SrvMapping.bDosBox))
+	if (gbPrepareDefaultTerminal)
 	{
+		// set up default terminal
+		bGoChangeParm = (!args.bNoDefaultTerm && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
+	}
+	else
+	{
+		bGoChangeParm = ((bLongConsoleOutput)
+			|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хотят GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
+			// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
+			|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
+				&& (bNewConsoleArg
+					|| (bLongConsoleOutput && (aCmd == eShellExecute))
+					|| (bCurConsoleArg && !args.bLongOutputDisable)
+					#ifdef _DEBUG
+					|| lbAlwaysAddConEmuC
+					#endif
+					))
+			// если это Дос-приложение - то если включен DosBox, вставляем ConEmuC.exe /DOSBOX
+			|| ((mn_ImageBits == 16) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
+				&& m_SrvMapping.cbSize && m_SrvMapping.bDosBox));
+	}
+
+	if (bGoChangeParm)
+	{
+		if (bDebugWasRequested && gbPrepareDefaultTerminal)
+		{
+			mb_NeedInjects = FALSE;
+			lbChanged = FALSE;
+			// We need to post attach ConEmu GUI to started console
+			mb_DebugWasRequested = TRUE;
+			goto wrap;
+		}
+
 		lbChanged = ChangeExecuteParms(aCmd, bNewConsoleArg, asFile, asParam,
 						ms_ExeTmp, args, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
+
 		if (!lbChanged)
 		{
 			// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
@@ -1649,7 +1780,7 @@ BOOL CShellProc::PrepareExecuteParms(
 		//				ms_ExeTmp, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 		// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
 		// И если просили не ставить хуки (-new_console:i) - тоже
-		mb_NeedInjects = (aCmd == eCreateProcess) && (mn_ImageBits != 16) && !args.bInjectsDisable;
+		mb_NeedInjects = (aCmd == eCreateProcess) && (mn_ImageBits != 16) && !args.bInjectsDisable && !gbPrepareDefaultTerminal;
 
 		// Параметр -cur_console / -new_console нужно вырезать
 		if (bNewConsoleArg || bCurConsoleArg)
@@ -1939,7 +2070,16 @@ void CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 void CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOW lpSI)
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
-		return; // Перехватывать только под ConEmu
+	{
+		if (isDefaultTerminalEnabled())
+		{
+			// OK, continue to "Default terminal" feature (console applications and batch files only)
+		}
+		else
+		{
+			return; // Перехватывать только под ConEmu
+		}
+	}
 		
 	DWORD nShowCmd = (lpSI->dwFlags & STARTF_USESHOWWINDOW) ? lpSI->wShowWindow : SW_SHOWNORMAL;
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
@@ -1956,21 +2096,41 @@ void CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	// возвращает TRUE только если были изменены СТРОКИ,
 	// а если выставлен mb_NeedInjects - строго включить _Suspended
 	if (mb_NeedInjects)
-		(*anCreationFlags) |= CREATE_SUSPENDED;
+	{
+		if (gbPrepareDefaultTerminal)
+		{
+			_ASSERTEX(!gbPrepareDefaultTerminal && "Not injects must be in gbPrepareDefaultTerminal");
+			mb_NeedInjects = FALSE;
+		}
+		else
+		{
+			(*anCreationFlags) |= CREATE_SUSPENDED;
+		}
+	}
+
 	if (lbRc)
 	{
-		if ((lpSI->wShowWindow != nShowCmd) && !gbPrepareDefaultTerminal)
+		if (gbPrepareDefaultTerminal)
+		{
+			// ConEmu itself must starts normally?
+			lpSI->wShowWindow = SW_SHOWNORMAL;
+			lpSI->dwFlags |= STARTF_USESHOWWINDOW;
+		}
+		else if (lpSI->wShowWindow != nShowCmd)
 		{
 			lpSI->wShowWindow = (WORD)nShowCmd;
 			if (!(lpSI->dwFlags & STARTF_USESHOWWINDOW))
 				lpSI->dwFlags |= STARTF_USESHOWWINDOW;
 		}
+
 		*asFile = mpwsz_TempRetFile;
 	}
+
 	if (lbRc || mpwsz_TempRetParam)
 	{
 		*asCmdLine = mpwsz_TempRetParam;
 	}
+
 	if (mpwsz_TempRetDir)
 	{
 		*asDir = mpwsz_TempRetDir;
@@ -2009,9 +2169,45 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 	}
 #endif
 
+	BOOL bAttachCreated = FALSE;
+
 	if (abSucceeded)
 	{
-		if (mb_NeedInjects)
+		if (gbPrepareDefaultTerminal)
+		{
+			_ASSERTEX(!mb_NeedInjects);
+			// Starting debugging session from VS (for example)?
+			if (mb_DebugWasRequested)
+			{
+				// We need to start console app directly, but it will be nice
+				// to attach it to the existing or new ConEmu window.
+				size_t cchMax = MAX_PATH+80;
+				wchar_t* pszCmdLine = (wchar_t*)malloc(cchMax*sizeof(*pszCmdLine));
+				if (pszCmdLine)
+				{
+					msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /CONPID=%u", m_SrvMapping.sConEmuBaseDir, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"), lpPI->dwProcessId);
+					STARTUPINFO si = {sizeof(si)};
+					PROCESS_INFORMATION pi = {};
+					bAttachCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, m_SrvMapping.sConEmuBaseDir, &si, &pi);
+					if (bAttachCreated)
+					{
+						CloseHandle(pi.hProcess);
+						CloseHandle(pi.hThread);
+					}
+					#ifdef _DEBUG
+					else
+					{
+						DWORD nErr = GetLastError();
+						wchar_t* pszDbg = (wchar_t*)malloc(MAX_PATH*3*sizeof(*pszDbg));
+						msprintf(pszDbg, MAX_PATH*3, L"ConEmuHk: Failed to start attach server, Err=%u! %s\n", nErr, pszCmdLine);
+						OutputDebugString(pszDbg);
+					}
+					#endif
+					free(pszCmdLine);
+				}
+			}
+		}
+		else if (mb_NeedInjects)
 		{
 			wchar_t szDbgMsg[255];
 			#ifdef _DEBUG

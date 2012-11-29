@@ -298,6 +298,8 @@ struct Settings
 
 		// Replace default terminal
 		bool isSetDefaultTerminal;
+		bool isDefaultTerminalNoInjects;
+		BYTE nDefaultTerminalConfirmClose; // "Press Enter to close console". 0 - Auto, 1 - Always, 2 - Never
 		wchar_t* GetDefaultTerminalApps(); // "|" delimited
 		const wchar_t* GetDefaultTerminalAppsMSZ(); // "\0" delimited
 		void SetDefaultTerminalApps(const wchar_t* apszApps); // "|" delimited

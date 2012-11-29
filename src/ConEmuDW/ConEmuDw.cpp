@@ -53,8 +53,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/UnicodeChars.h"
 #include "../ConEmu/version.h"
+#include "../ConEmuCD/ExitCodes.h"
 #include "ConEmuDw.h"
 #include "resource.h"
+#ifdef _DEBUG
+#include "../common/WinObjects.h"
+#endif
 
 #define MSG_TITLE "ConEmu writer"
 #define MSG_INVALID_CONEMU_VER "Unsupported ConEmu version detected!\nRequired version: " CONEMUVERS "\nConsole writer'll works in 4bit mode"
@@ -102,6 +106,7 @@ CESERVER_CONSOLE_MAPPING_HDR SrvMapping = {};
 
 AnnotationHeader* gpTrueColor = NULL;
 HANDLE ghTrueColor = NULL;
+HANDLE ghFarCommitUpdateSrv = NULL;
 BOOL CheckBuffers(bool abWrite = false);
 void CloseBuffers();
 
@@ -207,6 +212,74 @@ BOOL GetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWo
 	return TRUE;
 }
 
+int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
+{
+	HMODULE ghSrvDll = NULL;
+	RequestLocalServer_t gfRequestLocalServer = NULL;
+
+	int iRc = CERR_SRVLOADFAILED;
+	if (!Parm || (Parm->StructSize != sizeof(*Parm)))
+	{
+		iRc = CERR_CARGUMENT;
+		goto wrap;
+	}
+	//RequestLocalServerParm Parm = {(DWORD)sizeof(Parm)};
+
+	//if (Parm->Flags & slsf_AltServerStopped)
+	//{
+	//	_ASSERTE(FALSE);
+	//	iRc = 0;
+	//	// SendStopped посылаетс€ из DllStop!
+	//	goto wrap;
+	//}
+
+	if (!ghSrvDll || !gfRequestLocalServer)
+	{
+		LPCWSTR pszSrvName = WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll");
+
+		if (!ghSrvDll)
+		{
+			gfRequestLocalServer = NULL;
+			ghSrvDll = GetModuleHandle(pszSrvName);
+		}
+
+		if (!ghSrvDll)
+		{
+			_ASSERTE(ghSrvDll!=NULL && "ConEmuCD.dll must be loaded already?");
+
+			wchar_t *pszSlash, szFile[MAX_PATH+1] = {};
+
+			GetModuleFileName(ghOurModule, szFile, MAX_PATH);
+			pszSlash = wcsrchr(szFile, L'\\');
+			if (!pszSlash)
+				goto wrap;
+			pszSlash[1] = 0;
+			wcscat_c(szFile, pszSrvName);
+
+			ghSrvDll = LoadLibrary(szFile);
+			if (!ghSrvDll)
+				goto wrap;
+		}
+
+		gfRequestLocalServer = (RequestLocalServer_t)GetProcAddress(ghSrvDll, "PrivateEntry");
+	}
+
+	if (!gfRequestLocalServer)
+		goto wrap;
+
+	_ASSERTE(CheckCallbackPtr(ghSrvDll, 1, (FARPROC*)&gfRequestLocalServer, TRUE));
+
+	//iRc = gfRequestLocalServer(&gpAnnotationHeader, &ghCurrentOutBuffer);
+	iRc = gfRequestLocalServer(Parm);
+
+	//if  ((iRc == 0) && (Parm->Flags & slsf_PrevAltServerPID))
+	//{
+	//	gnPrevAltServerPID = Parm->nPrevAltServerPID;
+	//}
+wrap:
+	return iRc;
+}
+
 BOOL CheckBuffers(bool abWrite /*= false*/)
 {
 	if (!gbInitialized)
@@ -261,6 +334,17 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 			CloseHandle(ghTrueColor);
 			ghTrueColor = NULL;
 			return FALSE;
+		}
+
+		if (!ghFarCommitUpdateSrv)
+		{
+			RequestLocalServerParm prm = {sizeof(prm)};
+			prm.Flags = slsf_GetFarCommitEvent;
+			int iFRc = RequestLocalServer(&prm);
+			if (iFRc == 0)
+			{
+				ghFarCommitUpdateSrv = prm.hFarCommitEvent;
+			}
 		}
 		
 		#ifdef USE_COMMIT_EVENT
@@ -335,6 +419,11 @@ void CloseBuffers()
 	{
 		CloseHandle(ghTrueColor);
 		ghTrueColor = NULL;
+	}
+	if (ghFarCommitUpdateSrv)
+	{
+		CloseHandle(ghFarCommitUpdateSrv);
+		ghFarCommitUpdateSrv = NULL;
 	}
 }
 
@@ -1164,6 +1253,12 @@ BOOL WINAPI Commit()
 			gpTrueColor->flushCounter++;
 			gpTrueColor->locked = FALSE;
 		}
+	}
+
+	if (ghFarCommitUpdateSrv)
+	{
+		// –азрешить передернуть сервер
+		SetEvent(ghFarCommitUpdateSrv);
 	}
 	
 	#ifdef USE_COMMIT_EVENT

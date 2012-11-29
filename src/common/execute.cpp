@@ -112,7 +112,11 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 
 		// Это это батник - сразу вернуть IMAGE_SUBSYSTEM_BATCH_FILE
 		LPCWSTR pszExt = PointToExt(FileName);
-		if (pszExt && (!lstrcmpi(pszExt, L".cmd") || !lstrcmpiW(pszExt, L".bat")))
+		if (pszExt 
+			&& (!lstrcmpi(pszExt, L".cmd")
+				|| !lstrcmpiW(pszExt, L".bat")
+				|| !lstrcmpiW(pszExt, L".btm") // take command
+			))
 		{
 			CloseHandle(hModuleFile);
 			ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;

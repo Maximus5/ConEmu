@@ -208,7 +208,9 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				}
 			}
 
-			const wchar_t *pszUser, *pszDomain; BOOL bResticted;
+			const wchar_t *pszUser = pArgs->pszUserName;
+			const wchar_t *pszDomain = pArgs->pszDomain;
+			BOOL bResticted = pArgs->bRunAsRestricted;
 			int nChecked = rbCurrentUser;
 			DWORD nUserNameLen = countof(pDlg->ms_CurUser);
 

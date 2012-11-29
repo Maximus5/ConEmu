@@ -209,7 +209,7 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 			gpSrv->pConsole->hdr.bUseTrueColor = gpSrv->guiSettings.bUseTrueColor;
 			gpSrv->pConsole->hdr.bProcessAnsi = gpSrv->guiSettings.bProcessAnsi;
 			gpSrv->pConsole->hdr.bUseClink = gpSrv->guiSettings.bUseClink;
-
+			
 			// ќбновить пути к ConEmu
 			wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
 			wcscpy_c(gpSrv->pConsole->hdr.sConEmuBaseDir, gpSrv->guiSettings.sConEmuBaseDir);
@@ -782,6 +782,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 {
 	int iRc = 0;
 	DWORD dwErr = 0;
+	wchar_t szName[64];
 
 	if (anWorkMode == 0)
 	{
@@ -1087,6 +1088,27 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
 
+	_ASSERTE(gnSelfPID == GetCurrentProcessId());
+	_wsprintf(szName, SKIPLEN(countof(szName)) CEFARWRITECMTEVENT, gnSelfPID);
+	gpSrv->hFarCommitEvent = CreateEvent(NULL,FALSE,FALSE,szName);
+	if (!gpSrv->hFarCommitEvent)
+	{
+		dwErr = GetLastError();
+		_ASSERTE(gpSrv->hFarCommitEvent!=NULL);
+		_printf("CreateEvent(hFarCommitEvent) failed, ErrCode=0x%08X\n", dwErr);
+		iRc = CERR_REFRESHEVENT; goto wrap;
+	}
+
+	_wsprintf(szName, SKIPLEN(countof(szName)) CECURSORCHANGEEVENT, gnSelfPID);
+	gpSrv->hCursorChangeEvent = CreateEvent(NULL,FALSE,FALSE,szName);
+	if (!gpSrv->hCursorChangeEvent)
+	{
+		dwErr = GetLastError();
+		_ASSERTE(gpSrv->hCursorChangeEvent!=NULL);
+		_printf("CreateEvent(hCursorChangeEvent) failed, ErrCode=0x%08X\n", dwErr);
+		iRc = CERR_REFRESHEVENT; goto wrap;
+	}
+
 	gpSrv->hRefreshDoneEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	if (!gpSrv->hRefreshDoneEvent)
 	{
@@ -1324,6 +1346,10 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	SafeCloseHandle(gpSrv->hAltServerChanged);
 
 	SafeCloseHandle(gpSrv->hRefreshEvent);
+
+	SafeCloseHandle(gpSrv->hFarCommitEvent);
+
+	SafeCloseHandle(gpSrv->hCursorChangeEvent);
 
 	SafeCloseHandle(gpSrv->hRefreshDoneEvent);
 
@@ -3404,10 +3430,12 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 	DWORD nPacketID = gpSrv->pConsole->info.nPacketId;
 #endif
 
+#ifdef USE_COMMIT_EVENT
 	if (gpSrv->hExtConsoleCommit)
 	{
 		WaitForSingleObject(gpSrv->hExtConsoleCommit, EXTCONCOMMIT_TIMEOUT);
 	}
+#endif
 
 	if (abForceSend)
 		gpSrv->pConsole->bDataChanged = TRUE;
@@ -3468,7 +3496,11 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 DWORD WINAPI RefreshThread(LPVOID lpvParam)
 {
 	DWORD nWait = 0, nAltWait = 0, nFreezeWait = 0;
-	HANDLE hEvents[2] = {ghQuitEvent, gpSrv->hRefreshEvent};
+	
+	HANDLE hEvents[4] = {ghQuitEvent, gpSrv->hRefreshEvent};
+	DWORD  nEventsBaseCount = 2;
+	DWORD  nRefreshEventId = (WAIT_OBJECT_0+1);
+
 	DWORD nDelta = 0;
 	DWORD nLastReadTick = 0; //GetTickCount();
 	DWORD nLastConHandleTick = GetTickCount();
@@ -3482,9 +3514,18 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	BOOL bConsoleActive = TRUE;
 	BOOL bConsoleVisible = TRUE;
 	DWORD nLastConsoleActiveTick = 0;
+	BOOL bOnlyCursorChanged;
+	BOOL bSetRefreshDoneEvent;
+	DWORD nWaitCursor = 99;
+	DWORD nWaitCommit = 99;
 
 	while (TRUE)
 	{
+		bOnlyCursorChanged = FALSE;
+		bSetRefreshDoneEvent = FALSE;
+		nWaitCursor = 99;
+		nWaitCommit = 99;
+
 		nWait = WAIT_TIMEOUT;
 		//lbForceSend = FALSE;
 		MCHKHEAP;
@@ -3686,9 +3727,72 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//#endif
 		//
 		if (lbWasSizeChange)
-			nWait = (WAIT_OBJECT_0+1); // требуетс€ перечитать консоль после изменени€ размера!
+		{
+			nWait = nRefreshEventId; // требуетс€ перечитать консоль после изменени€ размера!
+			bSetRefreshDoneEvent = TRUE;
+		}
 		else
-			nWait = WaitForMultipleObjects(2, hEvents, FALSE, dwTimeout/*dwTimeout*/);
+		{
+			DWORD nEvtCount = nEventsBaseCount;
+			DWORD nWaitTimeout = dwTimeout;
+			DWORD nFarCommit = 99;
+			DWORD nCursorChanged = 99;
+
+			if (gpSrv->bFarCommitRegistered)
+			{
+				nFarCommit = nEvtCount;
+				hEvents[nEvtCount++] = gpSrv->hFarCommitEvent;
+				nWaitTimeout = 2500; // No need to force console scanning, Far & ExtendedConsole.dll takes care
+			}
+			if (gpSrv->bCursorChangeRegistered)
+			{
+				nCursorChanged = nEvtCount;
+				hEvents[nEvtCount++] = gpSrv->hCursorChangeEvent;
+			}
+
+			nWait = WaitForMultipleObjects(nEvtCount, hEvents, FALSE, nWaitTimeout);
+			
+			if (nWait == nFarCommit || nWait == nCursorChanged)
+			{
+				if (nWait == nFarCommit)
+				{
+					// ѕосле Commit вызванного из Far может быть изменена позици€ курсора. ѕодождем чуть-чуть.
+					if (gpSrv->bCursorChangeRegistered)
+					{
+						nWaitCursor = WaitForSingleObject(gpSrv->hCursorChangeEvent, 10);
+					}
+				}
+				else if (gpSrv->bFarCommitRegistered)
+				{
+					nWaitCommit = WaitForSingleObject(gpSrv->hFarCommitEvent, 0);
+				}
+
+				if (gpSrv->bFarCommitRegistered && (nWait == nCursorChanged))
+				{
+					TODO("ћожно выполнить облегченное чтение консоли");
+					bOnlyCursorChanged = TRUE;
+				}
+
+				nWait = nRefreshEventId;
+			}
+			else
+			{
+				bSetRefreshDoneEvent = (nWait == nRefreshEventId);
+
+				// ƒл€ информации и дл€ гарантированного сброса событий
+				
+				if (gpSrv->bCursorChangeRegistered)
+				{
+					nWaitCursor = WaitForSingleObject(gpSrv->hCursorChangeEvent, 0);
+				}
+
+				if (gpSrv->bFarCommitRegistered)
+				{
+					nWaitCommit = WaitForSingleObject(gpSrv->hFarCommitEvent, 0);
+				}
+			}
+			UNREFERENCED_PARAMETER(nWaitCursor);
+		}
 
 		if (nWait == WAIT_OBJECT_0)
 		{
@@ -3759,7 +3863,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		            // или активна, но сам ConEmu GUI не в фокусе
 		            || bFellInSleep)
 		        // и не дернули событие gpSrv->hRefreshEvent
-		        && (nWait != (WAIT_OBJECT_0+1))
+		        && (nWait != nRefreshEventId)
 				&& !gpSrv->bWasReattached)
 		{
 			DWORD nCurTick = GetTickCount();
@@ -3774,7 +3878,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		}
 
 		#ifdef _DEBUG
-		if (nWait == (WAIT_OBJECT_0+1))
+		if (nWait == nRefreshEventId)
 		{
 			DEBUGSTR(L"*** hRefreshEvent was set, checking console...\n");
 		}
@@ -3861,8 +3965,10 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			lbWasSizeChange = FALSE;
 		}
 
-		if (nWait == (WAIT_OBJECT_0+1))
+		if (bSetRefreshDoneEvent)
+		{
 			SetEvent(gpSrv->hRefreshDoneEvent);
+		}
 
 		// запомнить последний tick
 		//if (lbChanged)

@@ -56,6 +56,7 @@ private:
 	wchar_t ms_ExeTmp[MAX_PATH+1];
 	BOOL mb_WasSuspended; // Если TRUE - значит при вызове CreateProcessXXX уже был флаг CREATE_SUSPENDED
 	BOOL mb_NeedInjects;
+	BOOL mb_DebugWasRequested;
 	//BOOL mb_DosBoxAllowed;
 	
 	//static int mn_InShellExecuteEx;
@@ -82,6 +83,7 @@ private:
 				DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam);
 	BOOL FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd);
+	HWND FindCheckConEmuWindow();
 public:
 	CESERVER_REQ* NewCmdOnCreate(enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,

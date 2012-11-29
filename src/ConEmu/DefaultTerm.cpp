@@ -39,6 +39,7 @@ CDefaultTerminal::CDefaultTerminal()
 	mb_ReadyToHook = FALSE;
 	mh_SignEvent = NULL;
 	mn_PostThreadId = 0;
+	mb_PostCreatedThread = false;
 	InitializeCriticalSection(&mcs);
 }
 
@@ -77,17 +78,23 @@ void CDefaultTerminal::ClearThreads(bool bForceTerminate)
 
 void CDefaultTerminal::PostCreated()
 {
-	if (gpConEmu->DisableSetDefTerm)
+	if (gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal || mb_PostCreatedThread)
 		return;
 
 	mb_ReadyToHook = TRUE;
 
 	// Ётот процесс занимает некоторое врем€, чтобы не блокировать основной поток - запускаем фоновый
+	mb_PostCreatedThread = true;
 	HANDLE hPostThread = CreateThread(NULL, 0, PostCreatedThread, this, 0, &mn_PostThreadId);
-	_ASSERTE(hPostThread!=NULL);
+	
 	if (hPostThread)
 	{
 		m_Threads.push_back(hPostThread);
+	}
+	else
+	{
+		_ASSERTE(hPostThread!=NULL);
+		mb_PostCreatedThread = false;
 	}
 }
 
@@ -115,6 +122,9 @@ DWORD CDefaultTerminal::PostCreatedThread(LPVOID lpParameter)
 		}
 	}
 
+	// Done
+	pTerm->mb_PostCreatedThread = false;
+
 	return 0;
 }
 
@@ -132,7 +142,7 @@ DWORD CDefaultTerminal::PostCheckThread(LPVOID lpParameter)
 
 bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread /*= true*/)
 {
-	if (gpConEmu->DisableSetDefTerm)
+	if (gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
 		return false;
 
 	bool lbRc = false;
@@ -150,8 +160,8 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 	STARTUPINFO si = {sizeof(si)};
 	BOOL bStarted = FALSE;
 
-	// ≈сли не просили, или если главное окно еще не создано
-	if (!gpSet->isSetDefaultTerminal || !mb_ReadyToHook)
+	// ≈сли главное окно еще не создано
+	if (!mb_ReadyToHook)
 	{
 		// —разу выходим
 		goto wrap;
@@ -283,6 +293,8 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 		lbRc = true;
 		goto wrap;
 	}
+
+	_ASSERTE(gpSet->isSetDefaultTerminal && !gpConEmu->DisableSetDefTerm);
 
 	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, nForePID);
 	if (!hProcess)

@@ -48,6 +48,7 @@ public:
 	LONG_PTR setWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
 	HWND     getParent(HWND hWnd);
 	HWND     setParent(HWND hWndChild, HWND hWndNewParent);
+	HWND     findWindowEx(HWND hwndParent, HWND hwndChildAfter, LPCTSTR lpszClass, LPCTSTR lpszWindow);
 	BOOL     getWindowRect(HWND hWnd, LPRECT lpRect);
 	int      getSystemMetrics(int nIndex);
 	BOOL     systemParametersInfoW(UINT uiAction, UINT uiParam, PVOID pvParam, UINT fWinIni);
@@ -95,6 +96,8 @@ private:
 	getParent_t getParent_f;
 	typedef HWND     (WINAPI* setParent_t)(HWND hWndChild, HWND hWndNewParent);
 	setParent_t setParent_f;
+	typedef HWND     (WINAPI* findWindowEx_t)(HWND hwndParent, HWND hwndChildAfter, LPCTSTR lpszClass, LPCTSTR lpszWindow);
+	findWindowEx_t findWindowEx_f;
 	typedef BOOL     (WINAPI* getWindowRect_t)(HWND hWnd, LPRECT lpRect);
 	getWindowRect_t getWindowRect_f;
 	typedef int      (WINAPI* getSystemMetrics_t)(int nIndex);

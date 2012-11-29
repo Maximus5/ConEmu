@@ -63,6 +63,7 @@ typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 
 // Some WinAPI related functions
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
+BOOL FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);
 BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
 BOOL DirectoryExists(LPCWSTR asPath);
 BOOL MyCreateDirectory(wchar_t* asPath);

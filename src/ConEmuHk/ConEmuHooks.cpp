@@ -160,6 +160,7 @@ HANDLE ghLastConInHandle = NULL, ghLastNotConInHandle = NULL;
 /* ************ Globals for Far Hooks ************ */
 struct HookModeFar gFarMode = {sizeof(HookModeFar)};
 InQueue gInQueue = {};
+HANDLE ghConsoleCursorChanged = NULL;
 /* ************ Globals for Far Hooks ************ */
 
 
@@ -192,6 +193,18 @@ bool gbDosBoxProcess = false;
 
 /* ************ Globals for "Default terminal ************ */
 bool gbPrepareDefaultTerminal = false;
+ConEmuGuiMapping* gpDefaultTermParm = NULL;
+
+bool isDefaultTerminalEnabled()
+{
+	if (!gbPrepareDefaultTerminal || !gpDefaultTermParm)
+		return false;
+	if ((gpDefaultTermParm->cbSize != sizeof(*gpDefaultTermParm)) || (gpDefaultTermParm->nProtocolVersion != CESERVER_REQ_VER))
+		return false;
+	if (!*gpDefaultTermParm->sConEmuExe || !gpDefaultTermParm->bUseDefaultTerminal)
+		return false;
+	return true;
+}
 /* ************ Globals for "Default terminal ************ */
 
 struct ReadConsoleInfo gReadConsoleInfo = {};
@@ -329,6 +342,8 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput);
 BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
 BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
 COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput);
+BOOL WINAPI OnSetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosition);
+BOOL WINAPI OnSetConsoleCursorInfo(HANDLE hConsoleOutput, const CONSOLE_CURSOR_INFO *lpConsoleCursorInfo);
 INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
 HDC WINAPI OnGetDC(HWND hWnd); // user32
 HDC WINAPI OnGetDCEx(HWND hWnd, HRGN hrgnClip, DWORD flags); // user32
@@ -456,6 +471,16 @@ bool InitHooksCommon()
 		{
 			(void*)OnGetLargestConsoleWindowSize,
 			"GetLargestConsoleWindowSize",
+			kernel32
+		},
+		{
+			(void*)OnSetConsoleCursorPosition,
+			"SetConsoleCursorPosition",
+			kernel32
+		},
+		{
+			(void*)OnSetConsoleCursorInfo,
+			"SetConsoleCursorInfo",
 			kernel32
 		},
 		#endif
@@ -1050,7 +1075,7 @@ HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPC
 		// При попытке открыть мэппинг для TrueColor - перейти в режим локального сервера
 		if (lstrcmpi(lpName, szTrueColorMap) == 0)
 		{
-			RequestLocalServerParm Parm = {(DWORD)sizeof(Parm), slsf_RequestTrueColor};
+			RequestLocalServerParm Parm = {(DWORD)sizeof(Parm), slsf_RequestTrueColor|slsf_GetCursorEvent};
 			if (RequestLocalServer(&Parm) == 0)
 			{
 				if (Parm.pAnnotation)
@@ -1063,6 +1088,10 @@ HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPC
 				{
 					WARNING("Перенести обработку AnnotationShareName в хуки");
 				}
+
+				if (ghConsoleCursorChanged && (ghConsoleCursorChanged != Parm.hCursorChangeEvent))
+					CloseHandle(ghConsoleCursorChanged);
+				ghConsoleCursorChanged = Parm.hCursorChangeEvent;
 			}
 		}
 	}
@@ -4999,6 +5028,32 @@ COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 	}
 	
 	return cr;
+}
+
+BOOL WINAPI OnSetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosition)
+{
+	typedef BOOL (WINAPI* OnSetConsoleCursorPosition_t)(HANDLE,COORD);
+	ORIGINALFAST(SetConsoleCursorPosition);
+
+	BOOL lbRc = F(SetConsoleCursorPosition)(hConsoleOutput, dwCursorPosition);
+
+	if (ghConsoleCursorChanged)
+		SetEvent(ghConsoleCursorChanged);
+
+	return lbRc;
+}
+
+BOOL WINAPI OnSetConsoleCursorInfo(HANDLE hConsoleOutput, const CONSOLE_CURSOR_INFO *lpConsoleCursorInfo)
+{
+	typedef BOOL (WINAPI* OnSetConsoleCursorInfo_t)(HANDLE,const CONSOLE_CURSOR_INFO *);
+	ORIGINALFAST(SetConsoleCursorInfo);
+
+	BOOL lbRc = F(SetConsoleCursorInfo)(hConsoleOutput, lpConsoleCursorInfo);
+
+	if (ghConsoleCursorChanged)
+		SetEvent(ghConsoleCursorChanged);
+
+	return lbRc;
 }
 
 void PatchDialogParentWnd(HWND& hWndParent)
