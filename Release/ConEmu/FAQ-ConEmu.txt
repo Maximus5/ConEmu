@@ -46,6 +46,17 @@ A. Если сертификат импортирован в корневые д
 A. Если сертификат импортирован в корневые доверенные сертификаты
    антивирусы (например KIS) будут считать программу доверенной.
 
+Q. What is an Apps key?
+A. This key (mentioned as VK_APPS in WinUser.h) located between RightWin and RightShift
+   on most keyboard layouts: http://en.wikipedia.org/wiki/File:Klawiatura_maszynistki.jpg
+   Sometimes it's called «Application/Menu». Thought, it is not correct in Windows because
+   VK_MENU (from WinUser.h) refers to the Alt key in fact.
+
+Q. What is a Host key?
+A. This is sort of «substitution» for key chosed by user. For example you may choose
+   common modifier (from one or more Ctrl/Alt/Shift/Apps) for group of actions.
+   Browse «Keys & Macro» page in the Settings dialog.
+
 Q. Как импортировать в корневые доверенные сертификаты?
 A. В Vista+ можно просто 'запустить' файл сертификата и нажать кнопку 'Установить сертификат'.
 A. Через MMC -> оснастка Certificates.

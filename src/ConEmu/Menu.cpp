@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include "header.h"
 //
+#include "Menu.h"
 #include "ConEmu.h"
 #include "Attach.h"
 #include "Menu.h"
@@ -1794,7 +1795,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			if (!mb_PassSysCommand)
 			{
 				#ifndef _DEBUG
-				if (isPictureView())
+				if (gpConEmu->isPictureView())
 					break;
 				#endif
 				
@@ -1815,7 +1816,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			if (!mb_PassSysCommand)
 			{
 				#ifndef _DEBUG
-				if (!isIconic() && isPictureView())
+				if (!gpConEmu->isIconic() && gpConEmu->isPictureView())
 					break;
 				#endif
 
