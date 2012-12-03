@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "VConGroup.h"
 #include "RealConsole.h"
+#include "Menu.h"
 
 //#define MAX_OVERLAY_WIDTH    300
 //#define MAX_OVERLAY_HEIGHT   300
@@ -49,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRBACK(s) //DEBUGSTR(s)
 #define DEBUGSTROVER(s) DEBUGSTR(s)
 
+//#define ForwardedPanelInfo
 
 CDragDrop::CDragDrop()
 {
@@ -64,6 +66,7 @@ CDragDrop::CDragDrop()
 	mb_DragWithinNow = FALSE;
 	mn_ExtractIconsTID = 0;
 	mh_ExtractIcons = NULL;
+	mb_IsUpdatePackage = false;
 	InitializeCriticalSection(&m_CrThreads);
 }
 
@@ -125,7 +128,7 @@ CDragDrop::~CDragDrop()
 	TerminateDrag();
 
 
-	if (m_pfpi) free(m_pfpi); m_pfpi=NULL;
+	//if (m_pfpi) free(m_pfpi); m_pfpi=NULL;
 
 	//if (mp_DesktopID) { CoTaskMemFree(mp_DesktopID); mp_DesktopID = NULL; }
 	DeleteCriticalSection(&m_CrThreads);
@@ -798,7 +801,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 
 		SetForegroundWindow(ghWnd);
 
-		int nId = gpConEmu->trackPopupMenu(tmp_PasteCmdLine, hPopup, TPM_LEFTALIGN|TPM_BOTTOMALIGN|TPM_RETURNCMD/*|TPM_NONOTIFY*/,
+		int nId = gpConEmu->mp_Menu->trackPopupMenu(tmp_PasteCmdLine, hPopup, TPM_LEFTALIGN|TPM_BOTTOMALIGN|TPM_RETURNCMD/*|TPM_NONOTIFY*/,
 	                         ptCur.x,ptCur.y, ghWnd);
 		DestroyMenu(hPopup);
 
@@ -1319,6 +1322,12 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
+	// Drag over inactive pane?
+	if (NeedRefreshToInfo(pt))
+	{
+		RetrieveDragToInfo();
+	}
+
 	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
 	HRESULT hr = DragOverInt(grfKeyState, pt, pdwEffect);
 
@@ -1340,7 +1349,12 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 	DWORD dwAllowed = *pdwEffect;
 	CVConGuard VCon;
 
-	if (!gpSet->isDropEnabled && !gpConEmu->isDragging())
+	if (mb_IsUpdatePackage && !mp_LastRCon)
+	{
+		// OK, Запустить AutoUpdate c заранее загруженным пакетом
+		*pdwEffect = DROPEFFECT_COPY;
+	}
+	else if (!gpSet->isDropEnabled && !gpConEmu->isDragging())
 	{
 		*pdwEffect = DROPEFFECT_NONE;
 		gpConEmu->DebugStep(_T("DnD: Drop disabled"));
@@ -1479,15 +1493,33 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 	if (gbDebugLogStarted || IsDebuggerPresent())
 		EnumDragFormats(pDataObject);
 
+	CheckIsUpdatePackage(pDataObject);
+
+	bool bNeedLoadImg = false;
+
+	if (gpSet->isDropEnabled && !mb_selfdrag && NeedRefreshToInfo(pt))
+	{
+		// при "своем" драге - информация уже получена
+		RetrieveDragToInfo();
+	}
+	else if (!m_pfpi)
+	{
+		_ASSERTE(m_pfpi!=NULL); // Must be retrieved already!
+		RetrieveDragToInfo();
+	}
+
+	// Скорректировать допустимые действия
+	DragOverInt(grfKeyState, pt, pdwEffect);
+
 	if (gpSet->isDropEnabled || mb_selfdrag)
 	{
 		if (!mb_selfdrag)
 		{
-			// при "своем" драге - информация уже получена
-			RetrieveDragToInfo(/*pDataObject*/);
+			//// при "своем" драге - информация уже получена
+			//RetrieveDragToInfo();
 
-			// Скорректировать допустимые действия
-			DragOverInt(grfKeyState, pt, pdwEffect);
+			//// Скорректировать допустимые действия
+			//DragOverInt(grfKeyState, pt, pdwEffect);
 
 			if (LoadDragImageBits(pDataObject))
 			{
@@ -1648,4 +1680,48 @@ void CDragDrop::ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownErr
 		EnumDragFormats(pDataObject, hFile);
 		CloseHandle(hFile);
 	}
+}
+
+bool CDragDrop::CheckIsUpdatePackage(IDataObject * pDataObject)
+{
+	bool bHasUpdatePackage = false;
+
+	STGMEDIUM stgMediumMap = { 0 };
+	FORMATETC fmtetcMap = { RegisterClipboardFormat(CFSTR_FILENAMEMAPW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+
+	HRESULT hr = pDataObject->GetData(&fmtetcMap, &stgMediumMap);
+
+	if (hr == S_OK && stgMediumMap.hGlobal)
+	{
+		LPCWSTR pszFileMap = (LPCWSTR)GlobalLock(stgMediumMap.hGlobal);
+
+		if (pszFileMap && *pszFileMap && lstrlen(pszFileMap) <= MAX_PATH)
+		{
+			wchar_t szName[MAX_PATH+1];
+			LPCWSTR pszName = PointToName(pszFileMap);
+			if (pszName && *pszName)
+			{
+				lstrcpyn(szName, pszName, countof(szName));
+				CharLowerBuff(szName, lstrlen(szName));
+				LPCWSTR pszExt = PointToExt(szName);
+				if (pszExt)
+				{
+					if ((wcsncmp(szName, L"coemupack.", 11) == 0)
+						&& (wcscmp(pszExt, L".7z") == 0))
+					{
+						bHasUpdatePackage = true;
+					}
+					else if ((wcsncmp(szName, L"coemusetup.", 12) == 0)
+						&& (wcscmp(pszExt, L".exe") == 0))
+					{
+						bHasUpdatePackage = true;
+					}
+				}
+			}
+		}
+		ReleaseStgMedium(&stgMediumMap);
+	}
+
+	mb_IsUpdatePackage = bHasUpdatePackage;
+	return bHasUpdatePackage;
 }

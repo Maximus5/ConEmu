@@ -47,8 +47,11 @@ protected:
 
 	CWinInet* wi;
 	friend class CWinInet;
-	HANDLE mh_Internet, mh_Connect;
-	DWORD mn_InternetContentLen, mn_InternetContentReady;
+	bool mb_InetMode;
+	HANDLE mh_Internet, mh_Connect, mh_SrcFile;
+	DWORD mn_InternetContentLen, mn_InternetContentReady, mn_PackageSize;
+	DWORD_PTR mn_Context;
+	void CloseInternet(bool bFull);
 	
 	BOOL mb_ManualCallMode;
 	ConEmuUpdateSettings* mp_Set;
@@ -64,6 +67,8 @@ protected:
 
 	wchar_t* mpsz_PendingPackageFile;
 	wchar_t* mpsz_PendingBatchFile;
+
+	DWORD mn_Timeout, mn_ConnTimeout, mn_DataTimeout, mn_FileTimeout;
 	
 	static DWORD WINAPI CheckThreadProc(LPVOID lpParameter);
 	DWORD CheckProcInt();

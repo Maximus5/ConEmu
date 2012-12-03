@@ -80,6 +80,10 @@ class CDragDropData
 		BOOL PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAllowedEffects);
 		// Загрузить из фара информацию для Drop
 		void RetrieveDragToInfo();
+		// Запомнить занные о Destination
+		void SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfoSize, CRealConsole* pRCon);
+		// Может быть требуется обновить данные о назначении?
+		bool NeedRefreshToInfo(POINTL ptScreen);
 		// Callback
 		void DragFeedBack(DWORD dwEffect);
 		// Начат Drag, или создано окно mh_Overlapped
@@ -102,8 +106,10 @@ class CDragDropData
 		BOOL AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
 	protected:
 		CDataObject *mp_DataObject;
+		size_t mn_PfpiSizeMax;
 		ForwardedPanelInfo *m_pfpi;
-		BOOL mb_DragDropRegistered;
+		void* mp_LastRCon; // Just a pointer, for comparision
+		bool mb_DragDropRegistered;
 		#ifdef USE_DROP_HELPER
 		IDropTargetHelper* mp_TargetHelper;
 		bool mb_TargetHelperFailed;

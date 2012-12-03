@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "Options.h"
 #include "Status.h"
+#include "Menu.h"
 
 #ifdef _DEBUG
 static int _nDbgStep = 0; wchar_t _szDbg[512];
@@ -229,30 +230,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			if ((wParam == HTSYSMENU && uMsg == WM_NCLBUTTONDOWN)
 				/*|| (wParam == HTCAPTION && uMsg == WM_NCRBUTTONDOWN)*/)
 			{
-				//if (uMsg == WM_NCRBUTTONDOWN)
-				//	gpConEmu->ShowSysmenu((SHORT)LOWORD(lParam),(SHORT)HIWORD(lParam));
-				//else
-
-				DWORD nCurTick = GetTickCount();
-				DWORD nOpenDelay = nCurTick - gpConEmu->mn_SysMenuOpenTick;
-				DWORD nCloseDelay = nCurTick - gpConEmu->mn_SysMenuCloseTick;
-				DWORD nDoubleTime = GetDoubleClickTime();
-
-				if (gpConEmu->mn_SysMenuOpenTick && (nOpenDelay < nDoubleTime))
-				{
-					PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
-				}
-				else if (gpConEmu->mn_SysMenuCloseTick && (nCloseDelay < (nDoubleTime/2)))
-				{
-					// Пропустить - кликом закрыли меню
-					#ifdef _DEBUG
-					int nDbg = 0;
-					#endif
-				}
-				else
-				{
-					gpConEmu->ShowSysmenu();
-				}
+				gpConEmu->mp_Menu->OnNcIconLClick();
 				lResult = 0;
 				lbRc = true;
 			}
@@ -350,7 +328,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			//GetWindowText(hWnd, ms_LastCaption, countof(ms_LastCaption));
 			//SetWindowText(hWnd, L"");
 		}
-		lResult = gpConEmu->OnSysCommand(hWnd, wParam, lParam);
+		lResult = gpConEmu->mp_Menu->OnSysCommand(hWnd, wParam, lParam);
 		if (wParam == SC_MAXIMIZE || wParam == SC_MINIMIZE || wParam == SC_RESTORE)
 		{
 			mb_NcAnimate = FALSE;

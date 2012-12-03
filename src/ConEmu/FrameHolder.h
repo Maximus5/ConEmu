@@ -55,7 +55,7 @@ public:
 	bool SetAllowPreserveClient(bool abSwitch);
 public:
 	// Next functions must me defined in the ancestor
-	virtual void ShowSysmenu(int x=-32000, int y=-32000, bool bAlignUp = false) = 0;
+	//virtual void ShowSysmenu(int x=-32000, int y=-32000, bool bAlignUp = false) = 0;
 	//virtual void ShowTabMenu(int anConsole, int anTab, int x, int y) = 0;
 	//virtual void OnPaintClient(HDC hdc/*, int width, int height*/) = 0;
 	virtual void CalculateTabPosition(const RECT &rcWindow, const RECT &rcCaption, RECT* rcTabs);

@@ -81,35 +81,6 @@ class CDragDrop :
 			SHFILEOPSTRUCT fop;
 		} ShlOpInfo;
 		static DWORD WINAPI ShellOpThreadProc(LPVOID lpParameter);
-		//DragImageBits m_BitsInfo;
-		//HWND mh_Overlapped;
-		//HDC mh_BitsDC;
-		//HBITMAP mh_BitsBMP, mh_BitsBMP_Old;
-		//int m_iBPP;
-		//static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-		//BOOL CreateDragImageWindow();
-		//void DestroyDragImageWindow();
-		//BOOL LoadDragImageBits(IDataObject * pDataObject);
-		//BOOL CreateDragImageBits(IDataObject * pDataObject);
-		//DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
-		//BOOL DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY );
-		//void DestroyDragImageBits();
-		//void MoveDragWindow(BOOL abVisible=TRUE);
-		//DragImageBits m_ImgInfo;
-		//LPBYTE mp_ImgData;
-		//DragImageBits *mp_Bits;
-		//BOOL mb_DragWithinNow;
-		//
-		//static DWORD WINAPI ExtractIconsThread(LPVOID lpParameter);
-		//DWORD mn_ExtractIconsTID;
-		//HANDLE mh_ExtractIcons;
-		//
-		//typedef struct _DragThreadArg {
-		//	CDragDrop   *pThis;
-		//	IDataObject *pDataObject;
-		//	IDropSource *pDropSource;
-		//	DWORD        dwAllowedEffects;
-		//} DragThreadArg;
-		//static DWORD WINAPI DragOpThreadProc(LPVOID lpParameter);
-		//HANDLE mh_DragThread; DWORD mn_DragThreadId;
+		bool mb_IsUpdatePackage;
+		bool CheckIsUpdatePackage(IDataObject * pDataObject);
 };

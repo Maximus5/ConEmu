@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include "ConEmu.h"
+#include "Menu.h"
 #include "ConEmuCtrl.h"
 #include "Macro.h"
 #include "OptionsClass.h"
@@ -420,7 +421,7 @@ bool CConEmuCtrl::key_MultiNewPopupMenu(DWORD VkMod, bool TestOnly, const ConEmu
 	if (TestOnly)
 		return true;
 	// Создать новую консоль
-	gpConEmu->mp_TabBar->OnNewConPopupMenu();
+	gpConEmu->mp_Menu->OnNewConPopupMenu();
 	return true;
 }
 
@@ -440,7 +441,7 @@ bool CConEmuCtrl::key_MultiNewAttach(DWORD VkMod, bool TestOnly, const ConEmuHot
 	if (TestOnly)
 		return true;
 	// Создать новую консоль
-	gpConEmu->OnSysCommand(ghWnd, IDM_ATTACHTO, 0);
+	gpConEmu->mp_Menu->OnSysCommand(ghWnd, IDM_ATTACHTO, 0);
 	return true;
 }
 
@@ -629,7 +630,7 @@ bool CConEmuCtrl::key_Settings(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 	if (TestOnly)
 		return true;
 	//KeyUp!
-	gpConEmu->OnSysCommand(ghWnd, ID_SETTINGS, 0);
+	gpConEmu->mp_Menu->OnSysCommand(ghWnd, ID_SETTINGS, 0);
 	return true;
 }
 
@@ -650,7 +651,7 @@ bool CConEmuCtrl::key_SystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 	}
 	
 	//Win-Alt-Space
-	gpConEmu->ShowSysmenu(ptCur.x, ptCur.y);
+	gpConEmu->mp_Menu->ShowSysmenu(ptCur.x, ptCur.y);
 
 	return true;
 }
@@ -673,10 +674,10 @@ bool CConEmuCtrl::key_TabMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 		}
 	}
 	if (ptCur.x == -32000)
-		ptCur = gpConEmu->CalcTabMenuPos(pRCon->VCon());
+		ptCur = gpConEmu->mp_Menu->CalcTabMenuPos(pRCon->VCon());
 
 	//Win-Apps
-	pRCon->VCon()->ShowPopupMenu(ptCur);
+	gpConEmu->mp_Menu->ShowPopupMenu(pRCon->VCon(), ptCur);
 	return true;
 }
 
@@ -1165,12 +1166,12 @@ bool CConEmuCtrl::key_GuiMacro(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 
 void CConEmuCtrl::ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /*= TPM_CENTERALIGN|TPM_VCENTERALIGN*/)
 {
-	HMENU hPopup = gpConEmu->CreateVConListPopupMenu(NULL, abFirstTabOnly);
+	HMENU hPopup = gpConEmu->mp_Menu->CreateVConListPopupMenu(NULL, abFirstTabOnly);
 
 	if (!Align)
 		Align = TPM_LEFTALIGN|TPM_TOPALIGN;
 
-	int nTab = gpConEmu->trackPopupMenu(tmp_TabsList, hPopup, Align|TPM_RETURNCMD,
+	int nTab = gpConEmu->mp_Menu->trackPopupMenu(tmp_TabsList, hPopup, Align|TPM_RETURNCMD,
 		pt.x, pt.y, ghWnd);
 
 	if (nTab >= IDM_VCON_FIRST && nTab <= IDM_VCON_LAST)

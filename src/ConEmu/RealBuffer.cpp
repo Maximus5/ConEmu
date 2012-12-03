@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuPipe.h"
 #include "Macro.h"
 #include "Status.h"
+#include "Menu.h"
 
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
@@ -2718,7 +2719,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 			RECT rcExcl = {con.ptRClick4KeyBar.x-1,con.ptRClick4KeyBar.y-1,con.ptRClick4KeyBar.x+1,con.ptRClick4KeyBar.y+1};
 
-			int i = gpConEmu->trackPopupMenu(tmp_KeyBar, h, TPM_LEFTALIGN|TPM_BOTTOMALIGN|/*TPM_NONOTIFY|*/TPM_RETURNCMD|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
+			int i = gpConEmu->mp_Menu->trackPopupMenu(tmp_KeyBar, h, TPM_LEFTALIGN|TPM_BOTTOMALIGN|/*TPM_NONOTIFY|*/TPM_RETURNCMD|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
 						con.ptRClick4KeyBar.x, con.ptRClick4KeyBar.y, ghWnd, &rcExcl);
 			DestroyMenu(h);
 

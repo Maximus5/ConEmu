@@ -301,8 +301,8 @@ class CVirtualConsole :
 		static void ClearPartBrushes();
 		HRGN GetExclusionRgn(bool abTestOnly=false);
 		COORD FindOpaqueCell();
-		void ShowPopupMenu(POINT ptCur, DWORD Align = TPM_LEFTALIGN);
-		void ExecPopupMenuCmd(int nCmd);
+		//void ShowPopupMenu(POINT ptCur, DWORD Align = TPM_LEFTALIGN);
+		//void ExecPopupMenuCmd(int nCmd);
 		bool RegisterPanelView(PanelViewInit* ppvi);
 		void OnPanelViewSettingsChanged();
 		bool IsPanelViews();
@@ -365,7 +365,7 @@ class CVirtualConsole :
 			POINT *pAllPoints;
 			INT   *pAllCounts;
 		} TransparentInfo;
-		static HMENU mh_PopupMenu, mh_TerminatePopup, mh_DebugPopup, mh_EditPopup;
+		//static HMENU mh_PopupMenu, mh_TerminatePopup, mh_DebugPopup, mh_EditPopup;
 	protected:
 		virtual void OnDestroy();
 };

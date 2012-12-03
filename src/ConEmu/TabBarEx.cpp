@@ -146,10 +146,10 @@ TabBarClass::~TabBarClass()
 	m_TabStack.ReleaseTabs(FALSE);
 }
 
-bool TabBarClass::OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags)
-{
-	return false;
-}
+//bool TabBarClass::OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags)
+//{
+//	return false;
+//}
 
 void TabBarClass::Retrieve()
 {
@@ -347,13 +347,13 @@ void TabBarClass::OnChooseTabPopup()
 {
 }
 
-void TabBarClass::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
-{
-}
-
-void TabBarClass::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
-{
-}
+//void TabBarClass::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
+//{
+//}
+//
+//void TabBarClass::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
+//{
+//}
 
 void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 {
@@ -3356,4 +3356,10 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 
 	return pVCon;
 }
-#endif
+#endif // #ifdef FarSendChangeTab
+
+bool TabBarClass::Toolbar_GetBtnRect(int nCmd, RECT* rcBtnRect)
+{
+	_ASSERTE(FALSE); // TODO:
+	return false;
+}

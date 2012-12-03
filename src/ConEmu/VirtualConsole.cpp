@@ -156,10 +156,10 @@ char CVirtualConsole::mc_Uni2Oem[0x10000];
 wchar_t CVirtualConsole::ms_Spaces[MAX_SPACES];
 wchar_t CVirtualConsole::ms_HorzDbl[MAX_SPACES];
 wchar_t CVirtualConsole::ms_HorzSingl[MAX_SPACES];
-HMENU CVirtualConsole::mh_PopupMenu = NULL;
-HMENU CVirtualConsole::mh_TerminatePopup = NULL;
-HMENU CVirtualConsole::mh_DebugPopup = NULL;
-HMENU CVirtualConsole::mh_EditPopup = NULL;
+//HMENU CVirtualConsole::mh_PopupMenu = NULL;
+//HMENU CVirtualConsole::mh_TerminatePopup = NULL;
+//HMENU CVirtualConsole::mh_DebugPopup = NULL;
+//HMENU CVirtualConsole::mh_EditPopup = NULL;
 
 //--> VConGroup
 //CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
@@ -4827,144 +4827,6 @@ COORD CVirtualConsole::FindOpaqueCell()
 	}
 
 	return cr;
-}
-
-// Показать контекстное меню для ТЕКУЩЕЙ закладки консоли
-// ptCur - экранные координаты
-void CVirtualConsole::ShowPopupMenu(POINT ptCur, DWORD Align /* = TPM_LEFTALIGN */)
-{
-	CVConGuard guard(this);
-	BOOL lbNeedCreate = (mh_PopupMenu == NULL);
-
-	if (!Align)
-		Align = TPM_LEFTALIGN;
-
-	// Создать или обновить enable/disable
-	mh_PopupMenu = gpConEmu->CreateVConPopupMenu(this, mh_PopupMenu, TRUE, mh_TerminatePopup);
-	if (!mh_PopupMenu)
-	{
-		MBoxAssert(mh_PopupMenu!=NULL);
-		return;
-	}
-
-	if (lbNeedCreate)
-	{
-		AppendMenu(mh_PopupMenu, MF_BYPOSITION, MF_SEPARATOR, 0);
-
-		mh_EditPopup = gpConEmu->CreateEditMenuPopup(this);
-		AppendMenu(mh_PopupMenu, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_EditPopup, _T("Ed&it"));
-
-		mh_DebugPopup = gpConEmu->CreateDebugMenuPopup();
-		AppendMenu(mh_PopupMenu, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_DebugPopup, _T("&Debug"));
-	}
-	else
-	{
-		// обновить enable/disable пунктов меню
-		gpConEmu->CreateEditMenuPopup(this, mh_EditPopup);
-	}
-
-	// Некузяво. Может вслыть тултип под меню
-	//ptCur.x++; ptCur.y++; // чтобы меню можно было сразу закрыть левым кликом.
-	
-	
-	// -- перенесено в CreateVConPopupMenu
-	//bool lbIsFar = mp_RCon->isFar(TRUE/* abPluginRequired */)!=FALSE;
-	//bool lbIsPanels = lbIsFar && mp_RCon->isFilePanel(false/* abPluginAllowed */)!=FALSE;
-	//bool lbIsEditorModified = lbIsFar && mp_RCon->isEditorModified()!=FALSE;
-	//bool lbHaveModified = lbIsFar && mp_RCon->GetModifiedEditors()!=FALSE;
-	//bool lbCanCloseTab = mp_RCon->CanCloseTab();
-	//
-	//if (lbHaveModified)
-	//{
-	//	if (!gpSet->sSaveAllMacro || !*gpSet->sSaveAllMacro)
-	//		lbHaveModified = false;
-	//}
-	//
-	//EnableMenuItem(mh_PopupMenu, IDM_CLOSE, MF_BYCOMMAND | (lbCanCloseTab ? MF_ENABLED : MF_GRAYED));
-	//EnableMenuItem(mh_PopupMenu, IDM_ADMIN_DUPLICATE, MF_BYCOMMAND | (lbIsPanels ? MF_ENABLED : MF_GRAYED));
-	//EnableMenuItem(mh_PopupMenu, IDM_SAVE, MF_BYCOMMAND | (lbIsEditorModified ? MF_ENABLED : MF_GRAYED));
-	//EnableMenuItem(mh_PopupMenu, IDM_SAVEALL, MF_BYCOMMAND | (lbHaveModified ? MF_ENABLED : MF_GRAYED));
-	
-	int nCmd = gpConEmu->trackPopupMenu(tmp_VCon, mh_PopupMenu,
-	                          Align | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
-	                          ptCur.x, ptCur.y, ghWnd);
-
-	if (!nCmd)
-		return; // отмена
-
-	ExecPopupMenuCmd(nCmd);
-}
-
-void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
-{
-	if (!this)
-		return;
-
-	CVConGuard guard(this);
-
-	switch (nCmd)
-	{
-		case IDM_CLOSE:
-			mp_RCon->CloseTab();
-			break;
-		case IDM_DETACH:
-			mp_RCon->Detach();
-			//if (mp_RCon->Detach())
-			//	gpConEmu->OnVConClosed(this);
-			break;
-		case IDM_RENAMETAB:
-			mp_RCon->DoRenameTab();
-			break;
-		case IDM_DUPLICATE:
-		case IDM_ADMIN_DUPLICATE:
-			if ((nCmd == IDM_ADMIN_DUPLICATE) || isPressed(VK_SHIFT))
-				mp_RCon->AdminDuplicate();
-			else
-				mp_RCon->DuplicateRoot();
-			break;
-		case IDM_TERMINATEPRC:
-			mp_RCon->CloseConsole(true, false);
-			break;
-		case IDM_TERMINATECON:
-			//mp_RCon->CloseConsoleWindow();
-			mp_RCon->CloseConsole(false, true);
-			break;
-		case IDM_TERMINATEGROUP:
-			//mp_RCon->CloseConsoleWindow();
-			CVConGroup::CloseGroup(this);
-			break;
-		case IDM_RESTART:
-		case IDM_RESTARTAS:
-
-			if (gpConEmu->isActive(this))
-			{
-				gpConEmu->RecreateAction(cra_RecreateTab/*TRUE*/, isPressed(VK_SHIFT), (nCmd==IDM_RESTARTAS));
-			}
-			else
-			{
-				MBoxAssert(gpConEmu->isActive(this));
-			}
-
-			break;
-		case ID_NEWCONSOLE:
-			gpConEmu->RecreateAction(gpSet->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
-			break;
-		case IDM_ATTACHTO:
-			gpConEmu->OnSysCommand(ghWnd, IDM_ATTACHTO, 0);
-			break;
-		case IDM_SAVE:
-			mp_RCon->PostMacro(L"F2");
-			break;
-		case IDM_SAVEALL:
-			mp_RCon->PostMacro(gpSet->sSaveAllMacro);
-			break;
-		default:
-			if (nCmd >= 0xAB00)
-			{
-				// "Системные" команды, обрабатываемые в CConEmu
-				gpConEmu->OnSysCommand(ghWnd, nCmd, 0);
-			}
-	}
 }
 
 void CVirtualConsole::OnPanelViewSettingsChanged()

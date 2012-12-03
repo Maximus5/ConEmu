@@ -63,6 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Update.h"
 #include "LoadImg.h"
 #include "Status.h"
+#include "Menu.h"
 #include "DefaultTerm.h"
 #include "../ConEmuCD/RegPrepare.h"
 #include "../ConEmuCD/GuiHooks.h"
@@ -265,6 +266,7 @@ CConEmuMain::CConEmuMain()
 	wcscat_c(ms_ConEmuDefTitle, ms_ConEmuBuild);
 	wcscat_c(ms_ConEmuDefTitle, WIN3264TEST(L" [32]",L" [64]"));
 
+	mp_Menu = new CConEmuMenu;
 	mp_TabBar = NULL; /*m_Macro = NULL;*/ mp_Tip = NULL;
 	mp_Status = new CStatus;
 	mp_DefTrm = new CDefaultTerminal;
@@ -279,7 +281,7 @@ CConEmuMain::CConEmuMain()
 	mn_StartupFinished = ss_Starting;
 	WindowMode = wmNormal;
 	changeFromWindowMode = wmNotChanging;
-	isRestoreFromMinimized = false;
+	//isRestoreFromMinimized = false;
 	WindowStartMinimized = false;
 	ForceMinimizeToTray = false;
 	mb_InCreateWindow = true;
@@ -293,15 +295,15 @@ CConEmuMain::CConEmuMain()
 	DisableKeybHooks = false;
 	DisableSetDefTerm = false;
 	DisableRegisterFonts = false;
-	mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
+	//mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	m_InsideIntegration = ii_None; mb_InsideIntegrationShift = false; mn_InsideParentPID = 0;
 	mb_InsideSynchronizeCurDir = false;
 	ms_InsideSynchronizeCurDir = NULL;
 	mb_InsidePaneWasForced = false;
 	mh_InsideParentRoot = mh_InsideParentWND = mh_InsideParentRel = NULL;
 	mh_InsideParentPath = mh_InsideParentCD = NULL; ms_InsideParentPath[0] = 0;
-	mh_InsideSysMenu = NULL;
-	mb_PassSysCommand = false;
+	//mh_InsideSysMenu = NULL;
+	//mb_PassSysCommand = false;
 	mb_ExternalHidden = FALSE;
 	memset(&mrc_StoredNormalRect, 0, sizeof(mrc_StoredNormalRect));
 	isWndNotFSMaximized = false;
@@ -321,7 +323,7 @@ CConEmuMain::CConEmuMain()
 	//mb_InConsoleResize = FALSE;
 	//ProgressBars = NULL;
 	//cBlinkShift=0;
-	mh_DebugPopup = mh_EditPopup = mh_ActiveVConPopup = mh_TerminateVConPopup = mh_VConListPopup = mh_HelpPopup = NULL;
+	//mh_DebugPopup = mh_EditPopup = mh_ActiveVConPopup = mh_TerminateVConPopup = mh_VConListPopup = mh_HelpPopup = NULL;
 	Title[0] = 0; //TitleCmp[0] = 0; /*MultiTitle[0] = 0;*/ mn_Progress = -1;
 	TitleTemplate[0] = 0;
 	mb_InTimer = FALSE;
@@ -336,7 +338,7 @@ CConEmuMain::CConEmuMain()
 	mb_InImeComposition = false; mb_ImeMethodChanged = false;
 	ZeroStruct(mr_Ideal);
 	mn_InResize = 0;
-	mb_InScMinimize = false;
+	//mb_InScMinimize = false;
 	mb_MouseCaptured = FALSE;
 	mb_HotKeyRegistered = FALSE;
 	mh_LLKeyHookDll = NULL;
@@ -347,7 +349,7 @@ CConEmuMain::CConEmuMain()
 	mh_RightClickingWnd = NULL; mb_RightClickingRegistered = FALSE;
 	mb_WaitCursor = FALSE;
 	//mb_InTrackSysMenu = FALSE;
-	mn_TrackMenuPlace = tmp_None;
+	//mn_TrackMenuPlace = tmp_None;
 	mb_LastRgnWasNull = TRUE;
 	mb_LockWindowRgn = FALSE;
 	m_ForceShowFrame = fsf_Hide;
@@ -1470,128 +1472,6 @@ RECT CConEmuMain::GetVirtualScreenRect(BOOL abFullScreen)
 	}
 
 	return rcScreen;
-}
-
-HMENU CConEmuMain::GetSysMenu(BOOL abInitial /*= FALSE*/)
-{
-	HMENU hwndMain = NULL;
-	//MENUITEMINFO mi = {sizeof(mi)};
-	//wchar_t szText[255];
-
-	
-	if (m_InsideIntegration || gpSet->isQuakeStyle)
-	{
-		if (!mh_InsideSysMenu || abInitial)
-		{
-			if (mh_InsideSysMenu)
-				DestroyMenu(mh_InsideSysMenu);
-
-			mh_InsideSysMenu = CreatePopupMenu();
-			AppendMenu(mh_InsideSysMenu, MF_STRING | MF_ENABLED, SC_CLOSE, MenuAccel(vkCloseConEmu,L"&Close ConEmu"));
-		}
-		hwndMain = mh_InsideSysMenu;
-	}
-	else
-	{
-		hwndMain = ::GetSystemMenu(ghWnd, FALSE);
-
-		//// "Alt+F4" для пункта "Close" смысла не имеет
-		//mi.fMask = MIIM_STRING; mi.dwTypeData = szText; mi.cch = countof(szText);
-		//if (GetMenuItemInfo(hwndMain, SC_CLOSE, FALSE, &mi))
-		//{
-		//	wchar_t* psz = wcschr(szText, L'\t');
-		//	if (psz)
-		//	{
-		//		*psz = 0;
-		//		SetMenuItemInfo(hwndMain, SC_CLOSE, FALSE, &mi);
-		//	}
-		//}
-	}
-
-	UpdateSysMenu(hwndMain);
-
-	return hwndMain;
-}
-
-void CConEmuMain::UpdateSysMenu(HMENU hSysMenu)
-{
-	MENUITEMINFO mi = {sizeof(mi)};
-	wchar_t szText[255];
-
-	// "Alt+F4" для пункта "Close" смысла не имеет
-	mi.fMask = MIIM_STRING; mi.dwTypeData = szText; mi.cch = countof(szText);
-	if (GetMenuItemInfo(hSysMenu, SC_CLOSE, FALSE, &mi))
-	{
-		wchar_t* psz = wcschr(szText, L'\t');
-		if (psz)
-		{
-			*psz = 0;
-			//SetMenuItemInfo(hSysMenu, SC_CLOSE, FALSE, &mi);
-		}
-		mi.dwTypeData = (LPWSTR)MenuAccel(vkCloseConEmu,szText);
-		if (lstrcmp(mi.dwTypeData, szText) != 0)
-		{
-			SetMenuItemInfo(hSysMenu, SC_CLOSE, FALSE, &mi);
-		}
-	}
-
-	// В результате работы некоторых недобросовествных программ может сбиваться настроенное системное меню
-	mi.fMask = MIIM_STRING; mi.dwTypeData = szText; mi.cch = countof(szText);
-	if (!GetMenuItemInfo(hSysMenu, ID_NEWCONSOLE, FALSE, &mi))
-	{
-		if (!m_InsideIntegration)
-		{
-			if (!gpSet->isQuakeStyle)
-				InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
-			InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
-		}
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-		
-		//InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About / Help"));
-		if (mh_HelpPopup) DestroyMenu(mh_HelpPopup);
-		mh_HelpPopup = CreateHelpMenuPopup();
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_HelpPopup, _T("Hel&p"));
-		//if (ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
-		//	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
-
-		// --------------------
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-		
-		if (mh_DebugPopup) DestroyMenu(mh_DebugPopup);
-		mh_DebugPopup = CreateDebugMenuPopup();
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_DebugPopup, _T("&Debug"));
-		
-		if (mh_EditPopup) DestroyMenu(mh_EditPopup);
-		mh_EditPopup = CreateEditMenuPopup(NULL);
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_EditPopup, _T("Ed&it"));
-		
-		// --------------------
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-		
-		if (mh_VConListPopup) DestroyMenu(mh_VConListPopup);
-		mh_VConListPopup = CreateVConListPopupMenu(mh_VConListPopup, TRUE/*abFirstTabOnly*/);
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_VConListPopup, _T("Console &list"));
-		
-		if (mh_ActiveVConPopup) DestroyMenu(mh_ActiveVConPopup);
-		if (mh_TerminateVConPopup) { DestroyMenu(mh_TerminateVConPopup); mh_TerminateVConPopup = NULL; }
-		mh_ActiveVConPopup = CreateVConPopupMenu(NULL, NULL, FALSE, mh_TerminateVConPopup);
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_ActiveVConPopup, _T("Acti&ve console"));
-		
-		// --------------------
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-		if (!m_InsideIntegration)
-		{
-			InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
-				ID_ALWAYSONTOP, MenuAccel(vkAlwaysOnTop,L"Al&ways on top"));
-		}
-		#ifdef SHOW_AUTOSCROLL
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSetCls->AutoScroll ? MF_CHECKED : 0),
-			ID_AUTOSCROLL, _T("Auto scro&ll"));
-		#endif
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, MenuAccel(vkWinAltP,L"S&ettings..."));
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, IDM_ATTACHTO, MenuAccel(vkMultiNewAttach,L"Attach t&o..."));
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNew,L"&New console..."));
-	}
 }
 
 void CConEmuMain::SetWindowStyle(DWORD anStyle)
@@ -3334,6 +3214,8 @@ CConEmuMain::~CConEmuMain()
 
 	SafeDelete(mp_Status);
 
+	SafeDelete(mp_Menu);
+
 	//if (m_Child)
 	//{
 	//	delete m_Child;
@@ -3352,30 +3234,6 @@ CConEmuMain::~CConEmuMain()
 	//	m_Macro = NULL;
 	//}
 
-	if (mh_DebugPopup)
-	{
-		DestroyMenu(mh_DebugPopup);
-		mh_DebugPopup = NULL;
-	}
-	
-	if (mh_EditPopup)
-	{
-		DestroyMenu(mh_EditPopup);
-		mh_EditPopup = NULL;
-	}
-	
-	if (mh_TerminateVConPopup)
-	{
-		DestroyMenu(mh_TerminateVConPopup);
-		mh_TerminateVConPopup = NULL;
-	}
-	
-	if (mh_ActiveVConPopup)
-	{
-		DestroyMenu(mh_ActiveVConPopup);
-		mh_ActiveVConPopup = NULL;
-	}
-	
 	//if (mh_RecreatePasswFont)
 	//{
 	//	DeleteObject(mh_RecreatePasswFont);
@@ -3736,7 +3594,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 {
 	_ASSERTE(ghWnd!=NULL);
 	RECT rcMain = {};
-	if (isIconic() || isRestoreFromMinimized)
+	if (isIconic() || mp_Menu->GetRestoreFromMinimized())
 	{
 		if (gpSet->isQuakeStyle)
 		{
@@ -4330,38 +4188,6 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 	return rc; // Посчитали, возвращаем
 }
 
-POINT CConEmuMain::CalcTabMenuPos(CVirtualConsole* apVCon)
-{
-	POINT ptCur = {};
-	if (apVCon)
-	{
-		RECT rcWnd;
-		if (mp_TabBar && mp_TabBar->IsTabsShown())
-		{
-			mp_TabBar->GetActiveTabRect(&rcWnd);
-			ptCur.x = rcWnd.left;
-			ptCur.y = rcWnd.bottom;
-		}
-		else
-		{
-			CVConGuard VCon;
-			if (GetActiveVCon(&VCon) >= 0)
-			{
-				GetWindowRect(VCon->GetView(), &rcWnd);
-			}
-			else
-			{
-				_ASSERTE(FALSE && "No Active VCon");
-				GetWindowRect(ghWnd, &rcWnd);
-			}
-
-			ptCur.x = rcWnd.left;
-			ptCur.y = rcWnd.top;
-		}
-	}
-	return ptCur;
-}
-
 #if 0
 /*!!!static!!*/
 // Получить размер (правый нижний угол) окна по его клиентской области и наоборот
@@ -4877,7 +4703,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	}
 
 	SetCursor(LoadCursor(NULL,IDC_WAIT));
-	mb_PassSysCommand = true;
+	mp_Menu->SetPassSysCommand(true);
 
 	//WindowPlacement -- использовать нельзя, т.к. он работает в координатах Workspace, а не Screen!
 	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
@@ -4912,7 +4738,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	ConEmuWindowMode NewMode = (gpSet->isQuakeStyle || m_InsideIntegration) ? wmNormal : inMode;
 	// И сразу запоминаем _новый_ режим
 	changeFromWindowMode = WindowMode;
-	isRestoreFromMinimized = bIconic;
+	mp_Menu->SetRestoreFromMinimized(bIconic);
 	WindowMode = inMode;
 
 
@@ -4942,7 +4768,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			// Расчитать размер по оптимальному WindowRect
 			if (!CVConGroup::PreReSize(inMode, rcIdeal))
 			{
-				mb_PassSysCommand = false;
+				mp_Menu->SetPassSysCommand(false);
 				goto wrap;
 			}
 
@@ -5059,7 +4885,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			}
 
 			// Already resored, need to clear the flag to avoid incorrect sizing
-			isRestoreFromMinimized = false;
+			mp_Menu->SetRestoreFromMinimized(false);
 
 			UpdateWindowRgn();
 			OnSize(false); // подровнять ТОЛЬКО дочерние окошки
@@ -5088,7 +4914,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			// в этом случае хорошо бы установить максимально возможный и отцентрировать ее в ConEmu
 			if (!CVConGroup::PreReSize(inMode, rcMax))
 			{
-				mb_PassSysCommand = false;
+				mp_Menu->SetPassSysCommand(false);
 				goto wrap;
 			}
 
@@ -5148,7 +4974,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			}
 
 			// Already resored, need to clear the flag to avoid incorrect sizing
-			isRestoreFromMinimized = false;
+			mp_Menu->SetRestoreFromMinimized(false);
 
 			OnSize(false); // консоль уже изменила свой размер
 
@@ -5166,7 +4992,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			// в этом случае хорошо бы установить максимально возможный и отцентрировать ее в ConEmu
 			if (!CVConGroup::PreReSize(inMode, rcMax))
 			{
-				mb_PassSysCommand = false;
+				mp_Menu->SetPassSysCommand(false);
 				goto wrap;
 			}
 
@@ -5229,7 +5055,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			}
 
 			// Already resored, need to clear the flag to avoid incorrect sizing
-			isRestoreFromMinimized = false;
+			mp_Menu->SetRestoreFromMinimized(false);
 
 			OnSize(false); // подровнять ТОЛЬКО дочерние окошки
 
@@ -5287,7 +5113,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	}
 
 	//Sync ConsoleToWindow(); 2009-09-10 А это вроде вообще не нужно - ресайз консоли уже сделан
-	mb_PassSysCommand = false;
+	mp_Menu->SetPassSysCommand(false);
 	lbRc = true;
 wrap:
 	if (!lbRc)
@@ -5300,7 +5126,7 @@ wrap:
 		WindowMode = changeFromWindowMode;
 	}
 	changeFromWindowMode = wmNotChanging;
-	isRestoreFromMinimized = false;
+	mp_Menu->SetRestoreFromMinimized(false);
 
 	// В случае облома изменения размера консоли - может слететь признак
 	// полноэкранности у панели задач. Вернем его...
@@ -6218,7 +6044,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	// -- // Если у нас режим скрытия заголовка (при максимизации/фулскрине)
 	// При любой смене. Т.к. мы меняем WM_GETMINMAXINFO - нужно корректировать и размеры :(
 	// Иначе возможны глюки
-	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && !mb_InScMinimize)
+	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && !mp_Menu->GetInScMinimize())
 	{
 		if (gpSet->isQuakeStyle)
 		{
@@ -6580,6 +6406,13 @@ int CConEmuMain::ActiveConNum()
 int CConEmuMain::GetConCount()
 {
 	return CVConGroup::GetConCount();
+}
+
+void CConEmuMain::AttachToDialog()
+{
+	if (!mp_AttachDlg)
+		mp_AttachDlg = new CAttachDlg;
+	mp_AttachDlg->AttachDlg();
 }
 
 BOOL CConEmuMain::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
@@ -8078,275 +7911,6 @@ void CConEmuMain::ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServe
 	MBox(pszMsg);
 	free(pszMsg);
 	mb_InShowOldCmdVersion = FALSE; // теперь можно показать еще одно...
-}
-
-LRESULT CConEmuMain::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
-{
-	// Уже должен быть выставлен тип меню, иначе не будут всплывать подсказки для пунктов меню
-	_ASSERTE(mn_TrackMenuPlace != tmp_None);
-
-	DefWindowProc(hWnd, WM_INITMENUPOPUP, (WPARAM)hMenu, lParam);
-
-	MENUITEMINFO mi = {sizeof(mi)};
-	wchar_t szText[255];
-	mi.fMask = MIIM_STRING; mi.dwTypeData = szText; mi.cch = countof(szText);
-	BOOL bIsSysMenu = GetMenuItemInfo(hMenu, SC_CLOSE, FALSE, &mi);
-
-
-	if (HIWORD(lParam))
-	{
-		_ASSERTE(mn_TrackMenuPlace == tmp_System);
-
-		// при всплытии "Help/Debug/..." submenu сюда мы тоже попадаем
-
-		if (bIsSysMenu)
-		{
-			UpdateSysMenu(hMenu);			
-
-			//BOOL bSelectionExist = FALSE;
-
-			CVConGuard VCon;
-			CVirtualConsole* pVCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
-			//if (pVCon && pVCon->RCon())
-			//	bSelectionExist = pVCon->RCon()->isSelectionPresent();
-
-			//EnableMenuItem(hMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
-			if (mh_EditPopup)
-			{
-				TODO("Проверить, сработает ли, если mh_EditPopup уже был вставлен в SystemMenu?");
-				CreateEditMenuPopup(pVCon, mh_EditPopup);
-			}
-			else
-			{
-				_ASSERTE(mh_EditPopup!=NULL);
-			}
-			
-			if (mh_VConListPopup)
-			{
-				CreateVConListPopupMenu(mh_VConListPopup, TRUE/*abFirstTabOnly*/);
-			}
-			else
-			{
-				_ASSERTE(mh_VConListPopup!=NULL);
-			}
-			
-			if (mh_ActiveVConPopup)
-			{
-				CreateVConPopupMenu(NULL, mh_ActiveVConPopup, FALSE, mh_TerminateVConPopup);
-			}
-			else
-			{
-				_ASSERTE(mh_ActiveVConPopup!=NULL);
-			}
-			
-			
-			CheckMenuItem(hMenu, ID_DEBUG_SHOWRECTS, MF_BYCOMMAND|(gbDebugShowRects ? MF_CHECKED : MF_UNCHECKED));
-			//#ifdef _DEBUG
-			//		wchar_t szText[128];
-			//		MENUITEMINFO mi = {sizeof(MENUITEMINFO)};
-			//		mi.fMask = MIIM_STRING|MIIM_STATE;
-			//		bool bLogged = false, bAllowed = false;
-			//		CRealConsole* pRCon = mp_ VActive ? mp_ VActive->RCon() : NULL;
-			//
-			//		if (pRCon)
-			//		{
-			//			bLogged = pRCon->IsLogShellStarted();
-			//			bAllowed = (pRCon->GetFarPID(TRUE) != 0);
-			//		}
-			//
-			//		lstrcpy(szText, bLogged ? _T("Disable &shell log") : _T("Enable &shell log..."));
-			//		mi.dwTypeData = szText;
-			//		mi.fState = bAllowed ? MFS_ENABLED : MFS_GRAYED;
-			//		SetMenuItemInfo(hMenu, ID_MONITOR_SHELLACTIVITY, FALSE, &mi);
-			//#endif
-		}
-	}
-
-	return 0;
-}
-
-int CConEmuMain::trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, HWND hWnd, RECT *prcRect /* = NULL*/)
-{
-	mp_Tip->HideTip();
-	TrackMenuPlace prevPlace = mn_TrackMenuPlace;
-	if (prevPlace == place)
-	{
-		_ASSERTE(prevPlace==tmp_System);
-		prevPlace = tmp_None; 
-	}
-	_ASSERTE(prevPlace==tmp_None || prevPlace==tmp_Cmd);
-
-	mn_TrackMenuPlace = place;
-
-	TPMPARAMS ex = {sizeof(ex)};
-	if (prcRect)
-		ex.rcExclude = *prcRect;
-	else
-		ex.rcExclude = MakeRect(x-1,y-1,x+1,y+1);
-
-	if (!(uFlags & (TPM_HORIZONTAL|TPM_VERTICAL)))
-		uFlags |= TPM_HORIZONTAL;
-
-	int cmd = TrackPopupMenuEx(hMenu, uFlags, x, y, hWnd, &ex);
-
-	mn_TrackMenuPlace = prevPlace;
-
-	mp_Tip->HideTip();
-
-	return cmd;
-}
-
-void CConEmuMain::ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags)
-{
-	if (nID && (nID != MF_SEPARATOR) && !(nFlags & MF_POPUP))
-	{
-		//POINT pt; GetCursorPos(&pt);
-		RECT rcMenuItem = {};
-		BOOL lbMenuItemPos = FALSE;
-		UINT nMenuID = 0;
-		for (int i = 0; i < 100; i++)
-		{
-			nMenuID = GetMenuItemID(hMenu, i);
-			if (nMenuID == nID)
-			{
-				lbMenuItemPos = GetMenuItemRect(ghWnd, hMenu, i, &rcMenuItem);
-				break;
-			}
-		}
-		if (lbMenuItemPos)
-		{
-			POINT pt = {rcMenuItem.left + (rcMenuItem.bottom - rcMenuItem.top)*2, rcMenuItem.bottom};
-			//pt.x = rcMenuItem.left; //(rcMenuItem.left + rcMenuItem.right) >> 1;
-			//pt.y = rcMenuItem.bottom;
-			TCHAR szText[0x200];
-			if (LoadString(g_hInstance, nMenuID, szText, countof(szText)))
-			{
-				mp_Tip->ShowTip(ghWnd, ghWnd, szText, TRUE, pt, g_hInstance);
-				return;
-			}
-		}
-	}
-
-	mp_Tip->HideTip();
-}
-
-void CConEmuMain::ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags)
-{
-	if (nID && (nID != MF_SEPARATOR) && !(nFlags & MF_POPUP))
-	{
-		CVConGuard VCon;
-		CVirtualConsole* pVCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
-		if (pVCon && pVCon->RCon())
-			pVCon->RCon()->ShowKeyBarHint(nID);
-	}
-}
-
-void CConEmuMain::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
-{
-	//if (!Wnd)
-	//	Wnd = ghWnd;
-
-	WARNING("SysMenu: Обработать DblClick по иконке!");
-
-	if ((x == -32000) || (y == -32000))
-	{
-		RECT rect, cRect;
-		GetWindowRect(ghWnd, &rect);
-		cRect = GetGuiClientRect();
-		WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
-		int nTabShift =
-		    ((gpSet->isCaptionHidden()) && gpConEmu->mp_TabBar->IsTabsShown() && (gpSet->nTabsLocation != 1))
-		    ? gpConEmu->mp_TabBar->GetTabbarHeight() : 0;
-
-		if (x == -32000)
-			x = rect.right - cRect.right - wInfo.cxWindowBorders;
-
-		if (y == -32000)
-			y = rect.bottom - cRect.bottom - wInfo.cyWindowBorders + nTabShift;
-	}
-
-	bool iconic = isIconic();
-	bool zoomed = isZoomed();
-	bool visible = IsWindowVisible(ghWnd);
-	int style = GetWindowLong(ghWnd, GWL_STYLE);
-	HMENU systemMenu = gpConEmu->GetSysMenu();
-
-	if (!systemMenu)
-		return;
-
-	if (!m_InsideIntegration)
-	{
-		EnableMenuItem(systemMenu, SC_RESTORE,
-		               MF_BYCOMMAND | ((visible && (iconic || zoomed)) ? MF_ENABLED : MF_GRAYED));
-		EnableMenuItem(systemMenu, SC_MOVE,
-		               MF_BYCOMMAND | ((visible && !(iconic || zoomed)) ? MF_ENABLED : MF_GRAYED));
-		EnableMenuItem(systemMenu, SC_SIZE,
-		               MF_BYCOMMAND | ((visible && (!(iconic || zoomed) && (style & WS_SIZEBOX))) ? MF_ENABLED : MF_GRAYED));
-		EnableMenuItem(systemMenu, SC_MINIMIZE,
-		               MF_BYCOMMAND | ((visible && (!iconic && (style & WS_MINIMIZEBOX))) ? MF_ENABLED : MF_GRAYED));
-		EnableMenuItem(systemMenu, SC_MAXIMIZE,
-		               MF_BYCOMMAND | ((visible && (!zoomed && (style & WS_MAXIMIZEBOX))) ? MF_ENABLED : MF_GRAYED));
-		EnableMenuItem(systemMenu, ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
-	}
-
-	mn_TrackMenuPlace = tmp_System;
-	SendMessage(ghWnd, WM_INITMENU, (WPARAM)systemMenu, 0);
-	SendMessage(ghWnd, WM_INITMENUPOPUP, (WPARAM)systemMenu, MAKELPARAM(0, true));
-
-	// Переехало в OnMenuPopup
-	//BOOL bSelectionExist = ActiveCon()->RCon()->isSelectionPresent();
-	//EnableMenuItem(systemMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
-	SetActiveWindow(ghWnd);
-	//mb_InTrackSysMenu = TRUE;
-	mn_SysMenuOpenTick = GetTickCount();
-	POINT ptCurBefore = {}; GetCursorPos(&ptCurBefore);
-
-	int command = trackPopupMenu(tmp_System, systemMenu,
-		 TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | (bAlignUp ? TPM_BOTTOMALIGN : 0),
-		 x, y, ghWnd);
-	//mb_InTrackSysMenu = FALSE;
-	if (command == 0)
-	{
-		mn_SysMenuCloseTick = GetTickCount();
-
-		if ((mn_SysMenuCloseTick - gpConEmu->mn_SysMenuOpenTick) < GetDoubleClickTime())
-		{
-			POINT ptCur = {}; GetCursorPos(&ptCur);
-			if (PtDiffTest(ptCur, ptCurBefore.x, ptCurBefore.y, 8))
-			{
-				LRESULT lHitTest = SendMessage(ghWnd, WM_NCHITTEST, 0, MAKELONG(ptCur.x,ptCur.y));
-				if (lHitTest == HTSYSMENU)
-				{
-					command = SC_CLOSE;
-				}
-			}
-		}
-	}
-	else
-	{
-		mn_SysMenuCloseTick = 0;
-	}
-
-	if (Icon.isWindowInTray())
-	{
-		_ASSERTE(!m_InsideIntegration);
-
-		switch (command)
-		{
-			case SC_RESTORE:
-			case SC_MOVE:
-			case SC_SIZE:
-			case SC_MINIMIZE:
-			case SC_MAXIMIZE:
-				SendMessage(ghWnd, WM_TRAYNOTIFY, 0, WM_LBUTTONDOWN);
-				break;
-		}
-	}
-
-	if (command)
-	{
-		PostMessage(ghWnd, WM_SYSCOMMAND, (WPARAM)command, 0);
-	}
 }
 
 // Запуск отладки текущего GUI
@@ -10115,281 +9679,6 @@ bool CConEmuMain::isCloseConfirmed()
 	return gpSet->isCloseConsoleConfirm ? mb_CloseGuiConfirmed : true;
 }
 
-HMENU CConEmuMain::CreateDebugMenuPopup()
-{
-	HMENU hDebug = CreatePopupMenu();
-	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, MenuAccel(vkCtrlWinAltSpace,L"&Real console"));
-	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
-	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_SCREENSHOT, MenuAccel(vkScreenshot,L"Make &screenshot..."));
-	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump screen..."));
-	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_LOADDUMPCONSOLE, _T("&Load screen dump..."));
-	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGGUI, _T("Debug &log (GUI)"));
-//#ifdef _DEBUG
-//	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_MONITOR_SHELLACTIVITY, _T("Enable &shell log..."));
-//#endif
-	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_SHOWRECTS, _T("Show debug rec&ts"));
-	AppendMenu(hDebug, MF_SEPARATOR, 0, NULL);
-	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGCON, _T("Debug &active process"));
-	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_MINIDUMP, _T("Active process &memory dump..."));
-	return hDebug;
-}
-
-HMENU CConEmuMain::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
-{
-	HMENU h = ahExist ? ahExist : CreatePopupMenu();
-	wchar_t szText[128];
-	const int nMaxStrLen = 32;
-
-	BOOL lbActiveVCon = FALSE;
-	int nActiveCmd = -1; // DWORD MAKELONG(WORD wLow,WORD wHigh);
-	CVirtualConsole* pVCon = NULL;
-	DWORD nAddFlags = 0;
-	
-	if (ahExist)
-	{
-		while (DeleteMenu(ahExist, 0, MF_BYPOSITION))
-			;
-	}
-	
-	for (int V = 0; (pVCon = GetVCon(V, true))!=NULL; V++)
-	{
-		if ((lbActiveVCon = isActive(pVCon)))
-			nActiveCmd = MAKELONG(1, V+1);
-		nAddFlags = 0; //(lbActiveVCon ? MF_DEFAULT : 0);
-		CRealConsole* pRCon = pVCon->RCon();
-		if (!pRCon)
-		{
-			wsprintf(szText, L"%i: VConsole", V+1);
-			AppendMenu(h, MF_STRING|nAddFlags, MAKELONG(1, V+1), szText);
-		}
-		else
-		{
-			ConEmuTab tab = {};
-			int R = 0;
-			if (!pRCon->GetTab(R, &tab))
-			{
-				wsprintf(szText, L"%i: RConsole", V+1);
-				AppendMenu(h, MF_STRING|nAddFlags, MAKELONG(1, V+1), szText);
-			}
-			else
-			{
-				do
-				{
-					nAddFlags = 0/*((lbActiveVCon && (R==0)) ? MF_DEFAULT : 0)*/
-						| ((lbActiveVCon && (abFirstTabOnly || pRCon->GetActiveTab() == R)) ? MF_CHECKED : MF_UNCHECKED)
-						#if 0
-						| ((tab->Flags() & etfDisabled) ? (MF_DISABLED|MF_GRAYED) : 0)
-						#endif
-						;
-					int nLen = lstrlen(tab.Name/*.Ptr()*/);
-					if (!R)
-						wsprintf(szText, L"%i: ", V+1);
-					else
-						wcscpy_c(szText, L"      ");
-					if (nLen <= nMaxStrLen)
-					{
-						wcscat_c(szText, tab.Name/*.Ptr()*/);
-					}
-					else
-					{
-						int nCurLen = lstrlen(szText);
-						_ASSERTE((nCurLen+10)<nMaxStrLen);
-						if ((tab.Type & fwt_TypeMask) == fwt_Panels)
-						{
-							lstrcpyn(szText+nCurLen, tab.Name/*.Ptr()*/, nMaxStrLen-1-nCurLen);
-						}
-						else
-						{
-							szText[nCurLen++] = L'\x2026'; szText[nCurLen] = 0;
-							lstrcpyn(szText+nCurLen, tab.Name+nLen-nMaxStrLen, nMaxStrLen-1-nCurLen);
-						}
-						wcscat_c(szText, L"\x2026"); //...
-					}
-					AppendMenu(h, MF_STRING|nAddFlags, MAKELONG(R+1, V+1), szText);
-				} while (!abFirstTabOnly && pRCon->GetTab(++R, &tab));
-			}
-		}
-	}
-
-	if (nActiveCmd != -1 && !abFirstTabOnly)
-	{
-		MENUITEMINFO mi = {sizeof(mi), MIIM_STATE|MIIM_ID};
-		mi.wID = nActiveCmd;
-		GetMenuItemInfo(h, nActiveCmd, FALSE, &mi);
-		mi.fState |= MF_DEFAULT;
-		SetMenuItemInfo(h, nActiveCmd, FALSE, &mi);
-	}
-	
-	return h;
-}
-
-HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew, HMENU& hTerminate)
-{
-	//BOOL lbEnabled = TRUE;
-	HMENU hMenu = ahExist;
-	
-	CVConGuard VCon;
-	if (!apVCon && (CVConGroup::GetActiveVCon(&VCon) >= 0))
-		apVCon = VCon.VCon();
-
-	if (!hTerminate)
-		hTerminate = CreatePopupMenu();
-	
-	if (!hMenu)
-	{	
-		hMenu = CreatePopupMenu();
-		
-		/*
-        MENUITEM "&Close",                      IDM_CLOSE
-        MENUITEM "Detach",                      IDM_DETACH
-        MENUITEM "&Terminate",                  IDM_TERMINATE
-        MENUITEM SEPARATOR
-        MENUITEM "&Restart",                    IDM_RESTART
-        MENUITEM "Restart as...",               IDM_RESTARTAS
-        MENUITEM SEPARATOR
-        MENUITEM "New console...",              IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "&Save",                       IDM_SAVE
-        MENUITEM "Save &all",                   IDM_SAVEALL
-		*/
-		
-		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_CLOSE,     MenuAccel(vkCloseTab,L"&Close tab"));
-		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_DETACH,    L"Detach");
-		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_DUPLICATE, MenuAccel(vkDuplicateRoot,L"Duplica&te root..."));
-		//AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_ADMIN_DUPLICATE, MenuAccel(vkDuplicateRootAs,L"Duplica&te as Admin..."));
-		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RENAMETAB, MenuAccel(vkRenameTab,L"Rena&me tab"));
-		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATECON, MenuAccel(vkMultiClose,L"&Console"));
-		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEGROUP, MenuAccel(vkCloseGroup,L"Active &group"));
-		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
-		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEPRC, MenuAccel(vkTerminateApp,L"&Active process"));
-		AppendMenu(hMenu, MF_POPUP | MF_ENABLED, (UINT_PTR)hTerminate, L"&Terminate");
-		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
-		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTART,   MenuAccel(vkMultiRecreate,L"&Restart"));
-		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTARTAS, L"Restart as...");
-		if (abAddNew)
-		{
-			AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
-			AppendMenu(hMenu, MF_STRING | MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNew,L"New console..."));
-			AppendMenu(hMenu, MF_STRING | MF_ENABLED, IDM_ATTACHTO,  MenuAccel(vkMultiNewAttach,L"Attach to..."));
-		}
-		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
-		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_SAVE,      L"&Save");
-		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_SAVEALL,   L"Save &all");
-	}
-
-	if (apVCon)
-	{
-		bool lbIsFar = apVCon->RCon()->isFar(TRUE/* abPluginRequired */)!=FALSE;
-		#ifdef _DEBUG
-		bool lbIsPanels = lbIsFar && apVCon->RCon()->isFilePanel(false/* abPluginAllowed */)!=FALSE;
-		#endif
-		bool lbIsEditorModified = lbIsFar && apVCon->RCon()->isEditorModified()!=FALSE;
-		bool lbHaveModified = lbIsFar && apVCon->RCon()->GetModifiedEditors()!=0;
-		bool lbCanCloseTab = apVCon->RCon()->CanCloseTab();
-
-		if (lbHaveModified)
-		{
-			if (!gpSet->sSaveAllMacro || !*gpSet->sSaveAllMacro)
-				lbHaveModified = false;
-		}
-
-		EnableMenuItem(hMenu, IDM_CLOSE, MF_BYCOMMAND | (lbCanCloseTab ? MF_ENABLED : MF_GRAYED));
-		EnableMenuItem(hMenu, IDM_DETACH, MF_BYCOMMAND | MF_ENABLED);
-		EnableMenuItem(hMenu, IDM_DUPLICATE, MF_BYCOMMAND | MF_ENABLED);
-		EnableMenuItem(hMenu, IDM_RENAMETAB, MF_BYCOMMAND | MF_ENABLED);
-		EnableMenuItem(hTerminate, IDM_TERMINATECON, MF_BYCOMMAND | MF_ENABLED);
-		EnableMenuItem(hTerminate, IDM_TERMINATEGROUP, MF_BYCOMMAND | MF_ENABLED);
-		EnableMenuItem(hTerminate, IDM_TERMINATEPRC, MF_BYCOMMAND | MF_ENABLED);
-		EnableMenuItem(hMenu, IDM_RESTART, MF_BYCOMMAND | MF_ENABLED);
-		EnableMenuItem(hMenu, IDM_RESTARTAS, MF_BYCOMMAND | MF_ENABLED);
-		//EnableMenuItem(hMenu, IDM_ADMIN_DUPLICATE, MF_BYCOMMAND | (lbIsPanels ? MF_ENABLED : MF_GRAYED));
-		EnableMenuItem(hMenu, IDM_SAVE, MF_BYCOMMAND | (lbIsEditorModified ? MF_ENABLED : MF_GRAYED));
-		EnableMenuItem(hMenu, IDM_SAVEALL, MF_BYCOMMAND | (lbHaveModified ? MF_ENABLED : MF_GRAYED));
-	}
-	else
-	{
-		EnableMenuItem(hMenu, IDM_CLOSE, MF_BYCOMMAND | MF_GRAYED);
-		EnableMenuItem(hMenu, IDM_DETACH, MF_BYCOMMAND | MF_GRAYED);
-		EnableMenuItem(hMenu, IDM_DUPLICATE, MF_BYCOMMAND | MF_GRAYED);
-		EnableMenuItem(hMenu, IDM_RENAMETAB, MF_BYCOMMAND | MF_GRAYED);
-		EnableMenuItem(hTerminate, IDM_TERMINATECON, MF_BYCOMMAND | MF_GRAYED);
-		EnableMenuItem(hTerminate, IDM_TERMINATEGROUP, MF_BYCOMMAND | MF_GRAYED);
-		EnableMenuItem(hTerminate, IDM_TERMINATEPRC, MF_BYCOMMAND | MF_GRAYED);
-		EnableMenuItem(hMenu, IDM_RESTART, MF_BYCOMMAND | MF_GRAYED);
-		EnableMenuItem(hMenu, IDM_RESTARTAS, MF_BYCOMMAND | MF_GRAYED);
-		EnableMenuItem(hMenu, IDM_SAVE, MF_BYCOMMAND | MF_GRAYED);
-		EnableMenuItem(hMenu, IDM_SAVEALL, MF_BYCOMMAND | MF_GRAYED);
-	}
-
-	return hMenu;
-}
-
-//void CConEmuMain::PopulateEditMenuPopup(HMENU hMenu)
-HMENU CConEmuMain::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*= NULL*/)
-{
-	CVConGuard VCon;
-	if (!apVCon && (CVConGroup::GetActiveVCon(&VCon) >= 0))
-		apVCon = VCon.VCon();
-		
-	BOOL lbEnabled = TRUE;
-	BOOL lbSelectionExist = FALSE;
-	if (apVCon && apVCon->RCon())
-	{
-		if (apVCon->RCon()->GuiWnd() && !apVCon->RCon()->isBufferHeight())
-			lbEnabled = FALSE; // Если видимо дочернее графическое окно - выделение смысла не имеет
-		// Нужно ли серить пункт "Copy"
-		lbSelectionExist = lbEnabled && apVCon->RCon()->isSelectionPresent();
-	}
-
-	HMENU hMenu = ahExist;
-	
-	if (!hMenu)
-	{	
-		hMenu = CreatePopupMenu();
-		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKBLOCK, MenuAccel(vkCTSVkBlockStart,L"Mark &block"));
-		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKTEXT, MenuAccel(vkCTSVkTextStart,L"Mar&k text"));
-		AppendMenu(hMenu, MF_STRING | (lbSelectionExist?MF_ENABLED:MF_GRAYED), ID_CON_COPY, _T("Cop&y"));
-		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_PASTE, _T("&Paste"));
-		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
-		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_FIND, MenuAccel(vkFindTextDlg,L"&Find text..."));
-	}
-	else
-	{
-		EnableMenuItem(hMenu, ID_CON_MARKBLOCK, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
-		EnableMenuItem(hMenu, ID_CON_MARKTEXT, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
-		EnableMenuItem(hMenu, ID_CON_COPY, MF_BYCOMMAND | (lbSelectionExist?MF_ENABLED:MF_GRAYED));
-		EnableMenuItem(hMenu, ID_CON_PASTE, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
-		EnableMenuItem(hMenu, ID_CON_FIND, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
-	}
-	
-	return hMenu;
-}
-
-HMENU CConEmuMain::CreateHelpMenuPopup()
-{
-	HMENU hHelp = CreatePopupMenu();
-
-	if (!gpConEmu->mb_MingwMode)
-	{
-		if (gpUpd && gpUpd->InUpdate())
-			AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_STOPUPDATE, _T("&Stop updates checking"));
-		else
-			AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_CHECKUPDATE, _T("&Check for updates"));
-	}
-	
-	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HOMEPAGE, _T("&Visit home page"));
-	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_REPORTBUG, _T("&Report a bug..."));
-	
-	if (ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
-		AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
-
-	AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);	
-	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HOTKEYS, MenuAccel(vkWinAltK,L"Hot&keys"));
-	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_ABOUT, MenuAccel(vkWinAltA,L"&About / Help"));
-	
-	return hHelp;
-}
-
 LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 {
 	_ASSERTE(ghWnd == hWnd); // Уже должно было быть выставлено (CConEmuMain::MainWndProc)
@@ -10454,7 +9743,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//SetConEmuEnvVar('ghWnd DC');
 
 	// Сформировать или обновить системное меню
-	GetSysMenu(TRUE);
+	mp_Menu->GetSysMenu(TRUE);
 
 	// Holder
 	_ASSERTE(ghWndWork==NULL); // еще не должен был быть создан
@@ -11197,8 +10486,8 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	//	mp_TaskBar2 = NULL;
 	//}
 
-	if (mh_InsideSysMenu)
-		DestroyMenu(mh_InsideSysMenu);
+	//if (mh_InsideSysMenu)
+	//	DestroyMenu(mh_InsideSysMenu);
 
 	UnRegisterHotKeys(TRUE);
 	//if (mh_DwmApi && mh_DwmApi != INVALID_HANDLE_VALUE)
@@ -11613,6 +10902,15 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	return 0;
 }
 
+void CConEmuMain::StorePreMinimizeMonitor()
+{
+	// Запомним, на каком мониторе мы были до минимзации
+	if (!isIconic())
+	{
+		mh_MinFromMonitor = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+	}
+}
+
 HMONITOR CConEmuMain::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPRECT prcWnd /*= NULL*/)
 {
 	HMONITOR hMon = NULL;
@@ -11631,7 +10929,7 @@ HMONITOR CConEmuMain::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPRECT prcW
 
 		hMon = MonitorFromRect(&rcEvalWnd, MONITOR_DEFAULTTONEAREST);
 	}
-	else if (!isRestoreFromMinimized && !isIconic())
+	else if (!mp_Menu->GetRestoreFromMinimized() && !isIconic())
 	{
 		hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
 	}
@@ -12224,9 +11522,9 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		// Здесь - интересует реальный IsIconic. Для isQuakeStyle может быть фейк
 		if (::IsIconic(ghWnd))
 		{
-			bool b = mb_PassSysCommand; mb_PassSysCommand = true;
+			bool b = mp_Menu->SetPassSysCommand(true);
 			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
-			mb_PassSysCommand = b;
+			mp_Menu->SetPassSysCommand(b);
 		}
 
 		// Страховка, коррекция позиции для Quake
@@ -13512,7 +12810,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (gpSetCls->isAdvLogging)
 		CVConGroup::LogInput(messg, wParam, lParam);
 
-	if (mn_TrackMenuPlace != tmp_None)
+	if (mp_Menu->GetTrackMenuPlace() != tmp_None)
 	{
 		if (mp_Tip)
 		{
@@ -13520,7 +12818,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 
 		if (gpSetCls->isAdvLogging)
-			LogString("Mouse event skipped due to (mn_TrackMenuPlace != tmp_None)");
+			LogString("Mouse event skipped due to (mp_Menu->GetTrackMenuPlace() != tmp_None)");
 
 		return 0;
 	}
@@ -15077,7 +14375,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 
 	POINT ptCur; GetCursorPos(&ptCur);
 	// Если сейчас идет trackPopupMenu - то на выход
-	CVirtualConsole* pVCon = (mn_TrackMenuPlace == tmp_None) ? GetVConFromPoint(ptCur) : NULL;
+	CVirtualConsole* pVCon = (mp_Menu->GetTrackMenuPlace() == tmp_None) ? GetVConFromPoint(ptCur) : NULL;
 	if (pVCon && !isActive(pVCon, false))
 		pVCon = NULL;
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
@@ -15378,7 +14676,7 @@ void CConEmuMain::OnAlwaysOnTop()
 	_ASSERTE((hwndAfter!=HWND_TOPMOST) && "Setting TopMost mode - CConEmuMain::OnAlwaysOnTop()");
 	#endif
 
-	CheckMenuItem(gpConEmu->GetSysMenu(), ID_ALWAYSONTOP, MF_BYCOMMAND |
+	CheckMenuItem(gpConEmu->mp_Menu->GetSysMenu(), ID_ALWAYSONTOP, MF_BYCOMMAND |
 	              (gpSet->isAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
 	SetWindowPos(ghWnd, hwndAfter, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
@@ -15781,462 +15079,6 @@ void CConEmuMain::OnInfo_ReportBug()
 	}
 }
 
-LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
-{
-#ifdef _DEBUG
-	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand (%i(0x%X), %i)\n", (DWORD)wParam, (DWORD)wParam, (DWORD)lParam);
-	DEBUGSTRSIZE(szDbg);
-	if (wParam == SC_HOTKEY)
-	{
-		_ASSERTE(wParam!=SC_HOTKEY);
-	}
-#endif
-	LRESULT result = 0;
-
-	if (wParam >= IDM_VCON_FIRST && wParam <= IDM_VCON_LAST)
-	{
-		int nNewV = ((int)HIWORD(wParam))-1;
-		int nNewR = ((int)LOWORD(wParam))-1; UNREFERENCED_PARAMETER(nNewR);
-		
-		CVirtualConsole* pVCon = GetVCon(nNewV);
-		if (pVCon)
-		{
-			// -- в SysMenu показываются только консоли (редакторов/вьюверов там нет)
-			//CRealConsole* pRCon = pVCon->RCon();
-			//if (pRCon)
-			//{
-			//	//if (pRCon->CanActivateFarWindow(nNewR))
-			//	pRCon->ActivateFarWindow(nNewR);
-			//}
-			if (!isActive(pVCon))
-				Activate(pVCon);
-			//else
-			//	UpdateTabs();
-		}
-		return 0;
-	}
-
-	//switch(LOWORD(wParam))
-	switch (wParam)
-	{
-		case ID_NEWCONSOLE:
-			// Создать новую консоль
-			RecreateAction(gpSet->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
-			return 0;
-			
-		case IDM_ATTACHTO:
-			if (!mp_AttachDlg)
-				mp_AttachDlg = new CAttachDlg;
-			mp_AttachDlg->AttachDlg();
-			return 0;
-			
-		case ID_SETTINGS:
-			CSettings::Dialog();
-			return 0;
-			
-		case ID_CON_PASTE:
-			{
-				CVConGuard VCon;
-				if (GetActiveVCon(&VCon) >= 0)
-				{
-					VCon->RCon()->Paste();
-				}
-			}
-			return 0;
-
-		case ID_CON_FIND:
-			gpSetCls->FindTextDialog();
-			return 0;
-
-		case ID_CON_COPY:
-			{
-				CVConGuard VCon;
-				if (GetActiveVCon(&VCon) >= 0)
-				{
-					VCon->RCon()->DoSelectionCopy();
-				}
-			}
-			return 0;
-			
-		case ID_CON_MARKBLOCK:
-		case ID_CON_MARKTEXT:
-			{
-				CVConGuard VCon;
-				if (GetActiveVCon(&VCon) >= 0)
-				{
-					VCon->RCon()->StartSelection(LOWORD(wParam) == ID_CON_MARKTEXT);
-				}
-			}
-			return 0;
-			
-		#ifdef SHOW_AUTOSCROLL
-		case ID_AUTOSCROLL:
-			gpSetCls->AutoScroll = !gpSetCls->AutoScroll;
-			CheckMenuItem(gpConEmu->GetSysMenu(), ID_AUTOSCROLL, MF_BYCOMMAND |
-			              (gpSetCls->AutoScroll ? MF_CHECKED : MF_UNCHECKED));
-			return 0;
-		#endif
-			
-		case ID_ALWAYSONTOP:
-			{
-				gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
-				OnAlwaysOnTop();
-
-				HWND hExt = gpSetCls->mh_Tabs[gpSetCls->thi_Ext];
-
-				if (ghOpWnd && hExt)
-				{
-					CheckDlgButton(hExt, cbAlwaysOnTop, gpSet->isAlwaysOnTop ? BST_CHECKED : BST_UNCHECKED);
-				}
-			}
-			return 0;
-			
-		case ID_DUMPCONSOLE:
-			{
-				CVConGuard VCon;
-				if (GetActiveVCon(&VCon) >= 0)
-				{
-					VCon->DumpConsole();
-				}
-			 }
-			return 0;
-
-		case ID_SCREENSHOT:
-			CConEmuCtrl::MakeScreenshot();
-
-			return 0;
-
-		case ID_LOADDUMPCONSOLE:
-			{
-				CVConGuard VCon;
-				if (GetActiveVCon(&VCon) >= 0)
-				{
-					VCon->LoadDumpConsole();
-				}
-			}
-			return 0;
-			
-		case ID_DEBUGGUI:
-			StartDebugLogConsole();
-			return 0;
-			
-		case ID_DEBUGCON:
-			StartDebugActiveProcess();
-			return 0;
-		case ID_MINIDUMP:
-			MemoryDumpActiveProcess();
-			return 0;
-			
-		//case ID_MONITOR_SHELLACTIVITY:
-		//{
-		//	CRealConsole* pRCon = mp_ VActive->RCon();
-
-		//	if (pRCon)
-		//		pRCon->LogShellStartStop();
-
-		//	//if (!mb_CreateProcessLogged)
-		//	//	StartLogCreateProcess();
-		//	//else
-		//	//	StopLogCreateProcess();
-		//}
-		//return 0;
-		
-		case ID_DEBUG_SHOWRECTS:
-			gbDebugShowRects = !gbDebugShowRects;
-			InvalidateAll();
-			return 0;
-			
-		case ID_CON_TOGGLE_VISIBLE:
-			{
-				CVConGuard VCon;
-				if (GetActiveVCon(&VCon) >= 0)
-				{
-					VCon->RCon()->ShowConsoleOrGuiClient(-1); // Toggle visibility
-				}
-			}
-			return 0;
-			
-		case ID_HELP:
-		{
-			gpConEmu->OnInfo_Help();
-			return 0;
-		} // case ID_HELP:
-		
-		case ID_HOMEPAGE:
-		{
-			gpConEmu->OnInfo_HomePage();
-			return 0;
-		}
-		
-		case ID_REPORTBUG:
-		{
-			gpConEmu->OnInfo_ReportBug();
-			return 0;
-		}
-		
-		case ID_CHECKUPDATE:
-			gpConEmu->CheckUpdates(TRUE);
-			return 0;
-		
-		case ID_STOPUPDATE:
-			if (gpUpd)
-				gpUpd->StopChecking();
-			return 0;
-		
-		case ID_HOTKEYS:
-		{
-			CSettings::Dialog(IDD_SPG_KEYS);
-			return 0;
-		}
-
-		case ID_ABOUT:
-		{
-			gpConEmu->OnInfo_About();
-			return 0;
-		}
-
-		case ID_TOMONITOR:
-		{
-			if (gpSet->isQuakeStyle || gpConEmu->m_InsideIntegration)
-				return 0;
-			if (!IsWindowVisible(ghWnd))
-				Icon.RestoreWindowFromTray();
-			POINT ptCur = {}; GetCursorPos(&ptCur);
-			HMONITOR hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTOPRIMARY);
-			MONITORINFO mi = {sizeof(mi)};
-			GetMonitorInfo(hMon, &mi);
-			SetWindowPos(ghWnd, HWND_TOP, mi.rcWork.left, mi.rcWork.top, 0,0, SWP_NOSIZE);
-			return 0;
-		}
-
-		case ID_TOTRAY:
-			if (IsWindowVisible(ghWnd))
-				Icon.HideWindowToTray();
-			else
-				Icon.RestoreWindowFromTray();
-
-			return 0;
-			
-		case ID_CONPROP:
-		{
-			CVConGuard VCon;
-			if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
-			{
-				#ifdef MSGLOGGER
-				{
-					// Для отладки, посмотреть, какие пункты меню есть в RealConsole
-					HMENU hMenu = ::GetSystemMenu(VCon->RCon()->ConWnd(), FALSE);
-					MENUITEMINFO mii; TCHAR szText[255];
-
-					for(int i=0; i<15; i++)
-					{
-						memset(&mii, 0, sizeof(mii));
-						mii.cbSize = sizeof(mii); mii.dwTypeData=szText; mii.cch=255;
-						mii.fMask = MIIM_ID|MIIM_STRING|MIIM_SUBMENU;
-
-						if (GetMenuItemInfo(hMenu, i, TRUE, &mii))
-						{
-							mii.cbSize = sizeof(mii);
-
-							if (mii.hSubMenu)
-							{
-								MENUITEMINFO mic;
-
-								for(int i=0; i<15; i++)
-								{
-									memset(&mic, 0, sizeof(mic));
-									mic.cbSize = sizeof(mic); mic.dwTypeData=szText; mic.cch=255;
-									mic.fMask = MIIM_ID|MIIM_STRING;
-
-									if (GetMenuItemInfo(mii.hSubMenu, i, TRUE, &mic))
-									{
-										mic.cbSize = sizeof(mic);
-									}
-									else
-									{
-										break;
-									}
-								}
-							}
-						}
-						else
-							break;
-					}
-				}
-				#endif
-			
-			    // Go!
-				VCon->RCon()->ShowPropertiesDialog();
-			}
-			return 0;
-		} // case ID_CONPROP:
-
-		case SC_MAXIMIZE_SECRET:
-			SetWindowMode(wmMaximized);
-			break;
-			
-		case SC_RESTORE_SECRET:
-			SetWindowMode(wmNormal);
-			break;
-			
-		case SC_CLOSE:
-			CVConGroup::OnScClose();
-			break;
-		
-		case SC_MAXIMIZE:
-		{
-			DEBUGSTRSYS(L"OnSysCommand(SC_MAXIMIZE)\n");
-
-			if (!mb_PassSysCommand)
-			{
-				#ifndef _DEBUG
-				if (isPictureView())
-					break;
-				#endif
-				
-				SetWindowMode(wmMaximized);
-			}
-			else
-			{
-				result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
-			}
-
-			break;
-		} // case SC_MAXIMIZE:
-		
-		case SC_RESTORE:
-		{
-			DEBUGSTRSYS(L"OnSysCommand(SC_RESTORE)\n");
-
-			if (!mb_PassSysCommand)
-			{
-				#ifndef _DEBUG
-				if (!isIconic() && isPictureView())
-					break;
-				#endif
-
-				if (gpSet->isQuakeStyle)
-				{
-					gpConEmu->OnMinimizeRestore(sih_Show/*sih_HideTSA*/);
-					break;
-				}
-
-				if (SetWindowMode(isIconic() ? WindowMode : wmNormal))
-					break;
-			}
-			
-			// ***
-			{
-				bool bIconic = ::IsIconic(hWnd);
-				bool bPrev = isRestoreFromMinimized;
-				if (bIconic)
-					isRestoreFromMinimized = true;
-
-				result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
-
-				isRestoreFromMinimized = bPrev;
-			}
-
-			break;
-		} // case SC_RESTORE:
-		
-		case SC_MINIMIZE:
-		{
-			DEBUGSTRSYS(L"OnSysCommand(SC_MINIMIZE)\n");
-
-			bool bMin2TSA = gpSet->isMinToTray();
-
-			if (!mb_InScMinimize)
-			{
-				mb_InScMinimize = true;
-
-				// Запомним, на каком мониторе мы были до минимзации
-				if (!isIconic())
-				{
-					mh_MinFromMonitor = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
-				}
-
-				// Если "фокус" в дочернем Gui приложении - нужно перед скрытием ConEmu "поднять" его
-				CVConGuard VCon;
-				if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
-				{
-					apiSetForegroundWindow(ghWnd);
-				}
-
-				if (gpSet->isQuakeStyle)
-				{
-					gpConEmu->OnMinimizeRestore(bMin2TSA ? sih_HideTSA : sih_Minimize);
-				}
-				else if (bMin2TSA)
-				{
-					Icon.HideWindowToTray();
-				}
-
-				if (bMin2TSA)
-				{
-					// Окошко уже "спрятано", минимизировать не нужно
-					mb_InScMinimize = false;
-					break;
-				}
-
-				result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
-
-				mb_InScMinimize = false;
-			}
-			else
-			{
-				DEBUGSTRSYS(L"--OnSysCommand(SC_MINIMIZE) skipped, already in cycle\n");
-			}
-			
-			break;
-		} // case SC_MINIMIZE:
-		
-		default:
-		{
-			if (wParam >= IDM_VCONCMD_FIRST && wParam <= IDM_VCONCMD_LAST)
-			{
-				CVConGuard VCon;
-				if (CVConGroup::GetActiveVCon(&VCon) >= 0)
-					VCon->ExecPopupMenuCmd((int)(DWORD)wParam);
-				result = 0; 
-			}
-			else if (wParam != 0xF100)
-			{
-				#ifdef _DEBUG
-				wchar_t szDbg[64]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand(%i)\n", (DWORD)wParam);
-				DEBUGSTRSYS(szDbg);
-				#endif
-
-				// Зачем вообще SysCommand, полученный в ConEmu, перенаправлять в RealConsole?
-				#if 0
-				// иначе это приводит к потере фокуса и активации невидимой консоли,
-				// перехвате стрелок клавиатуры, и прочей фигни...
-				if (wParam<0xF000)
-				{
-					POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, wParam, lParam, FALSE);
-				}
-				#endif
-
-				if (wParam == SC_SYSMENUPOPUP_SECRET)
-				{
-					mn_TrackMenuPlace = tmp_System;
-					mp_Tip->HideTip();
-				}
-
-				result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
-
-				if (wParam == SC_SYSMENUPOPUP_SECRET)
-				{
-					mn_TrackMenuPlace = tmp_None;
-					mp_Tip->HideTip();
-				}
-			}
-		} // default:
-	}
-
-	return result;
-}
-
 LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
@@ -16249,6 +15091,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	//if (mb_InTimer) return 0; // чтобы ненароком два раза в одно событие не вошел (хотя не должен)
 	mb_InTimer = TRUE;
 	//result = gpConEmu->OnTimer(wParam, lParam);
+
 #ifdef DEBUGSHOWFOCUS
 	HWND hFocus = GetFocus();
 	HWND hFore = GetForegroundWindow();
@@ -16284,278 +15127,303 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	if (GetActiveVCon(&VCon) >= 0)
 		pVCon = VCon.VCon();
 
-	switch(wParam)
+	switch (wParam)
 	{
 		case TIMER_MAIN_ID: // Период: 500 мс
-		{
-			//Maximus5. Hack - если какая-то зараза задизеблила окно
-			if (!gbDontEnable)
-			{
-				DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+			OnTimer_Main(pVCon);
+			break; // case 0:
 
-				if (dwStyle & WS_DISABLED)
-					EnableWindow(ghWnd, TRUE);
-			}
-
-			bool bForeground = isMeForeground();
-			if (bForeground && !m_GuiInfo.bGuiActive)
-			{
-				UpdateGuiInfoMappingActive(true);
-			}
-
-			DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
-			#ifdef CATCH_TOPMOST_SET
-			static bool bWasTopMost = false;
-			_ASSERTE((bWasTopMost || gpSet->isAlwaysOnTop || ((dwStyleEx & WS_EX_TOPMOST)==0)) && "TopMost mode was set (WM_TIMER)");
-			bWasTopMost = ((dwStyleEx & WS_EX_TOPMOST)==WS_EX_TOPMOST);
-			#endif
-			if (!gpSet->isAlwaysOnTop && ((dwStyleEx & WS_EX_TOPMOST)==WS_EX_TOPMOST))
-			{
-				CheckTopMostState();
-			}
-
-			mp_Status->OnTimer();
-
-			CheckProcesses();
-			TODO("Теперь это условие не работает. 1 - раньше это был сам ConEmu.exe");
-
-			if (m_ProcCount == 0)
-			{
-				// При ошибках запуска консольного приложения хотя бы можно будет увидеть, что оно написало...
-				if (mb_ProcessCreated)
-				{
-					OnAllVConClosed();
-					break;
-				}
-			}
-			else
-			{
-				//if (!mb_ProcessCreated && m_ProcCount>=1) --> OnRConStartedSuccess
-				//{
-				//	if ((GetTickCount() - mn_StartTick)>PROCESS_WAIT_START_TIME)
-				//		mb_ProcessCreated = TRUE;
-				//}
-
-				if (!mb_WorkspaceErasedOnClose)
-					mb_WorkspaceErasedOnClose = FALSE;
-			}
-
-			// TODO: поддержку SlideShow повесить на отдельный таймер
-			BOOL lbIsPicView = isPictureView();
-
-			if (bPicViewSlideShow)
-			{
-				DWORD dwTicks = GetTickCount();
-				DWORD dwElapse = dwTicks - dwLastSlideShowTick;
-
-				if (dwElapse > gpSet->nSlideShowElapse)
-				{
-					if (IsWindow(hPictureView) && pVCon)
-					{
-						//
-						bPicViewSlideShow = false;
-						SendMessage(pVCon->RCon()->ConWnd(), WM_KEYDOWN, VK_NEXT, 0x01510001);
-						SendMessage(pVCon->RCon()->ConWnd(), WM_KEYUP, VK_NEXT, 0xc1510001);
-						// Окно могло измениться?
-						isPictureView();
-						dwLastSlideShowTick = GetTickCount();
-						bPicViewSlideShow = true;
-					}
-					else
-					{
-						hPictureView = NULL;
-						bPicViewSlideShow = false;
-					}
-				}
-			}
-
-			if (m_InsideIntegration)
-			{
-				InsideParentMonitor();
-			}
-
-			//2009-04-22 - вроде не требуется
-			/*if (lbIsPicView && !isPiewUpdate)
-			{
-			    // чтобы принудительно обновиться после закрытия PicView
-			    isPiewUpdate = true;
-			}*/
-
-			if (!lbIsPicView && isPiewUpdate)
-			{
-				// После скрытия/закрытия PictureView нужно передернуть консоль - ее размер мог измениться
-				isPiewUpdate = false;
-				SyncConsoleToWindow();
-				//INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
-				InvalidateAll();
-			}
-
-			if (!isIconic())
-			{
-				// Был сдвиг окна? Проверка после отпускания кнопки мышки
-				if ((mouse.state & MOUSE_SIZING_BEGIN) || mouse.bCheckNormalRect)
-				{
-					bool bIsSizing = isSizing();
-					if (!bIsSizing)
-					{
-						StoreNormalRect(NULL); // Сама разберется, надо/не надо
-					}
-				}
-				//// Было ли реальное изменение размеров?
-				//BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
-
-				//if (isSizing() && !isPressed(VK_LBUTTON)) {
-				//    // Сборс всех флагов ресайза мышкой
-				//    mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
-				//}
-
-				//TODO("возможно весь ресайз (кроме SyncNtvdm?) нужно перенести в нить консоли")
-				//OnConsoleResize();
-
-				// update scrollbar
-				OnUpdateScrollInfo(TRUE);
-			}
-			else
-			{
-				if (mouse.bCheckNormalRect)
-					mouse.bCheckNormalRect = false;
-			}
-
-			// режим полного скрытия заголовка
-			if (gpSet->isCaptionHidden())
-			{
-				if (!bForeground)
-				{
-					if (m_ForceShowFrame)
-					{
-						StopForceShowFrame();
-					}
-				}
-				else
-				{
-					// в Normal режиме при помещении мышки над местом, где должен быть
-					// заголовок или рамка - показать их
-					if (!isIconic() && (WindowMode == wmNormal))
-					{
-						TODO("Не наколоться бы с предыдущим статусом при ресайзе?");
-						//static bool bPrevForceShow = false;
-						bool bCurForceShow = isMouseOverFrame(true);
-
-						if (bCurForceShow != (m_ForceShowFrame != fsf_Hide))
-						{
-							m_ForceShowFrame = bCurForceShow ? fsf_WaitShow : fsf_Hide;
-							KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID);
-							KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
-							WORD nID = bCurForceShow ? TIMER_CAPTION_APPEAR_ID : TIMER_CAPTION_DISAPPEAR_ID;
-							DWORD nDelay = bCurForceShow ? gpSet->nHideCaptionAlwaysDelay : gpSet->nHideCaptionAlwaysDisappear;
-
-							// Если просили показывать с задержкой - то по таймеру
-							if (nDelay)
-								SetTimer(ghWnd, nID, nDelay, NULL);
-							else if (bCurForceShow)
-								StartForceShowFrame();
-							else
-								StopForceShowFrame();
-						}
-					}
-				}
-			}
-
-			if (pVCon)
-			{
-				bool bLastFade = pVCon->mb_LastFadeFlag;
-				bool bNewFade = (gpSet->isFadeInactive && !bForeground && !lbIsPicView);
-
-				// Это условие скорее всего никогда не выполнится, т.к.
-				// смена Fade обрабатывается в WM_ACTIVATE/WM_SETFOCUS/WM_KILLFOCUS
-				if (bLastFade != bNewFade)
-				{
-					pVCon->mb_LastFadeFlag = bNewFade;
-					Invalidate(pVCon);
-				}
-			}
-
-			if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
-				isFirstInstance(); // Заодно и проверит...
-
-			// Если был изменен файл background
-			if (gpSetCls->PollBackgroundFile())
-			{
-				gpConEmu->Update(true);
-			}
-
-			if (mn_TrackMenuPlace != tmp_None && mp_Tip)
-			{
-				POINT ptCur; GetCursorPos(&ptCur);
-				HWND hPoint = WindowFromPoint(ptCur);
-				if (hPoint)
-				{
-					#if 0
-					wchar_t szWinInfo[1024];
-					_wsprintf(szWinInfo, SKIPLEN(countof(szWinInfo)) L"WindowFromPoint(%i,%i) ", ptCur.x, ptCur.y);
-					OutputDebugString(szWinInfo);
-					getWindowInfo(hPoint, szWinInfo);
-					wcscat_c(szWinInfo, L"\n");
-					OutputDebugString(szWinInfo);
-					#endif
-
-					wchar_t szClass[128];
-					if (GetClassName(hPoint, szClass, countof(szClass))
-						&& (lstrcmp(szClass, VirtualConsoleClass) == 0 || lstrcmp(szClass, VirtualConsoleClassMain) == 0))
-					{
-						mp_Tip->HideTip();
-					}
-				}
-			}
-
-			// -- Замена на OnFocus
-			//CheckFocus(L"TIMER_MAIN_ID");
-			// Проверить, может ConEmu был активирован, а сервер нет?
-			OnFocus(NULL, 0, 0, 0, L"TIMER_MAIN_ID");
-
-			if (!lbIsPicView && gpSet->UpdSet.isUpdateCheckHourly)
-			{
-				gpSet->UpdSet.CheckHourlyUpdate();
-			}
-
-		} break; // case 0:
 		case TIMER_CONREDRAW_ID: // Период: CON_REDRAW_TIMOUT*2
-		{
-			if (pVCon && !isIconic())
-			{
-				pVCon->CheckPostRedraw();
-			}
-		} break; // case 1:
+			OnTimer_ConRedraw(pVCon);
+			break; // case 1:
+
 		case TIMER_CAPTION_APPEAR_ID:
 		case TIMER_CAPTION_DISAPPEAR_ID:
-		{
-			KillTimer(ghWnd, wParam);
-			if (isMouseOverFrame(true))
-				StartForceShowFrame();
-			else
-				StopForceShowFrame();
-		} break;
+			OnTimer_FrameAppearDisappear(wParam);
+			break;
+
 		case TIMER_RCLICKPAINT:
-		{
-			RightClickingPaint(NULL, NULL);
-		} break;
+			OnTimer_RClickPaint();
+			break;
+
 		case TIMER_ADMSHIELD_ID:
-		{
-			static int nStep = 0;
-			if (gpSet->isTaskbarShield)
-			{
-				Taskbar_UpdateOverlay();
-				nStep++;
-			}
-			if ((nStep >= 5) || !gpSet->isTaskbarShield)
-			{
-				KillTimer(ghWnd, TIMER_ADMSHIELD_ID);
-			}
-		} break;
+			OnTimer_AdmShield();
+			break;
 	}
 
 	mb_InTimer = FALSE;
 	return result;
+}
+
+void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
+{
+	//Maximus5. Hack - если какая-то зараза задизеблила окно
+	if (!gbDontEnable)
+	{
+		DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+
+		if (dwStyle & WS_DISABLED)
+			EnableWindow(ghWnd, TRUE);
+	}
+
+	bool bForeground = isMeForeground();
+	if (bForeground && !m_GuiInfo.bGuiActive)
+	{
+		UpdateGuiInfoMappingActive(true);
+	}
+
+	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
+	#ifdef CATCH_TOPMOST_SET
+	static bool bWasTopMost = false;
+	_ASSERTE((bWasTopMost || gpSet->isAlwaysOnTop || ((dwStyleEx & WS_EX_TOPMOST)==0)) && "TopMost mode was set (WM_TIMER)");
+	bWasTopMost = ((dwStyleEx & WS_EX_TOPMOST)==WS_EX_TOPMOST);
+	#endif
+	if (!gpSet->isAlwaysOnTop && ((dwStyleEx & WS_EX_TOPMOST)==WS_EX_TOPMOST))
+	{
+		CheckTopMostState();
+	}
+
+	mp_Status->OnTimer();
+
+	CheckProcesses();
+	TODO("Теперь это условие не работает. 1 - раньше это был сам ConEmu.exe");
+
+	if (m_ProcCount == 0)
+	{
+		// При ошибках запуска консольного приложения хотя бы можно будет увидеть, что оно написало...
+		if (mb_ProcessCreated)
+		{
+			OnAllVConClosed();
+			return;
+		}
+	}
+	else
+	{
+		//if (!mb_ProcessCreated && m_ProcCount>=1) --> OnRConStartedSuccess
+		//{
+		//	if ((GetTickCount() - mn_StartTick)>PROCESS_WAIT_START_TIME)
+		//		mb_ProcessCreated = TRUE;
+		//}
+
+		if (!mb_WorkspaceErasedOnClose)
+			mb_WorkspaceErasedOnClose = FALSE;
+	}
+
+	// TODO: поддержку SlideShow повесить на отдельный таймер
+	BOOL lbIsPicView = isPictureView();
+
+	if (bPicViewSlideShow)
+	{
+		DWORD dwTicks = GetTickCount();
+		DWORD dwElapse = dwTicks - dwLastSlideShowTick;
+
+		if (dwElapse > gpSet->nSlideShowElapse)
+		{
+			if (IsWindow(hPictureView) && pVCon)
+			{
+				//
+				bPicViewSlideShow = false;
+				SendMessage(pVCon->RCon()->ConWnd(), WM_KEYDOWN, VK_NEXT, 0x01510001);
+				SendMessage(pVCon->RCon()->ConWnd(), WM_KEYUP, VK_NEXT, 0xc1510001);
+				// Окно могло измениться?
+				isPictureView();
+				dwLastSlideShowTick = GetTickCount();
+				bPicViewSlideShow = true;
+			}
+			else
+			{
+				hPictureView = NULL;
+				bPicViewSlideShow = false;
+			}
+		}
+	}
+
+	if (m_InsideIntegration)
+	{
+		InsideParentMonitor();
+	}
+
+	//2009-04-22 - вроде не требуется
+	/*if (lbIsPicView && !isPiewUpdate)
+	{
+	    // чтобы принудительно обновиться после закрытия PicView
+	    isPiewUpdate = true;
+	}*/
+
+	if (!lbIsPicView && isPiewUpdate)
+	{
+		// После скрытия/закрытия PictureView нужно передернуть консоль - ее размер мог измениться
+		isPiewUpdate = false;
+		SyncConsoleToWindow();
+		//INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
+		InvalidateAll();
+	}
+
+	if (!isIconic())
+	{
+		// Был сдвиг окна? Проверка после отпускания кнопки мышки
+		if ((mouse.state & MOUSE_SIZING_BEGIN) || mouse.bCheckNormalRect)
+		{
+			bool bIsSizing = isSizing();
+			if (!bIsSizing)
+			{
+				StoreNormalRect(NULL); // Сама разберется, надо/не надо
+			}
+		}
+		//// Было ли реальное изменение размеров?
+		//BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
+
+		//if (isSizing() && !isPressed(VK_LBUTTON)) {
+		//    // Сборс всех флагов ресайза мышкой
+		//    mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
+		//}
+
+		//TODO("возможно весь ресайз (кроме SyncNtvdm?) нужно перенести в нить консоли")
+		//OnConsoleResize();
+
+		// update scrollbar
+		OnUpdateScrollInfo(TRUE);
+	}
+	else
+	{
+		if (mouse.bCheckNormalRect)
+			mouse.bCheckNormalRect = false;
+	}
+
+	// режим полного скрытия заголовка
+	if (gpSet->isCaptionHidden())
+	{
+		if (!bForeground)
+		{
+			if (m_ForceShowFrame)
+			{
+				StopForceShowFrame();
+			}
+		}
+		else
+		{
+			// в Normal режиме при помещении мышки над местом, где должен быть
+			// заголовок или рамка - показать их
+			if (!isIconic() && (WindowMode == wmNormal))
+			{
+				TODO("Не наколоться бы с предыдущим статусом при ресайзе?");
+				//static bool bPrevForceShow = false;
+				bool bCurForceShow = isMouseOverFrame(true);
+
+				if (bCurForceShow != (m_ForceShowFrame != fsf_Hide))
+				{
+					m_ForceShowFrame = bCurForceShow ? fsf_WaitShow : fsf_Hide;
+					KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID);
+					KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
+					WORD nID = bCurForceShow ? TIMER_CAPTION_APPEAR_ID : TIMER_CAPTION_DISAPPEAR_ID;
+					DWORD nDelay = bCurForceShow ? gpSet->nHideCaptionAlwaysDelay : gpSet->nHideCaptionAlwaysDisappear;
+
+					// Если просили показывать с задержкой - то по таймеру
+					if (nDelay)
+						SetTimer(ghWnd, nID, nDelay, NULL);
+					else if (bCurForceShow)
+						StartForceShowFrame();
+					else
+						StopForceShowFrame();
+				}
+			}
+		}
+	}
+
+	if (pVCon)
+	{
+		bool bLastFade = pVCon->mb_LastFadeFlag;
+		bool bNewFade = (gpSet->isFadeInactive && !bForeground && !lbIsPicView);
+
+		// Это условие скорее всего никогда не выполнится, т.к.
+		// смена Fade обрабатывается в WM_ACTIVATE/WM_SETFOCUS/WM_KILLFOCUS
+		if (bLastFade != bNewFade)
+		{
+			pVCon->mb_LastFadeFlag = bNewFade;
+			Invalidate(pVCon);
+		}
+	}
+
+	if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
+		isFirstInstance(); // Заодно и проверит...
+
+	// Если был изменен файл background
+	if (gpSetCls->PollBackgroundFile())
+	{
+		gpConEmu->Update(true);
+	}
+
+	if (mp_Menu->GetTrackMenuPlace() != tmp_None && mp_Tip)
+	{
+		POINT ptCur; GetCursorPos(&ptCur);
+		HWND hPoint = WindowFromPoint(ptCur);
+		if (hPoint)
+		{
+			#if 0
+			wchar_t szWinInfo[1024];
+			_wsprintf(szWinInfo, SKIPLEN(countof(szWinInfo)) L"WindowFromPoint(%i,%i) ", ptCur.x, ptCur.y);
+			OutputDebugString(szWinInfo);
+			getWindowInfo(hPoint, szWinInfo);
+			wcscat_c(szWinInfo, L"\n");
+			OutputDebugString(szWinInfo);
+			#endif
+
+			wchar_t szClass[128];
+			if (GetClassName(hPoint, szClass, countof(szClass))
+				&& (lstrcmp(szClass, VirtualConsoleClass) == 0 || lstrcmp(szClass, VirtualConsoleClassMain) == 0))
+			{
+				mp_Tip->HideTip();
+			}
+		}
+	}
+
+	// -- Замена на OnFocus
+	//CheckFocus(L"TIMER_MAIN_ID");
+	// Проверить, может ConEmu был активирован, а сервер нет?
+	OnFocus(NULL, 0, 0, 0, L"TIMER_MAIN_ID");
+
+	if (!lbIsPicView && gpSet->UpdSet.isUpdateCheckHourly)
+	{
+		gpSet->UpdSet.CheckHourlyUpdate();
+	}
+
+}
+
+void CConEmuMain::OnTimer_ConRedraw(CVirtualConsole* pVCon)
+{
+	if (pVCon && !isIconic())
+	{
+		pVCon->CheckPostRedraw();
+	}
+}
+
+void CConEmuMain::OnTimer_FrameAppearDisappear(WPARAM wParam)
+{
+	KillTimer(ghWnd, wParam);
+
+	if (isMouseOverFrame(true))
+		StartForceShowFrame();
+	else
+		StopForceShowFrame();
+}
+
+void CConEmuMain::OnTimer_RClickPaint()
+{
+	RightClickingPaint(NULL, NULL);
+}
+
+void CConEmuMain::OnTimer_AdmShield()
+{
+	static int nStep = 0;
+	if (gpSet->isTaskbarShield)
+	{
+		Taskbar_UpdateOverlay();
+		nStep++;
+	}
+	if ((nStep >= 5) || !gpSet->isTaskbarShield)
+	{
+		KillTimer(ghWnd, TIMER_ADMSHIELD_ID);
+	}
 }
 
 void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*= true*/)
@@ -16587,7 +15455,7 @@ void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*=
 	// return true - when state was changes
 	if (SetTransparent(ghWnd, nAlpha, bColorKey, gpSet->nColorKeyValue, bForceLayered))
 	{
-		if (mn_TrackMenuPlace == tmp_None)
+		if (mp_Menu->GetTrackMenuPlace() == tmp_None)
 		{
 			OnSetCursor();
 		}
@@ -16921,33 +15789,6 @@ BOOL CConEmuMain::isDialogMessage(MSG &Msg)
 	return lbDlgMsg;
 }
 
-LPCWSTR CConEmuMain::MenuAccel(int DescrID, LPCWSTR asText)
-{
-	if (!asText || !*asText)
-	{
-		_ASSERTE(asText!=NULL);
-		return L"";
-	}
-
-	static wchar_t szTemp[255];
-	wchar_t szKey[128] = {};
-	
-	const ConEmuHotKey* pHK = NULL;
-	DWORD VkMod = gpSet->GetHotkeyById(DescrID, &pHK);
-	if (!gpSet->GetHotkey(VkMod) || !pHK)
-		return asText;
-
-	gpSet->GetHotkeyName(pHK, szKey);
-	if (!*szKey)
-		return asText;
-	int nLen = lstrlen(szKey);
-	lstrcpyn(szTemp, asText, countof(szTemp)-nLen-4);
-	wcscat_c(szTemp, L"\t");
-	wcscat_c(szTemp, szKey);
-
-	return szTemp;
-}
-
 // Window procedure for ghWndWork
 LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -17080,43 +15921,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			break;
 		}
 		case WM_INITMENUPOPUP:
-		{
-			return gpConEmu->OnInitMenuPopup(hWnd, (HMENU)wParam, lParam);
-		}
+			return gpConEmu->mp_Menu->OnInitMenuPopup(hWnd, (HMENU)wParam, lParam);
 		case WM_MENUSELECT:
-		{
-			switch (gpConEmu->mn_TrackMenuPlace)
-			{
-			case tmp_Cmd:
-				if (gpConEmu->mp_TabBar)
-					gpConEmu->mp_TabBar->OnMenuSelected((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
-				return 0;
-			case tmp_System:
-			case tmp_VCon:
-				gpConEmu->ShowMenuHint((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
-				return 0;
-			case tmp_KeyBar:
-				gpConEmu->ShowKeyBarHint((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
-				return 0;
-			case tmp_StatusBarCols:
-				gpConEmu->mp_Status->ProcessMenuHighlight((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
-				return 0;
-			case tmp_None:
-				break;
-			default:
-				; // Take no action
-			}
-			// Else ...
+			gpConEmu->mp_Menu->OnMenuSelected((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
 			return 0;
-		}
 		case WM_MENURBUTTONUP:
-		{
-			if (gpConEmu->mn_TrackMenuPlace == tmp_Cmd)
-			{
-				gpConEmu->mp_TabBar->OnNewConPopupMenuRClick((HMENU)lParam, (UINT)wParam);
-			}
+			gpConEmu->mp_Menu->OnMenuRClick((HMENU)lParam, (UINT)wParam);
 			return 0;
-		}
 		case WM_ERASEBKGND:
 			//return 0;
 			return 1; //2010-10-05
@@ -17366,7 +16177,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = 0;
 			break;
 		case WM_SYSCOMMAND:
-			result = gpConEmu->OnSysCommand(hWnd, wParam, lParam);
+			result = gpConEmu->mp_Menu->OnSysCommand(hWnd, wParam, lParam);
 			break;
 		case WM_NCLBUTTONDOWN:
 			// При ресайзе WM_NCLBUTTONUP к сожалению не приходит
@@ -17786,7 +16597,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				// system menu at the given coordinates.
 				if ((messg == WM_CONTEXTMENU) || (messg == 0x0313))
 				{
-					mn_TrackMenuPlace = tmp_System;
+					mp_Menu->SetTrackMenuPlace(tmp_System);
 					mp_Tip->HideTip();
 				}
 
@@ -17794,7 +16605,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 				if ((messg == WM_CONTEXTMENU) || (messg == 0x0313))
 				{
-					mn_TrackMenuPlace = tmp_None;
+					mp_Menu->SetTrackMenuPlace(tmp_None);
 					mp_Tip->HideTip();
 				}
 			}

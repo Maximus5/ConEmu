@@ -17,6 +17,7 @@ SRCS =  \
 		GuiServer.cpp      \
 		LoadImg.cpp        \
 		Macro.cpp          \
+		Menu.cpp          \
 		Options.cpp        \
 		OptionsClass.cpp   \
 		OptionsFast.cpp    \

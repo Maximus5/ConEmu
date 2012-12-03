@@ -77,7 +77,7 @@ TODO("Попробовать перевести DragImage на нормальный интерфейс API");
 
 CDragDropData::CDragDropData()
 {
-	m_pfpi = NULL;
+	m_pfpi = NULL; mp_LastRCon = NULL; mn_PfpiSizeMax = 0;
 	mp_DataObject = NULL;
 	m_DesktopID.mkid.cb = 0;
 	mh_Overlapped = NULL; mh_BitsDC = NULL; mh_BitsBMP = mh_BitsBMP_Old = NULL;
@@ -109,7 +109,9 @@ CDragDropData::~CDragDropData()
 	DestroyDragImageBits();
 	DestroyDragImageWindow();
 
+	// Final release, no more need
 	if (m_pfpi) free(m_pfpi); m_pfpi=NULL;
+	mp_LastRCon = NULL;
 }
 
 BOOL CDragDropData::Register()
@@ -219,16 +221,20 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 {
 	CVConGuard VCon;
 	if (CVConGroup::GetActiveVCon(&VCon) < 0)
+	{
+		SetDragToInfo(NULL, 0, NULL);
 		return -1;
+	}
 
 	int size = -1;
 	UINT nFilesCount = 0;
 	wchar_t *szDraggedPath = NULL;
+	bool bInfoSet = false;
 	//BOOL lbNeedLBtnUp = !abClickNeed;
 	CConEmuPipe pipe(gpConEmu->GetFarPID(), CONEMUREADYTIMEOUT);
 	MCHKHEAP
 
-	if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+	//if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 
 	if (pipe.Init(_T("CDragDropData::Drag")))
 	{
@@ -289,37 +295,43 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 					nFilesCount ++;
 				}
 
-				int cbStructSize=0;
+				int cbStructSize = 0;
+				DWORD cbPfiReadSize = 0;
+				ForwardedPanelInfo* pBuf = NULL;
 
-				if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+				//if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 
 				if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
 				{
 					if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo))
 					{
-						m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
-						pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
-						m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
-						//Slash на конце нам не нужен
-						int nPathLen = lstrlenW(m_pfpi->pszActivePath);
+						pBuf = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
 
-						if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
-							m_pfpi->pszActivePath[nPathLen-1] = 0;
-
-						m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
-						//Slash на конце нам не нужен
-						nPathLen = lstrlenW(m_pfpi->pszPassivePath);
-
-						if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
-							m_pfpi->pszPassivePath[nPathLen-1] = 0;
+						if (pBuf)
+						{
+							pipe.Read(pBuf, cbStructSize, &cbPfiReadSize);
+						}
 					}
+				}
+
+				SetDragToInfo(pBuf, cbPfiReadSize, VCon->RCon());
+				bInfoSet = true;
+
+				if (pBuf)
+				{
+					free(pBuf);
 				}
 
 				// Сразу закроем
 				pipe.Close();
-				size=(curr-szDraggedPath)*sizeof(wchar_t)+2;
+				size=(curr-szDraggedPath+1)*sizeof(wchar_t);
 			}
 		}
+	}
+
+	if (!bInfoSet)
+	{
+		SetDragToInfo(NULL, 0, NULL);
 	}
 
 	*ppszDraggedPath = szDraggedPath;
@@ -565,6 +577,8 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	wchar_t *szDraggedPath = NULL; // ASCIIZZ
 	UINT nFilesCount = 0;
 
+	SetDragToInfo(NULL, 0, NULL);
+
 	if (!gpSet->isDragEnabled /*|| isInDrag */|| gpConEmu->isDragging())
 	{
 		gpConEmu->DebugStep(_T("DnD: Drag disabled"), TRUE);
@@ -612,12 +626,14 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 
 	//CFSTR_PREFERREDDROPEFFECT, FD_LINKUI
 
-	// Сразу получим информацию о путях панелей...
-	if (!m_pfpi)  // если это уже не сделали
-	{
-		// Ошибки пайпа отображаются через MBoxA
-		RetrieveDragToInfo();
-	}
+	// Информация о панелях уже должна быть получена!
+	_ASSERTE(m_pfpi && m_pfpi->NoFarConsole==FALSE);
+	//// Сразу получим информацию о путях панелей...
+	//if (!m_pfpi)  // если это уже не сделали
+	//{
+	//	// Ошибки пайпа отображаются через MBoxA
+	//	RetrieveDragToInfo();
+	//}
 
 	if (LoadDragImageBits(mp_DataObject))
 	{
@@ -968,33 +984,64 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 	hr = S_OK;
 }
 
-// Загрузить из фара информацию для Drop
-// Требуется только при Drop из внешних приложений!
-void CDragDropData::RetrieveDragToInfo()
+bool CDragDropData::NeedRefreshToInfo(POINTL ptScreen)
 {
-	if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+	POINT pt = {ptScreen.x, ptScreen.y};
 
 	CVConGuard VCon;
-	if (CVConGroup::GetActiveVCon(&VCon) < 0)
-		return;
-	CVirtualConsole* pVCon = VCon.VCon();
-	if (!pVCon)
-		return;
-	CRealConsole* pRCon = pVCon->RCon();
-	if (!pRCon)
-		return;
+	CRealConsole* pRCon = NULL;
+	if (CVConGroup::GetVConFromPoint(pt, &VCon))
+		pRCon = VCon->RCon();
 
-	CEFarWindowType tabType = pRCon->GetActiveTabType();
-	DWORD nFarPID = pRCon->GetFarPID(TRUE);
-	UNREFERENCED_PARAMETER(tabType);
+	bool bNeedRefresh = (pRCon != mp_LastRCon) || (m_pfpi == NULL);
 
-	if (nFarPID == 0)
+	if (bNeedRefresh && pRCon)
 	{
-		// 
-		m_pfpi = (ForwardedPanelInfo*)calloc(sizeof(ForwardedPanelInfo), 1);
+		// When drag over INACTIVE pane (split-screen) - need to activate this VCon
+		if (!CVConGroup::isActive(VCon.VCon(), false))
+		{
+			CVConGroup::Activate(VCon.VCon());
+		}
+	}
+
+	return bNeedRefresh;
+}
+
+void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfoSize, CRealConsole* pRCon)
+{
+	if (m_pfpi && (cbInfoSize > mn_PfpiSizeMax))
+	{
+		// Need larger buffer
+		free(m_pfpi); m_pfpi=NULL;
+	}
+
+	mp_LastRCon = pRCon;
+
+	if (!pInfo || (cbInfoSize <= sizeof(ForwardedPanelInfo)) || pInfo->NoFarConsole)
+	{
+		if (!m_pfpi)
+		{
+			mn_PfpiSizeMax = sizeof(ForwardedPanelInfo)+(MAX_PATH*5*sizeof(wchar_t));
+			m_pfpi = (ForwardedPanelInfo*)calloc(1,mn_PfpiSizeMax);
+		}
+
+		if (!m_pfpi)
+		{
+			return;
+		}
+
 		m_pfpi->NoFarConsole = TRUE;
-		m_pfpi->ActiveRect.right = pRCon->TextWidth() - 1;
-		m_pfpi->ActiveRect.bottom = pRCon->TextHeight() - 1;
+		if (pRCon)
+		{
+			m_pfpi->ActiveRect.right = pRCon->TextWidth() - 1;
+			m_pfpi->ActiveRect.bottom = pRCon->TextHeight() - 1;
+		}
+		else
+		{
+			// Если консоли нет - то и бросать некуда
+			m_pfpi->ActiveRect.right = 0;
+			m_pfpi->ActiveRect.bottom = 0;
+		}
 		wcscpy_c(m_pfpi->szDummy, L"*");
 		m_pfpi->pszActivePath = m_pfpi->szDummy;
 		m_pfpi->pszPassivePath = m_pfpi->szDummy+1;
@@ -1005,10 +1052,67 @@ void CDragDropData::RetrieveDragToInfo()
 		//m_pfpi->PassivePathShift = sizeof(ForwardedPanelInfo)+sizeof(wchar_t);
 		//m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
 		//m_pfpi->pszActivePath[0] = L'*';
+		return;
+	}
+
+	// Reserve additional space
+	mn_PfpiSizeMax = cbInfoSize+(MAX_PATH*5*sizeof(wchar_t));
+	m_pfpi = (ForwardedPanelInfo*)calloc(1, mn_PfpiSizeMax);
+	if (!m_pfpi)
+	{
+		return;
+	}
+
+	memmove(m_pfpi, pInfo, cbInfoSize);
+
+	m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
+	//Slash на конце нам не нужен
+	int nPathLen = lstrlenW(m_pfpi->pszActivePath);
+
+	if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
+		m_pfpi->pszActivePath[nPathLen-1] = 0;
+
+	m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
+	//Slash на конце нам не нужен
+	nPathLen = lstrlenW(m_pfpi->pszPassivePath);
+
+	if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
+		m_pfpi->pszPassivePath[nPathLen-1] = 0;
+
+	// Done
+}
+
+// Загрузить из фара информацию для Drop
+// Требуется только при Drop из внешних приложений!
+void CDragDropData::RetrieveDragToInfo()
+{
+	//if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+
+	CVConGuard VCon;
+	CVirtualConsole* pVCon = NULL;
+	CRealConsole* pRCon = NULL;
+
+	if ((CVConGroup::GetActiveVCon(&VCon) < 0)
+		|| ((pVCon = VCon.VCon()) == NULL)
+		|| ((pRCon = pVCon->RCon()) == NULL))
+	{
+		SetDragToInfo(NULL, 0, NULL);
+		return;
+	}
+
+	CEFarWindowType tabType = pRCon->GetActiveTabType();
+	DWORD nFarPID = pRCon->GetFarPID(TRUE);
+	UNREFERENCED_PARAMETER(tabType);
+	bool bInfoSet = false;
+
+	if (nFarPID == 0)
+	{
+		//SetDragToInfo(NULL, 0, pRCon);
 	}
 	else if (!pRCon->isAlive())
 	{
 		gpConEmu->DebugStep(_T("DnD: Far is not alive, drop disabled"));
+		//SetDragToInfo(NULL, 0, pRCon);
 	}
 	else
 	{
@@ -1023,41 +1127,27 @@ void CDragDropData::RetrieveDragToInfo()
 				DWORD cbBytesRead=0;
 				int cbStructSize=0;
 
-				if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+				//if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 
 				if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
 				{
 					if ((DWORD)cbStructSize>=sizeof(ForwardedPanelInfo))
 					{
-						m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
-						pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
+						ForwardedPanelInfo* pBuf = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
 
-						if (m_pfpi->NoFarConsole)
+						if (pBuf)
 						{
-							TODO("Здесь можно бы получать координаты диалога/полей/редактора, чтобы бросать только в него...");
-							m_pfpi->ActiveRect.right = pRCon->TextWidth() - 1;
-							m_pfpi->ActiveRect.bottom = pRCon->TextHeight() - 1;
-							wcscpy_c(m_pfpi->szDummy, L"*");
-							m_pfpi->pszActivePath = m_pfpi->szDummy;
-							m_pfpi->pszPassivePath = m_pfpi->szDummy+1;
-							m_pfpi->ActivePathShift = (int)(((LPBYTE)m_pfpi->pszActivePath) - ((LPBYTE)m_pfpi));
-							m_pfpi->PassivePathShift = (int)(((LPBYTE)m_pfpi->pszPassivePath) - ((LPBYTE)m_pfpi));
+							pipe.Read(pBuf, cbStructSize, &cbBytesRead);
 						}
-						else
+
+						TODO("можно бы получать координаты диалога/полей/редактора, чтобы бросать только в него...");
+
+						SetDragToInfo(pBuf, cbBytesRead, pRCon);
+						bInfoSet = true;
+
+						if (pBuf)
 						{
-							m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
-							//Slash на конце нам не нужен
-							int nPathLen = lstrlenW(m_pfpi->pszActivePath);
-
-							if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
-								m_pfpi->pszActivePath[nPathLen-1] = 0;
-
-							m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
-							//Slash на конце нам не нужен
-							nPathLen = lstrlenW(m_pfpi->pszPassivePath);
-
-							if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
-								m_pfpi->pszPassivePath[nPathLen-1] = 0;
+							free(pBuf);
 						}
 					}
 				}
@@ -1065,6 +1155,11 @@ void CDragDropData::RetrieveDragToInfo()
 		}
 
 		gpConEmu->DebugStep(NULL);
+	}
+
+	if (!bInfoSet)
+	{
+		SetDragToInfo(NULL, 0, pRCon);
 	}
 }
 

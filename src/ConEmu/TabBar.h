@@ -43,6 +43,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HT_CONEMUTAB HTBORDER
 
+enum ToolbarCommandIdx
+{
+	TID_ACTIVE_NUMBER = 1,
+	TID_CREATE_CON,
+	TID_ALTERNATIVE,
+	TID_SCROLL,
+	TID_MINIMIZE,
+	TID_MAXIMIZE,
+	TID_APPCLOSE,
+	TID_COPYING,
+	TID_MINIMIZE_SEP = 110,
+};
+
+
 class TabBarClass //: public CToolTip
 {
 	private:
@@ -67,14 +81,14 @@ class TabBarClass //: public CToolTip
 		HFONT mh_TabFont;
 		TOOLINFO tiBalloon; wchar_t ms_TabErrText[512];
 		HIMAGELIST mh_TabIcons; int mn_AdminIcon;
-		struct CmdHistory
-		{
-			int nCmd;
-			LPCWSTR pszCmd;
-			wchar_t szShort[32];
-		} m_CmdPopupMenu[MAX_CMD_HISTORY+1]; // структура для меню выбора команды новой консоли
-		bool mb_InNewConPopup, mb_InNewConRPopup;
-		int mn_FirstTaskID, mn_LastTaskID; // MenuItemID for Tasks, when mb_InNewConPopup==true
+		//struct CmdHistory
+		//{
+		//	int nCmd;
+		//	LPCWSTR pszCmd;
+		//	wchar_t szShort[32];
+		//} m_CmdPopupMenu[MAX_CMD_HISTORY+1]; // структура для меню выбора команды новой консоли
+		//bool mb_InNewConPopup, mb_InNewConRPopup;
+		//int mn_FirstTaskID, mn_LastTaskID; // MenuItemID for Tasks, when mb_InNewConPopup==true
 		bool _active;
 		int _tabHeight;
 		bool mb_ForceRecalcHeight;
@@ -144,7 +158,7 @@ class TabBarClass //: public CToolTip
 	public:
 		TabBarClass();
 		virtual ~TabBarClass();
-		virtual bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags);
+		//virtual bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags);
 		//void Enable(BOOL abEnabled);
 		//void Refresh(BOOL abFarActive);
 		void Retrieve();
@@ -177,8 +191,8 @@ class TabBarClass //: public CToolTip
 		void OnAlternative(BOOL abAlternative);
 		LRESULT OnNotify(LPNMHDR nmhdr);
 		void OnChooseTabPopup();
-		void OnNewConPopupMenu(POINT* ptWhere = NULL, DWORD nFlags = 0);
-		void OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos);
+		//void OnNewConPopupMenu(POINT* ptWhere = NULL, DWORD nFlags = 0);
+		//void OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos);
 		void OnCommand(WPARAM wParam, LPARAM lParam);
 		void OnMouse(int message, int x, int y);
 		// Переключение табов
@@ -203,6 +217,7 @@ class TabBarClass //: public CToolTip
 		void PaintTabs(HDC hdc, const RECT &rcCaption, const RECT &rcTabs) {};
 		int TabFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
 		int TabBtnFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
+		bool Toolbar_GetBtnRect(int nCmd, RECT* rcBtnRect);
 };
 
 #endif // #if !defined(CONEMU_TABBAR_EX)

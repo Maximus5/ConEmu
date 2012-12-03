@@ -47,6 +47,7 @@ $(INTDIR)\GestureEngine.obj \
 $(INTDIR)\GuiServer.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
+$(INTDIR)\Menu.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MSecurity.obj \
@@ -263,6 +264,8 @@ $(INTDIR)\GuiServer.obj: GuiServer.cpp GuiServer.h ConEmu.h RealConsole.h Virtua
 $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 
 $(INTDIR)\Macro.obj: Macro.cpp Macro.h
+
+$(INTDIR)\Menu.obj: Menu.cpp Menu.h MenuIds.h
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 

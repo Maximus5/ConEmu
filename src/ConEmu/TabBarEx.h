@@ -49,13 +49,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HT_CONEMUTAB HTBORDER
 
+enum ToolbarCommandIdx
+{
+	TID_ACTIVE_NUMBER = 1,
+	TID_CREATE_CON,
+	TID_ALTERNATIVE,
+	TID_SCROLL,
+	TID_MINIMIZE,
+	TID_MAXIMIZE,
+	TID_APPCLOSE,
+	TID_COPYING,
+	TID_MINIMIZE_SEP = 110,
+};
+
 class TabBarClass
 {
 public:
 	TabBarClass();
 	virtual ~TabBarClass();
 	
-	bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags);
+	//bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags);
 	void Retrieve();
 	void Reset();
 	void Invalidate();
@@ -84,8 +97,8 @@ public:
 	void OnAlternative(BOOL abAlternative);
 	//LRESULT OnNotify(LPNMHDR nmhdr);
 	void OnChooseTabPopup();
-	void OnNewConPopupMenu(POINT* ptWhere = NULL, DWORD nFlags = 0);
-	void OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos);
+	//void OnNewConPopupMenu(POINT* ptWhere = NULL, DWORD nFlags = 0);
+	//void OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos);
 	void OnCommand(WPARAM wParam, LPARAM lParam);
 	void OnMouse(int message, int x, int y);
 
@@ -118,6 +131,7 @@ public:
 	int TabFromCursor(POINT point, DWORD *pnFlags = NULL);
 	int TabBtnFromCursor(POINT point, DWORD *pnFlags = NULL);
 	void ShowTabError(LPCTSTR asInfo, int tabIndex);
+	bool Toolbar_GetBtnRect(int nCmd, RECT* rcBtnRect);
 
 protected:
 	bool mb_Active; // режим автоскрытия табов?

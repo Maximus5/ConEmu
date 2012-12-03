@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "Status.h"
 #include "VConGroup.h"
+#include "Menu.h"
 
 
 #define STATUS_PAINT_DELAY 500
@@ -899,7 +900,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 					break;
 				case csi_NewVCon:
 					if (uMsg == WM_LBUTTONDOWN)
-						gpConEmu->mp_TabBar->OnNewConPopupMenu((POINT*)&rcClient, TPM_LEFTALIGN|TPM_BOTTOMALIGN);
+						gpConEmu->mp_Menu->OnNewConPopupMenu((POINT*)&rcClient, TPM_LEFTALIGN|TPM_BOTTOMALIGN);
 					break;
 				case csi_Transparency:
 					if (uMsg == WM_LBUTTONDOWN)
@@ -937,7 +938,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 						CVConGuard VCon;
 						if (CVConGroup::GetActiveVCon(&VCon) >= 0)
 						{
-							VCon->ShowPopupMenu(MakePoint(rcClient.left,rcClient.top), TPM_LEFTALIGN|TPM_BOTTOMALIGN);
+							gpConEmu->mp_Menu->ShowPopupMenu(VCon.VCon(), MakePoint(rcClient.left,rcClient.top), TPM_LEFTALIGN|TPM_BOTTOMALIGN);
 						}
 					}
 					break;
@@ -992,7 +993,7 @@ void CStatus::ShowStatusSetupMenu()
 		// (ну так, на всякий случай, чтобы и статусное меню можно было показать)
 		&& (ptClient.x <= min(80,(m_Items[0].rcClient.right/2))))
 	{
-		gpConEmu->ShowSysmenu(ptCur.x, ptCur.y, true);
+		gpConEmu->mp_Menu->ShowSysmenu(ptCur.x, ptCur.y, true);
 		return;
 	}
 
@@ -1044,7 +1045,7 @@ void CStatus::ShowStatusSetupMenu()
 	{
 		mb_InSetupMenu = true;
 		// Popup menu with columns list
-		int nCmd = gpConEmu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_LEFTALIGN|TPM_RETURNCMD, ptCur.x, ptCur.y, ghWnd);
+		int nCmd = gpConEmu->mp_Menu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_LEFTALIGN|TPM_RETURNCMD, ptCur.x, ptCur.y, ghWnd);
 		mb_InSetupMenu = false;
 
 		if (nCmd == ((int)countof(gStatusCols)+1))
@@ -1696,7 +1697,7 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 	else
 		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcExcl, 2);
 
-	int nCmd = gpConEmu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_RIGHTALIGN|TPM_RETURNCMD, pt.x, pt.y, ghWnd, &rcExcl);
+	int nCmd = gpConEmu->mp_Menu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_RIGHTALIGN|TPM_RETURNCMD, pt.x, pt.y, ghWnd, &rcExcl);
 
 	bool bSelected = ProcessTransparentMenuId(nCmd, false);
 

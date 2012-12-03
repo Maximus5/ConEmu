@@ -48,6 +48,8 @@ typedef struct {
 CConEmuUpdate* gpUpd = NULL;
 
 #define UPDATETHREADTIMEOUT 2500
+#define DOWNLOADTIMEOUT     30000
+#define DOWNLOADTIMEOUTMAX  180000
 
 static bool CalcCRC(const BYTE *pData, size_t cchSize, DWORD& crc)
 {
@@ -128,6 +130,7 @@ public:
 	typedef HINTERNET (WINAPI* InternetOpenW_t)(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags);
 	typedef BOOL (WINAPI* InternetReadFile_t)(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfBytesToRead, LPDWORD lpdwNumberOfBytesRead);
 	typedef BOOL (WINAPI* InternetSetOptionW_t)(HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer, DWORD dwBufferLength);
+	typedef BOOL (WINAPI* InternetQueryOptionW_t)(HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer, LPDWORD lpdwBufferLength);
 
 	HttpOpenRequestW_t _HttpOpenRequestW;
 	HttpQueryInfoW_t _HttpQueryInfoW;
@@ -137,6 +140,7 @@ public:
 	InternetOpenW_t _InternetOpenW;
 	InternetReadFile_t _InternetReadFile;
 	InternetSetOptionW_t _InternetSetOptionW;
+	InternetQueryOptionW_t _InternetQueryOptionW;
 protected:
 	HMODULE _hWinInet;
 public:
@@ -151,6 +155,7 @@ public:
 		_InternetOpenW = NULL;
 		_InternetReadFile = NULL;
 		_InternetSetOptionW = NULL;
+        _InternetQueryOptionW = NULL;
 	};
 	~CWinInet()
 	{
@@ -192,14 +197,15 @@ public:
 		//Interne[0] = 'I'; Interne[2] = 't'; Interne[4] = 'r'; Interne[6] = 'e';
 		//Interne[1] = 'n'; Interne[3] = 'e'; Interne[5] = 'n'; Interne[7] = 0;
 
-		LoadFunc(HttpOpenRequestW,"tHptpOneeRuqseWt");
-		LoadFunc(HttpQueryInfoW,"tHptuQreIyfnWo");
-		LoadFunc(HttpSendRequestW,"tHpteSdneRuqseWt");
-		LoadFunc(InternetCloseHandle,"nIetnrtelCsoHenalde");
-		LoadFunc(InternetConnectW,"nIetnrteoCnnceWt");
-		LoadFunc(InternetSetOptionW,"nIetnrteeSOttpoiWn");
-		LoadFunc(InternetOpenW,"nIetnrtepOneW");
-		LoadFunc(InternetReadFile,"nIetnrteeRdaiFel");
+		LoadFunc(HttpOpenRequestW,     "tHptpOneeRuqseWt");
+		LoadFunc(HttpQueryInfoW,       "tHptuQreIyfnWo");
+		LoadFunc(HttpSendRequestW,     "tHpteSdneRuqseWt");
+		LoadFunc(InternetCloseHandle,  "nIetnrtelCsoHenalde");
+		LoadFunc(InternetConnectW,     "nIetnrteoCnnceWt");
+		LoadFunc(InternetSetOptionW,   "nIetnrteeSOttpoiWn");
+		LoadFunc(InternetQueryOptionW, "nIetnrteuQreOytpoiWn");
+		LoadFunc(InternetOpenW,        "nIetnrtepOneW");
+		LoadFunc(InternetReadFile,     "nIetnrteeRdaiFel");
 
 		return true;
 	}
@@ -208,6 +214,8 @@ public:
 
 CConEmuUpdate::CConEmuUpdate()
 {
+	mn_Timeout = DOWNLOADTIMEOUT;
+	mn_ConnTimeout = mn_FileTimeout = 0;
 	mb_InCheckProcedure = FALSE;
 	mn_CheckThreadId = 0;
 	mh_CheckThread = NULL;
@@ -217,8 +225,10 @@ CConEmuUpdate::CConEmuUpdate()
 	ms_LastErrorInfo = NULL;
 	mb_InShowLastError = false;
 	mp_LastErrorSC = new MSection;
-	mh_Internet = mh_Connect = NULL;
-	mn_InternetContentLen = mn_InternetContentReady = 0;
+	mb_InetMode = false;
+	mh_Internet = mh_Connect = mh_SrcFile = NULL;
+	mn_InternetContentLen = mn_InternetContentReady = mn_PackageSize = 0;
+	mn_Context = 0;
 	mpsz_DeleteIniFile = mpsz_DeletePackageFile = mpsz_DeleteBatchFile = NULL;
 	mpsz_PendingPackageFile = mpsz_PendingBatchFile = NULL;
 	wi = NULL;
@@ -260,6 +270,7 @@ CConEmuUpdate::~CConEmuUpdate()
 
 	if (wi)
 	{
+		CloseInternet(true);
 		delete wi;
 		wi = NULL;
 	}
@@ -510,6 +521,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	m_UpdateStep = us_Check;
 
 	DeleteBadTempFiles();
+	CloseInternet(true);
 
 	//120315 - OK, положим в архив и 64битный гуй
 	//#ifdef _WIN64
@@ -552,6 +564,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 			goto wrap;
 		bTempUpdateVerLocation = true;
 		
+		mn_Timeout = DOWNLOADTIMEOUT;
 		bInfoRc = DownloadFile(pszUpdateVerLocationSet, pszUpdateVerLocation, hInfo, crc);
 		CloseHandle(hInfo);
 		if (!bInfoRc)
@@ -606,6 +619,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 		ReportError(L"Invalid format in version description (size)\n%s", szSourceFull, 0);
 		goto wrap;
 	}
+	mn_PackageSize = nSrcLen;
 	pszSource = pszEnd+2;
 	nSrcCRC = wcstoul(pszSource, &pszEnd, 16);
 	if (!nSrcCRC || !pszEnd || *pszEnd != L',')
@@ -647,6 +661,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 		if (!pszLocalPackage)
 			goto wrap;
 		
+		mn_Timeout = DOWNLOADTIMEOUTMAX;
 		lbDownloadRc = DownloadFile(pszSource, pszLocalPackage, hTarget, nLocalCRC, TRUE);
 		if (lbDownloadRc)
 		{
@@ -672,6 +687,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	
 	if (wi)
 	{
+		CloseInternet(true);
 		delete wi;
 		wi = NULL;
 	}
@@ -744,6 +760,7 @@ wrap:
 
 	if (wi)
 	{
+		CloseInternet(true);
 		delete wi;
 		wi = NULL;
 	}
@@ -1100,10 +1117,9 @@ bool CConEmuUpdate::IsLocalFile(LPWSTR& asPathOrUrl)
 BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc, BOOL abPackage /*= FALSE*/)
 {
 	BOOL lbRc = FALSE, lbRead = FALSE, lbWrite = FALSE;
-	HANDLE hSrcFile = NULL;
 	DWORD nRead;
 	bool lbNeedTargetClose = false;
-	bool lbInet = !IsLocalFile(asSource);
+	mb_InetMode = !IsLocalFile(asSource);
 	bool lbTargetLocal = IsLocalFile(asTarget);
 	_ASSERTE(lbTargetLocal);
 	UNREFERENCED_PARAMETER(lbTargetLocal);
@@ -1111,6 +1127,15 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 	BYTE* ptrData = (BYTE*)malloc(cchDataMax);
 	//DWORD nTotalSize = 0;
 	BOOL lbFirstThunk = TRUE;
+	DWORD nConnTimeoutSet, nDataTimeoutSet, cbSize;
+	DWORD ProxyType = INTERNET_OPEN_TYPE_DIRECT;
+	LPCWSTR ProxyName = NULL;
+	wchar_t szServer[MAX_PATH], szSrvPath[MAX_PATH*2];
+	wchar_t *pszColon;
+	INTERNET_PORT nServerPort = INTERNET_DEFAULT_HTTP_PORT;
+	HTTP_VERSION_INFO httpver = {1,1};
+
+	CloseInternet(false);
 
 	mn_InternetContentReady = 0;
 	mn_InternetContentLen = 0;
@@ -1140,10 +1165,9 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 		lbNeedTargetClose = true;
 	}
 	
-	if (lbInet)
+	if (mb_InetMode)
 	{
-		DWORD ProxyType = INTERNET_OPEN_TYPE_DIRECT;
-		LPCWSTR ProxyName = NULL;
+
 		if (mp_Set->isUpdateUseProxy)
 		{
 			if (mp_Set->szUpdateProxy && *mp_Set->szUpdateProxy)
@@ -1157,7 +1181,6 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			}
 		}
 
-		wchar_t szServer[MAX_PATH], szSrvPath[MAX_PATH*2];
 		if (wmemcmp(asSource, L"http://", 7) != 0)
 		{
 			ReportError(L"Only http addresses are supported!\n%s", asSource, 0);
@@ -1180,7 +1203,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 		if (mb_RequestTerminate)
 			goto wrap;
 
-		// Открыть WinInet, если этого еще не сделали
+		// Открыть WinInet
 		if (mh_Internet == NULL)
 		{
 			mh_Internet = wi->_InternetOpenW(TEXT("Mozilla/5.0 (compatible; ConEmu Update)"), ProxyType, ProxyName, NULL, 0);
@@ -1190,44 +1213,16 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 				ReportError(L"Network initialization failed, code=%u", dwErr);
 				goto wrap;
 			}
-		}
 
-		if (mb_RequestTerminate)
-			goto wrap;
-
-		if (mh_Connect != NULL)
-		{
-			wi->_InternetCloseHandle(mh_Connect);
-			mh_Connect = NULL;
-		}
-		
-		//TODO после включения ноута вылезла ошибка ERROR_INTERNET_NAME_NOT_RESOLVED==12007
-
-		if (mh_Connect == NULL)
-		{
-			wchar_t *pszColon = wcsrchr(szServer, L':');
-			INTERNET_PORT nServerPort = INTERNET_DEFAULT_HTTP_PORT;
-			if (pszColon != NULL)
-			{
-				*pszColon = 0;
-				nServerPort = wcstoul(pszColon+1, &pszColon, 10);
-				if (!nServerPort)
-					nServerPort = INTERNET_DEFAULT_HTTP_PORT;
-			}
-			mh_Connect = wi->_InternetConnectW(mh_Internet, szServer, nServerPort, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 1);
-			if (!mh_Connect)
-			{
-				DWORD dwErr = GetLastError();
-				if (mb_ManualCallMode || abPackage)
-					ReportError(L"Connection failed, code=%u", dwErr);
+			if (mb_RequestTerminate)
 				goto wrap;
-			}
 
+			// Proxy User/Password
 			if (ProxyName)
 			{
 				if (mp_Set->szUpdateProxyUser && *mp_Set->szUpdateProxyUser)
 				{
-					if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_PROXY_USERNAME, (LPVOID)mp_Set->szUpdateProxyUser, lstrlen(mp_Set->szUpdateProxyUser)))
+					if (!wi->_InternetSetOptionW(mh_Internet, INTERNET_OPTION_PROXY_USERNAME, (LPVOID)mp_Set->szUpdateProxyUser, lstrlen(mp_Set->szUpdateProxyUser)))
 					{
 						ReportError(L"ProxyUserName failed, code=%u", GetLastError());
 						goto wrap;
@@ -1235,7 +1230,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 				}
 				if (mp_Set->szUpdateProxyPassword && *mp_Set->szUpdateProxyPassword)
 				{
-					if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_PROXY_PASSWORD, (LPVOID)mp_Set->szUpdateProxyPassword, lstrlen(mp_Set->szUpdateProxyPassword)))
+					if (!wi->_InternetSetOptionW(mh_Internet, INTERNET_OPTION_PROXY_PASSWORD, (LPVOID)mp_Set->szUpdateProxyPassword, lstrlen(mp_Set->szUpdateProxyPassword)))
 					{
 						ReportError(L"ProxyPassword failed, code=%u", GetLastError());
 						goto wrap;
@@ -1243,24 +1238,119 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 				}
 			}
 
-			HTTP_VERSION_INFO httpver={1,1};
-			if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_HTTP_VERSION, &httpver, sizeof(httpver)))
+			// Protocol version
+			if (!wi->_InternetSetOptionW(mh_Internet, INTERNET_OPTION_HTTP_VERSION, &httpver, sizeof(httpver)))
 			{
 				ReportError(L"HttpVersion failed, code=%u", GetLastError());
 				goto wrap;
 			}
+		}
 
-			TODO("INTERNET_OPTION_RECEIVE_TIMEOUT - Sets or retrieves an unsigned long integer value that contains the time-out value, in milliseconds");
+		// Timeout
+		if (!mn_ConnTimeout)
+		{
+			cbSize = sizeof(mn_ConnTimeout);
+			if (!wi->_InternetQueryOptionW(mh_Internet, INTERNET_OPTION_RECEIVE_TIMEOUT, &mn_ConnTimeout, &cbSize))
+				mn_ConnTimeout = 0;
+		}
+		nConnTimeoutSet = max(mn_ConnTimeout,mn_Timeout);
+		if (!wi->_InternetSetOptionW(mh_Internet, INTERNET_OPTION_RECEIVE_TIMEOUT, &nConnTimeoutSet, sizeof(nConnTimeoutSet)))
+		{
+			wchar_t szErr[128]; DWORD nErr = GetLastError();
+			_wsprintf(szErr, SKIPLEN(countof(szErr)) L"INTERNET_OPTION_RECEIVE_TIMEOUT(mh_Internet,%u) failed, code=%u", nConnTimeoutSet, nErr);
+			ReportError(szErr, nErr);
+			goto wrap;
+		}
+		if (!mn_DataTimeout)
+		{
+			cbSize = sizeof(mn_ConnTimeout);
+			if (!wi->_InternetQueryOptionW(mh_Internet, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT, &mn_DataTimeout, &cbSize))
+				mn_ConnTimeout = 0;
+		}
+		nDataTimeoutSet = max(mn_DataTimeout,mn_Timeout);
+		if (!wi->_InternetSetOptionW(mh_Internet, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT, &nDataTimeoutSet, sizeof(nDataTimeoutSet)))
+		{
+			wchar_t szErr[128]; DWORD nErr = GetLastError();
+			_wsprintf(szErr, SKIPLEN(countof(szErr)) L"INTERNET_OPTION_DATA_RECEIVE_TIMEOUT(mh_Internet,%u) failed, code=%u", nDataTimeoutSet, nErr);
+			ReportError(szErr, nErr);
+			goto wrap;
+		}
 
-		} // if (mh_Connect == NULL)
+
+		// 
+		_ASSERTE(mh_Connect == NULL);
+		
+		//TODO после включения ноута вылезла ошибка ERROR_INTERNET_NAME_NOT_RESOLVED==12007
+
+		// Server:Port
+		if ((pszColon = wcsrchr(szServer, L':')) != NULL)
+		{
+			*pszColon = 0;
+			nServerPort = wcstoul(pszColon+1, &pszColon, 10);
+			if (!nServerPort)
+				nServerPort = INTERNET_DEFAULT_HTTP_PORT;
+		}
+		mh_Connect = wi->_InternetConnectW(mh_Internet, szServer, nServerPort, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 1);
+		if (!mh_Connect)
+		{
+			DWORD dwErr = GetLastError();
+			if (mb_ManualCallMode || abPackage)
+				ReportError(L"Connection failed, code=%u", dwErr);
+			goto wrap;
+		}
+
+		//if (ProxyName)
+		//{
+		//	if (mp_Set->szUpdateProxyUser && *mp_Set->szUpdateProxyUser)
+		//	{
+		//		if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_PROXY_USERNAME, (LPVOID)mp_Set->szUpdateProxyUser, lstrlen(mp_Set->szUpdateProxyUser)))
+		//		{
+		//			ReportError(L"ProxyUserName failed, code=%u", GetLastError());
+		//			goto wrap;
+		//		}
+		//	}
+		//	if (mp_Set->szUpdateProxyPassword && *mp_Set->szUpdateProxyPassword)
+		//	{
+		//		if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_PROXY_PASSWORD, (LPVOID)mp_Set->szUpdateProxyPassword, lstrlen(mp_Set->szUpdateProxyPassword)))
+		//		{
+		//			ReportError(L"ProxyPassword failed, code=%u", GetLastError());
+		//			goto wrap;
+		//		}
+		//	}
+		//}
+
+		//if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_HTTP_VERSION, &httpver, sizeof(httpver)))
+		//{
+		//	ReportError(L"HttpVersion failed, code=%u", GetLastError());
+		//	goto wrap;
+		//}
+
+		//INTERNET_OPTION_RECEIVE_TIMEOUT - Sets or retrieves an unsigned long integer value that contains the time-out value, in milliseconds");
+		//nConnTimeout, nConnTimeoutSet, nFileTimeout, nFileTimeoutSet
+		//if (!mn_ConnTimeout)
+		//{
+		//	cbSize = sizeof(mn_ConnTimeout);
+		//	if (!wi->_InternetQueryOptionW(mh_Connect, INTERNET_OPTION_RECEIVE_TIMEOUT, &mn_ConnTimeout, &cbSize))
+		//		mn_ConnTimeout = 0;
+		//}
+		//nConnTimeoutSet = max(mn_ConnTimeout,mn_Timeout);
+		//if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_RECEIVE_TIMEOUT, &nConnTimeoutSet, sizeof(nConnTimeoutSet)))
+		//{
+		//	wchar_t szErr[128]; DWORD nErr = GetLastError();
+		//	_wsprintf(szErr, SKIPLEN(countof(szErr)) L"INTERNET_OPTION_RECEIVE_TIMEOUT(mh_Connect,%u) failed, code=%u", nConnTimeoutSet, nErr);
+		//	ReportError(szErr, nErr);
+		//	goto wrap;
+		//}
+
 
 		if (mb_RequestTerminate)
 			goto wrap;
 
+		_ASSERTE(mh_SrcFile==NULL);
 		// Отправить запрос на файл
-		hSrcFile = wi->_HttpOpenRequestW(mh_Connect, L"GET", szSrvPath, L"HTTP/1.1", NULL, 0,
-			INTERNET_FLAG_KEEP_CONNECTION|INTERNET_FLAG_NO_CACHE_WRITE|INTERNET_FLAG_PRAGMA_NOCACHE|INTERNET_FLAG_RELOAD, 1);
-		if (!hSrcFile)
+		mh_SrcFile = wi->_HttpOpenRequestW(mh_Connect, L"GET", szSrvPath, L"HTTP/1.1", NULL, 0,
+			INTERNET_FLAG_KEEP_CONNECTION|INTERNET_FLAG_NO_CACHE_WRITE|INTERNET_FLAG_PRAGMA_NOCACHE|INTERNET_FLAG_RELOAD, ++mn_Context);
+		if (!mh_SrcFile || (mh_SrcFile == INVALID_HANDLE_VALUE))
 		{
 			DWORD dwErr = GetLastError();
 			if (mb_ManualCallMode || abPackage)
@@ -1275,7 +1365,8 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			goto wrap;
 		}
 
-		if (!wi->_HttpSendRequestW(hSrcFile,NULL,0,NULL,0))
+
+		if (!wi->_HttpSendRequestW(mh_SrcFile,NULL,0,NULL,0))
 		{
 			DWORD dwErr = GetLastError();
 			if (mb_ManualCallMode || abPackage)
@@ -1287,26 +1378,47 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			mn_InternetContentLen = 0;
 			DWORD sz = sizeof(mn_InternetContentLen);
 			DWORD dwIndex = 0;
-			if (!wi->_HttpQueryInfoW(hSrcFile, HTTP_QUERY_CONTENT_LENGTH|HTTP_QUERY_FLAG_NUMBER, &mn_InternetContentLen, &sz, &dwIndex))
+			if (!wi->_HttpQueryInfoW(mh_SrcFile, HTTP_QUERY_CONTENT_LENGTH|HTTP_QUERY_FLAG_NUMBER, &mn_InternetContentLen, &sz, &dwIndex))
 			{
-				DWORD dwErr = GetLastError();
-				// были ошибки: ERROR_HTTP_HEADER_NOT_FOUND
-				if (mb_ManualCallMode || abPackage)
-					ReportError(L"QueryContentLen failed\nURL=%s\ncode=%u", asSource, dwErr);
-				goto wrap;
+				mn_InternetContentLen = 0;
+				//DWORD dwErr = GetLastError();
+				//// были ошибки: ERROR_HTTP_HEADER_NOT_FOUND
+				//if (mb_ManualCallMode || abPackage)
+				//	ReportError(L"QueryContentLen failed\nURL=%s\ncode=%u", asSource, dwErr);
+				//goto wrap;
 			}
 		}
+
+
+		////Because of some antivirus programs tail of file may arrives with long delay...
+		////INTERNET_OPTION_RECEIVE_TIMEOUT - Sets or retrieves an unsigned long integer value that contains the time-out value, in milliseconds");
+		////nConnTimeout, nConnTimeoutSet, nFileTimeout, nFileTimeoutSet
+		//if (!mn_FileTimeout)
+		//{
+		//	cbSize = sizeof(mn_FileTimeout);
+		//	if (!wi->_InternetQueryOptionW(mh_SrcFile, INTERNET_OPTION_RECEIVE_TIMEOUT, &mn_FileTimeout, &cbSize))
+		//		mn_FileTimeout = 0;
+		//}
+		//nFileTimeoutSet = max(mn_FileTimeout,mn_Timeout);
+		//if (!wi->_InternetSetOptionW(hSrcFile, INTERNET_OPTION_RECEIVE_TIMEOUT, &nFileTimeoutSet, sizeof(nFileTimeoutSet)))
+		//{
+		//	wchar_t szErr[128]; DWORD nErr = GetLastError();
+		//	_wsprintf(szErr, SKIPLEN(countof(szErr)) L"INTERNET_OPTION_RECEIVE_TIMEOUT(hSrcFile,%u) failed, code=%u", nFileTimeoutSet, nErr);
+		//	ReportError(szErr, nErr);
+		//	goto wrap;
+		//}
+
 	}
 	else
 	{
-		hSrcFile = CreateFile(asSource, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-		if (!hSrcFile || hSrcFile == INVALID_HANDLE_VALUE)
+		mh_SrcFile = CreateFile(asSource, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+		if (!mh_SrcFile || (mh_SrcFile == INVALID_HANDLE_VALUE))
 		{
 			ReportError(L"Failed to open source file(%s), code=%u", asSource, GetLastError());
 			goto wrap;
 		}
 		LARGE_INTEGER liSize;
-		if (GetFileSizeEx(hSrcFile, &liSize))
+		if (GetFileSizeEx(mh_SrcFile, &liSize))
 			mn_InternetContentLen = liSize.LowPart;
 	}
 	
@@ -1315,7 +1427,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 		if (mb_RequestTerminate)
 			goto wrap;
 
-		lbRead = ReadSource(asSource, lbInet, hSrcFile, ptrData, cchDataMax, &nRead);
+		lbRead = ReadSource(asSource, mb_InetMode, mh_SrcFile, ptrData, cchDataMax, &nRead);
 		if (!lbRead)
 			goto wrap;
 			
@@ -1360,28 +1472,15 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 	crc ^= 0xFFFFFFFF;
 	lbRc = TRUE;
 wrap:
-	if (hSrcFile && hSrcFile != INVALID_HANDLE_VALUE)
+	if (mb_InetMode)
 	{
-		if (lbInet)
-		{
-			wi->_InternetCloseHandle(hSrcFile);
-		}
-		else
-		{
-			CloseHandle(hSrcFile);
-		}
+		CloseInternet(lbRc == FALSE);
 	}
-
-	if (mh_Connect)
+	else
 	{
-		wi->_InternetCloseHandle(mh_Connect);
-		mh_Connect = NULL;
-	}
-
-	if (mh_Internet)
-	{
-		wi->_InternetCloseHandle(mh_Internet);
-		mh_Internet = NULL;
+		if (mh_SrcFile && (mh_SrcFile != INVALID_HANDLE_VALUE))
+			CloseHandle(mh_SrcFile);
+		mh_SrcFile = NULL;
 	}
 
 	if (lbNeedTargetClose && hDstFile && hDstFile != INVALID_HANDLE_VALUE)
@@ -1392,6 +1491,45 @@ wrap:
 	SafeFree(ptrData);
 	return lbRc;
 }
+
+void CConEmuUpdate::CloseInternet(bool bFull)
+{
+	BOOL bClose = FALSE;
+	DWORD nCloseErr = 0;
+
+	if (wi)
+	{
+		if (mh_SrcFile && (mh_SrcFile != INVALID_HANDLE_VALUE))
+		{
+			bClose = wi->_InternetCloseHandle(mh_SrcFile);
+			if (!bClose)
+				nCloseErr = GetLastError();
+		}
+
+		if (mh_Connect)
+		{
+			bClose = wi->_InternetCloseHandle(mh_Connect);
+			if (!bClose)
+				nCloseErr = GetLastError();
+		}
+
+		if (bFull && mh_Internet)
+		{
+			bClose = wi->_InternetCloseHandle(mh_Internet);
+			if (!bClose)
+				nCloseErr = GetLastError();
+		}
+	}
+
+	mh_SrcFile = NULL;
+	mh_Connect = NULL;
+
+	if (bFull)
+	{
+		mh_Internet = NULL;
+	}
+}
+
 
 BOOL CConEmuUpdate::ReadSource(LPCWSTR asSource, BOOL bInet, HANDLE hSource, BYTE* pData, DWORD cbData, DWORD* pcbRead)
 {
@@ -1668,9 +1806,9 @@ short CConEmuUpdate::GetUpdateProgress()
 	case us_ConfirmDownload:
 		return 10;
 	case us_Downloading:
-		if (mn_InternetContentLen > 0)
+		if (mn_PackageSize > 0)
 		{
-			int nValue = (mn_InternetContentReady * 88 / mn_InternetContentLen);
+			int nValue = (mn_InternetContentReady * 88 / mn_PackageSize);
 			if (nValue < 0)
 				nValue = 0;
 			else if (nValue > 88)

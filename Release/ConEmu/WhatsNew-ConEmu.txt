@@ -11,6 +11,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[*] Timeout for downloading files (Auto-Update) increased to 180 seconds.
+[%] Issue 743: Sometimes Auto-Update fails via proxy.
+[*] Refactoring of menus processing.
+[+] Shell style Drag&Drop allows drops into inactive panes (split-screen).
+    To be more exact pane will be activated on drag-over.
+
+
 2012.11.28
 [*] Some changes in console server & ExtendedConsole.dll.
 [+] «Default terminal» - more flexible:

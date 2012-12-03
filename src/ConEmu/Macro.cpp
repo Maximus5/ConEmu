@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuPipe.h"
 #include "Macro.h"
 #include "VConGroup.h"
+#include "Menu.h"
 
 
 // Общая функция, для обработки любого известного макроса
@@ -666,7 +667,7 @@ LPWSTR CConEmuMacro::Menu(LPWSTR asArgs, CRealConsole* apRCon)
 	{
 	case 0:
 		WARNING("учитывать gpCurrentHotKey, если оно по клику мышки - показывать в позиции курсора");
-		gpConEmu->ShowSysmenu(ptCur.x, ptCur.y);
+		gpConEmu->mp_Menu->ShowSysmenu(ptCur.x, ptCur.y);
 		return lstrdup(L"OK");
 
 	case 1:
@@ -674,8 +675,8 @@ LPWSTR CConEmuMacro::Menu(LPWSTR asArgs, CRealConsole* apRCon)
 		{
 			WARNING("учитывать gpCurrentHotKey, если оно по клику мышки - показывать в позиции курсора");
 			if (ptCur.x == -32000)
-				ptCur = gpConEmu->CalcTabMenuPos(apRCon->VCon());
-			apRCon->VCon()->ShowPopupMenu(ptCur);
+				ptCur = gpConEmu->mp_Menu->CalcTabMenuPos(apRCon->VCon());
+			gpConEmu->mp_Menu->ShowPopupMenu(apRCon->VCon(), ptCur);
 			return lstrdup(L"OK");
 		}
 		break;

@@ -1710,6 +1710,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Menu.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\common\MAssert.cpp"
 				>
 			</File>
@@ -2105,6 +2109,10 @@
 			</File>
 			<File
 				RelativePath=".\Macro.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Menu.h"
 				>
 			</File>
 			<File

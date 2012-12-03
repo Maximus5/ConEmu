@@ -517,6 +517,7 @@
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
       <Profile>false</Profile>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -631,6 +632,7 @@
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
       <Profile>false</Profile>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -910,6 +912,7 @@
     <ClCompile Include="Macro.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
+    <ClCompile Include="Menu.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="Options.cpp" />
@@ -966,6 +969,7 @@
     <ClInclude Include="LoadImg.h" />
     <ClInclude Include="Macro.h" />
     <ClInclude Include="..\common\Memory.h" />
+    <ClInclude Include="Menu.h" />
     <ClInclude Include="MenuIds.h" />
     <ClInclude Include="..\common\MSecurity.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
