@@ -58,6 +58,7 @@
       <ComponentRef Id="RenameTab.cmd" />
       <ComponentRef Id="SetConTitle.cmd" />
       <ComponentRef Id="SetProgress.cmd" />
+      <ComponentRef Id="TypeBuildErrors.cmd" />
       <ComponentRef Id="Command_Processor.reg" />
       <ComponentRef Id="Command_Processor_Off.reg" />
     </Feature>

@@ -76,6 +76,9 @@
       <Component Id="SetProgress.cmd" Guid="$(var.Guid.SetProgress.cmd)" Win64="$(var.Win64)">
         <File Id="SetProgress.cmd" Source="..\..\Release\ConEmu\SetProgress.cmd"  KeyPath="yes" />
       </Component>
+      <Component Id="TypeBuildErrors.cmd" Guid="$(var.Guid.TypeBuildErrors.cmd)" Win64="$(var.Win64)">
+        <File Id="TypeBuildErrors.cmd" Source="..\..\Release\ConEmu\TypeBuildErrors.cmd"  KeyPath="yes" />
+      </Component>
       <Component Id="Command_Processor.reg" Guid="$(var.Guid.Command_Processor.reg)" Win64="$(var.Win64)">
         <File Id="Command_Processor.reg" Source="..\..\Release\ConEmu\Command Processor.reg"  KeyPath="yes" />
       </Component>

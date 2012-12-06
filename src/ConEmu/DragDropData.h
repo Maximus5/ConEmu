@@ -79,7 +79,7 @@ class CDragDropData
 		// Загрузить из фара информацию для Drag
 		BOOL PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAllowedEffects);
 		// Загрузить из фара информацию для Drop
-		void RetrieveDragToInfo();
+		void RetrieveDragToInfo(POINTL pt);
 		// Запомнить занные о Destination
 		void SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfoSize, CRealConsole* pRCon);
 		// Может быть требуется обновить данные о назначении?
@@ -110,6 +110,9 @@ class CDragDropData
 		ForwardedPanelInfo *m_pfpi;
 		void* mp_LastRCon; // Just a pointer, for comparision
 		bool mb_DragDropRegistered;
+		bool CheckIsUpdatePackage(IDataObject * pDataObject);
+		bool mb_IsUpdatePackage;
+		wchar_t* mpsz_UpdatePackage;
 		#ifdef USE_DROP_HELPER
 		IDropTargetHelper* mp_TargetHelper;
 		bool mb_TargetHelperFailed;

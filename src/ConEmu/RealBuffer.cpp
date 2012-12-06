@@ -67,6 +67,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
 
+// ANSI, without "\r\n"
+#define IFLOGCONSOLECHANGE gpSetCls->isAdvLogging>=2
+#define LOGCONSOLECHANGE(s) if (IFLOGCONSOLECHANGE) mp_RCon->LogString(s, TRUE)
+
 #ifndef CONSOLE_MOUSE_DOWN
 #define CONSOLE_MOUSE_DOWN 8
 #endif
@@ -114,6 +118,10 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 	mb_LeftPanel = mb_RightPanel = FALSE;
 	
 	ZeroStruct(dump);
+
+	InitializeCriticalSection(&m_TrueMode.csLock);
+	m_TrueMode.mp_Cmp = NULL;
+	m_TrueMode.nCmpMax = 0;
 }
 
 CRealBuffer::~CRealBuffer()
@@ -128,6 +136,9 @@ CRealBuffer::~CRealBuffer()
 		{ CloseHandle(con.hInSetSize); con.hInSetSize = NULL; }
 
 	dump.Close();
+
+	DeleteCriticalSection(&m_TrueMode.csLock);
+	SafeFree(m_TrueMode.mp_Cmp);
 }
 
 void CRealBuffer::ReleaseMem()
@@ -1033,7 +1044,7 @@ void CRealBuffer::SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY)
 	// Во избежание лишних движений да и зацикливания...
 	if (con.nTextWidth != wndSizeX || con.nTextHeight != wndSizeY)
 	{
-		if (gpSetCls->isAdvLogging>=2)
+		if (IFLOGCONSOLECHANGE)
 		{
 			char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CRealBuffer::SyncConsole2Window(Cols=%i, Rows=%i, Current={%i,%i})", wndSizeX, wndSizeY, con.nTextWidth, con.nTextHeight);
 			mp_RCon->LogString(szInfo);
@@ -1802,10 +1813,43 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	}
 
 
-	lbScreenChanged = memcmp(con.pDataCmp, pData, CharCount*sizeof(CHAR_INFO));
+	_ASSERTE(sizeof(*con.pDataCmp) == sizeof(*pData));
+
+	lbScreenChanged = (memcmp(con.pDataCmp, pData, CharCount*sizeof(*pData)) != 0);
 
 	if (lbScreenChanged)
 	{
+		if (IFLOGCONSOLECHANGE)
+		{
+			char sInfo[128];
+			_wsprintfA(sInfo, SKIPLEN(countof(sInfo)) "DataCmp was changed, width=%u, height=%u, count=%u", con.nTextWidth, con.nTextHeight, CharCount);
+
+			const CHAR_INFO* lp1 = con.pDataCmp;
+			const CHAR_INFO* lp2 = pData;
+			INT_PTR idx = -1;
+
+			for (DWORD n = 0; n < CharCount; n++, lp1++, lp2++)
+			{
+				if (memcmp(lp1, lp2, sizeof(*lp2)) != 0)
+				{
+					idx = (lp1 - con.pDataCmp);
+					int y = con.nTextWidth ? (idx / con.nTextWidth) : 0;
+					int x = con.nTextWidth ? (idx - y * con.nTextWidth) : idx;
+
+					_wsprintfA(sInfo+strlen(sInfo), SKIPLEN(32) ", posY=%i, posX=%i", y, x);
+
+					break;
+				}
+			}
+            
+            if (idx == -1)
+            {
+            	lstrcatA(sInfo, ", failed to find change idx");
+            }
+
+			LOGCONSOLECHANGE(sInfo);
+		}
+
 		//con.pCopy->crBufSize = con.pCmp->crBufSize;
 		//memmove(con.pCopy->Buf, con.pCmp->Buf, CharCount*sizeof(CHAR_INFO));
 		memmove(con.pDataCmp, pData, CharCount*sizeof(CHAR_INFO));
@@ -1831,6 +1875,66 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	}
 
 	return lbScreenChanged;
+}
+
+BOOL CRealBuffer::IsTrueColorerBufferChanged()
+{
+	BOOL lbChanged = FALSE;
+	AnnotationHeader aHdr;
+	int nCmp = 0;
+
+	if (!gpSet->isTrueColorer || !mp_RCon->mp_TrueColorerData)
+		goto wrap;
+
+	// Проверка буфера TrueColor
+	if (!mp_RCon->m_TrueColorerMap.GetTo(&aHdr, sizeof(aHdr)))
+		goto wrap;
+
+	// Check counter
+	if (mp_RCon->m_TrueColorerHeader.flushCounter == aHdr.flushCounter)
+		goto wrap;
+
+	// Compare data
+	EnterCriticalSection(&m_TrueMode.csLock);
+	{
+		int nCurMax = max(con.nTextWidth*con.nTextHeight,aHdr.bufferSize);
+		size_t cbCurSize = nCurMax*sizeof(*m_TrueMode.mp_Cmp);
+
+		if (!m_TrueMode.mp_Cmp || (nCurMax > m_TrueMode.nCmpMax))
+		{
+			SafeFree(m_TrueMode.mp_Cmp);
+			m_TrueMode.nCmpMax = nCurMax;
+            m_TrueMode.mp_Cmp = (AnnotationInfo*)malloc(cbCurSize);
+            nCmp = 2;
+		}
+		else
+		{
+			nCmp = memcmp(m_TrueMode.mp_Cmp, mp_RCon->mp_TrueColorerData, cbCurSize);
+		}
+
+		if ((nCmp != 0) && m_TrueMode.mp_Cmp)
+		{
+			memcpy(m_TrueMode.mp_Cmp, mp_RCon->mp_TrueColorerData, cbCurSize);
+		}
+	}
+	LeaveCriticalSection(&m_TrueMode.csLock);
+
+
+	if (nCmp != 0)
+	{
+		lbChanged = TRUE;
+
+		if (IFLOGCONSOLECHANGE)
+		{
+			char szDbgSize[128]; _wsprintfA(szDbgSize, SKIPLEN(countof(szDbgSize)) "ApplyConsoleInfo: TrueColorer.flushCounter(%u) -> changed(%u)", mp_RCon->m_TrueColorerHeader.flushCounter, aHdr.flushCounter);
+			LOGCONSOLECHANGE(szDbgSize);
+		}
+	}
+
+	// Save counter to avoid redundant checks
+	mp_RCon->m_TrueColorerHeader = aHdr;
+wrap:
+	return lbChanged;
 }
 
 BOOL CRealBuffer::ApplyConsoleInfo()
@@ -1902,7 +2006,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			}
 		}
 
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		HWND hWnd = pInfo->hConWnd;
 		if (!hWnd || (hWnd != mp_RCon->hConWnd))
 		{
@@ -1910,7 +2014,8 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			_ASSERTE(hWnd!=NULL);
 			_ASSERTE(hWnd==mp_RCon->hConWnd);
 		}
-#endif
+		#endif
+
 		//if (mp_RCon->hConWnd != hWnd) {
 		//    SetHwnd ( hWnd ); -- низя. Maps уже созданы!
 		//}
@@ -1932,7 +2037,10 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			_ASSERTE(dwCiSize == sizeof(con.m_ci));
 
 			if (memcmp(&con.m_ci, &pInfo->ci, sizeof(con.m_ci))!=0)
+			{
+				LOGCONSOLECHANGE("ApplyConsoleInfo: CursorInfo changed");
 				lbChanged = TRUE;
+			}
 
 			con.m_ci = pInfo->ci;
 		}
@@ -1959,6 +2067,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 
 			if (memcmp(&con.m_sbi, &pInfo->sbi, sizeof(con.m_sbi))!=0)
 			{
+				LOGCONSOLECHANGE("ApplyConsoleInfo: ScreenBufferInfo changed");
 				lbChanged = TRUE;
 
 				//if (mp_RCon->isActive())
@@ -2015,10 +2124,17 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 				//  TODO("Включить прокрутку? или оно само?");
 				if (nNewWidth != con.nTextWidth || nNewHeight != con.nTextHeight)
 				{
-#ifdef _DEBUG
-					wchar_t szDbgSize[128]; _wsprintf(szDbgSize, SKIPLEN(countof(szDbgSize)) L"ApplyConsoleInfo.SizeWasChanged(cx=%i, cy=%i)\n", nNewWidth, nNewHeight);
+					if (IFLOGCONSOLECHANGE)
+					{
+						char szDbgSize[128]; _wsprintfA(szDbgSize, SKIPLEN(countof(szDbgSize)) "ApplyConsoleInfo: SizeWasChanged(cx=%i, cy=%i)", nNewWidth, nNewHeight);
+						LOGCONSOLECHANGE(szDbgSize);
+					}
+					
+					#ifdef _DEBUG
+					wchar_t szDbgSize[128]; _wsprintf(szDbgSize, SKIPLEN(countof(szDbgSize)) L"ApplyConsoleInfo.SizeWasChanged(cx=%i, cy=%i)", nNewWidth, nNewHeight);
 					DEBUGSTRSIZE(szDbgSize);
-#endif
+					#endif
+
 					bBufRecreated = TRUE; // Смена размера, буфер пересоздается
 					//sc.Lock(&csCON, TRUE);
 					//WARNING("может не заблокировалось?");
@@ -2057,17 +2173,21 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			// Если вместе с заголовком пришли измененные данные
 			if (pInfo->nDataShift && pInfo->nDataCount)
 			{
+				LOGCONSOLECHANGE("ApplyConsoleInfo: Console contents received");
+
 				mp_RCon->mn_LastConsolePacketIdx = pInfo->nPacketId;
 				DWORD CharCount = pInfo->nDataCount;
-#ifdef _DEBUG
 
+				
+				#ifdef _DEBUG
 				if (CharCount != (nNewWidth * nNewHeight))
 				{
 					// Это может случиться во время пересоздания консоли (когда фар падал)
 					_ASSERTE(CharCount == (nNewWidth * nNewHeight));
 				}
+				#endif
 
-#endif
+
 				DWORD OneBufferSize = CharCount * sizeof(wchar_t);
 				CHAR_INFO *pData = (CHAR_INFO*)(((LPBYTE)pInfo) + pInfo->nDataShift);
 				// Проверка размера!
@@ -2088,7 +2208,10 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 				if (InitBuffers(OneBufferSize))
 				{
 					if (LoadDataFromSrv(CharCount, pData))
+					{
+						LOGCONSOLECHANGE("ApplyConsoleInfo: InitBuffers&LoadDataFromSrv -> changed");
 						lbChanged = TRUE;
+					}
 				}
 
 				MCHKHEAP;
@@ -2143,12 +2266,10 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 #endif
 
 		// Проверка буфера TrueColor
-		AnnotationHeader aHdr;
-		if (!lbChanged && gpSet->isTrueColorer && mp_RCon->mp_TrueColorerData && mp_RCon->m_TrueColorerMap.GetTo(&aHdr, sizeof(aHdr)))
+		if (!lbChanged && gpSet->isTrueColorer && mp_RCon->mp_TrueColorerData)
 		{
-			if (mp_RCon->m_TrueColorerHeader.flushCounter != aHdr.flushCounter)
+			if (IsTrueColorerBufferChanged())
 			{
-				mp_RCon->m_TrueColorerHeader = aHdr;
 				lbChanged = TRUE;
 			}
 		}

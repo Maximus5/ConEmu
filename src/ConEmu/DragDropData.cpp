@@ -94,6 +94,8 @@ CDragDropData::CDragDropData()
 	mb_TargetHelperFailed = false;
 	#endif
 	mb_selfdrag = false;
+	mb_IsUpdatePackage = false;
+	mpsz_UpdatePackage = NULL;
 }
 
 CDragDropData::~CDragDropData()
@@ -110,8 +112,9 @@ CDragDropData::~CDragDropData()
 	DestroyDragImageWindow();
 
 	// Final release, no more need
-	if (m_pfpi) free(m_pfpi); m_pfpi=NULL;
+	if (m_pfpi) free(m_pfpi); m_pfpi = NULL;
 	mp_LastRCon = NULL;
+	if (mpsz_UpdatePackage) free(mpsz_UpdatePackage); mpsz_UpdatePackage = NULL;
 }
 
 BOOL CDragDropData::Register()
@@ -984,6 +987,67 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 	hr = S_OK;
 }
 
+bool CDragDropData::CheckIsUpdatePackage(IDataObject * pDataObject)
+{
+	bool bHasUpdatePackage = false;
+
+	if (mpsz_UpdatePackage)
+	{
+		free(mpsz_UpdatePackage);
+		mpsz_UpdatePackage = NULL;
+	}
+
+	STGMEDIUM stgMedium = { 0 };
+	FORMATETC fmtetc = { RegisterClipboardFormat(CFSTR_FILENAMEW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+
+	HRESULT hr = pDataObject->GetData(&fmtetc, &stgMedium);
+
+	if (hr == S_OK && stgMedium.hGlobal)
+	{
+		LPCWSTR pszFileNames = (LPCWSTR)GlobalLock(stgMedium.hGlobal);
+
+		if (pszFileNames && *pszFileNames && lstrlen(pszFileNames) <= MAX_PATH)
+		{
+			wchar_t szName[MAX_PATH+1];
+			LPCWSTR pszName = PointToName(pszFileNames);
+			if (pszName && *pszName)
+			{
+				lstrcpyn(szName, pszName, countof(szName));
+				CharLowerBuff(szName, lstrlen(szName));
+				LPCWSTR pszExt = PointToExt(szName);
+				if (pszExt)
+				{
+					if ((wcsncmp(szName, L"conemupack.", 11) == 0)
+						&& (wcscmp(pszExt, L".7z") == 0))
+					{
+						bHasUpdatePackage = true;
+					}
+					else if ((wcsncmp(szName, L"conemusetup.", 12) == 0)
+						&& (wcscmp(pszExt, L".exe") == 0))
+					{
+						bHasUpdatePackage = true;
+					}
+				}
+			}
+
+			if (bHasUpdatePackage)
+			{
+				mpsz_UpdatePackage = lstrdup(pszFileNames);
+			}
+		}
+
+		if (pszFileNames)
+		{
+			GlobalUnlock(stgMedium.hGlobal);
+		}
+
+		ReleaseStgMedium(&stgMedium);
+	}
+
+	mb_IsUpdatePackage = bHasUpdatePackage;
+	return bHasUpdatePackage;
+}
+
 bool CDragDropData::NeedRefreshToInfo(POINTL ptScreen)
 {
 	POINT pt = {ptScreen.x, ptScreen.y};
@@ -1003,6 +1067,8 @@ bool CDragDropData::NeedRefreshToInfo(POINTL ptScreen)
 			CVConGroup::Activate(VCon.VCon());
 		}
 	}
+
+	mp_LastRCon = pRCon;
 
 	return bNeedRefresh;
 }
@@ -1084,15 +1150,16 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 
 // Загрузить из фара информацию для Drop
 // Требуется только при Drop из внешних приложений!
-void CDragDropData::RetrieveDragToInfo()
+void CDragDropData::RetrieveDragToInfo(POINTL pt)
 {
 	//if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 
 	CVConGuard VCon;
 	CVirtualConsole* pVCon = NULL;
 	CRealConsole* pRCon = NULL;
+	POINT ptScreen = {pt.x, pt.y};
 
-	if ((CVConGroup::GetActiveVCon(&VCon) < 0)
+	if (!CVConGroup::GetVConFromPoint(ptScreen, &VCon)
 		|| ((pVCon = VCon.VCon()) == NULL)
 		|| ((pRCon = pVCon->RCon()) == NULL))
 	{

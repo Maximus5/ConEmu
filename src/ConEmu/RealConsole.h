@@ -309,6 +309,7 @@ class CRealConsole
 		COORD BufferToScreen(COORD crMouse, bool bVertOnly = false);
 		bool PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME = false);
 		bool PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
+		bool DeleteWordKeyPress(bool bTestOnly = false);
 		bool PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		bool PostLeftClickSync(COORD crDC);
 		bool PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount = 1);

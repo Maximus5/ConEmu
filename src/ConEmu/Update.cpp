@@ -498,6 +498,68 @@ DWORD CConEmuUpdate::CheckThreadProc(LPVOID lpParameter)
 	return nRc;
 }
 
+bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
+{
+	bool bRc = false;
+	LPCWSTR pszName, pszExt;
+
+	if (InUpdate() != us_NotStarted)
+	{
+		MBoxA(L"Checking for updates already started");
+		goto wrap;
+	}
+
+	pszName = PointToName(asDownloadedPackage);
+	pszExt = PointToExt(pszName);
+	if (!pszName || !*pszName || pszExt || !*pszExt)
+	{
+		MBoxA(L"Invalid asDownloadedPackage");
+		goto wrap;
+	}
+	
+	// Запомнить текущие параметры обновления
+	if (!mp_Set)
+		mp_Set = new ConEmuUpdateSettings;
+	mp_Set->LoadFrom(&gpSet->UpdSet);
+	
+	mb_ManualCallMode = TRUE;
+	{
+		MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
+		SafeFree(ms_LastErrorInfo);
+	}
+
+
+	if ((lstrcmpni(pszName, L"conemupack.", 11) == 0)
+		&& (lstrcmpi(pszExt, L".7z") == 0))
+	{
+		// OK
+	}
+	else if ((lstrcmpni(pszName, L"conemusetup.", 12) == 0)
+		&& (lstrcmpi(pszExt, L".exe") == 0))
+	{
+		if (mp_Set->UpdateDownloadSetup() != 1)
+		{
+			MBoxA(L"ConEmu was not installed with setup! Can't update!");
+			goto wrap;
+		}
+		// OK
+	}
+	else
+	{
+		MBoxA(L"Invalid asDownloadedPackage (2)");
+		goto wrap;
+	}
+
+
+	_wsprintf(ms_CurVersion, SKIPLEN(countof(ms_CurVersion)) L"%02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
+	//ms_NewVersion
+
+	TODO("StartLocalUpdate - запуск обновления из локального пакета");
+
+wrap:
+	return bRc;
+}
+
 DWORD CConEmuUpdate::CheckProcInt()
 {
 	BOOL lbDownloadRc = FALSE, lbExecuteRc = FALSE;

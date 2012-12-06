@@ -177,6 +177,7 @@ private:
 	BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	BOOL InitBuffers(DWORD OneBufferSize);
 	BOOL CheckBufferSize();
+	BOOL IsTrueColorerBufferChanged();
 	BOOL LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
 	bool LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, const CHAR_INFO* pData, DWORD cchMaxCellCount);
 
@@ -207,6 +208,13 @@ protected:
 
 	BOOL mb_BuferModeChangeLocked;
 	COORD mcr_LastMousePos;
+
+	struct {
+		CRITICAL_SECTION csLock;
+		AnnotationInfo* mp_Cmp;
+		int nCmpMax;
+	} m_TrueMode;
+
 	
 	MSection csCON;
 	// Эти переменные инициализируются в RetrieveConsoleInfo()

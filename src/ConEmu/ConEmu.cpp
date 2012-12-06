@@ -2982,6 +2982,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 		// ”словие именно такое (дл€ isZoomed) - здесь регион ставитс€ на весь монитор
 		|| ((WindowMode == wmMaximized) && (gpSet->isHideCaption || gpSet->isHideCaptionAlways())))
 	{
+		_ASSERTE(!gpSet->isQuakeStyle);
 		if (abTestOnly)
 			return (HRGN)1;
 
@@ -3001,6 +3002,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 	}
 	else if (WindowMode == wmMaximized)
 	{
+		_ASSERTE(!gpSet->isQuakeStyle);
 		if (!hExclusion)
 		{
 			// ≈сли прозрачных участков в консоли нет - ничего не делаем
@@ -3046,16 +3048,42 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				}
 
 				int nFrame = gpSet->HideCaptionAlwaysFrame();
-				if (gpSet->isQuakeStyle && mn_QuakePercent && (nFrame < 0))
+
+				int rgnX = rcFrame.left-nFrame;
+				int rgnY = rcFrame.top-nFrame;
+				int rgnWidth = rcClient.right+2*nFrame;
+				int rgnHeight = rcClient.bottom+2*nFrame;
+
+				bool bCreateRgn = (nFrame >= 0);
+
+
+				if (gpSet->isQuakeStyle)
 				{
-					nFrame = GetSystemMetrics(SM_CXSIZEFRAME);
+					if (mn_QuakePercent)
+					{
+						if (mn_QuakePercent == 1)
+						{
+							rgnWidth = rgnHeight = 1;
+						}
+						else if (nFrame < 0)
+						{
+							nFrame = GetSystemMetrics(SM_CXSIZEFRAME);
+						}
+						bCreateRgn = true;
+					}
+					bRoundTitle = false;
 				}
 
-				hRgn = (nFrame >= 0) ? CreateWindowRgn(abTestOnly, bRoundTitle,
-				                       rcFrame.left-nFrame,
-				                       rcFrame.top-nFrame,
-				                       rcClient.right+2*nFrame,
-									   rcClient.bottom+2*nFrame) : NULL;
+
+				if (bCreateRgn)
+				{
+					hRgn = CreateWindowRgn(abTestOnly, bRoundTitle, rgnX, rgnY, rgnWidth, rgnHeight);
+				}
+				else
+				{
+					_ASSERTE(hRgn == NULL);
+					hRgn = NULL;
+				}
 			}
 		}
 
@@ -3079,14 +3107,14 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 	TODO("DoubleView: ≈сли видимы несколько консолей - нужно совместить регионы, или вообще отрубить, дл€ простоты");
 
 	CVConGuard VCon;
-	if (CVConGroup::GetActiveVCon(&VCon) < 0)
-	{
-		// ƒопустимо на старте
-		//_ASSERTE(FALSE && "No Active VCon");
-		return NULL;
-	}
 
-	hExclusion = CVConGroup::GetExclusionRgn(abTestOnly);
+	//  онсоли может реально не быть на старте
+	// или если GUI не закрываетс€ при закрытии последнего таба
+	if (CVConGroup::GetActiveVCon(&VCon) >= 0)
+	{
+		hExclusion = CVConGroup::GetExclusionRgn(abTestOnly);
+	}
+	
 
 	if (abTestOnly && hExclusion)
 	{
@@ -3137,6 +3165,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 			#endif
 
 			POINT ptClient = {0,0};
+			TODO("Ѕудет глючить на SplitScreen?");
 			MapWindowPoints(VCon->GetView(), ghWnd, &ptClient, 1);
 
 			HRGN hOffset = CreateRectRgn(0,0,0,0);

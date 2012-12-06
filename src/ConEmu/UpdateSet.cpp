@@ -278,6 +278,7 @@ bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])
 	return true;
 }
 
+// 0-пока не проверялся, 1-установлено через Installer, пути совпали, 2-Installer не запускался
 BYTE ConEmuUpdateSettings::UpdateDownloadSetup()
 {
 	if (isUpdateDownloadSetup)

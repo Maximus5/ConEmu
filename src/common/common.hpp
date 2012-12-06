@@ -301,6 +301,7 @@ const CECMD
 	CECMD_EXPORTVARS     = 67, // wData - same as GetEnvironmentStringsW returns, but may be less (selected vars only)
 	CECMD_EXPORTVARSALL  = 68, // same as CECMD_EXPORTVARS, but apply environment to all tabs
 	CECMD_DUPLICATE      = 69, // CESERVER_REQ_DUPLICATE. sent to root console process (cmd, far, powershell), processed with ConEmuHk - Create new tab reproducing current state.
+	CECMD_BSDELETEWORD   = 70, // default action for Ctrl+BS (prompt) - delete word to the left of the cursor
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,

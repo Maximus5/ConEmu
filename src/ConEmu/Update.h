@@ -100,6 +100,7 @@ public:
 	void StopChecking();
 	void ShowLastError();
 	bool ShowConfirmation();
+	bool StartLocalUpdate(LPCWSTR asDownloadedPackage);
 
 	enum UpdateStep
 	{

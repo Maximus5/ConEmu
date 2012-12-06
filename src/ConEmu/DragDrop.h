@@ -81,6 +81,4 @@ class CDragDrop :
 			SHFILEOPSTRUCT fop;
 		} ShlOpInfo;
 		static DWORD WINAPI ShellOpThreadProc(LPVOID lpParameter);
-		bool mb_IsUpdatePackage;
-		bool CheckIsUpdatePackage(IDataObject * pDataObject);
 };

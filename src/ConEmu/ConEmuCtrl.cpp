@@ -1579,6 +1579,19 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 	return cchCount;
 }
 
+bool CConEmuCtrl::key_DeleteWordToLeft(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (!pRCon || pRCon->GuiWnd())
+		return false;
+
+	if (TestOnly)
+		return pRCon->DeleteWordKeyPress(true);
+
+	pRCon->DeleteWordKeyPress(false);
+
+	return true;
+}
+
 bool CConEmuCtrl::key_FindTextDlg(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	// Если это GUI App in Tab - само

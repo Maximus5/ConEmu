@@ -710,50 +710,53 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Text selection",IDC_STATIC,4,1,319,82
+    GROUPBOX        "Text selection",IDC_STATIC,4,1,319,60
     CONTROL         "Always",rbCTSAlways,"Button",BS_AUTORADIOBUTTON,131,13,38,8
     CONTROL         "Buffer only (cmd.exe)",rbCTSBufferOnly,"Button",BS_AUTORADIOBUTTON,173,13,85,8
-    CONTROL         "Block selection",cbCTSBlockSelection,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,30,59,8
-    COMBOBOX        lbCTSBlockSelection,75,28,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Text selection",cbCTSTextSelection,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,139,30,59,8
-    COMBOBOX        lbCTSTextSelection,201,28,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Block (rectangular) selection",cbCTSBlockSelection,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,75,109,8
+    COMBOBOX        lbCTSBlockSelection,262,73,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Text selection",cbCTSTextSelection,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,75,59,8
+    COMBOBOX        lbCTSTextSelection,82,73,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Text:",IDC_STATIC,269,14,22,8
     COMBOBOX        lbCTSForeIdx,293,11,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Back:",IDC_STATIC,269,30,22,8
     COMBOBOX        lbCTSBackIdx,293,28,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Mouse button actions",IDC_STATIC,4,88,319,47
-    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,102,10,8
-    COMBOBOX        lbCTSActAlways,22,99,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,76,102,100,8
-    RTEXT           "Right:",IDC_STATIC,177,102,24,8
-    COMBOBOX        lbCTSRBtnAction,201,99,44,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Middle:",IDC_STATIC,245,102,28,8
-    COMBOBOX        lbCTSMBtnAction,273,99,44,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Mouse button actions",IDC_STATIC,4,142,319,47
+    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,156,10,8
+    COMBOBOX        lbCTSActAlways,22,153,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,76,156,100,8
+    RTEXT           "Right:",IDC_STATIC,177,156,24,8
+    COMBOBOX        lbCTSRBtnAction,201,153,44,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Middle:",IDC_STATIC,245,156,28,8
+    COMBOBOX        lbCTSMBtnAction,273,153,44,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Never",rbCTSNever,"Button",BS_AUTORADIOBUTTON,90,13,35,8
-    GROUPBOX        "Color indexes",IDC_STATIC,263,1,60,47
+    GROUPBOX        "Color indexes",IDC_STATIC,263,1,60,60
     LTEXT           "Select text in console:",IDC_STATIC,12,13,72,8
-    GROUPBOX        "Pasting text behavior (with exception of Far Manager)",gbFeatureClipboard,4,141,319,42
-    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,153,117,8
-    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,154,91,8
-    CONTROL         "Confirm <Enter> keypress",cbClipConfirmEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,167,117,8
-    CONTROL         "Confirm pasting more than",cbClipConfirmLimit,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,167,105,8
-    EDITTEXT        tClipConfirmLimit,246,166,40,12,ES_AUTOHSCROLL
-    CTEXT           "chars",stClipConfirmLimit,292,167,22,8
+    GROUPBOX        "Pasting text behavior (with exception of Far Manager)",gbFeatureClipboard,4,191,319,42
+    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,203,117,8
+    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,204,91,8
+    CONTROL         "Confirm <Enter> keypress",cbClipConfirmEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,217,117,8
+    CONTROL         "Confirm pasting more than",cbClipConfirmLimit,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,217,105,8
+    EDITTEXT        tClipConfirmLimit,246,216,40,12,ES_AUTOHSCROLL
+    CTEXT           "chars",stClipConfirmLimit,292,217,22,8
     CONTROL         "Freeze console contents before selection (may cause small lag)",cbCTSFreezeBeforeSelect,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,45,249,8
-    RTEXT           "Find:",IDC_STATIC,269,85,22,8,NOT WS_VISIBLE | WS_DISABLED
-    COMBOBOX        lbCTSFindIdx,293,83,24,30,CBS_DROPDOWNLIST | CBS_SORT | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Copy on LButton up",cbCTSAutoCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,69,85,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,28,249,8
+    RTEXT           "Find:",IDC_STATIC,269,47,22,8,NOT WS_VISIBLE | WS_DISABLED
+    COMBOBOX        lbCTSFindIdx,293,45,24,30,CBS_DROPDOWNLIST | CBS_SORT | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Copy on Left Button release",cbCTSAutoCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,89,125,8
     CONTROL         "Change prompt (cmd, powershell) text cursor position with Left Click",cbCTSClickPromptPosition,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,11,118,237,8
-    COMBOBOX        lbCTSClickPromptPosition,250,116,67,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Detect text line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,11,57,85,8
-    CONTROL         "Bash margin",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,101,57,55,8
-    CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTO3STATE | WS_TABSTOP,165,57,85,8
-    RTEXT           "EOL:",IDC_STATIC,254,57,19,8
-    COMBOBOX        lbCTSEOL,277,55,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "End selection on typing",cbCTSEndOnTyping,"Button",BS_AUTO3STATE | WS_TABSTOP,101,69,93,8
-    CONTROL         "any key",cbCTSEndOnKeyPress,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,200,69,45,8
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,11,172,237,8
+    COMBOBOX        lbCTSClickPromptPosition,250,170,67,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Detect line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,11,44,66,8
+    CONTROL         "Bash margin",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,81,44,52,8
+    CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTO3STATE | WS_TABSTOP,137,44,77,8
+    COMBOBOX        lbCTSEOL,220,42,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "End selection on typing",cbCTSEndOnTyping,"Button",BS_AUTO3STATE | WS_TABSTOP,11,127,93,8
+    CONTROL         "any key",cbCTSEndOnKeyPress,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,127,45,8
+    GROUPBOX        "Select text with mouse (LeftClick+Drag)",IDC_STATIC,4,63,319,40
+    GROUPBOX        "Select text with keyboard",IDC_STATIC,4,104,319,37
+    LTEXT           "You may configure hotkeys for starting selection from keyboard (goto Keys&&Macro page)",IDC_STATIC,10,114,308,8
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235

@@ -1343,6 +1343,32 @@ bool CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int 
 	return lbOk;
 }
 
+bool CRealConsole::DeleteWordKeyPress(bool bTestOnly /*= false*/)
+{
+	DWORD nActivePID = GetActivePID();
+	if (!nActivePID || (mp_ABuf->m_Type != rbt_Primary) || isFar() || isNtvdm())
+		return false;
+
+	const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
+	if (pApp == NULL)
+		return false;
+
+	if (!bTestOnly)
+	{
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_BSDELETEWORD, sizeof(CESERVER_REQ_HDR)+sizeof(WORD));
+		if (pIn)
+		{
+			pIn->wData[0] = pApp->CTSBashMargin();
+
+			CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
+			ExecuteFreeResult(pOut);
+			ExecuteFreeResult(pIn);
+		}
+	}
+
+	return true;
+}
+
 bool CRealConsole::PostLeftClickSync(COORD crDC)
 {
 	if (!this)
