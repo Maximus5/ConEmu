@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    116
+#define CESERVER_REQ_VER    118
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -134,6 +134,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 //#define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
 #define CEGUIRCONSTARTED    L"ConEmuGuiRConStarted.%u"
 #define CEGUI_ALIVE_EVENT   L"ConEmuGuiStarted"
+#define CESRVSTARTEDEVENT   L"ConEmuSrvStarted.%u" // %u==ServerPID
 #define CEKEYEVENT_CTRL     L"ConEmuCtrlPressed.%u"
 #define CEKEYEVENT_SHIFT    L"ConEmuShiftPressed.%u"
 #define CEHOOKLOCKMUTEX     L"ConEmuHookMutex.%u"
@@ -292,7 +293,7 @@ const CECMD
 	CECMD_ACTIVATETAB    = 58, // dwData[0]=0-based Console, dwData[1]=0-based Tab
 	CECMD_FREEZEALTSRV   = 59, // dwData[0]=1-Freeze, 0-Thaw; dwData[1]=New Alt server PID
 	CECMD_SETFULLSCREEN  = 60, // SetConsoleDisplayMode(CONSOLE_FULLSCREEN_MODE) -> CESERVER_REQ_FULLSCREEN
-	CECMD_MOUSECLICK     = 61, // wData[0]=cr.X, wData[1]=cr.Y - обработка клика, если консоль в ReadConsoleW
+	CECMD_MOUSECLICK     = 61, // CESERVER_REQ_PROMPTACTION - обработка клика, если консоль в ReadConsoleW
 	CECMD_PROMPTCMD      = 62, // wData - это LPCWSTR
 	CECMD_SETTABTITLE    = 63, // wData - это LPCWSTR, посылается в GUI
 	CECMD_SETPROGRESS    = 64, // wData[0]: 0 - remove, 1 - set, 2 - error. Для "1": wData[1] - 0..100%.
@@ -301,7 +302,7 @@ const CECMD
 	CECMD_EXPORTVARS     = 67, // wData - same as GetEnvironmentStringsW returns, but may be less (selected vars only)
 	CECMD_EXPORTVARSALL  = 68, // same as CECMD_EXPORTVARS, but apply environment to all tabs
 	CECMD_DUPLICATE      = 69, // CESERVER_REQ_DUPLICATE. sent to root console process (cmd, far, powershell), processed with ConEmuHk - Create new tab reproducing current state.
-	CECMD_BSDELETEWORD   = 70, // default action for Ctrl+BS (prompt) - delete word to the left of the cursor
+	CECMD_BSDELETEWORD   = 70, // CESERVER_REQ_PROMPTACTION - default action for Ctrl+BS (prompt) - delete word to the left of the cursor
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1683,6 +1684,13 @@ struct CESERVER_REQ_SETCONSOLORS
 	BOOL  ReFillConsole;
 };
 
+struct CESERVER_REQ_PROMPTACTION
+{
+	BOOL  Force;
+	BOOL  BashMargin;
+	SHORT xPos, yPos; // Only for CECMD_MOUSECLICK
+};
+
 struct CESERVER_REQ_DUPLICATE
 {
 	HWND2 hGuiWnd;
@@ -1739,6 +1747,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_GETALLTABS GetAllTabs;
 		CESERVER_REQ_FULLSCREEN FullScreenRet;
 		CESERVER_REQ_SETCONSOLORS SetConColor;
+		CESERVER_REQ_PROMPTACTION Prompt;
 		CESERVER_REQ_DUPLICATE Duplicate;
 	};
 

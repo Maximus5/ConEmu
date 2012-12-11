@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/execute.h"
 #include "Options.h"
 #include "ConEmu.h"
+#include "Inside.h"
 #include "TaskBar.h"
 #include "DwmHelper.h"
 #include "ConEmuApp.h"
@@ -2619,29 +2620,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/inside"))
 					|| !lstrcmpni(curCommand, _T("/inside="), 8))
 				{
-					gpConEmu->m_InsideIntegration = CConEmuMain::ii_Auto;
-					gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
+					bool bRunAsAdmin = isPressed(VK_SHIFT);
+					bool bSyncDir = false;
+					LPCWSTR pszSyncFmt = NULL;
+
 					if (curCommand[7] == _T('='))
 					{
-						gpConEmu->mb_InsideSynchronizeCurDir = true;
-						gpConEmu->ms_InsideSynchronizeCurDir = lstrdup(curCommand+8); // \eCD /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
+						bSyncDir = true;
+						pszSyncFmt = curCommand; // \eCD /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
 					}
-					else
-					{
-						gpConEmu->mb_InsideSynchronizeCurDir = false;
-					}
+
+					CConEmuInside::InitInside(bRunAsAdmin, bSyncDir, pszSyncFmt, 0, NULL);
 				}
 				else if (!klstricmp(curCommand, _T("/insidepid")) && ((i + 1) < params))
 				{
 					curCommand += _tcslen(curCommand) + 1; i++;
 
+					bool bRunAsAdmin = isPressed(VK_SHIFT);
+
 					wchar_t* pszEnd;
-					gpConEmu->mn_InsideParentPID = wcstol(curCommand, &pszEnd, 10);
-					if (gpConEmu->mn_InsideParentPID)
+					// Здесь указывается PID, в который нужно внедриться.
+					DWORD nInsideParentPID = wcstol(curCommand, &pszEnd, 10);
+					if (nInsideParentPID)
 					{
-						// Здесь указывается PID, в который нужно внедриться.
-						gpConEmu->m_InsideIntegration = CConEmuMain::ii_Auto;
-						gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
+						CConEmuInside::InitInside(bRunAsAdmin, false, NULL, nInsideParentPID, NULL);
 					}
 				}
 				else if (!klstricmp(curCommand, _T("/insidewnd")) && ((i + 1) < params))
@@ -2652,14 +2654,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					else if (curCommand[0] == L'x' || curCommand[0] == L'X')
 						curCommand ++;
 
+					bool bRunAsAdmin = isPressed(VK_SHIFT);
+
 					wchar_t* pszEnd;
+					// Здесь указывается HWND, в котором нужно создаваться.
 					HWND hParent = (HWND)wcstol(curCommand, &pszEnd, 16);
 					if (hParent && IsWindow(hParent))
 					{
-						// Здесь указывается HWND, в котором нужно создаваться.
-						gpConEmu->m_InsideIntegration = CConEmuMain::ii_Simple;
-						gpConEmu->mh_InsideParentWND = hParent;
-						gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
+						CConEmuInside::InitInside(bRunAsAdmin, false, NULL, 0, hParent);
 					}
 				}
 				else if (!klstricmp(curCommand, _T("/icon")) && ((i + 1) < params))
@@ -2936,7 +2938,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 
 	// Если в режиме "Inside" подходящего окна не нашли и юзер отказался от "обычного" режима
-	if (gpConEmu->m_InsideIntegration && (gpConEmu->mh_InsideParentWND == (HWND)-1))
+	// mh_InsideParentWND инициализируется вызовом InsideFindParent из Settings::LoadSettings()
+	if (gpConEmu->mp_Inside && (gpConEmu->mp_Inside->mh_InsideParentWND == INSIDE_PARENT_NOT_FOUND))
 	{
 		return 100;
 	}

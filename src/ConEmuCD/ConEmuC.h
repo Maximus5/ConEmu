@@ -403,6 +403,7 @@ struct SrvInfo
 	DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
 	DWORD dwParentFarPID;
 	HANDLE hMainServer; DWORD dwMainServerPID;
+	HANDLE hServerStartedEvent;
 
 	HANDLE hAltServer, hCloseAltServer, hAltServerChanged;
 	DWORD dwAltServerPID; DWORD dwPrevAltServerPID;

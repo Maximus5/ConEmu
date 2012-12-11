@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LoadImg.h"
 #include "Status.h"
 #include "Menu.h"
+#include "Inside.h"
 #include "DefaultTerm.h"
 #include "../ConEmuCD/RegPrepare.h"
 #include "../ConEmuCD/GuiHooks.h"
@@ -270,6 +271,7 @@ CConEmuMain::CConEmuMain()
 	mp_TabBar = NULL; /*m_Macro = NULL;*/ mp_Tip = NULL;
 	mp_Status = new CStatus;
 	mp_DefTrm = new CDefaultTerminal;
+	mp_Inside = NULL;
 	
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE;
 	mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = false; mn_ConEmuAliveEventErr = 0;
@@ -296,13 +298,6 @@ CConEmuMain::CConEmuMain()
 	DisableSetDefTerm = false;
 	DisableRegisterFonts = false;
 	//mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
-	m_InsideIntegration = ii_None; mb_InsideIntegrationShift = false; mn_InsideParentPID = 0;
-	mb_InsideSynchronizeCurDir = false;
-	ms_InsideSynchronizeCurDir = NULL;
-	mb_InsidePaneWasForced = false;
-	mh_InsideParentRoot = mh_InsideParentWND = mh_InsideParentRel = NULL;
-	mh_InsideParentPath = mh_InsideParentCD = NULL; ms_InsideParentPath[0] = 0;
-	//mh_InsideSysMenu = NULL;
 	//mb_PassSysCommand = false;
 	mb_ExternalHidden = FALSE;
 	memset(&mrc_StoredNormalRect, 0, sizeof(mrc_StoredNormalRect));
@@ -1187,66 +1182,24 @@ void CConEmuMain::OnUseDwm(bool abEnableDwm)
 // Вызывается при старте программы, для вычисления mrc_Ideal - размера окна по умолчанию
 RECT CConEmuMain::GetDefaultRect()
 {
-	RECT rcWnd;
+	RECT rcWnd = {};
 
-	if (m_InsideIntegration)
+	if (mp_Inside)
 	{
-		WindowMode = wmNormal;
-		RECT rcParent = {}, rcRelative = {};
-		GetClientRect(mh_InsideParentWND, &rcParent);
-		if (m_InsideIntegration == ii_Simple)
+		if (mp_Inside->GetInsideRect(&rcWnd))
 		{
-			mrc_InsideParent = rcParent;
-			ZeroStruct(mrc_InsideParentRel);
-			rcWnd = rcParent;
+			WindowMode = wmNormal;
+
+			gpConEmu->wndX = rcWnd.left;
+			gpConEmu->wndY = rcWnd.top;
+			RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);
+			gpConEmu->wndWidth = rcCon.right;
+			gpConEmu->wndHeight = rcCon.bottom;
+
+			OnMoving(&rcWnd);
+
+			return rcWnd;
 		}
-		else
-		{
-			RECT rcChild = {};
-			GetWindowRect(mh_InsideParentRel, &rcChild);
-			MapWindowPoints(NULL, mh_InsideParentWND, (LPPOINT)&rcChild, 2);
-			mrc_InsideParent = rcParent;
-			mrc_InsideParentRel = rcChild;
-			IntersectRect(&rcRelative, &rcParent, &rcChild);
-
-			// WinXP & Win2k3
-			if (gnOsVer < 0x600)
-			{
-				rcWnd = rcRelative;
-			}
-			// Windows 7
-			else if ((rcParent.bottom - rcRelative.bottom) >= 100)
-			{
-				// Предпочтительно
-				// Далее - ветвимся по OS
-				if (gnOsVer < 0x600)
-				{
-					rcWnd = MakeRect(rcRelative.left, rcRelative.bottom + 4, rcParent.right, rcParent.bottom);
-				}
-				else
-				{
-					rcWnd = MakeRect(rcParent.left, rcRelative.bottom + 4, rcParent.right, rcParent.bottom);
-				}
-			}
-			else if ((rcParent.right - rcRelative.right) >= 200)
-			{
-				rcWnd = MakeRect(rcRelative.right + 4, rcRelative.top, rcParent.right, rcRelative.bottom);
-			}
-			else
-			{
-				TODO("Другие системы и проверки на валидность");
-				rcWnd = MakeRect(rcParent.left, rcParent.bottom - 100, rcParent.right, rcParent.bottom);
-			}
-		}
-		gpConEmu->wndX = rcWnd.left;
-		gpConEmu->wndY = rcWnd.top;
-		RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);
-		gpConEmu->wndWidth = rcCon.right;
-		gpConEmu->wndHeight = rcCon.bottom;
-
-		OnMoving(&rcWnd);
-
-		return rcWnd;
 	}
 
 	int nWidth, nHeight;
@@ -1490,7 +1443,7 @@ DWORD CConEmuMain::GetWindowStyle()
 {
 	DWORD style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
 
-	if (m_InsideIntegration)
+	if (mp_Inside)
 	{
 		style |= WS_CHILD|WS_SYSMENU;
 	}
@@ -1530,7 +1483,7 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 		wmNewMode = WindowMode;
 	}
 
-	if (m_InsideIntegration)
+	if (mp_Inside)
 	{
 		dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
 		dwStyle |= WS_CHILD|WS_SYSMENU;
@@ -1579,7 +1532,7 @@ DWORD CConEmuMain::GetWindowStyleEx()
 {
 	DWORD styleEx = 0;
 
-	if (m_InsideIntegration)
+	if (mp_Inside)
 	{
 		// ничего вроде не надо
 	}
@@ -1697,17 +1650,19 @@ BOOL CConEmuMain::CreateMainWindow()
 		return -1;
 	}
 
-	if (m_InsideIntegration)
+	if (mp_Inside)
 	{
-		if (!mh_InsideParentWND)
+		if (!mp_Inside->mh_InsideParentWND)
 		{
-			_ASSERTE(!m_InsideIntegration || mh_InsideParentWND);
-			m_InsideIntegration = ii_None;
+			_ASSERTE(mp_Inside == NULL); // Must be cleared already!
+			_ASSERTE(!mp_Inside->m_InsideIntegration || mp_Inside->mh_InsideParentWND);
+			//m_InsideIntegration = ii_None;
+			SafeDelete(mp_Inside);
 		}
 		else
 		{
 			DWORD nParentTID, nParentPID;
-			nParentTID = GetWindowThreadProcessId(mh_InsideParentWND, &nParentPID);
+			nParentTID = GetWindowThreadProcessId(mp_Inside->mh_InsideParentWND, &nParentPID);
 			_ASSERTE(nParentTID && nParentPID);
 			BOOL bAttach = AttachThreadInput(GetCurrentThreadId(), nParentTID, TRUE);
 			if (!bAttach)
@@ -1736,7 +1691,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	_ASSERTE(WindowMode==wmNormal);
 
 	// Расчет размеров окна в Normal режиме
-	if ((gpConEmu->wndWidth && gpConEmu->wndHeight) || m_InsideIntegration)
+	if ((gpConEmu->wndWidth && gpConEmu->wndHeight) || mp_Inside)
 	{
 		MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
 		//COORD conSize; conSize.X=gpSet->wndWidth; conSize.Y=gpSet->wndHeight;
@@ -1761,7 +1716,7 @@ BOOL CConEmuMain::CreateMainWindow()
 		_ASSERTE(gpConEmu->wndWidth && gpConEmu->wndHeight);
 	}
 
-	HWND hParent = m_InsideIntegration ? mh_InsideParentWND : ghWndApp;
+	HWND hParent = mp_Inside ? mp_Inside->mh_InsideParentWND : ghWndApp;
 
 	if (gpSetCls->isAdvLogging)
 	{
@@ -1769,7 +1724,7 @@ BOOL CConEmuMain::CreateMainWindow()
 		_wsprintf(szCreate, SKIPLEN(countof(szCreate)) L"Creating main window.%s%s%s Parent=x%08X X=%i Y=%i W=%i H=%i style=x%08X exStyle=x%08X Mode=%u",
 			(DWORD)hParent,
 			gpSet->isQuakeStyle ? L" Quake" : L"",
-			gpConEmu->m_InsideIntegration ? L" Inside" : L"",
+			gpConEmu->mp_Inside ? L" Inside" : L"",
 			gpSet->isDesktopMode ? L" Desktop" : L"",
 			gpConEmu->wndX, gpConEmu->wndY, nWidth, nHeight, style, styleEx,
 			gpSet->isQuakeStyle ? gpSet->_WindowMode : WindowMode);
@@ -1853,523 +1808,6 @@ void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 	pFont->nBorderFontWidth = gpSetCls->BorderFontWidth();
 }
 
-BOOL CConEmuMain::EnumInsideFindParent(HWND hwnd, LPARAM lParam)
-{
-	DWORD nPID = 0;
-	if (IsWindowVisible(hwnd)
-		&& GetWindowThreadProcessId(hwnd, &nPID)
-		&& (nPID == (DWORD)lParam))
-	{
-		DWORD nNeedStyles = WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX;
-		DWORD nStyles = GetWindowLong(hwnd, GWL_STYLE);
-		if ((nStyles & nNeedStyles) == nNeedStyles)
-		{
-			// Нашли
-			gpConEmu->mn_InsideParentPID = nPID;
-			gpConEmu->mh_InsideParentRoot = hwnd;
-			return FALSE;
-		}
-	}
-
-	// Next window
-	return TRUE;
-}
-
-HWND  CConEmuMain::InsideFindConEmu(HWND hFrom)
-{
-	wchar_t szClass[128];
-	HWND hChild = NULL, hNext = NULL;
-	//HWND hXpView = NULL, hXpPlace = NULL;
-
-	while ((hChild = FindWindowEx(hFrom, hChild, NULL, NULL)) != NULL)
-	{
-		GetClassName(hChild, szClass, countof(szClass));
-		if (lstrcmp(szClass, gsClassNameParent) == 0)
-		{
-			return hChild;
-		}
-
-		hNext = InsideFindConEmu(hChild);
-		if (hNext)
-		{
-			return hNext;
-		}
-	}
-
-	return NULL;
-}
-
-bool CConEmuMain::InsideFindShellView(HWND hFrom)
-{
-	wchar_t szClass[128];
-	wchar_t szParent[128];
-	wchar_t szRoot[128];
-	HWND hChild = NULL;
-	// Для WinXP
-	HWND hXpView = NULL, hXpPlace = NULL;
-
-	while ((hChild = FindWindowEx(hFrom, hChild, NULL, NULL)) != NULL)
-	{
-		// Нас интересуют только видимые окна!
-		if (!IsWindowVisible(hChild))
-			continue;
-
-		// Windows 7, Windows 8.
-		GetClassName(hChild, szClass, countof(szClass));
-		if (lstrcmp(szClass, L"SHELLDLL_DefView") == 0)
-		{
-			GetClassName(hFrom, szParent, countof(szParent));
-			if (lstrcmp(szParent, L"CtrlNotifySink") == 0)
-			{
-				HWND hParent = GetParent(hFrom);
-				if (hParent)
-				{
-					GetClassName(hParent, szRoot, countof(szRoot));
-					_ASSERTE(lstrcmp(szRoot, L"DirectUIHWND") == 0);
-
-					mh_InsideParentWND = hParent;
-					mh_InsideParentRel = hFrom;
-					m_InsideIntegration = ii_Explorer;
-
-					return true;
-				}
-			}
-			else if ((gnOsVer < 0x600) && (lstrcmp(szParent, L"ExploreWClass") == 0))
-			{
-				_ASSERTE(mh_InsideParentRoot == hFrom);
-				hXpView = hChild;
-			}
-		}
-		else if ((gnOsVer < 0x600) && (lstrcmp(szClass, L"BaseBar") == 0))
-		{
-			RECT rcBar = {}; GetWindowRect(hChild, &rcBar);
-			MapWindowPoints(NULL, hFrom, (LPPOINT)&rcBar, 2);
-			RECT rcParent = {}; GetClientRect(hFrom, &rcParent);
-			if ((-10 <= (rcBar.right - rcParent.right))
-				&& ((rcBar.right - rcParent.right) <= 10))
-			{
-				// Нас интересует область, прилепленная к правому-нижнему углу
-				hXpPlace = hChild;
-			}
-		}
-		// Путь в этом (hChild) хранится в формате "Address: D:\users\max"
-		else if ((gnOsVer >= 0x600) && lstrcmp(szClass, L"ToolbarWindow32") == 0)
-		{
-			GetClassName(hFrom, szParent, countof(szParent));
-			if (lstrcmp(szParent, L"Breadcrumb Parent") == 0)
-			{
-				HWND hParent = GetParent(hFrom);
-				if (hParent)
-				{
-					GetClassName(hParent, szRoot, countof(szRoot));
-					_ASSERTE(lstrcmp(szRoot, L"msctls_progress32") == 0);
-
-					mh_InsideParentPath = hChild;
-
-					// Остается ComboBox/Edit, в который можно запихнуть путь, чтобы заставить эксплорер по нему перейти
-					// Но есть проблема. Этот контрол не создается при открытии окна!
-
-					return true;
-				}
-			}
-		}
-
-		if ((hChild != hXpView) && (hChild != hXpPlace))
-		{
-			if (InsideFindShellView(hChild))
-			{
-				if (mh_InsideParentRel && mh_InsideParentPath)
-					return true;
-				else
-					break;
-			}
-		}
-
-		if (hXpView && hXpPlace)
-		{
-			mh_InsideParentRel = FindWindowEx(hXpPlace, NULL, L"ReBarWindow32", NULL);
-			if (!mh_InsideParentRel)
-			{
-				_ASSERTE(mh_InsideParentRel && L"ReBar must be found on XP & 2k3");
-				return true; // закончить поиск
-			}
-			mh_InsideParentWND = hXpPlace;
-			mh_InsideParentPath = mh_InsideParentRoot;
-			m_InsideIntegration = ii_Explorer;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-HWND CConEmuMain::InsideFindParent()
-{
-	bool bFirstStep = true;
-	DWORD nParentPID = 0;
-
-	if (!m_InsideIntegration)
-	{
-		return NULL;
-	}
-
-	if (mh_InsideParentWND)
-	{
-		if (IsWindow(mh_InsideParentWND))
-		{
-			if (m_InsideIntegration == ii_Simple)
-			{
-				if (mh_InsideParentRoot == NULL)
-				{
-					// Если еще не искали "корневое" окно
-					HWND hParent = mh_InsideParentWND;
-					while (hParent)
-					{
-						mh_InsideParentRoot = hParent;
-						hParent = GetParent(hParent);
-					}
-				}
-				// В этом режиме занимаем всю клиентскую область
-				_ASSERTE(mh_InsideParentRel==NULL);
-				mh_InsideParentRel = NULL;
-			}
-
-			_ASSERTE(mh_InsideParentWND!=NULL);
-			goto wrap;
-		}
-		else
-		{
-			if (m_InsideIntegration == ii_Simple)
-			{
-				DisplayLastError(L"Specified window not found");
-				mh_InsideParentWND = NULL;
-				goto wrap;
-			}
-			_ASSERTE(IsWindow(mh_InsideParentWND));
-			mh_InsideParentRoot = mh_InsideParentWND = mh_InsideParentRel = NULL;
-		}
-	}
-
-	_ASSERTE(m_InsideIntegration!=ii_Simple);
-
-	if (gpConEmu->mn_InsideParentPID)
-	{
-		PROCESSENTRY32 pi = {sizeof(pi)};
-		if ((gpConEmu->mn_InsideParentPID == GetCurrentProcessId())
-			|| !GetProcessInfo(gpConEmu->mn_InsideParentPID, &pi))
-		{
-			DisplayLastError(L"Invalid parent process specified");
-			m_InsideIntegration = ii_None;
-			mh_InsideParentWND = NULL;
-			goto wrap;
-		}
-		nParentPID = gpConEmu->mn_InsideParentPID;
-	}
-	else
-	{
-		PROCESSENTRY32 pi = {sizeof(pi)};
-		if (!GetProcessInfo(GetCurrentProcessId(), &pi) || !pi.th32ParentProcessID)
-		{
-			DisplayLastError(L"GetProcessInfo(GetCurrentProcessId()) failed");
-			m_InsideIntegration = ii_None;
-			mh_InsideParentWND = NULL;
-			goto wrap;
-		}
-		nParentPID = pi.th32ParentProcessID;
-	}
-
-	EnumWindows(EnumInsideFindParent, nParentPID);
-	if (!mh_InsideParentRoot)
-	{
-		int nBtn = MessageBox(L"Can't find appropriate parent window!\n\nContinue in normal mode?", MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
-		if (nBtn != IDYES)
-		{
-			mh_InsideParentWND = (HWND)-1;
-			return mh_InsideParentWND; // Закрыться!
-		}
-		// Продолжить в обычном режиме
-		m_InsideIntegration = ii_None;
-		mh_InsideParentWND = NULL;
-		goto wrap;
-	}
-
-
-    HWND hExistConEmu;
-    if ((hExistConEmu = InsideFindConEmu(mh_InsideParentRoot)) != NULL)
-    {
-    	_ASSERTE(FALSE && "Continue to create tab in existing instance");
-    	// Если в проводнике уже есть ConEmu - открыть в нем новую вкладку
-    	gpSetCls->SingleInstanceShowHide = sih_None;
-    	LPCWSTR pszCmdLine = GetCommandLine();
-    	LPCWSTR pszCmd = StrStrI(pszCmdLine, L" /cmd ");
-    	RunSingleInstance(hExistConEmu, pszCmd ? (pszCmd + 6) : NULL);
-
-		mh_InsideParentWND = (HWND)-1;
-		return mh_InsideParentWND; // Закрыться!
-    }
-
-	// Теперь нужно найти дочерние окна
-	// 1. в которое будем внедряться
-	// 2. по которому будем позиционироваться
-	// 3. для синхронизации текущего пути
-	InsideFindShellView(mh_InsideParentRoot);
-
-RepeatCheck:
-	if (!mh_InsideParentWND || (!mh_InsideParentRel && (m_InsideIntegration == ii_Explorer)))
-	{
-		int nBtn = IDCANCEL;
-		wchar_t szAddMsg[128] = L"", szMsg[1024];
-		if (bFirstStep)
-		{
-			bFirstStep = false;
-			if (gnOsVer < 0x600)
-			{
-				// WinXP, Win2k3
-				nBtn = MessageBox(L"Tip pane is not found in Explorer window!\nThis pane is required for 'ConEmu Inside' mode.\nDo you want to show this pane?", MB_ICONQUESTION|MB_YESNO);
-				if (nBtn == IDYES)
-				{
-					DWORD_PTR nRc;
-					LRESULT lSendRc;
-
-				#if 0
-
-					HWND hWorker = GetDlgItem(mh_InsideParentRoot, 0xA005);
-
-					#ifdef _DEBUG
-					if (hWorker)
-					{
-						HWND hReBar = FindWindowEx(hWorker, NULL, L"ReBarWindow32", NULL);
-						if (hReBar)
-						{
-							POINT pt = {4,4};
-							HWND hTool = ChildWindowFromPoint(hReBar, pt);
-							if (hTool)
-							{
-								//TBBUTTON tb = {};
-								//lSendRc = SendMessageTimeout(mh_InsideParentRoot, TB_GETBUTTON, 2, (LPARAM)&tb, SMTO_NOTIMEOUTIFNOTHUNG, 500, &nRc);
-								//if (tb.idCommand)
-								//{
-								//	NMTOOLBAR nm = {{hTool, 0, TBN_DROPDOWN}, 32896/*tb.idCommand*/};
-								//	lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_NOTIFY, 0, (LPARAM)&nm, SMTO_NOTIMEOUTIFNOTHUNG, 500, &nRc);
-								//}
-								lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_COMMAND, 32896, 0, SMTO_NOTIMEOUTIFNOTHUNG, 500, &nRc);
-							}
-						}
-					}
-					// There is no way to force "Tip pane" in WinXP
-					// if popup menu "View -> Explorer bar" was not _shown_ at least once
-					// In that case, Explorer ignores WM_COMMAND(41536) and does not reveal tip pane.
-					HMENU hMenu1 = GetMenu(mh_InsideParentRoot), hMenu2 = NULL, hMenu3 = NULL;
-					if (hMenu1)
-					{
-						hMenu2 = GetSubMenu(hMenu1, 2);
-						//if (!hMenu2)
-						//{
-						//	lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_MENUSELECT, MAKELONG(2,MF_POPUP), (LPARAM)hMenu1, SMTO_NOTIMEOUTIFNOTHUNG, 1500, &nRc);
-						//	hMenu2 = GetSubMenu(hMenu1, 2);
-						//}
-
-						if (hMenu2)
-						{
-							hMenu3 = GetSubMenu(hMenu2, 2);
-						}
-					}
-					#endif
-				#endif
-
-					//INPUT keys[4] = {INPUT_KEYBOARD,INPUT_KEYBOARD,INPUT_KEYBOARD,INPUT_KEYBOARD};
-					//keys[0].ki.wVk = VK_F10; keys[0].ki.dwFlags = 0; //keys[0].ki.wScan = MapVirtualKey(VK_F10,MAPVK_VK_TO_VSC);
-					//keys[1].ki.wVk = VK_F10; keys[1].ki.dwFlags = KEYEVENTF_KEYUP; //keys[0].ki.wScan = MapVirtualKey(VK_F10,MAPVK_VK_TO_VSC);
-					//keys[1].ki.wVk = 'V';
-					//keys[2].ki.wVk = 'E';
-					//keys[3].ki.wVk = 'T';
-
-					//LRESULT lSentRc = 0;
-					//SetForegroundWindow(mh_InsideParentRoot);
-					//LRESULT lSentRc = SendInput(2/*countof(keys)*/, keys, sizeof(keys[0]));
-					//lSentRc = SendMessageTimeout(mh_InsideParentRoot, WM_SYSKEYUP, 'V', 0, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &nRc);
-
-					lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_COMMAND, 41536, 0, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &nRc);
-					UNREFERENCED_PARAMETER(lSendRc);
-
-					mb_InsidePaneWasForced = true;
-					// Подготовим сообщение если не удастся
-					wcscpy_c(szAddMsg, L"Forcing Explorer to show Tip pane failed.\nShow pane yourself and recall ConEmu.\n\n");
-				}
-			}
-
-			if (nBtn == IDYES)
-			{
-				// Первая проверка
-				mh_InsideParentWND = mh_InsideParentRel = NULL;
-				m_InsideIntegration = ii_Auto;
-				InsideFindShellView(mh_InsideParentRoot);
-				if (mh_InsideParentWND && mh_InsideParentRel)
-					goto RepeatCheck;
-				// Если не нашли - задержка и повторная проверка
-				Sleep(1500);
-				mh_InsideParentWND = mh_InsideParentRel = NULL;
-				m_InsideIntegration = ii_Auto;
-				InsideFindShellView(mh_InsideParentRoot);
-				if (mh_InsideParentWND && mh_InsideParentRel)
-					goto RepeatCheck;
-			}
-		}
-
-		//MessageBox(L"Can't find appropriate shell window!", MB_ICONSTOP);
-		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"%sCan't find appropriate shell window!\nUnrecognized layout of the Explorer.\n\nContinue in normal mode?", szAddMsg);
-		nBtn = MessageBox(szMsg, MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
-
-		if (nBtn != IDYES)
-		{
-			mh_InsideParentWND = (HWND)-1;
-			return mh_InsideParentWND; // Закрыться!
-		}
-		m_InsideIntegration = ii_None;
-		mh_InsideParentRoot = NULL;
-		mh_InsideParentWND = NULL;
-		goto wrap;
-	}
-
-wrap:
-	if (!mh_InsideParentWND)
-	{
-		m_InsideIntegration = ii_None;
-		mh_InsideParentRoot = NULL;
-	}
-	else
-	{
-		GetWindowThreadProcessId(mh_InsideParentWND, &gpConEmu->mn_InsideParentPID);
-		// Для мониторинга папки
-		GetCurrentDirectory(countof(ms_InsideParentPath), ms_InsideParentPath);
-		int nLen = lstrlen(ms_InsideParentPath);
-		if ((nLen > 3) && (ms_InsideParentPath[nLen-1] == L'\\'))
-		{
-			ms_InsideParentPath[nLen-1] = 0;
-		}
-	}
-
-	return mh_InsideParentWND;
-}
-
-void CConEmuMain::InsideParentMonitor()
-{
-	// При смене положения "сплиттеров" - обновить свой размер/положение
-	InsideUpdatePlacement();
-
-	if (mb_InsideSynchronizeCurDir)
-	{
-		// При смене папки в проводнике
-		InsideUpdateDir();
-	}
-}
-
-void CConEmuMain::InsideUpdateDir()
-{
-	CVConGuard VCon;
-	
-	if (mh_InsideParentPath && IsWindow(mh_InsideParentPath) && (GetActiveVCon(&VCon) >= 0) && VCon->RCon())
-	{
-		wchar_t szCurText[512] = {};
-		DWORD_PTR lRc = 0;
-		if (SendMessageTimeout(mh_InsideParentPath, WM_GETTEXT, countof(szCurText), (LPARAM)szCurText, SMTO_ABORTIFHUNG|SMTO_NORMAL, 300, &lRc))
-		{
-			if (gnOsVer < 0x600)
-			{
-				// Если в заголовке нет полного пути
-				if (wcschr(szCurText, L'\\') == NULL)
-				{
-					// Сразу выходим
-					return;
-				}
-			}
-
-			LPCWSTR pszPath = NULL;
-			// Если тут уже путь - то префикс не отрезать
-            if ((szCurText[0] == L'\\' && szCurText[1] == L'\\' && szCurText[2]) // сетевой путь
-            	|| (szCurText[0] && szCurText[1] == L':' && szCurText[2] == L'\\' /*&& szCurText[3]*/)) // Путь через букву диска
-        	{
-        		pszPath = szCurText;
-        	}
-        	else
-        	{
-        		// Иначе - отрезать префикс. На английской винде это "Address: D:\dir1\dir2"
-				pszPath = wcschr(szCurText, L':');
-        		if (pszPath)
-        			pszPath = SkipNonPrintable(pszPath+1);
-        	}
-
-        	// Если успешно - сравниваем с ms_InsideParentPath
-        	if (pszPath && *pszPath && (lstrcmpi(ms_InsideParentPath, pszPath) != 0))
-        	{
-        		int nLen = lstrlen(pszPath);
-        		if (nLen >= (int)countof(ms_InsideParentPath))
-        		{
-        			_ASSERTE((nLen<countof(ms_InsideParentPath)) && "Too long path?");
-        		}
-        		else //if (VCon->RCon())
-        		{
-        			// Запомнить для сравнения
-        			lstrcpyn(ms_InsideParentPath, pszPath, countof(ms_InsideParentPath));
-        			// Подготовить команду для выполнения в Shell
-        			VCon->RCon()->PostPromptCmd(true, pszPath);
-        		}
-        	}
-		}
-	}
-}
-
-void CConEmuMain::InsideUpdatePlacement()
-{
-	if (!mh_InsideParentWND || !IsWindow(mh_InsideParentWND))
-		return;
-
-	if ((m_InsideIntegration != ii_Explorer) && (m_InsideIntegration != ii_Simple))
-		return;
-
-	if ((m_InsideIntegration == ii_Explorer) && mh_InsideParentRel
-		&& (!IsWindow(mh_InsideParentRel) || !IsWindowVisible(mh_InsideParentRel)))
-	{
-		//Vista: Проводник мог пересоздать окошко со списком файлов, его нужно найти повторно
-		HWND hChild = NULL;
-		bool bFound = false;
-		while (((hChild = FindWindowEx(mh_InsideParentWND, hChild, NULL, NULL)) != NULL))
-		{
-			HWND hView = FindWindowEx(hChild, NULL, L"SHELLDLL_DefView", NULL);
-			if (hView && IsWindowVisible(hView))
-			{
-				bFound = true;
-				mh_InsideParentRel = hView;
-				break;
-			}
-		}
-
-		if (!bFound)
-			return;
-	}
-
-	//if ((m_InsideIntegration == ii_Simple) || IsWindow(mh_InsideParentRel))
-	{
-		RECT rcParent = {}, rcRelative = {};
-		GetClientRect(mh_InsideParentWND, &rcParent);
-		if (m_InsideIntegration != ii_Simple)
-		{
-			GetWindowRect(mh_InsideParentRel, &rcRelative);
-			MapWindowPoints(NULL, mh_InsideParentWND, (LPPOINT)&rcRelative, 2);
-		}
-
-		if (memcmp(&mrc_InsideParent, &rcParent, sizeof(rcParent))
-			|| ((m_InsideIntegration != ii_Simple) && memcmp(&mrc_InsideParentRel, &rcRelative, sizeof(rcRelative))))
-		{
-			// Расчитать
-			RECT rcWnd = GetDefaultRect();
-			UpdateIdealRect(rcWnd);
-			// Подвинуть
-			SetWindowPos(ghWnd, HWND_TOP, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
-			//MoveWindow(ghWnd, mrc_Ideal.left, mrc_Ideal.top, mrc_Ideal.right-mrc_Ideal.left, mrc_Ideal.bottom-mrc_Ideal.top, TRUE);
-		}
-	}
-}
 
 BOOL CConEmuMain::CheckDosBoxExists()
 {
@@ -3029,7 +2467,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
 				_ASSERTE(!rcClient.left && !rcClient.top);
 
-				bool bRoundTitle = gpSetCls->CheckTheming() && mp_TabBar->IsTabsShown();
+				bool bRoundTitle = gpSetCls->CheckTheming() && mp_TabBar->IsTabsShown() && !IsWindows8;
 
 				if (gpSet->isQuakeStyle)
 				{
@@ -3245,6 +2683,8 @@ CConEmuMain::~CConEmuMain()
 
 	SafeDelete(mp_Menu);
 
+	SafeDelete(mp_Inside);
+
 	//if (m_Child)
 	//{
 	//	delete m_Child;
@@ -3458,7 +2898,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 	//}
 
 	// Разница между размером всего окна и клиентской области окна (рамка + заголовок)
-	if ((mg & ((DWORD)CEM_FRAMECAPTION)) && !m_InsideIntegration)
+	if ((mg & ((DWORD)CEM_FRAMECAPTION)) && (mp_Inside == NULL))
 	{
 		// Только CEM_CAPTION считать нельзя
 		_ASSERTE((mg & ((DWORD)CEM_FRAMECAPTION)) != CEM_CAPTION);
@@ -3664,7 +3104,7 @@ bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	RECT rcWork;
 
 	// When we live inside parent window - size must be strict
-	if (m_InsideIntegration)
+	if (mp_Inside)
 	{
 		rcWork = GetDefaultRect();
 		bool bChanged = (memcmp(&rcWork, &rcWnd, sizeof(rcWnd)) != 0);
@@ -3751,7 +3191,7 @@ bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 		rcWnd.top = max(rcWork.top-rcMargins.top,min(rcStore.top,rcWork.bottom-nHeight+rcMargins.bottom));
 
 		// Add Width/Height. They may exceeds monitor in wmNormal.
-		if ((wndMode == wmNormal) && !gpSet->isQuakeStyle && !m_InsideIntegration)
+		if ((wndMode == wmNormal) && !gpSet->isQuakeStyle && (mp_Inside == NULL))
 		{
 			rcWnd.right = rcWnd.left+nWidth;
 			rcWnd.bottom = rcWnd.top+nHeight;
@@ -4459,7 +3899,7 @@ void CConEmuMain::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
 
 void CConEmuMain::StoreIdealRect()
 {
-	if ((WindowMode != wmNormal) || m_InsideIntegration)
+	if ((WindowMode != wmNormal) || mp_Inside)
 		return;
 
 	RECT rcWnd = CalcRect(CER_MAIN);
@@ -4469,7 +3909,7 @@ void CConEmuMain::StoreIdealRect()
 RECT CConEmuMain::GetIdealRect()
 {
 	RECT rcIdeal = mr_Ideal.rcIdeal;
-	if (m_InsideIntegration || (rcIdeal.right <= rcIdeal.left) || (rcIdeal.bottom <= rcIdeal.top))
+	if (mp_Inside || (rcIdeal.right <= rcIdeal.left) || (rcIdeal.bottom <= rcIdeal.top))
 	{
 		rcIdeal = GetDefaultRect();
 	}
@@ -4482,7 +3922,7 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 
 	// Обновить коордианты в gpSet, если требуется
 	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
-	if ((WindowMode == wmNormal) && !m_InsideIntegration && !isIconic())
+	if ((WindowMode == wmNormal) && !mp_Inside && !isIconic())
 	{
 		RECT rcNormal = {};
 		if (prcWnd)
@@ -4764,7 +4204,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 		StoreNormalRect(&rcWnd);
 
 	// Коррекция для Quake
-	ConEmuWindowMode NewMode = (gpSet->isQuakeStyle || m_InsideIntegration) ? wmNormal : inMode;
+	ConEmuWindowMode NewMode = (gpSet->isQuakeStyle || mp_Inside) ? wmNormal : inMode;
 	// И сразу запоминаем _новый_ режим
 	changeFromWindowMode = WindowMode;
 	mp_Menu->SetRestoreFromMinimized(bIconic);
@@ -4850,7 +4290,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			//	mb_MaximizedHideCaption = FALSE;
 
 			RECT rcNew;
-			if (m_InsideIntegration)
+			if (mp_Inside)
 			{
 				rcNew = GetDefaultRect();
 			}
@@ -5246,7 +4686,7 @@ bool CConEmuMain::isWindowNormal()
 	_ASSERTE((WindowMode == wmNormal) || bZoomed || bIconic || (changeFromWindowMode == wmNormal) || mb_InCreateWindow);
 	#endif
 
-	if ((WindowMode != wmNormal) || gpSet->isQuakeStyle || m_InsideIntegration)
+	if ((WindowMode != wmNormal) || gpSet->isQuakeStyle || mp_Inside)
 		return false;
 
 	if (::IsIconic(ghWnd))
@@ -6820,6 +6260,16 @@ void CConEmuMain::UpdateFarSettings()
 //	}
 //}
 
+void CConEmuMain::UpdateInsideRect(RECT rcNewPos)
+{
+	RECT rcWnd = rcNewPos;
+
+	gpConEmu->UpdateIdealRect(rcWnd);
+	
+	// Подвинуть
+	SetWindowPos(ghWnd, HWND_TOP, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
+}
+
 void CConEmuMain::UpdateIdealRect(RECT rcNewIdeal)
 {
 #ifdef _DEBUG
@@ -7237,7 +6687,7 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 {
 	wchar_t szErr[512];
 
-	if (abRegister && !m_InsideIntegration)
+	if (abRegister && !mp_Inside)
 	{
 		for (size_t i = 0; i < countof(gRegisteredHotKeys); i++)
 		{
@@ -9435,7 +8885,7 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 					//|| (mp_AttachDlg && (mp_AttachDlg->GetHWND() == h))
 					//|| (mp_RecreateDlg && (mp_RecreateDlg->GetHWND() == h))
 					//|| (gpSetCls->mh_FindDlg == h)))
-				|| (m_InsideIntegration && (h == mh_InsideParentRoot)))
+				|| (mp_Inside && (h == mp_Inside->mh_InsideParentRoot)))
 			;
 
 		if (h && !isMe && abRealAlso)
@@ -9814,7 +9264,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		ForceShowTabs(TRUE); // Показать табы
 
 		// Расчет высоты таббара был выполнен "примерно"
-		if ((WindowMode == wmNormal) && !m_InsideIntegration)
+		if ((WindowMode == wmNormal) && !mp_Inside)
 		{
 			RECT rcWnd = GetDefaultRect();
 			SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOZORDER);
@@ -10372,10 +9822,10 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		//SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
 		
 		// Если фокус был у нас - вернуть его (на всякий случай, вдруг RealConsole какая забрала
-		if (m_InsideIntegration)
+		if (mp_Inside)
 		{
-			if ((hCurForeground == ghWnd) || (hCurForeground != mh_InsideParentRoot))
-				SetForegroundWindow(mh_InsideParentRoot);
+			if ((hCurForeground == ghWnd) || (hCurForeground != mp_Inside->mh_InsideParentRoot))
+				SetForegroundWindow(mp_Inside->mh_InsideParentRoot);
 			SetWindowPos(ghWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
 		}
 		else if ((hCurForeground == ghWnd) && !WindowStartMinimized)
@@ -10684,7 +10134,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			CheckFocus(pszMsgName);
 		}
 
-		if (gpSet->isDesktopMode || gpConEmu->m_InsideIntegration)
+		if (gpSet->isDesktopMode || mp_Inside)
 		{
 			// В этих режимах игнорировать
 			return 0;
@@ -10964,7 +10414,7 @@ HMONITOR CConEmuMain::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPRECT prcW
 	}
 	else
 	{
-		_ASSERTE(!m_InsideIntegration); // По идее, для "Inside" вызываться не должен
+		_ASSERTE(!mp_Inside); // По идее, для "Inside" вызываться не должен
 
 		if (mh_MinFromMonitor && GetMonitorInfo(mh_MinFromMonitor, &mi))
 		{
@@ -11389,7 +10839,7 @@ void CConEmuMain::OnTaskbarSettingsChanged()
 
 void CConEmuMain::OnAltEnter()
 {
-	if (m_InsideIntegration)
+	if (mp_Inside)
 	{
 		_ASSERTE(FALSE && "Must not change mode in the Inside mode");
 		return;
@@ -11405,7 +10855,7 @@ void CConEmuMain::OnAltEnter()
 
 void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 {
-	if (m_InsideIntegration)
+	if (mp_Inside)
 	{
 		_ASSERTE(FALSE && "Must not change mode in the Inside mode");
 		return;
@@ -11435,7 +10885,7 @@ bool CConEmuMain::InQuakeAnimation()
 
 void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= sih_None*/)
 {
-	if (m_InsideIntegration)
+	if (mp_Inside)
 		return;
 
 	static bool bInFunction = false;
@@ -12935,7 +12385,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (!bContinue)
 		return 0;
 
-	if (m_InsideIntegration && ((messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN)))
+	if (mp_Inside && ((messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN)))
 	{
 		#ifdef _DEBUG
 		HWND hFocus = GetFocus();
@@ -15267,9 +14717,9 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		}
 	}
 
-	if (m_InsideIntegration)
+	if (mp_Inside)
 	{
-		InsideParentMonitor();
+		mp_Inside->InsideParentMonitor();
 	}
 
 	//2009-04-22 - вроде не требуется
@@ -16177,7 +15627,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				}
 			}
 
-			if (gpConEmu->m_InsideIntegration)
+			if (gpConEmu->mp_Inside)
 			{
 				SetForegroundWindow(ghWnd);
 			}

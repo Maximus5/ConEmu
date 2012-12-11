@@ -94,15 +94,16 @@ enum FarMacroVersion
 	fmv_Lua,
 };
 
-enum BackgroundOp
-{
-	eUpLeft = 0,
-	eStretch = 1,
-	eTile = 2,
-	eUpRight = 3,
-	eDownLeft = 4,
-	eDownRight = 5,
-};
+// -> Header.h
+//enum BackgroundOp
+//{
+//	eUpLeft = 0,
+//	eStretch = 1,
+//	eTile = 2,
+//	eUpRight = 3,
+//	eDownLeft = 4,
+//	eDownRight = 5,
+//};
 
 #define BgImageColorsDefaults (1|2)
 
@@ -380,9 +381,9 @@ struct Settings
 			BYTE FontItalicColor() const { return (OverrideExtendFonts || !AppNames) ? nFontItalicColor : gpSet->AppStd.nFontItalicColor; };
 
 			bool OverrideCursor;
-			//reg->Load(L"CursorType", isCursorV);
-			bool isCursorV;
-			bool CursorV() const { return (OverrideCursor || !AppNames) ? isCursorV : gpSet->AppStd.isCursorV; };
+			//reg->Load(L"CursorType", isCursorType);
+			BYTE isCursorType; // 0 - Horz, 1 - Vert, 2 - Hollow-block
+			BYTE CursorType() const { return (OverrideCursor || !AppNames) ? isCursorType : gpSet->AppStd.isCursorType; };
 			//reg->Load(L"CursorBlink", isCursorBlink);
 			bool isCursorBlink;
 			bool CursorBlink() const { return (OverrideCursor || !AppNames) ? isCursorBlink : gpSet->AppStd.isCursorBlink; };

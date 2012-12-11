@@ -408,5 +408,15 @@ enum ExpandTextRangeType
 	etr_Url = 3,
 };
 
+enum BackgroundOp
+{
+	eUpLeft = 0,
+	eStretch = 1,
+	eTile = 2,
+	eUpRight = 3,
+	eDownLeft = 4,
+	eDownRight = 5,
+};
+
 bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval);
 #define LockFrequentExecute(Interval) static DWORD LastExecuteTick; if (CheckLockFrequentExecute(LastExecuteTick,Interval))

@@ -28,23 +28,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "Header.h"
+
 #include "../common/common.hpp"
-#include "../common/WinObjects.h"
 #include "../common/ConEmuCheck.h"
+#include "../common/WinObjects.h"
 #include "ConEmu.h"
-#include "VConGroup.h"
-#include "VConChild.h"
+#include "Inside.h"
 #include "Options.h"
-#include "TabBar.h"
-#include "VirtualConsole.h"
 #include "RealConsole.h"
-#include "Update.h"
 #include "Status.h"
+#include "TabBar.h"
+#include "Update.h"
+#include "VConChild.h"
+#include "VConGroup.h"
+#include "VirtualConsole.h"
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)
 #define DEBUGSTRERR(s) DEBUGSTR(s)
+#define DEBUGSTRATTACHERR(s) DEBUGSTR(s)
 
 static CVirtualConsole* gp_VCon[MAX_CONSOLE_COUNT] = {};
 
@@ -2260,7 +2263,16 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 	// Может быть какой-то VCon ждет аттача?
 	if (!pVCon)
 	{
-		_ASSERTE(pStartStop->dwAID!=0);
+		#ifdef _DEBUG
+		if (pStartStop->dwAID == 0)
+		{
+			//Штатная ситуация, если аттач (запуск ConEmu.exe) инициируется из сервера
+			wchar_t szDbg[128];
+			//_ASSERTE(pStartStop->dwAID!=0);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Attach was requested from ServerPID=%u without dwAID\n", pStartStop->dwPID);
+			DEBUGSTRATTACHERR(szDbg);
+		}
+		#endif
 
 		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
@@ -2667,9 +2679,9 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		args->ProcessNewConArg(abForceCurConsole);
 	}
 
-	if (gpConEmu->m_InsideIntegration && gpConEmu->mb_InsideIntegrationShift)
+	if (gpConEmu->mp_Inside && gpConEmu->mp_Inside->m_InsideIntegration && gpConEmu->mp_Inside->mb_InsideIntegrationShift)
 	{
-		gpConEmu->mb_InsideIntegrationShift = false;
+		gpConEmu->mp_Inside->mb_InsideIntegrationShift = false;
 		args->bRunAsAdministrator = true;
 	}
 

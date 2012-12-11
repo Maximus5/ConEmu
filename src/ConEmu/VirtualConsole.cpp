@@ -3575,15 +3575,18 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	// указатель на настройки раздел€емые по приложени€м
 	mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 
-	if (!bForeground && mp_Set->CursorBlockInactive())
+	bool bHollowBlock = false;
+
+	if ((!bForeground && mp_Set->CursorBlockInactive()) || (mp_Set->CursorType() == 2)) // Hollow-Block
 	{
+		bHollowBlock = true;
 		dwSize = 100;
 		rect.left = pix.X; /*Cursor.x * nFontWidth;*/
 		rect.right = pix.X + nFontWidth; /*(Cursor.x+1) * nFontWidth;*/ //TODO: а ведь позици€ следующего символа известна!
 		rect.bottom = (pos.Y+1) * nFontHeight;
 		rect.top = (pos.Y * nFontHeight) /*+ 1*/;
 	}
-	else if (!mp_Set->CursorV())
+	else if (mp_Set->CursorType() == 0) // Horizontal
 	{
 		if (!gpSet->isMonospace)
 		{
@@ -3613,7 +3616,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
 		rect.top = max(rect.top, (rect.bottom-nHeight));
 	}
-	else
+	else // Vertical
 	{
 		if (!gpSet->isMonospace)
 		{
@@ -3672,7 +3675,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		HBRUSH hBr = CreateSolidBrush(0xC0C0C0);
 		HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
 
-		if (bForeground || !mp_Set->CursorBlockInactive())
+		if (!bHollowBlock)
 		{
 			BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, hDC, 0,0,
 			       PATINVERT);

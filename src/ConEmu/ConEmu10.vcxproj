@@ -951,6 +951,7 @@
     <ClCompile Include="FrameHolder.cpp" />
     <ClCompile Include="GestureEngine.cpp" />
     <ClCompile Include="GuiServer.cpp" />
+    <ClCompile Include="Inside.cpp" />
     <ClCompile Include="LoadImg.cpp" />
     <ClCompile Include="Macro.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
@@ -1009,6 +1010,7 @@
     <ClInclude Include="..\ConEmuCD\GuiHooks.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="kl_parts.h" />
+    <ClInclude Include="Inside.h" />
     <ClInclude Include="LoadImg.h" />
     <ClInclude Include="Macro.h" />
     <ClInclude Include="..\common\Memory.h" />

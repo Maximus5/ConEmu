@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Tlhelp32.h>
 #include "ConEmu.h"
 #include "Attach.h"
+#include "Inside.h"
 #include "OptionsClass.h"
 #include "VConGroup.h"
 #include "../common/WinObjects.h"
@@ -263,7 +264,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			lbCan = false;
 		if (lbCan && gpConEmu->isOurConsoleWindow(hFind))
 			lbCan = false;
-		if (lbCan && gpConEmu->m_InsideIntegration && (hFind == gpConEmu->mh_InsideParentRoot))
+		if (lbCan && gpConEmu->mp_Inside && (hFind == gpConEmu->mp_Inside->mh_InsideParentRoot))
 			lbCan = false;
 
 		wchar_t szClass[MAX_PATH], szTitle[MAX_PATH];

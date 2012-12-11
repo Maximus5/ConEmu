@@ -38,25 +38,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <commctrl.h>
 #include <shlobj.h>
-//#include "../common/ConEmuCheck.h"
-#include "Options.h"
+
+#include "../ConEmuCD/ExitCodes.h"
+#include "../ConEmuCD/GuiHooks.h"
+#include "Background.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "ConEmuCtrl.h"
-#include "VConChild.h"
-#include "VirtualConsole.h"
-#include "VConGroup.h"
-#include "RealConsole.h"
-#include "TabBar.h"
-#include "Background.h"
-#include "TrayIcon.h"
-#include "LoadImg.h"
-#include "Status.h"
-#include "Recreate.h"
 #include "DefaultTerm.h"
-#include "../ConEmuCD/GuiHooks.h"
-#include "../ConEmuCD/ExitCodes.h"
+#include "Inside.h"
+#include "LoadImg.h"
+#include "Options.h"
+#include "RealConsole.h"
+#include "Recreate.h"
+#include "Status.h"
+#include "TabBar.h"
+#include "TrayIcon.h"
+#include "VConChild.h"
+#include "VConGroup.h"
 #include "version.h"
+#include "VirtualConsole.h"
 
 //#define CONEMU_ROOT_KEY L"Software\\ConEmu"
 
@@ -1659,7 +1660,7 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 
 LRESULT CSettings::OnInitDialog_Cursor(HWND hWnd2, BOOL abInitial)
 {
-	checkRadioButton(hWnd2, rCursorV, rCursorH, gpSet->AppStd.isCursorV ? rCursorV : rCursorH);
+	checkRadioButton(hWnd2, rCursorV, rCursorB, (rCursorH + gpSet->AppStd.isCursorType));
 
 	checkDlgButton(hWnd2, cbCursorColor, gpSet->AppStd.isCursorColor);
 
@@ -3132,7 +3133,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				SetDlgItemText(hWnd2, tInsideShell, L"powershell -cur_console:n");
 				//SetDlgItemText(hWnd2, tInsideIcon, szIcon);
 				SetDlgItemText(hWnd2, tInsideIcon, L"powershell.exe");
-				checkDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mb_InsideSynchronizeCurDir);
+				checkDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mp_Inside && gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir);
 				SetDlgItemText(hWnd2, tInsideSyncDir, L""); // Auto
 			}
 
@@ -3173,7 +3174,10 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				switch (CB)
 				{
 				case cbInsideSyncDir:
-					gpConEmu->mb_InsideSynchronizeCurDir = IsChecked(hWnd2, CB);
+					if (gpConEmu->mp_Inside)
+					{
+						gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir = IsChecked(hWnd2, CB);
+					}
 					break;
 				case bInsideRegister:
 				case bInsideUnregister:
@@ -3220,10 +3224,10 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				switch (EB)
 				{
 				case tInsideSyncDir:
-					if (gpConEmu->m_InsideIntegration)
+					if (gpConEmu->mp_Inside)
 					{
-						SafeFree(gpConEmu->ms_InsideSynchronizeCurDir);
-                        gpConEmu->ms_InsideSynchronizeCurDir = GetDlgItemText(hWnd2, tInsideSyncDir);
+						SafeFree(gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir);
+                        gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir = GetDlgItemText(hWnd2, tInsideSyncDir);
 					}
 					break;
 				case tDefaultTerminal:
@@ -4564,12 +4568,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		//	break;
 		case rCursorH:
 		case rCursorV:
-
-			if (wParam == rCursorV)
-				gpSet->AppStd.isCursorV = true;
-			else
-				gpSet->AppStd.isCursorV = false;
-
+		case rCursorB:
+			gpSet->AppStd.isCursorType = (CB - rCursorH);
 			gpConEmu->Update(true);
 			break;
 		case cbBlockInactiveCursor:
@@ -8202,7 +8202,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			SelectStringExact(hChild, lbExtendFontNormalIdx, temp);
 
 			checkDlgButton(hChild, cbCursorOverride, pApp->OverrideCursor);
-			checkRadioButton(hChild, rCursorV, rCursorH, pApp->isCursorV ? rCursorV : rCursorH);
+			checkRadioButton(hChild, rCursorH, rCursorB, (rCursorH + pApp->isCursorType));
 			checkDlgButton(hChild, cbCursorColor, pApp->isCursorColor);
 			checkDlgButton(hChild, cbCursorBlink, pApp->isCursorBlink);
 			checkDlgButton(hChild, cbBlockInactiveCursor, pApp->isCursorBlockInactive);
@@ -8429,9 +8429,10 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 					break;
 				case rCursorV:
 				case rCursorH:
+				case rCursorB:
 					if (pApp)
 					{
-						pApp->isCursorV = IsChecked(hChild, rCursorV);
+						pApp->isCursorType = (CB - rCursorH); // IsChecked(hChild, rCursorV);
 						bRedraw = true;
 					}
 					break;

@@ -1702,6 +1702,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Inside.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\LoadImg.cpp"
 				>
 			</File>
@@ -2101,6 +2105,10 @@
 			</File>
 			<File
 				RelativePath=".\kl_parts.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Inside.h"
 				>
 			</File>
 			<File

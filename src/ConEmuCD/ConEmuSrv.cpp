@@ -1217,6 +1217,18 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 			goto wrap;
 	}
 
+	_ASSERTE(gnSelfPID == GetCurrentProcessId());
+	_wsprintf(szName, SKIPLEN(countof(szName)) CESRVSTARTEDEVENT, gnSelfPID);
+	// Event мог быть создан и ранее (в Far-плагине, например)
+	gpSrv->hServerStartedEvent = CreateEvent(LocalSecurity(), TRUE, FALSE, szName);
+	if (!gpSrv->hServerStartedEvent)
+	{
+		_ASSERTE(gpSrv->hServerStartedEvent!=NULL);
+	}
+	else
+	{
+		SetEvent(gpSrv->hServerStartedEvent);
+	}
 wrap:
 	return iRc;
 }
@@ -1354,6 +1366,8 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	SafeCloseHandle(gpSrv->hRefreshDoneEvent);
 
 	SafeCloseHandle(gpSrv->hDataReadyEvent);
+
+	SafeCloseHandle(gpSrv->hServerStartedEvent);
 
 	//if (gpSrv->hChangingSize) {
 	//    SafeCloseHandle(gpSrv->hChangingSize);
@@ -2152,6 +2166,8 @@ bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
 	bool bConnected = false;
 	DWORD nDupErrCode = 0;
 
+	_ASSERTE(pIn && pIn->hdr.nCmd==CECMD_ATTACH2GUI);
+
 	//if (lbNeedSetFont) {
 	//	lbNeedSetFont = FALSE;
 	//
@@ -2201,8 +2217,8 @@ bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
 
 	UNREFERENCED_PARAMETER(nDupErrCode);
 
-	wchar_t szPipe[64];
-	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEGUIPIPENAME, L".", (DWORD)hGui); //-V205
+	// Execute CECMD_ATTACH2GUI
+	wchar_t szPipe[64]; _wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEGUIPIPENAME, L".", (DWORD)hGui); //-V205
 	CESERVER_REQ *pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, ghConWnd);
 
 	if (!pOut)
@@ -2349,7 +2365,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 	if (bNeedStartGui)
 	{
-		wchar_t szSelf[MAX_PATH+100];
+		wchar_t szSelf[MAX_PATH+128];
 		wchar_t* pszSelf = szSelf+1, *pszSlash = NULL;
 
 		if (!GetModuleFileName(NULL, pszSelf, MAX_PATH))
@@ -2416,6 +2432,10 @@ HWND Attach2Gui(DWORD nTimeout)
 		//	lstrcpyW(pszSlash, L"ConEmu.exe");
 		//}
 		lstrcatW(pszSelf, L" /detached");
+		#ifdef _DEBUG
+		lstrcatW(pszSelf, L" /nokeyhooks");
+		#endif
+
 		PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
 		STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
 		PRINT_COMSPEC(L"Starting GUI:\n%s\n", pszSelf);

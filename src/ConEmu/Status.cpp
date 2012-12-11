@@ -34,15 +34,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include <commctrl.h>
-#include "header.h"
-#include "Options.h"
+
 #include "ConEmu.h"
-#include "TabBar.h"
-#include "RealConsole.h"
-#include "VirtualConsole.h"
-#include "Status.h"
-#include "VConGroup.h"
+#include "header.h"
+#include "Inside.h"
 #include "Menu.h"
+#include "Options.h"
+#include "RealConsole.h"
+#include "Status.h"
+#include "TabBar.h"
+#include "VConGroup.h"
+#include "VirtualConsole.h"
 
 
 #define STATUS_PAINT_DELAY 500
@@ -428,7 +430,7 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 				continue; // если выбрано - то показывается как csi_Info
 			if ((nID == csi_Transparency) && !gpSet->isTransparentAllowed())
 				continue; // смысла не имеет
-			if ((nID == csi_SyncInside) && !gpConEmu->m_InsideIntegration)
+			if ((nID == csi_SyncInside) && !gpConEmu->mp_Inside)
 				continue; // смысла не имеет
 		}
 
@@ -677,7 +679,7 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 		switch (m_Items[i].nID)
 		{
 		case csi_SyncInside:
-			SetTextColor(mh_MemDC, gpConEmu->mb_InsideSynchronizeCurDir ? crText : crDash);
+			SetTextColor(mh_MemDC, (gpConEmu->mp_Inside && gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir) ? crText : crDash);
 			break;
 		case csi_CapsLock:
 			SetTextColor(mh_MemDC, mb_Caps ? crText : crDash);
@@ -907,7 +909,10 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 						ShowTransparencyMenu(MakePoint(rcClient.right, rcClient.top));
 					break;
 				case csi_SyncInside:
-					gpConEmu->mb_InsideSynchronizeCurDir = !gpConEmu->mb_InsideSynchronizeCurDir;
+					if (gpConEmu->mp_Inside)
+					{
+						gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir = !gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir;
+					}
 					break;
 				case csi_CapsLock:
 					keybd_event(VK_CAPITAL, 0, 0, 0);

@@ -1829,12 +1829,23 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 		} // CECMD_LANGCHANGE
 		break;
 	case CECMD_MOUSECLICK:
+	case CECMD_BSDELETEWORD:
 		{
 			BOOL bProcessed = FALSE;
 			if ((gReadConsoleInfo.InReadConsoleTID || gReadConsoleInfo.LastReadConsoleInputTID)
-				&& (pCmd->DataSize() >= 4*sizeof(WORD)))
+				&& (pCmd->DataSize() >= sizeof(CESERVER_REQ_PROMPTACTION)))
 			{
-				bProcessed = OnReadConsoleClick(pCmd->wData[0], pCmd->wData[1], (pCmd->wData[2] != 0), (pCmd->wData[3] != 0));
+				switch (pCmd->hdr.nCmd)
+				{
+				case CECMD_MOUSECLICK:
+					bProcessed = OnReadConsoleClick(pCmd->Prompt.xPos, pCmd->Prompt.yPos, (pCmd->Prompt.Force != 0), (pCmd->Prompt.BashMargin != 0));
+					break;
+				case CECMD_BSDELETEWORD:
+					bProcessed = OnPromptBsDeleteWord((pCmd->Prompt.Force != 0), (pCmd->Prompt.BashMargin != 0));
+					break;
+				default:
+					_ASSERTEX(FALSE && "Undefined action");
+				}
 			}
 
 			lbRc = TRUE;
@@ -1843,7 +1854,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			{
 				ppReply->dwData[0] = bProcessed;
 			}
-		} // CECMD_MOUSECLICK
+		} // CECMD_MOUSECLICK, CECMD_BSDELETEWORD
 		break;
 	case CECMD_PROMPTCMD:
 		{

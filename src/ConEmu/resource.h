@@ -134,8 +134,6 @@
 #define cbFullScreen                    1205
 #define tFont                           1206
 #define cbFixFarBorders                 1207
-#define rCursorV                        1208
-#define rCursorH                        1209
 #define cbCursorColor                   1210
 #define rNormal                         1311
 #define rMaximized                      1312
@@ -253,13 +251,11 @@
 #define lbCTSForeIdx                    1636
 #define lbCTSBackIdx                    1637
 #define tTabConsole                     1638
-#define lbCTSFindIdx                    1638
 #define tTabEditor                      1639
 #define tTabViewer                      1640
 #define tTabEditorMod                   1641
 #define cbHideInactiveConTabs           1642
 #define tTabLenMax                      1643
-#define cbHideInactiveConTabs2          1644
 #define tTabPanels                      1644
 #define lbCTSActAlways                  1645
 #define cbAdminShield                   1646
@@ -881,7 +877,12 @@
 #define rbDefaultTerminalConfAlways     2520
 #define rbDefaultTerminalConfNever      2521
 #define vkDeleteLeftWord                2522
-#define rbCTSEOL_CR                     2525
+#define cbCTSDeleteLeftWord             2526
+#define lbCTSShiftArrowStart            2528
+#define lbCTSFindIdx                    2529
+#define rCursorH                        2530
+#define rCursorV                        2531
+#define rCursorB                        2532
 
 // Next default values for new objects
 // 
@@ -889,7 +890,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2526
+#define _APS_NEXT_CONTROL_VALUE         2533
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

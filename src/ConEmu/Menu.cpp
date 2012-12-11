@@ -746,7 +746,7 @@ HMENU CConEmuMenu::GetSysMenu(BOOL abInitial /*= FALSE*/)
 	//wchar_t szText[255];
 
 	
-	if (gpConEmu->m_InsideIntegration || gpSet->isQuakeStyle)
+	if (gpConEmu->mp_Inside || gpSet->isQuakeStyle)
 	{
 		if (!mh_InsideSysMenu || abInitial)
 		{
@@ -806,7 +806,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 	mi.fMask = MIIM_STRING; mi.dwTypeData = szText; mi.cch = countof(szText);
 	if (!GetMenuItemInfo(hSysMenu, ID_NEWCONSOLE, FALSE, &mi))
 	{
-		if (!gpConEmu->m_InsideIntegration)
+		if (!gpConEmu->mp_Inside)
 		{
 			if (!gpSet->isQuakeStyle)
 				InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
@@ -846,7 +846,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		
 		// --------------------
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-		if (!gpConEmu->m_InsideIntegration)
+		if (!gpConEmu->mp_Inside)
 		{
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
 				ID_ALWAYSONTOP, MenuAccel(vkAlwaysOnTop,L"Al&ways on top"));
@@ -1111,7 +1111,7 @@ void CConEmuMenu::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
 	if (!systemMenu)
 		return;
 
-	if (!gpConEmu->m_InsideIntegration)
+	if (!gpConEmu->mp_Inside)
 	{
 		EnableMenuItem(systemMenu, SC_RESTORE,
 		               MF_BYCOMMAND | ((visible && (iconic || zoomed)) ? MF_ENABLED : MF_GRAYED));
@@ -1166,7 +1166,7 @@ void CConEmuMenu::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
 
 	if (Icon.isWindowInTray())
 	{
-		_ASSERTE(!gpConEmu->m_InsideIntegration);
+		_ASSERTE(!gpConEmu->mp_Inside);
 
 		switch (command)
 		{
@@ -1702,7 +1702,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 		case ID_TOMONITOR:
 		{
-			if (gpSet->isQuakeStyle || gpConEmu->m_InsideIntegration)
+			if (gpSet->isQuakeStyle || gpConEmu->mp_Inside)
 				return 0;
 			if (!IsWindowVisible(ghWnd))
 				Icon.RestoreWindowFromTray();

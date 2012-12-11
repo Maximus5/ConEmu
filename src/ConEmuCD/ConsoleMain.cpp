@@ -1771,7 +1771,14 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 DoEvents:
 	if (Parm->Flags & slsf_GetFarCommitEvent)
 	{
-		_ASSERTE(gpSrv->hFarCommitEvent != NULL); // Уже должно быть создано!
+		if (gpSrv)
+		{
+			_ASSERTE(gpSrv->hFarCommitEvent != NULL); // Уже должно быть создано!
+		}
+		else
+		{
+			;
+		}
 
 		_wsprintf(szName, SKIPLEN(countof(szName)) CEFARWRITECMTEVENT, gnSelfPID);
 		Parm->hFarCommitEvent = OpenEvent(EVENT_MODIFY_STATE, FALSE, szName);
@@ -8434,6 +8441,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel)
 {
 	_ASSERTE(ghConWnd);
+	_ASSERTE(BufferHeight==0 || BufferHeight>crNewSize.Y); // Otherwise - it will be NOT a bufferheight...
 
 	if (!ghConWnd) return FALSE;
 

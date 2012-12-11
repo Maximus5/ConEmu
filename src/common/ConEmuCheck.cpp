@@ -1231,7 +1231,29 @@ int ConEmuCheck(HWND* ahConEmuWnd)
 
 // Вернуть путь к папке, содержащей ConEmuC.exe
 #ifndef CONEMU_MINIMAL
-BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1])
+BOOL IsConEmuExeExist(LPCWSTR szExePath, wchar_t (&rsConEmuExe)[MAX_PATH+1])
+{
+	BOOL lbExeFound = FALSE;
+	BOOL isWin64 = WIN3264TEST(IsWindows64(),TRUE);
+
+	//if (szExePath[lstrlen(szExePath)-1] != L'\\')
+	//	wcscat_c(szExePath, L"\\");
+	_ASSERTE(szExePath && *szExePath && (szExePath[lstrlen(szExePath)-1] == L'\\'));
+
+	wcscpy_c(rsConEmuExe, szExePath);
+	wchar_t* pszName = rsConEmuExe+lstrlen(rsConEmuExe);
+	LPCWSTR szGuiExe[2] = {L"ConEmu64.exe", L"ConEmu.exe"};
+	for (size_t s = 0; !lbExeFound && (s < countof(szGuiExe)); s++)
+	{
+		if (!s && !isWin64) continue;
+		wcscpy_add(pszName, rsConEmuExe, szGuiExe[s]);
+		lbExeFound = FileExists(rsConEmuExe);
+	}
+
+	return lbExeFound;
+}
+
+BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1], HMODULE hPluginDll /*= NULL*/)
 {
 	// Сначала пробуем Mapping консоли (вдруг есть?)
 	{
@@ -1270,15 +1292,17 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 	wchar_t szExePath[MAX_PATH+1];
 	HKEY hkRoot[] = {NULL,HKEY_CURRENT_USER,HKEY_LOCAL_MACHINE,HKEY_LOCAL_MACHINE};
 	DWORD samDesired = KEY_QUERY_VALUE;
-	DWORD RedirectionFlag = 0;
-	BOOL isWin64 = FALSE;
-#ifdef _WIN64
-	isWin64 = TRUE;
-	RedirectionFlag = KEY_WOW64_32KEY;
-#else
-	isWin64 = IsWindows64();
-	RedirectionFlag = isWin64 ? KEY_WOW64_64KEY : 0;
-#endif
+
+	BOOL isWin64 = WIN3264TEST(IsWindows64(),TRUE);
+	DWORD RedirectionFlag = WIN3264TEST((isWin64 ? KEY_WOW64_64KEY : 0),KEY_WOW64_32KEY);
+	//#ifdef _WIN64
+	//	isWin64 = TRUE;
+	//	RedirectionFlag = KEY_WOW64_32KEY;
+	//#else
+	//	isWin64 = IsWindows64();
+	//	RedirectionFlag = isWin64 ? KEY_WOW64_64KEY : 0;
+	//#endif
+
 	for (size_t i = 0; i < countof(hkRoot); i++)
 	{
 		szExePath[0] = 0;
@@ -1293,6 +1317,29 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 			if (!pszName)
 				continue;
 			*(pszName+1) = 0;
+
+			// Проверяем наличие файлов
+			// LPCWSTR szGuiExe[2] = {L"ConEmu64.exe", L"ConEmu.exe"};
+			if (!IsConEmuExeExist(szExePath, rsConEmuExe) && hPluginDll)
+			{
+				// Попробовать найти наш exe-шник от пути плагина?
+				if (!GetModuleFileName(hPluginDll, szExePath, countof(szExePath)-1))
+					continue;
+				wchar_t* pszName = wcsrchr(szExePath, L'\\');
+				if (!pszName)
+					continue;
+				*(pszName+1) = 0;
+				int nLen = lstrlen(szExePath);
+				LPCWSTR pszCompare = L"\\Plugins\\ConEmu\\";
+				if (nLen <= lstrlen(pszCompare))
+					continue;
+				nLen = lstrlen(pszCompare);
+				int iCmp = lstrcmpi(pszName-nLen+1, pszCompare);
+				if (iCmp != 0)
+					continue;
+				*(pszName-nLen+2) = 0;
+			}
+
 		}
 		else
 		{
@@ -1324,21 +1371,14 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 			// Хоть и задано в реестре - файлов может не быть. Проверяем
 			if (szExePath[lstrlen(szExePath)-1] != L'\\')
 				wcscat_c(szExePath, L"\\");
-			wcscpy_c(rsConEmuExe, szExePath);
-			BOOL lbExeFound = FALSE;
-			wchar_t* pszName = rsConEmuExe+lstrlen(rsConEmuExe);
-			LPCWSTR szGuiExe[2] = {L"ConEmu64.exe", L"ConEmu.exe"};
-			for (size_t s = 0; !lbExeFound && (s < countof(szGuiExe)); s++)
-			{
-				if (!s && !isWin64) continue;
-				wcscpy_add(pszName, rsConEmuExe, szGuiExe[s]);
-				lbExeFound = FileExists(rsConEmuExe);
-			}
+			// Проверяем наличие файлов
+			// LPCWSTR szGuiExe[2] = {L"ConEmu64.exe", L"ConEmu.exe"};
+			BOOL lbExeFound = IsConEmuExeExist(szExePath, rsConEmuExe);
 
 			// Если GUI-exe найден - ищем "base"
 			if (lbExeFound)
 			{
-				pszName = szExePath+lstrlen(szExePath);
+				wchar_t* pszName = szExePath+lstrlen(szExePath);
 				LPCWSTR szSrvExe[4] = {L"ConEmuC64.exe", L"ConEmu\\ConEmuC64.exe", L"ConEmuC.exe", L"ConEmu\\ConEmuC.exe"};
 				for (size_t s = 0; s < countof(szSrvExe); s++)
 				{

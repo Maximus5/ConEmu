@@ -15,9 +15,10 @@ SRCS =  \
 		FrameHolder.cpp    \
 		GestureEngine.cpp  \
 		GuiServer.cpp      \
+		Inside.cpp         \
 		LoadImg.cpp        \
 		Macro.cpp          \
-		Menu.cpp          \
+		Menu.cpp           \
 		Options.cpp        \
 		OptionsClass.cpp   \
 		OptionsFast.cpp    \

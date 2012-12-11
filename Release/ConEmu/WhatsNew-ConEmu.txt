@@ -11,6 +11,15 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.12.11
+[+] Issue 824: Ctrl+BackSpace deletes word leftward to the cursor. Ignored in Far Manager. Hotkey is configurable.
+    ATM takes care of «Change prompt with Left Click» third state.
+[+] Issue 707: ConEmu Inside: WinXP: Trying to show «Tip pane» automatically and close it after ConEmu exits.
+[+] Issue 838: New cursor type «Block». With «Color» checked ConEmu draws «empty» rectangle around cell under cursor.
+[%] Issue 842: Far 3 build 3000: [string "if APanel.Left Keys("Tab") end"]:1: 'then' expected near 'Keys'.
+[%] Some resize bugfixes.
+
+
 2012.12.06
 [*] Timeout for downloading files (Auto-Update) increased to 180 seconds.
 [%] Issue 743: Sometimes Auto-Update fails via proxy.

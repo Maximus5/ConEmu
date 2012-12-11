@@ -84,6 +84,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SETWND_CALLPLUGIN_BASE (SETWND_CALLPLUGIN_SENDTABS+1)
 #define CHECK_RESOURCES_INTERVAL 5000
 #define CHECK_FARINFO_INTERVAL 2000
+#define ATTACH_START_SERVER_TIMEOUT 10000
 
 #define CMD__EXTERNAL_CALLBACK 0x80001
 //typedef void (WINAPI* SyncExecuteCallback_t)(LONG_PTR lParam);
@@ -182,7 +183,7 @@ HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
 //HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
 wchar_t gsFarLang[64] = {0};
-BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID);
+BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID, bool bFromAttach = false);
 BOOL gbNeedPostTabSend = FALSE;
 BOOL gbNeedPostEditCheck = FALSE; // проверить, может в активном редакторе изменился статус
 //BOOL gbNeedBgUpdate = FALSE; // требуется перерисовка Background
@@ -5725,7 +5726,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 	}
 }
 
-BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
+BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID, bool bFromAttach /*= false*/)
 {
 	if (!FarHwnd)
 	{
@@ -5763,7 +5764,7 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
 	}
 	else
 	{
-		_ASSERTE(LoadSrvMapping(FarHwnd, SrvMapping));
+		_ASSERTE(bFromAttach && "LoadSrvMapping(FarHwnd, SrvMapping) failed");
 		return FALSE;
 	}
 	return FALSE;
@@ -5891,8 +5892,9 @@ BOOL Attach2Gui()
 	STARTUPINFO si = {sizeof(si)};
 	DWORD dwSelfPID = GetCurrentProcessId();
 	wchar_t* pszSlash = NULL;
+	DWORD nStartWait = 255;
 
-	if (!FindConEmuBaseDir(szConEmuBase, szConEmuGui))
+	if (!FindConEmuBaseDir(szConEmuBase, szConEmuGui, ghPluginModule))
 	{
 		ShowMessageGui(CECantStartServer2, MB_ICONSTOP|MB_SYSTEMMODAL);
 		lbRc = FALSE;
@@ -5919,7 +5921,7 @@ BOOL Attach2Gui()
 	}
 
 
-	if (FindServerCmd(CECMD_ATTACH2GUI, dwServerPID) && dwServerPID != 0)
+	if (FindServerCmd(CECMD_ATTACH2GUI, dwServerPID, true) && dwServerPID != 0)
 	{
 		// "Server was already started. PID=%i. Exiting...\n", dwServerPID
 		gdwServerPID = dwServerPID;
@@ -6010,13 +6012,32 @@ BOOL Attach2Gui()
 	}
 	else
 	{
-		gdwServerPID = pi.dwProcessId;
-		_ASSERTE(gdwServerPID!=0);
-		SafeCloseHandle(pi.hProcess);
-		SafeCloseHandle(pi.hThread);
-		lbRc = TRUE;
-		// Чтобы MonitorThread пытался открыть Mapping
-		gbTryOpenMapHeader = (gpConMapInfo==NULL);
+		wchar_t szName[64];
+		_wsprintf(szName, SKIPLEN(countof(szName)) CESRVSTARTEDEVENT, gnSelfPID);
+		// Event мог быть создан и ранее (в Far-плагине, например)
+		HANDLE hServerStartedEvent = CreateEvent(LocalSecurity(), TRUE, FALSE, szName);
+		_ASSERTE(hServerStartedEvent!=NULL);
+		HANDLE hWait[] = {pi.hProcess, hServerStartedEvent};
+		nStartWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, ATTACH_START_SERVER_TIMEOUT);
+
+		if (nStartWait == 0)
+		{
+			// Server was terminated!
+			ShowMessageGui(CECantStartServer, MB_ICONSTOP|MB_SYSTEMMODAL); // "ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
+		}
+		else
+		{
+			// Server must be initialized ATM
+			_ASSERTE(nStartWait == 1);
+
+			gdwServerPID = pi.dwProcessId;
+			_ASSERTE(gdwServerPID!=0);
+			SafeCloseHandle(pi.hProcess);
+			SafeCloseHandle(pi.hThread);
+			lbRc = TRUE;
+			// Чтобы MonitorThread пытался открыть Mapping
+			gbTryOpenMapHeader = (gpConMapInfo==NULL);
+		}
 	}
 
 wrap:

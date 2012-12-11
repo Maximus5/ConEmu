@@ -36,19 +36,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <Tlhelp32.h>
 #include <ShlObj.h>
+
 #include "../common/ConEmuCheck.h"
-#include "../common/RgnDetect.h"
 #include "../common/Execute.h"
-#include "RealConsole.h"
-#include "RealBuffer.h"
-#include "VirtualConsole.h"
-#include "TabBar.h"
+#include "../common/RgnDetect.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
-#include "VConChild.h"
 #include "ConEmuPipe.h"
+#include "Inside.h"
 #include "Macro.h"
+#include "RealBuffer.h"
+#include "RealConsole.h"
 #include "Status.h"
+#include "TabBar.h"
+#include "VConChild.h"
+#include "VirtualConsole.h"
 
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
@@ -883,6 +885,9 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	lstrcpy(pRet->Font.sFontName, gpSet->ConsoleFont.lfFaceName);
 	// Передернуть нить MonitorThread
 	SetMonitorThreadEvent();
+
+	_ASSERTE((pRet->nBufferHeight == 0) || ((int)pRet->nBufferHeight > rStartStop->sbi.dwSize.X));
+
 	return TRUE;
 }
 
@@ -1039,7 +1044,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 
 			if (CD)
 			{
-				pszFormat = gpConEmu->ms_InsideSynchronizeCurDir; // \ecd /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
+				pszFormat = gpConEmu->mp_Inside ? gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir : NULL; // \ecd /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
 				if (!pszFormat || !*pszFormat)
 				{
 					LPCWSTR pszExe = GetActiveProcessName();
@@ -1355,10 +1360,11 @@ bool CRealConsole::DeleteWordKeyPress(bool bTestOnly /*= false*/)
 
 	if (!bTestOnly)
 	{
-		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_BSDELETEWORD, sizeof(CESERVER_REQ_HDR)+sizeof(WORD));
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_BSDELETEWORD, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PROMPTACTION));
 		if (pIn)
 		{
-			pIn->wData[0] = pApp->CTSBashMargin();
+			pIn->Prompt.Force = (pApp->CTSClickPromptPosition() == 1);
+			pIn->Prompt.BashMargin = pApp->CTSBashMargin();
 
 			CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
 			ExecuteFreeResult(pOut);
@@ -3335,13 +3341,13 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 		if (nActivePID && (mp_ABuf->m_Type == rbt_Primary) && !isFar() && !isNtvdm())
 		{
 			mb_WasSendClickToReadCon = false; // сначала - сброс
-			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_MOUSECLICK, sizeof(CESERVER_REQ_HDR)+4*sizeof(WORD));
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_MOUSECLICK, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PROMPTACTION));
 			if (pIn)
 			{
-				pIn->wData[0] = crMouse.X;
-				pIn->wData[1] = crMouse.Y;
-				pIn->wData[2] = (pApp->CTSClickPromptPosition() == 1);
-				pIn->wData[3] = pApp->CTSBashMargin();
+				pIn->Prompt.xPos = crMouse.X;
+				pIn->Prompt.yPos = crMouse.Y;
+				pIn->Prompt.Force = (pApp->CTSClickPromptPosition() == 1);
+				pIn->Prompt.BashMargin = pApp->CTSBashMargin();
 
 				CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
 				if (pOut && (pOut->DataSize() >= sizeof(DWORD)))

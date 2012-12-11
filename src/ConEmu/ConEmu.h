@@ -62,6 +62,7 @@ class CStatus;
 enum ConEmuWindowMode;
 class CDefaultTerminal;
 class CConEmuMenu;
+class CConEmuInside;
 
 
 struct MsgSrvStartedArg
@@ -134,33 +135,6 @@ class CConEmuMain :
 		bool PreparePortableReg();
 		bool mb_UpdateJumpListOnStartup;
 	public:
-		// Режим интеграции. Запуститься как дочернее окно, например, в области проводника.
-		enum {
-			ii_None = 0,
-			ii_Auto,
-			ii_Explorer,
-			ii_Simple,
-		} m_InsideIntegration;
-		bool  mb_InsideIntegrationShift;
-		bool  mb_InsideSynchronizeCurDir;
-		wchar_t* ms_InsideSynchronizeCurDir; // \ecd /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
-		bool  mb_InsidePaneWasForced;
-		DWORD mn_InsideParentPID;  // PID "родительского" процесса режима интеграции
-		HWND  mh_InsideParentWND; // Это окно используется как родительское в режиме интеграции
-		HWND  mh_InsideParentRoot; // Корневое окно режима интеграции (для проверки isMeForeground)
-		HWND  InsideFindParent();
-	private:
-		HWND  mh_InsideParentRel;  // Может быть NULL (ii_Simple). HWND относительно которого нужно позиционироваться
-		HWND  mh_InsideParentPath; // Win7 Text = "Address: D:\MYDOC"
-		HWND  mh_InsideParentCD;   // Edit для смены текущей папки, например -> "C:\USERS"
-		RECT  mrc_InsideParent, mrc_InsideParentRel; // для сравнения, чтоб знать, что подвинуться нада
-		wchar_t ms_InsideParentPath[MAX_PATH+1];
-		static BOOL CALLBACK EnumInsideFindParent(HWND hwnd, LPARAM lParam);
-		HWND  InsideFindConEmu(HWND hFrom);
-		bool  InsideFindShellView(HWND hFrom);
-		void  InsideParentMonitor();
-		void  InsideUpdateDir();
-		void  InsideUpdatePlacement();
 	private:
 		bool CheckBaseDir();
 		BOOL CheckDosBoxExists();
@@ -201,6 +175,7 @@ class CConEmuMain :
 		//CConEmuMacro *m_Macro;
 		CConEmuMenu *mp_Menu;
 		TabBarClass *mp_TabBar;
+		CConEmuInside *mp_Inside;
 		CStatus *mp_Status;
 		CToolTip *mp_Tip;
 		MFileLog *mp_Log;
@@ -592,6 +567,7 @@ class CConEmuMain :
 		void Invalidate(CVirtualConsole* apVCon);
 		void InvalidateAll();
 		void UpdateWindowChild(CVirtualConsole* apVCon);
+		void UpdateInsideRect(RECT rcNewPos);
 		bool isActive(CVirtualConsole* apVCon, bool abAllowGroup = true);
 		bool isChildWindow();
 		bool isCloseConfirmed();

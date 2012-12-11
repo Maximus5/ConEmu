@@ -74,6 +74,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "GuiAttach.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/clink.h"
+#include "../common/UnicodeChars.h"
 
 
 bool USE_INTERNAL_QUEUE = true;
@@ -2805,31 +2806,216 @@ void OnReadConsoleEnd(BOOL bSucceeded, BOOL bUnicode, HANDLE hConsoleInput, LPVO
 	GetConsoleScreenBufferInfoCached(NULL, NULL);
 }
 
-// bBashMargin - sh.exe has pad in one space cell on right edge of window
-BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
+bool IsPromptActionAllowed(bool bForce, bool bBashMargin, HANDLE* phConIn)
 {
 	if (!gReadConsoleInfo.InReadConsoleTID && !gReadConsoleInfo.LastReadConsoleInputTID)
-		return FALSE;
+		return false;
 
-	TODO("“ут бы нужно еще учитывать, что консоль могла прокрутитьс€ вверх на несколько строк, если был ENABLE_WRAP_AT_EOL_OUTPUT");
-	TODO("≈ще интересно, что будет, если координата начала вдруг окажетс€ за пределами буфера (типа сузили окно, и курсор уехал)");
-
-	BOOL lbRc = FALSE, lbWrite = FALSE;
-    int nChars = 0;
-    DWORD nWritten = 0, nConInMode = 0;
+	DWORD nConInMode = 0;
 
 	HANDLE hConIn = gReadConsoleInfo.InReadConsoleTID ? gReadConsoleInfo.hConsoleInput : gReadConsoleInfo.hConsoleInput2;
 	if (!hConIn)
-		return FALSE;
+		return false;
 
 	if (!gReadConsoleInfo.InReadConsoleTID && gReadConsoleInfo.LastReadConsoleInputTID)
 	{
 		// ѕроверить, может программа мышь сама обрабатывает?
 		if (!GetConsoleMode(hConIn, &nConInMode))
-			return FALSE;
+			return false;
 		if (!bForce && ((nConInMode & ENABLE_MOUSE_INPUT) == ENABLE_MOUSE_INPUT))
-			return FALSE; // –азрешить обрабатывать самой программе
+			return false; // –азрешить обрабатывать самой программе
 	}
+
+	if (phConIn)
+		*phConIn = hConIn;
+
+	return true;
+}
+
+BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin)
+{
+	HANDLE hConIn = NULL;
+	if (!IsPromptActionAllowed(bForce, bBashMargin, &hConIn))
+		return FALSE;
+
+	int iBSCount = 0;
+	BOOL lbWrite = FALSE;
+	DWORD dwLastError = 0;
+
+	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	if (GetConsoleScreenBufferInfo(hConOut, &csbi) && csbi.dwSize.X && csbi.dwSize.Y)
+	{
+		if (csbi.dwCursorPosition.X == 0)
+		{
+			iBSCount = 1;
+		}
+		else
+		{
+			bool bDBCS = false;
+			DWORD nRead = 0;
+			BOOL bReadOk = FALSE;
+
+			// ≈сли в консоли выбрана DBCS кодировка - там все не просто
+			DWORD nCP = GetConsoleOutputCP();
+			if (nCP && nCP != CP_UTF7 && nCP != CP_UTF8 && nCP != 1200 && nCP != 1201)
+			{
+				CPINFO cp = {};
+				if (GetCPInfo(nCP, &cp) && (cp.MaxCharSize > 1))
+				{
+					bDBCS = true;
+				}
+			}
+
+			int xPos = csbi.dwCursorPosition.X;
+			COORD cr = {0, csbi.dwCursorPosition.Y};
+			if ((xPos == 0) && (csbi.dwCursorPosition.Y > 0))
+			{
+				cr.Y--;
+				xPos = csbi.dwSize.X;
+			}
+
+			char* pszLine = (char*)malloc(csbi.dwSize.X+1);
+			wchar_t* pwszLine = (wchar_t*)malloc((csbi.dwSize.X+1)*sizeof(*pwszLine));
+
+
+			if (pszLine && pwszLine)
+			{
+				pszLine[csbi.dwSize.X] = 0;
+				pwszLine[csbi.dwSize.X] = 0;
+
+				// —читать строку
+				if (bDBCS)
+				{
+					// Ќа DBCS кодировках "ReadConsoleOutputCharacterW" фигню возвращает
+					BOOL bReadOk = ReadConsoleOutputCharacterA(hConOut, pszLine, csbi.dwSize.X, cr, &nRead);
+					dwLastError = GetLastError();
+
+					if (!bReadOk || !nRead)
+					{
+						// ќднако и ReadConsoleOutputCharacterA может глючить, пробуем "W"
+						bReadOk = ReadConsoleOutputCharacterW(hConOut, pwszLine, csbi.dwSize.X, cr, &nRead);
+						dwLastError = GetLastError();
+
+						if (!bReadOk || !nRead)
+							bReadOk = FALSE;
+						else
+							bDBCS = false; // Thread string as simple Unicode.
+					}
+					else
+					{
+						nRead = MultiByteToWideChar(nCP, 0, pszLine, nRead, pwszLine, csbi.dwSize.X);
+					}
+
+					// Check chars count
+					if (((int)nRead) <= 0)
+						bReadOk = FALSE;
+				}
+				else
+				{
+					bReadOk = ReadConsoleOutputCharacterW(hConOut, pwszLine, csbi.dwSize.X, cr, &nRead);
+					if (bReadOk && !nRead)
+						bReadOk = FALSE;
+				}
+
+				if (bReadOk)
+				{
+					// Count chars
+					if (bDBCS)
+					{
+						TODO("DBCS!!! Must to convert cursor pos ('DBCS') to char pos!");
+						_ASSERTEX(bDBCS==false && "TODO!!!");
+					}
+					else
+					{
+						if ((int)nRead >= xPos)
+						{
+							int i = xPos - 1;
+							_ASSERTEX(i >= 0);
+
+							if ((pwszLine[i] == ucSpace) || (pwszLine[i] == ucNoBreakSpace))
+							{
+								// Delete all spaces
+								iBSCount = 1;
+								while ((i-- > 0) && ((pwszLine[i] == ucSpace) || (pwszLine[i] == ucNoBreakSpace)))
+									iBSCount++;
+							}
+							else
+							{
+								// Delete all NON-spaces
+								iBSCount = 1;
+								wchar_t cBreaks[] = {ucSpace, ucNoBreakSpace, L'>', L']', L'$', L'.', L'\\', L'/', 0};
+								while ((i-- > 0) && !wcschr(cBreaks, pwszLine[i]))
+									iBSCount++;
+							}
+						}
+					}
+				}
+			}
+
+			// Done, string was processed
+			SafeFree(pszLine);
+			SafeFree(pwszLine);
+		}
+	}
+
+	if (iBSCount > 0)
+	{
+		INPUT_RECORD* pr = (INPUT_RECORD*)calloc((size_t)iBSCount,sizeof(*pr));
+		if (pr != NULL)
+		{
+			WORD vk = VK_BACK;
+			HKL hkl = GetKeyboardLayout(gReadConsoleInfo.InReadConsoleTID ? gReadConsoleInfo.InReadConsoleTID : gReadConsoleInfo.LastReadConsoleInputTID);
+			WORD sc = MapVirtualKeyEx(vk, 0/*MAPVK_VK_TO_VSC*/, hkl);
+			if (!sc)
+			{
+				_ASSERTEX(sc!=NULL && "Can't determine SC?");
+				sc = 0x0E;
+			}
+
+			for (int i = 0; i < iBSCount; i++)
+			{
+				pr[i].EventType = KEY_EVENT;
+				pr[i].Event.KeyEvent.bKeyDown = TRUE;
+				pr[i].Event.KeyEvent.wRepeatCount = 1;
+				pr[i].Event.KeyEvent.wVirtualKeyCode = vk;
+				pr[i].Event.KeyEvent.wVirtualScanCode = sc;
+				pr[i].Event.KeyEvent.uChar.UnicodeChar = vk; // BS
+				pr[i].Event.KeyEvent.dwControlKeyState = 0;
+			}
+
+			DWORD nWritten = 0;
+
+			while (iBSCount > 0)
+			{
+				lbWrite = WriteConsoleInputW(hConIn, pr, min(iBSCount,256), &nWritten);
+				if (!lbWrite || !nWritten)
+					break;
+				iBSCount -= nWritten;
+			}
+
+			free(pr);
+		}
+	}
+
+	UNREFERENCED_PARAMETER(dwLastError);
+	return FALSE;
+}
+
+// bBashMargin - sh.exe has pad in one space cell on right edge of window
+BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
+{
+	TODO("“ут бы нужно еще учитывать, что консоль могла прокрутитьс€ вверх на несколько строк, если был ENABLE_WRAP_AT_EOL_OUTPUT");
+	TODO("≈ще интересно, что будет, если координата начала вдруг окажетс€ за пределами буфера (типа сузили окно, и курсор уехал)");
+
+	HANDLE hConIn = NULL;
+	if (!IsPromptActionAllowed(bForce, bBashMargin, &hConIn))
+		return FALSE;
+
+	BOOL lbRc = FALSE, lbWrite = FALSE;
+    int nChars = 0;
+    DWORD nWritten = 0, dwLastError = 0;
 
 	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -2846,6 +3032,7 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 		{
 			char* pszLine = (char*)malloc(csbi.dwSize.X+1);
 			wchar_t* pwszLine = (wchar_t*)malloc((csbi.dwSize.X+1)*sizeof(*pwszLine));
+
 			if (pszLine && pwszLine)
 			{
 				int nChecked = 0;
@@ -2866,7 +3053,7 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 					}
 				}
 
-				TODO("DBCS!!!");
+				TODO("DBCS!!! Must to convert cursor pos ('DBCS') to char pos!");
 				// Ok, теперь нужно проверить, не был ли клик сделан "за пределами строки ввода"
 				
 				SHORT y = csbi.dwCursorPosition.Y;
@@ -2893,9 +3080,26 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 					if (bDBCS)
 					{
 						// Ќа DBCS кодировках "ReadConsoleOutputCharacterW" фигню возвращает
-						if (!ReadConsoleOutputCharacterA(hConOut, pszLine, iCount, cr, &nRead) || !nRead)
-							break;
-						nRead = MultiByteToWideChar(nCP, 0, pszLine, nRead, pwszLine, csbi.dwSize.X);
+						BOOL bReadOk = ReadConsoleOutputCharacterA(hConOut, pszLine, iCount, cr, &nRead);
+						dwLastError = GetLastError();
+
+						if (!bReadOk || !nRead)
+						{
+							// ќднако и ReadConsoleOutputCharacterA может глючить, пробуем "W"
+							bReadOk = ReadConsoleOutputCharacterW(hConOut, pwszLine, iCount, cr, &nRead);
+							dwLastError = GetLastError();
+
+							if (!bReadOk || !nRead)
+								break;
+
+							bDBCS = false; // Thread string as simple Unicode.
+						}
+						else
+						{
+							nRead = MultiByteToWideChar(nCP, 0, pszLine, nRead, pwszLine, csbi.dwSize.X);
+						}
+
+						// Check chars count
 						if (((int)nRead) <= 0)
 							break;
 					}
@@ -2904,6 +3108,7 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 						if (!ReadConsoleOutputCharacterW(hConOut, pwszLine, iCount, cr, &nRead) || !nRead)
 							break;
 					}
+
 					if (nRead > (DWORD)csbi.dwSize.X)
 					{
 						_ASSERTEX(nRead <= (DWORD)csbi.dwSize.X);
@@ -2984,6 +3189,7 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 				WORD sc = MapVirtualKeyEx(vk, 0/*MAPVK_VK_TO_VSC*/, hkl);
 				if (!sc)
 				{
+					_ASSERTEX(sc!=NULL && "Can't determine SC?");
 					sc = (vk == VK_LEFT)  ? 0x4B :
 						 (vk == VK_RIGHT) ? 0x4D :
 						 (vk == VK_HOME)  ? 0x47 :
@@ -3013,6 +3219,7 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 		}
 	}
 
+	UNREFERENCED_PARAMETER(dwLastError);
 	return lbRc;
 }
 

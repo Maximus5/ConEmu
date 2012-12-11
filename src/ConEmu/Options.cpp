@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/ConEmuCheck.h"
 #include "Options.h"
 #include "ConEmu.h"
+#include "Inside.h"
 #include "Status.h"
 #include "VConChild.h"
 #include "VirtualConsole.h"
@@ -422,7 +423,7 @@ void Settings::InitSettings()
 	AppStd.nPopTextColorIdx = AppStd.nPopBackColorIdx = 16; // Auto
 	AppStd.isExtendFonts = false;
 	AppStd.nFontNormalColor = 1; AppStd.nFontBoldColor = 12; AppStd.nFontItalicColor = 13;
-	AppStd.isCursorV = true;
+	AppStd.isCursorType = 1; // 0 - Horz, 1 - Vert, 2 - Hollow-block
 	AppStd.isCursorBlink = true;
 	AppStd.isCursorColor = true;
 	AppStd.isCursorBlockInactive = true;
@@ -637,7 +638,7 @@ void Settings::InitSettings()
 bool Settings::isTransparentAllowed()
 {
 	// Окно работает в "Child" режиме, прозрачность не допускается
-	if (isDesktopMode || gpConEmu->m_InsideIntegration)
+	if (isDesktopMode || gpConEmu->mp_Inside)
 		return false;
 
 	// Чтобы не рушилось отображение картинки плагинами
@@ -651,7 +652,7 @@ bool Settings::isTransparentAllowed()
 // true - не допускать Gaps в Normal режиме. Подгонять размер окна точно под консоль.
 bool Settings::isIntegralSize()
 {
-	if (isQuakeStyle || gpConEmu->m_InsideIntegration)
+	if (isQuakeStyle || gpConEmu->mp_Inside)
 		return false;
 
 	#if 0
@@ -826,7 +827,7 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	pApp->OverrideCursor = bStd;
 	if (!bStd)
 		reg->Load(L"OverrideCursor", pApp->OverrideCursor);
-	reg->Load(L"CursorType", pApp->isCursorV);
+	reg->Load(L"CursorType", pApp->isCursorType);
 	reg->Load(L"CursorColor", pApp->isCursorColor);
 	reg->Load(L"CursorBlink", pApp->isCursorBlink);
 	reg->Load(L"CursorBlockInactive", pApp->isCursorBlockInactive);
@@ -2213,26 +2214,39 @@ void Settings::LoadSettings()
 //-----------------------------------------------------------------------
 ///| Preload settings actions |//////////////////////////////////////////
 //-----------------------------------------------------------------------
-	if (gpConEmu->m_InsideIntegration == CConEmuMain::ii_Auto)
+	if (gpConEmu->mp_Inside)
 	{
-		HWND hParent = gpConEmu->InsideFindParent();
-		if (hParent == (HWND)-1)
+		if (gpConEmu->mp_Inside->m_InsideIntegration == CConEmuInside::ii_Auto)
 		{
-			return;
+			HWND hParent = gpConEmu->mp_Inside->InsideFindParent();
+
+			if (hParent == INSIDE_PARENT_NOT_FOUND)
+			{
+				return;
+			}
+			else if (hParent)
+			{
+				// Типа, запуститься как панель в Explorer (не в таскбаре, а в проводнике)
+				//isStatusBarShow = false;
+				isTabs = 0;
+				FontSizeY = 10;
+				// Скрыть колонки, чтобы много слишком не было...
+				isStatusColumnHidden[csi_ConsolePos] = true;
+				isStatusColumnHidden[csi_ConsoleSize] = true;
+				isStatusColumnHidden[csi_CursorX] = true;
+				isStatusColumnHidden[csi_CursorY] = true;
+				isStatusColumnHidden[csi_CursorSize] = true;
+				isStatusColumnHidden[csi_Server] = true;
+			}
 		}
-		else if (hParent)
+
+		if (gpConEmu->mp_Inside
+			&& ((gpConEmu->mp_Inside->mh_InsideParentWND == NULL)
+				|| (gpConEmu->mp_Inside->mh_InsideParentWND
+					&& (gpConEmu->mp_Inside->mh_InsideParentWND != INSIDE_PARENT_NOT_FOUND)
+					&& !IsWindow(gpConEmu->mp_Inside->mh_InsideParentWND))))
 		{
-			// Типа, запуститься как панель в Explorer (не в таскбаре, а в проводнике)
-			//isStatusBarShow = false;
-			isTabs = 0;
-			FontSizeY = 10;
-			// Скрыть колонки, чтобы много слишком не было...
-			isStatusColumnHidden[csi_ConsolePos] = true;
-			isStatusColumnHidden[csi_ConsoleSize] = true;
-			isStatusColumnHidden[csi_CursorX] = true;
-			isStatusColumnHidden[csi_CursorY] = true;
-			isStatusColumnHidden[csi_CursorSize] = true;
-			isStatusColumnHidden[csi_Server] = true;
+			SafeDelete(gpConEmu->mp_Inside);
 		}
 	}
 
@@ -3122,7 +3136,7 @@ void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 
 	if (!bStd)
 		reg->Save(L"OverrideCursor", pApp->OverrideCursor);
-	reg->Save(L"CursorType", pApp->isCursorV);
+	reg->Save(L"CursorType", pApp->isCursorType);
 	reg->Save(L"CursorColor", pApp->isCursorColor);
 	reg->Save(L"CursorBlink", pApp->isCursorBlink);
 	reg->Save(L"CursorBlockInactive", pApp->isCursorBlockInactive);
@@ -4417,7 +4431,7 @@ void Settings::SwitchHideCaptionAlways()
 
 bool Settings::isHideCaptionAlways()
 {
-	return mb_HideCaptionAlways || (!mb_HideCaptionAlways && isUserScreenTransparent) || isQuakeStyle;
+	return mb_HideCaptionAlways || (!mb_HideCaptionAlways && isUserScreenTransparent) || isQuakeStyle || gpConEmu->mp_Inside;
 }
 
 bool Settings::isForcedHideCaptionAlways()
@@ -4818,7 +4832,7 @@ bool Settings::NeedCreateAppWindow()
 // Показывать табы на таскбаре? (для каждой консоли - своя кнопка)
 bool Settings::isTabsOnTaskBar()
 {
-	if (isDesktopMode || (m_isTabsOnTaskBar == 3) || gpConEmu->m_InsideIntegration)
+	if (isDesktopMode || (m_isTabsOnTaskBar == 3) || gpConEmu->mp_Inside)
 		return false;
 	if ((m_isTabsOnTaskBar == 1) || ((m_isTabsOnTaskBar == 2) && IsWindows7))
 		return true;
@@ -4830,7 +4844,7 @@ bool Settings::isWindowOnTaskBar(bool bStrictOnly /*= false*/)
 {
 	// m_isTabsOnTaskBar: 0 - ConEmu only, 1 - all tabs & all OS, 2 - all tabs & Win 7, 3 - DON'T SHOW
 
-	if (isDesktopMode || (m_isTabsOnTaskBar == 3) || gpConEmu->m_InsideIntegration)
+	if (isDesktopMode || (m_isTabsOnTaskBar == 3) || gpConEmu->mp_Inside)
 		return false;
 
 	if (bStrictOnly)
@@ -5484,7 +5498,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkShowTabsList2,  chk_User,  NULL,    L"Multi.ShowTabsList2",   MakeHotKey(VK_F12,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Tabs(8)")},
 		{vkPasteText,      chk_User,  NULL,    L"ClipboardVkAllLines",   MakeHotKey(VK_INSERT,VK_SHIFT), CConEmuCtrl::key_PasteText},
 		{vkPasteFirstLine, chk_User,  NULL,    L"ClipboardVkFirstLine",  MakeHotKey('V',VK_CONTROL), CConEmuCtrl::key_PasteFirstLine},
-		//{vkDeleteLeftWord, chk_User,  NULL,    L"DeleteWordToLeft",      MakeHotKey(VK_BACK,VK_CONTROL), CConEmuCtrl::key_DeleteWordToLeft},
+		{vkDeleteLeftWord, chk_User,  NULL,    L"DeleteWordToLeft",      MakeHotKey(VK_BACK,VK_CONTROL), CConEmuCtrl::key_DeleteWordToLeft},
 		{vkFindTextDlg,    chk_User,  NULL,    L"FindTextKey",           MakeHotKey('F',VK_APPS), CConEmuCtrl::key_FindTextDlg},
 		{vkScreenshot,     chk_User,  NULL,    L"ScreenshotKey",         MakeHotKey('H',VK_LWIN), CConEmuCtrl::key_Screenshot/*, true/ *OnKeyUp*/},
 		{vkScreenshotFull, chk_User,  NULL,    L"ScreenshotFullKey",     MakeHotKey('H',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_ScreenshotFull/*, true/ *OnKeyUp*/},
