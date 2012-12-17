@@ -285,6 +285,7 @@ CConEmuMain::CConEmuMain()
 	changeFromWindowMode = wmNotChanging;
 	//isRestoreFromMinimized = false;
 	WindowStartMinimized = false;
+	WindowStartTSA = false;
 	ForceMinimizeToTray = false;
 	mb_InCreateWindow = true;
 	mh_MinFromMonitor = NULL;
@@ -3953,6 +3954,14 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= 0*/)
 {
 	BOOL lbRc = FALSE;
 	bool bUseApi = true;
+
+	if (mb_InCreateWindow && (WindowStartTSA || (WindowStartMinimized && gpConEmu->ForceMinimizeToTray)))
+	{
+		_ASSERTE(anCmdShow == SW_SHOWMINNOACTIVE || anCmdShow == SW_HIDE);
+		_ASSERTE(::IsWindowVisible(ghWnd) == FALSE);
+		anCmdShow = SW_HIDE;
+	}
+
 
 	// In Quake mode - animation proceeds with SetWindowRgn
 	//   yes, it is possible to use Slide, but ConEmu may hold
@@ -9835,8 +9844,21 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 		if (WindowStartMinimized)
 		{
-			if (IsWindowVisible(ghWnd) && !isIconic())
+			if (WindowStartTSA || gpConEmu->ForceMinimizeToTray)
+			{
+				Icon.HideWindowToTray();
+
+				if (WindowStartTSA)
+				{
+					gpSet->isMultiLeaveOnClose = true;
+					gpSet->isMultiHideOnClose = true;
+				}
+			}
+			else if (IsWindowVisible(ghWnd) && !isIconic())
+			{
 				PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+			}
+
 			WindowStartMinimized = false;
 		}
 
@@ -11547,7 +11569,20 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	else
 	{
 		// ≈сли вдруг активной консоли нету (вообще?) но клавиши обработать все-равно нада
-		ProcessHotKeyMsg(messg, wParam, lParam, szTranslatedChars, NULL);
+		// true - хоткей обработан
+		if (!ProcessHotKeyMsg(messg, wParam, lParam, szTranslatedChars, NULL))
+		{
+			; // Keypress was not processed
+
+			//// » напоследок
+			//if (wParam == VK_ESCAPE)
+			//{
+			//	if (messg == WM_KEYUP)
+			//	{
+			//		OnMinimizeRestore(sih_Minimize);
+			//	}
+			//}
+		}
 	}
 
 	return 0;
@@ -14673,6 +14708,8 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		if (mb_ProcessCreated)
 		{
 			OnAllVConClosed();
+			// Once. Otherwise window we can't show window when "Auto hide" is on...
+			mb_ProcessCreated = FALSE;
 			return;
 		}
 	}
@@ -14952,7 +14989,7 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 	}
 	#endif
 
-	BOOL bNeedRedrawOp = FALSE;
+ 	BOOL bNeedRedrawOp = FALSE;
 	// “ут бы ветвитьс€ по Active/Inactive, но это будет избыточно.
 	// ѕроверка уже сделана в OnTransparent
 	UINT nTransparent = max(MIN_INACTIVE_ALPHA_VALUE,min(anAlpha,255));
@@ -14972,6 +15009,11 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 			SetLayeredWindowAttributes(ahWnd, 0, 255, LWA_ALPHA);
 			SetWindowStyleEx(ahWnd, dwExStyle);
 			lbChanged = true;
+			CVConGroup::LogString("Transparency was disabled");
+		}
+		else
+		{
+			CVConGroup::LogString("Transparency was already disabled");
 		}
 	}
 	else
@@ -14982,6 +15024,7 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 			SetWindowStyleEx(ahWnd, dwExStyle);
 			bNeedRedrawOp = TRUE;
 			lbChanged = true;
+			CVConGroup::LogString("Enabling WS_EX_LAYERED");
 		}
 
 		DWORD nNewFlags = (((nTransparent < 255) || abForceLayered) ? LWA_ALPHA : 0) | (abColorKey ? LWA_COLORKEY : 0);
@@ -14997,6 +15040,13 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 		{
 			lbChanged = true;
 			SetLayeredWindowAttributes(ahWnd, acrColorKey, nTransparent, nNewFlags);
+			if (gpSetCls->isAdvLogging)
+			{
+				wchar_t szInfo[128];
+				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetLayeredWindowAttributes(0x%08X, 0x%08X, %u, 0x%X)",
+					(DWORD)ahWnd, acrColorKey, nTransparent, nNewFlags);
+				CVConGroup::LogString(szInfo);
+			}
 		}
 
 		// ѕосле смены стил€ (не было альфа - по€вилась альфа) измененное окно "выноситс€ наверх"
@@ -15052,11 +15102,22 @@ void CConEmuMain::OnAllVConClosed()
 	{
 		Destroy();
 	}
-	else if (!mb_WorkspaceErasedOnClose)
+	else
 	{
-		mb_WorkspaceErasedOnClose = TRUE;
-		UpdateTitle();
-		InvalidateAll();
+		if (gpSet->isMultiHideOnClose)
+		{
+			if (IsWindowVisible(ghWnd))
+			{
+				Icon.HideWindowToTray();
+			}
+		}
+
+		if (!mb_WorkspaceErasedOnClose)
+		{
+			mb_WorkspaceErasedOnClose = TRUE;
+			UpdateTitle();
+			InvalidateAll();
+		}
 	}
 }
 

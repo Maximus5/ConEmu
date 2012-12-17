@@ -38,7 +38,9 @@ public:
 	~CDefaultTerminal();
 
 	bool CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread = true);
-	void PostCreated();
+	void PostCreated(bool bWaitForReady = false, bool bShowErrors = false);
+	void CheckRegisterOsStartup();
+	bool IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax);
 
 private:
 	struct ProcessInfo

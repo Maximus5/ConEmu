@@ -117,12 +117,6 @@ const CONEMUDEFCOLORS DefColors[] =
 		}
 	},
 	{
-		L"<Standard VGA>", {
-			0x00000000, 0x00aa0000, 0x0000aa00, 0x00aaaa00, 0x000000aa, 0x00aa00aa, 0x000055aa, 0x00aaaaaa,
-			0x00555555, 0x00ff5555, 0x0055ff55, 0x00ffff55, 0x005555ff, 0x00ff55ff, 0x0055ffff, 0x00ffffff
-		}
-	},
-	{
 		L"<PowerShell>", {
 			0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00562401, 0x00F0EDEE, 0x00C0C0C0,
 			0x00808080, 0x00ff0000, 0x0000FF00, 0x00FFFF00, 0x000000FF, 0x00FF00FF, 0x0000FFFF, 0x00FFFFFF
@@ -135,9 +129,9 @@ const CONEMUDEFCOLORS DefColors[] =
 		}
 	},
 	{
-		L"<tc-maxx>", {
-			0x00000000, RGB(11,27,59), RGB(0,128,0), RGB(0,90,135), RGB(106,7,28), RGB(128,0,128), RGB(128,128,0), RGB(40,150,177),
-			RGB(128,128,128), RGB(0,0,255), RGB(0,255,0), RGB(0,215,243), RGB(190,7,23), RGB(255,0,255), RGB(255,255,0), RGB(255,255,255)
+		L"<Solarized>", {
+			0x00423607, 0x002f32dc, 0x00009985, 0x000089b5, 0x00d28b26, 0x008236d3, 0x0098a12a, 0x00d5e8ee,
+			0x00362b00, 0x00164bcb, 0x00756e58, 0x00837b65, 0x00969483, 0x00c4716c, 0x00a1a193, 0x00e3f6fd
 		}
 	},
 	{
@@ -156,6 +150,18 @@ const CONEMUDEFCOLORS DefColors[] =
 		L"<Solarized Me>", {
 			0x00E3F6FD, 0x00D5E8EE, 0x00756E58, 0x008C8A77, 0x00164BCB, 0x00C4716C, 0x002F32DC, 0x00586E75,
 			0x00423607, 0x00D28B26, 0x0000BB7E, 0x0098A12A, 0x00837B65, 0x008236D3, 0x000089B5, 0x00362B00
+		}
+	},
+	{
+		L"<Standard VGA>", {
+			0x00000000, 0x00aa0000, 0x0000aa00, 0x00aaaa00, 0x000000aa, 0x00aa00aa, 0x000055aa, 0x00aaaaaa,
+			0x00555555, 0x00ff5555, 0x0055ff55, 0x00ffff55, 0x005555ff, 0x00ff55ff, 0x0055ffff, 0x00ffffff
+		}
+	},
+	{
+		L"<tc-maxx>", {
+			0x00000000, RGB(11,27,59), RGB(0,128,0), RGB(0,90,135), RGB(106,7,28), RGB(128,0,128), RGB(128,128,0), RGB(40,150,177),
+			RGB(128,128,128), RGB(0,0,255), RGB(0,255,0), RGB(0,215,243), RGB(190,7,23), RGB(255,0,255), RGB(255,255,0), RGB(255,255,255)
 		}
 	},
 	{
@@ -300,7 +306,7 @@ void Settings::InitSettings()
 	//vmMinimizeRestore = 'C' | (nMultiHotkeyModifier << 8);
 	//vmMultiClose = VK_DELETE | (nMultiHotkeyModifier << 8);
 	//vmMultiCmd = 'X' | (nMultiHotkeyModifier << 8);
-	isMultiAutoCreate = false; isMultiLeaveOnClose = false; isMultiIterate = true;
+	isMultiAutoCreate = false; isMultiLeaveOnClose = isMultiHideOnClose = false; isMultiIterate = true;
 	isMultiNewConfirm = true;
 	isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false;
 	nSplitWidth = nSplitHeight = 4;
@@ -423,13 +429,22 @@ void Settings::InitSettings()
 	AppStd.nPopTextColorIdx = AppStd.nPopBackColorIdx = 16; // Auto
 	AppStd.isExtendFonts = false;
 	AppStd.nFontNormalColor = 1; AppStd.nFontBoldColor = 12; AppStd.nFontItalicColor = 13;
-	AppStd.isCursorType = 1; // 0 - Horz, 1 - Vert, 2 - Hollow-block
-	AppStd.isCursorBlink = true;
-	AppStd.isCursorColor = true;
-	AppStd.isCursorBlockInactive = true;
-	AppStd.isCursorIgnoreSize = false;
-	AppStd.nCursorFixedSize = 25;
-	AppStd.nCursorMinSize = 2;
+	{
+		_ASSERTE(sizeof(AppStd.CursorActive) == sizeof(DWORD));
+		AppStd.CursorActive.Raw = 0; // Сброс
+		AppStd.CursorActive.CursorType = cur_Vert; // 0 - Horz, 1 - Vert, 2 - Hollow-block
+		AppStd.CursorActive.isBlinking = true;
+		AppStd.CursorActive.isColor = true;
+		//AppStd.CursorActive.isCursorBlockInactive = true;
+		AppStd.CursorActive.isFixedSize = false;
+		AppStd.CursorActive.FixedSize = 25; // в процентах
+		AppStd.CursorActive.MinSize = 2; // в пикселях
+
+		AppStd.CursorInactive.Raw = AppStd.CursorActive.Raw; // копирование
+		AppStd.CursorActive.Used = true;
+		AppStd.CursorActive.CursorType = cur_Rect;
+		AppStd.CursorActive.isBlinking = false;
+	}
 	AppStd.isCTSDetectLineEnd = true;
 	AppStd.isCTSBashMargin = false;
 	AppStd.isCTSTrimTrailing = 2;
@@ -495,6 +510,7 @@ void Settings::InitSettings()
 	isUseInjects = false; // гррр... Disclaimer#2
 
 	isSetDefaultTerminal = false;
+	isRegisterOnOsStartup = false;
 	isDefaultTerminalNoInjects = false;
 	nDefaultTerminalConfirmClose = 1 /* Always */;
 	SetDefaultTerminalApps(NULL/* to default value */); // "|"-delimited string -> MSZ
@@ -767,6 +783,63 @@ void Settings::LoadAppSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 		delete reg;
 }
 
+void Settings::LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECursorType* pInactive)
+{
+	#define _MinMax(a,mn,mx) if (a < mn) a = mn; else if (a > mx) a = mx;
+
+	// Is there new style was saved?
+	bool bActive = reg->Load(L"CursorTypeActive", pActive->Raw), bInactive = false;
+	if (bActive)
+	{
+		_MinMax(pActive->CursorType, cur_First, cur_Last);
+		_MinMax(pActive->FixedSize, CURSORSIZE_MIN, CURSORSIZE_MAX);
+		_MinMax(pActive->MinSize, CURSORSIZEPIX_MIN, CURSORSIZEPIX_MAX);
+
+		bInactive = reg->Load(L"CursorTypeInactive", pInactive->Raw);
+
+		_MinMax(pInactive->CursorType, cur_First, cur_Last);
+		_MinMax(pInactive->FixedSize, CURSORSIZE_MIN, CURSORSIZE_MAX);
+		_MinMax(pInactive->MinSize, CURSORSIZEPIX_MIN, CURSORSIZEPIX_MAX);
+	}
+	else
+	{
+		// Need to convert old settings style
+
+		BYTE isCursorType = cur_Vert; // 0 - Horz, 1 - Vert, 2 - Hollow-block
+		bool isCursorBlink = true;
+		bool isCursorColor = true;
+		bool isCursorBlockInactive = true;
+		bool isCursorIgnoreSize = false;
+		BYTE nCursorFixedSize = 25; // в процентах
+		BYTE nCursorMinSize = 2; // в пикселях
+
+		reg->Load(L"CursorType", isCursorType);
+			_MinMax(isCursorType, cur_First, cur_Last);
+		reg->Load(L"CursorColor", isCursorColor);
+		reg->Load(L"CursorBlink", isCursorBlink);
+		reg->Load(L"CursorBlockInactive", isCursorBlockInactive);
+		reg->Load(L"CursorIgnoreSize", isCursorIgnoreSize);
+		reg->Load(L"CursorFixedSize", nCursorFixedSize);
+			_MinMax(nCursorFixedSize, CURSORSIZE_MIN, CURSORSIZE_MAX);
+		reg->Load(L"CursorMinSize", nCursorMinSize);
+			_MinMax(nCursorMinSize, CURSORSIZEPIX_MIN, CURSORSIZEPIX_MAX);
+
+		pActive->Raw = 0; // Сброс
+		pActive->CursorType = (CECursorStyle)isCursorType; // 0 - Horz, 1 - Vert, 2 - Hollow-block
+		pActive->isBlinking = isCursorBlink;
+		pActive->isColor = isCursorColor;
+		//AppStd.CursorActive.isCursorBlockInactive = true;
+		pActive->isFixedSize = isCursorIgnoreSize;
+		pActive->FixedSize = nCursorFixedSize; // в процентах
+		pActive->MinSize = nCursorMinSize; // в пикселях
+
+		pInactive->Raw = AppStd.CursorActive.Raw; // копирование
+		pInactive->Used = isCursorBlockInactive;
+		pInactive->CursorType = cur_Rect;
+		pInactive->isBlinking = false;
+	}
+}
+
 void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, COLORREF* pColors)
 {
 	// Для AppStd данные загружаются из основной ветки! В том числе и цвета (RGB[32] а не имя палитры)
@@ -827,13 +900,7 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	pApp->OverrideCursor = bStd;
 	if (!bStd)
 		reg->Load(L"OverrideCursor", pApp->OverrideCursor);
-	reg->Load(L"CursorType", pApp->isCursorType);
-	reg->Load(L"CursorColor", pApp->isCursorColor);
-	reg->Load(L"CursorBlink", pApp->isCursorBlink);
-	reg->Load(L"CursorBlockInactive", pApp->isCursorBlockInactive);
-	reg->Load(L"CursorIgnoreSize", pApp->isCursorIgnoreSize);
-	reg->Load(L"CursorFixedSize", pApp->nCursorFixedSize); MinMax(pApp->nCursorFixedSize, CURSORSIZE_MIN, CURSORSIZE_MAX);
-	reg->Load(L"CursorMinSize", pApp->nCursorMinSize); MinMax(pApp->nCursorMinSize, CURSORSIZEPIX_MIN, CURSORSIZEPIX_MAX);
+	LoadCursorSettings(reg, &pApp->CursorActive, &pApp->CursorInactive);
 
 	pApp->OverrideClipboard = bStd;
 	if (!bStd)
@@ -1139,7 +1206,8 @@ void Settings::SortPalettes()
 		int iMin = i;
 		for (int j = (i+1); j < PaletteCount; j++)
 		{
-			if (Palettes[iMin]->bPredefined && !Palettes[j]->bPredefined)
+			// Don't "sort" predefined palettes at all
+			if (Palettes[iMin]->bPredefined /*&& !Palettes[j]->bPredefined*/)
 			{
 				continue;
 			}
@@ -2302,6 +2370,7 @@ void Settings::LoadSettings()
 		reg->Load(L"UseInjects", isUseInjects); //MinMax(isUseInjects, BST_INDETERMINATE);
 
 		reg->Load(L"SetDefaultTerminal", isSetDefaultTerminal);
+		reg->Load(L"SetDefaultTerminalStartup", isRegisterOnOsStartup);
 		reg->Load(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
 		reg->Load(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
@@ -2388,6 +2457,7 @@ void Settings::LoadSettings()
 		reg->Load(L"Multi.UseWinTab", isUseWinTab);
 		reg->Load(L"Multi.AutoCreate", isMultiAutoCreate);
 		reg->Load(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
+		reg->Load(L"Multi.HideOnClose", isMultiHideOnClose);
 		reg->Load(L"Multi.Iterate", isMultiIterate);
 		//LoadVkMod(reg, L"MinimizeRestore", vmMinimizeRestore, vmMinimizeRestore);
 		reg->Load(L"Multi.SplitWidth", nSplitWidth); MinMax(nSplitWidth, MAX_SPLITTER_SIZE);
@@ -3136,13 +3206,8 @@ void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 
 	if (!bStd)
 		reg->Save(L"OverrideCursor", pApp->OverrideCursor);
-	reg->Save(L"CursorType", pApp->isCursorType);
-	reg->Save(L"CursorColor", pApp->isCursorColor);
-	reg->Save(L"CursorBlink", pApp->isCursorBlink);
-	reg->Save(L"CursorBlockInactive", pApp->isCursorBlockInactive);
-	reg->Save(L"CursorIgnoreSize", pApp->isCursorIgnoreSize);
-	reg->Save(L"CursorFixedSize", pApp->nCursorFixedSize);
-	reg->Save(L"CursorMinSize", pApp->nCursorMinSize);
+	reg->Save(L"CursorTypeActive", pApp->CursorActive.Raw);
+	reg->Save(L"CursorTypeInactive", pApp->CursorInactive.Raw);
 
 	if (!bStd)
 		reg->Save(L"OverrideClipboard", pApp->OverrideClipboard);
@@ -3214,6 +3279,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"UseInjects", isUseInjects);
 
 		reg->Save(L"SetDefaultTerminal", isSetDefaultTerminal);
+		reg->Save(L"SetDefaultTerminalStartup", isRegisterOnOsStartup);
 		reg->Save(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
 		reg->Save(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
@@ -3263,6 +3329,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"Multi.UseWinTab", isUseWinTab);
 		reg->Save(L"Multi.AutoCreate", isMultiAutoCreate);
 		reg->Save(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
+		reg->Save(L"Multi.HideOnClose", isMultiHideOnClose);
 		reg->Save(L"Multi.Iterate", isMultiIterate);
 		reg->Save(L"Multi.SplitWidth", nSplitWidth);
 		reg->Save(L"Multi.SplitHeight", nSplitHeight);
@@ -5581,6 +5648,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkCtrlTab_Up,     chk_System, NULL, L"", MakeHotKey(VK_UP,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Prev}, // Tab switch
 		{vkCtrlTab_Right,  chk_System, NULL, L"", MakeHotKey(VK_RIGHT,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Next}, // Tab switch
 		{vkCtrlTab_Down,   chk_System, NULL, L"", MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Next}, // Tab switch
+		{vkEscNoConsoles,  chk_System, NULL, L"", MakeHotKey(VK_ESCAPE), CConEmuCtrl::key_MinimizeRestoreByEsc, true/*OnKeyUp*/}, // Minimize ConEmu by Esc when no open consoles left
 		// Все что ниже - было привязано к "HostKey"
 		// Надо бы дать настроить модификатор, а сами кнопки - не трогать
 		{vkWinLeft,    chk_ArrHost, &isUseWinArrows, L"", VK_LEFT|CEHOTKEY_ARRHOSTKEY,  CConEmuCtrl::key_WinWidthDec},  // Decrease window width

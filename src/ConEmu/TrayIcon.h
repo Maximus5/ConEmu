@@ -36,6 +36,8 @@ enum TrayIconMsgSource
 	tsa_Source_None = 0,
 	tsa_Source_Updater,
 	tsa_Config_Error,
+	tsa_Console_Size,
+	tsa_Default_Term,
 };
 
 class TrayIcon

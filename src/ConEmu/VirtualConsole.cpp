@@ -108,8 +108,8 @@ WARNING("„асто после разблокировани€ компьютера размер консоли измен€етс€ (OK), 
 
 // урсор, его положение, размер консоли, измененный текст, и пр...
 
-#define VCURSORWIDTH  /*2*/ mp_Set->CursorMinSize()
-#define HCURSORHEIGHT /*2*/ mp_Set->CursorMinSize()
+//#define VCURSORWIDTH  /*2*/ mp_Set->CursorMinSize()
+//#define HCURSORHEIGHT /*2*/ mp_Set->CursorMinSize()
 
 #define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i", _T(#V), _T(__FILE__), __LINE__); Box(szAMsg); }
 
@@ -3570,23 +3570,28 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		pix.X = ConCharX[CurChar-1];
 
 	RECT rect;
-	bool bForeground = gpConEmu->isMeForeground() && gpConEmu->isActive(this); // в неактивных консол€х - показывать "блок"
+	TODO("DoubleView: обработка группировки ввода");
+	bool bActive = gpConEmu->isMeForeground()
+		&& CVConGroup::isActive(this, false);
 
 	// указатель на настройки раздел€емые по приложени€м
 	mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 
-	bool bHollowBlock = false;
+	//bool bHollowBlock = false;
+	CECursorStyle curStyle = mp_Set->CursorStyle(bActive);
+	int MinSize = mp_Set->CursorMinSize(bActive);
 
-	if ((!bForeground && mp_Set->CursorBlockInactive()) || (mp_Set->CursorType() == 2)) // Hollow-Block
+	//if ((!bForeground && mp_Set->CursorBlockInactive()) || (mp_Set->CursorType() == 2)) // Hollow-Block
+	if ((curStyle == cur_Block) || (curStyle == cur_Rect))
 	{
-		bHollowBlock = true;
-		dwSize = 100;
+		//bHollowBlock = true;
+		dwSize = 100; // percents
 		rect.left = pix.X; /*Cursor.x * nFontWidth;*/
 		rect.right = pix.X + nFontWidth; /*(Cursor.x+1) * nFontWidth;*/ //TODO: а ведь позици€ следующего символа известна!
 		rect.bottom = (pos.Y+1) * nFontHeight;
 		rect.top = (pos.Y * nFontHeight) /*+ 1*/;
 	}
-	else if (mp_Set->CursorType() == 0) // Horizontal
+	else if (curStyle == cur_Horz) // Horizontal
 	{
 		if (!gpSet->isMonospace)
 		{
@@ -3609,7 +3614,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		{
 			nHeight = MulDiv(nFontHeight, dwSize, 100);
 
-			nHeight = min(nFontHeight,max(nHeight,(LONG)HCURSORHEIGHT));
+			nHeight = min(nFontHeight,max(nHeight,MinSize));
 			//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
 		}
 
@@ -3618,6 +3623,8 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	}
 	else // Vertical
 	{
+		_ASSERTE(curStyle == cur_Vert); // Validate type
+
 		if (!gpSet->isMonospace)
 		{
 			rect.left = pix.X; /*Cursor.x * nFontWidth;*/
@@ -3648,7 +3655,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 			nWidth = MulDiv(nMaxWidth, dwSize, 100);
 
-			nWidth = min(nMaxWidth,max(nWidth,(LONG)VCURSORWIDTH));
+			nWidth = min(nMaxWidth,max(nWidth,MinSize));
 			//if (nWidth < VCURSORWIDTH) nWidth = VCURSORWIDTH;
 		}
 
@@ -3667,7 +3674,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	// XOR режим, иначе (тем более при немигающем) курсор закрывает
 	// весь символ и его не видно
 	// 110131 ≈сли курсор мигающий - разрешим нецветной курсор дл€ AltIns в фаре
-	bool bCursorColor = mp_Set->CursorColor() || (dwSize >= 40 && !mp_Set->CursorBlink());
+	bool bCursorColor = mp_Set->CursorColor(bActive) || (dwSize >= 40 && !mp_Set->CursorBlink(bActive));
 
 	// “еперь в rect нужно отобразить курсор (XOR'ом попробуем?)
 	if (bCursorColor)
@@ -3675,14 +3682,14 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		HBRUSH hBr = CreateSolidBrush(0xC0C0C0);
 		HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
 
-		if (!bHollowBlock)
+		if (curStyle != cur_Rect)
 		{
 			BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, hDC, 0,0,
 			       PATINVERT);
 		}
 		else
 		{
-			//  огда CE не в фокусе - можно просто пр€моугольник рисовать
+			// просто пр€моугольник рисовать
 			BitBlt(hPaintDC, rect.left, rect.top, 1, rect.bottom-rect.top, hDC, 0,0,
 			       PATINVERT);
 			BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, 1, hDC, 0,0,
@@ -3733,7 +3740,8 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	Cursor.isVisiblePrevFromInfo = cinf.bVisible;
 	BOOL lbUpdateTick = FALSE;
 	bool bForeground = gpConEmu->isMeForeground();
-	bool bConActive = gpConEmu->isActive(this); // а тут именно Active, т.к. курсор должен мигать в активной консоли
+	TODO("DoubleView: группировка ввода");
+	bool bConActive = CVConGroup::isActive(this, false); // а тут именно Active, т.к. курсор должен мигать в активной консоли
 	bool bConVisible = bConActive || gpConEmu->isVisible(this);
 	bool bIsAlive = mp_RCon ? (mp_RCon->isAlive() || !mp_RCon->isFar(TRUE)) : false; // не мигать, если фар "думает"
 	//if (bConActive) {
@@ -3743,7 +3751,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	// ≈сли курсор (в консоли) видим, и находитс€ в видимой области (при прокрутке)
 	if (cinf.bVisible && isCursorValid)
 	{
-		if (!mp_Set->CursorBlink() || !bForeground || !bConActive)
+		if (!mp_Set->CursorBlink(bConActive && bForeground) /*|| !bForeground || !bConActive*/)
 		{
 			Cursor.isVisible = true; // ¬идим всегда (даже в неактивной консоли), не мигает
 

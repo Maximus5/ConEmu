@@ -666,7 +666,8 @@ void CSettings::InitVars_Pages()
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
 		{IDD_SPG_MAIN,        0, L"Main",           thi_Main/*,    OnInitDialog_Main*/},
 		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos/*, OnInitDialog_WndPosSize*/},
-		{IDD_SPG_SHOW,  1, L"Appearance",     thi_Show/*, OnInitDialog_Show*/},
+		{IDD_SPG_SHOW,        1, L"Appearance",     thi_Show/*, OnInitDialog_Show*/},
+		{IDD_SPG_TASKBAR,     1, L"Task bar",       thi_Taskbar/*, OnInitDialog_Taskbar*/},
 		{IDD_SPG_UPDATE,      1, L"Update",         thi_Update/*,  OnInitDialog_Update*/},
 		{IDD_SPG_STARTUP,     0, L"Startup",        thi_Startup/*, OnInitDialog_Startup*/},
 		{IDD_SPG_CMDTASKS,    1, L"Tasks",          thi_Tasks/*,   OnInitDialog_CmdTasks*/},
@@ -1537,17 +1538,21 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 {
-	checkDlgButton(hWnd2, cbMinToTray, gpSet->mb_MinToTray);
-	EnableWindow(GetDlgItem(hWnd2, cbMinToTray), !gpConEmu->ForceMinimizeToTray);
+	//checkDlgButton(hWnd2, cbMinToTray, gpSet->mb_MinToTray);
+	//EnableWindow(GetDlgItem(hWnd2, cbMinToTray), !gpConEmu->ForceMinimizeToTray);
 
-	checkDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon);
+	//checkDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon);
 
-	checkRadioButton(hWnd2, rbTaskbarBtnActive, rbTaskbarBtnHidden, 
-		(gpSet->m_isTabsOnTaskBar == 3) ? rbTaskbarBtnHidden :
-		(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
-		(gpSet->m_isTabsOnTaskBar == 1) ? rbTaskbarBtnAll
-		: rbTaskbarBtnActive);
-	checkDlgButton(hWnd2, cbTaskbarShield, gpSet->isTaskbarShield);
+	//checkDlgButton(hWnd2, cbMultiLeaveOnClose, gpSet->isMultiLeaveOnClose);
+	//checkDlgButton(hWnd2, cbMultiHideOnClose, gpSet->isMultiHideOnClose);
+	//EnableWindow(GetDlgItem(hWnd2, cbMultiHideOnClose), gpSet->isMultiLeaveOnClose);
+
+	//checkRadioButton(hWnd2, rbTaskbarBtnActive, rbTaskbarBtnHidden, 
+	//	(gpSet->m_isTabsOnTaskBar == 3) ? rbTaskbarBtnHidden :
+	//	(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
+	//	(gpSet->m_isTabsOnTaskBar == 1) ? rbTaskbarBtnAll
+	//	: rbTaskbarBtnActive);
+	//checkDlgButton(hWnd2, cbTaskbarShield, gpSet->isTaskbarShield);
 
 	checkDlgButton(hWnd2, cbHideCaption, gpSet->isHideCaption);
 
@@ -1579,6 +1584,59 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	#endif
 
 	checkDlgButton(hWnd2, cbNumberInCaption, gpSet->isNumberInCaption);
+
+	RegisterTipsFor(hWnd2);
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
+{
+	checkDlgButton(hWnd2, cbMinToTray, gpSet->mb_MinToTray);
+	EnableWindow(GetDlgItem(hWnd2, cbMinToTray), !gpConEmu->ForceMinimizeToTray);
+
+	checkDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon);
+
+	checkDlgButton(hWnd2, cbMultiLeaveOnClose, gpSet->isMultiLeaveOnClose);
+	checkDlgButton(hWnd2, cbMultiHideOnClose, gpSet->isMultiHideOnClose);
+	EnableWindow(GetDlgItem(hWnd2, cbMultiHideOnClose), gpSet->isMultiLeaveOnClose);
+
+	checkRadioButton(hWnd2, rbTaskbarBtnActive, rbTaskbarBtnHidden, 
+		(gpSet->m_isTabsOnTaskBar == 3) ? rbTaskbarBtnHidden :
+		(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
+		(gpSet->m_isTabsOnTaskBar == 1) ? rbTaskbarBtnAll
+		: rbTaskbarBtnActive);
+	checkDlgButton(hWnd2, cbTaskbarShield, gpSet->isTaskbarShield);
+
+	//checkDlgButton(hWnd2, cbHideCaption, gpSet->isHideCaption);
+
+	//checkDlgButton(hWnd2, cbHideCaptionAlways, gpSet->isHideCaptionAlways());
+	//EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
+
+	//// копия на вкладке "Size & Pos"
+	//SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
+	//SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
+	//SetDlgItemInt(hWnd2, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
+
+	//checkDlgButton(hWnd2, cbEnhanceGraphics, gpSet->isEnhanceGraphics);
+	//
+	////checkDlgButton(hWnd2, cbEnhanceButtons, gpSet->isEnhanceButtons);
+
+	////checkDlgButton(hWnd2, cbAlwaysShowScrollbar, gpSet->isAlwaysShowScrollbar);
+	//checkRadioButton(hWnd2, rbScrollbarHide, rbScrollbarAuto, (gpSet->isAlwaysShowScrollbar==0) ? rbScrollbarHide : (gpSet->isAlwaysShowScrollbar==1) ? rbScrollbarShow : rbScrollbarAuto);
+	//SetDlgItemInt(hWnd2, tScrollAppearDelay, gpSet->nScrollBarAppearDelay, FALSE);
+	//SetDlgItemInt(hWnd2, tScrollDisappearDelay, gpSet->nScrollBarDisappearDelay, FALSE);
+
+	//checkDlgButton(hWnd2, cbDesktopMode, gpSet->isDesktopMode);
+
+	//checkDlgButton(hWnd2, cbAlwaysOnTop, gpSet->isAlwaysOnTop);
+
+	//#ifdef _DEBUG
+	//checkDlgButton(hWnd2, cbTabsInCaption, gpSet->isTabsInCaption);
+	//#else
+	//ShowWindow(GetDlgItem(hWnd2, cbTabsInCaption), SW_HIDE);
+	//#endif
+
+	//checkDlgButton(hWnd2, cbNumberInCaption, gpSet->isNumberInCaption);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -1658,20 +1716,27 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 	return 0;
 }
 
+void CSettings::InitCursorCtrls(HWND hWnd2, const Settings::AppSettings* pApp)
+{
+	checkRadioButton(hWnd2, rCursorV, rCursorR, (rCursorH + gpSet->AppStd.CursorActive.CursorType));
+	checkDlgButton(hWnd2, cbCursorColor, gpSet->AppStd.CursorActive.isColor);
+	checkDlgButton(hWnd2, cbCursorBlink, gpSet->AppStd.CursorActive.isBlinking);
+	checkDlgButton(hWnd2, cbCursorIgnoreSize, gpSet->AppStd.CursorActive.isFixedSize);
+	SetDlgItemInt(hWnd2, tCursorFixedSize, gpSet->AppStd.CursorActive.FixedSize, FALSE);
+	SetDlgItemInt(hWnd2, tCursorMinSize, gpSet->AppStd.CursorActive.MinSize, FALSE);
+
+	checkDlgButton(hWnd2, cbInactiveCursor, gpSet->AppStd.CursorInactive.Used);
+	checkRadioButton(hWnd2, rInactiveCursorV, rInactiveCursorR, (rInactiveCursorH + gpSet->AppStd.CursorInactive.CursorType));
+	checkDlgButton(hWnd2, cbInactiveCursorColor, gpSet->AppStd.CursorInactive.isColor);
+	checkDlgButton(hWnd2, cbInactiveCursorBlink, gpSet->AppStd.CursorInactive.isBlinking);
+	checkDlgButton(hWnd2, cbInactiveCursorIgnoreSize, gpSet->AppStd.CursorInactive.isFixedSize);
+	SetDlgItemInt(hWnd2, tInactiveCursorFixedSize, gpSet->AppStd.CursorInactive.FixedSize, FALSE);
+	SetDlgItemInt(hWnd2, tInactiveCursorMinSize, gpSet->AppStd.CursorInactive.MinSize, FALSE);
+}
+
 LRESULT CSettings::OnInitDialog_Cursor(HWND hWnd2, BOOL abInitial)
 {
-	checkRadioButton(hWnd2, rCursorV, rCursorB, (rCursorH + gpSet->AppStd.isCursorType));
-
-	checkDlgButton(hWnd2, cbCursorColor, gpSet->AppStd.isCursorColor);
-
-	checkDlgButton(hWnd2, cbCursorBlink, gpSet->AppStd.isCursorBlink);
-
-	checkDlgButton(hWnd2, cbBlockInactiveCursor, gpSet->AppStd.isCursorBlockInactive);
-
-	checkDlgButton(hWnd2, cbCursorIgnoreSize, gpSet->AppStd.isCursorIgnoreSize);
-
-	SetDlgItemInt(hWnd2, tCursorFixedSize, gpSet->AppStd.nCursorFixedSize, FALSE);
-	SetDlgItemInt(hWnd2, tCursorMinSize, gpSet->AppStd.nCursorMinSize, FALSE);
+	InitCursorCtrls(hWnd2, &gpSet->AppStd);
 
 	if (abInitial)
 		RegisterTipsFor(hWnd2);
@@ -2645,7 +2710,7 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	checkDlgButton(hWnd2, cbNewConfirm, gpSet->isMultiNewConfirm);
 	checkDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
 	checkDlgButton(hWnd2, cbCloseEditViewConfirm, gpSet->isCloseEditViewConfirm);
-	checkDlgButton(hWnd2, cbMultiLeaveOnClose, gpSet->isMultiLeaveOnClose);
+	//checkDlgButton(hWnd2, cbMultiLeaveOnClose, gpSet->isMultiLeaveOnClose);
 
 	//checkDlgButton(hWnd2, cbTabs, gpSet->isTabs);
 	checkRadioButton(hWnd2, rbTabsAlways, rbTabsNone, (gpSet->isTabs == 2) ? rbTabsAuto : gpSet->isTabs ? rbTabsAlways : rbTabsNone);
@@ -3153,6 +3218,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 
 			// Default terminal apps
 			CheckDlgButton(hWnd2, cbDefaultTerminal, gpSet->isSetDefaultTerminal);
+			CheckDlgButton(hWnd2, cbDefaultTerminalStartup, gpSet->isRegisterOnOsStartup || gpConEmu->mp_DefTrm->IsRegisteredOsStartup(NULL,0));
 			CheckDlgButton(hWnd2, cbDefaultTerminalNoInjects, gpSet->isDefaultTerminalNoInjects);
 			CheckRadioButton(hWnd2, rbDefaultTerminalConfAuto, rbDefaultTerminalConfNever, rbDefaultTerminalConfAuto+gpSet->nDefaultTerminalConfirmClose);
 			wchar_t* pszApps = gpSet->GetDefaultTerminalApps();
@@ -3169,8 +3235,9 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 		{
 		case BN_CLICKED:
 			{
-				bool bUpdateGuiMapping = false;
+				bool bUpdateGuiMapping = false, bSetupDefaultTerminal = false;
 				WORD CB = LOWORD(wParam);
+
 				switch (CB)
 				{
 				case cbInsideSyncDir:
@@ -3192,6 +3259,27 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				case cbDefaultTerminal:
 					gpSet->isSetDefaultTerminal = IsChecked(hWnd2, cbDefaultTerminal);
 					bUpdateGuiMapping = true;
+					bSetupDefaultTerminal = gpSet->isSetDefaultTerminal;
+					break;
+				case cbDefaultTerminalStartup:
+					if (IsChecked(hWnd2, cbDefaultTerminalStartup))
+					{
+						if (!gpSet->isSetDefaultTerminal)
+						{
+							if (MessageBox(L"Default Terminal feature was not enabled. Enable it now?", MB_YESNO, NULL, ghOpWnd) != IDYES)
+								break;
+							gpSet->isSetDefaultTerminal = true;
+							checkDlgButton(hWnd2, cbDefaultTerminal, BST_CHECKED);
+							bUpdateGuiMapping = true;
+							bSetupDefaultTerminal = true;
+						}
+						gpSet->isRegisterOnOsStartup = true;
+					}
+					else
+					{
+						gpSet->isRegisterOnOsStartup = false;
+					}
+					gpConEmu->mp_DefTrm->CheckRegisterOsStartup();
 					break;
 				case cbDefaultTerminalNoInjects:
 					gpSet->isDefaultTerminalNoInjects = IsChecked(hWnd2, cbDefaultTerminalNoInjects);
@@ -3211,10 +3299,12 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				{
 					gpConEmu->OnGlobalSettingsChanged();
 				}
-				if (gpSet->isSetDefaultTerminal && (CB == cbDefaultTerminal))
+
+				if (gpSet->isSetDefaultTerminal && bSetupDefaultTerminal)
 				{
+					RedrawWindow(hWnd2, NULL, NULL, RDW_UPDATENOW|RDW_ALLCHILDREN);
 					// Инициировать эксплорер, если он еще не был обработан
-					gpConEmu->mp_DefTrm->PostCreated();
+					gpConEmu->mp_DefTrm->PostCreated(true, true);
 				}
 			}
 			break; // BN_CLICKED
@@ -4153,15 +4243,15 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 			gpConEmu->Update(true);
 			break;
-		case cbCursorColor:
-			gpSet->AppStd.isCursorColor = IsChecked(hWnd2,cbCursorColor);
-			gpConEmu->Update(true);
-			break;
-		case cbCursorBlink:
-			gpSet->AppStd.isCursorBlink = IsChecked(hWnd2,cbCursorBlink);
-			if (!gpSet->AppStd.isCursorBlink) // если мигание отключается - то курсор может "замереть" в погашенном состоянии.
-				CVConGroup::InvalidateAll();
-			break;
+		//case cbCursorColor:
+		//	gpSet->AppStd.isCursorColor = IsChecked(hWnd2,cbCursorColor);
+		//	gpConEmu->Update(true);
+		//	break;
+		//case cbCursorBlink:
+		//	gpSet->AppStd.isCursorBlink = IsChecked(hWnd2,cbCursorBlink);
+		//	if (!gpSet->AppStd.isCursorBlink) // если мигание отключается - то курсор может "замереть" в погашенном состоянии.
+		//		CVConGroup::InvalidateAll();
+		//	break;
 		case cbMultiCon:
 			gpSet->isMulti = IsChecked(hWnd2, cbMultiCon);
 			break;
@@ -4569,15 +4659,20 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rCursorH:
 		case rCursorV:
 		case rCursorB:
-			gpSet->AppStd.isCursorType = (CB - rCursorH);
-			gpConEmu->Update(true);
-			break;
-		case cbBlockInactiveCursor:
-			gpSet->AppStd.isCursorBlockInactive = IsChecked(hWnd2, cbBlockInactiveCursor);
-			CVConGroup::InvalidateAll();
-			break;
+		case rCursorR:
+		case cbCursorColor:
+		case cbCursorBlink:
 		case cbCursorIgnoreSize:
-			gpSet->AppStd.isCursorIgnoreSize = IsChecked(hWnd2, cbCursorIgnoreSize);
+		case cbInactiveCursor:
+		case rInactiveCursorH:
+		case rInactiveCursorV:
+		case rInactiveCursorB:
+		case rInactiveCursorR:
+		case cbInactiveCursorColor:
+		case cbInactiveCursorBlink:
+		case cbInactiveCursorIgnoreSize:
+			OnButtonClicked_Cursor(hWnd2, wParam, lParam, &gpSet->AppStd);
+			gpConEmu->Update(true);
 			CVConGroup::InvalidateAll();
 			break;
 		case bBgImage:
@@ -4743,6 +4838,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbMultiLeaveOnClose:
 			gpSet->isMultiLeaveOnClose = IsChecked(hWnd2, cbMultiLeaveOnClose);
+			EnableWindow(GetDlgItem(hWnd2, cbMultiHideOnClose), gpSet->isMultiLeaveOnClose);
+			break;
+		case cbMultiHideOnClose:
+			gpSet->isMultiHideOnClose = IsChecked(hWnd2, cbMultiHideOnClose);
 			break;
 
 		case cbGuiMacroHelp:
@@ -5544,6 +5643,59 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+LRESULT CSettings::OnButtonClicked_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, Settings::AppSettings* pApp)
+{
+	WORD CB = LOWORD(wParam);
+
+	switch (CB)
+	{
+		case rCursorH:
+		case rCursorV:
+		case rCursorB:
+		case rCursorR:
+			pApp->CursorActive.CursorType = (CECursorStyle)(CB - rCursorH);
+			break;
+		//case cbBlockInactiveCursor:
+		//	gpSet->AppStd.isCursorBlockInactive = IsChecked(hWnd2, cbBlockInactiveCursor);
+		//	CVConGroup::InvalidateAll();
+		//	break;
+		case cbCursorColor:
+			gpSet->AppStd.CursorActive.isColor = IsChecked(hWnd2,cbCursorColor);
+			break;
+		case cbCursorBlink:
+			gpSet->AppStd.CursorActive.isBlinking = IsChecked(hWnd2,cbCursorBlink);
+			break;
+		case cbCursorIgnoreSize:
+			gpSet->AppStd.CursorActive.isFixedSize = IsChecked(hWnd2,cbCursorIgnoreSize);
+			break;
+
+		case cbInactiveCursor:
+			gpSet->AppStd.CursorInactive.Used = IsChecked(hWnd2,cbInactiveCursor);
+			break;
+
+		case rInactiveCursorH:
+		case rInactiveCursorV:
+		case rInactiveCursorB:
+		case rInactiveCursorR:
+			pApp->CursorInactive.CursorType = (CECursorStyle)(CB - rInactiveCursorH);
+			break;
+		case cbInactiveCursorColor:
+			gpSet->AppStd.CursorInactive.isColor = IsChecked(hWnd2,cbInactiveCursorColor);
+			break;
+		case cbInactiveCursorBlink:
+			gpSet->AppStd.CursorInactive.isColor = IsChecked(hWnd2,cbInactiveCursorColor);
+			break;
+		case cbInactiveCursorIgnoreSize:
+			gpSet->AppStd.CursorInactive.isFixedSize = IsChecked(hWnd2,cbInactiveCursorIgnoreSize);
+			break;
+
+		default:
+			_ASSERTE(FALSE && "Unprocessed ID");
+	}
+
+	return 0;
+}
+
 LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 {
 	WORD CB = LOWORD(wParam);
@@ -6016,37 +6168,18 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	} //case tDarker:
 
 	case tCursorFixedSize:
-	{
-		BOOL lbOk = FALSE;
-		UINT nNewVal = GetDlgItemInt(hWnd2, tCursorFixedSize, &lbOk, FALSE);
-		if (lbOk)
-		{
-			if ((nNewVal >= CURSORSIZE_MIN) && (nNewVal <= CURSORSIZE_MAX) && (gpSet->AppStd.nCursorFixedSize != nNewVal))
-			{
-				gpSet->AppStd.nCursorFixedSize = nNewVal;
-				gpConEmu->Update(true);
-			}
-		}
-
-		break;
-	} //case tCursorFixedSize:
-	
+	case tInactiveCursorFixedSize:
 	case tCursorMinSize:
+	case tInactiveCursorMinSize:
 	{
-		BOOL lbOk = FALSE;
-		UINT nNewVal = GetDlgItemInt(hWnd2, tCursorMinSize, &lbOk, FALSE);
-		if (lbOk)
+		if (OnEditChanged_Cursor(hWnd2, wParam, lParam, &gpSet->AppStd))
 		{
-			if ((nNewVal >= CURSORSIZEPIX_MIN) && (nNewVal <= CURSORSIZEPIX_MAX) && (gpSet->AppStd.nCursorMinSize != nNewVal))
-			{
-				gpSet->AppStd.nCursorMinSize = nNewVal;
-				gpConEmu->Update(true);
-			}
+			gpConEmu->Update(true);
 		}
-
 		break;
-	} //case tCursorMinSize:
+	} //case tCursorFixedSize, tInactiveCursorFixedSize, tCursorMinSize, tInactiveCursorMinSize
 	
+
 	case tLongOutputHeight:
 	{
 		BOOL lbOk = FALSE;
@@ -6512,6 +6645,64 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	} // switch (TB)
 
 	return 0;
+}
+
+bool CSettings::OnEditChanged_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, Settings::AppSettings* pApp)
+{
+	bool bChanged = false;
+	WORD TB = LOWORD(wParam);
+
+	switch (TB)
+	{
+		case tCursorFixedSize:
+		case tInactiveCursorFixedSize:
+		{
+			BOOL lbOk = FALSE;
+			UINT nNewVal = GetDlgItemInt(hWnd2, TB, &lbOk, FALSE);
+			if (lbOk)
+			{
+				if ((nNewVal >= CURSORSIZE_MIN) && (nNewVal <= CURSORSIZE_MAX))
+				{
+					CECursorType* pCur = (TB == tCursorFixedSize) ? &pApp->CursorActive : &pApp->CursorInactive;
+
+					if (pCur->FixedSize != nNewVal)
+					{
+						pCur->FixedSize = nNewVal;
+						bChanged = true;
+					}
+				}
+			}
+
+			break;
+		} //case tCursorFixedSize, tInactiveCursorFixedSize:
+		
+		case tCursorMinSize:
+		case tInactiveCursorMinSize:
+		{
+			BOOL lbOk = FALSE;
+			UINT nNewVal = GetDlgItemInt(hWnd2, TB, &lbOk, FALSE);
+			if (lbOk)
+			{
+				if ((nNewVal >= CURSORSIZEPIX_MIN) && (nNewVal <= CURSORSIZEPIX_MAX))
+				{
+					CECursorType* pCur = (TB == tCursorFixedSize) ? &pApp->CursorActive : &pApp->CursorInactive;
+
+					if (pCur->MinSize != nNewVal)
+					{
+						pCur->MinSize = nNewVal;
+						bChanged = true;
+					}
+				}
+			}
+
+			break;
+		} //case tCursorMinSize, tInactiveCursorMinSize:
+
+		default:
+			_ASSERTE(FALSE && "Unprocessed edit");
+	}
+
+	return bChanged;
 }
 
 LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
@@ -7564,6 +7755,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_SHOW:
 			gpSetCls->OnInitDialog_Show(hWnd2, true);
 			break;
+		case IDD_SPG_TASKBAR:
+			gpSetCls->OnInitDialog_Taskbar(hWnd2, true);
+			break;
 		case IDD_SPG_CURSOR:
 			gpSetCls->OnInitDialog_Cursor(hWnd2, TRUE);
 			break;
@@ -7654,6 +7848,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			break;
 		case IDD_SPG_SHOW:
 			gpSetCls->OnInitDialog_Show(hWnd2, false);
+			break;
+		case IDD_SPG_TASKBAR:
+			gpSetCls->OnInitDialog_Taskbar(hWnd2, false);
 			break;
 		case IDD_SPG_CURSOR:
 			gpSetCls->OnInitDialog_Cursor(hWnd2, FALSE);
@@ -8043,11 +8240,14 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 	static struct StrDistinctControls
 	{
 		WORD nOverrideID;
-		WORD nCtrls[16];
+		WORD nCtrls[32];
 	} DistinctControls[] = {
 		{0, {rbAppDistinctElevatedOn, rbAppDistinctElevatedOff, rbAppDistinctElevatedIgnore, stAppDistinctName, tAppDistinctName}},
 		{cbExtendFontsOverride, {cbExtendFonts, stExtendFontBoldIdx, lbExtendFontBoldIdx, stExtendFontItalicIdx, lbExtendFontItalicIdx, stExtendFontNormalIdx, lbExtendFontNormalIdx}},
-		{cbCursorOverride, {rCursorV, rCursorH, cbCursorColor, cbCursorBlink, cbBlockInactiveCursor, cbCursorIgnoreSize, tCursorFixedSize, stCursorFixedSize, tCursorMinSize, stCursorMinSize}},
+		{cbCursorOverride, {
+			rCursorV, rCursorH, rCursorB, rCursorR, cbCursorColor, cbCursorBlink, cbCursorIgnoreSize, tCursorFixedSize, stCursorFixedSize, tCursorMinSize, stCursorMinSize,
+			cbInactiveCursor, rInactiveCursorV, rInactiveCursorH, rInactiveCursorB, rInactiveCursorR, cbInactiveCursorColor, cbInactiveCursorBlink, cbInactiveCursorIgnoreSize, tInactiveCursorFixedSize, stInactiveCursorFixedSize, tInactiveCursorMinSize, stInactiveCursorMinSize,
+		}},
 		{cbColorsOverride, {lbColorsOverride}},
 		{cbClipboardOverride, {
 			gbCopyingOverride, cbCTSDetectLineEnd, cbCTSBashMargin, cbCTSTrimTrailing, stCTSEOL, lbCTSEOL,
@@ -8202,13 +8402,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			SelectStringExact(hChild, lbExtendFontNormalIdx, temp);
 
 			checkDlgButton(hChild, cbCursorOverride, pApp->OverrideCursor);
-			checkRadioButton(hChild, rCursorH, rCursorB, (rCursorH + pApp->isCursorType));
-			checkDlgButton(hChild, cbCursorColor, pApp->isCursorColor);
-			checkDlgButton(hChild, cbCursorBlink, pApp->isCursorBlink);
-			checkDlgButton(hChild, cbBlockInactiveCursor, pApp->isCursorBlockInactive);
-			checkDlgButton(hChild, cbCursorIgnoreSize, pApp->isCursorIgnoreSize);
-			SetDlgItemInt(hChild, tCursorFixedSize, pApp->nCursorFixedSize, FALSE);
-			SetDlgItemInt(hChild, tCursorMinSize, pApp->nCursorMinSize, FALSE);
+			InitCursorCtrls(hChild, pApp);
 
 			checkDlgButton(hChild, cbColorsOverride, pApp->OverridePalette);
 			SelectStringExact(hChild, lbColorsOverride, pApp->szPaletteName);
@@ -8427,45 +8621,63 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 						bRedraw = true;
 					}
 					break;
-				case rCursorV:
 				case rCursorH:
+				case rCursorV:
 				case rCursorB:
-					if (pApp)
-					{
-						pApp->isCursorType = (CB - rCursorH); // IsChecked(hChild, rCursorV);
-						bRedraw = true;
-					}
-					break;
+				case rCursorR:
 				case cbCursorColor:
-					if (pApp)
-					{
-						pApp->isCursorColor = IsChecked(hChild, CB);
-						bRedraw = true;
-					}
-					break;
 				case cbCursorBlink:
-					if (pApp)
-					{
-						pApp->isCursorBlink = IsChecked(hChild, CB);
-						//if (!gpSet->AppStd.isCursorBlink) // если мигание отключается - то курсор может "замереть" в погашенном состоянии.
-						//	gpConEmu->ActiveCon()->Invalidate();
-						bRedraw = true;
-					}
-					break;
-				case cbBlockInactiveCursor:
-					if (pApp)
-					{
-						pApp->isCursorBlockInactive = IsChecked(hChild, CB);
-						bRedraw = true;
-					}
-					break;
 				case cbCursorIgnoreSize:
-					if (pApp)
-					{
-						pApp->isCursorIgnoreSize = IsChecked(hChild, CB);
-						bRedraw = true;
-					}
+				case cbInactiveCursor:
+				case rInactiveCursorH:
+				case rInactiveCursorV:
+				case rInactiveCursorB:
+				case rInactiveCursorR:
+				case cbInactiveCursorColor:
+				case cbInactiveCursorBlink:
+				case cbInactiveCursorIgnoreSize:
+					OnButtonClicked_Cursor(hWnd2, wParam, lParam, pApp);
+					bRedraw = true;
 					break;
+				//case rCursorV:
+				//case rCursorH:
+				//case rCursorB:
+				//	if (pApp)
+				//	{
+				//		pApp->isCursorType = (CB - rCursorH); // IsChecked(hChild, rCursorV);
+				//		bRedraw = true;
+				//	}
+				//	break;
+				//case cbCursorColor:
+				//	if (pApp)
+				//	{
+				//		pApp->isCursorColor = IsChecked(hChild, CB);
+				//		bRedraw = true;
+				//	}
+				//	break;
+				//case cbCursorBlink:
+				//	if (pApp)
+				//	{
+				//		pApp->isCursorBlink = IsChecked(hChild, CB);
+				//		//if (!gpSet->AppStd.isCursorBlink) // если мигание отключается - то курсор может "замереть" в погашенном состоянии.
+				//		//	gpConEmu->ActiveCon()->Invalidate();
+				//		bRedraw = true;
+				//	}
+				//	break;
+				//case cbBlockInactiveCursor:
+				//	if (pApp)
+				//	{
+				//		pApp->isCursorBlockInactive = IsChecked(hChild, CB);
+				//		bRedraw = true;
+				//	}
+				//	break;
+				//case cbCursorIgnoreSize:
+				//	if (pApp)
+				//	{
+				//		pApp->isCursorIgnoreSize = IsChecked(hChild, CB);
+				//		bRedraw = true;
+				//	}
+				//	break;
 
 				case cbExtendFontsOverride:
 					bChecked = IsChecked(hChild, CB);
@@ -8632,35 +8844,13 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 						break;
 
 					case tCursorFixedSize:
-						if (pApp)
-						{
-							BOOL lbOk = FALSE;
-							UINT nNewVal = GetDlgItemInt(hChild, tCursorFixedSize, &lbOk, FALSE);
-							if (lbOk)
-							{
-								if ((nNewVal >= CURSORSIZE_MIN) && (nNewVal <= CURSORSIZE_MAX) && (pApp->nCursorFixedSize != nNewVal))
-								{
-									pApp->nCursorFixedSize = nNewVal;
-									bRedraw = true;
-								}
-							}
-						} //case tCursorFixedSize:
-						break;
-
+					case tInactiveCursorFixedSize:
 					case tCursorMinSize:
+					case tInactiveCursorMinSize:
 						if (pApp)
 						{
-							BOOL lbOk = FALSE;
-							UINT nNewVal = GetDlgItemInt(hChild, tCursorMinSize, &lbOk, FALSE);
-							if (lbOk)
-							{
-								if ((nNewVal >= CURSORSIZEPIX_MIN) && (nNewVal <= CURSORSIZEPIX_MAX) && (pApp->nCursorMinSize != nNewVal))
-								{
-									pApp->nCursorMinSize = nNewVal;
-									bRedraw = true;
-								}
-							}
-						} //case tCursorMinSize:
+							bRedraw = OnEditChanged_Cursor(hChild, wParam, lParam, pApp);
+						} //case tCursorFixedSize, tInactiveCursorFixedSize, tCursorMinSize, tInactiveCursorMinSize:
 						break;
 
 					case tBgImage:

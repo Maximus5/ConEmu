@@ -52,6 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Macro.h"
 #include "Status.h"
 #include "Menu.h"
+#include "TrayIcon.h"
 
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
@@ -613,6 +614,9 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	CESERVER_REQ* pIn = ExecuteNewCmd(anCmdID, nInSize);
 	CESERVER_REQ* pOut = ExecuteNewCmd(anCmdID, nOutSize);
 	SMALL_RECT rect = {0};
+	bool bLargestReached = false;
+	bool bSecondTry = false;
+
 	_ASSERTE(anCmdID==CECMD_SETSIZESYNC || anCmdID==CECMD_SETSIZENOSYNC || anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED);
 	//ExecutePrepareCmd(&lIn.hdr, anCmdID, lIn.hdr.cbSize);
 	if (!pIn || !pOut)
@@ -729,6 +733,40 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	nCallTimeout = RELEASEDEBUGTEST(500,30000);
 
 	fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);
+
+	if (fSuccess && (dwRead == (DWORD)nOutSize))
+	{
+		int nSetWidth = sizeX, nSetHeight = sizeY;
+		if (GetConWindowSize(pOut->SetSizeRet.SetSizeRet, &nSetWidth, &nSetHeight, NULL))
+		{
+			// If change-size (enlarging) was failed
+			if ((sizeX > (UINT)nSetWidth) || (sizeY > (UINT)nSetHeight))
+			{
+				// Check width
+				if ((pOut->SetSizeRet.crMaxSize.X > nSetWidth) && (sizeX > (UINT)nSetWidth))
+				{
+					bSecondTry = true;
+					pIn->SetSize.size.X = pOut->SetSizeRet.crMaxSize.X;
+					pIn->SetSize.rcWindow.Right = pIn->SetSize.rcWindow.Left + pIn->SetSize.size.X - 1;
+				}
+				// And height
+				if ((pOut->SetSizeRet.crMaxSize.Y > nSetHeight) && (sizeY > (UINT)nSetHeight))
+				{
+					bSecondTry = true;
+					pIn->SetSize.size.Y = pOut->SetSizeRet.crMaxSize.Y;
+					pIn->SetSize.rcWindow.Bottom = pIn->SetSize.rcWindow.Top + pIn->SetSize.size.Y - 1;
+				}
+				// Try again with lesser size?
+				if (bSecondTry)
+				{
+					fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);
+				}
+				// Inform user
+				Icon.ShowTrayIcon(L"Maximum real console size was reached\nDecrease font size in the real console properties", tsa_Console_Size);
+			}
+		}
+	}
+
 	gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, mp_RCon->ms_ConEmuC_Pipe, pOut);
 
 	if (!fSuccess || dwRead<(DWORD)nOutSize)
@@ -5091,8 +5129,9 @@ void CRealBuffer::ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
 	else
 	{
 		const Settings::AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
-		if (pApp->CursorIgnoreSize())
-			ci->dwSize = pApp->CursorFixedSize();
+		bool bActive = mp_RCon->isInFocus();
+		if (pApp->CursorIgnoreSize(bActive))
+			ci->dwSize = pApp->CursorFixedSize(bActive);
 	}
 }
 

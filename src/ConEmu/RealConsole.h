@@ -472,7 +472,8 @@ class CRealConsole
 		void Paste(bool abFirstLineOnly = false, LPCWSTR asText = NULL, bool abNoConfirm = false, bool abCygWin = false);
 		void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
 		void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
-		bool isActive();
+		bool isActive(bool abAllowGroup = false);
+		bool isInFocus();
 		bool isFilePanel(bool abPluginAllowed = false, bool abSkipEditViewCheck = false);
 		bool isEditor();
 		bool isEditorModified();

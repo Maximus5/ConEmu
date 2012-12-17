@@ -223,43 +223,54 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Taskbar status area (TSA)",IDC_STATIC,4,1,319,29
+    GROUPBOX        "Appearance",gbFeatureAppear,4,1,319,29
+    CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,140,8
+    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,14,73,8
+    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,234,14,78,8
+    GROUPBOX        "Scrollbar",IDC_STATIC,4,35,319,29
+    RTEXT           "Appear delay:",IDC_STATIC,129,48,50,8
+    EDITTEXT        tScrollAppearDelay,183,46,40,12,ES_AUTOHSCROLL
+    RTEXT           "Disappear:",IDC_STATIC,230,48,43,8
+    EDITTEXT        tScrollDisappearDelay,277,46,40,12,ES_AUTOHSCROLL
+    GROUPBOX        "Caption and border options",gbFeatureCaption,4,69,319,59
+    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,82,117,8
+    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,82,79,8
+    CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,82,94,8
+    RTEXT           "Frame width:",IDC_STATIC,9,97,54,8
+    EDITTEXT        tHideCaptionAlwaysFrame,67,95,40,12,ES_AUTOHSCROLL
+    RTEXT           "Appear delay:",IDC_STATIC,125,97,50,8
+    EDITTEXT        tHideCaptionAlwaysDelay,179,95,40,12,ES_AUTOHSCROLL
+    RTEXT           "Disappear:",IDC_STATIC,227,97,43,8
+    EDITTEXT        tHideCaptionAlwaysDissapear,273,95,40,12,ES_AUTOHSCROLL
+    CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,112,117,8
+    CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON,10,48,30,8
+    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,48,48,35,8
+    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,92,48,33,8
+END
+
+IDD_SPG_TASKBAR DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Taskbar status area (TSA)",IDC_STATIC,4,1,319,46
     CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,89,8
     CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,14,89,8
-    GROUPBOX        "Taskbar buttons",IDC_STATIC,4,35,319,59
+    GROUPBOX        "Taskbar buttons",IDC_STATIC,4,53,319,59
     CONTROL         "Show all consoles (Win7 and higher)",rbTaskbarBtnWin7,
-                    "Button",BS_AUTORADIOBUTTON,11,50,137,8
-    CONTROL         "Show all consoles (all OS)",rbTaskbarBtnAll,"Button",BS_AUTORADIOBUTTON,158,50,160,8
+                    "Button",BS_AUTORADIOBUTTON,11,68,137,8
+    CONTROL         "Show all consoles (all OS)",rbTaskbarBtnAll,"Button",BS_AUTORADIOBUTTON,158,68,160,8
     CONTROL         "Active console only (ConEmu window)",rbTaskbarBtnActive,
-                    "Button",BS_AUTORADIOBUTTON,11,63,140,8
+                    "Button",BS_AUTORADIOBUTTON,11,81,140,8
     CONTROL         "Don't show ConEmu window on Taskbar",rbTaskbarBtnHidden,
-                    "Button",BS_AUTORADIOBUTTON,158,63,159,8
-    GROUPBOX        "Appearance",gbFeatureAppear,4,99,319,29
-    CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,112,119,8
-    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,112,73,8
-    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,234,112,78,8
-    GROUPBOX        "Scrollbar",IDC_STATIC,4,134,319,29
-    RTEXT           "Appear delay:",IDC_STATIC,129,147,50,8
-    EDITTEXT        tScrollAppearDelay,183,145,40,12,ES_AUTOHSCROLL
-    RTEXT           "Disappear:",IDC_STATIC,230,147,43,8
-    EDITTEXT        tScrollDisappearDelay,277,145,40,12,ES_AUTOHSCROLL
-    GROUPBOX        "Caption and border options",gbFeatureCaption,4,169,319,59
-    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,182,117,8
-    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,182,79,8
-    CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,182,94,8
-    RTEXT           "Frame width:",IDC_STATIC,9,197,54,8
-    EDITTEXT        tHideCaptionAlwaysFrame,67,195,40,12,ES_AUTOHSCROLL
-    RTEXT           "Appear delay:",IDC_STATIC,125,197,50,8
-    EDITTEXT        tHideCaptionAlwaysDelay,179,195,40,12,ES_AUTOHSCROLL
-    RTEXT           "Disappear:",IDC_STATIC,227,197,43,8
-    EDITTEXT        tHideCaptionAlwaysDissapear,273,195,40,12,ES_AUTOHSCROLL
-    CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,212,117,8
-    CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON,10,147,30,8
-    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,48,147,35,8
-    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,92,147,33,8
+                    "Button",BS_AUTORADIOBUTTON,158,81,159,8
     CONTROL         "Show Shield overlay (Win7 and higher)",cbTaskbarShield,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,78,143,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,96,143,8
+    CONTROL         "Leave ConEmu after last console close",cbMultiLeaveOnClose,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,30,144,8
+    CONTROL         "Auto hide ConEmu after last console close",cbMultiHideOnClose,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,30,159,8
 END
 
 IDD_SPG_CURSOR DIALOGEX 0, 0, 328, 235
@@ -267,18 +278,33 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Text Cursor",IDC_STATIC,4,1,319,68
+    GROUPBOX        "Active console Text Cursor",IDC_STATIC,4,1,319,68
     CONTROL         "&Vertical (as GUI)",rCursorV,"Button",BS_AUTORADIOBUTTON | WS_GROUP,12,15,81,8
     CONTROL         "&Horizontal (as console)",rCursorH,"Button",BS_AUTORADIOBUTTON,104,15,95,8
-    CONTROL         "Block",rCursorB,"Button",BS_AUTORADIOBUTTON,209,15,66,8
-    CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,32,33,8
-    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,52,32,50,8
-    CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,104,32,96,8
-    CONTROL         "Fixed cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,49,72,8
+    CONTROL         "Block",rCursorB,"Button",BS_AUTORADIOBUTTON,209,15,47,8
+    CONTROL         "Rectangle",rCursorR,"Button",BS_AUTORADIOBUTTON,260,15,58,8
+    CONTROL         "Co&lor (inverse screen part under cursor shape)",cbCursorColor,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,32,192,8
+    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,32,50,8
+    CONTROL         "Fixed cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,49,88,8
     EDITTEXT        tCursorFixedSize,104,47,40,12,ES_AUTOHSCROLL
     LTEXT           "(5-100) %",stCursorFixedSize,153,49,38,8
     RTEXT           "Min size (pix):",stCursorMinSize,204,49,50,8
     EDITTEXT        tCursorMinSize,260,47,40,12,ES_AUTOHSCROLL
+    GROUPBOX        "",IDC_STATIC,4,81,319,68
+    CONTROL         "Inactive console Text Cursor",cbInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,81,120,8
+    CONTROL         "Vertical (as GUI)",rInactiveCursorV,"Button",BS_AUTORADIOBUTTON | WS_GROUP,12,95,81,8
+    CONTROL         "Horizontal (as console)",rInactiveCursorH,"Button",BS_AUTORADIOBUTTON,104,95,95,8
+    CONTROL         "Block",rInactiveCursorB,"Button",BS_AUTORADIOBUTTON,209,95,47,8
+    CONTROL         "Rectangle",rInactiveCursorR,"Button",BS_AUTORADIOBUTTON,260,95,58,8
+    CONTROL         "Color (inverse screen part under cursor shape)",cbInactiveCursorColor,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,112,192,8
+    CONTROL         "Blinking",cbInactiveCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,112,50,8
+    CONTROL         "Fixed cursor size",cbInactiveCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,129,88,8
+    EDITTEXT        tInactiveCursorFixedSize,104,127,40,12,ES_AUTOHSCROLL
+    LTEXT           "(5-100) %",stInactiveCursorFixedSize,153,129,38,8
+    RTEXT           "Min size (pix):",stInactiveCursorMinSize,204,129,50,8
+    EDITTEXT        tInactiveCursorMinSize,260,127,40,12,ES_AUTOHSCROLL
 END
 
 IDD_SPG_INTEGRATION DIALOGEX 0, 0, 328, 235
@@ -311,8 +337,8 @@ BEGIN
     PUSHBUTTON      "Register",bHereRegister,213,62,50,14
     PUSHBUTTON      "Unregister",bHereUnregister,267,62,50,14
     GROUPBOX        "WARNING!!! Enabling this option may cause false alarms in antiviral programs!!!",IDC_STATIC,4,168,319,64
-    CONTROL         "Force ConEmu as default terminal when starting console applications",cbDefaultTerminal,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,179,311,8
+    CONTROL         "Force ConEmu as default terminal for console applications",cbDefaultTerminal,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,179,208,8
     LTEXT           "List of hooked executables delimited with ""|"" (e.g. ""explorer.exe|devenv.exe|totalcmd.exe""):",IDC_STATIC,10,190,306,8
     EDITTEXT        tDefaultTerminal,9,201,308,13,ES_AUTOHSCROLL
     CONTROL         "Don't use ConEmuHk.dll in started console",cbDefaultTerminalNoInjects,
@@ -321,6 +347,7 @@ BEGIN
     CONTROL         "Auto",rbDefaultTerminalConfAuto,"Button",BS_AUTORADIOBUTTON,60,219,31,8
     CONTROL         "Always",rbDefaultTerminalConfAlways,"Button",BS_AUTORADIOBUTTON,92,219,38,8
     CONTROL         "Never",rbDefaultTerminalConfNever,"Button",BS_AUTORADIOBUTTON,131,219,34,8
+    CONTROL         "Register on OS startup",cbDefaultTerminalStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,179,96,8
 END
 
 IDD_SPG_STARTUP DIALOGEX 0, 0, 328, 235
@@ -770,8 +797,6 @@ BEGIN
     CONTROL         "Far windows",cbShowFarWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,91,56,8
     CONTROL         "Active console only",cbHideInactiveConTabs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,91,77,8
     CONTROL         "Hide disabled tabs",cbHideDisabledTabs,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,233,77,75,8
-    CONTROL         "Don't close ConEmu on last console close",cbMultiLeaveOnClose,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,15,150,8
     RTEXT           "Tabs font:",IDC_STATIC,21,107,42,8
     COMBOBOX        tTabFontFace,69,105,107,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     CTEXT           "x",IDC_STATIC,181,107,8,8
@@ -1182,7 +1207,6 @@ BEGIN
     CONTROL         "&Horizontal (as console)",rCursorH,"Button",BS_AUTORADIOBUTTON,7,53,88,8
     CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,42,38,8
     CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,141,42,45,8
-    CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,53,91,8
     CONTROL         "Fixed cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,66,89,8
     CONTROL         "Color palette override",cbColorsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,85,87,8
     COMBOBOX        lbColorsOverride,7,96,279,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP

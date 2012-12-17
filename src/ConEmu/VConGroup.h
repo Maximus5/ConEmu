@@ -159,7 +159,7 @@ public:
 	static DWORD CheckProcesses();
 	static CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
 	static BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
-	static int GetConCount();
+	static int GetConCount(bool bNoDetached = false);
 	static int ActiveConNum();
 
 	static void LogString(LPCSTR asText, BOOL abShowTime = FALSE);

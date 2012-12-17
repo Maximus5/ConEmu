@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
 //	#define SHOW_INJECT_MSGBOX
-	#define SHOW_INJECTREM_MSGBOX
+//	#define SHOW_INJECTREM_MSGBOX
 //	#define SHOW_ATTACH_MSGBOX
 //  #define SHOW_ROOT_STARTED
 	#define WINE_PRINT_PROC_INFO
@@ -4273,10 +4273,17 @@ void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDon
 		}
 	}
 
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+
 	// Сначала почистить буфер
 	INPUT_RECORD r = {0}; DWORD dwCount = 0;
-	FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+	DWORD nPreFlush = 0, nPostFlush = 0, nPreQuit = 0;
+	GetNumberOfConsoleInputEvents(hIn, &nPreFlush);
+
+	FlushConsoleInputBuffer(hIn);
+
 	PRINT_COMSPEC(L"Finalizing. gbInShutdown=%i\n", gbInShutdown);
+	GetNumberOfConsoleInputEvents(hIn, &nPostFlush);
 
 	if (gbInShutdown)
 		return; // Event закрытия мог припоздниться
@@ -4302,26 +4309,31 @@ void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDon
 		if (!PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount))
 			dwCount = 0;
 
-		if (gnRunMode == RM_SERVER)
+		if (!gbInExitWaitForKey)
 		{
-			int nCount = gpSrv->nProcessCount;
-
-			if (nCount > 1)
+			if (gnRunMode == RM_SERVER)
 			{
-				// Теперь Peek, так что просто выходим
-				//// ! Процесс таки запустился, закрываться не будем. Вернуть событие в буфер!
-				//WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount);
+				int nCount = gpSrv->nProcessCount;
+
+				if (nCount > 1)
+				{
+					// Теперь Peek, так что просто выходим
+					//// ! Процесс таки запустился, закрываться не будем. Вернуть событие в буфер!
+					//WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount);
+					break;
+				}
+			}
+
+			if (gbInShutdown)
+			{
 				break;
 			}
 		}
 
-		if (gbInShutdown)
-		{
-			break;
-		}
-
 		if (dwCount)
 		{
+			GetNumberOfConsoleInputEvents(hIn, &nPreQuit);
+
 			if (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount) && dwCount)
 			{
 				bool lbMatch = false;
@@ -6596,7 +6608,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		//case CECMD_CMDFINISHED:
 		
 	MCHKHEAP;
-	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CONSOLE_SCREEN_BUFFER_INFO) + sizeof(DWORD);
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_RETSIZE);
 	*out = ExecuteNewCmd(0,nOutSize);
 
 	if (*out == NULL) return FALSE;
@@ -6725,10 +6737,16 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 	}
 
 	MCHKHEAP;
+
+	// Prepare result
+	(*out)->SetSizeRet.crMaxSize = MyGetLargestConsoleWindowSize(ghConOut);
+
 	PCONSOLE_SCREEN_BUFFER_INFO psc = &((*out)->SetSizeRet.SetSizeRet);
 	MyGetConsoleScreenBufferInfo(ghConOut, psc);
+	
 	DWORD lnNextPacketId = ++gpSrv->nLastPacketID;
 	(*out)->SetSizeRet.nNextPacketId = lnNextPacketId;
+
 	//gpSrv->bForceFullSend = TRUE;
 	SetEvent(gpSrv->hRefreshEvent);
 	MCHKHEAP;
@@ -8458,6 +8476,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 //#endif
 	DWORD dwCurThId = GetCurrentThreadId();
 	DWORD dwWait = 0;
+	DWORD dwErr = 0;
 
 	if ((gnRunMode == RM_SERVER) || (gnRunMode == RM_ALTSERVER))
 	{
@@ -8550,8 +8569,10 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	// Minimum console size
 	int curSizeY, curSizeX;
 	wchar_t sFontName[LF_FACESIZE];
+	bool bCanChangeFontSize = false; // Vista+ only
 	if (apiGetConsoleFontSize(ghConOut, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
 	{
+		bCanChangeFontSize = true;
 		int nMinY = GetSystemMetrics(SM_CYMIN) - GetSystemMetrics(SM_CYSIZEFRAME) - GetSystemMetrics(SM_CYCAPTION);
 		int nMinX = GetSystemMetrics(SM_CXMIN) - 2*GetSystemMetrics(SM_CXSIZEFRAME);
 		if ((nMinX > 0) && (nMinY > 0))
@@ -8582,7 +8603,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	if ((crMax.X && crNewSize.X > crMax.X)
 		|| (crMax.Y && crNewSize.Y > crMax.Y))
 	{
-		if (apiFixFontSizeForBufferSize(ghConOut, crNewSize))
+		if (bCanChangeFontSize && apiFixFontSizeForBufferSize(ghConOut, crNewSize))
 		{
 			crMax = MyGetLargestConsoleWindowSize(ghConOut);
 			if ((crMax.X && crNewSize.X > crMax.X)
@@ -8635,8 +8656,6 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	{
 		if (lbNeedChange)
 		{
-			DWORD dwErr = 0;
-
 			// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
 			//if (crNewSize.X < csbi.dwSize.X || crNewSize.Y < csbi.dwSize.Y)
 			if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left) || crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
@@ -8653,7 +8672,8 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 			//specified width and height cannot be less than the width and height of the console screen buffer's window
 			lbRc = SetConsoleScreenBufferSize(ghConOut, crNewSize);
 
-			if (!lbRc) dwErr = GetLastError();
+			if (!lbRc)
+				dwErr = GetLastError();
 
 			//TODO: а если правый нижний край вылезет за пределы экрана?
 			//WARNING("отключил для теста");
@@ -8716,6 +8736,10 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 				crHeight.Y = nMaxBuf;
 		}*/
 		lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
+
+		if (!lbRc)
+			dwErr = GetLastError();
+
 		//}
 		//окошко раздвигаем только по ширине!
 		//RECT rcCurConPos = {0};
@@ -8746,6 +8770,7 @@ wrap:
 
 	//cs.Leave();
 	//CSCS.Unlock();
+	UNREFERENCED_PARAMETER(dwErr);
 	return lbRc;
 }
 

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    118
+#define CESERVER_REQ_VER    119
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1300,6 +1300,7 @@ struct CESERVER_REQ_OUTPUTFILE
 struct CESERVER_REQ_RETSIZE
 {
 	DWORD nNextPacketId;
+	COORD crMaxSize; // Current maximum possible size of console window
 	CONSOLE_SCREEN_BUFFER_INFO SetSizeRet;
 };
 

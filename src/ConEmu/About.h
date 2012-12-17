@@ -50,8 +50,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/? - This help screen.\r\n" \
 	L"/Config <configname> - Use alternative named configuration.\r\n" \
 	L"/Dir <workdir> - Set startup directory for ConEmu and consoles.\r\n" \
-	L"/FS | /max | /min - (Full screen), (Maximized) or (Minimized) mode.\r\n" \
+	L"/FS | /Max | /Min - (Full screen), (Maximized) or (Minimized) mode.\r\n" \
 	L"/TSA - Override (enable) minimize to taskbar status area.\r\n" \
+	L"/MinTSA - start minimized in taskbar status area on startup only.\r\n" \
+	L"/Detached - start ConEmu without consoles.\r\n" \
 	L"/Icon <file> - Take icon from file (exe, dll, ico).\r\n" \
 	L"/Multi | /NoMulti - Enable or disable multiconsole features.\r\n" \
 	L"/Single - New console will be started in new tab of existing ConEmu.\r\n" \
@@ -71,6 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/UpdateJumpList - Update Windows 7 taskbar jump list.\r\n" \
 	L"/LoadCfgFile <file> - Use specified xml file as configuration storage.\r\n" \
 	L"/SaveCfgFile <file> - Save configuration to the specified xml file.\r\n" \
+	L"/SetDefTerm - Set ConEmu as default terminal, use with \"/Exit\" switch.\r\n" \
 	L"/Exit - Don't create ConEmu window, exit after actions.\r\n" \
 	/* L"/Attach [PID] - intercept console of specified process\n" */ \
 	L"/cmd <commandline>|@<taskfile>|{taskname} - Command line to start. This must be the last used switch.\r\n" \

@@ -41,6 +41,7 @@
 #define IDD_SPG_UPDATE                  172
 #define IDD_SPG_CONTROL                 173
 #define IDD_SPG_SHOW                    174
+#define IDD_SPG_TASKBAR                 175
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_ATTACHDLG                   212
@@ -212,7 +213,6 @@
 #define cbDropUnlocked                  1579
 #define cbDropUseBCopy                  1580
 #define cbFadeInactive                  1581
-#define cbBlockInactiveCursor           1586
 #define tHideCaptionAlwaysFrame         1589
 #define tHideCaptionAlwaysDelay         1590
 #define tHideCaptionAlwaysDissapear     1591
@@ -883,6 +883,23 @@
 #define rCursorH                        2530
 #define rCursorV                        2531
 #define rCursorB                        2532
+#define rCursorR                        2533
+#define rInactiveCursorH                2534
+#define rInactiveCursorV                2535
+#define rInactiveCursorB                2536
+#define rInactiveCursorR                2537
+#define cbInactiveCursorColor           2538
+#define cbInactiveCursorIgnoreSize      2539
+#define tInactiveCursorFixedSize        2540
+#define stInactiveCursorFixedSize       2541
+#define stInactiveCursorMinSize         2542
+#define tInactiveCursorMinSize          2543
+#define cbInactiveCursor                2544
+#define cbInactiveCursorBlink           2545
+#define vkEscNoConsoles                 2546
+#define cbDefaultTerminalStartup        2547
+#define IDC_CHECK1                      2548
+#define cbMultiHideOnClose              2548
 
 // Next default values for new objects
 // 
@@ -890,7 +907,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2533
+#define _APS_NEXT_CONTROL_VALUE         2549
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

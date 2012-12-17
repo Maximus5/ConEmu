@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "TabBar.h"
 #include "VConChild.h"
+#include "VConGroup.h"
 #include "VirtualConsole.h"
 
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
@@ -2280,8 +2281,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					if (pRCon->mp_VCon->Update(bForce))
 						lbNeedRedraw = true;
 				}
-				else if (lbIsVisible // мигать курсором только в "активной" консоли, в видимых - немигающий
-					&& gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId())->CursorBlink()
+				else if (lbIsVisible // где мигать курсором
+					&& gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId())->CursorBlink(lbIsActive)
 					&& pRCon->mb_RConStartedSuccess)
 				{
 					// Возможно, настало время мигнуть курсором?
@@ -9114,13 +9115,28 @@ void CRealConsole::OnBufferHeight()
 	mp_ABuf->OnBufferHeight();
 }
 
-bool CRealConsole::isActive()
+bool CRealConsole::isActive(bool abAllowGroup /*= false*/)
 {
-	if (!this) return false;
+	if (!this || !mp_VCon)
+		return false;
 
-	if (!mp_VCon) return false;
+	return CVConGroup::isActive(mp_VCon, abAllowGroup);
+}
 
-	return gpConEmu->isActive(mp_VCon);
+// Проверяет не только активность, но и "в фокусе ли ConEmu"
+bool CRealConsole::isInFocus()
+{
+	if (!this || !mp_VCon)
+		return false;
+
+	TODO("DoubleView: когда будет группировка ввода - чтобы курсором мигать во всех консолях");
+	if (!CVConGroup::isActive(mp_VCon, false/*abAllowGroup*/))
+		return false;
+
+	if (!gpConEmu->isMeForeground(false, true))
+		return false;
+
+	return true;
 }
 
 bool CRealConsole::isVisible()

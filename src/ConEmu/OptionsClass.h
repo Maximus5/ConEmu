@@ -305,6 +305,7 @@ class CSettings
 			thi_Main = 0,
 			thi_SizePos,
 			thi_Show,
+			thi_Taskbar,
 			thi_Cursor,
 			thi_Startup,
 			thi_Ext,
@@ -434,6 +435,7 @@ class CSettings
 		LRESULT OnInitDialog_Main(HWND hWnd2);
 		LRESULT OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Show(HWND hWnd2, bool abInitial);
+		LRESULT OnInitDialog_Taskbar(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Cursor(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Startup(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
@@ -458,7 +460,9 @@ class CSettings
 		LRESULT OnInitDialog_Info(HWND hWnd2);
 		//
 		LRESULT OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		LRESULT OnButtonClicked_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, Settings::AppSettings* pApp);
 		LRESULT OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		void InitCursorCtrls(HWND hWnd2, const Settings::AppSettings* pApp);
 		bool mb_IgnoreCmdGroupEdit, mb_IgnoreCmdGroupList;
 		//LRESULT OnButtonClicked_Apps(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		//UINT mn_AppsEnableControlsMsg;
@@ -469,7 +473,8 @@ class CSettings
 		//LRESULT OnColorButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		//LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		
 		//LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
-		LRESULT OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
+		LRESULT OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		bool OnEditChanged_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, Settings::AppSettings* pApp);
 		LRESULT OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnListBoxDblClk(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnPage(LPNMHDR phdr);

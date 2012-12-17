@@ -31,7 +31,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DefaultTerm.h"
 #include "ConEmu.h"
 #include "Options.h"
+#include "TrayIcon.h"
 #include "../ConEmuCD/ExitCodes.h"
+
+#define StartupValueName L"ConEmuDefaultTerminal"
 
 CDefaultTerminal::CDefaultTerminal()
 {
@@ -76,23 +79,147 @@ void CDefaultTerminal::ClearThreads(bool bForceTerminate)
 	}
 }
 
-void CDefaultTerminal::PostCreated()
+bool CDefaultTerminal::IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax)
 {
-	if (gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal || mb_PostCreatedThread)
+	LPCWSTR ValueName = StartupValueName;
+	bool bCurState = false;
+	HKEY hk;
+	DWORD nSize, nType = 0;
+	LONG lRc;
+
+	if (0 == (lRc = RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_READ, &hk)))
+	{
+		nSize = cchMax*sizeof(*rsValue);
+		if ((0 == (lRc = RegQueryValueEx(hk, ValueName, NULL, &nType, (LPBYTE)rsValue, &nSize)) && (nType == REG_SZ) && (nSize > sizeof(wchar_t))))
+		{
+			bCurState = true;
+		}
+		RegCloseKey(hk);
+	}
+
+	return bCurState;
+}
+
+void CDefaultTerminal::CheckRegisterOsStartup()
+{
+	LPCWSTR ValueName = StartupValueName;
+	bool bCurState = false;
+	bool bNeedState = gpSet->isSetDefaultTerminal && gpSet->isRegisterOnOsStartup;
+	HKEY hk;
+	DWORD nSize, nType = 0;
+	wchar_t szCurValue[MAX_PATH*3] = {};
+	wchar_t szNeedValue[MAX_PATH+80] = {};
+	LONG lRc;
+
+	_wsprintf(szNeedValue, SKIPLEN(countof(szNeedValue)) L"\"%s\" /SetDefTerm /Detached /MinTSA", gpConEmu->ms_ConEmuExe);
+
+	if (IsRegisteredOsStartup(szCurValue, countof(szCurValue)-1) && *szCurValue)
+	{
+		bCurState = true;
+	}
+
+	if ((bCurState != bNeedState)
+		|| (bNeedState && (lstrcmpi(szNeedValue, szCurValue) != 0)))
+	{
+		if (0 == (lRc = RegCreateKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hk, NULL)))
+		{
+			if (bNeedState)
+			{
+				nSize = ((DWORD)_tcslen(szNeedValue)+1) * sizeof(szNeedValue[0]);
+				if (0 != (lRc = RegSetValueEx(hk, ValueName, 0, REG_SZ, (LPBYTE)szNeedValue, nSize)))
+				{
+					DisplayLastError(L"Failed to set ConEmuDefaultTerminal value in HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", lRc);
+				}
+			}
+			else
+			{
+				if (0 != (lRc = RegDeleteValue(hk, ValueName)))
+				{
+					DisplayLastError(L"Failed to remove ConEmuDefaultTerminal value from HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", lRc);
+				}
+			}
+			RegCloseKey(hk);
+		}
+		else
+		{
+			DisplayLastError(L"Failed to open HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run for write", lRc);
+		}
+	}
+}
+
+void CDefaultTerminal::PostCreated(bool bWaitForReady /*= false*/, bool bShowErrors /*= false*/)
+{
+	if (!ghWnd)
+	{
+		// Main ConEmu window must be created
+		// It is required for initialization of ConEmuHk.dll
+		// wich will be injected into hooked processes
+		_ASSERTE(ghWnd!=NULL);
 		return;
+	}
+
+	if (gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
+	{
+		_ASSERTE(bWaitForReady == false);
+		if (bShowErrors && gpConEmu->DisableSetDefTerm)
+		{
+			DisplayLastError(L"Default terminal feature was blocked\n"
+				L"with '/NoDefTerm' ConEmu command line argument!", -1);
+		}
+		return;
+	}
+
+	if (mb_PostCreatedThread)
+	{
+		if (!bShowErrors)
+			return;
+		ClearThreads(false);
+		if (m_Threads.size() > 0)
+		{
+			Icon.ShowTrayIcon(L"Previous Default Terminal setup cycle was not finished yet", tsa_Default_Term);
+			return;
+		}
+	}
+
+	CheckRegisterOsStartup();
 
 	mb_ReadyToHook = TRUE;
 
 	// Этот процесс занимает некоторое время, чтобы не блокировать основной поток - запускаем фоновый
 	mb_PostCreatedThread = true;
+	DWORD  nWait = WAIT_FAILED;
 	HANDLE hPostThread = CreateThread(NULL, 0, PostCreatedThread, this, 0, &mn_PostThreadId);
 	
 	if (hPostThread)
 	{
+		if (bWaitForReady)
+		{
+			// Wait for 30 seconds
+			DWORD nStart = GetTickCount();
+			SetCursor(LoadCursor(NULL, IDC_WAIT));
+			nWait = WaitForSingleObject(hPostThread, 30000);
+			SetCursor(LoadCursor(NULL, IDC_ARROW));
+			DWORD nDuration = GetTickCount() - nStart;
+			if (nWait == WAIT_OBJECT_0)
+			{
+				CloseHandle(hPostThread);
+				return;
+			}
+			else
+			{
+				//_ASSERTE(nWait == WAIT_OBJECT_0);
+				DisplayLastError(L"PostCreatedThread was not finished in 30 seconds");
+			}
+		}
+
 		m_Threads.push_back(hPostThread);
 	}
 	else
 	{
+		if (bShowErrors)
+		{
+			DisplayLastError(L"Failed to start PostCreatedThread");
+		}
 		_ASSERTE(hPostThread!=NULL);
 		mb_PostCreatedThread = false;
 	}
@@ -102,23 +229,23 @@ DWORD CDefaultTerminal::PostCreatedThread(LPVOID lpParameter)
 {
 	CDefaultTerminal *pTerm = (CDefaultTerminal*)lpParameter;
 	bool bHooked = false;
-	HWND hDesktop = GetDesktopWindow();
+	HWND hDesktop = GetDesktopWindow(); //csrss.exe on Windows 8
 	HWND hTrayWnd = FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL);
 	DWORD nDesktopPID = 0, nTrayPID = 0;
 
-	if (hDesktop)
+	if (!bHooked && hTrayWnd)
 	{
-		if (GetWindowThreadProcessId(hDesktop, &nDesktopPID) && nDesktopPID)
+		if (GetWindowThreadProcessId(hTrayWnd, &nTrayPID) && nTrayPID)
 		{
-			bHooked = pTerm->CheckForeground(hDesktop, nDesktopPID, false);
+			bHooked = pTerm->CheckForeground(hTrayWnd, nTrayPID, false);
 		}
 	}
 
-	if (!bHooked && hTrayWnd)
+	if (!bHooked && hDesktop)
 	{
-		if (GetWindowThreadProcessId(hTrayWnd, &nTrayPID) && nTrayPID && (nTrayPID != nDesktopPID))
+		if (GetWindowThreadProcessId(hDesktop, &nDesktopPID) && nDesktopPID && (nTrayPID != nDesktopPID))
 		{
-			bHooked = pTerm->CheckForeground(hTrayWnd, nTrayPID, false);
+			bHooked = pTerm->CheckForeground(hDesktop, nDesktopPID, false);
 		}
 	}
 

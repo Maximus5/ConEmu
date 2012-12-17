@@ -4524,8 +4524,29 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize)
 		wchar_t sFontName[LF_FACESIZE];
 		if (apiGetConsoleFontSize(hOutput, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
 		{
+			// Увеличение
+			if (crLargest.X && crLargest.Y && ((dwSize.X > crLargest.X) || (dwSize.Y > crLargest.Y)))
+			{
+				// Теперь прикинуть, какой размер шрифта нам нужен
+				newSizeY = max(1,(nMaxY / (dwSize.Y+1)));
+				newSizeX = max(1,(nMaxX / (dwSize.X+1)));
+				if ((newSizeY < curSizeY) || (newSizeX < curSizeX))
+				{
+					calcSizeX = newSizeY * curSizeX / curSizeY;
+					calcSizeY = newSizeX * curSizeY / curSizeX;
+					if (calcSizeY < curSizeY)
+						calcSizeX = min(calcSizeX,(calcSizeY * curSizeX / curSizeY));
+					if (calcSizeX < curSizeX)
+						calcSizeY = min(calcSizeY,(calcSizeX * curSizeY / curSizeX));
+
+					newSizeY = max(1,min(calcSizeY,curSizeY));
+					newSizeX = max(1,min(calcSizeX,curSizeX));
+					lbRetry = TRUE;
+				}
+			}
 			// Уменьшение
-			if ((dwSize.X < csbi.dwSize.X) || (dwSize.Y < csbi.dwSize.Y))
+			else if ((dwSize.X <= (csbi.srWindow.Right - csbi.srWindow.Left))
+				|| (dwSize.Y <= (csbi.srWindow.Bottom - csbi.srWindow.Top)))
 			{
 				int nMinY = GetSystemMetrics(SM_CYMIN) - GetSystemMetrics(SM_CYSIZEFRAME) - GetSystemMetrics(SM_CYCAPTION);
 				int nMinX = GetSystemMetrics(SM_CXMIN) - 2*GetSystemMetrics(SM_CXSIZEFRAME);
@@ -4547,26 +4568,6 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize)
 						newSizeX = max(calcSizeX,curSizeX);
 						lbRetry = TRUE;
 					}
-				}
-			}
-			// Увеличение
-			else if (crLargest.X && crLargest.Y && ((dwSize.X > crLargest.X) || (dwSize.Y > crLargest.Y)))
-			{
-				// Теперь прикинуть, какой размер шрифта нам нужен
-				newSizeY = max(1,(nMaxY / (dwSize.Y+1)));
-				newSizeX = max(1,(nMaxX / (dwSize.X+1)));
-				if ((newSizeY < curSizeY) || (newSizeX < curSizeX))
-				{
-					calcSizeX = newSizeY * curSizeX / curSizeY;
-					calcSizeY = newSizeX * curSizeY / curSizeX;
-					if (calcSizeY < curSizeY)
-						calcSizeX = min(calcSizeX,(calcSizeY * curSizeX / curSizeY));
-					if (calcSizeX < curSizeX)
-						calcSizeY = min(calcSizeY,(calcSizeX * curSizeY / curSizeX));
-
-					newSizeY = max(1,min(calcSizeY,curSizeY));
-					newSizeX = max(1,min(calcSizeX,curSizeX));
-					lbRetry = TRUE;
 				}
 			}
 

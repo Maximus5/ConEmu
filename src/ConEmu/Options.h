@@ -270,6 +270,37 @@ struct FindTextOptions
 	bool     bTransparent;
 };
 
+
+enum CECursorStyle
+{
+	cur_Horz         = 0x00,
+	cur_Vert         = 0x01,
+	cur_Block        = 0x02,
+	cur_Rect         = 0x03,
+
+	// Used for Min/Max
+	cur_First        = cur_Horz,
+	cur_Last         = cur_Rect,
+};
+
+union CECursorType
+{
+	struct
+	{
+		CECursorStyle  CursorType   : 6;
+		unsigned int   isBlinking   : 1;
+		unsigned int   isColor      : 1;
+		unsigned int   isFixedSize  : 1;
+		unsigned int   FixedSize    : 7;
+		unsigned int   MinSize      : 7;
+		// set to true for use distinct settings for Inactive cursor
+		unsigned int   Used         : 1;
+	};
+
+	DWORD Raw;
+};
+
+
 struct Settings
 {
 	public:
@@ -299,6 +330,7 @@ struct Settings
 
 		// Replace default terminal
 		bool isSetDefaultTerminal;
+		bool isRegisterOnOsStartup;
 		bool isDefaultTerminalNoInjects;
 		BYTE nDefaultTerminalConfirmClose; // "Press Enter to close console". 0 - Auto, 1 - Always, 2 - Never
 		wchar_t* GetDefaultTerminalApps(); // "|" delimited
@@ -381,27 +413,44 @@ struct Settings
 			BYTE FontItalicColor() const { return (OverrideExtendFonts || !AppNames) ? nFontItalicColor : gpSet->AppStd.nFontItalicColor; };
 
 			bool OverrideCursor;
-			//reg->Load(L"CursorType", isCursorType);
-			BYTE isCursorType; // 0 - Horz, 1 - Vert, 2 - Hollow-block
-			BYTE CursorType() const { return (OverrideCursor || !AppNames) ? isCursorType : gpSet->AppStd.isCursorType; };
-			//reg->Load(L"CursorBlink", isCursorBlink);
-			bool isCursorBlink;
-			bool CursorBlink() const { return (OverrideCursor || !AppNames) ? isCursorBlink : gpSet->AppStd.isCursorBlink; };
-			//reg->Load(L"CursorColor", isCursorColor);
-			bool isCursorColor;
-			bool CursorColor() const { return (OverrideCursor || !AppNames) ? isCursorColor : gpSet->AppStd.isCursorColor; };
-			//reg->Load(L"CursorBlockInactive", isCursorBlockInactive);
-			bool isCursorBlockInactive;
-			bool CursorBlockInactive() const { return (OverrideCursor || !AppNames) ? isCursorBlockInactive : gpSet->AppStd.isCursorBlockInactive; };
-			//reg->Load(L"CursorIgnoreSize", isCursorIgnoreSize);
-			bool isCursorIgnoreSize;
-			bool CursorIgnoreSize() const { return (OverrideCursor || !AppNames) ? isCursorIgnoreSize : gpSet->AppStd.isCursorIgnoreSize; };
-			//reg->Load(L"CursorFixedSize", nCursorFixedSize);
-			BYTE nCursorFixedSize; // в процентах
-			BYTE CursorFixedSize() const { return (OverrideCursor || !AppNames) ? nCursorFixedSize : gpSet->AppStd.nCursorFixedSize; };
+			// *** Active ***
+			////reg->Load(L"CursorType", isCursorType);
+			////BYTE isCursorType; // 0 - Horz, 1 - Vert, 2 - Hollow-block
+			//reg->Load(L"CursorTypeActive", CursorActive.Raw);
+			//reg->Load(L"CursorTypeInactive", CursorActive.Raw);
+			CECursorType CursorActive; // storage
+			CECursorType CursorInactive; // storage
+			CECursorStyle CursorStyle(bool bActive) const { return (OverrideCursor || !AppNames)
+				? ((bActive || !CursorInactive.Used) ? CursorActive.CursorType : CursorInactive.CursorType)
+				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.CursorType : gpSet->AppStd.CursorInactive.CursorType); };
+			////reg->Load(L"CursorBlink", isCursorBlink);
+			////bool isCursorBlink;
+			bool CursorBlink(bool bActive) const { return (OverrideCursor || !AppNames)
+				? ((bActive || !CursorInactive.Used) ? CursorActive.isBlinking : CursorInactive.isBlinking)
+				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.isBlinking : gpSet->AppStd.CursorInactive.isBlinking); };
+			////reg->Load(L"CursorColor", isCursorColor);
+			////bool isCursorColor;
+			bool CursorColor(bool bActive) const { return (OverrideCursor || !AppNames)
+				? ((bActive || !CursorInactive.Used) ? CursorActive.isColor : CursorInactive.isColor)
+				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.isColor : gpSet->AppStd.CursorInactive.isColor); };
+			////reg->Load(L"CursorBlockInactive", isCursorBlockInactive);
+			////bool isCursorBlockInactive;
+			////bool CursorBlockInactive() const { return (OverrideCursor || !AppNames) ? isCursorBlockInactive : gpSet->AppStd.isCursorBlockInactive; };
+			////reg->Load(L"CursorIgnoreSize", isCursorIgnoreSize);
+			////bool isCursorIgnoreSize;
+			bool CursorIgnoreSize(bool bActive) const { return (OverrideCursor || !AppNames)
+				? ((bActive || !CursorInactive.Used) ? CursorActive.isFixedSize : CursorInactive.isFixedSize)
+				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.isFixedSize : gpSet->AppStd.CursorInactive.isFixedSize); };
+			////reg->Load(L"CursorFixedSize", nCursorFixedSize);
+			////BYTE nCursorFixedSize; // в процентах
+			BYTE CursorFixedSize(bool bActive) const { return (OverrideCursor || !AppNames)
+				? ((bActive || !CursorInactive.Used) ? CursorActive.FixedSize : CursorInactive.FixedSize)
+				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.FixedSize : gpSet->AppStd.CursorInactive.FixedSize); };
 			//reg->Load(L"CursorMinSize", nCursorMinSize);
-			BYTE nCursorMinSize; // в пикселях
-			BYTE CursorMinSize() const { return (OverrideCursor || !AppNames) ? nCursorMinSize : gpSet->AppStd.nCursorMinSize; };
+			//BYTE nCursorMinSize; // в пикселях
+			BYTE CursorMinSize(bool bActive) const { return (OverrideCursor || !AppNames)
+				? ((bActive || !CursorInactive.Used) ? CursorActive.MinSize : CursorInactive.MinSize)
+				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.MinSize : gpSet->AppStd.CursorInactive.MinSize); };
 
 			bool OverrideClipboard;
 			// *** Copying
@@ -704,6 +753,8 @@ struct Settings
 			COLORREF ColorsFade[0x20];
 			bool FadeInitialized;
 		} **AppColors; // [AppCount]
+
+		void LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECursorType* pInactive);
 
 		void LoadAppSettings(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadAppSettings(SettingsBase* reg, AppSettings* pApp, COLORREF* pColors);
@@ -1205,6 +1256,8 @@ struct Settings
 		bool isMultiAutoCreate;
 		//reg->Load(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
 		bool isMultiLeaveOnClose;
+		//reg->Load(L"Multi.HideOnClose", isMultiHideOnClose);
+		bool isMultiHideOnClose;
 		//reg->Load(L"Multi.Iterate", isMultiIterate);
 		bool isMultiIterate;
 		//reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);

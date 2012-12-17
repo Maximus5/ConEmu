@@ -11,6 +11,19 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.12.16
+[+] Issue 846: New predefined color palette <Solarized>.
+[%] Sometimes console was not resized after maximizing ConEmu window. TechInfo: because of larget font size in *real console*. Auto-reducing automatically when possible.
+[%] Sometimes close console confirmation «Press Enter or Esc to close console» was bypassed.
+[+] Cursor setting page was redesigned. Inactive cursor may be fully configured now. To be continued, some combinations not works yet.
+[*] New settings page "Task bar". Some controls from "Appearance" page are here now.
+[+] New option "Auto hide ConEmu after last console close". Must be used together with "Leave ConEmu after last console close".
+[+] New ConEmu.exe switches:
+    /MinTSA - almost like combination of "/Min /TSA" but implies "Leave ..." and "Auto hide after last console close".
+    /SetDefTerm - forces installation of ConEmu as default terminal. May be useful with "/MinTSA /Detached".
+[+] Now you can turn on "Register on OS startup" for "Default terminal" feature. "Integration" page.
+
+
 2012.12.11
 [+] Issue 824: Ctrl+BackSpace deletes word leftward to the cursor. Ignored in Far Manager. Hotkey is configurable.
     ATM takes care of «Change prompt with Left Click» third state.

@@ -1356,7 +1356,11 @@ bool CVConGroup::isActive(CVirtualConsole* apVCon, bool abAllowGroup /*= true*/)
 
 	if (abAllowGroup)
 	{
-		TODO("DoubleView: когда будет группировка ввода - чтобы курсором мигать во всех консолях");
+		// DoubleView: когда будет группировка ввода - чтобы курсором мигать во всех консолях
+		CVConGroup* pRoot = GetRootOfVCon(apVCon);
+		CVConGroup* pActiveRoot = GetRootOfVCon(gp_VActive);
+		if (pRoot && (pRoot == pActiveRoot))
+			return true;
 	}
 
 	return false;
@@ -2239,16 +2243,23 @@ int CVConGroup::ActiveConNum()
 	return nActive;
 }
 
-int CVConGroup::GetConCount()
+int CVConGroup::GetConCount(bool bNoDetached /*= false*/)
 {
 	int nCount = 0;
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		if (gp_VCon[i])
-			nCount++;
-		else
+		if (!gp_VCon[i])
 			break;
+
+		if (bNoDetached)
+		{
+			_ASSERTE(gpConEmu->isMainThread()); // чтобы не морочится с блокировками
+			if (gp_VCon[i]->RCon()->isDetached())
+				continue;
+		}
+
+		nCount++;
 	}
 
 	return nCount;

@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "Update.h"
 #include "Recreate.h"
+#include "DefaultTerm.h"
 
 #ifdef _DEBUG
 //	#define SHOW_STARTED_MSGBOX
@@ -2259,6 +2260,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool WindowPrm = false; int WindowModeVal = 0;
 	bool LoadCfgFilePrm = false; TCHAR* LoadCfgFile = NULL;
 	bool SaveCfgFilePrm = false; TCHAR* SaveCfgFile = NULL;
+	bool SetUpDefaultTerminal = false;
 	bool ExitAfterActionPrm = false;
 #if 0
 	//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
@@ -2447,10 +2449,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					VisValue = true; VisPrm = true;
 				}
-				else if (!klstricmp(curCommand, _T("/detached")))
-				{
-					gpConEmu->mb_StartDetached = TRUE;
-				}
 				else if (!klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype"))
 					|| !klstricmp(curCommand, _T("/ct0")) || !klstricmp(curCommand, _T("/ct1")) || !klstricmp(curCommand, _T("/ct2")))
 				{
@@ -2588,13 +2586,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					WindowModeVal = rMaximized; WindowPrm = true;
 				}
-				else if (!klstricmp(curCommand, _T("/min")))
+				else if (!klstricmp(curCommand, _T("/min")) || !klstricmp(curCommand, _T("/mintsa")))
 				{
 					gpConEmu->WindowStartMinimized = true;
+					gpConEmu->WindowStartTSA = (klstricmp(curCommand, _T("/mintsa")) == 0);
 				}
 				else if (!klstricmp(curCommand, _T("/tsa")) || !klstricmp(curCommand, _T("/tray")))
 				{
 					gpConEmu->ForceMinimizeToTray = true;
+				}
+				else if (!klstricmp(curCommand, _T("/detached")))
+				{
+					gpConEmu->mb_StartDetached = TRUE;
 				}
 				else if (!klstricmp(curCommand, _T("/noupdate")))
 				{
@@ -2787,6 +2790,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return 100;
 					}
 				}
+				else if (!klstricmp(curCommand, _T("/SetDefTerm")))
+				{
+					SetUpDefaultTerminal = true;
+				}
 				else if (!klstricmp(curCommand, _T("/Exit")))
 				{
 					ExitAfterActionPrm = true;
@@ -2923,6 +2930,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				if (!iMainRc) iMainRc = 12;
 			}
+		}
+	}
+
+	// Only when ExitAfterActionPrm, otherwise - it will be called from ConEmu's PostCreate
+	if (SetUpDefaultTerminal)
+	{
+		if (ExitAfterActionPrm)
+		{
+			MessageBox(L"'/Exit' switch can not be used together with '/SetDefTerm'!", MB_ICONSTOP);
+		}
+		else
+		{
+			gpSet->isSetDefaultTerminal = true;
+			gpSet->isRegisterOnOsStartup = true;
 		}
 	}
 
