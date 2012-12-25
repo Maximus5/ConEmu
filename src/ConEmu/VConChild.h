@@ -39,12 +39,13 @@ class CConEmuChild
 		CConEmuChild();
 	protected:
 		virtual ~CConEmuChild();
+		LRESULT OnSize(WPARAM wParam, LPARAM lParam);
+		LRESULT OnMove(WPARAM wParam, LPARAM lParam);
 	public:
 		static LRESULT WINAPI ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		static LRESULT WINAPI BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		LRESULT OnPaint();
-		LRESULT OnSize(WPARAM wParam, LPARAM lParam);
 		HWND CreateView();
 		HWND GetView();
 		HWND GetBack();

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmu"
 	ProjectGUID="{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
 	RootNamespace="conemu"
@@ -694,7 +694,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MSGLOGGER;HIDE_TODO"
+				PreprocessorDefinitions="CONEMU_TABBAR_EX;WIN32;_DEBUG;_WINDOWS;MSGLOGGER;HIDE_TODO"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="1"
@@ -1714,15 +1714,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Menu.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\common\MAssert.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\common\Memory.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Menu.cpp"
 				>
 			</File>
 			<File
@@ -2104,11 +2104,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\kl_parts.h"
+				RelativePath=".\Inside.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Inside.h"
+				RelativePath=".\kl_parts.h"
 				>
 			</File>
 			<File
@@ -2120,11 +2120,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Menu.h"
+				RelativePath="..\common\Memory.h"
 				>
 			</File>
 			<File
-				RelativePath="..\common\Memory.h"
+				RelativePath=".\Menu.h"
 				>
 			</File>
 			<File

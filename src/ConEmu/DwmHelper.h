@@ -34,6 +34,7 @@ enum FrameDrawStyle
 	fdt_Win2kSelf = 2,
 	fdt_Themed = 3,
 	fdt_Aero = 4,
+	fdt_Win8 = 5,
 };
 
 class CDwmHelper

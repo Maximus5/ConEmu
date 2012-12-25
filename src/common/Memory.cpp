@@ -318,8 +318,10 @@ void __cdecl xf_dump()
 	//HeapCompact(ghHeap,0);
 	char sBlockInfo[255];
 	PVOID pLast = NULL;
+	size_t cbUsedSize = 0, cbBrokenSize = 0;
+	DWORD cCount = 0;
 
-	while(HeapWalk(ghHeap, &ent))
+	while (HeapWalk(ghHeap, &ent))
 	{
 		if (pLast == ent.lpData)
 		{
@@ -341,16 +343,22 @@ void __cdecl xf_dump()
 		{
 			xf_mem_block* p = (xf_mem_block*)ent.lpData;
 
-			if (p->bBlockUsed==TRUE && p->nBlockSize==ent.cbData)
+			if (p->bBlockUsed==TRUE && (p->nBlockSize+sizeof(xf_mem_block)+8)==ent.cbData)
 			{
-				msprintf(sBlockInfo, countof(sBlockInfo), "!!! Lost memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n", WIN3264WSPRINT(ent.lpData), ent.cbData,
+				msprintf(sBlockInfo, countof(sBlockInfo), "Used memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n", WIN3264WSPRINT(ent.lpData), ent.cbData,
 				          p->sCreatedFrom);
+
+				cbUsedSize += p->nBlockSize;
 			}
 			else
 			{
-				msprintf(sBlockInfo, countof(sBlockInfo), "!!! Lost memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n", WIN3264WSPRINT(ent.lpData), ent.cbData,
+				msprintf(sBlockInfo, countof(sBlockInfo), "Used memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n", WIN3264WSPRINT(ent.lpData), ent.cbData,
 				          "<Header information broken!>");
+
+				cbBrokenSize += ent.cbData;
 			}
+
+			cCount++;
 
 			pLast = ent.lpData;
 			OutputDebugStringA(sBlockInfo);
@@ -358,6 +366,10 @@ void __cdecl xf_dump()
 	}
 
 	HeapUnlock(ghHeap);
+
+	msprintf(sBlockInfo, countof(sBlockInfo), "Used size 0x" WIN3264TEST("%08X","%08X%08X") ", broken size 0x" WIN3264TEST("%08X","%08X%08X") ", total blocks %u\n",
+		WIN3264WSPRINT(cbUsedSize), WIN3264WSPRINT(cbBrokenSize), cCount);
+	OutputDebugStringA(sBlockInfo);
 #endif
 }
 #endif

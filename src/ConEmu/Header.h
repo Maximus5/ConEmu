@@ -238,8 +238,12 @@ BOOL /*__forceinline*/ CoordInRect(const COORD& c, const RECT& r);
 BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2);
 
 wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
-size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText, bool bEscapes = false);
-BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString, bool bEscapes = false);
+size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*, bool bEscapes = false*/);
+BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes = false*/);
+
+extern const wchar_t* gsEscaped;
+//wchar_t* EscapeString(bool bSet, LPCWSTR pszSrc);
+void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst);
 
 wchar_t* lstrmerge(LPCWSTR asStr1, LPCWSTR asStr2, LPCWSTR asStr3 = NULL, LPCWSTR asStr4 = NULL);
 
@@ -416,6 +420,33 @@ enum BackgroundOp
 	eUpRight = 3,
 	eDownLeft = 4,
 	eDownRight = 5,
+};
+
+enum ToolbarMainBitmapIdx
+{
+	BID_FIST_CON = 0,
+	BID_LAST_CON = (MAX_CONSOLE_COUNT-1),
+	BID_NEWCON_IDX,
+	BID_ALTERNATIVE_IDX,
+	BID_MINIMIZE_IDX,
+	BID_MAXIMIZE_IDX,
+	BID_RESTORE_IDX,
+	BID_APPCLOSE_IDX,
+	BID_DUMMYBTN_IDX,
+	BID_TOOLBAR_LAST_IDX,
+};
+
+enum ToolbarCommandIdx
+{
+	TID_ACTIVE_NUMBER = 1,
+	TID_CREATE_CON,
+	TID_ALTERNATIVE,
+	TID_SCROLL,
+	TID_MINIMIZE,
+	TID_MAXIMIZE,
+	TID_APPCLOSE,
+	TID_COPYING,
+	TID_MINIMIZE_SEP = 110,
 };
 
 bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval);

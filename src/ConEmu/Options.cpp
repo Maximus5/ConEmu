@@ -35,22 +35,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
-//#include "../common/ConEmuCheck.h"
-#include "Options.h"
+#include "version.h"
+
+#include "../ConEmuCD/GuiHooks.h"
+#include "../ConEmuPlugin/FarDefaultMacros.h"
+#include "Background.h"
 #include "ConEmu.h"
 #include "Inside.h"
+#include "LoadImg.h"
+#include "Macro.h"
+#include "Options.h"
+#include "OptionsFast.h"
+#include "RealConsole.h"
 #include "Status.h"
+#include "TabBar.h"
+#include "TrayIcon.h"
 #include "VConChild.h"
 #include "VirtualConsole.h"
-#include "RealConsole.h"
-#include "TabBar.h"
-#include "Background.h"
-#include "TrayIcon.h"
-#include "LoadImg.h"
-#include "../ConEmuPlugin/FarDefaultMacros.h"
-#include "OptionsFast.h"
-#include "../ConEmuCD/GuiHooks.h"
-#include "version.h"
+
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
 
@@ -298,6 +300,7 @@ void Settings::InitSettings()
 	nHostkeyNumberModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyNumberModifier);
 	nHostkeyArrowModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyArrowModifier);
 	isMulti = true;
+	isMultiShowButtons = true;
 	isNumberInCaption = false;
 	//vmMultiNew = 'W' | (nMultiHotkeyModifier << 8);
 	//vmMultiNext = 'Q' | (nMultiHotkeyModifier << 8);
@@ -449,9 +452,14 @@ void Settings::InitSettings()
 	AppStd.isCTSBashMargin = false;
 	AppStd.isCTSTrimTrailing = 2;
 	AppStd.isCTSEOL = 0;
+	AppStd.isCTSShiftArrowStart = true;
 	AppStd.isPasteAllLines = true;
 	AppStd.isPasteFirstLine = true;
+	
+	// 0 - off, 1 - force, 2 - try to detect "ReadConsole" (don't use 2 in bash)
 	AppStd.isCTSClickPromptPosition = 2; //  ликом мышки позиционировать курсор в Cmd Prompt (cmd.exe, Powershell.exe, ...) + vkCTSVkPromptClk
+	AppStd.isCTSDeleteLeftWord = 2; // Ctrl+BS - удал€ть слово слева от курсора
+
 	// пока не учитываетс€
 	AppStd.isShowBgImage = 0;
 	AppStd.sBgImage[0] = 0;
@@ -539,6 +547,8 @@ void Settings::InitSettings()
 	wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] *");
 	wcscpy_c(szTabViewer, L"<%c.%i>[%s]");
 	nTabLenMax = 20;
+	nTabWidthMax = 200;
+	nTabStyle = ts_Win8;
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используетс€ макрос по умолчанию
 	isConsoleTextSelection = 1; // Always
@@ -909,9 +919,11 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	reg->Load(L"ClipboardBashMargin", pApp->isCTSBashMargin);
 	reg->Load(L"ClipboardTrimTrailing", pApp->isCTSTrimTrailing);
 	reg->Load(L"ClipboardEOL", pApp->isCTSEOL); MinMax(pApp->isCTSEOL,2);
+	reg->Load(L"ClipboardArrowStart", pApp->isCTSShiftArrowStart);
 	reg->Load(L"ClipboardAllLines", pApp->isPasteAllLines);
 	reg->Load(L"ClipboardFirstLine", pApp->isPasteFirstLine);
 	reg->Load(L"ClipboardClickPromptPosition", pApp->isCTSClickPromptPosition); MinMax(pApp->isCTSClickPromptPosition,2);
+	reg->Load(L"ClipboardDeleteLeftWord", pApp->isCTSDeleteLeftWord); MinMax(pApp->isCTSDeleteLeftWord,2);
 }
 
 void Settings::FreeCmdTasks()
@@ -2440,6 +2452,7 @@ void Settings::LoadSettings()
 
 		reg->Load(L"CmdLineHistory", &psCmdHistory); nCmdHistorySize = 0; HistoryCheck();
 		reg->Load(L"Multi", isMulti);
+		reg->Load(L"Multi.ShowButtons", isMultiShowButtons);
 		reg->Load(L"Multi.NumberInCaption", isNumberInCaption);
 		//LoadVkMod(reg, L"Multi.NewConsole", vmMultiNew, vmMultiNew);
 		//LoadVkMod(reg, L"Multi.NewConsoleShift", vmMultiNewShift, SetModifier(vmMultiNew,VK_SHIFT, true/*Xor*/));
@@ -3215,9 +3228,11 @@ void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	reg->Save(L"ClipboardBashMargin", pApp->isCTSBashMargin);
 	reg->Save(L"ClipboardTrimTrailing", pApp->isCTSTrimTrailing);
 	reg->Save(L"ClipboardEOL", pApp->isCTSEOL);
+	reg->Save(L"ClipboardArrowStart", pApp->isCTSShiftArrowStart);
 	reg->Save(L"ClipboardAllLines", pApp->isPasteAllLines);
 	reg->Save(L"ClipboardFirstLine", pApp->isPasteFirstLine);
 	reg->Save(L"ClipboardClickPromptPosition", pApp->isCTSClickPromptPosition);
+	reg->Save(L"ClipboardDeleteLeftWord", pApp->isCTSDeleteLeftWord);
 }
 
 void Settings::SaveStatusSettings(SettingsBase* reg)
@@ -3312,6 +3327,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 			reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
 
 		reg->Save(L"Multi", isMulti);
+		reg->Save(L"Multi.ShowButtons", isMultiShowButtons);
 		reg->Save(L"Multi.NumberInCaption", isNumberInCaption);
 		//reg->Save(L"Multi.NewConsole", vmMultiNew);
 		//reg->Save(L"Multi.NewConsoleShift", vmMultiNewShift);
@@ -4578,7 +4594,7 @@ int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)
 		wchar_t* pch = Apps[i]->AppNamesLwr;
 		if (!pch || !*pch)
 		{
-			_ASSERTE(pch && *pch);
+			_ASSERTE((pch && *pch) || (ghOpWnd && IsWindowVisible(gpSetCls->mh_Tabs[CSettings::thi_Apps])));
 			continue;
 		}
 
@@ -5344,6 +5360,10 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 
 	wchar_t szMacroName[80];
 
+	// Compatibility with old settings format
+	BYTE MacroVersion = 0;
+	reg->Load(L"KeyMacroVersion", MacroVersion);
+
 	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
 	{
 		ppHK->NotChanged = true;
@@ -5393,7 +5413,18 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 		{
 			wcscpy_c(szMacroName, ppHK->Name);
 			wcscat_c(szMacroName, L".Text");
-			reg->Load(szMacroName, &ppHK->GuiMacro);
+			_ASSERTE(ppHK->GuiMacro == NULL);
+			wchar_t* pszMacro = NULL;
+			reg->Load(szMacroName, &pszMacro);
+			if (MacroVersion < GUI_MACRO_VERSION)
+			{
+				ppHK->GuiMacro = CConEmuMacro::ConvertMacro(pszMacro, MacroVersion, true);
+				SafeFree(pszMacro);
+			}
+			else
+			{
+				ppHK->GuiMacro = pszMacro;
+			}
 		}
 	}
 }
@@ -5487,6 +5518,9 @@ void Settings::SaveHotkeys(SettingsBase* reg)
 	reg->Save(L"Multi.Modifier", nHostkeyNumberModifier);
 	reg->Save(L"Multi.ArrowsModifier", nHostkeyArrowModifier);
 
+	BYTE MacroVersion = GUI_MACRO_VERSION;
+	reg->Save(L"KeyMacroVersion", MacroVersion);
+
 	wchar_t szMacroName[80];
 
 	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
@@ -5510,10 +5544,30 @@ void Settings::SaveHotkeys(SettingsBase* reg)
 			{
 				wcscpy_c(szMacroName, ppHK->Name);
 				wcscat_c(szMacroName, L".Text");
+				//wchar_t* pszEsc = EscapeString(true, ppHK->GuiMacro);
+				//reg->Save(szMacroName, pszEsc);
+				//SafeFree(pszEsc);
 				reg->Save(szMacroName, ppHK->GuiMacro);
 			}
 		}
 	}
+}
+
+bool Settings::UseCTSShiftArrow() // { return gpSet->isUseWinArrows; }; // { return (OverrideClipboard || !AppNames) ? isCTSShiftArrowStart : gpSet->AppStd.isCTSShiftArrowStart; };
+{
+	CVConGuard VCon;
+	if (gpConEmu->GetActiveVCon(&VCon) < 0)
+		return false;
+	
+	CRealConsole* pRCon = VCon->RCon();
+	if (!pRCon || pRCon->isFar() || pRCon->isSelectionPresent())
+		return false;
+
+	const AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
+	if (!pApp)
+		return false;
+
+	return pApp->CTSShiftArrowStart();
 }
 
 ConEmuHotKey* Settings::AllocateHotkeys()
@@ -5649,23 +5703,27 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkCtrlTab_Right,  chk_System, NULL, L"", MakeHotKey(VK_RIGHT,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Next}, // Tab switch
 		{vkCtrlTab_Down,   chk_System, NULL, L"", MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Next}, // Tab switch
 		{vkEscNoConsoles,  chk_System, NULL, L"", MakeHotKey(VK_ESCAPE), CConEmuCtrl::key_MinimizeRestoreByEsc, true/*OnKeyUp*/}, // Minimize ConEmu by Esc when no open consoles left
+		{vkCTSShiftLeft,   chk_System, UseCTSShiftArrow, L"", MakeHotKey(VK_LEFT,VK_SHIFT),  CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Select(0,-1)")},
+		{vkCTSShiftRight,  chk_System, UseCTSShiftArrow, L"", MakeHotKey(VK_RIGHT,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Select(0,1)")},
+		{vkCTSShiftUp,     chk_System, UseCTSShiftArrow, L"", MakeHotKey(VK_UP,VK_SHIFT),    CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Select(1,0,-1)")},
+		{vkCTSShiftDown,   chk_System, UseCTSShiftArrow, L"", MakeHotKey(VK_DOWN,VK_SHIFT),  CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Select(1,0,1)")},
 		// ¬се что ниже - было прив€зано к "HostKey"
 		// Ќадо бы дать настроить модификатор, а сами кнопки - не трогать
-		{vkWinLeft,    chk_ArrHost, &isUseWinArrows, L"", VK_LEFT|CEHOTKEY_ARRHOSTKEY,  CConEmuCtrl::key_WinWidthDec},  // Decrease window width
-		{vkWinRight,   chk_ArrHost, &isUseWinArrows, L"", VK_RIGHT|CEHOTKEY_ARRHOSTKEY, CConEmuCtrl::key_WinWidthInc},  // Increase window width
-		{vkWinUp,      chk_ArrHost, &isUseWinArrows, L"", VK_UP|CEHOTKEY_ARRHOSTKEY,    CConEmuCtrl::key_WinHeightDec}, // Decrease window height
-		{vkWinDown,    chk_ArrHost, &isUseWinArrows, L"", VK_DOWN|CEHOTKEY_ARRHOSTKEY,  CConEmuCtrl::key_WinHeightInc}, // Increase window height
+		{vkWinLeft,    chk_ArrHost, UseWinArrows, L"", VK_LEFT|CEHOTKEY_ARRHOSTKEY,  CConEmuCtrl::key_WinWidthDec},  // Decrease window width
+		{vkWinRight,   chk_ArrHost, UseWinArrows, L"", VK_RIGHT|CEHOTKEY_ARRHOSTKEY, CConEmuCtrl::key_WinWidthInc},  // Increase window width
+		{vkWinUp,      chk_ArrHost, UseWinArrows, L"", VK_UP|CEHOTKEY_ARRHOSTKEY,    CConEmuCtrl::key_WinHeightDec}, // Decrease window height
+		{vkWinDown,    chk_ArrHost, UseWinArrows, L"", VK_DOWN|CEHOTKEY_ARRHOSTKEY,  CConEmuCtrl::key_WinHeightInc}, // Increase window height
 		// Console activate by number
-		{vkConsole_1,  chk_NumHost, &isUseWinNumber, L"", '1'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
-		{vkConsole_2,  chk_NumHost, &isUseWinNumber, L"", '2'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
-		{vkConsole_3,  chk_NumHost, &isUseWinNumber, L"", '3'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
-		{vkConsole_4,  chk_NumHost, &isUseWinNumber, L"", '4'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
-		{vkConsole_5,  chk_NumHost, &isUseWinNumber, L"", '5'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
-		{vkConsole_6,  chk_NumHost, &isUseWinNumber, L"", '6'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
-		{vkConsole_7,  chk_NumHost, &isUseWinNumber, L"", '7'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
-		{vkConsole_8,  chk_NumHost, &isUseWinNumber, L"", '8'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
-		{vkConsole_9,  chk_NumHost, &isUseWinNumber, L"", '9'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
-		{vkConsole_10, chk_NumHost, &isUseWinNumber, L"", '0'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_1,  chk_NumHost, UseWinNumber, L"", '1'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_2,  chk_NumHost, UseWinNumber, L"", '2'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_3,  chk_NumHost, UseWinNumber, L"", '3'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_4,  chk_NumHost, UseWinNumber, L"", '4'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_5,  chk_NumHost, UseWinNumber, L"", '5'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_6,  chk_NumHost, UseWinNumber, L"", '6'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_7,  chk_NumHost, UseWinNumber, L"", '7'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_8,  chk_NumHost, UseWinNumber, L"", '8'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_9,  chk_NumHost, UseWinNumber, L"", '9'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_10, chk_NumHost, UseWinNumber, L"", '0'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
 		//{vkConsole_11, chk_NumHost, &isUseWinNumber, L"", VK_F11|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // ƒл€ WinF11 & WinF12 приход€т только WM_KEYUP || WM_SYSKEYUP)
 		//{vkConsole_12, chk_NumHost, &isUseWinNumber, L"", VK_F12|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // ƒл€ WinF11 & WinF12 приход€т только WM_KEYUP || WM_SYSKEYUP)
 		// End

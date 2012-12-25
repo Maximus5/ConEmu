@@ -6013,7 +6013,7 @@ BOOL Attach2Gui()
 	else
 	{
 		wchar_t szName[64];
-		_wsprintf(szName, SKIPLEN(countof(szName)) CESRVSTARTEDEVENT, gnSelfPID);
+		_wsprintf(szName, SKIPLEN(countof(szName)) CESRVSTARTEDEVENT, pi.dwProcessId/*gnSelfPID*/);
 		// Event мог быть создан и ранее (в Far-плагине, например)
 		HANDLE hServerStartedEvent = CreateEvent(LocalSecurity(), TRUE, FALSE, szName);
 		_ASSERTE(hServerStartedEvent!=NULL);
@@ -6029,6 +6029,20 @@ BOOL Attach2Gui()
 		{
 			// Server must be initialized ATM
 			_ASSERTE(nStartWait == 1);
+
+			// Recall initialization of ConEmuHk.dll
+			if (ghHooksModule)
+			{
+				RequestLocalServer_t fRequestLocalServer = (RequestLocalServer_t)GetProcAddress(ghHooksModule, "RequestLocalServer");
+				// Refresh ConEmu HWND's
+				if (fRequestLocalServer)
+				{
+					RequestLocalServerParm Parm = {sizeof(Parm), slsf_ReinitWindows};
+					//if (gFarVersion.dwVerMajor >= 3)
+					//	Parm.Flags |= 
+					fRequestLocalServer(&Parm);
+				}
+			}
 
 			gdwServerPID = pi.dwProcessId;
 			_ASSERTE(gdwServerPID!=0);

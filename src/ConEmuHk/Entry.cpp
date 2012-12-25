@@ -1994,6 +1994,8 @@ int main()
 
 int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 {
+	//_ASSERTE(FALSE && "ConEmuHk. Continue to RequestLocalServer");
+
 	int iRc = CERR_SRVLOADFAILED;
 	if (!Parm || (Parm->StructSize != sizeof(*Parm)))
 	{
@@ -2001,6 +2003,20 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 		goto wrap;
 	}
 	//RequestLocalServerParm Parm = {(DWORD)sizeof(Parm)};
+
+	if (Parm->Flags & slsf_ReinitWindows)
+	{
+		if (!GetConMap(TRUE))
+		{
+			SetConEmuHkWindows(NULL, NULL);
+		}
+
+		if ((Parm->Flags & slsf_ReinitWindows) == Parm->Flags)
+		{
+			iRc = 0;
+			goto wrap;
+		}
+	}
 
 	if (Parm->Flags & slsf_AltServerStopped)
 	{

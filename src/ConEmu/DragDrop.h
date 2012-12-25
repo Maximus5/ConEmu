@@ -46,6 +46,7 @@ class CDragDrop :
 		virtual HRESULT __stdcall DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
 		virtual HRESULT __stdcall DragLeave(void);
 		void Drag(BOOL abClickNeed, COORD crMouseDC);
+		void DebugLog(LPCWSTR asInfo, BOOL abErrorSeverity=FALSE);
 		//IDataObject *mp_DataObject;
 		//bool mb_selfdrag;
 		//ForwardedPanelInfo *m_pfpi;

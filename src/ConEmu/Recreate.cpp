@@ -301,7 +301,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			if (pArgs->aRecreate == cra_RecreateTab)
 			{
 				//GCC hack. иначе не собирается
-				SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "About to recreate console");
+				SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "About to restart console");
 				SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
 				// Выровнять флажок по кнопке
 				GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
@@ -315,6 +315,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetDlgItemTextA(hDlg, IDC_RESTART_MSG,  "Create new console");
 
 				CheckDlgButton(hDlg, cbRunInNewWindow, (pArgs->aRecreate == cra_CreateWindow || !gpSet->isMulti) ? BST_CHECKED : BST_UNCHECKED);
+				EnableWindow(GetDlgItem(hDlg, cbRunInNewWindow), gpSet->isMulti);
 				//if (pArgs->aRecreate == cra_CreateWindow)
 				//{
 				//	SetWindowText(hDlg, L"ConEmu - Create new window");

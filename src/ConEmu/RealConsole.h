@@ -364,7 +364,7 @@ class CRealConsole
 		LPCTSTR GetTitle(bool abGetRenamed=false);
 		void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
 		//void GetConsoleCursorPos(COORD *pcr);
-		void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
+		void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr = NULL);
 		DWORD GetConsoleCP();
 		DWORD GetConsoleOutputCP();
 		DWORD GetConsoleMode();

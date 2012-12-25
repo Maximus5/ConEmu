@@ -416,8 +416,8 @@ class CConEmuMain :
 	public:
 		void RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon);
 		void RegisterMinRestore(bool abRegister);
-		void RegisterHoooks();
-		void UnRegisterHoooks(BOOL abFinal=FALSE);
+		void RegisterHooks();
+		void UnRegisterHooks(BOOL abFinal=FALSE);
 		void OnWmHotkey(WPARAM wParam);
 		void UpdateWinHookSettings();
 		void CtrlWinAltSpace();

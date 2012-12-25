@@ -180,7 +180,7 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 	else
 	{
 		gpSrv->guiSettings.cbSize = sizeof(ConEmuGuiMapping);
-		lbRc = LoadGuiSettings(gpSrv->guiSettings);
+		lbRc = LoadGuiSettings(gpSrv->guiSettings) && (gpSrv->guiSettingsChangeNum != gpSrv->guiSettings.nChangeNum);
 	}
 
 	if (lbRc)
@@ -3836,6 +3836,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		{
 			ReloadGuiSettings(NULL);
 			bConsoleVisible = IsWindowVisible(ghConEmuWndDC);
+			nLastConsoleActiveTick = GetTickCount();
 		}
 
 		if ((ghConWnd == gpSrv->guiSettings.hActiveCon) || (gpSrv->guiSettings.hActiveCon == NULL) || bConsoleVisible)

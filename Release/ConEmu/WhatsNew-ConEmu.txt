@@ -11,6 +11,24 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.12.25
+[!] GuiMacro engine upgraded to avoid ambiguity. Now there are C-Strings and Verbatim-Strings.
+    C-Strings: allows backslash-escape sequences, for example print("\ecd /d \"C:\\Users\"\n")
+    Verbatim-Strings: allows using backslashes without escapes, for example print(@"cd /d ""C:\Users""")
+[%] Due to a bug(?) in MS DOM saving GuiMacro with (Esc), for example print("\eexit\n"),
+    was caused erasing of ConEmu.xml file contents.
+[*] Group «Multi console» moved from «Tabs» page to «Appearance» page.
+[+] New option «Show buttons (toolbar) in tab bar» on «Appearance» page.
+[%] Issue 849: Transparency breaks on startup when «Hide caption» is on.
+[*] Debug build. Menu item «Dump used memory blocks» in «Debug» submenu.
+[*] Some internal changes.
+[%] Some Attach from Far Plugin bugfixes.
+[+] «App distinct» updated with new Cursor controls.
+[+] Shift+Arrows may start selection (new option on «Mark & Paste» and «App distinct» pages).
+    Shift+Left/Right starts text selection, Shift+Up/Down starts block selection.
+    Note! Shift+Arrows don't start selection in Far Manager.
+
+
 2012.12.16
 [+] Issue 846: New predefined color palette <Solarized>.
 [%] Sometimes console was not resized after maximizing ConEmu window. TechInfo: because of larget font size in *real console*. Auto-reducing automatically when possible.

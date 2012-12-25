@@ -79,7 +79,7 @@ protected:
 	void RedrawLock();
 	void RedrawUnlock();
 public:
-	void RedrawTabPanel();
+	void RedrawFrame();
 private:
 	//OSVERSIONINFO m_OSVer;
 #if 0

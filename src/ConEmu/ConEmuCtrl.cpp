@@ -81,28 +81,41 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, con
 
 	if (pHotKey && (pHotKey != ConEmuSkipHotKey))
 	{
-		// „тобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
-		if (((VkState & cvk_ALLMASK) == cvk_LAlt) || ((VkState & cvk_ALLMASK) == cvk_RAlt))
+		bool bEnabled = true;
+		if (pHotKey->Enabled)
 		{
-			if (pRCon && gpSet->isFixAltOnAltTab)
-				pRCon->PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
+			bEnabled = pHotKey->Enabled();
+			if (!bEnabled)
+			{
+				pHotKey = NULL;
+			}
 		}
 
-		// “еперь собственно действие
-		if (pHotKey->fkey)
+		if (pHotKey)
 		{
-			bool bApps = (VkState & cvk_Apps) == cvk_Apps;
-			if (bApps)
-				gpConEmu->SkipOneAppsRelease(true);
+			// „тобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
+			if (((VkState & cvk_ALLMASK) == cvk_LAlt) || ((VkState & cvk_ALLMASK) == cvk_RAlt))
+			{
+				if (pRCon && gpSet->isFixAltOnAltTab)
+					pRCon->PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
+			}
 
-			pHotKey->fkey(VkState, false, pHotKey, pRCon);
+			// “еперь собственно действие
+			if (pHotKey->fkey)
+			{
+				bool bApps = (VkState & cvk_Apps) == cvk_Apps;
+				if (bApps)
+					gpConEmu->SkipOneAppsRelease(true);
 
-			if (bApps && !isPressed(VK_APPS))
-				gpConEmu->SkipOneAppsRelease(false);
-		}
-		else
-		{
-			_ASSERTE(pHotKey->fkey!=NULL);
+				pHotKey->fkey(VkState, false, pHotKey, pRCon);
+
+				if (bApps && !isPressed(VK_APPS))
+					gpConEmu->SkipOneAppsRelease(false);
+			}
+			else
+			{
+				_ASSERTE(pHotKey->fkey!=NULL);
+			}
 		}
 	}
 

@@ -775,28 +775,41 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 	bsText = ::SysAllocString(asName);
 	hr = apAttrs->getNamedItem(bsText, &pValue);
 
+	BSTR bsValue = ::SysAllocString(asValue);
+	wchar_t* pszEsc = wcschr(bsValue, (wchar_t)27);
+	if (pszEsc != NULL)
+	{
+		_ASSERTE(wcschr(bsValue, (wchar_t)27) == NULL); // ” DOM сносит крышу, если писать "ESC" в значение
+		while ((pszEsc = wcschr(bsValue, (wchar_t)27)) != NULL)
+		{
+			*pszEsc = L'?';
+		}
+	}
+
 	if (FAILED(hr) || !pValue)
 	{
 		hr = mp_File->createAttribute(bsText, &pIXMLDOMAttribute);
-		::SysFreeString(bsText); bsText = NULL;
+		_ASSERTE(hr == S_OK);
 
 		if (SUCCEEDED(hr) && pIXMLDOMAttribute)
 		{
-			VARIANT vtValue; vtValue.vt = VT_BSTR; vtValue.bstrVal = ::SysAllocString(asValue);
+			VARIANT vtValue; vtValue.vt = VT_BSTR; vtValue.bstrVal = bsValue;
 			hr = pIXMLDOMAttribute->put_nodeValue(vtValue);
-			VariantClear(&vtValue);
+			_ASSERTE(hr == S_OK);
 			hr = apAttrs->setNamedItem(pIXMLDOMAttribute, &pValue); //-V519
+			_ASSERTE(hr == S_OK);
 			lbRc = SUCCEEDED(hr);
 		}
 	}
 	else if (SUCCEEDED(hr) && pValue)
 	{
-		::SysFreeString(bsText); bsText = NULL;
-		bsText = ::SysAllocString(asValue);
-		hr = pValue->put_text(bsText);
+		hr = pValue->put_text(bsValue);
+		_ASSERTE(hr == S_OK);
 		lbRc = SUCCEEDED(hr);
-		::SysFreeString(bsText); bsText = NULL;
 	}
+
+	::SysFreeString(bsText); bsText = NULL;
+	::SysFreeString(bsValue); bsValue = NULL;
 
 	if (pValue) { pValue->Release(); pValue = NULL; }
 

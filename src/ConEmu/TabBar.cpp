@@ -85,19 +85,19 @@ WARNING("TB_GETIDEALSIZE - awailable on XP only, use insted TB_GETMAXSIZE");
 #define TB_GETIDEALSIZE         (WM_USER + 99)
 #endif
 
-enum ToolbarMainBitmapIdx
-{
-	BID_FIST_CON = 0,
-	BID_LAST_CON = (MAX_CONSOLE_COUNT-1),
-	BID_NEWCON_IDX,
-	BID_ALTERNATIVE_IDX,
-	BID_MINIMIZE_IDX,
-	BID_MAXIMIZE_IDX,
-	BID_RESTORE_IDX,
-	BID_APPCLOSE_IDX,
-	BID_DUMMYBTN_IDX,
-	BID_TOOLBAR_LAST_IDX,
-};
+//enum ToolbarMainBitmapIdx
+//{
+//	BID_FIST_CON = 0,
+//	BID_LAST_CON = (MAX_CONSOLE_COUNT-1),
+//	BID_NEWCON_IDX,
+//	BID_ALTERNATIVE_IDX,
+//	BID_MINIMIZE_IDX,
+//	BID_MAXIMIZE_IDX,
+//	BID_RESTORE_IDX,
+//	BID_APPCLOSE_IDX,
+//	BID_DUMMYBTN_IDX,
+//	BID_TOOLBAR_LAST_IDX,
+//};
 
 #define POST_UPDATE_TIMEOUT 2000
 
@@ -1235,19 +1235,27 @@ void TabBarClass::Reposition()
 		if (mh_Toolbar)
 		{
 			nBarIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, 2, 0);
-			SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-			sz.cx += (gpSet->isHideCaptionAlways() ? gpSet->nToolbarAddSpace : 0);
-			lbWideEnough = (sz.cx + 150) <= client.right;
 
-			if (!lbWideEnough)
+			if (gpSet->isMultiShowButtons)
 			{
-				if (IsWindowVisible(mh_Toolbar))
-					SendMessage(mh_Rebar, RB_SHOWBAND, nBarIndex, 0);
+				SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+				sz.cx += (gpSet->isHideCaptionAlways() ? gpSet->nToolbarAddSpace : 0);
+				lbWideEnough = (sz.cx + 150) <= client.right;
+
+				if (!lbWideEnough)
+				{
+					if (IsWindowVisible(mh_Toolbar))
+						SendMessage(mh_Rebar, RB_SHOWBAND, nBarIndex, 0);
+				}
+				else
+				{
+					if (!IsWindowVisible(mh_Toolbar))
+						lbNeedShow = TRUE;
+				}
 			}
 			else
 			{
-				if (!IsWindowVisible(mh_Toolbar))
-					lbNeedShow = TRUE;
+				SendMessage(mh_Rebar, RB_SHOWBAND, nBarIndex, 0);
 			}
 		}
 
@@ -1316,7 +1324,7 @@ void TabBarClass::Reposition()
 
 void TabBarClass::UpdateToolbarPos()
 {
-	if (mh_Toolbar)
+	if (mh_Toolbar && gpSet->isMultiShowButtons)
 	{
 		SIZE sz;
 		SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
@@ -1390,7 +1398,7 @@ LRESULT TabBarClass::OnNotify(LPNMHDR nmhdr)
 
 	if (nmhdr->code == TBN_GETINFOTIP /*&& nmhdr->hwndFrom == mh_Toolbar*/)
 	{
-		if (!gpSet->isMulti)
+		if (!gpSet->isMultiShowButtons)
 			return 0;
 
 		LPNMTBGETINFOTIP pDisp = (LPNMTBGETINFOTIP)nmhdr;
@@ -1523,8 +1531,11 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	if (mh_Toolbar != (HWND)lParam)
 		return;
 
-	if (!gpSet->isMulti)
+	if (!gpSet->isMultiShowButtons)
+	{
+		_ASSERTE(gpSet->isMultiShowButtons);
 		return;
+	}
 
 	if (wParam == TID_ACTIVE_NUMBER)
 	{
@@ -1786,11 +1797,65 @@ void TabBarClass::OnAlternative(BOOL abAlternative)
 	SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_ALTERNATIVE, abAlternative);
 }
 
+void TabBarClass::OnShowButtonsChanged()
+{
+	if (!mh_Rebar)
+		return;
+	
+	//Reposition();
+
+	//bool bChanged = false;
+
+	if (gpSet->isMultiShowButtons && !mh_Toolbar)
+	{
+		if (CreateToolbar() != NULL)
+		{
+			REBARBANDINFO rbBand = {80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+
+			rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE | RBBIM_COLORS;
+			rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
+			rbBand.clrBack = GetSysColor(COLOR_BTNFACE);
+			rbBand.clrFore = GetSysColor(COLOR_BTNTEXT);
+
+			SIZE sz = {0,0};
+			SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+
+			// Set values unique to the band with the toolbar.
+			rbBand.wID        = 2;
+			rbBand.hwndChild  = mh_Toolbar;
+			rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
+			rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = sz.cy + mn_ThemeHeightDiff;
+
+			// Add the band that has the toolbar.
+			if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
+			{
+				DisplayLastError(_T("Can't initialize rebar (toolbar)"));
+			}
+		}
+	}
+	//else
+	//{
+	//	if (mh_Toolbar)
+	//	{
+	//		DestroyWindow(mh_Toolbar);
+	//		mh_Toolbar = NULL;
+	//		bChanged = true;
+	//	}
+	//}
+
+	//if (bChanged)
+	//{
+
+	Reposition();
+
+	//}
+}
+
 HWND TabBarClass::CreateToolbar()
 {
 	gpSetCls->CheckTheming();
 
-	if (!mh_Rebar || !gpSet->isMulti)
+	if (!mh_Rebar || !gpSet->isMultiShowButtons)
 		return NULL; // нет табов - нет и тулбара
 
 	if (mh_Toolbar)

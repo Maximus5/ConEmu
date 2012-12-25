@@ -806,9 +806,12 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 		return FALSE;
 	}
 
+	WARNING("TODO: Support horizontal scroll");
+
 	//2010-03-03 переделано для аттача через пайп
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = rStartStop->sbi;
-	BOOL bCurBufHeight = rStartStop->bRootIsCmdExe || mp_RBuf->isScroll() || mp_RBuf->BufferHeightTurnedOn(&lsbi);
+	// Remove bRootIsCmdExe&isScroll() from expression. Use REAL scrolls from REAL console
+	BOOL bCurBufHeight = /*rStartStop->bRootIsCmdExe || mp_RBuf->isScroll() ||*/ mp_RBuf->BufferHeightTurnedOn(&lsbi);
 
 	// Смотрим реальный буфер - изменилось ли наличие прокрутки?
 	if (mp_RBuf->isScroll() != bCurBufHeight)
@@ -1356,7 +1359,7 @@ bool CRealConsole::DeleteWordKeyPress(bool bTestOnly /*= false*/)
 		return false;
 
 	const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
-	if (pApp == NULL)
+	if (!pApp || !pApp->CTSDeleteLeftWord())
 		return false;
 
 	if (!bTestOnly)
@@ -1364,7 +1367,7 @@ bool CRealConsole::DeleteWordKeyPress(bool bTestOnly /*= false*/)
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_BSDELETEWORD, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PROMPTACTION));
 		if (pIn)
 		{
-			pIn->Prompt.Force = (pApp->CTSClickPromptPosition() == 1);
+			pIn->Prompt.Force = (pApp->CTSDeleteLeftWord() == 1);
 			pIn->Prompt.BashMargin = pApp->CTSBashMargin();
 
 			CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
@@ -3097,7 +3100,7 @@ BOOL CRealConsole::StartProcess()
 			_ASSERTE(mh_MainSrv==NULL);
 			SafeCloseHandle(mh_MainSrv);
 			_ASSERTE(isDetached());
-			SetConStatus(L"Recreate console failed");
+			SetConStatus(L"Restart console failed");
 		}
 
 		//Box("Cannot execute the command.");
@@ -7827,7 +7830,7 @@ int CRealConsole::GetTabCount(BOOL abVisibleOnly /*= FALSE*/)
 	WARNING("После перехода на «свои» табы отдавать и те, которые сейчас недоступны");
 	if (gpSet->isTabsInCaption)
 	{
-		_ASSERTE(FALSE);
+		//_ASSERTE(FALSE);
 	}
 	#endif
 	
@@ -8053,7 +8056,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	WARNING("После перевода табов на ручную отрисовку - эту часть с амперсандами можно будет убрать");
 	if (gpSet->isTabsInCaption)
 	{
-		_ASSERTE(FALSE);
+		//_ASSERTE(FALSE);
 	}
 	#endif
 
@@ -10260,10 +10263,15 @@ bool CRealConsole::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
 	return mp_ABuf->GetConsoleSelectionInfo(sel);
 }
 
-void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
+void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr)
 {
 	if (!this) return;
-	mp_ABuf->ConsoleCursorInfo(ci);
+
+	if (ci)
+		mp_ABuf->ConsoleCursorInfo(ci);
+
+	if (cr)
+		mp_ABuf->ConsoleCursorPos(cr);
 }
 
 void CRealConsole::GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)

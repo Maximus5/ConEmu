@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTROVL(s) //DEBUGSTR(s)
 #define DEBUGSTRBACK(s) //DEBUGSTR(s)
 #define DEBUGSTROVER(s) DEBUGSTR(s)
+#define DEBUGSTRSTEP(s) DEBUGSTR(s)
 
 //#define ForwardedPanelInfo
 
@@ -68,6 +69,15 @@ CDragDrop::CDragDrop()
 	mn_ExtractIconsTID = 0;
 	mh_ExtractIcons = NULL;
 	InitializeCriticalSection(&m_CrThreads);
+}
+
+void CDragDrop::DebugLog(LPCWSTR asInfo, BOOL abErrorSeverity/*=FALSE*/)
+{
+	gpConEmu->DebugStep(asInfo);
+	if (asInfo)
+	{
+		DEBUGSTRSTEP(asInfo);
+	}
 }
 
 CDragDrop::~CDragDrop()
@@ -144,7 +154,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 
 	if (!gpSet->isDragEnabled /*|| isInDrag */|| gpConEmu->isDragging())
 	{
-		gpConEmu->DebugStep(gpSet->isDragEnabled
+		DebugLog(gpSet->isDragEnabled
 		                    ? _T("DnD: Already in Drag loop") : _T("DnD: Drag disabled"),
 		                    gpSet->isDragEnabled);
 		goto wrap;
@@ -159,7 +169,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 
 	if (!PrepareDrag(abClickNeed, crMouseDC, &dwAllowedEffects))
 	{
-		//gpConEmu->DebugStep(_T("DnD: PrepareDrag failed!")); -- уже показана
+		DEBUGSTRSTEP(_T("DnD: PrepareDrag failed!"));
 		MCHKHEAP
 	}
 	else
@@ -173,7 +183,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 		{
 			pds->bInDrag = TRUE;
 			wchar_t szStep[255]; _wsprintf(szStep, countof(szStep), L"Posting DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)mp_DataObject, (DWORD)pDropSource);
-			gpConEmu->DebugStep(szStep);
+			DebugLog(szStep);
 			PostMessage(pds->hWnd, MSG_STARTDRAG, dwAllowedEffects, (LPARAM)pDropSource);
 			pDropSource = NULL; // чтобы ниже не от-release-илось
 		}
@@ -187,7 +197,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 			{
 #endif
 				wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)mp_DataObject, (DWORD)pDropSource); //-V205
-				gpConEmu->DebugStep(szStep);
+				DebugLog(szStep);
 				SAFETRY
 				{
 					dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
@@ -207,7 +217,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 						//case E_UNSPEC: lstrcat(szStep, L" (E_UNSPEC)"); break;
 				}
 
-				gpConEmu->DebugStep(szStep, (dwResult!=S_OK && dwResult!=DRAGDROP_S_CANCEL && dwResult!=DRAGDROP_S_DROP));
+				DebugLog(szStep, (dwResult!=S_OK && dwResult!=DRAGDROP_S_CANCEL && dwResult!=DRAGDROP_S_DROP));
 #ifdef UNLOCKED_DRAG
 			}
 		}
@@ -577,7 +587,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 					if ((nFolderLen + 1) >= (INT_PTR)countof(szSubFolder))
 					{
 						_wsprintf(sUnknownError, SKIPLEN(countof(sUnknownError)) L"Drag item #%i contains too long path!", mn_CurFile+1);
-						gpConEmu->DebugStep(sUnknownError, TRUE);
+						DebugLog(sUnknownError, TRUE);
 						free(pszNewFileName); pszNewFileName = NULL;
 						continue;
 					}
@@ -748,7 +758,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 				ReportUnknownData(pDataObject, sUnknownError);
 			}
 
-			gpConEmu->DebugStep(NULL, TRUE);
+			DebugLog(NULL, TRUE);
 			goto wrap;
 		} // если удалось получить "pDataObject->GetData(&fmtetc, &stgMedium)" - уже вышли из функции
 	}
@@ -1140,7 +1150,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		return S_OK; // ничего нет, выходим
 	}
 
-	gpConEmu->DebugStep(_T("DnD: Drop starting"));
+	DebugLog(_T("DnD: Drop starting"));
 
 	if (lbDropFileNamesOnly)
 	{
@@ -1241,7 +1251,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 
 		sfop->fop.fFlags = lbMultiDest ? FOF_MULTIDESTFILES : 0;
 		//sfop->fop.fFlags=FOF_SIMPLEPROGRESS; -- пусть полностью показывает
-		gpConEmu->DebugStep(_T("DnD: Shell operation starting"));
+		DebugLog(_T("DnD: Shell operation starting"));
 		ThInfo th;
 		th.hThread = CreateThread(NULL, 0, CDragDrop::ShellOpThreadProc, sfop, 0, &th.dwThreadId);
 
@@ -1256,7 +1266,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 			LeaveCriticalSection(&m_CrThreads);
 		}
 
-		gpConEmu->DebugStep(NULL);
+		DebugLog(NULL);
 	}
 
 	return S_OK; //1;
@@ -1367,7 +1377,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 	else if (!gpSet->isDropEnabled && !gpConEmu->isDragging())
 	{
 		*pdwEffect = DROPEFFECT_NONE;
-		gpConEmu->DebugStep(_T("DnD: Drop disabled"));
+		DebugLog(_T("DnD: Drop disabled"));
 		hr = S_FALSE;
 	}
 	else if (m_pfpi==NULL)
@@ -1377,13 +1387,13 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 	else if (CVConGroup::GetActiveVCon(&VCon) < 0)
 	{
 		*pdwEffect = DROPEFFECT_NONE;
-		gpConEmu->DebugStep(_T("DnD: No Active VCon"));
+		DebugLog(_T("DnD: No Active VCon"));
 		hr = S_FALSE;
 	}
 	else
 	{
 		TODO("Если drop идет ПОД панели - впечатать путь в командную строку");
-		//gpConEmu->DebugStep(_T("DnD: DragOverInt starting"));
+		DEBUGSTRSTEP(_T("DnD: DragOverInt starting"));
 		POINT ptCur; ptCur.x = pt.x; ptCur.y = pt.y;
 #ifdef _DEBUG
 		GetCursorPos(&ptCur);
@@ -1489,7 +1499,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 		}
 	}
 
-	//gpConEmu->DebugStep(_T("DnD: DragOverInt ok"));
+	DEBUGSTRSTEP(_T("DnD: DragOverInt ok"));
 	return hr;
 }
 
@@ -1552,7 +1562,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 	}
 	else
 	{
-		gpConEmu->DebugStep(_T("DnD: Drop disabled"));
+		DebugLog(_T("DnD: Drop disabled"));
 	}
 
 	#ifdef USE_DROP_HELPER

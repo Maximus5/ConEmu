@@ -1539,19 +1539,14 @@ DWORD CConEmuMain::GetWindowStyleEx()
 	}
 	else
 	{
-		styleEx |= WS_EX_APPWINDOW;
-
 		if (gpSet->nTransparent < 255 /*&& !gpSet->isDesktopMode*/)
 			styleEx |= WS_EX_LAYERED;
 
 		if (gpSet->isAlwaysOnTop)
 			styleEx |= WS_EX_TOPMOST;
 
-		if (!gpSet->isWindowOnTaskBar(true))
-		{
-			styleEx &= ~WS_EX_APPWINDOW;
-			//styleEx |= WS_EX_TOOLWINDOW;
-		}
+		if (gpSet->isWindowOnTaskBar(true))
+			styleEx |= WS_EX_APPWINDOW;
 
 		#ifndef CHILD_DESK_MODE
 		if (gpSet->isDesktopMode)
@@ -2190,6 +2185,10 @@ void CConEmuMain::CreateGuiAttachMapping(DWORD nGuiAppPID)
 void CConEmuMain::UpdateGuiInfoMapping()
 {
 	m_GuiInfo.nProtocolVersion = CESERVER_REQ_VER;
+
+	static DWORD ChangeNum = 0; ChangeNum++; if (!ChangeNum) ChangeNum = 1;
+	m_GuiInfo.nChangeNum = ChangeNum;
+
 	m_GuiInfo.hGuiWnd = ghWnd;
 	m_GuiInfo.nGuiPID = GetCurrentProcessId();
 	
@@ -3968,7 +3967,9 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= 0*/)
 	//   many child windows (outprocess), which don't support
 	//   WM_PRINTCLIENT. So, our choice - "trim" window with RGN
 	// When Caption is visible - Windows animates window itself.
-	if (!gpSet->isQuakeStyle && gpSet->isCaptionHidden())
+	// Also, animation brakes transparency
+	DWORD nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
+	if (!gpSet->isQuakeStyle && gpSet->isCaptionHidden() && !(nStyleEx & WS_EX_LAYERED) )
 	{
 		// Well, Caption is hidden, Windows does not animates our window.
 		if (anCmdShow == SW_HIDE)
@@ -4626,6 +4627,9 @@ wrap:
 	dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 	#endif
 
+	// Transparency styles may was changed occasionally, check them
+	OnTransparent();
+
 	TODO("Что-то курсор иногда остается APPSTARTING...");
 	SetCursor(LoadCursor(NULL,IDC_ARROW));
 	//PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
@@ -4918,7 +4922,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 	if (!abPosted)
 	{
 		if (gpSetCls->isAdvLogging)
-			CVConGroup::LogString("OnConsoleResize(abPosted==false)", TRUE);
+			LogString("OnConsoleResize(abPosted==false)", TRUE);
 
 		if (!lbPosted)
 		{
@@ -4938,7 +4942,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 	if (isIconic())
 	{
 		if (gpSetCls->isAdvLogging)
-			CVConGroup::LogString("OnConsoleResize ignored, because of iconic");
+			LogString("OnConsoleResize ignored, because of iconic");
 
 		return; // если минимизировано - ничего не делать
 	}
@@ -4958,7 +4962,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 	{
 		char szInfo[160]; wsprintfA(szInfo, "OnConsoleResize: mouse.state=0x%08X, SizingToDo=%i, IsSizing=%i, LBtnPressed=%i, gbPostUpdateWindowSize=%i",
 		                            mouse.state, (int)lbSizingToDo, (int)lbIsSizing, (int)lbLBtnPressed, (int)gbPostUpdateWindowSize);
-		CVConGroup::LogString(szInfo, TRUE);
+		LogString(szInfo, TRUE);
 	}
 
 	CVConGroup::OnConsoleResize(lbSizingToDo);
@@ -6298,15 +6302,18 @@ void CConEmuMain::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL C
 
 void CConEmuMain::DebugStep(LPCWSTR asMsg, BOOL abErrorSeverity/*=FALSE*/)
 {
+	if (asMsg && *asMsg)
+	{
+		// Если ведется ЛОГ - выбросить в него
+		LogString(asMsg);
+	}
+
 	if (ghWnd)
 	{
 		static bool bWasDbgStep, bWasDbgError;
 
 		if (asMsg && *asMsg)
 		{
-			// Если ведется ЛОГ - выбросить в него
-			LogString(asMsg);
-
 			if (gpSet->isDebugSteps || abErrorSeverity)
 			{
 				bWasDbgStep = true;
@@ -6820,7 +6827,7 @@ void CConEmuMain::RegisterHotKeys()
 
 	if (!mh_LLKeyHook)
 	{
-		RegisterHoooks();
+		RegisterHooks();
 	}
 }
 
@@ -6865,7 +6872,7 @@ void CConEmuMain::UpdateWinHookSettings()
 	}
 }
 
-void CConEmuMain::RegisterHoooks()
+void CConEmuMain::RegisterHooks()
 {
 //	#ifndef _DEBUG
 	// -- для GUI режима таки нужно
@@ -6882,10 +6889,10 @@ void CConEmuMain::RegisterHoooks()
 	{
 		if (gpSetCls->isAdvLogging)
 		{
-			LogString("CConEmuMain::RegisterHoooks() skipped, cause of !HasSingleWinHotkey()", TRUE);
+			LogString("CConEmuMain::RegisterHooks() skipped, cause of !HasSingleWinHotkey()", TRUE);
 		}
 
-		UnRegisterHoooks();
+		UnRegisterHooks();
 
 		return;
 	}
@@ -6899,7 +6906,7 @@ void CConEmuMain::RegisterHoooks()
 		{
 			if (gpSetCls->isAdvLogging)
 			{
-				LogString("CConEmuMain::RegisterHoooks() skipped, cause of !isKeyboardHooks()", TRUE);
+				LogString("CConEmuMain::RegisterHooks() skipped, cause of !isKeyboardHooks()", TRUE);
 			}
 		}
 		else
@@ -6950,7 +6957,7 @@ void CConEmuMain::RegisterHoooks()
 						if (gpSetCls->isAdvLogging)
 						{
 							char szErr[128];
-							_wsprintfA(szErr, SKIPLEN(countof(szErr)) "CConEmuMain::RegisterHoooks() failed, Code=%u", dwErr);
+							_wsprintfA(szErr, SKIPLEN(countof(szErr)) "CConEmuMain::RegisterHooks() failed, Code=%u", dwErr);
 							LogString(szErr, TRUE);
 						}
 						_ASSERTE(mh_LLKeyHook!=NULL);
@@ -6960,7 +6967,7 @@ void CConEmuMain::RegisterHoooks()
 						if (pKeyHook) *pKeyHook = mh_LLKeyHook;
 						if (gpSetCls->isAdvLogging)
 						{
-							LogString("CConEmuMain::RegisterHoooks() succeeded", TRUE);
+							LogString("CConEmuMain::RegisterHooks() succeeded", TRUE);
 						}
 					}
 				}
@@ -6969,7 +6976,7 @@ void CConEmuMain::RegisterHoooks()
 			{
 				if (gpSetCls->isAdvLogging)
 				{
-					LogString("CConEmuMain::RegisterHoooks() failed, cause of !mh_LLKeyHookDll", TRUE);
+					LogString("CConEmuMain::RegisterHooks() failed, cause of !mh_LLKeyHookDll", TRUE);
 				}
 			}
 		}
@@ -6978,7 +6985,7 @@ void CConEmuMain::RegisterHoooks()
 	{
 		if (gpSetCls->isAdvLogging >= 2)
 		{
-			LogString("CConEmuMain::RegisterHoooks() skipped, already was set", TRUE);
+			LogString("CConEmuMain::RegisterHooks() skipped, already was set", TRUE);
 		}
 	}
 }
@@ -7027,10 +7034,10 @@ void CConEmuMain::UnRegisterHotKeys(BOOL abFinal/*=FALSE*/)
 		}
 	}
 
-	UnRegisterHoooks(abFinal);
+	UnRegisterHooks(abFinal);
 }
 
-void CConEmuMain::UnRegisterHoooks(BOOL abFinal/*=FALSE*/)
+void CConEmuMain::UnRegisterHooks(BOOL abFinal/*=FALSE*/)
 {
 	if (mh_LLKeyHook)
 	{
@@ -7039,7 +7046,7 @@ void CConEmuMain::UnRegisterHoooks(BOOL abFinal/*=FALSE*/)
 
 		if (gpSetCls->isAdvLogging)
 		{
-			LogString("CConEmuMain::UnRegisterHoooks() done", TRUE);
+			LogString("CConEmuMain::UnRegisterHooks() done", TRUE);
 		}
 	}
 
@@ -7918,6 +7925,17 @@ void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 			return; // менять не нужно
 	}
 
+	if (gpSetCls->isAdvLogging)
+	{
+		char szInfo[128];
+		RECT rcBox = {};
+		int nRgn = hRgn ? GetRgnBox(hRgn, &rcBox) : NULLREGION;
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo))
+			nRgn ? "SetWindowRgn(0x%08X, <%u> {%i,%i}-{%i,%i})" : "SetWindowRgn(0x%08X, NULL)",
+			ghWnd, nRgn, rcBox.left, rcBox.top, rcBox.right, rcBox.bottom);
+		LogString(szInfo);
+	}
+
 	// Облом получается при двукратном SetWindowRgn(ghWnd, NULL, TRUE);
 	// Причем после следующего ресайза - рамка приходит в норму
 	bool b = SetDontPreserveClient(true);
@@ -7944,7 +7962,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			if ((idChild == CONSOLE_APPLICATION_16BIT) && gpSetCls->isAdvLogging)
 			{
 				char szInfo[64]; wsprintfA(szInfo, "NTVDM started, PID=%i\n", idObject);
-				CVConGroup::LogString(szInfo, TRUE);
+				gpConEmu->LogString(szInfo, TRUE);
 			}
 
 			#ifdef _DEBUG
@@ -7960,7 +7978,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			if ((idChild == CONSOLE_APPLICATION_16BIT) && gpSetCls->isAdvLogging)
 			{
 				char szInfo[64]; wsprintfA(szInfo, "NTVDM stopped, PID=%i\n", idObject);
-				CVConGroup::LogString(szInfo, TRUE);
+				gpConEmu->LogString(szInfo, TRUE);
 			}
 
 			#ifdef _DEBUG
@@ -10735,11 +10753,21 @@ void CConEmuMain::OnHideCaption()
 		//}
 	}
 
+	if (IsWindowVisible(ghWnd))
+	{
+		// Refresh JIC
+		RedrawFrame();
+		// Status bar and others
+		InvalidateRect(ghWnd, NULL, TRUE);
+	}
+
 	if (changeFromWindowMode == wmNotChanging)
 	{
 		UpdateWindowRgn();
 		ReSize(FALSE);
 	}
+
+	//OnTransparent();
 }
 
 void CConEmuMain::OnGlobalSettingsChanged()
@@ -12337,6 +12365,14 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		return 0;
 	}
 
+	LRESULT lRc = 0;
+
+	#if defined(CONEMU_TABBAR_EX)
+	if (mp_TabBar->OnMouse(hWnd, messg, wParam, lParam, lRc))
+		return lRc;
+	#endif
+
+
 	//2010-05-20 все-таки будем ориентироваться на lParam, потому что
 	//  только так ConEmuTh может передать корректные координаты
 	//POINT ptCur = {-1, -1}; GetCursorPos(&ptCur);
@@ -12413,7 +12449,6 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 
 	// Обработать клики на StatusBar
-	LRESULT lRc = 0;
 	if (mp_Status->ProcessStatusMessage(hWnd, messg, wParam, lParam, ptCurClient, lRc))
 		return lRc;
 
@@ -14964,9 +14999,9 @@ void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*=
 	}
 
 	TODO("EnableBlurBehind: tabs and toolbar must be rewritten, all parts of GUI must be drawn with Alpha channel");
-#ifdef _DEBUG
-	EnableBlurBehind((nAlpha < 255));
-#endif
+	#ifdef _DEBUG
+	//EnableBlurBehind((nAlpha < 255));
+	#endif
 
 	// return true - when state was changes
 	if (SetTransparent(ghWnd, nAlpha, bColorKey, gpSet->nColorKeyValue, bForceLayered))
@@ -15009,11 +15044,11 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 			SetLayeredWindowAttributes(ahWnd, 0, 255, LWA_ALPHA);
 			SetWindowStyleEx(ahWnd, dwExStyle);
 			lbChanged = true;
-			CVConGroup::LogString("Transparency was disabled");
+			LogString("Transparency: Disabling WS_EX_LAYERED");
 		}
 		else
 		{
-			CVConGroup::LogString("Transparency was already disabled");
+			LogString("Transparency: WS_EX_LAYERED was already disabled");
 		}
 	}
 	else
@@ -15024,7 +15059,11 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 			SetWindowStyleEx(ahWnd, dwExStyle);
 			bNeedRedrawOp = TRUE;
 			lbChanged = true;
-			CVConGroup::LogString("Enabling WS_EX_LAYERED");
+			LogString("Transparency: Enabling WS_EX_LAYERED");
+		}
+		else
+		{
+			LogString("Transparency: WS_EX_LAYERED was already enabled");
 		}
 
 		DWORD nNewFlags = (((nTransparent < 255) || abForceLayered) ? LWA_ALPHA : 0) | (abColorKey ? LWA_COLORKEY : 0);
@@ -15032,21 +15071,29 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 		BYTE nCurAlpha = 0;
 		DWORD nCurFlags = 0;
 		COLORREF nCurColorKey = 0;
+		BOOL bGet = FALSE;
+		if (_GetLayeredWindowAttributes)
+			bGet = _GetLayeredWindowAttributes(ahWnd, &nCurColorKey, &nCurAlpha, &nCurFlags);
 
 		if (lbChanged
-			|| (!_GetLayeredWindowAttributes || !(_GetLayeredWindowAttributes(ahWnd, &nCurColorKey, &nCurAlpha, &nCurFlags)))
+			|| (!bGet)
 			|| (nCurAlpha != nTransparent) || (nCurFlags != nNewFlags)
 			|| (abColorKey && (nCurColorKey != acrColorKey)))
 		{
 			lbChanged = true;
-			SetLayeredWindowAttributes(ahWnd, acrColorKey, nTransparent, nNewFlags);
+			BOOL bSet = SetLayeredWindowAttributes(ahWnd, acrColorKey, nTransparent, nNewFlags);
 			if (gpSetCls->isAdvLogging)
 			{
 				wchar_t szInfo[128];
-				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetLayeredWindowAttributes(0x%08X, 0x%08X, %u, 0x%X)",
-					(DWORD)ahWnd, acrColorKey, nTransparent, nNewFlags);
-				CVConGroup::LogString(szInfo);
+				DWORD nErr = bSet ? 0 : GetLastError();
+				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Transparency: Set(0x%08X, 0x%08X, %u, 0x%X) -> %u:%u",
+					(DWORD)ahWnd, acrColorKey, nTransparent, nNewFlags, bSet, nErr);
+				LogString(szInfo);
 			}
+		}
+		else
+		{
+			LogString(L"Transparency: Attributes were not changed");
 		}
 
 		// После смены стиля (не было альфа - появилась альфа) измененное окно "выносится наверх"

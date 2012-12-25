@@ -534,8 +534,6 @@
 #define rbComspec_AppBit                2158
 #define rbComspec_x32                   2159
 #define cbComspecUpdateEnv              2160
-#define cbMultiLeaveOnClose             2161
-#define cbComspec                       2162
 #define cbComspecTest                   2162
 #define gbFeatureMisc                   2163
 #define gbFeatureAppear                 2164
@@ -818,8 +816,6 @@
 #define cbClipStartTextSelection        2459
 #define lbClipStartBlockSelection       2460
 #define lbClipStartTextSelection        2461
-#define vkClipStartBlockSelection       2462
-#define vkClipStartTextSelection        2463
 #define cbQuakeAutoHide                 2466
 #define cbFullscreenNoBars              2468
 #define cbFullscreenFixedConSize        2469
@@ -878,7 +874,6 @@
 #define rbDefaultTerminalConfNever      2521
 #define vkDeleteLeftWord                2522
 #define cbCTSDeleteLeftWord             2526
-#define lbCTSShiftArrowStart            2528
 #define lbCTSFindIdx                    2529
 #define rCursorH                        2530
 #define rCursorV                        2531
@@ -898,8 +893,16 @@
 #define cbInactiveCursorBlink           2545
 #define vkEscNoConsoles                 2546
 #define cbDefaultTerminalStartup        2547
-#define IDC_CHECK1                      2548
-#define cbMultiHideOnClose              2548
+#define cbMultiShowButtons              2549
+#define rbMultiLastClose                2550
+#define rbMultiLastLeave                2551
+#define rbMultiLastTSA                  2552
+#define cbCTSShiftArrowStartSel         2553
+#define vkCTSShiftLeft                  2554
+#define vkCTSShiftRight                 2555
+#define vkCTSShiftUp                    2556
+#define vkCTSShiftDown                  2557
+#define gbSelectingOverride             2558
 
 // Next default values for new objects
 // 
@@ -907,7 +910,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2549
+#define _APS_NEXT_CONTROL_VALUE         2559
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

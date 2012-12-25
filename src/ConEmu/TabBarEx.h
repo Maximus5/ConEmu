@@ -36,38 +36,41 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(CONEMU_TABBAR_EX)
 
-//ПОКА ТУЛБАРА НЕТ
-#undef USE_CONEMU_TOOLBAR
+#define USE_CONEMU_TOOLBAR
 
 
 #include "Header.h"
 #include "../common/WinObjects.h"
 #include "TabID.h"
 #include "DwmHelper.h"
+#include "ToolBarClass.h"
 
 //#define CONEMUMSG_UPDATETABS _T("ConEmuMain::UpdateTabs")
 
 #define HT_CONEMUTAB HTBORDER
 
-enum ToolbarCommandIdx
-{
-	TID_ACTIVE_NUMBER = 1,
-	TID_CREATE_CON,
-	TID_ALTERNATIVE,
-	TID_SCROLL,
-	TID_MINIMIZE,
-	TID_MAXIMIZE,
-	TID_APPCLOSE,
-	TID_COPYING,
-	TID_MINIMIZE_SEP = 110,
-};
+//enum ToolbarCommandIdx
+//{
+//	TID_ACTIVE_NUMBER = 1,
+//	TID_CREATE_CON,
+//	TID_ALTERNATIVE,
+//	TID_SCROLL,
+//	TID_MINIMIZE,
+//	TID_MAXIMIZE,
+//	TID_APPCLOSE,
+//	TID_COPYING,
+//	TID_MINIMIZE_SEP = 110,
+//};
 
 class TabBarClass
 {
 public:
 	TabBarClass();
 	virtual ~TabBarClass();
-	
+
+protected:
+	void InitToolbar();
+public:
 	//bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags);
 	void Retrieve();
 	void Reset();
@@ -100,7 +103,8 @@ public:
 	//void OnNewConPopupMenu(POINT* ptWhere = NULL, DWORD nFlags = 0);
 	//void OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos);
 	void OnCommand(WPARAM wParam, LPARAM lParam);
-	void OnMouse(int message, int x, int y);
+	bool OnMouse(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult);
+	void OnShowButtonsChanged();
 
 	// Переключение табов
 	void Switch(BOOL abForward, BOOL abAltStyle=FALSE);
@@ -116,7 +120,7 @@ public:
 	void GetActiveTabRect(RECT* rcTab);
 
 	// Из Samples\Tabs
-	bool ProcessTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult);
+	bool ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult);
 	int GetCurSel();
 	int GetHoverTab();
 	int GetItemCount();
@@ -133,13 +137,26 @@ public:
 	void ShowTabError(LPCTSTR asInfo, int tabIndex);
 	bool Toolbar_GetBtnRect(int nCmd, RECT* rcBtnRect);
 
+public:
+	CToolBarClass* mp_Toolbar;
+	//int mn_ToolbarBmp;
+	//SIZE m_ToolbarBmpSize;
+	//int mn_ToolPaneConsole, mn_ToolPaneOptions;
+	//int mn_ToolCmdActiveCon, mn_ToolCmdNewCon, mn_ToolCmdBuffer;
+	static void OnToolbarCommand(LPARAM lParam, int anPaneID, int anCmd, bool abArrow, POINT ptWhere);
+	static void OnToolbarMenu(LPARAM lParam, int anPaneID, int anCmd, POINT ptWhere);
+	static void OnToolBarDraw(LPARAM lParam, HDC hdc, const RECT& rc, int nPane, int nCmd, DWORD nFlags);
+
 protected:
+	RECT mrc_TabsClient; // координаты в клиентской(!) области ConEmu панели табов и тулбара
+	RECT mrc_Tabs, mrc_Caption, mrc_Toolbar;
+
 	bool mb_Active; // режим автоскрытия табов?
 	bool mb_UpdateModified;
 	int mn_ActiveTab; // активная вкладка (белый фон)
 	int mn_HoverTab;  // пассивная вкладка под мышиным курсором (более светлая, чем просто пассивная)
 	CTabStack m_Tabs, m_TabStack;
-	RECT mrc_Caption, mrc_Tabs, mrc_Toolbar;
+	
 	bool mb_ToolbarFit;
 	int mn_InUpdate;
 	int GetMainIcon(const CTabID* pTab);
@@ -159,6 +176,7 @@ private:
 		clrDisabledText, //RGB(0,0,0);
 		clrDisabledTextShadow, //RGB(0,0,0);
 		clrBorder, //RGB(107,165,189);
+		clrHoverBorder, //RGB(148,148,165);
 		clrInactiveBorder, //RGB(148,148,165);
 
 		clrEdgeLeft, //RGB(255,255,247);
@@ -181,6 +199,7 @@ private:
 	HPEN     mh_Pens[30], mh_OldPen;
 	HBRUSH   mh_Brushes[30], mh_OldBrush;
 	HFONT    mh_Font, mh_OldFont;
+	void PreparePalette();
 	void CreateStockObjects(HDC hdc, const RECT &rcTabs);
 	void DeleteStockObjects(HDC hdc);
 	BITMAPINFOHEADER bi;
@@ -193,9 +212,13 @@ private:
 	void PaintCaption_2k(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
 	void PaintCaption_XP(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
 	void PaintCaption_Aero(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
+	void PaintCaption_Win8(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
 	void PaintCaption_Icon(HDC hdc, int X, int Y);
 	void PaintTabs_Common(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
 	void PaintTab_Common(HDC hdcPaint, RECT rcTab, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover);
+	void PaintTab_VS2008(HDC hdcPaint, RECT rcTab, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover);
+	void PaintTab_Win8(HDC hdcPaint, RECT rcTab, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover);
+	void PaintTab_Text(HDC hdcPaint, RECT rcText, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover);
 
 	BOOL mb_PostUpdateCalled, mb_PostUpdateRequested;
 	DWORD mn_PostUpdateTick;

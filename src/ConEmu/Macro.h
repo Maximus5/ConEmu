@@ -31,8 +31,53 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#define GUI_MACRO_VERSION 2
 
 class CRealConsole;
+
+struct GuiMacro;
+struct GuiMacroArg;
+
+enum GuiMacroArgType
+{
+	gmt_Int,
+	gmt_Hex,
+	gmt_Str,
+	gmt_VStr,
+	gmt_Fn, // Reserved
+};
+
+struct GuiMacroArg
+{
+	GuiMacroArgType Type;
+
+	#ifdef _WIN64
+	DWORD Pad;
+	#endif
+
+	union
+	{
+		int Int;
+		LPWSTR Str;
+		GuiMacro* Macro;
+	};
+};
+
+struct GuiMacro
+{
+	size_t  cbSize;
+	LPCWSTR szFunc;
+	wchar_t chFuncTerm; // L'(', L':', L' ' - delimiter between func name and arguments
+
+	size_t  argc;
+	GuiMacroArg* argv;
+
+	wchar_t* AsString();
+	bool GetIntArg(size_t idx, int& val);
+	bool GetStrArg(size_t idx, LPWSTR& val);
+	bool IsIntArg(size_t idx);
+	bool IsStrArg(size_t idx);
+};
 
 
 class CConEmuMacro
@@ -44,60 +89,65 @@ class CConEmuMacro
 	public:
 		// Общая функция, для обработки любого известного макроса
 		static LPWSTR ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon);
+		// Конвертация из "старого" в "новый" формат
+		static LPWSTR ConvertMacro(LPCWSTR asMacro, BYTE FromVersion, bool bShowErrorTip = true);
 	protected:
 		// Функции для парсера параметров
-		static LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString);
+		static LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim = false);
 		static LPWSTR GetNextArg(LPWSTR& rsArguments, LPWSTR& rsArg);
 		static LPWSTR GetNextInt(LPWSTR& rsArguments, int& rnValue);
 		static void SkipWhiteSpaces(LPWSTR& rsString);
+		static GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg);
 	public:
 		// Теперь - собственно макросы
 
 		// Закрыть/прибить текущую консоль
-		static LPWSTR Close(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR Close(GuiMacro* p, CRealConsole* apRCon);
 		// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
-		static LPWSTR FindEditor(LPWSTR asArgs, CRealConsole* apRCon);
-		static LPWSTR FindViewer(LPWSTR asArgs, CRealConsole* apRCon);
-		static LPWSTR FindFarWindow(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR FindEditor(GuiMacro* p, CRealConsole* apRCon);
+		static LPWSTR FindViewer(GuiMacro* p, CRealConsole* apRCon);
+		static LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon);
 		static LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon); // helper, это не макро-фукнция
 		// Изменить имя основного шрифта. string
-		static LPWSTR FontSetName(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR FontSetName(GuiMacro* p, CRealConsole* apRCon);
 		// Изменить размер шрифта. int nRelative, int N
-		static LPWSTR FontSetSize(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR FontSetSize(GuiMacro* p, CRealConsole* apRCon);
 		// Проверка, есть ли ConEmu GUI. Функцию мог бы и сам плагин обработать, но для "общности" возвращаем "Yes" здесь
-		static LPWSTR IsConEmu(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR IsConEmu(GuiMacro* p, CRealConsole* apRCon);
 		// Проверка, активна ли RealConsole
-		static LPWSTR IsConsoleActive(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR IsConsoleActive(GuiMacro* p, CRealConsole* apRCon);
 		// Проверка, видима ли RealConsole
-		static LPWSTR IsRealVisible(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR IsRealVisible(GuiMacro* p, CRealConsole* apRCon);
 		// Menu(Type)
-		static LPWSTR Menu(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR Menu(GuiMacro* p, CRealConsole* apRCon);
 		// MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
-		static LPWSTR MsgBox(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR MsgBox(GuiMacro* p, CRealConsole* apRCon);
 		// Paste (<Cmd>[,"<Text>"])
-		static LPWSTR Paste(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon);
 		// print("<Text>") - alias for Paste(2,"<Text>")
-		static LPWSTR Print(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR Print(GuiMacro* p, CRealConsole* apRCon);
 		// Progress(<Type>[,<Value>])
-		static LPWSTR Progress(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR Progress(GuiMacro* p, CRealConsole* apRCon);
 		// Rename(<Type>,"<Title>")
-		static LPWSTR Rename(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR Rename(GuiMacro* p, CRealConsole* apRCon);
+		// Select(<Type>,<DX>,<DY>)
+		static LPWSTR Select(GuiMacro* p, CRealConsole* apRCon);
 		// SetOption("<Name>",<Value>)
-		static LPWSTR SetOption(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR SetOption(GuiMacro* p, CRealConsole* apRCon);
 		// Shell (ShellExecute)
-		static LPWSTR Shell(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR Shell(GuiMacro* p, CRealConsole* apRCon);
 		// Status
-		static LPWSTR Status(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR Status(GuiMacro* p, CRealConsole* apRCon);
 		// Tabs
-		static LPWSTR Tab(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR Tab(GuiMacro* p, CRealConsole* apRCon);
 		// Task
-		static LPWSTR Task(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR Task(GuiMacro* p, CRealConsole* apRCon);
 		// Fullscreen
-		static LPWSTR WindowFullscreen(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR WindowFullscreen(GuiMacro* p, CRealConsole* apRCon);
 		// Maximize
-		static LPWSTR WindowMaximize(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR WindowMaximize(GuiMacro* p, CRealConsole* apRCon);
 		// Минимизировать окно (можно насильно в трей) // [int nForceToTray=0/1]
-		static LPWSTR WindowMinimize(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR WindowMinimize(GuiMacro* p, CRealConsole* apRCon);
 		// Вернуть текущий статус: NOR/MAX/FS/MIN/TSA
-		static LPWSTR WindowMode(LPWSTR asArgs, CRealConsole* apRCon);
+		static LPWSTR WindowMode(GuiMacro* p, CRealConsole* apRCon);
 };

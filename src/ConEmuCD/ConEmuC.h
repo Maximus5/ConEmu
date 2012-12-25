@@ -449,6 +449,7 @@ struct SrvInfo
 	MFileMapping<CESERVER_CONSAVE_MAP> *pStoredOutputItem;
 	//
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *pConsoleMap;
+	DWORD guiSettingsChangeNum;
 	ConEmuGuiMapping guiSettings;
 	CESERVER_REQ_CONINFO_FULL *pConsole;
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)

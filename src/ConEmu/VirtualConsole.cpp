@@ -3674,7 +3674,8 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	// XOR режим, иначе (тем более при немигающем) курсор закрывает
 	// весь символ и его не видно
 	// 110131 ≈сли курсор мигающий - разрешим нецветной курсор дл€ AltIns в фаре
-	bool bCursorColor = mp_Set->CursorColor(bActive) || (dwSize >= 40 && !mp_Set->CursorBlink(bActive));
+	bool bCursorColor = mp_Set->CursorColor(bActive)
+		|| (dwSize >= 40 && !mp_Set->CursorBlink(bActive) && (curStyle != cur_Rect));
 
 	// “еперь в rect нужно отобразить курсор (XOR'ом попробуем?)
 	if (bCursorColor)
@@ -3715,7 +3716,21 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	lbDark = (R <= 0xC0) && (G <= 0xC0) && (B <= 0xC0);
 	clr = lbDark ? mp_Colors[15] : mp_Colors[0];
 	HBRUSH hBr = CreateSolidBrush(clr);
-	FillRect(hPaintDC, &rect, hBr);
+	if (curStyle != cur_Rect)
+	{
+		FillRect(hPaintDC, &rect, hBr);
+	}
+	else
+	{
+		RECT r = {rect.left, rect.top+1, rect.left+1, rect.bottom-1};
+		FillRect(hPaintDC, &r, hBr);
+		r = MakeRect(rect.left+1, rect.top, rect.right-1, rect.top+1);
+		FillRect(hPaintDC, &r, hBr);
+		r = MakeRect(rect.right-1, rect.top+1, rect.right, rect.bottom-1);
+		FillRect(hPaintDC, &r, hBr);
+		r = MakeRect(rect.left+1, rect.bottom-1, rect.right-1, rect.bottom);
+		FillRect(hPaintDC, &r, hBr);
+	}
 	DeleteObject(hBr);
 }
 

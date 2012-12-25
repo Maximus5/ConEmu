@@ -707,10 +707,11 @@ void CConEmuMenu::ExecPopupMenuCmd(CVirtualConsole* apVCon, int nCmd)
 			break;
 		case IDM_RESTART:
 		case IDM_RESTARTAS:
+		case IDM_RESTARTDLG:
 
 			if (gpConEmu->isActive(apVCon))
 			{
-				gpConEmu->RecreateAction(cra_RecreateTab/*TRUE*/, isPressed(VK_SHIFT), (nCmd==IDM_RESTARTAS));
+				gpConEmu->RecreateAction(cra_RecreateTab/*TRUE*/, (nCmd==IDM_RESTARTDLG) || isPressed(VK_SHIFT), (nCmd==IDM_RESTARTAS));
 			}
 			else
 			{
@@ -1199,6 +1200,10 @@ HMENU CConEmuMenu::CreateDebugMenuPopup()
 //	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_MONITOR_SHELLACTIVITY, _T("Enable &shell log..."));
 //#endif
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_SHOWRECTS, _T("Show debug rec&ts"));
+	#ifdef TRACK_MEMORY_ALLOCATIONS
+	AppendMenu(hDebug, MF_SEPARATOR, 0, NULL);
+	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMP_MEM_BLK, _T("Dump used memory blocks"));
+	#endif
 	AppendMenu(hDebug, MF_SEPARATOR, 0, NULL);
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGCON, _T("Debug &active process"));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_MINIDUMP, _T("Active process &memory dump..."));
@@ -1335,8 +1340,9 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEPRC, MenuAccel(vkTerminateApp,L"&Active process"));
 		AppendMenu(hMenu, MF_POPUP | MF_ENABLED, (UINT_PTR)hTerminate, L"&Terminate");
 		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
-		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTART,   MenuAccel(vkMultiRecreate,L"&Restart"));
-		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTARTAS, L"Restart as...");
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTARTDLG, MenuAccel(vkMultiRecreate,L"&Restart..."));
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTART,    L"&Restart");
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTARTAS,  L"Restart as Admin");
 		if (abAddNew)
 		{
 			AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
@@ -1371,6 +1377,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		EnableMenuItem(hTerminate, IDM_TERMINATECON, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEGROUP, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRC, MF_BYCOMMAND | MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_RESTARTDLG, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hMenu, IDM_RESTART, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hMenu, IDM_RESTARTAS, MF_BYCOMMAND | MF_ENABLED);
 		//EnableMenuItem(hMenu, IDM_ADMIN_DUPLICATE, MF_BYCOMMAND | (lbIsPanels ? MF_ENABLED : MF_GRAYED));
@@ -1386,6 +1393,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		EnableMenuItem(hTerminate, IDM_TERMINATECON, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEGROUP, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRC, MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_RESTARTDLG, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hMenu, IDM_RESTART, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hMenu, IDM_RESTARTAS, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hMenu, IDM_SAVE, MF_BYCOMMAND | MF_GRAYED);
@@ -1649,6 +1657,14 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		case ID_DEBUG_SHOWRECTS:
 			gbDebugShowRects = !gbDebugShowRects;
 			gpConEmu->InvalidateAll();
+			return 0;
+
+		case ID_DUMP_MEM_BLK:
+			#ifdef TRACK_MEMORY_ALLOCATIONS
+			xf_dump();
+			#else
+			_ASSERTE(FALSE && "TRACK_MEMORY_ALLOCATIONS not defined");
+			#endif
 			return 0;
 			
 		case ID_CON_TOGGLE_VISIBLE:

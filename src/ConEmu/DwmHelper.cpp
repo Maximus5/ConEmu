@@ -94,7 +94,11 @@ CDwmHelper::~CDwmHelper(void)
 
 FrameDrawStyle CDwmHelper::DrawType()
 {
-	if (IsGlass())
+	if (IsWindows8)
+	{
+		m_DrawType = fdt_Win8;
+	}
+	else if (IsGlass())
 	{
 		m_DrawType = fdt_Aero;
 	}
@@ -392,25 +396,42 @@ HRESULT CDwmHelper::DwmGetWindowAttribute(HWND hwnd, DWORD dwAttribute, PVOID pv
 
 int CDwmHelper::GetDwmClientRectTopOffset()
 {
+	int nOffset = 0;
+	FrameDrawStyle dt = gpConEmu->DrawType();
+
+	if (!gpSet->isTabs)
+		goto wrap;
+
+
 	// GetFrameHeight(), GetCaptionDragHeight(), GetTabsHeight()
-	if (gpSet->isTabs && gpSet->isTabsInCaption)
+	if (gpSet->isTabsInCaption)
 	{
-		//mn_DwmClientRectTopOffset = 
-		//	(GetSystemMetrics(SM_CYCAPTION)+(IsGlass() ? 8 : 0)
-		//	+(IsZoomed(ghWnd)?(GetSystemMetrics(SM_CYFRAME)-1):(GetSystemMetrics(SM_CYCAPTION)/2)));
-		mn_DwmClientRectTopOffset = 0
-			//+ (IsGlass() ? 8 : 0)
-			+ gpConEmu->GetFrameHeight() //+ 2
-			+ gpConEmu->GetCaptionDragHeight()
-			+ gpConEmu->GetTabsHeight();
+		if (dt == fdt_Win8)
+		{
+			nOffset = gpConEmu->GetTabsHeight();
+		}
+		else
+		{
+			//mn_DwmClientRectTopOffset = 
+			//	(GetSystemMetrics(SM_CYCAPTION)+(IsGlass() ? 8 : 0)
+			//	+(IsZoomed(ghWnd)?(GetSystemMetrics(SM_CYFRAME)-1):(GetSystemMetrics(SM_CYCAPTION)/2)));
+			nOffset = 0
+				//+ (IsGlass() ? 8 : 0)
+				+ gpConEmu->GetFrameHeight() //+ 2
+				+ gpConEmu->GetCaptionDragHeight()
+				+ gpConEmu->GetTabsHeight();
+		}
 	}
-	else
-	{
-		mn_DwmClientRectTopOffset = 0;
-			//GetSystemMetrics(SM_CYCAPTION)+(IsGlass() ? 8 : 0)
-			//+(GetSystemMetrics(SM_CYFRAME)-1);
-	}
-	return mn_DwmClientRectTopOffset;
+	//else
+	//{
+	//	mn_DwmClientRectTopOffset = 0;
+	//		//GetSystemMetrics(SM_CYCAPTION)+(IsGlass() ? 8 : 0)
+	//		//+(GetSystemMetrics(SM_CYFRAME)-1);
+	//}
+
+wrap:
+	mn_DwmClientRectTopOffset = nOffset;
+	return nOffset;
 }
 
 HANDLE/*HTHEME*/ CDwmHelper::OpenThemeData(HWND hwnd, LPCWSTR pszClassList)

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    119
+#define CESERVER_REQ_VER    120
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -912,6 +912,7 @@ struct ConEmuGuiMapping
 {
 	DWORD    cbSize;
 	DWORD    nProtocolVersion; // == CESERVER_REQ_VER
+	DWORD    nChangeNum; // incremental change number of structure
 	HWND2    hGuiWnd; // основное (корневое) окно ConEmu
 	DWORD    nGuiPID; // PID ConEmu.exe
 	
@@ -1848,6 +1849,7 @@ const RequestLocalServerFlags
 	slsf_GetFarCommitEvent = 16,
 	slsf_FarCommitForce    = 32,
 	slsf_GetCursorEvent    = 64,
+	slsf_ReinitWindows     = 128,
 	slsf_None              = 0;
 struct RequestLocalServerParm
 {

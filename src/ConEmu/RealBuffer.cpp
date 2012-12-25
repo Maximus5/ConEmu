@@ -1292,6 +1292,7 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 	{
 		MSectionLock sc; sc.Lock(&csCON, TRUE);
 		MCHKHEAP;
+		con.LastStartInitBuffersTick = GetTickCount();
 
 		if (con.pConChar)
 			{ Free(con.pConChar); con.pConChar = NULL; }
@@ -1314,6 +1315,7 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 		BYTE nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
 		wmemset((wchar_t*)con.pConAttr, nDefTextAttr, cchCharMax);
 
+		con.LastEndInitBuffersTick = GetTickCount();
 
 		sc.Unlock();
 		_ASSERTE(con.pConChar!=NULL);
@@ -1398,13 +1400,23 @@ SHORT CRealBuffer::GetBufferPosX()
 
 SHORT CRealBuffer::GetBufferPosY()
 {
-#ifdef _DEBUG
-	if (con.nTopVisibleLine!=con.m_sbi.srWindow.Top)
+	#ifdef _DEBUG
+	USHORT nTop = con.nTopVisibleLine;
+	CONSOLE_SCREEN_BUFFER_INFO csbi = con.m_sbi;
+	bool bInScroll = mp_RCon->InScroll();
+	if (nTop != csbi.srWindow.Top)
 	{
 		TODO("Пока не переделал скролл на пайп - данные могут приходить немного с запаздываением");
-		_ASSERTE(con.nTopVisibleLine==con.m_sbi.srWindow.Top || mp_RCon->InScroll());
+		_ASSERTE(nTop == csbi.srWindow.Top || bInScroll);
+		bool bDbgShowConsole = false;
+		if (bDbgShowConsole)
+		{
+			mp_RCon->ShowConsole(1);
+			mp_RCon->ShowConsole(0);
+		}
 	}
-#endif
+	#endif
+
 	return con.nTopVisibleLine;
 }
 
@@ -2343,8 +2355,9 @@ BOOL CRealBuffer::BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 	BOOL lbTurnedOn = FALSE;
 	TODO("!!! Скорректировать");
 
-	if (psbi->dwSize.Y == (psbi->srWindow.Bottom - psbi->srWindow.Top + 1))
+	if (psbi->dwSize.Y <= (psbi->srWindow.Bottom - psbi->srWindow.Top + 1))
 	{
+		_ASSERTE(psbi->dwSize.Y == (psbi->srWindow.Bottom - psbi->srWindow.Top + 1))
 		// высота окна == высоте буфера,
 		lbTurnedOn = FALSE;
 	}
@@ -4165,6 +4178,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	lcaTable = lcaTableOrg;
 
 	MSectionLock csData; csData.Lock(&csCON);
+	con.LastStartReadBufferTick = GetTickCount();
 	HEAPVAL
 	wchar_t wSetChar = L' ';
 	CharAttr lcaDef;
@@ -4590,9 +4604,12 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			pAttr[i] = lca;
 	}
 
+	con.LastEndReadBufferTick = GetTickCount();
+
 	//FIN
 	HEAPVAL
 	csData.Unlock();
+	return;
 }
 
 DWORD_PTR CRealBuffer::GetKeybLayout()

@@ -308,6 +308,9 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			#endif
 			result = pVCon->OnSize(wParam, lParam);
 			break;
+		case WM_MOVE:
+			result = pVCon->OnMove(wParam, lParam);
+			break;
 		case WM_CREATE:
 			break;
 		case WM_KEYDOWN:
@@ -909,6 +912,13 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 	RECT rcNewWnd;    ::GetWindowRect(mh_WndDC, &rcNewWnd);
 	#endif
 
+	if (gpSetCls->isAdvLogging)
+	{
+		char szInfo[128];
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "VCon(0x%08X).OnSize(%ux%u)", (DWORD)mh_WndDC, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam));
+		gpConEmu->LogString(szInfo);
+	}
+
 	// Вроде это и не нужно. Ни для Ansi ни для Unicode версии плагина
 	// Все равно в ConEmu запрещен ресайз во время видимости окошка PictureView
 	//if (gpConEmu->isPictureView())
@@ -924,6 +934,31 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 	//        //SetFocus(hPictureView); -- все равно на другой процесс фокус передать нельзя...
 	//    }
 	//}
+	return result;
+}
+
+LRESULT CConEmuChild::OnMove(WPARAM wParam, LPARAM lParam)
+{
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return 0;
+	}
+
+	LRESULT result = 0;
+
+	#ifdef _DEBUG
+	RECT rcNewClient; ::GetClientRect(mh_WndDC, &rcNewClient);
+	RECT rcNewWnd;    ::GetWindowRect(mh_WndDC, &rcNewWnd);
+	#endif
+
+	if (gpSetCls->isAdvLogging)
+	{
+		char szInfo[128];
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "VCon(0x%08X).OnMove(%ux%u)", (DWORD)mh_WndDC, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
+		gpConEmu->LogString(szInfo);
+	}
+
 	return result;
 }
 

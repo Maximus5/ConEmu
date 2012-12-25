@@ -472,7 +472,7 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID)
 	return pszText;
 }
 
-size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText, bool bEscapes /*= false*/)
+size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*, bool bEscapes*/ /*= false*/)
 {
 	HWND hEdit;
 
@@ -503,50 +503,15 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText, 
 			pszText[0] = 0;
 			GetWindowText(hEdit, pszText, nLen+1);
 
-			if (bEscapes)
-			{
-				wchar_t* pszSrc = wcschr(pszText, L'\\');
-				if (pszSrc)
-				{
-					wchar_t* pszDst = pszSrc;
-					while (*pszSrc)
-					{
-						if (*pszSrc == L'\\')
-						{
-							// -- Must be the same set in MySetDlgItemText
-							switch (pszSrc[1])
-							{
-							case L'\\':
-								*(pszDst++) = L'\\';
-								pszSrc += 2;
-								continue;
-							case L'r':
-								*(pszDst++) = L'\r';
-								pszSrc += 2;
-								continue;
-							case L'n':
-								*(pszDst++) = L'\n';
-								pszSrc += 2;
-								continue;
-							case L't':
-								*(pszDst++) = L'\t';
-								pszSrc += 2;
-								continue;
-							case L'e':
-								*(pszDst++) = 27; // ESC
-								pszSrc += 2;
-								continue;
-							case L'a':
-								*(pszDst++) = L'\a'; // BELL
-								pszSrc += 2;
-								continue;
-							}
-						}
-						*(pszDst++) = *(pszSrc++);
-					}
-					*pszDst = 0;
-				}
-			}
+			//if (bEscapes)
+			//{
+			//	wchar_t* pszDst = EscapeString(false, pszText);
+			//	if (pszDst)
+			//	{
+			//		_wcscpy_c(pszText, cchMax, pszDst);
+			//		free(pszDst);
+			//	}
+			//}
 		}
 	}
 	else
@@ -561,61 +526,181 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText, 
 	return nLen;
 }
 
-BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString, bool bEscapes /*= false*/)
+const wchar_t* gsEscaped = L"\\\r\n\t\a\x1B";
+
+void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
+{
+	_ASSERTE(pszSrc && pszDst);
+
+	LPCWSTR  pszCtrl = L"rntae\\\"";
+
+	if (bSet)
+	{
+		// Set escapes: wchar(13) --> "\\r"
+
+		_ASSERTE(pszSrc != pszDst);
+
+		switch (*pszSrc)
+		{
+			case L'"':
+				*(pszDst++) = L'\\';
+				*(pszDst++) = L'"';
+				pszSrc++;
+				break;
+			case L'\\':
+				*(pszDst++) = L'\\';
+				pszSrc++;
+				if (!*pszSrc || !wcschr(pszCtrl, *pszSrc))
+					*(pszDst++) = L'\\';
+				break;
+			case L'\r':
+				*(pszDst++) = L'\\';
+				*(pszDst++) = L'r';
+				pszSrc++;
+				break;
+			case L'\n':
+				*(pszDst++) = L'\\';
+				*(pszDst++) = L'n';
+				pszSrc++;
+				break;
+			case L'\t':
+				*(pszDst++) = L'\\';
+				*(pszDst++) = L't';
+				pszSrc++;
+				break;
+			case 27: //ESC
+				*(pszDst++) = L'\\';
+				*(pszDst++) = L'e';
+				pszSrc++;
+				break;
+			case L'\a': //BELL
+				*(pszDst++) = L'\\';
+				*(pszDst++) = L'a';
+				pszSrc++;
+				break;
+			default:
+				*(pszDst++) = *(pszSrc++);
+		}
+	}
+	else
+	{
+		// Remove escapes: "\\r" --> wchar(13)
+
+		if (*pszSrc == L'\\')
+		{
+			// -- Must be the same set in "Set escapes"
+			switch (pszSrc[1])
+			{
+				case L'"':
+					*(pszDst++) = L'"';
+					pszSrc += 2;
+					break;
+				case L'\\':
+					*(pszDst++) = L'\\';
+					pszSrc += 2;
+					break;
+				case L'r': case L'R':
+					*(pszDst++) = L'\r';
+					pszSrc += 2;
+					break;
+				case L'n': case L'N':
+					*(pszDst++) = L'\n';
+					pszSrc += 2;
+					break;
+				case L't': case L'T':
+					*(pszDst++) = L'\t';
+					pszSrc += 2;
+					break;
+				case L'e': case L'E':
+					*(pszDst++) = 27; // ESC
+					pszSrc += 2;
+					break;
+				case L'a': case L'A':
+					*(pszDst++) = L'\a'; // BELL
+					pszSrc += 2;
+					break;
+				default:
+					*(pszDst++) = *(pszSrc++);
+			}
+		}
+		else
+		{
+			*(pszDst++) = *(pszSrc++);
+		}
+	}
+}
+
+#if 0
+wchar_t* EscapeString(bool bSet, LPCWSTR pszSrc)
 {
 	wchar_t* pszBuf = NULL;
 
-	// -- Must be the same set in MyGetDlgItemText
-	if (lpString && bEscapes && wcspbrk(lpString, L"\r\n\t\\"))
+	if (!pszSrc || !*pszSrc)
 	{
-		pszBuf = (wchar_t*)malloc((_tcslen(lpString)*2+1)*sizeof(*pszBuf));
+		return lstrdup(L"");
+	}
+
+	if (bSet)
+	{
+		// Set escapes: wchar(13) --> "\\r"
+		pszBuf = (wchar_t*)malloc((_tcslen(pszSrc)*2+1)*sizeof(*pszBuf));
 		if (!pszBuf)
 		{
 			MBoxAssert(pszBuf && "Memory allocation failed");
-			return FALSE;
+			return NULL;
 		}
+
+		// This func is used mostly for print("...") GuiMacro, So, we don't need to set escapes on quotas
+
 		wchar_t* pszDst = pszBuf;
-		LPCWSTR pszSrc = lpString;
+		
+		LPCWSTR  pszCtrl = L"rntae\\\"";
+
 		while (*pszSrc)
 		{
-			switch (*pszSrc)
-			{
-				case L'\\':
-					*(pszDst++) = L'\\';
-					*(pszDst++) = L'\\';
-					pszSrc++;
-					continue;
-				case L'\r':
-					*(pszDst++) = L'\\';
-					*(pszDst++) = L'r';
-					pszSrc++;
-					continue;
-				case L'\n':
-					*(pszDst++) = L'\\';
-					*(pszDst++) = L'n';
-					pszSrc++;
-					continue;
-				case L'\t':
-					*(pszDst++) = L'\\';
-					*(pszDst++) = L't';
-					pszSrc++;
-					continue;
-				case 27: //ESC
-					*(pszDst++) = L'\\';
-					*(pszDst++) = L'e';
-					pszSrc++;
-					continue;
-				case L'\a': //BELL
-					*(pszDst++) = L'\\';
-					*(pszDst++) = L'a';
-					pszSrc++;
-					continue;
-			}
-			*(pszDst++) = *(pszSrc++);
+			EscapeChar(bSet, pszSrc, pszDst);
 		}
 		*pszDst = 0;
-		lpString = pszBuf;
 	}
+	else
+	{
+		// Remove escapes: "\\r" --> wchar(13)
+		pszBuf = lstrdup(pszSrc);
+		if (!pszBuf)
+		{
+			MBoxAssert(pszBuf && "Memory allocation failed");
+			return NULL;
+		}
+
+		wchar_t* pszEsc = wcschr(pszBuf, L'\\');
+		if (pszEsc)
+		{
+			wchar_t* pszDst = pszEsc;
+			pszSrc = pszEsc;
+			while (*pszSrc)
+			{
+				EscapeChar(bSet, pszSrc, pszDst);
+			}
+			*pszDst = 0;
+		}
+	}
+
+	return pszBuf;
+}
+#endif
+
+BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes*/ /*= false*/)
+{
+	wchar_t* pszBuf = NULL;
+
+	//// -- Must be the same set in MyGetDlgItemText
+	//if (lpString && bEscapes /*&& wcspbrk(lpString, L"\r\n\t\\")*/)
+	//{
+	//	pszBuf = EscapeString(true, lpString);
+	//	if (!pszBuf)
+	//		return FALSE; // Уже ругнулись
+	//	lpString = pszBuf;
+	//}
 
 	BOOL lbRc = SetDlgItemText(hDlg, nIDDlgItem, lpString);
 

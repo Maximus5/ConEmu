@@ -5048,11 +5048,11 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 	if (!ghStdOutHandle)
 		ghStdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	HANDLE hIn  = GetStdHandle(STD_INPUT_HANDLE);
 	HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
-#endif
+	#endif
 
 	BOOL lbRc = FALSE;
 	if (F(SetConsoleActiveScreenBuffer))
@@ -5060,12 +5060,12 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 
 	if (lbRc && (ghCurrentOutBuffer || (hConsoleOutput != ghStdOutHandle)))
 	{
-#ifdef SHOWCREATEBUFFERINFO
+		#ifdef SHOWCREATEBUFFERINFO
 		CONSOLE_SCREEN_BUFFER_INFO lsbi = {};
 		BOOL lbTest = GetConsoleScreenBufferInfo(hConsoleOutput, &lsbi);
 		DWORD nErrCode = GetLastError();
 		_ASSERTE(lbTest && lsbi.dwSize.Y && "GetConsoleScreenBufferInfo(hConsoleOutput) failed");
-#endif
+		#endif
 
 		ghCurrentOutBuffer = hConsoleOutput;
 		RequestLocalServerParm Parm = {(DWORD)sizeof(Parm), slsf_SetOutHandle, &ghCurrentOutBuffer};

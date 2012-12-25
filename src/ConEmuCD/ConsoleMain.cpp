@@ -1360,7 +1360,7 @@ wait:
 		if (!gpSrv->bDebuggerActive)
 		{
 			#ifdef _DEBUG
-			while(nWait == WAIT_TIMEOUT)
+			while (nWait == WAIT_TIMEOUT)
 			{
 				nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, 100);
 				// Что-то при загрузке компа иногда все-таки не дожидается, когда процесс в консоли появится
@@ -1475,6 +1475,7 @@ wrap:
 		GetExitCodeProcess(gpSrv->hRootProcess, &gnExitCode);
 	else if (pi.hProcess)
 		GetExitCodeProcess(pi.hProcess, &gnExitCode);
+	_ASSERTE(gnExitCode!=STILL_ACTIVE);
 
 	ShutdownSrvStep(L"Finalizing.2");
 
@@ -1693,6 +1694,8 @@ AltServerDone:
 
 int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 {
+	//_ASSERTE(FALSE && "ConEmuCD. Continue to RequestLocalServer");
+
 	int iRc = 0;
 	wchar_t szName[64];
 
@@ -5502,6 +5505,18 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		if (nCurCount == 0)
 		{
 			_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
+
+			// Похоже что сюда мы попадаем также при ошибке 0xC0000142 запуска root-process
+			#ifdef _DEBUG
+			_ASSERTE(FALSE && "(nCurCount==0)?");
+			// Some diagnostics for debugger
+			DWORD nErr;
+			HWND hConWnd = GetConsoleWindow(); nErr = GetLastError();
+			HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE); nErr = GetLastError();
+			CONSOLE_SCREEN_BUFFER_INFO sbi = {}; BOOL bSbi = GetConsoleScreenBufferInfo(hOut, &sbi); nErr = GetLastError();
+			DWORD nWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
+			GetExitCodeProcess(gpSrv->hRootProcess, &nErr);
+			#endif
 
 			// Это значит в Win7 свалился conhost.exe
 			//if ((gnOsVer >= 0x601) && !gbIsWine)

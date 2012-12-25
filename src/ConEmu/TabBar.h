@@ -43,18 +43,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HT_CONEMUTAB HTBORDER
 
-enum ToolbarCommandIdx
-{
-	TID_ACTIVE_NUMBER = 1,
-	TID_CREATE_CON,
-	TID_ALTERNATIVE,
-	TID_SCROLL,
-	TID_MINIMIZE,
-	TID_MAXIMIZE,
-	TID_APPCLOSE,
-	TID_COPYING,
-	TID_MINIMIZE_SEP = 110,
-};
+//enum ToolbarCommandIdx
+//{
+//	TID_ACTIVE_NUMBER = 1,
+//	TID_CREATE_CON,
+//	TID_ALTERNATIVE,
+//	TID_SCROLL,
+//	TID_MINIMIZE,
+//	TID_MAXIMIZE,
+//	TID_APPCLOSE,
+//	TID_COPYING,
+//	TID_MINIMIZE_SEP = 110,
+//};
 
 
 class TabBarClass //: public CToolTip
@@ -207,9 +207,10 @@ class TabBarClass //: public CToolTip
 		//void PaintHeader(HDC hdc, RECT rcPaint);
 		int  ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon);
 		void GetActiveTabRect(RECT* rcTab);
+		void OnShowButtonsChanged();
 
 		// Из Samples\Tabs
-		bool ProcessTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };
+		bool ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };
 		int GetHoverTab() { return -1; };
 		void HoverTab(int anTab) {};
 		void Toolbar_UnHover() {};

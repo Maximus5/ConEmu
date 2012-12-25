@@ -175,10 +175,13 @@ extern wchar_t gszDbgModLabel[6];
 #ifdef SHOWDEBUGSTR
 #define DEBUGSTR(s) { \
 	MCHKHEAP; CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[1040]; _wsprintf(szDEBUGSTRTime, SKIPLEN(countof(szDEBUGSTRTime)) L"%i:%02i:%02i.%03i(%s.%i.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentProcessId(), GetCurrentThreadId()); \
-	if (lstrlen(s) < 1000) { \
-		wcscat_c(szDEBUGSTRTime, s); OutputDebugString(szDEBUGSTRTime); \
+	LPCWSTR psz = s; int nSLen = lstrlen(psz); \
+	if (nSLen < 999) { \
+		wcscat_c(szDEBUGSTRTime, s); \
+		{ if (nSLen && psz[nSLen-1]!=L'\n') wcscat_c(szDEBUGSTRTime, L"\n"); } \
+		OutputDebugString(szDEBUGSTRTime); \
 	} else { \
-		OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); \
+		OutputDebugString(szDEBUGSTRTime); OutputDebugString(psz); if (nSLen && psz[nSLen-1]!=L'\n') OutputDebugString(L"\n"); \
 	}}
 #else
 #ifndef DEBUGSTR

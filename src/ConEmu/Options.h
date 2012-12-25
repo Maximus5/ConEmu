@@ -174,7 +174,8 @@ struct ConEmuHotKey
 	
 	ConEmuHotKeyType HkType; // 0 - hotkey, 1 - modifier (дл€ драга, например), 2 - system hotkey (настройка nMultiHotkeyModifier)
 
-	bool*   Enabled;
+	bool   (*Enabled)();
+
 	wchar_t Name[64];
 	
 	//// User. ≈сли NULL - значит системный, не измен€емый
@@ -298,6 +299,12 @@ union CECursorType
 	};
 
 	DWORD Raw;
+};
+
+enum TabStyle
+{
+	ts_VS2008 = 0,
+	ts_Win8   = 1,
 };
 
 
@@ -466,6 +473,9 @@ struct Settings
 			//reg->Load(L"ClipboardEOL", isCTSEOL);
 			BYTE isCTSEOL; // cbCTSEOL: 0="CR+LF", 1="LF", 2="CR"
 			BYTE CTSEOL() const { return (OverrideClipboard || !AppNames) ? isCTSEOL : gpSet->AppStd.isCTSEOL; };
+			//reg->Load(L"ClipboardArrowStart", pApp->isCTSShiftArrowStart);
+			bool isCTSShiftArrowStart;
+			bool CTSShiftArrowStart() const { return (OverrideClipboard || !AppNames) ? isCTSShiftArrowStart : gpSet->AppStd.isCTSShiftArrowStart; };
 			// *** Pasting
 			//reg->Load(L"ClipboardAllLines", isPasteAllLines);
 			bool isPasteAllLines;
@@ -476,8 +486,11 @@ struct Settings
 			// *** Prompt
 			// cbCTSClickPromptPosition
 			//reg->Load(L"ClipboardClickPromptPosition", isCTSClickPromptPosition);
+			//0 - off, 1 - force, 2 - try to detect "ReadConsole" (don't use 2 in bash)
 			BYTE isCTSClickPromptPosition; // cbCTSClickPromptPosition
 			BYTE CTSClickPromptPosition() const { return (OverrideClipboard || !AppNames) ? isCTSClickPromptPosition : gpSet->AppStd.isCTSClickPromptPosition; };
+			BYTE isCTSDeleteLeftWord; // cbCTSDeleteLeftWord
+			BYTE CTSDeleteLeftWord() const { return (OverrideClipboard || !AppNames) ? isCTSDeleteLeftWord : gpSet->AppStd.isCTSDeleteLeftWord; };
 
 			bool OverrideBgImage;
 			//reg->Load(L"BackGround Image show", isShowBgImage);
@@ -1129,7 +1142,7 @@ struct Settings
 		//reg->Load(L"Tabs", isTabs);
 		char isTabs;
 		//reg->Load(L"TabsLocation", nTabsLocation);
-		BYTE nTabsLocation;
+		BYTE nTabsLocation; // 0 - top, 1 - bottom
 		//reg->Load(L"TabSelf", isTabSelf);
 		bool isTabSelf;
 		//reg->Load(L"TabRecent", isTabRecent);
@@ -1224,6 +1237,8 @@ struct Settings
 		//DWORD vmMinimizeRestore;
 		//reg->Load(L"Multi", isMulti);
 		bool isMulti;
+		//reg->Load(L"Multi.ShowButtons", isMultiShowButtons);
+		bool isMultiShowButtons;
 		//reg->Load(L"NumberInCaption", isMulti);
 		bool isNumberInCaption;
 		private:
@@ -1346,6 +1361,9 @@ struct Settings
 		WCHAR szTabViewer[32];
 		//reg->Load(L"TabLenMax", nTabLenMax); if (nTabLenMax < 10 || nTabLenMax >= CONEMUTABMAX) nTabLenMax = 20;
 		DWORD nTabLenMax;
+		//todo
+		DWORD nTabWidthMax;
+		TabStyle nTabStyle; // enum
 
 		//reg->Load(L"AdminTitleSuffix", szAdminTitleSuffix, countof(szAdminTitleSuffix)); szAdminTitleSuffix[countof(szAdminTitleSuffix)-1] = 0;
 		wchar_t szAdminTitleSuffix[64]; //" (Admin)"
@@ -1531,6 +1549,11 @@ struct Settings
 		CEFontRange m_Fonts[MAX_FONT_GROUPS]; // 0-Main, 1-Borders, 2 и более - user defined
 		BOOL FontRangeLoad(SettingsBase* reg, int Idx);
 		BOOL FontRangeSave(SettingsBase* reg, int Idx);
+
+	protected:
+		static bool UseWinNumber() { return gpSet->isMulti && gpSet->isUseWinNumber; };
+		static bool UseWinArrows() { return gpSet->isUseWinArrows; };
+		static bool UseCTSShiftArrow(); // { return gpSet->isUseWinArrows; }; // { return (OverrideClipboard || !AppNames) ? isCTSShiftArrowStart : gpSet->AppStd.isCTSShiftArrowStart; };
 };
 
 #include "OptionsClass.h"

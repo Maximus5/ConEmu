@@ -221,7 +221,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			lbRc = false;
 		#else
 		RedrawLock();
-		lbRc = gpConEmu->mp_TabBar->ProcessTabMouseEvent(hWnd, uMsg, wParam, lParam, lResult);
+		lbRc = gpConEmu->mp_TabBar->ProcessNcTabMouseEvent(hWnd, uMsg, wParam, lParam, lResult);
 		RedrawUnlock();
 		#endif
 
@@ -277,7 +277,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		{
 			_ASSERTE(FALSE && "There is not tabs in 'Caption'");
 			//RedrawLock(); -- чтобы отрисовать "клик" по кнопке
-			lbRc = gpConEmu->mp_TabBar->ProcessTabMouseEvent(hWnd, uMsg, wParam, lParam, lResult);
+			lbRc = gpConEmu->mp_TabBar->ProcessNcTabMouseEvent(hWnd, uMsg, wParam, lParam, lResult);
 			//RedrawUnlock();
 		}
 		else if (gpConEmu->OnMouse_NCBtnDblClk(hWnd, uMsg, wParam, lParam))
@@ -342,6 +342,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		//TODO: —делаем, пока, чтобы текст хот€ бы не мелькал...                     
 		if (mb_NcAnimate && gpSet->isTabsInCaption)
 		{
+			_ASSERTE(!IsWindows7); // ѕроверить на XP и ниже
 			if (wParam && lParam)
 			{
 				*(wchar_t*)lParam = 0;
@@ -360,8 +361,10 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 LRESULT CFrameHolder::OnDwmMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+#if 0
 	if (gpSet->isTabsInCaption)
 	{
+		FrameDrawStyle dt = gpConEmu->DrawType();
 		switch (uMsg)
 		{
 		case 0x31E: // WM_DWMCOMPOSITIONCHANGED:
@@ -373,9 +376,10 @@ LRESULT CFrameHolder::OnDwmMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			// ак минимум, вызываетс€ при включенных темах (WinXP).
 		case 0xAE: // WM_NCUAHDRAWCAPTION:
 		case 0xAF: // WM_NCUAHDRAWFRAME:
-			return (gpConEmu->DrawType()==fdt_Aero) ? DefWindowProc(hWnd, uMsg, wParam, lParam) : 0;
+			return (dt==fdt_Aero || dt==fdt_Win8) ? DefWindowProc(hWnd, uMsg, wParam, lParam) : 0;
 		}
 	}
+#endif
 	
 	// Unknown!
 	_ASSERTE(uMsg == 0x31E || uMsg == 0xAE || uMsg == 0xAF);
@@ -416,7 +420,7 @@ void CFrameHolder::RedrawUnlock()
 	}
 }
 
-void CFrameHolder::RedrawTabPanel()
+void CFrameHolder::RedrawFrame()
 {
 	//TODO: табы/кнопки могут быть в клиентской области!
 	if (mn_RedrawLockCount > 0)
@@ -581,6 +585,8 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 
 	cr = wr;
 
+	FrameDrawStyle dt = gpConEmu->DrawType();
+
 	if (!gpSet->isTabsInCaption)
 	{
 		_ASSERTE(gpConEmu->GetDwmClientRectTopOffset() == 0); // CheckIt, must be zero
@@ -595,22 +601,25 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 		}
 
 	}
-	else if (gpConEmu->DrawType() == fdt_Aero)
+	else if (dt == fdt_Aero || dt == fdt_Win8)
 	{
+		_ASSERTE(gpSet->isTabsInCaption);
+
 		int nOffset = gpConEmu->GetDwmClientRectTopOffset();
 		// "–амка" расширена на клиентскую область, поэтому
 		// нужно зарисовать заголовок черной кистью, иначе идет
 		// искажение цвета дл€ кнопок Min/Max/Close
 
-		if (gpSet->isTabs && gpSet->isTabsInCaption)
+		if (gpSet->isTabs)
 		{
-			RECT captrect;
-			CalculateCaptionPosition(cr, &captrect);
+			RECT captrect = gpConEmu->CalcRect(CER_TAB, wr, CER_MAINCLIENT);
+			//CalculateCaptionPosition(cr, &captrect);
 			CalculateTabPosition(cr, captrect, &tr);
 
 			gpConEmu->mp_TabBar->PaintTabs(hdc, captrect, tr);
 
-			mb_WasGlassDraw = TRUE;
+			// There is no "Glass" in Win8
+			mb_WasGlassDraw = IsWindows7 && !IsWindows8;
 		}
 
 		cr.top += nOffset;
@@ -621,16 +630,16 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 	int nHeight = (cr.bottom-cr.top);
 
 	WARNING("ѕока табы рисуем не сами и ExtendDWM отсутствует - дополнительные изыски с временным DC не нужны");
+#if 0
 	if (!gpSet->isTabsInCaption)
 	{
 		//OnPaintClient(hdc/*, nWidth, nHeight*/);
 	}
 	else
-
 	// —оздадим временный DC, дл€ удобства отрисовки в Glass-режиме и дл€ фикса глюка DWM(?) см.ниже
 	// ¬ принципе, дл€ режима Win2k/XP временный DC можно не создавать, если это будет тормозить
 	{
-		_ASSERTE(FALSE && "Need to be rewritten");
+		//_ASSERTE(FALSE && "Need to be rewritten");
 
 		HDC hdcPaint = CreateCompatibleDC(hdc);
 		HBITMAP hbmp = CreateCompatibleBitmap(hdc, nWidth, nHeight);
@@ -638,7 +647,7 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 
 		//OnPaintClient(hdcPaint/*, nWidth, nHeight*/);
 
-		if ((gpConEmu->DrawType() == fdt_Aero) || !(mb_WasGlassDraw && gpConEmu->isZoomed()))
+		if ((dt == fdt_Aero) || !(mb_WasGlassDraw && gpConEmu->isZoomed()))
 		{
 			BitBlt(hdc, cr.left, cr.top, nWidth, nHeight, hdcPaint, 0, 0, SRCCOPY);
 		}
@@ -691,14 +700,18 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 		DeleteObject(hbmp);
 		DeleteDC(hdcPaint);
 	}
-
+#endif
 
 	return 0;
 }
 
 void CFrameHolder::CalculateCaptionPosition(const RECT &rcWindow, RECT* rcCaption)
 {
-	if (gpConEmu->DrawType() == fdt_Aero)
+	//_ASSERTE(FALSE && "CFrameHolder::CalculateCaptionPosition MUST be refactored!");
+
+	FrameDrawStyle dt = gpConEmu->DrawType();
+
+	if (dt == fdt_Aero || dt == fdt_Win8)
 	{
 		// ѕочему тут не SM_CXFRAME не помню
 		rcCaption->left = 0; //2; //GetSystemMetrics(SM_CXFRAME);
@@ -706,7 +719,7 @@ void CFrameHolder::CalculateCaptionPosition(const RECT &rcWindow, RECT* rcCaptio
 		rcCaption->top = GetFrameHeight(); //6; //GetSystemMetrics(SM_CYFRAME);
 		rcCaption->bottom = rcCaption->top + GetCaptionHeight()/*это наш*/; // (gpSet->isTabs ? (GetCaptionDragHeight()+GetTabsHeight()) : GetWinCaptionHeight()); //gpConEmu->GetDwmClientRectTopOffset() - 1;
 	}
-	else if (gpConEmu->DrawType() == fdt_Themed)
+	else if (dt == fdt_Themed)
 	{
 		rcCaption->left = GetFrameWidth();
 		rcCaption->right = (rcWindow.right - rcWindow.left) - GetFrameWidth() - 1;
@@ -733,12 +746,22 @@ void CFrameHolder::CalculateTabPosition(const RECT &rcWindow, const RECT &rcCapt
 	rcTabs->left = rcCaption.left;
 	if (bCaptionHidden)
 		rcTabs->left += GetSystemMetrics(SM_CXSMICON) + 3;
-	rcTabs->bottom = rcCaption.bottom - 1;
-	rcTabs->top = max((rcCaption.bottom - GetTabsHeight()/*nHeightIdeal*/), rcCaption.top);
+	if (gpSet->nTabsLocation == 0)
+	{
+		// Tabs on Top
+		rcTabs->bottom = rcCaption.bottom - 1;
+		rcTabs->top = max((rcCaption.bottom - GetTabsHeight()/*nHeightIdeal*/), rcCaption.top);
+	}
+	else
+	{
+		// Tabs on Bottom
+		rcTabs->top = rcCaption.top;
+		rcTabs->bottom = rcCaption.bottom - 1;// min(rcCaption.bottom, (rcCaption.top + GetTabsHeight()));
+	}
 
 	if (!bCaptionHidden)
 	{
-		rcTabs->right = rcCaption.right;
+		rcTabs->right = rcCaption.right - 1;
 	}
 	// TODO: определить ширину кнопок + Shift из настроек юзера
 	else if (gpConEmu->DrawType() == fdt_Aero)
@@ -747,9 +770,9 @@ void CFrameHolder::CalculateTabPosition(const RECT &rcWindow, const RECT &rcCapt
 		HRESULT hr = gpConEmu->DwmGetWindowAttribute(ghWnd, DWMWA_CAPTION_BUTTON_BOUNDS, &rcButtons, sizeof(rcButtons));
 
 		if (SUCCEEDED(hr))
-			rcTabs->right = min((rcButtons.left - 4),(rcCaption.right - 3*nBtnWidth));
+			rcTabs->right = min((rcButtons.left - 4),(rcCaption.right - 3*nBtnWidth)) - 1;
 		else
-			rcTabs->right = rcCaption.right - 3*nBtnWidth;
+			rcTabs->right = rcCaption.right - 3*nBtnWidth - 1;
 	}
 	else if (gpConEmu->DrawType() == fdt_Themed)
 	{
@@ -759,11 +782,11 @@ void CFrameHolder::CalculateTabPosition(const RECT &rcWindow, const RECT &rcCapt
 		//HRESULT hr = gpConEmu->GetThemeBackgroundContentRect(hTheme, NULL, 15/*WP_MINBUTTON*/, 1/*MINBS_NORMAL*/, &wr, &rcBtns);
 		//gpConEmu->CloseThemeData(hTheme);
 
-		rcTabs->right = rcCaption.right - 3*nBtnWidth;
+		rcTabs->right = rcCaption.right - 3*nBtnWidth - 1;
 	}
 	else
 	{
-		rcTabs->right = rcCaption.right - 3*nBtnWidth /*+ 2*/;
+		rcTabs->right = rcCaption.right - 3*nBtnWidth /*+ 2*/ - 1;
 	}
 }
 
@@ -777,7 +800,9 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		return lRc;
 	}
 
-	if (gpConEmu->DrawType() == fdt_Aero)
+	FrameDrawStyle fdt = gpConEmu->DrawType();
+
+	if (fdt == fdt_Aero || fdt == fdt_Win8)
 	{
 		LRESULT lRc = DefWindowProc(hWnd, uMsg, wParam, lParam);
 		//TODO: ћожет быть на "стекле" сразу рисовать, а не в WM_PAINT?
@@ -1233,12 +1258,13 @@ void CFrameHolder::RecalculateFrameSizes()
 
 	int nHeightIdeal = mn_WinCaptionHeight * 3 / 4;
 	if (nHeightIdeal < 19) nHeightIdeal = 19;
-	mn_TabsHeight = min(nHeightIdeal,mn_OurCaptionHeight);
+	mn_TabsHeight = GetTabsHeight(); // min(nHeightIdeal,mn_OurCaptionHeight);
 
 	if (gpSet->isCaptionHidden())
 	{
 		mn_OurCaptionHeight = 0;
 	}
+#if 0
 	else if (gpSet->isTabsInCaption && gpConEmu->mp_TabBar->IsTabsActive())
 	{
 		if ((GetCaptionDragHeight() == 0) && (mn_TabsHeight > mn_WinCaptionHeight))
@@ -1250,6 +1276,7 @@ void CFrameHolder::RecalculateFrameSizes()
 		int nCHeight = mn_TabsHeight + GetCaptionDragHeight();
 		mn_OurCaptionHeight = max(mn_WinCaptionHeight,nCHeight);
 	}
+#endif
 	else
 	{
 		mn_OurCaptionHeight = mn_WinCaptionHeight;
@@ -1303,12 +1330,15 @@ int CFrameHolder::GetCaptionHeight()
 // высота табов
 int CFrameHolder::GetTabsHeight()
 {
-#ifndef CONEMU_TABBAR_EX
-	return gpConEmu->mp_TabBar->GetTabbarHeight();
-#else
-	_ASSERTE(mb_Initialized && mn_TabsHeight > 0);
+	mn_TabsHeight = gpConEmu->mp_TabBar->GetTabbarHeight();
 	return mn_TabsHeight;
-#endif
+
+	//#ifndef CONEMU_TABBAR_EX
+	//	return gpConEmu->mp_TabBar->GetTabbarHeight();
+	//#else
+	//	_ASSERTE(mb_Initialized && mn_TabsHeight > 0);
+	//	return mn_TabsHeight;
+	//#endif
 }
 
 // высота части заголовка, который оставл€ем дл€ "таскани€" окна
@@ -1333,30 +1363,45 @@ int CFrameHolder::GetWinCaptionHeight()
 
 void CFrameHolder::GetIconShift(POINT& IconShift)
 {
-	if (gpConEmu->DrawType() == fdt_Aero)
+	switch (gpConEmu->DrawType())
 	{
-		IconShift.x = 3;
-		//IconShift.y = (gpConEmu->isZoomed()?4:0)+(gpSet->ilDragHeight ? 4 : 1);
-		IconShift.y = gpConEmu->GetCaptionHeight() - 16;
-		if (IconShift.y < 0)
+	case fdt_Win8:
+		{
+			IconShift.x = 2;
 			IconShift.y = 0;
-		else if (IconShift.y > 4)
-			IconShift.y = 4;
-		if (gpConEmu->isZoomed())
-			IconShift.y += 4;
-	}
-	else if (gpConEmu->DrawType() == fdt_Themed)
-	{
-		IconShift.x = 3;
-		IconShift.y = gpConEmu->GetCaptionHeight() - 16;
-		if (IconShift.y < 0)
-			IconShift.y = 0;
-		else if (IconShift.y > 4)
-			IconShift.y = 4;
-	}
-	else // Win2k
-	{
-		IconShift.x = 2;
-		IconShift.y = 1; //(gpSet->ilDragHeight ? 1 : 1);
+		}
+		break;
+
+	case fdt_Aero:
+		{
+			IconShift.x = 3;
+			//IconShift.y = (gpConEmu->isZoomed()?4:0)+(gpSet->ilDragHeight ? 4 : 1);
+			IconShift.y = gpConEmu->GetCaptionHeight() - 16;
+			if (IconShift.y < 0)
+				IconShift.y = 0;
+			else if (IconShift.y > 4)
+				IconShift.y = 4;
+			if (gpConEmu->isZoomed())
+				IconShift.y += 4;
+		}
+		break;
+
+	case fdt_Themed:
+		{
+			IconShift.x = 3;
+			IconShift.y = gpConEmu->GetCaptionHeight() - 16;
+			if (IconShift.y < 0)
+				IconShift.y = 0;
+			else if (IconShift.y > 4)
+				IconShift.y = 4;
+		}
+		break;
+
+	default:
+		// Win2k
+		{
+			IconShift.x = 2;
+			IconShift.y = 1; //(gpSet->ilDragHeight ? 1 : 1);
+		}
 	}
 }

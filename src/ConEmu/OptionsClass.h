@@ -302,30 +302,29 @@ class CSettings
 
 		//HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hCmdTasks, hViews, hInfo, hDebug, hUpdate, hSelection;
 		enum TabHwndIndex {
-			thi_Main = 0,
-			thi_SizePos,
-			thi_Show,
-			thi_Taskbar,
-			thi_Cursor,
-			thi_Startup,
-			thi_Ext,
-			thi_Comspec,
-			//thi_Output,
-			thi_Selection,
-			thi_Far,
-			thi_Keys,
-			thi_KeybMouse,
-			thi_Tabs,
-			thi_Status,
-			thi_Colors,
-			thi_Transparent,
-			thi_Tasks,
-			thi_Apps,
-			thi_Integr,
-			thi_Views,
-			thi_Debug,
-			thi_Update,
-			thi_Info,
+			thi_Main = 0,     // "Main"
+			thi_SizePos,      //   "Size & Pos"
+			thi_Show,         //   "Appearance"
+			thi_Taskbar,      //   "Task bar"
+			thi_Update,       //   "Update"
+			thi_Startup,      // "Startup"
+			thi_Tasks,        //   "Tasks"
+			thi_Comspec,      //   "ComSpec"
+			thi_Ext,          // "Features"
+			thi_Cursor,       //   "Text cursor"
+			thi_Colors,       //   "Colors"
+			thi_Transparent,  //   "Transparency"
+			thi_Tabs,         //   "Tabs"
+			thi_Status,       //   "Status bar"
+			thi_Integr,       //   "Integration"
+			thi_Apps,         //   "App distinct"
+			thi_Keys,         // "Keys & Macro"
+			thi_KeybMouse,    //   "Controls"
+			thi_Selection,    //   "Mark & Paste"
+			thi_Far,          // "Far Manager"
+			thi_Views,        //   "Views"
+			thi_Info,         // "Info"
+			thi_Debug,        //   "Debug"
 			//
 			thi_Last
 		};
@@ -486,7 +485,7 @@ class CSettings
 		LRESULT OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		static int CALLBACK HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 		wchar_t szSelectionModError[512];
-		void CheckSelectionModifiers();
+		void CheckSelectionModifiers(HWND hWnd2);
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);

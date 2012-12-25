@@ -49,6 +49,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "Status.h"
+#include "Menu.h"
+
+// Пока не вышло в релиз - так
+#ifdef USE_CONEMU_TOOLBAR
+#include "ToolBarClass.cpp"
+#endif
 
 
 #define MIN_TAB_WIDTH 30
@@ -73,10 +79,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#undef DRAW_CAPTION_MARKERS
 	#define DIRECT_CAP_PAINT
 	//#undef DIRECT_CAP_PAINT
+	//#define DEBUG_SHOW_RECT
+	#undef DEBUG_SHOW_RECT
 #else
 	#undef DEBUG_NO_DRAW_TABS
 	#undef DRAW_CAPTION_MARKERS
 	#undef DIRECT_CAP_PAINT
+	#undef DEBUG_SHOW_RECT
 #endif
 
 
@@ -98,45 +107,99 @@ TabBarClass::TabBarClass()
 	mn_HoverTab = -1;
 	mn_TabWidth = MIN_TAB_WIDTH; // Информационно, фактическое расположение табов фиксируется в RepositionTabs
 	mn_EdgeWidth = 4;
-	memset(&mrc_Caption, 0, sizeof(mrc_Caption));
-	memset(&mrc_Tabs, 0, sizeof(mrc_Tabs));
-	memset(&mrc_Toolbar, 0, sizeof(mrc_Toolbar));
+	ZeroStruct(mrc_Caption);
+	ZeroStruct(mrc_Tabs);
+	ZeroStruct(mrc_TabsClient);
+	ZeroStruct(mrc_Toolbar);
 	mh_Theme = NULL;
 	pPixels = NULL;
 	mn_InUpdate = 0;
 
-	memset(m_Colors, 0, sizeof(m_Colors));
-	memset(mh_Pens, 0, sizeof(mh_Pens));
-	memset(mh_Brushes, 0, sizeof(mh_Brushes));
+	ZeroStruct(m_Colors);
+	ZeroStruct(mh_Pens);
+	ZeroStruct(mh_Brushes);
 
-	m_Colors[clrText] = RGB(0,0,0);
-	m_Colors[clrDisabledText] = RGB(96,96,96);
-	m_Colors[clrDisabledTextShadow] = RGB(255,255,255);
-	m_Colors[clrBorder] = RGB(107,165,189);
-	m_Colors[clrInactiveBorder] = RGB(148,148,165);
+	//m_Colors[clrText] = RGB(0,0,0);
+	//m_Colors[clrDisabledText] = RGB(96,96,96);
+	//m_Colors[clrDisabledTextShadow] = RGB(255,255,255);
+	//m_Colors[clrBorder] = RGB(107,165,189);
+	//m_Colors[clrInactiveBorder] = RGB(148,148,165);
 
-	m_Colors[clrEdgeLeft] = RGB(255,255,247);
-	m_Colors[clrEdgeRight] = RGB(255,255,247);
-	m_Colors[clrInactiveEdgeLeft] = RGB(239,239,247);
-	m_Colors[clrInactiveEdgeRight] = RGB(140,173,206);
+	//m_Colors[clrEdgeLeft] = RGB(255,255,247);
+	//m_Colors[clrEdgeRight] = RGB(255,255,247);
+	//m_Colors[clrInactiveEdgeLeft] = RGB(239,239,247);
+	//m_Colors[clrInactiveEdgeRight] = RGB(140,173,206);
 
-	m_Colors[clrBackActive] = RGB(255,255,247);
-	m_Colors[clrBackActiveBottom] = RGB(214,231,247);
-	m_Colors[clrBackHover] = RGB(239,239,247);
-	m_Colors[clrBackHoverBottom] = RGB(132,206,247);
-	m_Colors[clrBackInactive] = RGB(239,239,247);
-	m_Colors[clrBackInactiveBottom] = RGB(156,181,214);
-	m_Colors[clrBackDisabled] = RGB(243,243,243);
-	m_Colors[clrBackDisabledBottom] = RGB(189,189,189);
+	//m_Colors[clrBackActive] = RGB(255,255,247);
+	//m_Colors[clrBackActiveBottom] = RGB(214,231,247);
+	//m_Colors[clrBackHover] = RGB(239,239,247);
+	//m_Colors[clrBackHoverBottom] = RGB(132,206,247);
+	//m_Colors[clrBackInactive] = RGB(239,239,247);
+	//m_Colors[clrBackInactiveBottom] = RGB(156,181,214);
+	//m_Colors[clrBackDisabled] = RGB(243,243,243);
+	//m_Colors[clrBackDisabledBottom] = RGB(189,189,189);
 
 	mb_PostUpdateCalled = mb_PostUpdateRequested = FALSE;
 	mn_PostUpdateTick = 0;
 	mb_InKeySwitching = FALSE;
 	
 	mh_Balloon = NULL;
-	memset(&tiBalloon, 0, sizeof(tiBalloon));
+	ZeroStruct(tiBalloon);
 	ms_TabErrText[0] = 0;
 	mh_TabIcons = 0;
+
+	// *** Создать дефолтные тулбары ***
+	InitToolbar();
+}
+
+void TabBarClass::InitToolbar()
+{
+	// *** Создать дефолтные тулбары ***
+	LPARAM lParam = (LPARAM)(TabBarClass*)this;
+	//mn_ToolbarBmp = IDB_MAIN_TOOLBAR;
+	SIZE sz = {14,14};
+	//m_ToolbarBmpSize = sz;
+
+	mp_Toolbar = new CToolBarClass;
+	mp_Toolbar->Lock();
+
+	RECT rcBtn = {0,0,sz.cx-1,sz.cy-1};
+
+	// Bitmap indexes defined in header.h: enum ToolbarMainBitmapIdx
+
+	mp_Toolbar->CreatePane(TID_CREATE_CON, 1020, true, LoadBitmap(g_hInstance, MAKEINTRESOURCE(IDB_MAIN_TOOLBAR)), lParam, OnToolbarCommand, OnToolbarMenu, OnToolBarDraw);
+	rcBtn.left = BID_NEWCON_IDX*sz.cx; rcBtn.right = rcBtn.left + sz.cx - 1;
+	mp_Toolbar->AddTool(TID_CREATE_CON, TID_CREATE_CON, rcBtn, TIS_DROPDOWN, L"Create new console");
+
+	mp_Toolbar->CreatePane(TID_ACTIVE_NUMBER, 1010, true, LoadBitmap(g_hInstance, MAKEINTRESOURCE(IDB_MAIN_TOOLBAR)), lParam, OnToolbarCommand, OnToolbarMenu, OnToolBarDraw);
+	rcBtn.left = 0; rcBtn.right = rcBtn.left + sz.cx - 1;
+	mp_Toolbar->AddTool(TID_ACTIVE_NUMBER, TID_ACTIVE_NUMBER, rcBtn, TIS_DROPDOWN|/*TIS_DRAWCALLBACK|*/TIS_TIPCALLBACK, NULL);
+	
+	mp_Toolbar->CreatePane(TID_ALTERNATIVE, 1000, true, LoadBitmap(g_hInstance, MAKEINTRESOURCE(IDB_MAIN_TOOLBAR)), lParam, OnToolbarCommand, OnToolbarMenu, OnToolBarDraw);
+	rcBtn.left = BID_ALTERNATIVE_IDX*sz.cx; rcBtn.right = rcBtn.left + sz.cx - 1;
+	mp_Toolbar->AddTool(TID_ALTERNATIVE, TID_ALTERNATIVE, rcBtn, TIS_TIPCALLBACK, NULL);
+	//mp_Toolbar->CheckTool(mn_ToolPaneOptions, mn_ToolCmdBuffer, false/*isAlternative()*/);
+
+	{
+	COLORMAP colorMap = {0xC0C0C0,GetSysColor(COLOR_BTNFACE)};
+	HBITMAP hBmp = CreateMappedBitmap(g_hInstance, IDB_SCROLL, 0, &colorMap, 1);
+	mp_Toolbar->CreatePane(TID_SCROLL, 1000, true, hBmp, lParam, OnToolbarCommand, OnToolbarMenu, OnToolBarDraw);
+	rcBtn.left = 0; rcBtn.right = rcBtn.left + sz.cx - 1;
+	mp_Toolbar->AddTool(TID_SCROLL, TID_SCROLL, rcBtn, TIS_TIPCALLBACK, NULL);
+	//mp_Toolbar->CheckTool(mn_ToolPaneOptions, mn_ToolCmdBuffer, false/*isBufferHeight()*/);
+	}
+
+
+	mp_Toolbar->CreatePane(TID_APPCLOSE, 3000, true, LoadBitmap(g_hInstance, MAKEINTRESOURCE(IDB_MAIN_TOOLBAR)), lParam, OnToolbarCommand, OnToolbarMenu, OnToolBarDraw);
+	rcBtn.left = BID_MINIMIZE_IDX*sz.cx; rcBtn.right = rcBtn.left + sz.cx - 1;
+	mp_Toolbar->AddTool(TID_APPCLOSE, TID_MINIMIZE, rcBtn, TIS_TIPCALLBACK, NULL);
+	rcBtn.left = BID_MAXIMIZE_IDX*sz.cx; rcBtn.right = rcBtn.left + sz.cx - 1;
+	mp_Toolbar->AddTool(TID_APPCLOSE, TID_MAXIMIZE, rcBtn, TIS_TIPCALLBACK, NULL);
+	rcBtn.left = BID_APPCLOSE_IDX*sz.cx; rcBtn.right = rcBtn.left + sz.cx - 1;
+	mp_Toolbar->AddTool(TID_APPCLOSE, TID_APPCLOSE, rcBtn, TIS_TIPCALLBACK, NULL);
+
+
+	mp_Toolbar->Commit();
 }
 
 TabBarClass::~TabBarClass()
@@ -144,6 +207,8 @@ TabBarClass::~TabBarClass()
 	// Освободить все табы
 	m_Tabs.ReleaseTabs(FALSE);
 	m_TabStack.ReleaseTabs(FALSE);
+
+	SafeDelete(mp_Toolbar);
 }
 
 //bool TabBarClass::OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags)
@@ -156,10 +221,6 @@ void TabBarClass::Retrieve()
 }
 
 void TabBarClass::Reset()
-{
-}
-
-void TabBarClass::Invalidate()
 {
 }
 
@@ -269,6 +330,13 @@ void TabBarClass::CreateRebar()
 //{
 //}
 
+void TabBarClass::Invalidate()
+{
+	TODO("Обновить Frame/Caption?");
+	// -- gpConEmu->RedrawFrame();
+	InvalidateRect(ghWnd, NULL, TRUE);
+}
+
 void TabBarClass::RePaint()
 {
 }
@@ -359,8 +427,124 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 }
 
-void TabBarClass::OnMouse(int message, int x, int y)
+bool TabBarClass::OnMouse(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult)
 {
+	POINT ptCurClient = {(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)};
+	if ((uMsg == WM_MOUSEWHEEL) || (uMsg == 0x020E/*WM_MOUSEHWHEEL*/))
+		MapWindowPoints(NULL, ghWnd, &ptCurClient, 1);
+
+	if (!PtInRect(&mrc_TabsClient, ptCurClient))
+	{
+		if (mn_HoverTab >= 0)
+		{
+			HoverTab(-1);
+			#if defined(USE_CONEMU_TOOLBAR)
+			// с кнопок убрать подсветку, если была
+			mp_Toolbar->UnHover();
+			#endif
+		}
+
+		return false;
+	}
+
+	switch (uMsg)
+	{
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_MOUSEMOVE:
+		//if (wParam == HT_CONEMUTAB || wParam == HTCAPTION)
+		{
+			if (mb_ToolbarFit && PtInRect(&mrc_Toolbar, ptCurClient))
+			{
+				if (mn_HoverTab >= 0)
+				{
+					HoverTab(-1);
+				}
+				#if defined(USE_CONEMU_TOOLBAR)
+				if (mp_Toolbar->MouseEvent(hWnd, uMsg, wParam, lParam, ptCurClient, lResult))
+				{
+					break;
+				}
+				#endif
+				break;
+			}
+			else
+			{
+				#if defined(USE_CONEMU_TOOLBAR)
+				// с кнопок убрать подсветку, если была
+				mp_Toolbar->UnHover();
+				#endif
+			}
+
+			DWORD nTabFlags = 0;
+			int nTab = TabFromCursor(ptCurClient, &nTabFlags);
+			if (nTab >= 0)
+			{
+				//TODO: WM_MBUTTONDOWN
+				if ((uMsg == WM_LBUTTONDOWN) || (uMsg == WM_RBUTTONUP))
+				{
+					if ((nTabFlags & fwt_Disabled))
+					{
+						ShowTabError(TAB_CANT_BE_ACTIVATED, nTab);
+					}
+					else
+					{
+						if (OnTabSelected(nTab))
+						{
+							CVConGuard VCon;
+							if ((uMsg == WM_RBUTTONUP) && (gpConEmu->GetActiveVCon(&VCon) >= 0))
+							{
+								POINT ptCur; GetCursorPos(&ptCur);
+								gpConEmu->mp_Menu->ShowPopupMenu(VCon.VCon(), ptCur);
+							}
+						}
+					}
+				}
+				else if (uMsg == WM_MOUSEMOVE)
+				{
+					// check hover - mn_HoverTab
+					int nNewHover = (mn_ActiveTab == nTab) ? -1 : nTab;
+					if (nNewHover != mn_HoverTab)
+					{
+						HoverTab(nNewHover);
+					}
+				}
+				else if (uMsg == WM_MBUTTONUP)
+				{
+					// Закрыть таб?
+				}
+				break;
+			}
+			else if (mn_HoverTab >= 0)
+			{
+				HoverTab(-1);
+			}
+		}
+		break;
+
+	case WM_MOUSEHOVER:
+		// Показать тултип, если текст был обрезан
+		break;
+
+	case WM_MOUSELEAVE:
+		if (mn_HoverTab >= 0)
+		{
+			HoverTab(-1);
+			#if defined(USE_CONEMU_TOOLBAR)
+			// с кнопок убрать подсветку, если была
+			mp_Toolbar->UnHover();
+			#endif
+		}
+		break;
+
+	}
+
+	return true; // событие над нашей панелью, дальше не обрабатывать!
 }
 
 // Переключение табов
@@ -413,12 +597,69 @@ void TabBarClass::GetActiveTabRect(RECT* rcTab)
 /*  Owner-draw tab paintings
 /* ************************** */
 
+void TabBarClass::PreparePalette()
+{
+	switch (gpSet->nTabStyle)
+	{
+	case ts_Win8:
+		{
+			m_Colors[clrText] = RGB(0,0,0);
+			m_Colors[clrDisabledText] = RGB(96,96,96);
+			m_Colors[clrDisabledTextShadow] = RGB(255,255,255);
+			m_Colors[clrBorder] = RGB(172,172,172);
+			m_Colors[clrHoverBorder] = RGB(126,180,234);
+			m_Colors[clrInactiveBorder] = RGB(172,172,172);
+
+			// Not used in this theme
+			m_Colors[clrEdgeLeft] = RGB(0,0,0);
+			m_Colors[clrEdgeRight] = RGB(0,0,0);
+			m_Colors[clrInactiveEdgeLeft] = RGB(0,0,0);
+			m_Colors[clrInactiveEdgeRight] = RGB(0,0,0);
+
+			m_Colors[clrBackActive] = RGB(255,255,255);
+			m_Colors[clrBackActiveBottom] = RGB(255,255,255);
+			m_Colors[clrBackHover] = RGB(236,244,252);
+			m_Colors[clrBackHoverBottom] = RGB(221,237,252);
+			m_Colors[clrBackInactive] = RGB(240,240,240);
+			m_Colors[clrBackInactiveBottom] = RGB(230,230,230);
+			m_Colors[clrBackDisabled] = RGB(240,240,240);
+			m_Colors[clrBackDisabledBottom] = RGB(230,230,230);
+		}
+		break;
+	default:
+		{
+			m_Colors[clrText] = RGB(0,0,0);
+			m_Colors[clrDisabledText] = RGB(96,96,96);
+			m_Colors[clrDisabledTextShadow] = RGB(255,255,255);
+			m_Colors[clrBorder] = RGB(107,165,189);
+			m_Colors[clrHoverBorder] = RGB(107,165,189);
+			m_Colors[clrInactiveBorder] = RGB(148,148,165);
+
+			m_Colors[clrEdgeLeft] = RGB(255,255,247);
+			m_Colors[clrEdgeRight] = RGB(255,255,247);
+			m_Colors[clrInactiveEdgeLeft] = RGB(239,239,247);
+			m_Colors[clrInactiveEdgeRight] = RGB(140,173,206);
+
+			m_Colors[clrBackActive] = RGB(255,255,247);
+			m_Colors[clrBackActiveBottom] = RGB(214,231,247);
+			m_Colors[clrBackHover] = RGB(239,239,247);
+			m_Colors[clrBackHoverBottom] = RGB(132,206,247);
+			m_Colors[clrBackInactive] = RGB(239,239,247);
+			m_Colors[clrBackInactiveBottom] = RGB(156,181,214);
+			m_Colors[clrBackDisabled] = RGB(243,243,243);
+			m_Colors[clrBackDisabledBottom] = RGB(189,189,189);
+		}
+	}
+}
+
 void TabBarClass::CreateStockObjects(HDC hdc, const RECT &rcTabs)
 {
 	if (m_TabDrawStyle == fdt_Themed)
 	{
 		mh_Theme = gpConEmu->OpenThemeData(NULL, L"WINDOW"); 
 	}
+
+	PreparePalette();
 
 	for (int i = 0; i <= clrColorIndexMax; i++)
 	{
@@ -437,7 +678,17 @@ void TabBarClass::CreateStockObjects(HDC hdc, const RECT &rcTabs)
 
 	// Прикинуть высоту получившегося шрифта
 	GetTextExtentPoint32(hdc, L"Ay", 2, &m_TabFontSize);
-	mn_TextShift = ((rcTabs.bottom-rcTabs.top+1) - m_TabFontSize.cy)/2;
+	switch (gpSet->nTabStyle)
+	{
+	case ts_Win8:
+		if (gpSet->nTabsLocation == 0)
+			mn_TextShift = 1+((rcTabs.bottom-rcTabs.top+1) - m_TabFontSize.cy)/2;
+		else
+			mn_TextShift = 3+((rcTabs.bottom-rcTabs.top+5) - m_TabFontSize.cy)/2;
+		break;
+	default:
+		mn_TextShift = ((rcTabs.bottom-rcTabs.top+1) - m_TabFontSize.cy)/2;
+	}
 	if (mn_TextShift < 1) mn_TextShift = 1;
 }
 
@@ -464,26 +715,34 @@ void TabBarClass::RepositionTabs(const RECT &rcCaption, const RECT &rcTabs)
 {
 	//TODO: Если мышка над полосой табов - не увеличивать ширину таба?
 
-	mn_EdgeWidth = (rcTabs.bottom - rcTabs.top) * 2 / 3;
+	switch (gpSet->nTabStyle)
+	{
+	case ts_Win8:
+		mn_EdgeWidth = (rcTabs.bottom - rcTabs.top) / 4;
+		break;
+	default:
+		mn_EdgeWidth = (rcTabs.bottom - rcTabs.top) * 2 / 3;
+	}
+
 	int nTabCount = m_Tabs.GetCount();
 	int nAllWidth = rcTabs.right - rcTabs.left - TAB_BUTTON_SPACING - mn_EdgeWidth;
 	int nToolbarWidth = 0;
 	bool bToolbarFit = false;
 
 	#if defined(USE_CONEMU_TOOLBAR)
-	if (gpSet->isToolbar)
+	if (gpSet->isMultiShowButtons)
 	{
 		int nMaxToolbarWidth = nAllWidth - nTabCount*MIN_TAB_WIDTH - TOOL_TAB_SPACING;
 		if (nMaxToolbarWidth > 0)
 		{
-			nToolbarWidth = gpConEmu->Toolbar_GetWidth(nMaxToolbarWidth);
+			nToolbarWidth = mp_Toolbar->GetWidth(nMaxToolbarWidth);
 			if (nToolbarWidth > 0)
 			{
 				bToolbarFit = true;
 				mrc_Toolbar = rcTabs;
-				mrc_Toolbar.right -= TAB_BUTTON_SPACING;
+				//mrc_Toolbar.right -= TAB_BUTTON_SPACING; -- отступ от оригинальных кнопок в заголовке, если они рисуются виндой
 				mrc_Toolbar.left = mrc_Toolbar.right - nToolbarWidth;
-				mrc_Toolbar.top = rcTabs.bottom-gpConEmu->Toolbar_GetHeight();
+				mrc_Toolbar.top = rcTabs.bottom - mp_Toolbar->GetHeight();
 				if (gpConEmu->DrawType() == fdt_Aero)
 				{
 					if (mrc_Toolbar.top < (rcCaption.top+2))
@@ -501,18 +760,43 @@ void TabBarClass::RepositionTabs(const RECT &rcCaption, const RECT &rcTabs)
 	#endif
 	mb_ToolbarFit = bToolbarFit;
 
-	mn_TabWidth = (nAllWidth / nTabCount);
-	if (mn_TabWidth < MIN_TAB_WIDTH) mn_TabWidth = MIN_TAB_WIDTH;
-
+	if (nTabCount > 0)
+	{
+		mn_TabWidth = (nAllWidth / nTabCount);
+		if (mn_TabWidth < MIN_TAB_WIDTH)
+			mn_TabWidth = MIN_TAB_WIDTH;
+		else if ((DWORD)mn_TabWidth > gpSet->nTabWidthMax)
+			mn_TabWidth = gpSet->nTabWidthMax;
+	}
+	else
+	{
+		mn_TabWidth = min(nAllWidth, (int)gpSet->nTabWidthMax);
+	}
 	
-	RECT rcTab = {rcTabs.left, rcTabs.top, rcTabs.left+mn_TabWidth+(mn_EdgeWidth / 3), rcTabs.bottom};
+	RECT rcTab;
+	switch (gpSet->nTabStyle)
+	{
+	case ts_Win8:
+		rcTab = MakeRect(rcTabs.left+2, rcTabs.top, rcTabs.left+mn_TabWidth+1, rcTabs.bottom);
+		break;
+	default:
+		rcTab = MakeRect(rcTabs.left, rcTabs.top, rcTabs.left+mn_TabWidth+(mn_EdgeWidth / 3), rcTabs.bottom);
+	}
+
+	int nRectWidth = rcTab.right - rcTab.left;
 	int nTabShift = mn_TabWidth;
+	// Try to distribute non-used space between tabs (+1px per tab)
 	int nAddShift = nAllWidth - mn_TabWidth*nTabCount;
 
 	for (int i = 0; i < nTabCount && (rcTab.left+MIN_TAB_WIDTH-1) < rcTabs.right; i++)
 	{
-		m_Tabs.SetTabDrawRect(i, rcTab);
-		OffsetRect(&rcTab, nTabShift+((nAddShift>0)?1:0), 0);
+		int nCur1 = 0; //((i > 0) && (i == mn_ActiveTab)) ? 1 : 0;
+		int nCur2 = 0; //((i == mn_ActiveTab) && ((i+1) < nTabCount)) ? 1 : 0;
+		RECT rc = {rcTab.left-nCur1, rcTab.top, rcTab.right+((nAddShift>0)?1:0)+nCur2, rcTab.bottom};
+		m_Tabs.SetTabDrawRect(i, rc);
+		//OffsetRect(&rcTab, nTabShift+((nAddShift>0)?1:0), 0);
+		rcTab.left = rc.right;
+		rcTab.right = rcTab.left + nRectWidth;
 		nAddShift--;
 	}
 }
@@ -531,12 +815,15 @@ void TabBarClass::PaintTabs(HDC hdc, const RECT &rcCaption, const RECT &rcTabs)
 	
 	mrc_Caption = rcCaption;
 	mrc_Tabs = rcTabs;
+	WARNING("Должна быть отрисовка в КЛИЕНТСКОЙ области, а не в заголовке!");
+	mrc_TabsClient = rcTabs;
 
 	PaintTabs_Common(hdc, rcCaption, rcTabs);
 
 	CS.Unlock();
 
 	#ifdef DRAW_CAPTION_MARKERS
+	{
 	SetBkMode(hdc, TRANSPARENT);
 	HPEN hGR = CreatePen(PS_DOT,1,RGB(0,255,0));
 	HPEN hOldP = (HPEN)SelectObject(hdc, hGR);
@@ -552,14 +839,27 @@ void TabBarClass::PaintTabs(HDC hdc, const RECT &rcCaption, const RECT &rcTabs)
 	LineTo(hdc, rcTabs.right, rcTabs.bottom+1);
 	SelectObject(hdc, hOldP);
 	DeleteObject(hGR); DeleteObject(hTP);
+	}
+	#endif
+
+	#ifdef DEBUG_SHOW_RECT
+	{
+	HPEN hGR = CreatePen(PS_DOT,1,RGB(0,255,0));
+	HPEN hOldP = (HPEN)SelectObject(hdc, hGR);
+	POINT pt[] = {{rcTabs.left, rcTabs.top}, {rcTabs.right, rcTabs.top}, {rcTabs.right, rcTabs.bottom}, {rcTabs.left, rcTabs.bottom}, {rcTabs.left, rcTabs.top}};
+	Polyline(hdc, pt, countof(pt));
+	SelectObject(hdc, hOldP);
+	DeleteObject(hGR);
+	}
 	#endif
 }
 
 HFONT TabBarClass::CreateTabFont(int anTabHeight)
 {
-	//TODO: Настройки
-	HFONT hFont = CreateFont((anTabHeight*5/6), 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, 
-		CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY, FF_MODERN, L"Verdana");
+	//HFONT hFont = CreateFont((anTabHeight*5/6), 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, 
+	//	CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY, FF_MODERN, L"Verdana");
+	HFONT hFont = CreateFont(min(gpSet->nTabFontHeight,anTabHeight), 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gpSet->nTabFontCharSet, OUT_DEFAULT_PRECIS,
+		CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gpSet->sTabFontFace);
 	return hFont;
 }
 
@@ -805,6 +1105,58 @@ void TabBarClass::PaintCaption_Aero(HDC hdc, const RECT &rcCaption, const RECT &
 	PaintCaption_Icon(hdc, rcCaption.left+IconShift.x, rcCaption.top+IconShift.y);
 }
 
+void TabBarClass::PaintCaption_Win8(HDC hdc, const RECT &rcCaption, const RECT &rcTabs)
+{
+	if (gpSet->isTabsInCaption)
+	{
+		return;
+	}
+
+	BOOL lbActive = gpConEmu->mb_NcActive;
+	BOOL lbGradient = TRUE;
+	SystemParametersInfo(SPI_GETGRADIENTCAPTIONS, 0, &lbGradient, 0);
+	
+	// -- Не работает
+	//RECT rc = rcCaption;
+	//DrawCaption(ghWnd, hdc, &rc, (lbActive?DC_ACTIVE:0)|DC_BUTTONS|(lbGradient?DC_GRADIENT:0));
+	
+	HBRUSH br = (HBRUSH)GetSysColorBrush(lbActive ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION);
+	//TODO: А место с иконкой?!
+	RECT rc = {rcCaption.left, rcCaption.top, rcTabs.right, rcCaption.bottom};
+	FillRect(hdc, &rc, br);
+	
+	// Иконка
+	{
+		HBRUSH br = (HBRUSH)GetSysColorBrush(lbActive ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION);
+		RECT rc = {rcCaption.left, rcCaption.top, rcTabs.left, rcTabs.bottom};
+		FillRect(hdc, &rc, br);
+		
+		POINT IconShift;
+		gpConEmu->GetIconShift(IconShift);
+		PaintCaption_Icon(hdc, rcCaption.left+IconShift.x, rcCaption.top+IconShift.y);
+	}
+	
+	// Кнопки
+	{
+		HBRUSH br = (HBRUSH)GetSysColorBrush(lbActive 
+			? (lbGradient?COLOR_GRADIENTACTIVECAPTION:COLOR_ACTIVECAPTION)
+			: (lbGradient?COLOR_GRADIENTINACTIVECAPTION:COLOR_INACTIVECAPTION));
+		RECT rc = {rcTabs.right, rcCaption.top, rcCaption.right+1, rcTabs.bottom+1};
+		FillRect(hdc, &rc, br);
+		
+		int nBtnWidth = GetSystemMetrics(SM_CXSIZE);
+		int nBtnHeight = GetSystemMetrics(SM_CYSIZE);
+		RECT rcBtn = {0, rcCaption.top+2, 0, rcCaption.top+nBtnHeight-2};
+		rcBtn.right = rcCaption.right - 1;
+		rcBtn.left = rcBtn.right - nBtnWidth + 2;
+		DrawFrameControl(hdc, &rcBtn, DFC_CAPTION, DFCS_CAPTIONCLOSE);
+		rcBtn.right -= nBtnWidth; rcBtn.left -= nBtnWidth;
+		DrawFrameControl(hdc, &rcBtn, DFC_CAPTION, (gpConEmu->isZoomed()?DFCS_CAPTIONRESTORE:DFCS_CAPTIONMAX));
+		rcBtn.right -= (nBtnWidth - 2); rcBtn.left -= (nBtnWidth-2);
+		DrawFrameControl(hdc, &rcBtn, DFC_CAPTION, DFCS_CAPTIONMIN);
+	}
+}
+
 void TabBarClass::PaintCaption_Icon(HDC hdc, int X, int Y)
 {
 	_ASSERTE(gpSet->isCaptionHidden()); // Должна вызываться только при скрытом заголовке!
@@ -999,22 +1351,28 @@ void TabBarClass::PaintTabs_Common(HDC hdc, const RECT &rcCaption, const RECT &r
 
 	bool bCaptionHidden = gpSet->isCaptionHidden();
 
-	if (!bCaptionHidden)
+	if (!gpSet->isTabsInCaption)
 	{
-		PaintCaption_Plain(hdcPaint, rcCaption, rcTabs);
-	}
-	else
-	{
-		switch (m_TabDrawStyle)
+		if (!bCaptionHidden)
 		{
-		case fdt_Aero:
-			PaintCaption_Aero(hdcPaint, rcCaption, rcTabs);
-			break;
-		case fdt_Themed:
-			PaintCaption_XP(hdcPaint, rcCaption, rcTabs);
-			break;
-		default:
-			PaintCaption_2k(hdcPaint, rcCaption, rcTabs);
+			PaintCaption_Plain(hdcPaint, rcCaption, rcTabs);
+		}
+		else
+		{
+			switch (m_TabDrawStyle)
+			{
+			case fdt_Win8:
+				PaintCaption_Win8(hdcPaint, rcCaption, rcTabs);
+				break;
+			case fdt_Aero:
+				PaintCaption_Aero(hdcPaint, rcCaption, rcTabs);
+				break;
+			case fdt_Themed:
+				PaintCaption_XP(hdcPaint, rcCaption, rcTabs);
+				break;
+			default:
+				PaintCaption_2k(hdcPaint, rcCaption, rcTabs);
+			}
 		}
 	}
 
@@ -1069,7 +1427,7 @@ void TabBarClass::PaintTabs_Common(HDC hdc, const RECT &rcCaption, const RECT &r
 	#if defined(USE_CONEMU_TOOLBAR)
 	if (mb_ToolbarFit)
 	{
-		gpConEmu->Toolbar_Paint(hdcPaint, mrc_Toolbar);
+		mp_Toolbar->Paint(hdcPaint, mrc_Toolbar);
 	}
 	#endif
 
@@ -1142,6 +1500,18 @@ void TabBarClass::PaintTabs_Common(HDC hdc, const RECT &rcCaption, const RECT &r
 }
 
 void TabBarClass::PaintTab_Common(HDC hdcPaint, RECT rcTab, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover)
+{
+	switch (gpSet->nTabStyle)
+	{
+	case ts_Win8:
+		PaintTab_Win8(hdcPaint, rcTab, pTab, anFlags, bCurrent, bHover);
+		break;
+	default:
+		PaintTab_VS2008(hdcPaint, rcTab, pTab, anFlags, bCurrent, bHover);
+	}
+}
+
+void TabBarClass::PaintTab_VS2008(HDC hdcPaint, RECT rcTab, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover)
 {
 	int nColor1, nColor2, nColorL, nColorR, nColorO;
 
@@ -1216,7 +1586,7 @@ void TabBarClass::PaintTab_Common(HDC hdcPaint, RECT rcTab, struct TabDrawInfo* 
 	}
 	else if (bHover)
 	{
-		nColorO = clrBorder;
+		nColorO = clrHoverBorder;
 		nColor1 = clrBackHover;
 		nColor2 = clrBackHoverBottom;
 		nColorL = clrEdgeLeft;
@@ -1277,15 +1647,7 @@ void TabBarClass::PaintTab_Common(HDC hdcPaint, RECT rcTab, struct TabDrawInfo* 
 
 	// Собственно текст
 	RECT rcText = {rcTab.left+mn_EdgeWidth, rcTab.top+mn_TextShift, rcTab.right-mn_EdgeWidth, rcTab.bottom};
-	if ((anFlags & fwt_Disabled))
-	{
-		SetTextColor(hdcPaint, m_Colors[clrDisabledTextShadow]);
-		OffsetRect(&rcText, 1, 1);
-		DrawText(hdcPaint, pTab->Display.Ptr(), -1, &rcText, DT_LEFT|DT_NOPREFIX|DT_TOP|DT_WORD_ELLIPSIS);
-		OffsetRect(&rcText, -1, -1);
-	}
-	SetTextColor(hdcPaint, m_Colors[(anFlags & fwt_Disabled) ? clrDisabledText : clrText]);
-	DrawText(hdcPaint, pTab->Display.Ptr(), -1, &rcText, DT_LEFT|DT_NOPREFIX|DT_TOP|DT_WORD_ELLIPSIS);
+	PaintTab_Text(hdcPaint, rcText, pTab, anFlags, bCurrent, bHover);
 	
 	// Скосы
 	SelectObject(hdcPaint, mh_Pens[nColorL]);
@@ -1306,8 +1668,146 @@ void TabBarClass::PaintTab_Common(HDC hdcPaint, RECT rcTab, struct TabDrawInfo* 
 		MoveToEx(hdcPaint, rcTab.left, rcTab.bottom-nY, 0);
 		LineTo(hdcPaint, rcTab.right, rcTab.bottom-nY);
 	}
-	
+}
 
+void TabBarClass::PaintTab_Win8(HDC hdcPaint, RECT rcTab, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover)
+{
+	int nColor1, nColor2, /*nColorL, nColorR,*/ nColorO;
+	if ((anFlags & fwt_Disabled))
+	{
+		nColorO = clrInactiveBorder;
+		nColor1 = clrBackDisabled;
+		nColor2 = clrBackDisabledBottom;
+		//nColorL = clrInactiveEdgeLeft;
+		//nColorR = clrInactiveEdgeRight;
+	}
+	else if (bCurrent)
+	{
+		nColorO = clrBorder;
+		nColor1 = clrBackActive;
+		nColor2 = clrBackActiveBottom;
+		//nColorL = clrEdgeLeft;
+		//nColorR = clrEdgeRight;
+	}
+	else if (bHover)
+	{
+		nColorO = clrHoverBorder;
+		nColor1 = clrBackHover;
+		nColor2 = clrBackHoverBottom;
+		//nColorL = clrEdgeLeft;
+		//nColorR = clrEdgeRight;
+	}
+	else 
+	{
+		nColorO = clrInactiveBorder;
+		nColor1 = clrBackInactive;
+		nColor2 = clrBackInactiveBottom;
+		//nColorL = clrInactiveEdgeLeft;
+		//nColorR = clrInactiveEdgeRight;
+	}
+
+	bool bUpDown = (gpSet->nTabsLocation == 1);
+	//int T = bCurrent ? 2 : 2;
+	int T = bUpDown ? 2 : 2;
+
+	int  nY1 = bUpDown ? rcTab.top : rcTab.bottom;
+	int  nY2 = bUpDown ? (rcTab.bottom-T) : (rcTab.top+T);
+	POINT ptOuter[] = {
+		{rcTab.left,nY1},    // 0
+		{rcTab.left,nY2},    // 1
+		{rcTab.right,nY2},   // 2
+		{rcTab.right,nY1},   // 3
+		{rcTab.right+1,nY1}, // 4
+	};
+
+	// Used for "click region" (upside/down - does not matter)
+	POINT ptInner[] = {
+		{rcTab.left,rcTab.bottom},    // 0
+		{rcTab.left,rcTab.top},       // 1
+		{rcTab.right,rcTab.top},      // 2
+		{rcTab.right,rcTab.bottom},   // 3
+		{rcTab.right+1,rcTab.bottom}, // 4
+	};
+
+
+	// фон таба
+	nY1 = bUpDown ? (rcTab.bottom-T) : (rcTab.top+1+T);
+	nY2 = bUpDown ? (rcTab.top+1) : (rcTab.bottom+1);
+	TRIVERTEX vertex[] =
+	{
+		{rcTab.left+1,
+		 nY1,
+		 GetRValue(m_Colors[nColor1])<<8,
+		 GetGValue(m_Colors[nColor1])<<8,
+		 GetBValue(m_Colors[nColor1])<<8,
+		 0x0000},
+		{rcTab.right/*-1*/,
+		 nY1,
+		 GetRValue(m_Colors[nColor1])<<8,
+		 GetGValue(m_Colors[nColor1])<<8,
+		 GetBValue(m_Colors[nColor1])<<8,
+		 0x0000},
+        {rcTab.left+1,
+         nY2,
+         GetRValue(m_Colors[nColor2])<<8,
+         GetGValue(m_Colors[nColor2])<<8,
+         GetBValue(m_Colors[nColor2])<<8,
+         0x0000},
+        {rcTab.right/*-1*/,
+         nY2,
+         GetRValue(m_Colors[nColor2])<<8,
+         GetGValue(m_Colors[nColor2])<<8,
+         GetBValue(m_Colors[nColor2])<<8,
+         0x0000}
+	};
+
+	RECT rcText = {rcTab.left+mn_EdgeWidth, rcTab.top+mn_TextShift, rcTab.right-mn_EdgeWidth, rcTab.bottom};
+
+
+	// Go
+
+	// Paint gradient on TAB
+	GRADIENT_TRIANGLE triangles[] = {{0,2,3},{0,1,3}};
+	GdiGradientFill(hdcPaint, vertex, countof(vertex), triangles, countof(triangles), GRADIENT_FILL_TRIANGLE);
+
+	// Запомнить регион, для проверки в HitTest
+	if (pTab->rgnTab) DeleteObject(pTab->rgnTab); //TODO: можно бы не пересоздавать регион, если не менятся
+	pTab->rgnTab = CreatePolygonRgn(ptInner, countof(ptInner), WINDING);
+
+	// Собственно текст
+	PaintTab_Text(hdcPaint, rcText, pTab, anFlags, bCurrent, bHover);
+	
+	////Скосы
+	////SelectObject(hdcPaint, mh_Pens[nColorL]);
+	////Polyline(hdcPaint, ptInner, 4);
+	////SelectObject(hdcPaint, mh_Pens[nColorR]);
+	////_ASSERTE(countof(ptInner) == 8);
+	////Polyline(hdcPaint, ptInner+4, 4);
+
+	// Окантовка
+	SelectObject(hdcPaint, mh_Pens[nColorO]);
+	Polyline(hdcPaint, ptOuter, countof(ptOuter));
+
+	//if (!bCurrent)
+	//{
+	//	SelectObject(hdcPaint, mh_Pens[clrBorder]);
+	//	int nY = 0; //(m_TabDrawStyle == fdt_Aero) ? 0 : 1;
+	//	MoveToEx(hdcPaint, rcTab.left, rcTab.bottom-nY, 0);
+	//	LineTo(hdcPaint, rcTab.right, rcTab.bottom-nY);
+	//}
+}
+
+void TabBarClass::PaintTab_Text(HDC hdcPaint, RECT rcText, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover)
+{
+	if ((anFlags & fwt_Disabled))
+	{
+		SetTextColor(hdcPaint, m_Colors[clrDisabledTextShadow]);
+		OffsetRect(&rcText, 1, 1);
+		DrawText(hdcPaint, pTab->Display.Ptr(), -1, &rcText, DT_LEFT|DT_NOPREFIX|DT_TOP|DT_WORD_ELLIPSIS);
+		OffsetRect(&rcText, -1, -1);
+	}
+	SetTextColor(hdcPaint, m_Colors[(anFlags & fwt_Disabled) ? clrDisabledText : clrText]);
+	DrawText(hdcPaint, pTab->Display.Ptr(), -1, &rcText, DT_LEFT|DT_NOPREFIX|DT_TOP|DT_WORD_ELLIPSIS);
 }
 
 //void TabBarClass::PaintTab_2k(HDC hdcPaint, RECT rcTab, struct TabInfo* pTab, BOOL bCurrent, BOOL bHover)
@@ -1632,7 +2132,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 
 	TODO("Проверить, а нужно ли обновлять табы?");
-	gpConEmu->RedrawTabPanel();
+	Invalidate();
 }
 
 int TabBarClass::GetCurSel()
@@ -1665,7 +2165,7 @@ void TabBarClass::SelectTab(int anTab)
 			mn_HoverTab = -1;
 	}
 
-	gpConEmu->RedrawTabPanel();
+	Invalidate();
 }
 
 void TabBarClass::HoverTab(int anTab)
@@ -1677,7 +2177,7 @@ void TabBarClass::HoverTab(int anTab)
 	if (mn_HoverTab != nNewHover)
 	{
 		mn_HoverTab = anTab;
-		gpConEmu->RedrawTabPanel();
+		Invalidate();
 	}
 }
 
@@ -1757,7 +2257,7 @@ bool TabBarClass::CanSelectTab(int anNewTab, const TabInfo& ti)
 	return ((ti.Flags & fwt_Disabled) == 0);
 }
 
-bool TabBarClass::ProcessTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult)
+bool TabBarClass::ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult)
 {
 	_ASSERTE(FALSE && "There is no tabs in 'Caption'");
 
@@ -1788,7 +2288,7 @@ bool TabBarClass::ProcessTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 					HoverTab(-1);
 				}
 				#if defined(USE_CONEMU_TOOLBAR)
-				if (gpConEmu->Toolbar_MouseEvent(hWnd, uMsg, wParam, lParam, lResult))
+				if (mp_Toolbar->MouseEvent(hWnd, uMsg, wParam, lParam, point, lResult))
 				{
 					return true;
 				}
@@ -1799,7 +2299,7 @@ bool TabBarClass::ProcessTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 			{
 				#if defined(USE_CONEMU_TOOLBAR)
 				// с кнопок убрать подсветку, если была
-				gpConEmu->Toolbar_UnHover();
+				mp_Toolbar->UnHover();
 				#endif
 			}
 
@@ -1822,7 +2322,7 @@ bool TabBarClass::ProcessTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 							if ((uMsg == WM_NCRBUTTONUP) && (gpConEmu->GetActiveVCon(&VCon) >= 0))
 							{
 								POINT ptCur; GetCursorPos(&ptCur);
-								VCon->ShowPopupMenu(ptCur);
+								gpConEmu->mp_Menu->ShowPopupMenu(VCon.VCon(), ptCur);
 							}
 						}
 					}
@@ -1857,7 +2357,7 @@ bool TabBarClass::ProcessTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 			HoverTab(-1);
 			#if defined(USE_CONEMU_TOOLBAR)
 			// с кнопок убрать подсветку, если была
-			gpConEmu->Toolbar_UnHover();
+			mp_Toolbar->UnHover();
 			#endif
 		}
 		return false; // продолжить обработку
@@ -3362,4 +3862,23 @@ bool TabBarClass::Toolbar_GetBtnRect(int nCmd, RECT* rcBtnRect)
 {
 	_ASSERTE(FALSE); // TODO:
 	return false;
+}
+
+void TabBarClass::OnShowButtonsChanged()
+{
+}
+
+void TabBarClass::OnToolbarCommand(LPARAM lParam, int anPaneID, int anCmd, bool abArrow, POINT ptWhere)
+{
+	TabBarClass* p = (TabBarClass*)lParam;
+}
+
+void TabBarClass::OnToolbarMenu(LPARAM lParam, int anPaneID, int anCmd, POINT ptWhere)
+{
+	TabBarClass* p = (TabBarClass*)lParam;
+}
+
+void TabBarClass::OnToolBarDraw(LPARAM lParam, HDC hdc, const RECT& rc, int nPane, int nCmd, DWORD nFlags)
+{
+	TabBarClass* p = (TabBarClass*)lParam;
 }
