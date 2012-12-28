@@ -2904,6 +2904,18 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 	//	wmNewMode = gpConEmu->WindowMode;
 	//}
 
+	if ((mg & ((DWORD)CEM_CLIENTSHIFT)) && (mp_Inside == NULL))
+	{
+		_ASSERTE(mg == (DWORD)CEM_CLIENTSHIFT); // Can not be combined with other flags!
+
+		#if defined(CONEMU_TABBAR_EX)
+		if ((fdt >= fdt_Aero) && gpSet->isTabsInCaption)
+		{
+			rc.top = gpConEmu->GetCaptionDragHeight() + gpConEmu->GetFrameHeight();
+		}
+		#endif
+	}
+
 	// Разница между размером всего окна и клиентской области окна (рамка + заголовок)
 	if ((mg & ((DWORD)CEM_FRAMECAPTION)) && (mp_Inside == NULL))
 	{
@@ -2955,7 +2967,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 					//if (wm != wmMaximized)
 					//	rc.top = gpConEmu->GetCaptionDragHeight() + rc.bottom;
 					//else
-					rc.top = rc.bottom;
+					rc.top = rc.bottom + gpConEmu->GetCaptionDragHeight();
 				}
 				else
 				#endif
@@ -3055,7 +3067,8 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 			//}
 		}
 
-		#if defined(CONEMU_TABBAR_EX)
+		//#if defined(CONEMU_TABBAR_EX)
+		#if 0
 		if ((fdt >= fdt_Aero) && gpSet->isTabsInCaption)
 		{
 			if (wm != wmMaximized)
@@ -3316,10 +3329,18 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			// Это может быть, если сделали GetWindowRect для ghWnd, когда он isIconic!
 			_ASSERTE((rc.left!=-32000 && rc.right!=-32000) && "Use CalcRect(CER_MAIN) instead of GetWindowRect() while IsIconic!");
 			rcShift = CalcMargins(CEM_FRAMECAPTION);
-			rc.right = (rc.right-rc.left) - (rcShift.left+rcShift.right);
-			rc.bottom = (rc.bottom-rc.top) - (rcShift.top+rcShift.bottom);
+			int nWidth = (rc.right-rc.left) - (rcShift.left+rcShift.right);
+			int nHeight = (rc.bottom-rc.top) - (rcShift.top+rcShift.bottom);
 			rc.left = 0;
 			rc.top = 0; // Получили клиентскую область
+			#if defined(CONEMU_TABBAR_EX)
+			if (gpSet->isTabsInCaption)
+			{
+				rc.top = rcShift.top;
+			}
+			#endif
+			rc.right = rc.left + nWidth;
+			rc.bottom = rc.top + nHeight;
 			tFromNow = CER_MAINCLIENT;
 		}
 		break;
@@ -5093,7 +5114,13 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 		newClientHeight = rcClient.bottom;
 	}
 
-	RECT mainClient = MakeRect(newClientWidth,newClientHeight);
+	//int nClientTop = 0;
+	//#if defined(CONEMU_TABBAR_EX)
+	//RECT rcFrame = CalcMargins(CEM_CLIENTSHIFT);
+	//nClientTop = rcFrame.top;
+	//#endif
+	//RECT mainClient = MakeRect(0, nClientTop, newClientWidth, newClientHeight+nClientTop);
+	RECT mainClient = CalcRect(CER_MAINCLIENT);
 	RECT work = CalcRect(CER_WORKSPACE, mainClient, CER_MAINCLIENT);
 	_ASSERTE(ghWndWork && GetParent(ghWndWork)==ghWnd); // пока расчитано на дочерний режим
 	MoveWindow(ghWndWork, work.left, work.top, work.right-work.left, work.bottom-work.top, TRUE);
@@ -9836,19 +9863,21 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 				lbCreated = TRUE;
 			}
 
-			if (!lbCreated)
+			if (!lbCreated && !gpConEmu->mb_StartDetached)
 			{
 				RConStartArgs args;
 				args.bDetached = gpConEmu->mb_StartDetached;
 
 				if (!args.bDetached)
+				{
 					args.pszSpecialCmd = lstrdup(gpSet->GetCmd());
 
-				if (!CreateCon(&args, TRUE))
-				{
-					DisplayLastError(L"Can't create new virtual console!");
-					Destroy();
-					return;
+					if (!CreateCon(&args, TRUE))
+					{
+						DisplayLastError(L"Can't create new virtual console!");
+						Destroy();
+						return;
+					}
 				}
 			}
 		}
@@ -15512,6 +15541,13 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		} // WM_PAINT
 		break;
 
+#ifdef _DEBUG
+	case WM_MOVE:
+		break;
+	case WM_SIZE:
+		break;
+#endif
+
 	default:
 		result = DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
@@ -15702,7 +15738,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			//}
 			if (!isIconic())
 			{
-				result = gpConEmu->OnSize(HIWORD(wParam)!=2, LOWORD(wParam), LOWORD(lParam), HIWORD(lParam));
+				WORD newClientWidth = LOWORD(lParam), newClientHeight = HIWORD(lParam);
+				RECT rcShift = CalcMargins(CEM_CLIENTSHIFT);
+				_ASSERTE(rcShift.left==0 && rcShift.bottom==0 && rcShift.right==0); // Only top shift allowed
+				if ((UINT)rcShift.top > newClientHeight)
+					newClientHeight -= rcShift.top;
+				result = gpConEmu->OnSize(HIWORD(wParam)!=2, LOWORD(wParam), newClientWidth, newClientHeight);
 			}
 		} break;
 		case WM_MOVE:

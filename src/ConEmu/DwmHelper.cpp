@@ -79,6 +79,7 @@ CDwmHelper::~CDwmHelper(void)
 		_BufferedPaintInit = NULL;
 		_BufferedPaintUnInit = NULL;
 		_BeginBufferedPaint = NULL;
+		_BufferedPaintSetAlpha = NULL;
 		_EndBufferedPaint = NULL;
 		_DrawThemeTextEx = NULL;
 		_DrawThemeBackground = NULL;
@@ -141,6 +142,7 @@ void CDwmHelper::InitDwm()
 	_BufferedPaintInit = NULL;
 	_BufferedPaintUnInit = NULL;
 	_BeginBufferedPaint = NULL;
+	_BufferedPaintSetAlpha = NULL;
 	_EndBufferedPaint = NULL;
 	_DrawThemeTextEx = NULL;
 	_DrawThemeBackground = NULL;
@@ -208,6 +210,7 @@ void CDwmHelper::InitDwm()
 			_BufferedPaintInit = (BufferedPaintInit_t)GetProcAddress(mh_UxTheme, "BufferedPaintInit");
 			_BufferedPaintUnInit = (BufferedPaintInit_t)GetProcAddress(mh_UxTheme, "BufferedPaintUnInit");
 			_BeginBufferedPaint = (BeginBufferedPaint_t)GetProcAddress(mh_UxTheme, "BeginBufferedPaint");
+			_BufferedPaintSetAlpha = (BufferedPaintSetAlpha_t)GetProcAddress(mh_UxTheme, "BufferedPaintSetAlpha");
 			_EndBufferedPaint = (EndBufferedPaint_t)GetProcAddress(mh_UxTheme, "EndBufferedPaint");
 			_DrawThemeTextEx = (DrawThemeTextEx_t)GetProcAddress(mh_UxTheme, "DrawThemeTextEx");
     		
@@ -408,7 +411,7 @@ int CDwmHelper::GetDwmClientRectTopOffset()
 	{
 		//if (dt == fdt_Win8)
 		{
-			nOffset = gpConEmu->GetTabsHeight();
+			nOffset = gpConEmu->GetTabsHeight() + gpConEmu->GetFrameHeight() + gpConEmu->GetCaptionDragHeight();
 		}
 		//else
 		//{
@@ -448,18 +451,84 @@ HRESULT CDwmHelper::CloseThemeData(HANDLE/*HTHEME*/ hTheme)
 	return _CloseThemeData(hTheme);
 }
 
-HANDLE/*HPAINTBUFFER*/ CDwmHelper::BeginBufferedPaint(HDC hdcTarget, const RECT *prcTarget, int/*BP_BUFFERFORMAT*/ dwFormat, void/*BP_PAINTPARAMS*/ *pPaintParams, HDC *phdc)
+HANDLE/*HPAINTBUFFER*/ CDwmHelper::BeginBufferedPaint(HDC hdcTarget, const RECT& rcTarget, PaintDC& dc)
+//(HDC hdcTarget, const RECT *prcTarget, int/*BP_BUFFERFORMAT*/ dwFormat, void/*BP_PAINTPARAMS*/ *pPaintParams, HDC *phdc)
 {
-	if (!_BeginBufferedPaint)
-		return NULL;
-	return _BeginBufferedPaint(hdcTarget, prcTarget, dwFormat, (BP_PAINTPARAMS*)pPaintParams, phdc);
+	HANDLE hResult = NULL;
+
+	if (_BeginBufferedPaint && !dc.bInternal)
+	{
+		dc.bInternal = false;
+
+		BP_PAINTPARAMS args = {sizeof(args)};
+		args.dwFlags = 1/*BPPF_ERASE*/;
+
+		hResult = _BeginBufferedPaint(hdcTarget, &rcTarget, 1/*BPBF_DIB*//*dwFormat*/, &args, &dc.hDC);
+	}
+
+	if (!hResult)
+	{
+		BITMAPINFOHEADER bi = {sizeof(bi)};
+		bi.biWidth = rcTarget.right;
+		bi.biHeight = rcTarget.bottom;
+		bi.biPlanes = 1;
+		bi.biBitCount = 32;
+		void* pPixels = NULL;
+		HDC hdcPaint = CreateCompatibleDC(hdcTarget);
+		HBITMAP hbmp = CreateDIBSection(hdcPaint, (BITMAPINFO*)&bi, DIB_RGB_COLORS, &pPixels, NULL, 0);
+		HBITMAP hOldBmp = (HBITMAP)SelectObject(hdcPaint, hbmp);
+
+		dc.hDC = hdcPaint;
+		dc.rcTarget = rcTarget;
+		dc.hInternal1 = hdcTarget;
+		dc.hInternal2 = hbmp;
+		dc.hInternal3 = hOldBmp;
+		dc.hInternal4 = pPixels;
+		dc.bInternal = true;
+
+		hResult = (HANDLE)TRUE;
+	}
+
+	dc.hBuffered = hResult;
+	return hResult;
 }
 
-HRESULT CDwmHelper::EndBufferedPaint(HANDLE/*HPAINTBUFFER*/ hBufferedPaint, BOOL fUpdateTarget)
+HRESULT CDwmHelper::BufferedPaintSetAlpha(const PaintDC& dc, const RECT *prc, BYTE alpha)
 {
-	if (!_EndBufferedPaint)
+	if (!_BufferedPaintSetAlpha || dc.bInternal)
 		return E_NOINTERFACE;
-	return _EndBufferedPaint(hBufferedPaint, fUpdateTarget);
+	return _BufferedPaintSetAlpha(dc.hBuffered, prc, alpha);
+}
+
+HRESULT CDwmHelper::EndBufferedPaint(PaintDC& dc, BOOL fUpdateTarget)
+//(HANDLE/*HPAINTBUFFER*/ hBufferedPaint, BOOL fUpdateTarget)
+{
+	HRESULT hr = E_NOINTERFACE;
+	if (dc.bInternal)
+	{
+		if (fUpdateTarget)
+		{
+			RECT rc = dc.rcTarget;
+			BitBlt(
+				(HDC)dc.hInternal1, rc.left, rc.top, rc.right-rc.left+1, rc.bottom-rc.top+1,
+				dc.hDC, rc.left, rc.top, SRCCOPY);
+		}
+
+		SelectObject(dc.hDC, (HBITMAP)dc.hInternal3);
+		DeleteObject((HBITMAP)dc.hInternal2);
+		DeleteDC(dc.hDC);
+
+		hr = S_OK;
+	}
+	else
+	{
+		if (_EndBufferedPaint)
+		{
+			hr = _EndBufferedPaint(dc.hBuffered, fUpdateTarget);
+		}
+	}
+	
+	return hr;
 }
 
 HRESULT CDwmHelper::DrawThemeTextEx(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, LPCWSTR pszText, int iCharCount, DWORD dwFlags, LPRECT pRect, const void/*DTTOPTS*/ *pOptions)

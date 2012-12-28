@@ -12,7 +12,7 @@ BEGIN
     IDM_RESTARTAS           "Restart current console as Admin (Vista+) or user (WinXP)\nHold Shift to popup Restart dialog"
     IDM_RESTARTDLG          "Show «Restart current console» dialog"
     ID_HOMEPAGE             "Visit http://conemu-maximus5.googlecode.com"
-    ID_REPORTBUG            "Create bugreport or request new feature\nhttp://code.google.com/p/conemu-maximus5/issues/entry"
+    ID_REPORTBUG            "Create bug report or request new feature\nhttp://code.google.com/p/conemu-maximus5/issues/entry"
     bRealConsoleSettings    "You may change font face and size in the Real console. Console restart required."
     bReloadSettings         "Reload all settings from registry/xml"
     bResetSettings          "Reset all settings to defaults"

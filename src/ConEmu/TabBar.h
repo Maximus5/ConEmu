@@ -215,7 +215,7 @@ class TabBarClass //: public CToolTip
 		void HoverTab(int anTab) {};
 		void Toolbar_UnHover() {};
 		bool ProcessTabKeyboardEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };
-		void PaintTabs(HDC hdc, const RECT &rcCaption, const RECT &rcTabs) {};
+		void PaintTabs(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs) {};
 		int TabFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
 		int TabBtnFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
 		bool Toolbar_GetBtnRect(int nCmd, RECT* rcBtnRect);

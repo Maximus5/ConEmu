@@ -37,6 +37,21 @@ enum FrameDrawStyle
 	fdt_Win8 = 5,
 };
 
+struct PaintDC
+{
+	bool   bInternal;
+	HDC    hDC;
+	HANDLE hBuffered;
+
+	// Internal use!
+	RECT   rcTarget;
+	void*  hInternal1; // HDC hdcTarget
+	void*  hInternal2; // HBITMAP hbmp
+	void*  hInternal3; // HBITMAP hOldBmp
+	void*  hInternal4; // void* pPixels
+};
+
+
 class CDwmHelper
 {
 protected:
@@ -65,8 +80,9 @@ public:
 	HRESULT DwmGetWindowAttribute(HWND hwnd, DWORD dwAttribute, PVOID pvAttribute, DWORD cbAttribute);
 	HANDLE/*HTHEME*/ OpenThemeData(HWND hwnd, LPCWSTR pszClassList);
 	HRESULT CloseThemeData(HANDLE/*HTHEME*/ hTheme);
-	HANDLE/*HPAINTBUFFER*/ BeginBufferedPaint(HDC hdcTarget, const RECT *prcTarget, int/*BP_BUFFERFORMAT*/ dwFormat, void/*BP_PAINTPARAMS*/ *pPaintParams, HDC *phdc);
-	HRESULT EndBufferedPaint(HANDLE/*HPAINTBUFFER*/ hBufferedPaint, BOOL fUpdateTarget);
+	HANDLE/*HPAINTBUFFER*/ BeginBufferedPaint(HDC hdcTarget, const RECT& rcTarget, PaintDC& dc);
+	HRESULT BufferedPaintSetAlpha(const PaintDC& dc, const RECT *prc, BYTE alpha);
+	HRESULT EndBufferedPaint(PaintDC& dc, BOOL fUpdateTarget);
 	HRESULT DrawThemeTextEx(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, LPCWSTR pszText, int iCharCount, DWORD dwFlags, LPRECT pRect, const void/*DTTOPTS*/ *pOptions);
 	HRESULT DrawThemeBackground(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, const RECT *pRect, const RECT *pClipRect);
 	HRESULT DrawThemeEdge(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, LPCRECT pDestRect, UINT uEdge, UINT uFlags, LPRECT pContentRect);
@@ -122,6 +138,8 @@ private:
 	BufferedPaintInit_t _BufferedPaintUnInit; // Vista
 	typedef HANDLE/*HPAINTBUFFER*/ (WINAPI* BeginBufferedPaint_t)(HDC hdcTarget, const RECT *prcTarget, int/*BP_BUFFERFORMAT*/ dwFormat, void/*BP_PAINTPARAMS*/ *pPaintParams, HDC *phdc);
 	BeginBufferedPaint_t _BeginBufferedPaint; // Vista
+	typedef HRESULT (WINAPI* BufferedPaintSetAlpha_t)(HANDLE/*HPAINTBUFFER*/ hBufferedPaint, const RECT *prc, BYTE alpha);
+	BufferedPaintSetAlpha_t _BufferedPaintSetAlpha; // Vista
 	typedef HRESULT (WINAPI* EndBufferedPaint_t)(HANDLE/*HPAINTBUFFER*/ hBufferedPaint, BOOL fUpdateTarget);
 	EndBufferedPaint_t _EndBufferedPaint; // Vista
 	typedef HRESULT (WINAPI* DrawThemeTextEx_t)(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, LPCWSTR pszText, int iCharCount, DWORD dwFlags, LPRECT pRect, const void/*DTTOPTS*/ *pOptions);

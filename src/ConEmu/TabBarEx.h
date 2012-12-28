@@ -131,7 +131,7 @@ public:
 	void Toolbar_UnHover();
 	#endif
 	bool ProcessTabKeyboardEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult);
-	void PaintTabs(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
+	void PaintTabs(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs);
 	int TabFromCursor(POINT point, DWORD *pnFlags = NULL);
 	int TabBtnFromCursor(POINT point, DWORD *pnFlags = NULL);
 	void ShowTabError(LPCTSTR asInfo, int tabIndex);
@@ -143,9 +143,9 @@ public:
 	//SIZE m_ToolbarBmpSize;
 	//int mn_ToolPaneConsole, mn_ToolPaneOptions;
 	//int mn_ToolCmdActiveCon, mn_ToolCmdNewCon, mn_ToolCmdBuffer;
-	static void OnToolbarCommand(LPARAM lParam, int anPaneID, int anCmd, bool abArrow, POINT ptWhere);
-	static void OnToolbarMenu(LPARAM lParam, int anPaneID, int anCmd, POINT ptWhere);
-	static void OnToolBarDraw(LPARAM lParam, HDC hdc, const RECT& rc, int nPane, int nCmd, DWORD nFlags);
+	static void OnToolbarCommand(LPARAM lParam, int anPaneID, int anCmd, bool abArrow, POINT ptWhere, RECT rcBtnRect);
+	static void OnToolbarMenu(LPARAM lParam, int anPaneID, int anCmd, POINT ptWhere, RECT rcBtnRect);
+	static void OnToolBarDraw(LPARAM lParam, const PaintDC& dc, const RECT& rc, int nPane, int nCmd, DWORD nFlags);
 
 protected:
 	RECT mrc_TabsClient; // координаты в клиентской(!) области ConEmu панели табов и тулбара
@@ -202,23 +202,23 @@ private:
 	void PreparePalette();
 	void CreateStockObjects(HDC hdc, const RECT &rcTabs);
 	void DeleteStockObjects(HDC hdc);
-	BITMAPINFOHEADER bi;
+	//BITMAPINFOHEADER bi;
 	COLORREF *pPixels, nColorMagic;
 	FrameDrawStyle m_TabDrawStyle;
 
 	HANDLE/*HTHEME*/ mh_Theme;
 
-	void PaintCaption_Plain(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
-	void PaintCaption_2k(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
-	void PaintCaption_XP(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
-	void PaintCaption_Aero(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
-	void PaintCaption_Win8(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
-	void PaintCaption_Icon(HDC hdc, int X, int Y);
-	void PaintTabs_Common(HDC hdc, const RECT &rcCaption, const RECT &rcTabs);
-	void PaintTab_Common(HDC hdcPaint, RECT rcTab, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover);
-	void PaintTab_VS2008(HDC hdcPaint, RECT rcTab, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover);
-	void PaintTab_Win8(HDC hdcPaint, RECT rcTab, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover);
-	void PaintTab_Text(HDC hdcPaint, RECT rcText, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover);
+	void PaintCaption_Plain(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs);
+	void PaintCaption_2k(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs);
+	void PaintCaption_XP(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs);
+	void PaintCaption_Aero(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs);
+	void PaintCaption_Win8(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs);
+	void PaintCaption_Icon(const PaintDC& dc, int X, int Y);
+	void PaintTabs_Common(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs);
+	void PaintTab_Common(const PaintDC& dc, RECT rcTab, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover);
+	void PaintTab_VS2008(const PaintDC& dc, RECT rcTab, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover);
+	void PaintTab_Win8(const PaintDC& dc, RECT rcTab, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover);
+	void PaintTab_Text(const PaintDC& dc, RECT rcText, struct TabDrawInfo* pTab, UINT anFlags, BOOL bCurrent, BOOL bHover);
 
 	BOOL mb_PostUpdateCalled, mb_PostUpdateRequested;
 	DWORD mn_PostUpdateTick;

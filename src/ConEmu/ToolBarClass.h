@@ -43,9 +43,9 @@ enum ToolInfoStyles
 	TIS_VISIBLE      = 0x0040, // Pane-only style
 };
 
-typedef void (*ToolbarCommand_f)(LPARAM lParam, int anPaneID, int anCmd, bool abArrow, POINT ptWhere);
-typedef void (*ToolbarMenu_f)(LPARAM lParam, int anPaneID, int anCmd, POINT ptWhere);
-typedef void (*ToolBarDraw_f)(LPARAM lParam, HDC hdc, const RECT& rc, int nPane, int nCmd, DWORD nFlags);
+typedef void (*ToolbarCommand_f)(LPARAM lParam, int anPaneID, int anCmd, bool abArrow, POINT ptWhere, RECT rcBtnRect);
+typedef void (*ToolbarMenu_f)(LPARAM lParam, int anPaneID, int anCmd, POINT ptWhere, RECT rcBtnRect);
+typedef void (*ToolBarDraw_f)(LPARAM lParam, const PaintDC& dc, const RECT& rc, int nPane, int nCmd, DWORD nFlags);
 
 class CToolBarClass
 {
@@ -104,9 +104,10 @@ private:
 	HPEN mh_LitePen; //, mh_DarkPen;
 	HBRUSH mh_HoverBrush, mh_CheckedBrush;
 	HDC mh_PaneDC;
-	void PaintPane(HDC hdc, const RECT& rcTB, PaneInfo* p, int x, int y);
-	void PaintTool(HDC hdc, const RECT& rcTB, PaneInfo* p, ToolInfo* t, int x, int y);
-	void PaintSeparator(HDC hdc, const RECT& rcTB, int x, int y, int h);
+	bool mb_Aero;
+	void PaintPane(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, int x, int y);
+	void PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, ToolInfo* t, int x, int y);
+	void PaintSeparator(const PaintDC& dc, const RECT& rcTB, int x, int y, int h);
 	ToolInfo* AddTool(PaneInfo* aPane, int anCmd, DWORD anFlags, const RECT& rcBmp, LPCWSTR asTip);
 	void SetToolTip(ToolInfo* apTool, LPCWSTR asTip);
 	PaneInfo* GetPaneById(int anPane);
@@ -132,7 +133,7 @@ public:
 	BOOL AddSeparator(int anPane);
 	void Commit();
 
-	void Paint(HDC hdc, const RECT& rcTB);
+	void Paint(const PaintDC& dc, const RECT& rcTB);
 	
 	void UnHover();
 	bool MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, POINT ptClient, LRESULT &lResult);
