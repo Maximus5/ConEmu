@@ -124,9 +124,12 @@ void SetStartupInfoW1900(void *aInfo)
 extern BOOL gbInfoW_OK;
 HANDLE OpenW1900(const void* aInfo)
 {
+	_ASSERTE(gFarVersion.dwVerMajor >= 3)
+	HANDLE hResult = NULL;
+
 	const struct OpenInfo *Info = (OpenInfo*)aInfo;
 	if (!gbInfoW_OK)
-		return INVALID_HANDLE_VALUE;
+		return hResult;
 
 	INT_PTR Item = Info->Data;
 	if (Info->OpenFrom == OPEN_FROMMACRO)
@@ -156,6 +159,7 @@ HANDLE OpenW1900(const void* aInfo)
 			_ASSERTE(p->StructSize >= sizeof(*p));
 		}
 	}
+
 	return OpenPluginWcmn(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
 }
 

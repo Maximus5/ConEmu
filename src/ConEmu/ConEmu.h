@@ -712,6 +712,7 @@ class CConEmuMain :
 		LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 		void OnHideCaption();
 		void OnInfo_About(LPCWSTR asPageName = NULL);
+		void OnInfo_WhatsNew(bool bLocal);
 		void OnInfo_Help();
 		void OnInfo_HomePage();
 		void OnInfo_ReportBug();

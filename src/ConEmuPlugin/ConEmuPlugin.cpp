@@ -369,8 +369,10 @@ void CheckConEmuDetached()
 BOOL gbInfoW_OK = FALSE;
 HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 {
+	HANDLE hResult = (gFarVersion.dwVerMajor >= 3) ? NULL : INVALID_HANDLE_VALUE;
+
 	if (!gbInfoW_OK)
-		return INVALID_HANDLE_VALUE;
+		return hResult;
 
 	if (OpenFrom == OPEN_COMMANDLINE && Item)
 	{
@@ -381,7 +383,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 		else
 			FUNC_X(ProcessCommandLineW)((wchar_t*)Item);
 
-		return INVALID_HANDLE_VALUE;
+		return hResult;
 	}
 
 	if (gnReqCommand != (DWORD)-1)
@@ -431,7 +433,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 					}
 				}
 
-				return INVALID_HANDLE_VALUE;
+				return hResult;
 			}
 
 			if (Item >= pcc_First && Item <= pcc_Last)
@@ -445,7 +447,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 				DWORD nTab = (DWORD)(Item - SETWND_CALLPLUGIN_BASE);
 				ProcessCommand(CMD_SETWINDOW, FALSE, &nTab);
 				SetEvent(ghSetWndSendTabsEvent);
-				return INVALID_HANDLE_VALUE;
+				return hResult;
 			}
 			else if (Item == SETWND_CALLPLUGIN_SENDTABS)
 			{
@@ -456,7 +458,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 				//SC.Unlock();
 				UpdateConEmuTabs(0,false,false);
 				SetEvent(ghSetWndSendTabsEvent);
-				return INVALID_HANDLE_VALUE;
+				return hResult;
 			}
 		}
 
@@ -466,16 +468,19 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 		//}
 	}
 
-	return INVALID_HANDLE_VALUE;
+	return hResult;
 }
 
 HANDLE WINAPI OpenPluginW(int OpenFrom,INT_PTR Item)
 {
-	if (!gbInfoW_OK)
-		return INVALID_HANDLE_VALUE;
-	
-	// Far2 api!
-	return OpenPluginWcmn(OpenFrom, Item, ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO));
+	HANDLE hPlugin = INVALID_HANDLE_VALUE;
+
+	if (gbInfoW_OK)
+	{
+		hPlugin = OpenPluginWcmn(OpenFrom, Item, ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO));
+	}
+
+	return hPlugin;
 }
 
 void TouchReadPeekConsoleInputs(int Peek /*= -1*/)
@@ -4961,10 +4966,18 @@ int WINAPI ProcessDialogEventW(int Event, void *Param)
 
 HANDLE WINAPI OpenW(const void* Info)
 {
+	HANDLE hResult = NULL;
+
 	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(OpenW)(Info);
-	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		return FUNC_Y1(OpenW)(Info);
+		hResult = FUNC_Y2(OpenW)(Info);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		hResult = FUNC_Y1(OpenW)(Info);
+	else
+	{
+		_ASSERTE(FALSE && "Must not called in Far2");
+	}
+
+	return hResult;
 }
 
 INT_PTR WINAPI ProcessConsoleInputW(void *Info)

@@ -170,10 +170,11 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			CVConGuard VCon;
 			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
 			CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
-			_ASSERTE(pRCon);
-
 			RConStartArgs* pArgs = pDlg->mp_Args;
+
 			_ASSERTE(pArgs);
+			_ASSERTE(pRCon || pArgs->aRecreate == cra_CreateTab);
+
 			LPCWSTR pszCmd = pArgs->pszSpecialCmd
 			                 ? pArgs->pszSpecialCmd
 			                 : pRCon ? pRCon->GetCmd() : NULL;
@@ -419,7 +420,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			CVConGuard VCon;
 			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
 			CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
-			_ASSERTE(pRCon);
+			_ASSERTE(pRCon || pArgs->aRecreate == cra_CreateTab);
 
 			LPCWSTR pszCmd = pArgs->pszSpecialCmd
 			                 ? pArgs->pszSpecialCmd

@@ -47,6 +47,13 @@ static int _nDbgStep = 0; wchar_t _szDbg[512];
 #define DBGFUNCTION(s) //{ wsprintf(_szDbg, L"%i: %s", ++_nDbgStep, s); OutputDebugString(_szDbg); /*Sleep(1000);*/ }
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
 
+#ifdef _DEBUG
+	#define RED_CLIENT_FILL
+	//#undef RED_CLIENT_FILL
+#else
+	#undef RED_CLIENT_FILL
+#endif
+
 extern HICON hClassIconSm;
 
 CFrameHolder::CFrameHolder()
@@ -572,6 +579,19 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 	wr = gpConEmu->GetGuiClientRect();
 	//GetClientRect(hWnd, &wr);
 
+#ifdef _DEBUG
+	RECT crTest; GetClientRect(hWnd, &crTest);
+#endif
+
+#if defined(CONEMU_TABBAR_EX)
+#ifdef RED_CLIENT_FILL
+	HBRUSH h = CreateSolidBrush(RGB(255,0,0));
+	FillRect(hdc, &wr, h);
+	DeleteObject(h);
+	return 0;
+#endif
+#endif
+
 	if (gpSet->isStatusBarShow)
 	{
 		int nHeight = gpSet->StatusBarHeight();
@@ -717,7 +737,10 @@ void CFrameHolder::CalculateCaptionPosition(const RECT &rcWindow, RECT* rcCaptio
 		rcCaption->left = 0; //2; //GetSystemMetrics(SM_CXFRAME);
 		rcCaption->right = (rcWindow.right - rcWindow.left); // - 4; //GetSystemMetrics(SM_CXFRAME);
 		rcCaption->top = GetFrameHeight(); //6; //GetSystemMetrics(SM_CYFRAME);
-		rcCaption->bottom = rcCaption->top + GetCaptionHeight()/*это наш*/; // (gpSet->isTabs ? (GetCaptionDragHeight()+GetTabsHeight()) : GetWinCaptionHeight()); //gpConEmu->GetDwmClientRectTopOffset() - 1;
+		if (gpSet->isTabsInCaption)
+			rcCaption->bottom = rcCaption->top + GetCaptionHeight()/*это наш*/; // (gpSet->isTabs ? (GetCaptionDragHeight()+GetTabsHeight()) : GetWinCaptionHeight()); //gpConEmu->GetDwmClientRectTopOffset() - 1;
+		else
+			rcCaption->bottom = rcCaption->top + GetCaptionHeight()/*это наш*/; // (gpSet->isTabs ? (GetCaptionDragHeight()+GetTabsHeight()) : GetWinCaptionHeight()); //gpConEmu->GetDwmClientRectTopOffset() - 1;
 	}
 	else if (dt == fdt_Themed)
 	{
@@ -743,13 +766,20 @@ void CFrameHolder::CalculateTabPosition(const RECT &rcWindow, const RECT &rcCapt
 
 	bool bCaptionHidden = gpSet->isCaptionHidden();
 
+	FrameDrawStyle fdt = gpConEmu->DrawType();
+
 	rcTabs->left = rcCaption.left;
 	if (bCaptionHidden)
 		rcTabs->left += GetSystemMetrics(SM_CXSMICON) + 3;
 	if (gpSet->nTabsLocation == 0)
 	{
 		// Tabs on Top
-		rcTabs->bottom = rcCaption.bottom - 1;
+		if (fdt == fdt_Win8)
+			rcTabs->bottom = rcCaption.bottom - 2;
+		else if (fdt == fdt_Aero)
+			rcTabs->bottom = rcCaption.bottom - 7;
+		else
+			rcTabs->bottom = rcCaption.bottom - 1;
 		rcTabs->top = max((rcCaption.bottom - GetTabsHeight()/*nHeightIdeal*/), rcCaption.top);
 	}
 	else
@@ -1006,6 +1036,15 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	// Если nCaption == 0, то при fdt_Aero текст в заголовке окна не отрисовывается
 	int nCaption = GetCaptionHeight();
 
+	#if defined(CONEMU_TABBAR_EX)
+	// В режиме Aero/Glass (хоть он и почти выпилен в Win8)
+	// мы расширяем клиентскую область на заголовок
+	if (gpSet->isTabsInCaption && (fdt == fdt_Aero || fdt == fdt_Win8))
+	{
+		nCaption = 0;
+	}
+	#endif
+
 	if (wParam)
 	{
 		// lParam points to an NCCALCSIZE_PARAMS structure that contains information
@@ -1027,10 +1066,22 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		RECT rcClient = gpConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
 		_ASSERTE(rcClient.left==0 && rcClient.top==0);
 
-		int nDX = ((rcWnd.right - rcClient.right) >> 1);
-		int nDY = ((rcWnd.bottom - rcClient.bottom - nCaption) >> 1);
-		// Need screen coordinates!
-		OffsetRect(&rcClient, r[0].left + nDX, r[0].top + nDY + nCaption);
+		#if defined(CONEMU_TABBAR_EX)
+		if (gpSet->isTabsInCaption)
+		{
+			_ASSERTE(nCaption==0);
+			int nDX = ((rcWnd.right - rcClient.right) >> 1);
+			int nDY = ((rcWnd.bottom - rcClient.bottom /*- nCaption*/) >> 1);
+			rcClient = MakeRect(r[0].left+nDX, r[0].top+nDY, r[0].right-nDX, r[0].bottom-nDY);
+		}
+		else
+		#endif
+		{
+			int nDX = ((rcWnd.right - rcClient.right) >> 1);
+			int nDY = ((rcWnd.bottom - rcClient.bottom - nCaption) >> 1);
+			// Need screen coordinates!
+			OffsetRect(&rcClient, r[0].left + nDX, r[0].top + nDY + nCaption);
+		}
 
 		// pParm->rgrc[0] contains the coordinates of the new client rectangle resulting from the move or resize
 		// pParm->rgrc[1] rectangle contains the valid destination rectangle
@@ -1070,6 +1121,16 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		int nDY = ((rcWnd.bottom - rcClient.bottom - nCaption) >> 1);
 		OffsetRect(&rcClient, rc.left + nDX, rc.top + nDY + nCaption);
 		*nccr = rcClient;
+
+		#if defined(CONEMU_TABBAR_EX)
+		if (gpSet->isTabsInCaption)
+		{
+			_ASSERTE(nCaption==0);
+			int nDX = ((rcWnd.right - rcClient.right) >> 1);
+			int nDY = ((rcWnd.bottom - rcClient.bottom /*- nCaption*/) >> 1);
+			*nccr = MakeRect(rc.left+nDX, rc.top+nDY, rc.right-nDX, rc.bottom-nDY);
+		}
+		#endif
 	}
 
 	//if (!gpSet->isTabsInCaption)
@@ -1131,7 +1192,7 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	LRESULT l_result;
 
 	// Обработает клики на кнопках Min/Max/Close
-	if (gpConEmu->DrawType() == fdt_Aero)
+	if (gpConEmu->DrawType() >= fdt_Aero)
 	{
 		//TODO: Проверить, чтобы за табы окошко НЕ таскалось!
 		if (gpConEmu->DwmDefWindowProc(hWnd, WM_NCHITTEST, 0, lParam, &l_result))
@@ -1179,7 +1240,7 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	}
 	else
 	#endif
-	if (gpConEmu->DrawType() == fdt_Aero)
+	if (gpConEmu->DrawType() >= fdt_Aero)
 	{
 		if (point.y < gpConEmu->GetDwmClientRectTopOffset())
 		{
@@ -1264,8 +1325,8 @@ void CFrameHolder::RecalculateFrameSizes()
 	{
 		mn_OurCaptionHeight = 0;
 	}
-#if 0
-	else if (gpSet->isTabsInCaption && gpConEmu->mp_TabBar->IsTabsActive())
+#if defined(CONEMU_TABBAR_EX)
+	else if (gpSet->isTabsInCaption && gpConEmu->mp_TabBar && gpConEmu->mp_TabBar->IsTabsActive())
 	{
 		if ((GetCaptionDragHeight() == 0) && (mn_TabsHeight > mn_WinCaptionHeight))
 		{

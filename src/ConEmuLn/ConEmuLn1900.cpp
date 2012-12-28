@@ -136,7 +136,7 @@ HANDLE WINAPI OpenW1900(const void* apInfo)
 	const struct OpenInfo *Info = (const struct OpenInfo*)apInfo;
 
 	if (!gbInfoW_OK)
-		return INVALID_HANDLE_VALUE;
+		return NULL;
 
 	return OpenPluginWcmn(Info->OpenFrom, Info->Data);
 }

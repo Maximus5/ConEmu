@@ -1841,7 +1841,7 @@ HANDLE WINAPI OpenW2800(const void* apInfo)
 	const struct OpenInfo *Info = (const struct OpenInfo*)apInfo;
 
 	if (!gbInfoW_OK)
-		return FALSE;
+		return NULL;
 	
 	INT_PTR Item = Info->Data;
 	if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_FROMMACRO)
@@ -1871,6 +1871,7 @@ HANDLE WINAPI OpenW2800(const void* apInfo)
 			_ASSERTE(p->StructSize >= sizeof(*p));
 		}
 	}
+
 	HANDLE h = OpenPluginWcmn(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
 	if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_FROMMACRO)
 	{
@@ -1883,6 +1884,7 @@ HANDLE WINAPI OpenW2800(const void* apInfo)
 		else
 			h = NULL;
 	}
+
 	return h;
 }
 

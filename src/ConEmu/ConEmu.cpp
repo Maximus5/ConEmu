@@ -135,8 +135,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CONEMU_ANIMATE_DURATION 200
 #define CONEMU_ANIMATE_DURATION_MAX 5000
 
-const wchar_t* gsHomePage = L"http://conemu-maximus5.googlecode.com";
+const wchar_t* gsHomePage  = L"http://conemu-maximus5.googlecode.com";
 const wchar_t* gsReportBug = L"http://code.google.com/p/conemu-maximus5/issues/entry";
+const wchar_t* gsWhatsNew  = L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";
 
 static struct RegisteredHotKeys
 {
@@ -699,7 +700,7 @@ CConEmuMain::CConEmuMain()
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 
-	InitFrameHolder();
+	//InitFrameHolder();
 }
 
 void LogFocusInfo(LPCWSTR asInfo)
@@ -1164,6 +1165,9 @@ BOOL CConEmuMain::Init()
 	_wsprintf(szErr, countof(szErr), _T("Can't initialize psapi!\r\nLastError = 0x%08x"), dwErr);
 	MBoxA(szErr);
 	return FALSE;*/
+
+	InitFrameHolder();
+
 	return TRUE;
 }
 
@@ -2892,6 +2896,9 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 
 	RECT rc = {};
 
+	FrameDrawStyle fdt = DrawType();
+	ConEmuWindowMode wm = (wmNewMode == wmCurrent) ? WindowMode : wmNewMode;
+
 	//if ((wmNewMode == wmCurrent) || (wmNewMode == wmNotChanging))
 	//{
 	//	wmNewMode = gpConEmu->WindowMode;
@@ -2920,23 +2927,46 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 		const int nTestWidth = 100, nTestHeight = 100;
 		RECT rcTest = MakeRect(nTestWidth,nTestHeight);
 
-		bool bHideCaption = gpSet->isCaptionHidden();
+		bool bHideCaption = gpSet->isCaptionHidden(wmNewMode);
 
 		// AdjustWindowRectEx НЕ должно вызываться в FullScreen. Глючит. А рамки с заголовком нет, расширять нечего.
-		if (WindowMode == wmFullScreen)
+		if (wm == wmFullScreen)
 		{
 			// Для FullScreen полностью убираются рамки и заголовок
 			_ASSERTE(rc.left==0 && rc.top==0 && rc.right==0 && rc.bottom==0);
 		}
+		//#if defined(CONEMU_TABBAR_EX)
+		//else if ((fdt >= fdt_Aero) && (wm == wmMaximized) && gpSet->isTabsInCaption)
+		//{
+		//	
+		//}
+		//#endif
 		else if (AdjustWindowRectEx(&rcTest, dwStyle, FALSE, dwStyleEx))
 		{
 			rc.left = -rcTest.left;
 			rc.right = rcTest.right - nTestWidth;
 			rc.bottom = rcTest.bottom - nTestHeight;
 			if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption)
-				rc.top = -rcTest.top;
+			{
+				#if defined(CONEMU_TABBAR_EX)
+				if ((fdt >= fdt_Aero) && gpSet->isTabsInCaption)
+				{
+					//-- NO additional space!
+					//if (wm != wmMaximized)
+					//	rc.top = gpConEmu->GetCaptionDragHeight() + rc.bottom;
+					//else
+					rc.top = rc.bottom;
+				}
+				else
+				#endif
+				{
+					rc.top = -rcTest.top;
+				}
+			}
 			else
+			{
 				rc.top = rc.bottom;
+			}
 			_ASSERTE(rc.top >= 0 && rc.left >= 0 && rc.right >= 0 && rc.bottom >= 0);
 		}
 		else
@@ -2945,8 +2975,22 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 			rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
 			rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
 			rc.top = rc.bottom; // рамка
+
 			if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption) // если есть заголовок - добавим и его
-				rc.top += GetSystemMetrics(SM_CYCAPTION);
+			{
+				#if defined(CONEMU_TABBAR_EX)
+				if ((fdt >= fdt_Aero) && gpSet->isTabsInCaption)
+				{
+					//-- NO additional space!
+					//if (wm != wmMaximized)
+					//	rc.top += gpConEmu->GetCaptionDragHeight();
+				}
+				else
+				#endif
+				{
+					rc.top += GetSystemMetrics(SM_CYCAPTION);
+				}
+			}
 		}
 	}
 
@@ -3010,6 +3054,14 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 			//    rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
 			//}
 		}
+
+		#if defined(CONEMU_TABBAR_EX)
+		if ((fdt >= fdt_Aero) && gpSet->isTabsInCaption)
+		{
+			if (wm != wmMaximized)
+				rc.top += gpConEmu->GetCaptionDragHeight();
+		}
+		#endif
 	}
 
 	//    //case CEM_BACK:  // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
@@ -14579,6 +14631,37 @@ void CConEmuMain::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 		MessageBoxIndirectW(&mb);
 		//MessageBoxW(ghWnd, pHelp, szTitle, MB_ICONQUESTION);
 	}
+}
+
+void CConEmuMain::OnInfo_WhatsNew(bool bLocal)
+{
+	wchar_t sFile[MAX_PATH+80];
+	int iExec = -1;
+
+	if (bLocal)
+	{
+		wcscpy_c(sFile, ms_ConEmuBaseDir);
+		wcscat_c(sFile, L"\\WhatsNew-ConEmu.txt");
+
+		if (FileExists(sFile))
+		{
+			iExec = (int)ShellExecute(ghWnd, L"open", sFile, NULL, NULL, SW_SHOWNORMAL);
+			if (iExec >= 32)
+			{
+				return;
+			}
+		}
+	}
+
+	wcscpy_c(sFile, gsWhatsNew);
+	
+	iExec = (int)ShellExecute(ghWnd, L"open", sFile, NULL, NULL, SW_SHOWNORMAL);
+	if (iExec >= 32)
+	{
+		return;
+	}
+
+	DisplayLastError(L"File 'WhatsNew-ConEmu.txt' not found, go to web page failed", iExec);
 }
 
 void CConEmuMain::OnInfo_Help()

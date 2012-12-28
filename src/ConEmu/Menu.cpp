@@ -1454,15 +1454,22 @@ HMENU CConEmuMenu::CreateHelpMenuPopup()
 			AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_STOPUPDATE, _T("&Stop updates checking"));
 		else
 			AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_CHECKUPDATE, _T("&Check for updates"));
+
+		AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);
 	}
 	
 	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HOMEPAGE, _T("&Visit home page"));
+
+	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_WHATS_NEW_FILE, _T("Whats &new (local)"));
+	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_WHATS_NEW_WWW, _T("Whats new (&web)"));
+	AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);
+
 	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_REPORTBUG, _T("&Report a bug..."));
 	
 	if (gpConEmu->ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
 		AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
 
-	AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);	
+	AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);
 	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HOTKEYS, MenuAccel(vkWinAltK,L"Hot&keys"));
 	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_ABOUT, MenuAccel(vkWinAltA,L"&About / Help"));
 	
@@ -1713,6 +1720,13 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		case ID_ABOUT:
 		{
 			gpConEmu->OnInfo_About();
+			return 0;
+		}
+
+		case ID_WHATS_NEW_FILE:
+		case ID_WHATS_NEW_WWW:
+		{
+			gpConEmu->OnInfo_WhatsNew((wParam == ID_WHATS_NEW_FILE));
 			return 0;
 		}
 

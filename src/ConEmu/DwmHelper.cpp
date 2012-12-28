@@ -406,21 +406,21 @@ int CDwmHelper::GetDwmClientRectTopOffset()
 	// GetFrameHeight(), GetCaptionDragHeight(), GetTabsHeight()
 	if (gpSet->isTabsInCaption)
 	{
-		if (dt == fdt_Win8)
+		//if (dt == fdt_Win8)
 		{
 			nOffset = gpConEmu->GetTabsHeight();
 		}
-		else
-		{
-			//mn_DwmClientRectTopOffset = 
-			//	(GetSystemMetrics(SM_CYCAPTION)+(IsGlass() ? 8 : 0)
-			//	+(IsZoomed(ghWnd)?(GetSystemMetrics(SM_CYFRAME)-1):(GetSystemMetrics(SM_CYCAPTION)/2)));
-			nOffset = 0
-				//+ (IsGlass() ? 8 : 0)
-				+ gpConEmu->GetFrameHeight() //+ 2
-				+ gpConEmu->GetCaptionDragHeight()
-				+ gpConEmu->GetTabsHeight();
-		}
+		//else
+		//{
+		//	//mn_DwmClientRectTopOffset = 
+		//	//	(GetSystemMetrics(SM_CYCAPTION)+(IsGlass() ? 8 : 0)
+		//	//	+(IsZoomed(ghWnd)?(GetSystemMetrics(SM_CYFRAME)-1):(GetSystemMetrics(SM_CYCAPTION)/2)));
+		//	nOffset = 0
+		//		//+ (IsGlass() ? 8 : 0)
+		//		+ gpConEmu->GetFrameHeight() //+ 2
+		//		+ gpConEmu->GetCaptionDragHeight()
+		//		+ gpConEmu->GetTabsHeight();
+		//}
 	}
 	//else
 	//{

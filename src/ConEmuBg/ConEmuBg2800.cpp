@@ -173,7 +173,7 @@ HANDLE WINAPI OpenW2800(const void* apInfo)
 	const struct OpenInfo *Info = (const struct OpenInfo*)apInfo;
 
 	if (!gbInfoW_OK)
-		return INVALID_HANDLE_VALUE;
+		return NULL;
 
 	return OpenPluginWcmn(Info->OpenFrom, Info->Data);
 }
@@ -215,7 +215,7 @@ int ConfigureW2800(int ItemNumber)
 void SettingsLoadW2800()
 {
 	FarSettingsCreate sc = {sizeof(FarSettingsCreate), guid_ConEmuBg, INVALID_HANDLE_VALUE};
-	FarSettingsItem fsi = {0};
+	FarSettingsItem fsi = {sizeof(fsi)};
 	if (InfoW2800->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
 	{
 		//BYTE cVal; DWORD nVal;
@@ -262,7 +262,7 @@ void SettingsSaveW2800()
 		return;
 
 	FarSettingsCreate sc = {sizeof(FarSettingsCreate), guid_ConEmuBg, INVALID_HANDLE_VALUE};
-	FarSettingsItem fsi = {0};
+	FarSettingsItem fsi = {sizeof(fsi)};
 	if (InfoW2800->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
 	{
 		BYTE cVal;

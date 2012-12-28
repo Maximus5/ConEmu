@@ -153,12 +153,15 @@ void WINAPI _export GetPluginInfoWcmn(void *piv)
 BOOL gbInfoW_OK = FALSE;
 HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 {
+	HANDLE hResult = (gFarVersion.dwVerMajor >= 3) ? NULL : INVALID_HANDLE_VALUE;
+
 	if (!gbInfoW_OK)
-		return INVALID_HANDLE_VALUE;
+		return hResult;
 
 	ReloadResourcesW();
 	EntryPoint(OpenFrom, Item, FromMacro);
-	return INVALID_HANDLE_VALUE;
+
+	return hResult;
 }
 
 // !!! WARNING !!! Version independent !!!
@@ -553,10 +556,18 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 HANDLE WINAPI _export OpenW(const struct OpenInfo *Info)
 {
+	HANDLE hResult = NULL;
+
 	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(OpenW)((void*)Info);
+		hResult = FUNC_Y2(OpenW)((void*)Info);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		hResult = FUNC_Y1(OpenW)((void*)Info);
 	else
-		return FUNC_Y1(OpenW)((void*)Info);
+	{
+		_ASSERTE(FALSE && "Must not called in Far2");
+	}
+
+	return hResult;
 }
 
 

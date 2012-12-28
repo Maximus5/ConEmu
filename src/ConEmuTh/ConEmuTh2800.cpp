@@ -146,10 +146,13 @@ void SetStartupInfoW2800(void *aInfo)
 extern BOOL gbInfoW_OK;
 HANDLE OpenW2800(const void* aInfo)
 {
+	_ASSERTE(gFarVersion.dwVerMajor >= 3)
+	HANDLE hResult = NULL;
+
 	const struct OpenInfo *Info = (OpenInfo*)aInfo;
 
 	if (!gbInfoW_OK)
-		return INVALID_HANDLE_VALUE;
+		return hResult;
 
 	INT_PTR Item = Info->Data;
 	if (Info->OpenFrom == OPEN_FROMMACRO)
@@ -179,6 +182,7 @@ HANDLE OpenW2800(const void* aInfo)
 			_ASSERTE(p->StructSize >= sizeof(*p));
 		}
 	}
+
 	return OpenPluginWcmn(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
 }
 
@@ -674,7 +678,7 @@ void SetCurrentPanelItemW2800(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCur
 
 	// Обновляем панель
 	#pragma warning(disable: 4244)
-	PanelRedrawInfo pri = {anCurItem, anTopItem};
+	PanelRedrawInfo pri = {sizeof(pri), anCurItem, anTopItem};
 	#pragma warning(default: 4244)
 	InfoW2800->PanelControl(hPanel, FCTL_REDRAWPANEL, 0, &pri);
 }
@@ -796,7 +800,7 @@ BOOL SettingsLoadW2800(LPCWSTR pszName, DWORD* pValue)
 {
 	BOOL lbValue = FALSE;
 	FarSettingsCreate sc = {sizeof(FarSettingsCreate), guid_ConEmuTh, INVALID_HANDLE_VALUE};
-	FarSettingsItem fsi = {0};
+	FarSettingsItem fsi = {sizeof(fsi)};
 	if (InfoW2800->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
 	{
 		//DWORD nValue = *pValue;
@@ -819,7 +823,7 @@ void SettingsSaveW2800(LPCWSTR pszName, DWORD* pValue)
 		return;
 
 	FarSettingsCreate sc = {sizeof(FarSettingsCreate), guid_ConEmuTh, INVALID_HANDLE_VALUE};
-	FarSettingsItem fsi = {0};
+	FarSettingsItem fsi = {sizeof(fsi)};
 	if (InfoW2800->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
 	{
 		DWORD nValue = *pValue;

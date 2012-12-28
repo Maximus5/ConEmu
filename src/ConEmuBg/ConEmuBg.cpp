@@ -2968,10 +2968,18 @@ LPCWSTR GetMsgW(int aiMsg)
 
 HANDLE WINAPI OpenW(const void* Info)
 {
+	HANDLE hResult = NULL;
+
 	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(OpenW)(Info);
+		hResult = FUNC_Y2(OpenW)(Info);
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		hResult = FUNC_Y1(OpenW)(Info);
 	else
-		return FUNC_Y1(OpenW)(Info);
+	{
+		_ASSERTE(FALSE && "Must not called in Far2");
+	}
+
+	return hResult;
 }
 
 
@@ -3001,11 +3009,14 @@ int WINAPI ConfigureW3(void*)
 
 HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)
 {
+	HANDLE hResult = (gFarVersion.dwVerMajor >= 3) ? NULL : INVALID_HANDLE_VALUE;
+
 	if (!gbInfoW_OK)
-		return INVALID_HANDLE_VALUE;
+		return hResult;
 
 	ConfigureW(0);
-	return INVALID_HANDLE_VALUE;
+
+	return hResult;
 }
 
 bool FMatch(LPCWSTR asMask, LPWSTR asPath)
