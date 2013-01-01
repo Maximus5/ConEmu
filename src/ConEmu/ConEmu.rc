@@ -232,34 +232,32 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,28,155,8
     CONTROL         "Close confirmation",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,28,77,8
     CONTROL         "Far Editor/Viewer",cbCloseEditViewConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,246,28,72,8
-    GROUPBOX        "When last console (tab) is closed",IDC_STATIC,4,49,319,29
-    CONTROL         "Close ConEmu window",rbMultiLastClose,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,62,95,8
-    CONTROL         "Leave ConEmu opened",rbMultiLastLeave,"Button",BS_AUTORADIOBUTTON,113,62,99,8
-    CONTROL         "Hide ConEmu to the TSA",rbMultiLastTSA,"Button",BS_AUTORADIOBUTTON,218,62,101,8
-    GROUPBOX        "Appearance",gbFeatureAppear,4,84,319,29
+    GROUPBOX        "Appearance",gbFeatureAppear,4,49,319,29
     CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,97,140,8
-    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,97,73,8
-    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,234,97,78,8
-    GROUPBOX        "Scrollbar",IDC_STATIC,4,118,319,29
-    CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON | WS_GROUP,10,131,30,8
-    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,48,131,35,8
-    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,92,131,33,8
-    RTEXT           "Appear delay:",IDC_STATIC,129,131,50,8
-    EDITTEXT        tScrollAppearDelay,183,129,40,12,ES_AUTOHSCROLL
-    RTEXT           "Disappear:",IDC_STATIC,230,131,43,8
-    EDITTEXT        tScrollDisappearDelay,277,129,40,12,ES_AUTOHSCROLL
-    GROUPBOX        "Caption and border options",gbFeatureCaption,4,152,319,59
-    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,165,117,8
-    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,165,79,8
-    CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,165,94,8
-    RTEXT           "Frame width:",IDC_STATIC,9,180,54,8
-    EDITTEXT        tHideCaptionAlwaysFrame,67,178,40,12,ES_AUTOHSCROLL
-    RTEXT           "Appear delay:",IDC_STATIC,125,180,50,8
-    EDITTEXT        tHideCaptionAlwaysDelay,179,178,40,12,ES_AUTOHSCROLL
-    RTEXT           "Disappear:",IDC_STATIC,227,180,43,8
-    EDITTEXT        tHideCaptionAlwaysDissapear,273,178,40,12,ES_AUTOHSCROLL
-    CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,195,117,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,62,140,8
+    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,62,73,8
+    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,234,62,78,8
+    GROUPBOX        "Scrollbar",IDC_STATIC,4,83,319,29
+    CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON | WS_GROUP,10,96,30,8
+    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,48,96,35,8
+    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,92,96,33,8
+    RTEXT           "Appear delay:",IDC_STATIC,129,96,50,8
+    EDITTEXT        tScrollAppearDelay,183,94,40,12,ES_AUTOHSCROLL
+    RTEXT           "Disappear:",IDC_STATIC,230,96,43,8
+    EDITTEXT        tScrollDisappearDelay,277,94,40,12,ES_AUTOHSCROLL
+    GROUPBOX        "Caption and border options",gbFeatureCaption,4,117,319,59
+    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,130,117,8
+    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,130,79,8
+    CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,130,94,8
+    RTEXT           "Frame width:",IDC_STATIC,9,145,54,8
+    EDITTEXT        tHideCaptionAlwaysFrame,67,143,40,12,ES_AUTOHSCROLL
+    RTEXT           "Appear delay:",IDC_STATIC,125,145,50,8
+    EDITTEXT        tHideCaptionAlwaysDelay,179,143,40,12,ES_AUTOHSCROLL
+    RTEXT           "Disappear:",IDC_STATIC,227,145,43,8
+    EDITTEXT        tHideCaptionAlwaysDissapear,273,143,40,12,ES_AUTOHSCROLL
+    CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,160,117,8
+    CONTROL         "Hide caption of child GUI windows started in ConEmu",cbHideChildCaption,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,160,189,8
 END
 
 IDD_SPG_TASKBAR DIALOGEX 0, 0, 328, 235
@@ -272,7 +270,7 @@ BEGIN
     CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,14,89,8
     GROUPBOX        "Taskbar buttons",IDC_STATIC,4,34,319,59
     CONTROL         "Show all consoles (Win7 and higher)",rbTaskbarBtnWin7,
-                    "Button",BS_AUTORADIOBUTTON,11,49,137,8
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP,11,49,137,8
     CONTROL         "Show all consoles (all OS)",rbTaskbarBtnAll,"Button",BS_AUTORADIOBUTTON,158,49,160,8
     CONTROL         "Active console only (ConEmu window)",rbTaskbarBtnActive,
                     "Button",BS_AUTORADIOBUTTON,11,62,140,8
@@ -280,6 +278,15 @@ BEGIN
                     "Button",BS_AUTORADIOBUTTON,158,62,159,8
     CONTROL         "Show Shield overlay (Win7 and higher)",cbTaskbarShield,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,77,143,8
+    GROUPBOX        "When last console (tab) is closed",IDC_STATIC,4,98,319,29
+    CONTROL         "Close ConEmu window",rbMultiLastClose,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,111,95,8
+    CONTROL         "Leave ConEmu opened",rbMultiLastLeave,"Button",BS_AUTORADIOBUTTON,113,111,99,8
+    CONTROL         "Hide ConEmu to the TSA",rbMultiLastTSA,"Button",BS_AUTORADIOBUTTON,218,111,101,8
+    GROUPBOX        "Minimize ConEmu by Esc",IDC_STATIC,4,132,319,29
+    CONTROL         "When all consoles closed",rbMinByEscEmpty,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,145,99,8
+    CONTROL         "Always",rbMinByEscAlways,"Button",BS_AUTORADIOBUTTON,113,145,42,8
+    CONTROL         "Never",rbMinByEscNever,"Button",BS_AUTORADIOBUTTON,161,145,38,8
+    CONTROL         "Map Shift+Esc to Esc",cbMapShiftEscToEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,145,101,8
 END
 
 IDD_SPG_CURSOR DIALOGEX 0, 0, 328, 235

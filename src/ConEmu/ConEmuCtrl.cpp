@@ -398,15 +398,21 @@ bool CConEmuCtrl::key_MinimizeRestore(DWORD VkMod, bool TestOnly, const ConEmuHo
 }
 
 // When depressing Esc in ConEmu without consoles (Don't close ConEmu on last console close)
-bool CConEmuCtrl::key_MinimizeRestoreByEsc(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MinimizeByEsc(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
-	if (CVConGroup::GetConCount(true) > 0)
+	if (gpSet->isMultiMinByEsc == 0)
 		return false;
+
+	if (gpSet->isMultiMinByEsc == 2)
+	{
+		if (CVConGroup::GetConCount(true) > 0)
+			return false;
+	}
 
 	if (TestOnly)
 		return true;
 
-	gpConEmu->OnMinimizeRestore((gpConEmu->WindowStartTSA || gpSet->isMultiHideOnClose) ? sih_HideTSA : sih_Minimize);
+	gpConEmu->OnMinimizeRestore((gpConEmu->WindowStartTSA || gpSet->isMultiHideOnClose || gpSet->isMinToTray()) ? sih_HideTSA : sih_Minimize);
 	return true;
 }
 

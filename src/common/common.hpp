@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    120
+#define CESERVER_REQ_VER    121
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -303,6 +303,7 @@ const CECMD
 	CECMD_EXPORTVARSALL  = 68, // same as CECMD_EXPORTVARS, but apply environment to all tabs
 	CECMD_DUPLICATE      = 69, // CESERVER_REQ_DUPLICATE. sent to root console process (cmd, far, powershell), processed with ConEmuHk - Create new tab reproducing current state.
 	CECMD_BSDELETEWORD   = 70, // CESERVER_REQ_PROMPTACTION - default action for Ctrl+BS (prompt) - delete word to the left of the cursor
+	CECMD_GUICLIENTSHIFT = 71, // GuiStylesAndShifts
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1608,6 +1609,12 @@ enum ATTACHGUIAPP_FLAGS
 	agaf_WS_CHILD = 8,
 };
 
+struct GuiStylesAndShifts
+{
+	DWORD nStyle, nStyleEx;
+	RECT  Shifts;
+};
+
 // CECMD_ATTACHGUIAPP
 struct CESERVER_REQ_ATTACHGUIAPP
 {
@@ -1621,7 +1628,9 @@ struct CESERVER_REQ_ATTACHGUIAPP
 	HWND2 hSrvConWnd;
 	RECT  rcWindow;     // координаты
 	DWORD Reserved;     // зарезервировано под флаги, вроде "Показывать заголовок"
-	DWORD nStyle, nStyleEx;
+	//DWORD nStyle, nStyleEx;
+	//BOOL  bHideCaption; // 
+	struct GuiStylesAndShifts Styles;
 	wchar_t sAppFileName[MAX_PATH*2];
 };
 
@@ -1740,6 +1749,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_PEEKREADINFO PeekReadInfo;
 		MyAssertInfo AssertInfo;
 		CESERVER_REQ_ATTACHGUIAPP AttachGuiApp;
+		struct GuiStylesAndShifts GuiAppShifts;
 		CESERVER_REQ_SETFOCUS setFocus;
 		CESERVER_REQ_SETPARENT setParent;
 		CESERVER_REQ_SETGUIEXTERN SetGuiExtern;

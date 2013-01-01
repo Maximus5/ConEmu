@@ -56,6 +56,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	TID_MINIMIZE_SEP = 110,
 //};
 
+#include "DwmHelper.h"
+
 
 class TabBarClass //: public CToolTip
 {

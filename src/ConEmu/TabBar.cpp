@@ -557,12 +557,13 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 		}
 		case WM_SETCURSOR:
 
-			if (gpSet->isTabs && (gpConEmu->WindowMode == wmNormal)
+			if (gpSet->isTabs && !gpSet->isQuakeStyle
+				&& (gpConEmu->GetWindowMode() == wmNormal)
 				&& gpSet->isCaptionHidden())
 			{
 				if (TabHitTest() == HTCAPTION)
 				{
-					SetCursor(gpSet->isQuakeStyle ? gpConEmu->mh_CursorArrow : gpConEmu->mh_CursorMove);
+					SetCursor(/*gpSet->isQuakeStyle ? gpConEmu->mh_CursorArrow :*/ gpConEmu->mh_CursorMove);
 					return TRUE;
 				}
 			}
@@ -1676,7 +1677,7 @@ void TabBarClass::OnWindowStateChanged()
 	if (mh_Toolbar)
 	{
 		TBBUTTONINFO tbi = {sizeof(TBBUTTONINFO), TBIF_IMAGE};
-		tbi.iImage = (gpConEmu->WindowMode != wmNormal) ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX;
+		tbi.iImage = (gpConEmu->GetWindowMode() != wmNormal) ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX;
 		SendMessage(mh_Toolbar, TB_SETBUTTONINFO, TID_MAXIMIZE, (LPARAM)&tbi);
 		//OnCaptionHidden();
 	}
@@ -1955,7 +1956,7 @@ HWND TabBarClass::CreateToolbar()
 	// Min,Max,Close
 	btn.iBitmap = nFirst + BID_MINIMIZE_IDX; btn.idCommand = TID_MINIMIZE; btn.fsState = TBSTATE_ENABLED|TBSTATE_HIDDEN;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
-	btn.iBitmap = nFirst + ((gpConEmu->WindowMode != wmNormal) ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX); btn.idCommand = TID_MAXIMIZE;
+	btn.iBitmap = nFirst + ((gpConEmu->GetWindowMode() != wmNormal) ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX); btn.idCommand = TID_MAXIMIZE;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	btn.iBitmap = nFirst + BID_APPCLOSE_IDX; btn.idCommand = TID_APPCLOSE;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);

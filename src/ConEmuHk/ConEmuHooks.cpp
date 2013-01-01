@@ -284,6 +284,7 @@ BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect);
 BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint);
 BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow);
 //BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName);
 //BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName);
 
@@ -544,6 +545,10 @@ bool InitHooksDefaultTrm()
 	HookItem HooksCommon[] =
 	{
 		{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
+		// Need to "hook" OnCreateProcessA because it is used in "OnWinExec"
+		{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
+		// Used in some programs, Issue 853
+		{(void*)OnWinExec,				"WinExec",				kernel32},
 		/* ************************ */
 		{0}
 	};
@@ -1053,6 +1058,81 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 
 	SetLastError(dwErr);
 	return lbRc;
+}
+
+UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow)
+{
+	if (!lpCmdLine || !*lpCmdLine)
+	{
+		_ASSERTEX(lpCmdLine && *lpCmdLine);
+		return 0;
+	}
+
+	STARTUPINFOA si = {sizeof(si)};
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = uCmdShow;
+	DWORD nCreateFlags = NORMAL_PRIORITY_CLASS;
+	PROCESS_INFORMATION pi = {};
+
+	int nLen = lstrlenA(lpCmdLine);
+	LPSTR pszCmd = (char*)malloc(nLen+1);
+	if (!pszCmd)
+	{
+		return 0; // out of memory
+	}
+	lstrcpynA(pszCmd, lpCmdLine, nLen+1);
+
+	UINT nRc = 0;
+	BOOL bRc = OnCreateProcessA(NULL, pszCmd, NULL, NULL, FALSE, nCreateFlags, NULL, NULL, &si, &pi);
+
+	free(pszCmd);
+
+	if (bRc)
+	{
+		// If the function succeeds, the return value is greater than 31.
+		nRc = 32;
+	}
+	else
+	{
+		nRc = GetLastError();
+		if (nRc != ERROR_BAD_FORMAT && nRc != ERROR_FILE_NOT_FOUND && nRc != ERROR_PATH_NOT_FOUND)
+			nRc = 0;
+	}
+
+	return nRc;
+
+#if 0
+	typedef BOOL (WINAPI* OnWinExec_t)(LPCSTR lpCmdLine, UINT uCmdShow);
+	ORIGINALFAST(CreateProcessA);
+	BOOL bMainThread = FALSE; // поток не важен
+	BOOL lbRc = FALSE;
+	DWORD dwErr = 0;
+	
+	CShellProc* sp = new CShellProc();
+	sp->OnCreateProcessA(NULL, &lpCmdLine, NULL, &nCreateFlags, sa);
+	if ((nCreateFlags & CREATE_SUSPENDED) == 0)
+	{
+		DebugString(L"CreateProcessA without CREATE_SUSPENDED Flag!\n");
+	}
+
+	lbRc = F(CreateProcessA)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	dwErr = GetLastError();
+
+
+	// Если lbParamsChanged == TRUE - об инжектах позаботится ConEmuC.exe
+	sp->OnCreateProcessFinished(lbRc, lpProcessInformation);
+	delete sp;
+
+
+	if (ph && ph->PostCallBack)
+	{
+		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+		ph->PostCallBack(&args);
+	}
+	
+	SetLastError(dwErr);
+	return lbRc;
+#endif
 }
 
 HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)

@@ -2794,6 +2794,7 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	DWORD dwErr = 0;
 	HWND lhConWnd = NULL;
 	const AnnotationHeader* pHdr = NULL;
+	int nHdrSize;
 
 	EnterCriticalSection(&gpSrv->csColorerMappingCreate);
 
@@ -2873,28 +2874,35 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 		//CloseHandle(gpSrv->hColorerMapping); gpSrv->hColorerMapping = NULL;
 		delete gpSrv->pColorerMapping;
 		gpSrv->pColorerMapping = NULL;
+		goto wrap;
 	}
-	else if (pHdr->struct_size != sizeof(AnnotationHeader))
+	else if ((nHdrSize = pHdr->struct_size) != sizeof(AnnotationHeader))
 	{
-		_ASSERTE(pHdr->struct_size == sizeof(AnnotationHeader));
-		delete gpSrv->pColorerMapping;
-		gpSrv->pColorerMapping = NULL;
-	}
-	else
-	{
-		//pHdr->struct_size = sizeof(AnnotationHeader);
-		//pHdr->bufferSize = nMapCells;
-		_ASSERTE((gnRunMode == RM_ALTSERVER) || (pHdr->locked == 0 && pHdr->flushCounter == 0));
-		//pHdr->locked = 0;
-		//pHdr->flushCounter = 0;
-		gpSrv->ColorerHdr = *pHdr;
-		//// В сервере - данные не нужны
-		////UnmapViewOfFile(pHdr);
-		//gpSrv->pColorerMapping->ClosePtr();
+		Sleep(500);
+		int nDbgSize = pHdr->struct_size;
+		_ASSERTE(nHdrSize == sizeof(AnnotationHeader));
+		UNREFERENCED_PARAMETER(nDbgSize);
 
-		// OK
-		iRc = 0;
+		if (pHdr->struct_size != sizeof(AnnotationHeader))
+		{
+			delete gpSrv->pColorerMapping;
+			gpSrv->pColorerMapping = NULL;
+			goto wrap;
+		}
 	}
+
+	//pHdr->struct_size = sizeof(AnnotationHeader);
+	//pHdr->bufferSize = nMapCells;
+	_ASSERTE((gnRunMode == RM_ALTSERVER) || (pHdr->locked == 0 && pHdr->flushCounter == 0));
+	//pHdr->locked = 0;
+	//pHdr->flushCounter = 0;
+	gpSrv->ColorerHdr = *pHdr;
+	//// В сервере - данные не нужны
+	////UnmapViewOfFile(pHdr);
+	//gpSrv->pColorerMapping->ClosePtr();
+
+	// OK
+	iRc = 0;
 
 	//}
 

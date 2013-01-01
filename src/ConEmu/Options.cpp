@@ -310,6 +310,7 @@ void Settings::InitSettings()
 	//vmMultiClose = VK_DELETE | (nMultiHotkeyModifier << 8);
 	//vmMultiCmd = 'X' | (nMultiHotkeyModifier << 8);
 	isMultiAutoCreate = false; isMultiLeaveOnClose = isMultiHideOnClose = false; isMultiIterate = true;
+	isMultiMinByEsc = 2; isMapShiftEscToEsc = true; // isMapShiftEscToEsc used only when isMultiMinByEsc==1 and only for console apps
 	isMultiNewConfirm = true;
 	isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false;
 	nSplitWidth = nSplitHeight = 4;
@@ -444,9 +445,9 @@ void Settings::InitSettings()
 		AppStd.CursorActive.MinSize = 2; // в пикселях
 
 		AppStd.CursorInactive.Raw = AppStd.CursorActive.Raw; // копирование
-		AppStd.CursorActive.Used = true;
-		AppStd.CursorActive.CursorType = cur_Rect;
-		AppStd.CursorActive.isBlinking = false;
+		AppStd.CursorInactive.Used = true;
+		AppStd.CursorInactive.CursorType = cur_Rect;
+		AppStd.CursorInactive.isBlinking = false;
 	}
 	AppStd.isCTSDetectLineEnd = true;
 	AppStd.isCTSBashMargin = false;
@@ -498,6 +499,7 @@ void Settings::InitSettings()
 	isUseCurrentSizePos = true; // Show in settings dialog and save current window size/pos
 	//isFullScreen = false;
 	isHideCaption = false; mb_HideCaptionAlways = false; isQuakeStyle = false;
+	isHideChildCaption = false;
 	nHideCaptionAlwaysFrame = 255; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
 	isDesktopMode = false;
 	isSnapToDesktopEdges = false;
@@ -2476,6 +2478,8 @@ void Settings::LoadSettings()
 		reg->Load(L"Multi.AutoCreate", isMultiAutoCreate);
 		reg->Load(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
 		reg->Load(L"Multi.HideOnClose", isMultiHideOnClose);
+		reg->Load(L"Multi.MinByEsc", isMultiMinByEsc); MinMax(isMultiMinByEsc, 2);
+		reg->Load(L"MapShiftEscToEsc", isMapShiftEscToEsc);
 		reg->Load(L"Multi.Iterate", isMultiIterate);
 		//LoadVkMod(reg, L"MinimizeRestore", vmMinimizeRestore, vmMinimizeRestore);
 		reg->Load(L"Multi.SplitWidth", nSplitWidth); MinMax(nSplitWidth, MAX_SPLITTER_SIZE);
@@ -2501,6 +2505,7 @@ void Settings::LoadSettings()
 		reg->Load(L"WindowMode", _WindowMode); if (_WindowMode!=rFullScreen && _WindowMode!=rMaximized && _WindowMode!=rNormal) _WindowMode = rNormal;
 		reg->Load(L"QuakeStyle", isQuakeStyle);
 		reg->Load(L"HideCaption", isHideCaption);
+		reg->Load(L"HideChildCaption", isHideChildCaption);
 		// грузим именно в mb_HideCaptionAlways, т.к. прозрачность сбивает темы в заголовке, поэтому возврат идет через isHideCaptionAlways()
 		reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
 		reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame); if (nHideCaptionAlwaysFrame > 0x7F) nHideCaptionAlwaysFrame = 255;
@@ -3351,6 +3356,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"Multi.AutoCreate", isMultiAutoCreate);
 		reg->Save(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
 		reg->Save(L"Multi.HideOnClose", isMultiHideOnClose);
+		reg->Save(L"Multi.MinByEsc", isMultiMinByEsc);
+		reg->Save(L"MapShiftEscToEsc", isMapShiftEscToEsc);
 		reg->Save(L"Multi.Iterate", isMultiIterate);
 		reg->Save(L"Multi.SplitWidth", nSplitWidth);
 		reg->Save(L"Multi.SplitHeight", nSplitHeight);
@@ -3411,6 +3418,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		mb_SizePosAutoSaved = false; // Раз было инициированное пользователей сохранение настроек - сбросим флажок
 		reg->Save(L"QuakeStyle", isQuakeStyle);
 		reg->Save(L"HideCaption", isHideCaption);
+		reg->Save(L"HideChildCaption", isHideChildCaption);
 		reg->Save(L"HideCaptionAlways", mb_HideCaptionAlways);
 		reg->Save(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
 		reg->Save(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
@@ -4537,9 +4545,9 @@ void Settings::SetMinToTray(bool bMinToTray)
 {
 	mb_MinToTray = bMinToTray;
 
-	if (ghOpWnd && gpSetCls->mh_Tabs[CSettings::thi_Show])
+	if (ghOpWnd && gpSetCls->mh_Tabs[CSettings::thi_Taskbar])
 	{
-		gpSetCls->checkDlgButton(gpSetCls->mh_Tabs[CSettings::thi_Show], cbMinToTray, mb_MinToTray);
+		gpSetCls->checkDlgButton(gpSetCls->mh_Tabs[CSettings::thi_Taskbar], cbMinToTray, mb_MinToTray);
 	}
 }
 
@@ -5438,26 +5446,45 @@ void Settings::CheckHotkeyUnique()
 {
 	// Проверка уникальности
 	wchar_t* pszFailMsg = NULL;
+
+	// Некоторые хоткеи имеют "локальное" действие
+	// А некоторые проверять не хочется
+	int SkipCheckID[] = {vkCtrlTab_Left, vkCtrlTab_Up, vkCtrlTab_Right, vkCtrlTab_Down, vkEscNoConsoles};
+	bool bSkip = false;
+
+	// Go
 	for (ConEmuHotKey *ppHK1 = gpSetCls->m_HotKeys; ppHK1[0].DescrLangID && ppHK1[1].DescrLangID; ++ppHK1)
 	{
 		if ((ppHK1->HkType == chk_Modifier) || (GetHotkey(ppHK1->VkMod) == 0))
 			continue;
-		// Некоторые хоткеи имеют "локальное" действие
-		if ((ppHK1->DescrLangID == vkCtrlTab_Left)
-			|| (ppHK1->DescrLangID == vkCtrlTab_Up)
-			|| (ppHK1->DescrLangID == vkCtrlTab_Right)
-			|| (ppHK1->DescrLangID == vkCtrlTab_Down))
+
+		// Некоторые хоткеи не проверять
+		bSkip = false;
+		for (size_t i = 0; i < countof(SkipCheckID); i++)
+		{
+			if (ppHK1->DescrLangID == SkipCheckID[i])
+			{
+				bSkip = true; break;
+			}
+		}
+		if (bSkip)
 			continue;
 		
 		for (ConEmuHotKey *ppHK2 = ppHK1+1; ppHK2[0].DescrLangID; ++ppHK2)
 		{
 			if ((ppHK2->HkType == chk_Modifier) || (GetHotkey(ppHK2->VkMod) == 0))
 				continue;
-			// Некоторые хоткеи имеют "локальное" действие
-			if ((ppHK2->DescrLangID == vkCtrlTab_Left)
-				|| (ppHK2->DescrLangID == vkCtrlTab_Up)
-				|| (ppHK2->DescrLangID == vkCtrlTab_Right)
-				|| (ppHK2->DescrLangID == vkCtrlTab_Down))
+
+			// Некоторые хоткеи не проверять
+			bSkip = false;
+			for (size_t i = 0; i < countof(SkipCheckID); i++)
+			{
+				if (ppHK2->DescrLangID == SkipCheckID[i])
+				{
+					bSkip = true; break;
+				}
+			}
+			if (bSkip)
 				continue;
 
 			// Хоткеи различаются?
@@ -5707,7 +5734,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkCtrlTab_Up,     chk_System, NULL, L"", MakeHotKey(VK_UP,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Prev}, // Tab switch
 		{vkCtrlTab_Right,  chk_System, NULL, L"", MakeHotKey(VK_RIGHT,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Next}, // Tab switch
 		{vkCtrlTab_Down,   chk_System, NULL, L"", MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Next}, // Tab switch
-		{vkEscNoConsoles,  chk_System, NULL, L"", MakeHotKey(VK_ESCAPE), CConEmuCtrl::key_MinimizeRestoreByEsc, false/*OnKeyUp*/}, // Minimize ConEmu by Esc when no open consoles left
+		{vkEscNoConsoles,  chk_System, NULL, L"", MakeHotKey(VK_ESCAPE), CConEmuCtrl::key_MinimizeByEsc, false/*OnKeyUp*/}, // Minimize ConEmu by Esc when no open consoles left
 		{vkCTSShiftLeft,   chk_System, UseCTSShiftArrow, L"", MakeHotKey(VK_LEFT,VK_SHIFT),  CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Select(0,-1)")},
 		{vkCTSShiftRight,  chk_System, UseCTSShiftArrow, L"", MakeHotKey(VK_RIGHT,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Select(0,1)")},
 		{vkCTSShiftUp,     chk_System, UseCTSShiftArrow, L"", MakeHotKey(VK_UP,VK_SHIFT),    CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Select(1,0,-1)")},

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"qqqq.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"notepad.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -705,6 +705,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		BOOL  bAttachExistingWindow = FALSE;
 		wchar_t szVar[64], *psz;
 		ConEmuGuiMapping* GuiMapping = (ConEmuGuiMapping*)calloc(1,sizeof(*GuiMapping));
+		// Он создается по PID GUI процесса? Может быть при аттаче ранее запущенного GUI приложения разве что.
 		if (GuiMapping && LoadGuiMapping(gnSelfPID, *GuiMapping))
 		{
 			gnGuiPID = GuiMapping->nGuiPID;
@@ -714,7 +715,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		}
 		else
 		{
-			_ASSERTEX(FALSE && "LoadGuiMapping failed");
+			_ASSERTEX((gbPrepareDefaultTerminal==false) && "LoadGuiMapping failed");
 		}
 		SafeFree(GuiMapping);
 
@@ -771,6 +772,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 							_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 							grcConEmuClient = pOut->AttachGuiApp.rcWindow;
 							gnServerPID = pOut->AttachGuiApp.nPID;
+							//gbGuiClientHideCaption = pOut->AttachGuiApp.bHideCaption;
+							gGuiClientStyles = pOut->AttachGuiApp.Styles;
 							if (pOut->AttachGuiApp.hkl)
 							{
 								LONG_PTR hkl = (LONG_PTR)(LONG)pOut->AttachGuiApp.hkl;
@@ -1772,6 +1775,8 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 		{
 			// При 'внешнем' аттаче инициированном юзером из ConEmu
 			_ASSERTEX(pCmd->AttachGuiApp.hConEmuWnd && ghConEmuWnd==pCmd->AttachGuiApp.hConEmuWnd);
+			//gbGuiClientHideCaption = pCmd->AttachGuiApp.bHideCaption;
+			gGuiClientStyles = pCmd->AttachGuiApp.Styles;
 			//ghConEmuWndDC -- еще нету
 			AttachGuiWindow(pCmd->AttachGuiApp.hAppWindow);
 			// Результат

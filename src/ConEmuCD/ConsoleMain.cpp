@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
 //  #define SHOW_COMSPEC_STARTED_MSGBOX
-//	#define SHOW_SERVER_STARTED_MSGBOX
+	#define SHOW_SERVER_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
 //	#define SHOW_INJECT_MSGBOX
@@ -7651,7 +7651,7 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 			GetClassName(in.AttachGuiApp.hAppWindow, szClass, countof(szClass));
 			_wsprintf(szInfo,  SKIPLEN(countof(szInfo))
 				L"\nWindow (x%08X,Style=x%08X,Ex=x%X,Flags=x%X) was attached to ConEmu:\nTitle: \"%s\"\nClass: \"%s\"\n",
-				(DWORD)in.AttachGuiApp.hAppWindow, in.AttachGuiApp.nStyle, in.AttachGuiApp.nStyleEx, in.AttachGuiApp.nFlags, szTitle, szClass);
+				(DWORD)in.AttachGuiApp.hAppWindow, in.AttachGuiApp.Styles.nStyle, in.AttachGuiApp.Styles.nStyleEx, in.AttachGuiApp.nFlags, szTitle, szClass);
 			_wprintf(szInfo);
 		}
 

@@ -191,7 +191,7 @@ void TrayIcon::RestoreWindowFromTray(BOOL abIconOnly /*= FALSE*/)
 {
 	if (!abIconOnly)
 	{
-		gpConEmu->SetWindowMode(gpConEmu->WindowMode);
+		gpConEmu->SetWindowMode(gpConEmu->GetWindowMode());
 
 		if (!IsWindowVisible(ghWnd))
 		{

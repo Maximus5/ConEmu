@@ -277,7 +277,7 @@ class CRealConsole
 		BOOL    isGuiVisible();
 		BOOL    isGuiOverCon();
 		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
-		void    CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui);
+		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui);
 
 		CRealConsole();
 		bool Construct(CVirtualConsole* apVCon, RConStartArgs *args);

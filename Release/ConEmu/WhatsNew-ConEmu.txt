@@ -11,6 +11,17 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[+] When unhandled exception occurred in ConEmu - full memory dump will be created on desktop in "ConEmuTrap" folder.
+[+] New options for "Esc" key or "Task bar" page:
+    "Minimize ConEmu when all consoles closed", "Minimize always" and "Never".
+    May be useful in Quake mode.
+[+] When "Esc" is always used for minimize ConEmu, you may use Shift+Esc to send simple Esc to console.
+    Uncheck "Map Shift+Esc to Esc" on "Task bar" page if you don't need this mapping.
+[%] Resize bugfixes in Quake mode.
+[%] Issue 853: Default terminal fails in TotalCmd "Open command prompt window".
+[*] New toolbar images by Grzegorz Kozub.
+
+
 2012.12.27
 [*] New SystemMenu item: About -> Whats new (local, web).
 [%] Far 3 plugins updated to new API (some changes was missed).

@@ -3497,7 +3497,7 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/)
 	            	return -1;
 				
 	        	_wcscpy_c(ms_FilePathName, cchMax, szDesktop);
-	        	_wcscat_c(ms_FilePathName, cchMax, (szDesktop[cchMax-1] != L'\\') ? L"\\ConEmuLogs" : L"ConEmuLogs");
+	        	_wcscat_c(ms_FilePathName, cchMax, (szDesktop[cchDirLen-1] != L'\\') ? L"\\ConEmuLogs" : L"ConEmuLogs");
 				CreateDirectory(ms_FilePathName, NULL);
 				_wcscat_c(ms_FilePathName, cchMax, L"\\");
 	    		_wcscat_c(ms_FilePathName, cchMax, ms_FileName);

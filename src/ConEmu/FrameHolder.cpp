@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <CRTDBG.H>
 //#endif
 #include "Header.h"
+#include "DwmHelper.h"
 #include "TabBar.h"
 #include "FrameHolder.h"
 #include "ConEmu.h"
@@ -586,7 +587,7 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 
 	// Go
 
-	RECT wr, cr, tr;
+	RECT wr, cr, tr = {};
 	
 	RecalculateFrameSizes();
 

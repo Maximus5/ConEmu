@@ -893,6 +893,8 @@ struct Settings
 		
 		//reg->Load(L"HideCaption", isHideCaption);
 		bool isHideCaption; // Hide caption when maximized
+		//reg->Load(L"HideChildCaption", isHideChildCaption);
+		bool isHideChildCaption; // Hide caption of child GUI applications, started in ConEmu tabs (PuTTY, Notepad, etc.)
 		//reg->Load(L"QuakeStyle", isQuakeStyle);
 		BYTE isQuakeStyle;
 		protected:
@@ -1273,6 +1275,10 @@ struct Settings
 		bool isMultiLeaveOnClose;
 		//reg->Load(L"Multi.HideOnClose", isMultiHideOnClose);
 		bool isMultiHideOnClose;
+		//reg->Load(L"Multi.MinByEsc", isMultiMinByEsc);
+		BYTE isMultiMinByEsc; // 0 - Never, 1 - Always, 2 - NoConsoles
+		//reg->Load(L"MapShiftEscToEsc", isMapShiftEscToEsc);
+		bool isMapShiftEscToEsc; // used only when isMultiMinByEsc==1 and only for console apps
 		//reg->Load(L"Multi.Iterate", isMultiIterate);
 		bool isMultiIterate;
 		//reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);

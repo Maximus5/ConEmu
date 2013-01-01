@@ -283,6 +283,7 @@ CConEmuMain::CConEmuMain()
 	
 	mn_StartupFinished = ss_Starting;
 	WindowMode = wmNormal;
+	mb_InSetQuakeMode = false;
 	changeFromWindowMode = wmNotChanging;
 	//isRestoreFromMinimized = false;
 	WindowStartMinimized = false;
@@ -2469,7 +2470,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				// Рамка невидима (мышка не над рамкой или заголовком)
 				RECT rcClient = GetGuiClientRect();
 				RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
-				_ASSERTE(!rcClient.left && !rcClient.top);
+				//_ASSERTE(!rcClient.left && !rcClient.top);
 
 				bool bRoundTitle = gpSetCls->CheckTheming() && mp_TabBar->IsTabsShown() && !IsWindows8;
 
@@ -2490,11 +2491,33 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				}
 
 				int nFrame = gpSet->HideCaptionAlwaysFrame();
+				bool bFullFrame = (nFrame < 0);
+				if (bFullFrame)
+				{
+					nFrame = 0;
+				}
+				else
+				{
+					_ASSERTE(rcFrame.left>=nFrame);
+					_ASSERTE(rcFrame.top>=nFrame);
+				}
 
-				int rgnX = rcFrame.left-nFrame;
-				int rgnY = rcFrame.top-nFrame;
-				int rgnWidth = rcClient.right+2*nFrame;
-				int rgnHeight = rcClient.bottom+2*nFrame;
+
+				// We need coordinates relative to upper-top corner of WINDOW (not client area)
+				int rgnX = bFullFrame ? 0 : (rcFrame.left - nFrame);
+				int rgnY = bFullFrame ? 0 : (rcFrame.top - nFrame);
+				int rgnX2 = (rcFrame.left - nFrame) + (bFullFrame ? rcFrame.right : nFrame);
+				int rgnY2 = (rcFrame.top - nFrame) + (bFullFrame ? rcFrame.bottom : nFrame);
+				if (gpSet->isQuakeStyle && (gpSet->_WindowMode != wmNormal))
+				{
+					// ConEmu window is maximized to fullscreen or work area
+					// Need to cut left/top/bottom frame edges
+					rgnX = rcFrame.left;
+					rgnX2 = rcFrame.left + rcFrame.right;
+					rgnY = rcFrame.top;
+				}
+				int rgnWidth = rcClient.right + rgnX2;
+				int rgnHeight = rcClient.bottom + rgnY2;
 
 				bool bCreateRgn = (nFrame >= 0);
 
@@ -4112,6 +4135,14 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= 0*/)
 
 bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode /*= wmNotChanging*/, bool bFromDlg /*= false*/)
 {
+	if (mb_InSetQuakeMode)
+	{
+		_ASSERTE(mb_InSetQuakeMode==false);
+		return false;
+	}
+
+	mb_InSetQuakeMode = true;
+
 	BYTE bPrevStyle = gpSet->isQuakeStyle;
 	gpSet->isQuakeStyle = NewQuakeMode;
 
@@ -4203,6 +4234,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 
 	apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
 
+	mb_InSetQuakeMode = false;
 	return true;
 }
 
@@ -4224,8 +4256,16 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 		return false;
 	}
 
-	if ((inMode == wmFullScreen) && gpSet->isDesktopMode)
-		inMode = (WindowMode != wmNormal) ? wmNormal : wmMaximized; // FullScreen на Desktop-е невозможен
+	//if (gpSet->isQuakeStyle && !mb_InSetQuakeMode)
+	//{
+	//	bool bQuake = SetQuakeMode(gpSet->isQuakeStyle
+	//}
+
+	if (gpSet->isDesktopMode)
+	{
+		if (inMode == wmFullScreen)
+			inMode = (WindowMode != wmNormal) ? wmNormal : wmMaximized; // FullScreen на Desktop-е невозможен
+	}
 
 	if (gpSetCls->isAdvLogging)
 	{
@@ -4291,7 +4331,15 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	// И сразу запоминаем _новый_ режим
 	changeFromWindowMode = WindowMode;
 	mp_Menu->SetRestoreFromMinimized(bIconic);
-	WindowMode = inMode;
+	if (gpSet->isQuakeStyle)
+	{
+		gpSet->_WindowMode = inMode;
+		WindowMode = wmNormal;
+	}
+	else
+	{
+		WindowMode = inMode;
+	}
 
 
 	CVConGuard VCon;
@@ -4315,7 +4363,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			DEBUGLOGFILE("SetWindowMode(wmNormal)\n");
 			RECT consoleSize;
 
-			RECT rcIdeal = GetIdealRect();
+			RECT rcIdeal = (gpSet->isQuakeStyle) ? GetDefaultRect() : GetIdealRect();
 			AutoSizeFont(rcIdeal, CER_MAIN);
 			// Расчитать размер по оптимальному WindowRect
 			if (!CVConGroup::PreReSize(inMode, rcIdeal))
@@ -4451,6 +4499,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 		case wmMaximized:
 		{
 			DEBUGLOGFILE("SetWindowMode(wmMaximized)\n");
+			_ASSERTE(gpSet->isQuakeStyle==0); // Must not get here for Quake mode
 
 			#ifdef _DEBUG
 			RECT rcShift = CalcMargins(CEM_FRAMEONLY);
@@ -4537,6 +4586,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 		case wmFullScreen:
 		{
 			DEBUGLOGFILE("SetWindowMode(wmFullScreen)\n");
+			_ASSERTE(gpSet->isQuakeStyle==0); // Must not get here for Quake mode
 
 			RECT rcMax = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
 
@@ -10976,9 +11026,11 @@ void CConEmuMain::OnAltEnter()
 		return;
 	}
 
-	if (WindowMode != wmFullScreen)
+	ConEmuWindowMode wm = GetWindowMode();
+
+	if (wm != wmFullScreen)
 		gpConEmu->SetWindowMode(wmFullScreen);
-	else if (gpSet->isDesktopMode && (WindowMode != wmNormal))
+	else if (gpSet->isDesktopMode && (wm != wmNormal))
 		gpConEmu->SetWindowMode(wmNormal);
 	else
 		gpConEmu->SetWindowMode(gpConEmu->isWndNotFSMaximized ? wmMaximized : wmNormal);
@@ -11001,7 +11053,9 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 	// -- this will be done in SetWindowMode
 	//StoreNormalRect(NULL); // Сама разберется, надо/не надо
 
-	gpConEmu->SetWindowMode((WindowMode != wmMaximized) ? wmMaximized : wmNormal);
+	ConEmuWindowMode wm = GetWindowMode();
+
+	gpConEmu->SetWindowMode((wm != wmMaximized) ? wmMaximized : wmNormal);
 }
 
 bool CConEmuMain::InCreateWindow()

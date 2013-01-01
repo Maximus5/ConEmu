@@ -4539,6 +4539,16 @@ void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, con
 
 	r.Event.KeyEvent.dwControlKeyState = gpConEmu->GetControlKeyState(lParam);
 
+	if ((mn_LastVKeyPressed == VK_ESCAPE)
+		&& (gpSet->isMapShiftEscToEsc && (gpSet->isMultiMinByEsc == 1))
+		&& ((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) == SHIFT_PRESSED))
+	{
+		// When enabled feature "Minimize by Esc always"
+		// we need easy way to send simple "Esc" to console
+		// There is an option for this: Map Shift+Esc to Esc
+		r.Event.KeyEvent.dwControlKeyState &= ~ALL_MODIFIERS;
+	}
+
 	#ifdef _DEBUG
 	if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
 	        r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
@@ -10039,8 +10049,10 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	In.AttachGuiApp.hConEmuDc = GetView();
 	In.AttachGuiApp.hConEmuBack = mp_VCon->GetBack();
 	In.AttachGuiApp.hAppWindow = ahGuiWnd;
-	In.AttachGuiApp.nStyle = anStyle;
-	In.AttachGuiApp.nStyleEx = anStyleEx;
+	In.AttachGuiApp.Styles.nStyle = anStyle;
+	In.AttachGuiApp.Styles.nStyleEx = anStyleEx;
+	ZeroStruct(In.AttachGuiApp.Styles.Shifts);
+	CorrectGuiChildRect(In.AttachGuiApp.Styles.nStyle, In.AttachGuiApp.Styles.nStyleEx, In.AttachGuiApp.Styles.Shifts);
 	In.AttachGuiApp.nPID = anAppPID;
 	if (asAppFileName)
 		wcscpy_c(In.AttachGuiApp.sAppFileName, asAppFileName);
@@ -10092,7 +10104,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 void CRealConsole::CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 {
 	//WARNING!! Same as "GuiAttach.cpp: CorrectGuiChildRect"
-	int nX = 0, nY = 0;
+	int nX = 0, nY = 0, nY0 = 0;
 	if (anStyle & WS_THICKFRAME)
 	{
 		nX = GetSystemMetrics(SM_CXSIZEFRAME);
@@ -10118,7 +10130,14 @@ void CRealConsole::CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcG
 		nX = GetSystemMetrics(SM_CXFIXEDFRAME);
 		nY = GetSystemMetrics(SM_CXFIXEDFRAME);
 	}
-	rcGui.left -= nX; rcGui.right += nX; rcGui.top -= nY; rcGui.bottom += nY;
+	if ((anStyle & WS_CAPTION) && gpSet->isHideChildCaption)
+	{
+		if (anStyleEx & WS_EX_TOOLWINDOW)
+			nY0 += GetSystemMetrics(SM_CYSMCAPTION);
+		else
+			nY0 += GetSystemMetrics(SM_CYCAPTION);
+	}
+	rcGui.left -= nX; rcGui.right += nX; rcGui.top -= nY+nY0; rcGui.bottom += nY;
 }
 
 int CRealConsole::GetStatusLineCount(int nLeftPanelEdge)

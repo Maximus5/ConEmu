@@ -53,6 +53,7 @@ RECT    grcConEmuClient = {}; // Для аттача гуевых окон
 BOOL    gbAttachGuiClient = FALSE; // Для аттача гуевых окон
 BOOL 	gbGuiClientAttached = FALSE; // Для аттача гуевых окон (успешно подключились)
 BOOL 	gbGuiClientExternMode = FALSE; // Если нужно показать Gui-приложение вне вкладки ConEmu
+struct GuiStylesAndShifts gGuiClientStyles = {}; // Запомнить сдвиги окна внутри ConEmu
 HWND 	ghAttachGuiClient = NULL;
 DWORD 	gnAttachGuiClientFlags = 0;
 DWORD 	gnAttachGuiClientStyle = 0, gnAttachGuiClientStyleEx = 0;
@@ -490,8 +491,8 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	pIn->AttachGuiApp.nFlags = gnAttachGuiClientFlags;
 	pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 	pIn->AttachGuiApp.hAppWindow = hWindow;
-	pIn->AttachGuiApp.nStyle = nCurStyle; // стили могли измениться после создания окна,
-	pIn->AttachGuiApp.nStyleEx = nCurStyleEx; // поэтому получим актуальные
+	pIn->AttachGuiApp.Styles.nStyle = nCurStyle; // стили могли измениться после создания окна,
+	pIn->AttachGuiApp.Styles.nStyleEx = nCurStyleEx; // поэтому получим актуальные
 	user->getWindowRect(hWindow, &pIn->AttachGuiApp.rcWindow);
 	GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
 	pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
@@ -528,6 +529,9 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 			_ASSERTE(ghConEmuWnd && (ghConEmuWnd==pOut->AttachGuiApp.hConEmuWnd));
 			ghConEmuWnd = pOut->AttachGuiApp.hConEmuWnd;
 			SetConEmuHkWindows(pOut->AttachGuiApp.hConEmuDc, pOut->AttachGuiApp.hConEmuBack);
+
+			//gbGuiClientHideCaption = pOut->AttachGuiApp.bHideCaption;
+			gGuiClientStyles = pOut->AttachGuiApp.Styles;
             
 			#ifdef _DEBUG
             HWND hFocus = user->getFocus();
@@ -652,8 +656,8 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach)
 			pIn->AttachGuiApp.nFlags = gnAttachGuiClientFlags;
 			pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 			pIn->AttachGuiApp.hAppWindow = hWnd;
-			pIn->AttachGuiApp.nStyle = nCurStyle; // стили могли измениться после создания окна,
-			pIn->AttachGuiApp.nStyleEx = nCurStyleEx; // поэтому получим актуальные
+			pIn->AttachGuiApp.Styles.nStyle = nCurStyle; // стили могли измениться после создания окна,
+			pIn->AttachGuiApp.Styles.nStyleEx = nCurStyleEx; // поэтому получим актуальные
 			user->getWindowRect(hWnd, &pIn->AttachGuiApp.rcWindow);
 			GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
 
@@ -672,6 +676,8 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach)
 					_ASSERTE(ghConEmuWnd && (ghConEmuWnd==pOut->AttachGuiApp.hConEmuWnd));
 					ghConEmuWnd = pOut->AttachGuiApp.hConEmuWnd;
 					SetConEmuHkWindows(pOut->AttachGuiApp.hConEmuDc, pOut->AttachGuiApp.hConEmuBack);
+					//gbGuiClientHideCaption = pOut->AttachGuiApp.bHideCaption;
+					gGuiClientStyles = pOut->AttachGuiApp.Styles;
 				}
 				ExecuteFreeResult(pOut);
 			}
@@ -700,8 +706,36 @@ void OnPostShowGuiClientWindow(HWND hWnd, int nCmdShow)
 
 void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 {
+	RECT rcShift = {};
+
+	if ((anStyle != gGuiClientStyles.nStyle) || (anStyleEx != gGuiClientStyles.nStyleEx))
+	{
+		DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(GuiStylesAndShifts);
+		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_GUICLIENTSHIFT, nSize);
+		if (pIn)
+		{
+			pIn->GuiAppShifts.nStyle = anStyle;
+			pIn->GuiAppShifts.nStyleEx = anStyleEx;
+
+			wchar_t szGuiPipeName[128];
+			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
+
+			CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 10000, NULL);
+			if (pOut)
+			{
+				rcShift = pOut->GuiAppShifts.Shifts;
+				gGuiClientStyles = pOut->GuiAppShifts;
+				ExecuteFreeResult(pOut);
+			}
+			ExecuteFreeResult(pIn);
+		}
+	}
+
+	rcGui.left += rcShift.left; rcGui.right -= rcShift.right; rcGui.top += rcShift.top; rcGui.bottom -= rcShift.bottom;
+
+#if 0
 	//WARNING!! Same as "CRealConsole::CorrectGuiChildRect"
-	int nX = 0, nY = 0;
+	int nX = 0, nY = 0, nY0 = 0;
 	if (anStyle & WS_THICKFRAME)
 	{
 		nX = user->getSystemMetrics(SM_CXSIZEFRAME);
@@ -727,7 +761,15 @@ void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 		nX = user->getSystemMetrics(SM_CXFIXEDFRAME);
 		nY = user->getSystemMetrics(SM_CXFIXEDFRAME);
 	}
-	rcGui.left -= nX; rcGui.right += nX; rcGui.top -= nY; rcGui.bottom += nY;
+	if ((anStyle & WS_CAPTION) && gbGuiClientHideCaption)
+	{
+		if (anStyleEx & WS_EX_TOOLWINDOW)
+			nY0 += user->getSystemMetrics(SM_CYSMCAPTION);
+		else
+			nY0 += user->getSystemMetrics(SM_CYCAPTION);
+	}
+	rcGui.left -= nX; rcGui.right += nX; rcGui.top -= nY+nY0; rcGui.bottom += nY;
+#endif
 }
 
 RECT AttachGuiClientPos(DWORD anStyle /*= 0*/, DWORD anStyleEx /*= 0*/)

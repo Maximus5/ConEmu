@@ -464,7 +464,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				
 				// Уведомить RCon и ConEmuC, что гуй подцепился
 				// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
-				pRCon->SetGuiMode(pIn->AttachGuiApp.nFlags, pIn->AttachGuiApp.hAppWindow, pIn->AttachGuiApp.nStyle, pIn->AttachGuiApp.nStyleEx, pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID, rcPrev);
+				pRCon->SetGuiMode(pIn->AttachGuiApp.nFlags, pIn->AttachGuiApp.hAppWindow, pIn->AttachGuiApp.Styles.nStyle, pIn->AttachGuiApp.Styles.nStyleEx, pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID, rcPrev);
 
 				ppReply->AttachGuiApp.nFlags = agaf_Success;
 				ppReply->AttachGuiApp.nPID = pRCon->GetServerPID();
@@ -474,6 +474,8 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				ppReply->AttachGuiApp.hAppWindow = pIn->AttachGuiApp.hAppWindow;
 				ppReply->AttachGuiApp.hSrvConWnd = pRCon->ConWnd();
 				ppReply->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(gpConEmu->mn_MainThreadId);
+				ZeroStruct(ppReply->AttachGuiApp.Styles.Shifts);
+				CRealConsole::CorrectGuiChildRect(pIn->AttachGuiApp.Styles.nStyle, pIn->AttachGuiApp.Styles.nStyleEx, ppReply->AttachGuiApp.Styles.Shifts);
 			}
 			else
 			{
@@ -491,6 +493,20 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			//               NULL);        // not overlapped I/O
 			break;
 		} // CECMD_ATTACHGUIAPP
+
+		case CECMD_GUICLIENTSHIFT:
+		{
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(GuiStylesAndShifts);
+			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+				goto wrap;
+			ppReply->GuiAppShifts = pIn->GuiAppShifts;
+
+			ZeroStruct(ppReply->GuiAppShifts.Shifts);
+			CRealConsole::CorrectGuiChildRect(pIn->GuiAppShifts.nStyle, pIn->GuiAppShifts.nStyleEx, ppReply->GuiAppShifts.Shifts);
+
+			lbRc = TRUE;
+			break;
+		} // CECMD_GUICLIENTSHIFT
 	}
 
 	//// Освободить память

@@ -188,6 +188,9 @@ class CConEmuMain :
 		//POINT cwShift; // difference between window size and client area size for main ConEmu window
 		POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
 
+	private:
+		bool mb_InSetQuakeMode;
+	public:
 		ConEmuWindowMode WindowMode;           // wmNormal/wmMaximized/wmFullScreen
 		ConEmuWindowMode changeFromWindowMode; // wmNotChanging/rmNormal/rmMaximized/rmFullScreen
 		bool isRestoreFromMinimized;

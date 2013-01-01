@@ -1200,6 +1200,10 @@ HMENU CConEmuMenu::CreateDebugMenuPopup()
 //	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_MONITOR_SHELLACTIVITY, _T("Enable &shell log..."));
 //#endif
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_SHOWRECTS, _T("Show debug rec&ts"));
+	#ifdef _DEBUG
+	AppendMenu(hDebug, MF_SEPARATOR, 0, NULL);
+	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_TRAP, _T("Raise exception"));
+	#endif
 	#ifdef TRACK_MEMORY_ALLOCATIONS
 	AppendMenu(hDebug, MF_SEPARATOR, 0, NULL);
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMP_MEM_BLK, _T("Dump used memory blocks"));
@@ -1665,6 +1669,12 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			gbDebugShowRects = !gbDebugShowRects;
 			gpConEmu->InvalidateAll();
 			return 0;
+
+		#ifdef _DEBUG
+		case ID_DEBUG_TRAP:
+			MyAssertTrap();
+			return 0;
+		#endif
 
 		case ID_DUMP_MEM_BLK:
 			#ifdef TRACK_MEMORY_ALLOCATIONS

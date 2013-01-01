@@ -1564,6 +1564,9 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
 
+	// Child GUI applications
+	checkDlgButton(hWnd2, cbHideChildCaption, gpSet->isHideChildCaption);
+
 	checkDlgButton(hWnd2, cbEnhanceGraphics, gpSet->isEnhanceGraphics);
 	
 	//checkDlgButton(hWnd2, cbEnhanceButtons, gpSet->isEnhanceButtons);
@@ -1591,9 +1594,6 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
 	checkDlgButton(hWnd2, cbCloseEditViewConfirm, gpSet->isCloseEditViewConfirm);
 
-	checkRadioButton(hWnd2, rbMultiLastClose, rbMultiLastTSA,
-		gpSet->isMultiLeaveOnClose ? (gpSet->isMultiHideOnClose ? rbMultiLastTSA : rbMultiLastLeave) : rbMultiLastClose);
-
 	RegisterTipsFor(hWnd2);
 	return 0;
 }
@@ -1616,36 +1616,13 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 		: rbTaskbarBtnActive);
 	checkDlgButton(hWnd2, cbTaskbarShield, gpSet->isTaskbarShield);
 
-	//checkDlgButton(hWnd2, cbHideCaption, gpSet->isHideCaption);
+	checkRadioButton(hWnd2, rbMultiLastClose, rbMultiLastTSA,
+		gpSet->isMultiLeaveOnClose ? (gpSet->isMultiHideOnClose ? rbMultiLastTSA : rbMultiLastLeave) : rbMultiLastClose);
 
-	//checkDlgButton(hWnd2, cbHideCaptionAlways, gpSet->isHideCaptionAlways());
-	//EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
-
-	//// копия на вкладке "Size & Pos"
-	//SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
-	//SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
-	//SetDlgItemInt(hWnd2, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
-
-	//checkDlgButton(hWnd2, cbEnhanceGraphics, gpSet->isEnhanceGraphics);
-	//
-	////checkDlgButton(hWnd2, cbEnhanceButtons, gpSet->isEnhanceButtons);
-
-	////checkDlgButton(hWnd2, cbAlwaysShowScrollbar, gpSet->isAlwaysShowScrollbar);
-	//checkRadioButton(hWnd2, rbScrollbarHide, rbScrollbarAuto, (gpSet->isAlwaysShowScrollbar==0) ? rbScrollbarHide : (gpSet->isAlwaysShowScrollbar==1) ? rbScrollbarShow : rbScrollbarAuto);
-	//SetDlgItemInt(hWnd2, tScrollAppearDelay, gpSet->nScrollBarAppearDelay, FALSE);
-	//SetDlgItemInt(hWnd2, tScrollDisappearDelay, gpSet->nScrollBarDisappearDelay, FALSE);
-
-	//checkDlgButton(hWnd2, cbDesktopMode, gpSet->isDesktopMode);
-
-	//checkDlgButton(hWnd2, cbAlwaysOnTop, gpSet->isAlwaysOnTop);
-
-	//#ifdef _DEBUG
-	//checkDlgButton(hWnd2, cbTabsInCaption, gpSet->isTabsInCaption);
-	//#else
-	//ShowWindow(GetDlgItem(hWnd2, cbTabsInCaption), SW_HIDE);
-	//#endif
-
-	//checkDlgButton(hWnd2, cbNumberInCaption, gpSet->isNumberInCaption);
+	checkRadioButton(hWnd2, rbMinByEscAlways, rbMinByEscNever,
+		(gpSet->isMultiMinByEsc == 2) ? rbMinByEscEmpty : gpSet->isMultiMinByEsc ? rbMinByEscAlways : rbMinByEscNever);
+	checkDlgButton(hWnd2, cbMapShiftEscToEsc, gpSet->isMapShiftEscToEsc);
+	EnableWindow(GetDlgItem(hWnd2, cbMapShiftEscToEsc), (gpSet->isMultiMinByEsc == 1 /*Always*/));
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -4493,6 +4470,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpConEmu->OnHideCaption();
 			apiSetForegroundWindow(ghOpWnd);
 			break;
+		case cbHideChildCaption:
+			gpSet->isHideChildCaption = IsChecked(hWnd2, CB);
+			gpConEmu->OnSize(true);
+			break;
 		//case bHideCaptionSettings:
 		//	DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_HIDE), ghOpWnd, hideOpProc);
 		//	break;
@@ -4881,6 +4862,15 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rbMultiLastTSA:
 			gpSet->isMultiHideOnClose = IsChecked(hWnd2, rbMultiLastTSA);
 			gpSet->isMultiLeaveOnClose = gpSet->isMultiHideOnClose || IsChecked(hWnd2, rbMultiLastLeave);
+			break;
+		case rbMinByEscNever:
+		case rbMinByEscEmpty:
+		case rbMinByEscAlways:
+			gpSet->isMultiMinByEsc = (CB == rbMinByEscAlways) ? 1 : (CB == rbMinByEscEmpty) ? 2 : 0;
+			EnableWindow(GetDlgItem(hWnd2, cbMapShiftEscToEsc), (gpSet->isMultiMinByEsc == 1 /*Always*/));
+			break;
+		case cbMapShiftEscToEsc:
+			gpSet->isMapShiftEscToEsc = IsChecked(hWnd2, CB);
 			break;
 		//case cbMultiLeaveOnClose:
 		//	gpSet->isMultiLeaveOnClose = IsChecked(hWnd2, cbMultiLeaveOnClose);
