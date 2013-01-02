@@ -11,6 +11,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.01.02
+[%] GuiMacro parser regression. Only one string argument was processed.
+
+
 2013.01.01
 [+] When unhandled exception occurred in ConEmu - full memory dump will be created on desktop in "ConEmuTrap" folder.
 [+] New options for "Esc" key or "Task bar" page:

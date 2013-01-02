@@ -699,7 +699,10 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool b
 		{
 			EscapeChar(false, pszSrc, pszDst);
 		}
-		*(pszDst++) = 0;
+		_ASSERTE((*pszSrc == L'"') || (*pszSrc == 0));
+		rsArguments = (wchar_t*)((*pszSrc == L'"') ? (pszSrc+1) : pszSrc);
+		_ASSERTE(rsArguments>pszDst || (rsArguments==pszDst && *rsArguments==0));
+		*pszDst = 0;
 	}
 	// "verbatim string"
 	else if ((rsArguments[0] == L'@') && (rsArguments[1] == L'"'))
@@ -724,44 +727,32 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool b
 
 			*(pszDst++) = *(pszSrc++);
 		}
-		*(pszDst++) = 0;
+		_ASSERTE((*pszSrc == L'"') || (*pszSrc == 0));
+		rsArguments = (wchar_t*)((*pszSrc == L'"') ? (pszSrc+1) : pszSrc);
+		_ASSERTE(rsArguments>pszDst || (rsArguments==pszDst && *rsArguments==0));
+		*pszDst = 0;
 	}
 	else
 	{
 		_ASSERTE(bColonDelim && "String without quotas!");
 		rsString = rsArguments;
 		rsArguments = rsArguments + _tcslen(rsArguments);
+		goto wrap;
 	}
 
-	if (pszSrc)
+	if (*rsArguments)
 	{
-		_ASSERTE(pszSrc>=pszArgStart && pszSrc<pszArgEnd);
-		wchar_t* pszSrcW = (wchar_t*)pszSrc;
+		_ASSERTE(rsArguments>=pszArgStart && rsArguments<pszArgEnd);
 
-		if (*pszSrcW == L'"')
-		{
-			// Make it ASCIIZ, yes, this affect rsArguments
-			*pszSrcW = 0;
+		// ѕропустить все, что до следующей зап€той
+		SkipWhiteSpaces(rsArguments);
+		if (*rsArguments == L',')
+			rsArguments++;
 
-			// Rest of line
-			rsArguments = pszSrcW+1;
-
-			// ѕропустить все, что до следующей зап€той
-			bool lbNextFound = false;
-
-			while (*rsArguments && !lbNextFound)
-			{
-				lbNextFound = (*rsArguments == L',');
-				rsArguments++;
-			}
-		}
-		else
-		{
-			_ASSERTE(*pszSrcW == 0);
-			rsArguments = pszSrcW;
-		}
+		_ASSERTE(rsArguments>=pszArgStart && rsArguments<pszArgEnd);
 	}
 
+wrap:
 	// “ут уже NULL-а не будет, допускаютс€ пустые строки ("")
 	_ASSERTE(rsString!=NULL);
 	return rsString;
