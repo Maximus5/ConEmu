@@ -50,7 +50,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTROVL(s) //DEBUGSTR(s)
 #define DEBUGSTRBACK(s) //DEBUGSTR(s)
 #define DEBUGSTROVER(s) DEBUGSTR(s)
-#define DEBUGSTRSTEP(s) DEBUGSTR(s)
+#define DEBUGSTRSTEP(s) //DEBUGSTR(s)
+#define DEBUGSTROVERINT(s) //DEBUGSTR(s)
 
 //#define ForwardedPanelInfo
 
@@ -1392,6 +1393,11 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 	}
 	else
 	{
+		if (mp_DataObject == mp_DroppedObject)
+		{
+			mb_selfdrag = (mp_DraggedVCon == VCon.VCon());
+		}
+
 		TODO("Если drop идет ПОД панели - впечатать путь в командную строку");
 		DEBUGSTRSTEP(_T("DnD: DragOverInt starting"));
 		POINT ptCur; ptCur.x = pt.x; ptCur.y = pt.y;
@@ -1475,8 +1481,13 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 	}
 
 #ifdef _DEBUG
-	//if (*pdwEffect == DROPEFFECT_NONE)
-	//	*pdwEffect = DROPEFFECT_LINK;
+	wchar_t szDbgInfo[128];
+	_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"CDragDrop::DragOverInt(%i,%i) -> %s\n",
+		pt.x, pt.y,
+		(*pdwEffect == DROPEFFECT_NONE) ? L"DROPEFFECT_NONE" :
+		(*pdwEffect == DROPEFFECT_COPY) ? L"DROPEFFECT_COPY" :
+		(*pdwEffect == DROPEFFECT_LINK) ? L"DROPEFFECT_LINK" : L"!!!UNKNOWN!!!");
+	DEBUGSTROVERINT(szDbgInfo);
 #endif
 
 	if (!mb_selfdrag)
@@ -1507,6 +1518,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 {
 	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
 
+	mp_DroppedObject = pDataObject;
 	mb_selfdrag = (pDataObject == mp_DataObject);
 	mb_DragWithinNow = TRUE;
 
@@ -1517,7 +1529,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 
 	bool bNeedLoadImg = false;
 
-	if (gpSet->isDropEnabled && !mb_selfdrag && NeedRefreshToInfo(pt))
+	if (gpSet->isDropEnabled /*&& !mb_selfdrag*/ && NeedRefreshToInfo(pt))
 	{
 		// при "своем" драге - информация уже получена
 		RetrieveDragToInfo(pt);

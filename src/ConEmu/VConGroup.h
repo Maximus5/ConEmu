@@ -59,7 +59,7 @@ protected:
 	static void ShowActiveGroup(CVirtualConsole* pOldActive);
 
 	void GetAllTextSize(SIZE& sz, bool abMinimal = false);
-	void SetConsoleSizes(const COORD& size, bool abSync);
+	void SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync);
 	
 protected:
 	//static CVirtualConsole* mp_VCon[MAX_CONSOLE_COUNT];

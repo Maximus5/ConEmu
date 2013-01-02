@@ -2317,6 +2317,8 @@ void Settings::LoadSettings()
 				//isStatusBarShow = false;
 				isTabs = 0;
 				FontSizeY = 10;
+				isTryToCenter = true;
+				nCenterConsolePad = 3;
 				// Скрыть колонки, чтобы много слишком не было...
 				isStatusColumnHidden[csi_ConsolePos] = true;
 				isStatusColumnHidden[csi_ConsoleSize] = true;

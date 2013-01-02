@@ -106,6 +106,8 @@ class CDragDropData
 		BOOL AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
 	protected:
 		CDataObject *mp_DataObject;
+		void *mp_DroppedObject;
+		void *mp_DraggedVCon;
 		size_t mn_PfpiSizeMax;
 		ForwardedPanelInfo *m_pfpi;
 		void* mp_LastRCon; // Just a pointer, for comparision

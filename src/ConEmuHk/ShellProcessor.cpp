@@ -1318,6 +1318,14 @@ BOOL CShellProc::PrepareExecuteParms(
 	HANDLE hOut = lphStdOut ? *lphStdOut : NULL;
 	HANDLE hErr = lphStdErr ? *lphStdErr : NULL;
 	BOOL bLongConsoleOutput = gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput;
+
+	BOOL bHooksTempDisabled = FALSE;
+	wchar_t szVar[32] = L"";
+	if (GetEnvironmentVariable(ENV_CONEMU_HOOKS, szVar, countof(szVar)))
+	{
+		szVar[3] = 0; // We interested only in "OFF" - trim other trailing spaces or characters
+		bHooksTempDisabled = (lstrcmpi(szVar, ENV_CONEMU_HOOKS_DISABLED) == 0);
+	}
 	
 	bool bNewConsoleArg = false, bForceNewConsole = false, bCurConsoleArg = false;
 	// Service object
@@ -1524,6 +1532,13 @@ BOOL CShellProc::PrepareExecuteParms(
 		ExecuteFreeResult(pOut);
 	}
 
+	// When user set env var "ConEmuHooks=OFF" - don't set hooks
+	if (bHooksTempDisabled)
+	{
+		mb_NeedInjects = FALSE;
+		goto wrap;
+	}
+
 #ifdef _DEBUG
 	{
 		int cchLen = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 128;
@@ -1680,6 +1695,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	}
 
 	_ASSERTE(mn_ImageBits!=0);
+
 	// Если это Фар - однозначно вставляем ConEmuC.exe
 	// -- bFarHookMode заменен на bLongConsoleOutput --
 	if (gbPrepareDefaultTerminal)

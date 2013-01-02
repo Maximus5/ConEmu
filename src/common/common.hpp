@@ -96,6 +96,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMUANSI_CONFIG_W L"ConEmuConfig"
 #define ENV_CONEMUANSI_WAITKEY L"ConEmuWaitKey"
 #define ENV_CONEMUREPORTEXE_VAR_W L"ConEmuReportExe"
+#define ENV_CONEMU_HOOKS L"ConEmuHooks" // when this is "OFF" - don't set hooks from "ConEmuHk.dll"
+#define ENV_CONEMU_HOOKS_ENABLED L"Enabled" // Informational
+#define ENV_CONEMU_HOOKS_DISABLED L"OFF" // This is only significant value
 
 
 

@@ -1468,27 +1468,32 @@ bool CVConGroup::isPictureView()
 
 	bool lbPrevPicView = (gpConEmu->hPictureView != NULL);
 
+	HWND hPicView = NULL;
+
 	for (size_t i = 0; !lbRc && i < countof(gp_VCon); i++)
 	{
 		CVirtualConsole* pVCon = gp_VCon[i];
-		if (!pVCon || !isVisible(pVCon) || !pVCon->RCon())
+		// Было isVisible, но некорректно блокировать другие сплиты, в которых PicView нету
+		if (!pVCon || !isActive(pVCon) || !pVCon->RCon())
 			continue;
 
-		gpConEmu->hPictureView = pVCon->RCon()->isPictureView();
+		hPicView = pVCon->RCon()->isPictureView();
 
-		lbRc = gpConEmu->hPictureView!=NULL;
+		lbRc = (hPicView != NULL);
 
 		// Если вызывали Help (F1) - окошко PictureView прячется
-		if (gpConEmu->hPictureView && !IsWindowVisible(gpConEmu->hPictureView))
+		if (hPicView && !IsWindowVisible(hPicView))
 		{
 			lbRc = false;
-			gpConEmu->hPictureView = NULL;
+			hPicView = NULL;
 		}
 	}
 
+	gpConEmu->hPictureView = hPicView;
+
 	if (gpConEmu->bPicViewSlideShow && !gpConEmu->hPictureView)
 	{
-		gpConEmu->bPicViewSlideShow=false;
+		gpConEmu->bPicViewSlideShow = false;
 	}
 
 	if (lbRc && !lbPrevPicView)
@@ -3149,7 +3154,7 @@ void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
 	}
 }
 
-void CVConGroup::SetConsoleSizes(const COORD& size, bool abSync)
+void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync)
 {
 	CVConGuard VCon(mp_Item);
 
@@ -3191,17 +3196,27 @@ void CVConGroup::SetConsoleSizes(const COORD& size, bool abSync)
 
 
 		RECT rcCon = MakeRect(size.X,size.Y);
+
 		if (VCon.VCon() && VCon->RCon())
 		{
 			CRealConsole* pRCon = VCon->RCon();
 			COORD CurSize = {(SHORT)pRCon->TextWidth(), (SHORT)pRCon->TextHeight()};
+
+			// split-size-calculation by COORD only - fails. Need to use pixels...
+
+			//RECT calcSize = gpConEmu->CalcRect(CER_CONSOLE_CUR, VCon.VCon());
+			//_ASSERTE(calcSize.left==0 && calcSize.top==0 && calcSize.right>0 && calcSize.bottom>0);
+
 			if ((CurSize.X != size.X) || (CurSize.Y != size.Y))
 			{
-				if (!VCon->RCon()->SetConsoleSize(size.X,size.Y, 0/*don't change*/, abSync ? CECMD_SETSIZESYNC : CECMD_SETSIZENOSYNC))
+				if (!VCon->RCon()->SetConsoleSize(size.X, size.Y,
+					0/*don't change scroll*/, abSync ? CECMD_SETSIZESYNC : CECMD_SETSIZENOSYNC))
+				{
+					// Debug purposes
 					rcCon = MakeRect(VCon->TextWidth,VCon->TextHeight);
+				}
 			}
 		}
-
 
 		return;
 	}
@@ -3209,12 +3224,21 @@ void CVConGroup::SetConsoleSizes(const COORD& size, bool abSync)
 
 	// Do Split
 
+	RECT rcCon1, rcCon2, rcSplitter, rcSize1, rcSize2;
+	CalcSplitRect(rcNewCon, rcCon1, rcCon2, rcSplitter);
+
+	rcSize1 = CalcRect(CER_CONSOLE_CUR, rcCon1, CER_BACK, mp_Grp1->mp_Item);
+	rcSize2 = CalcRect(CER_CONSOLE_CUR, rcCon2, CER_BACK, mp_Grp2->mp_Item);
+
+	COORD sz1 = {rcSize1.right,rcSize1.bottom}, sz2 = {rcSize2.right,rcSize2.bottom};
+
+#if 0
 	COORD sz1 = size, sz2 = size;
-
 	CalcSplitConSize(size, sz1, sz2);
+#endif
 
-	mp_Grp1->SetConsoleSizes(sz1, abSync);
-	mp_Grp2->SetConsoleSizes(sz2, abSync);
+	mp_Grp1->SetConsoleSizes(sz1, rcCon1, abSync);
+	mp_Grp2->SetConsoleSizes(sz2, rcCon2, abSync);
 }
 
 // size in columns and lines
@@ -3264,9 +3288,11 @@ void CVConGroup::SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*
 		SetRedraw(FALSE);
 	}
 
+	// Для разбиения имеет смысл использовать текущий размер окна в пикселях
+	RECT rcWorkspace = gpConEmu->CalcRect(CER_WORKSPACE);
 
 	// Go (size real consoles)
-	pRoot->SetConsoleSizes(size, bSetRedraw/*as Sync*/);
+	pRoot->SetConsoleSizes(size, rcWorkspace, bSetRedraw/*as Sync*/);
 
 
 	if (bSetRedraw /*&& gp_VActive*/)

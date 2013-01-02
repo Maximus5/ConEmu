@@ -739,7 +739,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 		}
 		else
 		{
-			_ASSERTE(FALSE && "Continue to AttachConEmuC");
+			//_ASSERTE(FALSE && "Continue to AttachConEmuC");
 
 			// Пока не все хорошо.
 			// --Переделали. Запуск идет через GUI, чтобы окошко не мелькало.
@@ -1153,8 +1153,9 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 								}
 								break;
 							default:
-								*(pszDst++) = *(pszFormat++);
+								*(pszDst++) = *pszFormat;
 							}
+							pszFormat++;
 							break;
 						case L'\\':
 							pszFormat++;
@@ -1170,8 +1171,9 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 								*(pszDst++) = L'\n';
 								break;
 							default:
-								*(pszDst++) = *(pszFormat++);
+								*(pszDst++) = *pszFormat;
 							}
+							pszFormat++;
 							break;
 						default:
 							*(pszDst++) = *(pszFormat++);
@@ -10677,11 +10679,12 @@ void CRealConsole::CloseMapHeader()
 
 bool CRealConsole::isAlive()
 {
-	if (!this) return false;
+	if (!this)
+		return false;
 
 	if (GetFarPID(TRUE)!=0 && mn_LastFarReadTick /*mn_LastFarReadIdx != (DWORD)-1*/)
 	{
-		bool lbAlive = false;
+		bool lbAlive;
 		DWORD nLastReadTick = mn_LastFarReadTick;
 
 		if (nLastReadTick)
@@ -10691,6 +10694,12 @@ bool CRealConsole::isAlive()
 
 			if (nDelta < FAR_ALIVE_TIMEOUT)
 				lbAlive = true;
+			else
+				lbAlive = false;
+		}
+		else
+		{
+			lbAlive = false;
 		}
 
 		return lbAlive;

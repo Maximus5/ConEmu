@@ -1460,7 +1460,7 @@ int CFrameHolder::GetCaptionHeight()
 // высота табов
 int CFrameHolder::GetTabsHeight()
 {
-	mn_TabsHeight = gpConEmu->mp_TabBar->GetTabbarHeight();
+	mn_TabsHeight = (gpSet->isTabs!=0) ? gpConEmu->mp_TabBar->GetTabbarHeight() : 0;
 	return mn_TabsHeight;
 
 	//#ifndef CONEMU_TABBAR_EX

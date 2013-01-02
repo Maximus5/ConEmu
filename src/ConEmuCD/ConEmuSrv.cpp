@@ -777,6 +777,17 @@ DWORD WINAPI SetOemCpProc(LPVOID lpParameter)
 }
 
 
+void ServerInitEnvVars()
+{
+	//wchar_t szValue[32];
+	//DWORD nRc;
+	//nRc = GetEnvironmentVariable(ENV_CONEMU_HOOKS, szValue, countof(szValue));
+	//if ((nRc == 0) && (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) ...
+
+	SetEnvironmentVariable(ENV_CONEMU_HOOKS, ENV_CONEMU_HOOKS_ENABLED);
+}
+
+
 // Создать необходимые события и нити
 int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 {
@@ -811,6 +822,9 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 				}
 			}
 		}
+
+		// Set up some environment variables
+		ServerInitEnvVars();
 	}
 
 

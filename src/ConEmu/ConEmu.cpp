@@ -1688,8 +1688,9 @@ BOOL CConEmuMain::CreateMainWindow()
 	////	style &= ~(WS_CAPTION);
 	int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
 
-	// In principle, this MUST be wmNormal on startup, even if started in Maximized/FullScreen/Iconic
-	_ASSERTE(WindowMode==wmNormal);
+	//WindowMode may be changed in SettingsLoaded
+	//// In principle, this MUST be wmNormal on startup, even if started in Maximized/FullScreen/Iconic
+	//_ASSERTE(WindowMode==wmNormal);
 
 	// Расчет размеров окна в Normal режиме
 	if ((gpConEmu->wndWidth && gpConEmu->wndHeight) || mp_Inside)
@@ -3300,8 +3301,8 @@ bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 		else
 		{
 			// Maximized/FullScreen. Window CAN'T exceeds active monitor!
-			rcWnd.right = min(rcWork.right+rcMargins.right,rcWork.left+rcStore.right-rcStore.left);
-			rcWnd.bottom = min(rcWork.bottom+rcMargins.bottom,rcWork.top+rcStore.bottom-rcStore.top);
+			rcWnd.right = min(rcWork.right+rcMargins.right,rcWnd.left+rcStore.right-rcStore.left);
+			rcWnd.bottom = min(rcWork.bottom+rcMargins.bottom,rcWnd.top+rcStore.bottom-rcStore.top);
 		}
 
 		bChanged = (memcmp(&rcWnd, &rcStore, sizeof(rcWnd)) != 0);
@@ -3969,11 +3970,11 @@ void CConEmuMain::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
 
 	if (tFrom == CER_MAIN)
 	{
-		rc = CalcRect(CER_DC, arFrom, CER_MAIN);
+		rc = CalcRect(CER_WORKSPACE, arFrom, CER_MAIN);
 	}
 	else if (tFrom == CER_MAINCLIENT)
 	{
-		rc = CalcRect(CER_DC, arFrom, CER_MAINCLIENT);
+		rc = CalcRect(CER_WORKSPACE, arFrom, CER_MAINCLIENT);
 	}
 	else
 	{
@@ -5626,6 +5627,9 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 		if ((nCurTick - m_FixPosAfterStyle) < FIXPOSAFTERSTYLE_DELTA)
 		{
+			#ifdef _DEBUG
+			RECT rcDbgNow = {}; GetWindowRect(hWnd, &rcDbgNow);
+			#endif
 			p->flags &= ~(SWP_NOMOVE|SWP_NOSIZE);
 			p->x = mrc_FixPosAfterStyle.left;
 			p->y = mrc_FixPosAfterStyle.top;

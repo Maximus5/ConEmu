@@ -723,7 +723,6 @@ void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 			CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 10000, NULL);
 			if (pOut)
 			{
-				rcShift = pOut->GuiAppShifts.Shifts;
 				gGuiClientStyles = pOut->GuiAppShifts;
 				ExecuteFreeResult(pOut);
 			}
@@ -731,7 +730,10 @@ void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 		}
 	}
 
-	rcGui.left += rcShift.left; rcGui.right -= rcShift.right; rcGui.top += rcShift.top; rcGui.bottom -= rcShift.bottom;
+	rcShift = gGuiClientStyles.Shifts;
+
+	rcGui.left += rcShift.left; rcGui.top += rcShift.top;
+	rcGui.right += rcShift.right; rcGui.bottom += rcShift.bottom;
 
 #if 0
 	//WARNING!! Same as "CRealConsole::CorrectGuiChildRect"

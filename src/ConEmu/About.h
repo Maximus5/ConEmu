@@ -91,7 +91,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"NightRoman: drawing optimization, BufferHeight and other fixes\r\n" \
 	L"dolzenko_: windows switching via GUI tabs\r\n" \
 	L"alex_itd: Drag'n'Drop, RightClick, AltEnter\r\n" \
-	L"Mors: loading font from file."
+	L"Mors: loading font from file\r\n" \
+	L"Grzegorz Kozub: new toolbar images"
 
 #define pAboutTitle \
 	L"Console emulation program. Visit home page:"

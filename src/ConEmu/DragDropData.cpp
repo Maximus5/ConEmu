@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTROVL(s) //DEBUGSTR(s)
 #define DEBUGSTRBACK(s) //DEBUGSTR(s)
+#define DEBUGSTRFAR(s) DEBUGSTR(s)
 
 #ifdef _DEBUG
 	#define DEBUG_DUMP_IMAGE
@@ -222,9 +223,12 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 // иначе - размер ASCIIZZ путей файлов в БАЙТАХ
 int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar_t** ppszDraggedPath, UINT* pnFilesCount)
 {
+	DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo()\n");
+
 	CVConGuard VCon;
 	if (CVConGroup::GetActiveVCon(&VCon) < 0)
 	{
+		DEBUGSTRFAR(L"-- failed\n");
 		SetDragToInfo(NULL, 0, NULL);
 		return -1;
 	}
@@ -579,6 +583,7 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	int  size = -1;
 	wchar_t *szDraggedPath = NULL; // ASCIIZZ
 	UINT nFilesCount = 0;
+	CVConGuard VCon;
 
 	SetDragToInfo(NULL, 0, NULL);
 
@@ -605,6 +610,10 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	*pdwAllowedEffects = DROPEFFECT_COPY|DROPEFFECT_MOVE;
 	// Создать IDataObject (пока пустой)
 	CreateDataObject(NULL, NULL, 0, &mp_DataObject) ;
+
+	// Т.к. у нас появились сплиты - нужно помнить, из какой консоли вытащили файлы
+	CVConGroup::GetActiveVCon(&VCon);
+	mp_DraggedVCon = VCon.VCon();
 
 	if (!mp_DataObject)
 	{
@@ -1052,6 +1061,17 @@ bool CDragDropData::NeedRefreshToInfo(POINTL ptScreen)
 {
 	POINT pt = {ptScreen.x, ptScreen.y};
 
+	#ifdef _DEBUG
+	static int nLastX, nLastY;
+	wchar_t szDbgInfo[128]; _wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"CDragDropData::NeedRefreshToInfo(%i,%i)\n", ptScreen.x, ptScreen.y);
+	bool bShow = (nLastX != ptScreen.x || nLastY != ptScreen.y);
+	if (bShow)
+	{
+		DEBUGSTRFAR(szDbgInfo);
+		nLastX = ptScreen.x; nLastY = ptScreen.y;
+	}
+	#endif
+
 	CVConGuard VCon;
 	CRealConsole* pRCon = NULL;
 	if (CVConGroup::GetVConFromPoint(pt, &VCon))
@@ -1064,8 +1084,22 @@ bool CDragDropData::NeedRefreshToInfo(POINTL ptScreen)
 		// When drag over INACTIVE pane (split-screen) - need to activate this VCon
 		if (!CVConGroup::isActive(VCon.VCon(), false))
 		{
+			DEBUGSTRFAR(L"-- need to refresh and activate console\n");
 			CVConGroup::Activate(VCon.VCon());
 		}
+		else
+		{
+			DEBUGSTRFAR(L"-- need to refresh, but console already active\n");
+		}
+	}
+	else
+	{
+		#ifdef _DEBUG
+		if (bShow)
+		{
+			DEBUGSTRFAR(L"-- no need to refresh\n");
+		}
+		#endif
 	}
 
 	mp_LastRCon = pRCon;
@@ -1085,6 +1119,8 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 
 	if (!pInfo || (cbInfoSize <= sizeof(ForwardedPanelInfo)) || pInfo->NoFarConsole)
 	{
+		DEBUGSTRFAR(pInfo ? L"CDragDropData::SetDragToInfo(NoFarConsole)\n" : L"CDragDropData::SetDragToInfo(NULL)\n");
+
 		if (!m_pfpi)
 		{
 			mn_PfpiSizeMax = sizeof(ForwardedPanelInfo)+(MAX_PATH*5*sizeof(wchar_t));
@@ -1093,6 +1129,7 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 
 		if (!m_pfpi)
 		{
+			DEBUGSTRFAR(L"-- skipped, m_pfpi==NULL\n");
 			return;
 		}
 
@@ -1118,6 +1155,7 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 		//m_pfpi->PassivePathShift = sizeof(ForwardedPanelInfo)+sizeof(wchar_t);
 		//m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
 		//m_pfpi->pszActivePath[0] = L'*';
+		DEBUGSTRFAR(L"-- dummy path was set\n");
 		return;
 	}
 
@@ -1126,6 +1164,7 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 	m_pfpi = (ForwardedPanelInfo*)calloc(1, mn_PfpiSizeMax);
 	if (!m_pfpi)
 	{
+		DEBUGSTRFAR(L"CDragDropData::SetDragToInfo() memory allocation failed\n");
 		return;
 	}
 
@@ -1145,6 +1184,10 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 	if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
 		m_pfpi->pszPassivePath[nPathLen-1] = 0;
 
+	DEBUGSTRFAR(L"CDragDropData::SetDragToInfo()\n");
+	DEBUGSTRFAR(m_pfpi->pszActivePath);
+	DEBUGSTRFAR(m_pfpi->pszPassivePath);
+
 	// Done
 }
 
@@ -1152,6 +1195,7 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 // Требуется только при Drop из внешних приложений!
 void CDragDropData::RetrieveDragToInfo(POINTL pt)
 {
+	DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo()\n");
 	//if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 
 	CVConGuard VCon;

@@ -467,7 +467,7 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 		return NULL;
 	}
 
-	if (!gpConEmu->isActive(pVCon))
+	if (!gpConEmu->isActive(pVCon, false))
 		bNeedActivate = TRUE;
 
 	DWORD nCallStart = TimeGetTime(), nCallEnd = 0;
@@ -721,11 +721,11 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 				CVConGuard VCon;
 				CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
 
-				if (!gpConEmu->isActive(pVCon))
+				if (!gpConEmu->isActive(pVCon, false))
 				{
 					if (!gpConEmu->ConActivate(nIdx))
 					{
-						if (!gpConEmu->isActive(pVCon))
+						if (!gpConEmu->isActive(pVCon, false))
 						{
 							return 0;
 						}
@@ -880,11 +880,13 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		{
 			_ASSERTE(m_Tab2VCon.size()==0);
 
-			if (!(pVCon = gpConEmu->GetVCon(V))) continue;
+			if (!(pVCon = gpConEmu->GetVCon(V)))
+				continue;
 
 			if (gpSet->bHideInactiveConsoleTabs)
 			{
-				if (!gpConEmu->isActive(pVCon)) continue;
+				if (!gpConEmu->isActive(pVCon))
+					continue;
 			}
 
 			_ASSERTE(m_Tab2VCon.size()==0);
@@ -907,11 +909,13 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		{
 			_ASSERTE(m_Tab2VCon.size()==0);
 
-			if (!(pVCon = gpConEmu->GetVCon(V))) continue;
+			if (!(pVCon = gpConEmu->GetVCon(V)))
+				continue;
 
 			if (gpSet->bHideInactiveConsoleTabs)
 			{
-				if (!gpConEmu->isActive(pVCon)) continue;
+				if (!gpConEmu->isActive(pVCon))
+					continue;
 			}
 
 			_ASSERTE(m_Tab2VCon.size()==0);
@@ -942,7 +946,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
 		CVConGuard guard(pVCon);
 
-		BOOL lbActive = gpConEmu->isActive(pVCon);
+		BOOL lbActive = gpConEmu->isActive(pVCon, false);
 
 		if (gpSet->bHideInactiveConsoleTabs)
 		{
@@ -3370,7 +3374,7 @@ int TabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** p
 		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
 
 		#ifdef _DEBUG
-		BOOL lbActive = gpConEmu->isActive(pVCon);
+		BOOL lbActive = gpConEmu->isActive(pVCon, false);
 		#endif
 
 		//111120 - Ёту опцию игнорируем. ≈сли редактор открыт в другой консоли - активируем ее потом

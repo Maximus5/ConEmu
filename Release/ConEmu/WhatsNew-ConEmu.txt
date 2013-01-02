@@ -11,6 +11,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.01.01
 [+] When unhandled exception occurred in ConEmu - full memory dump will be created on desktop in "ConEmuTrap" folder.
 [+] New options for "Esc" key or "Task bar" page:
     "Minimize ConEmu when all consoles closed", "Minimize always" and "Never".
@@ -20,6 +21,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [%] Resize bugfixes in Quake mode.
 [%] Issue 853: Default terminal fails in TotalCmd "Open command prompt window".
 [*] New toolbar images by Grzegorz Kozub.
+[+] New option on "Appearance" page: "Hide caption of child GUI windows started in ConEmu". Turned ON by default.
+[%] Regression. Tab activation failed when it is inactive split.
+[+] New environment variable "ConEmuHooks". You may set it to "OFF" to disable injects temporarily.
+    Example: cmd /k set ConEmuHooks=OFF & "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" -new_console:t:SDK & set ConEmuHooks=
+[*] Some changes in drag&drop files to Far panels.
 
 
 2012.12.27
