@@ -9905,6 +9905,24 @@ HWND CRealConsole::FindPicViewFrom(HWND hFrom)
 	return hPicView;
 }
 
+struct FindChildGuiWindowArg
+{
+	HWND  hDlg;
+	DWORD nPID;
+};
+
+BOOL CRealConsole::FindChildGuiWindowProc(HWND hwnd, LPARAM lParam)
+{
+	struct FindChildGuiWindowArg *p = (struct FindChildGuiWindowArg*)lParam;
+	DWORD nPID;
+	if (IsWindowVisible(hwnd) && GetWindowThreadProcessId(hwnd, &nPID) && (nPID == p->nPID))
+	{
+		p->hDlg = hwnd;
+		return FALSE; // fin
+	}
+	return TRUE;
+}
+
 // «аголовок окна дл€ PictureView вообще может пользователем настраиватьс€, так что
 // рассчитывать на него при определени€ "ѕросмотра" - нельз€
 HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
@@ -9932,6 +9950,24 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 				if (nChild == mn_GuiWndPID)
 				{
 					break;
+				}
+			}
+		}
+
+		if ((hChild == NULL) && gpSet->isAlwaysOnTop)
+		{
+			// ≈сли создаетс€ диалог (подключение PuTTY например)
+			// то он тоже должен быть OnTop, иначе вообще виден не будет
+			struct FindChildGuiWindowArg arg = {};
+			arg.nPID = mn_GuiWndPID;
+			EnumWindows(FindChildGuiWindowProc, (LPARAM)&arg);
+			if (arg.hDlg)
+			{
+				DWORD nExStyle = GetWindowLong(arg.hDlg, GWL_EXSTYLE);
+				if (!(nExStyle & WS_EX_TOPMOST))
+				{
+					//TODO: „ерез —ервер! ј то прав может не хватить
+					SetWindowPos(arg.hDlg, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 				}
 			}
 		}

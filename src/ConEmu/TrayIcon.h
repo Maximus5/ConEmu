@@ -86,7 +86,7 @@ class TrayIcon
 
 		void ShowTrayIcon(LPCTSTR asInfoTip = NULL, TrayIconMsgSource aMsgSource = tsa_Source_None);
 		void HideWindowToTray(LPCTSTR asInfoTip = NULL);
-		void RestoreWindowFromTray(BOOL abIconOnly = FALSE);
+		void RestoreWindowFromTray(bool abIconOnly = false, bool abDontCallShowWindow = false);
 		void LoadIcon(HWND inWnd, int inIconResource);
 		//void Delete();
 		void UpdateTitle();

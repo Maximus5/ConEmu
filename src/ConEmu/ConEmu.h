@@ -339,6 +339,7 @@ class CConEmuMain :
 		//TrackMenuPlace mn_TrackMenuPlace;
 		BOOL mb_LastRgnWasNull;
 		BOOL mb_LockWindowRgn;
+		BOOL mb_LockShowWindow;
 		enum {
 			fsf_Hide = 0,     // Рамка и заголовок спрятаны
 			fsf_WaitShow = 1, // Запущен таймер показа рамки

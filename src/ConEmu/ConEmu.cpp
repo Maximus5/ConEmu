@@ -350,6 +350,7 @@ CConEmuMain::CConEmuMain()
 	//mn_TrackMenuPlace = tmp_None;
 	mb_LastRgnWasNull = TRUE;
 	mb_LockWindowRgn = FALSE;
+	mb_LockShowWindow = FALSE;
 	m_ForceShowFrame = fsf_Hide;
 	mh_CursorWait = LoadCursor(NULL, IDC_WAIT);
 	mh_CursorArrow = LoadCursor(NULL, IDC_ARROW);
@@ -4048,6 +4049,11 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 
 BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= 0*/)
 {
+	if (mb_LockShowWindow)
+	{
+		return FALSE;
+	}
+
 	BOOL lbRc = FALSE;
 	bool bUseApi = true;
 
@@ -11146,10 +11152,15 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	int nQuakeMin = 1;
 	int nQuakeShift = 10;
 	int nQuakeDelay = 20;
-	bool bUseQuakeAnimation = (gpSet->isQuakeStyle != 0);
-	if (bUseQuakeAnimation)
+	bool bUseQuakeAnimation = false; //, bNeedHideTaskIcon = false;
+	if ((gpSet->isQuakeStyle != 0) && gpSet->isMinToTray())
 	{
-		//TODO: если там GUI дочернее окно, или не скрывать?
+		CVConGuard VCon;
+		// Если есть дочерние GUI окна - в них могут быть глюки с отрисовкой
+		if ((GetActiveVCon(&VCon) < 0) || (VCon->GuiWnd() == 0))
+		{
+			bUseQuakeAnimation = true;
+		}
 	}
 
 	if (cmd == sih_SetForeground)
@@ -11187,9 +11198,12 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		if (Icon.isWindowInTray() || !IsWindowVisible(ghWnd))
 		{
 			mb_LockWindowRgn = TRUE;
-			Icon.RestoreWindowFromTray();
+			BOOL b = mb_LockShowWindow; mb_LockShowWindow = bUseQuakeAnimation;
+			Icon.RestoreWindowFromTray(false, bUseQuakeAnimation);
+			mb_LockShowWindow = b;
 			mb_LockWindowRgn = FALSE;
 			bIsIconic = isIconic();
+			//bNeedHideTaskIcon = bUseQuakeAnimation;
 		}
 		
 		// Здесь - интересует реальный IsIconic. Для isQuakeStyle может быть фейк
@@ -11220,7 +11234,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 					DWORD nAnimationMS = (100 / nQuakeShift) * nQuakeDelay * 2;
 					MinMax(nAnimationMS, CONEMU_ANIMATE_DURATION, CONEMU_ANIMATE_DURATION_MAX);
 
-					DWORD nFlags = AW_SLIDE|AW_VER_NEGATIVE|AW_ACTIVATE;
+					DWORD nFlags = AW_SLIDE|AW_VER_POSITIVE|AW_ACTIVATE;
 
 					// Need to hide window
 					DEBUGTEST(RECT rcNow; ::GetWindowRect(ghWnd, &rcNow));
@@ -11232,6 +11246,9 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 					// and place it "in place"
 					int nWidth = rcPlace.right-rcPlace.left, nHeight = rcPlace.bottom-rcPlace.top;
 					SetWindowPos(ghWnd, NULL, rcPlace.left, rcPlace.top, nWidth, nHeight, SWP_NOZORDER);
+
+					mn_QuakePercent = 100;
+					UpdateWindowRgn();
 
 					// to enable animation
 					AnimateWindow(ghWnd, nAnimationMS, nFlags);
@@ -11284,6 +11301,21 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				DEBUGTEST(BOOL bVs2 = ::IsWindowVisible(ghWnd));
 				DEBUGTEST(RECT rc2; ::GetWindowRect(ghWnd, &rc2));
 				DEBUGTEST(bVs1 = bVs2);
+
+				// Если на таскбаре отображаются "табы",
+				// то после AnimateWindow(AW_HIDE) в Win8 иконка с таскбара не убирается
+				if (gpSet->isTabsOnTaskBar())
+				{
+					if (gpSet->isWindowOnTaskBar())
+					{
+						StopForceShowFrame();
+						mn_QuakePercent = 1;
+						UpdateWindowRgn();
+						apiShowWindow(ghWnd, SW_SHOWNOACTIVATE);
+						apiShowWindow(ghWnd, SW_HIDE);
+					}
+				}
+
 			}
 			else
 			{

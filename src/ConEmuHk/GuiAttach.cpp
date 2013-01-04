@@ -612,6 +612,20 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach)
 	GetStartupInfo(&si);
 #endif
 
+	//if (ghConEmuWnd)
+	//{
+	//	DWORD nConEmuExStyle = user->getWindowLongPtrW(ghConEmuWnd, GWL_EXSTYLE);
+	//	if (nConEmuExStyle & WS_EX_TOPMOST)
+	//	{
+	//		DWORD nExtStyle = user->getWindowLongPtrW(hWnd, GWL_EXSTYLE);
+	//		if (!(nExtStyle & WS_EX_TOPMOST))
+	//		{
+	//			nExtStyle |= WS_EX_TOPMOST;
+	//			user->setWindowLongPtrW(hWnd, GWL_EXSTYLE, nExtStyle);
+	//		}
+	//	}
+	//}
+
 	if ((!ghAttachGuiClient) && gbAttachGuiClient && (nCmdShow >= SW_SHOWNORMAL))
 	{
 		// VLC создает несколько "подходящих" окон, но ShowWindow зовет

@@ -183,7 +183,11 @@ void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 		{
 			if (gDisplayParm.TextColor > 15)
 				attr.Attributes.Flags |= CECF_FG_24BIT;
-			attr.Attributes.ForegroundColor = RgbMap[gDisplayParm.TextColor&0xFF];
+
+			if (gDisplayParm.Text256 == 2)
+				attr.Attributes.ForegroundColor = gDisplayParm.TextColor&0xFFFFFF;
+			else
+				attr.Attributes.ForegroundColor = RgbMap[gDisplayParm.TextColor&0xFF];
 
 			if (gDisplayParm.BrightOrBold)
 				attr.Attributes.Flags |= CECF_FG_BOLD;
@@ -202,7 +206,11 @@ void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 		{
 			if (gDisplayParm.BackColor > 15)
 				attr.Attributes.Flags |= CECF_BG_24BIT;
-			attr.Attributes.BackgroundColor = RgbMap[gDisplayParm.BackColor&0xFF];
+
+			if (gDisplayParm.Back256 == 2)
+				attr.Attributes.BackgroundColor = gDisplayParm.BackColor&0xFFFFFF;
+			else
+				attr.Attributes.BackgroundColor = RgbMap[gDisplayParm.BackColor&0xFF];
 		}
 		else
 		{
@@ -1531,9 +1539,16 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 											if (((i+2) < Code.ArgC) && (Code.ArgV[i+1] == 5))
 											{
 												gDisplayParm.TextColor = (Code.ArgV[i+2] & 0xFF);
-												gDisplayParm.Text256 = TRUE;
+												gDisplayParm.Text256 = 1;
 												gDisplayParm.WasSet = TRUE;
 												i += 2;
+											}
+											else if (((i+4) < Code.ArgC) && (Code.ArgV[i+1] == 2))
+											{
+												gDisplayParm.TextColor = RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF));
+												gDisplayParm.Text256 = 2;
+												gDisplayParm.WasSet = TRUE;
+												i += 4;
 											}
 											break;
 										case 39:
@@ -1552,9 +1567,16 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 											if (((i+2) < Code.ArgC) && (Code.ArgV[i+1] == 5))
 											{
 												gDisplayParm.BackColor = (Code.ArgV[i+2] & 0xFF);
-												gDisplayParm.Back256 = TRUE;
+												gDisplayParm.Back256 = 1;
 												gDisplayParm.WasSet = TRUE;
 												i += 2;
+											}
+											else if (((i+4) < Code.ArgC) && (Code.ArgV[i+1] == 2))
+											{
+												gDisplayParm.BackColor = RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF));
+												gDisplayParm.Back256 = 2;
+												gDisplayParm.WasSet = TRUE;
+												i += 4;
 											}
 											break;
 										case 49:

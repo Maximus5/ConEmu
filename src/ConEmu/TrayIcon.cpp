@@ -187,13 +187,13 @@ void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
 	//}
 }
 
-void TrayIcon::RestoreWindowFromTray(BOOL abIconOnly /*= FALSE*/)
+void TrayIcon::RestoreWindowFromTray(bool abIconOnly /*= false*/, bool abDontCallShowWindow /*= false*/)
 {
 	if (!abIconOnly)
 	{
 		gpConEmu->SetWindowMode(gpConEmu->GetWindowMode());
 
-		if (!IsWindowVisible(ghWnd))
+		if (!abDontCallShowWindow && !IsWindowVisible(ghWnd))
 		{
 			gpConEmu->ShowWindow(SW_SHOW);
 		}
