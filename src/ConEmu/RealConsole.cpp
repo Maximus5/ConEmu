@@ -257,8 +257,12 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_LastInvalidateTick = 0;
 
 	hConWnd = NULL;
-	hGuiWnd = NULL; mb_GuiExternMode = FALSE; mn_GuiWndStyle = mn_GuiWndStylEx = 0; setGuiWndPID(0, NULL);
-	mb_InSetFocus = FALSE; mb_InGuiAttaching = FALSE;
+	hGuiWnd = NULL; mb_GuiExternMode = FALSE; //mn_GuiApplicationPID = 0;
+	mn_GuiWndStyle = mn_GuiWndStylEx = 0; mn_GuiAttachFlags = 0;
+	setGuiWndPID(0, NULL); // set mn_GuiWndPID to 0
+	mb_InGuiAttaching = FALSE;
+
+	mb_InSetFocus = FALSE;
 	rcPreGuiWndRect = MakeRect(0,0);
 	//hFileMapping = NULL; pConsoleData = NULL;
 	mn_Focused = -1;
@@ -4083,6 +4087,8 @@ void CRealConsole::StopSignal()
 	if (!mn_InRecreate)
 	{
 		hGuiWnd = NULL;
+		//mn_GuiApplicationPID = 0;
+
 		// Чтобы при закрытии не было попытка активировать
 		// другую вкладку ЭТОЙ консоли
 		mn_tabsCount = 0;
@@ -6730,7 +6736,10 @@ BOOL CRealConsole::RecreateProcessStart()
 		ResetEvent(mh_TermEvent);
 		hConWnd = NULL;
 		hGuiWnd = NULL;
-		mn_GuiWndStyle = mn_GuiWndStylEx = mn_GuiWndPID;
+		//mn_GuiApplicationPID = 0;
+		setGuiWndPID(0, NULL); // set mn_GuiWndPID to 0
+		mn_GuiWndStyle = mn_GuiWndStylEx = 0;
+		mn_GuiAttachFlags = 0;
 
 		ms_VConServer_Pipe[0] = 0;
 		m_RConServer.Stop();
@@ -9902,6 +9911,39 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 {
 	if (!this) return NULL;
 
+	if (mn_GuiWndPID && !hGuiWnd)
+	{
+		// Если GUI приложение запущено во вкладке, и аттач выполняется НЕ из ConEmuHk.dll
+		HWND hBack = mp_VCon->GetBack();
+		HWND hChild = NULL;
+		DWORD nSelf = GetCurrentProcessId();
+		_ASSERTE(nSelf != mn_GuiWndPID);
+
+		while ((hChild = FindWindowEx(hBack, hChild, NULL, NULL)) != NULL)
+		{
+			DWORD nChild, nStyle;
+
+			nStyle = ::GetWindowLong(hChild, GWL_STYLE);
+			if (!(nStyle & WS_VISIBLE))
+				continue;
+
+			if (GetWindowThreadProcessId(hChild, &nChild))
+			{
+				if (nChild == mn_GuiWndPID)
+				{
+					break;
+				}
+			}
+		}
+
+		if (hChild != NULL)
+		{
+			DWORD nStyle = ::GetWindowLong(hChild, GWL_STYLE), nStyleEx = ::GetWindowLong(hChild, GWL_EXSTYLE);
+			RECT rcChild; GetWindowRect(hChild, &rcChild);
+			SetGuiMode(mn_GuiAttachFlags|agaf_Self, hChild, nStyle, nStyleEx, ms_GuiWndProcess, mn_GuiWndPID, rcChild);
+		}
+	}
+
 	if (hPictureView && (!IsWindow(hPictureView) || !isFar()))
 	{
 		hPictureView = NULL; mb_PicViewWasHidden = FALSE;
@@ -10024,8 +10066,10 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	// ahGuiWnd может быть на первом этапе, когда ConEmuHk уведомляет - запустился GUI процесс
 	_ASSERTE((hGuiWnd==NULL && ahGuiWnd==NULL) || (ahGuiWnd && IsWindow(ahGuiWnd))); // Проверить, чтобы мусор не пришел...
 	hGuiWnd = ahGuiWnd;
+	mn_GuiAttachFlags = anFlags;
+	//mn_GuiApplicationPID = anAppPID;
 	//mn_GuiWndPID = anAppPID;
-	setGuiWndPID(anAppPID, PointToName(asAppFileName));
+	setGuiWndPID(anAppPID, PointToName(asAppFileName)); // устанавливает mn_GuiWndPID
 	mn_GuiWndStyle = anStyle; mn_GuiWndStylEx = anStyleEx;
 	mb_GuiExternMode = FALSE;
 	ShowWindow(GetView(), SW_HIDE); // Остается видим только Back, в нем создается GuiClient
@@ -11115,6 +11159,8 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 
 		// Сбросить переменные, чтобы гуй закрыть не пыталось
 		hGuiWnd = NULL;
+		setGuiWndPID(0, NULL);
+		//mb_IsGuiApplication = FALSE;
 
 		//// Закрыть консоль
 		//CloseConsole(false, false);
@@ -11406,7 +11452,11 @@ ExpandTextRangeType CRealConsole::GetLastTextRangeType()
 void CRealConsole::setGuiWndPID(DWORD anPID, LPCWSTR asProcessName)
 {
 	mn_GuiWndPID = anPID;
-	lstrcpyn(ms_GuiWndProcess, asProcessName ? asProcessName : L"", countof(ms_GuiWndProcess));
+
+	if (asProcessName != ms_GuiWndProcess)
+	{
+		lstrcpyn(ms_GuiWndProcess, asProcessName ? asProcessName : L"", countof(ms_GuiWndProcess));
+	}
 }
 
 void CRealConsole::CtrlWinAltSpace()

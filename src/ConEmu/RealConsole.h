@@ -253,6 +253,7 @@ class CRealConsole
 	private:
 		HWND    hConWnd;
 		HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
+		DWORD   mn_GuiAttachFlags; // запоминается в SetGuiMode
 		BOOL    mb_GuiExternMode; // FALSE если захотели показать GUI приложение вне вкладки ConEmu (Ctrl-Win-Alt-Space)
 		RECT    rcPreGuiWndRect; // Положение окна ДО аттача
 		BOOL    mb_InGuiAttaching;

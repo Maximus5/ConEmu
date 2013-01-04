@@ -5522,7 +5522,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			RECT rc; GetWindowRect(ghWnd, &rc);
 			mp_Status->OnWindowReposition(&rc);
 
-			if (isWindowNormal())
+			if ((changeFromWindowMode == wmNotChanging) && isWindowNormal())
 			{
 				StoreNormalRect(&rc);
 			}
@@ -11146,6 +11146,11 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	int nQuakeMin = 1;
 	int nQuakeShift = 10;
 	int nQuakeDelay = 20;
+	bool bUseQuakeAnimation = (gpSet->isQuakeStyle != 0);
+	if (bUseQuakeAnimation)
+	{
+		//TODO: если там GUI дочернее окно, или не скрывать?
+	}
 
 	if (cmd == sih_SetForeground)
 	{
@@ -11210,13 +11215,37 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		{
 			if (!bNoQuakeAnimation)
 			{
-				StopForceShowFrame();
-				while (mn_QuakePercent < 100)
+				if (bUseQuakeAnimation)
 				{
-					mn_QuakePercent += nQuakeShift;
-					UpdateWindowRgn();
-					RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
-					Sleep(nQuakeDelay);
+					DWORD nAnimationMS = (100 / nQuakeShift) * nQuakeDelay * 2;
+					MinMax(nAnimationMS, CONEMU_ANIMATE_DURATION, CONEMU_ANIMATE_DURATION_MAX);
+
+					DWORD nFlags = AW_SLIDE|AW_VER_NEGATIVE|AW_ACTIVATE;
+
+					// Need to hide window
+					DEBUGTEST(RECT rcNow; ::GetWindowRect(ghWnd, &rcNow));
+					RECT rcPlace = GetDefaultRect();
+					if (::IsWindowVisible(ghWnd))
+					{
+						apiShowWindow(ghWnd, SW_HIDE);
+					}
+					// and place it "in place"
+					int nWidth = rcPlace.right-rcPlace.left, nHeight = rcPlace.bottom-rcPlace.top;
+					SetWindowPos(ghWnd, NULL, rcPlace.left, rcPlace.top, nWidth, nHeight, SWP_NOZORDER);
+
+					// to enable animation
+					AnimateWindow(ghWnd, nAnimationMS, nFlags);
+				}
+				else
+				{
+					StopForceShowFrame();
+					while (mn_QuakePercent < 100)
+					{
+						mn_QuakePercent += nQuakeShift;
+						UpdateWindowRgn();
+						RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
+						Sleep(nQuakeDelay);
+					}
 				}
 			}
 			if (mn_QuakePercent != 100)
@@ -11242,14 +11271,31 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
 		{
-			mn_QuakePercent = 100 + nQuakeMin - nQuakeShift;
-			StopForceShowFrame();
-			while (mn_QuakePercent > 0)
+			if (bUseQuakeAnimation)
 			{
-				UpdateWindowRgn();
-				RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
-				Sleep(nQuakeDelay);
-				mn_QuakePercent -= nQuakeShift;
+				DWORD nAnimationMS = (100 / nQuakeShift) * nQuakeDelay * 2;
+				MinMax(nAnimationMS, CONEMU_ANIMATE_DURATION, CONEMU_ANIMATE_DURATION_MAX);
+
+				DWORD nFlags = AW_SLIDE|AW_VER_NEGATIVE|AW_HIDE;
+
+				DEBUGTEST(BOOL bVs1 = ::IsWindowVisible(ghWnd));
+				DEBUGTEST(RECT rc1; ::GetWindowRect(ghWnd, &rc1));
+				AnimateWindow(ghWnd, nAnimationMS, nFlags);
+				DEBUGTEST(BOOL bVs2 = ::IsWindowVisible(ghWnd));
+				DEBUGTEST(RECT rc2; ::GetWindowRect(ghWnd, &rc2));
+				DEBUGTEST(bVs1 = bVs2);
+			}
+			else
+			{
+				mn_QuakePercent = 100 + nQuakeMin - nQuakeShift;
+				StopForceShowFrame();
+				while (mn_QuakePercent > 0)
+				{
+					UpdateWindowRgn();
+					RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
+					Sleep(nQuakeDelay);
+					mn_QuakePercent -= nQuakeShift;
+				}
 			}
 		}
 		mn_QuakePercent = 0; // 0 - отключен
@@ -15761,7 +15807,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			if (wParam == FALSE)
 			{
-				if (!Icon.isWindowInTray() && !Icon.isHidingToTray())
+				if (!Icon.isWindowInTray() && !Icon.isHidingToTray() && !gpConEmu->InQuakeAnimation())
 				{
 					//_ASSERTE(Icon.isHidingToTray());
 					Icon.HideWindowToTray(gpSet->isDownShowHiddenMessage ? NULL : _T("ConEmu was hidden from some program"));

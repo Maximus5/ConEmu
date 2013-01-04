@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		L"   or: ConEmuC /ATTACH /[FAR|CON]PID=<PID>\r\n" \
 	    L"   or: ConEmuC /GUIMACRO <ConEmu GUI macro command>\r\n" \
 		L"   or: ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]\r\n" \
+		L"   or: ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]\r\n" \
 _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n") \
 	    L"   or: ConEmuC /?\r\n" \
 	    L"Switches:\r\n" \

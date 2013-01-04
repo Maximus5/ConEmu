@@ -298,7 +298,10 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 	// Для "одиночных"
 	if (pHotKey && mn_LastSingleModifier)
 	{
-		mb_LastSingleModifier = TRUE;
+		if (pHotKey != ConEmuSkipHotKey)
+		{
+			mb_LastSingleModifier = TRUE;
+		}
 	}
 	else if (!pHotKey && !(VkMod & (cvk_Ctrl|cvk_Alt|cvk_Shift)))
 	{

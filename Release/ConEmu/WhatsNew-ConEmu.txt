@@ -11,6 +11,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Fixed Maximize/Restore regression. On Restore console size was not reduced.
+[%] Issue 806: GVim started as "gvim --windowid !ConEmuBackHWND!" does not appears when switching tabs.
+[%] Fixed regression in hotkeys processing. Far received RAlt after Shift+Arrow.
+
+
 2013.01.02
 [%] GuiMacro parser regression. Only one string argument was processed.
 
