@@ -1051,6 +1051,9 @@ CEStartupEnv* LoadStartupEnv()
 	STARTUPINFOW si = {sizeof(si)};
 	GetStartupInfoW(&si);
 
+	OSVERSIONINFOW os = {sizeof(os)};
+	GetVersionEx(&os);
+
 	wchar_t* pszEnvPathStore = (wchar_t*)malloc(1024*sizeof(*pszEnvPathStore));
 	if (pszEnvPathStore)
 	{
@@ -1140,9 +1143,13 @@ CEStartupEnv* LoadStartupEnv()
 	{
 		pEnv->cbSize = cchTotal;
 		pEnv->si = si;
+		pEnv->os = os;
 
 		pEnv->bIsDbcs = IsDbcs();
 		pEnv->bIsWine = IsWine();
+		wchar_t* pszReactOS = os.szCSDVersion + lstrlen(os.szCSDVersion);
+		pszReactOS[7] = 0;
+		pEnv->bIsReactOS = (lstrcmpi(pszReactOS, L"ReactOS") == 0);
 		pEnv->nAnsiCP = GetACP();
 		pEnv->nOEMCP = GetOEMCP();
 
@@ -3706,14 +3713,21 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 	GetVersionEx(&osv);
 	BOOL bWin64 = IsWindows64();
 
+	LPCWSTR szReactOS = osv.szCSDVersion + lstrlen(osv.szCSDVersion);
+	if (!*szReactOS)
+		szReactOS = L"No";
+
 	//wchar_t cVer = MVV_4a[0];
 	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\r\n"
-		L"\tOsVer: %u.%u.%u.x%u, DBCS: %u, WINE: %u, ACP: %u, OEMCP: %u\r\n"
+		L"\tOsVer: %u.%u.%u.x%u, DBCS: %u, WINE: %u, ReactOS: %u (%s)\r\n"
+		L"\tCSDVersion: %s, ACP: %u, OEMCP: %u\r\n"
 		L"\tDesktop: %s\r\n\tTitle: %s\r\n\tSize: {%u,%u},{%u,%u}\r\n"
 		L"\tFlags: 0x%08X, ShowWindow: %u\r\n\tHandles: 0x%08X, 0x%08X, 0x%08X"
 		,
 		osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, bWin64 ? 64 : 32,
-		apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->nAnsiCP, apStartEnv->nOEMCP,
+		apStartEnv->bIsDbcs, apStartEnv->bIsWine,
+		apStartEnv->bIsReactOS, szReactOS,
+		osv.szCSDVersion, apStartEnv->nAnsiCP, apStartEnv->nOEMCP,
 		szDesktop, szTitle,
 		apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
 		apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow,

@@ -116,7 +116,8 @@ struct CE_HANDLE_INFO
 struct CEStartupEnv
 {
 	size_t cbSize;
-	STARTUPINFO si;
+	STARTUPINFOW si;
+	OSVERSIONINFOW os;
 	CE_CONSOLE_HISTORY_INFO hi;
 	CE_HANDLE_INFO hIn, hOut, hErr;
 	LPCWSTR pszCmdLine;
@@ -125,6 +126,7 @@ struct CEStartupEnv
 	LPCWSTR pszPathEnv;
 	size_t  cchPathLen;
 	BOOL    bIsWine; // Информационно!
+	BOOL    bIsReactOS;
 	BOOL    bIsDbcs;
 	UINT    nAnsiCP, nOEMCP;
 	// HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont

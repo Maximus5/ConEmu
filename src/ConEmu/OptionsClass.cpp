@@ -12989,6 +12989,12 @@ bool CSettings::CheckConsoleFontRegistry(LPCWSTR asFaceName)
 // EnumFontFamilies не вызывается, т.к. занимает время
 bool CSettings::CheckConsoleFontFast()
 {
+	// В ReactOS шрифт не меняется и в реестре не регистрируется
+	if (gpStartEnv->bIsReactOS)
+	{
+		return true;
+	}
+
 	//wchar_t szCreatedFaceName[32] = {0};
 	LOGFONT LF = gpSet->ConsoleFont;
 	gpSetCls->nConFontError = 0; //ConFontErr_NonSystem|ConFontErr_NonRegistry|ConFontErr_InvalidName;

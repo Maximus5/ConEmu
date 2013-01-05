@@ -73,6 +73,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConsoleHelp.h"
 #include "UnicodeTest.h"
 
+#pragma comment(lib, "shlwapi.lib")
+
 
 #ifdef __GNUC__
 	#include "../common/DbgHlpGcc.h"
@@ -3428,6 +3430,51 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				return CERR_CARGUMENT;
 			}
 		}
+		else if (lstrcmpi(szArg, L"/DEBUGEXE")==0)
+		{
+			wchar_t* pszLine = lstrdup(GetCommandLineW());
+			if (!pszLine || !*pszLine)
+			{
+				_printf("Debug of process was requested, but GetCommandLineW failed\n");
+				_ASSERTE(FALSE);
+				return CERR_CARGUMENT;
+			}
+			LPWSTR pszDebugCmd = StrStrI(pszLine, L"/DEBUGEXE");
+			if (pszDebugCmd)
+			{
+				pszDebugCmd = (LPWSTR)SkipNonPrintable(pszDebugCmd + lstrlen(L"/DEBUGEXE"));
+			}
+			if (!pszDebugCmd || !*pszDebugCmd)
+			{
+				_printf("Debug of process was requested, but command was not found\n");
+				_ASSERTE(FALSE);
+				return CERR_CARGUMENT;
+			}
+
+			/*
+			STARTUPINFO si = {sizeof(si)};
+			PROCESS_INFORMATION pi = {};
+
+			if (!CreateProcess(NULL, pszDebugCmd, NULL, NULL, FALSE,
+				NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE|DEBUG_ONLY_THIS_PROCESS,
+				NULL, NULL, &si, &pi))
+			{
+				_printf("Debug of process was requested, but CreateProcess failed\n");
+				_ASSERTE(FALSE);
+				return CERR_CARGUMENT;
+			}
+			*/
+
+			gbNoCreateProcess = gbDebugProcess = TRUE;
+			gpSrv->pszDebuggingCmdLine = pszDebugCmd;
+			/*
+			gpSrv->hRootProcess = pi.hProcess;
+			gpSrv->hRootThread = pi.hThread;
+			gpSrv->dwRootProcess = pi.dwProcessId;
+			gpSrv->dwRootThread = pi.dwThreadId;
+			gpSrv->dwRootStartTime = GetTickCount();
+			*/
+		}
 		else if (lstrcmpi(szArg, L"/DUMP")==0)
 		{
 			gnDebugDumpProcess = 1;
@@ -3623,7 +3670,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			if (iAttachRc != 0)
 				return iAttachRc;
 
-			_ASSERTE(gpSrv->hRootProcess!=NULL && "Process handle must be opened");
+			_ASSERTE(((gpSrv->hRootProcess!=NULL) || (gpSrv->pszDebuggingCmdLine!=NULL)) && "Process handle must be opened");
 
 			gpSrv->hDebugReady = CreateEvent(NULL, FALSE, FALSE, NULL);
 			// ѕеренес обработку отладочных событий в отдельную нить, чтобы случайно не заблокироватьс€ с главной
@@ -5676,6 +5723,11 @@ int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD 
 
 int AttachDebuggingProcess()
 {
+	if (gpSrv->pszDebuggingCmdLine != NULL)
+	{
+		return 0; // Started from DebuggingThread
+	}
+
 	DWORD dwErr = 0;
 	// Ќужно открыть HANDLE корневого процесса
 	DWORD dwFlags = PROCESS_QUERY_INFORMATION|SYNCHRONIZE;
@@ -5719,11 +5771,43 @@ int AttachDebuggingProcess()
 
 DWORD WINAPI DebugThread(LPVOID lpvParam)
 {
-	_ASSERTE(gpSrv->hRootProcess!=NULL && "Process handle must be opened");
-
 	DWORD nWait = WAIT_TIMEOUT;
 	//DWORD nExternalExitCode = -1;
 	wchar_t szInfo[1024];
+
+	if (gpSrv->pszDebuggingCmdLine != NULL)
+	{
+		STARTUPINFO si = {sizeof(si)};
+		PROCESS_INFORMATION pi = {};
+
+		if (!CreateProcess(NULL, gpSrv->pszDebuggingCmdLine, NULL, NULL, FALSE,
+			NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE|DEBUG_ONLY_THIS_PROCESS,
+			NULL, NULL, &si, &pi))
+		{
+			DWORD dwErr = GetLastError();
+
+			wchar_t szProc[64]; szProc[0] = 0;
+			PROCESSENTRY32 pi = {sizeof(pi)};
+			if (GetProcessInfo(gpSrv->dwRootProcess, &pi))
+				_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
+
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't start debugging process. ErrCode=0x%08X\n", dwErr);
+			lstrcpyn(szInfo+lstrlen(szInfo), gpSrv->pszDebuggingCmdLine, 400);
+			wcscat_c(szInfo, L"\n");
+			_wprintf(szInfo);
+			return CERR_CANTSTARTDEBUGGER;
+		}
+
+		gpSrv->hRootProcess = pi.hProcess;
+		gpSrv->hRootThread = pi.hThread;
+		gpSrv->dwRootProcess = pi.dwProcessId;
+		gpSrv->dwRootThread = pi.dwThreadId;
+		gpSrv->dwRootStartTime = GetTickCount();
+	}
+
+
+	_ASSERTE(gpSrv->hRootProcess!=NULL && "Process handle must be opened");
+
 
 	// Ѕитность отладчика должна соответствовать битности приложени€!
 	if (IsWindows64())
@@ -5731,6 +5815,12 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		int nBits = GetProcessBits(gpSrv->dwRootProcess, gpSrv->hRootProcess);
 		if ((nBits == 32 || nBits == 64) && (nBits != WIN3264TEST(32,64)))
 		{
+			if (gpSrv->pszDebuggingCmdLine != NULL)
+			{
+				_printf("Bitness of ConEmuC and debugging program does not match\n");
+				return CERR_CANTSTARTDEBUGGER;
+			}
+
 			wchar_t szExe[MAX_PATH+16];
 			wchar_t szCmdLine[MAX_PATH*2];
 			if (GetModuleFileName(NULL, szExe, countof(szExe)-16))
@@ -5790,19 +5880,22 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		}
 	}
 
-	if (!DebugActiveProcess(gpSrv->dwRootProcess))
+	if (gpSrv->pszDebuggingCmdLine == NULL)
 	{
-		DWORD dwErr = GetLastError();
+		if (!DebugActiveProcess(gpSrv->dwRootProcess))
+		{
+			DWORD dwErr = GetLastError();
 
-		wchar_t szProc[64]; szProc[0] = 0;
-		PROCESSENTRY32 pi = {sizeof(pi)};
-		if (GetProcessInfo(gpSrv->dwRootProcess, &pi))
-			_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
+			wchar_t szProc[64]; szProc[0] = 0;
+			PROCESSENTRY32 pi = {sizeof(pi)};
+			if (GetProcessInfo(gpSrv->dwRootProcess, &pi))
+				_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
 
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't attach debugger to '%s' PID=%i. ErrCode=0x%08X\n",
-			szProc[0] ? szProc : L"not found", gpSrv->dwRootProcess, dwErr);
-		_wprintf(szInfo);
-		return CERR_CANTSTARTDEBUGGER;
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't attach debugger to '%s' PID=%i. ErrCode=0x%08X\n",
+				szProc[0] ? szProc : L"not found", gpSrv->dwRootProcess, dwErr);
+			_wprintf(szInfo);
+			return CERR_CANTSTARTDEBUGGER;
+		}
 	}
 
 	// ƒополнительна€ инициализаци€, чтобы закрытие дебагера (наш процесс) не привело

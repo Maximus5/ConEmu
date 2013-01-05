@@ -402,6 +402,8 @@ struct SrvInfo
 	HANDLE hRootProcess, hRootThread;
 	DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
 	DWORD dwParentFarPID;
+	LPWSTR pszDebuggingCmdLine;
+
 	HANDLE hMainServer; DWORD dwMainServerPID;
 	HANDLE hServerStartedEvent;
 
