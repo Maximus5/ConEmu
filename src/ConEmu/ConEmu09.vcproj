@@ -2188,6 +2188,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\StartupEnv.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Status.h"
 				>
 			</File>

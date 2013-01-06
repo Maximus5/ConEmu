@@ -1014,7 +1014,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 			{
 				// sDefaultTermArg contains something like this:
 				// "/config CfgName -new_console:c"
-				lstrcpyn((*psParam)+lstrlen(*psParam), m_GuiMapping.sDefaultTermArg, (pszNewCon - m_GuiMapping.sDefaultTermArg + 1));
+				lstrcpyn((*psParam)+lstrlen(*psParam), m_GuiMapping.sDefaultTermArg, (DWORD)(DWORD_PTR)(pszNewCon - m_GuiMapping.sDefaultTermArg + 1));
 			}
 		}
 		else if (m_GuiMapping.sDefaultTermArg[0] == L'-')
@@ -1298,7 +1298,10 @@ wrap:
 	return TRUE;
 }
 
-BOOL CShellProc::PrepareExecuteParms(
+// -1: if need to block execution
+//  0: continue
+//  1: continue, changes was made
+int CShellProc::PrepareExecuteParms(
 			enum CmdOnCreateType aCmd,
 			LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
 			DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
@@ -1309,7 +1312,61 @@ BOOL CShellProc::PrepareExecuteParms(
 	// !!! asAction может быть NULL;
 	_ASSERTE(*psFile==NULL && *psParam==NULL);
 	if (!ghConEmuWndDC && !isDefaultTerminalEnabled())
-		return FALSE; // Перехватывать только под ConEmu
+		return 0; // Перехватывать только под ConEmu
+
+	bool bAnsiCon = false;
+	for (int i = 0; (i <= 1); i++)
+	{
+		LPCWSTR psz = (i == 0) ? asFile : asParam;
+		if (!psz || !*psz)
+			continue;
+
+		#ifdef _DEBUG
+		bool bAnsiConFound = false;
+		lstrcpyn(ms_ExeTmp, psz, countof(ms_ExeTmp));
+		CharUpperBuff(ms_ExeTmp, lstrlen(ms_ExeTmp));
+		if (wcsstr(ms_ExeTmp, L"ANSI-LLW") != NULL
+			|| wcsstr(ms_ExeTmp, L"ANSICON") != NULL)
+		{
+			bAnsiConFound = true;
+		}
+		#endif
+
+		if (NextArg(&psz, ms_ExeTmp) != 0)
+		{
+			// AnsiCon exists in command line?
+			_ASSERTEX(bAnsiConFound==false);
+			continue;
+		}
+
+		CharUpperBuff(ms_ExeTmp, lstrlen(ms_ExeTmp));
+		psz = PointToName(ms_ExeTmp);
+		if ((lstrcmp(psz, L"ANSI-LLW.EXE") == 0) || (lstrcmp(psz, L"ANSI-LLW") == 0)
+			|| (lstrcmp(psz, L"ANSICON.EXE") == 0) || (lstrcmp(psz, L"ANSICON") == 0))
+		{
+			bAnsiCon = true;
+			break;
+		}
+
+		_ASSERTEX(bAnsiConFound==false);
+	}
+
+	if (bAnsiCon)
+	{
+		//_ASSERTEX(FALSE && "AnsiCon execution will be blocked");
+		HANDLE hStdOut = GetStdHandle(STD_ERROR_HANDLE);
+		LPCWSTR sErrMsg = L"\nConEmu blocks ANSICON injection\n";
+		CONSOLE_SCREEN_BUFFER_INFO csbi = {sizeof(csbi)};
+		if (GetConsoleScreenBufferInfo(hStdOut, &csbi) && (csbi.dwCursorPosition.X == 0))
+		{
+			sErrMsg++;
+		}
+		DWORD nLen = lstrlen(sErrMsg);
+		WriteConsoleW(hStdOut, sErrMsg, nLen, &nLen, NULL);
+		return -1;
+	}
+	ms_ExeTmp[0] = 0;
+
 
 	BOOL bGoChangeParm = FALSE;
 
@@ -1365,7 +1422,7 @@ BOOL CShellProc::PrepareExecuteParms(
 		// Настройка в ConEmu ConEmuGuiMapping.bUseInjects, или gFarMode.bFarHookMode. Иначе - сразу выходим
 		if (!bLongConsoleOutput)
 		{
-			return FALSE;
+			return 0;
 		}
 	}
 
@@ -1377,13 +1434,13 @@ BOOL CShellProc::PrepareExecuteParms(
 		if ((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS))
 		{
 			// Creating process without console window, not our case
-			return FALSE;
+			return 0;
 		}
 
 		if (anShowCmd && (*anShowCmd == SW_HIDE))
 		{
 			// Creating process with window initially hidden, not our case
-			return FALSE;
+			return 0;
 		}
 
 		if ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS))
@@ -1865,13 +1922,15 @@ wrap:
 			}
 		}
 	}
-	return lbChanged;
+
+	return lbChanged ? 1 : 0;
 }
 
+// returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asParam, LPCSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
-		return FALSE; // Перехватывать только под ConEmu
+		return TRUE; // Перехватывать только под ConEmu
 		
 	mb_InShellExecuteEx = TRUE;
 	gnInShellExecuteEx ++;
@@ -1882,11 +1941,16 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
-	BOOL lbRc = PrepareExecuteParms(eShellExecute,
+	int liRc = PrepareExecuteParms(eShellExecute,
 					mpwsz_TempAction, mpwsz_TempFile, mpwsz_TempParam,
 					anFlags, NULL, NULL, anShowCmd,
 					NULL, NULL, NULL, // *StdHandles
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
+	if (liRc == -1)
+		return FALSE; // Запретить выполнение файла
+
+	BOOL lbRc = (liRc != 0);
+
 	if (lbRc)
 	{
 		if (mpwsz_TempRetFile && *mpwsz_TempRetFile)
@@ -1912,25 +1976,32 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 		*asDir = mpsz_TempRetDir;
 	}
 
-	return lbRc;
+	return TRUE;
 }
+
+// returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asParam, LPCWSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
-		return FALSE; // Перехватывать только под ConEmu
+		return TRUE; // Перехватывать только под ConEmu
 	
 	mb_InShellExecuteEx = TRUE;
 	gnInShellExecuteEx ++;
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
-	BOOL lbRc = PrepareExecuteParms(eShellExecute,
+	int liRc = PrepareExecuteParms(eShellExecute,
 					asAction ? *asAction : NULL,
 					asFile ? *asFile : NULL,
 					asParam ? *asParam : NULL,
 					anFlags, NULL, NULL, anShowCmd,
 					NULL, NULL, NULL, // *StdHandles
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
+	if (liRc == -1)
+		return FALSE; // Запретить выполнение файла
+
+	BOOL lbRc = (liRc != 0);
+
 	if (lbRc)
 	{
 		*asFile = mpwsz_TempRetFile;
@@ -1946,8 +2017,9 @@ BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* as
 		*asDir = mpwsz_TempRetDir;
 	}
 
-	return lbRc;
+	return TRUE;
 }
+
 BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd)
 {
 	BOOL lbRc = FALSE;
@@ -1978,62 +2050,62 @@ BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phW
 
 	return lbRc;
 }
+
+// returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC) || !lpExecInfo)
-		return FALSE; // Перехватывать только под ConEmu
+		return TRUE; // Перехватывать только под ConEmu
 
 	mlp_SaveExecInfoA = *lpExecInfo;
 	mlp_ExecInfoA = (LPSHELLEXECUTEINFOA)malloc((*lpExecInfo)->cbSize);
 	if (!mlp_ExecInfoA)
 	{
 		_ASSERTE(mlp_ExecInfoA!=NULL);
-		return FALSE;
+		return TRUE;
 	}
 	memmove(mlp_ExecInfoA, (*lpExecInfo), (*lpExecInfo)->cbSize);
 	
-	BOOL lbRc = FALSE;
+	FixShellArgs((*lpExecInfo)->fMask, (*lpExecInfo)->hwnd, &(mlp_ExecInfoA->fMask), &(mlp_ExecInfoA->hwnd));
 
-	if (FixShellArgs((*lpExecInfo)->fMask, (*lpExecInfo)->hwnd, &(mlp_ExecInfoA->fMask), &(mlp_ExecInfoA->hwnd)))
-		lbRc = TRUE;
-
-	if (OnShellExecuteA(&mlp_ExecInfoA->lpVerb, &mlp_ExecInfoA->lpFile, &mlp_ExecInfoA->lpParameters, &mlp_ExecInfoA->lpDirectory, &mlp_ExecInfoA->fMask, (DWORD*)&mlp_ExecInfoA->nShow))
-		lbRc = TRUE;
+	BOOL lbRc = OnShellExecuteA(&mlp_ExecInfoA->lpVerb, &mlp_ExecInfoA->lpFile, &mlp_ExecInfoA->lpParameters, &mlp_ExecInfoA->lpDirectory, &mlp_ExecInfoA->fMask, (DWORD*)&mlp_ExecInfoA->nShow);
 
 	if (lbRc)
 		*lpExecInfo = mlp_ExecInfoA;
+
 	return lbRc;
 }
+
+// returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC) || !lpExecInfo)
-		return FALSE; // Перехватывать только под ConEmu
+		return TRUE; // Перехватывать только под ConEmu
 
 	mlp_SaveExecInfoW = *lpExecInfo;
 	mlp_ExecInfoW = (LPSHELLEXECUTEINFOW)malloc((*lpExecInfo)->cbSize);
 	if (!mlp_ExecInfoW)
 	{
 		_ASSERTE(mlp_ExecInfoW!=NULL);
-		return FALSE;
+		return TRUE;
 	}
 	memmove(mlp_ExecInfoW, (*lpExecInfo), (*lpExecInfo)->cbSize);
 	
-	BOOL lbRc = FALSE;
+	FixShellArgs((*lpExecInfo)->fMask, (*lpExecInfo)->hwnd, &(mlp_ExecInfoW->fMask), &(mlp_ExecInfoW->hwnd));
 
-	if (FixShellArgs((*lpExecInfo)->fMask, (*lpExecInfo)->hwnd, &(mlp_ExecInfoW->fMask), &(mlp_ExecInfoW->hwnd)))
-		lbRc = TRUE;
-
-	if (OnShellExecuteW(&mlp_ExecInfoW->lpVerb, &mlp_ExecInfoW->lpFile, &mlp_ExecInfoW->lpParameters, &mlp_ExecInfoW->lpDirectory, &mlp_ExecInfoW->fMask, (DWORD*)&mlp_ExecInfoW->nShow))
-		lbRc = TRUE;
+	BOOL lbRc = OnShellExecuteW(&mlp_ExecInfoW->lpVerb, &mlp_ExecInfoW->lpFile, &mlp_ExecInfoW->lpParameters, &mlp_ExecInfoW->lpDirectory, &mlp_ExecInfoW->fMask, (DWORD*)&mlp_ExecInfoW->nShow);
 
 	if (lbRc)
 		*lpExecInfo = mlp_ExecInfoW;
+
 	return lbRc;
 }
-void CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOA lpSI)
+
+// returns FALSE if need to block execution
+BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOA lpSI)
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
-		return; // Перехватывать только под ConEmu
+		return TRUE; // Перехватывать только под ConEmu
 
 	mpwsz_TempFile = str2wcs(asFile ? *asFile : NULL, mn_CP);
 	mpwsz_TempParam = str2wcs(asCmdLine ? *asCmdLine : NULL, mn_CP);
@@ -2042,11 +2114,16 @@ void CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
-	BOOL lbRc = PrepareExecuteParms(eCreateProcess,
+	int liRc = PrepareExecuteParms(eCreateProcess,
 					NULL, mpwsz_TempFile, mpwsz_TempParam,
 					NULL, anCreationFlags, &lpSI->dwFlags, &nShowCmd,
 					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
+	if (liRc == -1)
+		return FALSE; // Запретить выполнение файла
+
+	BOOL lbRc = (liRc != 0);
+
 	// возвращает TRUE только если были изменены СТРОКИ,
 	// а если выставлен mb_NeedInjects - строго включить _Suspended
 	if (mb_NeedInjects)
@@ -2082,8 +2159,12 @@ void CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 		mpsz_TempRetDir = wcs2str(mpwsz_TempRetDir, mn_CP);
 		*asDir = mpsz_TempRetDir;
 	}
+
+	return TRUE;
 }
-void CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOW lpSI)
+
+// returns FALSE if need to block execution
+BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOW lpSI)
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
 	{
@@ -2093,7 +2174,7 @@ void CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 		}
 		else
 		{
-			return; // Перехватывать только под ConEmu
+			return TRUE; // Перехватывать только под ConEmu
 		}
 	}
 		
@@ -2102,13 +2183,18 @@ void CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
-	BOOL lbRc = PrepareExecuteParms(eCreateProcess,
+	int liRc = PrepareExecuteParms(eCreateProcess,
 					NULL,
 					asFile ? *asFile : NULL,
 					asCmdLine ? *asCmdLine : NULL,
 					NULL, anCreationFlags, &lpSI->dwFlags, &nShowCmd,
 					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
+	if (liRc == -1)
+		return FALSE; // Запретить выполнение файла
+
+	BOOL lbRc = (liRc != 0);
+
 	// возвращает TRUE только если были изменены СТРОКИ,
 	// а если выставлен mb_NeedInjects - строго включить _Suspended
 	if (mb_NeedInjects)
@@ -2151,6 +2237,8 @@ void CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	{
 		*asDir = mpwsz_TempRetDir;
 	}
+
+	return TRUE;
 }
 
 void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI)

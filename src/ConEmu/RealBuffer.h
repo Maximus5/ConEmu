@@ -128,7 +128,7 @@ public:
 	void ExpandSelection(SHORT anX=-1, SHORT anY=-1);
 	bool DoSelectionFinalize(bool abCopy, WPARAM wParam = 0);
 	void DoSelectionStop();
-	bool DoSelectionCopy();
+	bool DoSelectionCopy(bool bCopyAll = false);
 	void UpdateSelection();
 	BOOL isConSelectMode();
 	BOOL isSelfSelectMode();

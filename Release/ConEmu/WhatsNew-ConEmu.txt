@@ -11,7 +11,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.01.05
+[%] Issue 865: Frame width option is broken.
+[+] Issue 864: MiddleButtonClick on free tabbar area creates new tab.
 [+] Debug purposes: new ConEmuC argument /DEBUGEXE <command line>.
+[%] Due to large amount of ANSICON-related reports its loading will be blocked in ConEmu.
+[*] Don't show console font warning in ReactOS.
 
 
 2013.01.04

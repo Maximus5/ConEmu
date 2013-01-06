@@ -1042,193 +1042,6 @@ BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 	return TRUE;
 }
 
-typedef BOOL (WINAPI* GetConsoleHistoryInfo_t)(CE_CONSOLE_HISTORY_INFO* lpConsoleHistoryInfo);
-
-CEStartupEnv* LoadStartupEnv()
-{
-	CEStartupEnv* pEnv = NULL;
-
-	STARTUPINFOW si = {sizeof(si)};
-	GetStartupInfoW(&si);
-
-	OSVERSIONINFOW os = {sizeof(os)};
-	GetVersionEx(&os);
-
-	wchar_t* pszEnvPathStore = (wchar_t*)malloc(1024*sizeof(*pszEnvPathStore));
-	if (pszEnvPathStore)
-	{
-		DWORD cbPathMax = 1024;
-		DWORD cbPathSize = GetEnvironmentVariable(L"PATH", pszEnvPathStore, cbPathMax);
-		if (cbPathSize >= 1024)
-		{
-			cbPathMax = cbPathSize+1;
-			pszEnvPathStore = (wchar_t*)realloc(pszEnvPathStore, cbPathMax*sizeof(*pszEnvPathStore));
-			if (pszEnvPathStore)
-			{
-				cbPathSize = GetEnvironmentVariable(L"PATH", pszEnvPathStore, (cbPathSize+1));
-			}
-		}
-
-		if (pszEnvPathStore)
-		{
-			pszEnvPathStore[min(cbPathSize,cbPathMax-1)] = 0;
-		}
-	}
-
-	LPCWSTR pszCmdLine = GetCommandLine();
-
-	wchar_t* pszExecMod = (wchar_t*)calloc(MAX_PATH*2,sizeof(*pszExecMod));
-	if (pszExecMod)
-		GetModuleFileName(NULL, pszExecMod, MAX_PATH*2);
-
-	wchar_t* pszWorkDir = (wchar_t*)calloc(MAX_PATH*2,sizeof(*pszWorkDir));
-	if (pszWorkDir)
-		GetCurrentDirectory(MAX_PATH*2, pszWorkDir);
-
-	// Enum registered Console Fonts
-	// HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
-	int nLenMax = 2048;
-	wchar_t* pszFonts = (wchar_t*)calloc(nLenMax,sizeof(*pszFonts));
-	if (pszFonts)
-	{
-		HKEY hk;
-		DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
-		if (0 == RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont", 0, nRights, &hk))
-		{
-			wchar_t szName[64], szValue[64];
-			DWORD idx = 0, cchName = countof(szName), cchValue = sizeof(szValue)-2, dwType;
-			LONG iRc;
-			wchar_t* psz = pszFonts;
-			while ((iRc = RegEnumValue(hk, idx++, szName, &cchName, NULL, &dwType, (LPBYTE)szValue, &cchValue)) == 0)
-			{
-				szName[min(countof(szName)-1,cchName)] = 0; szValue[min(countof(szValue)-1,cchValue/2)] = 0;
-				int nNameLen = lstrlen(szName);
-				int nValLen = lstrlen(szValue);
-				int nLen = nNameLen+nValLen+3;
-				if (nLen < nLenMax)
-				{
-					if (idx > 1) *(psz++) = L'\t';
-					lstrcpy(psz, szName); psz+= nNameLen;
-					*(psz++) = L'\t';
-					lstrcpy(psz, szValue); psz+= nValLen;
-				}
-				cchName = countof(szName); cchValue = sizeof(szValue)-2;
-			}
-			RegCloseKey(hk);
-		}
-	}
-
-	size_t cchTotal = sizeof(*pEnv);
-
-	size_t cchEnv = pszEnvPathStore ? (lstrlen(pszEnvPathStore)+1) : 0;
-	cchTotal += cchEnv*sizeof(wchar_t);
-
-	size_t cchExe = pszExecMod ? (lstrlen(pszExecMod)+1) : 0;
-	cchTotal += cchExe*sizeof(wchar_t);
-
-	size_t cchCmd = pszCmdLine ? (lstrlen(pszCmdLine)+1) : 0;
-	cchTotal += cchCmd*sizeof(wchar_t);
-
-	size_t cchDir = pszWorkDir ? (lstrlen(pszWorkDir)+1) : 0;
-	cchTotal += cchDir*sizeof(wchar_t);
-
-	size_t cchTtl = si.lpTitle ? (lstrlen(si.lpTitle)+1) : 0;
-	cchTotal += cchTtl*sizeof(wchar_t);
-
-	size_t cchFnt = pszFonts ? (lstrlen(pszFonts)+1) : 0;
-	cchTotal += cchFnt*sizeof(wchar_t);
-
-	pEnv = (CEStartupEnv*)calloc(cchTotal,1);
-	if (pEnv)
-	{
-		pEnv->cbSize = cchTotal;
-		pEnv->si = si;
-		pEnv->os = os;
-
-		pEnv->bIsDbcs = IsDbcs();
-		pEnv->bIsWine = IsWine();
-		wchar_t* pszReactOS = os.szCSDVersion + lstrlen(os.szCSDVersion);
-		pszReactOS[7] = 0;
-		pEnv->bIsReactOS = (lstrcmpi(pszReactOS, L"ReactOS") == 0);
-		pEnv->nAnsiCP = GetACP();
-		pEnv->nOEMCP = GetOEMCP();
-
-		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-		if (hKernel)
-		{
-			// Функция есть только в Vista+
-			GetConsoleHistoryInfo_t _GetConsoleHistoryInfo = (GetConsoleHistoryInfo_t)GetProcAddress(hKernel, "GetConsoleHistoryInfo");
-			if (_GetConsoleHistoryInfo)
-			{
-				pEnv->hi.cbSize = sizeof(pEnv->hi);
-				if (!_GetConsoleHistoryInfo(&pEnv->hi))
-				{
-					pEnv->hi.cbSize = GetLastError() | 0x80000000;
-				}
-			}
-		}
-
-		struct { CE_HANDLE_INFO* p; DWORD nId; }
-			lHandles[] = {{&pEnv->hIn, STD_INPUT_HANDLE}, {&pEnv->hOut, STD_OUTPUT_HANDLE}, {&pEnv->hErr, STD_ERROR_HANDLE}};
-		for (size_t i = 0; i < countof(lHandles); i++)
-		{
-			lHandles[i].p->hStd = GetStdHandle(lHandles[i].nId);
-			if (!GetConsoleMode(lHandles[i].p->hStd, &lHandles[i].p->nMode))
-				lHandles[i].p->nMode = (DWORD)-1;
-		}
-
-		wchar_t* psz = (wchar_t*)(pEnv+1);
-
-		if (pszCmdLine)
-		{
-			_wcscpy_c(psz, cchCmd, pszCmdLine);
-			pEnv->pszCmdLine = psz;
-			psz += cchCmd;
-		}
-
-		if (pszExecMod)
-		{
-			_wcscpy_c(psz, cchExe, pszExecMod);
-			pEnv->pszExecMod = psz;
-			psz += cchExe;
-		}
-
-		if (pszWorkDir)
-		{
-			_wcscpy_c(psz, cchDir, pszWorkDir);
-			pEnv->pszWorkDir = psz;
-			psz += cchDir;
-		}
-
-		if (pszEnvPathStore)
-		{
-			_wcscpy_c(psz, cchEnv, pszEnvPathStore);
-			pEnv->pszPathEnv = psz;
-			pEnv->cchPathLen = cchEnv;
-			psz += cchEnv;
-		}
-
-		if (si.lpTitle)
-		{
-			_wcscpy_c(psz, cchTtl, si.lpTitle);
-			pEnv->si.lpTitle = psz;
-			psz += cchTtl;
-		}
-
-		if (pszFonts)
-		{
-			_wcscpy_c(psz, cchFnt, pszFonts);
-			pEnv->pszRegConFonts = psz;
-			psz += cchFnt;
-		}
-	}
-
-	SafeFree(pszEnvPathStore);
-	SafeFree(pszExecMod);
-	SafeFree(pszFonts);
-	return pEnv;
-}
-
 #ifndef CONEMU_MINIMAL
 void RemoveOldComSpecC()
 {
@@ -3709,25 +3522,28 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 	lstrcpyn(szDesktop, apStartEnv->si.lpDesktop ? apStartEnv->si.lpDesktop : L"", countof(szDesktop));
 	lstrcpyn(szTitle, apStartEnv->si.lpTitle ? apStartEnv->si.lpTitle : L"", countof(szTitle));
 
-	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
-	GetVersionEx(&osv);
 	BOOL bWin64 = IsWindows64();
 
-	LPCWSTR szReactOS = osv.szCSDVersion + lstrlen(osv.szCSDVersion);
-	if (!*szReactOS)
-		szReactOS = L"No";
+	OSVERSIONINFOEXW osv = {sizeof(osv)};
+	GetVersionEx((OSVERSIONINFOW*)&osv);
+
+	LPCWSTR pszReactOS = osv.szCSDVersion + lstrlen(osv.szCSDVersion) + 1;
+	if (!*pszReactOS)
+		pszReactOS++;
 
 	//wchar_t cVer = MVV_4a[0];
 	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\r\n"
-		L"\tOsVer: %u.%u.%u.x%u, DBCS: %u, WINE: %u, ReactOS: %u (%s)\r\n"
-		L"\tCSDVersion: %s, ACP: %u, OEMCP: %u\r\n"
+		L"\tOsVer: %u.%u.%u.x%u, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
+		L"\tCSDVersion: %s, ReactOS: %u (%s), Rsrv: %u\r\n"
+		L"\tDBCS: %u, WINE: %u, ACP: %u, OEMCP: %u\r\n"
 		L"\tDesktop: %s\r\n\tTitle: %s\r\n\tSize: {%u,%u},{%u,%u}\r\n"
 		L"\tFlags: 0x%08X, ShowWindow: %u\r\n\tHandles: 0x%08X, 0x%08X, 0x%08X"
 		,
 		osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, bWin64 ? 64 : 32,
+		osv.wProductType, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask, GetSystemMetrics(89/*SM_SERVERR2*/),
+		osv.szCSDVersion, apStartEnv->bIsReactOS, pszReactOS, osv.wReserved,
 		apStartEnv->bIsDbcs, apStartEnv->bIsWine,
-		apStartEnv->bIsReactOS, szReactOS,
-		osv.szCSDVersion, apStartEnv->nAnsiCP, apStartEnv->nOEMCP,
+		apStartEnv->nAnsiCP, apStartEnv->nOEMCP,
 		szDesktop, szTitle,
 		apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
 		apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow,

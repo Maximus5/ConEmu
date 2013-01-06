@@ -2528,8 +2528,17 @@ void Settings::LoadSettings()
 		// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N"
 		// может сменить (умолчательную) команду запуска на "cmd" или "far"
 		reg->Load(L"Cascaded", wndCascade);
-		reg->Load(L"ConWnd Width", _wndWidth); if (!_wndWidth) _wndWidth = 80; else if (_wndWidth>1000) _wndWidth = 1000;
-		reg->Load(L"ConWnd Height", _wndHeight); if (!_wndHeight) _wndHeight = 25; else if (_wndHeight>500) _wndHeight = 500;
+		reg->Load(L"ConWnd Width", _wndWidth);
+		reg->Load(L"ConWnd Height", _wndHeight);
+
+		if (gpSetCls->isAdvLogging)
+		{
+			char szInfo[100]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "Loaded pos: {%i,%i}, size: {%i,%i}", _wndX, _wndY, _wndWidth, _wndHeight);
+			gpConEmu->LogString(szInfo);
+		}
+
+		if (!_wndWidth) _wndWidth = 80; else if (_wndWidth>1000) _wndWidth = 1000;
+		if (!_wndHeight) _wndHeight = 25; else if (_wndHeight>500) _wndHeight = 500;
 
 		//TODO: Эти два параметра не сохраняются
 		reg->Load(L"16bit Height", ntvdmHeight);

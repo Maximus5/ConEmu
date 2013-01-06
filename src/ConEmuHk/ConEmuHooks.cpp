@@ -976,7 +976,12 @@ BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LP
 	}
 
 	CShellProc* sp = new CShellProc();
-	sp->OnCreateProcessA(&lpApplicationName, (LPCSTR*)&lpCommandLine, &lpCurrentDirectory, &dwCreationFlags, lpStartupInfo);
+	if (!sp || !sp->OnCreateProcessA(&lpApplicationName, (LPCSTR*)&lpCommandLine, &lpCurrentDirectory, &dwCreationFlags, lpStartupInfo))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return FALSE;
+	}
 	if ((dwCreationFlags & CREATE_SUSPENDED) == 0)
 	{
 		DebugString(L"CreateProcessA without CREATE_SUSPENDED Flag!\n");
@@ -1019,7 +1024,13 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	}
 
 	CShellProc* sp = new CShellProc();
-	sp->OnCreateProcessW(&lpApplicationName, (LPCWSTR*)&lpCommandLine, &lpCurrentDirectory, &dwCreationFlags, lpStartupInfo);
+	if (!sp || !sp->OnCreateProcessW(&lpApplicationName, (LPCWSTR*)&lpCommandLine, &lpCurrentDirectory, &dwCreationFlags, lpStartupInfo))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return FALSE;
+	}
+
 	if ((dwCreationFlags & CREATE_SUSPENDED) == 0)
 	{
 		DebugString(L"CreateProcessW without CREATE_SUSPENDED Flag!\n");
@@ -1109,7 +1120,13 @@ UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow)
 	DWORD dwErr = 0;
 	
 	CShellProc* sp = new CShellProc();
-	sp->OnCreateProcessA(NULL, &lpCmdLine, NULL, &nCreateFlags, sa);
+	if (!sp || !sp->OnCreateProcessA(NULL, &lpCmdLine, NULL, &nCreateFlags, sa))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return ERROR_FILE_NOT_FOUND;
+	}
+
 	if ((nCreateFlags & CREATE_SUSPENDED) == 0)
 	{
 		DebugString(L"CreateProcessA without CREATE_SUSPENDED Flag!\n");
@@ -1388,7 +1405,12 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 	//memmove(lpNew, lpExecInfo, lpExecInfo->cbSize);
 	
 	CShellProc* sp = new CShellProc();
-	sp->OnShellExecuteExA(&lpExecInfo);
+	if (!sp || !sp->OnShellExecuteExA(&lpExecInfo))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return FALSE;
+	}
 
 	//// Under ConEmu only!
 	//if (ghConEmuWndDC)
@@ -1485,7 +1507,12 @@ BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 	#endif
 
 	CShellProc* sp = new CShellProc();
-	sp->OnShellExecuteExW(&lpExecInfo);
+	if (!sp || !sp->OnShellExecuteExW(&lpExecInfo))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return FALSE;
+	}
 
 	BOOL lbRc = FALSE;
 
@@ -1518,7 +1545,12 @@ HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, L
 	
 	//gbInShellExecuteEx = TRUE;
 	CShellProc* sp = new CShellProc();
-	sp->OnShellExecuteA(&lpOperation, &lpFile, &lpParameters, &lpDirectory, NULL, (DWORD*)&nShowCmd);
+	if (!sp || !sp->OnShellExecuteA(&lpOperation, &lpFile, &lpParameters, &lpDirectory, NULL, (DWORD*)&nShowCmd))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return (HINSTANCE)ERROR_FILE_NOT_FOUND;
+	}
 
 	HINSTANCE lhRc;
 	lhRc = F(ShellExecuteA)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
@@ -1550,7 +1582,12 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 	
 	//gbInShellExecuteEx = TRUE;
 	CShellProc* sp = new CShellProc();
-	sp->OnShellExecuteW(&lpOperation, &lpFile, &lpParameters, &lpDirectory, NULL, (DWORD*)&nShowCmd);
+	if (!sp || !sp->OnShellExecuteW(&lpOperation, &lpFile, &lpParameters, &lpDirectory, NULL, (DWORD*)&nShowCmd))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return (HINSTANCE)ERROR_FILE_NOT_FOUND;
+	}
 
 	HINSTANCE lhRc;
 	lhRc = F(ShellExecuteW)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);

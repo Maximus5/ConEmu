@@ -1671,6 +1671,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\StartupEnv.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\WinObjects.h"
 				>
 			</File>

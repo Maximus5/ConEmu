@@ -3670,9 +3670,9 @@ void CRealConsole::DoSelectionStop()
 	mp_ABuf->DoSelectionStop();
 }
 
-bool CRealConsole::DoSelectionCopy()
+bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/)
 {
-	return mp_ABuf->DoSelectionCopy();
+	return mp_ABuf->DoSelectionCopy(bCopyAll);
 }
 
 void CRealConsole::DoFindText(int nDirection)

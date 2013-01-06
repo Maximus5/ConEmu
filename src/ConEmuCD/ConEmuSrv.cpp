@@ -124,7 +124,7 @@ void ServerInitFont()
 
 		if (pPlgOut) ExecuteFreeResult(pPlgOut);
 	}
-	else if (!gbAlienMode || gOSVer.dwMajorVersion >= 6)
+	else if ((!gbAlienMode || gOSVer.dwMajorVersion >= 6) && !gpStartEnv->bIsReactOS)
 	{
 		if (gpLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
 

@@ -73,6 +73,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConsoleHelp.h"
 #include "UnicodeTest.h"
 
+#define FULL_STARTUP_ENV
+#include "../common/StartupEnv.h"
+
 #pragma comment(lib, "shlwapi.lib")
 
 
@@ -81,8 +84,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
 	#include <Dbghelp.h>
 #endif
-
-extern HMODULE ghOurModule;
 
 WARNING("Обязательно после запуска сделать apiSetForegroundWindow на GUI окно, если в фокусе консоль");
 WARNING("Обязательно получить код и имя родительского процесса");

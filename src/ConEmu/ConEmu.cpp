@@ -1530,6 +1530,15 @@ void CConEmuMain::SetWindowStyleEx(DWORD anStyleEx)
 
 void CConEmuMain::SetWindowStyleEx(HWND ahWnd, DWORD anStyleEx)
 {
+	if (gpSetCls->isAdvLogging)
+	{
+		char szInfo[100];
+		RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo))
+			"SetWindowStyleEx(HWND=x%08X, StyleEx=x%08X)",
+			(DWORD)(DWORD_PTR)ahWnd, anStyleEx);
+		LogString(szInfo);
+	}
 	LONG lRc = SetWindowLong(ahWnd, GWL_EXSTYLE, anStyleEx);
 	UNREFERENCED_PARAMETER(lRc);
 }
@@ -2474,7 +2483,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
 				//_ASSERTE(!rcClient.left && !rcClient.top);
 
-				bool bRoundTitle = gpSetCls->CheckTheming() && mp_TabBar->IsTabsShown() && !IsWindows8;
+				bool bRoundTitle = (gOSVer.dwMajorVersion == 5) && gpSetCls->CheckTheming() && mp_TabBar->IsTabsShown();
 
 				if (gpSet->isQuakeStyle)
 				{
@@ -2508,8 +2517,8 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				// We need coordinates relative to upper-top corner of WINDOW (not client area)
 				int rgnX = bFullFrame ? 0 : (rcFrame.left - nFrame);
 				int rgnY = bFullFrame ? 0 : (rcFrame.top - nFrame);
-				int rgnX2 = (rcFrame.left - nFrame) + (bFullFrame ? rcFrame.right : nFrame);
-				int rgnY2 = (rcFrame.top - nFrame) + (bFullFrame ? rcFrame.bottom : nFrame);
+				int rgnX2 = (rcFrame.left - rgnX) + (bFullFrame ?  rcFrame.right : nFrame);
+				int rgnY2 = (rcFrame.top - rgnY) + (bFullFrame ? rcFrame.bottom : nFrame);
 				if (gpSet->isQuakeStyle && (gpSet->_WindowMode != wmNormal))
 				{
 					// ConEmu window is maximized to fullscreen or work area
@@ -5438,6 +5447,16 @@ void CConEmuMain::CheckTopMostState()
 
 	if (!gpSet->isAlwaysOnTop && ((dwStyleEx & WS_EX_TOPMOST) == WS_EX_TOPMOST))
 	{
+		if (gpSetCls->isAdvLogging)
+		{
+			char szInfo[200];
+			RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
+			_wsprintfA(szInfo, SKIPLEN(countof(szInfo))
+				"Some external program bring ConEmu OnTop: HWND=x%08X, StyleEx=x%08X, Rect={%i,%i}-{%i,%i}",
+				(DWORD)ghWnd, dwStyleEx, rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
+			LogString(szInfo);
+		}
+
 		if (IDYES == MessageBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
 		{
 	        //SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
@@ -9328,6 +9347,16 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 {
 	_ASSERTE(ghWnd == hWnd); // Уже должно было быть выставлено (CConEmuMain::MainWndProc)
 	ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
+
+	if (gpSetCls->isAdvLogging)
+	{
+		char szInfo[200];
+		RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo))
+			"OnCreate: hWnd=x%08X, x=%i, y=%i, cx=%i, cy=%i, style=x%08X, exStyle=x%08X",
+			(DWORD)(DWORD_PTR)hWnd, lpCreate->x, lpCreate->y, lpCreate->cx, lpCreate->cy, lpCreate->style, lpCreate->dwExStyle);
+		LogString(szInfo);
+	}
 
 	OnTaskbarButtonCreated();
 

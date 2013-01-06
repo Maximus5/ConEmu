@@ -117,7 +117,7 @@ struct CEStartupEnv
 {
 	size_t cbSize;
 	STARTUPINFOW si;
-	OSVERSIONINFOW os;
+	OSVERSIONINFOEXW os;
 	CE_CONSOLE_HISTORY_INFO hi;
 	CE_HANDLE_INFO hIn, hOut, hErr;
 	LPCWSTR pszCmdLine;
@@ -133,7 +133,7 @@ struct CEStartupEnv
 	LPCWSTR pszRegConFonts; // "Index/CP ~t Name ~t Index/CP ..."
 };
 
-CEStartupEnv* LoadStartupEnv();
+//CEStartupEnv* LoadStartupEnv();
 
 #ifndef CONEMU_MINIMAL
 HANDLE DuplicateProcessHandle(DWORD anTargetPID);

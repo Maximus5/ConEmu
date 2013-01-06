@@ -53,6 +53,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DefaultTerm.h"
 #include "version.h"
 
+#define FULL_STARTUP_ENV
+#include "../common/StartupEnv.h"
+
 #ifdef _DEBUG
 //	#define SHOW_STARTED_MSGBOX
 //	#define WAIT_STARTED_DEBUGGER

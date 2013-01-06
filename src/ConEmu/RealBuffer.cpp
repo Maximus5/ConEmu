@@ -3480,7 +3480,7 @@ void CRealBuffer::DoSelectionStop()
 	con.m_sel.dwFlags = 0;
 }
 
-bool CRealBuffer::DoSelectionCopy()
+bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 {
 	if (!con.m_sel.dwFlags)
 	{
