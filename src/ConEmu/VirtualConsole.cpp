@@ -111,7 +111,7 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 //#define VCURSORWIDTH  /*2*/ mp_Set->CursorMinSize()
 //#define HCURSORHEIGHT /*2*/ mp_Set->CursorMinSize()
 
-#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i", _T(#V), _T(__FILE__), __LINE__); Box(szAMsg); }
+//#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i", _T(#V), _T(__FILE__), __LINE__); Box(szAMsg); }
 
 #ifdef _DEBUG
 //#undef HEAPVAL
@@ -507,6 +507,22 @@ HWND CVirtualConsole::GuiWnd()
 		return mp_RCon->GuiWnd();
 	_ASSERTE(this!=NULL);
 	return NULL;
+}
+
+void CVirtualConsole::setFocus()
+{
+	if (!this)
+		return;
+
+	HWND hGuiWnd = GuiWnd();
+	if (hGuiWnd && ::IsWindowVisible(hGuiWnd))
+	{
+		RCon()->GuiWndFocusRestore();
+	}
+	else
+	{
+		gpConEmu->setFocus();
+	}
 }
 
 HWND CVirtualConsole::GhostWnd()
@@ -4039,7 +4055,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		Update(mb_RequiredForceUpdate);
 
 	mb_InPaintCall = FALSE;
-	BOOL lbExcept = FALSE;
+	//BOOL lbExcept = FALSE;
 	RECT client = rcClient;
 	//PAINTSTRUCT ps;
 	//HDC hPaintDc = NULL;
@@ -4375,8 +4391,10 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 	//#endif
 
-	if (lbExcept)
-		Box(_T("Exception triggered in CVirtualConsole::Paint"));
+	//if (lbExcept)
+	//{
+	//	CRealConsole::Box(_T("Exception triggered in CVirtualConsole::Paint"), MB_RETRYCANCEL);
+	//}
 
 	//  if (hPaintDc && 'ghWnd DC') {
 	//if (lbInval)
@@ -4442,13 +4460,13 @@ void CVirtualConsole::UpdateInfo()
 	}
 }
 
-void CVirtualConsole::Box(LPCTSTR szText)
-{
-#ifdef _DEBUG
-	_ASSERT(FALSE);
-#endif
-	MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
-}
+//void CVirtualConsole::Box(LPCTSTR szText)
+//{
+//#ifdef _DEBUG
+//	_ASSERT(FALSE);
+//#endif
+//	MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
+//}
 
 RECT CVirtualConsole::GetRect()
 {

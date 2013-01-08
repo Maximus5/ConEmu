@@ -278,6 +278,68 @@ BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 	return lbFound;
 }
 
+BOOL FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax)
+{
+	if (!rsFilePath || !*rsFilePath)
+	{
+		_ASSERTEX(rsFilePath && *rsFilePath);
+		return FALSE;
+	}
+
+	if (FileExists(rsFilePath))
+	{
+		return TRUE;
+	}
+
+	// Переменные окружения
+	if (wcschr(rsFilePath, L'%'))
+	{
+		wchar_t* pszExpand = ExpandEnvStr(rsFilePath);
+		if (pszExpand)
+		{
+			_ASSERTEX(lstrlen(pszExpand) < (INT_PTR)cchPathMax);
+			lstrcpyn(rsFilePath, pszExpand, (int)cchPathMax);
+		}
+		SafeFree(pszExpand);
+
+		if (FileExists(rsFilePath))
+		{
+			return TRUE;
+		}
+	}
+
+	// Search "Path"
+	LPCWSTR pszSearchFile = rsFilePath;
+	LPCWSTR pszSlash = wcsrchr(rsFilePath, L'\\');
+	wchar_t* pszSearchPath = NULL;
+	if (pszSlash)
+	{
+		if ((pszSearchPath = lstrdup(rsFilePath)) != NULL)
+		{
+			pszSearchFile = pszSlash + 1;
+			pszSearchPath[pszSearchFile - rsFilePath] = 0;
+		}
+	}
+
+	// попытаемся найти
+	wchar_t *pszFilePart;
+	wchar_t szFind[MAX_PATH+1];
+	LPCWSTR pszExt = PointToExt(rsFilePath);
+
+	DWORD nLen = SearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
+
+	SafeFree(pszSearchPath);
+
+	if (nLen && (nLen < countof(szFind)))
+	{
+		_ASSERTEX(lstrlen(szFind) < (INT_PTR)cchPathMax);
+		lstrcpyn(rsFilePath, szFind, (int)cchPathMax);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 BOOL DirectoryExists(LPCWSTR asPath)
 {
 	if (!asPath || !*asPath)
@@ -1442,27 +1504,24 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 			memcpy(szExe, pwszCopy, (pchEnd - pwszCopy)*sizeof(wchar_t));
 			szExe[(pchEnd - pwszCopy)] = 0;
 
-			if (!FileExists(szExe))
+			if (lstrcmpiW(szExe, L"start") == 0)
 			{
-				bool bFound = false;
-				// Переменные окружения
-				if (wcschr(szExe, L'%'))
-				{
-					wchar_t* pszExpand = ExpandEnvStr(szExe);
-					if (pszExpand)
-						lstrcpyn(szExe, pszExpand, countof(szExe));
-					SafeFree(pszExpand);
+				// Команду start обрабатывает только процессор
+				#ifdef WARN_NEED_CMD
+				_ASSERTE(FALSE);
+				#endif
+				return TRUE;
+			}
 
-					if (FileExists(szExe))
-					{
-						if (rsArguments)
-							*rsArguments = pchEnd;
-						bFound = true;
-					}
-				}
-
-				if (!bFound)
-					szExe[0] = 0;
+			// Обработка переменных окружения и поиск в PATH
+			if (FileExistsSearch(/*IN|OUT*/szExe, countof(szExe)))
+			{
+				if (rsArguments)
+					*rsArguments = pchEnd;
+			}
+			else
+			{
+				szExe[0] = 0;
 			}
 		}
 
@@ -1477,22 +1536,20 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 				return TRUE;
 			}
 
-			if (wcschr(szExe, L'%') && !FileExists(szExe))
+			if (lstrcmpiW(szExe, L"start") == 0)
 			{
-				DEBUGTEST(bool bFound = false);
+				// Команду start обрабатывает только процессор
+				#ifdef WARN_NEED_CMD
+				_ASSERTE(FALSE);
+				#endif
+				return TRUE;
+			}
 
-				// Переменные окружения
-				wchar_t* pszExpand = ExpandEnvStr(szExe);
-				if (pszExpand && FileExists(pszExpand))
-				{
-					lstrcpyn(szExe, pszExpand, countof(szExe));
-					SafeFree(pszExpand);
-
-					if (rsArguments)
-						*rsArguments = pwszCopy;
-
-					DEBUGTEST(bFound = true);
-				}
+			// Обработка переменных окружения и поиск в PATH
+			if (FileExistsSearch(/*IN|OUT*/szExe, countof(szExe)))
+			{
+				if (rsArguments)
+					*rsArguments = pwszCopy;
 			}
 		}
 	}
@@ -1503,7 +1560,11 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 	}
 	else
 	{
-		// "Левые" символы в имени файла
+		// Если юзеру нужен редирект - то он должен явно указать ком.процессор
+		// Иначе нереально (или достаточно сложно) определить, является ли символ
+		// редиректом, или это просто один из аргументов команды...
+
+		// "Левые" символы в имени файла (а вот в "первом аргументе" все однозначно)
 		if (wcspbrk(szExe, L"?*<>|"))
 		{
 			rbRootIsCmdExe = TRUE; // запуск через "процессор"
@@ -1587,8 +1648,10 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 	//2009-08-27
 	wchar_t *pwszEndSpace = szExe + lstrlenW(szExe) - 1;
 
-	while((*pwszEndSpace == L' ') && (pwszEndSpace > szExe))
+	while ((*pwszEndSpace == L' ') && (pwszEndSpace > szExe))
+	{
 		*(pwszEndSpace--) = 0;
+	}
 
 #ifndef __GNUC__
 #pragma warning( push )

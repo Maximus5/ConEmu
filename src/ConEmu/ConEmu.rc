@@ -198,9 +198,6 @@ BEGIN
     CONTROL         "Show && store current window size and position",cbUseCurrentSizePos,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,13,258,8
     GROUPBOX        "DOS applications (ntvdm)",IDC_STATIC,185,85,130,32
-    GROUPBOX        "Quake style",IDC_STATIC,9,163,306,29
-    CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,176,100,8
-    CONTROL         "Auto-hide on focus lose",cbQuakeAutoHide,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,123,176,94,8
     CONTROL         "Center console in ConEmu workspace",cbTryToCenter,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,131,149,8
     RTEXT           "Pad size:",IDC_STATIC,156,131,45,8
@@ -208,14 +205,12 @@ BEGIN
     GROUPBOX        "Alignment",IDC_STATIC,9,119,306,42
     LTEXT           "pixels",IDC_STATIC,253,131,45,8
     CONTROL         "Snap to desktop edges",cbSnapToDesktopEdges,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,145,141,8
-    GROUPBOX        "FullScreen mode",IDC_STATIC,9,195,306,29,WS_DISABLED
-    CONTROL         "Hide tab && status bars",cbFullscreenNoBars,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,17,208,100,8
-    CONTROL         "Fixed console size",cbFullscreenFixedConSize,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,123,208,83,8
-    EDITTEXT        tFullScreenWidth,210,206,39,12,ES_AUTOHSCROLL | WS_DISABLED
-    EDITTEXT        tFullScreenHeight,269,206,39,12,ES_AUTOHSCROLL | WS_DISABLED
+    GROUPBOX        "FullScreen mode",IDC_STATIC,9,195,306,29,NOT WS_VISIBLE | WS_DISABLED
+    CONTROL         "Hide tab && status bars",cbFullscreenNoBars,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,17,208,100,8
+    CONTROL         "Fixed console size",cbFullscreenFixedConSize,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,123,208,83,8
+    EDITTEXT        tFullScreenWidth,210,206,39,12,ES_AUTOHSCROLL | NOT WS_VISIBLE | WS_DISABLED
+    EDITTEXT        tFullScreenHeight,269,206,39,12,ES_AUTOHSCROLL | NOT WS_VISIBLE | WS_DISABLED
     CTEXT           "x",IDC_STATIC,255,207,8,8,WS_DISABLED
-    RTEXT           "Frame width:",stHideCaptionAlwaysFrame,215,176,50,8
-    EDITTEXT        tHideCaptionAlwaysFrame,269,174,39,12,ES_AUTOHSCROLL
 END
 
 IDD_SPG_SHOW DIALOGEX 0, 0, 328, 235
@@ -258,6 +253,11 @@ BEGIN
     CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,160,117,8
     CONTROL         "Hide caption of child GUI windows started in ConEmu",cbHideChildCaption,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,160,189,8
+    GROUPBOX        "Quake style",IDC_STATIC,4,180,319,29
+    CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,193,100,8
+    CONTROL         "Auto-hide on focus lose",cbQuakeAutoHide,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,193,94,8
+    RTEXT           "Animation:",stQuakeAnimation,227,193,43,8
+    EDITTEXT        tQuakeAnimation,273,191,40,12,ES_AUTOHSCROLL
 END
 
 IDD_SPG_TASKBAR DIALOGEX 0, 0, 328, 235

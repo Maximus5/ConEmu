@@ -498,8 +498,8 @@ void Settings::InitSettings()
 	_WindowMode = rNormal;
 	isUseCurrentSizePos = true; // Show in settings dialog and save current window size/pos
 	//isFullScreen = false;
-	isHideCaption = false; mb_HideCaptionAlways = false; isQuakeStyle = false;
-	isHideChildCaption = false;
+	isHideCaption = false; mb_HideCaptionAlways = false; isQuakeStyle = false; nQuakeAnimation = QUAKEANIMATION_DEF;
+	isHideChildCaption = true;
 	nHideCaptionAlwaysFrame = 255; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
 	isDesktopMode = false;
 	isSnapToDesktopEdges = false;
@@ -2281,7 +2281,7 @@ DWORD Settings::GetHotkey(DWORD VkMod)
 	return (VkMod & 0xFF);
 }
 
-void Settings::LoadSettings()
+void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 {
 	MCHKHEAP
 	mb_CharSetWasSet = FALSE;
@@ -2346,17 +2346,18 @@ void Settings::LoadSettings()
 	SettingsBase* reg = CreateSettings();
 	wcscpy_c(Type, reg->Type);
 
-	BOOL lbOpened = FALSE, lbNeedCreateVanilla = FALSE;
+	BOOL lbOpened = FALSE;
+	*rbNeedCreateVanilla = false;
 
 	lbOpened = reg->OpenKey(gpSetCls->GetConfigPath(), KEY_READ);
 	// Поддержка старого стиля хранения (настройки БЕЗ имени конфига - лежали в корне ключа Software\ConEmu)
 	if (!lbOpened && (*gpSetCls->GetConfigName() == 0))
 	{
 		lbOpened = reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ);
-		lbNeedCreateVanilla = lbOpened;
+		*rbNeedCreateVanilla = (lbOpened != FALSE);
 	}
 
-	if (lbNeedCreateVanilla)
+	if (*rbNeedCreateVanilla)
 	{
 		IsConfigNew = true;
 		TODO("Здесь можно включить настройки, которые должны включаться только для новых конфигураций!");
@@ -2506,6 +2507,7 @@ void Settings::LoadSettings()
 		reg->Load(L"UseCurrentSizePos", isUseCurrentSizePos);
 		reg->Load(L"WindowMode", _WindowMode); if (_WindowMode!=rFullScreen && _WindowMode!=rMaximized && _WindowMode!=rNormal) _WindowMode = rNormal;
 		reg->Load(L"QuakeStyle", isQuakeStyle);
+		reg->Load(L"QuakeAnimation", nQuakeAnimation); MinMax(nQuakeAnimation, QUAKEANIMATION_MAX);
 		reg->Load(L"HideCaption", isHideCaption);
 		reg->Load(L"HideChildCaption", isHideChildCaption);
 		// грузим именно в mb_HideCaptionAlways, т.к. прозрачность сбивает темы в заголовке, поэтому возврат идет через isHideCaptionAlways()
@@ -2946,71 +2948,72 @@ void Settings::LoadSettings()
 	delete reg;
 	reg = NULL;
 
-	
-	// Зовем "FastConfiguration" (перед созданием новой/чистой конфигурации)
-	{
-		LPCWSTR pszDef = gpConEmu->GetDefaultTitle();
-		wchar_t szType[8]; bool ReadOnly;
-		GetSettingsType(szType, ReadOnly);
-		LPCWSTR pszConfig = gpSetCls->GetConfigName();
-		wchar_t szTitle[1024];
-		if (pszConfig && *pszConfig)
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration (%s) %s", pszDef, pszConfig, szType);
-		else
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration %s", pszDef, szType);
-		
-		CheckOptionsFast(szTitle, lbNeedCreateVanilla);
-	}
-	
-
-	if (lbNeedCreateVanilla)
-	{
-		SaveSettings(TRUE/*abSilent*/);
-	}
-
-	// Передернуть палитру затенения
-	ResetFadeColors();
-	GetColors(-1, TRUE);
-	
-	
-
-	// Проверить необходимость установки хуков
-	//-- isKeyboardHooks();
-	// При первом запуске - проверить, хотят ли включить автообновление?
-	//-- CheckUpdatesWanted();
-
-
-
-	// Стили окна
-	if ((_WindowMode!=rNormal) && (_WindowMode!=rMaximized) && (_WindowMode!=rFullScreen))
-	{
-		// Иначе окно вообще не отображается
-		_ASSERTE(_WindowMode!=0);
-		_WindowMode = rNormal;
-	}
-
-	//if (rcTabMargins.top > 100) rcTabMargins.top = 100;
-	//_ASSERTE((rcTabMargins.bottom == 0 || rcTabMargins.top == 0) && !rcTabMargins.left && !rcTabMargins.right);
-	//rcTabMargins.left = rcTabMargins.right = 0;
-	//int nTabHeight = rcTabMargins.top ? rcTabMargins.top : rcTabMargins.bottom;
-	//if (nTabsLocation == 1)
+	// -- перенесено в gpSetCls->SettingsLoaded();
+	//// Зовем "FastConfiguration" (перед созданием новой/чистой конфигурации)
 	//{
-	//	rcTabMargins.top = 0; rcTabMargins.bottom = nTabHeight;
+	//	LPCWSTR pszDef = gpConEmu->GetDefaultTitle();
+	//	wchar_t szType[8]; bool ReadOnly;
+	//	GetSettingsType(szType, ReadOnly);
+	//	LPCWSTR pszConfig = gpSetCls->GetConfigName();
+	//	wchar_t szTitle[1024];
+	//	if (pszConfig && *pszConfig)
+	//		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration (%s) %s", pszDef, pszConfig, szType);
+	//	else
+	//		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration %s", pszDef, szType);
+	//	
+	//	CheckOptionsFast(szTitle, lbNeedCreateVanilla);
 	//}
-	//else
+	//
+
+	//if (lbNeedCreateVanilla)
 	//{
-	//	rcTabMargins.top = nTabHeight; rcTabMargins.bottom = 0;
+	//	SaveSettings(TRUE/*abSilent*/);
 	//}
 
-	if (!psCmdHistory)
-	{
-		psCmdHistory = (wchar_t*)calloc(2,2);
-	}
+	//// Передернуть палитру затенения
+	//ResetFadeColors();
+	//GetColors(-1, TRUE);
+	//
+	//
 
-	MCHKHEAP
+	//// Проверить необходимость установки хуков
+	////-- isKeyboardHooks();
+	//// При первом запуске - проверить, хотят ли включить автообновление?
+	////-- CheckUpdatesWanted();
+
+
+
+	//// Стили окна
+	//if ((_WindowMode!=rNormal) && (_WindowMode!=rMaximized) && (_WindowMode!=rFullScreen))
+	//{
+	//	// Иначе окно вообще не отображается
+	//	_ASSERTE(_WindowMode!=0);
+	//	_WindowMode = rNormal;
+	//}
+
+	////if (rcTabMargins.top > 100) rcTabMargins.top = 100;
+	////_ASSERTE((rcTabMargins.bottom == 0 || rcTabMargins.top == 0) && !rcTabMargins.left && !rcTabMargins.right);
+	////rcTabMargins.left = rcTabMargins.right = 0;
+	////int nTabHeight = rcTabMargins.top ? rcTabMargins.top : rcTabMargins.bottom;
+	////if (nTabsLocation == 1)
+	////{
+	////	rcTabMargins.top = 0; rcTabMargins.bottom = nTabHeight;
+	////}
+	////else
+	////{
+	////	rcTabMargins.top = nTabHeight; rcTabMargins.bottom = 0;
+	////}
+
+	//if (!psCmdHistory)
+	//{
+	//	psCmdHistory = (wchar_t*)calloc(2,2);
+	//}
+
+	//MCHKHEAP
 	
-	// Переменные загружены, выполнить дополнительные действия в классе настроек
-	gpSetCls->SettingsLoaded();
+	// -- перенесено в WinMain
+	//// Переменные загружены, выполнить дополнительные действия в классе настроек
+	//gpSetCls->SettingsLoaded();
 }
 
 /*
@@ -3428,6 +3431,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
 		mb_SizePosAutoSaved = false; // Раз было инициированное пользователей сохранение настроек - сбросим флажок
 		reg->Save(L"QuakeStyle", isQuakeStyle);
+		reg->Save(L"QuakeAnimation", nQuakeAnimation);
 		reg->Save(L"HideCaption", isHideCaption);
 		reg->Save(L"HideChildCaption", isHideChildCaption);
 		reg->Save(L"HideCaptionAlways", mb_HideCaptionAlways);
@@ -4183,7 +4187,7 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 
 	*psz = 0;
 	HEAPVAL;
-	free(psCmdHistory);
+	SafeFree(psCmdHistory);
 	psCmdHistory = pszNewHistory;
 	nCmdHistorySize = (psz - pszNewHistory + 1)*sizeof(wchar_t);
 	HEAPVAL;

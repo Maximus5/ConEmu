@@ -1257,7 +1257,7 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 	l_result = DefWindowProc(hWnd, WM_NCHITTEST, wParam, lParam);
 	
-	POINT point;
+	POINT point; // Coordinates, relative to UpperLeft corner of window
 	RECT wr; GetWindowRect(hWnd, &wr);
 	point.x = (int)(short)LOWORD(lParam) - wr.left;
 	point.y = (int)(short)HIWORD(lParam) - wr.top;
@@ -1335,6 +1335,20 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 	if (l_result == HTTOP && gpSet->isHideCaptionAlways() && !gpConEmu->mp_TabBar->IsTabsShown())
 		l_result = HTCAPTION;
+
+	//if ((l_result == HTCLIENT) && gpSet->isStatusBarShow)
+	//{
+	//	RECT rcStatus = {};
+	//	if (gpConEmu->mp_Status->GetStatusBarItemRect(csi_ResizeMark, &rcStatus))
+	//	{
+	//		RECT rcFrame = gpConEmu->CalcMargins(CEM_FRAMECAPTION);
+	//		POINT ptOver = {point.x - rcFrame.left, point.y - rcFrame.top};
+	//		if (PtInRect(&rcStatus, ptOver))
+	//		{
+	//			l_result = HTBOTTOMRIGHT;
+	//		}
+	//	}
+	//}
 	
 	return l_result;
 }

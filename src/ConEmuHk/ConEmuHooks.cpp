@@ -2339,8 +2339,15 @@ HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWind
 	{
 		if (bAttachGui)
 		{
-			x = grcConEmuClient.left; y = grcConEmuClient.top;
-			nWidth = grcConEmuClient.right - grcConEmuClient.left; nHeight = grcConEmuClient.bottom - grcConEmuClient.top;
+			if ((grcConEmuClient.right > grcConEmuClient.left) && (grcConEmuClient.bottom > grcConEmuClient.top))
+			{
+				x = grcConEmuClient.left; y = grcConEmuClient.top;
+				nWidth = grcConEmuClient.right - grcConEmuClient.left; nHeight = grcConEmuClient.bottom - grcConEmuClient.top;
+			}
+			else
+			{
+				_ASSERTEX((grcConEmuClient.right > grcConEmuClient.left) && (grcConEmuClient.bottom > grcConEmuClient.top));
+			}
 		}
 
 		hWnd = F(CreateWindowExA)(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);

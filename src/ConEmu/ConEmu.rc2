@@ -191,6 +191,7 @@ BEGIN
     tSafeFarCloseMacro      "Macro for close Far Manager softly, instead of closing console window, when you close ConEmu window\nClear field to reset to defaults"
     tSaveAllMacro           "Macro for saving all opened Far Manager modified editors, when you choose «Save all» from tab context menu\nClear field to reset to defaults"
     tsTopPID                "Far PID and Far with plugin PID"
+    tQuakeAnimation         "Duration of Quake slide down/up (0..2000ms)"
     tRClickMacro            "Far Manager macro for EMenu of file panel selected items\nClear field to reset to defaults"
     tRealFontBorders        "Real sizes of 'Fix Far borders' font:\nHeight x Width"
     tRealFontMain           "Real sizes of main font:\nHeight x Width x AveWidth"

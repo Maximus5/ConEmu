@@ -1759,14 +1759,23 @@ void TabBarClass::OnConsoleActivated(int nConNumber)
 
 	TBBUTTONINFO tbi = {sizeof(TBBUTTONINFO), TBIF_IMAGE};
 	SendMessage(mh_Toolbar, TB_GETBUTTONINFO, TID_ACTIVE_NUMBER, (LPARAM)&tbi);
+
 	if (tbi.iImage != nConNumber)
 	{
+		bool bNeedShow = false, bWasHidden = false;
+
 		if ((nConNumber >= BID_FIST_CON) && (nConNumber <= BID_LAST_CON))
 		{
+			bNeedShow = (tbi.iImage == BID_DUMMYBTN_IDX);
 			tbi.iImage = nConNumber;
 		}
 		else
 		{
+			if (tbi.iImage != BID_DUMMYBTN_IDX)
+			{
+				SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_ACTIVE_NUMBER, TRUE);
+				bWasHidden = true;
+			}
 			tbi.iImage = BID_DUMMYBTN_IDX;
 		}
 
@@ -1777,6 +1786,17 @@ void TabBarClass::OnConsoleActivated(int nConNumber)
 		//}
 
 		SendMessage(mh_Toolbar, TB_SETBUTTONINFO, TID_ACTIVE_NUMBER, (LPARAM)&tbi);
+
+		if (bNeedShow)
+		{
+			SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_ACTIVE_NUMBER, FALSE);
+		}
+
+		if (bNeedShow || bWasHidden)
+		{
+			SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0);
+			UpdateToolbarPos();
+		}
 	}
 
 	//UpdateToolConsoles(true);
@@ -1900,6 +1920,7 @@ HWND TabBarClass::CreateToolbar()
 		//bmp.nID = (UINT_PTR)LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_COPY24), IMAGE_BITMAP, 0,0, LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
 		//nLoadErr = GetLastError();
 	}
+
 	int nCopyBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
 	// Должен 37 возвращать
 	_ASSERTE(nCopyBmp == BID_TOOLBAR_LAST_IDX);
@@ -1923,27 +1944,20 @@ HWND TabBarClass::CreateToolbar()
 	TBBUTTON sep = {0, TID_MINIMIZE_SEP+1, TBSTATE_ENABLED, TBSTYLE_SEP};
 	int nActiveCon = gpConEmu->ActiveConNum()+1;
 
+	// New console
+	btn.iBitmap = nFirst + BID_NEWCON_IDX;
+	btn.idCommand = TID_CREATE_CON;
+	btn.fsStyle = BTNS_DROPDOWN;
+	btn.fsState = TBSTATE_ENABLED;
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+
 	// Console numbers
 	btn.iBitmap = ((nActiveCon >= 0) ? (nFirst + BID_FIST_CON) : BID_DUMMYBTN_IDX);
 	btn.idCommand = TID_ACTIVE_NUMBER;
 	btn.fsStyle = BTNS_DROPDOWN;
 	btn.fsState = TBSTATE_ENABLED;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
-	//for (int i = 1; i <= MAX_CONSOLE_COUNT; i++)
-	//{
-	//	btn.iBitmap = nFirst + i-1;
-	//	btn.idCommand = i;
-	//	btn.fsState = TBSTATE_ENABLED
-	//	              | ((gpConEmu->GetVConTitle(i-1) == NULL) ? TBSTATE_HIDDEN : 0)
-	//	              | ((i == nActiveCon) ? TBSTATE_CHECKED : 0);
-	//	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
-	//}
 
-	//SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
-	// New console
-	btn.fsStyle = BTNS_DROPDOWN; btn.idCommand = TID_CREATE_CON; btn.fsState = TBSTATE_ENABLED;
-	btn.iBitmap = nFirst + BID_NEWCON_IDX;
-	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	btn.fsStyle = BTNS_BUTTON;
 	//SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
 #if 0 //defined(_DEBUG)

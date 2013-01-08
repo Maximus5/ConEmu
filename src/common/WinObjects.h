@@ -65,6 +65,7 @@ typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 BOOL FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);
 BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
+BOOL FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax);
 BOOL DirectoryExists(LPCWSTR asPath);
 BOOL MyCreateDirectory(wchar_t* asPath);
 BOOL IsFilePath(LPCWSTR asFilePath);
@@ -129,6 +130,8 @@ struct CEStartupEnv
 	BOOL    bIsReactOS;
 	BOOL    bIsDbcs;
 	UINT    nAnsiCP, nOEMCP;
+	UINT    nMonitorsCount;
+	RECT    rcMonitor[16], rcMonitorWork[16];
 	// HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
 	LPCWSTR pszRegConFonts; // "Index/CP ~t Name ~t Index/CP ..."
 };

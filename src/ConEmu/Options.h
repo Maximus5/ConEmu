@@ -70,6 +70,9 @@ void MinMax(T &a, int v2)
 #define CURSORSIZEPIX_MIN 1
 #define CURSORSIZEPIX_MAX 99
 
+#define QUAKEANIMATION_DEF 300
+#define QUAKEANIMATION_MAX 2000
+
 #include <pshpack1.h>
 typedef struct tagMYRGB
 {
@@ -897,6 +900,7 @@ struct Settings
 		bool isHideChildCaption; // Hide caption of child GUI applications, started in ConEmu tabs (PuTTY, Notepad, etc.)
 		//reg->Load(L"QuakeStyle", isQuakeStyle);
 		BYTE isQuakeStyle;
+		DWORD nQuakeAnimation;
 		protected:
 		//reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
 		bool mb_HideCaptionAlways;
@@ -1462,7 +1466,7 @@ struct Settings
 		
 	public:
 		ConEmuHotKey* AllocateHotkeys();
-		void LoadSettings();
+		void LoadSettings(bool *rbNeedCreateVanilla);
 		void InitSettings();
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadPalettes(SettingsBase* reg);

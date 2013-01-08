@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    121
+#define CESERVER_REQ_VER    122
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -166,6 +166,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define PNLVIEWMAPCOORD_TIMEOUT 1000
 #define CONEMUMSG_PNLVIEWMAPCOORD L"ConEmuTh::MapCoords"
 //#define CONEMUMSG_PNLVIEWLBTNDOWN L"ConEmuTh::LBtnDown"
+#define CONEMUMSG_RESTORECHILDFOCUS L"ConEmu::RestoreChildFocus"
 
 // Команды из плагина ConEmu и для GUI Macro
 enum ConEmuTabCommand

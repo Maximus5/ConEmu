@@ -156,6 +156,7 @@ HANDLE  ghQuitEvent = NULL;
 bool    gbQuit = false;
 BOOL	gbInShutdown = FALSE;
 BOOL	gbInExitWaitForKey = FALSE;
+BOOL	gbStopExitWaitForKey = FALSE;
 BOOL    gbCtrlBreakStopWaitingShown = FALSE;
 BOOL	gbTerminateOnCtrlBreak = FALSE;
 int     gnConfirmExitParm = 0; // 1 - CONFIRM, 2 - NOCONFIRM
@@ -556,6 +557,109 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 	if (!abSkipWowChange)
 		wow.Disable();
 
+	wchar_t* pszOrigPath = NULL;
+
+	// We need to check [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths]
+	// when starting our "root" or "comspec" command
+	if (lpApplicationName == NULL)
+	{
+		LPCWSTR pszTemp = lpCommandLine;
+		wchar_t szExe[MAX_PATH+1];
+		if (NextArg(&pszTemp, szExe) == 0)
+		{
+			LPCWSTR pszName = PointToName(szExe);
+			if (!pszName || !*pszName)
+			{
+				_ASSERTE(pszName && *pszName);
+			}
+			else
+			{
+				DWORD nRegFlags = KEY_READ;
+
+				//Seems that key does not have both (32-bit and 64-bit) versions
+				//if (IsWindows64())
+				//{
+				//}
+
+				bool bFound = false;
+				DWORD cchMax = 65537;
+				wchar_t* pszValue = (wchar_t*)calloc(cchMax,sizeof(*pszValue));
+				if (!pszValue)
+				{
+					SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+					return FALSE;
+				}
+
+				wchar_t szKey[MAX_PATH*2];
+				wcscpy_c(szKey, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\");
+				wcscat_c(szKey, pszName);
+
+				HKEY hk;
+				for (int i = 0; !bFound && (i <= 1); i++)
+				{
+					LONG lRc = RegOpenKeyEx(
+						(!i) ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE, szKey, 0,
+						(!i) ? KEY_READ : nRegFlags, &hk);
+					if (lRc != 0)
+					{
+						// Приложение не зарегистрировано
+						continue;
+					}
+
+					DWORD nSize = (cchMax-2)*sizeof(*pszValue);
+					lRc = RegQueryValueEx(hk, L"Path", NULL, NULL, (LPBYTE)pszValue, &nSize);
+					if (lRc == 0)
+					{
+						bFound = true;
+
+						if (*pszValue)
+						{
+							int nLen = lstrlen(pszValue);
+							if (pszValue[nLen-1] != L';')
+							{
+								pszValue[nLen++] = L';';
+								_ASSERTE(pszValue[nLen] == 0);
+							}
+
+							// Получить текущий PATH и добавить в его начало дополнительные пути
+							DWORD cchMax = 65535;
+							pszOrigPath = (wchar_t*)calloc(cchMax, sizeof(*pszOrigPath));
+							if (!pszOrigPath)
+							{
+								RegCloseKey(hk);
+								free(pszValue);
+								SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+								return FALSE;
+							}
+							DWORD nEnvLen = GetEnvironmentVariable(L"PATH", pszOrigPath, cchMax);
+							if (nEnvLen > 0)
+							{
+								wchar_t* pszNewPath = lstrmerge(pszValue, pszOrigPath);
+								if (!pszNewPath)
+								{
+									RegCloseKey(hk);
+									free(pszValue);
+									SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+									return FALSE;
+								}
+								SetEnvironmentVariable(L"PATH", pszNewPath);
+								free(pszNewPath);
+							}
+							else
+							{
+								SafeFree(pszOrigPath);
+							}
+						}
+					}
+
+					RegCloseKey(hk);
+				}
+
+				free(pszValue);
+			}
+		}
+	}
+
 	SetLastError(0);
 
 	BOOL lbRc = CreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
@@ -568,9 +672,15 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 	if (!abSkipWowChange)
 	{
 		wow.Restore();
-		SetLastError(dwErr);
 	}
 
+	if (pszOrigPath && *pszOrigPath)
+	{
+		SetEnvironmentVariable(L"PATH", pszOrigPath);
+		free(pszOrigPath);
+	}
+
+	SetLastError(dwErr);
 	return lbRc;
 }
 
@@ -662,6 +772,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	// ConEmuC должен быть максимально прозрачен для конечного процесса
 	GetStartupInfo(&si);
 	DWORD dwErr = 0, nWait = 0, nWaitExitEvent = -1, nWaitDebugExit = -1, nWaitComspecExit = -1;
+	DWORD dwWaitGui = -1, dwWaitRoot = -1;
 	BOOL lbRc = FALSE;
 	//DWORD mode = 0;
 	//BOOL lb = FALSE;
@@ -1019,9 +1130,8 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		//if (!gbSkipWowChange) wow.Disable();
 		////#endif
 
-		LPCWSTR pszRunCmpApp = NULL;
-
 		#ifdef _DEBUG
+		LPCWSTR pszRunCmpApp = NULL;
 		wchar_t szExeName[MAX_PATH+1];
 		{
 			LPCWSTR pszStart = gpszRunCmd;
@@ -1041,7 +1151,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		//		lpSec = NULL;
 		//#endif
 		// Не будем разрешать наследование, если нужно - сделаем DuplicateHandle
-		lbRc = createProcess(!gbSkipWowChange, pszRunCmpApp, gpszRunCmd, lpSec,lpSec, lbInheritHandle,
+		lbRc = createProcess(!gbSkipWowChange, NULL, gpszRunCmd, lpSec,lpSec, lbInheritHandle,
 		                      NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
 		                      |CREATE_SUSPENDED/*((gnRunMode == RM_SERVER) ? CREATE_SUSPENDED : 0)*/,
 		                      NULL, pszCurDir, &si, &pi);
@@ -1241,7 +1351,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 	if (gnRunMode == RM_SERVER)
 	{
-		DWORD dwWaitGui = -1;
+		//DWORD dwWaitGui = -1;
 
 		nExitPlaceStep = 500;
 		gpSrv->hRootProcess  = pi.hProcess; pi.hProcess = NULL; // Required for Win2k
@@ -1308,6 +1418,21 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 					while (!gbInShutdown && (nWait != WAIT_OBJECT_0))
 					{
 						nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, 250);
+
+						if (nWaitExitEvent == WAIT_OBJECT_0)
+						{
+							dwWaitRoot = WaitForSingleObject(gpSrv->hRootProcess, 0);
+							if (dwWaitRoot == WAIT_OBJECT_0)
+							{
+								gbTerminateOnCtrlBreak = FALSE;
+								gbCtrlBreakStopWaitingShown = FALSE; // сбросим, чтобы ассерты не лезли
+							}
+							else
+							{
+								// Root process must be terminated at this point (can't start/initialize)
+								_ASSERTE(dwWaitRoot == WAIT_OBJECT_0);
+							}
+						}
 
 						if ((nWait != WAIT_OBJECT_0) && (gpSrv->nProcessCount > 1))
 						{
@@ -4357,6 +4482,12 @@ void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDon
 	//    }
 	while (TRUE)
 	{
+		if (gbStopExitWaitForKey)
+		{
+			// Был вызван HandlerRoutine(CLOSE)
+			break;
+		}
+
 		if (!PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount))
 			dwCount = 0;
 
@@ -8899,6 +9030,9 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 		PRINT_COMSPEC(L"Console about to be closed\n", 0);
 		WARNING("Тут бы подождать немного, пока другие консольные процессы завершатся... а то таб закрывается раньше времени");
 		gbInShutdown = TRUE;
+
+		if (gbInExitWaitForKey)
+			gbStopExitWaitForKey = TRUE;
 		
 		// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется
 		if (gpSrv->bDebuggerActive)

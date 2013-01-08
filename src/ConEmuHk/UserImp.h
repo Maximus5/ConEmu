@@ -62,6 +62,7 @@ public:
 	HMENU    getMenu(HWND hWnd);
 	BOOL     attachThreadInput(DWORD idAttach, DWORD idAttachTo, BOOL fAttach);
 	HWND     getFocus();
+	HWND     setFocus(HWND hWnd);
 	BOOL     isWindow(HWND hWnd);
 	BOOL     isWindowVisible(HWND hWnd);
 	BOOL     showWindow(HWND hWnd, int nCmdShow);
@@ -124,6 +125,8 @@ private:
 	attachThreadInput_t attachThreadInput_f;
 	typedef HWND     (WINAPI* getFocus_t)();
 	getFocus_t getFocus_f;
+	typedef HWND     (WINAPI* setFocus_t)(HWND hWnd);
+	setFocus_t setFocus_f;
 	typedef BOOL     (WINAPI* isWindow_t)(HWND hWnd);
 	isWindow_t isWindow_f;
 	typedef BOOL     (WINAPI* isWindowVisible_t)(HWND hWnd);

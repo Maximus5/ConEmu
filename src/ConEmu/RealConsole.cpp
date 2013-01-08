@@ -93,7 +93,7 @@ WARNING("„асто после разблокировани€ компьютера размер консоли измен€етс€ (OK), 
 #define Free SafeFree
 #define Alloc calloc
 
-#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i", _T(#V), _T(__FILE__), __LINE__); Box(szAMsg); }
+//#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i", _T(#V), _T(__FILE__), __LINE__); Box(szAMsg); }
 
 #ifdef _DEBUG
 #define HEAPVAL MCHKHEAP
@@ -257,7 +257,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_LastInvalidateTick = 0;
 
 	hConWnd = NULL;
-	hGuiWnd = NULL; mb_GuiExternMode = FALSE; //mn_GuiApplicationPID = 0;
+	hGuiWnd = mh_GuiWndFocusStore = NULL; mb_GuiExternMode = FALSE; //mn_GuiApplicationPID = 0;
+	mn_GuiAttachInputTID = 0;
 	mn_GuiWndStyle = mn_GuiWndStylEx = 0; mn_GuiAttachFlags = 0;
 	setGuiWndPID(0, NULL); // set mn_GuiWndPID to 0
 	mb_InGuiAttaching = FALSE;
@@ -628,7 +629,7 @@ void CRealConsole::SyncGui2Window(RECT* prcClient)
 			// —транно это, по идее, приложение при закрытии окна должно было сообщить,
 			// что оно закрылось, hGuiWnd больше не валиден...
 			_ASSERTE(IsWindow(hGuiWnd));
-			hGuiWnd = NULL;
+			hGuiWnd = mh_GuiWndFocusStore = NULL;
 			return;
 		}
 
@@ -2737,6 +2738,7 @@ BOOL CRealConsole::StartProcess()
 		DisplayLastError(L"Failed to create/open registry key 'HKCU\\Console\\ConEmu'", lRegRc);
 		hkConsole = NULL;
 	}
+
 	BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
 	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, true, hkConsole);
 	si.dwFlags |= STARTF_USEFILLATTRIBUTE;
@@ -2793,9 +2795,12 @@ BOOL CRealConsole::StartProcess()
 		MCHKHEAP;
 		psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 		_ASSERTE(psCurCmd);
+
+
+		// Begin generation of execution command line
 		*psCurCmd = 0;
 
-#if 0
+		#if 0
 		// Issue 791: Server fails, when GUI started under different credentials (login) as server
 		if (m_Args.bRunAsAdministrator)
 		{
@@ -2803,9 +2808,10 @@ BOOL CRealConsole::StartProcess()
 			_wcscat_c(psCurCmd, nLen, gpConEmu->ms_ConEmuExe);
 			_wcscat_c(psCurCmd, nLen, L"\" /bypass /cmd ");
 		}
-#endif
+		#endif
 
 		_wcscat_c(psCurCmd, nLen, L"\"");
+		// Copy to psCurCmd full path to ConEmuC.exe or ConEmuC64.exe
 		_wcscat_c(psCurCmd, nLen, gpConEmu->ConEmuCExeFull(lpszCmd));
 		//lstrcat(psCurCmd, L"\\");
 		//lstrcpy(psCurCmd, gpConEmu->ms_ConEmuCExeName);
@@ -4086,7 +4092,7 @@ void CRealConsole::StopSignal()
 
 	if (!mn_InRecreate)
 	{
-		hGuiWnd = NULL;
+		hGuiWnd = mh_GuiWndFocusStore = NULL;
 		//mn_GuiApplicationPID = 0;
 
 		// „тобы при закрытии не было попытка активировать
@@ -4219,12 +4225,17 @@ void CRealConsole::StopThread(BOOL abRecreating)
 }
 
 
-void CRealConsole::Box(LPCTSTR szText)
+void CRealConsole::Box(LPCTSTR szText, DWORD nBtns)
 {
 #ifdef _DEBUG
 	_ASSERTE(FALSE);
 #endif
-	MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
+	int nRet = MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), nBtns|MB_ICONSTOP|MB_SYSTEMMODAL);
+
+	if ((nBtns & 0xF) == MB_RETRYCANCEL)
+	{
+		gpConEmu->OnInfo_ReportBug();
+	}
 }
 
 bool CRealConsole::InScroll()
@@ -6735,7 +6746,7 @@ BOOL CRealConsole::RecreateProcessStart()
 		StopThread(TRUE/*abRecreate*/);
 		ResetEvent(mh_TermEvent);
 		hConWnd = NULL;
-		hGuiWnd = NULL;
+		hGuiWnd = mh_GuiWndFocusStore = NULL;
 		//mn_GuiApplicationPID = 0;
 		setGuiWndPID(0, NULL); // set mn_GuiWndPID to 0
 		mn_GuiWndStyle = mn_GuiWndStylEx = 0;
@@ -7223,6 +7234,9 @@ void CRealConsole::OnDeactivate(int nNewNum)
 	if (!this) return;
 
 	HWND hFore = GetForegroundWindow();
+	HWND hGui = mp_VCon->GuiWnd();
+	if (hGui)
+		GuiWndFocusStore();
 	
 	mp_VCon->SavePaneSnapshoot();
 
@@ -7286,7 +7300,10 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 					//SetOtherWindowFocus(hGuiWnd, FALSE/*use SetFocus*/);
 					//--SetFocus(hGuiWnd);
 					//PostConsoleMessage(hConWnd, WM_SETFOCUS, NULL, NULL);
+					//SetForegroundWindow(hGuiWnd);
 				}
+
+				GuiWndFocusRestore();
 			}
 			SendMessage(ghWnd, WM_NCACTIVATE, TRUE, 0);
 		}
@@ -10067,9 +10084,109 @@ HWND CRealConsole::GetView()
 // ≈сли работаем в Gui-режиме (Notepad, Putty, ...)
 HWND CRealConsole::GuiWnd()
 {
-	if (!this) return NULL;
+	if (!this)
+		return NULL;
 
 	return hGuiWnd;
+}
+
+void CRealConsole::GuiWndFocusStore()
+{
+	if (!this || !hGuiWnd)
+		return;
+
+	GUITHREADINFO gti = {sizeof(gti)};
+	DWORD nPID;
+	DWORD nTID = GetWindowThreadProcessId(hGuiWnd, &nPID);
+	BOOL bGuiInfo = GetGUIThreadInfo(nTID, &gti);
+
+	DWORD nGetPID;
+	if (gti.hwndFocus)
+	{
+		GetWindowThreadProcessId(gti.hwndFocus, &nGetPID);
+		if (nGetPID != GetCurrentProcessId())
+		{
+			mh_GuiWndFocusStore = gti.hwndFocus;
+
+			BOOL bAttached = FALSE, bAttachCalled = FALSE; DWORD nErr;
+			GuiWndFocusThread(gti.hwndFocus, bAttached, bAttachCalled, nErr);
+
+			_ASSERTE(bAttached);
+		}
+	}
+}
+
+void CRealConsole::GuiWndFocusRestore()
+{
+	if (!this || !hGuiWnd)
+		return;
+
+	BOOL bAttached = FALSE;
+	DWORD nErr = 0;
+
+	HWND hSetFocus = mh_GuiWndFocusStore ? mh_GuiWndFocusStore : hGuiWnd;
+
+	if (hSetFocus && IsWindow(hSetFocus))
+	{
+		_ASSERTE(gpConEmu->isMainThread());
+
+		BOOL bAttachCalled = FALSE;
+		GuiWndFocusThread(hSetFocus, bAttached, bAttachCalled, nErr);
+		//DWORD nTID = GetWindowThreadProcessId(hSetFocus, NULL);
+		//if (nTID != mn_GuiAttachInputTID)
+		//{
+		//	bAttached = AttachThreadInput(nTID, GetCurrentThreadId(), TRUE);
+		//	if (!bAttached)
+		//		nErr = GetLastError();
+		//	else
+		//		mn_GuiAttachInputTID = nTID;
+		//	bAttachCalled = TRUE;
+		//}
+
+		//SetForegroundWindow(hGuiWnd);
+		SetFocus(hSetFocus);
+
+		#ifdef _DEBUG
+		wchar_t sInfo[200];
+		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"GuiWndFocusRestore to x%08X, hGuiWnd=x%08X, Attach=%s, Err=%u",
+			(DWORD)hSetFocus, (DWORD)hGuiWnd,
+			bAttachCalled ? (bAttached ? L"Called" : L"Failed") : L"Skipped", nErr);
+		DEBUGSTRFOCUS(sInfo);
+		#endif
+	}
+	else
+	{
+		DEBUGSTRFOCUS(L"GuiWndFocusRestore skipped");
+	}
+}
+
+void CRealConsole::GuiWndFocusThread(HWND hSetFocus, BOOL& bAttached, BOOL& bAttachCalled, DWORD& nErr)
+{
+	if (!this || !hGuiWnd)
+		return;
+
+	bAttached = FALSE;
+	nErr = 0;
+
+	DWORD nMainTID = GetWindowThreadProcessId(ghWnd, NULL);
+
+	bAttachCalled = FALSE;
+	DWORD nTID = GetWindowThreadProcessId(hSetFocus, NULL);
+	if (nTID != mn_GuiAttachInputTID)
+	{
+		// Ќадо, иначе не получитс€ "передать" фокус в дочернее окно GUI приложени€
+		bAttached = AttachThreadInput(nTID, nMainTID, TRUE);
+		if (!bAttached)
+			nErr = GetLastError();
+		else
+			mn_GuiAttachInputTID = nTID;
+		bAttachCalled = TRUE;
+	}
+	else
+	{
+		// ”же
+		bAttached = TRUE;
+	}
 }
 
 void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev)
@@ -10081,7 +10198,9 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	}
 
 	if ((hGuiWnd != NULL) && !IsWindow(hGuiWnd))
-		hGuiWnd = NULL; // окно закрылось, открылось другое
+	{
+		hGuiWnd = mh_GuiWndFocusStore = NULL; // окно закрылось, открылось другое
+	}
 
 	if (hGuiWnd != NULL && hGuiWnd != ahGuiWnd)
 	{
@@ -10102,6 +10221,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	// ahGuiWnd может быть на первом этапе, когда ConEmuHk уведомл€ет - запустилс€ GUI процесс
 	_ASSERTE((hGuiWnd==NULL && ahGuiWnd==NULL) || (ahGuiWnd && IsWindow(ahGuiWnd))); // ѕроверить, чтобы мусор не пришел...
 	hGuiWnd = ahGuiWnd;
+	GuiWndFocusStore();
 	mn_GuiAttachFlags = anFlags;
 	//mn_GuiApplicationPID = anAppPID;
 	//mn_GuiWndPID = anAppPID;
@@ -11194,7 +11314,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 		//SetOtherWindowPos(lhGuiWnd, HWND_NOTOPMOST, rcGui.left, rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top, SWP_SHOWWINDOW);
 
 		// —бросить переменные, чтобы гуй закрыть не пыталось
-		hGuiWnd = NULL;
+		hGuiWnd = mh_GuiWndFocusStore = NULL;
 		setGuiWndPID(0, NULL);
 		//mb_IsGuiApplication = FALSE;
 

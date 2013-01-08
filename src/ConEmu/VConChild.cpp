@@ -66,6 +66,7 @@ CConEmuChild::CConEmuChild()
 	mn_MsgPostFullPaint = RegisterWindowMessage(L"CConEmuChild::PostFullPaint");
 	mn_MsgSavePaneSnapshoot = RegisterWindowMessage(L"CConEmuChild::SavePaneSnapshoot");
 	mn_MsgDetachPosted = RegisterWindowMessage(L"CConEmuChild::Detach");
+	mn_MsgRestoreChildFocus = RegisterWindowMessage(CONEMUMSG_RESTORECHILDFOCUS);
 #ifdef _DEBUG
 	mn_MsgCreateDbgDlg = RegisterWindowMessage(L"CConEmuChild::MsgCreateDbgDlg");
 	hDlgTest = NULL;
@@ -281,8 +282,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			// Если в консоли работает "GUI" окно (GUI режим), то фокус нужно отдать туда.
 			{
 				// Фокус должен быть в главном окне! За исключением случая работы в GUI режиме.
-				HWND hGuiWnd = pVCon->GuiWnd();
-				SetFocus(hGuiWnd ? hGuiWnd : ghWnd);
+				pVCon->setFocus();
 			}
 			return 0;
 		case WM_ERASEBKGND:
@@ -539,6 +539,11 @@ wrap:
 	return result;
 }
 
+void CConEmuChild::PostRestoreChildFocus()
+{
+	PostMessage(mh_WndBack, mn_MsgRestoreChildFocus, 0, 0);
+}
+
 LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
@@ -595,8 +600,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			// Если в консоли работает "GUI" окно (GUI режим), то фокус нужно отдать туда.
 			{
 				// Фокус должен быть в главном окне! За исключением случая работы в GUI режиме.
-				HWND hGuiWnd = pVCon->GuiWnd();
-				SetFocus(hGuiWnd ? hGuiWnd : ghWnd);
+				pVCon->setFocus();
 			}
 			return 0;
 		case WM_ERASEBKGND:
@@ -753,7 +757,17 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 		default:
 
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			if (pVCon && (messg == pVCon->mn_MsgRestoreChildFocus))
+			{
+				if (gpConEmu->isActive(pVCon, false))
+				{
+					pVCon->RCon()->GuiWndFocusRestore();
+				}
+			}
+			else
+			{
+				result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
 	}
 
 wrap:

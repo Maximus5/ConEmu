@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"mode.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"xxxxx.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -2072,7 +2072,8 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 
 	if  ((iRc == 0) && (Parm->Flags & slsf_PrevAltServerPID))
 	{
-		gnPrevAltServerPID = Parm->nPrevAltServerPID;
+		// nPrevAltServerPID is DWORD_PTR for struct aligning purposes
+		gnPrevAltServerPID = (DWORD)Parm->nPrevAltServerPID;
 	}
 wrap:
 	return iRc;

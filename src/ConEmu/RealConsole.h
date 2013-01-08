@@ -253,6 +253,8 @@ class CRealConsole
 	private:
 		HWND    hConWnd;
 		HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
+		HWND    mh_GuiWndFocusStore;
+		DWORD   mn_GuiAttachInputTID;
 		static  BOOL CALLBACK FindChildGuiWindowProc(HWND hwnd, LPARAM lParam);
 		DWORD   mn_GuiAttachFlags; // запоминается в SetGuiMode
 		BOOL    mb_GuiExternMode; // FALSE если захотели показать GUI приложение вне вкладки ConEmu (Ctrl-Win-Alt-Space)
@@ -276,6 +278,11 @@ class CRealConsole
 
 		// Если работаем в Gui-режиме (Notepad, Putty, ...)
 		HWND    GuiWnd();  // HWND Gui приложения
+		void    GuiWndFocusStore();
+		void    GuiWndFocusRestore();
+	private:
+		void    GuiWndFocusThread(HWND hSetFocus, BOOL& bAttached, BOOL& bAttachCalled, DWORD& nErr);
+	public:
 		BOOL    isGuiVisible();
 		BOOL    isGuiOverCon();
 		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
@@ -529,6 +536,8 @@ class CRealConsole
 		void ShowPropertiesDialog();
 		void LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars = NULL);
 
+		static void Box(LPCTSTR szText, DWORD nBtns = 0);
+
 	protected:
 		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
 
@@ -597,9 +606,6 @@ class CRealConsole
 		//BOOL mb_AdminShieldChecked;
 		//wchar_t* ms_SpecialCmd;
 		//BOOL mb_RunAsAdministrator;
-
-
-		static void Box(LPCTSTR szText);
 
 		//BOOL RetrieveConsoleInfo(/*BOOL bShortOnly,*/ UINT anWaitSize);
 		BOOL WaitConsoleSize(int anWaitSize, DWORD nTimeout);
@@ -835,3 +841,5 @@ class CRealConsole
 		//		bool bWasFrame[MAX_DETECTED_DIALOGS];
 		//	} m_DetectedDialogs;
 };
+
+#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i\n\nPress <Retry> to report a bug (web page)", _T(#V), _T(__FILE__), __LINE__); CRealConsole::Box(szAMsg, MB_RETRYCANCEL); }

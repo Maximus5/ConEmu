@@ -68,6 +68,7 @@ class CVirtualConsole :
 	public:
 		CRealConsole *RCon();
 		HWND GuiWnd();
+		void setFocus();
 		HWND GhostWnd();
 		bool isVisible();
 		int GetTabCount();
@@ -336,7 +337,7 @@ class CVirtualConsole :
 		void Free(LPVOID ptr);
 		MSection csCON;
 		int mn_BackColorIdx; //==0
-		void Box(LPCTSTR szText);
+		//void Box(LPCTSTR szText);
 		static char mc_Uni2Oem[0x10000];
 		char Uni2Oem(wchar_t ch);
 		typedef struct tag_PARTBRUSHES

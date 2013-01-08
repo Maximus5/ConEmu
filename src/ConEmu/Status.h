@@ -77,6 +77,8 @@ enum CEStatusItems
 	csi_ActiveProcess,
 	csi_ConsoleTitle,
 
+	csi_ResizeMark,
+
 	//
 	csi_Last
 };
@@ -118,6 +120,11 @@ private:
 	wchar_t ms_ConEmuBuild[32];
 
 	RECT mrc_LastStatus;
+
+	RECT mrc_LastResizeCol;
+	bool mb_StatusResizing;
+	POINT mpt_StatusResizePt;
+	RECT mrc_StatusResizeRect;
 
 	SIZE mn_BmpSize;
 	HBITMAP mh_Bmp, mb_OldBmp;
@@ -181,6 +188,9 @@ public:
 	void OnKeyboardChanged();
 	void OnTransparency();
 
+	bool IsStatusResizing();
+	bool IsCursorOverResizeMark(POINT ptCurClient);
+	bool IsResizeAllowed();
 	bool ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, POINT ptCurClient, LRESULT& lResult);
 	void ProcessMenuHighlight(HMENU hMenu, WORD nID, WORD nFlags);
 

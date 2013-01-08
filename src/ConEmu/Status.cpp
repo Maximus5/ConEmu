@@ -183,6 +183,10 @@ static StatusColInfo gStatusCols[] =
 	{csi_Transparency,	L"StatusBar.Hide.Transparency",
 						L"Transparency",
 						L"Transparency, left click to change"},
+
+	{csi_ResizeMark,	L"StatusBar.Hide.Resize",
+						L"Resize mark",
+						L"Drag place to resize ConEmu window"},
 };
 
 static struct StatusTranspOptions {
@@ -225,6 +229,8 @@ CStatus::CStatus()
 	ZeroStruct(m_Items);
 	ZeroStruct(m_Values);
 	ZeroStruct(mrc_LastStatus);
+	ZeroStruct(mrc_LastResizeCol);
+	mb_StatusResizing = false;
 
 	//mn_BmpSize; -- не важно
 	mb_OldBmp = mh_Bmp = NULL; mh_MemDC = NULL;
@@ -258,6 +264,10 @@ CStatus::CStatus()
 
 	// Init some values
 	OnTransparency();
+
+	// Fixed and self-draw
+	wcscpy_c(m_Values[csi_ResizeMark].sText, L"//");
+	wcscpy_c(m_Values[csi_ResizeMark].szFormat, L"//");
 
 	_ASSERTE(gpConEmu && *gpConEmu->ms_ConEmuBuild);
 	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L" %c %s%s", 
@@ -676,53 +686,76 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 		// «апомнить, чтобы клики обрабатывать...
 		m_Items[i].rcClient = MakeRect(rcField.left+rcStatus.left, rcStatus.top, rcField.right+rcStatus.left, rcStatus.bottom);
 
-		switch (m_Items[i].nID)
+		// "Resize mark" отрисовываетс€ вручную
+		if (m_Items[i].nID == csi_ResizeMark)
 		{
-		case csi_SyncInside:
-			SetTextColor(mh_MemDC, (gpConEmu->mp_Inside && gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir) ? crText : crDash);
-			break;
-		case csi_CapsLock:
-			SetTextColor(mh_MemDC, mb_Caps ? crText : crDash);
-			break;
-		case csi_NumLock:
-			SetTextColor(mh_MemDC, mb_Num ? crText : crDash);
-			break;
-		case csi_ScrollLock:
-			SetTextColor(mh_MemDC, mb_Scroll ? crText : crDash);
-			break;
-		default:
-			;
+			int nW = (rcField.bottom - rcField.top);
+			if (nW > 0)
+			{
+				int nShift = (nW - 1) / 3;
+				int nX = rcField.right - nW - 1;
+				int nY = rcField.top-1;
+				int nR = rcField.right;
+				MoveToEx(mh_MemDC, nX, rcField.bottom, NULL);
+				LineTo(mh_MemDC, nR, nY);
+				nX += nShift; nY += nShift;
+				MoveToEx(mh_MemDC, nX, rcField.bottom, NULL);
+				LineTo(mh_MemDC, nR, nY);
+				nX += nShift; nY += nShift;
+				MoveToEx(mh_MemDC, nX, rcField.bottom, NULL);
+				LineTo(mh_MemDC, nR, nY);
+			}
 		}
-
-		RECT rcText = {rcField.left+1, rcField.top+1, rcField.right-1, rcField.bottom-1};
-
-		if (!i && szVerSize.cx > 0)
+		else
 		{
-			DrawText(mh_MemDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &rcText, 
-				DT_RIGHT|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS);
-			rcText.right -= szVerSize.cx;
-		}
+			switch (m_Items[i].nID)
+			{
+			case csi_SyncInside:
+				SetTextColor(mh_MemDC, (gpConEmu->mp_Inside && gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir) ? crText : crDash);
+				break;
+			case csi_CapsLock:
+				SetTextColor(mh_MemDC, mb_Caps ? crText : crDash);
+				break;
+			case csi_NumLock:
+				SetTextColor(mh_MemDC, mb_Num ? crText : crDash);
+				break;
+			case csi_ScrollLock:
+				SetTextColor(mh_MemDC, mb_Scroll ? crText : crDash);
+				break;
+			default:
+				;
+			}
 
-		DrawText(mh_MemDC, m_Items[i].sText, m_Items[i].nTextLen, &rcText, 
-			((m_Items[i].nID == csi_Info) ? DT_LEFT : DT_CENTER)
-			|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS);
+			RECT rcText = {rcField.left+1, rcField.top+1, rcField.right-1, rcField.bottom-1};
 
-		switch (m_Items[i].nID)
-		{
-		case csi_SyncInside:
-		case csi_CapsLock:
-		case csi_NumLock:
-		case csi_ScrollLock:
-			SetTextColor(mh_MemDC, crText);
-			break;
-		default:
-			;
-		}
+			if (!i && szVerSize.cx > 0)
+			{
+				DrawText(mh_MemDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &rcText, 
+					DT_RIGHT|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS);
+				rcText.right -= szVerSize.cx;
+			}
 
-		if ((gpSet->isStatusBarFlags & csf_VertDelim) && ((i+1) < nDrawCount))
-		{
-			MoveToEx(mh_MemDC, rcField.right, rcField.top, NULL);
-			LineTo(mh_MemDC, rcField.right, rcField.bottom+1);
+			DrawText(mh_MemDC, m_Items[i].sText, m_Items[i].nTextLen, &rcText, 
+				((m_Items[i].nID == csi_Info) ? DT_LEFT : DT_CENTER)
+				|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS);
+
+			switch (m_Items[i].nID)
+			{
+			case csi_SyncInside:
+			case csi_CapsLock:
+			case csi_NumLock:
+			case csi_ScrollLock:
+				SetTextColor(mh_MemDC, crText);
+				break;
+			default:
+				;
+			}
+
+			if ((gpSet->isStatusBarFlags & csf_VertDelim) && ((i+1) < nDrawCount))
+			{
+				MoveToEx(mh_MemDC, rcField.right, rcField.top, NULL);
+				LineTo(mh_MemDC, rcField.right, rcField.bottom+1);
+			}
 		}
 
 		x = rcField.right + nDashWidth;
@@ -739,6 +772,12 @@ wrap:
 	DeleteObject(hBr);
 	DeleteObject(hDash);
 	DeleteObject(hFont);
+
+	if (gpSet->isStatusColumnHidden[csi_ResizeMark]
+		|| !GetStatusBarItemRect(csi_ResizeMark, &mrc_LastResizeCol))
+	{
+		ZeroStruct(mrc_LastResizeCol);
+	}
 
 	mrc_LastStatus = rcStatus;
 	mn_LastPaintTick = GetTickCount();
@@ -824,12 +863,95 @@ void CStatus::SetClickedItemDesc(CEStatusItems anID)
 	}
 }
 
+bool CStatus::IsResizeAllowed()
+{
+	if (gpConEmu->mp_Inside)
+		return false;
+
+	if (!gpSet->isStatusBarShow
+		|| gpSet->isStatusColumnHidden[csi_ResizeMark])
+	{
+		return false;
+	}
+
+	if (gpConEmu->WindowMode != wmNormal)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool CStatus::IsCursorOverResizeMark(POINT ptCurClient)
+{
+	_ASSERTE(this);
+
+	if (!IsResizeAllowed())
+		return false;
+
+	// Cursor over "resize mark"?
+	if (!PtInRect(&mrc_LastResizeCol, ptCurClient))
+		return false;
+
+	return true;
+}
+
+bool CStatus::IsStatusResizing()
+{
+	_ASSERTE(this);
+	return mb_StatusResizing;
+}
+
 bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, POINT ptCurClient, LRESULT& lResult)
 {
 	if (!gpSet->isStatusBarShow)
 		return false; // –азрешить дальнейшую обработку
 
 	lResult = 0;
+
+	// Cursor over "resize mark"?
+	if (IsResizeAllowed()
+		&& (mb_StatusResizing || PtInRect(&mrc_LastResizeCol, ptCurClient)))
+	{
+		POINT ptScr = {};
+
+		switch (uMsg)
+		{
+		case WM_LBUTTONDOWN:
+			GetCursorPos(&mpt_StatusResizePt);
+			GetWindowRect(ghWnd, &mrc_StatusResizeRect);
+			mb_StatusResizing = true;
+			SetCapture(ghWnd);
+			gpConEmu->BeginSizing();
+			break;
+		case WM_LBUTTONUP:
+		case WM_MOUSEMOVE:
+			if (mb_StatusResizing && GetCursorPos(&ptScr))
+			{
+				int nWidth = (mrc_StatusResizeRect.right - mrc_StatusResizeRect.left) + (ptScr.x - mpt_StatusResizePt.x);
+				int nHeight = (mrc_StatusResizeRect.bottom - mrc_StatusResizeRect.top) + (ptScr.y - mpt_StatusResizePt.y);
+
+				RECT rcNew = {mrc_StatusResizeRect.left, mrc_StatusResizeRect.top, mrc_StatusResizeRect.left + nWidth, mrc_StatusResizeRect.top + nHeight};
+				gpConEmu->OnSizing(WMSZ_BOTTOMRIGHT, (LPARAM)&rcNew);
+
+				SetWindowPos(ghWnd, NULL,
+					rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top,
+					SWP_NOZORDER|SWP_NOCOPYBITS);
+			}
+			
+			if (uMsg == WM_LBUTTONUP)
+			{
+				SetCapture(NULL);
+				mb_StatusResizing = false;
+			}
+			break;
+		case WM_SETCURSOR: // не приходит
+			// Stop further processing
+			SetCursor(LoadCursor(NULL, MAKEINTRESOURCE(IDC_SIZENWSE)));
+			lResult = TRUE;
+			return true;
+		}
+	}
 
 	if (gpConEmu->isSizing() || !PtInRect(&mrc_LastStatus, ptCurClient))
 	{

@@ -132,8 +132,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define FIXPOSAFTERSTYLE_DELTA 2500
 
-#define CONEMU_ANIMATE_DURATION 200
-#define CONEMU_ANIMATE_DURATION_MAX 5000
+//#define CONEMU_ANIMATE_DURATION 200
+//#define CONEMU_ANIMATE_DURATION_MAX 5000
 
 const wchar_t* gsHomePage  = L"http://conemu-maximus5.googlecode.com";
 const wchar_t* gsReportBug = L"http://code.google.com/p/conemu-maximus5/issues/entry";
@@ -1063,24 +1063,39 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 					DWORD ImageSubsystem = 0, ImageBits = 0, FileAttrs = 0;
 					lbFound = GetImageSubsystem(asCmdLine, ImageSubsystem, ImageBits, FileAttrs);
 					// Если не нашли и путь не был указан
-					if (!lbFound && !wcschr(asCmdLine, L'\\'))
+					// Даже если указан путь - это может быть путь к файлу без расширения. Его нужно "добавить".
+					if (!lbFound /*&& !wcschr(asCmdLine, L'\\')*/)
 					{
+						LPCWSTR pszSearchFile = asCmdLine;
+						LPCWSTR pszSlash = wcsrchr(asCmdLine, L'\\');
+						wchar_t* pszSearchPath = NULL;
+						if (pszSlash)
+						{
+							if ((pszSearchPath = lstrdup(asCmdLine)) != NULL)
+							{
+								pszSearchFile = pszSlash + 1;
+								pszSearchPath[pszSearchFile - asCmdLine] = 0;
+							}
+						}
+
 						// попытаемся найти
 						wchar_t *pszFilePart;
-						DWORD nLen = SearchPath(NULL, asCmdLine, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
-						if (!nLen)
+						DWORD nLen = SearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
+						if (!nLen && !pszSearchPath)
 						{
 							wchar_t szRoot[MAX_PATH+1];
 							wcscpy_c(szRoot, ms_ConEmuExeDir);
 							wchar_t* pszSlash = wcsrchr(szRoot, L'\\');
 							if (pszSlash)
 								*pszSlash = 0;
-							nLen = SearchPath(szRoot, asCmdLine, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
+							nLen = SearchPath(szRoot, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
 						}
 						if (nLen && (nLen < countof(szFind)))
 						{
 							lbFound = GetImageSubsystem(szFind, ImageSubsystem, ImageBits, FileAttrs);
 						}
+
+						SafeFree(pszSearchPath);
 					}
 
 					if (lbFound)
@@ -3162,24 +3177,52 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 {
 	_ASSERTE(ghWnd!=NULL);
 	RECT rcMain = {};
-	if (isIconic() || mp_Menu->GetRestoreFromMinimized())
+	WINDOWPLACEMENT wpl = {sizeof(wpl)};
+	int nGetStyle = 0;
+
+	bool bNeedCalc = (isIconic() || mp_Menu->GetRestoreFromMinimized());
+
+	if (bNeedCalc)
 	{
+		nGetStyle = 1;
+
 		if (gpSet->isQuakeStyle)
 		{
 			rcMain = GetDefaultRect();
+			nGetStyle = 2;
 		}
 		else
 		{
-			WINDOWPLACEMENT wpl = {sizeof(wpl)};
 			GetWindowPlacement(ghWnd, &wpl);
 			
 			rcMain = wpl.rcNormalPosition;
+
+			if (rcMain.left <= -32000 && rcMain.top <= -32000)
+			{
+				// -- when we call "DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam)"
+				// -- uxtheme lose wpl.rcNormalPosition at this point
+				//_ASSERTE(FALSE && "wpl.rcNormalPosition contains 'iconic' size!");
+
+				if (mrc_StoredNormalRect.right > mrc_StoredNormalRect.left && mrc_StoredNormalRect.bottom > mrc_StoredNormalRect.top)
+				{
+					rcMain = mrc_StoredNormalRect;
+					nGetStyle = 6;
+				}
+				else
+				{
+					_ASSERTE(FALSE && "mrc_StoredNormalRect was not saved yet, using GetDefaultRect()");
+
+					rcMain = GetDefaultRect();
+					nGetStyle = 5;
+				}
+			}
 
 			// Если окно было свернуто из Maximized/FullScreen состояния
 			if ((WindowMode == wmMaximized) || (WindowMode == wmFullScreen))
 			{
 				ConEmuRect t = (WindowMode == wmMaximized) ? CER_MAXIMIZED : CER_FULLSCREEN;
 				rcMain = CalcRect(t, rcMain, t);
+				nGetStyle += 10;
 			}
 		}
 	}
@@ -3442,7 +3485,9 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					break;
 			}
 		}
+		_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
 		return rc;
+
 		case CER_CONSOLE_ALL: // switch (tFrom)
 		case CER_CONSOLE_CUR: // switch (tFrom)
 		{
@@ -3468,7 +3513,9 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 
 			// -- tFromNow = CER_BACK; -- менять не требуется, т.к. мы сразу на выход
 		}
+		_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
 		return rc;
+
 		case CER_FULLSCREEN: // switch (tFrom)
 		case CER_MAXIMIZED: // switch (tFrom)
 		case CER_RESTORE: // switch (tFrom)
@@ -3517,8 +3564,10 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		case CER_CONSOLE_NTVDMOFF: // switch (tWhat)
 		{
 			rc = CVConGroup::CalcRect(tWhat, rc, tFromNow, pVCon, tTabAction);
+			_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
 			return rc;
 		} break;
+
 		case CER_MONITOR:    // switch (tWhat)
 		case CER_FULLSCREEN: // switch (tWhat)
 		case CER_MAXIMIZED:  // switch (tWhat)
@@ -3754,6 +3803,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			//	//    rc.bottom = rc.top + nHeight;
 			//	//}
 			//}
+			_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
 			return rc;
 		} break;
 		default:
@@ -3761,6 +3811,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 	}
 
 	//AddMargins(rc, rcAddShift);
+	_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
 	return rc; // Посчитали, возвращаем
 }
 
@@ -4056,11 +4107,16 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 	}
 }
 
-BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= 0*/)
+BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 {
 	if (mb_LockShowWindow)
 	{
 		return FALSE;
+	}
+
+	if (nAnimationMS == (DWORD)-1)
+	{
+		nAnimationMS = gpSet->isQuakeStyle ? gpSet->nQuakeAnimation : QUAKEANIMATION_DEF;
 	}
 
 	BOOL lbRc = FALSE;
@@ -4138,10 +4194,14 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= 0*/)
 		if (anCmdShow == SW_HIDE)
 			nFlags |= AW_HIDE;
 
-		if (nAnimationMS == 0)
-			nAnimationMS = CONEMU_ANIMATE_DURATION;
-		else if (nAnimationMS > CONEMU_ANIMATE_DURATION_MAX)
-			nAnimationMS = CONEMU_ANIMATE_DURATION_MAX;
+
+		if (nAnimationMS > QUAKEANIMATION_MAX)
+			nAnimationMS = QUAKEANIMATION_MAX;
+
+		//if (nAnimationMS == 0)
+		//	nAnimationMS = CONEMU_ANIMATE_DURATION;
+		//else if (nAnimationMS > CONEMU_ANIMATE_DURATION_MAX)
+		//	nAnimationMS = CONEMU_ANIMATE_DURATION_MAX;
 
 		AnimateWindow(ghWnd, nAnimationMS, nFlags);
 	}
@@ -4168,15 +4228,21 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpSet->SetMinToTray(true);
 	}
 
-	HWND hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_SizePos] : NULL; // Страничка с настройками
-
+	HWND hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Show] : NULL; // Страничка с настройками
 	if (hWnd2)
 	{
 		EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
-		EnableWindow(GetDlgItem(hWnd2, tHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
-		EnableWindow(GetDlgItem(hWnd2, stHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
+		//EnableWindow(GetDlgItem(hWnd2, tHideCaptionAlwaysFrame), gpSet->isQuakeStyle); -- always enabled on "Appearance" page!
+		//EnableWindow(GetDlgItem(hWnd2, stHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
+		EnableWindow(GetDlgItem(hWnd2, stQuakeAnimation), gpSet->isQuakeStyle);
+		EnableWindow(GetDlgItem(hWnd2, tQuakeAnimation), gpSet->isQuakeStyle);
 		gpSetCls->checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle!=0);
 		gpSetCls->checkDlgButton(hWnd2, cbQuakeAutoHide, gpSet->isQuakeStyle==2);
+	}
+
+	hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_SizePos] : NULL; // Страничка с настройками
+	if (hWnd2)
+	{
 		gpSetCls->checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
 	}
 
@@ -4240,8 +4306,8 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	if (m_QuakePrevSize.bWaitReposition)
 		m_QuakePrevSize.bWaitReposition = false;
 
-	if (hWnd2)
-		SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
+	//if (hWnd2)
+	//	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 	if (ghOpWnd && gpSetCls->mh_Tabs[CSettings::thi_Show])
 		SetDlgItemInt(gpSetCls->mh_Tabs[CSettings::thi_Show], tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 
@@ -5484,6 +5550,8 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
 
+	DEBUGTEST(WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl););
+
 	if (gpSetCls->isAdvLogging >= 2)
 	{
 		wchar_t szInfo[255];
@@ -5607,6 +5675,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 
 	#ifdef _DEBUG
+	DEBUGTEST(WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl););
 	_ASSERTE(zoomed == ((dwStyle & WS_MAXIMIZE) == WS_MAXIMIZE));
 	_ASSERTE(iconic == ((dwStyle & WS_MINIMIZE) == WS_MINIMIZE));
 	#endif
@@ -9212,6 +9281,20 @@ bool CConEmuMain::isSizing()
 	return true;
 }
 
+void CConEmuMain::BeginSizing()
+{
+	gpConEmu->mouse.state |= MOUSE_SIZING_BEGIN;
+
+	if (gpSet->isHideCaptionAlways())
+	{
+		KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
+		KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID);
+		// -- если уж пришел WM_NCLBUTTONDOWN - значит рамка уже показана?
+		//gpConEmu->OnTimer(TIMER_CAPTION_APPEAR_ID,0);
+		//UpdateWindowRgn();
+	}
+}
+
 // Сюда может придти только LOWORD от HKL
 void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 {
@@ -10211,7 +10294,13 @@ void CConEmuMain::setFocus()
 	bool bNeedFocus = false;
 	if (hFocused != ghWnd)
 		bNeedFocus = true;
+	CVConGuard VCon;
+	HWND hGuiWnd = (GetActiveVCon(&VCon) >= 0) ? VCon->GuiWnd() : NULL;
+
+	// -- ассерт убрал, может возникать при переключении на консоль (табы)
+	//_ASSERTE(hGuiWnd==NULL || !IsWindowVisible(hGuiWnd));
 #endif
+
 	SetFocus(ghWnd);
 }
 
@@ -11180,7 +11269,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	// Поехали
 	int nQuakeMin = 1;
 	int nQuakeShift = 10;
-	int nQuakeDelay = 20;
+	//int nQuakeDelay = gpSet->nQuakeAnimation / nQuakeShift; // 20;
 	bool bUseQuakeAnimation = false; //, bNeedHideTaskIcon = false;
 	if ((gpSet->isQuakeStyle != 0) && gpSet->isMinToTray())
 	{
@@ -11238,6 +11327,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		// Здесь - интересует реальный IsIconic. Для isQuakeStyle может быть фейк
 		if (::IsIconic(ghWnd))
 		{
+			DEBUGTEST(WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl););
 			bool b = mp_Menu->SetPassSysCommand(true);
 			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 			mp_Menu->SetPassSysCommand(b);
@@ -11260,8 +11350,9 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			{
 				if (bUseQuakeAnimation)
 				{
-					DWORD nAnimationMS = (100 / nQuakeShift) * nQuakeDelay * 2;
-					MinMax(nAnimationMS, CONEMU_ANIMATE_DURATION, CONEMU_ANIMATE_DURATION_MAX);
+					DWORD nAnimationMS = gpSet->nQuakeAnimation; // (100 / nQuakeShift) * nQuakeDelay * 2;
+					//MinMax(nAnimationMS, CONEMU_ANIMATE_DURATION, CONEMU_ANIMATE_DURATION_MAX);
+					MinMax(nAnimationMS, QUAKEANIMATION_MAX);
 
 					DWORD nFlags = AW_SLIDE|AW_VER_POSITIVE|AW_ACTIVATE;
 
@@ -11284,13 +11375,32 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				}
 				else
 				{
+					DWORD nStartTick = GetTickCount();
+
 					StopForceShowFrame();
-					while (mn_QuakePercent < 100)
+
+					// Begin of animation
+					_ASSERTE(mn_QuakePercent==0);
+
+					if (gpSet->nQuakeAnimation > 0)
 					{
-						mn_QuakePercent += nQuakeShift;
-						UpdateWindowRgn();
-						RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
-						Sleep(nQuakeDelay);
+						int nQuakeStepDelay = gpSet->nQuakeAnimation / nQuakeShift; // 20;
+
+						while (mn_QuakePercent < 100)
+						{
+							mn_QuakePercent += nQuakeShift;
+							UpdateWindowRgn();
+							RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
+
+							DWORD nCurTick = GetTickCount();
+							int nQuakeDelay = nQuakeStepDelay - ((int)(nCurTick - nStartTick));
+							if (nQuakeDelay > 0)
+							{
+								Sleep(nQuakeDelay);
+							}
+
+							nStartTick = GetTickCount();
+						}
 					}
 				}
 			}
@@ -11301,6 +11411,13 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			}
 		}
 		mn_QuakePercent = 0; // 0 - отключен
+
+		CVConGuard VCon;
+		if (GetActiveVCon(&VCon) >= 0)
+		{
+			VCon->PostRestoreChildFocus();
+			//gpConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"From OnMinimizeRestore(sih_Show)");
+		}
 	}
 	else
 	{
@@ -11319,8 +11436,9 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		{
 			if (bUseQuakeAnimation)
 			{
-				DWORD nAnimationMS = (100 / nQuakeShift) * nQuakeDelay * 2;
-				MinMax(nAnimationMS, CONEMU_ANIMATE_DURATION, CONEMU_ANIMATE_DURATION_MAX);
+				DWORD nAnimationMS = gpSet->nQuakeAnimation; // (100 / nQuakeShift) * nQuakeDelay * 2;
+				//MinMax(nAnimationMS, CONEMU_ANIMATE_DURATION, CONEMU_ANIMATE_DURATION_MAX);
+				MinMax(nAnimationMS, QUAKEANIMATION_MAX);
 
 				DWORD nFlags = AW_SLIDE|AW_VER_NEGATIVE|AW_HIDE;
 
@@ -11348,14 +11466,30 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			}
 			else
 			{
+				DWORD nStartTick = GetTickCount();
 				mn_QuakePercent = 100 + nQuakeMin - nQuakeShift;
 				StopForceShowFrame();
-				while (mn_QuakePercent > 0)
+
+				if (gpSet->nQuakeAnimation > 0)
 				{
-					UpdateWindowRgn();
-					RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
-					Sleep(nQuakeDelay);
-					mn_QuakePercent -= nQuakeShift;
+					int nQuakeStepDelay = gpSet->nQuakeAnimation / nQuakeShift; // 20;
+
+					while (mn_QuakePercent > 0)
+					{
+						UpdateWindowRgn();
+						RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
+						//Sleep(nQuakeDelay);
+						mn_QuakePercent -= nQuakeShift;
+
+						DWORD nCurTick = GetTickCount();
+						int nQuakeDelay = nQuakeStepDelay - ((int)(nCurTick - nStartTick));
+						if (nQuakeDelay > 0)
+						{
+							Sleep(nQuakeDelay);
+						}
+
+						nStartTick = GetTickCount();
+					}
 				}
 			}
 		}
@@ -14174,8 +14308,25 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	if (pVCon && !isActive(pVCon, false))
 		pVCon = NULL;
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
+
+	// Курсор НЕ над консолью?
 	if (!pRCon)
 	{
+		// Status bar "Resize mark"?
+		if (gpSet->isStatusBarShow && !gpSet->isStatusColumnHidden[csi_ResizeMark])
+		{
+			MapWindowPoints(NULL, ghWnd, &ptCur, 1);
+
+			if (mp_Status->IsCursorOverResizeMark(ptCur))
+			{
+				LRESULT lResult = 0;
+				if (mp_Status->ProcessStatusMessage(ghWnd, WM_SETCURSOR, 0,0, ptCur, lResult))
+				{
+					return TRUE;
+				}
+			}
+		}
+
 		// Если курсор НЕ над консолью - то курсор по умолчанию
 		DEBUGSTRSETCURSOR(L" ---> skipped, not over VCon\n");
 		return FALSE;
@@ -16056,16 +16207,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = gpConEmu->mp_Menu->OnSysCommand(hWnd, wParam, lParam);
 			break;
 		case WM_NCLBUTTONDOWN:
-			// При ресайзе WM_NCLBUTTONUP к сожалению не приходит
-			gpConEmu->mouse.state |= MOUSE_SIZING_BEGIN;
+			// Note: При ресайзе WM_NCLBUTTONUP к сожалению не приходит
+			// поэтому нужно запомнить, что был начат ресайз и при завершении
+			// возможно выполнить дополнительные действия
 
-			if (gpSet->isHideCaptionAlways())
-			{
-				KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
-				// -- если уж пришел WM_NCLBUTTONDOWN - значит рамка уже показана?
-				//gpConEmu->OnTimer(TIMER_CAPTION_APPEAR_ID,0);
-				//UpdateWindowRgn();
-			}
+			BeginSizing();
 
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;

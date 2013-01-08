@@ -73,6 +73,8 @@ class CConEmuChild
 
 		void PostDetach(bool bSendCloseConsole /*= false*/);
 
+		void PostRestoreChildFocus();
+
 #ifdef _DEBUG
 	public:
 		UINT    mn_MsgCreateDbgDlg;
@@ -91,6 +93,7 @@ class CConEmuChild
 		UINT mn_MsgPostFullPaint;
 		UINT mn_MsgSavePaneSnapshoot;
 		UINT mn_MsgDetachPosted;
+		UINT mn_MsgRestoreChildFocus;
 		BOOL mb_PostFullPaint;
 		BOOL mb_DisableRedraw;
 #ifdef _DEBUG

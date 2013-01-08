@@ -871,38 +871,6 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent 
 }
 
 
-wchar_t* lstrmerge(LPCWSTR asStr1, LPCWSTR asStr2, LPCWSTR asStr3 /*= NULL*/, LPCWSTR asStr4 /*= NULL*/)
-{
-	size_t cchMax = 1;
-	const size_t Count = 4;
-	size_t cch[Count] = {};
-	LPCWSTR pszStr[Count] = {asStr1, asStr2, asStr3, asStr4};
-
-	for (size_t i = 0; i < Count; i++)
-	{
-		cch[i] = pszStr[i] ? lstrlen(pszStr[i]) : 0;
-		cchMax += cch[i];
-	}
-
-	wchar_t* pszRet = (wchar_t*)malloc(cchMax*sizeof(*pszRet));
-	if (!pszRet)
-		return NULL;
-	*pszRet = 0;
-	wchar_t* psz = pszRet;
-
-	for (size_t i = 0; i < Count; i++)
-	{
-		if (!cch[i])
-			continue;
-
-		_wcscpy_c(psz, cch[i]+1, pszStr[i]);
-		psz += cch[i];
-	}
-
-	return pszRet;
-}
-
-
 
 
 bool isKey(DWORD wp,DWORD vk)
@@ -3123,16 +3091,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	// preparing settings
-	if (!ResetSettings)
+	bool bNeedCreateVanilla = false;
+	if (ResetSettings)
 	{
-		// load settings from registry
-		gpSet->LoadSettings();
+		gpSet->IsConfigNew = true; // force this config as "new"
 	}
 	else
 	{
-		// раз загрузка не выполнялась, выполнить дополнительные действия в классе настроек здесь
-		gpSetCls->SettingsLoaded();
+		// load settings from registry
+		gpSet->LoadSettings(&bNeedCreateVanilla);
 	}
+	// выполнить дополнительные действия в классе настроек здесь
+	gpSetCls->SettingsLoaded(bNeedCreateVanilla, true);
+
 	// Для gpSet->isQuakeStyle - принудительно включается gpSetCls->SingleInstanceArg
 
 	// When "/Palette <name>" is specified

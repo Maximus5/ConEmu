@@ -598,6 +598,7 @@ class CConEmuMain :
 		bool isProcessCreated();		
 		bool isRightClickingPaint();		
 		bool isSizing();
+		void BeginSizing();
 		bool isValid(CRealConsole* apRCon);
 		bool isValid(CVirtualConsole* apVCon);
 		bool isVConExists(int nIdx);
@@ -654,7 +655,7 @@ class CConEmuMain :
 	public:
 		//void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
 		//void ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags);
-		BOOL ShowWindow(int anCmdShow, DWORD nAnimationMS = 0);
+		BOOL ShowWindow(int anCmdShow, DWORD nAnimationMS = (DWORD)-1);
 		void ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
 		//virtual void ShowSysmenu(int x=-32000, int y=-32000, bool bAlignUp = false);
 		bool SetParent(HWND hNewParent);

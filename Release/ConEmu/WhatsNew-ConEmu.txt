@@ -11,6 +11,19 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.01.08
+[+] New «column» in Status bar - «Resize mark». You can change ConEmu size by dragging this «column» even when frame is hidden.
+[+] Starting shells takes into account paths defined in "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths".
+[*] Minor changes in starting root shell.
+[*] Toolbar: when last console is closed - ConEmu hides button with console number.
+[*] Toolbar buttons order was changed. [+] button on first place now.
+[*] Option «Hide caption of child GUI windows» is enabled by default.
+[*] Quake-style options moved to «Appearance» page.
+[+] New Quake-style option for animation duration. Any value between 0 and 2000 ms allowed.
+[%] Minor fixes in "/reset" switch.
+[%] Fixed focus of child GUI windows after ConEmu window restore or tab switch.
+
+
 2013.01.05
 [%] Issue 865: Frame width option is broken.
 [+] Issue 864: MiddleButtonClick on free tabbar area creates new tab.

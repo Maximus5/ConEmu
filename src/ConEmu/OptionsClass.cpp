@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Inside.h"
 #include "LoadImg.h"
 #include "Options.h"
+#include "OptionsFast.h"
 #include "RealConsole.h"
 #include "Recreate.h"
 #include "Status.h"
@@ -806,8 +807,69 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, ConfigName);
 }
 
-void CSettings::SettingsLoaded()
+void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig)
 {
+	// Зовем "FastConfiguration" (перед созданием новой/чистой конфигурации)
+	if (abAllowFastConfig)
+	{
+		LPCWSTR pszDef = gpConEmu->GetDefaultTitle();
+		wchar_t szType[8]; bool ReadOnly;
+		gpSet->GetSettingsType(szType, ReadOnly);
+		LPCWSTR pszConfig = gpSetCls->GetConfigName();
+		wchar_t szTitle[1024];
+		if (pszConfig && *pszConfig)
+			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration (%s) %s", pszDef, pszConfig, szType);
+		else
+			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration %s", pszDef, szType);
+		
+		CheckOptionsFast(szTitle, abNeedCreateVanilla);
+	}
+	
+
+	if (abNeedCreateVanilla)
+	{
+		gpSet->SaveSettings(TRUE/*abSilent*/);
+	}
+
+	// Передернуть палитру затенения
+	gpSet->ResetFadeColors();
+	gpSet->GetColors(-1, TRUE);
+	
+	
+
+	// Проверить необходимость установки хуков
+	//-- isKeyboardHooks();
+	// При первом запуске - проверить, хотят ли включить автообновление?
+	//-- CheckUpdatesWanted();
+
+
+
+	// Стили окна
+	if ((gpSet->_WindowMode!=rNormal) && (gpSet->_WindowMode!=rMaximized) && (gpSet->_WindowMode!=rFullScreen))
+	{
+		// Иначе окно вообще не отображается
+		_ASSERTE(gpSet->_WindowMode!=0);
+		gpSet->_WindowMode = rNormal;
+	}
+
+	//if (rcTabMargins.top > 100) rcTabMargins.top = 100;
+	//_ASSERTE((rcTabMargins.bottom == 0 || rcTabMargins.top == 0) && !rcTabMargins.left && !rcTabMargins.right);
+	//rcTabMargins.left = rcTabMargins.right = 0;
+	//int nTabHeight = rcTabMargins.top ? rcTabMargins.top : rcTabMargins.bottom;
+	//if (nTabsLocation == 1)
+	//{
+	//	rcTabMargins.top = 0; rcTabMargins.bottom = nTabHeight;
+	//}
+	//else
+	//{
+	//	rcTabMargins.top = nTabHeight; rcTabMargins.bottom = 0;
+	//}
+
+	if (!gpSet->psCmdHistory)
+	{
+		gpSet->psCmdHistory = (wchar_t*)calloc(2,2);
+	}
+
 	MCHKHEAP
 
 	if (!SingleInstanceArg && gpSet->isQuakeStyle)
@@ -1559,7 +1621,12 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbHideCaptionAlways, gpSet->isHideCaptionAlways());
 	EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 
-	// копия на вкладке "Size & Pos"
+	// Quake style
+	checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbQuakeAutoHide, (gpSet->isQuakeStyle == 2) ? BST_CHECKED : BST_UNCHECKED);
+	SetDlgItemInt(hWnd2, tQuakeAnimation, gpSet->nQuakeAnimation, FALSE);
+
+	// Скрытие рамки
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
@@ -1687,16 +1754,17 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbSnapToDesktopEdges, gpSet->isSnapToDesktopEdges);
 
-	checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hWnd2, cbQuakeAutoHide, (gpSet->isQuakeStyle == 2) ? BST_CHECKED : BST_UNCHECKED);
-	//EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
-	// копия на вкладке "Show"
-	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
-	//EnableWindow(GetDlgItem(hWnd2, tHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
-	//EnableWindow(GetDlgItem(hWnd2, stHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
+	// -- moved to "Appearance" page
+	//checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
+	//checkDlgButton(hWnd2, cbQuakeAutoHide, (gpSet->isQuakeStyle == 2) ? BST_CHECKED : BST_UNCHECKED);
+	////EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
+	//// копия на вкладке "Show"
+	//SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
+	////EnableWindow(GetDlgItem(hWnd2, tHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
+	////EnableWindow(GetDlgItem(hWnd2, stHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
 
-	WORD nCtrls[] = {cbQuakeAutoHide, tHideCaptionAlwaysFrame, stHideCaptionAlwaysFrame};
-	EnableDlgItems(hWnd2, nCtrls, countof(nCtrls), gpSet->isQuakeStyle);
+	//WORD nCtrls[] = {cbQuakeAutoHide, tHideCaptionAlwaysFrame, stHideCaptionAlwaysFrame};
+	//EnableDlgItems(hWnd2, nCtrls, countof(nCtrls), gpSet->isQuakeStyle);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -4441,12 +4509,14 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				BYTE NewQuakeMode = IsChecked(hWnd2, cbQuakeStyle)
 					? IsChecked(hWnd2, cbQuakeAutoHide) ? 2 : 1 : 0;
-				ConEmuWindowMode NewWindowMode = 
-					IsChecked(hWnd2, rMaximized) ? wmMaximized :
-					IsChecked(hWnd2, rFullScreen) ? wmFullScreen : 
-					wmNormal;
+
+				//ConEmuWindowMode NewWindowMode = 
+				//	IsChecked(hWnd2, rMaximized) ? wmMaximized :
+				//	IsChecked(hWnd2, rFullScreen) ? wmFullScreen : 
+				//	wmNormal;
+
 				// здесь меняются gpSet->isQuakeStyle, gpSet->isTryToCenter, gpSet->SetMinToTray
-				gpConEmu->SetQuakeMode(NewQuakeMode, NewWindowMode, true);
+				gpConEmu->SetQuakeMode(NewQuakeMode, (ConEmuWindowMode)gpSet->_WindowMode, true);
 			}
 			break;
 		case cbHideCaption:
@@ -6472,7 +6542,17 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case tHideCaptionAlwaysFrame: // копия на вкладке "Show" & "Size & Pos"
+	case tQuakeAnimation:
+		{
+			WORD TB = LOWORD(wParam);
+			BOOL lbOk = FALSE;
+			UINT nNewVal = GetDlgItemInt(hWnd2, TB, &lbOk, FALSE);
+
+			gpSet->nQuakeAnimation = (nNewVal <= QUAKEANIMATION_MAX) ? nNewVal : QUAKEANIMATION_MAX;
+		}
+		break;
+
+	case tHideCaptionAlwaysFrame:
 		{
 			WORD TB = LOWORD(wParam);
 			BOOL lbOk = FALSE;
@@ -7544,10 +7624,16 @@ void CSettings::OnResetOrReload(BOOL abResetSettings)
 	}
 	_ASSERTE(ghOpWnd == NULL);
 	
+	
 	if (abResetSettings)
+	{
 		gpSet->InitSettings();
+	}
 	else
-		gpSet->LoadSettings();
+	{
+		bool bNeedCreateVanilla = false;
+		gpSet->LoadSettings(&bNeedCreateVanilla);
+	}
 	
 	RecreateFont(0);
 	

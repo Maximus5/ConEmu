@@ -245,8 +245,6 @@ extern const wchar_t* gsEscaped;
 //wchar_t* EscapeString(bool bSet, LPCWSTR pszSrc);
 void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst);
 
-wchar_t* lstrmerge(LPCWSTR asStr1, LPCWSTR asStr2, LPCWSTR asStr3 = NULL, LPCWSTR asStr4 = NULL);
-
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 
 wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote);

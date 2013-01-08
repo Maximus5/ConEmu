@@ -102,6 +102,7 @@ BOOL UserImp::loadExportsFrom(HMODULE hModule)
 		getMenu_f = (getMenu_t)GetProcAddress(hUser32, "GetMenu");
 		attachThreadInput_f = (attachThreadInput_t)GetProcAddress(hUser32, "AttachThreadInput");
 		getFocus_f = (getFocus_t)GetProcAddress(hUser32, "GetFocus");
+		setFocus_f = (setFocus_t)GetProcAddress(hUser32, "SetFocus");
 		getWindowRect_f = (getWindowRect_t)GetProcAddress(hUser32, "GetWindowRect");
 		isWindow_f = (isWindow_t)GetProcAddress(hUser32, "IsWindow");
 		isWindowVisible_f = (isWindowVisible_t)GetProcAddress(hUser32, "IsWindowVisible");
@@ -116,7 +117,7 @@ BOOL UserImp::loadExportsFrom(HMODULE hModule)
 		_ASSERTEX(setWindowPos_f && getWindowLongPtrW_f && setWindowLongPtrW_f && getParent_f && setParent_f && findWindowEx_f && getWindowRect_f);
 		_ASSERTEX(getSystemMetrics_f && systemParametersInfoW_f && setWindowTextW_f && endDialog_f && postMessageW_f && sendMessageW_f);
 		_ASSERTEX(dialogBoxIndirectParamW_f && getClassNameW_f && getClientRect_f && getMenu_f && attachThreadInput_f);
-		_ASSERTEX(getFocus_f && getWindowRect_f && isWindow_f && isWindowVisible_f && showWindow_f && getKeyState_f);
+		_ASSERTEX(getFocus_f && setFocus_f && getWindowRect_f && isWindow_f && isWindowVisible_f && showWindow_f && getKeyState_f);
 		_ASSERTEX(callNextHookEx_f && setWindowsHookExW_f && unhookWindowsHookEx_f && mapWindowPoints_f && registerWindowMessageW_f);
 
 		bUserLoaded = lbRc = (isWindow_f!=NULL);
@@ -596,6 +597,26 @@ HWND UserImp::getFocus()
 	else
 	{
 		_ASSERTEX(getFocus_f!=NULL);
+	}
+	return hRc;
+}
+
+HWND UserImp::setFocus(HWND hWnd)
+{
+	if (!bUserLoaded && !loadExports(bAllowLoadLibrary))
+	{
+		_ASSERTEX(hUser32!=NULL);
+		return NULL;
+	}
+	
+	HWND hRc = NULL;
+	if (setFocus_f)
+	{
+		hRc = setFocus_f(hWnd);
+	}
+	else
+	{
+		_ASSERTEX(setFocus_f!=NULL);
 	}
 	return hRc;
 }

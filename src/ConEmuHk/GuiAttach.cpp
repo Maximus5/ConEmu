@@ -60,12 +60,82 @@ DWORD 	gnAttachGuiClientStyle = 0, gnAttachGuiClientStyleEx = 0;
 BOOL  	gbAttachGuiClientStyleOk = FALSE;
 BOOL 	gbForceShowGuiClient = FALSE; // --
 //HMENU ghAttachGuiClientMenu = NULL;
-RECT 	grcAttachGuiClientOrig = {0,0,100,100};
-#ifdef _DEBUG
-HHOOK 	ghGuiClientRetHook = NULL;
-#endif
+RECT 	grcAttachGuiClientOrig = {0,0,0,0};
 
 #ifdef _DEBUG
+static HWND hMonitorWndPos = NULL;
+HHOOK 	ghGuiClientRetHook = NULL;
+HHOOK 	ghGuiClientCallHook = NULL;
+HHOOK 	ghGuiClientMsgHook = NULL;
+LRESULT CALLBACK GuiClientMsgHook(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode == HC_ACTION)
+	{
+		MSG* p = (MSG*)lParam;
+		switch (p->message)
+		{
+		case WM_CREATE:
+			break;
+		}
+	}
+	return user->callNextHookEx(ghGuiClientMsgHook, nCode, wParam, lParam);
+}
+LRESULT CALLBACK GuiClientCallHook(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode == HC_ACTION)
+	{
+		CWPSTRUCT* p = (CWPSTRUCT*)lParam;
+		CREATESTRUCT* pc = NULL;
+		wchar_t szDbg[200]; szDbg[0] = 0;
+		wchar_t szClass[127]; szClass[0] = 0;
+		switch (p->message)
+		{
+			case WM_DESTROY:
+			{
+				user->getClassNameW(p->hwnd, szClass, countof(szClass));
+				msprintf(szDbg, countof(szDbg), L"WM_DESTROY on 0x%08X (%s)\n", (DWORD)p->hwnd, szClass);
+				break;
+			}
+			case WM_CREATE:
+			{
+				pc = (CREATESTRUCT*)p->lParam;
+				break;
+			}
+			case WM_SIZE:
+			case WM_MOVE:
+			case WM_WINDOWPOSCHANGED:
+			case WM_WINDOWPOSCHANGING:
+			{
+				WINDOWPOS *wp = (WINDOWPOS*)p->lParam;
+				WORD x = LOWORD(p->lParam);
+				WORD y = HIWORD(p->lParam);
+				if (p->hwnd == ghAttachGuiClient || p->hwnd == hMonitorWndPos)
+				{
+					int nDbg = 0;
+					if (p->message == WM_WINDOWPOSCHANGING || p->message == WM_WINDOWPOSCHANGED)
+					{
+						if ((wp->x > 0 || wp->y > 0) && !isPressed(VK_LBUTTON))
+						{
+							if (user->getParent(p->hwnd) == ghConEmuWndBack)
+							{
+								//_ASSERTEX(!(wp->x > 0 || wp->y > 0));
+								break;
+							}
+						}
+					}
+				}
+				break;
+			}
+		}
+
+		if (*szDbg)
+		{
+			DebugString(szDbg);
+		}
+	}
+
+	return user->callNextHookEx(ghGuiClientCallHook, nCode, wParam, lParam);
+}
 LRESULT CALLBACK GuiClientRetHook(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	if (nCode == HC_ACTION)
@@ -99,7 +169,7 @@ LRESULT CALLBACK GuiClientRetHook(int nCode, WPARAM wParam, LPARAM lParam)
 				WINDOWPOS *wp = (WINDOWPOS*)p->lParam;
 				WORD x = LOWORD(p->lParam);
 				WORD y = HIWORD(p->lParam);
-				if (p->hwnd == ghAttachGuiClient)
+				if (p->hwnd == ghAttachGuiClient || p->hwnd == hMonitorWndPos)
 				{
 					int nDbg = 0;
 					if (p->message == WM_WINDOWPOSCHANGING || p->message == WM_WINDOWPOSCHANGED)
@@ -138,6 +208,20 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	_ASSERTE(hWndParent==NULL || ghConEmuWnd == NULL || hWndParent!=ghConEmuWnd || !dwStyle);
 	STARTUPINFO si = {sizeof(si)};
 	GetStartupInfo(&si);
+
+	bool lbAfxFrameOrView90 = false;
+	if (lpClassNameA && (((DWORD_PTR)lpClassNameA) & ~0xFFFF))
+	{
+		lbAfxFrameOrView90 = lstrcmpA(lpClassNameA, "AfxFrameOrView90") == 0 || lstrcmpiA(lpClassNameA, "Xshell4:MainWnd") == 0;
+	}
+	else if (lpClassNameW && (((DWORD_PTR)lpClassNameW) & ~0xFFFF))
+	{
+		lbAfxFrameOrView90 = lstrcmpW(lpClassNameW, L"AfxFrameOrView90") == 0 || lstrcmpiW(lpClassNameW, L"Xshell4:MainWnd") == 0;
+	}
+	if (lbAfxFrameOrView90)
+	{
+		lbAfxFrameOrView90 = true;
+	}
 #endif
 	
 	if (gbAttachGuiClient && ghConEmuWndBack)
@@ -192,9 +276,20 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 				#ifdef _DEBUG
 				if (!ghGuiClientRetHook)
 					ghGuiClientRetHook = user->setWindowsHookExW(WH_CALLWNDPROCRET, GuiClientRetHook, NULL, GetCurrentThreadId());
+				//if (!ghGuiClientCallHook)
+				//	ghGuiClientCallHook = user->setWindowsHookExW(WH_CALLWNDPROC, GuiClientCallHook, NULL, GetCurrentThreadId());
+				//if (!ghGuiClientMsgHook)
+				//	ghGuiClientMsgHook = user->setWindowsHookExW(WH_GETMESSAGE, GuiClientMsgHook, NULL, GetCurrentThreadId());
 				#endif
 
 				//gnAttachGuiClientThreadId = nTID; -- перенес к "ghAttachGuiClient = hWindow;"
+
+				RECT rcGui = AttachGuiClientPos(dwStyle, dwExStyle);
+				if (hWndParent != ghConEmuWndBack)
+				{
+					MapWindowPoints(ghConEmuWndBack, hWndParent, (LPPOINT)&rcGui, 2);
+				}
+				grcConEmuClient = rcGui;
 			}
 			return true;
 		}
@@ -260,6 +355,15 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 #endif
 }
 
+void CheckOrigGuiClientRect()
+{
+	if (grcAttachGuiClientOrig.left==grcAttachGuiClientOrig.right && grcAttachGuiClientOrig.bottom==grcAttachGuiClientOrig.top)
+	{
+		_ASSERTEX(ghAttachGuiClient!=NULL);
+		user->getWindowRect(ghAttachGuiClient, &grcAttachGuiClientOrig);
+	}
+}
+
 void ReplaceGuiAppWindow(BOOL abStyleHidden)
 {
 	if (!ghAttachGuiClient)
@@ -278,10 +382,8 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 		gnAttachGuiClientStyleEx = (DWORD)dwStyleEx;
 	}
 
-	if (grcAttachGuiClientOrig.left==grcAttachGuiClientOrig.right && grcAttachGuiClientOrig.bottom==grcAttachGuiClientOrig.top)
-	{
-		user->getWindowRect(ghAttachGuiClient, &grcAttachGuiClientOrig);
-	}
+	// Позвать user->getWindowRect(ghAttachGuiClient, &grcAttachGuiClientOrig); если надо
+	CheckOrigGuiClientRect();
 	
 	if (!gbGuiClientExternMode)
 	{
@@ -509,6 +611,8 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	DWORD nAttachErr = GetLastError();
 	UNREFERENCED_PARAMETER(bAttachRc); UNREFERENCED_PARAMETER(nAttachErr);
 
+	HWND hPreFocus = user->getFocus();
+
 
 	CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 0/*Default timeout*/, NULL);
 
@@ -558,6 +662,13 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 
             //grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
             ReplaceGuiAppWindow(abStyleHidden);
+
+			//if (hPreFocus)
+			//{
+			//	user->setFocus(hPreFocus);
+			//}
+			UINT nMsgID = user->registerWindowMessageW(CONEMUMSG_RESTORECHILDFOCUS);
+			user->postMessageW(ghConEmuWndBack, nMsgID, 0,0);
 
 			//// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
 			////user->setForegroundWindow(ghConEmuWnd);
@@ -713,7 +824,10 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach)
 
 void OnPostShowGuiClientWindow(HWND hWnd, int nCmdShow)
 {
+	CheckOrigGuiClientRect();
+
 	RECT rcGui = {0,0,grcAttachGuiClientOrig.right-grcAttachGuiClientOrig.left,grcAttachGuiClientOrig.bottom-grcAttachGuiClientOrig.top};
+
 	user->getClientRect(hWnd, &rcGui);
 	user->sendMessageW(hWnd, WM_SIZE, SIZE_RESTORED, MAKELONG((rcGui.right-rcGui.left),(rcGui.bottom-rcGui.top)));
 }
@@ -790,15 +904,29 @@ void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 
 RECT AttachGuiClientPos(DWORD anStyle /*= 0*/, DWORD anStyleEx /*= 0*/)
 {
-	RECT rcPos = {0,0,grcAttachGuiClientOrig.right-grcAttachGuiClientOrig.left,grcAttachGuiClientOrig.bottom-grcAttachGuiClientOrig.top};
+	//CheckOrigGuiClientRect();
+
+	RECT rcPos = {}; // {0,0,grcAttachGuiClientOrig.right-grcAttachGuiClientOrig.left,grcAttachGuiClientOrig.bottom-grcAttachGuiClientOrig.top};
+
 	if (ghConEmuWndBack)
 	{
 		user->getClientRect(ghConEmuWndBack, &rcPos);
-		_ASSERTEX(ghAttachGuiClient!=NULL);
+		// AttachGuiClientPos may be called from CheckCanCreateWindow
+		// and ghAttachGuiClient is NULL at this point
+		_ASSERTEX(ghAttachGuiClient!=NULL || (anStyle||anStyleEx));
+
 		DWORD nStyle = (anStyle || anStyleEx) ? anStyle : (DWORD)user->getWindowLongPtrW(ghAttachGuiClient, GWL_STYLE);
 		DWORD nStyleEx = (anStyle || anStyleEx) ? anStyleEx : (DWORD)user->getWindowLongPtrW(ghAttachGuiClient, GWL_EXSTYLE);
+
 		CorrectGuiChildRect(nStyle, nStyleEx, rcPos);
 	}
+	else
+	{
+		_ASSERTEX(ghConEmuWndBack!=NULL);
+		_ASSERTEX(ghAttachGuiClient!=NULL);
+		user->getWindowRect(ghConEmuWndBack, &rcPos);		
+	}
+
 	return rcPos;
 }
 
