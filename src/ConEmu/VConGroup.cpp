@@ -2569,7 +2569,8 @@ bool CVConGroup::ConActivate(int nCon)
 
 	if (nCon >= 0 && nCon < (int)countof(gp_VCon))
 	{
-		CVirtualConsole* pVCon = gp_VCon[nCon];
+		CVConGuard VCon(gp_VCon[nCon]);
+		CVirtualConsole* pVCon = VCon.VCon();
 
 		if (pVCon == NULL)
 		{

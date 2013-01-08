@@ -11,6 +11,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Sometimes, trap when switching to tab which is in "closing state".
+
+
 2013.01.08
 [+] New «column» in Status bar - «Resize mark». You can change ConEmu size by dragging this «column» even when frame is hidden.
 [+] Starting shells takes into account paths defined in "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths".
