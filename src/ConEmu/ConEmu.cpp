@@ -74,7 +74,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#endif
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
@@ -5297,6 +5297,8 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 
 LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 {
+	DEBUGSTRSIZE(L"CConEmuMain::OnSizing");
+
 	LRESULT result = true;
 #if defined(EXT_GNUC_LOG)
 	char szDbg[255];
@@ -9165,6 +9167,14 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 
 bool CConEmuMain::isMouseOverFrame(bool abReal)
 {
+	// Если ресайзят за хвостик статус-бара - нефиг с рамкой играться
+	if (mp_Status->IsStatusResizing())
+	{
+		_ASSERTE(m_ForceShowFrame == fsf_Hide); // не должно быть
+		_ASSERTE(isSizing()); // флаг "ресайза" должен был быть выставлен
+		return false;
+	}
+
 	if (m_ForceShowFrame && isSizing())
 	{
 		if (!isPressed(VK_LBUTTON))
@@ -9281,8 +9291,20 @@ bool CConEmuMain::isSizing()
 	return true;
 }
 
-void CConEmuMain::BeginSizing()
+void CConEmuMain::BeginSizing(bool bFromStatusBar)
 {
+	// When resizing by dragging status-bar corner
+	if (bFromStatusBar)
+	{
+		// hide frame, if it was force-showed
+		if (m_ForceShowFrame != fsf_Hide)
+		{
+			_ASSERTE(gpSet->isFrameHidden()); // m_ForceShowFrame may be set only when isFrameHidden
+
+			StopForceShowFrame();
+		}
+	}
+
 	gpConEmu->mouse.state |= MOUSE_SIZING_BEGIN;
 
 	if (gpSet->isHideCaptionAlways())
@@ -14313,7 +14335,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	if (!pRCon)
 	{
 		// Status bar "Resize mark"?
-		if (gpSet->isStatusBarShow && !gpSet->isStatusColumnHidden[csi_ResizeMark])
+		if (gpSet->isStatusBarShow && !gpSet->isStatusColumnHidden[csi_SizeGrip])
 		{
 			MapWindowPoints(NULL, ghWnd, &ptCur, 1);
 
@@ -16211,7 +16233,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			// поэтому нужно запомнить, что был начат ресайз и при завершении
 			// возможно выполнить дополнительные действия
 
-			BeginSizing();
+			BeginSizing(false);
 
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;

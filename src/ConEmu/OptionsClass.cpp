@@ -3377,6 +3377,9 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 
 				if (gpSet->isSetDefaultTerminal && bSetupDefaultTerminal)
 				{
+					// Change mouse cursor due to long operation
+					SetCursor(LoadCursor(NULL,IDC_WAIT));
+					// Redraw checkboxes to avoid lags in painting while installing hooks
 					RedrawWindow(hWnd2, NULL, NULL, RDW_UPDATENOW|RDW_ALLCHILDREN);
 					// Инициировать эксплорер, если он еще не был обработан
 					gpConEmu->mp_DefTrm->PostCreated(true, true);

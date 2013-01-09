@@ -11,7 +11,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
-[%] Sometimes, trap when switching to tab which is in "closing state".
+2013.01.09
+[%] Sometimes, trap occures when switching to tab which is in «closing state».
+[*] «Resize mark» renamed to «Size grip».
+[%] «Default terminal» fails to execute smth like "cmd /k copy aaa bbb".
 
 
 2013.01.08

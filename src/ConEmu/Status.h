@@ -77,7 +77,7 @@ enum CEStatusItems
 	csi_ActiveProcess,
 	csi_ConsoleTitle,
 
-	csi_ResizeMark,
+	csi_SizeGrip,
 
 	//
 	csi_Last

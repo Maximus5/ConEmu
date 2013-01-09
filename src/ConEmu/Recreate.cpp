@@ -156,7 +156,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED
 					   | ((GetWindowLong(ghOpWnd,GWL_EXSTYLE)&WS_EX_TOPMOST) ? MF_CHECKED : 0),
-					   ID_RESETCMDHISTORY, _T("Reset command history..."));
+					   ID_RESETCMDHISTORY, _T("Clear history..."));
 
 
 			SendDlgItemMessage(hDlg, tRunAsPassword, WM_SETFONT, (LPARAM)(HFONT)GetStockObject(DEFAULT_GUI_FONT), 0);

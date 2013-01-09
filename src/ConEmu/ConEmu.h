@@ -598,7 +598,7 @@ class CConEmuMain :
 		bool isProcessCreated();		
 		bool isRightClickingPaint();		
 		bool isSizing();
-		void BeginSizing();
+		void BeginSizing(bool bFromStatusBar);
 		bool isValid(CRealConsole* apRCon);
 		bool isValid(CVirtualConsole* apVCon);
 		bool isVConExists(int nIdx);

@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #define DEBUGSTRSTAT(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 
 #include <windows.h>
 #include <commctrl.h>
@@ -184,9 +185,9 @@ static StatusColInfo gStatusCols[] =
 						L"Transparency",
 						L"Transparency, left click to change"},
 
-	{csi_ResizeMark,	L"StatusBar.Hide.Resize",
-						L"Resize mark",
-						L"Drag place to resize ConEmu window"},
+	{csi_SizeGrip,		L"StatusBar.Hide.Resize",
+						L"Size grip",
+						L"Click and drag size grip to resize ConEmu window"},
 };
 
 static struct StatusTranspOptions {
@@ -266,8 +267,8 @@ CStatus::CStatus()
 	OnTransparency();
 
 	// Fixed and self-draw
-	wcscpy_c(m_Values[csi_ResizeMark].sText, L"//");
-	wcscpy_c(m_Values[csi_ResizeMark].szFormat, L"//");
+	wcscpy_c(m_Values[csi_SizeGrip].sText, L"//");
+	wcscpy_c(m_Values[csi_SizeGrip].szFormat, L"//");
 
 	_ASSERTE(gpConEmu && *gpConEmu->ms_ConEmuBuild);
 	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L" %c %s%s", 
@@ -687,7 +688,7 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 		m_Items[i].rcClient = MakeRect(rcField.left+rcStatus.left, rcStatus.top, rcField.right+rcStatus.left, rcStatus.bottom);
 
 		// "Resize mark" отрисовывается вручную
-		if (m_Items[i].nID == csi_ResizeMark)
+		if (m_Items[i].nID == csi_SizeGrip)
 		{
 			int nW = (rcField.bottom - rcField.top);
 			if (nW > 0)
@@ -773,8 +774,8 @@ wrap:
 	DeleteObject(hDash);
 	DeleteObject(hFont);
 
-	if (gpSet->isStatusColumnHidden[csi_ResizeMark]
-		|| !GetStatusBarItemRect(csi_ResizeMark, &mrc_LastResizeCol))
+	if (gpSet->isStatusColumnHidden[csi_SizeGrip]
+		|| !GetStatusBarItemRect(csi_SizeGrip, &mrc_LastResizeCol))
 	{
 		ZeroStruct(mrc_LastResizeCol);
 	}
@@ -869,7 +870,7 @@ bool CStatus::IsResizeAllowed()
 		return false;
 
 	if (!gpSet->isStatusBarShow
-		|| gpSet->isStatusColumnHidden[csi_ResizeMark])
+		|| gpSet->isStatusColumnHidden[csi_SizeGrip])
 	{
 		return false;
 	}
@@ -899,6 +900,9 @@ bool CStatus::IsCursorOverResizeMark(POINT ptCurClient)
 bool CStatus::IsStatusResizing()
 {
 	_ASSERTE(this);
+	if (!gpSet->isStatusBarShow)
+		return false; // Нет статуса - нет ресайза
+
 	return mb_StatusResizing;
 }
 
@@ -918,16 +922,19 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		switch (uMsg)
 		{
 		case WM_LBUTTONDOWN:
+			DEBUGSTRSIZE(L"Starting resize from status bar grip");
 			GetCursorPos(&mpt_StatusResizePt);
 			GetWindowRect(ghWnd, &mrc_StatusResizeRect);
 			mb_StatusResizing = true;
 			SetCapture(ghWnd);
-			gpConEmu->BeginSizing();
+			gpConEmu->BeginSizing(true);
 			break;
 		case WM_LBUTTONUP:
 		case WM_MOUSEMOVE:
 			if (mb_StatusResizing && GetCursorPos(&ptScr))
 			{
+				DEBUGSTRSIZE(L"Change size from status bar grip");
+
 				int nWidth = (mrc_StatusResizeRect.right - mrc_StatusResizeRect.left) + (ptScr.x - mpt_StatusResizePt.x);
 				int nHeight = (mrc_StatusResizeRect.bottom - mrc_StatusResizeRect.top) + (ptScr.y - mpt_StatusResizePt.y);
 
@@ -943,6 +950,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			{
 				SetCapture(NULL);
 				mb_StatusResizing = false;
+				DEBUGSTRSIZE(L"Resize from status bar grip finished");
 			}
 			break;
 		case WM_SETCURSOR: // не приходит

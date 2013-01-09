@@ -1339,7 +1339,7 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	//if ((l_result == HTCLIENT) && gpSet->isStatusBarShow)
 	//{
 	//	RECT rcStatus = {};
-	//	if (gpConEmu->mp_Status->GetStatusBarItemRect(csi_ResizeMark, &rcStatus))
+	//	if (gpConEmu->mp_Status->GetStatusBarItemRect(csi_SizeGrip, &rcStatus))
 	//	{
 	//		RECT rcFrame = gpConEmu->CalcMargins(CEM_FRAMECAPTION);
 	//		POINT ptOver = {point.x - rcFrame.left, point.y - rcFrame.top};

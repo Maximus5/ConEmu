@@ -636,7 +636,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	}
 
 	// ≈сли удалось определить "ComSpec"
-	if (asParam)
+	// Ќе мен€ть ком.строку, если запускаетс€ "Default Terminal"
+	if (!gbPrepareDefaultTerminal && asParam)
 	{
 		BOOL lbNewCmdCheck = FALSE;
 		const wchar_t* psz = SkipNonPrintable(asParam);
@@ -652,7 +653,6 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 					if (abNewConsole)
 					{
 						// 111211 - "-new_console" передаетс€ в GUI
-						_ASSERTEX(psz[1] == L'C' || psz[1] == L'c');
 						lbComSpecK = FALSE;
 					}
 					else
@@ -1024,9 +1024,13 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 		_wcscat_c((*psParam), nCchSize, L" /single /cmd ");
 
-		if (pszNewCon)
+		if (pszNewCon && *pszNewCon)
 		{
 			_wcscat_c((*psParam), nCchSize, pszNewCon);
+			// We need space after switches!
+			int nLen = lstrlen(pszNewCon);
+			if (pszNewCon[nLen-1] != L' ')
+				_wcscat_c((*psParam), nCchSize, L" ");
 		}
 	}
 	// 111211 - "-new_console" передаетс€ в GUI

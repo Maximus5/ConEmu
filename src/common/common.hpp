@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MIN_CON_HEIGHT 2
 #define GUI_ATTACH_TIMEOUT 5000
 
+#define CONSOLE_PROCESSES_MAX 20
 
 #ifndef CONSOLE_NO_SELECTION
 
@@ -1244,7 +1245,7 @@ struct CESERVER_REQ_CONINFO_INFO
 	//DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
 	DWORD nSrvUpdateTick; // GetTickCount(), когда консоль была считана в последний раз в сервере
 	DWORD nReserved0; //DWORD nInputTID;
-	DWORD nProcesses[20];
+	DWORD nProcesses[CONSOLE_PROCESSES_MAX/*20*/];
 	DWORD dwCiSize;
 	CONSOLE_CURSOR_INFO ci;
 	DWORD dwConsoleCP;
