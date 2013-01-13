@@ -249,7 +249,7 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst);
 
 wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote);
 wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder = NULL, HWND hParent = ghWnd, bool bAutoQuote = true, bool bCygwin = false);
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = NULL, HWND hParent = ghWnd, LPCWSTR asFilter = NULL, bool abAutoQuote = true, bool bCygwin = false);
+wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = NULL, HWND hParent = ghWnd, LPCWSTR asFilter = NULL, bool abAutoQuote = true, bool bCygwin = false, bool bSaveNewFile = false);
 
 
 #include "../common/RConStartArgs.h"
@@ -259,6 +259,18 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = NULL, HWND hParent = gh
 //------------------------------------------------------------------------
 ///| Registry |///////////////////////////////////////////////////////////
 //------------------------------------------------------------------------
+
+struct SettingsStorage
+{
+	wchar_t szType[8]; // CONEMU_CONFIGTYPE_REG, CONEMU_CONFIGTYPE_XML
+	LPCWSTR pszFile;   // NULL или полный путь к xml-файлу
+	LPCWSTR pszConfig; // Имя конфигурации
+};
+
+#define CONEMU_ROOT_KEY L"Software\\ConEmu"
+#define CONEMU_CONFIGTYPE_REG L"[reg]"
+#define CONEMU_CONFIGTYPE_XML L"[xml]"
+#define CONEMU_CONFIGTYPE_INI L"[ini]"
 
 #include "Registry.h"
 
@@ -450,3 +462,4 @@ enum ToolbarCommandIdx
 
 bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval);
 #define LockFrequentExecute(Interval) static DWORD LastExecuteTick; if (CheckLockFrequentExecute(LastExecuteTick,Interval))
+

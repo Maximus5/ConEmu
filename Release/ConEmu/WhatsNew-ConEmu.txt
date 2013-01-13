@@ -11,8 +11,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
-[+] Searching in «Settings» dialog now available.
-[+] New option «Minimize on focus lose» on «Task bar» page. This is used only for «normal» style, «quake» style has separate option.
+2013.01.13
+[+] Searching in «Settings» dialog now available. Type text in «Find» editbox (upper-left corner) and wait a little.
+    You may continue search by pressing ">" button.
+[+] New option «Minimize on focus lose» on «Task bar» page. This is used only for «normal» style,
+    «quake» style has separate option.
 [+] New switch: "ConEmu.exe /cmdlist cmd1 | cmd2 | cmd3".
     Now it is possible to start several tabs from the command line or shortcut without creating tasks.
 [+] Issue 864: MiddleButtonClick on free tabbar area creates new tab.
@@ -22,6 +25,8 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [%] Issue 878: Can't select in putty after moving ConEmu window.
 [+] New option «Focus in child windows». Enabled by default. It means set focus in xshell/putty/notepad/etc. when ConEmu is activated or tab switched.
 [+] New hotkey (not set by default): Switch focus between ConEmu and child GUI application (xshell/putty/notepad/etc.)
+[+] Now you may export your current configuration to xml-file directly from Settings dialog.
+[+] Current settings storage location displayed on the top of Settings dialog.
 
 
 2013.01.09

@@ -835,14 +835,16 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig)
 	if (abAllowFastConfig)
 	{
 		LPCWSTR pszDef = gpConEmu->GetDefaultTitle();
-		wchar_t szType[8]; bool ReadOnly;
-		gpSet->GetSettingsType(szType, ReadOnly);
+		//wchar_t szType[8];
+		bool ReadOnly = false;
+		SettingsStorage Storage = {};
+		gpSet->GetSettingsType(Storage, ReadOnly);
 		LPCWSTR pszConfig = gpSetCls->GetConfigName();
 		wchar_t szTitle[1024];
 		if (pszConfig && *pszConfig)
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration (%s) %s", pszDef, pszConfig, szType);
+			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration (%s) %s", pszDef, pszConfig, Storage.szType);
 		else
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration %s", pszDef, szType);
+			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration %s", pszDef, Storage.szType);
 		
 		CheckOptionsFast(szTitle, abNeedCreateVanilla);
 	}
@@ -1508,6 +1510,22 @@ LRESULT CSettings::OnInitDialog()
 
 	gbLastColorsOk = FALSE;
 
+	RECT rcEdt = {}, rcBtn = {};
+	if (GetWindowRect(GetDlgItem(ghOpWnd, tOptionSearch), &rcEdt))
+	{
+		MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcEdt, 2);
+		
+		// Hate non-strict alignment...
+		WORD nCtrls[] = {cbOptionSearch, cbExportConfig};
+		for (size_t i = 0; i < countof(nCtrls); i++)
+		{
+			HWND hBtn = GetDlgItem(ghOpWnd, nCtrls[i]);
+			GetWindowRect(hBtn, &rcBtn);
+			MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcBtn, 2);
+			SetWindowPos(hBtn, NULL, rcBtn.left, rcEdt.top-1, rcBtn.right-rcBtn.left, rcBtn.bottom-rcBtn.top, SWP_NOZORDER);
+		}
+	}
+
 	RegisterTipsFor(ghOpWnd);
 
 	HMENU hSysMenu = GetSystemMenu(ghOpWnd, FALSE);
@@ -1520,18 +1538,31 @@ LRESULT CSettings::OnInitDialog()
 	mp_ActiveHotKey = NULL;
 	wchar_t szTitle[MAX_PATH*2]; szTitle[0]=0;
 
-	wchar_t szType[8];
+	//wchar_t szType[8];
+	SettingsStorage Storage = {};
 	bool ReadOnly = false;
-	gpSet->GetSettingsType(szType, ReadOnly);
+	gpSet->GetSettingsType(Storage, ReadOnly);
 	if (ReadOnly)
 		EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
+
+	if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_REG) == 0)
+	{
+		wchar_t szStorage[MAX_PATH*2];
+		wcscpy_c(szStorage, L"HKCU\\");
+		wcscat_c(szStorage, ConfigPath);
+		SetDlgItemText(ghOpWnd, tStorage, szStorage);
+	}
+	else
+	{
+		SetDlgItemText(ghOpWnd, tStorage, gpConEmu->ConEmuXml());
+	}
 
 	//if (nConfLen>(nStdLen+1))
 	//	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->GetDefaultTitle(), (Config+nStdLen+1), szType);
 	if (ConfigName[0])
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->GetDefaultTitle(), ConfigName, szType);
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->GetDefaultTitle(), ConfigName, Storage.szType);
 	else
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings %s", gpConEmu->GetDefaultTitle(), szType);
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings %s", gpConEmu->GetDefaultTitle(), Storage.szType);
 
 	SetWindowText(ghOpWnd, szTitle);
 	MCHKHEAP
@@ -4397,6 +4428,18 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				{
 					if (!isShiftPressed)
 						SendMessage(ghOpWnd,WM_COMMAND,IDOK,0);
+				}
+			}
+			break;
+		case cbExportConfig:
+			{
+				wchar_t *pszFile = SelectFile(L"Export configuration", L"Export.xml", ghOpWnd, L"XML files (*.xml)\0*.xml\0", false, false, true);
+				if (pszFile)
+				{
+					SettingsStorage XmlStorage = {CONEMU_CONFIGTYPE_XML};
+					XmlStorage.pszFile = pszFile;
+					gpSet->SaveSettings(FALSE, &XmlStorage);
+					SafeFree(pszFile);
 				}
 			}
 			break;
@@ -7887,16 +7930,17 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			ghOpWnd = hWnd2;
 			SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hWnd2, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
-#ifdef _DEBUG
 
+			#ifdef _DEBUG
 			//if (IsDebuggerPresent())
 			if (!gpSet->isAlwaysOnTop)
 				SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+			#endif
 
-#endif
 			SetClassLongPtr(hWnd2, GCLP_HICON, (LONG_PTR)hClassIcon);
 			gpSetCls->OnInitDialog();
 			break;
+
 		case WM_SYSCOMMAND:
 
 			if (LOWORD(wParam) == ID_ALWAYSONTOP)

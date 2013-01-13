@@ -45,9 +45,11 @@ const CLSID CLSID_DOMDocument30 = {0xf5078f32, 0xc551, 0x11d3, {0x89, 0xb9, 0x00
 
 
 SettingsRegistry::SettingsRegistry()
+	: SettingsBase()
 {
+	ZeroStruct(m_Storage);
 	regMy = NULL;
-	lstrcpy(Type, L"[reg]");
+	lstrcpy(m_Storage.szType, CONEMU_CONFIGTYPE_REG);
 }
 SettingsRegistry::~SettingsRegistry()
 {
@@ -195,11 +197,12 @@ void SettingsRegistry::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, 
 
 /* *************************** */
 
-SettingsINI::SettingsINI()
+SettingsINI::SettingsINI(const SettingsStorage& Storage)
+	: SettingsBase(Storage)
 {
 	mpsz_Section = NULL;
 	mpsz_IniFile = NULL;
-	lstrcpy(Type, L"[ini]");
+	lstrcpy(m_Storage.szType, CONEMU_CONFIGTYPE_INI);
 }
 SettingsINI::~SettingsINI()
 {
@@ -218,7 +221,15 @@ bool SettingsINI::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 		return false;
 	}
 
-	mpsz_IniFile = gpConEmu->ConEmuIni();
+	if (m_Storage.pszFile && *m_Storage.pszFile)
+	{
+		mpsz_IniFile = m_Storage.pszFile;
+	}
+	else
+	{
+		_ASSERTE(m_Storage.pszFile && *m_Storage.pszFile);
+		m_Storage.pszFile = mpsz_IniFile = gpConEmu->ConEmuIni();
+	}
 
 	if (!mpsz_IniFile || !*mpsz_IniFile)
 	{
@@ -340,10 +351,11 @@ void SettingsINI::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 
 /* *************************** */
 #ifndef __GNUC__
-SettingsXML::SettingsXML()
+SettingsXML::SettingsXML(const SettingsStorage& Storage)
+	: SettingsBase(Storage)
 {
 	mp_File = NULL; mp_Key = NULL;
-	lstrcpy(Type, L"[xml]");
+	lstrcpy(m_Storage.szType, CONEMU_CONFIGTYPE_XML);
 	mb_Modified = false;
 	mi_Level = 0;
 	mb_Empty = false;
@@ -499,7 +511,16 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 	if ((access & KEY_WRITE) == KEY_WRITE)
 		dwAccess |= GENERIC_WRITE;
 
-	LPWSTR pszXmlFile = gpConEmu->ConEmuXml();
+	LPCWSTR pszXmlFile;
+	if (m_Storage.pszFile && *m_Storage.pszFile)
+	{
+		pszXmlFile = m_Storage.pszFile;
+	}
+	else
+	{
+		_ASSERTE(m_Storage.pszFile && *m_Storage.pszFile);
+		m_Storage.pszFile = pszXmlFile = gpConEmu->ConEmuXml();
+	}
 
 	if (!pszXmlFile || !*pszXmlFile)
 	{
@@ -675,7 +696,9 @@ void SettingsXML::CloseKey()
 
 	if (mb_Modified && mp_File)
 	{
-		LPWSTR pszXmlFile = gpConEmu->ConEmuXml();
+		// Путь к файлу проинициализирован в OpenKey
+		_ASSERTE(m_Storage.pszFile && *m_Storage.pszFile);
+		LPCWSTR pszXmlFile = m_Storage.pszFile;
 
 		if (pszXmlFile)
 		{

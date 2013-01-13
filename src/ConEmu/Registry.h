@@ -91,9 +91,12 @@ struct SettingsBase
 		}
 
 	public:
-		wchar_t Type[16];
-
-		SettingsBase() {Type[0] = 0;};
+		//wchar_t Type[16];
+		SettingsStorage m_Storage;
+	protected:
+		SettingsBase(const SettingsStorage& Storage) {m_Storage = Storage;};
+		SettingsBase() {memset(&m_Storage,0,sizeof(m_Storage));};
+	public:
 		virtual ~SettingsBase() {};
 };
 
@@ -140,7 +143,7 @@ struct SettingsINI : public SettingsBase
 		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize);
 
 	public:
-		SettingsINI();
+		SettingsINI(const SettingsStorage& Storage);
 		virtual ~SettingsINI();
 };
 
@@ -183,7 +186,7 @@ struct SettingsXML : public SettingsBase
 		void AppendText(IXMLDOMNode* apFrom, BSTR asText);
 
 	public:
-		SettingsXML();
+		SettingsXML(const SettingsStorage& Storage);
 		virtual ~SettingsXML();
 };
 #endif

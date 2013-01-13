@@ -3514,14 +3514,14 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 	//if (!con.pConChar)
 	if (!pszDataStart || !nTextWidth || !nTextHeight)
 	{
-		MBoxAssert(pszDataStart != NULL);
+		Assert(pszDataStart != NULL);
 		return false;
 	}
 
 	const Settings::AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 	if (pApp == NULL)
 	{
-		MBoxAssert(pApp!=NULL);
+		Assert(pApp!=NULL);
 		return false;
 	}
 	BYTE nEOL = pApp->CTSEOL();
@@ -3554,7 +3554,7 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 	//if (nSelWidth<0 || nSelHeight<0)
 	if (con.m_sel.srSelection.Left > (con.m_sel.srSelection.Right+(con.m_sel.srSelection.Bottom-con.m_sel.srSelection.Top)*nTextWidth))
 	{
-		MBoxAssert(con.m_sel.srSelection.Left <= (con.m_sel.srSelection.Right+(con.m_sel.srSelection.Bottom-con.m_sel.srSelection.Top)*nTextWidth));
+		Assert(con.m_sel.srSelection.Left <= (con.m_sel.srSelection.Right+(con.m_sel.srSelection.Bottom-con.m_sel.srSelection.Top)*nTextWidth));
 		return false;
 	}
 
@@ -3578,7 +3578,7 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 		}
 		else
 		{
-			_ASSERTE(nSelHeight>2);
+			Assert(nSelHeight>2);
 			// На первой строке - до конца строки, последняя строка - до окончания блока, + "\r\n"
 			nCharCount = (con.nTextWidth - con.m_sel.srSelection.Left) + (con.m_sel.srSelection.Right + 1) + 2
 			             + ((nSelHeight - 2) * (con.nTextWidth + 2)); // + серединка * (длину консоли + "\r\n")
@@ -3590,7 +3590,7 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 
 	if (hUnicode == NULL)
 	{
-		MBoxAssert(hUnicode != NULL);
+		Assert(hUnicode != NULL);
 		return false;
 	}
 
@@ -3598,20 +3598,20 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 
 	if (!pch)
 	{
-		MBoxAssert(pch != NULL);
+		Assert(pch != NULL);
 		GlobalFree(hUnicode);
 	}
 
 	// Заполнить данными
 	if ((con.m_sel.srSelection.Left + nSelWidth) > con.nTextWidth)
 	{
-		_ASSERTE((con.m_sel.srSelection.Left + nSelWidth) <= con.nTextWidth);
+		Assert((con.m_sel.srSelection.Left + nSelWidth) <= con.nTextWidth);
 		nSelWidth = con.nTextWidth - con.m_sel.srSelection.Left;
 	}
 
 	if ((con.m_sel.srSelection.Top + nSelHeight) > con.nTextHeight)
 	{
-		_ASSERTE((con.m_sel.srSelection.Top + nSelHeight) <= con.nTextHeight);
+		Assert((con.m_sel.srSelection.Top + nSelHeight) <= con.nTextHeight);
 		nSelHeight = con.nTextHeight - con.m_sel.srSelection.Top;
 	}
 
@@ -3778,7 +3778,7 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 	GlobalUnlock(hUnicode);
 
 	// Открыть буфер обмена
-	while(!(lbRc = OpenClipboard(ghWnd)))
+	while (!(lbRc = OpenClipboard(ghWnd)))
 	{
 		dwErr = GetLastError();
 
@@ -3790,7 +3790,7 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 	// Установить данные
 	Result = SetClipboardData(CF_UNICODETEXT, hUnicode);
 
-	while(!Result)
+	while (!Result)
 	{
 		dwErr = GetLastError();
 

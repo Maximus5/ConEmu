@@ -54,6 +54,7 @@ static CVirtualConsole* gp_VCon[MAX_CONSOLE_COUNT] = {};
 static CVirtualConsole* gp_VActive = NULL;
 static bool gb_CreatingActive = false, gb_SkipSyncSize = false;
 static UINT gn_CreateGroupStartVConIdx = 0;
+static bool gb_InCreateGroup = false;
 
 static CRITICAL_SECTION gcs_VGroups;
 static CVConGroup* gp_VGroups[MAX_CONSOLE_COUNT*2] = {}; // на каждое разбиение добавляется +Parent
@@ -2709,6 +2710,11 @@ bool CVConGroup::ConActivate(int nCon)
 	return false;
 }
 
+bool CVConGroup::InCreateGroup()
+{
+	return gb_InCreateGroup;
+}
+
 void CVConGroup::OnCreateGroupBegin()
 {
 	UINT nFreeCell = 0;
@@ -2721,11 +2727,13 @@ void CVConGroup::OnCreateGroupBegin()
 		}
 	}
 	gn_CreateGroupStartVConIdx = nFreeCell;
+	gb_InCreateGroup = true;
 }
 
 void CVConGroup::OnCreateGroupEnd()
 {
 	gn_CreateGroupStartVConIdx = 0;
+	gb_InCreateGroup = false;
 }
 
 CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)

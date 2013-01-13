@@ -10476,6 +10476,28 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			if (CVConGroup::isOurWindow(hNewFocus))
 			{
 				lbSetFocus = true; // —читать, что фокус мы не тер€ем!
+
+				//  лик мышкой в области дочернего GUI-приложени€, запущенного в ConEmu
+				// isPressed - не подходит
+				if (!CVConGroup::InCreateGroup())
+				{
+					POINT ptCur = {}; GetCursorPos(&ptCur);
+					for (size_t i = 0;; i++)
+					{
+						CVConGuard VCon;
+						if (!CVConGroup::GetVCon(i, &VCon))
+							break;
+						if (!CVConGroup::isVisible(VCon.VCon()))
+							continue;
+
+						HWND hGuiWnd = VCon->GuiWnd();
+						RECT rcChild = {}; GetWindowRect(hGuiWnd, &rcChild);
+						if (PtInRect(&rcChild, ptCur))
+						{
+							Activate(VCon.VCon());
+						}
+					}
+				}
 			}
 		}
 

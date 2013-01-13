@@ -728,7 +728,7 @@ void Settings::LoadAppSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 			return;
 		}
 
-		reg = CreateSettings();
+		reg = CreateSettings(NULL);
 		if (!reg)
 		{
 			_ASSERTE(reg!=NULL);
@@ -965,7 +965,7 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 			return;
 		}
 
-		reg = CreateSettings();
+		reg = CreateSettings(NULL);
 		if (!reg)
 		{
 			_ASSERTE(reg!=NULL);
@@ -1111,7 +1111,7 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 	bool lbDelete = false;
 	if (!reg)
 	{
-		reg = CreateSettings();
+		reg = CreateSettings(NULL);
 		if (!reg)
 		{
 			_ASSERTE(reg!=NULL);
@@ -1273,7 +1273,7 @@ void Settings::LoadPalettes(SettingsBase* reg)
 	bool lbDelete = false;
 	if (!reg)
 	{
-		reg = CreateSettings();
+		reg = CreateSettings(NULL);
 		if (!reg)
 		{
 			_ASSERTE(reg!=NULL);
@@ -1380,7 +1380,7 @@ void Settings::SavePalettes(SettingsBase* reg)
 	bool lbDelete = false;
 	if (!reg)
 	{
-		reg = CreateSettings();
+		reg = CreateSettings(NULL);
 		if (!reg)
 		{
 			_ASSERTE(reg!=NULL);
@@ -1764,7 +1764,7 @@ void Settings::LoadProgresses(SettingsBase* reg)
 	bool lbDelete = false;
 	if (!reg)
 	{
-		reg = CreateSettings();
+		reg = CreateSettings(NULL);
 		if (!reg)
 		{
 			_ASSERTE(reg!=NULL);
@@ -1820,7 +1820,7 @@ bool Settings::SaveProgresses(SettingsBase* reg)
 	bool lbDelete = false;
 	if (!reg)
 	{
-		reg = CreateSettings();
+		reg = CreateSettings(NULL);
 		if (!reg)
 		{
 			_ASSERTE(reg!=NULL);
@@ -2345,8 +2345,8 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 //-----------------------------------------------------------------------
 ///| Loading from reg/xml |//////////////////////////////////////////////
 //-----------------------------------------------------------------------
-	SettingsBase* reg = CreateSettings();
-	wcscpy_c(Type, reg->Type);
+	SettingsBase* reg = CreateSettings(NULL);
+	wcscpy_c(Type, reg->m_Storage.szType);
 
 	BOOL lbOpened = FALSE;
 	*rbNeedCreateVanilla = false;
@@ -3072,7 +3072,7 @@ void Settings::SaveSizePosOnExit()
 
 	gpConEmu->LogWindowPos(L"SaveSizePosOnExit");
 		
-	SettingsBase* reg = CreateSettings();
+	SettingsBase* reg = CreateSettings(NULL);
 
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
 	{
@@ -3117,7 +3117,7 @@ void Settings::SaveConsoleFont()
 	if (!this)
 		return;
 
-	SettingsBase* reg = CreateSettings();
+	SettingsBase* reg = CreateSettings(NULL);
 
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
 	{
@@ -3135,7 +3135,7 @@ void Settings::SaveFindOptions(SettingsBase* reg/* = NULL*/)
 	bool bDelete = (reg == NULL);
 	if (!reg)
 	{
-		reg = CreateSettings();
+		reg = CreateSettings(NULL);
 		if (!reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE, TRUE))
 		{
 			delete reg;
@@ -3282,13 +3282,13 @@ void Settings::SaveStatusSettings(SettingsBase* reg)
 	}
 }
 
-BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
+BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* apStorage /*= NULL*/)
 {
 	BOOL lbRc = FALSE;
 
 	gpSetCls->SettingsPreSave();
 
-	SettingsBase* reg = CreateSettings();
+	SettingsBase* reg = CreateSettings(apStorage);
 
 	// Если в реестре настройка есть, или изменилось значение
 	bool lbCurAutoRegisterFonts = isAutoRegisterFonts, lbCurAutoRegisterFontsRc = false;
@@ -3301,7 +3301,12 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE, abSilent))
 	{
-		wcscpy_c(Type, reg->Type);
+		// При сохранении меняем "сохраненный" тип (отображается в заголовке диалога)
+		// только если сохранение было "умолчательное", а не "Экспорт в файл"
+		if (apStorage == NULL)
+		{
+			wcscpy_c(Type, reg->m_Storage.szType);
+		}
 
 		SaveAppSettings(reg, &AppStd, Colors);
 
@@ -4141,7 +4146,7 @@ void Settings::HistoryReset()
 	nCmdHistorySize = 0;
 
 	// И сразу сохранить в настройках
-	SettingsBase* reg = CreateSettings();
+	SettingsBase* reg = CreateSettings(NULL);
 
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
 	{
@@ -4211,7 +4216,7 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 	nCmdHistorySize = (psz - pszNewHistory + 1)*sizeof(wchar_t);
 	HEAPVAL;
 	// И сразу сохранить в настройках
-	SettingsBase* reg = CreateSettings();
+	SettingsBase* reg = CreateSettings(NULL);
 
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
 	{
@@ -4469,17 +4474,47 @@ void Settings::CheckConsoleSettings()
 	}
 }
 
-SettingsBase* Settings::CreateSettings()
+SettingsBase* Settings::CreateSettings(const SettingsStorage* apStorage)
 {
-#ifndef __GNUC__
 	SettingsBase* pReg = NULL;
-	BOOL lbXml = FALSE;
-	DWORD dwAttr = -1;
-	LPWSTR pszXmlFile = gpConEmu->ConEmuXml();
 
-	if (pszXmlFile && *pszXmlFile)
+	BOOL lbXml = FALSE;
+	LPCWSTR pszFile = NULL;
+
+	if (apStorage)
 	{
-		dwAttr = GetFileAttributes(pszXmlFile);
+		if (lstrcmp(apStorage->szType, CONEMU_CONFIGTYPE_XML) == 0)
+		{
+			pszFile = apStorage->pszFile;
+			if (!pszFile || !*pszFile)
+			{
+				DisplayLastError(L"Invalid xml-path was specified!", -1);
+				return NULL;
+			}
+			HANDLE hFile = CreateFile(pszFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+			if (hFile == INVALID_HANDLE_VALUE || !hFile)
+			{
+				DisplayLastError(L"Failed to create xml file!");
+				return NULL;
+			}
+			CloseHandle(hFile);
+			lbXml = TRUE;
+		}
+	}
+
+
+#ifndef __GNUC__
+	DWORD dwAttr = -1;
+
+	if (!apStorage)
+	{
+		pszFile = gpConEmu->ConEmuXml();
+	}
+
+	// добавил lbXml - он мог быть принудительно включен
+	if (pszFile && *pszFile && !lbXml)
+	{
+		dwAttr = GetFileAttributes(pszFile);
 
 		if (dwAttr != (DWORD)-1 && !(dwAttr & FILE_ATTRIBUTE_DIRECTORY))
 			lbXml = TRUE;
@@ -4487,29 +4522,45 @@ SettingsBase* Settings::CreateSettings()
 
 	if (lbXml)
 	{
-		pReg = new SettingsXML();
+		SettingsStorage XmlStorage = {};
+		XmlStorage.pszFile = pszFile;
+
+		pReg = new SettingsXML(XmlStorage);
 
 		if (!((SettingsXML*)pReg)->IsXmlAllowed())
 		{
 			// Если MSXml.DomDocument не зарегистрирован
-			pszXmlFile[0] = 0;
+			if (!apStorage)
+			{
+				// Чтобы не пытаться повторно открыть XML - интерфейс не доступен!
+				gpConEmu->ConEmuXml()[0] = 0;
+			}
 			lbXml = FALSE;
+			SafeDelete(pReg);
 		}
 	}
+#endif
 
-	if (!lbXml)
+	if (lbXml && !pReg && apStorage)
+	{
+		DisplayLastError(L"XML storage is not available! Check IXMLDOMDocument interface!", -1);
+		return NULL;
+	}
+
+	if (!pReg)
+	{
 		pReg = new SettingsRegistry();
+	}
 
 	return pReg;
-#else
-	return new SettingsRegistry();
-#endif
 }
 
-void Settings::GetSettingsType(wchar_t (&szType)[8], bool& ReadOnly)
+void Settings::GetSettingsType(SettingsStorage& Storage, bool& ReadOnly)
 {
-	const wchar_t* pszType = L"[reg]";
+	const wchar_t* pszType = CONEMU_CONFIGTYPE_REG /*L"[reg]"*/;
 	ReadOnly = false;
+
+	ZeroStruct(Storage);
 
 #ifndef __GNUC__
 	HANDLE hFile = NULL;
@@ -4527,7 +4578,9 @@ void Settings::GetSettingsType(wchar_t (&szType)[8], bool& ReadOnly)
 
 			if (SettingsXML::IsXmlAllowed())
 			{
-				pszType = L"[xml]";
+				pszType = CONEMU_CONFIGTYPE_XML /*L"[xml]"*/;
+				Storage.pszFile = pszXmlFile;
+
 				// Проверим, сможем ли мы в него записать
 				hFile = CreateFile(pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
 				                   NULL, OPEN_EXISTING, 0, 0);
@@ -4546,7 +4599,8 @@ void Settings::GetSettingsType(wchar_t (&szType)[8], bool& ReadOnly)
 	}
 #endif
 
-	wcscpy_c(szType, pszType);
+	wcscpy_c(Storage.szType, pszType);
+	Storage.pszConfig = gpSetCls->GetConfigName();
 }
 
 void Settings::SetHideCaptionAlways(bool bHideCaptionAlways)

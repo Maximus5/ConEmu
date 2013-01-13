@@ -915,8 +915,12 @@
 #define IDC_CHECK2                      2568
 #define cbFocusInChildWindows           2568
 #define tOptionSearch                   2569
-#define IDC_BUTTON1                     2570
 #define cbOptionSearch                  2570
+#define tStorage                        2571
+#define IDC_BUTTON1                     2572
+#define cbExportConfig                  2572
+#define stStorage                       2573
+#define stOptionSearch                  2574
 
 // Next default values for new objects
 // 
@@ -924,7 +928,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2571
+#define _APS_NEXT_CONTROL_VALUE         2575
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

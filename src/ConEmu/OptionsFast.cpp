@@ -184,7 +184,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 					
 					if (!bVanilla)
 					{
-						if ((reg = gpSet->CreateSettings()) == NULL)
+						if ((reg = gpSet->CreateSettings(NULL)) == NULL)
 						{
 							_ASSERTE(reg!=NULL);
 						}
@@ -227,7 +227,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 							}
 						}
 
-						if ((reg = gpSet->CreateSettings()) != NULL)
+						if ((reg = gpSet->CreateSettings(NULL)) != NULL)
 						{
 							// БЕЗ имени конфигурации!
 							if (reg->OpenKey(CONEMU_ROOT_KEY, KEY_WRITE))
@@ -286,7 +286,7 @@ void CheckOptionsFast(LPCWSTR asTitle, bool abCreatingVanilla /*= false*/)
 		//	;;    Запретить автозапуск: Внесите в реестр и перезагрузитесь
 		long  lbStopWarning = FALSE;
 		
-		SettingsBase* reg = gpSet->CreateSettings();
+		SettingsBase* reg = gpSet->CreateSettings(NULL);
 		if (reg)
 		{
 			// БЕЗ имени конфигурации!

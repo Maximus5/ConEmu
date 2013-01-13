@@ -653,6 +653,12 @@ extern BOOL gbInRecreateRoot;
 #include "ExitCodes.h"
 
 
+#ifndef __GNUC__
+#include <intrin.h>
+#else
+#define _InterlockedIncrement InterlockedIncrement
+#endif
+
 
 // Message Logger
 // Originally from http://preshing.com/20120522/lightweight-in-memory-logging

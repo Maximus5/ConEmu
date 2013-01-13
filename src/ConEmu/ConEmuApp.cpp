@@ -824,7 +824,7 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 	return pszResult;
 }
 
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, bool abAutoQuote /*= true*/, bool bCygwin /*= false*/)
+wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, bool abAutoQuote /*= true*/, bool bCygwin /*= false*/, bool bSaveNewFile /*= false*/)
 {
 	wchar_t* pszResult = NULL;
 
@@ -840,9 +840,13 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent 
 	ofn.nMaxFile = countof(temp)-10;
 	ofn.lpstrTitle = asTitle ? asTitle : L"Choose file";
 	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-	            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
+		| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|(bSaveNewFile ? 0 : OFN_FILEMUSTEXIST);
 
-	if (GetOpenFileName(&ofn))
+	BOOL bRc = bSaveNewFile
+		? GetSaveFileName(&ofn)
+		: GetOpenFileName(&ofn);
+
+	if (bRc)
 	{
 		LPCWSTR pszName = temp+1;
 
@@ -1147,228 +1151,6 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 	return nBtn;
 }
 
-
-//BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, LPTSTR rsFontName)
-//{
-//	typedef struct _tagTT_OFFSET_TABLE{
-//		USHORT	uMajorVersion;
-//		USHORT	uMinorVersion;
-//		USHORT	uNumOfTables;
-//		USHORT	uSearchRange;
-//		USHORT	uEntrySelector;
-//		USHORT	uRangeShift;
-//	}TT_OFFSET_TABLE;
-//
-//	typedef struct _tagTT_TABLE_DIRECTORY{
-//		char	szTag[4];			//table name
-//		ULONG	uCheckSum;			//Check sum
-//		ULONG	uOffset;			//Offset from beginning of file
-//		ULONG	uLength;			//length of the table in bytes
-//	}TT_TABLE_DIRECTORY;
-//
-//	typedef struct _tagTT_NAME_TABLE_HEADER{
-//		USHORT	uFSelector;			//format selector. Always 0
-//		USHORT	uNRCount;			//Name Records count
-//		USHORT	uStorageOffset;		//Offset for strings storage, from start of the table
-//	}TT_NAME_TABLE_HEADER;
-//
-//	typedef struct _tagTT_NAME_RECORD{
-//		USHORT	uPlatformID;
-//		USHORT	uEncodingID;
-//		USHORT	uLanguageID;
-//		USHORT	uNameID;
-//		USHORT	uStringLength;
-//		USHORT	uStringOffset;	//from start of storage area
-//	}TT_NAME_RECORD;
-//
-//	#define SWAPWORD(x)		MAKEWORD(HIBYTE(x), LOBYTE(x))
-//	#define SWAPLONG(x)		MAKELONG(SWAPWORD(HIWORD(x)), SWAPWORD(LOWORD(x)))
-//
-//	BOOL lbRc = FALSE;
-//	HANDLE f = NULL;
-//	wchar_t szRetVal[MAX_PATH];
-//	DWORD dwRead;
-//
-//	//if (f.Open(lpszFilePath, CFile::modeRead|CFile::shareDenyWrite)){
-//	if ((f = CreateFile(lpszFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL))!=INVALID_HANDLE_VALUE)
-//	{
-//		TT_OFFSET_TABLE ttOffsetTable;
-//		//f.Read(&ttOffsetTable, sizeof(TT_OFFSET_TABLE));
-//		if (ReadFile(f, &ttOffsetTable, sizeof(TT_OFFSET_TABLE), &(dwRead=0), NULL) && dwRead)
-//		{
-//			ttOffsetTable.uNumOfTables = SWAPWORD(ttOffsetTable.uNumOfTables);
-//			ttOffsetTable.uMajorVersion = SWAPWORD(ttOffsetTable.uMajorVersion);
-//			ttOffsetTable.uMinorVersion = SWAPWORD(ttOffsetTable.uMinorVersion);
-//
-//			//check is this is a true type font and the version is 1.0
-//			if (ttOffsetTable.uMajorVersion != 1 || ttOffsetTable.uMinorVersion != 0)
-//				return FALSE;
-//
-//			TT_TABLE_DIRECTORY tblDir;
-//			BOOL bFound = FALSE;
-//
-//			for(int i=0; i< ttOffsetTable.uNumOfTables; i++){
-//				//f.Read(&tblDir, sizeof(TT_TABLE_DIRECTORY));
-//				if (ReadFile(f, &tblDir, sizeof(TT_TABLE_DIRECTORY), &(dwRead=0), NULL) && dwRead)
-//				{
-//					//strncpy(szRetVal, tblDir.szTag, 4); szRetVal[4] = 0;
-//					//if (lstrcmpi(szRetVal, L"name") == 0)
-//					//if (memcmp(tblDir.szTag, "name", 4) == 0)
-//					if (strnicmp(tblDir.szTag, "name", 4) == 0)
-//					{
-//						bFound = TRUE;
-//						tblDir.uLength = SWAPLONG(tblDir.uLength);
-//						tblDir.uOffset = SWAPLONG(tblDir.uOffset);
-//						break;
-//					}
-//				}
-//			}
-//
-//			if (bFound){
-//				if (SetFilePointer(f, tblDir.uOffset, NULL, FILE_BEGIN)!=INVALID_SET_FILE_POINTER)
-//				{
-//					TT_NAME_TABLE_HEADER ttNTHeader;
-//					//f.Read(&ttNTHeader, sizeof(TT_NAME_TABLE_HEADER));
-//					if (ReadFile(f, &ttNTHeader, sizeof(TT_NAME_TABLE_HEADER), &(dwRead=0), NULL) && dwRead)
-//					{
-//						ttNTHeader.uNRCount = SWAPWORD(ttNTHeader.uNRCount);
-//						ttNTHeader.uStorageOffset = SWAPWORD(ttNTHeader.uStorageOffset);
-//						TT_NAME_RECORD ttRecord;
-//						bFound = FALSE;
-//
-//						for(int i=0; i<ttNTHeader.uNRCount; i++){
-//							//f.Read(&ttRecord, sizeof(TT_NAME_RECORD));
-//							if (ReadFile(f, &ttRecord, sizeof(TT_NAME_RECORD), &(dwRead=0), NULL) && dwRead)
-//							{
-//								ttRecord.uNameID = SWAPWORD(ttRecord.uNameID);
-//								if (ttRecord.uNameID == 1){
-//									ttRecord.uStringLength = SWAPWORD(ttRecord.uStringLength);
-//									ttRecord.uStringOffset = SWAPWORD(ttRecord.uStringOffset);
-//									//int nPos = f.GetPosition();
-//									DWORD nPos = SetFilePointer(f, 0, 0, FILE_CURRENT);
-//									//f.Seek(tblDir.uOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset, CFile::begin);
-//									if (SetFilePointer(f, tblDir.uOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset, 0, FILE_BEGIN)!=INVALID_SET_FILE_POINTER)
-//									{
-//										if ((ttRecord.uStringLength + 1) < 33)
-//										{
-//											//f.Read(csTemp.GetBuffer(ttRecord.uStringLength + 1), ttRecord.uStringLength);
-//											//csTemp.ReleaseBuffer();
-//											char szName[MAX_PATH]; szName[ttRecord.uStringLength + 1] = 0;
-//											if (ReadFile(f, szName, ttRecord.uStringLength + 1, &(dwRead=0), NULL) && dwRead)
-//											{
-//												//if (csTemp.GetLength() > 0){
-//												if (szName[0]) {
-//													szName[ttRecord.uStringLength + 1] = 0;
-//													for (int j = ttRecord.uStringLength; j >= 0 && szName[j] == ' '; j--)
-//														szName[j] = 0;
-//													if (szName[0]) {
-//														MultiByteToWideChar(CP_ACP, 0, szName, -1, szRetVal, 32);
-//														szRetVal[31] = 0;
-//														lbRc = TRUE;
-//													}
-//													break;
-//												}
-//											}
-//										}
-//									}
-//									//f.Seek(nPos, CFile::begin);
-//									SetFilePointer(f, nPos, 0, FILE_BEGIN);
-//								}
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
-//		CloseHandle(f);
-//	}
-//	return lbRc;
-//}
-
-//BOOL FindFontInFolder(wchar_t* szTempFontFam)
-//{
-//	BOOL lbRc = FALSE;
-//
-//	typedef BOOL (WINAPI* FGetFontResourceInfo)(LPCTSTR lpszFilename,LPDWORD cbBuffer,LPVOID lpBuffer,DWORD dwQueryType);
-//	FGetFontResourceInfo GetFontResourceInfo = NULL;
-//	HMODULE hGdi = LoadLibrary(L"gdi32.dll");
-//	if (!hGdi) return FALSE;
-//	GetFontResourceInfo = (FGetFontResourceInfo)GetProcAddress(hGdi, "GetFontResourceInfoW");
-//	if (!GetFontResourceInfo) return FALSE;
-//
-//	WIN32_FIND_DATA fnd;
-//	wchar_t szFind[MAX_PATH]; wcscpy(szFind, gpConEmu->ms_ConEmuExe);
-//	wchar_t *pszSlash = wcsrchr(szFind, L'\\');
-//
-//	if (pszSlash) {
-//		wcscpy(pszSlash, L"\\*.ttf");
-//		HANDLE hFind = FindFirstFile(szFind, &fnd);
-//		if (hFind != INVALID_HANDLE_VALUE) {
-//			do {
-//				if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
-//					lbRc = TRUE; break;
-//				}
-//			} while (FindNextFile(hFind, &fnd));
-//			FindClose(hFind);
-//		}
-//
-//		if (lbRc) {
-//			lbRc = FALSE;
-//			pszSlash[1] = 0;
-//			if ((_tcslen(fnd.cFileName)+_tcslen(szFind)) >= MAX_PATH) {
-//				TCHAR* psz=(TCHAR*)calloc(_tcslen(fnd.cFileName)+100,sizeof(TCHAR));
-//				lstrcpyW(psz, L"Too long full pathname for font:\n");
-//				lstrcatW(psz, fnd.cFileName);
-//				MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OK|MB_ICONSTOP);
-//				free(psz);
-//			} else {
-//				wcscat(szFind, fnd.cFileName);
-//				// Теперь нужно определить имя шрифта
-//				DWORD dwSize = MAX_PATH;
-//				//if (!AddFontResourceEx(szFind, FR_PRIVATE, NULL)) //ADD fontname; by Mors
-//				//{
-//				//	TCHAR* psz=(TCHAR*)calloc(_tcslen(szFind)+100,sizeof(TCHAR));
-//				//	lstrcpyW(psz, L"Can't register font:\n");
-//				//	lstrcatW(psz, szFind);
-//				//	MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OK|MB_ICONSTOP);
-//				//	free(psz);
-//				//} else
-//				//if (!GetFontResourceInfo(szFind, &dwSize, szTempFontFam, 1)) {
-//				if (!gpSet->GetFontNameFromFile(szFind, szTempFontFam)) {
-//					DWORD dwErr = GetLastError();
-//					TCHAR* psz=(TCHAR*)calloc(_tcslen(szFind)+100,sizeof(TCHAR));
-//					lstrcpyW(psz, L"Can't query font family for file:\n");
-//					lstrcatW(psz, szFind);
-//					wsprintf(psz+_tcslen(psz), L"\nErrCode=0x%08X", dwErr);
-//					MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OK|MB_ICONSTOP);
-//					free(psz);
-//				} else {
-//					lstrcpynW(gpSet->FontFile, szFind, countof(gpSet->FontFile));
-//					lbRc = TRUE;
-//				}
-//			}
-//		}
-//	}
-//
-//	return lbRc;
-//}
-
-//extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
-
-// Disables the IME for all threads in a current process.
-//void DisableIME()
-//{
-//	typedef BOOL (WINAPI* ImmDisableIMEt)(DWORD idThread);
-//	BOOL lbDisabled = FALSE;
-//	HMODULE hImm32 = LoadLibrary(_T("imm32.dll"));
-//	if (hImm32) {
-//		ImmDisableIMEt ImmDisableIMEf = (ImmDisableIMEt)GetProcAddress(hImm32, "ImmDisableIME");
-//		if (ImmDisableIMEf) {
-//			lbDisabled = ImmDisableIMEf(-1);
-//		}
-//	}
-//	return;
-//}
 
 void MessageLoop()
 {

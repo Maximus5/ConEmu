@@ -29,8 +29,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#define CONEMU_ROOT_KEY L"Software\\ConEmu"
-
 template <class T>
 T GetMinMax(T a, int v1, int v2)
 {
@@ -309,7 +307,6 @@ enum TabStyle
 	ts_VS2008 = 0,
 	ts_Win8   = 1,
 };
-
 
 struct Settings
 {
@@ -1478,7 +1475,7 @@ struct Settings
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadPalettes(SettingsBase* reg);
 		void LoadProgresses(SettingsBase* reg);
-		BOOL SaveSettings(BOOL abSilent = FALSE);
+		BOOL SaveSettings(BOOL abSilent = FALSE, const SettingsStorage* apStorage = NULL);
 		void SaveAppSettings(SettingsBase* reg);
 		bool SaveCmdTasks(SettingsBase* reg);
 		bool SaveProgresses(SettingsBase* reg);
@@ -1495,9 +1492,9 @@ struct Settings
 		//BOOL CheckConIme();
 		void CheckConsoleSettings();
 		
-		SettingsBase* CreateSettings();
+		SettingsBase* CreateSettings(const SettingsStorage* apStorage);
 		
-		void GetSettingsType(wchar_t (&szType)[8], bool& ReadOnly);
+		void GetSettingsType(SettingsStorage& Storage, bool& ReadOnly);
 		
 	private:
 		struct CEFontRange
