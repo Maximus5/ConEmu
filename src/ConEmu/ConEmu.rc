@@ -282,11 +282,14 @@ BEGIN
     CONTROL         "Close ConEmu window",rbMultiLastClose,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,111,95,8
     CONTROL         "Leave ConEmu opened",rbMultiLastLeave,"Button",BS_AUTORADIOBUTTON,113,111,99,8
     CONTROL         "Hide ConEmu to the TSA",rbMultiLastTSA,"Button",BS_AUTORADIOBUTTON,218,111,101,8
-    GROUPBOX        "Minimize ConEmu by Esc",IDC_STATIC,4,132,319,29
-    CONTROL         "When all consoles closed",rbMinByEscEmpty,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,145,99,8
-    CONTROL         "Always",rbMinByEscAlways,"Button",BS_AUTORADIOBUTTON,113,145,42,8
-    CONTROL         "Never",rbMinByEscNever,"Button",BS_AUTORADIOBUTTON,161,145,38,8
-    CONTROL         "Map Shift+Esc to Esc",cbMapShiftEscToEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,145,101,8
+    GROUPBOX        "Minimize ConEmu automatically",IDC_STATIC,4,132,319,57
+    CONTROL         "Minimize on focus lose (not in Quake style)",cbMinimizeOnLoseFocus,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,145,199,8
+    GROUPBOX        "When Esc pressed",IDC_STATIC,4,160,319,29
+    CONTROL         "If all consoles closed",rbMinByEscEmpty,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,173,99,8
+    CONTROL         "Always",rbMinByEscAlways,"Button",BS_AUTORADIOBUTTON,113,173,42,8
+    CONTROL         "Never",rbMinByEscNever,"Button",BS_AUTORADIOBUTTON,161,173,38,8
+    CONTROL         "Map Shift+Esc to Esc",cbMapShiftEscToEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,173,101,8
 END
 
 IDD_SPG_CURSOR DIALOGEX 0, 0, 328, 235
@@ -550,10 +553,13 @@ BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,351,243,70,14
     PUSHBUTTON      "Reset",bResetSettings,235,243,51,14
     PUSHBUTTON      "Reload",bReloadSettings,293,243,51,14
-    GROUPBOX        "Save settings to",IDC_STATIC,4,236,90,22,NOT WS_VISIBLE
-    CONTROL         "reg",rbSettingsReg,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,8,246,27,9
-    CONTROL         "xml",rbSettingsXml,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,36,246,27,9
-    CONTROL         "ini",rbSettingsIni,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,65,246,23,9
+    GROUPBOX        "Save settings to",IDC_STATIC,97,236,90,22,NOT WS_VISIBLE
+    CONTROL         "reg",rbSettingsReg,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,101,246,27,9
+    CONTROL         "xml",rbSettingsXml,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,129,246,27,9
+    CONTROL         "ini",rbSettingsIni,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,158,246,23,9
+    EDITTEXT        tOptionSearch,23,243,54,13,ES_AUTOHSCROLL
+    PUSHBUTTON      ">",cbOptionSearch,78,243,15,13
+    LTEXT           "Find:",IDC_STATIC,4,245,17,8
 END
 
 IDD_SPG_INFO DIALOGEX 0, 0, 328, 224
@@ -623,6 +629,7 @@ BEGIN
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,132,41,89,8
     CONTROL         "Show «was hidden» warning",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,41,119,8
     GROUPBOX        "In-console options",IDC_STATIC,4,62,319,45
+    CONTROL         "Focus in child windows",cbFocusInChildWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,27,87,8
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235

@@ -391,12 +391,16 @@ class CConEmuMain :
 		HANDLE mh_ConEmuAliveEvent; bool mb_ConEmuAliveOwned; DWORD mn_ConEmuAliveEventErr;
 		HANDLE mh_ConEmuAliveEventNoDir; bool mb_ConEmuAliveOwnedNoDir; DWORD mn_ConEmuAliveEventErrNoDir;
 		//
-		BOOL mb_HotKeyRegistered;
+		bool mb_HotKeyRegistered;
 		HHOOK mh_LLKeyHook;
 		HMODULE mh_LLKeyHookDll;
 		HWND* mph_HookedGhostWnd;
 		HMODULE LoadConEmuCD();
 		void RegisterHotKeys();
+		void RegisterGlobalHotKeys(bool bRegister);
+	public:
+		void GlobalHotKeyChanged();
+	protected:
 		void UnRegisterHotKeys(BOOL abFinal=FALSE);
 		//int mn_MinRestoreRegistered; UINT mn_MinRestore_VK, mn_MinRestore_MOD;
 		//HMODULE mh_DwmApi;
@@ -574,7 +578,7 @@ class CConEmuMain :
 		void UpdateWindowChild(CVirtualConsole* apVCon);
 		void UpdateInsideRect(RECT rcNewPos);
 		bool isActive(CVirtualConsole* apVCon, bool abAllowGroup = true);
-		bool isChildWindow();
+		//bool isChildWindowVisible();
 		bool isCloseConfirmed();
 		bool isConSelectMode();
 		bool isConsolePID(DWORD nPID);
@@ -615,8 +619,8 @@ class CConEmuMain :
 		void InvalidateGaps();
 		//void PaintGaps(HDC hDC);
 		void PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
-		void PostDragCopy(BOOL abMove, BOOL abRecieved=FALSE);
-		void PostCreate(BOOL abRecieved=FALSE);
+		void PostDragCopy(BOOL abMove, BOOL abReceived=FALSE);
+		void PostCreate(BOOL abReceived=FALSE);
 		void PostCreateCon(RConStartArgs *pArgs);
 		HWND PostCreateView(CConEmuChild* pChild);
 		void PostMacro(LPCWSTR asMacro);
@@ -701,6 +705,7 @@ class CConEmuMain :
 		void OnAltF9(BOOL abPosted=FALSE);
 		void OnMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
 		void OnForcedFullScreen(bool bSet = true);
+		void OnSwitchGuiFocus();
 		void OnAlwaysOnTop();
 		void OnAlwaysShowScrollbar(bool abSync = true);
 		void OnBufferHeight();
@@ -713,7 +718,7 @@ class CConEmuMain :
 		void OnDesktopMode();
 		LRESULT OnDestroy(HWND hWnd);
 		LRESULT OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon);
-		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom = NULL);
+		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom = NULL, BOOL abForceChild = FALSE);
 		LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 		void OnHideCaption();
 		void OnInfo_About(LPCWSTR asPageName = NULL);

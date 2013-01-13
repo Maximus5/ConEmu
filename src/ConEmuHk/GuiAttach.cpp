@@ -716,12 +716,14 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	}
 }
 
-void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach)
+void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rbInactive)
 {
 #ifdef _DEBUG
 	STARTUPINFO si = {sizeof(si)};
 	GetStartupInfo(&si);
 #endif
+
+	rbInactive = FALSE;
 
 	//if (ghConEmuWnd)
 	//{
@@ -803,6 +805,8 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach)
 					SetConEmuHkWindows(pOut->AttachGuiApp.hConEmuDc, pOut->AttachGuiApp.hConEmuBack);
 					//gbGuiClientHideCaption = pOut->AttachGuiApp.bHideCaption;
 					gGuiClientStyles = pOut->AttachGuiApp.Styles;
+					//Если приложение создается в НЕ активной вкладке - фокус нужно вернуть в ConEmu
+					rbInactive = (pOut->AttachGuiApp.nFlags & agaf_Inactive) == agaf_Inactive;
 				}
 				ExecuteFreeResult(pOut);
 			}

@@ -451,6 +451,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			CRealConsole* pRCon = gpConEmu->AttachRequestedGui(pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID);
 			if (pRCon)
 			{
+				CVConGuard VCon(pRCon->VCon());
 				RECT rcPrev = ppReply->AttachGuiApp.rcWindow;
 				HWND hBack = pRCon->VCon()->GetBack();
 
@@ -466,7 +467,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
 				pRCon->SetGuiMode(pIn->AttachGuiApp.nFlags, pIn->AttachGuiApp.hAppWindow, pIn->AttachGuiApp.Styles.nStyle, pIn->AttachGuiApp.Styles.nStyleEx, pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID, rcPrev);
 
-				ppReply->AttachGuiApp.nFlags = agaf_Success;
+				ppReply->AttachGuiApp.nFlags = agaf_Success | (pRCon->isActive(false) ? 0 : agaf_Inactive);
 				ppReply->AttachGuiApp.nPID = pRCon->GetServerPID();
 				ppReply->AttachGuiApp.hConEmuDc = pRCon->GetView();
 				ppReply->AttachGuiApp.hConEmuBack = hBack;

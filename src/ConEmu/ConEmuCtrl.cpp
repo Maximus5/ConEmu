@@ -795,8 +795,17 @@ bool CConEmuCtrl::key_ForcedFullScreen(DWORD VkMod, bool TestOnly, const ConEmuH
 		return true;
 
 	// Должно обрабатываться через WM_HOTKEY
-	_ASSERTE(FALSE && "CConEmuCtrl::key_ForcesFullScreen");
 	gpConEmu->OnForcedFullScreen();
+	return true;
+}
+
+bool CConEmuCtrl::key_SwitchGuiFocus(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	// Должно обрабатываться через WM_HOTKEY
+	gpConEmu->OnSwitchGuiFocus();
 	return true;
 }
 

@@ -1872,7 +1872,8 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 				if (gpConEmu->SetWindowMode(gpConEmu->isIconic() ? gpConEmu->WindowMode : wmNormal))
 				{
-					gpConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"After SC_RESTORE");
+					// abForceChild=TRUE, если в табе запущено GUI приложение - можно передать в него фокус
+					gpConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"After SC_RESTORE", TRUE);
 					break;
 				}
 			}
@@ -1887,7 +1888,8 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 				SetRestoreFromMinimized(bPrev);
 
-				gpConEmu->OnFocus(hWnd, WM_ACTIVATEAPP, TRUE, 0, L"From SC_RESTORE");
+				// abForceChild=TRUE, если в табе запущено GUI приложение - можно передать в него фокус
+				gpConEmu->OnFocus(hWnd, WM_ACTIVATEAPP, TRUE, 0, L"From SC_RESTORE", TRUE);
 			}
 
 			break;

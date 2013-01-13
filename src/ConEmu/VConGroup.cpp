@@ -1402,19 +1402,26 @@ bool CVConGroup::isFilePanel(bool abPluginAllowed/*=false*/)
 
 bool CVConGroup::isNtvdm(BOOL abCheckAllConsoles/*=FALSE*/)
 {
-	if (gp_VActive && gp_VActive->RCon())
+	if (gp_VActive)
 	{
-		if (gp_VActive->RCon()->isNtvdm())
+		CVConGuard VCon(gp_VActive);
+		CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
+		
+		if (pRCon && pRCon->isNtvdm())
 			return true;
 	}
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		if (gp_VCon[i] && gp_VCon[i] != gp_VActive && gp_VCon[i]->RCon())
-		{
-			if (gp_VCon[i]->RCon()->isNtvdm())
-				return true;
-		}
+		CVConGuard VCon(gp_VCon[i]);
+		if (VCon.VCon() != gp_VActive)
+			continue;
+		CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
+		if (!pRCon)
+			continue;
+
+		if (pRCon->isNtvdm())
+			return true;
 	}
 
 	return false;
@@ -1427,27 +1434,66 @@ bool CVConGroup::isOurConsoleWindow(HWND hCon)
 	
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		if (gp_VCon[i] && gp_VCon[i]->RCon())
-		{
-			if (gp_VCon[i]->RCon()->ConWnd() == hCon)
-				return true;
-		}
+		CVConGuard VCon(gp_VCon[i]);
+		CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
+		if (!pRCon)
+			continue;
+
+		if (pRCon->ConWnd() == hCon)
+			return true;
 	}
 	
 	return false;
 }
 
-bool CVConGroup::isChildWindow()
+// Вернуть true, если hAnyWnd это наше окно, консольное окно,
+// или принадлежит дочернему GUI приложению, запущенному во вкладке ConEmu
+bool CVConGroup::isOurWindow(HWND hAnyWnd)
+{
+	if (!hAnyWnd)
+		return false;
+
+	// ConEmu/Settings?
+	if ((hAnyWnd == ghWnd) || (hAnyWnd == ghOpWnd))
+		return true;
+
+	DWORD nPID = 0;
+	if (!GetWindowThreadProcessId(hAnyWnd, &nPID))
+		return false;
+	// Еще какие-то наши окна?
+	if (nPID == GetCurrentProcessId())
+		return true;
+
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		CVConGuard VCon(gp_VCon[i]);
+		CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
+		if (!pRCon)
+			continue;
+
+		if (pRCon->ConWnd() == hAnyWnd)
+			return true;
+
+		if ((pRCon->GuiWnd() == hAnyWnd) || (pRCon->GuiWndPID() == nPID))
+			return true;
+	}
+
+	return false;
+}
+
+bool CVConGroup::isChildWindowVisible()
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		if (gp_VCon[i] && isVisible(gp_VCon[i]))
+		CVConGuard VCon(gp_VCon[i]);
+		if (VCon.VCon() && isVisible(VCon.VCon()))
 		{
-			if (gp_VCon[i]->RCon())
-			{
-				if (gp_VCon[i]->RCon()->GuiWnd() || gp_VCon[i]->RCon()->isPictureView())
-					return true;
-			}
+			CRealConsole* pRCon = VCon->RCon();
+			if (!pRCon)
+				continue;
+
+			if (pRCon->GuiWnd() || pRCon->isPictureView())
+				return true;
 		}
 	}
 
@@ -2619,7 +2665,7 @@ bool CVConGroup::ConActivate(int nCon)
 		}
 
 		// ПЕРЕД переключением на новую консоль - обновить ее размеры
-		if (gp_VActive)
+		if (pVCon)
 		{
 			//int nOldConWidth = gp_VActive->RCon()->TextWidth();
 			//int nOldConHeight = gp_VActive->RCon()->TextHeight();
@@ -2632,10 +2678,23 @@ bool CVConGroup::ConActivate(int nCon)
 			int nNewConWidth = rcNewCon.right;
 			int nNewConHeight = rcNewCon.bottom;
 
+			wchar_t szInfo[128];
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Activating con #%u, OldSize={%u,%u}, NewSize={%u,%u}",
+				nCon, nOldConWidth, nOldConHeight, nNewConWidth, nNewConHeight);
+			if (gpSetCls->isAdvLogging)
+			{
+				pVCon->RCon()->LogString(szInfo);
+			}
+
 			if (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight)
 			{
 				lbSizeOK = pVCon->RCon()->SetConsoleSize(nNewConWidth,nNewConHeight);
 			}
+
+			// И поправить размеры VCon/Back
+			RECT rcWork = {};
+			rcWork = gpConEmu->CalcRect(CER_WORKSPACE, pVCon);
+			CVConGroup::MoveAllVCon(pVCon, rcWork);
 		}
 
 		gp_VActive = pVCon;
@@ -4016,6 +4075,36 @@ void CVConGroup::ReSizePanes(RECT mainClient)
 	rcNewCon = gpConEmu->CalcRect(CER_WORKSPACE, mainClient, CER_MAINCLIENT, pVCon);
 
 	CVConGroup::MoveAllVCon(pVCon, rcNewCon);
+}
+
+void CVConGroup::NotifyChildrenWindows()
+{
+	// Issue 878: ConEmu - Putty: Can't select in putty when ConEmu change display
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		CVConGuard VCon(gp_VCon[i]);
+		if (VCon.VCon())
+		{
+			HWND hGuiWnd = VCon->GuiWnd(); // Child GUI Window
+			if (hGuiWnd)
+			{
+				CRealConsole* pRCon = VCon->RCon();
+				//VCon->RCon()->SetOtherWindowPos(hGuiWnd, NULL, int X, int Y, int cx, int cy, UINT uFlags)
+
+				RECT rcChild = {};
+				GetWindowRect(hGuiWnd, &rcChild);
+				MapWindowPoints(NULL, VCon->GetBack(), (LPPOINT)&rcChild, 2);
+
+				WPARAM wParam = 0;
+				LPARAM lParam = MAKELPARAM(rcChild.left, rcChild.top);
+				pRCon->PostConsoleMessage(hGuiWnd, WM_MOVE, wParam, lParam);
+
+				wParam = ::IsZoomed(hGuiWnd) ? SIZE_MAXIMIZED : SIZE_RESTORED;
+				lParam = MAKELPARAM(rcChild.right-rcChild.left, rcChild.bottom-rcChild.top);
+				pRCon->PostConsoleMessage(hGuiWnd, WM_SIZE, wParam, lParam);
+			}
+		}
+	}
 }
 
 bool CVConGroup::isInGroup(CVirtualConsole* apVCon, CVConGroup* apGroup)

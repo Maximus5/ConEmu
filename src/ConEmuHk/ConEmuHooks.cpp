@@ -1690,7 +1690,7 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 {
 	typedef BOOL (WINAPI* OnShowWindow_t)(HWND hWnd, int nCmdShow);
 	ORIGINALFASTEX(ShowWindow,NULL);
-	BOOL lbRc = FALSE, lbGuiAttach = FALSE;
+	BOOL lbRc = FALSE, lbGuiAttach = FALSE, lbInactiveTab = FALSE;
 	static bool bShowWndCalled = false;
 	
 	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConWnd))
@@ -1711,7 +1711,7 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 	}
 
 	if ((ghAttachGuiClient == hWnd) || (!ghAttachGuiClient && gbAttachGuiClient))
-		OnShowGuiClientWindow(hWnd, nCmdShow, lbGuiAttach);
+		OnShowGuiClientWindow(hWnd, nCmdShow, lbGuiAttach, lbInactiveTab);
 
 	if (F(ShowWindow))
 	{
@@ -1725,6 +1725,12 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 			{
 				F(ShowWindow)(hWnd, nCmdShow);
 			}
+		}
+
+		// Если вкладка НЕ активная - то вернуть фокус в ConEmu
+		if (lbGuiAttach && lbInactiveTab && nCmdShow && ghConEmuWnd)
+		{
+			user->setForegroundWindow(ghConEmuWnd);
 		}
 	}
 	DWORD dwErr = GetLastError();

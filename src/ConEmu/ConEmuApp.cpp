@@ -932,7 +932,7 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 // z120713 - В потоке CRealConsole::MonitorThread возвращаются 
 // отличные от основного потока HWND. В результате, а также из-за
 // отложенного выполнения, UpdateServerActive передавал Thaw==FALSE
-static HWND ghLastForegroundWindow = NULL;
+HWND ghLastForegroundWindow = NULL;
 HWND getForegroundWindow()
 {
 	HWND h = NULL;
@@ -1467,10 +1467,12 @@ void SplitCommandLine(wchar_t *str, uint *n)
 //  params  - количество аргументов
 //            0 - ком.строка пустая
 //            ((uint)-1) - весь cmdNew должен быть ПРИКЛЕЕН к строке запуска по умолчанию
-BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
+BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, bool& isScript, uint& params)
 {
 	params = 0;
 	cmdNew = NULL;
+	isScript = false;
+
 	LPCWSTR pszCmdLine = GetCommandLine();
 	int nInitLen = _tcslen(pszCmdLine);
 	cmdLine = lstrdup(pszCmdLine);
@@ -1569,12 +1571,26 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 		else
 		{
 			// Если ком.строка содержит "/cmd" - все что после него используется для создания нового процесса
+			// или "/cmdlist cmd1 | cmd2 | ..."
 			cmdNew = wcsstr(cmdLine, L"/cmd");
 
 			if (cmdNew)
 			{
 				*cmdNew = 0;
-				cmdNew += 5;
+				cmdNew++;
+
+				if (lstrcmpni(cmdNew, L"cmdlist", 7) == 0)
+				{
+					cmdNew += 7;
+					isScript = true;
+				}
+				else
+				{
+					cmdNew += 3;
+				}
+
+				// Пропустить пробелы
+				cmdNew = (wchar_t*)SkipNonPrintable(cmdNew);
 			}
 
 			// cmdLine готов к разбору
@@ -2507,11 +2523,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	TCHAR *cmdLine = NULL;
 	TCHAR *psUnknown = NULL;
 	uint  params = 0;
+	bool  isScript = false;
 
 	// [OUT] params = (uint)-1, если в первый аргумент не начинается с '/'
 	// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe", 
 	// а не такая "ConEmu.exe /cmd c:\tools\far.exe", 
-	if (!PrepareCommandLine(/*OUT*/cmdLine, /*OUT*/cmdNew, /*OUT*/params))
+	if (!PrepareCommandLine(/*OUT*/cmdLine, /*OUT*/cmdNew, /*OUT*/isScript, /*OUT*/params))
 		return 100;
 
 	if (params && params != (uint)-1)
@@ -2620,6 +2637,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/bypass")))
 				{
+					// Этот ключик был придуман для "скрытого" запуска консоли
+					// в режиме администратора
+					// (т.е. чтобы окно UAC нормально всплывало, но не мелькало консольное окно)
+					// Но не получилось, пока требуются хэндлы процесса, а их не получается
+					// передать в НЕ приподнятый процесс (исходный ConEmu GUI).
+
 					if (!cmdNew || !*cmdNew)
 					{
 						DisplayLastError(L"Invalid cmd line. '/bypass' exists, '/cmd' not", -1);
@@ -3235,84 +3258,101 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		MCHKHEAP
 		const wchar_t* pszDefCmd = NULL;
 		wchar_t* pszReady = NULL;
-		int nLen = _tcslen(cmdNew)+8;
 
-		// params = (uint)-1, если в первый аргумент не начинается с '/'
-		// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe"
-		if ((params == (uint)-1)
-			&& (gpSet->nStartType == 0)
-			&& (gpSet->psStartSingleApp && *gpSet->psStartSingleApp))
+		if (isScript)
 		{
-			// В psStartSingleApp может быть прописан путь к фару.
-			// Тогда, если в проводнике набросили, например, txt файл
-			// на иконку ConEmu, этот наброшенный путь прилепится
-			// к строке запуска фара.
-			pszDefCmd = gpSet->psStartSingleApp;
-			wchar_t szExe[MAX_PATH+1];
-			if (0 != NextArg(&pszDefCmd, szExe))
+			pszReady = lstrdup(cmdNew);
+			if (!pszReady)
 			{
-				_ASSERTE(FALSE && "NextArg failed");
-			}
-			else
-			{
-				// Только если szExe это Far.
-				if (IsFarExe(szExe))
-					pszDefCmd = gpSet->psStartSingleApp;
-				else
-					pszDefCmd = NULL; // Запускать будем только то, что "набросили"
-			}
-
-			if (pszDefCmd)
-			{
-				nLen += 3 + _tcslen(pszDefCmd);
-			}
-		}
-
-		pszReady = (TCHAR*)malloc(nLen*sizeof(TCHAR));
-		if (!pszReady)
-		{
-			MBoxAssert(pszReady!=NULL);
-			return 100;
-		}
-		
-
-		if (pszDefCmd)
-		{
-			lstrcpy(pszReady, pszDefCmd);
-			lstrcat(pszReady, L" ");
-			lstrcat(pszReady, SkipNonPrintable(cmdNew));
-
-			if (pszReady[0] != L'/' && pszReady[0] != L'-')
-			{
-				// Запомним в истории!
-				gpSet->HistoryAdd(pszReady);
-			}
-		}
-		else if (params == (uint)-1)
-		{
-			*pszReady = DropLnkPrefix; // Признак того, что это передача набрасыванием на ярлык
-			lstrcpy(pszReady+1, SkipNonPrintable(cmdNew));
-
-			if (pszReady[1] != L'/' && pszReady[1] != L'-')
-			{
-				// Запомним в истории!
-				gpSet->HistoryAdd(pszReady+1);
+				MBoxAssert(pszReady!=NULL);
+				return 100;
 			}
 		}
 		else
 		{
-			lstrcpy(pszReady, SkipNonPrintable(cmdNew));
+			int nLen = _tcslen(cmdNew)+8;
 
-			if (pszReady[0] != L'/' && pszReady[0] != L'-')
+			// params = (uint)-1, если в первый аргумент не начинается с '/'
+			// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe"
+			if ((params == (uint)-1)
+				&& (gpSet->nStartType == 0)
+				&& (gpSet->psStartSingleApp && *gpSet->psStartSingleApp))
 			{
-				// Запомним в истории!
-				gpSet->HistoryAdd(pszReady);
+				// В psStartSingleApp может быть прописан путь к фару.
+				// Тогда, если в проводнике набросили, например, txt файл
+				// на иконку ConEmu, этот наброшенный путь прилепится
+				// к строке запуска фара.
+				pszDefCmd = gpSet->psStartSingleApp;
+				wchar_t szExe[MAX_PATH+1];
+				if (0 != NextArg(&pszDefCmd, szExe))
+				{
+					_ASSERTE(FALSE && "NextArg failed");
+				}
+				else
+				{
+					// Только если szExe это Far.
+					if (IsFarExe(szExe))
+						pszDefCmd = gpSet->psStartSingleApp;
+					else
+						pszDefCmd = NULL; // Запускать будем только то, что "набросили"
+				}
+
+				if (pszDefCmd)
+				{
+					nLen += 3 + _tcslen(pszDefCmd);
+				}
+			}
+
+			pszReady = (TCHAR*)malloc(nLen*sizeof(TCHAR));
+			if (!pszReady)
+			{
+				MBoxAssert(pszReady!=NULL);
+				return 100;
+			}
+			
+
+			if (pszDefCmd)
+			{
+				lstrcpy(pszReady, pszDefCmd);
+				lstrcat(pszReady, L" ");
+				lstrcat(pszReady, SkipNonPrintable(cmdNew));
+
+				if (pszReady[0] != L'/' && pszReady[0] != L'-')
+				{
+					// Запомним в истории!
+					gpSet->HistoryAdd(pszReady);
+				}
+			}
+			else if (params == (uint)-1)
+			{
+				*pszReady = DropLnkPrefix; // Признак того, что это передача набрасыванием на ярлык
+				lstrcpy(pszReady+1, SkipNonPrintable(cmdNew));
+
+				if (pszReady[1] != L'/' && pszReady[1] != L'-')
+				{
+					// Запомним в истории!
+					gpSet->HistoryAdd(pszReady+1);
+				}
+			}
+			else
+			{
+				lstrcpy(pszReady, SkipNonPrintable(cmdNew));
+
+				if (pszReady[0] != L'/' && pszReady[0] != L'-')
+				{
+					// Запомним в истории!
+					gpSet->HistoryAdd(pszReady);
+				}
 			}
 		}
 
 		MCHKHEAP
-		SafeFree(gpSet->psCurCmd); // могло быть создано в gpSet->GetCmd()
+		// могло быть создано в gpSet->GetCmd()
+		SafeFree(gpSet->psCurCmd);
+
+		// Запоминаем
 		gpSet->psCurCmd = pszReady; pszReady = NULL;
+		gpSet->isCurCmdList = isScript;
 	}
 
 	//if (FontFilePrm) {

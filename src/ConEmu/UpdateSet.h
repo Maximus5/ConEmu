@@ -54,6 +54,7 @@ public:
 	LPCWSTR UpdateExeCmdLine();
 	wchar_t *szUpdateArcCmdLine, *szUpdateArcCmdLineDef; // isUpdateDownloadSetup==2
 	LPCWSTR UpdateArcCmdLine();
+
 	wchar_t *szUpdatePostUpdateCmd; // ёзер может чего-то свое делать с распакованными файлами
 
 	wchar_t *szUpdateDownloadPath; // "%TEMP%\\ConEmu"

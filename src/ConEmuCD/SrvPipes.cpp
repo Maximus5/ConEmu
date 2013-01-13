@@ -124,6 +124,7 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 			// очередь может "не успевать"
 			if (i && !(i & 31))
 			{
+				InputLogger::Log(InputLogger::Event::evt_InputQueueFlush);
 				gpSrv->InputQueue.WriteInputQueue(NULL, TRUE);
 				Sleep(10);
 			}
@@ -139,19 +140,48 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 
 			INPUT_RECORD r;
 
+			// Сбросим флаг
+			InputLogger::Log(InputLogger::Event::evt_ResetEvent, gpSrv->InputQueue.nUsedLen);
+			ResetEvent(gpSrv->hInputWasRead);
+
 			// Некорректные события - отсеиваются,
 			// некоторые события (CtrlC/CtrlBreak) не пишутся в буферном режиме
+			InputLogger::Log(InputLogger::Event::evt_ProcessInputMessage, gpSrv->InputQueue.nUsedLen);
 			if (ProcessInputMessage(pCmd->msg[i], r))
 			{
 				//SendConsoleEvent(&r, 1);
-				if (!gpSrv->InputQueue.WriteInputQueue(&r, FALSE))
+				InputLogger::Log(InputLogger::Event::evt_WriteInputQueue1, r, gpSrv->InputQueue.nUsedLen);
+				BOOL bWritten = gpSrv->InputQueue.WriteInputQueue(&r, FALSE);
+				// Облом с записью в наш внутренний буфер может быть только при его переполнении
+				// Т.е. InputThread еще не успел считать данные из внутреннего буфера
+				// и еще не перекинул считанное в консольный буфер.
+				if (!bWritten)
 				{
-					DWORD nErrCode = GetLastError(); UNREFERENCED_PARAMETER(nErrCode);
-					_ASSERTE(FALSE && "Input buffer overflow?");
+					// Передернуть на всякий случай очередь
+					InputLogger::Log(InputLogger::Event::evt_InputQueueFlush);
+					gpSrv->InputQueue.WriteInputQueue(NULL, TRUE);
+
+					// Подождем чуть-чуть
+					InputLogger::Log(InputLogger::Event::evt_WaitIntputReady, gpSrv->InputQueue.nUsedLen);
+					DWORD nReadyWait = WaitForSingleObject(gpSrv->hInputWasRead, 250);
+					if (nReadyWait == WAIT_OBJECT_0)
+					{
+						InputLogger::Log(InputLogger::Event::evt_WriteInputQueue2, gpSrv->InputQueue.nUsedLen);
+						bWritten = gpSrv->InputQueue.WriteInputQueue(&r, FALSE);
+					}
+
+					if (!bWritten)
+					{
+						InputLogger::Log(InputLogger::Event::evt_Overflow, gpSrv->InputQueue.nUsedLen);
+						_InterlockedIncrement(&InputLogger::g_overflow);
+						OutputDebugString(L"\n!!!ConEmuC input buffer overflow!!!\n");
+						_ASSERTE(FALSE && "Input buffer overflow");
+					}
 					WARNING("Если буфер переполнен - ждать? Хотя если будем ждать здесь - может повиснуть GUI на записи в pipe...");
 				}
+
 				#ifdef _DEBUG
-				else if (pszDbg && (r.EventType == KEY_EVENT) && r.Event.KeyEvent.bKeyDown)
+				if (bWritten && pszDbg && (r.EventType == KEY_EVENT) && r.Event.KeyEvent.bKeyDown)
 				{
 					*(pszDbg++) = r.Event.KeyEvent.uChar.UnicodeChar;
 					*pszDbg = 0;
@@ -162,6 +192,7 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 			MCHKHEAP;
 		}
 
+		InputLogger::Log(InputLogger::Event::evt_InputQueueFlush);
 		gpSrv->InputQueue.WriteInputQueue(NULL, TRUE);
 
 		#ifdef _DEBUG

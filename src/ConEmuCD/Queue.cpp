@@ -615,9 +615,15 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 		//_ASSERTE(ghConInSemaphore && (nSemaphore == WAIT_OBJECT_0));
 		//#endif
 
+		InputLogger::Log(InputLogger::Event::evt_ReadInputQueue);
+
 		if (gpSrv->InputQueue.ReadInputQueue(ir, &nInputCount))
 		{
 			_ASSERTE(nInputCount>0);
+
+			// Выставить флаг, что прошло очередное чтение
+			InputLogger::Log(InputLogger::Event::evt_SetEvent, nInputCount);
+			SetEvent(gpSrv->hInputWasRead);
 
 			#ifdef _DEBUG
 			for(DWORD j = 0; j < nInputCount; j++)
@@ -635,8 +641,15 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 			}
 			#endif
 
+			
+			// Write
+
+			InputLogger::Log(InputLogger::Event::evt_SendStart, nInputCount);
+			
 			//DEBUGSTRINPUTPIPE(L"SendConsoleEvent\n");
 			SendConsoleEvent(ir, nInputCount);
+
+			InputLogger::Log(InputLogger::Event::evt_SendEnd, nInputCount);
 		}
 
 		//#ifdef USE_INPUT_SEMAPHORE

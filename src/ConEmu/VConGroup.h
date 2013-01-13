@@ -108,7 +108,8 @@ public:
 	static bool isFilePanel(bool abPluginAllowed=false);
 	static bool isNtvdm(BOOL abCheckAllConsoles=FALSE);
 	static bool isOurConsoleWindow(HWND hCon);
-	static bool isChildWindow();
+	static bool isOurWindow(HWND hAnyWnd);
+	static bool isChildWindowVisible();
 	static bool isPictureView();
 	static bool isEditor();
 	static bool isViewer();
@@ -175,6 +176,8 @@ public:
 	static void SyncAllConsoles2Window(RECT rcWnd, enum ConEmuRect tFrom = CER_MAIN, bool bSetRedraw = false);
 	static void OnConsoleResize(bool abSizingToDo);
 	static void ReSizePanes(RECT mainClient);
+
+	static void NotifyChildrenWindows();
 
 	static void SetRedraw(bool abRedrawEnabled);
 	static void Redraw();

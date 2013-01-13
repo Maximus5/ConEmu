@@ -79,10 +79,13 @@ const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed 
 #define TEST_FONT_WIDTH_STRING_EN L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define TEST_FONT_WIDTH_STRING_RU L"АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
 
-#define FAILED_FONT_TIMERID 101
+#define BALLOON_MSG_TIMERID 101
 #define FAILED_FONT_TIMEOUT 3000
 #define FAILED_CONFONT_TIMEOUT 30000
 #define FAILED_SELMOD_TIMEOUT 5000
+#define CONTROL_FOUND_TIMEOUT 3000
+#define SEARCH_CONTROL_TIMERID 102
+#define SEARCH_CONTROL_TIMEOUT 1500
 
 #define DEFAULT_FINDDLG_ALPHA 180
 
@@ -406,6 +409,25 @@ void CSettings::InitVars_Hotkeys()
 	m_HotKeys = gpSet->AllocateHotkeys();
 
 	mp_ActiveHotKey = NULL;
+}
+
+// Called when user change hotkey or modifiers in Settings dialog
+void CSettings::SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod)
+{
+	if (!pHK)
+	{
+		_ASSERTE(pHK!=NULL);
+		return;
+	}
+
+	// Usually, this is equal to "mp_ActiveHotKey->VkMod = VkMod"
+	pHK->VkMod = VkMod;
+
+	// Global? Need to re-register?
+	if (pHK->DescrLangID == vkSwitchGuiFocus)
+	{
+		gpConEmu->GlobalHotKeyChanged();
+	}
 }
 
 // pRCon may be NULL
@@ -1306,6 +1328,177 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 	return 0;
 }
 
+void CSettings::SearchForControls()
+{
+	wchar_t* pszPart = GetDlgItemText(ghOpWnd, tOptionSearch);
+	if (!pszPart || !*pszPart)
+	{
+		SafeFree(pszPart);
+		return;
+	}
+
+	size_t i, s, iTab, iCurTab;
+	HWND hSelTab = NULL, hCurTab = NULL, hCtrl = NULL;
+	static HWND hLastTab, hLastCtrl;
+	wchar_t szText[255], szClass[80];
+
+	SetCursor(LoadCursor(NULL,IDC_WAIT));
+
+	for (i = 0; m_Pages[i].PageID; i++)
+	{
+		if (mh_Tabs[m_Pages[i].PageIndex] && IsWindowVisible(mh_Tabs[m_Pages[i].PageIndex]))
+		{
+			hSelTab = mh_Tabs[m_Pages[i].PageIndex];
+			iTab = i;
+			break;
+		}
+	}
+
+	if (!hSelTab)
+	{
+		_ASSERTE(hSelTab!=NULL);
+		goto wrap;
+	}
+
+	if (hLastTab != hSelTab)
+		hLastCtrl = NULL;
+
+	for (s = 0; s <= 2; s++)
+	{
+		size_t iFrom = iTab, iTo = iTab + 1;
+
+		if (s == 1)
+		{
+			iFrom = iTab+1; iTo = thi_Last;
+		}
+		else if (s == 2)
+		{
+			iFrom = 0; iTo = iTab;
+		}
+
+		for (i = iFrom; (i < iTo) && m_Pages[i].PageID; i++)
+		{
+			//if (mh_Tabs[m_Pages[i].PageIndex] && IsWindowVisible(mh_Tabs[m_Pages[i].PageIndex]))
+			//{
+			//	hSelTab = hCurTab = mh_Tabs[m_Pages[i].PageIndex];
+			//	iTab = i;
+			//	break;
+			//}
+			if (mh_Tabs[m_Pages[i].PageIndex] == NULL)
+			{
+				mh_Tabs[m_Pages[i].PageIndex] = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
+					MAKEINTRESOURCE(m_Pages[i].PageID), ghOpWnd, pageOpProc, (LPARAM)&(m_Pages[i]));
+			}
+
+			iCurTab = i;
+			hCurTab = mh_Tabs[m_Pages[i].PageIndex];
+
+			if (hCurTab == NULL)
+			{
+				_ASSERTE(hCurTab != NULL);
+				continue;
+			}
+
+			hCtrl = (hCurTab == hLastTab) ? hLastCtrl : NULL;
+
+			while ((hCtrl = FindWindowEx(hCurTab, hCtrl, NULL, NULL)) != NULL)
+			{
+				if (!(GetWindowLong(hCtrl, GWL_STYLE) & WS_VISIBLE))
+					continue;
+
+				if (!GetClassName(hCtrl, szClass, countof(szClass)))
+					continue;
+
+				if ((lstrcmpi(szClass, L"Button") != 0) && (lstrcmpi(szClass, L"Static") != 0))
+					continue;
+				
+				if (!GetWindowText(hCtrl, szText, countof(szText)) || !*szText)
+					continue;
+
+				// В контроле может быть акселератор (&) мешающий поиску
+				wchar_t* p = wcschr(szText, L'&');
+				while (p)
+				{
+					wmemmove(p, p+1, wcslen(p));
+					p = wcschr(p+1, L'&');
+				}
+
+				if (StrStrI(szText, pszPart) != NULL)
+					break;
+			}
+
+			if (hCtrl)
+				break;
+		}
+
+		if (hCtrl)
+			break;
+	}
+
+	if (hCtrl != NULL)
+	{
+		// Активировать нужный таб
+		if (hSelTab != hCurTab)
+		{
+			SelectTreeItem(GetDlgItem(ghOpWnd, tvSetupCategories), gpSetCls->m_Pages[iCurTab].hTI, true);
+			//SendMessage(hCurTab, mn_ActivateTabMsg, 1, (LPARAM)&(m_Pages[i]));
+			//ShowWindow(hCurTab, SW_SHOW);
+			//ShowWindow(hSelTab, SW_HIDE);
+		}
+
+		// Показать хинт?
+		static wchar_t szHint[2000];
+
+		LONG wID = GetWindowLong(hCtrl, GWL_ID);
+
+		if ((wID == -1) && (lstrcmpi(szClass, L"Static") == 0))
+		{
+			// If it is STATIC with IDC_STATIC - get next ctrl (edit/combo/so on)
+			wID = GetWindowLong(FindWindowEx(hCurTab, hCtrl, NULL, NULL), GWL_ID);
+		}
+
+		szHint[0] = 0;
+
+		if (wID != -1)
+		{
+			// Is there hint for this control?
+			if (!LoadString(g_hInstance, wID, szHint, countof(szHint)))
+				szHint[0] = 0;
+		}
+
+		if (!*szHint)
+		{
+			// Show text of original control.
+			wcscpy_c(szHint, szText);
+		}
+
+
+		HWND hBall = gpSetCls->hwndBalloon;
+		TOOLINFO *pti = &gpSetCls->tiBalloon;
+
+		pti->lpszText = szHint;
+
+		if (gpSetCls->hwndTip) SendMessage(gpSetCls->hwndTip, TTM_ACTIVATE, FALSE, 0);
+
+		SendMessage(hBall, TTM_UPDATETIPTEXT, 0, (LPARAM)pti);
+		RECT rcControl; GetWindowRect(hCtrl, &rcControl);
+		int ptx = /*bLeftAligh ?*/ (rcControl.left + 10) /*: (rcControl.right - 10)*/;
+		int pty = rcControl.top + 10; //bLeftAligh ? rcControl.bottom : (rcControl.top + rcControl.bottom) / 2;
+		SendMessage(hBall, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
+		SendMessage(hBall, TTM_TRACKACTIVATE, TRUE, (LPARAM)pti);
+		SetTimer(hCurTab, BALLOON_MSG_TIMERID, CONTROL_FOUND_TIMEOUT, 0);
+	}
+	
+wrap:
+	// Запомнить
+	hLastTab = hCurTab;
+	hLastCtrl = hCtrl;
+
+	SafeFree(pszPart);
+
+	SetCursor(LoadCursor(NULL,IDC_ARROW));
+}
+
 LRESULT CSettings::OnInitDialog()
 {
 	//_ASSERTE(!hMain && !hColors && !hCmdTasks && !hViews && !hExt && !hFar && !hInfo && !hDebug && !hUpdate && !hSelection);
@@ -1626,6 +1819,11 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbQuakeAutoHide, (gpSet->isQuakeStyle == 2) ? BST_CHECKED : BST_UNCHECKED);
 	SetDlgItemInt(hWnd2, tQuakeAnimation, gpSet->nQuakeAnimation, FALSE);
 
+	EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
+	EnableWindow(GetDlgItem(hWnd2, stQuakeAnimation), gpSet->isQuakeStyle);
+	EnableWindow(GetDlgItem(hWnd2, tQuakeAnimation), gpSet->isQuakeStyle);
+
+
 	// Скрытие рамки
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
@@ -1685,6 +1883,11 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 
 	checkRadioButton(hWnd2, rbMultiLastClose, rbMultiLastTSA,
 		gpSet->isMultiLeaveOnClose ? (gpSet->isMultiHideOnClose ? rbMultiLastTSA : rbMultiLastLeave) : rbMultiLastClose);
+
+
+	checkDlgButton(hWnd2, cbMinimizeOnLoseFocus, gpSet->mb_MinimizeOnLoseFocus);
+	EnableWindow(GetDlgItem(hWnd2, cbMinimizeOnLoseFocus), (gpSet->isQuakeStyle == 0));
+
 
 	checkRadioButton(hWnd2, rbMinByEscAlways, rbMinByEscNever,
 		(gpSet->isMultiMinByEsc == 2) ? rbMinByEscEmpty : gpSet->isMultiMinByEsc ? rbMinByEscAlways : rbMinByEscNever);
@@ -2033,6 +2236,7 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbDisableAllFlashing, gpSet->isDisableAllFlashing);
 
+	checkDlgButton(hWnd2, cbFocusInChildWindows, gpSet->isFocusInChildWindows);
 
 	#ifdef USEPORTABLEREGISTRY
 	if (gpConEmu->mb_PortableRegExist)
@@ -4892,6 +5096,12 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isSleepInBackground = IsChecked(hWnd2, cbSleepInBackground);
 			CVConGroup::OnGuiFocused(TRUE);
 			break;
+		case cbMinimizeOnLoseFocus:
+			gpSet->mb_MinimizeOnLoseFocus = IsChecked(hWnd2, cbMinimizeOnLoseFocus);
+			break;
+		case cbFocusInChildWindows:
+			gpSet->isFocusInChildWindows = IsChecked(hWnd2, cbFocusInChildWindows);
+			break;
 		case cbDisableFarFlashing:
 			gpSet->isDisableFarFlashing = IsChecked(hWnd2, cbDisableFarFlashing);
 			break;
@@ -5575,7 +5785,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			//		}
 			//		else if (mp_ActiveHotKey->VkMod)
 			//		{
-			//			mp_ActiveHotKey->VkMod = (cvk_VK_MASK & mp_ActiveHotKey->VkMod) | nModifers;
+			//			SetHotkeyVkMod(mp_ActiveHotKey, (cvk_VK_MASK & mp_ActiveHotKey->VkMod) | nModifers);
 			//		}
 			//	}
 			//	//gpSet->TrimHostkeys();
@@ -6358,7 +6568,9 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			DWORD nCurMods = (CEHOTKEY_MODMASK & mp_ActiveHotKey->VkMod);
 			if (!nCurMods)
 				nCurMods = CEHOTKEY_NOMOD;
-			mp_ActiveHotKey->VkMod = nHotKey | nCurMods;
+
+			SetHotkeyVkMod(mp_ActiveHotKey, nHotKey | nCurMods);
+
 			FillHotKeysList(hWnd2, FALSE);
 		}
 		break;
@@ -6942,13 +7154,13 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
 					nMod = (VK_LWIN << 8);
 				}
-				mp_ActiveHotKey->VkMod = ((DWORD)vk) | nMod;
+				SetHotkeyVkMod(mp_ActiveHotKey, ((DWORD)vk) | nMod);
 			}
 			else if (mp_ActiveHotKey->HkType == chk_Modifier)
 			{
 				GetListBoxByte(hWnd2, wId, SettingsNS::szKeys, SettingsNS::nKeys, vk);
 				SendDlgItemMessage(hWnd2, hkHotKeySelect, HKM_SETHOTKEY, 0, 0);
-				mp_ActiveHotKey->VkMod = vk;
+				SetHotkeyVkMod(mp_ActiveHotKey, vk);
 			}
 			FillHotKeysList(hWnd2, FALSE);
 		}
@@ -6966,6 +7178,25 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		{
 			BYTE vk = 0;
 			GetListBoxByte(hWnd2,lbHotKeyMod1+i,SettingsNS::szModifiers,SettingsNS::nModifiers,vk);
+			BYTE vkChange = vk;
+			switch (vk)
+			{
+			case VK_APPS:
+				vkChange = 0; break;
+			case VK_LMENU: case VK_RMENU:
+				vkChange = VK_MENU; break;
+			case VK_LCONTROL: case VK_RCONTROL:
+				vkChange = VK_CONTROL; break;
+			case VK_LSHIFT: case VK_RSHIFT:
+				vkChange = VK_SHIFT; break;
+			}
+			// Некоторые модификаторы НЕ допустимы при регистрации глобальных хоткеев (ограничения WinAPI)
+			if (vkChange != vk)
+			{
+				vk = vkChange;
+				FillListBoxByte(hWnd2, lbHotKeyMod1+i, SettingsNS::szModifiers, SettingsNS::nModifiers, vkChange);
+			}
+
 			if (vk)
 				nModifers = gpSet->SetModifier(nModifers, vk, false);
 		}
@@ -6999,7 +7230,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				if (!nModifers)
 					nModifers = CEHOTKEY_NOMOD;
-				mp_ActiveHotKey->VkMod = (cvk_VK_MASK & mp_ActiveHotKey->VkMod) | nModifers;
+				SetHotkeyVkMod(mp_ActiveHotKey, (cvk_VK_MASK & mp_ActiveHotKey->VkMod) | nModifers);
 			}
 		}
 
@@ -7715,18 +7946,33 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 			if (HIWORD(wParam) == BN_CLICKED)
 			{
-				if (LOWORD(wParam) == bResetSettings || LOWORD(wParam) == bReloadSettings)
+				switch (LOWORD(wParam))
 				{
+				case bResetSettings:
+				case bReloadSettings:
 					gpSetCls->OnResetOrReload(LOWORD(wParam) == bResetSettings);
-				}
-				else
-				{
+					break;
+				case cbOptionSearch:
+					gpSetCls->SearchForControls();
+					break;
+				default:
 					gpSetCls->OnButtonClicked(hWnd2, wParam, lParam);
 				}
 			}
 			else if (HIWORD(wParam) == EN_CHANGE)
 			{
-				gpSetCls->OnEditChanged(hWnd2, wParam, lParam);
+				if (LOWORD(wParam) == tOptionSearch)
+				{
+					// Start search delay on typing
+					if (GetWindowTextLength(GetDlgItem(hWnd2, tOptionSearch)) > 0)
+						SetTimer(hWnd2, SEARCH_CONTROL_TIMERID, SEARCH_CONTROL_TIMEOUT, 0);
+					else
+						KillTimer(hWnd2, SEARCH_CONTROL_TIMERID);
+				}
+				else
+				{
+					gpSetCls->OnEditChanged(hWnd2, wParam, lParam);
+				}
 			}
 			else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
 			{
@@ -7734,6 +7980,14 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			}
 
 			break;
+		case WM_TIMER:
+			if (wParam == SEARCH_CONTROL_TIMERID)
+			{
+				KillTimer(hWnd2, SEARCH_CONTROL_TIMERID);
+				gpSetCls->SearchForControls();
+			}
+			break;
+
 		case WM_NOTIFY:
 		{
 			LPNMHDR phdr = (LPNMHDR)lParam;
@@ -8189,9 +8443,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		
 		case WM_TIMER:
 
-			if (wParam == FAILED_FONT_TIMERID)
+			if (wParam == BALLOON_MSG_TIMERID)
 			{
-				KillTimer(gpSetCls->mh_Tabs[thi_Main], FAILED_FONT_TIMERID);
+				KillTimer(hWnd2, BALLOON_MSG_TIMERID);
 				SendMessage(gpSetCls->hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gpSetCls->tiBalloon);
 				SendMessage(gpSetCls->hwndTip, TTM_ACTIVATE, TRUE, 0);
 			}
@@ -11275,6 +11529,7 @@ void CSettings::ResetCmdArg()
 	SingleInstanceArg = false;
 	// Сбросить нужно только gpSet->psCurCmd, gpSet->psCmd не меняется - загружается только из настройки
 	SafeFree(gpSet->psCurCmd);
+	gpSet->isCurCmdList = false;
 }
 
 bool CSettings::ResetCmdHistory(HWND hParent)
@@ -12999,7 +13254,7 @@ void CSettings::ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* ps
 		int pty = bLeftAligh ? rcControl.bottom : (rcControl.top + rcControl.bottom) / 2;
 		SendMessage(hBall, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
 		SendMessage(hBall, TTM_TRACKACTIVATE, TRUE, (LPARAM)pti);
-		SetTimer(hDlg, FAILED_FONT_TIMERID, nTimeout/*FAILED_FONT_TIMEOUT*/, 0);
+		SetTimer(hDlg, BALLOON_MSG_TIMERID, nTimeout/*FAILED_FONT_TIMEOUT*/, 0);
 	}
 	else
 	{
@@ -13351,9 +13606,9 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			break;
 		case WM_TIMER:
 
-			if (wParam == FAILED_FONT_TIMERID)
+			if (wParam == BALLOON_MSG_TIMERID)
 			{
-				KillTimer(hWnd2, FAILED_FONT_TIMERID);
+				KillTimer(hWnd2, BALLOON_MSG_TIMERID);
 				SendMessage(gpSetCls->hwndConFontBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gpSetCls->tiConFontBalloon);
 			}
 
@@ -13651,7 +13906,7 @@ void CSettings::ShowConFontErrorTip(LPCTSTR asInfo)
 	//	int pty = (rcControl.top + rcControl.bottom) / 2;
 	//	SendMessage(hwndConFontBalloon, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
 	//	SendMessage(hwndConFontBalloon, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tiConFontBalloon);
-	//	SetTimer(hConFontDlg, FAILED_FONT_TIMERID, FAILED_FONT_TIMEOUT, 0);
+	//	SetTimer(hConFontDlg, BALLOON_MSG_TIMERID, FAILED_FONT_TIMEOUT, 0);
 	//} else {
 	//	SendMessage(hwndConFontBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiConFontBalloon);
 	//}

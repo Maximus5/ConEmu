@@ -278,8 +278,9 @@ class CRealConsole
 
 		// ≈сли работаем в Gui-режиме (Notepad, Putty, ...)
 		HWND    GuiWnd();  // HWND Gui приложени€
+		DWORD   GuiWndPID();  // HWND Gui приложени€
 		void    GuiWndFocusStore();
-		void    GuiWndFocusRestore();
+		void    GuiWndFocusRestore(bool bForce = false);
 	private:
 		void    GuiWndFocusThread(HWND hSetFocus, BOOL& bAttached, BOOL& bAttachCalled, DWORD& nErr);
 	public:

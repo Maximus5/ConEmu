@@ -121,6 +121,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TIMER_ADMSHIELD_ELAPSE 1000
 
 #define HOTKEY_CTRLWINALTSPACE_ID 0x0201 // this is wParam for WM_HOTKEY
+#define HOTKEY_SWITCHGUIFOCUS_ID 0x0202 // this is wParam for WM_HOTKEY
 #define HOTKEY_GLOBAL_START      0x1001 // this is wParam for WM_HOTKEY
 
 #define RCLICKAPPSTIMEOUT 600
@@ -144,6 +145,7 @@ static struct RegisteredHotKeys
 	int DescrID;
 	int RegisteredID; // wParam для WM_HOTKEY
 	UINT VK, MOD;     // чтобы на изменение реагировать
+	BOOL IsRegistered;
 }
 gRegisteredHotKeys[] = {
 	{vkMinimizeRestore},
@@ -338,7 +340,7 @@ CConEmuMain::CConEmuMain()
 	mn_InResize = 0;
 	//mb_InScMinimize = false;
 	mb_MouseCaptured = FALSE;
-	mb_HotKeyRegistered = FALSE;
+	mb_HotKeyRegistered = false;
 	mh_LLKeyHookDll = NULL;
 	mph_HookedGhostWnd = NULL;
 	mh_LLKeyHook = NULL;
@@ -4246,16 +4248,6 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpSetCls->checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
 	}
 
-	HWND hTabsPg = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Ext] : NULL; // Страничка с настройками
-	if (hTabsPg)
-	{
-		if (gpSet->isHideCaptionAlways())
-		{
-			gpSetCls->checkDlgButton(hTabsPg, cbHideCaptionAlways, BST_CHECKED);
-		}
-		EnableWindow(GetDlgItem(hTabsPg, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
-	}
-
 	//ConEmuWindowMode nNewWindowMode = 
 	//	IsChecked(hWnd2, rMaximized) ? wmMaximized :
 	//	IsChecked(hWnd2, rFullScreen) ? wmFullScreen : 
@@ -4287,6 +4279,15 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		nNewWindowMode = m_QuakePrevSize.WindowMode;
 		mr_Ideal = m_QuakePrevSize.rcIdealInfo;
 	}
+
+
+	HWND hTabsPg = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Show] : NULL; // Страничка с настройками
+	if (hTabsPg)
+	{
+		gpSetCls->checkDlgButton(hTabsPg, cbHideCaptionAlways, gpSet->isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
+		EnableWindow(GetDlgItem(hTabsPg, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
+	}
+
 
 	RECT rcWnd = gpConEmu->GetDefaultRect();
 	UNREFERENCED_PARAMETER(rcWnd);
@@ -5653,6 +5654,12 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		Icon.HideWindowToTray();
 	}
 
+	// Issue 878: ConEmu - Putty: Can't select in putty when ConEmu change display
+	if (IsWindowVisible(ghWnd) && !isIconic())
+	{
+		CVConGroup::NotifyChildrenWindows();
+	}
+
 	//Логирование, что получилось
 	if (gpSetCls->isAdvLogging)
 	{
@@ -6840,9 +6847,9 @@ void CConEmuMain::OnCopyingState()
 	TODO("CConEmuMain::OnCopyingState()");
 }
 
-void CConEmuMain::PostDragCopy(BOOL abMove, BOOL abRecieved/*=FALSE*/)
+void CConEmuMain::PostDragCopy(BOOL abMove, BOOL abReceived/*=FALSE*/)
 {
-	if (!abRecieved)
+	if (!abReceived)
 	{
 		PostMessage(ghWnd, mn_MsgPostCopy, 0, (LPARAM)abMove);
 	}
@@ -6965,6 +6972,7 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 				gpSet->GetHotkeyName(pHk, szKey);
 
 				BOOL bRegRc = RegisterHotKey(ghWnd, HOTKEY_GLOBAL_START+i, nMOD, vk);
+				gRegisteredHotKeys[i].IsRegistered = bRegRc;
 				DWORD dwErr = bRegRc ? 0 : GetLastError();
 
 				if (gpSetCls->isAdvLogging)
@@ -7028,6 +7036,101 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 	}
 }
 
+
+static struct RegisteredHotKeys
+//{
+//	int DescrID;
+//	int RegisteredID; // wParam для WM_HOTKEY
+//	UINT VK, MOD;     // чтобы на изменение реагировать
+//}
+gActiveOnlyHotKeys[] = {
+	{0, HOTKEY_CTRLWINALTSPACE_ID, VK_SPACE, MOD_CONTROL|MOD_WIN|MOD_ALT},
+	//#ifdef Use_vkSwitchGuiFocus
+	{vkSwitchGuiFocus, HOTKEY_SWITCHGUIFOCUS_ID},
+	//#endif
+};
+
+// When hotkey changed in "Keys & Macro" page
+void CConEmuMain::GlobalHotKeyChanged()
+{
+	if (isIconic())
+	{
+		return;
+	}
+
+	RegisterGlobalHotKeys(false);
+	RegisterGlobalHotKeys(true);
+}
+
+void CConEmuMain::RegisterGlobalHotKeys(bool bRegister)
+{
+	if (bRegister == mb_HotKeyRegistered)
+		return; // уже
+
+	if (bRegister)
+	{
+		for (size_t i = 0; i < countof(gActiveOnlyHotKeys); i++)
+		{
+			DWORD id, vk, mod;
+
+			// например, HOTKEY_CTRLWINALTSPACE_ID
+			id = gActiveOnlyHotKeys[i].RegisteredID;
+
+			if (gActiveOnlyHotKeys[i].DescrID == 0)
+			{
+				// VK_SPACE
+				vk = gActiveOnlyHotKeys[i].VK;
+				// MOD_CONTROL|MOD_WIN|MOD_ALT
+				mod = gActiveOnlyHotKeys[i].MOD;
+			}
+			else
+			{
+				const ConEmuHotKey* pHk = NULL;
+				DWORD VkMod = gpSet->GetHotkeyById(gActiveOnlyHotKeys[i].DescrID, &pHk);
+				vk = gpSet->GetHotkey(VkMod);
+				if (!vk)
+					continue;  // не просили
+				mod = gpSet->GetHotKeyMod(VkMod);
+			}
+
+			BOOL bRegRc = RegisterHotKey(ghWnd, id, mod, vk);
+			gActiveOnlyHotKeys[i].IsRegistered = bRegRc;
+			DWORD dwErr = bRegRc ? 0 : GetLastError();
+
+			if (gpSetCls->isAdvLogging)
+			{
+				char szErr[512];
+				_wsprintfA(szErr, SKIPLEN(countof(szErr)) "RegisterHotKey(ID=%u, VK=%u, MOD=x%X) - %s, Code=%u", id, vk, mod, bRegRc ? "OK" : "FAILED", dwErr);
+				LogString(szErr, TRUE);
+			}
+
+			if (bRegRc)
+			{
+				mb_HotKeyRegistered = true;
+			}
+		}
+	}
+	else
+	{
+		for (size_t i = 0; i < countof(gActiveOnlyHotKeys); i++)
+		{
+			// например, HOTKEY_CTRLWINALTSPACE_ID
+			DWORD id = gActiveOnlyHotKeys[i].RegisteredID;
+
+			UnregisterHotKey(ghWnd, id);
+
+			if (gpSetCls->isAdvLogging)
+			{
+				char szErr[128];
+				_wsprintfA(szErr, SKIPLEN(countof(szErr)) "UnregisterHotKey(ID=%u)", id);
+				LogString(szErr, TRUE);
+			}
+		}
+
+		mb_HotKeyRegistered = false;
+	}
+}
+
 void CConEmuMain::RegisterHotKeys()
 {
 	if (isIconic())
@@ -7036,23 +7139,7 @@ void CConEmuMain::RegisterHotKeys()
 		return;
 	}
 
-	if (!mb_HotKeyRegistered)
-	{
-		BOOL bRegRc = RegisterHotKey(ghWnd, HOTKEY_CTRLWINALTSPACE_ID, MOD_CONTROL|MOD_WIN|MOD_ALT, VK_SPACE);
-		DWORD dwErr = bRegRc ? 0 : GetLastError();
-
-		if (gpSetCls->isAdvLogging)
-		{
-			char szErr[512];
-			_wsprintfA(szErr, SKIPLEN(countof(szErr)) "RegisterHotKey(ID=%u, %s, VK=%u, MOD=x%X) - %s, Code=%u", HOTKEY_CTRLWINALTSPACE_ID, L"Ctrl+Win+Alt+Space", VK_SPACE, MOD_CONTROL|MOD_WIN|MOD_ALT, bRegRc ? "OK" : "FAILED", dwErr);
-			LogString(szErr, TRUE);
-		}
-
-		if (bRegRc)
-		{
-			mb_HotKeyRegistered = TRUE;
-		}
-	}
+	RegisterGlobalHotKeys(true);
 
 	if (!mh_LLKeyHook)
 	{
@@ -7250,18 +7337,7 @@ void CConEmuMain::RegisterHooks()
 
 void CConEmuMain::UnRegisterHotKeys(BOOL abFinal/*=FALSE*/)
 {
-	if (mb_HotKeyRegistered)
-	{
-		UnregisterHotKey(ghWnd, HOTKEY_CTRLWINALTSPACE_ID);
-		mb_HotKeyRegistered = FALSE;
-
-		if (gpSetCls->isAdvLogging)
-		{
-			char szErr[128];
-			_wsprintfA(szErr, SKIPLEN(countof(szErr)) "UnregisterHotKey(ID=%u)", HOTKEY_CTRLWINALTSPACE_ID);
-			LogString(szErr, TRUE);
-		}
-	}
+	RegisterGlobalHotKeys(false);
 
 	UnRegisterHooks(abFinal);
 }
@@ -7296,6 +7372,11 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 	if (wParam == HOTKEY_CTRLWINALTSPACE_ID)
 	{
 		CtrlWinAltSpace();
+	}
+	// Win+Esc by default
+	else if (wParam == HOTKEY_SWITCHGUIFOCUS_ID)
+	{
+		OnSwitchGuiFocus();
 	}
 	else
 	{
@@ -9146,7 +9227,7 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 
 		if (h && !isMe && abRealAlso)
 		{
-			if (CVConGroup::isOurConsoleWindow(h))
+			if (CVConGroup::isOurWindow(h))
 				isMe = true;
 		}
 
@@ -9257,10 +9338,10 @@ bool CConEmuMain::isVisible(CVirtualConsole* apVCon)
 	return CVConGroup::isVisible(apVCon);
 }
 
-bool CConEmuMain::isChildWindow()
-{
-	return CVConGroup::isChildWindow();
-}
+//bool CConEmuMain::isChildWindowVisible()
+//{
+//	return CVConGroup::isChildWindowVisible();
+//}
 
 // Заголовок окна для PictureView вообще может пользователем настраиваться, так что
 // рассчитывать на него при определения "Просмотра" - нельзя
@@ -9874,19 +9955,19 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 	return pszDataW;
 }
 
-void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
+void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 {
 	if (gpSetCls->isAdvLogging)
 	{
-		LogString(abRecieved ? L"PostCreate.2.begin" : L"PostCreate.1.begin");
+		LogString(abReceived ? L"PostCreate.2.begin" : L"PostCreate.1.begin");
 	}
 
-	mn_StartupFinished = abRecieved ? ss_PostCreate2Called : ss_PostCreate1Called;
+	mn_StartupFinished = abReceived ? ss_PostCreate2Called : ss_PostCreate1Called;
 
 	// First ShowWindow forced to use nCmdShow. This may be weird...
 	SkipOneShowWindow();
 
-	if (!abRecieved)
+	if (!abReceived)
 	{
 		//if (gpConEmu->WindowMode == wmFullScreen || gpConEmu->WindowMode == wmMaximized) {
 #ifdef MSGLOGGER
@@ -9934,7 +10015,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			}
 		}
 	}
-	else
+	else // (abReceived == true)
 	{
 		HWND hCurForeground = GetForegroundWindow();
 
@@ -10024,9 +10105,35 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 
 			BOOL lbCreated = FALSE;
-			LPCWSTR pszCmd = gpSet->GetCmd();
+			bool isScript = false;
+			LPCWSTR pszCmd = gpSet->GetCmd(&isScript);
+			_ASSERTE(pszCmd!=NULL && *pszCmd!=0); // Must be!
 
-			if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft) && !gpConEmu->mb_StartDetached)
+			if (isScript)
+			{
+				wchar_t* pszDataW = lstrdup(pszCmd);
+
+				// Если передали "скрипт" (как бы содержимое Task вытянутое в строку)
+				// Обработать - заменить "|" на "\n"
+				wchar_t* pszNext = pszDataW;
+				while ((pszNext = wcschr(pszNext, L'|')) != NULL)
+					*pszNext = L'\n';
+
+				// GO
+				if (!CreateConGroup(pszDataW, FALSE, NULL/*pszStartupDir*/))
+				{
+					Destroy();
+					return;
+				}
+
+				SafeFree(pszDataW);
+
+				// сбросить команду, которая пришла из "/cmdlist" - загрузить настройку
+				gpSetCls->ResetCmdArg();
+
+				lbCreated = TRUE;
+			}
+			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft) && !gpConEmu->mb_StartDetached)
 			{
 				wchar_t* pszStartupDir = NULL;
 				// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
@@ -10176,12 +10283,12 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		mp_DefTrm->PostCreated();
 	}
 
-	mn_StartupFinished = abRecieved ? ss_PostCreate2Finished : ss_PostCreate1Finished;
+	mn_StartupFinished = abReceived ? ss_PostCreate2Finished : ss_PostCreate1Finished;
 
 	if (gpSetCls->isAdvLogging)
 	{
 		wchar_t szInfo[64];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"PostCreate.%i.end", abRecieved ? 2 : 1);
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"PostCreate.%i.end", abReceived ? 2 : 1);
 		LogWindowPos(szInfo);
 	}
 }
@@ -10331,7 +10438,7 @@ void CConEmuMain::SetSkipOnFocus(bool abSkipOnFocus)
 	mb_SkipOnFocus = abSkipOnFocus;
 }
 
-LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom /*= NULL*/)
+LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom /*= NULL*/, BOOL abForceChild /*= FALSE*/)
 {
 	// Чтобы избежать лишних вызовов по CtrlWinAltSpace при работе с GUI приложением
 	if (mb_SkipOnFocus)
@@ -10347,6 +10454,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	LPCWSTR pszMsgName = L"Unknown";
 	HWND hNewFocus = NULL;
+	HWND hForeground = NULL;
 
 	if (messg == WM_SETFOCUS)
 	{
@@ -10362,7 +10470,14 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		lbSetFocus = (LOWORD(wParam)==WA_ACTIVE) || (LOWORD(wParam)==WA_CLICKACTIVE);
 
 		if (LOWORD(wParam)==WA_INACTIVE)
-			hNewFocus = lParam ? (HWND)lParam : GetForegroundWindow();
+		{
+			hForeground = GetForegroundWindow();
+			hNewFocus = lParam ? (HWND)lParam : hForeground;
+			if (CVConGroup::isOurWindow(hNewFocus))
+			{
+				lbSetFocus = true; // Считать, что фокус мы не теряем!
+			}
+		}
 
 		if (!lbSetFocus && gpSet->isDesktopMode && mh_ShellWindow)
 		{
@@ -10406,14 +10521,15 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 		else if (lbSetFocus && gpSet->isQuakeStyle && isQuakeMinimized)
 		{
+			// Обработать клик по кнопке на таскбаре
 			OnMinimizeRestore(sih_ShowMinimize);
 		}
 
 		#ifdef _DEBUG
-		if (lbSetFocus)
+		if (LOWORD(wParam)==WA_ACTIVE)
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_ACTIVATE(From=0x%08X)", (DWORD)lParam);
 		else
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_ACTIVATE.WA_INACTIVE(To=0x%08X)", (DWORD)lParam);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_ACTIVATE.WA_INACTIVE(To=0x%08X) OurFocus=%i", (DWORD)lParam, lbSetFocus);
 		DEBUGSTRFOCUS(szDbg);
 		#endif
 
@@ -10423,26 +10539,44 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	{
 		lbSetFocus = (wParam!=0);
 		if (!lbSetFocus)
-			hNewFocus = GetForegroundWindow();
+		{
+			hNewFocus = hForeground = GetForegroundWindow();
+		}
 
 		#ifdef _DEBUG
 		if (lbSetFocus)
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_ACTIVATEAPP.Activate(FromTID=%i)", (DWORD)lParam);
 		else
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_ACTIVATEAPP.Deactivate(ToTID=%i)", (DWORD)lParam);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_ACTIVATEAPP.Deactivate(ToTID=%i) OurFocus=%i", (DWORD)lParam, lbSetFocus);
 		DEBUGSTRFOCUS(szDbg);
 		#endif
+
+		if (!lbSetFocus)
+		{
+			if (CVConGroup::isOurWindow(hNewFocus))
+			{
+				lbSetFocus = true; // Считать, что фокус мы не теряем!
+			}
+		}
 
 		pszMsgName = L"WM_ACTIVATEAPP";
 	}
 	else if (messg == WM_KILLFOCUS)
 	{
+		pszMsgName = L"WM_KILLFOCUS";
+		hForeground = GetForegroundWindow();
+		hNewFocus = wParam ? (HWND)wParam : hForeground;
+
+		if (CVConGroup::isOurWindow(hNewFocus))
+		{
+			lbSetFocus = true; // Считать, что фокус мы не теряем!
+		}
+
 		#ifdef _DEBUG
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_KILLFOCUS(To=0x%08X)", (DWORD)wParam);
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_KILLFOCUS(To=0x%08X) OurFocus=%i", (DWORD)wParam, lbSetFocus);
 		DEBUGSTRFOCUS(szDbg);
 		#endif
-		pszMsgName = L"WM_KILLFOCUS";
-		hNewFocus = wParam ? (HWND)wParam : GetForegroundWindow();
+
 	}
 	else
 	{
@@ -10462,13 +10596,8 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 
 		hNewFocus = GetForegroundWindow();
-		if (hNewFocus == ghWnd)
-			lbSetFocus = true;
-		else if (hNewFocus)
-		{
-			DWORD nForePID; GetWindowThreadProcessId(hNewFocus, &nForePID);
-			lbSetFocus = (nForePID == GetCurrentProcessId());
-		}
+
+		lbSetFocus = CVConGroup::isOurWindow(hNewFocus);
 
 		if (!lbSetFocus || mb_LastConEmuFocusState)
 		{
@@ -10608,10 +10737,17 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (pVCon && pVCon->RCon())
 	{
 		// Здесь будет вызван CRealConsole::UpdateServerActive
-		pVCon->RCon()->OnGuiFocused(lbSetFocus, (messg == WM_ACTIVATEAPP));
+
+		// -- просто так abForceChild=TRUE здесь ставить нельзя
+		// -- если переключать фокус в дочернее приложение по любому чиху
+		// -- вообще не получается активировать окно ConEmu, открыть системное меню,
+		// -- клацнуть по крестику в заголовке и т.п.
+		// -- Поэтому abForceChild передается из вызывающей функции, которая "знает"
+
+		pVCon->RCon()->OnGuiFocused(lbSetFocus, abForceChild);
 	}
 
-	if ((gpSet->isQuakeStyle == 2)
+	if (gpSet->isMinimizeOnLoseFocus()
 		&& (!lbSetFocus && !isMeForeground(true,true)) && !isIconic()
 		&& IsWindowVisible(ghWnd))
 	{
@@ -10633,7 +10769,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		// Иначе получается бред при клике на иконку в TSA.
 		if (!bIsTaskbar)
 		{
-			OnMinimizeRestore(sih_HideTSA);
+			OnMinimizeRestore(gpSet->isQuakeStyle ? sih_HideTSA : sih_Minimize);
 		}
 	}
 	
@@ -11227,7 +11363,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	if (bInFunction)
 		return;
 
-	bool bIsForeground = isMeForeground();
+	bool bIsForeground = isMeForeground(true, true);
 	bool bIsIconic = isIconic();
 	BOOL bVis = IsWindowVisible(ghWnd);
 
@@ -11295,9 +11431,8 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	bool bUseQuakeAnimation = false; //, bNeedHideTaskIcon = false;
 	if ((gpSet->isQuakeStyle != 0) && gpSet->isMinToTray())
 	{
-		CVConGuard VCon;
 		// Если есть дочерние GUI окна - в них могут быть глюки с отрисовкой
-		if ((GetActiveVCon(&VCon) < 0) || (VCon->GuiWnd() == 0))
+		if (CVConGroup::isChildWindowVisible())
 		{
 			bUseQuakeAnimation = true;
 		}
@@ -11452,6 +11587,16 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		{
 			//UpdateIdealRect();
 			StoreIdealRect();
+		}
+
+		if ((ghLastForegroundWindow != ghWnd) && (ghLastForegroundWindow != ghOpWnd))
+		{
+			// Фокус не там где надо - например, в дочернем GUI приложении
+			setFocus();
+			SetForegroundWindow(ghWnd);
+			//TODO: Тут наверное нужно выйти и позвать Post для OnMinimizeRestore(cmd)
+			//TODO: иначе при сворачивании не активируется "следующее" окно, фокус ввода
+			//TODO: остается в дочернем Notepad (ввод текста идет в него)
 		}
 
 		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
@@ -11637,6 +11782,35 @@ void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 	{
 		SwitchToThisWindow(ghWnd, FALSE);
 	}
+}
+
+void CConEmuMain::OnSwitchGuiFocus()
+{
+	CVConGuard VCon;
+	HWND hSet = ghWnd;
+
+	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
+	{
+		DWORD nFocusPID = 0;
+		HWND hGet = GetFocus();
+		if (hGet)
+		{
+			GetWindowThreadProcessId(hGet, &nFocusPID);
+		}
+
+		if (nFocusPID == GetCurrentProcessId())
+		{
+			// Вернуть фокус в дочернее приложение
+			VCon->RCon()->GuiWndFocusRestore();
+			return;
+		}
+		else
+		{
+			// Поставить фокус в ConEmu
+		}
+	}
+
+	setFocus();
 }
 
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)

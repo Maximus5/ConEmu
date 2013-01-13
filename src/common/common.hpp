@@ -1613,6 +1613,7 @@ enum ATTACHGUIAPP_FLAGS
 	agaf_NoMenu   = 4,
 	agaf_WS_CHILD = 8,
 	agaf_Self     = 16, // GUI приложение само создало дочернее окно в ConEmu
+	agaf_Inactive = 32, // GUI приложение создается в НЕ активной вкладке! Фокус нужно вернуть в ConEmu!
 };
 
 struct GuiStylesAndShifts

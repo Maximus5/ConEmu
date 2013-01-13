@@ -939,21 +939,23 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		}
 		else
 		{
-			psz = pszText;
-			//INPUT_RECORD r = {KEY_EVENT};
-			while (*psz)
-			{
-				pRCon->PostKeyPress(0, 0, *(psz++));
-				//r.Event.KeyEvent.bKeyDown = TRUE;
-				//r.Event.KeyEvent.wRepeatCount = 1;
-				//r.Event.KeyEvent.uChar.UnicodeChar = *(psz++);
-				//pRCon->PostConsoleEvent(&r);
-				//r.Event.KeyEvent.bKeyDown = FALSE;
-				//pRCon->PostConsoleEvent(&r);
-			}
+			pRCon->Paste(false, pszText, true, false);
+			//psz = pszText;
+			////INPUT_RECORD r = {KEY_EVENT};
+			//while (*psz)
+			//{
+			//	pRCon->PostKeyPress(0, 0, *(psz++));
+			//	//r.Event.KeyEvent.bKeyDown = TRUE;
+			//	//r.Event.KeyEvent.wRepeatCount = 1;
+			//	//r.Event.KeyEvent.uChar.UnicodeChar = *(psz++);
+			//	//pRCon->PostConsoleEvent(&r);
+			//	//r.Event.KeyEvent.bKeyDown = FALSE;
+			//	//pRCon->PostConsoleEvent(&r);
+			//}
 
 			if (!bDontAddSpace)
-				pRCon->PostKeyPress(0, 0, L' ');
+				pRCon->Paste(false, L" ", true, false);
+				//pRCon->PostKeyPress(0, 0, L' ');
 			//r.Event.KeyEvent.bKeyDown = TRUE;
 			//r.Event.KeyEvent.wRepeatCount = 1;
 			//r.Event.KeyEvent.uChar.UnicodeChar = L' ';

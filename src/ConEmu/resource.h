@@ -910,6 +910,13 @@
 #define cbMapShiftEscToEsc              2563
 #define tQuakeAnimation                 2564
 #define stQuakeAnimation                2565
+#define vkSwitchGuiFocus                2566
+#define cbMinimizeOnLoseFocus           2567
+#define IDC_CHECK2                      2568
+#define cbFocusInChildWindows           2568
+#define tOptionSearch                   2569
+#define IDC_BUTTON1                     2570
+#define cbOptionSearch                  2570
 
 // Next default values for new objects
 // 
@@ -917,7 +924,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2566
+#define _APS_NEXT_CONTROL_VALUE         2571
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

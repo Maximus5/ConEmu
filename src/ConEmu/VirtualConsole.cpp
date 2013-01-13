@@ -509,6 +509,8 @@ HWND CVirtualConsole::GuiWnd()
 	return NULL;
 }
 
+// Вызывается из WM_SETFOCUS в Child & Back
+// т.к. фокус должен быть или в главном окне ConEmu или в ChildGUI
 void CVirtualConsole::setFocus()
 {
 	if (!this)

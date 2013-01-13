@@ -259,7 +259,7 @@ void Settings::ReleasePointers()
 	SafeFree(psStartSingleApp);
 	SafeFree(psStartTasksFile);
 	SafeFree(psStartTasksName);
-	SafeFree(psCurCmd);
+	SafeFree(psCurCmd); isCurCmdList = false;
 	SafeFree(psCmdHistory);
 	SafeFree(psDefaultTerminalApps);
 
@@ -500,11 +500,13 @@ void Settings::InitSettings()
 	//isFullScreen = false;
 	isHideCaption = false; mb_HideCaptionAlways = false; isQuakeStyle = false; nQuakeAnimation = QUAKEANIMATION_DEF;
 	isHideChildCaption = true;
+	isFocusInChildWindows = true;
 	nHideCaptionAlwaysFrame = 255; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
 	isDesktopMode = false;
 	isSnapToDesktopEdges = false;
 	isAlwaysOnTop = false;
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
+	mb_MinimizeOnLoseFocus = false; // не "прятаться" при потере фокуса
 	RECT rcWork = {}; SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
 	if (gbIsWine)
 	{
@@ -2510,6 +2512,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"QuakeAnimation", nQuakeAnimation); MinMax(nQuakeAnimation, QUAKEANIMATION_MAX);
 		reg->Load(L"HideCaption", isHideCaption);
 		reg->Load(L"HideChildCaption", isHideChildCaption);
+		reg->Load(L"FocusInChildWindows", isFocusInChildWindows);
 		// грузим именно в mb_HideCaptionAlways, т.к. прозрачность сбивает темы в заголовке, поэтому возврат идет через isHideCaptionAlways()
 		reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
 		reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame); if (nHideCaptionAlwaysFrame > 0x7F) nHideCaptionAlwaysFrame = 255;
@@ -2859,6 +2862,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"SnapToDesktopEdges", isSnapToDesktopEdges);
 		reg->Load(L"AlwaysOnTop", isAlwaysOnTop);
 		reg->Load(L"SleepInBackground", isSleepInBackground);
+		reg->Load(L"MinimizeOnLoseFocus", mb_MinimizeOnLoseFocus);
 
 		reg->Load(L"DisableFarFlashing", isDisableFarFlashing); if (isDisableFarFlashing>2) isDisableFarFlashing = 2;
 
@@ -3434,6 +3438,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"QuakeAnimation", nQuakeAnimation);
 		reg->Save(L"HideCaption", isHideCaption);
 		reg->Save(L"HideChildCaption", isHideChildCaption);
+		reg->Save(L"FocusInChildWindows", isFocusInChildWindows);
 		reg->Save(L"HideCaptionAlways", mb_HideCaptionAlways);
 		reg->Save(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
 		reg->Save(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
@@ -3572,6 +3577,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"SnapToDesktopEdges", isSnapToDesktopEdges);
 		reg->Save(L"AlwaysOnTop", isAlwaysOnTop);
 		reg->Save(L"SleepInBackground", isSleepInBackground);
+		reg->Save(L"MinimizeOnLoseFocus", mb_MinimizeOnLoseFocus);
 		reg->Save(L"DisableFarFlashing", isDisableFarFlashing);
 		reg->Save(L"DisableAllFlashing", isDisableAllFlashing);
 		/* FindText: bMatchCase, bMatchWholeWords, bFreezeConsole, bHighlightAll */
@@ -3988,10 +3994,23 @@ DWORD Settings::MakeHotKey(BYTE Vk, BYTE vkMod1/*=0*/, BYTE vkMod2/*=0*/, BYTE v
 //	return true;
 //}
 
-LPCTSTR Settings::GetCmd()
+LPCTSTR Settings::GetCmd(bool *pIsCmdList)
 {
 	if (psCurCmd && *psCurCmd)
+	{
+		if (pIsCmdList)
+		{
+			*pIsCmdList = isCurCmdList;
+		}
+		else
+		{
+			//_ASSERTE(isCurCmdList == false);
+		}
 		return psCurCmd;
+	}
+
+	if (pIsCmdList)
+		*pIsCmdList = false;
 
 	switch (nStartType)
 	{
@@ -4548,6 +4567,11 @@ bool Settings::isHideCaptionAlways()
 bool Settings::isForcedHideCaptionAlways()
 {
 	return (isUserScreenTransparent || isQuakeStyle);
+}
+
+bool Settings::isMinimizeOnLoseFocus()
+{
+	return (isQuakeStyle == 2) || (isQuakeStyle == 0 && mb_MinimizeOnLoseFocus);
 }
 
 bool Settings::isMinToTray(bool bRawOnly /*= false*/)
@@ -5636,6 +5660,9 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkMinimizeRestor2,chk_Global, NULL,   L"MinimizeRestore2",      0, CConEmuCtrl::key_MinimizeRestore},
 		{vkGlobalRestore,  chk_Global, NULL,   L"GlobalRestore",         0, CConEmuCtrl::key_GlobalRestore},
 		{vkForceFullScreen,chk_Global, NULL,   L"ForcedFullScreen",      MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL,VK_MENU), CConEmuCtrl::key_ForcedFullScreen},
+		//#ifdef Use_vkSwitchGuiFocus
+		{vkSwitchGuiFocus, chk_Global, NULL,   L"SwitchGuiFocus",        0/*MakeHotKey(VK_ESCAPE,VK_LWIN)*/, CConEmuCtrl::key_SwitchGuiFocus},
+		//#endif
 		// User (Keys)
 		{vkMultiNew,       chk_User,  NULL,    L"Multi.NewConsole",      MakeHotKey('W',VK_LWIN), CConEmuCtrl::key_MultiNew},
 		{vkMultiNewShift,  chk_User,  NULL,    L"Multi.NewConsoleShift", MakeHotKey('W',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNewShift},

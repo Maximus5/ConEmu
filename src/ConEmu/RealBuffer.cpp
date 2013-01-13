@@ -5449,7 +5449,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			const wchar_t* pszUrl = L":/%#ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz;?@&=+$,-_.!~*'()0123456789";
 			const wchar_t* pszProtocol = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.";
 			const wchar_t* pszEMail = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
-			const wchar_t* pszUrlDelim = L"\\\"<>{}[]^` \t\r\n";
+			const wchar_t* pszUrlDelim = L"\\\"<>{}[]^`' \t\r\n";
 			int nColons = 0;
 			bool bUrlMode = false, bMaybeMail = false;
 			SHORT MailX = -1;

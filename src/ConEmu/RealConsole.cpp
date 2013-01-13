@@ -7292,6 +7292,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 		{
 			if (abForceChild)
 			{
+				#ifdef _DEBUG
 				HWND hFore = getForegroundWindow();
 				DWORD nForePID = 0;
 				if (hFore) GetWindowThreadProcessId(hFore, &nForePID);
@@ -7302,6 +7303,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 					//PostConsoleMessage(hConWnd, WM_SETFOCUS, NULL, NULL);
 					//SetForegroundWindow(hGuiWnd);
 				}
+				#endif
 
 				GuiWndFocusRestore();
 			}
@@ -10086,8 +10088,13 @@ HWND CRealConsole::GuiWnd()
 {
 	if (!this)
 		return NULL;
-
 	return hGuiWnd;
+}
+DWORD CRealConsole::GuiWndPID()
+{
+	if (!this || !hGuiWnd)
+		return NULL;
+	return mn_GuiWndPID;
 }
 
 void CRealConsole::GuiWndFocusStore()
@@ -10116,10 +10123,18 @@ void CRealConsole::GuiWndFocusStore()
 	}
 }
 
-void CRealConsole::GuiWndFocusRestore()
+// Если (bForce == false) - то по "настройкам", юзер мог просить переключиться в ConEmu
+void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 {
 	if (!this || !hGuiWnd)
 		return;
+
+	// Temp workaround for Issue 876: Ctrl+N and Win-Alt-Delete hotkey randomly break
+	if (!gpSet->isFocusInChildWindows)
+	{
+		gpConEmu->setFocus();
+		return;
+	}
 
 	BOOL bAttached = FALSE;
 	DWORD nErr = 0;

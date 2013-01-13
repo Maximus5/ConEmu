@@ -428,6 +428,7 @@ class CSettings
 		static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh = false);
 	protected:
 		void OnResetOrReload(BOOL abResetSettings);
+		void SearchForControls();
 		// IDD_SETTINGS
 		LRESULT OnInitDialog();
 		// OnInitDialogPage_t: IDD_SPG_MAIN, è ò.ä.
@@ -598,6 +599,7 @@ class CSettings
 		//#define MAKEMODIFIER3(vk1,vk2,vk3) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)|(((DWORD)vk3&0xFF)<<16)
 		ConEmuHotKey *m_HotKeys;
 		ConEmuHotKey *mp_ActiveHotKey;
+		void SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod);
 		friend struct Settings;
 	public:
 		const ConEmuHotKey* GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealConsole* pRCon);

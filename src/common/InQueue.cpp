@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 BOOL InQueue::Initialize(int MaxInputQueue, HANDLE ahInputEvent/*by value*/)
 {
+	this->nUsedLen = 0;
 	this->nMaxInputQueue = MaxInputQueue;
 	this->hInputEvent = ahInputEvent;
 	this->pInputQueue = (INPUT_RECORD*)calloc(this->nMaxInputQueue, sizeof(INPUT_RECORD));
@@ -91,6 +92,7 @@ BOOL InQueue::WriteInputQueue(const INPUT_RECORD *pr, BOOL bSetEvent /*= TRUE*/,
 		// OK
 		*pNext = *(pSrc++);
 		this->pInputQueueWrite++;
+		InterlockedIncrement(&nUsedLen);
 
 		if (this->pInputQueueWrite >= this->pInputQueueEnd)
 			this->pInputQueueWrite = this->pInputQueue;
@@ -115,7 +117,9 @@ BOOL InQueue::IsInputQueueEmpty()
 {
 	if (this->pInputQueueRead != this->pInputQueueEnd
 		&& this->pInputQueueRead != this->pInputQueueWrite)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -134,6 +138,7 @@ BOOL InQueue::ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount, BOOL bNoRemove /*
 		while (n && pSrc < pEnd)
 		{
 			*pDst = *pSrc; nCount++; pSrc++;
+			InterlockedDecrement(&nUsedLen);
 			//// Для приведения поведения к стандартному RealConsole&Far
 			//if (pDst->EventType == KEY_EVENT
 			//	// Для нажатия НЕ символьных клавиш
@@ -178,7 +183,7 @@ BOOL InQueue::GetNumberOfBufferEvents()
 		INPUT_RECORD *pSrc = this->pInputQueueRead;
 		INPUT_RECORD *pEnd = (this->pInputQueueRead < this->pInputQueueWrite) ? this->pInputQueueWrite : this->pInputQueueEnd;
 
-		while(pSrc < pEnd)
+		while (pSrc < pEnd)
 		{
 			nCount++; pSrc++;
 		}

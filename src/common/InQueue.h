@@ -32,12 +32,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct InQueue
 {
-	HANDLE hInputEvent;
+	HANDLE hInputEvent; // <<-- gpSrv->hInputEvent. Выставляется в InputThread, флаг появления новых событий в очереди
 	int nInputQueue, nMaxInputQueue;
 	INPUT_RECORD* pInputQueue;
 	INPUT_RECORD* pInputQueueEnd;
 	INPUT_RECORD* pInputQueueRead;
 	INPUT_RECORD* pInputQueueWrite;
+
+	// Informational!!!
+	LONG nUsedLen;
 
 	BOOL Initialize(int anMaxInputQueue, HANDLE ahInputEvent/*by value*/);
 	void Release();

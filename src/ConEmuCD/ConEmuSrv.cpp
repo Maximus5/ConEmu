@@ -1008,8 +1008,10 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	_ASSERTE(gpSrv->bDebuggerActive || (gpSrv->nProcessCount<=2) || ((gpSrv->nProcessCount>2) && gbAttachMode && gpSrv->dwRootProcess));
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
 	gpSrv->hInputEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+	gpSrv->hInputWasRead = CreateEvent(NULL,FALSE,FALSE,NULL);
 
-	if (gpSrv->hInputEvent) gpSrv->hInputThread = CreateThread(
+	if (gpSrv->hInputEvent && gpSrv->hInputWasRead)
+		gpSrv->hInputThread = CreateThread(
 		        NULL,              // no security attribute
 		        0,                 // default stack size
 		        InputThread,       // thread proc
@@ -1017,7 +1019,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		        0,                 // not suspended
 		        &gpSrv->dwInputThread);      // returns thread ID
 
-	if (gpSrv->hInputEvent == NULL || gpSrv->hInputThread == NULL)
+	if (gpSrv->hInputEvent == NULL || gpSrv->hInputWasRead == NULL || gpSrv->hInputThread == NULL)
 	{
 		dwErr = GetLastError();
 		_printf("CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr);
@@ -1338,6 +1340,7 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 
 	//SafeCloseHandle(gpSrv->hInputPipe);
 	SafeCloseHandle(gpSrv->hInputEvent);
+	SafeCloseHandle(gpSrv->hInputWasRead);
 
 	if (gpSrv)
 		gpSrv->DataServer.StopPipeServer(false);

@@ -226,6 +226,15 @@ MFileLog* gpLogSize = NULL;
 BOOL gbInRecreateRoot = FALSE;
 
 
+namespace InputLogger
+{
+	Event g_evt[BUFFER_INFO_SIZE];
+	LONG g_evtidx = -1;
+	LONG g_overflow = 0;
+};
+
+
+
 void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
 {
 #ifdef SHOW_SHUTDOWNSRV_STEPS

@@ -123,4 +123,5 @@ extern BOOL bBlockDebugLog, bSendToDebugger, bSendToFile;
 //    #define MCHKHEAP
 //#endif
 
+extern HWND ghLastForegroundWindow;
 HWND getForegroundWindow();

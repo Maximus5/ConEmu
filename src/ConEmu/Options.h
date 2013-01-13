@@ -861,12 +861,13 @@ struct Settings
 		
 		/* Command Line ("/cmd" arg) */
 		LPTSTR psCurCmd;
+		bool isCurCmdList; // а это если был указан /cmdlist
 
 		/* 'Default' command line (if nor Registry, nor /cmd specified) */
 		//WCHAR  szDefCmd[16];
 	public:
 		/* "Active" command line */
-		LPCTSTR GetCmd();
+		LPCTSTR GetCmd(bool *pIsCmdList = NULL);
 
 		RecreateActionParm GetDefaultCreateAction();
 
@@ -898,8 +899,10 @@ struct Settings
 		bool isHideCaption; // Hide caption when maximized
 		//reg->Load(L"HideChildCaption", isHideChildCaption);
 		bool isHideChildCaption; // Hide caption of child GUI applications, started in ConEmu tabs (PuTTY, Notepad, etc.)
+		//reg->Load(L"FocusInChildWindows", isFocusInChildWindows);
+		bool isFocusInChildWindows;
 		//reg->Load(L"QuakeStyle", isQuakeStyle);
-		BYTE isQuakeStyle;
+		BYTE isQuakeStyle; // 0 - NoQuake, 1 - Quake, 2 - Quake+HideOnLoseFocus
 		DWORD nQuakeAnimation;
 		protected:
 		//reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
@@ -908,6 +911,7 @@ struct Settings
 		void SetHideCaptionAlways(bool bHideCaptionAlways);
 		void SwitchHideCaptionAlways();
 		bool isHideCaptionAlways(); //<<mb_HideCaptionAlways
+		bool isMinimizeOnLoseFocus();
 		bool isForcedHideCaptionAlways(); // true, если mb_HideCaptionAlways отключать нельзя
 		bool isCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);
 		bool isFrameHidden();
@@ -1407,6 +1411,9 @@ struct Settings
 		
 		//reg->Load(L"SleepInBackground", isSleepInBackground);
 		bool isSleepInBackground;
+
+		//reg->Load(L"MinimizeOnLoseFocus", mb_MinimizeOnLoseFocus);
+		bool mb_MinimizeOnLoseFocus;
 
 		//reg->Load(L"AffinityMask", nAffinity);
 		DWORD nAffinity;

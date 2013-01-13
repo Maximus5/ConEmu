@@ -456,7 +456,10 @@ struct SrvInfo
 	CESERVER_REQ_CONINFO_FULL *pConsole;
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
 	// Input
-	HANDLE hInputThread, hInputEvent; DWORD dwInputThread; BOOL bInputTermination;
+	HANDLE hInputThread;
+	DWORD dwInputThread; BOOL bInputTermination;
+	HANDLE hInputEvent;   // Выставляется в InputThread, флаг появления новых событий в очереди
+	HANDLE hInputWasRead; // Выставляется в InputThread после чтения InputQueue.ReadInputQueue
 	//int nInputQueue, nMaxInputQueue;
 	//INPUT_RECORD* pInputQueue;
 	//INPUT_RECORD* pInputQueueEnd;
@@ -649,3 +652,57 @@ extern BOOL gbInRecreateRoot;
 //#define CERR_GUIMACRO_FAILED 134
 #include "ExitCodes.h"
 
+
+
+// Message Logger
+// Originally from http://preshing.com/20120522/lightweight-in-memory-logging
+namespace InputLogger
+{
+	static const int BUFFER_INFO_SIZE = RELEASEDEBUGTEST(0x1000,0x1000);   // Must be a power of 2
+	struct Event {
+		DEBUGTEST(DWORD time;)
+		enum Source {
+			evt_Empty,
+			evt_ReadInputQueue,
+			evt_SetEvent,
+			evt_ResetEvent,
+			evt_SendStart,
+			evt_SendEnd,
+			evt_ProcessInputMessage,
+			evt_WriteInputQueue1,
+			evt_WaitIntputReady,
+			evt_WriteInputQueue2,
+			evt_InputQueueFlush,
+			evt_Overflow,
+		} what;
+		LONG val;
+		INPUT_RECORD ir;
+	};
+	extern Event g_evt[BUFFER_INFO_SIZE];
+	extern LONG g_evtidx;
+	extern LONG g_overflow;
+
+	inline void Log(Event::Source what, LONG val = 0)
+	{
+		// Get next message index
+		// Wrap to buffer size
+		LONG i = (_InterlockedIncrement(&g_evtidx) & (BUFFER_INFO_SIZE - 1));
+		// Write a message at this index
+		g_evt[i].what = what;
+		DEBUGTEST(g_evt[i].time = GetTickCount();)
+		g_evt[i].val = val;
+	}
+
+	inline void Log(Event::Source what, const INPUT_RECORD& ir, LONG val = 0)
+	{
+		// Get next message index
+		// Wrap to buffer size
+		LONG i = (_InterlockedIncrement(&g_evtidx) & (BUFFER_INFO_SIZE - 1));
+		// Write a message at this index
+		g_evt[i].what = what;
+		DEBUGTEST(g_evt[i].time = GetTickCount();)
+		// Fill info
+		g_evt[i].val = val;
+		g_evt[i].ir = ir;		
+	}
+}
