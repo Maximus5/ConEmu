@@ -404,6 +404,7 @@ enum TrackMenuPlace
 	tmp_TabsList,
 	tmp_PasteCmdLine,
 	tmp_StatusBarCols,
+	tmp_ChildSysMenu,
 };
 
 enum ConEmuWindowMode

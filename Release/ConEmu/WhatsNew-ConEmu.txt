@@ -11,6 +11,17 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.01.16
+[%] Issue 883: PuTTY resize again.
+[%] Failed to change cursor «Blinking» for Inactive console.
+[+] Two new compelental hotkeys: «Set focus to ConEmu», «Set focus to child GUI application».
+[+] New item in tab menu: «Child system menu».
+[%] Removing excess redraws.
+[+] New switch: "ConEmu.exe /nosingle".
+[+] New option in «Fast configuration» and «Appearance» page: «Single instance mode (use existing window instead of running new instance)».
+[*] Minor changes in «Mark & Paste» page: new checkbox «copy before reset» instead of third state of «Reset selection on input».
+
+
 2013.01.13
 [+] Searching in «Settings» dialog now available. Type text in «Find» editbox (upper-left corner) and wait a little.
     You may continue search by pressing ">" button.

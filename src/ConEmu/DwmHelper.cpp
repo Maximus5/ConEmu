@@ -368,19 +368,37 @@ void CDwmHelper::CheckGlassAttribute()
 	RedrawWindow(ghWnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
-void CDwmHelper::ExtendWindowFrame()
+bool CDwmHelper::ExtendWindowFrame()
 {
 	if (!mb_DwmAllowed)
-		return;
+		return false;
+
+	////dwmm.cxLeftWidth = 2;
+	////dwmm.cxRightWidth = 2;
+	//dwmm.cyTopHeight = GetDwmClientRectTopOffset();
+	////dwmm.cyBottomHeight = 0;
+
+	RECT rcMargins = {0, GetDwmClientRectTopOffset()};
+
+	return ExtendWindowFrame(ghWnd, rcMargins);
+}
+
+bool CDwmHelper::ExtendWindowFrame(HWND hWnd, const RECT& rcMargins)
+{
+	if (!mb_DwmAllowed)
+		return false;
 
 	MARGINS dwmm = {0};
-	//dwmm.cxLeftWidth = 2;
-	//dwmm.cxRightWidth = 2;
-	dwmm.cyTopHeight = GetDwmClientRectTopOffset();
-	//dwmm.cyBottomHeight = 0;
-	_DwmExtendFrameIntoClientArea(ghWnd, &dwmm);
+	dwmm.cxLeftWidth = rcMargins.left;
+	dwmm.cxRightWidth = rcMargins.right;
+	dwmm.cyTopHeight = rcMargins.top;
+	dwmm.cyBottomHeight = rcMargins.bottom;
+
+	HRESULT hr = _DwmExtendFrameIntoClientArea(hWnd, &dwmm);
 
 	//SetWindowThemeNonClientAttributes(hWnd, WTNCA_VALIDBITS, WTNCA_NODRAWCAPTION);
+
+	return SUCCEEDED(hr);
 }
 
 BOOL CDwmHelper::DwmDefWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult)

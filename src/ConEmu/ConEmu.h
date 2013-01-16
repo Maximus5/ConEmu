@@ -603,6 +603,7 @@ class CConEmuMain :
 		bool isRightClickingPaint();		
 		bool isSizing();
 		void BeginSizing(bool bFromStatusBar);
+		void EndSizing();
 		bool isValid(CRealConsole* apRCon);
 		bool isValid(CVirtualConsole* apVCon);
 		bool isVConExists(int nIdx);
@@ -705,7 +706,7 @@ class CConEmuMain :
 		void OnAltF9(BOOL abPosted=FALSE);
 		void OnMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
 		void OnForcedFullScreen(bool bSet = true);
-		void OnSwitchGuiFocus();
+		void OnSwitchGuiFocus(int DescrID);
 		void OnAlwaysOnTop();
 		void OnAlwaysShowScrollbar(bool abSync = true);
 		void OnBufferHeight();

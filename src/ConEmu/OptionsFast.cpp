@@ -63,6 +63,8 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 				SetWindowText(hDlg, szTitle);
 			}
 
+			CheckDlgButton(hDlg, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
+
 			CheckDlgButton(hDlg, cbUseKeyboardHooksFast, gpSet->isKeyboardHooks(true));
 
 			// Debug purposes only. ConEmu.exe switch "/nokeyhooks"
@@ -163,6 +165,9 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 			{
 			case IDOK:
 				{
+					/* Force Single instance mode */
+					gpSet->isSingleInstance = IsDlgButtonChecked(hDlg, cbSingleInstance);
+
 					/* Install Keyboard hooks */
 					gpSet->m_isKeyboardHooks = IsDlgButtonChecked(hDlg, cbUseKeyboardHooksFast) ? 1 : 2;
 
@@ -192,6 +197,9 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 						{
 							if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
 							{
+								/* Force Single instance mode */
+								reg->Save(L"SingleInstance", gpSet->isSingleInstance);
+
 								/* Install Keyboard hooks */
 								reg->Save(L"KeyboardHooks", gpSet->m_isKeyboardHooks);
 

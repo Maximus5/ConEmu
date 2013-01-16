@@ -139,6 +139,7 @@ enum ConEmuHotKeyType
 	chk_ArrHost,   // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
 	chk_System,    // predefined hotkeys, ненастраиваемые (пока?)
 	chk_Global,    // globally registered hotkey
+	chk_Local,     // locally registered hotkey
 	chk_Macro,     // GUI Macro
 };
 
@@ -200,7 +201,7 @@ struct ConEmuHotKey
 	bool CanChangeVK() const
 	{
 		//chk_System - пока не настраивается
-		if (HkType==chk_User || HkType==chk_Global || HkType==chk_Macro)
+		if (HkType==chk_User || HkType==chk_Global || HkType==chk_Local || HkType==chk_Macro)
 		{
 			return true;
 		}
@@ -951,7 +952,7 @@ struct Settings
 		//reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
 		bool isCTSAutoCopy;
 		//reg->Load(L"CTS.EndOnTyping", isCTSEndOnTyping);
-		BYTE isCTSEndOnTyping;
+		BYTE isCTSEndOnTyping; // 0 - off, 1 - copy & reset, 2 - reset only
 		//reg->Load(L"CTS.EndOnKeyPress", isCTSEndOnKeyPress);
 		bool isCTSEndOnKeyPress; // +isCTSEndOnTyping. +все, что не генерит WM_CHAR (стрелки и пр.)
 		//reg->Load(L"CTS.Freeze", isCTSFreezeBeforeSelect);
@@ -1242,6 +1243,8 @@ struct Settings
 
 		//reg->Load(L"MinimizeRestore", vmMinimizeRestore);
 		//DWORD vmMinimizeRestore;
+		//reg->Load(L"SingleInstance", isSingleInstance);
+		bool isSingleInstance;
 		//reg->Load(L"Multi", isMulti);
 		bool isMulti;
 		//reg->Load(L"Multi.ShowButtons", isMultiShowButtons);

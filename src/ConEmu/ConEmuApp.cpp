@@ -33,12 +33,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <commctrl.h>
 #include <shlobj.h>
 #include <tlhelp32.h>
-#include <dbghelp.h>
 #ifndef __GNUC__
+#include <dbghelp.h>
 #include <shobjidl.h>
 #include <propkey.h>
 #else
-//
+#include "../common/DbgHlpGcc.h"
 #endif
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
@@ -2280,8 +2280,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool VisPrm = false, VisValue = false;
 	bool ResetSettings = false;
 	//bool SingleInstance = false;
-	gpSetCls->SingleInstanceArg = false;
+
+	_ASSERTE(gpSetCls->SingleInstanceArg == sgl_Default);
+	gpSetCls->SingleInstanceArg = sgl_Default;
 	gpSetCls->SingleInstanceShowHide = sih_None;
+
 	//gpConEmu->cBlinkShift = GetCaretBlinkTime()/15;
 	//memset(&gOSVer, 0, sizeof(gOSVer));
 	//gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
@@ -2730,11 +2733,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/single")))
 				{
-					gpSetCls->SingleInstanceArg = true;
+					gpSetCls->SingleInstanceArg = sgl_Enabled;
+				}
+				else if (!klstricmp(curCommand, _T("/nosingle")))
+				{
+					gpSetCls->SingleInstanceArg = sgl_Disabled;
 				}
 				else if (!klstricmp(curCommand, _T("/showhide")) || !klstricmp(curCommand, _T("/showhideTSA")))
 				{
-					gpSetCls->SingleInstanceArg = true;
+					gpSetCls->SingleInstanceArg = sgl_Enabled;
 					gpSetCls->SingleInstanceShowHide = !klstricmp(curCommand, _T("/showhide"))
 						? sih_ShowMinimize : sih_ShowHideTSA;
 				}
@@ -3171,7 +3178,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///////////////////////////////////
 
 	// Нет смысла проверять и искать, если наш экземпляр - первый.
-	if (gpSetCls->SingleInstanceArg && !gpConEmu->isFirstInstance())
+	if (gpSetCls->IsSingleInstanceArg() && !gpConEmu->isFirstInstance())
 	{
 		gpConEmu->LogString(L"SingleInstanceArg");
 

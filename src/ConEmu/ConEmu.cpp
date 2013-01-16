@@ -121,8 +121,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TIMER_ADMSHIELD_ELAPSE 1000
 
 #define HOTKEY_CTRLWINALTSPACE_ID 0x0201 // this is wParam for WM_HOTKEY
-#define HOTKEY_SWITCHGUIFOCUS_ID 0x0202 // this is wParam for WM_HOTKEY
-#define HOTKEY_GLOBAL_START      0x1001 // this is wParam for WM_HOTKEY
+#define HOTKEY_SETFOCUSSWITCH_ID  0x0202 // this is wParam for WM_HOTKEY
+#define HOTKEY_SETFOCUSGUI_ID     0x0203 // this is wParam for WM_HOTKEY
+#define HOTKEY_SETFOCUSCHILD_ID   0x0204 // this is wParam for WM_HOTKEY
+#define HOTKEY_CHILDSYSMENU_ID    0x0205 // this is wParam for WM_HOTKEY
+#define HOTKEY_GLOBAL_START       0x1001 // this is wParam for WM_HOTKEY
 
 #define RCLICKAPPSTIMEOUT 600
 #define RCLICKAPPS_START 200 // начало отрисовки кружка вокруг курсора
@@ -4240,6 +4243,9 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		EnableWindow(GetDlgItem(hWnd2, tQuakeAnimation), gpSet->isQuakeStyle);
 		gpSetCls->checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle!=0);
 		gpSetCls->checkDlgButton(hWnd2, cbQuakeAutoHide, gpSet->isQuakeStyle==2);
+		
+		EnableWindow(GetDlgItem(hWnd2, cbSingleInstance), (gpSet->isQuakeStyle == 0));
+		gpSetCls->checkDlgButton(hWnd2, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
 	}
 
 	hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_SizePos] : NULL; // Страничка с настройками
@@ -5655,7 +5661,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	}
 
 	// Issue 878: ConEmu - Putty: Can't select in putty when ConEmu change display
-	if (IsWindowVisible(ghWnd) && !isIconic())
+	if (IsWindowVisible(ghWnd) && !isIconic() && !isSizing())
 	{
 		CVConGroup::NotifyChildrenWindows();
 	}
@@ -7046,7 +7052,10 @@ static struct RegisteredHotKeys
 gActiveOnlyHotKeys[] = {
 	{0, HOTKEY_CTRLWINALTSPACE_ID, VK_SPACE, MOD_CONTROL|MOD_WIN|MOD_ALT},
 	//#ifdef Use_vkSwitchGuiFocus
-	{vkSwitchGuiFocus, HOTKEY_SWITCHGUIFOCUS_ID},
+	{vkSetFocusSwitch, HOTKEY_SETFOCUSSWITCH_ID},
+	{vkSetFocusGui,    HOTKEY_SETFOCUSGUI_ID},
+	{vkSetFocusChild,  HOTKEY_SETFOCUSCHILD_ID},
+	{vkChildSystemMenu,HOTKEY_CHILDSYSMENU_ID},
 	//#endif
 };
 
@@ -7374,9 +7383,17 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 		CtrlWinAltSpace();
 	}
 	// Win+Esc by default
-	else if (wParam == HOTKEY_SWITCHGUIFOCUS_ID)
+	else if ((wParam == HOTKEY_SETFOCUSSWITCH_ID) || (wParam == HOTKEY_SETFOCUSGUI_ID) || (wParam == HOTKEY_SETFOCUSCHILD_ID))
 	{
-		OnSwitchGuiFocus();
+		OnSwitchGuiFocus((int)LOWORD(wParam));
+	}
+	else if (wParam == HOTKEY_CHILDSYSMENU_ID)
+	{
+		CVConGuard VCon;
+		if (GetActiveVCon(&VCon) >= 0)
+		{
+			VCon->RCon()->ChildSystemMenu();
+		}
 	}
 	else
 	{
@@ -9260,7 +9277,7 @@ bool CConEmuMain::isMouseOverFrame(bool abReal)
 	{
 		if (!isPressed(VK_LBUTTON))
 		{
-			mouse.state &= ~MOUSE_SIZING_BEGIN;
+			EndSizing();
 		}
 		else
 		{
@@ -9364,7 +9381,7 @@ bool CConEmuMain::isSizing()
 	// могло не сброситься, проверим
 	if (!isPressed(VK_LBUTTON))
 	{
-		mouse.state &= ~MOUSE_SIZING_BEGIN;
+		EndSizing();
 		mouse.bCheckNormalRect = true;
 		return false;
 	}
@@ -9395,6 +9412,16 @@ void CConEmuMain::BeginSizing(bool bFromStatusBar)
 		// -- если уж пришел WM_NCLBUTTONDOWN - значит рамка уже показана?
 		//gpConEmu->OnTimer(TIMER_CAPTION_APPEAR_ID,0);
 		//UpdateWindowRgn();
+	}
+}
+
+void CConEmuMain::EndSizing()
+{
+	mouse.state &= ~MOUSE_SIZING_BEGIN;
+
+	if (IsWindowVisible(ghWnd) && !isIconic())
+	{
+		CVConGroup::NotifyChildrenWindows();
 	}
 }
 
@@ -11454,7 +11481,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	if ((gpSet->isQuakeStyle != 0) && gpSet->isMinToTray())
 	{
 		// Если есть дочерние GUI окна - в них могут быть глюки с отрисовкой
-		if (CVConGroup::isChildWindowVisible())
+		if ((gpSet->nQuakeAnimation > 0) && !CVConGroup::isChildWindowVisible())
 		{
 			bUseQuakeAnimation = true;
 		}
@@ -11530,6 +11557,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				if (bUseQuakeAnimation)
 				{
 					DWORD nAnimationMS = gpSet->nQuakeAnimation; // (100 / nQuakeShift) * nQuakeDelay * 2;
+					_ASSERTE(nAnimationMS > 0);
 					//MinMax(nAnimationMS, CONEMU_ANIMATE_DURATION, CONEMU_ANIMATE_DURATION_MAX);
 					MinMax(nAnimationMS, QUAKEANIMATION_MAX);
 
@@ -11559,7 +11587,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 					StopForceShowFrame();
 
 					// Begin of animation
-					_ASSERTE(mn_QuakePercent==0);
+					_ASSERTE(mn_QuakePercent==0 || mn_QuakePercent==nQuakeMin);
 
 					if (gpSet->nQuakeAnimation > 0)
 					{
@@ -11626,6 +11654,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			if (bUseQuakeAnimation)
 			{
 				DWORD nAnimationMS = gpSet->nQuakeAnimation; // (100 / nQuakeShift) * nQuakeDelay * 2;
+				_ASSERTE(nAnimationMS > 0);
 				//MinMax(nAnimationMS, CONEMU_ANIMATE_DURATION, CONEMU_ANIMATE_DURATION_MAX);
 				MinMax(nAnimationMS, QUAKEANIMATION_MAX);
 
@@ -11656,7 +11685,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			else
 			{
 				DWORD nStartTick = GetTickCount();
-				mn_QuakePercent = 100 + nQuakeMin - nQuakeShift;
+				mn_QuakePercent = (gpSet->nQuakeAnimation > 0) ? (100 + nQuakeMin - nQuakeShift) : nQuakeMin;
 				StopForceShowFrame();
 
 				if (gpSet->nQuakeAnimation > 0)
@@ -11679,6 +11708,10 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 						nStartTick = GetTickCount();
 					}
+				}
+				else
+				{
+					UpdateWindowRgn();
 				}
 			}
 		}
@@ -11806,32 +11839,39 @@ void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 	}
 }
 
-void CConEmuMain::OnSwitchGuiFocus()
+void CConEmuMain::OnSwitchGuiFocus(int DescrID)
 {
 	CVConGuard VCon;
 	HWND hSet = ghWnd;
 
 	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
 	{
-		DWORD nFocusPID = 0;
-		HWND hGet = GetFocus();
-		if (hGet)
+		bool bSetChild = (DescrID == vkSetFocusChild);
+
+		if (DescrID == vkSetFocusSwitch)
 		{
-			GetWindowThreadProcessId(hGet, &nFocusPID);
+			DWORD nFocusPID = 0;
+			HWND hGet = GetFocus();
+			if (hGet)
+			{
+				GetWindowThreadProcessId(hGet, &nFocusPID);
+			}
+
+			if (nFocusPID == GetCurrentProcessId())
+			{
+				// Вернуть фокус в дочернее приложение
+				bSetChild = true;
+			}
 		}
 
-		if (nFocusPID == GetCurrentProcessId())
+		if (bSetChild)
 		{
 			// Вернуть фокус в дочернее приложение
 			VCon->RCon()->GuiWndFocusRestore();
-			return;
-		}
-		else
-		{
-			// Поставить фокус в ConEmu
 		}
 	}
 
+	// Поставить фокус в ConEmu
 	setFocus();
 }
 

@@ -963,9 +963,13 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 			{
 				n--; n2--;
 
+				// Похоже, следующее условие неправильное? В плане n2?
+				_ASSERTE(pChar[n] != L'\\');
+
 				// Диалоги в фаре можно "таскать" с клавиатуры через CtrlF5. Углы диалога помечаются слешами.
-				if ((pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace) || (pChar[n] == L'\\'))
-					&& (pAttr[n2].crBackColor == nColor && (pChar[n2] == L' ' || pChar[n2] == ucNoBreakSpace)))
+				if ((((pAttr[n].crBackColor == nColor) && ((pChar[n] == L' ') || (pChar[n] == ucNoBreakSpace)))
+						|| (pChar[n] == L'\\'))
+					&& ((pAttr[n2].crBackColor == nColor) && ((pChar[n2] == L' ') || (pChar[n2] == ucNoBreakSpace))))
 				{
 					nFromX--;
 				}

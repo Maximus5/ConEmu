@@ -278,6 +278,18 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 
 	switch (messg)
 	{
+		case WM_SHOWWINDOW:
+			{
+				#ifdef _DEBUG
+				HWND hGui = pVCon->GuiWnd();
+				if (hGui)
+				{
+					_ASSERTE(FALSE && "Show DC while GuiWnd exists");
+				}
+				#endif
+				result = DefWindowProc(hWnd, messg, wParam, lParam);
+				break;
+			}
 		case WM_SETFOCUS:
 			// Если в консоли работает "GUI" окно (GUI режим), то фокус нужно отдать туда.
 			{
@@ -903,7 +915,7 @@ LRESULT CConEmuChild::OnPaint()
 		EndPaint(mh_WndDC, &ps);
 	}
 
-	Validate();
+	//Validate();
 	gpSetCls->Performance(tPerfBlt, TRUE);
 	// Если открыто окно настроек - обновить системную информацию о размерах
 	gpConEmu->UpdateSizes();
@@ -1137,12 +1149,12 @@ void CConEmuChild::Invalidate()
 	UNREFERENCED_PARAMETER(pVCon);
 }
 
-void CConEmuChild::Validate()
-{
-	//mb_Invalidated = FALSE;
-	//DEBUGSTRDRAW(L" +++ Validate on DC window called\n");
-	//if ('ghWnd DC') ValidateRect(ghWnd, NULL);
-}
+//void CConEmuChild::Validate()
+//{
+//	//mb_Invalidated = FALSE;
+//	//DEBUGSTRDRAW(L" +++ Validate on DC window called\n");
+//	//if ('ghWnd DC') ValidateRect(ghWnd, NULL);
+//}
 
 void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 {

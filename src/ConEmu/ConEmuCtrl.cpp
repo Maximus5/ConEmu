@@ -805,7 +805,21 @@ bool CConEmuCtrl::key_SwitchGuiFocus(DWORD VkMod, bool TestOnly, const ConEmuHot
 		return true;
 
 	// Должно обрабатываться через WM_HOTKEY
-	gpConEmu->OnSwitchGuiFocus();
+	gpConEmu->OnSwitchGuiFocus(hk->DescrLangID);
+	return true;
+}
+
+bool CConEmuCtrl::key_ChildSystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	// Должно обрабатываться через WM_HOTKEY
+	CVConGuard VCon;
+	if (gpConEmu->GetActiveVCon(&VCon) >= 0)
+	{
+		VCon->RCon()->ChildSystemMenu();
+	}
 	return true;
 }
 

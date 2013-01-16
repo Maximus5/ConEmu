@@ -38,6 +38,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CBackground;
 struct DebugLogShellActivity;
 
+enum SingleInstanceArgEnum
+{
+	sgl_Default  = 0,
+	sgl_Enabled  = 1,
+	sgl_Disabled = 2,
+};
+
 class CSettings
 {
 	public:
@@ -59,7 +66,8 @@ class CSettings
 
 		wchar_t szFontError[512];
 
-		bool SingleInstanceArg; // по умолчанию = false, но для Quake переключается на = true
+		SingleInstanceArgEnum SingleInstanceArg; // по умолчанию = sgl_Default, но для Quake переключается на = sgl_Enabled
+		bool IsSingleInstanceArg();
 		SingleInstanceShowHideType SingleInstanceShowHide; // по умолчанию = sih_None
 		void ResetCmdArg();
 		bool ResetCmdHistory(HWND hParent = NULL);

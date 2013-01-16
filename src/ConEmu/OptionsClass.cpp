@@ -317,7 +317,7 @@ CSettings::CSettings()
 	// “еперь установим умолчани€ настроек	
 	gpSet->InitSettings();
 	
-	SingleInstanceArg = false;
+	SingleInstanceArg = sgl_Default;
 	SingleInstanceShowHide = sih_None;
 	mb_StopRegisterFonts = FALSE;
 	mb_IgnoreEditChanged = FALSE;
@@ -424,7 +424,7 @@ void CSettings::SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod)
 	pHK->VkMod = VkMod;
 
 	// Global? Need to re-register?
-	if (pHK->DescrLangID == vkSwitchGuiFocus)
+	if (pHK->HkType == chk_Local)
 	{
 		gpConEmu->GlobalHotKeyChanged();
 	}
@@ -598,7 +598,7 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 		//WARNING("CConEmuCtrl:: “ут вообще наверное нужно по всем HotKeys проехатьс€, а не только по Ђизбраннымї");
 		for (int i = 0; m_HotKeys[i].DescrLangID; i++)
 		{
-			if ((m_HotKeys[i].HkType == chk_Modifier) || (m_HotKeys[i].HkType == chk_Global))
+			if ((m_HotKeys[i].HkType == chk_Modifier) || (m_HotKeys[i].HkType == chk_Global) || (m_HotKeys[i].HkType == chk_Local))
 				continue;
 
 			DWORD VkMod = m_HotKeys[i].VkMod;
@@ -847,6 +847,12 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig)
 			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration %s", pszDef, Storage.szType);
 		
 		CheckOptionsFast(szTitle, abNeedCreateVanilla);
+
+		// Single instance?
+		if (gpSet->isSingleInstance && (gpSetCls->SingleInstanceArg == sgl_Default))
+		{
+			SingleInstanceShowHide = sih_ShowMinimize;
+		}
 	}
 	
 
@@ -896,10 +902,10 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig)
 
 	MCHKHEAP
 
-	if (!SingleInstanceArg && gpSet->isQuakeStyle)
+	if ((SingleInstanceArg == sgl_Default) && gpSet->isQuakeStyle)
 	{
 		_ASSERTE(SingleInstanceShowHide == sih_None);
-		SingleInstanceArg = true;
+		SingleInstanceArg = sgl_Enabled;
 	}
 
 	//wcscpy_c(gpSet->ComSpec.ConEmuDir, gpConEmu->ms_ConEmuDir);
@@ -1524,6 +1530,18 @@ LRESULT CSettings::OnInitDialog()
 			MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcBtn, 2);
 			SetWindowPos(hBtn, NULL, rcBtn.left, rcEdt.top-1, rcBtn.right-rcBtn.left, rcBtn.bottom-rcBtn.top, SWP_NOZORDER);
 		}
+
+		#if 0
+		RECT rcMargins = {0, rcBtn.bottom+2};
+		if (gpConEmu->ExtendWindowFrame(ghOpWnd, rcMargins))
+		{
+			//HDC hDc = GetDC(ghOpWnd);
+			//RECT rcClient; GetClientRect(ghOpWnd, &rcClient);
+			//rcClient.bottom = rcMargins.top;
+			//FillRect(hDc, &rcClient, (HBRUSH)GetStockObject(BLACK_BRUSH));
+			//ReleaseDC(ghOpWnd, hDc);
+		}
+		#endif
 	}
 
 	RegisterTipsFor(ghOpWnd);
@@ -1548,7 +1566,7 @@ LRESULT CSettings::OnInitDialog()
 	if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_REG) == 0)
 	{
 		wchar_t szStorage[MAX_PATH*2];
-		wcscpy_c(szStorage, L"HKCU\\");
+		wcscpy_c(szStorage, L"HKEY_CURRENT_USER\\");
 		wcscat_c(szStorage, ConfigPath);
 		SetDlgItemText(ghOpWnd, tStorage, szStorage);
 	}
@@ -1889,6 +1907,9 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbNewConfirm, gpSet->isMultiNewConfirm);
 	checkDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
 	checkDlgButton(hWnd2, cbCloseEditViewConfirm, gpSet->isCloseEditViewConfirm);
+
+	checkDlgButton(hWnd2, cbSingleInstance, IsSingleInstanceArg());
+	EnableDlgItem(hWnd2, cbSingleInstance, (gpSet->isQuakeStyle == 0));
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -2336,8 +2357,9 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 		(gpSet->isConsoleTextSelection == 1) ? rbCTSAlways : rbCTSBufferOnly);
 
 	checkDlgButton(hWnd2, cbCTSAutoCopy, gpSet->isCTSAutoCopy);
-	checkDlgButton(hWnd2, cbCTSEndOnTyping, gpSet->isCTSEndOnTyping);
+	checkDlgButton(hWnd2, cbCTSEndOnTyping, (gpSet->isCTSEndOnTyping != 0));
 	checkDlgButton(hWnd2, cbCTSEndOnKeyPress, (gpSet->isCTSEndOnTyping != 0) && gpSet->isCTSEndOnKeyPress);
+	checkDlgButton(hWnd2, cbCTSEndCopyBefore, (gpSet->isCTSEndOnTyping == 1));
 	EnableWindow(GetDlgItem(hWnd2, cbCTSEndOnKeyPress), gpSet->isCTSEndOnTyping!=0);
 	checkDlgButton(hWnd2, cbCTSFreezeBeforeSelect, gpSet->isCTSFreezeBeforeSelect);
 	checkDlgButton(hWnd2, cbCTSBlockSelection, gpSet->isCTSSelectBlock);
@@ -2548,7 +2570,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 				switch (nShowType)
 				{
 				case rbHotkeysUser:
-					if ((ppHK->HkType != chk_User) && (ppHK->HkType != chk_Global)
+					if ((ppHK->HkType != chk_User) && (ppHK->HkType != chk_Global) && (ppHK->HkType != chk_Local)
 						&& (ppHK->HkType != chk_Modifier) && (ppHK->HkType != chk_Modifier2))
 						continue;
 					break;
@@ -2595,6 +2617,8 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 			{
 			case chk_Global:
 				wcscpy_c(szName, L"Global"); break;
+			case chk_Local:
+				wcscpy_c(szName, L"Local"); break;
 			case chk_User:
 				wcscpy_c(szName, L"User"); break;
 			case chk_Macro:
@@ -2710,6 +2734,7 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				{
 				case chk_User:
 				case chk_Global:
+				case chk_Local:
 					pszLabel = L"Choose hotkey:";
 					VkMod = pk->VkMod;
 					bHotKeyEnabled = bKeyListEnabled = bModifiersEnabled = TRUE;
@@ -4409,39 +4434,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case IDOK:
 		case IDCANCEL:
 		case IDCLOSE:
-			// -- перенесено в WM_CLOSE
-			//if (gpSet->isTabs==1) gpConEmu->ForceShowTabs(TRUE); else
-			//if (gpSet->isTabs==0) gpConEmu->ForceShowTabs(FALSE); else
-			//	gpConEmu->mp_TabBar->Update();
-			//gpConEmu->OnPanelViewSettingsChanged();
-			SendMessage(ghOpWnd, WM_CLOSE, 0, 0);
-			break;
-		case bSaveSettings:
-			{
-				bool isShiftPressed = isPressed(VK_SHIFT);
-
-				// были изменени€ в пол€х размера/положени€?
-				if (mh_Tabs[thi_SizePos] && IsWindowEnabled(GetDlgItem(mh_Tabs[thi_SizePos], cbApplyPos)))
-					OnButtonClicked(mh_Tabs[thi_SizePos], cbApplyPos, 0);
-
-				if (gpSet->SaveSettings())
-				{
-					if (!isShiftPressed)
-						SendMessage(ghOpWnd,WM_COMMAND,IDOK,0);
-				}
-			}
-			break;
-		case cbExportConfig:
-			{
-				wchar_t *pszFile = SelectFile(L"Export configuration", L"Export.xml", ghOpWnd, L"XML files (*.xml)\0*.xml\0", false, false, true);
-				if (pszFile)
-				{
-					SettingsStorage XmlStorage = {CONEMU_CONFIGTYPE_XML};
-					XmlStorage.pszFile = pszFile;
-					gpSet->SaveSettings(FALSE, &XmlStorage);
-					SafeFree(pszFile);
-				}
-			}
+			// -- обрабатываютс€ в wndOpProc
 			break;
 		case rNoneAA:
 		case rStandardAA:
@@ -4577,6 +4570,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		//	if (!gpSet->AppStd.isCursorBlink) // если мигание отключаетс€ - то курсор может "замереть" в погашенном состо€нии.
 		//		CVConGroup::InvalidateAll();
 		//	break;
+		case cbSingleInstance:
+			gpSet->isSingleInstance = IsChecked(hWnd2, cbSingleInstance);
+			break;
 		case cbMultiCon:
 			gpSet->isMulti = IsChecked(hWnd2, cbMultiCon);
 			gpConEmu->UpdateWinHookSettings();
@@ -5593,8 +5589,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isCTSAutoCopy = IsChecked(hWnd2,CB);
 			break;
 		case cbCTSEndOnTyping:
-			gpSet->isCTSEndOnTyping = IsChecked(hWnd2,CB);
+		case cbCTSEndCopyBefore:
+			gpSet->isCTSEndOnTyping = IsChecked(hWnd2,cbCTSEndOnTyping) ? IsChecked(hWnd2,cbCTSEndCopyBefore) ? 1 : 2 : 0;
 			EnableWindow(GetDlgItem(hWnd2, cbCTSEndOnKeyPress), gpSet->isCTSEndOnTyping!=0);
+			EnableWindow(GetDlgItem(hWnd2, cbCTSEndCopyBefore), gpSet->isCTSEndOnTyping!=0);
 			checkDlgButton(hWnd2, cbCTSEndOnKeyPress, gpSet->isCTSEndOnKeyPress);
 			break;
 		case cbCTSEndOnKeyPress:
@@ -6051,7 +6049,7 @@ LRESULT CSettings::OnButtonClicked_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lPar
 			pApp->CursorInactive.isColor = IsChecked(hWnd2,cbInactiveCursorColor);
 			break;
 		case cbInactiveCursorBlink:
-			pApp->CursorInactive.isColor = IsChecked(hWnd2,cbInactiveCursorColor);
+			pApp->CursorInactive.isBlinking = IsChecked(hWnd2,cbInactiveCursorColor);
 			break;
 		case cbInactiveCursorIgnoreSize:
 			pApp->CursorInactive.isFixedSize = IsChecked(hWnd2,cbInactiveCursorIgnoreSize);
@@ -7988,39 +7986,131 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		//	return 0;
 		case WM_COMMAND:
 
-			if (HIWORD(wParam) == BN_CLICKED)
+			switch (HIWORD(wParam))
 			{
-				switch (LOWORD(wParam))
+				case BN_CLICKED:
 				{
-				case bResetSettings:
-				case bReloadSettings:
-					gpSetCls->OnResetOrReload(LOWORD(wParam) == bResetSettings);
-					break;
-				case cbOptionSearch:
-					gpSetCls->SearchForControls();
-					break;
-				default:
-					gpSetCls->OnButtonClicked(hWnd2, wParam, lParam);
+					switch (LOWORD(wParam))
+					{
+					case bSaveSettings:
+						{
+							HWND hFocus = GetFocus();
+							WORD wFocusID = GetDlgCtrlID(hFocus);
+							bool isShiftPressed = isPressed(VK_SHIFT);
+
+							if (wFocusID == tOptionSearch)
+							{
+								// ѕо Enter - искать следующий контрол, раз фокус в поле ввода
+								gpSetCls->SearchForControls();
+							}
+							else
+							{
+								// были изменени€ в пол€х размера/положени€?
+								if (gpSetCls->mh_Tabs[thi_SizePos]
+									&& IsWindowEnabled(GetDlgItem(gpSetCls->mh_Tabs[thi_SizePos], cbApplyPos)))
+								{
+									gpSetCls->OnButtonClicked(gpSetCls->mh_Tabs[thi_SizePos], cbApplyPos, 0);
+								}
+
+								if (gpSet->SaveSettings())
+								{
+									if (!isShiftPressed)
+										SendMessage(ghOpWnd,WM_COMMAND,IDOK,0);
+								}
+							}
+						}
+						break;
+
+					case bResetSettings:
+					case bReloadSettings:
+						gpSetCls->OnResetOrReload(LOWORD(wParam) == bResetSettings);
+						break;
+
+					case cbOptionSearch:
+						gpSetCls->SearchForControls();
+						break;
+
+					case IDOK:
+					case IDCANCEL:
+					case IDCLOSE:
+						// -- перенесено в WM_CLOSE
+						//if (gpSet->isTabs==1) gpConEmu->ForceShowTabs(TRUE); else
+						//if (gpSet->isTabs==0) gpConEmu->ForceShowTabs(FALSE); else
+						//	gpConEmu->mp_TabBar->Update();
+						//gpConEmu->OnPanelViewSettingsChanged();
+						SendMessage(ghOpWnd, WM_CLOSE, 0, 0);
+						break;
+
+					case cbExportConfig:
+						{
+							wchar_t *pszFile = SelectFile(L"Export configuration", L"*.xml", ghOpWnd, L"XML files (*.xml)\0*.xml\0", false, false, true);
+							if (pszFile)
+							{
+								SettingsStorage XmlStorage = {CONEMU_CONFIGTYPE_XML};
+								XmlStorage.pszFile = pszFile;
+								gpSet->SaveSettings(FALSE, &XmlStorage);
+								SafeFree(pszFile);
+							}
+						}
+						break;
+
+					default:
+						gpSetCls->OnButtonClicked(hWnd2, wParam, lParam);
+					}
 				}
-			}
-			else if (HIWORD(wParam) == EN_CHANGE)
-			{
-				if (LOWORD(wParam) == tOptionSearch)
+				break;
+
+				case EN_CHANGE:
 				{
-					// Start search delay on typing
-					if (GetWindowTextLength(GetDlgItem(hWnd2, tOptionSearch)) > 0)
-						SetTimer(hWnd2, SEARCH_CONTROL_TIMERID, SEARCH_CONTROL_TIMEOUT, 0);
+					if (LOWORD(wParam) == tOptionSearch)
+					{
+						// Start search delay on typing
+						if (GetWindowTextLength(GetDlgItem(hWnd2, tOptionSearch)) > 0)
+							SetTimer(hWnd2, SEARCH_CONTROL_TIMERID, SEARCH_CONTROL_TIMEOUT, 0);
+						else
+							KillTimer(hWnd2, SEARCH_CONTROL_TIMERID);
+					}
 					else
-						KillTimer(hWnd2, SEARCH_CONTROL_TIMERID);
+					{
+						gpSetCls->OnEditChanged(hWnd2, wParam, lParam);
+					}
 				}
-				else
+				break;
+
+				case CBN_EDITCHANGE:
+				case CBN_SELCHANGE:
 				{
-					gpSetCls->OnEditChanged(hWnd2, wParam, lParam);
+					gpSetCls->OnComboBox(hWnd2, wParam, lParam);
 				}
-			}
-			else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				gpSetCls->OnComboBox(hWnd2, wParam, lParam);
+				break;
+
+				case EN_SETFOCUS:
+				case EN_KILLFOCUS:
+				{
+					if (LOWORD(wParam) == tOptionSearch)
+					{
+						DWORD dwStyle;
+						HWND hSearch = GetDlgItem(hWnd2, cbOptionSearch);
+						HWND hSave = GetDlgItem(hWnd2, bSaveSettings);
+						if (HIWORD(wParam) == EN_SETFOCUS)
+						{
+							dwStyle = GetWindowLong(hSave, GWL_STYLE);
+							SetWindowLong(hSave, GWL_STYLE, dwStyle & ~BS_DEFPUSHBUTTON);
+							dwStyle = GetWindowLong(hSearch, GWL_STYLE);
+							SetWindowLong(hSearch, GWL_STYLE, dwStyle | BS_DEFPUSHBUTTON);
+						}
+						else
+						{
+							dwStyle = GetWindowLong(hSearch, GWL_STYLE);
+							SetWindowLong(hSearch, GWL_STYLE, dwStyle & ~BS_DEFPUSHBUTTON);
+							dwStyle = GetWindowLong(hSave, GWL_STYLE);
+							SetWindowLong(hSave, GWL_STYLE, dwStyle | BS_DEFPUSHBUTTON);
+						}
+						InvalidateRect(hSearch, NULL, FALSE);
+						InvalidateRect(hSave, NULL, FALSE);
+					}
+				}
+				break;
 			}
 
 			break;
@@ -11566,11 +11656,22 @@ LPCTSTR CSettings::GetDefaultCmd()
 	return szDefCmd;
 }
 
+bool CSettings::IsSingleInstanceArg()
+{
+	if (SingleInstanceArg == sgl_Enabled)
+		return true;
+
+	if ((SingleInstanceArg == sgl_Default) && (gpSet->isSingleInstance || gpSet->isQuakeStyle))
+		return true;
+
+	return false;
+}
+
 // ≈сли ConEmu был запущен с ключом "/single /cmd xxx" то после окончани€
 // загрузки - сбросить команду, котора€ пришла из "/cmd" - загрузить настройку
 void CSettings::ResetCmdArg()
 {
-	SingleInstanceArg = false;
+	SingleInstanceArg = sgl_Default;
 	// —бросить нужно только gpSet->psCurCmd, gpSet->psCmd не мен€етс€ - загружаетс€ только из настройки
 	SafeFree(gpSet->psCurCmd);
 	gpSet->isCurCmdList = false;

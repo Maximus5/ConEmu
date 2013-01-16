@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuPipe.h"
 #include "Inside.h"
 #include "Macro.h"
+#include "Menu.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
 #include "Status.h"
@@ -655,13 +656,17 @@ void CRealConsole::SyncGui2Window(RECT* prcClient)
 		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui);
 		RECT rcCur = {};
 		GetWindowRect(hGuiWnd, &rcCur);
-		MapWindowPoints(NULL, GetView(), (LPPOINT)&rcCur, 2);
+		HWND hBack = mp_VCon->GetBack();
+		MapWindowPoints(NULL, hBack, (LPPOINT)&rcCur, 2);
 		if (memcmp(&rcCur, &rcGui, sizeof(RECT)) != 0)
 		{
 			// Через команду пайпа, а то если он "под админом" будет Access denied
 			SetOtherWindowPos(hGuiWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 				SWP_ASYNCWINDOWPOS|SWP_NOACTIVATE);
 		}
+		// Запомнить ЭКРАННЫЕ координаты, куда поставили окошко
+		MapWindowPoints(hBack, NULL, (LPPOINT)&rcGui, 2);
+		mrc_LastGuiWnd = rcGui;
 	}
 }
 
@@ -1693,7 +1698,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 		// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
 		// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
-		if (gpSetCls->SingleInstanceArg)
+		if (gpSetCls->SingleInstanceArg == sgl_Enabled)
 		{
 			gpSetCls->ResetCmdArg();
 		}
@@ -1750,6 +1755,11 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	while (TRUE)
 	{
 		bActive = pRCon->isActive();
+		bIconic = gpConEmu->isIconic();
+
+		// в минимизированном/неактивном режиме - сократить расходы
+		nTimeout = bIconic ? max(1000,nInactiveElapse) : !bActive ? nInactiveElapse : nElapse;
+
 
 		if (bActive)
 			gpSetCls->Performance(tPerfInterval, TRUE); // считается по своему
@@ -1787,9 +1797,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			}
 		}
 
-		bIconic = gpConEmu->isIconic();
-		// в минимизированном/неактивном режиме - сократить расходы
-		nTimeout = bIconic ? max(1000,nInactiveElapse) : !bActive ? nInactiveElapse : nElapse;
+		
+
+
 		nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, nTimeout);
 		if (nWait == (DWORD)-1)
 		{
@@ -2284,12 +2294,15 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					//2010-05-18 lbForceUpdate вызывал CVirtualConsole::Update(abForce=true), что приводило к тормозам
 					bool bForce = false; //lbForceUpdate;
 					lbForceUpdate = false;
-					pRCon->mp_VCon->Validate(); // сбросить флажок
+					//pRCon->mp_VCon->Validate(); // сбросить флажок
 
 					if (pRCon->m_UseLogs>2) pRCon->LogString("mp_VCon->Update from CRealConsole::MonitorThread");
 
 					if (pRCon->mp_VCon->Update(bForce))
-						lbNeedRedraw = true;
+					{
+						// Invalidate уже вызван!
+						lbNeedRedraw = false;
+					}
 				}
 				else if (lbIsVisible // где мигать курсором
 					&& gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId())->CursorBlink(lbIsActive)
@@ -2321,9 +2334,11 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				{
 					//#ifndef _DEBUG
 					//WARNING("******************");
-					TODO("После этого двойная отрисовка не вызывается?");
-					pRCon->mp_VCon->Redraw();
+					//TODO("После этого двойная отрисовка не вызывается?");
+					//pRCon->mp_VCon->Redraw();
 					//#endif
+
+					pRCon->mp_VCon->Invalidate();
 					pRCon->mn_LastInvalidateTick = GetTickCount();
 				}
 			}
@@ -5967,6 +5982,25 @@ void CRealConsole::ShowGuiClientInt(bool bShow)
 	}
 }
 
+void CRealConsole::ChildSystemMenu()
+{
+	if (!this || !hGuiWnd)
+		return;
+
+	//PostConsoleMessage(hGuiWnd, WM_SYSCOMMAND, SC_KEYMENU, 0);
+	HMENU hSysMenu = GetSystemMenu(hGuiWnd, FALSE);
+	if (hSysMenu)
+	{
+		POINT ptCur = {}; MapWindowPoints(mp_VCon->GetBack(), NULL, &ptCur, 1);
+		int nCmd = gpConEmu->mp_Menu->trackPopupMenu(tmp_ChildSysMenu, hSysMenu, TPM_LEFTALIGN|TPM_TOPALIGN|TPM_RETURNCMD|TPM_NONOTIFY,
+			ptCur.x, ptCur.y, ghWnd, NULL);
+		if (nCmd)
+		{
+			PostConsoleMessage(hGuiWnd, WM_SYSCOMMAND, nCmd, 0);
+		}
+	}
+}
+
 void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 Toggle 0 - Hide 1 - Show
 {
 	if (this == NULL) return;
@@ -7304,6 +7338,8 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 					//SetForegroundWindow(hGuiWnd);
 				}
 				#endif
+
+				GuiNotifyChildWindow();
 
 				GuiWndFocusRestore();
 			}
@@ -10095,6 +10131,39 @@ DWORD CRealConsole::GuiWndPID()
 	if (!this || !hGuiWnd)
 		return NULL;
 	return mn_GuiWndPID;
+}
+
+// При движении окна ConEmu - нужно подергать дочерние окошки
+// Иначе PuTTY глючит с обработкой мышки
+void CRealConsole::GuiNotifyChildWindow()
+{
+	if (!this || !hGuiWnd || mb_GuiExternMode)
+		return;
+
+	RECT rcCur = {};
+	if (!GetWindowRect(hGuiWnd, &rcCur))
+		return;
+
+	if (memcmp(&mrc_LastGuiWnd, &rcCur, sizeof(rcCur)) == 0)
+		return; // ConEmu не двигалось
+
+	HWND hBack = mp_VCon->GetBack();
+	MapWindowPoints(NULL, hBack, (LPPOINT)&rcCur, 2);
+
+	SetOtherWindowPos(hGuiWnd, NULL, rcCur.left, rcCur.top, rcCur.right-rcCur.left+1, rcCur.bottom-rcCur.top+1, SWP_NOZORDER);
+	SetOtherWindowPos(hGuiWnd, NULL, rcCur.left, rcCur.top, rcCur.right-rcCur.left, rcCur.bottom-rcCur.top, SWP_NOZORDER);
+
+	//RECT rcChild = {};
+	//GetWindowRect(hGuiWnd, &rcChild);
+	////MapWindowPoints(NULL, VCon->GetBack(), (LPPOINT)&rcChild, 2);
+
+	//WPARAM wParam = 0;
+	//LPARAM lParam = MAKELPARAM(rcChild.left, rcChild.top);
+	////pRCon->PostConsoleMessage(hGuiWnd, WM_MOVE, wParam, lParam);
+
+	//wParam = ::IsZoomed(hGuiWnd) ? SIZE_MAXIMIZED : SIZE_RESTORED;
+	//lParam = MAKELPARAM(rcChild.right-rcChild.left, rcChild.bottom-rcChild.top);
+	////pRCon->PostConsoleMessage(hGuiWnd, WM_SIZE, wParam, lParam);
 }
 
 void CRealConsole::GuiWndFocusStore()

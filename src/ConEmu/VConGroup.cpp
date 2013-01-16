@@ -4091,25 +4091,27 @@ void CVConGroup::NotifyChildrenWindows()
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		CVConGuard VCon(gp_VCon[i]);
-		if (VCon.VCon())
+		if (VCon.VCon() && isVisible(VCon.VCon()))
 		{
 			HWND hGuiWnd = VCon->GuiWnd(); // Child GUI Window
 			if (hGuiWnd)
 			{
 				CRealConsole* pRCon = VCon->RCon();
-				//VCon->RCon()->SetOtherWindowPos(hGuiWnd, NULL, int X, int Y, int cx, int cy, UINT uFlags)
+				pRCon->GuiNotifyChildWindow();
 
-				RECT rcChild = {};
-				GetWindowRect(hGuiWnd, &rcChild);
-				MapWindowPoints(NULL, VCon->GetBack(), (LPPOINT)&rcChild, 2);
+				////VCon->RCon()->SetOtherWindowPos(hGuiWnd, NULL, int X, int Y, int cx, int cy, UINT uFlags)
 
-				WPARAM wParam = 0;
-				LPARAM lParam = MAKELPARAM(rcChild.left, rcChild.top);
-				pRCon->PostConsoleMessage(hGuiWnd, WM_MOVE, wParam, lParam);
+				//RECT rcChild = {};
+				//GetWindowRect(hGuiWnd, &rcChild);
+				////MapWindowPoints(NULL, VCon->GetBack(), (LPPOINT)&rcChild, 2);
 
-				wParam = ::IsZoomed(hGuiWnd) ? SIZE_MAXIMIZED : SIZE_RESTORED;
-				lParam = MAKELPARAM(rcChild.right-rcChild.left, rcChild.bottom-rcChild.top);
-				pRCon->PostConsoleMessage(hGuiWnd, WM_SIZE, wParam, lParam);
+				//WPARAM wParam = 0;
+				//LPARAM lParam = MAKELPARAM(rcChild.left, rcChild.top);
+				////pRCon->PostConsoleMessage(hGuiWnd, WM_MOVE, wParam, lParam);
+
+				//wParam = ::IsZoomed(hGuiWnd) ? SIZE_MAXIMIZED : SIZE_RESTORED;
+				//lParam = MAKELPARAM(rcChild.right-rcChild.left, rcChild.bottom-rcChild.top);
+				////pRCon->PostConsoleMessage(hGuiWnd, WM_SIZE, wParam, lParam);
 			}
 		}
 	}

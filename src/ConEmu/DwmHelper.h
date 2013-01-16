@@ -73,7 +73,8 @@ public:
 	void EnableGlass(bool abGlass);
 	void EnableTheming(bool abTheme);
 	void EnableBlurBehind(bool abBlurBehindClient);
-	void ExtendWindowFrame();
+	bool ExtendWindowFrame();
+	bool ExtendWindowFrame(HWND hWnd, const RECT& rcMargins);
 	void CheckGlassAttribute();
 	int GetDwmClientRectTopOffset();
 	BOOL DwmDefWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult);

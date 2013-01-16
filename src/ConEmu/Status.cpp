@@ -36,8 +36,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <commctrl.h>
 
-#include "ConEmu.h"
 #include "header.h"
+
+#include "ConEmu.h"
 #include "Inside.h"
 #include "Menu.h"
 #include "Options.h"
@@ -405,7 +406,7 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 	LPCWSTR pszTmp;
 	CONSOLE_CURSOR_INFO ci = {};
 	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
-	RealBufferType tBuffer = rbt_Undefined;
+	DEBUGTEST(RealBufferType tBuffer = rbt_Undefined);
 	SIZE szTemp;
 	int x = 0;
 
@@ -413,7 +414,7 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 	{
 		pRCon->GetConsoleCursorInfo(&ci);
 		pRCon->GetConsoleScreenBufferInfo(&sbi);
-		tBuffer = pRCon->GetActiveBufferType();
+		DEBUGTEST(tBuffer = pRCon->GetActiveBufferType());
 	}
 
 	int nGapWidth = 2;
@@ -815,6 +816,10 @@ void CStatus::InvalidateStatusBar()
 	if (!GetStatusBarClientRect(&rcClient))
 		return;
 
+	// Invalidate вызывается не только при изменениях, но
+	// и по таймеру, чтобы гарантировать актуальность данных
+	// (не все данные хранятся в объекте, например CAPS/NUM/SCRL нужно проверять)
+
 	InvalidateRect(ghWnd, &rcClient, FALSE);
 }
 
@@ -955,7 +960,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			break;
 		case WM_SETCURSOR: // не приходит
 			// Stop further processing
-			SetCursor(LoadCursor(NULL, MAKEINTRESOURCE(IDC_SIZENWSE)));
+			SetCursor(LoadCursor(NULL, IDC_SIZENWSE));
 			lResult = TRUE;
 			return true;
 		}

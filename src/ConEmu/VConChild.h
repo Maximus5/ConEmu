@@ -51,7 +51,7 @@ class CConEmuChild
 		HWND GetBack();
 		BOOL ShowView(int nShowCmd);
 		void Invalidate();
-		void Validate();
+		//void Validate();
 		void Redraw();
 
 		void SetRedraw(BOOL abRedrawEnabled);

@@ -299,6 +299,7 @@ void Settings::InitSettings()
 	isAutoRegisterFonts = true;
 	nHostkeyNumberModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyNumberModifier);
 	nHostkeyArrowModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyArrowModifier);
+	isSingleInstance = false;
 	isMulti = true;
 	isMultiShowButtons = true;
 	isNumberInCaption = false;
@@ -2104,6 +2105,7 @@ LPCWSTR Settings::GetHotkeyName(const ConEmuHotKey* ppHK, wchar_t (&szFull)[128]
 	switch (ppHK->HkType)
 	{
 	case chk_Global:
+	case chk_Local:
 	case chk_User:
 	case chk_Modifier2:
 		VkMod = ppHK->VkMod;
@@ -2463,6 +2465,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"StoreTaskbarCommands", isStoreTaskbarCommands);
 
 		reg->Load(L"CmdLineHistory", &psCmdHistory); nCmdHistorySize = 0; HistoryCheck();
+		reg->Load(L"SingleInstance", isSingleInstance);
 		reg->Load(L"Multi", isMulti);
 		reg->Load(L"Multi.ShowButtons", isMultiShowButtons);
 		reg->Load(L"Multi.NumberInCaption", isNumberInCaption);
@@ -3359,6 +3362,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		if (psCmdHistory)
 			reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
 
+		reg->Save(L"SingleInstance", isSingleInstance);
 		reg->Save(L"Multi", isMulti);
 		reg->Save(L"Multi.ShowButtons", isMultiShowButtons);
 		reg->Save(L"Multi.NumberInCaption", isNumberInCaption);
@@ -5714,9 +5718,11 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkMinimizeRestor2,chk_Global, NULL,   L"MinimizeRestore2",      0, CConEmuCtrl::key_MinimizeRestore},
 		{vkGlobalRestore,  chk_Global, NULL,   L"GlobalRestore",         0, CConEmuCtrl::key_GlobalRestore},
 		{vkForceFullScreen,chk_Global, NULL,   L"ForcedFullScreen",      MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL,VK_MENU), CConEmuCtrl::key_ForcedFullScreen},
-		//#ifdef Use_vkSwitchGuiFocus
-		{vkSwitchGuiFocus, chk_Global, NULL,   L"SwitchGuiFocus",        0/*MakeHotKey(VK_ESCAPE,VK_LWIN)*/, CConEmuCtrl::key_SwitchGuiFocus},
-		//#endif
+		// -- ƒобавить chk_Local недостаточно, нужно еще и gActiveOnlyHotKeys обработать
+		{vkSetFocusSwitch, chk_Local,  NULL,   L"SwitchGuiFocus",        0/*MakeHotKey(VK_ESCAPE,VK_LWIN)*/, CConEmuCtrl::key_SwitchGuiFocus},
+		{vkSetFocusGui,    chk_Local,  NULL,   L"SetFocusGui",           0/*MakeHotKey(VK_ESCAPE,VK_LWIN)*/, CConEmuCtrl::key_SwitchGuiFocus},
+		{vkSetFocusChild,  chk_Local,  NULL,   L"SetFocusChild",         0/*MakeHotKey(VK_ESCAPE,VK_LWIN)*/, CConEmuCtrl::key_SwitchGuiFocus},
+		{vkChildSystemMenu,chk_Local,  NULL,   L"ChildSystemMenu",       0, CConEmuCtrl::key_ChildSystemMenu},
 		// User (Keys)
 		{vkMultiNew,       chk_User,  NULL,    L"Multi.NewConsole",      MakeHotKey('W',VK_LWIN), CConEmuCtrl::key_MultiNew},
 		{vkMultiNewShift,  chk_User,  NULL,    L"Multi.NewConsoleShift", MakeHotKey('W',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNewShift},

@@ -253,6 +253,7 @@ class CRealConsole
 	private:
 		HWND    hConWnd;
 		HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
+		RECT    mrc_LastGuiWnd; // Screen coordinates!
 		HWND    mh_GuiWndFocusStore;
 		DWORD   mn_GuiAttachInputTID;
 		static  BOOL CALLBACK FindChildGuiWindowProc(HWND hwnd, LPARAM lParam);
@@ -279,6 +280,7 @@ class CRealConsole
 		// Если работаем в Gui-режиме (Notepad, Putty, ...)
 		HWND    GuiWnd();  // HWND Gui приложения
 		DWORD   GuiWndPID();  // HWND Gui приложения
+		void    GuiNotifyChildWindow();
 		void    GuiWndFocusStore();
 		void    GuiWndFocusRestore(bool bForce = false);
 	private:
@@ -427,6 +429,7 @@ class CRealConsole
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowGuiClientExt(int nMode, BOOL bDetach = FALSE); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowGuiClientInt(bool bShow);
+		void ChildSystemMenu();
 		BOOL isDetached();
 		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		BOOL RecreateProcess(RConStartArgs *args);
