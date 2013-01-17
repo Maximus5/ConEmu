@@ -11,6 +11,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.01.17
+[*] Excess console window flickering removed, when elevated tab is starting from elevated ConEmu.
+[%] Minor bugfix for «Single instance mode».
+[*] Quake animation when hide to TSA is disabled.
+[+] New switch "-new_console:w" turns on overwrite mode in console (for cmd, powershell, etc.)
+[+] One step closer to Vim 256 colors.
+
+
 2013.01.16
 [%] Issue 883: PuTTY resize again.
 [%] Failed to change cursor «Blinking» for Inactive console.

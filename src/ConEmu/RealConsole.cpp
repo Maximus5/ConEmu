@@ -2832,16 +2832,23 @@ BOOL CRealConsole::StartProcess()
 		//lstrcpy(psCurCmd, gpConEmu->ms_ConEmuCExeName);
 		_wcscat_c(psCurCmd, nLen, L"\" ");
 
-		if (m_Args.bRunAsAdministrator)
+		if (m_Args.bRunAsAdministrator && !gpConEmu->mb_IsUacAdmin)
 		{
 			m_Args.bDetached = TRUE;
 			_wcscat_c(psCurCmd, nLen, L" /ATTACH ");
 		}
 
-		if (gpSet->nConInMode != (DWORD)-1)
+		if ((gpSet->nConInMode != (DWORD)-1) || m_Args.bOverwriteMode)
 		{
+			DWORD nMode = (gpSet->nConInMode != (DWORD)-1) ? gpSet->nConInMode : 0;
+			if (m_Args.bOverwriteMode)
+			{
+				nMode |= (ENABLE_INSERT_MODE << 16); // Mask
+				nMode &= ~ENABLE_INSERT_MODE; // Turn bit OFF
+			}
+
 			nCurLen = _tcslen(psCurCmd);
-			_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen) L" /CINMODE=%X ", gpSet->nConInMode);
+			_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen) L" /CINMODE=%X ", nMode);
 		}
 
 		_ASSERTE(mp_RBuf==mp_ABuf);
@@ -2888,7 +2895,8 @@ BOOL CRealConsole::StartProcess()
 
 		SetConEmuEnvVar(GetView());
 
-		if (!m_Args.bRunAsAdministrator)
+		// Если сам ConEmu запущен под админом - нет смысла звать ShellExecuteEx("RunAs")
+		if (!m_Args.bRunAsAdministrator || gpConEmu->mb_IsUacAdmin)
 		{
 			LockSetForegroundWindow(LSFW_LOCK);
 			SetConStatus(L"Starting root process...", true);

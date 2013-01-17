@@ -362,7 +362,7 @@ class CSettings
 		void debugLogInfo(HWND hWnd2, CESERVER_REQ_PEEKREADINFO* pInfo);
 		void debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTick, DWORD anDur, LPCWSTR asPipe, CESERVER_REQ* pResult = NULL);
 		//
-		void SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig);
+		void SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig, LPCWSTR pszCmdLine = NULL);
 		void SettingsPreSave();
 		//void InitSettings();
 		//BOOL SaveSettings(BOOL abSilent = FALSE);

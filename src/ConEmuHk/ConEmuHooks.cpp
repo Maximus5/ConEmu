@@ -184,6 +184,10 @@ int  gnPowerShellProgressValue = -1;
 bool gbIsBashProcess = false;
 /* ************ Globals for bash ************ */
 
+/* ************ Globals for ViM ************ */
+bool gbIsVimProcess = false;
+/* ************ Globals for ViM ************ */
+
 /* ************ Globals for HIEW32.EXE ************ */
 bool gbIsHiewProcess = false;
 /* ************ Globals for HIEW32.EXE ************ */

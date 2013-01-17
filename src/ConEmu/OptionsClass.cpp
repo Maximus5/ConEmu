@@ -829,7 +829,7 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, ConfigName);
 }
 
-void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig)
+void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig, LPCWSTR pszCmdLine /*= NULL*/)
 {
 	// «овем "FastConfiguration" (перед созданием новой/чистой конфигурации)
 	if (abAllowFastConfig)
@@ -851,7 +851,15 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig)
 		// Single instance?
 		if (gpSet->isSingleInstance && (gpSetCls->SingleInstanceArg == sgl_Default))
 		{
-			SingleInstanceShowHide = sih_ShowMinimize;
+			if (pszCmdLine && *pszCmdLine)
+			{
+				// ƒолжен быть "sih_None" иначе существующа€ копи€ не запустит команду
+				_ASSERTE(SingleInstanceShowHide == sih_None);
+			}
+			else
+			{
+				SingleInstanceShowHide = sih_ShowMinimize;
+			}
 		}
 	}
 	

@@ -113,6 +113,7 @@ RConStartArgs::RConStartArgs()
 	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = pszRenameTab = NULL;
 	bBufHeight = FALSE; nBufHeight = 0; bLongOutputDisable = FALSE;
+	bOverwriteMode = FALSE; nPTY = 0;
 	bInjectsDisable = FALSE;
 	eConfirmation = eConfDefault;
 	szUserPassword[0] = 0;
@@ -189,6 +190,8 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 	this->bForceUserDialog = args->bForceUserDialog;
 	this->bInjectsDisable = args->bInjectsDisable;
 	this->bLongOutputDisable = args->bLongOutputDisable;
+	this->bOverwriteMode = args->bOverwriteMode;
+	this->nPTY = args->nPTY;
 
 	this->eSplit = args->eSplit;
 	this->nSplitValue = args->nSplitValue;
@@ -228,6 +231,8 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	cchMaxLen += (bBackgroundTab ? 15 : 0); // -new_console:b
 	cchMaxLen += (bBufHeight ? 32 : 0); // -new_console:h<lines>
 	cchMaxLen += (bLongOutputDisable ? 15 : 0); // -new_console:o
+	cchMaxLen += (bOverwriteMode ? 15 : 0); // -new_console:w
+	cchMaxLen += (nPTY ? 15 : 0); // -new_console:e
 	cchMaxLen += (bInjectsDisable ? 15 : 0); // -new_console:i
 	cchMaxLen += (eConfirmation ? 15 : 0); // -new_console:c / -new_console:n
 	cchMaxLen += (bForceDosBox ? 15 : 0); // -new_console:x
@@ -277,10 +282,16 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 
 	if (bLongOutputDisable)
 		wcscat_c(szAdd, L"o");
-	
+
+	if (bOverwriteMode)
+		wcscat_c(szAdd, L"w");
+
+	if (nPTY)
+		wcscat_c(szAdd, (nPTY == 1) ? L"p1" : (nPTY == 2) ? L"p2" : L"p0");
+
 	if (bInjectsDisable)
 		wcscat_c(szAdd, L"i");
-	
+
 	if (bBufHeight)
 	{
 		if (nBufHeight)
@@ -569,6 +580,35 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					case L'o':
 						// o - disable "Long output" for next command (Far Manager)
 						bLongOutputDisable = TRUE;
+						break;
+
+					case L'w':
+						// e - enable "Overwrite" mode in console prompt
+						bOverwriteMode = TRUE;
+						break;
+
+					case L'p':
+						if (isDigit(*pszEnd))
+						{
+							switch (*(pszEnd++))
+							{
+								case L'0':
+									nPTY = 0; // don't change
+									break;
+								case L'1':
+									nPTY = 1; // enable PTY mode
+									break;
+								case L'2':
+									nPTY = 2; // disable PTY mode (switch to plain $CONIN, $CONOUT, $CONERR)
+									break;
+								default:
+									nPTY = 1;
+							}
+						}
+						else
+						{
+							nPTY = 1; // enable PTY mode
+						}
 						break;
 
 					case L'i':

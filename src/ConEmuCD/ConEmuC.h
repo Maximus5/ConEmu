@@ -240,6 +240,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое 
 //void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
 int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/); // Создать необходимые события и нити
 void ServerDone(int aiRc, bool abReportShutdown = false);
+BOOL ServerInitConsoleMode();
 int ComspecInit();
 void ComspecDone(int aiRc);
 BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = NULL);

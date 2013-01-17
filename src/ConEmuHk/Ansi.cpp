@@ -1823,6 +1823,18 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 	}
 	#endif
 
+	if (gbIsVimProcess)
+	{
+		if ((dwMode & (ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT)) != (ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT))
+		{
+			if (IsOutputHandle(hConsoleHandle))
+			{
+				dwMode |= ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT;
+			}
+		}
+	}
+
+
 	lbRc = F(SetConsoleMode)(hConsoleHandle, dwMode);
 
 	return lbRc;

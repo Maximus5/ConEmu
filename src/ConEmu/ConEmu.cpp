@@ -5621,7 +5621,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	{
 		if (!gpConEmu->mb_IgnoreSizeChange && !gpConEmu->isIconic())
 		{
-			RECT rc; GetWindowRect(ghWnd, &rc);
+			RECT rc = gpConEmu->CalcRect(CER_MAIN);
 			mp_Status->OnWindowReposition(&rc);
 
 			if ((changeFromWindowMode == wmNotChanging) && isWindowNormal())
@@ -7610,6 +7610,10 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 
 			if (pIn)
 			{
+				// "ShowHide" argument has priority before szCommand!!!
+				// If need to run command in new tab of existing window,
+				// "ShowHide" must be "sih_None"
+
 				pIn->NewCmd.ShowHide = gpSetCls->SingleInstanceShowHide;
 				GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
 
@@ -11478,7 +11482,8 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	int nQuakeShift = 10;
 	//int nQuakeDelay = gpSet->nQuakeAnimation / nQuakeShift; // 20;
 	bool bUseQuakeAnimation = false; //, bNeedHideTaskIcon = false;
-	if ((gpSet->isQuakeStyle != 0) && gpSet->isMinToTray())
+	bool bMinToTray = gpSet->isMinToTray();
+	if (gpSet->isQuakeStyle != 0)
 	{
 		// Если есть дочерние GUI окна - в них могут быть глюки с отрисовкой
 		if ((gpSet->nQuakeAnimation > 0) && !CVConGroup::isChildWindowVisible())
@@ -11498,12 +11503,13 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		// может быть глюк - двойная отрисовка раскрытия (WM_ACTIVATE, WM_SYSCOMMAND)
 		bool bNoQuakeAnimation = false;
 
-		apiSetForegroundWindow(ghWnd);
+		//apiSetForegroundWindow(ghWnd);
 
 		DEBUGTEST(bool bWasQuakeIconic = isQuakeMinimized);
 
 		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
 		{
+			// Для Quake-style необходимо СНАЧАЛА сделать окно "невидимым" перед его разворачиваем или активацией
 			if ((hWndFore == ghWnd) && !bIsIconic && bVis)
 			{
 				bNoQuakeAnimation = true;
@@ -11667,9 +11673,17 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				DEBUGTEST(RECT rc2; ::GetWindowRect(ghWnd, &rc2));
 				DEBUGTEST(bVs1 = bVs2);
 
+				if (!bMinToTray && (cmd != sih_ShowHideTSA))
+				{
+					// Если в трей не скрываем - то окошко нужно "вернуть на таскбар"
+					StopForceShowFrame();
+					mn_QuakePercent = 1;
+					UpdateWindowRgn();
+					apiShowWindow(ghWnd, SW_SHOWNOACTIVATE);
+				}
 				// Если на таскбаре отображаются "табы",
 				// то после AnimateWindow(AW_HIDE) в Win8 иконка с таскбара не убирается
-				if (gpSet->isTabsOnTaskBar())
+				else if (gpSet->isTabsOnTaskBar())
 				{
 					if (gpSet->isWindowOnTaskBar())
 					{

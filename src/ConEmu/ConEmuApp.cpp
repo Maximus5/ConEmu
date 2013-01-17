@@ -2914,7 +2914,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpSet->LoadSettings(&bNeedCreateVanilla);
 	}
 	// выполнить дополнительные действи€ в классе настроек здесь
-	gpSetCls->SettingsLoaded(bNeedCreateVanilla, true);
+	gpSetCls->SettingsLoaded(bNeedCreateVanilla, true, cmdNew);
 
 	// ƒл€ gpSet->isQuakeStyle - принудительно включаетс€ gpSetCls->SingleInstanceArg
 

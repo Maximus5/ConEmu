@@ -127,6 +127,10 @@ extern int  gnPowerShellProgressValue;
 extern bool gbIsBashProcess;
 /* ************ Globals for bash ************ */
 
+/* ************ Globals for ViM ************ */
+extern bool gbIsVimProcess;
+/* ************ Globals for ViM ************ */
+
 /* ************ Globals for HIEW32.EXE ************ */
 extern bool gbIsHiewProcess;
 /* ************ Globals for HIEW32.EXE ************ */

@@ -53,7 +53,11 @@ struct RConStartArgs
 	wchar_t* pszUserName, *pszDomain, szUserPassword[MAX_PATH]; // "-new_console:u:<user>:<pwd>"
 	BOOL     bUseEmptyPassword;   // для GUI
 	BOOL     bForceUserDialog;    // -new_console:u
-	//wchar_t* pszUserProfile;      // %USERPROFILE%
+	//wchar_t* pszUserProfile;    // %USERPROFILE%
+
+	BOOL     bOverwriteMode;      // -new_console:w - enable "Overwrite" mode in console prompt
+
+	UINT     nPTY;                // -new_console:p[N] - 1 enable PTY, 2 - disable PTY (work as plain console), 0 - don't change
 	
 	BOOL     bBufHeight;          // -new_console:h<lines>
 	UINT     nBufHeight;          //

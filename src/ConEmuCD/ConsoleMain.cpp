@@ -190,6 +190,7 @@ int   gnDebugDumpProcess = 0; // 1 - ask user, 2 - minidump, 3 - fulldump
 //wchar_t szDebugDumpPath[MAX_PATH] = {}; // Может быть указана папка, в которую нужно складировать дампы
 int   gnCmdUnicodeMode = 0;
 BOOL  gbUseDosBox = FALSE; HANDLE ghDosBoxProcess = NULL; DWORD gnDosBoxPID = 0;
+UINT  gnPTYmode = 0; // 1 enable PTY, 2 - disable PTY (work as plain console), 0 - don't change
 BOOL  gbRootIsCmdExe = TRUE;
 BOOL  gbAttachFromFar = FALSE;
 BOOL  gbAlternativeAttach = FALSE;
@@ -4298,6 +4299,16 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	if (args.bForceDosBox)
 	{
 		gbUseDosBox = TRUE;
+	}
+	// Overwrite mode in Prompt?
+	if (args.bOverwriteMode)
+	{
+		gnConsoleModeFlags |= (ENABLE_INSERT_MODE << 16); // Mask
+		gnConsoleModeFlags &= ~ENABLE_INSERT_MODE; // Turn bit OFF
+
+		// Поскольку ключик указан через "-cur_console/-new_console"
+		// смену режима нужно сделать сразу, т.к. функа зовется только для сервера
+		ServerInitConsoleMode();
 	}
 
 #ifdef _DEBUG

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"xxxxx.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"vim.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -536,6 +536,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	else if ((lstrcmpi(pszName, L"dosbox.exe") == 0) || (lstrcmpi(pszName, L"dosbox") == 0))
 	{
 		gbDosBoxProcess = true;
+	}
+	else if ((lstrcmpi(pszName, L"vim.exe") == 0) || (lstrcmpi(pszName, L"vim") == 0))
+	{
+		gbIsVimProcess = true;
 	}
 
 	// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
