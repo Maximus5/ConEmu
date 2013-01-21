@@ -184,7 +184,7 @@ BEGIN
     tHideCaptionAlwaysDelay "Delay in milliseconds, for a Frame appearance"
     tHideCaptionAlwaysDissapear "Delay in milliseconds, for a Frame disappearance"
     tHideCaptionAlwaysFrame "While caption and frame are hidden, ConEmu may keep small part of frame (in pixels) around console part. Default is 1 pixel."
-    tInsideSyncDir          "Format of «cd», default is «\\eCD /d %1».\n\\e - ESC, \\b - BS, \\n - ENTER, %1 - ""dir"", %2 - ""bash dir""."
+    tInsideSyncDir          "Format of «cd», default is «\\eCD /d \\1».\n\\e - ESC, \\b - BS, \\n - ENTER, \\1 - ""dir"", \\2 - ""bash dir""."
     tLongOutputHeight       "Size of bufferheight, while Far\nexecutes console commands"
     tPadSize                "Create pad between ConEmu frame and console field"
     tPerfBlt                "Average duration of blit operation\nfrom memory DC to screen DC"

@@ -569,59 +569,75 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				{
 					case IDC_CHOOSE:
 					{
-						wchar_t *pszFilePath = NULL;
-						int nLen = MAX_PATH*2;
-						pszFilePath = (wchar_t*)calloc(nLen+3,2); // +2*'"'+\0
-
-						if (!pszFilePath) return 1;
-
-						OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
-						ofn.lStructSize=sizeof(ofn);
-						ofn.hwndOwner = hDlg;
-						ofn.lpstrFilter = _T("Executables (*.exe)\0*.exe\0\0");
-						ofn.nFilterIndex = 1;
-						ofn.lpstrFile = pszFilePath+1;
-						ofn.nMaxFile = nLen;
-						ofn.lpstrTitle = _T("Choose program to run");
-						ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-						            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
-
-						if (GetOpenFileName(&ofn))
+						wchar_t *pszFilePath = SelectFile(L"Choose program to run", NULL, hDlg, L"Executables (*.exe)\0*.exe\0\0", true, false, false);
+						if (pszFilePath)
 						{
-							LPCWSTR pszNewText = pszFilePath + 1;
-							if (wcschr(pszFilePath, L' '))
-							{
-								pszFilePath[0] = L'"'; _wcscat_c(pszFilePath, nLen+3, L"\"");
-								pszNewText = pszFilePath;
-							}
-							SetDlgItemText(hDlg, IDC_RESTART_CMD, pszNewText);
+							SetDlgItemText(hDlg, IDC_RESTART_CMD, pszFilePath);
+							SafeFree(pszFilePath);
 						}
 
-						SafeFree(pszFilePath);
+						//wchar_t *pszFilePath = NULL;
+						//int nLen = MAX_PATH*2;
+						//pszFilePath = (wchar_t*)calloc(nLen+3,2); // +2*'"'+\0
+
+						//if (!pszFilePath) return 1;
+
+						//OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+						//ofn.lStructSize=sizeof(ofn);
+						//ofn.hwndOwner = hDlg;
+						//ofn.lpstrFilter = _T("Executables (*.exe)\0*.exe\0\0");
+						//ofn.nFilterIndex = 1;
+						//ofn.lpstrFile = pszFilePath+1;
+						//ofn.nMaxFile = nLen;
+						//ofn.lpstrTitle = _T("Choose program to run");
+						//ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+						//            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
+
+						//if (GetOpenFileName(&ofn))
+						//{
+						//	LPCWSTR pszNewText = pszFilePath + 1;
+						//	if (wcschr(pszFilePath, L' '))
+						//	{
+						//		pszFilePath[0] = L'"'; _wcscat_c(pszFilePath, nLen+3, L"\"");
+						//		pszNewText = pszFilePath;
+						//	}
+						//	SetDlgItemText(hDlg, IDC_RESTART_CMD, pszNewText);
+						//}
+
+						//SafeFree(pszFilePath);
 						return 1;
 					}
 					case IDC_CHOOSE_DIR:
 					{
-						BROWSEINFO bi = {hDlg};
-						wchar_t szFolder[MAX_PATH+1] = {0};
-						GetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder, countof(szFolder));
-						bi.pszDisplayName = szFolder;
-						wchar_t szTitle[100];
-						bi.lpszTitle = wcscpy(szTitle, L"Choose startup directory");
-						bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
-						bi.lpfn = BrowseCallbackProc;
-						bi.lParam = (LPARAM)szFolder;
-						LPITEMIDLIST pRc = SHBrowseForFolder(&bi);
-
-						if (pRc)
+						wchar_t* pszDefFolder = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
+						wchar_t* pszFolder = SelectFolder(L"Choose startup directory", pszDefFolder, hDlg, false, false);
+						if (pszFolder)
 						{
-							if (SHGetPathFromIDList(pRc, szFolder))
-							{
-								SetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder);
-							}
-
-							CoTaskMemFree(pRc);
+							SetDlgItemText(hDlg, IDC_STARTUP_DIR, pszFolder);
+							SafeFree(pszFolder);
 						}
+						SafeFree(pszDefFolder);
+
+						//BROWSEINFO bi = {hDlg};
+						//wchar_t szFolder[MAX_PATH+1] = {0};
+						//GetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder, countof(szFolder));
+						//bi.pszDisplayName = szFolder;
+						//wchar_t szTitle[100];
+						//bi.lpszTitle = wcscpy(szTitle, L"Choose startup directory");
+						//bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
+						//bi.lpfn = BrowseCallbackProc;
+						//bi.lParam = (LPARAM)szFolder;
+						//LPITEMIDLIST pRc = SHBrowseForFolder(&bi);
+
+						//if (pRc)
+						//{
+						//	if (SHGetPathFromIDList(pRc, szFolder))
+						//	{
+						//		SetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder);
+						//	}
+
+						//	CoTaskMemFree(pRc);
+						//}
 
 						return 1;
 					}

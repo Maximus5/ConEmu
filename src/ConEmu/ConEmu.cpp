@@ -6333,7 +6333,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, 
 
 // Возвращает указатель на АКТИВНУЮ консоль (при создании группы)
 // apszScript содержит строки команд, разделенные \r\n
-CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsAdmin /*= false*/, LPCWSTR asStartupDir /*= NULL*/)
+CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsAdmin /*= false*/, LPCWSTR asStartupDir /*= NULL*/, const RConStartArgs *apDefArgs /*= NULL*/)
 {
 	CVirtualConsole* pVConResult = NULL;
 	// Поехали
@@ -6394,9 +6394,21 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 			if (*pszLine)
 			{
 				RConStartArgs args;
+				if (apDefArgs)
+					args.AssignFrom(apDefArgs);
+
 				args.pszSpecialCmd = lstrdup(pszLine);
-				args.pszStartupDir = (asStartupDir && *asStartupDir) ? lstrdup(asStartupDir) : NULL;
-				args.bRunAsAdministrator = lbRunAdmin;
+
+				if (apDefArgs && apDefArgs->pszStartupDir && *apDefArgs->pszStartupDir)
+					args.pszStartupDir = lstrdup(apDefArgs->pszStartupDir);
+				else if (asStartupDir && *asStartupDir)
+					args.pszStartupDir = lstrdup(asStartupDir);
+				else
+					SafeFree(args.pszStartupDir);
+
+				if (lbRunAdmin) // don't reset one that may come from apDefArgs
+					args.bRunAsAdministrator = true;
+
 				pVCon = CreateCon(&args, false, true);
 
 				if (!pVCon)
@@ -9295,16 +9307,28 @@ bool CConEmuMain::isMouseOverFrame(bool abReal)
 	{
 		POINT ptMouse; GetCursorPos(&ptMouse);
 		RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+		
+		const int nAdd = 2;
+		const int nSub = 1;
+
 		// чтобы область активации рамки была чуть побольше, увеличим регион
-		int nAdd = 2;
-		rcWnd.top -= nAdd; rcWnd.left -= nAdd; rcWnd.right += nAdd; rcWnd.bottom += nAdd;
+		rcWnd.left -= nAdd; rcWnd.right += nAdd; rcWnd.bottom += nAdd;
+		if (gpSet->isQuakeStyle)
+			rcWnd.top += nSub; // Don't activate on the TOP edge in Quake mode
+		else
+			rcWnd.top -= nAdd;
 
 		if (PtInRect(&rcWnd, ptMouse))
 		{
 			RECT rcClient = GetGuiClientRect();
+
 			// чтобы область активации рамки была чуть побольше, уменьшим регион
-			int nSub = 1;
-			rcClient.top += nSub; rcClient.left += nSub; rcClient.right -= nSub; rcClient.bottom -= nSub;
+			rcClient.left += nSub; rcClient.right -= nSub; rcClient.bottom -= nSub;
+			if (gpSet->isQuakeStyle)
+				rcWnd.top -= nAdd;
+			else
+				rcClient.top += nSub;
+
 			MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcClient, 2);
 
 			if (!PtInRect(&rcClient, ptMouse))

@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 	#define SHOWCREATEPROCESSTICK
 //	#define SHOWCREATEBUFFERINFO
+	#define DUMP_VIM_SETCURSORPOS
 #endif
 
 #ifdef _DEBUG
@@ -186,6 +187,7 @@ bool gbIsBashProcess = false;
 
 /* ************ Globals for ViM ************ */
 bool gbIsVimProcess = false;
+bool gbIsVimAnsi = false;
 /* ************ Globals for ViM ************ */
 
 /* ************ Globals for HIEW32.EXE ************ */
@@ -4839,10 +4841,13 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 		msprintf(szText, countof(szText), L"VirtualAlloc failed (0x%08X..0x%08X)\nErrorCode=0x%08X\n\nWarning! This will be an error in Release!\n\n",
 			(DWORD)lpAddress, (DWORD)((LPBYTE)lpAddress+dwSize));
 		GetModuleFileName(NULL, szText+lstrlen(szText), MAX_PATH);
-#if 0
-		GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OK|MB_ICONSTOP);
+#if 1
+		int iBtn = GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL|MB_ICONSTOP);
 		SetLastError(nErr);
-		lpResult = F(VirtualAlloc)(NULL, dwSize, flAllocationType, flProtect);
+		if (iBtn == IDOK)
+		{
+			lpResult = F(VirtualAlloc)(NULL, dwSize, flAllocationType, flProtect);
+		}
 #else
 		SetLastError(nErr);
 #endif
@@ -5376,7 +5381,20 @@ BOOL WINAPI OnSetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosi
 	typedef BOOL (WINAPI* OnSetConsoleCursorPosition_t)(HANDLE,COORD);
 	ORIGINALFAST(SetConsoleCursorPosition);
 
-	BOOL lbRc = F(SetConsoleCursorPosition)(hConsoleOutput, dwCursorPosition);
+	BOOL lbRc;
+	
+	if (gbIsVimAnsi)
+	{
+		#ifdef DUMP_VIM_SETCURSORPOS
+		wchar_t szDbg[80]; msprintf(szDbg, countof(szDbg), L"ViM trying to set cursor pos: {%i,%i}\n", (UINT)dwCursorPosition.X, (UINT)dwCursorPosition.Y);
+		OutputDebugString(szDbg);
+		#endif
+		lbRc = FALSE;
+	}
+	else
+	{
+		lbRc = F(SetConsoleCursorPosition)(hConsoleOutput, dwCursorPosition);
+	}
 
 	if (ghConsoleCursorChanged)
 		SetEvent(ghConsoleCursorChanged);

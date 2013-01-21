@@ -129,6 +129,7 @@ extern bool gbIsBashProcess;
 
 /* ************ Globals for ViM ************ */
 extern bool gbIsVimProcess;
+extern bool gbIsVimAnsi;
 /* ************ Globals for ViM ************ */
 
 /* ************ Globals for HIEW32.EXE ************ */
@@ -199,7 +200,7 @@ extern "C" {
 			#endif
 		};
 	 
-		static const int BUFFER_SIZE = RELEASEDEBUGTEST(256,0x100000);   // Must be a power of 2
+		static const int BUFFER_SIZE = RELEASEDEBUGTEST(256,1024);   // Must be a power of 2
 		extern Event g_events[BUFFER_SIZE];
 		extern LONG g_pos;
 		extern LARGE_INTEGER g_freq;

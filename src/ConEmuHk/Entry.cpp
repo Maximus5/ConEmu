@@ -156,6 +156,8 @@ extern DWORD GetMainThreadId(bool bUseCurrentAsMain);
 extern HHOOK ghGuiClientRetHook;
 //extern bool gbAllowAssertThread;
 #endif
+extern void StartVimTerm(bool bFromDllStart);
+extern void StopVimTerm();
 
 CEStartupEnv* gpStartEnv = NULL;
 DWORD   gnSelfPID = 0;
@@ -540,6 +542,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	else if ((lstrcmpi(pszName, L"vim.exe") == 0) || (lstrcmpi(pszName, L"vim") == 0))
 	{
 		gbIsVimProcess = true;
+		StartVimTerm(true);
 	}
 
 	// ѕоскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
@@ -950,6 +953,11 @@ void DllStop()
 		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	#endif
+
+	if (gbIsVimProcess)
+	{
+		StopVimTerm();
+	}
 
 	TODO("Stop redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
 	#ifdef _DEBUG

@@ -11,6 +11,15 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.01.20
+[%] Settings in «Create new console» dialog was ignored for Tasks.
+[%] Issue 706: ConEmu Inside: You must use in Sync command "\1" and "\2" instead of "%1" and "%2".
+    Also, you need to re-register menu items.
+[+] Vim 256 colors next try. Hope, it will be usable now.
+    You need to configure your vimrc for enabling 256 colors.
+    Sample lines are here: http://conemu-maximus5.googlecode.com/svn/files/Temp/vimrc_add
+
+
 2013.01.17
 [*] Excess console window flickering removed, when elevated tab is starting from elevated ConEmu.
 [%] Minor bugfix for «Single instance mode».

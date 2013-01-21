@@ -980,6 +980,23 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	SHORT WrapAtCol = csbi.dwSize.X; // 1-based
 	DWORD Mode = 0;
 
+	// "Working lines" may be defined (Vim and others)
+	SHORT ScrollTop, ScrollBottom;
+	bool  ScrollRegion = ((Info->Flags & ewtf_Region) != 0);
+	COORD crScrollCursor;
+	if (ScrollRegion)
+	{
+		_ASSERTEX(Info->Region.left==0 && Info->Region.right==0); // Not used yet
+		_ASSERTEX(Info->Region.top>=0 && Info->Region.bottom>=Info->Region.top);
+		ScrollTop = Info->Region.top;
+		ScrollBottom = Info->Region.bottom+1;
+	}
+	else
+	{
+		ScrollTop = 0;
+		ScrollBottom = csbi.dwSize.Y;
+	}
+
 	if ((Info->Flags & ewtf_WrapAt))
 	{
 		if ((Info->WrapAtCol > 0) && (Info->WrapAtCol < WrapAtCol))
@@ -997,7 +1014,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	_ASSERTE(srWork.Bottom == (csbi.dwSize.Y - 1));
 	// Размер TrueColor буфера
 	SHORT nWindowWidth  = srWork.Right - srWork.Left + 1;
-	SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1; UNREFERENCED_PARAMETER(nWindowHeight);
+	DEBUGTEST(SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1);
 	SHORT YShift = csbi.dwCursorPosition.Y - srWork.Top;
 
 	BOOL lbRc = TRUE;
@@ -1112,19 +1129,43 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		if (y2 > y)
 		{
 			_ASSERTE(bWrap && "для !Wrap - доделать");
-			if (y2 >= csbi.dwSize.Y)
+			if (y2 >= ScrollBottom/*csbi.dwSize.Y*/)
 			{
 				// Экран прокрутился на одну строку вверх
 				
 				// расширенный буфер - прокрутить
 				_ASSERTE((y-y2) == -1); // Должен быть сдвиг на одну строку
-				ExtScrollScreenParm Shift = {sizeof(Shift), essf_ExtOnly, h, y-y2, DefClr.Attributes, L' '};
+				ExtScrollScreenParm Shift = {sizeof(Shift), essf_None, h, y-y2, DefClr.Attributes, L' '};
+				if (ScrollRegion)
+				{
+					Shift.Flags |= essf_Region;
+					Shift.Region = Info->Region;
+					//Shift.Region.top += (y2-y);
+					if (ScrollBottom >= csbi.dwSize.Y)
+						Shift.Flags |= essf_ExtOnly;
+				}
+				else
+				{
+					Shift.Flags |= essf_ExtOnly;
+				}
 				ExtScrollScreen(&Shift);
 
 				Info->ScrolledRowsUp++;
 
 				// координату - "отмотать" (она как бы не изменилась)
-				y2 = csbi.dwSize.Y - 1;
+				if (ScrollRegion && (ScrollBottom < csbi.dwSize.Y))
+				{
+					y2 = ScrollBottom - 1;
+					
+					crScrollCursor.X = x2;
+					crScrollCursor.Y = y2;
+					
+					SetConsoleCursorPosition(Info->ConsoleOutput, crScrollCursor);
+				}
+				else
+				{
+					y2 = csbi.dwSize.Y - 1;
+				}
 			}
 			else //if (pTrueColorLine)
 			{
@@ -1139,7 +1180,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	if (pCur > pFrom)
 	{
 		// НЕ включая символ pCur
-		SHORT ForceDumpX = (x2 > x) ? (min(x2, WrapAtCol)-1) : 0;
+		SHORT ForceDumpX = (x2 > x) ? (min(x2, WrapAtCol)-1) : -1;
 		lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom),
 					 (pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
 					 (pTrueColorEnd), AIColor, (WriteConsoleW_t)Info->Private);
@@ -1295,10 +1336,50 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 	COORD crSize = {csbi.dwSize.X,1};
 	COORD cr0 = {};
 	SMALL_RECT rcRgn = {0,0,csbi.dwSize.X-1,0};
+	int SrcLineTop = 0, SrcLineBottom = 0;
 	int nDir = (int)Info->Dir;
 
+	if (Info->Flags & essf_Region)
+	{
+		_ASSERTEX(Info->Region.left==0 && Info->Region.right==0); // Not used yet!
+		if ((Info->Region.top < 0) || (Info->Region.bottom < Info->Region.top))
+		{
+			_ASSERTEX(Info->Region.top>=0 && Info->Region.bottom>=Info->Region.top); // Must not be empty!
+			SetLastError(E_INVALIDARG);
+			return FALSE;
+		}
+
+		if (nDir < 0)
+		{
+			 SrcLineTop = Info->Region.top + (-nDir); SrcLineBottom = Info->Region.bottom;
+		}
+		else if (nDir > 0)
+		{
+			SrcLineTop = Info->Region.top; SrcLineBottom = Info->Region.bottom - nDir;
+		}
+	}
+	else
+	{
+		if (nDir < 0)
+		{
+			 SrcLineTop = -nDir; SrcLineBottom = csbi.dwSize.Y - 1;
+		}
+		else if (nDir > 0)
+		{
+			SrcLineTop = 0; SrcLineBottom = csbi.dwSize.Y - nDir - 1;
+		}
+	}
+
 	if (!pBuf)
+	{
 		return FALSE;
+	}
+
+	if (SrcLineBottom < SrcLineTop)
+	{
+		_ASSERTEX(SrcLineBottom >= SrcLineTop);
+		return FALSE;
+	}
 
 
 	// Размер TrueColor буфера
@@ -1306,7 +1387,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 	SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1;
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
-	//AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
+	DEBUGTEST(AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL); //-V104
 
 	if (Info->Flags & essf_Current)
 	{
@@ -1343,11 +1424,24 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 		if (gpTrueColor)
 		{
 			int nMaxCell = min(nWindowWidth * nWindowHeight,gpTrueColor->bufferSize);
-			int nRows = nMaxCell / nWindowWidth;
+			int nMaxRows = nMaxCell / nWindowWidth;
+			_ASSERTEX(SrcLineTop >= srWork.Top);
+			int nY1 = min(max((SrcLineTop - srWork.Top),0),nMaxRows);
+			int nY2 = min(max((SrcLineBottom - srWork.Top),0),nMaxRows);
+			int nRows = nY2 - nY1 + 1;
+
 			if (nRows > (-nDir))
 			{
+				if (nY1 > (-nDir))
+				{
+					pTrueColorStart += ((nY1+nDir) * nWindowWidth);
+					_ASSERTEX((pTrueColorStart+(-nDir*nWindowWidth)+(nRows*nWindowWidth))<pTrueColorEnd);
+				}
+
 				WARNING("OPTIMIZE: Не нужно двигать заполненную нулями память. Нет атрибутов в строке - и не дергаться.");
-				memmove(pTrueColorStart, pTrueColorStart+(-nDir*nWindowWidth), (nRows * nWindowWidth * sizeof(*pTrueColorStart)));
+				memmove(pTrueColorStart, pTrueColorStart+(-nDir*nWindowWidth),
+					(nRows * nWindowWidth * sizeof(*pTrueColorStart)));
+
 				if (Info->Flags & essf_ExtOnly)
 				{
 					TODO("Чем заливать");
@@ -1358,20 +1452,31 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 					}
 				}
 			}
+			else
+			{
+				_ASSERTEX(nRows > (-nDir));
+			}
 		}
 
 		if (!(Info->Flags & essf_ExtOnly))
 		{
-			TODO("ScrollConsoleScreenBuffer");
-			for (SHORT y = 0, y1 = -nDir; y1 < csbi.dwSize.Y; y++, y1++)
-			{
-				rcRgn.Top = rcRgn.Bottom = y1;
-				if (ReadConsoleOutputW(Info->ConsoleOutput, pBuf, crSize, cr0, &rcRgn))
-				{
-					rcRgn.Top = rcRgn.Bottom = y;
-					WriteConsoleOutputW(Info->ConsoleOutput, pBuf, crSize, cr0, &rcRgn);
-				}
-			}
+			SMALL_RECT rcSrc = {0, SrcLineTop, csbi.dwSize.X-1, SrcLineBottom};
+			COORD crDst = {0, SrcLineTop + nDir/*<0*/};
+			AnnotationInfo t = {};
+			CHAR_INFO cFill = {{Info->FillChar}};
+			ExtPrepareColor(Info->FillAttr, t, cFill.Attributes);
+			
+			ScrollConsoleScreenBuffer(Info->ConsoleOutput, &rcSrc, NULL, crDst, &cFill);
+
+			//for (SHORT y = 0, y1 = -nDir; y1 < csbi.dwSize.Y; y++, y1++)
+			//{
+			//	rcRgn.Top = rcRgn.Bottom = y1;
+			//	if (ReadConsoleOutputW(Info->ConsoleOutput, pBuf, crSize, cr0, &rcRgn))
+			//	{
+			//		rcRgn.Top = rcRgn.Bottom = y;
+			//		WriteConsoleOutputW(Info->ConsoleOutput, pBuf, crSize, cr0, &rcRgn);
+			//	}
+			//}
 
 			if (nDir < 0)
 			{
@@ -1392,11 +1497,24 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 		if (gpTrueColor)
 		{
 			int nMaxCell = min(nWindowWidth * nWindowHeight,gpTrueColor->bufferSize);
-			int nRows = nMaxCell / nWindowWidth;
+			int nMaxRows = nMaxCell / nWindowWidth;
+			_ASSERTEX(SrcLineTop >= srWork.Top);
+			int nY1 = min(max((SrcLineTop - srWork.Top),0),nMaxRows);
+			int nY2 = min(max((SrcLineBottom - srWork.Top),0),nMaxRows);
+			int nRows = nY2 - nY1 + 1;
+
 			if (nRows > nDir)
 			{
+				if (nY1 > nDir)
+				{
+					pTrueColorStart += ((nY1 - nDir) * nWindowWidth);
+					_ASSERTEX((pTrueColorStart+(nDir*nWindowWidth)+(nRows*nWindowWidth))<pTrueColorEnd);
+				}
+
 				WARNING("OPTIMIZE: Не нужно двигать заполненную нулями память. Нет атрибутов в строке - и не дергаться.");
-				memmove(pTrueColorStart+(nDir*nWindowWidth), pTrueColorStart, (nRows * nWindowWidth * sizeof(*pTrueColorStart)));
+				memmove(pTrueColorStart+(nDir*nWindowWidth), pTrueColorStart,
+					(nRows * nWindowWidth * sizeof(*pTrueColorStart)));
+			
 				if (Info->Flags & essf_ExtOnly)
 				{
 					TODO("Чем заливать");
@@ -1411,16 +1529,23 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 		if (!(Info->Flags & essf_ExtOnly))
 		{
-			TODO("ScrollConsoleScreenBuffer");
-			for (SHORT y = csbi.dwSize.Y - nDir - 1, y1 = csbi.dwSize.Y - 1; y >= 0; y--, y1--)
-			{
-				rcRgn.Top = rcRgn.Bottom = y;
-				if (ReadConsoleOutputW(Info->ConsoleOutput, pBuf, crSize, cr0, &rcRgn))
-				{
-					rcRgn.Top = rcRgn.Bottom = y1;
-					WriteConsoleOutputW(Info->ConsoleOutput, pBuf, crSize, cr0, &rcRgn);
-				}
-			}
+			SMALL_RECT rcSrc = {0, SrcLineTop, csbi.dwSize.X-1, SrcLineBottom};
+			COORD crDst = {0, SrcLineTop + nDir/*>0*/};
+			AnnotationInfo t = {};
+			CHAR_INFO cFill = {{Info->FillChar}};
+			ExtPrepareColor(Info->FillAttr, t, cFill.Attributes);
+			
+			ScrollConsoleScreenBuffer(Info->ConsoleOutput, &rcSrc, NULL, crDst, &cFill);
+
+			//for (SHORT y = csbi.dwSize.Y - nDir - 1, y1 = csbi.dwSize.Y - 1; y >= 0; y--, y1--)
+			//{
+			//	rcRgn.Top = rcRgn.Bottom = y;
+			//	if (ReadConsoleOutputW(Info->ConsoleOutput, pBuf, crSize, cr0, &rcRgn))
+			//	{
+			//		rcRgn.Top = rcRgn.Bottom = y1;
+			//		WriteConsoleOutputW(Info->ConsoleOutput, pBuf, crSize, cr0, &rcRgn);
+			//	}
+			//}
 
 			if (nDir > 0)
 			{

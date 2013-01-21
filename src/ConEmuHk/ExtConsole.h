@@ -86,6 +86,8 @@ static const EXTREADWRITEFLAGS
 
 	ewtf_WrapAt  = 0x0000000000000020ULL, // Force wrap at specific position (WrapAtCol)
 
+	ewtf_Region  = 0x0000000000000040ULL, // Top/Bottom lines are defined, take into account when "\r\n"
+
 	ewtf_Commit  = 0x0000000000000100ULL, // Only for Write functions
 	ewtf_None    = 0x0000000000000000ULL;
 
@@ -106,6 +108,7 @@ struct ExtWriteTextParm
 	SHORT WrapAtCol; // 1-based. Used only when ewtf_WrapAt specified
 	SHORT ScrolledRowsUp; // При достижении нижней границы экрана происходит скролл
 	void* Private;   // ConEmu private usage !!! Must be NULL !!!
+	RECT  Region;    // ewtf_Region, take into account when "\r\n"
 };
 
 BOOL ExtWriteText(ExtWriteTextParm* Info);
@@ -192,7 +195,9 @@ static const EXTSCROLLSCREENFLAGS
 	essf_Pad      = 0x0000000000000001ULL, // pad with spaces to right edge first
 	essf_ExtOnly  = 0x0000000000000002ULL, // scroll extended attrs only (don't touch real console text/attr)
 
-	essf_Current = 0x0000000000000010ULL, // Use current color (may be extended) selected in console
+	essf_Current  = 0x0000000000000010ULL, // Use current color (may be extended) selected in console
+
+	essf_Region   = 0x0000000000000020ULL, // Scroll region is defined. If not - scroll whole screen (visible buffer?)
 
 	essf_Commit   = 0x0000000000000100ULL,
 	essf_None     = 0x0000000000000000ULL;
@@ -210,6 +215,9 @@ struct ExtScrollScreenParm
 	// Fill regions with
 	ConEmuColor FillAttr;
 	wchar_t FillChar;
+
+	// essf_Region
+	RECT Region;
 };
 
 BOOL ExtScrollScreen(ExtScrollScreenParm* Info);

@@ -1065,16 +1065,16 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 					if (pszExe && (lstrcmpi(pszExe, L"powershell.exe") == 0))
 					{
 						//_wsprintf(psz, SKIPLEN(cchMax) L"%ccd \"%s\"%c", 27, asCmd, L'\n');
-						pszFormat = L"\\ecd %1\\n";
+						pszFormat = L"\\ecd \\1\\n";
 					}
 					else if (pszExe && (lstrcmpi(pszExe, L"bash.exe") == 0 || lstrcmpi(pszExe, L"sh.exe") == 0))
 					{
-						pszFormat = L"\\e\\bcd %2\\n";
+						pszFormat = L"\\e\\bcd \\2\\n";
 					}
 					else
 					{
 						//_wsprintf(psz, SKIPLEN(cchMax) L"%ccd /d \"%s\"%c", 27, asCmd, L'\n');
-						pszFormat = L"\\ecd /d %1\\n";
+						pszFormat = L"\\ecd /d \\1\\n";
 					}
 				}
 
@@ -1088,7 +1088,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 				if (CD)
 				{
 					_ASSERTE(pszFormat!=NULL); // уже должен был быть подготовлен выше
-					// \ecd /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
+					// \ecd /d %1 - \e - ESC, \b - BS, \n - ENTER, \1 - "dir", \2 - "bash dir"
 
 					wchar_t* pszDst = psz;
 					wchar_t* pszEnd = pszDst + cchMax - 1;
@@ -1097,10 +1097,19 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 					{
 						switch (*pszFormat)
 						{
-						case L'%':
+						case L'\\':
 							pszFormat++;
 							switch (*pszFormat)
 							{
+							case L'e': case L'E':
+								*(pszDst++) = 27;
+								break;
+							case L'b': case L'B':
+								*(pszDst++) = 8;
+								break;
+							case L'n': case L'N':
+								*(pszDst++) = L'\n';
+								break;
 							case L'1':
 								if ((pszDst+3) < pszEnd)
 								{
@@ -1161,24 +1170,6 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 										*(pszDst++) = L'"';
 									}
 								}
-								break;
-							default:
-								*(pszDst++) = *pszFormat;
-							}
-							pszFormat++;
-							break;
-						case L'\\':
-							pszFormat++;
-							switch (*pszFormat)
-							{
-							case L'e': case L'E':
-								*(pszDst++) = 27;
-								break;
-							case L'b': case L'B':
-								*(pszDst++) = 8;
-								break;
-							case L'n': case L'N':
-								*(pszDst++) = L'\n';
 								break;
 							default:
 								*(pszDst++) = *pszFormat;
@@ -6687,6 +6678,9 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 		Box(_T("Console already in recreate..."));
 		return false;
 	}
+
+	_ASSERTE(m_Args.pszStartupDir==NULL || (m_Args.pszStartupDir && args->pszStartupDir));
+	SafeFree(m_Args.pszStartupDir);
 
 	bool bCopied = m_Args.AssignFrom(args);
 

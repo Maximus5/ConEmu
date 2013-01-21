@@ -2788,7 +2788,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 			return NULL;
 
 		// GO
-		pVCon = gpConEmu->CreateConGroup(pszDataW, args->bRunAsAdministrator, args->pszStartupDir);
+		pVCon = gpConEmu->CreateConGroup(pszDataW, args->bRunAsAdministrator, NULL/*ignored when 'args' specified*/, args);
 
 		SafeFree(pszDataW);
 		return pVCon;

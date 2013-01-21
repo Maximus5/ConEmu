@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEFINE_HOOK_MACROS
 
 #ifdef _DEBUG
-//	#define DUMP_WRITECONSOLE_LINES
+	#define DUMP_WRITECONSOLE_LINES
 	#define DUMP_UNKNOWN_ESCAPES
 #endif
 
@@ -72,6 +72,13 @@ extern HANDLE ghStdOutHandle;
 extern wchar_t gsInitConTitle[512];
 /* ************ Globals for SetHook ************ */
 
+/* ************ Globals for ViM ************ */
+static int  gnVimTermWasChangedBuffer = 0;
+static bool gbVimTermWasChangedBuffer = false;
+void StartVimTerm(bool bFromDllStart);
+void StopVimTerm();
+/* ************ Globals for ViM ************ */
+
 
 HANDLE ghLastAnsiCapable = NULL;
 HANDLE ghLastAnsiNotCapable = NULL;
@@ -95,12 +102,17 @@ struct DisplayParm
 	BOOL Text256;          // 38
     int  BackColor;        // 40-47,48,49
     BOOL Back256;          // 48
+	// xterm
+	BOOL Inverse;
 } gDisplayParm = {};
 
 struct DisplayCursorPos
 {
     // Internal
     COORD StoredCursorPos;
+	// Esc[?1h 	Set cursor key to application 	DECCKM 
+	// Esc[?1l 	Set cursor key to cursor 	DECCKM 
+	BOOL CursorKeysApp; // "1h"
 } gDisplayCursor = {};
 
 struct DisplayOpt
@@ -109,11 +121,15 @@ struct DisplayOpt
 	SHORT WrapAt; // Rightmost X coord (1-based)
 	//
 	BOOL  AutoLfNl; // LF/NL (default off): Automatically follow echo of LF, VT or FF with CR.
+	//
+	BOOL  ScrollRegion;
+	SHORT ScrollStart, ScrollEnd; // 1-based line indexes
 } gDisplayOpt;
 
-static wchar_t gsPrevAnsiPart[160] = {};
-static wchar_t gsPrevAnsiPart2[160] = {};
+const size_t cchMaxPrevPart = 160;
+static wchar_t gsPrevAnsiPart[cchMaxPrevPart] = {};
 static INT_PTR gnPrevAnsiPart = 0;
+static wchar_t gsPrevAnsiPart2[cchMaxPrevPart] = {};
 static INT_PTR gnPrevAnsiPart2 = 0;
 const  INT_PTR MaxPrevAnsiPart = 80;
 
@@ -179,15 +195,36 @@ void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 			/*244*/0x808080, /*245*/0x8a8a8a, /*246*/0x949494, /*247*/0x9e9e9e, /*248*/0xa8a8a8, /*249*/0xb2b2b2, /*250*/0xbcbcbc, /*251*/0xc6c6c6, /*252*/0xd0d0d0, /*253*/0xdadada, /*254*/0xe4e4e4, /*255*/0xeeeeee
 		};
 
-		if (gDisplayParm.Text256)
+		int  TextColor;        // 30-37,38,39
+		BOOL Text256;          // 38
+		int  BackColor;        // 40-47,48,49
+		BOOL Back256;          // 48
+
+		if (!gDisplayParm.Inverse)
 		{
-			if (gDisplayParm.TextColor > 15)
+			TextColor = gDisplayParm.TextColor;
+			Text256 = gDisplayParm.Text256;
+			BackColor = gDisplayParm.BackColor;
+			Back256 = gDisplayParm.Back256;
+		}
+		else
+		{
+			TextColor = gDisplayParm.BackColor;
+			Text256 = gDisplayParm.Back256;
+			BackColor = gDisplayParm.TextColor;
+			Back256 = gDisplayParm.Text256;
+		}
+
+
+		if (Text256)
+		{
+			if (TextColor > 15)
 				attr.Attributes.Flags |= CECF_FG_24BIT;
 
-			if (gDisplayParm.Text256 == 2)
-				attr.Attributes.ForegroundColor = gDisplayParm.TextColor&0xFFFFFF;
+			if (Text256 == 2)
+				attr.Attributes.ForegroundColor = TextColor&0xFFFFFF;
 			else
-				attr.Attributes.ForegroundColor = RgbMap[gDisplayParm.TextColor&0xFF];
+				attr.Attributes.ForegroundColor = RgbMap[TextColor&0xFF];
 
 			if (gDisplayParm.BrightOrBold)
 				attr.Attributes.Flags |= CECF_FG_BOLD;
@@ -198,24 +235,24 @@ void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 		}
 		else
 		{
-			attr.Attributes.ForegroundColor |= ClrMap[gDisplayParm.TextColor&0x7]
+			attr.Attributes.ForegroundColor |= ClrMap[TextColor&0x7]
 				| (gDisplayParm.BrightOrBold ? 0x08 : 0);
 		}
 
-		if (gDisplayParm.Back256)
+		if (Back256)
 		{
-			if (gDisplayParm.BackColor > 15)
+			if (BackColor > 15)
 				attr.Attributes.Flags |= CECF_BG_24BIT;
 
-			if (gDisplayParm.Back256 == 2)
-				attr.Attributes.BackgroundColor = gDisplayParm.BackColor&0xFFFFFF;
+			if (Back256 == 2)
+				attr.Attributes.BackgroundColor = BackColor&0xFFFFFF;
 			else
-				attr.Attributes.BackgroundColor = RgbMap[gDisplayParm.BackColor&0xFF];
+				attr.Attributes.BackgroundColor = RgbMap[BackColor&0xFF];
 		}
 		else
 		{
-			attr.Attributes.BackgroundColor |= ClrMap[gDisplayParm.BackColor&0x7]
-				| ((gDisplayParm.BackOrUnderline && !gDisplayParm.Text256) ? 0x8 : 0);
+			attr.Attributes.BackgroundColor |= ClrMap[BackColor&0x7]
+				| ((gDisplayParm.BackOrUnderline && !Text256) ? 0x8 : 0);
 		}
 		
 
@@ -332,6 +369,82 @@ bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL)
 
 	return bAnsi;
 }
+
+#if defined(DUMP_UNKNOWN_ESCAPES) || defined(DUMP_WRITECONSOLE_LINES)
+void DumpEscape(LPCWSTR buf, size_t cchLen, bool bUnknown)
+{
+	if (!buf || !cchLen)
+	{
+		_ASSERTE(buf && cchLen);
+	}
+	else if (bUnknown)
+	{
+		_ASSERTE(FALSE && "Unknown Esc Sequence!");
+	}
+
+	wchar_t szDbg[190];
+	size_t nLen = cchLen;
+	static int nWriteCallNo = 0;
+
+	if (bUnknown)
+		wcscpy_c(szDbg, L"###Unknown Esc Sequence: ");
+	else
+		msprintf(szDbg, countof(szDbg), L"AnsiDump #%u: ", ++nWriteCallNo);
+
+	size_t nStart = lstrlenW(szDbg);
+	wchar_t* pszDst = szDbg + nStart;
+	const wchar_t* pszSrc = (wchar_t*)buf;
+	size_t nCur = 0;
+	while (nLen)
+	{
+		switch (*pszSrc)
+		{
+		case L'\r':
+			*(pszDst++) = L'\\'; *(pszDst++) = L'r';
+			break;
+		case L'\n':
+			*(pszDst++) = L'\\'; *(pszDst++) = L'n';
+			break;
+		case L'\t':
+			*(pszDst++) = L'\\'; *(pszDst++) = L't';
+			break;
+		case L'\x1B':
+			*(pszDst++) = szAnalogues[0x1B];
+			break;
+		case 0:
+			*(pszDst++) = L'\\'; *(pszDst++) = L'0';
+			break;
+		case L'\\':
+			*(pszDst++) = L'\\'; *(pszDst++) = L'\\';
+			break;
+		default:
+			*(pszDst++) = *pszSrc;
+		}
+		pszSrc++;
+		nLen--;
+		nCur++;
+
+		if (nCur >= 80)
+		{
+			*(pszDst++) = L'\n'; *pszDst = 0;
+			DebugString(szDbg);
+			wmemset(szDbg, L' ', nStart);
+			nCur = 0;
+			pszDst = szDbg + nStart;
+		}
+	}
+	*(pszDst++) = L'\n'; *pszDst = 0;
+
+	DebugString(szDbg);
+}
+#endif
+
+#ifdef DUMP_UNKNOWN_ESCAPES
+#define DumpUnknownEscape(buf, cchLen) DumpEscape(buf, cchLen, true)
+#else
+#define DumpUnknownEscape(buf,cchLen)
+#endif
+
 
 BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
 {
@@ -477,6 +590,15 @@ BOOL WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR 
 		write.WrapAtCol = gDisplayOpt.WrapAt;
 	}
 
+	if (gDisplayOpt.ScrollRegion)
+	{
+		write.Flags |= ewtf_Region;
+		_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
+		write.Region.top = gDisplayOpt.ScrollStart-1;
+		write.Region.bottom = gDisplayOpt.ScrollEnd-1;
+		write.Region.left = write.Region.right = 0; // not used yet
+	}
+
 	//lbRc = _WriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nTotalWritten, NULL);
 	write.Buffer = lpBuffer;
 	write.NumberOfCharsToWrite = nNumberOfCharsToWrite;
@@ -513,17 +635,8 @@ BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 	}
 
 	#ifdef DUMP_WRITECONSOLE_LINES
-	wchar_t szDbg[120], *pch;
-	size_t nLen = min(90,nNumberOfCharsToWrite);
-	static int nWriteCallNo = 0;
-	msprintf(szDbg, countof(szDbg), L"AnsiDump #%u: ", ++nWriteCallNo);
-	size_t nStart = lstrlenW(szDbg);
-	wmemmove(szDbg+nStart, (wchar_t*)lpBuffer, nLen);
-	szDbg[nLen+nStart] = 0;
-	while ((pch = wcspbrk(szDbg+nStart, L"\r\n\t\x1B")) != NULL)
-		*pch = szAnalogues[*pch];
-	szDbg[nStart+nLen] = L'\n'; szDbg[nStart+nLen+1] = 0;
-	DebugString(szDbg);
+	// Логирование в отладчик ВСЕГО, что пишется в консольный Output
+	DumpEscape((wchar_t*)lpBuffer, nNumberOfCharsToWrite, false);
 	#endif
 
 	if (lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput, &bIsConOut))
@@ -605,10 +718,12 @@ struct AnsiEscCode
 // 0 - нет (в lpBuffer только текст)
 // 1 - в Code помещена Esc последовательность (может быть простой текст ДО нее)
 // 2 - нет, но кусок последовательности сохранен в gsPrevAnsiPart
-int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNext, AnsiEscCode& Code, BOOL ReEntrance = FALSE)
+int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[cchMaxPrevPart], DWORD& cchPrevPart, LPCWSTR& lpStart, LPCWSTR& lpNext, AnsiEscCode& Code, BOOL ReEntrance = FALSE)
 {
 	int iRc = 0;
 	wchar_t wc;
+
+	_ASSERTEX(cchPrevPart==0);
 
 	if (gnPrevAnsiPart && !ReEntrance)
 	{
@@ -616,18 +731,43 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 		{
 			_ASSERTE(gnPrevAnsiPart < 79);
 			INT_PTR nCurPrevLen = gnPrevAnsiPart;
-			INT_PTR nAdd = min((lpEnd-lpBuffer),(INT_PTR)countof(gsPrevAnsiPart)-nCurPrevLen);
+			INT_PTR nAdd = min((lpEnd-lpBuffer),(INT_PTR)countof(gsPrevAnsiPart)-nCurPrevLen-1);
 			// Need to check buffer overflow!!!
-			_ASSERTE((INT_PTR)countof(gsPrevAnsiPart)>(nCurPrevLen+(lpEnd-lpBuffer)));
+			_ASSERTE((INT_PTR)countof(gsPrevAnsiPart)>(nCurPrevLen+nAdd));
 			wmemcpy(gsPrevAnsiPart+nCurPrevLen, lpBuffer, nAdd);
 			gsPrevAnsiPart[nCurPrevLen+nAdd] = 0;
 
 			LPCWSTR lpReStart, lpReNext;
-			int iCall = NextEscCode(gsPrevAnsiPart, gsPrevAnsiPart+nAdd+gnPrevAnsiPart, lpReStart, lpReNext, Code, TRUE);
+			int iCall = NextEscCode(gsPrevAnsiPart, gsPrevAnsiPart+nAdd+gnPrevAnsiPart, szPreDump, cchPrevPart, lpReStart, lpReNext, Code, TRUE);
 			if (iCall == 1)
 			{
 				if ((lpReNext - gsPrevAnsiPart) >= gnPrevAnsiPart)
 				{
+					// Bypass unrecognized ESC sequences to screen?
+					if (lpReStart > gsPrevAnsiPart)
+					{
+						INT_PTR nSkipLen = (lpReStart - gsPrevAnsiPart); //DWORD nWritten;
+						_ASSERTEX(nSkipLen<=countof(gsPrevAnsiPart) && nSkipLen<=gnPrevAnsiPart);
+						DumpUnknownEscape(gsPrevAnsiPart, nSkipLen);
+
+						//WriteText(_WriteConsoleW, hConsoleOutput, gsPrevAnsiPart, nSkipLen, &nWritten);
+						_ASSERTEX(nSkipLen <= ((int)cchMaxPrevPart - (int)cchPrevPart));
+						memmove(szPreDump, gsPrevAnsiPart, nSkipLen);
+						cchPrevPart += nSkipLen;
+
+						if (nSkipLen < gnPrevAnsiPart)
+						{
+							memmove(gsPrevAnsiPart, lpReStart, (gnPrevAnsiPart - nSkipLen)*sizeof(*gsPrevAnsiPart));
+							gnPrevAnsiPart -= nSkipLen;
+						}
+						else
+						{
+							_ASSERTEX(nSkipLen == gnPrevAnsiPart);
+							*gsPrevAnsiPart = 0;
+							gnPrevAnsiPart = 0;
+						}
+						lpReStart = gsPrevAnsiPart;
+					}
 					_ASSERTE(lpReStart == gsPrevAnsiPart);
 					lpStart = lpBuffer; // nothing to dump before Esc-sequence
 					_ASSERTE((lpReNext - gsPrevAnsiPart) >= gnPrevAnsiPart);
@@ -675,7 +815,25 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 				#endif
 
 				// minimal length failed?
-				if ((lpBuffer + 2) < lpEnd)
+				if ((lpBuffer + 2) >= lpEnd)
+				{
+					// But it may be some "special" codes
+					switch (lpBuffer[1])
+					{
+					case L'=':
+					case L'>':
+						// xterm?
+						Code.First = 27;
+						Code.Second = *(++lpBuffer);
+						Code.ArgC = 0;
+						Code.PvtLen = 0;
+						Code.Pvt[0] = 0;
+						lpEnd = (++lpBuffer);
+						iRc = 1;
+						goto wrap;
+					}
+				}
+				else
 				{
 					lpSaveStart = lpBuffer;
 					Code.First = 27;
@@ -684,14 +842,21 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 					Code.PvtLen = 0;
 					Code.Pvt[0] = 0;
 
-					if ((Code.Second < 64) || (Code.Second > 95))
+					TODO("Bypass unrecognized ESC sequences to screen? Don't try to eliminate 'Possible' sequences?");
+					//if (((Code.Second < 64) || (Code.Second > 95)) && (Code.Second != 124/* '|' - vim-xterm-emulation */))
+					if (!wcschr(L"[]|=>", Code.Second))
+					{
+						_ASSERTEX(FALSE && "Unsupported control sequence?");
 						continue; // invalid code
+					}
 					
 					// Теперь идут параметры.
 					++lpBuffer; // переместим указатель на первый символ ЗА CSI (после '[')
 					
 					switch (Code.Second)
 					{
+					case L'|':
+						// vim-xterm-emulation
 					case L'[':
 						// Standard
 						Code.Skip = 0;
@@ -808,6 +973,13 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 						// Ниже
 						break;
 
+					case L'=':
+					case L'>':
+						// xterm?
+						lpEnd = lpBuffer;
+						iRc = 1;
+						goto wrap;
+
 					default:
 						// Неизвестный код, обрабатываем по общим правилам
 						Code.Skip = Code.Second;
@@ -833,27 +1005,12 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 				{
 					if (ReEntrance)
 					{
-						//_ASSERTE(!ReEntrance && "Need to be checked!");
+						_ASSERTE(!ReEntrance && "Need to be checked!");
 
 						// gsPrevAnsiPart2 stored for debug purposes only (fully excess)
 						wmemmove(gsPrevAnsiPart2, lpEscStart, nLeft);
 						gsPrevAnsiPart2[nLeft] = 0;
 						gnPrevAnsiPart2 = nLeft;
-
-						//INT_PTR nCurPart = gnPrevAnsiPart;
-						//if (nLeft < (countof(gsPrevAnsiPart) - nCurPart))
-						//{
-						//	wmemmove(gsPrevAnsiPart+nCurPart, lpEscStart, nLeft);
-						//	gsPrevAnsiPart[nCurPart+nLeft] = 0;
-						//	gnPrevAnsiPart = nCurPart+nLeft;
-						//}
-						//else
-						//{
-						//	_ASSERTE(FALSE && "Esc reentrance, Not enough buffer for sequence, Need to be checked!");
-						//	wmemmove(gsPrevAnsiPart2, lpEscStart, nLeft);
-						//	gsPrevAnsiPart2[nLeft] = 0;
-						//	gnPrevAnsiPart2 = nLeft;
-						//}
 					}
 					else
 					{
@@ -891,87 +1048,25 @@ wrap:
 
 BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir)
 {
-	TODO("Define scrolling region");
 	ExtScrollScreenParm scrl = {sizeof(scrl), essf_Current|essf_Commit, hConsoleOutput, nDir, {}, L' '};
+	if (gDisplayOpt.ScrollRegion)
+	{
+		_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
+		scrl.Region.top = gDisplayOpt.ScrollStart-1;
+		scrl.Region.bottom = gDisplayOpt.ScrollEnd-1;
+		scrl.Flags |= essf_Region;
+	}
+
 	BOOL lbRc = ExtScrollScreen(&scrl);
-	return lbRc;
-
-#if 0
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi, TRUE))
-		return FALSE;
-
-	BOOL lbRc = FALSE;
-	CHAR_INFO Buf[200];
-	CHAR_INFO* pBuf = (csbi.dwSize.X <= countof(Buf)) ? Buf : (CHAR_INFO*)malloc(csbi.dwSize.X*sizeof(*pBuf));
-	DWORD nCount;
-	COORD crSize = {csbi.dwSize.X,1};
-	COORD cr0 = {};
-	SMALL_RECT rcRgn = {0,0,csbi.dwSize.X-1,0};
-
-	if (!pBuf)
-		return FALSE;
-
-	WARNING("Расширенные атрибуты тоже нада двигать!");
-	//_ASSERTE(FALSE);
-
-	if (nDir < 0)
-	{
-		// Scroll whole page up by n (default 1) lines. New lines are added at the bottom.
-		for (SHORT y = 0, y1 = -nDir; y1 < csbi.dwSize.Y; y++, y1++)
-		{
-			rcRgn.Top = rcRgn.Bottom = y1;
-			if (MyReadConsoleOutputW(hConsoleOutput, pBuf, crSize, cr0, &rcRgn))
-			{
-				rcRgn.Top = rcRgn.Bottom = y;
-				WriteConsoleOutputW(hConsoleOutput, pBuf, crSize, cr0, &rcRgn);
-			}
-		}
-
-		while (nDir < 0)
-		{
-			cr0.Y = csbi.dwSize.Y - 1 + nDir;
-			FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), csbi.dwSize.X, cr0, &nCount);
-			FillConsoleOutputCharacter(hConsoleOutput, L' ', csbi.dwSize.X, cr0, &nCount);
-			++nDir;
-		}
-	}
-	else if (nDir > 0)
-	{
-		// Scroll whole page down by n (default 1) lines. New lines are added at the top.
-		for (SHORT y = csbi.dwSize.Y - nDir - 1, y1 = csbi.dwSize.Y - 1; y >= 0; y--, y1--)
-		{
-			rcRgn.Top = rcRgn.Bottom = y;
-			if (MyReadConsoleOutputW(hConsoleOutput, pBuf, crSize, cr0, &rcRgn))
-			{
-				rcRgn.Top = rcRgn.Bottom = y1;
-				WriteConsoleOutputW(hConsoleOutput, pBuf, crSize, cr0, &rcRgn);
-			}
-		}
-
-		while (nDir > 0)
-		{
-			cr0.Y = nDir - 1;
-			FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), csbi.dwSize.X, cr0, &nCount);
-			FillConsoleOutputCharacter(hConsoleOutput, L' ', csbi.dwSize.X, cr0, &nCount);
-			--nDir;
-		}
-	}
-
-	if (pBuf != Buf)
-		free(pBuf);
 
 	return lbRc;
-#endif
 }
 
 BOOL PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi)
 {
 	BOOL lbRc = FALSE;
 	COORD crFrom = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y};
-	#ifdef _DEBUG
-	DWORD nCount = csbi.dwSize.X - csbi.dwCursorPosition.X; //, nWritten;
-	#endif
+	DEBUGTEST(DWORD nCount = csbi.dwSize.X - csbi.dwCursorPosition.X);
 
 	/*
 	lbRc = FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nCount, crFrom, &nWritten)
@@ -995,29 +1090,65 @@ BOOL PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi)
 	return lbRc;
 }
 
-#ifdef DUMP_UNKNOWN_ESCAPES
-void DumpUnknownEscape(LPCWSTR buf, size_t cchLen)
+BOOL LinesInsert(HANDLE hConsoleOutput, const int LinesCount)
 {
-	if (!buf || !cchLen)
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 	{
-		_ASSERTE(buf && cchLen);
+		_ASSERTEX(FALSE && "GetConsoleScreenBufferInfoCached failed");
+		return FALSE;
 	}
 
-	wchar_t szEsc[128], *pch;
-	wcscpy_c(szEsc, L"###Unknown Esc Sequence: ");
-	size_t nCurLen = lstrlen(szEsc);
-	size_t nLen = min(80,cchLen);
-	wmemcpy(szEsc+nCurLen, buf, nLen);
-	szEsc[nCurLen+nLen] = 0;
-	while ((pch = wcspbrk(szEsc, L"\r\n\t\x1B")) != NULL)
-		*pch = szAnalogues[*pch];
-	wcscat_c(szEsc, L"\n");
+	int TopLine, BottomLine;
+	if (gDisplayOpt.ScrollRegion)
+	{
+		_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
+		TopLine = max(gDisplayOpt.ScrollStart-1,0);
+		BottomLine = max(gDisplayOpt.ScrollEnd-1,0);
+	}
+	else
+	{
+		TODO("What we need to scroll? Buffer or visible rect?");
+		TopLine = 0;
+		BottomLine = csbi.srWindow.Bottom - csbi.srWindow.Top;
+	}
 
-	DebugString(szEsc);
+	ExtScrollScreenParm scrl = {
+		sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
+		LinesCount, {}, L' ', {0, TopLine, 0, BottomLine}};
+	BOOL lbRc = ExtScrollScreen(&scrl);
+	return lbRc;
 }
-#else
-#define DumpUnknownEscape(buf,cchLen)
-#endif
+
+BOOL LinesDelete(HANDLE hConsoleOutput, const int LinesCount)
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+	{
+		_ASSERTEX(FALSE && "GetConsoleScreenBufferInfoCached failed");
+		return FALSE;
+	}
+
+	int TopLine, BottomLine;
+	if (gDisplayOpt.ScrollRegion)
+	{
+		_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>gDisplayOpt.ScrollStart);
+		TopLine = max(gDisplayOpt.ScrollStart-1,0);
+		BottomLine = max(gDisplayOpt.ScrollEnd-1,0);
+	}
+	else
+	{
+		TODO("What we need to scroll? Buffer or visible rect?");
+		TopLine = 0;
+		BottomLine = csbi.srWindow.Bottom - csbi.srWindow.Top;
+	}
+
+	ExtScrollScreenParm scrl = {
+		sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
+		-LinesCount, {}, L' ', {0, TopLine, 0, BottomLine}};
+	BOOL lbRc = ExtScrollScreen(&scrl);
+	return lbRc;
+}
 
 static int NextNumber(LPCWSTR& asMS)
 {
@@ -1109,6 +1240,8 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 	LPCWSTR lpEnd = (lpBuffer + nNumberOfCharsToWrite);
 	AnsiEscCode Code = {};
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	wchar_t szPreDump[cchMaxPrevPart];
+	DWORD cchPrevPart;
 
 	//ExtWriteTextParm write = {sizeof(write), ewtf_Current, hConsoleOutput};
 	//write.Private = _WriteConsoleW;
@@ -1120,7 +1253,22 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 		// '^' is ESC
 		// ^[0;31;47m   $E[31;47m   ^[0m ^[0;1;31;47m  $E[1;31;47m  ^[0m
 
-		int iEsc = NextEscCode(lpBuffer, lpEnd, lpStart, lpNext, Code);
+		cchPrevPart = 0;
+
+		int iEsc = NextEscCode(lpBuffer, lpEnd, szPreDump, cchPrevPart, lpStart, lpNext, Code);
+
+		if (cchPrevPart)
+		{
+			if (lbApply)
+			{
+				ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+				lbApply = FALSE;
+			}
+
+			lbRc = WriteText(_WriteConsoleW, hConsoleOutput, szPreDump, cchPrevPart, lpNumberOfCharsWritten);
+			if (!lbRc)
+				goto wrap;
+		}
 
 		if (iEsc != 0)
 		{
@@ -1248,6 +1396,9 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 										crNewPos.X = csbi.dwSize.X - 1;
 									// Goto
                                     SetConsoleCursorPosition(hConsoleOutput, crNewPos);
+
+									if (gbIsVimProcess)
+										gbIsVimAnsi = true;
 								} // case L'H': case L'f': case 'A': case L'B': case L'C': case L'D':
 								break;
 
@@ -1280,6 +1431,13 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 										DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 									}
 
+									if (lbApply)
+									{
+										// ViM: need to fill whole screen with selected background color, so Apply attributes
+										ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+										lbApply = FALSE;
+									}
+
 									if (nChars > 0)
 									{
 										ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
@@ -1295,8 +1453,8 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 										SetConsoleCursorPosition(hConsoleOutput, cr0);
 									}
 
-									TODO("Need to clear attributes?");
-									ReSetDisplayParm(hConsoleOutput, TRUE/*bReset*/, TRUE/*bApply*/);
+									//TODO("Need to clear attributes?");
+									//ReSetDisplayParm(hConsoleOutput, TRUE/*bReset*/, TRUE/*bApply*/);
 								} // case L'J':
 								break;
 
@@ -1348,13 +1506,43 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 								// and must be greater than Pt.
 								//(The default for Pt is line 1, the default for Pb is the end 
 								// of the screen)
-								_ASSERTE(FALSE && "Define scrolling region");
+								//
+								if ((Code.ArgC >= 2) && (Code.ArgV[0] >= 1) && (Code.ArgV[1] >= Code.ArgV[0]))
+								{
+									gDisplayOpt.ScrollRegion = TRUE;
+									// Lines are 1-based
+									gDisplayOpt.ScrollStart = Code.ArgV[0];
+									gDisplayOpt.ScrollEnd = Code.ArgV[1];
+									_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
+								}
+								else
+								{
+									gDisplayOpt.ScrollRegion = FALSE;
+								}
 								break;
 
 							case L'S':
 								// Scroll whole page up by n (default 1) lines. New lines are added at the bottom.
-								TODO("Define scrolling region");
 								ScrollScreen(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? -Code.ArgV[0] : -1);
+								break;
+
+							case L'L':
+								// Insert P s Line(s) (default = 1) (IL).
+								LinesInsert(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1);
+								break;
+							case L'M':
+								// Delete P s Line(s) (default = 1) (DL).
+								_ASSERTEX(FALSE && "'Delete N lines', need to be checked");
+								LinesDelete(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1);
+								break;
+
+							case L'@':
+								// Insert P s (Blank) Character(s) (default = 1) (ICH).
+								DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+								break;
+							case L'P':
+								// Delete P s Character(s) (default = 1) (DCH).
+								DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 								break;
 
 							case L'T':
@@ -1411,6 +1599,23 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 
 									switch (Code.ArgV[0])
 									{
+									case 1:
+										_ASSERTEX(Code.PvtLen==1 && Code.Pvt[0]==L'?');
+										gDisplayCursor.CursorKeysApp = (Code.Action == L'h');
+										TODO("What need to send to APP input instead of VK_xxx? (vim.exe)");
+										if (gbIsVimProcess)
+										{
+											TODO("Need to find proper way for activation alternative buffer from ViM?");
+											if (Code.Action == L'h')
+											{
+												StartVimTerm(false);
+											}
+											else
+											{
+												StopVimTerm();
+											}
+										}
+										break;
 									case 7:
 										//ESC [ ? 7 h
 										//	  DECAWM (default off): Set autowrap on.  In this mode, a graphic
@@ -1592,6 +1797,11 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 								}
 								break; // "[...m"
 
+							case L'c':
+								// P s = 0 or omitted -> request the terminal’s identification code.
+								DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+								break;
+
 							default:
 								DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 							} // switch (Code.Action)
@@ -1601,6 +1811,8 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 
 					case L']':
 						{
+							lbApply = TRUE;
+
 							//ESC ] 0 ; txt ST        Set icon name and window title to txt.
 							//ESC ] 1 ; txt ST        Set icon name to txt.
 							//ESC ] 2 ; txt ST        Set window title to txt.
@@ -1748,6 +1960,56 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 							}
 						} // case L']':
 						break;
+
+					case L'|':
+						{
+							// vim-xterm-emulation
+							lbApply = TRUE;
+
+							switch (Code.Action)
+							{
+							case L'm':
+								// Set xterm display modes (colors, fonts, etc.)
+								if (!Code.ArgC)
+								{
+									//ReSetDisplayParm(hConsoleOutput, TRUE, FALSE);
+									DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+								}
+								else
+								{
+									for (int i = 0; i < Code.ArgC; i++)
+									{
+										switch (Code.ArgV[i])
+										{
+										case 7:
+											gDisplayParm.BrightOrBold = FALSE;
+											gDisplayParm.ItalicOrInverse = FALSE;
+											gDisplayParm.BackOrUnderline = FALSE;
+											gDisplayParm.Inverse = FALSE;
+											gDisplayParm.WasSet = TRUE;
+											break;
+										case 15:
+											gDisplayParm.BrightOrBold = TRUE;
+											gDisplayParm.WasSet = TRUE;
+											break;
+										case 112:
+											gDisplayParm.Inverse = TRUE;
+											gDisplayParm.WasSet = TRUE;
+											break;
+										default:
+											DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+										}
+									}
+								}
+								break; // "|...m"
+							}
+						} // case L'|':
+						break;
+
+					case L'=':
+					case L'>':
+						// xterm "ESC ="
+						break;
 					
 					default:
 						DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
@@ -1838,4 +2100,65 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 	lbRc = F(SetConsoleMode)(hConsoleHandle, dwMode);
 
 	return lbRc;
+}
+
+
+/* 
+ViM need some hacks in current ConEmu versions
+This is because 
+1) 256 colors mode requires NO scroll buffer
+2) can't find ATM legal way to switch Alternative/Primary buffer by request from ViM
+*/
+
+//static int  gnVimTermWasChangedBuffer = 0;
+//static bool gbVimTermWasChangedBuffer = false;
+
+void StartVimTerm(bool bFromDllStart)
+{
+	if (/*bFromDllStart ||*/ gbVimTermWasChangedBuffer)
+		return;
+
+	TODO("Переделать на команду сервера?");
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
+	{
+		if (csbi.dwSize.Y > (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
+		{
+			COORD crNoScroll = {csbi.srWindow.Right-csbi.srWindow.Left+1, csbi.srWindow.Bottom-csbi.srWindow.Top+1};
+			BOOL bRc = SetConsoleScreenBufferSize(hOut, crNoScroll);
+			if (bRc)
+			{
+				gnVimTermWasChangedBuffer = csbi.dwSize.Y;
+			}
+			else
+			{
+				_ASSERTEX(FALSE && "Failed to reset buffer height to ViM");
+			}
+		}
+	}
+}
+
+void StopVimTerm()
+{
+	if (!gbVimTermWasChangedBuffer)
+		return;
+
+	TODO("Переделать на команду сервера?");
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
+	{
+		if (csbi.dwSize.Y < gnVimTermWasChangedBuffer)
+		{
+			COORD crScroll = {csbi.dwSize.X, gnVimTermWasChangedBuffer};
+			BOOL bRc = SetConsoleScreenBufferSize(hOut, crScroll);
+			if (!bRc)
+			{
+				_ASSERTEX(FALSE && "Failed to return scroll!");
+			}
+		}
+	}
 }
