@@ -38,19 +38,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include "header.h"
 //
-#include "Menu.h"
-#include "ConEmu.h"
 #include "Attach.h"
+#include "ConEmu.h"
+#include "FindDlg.h"
+#include "Menu.h"
 #include "Menu.h"
 #include "Options.h"
 #include "RealConsole.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
+#include "Update.h"
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
-#include "Update.h"
 
 
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
@@ -1346,7 +1347,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEPRC, MenuAccel(vkTerminateApp,L"&Active process"));
 		AppendMenu(hMenu, MF_POPUP | MF_ENABLED, (UINT_PTR)hTerminate, L"&Terminate");
-		AppendMenu(hMenu, MF_STRING | ((apVCon && apVCon->GuiWnd()) ? MF_ENABLED : 0),     IDM_CHILDSYSMENU,    L"Child system menu...");
+		AppendMenu(hMenu, MF_STRING | ((apVCon && apVCon->GuiWnd()) ? MF_ENABLED : 0),     IDM_CHILDSYSMENU,    MenuAccel(vkChildSystemMenu,L"Child system menu..."));
 		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTARTDLG, MenuAccel(vkMultiRecreate,L"&Restart..."));
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTART,    L"&Restart");
@@ -1577,7 +1578,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			return 0;
 
 		case ID_CON_FIND:
-			gpSetCls->FindTextDialog();
+			gpConEmu->mp_Find->FindTextDialog();
 			return 0;
 
 		case ID_CON_COPY:

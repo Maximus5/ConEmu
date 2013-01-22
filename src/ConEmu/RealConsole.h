@@ -540,7 +540,7 @@ class CRealConsole
 		void ShowPropertiesDialog();
 		void LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars = NULL);
 
-		static void Box(LPCTSTR szText, DWORD nBtns = 0);
+		//static void Box(LPCTSTR szText, DWORD nBtns = 0);
 
 	protected:
 		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
@@ -846,4 +846,4 @@ class CRealConsole
 		//	} m_DetectedDialogs;
 };
 
-#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i\n\nPress <Retry> to report a bug (web page)", _T(#V), _T(__FILE__), __LINE__); CRealConsole::Box(szAMsg, MB_RETRYCANCEL); }
+//#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i\n\nPress <Retry> to report a bug (web page)", _T(#V), _T(__FILE__), __LINE__); CRealConsole::Box(szAMsg, MB_RETRYCANCEL); }

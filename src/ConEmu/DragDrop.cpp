@@ -1032,11 +1032,13 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 
 	mb_DragWithinNow = FALSE;
 	DestroyDragImageBits();
-#ifdef PERSIST_OVL
+
+	#ifdef PERSIST_OVL
 	MoveDragWindow(FALSE);
-#else
+	#else
 	DestroyDragImageWindow();
-#endif
+	#endif
+
 	gpConEmu->SetDragCursor(NULL);
 	//PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
 	#ifdef _DEBUG
@@ -1504,11 +1506,14 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 		}
 		else if (mp_Bits)
 		{
-#ifdef PERSIST_OVL
+			#if defined(USE_CHILD_OVL)
+			if (!mh_Overlapped)
+				CreateDragImageWindow();
+			#elif defined(PERSIST_OVL)
 			_ASSERTE(mh_Overlapped); // должно быть создано при запуске ConEmu
-#else
+			#else
 			CreateDragImageWindow();
-#endif
+			#endif
 		}
 	}
 
@@ -1607,11 +1612,12 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 	else
 	{
 		DestroyDragImageBits();
-#ifdef PERSIST_OVL
+
+		#ifdef PERSIST_OVL
 		MoveDragWindow(FALSE);
-#else
+		#else
 		DestroyDragImageWindow();
-#endif
+		#endif
 	}
 
 	#ifdef USE_DROP_HELPER

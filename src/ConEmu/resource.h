@@ -923,7 +923,6 @@
 #define vkSetFocusChild                 2576
 #define vkChildSystemMenu               2577
 #define cbSingleInstance                2578
-#define IDC_CHECK1                      2579
 #define cbCTSEndCopyBefore              2579
 
 // Next default values for new objects

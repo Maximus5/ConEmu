@@ -1862,7 +1862,9 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 	// Запомнить/обновить sbi
 	pData->info = lsbi;
 
+	MSectionLock csRead; csRead.Lock(gpSrv->csReadConsoleInfo, TRUE, 1000);
 	pData->Succeeded = MyReadConsoleOutput(ghConOut, pData->Data, BufSize, ReadRect);
+	csRead.Unlock();
 
 #if 0
 	// [Roman Kuzmin]
@@ -3053,12 +3055,12 @@ static int ReadConsoleInfo()
 	DWORD ldwConsoleCP=0, ldwConsoleOutputCP=0, ldwConsoleMode=0;
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // MyGetConsoleScreenBufferInfo
 	HANDLE hOut = (HANDLE)ghConOut;
-	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	//HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+	HANDLE hStdOut = NULL;
+	HANDLE hStdIn = GetStdHandle(STD_INPUT_HANDLE);
 	//DWORD nConInMode = 0;
 
 	if (hOut == INVALID_HANDLE_VALUE)
-		hOut = hStdOut;
+		hOut = hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	// Могут возникать проблемы при закрытии ComSpec и уменьшении высоты буфера
 	MCHKHEAP;
@@ -3100,10 +3102,8 @@ static int ReadConsoleInfo()
 	}
 
 	ldwConsoleMode = 0;
-#ifdef _DEBUG
-	BOOL lbConModRc =
-#endif
-	    GetConsoleMode(/*ghConIn*/GetStdHandle(STD_INPUT_HANDLE), &ldwConsoleMode);
+	DEBUGTEST(BOOL lbConModRc =)
+    GetConsoleMode(hStdIn, &ldwConsoleMode);
 
 	if (gpSrv->dwConsoleMode!=ldwConsoleMode)
 	{
@@ -3485,7 +3485,10 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 	if (abForceSend)
 		gpSrv->pConsole->bDataChanged = TRUE;
 
+	MSectionLock csRead; csRead.Lock(gpSrv->csReadConsoleInfo, TRUE, 1000);
 	int iInfoRc = ReadConsoleInfo();
+	csRead.Unlock();
+
 	if (iInfoRc == -1)
 	{
 		lbChanged = FALSE;

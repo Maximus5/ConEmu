@@ -1320,7 +1320,7 @@ void CVConGroup::RePaint()
 			{
 				HDC hDc = GetDC(hView);
 				RECT rcClient = pVCon->GetDcClientRect();
-				pVCon->Paint(hDc, rcClient);
+				pVCon->PaintVCon(hDc, rcClient);
 				ReleaseDC(ghWnd, hDc);
 			}
 		}

@@ -30,16 +30,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
+
 #include "ConEmu.h"
-#include "Menu.h"
 #include "ConEmuCtrl.h"
+#include "FindDlg.h"
 #include "Macro.h"
+#include "Menu.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
-#include "TabBar.h"
-#include "VirtualConsole.h"
-#include "VConGroup.h"
 #include "ScreenDump.h"
+#include "TabBar.h"
+#include "VConGroup.h"
+#include "VirtualConsole.h"
 
 #define DEBUGSTRAPPS(s) DEBUGSTR(s)
 
@@ -1658,7 +1660,7 @@ bool CConEmuCtrl::key_FindTextDlg(DWORD VkMod, bool TestOnly, const ConEmuHotKey
 	if (TestOnly)
 		return true;
 
-	gpSetCls->FindTextDialog();
+	gpConEmu->mp_Find->FindTextDialog();
 	return true;
 }
 

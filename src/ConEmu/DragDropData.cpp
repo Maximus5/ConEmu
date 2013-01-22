@@ -1321,11 +1321,12 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles, bool abForc
 	}
 
 	DestroyDragImageBits();
-#ifdef PERSIST_OVL
+
+	#ifdef PERSIST_OVL
 	MoveDragWindow(FALSE);
-#else
+	#else
 	DestroyDragImageWindow();
-#endif
+	#endif
 
 #if 0
 	if (abForceToTop)
@@ -1397,17 +1398,14 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles, bool abForc
 		// DC может быть испорчен (почему?), поэтому лучше почистим его
 		RECT rcFill = MakeRect(MAX_OVERLAY_WIDTH,MAX_OVERLAY_HEIGHT);
 
-#ifdef PERSIST_OVL
+		#if !defined(USE_ALPHA_OVL)
 		HBRUSH hBr = CreateSolidBrush(OVERLAY_COLOR);
 		FillRect(hDrawDC, &rcFill, hBr);
 		DeleteObject(hBr);
-#else
-		#ifdef _DEBUG
-			FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH/*WHITE_BRUSH*/));
 		#else
-			FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH));
+		FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(RELEASEDEBUGTEST(BLACK_BRUSH,BLACK_BRUSH/*WHITE_BRUSH*/)));
 		#endif
-#endif
+
 		psz = pszFiles;
 		int nFileIdx = 0, nColMaxY = 0, nAllFiles = 0;
 		nMaxX = 0;
@@ -1492,11 +1490,8 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles, bool abForc
 						pDst->nRes1 = GetTickCount(); // что-то непонятное. Random?
 						pDst->nRes2 = (DWORD)-1;
 						MyRgbQuad *pRGB = (MyRgbQuad*)pDst->pix;
-#ifdef PERSIST_OVL
+
 						u32 nCurBlend = OVERLAY_ALPHA, nAllBlend = OVERLAY_ALPHA;
-#else
-						u32 nCurBlend = 0xAA, nAllBlend = 0xAA;
-#endif
 
 						for (int y = 0; y < nMaxY; y++)
 						{
@@ -1508,7 +1503,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles, bool abForc
 
 								if (pRGB->dwValue)
 								{
-#ifdef PERSIST_OVL
+#if !defined(USE_ALPHA_OVL)
 
 									if (pRGB->dwValue == OVERLAY_COLOR)
 									{
@@ -1522,7 +1517,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles, bool abForc
 										pRGB->rgbGreen = klMulDivU32(pRGB->rgbGreen, nCurBlend, 0xFF);
 										pRGB->rgbRed = klMulDivU32(pRGB->rgbRed, nCurBlend, 0xFF);
 										pRGB->rgbAlpha = nAllBlend;
-#ifdef PERSIST_OVL
+#if !defined(USE_ALPHA_OVL)
 									}
 
 #endif
@@ -1652,6 +1647,7 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 #endif
 
 	DestroyDragImageBits();
+
 #ifdef PERSIST_OVL
 	MoveDragWindow(FALSE);
 #else
@@ -1777,7 +1773,7 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 				GdiFlush();
 
 
-				#ifdef PERSIST_OVL
+				#if defined(PERSIST_OVL) && !defined(USE_ALPHA_OVL)
 				MyRgbQuad *pRGB = (MyRgbQuad*)pDst;
                 int nMaxY = (bih.biHeight > 0) ? bih.biHeight : -bih.biHeight;
                 int nMaxX = bih.biWidth;
@@ -1889,14 +1885,25 @@ BOOL CDragDropData::CreateDragImageWindow()
 	HWND hParent = ghWnd;
 	//hParent = GetForegroundWindow();
 
-#ifdef _DEBUG
-	#undef DRAGBITSTITLE
-	#define DRAGBITSTITLE gpConEmu->ms_ConEmuExe
-#endif
+	//#ifdef _DEBUG
+	//#undef DRAGBITSTITLE
+	//#define DRAGBITSTITLE gpConEmu->ms_ConEmuExe
+	//#endif
 	
 	// |WS_BORDER|WS_SYSMENU - создает проводник. попробуем?
 	//2009-08-20 [+] WS_EX_NOACTIVATE
-#ifdef PERSIST_OVL
+#if defined(USE_CHILD_OVL)
+	if (!ghWnd)
+	{
+		_ASSERTE(ghWnd!=NULL && "Must be created as child of ghWnd!");
+		return FALSE;
+	}
+	// WS_EX_TRANSPARENT does not fit for our drawing behavior?
+	mh_Overlapped = CreateWindowEx(0, DRAGBITSCLASS, DRAGBITSTITLE,
+						WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS,
+	                    -32000, -32000, nWidth, nHeight,
+	                    hParent, NULL, g_hInstance, (LPVOID)(CDragDropData*)this);
+#elif defined(PERSIST_OVL)
 	mh_Overlapped = CreateWindowEx(
 	                    WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_NOACTIVATE,
 	                    DRAGBITSCLASS, DRAGBITSTITLE, WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS/*|WS_BORDER|WS_SYSMENU*/,
@@ -1947,6 +1954,7 @@ void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 	if (!mh_Overlapped)
 	{
 		DEBUGSTRBACK(L"MoveDragWindow skipped, Overlay was not created\n");
+		ghWndDrag = NULL;
 		return;
 	}
 
@@ -1965,15 +1973,23 @@ void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 	if (abVisible)
 	{
 		GetCursorPos(&p);
+		#if defined(USE_CHILD_OVL)
+		MapWindowPoints(NULL, ghWnd, &p, 1);
+		#endif
 
 		if (mp_Bits)
 		{
 			p.x -= mp_Bits->nXCursor; p.y -= mp_Bits->nYCursor;
 		}
+
+		#if defined(USE_CHILD_OVL)
+		ghWndDrag = mh_Overlapped;
+		#endif
 	}
 	else
 	{
 		p.x = p.y = -32000;
+		ghWndDrag = NULL;
 	}
 
 	//POINT p2 = {0, 0};
@@ -1985,9 +2001,22 @@ void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 	}
 
 	static BOOL bLastVisible = FALSE;
+	#if defined(USE_CHILD_OVL)
+	SetWindowPos(mh_Overlapped, HWND_TOP, p.x, p.y, sz.cx, sz.cy, SWP_NOACTIVATE|SWP_NOCOPYBITS);
+	if (!IsWindowVisible(mh_Overlapped))
+	{
+		_ASSERTE(FALSE && "DragWindow must be visible");
+		apiShowWindow(mh_Overlapped, SW_SHOWNA);
+	}
+	#else
 	MoveWindow(mh_Overlapped, p.x, p.y, sz.cx, sz.cy, abVisible && (abVisible != bLastVisible));
+	#endif
 	bLastVisible = abVisible;
 #else
+	#if defined(USE_CHILD_OVL)
+		_ASSERTE(FALSE && "Must not be child in this mode!");
+	#endif
+
 	BLENDFUNCTION bf;
 	bf.BlendOp = AC_SRC_OVER;
 	bf.AlphaFormat = AC_SRC_ALPHA;
@@ -2014,6 +2043,7 @@ void CDragDropData::DestroyDragImageWindow()
 		DestroyWindow(mh_Overlapped);
 		mh_Overlapped = NULL;
 	}
+	ghWndDrag = NULL;
 }
 
 LRESULT CDragDropData::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -2038,6 +2068,10 @@ LRESULT CDragDropData::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPA
 	}
 
 #ifdef PERSIST_OVL
+	else if (messg == WM_ERASEBKGND)
+	{
+		return 1;
+	}
 	else if (messg == WM_PAINT)
 	{
 		CDragDropData *pDrag = (CDragDropData*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
@@ -2050,6 +2084,9 @@ LRESULT CDragDropData::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPA
 			if (hdc)
 			{
 				int nWidth = 0, nHeight = 0;
+
+				#if defined(USE_CHILD_OVL)
+				#endif
 
 				if (pDrag->mp_Bits)
 				{

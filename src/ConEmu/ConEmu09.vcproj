@@ -1690,6 +1690,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FindDlg.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FrameHolder.cpp"
 				>
 			</File>
@@ -2077,6 +2081,10 @@
 			</File>
 			<File
 				RelativePath="..\common\far3color.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FindDlg.h"
 				>
 			</File>
 			<File

@@ -317,7 +317,7 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 			{
 				// Просто отрисуем "консоль" на нашем DC
 				RECT rcPaint = m_TabSize.UsedRect;
-				mp_VCon->Paint(hdcMem, rcPaint);
+				mp_VCon->PaintVCon(hdcMem, rcPaint);
 			}
 
 			SelectObject(hdcMem, hOld);

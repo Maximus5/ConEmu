@@ -251,6 +251,25 @@ class MConHandle
 		DWORD     mn_StdMode;
 		HANDLE*   mpp_OutBuffer; // Устанавливается при SetConsoleActiveScreenBuffer
 
+		static const int HANDLE_BUFFER_SIZE = RELEASEDEBUGTEST(0x100,0x1000);   // Must be a power of 2
+		struct Event {
+			DWORD TID;
+			HANDLE h;
+			enum EventType {
+				e_Empty,
+				e_GetHandle,
+				e_CloseHandle,
+				e_CloseHandleStd,
+				e_CreateHandle,
+				e_CreateHandleStd,
+				e_GetHandlePtr,
+			} evt;
+			DEBUGTEST(DWORD time;)
+		};
+		Event m_log[HANDLE_BUFFER_SIZE];
+		LONG m_logidx;
+		void LogHandle(UINT evt, HANDLE h);
+
 	public:
 		operator const HANDLE();
 

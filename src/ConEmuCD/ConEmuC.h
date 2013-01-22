@@ -456,6 +456,7 @@ struct SrvInfo
 	ConEmuGuiMapping guiSettings;
 	CESERVER_REQ_CONINFO_FULL *pConsole;
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
+	MSection *csReadConsoleInfo;
 	// Input
 	HANDLE hInputThread;
 	DWORD dwInputThread; BOOL bInputTermination;
@@ -537,11 +538,13 @@ struct SrvInfo
 	void InitFields()
 	{
 		InitializeCriticalSection(&csColorerMappingCreate);
+		csReadConsoleInfo = new MSection();
 		AltServers.Init();
 	};
 	void FinalizeFields()
 	{
 		DeleteCriticalSection(&csColorerMappingCreate);
+		SafeDelete(csReadConsoleInfo);
 	};
 };
 

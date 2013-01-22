@@ -38,21 +38,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include <Tlhelp32.h>
+
 #include "../common/ConEmuCheck.h"
-#include "../common/RgnDetect.h"
 #include "../common/Execute.h"
-#include "RealBuffer.h"
-#include "RealConsole.h"
-#include "VirtualConsole.h"
-#include "TabBar.h"
+#include "../common/RgnDetect.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
-#include "VConChild.h"
 #include "ConEmuPipe.h"
+#include "FindDlg.h"
 #include "Macro.h"
-#include "Status.h"
 #include "Menu.h"
+#include "RealBuffer.h"
+#include "RealConsole.h"
+#include "Status.h"
+#include "TabBar.h"
 #include "TrayIcon.h"
+#include "VConChild.h"
+#include "VirtualConsole.h"
 
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
@@ -3974,7 +3976,7 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 			if (wParam == VK_ESCAPE)
 			{
-				if ((m_Type == rbt_Find) && gpSetCls->mh_FindDlg && IsWindow(gpSetCls->mh_FindDlg))
+				if ((m_Type == rbt_Find) && gpConEmu->mp_Find->mh_FindDlg && IsWindow(gpConEmu->mp_Find->mh_FindDlg))
 				{
 					break; // Пока висит диалог поиска - буфер не закрывать!
 				}

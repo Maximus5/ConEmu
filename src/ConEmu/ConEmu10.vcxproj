@@ -948,6 +948,7 @@
     <ClCompile Include="DragDrop.cpp" />
     <ClCompile Include="DragDropData.cpp" />
     <ClCompile Include="DwmHelper.cpp" />
+    <ClCompile Include="FindDlg.cpp" />
     <ClCompile Include="FrameHolder.cpp" />
     <ClCompile Include="GestureEngine.cpp" />
     <ClCompile Include="GuiServer.cpp" />
@@ -1003,6 +1004,7 @@
     <ClInclude Include="DragDropData.h" />
     <ClInclude Include="DwmHelper.h" />
     <ClInclude Include="..\common\far3color.h" />
+    <ClInclude Include="FindDlg.h" />
     <ClInclude Include="FrameHolder.h" />
     <ClInclude Include="GestureEngine.h" />
     <ClInclude Include="globals.h" />

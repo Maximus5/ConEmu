@@ -362,7 +362,7 @@ class CSettings
 		void debugLogInfo(HWND hWnd2, CESERVER_REQ_PEEKREADINFO* pInfo);
 		void debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTick, DWORD anDur, LPCWSTR asPipe, CESERVER_REQ* pResult = NULL);
 		//
-		void SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig, LPCWSTR pszCmdLine = NULL);
+		void SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig, LPCWSTR pszCmdLine = NULL, bool abOnResetReload = false);
 		void SettingsPreSave();
 		//void InitSettings();
 		//BOOL SaveSettings(BOOL abSilent = FALSE);
@@ -435,7 +435,7 @@ class CSettings
 	private:
 		static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh = false);
 	protected:
-		void OnResetOrReload(BOOL abResetSettings);
+		void OnResetOrReload(BOOL abResetOnly);
 		void SearchForControls();
 		// IDD_SETTINGS
 		LRESULT OnInitDialog();
@@ -499,11 +499,6 @@ class CSettings
 		bool mb_IgnoreSelPage;
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 		void UpdateComSpecUncSupport();
-	public:
-		void FindTextDialog();
-		static INT_PTR CALLBACK findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		void UpdateFindDlgAlpha(bool abForce = false);
-		HWND mh_FindDlg;
 	private:
 		bool GetColorById(WORD nID, COLORREF* color);
 		bool SetColorById(WORD nID, COLORREF color);

@@ -63,6 +63,7 @@ enum ConEmuWindowMode;
 class CDefaultTerminal;
 class CConEmuMenu;
 class CConEmuInside;
+struct CEFindDlg;
 
 
 struct MsgSrvStartedArg
@@ -180,6 +181,8 @@ class CConEmuMain :
 		CToolTip *mp_Tip;
 		MFileLog *mp_Log;
 		CDefaultTerminal *mp_DefTrm;
+		CEFindDlg *mp_Find;
+
 		void CreateLog();
 		void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
 		void LogString(LPCSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);

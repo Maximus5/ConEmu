@@ -307,7 +307,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			if (wParam && (lParam & PRF_CLIENT))
 			{
 				RECT rcClient = pVCon->GetDcClientRect();
-				pVCon->Paint((HDC)wParam, rcClient);
+				pVCon->PaintVCon((HDC)wParam, rcClient);
 			}
 			break;
 		case WM_SIZE:
@@ -904,7 +904,7 @@ LRESULT CConEmuChild::OnPaint()
 		UNREFERENCED_PARAMETER(hDc);
 
 		RECT rcClient = pVCon->GetDcClientRect();
-		pVCon->Paint(ps.hdc, rcClient);
+		pVCon->PaintVCon(ps.hdc, rcClient);
 
 		if (bRightClickingPaint)
 		{

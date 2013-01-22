@@ -87,7 +87,7 @@ wchar_t gszDbgModLabel[6] = {0};
 
 //externs
 HINSTANCE g_hInstance=NULL;
-HWND ghWnd=NULL, ghWndWork=NULL, ghWndApp=NULL;
+HWND ghWnd=NULL, ghWndWork=NULL, ghWndApp=NULL, ghWndDrag=NULL;
 // Если для ярлыка назначен shortcut - может случиться, что в главное окно он не дойдет
 WPARAM gnWndSetHotkey = 0, gnWndSetHotkeyOk = 0;
 #ifdef _DEBUG
@@ -1112,6 +1112,34 @@ int MessageBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND hP
 		lpText, lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
 
 	return nBtn;
+}
+
+void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine)
+{
+#ifdef _DEBUG
+	_ASSERTE(FALSE);
+#endif
+
+	int nRet = IDRETRY;
+
+	size_t cchMax = (szText ? _tcslen(szText) : 0) + (szFile ? _tcslen(szFile) : 0) + 100;
+	wchar_t* pszFull = (wchar_t*)malloc(cchMax*sizeof(*pszFull));
+
+	if (pszFull)
+	{
+		_wsprintf(pszFull, SKIPLEN(cchMax)
+			L"Assertion (%s) at\n%s:%i\n\nPress <Retry> to report a bug (web page)",
+			szText, szFile, nLine);
+
+		nRet = MessageBox(NULL, pszFull, gpConEmu->GetDefaultTitle(), MB_RETRYCANCEL|MB_ICONSTOP|MB_SYSTEMMODAL);
+
+		SafeFree(pszFull);
+	}
+
+	if (nRet == IDRETRY)
+	{
+		gpConEmu->OnInfo_ReportBug();
+	}
 }
 
 BOOL gbInDisplayLastError = FALSE;

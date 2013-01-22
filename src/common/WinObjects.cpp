@@ -2333,6 +2333,7 @@ MConHandle::MConHandle(LPCWSTR asName)
 	mh_Handle = INVALID_HANDLE_VALUE;
 	mpp_OutBuffer = NULL;
 	lstrcpynW(ms_Name, asName, 9);
+	m_logidx = -1;
 	/*
 	FAR2 последний
 	Conemu последний
@@ -2429,6 +2430,21 @@ MConHandle::MConHandle(LPCWSTR asName)
 	//}
 };
 
+#ifndef __GNUC__
+#include <intrin.h>
+#else
+#define _InterlockedIncrement InterlockedIncrement
+#endif
+
+void MConHandle::LogHandle(UINT evt, HANDLE h)
+{
+	LONG i = (_InterlockedIncrement(&m_logidx) & (HANDLE_BUFFER_SIZE - 1));
+	m_log[i].evt = (Event::EventType)evt;
+	DEBUGTEST(m_log[i].time = GetTickCount());
+	m_log[i].TID = GetCurrentThreadId();
+	m_log[i].h = h;
+}
+
 MConHandle::~MConHandle()
 {
 	Close();
@@ -2443,6 +2459,7 @@ MConHandle::operator const HANDLE()
 {
 	if (mpp_OutBuffer && *mpp_OutBuffer && (*mpp_OutBuffer != INVALID_HANDLE_VALUE))
 	{
+		LogHandle(Event::e_GetHandlePtr, *mpp_OutBuffer);
 		return *mpp_OutBuffer;
 	}
 
@@ -2451,61 +2468,66 @@ MConHandle::operator const HANDLE()
 		if (mn_StdMode)
 		{
 			mh_Handle = GetStdHandle(mn_StdMode);
-			return mh_Handle;
+			LogHandle(Event::e_CreateHandleStd, mh_Handle);
 		}
-
-		// Чтобы случайно не открыть хэндл несколько раз в разных потоках
-		MSectionLock CS; CS.Lock(&mcs_Handle, TRUE);
-
-		// Во время ожидания хэндл мог быт открыт в другом потоке
-		if (mh_Handle == INVALID_HANDLE_VALUE)
+		else
 		{
-			mh_Handle = CreateFileW(ms_Name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-			                        0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+			// Чтобы случайно не открыть хэндл несколько раз в разных потоках
+			MSectionLock CS; CS.Lock(&mcs_Handle, TRUE);
 
-			if (mh_Handle != INVALID_HANDLE_VALUE)
+			// Во время ожидания хэндл мог быт открыт в другом потоке
+			if (mh_Handle == INVALID_HANDLE_VALUE)
 			{
-				mb_OpenFailed = FALSE;
-			}
-			else
-			{
-				mn_LastError = GetLastError();
+				mh_Handle = CreateFileW(ms_Name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+										0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 
-				if (!mb_OpenFailed)
+				if (mh_Handle != INVALID_HANDLE_VALUE)
 				{
-					mb_OpenFailed = TRUE; // чтобы ошибка вываливалась только один раз!
-					char szErrMsg[512], szNameA[10], szSelfFull[MAX_PATH];
-					const char *pszSelf;
-					char *pszDot;
+					mb_OpenFailed = FALSE;
+				}
+				else
+				{
+					mn_LastError = GetLastError();
 
-					if (!GetModuleFileNameA(0,szSelfFull,MAX_PATH))
+					if (!mb_OpenFailed)
 					{
-						pszSelf = "???";
-					}
-					else
-					{
-						pszSelf = strrchr(szSelfFull, '\\');
-						if (pszSelf) pszSelf++; else pszSelf = szSelfFull;
+						mb_OpenFailed = TRUE; // чтобы ошибка вываливалась только один раз!
+						char szErrMsg[512], szNameA[10], szSelfFull[MAX_PATH];
+						const char *pszSelf;
+						char *pszDot;
 
-						pszDot = strrchr((char*)pszSelf, '.');
+						if (!GetModuleFileNameA(0,szSelfFull,MAX_PATH))
+						{
+							pszSelf = "???";
+						}
+						else
+						{
+							pszSelf = strrchr(szSelfFull, '\\');
+							if (pszSelf) pszSelf++; else pszSelf = szSelfFull;
 
-						if (pszDot) *pszDot = 0;
-					}
+							pszDot = strrchr((char*)pszSelf, '.');
 
-					WideCharToMultiByte(CP_OEMCP, 0, ms_Name, -1, szNameA, sizeof(szNameA), 0,0);
-					_wsprintfA(szErrMsg, SKIPLEN(countof(szErrMsg)) "%s: CreateFile(%s) failed, ErrCode=0x%08X\n", pszSelf, szNameA, mn_LastError);
-					HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+							if (pszDot) *pszDot = 0;
+						}
 
-					if (h && h!=INVALID_HANDLE_VALUE)
-					{
-						DWORD dwWritten = 0;
-						WriteFile(h, szErrMsg, lstrlenA(szErrMsg), &dwWritten, 0);
+						WideCharToMultiByte(CP_OEMCP, 0, ms_Name, -1, szNameA, sizeof(szNameA), 0,0);
+						_wsprintfA(szErrMsg, SKIPLEN(countof(szErrMsg)) "%s: CreateFile(%s) failed, ErrCode=0x%08X\n", pszSelf, szNameA, mn_LastError);
+						HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+
+						if (h && h!=INVALID_HANDLE_VALUE)
+						{
+							DWORD dwWritten = 0;
+							WriteFile(h, szErrMsg, lstrlenA(szErrMsg), &dwWritten, 0);
+						}
 					}
 				}
+
+				LogHandle(Event::e_CreateHandle, mh_Handle);
 			}
 		}
 	}
 
+	LogHandle(Event::e_GetHandle, mh_Handle);
 	return mh_Handle;
 };
 
@@ -2521,11 +2543,13 @@ void MConHandle::Close()
 	{
 		if (mn_StdMode)
 		{
+			LogHandle(Event::e_CloseHandleStd, mh_Handle);
 			mh_Handle = INVALID_HANDLE_VALUE;
 		}
 		else
 		{
 			HANDLE h = mh_Handle;
+			LogHandle(Event::e_CloseHandleStd, h);
 			mh_Handle = INVALID_HANDLE_VALUE;
 			mb_OpenFailed = FALSE;
 			CloseHandle(h);

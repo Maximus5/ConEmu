@@ -976,12 +976,12 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	if (!ExtGetBufferInfo(h, csbi, srWork))
 		return FALSE;
 
-	bool bWrap = true, bVirtualWrap = false;;
+	bool  bWrap = true, bVirtualWrap = false;;
 	SHORT WrapAtCol = csbi.dwSize.X; // 1-based
 	DWORD Mode = 0;
 
 	// "Working lines" may be defined (Vim and others)
-	SHORT ScrollTop, ScrollBottom;
+	LONG  ScrollTop, ScrollBottom;
 	bool  ScrollRegion = ((Info->Flags & ewtf_Region) != 0);
 	COORD crScrollCursor;
 	if (ScrollRegion)
@@ -1362,11 +1362,11 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 	{
 		if (nDir < 0)
 		{
-			 SrcLineTop = -nDir; SrcLineBottom = csbi.dwSize.Y - 1;
+			 SrcLineTop = srWork.Top + (-nDir); SrcLineBottom = csbi.dwSize.Y - 1;
 		}
 		else if (nDir > 0)
 		{
-			SrcLineTop = 0; SrcLineBottom = csbi.dwSize.Y - nDir - 1;
+			SrcLineTop = srWork.Top; SrcLineBottom = csbi.dwSize.Y - nDir - 1;
 		}
 	}
 

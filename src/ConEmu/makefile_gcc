@@ -12,6 +12,7 @@ SRCS =  \
 		DragDrop.cpp       \
 		DragDropData.cpp   \
 		DwmHelper.cpp      \
+		FindDlg.cpp        \
 		FrameHolder.cpp    \
 		GestureEngine.cpp  \
 		GuiServer.cpp      \

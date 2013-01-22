@@ -54,7 +54,7 @@ bool operator== (const CEFONT &a, const CEFONT &b)
 	case CEFONT_CUSTOM:
 		return a.pCustomFont == b.pCustomFont;
 	}
-	_ASSERT(0);
+	_ASSERTE(0);
 	return FALSE;
 }
 
@@ -541,7 +541,111 @@ HBRUSH CachedSolidBrush::Get(COLORREF c)
 
 // CEDC
 
-CEFONT CEDC::SelectObject(CEFONT font)
+CEDC::CEDC(HDC hDc)
+	: hDC(hDc)
+	, hBitmap(NULL)
+	, mh_OldBitmap(NULL)
+{
+	mb_ExtDc = (hDc != NULL);
+	Reset();
+}
+
+void CEDC::Reset()
+{
+	_ASSERTE(mb_ExtDc || (hDC == NULL && hBitmap == NULL));
+
+	mh_OldBitmap = NULL;
+	pPixels = NULL;
+	m_Font = CEFONT();
+	m_BkColor = CLR_INVALID;
+	m_TextColor = CLR_INVALID;
+	m_BkMode = -1;
+}
+
+void CEDC::DeleteDC()
+{
+	if (hDC)
+	{
+		if (mb_ExtDc)
+		{
+			_ASSERTEX(mh_OldBitmap==NULL);
+		}
+		else
+		{
+			if (mh_OldBitmap)
+				::SelectObject(hDC, mh_OldBitmap);
+			::DeleteDC(hDC);
+		}
+		hDC = NULL;
+	}
+
+	if (hBitmap)
+	{
+		DeleteObject(hBitmap); hBitmap = NULL;
+	}
+
+	Reset();
+}
+
+bool CEDC::CreateDC(UINT Width, UINT Height)
+{
+	DeleteDC();
+
+	const HDC hScreenDC = GetDC(NULL);
+	_ASSERTE(hScreenDC);
+
+	mb_ExtDc = false;
+
+	hDC = CreateCompatibleDC(hScreenDC);
+
+	if (hDC == NULL)
+	{
+		Assert((hDC!=NULL) && "CreateCompatibleDC failed!");
+
+		ReleaseDC(NULL, hScreenDC);
+		return false;
+	}
+
+
+	//**************************
+	//if (ghOpWnd)
+	//	gpConEmu->UpdateSizes();
+	//**************************
+
+	if (GetDeviceCaps(hScreenDC, BITSPIXEL) == 32)
+	{
+		// For custom font rendering
+		BITMAPINFO bmi;
+		bmi.bmiHeader.biSize        = sizeof(bmi.bmiHeader);
+		bmi.bmiHeader.biWidth       = Width;
+		bmi.bmiHeader.biHeight      = -Height;
+		bmi.bmiHeader.biPlanes      = 1;
+		bmi.bmiHeader.biBitCount    = 32;
+		bmi.bmiHeader.biCompression = BI_RGB;
+		void* pvBits;
+		hBitmap = CreateDIBSection(hDC, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0);
+		pPixels = (COLORREF*)pvBits;
+	}
+	else
+	{
+		hBitmap = CreateCompatibleBitmap(hScreenDC, Width, Height);
+		_ASSERTE(pPixels);
+	}
+
+	if (hBitmap)
+	{
+		iWidth = Width;
+		iHeight = Height;
+	}
+
+	mh_OldBitmap = (HBITMAP)::SelectObject(hDC, hBitmap);
+
+	ReleaseDC(0, hScreenDC);
+	
+	return (hBitmap!=NULL);
+}
+
+struct CEFONT CEDC::SelectObject(const struct CEFONT font)
 {
 	CEFONT oldFont = m_Font;
 	m_Font = font;
@@ -618,7 +722,7 @@ BOOL CEDC::ExtTextOut(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lp
 
 		return TRUE;
 	default:
-		_ASSERT(0);
+		_ASSERTE(0);
 		return FALSE;
 	}
 }
@@ -653,7 +757,7 @@ BOOL CEDC::ExtTextOutA(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lp
 		}
 	default:
 		{
-			_ASSERT(FALSE && "Invalid iType");
+			_ASSERTE(FALSE && "Invalid iType");
 		}
 	}
 	return lbRc;
@@ -670,7 +774,7 @@ BOOL CEDC::GetTextExtentPoint32(LPCTSTR ch, int c, LPSIZE sz)
 		m_Font.pCustomFont->GetBoundingBox(&sz->cx, &sz->cy);
 		return TRUE;
 	default:
-		_ASSERT(0);
+		_ASSERTE(0);
 		return FALSE;
 	}
 }

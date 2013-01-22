@@ -146,12 +146,19 @@ private:
 struct CEDC
 {
 	HDC hDC;
-	COLORREF* pPixels; LONG iWidth;
+	HBITMAP hBitmap;
+	COLORREF* pPixels;
+	LONG iWidth, iHeight;
 
-	CEDC(HDC hDC) : hDC(hDC), pPixels(NULL), m_Font(CEFONT()), m_BkColor(CLR_INVALID), m_TextColor(CLR_INVALID), m_BkMode(-1) {}
+	CEDC(HDC hDc);
+	//~CEDC(); -- it is caller responsibility
+
+	bool CreateDC(UINT Width, UINT Height);
+	void DeleteDC();
+
 	operator HDC() const { return hDC; }
 
-	CEFONT SelectObject(CEFONT font);
+	struct CEFONT SelectObject(const struct CEFONT font);
 	void SetTextColor(COLORREF color);
 	void SetBkColor(COLORREF color);
 	void SetBkMode( int iBkMode );
@@ -159,6 +166,10 @@ struct CEDC
 	BOOL ExtTextOutA(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lpString, UINT cbCount, const INT *lpDx);
 	BOOL GetTextExtentPoint32( LPCTSTR ch, int c, LPSIZE sz );
 private:
+	bool mb_ExtDc;
+	void Reset();
+
+	HBITMAP mh_OldBitmap;
 	CEFONT m_Font;
 	COLORREF m_BkColor, m_TextColor;
 	int m_BkMode;

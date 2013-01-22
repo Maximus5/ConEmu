@@ -87,8 +87,6 @@ const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed 
 #define SEARCH_CONTROL_TIMERID 102
 #define SEARCH_CONTROL_TIMEOUT 1500
 
-#define DEFAULT_FINDDLG_ALPHA 180
-
 #define UM_RELOAD_HERE_LIST (WM_USER+32)
 #define UM_RELOAD_AUTORUN   (WM_USER+33)
 
@@ -282,13 +280,17 @@ CSettings::CSettings()
 	//TODO: OLD - на переделку
 	memset(&LogFont, 0, sizeof(LogFont));
 	memset(&LogFont2, 0, sizeof(LogFont2));
+	mn_FontWidth = mn_BorderFontWidth = 0; mn_FontHeight = 16; // сброшено будет в SettingsLoaded
 	//gpSet->isFontAutoSize = false;
+	mb_Name1Ok = mb_Name2Ok = false;
 	mn_AutoFontWidth = mn_AutoFontHeight = -1;
 	isAllowDetach = 0;
 	mb_ThemingEnabled = (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1));
 	//isFullScreen = false;
 	isMonospaceSelected = 0;
 	//ZeroStruct(m_QuakePrevSize);
+
+	szSelectionModError[0] = 0;
 	
 	// Некоторые вещи нужно делать вне InitSettings, т.к. она может быть
 	// вызвана потом из интерфейса диалога настроек
@@ -312,8 +314,6 @@ CSettings::CSettings()
 		//gpConEmu->OnPanelViewSettingsChanged(FALSE);
 	}
 
-	mh_FindDlg = NULL;
-	
 	// Теперь установим умолчания настроек	
 	gpSet->InitSettings();
 	
@@ -396,8 +396,13 @@ CSettings::CSettings()
 	mh_EnumThread = NULL;
 	mh_CtlColorBrush = NULL;
 
+	m_HotKeys = NULL;
+	mp_ActiveHotKey = NULL;
+
 	// Горячие клавиши
 	InitVars_Hotkeys();
+
+	m_Pages = NULL;
 
 	// Вкладки-диалоги
 	InitVars_Pages();
@@ -405,7 +410,16 @@ CSettings::CSettings()
 
 void CSettings::InitVars_Hotkeys()
 {	
-	// Горячие клавиши
+	if (m_HotKeys)
+	{
+		for (size_t i = 0; m_HotKeys[i].DescrLangID; i++)
+		{
+			SafeFree(m_HotKeys[i].GuiMacro);
+		}
+		free(m_HotKeys);
+	}
+
+	// Горячие клавиши (умолчания)
 	m_HotKeys = gpSet->AllocateHotkeys();
 
 	mp_ActiveHotKey = NULL;
@@ -829,7 +843,7 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, ConfigName);
 }
 
-void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig, LPCWSTR pszCmdLine /*= NULL*/)
+void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig, LPCWSTR pszCmdLine /*= NULL*/, bool abOnResetReload /*= false*/)
 {
 	// Зовем "FastConfiguration" (перед созданием новой/чистой конфигурации)
 	if (abAllowFastConfig)
@@ -939,9 +953,27 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig,
 	
 	isMonospaceSelected = gpSet->isMonospace ? gpSet->isMonospace : 1; // запомнить, чтобы выбирать то что нужно при смене шрифта
 
+	if (abOnResetReload)
+	{
+		// Шрифт пере-создать сразу, его характеристики используются при ресайзе окна
+		RecreateFont((WORD)-1);
+	}
+	else
+	{
+		_ASSERTE(ghWnd==NULL);
+	}
+
 	// Стили окна
 	// Т.к. вызывается из Settings::LoadSettings() то проверка на валидность уже не нужно, оставим только ассерт
 	_ASSERTE(gpSet->_WindowMode == rNormal || gpSet->_WindowMode == rMaximized || gpSet->_WindowMode == rFullScreen);
+
+	if ((ghWnd == NULL) || abOnResetReload)
+	{
+		gpConEmu->wndX = gpSet->_wndX;
+		gpConEmu->wndY = gpSet->_wndY;
+		gpConEmu->wndWidth = gpSet->_wndWidth;
+		gpConEmu->wndHeight = gpSet->_wndHeight;
+	}
 
 	if (ghWnd == NULL)
 	{
@@ -950,14 +982,6 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig,
 	else
 	{
 		gpConEmu->SetWindowMode((ConEmuWindowMode)gpSet->_WindowMode);
-	}
-
-	if (ghWnd == NULL)
-	{
-		gpConEmu->wndX = gpSet->_wndX;
-		gpConEmu->wndY = gpSet->_wndY;
-		gpConEmu->wndWidth = gpSet->_wndWidth;
-		gpConEmu->wndHeight = gpSet->_wndHeight;
 	}
 
 	if (gpSet->wndCascade && (ghWnd == NULL))
@@ -7886,17 +7910,20 @@ void CSettings::OnClose()
 		gpConEmu->UnRegisterHooks();
 }
 
-void CSettings::OnResetOrReload(BOOL abResetSettings)
+void CSettings::OnResetOrReload(BOOL abResetOnly)
 {
 	BOOL lbWasPos = FALSE;
 	RECT rcWnd = {};
 	int nSel = -1;
 	
 	int nBtn = MessageBox(ghOpWnd,
-		abResetSettings ? L"Confirm reset settings to defaults" : L"Confirm reload settings from xml/registry",
+		abResetOnly ? L"Confirm reset settings to defaults" : L"Confirm reload settings from xml/registry",
 		gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2);
 	if (nBtn != IDYES)
 		return;
+
+	SetCursor(LoadCursor(NULL,IDC_WAIT));
+	gpConEmu->Taskbar_SetProgressState(TBPF_INDETERMINATE);
 	
 	if (ghOpWnd && IsWindow(ghOpWnd))
 	{
@@ -7907,24 +7934,29 @@ void CSettings::OnResetOrReload(BOOL abResetSettings)
 	}
 	_ASSERTE(ghOpWnd == NULL);
 	
-	
-	if (abResetSettings)
-	{
-		gpSet->InitSettings();
-	}
-	else
+	// Сброс настроек на умолчания
+	gpSet->InitSettings();
+
+	// Почистить макросы и сбросить на умолчания
+	InitVars_Hotkeys();
+
+	// Если надо - загрузить из реестра/xml
+	if (!abResetOnly)
 	{
 		bool bNeedCreateVanilla = false;
 		gpSet->LoadSettings(&bNeedCreateVanilla);
 	}
-	
-	RecreateFont(0);
+
+	SettingsLoaded(false, false, NULL, true);
 	
 	if (lbWasPos && !ghOpWnd)
 	{
 		Dialog();
 		TabCtrl_SetCurSel(GetDlgItem(ghOpWnd, tabMain), nSel);
 	}
+
+	SetCursor(LoadCursor(NULL,IDC_ARROW));
+	gpConEmu->Taskbar_SetProgressState(TBPF_NOPROGRESS);
 }
 
 // DlgProc для окна настроек (IDD_SETTINGS)
@@ -10491,11 +10523,13 @@ void CSettings::RecreateFont(WORD wFromID)
 	        || wFromID == rStandardAA
 	        || wFromID == rCTAA
 	  )
+	{
 		mb_IgnoreTtfChange = FALSE;
+	}
 
 	LOGFONT LF = {0};
 	
-	if (ghOpWnd == NULL)
+	if ((wFromID == (WORD)-1) || (ghOpWnd == NULL))
 	{
 		LF = LogFont;
 	}
@@ -10548,16 +10582,23 @@ void CSettings::RecreateFont(WORD wFromID)
 		CEFONT hOldF = mh_Font[0];
 		LogFont = LF;
 		mh_Font[0] = hf;
-		hOldF.Delete();
+		if (hOldF != hf)
+		{
+			hOldF.Delete();
+		}
 		SaveFontSizes(&LF, (mn_AutoFontWidth == -1), true);
-		gpConEmu->Update(true);
 
-		if (gpConEmu->WindowMode == wmNormal)
-			gpConEmu->SyncWindowToConsole(); // -- функция пустая, игнорируется
-		else
-			gpConEmu->SyncConsoleToWindow();
+		if (wFromID != (WORD)-1)
+		{
+			gpConEmu->Update(true);
 
-		gpConEmu->ReSize();
+			if (gpConEmu->WindowMode == wmNormal)
+				gpConEmu->SyncWindowToConsole(); // -- функция пустая, игнорируется
+			else
+				gpConEmu->SyncConsoleToWindow();
+
+			gpConEmu->ReSize();
+		}
 	}
 
 	if (ghOpWnd && wFromID == tFontFace)
@@ -10574,11 +10615,10 @@ void CSettings::RecreateFont(WORD wFromID)
 		ShowFontErrorTip(gpSetCls->szFontError);
 	}
 
-	//if (wFromID == rNoneAA || wFromID == rStandardAA || wFromID == rCTAA)
-	//{
-	gpConEmu->OnPanelViewSettingsChanged(TRUE);
-	//	//gpConEmu->UpdateGuiInfoMapping();
-	//}
+	if (gpConEmu->mn_StartupFinished == CConEmuMain::ss_Started)
+	{
+		gpConEmu->OnPanelViewSettingsChanged(TRUE);
+	}
 
 	mb_IgnoreTtfChange = TRUE;
 }
@@ -14176,183 +14216,4 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 	MCHKHEAP
 	return TRUE;
 	UNREFERENCED_PARAMETER(lpntm);
-}
-
-
-void CSettings::FindTextDialog()
-{
-	if (mh_FindDlg && IsWindow(mh_FindDlg))
-	{
-		SetForegroundWindow(mh_FindDlg);
-		return;
-	}
-
-	CVConGuard VCon;
-	CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
-
-	// Создаем диалог поиска только для консольных приложений
-	if (!pRCon || (pRCon->GuiWnd() && !pRCon->isBufferHeight()) || !pRCon->GetView())
-	{
-		//DisplayLastError(L"No RealConsole, nothing to find");
-		return;
-	}
-
-	gpConEmu->SkipOneAppsRelease(true);
-	
-	mh_FindDlg = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_FIND), ghWnd, findTextProc, 0/*Param*/);
-	if (!mh_FindDlg)
-	{
-		DisplayLastError(L"Can't create Find text dialog", GetLastError());
-	}
-}
-
-void CSettings::UpdateFindDlgAlpha(bool abForce)
-{
-	if (!mh_FindDlg)
-		return;
-
-	int nAlpha = 255;
-
-	if (gpSet->FindOptions.bTransparent)
-	{
-		POINT ptCur = {}; GetCursorPos(&ptCur);
-		RECT rcWnd = {}; GetWindowRect(mh_FindDlg, &rcWnd);
-
-		nAlpha = PtInRect(&rcWnd, ptCur) ? 254 : DEFAULT_FINDDLG_ALPHA;
-	}
-
-	static int nWasAlpha;
-	if (!abForce && (nWasAlpha == nAlpha))
-		return;
-
-	nWasAlpha = nAlpha;
-	gpConEmu->SetTransparent(mh_FindDlg, nAlpha);
-}
-
-INT_PTR CSettings::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-	switch (messg)
-	{
-		case WM_INITDIALOG:
-		{
-			gpSetCls->mh_FindDlg = hWnd2;
-			SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-			SendMessage(hWnd2, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
-			
-			#if 0
-			//if (IsDebuggerPresent())
-			if (!gpSet->isAlwaysOnTop)
-				SetWindowPos(hWnd2, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-			#endif
-
-			CVConGuard VCon;
-			CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
-			RECT rcWnd = {}; GetWindowRect(pRCon->GetView(), &rcWnd);
-			SetWindowPos(hWnd2, gpSet->isAlwaysOnTop ? HWND_TOPMOST : HWND_TOP,
-				rcWnd.left+gpSet->FontSizeY, rcWnd.top+gpSet->FontSizeY, 0,0,
-				SWP_NOSIZE);
-			gpSetCls->UpdateFindDlgAlpha(true);
-			SetTimer(hWnd2, 101, 1000, NULL);
-
-			SetClassLongPtr(hWnd2, GCLP_HICON, (LONG_PTR)hClassIcon);
-			SetDlgItemText(hWnd2, tFindText, gpSet->FindOptions.pszText ? gpSet->FindOptions.pszText : L"");
-			checkDlgButton(hWnd2, cbFindMatchCase, gpSet->FindOptions.bMatchCase);
-			checkDlgButton(hWnd2, cbFindWholeWords, gpSet->FindOptions.bMatchWholeWords);
-			checkDlgButton(hWnd2, cbFindFreezeConsole, gpSet->FindOptions.bFreezeConsole);
-			#if 0
-			checkDlgButton(hWnd2, cbFindHighlightAll, gpSet->FindOptions.bHighlightAll);
-			#endif
-			checkDlgButton(hWnd2, cbFindTransparent, gpSet->FindOptions.bTransparent);
-
-			if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
-				SendDlgItemMessage(hWnd2, tFindText, EM_SETSEL, 0, lstrlen(gpSet->FindOptions.pszText));
-
-			// Зовем всегда, чтобы инициализировать буфер для поиска как минимум
-			gpConEmu->DoFindText(0);
-			break;
-		}
-
-		//case WM_SYSCOMMAND:
-		//	if (LOWORD(wParam) == ID_ALWAYSONTOP)
-		//	{
-		//		BOOL lbOnTopNow = GetWindowLong(ghOpWnd, GWL_EXSTYLE) & WS_EX_TOPMOST;
-		//		SetWindowPos(ghOpWnd, lbOnTopNow ? HWND_NOTOPMOST : HWND_TOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
-		//		CheckMenuItem(GetSystemMenu(ghOpWnd, FALSE), ID_ALWAYSONTOP, MF_BYCOMMAND |
-		//		              (lbOnTopNow ? MF_UNCHECKED : MF_CHECKED));
-		//		SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, 0);
-		//		return 1;
-		//	}
-		//	break;
-
-		case WM_MOUSEMOVE:
-		case WM_NCMOUSEMOVE:
-		case WM_TIMER:
-			gpSetCls->UpdateFindDlgAlpha();
-			break;
-
-		case WM_COMMAND:
-			if (HIWORD(wParam) == BN_CLICKED)
-			{
-				int nDirection = 0;
-
-				switch (LOWORD(wParam))
-				{
-				case IDCLOSE:
-				case IDCANCEL:
-					DestroyWindow(hWnd2);
-					return 0;
-				case cbFindMatchCase:
-					gpSet->FindOptions.bMatchCase = IsChecked(hWnd2, cbFindMatchCase);
-					break;
-				case cbFindWholeWords:
-					gpSet->FindOptions.bMatchWholeWords = IsChecked(hWnd2, cbFindWholeWords);
-					break;
-				case cbFindFreezeConsole:
-					gpSet->FindOptions.bFreezeConsole = IsChecked(hWnd2, cbFindFreezeConsole);
-					break;
-				case cbFindHighlightAll:
-					gpSet->FindOptions.bHighlightAll = IsChecked(hWnd2, cbFindHighlightAll);
-					break;
-				case cbFindTransparent:
-					gpSet->FindOptions.bTransparent = IsChecked(hWnd2, cbFindTransparent);
-					gpSetCls->UpdateFindDlgAlpha(true);
-					return 0;
-				case cbFindNext:
-					nDirection = 1;
-					break;
-				case cbFindPrev:
-					nDirection = -1;
-					break;
-				default:
-					return 0;
-				}
-
-				if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
-					gpConEmu->DoFindText(nDirection);
-			}
-			else if (HIWORD(wParam) == EN_CHANGE || HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				MyGetDlgItemText(hWnd2, tFindText, gpSet->FindOptions.cchTextMax, gpSet->FindOptions.pszText);
-				if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
-					gpConEmu->DoFindText(0);
-			}
-			break;
-
-		case WM_CLOSE:
-			DestroyWindow(hWnd2);
-			break;
-
-		case WM_DESTROY:
-			KillTimer(hWnd2, 101);
-			gpSetCls->mh_FindDlg = NULL;
-			gpSet->SaveFindOptions();
-			gpConEmu->SkipOneAppsRelease(false);
-			gpConEmu->DoEndFindText();
-			break;
-
-		default:
-			return 0;
-	}
-
-	return 0;
 }

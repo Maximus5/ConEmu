@@ -42,6 +42,7 @@ $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
 $(INTDIR)\DwmHelper.obj \
 $(INTDIR)\Execute.obj \
+$(INTDIR)\FindDlg.obj \
 $(INTDIR)\FrameHolder.obj \
 $(INTDIR)\GestureEngine.obj \
 $(INTDIR)\GuiServer.obj \
@@ -240,7 +241,7 @@ $(INTDIR)\ConEmuApp.obj: ConEmuApp.cpp Version.h
 
 $(INTDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp
 
-$(INTDIR)\ConEmuCtrl.obj: ConEmuCtrl.cpp ConEmuCtrl.h
+$(INTDIR)\ConEmuCtrl.obj: ConEmuCtrl.cpp ConEmuCtrl.h FindDlg.h
 
 $(INTDIR)\ConEmuPipe.obj: ConEmuPipe.cpp
 
@@ -256,6 +257,8 @@ $(INTDIR)\DwmHelper.obj: DwmHelper.cpp DwmHelper.h
 
 $(INTDIR)\Execute.obj: ../common/execute.cpp ../common/execute.h
 
+$(INTDIR)\FindDlg.obj: FindDlg.cpp FindDlg.h
+
 $(INTDIR)\FrameHolder.obj: FrameHolder.cpp FrameHolder.h
 
 $(INTDIR)\GestureEngine.obj: GestureEngine.cpp GestureEngine.h
@@ -268,7 +271,7 @@ $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 
 $(INTDIR)\Macro.obj: Macro.cpp Macro.h
 
-$(INTDIR)\Menu.obj: Menu.cpp Menu.h MenuIds.h
+$(INTDIR)\Menu.obj: Menu.cpp Menu.h MenuIds.h FindDlg.h
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 

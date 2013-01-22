@@ -11,6 +11,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[*] Issue 899: Default position of «Find text» dialog is upper-right corner.
+[*] Some changes in Drag&Drop items drawing.
+[%] Bugfixes for Reload/Reset Settings (buttons in «Settings» dialog).
+
+
 2013.01.20
 [%] Settings in «Create new console» dialog was ignored for Tasks.
 [%] Issue 706: ConEmu Inside: You must use in Sync command "\1" and "\2" instead of "%1" and "%2".

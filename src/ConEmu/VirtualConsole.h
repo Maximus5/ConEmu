@@ -82,6 +82,7 @@ class CVirtualConsole :
 		bool LoadConsoleData();
 	private:
 		uint nMaxTextWidth, nMaxTextHeight; // размер в символах
+		uint LastPadSize;
 	private:
 		struct
 		{
@@ -110,8 +111,7 @@ class CVirtualConsole :
 		HDC GetIntDC();
 	private:
 		bool    mb_InUpdate;
-		CEDC    hDC;
-		HBITMAP hBitmap;
+		CEDC    m_DC;
 		HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
 		HBRUSH  CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COLORREF *pColors = NULL);
 		CEFONT  hSelectedFont, hOldFont;
@@ -285,7 +285,7 @@ class CVirtualConsole :
 		void BlitPictureTo(int inX, int inY, int inWidth, int inHeight, COLORREF crBack);
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
-		void Paint(HDC hPaintDc, RECT rcClient);
+		void PaintVCon(HDC hPaintDc, RECT rcClient);
 		void StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight);
 		void UpdateInfo();
 		//void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };

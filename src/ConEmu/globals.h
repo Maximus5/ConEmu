@@ -54,7 +54,7 @@ struct CEStartupEnv;
 extern CEStartupEnv* gpStartEnv;
 //extern TCHAR Title[0x400];
 //extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
-extern HWND ghWnd, ghWndWork, ghWndApp;
+extern HWND ghWnd, ghWndWork, ghWndApp, ghWndDrag;
 extern WPARAM gnWndSetHotkey, gnWndSetHotkeyOk;
 extern HWND ghOpWnd;
 #ifdef _DEBUG
@@ -125,3 +125,9 @@ extern BOOL bBlockDebugLog, bSendToDebugger, bSendToFile;
 
 extern HWND ghLastForegroundWindow;
 HWND getForegroundWindow();
+
+int MessageBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND hParent = NULL);
+void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine);
+
+#define Assert(V) if ((V)==FALSE) { AssertBox(_T(#V), _T(__FILE__), __LINE__); }
+#define AssertMsg(V) AssertBox(V, _T(__FILE__), __LINE__);

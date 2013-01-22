@@ -42,36 +42,37 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "About.h"
 #include <Tlhelp32.h>
 #include <Shlobj.h>
+#include "ShObjIdl_Part.h"
 //#include <lm.h>
 //#include "../common/ConEmuCheck.h"
-#include "VirtualConsole.h"
-#include "RealBuffer.h"
-#include "options.h"
-#include "DragDrop.h"
-#include "TrayIcon.h"
-#include "VConChild.h"
-#include "VConGroup.h"
-#include "GestureEngine.h"
+
+#include "../common/execute.h"
+#include "../ConEmuCD/GuiHooks.h"
+#include "../ConEmuCD/RegPrepare.h"
+#include "Attach.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
-#include "TabBar.h"
 #include "ConEmuPipe.h"
-#include "version.h"
-#include "Macro.h"
-#include "Attach.h"
-#include "Recreate.h"
-#include "Update.h"
-#include "LoadImg.h"
-#include "Status.h"
-#include "Menu.h"
-#include "Inside.h"
 #include "DefaultTerm.h"
-#include "../ConEmuCD/RegPrepare.h"
-#include "../ConEmuCD/GuiHooks.h"
-#include "../common/execute.h"
-//#ifdef __GNUC__
-#include "ShObjIdl_Part.h"
-//#endif
+#include "DragDrop.h"
+#include "FindDlg.h"
+#include "GestureEngine.h"
+#include "Inside.h"
+#include "LoadImg.h"
+#include "Macro.h"
+#include "Menu.h"
+#include "options.h"
+#include "RealBuffer.h"
+#include "Recreate.h"
+#include "Status.h"
+#include "TabBar.h"
+#include "TrayIcon.h"
+#include "Update.h"
+#include "VConChild.h"
+#include "VConGroup.h"
+#include "version.h"
+#include "VirtualConsole.h"
+
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
@@ -278,6 +279,7 @@ CConEmuMain::CConEmuMain()
 	mp_Status = new CStatus;
 	mp_DefTrm = new CDefaultTerminal;
 	mp_Inside = NULL;
+	mp_Find = new CEFindDlg;
 	
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE;
 	mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = false; mn_ConEmuAliveEventErr = 0;
@@ -8953,7 +8955,7 @@ void CConEmuMain::InvalidateGaps()
 //	}
 //
 //	// если mp_ VActive==NULL - будет просто выполнена заливка фоном.
-//	mp_ VActive->Paint(hPaintDC, rcClient);
+//	mp_ VActive->PaintVCon(hPaintDC, rcClient);
 //
 //#ifdef _DEBUG
 //	if ((GetKeyState(VK_SCROLL) & 1) && (GetKeyState(VK_CAPITAL) & 1))
@@ -8972,7 +8974,7 @@ void CConEmuMain::InvalidateGaps()
 //	gpConEmu->mp_TabBar->RePaint();
 //	//m_Back->RePaint();
 //	HDC hDc = GetDC(ghWnd);
-//	//mp_ VActive->Paint(hDc); // если mp_ VActive==NULL - будет просто выполнена заливка фоном.
+//	//mp_ VActive->PaintVCon(hDc); // если mp_ VActive==NULL - будет просто выполнена заливка фоном.
 //	PaintGaps(hDc);
 //	//PaintCon(hDc);
 //	ReleaseDC(ghWnd, hDc);
@@ -9254,7 +9256,7 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 					//((h == ghOpWnd)
 					//|| (mp_AttachDlg && (mp_AttachDlg->GetHWND() == h))
 					//|| (mp_RecreateDlg && (mp_RecreateDlg->GetHWND() == h))
-					//|| (gpSetCls->mh_FindDlg == h)))
+					//|| (mp_Find->mh_FindDlg == h)))
 				|| (mp_Inside && (h == mp_Inside->mh_InsideParentRoot)))
 			;
 
@@ -13531,7 +13533,7 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 
 	mouse.lastMMW=wParam; mouse.lastMML=lParam;
 
-	gpSetCls->UpdateFindDlgAlpha();
+	mp_Find->UpdateFindDlgAlpha();
 
 	// мог не сброситься, проверим
 	isSizing();
@@ -15824,7 +15826,7 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 		// и принудительно перерисовывается. Если в этот момент видим диалог настроек - он затирается.
 		if (bNeedRedrawOp)
 		{
-			HWND hWindows[] = {ghOpWnd, (mp_AttachDlg ? mp_AttachDlg->GetHWND() : NULL), gpSetCls->mh_FindDlg};
+			HWND hWindows[] = {ghOpWnd, (mp_AttachDlg ? mp_AttachDlg->GetHWND() : NULL), mp_Find->mh_FindDlg};
 			for (size_t i = 0; i < countof(hWindows); i++)
 			{
 				if (hWindows[i] && (hWindows[i] != ahWnd) && IsWindow(hWindows[i]))
@@ -16091,7 +16093,7 @@ BOOL CConEmuMain::isDialogMessage(MSG &Msg)
 			lbDlgMsg = IsDialogMessage(hDlg, &Msg);
 	}
 
-	if (!lbDlgMsg && (hDlg = gpSetCls->mh_FindDlg))
+	if (!lbDlgMsg && (hDlg = mp_Find->mh_FindDlg))
 	{
 		if (IsWindow(hDlg))
 			lbDlgMsg = IsDialogMessage(hDlg, &Msg);

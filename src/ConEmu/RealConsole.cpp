@@ -1215,7 +1215,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 	MSG64* pirChars = (MSG64*)malloc(sizeof(MSG64)+cchCount*2*sizeof(MSG64::MsgStr));
 	if (!pirChars)
 	{
-		Box(L"Can't allocate (INPUT_RECORD* pirChars)!");
+		AssertMsg(L"Can't allocate (INPUT_RECORD* pirChars)!");
 		return false;
 	}
 
@@ -2356,7 +2356,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			_ASSERTE(FALSE);
 			#endif
 
-			pRCon->Box(_T("Exception triggered in CRealConsole::MonitorThread"));
+			AssertMsg(L"Exception triggered in CRealConsole::MonitorThread");
 		}
 
 		//if (bActive)
@@ -4239,18 +4239,18 @@ void CRealConsole::StopThread(BOOL abRecreating)
 }
 
 
-void CRealConsole::Box(LPCTSTR szText, DWORD nBtns)
-{
-#ifdef _DEBUG
-	_ASSERTE(FALSE);
-#endif
-	int nRet = MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), nBtns|MB_ICONSTOP|MB_SYSTEMMODAL);
-
-	if ((nBtns & 0xF) == MB_RETRYCANCEL)
-	{
-		gpConEmu->OnInfo_ReportBug();
-	}
-}
+//void CRealConsole::Box(LPCTSTR szText, DWORD nBtns)
+//{
+//#ifdef _DEBUG
+//	_ASSERTE(FALSE);
+//#endif
+//	int nRet = MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), nBtns|MB_ICONSTOP|MB_SYSTEMMODAL);
+//
+//	if ((nBtns & 0xF) == MB_RETRYCANCEL)
+//	{
+//		gpConEmu->OnInfo_ReportBug();
+//	}
+//}
 
 bool CRealConsole::InScroll()
 {
@@ -5986,6 +5986,10 @@ void CRealConsole::ChildSystemMenu()
 	if (!this || !hGuiWnd)
 		return;
 
+	//Seems like we need to bring focus to ConEmu window before
+	SetForegroundWindow(ghWnd);
+	gpConEmu->setFocus();
+
 	//PostConsoleMessage(hGuiWnd, WM_SYSCOMMAND, SC_KEYMENU, 0);
 	HMENU hSysMenu = GetSystemMenu(hGuiWnd, FALSE);
 	if (hSysMenu)
@@ -6669,13 +6673,13 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 
 	if ((!hConWnd || !mh_MainSrv) && !isDetached())
 	{
-		Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
+		AssertMsg(L"Console was not created (CRealConsole::SetConsoleSize)");
 		return false; // консоль пока не создана?
 	}
 
 	if (mn_InRecreate)
 	{
-		Box(_T("Console already in recreate..."));
+		AssertMsg(L"Console already in recreate...");
 		return false;
 	}
 
@@ -6692,7 +6696,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 
 	if (!bCopied)
 	{
-		Box(_T("Failed to copy args (CRealConsole::RecreateProcess)"));
+		AssertMsg(L"Failed to copy args (CRealConsole::RecreateProcess)");
 		return false;
 	}
 

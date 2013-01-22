@@ -232,6 +232,7 @@ BEGIN
     vkAltEnter              "Full screen"
     vkAltF9                 "Maximize/restore"
     vkAlwaysOnTop           "Switch «Always on top» window mode"
+    vkChildSystemMenu       "Child GUI window system menu (PuTTY, Notepad, etc.)"
     vkCloseConEmu           "Close all tabs (same as «Cross» click)"
     vkCloseTab              "Close current tab"
     vkCloseGroup            "Close tabs of the active group"
