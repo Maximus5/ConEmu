@@ -366,10 +366,15 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			GetWindowRect(hDlg, &rect);
 			RECT rcParent;
 			GetWindowRect(pDlg->mh_Parent, &rcParent);
-			MoveWindow(hDlg,
-			           (rcParent.left+rcParent.right-rect.right+rect.left)/2,
-			           (rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2,
-			           rect.right - rect.left, rect.bottom - rect.top, false);
+
+			// Ensure, it will be "on screen"
+			RECT rcFix = {(rcParent.left+rcParent.right-rect.right+rect.left)/2,
+				(rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2};
+			rcFix.right = rcFix.left + (rect.right - rect.left);
+			rcFix.bottom = rcFix.top + (rect.bottom - rect.top);
+			gpConEmu->FixWindowRect(rcFix, 0, true);
+
+			MoveWindow(hDlg, rcFix.left, rcFix.top, rcFix.right-rcFix.left, rcFix.bottom-rcFix.top, false);
 
 			PostMessage(hDlg, (WM_APP+1), 0,0);
 

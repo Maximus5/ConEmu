@@ -462,3 +462,6 @@ enum ToolbarCommandIdx
 bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval);
 #define LockFrequentExecute(Interval) static DWORD LastExecuteTick; if (CheckLockFrequentExecute(LastExecuteTick,Interval))
 
+extern const wchar_t* gsHomePage;  // = L"http://conemu-maximus5.googlecode.com";
+extern const wchar_t* gsReportBug; // = L"http://code.google.com/p/conemu-maximus5/issues/entry";
+extern const wchar_t* gsWhatsNew;  // = L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";

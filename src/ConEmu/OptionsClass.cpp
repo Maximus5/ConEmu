@@ -7252,18 +7252,23 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			BYTE vk = 0;
 			GetListBoxByte(hWnd2,lbHotKeyMod1+i,SettingsNS::szModifiers,SettingsNS::nModifiers,vk);
 			BYTE vkChange = vk;
-			switch (vk)
-			{
-			case VK_APPS:
-				vkChange = 0; break;
-			case VK_LMENU: case VK_RMENU:
-				vkChange = VK_MENU; break;
-			case VK_LCONTROL: case VK_RCONTROL:
-				vkChange = VK_CONTROL; break;
-			case VK_LSHIFT: case VK_RSHIFT:
-				vkChange = VK_SHIFT; break;
-			}
+
 			// Некоторые модификаторы НЕ допустимы при регистрации глобальных хоткеев (ограничения WinAPI)
+			if (mp_ActiveHotKey && (mp_ActiveHotKey->HkType == chk_Global || mp_ActiveHotKey->HkType == chk_Local))
+			{
+				switch (vk)
+				{
+				case VK_APPS:
+					vkChange = 0; break;
+				case VK_LMENU: case VK_RMENU:
+					vkChange = VK_MENU; break;
+				case VK_LCONTROL: case VK_RCONTROL:
+					vkChange = VK_CONTROL; break;
+				case VK_LSHIFT: case VK_RSHIFT:
+					vkChange = VK_SHIFT; break;
+				}
+			}
+			
 			if (vkChange != vk)
 			{
 				vk = vkChange;

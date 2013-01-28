@@ -59,7 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTROVL(s) //DEBUGSTR(s)
 #define DEBUGSTRBACK(s) //DEBUGSTR(s)
-#define DEBUGSTRFAR(s) DEBUGSTR(s)
+#define DEBUGSTRFAR(s) //DEBUGSTR(s)
 
 #ifdef _DEBUG
 	#define DEBUG_DUMP_IMAGE
@@ -94,6 +94,10 @@ CDragDropData::CDragDropData()
 	mp_TargetHelper = NULL;
 	mb_TargetHelperFailed = false;
 	#endif
+	#ifdef USE_DRAG_HELPER
+	mp_SourceHelper = NULL;
+	mb_SourceHelperFailed = false;
+	#endif
 	mb_selfdrag = false;
 	mb_IsUpdatePackage = false;
 	mpsz_UpdatePackage = NULL;
@@ -106,6 +110,14 @@ CDragDropData::~CDragDropData()
 	{
 		mp_TargetHelper->Release();
 		mp_TargetHelper = NULL;
+	}
+	#endif
+
+	#ifdef USE_DRAG_HELPER
+	if (mp_SourceHelper)
+	{
+		mp_SourceHelper->Release();
+		mp_SourceHelper = NULL;
 	}
 	#endif
 
@@ -162,9 +174,27 @@ BOOL CDragDropData::Register()
 	//}
 #endif
 
+#ifdef USE_DRAG_HELPER
+	 mb_SourceHelperFailed = false;
+#endif
+
 	lbRc = TRUE;
 wrap:
 	return lbRc;
+}
+
+bool CDragDropData::IsDragImageOsSupported()
+{
+	if (gnOsVer >= 0x601/*Windows7*/)
+	{
+		// в Windows 7 вроде бы только при включенном Aero (Glass) работают DragImage
+		// или это при включении "Classic Theme"?
+		//if (!gpConEmu->IsDwm())
+		if (!gpConEmu->IsThemed())
+			return false;
+	}
+
+	return true;
 }
 
 bool CDragDropData::UseTargetHelper(bool abSelfDrag)
@@ -179,13 +209,9 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 	HRESULT hr = 0;
 	
 	#ifdef USE_DROP_HELPER
-	if (gnOsVer >= 0x601/*Windows7*/)
+	if (!IsDragImageOsSupported())
 	{
-		// в Windows 7 вроде бы только при включенном Aero (Glass) работают DragImage
-		// или это при включении "Classic Theme"?
-		//if (!gpConEmu->IsDwm())
-		if (!gpConEmu->IsThemed())
-			return false;
+		return false;
 	}
 
     //if (mp_TargetHelper && !abSelfDrag)
@@ -193,7 +219,9 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 
 	//HRESULT hr = S_FALSE;
 
+	#ifndef USE_DRAG_HELPER
 	if (!abSelfDrag)
+	#endif
 	{
 		if (!mp_TargetHelper)
 		{
@@ -217,6 +245,50 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 
     UNREFERENCED_PARAMETER(hr);
     return lbCanUseHelper;
+}
+
+// Это ТОЛЬКО при "своем" драге
+bool CDragDropData::UseSourceHelper()
+{
+#ifndef USE_DRAG_HELPER
+	return false;
+#else
+	if (mb_SourceHelperFailed)
+	{
+		// Если один раз helper обломался - второй не просить
+		return false;
+	}
+
+	bool lbCanUseHelper = false;
+	HRESULT hr = 0;
+	
+	#ifdef USE_DROP_HELPER
+	if (!IsDragImageOsSupported())
+	{
+		return false;
+	}
+
+	if (!mp_SourceHelper)
+	{
+		IUnknown* pHelper = NULL;
+		hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
+		if (SUCCEEDED(hr) && pHelper)
+		{
+			hr = pHelper->QueryInterface(IID_IDragSourceHelper, (void**)&mp_SourceHelper);
+			pHelper->Release();
+			pHelper = NULL;
+		}
+	}
+
+	if (!mp_SourceHelper)
+		mb_SourceHelperFailed = true;
+	else
+		lbCanUseHelper = true;
+    #endif
+
+    UNREFERENCED_PARAMETER(hr);
+    return lbCanUseHelper;
+#endif
 }
 
 // -1 - ошибка
@@ -348,19 +420,8 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 
 BOOL CDragDropData::AddFmt_FileNameW(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
 {
-	HGLOBAL file_nameW = NULL;
-	file_nameW = GlobalAlloc(GPTR, cbSize);
-	memcpy(((WCHAR*)file_nameW), pszDraggedPath, cbSize);
-	FORMATETC       fmtetc[] =
-	{
-		{ RegisterClipboardFormat(L"FileNameW"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }
-	};
-	STGMEDIUM       stgmed[] =
-	{
-		{ TYMED_HGLOBAL, { (HBITMAP)file_nameW }, 0 }
-	};
-	mp_DataObject->SetData(fmtetc, stgmed, TRUE);
-	return (file_nameW!=NULL);
+	HRESULT hr = mp_DataObject->SetDataInt(L"FileNameW", pszDraggedPath, cbSize);
+	return SUCCEEDED(hr);
 }
 
 BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
@@ -466,19 +527,10 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	}
 
 	// Добавляем
-	{
-		FORMATETC       fmtetc[] =
-		{
-			{ RegisterClipboardFormat(CFSTR_SHELLIDLIST), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL},
-		};
-		STGMEDIUM       stgmed[] =
-		{
-			{ TYMED_HGLOBAL, { (HBITMAP)file_PIDLs }, 0 }
-		};
-		mp_DataObject->SetData(fmtetc, stgmed, TRUE);
-		lbAdded = TRUE;
-		file_PIDLs = NULL;
-	}
+	mp_DataObject->SetDataInt(CFSTR_SHELLIDLIST, file_PIDLs);
+	lbAdded = TRUE;
+	file_PIDLs = NULL;
+
 wrap:
 
 	if (pDesktop) { pDesktop->Release(); pDesktop = NULL; }
@@ -490,41 +542,25 @@ wrap:
 
 BOOL CDragDropData::AddFmt_PREFERREDDROPEFFECT(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
 {
-	HGLOBAL drop_preferredeffect = GlobalAlloc(GPTR, sizeof(DWORD));
+	DWORD drop_preferredeffect;
 
 	if (gpConEmu->mouse.state & DRAG_R_STARTED)
-		*((DWORD*)drop_preferredeffect) = DROPEFFECT_LINK;
+		drop_preferredeffect = DROPEFFECT_LINK;
 	else if (gpSet->isDefCopy)
-		*((DWORD*)drop_preferredeffect) = DROPEFFECT_COPY;
+		drop_preferredeffect = DROPEFFECT_COPY;
 	else
-		*((DWORD*)drop_preferredeffect) = DROPEFFECT_MOVE;
+		drop_preferredeffect = DROPEFFECT_MOVE;
 
-	FORMATETC       fmtetc[] =
-	{
-		{ RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
-	};
-	STGMEDIUM       stgmed[] =
-	{
-		{ TYMED_HGLOBAL, { (HBITMAP)drop_preferredeffect }, 0 },
-	};
-	mp_DataObject->SetData(fmtetc, stgmed, TRUE);
-	return TRUE;
+	HRESULT hr = mp_DataObject->SetDataInt(CFSTR_PREFERREDDROPEFFECT, &drop_preferredeffect, sizeof(drop_preferredeffect));
+
+	return SUCCEEDED(hr);
 }
 
 BOOL CDragDropData::AddFmt_InShellDragLoop(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
 {
-	HGLOBAL drag_loop = GlobalAlloc(GPTR, sizeof(DWORD));
-	*((DWORD*)drag_loop) = 1;
-	FORMATETC       fmtetc[] =
-	{
-		{ RegisterClipboardFormat(L"InShellDragLoop"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
-	};
-	STGMEDIUM       stgmed[] =
-	{
-		{ TYMED_HGLOBAL, { (HBITMAP)drag_loop }, 0 },
-	};
-	mp_DataObject->SetData(fmtetc, stgmed, TRUE);
-	return TRUE;
+	DWORD drag_loop = 1;
+	HRESULT hr = mp_DataObject->SetDataInt(L"InShellDragLoop", &drag_loop, sizeof(drag_loop));
+	return SUCCEEDED(hr);
 }
 
 BOOL CDragDropData::AddFmt_HDROP(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
@@ -564,16 +600,96 @@ BOOL CDragDropData::AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCou
 	if (!pDragBits)
 		return FALSE;
 
-	FORMATETC       fmtetc[] =
+	//if (SUCCEEDED(hr))
 	{
-		{ RegisterClipboardFormat(L"DragImageBits"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
-	};
-	STGMEDIUM       stgmed[] =
+		DWORD nData;
+		struct DwordData {
+			LPCWSTR sClipName;
+			DWORD   nValue;
+		} DragOptions[] = {
+			// TRUE -- вызовет "создание/отрисовку" стандартной иконки винды
+			{L"UsingDefaultDragImage", TRUE},
+			// Флаги (Undocumented)
+			{L"DragSourceHelperFlags", 1},
+			// IsComputingImage
+			{L"IsComputingImage", 0},
+			// ComputedDragImage
+			//{L"ComputedDragImage", 1},
+			// IsShowingLayered
+			//{L"IsShowingLayered", 0},
+			// IsShowingText
+			{L"IsShowingText", 1},
+			// DisableDragText
+			{L"DisableDragText", 0},
+
+			// End
+			{NULL}
+		};
+
+		HRESULT hrTest = S_OK;
+
+		for (size_t i = 0; DragOptions[i].sClipName; i++)
+		{
+			hrTest = mp_DataObject->SetDataInt(DragOptions[i].sClipName, &DragOptions[i].nValue, sizeof(nData));
+		}
+
+		if (gOSVer.dwMajorVersion >= 6)
+		{
+			// DropDescription: CFSTR_DROPDESCRIPTION, DROPDESCRIPTION, DROPIMAGETYPE
+			/*
+			pszData = L"ConEmu DropDescription";
+			hr = mp_DataObject->SetDataInt(L"DropDescription", pszData, (_tcslen(pszData)+1)*sizeof(*pszData));
+			*/
+			DROPDESCRIPTION desc = {DROPIMAGE_INVALID};
+			#ifdef _DEBUG
+			wcscpy_c(desc.szInsert, L"Kudato");
+			wcscpy_c(desc.szMessage, L"Dragging %1");
+			#endif
+			hrTest = mp_DataObject->SetDataInt(CFSTR_DROPDESCRIPTION, &desc, sizeof(desc));
+		}
+
+		UNREFERENCED_PARAMETER(hrTest);
+	}
+
+	HRESULT hr = E_FAIL;
+
+#if defined(USE_DRAG_HELPER)
+	if (UseSourceHelper())
 	{
-		{ TYMED_HGLOBAL, { (HBITMAP)pDragBits }, 0 },
-	};
-	mp_DataObject->SetData(fmtetc, stgmed, TRUE);
-	return TRUE;
+		//TODO: Need GCC check!
+		SHDRAGIMAGE info = {
+			{pDragBits->nWidth, pDragBits->nHeight},
+			{pDragBits->nXCursor, pDragBits->nYCursor},
+			mh_BitsBMP,
+			// The color used by the control to fill the background of the drag image.
+			#if defined(USE_ALPHA_OVL)
+			0
+			#else
+			OVERLAY_COLOR
+			#endif
+		};
+
+		#ifdef _DEBUG
+		bool bDraw = false;
+		if (bDraw)
+		{
+			HDC hDc = GetWindowDC(ghWnd);
+			BitBlt(hDc, 50,100, pDragBits->nWidth, pDragBits->nHeight, mh_BitsDC, 0,0, SRCCOPY);
+			ReleaseDC(ghWnd, hDc);
+			GdiFlush();
+		}
+		#endif
+
+		hr = mp_SourceHelper->InitializeFromBitmap(&info, mp_DataObject);
+	}
+#endif
+
+	if (FAILED(hr))
+	{
+		hr = mp_DataObject->SetDataInt(L"DragImageBits", pDragBits);
+	}
+
+	return SUCCEEDED(hr);
 }
 
 // Загрузить из фара информацию для Drag
@@ -625,13 +741,15 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	AddFmt_HDROP(szDraggedPath, nFilesCount, size);
 	AddFmt_PREFERREDDROPEFFECT(szDraggedPath, nFilesCount, size);
 	AddFmt_InShellDragLoop(szDraggedPath, nFilesCount, size);
-	AddFmt_DragImageBits(szDraggedPath, nFilesCount, size);
 
 	// Эти шли последними
 	if (AddFmt_SHELLIDLIST(szDraggedPath, nFilesCount, size))
 		*pdwAllowedEffects |= DROPEFFECT_LINK;
 
 	AddFmt_FileNameW(szDraggedPath, nFilesCount, size);
+
+	AddFmt_DragImageBits(szDraggedPath, nFilesCount, size);
+
 	MCHKHEAP
 	//Освободить память, больше не нужно
 	delete szDraggedPath; szDraggedPath=NULL;
@@ -1276,7 +1394,7 @@ void CDragDropData::RetrieveDragToInfo(POINTL pt)
 
 BOOL CDragDropData::CreateDragImageBits(IDataObject * pDataObject)
 {
-	MBoxAssert(L"CreateDragImageBits(IDataObject) - NOT IMPLEMENTED\n");
+	AssertMsg(L"CreateDragImageBits(IDataObject) - NOT IMPLEMENTED\n");
 	return FALSE;
 }
 
@@ -1311,7 +1429,7 @@ bool CDragDropData::AllocDragImageBits()
 }
 
 // Result Must be GlobalAlloc'ed
-DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles, bool abForceToTop /*= true*/)
+DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 {
 	if (!pszFiles)
 	{
@@ -1464,17 +1582,33 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles, bool abForc
 				bih.biWidth = nLineX;
 				bih.biHeight = nMaxY;
 				bih.biPlanes = 1;
-				bih.biBitCount = 24;
+				bih.biBitCount = 32;
 				bih.biCompression = BI_RGB;
-				LPBYTE pSrc = NULL;
+				MyRgbQuad* pSrc = NULL;
 				HBITMAP hBitsBitmap = CreateDIBSection(hScreenDC, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pSrc, NULL, 0);
+
+				DragImageBits* pDst = NULL;
+				bool UseDragHelper = false;
 
 				if (hBitsBitmap)
 				{
 					HBITMAP hOldBitsBitmap = (HBITMAP)SelectObject(hBitsDC, hBitsBitmap);
 					BitBlt(hBitsDC, 0,0,nLineX,nMaxY, hDrawDC,0,0, SRCCOPY);
 					GdiFlush();
-					DragImageBits* pDst = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits) + (nLineX*nMaxY - 1)*sizeof(RGBQUAD));
+
+					#if defined(USE_DRAG_HELPER)
+					{
+						// Local, use DragHelper
+						pDst = (DragImageBits*)calloc(sizeof(DragImageBits),1);
+						UseDragHelper = true;
+					}
+					#else
+					{
+						pDst = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits) + (nLineX*nMaxY - 1)*sizeof(RGBQUAD));
+						UseDragHelper = false;
+					}
+					#endif
+
 
 					if (pDst)
 					{
@@ -1489,21 +1623,56 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles, bool abForc
 						pDst->nYCursor = 17; // под первой строкой
 						pDst->nRes1 = GetTickCount(); // что-то непонятное. Random?
 						pDst->nRes2 = (DWORD)-1;
-						MyRgbQuad *pRGB = (MyRgbQuad*)pDst->pix;
 
-						u32 nCurBlend = OVERLAY_ALPHA, nAllBlend = OVERLAY_ALPHA;
+						const u32 nCurBlend = OVERLAY_ALPHA, nAllBlend = OVERLAY_ALPHA;
 
-						for (int y = 0; y < nMaxY; y++)
+						INT_PTR PixCount = nMaxY * nLineX;
+						Assert(PixCount>0);
+
+						#if defined(USE_DRAG_HELPER)
 						{
-							for (int x = 0; x < nLineX; x++)
-							{
-								pRGB->rgbBlue = *(pSrc++);
-								pRGB->rgbGreen = *(pSrc++);
-								pRGB->rgbRed = *(pSrc++);
+							MyRgbQuad *pRGB = pSrc;
 
+							for (INT_PTR i = PixCount; i--;)
+							{
 								if (pRGB->dwValue)
 								{
-#if !defined(USE_ALPHA_OVL)
+								#if !defined(USE_ALPHA_OVL)
+									if (pRGB->dwValue == OVERLAY_COLOR)
+									{
+										WARNING("OVERLAY_COLOR?");
+										//pRGB->dwValue = 0;
+									}
+									else
+									{
+								#endif
+
+										pRGB->rgbBlue = klMulDivU32(pRGB->rgbBlue, nCurBlend, 0xFF);
+										pRGB->rgbGreen = klMulDivU32(pRGB->rgbGreen, nCurBlend, 0xFF);
+										pRGB->rgbRed = klMulDivU32(pRGB->rgbRed, nCurBlend, 0xFF);
+										pRGB->rgbAlpha = nAllBlend;
+
+								#if !defined(USE_ALPHA_OVL)
+									}
+								#endif
+								}
+
+								pRGB++;
+							}
+						}
+						#else
+						{
+							MyRgbQuad *pRGB = (MyRgbQuad*)pDst->pix;
+
+							for (INT_PTR i = PixCount; i--;)
+							{
+								//pRGB->rgbBlue = *(pSrc++);
+								//pRGB->rgbGreen = *(pSrc++);
+								//pRGB->rgbRed = *(pSrc++);
+
+								if (pSrc->dwValue)
+								{
+								#if !defined(USE_ALPHA_OVL)
 
 									if (pRGB->dwValue == OVERLAY_COLOR)
 									{
@@ -1512,20 +1681,20 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles, bool abForc
 									}
 									else
 									{
-#endif
-										pRGB->rgbBlue = klMulDivU32(pRGB->rgbBlue, nCurBlend, 0xFF);
-										pRGB->rgbGreen = klMulDivU32(pRGB->rgbGreen, nCurBlend, 0xFF);
-										pRGB->rgbRed = klMulDivU32(pRGB->rgbRed, nCurBlend, 0xFF);
+								#endif
+										pRGB->rgbBlue = klMulDivU32(pSrc->rgbBlue, nCurBlend, 0xFF);
+										pRGB->rgbGreen = klMulDivU32(pSrc->rgbGreen, nCurBlend, 0xFF);
+										pRGB->rgbRed = klMulDivU32(pSrc->rgbRed, nCurBlend, 0xFF);
 										pRGB->rgbAlpha = nAllBlend;
-#if !defined(USE_ALPHA_OVL)
+								#if !defined(USE_ALPHA_OVL)
 									}
-
-#endif
+								#endif
 								}
 
-								pRGB++;
+								pRGB++; pSrc++;
 							}
 						}
+						#endif
 
 						if (AllocDragImageBits())
 						{
@@ -1540,14 +1709,20 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles, bool abForc
 						}
 					}
 
+					Assert((hBitsDC==NULL) && (hBitsBitmap==NULL) && "AllocDragImageBits was not succeeded");
+
 					if (hBitsDC)
+					{
 						SelectObject(hBitsDC, hOldBitsBitmap);
+					}
 
 					if (hBitsBitmap)
 					{
 						DeleteObject(hBitsBitmap); hBitsBitmap = NULL;
 					}
 				}
+
+				UNREFERENCED_PARAMETER(UseDragHelper);
 			}
 
 			if (hBitsDC)
@@ -2149,7 +2324,7 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 #endif
 
 	// Drop или отмена драга, когда источник - ConEmu
-	if (dwEffect == (DWORD)-1)
+	if (dwEffect == DROPEFFECT_STOP_INTERNAL)
 	{
 		#ifdef USE_DROP_HELPER
 		if (UseTargetHelper(mb_selfdrag))
@@ -2167,6 +2342,42 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 	}
 	else
 	{
+		if (mp_DataObject && (gOSVer.dwMajorVersion >= 6))
+		{
+			DROPDESCRIPTION desc = {DROPIMAGE_INVALID};
+			#ifdef _DEBUG
+			wcscpy_c(desc.szInsert, L"Kudato");
+			wcscpy_c(desc.szMessage, L"Dragging %1");
+			#endif
+			if (m_pfpi)
+			{
+				;
+			}
+			
+			if (dwEffect == DROPEFFECT_NONE)
+			{
+				desc.type = DROPIMAGE_NONE;
+			}
+			else if (dwEffect & DROPEFFECT_COPY)
+			{
+				desc.type = DROPIMAGE_COPY;
+			}
+			else if (dwEffect & DROPEFFECT_MOVE)
+			{
+				desc.type = DROPIMAGE_MOVE;
+			}
+			else if (dwEffect & DROPEFFECT_LINK)
+			{
+				desc.type = DROPIMAGE_LINK;
+			}
+			else
+			{
+				desc.type = DROPIMAGE_WARNING;
+			}
+
+			hrHelper = mp_DataObject->SetDataInt(CFSTR_DROPDESCRIPTION, &desc, sizeof(desc));
+		}
+
 		#ifdef USE_DROP_HELPER
 		if (UseTargetHelper(mb_selfdrag))
 		{

@@ -1666,6 +1666,17 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ConfirmDlg.cpp"
+				>
+				<FileConfiguration
+					Name="Debug_C|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\CustomFonts.cpp"
 				>
 			</File>
@@ -2041,6 +2052,10 @@
 			</File>
 			<File
 				RelativePath=".\ConEmuPipe.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ConfirmDlg.h"
 				>
 			</File>
 			<File

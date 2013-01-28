@@ -36,6 +36,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRINPUTWRITEALL(s) //DEBUGSTR(s) // *** WriteConsoleInput(Write=
 #define DEBUGSTRINPUTWRITEFAIL(s) //DEBUGSTR(s) // ### WriteConsoleInput(Write=
 
+#ifdef _DEBUG
+// Only for input_bug search purposes in Debug builds
+const LONG gn_LogWrittenCharsMax = 4096; // must be power of 2
+wchar_t gs_LogWrittenChars[gn_LogWrittenCharsMax*2+1] = L""; // "+1" для ASCIIZ
+LONG gn_LogWrittenChars = -1;
+#endif
+
 BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 {
 	memset(&r, 0, sizeof(r));
@@ -450,7 +457,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	int nAllCount = 0;
 	BOOL lbReqEmpty = FALSE;
 
-	for(UINT n = 0; n < nCount; n++)
+	for (UINT n = 0; n < nCount; n++)
 	{
 		if (pr[n].EventType != KEY_EVENT)
 		{
@@ -525,12 +532,14 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	}
 
 	// Если не готов - все равно запишем
+	DEBUGTEST(BOOL bConReady = )
 	WaitConsoleReady(lbReqEmpty);
 
 
 	DWORD cbWritten = 0;
 
 #ifdef _DEBUG
+	wchar_t* pszDbgCurChars = NULL;
 	wchar_t szDbg[255];
 	for (UINT i = 0; i < nCount; i++)
 	{
@@ -560,9 +569,36 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 				}
 			}
 			#endif
-			
 		}
+
+		// Only for input_bug search purposes in Debug builds
+		LONG idx = (InterlockedIncrement(&gn_LogWrittenChars) & (gn_LogWrittenCharsMax-1))*2;
+		if (!pszDbgCurChars) pszDbgCurChars = gs_LogWrittenChars+idx;
+		if (pr[i].EventType == KEY_EVENT)
+		{
+			gs_LogWrittenChars[idx++] = pr[i].Event.KeyEvent.bKeyDown ? L'\\' : L'/';
+			gs_LogWrittenChars[idx] = pr[i].Event.KeyEvent.uChar.UnicodeChar ? pr[i].Event.KeyEvent.uChar.UnicodeChar : L'.';
+		}
+		else
+		{
+			gs_LogWrittenChars[idx++] = L'=';
+			switch (pr[i].EventType)
+			{
+			case MOUSE_EVENT:
+				gs_LogWrittenChars[idx] = L'm'; break;
+			case WINDOW_BUFFER_SIZE_EVENT:
+				gs_LogWrittenChars[idx] = L'w'; break;
+			case MENU_EVENT:
+				gs_LogWrittenChars[idx] = L'e'; break;
+			case FOCUS_EVENT:
+				gs_LogWrittenChars[idx] = L'f'; break;
+			default:
+				gs_LogWrittenChars[idx] = L'x'; break;
+			}
+		}
+		gs_LogWrittenChars[++idx] = 0;
 	}
+	int nDbgSendLen = pszDbgCurChars ? lstrlen(pszDbgCurChars) : -1;
 	SetLastError(0);
 #endif
 

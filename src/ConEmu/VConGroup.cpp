@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/WinObjects.h"
 #include "ConEmu.h"
+#include "ConfirmDlg.h"
 #include "Inside.h"
 #include "Options.h"
 #include "RealConsole.h"
@@ -1662,35 +1663,44 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 
 	if (nProgress || nEditors || (gpSet->isCloseConsoleConfirm && (nConsoles > 1)))
 	{
-		wchar_t szText[360], *pszText;
-		//wcscpy_c(szText, L"Close confirmation.\r\n\r\n");
-		_wsprintf(szText, SKIPLEN(countof(szText)) L"About to close %u console%s.\r\n", nConsoles, (nConsoles>1)?L"s":L"");
-		pszText = szText+_tcslen(szText);
-
-		if (nProgress || nEditors)
-		{
-			*(pszText++) = L'\r'; *(pszText++) = L'\n'; *(pszText) = 0;
-
-			if (nProgress)
-			{
-				_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", nProgress);
-				pszText += _tcslen(pszText);
-			}
-			if (nEditors)
-			{
-				_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", nEditors);
-				pszText += _tcslen(pszText);
-			}
-		}
+		int nBtn = IDCANCEL;
 
 		if (rpPanes)
-			wcscat_c(szText, L"\r\nProceed with close group?");
-		else
-    		wcscat_c(szText,
-				L"\r\nPress button <No> to close active console only\r\n"
-				L"\r\nProceed with close ConEmu?");
+		{
+			wchar_t szText[360], *pszText;
+			//wcscpy_c(szText, L"Close confirmation.\r\n\r\n");
+			_wsprintf(szText, SKIPLEN(countof(szText)) L"About to close %u console%s.\r\n", nConsoles, (nConsoles>1)?L"s":L"");
+			pszText = szText+_tcslen(szText);
 
-		int nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), (rpPanes ? MB_OKCANCEL : MB_YESNOCANCEL)|MB_ICONEXCLAMATION);
+			if (nProgress || nEditors)
+			{
+				*(pszText++) = L'\r'; *(pszText++) = L'\n'; *(pszText) = 0;
+
+				if (nProgress)
+				{
+					_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", nProgress);
+					pszText += _tcslen(pszText);
+				}
+				if (nEditors)
+				{
+					_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", nEditors);
+					pszText += _tcslen(pszText);
+				}
+			}
+
+			if (rpPanes)
+				wcscat_c(szText, L"\r\nProceed with close group?");
+			else
+    			wcscat_c(szText,
+					L"\r\nPress button <No> to close active console only\r\n"
+					L"\r\nProceed with close ConEmu?");
+
+			nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), (rpPanes ? MB_OKCANCEL : MB_YESNOCANCEL)|MB_ICONEXCLAMATION);
+		}
+		else
+		{
+			nBtn = ConfirmCloseConsoles(nConsoles, nProgress, nEditors);
+		}
 
 		if (nBtn == IDNO)
 		{

@@ -7,6 +7,7 @@ SRCS =  \
 		ConEmuApp.cpp      \
 		ConEmuCtrl.cpp     \
 		ConEmuPipe.cpp     \
+		ConfirmDlg.cpp     \
 		CustomFonts.cpp    \
 		DefaultTerm.cpp    \
 		DragDrop.cpp       \

@@ -53,6 +53,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSTEP(s) //DEBUGSTR(s)
 #define DEBUGSTROVERINT(s) //DEBUGSTR(s)
 
+
+#define DUMP_DRAGGED_ITEMS_INFO
+
+
 //#define ForwardedPanelInfo
 
 CDragDrop::CDragDrop()
@@ -1524,13 +1528,20 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
 	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
+	DEBUGSTROVER(L"CDragDrop::DragEnter() called\n");
 
 	mp_DroppedObject = pDataObject;
 	mb_selfdrag = (pDataObject == mp_DataObject);
 	mb_DragWithinNow = TRUE;
 
-	if (gbDebugLogStarted || IsDebuggerPresent())
+	if (gbDebugLogStarted
+		#ifdef DUMP_DRAGGED_ITEMS_INFO
+		|| IsDebuggerPresent()
+		#endif
+		)
+	{
 		EnumDragFormats(pDataObject);
+	}
 
 	CheckIsUpdatePackage(pDataObject);
 
@@ -1602,6 +1613,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 {
 	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
+	DEBUGSTROVER(L"CDragDrop::DragLeave() called\n");
 
 	mb_DragWithinNow = FALSE;
 

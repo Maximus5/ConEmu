@@ -87,6 +87,13 @@ INPUT_RECORD gir_Real[16] = {};
 INPUT_RECORD gir_Virtual[16] = {};
 #endif
 
+#ifdef _DEBUG
+// Only for input_bug search purposes in Debug builds
+const LONG gn_LogReadCharsMax = 4096; // must be power of 2
+wchar_t gs_LogReadChars[gn_LogReadCharsMax*2+1] = L""; // "+1" для ASCIIZ
+LONG gn_LogReadChars = -1;
+#endif
+
 
 /* Forward declarations */
 BOOL IsVisibleRectLocked(COORD& crLocked);
@@ -3468,6 +3475,23 @@ BOOL WINAPI OnReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead
 	if (bConIn)
 	{
 		OnReadConsoleEnd(lbRc, FALSE, hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, NULL);
+
+		#ifdef _DEBUG
+		// Only for input_bug search purposes in Debug builds
+		const char* pszChr = (const char*)lpBuffer;
+		int cchRead = *lpNumberOfBytesRead;
+		wchar_t* pszDbgCurChars = NULL;
+		while ((cchRead--) > 0)
+		{
+			LONG idx = (InterlockedIncrement(&gn_LogReadChars) & (gn_LogReadCharsMax-1))*2;
+			if (!pszDbgCurChars) pszDbgCurChars = gs_LogReadChars+idx;
+			gs_LogReadChars[idx++] = L'|';
+			gs_LogReadChars[idx++] = *pszChr ? *pszChr : L'.';
+			gs_LogReadChars[idx] = 0;
+			pszChr++;
+		}
+		#endif
+
 		SetLastError(nErr);
 	}
 

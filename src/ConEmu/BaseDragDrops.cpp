@@ -1,13 +1,17 @@
 
 #define HIDE_USE_EXCEPTION_INFO
-//#include "StdAfx.h"
+#define SHOWDEBUGSTR
+
+#include "header.h"
 #include <shlobj.h>
 #include <tchar.h>
-#include "resource.h"
-#include "header.h"
-#include "basedragdrops.h"
-#include "DragDrop.h"
+
+#include "BaseDragDrops.h"
 #include "ConEmu.h"
+#include "DragDrop.h"
+#include "resource.h"
+
+#define DEBUGSTRDATA(s) DEBUGSTR(s)
 
 extern HINSTANCE g_hInstance;
 
@@ -185,7 +189,7 @@ HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfK
 	if (fEscapePressed == TRUE)
 	{
 		if (mp_Callback)
-			mp_Callback->DragFeedBack((DWORD)-1);
+			mp_Callback->DragFeedBack(DROPEFFECT_STOP_INTERNAL);
 
 		return DRAGDROP_S_CANCEL;
 	}
@@ -225,31 +229,36 @@ HRESULT __stdcall CDropSource::GiveFeedback(DWORD dwEffect)
 {
 	HRESULT hr = DRAGDROP_S_USEDEFAULTCURSORS;
 	HCURSOR hCur = NULL;
+	DEBUGTEST(HRESULT hrTest = S_FALSE);
 
-	if (dwEffect != DROPEFFECT_NONE)
+	//-- пока CFSTR_DROPDESCRIPTION не заводится...
+	//if ((gOSVer.dwMajorVersion < 6) || !mp_Callback)
 	{
-		if (dwEffect & DROPEFFECT_COPY)
+		if (dwEffect != DROPEFFECT_NONE)
 		{
-			if (!mh_CurCopy) mh_CurCopy = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_COPY));
+			if (dwEffect & DROPEFFECT_COPY)
+			{
+				if (!mh_CurCopy) mh_CurCopy = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_COPY));
 
-			hCur = mh_CurCopy;
+				hCur = mh_CurCopy;
+			}
+			else if (dwEffect & DROPEFFECT_MOVE)
+			{
+				if (!mh_CurMove) mh_CurMove = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_MOVE));
+
+				hCur = mh_CurMove;
+			}
+			else if (dwEffect & DROPEFFECT_LINK)
+			{
+				if (!mh_CurLink) mh_CurLink = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_LINK));
+
+				hCur = mh_CurLink;
+			}
 		}
-		else if (dwEffect & DROPEFFECT_MOVE)
+		else
 		{
-			if (!mh_CurMove) mh_CurMove = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_MOVE));
-
-			hCur = mh_CurMove;
+			hCur = LoadCursor(NULL, IDC_NO);
 		}
-		else if (dwEffect & DROPEFFECT_LINK)
-		{
-			if (!mh_CurLink) mh_CurLink = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_LINK));
-
-			hCur = mh_CurLink;
-		}
-	}
-	else
-	{
-		hCur = LoadCursor(NULL, IDC_NO);
 	}
 
 	gpConEmu->SetDragCursor(hCur);
@@ -320,7 +329,7 @@ CDataObject::~CDataObject()
 
 	SafeFree(m_pStgMedium);
 
-	DEBUGSTR(L"oof\n");
+	DEBUGSTR(L"CDataObject::~CDataObject()\n");
 }
 
 //
@@ -398,6 +407,32 @@ int CDataObject::LookupFormatEtc(FORMATETC *pFormatEtc)
 	return -1;
 }
 
+LPCWSTR CDataObject::GetFormatName(CLIPFORMAT cfFormat, bool bRaw)
+{
+	static wchar_t szName[128];
+	szName[0] = bRaw ? 0 : L'\'';
+
+	if (GetClipboardFormatName(cfFormat, szName+(bRaw?0:1), 80) >= 1)
+	{
+		if (!bRaw)
+		{
+			wcscat_c(szName, L"',");
+		}
+	}
+	else
+	{
+		szName[0] = 0;
+	}
+
+	if (!bRaw || (szName[0] == 0))
+	{
+		int nLen = lstrlen(szName);
+		_wsprintf(szName+nLen, SKIPLEN(countof(szName)-nLen) L"x%04X(%u)",
+			cfFormat, cfFormat);
+	}
+	return szName;
+}
+
 //
 //	IDataObject::GetData
 //
@@ -405,34 +440,104 @@ HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 {
 	int idx;
 
+	#ifdef _DEBUG
+	wchar_t szDbg[200];
+	#endif
+
 	//
 	// try to match the requested FORMATETC with one of our supported formats
 	//
 	if ((idx = LookupFormatEtc(pFormatEtc)) == -1)
 	{
+		#ifdef _DEBUG
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"!!! CDataObject::LookupFormatEtc(%s) failed\n", GetFormatName(pFormatEtc->cfFormat));
+		DEBUGSTRDATA(szDbg);
+		#endif
 		return DV_E_FORMATETC;
 	}
 
-	//
-	// found a match! transfer the data into the supplied storage-medium
-	//
-	pMedium->tymed			 = m_pFormatEtc[idx].tymed;
-	pMedium->pUnkForRelease  = 0;
-	//pMedium->lpszFileName =
+	#ifdef _DEBUG
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CDataObject::GetData {cfFormat=%s, lindex=%i, tymed=x%02X(%u)})",
+		GetFormatName(pFormatEtc->cfFormat), pFormatEtc->lindex, pFormatEtc->tymed, pFormatEtc->tymed);
+	LPCWSTR pszName = GetFormatName(pFormatEtc->cfFormat, true);
+	DWORD nData = (DWORD)-1;
+	if (lstrcmp(pszName, L"IsShowingLayered")==0
+		|| lstrcmp(pszName, L"IsShowingText")==0
+		|| lstrcmp(pszName, L"DragContext")==0
+		|| lstrcmp(pszName, L"UsingDefaultDragImage")==0
+		|| lstrcmp(pszName, L"DragSourceHelperFlags")==0
+		|| lstrcmp(pszName, L"DragWindow")==0
+		|| lstrcmp(pszName, L"DisableDragText")==0
+		)		
+	{
+		LPDWORD pdw = (LPDWORD)GlobalLock(m_pStgMedium[idx].hGlobal);
+		if (pdw)
+		{
+			nData = *pdw;
+			int nLen = lstrlen(szDbg);
+			_wsprintf(szDbg+nLen, SKIPLEN(countof(szDbg)-nLen) L", Data=x%02X(%u)", nData, nData);
+		}
+		GlobalUnlock(m_pStgMedium[idx].hGlobal);
+	}
+	wcscat_c(szDbg, L"\n");
+	DEBUGSTRDATA(szDbg);
+	#endif
+
+
+	HRESULT hr = DV_E_FORMATETC;
+
 
 	switch (m_pFormatEtc[idx].tymed)
 	{
 		case TYMED_HGLOBAL:
-		{
+			//ReleaseStgMedium(pMedium);
 			pMedium->hGlobal = DupMem(m_pStgMedium[idx].hGlobal);
-			//return S_OK;
+			pMedium->pUnkForRelease = m_pStgMedium[idx].pUnkForRelease;
+			hr = S_OK;
 			break;
-		}
+
+		case TYMED_ISTREAM:
+			_ASSERTE(pMedium->pstm != m_pStgMedium[idx].pstm);
+			//ReleaseStgMedium(pMedium);
+			pMedium->pstm = m_pStgMedium[idx].pstm;
+			if (m_pStgMedium[idx].pstm)
+				m_pStgMedium[idx].pstm->AddRef();
+			pMedium->pUnkForRelease = m_pStgMedium[idx].pUnkForRelease;
+			hr = S_OK;
+			break;
+
+		case TYMED_ISTORAGE:
+			_ASSERTE(pMedium->pstg != m_pStgMedium[idx].pstg);
+			//ReleaseStgMedium(pMedium);
+			pMedium->pstg = m_pStgMedium[idx].pstg;
+			if (m_pStgMedium[idx].pstg)
+				m_pStgMedium[idx].pstg->AddRef();
+			pMedium->pUnkForRelease = m_pStgMedium[idx].pUnkForRelease;
+			hr = S_OK;
+			break;
 		default:
-			return DV_E_FORMATETC;
+			AssertMsg(L"Unsupported value in m_pFormatEtc[idx].tymed");
 	}
 
-	return S_OK;
+	if (hr == S_OK)
+	{
+		//
+		// found a match! transfer the data into the supplied storage-medium
+		//
+		pMedium->tymed			 = m_pFormatEtc[idx].tymed;
+		//Assert(pMedium->pUnkForRelease==NULL && m_pStgMedium[idx].pUnkForRelease==NULL);
+		//pMedium->pUnkForRelease  = NULL;
+	}
+	else
+	{
+		#ifdef _DEBUG
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"!!! CDataObject::GetData(tymed=%u) failed", m_pFormatEtc[idx].tymed);
+		DEBUGSTRDATA(szDbg);
+		//_ASSERTE(FALSE && "Unsupported tymed!");
+		#endif
+	}
+
+	return hr;
 }
 
 //
@@ -440,6 +545,15 @@ HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 //
 HRESULT __stdcall CDataObject::GetDataHere(FORMATETC *pFormatEtc, STGMEDIUM *pMedium)
 {
+	#ifdef _DEBUG
+	wchar_t szDbg[200];
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CDataObject::GetDataHere({cfFormat=x%04X(%u), lindex=%i, tymed=x%02X(%u)}, {tymed=x%02X})\n",
+		pFormatEtc->cfFormat, pFormatEtc->cfFormat, pFormatEtc->lindex, pFormatEtc->tymed, pFormatEtc->tymed, pMedium->tymed);
+	DEBUGSTRDATA(szDbg);
+	#endif
+
+	_ASSERTE(FALSE && "CDataObject::GetDataHere not impemented!");
+
 	// GetDataHere is only required for IStream and IStorage mediums
 	// It is an error to call GetDataHere for things like HGLOBAL and other clipboard formats
 	//
@@ -455,6 +569,13 @@ HRESULT __stdcall CDataObject::GetDataHere(FORMATETC *pFormatEtc, STGMEDIUM *pMe
 //
 HRESULT __stdcall CDataObject::QueryGetData(FORMATETC *pFormatEtc)
 {
+	#ifdef _DEBUG
+	wchar_t szDbg[200];
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CDataObject::LookupFormatEtc({cfFormat=x%04X(%u), lindex=%i, tymed=x%02X(%u)})\n",
+		pFormatEtc->cfFormat, pFormatEtc->cfFormat, pFormatEtc->lindex, pFormatEtc->tymed, pFormatEtc->tymed);
+	DEBUGSTRDATA(szDbg);
+	#endif
+
 	return (LookupFormatEtc(pFormatEtc) == -1) ? DV_E_FORMATETC : S_OK;
 }
 
@@ -468,47 +589,130 @@ HRESULT __stdcall CDataObject::GetCanonicalFormatEtc(FORMATETC *pFormatEct, FORM
 	return E_NOTIMPL;
 }
 
+HRESULT CDataObject::SetDataInt(LPCWSTR sFmtName, const void* hData, DWORD nDataSize /*= 0*/)
+{
+	HRESULT hr;
+
+	FORMATETC       fmtetc[] =
+	{
+		{ RegisterClipboardFormat(sFmtName), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+	};
+	STGMEDIUM       stgmed[] =
+	{
+		{ TYMED_HGLOBAL },
+	};
+
+	if (nDataSize == 0)
+	{
+		stgmed[0].hGlobal = (HGLOBAL)hData;
+	}
+	else
+	{
+		stgmed[0].hGlobal = GlobalAlloc(GPTR, nDataSize);
+		memmove(stgmed[0].hGlobal, hData, nDataSize);
+	}
+
+	hr = SetData(fmtetc, stgmed, TRUE);
+
+	return hr;
+}
+
 //
 //	IDataObject::SetData
 //
 HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium,  BOOL fRelease)
 {
-	_ASSERTE(fRelease);
+	Assert(fRelease);
+	_ASSERTE(pMedium && pMedium->pUnkForRelease==NULL);
 
-	// Если нужно - увеличим размерность массивов
-	if (m_nNumFormats >= m_nMaxNumFormats)
+	#ifdef _DEBUG
+	LPCWSTR pszName = GetFormatName(pFormatEtc->cfFormat, true);
+	DWORD nData = (DWORD)-1;
+	if (lstrcmp(pszName, L"IsShowingLayered")==0
+		|| lstrcmp(pszName, L"IsShowingText")==0
+		|| lstrcmp(pszName, L"DragContext")==0
+		|| lstrcmp(pszName, L"UsingDefaultDragImage")==0
+		|| lstrcmp(pszName, L"DragSourceHelperFlags")==0
+		|| lstrcmp(pszName, L"DragWindow")==0
+		|| lstrcmp(pszName, L"DisableDragText")==0
+		)		
 	{
-		_ASSERTE(m_nNumFormats == m_nMaxNumFormats);
-		LONG nNewMaxNumFormats = m_nNumFormats + 32; //-V112
-		FORMATETC *pNewFormatEtc = (FORMATETC*)calloc(nNewMaxNumFormats,sizeof(FORMATETC));
-		STGMEDIUM *pNewStgMedium = (STGMEDIUM*)calloc(nNewMaxNumFormats,sizeof(STGMEDIUM));
-
-		if (!pNewFormatEtc || !pNewStgMedium)
+		LPDWORD pdw = (LPDWORD)GlobalLock(pMedium->hGlobal);
+		if (pdw)
 		{
-			SafeFree(pNewFormatEtc);
-			SafeFree(pNewStgMedium);
-
-			return E_OUTOFMEMORY;
+			nData = *pdw;
 		}
-
-		for (LONG i = 0; i < m_nNumFormats; i++)
-		{
-			pNewFormatEtc[i] = m_pFormatEtc[i];
-			pNewStgMedium[i] = m_pStgMedium[i];
-		}
-
-		m_nMaxNumFormats = nNewMaxNumFormats;
-
-		SafeFree(m_pFormatEtc);
-		m_pFormatEtc = pNewFormatEtc;
-
-		SafeFree(m_pStgMedium);
-		m_pStgMedium = pNewStgMedium;
+		GlobalUnlock(pMedium->hGlobal);
 	}
 
-	m_pFormatEtc[m_nNumFormats] = *pFormatEtc;
-	m_pStgMedium[m_nNumFormats] = *pMedium;
-	m_nNumFormats++;
+	wchar_t szDbg[255];
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CDataObject::SetData {cfFormat=%s, lindex=%i, tymed=x%02X(%u)}, {tymed=x%02X}",
+		GetFormatName(pFormatEtc->cfFormat), pFormatEtc->lindex, pFormatEtc->tymed, pFormatEtc->tymed, pMedium->tymed);
+	if (nData != (DWORD)-1)
+	{
+		int nLen = lstrlen(szDbg);
+		_wsprintf(szDbg+nLen, SKIPLEN(countof(szDbg)-nLen) L", Data=x%02X(%u)", nData, nData);
+	}
+	wcscat_c(szDbg, L"\n");
+	DEBUGSTRDATA(szDbg);
+	#endif
+
+	bool bNew = false;
+	LONG nIndex = LookupFormatEtc(pFormatEtc);
+
+	if (nIndex >= 0)
+	{
+		if ((pMedium != (m_pStgMedium+nIndex)) && (pMedium->hGlobal != m_pStgMedium[nIndex].hGlobal))
+		{
+			ReleaseStgMedium(m_pStgMedium+nIndex);
+		}
+		else
+		{
+			Assert((pMedium != (m_pStgMedium+nIndex)) && (pMedium->hGlobal != m_pStgMedium[nIndex].hGlobal));
+		}
+	}
+	else //	if (nIndex < 0)
+	{
+		bNew = true;
+		_ASSERTE(nIndex < 0);
+
+		// Если нужно - увеличим размерность массивов
+		if (m_nNumFormats >= m_nMaxNumFormats)
+		{
+			_ASSERTE(m_nNumFormats == m_nMaxNumFormats);
+			LONG nNewMaxNumFormats = m_nNumFormats + 32; //-V112
+			FORMATETC *pNewFormatEtc = (FORMATETC*)calloc(nNewMaxNumFormats,sizeof(FORMATETC));
+			STGMEDIUM *pNewStgMedium = (STGMEDIUM*)calloc(nNewMaxNumFormats,sizeof(STGMEDIUM));
+
+			if (!pNewFormatEtc || !pNewStgMedium)
+			{
+				SafeFree(pNewFormatEtc);
+				SafeFree(pNewStgMedium);
+
+				return E_OUTOFMEMORY;
+			}
+
+			for (LONG i = 0; i < m_nNumFormats; i++)
+			{
+				pNewFormatEtc[i] = m_pFormatEtc[i];
+				pNewStgMedium[i] = m_pStgMedium[i];
+			}
+
+			m_nMaxNumFormats = nNewMaxNumFormats;
+
+			SafeFree(m_pFormatEtc);
+			m_pFormatEtc = pNewFormatEtc;
+
+			SafeFree(m_pStgMedium);
+			m_pStgMedium = pNewStgMedium;
+		}
+
+		nIndex = m_nNumFormats++;
+		m_pFormatEtc[nIndex] = *pFormatEtc;
+	}
+
+	m_pStgMedium[nIndex] = *pMedium;
+
 	return S_OK;
 }
 

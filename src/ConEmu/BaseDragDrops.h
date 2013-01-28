@@ -1,6 +1,8 @@
 #pragma once
 #include <windows.h>
 
+#define DROPEFFECT_STOP_INTERNAL ((DWORD)-1)
+
 class CDragDropData;
 
 class CBaseDropTarget : public IDropTarget
@@ -93,9 +95,13 @@ class CDataObject : public IDataObject
 		CDataObject(FORMATETC *fmt, STGMEDIUM *stgmed, int count);
 		~CDataObject();
 
+		// Helper methods
+		HRESULT SetDataInt(LPCWSTR sFmtName, const void* hData, DWORD nDataSize = 0);
+
 	private:
 
 		int LookupFormatEtc(FORMATETC *pFormatEtc);
+		LPCWSTR GetFormatName(CLIPFORMAT cfFormat, bool bRaw = false);
 
 		//
 		// any private members and functions

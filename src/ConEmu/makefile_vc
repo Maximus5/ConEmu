@@ -36,6 +36,7 @@ $(INTDIR)\ConEmuApp.obj \
 $(INTDIR)\ConEmuCheck.obj \
 $(INTDIR)\ConEmuCtrl.obj \
 $(INTDIR)\ConEmuPipe.obj \
+$(INTDIR)\ConfirmDlg.obj \
 $(INTDIR)\CustomFonts.obj \
 $(INTDIR)\DefaultTerm.obj \
 $(INTDIR)\DragDrop.obj \
@@ -244,6 +245,8 @@ $(INTDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp
 $(INTDIR)\ConEmuCtrl.obj: ConEmuCtrl.cpp ConEmuCtrl.h FindDlg.h
 
 $(INTDIR)\ConEmuPipe.obj: ConEmuPipe.cpp
+
+$(INTDIR)\ConfirmDlg.obj: ConfirmDlg.cpp ConfirmDlg.h
 
 $(INTDIR)\CustomFonts.obj: CustomFonts.cpp CustomFonts.h
 

@@ -943,6 +943,7 @@
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="ConEmuCtrl.cpp" />
     <ClCompile Include="ConEmuPipe.cpp" />
+    <ClCompile Include="ConfirmDlg.cpp" />
     <ClCompile Include="CustomFonts.cpp" />
     <ClCompile Include="DefaultTerm.cpp" />
     <ClCompile Include="DragDrop.cpp" />
@@ -997,6 +998,7 @@
     <ClInclude Include="ConEmuCtrl.h" />
     <ClInclude Include="ConEmuPipe.h" />
     <ClInclude Include="..\common\ConsoleAnnotation.h" />
+    <ClInclude Include="ConfirmDlg.h" />
     <ClInclude Include="CustomFonts.h" />
     <ClInclude Include="..\common\defines.h" />
     <ClInclude Include="DefaultTerm.h" />

@@ -3247,13 +3247,13 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 }
 
 // Return true, when rect was changed
-bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBorders */)
+bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBorders */, bool bPopupDlg /*= false*/)
 {
 	RECT rcStore = rcWnd;
 	RECT rcWork;
 
 	// When we live inside parent window - size must be strict
-	if (mp_Inside)
+	if (!bPopupDlg && mp_Inside)
 	{
 		rcWork = GetDefaultRect();
 		bool bChanged = (memcmp(&rcWork, &rcWnd, sizeof(rcWnd)) != 0);
@@ -3263,7 +3263,7 @@ bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 
 	ConEmuWindowMode wndMode = GetWindowMode();
 
-	if (wndMode == wmMaximized || wndMode == wmFullScreen)
+	if (!bPopupDlg && (wndMode == wmMaximized || wndMode == wmFullScreen))
 	{
 		nBorders |= CEB_TOP|CEB_LEFT|CEB_RIGHT|CEB_BOTTOM;
 	}
@@ -10171,10 +10171,15 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				wchar_t* pszDataW = lstrdup(pszCmd);
 
 				// Если передали "скрипт" (как бы содержимое Task вытянутое в строку)
-				// Обработать - заменить "|" на "\n"
+				// Обработать - заменить "|||" на " \r\n"
+				// Раньше здесь было '|' но заменил на "|||" во избежание неоднозначностей
 				wchar_t* pszNext = pszDataW;
-				while ((pszNext = wcschr(pszNext, L'|')) != NULL)
-					*pszNext = L'\n';
+				while ((pszNext = wcsstr(pszNext, L"|||")) != NULL)
+				{
+					*(pszNext++) = L' ';
+					*(pszNext++) = L'\r';
+					*(pszNext++) = L'\n';
+				}
 
 				// GO
 				if (!CreateConGroup(pszDataW, FALSE, NULL/*pszStartupDir*/))

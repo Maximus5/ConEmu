@@ -963,12 +963,13 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 			{
 				n--; n2--;
 
-				// Похоже, следующее условие неправильное? В плане n2?
-				_ASSERTE(pChar[n] != L'\\');
-
-				// Диалоги в фаре можно "таскать" с клавиатуры через CtrlF5. Углы диалога помечаются слешами.
+				// Проверяем цвет и символ
 				if ((((pAttr[n].crBackColor == nColor) && ((pChar[n] == L' ') || (pChar[n] == ucNoBreakSpace)))
+						// "\\" - пометка что диалог в Far двигается с клавиатуры (Ctrl+F5)
 						|| (pChar[n] == L'\\'))
+					// Строка n2 соответствует не самой нижней строке диалога,
+					// а предпоследней строке на которой рисуется рамка.
+					// Поэтому тут проверяем только на " "
 					&& ((pAttr[n2].crBackColor == nColor) && ((pChar[n2] == L' ') || (pChar[n2] == ucNoBreakSpace))))
 				{
 					nFromX--;
@@ -1020,6 +1021,9 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 	// nMostBottom
 	if (nFrameY > nFromY && nMostBottom < (nHeight-1))
 	{
+		// Если в фаре диалог двигается с клавиатуры (Ctrl+F5)
+		// то по углам диалога ставятся красные метки "\/"
+		// Поэтому проверяем не по углу диалога, а "под углом рамки"
 		n = (nMostBottom+1)*nWidth+nFrameX;
 
 		if (pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace))

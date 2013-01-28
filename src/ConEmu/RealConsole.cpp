@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "ConEmuPipe.h"
+#include "ConfirmDlg.h"
 #include "Inside.h"
 #include "Macro.h"
 #include "Menu.h"
@@ -8172,7 +8173,7 @@ int CRealConsole::GetModifiedEditors()
 	
 	if (mp_tabs && mn_tabsCount)
 	{
-		for(int j = 0; j < mn_tabsCount; j++)
+		for (int j = 0; j < mn_tabsCount; j++)
 		{
 			if ((mp_tabs[j].Type == /*Editor*/3) && (mp_tabs[j].Modified != 0))
 				nEditors++;
@@ -8841,13 +8842,16 @@ bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation)
 
 	int nBtn = 0;
 	{
-		DontEnable de;
-		//nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
-		nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL,
-			asConfirmation ? asConfirmation : gsCloseAny, Title, MB_OKCANCEL|MB_ICONEXCLAMATION);
+		nBtn = ConfirmCloseConsoles(1, (GetProgress(NULL,NULL)>=0) ? 1 : 0, GetModifiedEditors(), NULL,
+			asConfirmation ? asConfirmation : gsCloseAny, Title);
+
+		//DontEnable de;
+		////nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+		//nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL,
+		//	asConfirmation ? asConfirmation : gsCloseAny, Title, MB_OKCANCEL|MB_ICONEXCLAMATION);
 	}
 
-	if (nBtn != IDOK)
+	if (nBtn != IDYES)
 	{
 		CloseConfirmReset();
 		return false;

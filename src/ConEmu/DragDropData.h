@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef UNLOCKED_DRAG
 
 #define USE_DROP_HELPER
+#define USE_DRAG_HELPER
 
 //#ifdef _DEBUG
 #define PERSIST_OVL
@@ -122,7 +123,13 @@ class CDragDropData
 		IDropTargetHelper* mp_TargetHelper;
 		bool mb_TargetHelperFailed;
 		#endif
+		#ifdef USE_DRAG_HELPER
+		IDragSourceHelper* mp_SourceHelper;
+		bool mb_SourceHelperFailed;
+		#endif
 		bool UseTargetHelper(bool abSelfDrag);
+		bool UseSourceHelper();
+		bool IsDragImageOsSupported();
 	protected:
 		ITEMIDLIST m_DesktopID;
 		void EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile = NULL);
@@ -137,7 +144,7 @@ class CDragDropData
 		void DestroyDragImageWindow();
 		BOOL LoadDragImageBits(IDataObject * pDataObject);
 		BOOL CreateDragImageBits(IDataObject * pDataObject);
-		DragImageBits* CreateDragImageBits(wchar_t* pszFiles, bool abForceToTop = true);
+		DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
 		BOOL DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY);
 		void DestroyDragImageBits();
 		void MoveDragWindow(BOOL abVisible=TRUE);
