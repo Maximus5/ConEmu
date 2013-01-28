@@ -452,7 +452,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 		HKEY hk;
 	
 		lstrcpyn(gsMessage, L"Choose version to install", countof(gsMessage));
-		wsprintf(gsVer86, L"%s x86\nDefault installation folder is\n", CONEMUVERL);
+		
 			szInstallPath[0] = 0;
 			struct {HKEY hk; LPCWSTR path; LPCWSTR name;}
 				Keys[] = {
@@ -478,13 +478,16 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 			if (szInstallPath[0] == 0)
 			{
 				GetEnvironmentVariable(L"ProgramFiles", szInstallPath, MAX_PATH);
-				lstrcat(szInstallPath, L"\\ConEmu");
+				wsprintf(gsVer86, L"%s x86\nDefault installation folder is\n%s\\ConEmu", CONEMUVERL, szInstallPath);
 			}
-			lstrcat(gsVer86, szInstallPath);
+			else
+			{
+				wsprintf(gsVer86, L"%s x86\nCurrent installation folder is\n%s", CONEMUVERL, szInstallPath);
+			}
 			
 		if (isWin64)
 		{
-			wsprintf(gsVer64, L"%s x64\nDefault installation folder is\n", CONEMUVERL);
+			
 				szInstallPath[0] = 0;
 				struct {HKEY hk; LPCWSTR path; LPCWSTR name;}
 					Keys[] = {
@@ -509,9 +512,13 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 				if (szInstallPath[0] == 0)
 				{
 					GetEnvironmentVariable(L"ProgramW6432", szInstallPath, MAX_PATH);	
-					lstrcat(szInstallPath, L"\\ConEmu");
+					wsprintf(gsVer64, L"%s x64\nDefault installation folder is\n%s\\ConEmu", CONEMUVERL, szInstallPath);
 				}
-				lstrcat(gsVer64, szInstallPath);
+				else
+				{
+					wsprintf(gsVer64, L"%s x64\nCurrent installation folder is\n%s", CONEMUVERL, szInstallPath);
+				}
+
 			wsprintf(gsFull, L"%s\n\nPress `Yes` to install x64 version\nPress `No` to install x86 version", gsMessage);
 		}
 		else

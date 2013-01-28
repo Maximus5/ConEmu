@@ -1109,7 +1109,7 @@ BEGIN
     EDITTEXT        tUpdateDownloadPath,10,69,160,13,ES_AUTOHSCROLL
     PUSHBUTTON      "...",cbUpdateDownloadPath,173,68,15,13
     CONTROL         "Leave downloaded packages",cbUpdateLeavePackages,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,70,113,10
-    GROUPBOX        "Post-update command",IDC_STATIC,5,161,319,30
+    GROUPBOX        "Post-update command, don't forget «call» for batches",IDC_STATIC,5,161,319,30
     EDITTEXT        tUpdatePostUpdateCmd,10,172,310,13,ES_AUTOHSCROLL
     GROUPBOX        "Update settings",IDC_STATIC,4,1,319,27
     EDITTEXT        tUpdateArcCmdLine,10,140,290,13,ES_AUTOHSCROLL

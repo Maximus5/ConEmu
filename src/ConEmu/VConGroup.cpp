@@ -1697,6 +1697,17 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 
 			nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), (rpPanes ? MB_OKCANCEL : MB_YESNOCANCEL)|MB_ICONEXCLAMATION);
 		}
+		else if (nConsoles == 1)
+		{
+			CVConGuard VCon(gp_VActive);
+			if (VCon.VCon())
+			{
+				if (VCon->RCon()->isCloseConfirmed(NULL, true))
+				{
+					nBtn = IDOK;
+				}
+			}
+		}
 		else
 		{
 			nBtn = ConfirmCloseConsoles(nConsoles, nProgress, nEditors);
@@ -1704,9 +1715,10 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 
 		if (nBtn == IDNO)
 		{
-			if (gp_VActive)
+			CVConGuard VCon(gp_VActive);
+			if (VCon.VCon())
 			{
-				gp_VActive->RCon()->CloseConsole(false, false);
+				VCon->RCon()->CloseConsole(false, false);
 			}
 			return false; // Don't close others!
 		}

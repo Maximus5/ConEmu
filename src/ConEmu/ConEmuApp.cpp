@@ -874,6 +874,74 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent 
 	return pszResult;
 }
 
+BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
+							 LPDWORD pdwLastError)
+{
+	BOOL lbRc = FALSE;
+	HANDLE hToken = NULL, hTokenRest = NULL;
+
+	if (OpenProcessToken(GetCurrentProcess(),
+	                    //TOKEN_ASSIGN_PRIMARY|TOKEN_DUPLICATE|TOKEN_QUERY|TOKEN_ADJUST_DEFAULT,
+	                    TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY,
+	                    &hToken))
+	{
+		enum WellKnownAuthorities
+		{
+			NullAuthority = 0, WorldAuthority, LocalAuthority, CreatorAuthority,
+			NonUniqueAuthority, NtAuthority, MandatoryLabelAuthority = 16
+		};
+		SID *pAdmSid = (SID*)calloc(sizeof(SID)+sizeof(DWORD)*2,1);
+		pAdmSid->Revision = SID_REVISION;
+		pAdmSid->SubAuthorityCount = 2;
+		pAdmSid->IdentifierAuthority.Value[5] = NtAuthority;
+		pAdmSid->SubAuthority[0] = SECURITY_BUILTIN_DOMAIN_RID;
+		pAdmSid->SubAuthority[1] = DOMAIN_ALIAS_RID_ADMINS;
+		SID_AND_ATTRIBUTES sidsToDisable[] =
+		{
+			{pAdmSid}
+		};
+		
+		#ifdef __GNUC__
+		HMODULE hAdvApi = GetModuleHandle(L"AdvApi32.dll");
+		CreateRestrictedToken_t CreateRestrictedToken = (CreateRestrictedToken_t)GetProcAddress(hAdvApi, "CreateRestrictedToken");
+		#endif
+
+		if (CreateRestrictedToken(hToken, DISABLE_MAX_PRIVILEGE,
+		                         countof(sidsToDisable), sidsToDisable,
+		                         0, NULL, 0, NULL, &hTokenRest))
+		{
+			if (CreateProcessAsUserW(hTokenRest, lpApplicationName, lpCommandLine,
+							 lpProcessAttributes, lpThreadAttributes,
+							 bInheritHandles, dwCreationFlags, lpEnvironment,
+							 lpCurrentDirectory, lpStartupInfo, lpProcessInformation))
+			{
+				lbRc = TRUE;
+			}
+			else
+			{
+				if (pdwLastError) *pdwLastError = GetLastError();
+			}
+
+			CloseHandle(hTokenRest); hTokenRest = NULL;
+		}
+		else
+		{
+			if (pdwLastError) *pdwLastError = GetLastError();
+		}
+
+		free(pAdmSid);
+		CloseHandle(hToken); hToken = NULL;
+	}
+	else
+	{
+		if (pdwLastError) *pdwLastError = GetLastError();
+	}
+
+	return lbRc;
+}
 
 
 
@@ -2483,6 +2551,87 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 					// Failed
 					DisplayLastError(cmdNew);
+					return 100;
+				}
+				else if (!klstricmp(curCommand, _T("/demote")))
+				{
+					// Этот ключик был придуман для "скрытого" запуска консоли
+					// в режиме администратора
+					// (т.е. чтобы окно UAC нормально всплывало, но не мелькало консольное окно)
+					// Но не получилось, пока требуются хэндлы процесса, а их не получается
+					// передать в НЕ приподнятый процесс (исходный ConEmu GUI).
+
+					if (!cmdNew || !*cmdNew)
+					{
+						DisplayLastError(L"Invalid cmd line. '/demote' exists, '/cmd' not", -1);
+						return 100;
+					}
+
+					#if 0
+					LPCWSTR pszDefCmd = cmdNew;
+					wchar_t szExe[MAX_PATH+1];
+					if (0 != NextArg(&pszDefCmd, szExe))
+					{
+						DisplayLastError(L"Invalid cmd line. ConEmu.exe not exists", -1);
+						return 100;
+					}
+					#endif
+
+					// Information
+					#ifdef _DEBUG
+					STARTUPINFO siOur = {sizeof(siOur)};
+					GetStartupInfo(&siOur);
+					#endif
+
+					STARTUPINFO si = {sizeof(si)};
+					PROCESS_INFORMATION pi = {};
+					si.dwFlags = STARTF_USESHOWWINDOW;
+					si.wShowWindow = SW_SHOWNORMAL;
+
+					wchar_t szCurDir[MAX_PATH+1] = L"";
+					GetCurrentDirectory(countof(szCurDir), szCurDir);
+
+					DWORD nErr = 0;
+					BOOL b = CreateProcessRestricted(NULL, cmdNew, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+						szCurDir, &si, &pi, &nErr);
+
+
+					// -- Странно, IShellDispatch2::ShellExecute запускает с правами текущего процесса, а не от Explorer.exe
+					#if 0
+					OleInitialize(NULL);
+
+					BOOL b = FALSE;
+				    IShellDispatch2 *pshl;
+				    HRESULT hr = CoCreateInstance(CLSID_Shell, NULL, CLSCTX_SERVER, IID_IShellDispatch2, (void**)&pshl);
+				    if (SUCCEEDED(hr))
+				    {
+				    	BSTR bsFile = SysAllocString(szExe);
+				    	VARIANT vtArgs; vtArgs.vt = VT_BSTR; vtArgs.bstrVal = SysAllocString(pszDefCmd);
+				    	VARIANT vtDir; vtDir.vt = VT_BSTR; vtDir.bstrVal = SysAllocString(gpConEmu->ms_ConEmuExeDir);
+				    	VARIANT vtOper; vtOper.vt = VT_BSTR; vtOper.bstrVal = SysAllocString(L"open");
+				    	VARIANT vtShow; vtShow.vt = VT_I4; vtShow.lVal = SW_SHOWNORMAL;
+						
+						hr = pshl->ShellExecute(bsFile, vtArgs, vtDir, vtOper, vtShow);
+						b = SUCCEEDED(hr);
+
+						VariantClear(&vtArgs);
+						VariantClear(&vtDir);
+						VariantClear(&vtOper);
+						SysFreeString(bsFile);
+
+				    	pshl->Release();
+					}
+					#endif
+
+					if (b)
+					{
+						SafeCloseHandle(pi.hProcess);
+						SafeCloseHandle(pi.hThread);
+						return 0;
+					}
+
+					// Failed
+					DisplayLastError(cmdNew, nErr);
 					return 100;
 				}
 				else if (!klstricmp(curCommand, _T("/multi")))

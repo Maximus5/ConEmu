@@ -1067,16 +1067,18 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	CVConGuard VCon;
 	if (!CVConGroup::GetVConFromPoint(ppt, &VCon))
 	{
-		if (mb_IsUpdatePackage && gpUpd)
+		_ASSERTE(!mb_IsUpdatePackage || mpsz_UpdatePackage);
+		if (mb_IsUpdatePackage && mpsz_UpdatePackage)
 		{
-			if (mpsz_UpdatePackage)
+			if (!gpUpd)
+				gpUpd = new CConEmuUpdate;
+
+			if (gpUpd)
 			{
 				gpUpd->StartLocalUpdate(mpsz_UpdatePackage);
+				return S_OK;
 			}
-			_ASSERTE(mpsz_UpdatePackage!=NULL);
-			return S_OK;
 		}
-		_ASSERTE(FALSE);
 		return S_FALSE;
 	}
 

@@ -145,6 +145,7 @@ class CDragDropData
 		BOOL LoadDragImageBits(IDataObject * pDataObject);
 		BOOL CreateDragImageBits(IDataObject * pDataObject);
 		DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
+		BOOL PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP& hBitmap, HBITMAP& hOldBitmap, int nWidth, int nHeight, int* pnMaxX, int* pnMaxY, POINT* ptCursor, bool bUseColorKey, COLORREF clrKey);
 		BOOL DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY);
 		void DestroyDragImageBits();
 		void MoveDragWindow(BOOL abVisible=TRUE);

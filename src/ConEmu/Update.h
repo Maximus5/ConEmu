@@ -47,7 +47,7 @@ protected:
 
 	CWinInet* wi;
 	friend class CWinInet;
-	bool mb_InetMode;
+	bool mb_InetMode, mb_DroppedMode;
 	HANDLE mh_Internet, mh_Connect, mh_SrcFile;
 	DWORD mn_InternetContentLen, mn_InternetContentReady, mn_PackageSize;
 	DWORD_PTR mn_Context;
@@ -123,4 +123,7 @@ protected:
 	bool QueryConfirmation(UpdateStep step, LPCWSTR asParm = NULL);
 	bool QueryConfirmationInt(LPCWSTR asConfirmInfo);
 	void WaitAllInstances();
+	#if 0
+	bool CanUpdateInstallation();
+	#endif
 };

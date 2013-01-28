@@ -14473,6 +14473,8 @@ void CConEmuMain::CheckUpdates(BOOL abShowMessages)
 	if (gpConEmu->mb_MingwMode)
 		return;
 
+	_ASSERTE(isMainThread());
+
 	if (!gpUpd)
 		gpUpd = new CConEmuUpdate;
 	

@@ -214,6 +214,8 @@ public:
 
 CConEmuUpdate::CConEmuUpdate()
 {
+	_ASSERTE(gpConEmu->isMainThread());
+
 	mn_Timeout = DOWNLOADTIMEOUT;
 	mn_ConnTimeout = mn_FileTimeout = 0;
 	mb_InCheckProcedure = FALSE;
@@ -226,6 +228,7 @@ CConEmuUpdate::CConEmuUpdate()
 	mb_InShowLastError = false;
 	mp_LastErrorSC = new MSection;
 	mb_InetMode = false;
+	mb_DroppedMode = false;
 	mh_Internet = mh_Connect = mh_SrcFile = NULL;
 	mn_InternetContentLen = mn_InternetContentReady = mn_PackageSize = 0;
 	mn_Context = 0;
@@ -333,7 +336,7 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 		}
 		else if (abShowMessages)
 		{
-			MBoxA(L"Checking for updates already started");
+			MBoxError(L"Checking for updates already started");
 		}
 		return;
 	}
@@ -498,22 +501,75 @@ DWORD CConEmuUpdate::CheckThreadProc(LPVOID lpParameter)
 	return nRc;
 }
 
+#if 0
+bool CConEmuUpdate::CanUpdateInstallation()
+{
+	if (UpdateDownloadSetup() == 1)
+	{
+		// Если через Setupper - то msi сам разберется и ругнется когда надо
+		return true;
+	}
+
+	// Раз дошли сюда - значит ConEmu был просто "распакован"
+
+	if (IsUserAdmin())
+	{
+		// ConEmu запущен "Под администратором", проверки не нужны
+		return true;
+	}
+
+	wchar_t szTestFile[MAX_PATH*2];
+	wcscpy_c(szTestFile, gpConEmu->ms_ConEmuExeDir);
+	wcscat_c(szTestFile, L"\\ConEmuUpdate.check");
+	
+	HANDLE hFile = CreateFile(szTestFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_TEMPORARY, NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		DWORD nErr = GetLastError();
+		wcscpy_c(szTestFile, L"Can't update installation folder!\r\n");
+		wcscat_c(szTestFile, gpConEmu->ms_ConEmuExeDir);
+		DisplayLastError(szTestFile, nErr);
+		return false;
+	}
+	CloseHandle(hFile);
+	DeleteFile(szTestFile);
+
+	// OK
+	return true;
+}
+#endif
+
 bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 {
 	bool bRc = false;
 	LPCWSTR pszName, pszExt;
+	HANDLE hTarget = NULL;
+	wchar_t *pszLocalPackage = NULL, *pszBatchFile = NULL;
+	DWORD nLocalCRC = 0;
+	BOOL lbDownloadRc = FALSE, lbExecuteRc = FALSE;
+
+	_ASSERTE(gpConEmu->isMainThread());
 
 	if (InUpdate() != us_NotStarted)
 	{
-		MBoxA(L"Checking for updates already started");
+		MBoxError(L"Checking for updates already started");
 		goto wrap;
 	}
 
+	if (mb_InCheckProcedure)
+	{
+		Assert(mb_InCheckProcedure==FALSE);
+		goto wrap;
+	}
+
+	DeleteBadTempFiles();
+	CloseInternet(true);
+
 	pszName = PointToName(asDownloadedPackage);
 	pszExt = PointToExt(pszName);
-	if (!pszName || !*pszName || pszExt || !*pszExt)
+	if (!pszName || !*pszName || !pszExt || !*pszExt)
 	{
-		MBoxA(L"Invalid asDownloadedPackage");
+		AssertMsg(L"Invalid asDownloadedPackage");
 		goto wrap;
 	}
 	
@@ -523,40 +579,146 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 	mp_Set->LoadFrom(&gpSet->UpdSet);
 	
 	mb_ManualCallMode = TRUE;
+
+	// Clear possible last error
 	{
 		MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
 		SafeFree(ms_LastErrorInfo);
 	}
 
+	ms_NewVersion[0] = 0;
 
-	if ((lstrcmpni(pszName, L"conemupack.", 11) == 0)
-		&& (lstrcmpi(pszExt, L".7z") == 0))
+	LPCWSTR pszPackPref = L"conemupack.";
+	size_t lnPackPref = _tcslen(pszPackPref);
+	LPCWSTR pszSetupPref = L"conemusetup.";
+	size_t lnSetupPref = _tcslen(pszSetupPref);
+
+	if ((lstrcmpni(pszName, pszPackPref, lnPackPref) == 0)
+		&& (lstrcmpi(pszExt, L".7z") == 0)
+		&& (((pszExt - pszName) - lnPackPref + 1) < sizeof(ms_NewVersion)))
 	{
+		// Check it was NOT installed with "Setupper"
+		if (mp_Set->UpdateDownloadSetup() == 1)
+		{
+			DontEnable de;
+			LPCWSTR pszConfirm = L"ConEmu was installed with setup!\nAre you sure to update installation with 7zip?";
+			int iBtn = MessageBox(NULL, pszConfirm, ms_DefaultTitle, MB_ICONEXCLAMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_YESNO|MB_DEFBUTTON2);
+			if (iBtn != IDYES)
+			{
+				goto wrap;
+			}
+		}
+
+		//if (!CanUpdateInstallation())
+		//{
+		//	// Значит 7zip обломается при попытке распаковки
+		//	goto wrap;
+		//}
+
 		// OK
+		size_t nLen = (pszExt - pszName) - lnPackPref;
+		wmemmove(ms_NewVersion, pszName+lnPackPref, nLen);
+		ms_NewVersion[nLen] = 0;
 	}
-	else if ((lstrcmpni(pszName, L"conemusetup.", 12) == 0)
-		&& (lstrcmpi(pszExt, L".exe") == 0))
+	else if ((lstrcmpni(pszName, pszSetupPref, lnSetupPref) == 0)
+		&& (lstrcmpi(pszExt, L".exe") == 0)
+		&& (((pszExt - pszName) - lnSetupPref + 1) < sizeof(ms_NewVersion)))
 	{
+		// Must be installed with "Setupper"
 		if (mp_Set->UpdateDownloadSetup() != 1)
 		{
-			MBoxA(L"ConEmu was not installed with setup! Can't update!");
+			MBoxError(L"ConEmu was not installed with setup! Can't update!");
 			goto wrap;
 		}
+
 		// OK
+		size_t nLen = (pszExt - pszName) - lnSetupPref;
+		wmemmove(ms_NewVersion, pszName+lnSetupPref, nLen);
+		ms_NewVersion[nLen] = 0;
 	}
 	else
 	{
-		MBoxA(L"Invalid asDownloadedPackage (2)");
+		AssertMsg(L"Invalid asDownloadedPackage (2)");
 		goto wrap;
 	}
 
 
+	// Сразу проверим, как нужно будет запускаться
+	bNeedRunElevation = NeedRunElevation();
+
 	_wsprintf(ms_CurVersion, SKIPLEN(countof(ms_CurVersion)) L"%02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
 	//ms_NewVersion
 
-	TODO("StartLocalUpdate - запуск обновления из локального пакета");
+	// StartLocalUpdate - запуск обновления из локального пакета
+
+	mb_InetMode = false;
+	mb_DroppedMode = true;
+
+	
+	
+	pszLocalPackage = CreateTempFile(mp_Set->szUpdateDownloadPath, PointToName(asDownloadedPackage), hTarget);
+	if (!pszLocalPackage)
+		goto wrap;
+	
+	lbDownloadRc = DownloadFile(asDownloadedPackage, pszLocalPackage, hTarget, nLocalCRC, TRUE);
+	CloseHandle(hTarget);
+	if (!lbDownloadRc)
+		goto wrap;
+
+
+	if (mb_RequestTerminate)
+		goto wrap;
+
+	pszBatchFile = CreateBatchFile(pszLocalPackage);
+	if (!pszBatchFile)
+		goto wrap;
+	
+	if (!QueryConfirmation(us_ConfirmUpdate))
+	{
+		goto wrap;
+	}
+
+	Assert(mb_ManualCallMode==NULL && mpsz_PendingBatchFile==NULL);
+
+	mpsz_PendingPackageFile = pszLocalPackage;
+	pszLocalPackage = NULL;
+	mpsz_PendingBatchFile = pszBatchFile;
+	pszBatchFile = NULL;
+	m_UpdateStep = us_ExitAndUpdate;
+	gpConEmu->RequestExitUpdate();
+	lbExecuteRc = TRUE;
 
 wrap:
+	_ASSERTE(mpsz_DeleteIniFile==NULL);
+
+	_ASSERTE(mpsz_DeletePackageFile==NULL);
+	mpsz_DeletePackageFile = NULL;
+	if (pszLocalPackage)
+	{
+		if (*pszLocalPackage && (!lbDownloadRc || (!lbExecuteRc && !mp_Set->isUpdateLeavePackages)))
+			mpsz_DeletePackageFile = pszLocalPackage;
+			//DeleteFile(pszLocalPackage);
+		else
+			SafeFree(pszLocalPackage);
+	}
+
+	_ASSERTE(mpsz_DeleteBatchFile==NULL);
+	mpsz_DeleteBatchFile = NULL;
+	if (pszBatchFile)
+	{
+		if (*pszBatchFile && !lbExecuteRc)
+			mpsz_DeleteBatchFile = pszBatchFile;
+			//DeleteFile(pszBatchFile);
+		else
+			SafeFree(pszBatchFile);
+	}
+
+	if (!lbExecuteRc)
+	{
+		m_UpdateStep = us_NotStarted;
+		mb_DroppedMode = false;
+	}
+
 	return bRc;
 }
 
@@ -663,7 +825,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 		// Новых версий нет
 		if (mb_ManualCallMode)
 		{
-			ReportError(L"You are using latest available %s version (%s)", (mp_Set->isUpdateUseBuilds==1) ? L"stable" : L"developer", ms_CurVersion, 0);
+			ReportError(L"Your current ConEmu version is (%s)\nNo newer %s version available", ms_CurVersion, (mp_Set->isUpdateUseBuilds==1) ? L"stable" : L"developer", 0);
 		}
 
 		if (bTempUpdateVerLocation && pszUpdateVerLocation && *pszUpdateVerLocation)
@@ -956,18 +1118,28 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	{
 		WRITE_BATCH_A("\r\n");
 		WRITE_BATCH_W(mp_Set->szUpdatePostUpdateCmd);
-		WRITE_BATCH_A("\r\necho Starting ConEmu...\r\nstart \"ConEmu\" \"");
-		WRITE_BATCH_W(gpConEmu->ms_ConEmuExe);
-		WRITE_BATCH_A("\" ");
-		if (gpConEmu->mpsz_ConEmuArgs)
-		{
-			WRITE_BATCH_W(gpConEmu->mpsz_ConEmuArgs);
-		}
 		WRITE_BATCH_A("\r\n");
 	}
+
+	// Перезапуск ConEmu
+	WRITE_BATCH_A("\r\necho Starting ConEmu...\r\nstart \"ConEmu\" \"");
+	WRITE_BATCH_W(gpConEmu->ms_ConEmuExe);
+	WRITE_BATCH_A("\" ");
+	if (bNeedRunElevation)
+	{
+		WRITE_BATCH_A("/demote /cmd \"");
+		WRITE_BATCH_W(gpConEmu->ms_ConEmuExe);
+		WRITE_BATCH_A("\" ");
+	}
+	if (gpConEmu->mpsz_ConEmuArgs)
+	{
+		WRITE_BATCH_W(gpConEmu->mpsz_ConEmuArgs);
+	}
+	// Fin
+	WRITE_BATCH_A("\r\ngoto fin\r\n");
 	
 	// Сообщение об ошибке?
-	WRITE_BATCH_A("\r\ngoto fin\r\n:err\r\n");
+	WRITE_BATCH_A("\r\n:err\r\n");
 	WRITE_BATCH_A((mp_Set->UpdateDownloadSetup()==1) ? "echo \7Installation failed\7" : "echo \7Extraction failed\7\r\n");
 	WRITE_BATCH_A("\r\npause\r\n:fin\r\n");
 
@@ -1004,6 +1176,12 @@ wrap:
 
 CConEmuUpdate::UpdateStep CConEmuUpdate::InUpdate()
 {
+	if (!this)
+	{
+		_ASSERTE(this);
+		return us_NotStarted;
+	}
+
 	DWORD nWait = WAIT_OBJECT_0;
 	
 	if (mh_CheckThread)
@@ -1182,6 +1360,10 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 	DWORD nRead;
 	bool lbNeedTargetClose = false;
 	mb_InetMode = !IsLocalFile(asSource);
+	if (mb_InetMode)
+	{
+		mb_DroppedMode = false;
+	}
 	bool lbTargetLocal = IsLocalFile(asTarget);
 	_ASSERTE(lbTargetLocal);
 	UNREFERENCED_PARAMETER(lbTargetLocal);
@@ -1827,8 +2009,8 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 		pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
 		_wsprintf(pszMsg, SKIPLEN(cchMax)
 			L"Do you want to close ConEmu and\n"
-			L"update to new %s version %s?",
-			(mp_Set->isUpdateUseBuilds==1) ? L"stable" : L"developer", ms_NewVersion);
+			L"update to %s version %s?",
+			mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new stable" : L"new developer", ms_NewVersion);
 		m_UpdateStep = step;
 		lbRc = QueryConfirmationInt(pszMsg);
 		break;
@@ -1836,6 +2018,8 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 		_ASSERTE(step==us_ConfirmDownload);
 		lbRc = false;
 	}
+
+	SafeFree(pszMsg);
 
 	return lbRc;
 }
@@ -1845,13 +2029,30 @@ bool CConEmuUpdate::QueryConfirmationInt(LPCWSTR asConfirmInfo)
 	if (mb_InShowLastError)
 		return false; // Если отображается ошибк - не звать
 
-	MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
-	SafeFree(ms_LastErrorInfo);
-	ms_LastErrorInfo = lstrdup(asConfirmInfo);
-	SC.Unlock();
+	bool lbConfirm;
 
-	bool bRc = gpConEmu->ReportUpdateConfirmation();
-	return bRc;
+	if (gpConEmu->isMainThread())
+	{
+		Assert(!mb_InetMode && mb_ManualCallMode);
+
+		DontEnable de;
+		int iBtn = MessageBox(NULL, asConfirmInfo, ms_DefaultTitle, MB_ICONQUESTION|MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_YESNO);
+
+		mb_InShowLastError = false;
+
+		lbConfirm = (iBtn == IDYES);
+	}
+	else
+	{
+		MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
+		SafeFree(ms_LastErrorInfo);
+		ms_LastErrorInfo = lstrdup(asConfirmInfo);
+		SC.Unlock();
+
+		lbConfirm = gpConEmu->ReportUpdateConfirmation();
+	}
+
+	return lbConfirm;
 }
 
 short CConEmuUpdate::GetUpdateProgress()

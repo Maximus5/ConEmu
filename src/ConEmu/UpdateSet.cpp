@@ -278,12 +278,13 @@ bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])
 	return true;
 }
 
-// 0-пока не проверялся, 1-установлено через Installer, пути совпали, 2-Installer не запускался
+// 1-установлено через Installer, пути совпали, 2-Installer не запускался
 BYTE ConEmuUpdateSettings::UpdateDownloadSetup()
 {
 	if (isUpdateDownloadSetup)
 		return isUpdateDownloadSetup;
 
+	// если 0 - пока не проверялся
 	if (isSetupDetected == 0)
 	{
 		HKEY hk;

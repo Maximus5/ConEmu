@@ -86,7 +86,7 @@ wchar_t* GuiMacro::AsString()
 				break;
 			case gmt_Str:
 				// + " ... ", + escaped (double len in maximum)
-				pszArgs[i] = (wchar_t*)malloc((4+(argv[i].Str ? _tcslen(argv[i].Str) : 0))*sizeof(*argv[i].Str));
+				pszArgs[i] = (wchar_t*)malloc((3+(argv[i].Str ? _tcslen(argv[i].Str)*2 : 0))*sizeof(*argv[i].Str));
 				if (pszArgs[i])
 				{
 					LPCWSTR pszSrc = argv[i].Str;
@@ -105,7 +105,7 @@ wchar_t* GuiMacro::AsString()
 				break;
 			case gmt_VStr:
 				// + @" ... ", + escaped (double len in maximum)
-				pszArgs[i] = (wchar_t*)malloc((4+(argv[i].Str ? _tcslen(argv[i].Str) : 0))*sizeof(*argv[i].Str));
+				pszArgs[i] = (wchar_t*)malloc((4+(argv[i].Str ? _tcslen(argv[i].Str)*2 : 0))*sizeof(*argv[i].Str));
 				if (pszArgs[i])
 				{
 					LPCWSTR pszSrc = argv[i].Str;

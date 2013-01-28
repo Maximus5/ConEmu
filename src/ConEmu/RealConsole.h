@@ -476,7 +476,7 @@ class CRealConsole
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
 		void CloseConsole(bool abForceTerminate, bool abConfirm);
 		void CloseConsoleWindow(bool abConfirm);
-		bool isCloseConfirmed(LPCWSTR asConfirmation);
+		bool isCloseConfirmed(LPCWSTR asConfirmation, bool bForceAsk = false);
 		void CloseConfirmReset();
 		BOOL CanCloseTab(BOOL abPluginRequired = FALSE);
 		void CloseTab();

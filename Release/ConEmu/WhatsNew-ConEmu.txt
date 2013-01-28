@@ -11,7 +11,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
-[!] Refactoring of drag from Far Manager panels is started. Lack of documentation :(
+2013.01.28
+[!] Refactoring of drag from Far Manager panels is started.
+[*] Changes in self-update procedure (elevation related).
 [*] Issue 899: Default position of «Find text» dialog is upper-right corner.
 [*] Some changes in Drag&Drop items drawing.
 [%] Bugfixes for Reload/Reset Settings (buttons in «Settings» dialog).

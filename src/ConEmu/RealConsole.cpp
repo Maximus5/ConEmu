@@ -118,7 +118,7 @@ wchar_t CRealConsole::ms_LastRConStatus[80] = {};
 
 const wchar_t gsCloseGui[] = L"Confirm closing current window?";
 const wchar_t gsCloseCon[] = L"Confirm closing console window?";
-const wchar_t gsCloseAny[] = L"Confirm closing console?";
+//const wchar_t gsCloseAny[] = L"Confirm closing console?";
 const wchar_t gsCloseEditor[] = L"Confirm closing Far editor?";
 const wchar_t gsCloseViewer[] = L"Confirm closing Far viewer?";
 
@@ -2949,62 +2949,17 @@ BOOL CRealConsole::StartProcess()
 			}
 			else if (m_Args.bRunAsRestricted)
 			{
-				HANDLE hToken = NULL, hTokenRest = NULL;
 				lbRc = FALSE;
 
-				if (OpenProcessToken(GetCurrentProcess(),
-				                    //TOKEN_ASSIGN_PRIMARY|TOKEN_DUPLICATE|TOKEN_QUERY|TOKEN_ADJUST_DEFAULT,
-				                    TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY,
-				                    &hToken))
+				if (CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
+				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+				                        , NULL, m_Args.pszStartupDir, &si, &pi, &dwLastError))
 				{
-					enum WellKnownAuthorities
-					{
-						NullAuthority = 0, WorldAuthority, LocalAuthority, CreatorAuthority,
-						NonUniqueAuthority, NtAuthority, MandatoryLabelAuthority = 16
-					};
-					SID *pAdmSid = (SID*)calloc(sizeof(SID)+sizeof(DWORD)*2,1);
-					pAdmSid->Revision = SID_REVISION;
-					pAdmSid->SubAuthorityCount = 2;
-					pAdmSid->IdentifierAuthority.Value[5] = NtAuthority;
-					pAdmSid->SubAuthority[0] = SECURITY_BUILTIN_DOMAIN_RID;
-					pAdmSid->SubAuthority[1] = DOMAIN_ALIAS_RID_ADMINS;
-					SID_AND_ATTRIBUTES sidsToDisable[] =
-					{
-						{pAdmSid}
-					};
-					
-					#ifdef __GNUC__
-					HMODULE hAdvApi = GetModuleHandle(L"AdvApi32.dll");
-					CreateRestrictedToken_t CreateRestrictedToken = (CreateRestrictedToken_t)GetProcAddress(hAdvApi, "CreateRestrictedToken");
-					#endif
-
-					if (CreateRestrictedToken(hToken, DISABLE_MAX_PRIVILEGE,
-					                         countof(sidsToDisable), sidsToDisable,
-					                         0, NULL, 0, NULL, &hTokenRest))
-					{
-						if (CreateProcessAsUserW(hTokenRest, NULL, psCurCmd, NULL, NULL, FALSE,
-						                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-						                        , NULL, m_Args.pszStartupDir, &si, &pi))
-						{
-							lbRc = TRUE;
-							//mn_MainSrv_PID = pi.dwProcessId;
-							SetMainSrvPID(pi.dwProcessId, NULL);
-						}
-
-						CloseHandle(hTokenRest); hTokenRest = NULL;
-					}
-					else
-					{
-						dwLastError = GetLastError();
-					}
-
-					free(pAdmSid);
-					CloseHandle(hToken); hToken = NULL;
+					lbRc = TRUE;
+					//mn_MainSrv_PID = pi.dwProcessId;
+					SetMainSrvPID(pi.dwProcessId, NULL);
 				}
-				else
-				{
-					dwLastError = GetLastError();
-				}
+
 			}
 			else
 			{
@@ -8832,18 +8787,18 @@ void CRealConsole::CloseConfirmReset()
 	mb_CloseFarMacroPosted = false;
 }
 
-bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation)
+bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation, bool bForceAsk /*= false*/)
 {
 	if (!gpSet->isCloseConsoleConfirm)
 		return true;
 
-	if (gpConEmu->isCloseConfirmed())
+	if (!bForceAsk && gpConEmu->isCloseConfirmed())
 		return true;
 
 	int nBtn = 0;
 	{
 		nBtn = ConfirmCloseConsoles(1, (GetProgress(NULL,NULL)>=0) ? 1 : 0, GetModifiedEditors(), NULL,
-			asConfirmation ? asConfirmation : gsCloseAny, Title);
+			asConfirmation ? asConfirmation : hGuiWnd ? gsCloseGui : gsCloseCon, Title);
 
 		//DontEnable de;
 		////nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
@@ -8889,7 +8844,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 	// Для Terminate - спрашиваем отдельно
 	if (abConfirm && !abForceTerminate)
 	{
-		if (!isCloseConfirmed(gsCloseAny))
+		if (!isCloseConfirmed(NULL))
 			return;
 	}
 	#ifdef _DEBUG

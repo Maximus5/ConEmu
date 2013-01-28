@@ -30,17 +30,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
-#include <shlobj.h>
 #include "Header.h"
+#include <shlobj.h>
+
 #include "DragDropData.h"
 #include "DragDrop.h"
-#include "ScreenDump.h"
+
 #include "ConEmu.h"
 #include "ConEmuPipe.h"
-#include "VirtualConsole.h"
-#include "VConGroup.h"
 #include "RealConsole.h"
-//#include "../common/ConEmuCheck.h"
+#include "ScreenDump.h"
+#include "Update.h"
+#include "VConGroup.h"
+#include "VirtualConsole.h"
+
 
 #ifdef __GNUC__
 #define PCUIDLIST_RELATIVE LPCITEMIDLIST
@@ -420,7 +423,7 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 
 BOOL CDragDropData::AddFmt_FileNameW(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
 {
-	HRESULT hr = mp_DataObject->SetDataInt(L"FileNameW", pszDraggedPath, cbSize);
+	HRESULT hr = mp_DataObject->SetDataInt(CFSTR_FILENAMEW/*L"FileNameW"*/, pszDraggedPath, cbSize);
 	return SUCCEEDED(hr);
 }
 
@@ -592,17 +595,13 @@ wrap:
 	return TRUE;
 }
 
+// pszDraggedPath - ASCIIZZ
 BOOL CDragDropData::AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
 {
-	// Must be GlobalAlloc'ed
-	DragImageBits *pDragBits = CreateDragImageBits(pszDraggedPath);
-
-	if (!pDragBits)
-		return FALSE;
-
+	TODO("CFSTR_DROPDESCRIPTION");
+#if 0
 	//if (SUCCEEDED(hr))
 	{
-		DWORD nData;
 		struct DwordData {
 			LPCWSTR sClipName;
 			DWORD   nValue;
@@ -628,10 +627,10 @@ BOOL CDragDropData::AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCou
 
 		HRESULT hrTest = S_OK;
 
-		for (size_t i = 0; DragOptions[i].sClipName; i++)
-		{
-			hrTest = mp_DataObject->SetDataInt(DragOptions[i].sClipName, &DragOptions[i].nValue, sizeof(nData));
-		}
+		//for (size_t i = 0; DragOptions[i].sClipName; i++)
+		//{
+		//	hrTest = mp_DataObject->SetDataInt(DragOptions[i].sClipName, &DragOptions[i].nValue, sizeof(nData));
+		//}
 
 		if (gOSVer.dwMajorVersion >= 6)
 		{
@@ -650,42 +649,63 @@ BOOL CDragDropData::AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCou
 
 		UNREFERENCED_PARAMETER(hrTest);
 	}
+#endif
 
 	HRESULT hr = E_FAIL;
 
 #if defined(USE_DRAG_HELPER)
 	if (UseSourceHelper())
 	{
-		//TODO: Need GCC check!
-		SHDRAGIMAGE info = {
-			{pDragBits->nWidth, pDragBits->nHeight},
-			{pDragBits->nXCursor, pDragBits->nYCursor},
-			mh_BitsBMP,
-			// The color used by the control to fill the background of the drag image.
-			#if defined(USE_ALPHA_OVL)
-			0
-			#else
-			OVERLAY_COLOR
-			#endif
-		};
+		HDC hDrawDC = NULL;
+		HBITMAP hBitmap = NULL, hOldBitmap = NULL;
+		POINT ptCursor = {0,0};
+		int nMaxX = 0, nMaxY = 0;
+		COLORREF clrKey = RGB(1,2,3); // Something dark, but not black
 
-		#ifdef _DEBUG
-		bool bDraw = false;
-		if (bDraw)
+		if (PaintDragImageBits(pszDraggedPath, hDrawDC, hBitmap, hOldBitmap, MAX_OVERLAY_WIDTH, MAX_OVERLAY_HEIGHT, &nMaxX, &nMaxY, &ptCursor, true, clrKey))
 		{
-			HDC hDc = GetWindowDC(ghWnd);
-			BitBlt(hDc, 50,100, pDragBits->nWidth, pDragBits->nHeight, mh_BitsDC, 0,0, SRCCOPY);
-			ReleaseDC(ghWnd, hDc);
-			GdiFlush();
-		}
-		#endif
+			//TODO: Need GCC check!
+			SHDRAGIMAGE info = {
+				{nMaxX, nMaxY},
+				{ptCursor.x, ptCursor.y},
+				hBitmap, clrKey
+			};
 
-		hr = mp_SourceHelper->InitializeFromBitmap(&info, mp_DataObject);
+			#ifdef _DEBUG
+			bool bDraw = false;
+			if (bDraw)
+			{
+				HDC hDc = GetWindowDC(ghWnd);
+				BitBlt(hDc, 50,100, nMaxX, nMaxY, hDrawDC, 0,0, SRCCOPY);
+				ReleaseDC(ghWnd, hDc);
+				GdiFlush();
+			}
+			#endif
+
+			SelectObject(hDrawDC, hOldBitmap);
+			DeleteDC(hDrawDC);
+
+			IDragSourceHelper2* pHelper2 = NULL;
+			if (SUCCEEDED(mp_SourceHelper->QueryInterface(IID_IDragSourceHelper2, (void**)&pHelper2)))
+			{
+				TODO("DSH_ALLOWDROPDESCRIPTIONTEXT")
+				hr = pHelper2->SetFlags(0/*DSH_ALLOWDROPDESCRIPTIONTEXT*/);
+				pHelper2->Release();
+			}
+
+			hr = mp_SourceHelper->InitializeFromBitmap(&info, mp_DataObject);
+		}
 	}
 #endif
 
 	if (FAILED(hr))
 	{
+		// Must be GlobalAlloc'ed
+		DragImageBits *pDragBits = CreateDragImageBits(pszDraggedPath);
+
+		if (!pDragBits)
+			return FALSE;
+
 		hr = mp_DataObject->SetDataInt(L"DragImageBits", pDragBits);
 	}
 
@@ -1124,53 +1144,68 @@ bool CDragDropData::CheckIsUpdatePackage(IDataObject * pDataObject)
 		mpsz_UpdatePackage = NULL;
 	}
 
-	STGMEDIUM stgMedium = { 0 };
-	FORMATETC fmtetc = { RegisterClipboardFormat(CFSTR_FILENAMEW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-
-	HRESULT hr = pDataObject->GetData(&fmtetc, &stgMedium);
-
-	if (hr == S_OK && stgMedium.hGlobal)
+	if (gpUpd && gpUpd->InUpdate())
 	{
-		LPCWSTR pszFileNames = (LPCWSTR)GlobalLock(stgMedium.hGlobal);
+		// Already in Update stage
+		goto wrap;
+	}
+	else
+	{
+		HRESULT hr;
+		STGMEDIUM stgMedium = { 0 };
+		FORMATETC fmtetc = { RegisterClipboardFormat(CFSTR_FILENAMEW/*L"FileNameW"*/), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 
-		if (pszFileNames && *pszFileNames && lstrlen(pszFileNames) <= MAX_PATH)
+		hr = pDataObject->QueryGetData(&fmtetc);
+
+		if (SUCCEEDED(hr))
 		{
-			wchar_t szName[MAX_PATH+1];
-			LPCWSTR pszName = PointToName(pszFileNames);
-			if (pszName && *pszName)
+			hr = pDataObject->GetData(&fmtetc, &stgMedium);
+
+			if (SUCCEEDED(hr) && stgMedium.hGlobal)
 			{
-				lstrcpyn(szName, pszName, countof(szName));
-				CharLowerBuff(szName, lstrlen(szName));
-				LPCWSTR pszExt = PointToExt(szName);
-				if (pszExt)
+				LPCWSTR pszFileNames = (LPCWSTR)GlobalLock(stgMedium.hGlobal);
+
+				if (pszFileNames && *pszFileNames && lstrlen(pszFileNames) <= MAX_PATH)
 				{
-					if ((wcsncmp(szName, L"conemupack.", 11) == 0)
-						&& (wcscmp(pszExt, L".7z") == 0))
+					wchar_t szName[MAX_PATH+1];
+					LPCWSTR pszName = PointToName(pszFileNames);
+					if (pszName && *pszName)
 					{
-						bHasUpdatePackage = true;
+						lstrcpyn(szName, pszName, countof(szName));
+						CharLowerBuff(szName, lstrlen(szName));
+						LPCWSTR pszExt = PointToExt(szName);
+						if (pszExt)
+						{
+							if ((wcsncmp(szName, L"conemupack.", 11) == 0)
+								&& (wcscmp(pszExt, L".7z") == 0))
+							{
+								bHasUpdatePackage = true;
+							}
+							else if ((wcsncmp(szName, L"conemusetup.", 12) == 0)
+								&& (wcscmp(pszExt, L".exe") == 0))
+							{
+								bHasUpdatePackage = true;
+							}
+						}
 					}
-					else if ((wcsncmp(szName, L"conemusetup.", 12) == 0)
-						&& (wcscmp(pszExt, L".exe") == 0))
+
+					if (bHasUpdatePackage)
 					{
-						bHasUpdatePackage = true;
+						mpsz_UpdatePackage = lstrdup(pszFileNames);
 					}
 				}
-			}
 
-			if (bHasUpdatePackage)
-			{
-				mpsz_UpdatePackage = lstrdup(pszFileNames);
+				if (pszFileNames)
+				{
+					GlobalUnlock(stgMedium.hGlobal);
+				}
+
+				ReleaseStgMedium(&stgMedium);
 			}
 		}
-
-		if (pszFileNames)
-		{
-			GlobalUnlock(stgMedium.hGlobal);
-		}
-
-		ReleaseStgMedium(&stgMedium);
 	}
 
+wrap:
 	mb_IsUpdatePackage = bHasUpdatePackage;
 	return bHasUpdatePackage;
 }
@@ -1428,6 +1463,334 @@ bool CDragDropData::AllocDragImageBits()
 	return (mp_Bits!=NULL);
 }
 
+BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP& hBitmap, HBITMAP& hOldBitmap, int nWidth, int nHeight, int* pnMaxX, int* pnMaxY, POINT* ptCursor, bool bUseColorKey, COLORREF clrKey)
+{
+	HDC hScreenDC = ::GetDC(NULL);
+	bool bCreateDC = false, bCreateBmp = false;
+
+	if (!hDrawDC)
+	{
+		hDrawDC = CreateCompatibleDC(hScreenDC);
+		if (!hDrawDC)
+		{
+			_ASSERTE(hDrawDC);
+			if (hScreenDC) ::ReleaseDC(0, hScreenDC);
+			return FALSE;
+		}
+		bCreateDC = true;
+	}
+
+	if (!hBitmap)
+	{
+		hBitmap = CreateCompatibleBitmap(hScreenDC, nWidth, nHeight);
+		if (!hBitmap)
+		{
+			_ASSERTE(hBitmap);
+			if (bCreateDC) DeleteDC(hDrawDC);
+			if (hScreenDC) ::ReleaseDC(0, hScreenDC);
+			return FALSE;
+		}
+		hOldBitmap = (HBITMAP)SelectObject(hDrawDC, hBitmap);
+	}
+
+	if (hScreenDC)
+	{
+		::ReleaseDC(0, hScreenDC);
+		hScreenDC = NULL;
+	}
+
+	HFONT hOldF = NULL, hf = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, CP_ACP, 0, 0, 0, 0, L"Tahoma");
+
+	if (hf) hOldF = (HFONT)SelectObject(hDrawDC, hf);
+
+	int nMaxX = 0, nMaxY = 0;
+	// GetTextExtentPoint32 почему-то портит DC, поэтому ширину получим сначала
+	wchar_t *psz = pszFiles; int nFilesCol = 0;
+
+	while (*psz)
+	{
+		SIZE sz = {0};
+		LPCWSTR pszText = PointToName(psz);
+
+		GetTextExtentPoint32(hDrawDC, pszText, _tcslen(pszText), &sz); //-V107
+
+		if (sz.cx > nWidth)
+			sz.cx = nWidth;
+
+		if (sz.cx > nMaxX)
+			nMaxX = sz.cx;
+
+		psz += _tcslen(psz)+1; // длина полного пути и длина имени файла разные ;)
+		nFilesCol ++;
+	}
+
+	nMaxX = min((OVERLAY_TEXT_SHIFT + nMaxX),nWidth);
+	// ≈сли тащат много файлов/папок - можно попробовать разместить их в несколько колонок
+	int nColCount = 1;
+	// Win8 bug.
+	// It does not cares about difference in struct sizes between 64/32 bit processes.
+	// Need to reserve one pix to avoid cut/trunsfer first pixels row.
+	int nX = 1;
+
+	if (nFilesCol > 3)
+	{
+		if (nFilesCol > 21 && (nMaxX * 3 + 32) <= nWidth) //-V112
+		{
+			nFilesCol = (nFilesCol+3) / (nColCount = 4); // располагаем в 4 колонки //-V112
+		}
+		else if (nFilesCol > 12 && (nMaxX * 2 + 32) <= nWidth) //-V112
+		{
+			nFilesCol = (nFilesCol+2) / (nColCount = 3); // располагаем в 3 колонки
+		}
+		else if ((nMaxX + 32) <= nWidth) //-V112
+		{
+			nFilesCol = (nFilesCol+1) / (nColCount = 2); // располагаем в 2 колонки
+		}
+	}
+
+	hOldBitmap = (HBITMAP)SelectObject(hDrawDC, hBitmap);
+	SetTextColor(hDrawDC, RGB(0,0,128)); // “емно синий текст
+	//SetTextColor(hDrawDC, RGB(255,255,255)); // Ѕелый текст
+	SetBkColor(hDrawDC, RGB(192,192,192)); // на сером фоне
+	SetBkMode(hDrawDC, OPAQUE);
+	// DC может быть испорчен (почему?), поэтому лучше почистим его
+	RECT rcFill = MakeRect(nWidth,nHeight);
+
+	if (bUseColorKey)
+	{
+		HBRUSH hBr = CreateSolidBrush(clrKey/*OVERLAY_COLOR*/);
+		FillRect(hDrawDC, &rcFill, hBr);
+		DeleteObject(hBr);
+	}
+	else
+	{
+		FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(RELEASEDEBUGTEST(BLACK_BRUSH,BLACK_BRUSH/*WHITE_BRUSH*/)));
+	}
+
+	psz = pszFiles;
+	int nFileIdx = 0, nColMaxY = 0, nAllFiles = 0;
+	nMaxX = 0;
+	int nFirstColWidth = 0;
+
+	while (*psz)
+	{
+		if (!DrawImageBits(hDrawDC, psz, &nMaxX, nX, &nColMaxY))
+			break; // вышли за пределы nWidth x nHeight (по высоте)
+
+		psz += _tcslen(psz)+1;
+
+		if (!*psz) break;
+
+		nFileIdx ++; nAllFiles ++;
+
+		if (nFileIdx >= nFilesCol)
+		{
+			if (!nFirstColWidth)
+				nFirstColWidth = nMaxX + OVERLAY_TEXT_SHIFT;
+
+			if ((nX + nMaxX + 32) >= nWidth) //-V112
+				break;
+
+			nX += nMaxX + OVERLAY_TEXT_SHIFT + OVERLAY_COLUMN_SHIFT;
+
+			if (nColMaxY > nMaxY) nMaxY = nColMaxY;
+
+			nColMaxY = nMaxX = nFileIdx = 0;
+		}
+	}
+
+	if (nColMaxY > nMaxY) nMaxY = nColMaxY;
+
+	if (!nFirstColWidth) nFirstColWidth = nMaxX + OVERLAY_TEXT_SHIFT;
+
+	int nLineX = ((nX+nMaxX+OVERLAY_TEXT_SHIFT+3)>>2)<<2;
+
+	if (nLineX > nWidth) nLineX = nWidth;
+
+	SelectObject(hDrawDC, hOldF);
+	//GdiFlush();
+
+	#ifdef DEBUG_DUMP_IMAGE
+	DumpImage(hDrawDC, NULL, nWidth, nMaxY, L"T:\\DragDump.bmp");
+	#endif
+
+	//if (nLineX>2 && nMaxY>2)
+	//{
+	//	HDC hBitsDC = CreateCompatibleDC(hScreenDC);
+
+	//	if (hBitsDC && hDrawDC)
+	//	{
+	//		SetLayout(hBitsDC, LAYOUT_BITMAPORIENTATIONPRESERVED);
+	//		BITMAPINFOHEADER bih = {sizeof(BITMAPINFOHEADER)};
+	//		bih.biWidth = nLineX;
+	//		bih.biHeight = nMaxY;
+	//		bih.biPlanes = 1;
+	//		bih.biBitCount = 32;
+	//		bih.biCompression = BI_RGB;
+	//		MyRgbQuad* pSrc = NULL;
+	//		HBITMAP hBitsBitmap = CreateDIBSection(hScreenDC, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pSrc, NULL, 0);
+
+	//		DragImageBits* pDst = NULL;
+	//		bool UseDragHelper = false;
+
+	//		if (hBitsBitmap)
+	//		{
+	//			HBITMAP hOldBitsBitmap = (HBITMAP)SelectObject(hBitsDC, hBitsBitmap);
+	//			BitBlt(hBitsDC, 0,0,nLineX,nMaxY, hDrawDC,0,0, SRCCOPY);
+	//			GdiFlush();
+
+	//			#if defined(USE_DRAG_HELPER)
+	//			{
+	//				// Local, use DragHelper
+	//				pDst = (DragImageBits*)calloc(sizeof(DragImageBits),1);
+	//				UseDragHelper = true;
+	//			}
+	//			#else
+	//			{
+	//				pDst = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits) + (nLineX*nMaxY - 1)*sizeof(RGBQUAD));
+	//				UseDragHelper = false;
+	//			}
+	//			#endif
+
+
+	//			if (pDst)
+	//			{
+	//				pDst->nWidth = nLineX;
+	//				pDst->nHeight = nMaxY;
+
+	//				if (nColCount == 1)
+	//					pDst->nXCursor = nMaxX / 2;
+	//				else
+	//					pDst->nXCursor = nFirstColWidth;
+
+	//				pDst->nYCursor = 17; // под первой строкой
+	//				pDst->nRes1 = GetTickCount(); // что-то непон€тное. Random?
+	//				pDst->nRes2 = (DWORD)-1;
+
+	//				const u32 nCurBlend = OVERLAY_ALPHA, nAllBlend = OVERLAY_ALPHA;
+
+	//				INT_PTR PixCount = nMaxY * nLineX;
+	//				Assert(PixCount>0);
+
+	//				#if defined(USE_DRAG_HELPER)
+	//				{
+	//					MyRgbQuad *pRGB = pSrc;
+
+	//					for (INT_PTR i = PixCount; i--;)
+	//					{
+	//						if (pRGB->dwValue)
+	//						{
+	//						#if !defined(USE_ALPHA_OVL)
+	//							if (pRGB->dwValue == OVERLAY_COLOR)
+	//							{
+	//								WARNING("OVERLAY_COLOR?");
+	//								//pRGB->dwValue = 0;
+	//							}
+	//							else
+	//							{
+	//						#endif
+
+	//								pRGB->rgbBlue = klMulDivU32(pRGB->rgbBlue, nCurBlend, 0xFF);
+	//								pRGB->rgbGreen = klMulDivU32(pRGB->rgbGreen, nCurBlend, 0xFF);
+	//								pRGB->rgbRed = klMulDivU32(pRGB->rgbRed, nCurBlend, 0xFF);
+	//								pRGB->rgbAlpha = nAllBlend;
+
+	//						#if !defined(USE_ALPHA_OVL)
+	//							}
+	//						#endif
+	//						}
+
+	//						pRGB++;
+	//					}
+	//				}
+	//				#else
+	//				{
+	//					MyRgbQuad *pRGB = (MyRgbQuad*)pDst->pix;
+
+	//					for (INT_PTR i = PixCount; i--;)
+	//					{
+	//						//pRGB->rgbBlue = *(pSrc++);
+	//						//pRGB->rgbGreen = *(pSrc++);
+	//						//pRGB->rgbRed = *(pSrc++);
+
+	//						if (pSrc->dwValue)
+	//						{
+	//						#if !defined(USE_ALPHA_OVL)
+
+	//							if (pRGB->dwValue == OVERLAY_COLOR)
+	//							{
+	//								WARNING("OVERLAY_COLOR?");
+	//								//pRGB->dwValue = 0;
+	//							}
+	//							else
+	//							{
+	//						#endif
+	//								pRGB->rgbBlue = klMulDivU32(pSrc->rgbBlue, nCurBlend, 0xFF);
+	//								pRGB->rgbGreen = klMulDivU32(pSrc->rgbGreen, nCurBlend, 0xFF);
+	//								pRGB->rgbRed = klMulDivU32(pSrc->rgbRed, nCurBlend, 0xFF);
+	//								pRGB->rgbAlpha = nAllBlend;
+	//						#if !defined(USE_ALPHA_OVL)
+	//							}
+	//						#endif
+	//						}
+
+	//						pRGB++; pSrc++;
+	//					}
+	//				}
+	//				#endif
+
+	//				if (AllocDragImageBits())
+	//				{
+	//					*mp_Bits = *pDst;
+	//					pBits = pDst; pDst = NULL; //OK
+	//					mh_BitsDC = hBitsDC; hBitsDC = NULL;
+	//					mh_BitsBMP = hBitsBitmap; hBitsBitmap = NULL;
+	//				}
+	//				else
+	//				{
+	//					if (pDst) GlobalFree(pDst); pDst = NULL;  // ќшибка
+	//				}
+	//			}
+
+	//			Assert((hBitsDC==NULL) && (hBitsBitmap==NULL) && "AllocDragImageBits was not succeeded");
+
+	//			if (hBitsDC)
+	//			{
+	//				SelectObject(hBitsDC, hOldBitsBitmap);
+	//			}
+
+	//			if (hBitsBitmap)
+	//			{
+	//				DeleteObject(hBitsBitmap); hBitsBitmap = NULL;
+	//			}
+	//		}
+
+	//		UNREFERENCED_PARAMETER(UseDragHelper);
+	//	}
+
+	//	if (hBitsDC)
+	//	{
+	//		DeleteDC(hBitsDC); hBitsDC = NULL;
+	//	}
+	//}
+
+	//-- this is responsibility of calling method!
+	//SelectObject(hDrawDC, hOldBitmap);
+
+	if (pnMaxX) *pnMaxX  = nLineX;
+	if (pnMaxY) *pnMaxY  = nMaxY;
+	if (ptCursor)
+	{
+		if (nColCount == 1)
+			ptCursor->x = nMaxX / 2;
+		else
+			ptCursor->x = nFirstColWidth;
+
+		ptCursor->y = 17; // под первой строкой
+	}
+	return TRUE;
+}
+
 // Result Must be GlobalAlloc'ed
 DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 {
@@ -1457,121 +1820,129 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 	DEBUGSTROVL(L"CreateDragImageBits()\n");
 	DragImageBits* pBits = NULL;
 	HDC hScreenDC = ::GetDC(0);
-	HDC hDrawDC = CreateCompatibleDC(hScreenDC);
-	HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, MAX_OVERLAY_WIDTH, MAX_OVERLAY_HEIGHT);
+	HDC hDrawDC = NULL;
+	HBITMAP hBitmap = NULL, hOldBitmap = NULL;
+	int nMaxX = 0, nMaxY = 0;
+	POINT ptCursor = {0,0};
 
-	if (hDrawDC && hBitmap)
-	{
-		HFONT hOldF = NULL, hf = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, CP_ACP, 0, 0, 0, 0, L"Tahoma");
-
-		if (hf) hOldF = (HFONT)SelectObject(hDrawDC, hf);
-
-		int nMaxX = 0, nMaxY = 0, nX = 0;
-		// GetTextExtentPoint32 почему-то портит DC, поэтому ширину получим сначала
-		wchar_t *psz = pszFiles; int nFilesCol = 0;
-
-		while (*psz)
-		{
-			SIZE sz = {0};
-			LPCWSTR pszText = wcsrchr(psz, L'\\');
-			if (!pszText) pszText = psz; else psz++;
-
-			GetTextExtentPoint32(hDrawDC, pszText, _tcslen(pszText), &sz); //-V107
-
-			if (sz.cx > MAX_OVERLAY_WIDTH)
-				sz.cx = MAX_OVERLAY_WIDTH;
-
-			if (sz.cx > nMaxX)
-				nMaxX = sz.cx;
-
-			psz += _tcslen(psz)+1; // длина полного пути и длина имени файла разные ;)
-			nFilesCol ++;
-		}
-
-		nMaxX = min((OVERLAY_TEXT_SHIFT + nMaxX),MAX_OVERLAY_WIDTH);
-		// ≈сли тащат много файлов/папок - можно попробовать разместить их в несколько колонок
-		int nColCount = 1;
-
-		if (nFilesCol > 3)
-		{
-			if (nFilesCol > 21 && (nMaxX * 3 + 32) <= MAX_OVERLAY_WIDTH) //-V112
-			{
-				nFilesCol = (nFilesCol+3) / (nColCount = 4); // располагаем в 4 колонки //-V112
-			}
-			else if (nFilesCol > 12 && (nMaxX * 2 + 32) <= MAX_OVERLAY_WIDTH) //-V112
-			{
-				nFilesCol = (nFilesCol+2) / (nColCount = 3); // располагаем в 3 колонки
-			}
-			else if ((nMaxX + 32) <= MAX_OVERLAY_WIDTH) //-V112
-			{
-				nFilesCol = (nFilesCol+1) / (nColCount = 2); // располагаем в 2 колонки
-			}
-		}
-
-		HBITMAP hOldBitmap = (HBITMAP)SelectObject(hDrawDC, hBitmap);
-		SetTextColor(hDrawDC, RGB(0,0,128)); // “емно синий текст
-		//SetTextColor(hDrawDC, RGB(255,255,255)); // Ѕелый текст
-		SetBkColor(hDrawDC, RGB(192,192,192)); // на сером фоне
-		SetBkMode(hDrawDC, OPAQUE);
-		// DC может быть испорчен (почему?), поэтому лучше почистим его
-		RECT rcFill = MakeRect(MAX_OVERLAY_WIDTH,MAX_OVERLAY_HEIGHT);
-
-		#if !defined(USE_ALPHA_OVL)
-		HBRUSH hBr = CreateSolidBrush(OVERLAY_COLOR);
-		FillRect(hDrawDC, &rcFill, hBr);
-		DeleteObject(hBr);
+	if (PaintDragImageBits(pszFiles, hDrawDC, hBitmap, hOldBitmap, MAX_OVERLAY_WIDTH, MAX_OVERLAY_HEIGHT,
+		&nMaxX, &nMaxY, &ptCursor,
+		#ifdef USE_ALPHA_OVL
+		false, 0
 		#else
-		FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(RELEASEDEBUGTEST(BLACK_BRUSH,BLACK_BRUSH/*WHITE_BRUSH*/)));
+		true, OVERLAY_COLOR
 		#endif
+		))
+	{
+		//HFONT hOldF = NULL, hf = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, CP_ACP, 0, 0, 0, 0, L"Tahoma");
 
-		psz = pszFiles;
-		int nFileIdx = 0, nColMaxY = 0, nAllFiles = 0;
-		nMaxX = 0;
-		int nFirstColWidth = 0;
+		//if (hf) hOldF = (HFONT)SelectObject(hDrawDC, hf);
 
-		while (*psz)
-		{
-			if (!DrawImageBits(hDrawDC, psz, &nMaxX, nX, &nColMaxY))
-				break; // вышли за пределы MAX_OVERLAY_WIDTH x MAX_OVERLAY_HEIGHT (по высоте)
+		//int nMaxX = 0, nMaxY = 0, nX = 0;
+		//// GetTextExtentPoint32 почему-то портит DC, поэтому ширину получим сначала
+		//wchar_t *psz = pszFiles; int nFilesCol = 0;
 
-			psz += _tcslen(psz)+1;
+		//while (*psz)
+		//{
+		//	SIZE sz = {0};
+		//	LPCWSTR pszText = PointToName(psz);
 
-			if (!*psz) break;
+		//	GetTextExtentPoint32(hDrawDC, pszText, _tcslen(pszText), &sz); //-V107
 
-			nFileIdx ++; nAllFiles ++;
+		//	if (sz.cx > MAX_OVERLAY_WIDTH)
+		//		sz.cx = MAX_OVERLAY_WIDTH;
 
-			if (nFileIdx >= nFilesCol)
-			{
-				if (!nFirstColWidth)
-					nFirstColWidth = nMaxX + OVERLAY_TEXT_SHIFT;
+		//	if (sz.cx > nMaxX)
+		//		nMaxX = sz.cx;
 
-				if ((nX + nMaxX + 32) >= MAX_OVERLAY_WIDTH) //-V112
-					break;
+		//	psz += _tcslen(psz)+1; // длина полного пути и длина имени файла разные ;)
+		//	nFilesCol ++;
+		//}
 
-				nX += nMaxX + OVERLAY_TEXT_SHIFT + OVERLAY_COLUMN_SHIFT;
+		//nMaxX = min((OVERLAY_TEXT_SHIFT + nMaxX),MAX_OVERLAY_WIDTH);
+		//// ≈сли тащат много файлов/папок - можно попробовать разместить их в несколько колонок
+		//int nColCount = 1;
 
-				if (nColMaxY > nMaxY) nMaxY = nColMaxY;
+		//if (nFilesCol > 3)
+		//{
+		//	if (nFilesCol > 21 && (nMaxX * 3 + 32) <= MAX_OVERLAY_WIDTH) //-V112
+		//	{
+		//		nFilesCol = (nFilesCol+3) / (nColCount = 4); // располагаем в 4 колонки //-V112
+		//	}
+		//	else if (nFilesCol > 12 && (nMaxX * 2 + 32) <= MAX_OVERLAY_WIDTH) //-V112
+		//	{
+		//		nFilesCol = (nFilesCol+2) / (nColCount = 3); // располагаем в 3 колонки
+		//	}
+		//	else if ((nMaxX + 32) <= MAX_OVERLAY_WIDTH) //-V112
+		//	{
+		//		nFilesCol = (nFilesCol+1) / (nColCount = 2); // располагаем в 2 колонки
+		//	}
+		//}
 
-				nColMaxY = nMaxX = nFileIdx = 0;
-			}
-		}
+		//HBITMAP hOldBitmap = (HBITMAP)SelectObject(hDrawDC, hBitmap);
+		//SetTextColor(hDrawDC, RGB(0,0,128)); // “емно синий текст
+		////SetTextColor(hDrawDC, RGB(255,255,255)); // Ѕелый текст
+		//SetBkColor(hDrawDC, RGB(192,192,192)); // на сером фоне
+		//SetBkMode(hDrawDC, OPAQUE);
+		//// DC может быть испорчен (почему?), поэтому лучше почистим его
+		//RECT rcFill = MakeRect(MAX_OVERLAY_WIDTH,MAX_OVERLAY_HEIGHT);
 
-		if (nColMaxY > nMaxY) nMaxY = nColMaxY;
+		//#if !defined(USE_ALPHA_OVL)
+		//HBRUSH hBr = CreateSolidBrush(OVERLAY_COLOR);
+		//FillRect(hDrawDC, &rcFill, hBr);
+		//DeleteObject(hBr);
+		//#else
+		//FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(RELEASEDEBUGTEST(BLACK_BRUSH,BLACK_BRUSH/*WHITE_BRUSH*/)));
+		//#endif
 
-		if (!nFirstColWidth) nFirstColWidth = nMaxX + OVERLAY_TEXT_SHIFT;
+		//psz = pszFiles;
+		//int nFileIdx = 0, nColMaxY = 0, nAllFiles = 0;
+		//nMaxX = 0;
+		//int nFirstColWidth = 0;
 
-		int nLineX = ((nX+nMaxX+OVERLAY_TEXT_SHIFT+3)>>2)<<2;
+		//while (*psz)
+		//{
+		//	if (!DrawImageBits(hDrawDC, psz, &nMaxX, nX, &nColMaxY))
+		//		break; // вышли за пределы MAX_OVERLAY_WIDTH x MAX_OVERLAY_HEIGHT (по высоте)
 
-		if (nLineX > MAX_OVERLAY_WIDTH) nLineX = MAX_OVERLAY_WIDTH;
+		//	psz += _tcslen(psz)+1;
 
-		SelectObject(hDrawDC, hOldF);
-		GdiFlush();
+		//	if (!*psz) break;
 
-		#ifdef DEBUG_DUMP_IMAGE
-		DumpImage(hDrawDC, NULL, MAX_OVERLAY_WIDTH, nMaxY, L"T:\\DragDump.bmp");
-		#endif
+		//	nFileIdx ++; nAllFiles ++;
 
-		if (nLineX>2 && nMaxY>2)
+		//	if (nFileIdx >= nFilesCol)
+		//	{
+		//		if (!nFirstColWidth)
+		//			nFirstColWidth = nMaxX + OVERLAY_TEXT_SHIFT;
+
+		//		if ((nX + nMaxX + 32) >= MAX_OVERLAY_WIDTH) //-V112
+		//			break;
+
+		//		nX += nMaxX + OVERLAY_TEXT_SHIFT + OVERLAY_COLUMN_SHIFT;
+
+		//		if (nColMaxY > nMaxY) nMaxY = nColMaxY;
+
+		//		nColMaxY = nMaxX = nFileIdx = 0;
+		//	}
+		//}
+
+		//if (nColMaxY > nMaxY) nMaxY = nColMaxY;
+
+		//if (!nFirstColWidth) nFirstColWidth = nMaxX + OVERLAY_TEXT_SHIFT;
+
+		//int nLineX = ((nX+nMaxX+OVERLAY_TEXT_SHIFT+3)>>2)<<2;
+
+		//if (nLineX > MAX_OVERLAY_WIDTH) nLineX = MAX_OVERLAY_WIDTH;
+
+		//SelectObject(hDrawDC, hOldF);
+		//GdiFlush();
+
+		//#ifdef DEBUG_DUMP_IMAGE
+		//DumpImage(hDrawDC, NULL, MAX_OVERLAY_WIDTH, nMaxY, L"T:\\DragDump.bmp");
+		//#endif
+
+		if (nMaxX>2 && nMaxY>2)
 		{
 			HDC hBitsDC = CreateCompatibleDC(hScreenDC);
 
@@ -1579,7 +1950,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 			{
 				SetLayout(hBitsDC, LAYOUT_BITMAPORIENTATIONPRESERVED);
 				BITMAPINFOHEADER bih = {sizeof(BITMAPINFOHEADER)};
-				bih.biWidth = nLineX;
+				bih.biWidth = nMaxX;
 				bih.biHeight = nMaxY;
 				bih.biPlanes = 1;
 				bih.biBitCount = 32;
@@ -1593,7 +1964,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 				if (hBitsBitmap)
 				{
 					HBITMAP hOldBitsBitmap = (HBITMAP)SelectObject(hBitsDC, hBitsBitmap);
-					BitBlt(hBitsDC, 0,0,nLineX,nMaxY, hDrawDC,0,0, SRCCOPY);
+					BitBlt(hBitsDC, 0,0,nMaxX,nMaxY, hDrawDC,0,0, SRCCOPY);
 					GdiFlush();
 
 					#if defined(USE_DRAG_HELPER)
@@ -1604,7 +1975,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 					}
 					#else
 					{
-						pDst = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits) + (nLineX*nMaxY - 1)*sizeof(RGBQUAD));
+						pDst = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits) + (nMaxX*nMaxY - 1)*sizeof(RGBQUAD));
 						UseDragHelper = false;
 					}
 					#endif
@@ -1612,21 +1983,18 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 
 					if (pDst)
 					{
-						pDst->nWidth = nLineX;
+						pDst->nWidth = nMaxX;
 						pDst->nHeight = nMaxY;
 
-						if (nColCount == 1)
-							pDst->nXCursor = nMaxX / 2;
-						else
-							pDst->nXCursor = nFirstColWidth;
+						pDst->nXCursor = ptCursor.x;
+						pDst->nYCursor = ptCursor.y; // под первой строкой
 
-						pDst->nYCursor = 17; // под первой строкой
 						pDst->nRes1 = GetTickCount(); // что-то непон€тное. Random?
 						pDst->nRes2 = (DWORD)-1;
 
 						const u32 nCurBlend = OVERLAY_ALPHA, nAllBlend = OVERLAY_ALPHA;
 
-						INT_PTR PixCount = nMaxY * nLineX;
+						INT_PTR PixCount = nMaxY * nMaxX;
 						Assert(PixCount>0);
 
 						#if defined(USE_DRAG_HELPER)
@@ -1837,7 +2205,7 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 	// Ёто пока что-то не работает
 	//if (gpSet->isDragOverlay == 1) {
 	//	wchar_t* pszFiles = NULL;
-	//	fmtetc.cfFormat = RegisterClipboardFormat(L"FileNameW");
+	//	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILENAMEW/*L"FileNameW"*/);
 	//	TODO("ј освобождать полученное надо?");
 	//	if (S_OK == pDataObject->QueryGetData(&fmtetc)) {
 	//		if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == NULL) {
@@ -2342,6 +2710,8 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 	}
 	else
 	{
+		TODO("CFSTR_DROPDESCRIPTION");
+#if 0
 		if (mp_DataObject && (gOSVer.dwMajorVersion >= 6))
 		{
 			DROPDESCRIPTION desc = {DROPIMAGE_INVALID};
@@ -2377,6 +2747,7 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 
 			hrHelper = mp_DataObject->SetDataInt(CFSTR_DROPDESCRIPTION, &desc, sizeof(desc));
 		}
+#endif
 
 		#ifdef USE_DROP_HELPER
 		if (UseTargetHelper(mb_selfdrag))
