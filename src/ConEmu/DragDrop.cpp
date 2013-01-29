@@ -67,8 +67,8 @@ CDragDrop::CDragDrop()
 	mp_DataObject = NULL;
 	//mb_selfdrag = NULL;
 	m_DesktopID.mkid.cb = 0;
-	mh_Overlapped = NULL; mh_BitsDC = NULL; mh_BitsBMP = mh_BitsBMP_Old = NULL;
-	mp_Bits = NULL;
+	//mh_Overlapped = NULL; mh_BitsDC = NULL; mh_BitsBMP = mh_BitsBMP_Old = NULL;
+	//mp_Bits = NULL;
 	mn_AllFiles = 0; mn_CurWritten = 0; mn_CurFile = 0;
 	mb_DragWithinNow = FALSE;
 	mn_ExtractIconsTID = 0;
@@ -87,8 +87,8 @@ void CDragDrop::DebugLog(LPCWSTR asInfo, BOOL abErrorSeverity/*=FALSE*/)
 
 CDragDrop::~CDragDrop()
 {
-	DestroyDragImageBits();
-	DestroyDragImageWindow();
+	//DestroyDragImageBits();
+	//DestroyDragImageWindow();
 
 	if (mb_DragDropRegistered && ghWnd)
 	{
@@ -107,14 +107,20 @@ CDragDrop::~CDragDrop()
 		{
 			// Terminate all shell (copying) threads
 			EnterCriticalSection(&m_CrThreads);
-			std::vector<ThInfo>::iterator iter = m_OpThread.begin();
+			//std::vector<ThInfo>::iterator iter = m_OpThread.begin();
 
-			while (iter != m_OpThread.end())
+			//while (iter != m_OpThread.end())
+			while (m_OpThread.size() > 0)
 			{
+				INT_PTR j = m_OpThread.size()-1;
+				const ThInfo* iter = &(m_OpThread[j]);
+				
 				HANDLE hThread = iter->hThread;
 				TerminateThread(hThread, 100);
 				CloseHandle(hThread);
-				iter = m_OpThread.erase(iter);
+
+				//iter = m_OpThread.erase(iter);
+				m_OpThread.erase(j);
 			}
 
 			LeaveCriticalSection(&m_CrThreads);
@@ -154,7 +160,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 	DWORD dwAllowedEffects = 0, dwResult = 0, dwEffect = 0;;
 	IDropSource *pDropSource = NULL;
 #ifdef PRESIST_OVL
-	_ASSERTE(mh_Overlapped!=NULL);
+	//_ASSERTE(mh_Overlapped!=NULL);
 #endif
 
 	if (!gpSet->isDragEnabled /*|| isInDrag */|| gpConEmu->isDragging())
@@ -1035,13 +1041,13 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
 
 	mb_DragWithinNow = FALSE;
-	DestroyDragImageBits();
-
-	#ifdef PERSIST_OVL
-	MoveDragWindow(FALSE);
-	#else
-	DestroyDragImageWindow();
-	#endif
+	//DestroyDragImageBits();
+//
+	//#ifdef PERSIST_OVL
+	//MoveDragWindow(FALSE);
+	//#else
+	//DestroyDragImageWindow();
+	//#endif
 
 	gpConEmu->SetDragCursor(NULL);
 	//PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
@@ -1329,18 +1335,22 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 	delete sfop;
 	HANDLE hTh = NULL;
 	EnterCriticalSection(&pDragDrop->m_CrThreads);
-	std::vector<ThInfo>::iterator iter = pDragDrop->m_OpThread.begin();
+	//std::vector<ThInfo>::iterator iter = pDragDrop->m_OpThread.begin();
 
-	while (iter != pDragDrop->m_OpThread.end())
+	//while (iter != pDragDrop->m_OpThread.end())
+	for (INT_PTR j = 0; j < pDragDrop->m_OpThread.size(); j++)
 	{
+		const ThInfo* iter = &(pDragDrop->m_OpThread[j]);
+
 		if (dwThreadId == iter->dwThreadId)
 		{
 			hTh = iter->hThread;
-			iter = pDragDrop->m_OpThread.erase(iter);
+			//iter = pDragDrop->m_OpThread.erase(iter);
+			pDragDrop->m_OpThread.erase(j);
 			break;
 		}
 
-		++iter;
+		//++iter;
 	}
 
 	LeaveCriticalSection(&pDragDrop->m_CrThreads);
@@ -1500,28 +1510,28 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 	DEBUGSTROVERINT(szDbgInfo);
 #endif
 
-	if (!mb_selfdrag)
-	{
-		if (*pdwEffect == DROPEFFECT_NONE)
-		{
-			MoveDragWindow(FALSE);
-		}
-		else if (mh_Overlapped && mp_Bits)
-		{
-			MoveDragWindow(!UseTargetHelper(mb_selfdrag));
-		}
-		else if (mp_Bits)
-		{
-			#if defined(USE_CHILD_OVL)
-			if (!mh_Overlapped)
-				CreateDragImageWindow();
-			#elif defined(PERSIST_OVL)
-			_ASSERTE(mh_Overlapped); // должно быть создано при запуске ConEmu
-			#else
-			CreateDragImageWindow();
-			#endif
-		}
-	}
+	//if (!mb_selfdrag)
+	//{
+	//	if (*pdwEffect == DROPEFFECT_NONE)
+	//	{
+	//		MoveDragWindow(FALSE);
+	//	}
+	//	else if (mh_Overlapped && mp_Bits)
+	//	{
+	//		MoveDragWindow(!UseTargetHelper(mb_selfdrag));
+	//	}
+	//	else if (mp_Bits)
+	//	{
+	//		#if defined(USE_CHILD_OVL)
+	//		if (!mh_Overlapped)
+	//			CreateDragImageWindow();
+	//		#elif defined(PERSIST_OVL)
+	//		_ASSERTE(mh_Overlapped); // должно быть создано при запуске ConEmu
+	//		#else
+	//		CreateDragImageWindow();
+	//		#endif
+	//	}
+	//}
 
 	DEBUGSTRSTEP(_T("DnD: DragOverInt ok"));
 	return hr;
@@ -1547,7 +1557,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 
 	CheckIsUpdatePackage(pDataObject);
 
-	bool bNeedLoadImg = false;
+	//bool bNeedLoadImg = false;
 
 	if (gpSet->isDropEnabled /*&& !mb_selfdrag*/ && NeedRefreshToInfo(pt))
 	{
@@ -1573,23 +1583,23 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 			//// Скорректировать допустимые действия
 			//DragOverInt(grfKeyState, pt, pdwEffect);
 
-			if (LoadDragImageBits(pDataObject))
-			{
-				#ifdef PERSIST_OVL
-				if (!mh_Overlapped || !IsWindow(mh_Overlapped))
-				{
-					_ASSERTE(mh_Overlapped); // должно быть создано при запуске ConEmu
-					mh_Overlapped = NULL;
-					CreateDragImageWindow();
-				}
-				else
-				{
-					InvalidateRect(mh_Overlapped, NULL, TRUE);
-				}
-				#else
-				CreateDragImageWindow();
-				#endif
-			}
+			//if (LoadDragImageBits(pDataObject))
+			//{
+			//	#ifdef PERSIST_OVL
+			//	if (!mh_Overlapped || !IsWindow(mh_Overlapped))
+			//	{
+			//		_ASSERTE(mh_Overlapped); // должно быть создано при запуске ConEmu
+			//		mh_Overlapped = NULL;
+			//		CreateDragImageWindow();
+			//	}
+			//	else
+			//	{
+			//		InvalidateRect(mh_Overlapped, NULL, TRUE);
+			//	}
+			//	#else
+			//	CreateDragImageWindow();
+			//	#endif
+			//}
 		}
 	}
 	else
@@ -1619,20 +1629,20 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 
 	mb_DragWithinNow = FALSE;
 
-	if (mb_selfdrag)
-	{
-		MoveDragWindow(FALSE);
-	}
-	else
-	{
-		DestroyDragImageBits();
-
-		#ifdef PERSIST_OVL
-		MoveDragWindow(FALSE);
-		#else
-		DestroyDragImageWindow();
-		#endif
-	}
+	//if (mb_selfdrag)
+	//{
+	//	MoveDragWindow(FALSE);
+	//}
+	//else
+	//{
+	//	DestroyDragImageBits();
+//
+	//	#ifdef PERSIST_OVL
+	//	MoveDragWindow(FALSE);
+	//	#else
+	//	DestroyDragImageWindow();
+	//	#endif
+	//}
 
 	#ifdef USE_DROP_HELPER
 	if (UseTargetHelper(mb_selfdrag))

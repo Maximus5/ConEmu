@@ -657,7 +657,7 @@ HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 	DEBUGSTRDATA(szDbg);
 	#endif
 
-	bool bNew = false;
+	DEBUGTEST(bool bNew = false);
 	LONG nIndex = LookupFormatEtc(pFormatEtc);
 
 	if (nIndex >= 0)
@@ -673,7 +673,7 @@ HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 	}
 	else //	if (nIndex < 0)
 	{
-		bNew = true;
+		DEBUGTEST(bNew = true);
 		_ASSERTE(nIndex < 0);
 
 		// ≈сли нужно - увеличим размерность массивов

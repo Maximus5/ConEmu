@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "ConEmuPipeMode.h"
+
 #ifdef _DEBUG
 	#define USEPIPELOG
 	//#undef USEPIPELOG
@@ -678,9 +680,9 @@ struct PipeServer
 						(mb_Overlapped ? FILE_FLAG_OVERLAPPED : 0); // overlapped mode?
 
 					DWORD dwPipeMode =
-						PIPE_TYPE_MESSAGE |         // message type pipe
-						PIPE_READMODE_MESSAGE |     // message-read mode
-						PIPE_WAIT;                  // Blocking mode is enabled.
+						CE_PIPE_TYPE |         // message type pipe
+						CE_PIPE_READMODE |     // message-read mode
+						PIPE_WAIT;             // Blocking mode is enabled.
 
 					_ASSERTEX(mlp_Sec!=NULL);
 					pPipe->dwState = CREATEPIPE_STATE;

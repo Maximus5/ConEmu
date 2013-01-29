@@ -6702,16 +6702,16 @@ void ProcessDebugEvent()
 //	{
 //		MCHKHEAP;
 //		hPipe = Create NamedPipe(
-//		            gpSrv->szPipename,               // pipe name
+//		            gpSrv->szPipename,        // pipe name
 //		            PIPE_ACCESS_DUPLEX,       // read/write access
-//		            PIPE_TYPE_MESSAGE |       // message type pipe
-//		            PIPE_READMODE_MESSAGE |   // message-read mode
+//		            CE_PIPE_TYPE |            // message type pipe
+//		            CE_PIPE_READMODE |        // message-read mode
 //		            PIPE_WAIT,                // blocking mode
 //		            PIPE_UNLIMITED_INSTANCES, // max. instances
 //		            PIPEBUFSIZE,              // output buffer size
 //		            PIPEBUFSIZE,              // input buffer size
 //		            0,                        // client time-out
-//		            gpLocalSecurity);          // default security attribute
+//		            gpLocalSecurity);         // default security attribute
 //		_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
 //
 //		if (hPipe == INVALID_HANDLE_VALUE)

@@ -649,6 +649,8 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 
 			mp_RCon->mp_RBuf->BuferModeChangeUnlock();
 			//}
+
+			UNREFERENCED_PARAMETER(lbNeedResizeWnd);
 		}
 		else
 		{
@@ -666,7 +668,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	//pOut = ExecuteNewCmd(pIn->hdr.nCmd, pIn->hdr.cbSize);
 	//if (pIn->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
 	//	memmove(pOut->Data, pIn->Data, pIn->hdr.cbSize - (int)sizeof(CESERVER_REQ_HDR));
-		
+
 	return pOut;
 }
 

@@ -29,11 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "CustomFonts.h"
-//#include <fstream>
-//#include <sstream>
-//#include <string>
-//#include <algorithm>
-#include <vector>
+#include "../common/MArray.h"
 #include "../common/WinObjects.h"
 
 #ifdef _DEBUG
@@ -68,7 +64,7 @@ bool operator!= (const CEFONT &a, const CEFONT &b)
 
 struct CustomFontFamily::Impl
 {
-	std::vector<CustomFont*> fonts;
+	MArray<CustomFont*> fonts;
 };
 
 void CustomFontFamily::AddFont(CustomFont* font)
@@ -86,10 +82,13 @@ CustomFont* CustomFontFamily::GetFont(int iSize, BOOL bBold, BOOL bItalic, BOOL 
 	CustomFont* pBestFont = NULL;
 	int iBestScore = 1000000000;
 
-	for (std::vector<CustomFont*>::iterator iter = pImpl->fonts.begin(); iter != pImpl->fonts.end(); ++iter)
+	//for (std::vector<CustomFont*>::iterator iter = pImpl->fonts.begin(); iter != pImpl->fonts.end(); ++iter)
+	for (INT_PTR iter = 0; iter < pImpl->fonts.size(); ++iter)
 	{
 		int iScore = 0;	// lower is better
-		CustomFont* pFont = *iter;
+		//CustomFont* pFont = *iter;
+		CustomFont* pFont = pImpl->fonts[iter];
+
 		iScore += abs(abs(iSize) - abs(pFont->GetSize()));
 		if (bBold != pFont->IsBold())
 			iScore += 1000;
@@ -107,6 +106,7 @@ CustomFont* CustomFontFamily::GetFont(int iSize, BOOL bBold, BOOL bItalic, BOOL 
 			iBestScore = iScore;
 		}
 	}
+
 	return pBestFont;
 }
 

@@ -35,8 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if !defined(CONEMU_TABBAR_EX)
 
-#include <vector>
 #include <commctrl.h>
+#include "../common/MArray.h"
 #include "../common/WinObjects.h"
 
 //#define CONEMUMSG_UPDATETABS _T("ConEmuMain::UpdateTabs")
@@ -139,7 +139,7 @@ class TabBarClass //: public CToolTip
 		//	} u;
 		//	ULONGLONG ID;
 		//} VConTabs;
-		std::vector<VConTabs> m_Tab2VCon;
+		MArray<VConTabs> m_Tab2VCon;
 		BOOL mb_PostUpdateCalled, mb_PostUpdateRequested;
 		DWORD mn_PostUpdateTick;
 		void RequestPostUpdate();
@@ -151,7 +151,7 @@ class TabBarClass //: public CToolTip
 		//BOOL mb_ThemingEnabled;
 
 		// Tab stack
-		std::vector<VConTabs> m_TabStack;
+		MArray<VConTabs> m_TabStack;
 		void CheckStack(); // Убьет из стека отсутствующих
 		void AddStack(VConTabs tab); // Убьет из стека отсутствующих и поместит tab на верх стека
 

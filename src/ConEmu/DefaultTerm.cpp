@@ -106,7 +106,7 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 	bool bCurState = false;
 	bool bNeedState = gpSet->isSetDefaultTerminal && gpSet->isRegisterOnOsStartup;
 	HKEY hk;
-	DWORD nSize, nType = 0;
+	DWORD nSize; //, nType = 0;
 	wchar_t szCurValue[MAX_PATH*3] = {};
 	wchar_t szNeedValue[MAX_PATH+80] = {};
 	LONG lRc;
@@ -209,6 +209,7 @@ void CDefaultTerminal::PostCreated(bool bWaitForReady /*= false*/, bool bShowErr
 			{
 				//_ASSERTE(nWait == WAIT_OBJECT_0);
 				DisplayLastError(L"PostCreatedThread was not finished in 30 seconds");
+				UNREFERENCED_PARAMETER(nDuration);
 			}
 		}
 

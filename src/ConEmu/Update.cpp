@@ -548,6 +548,11 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 	DWORD nLocalCRC = 0;
 	BOOL lbDownloadRc = FALSE, lbExecuteRc = FALSE;
 
+	LPCWSTR pszPackPref = L"conemupack.";
+	size_t lnPackPref = _tcslen(pszPackPref);
+	LPCWSTR pszSetupPref = L"conemusetup.";
+	size_t lnSetupPref = _tcslen(pszSetupPref);
+
 	_ASSERTE(gpConEmu->isMainThread());
 
 	if (InUpdate() != us_NotStarted)
@@ -587,11 +592,6 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 	}
 
 	ms_NewVersion[0] = 0;
-
-	LPCWSTR pszPackPref = L"conemupack.";
-	size_t lnPackPref = _tcslen(pszPackPref);
-	LPCWSTR pszSetupPref = L"conemusetup.";
-	size_t lnSetupPref = _tcslen(pszSetupPref);
 
 	if ((lstrcmpni(pszName, pszPackPref, lnPackPref) == 0)
 		&& (lstrcmpi(pszExt, L".7z") == 0)
@@ -678,7 +678,7 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 		goto wrap;
 	}
 
-	Assert(mb_ManualCallMode==NULL && mpsz_PendingBatchFile==NULL);
+	Assert(mb_ManualCallMode==FALSE && mpsz_PendingBatchFile==NULL);
 
 	mpsz_PendingPackageFile = pszLocalPackage;
 	pszLocalPackage = NULL;

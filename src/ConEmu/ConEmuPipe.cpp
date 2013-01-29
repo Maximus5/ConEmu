@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "header.h"
 #include "../common/ConEmuCheck.h"
+#include "../common/ConEmuPipeMode.h"
 #include "ConEmuPipe.h"
 #include "ConEmu.h"
 #include "OptionsClass.h"
@@ -117,7 +118,7 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 	//}
 	//
 	//// The pipe connected; change to message-read mode.
-	//DWORD dwMode = PIPE_READMODE_MESSAGE;
+	//DWORD dwMode = CE_PIPE_READMODE;
 	//BOOL fSuccess = SetNamedPipeHandleState(
 	//	mh_Pipe,    // pipe handle
 	//	&dwMode,  // new pipe mode

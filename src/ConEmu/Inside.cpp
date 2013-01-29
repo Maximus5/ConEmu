@@ -587,7 +587,7 @@ bool CConEmuInside::SendVkKeySequence(HWND hWnd, WORD* pvkKeys)
 {
 	bool bSent = false;
 	//DWORD_PTR nRc1, nRc2;
-	LRESULT lSendRc;
+	LRESULT lSendRc = 0;
 	DWORD nErrCode = 0;
 
 	if (!pvkKeys || !*pvkKeys)
@@ -616,10 +616,10 @@ bool CConEmuInside::SendVkKeySequence(HWND hWnd, WORD* pvkKeys)
 	{
 		// Prep send msg values
 		UINT nMsg1 = (pvkKeys[k] == VK_F10) ? WM_SYSKEYDOWN : WM_KEYDOWN;
-		UINT nMsg2 = (pvkKeys[k] == VK_F10) ? WM_SYSKEYUP : WM_KEYUP;
+		DEBUGTEST(UINT nMsg2 = (pvkKeys[k] == VK_F10) ? WM_SYSKEYUP : WM_KEYUP);
 		UINT vkScan = MapVirtualKey(pvkKeys[k], 0/*MAPVK_VK_TO_VSC*/);
 		LPARAM lParam1 = 0x00000001 | (vkScan << 16);
-		LPARAM lParam2 = 0xC0000001 | (vkScan << 16);
+		DEBUGTEST(LPARAM lParam2 = 0xC0000001 | (vkScan << 16));
 
 		// Post KeyDown&KeyUp
 		if (pvkKeys[k] == VK_F10)
@@ -660,6 +660,8 @@ bool CConEmuInside::SendVkKeySequence(HWND hWnd, WORD* pvkKeys)
 
 	// SendMessageTimeout failed?
 	_ASSERTE(bSent);
+
+	UNREFERENCED_PARAMETER(nErrCode);
 
 	return bSent;
 }

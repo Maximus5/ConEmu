@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/common.hpp"
 #include "BaseDragDrops.h"
 //#include "virtualconsole.h"
+#include "../common/MArray.h"
 
 
 //#define UNLOCKED_DRAG
@@ -134,25 +135,25 @@ class CDragDropData
 		ITEMIDLIST m_DesktopID;
 		void EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile = NULL);
 		//DragImageBits m_BitsInfo;
-		HWND mh_Overlapped;
-		HDC mh_BitsDC;
-		HBITMAP mh_BitsBMP, mh_BitsBMP_Old;
+		//HWND mh_Overlapped;
+		//HDC mh_BitsDC;
+		//HBITMAP mh_BitsBMP, mh_BitsBMP_Old;
 		//int m_iBPP;
-		static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-		BOOL CreateDragImageWindow();
-		bool AllocDragImageBits();
-		void DestroyDragImageWindow();
-		BOOL LoadDragImageBits(IDataObject * pDataObject);
-		BOOL CreateDragImageBits(IDataObject * pDataObject);
-		DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
+		//static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		//BOOL CreateDragImageWindow();
+		//bool AllocDragImageBits();
+		//void DestroyDragImageWindow();
+		//BOOL LoadDragImageBits(IDataObject * pDataObject);
+		//BOOL CreateDragImageBits(IDataObject * pDataObject);
+		//DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
 		BOOL PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP& hBitmap, HBITMAP& hOldBitmap, int nWidth, int nHeight, int* pnMaxX, int* pnMaxY, POINT* ptCursor, bool bUseColorKey, COLORREF clrKey);
 		BOOL DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY);
-		void DestroyDragImageBits();
-		void MoveDragWindow(BOOL abVisible=TRUE);
-		void MoveDragWindowToTop();
+		//void DestroyDragImageBits();
+		//void MoveDragWindow(BOOL abVisible=TRUE);
+		//void MoveDragWindowToTop();
 		//DragImageBits m_ImgInfo;
 		//LPBYTE mp_ImgData;
-		DragImageBits *mp_Bits;
+		//DragImageBits *mp_Bits;
 		BOOL mb_DragWithinNow;
 		//
 		static DWORD WINAPI ExtractIconsThread(LPVOID lpParameter);
@@ -170,7 +171,7 @@ class CDragDropData
 			HANDLE  hThread;
 			HWND    hWnd;
 		} CEDragSource;
-		std::vector<CEDragSource*> m_Sources;
+		MArray<CEDragSource*> m_Sources;
 		BOOL mb_DragStarting;
 		void TerminateDrag();
 		static LRESULT WINAPI DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

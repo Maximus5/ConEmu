@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/ConEmuCheck.h"
 
 #include "../common/execute.h"
+#include "../common/MArray.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuCD/RegPrepare.h"
 #include "Attach.h"
@@ -2952,7 +2953,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 
 	RECT rc = {};
 
-	FrameDrawStyle fdt = DrawType();
+	DEBUGTEST(FrameDrawStyle fdt = DrawType());
 	ConEmuWindowMode wm = (wmNewMode == wmCurrent) ? WindowMode : wmNewMode;
 
 	//if ((wmNewMode == wmCurrent) || (wmNewMode == wmNotChanging))
@@ -11887,7 +11888,7 @@ void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 void CConEmuMain::OnSwitchGuiFocus(int DescrID)
 {
 	CVConGuard VCon;
-	HWND hSet = ghWnd;
+	//HWND hSet = ghWnd;
 
 	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
 	{

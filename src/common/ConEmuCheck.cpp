@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Memory.h"
 #include "ConEmuCheck.h"
 #include "WinObjects.h"
+#include "ConEmuPipeMode.h"
 
 // !!! Использовать только через функцию: LocalSecurity() !!!
 SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
@@ -56,8 +57,6 @@ bool gbPipeDebugBoxes = false;
 //extern void   _free(LPVOID);
 
 //typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
-
-//WARNING("Для 'Простых' запросов можно использовать 'CallNamedPipe', Это если нужно например получить хэндлы окон");
 
 
 //#if defined(__GNUC__)
@@ -335,7 +334,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 #endif
 
 	// The pipe connected; change to message-read mode.
-	dwMode = PIPE_READMODE_MESSAGE;
+	dwMode = CE_PIPE_READMODE;
 	fSuccess = SetNamedPipeHandleState(
 	               hPipe,    // pipe handle
 	               &dwMode,  // new pipe mode
@@ -824,7 +823,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 	//}
 	//
 	//// The pipe connected; change to message-read mode.
-	//dwMode = PIPE_READMODE_MESSAGE;
+	//dwMode = CE_PIPE_READMODE;
 	//fSuccess = SetNamedPipeHandleState(
 	//	hPipe,    // pipe handle
 	//	&dwMode,  // new pipe mode

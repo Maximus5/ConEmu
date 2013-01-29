@@ -104,6 +104,8 @@ BOOL LoadScreen(HDC hScreen, int anX, int anY, int anWidth, int anHeight, LPBYTE
 		bRc = BitBlt(hMem, 0,0,iWidth,iHeight, hScreen, anX, anY, SRCCOPY);
 	}
 
+	UNREFERENCED_PARAMETER(bRc);
+
 	BITMAPFILEHEADER bfh;
 	bfh.bfType = 0x4D42; // 'MB';
 	bfh.bfSize = sizeof(BITMAPFILEHEADER)+iHdrSize+iMemSize;

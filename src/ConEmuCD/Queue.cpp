@@ -717,16 +717,16 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 //	{
 //		MCHKHEAP;
 //		gpSrv->hInputPipe = Create NamedPipe(
-//			gpSrv->szInputname,          // pipe name
+//			gpSrv->szInputname,       // pipe name
 //			PIPE_ACCESS_INBOUND,      // goes from client to server only
-//			PIPE_TYPE_MESSAGE |       // message type pipe
-//			PIPE_READMODE_MESSAGE |   // message-read mode
+//			CE_PIPE_TYPE |            // message type pipe
+//			CE_PIPE_READMODE |        // message-read mode
 //			PIPE_WAIT,                // blocking mode
 //			PIPE_UNLIMITED_INSTANCES, // max. instances
 //			PIPEBUFSIZE,              // output buffer size
 //			PIPEBUFSIZE,              // input buffer size
 //			0,                        // client time-out
-//			gpLocalSecurity);          // default security attribute
+//			gpLocalSecurity);         // default security attribute
 //
 //		if (gpSrv->hInputPipe == INVALID_HANDLE_VALUE)
 //		{

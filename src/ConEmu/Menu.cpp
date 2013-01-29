@@ -455,7 +455,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 
 	DestroyMenu(hPopup);
 
-	if (nRetID >= (nStartID+1) && nRetID <= (int)(nStartID+nLastID))
+	if (nRetID >= (int)(nStartID+1) && nRetID <= (int)(nStartID+nLastID))
 	{
 		// Need to close parentmenu
 		if (hMenuWnd)

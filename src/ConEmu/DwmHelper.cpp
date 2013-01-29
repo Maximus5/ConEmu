@@ -418,7 +418,7 @@ HRESULT CDwmHelper::DwmGetWindowAttribute(HWND hwnd, DWORD dwAttribute, PVOID pv
 int CDwmHelper::GetDwmClientRectTopOffset()
 {
 	int nOffset = 0;
-	FrameDrawStyle dt = gpConEmu->DrawType();
+	DEBUGTEST(FrameDrawStyle dt = gpConEmu->DrawType());
 
 	if (!gpSet->isTabs)
 		goto wrap;

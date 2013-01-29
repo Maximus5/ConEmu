@@ -426,7 +426,7 @@ BOOL TabBarClass::GetVConFromTab(int nTabIdx, CVirtualConsole** rpVCon, DWORD* r
 	CVirtualConsole *pVCon = NULL;
 	DWORD wndIndex = 0;
 
-	if (nTabIdx >= 0 && (UINT)nTabIdx < m_Tab2VCon.size())
+	if ((nTabIdx >= 0) && (nTabIdx < m_Tab2VCon.size()))
 	{
 		pVCon = m_Tab2VCon[nTabIdx].pVCon;
 		wndIndex = m_Tab2VCon[nTabIdx].nFarWindowId;
@@ -508,6 +508,7 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 	}
 
 	UNREFERENCED_PARAMETER(nCallStart);
+	UNREFERENCED_PARAMETER(nCallEnd);
 
 	return pVCon;
 }
@@ -1057,7 +1058,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 
 	// Update последних выбранных
-	if (nCurTab >= 0 && (UINT)nCurTab < m_Tab2VCon.size())
+	if ((nCurTab >= 0) && (nCurTab < m_Tab2VCon.size()))
 		AddStack(m_Tab2VCon[nCurTab]);
 	else
 		CheckStack(); // иначе просто проверим стек
@@ -1115,16 +1116,15 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 void TabBarClass::AddTab2VCon(VConTabs& vct)
 {
-#ifdef _DEBUG
-	std::vector<VConTabs>::iterator i = m_Tab2VCon.begin();
+	//#ifdef _DEBUG
+	//std::vector<VConTabs>::iterator i = m_Tab2VCon.begin();
+	//while (i != m_Tab2VCon.end())
+	//{
+	//	_ASSERTE(i->pVCon!=vct.pVCon || i->nFarWindowId!=vct.nFarWindowId);
+	//	++i;
+	//}
+	//#endif
 
-	while(i != m_Tab2VCon.end())
-	{
-		_ASSERTE(i->pVCon!=vct.pVCon || i->nFarWindowId!=vct.nFarWindowId);
-		++i;
-	}
-
-#endif
 	m_Tab2VCon.push_back(vct);
 }
 
@@ -2002,7 +2002,7 @@ HWND TabBarClass::GetTabbar()
 
 int TabBarClass::GetTabbarHeight()
 {
-	if (!this) return NULL;
+	if (!this) return 0;
 
 	_ASSERTE(gpSet->isTabs!=0);
 
@@ -2351,7 +2351,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 						size_t nLeft = _tcslen(pszFound);
 						if (nLeft <= (size_t)nLen)
 						{
-							*pszFound = NULL;
+							*pszFound = 0;
 							break;
 						}
 						else
@@ -2547,18 +2547,25 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 
 int TabBarClass::GetIndexByTab(VConTabs tab)
 {
-	int nIdx = -1;
-	std::vector<VConTabs>::iterator iter = m_Tab2VCon.begin();
+	//int nIdx = -1;
+	int nCount = m_Tab2VCon.size();
 
-	while(iter != m_Tab2VCon.end())
+	for (int i = 0; i < nCount; i++)
 	{
-		nIdx ++;
-
-		if (*iter == tab)
-			return nIdx;
-
-		++iter;
+		if (m_Tab2VCon[i] == tab)
+		{
+			return i;
+		}
 	}
+
+	//std::vector<VConTabs>::iterator iter = m_Tab2VCon.begin();
+	//while (iter != m_Tab2VCon.end())
+	//{
+	//	nIdx ++;
+	//	if (*iter == tab)
+	//		return nIdx;
+	//	++iter;
+	//}
 
 	return -1;
 }
@@ -2570,20 +2577,21 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 	int nCurSel = GetCurSel();
 	int nCurCount = GetItemCount();
 	VConTabs cur = {NULL};
-#ifdef _DEBUG
 
+	#ifdef _DEBUG
 	if (nCurCount != m_Tab2VCon.size())
 	{
 		_ASSERTE(nCurCount == m_Tab2VCon.size());
 	}
-
-#endif
+	#endif
 
 	if (nCurCount < 1)
 		return 0; // хот€ такого и не должно быть
 
-	if (lbRecentMode && nCurSel >= 0 && (UINT)nCurSel < m_Tab2VCon.size())
+	if (lbRecentMode && (nCurSel >= 0) && (nCurSel < m_Tab2VCon.size()))
+	{
 		cur = m_Tab2VCon[nCurSel];
+	}
 
 	int i, nNewSel = -1;
 	TODO("ƒобавить возможность переключатьс€ а'л€ RecentScreens");
@@ -2592,31 +2600,39 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 	{
 		if (lbRecentMode)
 		{
-			std::vector<VConTabs>::iterator iter = m_TabStack.begin();
+			//std::vector<VConTabs>::iterator iter = m_TabStack.begin();
+			//while (iter != m_TabStack.end())
+			int iter = 0;
 
-			while(iter != m_TabStack.end())
+			while (iter < m_TabStack.size())
 			{
-				VConTabs Item = *iter;
+				VConTabs Item = m_TabStack[iter]; // *iter;
 
 				// Ќайти в стеке выделенный таб
 				if (Item == cur)
 				{
+					int iCur = iter;
+
 					// ќпределить следующий таб, который мы можем активировать
 					do
 					{
-						++iter; // ≈сли дошли до конца (сейчас выделен последний таб) вернуть первый
+						++iter;
 
-						if (iter == m_TabStack.end()) iter = m_TabStack.begin();
+                        // ≈сли дошли до конца (сейчас выделен последний таб) вернуть первый
+						if (iter >= m_TabStack.size())
+						{
+							iter = 0;
+						}
 
 						// ќпределить индекс в m_Tab2VCon
-						i = GetIndexByTab(*iter);
+						i = GetIndexByTab(m_TabStack[iter]);
 
 						if (CanActivateTab(i))
 						{
 							return i;
 						}
 					}
-					while(*iter != cur);
+					while (iter != iCur);
 
 					break;
 				}
@@ -2625,54 +2641,74 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 			}
 		} // ≈сли не смогли в стиле Recent - идем простым путем
 
-		for(i = nCurSel+1; nNewSel == -1 && i < nCurCount; i++)
-			if (CanActivateTab(i)) nNewSel = i;
+		for (i = nCurSel+1; nNewSel == -1 && i < nCurCount; i++)
+		{
+			if (CanActivateTab(i))
+				nNewSel = i;
+		}
 
-		for(i = 0; nNewSel == -1 && i < nCurSel; i++)
-			if (CanActivateTab(i)) nNewSel = i;
+		for (i = 0; nNewSel == -1 && i < nCurSel; i++)
+		{
+			if (CanActivateTab(i))
+				nNewSel = i;
+		}
 	}
 	else
 	{
 		if (lbRecentMode)
 		{
-			std::vector<VConTabs>::reverse_iterator iter = m_TabStack.rbegin();
+			//std::vector<VConTabs>::reverse_iterator iter = m_TabStack.rbegin();
+			int iter = m_TabStack.size()-1;
 
-			while(iter != m_TabStack.rend())
+			//while (iter != m_TabStack.rend())
+			while (iter >= 0)
 			{
-				VConTabs Item = *iter;
+				VConTabs Item = m_TabStack[iter]; // *iter;
 
 				// Ќайти в стеке выделенный таб
 				if (Item == cur)
 				{
+					int iCur = iter;
+
 					// ќпределить следующий таб, который мы можем активировать
 					do
 					{
-						++iter; // ≈сли дошли до конца (сейчас выделен последний таб) вернуть первый
+						iter--;
 
-						if (iter == m_TabStack.rend()) iter = m_TabStack.rbegin();
+                        // ≈сли дошли до конца (сейчас выделен последний таб) вернуть первый
+						if (iter < 0)
+						{
+							iter = m_TabStack.size()-1;
+						}
 
 						// ќпределить индекс в m_Tab2VCon
-						i = GetIndexByTab(*iter);
+						i = GetIndexByTab(m_TabStack[iter]);
 
 						if (CanActivateTab(i))
 						{
 							return i;
 						}
 					}
-					while(*iter != cur);
+					while (iter != iCur);
 
 					break;
 				}
 
-				++iter;
+				iter--;
 			}
 		} // ≈сли не смогли в стиле Recent - идем простым путем
 
-		for(i = nCurSel-1; nNewSel == -1 && i >= 0; i++)
-			if (CanActivateTab(i)) nNewSel = i;
+		for (i = nCurSel-1; nNewSel == -1 && i >= 0; i++)
+		{
+			if (CanActivateTab(i))
+				nNewSel = i;
+		}
 
-		for(i = nCurCount-1; nNewSel == -1 && i > nCurSel; i++)
-			if (CanActivateTab(i)) nNewSel = i;
+		for (i = nCurCount-1; nNewSel == -1 && i > nCurSel; i++)
+		{
+			if (CanActivateTab(i))
+				nNewSel = i;
+		}
 	}
 
 	return nNewSel;
@@ -2737,42 +2773,58 @@ void TabBarClass::SwitchRollback()
 void TabBarClass::CheckStack()
 {
 	_ASSERTE(gpConEmu->isMainThread());
-	std::vector<VConTabs>::iterator i, j;
-	BOOL lbExist = FALSE;
-	j = m_TabStack.begin();
+	//std::vector<VConTabs>::iterator i, j;
+	int i, j;
 
-	while (j != m_TabStack.end())
+	BOOL lbExist = FALSE;
+	//j = m_TabStack.begin();
+	j = 0;
+
+	//while (j != m_TabStack.end())
+	while (j < m_TabStack.size())
 	{
 		lbExist = FALSE;
 
-		for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); ++i)
+		//for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); ++i)
+		for (i = 0; i < m_Tab2VCon.size(); ++i)
 		{
-			if (*i == *j)
+			//if (*i == *j)
+			if (m_Tab2VCon[i] == m_TabStack[j])
 			{
 				lbExist = TRUE; break;
 			}
 		}
 
 		if (lbExist)
+		{
 			++j;
+		}
 		else
-			j = m_TabStack.erase(j);
+		{
+			m_TabStack.erase(j);
+		}
 	}
 
-	for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); ++i)
+	//for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); ++i)
+	for (i = 0; i < m_Tab2VCon.size(); ++i)
 	{
 		lbExist = FALSE;
 
-		for (j = m_TabStack.begin(); j != m_TabStack.end(); ++j)
+		//for (j = m_TabStack.begin(); j != m_TabStack.end(); ++j)
+		for (j = 0; j < m_TabStack.size(); ++j)
 		{
-			if (*i == *j)
+			//if (*i == *j)
+			if (m_Tab2VCon[i] == m_TabStack[j])
 			{
 				lbExist = TRUE; break;
 			}
 		}
 
 		if (!lbExist)
-			m_TabStack.push_back(*i);
+		{
+			//m_TabStack.push_back(*i);
+			m_TabStack.push_back(m_Tab2VCon[i]);
+		}
 	}
 }
 
@@ -2785,13 +2837,16 @@ void TabBarClass::AddStack(VConTabs tab)
 	if (!m_TabStack.empty())
 	{
 		//VConTabs tmp;
-		std::vector<VConTabs>::iterator iter = m_TabStack.begin();
+		//std::vector<VConTabs>::iterator iter = m_TabStack.begin();
+		int iter = 0;
 
-		while(iter != m_TabStack.end())
+		//while (iter != m_TabStack.end())
+		while (iter < m_TabStack.size())
 		{
-			if (*iter == tab)
+			if (m_TabStack[iter] == tab)
 			{
-				if (iter == m_TabStack.begin())
+				//if (iter == m_TabStack.begin())
+				if (iter == 0)
 				{
 					lbExist = TRUE;
 				}
@@ -2807,8 +2862,12 @@ void TabBarClass::AddStack(VConTabs tab)
 		}
 	}
 
-	if (!lbExist)  // поместить наверх стека
-		m_TabStack.insert(m_TabStack.begin(), tab);
+	// поместить наверх стека
+	if (!lbExist)
+	{
+		//m_TabStack.insert(m_TabStack.begin(), tab);
+		m_TabStack.insert(0, tab);
+	}
 
 	CheckStack();
 }

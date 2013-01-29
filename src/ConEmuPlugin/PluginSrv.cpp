@@ -336,7 +336,7 @@ void PlugServerStop(bool abDelete)
 //			//	}
 //			//}
 //			hPipe = CreateNamedPipe(gszPluginServerPipe, PIPE_ACCESS_DUPLEX,
-//			                        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
+//			                        CE_PIPE_TYPE | CE_PIPE_READMODE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
 //			                        PIPEBUFSIZE, PIPEBUFSIZE, 0, gpLocalSecurity);
 //			_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
 //

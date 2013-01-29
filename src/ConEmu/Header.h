@@ -39,12 +39,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include <Shlwapi.h>
-#include <vector>
+//#include <vector>
 //#if !defined(__GNUC__)
 //#include <crtdbg.h>
 //#endif
 
 #include "../common/Memory.h"
+#include "../common/MAssert.h"
 
 #ifdef __GNUC__
 #define wmemmove_s(d,ds,s,ss) wmemmove(d,s,ss)

@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../Common/MArray.h"
 #include "../Common/WinObjects.h"
 #include <commctrl.h>
 
@@ -566,7 +567,7 @@ class CSettings
 			BOOL    bHasBorders;          // »меет ли данный шрифт символы рамок
 			BOOL    bAlreadyInSystem;     // Ўрифт с таким именем уже был зарегистрирован в системе
 		} RegFont;
-		std::vector<RegFont> m_RegFonts;
+		MArray<RegFont> m_RegFonts;
 		BOOL mb_StopRegisterFonts;
 		////
 		//COLORREF Colors[0x20];

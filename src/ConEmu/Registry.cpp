@@ -168,7 +168,7 @@ void SettingsRegistry::Delete(const wchar_t *regName)
 void SettingsRegistry::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize)
 {
 	_ASSERTE(value && nSize);
-	RegSetValueEx(regMy, regName, NULL, nType, (LPBYTE)value, nSize);
+	RegSetValueEx(regMy, regName, 0, nType, (LPBYTE)value, nSize);
 }
 //void SettingsRegistry::Save(const wchar_t *regName, const wchar_t *value)
 //{

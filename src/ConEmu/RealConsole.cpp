@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ShlObj.h>
 
 #include "../common/ConEmuCheck.h"
+#include "../common/ConEmuPipeMode.h"
 #include "../common/Execute.h"
 #include "../common/RgnDetect.h"
 #include "ConEmu.h"
@@ -1796,10 +1797,21 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		if (nWait == (DWORD)-1)
 		{
 			DWORD nWaitItems[EVENTS_COUNT] = {99,99,99,99,99};
+
 			for (size_t i = 0; i < nEvents; i++)
+			{
 				nWaitItems[i] = WaitForSingleObject(hEvents[i], 0);
+				if (nWaitItems[i] == 0)
+				{
+					nWait = (DWORD)i;
+				}
+			}
 			_ASSERTE(nWait!=(DWORD)-1);
+
+			#ifdef _DEBUG
 			int nDbg = nWaitItems[EVENTS_COUNT-1];
+			UNREFERENCED_PARAMETER(nDbg);
+			#endif
 		}
 
 		//if ((nWait == IDEVENT_SERVERPH) && (hEvents[IDEVENT_SERVERPH] != pRCon->mh_MainSrv))
@@ -2736,7 +2748,7 @@ BOOL CRealConsole::StartProcess()
 					nValue = BufferValues[i].nDef;
 
 				// Issue 700: Default history buffers count too small.
-				lRegRc = RegSetValueEx(hkConsole, BufferValues[i].pszName, NULL, REG_DWORD, (LPBYTE)&nValue, sizeof(nValue));
+				lRegRc = RegSetValueEx(hkConsole, BufferValues[i].pszName, 0, REG_DWORD, (LPBYTE)&nValue, sizeof(nValue));
 			}
 		}
 	}
@@ -2903,7 +2915,7 @@ BOOL CRealConsole::StartProcess()
 					HANDLE hLogonToken = m_Args.CheckUserToken();
 					if (hLogonToken)
 					{
-						HRESULT hr;
+						HRESULT hr = E_FAIL;
 
 						// Windows 2000 - hLogonToken - not supported
 						if (gOSVer.dwMajorVersion <= 5 && gOSVer.dwMinorVersion == 0)
@@ -3523,6 +3535,7 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 			}
 		}
 	}
+	UNREFERENCED_PARAMETER(lbNormalRBtnMode);
 
 	if (messg == WM_MOUSEMOVE /*&& mb_MouseButtonDown*/)
 	{
@@ -3715,7 +3728,7 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 		if (mh_ConInputPipe != INVALID_HANDLE_VALUE)
 		{
 			// The pipe connected; change to message-read mode.
-			DWORD dwMode = PIPE_READMODE_MESSAGE;
+			DWORD dwMode = CE_PIPE_READMODE;
 			fSuccess = SetNamedPipeHandleState(
 			               mh_ConInputPipe,    // pipe handle
 			               &dwMode,  // new pipe mode
@@ -3900,7 +3913,7 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount /*= 1*/)
 		//}
 		//
 		//// The pipe connected; change to message-read mode.
-		//dwMode = PIPE_READMODE_MESSAGE;
+		//dwMode = CE_PIPE_READMODE;
 		//fSuccess = SetNamedPipeHandleState(
 		//  mh_ConInputPipe,    // pipe handle
 		//  &dwMode,  // new pipe mode
@@ -4820,7 +4833,7 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc)
 		{
 			if (mn_InRecreate && !mb_ProcessRestarted && mh_MainSrv)
 			{
-				DWORD dwExitCode = 0;
+				//DWORD dwExitCode = 0;
 
 				if (!isServerAlive())
 				{
@@ -7015,6 +7028,8 @@ BOOL CRealConsole::SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground)
 	//	lbRc = TRUE;
 	//}
 
+	UNREFERENCED_PARAMETER(hLastFocus);
+
 	return lbRc;
 }
 
@@ -7390,11 +7405,12 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 	if (ms_MainSrv_Pipe[0])
 	{
 		size_t nInSize = sizeof(CESERVER_REQ_HDR); //+sizeof(DWORD)*2;
-		DWORD dwRead = 0;
+		//DWORD dwRead = 0;
 		//CESERVER_REQ lIn = {{nInSize}}, lOut = {};
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ONACTIVATION, nInSize);
-		CESERVER_REQ* pOut = ExecuteNewCmd(CECMD_ONACTIVATION, sizeof(CESERVER_REQ));
-		if (pIn && pOut)
+		CESERVER_REQ* pOut = NULL; //ExecuteNewCmd(CECMD_ONACTIVATION, sizeof(CESERVER_REQ));
+
+		if (pIn /*&& pOut*/)
 		{
 			#if 0
 			wchar_t szInfo[255];
@@ -7419,7 +7435,11 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 			DWORD dwTickStart = timeGetTime();
 			mn_LastUpdateServerActive = GetTickCount();
 			WARNING("Таймаут, чтобы не зависнуть");
-			fSuccess = CallNamedPipe(ms_MainSrv_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, 500);
+			
+			/*fSuccess = CallNamedPipe(ms_MainSrv_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, 500);*/
+			pOut = ExecuteCmd(ms_MainSrv_Pipe, pIn, 500, ghWnd);
+			fSuccess = (pOut != NULL);
+
 			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_MainSrv_Pipe, pOut);
 
 			#if 0
@@ -7428,6 +7448,7 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 
 			mn_LastUpdateServerActive = GetTickCount();
 		}
+
 		ExecuteFreeResult(pIn);
 		ExecuteFreeResult(pOut);
 	}
@@ -7442,6 +7463,7 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 		bActiveNonSleep, fSuccess ? L"OK" : L"Failed!", *ms_MainSrv_Pipe ? (ms_MainSrv_Pipe+18) : L"<NoPipe>");
 	DEBUGSTRALTSRV(szDbgInfo);
 #endif
+	UNREFERENCED_PARAMETER(fSuccess);
 }
 
 void CRealConsole::UpdateScrollInfo()
@@ -9912,7 +9934,7 @@ HWND CRealConsole::FindPicViewFrom(HWND hFrom)
 	//hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
 	// Класс может быть как "FarPictureViewControlClass", так и "FarMultiViewControlClass"
 	// А вот заголовок у них пока один
-	while((hPicView = FindWindowEx(hFrom, hPicView, NULL, L"PictureView")) != NULL)
+	while ((hPicView = FindWindowEx(hFrom, hPicView, NULL, L"PictureView")) != NULL)
 	{
 		// Проверить на принадлежность фару
 		DWORD dwPID, dwTID;
@@ -9920,6 +9942,8 @@ HWND CRealConsole::FindPicViewFrom(HWND hFrom)
 
 		if (dwPID == mn_FarPID || dwPID == GetActivePID())
 			break;
+
+		UNREFERENCED_PARAMETER(dwTID);
 	}
 
 	return hPicView;
@@ -9954,7 +9978,7 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 		// Если GUI приложение запущено во вкладке, и аттач выполняется НЕ из ConEmuHk.dll
 		HWND hBack = mp_VCon->GetBack();
 		HWND hChild = NULL;
-		DWORD nSelf = GetCurrentProcessId();
+		DEBUGTEST(DWORD nSelf = GetCurrentProcessId());
 		_ASSERTE(nSelf != mn_GuiWndPID);
 
 		while ((hChild = FindWindowEx(hBack, hChild, NULL, NULL)) != NULL)
@@ -10094,7 +10118,7 @@ HWND CRealConsole::GuiWnd()
 DWORD CRealConsole::GuiWndPID()
 {
 	if (!this || !hGuiWnd)
-		return NULL;
+		return 0;
 	return mn_GuiWndPID;
 }
 
@@ -10137,9 +10161,13 @@ void CRealConsole::GuiWndFocusStore()
 		return;
 
 	GUITHREADINFO gti = {sizeof(gti)};
+	
 	DWORD nPID;
+
 	DWORD nTID = GetWindowThreadProcessId(hGuiWnd, &nPID);
-	BOOL bGuiInfo = GetGUIThreadInfo(nTID, &gti);
+
+	DEBUGTEST(BOOL bGuiInfo = )
+	GetGUIThreadInfo(nTID, &gti);
 
 	DWORD nGetPID;
 	if (gti.hwndFocus)
@@ -10325,8 +10353,8 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 		// Чтобы артефакты не появлялись
 		ValidateRect(hDcWnd, &rcDC);
 		
-		DWORD nTID = 0, nPID = 0;
-		nTID = GetWindowThreadProcessId(hGuiWnd, &nPID);
+		DWORD nPID = 0;
+		DWORD nTID = GetWindowThreadProcessId(hGuiWnd, &nPID);
 		_ASSERTE(nPID == anAppPID);
 		AllowSetForegroundWindow(nPID);
 		
@@ -10800,6 +10828,8 @@ wrap:
 		gpConEmu->DebugStep(szErr);
 		MBoxA(szErr);
 	}
+
+	UNREFERENCED_PARAMETER(dwErr);
 
 	return lbResult;
 }
@@ -11371,18 +11401,17 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 		//CloseConsole(false, false);
 
 		// Уведомить сервер, что нужно закрыться
-		CESERVER_REQ in;
-		ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
-		in.dwData[0] = (DWORD)lhGuiWnd;
-		in.dwData[1] = bSendCloseConsole;
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+		pIn->dwData[0] = (DWORD)lhGuiWnd;
+		pIn->dwData[1] = bSendCloseConsole;
 		DWORD dwTickStart = timeGetTime();
 		
-		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), &in, ghWnd);
+		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), pIn, ghWnd);
 		
-		gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+		gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 		
-		if (pOut)
-			ExecuteFreeResult(pOut);
+		ExecuteFreeResult(pOut);
+		ExecuteFreeResult(pIn);
 
 		// Поднять отцепленное окно "наверх"
 		apiSetForegroundWindow(lhGuiWnd);
@@ -11405,21 +11434,22 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 			SetOtherWindowPos(hConWnd, HWND_NOTOPMOST, rcScreen.left, rcScreen.top, 0,0, SWP_NOSIZE);
 
 		// Уведомить сервер, что он больше не наш
-		CESERVER_REQ in;
-		ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
 		DWORD dwTickStart = timeGetTime();
-		in.dwData[0] = 0;
-		in.dwData[1] = bSendCloseConsole;
+		pIn->dwData[0] = 0;
+		pIn->dwData[1] = bSendCloseConsole;
 		
-		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), &in, ghWnd);
+		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), pIn, ghWnd);
 		
-		gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+		gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 		
 		if (pOut)
 			ExecuteFreeResult(pOut);
 		else
 			ShowConsole(1);
 		
+		ExecuteFreeResult(pIn);
+
 		//SetLastError(0);
 		//BOOL bVisible = IsWindowVisible(hConWnd); -- проверка обламывается. Не успевает...
 		//DWORD nErr = GetLastError();

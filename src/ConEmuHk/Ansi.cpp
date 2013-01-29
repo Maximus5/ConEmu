@@ -479,6 +479,11 @@ BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT
 		ExtScrollScreen(&scrl);
 	}
 
+	//Warning: This function called from "cmd.exe /c cls" whith arguments:
+	//lpScrollRectangle - full scroll buffer
+	//lpClipRectangle - NULL
+	//dwDestinationOrigin = {0, -9999}
+
 	lbRc = F(ScrollConsoleScreenBufferW)(hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
 
 	return lbRc;

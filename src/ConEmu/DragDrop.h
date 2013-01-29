@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "BaseDragDrops.h"
 #include "DragDropData.h"
 //#include "virtualconsole.h"
+#include "../common/MArray.h"
 
 
 class CDragDrop :
@@ -74,7 +75,7 @@ class CDragDrop :
 			HANDLE hThread;
 			DWORD  dwThreadId;
 		} ThInfo;
-		std::vector<ThInfo> m_OpThread;
+		MArray<ThInfo> m_OpThread;
 		CRITICAL_SECTION m_CrThreads;
 		typedef struct _ShlOpInfo
 		{

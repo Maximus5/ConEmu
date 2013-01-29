@@ -808,14 +808,17 @@ void Settings::LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECu
 	#define _MinMax(a,mn,mx) if (a < mn) a = mn; else if (a > mx) a = mx;
 
 	// Is there new style was saved?
-	bool bActive = reg->Load(L"CursorTypeActive", pActive->Raw), bInactive = false;
+	bool bActive = reg->Load(L"CursorTypeActive", pActive->Raw);
+	DEBUGTEST(bInactive = false);
+
 	if (bActive)
 	{
 		_MinMax(pActive->CursorType, cur_First, cur_Last);
 		_MinMax(pActive->FixedSize, CURSORSIZE_MIN, CURSORSIZE_MAX);
 		_MinMax(pActive->MinSize, CURSORSIZEPIX_MIN, CURSORSIZEPIX_MAX);
 
-		bInactive = reg->Load(L"CursorTypeInactive", pInactive->Raw);
+		DEBUGTEST(bInactive = )
+		reg->Load(L"CursorTypeInactive", pInactive->Raw);
 
 		_MinMax(pInactive->CursorType, cur_First, cur_Last);
 		_MinMax(pInactive->FixedSize, CURSORSIZE_MIN, CURSORSIZE_MAX);

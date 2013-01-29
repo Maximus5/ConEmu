@@ -587,7 +587,7 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 
 	// Go
 
-	RECT wr, cr, tr = {};
+	RECT wr, cr; //, tr = {};
 	
 	RecalculateFrameSizes();
 
@@ -620,7 +620,7 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 
 	cr = wr;
 
-	FrameDrawStyle dt = gpConEmu->DrawType();
+	DEBUGTEST(FrameDrawStyle dt = gpConEmu->DrawType());
 
 
 #if defined(CONEMU_TABBAR_EX)
@@ -675,8 +675,10 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 	}
 #endif
 
+	#ifdef _DEBUG
 	int nWidth = (cr.right-cr.left);
 	int nHeight = (cr.bottom-cr.top);
+	#endif
 
 	WARNING("Пока табы рисуем не сами и ExtendDWM отсутствует - дополнительные изыски с временным DC не нужны");
 #if 0
@@ -1071,7 +1073,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	FrameDrawStyle fdt = gpConEmu->DrawType();
 
 	// Если nCaption == 0, то при fdt_Aero текст в заголовке окна не отрисовывается
-	int nCaption = GetCaptionHeight();
+	DEBUGTEST(int nCaption = GetCaptionHeight());
 
 	bool bCallDefProc = true;
 
@@ -1107,7 +1109,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
 
-		RECT rcWnd = {0,0, r[0].right-r[0].left, r[0].bottom-r[0].top};
+		//RECT rcWnd = {0,0, r[0].right-r[0].left, r[0].bottom-r[0].top};
 		RECT rcClient; // = gpConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
 		//_ASSERTE(rcClient.left==0 && rcClient.top==0);
 		RECT rcMargins = gpConEmu->CalcMargins(CEM_FRAMECAPTION);
@@ -1155,7 +1157,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		// of the corresponding window client area.
 		LPRECT nccr = (LPRECT)lParam;
 		RECT rc = *nccr;
-		RECT rcWnd = {0,0, rc.right-rc.left, rc.bottom-rc.top};
+		//RECT rcWnd = {0,0, rc.right-rc.left, rc.bottom-rc.top};
 		RECT rcClient; // = gpConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
 		//_ASSERTE(rcClient.left==0 && rcClient.top==0);
 		RECT rcMargins = gpConEmu->CalcMargins(CEM_FRAMECAPTION);

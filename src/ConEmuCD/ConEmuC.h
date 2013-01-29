@@ -138,7 +138,6 @@ extern size_t gnHeapUsed, gnHeapMax;
 extern HANDLE ghFarInExecuteEvent;
 #endif
 
-//#include <vector>
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/WinObjects.h"

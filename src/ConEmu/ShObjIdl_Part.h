@@ -386,17 +386,20 @@ extern RPC_IF_HANDLE __MIDL_itf_shobjidl_0000_0092_v0_0_s_ifspec;
 /* interface ITaskbarList3 */
 /* [object][uuid] */
 
-//typedef /* [v1_enum] */
-//enum TBPFLAG
-//{
-//	TBPF_NOPROGRESS	= 0,
-//	TBPF_INDETERMINATE	= 0x1,
-//	TBPF_NORMAL	= 0x2,
-//	TBPF_ERROR	= 0x4,
-//	TBPF_PAUSED	= 0x8
-//} 	TBPFLAG;
+#ifndef __IDragSourceHelper_FWD_DEFINED__
+typedef /* [v1_enum] */
+enum TBPFLAG
+{
+	TBPF_NOPROGRESS	= 0,
+	TBPF_INDETERMINATE	= 0x1,
+	TBPF_NORMAL	= 0x2,
+	TBPF_ERROR	= 0x4,
+	TBPF_PAUSED	= 0x8
+} 	TBPFLAG;
 
 DEFINE_ENUM_FLAG_OPERATORS(TBPFLAG)
+#endif // #ifndef __IDragSourceHelper_FWD_DEFINED__
+
 typedef /* [v1_enum] */
 enum TBATFLAG
 {
@@ -907,6 +910,35 @@ EXTERN_C const CLSID CLSID_TaskbarList;
 class DECLSPEC_UUID("56FDF344-FD6D-11d0-958A-006097C9A090")
 		TaskbarList;
 #endif
+
+
+#ifndef __IDragSourceHelper2_FWD_DEFINED__
+#define __IDragSourceHelper2_FWD_DEFINED__
+typedef interface IDragSourceHelper2 IDragSourceHelper2;
+#endif 	/* __IDragSourceHelper2_FWD_DEFINED__ */
+
+
+#ifndef __IDragSourceHelper2_INTERFACE_DEFINED__
+#define __IDragSourceHelper2_INTERFACE_DEFINED__
+
+/* interface IDragSourceHelper2 */
+/* [object][unique][local][uuid] */ 
+
+
+EXTERN_C const IID IID_IDragSourceHelper2;
+
+
+    MIDL_INTERFACE("83E07D0D-0C5F-4163-BF1A-60B274051E40")
+    IDragSourceHelper2 : public IDragSourceHelper
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE SetFlags( 
+            /* [annotation][in] */ 
+            DWORD dwFlags) = 0;
+        
+    };
+    
+#endif 	/* __IDragSourceHelper2_INTERFACE_DEFINED__ */
 
 
 #endif // __shobjidl_h__

@@ -117,7 +117,12 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 	mb_BuferModeChangeLocked = FALSE;
 	mcr_LastMousePos = MakeCoord(-1,-1);
 
-	mr_LeftPanel = mr_LeftPanelFull = mr_RightPanel = mr_RightPanel = MakeRect(-1,-1);
+	RECT rcNil = MakeRect(-1,-1);
+	mr_LeftPanel = rcNil;
+	mr_LeftPanelFull = rcNil;
+	mr_RightPanel = rcNil;
+	mr_RightPanel = rcNil;
+
 	mb_LeftPanel = mb_RightPanel = FALSE;
 	
 	ZeroStruct(dump);
@@ -165,6 +170,8 @@ void CRealBuffer::DumpConsole(HANDLE ahFile)
 		lbRc = WriteFile(ahFile, con.pConChar, nSize, &dw, NULL);
 		lbRc = WriteFile(ahFile, con.pConAttr, nSize, &dw, NULL); //-V519
 	}
+
+	UNREFERENCED_PARAMETER(lbRc);
 }
 
 
@@ -608,22 +615,22 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 
 	BOOL lbRc = FALSE;
 	BOOL fSuccess = FALSE;
-	DWORD dwRead = 0;
+	//DWORD dwRead = 0;
 	DWORD dwTickStart = 0;
 	DWORD nCallTimeout = 0;
-	int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE);
-	int nOutSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_RETSIZE);
+	DWORD nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE);
+	DWORD nOutSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_RETSIZE);
 	CESERVER_REQ* pIn = ExecuteNewCmd(anCmdID, nInSize);
-	CESERVER_REQ* pOut = ExecuteNewCmd(anCmdID, nOutSize);
+	CESERVER_REQ* pOut = NULL; //ExecuteNewCmd(anCmdID, nOutSize);
 	SMALL_RECT rect = {0};
-	bool bLargestReached = false;
+	//bool bLargestReached = false;
 	bool bSecondTry = false;
 
 	_ASSERTE(anCmdID==CECMD_SETSIZESYNC || anCmdID==CECMD_SETSIZENOSYNC || anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED);
 	//ExecutePrepareCmd(&lIn.hdr, anCmdID, lIn.hdr.cbSize);
-	if (!pIn || !pOut)
+	if (!pIn /*|| !pOut*/)
 	{
-		_ASSERTE(pIn && pOut);
+		_ASSERTE(pIn);
 		goto wrap;
 	}
 
@@ -725,7 +732,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	}
 
 	#ifdef _DEBUG
-	wchar_t szDbgCmd[128]; _wsprintf(szDbgCmd, SKIPLEN(countof(szDbgCmd)) L"SetConsoleSize.CallNamedPipe(cx=%i, cy=%i, buf=%i, cmd=%i)\n",
+	wchar_t szDbgCmd[128]; _wsprintf(szDbgCmd, SKIPLEN(countof(szDbgCmd)) L"SetConsoleSize.ExecuteCmd(cx=%i, cy=%i, buf=%i, cmd=%i)\n",
 	                                 sizeX, sizeY, sizeBuffer, anCmdID);
 	DEBUGSTRSIZE(szDbgCmd);
 	#endif
@@ -734,9 +741,12 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	// С таймаутом
 	nCallTimeout = RELEASEDEBUGTEST(500,30000);
 
-	fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);
+	/*fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);*/
+	_ASSERTE(pOut==NULL);
+	pOut = ExecuteCmd(mp_RCon->ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
+	fSuccess = (pOut != NULL);
 
-	if (fSuccess && (dwRead == (DWORD)nOutSize))
+	if (fSuccess /*&& (dwRead == (DWORD)nOutSize)*/)
 	{
 		int nSetWidth = sizeX, nSetHeight = sizeY;
 		if (GetConWindowSize(pOut->SetSizeRet.SetSizeRet, &nSetWidth, &nSetHeight, NULL))
@@ -761,7 +771,10 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				// Try again with lesser size?
 				if (bSecondTry)
 				{
-					fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);
+					/*fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);*/
+					ExecuteFreeResult(pOut);
+					pOut = ExecuteCmd(mp_RCon->ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
+					fSuccess = (pOut != NULL);
 				}
 				// Inform user
 				Icon.ShowTrayIcon(L"Maximum real console size was reached\nDecrease font size in the real console properties", tsa_Console_Size);
@@ -771,16 +784,16 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 
 	gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, mp_RCon->ms_ConEmuC_Pipe, pOut);
 
-	if (!fSuccess || dwRead<(DWORD)nOutSize)
+	if (!fSuccess || (pOut->hdr.cbSize < nOutSize))
 	{
 		if (gpSetCls->isAdvLogging)
 		{
 			char szInfo[128]; DWORD dwErr = GetLastError();
-			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv.CallNamedPipe FAILED!!! ErrCode=0x%08X, Bytes read=%i", dwErr, dwRead);
+			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv.ExecuteCmd FAILED!!! ErrCode=0x%08X, Bytes read=%i", dwErr, pOut->hdr.cbSize);
 			mp_RCon->LogString(szInfo);
 		}
 
-		DEBUGSTRSIZE(L"SetConsoleSize.CallNamedPipe FAILED!!!\n");
+		DEBUGSTRSIZE(L"SetConsoleSize.ExecuteCmd FAILED!!!\n");
 	}
 	else
 	{
@@ -2346,6 +2359,8 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		//if (mp_RCon->isActive()) -- mp_RCon->isActive() проверит сама UpdateScrollInfo, а скроллбар может быть и в видимой но НЕ активной консоли
 		mp_RCon->UpdateScrollInfo();
 	}
+
+	UNREFERENCED_PARAMETER(bBufRecreated);
 
 	return lbChanged;
 }
@@ -6022,7 +6037,7 @@ LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/, UINT nCo
 		while (true)
 		{
 			WARNING("Переделать в команду пайпа");
-			mp_RCon->PostConsoleMessage(mp_RCon->hConWnd, WM_VSCROLL, wParm, NULL);
+			mp_RCon->PostConsoleMessage(mp_RCon->hConWnd, WM_VSCROLL, wParm, 0);
 
 			if ((nCount <= 1) || (nDirection != SB_LINEUP && nDirection != SB_LINEDOWN) /*|| mp_RCon->isFar()*/)
 				break;

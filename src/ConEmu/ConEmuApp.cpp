@@ -2090,7 +2090,7 @@ LONG WINAPI CreateDumpOnException(struct _EXCEPTION_POINTERS *ExceptionInfo)
 	INT_PTR nLen;
 	wchar_t szFull[1024] = L"";
 	MINIDUMP_TYPE dumpType = MiniDumpWithFullMemory;
-	bool bDumpSucceeded = false;
+	//bool bDumpSucceeded = false;
 	HANDLE hDmpFile = NULL;
 	HMODULE hDbghelp = NULL;
 	wchar_t dmpfile[MAX_PATH+64] = L"";
@@ -2203,7 +2203,7 @@ wrap:
 	if (pszError)
 	{
 		lstrcpyn(szFull, pszError, 255);
-		if (dmpfile)
+		if (dmpfile[0])
 		{
 			wcscat_c(szFull, L"\r\n");
 			wcscat_c(szFull, dmpfile);

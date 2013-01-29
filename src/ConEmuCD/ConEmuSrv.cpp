@@ -594,10 +594,22 @@ int ServerInitGuiTab()
 		_ASSERTE(ghConWnd!=NULL);
 		wchar_t szServerPipe[MAX_PATH];
 		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)hConEmuWnd); //-V205
-		CESERVER_REQ In, Out;
-		ExecutePrepareCmd(&In, CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2);
-		In.dwData[0] = 1; // запущен сервер
-		In.dwData[1] = (DWORD)ghConWnd; //-V205
+
+		//CESERVER_REQ In, Out;
+		//ExecutePrepareCmd(&In, CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2);
+		//In.dwData[0] = 1; // запущен сервер
+		//In.dwData[1] = (DWORD)ghConWnd; //-V205
+		
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2);
+		if (!pIn)
+		{
+			_ASSERTEX(pIn);
+			return CERR_NOTENOUGHMEM1;
+		}
+		pIn->dwData[0] = 1; // запущен сервер
+		pIn->dwData[1] = (DWORD)ghConWnd; //-V205
+
+		CESERVER_REQ* pOut = NULL;
 
 		DWORD nInitTick = GetTickCount();
 
@@ -607,7 +619,9 @@ int ServerInitGuiTab()
 			DWORD nStartTick = GetTickCount();
 			#endif
 
-			lbCallRc = CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, EXECUTE_CONNECT_GUI_CALL_TIMEOUT);
+			/*lbCallRc = CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, EXECUTE_CONNECT_GUI_CALL_TIMEOUT);*/
+			pOut = ExecuteCmd(szServerPipe, pIn, EXECUTE_CONNECT_GUI_CALL_TIMEOUT, ghConWnd);
+			lbCallRc = (pOut != NULL);
 
 			DWORD dwErr = GetLastError(), nEndTick = GetTickCount();
 			DWORD nConnectDelta = nEndTick - nInitTick;
@@ -637,37 +651,45 @@ int ServerInitGuiTab()
 		}
 
 
-		if (!lbCallRc || !Out.StartStopRet.hWndDc || !Out.StartStopRet.hWndBack)
+		if (!lbCallRc || !pOut->StartStopRet.hWndDc || !pOut->StartStopRet.hWndBack)
 		{
 			dwErr = GetLastError();
+
 			#ifdef _DEBUG
 			if (gbIsWine)
 			{
 				wchar_t szDbgMsg[512], szTitle[128];
 				GetModuleFileName(NULL, szDbgMsg, countof(szDbgMsg));
 				msprintf(szTitle, countof(szTitle), L"%s: PID=%u", PointToName(szDbgMsg), gnSelfPID);
-				msprintf(szDbgMsg, countof(szDbgMsg), L"CallNamedPipe(%s)\nFailed, code=%u, RC=%u, hWndDC=x%08X, hWndBack=x%08X", szServerPipe, dwErr, lbCallRc, (DWORD)Out.StartStopRet.hWndDc, (DWORD)Out.StartStopRet.hWndBack);
+				msprintf(szDbgMsg, countof(szDbgMsg), L"ExecuteCmd('%s',CECMD_SRVSTARTSTOP)\nFailed, code=%u, RC=%u, hWndDC=x%08X, hWndBack=x%08X",
+					szServerPipe, dwErr, lbCallRc, (DWORD)pOut->StartStopRet.hWndDc, (DWORD)pOut->StartStopRet.hWndBack);
 				MessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 			}
 			else
 			{
-				_ASSERTEX(lbCallRc && Out.StartStopRet.hWndDc && Out.StartStopRet.hWndBack);
+				_ASSERTEX(lbCallRc && pOut->StartStopRet.hWndDc && pOut->StartStopRet.hWndBack);
 			}
 			SetLastError(dwErr);
 			#endif
+
 		}
 		else
 		{
-			ghConEmuWnd = Out.StartStop.hWnd;
-			SetConEmuWindows(Out.StartStopRet.hWndDc, Out.StartStopRet.hWndBack);
-			gpSrv->dwGuiPID = Out.StartStopRet.dwPID;
+			ghConEmuWnd = pOut->StartStop.hWnd;
+			SetConEmuWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
+			gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
+			
 			#ifdef _DEBUG
 			DWORD nGuiPID; GetWindowThreadProcessId(ghConEmuWnd, &nGuiPID);
-			_ASSERTEX(Out.hdr.nSrcPID==nGuiPID);
+			_ASSERTEX(pOut->hdr.nSrcPID==nGuiPID);
 			#endif
+			
 			gpSrv->bWasDetached = FALSE;
 			UpdateConsoleMapHeader();
 		}
+
+		ExecuteFreeResult(pIn);
+		ExecuteFreeResult(pOut);
 	}
 
 	DWORD nWaitRc = 99;
@@ -1289,12 +1311,20 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 
 		wchar_t szServerPipe[MAX_PATH];
 		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd); //-V205
-		CESERVER_REQ In, Out; DWORD dwRead = 0;
-		ExecutePrepareCmd(&In, CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2);
-		In.dwData[0] = 101;
-		In.dwData[1] = (DWORD)ghConWnd; //-V205
-		// Послать в GUI уведомление, что сервер закрывается
-		CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, 1000);
+
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2);
+		if (pIn)
+		{
+			pIn->dwData[0] = 101;
+			pIn->dwData[1] = (DWORD)ghConWnd; //-V205
+
+			// Послать в GUI уведомление, что сервер закрывается
+			/*CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, 1000);*/
+			CESERVER_REQ* pOut = ExecuteCmd(szServerPipe, pIn, 1000, ghConWnd, TRUE/*bAsyncNoResult*/);
+
+			ExecuteFreeResult(pIn);
+			ExecuteFreeResult(pOut);
+		}
 	}
 
 	// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется

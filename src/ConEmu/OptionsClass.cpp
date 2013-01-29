@@ -1145,14 +1145,17 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 	if (*gpSet->inFont2)
 		mb_Name2Ok = TRUE;
 	
-	std::vector<RegFont>::iterator iter;
+	//std::vector<RegFont>::iterator iter;
 
 	if (!mb_Name1Ok)
 	{
-		for(int i = 0; !mb_Name1Ok && (i < 3); i++)
+		for (int i = 0; !mb_Name1Ok && (i < 3); i++)
 		{
-			for (iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+			//for (iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+			for (INT_PTR j = 0; j < m_RegFonts.size(); ++j)
 			{
+				const RegFont* iter = &(m_RegFonts[j]);
+
 				switch (i)
 				{
 					case 0:
@@ -1183,8 +1186,11 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 
 	if (!mb_Name2Ok)
 	{
-		for (iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+		//for (iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+		for (INT_PTR j = 0; j < m_RegFonts.size(); ++j)
 		{
+			const RegFont* iter = &(m_RegFonts[j]);
+
 			if (iter->bHasBorders)
 			{
 				lstrcpynW(LogFont2.lfFaceName, iter->szFontName, countof(LogFont2.lfFaceName));
@@ -1729,8 +1735,11 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	SetDlgItemText(hWnd2, tFontFace2, LogFont2.lfFaceName);
 
 	// Добавить шрифты рисованные ConEmu
-	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+	//for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+	for (INT_PTR j = 0; j < m_RegFonts.size(); ++j)
 	{
+		const RegFont* iter = &(m_RegFonts[j]);
+
 		if (iter->pCustom)
 		{
 			BOOL bMono = iter->pCustom->GetFont(0,0,0,0)->IsMonospace();
@@ -10850,8 +10859,11 @@ bool CSettings::FindCustomFont(LPCWSTR lfFaceName, int iSize, BOOL bBold, BOOL b
 	*ppCustom = NULL;
 
 	// Поиск по шрифтам рисованным ConEmu (bdf)
-	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+	//for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+	for (INT_PTR j = 0; j < m_RegFonts.size(); ++j)
 	{
+		const RegFont* iter = &(m_RegFonts[j]);
+
 		if (iter->pCustom && lstrcmp(lfFaceName, iter->szFontName)==0)
 		{
 			*ppCustom = iter->pCustom;
@@ -11841,12 +11853,16 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 
 	if (mb_StopRegisterFonts) return FALSE;
 
-	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+	//for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+	for (INT_PTR j = 0; j < m_RegFonts.size(); ++j)
 	{
+		RegFont* iter = &(m_RegFonts[j]);
+
 		if (StrCmpI(iter->szFontFile, asFontFile) == 0)
 		{
 			// Уже добавлено
-			if (abDefault && iter->bDefault == FALSE) iter->bDefault = TRUE;
+			if (abDefault && iter->bDefault == FALSE)
+				iter->bDefault = TRUE;
 
 			return TRUE;
 		}
@@ -11882,15 +11898,19 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 	// Проверить, может такой шрифт уже зарегистрирован в системе
 	BOOL lbRegistered = FALSE, lbOneOfFam = FALSE; int iFamIndex = -1;
 
-	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+	//for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+	for (INT_PTR j = 0; j < m_RegFonts.size(); ++j)
 	{
+		const RegFont* iter = &(m_RegFonts[j]);
+
 		// Это может быть другой тип шрифта (Liberation Mono Bold, Liberation Mono Regular, ...)
 		if (lstrcmpi(iter->szFontName, rf.szFontName) == 0
 			|| lstrcmpi(iter->szFontName, szFullFontName) == 0)
 		{
 			lbRegistered = iter->bAlreadyInSystem;
 			lbOneOfFam = TRUE;
-			iFamIndex = iter - m_RegFonts.begin();
+			//iFamIndex = iter - m_RegFonts.begin();
+			iFamIndex = j;
 			break;
 		}
 	}
@@ -12214,13 +12234,19 @@ void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
 
 void CSettings::UnregisterFonts()
 {
-	for(std::vector<RegFont>::iterator iter = m_RegFonts.begin();
-	        iter != m_RegFonts.end(); iter = m_RegFonts.erase(iter))
+	//for(std::vector<RegFont>::iterator iter = m_RegFonts.begin();
+	//        iter != m_RegFonts.end(); iter = m_RegFonts.erase(iter))
+	while (m_RegFonts.size() > 0)
 	{
+		INT_PTR j = m_RegFonts.size()-1;
+		RegFont* iter = &(m_RegFonts[j]);
+
 		if (iter->pCustom)
 			delete iter->pCustom;
 		else
 			RemoveFontResourceEx(iter->szFontFile, FR_PRIVATE, NULL);
+
+		m_RegFonts.erase(j);
 	}
 }
 
@@ -13568,8 +13594,11 @@ bool CSettings::CheckConsoleFontFast()
 				BOOL lbNonSystem = FALSE;
 
 				// Нельзя использовать шрифты, которые зарегистрированы нами (для ConEmu). Они должны быть системными
-				for (std::vector<RegFont>::iterator iter = gpSetCls->m_RegFonts.begin(); !lbNonSystem && iter != gpSetCls->m_RegFonts.end(); ++iter)
+				//for (std::vector<RegFont>::iterator iter = gpSetCls->m_RegFonts.begin(); !lbNonSystem && iter != gpSetCls->m_RegFonts.end(); ++iter)
+				for (INT_PTR j = 0; j < m_RegFonts.size(); ++j)
 				{
+					const RegFont* iter = &(m_RegFonts[j]);
+
 					if (!iter->bAlreadyInSystem &&
 					        lstrcmpi(iter->szFontName, gpSet->ConsoleFont.lfFaceName) == 0)
 						lbNonSystem = TRUE;
@@ -14159,11 +14188,16 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 		return TRUE; // Alias?
 
 	// Нельзя использовать шрифты, которые зарегистрированы нами (для ConEmu). Они должны быть системными
-	for (std::vector<RegFont>::iterator iter = gpSetCls->m_RegFonts.begin(); iter != gpSetCls->m_RegFonts.end(); ++iter)
+	//for (std::vector<RegFont>::iterator iter = gpSetCls->m_RegFonts.begin(); iter != gpSetCls->m_RegFonts.end(); ++iter)
+	for (INT_PTR j = 0; j < gpSetCls->m_RegFonts.size(); ++j)
 	{
+		const RegFont* iter = &(gpSetCls->m_RegFonts[j]);
+
 		if (!iter->bAlreadyInSystem &&
 		        lstrcmpi(iter->szFontName, lplf->lfFaceName) == 0)
+        {
 			return TRUE;
+		}
 	}
 
 	// PAN_PROP_MONOSPACED - не дает правильного результата. Например 'MS Mincho' заявлен как моноширный,
