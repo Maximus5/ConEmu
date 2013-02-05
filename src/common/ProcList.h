@@ -398,6 +398,9 @@ protected:
 	BOOL mb_Is64BitOs;
 	typedef BOOL (WINAPI* IsWow64Process_t)(HANDLE hProcess, PBOOL Wow64Process);
 	IsWow64Process_t IsWow64Process_f;
+	typedef BOOL (WINAPI* QueryFullProcessImageNameW_t)(HANDLE hProcess, DWORD dwFlags, LPWSTR lpExeName, PDWORD lpdwSize);
+	QueryFullProcessImageNameW_t QueryFullProcessImageNameW_f;
+
 
 public:
 
@@ -417,6 +420,8 @@ public:
 			    GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
 		}
 		IsWow64Process_f = (IsWow64Process_t)(hKernel ? GetProcAddress(hKernel, "IsWow64Process") : NULL);
+
+		QueryFullProcessImageNameW_f = (QueryFullProcessImageNameW_t)(hKernel ? GetProcAddress(hKernel, "QueryFullProcessImageNameW") : NULL);
 		
 		mb_Is64BitOs = IsWindows64();
 		
@@ -498,10 +503,46 @@ public:
 			
 			if (pszPath)
 			{
+				*pszPath = 0;
+
+				DWORD nErr = 0;
 				HANDLE h = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, anPID);
+				if (h == NULL)
+				{
+					DEBUGTEST(nErr = GetLastError());
+
+					h = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, anPID);
+					if (h == NULL)
+					{
+						DEBUGTEST(nErr = GetLastError());
+
+						// Last chance for Vista+
+						// We can't get full path by this handle, but IsWow64Process may be succeeded
+						if (gOSVer.dwMajorVersion >= 6)
+						{
+							// PROCESS_QUERY_LIMITED_INFORMATION not defined in GCC
+							h = OpenProcess(0x1000/*PROCESS_QUERY_LIMITED_INFORMATION*/, FALSE, anPID);
+						}
+					}
+				}
+
+				if (h == NULL)
+				{
+					nErr = GetLastError();
+					// Most usually this will be "Access denied", check others?
+					_ASSERTE(nErr == ERROR_ACCESS_DENIED);
+				}
+
 				if (h && h != INVALID_HANDLE_VALUE)
 				{
-					if (GetModuleFileNameEx)
+					if ((*pszPath == 0) && QueryFullProcessImageNameW_f)
+					{
+						DWORD nLen = cchMax;
+						if (!QueryFullProcessImageNameW_f(h, 0, pszPath, &nLen))
+							*pszPath = 0;
+					}
+
+					if ((*pszPath == 0) && GetModuleFileNameEx)
 					{
 						if (!GetModuleFileNameEx(h, NULL, pszPath, cchMax))
 							*pszPath = 0;

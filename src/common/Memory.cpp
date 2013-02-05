@@ -467,10 +467,23 @@ char* lstrdup(const char* asText)
 wchar_t* lstrdup(const wchar_t* asText)
 {
 	int nLen = asText ? lstrlenW(asText) : 0;
-	wchar_t* psz = (wchar_t*)malloc((nLen+1)*2);
+	wchar_t* psz = (wchar_t*)malloc((nLen+1) * sizeof(*psz));
 
 	if (nLen)
 		StringCchCopyW(psz, nLen+1, asText);
+	else
+		psz[0] = 0;
+
+	return psz;
+}
+
+wchar_t* lstrdupW(const char* asText, UINT cp /*= CP_ACP*/)
+{
+	int nLen = asText ? lstrlenA(asText) : 0;
+	wchar_t* psz = (wchar_t*)malloc((nLen+1) * sizeof(*psz));
+
+	if (nLen)
+		MultiByteToWideChar(cp, 0, asText, nLen+1, psz, nLen+1);
 	else
 		psz[0] = 0;
 

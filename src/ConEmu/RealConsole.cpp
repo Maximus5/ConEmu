@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Menu.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
+#include "RunQueue.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "VConChild.h"
@@ -65,7 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCON(s) DEBUGSTR(s)
-#define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
+#define DEBUGSTRLANG(s) DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRLOG(s) //OutputDebugStringA(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
@@ -136,8 +137,10 @@ CRealConsole::CRealConsole()
 
 bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 {
+	Assert(apVCon && args);
+
 	MCHKHEAP;
-	SetConStatus(L"Initializing ConEmu..", true, true);
+	SetConStatus(L"Initializing ConEmu (2)", true, true);
 	mp_VCon = apVCon;
 	//mp_VCon->mp_RCon = this;
 	HWND hView = apVCon->GetView();
@@ -183,7 +186,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mh_PostMacroThread = NULL; mn_PostMacroThreadID = 0;
 	//mh_InputThread = NULL; mn_InputThreadID = 0;
 	mp_sei = NULL;
-	mn_MainSrv_PID = 0; mh_MainSrv = NULL;
+	mn_MainSrv_PID = 0; mh_MainSrv = NULL; mb_MainSrv_Ready = false;
+	mn_ActiveLayout = 0;
 	mn_AltSrv_PID = 0;  //mh_AltSrv = NULL;
 	mb_SwitchActiveServer = false;
 	mh_SwitchActiveServer = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -195,6 +199,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_NeedStartProcess = FALSE; mb_IgnoreCmdStop = FALSE;
 	ms_MainSrv_Pipe[0] = 0; ms_ConEmuC_Pipe[0] = 0; ms_ConEmuCInput_Pipe[0] = 0; ms_VConServer_Pipe[0] = 0;
 	mh_TermEvent = CreateEvent(NULL,TRUE/*MANUAL - используется в нескольких нитях!*/,FALSE,NULL); ResetEvent(mh_TermEvent);
+	mh_StartExecuted = CreateEvent(NULL,FALSE,FALSE,NULL); ResetEvent(mh_StartExecuted);
+	mb_StartResult = mb_WaitingRootStartup = FALSE;
 	mh_MonitorThreadEvent = CreateEvent(NULL,TRUE,FALSE,NULL); //2009-09-09 Поставил Manual. Нужно для определения, что можно убирать флаг Detached
 	mh_UpdateServerActiveEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	//mb_UpdateServerActive = FALSE;
@@ -301,14 +307,25 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	lstrcpy(ms_TempPanel, L"{Temporary panel");
 	MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, countof(ms_TempPanelRus));
 	//lstrcpy(ms_NameTitle, L"Name");
+
 	PreInit(); // просто инициализировать переменные размеров...
 
 	if (!PreCreate(args))
 		return false;
 
+	mb_WasStartDetached = m_Args.bDetached;
+	_ASSERTE(mb_WasStartDetached == args->bDetached);
+
 	// -- т.к. автопоказ табов может вызвать ресайз - то табы в самом конце инициализации!
 	SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
 	MCHKHEAP;
+
+	if (mb_NeedStartProcess)
+	{
+		// Push request to "startup queue"
+		mb_WaitingRootStartup = TRUE;
+		gpConEmu->mp_RunQueue->RequestRConStartup(this);
+	}
 
 	return true;
 }
@@ -342,8 +359,9 @@ CRealConsole::~CRealConsole()
 		{ delete mp_SBuf; mp_SBuf = NULL; }
 	mp_ABuf = NULL;
 
-		
-	SafeCloseHandle(mh_MainSrv); mn_MainSrv_PID = 0;
+	SafeCloseHandle(mh_StartExecuted);
+
+	SafeCloseHandle(mh_MainSrv); mn_MainSrv_PID = 0; mb_MainSrv_Ready = false;
 	/*SafeCloseHandle(mh_AltSrv);*/  mn_AltSrv_PID = 0;
 	SafeCloseHandle(mh_SwitchActiveServer); mb_SwitchActiveServer = false;
 	SafeCloseHandle(mh_ActiveServerSwitched);
@@ -360,7 +378,7 @@ CRealConsole::~CRealConsole()
 	if (mp_sei)
 	{
 		SafeCloseHandle(mp_sei->hProcess);
-		GlobalFree(mp_sei); mp_sei = NULL;
+		SafeFree(mp_sei);
 	}
 
 	m_RConServer.Stop(true);
@@ -1666,18 +1684,62 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 //    return 0;
 //}
 
+enum
+{
+	IDEVENT_TERM = 0,           // Завершение нити/консоли/conemu
+	IDEVENT_MONITORTHREADEVENT, // Используется, чтобы вызвать Update & Invalidate
+	IDEVENT_UPDATESERVERACTIVE, // Дернуть pRCon->UpdateServerActive()
+	IDEVENT_SWITCHSRV,          // пришел запрос от альт.сервера переключиться на него
+	IDEVENT_SERVERPH,           // ConEmuC.exe process handle (server)
+	EVENTS_COUNT
+};
+
 DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 {
-	BOOL lbChildProcessCreated = FALSE;
+	DWORD nWait = IDEVENT_TERM;
 	CRealConsole* pRCon = (CRealConsole*)lpParameter;
-
 	BOOL bDetached = pRCon->m_Args.bDetached && !pRCon->mb_ProcessRestarted && !pRCon->mn_InRecreate;
+	BOOL lbChildProcessCreated = FALSE;
 
 	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...", true);
+
+	//pRCon->mb_WaitingRootStartup = TRUE;
 
 	if (pRCon->mb_NeedStartProcess)
 	{
 		_ASSERTE(pRCon->mh_MainSrv==NULL);
+
+		#if 1
+
+		//if (!pRCon->mb_ProcessRestarted)
+		//{
+		//	if (!pRCon->PreInit())
+		//	{
+		//		DEBUGSTRPROC(L"### RCon:PreInit failed\n");
+		//		pRCon->SetConStatus(L"RCon:PreInit failed");
+		//		return 0;
+		//	}
+		//}
+
+		// -- pushed to queue from ::Constructor!
+		//// Move all "CreateProcess-es" to Main Thread
+		//gpConEmu->mp_RunQueue->RequestRConStartup(pRCon);
+
+		HANDLE hWait[] = {pRCon->mh_TermEvent, pRCon->mh_StartExecuted};
+		DWORD nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, INFINITE);
+		if ((nWait == WAIT_OBJECT_0) || !pRCon->mb_StartResult)
+		{
+			_ASSERTE(FALSE && "Failed to start console?");
+			goto wrap;
+		}
+
+		#ifdef _DEBUG
+		int nNumber = gpConEmu->isVConValid(pRCon->mp_VCon);
+		UNREFERENCED_PARAMETER(nNumber);
+		#endif
+
+		#else
+
 		pRCon->mb_NeedStartProcess = FALSE;
 
 		if (!pRCon->StartProcess())
@@ -1695,700 +1757,19 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		{
 			gpSetCls->ResetCmdArg();
 		}
+		#endif
 	}
+
+	pRCon->mb_WaitingRootStartup = FALSE;
 
 	//_ASSERTE(pRCon->mh_ConChanged!=NULL);
 	// Пока нить запускалась - произошел "аттач" так что все нормально...
 	//_ASSERTE(pRCon->mb_Detached || pRCon->mh_MainSrv!=NULL);
 
 	// а тут мы будем читать консоль...
+	nWait = pRCon->MonitorThreadWorker(bDetached, lbChildProcessCreated);
 
-	enum
-	{
-		IDEVENT_TERM = 0,           // Завершение нити/консоли/conemu
-		IDEVENT_MONITORTHREADEVENT, // Используется, чтобы вызвать Update & Invalidate
-		IDEVENT_UPDATESERVERACTIVE, // Дернуть pRCon->UpdateServerActive()
-		IDEVENT_SWITCHSRV,          // пришел запрос от альт.сервера переключиться на него
-		IDEVENT_SERVERPH,           // ConEmuC.exe process handle (server)
-		EVENTS_COUNT
-	};
-
-	_ASSERTE(IDEVENT_SERVERPH==(EVENTS_COUNT-1)); // Должен быть последним хэндлом!
-	HANDLE hEvents[EVENTS_COUNT];
-	_ASSERTE(EVENTS_COUNT==countof(hEvents)); // проверить размерность
-
-	hEvents[IDEVENT_TERM] = pRCon->mh_TermEvent;
-	hEvents[IDEVENT_MONITORTHREADEVENT] = pRCon->mh_MonitorThreadEvent; // Использовать, чтобы вызвать Update & Invalidate
-	hEvents[IDEVENT_UPDATESERVERACTIVE] = pRCon->mh_UpdateServerActiveEvent; // Дернуть pRCon->UpdateServerActive()
-	hEvents[IDEVENT_SWITCHSRV] = pRCon->mh_SwitchActiveServer;
-	hEvents[IDEVENT_SERVERPH] = pRCon->mh_MainSrv;
-	//HANDLE hAltServerHandle = NULL;
-
-	DWORD  nEvents = countof(hEvents);
-
-	// Скорее всего будет NULL, если запуск идет через ShellExecuteEx(runas)
-	if (hEvents[IDEVENT_SERVERPH] == NULL)
-		nEvents --;
-
-	DWORD  nWait = 0, nSrvWait = -1;
-	BOOL   bException = FALSE, bIconic = FALSE, /*bFirst = TRUE,*/ bActive = TRUE, bGuiVisible = FALSE;
-	DWORD nElapse = max(10,gpSet->nMainTimerElapse);
-	DWORD nInactiveElapse = max(10,gpSet->nMainTimerInactiveElapse);
-	DWORD nLastFarPID = 0;
-	bool bLastAlive = false, bLastAliveActive = false;
-	bool lbForceUpdate = false;
-	WARNING("Переделать ожидание на hDataReadyEvent, который выставляется в сервере?");
-	TODO("Нить не завершается при F10 в фаре - процессы пока не инициализированы...");
-	DWORD nConsoleStartTick = GetTickCount();
-	DWORD nTimeout = 0;
-	CRealBuffer* pLastBuf = NULL;
-	bool lbActiveBufferChanged = false;
-	DWORD nConWndCheckTick = GetTickCount();
-
-	while (TRUE)
-	{
-		bActive = pRCon->isActive();
-		bIconic = gpConEmu->isIconic();
-
-		// в минимизированном/неактивном режиме - сократить расходы
-		nTimeout = bIconic ? max(1000,nInactiveElapse) : !bActive ? nInactiveElapse : nElapse;
-
-
-		if (bActive)
-			gpSetCls->Performance(tPerfInterval, TRUE); // считается по своему
-
-		#ifdef _DEBUG
-		// 1-based console index
-		int nVConNo = gpConEmu->isVConValid(pRCon->mp_VCon);
-		UNREFERENCED_PARAMETER(nVConNo);
-		#endif
-
-		// Проверка, вдруг осталась висеть "мертвая" консоль?
-		if (hEvents[IDEVENT_SERVERPH] == NULL && pRCon->mh_MainSrv)
-		{
-			nSrvWait = WaitForSingleObject(pRCon->mh_MainSrv,0);
-			if (nSrvWait == WAIT_OBJECT_0)
-			{
-				// ConEmuC was terminated!
-				_ASSERTE(bDetached == FALSE);
-				nWait = IDEVENT_SERVERPH;
-				break;
-			}
-		}
-		else if (pRCon->hConWnd)
-		{
-			DWORD nDelta = (GetTickCount() - nConWndCheckTick);
-			if (nDelta >= CHECK_CONHWND_TIMEOUT)
-			{
-				if (!IsWindow(pRCon->hConWnd))
-				{
-					_ASSERTE(FALSE && "Console window was abnormally terminated?");
-					nWait = IDEVENT_SERVERPH;
-					break;
-				}
-				nConWndCheckTick = GetTickCount();
-			}
-		}
-
-		
-
-
-		nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, nTimeout);
-		if (nWait == (DWORD)-1)
-		{
-			DWORD nWaitItems[EVENTS_COUNT] = {99,99,99,99,99};
-
-			for (size_t i = 0; i < nEvents; i++)
-			{
-				nWaitItems[i] = WaitForSingleObject(hEvents[i], 0);
-				if (nWaitItems[i] == 0)
-				{
-					nWait = (DWORD)i;
-				}
-			}
-			_ASSERTE(nWait!=(DWORD)-1);
-
-			#ifdef _DEBUG
-			int nDbg = nWaitItems[EVENTS_COUNT-1];
-			UNREFERENCED_PARAMETER(nDbg);
-			#endif
-		}
-
-		//if ((nWait == IDEVENT_SERVERPH) && (hEvents[IDEVENT_SERVERPH] != pRCon->mh_MainSrv))
-		//{
-		//	// Закрылся альт.сервер, переключиться на основной
-		//	_ASSERTE(pRCon->mh_MainSrv!=NULL);
-		//	if (pRCon->mh_AltSrv == hAltServerHandle)
-		//	{
-		//		pRCon->mh_AltSrv = NULL;
-		//		pRCon->SetAltSrvPID(0, NULL);
-		//	}
-		//	SafeCloseHandle(hAltServerHandle);
-		//	hEvents[IDEVENT_SERVERPH] = pRCon->mh_MainSrv;
-
-		//	if (pRCon->mb_InCloseConsole && pRCon->mh_MainSrv && (WaitForSingleObject(pRCon->mh_MainSrv, 0) == WAIT_OBJECT_0))
-		//	{
-		//		ShutdownGuiStep(L"AltServer and MainServer are closed");
-		//		// Подтверждаем nWait, основной сервер закрылся
-		//		nWait = IDEVENT_SERVERPH;
-		//	}
-		//	else
-		//	{
-		//		ShutdownGuiStep(L"AltServer closed, executing ReopenServerPipes");
-		//		if (pRCon->ReopenServerPipes())
-		//		{
-		//			// Меняем nWait, т.к. основной сервер еще не закрылся (консоль жива)
-		//			nWait = IDEVENT_MONITORTHREADEVENT;
-		//		}
-		//		else
-		//		{
-		//			ShutdownGuiStep(L"ReopenServerPipes failed, exiting from MonitorThread");
-		//		}
-		//	}
-		//}
-
-		if (nWait == IDEVENT_TERM || nWait == IDEVENT_SERVERPH)
-		{
-			//if (nWait == IDEVENT_SERVERPH) -- внизу
-			//{
-			//	DEBUGSTRPROC(L"### ConEmuC.exe was terminated\n");
-			//}
-			#ifdef _DEBUG
-			DWORD nSrvExitPID = 0, nSrvPID = 0, nFErr;
-			BOOL bFRc = GetExitCodeProcess(hEvents[IDEVENT_SERVERPH], &nSrvExitPID);
-			nFErr = GetLastError();
-			typedef DWORD (WINAPI* GetProcessId_t)(HANDLE);
-			GetProcessId_t getProcessId = (GetProcessId_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetProcessId");
-			if (getProcessId)
-				nSrvPID = getProcessId(hEvents[IDEVENT_SERVERPH]);
-			#endif
-
-			break; // требование завершения нити
-		}
-
-		if ((nWait == IDEVENT_SWITCHSRV) || pRCon->mb_SwitchActiveServer)
-		{
-			//hAltServerHandle = pRCon->mh_AltSrv;
-			//_ASSERTE(hAltServerHandle!=NULL);
-			//hEvents[IDEVENT_SERVERPH] = hAltServerHandle ? hAltServerHandle : pRCon->mh_MainSrv;
-
-			pRCon->ReopenServerPipes();
-
-			// Done
-			pRCon->mb_SwitchActiveServer = false;
-			SetEvent(pRCon->mh_ActiveServerSwitched);
-		}
-
-		if (nWait == IDEVENT_UPDATESERVERACTIVE)
-		{
-			if (pRCon->isServerCreated())
-			{
-				pRCon->UpdateServerActive(TRUE);
-			}
-			ResetEvent(pRCon->mh_UpdateServerActiveEvent);
-		}
-
-		// Это событие теперь ManualReset
-		if (nWait == IDEVENT_MONITORTHREADEVENT
-		        || WaitForSingleObject(hEvents[IDEVENT_MONITORTHREADEVENT],0) == WAIT_OBJECT_0)
-		{
-			ResetEvent(hEvents[IDEVENT_MONITORTHREADEVENT]);
-
-			// Сюда мы попадаем, например, при запуске новой консоли "Под админом", когда GUI НЕ "Под админом"
-			// В начале нити (pRCon->mh_MainSrv == NULL), если запуск идет через ShellExecuteEx(runas)
-			if (hEvents[IDEVENT_SERVERPH] == NULL)
-			{
-				if (pRCon->mh_MainSrv)
-				{
-					if (bDetached || pRCon->m_Args.bRunAsAdministrator)
-					{
-						bDetached = FALSE;
-						hEvents[IDEVENT_SERVERPH] = pRCon->mh_MainSrv;
-						nEvents = countof(hEvents);
-					}
-					else
-					{
-						_ASSERTE(bDetached==TRUE);
-					}
-				}
-				else
-				{
-					_ASSERTE(pRCon->mh_MainSrv!=NULL);
-				}
-			}
-		}
-
-		if (!lbChildProcessCreated
-			&& (pRCon->mn_ProcessCount > 1)
-			&& ((GetTickCount() - nConsoleStartTick) > PROCESS_WAIT_START_TIME))
-		{
-			lbChildProcessCreated = TRUE;
-			pRCon->OnRConStartedSuccess();
-		}
-
-		// IDEVENT_SERVERPH уже проверен, а код возврата обработается при выходе из цикла
-		//// Проверим, что ConEmuC жив
-		//if (pRCon->mh_MainSrv)
-		//{
-		//	DWORD dwExitCode = 0;
-		//	#ifdef _DEBUG
-		//	BOOL fSuccess =
-		//	#endif
-		//	    GetExitCodeProcess(pRCon->mh_MainSrv, &dwExitCode);
-		//	if (dwExitCode!=STILL_ACTIVE)
-		//	{
-		//		pRCon->StopSignal();
-		//		return 0;
-		//	}
-		//}
-
-		// Если консоль не должна быть показана - но ее кто-то отобразил
-		if (!pRCon->isShowConsole && !gpSet->isConVisible)
-		{
-			/*if (foreWnd == hConWnd)
-			    apiSetForegroundWindow(ghWnd);*/
-			bool bMonitorVisibility = true;
-
-			#ifdef _DEBUG
-			if ((GetKeyState(VK_SCROLL) & 1))
-				bMonitorVisibility = false;
-
-			WARNING("bMonitorVisibility = false - для отлова сброса буфера");
-			bMonitorVisibility = false;
-			#endif
-
-			if (bMonitorVisibility && IsWindowVisible(pRCon->hConWnd))
-				pRCon->ShowOtherWindow(pRCon->hConWnd, SW_HIDE);
-		}
-
-		// Размер консоли меняем в том треде, в котором это требуется. Иначе можем заблокироваться при Update (InitDC)
-		// Требуется изменение размеров консоли
-		/*if (nWait == (IDEVENT_SYNC2WINDOW)) {
-		    pRCon->SetConsoleSize(pRCon->m_ReqSetSize);
-		    //SetEvent(pRCon->mh_ReqSetSizeEnd);
-		    //continue; -- и сразу обновим информацию о ней
-		}*/
-		DWORD dwT1 = GetTickCount();
-		SAFETRY
-		{
-			//ResetEvent(pRCon->mh_EndUpdateEvent);
-
-			// Тут и ApplyConsole вызывается
-			//if (pRCon->mp_ConsoleInfo)
-
-			lbActiveBufferChanged = (pRCon->mp_ABuf != pLastBuf);
-			if (lbActiveBufferChanged)
-			{
-				pRCon->mb_ABufChaged = lbForceUpdate = true;
-			}
-
-			if (pRCon->mp_RBuf != pRCon->mp_ABuf)
-			{
-				pRCon->mn_LastFarReadTick = GetTickCount();
-				if (lbActiveBufferChanged || pRCon->mp_ABuf->isConsoleDataChanged())
-					lbForceUpdate = true;
-			}
-			// Если сервер жив - можно проверить наличие фара и его отклик
-			else if ((!pRCon->mb_SkipFarPidChange) && pRCon->m_ConsoleMap.IsValid())
-			{
-				bool lbFarChanged = false;
-				// Alive?
-				DWORD nCurFarPID = pRCon->GetFarPID(TRUE);
-
-				if (!nCurFarPID)
-				{
-					// Возможно, сменился FAR (возврат из cmd.exe/tcc.exe, или вложенного фара)
-					DWORD nPID = pRCon->GetFarPID(FALSE);
-
-					if (nPID)
-					{
-						for (UINT i = 0; i < pRCon->mn_FarPlugPIDsCount; i++)
-						{
-							if (pRCon->m_FarPlugPIDs[i] == nPID)
-							{
-								nCurFarPID = nPID;
-								pRCon->SetFarPluginPID(nCurFarPID);
-								break;
-							}
-						}
-					}
-				}
-
-				// Если фара (с плагином) нет, а раньше был
-				if (!nCurFarPID && nLastFarPID)
-				{
-					// Закрыть и сбросить PID
-					pRCon->CloseFarMapData();
-					nLastFarPID = 0;
-					lbFarChanged = true;
-				}
-
-				// Если PID фара (с плагином) сменился
-				if (nCurFarPID && nLastFarPID != nCurFarPID)
-				{
-					//pRCon->mn_LastFarReadIdx = -1;
-					pRCon->mn_LastFarReadTick = 0;
-					nLastFarPID = nCurFarPID;
-
-					// Переоткрывать мэппинг при смене PID фара
-					// (из одного фара запустили другой, который закрыли и вернулись в первый)
-					if (!pRCon->OpenFarMapData())
-					{
-						// Значит его таки еще (или уже) нет?
-						if (pRCon->mn_FarPID_PluginDetected == nCurFarPID)
-						{
-							for (UINT i = 0; i < pRCon->mn_FarPlugPIDsCount; i++)  // сбросить ИД списка плагинов
-							{
-								if (pRCon->m_FarPlugPIDs[i] == nCurFarPID)
-									pRCon->m_FarPlugPIDs[i] = 0;
-							}
-
-							pRCon->SetFarPluginPID(0);
-						}
-					}
-
-					lbFarChanged = true;
-				}
-
-				bool bAlive = false;
-
-				//if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
-				if (nCurFarPID && pRCon->m_FarInfo.cbSize && pRCon->m_FarAliveEvent.Open())
-				{
-					DWORD nCurTick = GetTickCount();
-
-					// Чтобы опрос события не шел слишком часто.
-					if (pRCon->mn_LastFarReadTick == 0 ||
-					        (nCurTick - pRCon->mn_LastFarReadTick) >= (FAR_ALIVE_TIMEOUT/2))
-					{
-						//if (WaitForSingleObject(pRCon->mh_FarAliveEvent, 0) == WAIT_OBJECT_0)
-						if (pRCon->m_FarAliveEvent.Wait(0) == WAIT_OBJECT_0)
-						{
-							pRCon->mn_LastFarReadTick = nCurTick ? nCurTick : 1;
-							bAlive = true; // живой
-						}
-
-#ifdef _DEBUG
-						else
-						{
-							pRCon->mn_LastFarReadTick = nCurTick - FAR_ALIVE_TIMEOUT - 1;
-							bAlive = false; // занят
-						}
-
-#endif
-					}
-					else
-					{
-						bAlive = true; // еще не успело протухнуть
-					}
-
-					//if (pRCon->mn_LastFarReadIdx != pRCon->mp_FarInfo->nFarReadIdx) {
-					//	pRCon->mn_LastFarReadIdx = pRCon->mp_FarInfo->nFarReadIdx;
-					//	pRCon->mn_LastFarReadTick = GetTickCount();
-					//	DEBUGSTRALIVE(L"*** FAR ReadTick updated\n");
-					//	bAlive = true;
-					//}
-				}
-				else
-				{
-					bAlive = true; // если нет фаровского плагина, или это не фар
-				}
-
-				//if (!bAlive) {
-				//	bAlive = pRCon->isAlive();
-				//}
-				if (pRCon->isActive())
-				{
-					WARNING("Тут нужно бы сравнивать с переменной, хранящейся в gpConEmu, а не в этом instance RCon!");
-#ifdef _DEBUG
-
-					if (!IsDebuggerPresent())
-					{
-						bool lbIsAliveDbg = pRCon->isAlive();
-
-						if (lbIsAliveDbg != bAlive)
-						{
-							_ASSERTE(lbIsAliveDbg == bAlive);
-						}
-					}
-
-#endif
-
-					if (bLastAlive != bAlive || !bLastAliveActive)
-					{
-						DEBUGSTRALIVE(bAlive ? L"MonitorThread: Alive changed to TRUE\n" : L"MonitorThread: Alive changed to FALSE\n");
-						PostMessage(pRCon->GetView(), WM_SETCURSOR, -1, -1);
-					}
-
-					bLastAliveActive = true;
-
-					if (lbFarChanged)
-						gpConEmu->UpdateProcessDisplay(FALSE); // обновить PID в окне настройки
-				}
-				else
-				{
-					bLastAliveActive = false;
-				}
-
-				bLastAlive = bAlive;
-				//вроде не надо
-				//UpdateFarSettings(mn_FarPID_PluginDetected);
-				// Загрузить изменения из консоли
-				//if ((HWND)pRCon->mp_ConsoleInfo->hConWnd && pRCon->mp_ConsoleInfo->nCurDataMapIdx
-				//	&& pRCon->mp_ConsoleInfo->nPacketId
-				//	&& pRCon->mn_LastConsolePacketIdx != pRCon->mp_ConsoleInfo->nPacketId)
-				WARNING("!!! Если ожидание m_ConDataChanged будет перенесно выше - то тут нужно пользовать полученное выше значение !!!");
-
-				if (!pRCon->m_ConDataChanged.Wait(0,TRUE))
-				{
-					// если сменился статус (Far/не Far) - перерисовать на всякий случай, 
-					// чтобы после возврата из батника, гарантированно отрисовалось в режиме фара
-					_ASSERTE(pRCon->mp_RBuf==pRCon->mp_ABuf);
-					if (pRCon->mb_InCloseConsole && pRCon->mh_MainSrv && (WaitForSingleObject(pRCon->mh_MainSrv, 0) == WAIT_OBJECT_0))
-					{
-						// Основной сервер закрылся (консоль закрыта), идем на выход
-						break;
-					}
-					else if (pRCon->mp_RBuf->ApplyConsoleInfo())
-					{
-						lbForceUpdate = true;
-					}
-				}
-			}
-
-			bool bCheckStatesFindPanels = false, lbForceUpdateProgress = false;
-
-			// Если консоль неактивна - CVirtualConsole::Update не вызывается и диалоги не детектятся. А это требуется.
-			// Смотрим именно mp_ABuf, т.к. здесь нас интересует то, что нужно показать на экране!
-			if ((!bActive || bIconic) && (lbActiveBufferChanged || pRCon->mp_ABuf->isConsoleDataChanged()))
-			{
-				DWORD nCurTick = GetTickCount();
-				DWORD nDelta = nCurTick - pRCon->mn_LastInactiveRgnCheck;
-
-				if (nDelta > CONSOLEINACTIVERGNTIMEOUT)
-				{
-					pRCon->mn_LastInactiveRgnCheck = nCurTick;
-
-					// Если при старте ConEmu создано несколько консолей через '@'
-					// то все кроме активной - не инициализированы (InitDC не вызывался),
-					// что нужно делать в главной нити, LoadConsoleData об этом позаботится
-					if (pRCon->mp_VCon->LoadConsoleData())
-						bCheckStatesFindPanels = true;
-				}
-			}
-
-
-			// обновить статусы, найти панели, и т.п.
-			if (pRCon->mb_DataChanged || pRCon->mb_TabsWasChanged)
-			{
-				lbForceUpdate = true; // чтобы если консоль неактивна - не забыть при ее активации передернуть что нужно...
-				pRCon->mb_TabsWasChanged = FALSE;
-				pRCon->mb_DataChanged = FALSE;
-				// Функция загружает ТОЛЬКО ms_PanelTitle, чтобы показать
-				// корректный текст в закладке, соответсвующей панелям
-				pRCon->CheckPanelTitle();
-				// выполнит ниже CheckFarStates & FindPanels
-				bCheckStatesFindPanels = true;
-			}
-
-			if (!bCheckStatesFindPanels)
-			{
-				// Если была обнаружена "ошибка" прогресса - проверить заново.
-				// Это может также произойти при извлечении файла из архива через MA.
-				// Проценты бегут (панелей нет), проценты исчезают, панели появляются, но
-				// пока не произойдет хоть каких-нибудь изменений в консоли - статус не обновлялся.
-				if (pRCon->mn_LastWarnCheckTick || pRCon->mn_FarStatus & (CES_WASPROGRESS|CES_OPER_ERROR))
-					bCheckStatesFindPanels = true;
-			}
-
-			if (bCheckStatesFindPanels)
-			{
-				// Статусы mn_FarStatus & mn_PreWarningProgress
-				// Результат зависит от распознанных регионов!
-				// В функции есть вложенные вызовы, например,
-				// mp_ABuf->GetDetector()->GetFlags()
-				pRCon->CheckFarStates();
-				// Если возможны панели - найти их в консоли,
-				// заодно оттуда позовется CheckProgressInConsole
-				pRCon->mp_RBuf->FindPanels();
-			}
-
-			if (pRCon->mn_ConsoleProgress == -1 && pRCon->mn_LastConsoleProgress >= 0)
-			{
-				// Пока бежит запаковка 7z - иногда попадаем в момент, когда на новой строке процентов еще нет
-				DWORD nDelta = GetTickCount() - pRCon->mn_LastConProgrTick;
-
-				if (nDelta >= CONSOLEPROGRESSTIMEOUT)
-				{
-					pRCon->mn_LastConsoleProgress = -1; pRCon->mn_LastConProgrTick = 0;
-					lbForceUpdateProgress = true;
-				}
-			}
-
-
-			// Видимость гуй-клиента - это кнопка "буферного режима"
-			if (pRCon->hGuiWnd && bActive)
-			{
-				BOOL lbVisible = ::IsWindowVisible(pRCon->hGuiWnd);
-				if (lbVisible != bGuiVisible)
-				{
-					// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
-					pRCon->OnBufferHeight();
-					bGuiVisible = lbVisible;
-				}
-			}
-
-			if (pRCon->hConWnd || pRCon->hGuiWnd)  // Если знаем хэндл окна -
-				GetWindowText(pRCon->hGuiWnd ? pRCon->hGuiWnd : pRCon->hConWnd, pRCon->TitleCmp, countof(pRCon->TitleCmp)-2);
-
-			// возможно, требуется сбросить прогресс
-			//bool lbCheckProgress = (pRCon->mn_PreWarningProgress != -1);
-
-			if (pRCon->mb_ForceTitleChanged
-			        || wcscmp(pRCon->Title, pRCon->TitleCmp))
-			{
-				pRCon->mb_ForceTitleChanged = FALSE;
-				pRCon->OnTitleChanged();
-				lbForceUpdateProgress = false; // прогресс обновлен
-			}
-			else if (bActive)
-			{
-				// Если в консоли заголовок не менялся, но он отличается от заголовка в ConEmu
-				if (wcscmp(pRCon->GetTitle(), gpConEmu->GetLastTitle(false)))
-					gpConEmu->UpdateTitle();
-			}
-
-			if (lbForceUpdateProgress)
-			{
-				gpConEmu->UpdateProgress();
-			}
-
-			//if (lbCheckProgress && pRCon->mn_LastShownProgress >= 0) {
-			//	if (pRCon->GetProgress(NULL) != -1) {
-			//		pRCon->OnTitleChanged();
-			//	}
-			//	//DWORD nDelta = GetTickCount() - pRCon->mn_LastProgressTick;
-			//	//if (nDelta >= 500) {
-			//	//}
-			//}
-
-			bool lbIsActive = pRCon->isActive();
-			bool lbIsVisible = lbIsActive || pRCon->isVisible();
-
-			#ifdef _DEBUG
-			if (pRCon->mb_DebugLocked)
-				lbIsActive = false;
-			#endif
-
-			TODO("После DoubleView нужно будет заменить на IsVisible");
-			if (!lbIsVisible)
-			{
-				if (lbForceUpdate)
-					pRCon->mp_VCon->UpdateThumbnail();
-			}
-			else
-			{
-				//2009-01-21 сомнительно, что здесь действительно нужно подресайзивать дочерние окна
-				//if (lbForceUpdate) // размер текущего консольного окна был изменен
-				//	gpConEmu->OnSize(false); // послать в главную нить запрос на обновление размера
-				bool lbNeedRedraw = false;
-
-				if ((nWait == (WAIT_OBJECT_0+1)) || lbForceUpdate)
-				{
-					//2010-05-18 lbForceUpdate вызывал CVirtualConsole::Update(abForce=true), что приводило к тормозам
-					bool bForce = false; //lbForceUpdate;
-					lbForceUpdate = false;
-					//pRCon->mp_VCon->Validate(); // сбросить флажок
-
-					if (pRCon->m_UseLogs>2) pRCon->LogString("mp_VCon->Update from CRealConsole::MonitorThread");
-
-					if (pRCon->mp_VCon->Update(bForce))
-					{
-						// Invalidate уже вызван!
-						lbNeedRedraw = false;
-					}
-				}
-				else if (lbIsVisible // где мигать курсором
-					&& gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId())->CursorBlink(lbIsActive)
-					&& pRCon->mb_RConStartedSuccess)
-				{
-					// Возможно, настало время мигнуть курсором?
-					bool lbNeedBlink = false;
-					pRCon->mp_VCon->UpdateCursor(lbNeedBlink);
-
-					// UpdateCursor Invalidate не зовет
-					if (lbNeedBlink)
-					{
-						if (pRCon->m_UseLogs>2) pRCon->LogString("Invalidating from CRealConsole::MonitorThread.1");
-
-						lbNeedRedraw = true;
-					}
-				}
-				else if (((GetTickCount() - pRCon->mn_LastInvalidateTick) > FORCE_INVALIDATE_TIMEOUT))
-				{
-					DEBUGSTRDRAW(L"+++ Force invalidate by timeout\n");
-
-					if (pRCon->m_UseLogs>2) pRCon->LogString("Invalidating from CRealConsole::MonitorThread.2");
-
-					lbNeedRedraw = true;
-				}
-
-				// Если нужна отрисовка - дернем основную нить
-				if (lbNeedRedraw)
-				{
-					//#ifndef _DEBUG
-					//WARNING("******************");
-					//TODO("После этого двойная отрисовка не вызывается?");
-					//pRCon->mp_VCon->Redraw();
-					//#endif
-
-					pRCon->mp_VCon->Invalidate();
-					pRCon->mn_LastInvalidateTick = GetTickCount();
-				}
-			}
-
-			pLastBuf = pRCon->mp_ABuf;
-
-		} SAFECATCH
-		{
-			bException = TRUE;
-		}
-		// Чтобы не было слишком быстрой отрисовки (тогда процессор загружается на 100%)
-		// делаем такой расчет задержки
-		DWORD dwT2 = GetTickCount();
-		DWORD dwD = max(10,(dwT2 - dwT1));
-		nElapse = (DWORD)(nElapse*0.7 + dwD*0.3);
-
-		if (nElapse > 1000) nElapse = 1000;  // больше секунды - не ждать! иначе курсор мигать не будет
-
-		if (bException)
-		{
-			bException = FALSE;
-
-			#ifdef _DEBUG
-			_ASSERTE(FALSE);
-			#endif
-
-			AssertMsg(L"Exception triggered in CRealConsole::MonitorThread");
-		}
-
-		//if (bActive)
-		//	gpSetCls->Performance(tPerfInterval, FALSE);
-
-		if (pRCon->m_ServerClosing.nServerPID
-		        && pRCon->m_ServerClosing.nServerPID == pRCon->mn_MainSrv_PID
-		        && (GetTickCount() - pRCon->m_ServerClosing.nRecieveTick) >= SERVERCLOSETIMEOUT)
-		{
-			// Видимо, сервер повис во время выхода?
-			pRCon->isConsoleClosing(); // функция позовет TerminateProcess(mh_MainSrv)
-			nWait = IDEVENT_SERVERPH;
-			break;
-		}
-
-		#ifdef _DEBUG
-		UNREFERENCED_PARAMETER(nVConNo);
-		#endif
-	}
+wrap:
 
 	if (nWait == IDEVENT_SERVERPH)
 	{
@@ -2465,7 +1846,693 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	return 0;
 }
 
-BOOL CRealConsole::PreInit(BOOL abCreateBuffers/*=TRUE*/)
+DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCreated)
+{
+	rbChildProcessCreated = FALSE;
+
+	_ASSERTE(IDEVENT_SERVERPH==(EVENTS_COUNT-1)); // Должен быть последним хэндлом!
+	HANDLE hEvents[EVENTS_COUNT];
+	_ASSERTE(EVENTS_COUNT==countof(hEvents)); // проверить размерность
+
+	hEvents[IDEVENT_TERM] = mh_TermEvent;
+	hEvents[IDEVENT_MONITORTHREADEVENT] = mh_MonitorThreadEvent; // Использовать, чтобы вызвать Update & Invalidate
+	hEvents[IDEVENT_UPDATESERVERACTIVE] = mh_UpdateServerActiveEvent; // Дернуть UpdateServerActive()
+	hEvents[IDEVENT_SWITCHSRV] = mh_SwitchActiveServer;
+	hEvents[IDEVENT_SERVERPH] = mh_MainSrv;
+	//HANDLE hAltServerHandle = NULL;
+
+	DWORD  nEvents = countof(hEvents);
+
+	// Скорее всего будет NULL, если запуск идет через ShellExecuteEx(runas)
+	if (hEvents[IDEVENT_SERVERPH] == NULL)
+		nEvents --;
+
+	DWORD  nWait = 0, nSrvWait = -1;
+	BOOL   bException = FALSE, bIconic = FALSE, /*bFirst = TRUE,*/ bActive = TRUE, bGuiVisible = FALSE;
+	DWORD nElapse = max(10,gpSet->nMainTimerElapse);
+	DWORD nInactiveElapse = max(10,gpSet->nMainTimerInactiveElapse);
+	DWORD nLastFarPID = 0;
+	bool bLastAlive = false, bLastAliveActive = false;
+	bool lbForceUpdate = false;
+	WARNING("Переделать ожидание на hDataReadyEvent, который выставляется в сервере?");
+	TODO("Нить не завершается при F10 в фаре - процессы пока не инициализированы...");
+	DWORD nConsoleStartTick = GetTickCount();
+	DWORD nTimeout = 0;
+	CRealBuffer* pLastBuf = NULL;
+	bool lbActiveBufferChanged = false;
+	DWORD nConWndCheckTick = GetTickCount();
+
+	while (TRUE)
+	{
+		bActive = isActive();
+		bIconic = gpConEmu->isIconic();
+
+		// в минимизированном/неактивном режиме - сократить расходы
+		nTimeout = bIconic ? max(1000,nInactiveElapse) : !bActive ? nInactiveElapse : nElapse;
+
+
+		if (bActive)
+			gpSetCls->Performance(tPerfInterval, TRUE); // считается по своему
+
+		#ifdef _DEBUG
+		// 1-based console index
+		int nVConNo = gpConEmu->isVConValid(mp_VCon);
+		UNREFERENCED_PARAMETER(nVConNo);
+		#endif
+
+		// Проверка, вдруг осталась висеть "мертвая" консоль?
+		if (hEvents[IDEVENT_SERVERPH] == NULL && mh_MainSrv)
+		{
+			nSrvWait = WaitForSingleObject(mh_MainSrv,0);
+			if (nSrvWait == WAIT_OBJECT_0)
+			{
+				// ConEmuC was terminated!
+				_ASSERTE(bDetached == FALSE);
+				nWait = IDEVENT_SERVERPH;
+				break;
+			}
+		}
+		else if (hConWnd)
+		{
+			DWORD nDelta = (GetTickCount() - nConWndCheckTick);
+			if (nDelta >= CHECK_CONHWND_TIMEOUT)
+			{
+				if (!IsWindow(hConWnd))
+				{
+					_ASSERTE(FALSE && "Console window was abnormally terminated?");
+					nWait = IDEVENT_SERVERPH;
+					break;
+				}
+				nConWndCheckTick = GetTickCount();
+			}
+		}
+
+		
+
+
+		nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, nTimeout);
+		if (nWait == (DWORD)-1)
+		{
+			DWORD nWaitItems[EVENTS_COUNT] = {99,99,99,99,99};
+
+			for (size_t i = 0; i < nEvents; i++)
+			{
+				nWaitItems[i] = WaitForSingleObject(hEvents[i], 0);
+				if (nWaitItems[i] == 0)
+				{
+					nWait = (DWORD)i;
+				}
+			}
+			_ASSERTE(nWait!=(DWORD)-1);
+
+			#ifdef _DEBUG
+			int nDbg = nWaitItems[EVENTS_COUNT-1];
+			UNREFERENCED_PARAMETER(nDbg);
+			#endif
+		}
+
+		//if ((nWait == IDEVENT_SERVERPH) && (hEvents[IDEVENT_SERVERPH] != mh_MainSrv))
+		//{
+		//	// Закрылся альт.сервер, переключиться на основной
+		//	_ASSERTE(mh_MainSrv!=NULL);
+		//	if (mh_AltSrv == hAltServerHandle)
+		//	{
+		//		mh_AltSrv = NULL;
+		//		SetAltSrvPID(0, NULL);
+		//	}
+		//	SafeCloseHandle(hAltServerHandle);
+		//	hEvents[IDEVENT_SERVERPH] = mh_MainSrv;
+
+		//	if (mb_InCloseConsole && mh_MainSrv && (WaitForSingleObject(mh_MainSrv, 0) == WAIT_OBJECT_0))
+		//	{
+		//		ShutdownGuiStep(L"AltServer and MainServer are closed");
+		//		// Подтверждаем nWait, основной сервер закрылся
+		//		nWait = IDEVENT_SERVERPH;
+		//	}
+		//	else
+		//	{
+		//		ShutdownGuiStep(L"AltServer closed, executing ReopenServerPipes");
+		//		if (ReopenServerPipes())
+		//		{
+		//			// Меняем nWait, т.к. основной сервер еще не закрылся (консоль жива)
+		//			nWait = IDEVENT_MONITORTHREADEVENT;
+		//		}
+		//		else
+		//		{
+		//			ShutdownGuiStep(L"ReopenServerPipes failed, exiting from MonitorThread");
+		//		}
+		//	}
+		//}
+
+		if (nWait == IDEVENT_TERM || nWait == IDEVENT_SERVERPH)
+		{
+			//if (nWait == IDEVENT_SERVERPH) -- внизу
+			//{
+			//	DEBUGSTRPROC(L"### ConEmuC.exe was terminated\n");
+			//}
+			#ifdef _DEBUG
+			DWORD nSrvExitPID = 0, nSrvPID = 0, nFErr;
+			BOOL bFRc = GetExitCodeProcess(hEvents[IDEVENT_SERVERPH], &nSrvExitPID);
+			nFErr = GetLastError();
+			typedef DWORD (WINAPI* GetProcessId_t)(HANDLE);
+			GetProcessId_t getProcessId = (GetProcessId_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetProcessId");
+			if (getProcessId)
+				nSrvPID = getProcessId(hEvents[IDEVENT_SERVERPH]);
+			#endif
+
+			break; // требование завершения нити
+		}
+
+		if ((nWait == IDEVENT_SWITCHSRV) || mb_SwitchActiveServer)
+		{
+			//hAltServerHandle = mh_AltSrv;
+			//_ASSERTE(hAltServerHandle!=NULL);
+			//hEvents[IDEVENT_SERVERPH] = hAltServerHandle ? hAltServerHandle : mh_MainSrv;
+
+			ReopenServerPipes();
+
+			// Done
+			mb_SwitchActiveServer = false;
+			SetEvent(mh_ActiveServerSwitched);
+		}
+
+		if (nWait == IDEVENT_UPDATESERVERACTIVE)
+		{
+			if (isServerCreated(true))
+			{
+				_ASSERTE(hConWnd!=NULL && "Console window must be already detected!");
+
+				UpdateServerActive(TRUE);
+			}
+			ResetEvent(mh_UpdateServerActiveEvent);
+		}
+
+		// Это событие теперь ManualReset
+		if (nWait == IDEVENT_MONITORTHREADEVENT
+		        || WaitForSingleObject(hEvents[IDEVENT_MONITORTHREADEVENT],0) == WAIT_OBJECT_0)
+		{
+			ResetEvent(hEvents[IDEVENT_MONITORTHREADEVENT]);
+
+			// Сюда мы попадаем, например, при запуске новой консоли "Под админом", когда GUI НЕ "Под админом"
+			// В начале нити (mh_MainSrv == NULL), если запуск идет через ShellExecuteEx(runas)
+			if (hEvents[IDEVENT_SERVERPH] == NULL)
+			{
+				if (mh_MainSrv)
+				{
+					if (bDetached || m_Args.bRunAsAdministrator)
+					{
+						bDetached = FALSE;
+						hEvents[IDEVENT_SERVERPH] = mh_MainSrv;
+						nEvents = countof(hEvents);
+					}
+					else
+					{
+						_ASSERTE(bDetached==TRUE);
+					}
+				}
+				else
+				{
+					_ASSERTE(mh_MainSrv!=NULL);
+				}
+			}
+		}
+
+		if (!rbChildProcessCreated
+			&& (mn_ProcessCount > 1)
+			&& ((GetTickCount() - nConsoleStartTick) > PROCESS_WAIT_START_TIME))
+		{
+			rbChildProcessCreated = TRUE;
+			OnRConStartedSuccess();
+		}
+
+		// IDEVENT_SERVERPH уже проверен, а код возврата обработается при выходе из цикла
+		//// Проверим, что ConEmuC жив
+		//if (mh_MainSrv)
+		//{
+		//	DWORD dwExitCode = 0;
+		//	#ifdef _DEBUG
+		//	BOOL fSuccess =
+		//	#endif
+		//	    GetExitCodeProcess(mh_MainSrv, &dwExitCode);
+		//	if (dwExitCode!=STILL_ACTIVE)
+		//	{
+		//		StopSignal();
+		//		return 0;
+		//	}
+		//}
+
+		// Если консоль не должна быть показана - но ее кто-то отобразил
+		if (!isShowConsole && !gpSet->isConVisible)
+		{
+			/*if (foreWnd == hConWnd)
+			    apiSetForegroundWindow(ghWnd);*/
+			bool bMonitorVisibility = true;
+
+			#ifdef _DEBUG
+			if ((GetKeyState(VK_SCROLL) & 1))
+				bMonitorVisibility = false;
+
+			WARNING("bMonitorVisibility = false - для отлова сброса буфера");
+			bMonitorVisibility = false;
+			#endif
+
+			if (bMonitorVisibility && IsWindowVisible(hConWnd))
+				ShowOtherWindow(hConWnd, SW_HIDE);
+		}
+
+		// Размер консоли меняем в том треде, в котором это требуется. Иначе можем заблокироваться при Update (InitDC)
+		// Требуется изменение размеров консоли
+		/*if (nWait == (IDEVENT_SYNC2WINDOW)) {
+		    SetConsoleSize(m_ReqSetSize);
+		    //SetEvent(mh_ReqSetSizeEnd);
+		    //continue; -- и сразу обновим информацию о ней
+		}*/
+		DWORD dwT1 = GetTickCount();
+		SAFETRY
+		{
+			//ResetEvent(mh_EndUpdateEvent);
+
+			// Тут и ApplyConsole вызывается
+			//if (mp_ConsoleInfo)
+
+			lbActiveBufferChanged = (mp_ABuf != pLastBuf);
+			if (lbActiveBufferChanged)
+			{
+				mb_ABufChaged = lbForceUpdate = true;
+			}
+
+			if (mp_RBuf != mp_ABuf)
+			{
+				mn_LastFarReadTick = GetTickCount();
+				if (lbActiveBufferChanged || mp_ABuf->isConsoleDataChanged())
+					lbForceUpdate = true;
+			}
+			// Если сервер жив - можно проверить наличие фара и его отклик
+			else if ((!mb_SkipFarPidChange) && m_ConsoleMap.IsValid())
+			{
+				bool lbFarChanged = false;
+				// Alive?
+				DWORD nCurFarPID = GetFarPID(TRUE);
+
+				if (!nCurFarPID)
+				{
+					// Возможно, сменился FAR (возврат из cmd.exe/tcc.exe, или вложенного фара)
+					DWORD nPID = GetFarPID(FALSE);
+
+					if (nPID)
+					{
+						for (UINT i = 0; i < mn_FarPlugPIDsCount; i++)
+						{
+							if (m_FarPlugPIDs[i] == nPID)
+							{
+								nCurFarPID = nPID;
+								SetFarPluginPID(nCurFarPID);
+								break;
+							}
+						}
+					}
+				}
+
+				// Если фара (с плагином) нет, а раньше был
+				if (!nCurFarPID && nLastFarPID)
+				{
+					// Закрыть и сбросить PID
+					CloseFarMapData();
+					nLastFarPID = 0;
+					lbFarChanged = true;
+				}
+
+				// Если PID фара (с плагином) сменился
+				if (nCurFarPID && nLastFarPID != nCurFarPID)
+				{
+					//mn_LastFarReadIdx = -1;
+					mn_LastFarReadTick = 0;
+					nLastFarPID = nCurFarPID;
+
+					// Переоткрывать мэппинг при смене PID фара
+					// (из одного фара запустили другой, который закрыли и вернулись в первый)
+					if (!OpenFarMapData())
+					{
+						// Значит его таки еще (или уже) нет?
+						if (mn_FarPID_PluginDetected == nCurFarPID)
+						{
+							for (UINT i = 0; i < mn_FarPlugPIDsCount; i++)  // сбросить ИД списка плагинов
+							{
+								if (m_FarPlugPIDs[i] == nCurFarPID)
+									m_FarPlugPIDs[i] = 0;
+							}
+
+							SetFarPluginPID(0);
+						}
+					}
+
+					lbFarChanged = true;
+				}
+
+				bool bAlive = false;
+
+				//if (nCurFarPID && mn_LastFarReadIdx != mp_ConsoleInfo->nFarReadIdx) {
+				if (nCurFarPID && m_FarInfo.cbSize && m_FarAliveEvent.Open())
+				{
+					DWORD nCurTick = GetTickCount();
+
+					// Чтобы опрос события не шел слишком часто.
+					if (mn_LastFarReadTick == 0 ||
+					        (nCurTick - mn_LastFarReadTick) >= (FAR_ALIVE_TIMEOUT/2))
+					{
+						//if (WaitForSingleObject(mh_FarAliveEvent, 0) == WAIT_OBJECT_0)
+						if (m_FarAliveEvent.Wait(0) == WAIT_OBJECT_0)
+						{
+							mn_LastFarReadTick = nCurTick ? nCurTick : 1;
+							bAlive = true; // живой
+						}
+
+#ifdef _DEBUG
+						else
+						{
+							mn_LastFarReadTick = nCurTick - FAR_ALIVE_TIMEOUT - 1;
+							bAlive = false; // занят
+						}
+
+#endif
+					}
+					else
+					{
+						bAlive = true; // еще не успело протухнуть
+					}
+
+					//if (mn_LastFarReadIdx != mp_FarInfo->nFarReadIdx) {
+					//	mn_LastFarReadIdx = mp_FarInfo->nFarReadIdx;
+					//	mn_LastFarReadTick = GetTickCount();
+					//	DEBUGSTRALIVE(L"*** FAR ReadTick updated\n");
+					//	bAlive = true;
+					//}
+				}
+				else
+				{
+					bAlive = true; // если нет фаровского плагина, или это не фар
+				}
+
+				//if (!bAlive) {
+				//	bAlive = isAlive();
+				//}
+				if (isActive())
+				{
+					WARNING("Тут нужно бы сравнивать с переменной, хранящейся в gpConEmu, а не в этом instance RCon!");
+#ifdef _DEBUG
+
+					if (!IsDebuggerPresent())
+					{
+						bool lbIsAliveDbg = isAlive();
+
+						if (lbIsAliveDbg != bAlive)
+						{
+							_ASSERTE(lbIsAliveDbg == bAlive);
+						}
+					}
+
+#endif
+
+					if (bLastAlive != bAlive || !bLastAliveActive)
+					{
+						DEBUGSTRALIVE(bAlive ? L"MonitorThread: Alive changed to TRUE\n" : L"MonitorThread: Alive changed to FALSE\n");
+						PostMessage(GetView(), WM_SETCURSOR, -1, -1);
+					}
+
+					bLastAliveActive = true;
+
+					if (lbFarChanged)
+						gpConEmu->UpdateProcessDisplay(FALSE); // обновить PID в окне настройки
+				}
+				else
+				{
+					bLastAliveActive = false;
+				}
+
+				bLastAlive = bAlive;
+				//вроде не надо
+				//UpdateFarSettings(mn_FarPID_PluginDetected);
+				// Загрузить изменения из консоли
+				//if ((HWND)mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx
+				//	&& mp_ConsoleInfo->nPacketId
+				//	&& mn_LastConsolePacketIdx != mp_ConsoleInfo->nPacketId)
+				WARNING("!!! Если ожидание m_ConDataChanged будет перенесно выше - то тут нужно пользовать полученное выше значение !!!");
+
+				if (!m_ConDataChanged.Wait(0,TRUE))
+				{
+					// если сменился статус (Far/не Far) - перерисовать на всякий случай, 
+					// чтобы после возврата из батника, гарантированно отрисовалось в режиме фара
+					_ASSERTE(mp_RBuf==mp_ABuf);
+					if (mb_InCloseConsole && mh_MainSrv && (WaitForSingleObject(mh_MainSrv, 0) == WAIT_OBJECT_0))
+					{
+						// Основной сервер закрылся (консоль закрыта), идем на выход
+						break;
+					}
+					else if (mp_RBuf->ApplyConsoleInfo())
+					{
+						lbForceUpdate = true;
+					}
+				}
+			}
+
+			bool bCheckStatesFindPanels = false, lbForceUpdateProgress = false;
+
+			// Если консоль неактивна - CVirtualConsole::Update не вызывается и диалоги не детектятся. А это требуется.
+			// Смотрим именно mp_ABuf, т.к. здесь нас интересует то, что нужно показать на экране!
+			if ((!bActive || bIconic) && (lbActiveBufferChanged || mp_ABuf->isConsoleDataChanged()))
+			{
+				DWORD nCurTick = GetTickCount();
+				DWORD nDelta = nCurTick - mn_LastInactiveRgnCheck;
+
+				if (nDelta > CONSOLEINACTIVERGNTIMEOUT)
+				{
+					mn_LastInactiveRgnCheck = nCurTick;
+
+					// Если при старте ConEmu создано несколько консолей через '@'
+					// то все кроме активной - не инициализированы (InitDC не вызывался),
+					// что нужно делать в главной нити, LoadConsoleData об этом позаботится
+					if (mp_VCon->LoadConsoleData())
+						bCheckStatesFindPanels = true;
+				}
+			}
+
+
+			// обновить статусы, найти панели, и т.п.
+			if (mb_DataChanged || mb_TabsWasChanged)
+			{
+				lbForceUpdate = true; // чтобы если консоль неактивна - не забыть при ее активации передернуть что нужно...
+				mb_TabsWasChanged = FALSE;
+				mb_DataChanged = FALSE;
+				// Функция загружает ТОЛЬКО ms_PanelTitle, чтобы показать
+				// корректный текст в закладке, соответсвующей панелям
+				CheckPanelTitle();
+				// выполнит ниже CheckFarStates & FindPanels
+				bCheckStatesFindPanels = true;
+			}
+
+			if (!bCheckStatesFindPanels)
+			{
+				// Если была обнаружена "ошибка" прогресса - проверить заново.
+				// Это может также произойти при извлечении файла из архива через MA.
+				// Проценты бегут (панелей нет), проценты исчезают, панели появляются, но
+				// пока не произойдет хоть каких-нибудь изменений в консоли - статус не обновлялся.
+				if (mn_LastWarnCheckTick || mn_FarStatus & (CES_WASPROGRESS|CES_OPER_ERROR))
+					bCheckStatesFindPanels = true;
+			}
+
+			if (bCheckStatesFindPanels)
+			{
+				// Статусы mn_FarStatus & mn_PreWarningProgress
+				// Результат зависит от распознанных регионов!
+				// В функции есть вложенные вызовы, например,
+				// mp_ABuf->GetDetector()->GetFlags()
+				CheckFarStates();
+				// Если возможны панели - найти их в консоли,
+				// заодно оттуда позовется CheckProgressInConsole
+				mp_RBuf->FindPanels();
+			}
+
+			if (mn_ConsoleProgress == -1 && mn_LastConsoleProgress >= 0)
+			{
+				// Пока бежит запаковка 7z - иногда попадаем в момент, когда на новой строке процентов еще нет
+				DWORD nDelta = GetTickCount() - mn_LastConProgrTick;
+
+				if (nDelta >= CONSOLEPROGRESSTIMEOUT)
+				{
+					mn_LastConsoleProgress = -1; mn_LastConProgrTick = 0;
+					lbForceUpdateProgress = true;
+				}
+			}
+
+
+			// Видимость гуй-клиента - это кнопка "буферного режима"
+			if (hGuiWnd && bActive)
+			{
+				BOOL lbVisible = ::IsWindowVisible(hGuiWnd);
+				if (lbVisible != bGuiVisible)
+				{
+					// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
+					OnBufferHeight();
+					bGuiVisible = lbVisible;
+				}
+			}
+
+			if (hConWnd || hGuiWnd)  // Если знаем хэндл окна -
+				GetWindowText(hGuiWnd ? hGuiWnd : hConWnd, TitleCmp, countof(TitleCmp)-2);
+
+			// возможно, требуется сбросить прогресс
+			//bool lbCheckProgress = (mn_PreWarningProgress != -1);
+
+			if (mb_ForceTitleChanged
+			        || wcscmp(Title, TitleCmp))
+			{
+				mb_ForceTitleChanged = FALSE;
+				OnTitleChanged();
+				lbForceUpdateProgress = false; // прогресс обновлен
+			}
+			else if (bActive)
+			{
+				// Если в консоли заголовок не менялся, но он отличается от заголовка в ConEmu
+				if (wcscmp(GetTitle(), gpConEmu->GetLastTitle(false)))
+					gpConEmu->UpdateTitle();
+			}
+
+			if (lbForceUpdateProgress)
+			{
+				gpConEmu->UpdateProgress();
+			}
+
+			//if (lbCheckProgress && mn_LastShownProgress >= 0) {
+			//	if (GetProgress(NULL) != -1) {
+			//		OnTitleChanged();
+			//	}
+			//	//DWORD nDelta = GetTickCount() - mn_LastProgressTick;
+			//	//if (nDelta >= 500) {
+			//	//}
+			//}
+
+			bool lbIsActive = isActive();
+			bool lbIsVisible = lbIsActive || isVisible();
+
+			#ifdef _DEBUG
+			if (mb_DebugLocked)
+				lbIsActive = false;
+			#endif
+
+			TODO("После DoubleView нужно будет заменить на IsVisible");
+			if (!lbIsVisible)
+			{
+				if (lbForceUpdate)
+					mp_VCon->UpdateThumbnail();
+			}
+			else
+			{
+				//2009-01-21 сомнительно, что здесь действительно нужно подресайзивать дочерние окна
+				//if (lbForceUpdate) // размер текущего консольного окна был изменен
+				//	gpConEmu->OnSize(false); // послать в главную нить запрос на обновление размера
+				bool lbNeedRedraw = false;
+
+				if ((nWait == (WAIT_OBJECT_0+1)) || lbForceUpdate)
+				{
+					//2010-05-18 lbForceUpdate вызывал CVirtualConsole::Update(abForce=true), что приводило к тормозам
+					bool bForce = false; //lbForceUpdate;
+					lbForceUpdate = false;
+					//mp_VCon->Validate(); // сбросить флажок
+
+					if (m_UseLogs>2) LogString("mp_VCon->Update from CRealConsole::MonitorThread");
+
+					if (mp_VCon->Update(bForce))
+					{
+						// Invalidate уже вызван!
+						lbNeedRedraw = false;
+					}
+				}
+				else if (lbIsVisible // где мигать курсором
+					&& gpSet->GetAppSettings(GetActiveAppSettingsId())->CursorBlink(lbIsActive)
+					&& mb_RConStartedSuccess)
+				{
+					// Возможно, настало время мигнуть курсором?
+					bool lbNeedBlink = false;
+					mp_VCon->UpdateCursor(lbNeedBlink);
+
+					// UpdateCursor Invalidate не зовет
+					if (lbNeedBlink)
+					{
+						if (m_UseLogs>2) LogString("Invalidating from CRealConsole::MonitorThread.1");
+
+						lbNeedRedraw = true;
+					}
+				}
+				else if (((GetTickCount() - mn_LastInvalidateTick) > FORCE_INVALIDATE_TIMEOUT))
+				{
+					DEBUGSTRDRAW(L"+++ Force invalidate by timeout\n");
+
+					if (m_UseLogs>2) LogString("Invalidating from CRealConsole::MonitorThread.2");
+
+					lbNeedRedraw = true;
+				}
+
+				// Если нужна отрисовка - дернем основную нить
+				if (lbNeedRedraw)
+				{
+					//#ifndef _DEBUG
+					//WARNING("******************");
+					//TODO("После этого двойная отрисовка не вызывается?");
+					//mp_VCon->Redraw();
+					//#endif
+
+					mp_VCon->Invalidate();
+					mn_LastInvalidateTick = GetTickCount();
+				}
+			}
+
+			pLastBuf = mp_ABuf;
+
+		} SAFECATCH
+		{
+			bException = TRUE;
+		}
+		// Чтобы не было слишком быстрой отрисовки (тогда процессор загружается на 100%)
+		// делаем такой расчет задержки
+		DWORD dwT2 = GetTickCount();
+		DWORD dwD = max(10,(dwT2 - dwT1));
+		nElapse = (DWORD)(nElapse*0.7 + dwD*0.3);
+
+		if (nElapse > 1000) nElapse = 1000;  // больше секунды - не ждать! иначе курсор мигать не будет
+
+		if (bException)
+		{
+			bException = FALSE;
+
+			#ifdef _DEBUG
+			_ASSERTE(FALSE);
+			#endif
+
+			AssertMsg(L"Exception triggered in CRealConsole::MonitorThread");
+		}
+
+		//if (bActive)
+		//	gpSetCls->Performance(tPerfInterval, FALSE);
+
+		if (m_ServerClosing.nServerPID
+		        && m_ServerClosing.nServerPID == mn_MainSrv_PID
+		        && (GetTickCount() - m_ServerClosing.nRecieveTick) >= SERVERCLOSETIMEOUT)
+		{
+			// Видимо, сервер повис во время выхода?
+			isConsoleClosing(); // функция позовет TerminateProcess(mh_MainSrv)
+			nWait = IDEVENT_SERVERPH;
+			break;
+		}
+
+		#ifdef _DEBUG
+		UNREFERENCED_PARAMETER(nVConNo);
+		#endif
+	}
+
+	return nWait;
+}
+
+BOOL CRealConsole::PreInit()
 {
 	TODO("Инициализация остальных буферов?");
 	
@@ -2492,9 +2559,22 @@ BOOL CRealConsole::StartMonitorThread()
 	_ASSERTE(mh_MonitorThread==NULL);
 	//_ASSERTE(mh_InputThread==NULL);
 	//_ASSERTE(mb_Detached || mh_MainSrv!=NULL); -- процесс теперь запускаем в MonitorThread
-	SetConStatus(L"Initializing ConEmu...", true);
+	DWORD nCreateBegin = GetTickCount();
+	SetConStatus(L"Initializing ConEmu (4)", true);
 	mh_MonitorThread = CreateThread(NULL, 0, MonitorThread, (LPVOID)this, 0, &mn_MonitorThreadID);
-	SetConStatus(L"Initializing ConEmu....", true);
+	SetConStatus(L"Initializing ConEmu (5)", true);
+	DWORD nCreateEnd = GetTickCount();
+	DWORD nThreadCreationTime = nCreateEnd - nCreateBegin;
+	if (nThreadCreationTime > 2500)
+	{
+		wchar_t szInfo[80];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+			L"[DBG] Very high CPU load? CreateThread takes %u ms", nThreadCreationTime);
+		#ifdef _DEBUG
+		AssertMsg(szInfo);
+		#endif
+		LogString(szInfo);
+	}
 
 	//mh_InputThread = CreateThread(NULL, 0, InputThread, (LPVOID)this, 0, &mn_InputThreadID);
 
@@ -2651,6 +2731,55 @@ wchar_t* CRealConsole::ParseConEmuSubst(LPCWSTR asCmd)
 	return pszChange;
 }
 
+void CRealConsole::OnStartProcessAllowed()
+{
+	if (!this || !mb_NeedStartProcess)
+	{
+		_ASSERTE(this && mb_NeedStartProcess);
+
+		if (this)
+		{
+			mb_StartResult = TRUE;
+			SetEvent(mh_StartExecuted);
+		}
+
+		return;
+	}
+
+	_ASSERTE(mh_MainSrv==NULL);
+	
+	if (!PreInit())
+	{
+		DEBUGSTRPROC(L"### RCon:PreInit failed\n");
+		SetConStatus(L"RCon:PreInit failed");
+
+		mb_StartResult = FALSE;
+		mb_NeedStartProcess = FALSE;
+		SetEvent(mh_StartExecuted);
+
+		return;
+	}
+
+	if (!StartProcess())
+	{
+		wchar_t szErrInfo[128];
+		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't start root process, ErrCode=0x%08X...", GetLastError());
+		DEBUGSTRPROC(L"### Can't start process\n");
+		
+		SetConStatus(szErrInfo);
+
+		WARNING("Need to be checked, what happens on 'Run errors'");
+		return;
+	}
+
+	// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
+	// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
+	if (gpSetCls->SingleInstanceArg == sgl_Enabled)
+	{
+		gpSetCls->ResetCmdArg();
+	}
+}
+
 BOOL CRealConsole::StartProcess()
 {
 	if (!this)
@@ -2659,17 +2788,20 @@ BOOL CRealConsole::StartProcess()
 		return FALSE;
 	}
 
+	// Must be executed in Main Thread
+	_ASSERTE(gpConEmu->isMainThread());
+
 	BOOL lbRc = FALSE;
 	SetConStatus(L"Preparing process startup line...", true);
 
 	// Для валидации объектов
 	CVirtualConsole* pVCon = mp_VCon;
 
-	if (!mb_ProcessRestarted)
-	{
-		if (!PreInit())
-			return FALSE;
-	}
+	//if (!mb_ProcessRestarted)
+	//{
+	//	if (!PreInit())
+	//		goto wrap;
+	//}
 
 	HWND hSetForeground = (gpConEmu->isIconic() || !IsWindowVisible(ghWnd)) ? GetForegroundWindow() : ghWnd;
 
@@ -2678,7 +2810,7 @@ BOOL CRealConsole::StartProcess()
 	if (mp_sei)
 	{
 		SafeCloseHandle(mp_sei->hProcess);
-		GlobalFree(mp_sei); mp_sei = NULL;
+		SafeFree(mp_sei);
 	}
 
 	//ResetEvent(mh_CreateRootEvent);
@@ -2686,6 +2818,7 @@ BOOL CRealConsole::StartProcess()
 	mb_InCreateRoot = TRUE;
 	mb_InCloseConsole = FALSE;
 	mb_SwitchActiveServer = false;
+	mb_WasStartDetached = FALSE;
 	ZeroStruct(m_ServerClosing);
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
@@ -2797,6 +2930,7 @@ BOOL CRealConsole::StartProcess()
 	mpsz_CmdBuffer = ParseConEmuSubst(lpszRawCmd);
 	LPCWSTR lpszCmd = mpsz_CmdBuffer ? mpsz_CmdBuffer : lpszRawCmd;
 	
+	DWORD nCreateBegin, nCreateEnd, nCreateDuration = 0;
 
 
 	// Go
@@ -2862,7 +2996,8 @@ BOOL CRealConsole::StartProcess()
 		_ASSERTE(nWndWidth>0 && nWndHeight>0);
 
 		DWORD nAID = GetMonitorThreadID();
-		_ASSERTE(nAID == GetCurrentThreadId());
+		_ASSERTE(gpConEmu->isMainThread());
+		_ASSERTE(mn_MonitorThreadID!=0 && mn_MonitorThreadID==nAID && nAID!=GetCurrentThreadId());
 		
 		nCurLen = _tcslen(psCurCmd);
 		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen)
@@ -2870,7 +3005,6 @@ BOOL CRealConsole::StartProcess()
 		          nAID, GetCurrentProcessId(), (DWORD)ghWnd, nWndWidth, nWndHeight, mn_DefaultBufferHeight,
 		          gpSet->ConsoleFont.lfFaceName, gpSet->ConsoleFont.lfWidth, gpSet->ConsoleFont.lfHeight,
 		          nColors);
-		_ASSERTE(mn_MonitorThreadID == GetCurrentThreadId());
 
 		/*if (gpSet->FontFile[0]) { --  РЕГИСТРАЦИЯ ШРИФТА НА КОНСОЛЬ НЕ РАБОТАЕТ!
 		    wcscat(psCurCmd, L" \"/FF=");
@@ -2940,15 +3074,17 @@ BOOL CRealConsole::StartProcess()
 					}
 				}
 
-				if (CreateProcessWithLogonW(m_Args.pszUserName, m_Args.pszDomain, m_Args.szUserPassword,
+				nCreateBegin = GetTickCount();
+				lbRc = CreateProcessWithLogonW(m_Args.pszUserName, m_Args.pszDomain, m_Args.szUserPassword,
 				                           LOGON_WITH_PROFILE, NULL, psCurCmd,
 				                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-				                           , NULL, pszStartupDir, &si, &pi))
+				                           , NULL, pszStartupDir, &si, &pi);
 					//if (CreateProcessAsUser(m_Args.hLogonToken, NULL, psCurCmd, NULL, NULL, FALSE,
 					//	NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 					//	, NULL, m_Args.pszStartupDir, &si, &pi))
+				nCreateEnd = GetTickCount();
+				if (lbRc)
 				{
-					lbRc = TRUE;
 					//mn_MainSrv_PID = pi.dwProcessId;
 					SetMainSrvPID(pi.dwProcessId, NULL);
 				}
@@ -2961,13 +3097,14 @@ BOOL CRealConsole::StartProcess()
 			}
 			else if (m_Args.bRunAsRestricted)
 			{
-				lbRc = FALSE;
-
-				if (CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
+				nCreateBegin = GetTickCount();
+				lbRc = CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
 				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-				                        , NULL, m_Args.pszStartupDir, &si, &pi, &dwLastError))
+				                        , NULL, m_Args.pszStartupDir, &si, &pi, &dwLastError);
+				nCreateEnd = GetTickCount();
+
+				if (lbRc)
 				{
-					lbRc = TRUE;
 					//mn_MainSrv_PID = pi.dwProcessId;
 					SetMainSrvPID(pi.dwProcessId, NULL);
 				}
@@ -2975,10 +3112,12 @@ BOOL CRealConsole::StartProcess()
 			}
 			else
 			{
+				nCreateBegin = GetTickCount();
 				lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE,
 				                     NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 				                     //|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
 				                     , NULL, m_Args.pszStartupDir, &si, &pi);
+				nCreateEnd = GetTickCount();
 
 				if (!lbRc)
 				{
@@ -2990,6 +3129,9 @@ BOOL CRealConsole::StartProcess()
 					SetMainSrvPID(pi.dwProcessId, NULL);
 				}
 			}
+
+			nCreateDuration = nCreateEnd - nCreateBegin;
+			UNREFERENCED_PARAMETER(nCreateDuration);
 
 			DEBUGSTRPROC(L"CreateProcess finished\n");
 			//if (m_Args.hLogonToken) { CloseHandle(m_Args.hLogonToken); m_Args.hLogonToken = NULL; }
@@ -3010,7 +3152,7 @@ BOOL CRealConsole::StartProcess()
 				if (mp_sei)
 				{
 					SafeCloseHandle(mp_sei->hProcess);
-					GlobalFree(mp_sei); mp_sei = NULL;
+					SafeFree(mp_sei);
 				}
 
 				wchar_t szCurrentDirectory[MAX_PATH+1];
@@ -3027,7 +3169,7 @@ BOOL CRealConsole::StartProcess()
 				                  + ((pszCmd == NULL) ? 0 : (_tcslen(pszCmd)+2))
 				                  + _tcslen(szCurrentDirectory) + 2
 				                 );
-				mp_sei = (SHELLEXECUTEINFO*)GlobalAlloc(GPTR, nWholeSize);
+				mp_sei = (SHELLEXECUTEINFO*)calloc(nWholeSize, 1);
 				mp_sei->cbSize = sizeof(SHELLEXECUTEINFO);
 				mp_sei->hwnd = ghWnd;
 				//mp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
@@ -3060,8 +3202,12 @@ BOOL CRealConsole::StartProcess()
 				//mp_sei->nShow = SW_SHOWMINIMIZED;
 				mp_sei->nShow = SW_SHOWNORMAL;
 
+				// GuiShellExecuteEx запускается в основном потоке, поэтому nCreateDuration здесь не считаем
 				SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", true);
-				lbRc = gpConEmu->GuiShellExecuteEx(mp_sei, mp_VCon);
+				//lbRc = gpConEmu->GuiShellExecuteEx(mp_sei, mp_VCon);
+
+				lbRc = ShellExecuteEx(mp_sei);
+
 				// ошибку покажем дальше
 				dwLastError = GetLastError();
 			}
@@ -3081,7 +3227,7 @@ BOOL CRealConsole::StartProcess()
 			/*if (!AttachPID(pi.dwProcessId)) {
 			    DEBUGSTRPROC(_T("AttachPID failed\n"));
 				SetEvent(mh_CreateRootEvent); mb_InCreateRoot = FALSE;
-			    return FALSE;
+			    { lbRc = FALSE; goto wrap; }
 			}
 			DEBUGSTRPROC(_T("AttachPID OK\n"));*/
 			break; // OK, запустили
@@ -3157,7 +3303,8 @@ BOOL CRealConsole::StartProcess()
 			{
 				_ASSERTE(gpConEmu->isValid(pVCon));
 			}
-			return FALSE;
+			lbRc = FALSE;
+			goto wrap;
 		}
 
 		// Выполнить стандартную команду...
@@ -3208,8 +3355,12 @@ BOOL CRealConsole::StartProcess()
 		//MCHKHEAP
 	}
 
+wrap:
 	//SetEvent(mh_CreateRootEvent);
 	mb_InCreateRoot = FALSE;
+	mb_StartResult = lbRc;
+	mb_NeedStartProcess = FALSE;
+	SetEvent(mh_StartExecuted);
 	return lbRc;
 }
 
@@ -4702,7 +4853,9 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 	}
 }
 
-void CRealConsole::OnServerStarted(HWND ahConWnd, DWORD anServerPID)
+// Это приходит из ConEmuC.exe::ServerInitGuiTab (CECMD_SRVSTARTSTOP)
+// здесь сервер только "запускается" и еще не готов принимать команды
+void CRealConsole::OnServerStarted(HWND ahConWnd, DWORD anServerPID, DWORD dwKeybLayout)
 {
 	if (!this)
 	{
@@ -4723,6 +4876,9 @@ void CRealConsole::OnServerStarted(HWND ahConWnd, DWORD anServerPID)
 		SetConStatus(L"Waiting for console server...", true);
 		SetHwnd(ahConWnd);
 	}
+
+	// Само разберется
+	OnConsoleKeyboardLayout(dwKeybLayout);
 }
 
 //void CRealConsole::OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
@@ -5005,6 +5161,14 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 	mh_MainSrv = ahMainSrv;
 	mn_MainSrv_PID = anMainSrvPID;
 
+	if (!anMainSrvPID)
+	{
+		// только сброс! установка в OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle)
+		mb_MainSrv_Ready = false;
+		// Устанавливается в OnConsoleLangChange
+		mn_ActiveLayout = 0;
+	}
+
 	DEBUGTEST(isServerAlive());
 
 	if (isActive())
@@ -5150,9 +5314,16 @@ bool CRealConsole::ReopenServerPipes()
 	return bOpened;
 }
 
-bool CRealConsole::isServerCreated()
+// Если bFullRequired - требуется чтобы сервер уже мог принимать команды
+bool CRealConsole::isServerCreated(bool bFullRequired /*= false*/)
 {
-	return (mn_MainSrv_PID!=0);
+	if (!mn_MainSrv_PID)
+		return false;
+
+	if (bFullRequired && !mb_MainSrv_Ready)
+		return false;
+
+	return true;
 }
 
 DWORD CRealConsole::GetFarPID(bool abPluginRequired/*=false*/)
@@ -6135,7 +6306,8 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
 //	}
 //}
 
-void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle)
+// Вызывается при окончании инициализации сервера из ConEmuC.exe:SendStarted (CECMD_CMDSTARTSTOP)
+void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout)
 {
 	_ASSERTE(anServerPID && (anServerPID == mn_MainSrv_PID));
 	if (ahServerHandle != NULL)
@@ -6168,6 +6340,12 @@ void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle)
 	// Возвращается через CESERVER_REQ_STARTSTOPRET
 	//if ((gpSet->isMonitorConsoleLang & 2) == 2) // Один Layout на все консоли
 	//	SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gpConEmu->GetActiveKeyboardLayout());
+
+	// Само разберется
+	OnConsoleKeyboardLayout(dwKeybLayout);
+
+	// Сервер готов принимать команды
+	mb_MainSrv_Ready = true;
 }
 
 // Если эта функция вызвана - считаем, что консоль запустилась нормально
@@ -7390,9 +7568,20 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 	if (!bActiveNonSleep)
 		return; // команду в сервер посылаем только при активации
 
+	if (!isServerCreated(true))
+		return; // сервер еще не завершил инициализацию
+
 	//DWORD nTID = GetCurrentThreadId();
 	if (!abImmediate && (mn_MonitorThreadID && (GetCurrentThreadId() != mn_MonitorThreadID)))
 	{
+		#ifdef _DEBUG
+		static bool bDebugIgnoreActiveEvent = false;
+		if (bDebugIgnoreActiveEvent)
+		{
+			return;
+		}
+		#endif
+
 		DEBUGSTRFOCUS(L"UpdateServerActive - delayed, event");
 		_ASSERTE(mh_UpdateServerActiveEvent!=NULL);
 		SetEvent(mh_UpdateServerActiveEvent);
@@ -8587,6 +8776,13 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 
 	if (hGuiWnd && dwNewKeyboardLayout)
 	{
+		#ifdef _DEBUG
+		WCHAR szMsg[255];
+		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"SwitchKeyboardLayout/GUIChild(CP:%i, HKL:0x" WIN3264TEST(L"%08X",L"%X%08X") L")\n",
+				  (DWORD)wParam, WIN3264WSPRINT(dwNewKeyboardLayout));
+		DEBUGSTRLANG(szMsg);
+		#endif
+
 		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_LANGCHANGE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
 		if (pIn)
 		{
@@ -8601,18 +8797,20 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 			ExecuteFreeResult(pOut);
 			ExecuteFreeResult(pIn);
 		}
+
+		DEBUGSTRLANG(L"SwitchKeyboardLayout/GUIChild - finished\n");
 	}
 
 	if (ms_ConEmuC_Pipe[0] == 0) return;
 
 	if (!hConWnd) return;
 
-#ifdef _DEBUG
-	WCHAR szMsg[255];
-	_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"CRealConsole::SwitchKeyboardLayout(CP:%i, HKL:0x" WIN3264TEST(L"%08X",L"%X%08X") L")\n",
-	          (DWORD)wParam, WIN3264WSPRINT(dwNewKeyboardLayout));
-	DEBUGSTRLANG(szMsg);
-#endif
+	//#ifdef _DEBUG
+	//	WCHAR szMsg[255];
+	//	_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"CRealConsole::SwitchKeyboardLayout(CP:%i, HKL:0x" WIN3264TEST(L"%08X",L"%X%08X") L")\n",
+	//	          (DWORD)wParam, WIN3264WSPRINT(dwNewKeyboardLayout));
+	//	DEBUGSTRLANG(szMsg);
+	//#endif
 
 	if (gpSetCls->isAdvLogging > 1)
 	{
@@ -8625,6 +8823,13 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 	// Сразу запомнить новое значение, чтобы не циклиться
 	mp_RBuf->SetKeybLayout(dwNewKeyboardLayout);
 	
+	#ifdef _DEBUG
+	WCHAR szMsg[255];
+	_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"SwitchKeyboardLayout/Console(CP:%i, HKL:0x" WIN3264TEST(L"%08X",L"%X%08X") L")\n",
+			  (DWORD)wParam, WIN3264WSPRINT(dwNewKeyboardLayout));
+	DEBUGSTRLANG(szMsg);
+	#endif
+
 	// В FAR при XLat делается так:
 	//PostConsoleMessageW(hFarWnd,WM_INPUTLANGCHANGEREQUEST, INPUTLANGCHANGE_FORWARD, 0);
 	PostConsoleMessage(hConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, (LPARAM)dwNewKeyboardLayout);
@@ -10611,6 +10816,21 @@ BOOL CRealConsole::isMouseButtonDown()
 	return mb_MouseButtonDown;
 }
 
+// Аргумент - DWORD(!) а не DWORD_PTR. Это приходит из консоли.
+void CRealConsole::OnConsoleKeyboardLayout(DWORD dwNewLayout)
+{
+	_ASSERTE(dwNewLayout!=0);
+
+	// LayoutName: "00000409", "00010409", ...
+	// А HKL от него отличается, так что передаем DWORD
+	// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
+
+	// Информационно?
+	mn_ActiveLayout = dwNewLayout;
+
+	gpConEmu->OnLangChangeConsole(mp_VCon, dwNewLayout);
+}
+
 // Вызывается из CConEmuMain::OnLangChangeConsole в главной нити
 void CRealConsole::OnConsoleLangChange(DWORD_PTR dwNewKeybLayout)
 {
@@ -11006,12 +11226,13 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, bool abResetOnConsoleReady /*=
 
 	lstrcpyn(CRealConsole::ms_LastRConStatus, ms_ConStatus, countof(CRealConsole::ms_LastRConStatus));
 
-	if (!abDontUpdate && isActive())
+	if (!abDontUpdate && isActive(false))
 	{
 		// Обновить статусную строку, если она показана
 		if (gpSet->isStatusBarShow)
 		{
-			gpConEmu->mp_Status->UpdateStatusBar(true);
+			// Перерисовать сразу
+			gpConEmu->mp_Status->UpdateStatusBar(true, true);
 		}
 		else if (!abDontUpdate)
 		{

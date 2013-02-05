@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CBackground;
 struct DebugLogShellActivity;
+struct CEHelpPopup;
 
 enum SingleInstanceArgEnum
 {
@@ -341,6 +342,7 @@ class CSettings
 
 		//static void CenterDialog(HWND hWnd2);
 		void OnClose();
+		DWORD BalloonStyle();
 		// IDD_SETTINGS
 		static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		// ¬кладки настроек: IDD_SPG_MAIN, IDD_SPG_FEATURE, и т.д.
@@ -609,6 +611,11 @@ class CSettings
 		const ConEmuHotKey* GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealConsole* pRCon);
 		bool HasSingleWinHotkey();
 		void UpdateWinHookSettings(HMODULE hLLKeyHookDll);
+	public:
+		bool isDialogMessage(MSG &Msg);
+	private:
+		CEHelpPopup* mp_HelpPopup;
+		INT_PTR ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	private:
 
 		enum KeyListColumns
@@ -698,8 +705,9 @@ class CSettings
 			int              PageID;       // Dialog ID
 			int              Level;        // 0, 1
 			wchar_t          PageName[64]; // Label in treeview
-			//HWND     *hPage;
 			TabHwndIndex     PageIndex;    // mh_Tabs[...]
+			bool             Collapsed;
+			// Filled after creation
 			HTREEITEM        hTI;
 			ConEmuSetupItem* pItems;
 		};

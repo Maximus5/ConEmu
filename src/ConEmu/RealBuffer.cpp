@@ -134,6 +134,8 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 
 CRealBuffer::~CRealBuffer()
 {
+	Assert(con.bInGetConsoleData==FALSE);
+
 	if (con.pConChar)
 		{ Free(con.pConChar); con.pConChar = NULL; }
 
@@ -1268,7 +1270,7 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 	
 	#ifdef _DEBUG
 	DWORD dwCurThId = GetCurrentThreadId();
-	_ASSERTE(mp_RCon->mn_MonitorThreadID==0 || dwCurThId==mp_RCon->mn_MonitorThreadID
+	_ASSERTE((mp_RCon->mn_MonitorThreadID==0 || dwCurThId==mp_RCon->mn_MonitorThreadID || mp_RCon->mb_WaitingRootStartup)
 		|| ((m_Type==rbt_DumpScreen || m_Type==rbt_Alternative || m_Type==rbt_Selection || m_Type==rbt_Find) && gpConEmu->isMainThread()));
 	#endif
 
@@ -1309,6 +1311,8 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 		MCHKHEAP;
 		con.LastStartInitBuffersTick = GetTickCount();
 
+		Assert(con.bInGetConsoleData==FALSE);
+
 		if (con.pConChar)
 			{ Free(con.pConChar); con.pConChar = NULL; }
 
@@ -1331,6 +1335,8 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 		wmemset((wchar_t*)con.pConAttr, nDefTextAttr, cchCharMax);
 
 		con.LastEndInitBuffersTick = GetTickCount();
+
+		Assert(con.bInGetConsoleData==FALSE);
 
 		sc.Unlock();
 		_ASSERTE(con.pConChar!=NULL);
@@ -4194,8 +4200,12 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	
 	lcaTable = lcaTableOrg;
 
+	con.bInGetConsoleData = TRUE;
+
 	MSectionLock csData; csData.Lock(&csCON);
+
 	con.LastStartReadBufferTick = GetTickCount();
+
 	HEAPVAL
 	wchar_t wSetChar = L' ';
 	CharAttr lcaDef;
@@ -4274,8 +4284,18 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
 			//_ASSERTE(*con.pConChar!=ucBoxDblVert);
 			nYMax = min(nHeight,con.nTextHeight);
+
 			wchar_t  *pszSrc = con.pConChar;
 			WORD     *pnSrc = con.pConAttr;
+
+			// Т.к. есть блокировка (csData), то con.pConChar и con.pConAttr
+			// не должны меняться во время выполнения этой функции
+			const wchar_t* const pszSrcStart = con.pConChar;
+			WORD* const pnSrcStart = con.pConAttr;
+			size_t nSrcCells = (con.nTextWidth * con.nTextHeight);
+
+			Assert(pszSrcStart==pszSrc && pnSrcStart==pnSrc);
+
 			const AnnotationInfo *pcolSrc = NULL;
 			const AnnotationInfo *pcolEnd = NULL;
 			BOOL bUseColorData = FALSE, bStartUseColorData = FALSE;
@@ -4499,6 +4519,10 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				pszDst += nWidth; pszSrc += cnSrcLineLen;
 				pcaDst += nWidth; //pnSrc += con.nTextWidth;
 			}
+
+			UNREFERENCED_PARAMETER(pszSrcStart);
+			UNREFERENCED_PARAMETER(pnSrcStart);
+			UNREFERENCED_PARAMETER(nSrcCells);
 		}
 	} // rbt_Primary
 
@@ -4625,6 +4649,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 	//FIN
 	HEAPVAL
+	con.bInGetConsoleData = FALSE;
 	csData.Unlock();
 	return;
 }

@@ -11,6 +11,22 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.02.05
+[*] Some improvements for «stress mode».
+[*] «Disabled» will be shown in «Keys & Macro» if specified action is disabled in settings.
+[%] Some bugfixes in Drag&Drop to Far panels from some storages.
+[*] Checking 7zip/WinRar existence before updating with 7z package.
+[*] Some changes in Status bar drawing.
+[*] Removed all references to std::vector.
+[%] Issue 885: Attach of «As Administrator» console fixed.
+[+] Issue 886: Button «?» in the Title Bar of «Settings» dialog.
+[*] Minor changes of resources in «Settings» dialog.
+[%] Tooltips in «Settings» dialogs was not visible with this registry value:
+    [HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced]
+    "EnableBalloonTips"=0
+
+
+
 2013.01.28
 [!] Refactoring of drag from Far Manager panels is started.
 [*] Changes in self-update procedure (elevation related).

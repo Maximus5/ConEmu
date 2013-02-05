@@ -50,6 +50,7 @@
 #define IDD_ABOUT                       218
 #define IDD_RENAMETAB                   219
 #define IDD_CMDPROMPT                   220
+#define IDD_HELP                        221
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -924,14 +925,15 @@
 #define vkChildSystemMenu               2577
 #define cbSingleInstance                2578
 #define cbCTSEndCopyBefore              2579
+#define IDC_HELP_DESCR                  2580
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        221
+#define _APS_NEXT_RESOURCE_VALUE        222
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2580
+#define _APS_NEXT_CONTROL_VALUE         2581
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

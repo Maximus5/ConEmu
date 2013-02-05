@@ -1,9 +1,6 @@
 
-//     bHideCaptionSettings    "Choose frame width, appearance and disappearance delays"
-
-
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -50,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LoadImg.h"
 #include "Options.h"
 #include "OptionsFast.h"
+#include "OptionsHelp.h"
 #include "RealConsole.h"
 #include "Recreate.h"
 #include "Status.h"
@@ -396,6 +394,8 @@ CSettings::CSettings()
 	mh_EnumThread = NULL;
 	mh_CtlColorBrush = NULL;
 
+	mp_HelpPopup = new CEHelpPopup;
+
 	m_HotKeys = NULL;
 	mp_ActiveHotKey = NULL;
 
@@ -720,9 +720,9 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_KEYS,        0, L"Keys & Macro",   thi_Keys/*,    OnInitDialog_Keys*/},
 		{IDD_SPG_CONTROL,     1, L"Controls",       thi_KeybMouse/*,OnInitDialog_Control*/},
 		{IDD_SPG_SELECTION,   1, L"Mark & Paste",   thi_Selection/*OnInitDialog_Selection*/},
-		{IDD_SPG_FEATURE_FAR, 0, L"Far Manager",    thi_Far/*,     OnInitDialog_Ext*/},
+		{IDD_SPG_FEATURE_FAR, 0, L"Far Manager",    thi_Far/*,     OnInitDialog_Ext*/, true/*Collapsed*/},
 		{IDD_SPG_VIEWS,       1, L"Views",          thi_Views/*,   OnInitDialog_Views*/},
-		{IDD_SPG_INFO,        0, L"Info",           thi_Info/*,    OnInitDialog_Info*/},
+		{IDD_SPG_INFO,        0, L"Info",           thi_Info/*,    OnInitDialog_Info*/, RELEASEDEBUGTEST(true,false)/*Collapsed in Release*/},
 		{IDD_SPG_DEBUG,       1, L"Debug",          thi_Debug/*,   OnInitDialog_Debug*/},
 		// End
 		{},
@@ -803,17 +803,12 @@ CSettings::~CSettings()
 	//	delete gpSet;
 	//	gpSet = NULL;
 	//}
-	if (m_HotKeys)
-	{
-		free(m_HotKeys);
-		m_HotKeys = NULL;
-		mp_ActiveHotKey = NULL;
-	}
-	if (m_Pages)
-	{
-		free(m_Pages);
-		m_Pages = NULL;
-	}
+	SafeFree(m_HotKeys);
+	mp_ActiveHotKey = NULL;
+
+	SafeFree(m_Pages);
+
+	SafeDelete(mp_HelpPopup);
 }
 
 LPCWSTR CSettings::GetConfigPath()
@@ -1455,8 +1450,44 @@ void CSettings::SearchForControls()
 				if (!GetClassName(hCtrl, szClass, countof(szClass)))
 					continue;
 
-				if ((lstrcmpi(szClass, L"Button") != 0) && (lstrcmpi(szClass, L"Static") != 0))
+				if (lstrcmpi(szClass, L"ListBox") == 0)
+				{
+					LRESULT lFind = SendMessage(hCtrl, LB_FINDSTRING, -1, (LPARAM)pszPart);
+					// LB_FINDSTRING search from begin of string, but may be "In string"?
+					if (lFind < 0)
+					{
+						INT_PTR iCount = SendMessage(hCtrl, LB_GETCOUNT, 0, 0);
+						for (INT_PTR i = 0; i < iCount; i++)
+						{
+							INT_PTR iLen = SendMessage(hCtrl, LB_GETTEXTLEN, 0, 0);
+							if (iLen >= countof(szText))
+							{
+								_ASSERTE(iLen < countof(szText));
+							}
+							else
+							{
+								SendMessage(hCtrl, LB_GETTEXT, i, (LPARAM)szText);
+								if (StrStrI(szText, pszPart) != NULL)
+								{
+									lFind = i;
+									break;
+								}
+							}
+						}
+					}
+
+					if (lFind >= 0)
+						break; // Нашли
+
 					continue;
+				}
+
+				if ((lstrcmpi(szClass, L"Button") != 0)
+					&& (lstrcmpi(szClass, L"Static") != 0)
+					)
+				{
+					continue;
+				}
 				
 				if (!GetWindowText(hCtrl, szText, countof(szText)) || !*szText)
 					continue;
@@ -1627,7 +1658,7 @@ LRESULT CSettings::OnInitDialog()
 		TVINSERTSTRUCT ti = {TVI_ROOT, TVI_LAST, {{TVIF_TEXT}}};
 		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
 		HTREEITEM hLastRoot = TVI_ROOT;
-		bool bExpanded = false;
+		bool bNeedExpand = true;
 		for (size_t i = 0; m_Pages[i].PageID; i++)
 		{
 			if ((m_Pages[i].PageID == IDD_SPG_UPDATE) && gpConEmu->mb_MingwMode)
@@ -1644,15 +1675,19 @@ LRESULT CSettings::OnInitDialog()
 			_ASSERTE(mh_Tabs[m_Pages[i].PageIndex]==NULL);
 			mh_Tabs[m_Pages[i].PageIndex] = NULL;
 
-			if (!m_Pages[i].Level)
+			if (m_Pages[i].Level == 0)
 			{
 				hLastRoot = m_Pages[i].hTI;
-				bExpanded = false;
+				bNeedExpand = !m_Pages[i].Collapsed;
 			}
-			else if (!bExpanded)
+			else
 			{
-				TreeView_Expand(hTree, hLastRoot, TVE_EXPAND);
-				bExpanded = true;
+				if (bNeedExpand)
+				{
+					TreeView_Expand(hTree, hLastRoot, TVE_EXPAND);
+				}
+				// Only two levels in tree
+				bNeedExpand = false;
 			}
 		}
 
@@ -1877,7 +1912,6 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	checkDlgButton(hWnd2, cbFixFarBorders, BST(gpSet->isFixFarBorders));
 
 	mn_LastChangingFontCtrlId = 0;
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -1952,7 +1986,6 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbSingleInstance, IsSingleInstanceArg());
 	EnableDlgItem(hWnd2, cbSingleInstance, (gpSet->isQuakeStyle == 0));
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -1987,7 +2020,6 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbMapShiftEscToEsc, gpSet->isMapShiftEscToEsc);
 	EnableWindow(GetDlgItem(hWnd2, cbMapShiftEscToEsc), (gpSet->isMultiMinByEsc == 1 /*Always*/));
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -2062,7 +2094,6 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 	//WORD nCtrls[] = {cbQuakeAutoHide, tHideCaptionAlwaysFrame, stHideCaptionAlwaysFrame};
 	//EnableDlgItems(hWnd2, nCtrls, countof(nCtrls), gpSet->isQuakeStyle);
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -2088,8 +2119,6 @@ LRESULT CSettings::OnInitDialog_Cursor(HWND hWnd2, BOOL abInitial)
 {
 	InitCursorCtrls(hWnd2, &gpSet->AppStd);
 
-	if (abInitial)
-		RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -2097,8 +2126,6 @@ LRESULT CSettings::OnInitDialog_Startup(HWND hWnd2, BOOL abInitial)
 {
 	pageOpProc_Start(hWnd2, WM_INITDIALOG, 0, abInitial);
 
-	if (abInitial)
-		RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -2110,6 +2137,17 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 
 	switch (messg)
 	{
+	case WM_NOTIFY:
+		{
+			LPNMHDR phdr = (LPNMHDR)lParam;
+
+			if ((phdr->code == TTN_GETDISPINFO) || (phdr->code == TTN_NEEDTEXT))
+			{
+				return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
+			}
+
+			break;
+		}
 	case WM_INITDIALOG:
 		{
 			BOOL bInitial = (lParam != 0); UNREFERENCED_PARAMETER(bInitial);
@@ -2344,7 +2382,6 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 		EnableWindow(GetDlgItem(hWnd2, bPortableRegistrySettings), FALSE); // изменение пока запрещено
 	}
 	
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -2387,7 +2424,6 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 	// Autorun (autoattach) with "cmd.exe" or "tcc.exe"
 	pageOpProc_Integr(hWnd2, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -2438,8 +2474,6 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 
 	CheckSelectionModifiers(hWnd2);
 
-	// тултипы
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -2549,7 +2583,6 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 	_ASSERTE(gpSet->isDisableFarFlashing==0 || gpSet->isDisableFarFlashing==1 || gpSet->isDisableFarFlashing==2);
 	checkDlgButton(hWnd2, cbDisableFarFlashing, gpSet->isDisableFarFlashing);
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -3025,7 +3058,6 @@ LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, BOOL abInitial)
 	// Ctrl+BS - del left word
 	checkDlgButton(hWnd2, cbCTSDeleteLeftWord, gpSet->AppStd.isCTSDeleteLeftWord);
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -3076,7 +3108,6 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 	FillListBoxByte(hWnd2, lbHotKeyMod2, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
 	FillListBoxByte(hWnd2, lbHotKeyMod3, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -3147,7 +3178,6 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	checkRadioButton(hWnd2, rbAdminShield, rbAdminSuffix, gpSet->bAdminShield ? rbAdminShield : rbAdminSuffix);
 	SetDlgItemText(hWnd2, tAdminSuffix, gpSet->szAdminTitleSuffix);
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -3182,7 +3212,6 @@ LRESULT CSettings::OnInitDialog_Status(HWND hWnd2, bool abInitial)
 
 	OnInitDialog_StatusItems(hWnd2);
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -3329,7 +3358,6 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 
 	gbLastColorsOk = TRUE;
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -3352,7 +3380,6 @@ LRESULT CSettings::OnInitDialog_Transparent(HWND hWnd2)
 	checkDlgButton(hWnd2, cbUserScreenTransparent, gpSet->isUserScreenTransparent ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbColorKeyTransparent, gpSet->isColorKeyTransparent);
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -3403,7 +3430,6 @@ LRESULT CSettings::OnInitDialog_Tasks(HWND hWnd2, bool abForceReload)
 	checkDlgButton(hWnd2, cbCmdTaskbarCommands, gpSet->isStoreTaskbarCommands);
 	EnableWindow(GetDlgItem(hWnd2, cbCmdTaskbarUpdate), (gnOsVer >= 0x601));
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -3423,10 +3449,6 @@ LRESULT CSettings::OnInitDialog_Apps(HWND hWnd2, bool abForceReload)
 	
 	pageOpProc_Apps(hWnd2, NULL, abForceReload ? WM_INITDIALOG : mn_ActivateTabMsg, 0, 0);
 
-	if (abForceReload)
-	{
-		RegisterTipsFor(hWnd2);
-	}
 	return 0;
 }
 
@@ -3434,8 +3456,6 @@ LRESULT CSettings::OnInitDialog_Integr(HWND hWnd2, BOOL abInitial)
 {
 	pageOpProc_Integr(hWnd2, WM_INITDIALOG, 0, abInitial);
 
-	if (abInitial)
-		RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -3543,6 +3563,17 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 
 	switch (messg)
 	{
+	case WM_NOTIFY:
+		{
+			LPNMHDR phdr = (LPNMHDR)lParam;
+
+			if ((phdr->code == TTN_GETDISPINFO) || (phdr->code == TTN_NEEDTEXT))
+			{
+				return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
+			}
+
+			break;
+		}
 	case WM_INITDIALOG:
 		{
 			bSkipCbSel = true;
@@ -4301,7 +4332,6 @@ LRESULT CSettings::OnInitDialog_Views(HWND hWnd2)
 	checkDlgButton(hWnd2, cbThumbUsePicView2, gpSet->ThSet.bUsePicView2);
 	checkDlgButton(hWnd2, cbThumbRestoreOnStartup, gpSet->ThSet.bRestoreOnStartup);
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -4410,7 +4440,6 @@ LRESULT CSettings::OnInitDialog_Debug(HWND hWnd2)
 	//wcscpy_c(szTitle, L"Received");		ListView_InsertColumn(hList, 2, &col);
 	//wcscpy_c(szTitle, L"Description");	ListView_InsertColumn(hList, 3, &col);
 	
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -4425,22 +4454,23 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2)
 	checkDlgButton(hWnd2, cbUpdateCheckHourly, p->isUpdateCheckHourly);
 	checkDlgButton(hWnd2, cbUpdateConfirmDownload, !p->isUpdateConfirmDownload);
 	checkRadioButton(hWnd2, rbUpdateStableOnly, rbUpdateLatestAvailable, (p->isUpdateUseBuilds==1) ? rbUpdateStableOnly : rbUpdateLatestAvailable);
-	checkRadioButton(hWnd2, rbUpdateUseExe, rbUpdateUseArc, (p->UpdateDownloadSetup()==1) ? rbUpdateUseExe : rbUpdateUseArc);
 	
 	checkDlgButton(hWnd2, cbUpdateUseProxy, p->isUpdateUseProxy);
 	OnButtonClicked(hWnd2, cbUpdateUseProxy, 0); // Enable/Disable proxy fields
 	SetDlgItemText(hWnd2, tUpdateProxy, p->szUpdateProxy);
 	SetDlgItemText(hWnd2, tUpdateProxyUser, p->szUpdateProxyUser);
 	SetDlgItemText(hWnd2, tUpdateProxyPassword, p->szUpdateProxyPassword);
-	
+
+	int nPackage = p->UpdateDownloadSetup(); // 1-exe, 2-7zip
+	checkRadioButton(hWnd2, rbUpdateUseExe, rbUpdateUseArc, (nPackage==1) ? rbUpdateUseExe : rbUpdateUseArc);
 	SetDlgItemText(hWnd2, tUpdateExeCmdLine, p->UpdateExeCmdLine());
 	SetDlgItemText(hWnd2, tUpdateArcCmdLine, p->UpdateArcCmdLine());
 	SetDlgItemText(hWnd2, tUpdatePostUpdateCmd, p->szUpdatePostUpdateCmd);
+	EnableDlgItem(hWnd2, (nPackage==1) ? tUpdateArcCmdLine : tUpdateExeCmdLine, FALSE);
 	
 	checkDlgButton(hWnd2, cbUpdateLeavePackages, p->isUpdateLeavePackages);
 	SetDlgItemText(hWnd2, tUpdateDownloadPath, p->szUpdateDownloadPath);
 
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -4461,7 +4491,7 @@ LRESULT CSettings::OnInitDialog_Info(HWND hWnd2)
 	UpdateFontInfo();
 	if (pVCon)
 		UpdateConsoleMode(pVCon->RCon()->GetConsoleStates());
-	RegisterTipsFor(hWnd2);
+
 	return 0;
 }
 
@@ -7973,6 +8003,42 @@ void CSettings::OnResetOrReload(BOOL abResetOnly)
 	gpConEmu->Taskbar_SetProgressState(TBPF_NOPROGRESS);
 }
 
+INT_PTR CSettings::ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	LPNMTTDISPINFO lpnmtdi = (LPNMTTDISPINFO)lParam;
+
+	if (!lpnmtdi)
+	{
+		_ASSERTE(lpnmtdi);
+		return 0;
+	}
+
+	// If your message handler sets the uFlags field of the NMTTDISPINFO structure to TTF_DI_SETITEM,
+	// the ToolTip control stores the information and will not request it again. 
+	static wchar_t szHint[2000];
+	
+	_ASSERTE((lpnmtdi->uFlags & TTF_IDISHWND) == TTF_IDISHWND);
+
+	if (mp_HelpPopup->mh_Popup)
+	{
+		POINT MousePos = {}; GetCursorPos(&MousePos);
+		mp_HelpPopup->ShowItemHelp(0, (HWND)lpnmtdi->hdr.idFrom, MousePos);
+
+		szHint[0] = 0;
+		lpnmtdi->lpszText = szHint;
+	}
+	else
+	{
+		mp_HelpPopup->GetItemHelp(0, (HWND)lpnmtdi->hdr.idFrom, szHint, countof(szHint));
+
+		lpnmtdi->lpszText = szHint;
+	}
+
+	lpnmtdi->szText[0] = 0;
+
+	return 0;
+}
+
 // DlgProc для окна настроек (IDD_SETTINGS)
 INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
@@ -8180,7 +8246,11 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		{
 			LPNMHDR phdr = (LPNMHDR)lParam;
 
-			switch (phdr->idFrom)
+			if ((phdr->code == TTN_GETDISPINFO) || (phdr->code == TTN_NEEDTEXT))
+			{
+				return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
+			}
+			else switch (phdr->idFrom)
 			{
 			#if 0
 			case tabMain:
@@ -8234,6 +8304,21 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 				gpSetCls->UnregisterTabs();
 
 			break;
+
+		case HELP_WM_HELP:
+			break;
+		case WM_HELP:
+			if ((wParam == 0) && (lParam != 0))
+			{
+				// Показать хинт?
+				HELPINFO* hi = (HELPINFO*)lParam;
+				if (hi->cbSize >= sizeof(HELPINFO))
+				{
+					gpSetCls->mp_HelpPopup->ShowItemHelp(hi);
+				}
+			}
+			return TRUE;
+
 		default:
 			return 0;
 	}
@@ -8409,6 +8494,8 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			// Чтобы не забыть добавить вызов инициализации
 			_ASSERTE(((ConEmuSetupPages*)lParam)->PageID==IDD_SPG_MAIN);
 		}
+
+		gpSetCls->RegisterTipsFor(hWnd2);
 	}
 	else if (messg == gpSetCls->mn_ActivateTabMsg)
 	{
@@ -8483,6 +8570,11 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			// Чтобы не забыть добавить вызов инициализации
 			_ASSERTE(((ConEmuSetupPages*)lParam)->PageID==IDD_SPG_MAIN);
 		}
+	}
+	else if ((messg == WM_HELP) || (messg == HELP_WM_HELP))
+	{
+		_ASSERTE(messg == WM_HELP);
+		return gpSetCls->wndOpProc(hWnd2, messg, wParam, lParam);
 	}
 	else if (gpSetCls->mh_Tabs[thi_Apps] && (hWnd2 == gpSetCls->mh_Tabs[thi_Apps]))
 	{
@@ -8614,7 +8706,11 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		
 		case WM_NOTIFY:
 			{
-				switch (((NMHDR*)lParam)->idFrom)
+				if ((((NMHDR*)lParam)->code == TTN_GETDISPINFO) || (((NMHDR*)lParam)->code == TTN_NEEDTEXT))
+				{
+					return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
+				}
+				else switch (((NMHDR*)lParam)->idFrom)
 				{
 				case lbActivityLog:
 					if (!bSkipSelChange)
@@ -8737,7 +8833,20 @@ INT_PTR CSettings::pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, L
 	{
 	case WM_INITDIALOG:
 		nLastScrollPos = 0;
+		gpSetCls->RegisterTipsFor(hWnd2);
 		return FALSE;
+
+	case WM_NOTIFY:
+		{
+			LPNMHDR phdr = (LPNMHDR)lParam;
+
+			if ((phdr->code == TTN_GETDISPINFO) || (phdr->code == TTN_NEEDTEXT))
+			{
+				return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
+			}
+
+			break;
+		}
 
 	case WM_MOUSEWHEEL:
 		{
@@ -8962,6 +9071,17 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 	}
 	else switch (messg)
 	{
+	case WM_NOTIFY:
+		{
+			LPNMHDR phdr = (LPNMHDR)lParam;
+
+			if ((phdr->code == TTN_GETDISPINFO) || (phdr->code == TTN_NEEDTEXT))
+			{
+				return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
+			}
+
+			break;
+		}
 	case UM_FILL_CONTROLS:
 		if ((((HWND)wParam) == hWnd2) && lParam) // arg check
 		{
@@ -10349,6 +10469,29 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 	}
 }
 
+DWORD CSettings::BalloonStyle()
+{
+	//грр, Issue 886, и подсказки нифига не видны
+	//[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced]
+	//"EnableBalloonTips"=0
+
+	DWORD nBalloonStyle = TTS_BALLOON;
+
+	HKEY hk;
+	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", 0, KEY_READ, &hk))
+	{
+		DWORD nEnabled = 1;
+		DWORD nSize = sizeof(nEnabled);
+		if ((0 == RegQueryValueEx(hk, L"EnableBalloonTips", NULL, NULL, (LPBYTE)&nEnabled, &nSize)) && (nEnabled == 0))
+		{
+			nBalloonStyle = 0;
+		}
+		RegCloseKey(hk);
+	}
+
+	return nBalloonStyle;
+}
+
 void CSettings::RegisterTipsFor(HWND hChildDlg)
 {
 	if (gpSetCls->hConFontDlg == hChildDlg)
@@ -10356,7 +10499,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 		if (!hwndConFontBalloon || !IsWindow(hwndConFontBalloon))
 		{
 			hwndConFontBalloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-			                                    WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX | TTS_CLOSE,
+			                                    BalloonStyle() | WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX | TTS_CLOSE,
 			                                    CW_USEDEFAULT, CW_USEDEFAULT,
 			                                    CW_USEDEFAULT, CW_USEDEFAULT,
 			                                    ghOpWnd, NULL,
@@ -10383,7 +10526,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 		if (!hwndBalloon || !IsWindow(hwndBalloon))
 		{
 			hwndBalloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-			                             WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
+			                             BalloonStyle() | WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
 			                             CW_USEDEFAULT, CW_USEDEFAULT,
 			                             CW_USEDEFAULT, CW_USEDEFAULT,
 			                             ghOpWnd, NULL,
@@ -10409,7 +10552,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 		if (!hwndTip || !IsWindow(hwndTip))
 		{
 			hwndTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-			                         WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
+			                         BalloonStyle() | WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
 			                         CW_USEDEFAULT, CW_USEDEFAULT,
 			                         CW_USEDEFAULT, CW_USEDEFAULT,
 			                         ghOpWnd, NULL,
@@ -10422,33 +10565,40 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 
 		HWND hChild = NULL, hEdit = NULL;
 		BOOL lbRc = FALSE;
-		TCHAR szText[0x200];
+		//TCHAR szText[0x200];
 
 		while ((hChild = FindWindowEx(hChildDlg, hChild, NULL, NULL)) != NULL)
 		{
-			LONG wID = GetWindowLong(hChild, GWL_ID);
+			//LONG wID = GetWindowLong(hChild, GWL_ID);
 
-			if (wID == -1) continue;
+			//if (wID == -1) continue;
 
-			if (LoadString(g_hInstance, wID, szText, countof(szText)))
+			//if (LoadString(g_hInstance, wID, szText, countof(szText)))
 			{
 				// Associate the ToolTip with the tool.
 				TOOLINFO toolInfo = { 0 };
-				toolInfo.cbSize = 44; //sizeof(toolInfo);
-				//GetWindowRect(hChild, &toolInfo.rect); MapWindowPoints(NULL, hChildDlg, (LPPOINT)&toolInfo.rect, 2);
-				GetClientRect(hChild, &toolInfo.rect);
-				toolInfo.hwnd = hChild; //hChildDlg;
+				toolInfo.cbSize = 44; //sizeof(toolInfo); -- need to work on Win2k and compile with Vista+
+				GetWindowRect(hChild, &toolInfo.rect);
+				MapWindowPoints(NULL, hChildDlg, (LPPOINT)&toolInfo.rect, 2);
+				toolInfo.hwnd = hChildDlg;
 				toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
 				toolInfo.uId = (UINT_PTR)hChild;
-				toolInfo.lpszText = szText;
-				//toolInfo.hinst = g_hInstance;
-				//toolInfo.lpszText = (LPTSTR)wID;
+
+				// Use ProcessTipHelp dynamically
+				toolInfo.lpszText = LPSTR_TEXTCALLBACK;
+
 				lbRc = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 				hEdit = FindWindowEx(hChild, NULL, L"Edit", NULL);
 
 				if (hEdit)
 				{
+					toolInfo.lpszText = LPSTR_TEXTCALLBACK;
 					toolInfo.uId = (UINT_PTR)hEdit;
+
+					GetWindowRect(hEdit, &toolInfo.rect);
+					MapWindowPoints(NULL, hChildDlg, (LPPOINT)&toolInfo.rect, 2);
+					toolInfo.hwnd = hChildDlg;
+
 					lbRc = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 				}
 
@@ -13773,6 +13923,17 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 {
 	switch (messg)
 	{
+		case WM_NOTIFY:
+			{
+				LPNMHDR phdr = (LPNMHDR)lParam;
+
+				if ((phdr->code == TTN_GETDISPINFO) || (phdr->code == TTN_NEEDTEXT))
+				{
+					return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
+				}
+
+				break;
+			}
 		case WM_INITDIALOG:
 		{
 			SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
@@ -14255,4 +14416,22 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 	MCHKHEAP
 	return TRUE;
 	UNREFERENCED_PARAMETER(lpntm);
+}
+
+bool CSettings::isDialogMessage(MSG &Msg)
+{
+	if (IsDialogMessage(ghOpWnd, &Msg))
+	{
+		return true;
+	}
+
+	if (mp_HelpPopup && mp_HelpPopup->mh_Popup)
+	{
+		if (IsDialogMessage(mp_HelpPopup->mh_Popup, &Msg))
+		{
+			return true;
+		}
+	}
+
+	return false;
 }

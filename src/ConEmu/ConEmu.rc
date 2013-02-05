@@ -138,7 +138,7 @@ BEGIN
     COMBOBOX        lbExtendFontBoldIdx,231,41,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontItalicIdx,261,41,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontNormalIdx,291,41,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Change frames font",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,59,84,8
+    CONTROL         "Change pseudographics font",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,59,145,8
     COMBOBOX        tFontFace2,169,70,101,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     CTEXT           "x",IDC_STATIC,275,72,8,8
     COMBOBOX        tFontSizeX2,287,71,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
@@ -242,7 +242,7 @@ BEGIN
     EDITTEXT        tScrollAppearDelay,183,105,40,12,ES_AUTOHSCROLL
     RTEXT           "Disappear:",IDC_STATIC,230,107,43,8
     EDITTEXT        tScrollDisappearDelay,277,105,40,12,ES_AUTOHSCROLL
-    GROUPBOX        "Caption and border options",gbFeatureCaption,4,128,319,59
+    GROUPBOX        "Title bar (Caption) and border options",gbFeatureCaption,4,128,319,59
     CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,141,117,8
     CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,141,79,8
     CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,141,94,8
@@ -546,7 +546,7 @@ END
 
 IDD_SETTINGS DIALOGEX 0, 0, 425, 275
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-EXSTYLE WS_EX_TOPMOST
+EXSTYLE WS_EX_TOPMOST | WS_EX_CONTEXTHELP
 CAPTION "Settings..."
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
@@ -559,9 +559,9 @@ BEGIN
     CONTROL         "reg",rbSettingsReg,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,101,264,27,9
     CONTROL         "xml",rbSettingsXml,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,129,264,27,9
     CONTROL         "ini",rbSettingsIni,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,158,264,23,9
+    LTEXT           "Find:",stOptionSearch,5,5,17,8
     EDITTEXT        tOptionSearch,23,3,55,13,ES_AUTOHSCROLL
     PUSHBUTTON      ">",cbOptionSearch,79,2,15,14
-    LTEXT           "Find:",stOptionSearch,5,5,17,8
     LTEXT           "Storage:",stStorage,106,5,29,8
     EDITTEXT        tStorage,141,3,227,13,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "Export...",cbExportConfig,371,2,50,14
@@ -1298,6 +1298,15 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,130,34,50,14
     LTEXT           "&New tab name (clear to revert):",stNewTabName,7,6,173,8
     EDITTEXT        tNewTabName,7,17,173,12,ES_AUTOHSCROLL
+END
+
+IDD_HELP DIALOGEX 0, 0, 183, 60
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_PALETTEWINDOW
+CAPTION "Item description"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_HELP_DESCR,0,0,166,75,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY
 END
 
 

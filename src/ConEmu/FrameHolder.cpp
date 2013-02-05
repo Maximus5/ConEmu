@@ -587,7 +587,7 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 
 	// Go
 
-	RECT wr, cr; //, tr = {};
+	RECT wr, cr;
 	
 	RecalculateFrameSizes();
 
@@ -613,7 +613,7 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 		if (nHeight < (wr.bottom - wr.top))
 		{
 			RECT rcStatus = {wr.left, wr.bottom - nHeight, wr.right, wr.bottom};
-			gpConEmu->mp_Status->PaintStatus(hdc, rcStatus);
+			gpConEmu->mp_Status->PaintStatus(hdc, &rcStatus);
 			wr.bottom = rcStatus.top;
 		}
 	}
@@ -624,6 +624,8 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 
 
 #if defined(CONEMU_TABBAR_EX)
+	RECT tr = {};
+
 	if (!gpSet->isTabsInCaption)
 	{
 		_ASSERTE(gpConEmu->GetDwmClientRectTopOffset() == 0); // CheckIt, must be zero

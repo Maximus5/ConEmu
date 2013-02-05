@@ -372,7 +372,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			// Теперь мы гарантированно знаем дескриптор окна консоли
 			mp_RCon->SetHwnd(hWnd, TRUE);
 			// Открыть мэппинги, выставить KeyboardLayout, и т.п.
-			mp_RCon->OnServerStarted(pIn->StartStop.dwPID, hServerProcessHandle);
+			mp_RCon->OnServerStarted(pIn->StartStop.dwPID, hServerProcessHandle, pIn->StartStop.dwKeybLayout);
 		}
 
 		AllowSetForegroundWindow(nPID);
@@ -461,7 +461,11 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 				        && (mp_RCon->mp_RBuf->isScroll()
 				            || (mp_RCon->mn_DefaultBufferHeight && bRunViaCmdExe)))
 				{
-					_ASSERTE(mp_RCon->m_Args.bDetached || mp_RCon->mn_DefaultBufferHeight == mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/ || mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/ == mp_RCon->TextHeight());
+					// Смысл ассерта в том, что консоль запускаемая ИЗ ConEmu должна стартовать
+					// с корректным размером (заранее заданные через параметры для ConEmuC)
+					// А вот если идет аттач внешних консолей - то размер будет отличаться (и это нормально)
+					_ASSERTE(mp_RCon->mb_WasStartDetached || mp_RCon->mn_DefaultBufferHeight == mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/ || mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/ == mp_RCon->TextHeight());
+
 					pOut->StartStopRet.nBufferHeight = max(mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/,mp_RCon->mn_DefaultBufferHeight);
 					_ASSERTE(mp_RCon->mp_RBuf->TextHeight()/*con.nTextHeight*/ > 5);
 					pOut->StartStopRet.nHeight = mp_RCon->mp_RBuf->TextHeight()/*con.nTextHeight*/;
@@ -881,7 +885,8 @@ CESERVER_REQ* CRealServer::cmdLangChange(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	// А HKL от него отличается, так что передаем DWORD
 	// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
 	DWORD dwName = pIn->dwData[0];
-	gpConEmu->OnLangChangeConsole(mp_RCon->mp_VCon, dwName);
+
+	mp_RCon->OnConsoleKeyboardLayout(dwName);
 
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
 

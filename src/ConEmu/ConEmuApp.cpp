@@ -1185,7 +1185,7 @@ int MessageBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND hP
 void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine)
 {
 #ifdef _DEBUG
-	_ASSERTE(FALSE);
+//	_ASSERTE(FALSE);
 #endif
 
 	int nRet = IDRETRY;

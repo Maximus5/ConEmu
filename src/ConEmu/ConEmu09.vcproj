@@ -1668,13 +1668,6 @@
 			<File
 				RelativePath=".\ConfirmDlg.cpp"
 				>
-				<FileConfiguration
-					Name="Debug_C|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\CustomFonts.cpp"
@@ -1761,6 +1754,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\OptionsHelp.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\common\RConStartArgs.cpp"
 				>
 			</File>
@@ -1786,6 +1783,10 @@
 			</File>
 			<File
 				RelativePath="..\common\RgnDetect.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RunQueue.cpp"
 				>
 			</File>
 			<File
@@ -2055,6 +2056,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\ConEmuPipeMode.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ConfirmDlg.h"
 				>
 			</File>
@@ -2175,6 +2180,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\OptionsHelp.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\PipeServer.h"
 				>
 			</File>
@@ -2204,6 +2213,10 @@
 			</File>
 			<File
 				RelativePath="..\common\RgnDetect.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RunQueue.h"
 				>
 			</File>
 			<File

@@ -409,7 +409,13 @@ BOOL MyCreateDirectory(wchar_t* asPath)
 	{
 		dwErr = GetLastError();
 		if (pszSlash && (dwErr !=  ERROR_ACCESS_DENIED))
+		{
 			bOk = MyCreateDirectory(asPath);
+		}
+		else if (dwErr == ERROR_ALREADY_EXISTS)
+		{
+			_ASSERTE(FALSE && "Must not get here");
+		}
 	}
 
 	if (pszSlash)

@@ -964,6 +964,7 @@
     <ClCompile Include="Options.cpp" />
     <ClCompile Include="OptionsClass.cpp" />
     <ClCompile Include="OptionsFast.cpp" />
+    <ClCompile Include="OptionsHelp.cpp" />
     <ClCompile Include="..\common\RConStartArgs.cpp" />
     <ClCompile Include="RealBuffer.cpp" />
     <ClCompile Include="RealConsole.cpp" />
@@ -971,6 +972,7 @@
     <ClCompile Include="Recreate.cpp" />
     <ClCompile Include="Registry.cpp" />
     <ClCompile Include="..\common\RgnDetect.cpp" />
+    <ClCompile Include="RunQueue.cpp" />
     <ClCompile Include="ScreenDump.cpp" />
     <ClCompile Include="Status.cpp" />
     <ClCompile Include="TabBar.cpp" />
@@ -1025,6 +1027,7 @@
     <ClInclude Include="Options.h" />
     <ClInclude Include="OptionsClass.h" />
     <ClInclude Include="OptionsFast.h" />
+    <ClInclude Include="OptionsHelp.h" />
     <ClInclude Include="..\common\PipeServer.h" />
     <ClInclude Include="..\common\RConStartArgs.h" />
     <ClInclude Include="RealBuffer.h" />
@@ -1034,6 +1037,7 @@
     <ClInclude Include="Registry.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="..\common\RgnDetect.h" />
+    <ClInclude Include="RunQueue.h" />
     <ClInclude Include="ScreenDump.h" />
     <ClInclude Include="Status.h" />
     <ClInclude Include="TabBar.h" />

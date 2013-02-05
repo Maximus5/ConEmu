@@ -1626,6 +1626,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\ConEmuPipeMode.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Console2.h"
 				>
 			</File>

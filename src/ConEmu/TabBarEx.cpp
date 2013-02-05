@@ -298,7 +298,7 @@ void TabBarClass::CreateRebar()
     //if (!mh_TabTip || !IsWindow(mh_TabTip))
 	//{
     //    mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-    //                          WS_POPUP | TTS_ALWAYSTIP /*| TTS_BALLOON*/ | TTS_NOPREFIX,
+    //                          WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
     //                          CW_USEDEFAULT, CW_USEDEFAULT,
     //                          CW_USEDEFAULT, CW_USEDEFAULT,
     //                          ghWnd, NULL, 
@@ -309,7 +309,7 @@ void TabBarClass::CreateRebar()
 	if (!mh_Balloon || !IsWindow(mh_Balloon))
 	{
 		mh_Balloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-			WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
+			gpSetCls->BalloonStyle() | WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
 			CW_USEDEFAULT, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT,
 			ghWnd, NULL, 
@@ -815,6 +815,7 @@ void TabBarClass::PaintTabs(const PaintDC& dc, const RECT &rcCaption, const RECT
 {
 	//if ((rcTabs.right - rcTabs.left) < MIN_TAB_WIDTH)
 	//	return;
+	_ASSERTE(gpConEmu->isMainThread());
 
 	m_TabDrawStyle = gpConEmu->DrawType();
 

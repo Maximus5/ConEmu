@@ -430,6 +430,8 @@ void CToolBarClass::Paint(const PaintDC& dc, const RECT& rcTB)
 	if (!dc.hDC)
 		return;
 
+	_ASSERTE(gpConEmu->isMainThread());
+
 	int nWidth = 0;
 	int nMaxWidth = rcTB.right - rcTB.left + 1;
 	if (nMaxWidth < 2)

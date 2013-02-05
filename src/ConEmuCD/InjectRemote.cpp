@@ -261,8 +261,8 @@ wrap:
 int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 {
 	int iRc = -1;
-	BOOL lbWin64 = WIN3264TEST(IsWindows64(),TRUE);
-	BOOL is32bit;
+	bool lbWin64 = WIN3264TEST((IsWindows64()!=0),true);
+	bool is32bit;
 	DWORD nWrapperWait = (DWORD)-1, nWrapperResult = (DWORD)-1;
 	HANDLE hProc = NULL;
 	wchar_t szSelf[MAX_PATH+16], szHooks[MAX_PATH+16];
@@ -292,11 +292,11 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 	// ѕерезапустить 32битную версию ConEmuC.exe
 	if (!lbWin64)
 	{
-		is32bit = TRUE; // x86 OS!
+		is32bit = true; // x86 OS!
 	}
 	else
 	{
-		is32bit = FALSE; // x64 OS!
+		is32bit = false; // x64 OS!
 
 		// ѕровер€ем, кто такой nRemotePID
 		HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
@@ -316,23 +316,23 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 					#ifdef _WIN64
 					_ASSERTE(bWow64==FALSE);
 					#endif
-					is32bit = TRUE;
+					is32bit = true;
 				}
 			}
 		}
 	}
 
-	if (is32bit != WIN3264TEST(TRUE,FALSE))
+	if (is32bit != WIN3264TEST(true,false))
 	{
 		// ѕо идее, такого быть не должно. ConEmu должен был запустить соответствующий conemuC*.exe
-		_ASSERTE(is32bit == WIN3264TEST(TRUE,FALSE));
+		_ASSERTE(is32bit == WIN3264TEST(true,false));
 		PROCESS_INFORMATION pi = {};
 		STARTUPINFO si = {sizeof(si)};
 
 		_wcscpy_c(pszNamePtr, 16, is32bit ? L"ConEmuC.exe" : L"ConEmuC64.exe");
 		_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /INJECT=%u", nRemotePID);
 
-		if (!CreateProcess(szSelf, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
+		if (!CreateProcess(szHooks, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
 		{
 			iRc = -202;
 			goto wrap;
@@ -341,7 +341,7 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 		GetExitCodeProcess(pi.hProcess, &nWrapperResult);
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
-		if (nWrapperResult != 0)
+		if (nWrapperResult != CERR_HOOKS_WAS_SET)
 		{
 			iRc = -203;
 			SetLastError(nWrapperResult);

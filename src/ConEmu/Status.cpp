@@ -51,6 +51,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define STATUS_PAINT_DELAY 500
 
+#undef DUMP_STATUS_IMG
+#ifdef _DEBUG
+	#include "ScreenDump.h"
+
+	#define DUMP_STATUS_IMG
+#endif
 
 const wchar_t gsReady[] = L"Waiting...";
 
@@ -331,8 +337,24 @@ bool CStatus::LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMa
 	return lbRc;
 }
 
-void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
+void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 {
+	#ifdef DUMP_STATUS_IMG
+	static bool bNeedDumpImage;
+	#endif
+
+	_ASSERTE(gpConEmu->isMainThread());
+
+	RECT rcStatus = {0,0};
+	if (prcStatus)
+	{
+		rcStatus = *prcStatus;
+	}
+	else
+	{
+		GetStatusBarClientRect(&rcStatus);
+	}
+
 	// —разу сбросим
 	//mb_Invalidated = false;
 
@@ -365,6 +387,9 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 		mn_BmpSize.cx = nStatusWidth; mn_BmpSize.cy = nStatusHeight;
 	}
 
+	HDC hDrawDC = mh_MemDC;
+	POINT ptUL = {0,0};
+
 	bool lbSysColor = (gpSet->isStatusBarFlags & csf_SystemColors) == csf_SystemColors;
 	bool lbFade = lbSysColor ? false : gpSet->isFadeInactive && !gpConEmu->isMeForeground(true);
 
@@ -376,21 +401,29 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 	//HPEN hLight = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
 	//HPEN hShadow = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DDKSHADOW));
 	HPEN hDash = CreatePen(PS_SOLID, 1, crDash);
-	HPEN hOldP = (HPEN)SelectObject(mh_MemDC, hDash);
+	HPEN hOldP = (HPEN)SelectObject(hDrawDC, hDash);
 
 	TODO("sStatusFontFace");
 	HFONT hFont = CreateFont(gpSet->StatusBarFontHeight(), 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gpSet->nStatusFontCharSet, OUT_DEFAULT_PRECIS,
 		CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gpSet->sStatusFontFace);
-	HFONT hOldF = (HFONT)SelectObject(mh_MemDC, hFont);
+	HFONT hOldF = (HFONT)SelectObject(hDrawDC, hFont);
 
-	RECT rcFill = {0,0, nStatusWidth, nStatusHeight};
-	FillRect(mh_MemDC, &rcFill, hBr);
+	RECT rcFill = {ptUL.x, ptUL.y, ptUL.x+nStatusWidth, ptUL.y+nStatusHeight};
+	
+	#ifdef DUMP_STATUS_IMG
+	if (bNeedDumpImage)
+	{
+		FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH));
+	}
+	#endif
+
+	FillRect(hDrawDC, &rcFill, hBr);
 
 
 	if (gpSet->isStatusBarFlags & csf_HorzDelim)
 	{
-		MoveToEx(mh_MemDC, rcFill.left, rcFill.top, NULL);
-		LineTo(mh_MemDC, rcFill.right+1, rcFill.top);
+		MoveToEx(hDrawDC, rcFill.left, rcFill.top, NULL);
+		LineTo(hDrawDC, rcFill.right+1, rcFill.top);
 	}
 
 
@@ -424,7 +457,7 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 	int iInfoID = -1;
 	SIZE szVerSize = {};
 
-	GetTextExtentPoint32(mh_MemDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &szVerSize);
+	GetTextExtentPoint32(hDrawDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &szVerSize);
 
 	//while (nID <= ces_Last)
 	for (size_t ii = 0; ii < countof(gStatusCols); ii++)
@@ -575,12 +608,12 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 			continue;
 		}
 
-		if (!GetTextExtentPoint32(mh_MemDC, m_Items[nDrawCount].sText, m_Items[nDrawCount].nTextLen, &m_Items[nDrawCount].TextSize) || (m_Items[nDrawCount].TextSize.cx <= 0))
+		if (!GetTextExtentPoint32(hDrawDC, m_Items[nDrawCount].sText, m_Items[nDrawCount].nTextLen, &m_Items[nDrawCount].TextSize) || (m_Items[nDrawCount].TextSize.cx <= 0))
 		{
 			if (nID != csi_Info)
 				continue;
 		}
-		if (*m_Items[nDrawCount].szFormat && GetTextExtentPoint32(mh_MemDC, m_Items[nDrawCount].szFormat, lstrlen(m_Items[nDrawCount].szFormat), &szTemp))
+		if (*m_Items[nDrawCount].szFormat && GetTextExtentPoint32(hDrawDC, m_Items[nDrawCount].szFormat, lstrlen(m_Items[nDrawCount].szFormat), &szTemp))
 		{
 			m_Items[nDrawCount].TextSize.cx = max(m_Items[nDrawCount].TextSize.cx, szTemp.cx);
 		}
@@ -646,10 +679,11 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 					nTotalWidth += (m_Items[i].TextSize.cx + 2*nGapWidth + nDashWidth);
 				}
 			}
-			else
-			{
-				break; // дальше смысла нет - €чейки кончились
-			}
+			// -- don't break, may be further columns!
+			//else
+			//{
+			//	break; // дальше смысла нет - €чейки кончились
+			//}
 		}
 
 
@@ -665,17 +699,20 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 
 	
 
-	SetTextColor(mh_MemDC, crText);
-	SetBkColor(mh_MemDC, crBack);
-	SetBkMode(mh_MemDC, TRANSPARENT);
+	SetTextColor(hDrawDC, crText);
+	SetBkColor(hDrawDC, crBack);
+	SetBkMode(hDrawDC, TRANSPARENT);
 
-	x = 0;
+	x = ptUL.x;
 	for (size_t i = 0; i < nDrawCount; i++)
 	{
+		BOOL bDrawRC = FALSE;
+		DWORD nDrawErr = 0;
+
 		if (!m_Items[i].bShow || (m_Items[i].nID >= csi_Last) || (i && !m_Items[i].nID))
 			continue;
 
-		RECT rcField = {x, 0, x+m_Items[i].TextSize.cx+2*nGapWidth, nStatusHeight};
+		RECT rcField = {x, ptUL.y, x+m_Items[i].TextSize.cx+2*nGapWidth, ptUL.y+nStatusHeight};
 		if (rcField.right > nStatusWidth)
 		{
 			_ASSERTE(rcField.right <= nStatusWidth); // должно было отсечьс€ на предыдущем цикле!
@@ -698,14 +735,14 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 				int nX = rcField.right - nW - 1;
 				int nY = rcField.top-1;
 				int nR = rcField.right;
-				MoveToEx(mh_MemDC, nX, rcField.bottom, NULL);
-				LineTo(mh_MemDC, nR, nY);
+				MoveToEx(hDrawDC, nX, rcField.bottom, NULL);
+				LineTo(hDrawDC, nR, nY);
 				nX += nShift; nY += nShift;
-				MoveToEx(mh_MemDC, nX, rcField.bottom, NULL);
-				LineTo(mh_MemDC, nR, nY);
+				MoveToEx(hDrawDC, nX, rcField.bottom, NULL);
+				LineTo(hDrawDC, nR, nY);
 				nX += nShift; nY += nShift;
-				MoveToEx(mh_MemDC, nX, rcField.bottom, NULL);
-				LineTo(mh_MemDC, nR, nY);
+				MoveToEx(hDrawDC, nX, rcField.bottom, NULL);
+				LineTo(hDrawDC, nR, nY);
 			}
 		}
 		else
@@ -713,16 +750,16 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 			switch (m_Items[i].nID)
 			{
 			case csi_SyncInside:
-				SetTextColor(mh_MemDC, (gpConEmu->mp_Inside && gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir) ? crText : crDash);
+				SetTextColor(hDrawDC, (gpConEmu->mp_Inside && gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir) ? crText : crDash);
 				break;
 			case csi_CapsLock:
-				SetTextColor(mh_MemDC, mb_Caps ? crText : crDash);
+				SetTextColor(hDrawDC, mb_Caps ? crText : crDash);
 				break;
 			case csi_NumLock:
-				SetTextColor(mh_MemDC, mb_Num ? crText : crDash);
+				SetTextColor(hDrawDC, mb_Num ? crText : crDash);
 				break;
 			case csi_ScrollLock:
-				SetTextColor(mh_MemDC, mb_Scroll ? crText : crDash);
+				SetTextColor(hDrawDC, mb_Scroll ? crText : crDash);
 				break;
 			default:
 				;
@@ -730,16 +767,46 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 
 			RECT rcText = {rcField.left+1, rcField.top+1, rcField.right-1, rcField.bottom-1};
 
+			#ifdef DUMP_STATUS_IMG
+			if (bNeedDumpImage)
+			{
+				if (hDrawDC != hPaint)
+				{
+					FillRect(hDrawDC, &rcText, (HBRUSH)GetStockObject(BLACK_BRUSH));
+					DumpImage(mh_MemDC, mh_Bmp, nStatusWidth, nStatusHeight, L"T:\\StatusMem.png");
+					FillRect(hDrawDC, &rcText, hBr);
+
+					SelectObject(hDrawDC, hFont);
+					SetTextColor(hDrawDC, crText);
+					SetBkColor(hDrawDC, crBack);
+					SetBkMode(hDrawDC, OPAQUE);
+				}
+			}
+			#endif
+
 			if (!i && szVerSize.cx > 0)
 			{
-				DrawText(mh_MemDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &rcText, 
+				bDrawRC = DrawText(hDrawDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &rcText, 
 					DT_RIGHT|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS);
 				rcText.right -= szVerSize.cx;
 			}
 
-			DrawText(mh_MemDC, m_Items[i].sText, m_Items[i].nTextLen, &rcText, 
+			bDrawRC = DrawText(hDrawDC, m_Items[i].sText, m_Items[i].nTextLen, &rcText, 
 				((m_Items[i].nID == csi_Info) ? DT_LEFT : DT_CENTER)
 				|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS);
+
+			if (bDrawRC <= 0)
+				nDrawErr = GetLastError();
+
+			#ifdef DUMP_STATUS_IMG
+			if (bNeedDumpImage)
+			{
+				if (hDrawDC != hPaint)
+				{
+					DumpImage(mh_MemDC, mh_Bmp, nStatusWidth, nStatusHeight, L"T:\\StatusMem.png");
+				}
+			}
+			#endif
 
 			switch (m_Items[i].nID)
 			{
@@ -747,7 +814,7 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 			case csi_CapsLock:
 			case csi_NumLock:
 			case csi_ScrollLock:
-				SetTextColor(mh_MemDC, crText);
+				SetTextColor(hDrawDC, crText);
 				break;
 			default:
 				;
@@ -755,21 +822,51 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 
 			if ((gpSet->isStatusBarFlags & csf_VertDelim) && ((i+1) < nDrawCount))
 			{
-				MoveToEx(mh_MemDC, rcField.right, rcField.top, NULL);
-				LineTo(mh_MemDC, rcField.right, rcField.bottom+1);
+				MoveToEx(hDrawDC, rcField.right, rcField.top, NULL);
+				LineTo(hDrawDC, rcField.right, rcField.bottom+1);
 			}
+
+			UNREFERENCED_PARAMETER(nDrawErr);
 		}
+
+		#ifdef DUMP_STATUS_IMG
+		if (hDrawDC == hPaint)
+		{
+			GdiFlush();
+		}
+		#endif
 
 		x = rcField.right + nDashWidth;
 	}
 
 
 wrap:
-	BitBlt(hPaint, rcStatus.left, rcStatus.top, nStatusWidth, nStatusHeight, mh_MemDC, 0,0, SRCCOPY);
+	#ifdef DUMP_STATUS_IMG
+	if (bNeedDumpImage)
+	{
+		if (hDrawDC != hPaint)
+			DumpImage(mh_MemDC, mh_Bmp, nStatusWidth, nStatusHeight, L"T:\\StatusMem.png");
+		DumpImage(hPaint, NULL, rcStatus.left, rcStatus.top, nStatusWidth, nStatusHeight, L"T:\\StatusDst.png");
+	}
+	#endif
+
+	if (hDrawDC != hPaint)
+	{
+		DWORD nErr = 0;
+		BOOL bPaintOK = BitBlt(hPaint, rcStatus.left, rcStatus.top, nStatusWidth, nStatusHeight, hDrawDC, 0,0, SRCCOPY);
+		if (!bPaintOK)
+		{
+			#ifdef _DEBUG
+			nErr = GetLastError();
+			_ASSERTE(bPaintOK);
+			bPaintOK = FALSE;
+			#endif
+		}
+	}
 
 
-	SelectObject(mh_MemDC, hOldF);
-	SelectObject(mh_MemDC, hOldP);
+	SelectObject(hDrawDC, hOldF);
+	SelectObject(hDrawDC, hOldP);
 
 	DeleteObject(hBr);
 	DeleteObject(hDash);
@@ -786,7 +883,7 @@ wrap:
 }
 
 // true = обновл€ть строго, сменилс€ шрифт, размер, или еще что...
-void CStatus::UpdateStatusBar(bool abForce /*= false*/)
+void CStatus::UpdateStatusBar(bool abForce /*= false*/, bool abRepaintNow /*= false*/)
 {
 	if (!gpSet->isStatusBarShow || !ghWnd)
 		return;
@@ -804,10 +901,17 @@ void CStatus::UpdateStatusBar(bool abForce /*= false*/)
 			return; // обновитс€ по следующему таймеру
 	}
 
-	InvalidateStatusBar();
+	RECT rcInvalidated = {};
+
+	InvalidateStatusBar(&rcInvalidated);
+
+	if (abRepaintNow)
+	{
+		RedrawWindow(ghWnd, &rcInvalidated, NULL, RDW_INTERNALPAINT|RDW_NOERASE|RDW_NOFRAME|RDW_UPDATENOW|RDW_VALIDATE);
+	}
 }
 
-void CStatus::InvalidateStatusBar()
+void CStatus::InvalidateStatusBar(LPRECT rcInvalidated /*= NULL*/)
 {
 	if (gpConEmu->isIconic())
 		return;
@@ -821,6 +925,11 @@ void CStatus::InvalidateStatusBar()
 	// (не все данные хран€тс€ в объекте, например CAPS/NUM/SCRL нужно провер€ть)
 
 	InvalidateRect(ghWnd, &rcClient, FALSE);
+
+	if (rcInvalidated)
+	{
+		*rcInvalidated = rcClient;
+	}
 }
 
 void CStatus::OnTimer()

@@ -2117,7 +2117,7 @@ HWND TabBarClass::CreateTabbar(bool abDummyCreate /*= false*/)
 		if (!mh_TabTip || !IsWindow(mh_TabTip))
 		{
 			mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-									   WS_POPUP | TTS_ALWAYSTIP /*| TTS_BALLOON*/ | TTS_NOPREFIX,
+									   WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
 									   CW_USEDEFAULT, CW_USEDEFAULT,
 									   CW_USEDEFAULT, CW_USEDEFAULT,
 									   mh_Tabbar, NULL,
@@ -2135,7 +2135,7 @@ HWND TabBarClass::CreateTabbar(bool abDummyCreate /*= false*/)
 	if (!abDummyCreate && (!mh_Balloon || !IsWindow(mh_Balloon)))
 	{
 		mh_Balloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-		                            WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
+		                            gpSetCls->BalloonStyle() | WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
 		                            CW_USEDEFAULT, CW_USEDEFAULT,
 		                            CW_USEDEFAULT, CW_USEDEFAULT,
 		                            mh_Tabbar, NULL,

@@ -77,7 +77,7 @@ bool CGuiServer::Start()
 	lpfnOnConnected = CGuiServer::OnGuiServerConnected;
 #endif
 	
-	if (!mp_GuiServer->StartPipeServer(ms_ServerPipe, 0, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, NULL))
+	if (!mp_GuiServer->StartPipeServer(ms_ServerPipe, (LPARAM)this, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, NULL))
 	{
 		// Ошибка уже показана
 		return false;
@@ -115,7 +115,15 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 	BOOL lbRc = FALSE;
 	CGuiServer* pGSrv = (CGuiServer*)lParam;
 
+	if (!pGSrv)
+	{
+		_ASSERTE(((CGuiServer*)lParam)!=NULL);
+		pGSrv = &gpConEmu->m_GuiServer;
+	}
 	
+	if (pIn->hdr.bAsync)
+		pGSrv->mp_GuiServer->BreakConnection(pInst);
+
 	gpSetCls->debugLogCommand(pIn, TRUE, timeGetTime(), 0, pGSrv ? pGSrv->ms_ServerPipe : NULL);
 
 	#ifdef _DEBUG
@@ -321,7 +329,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 				goto wrap;
 
-			if (pIn->dwData[0] == 1)
+			if (pIn->SrvStartStop.Started == srv_Started)
 			{
 				// Запущен процесс сервера
 				HWND hConWnd = (HWND)pIn->dwData[1];
@@ -334,8 +342,9 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				//2010-05-21 Поскольку это критично - лучше ждать до упора, хотя может быть DeadLock?
 				//l = SendMessageTimeout(ghWnd, gpConEmu->mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID,
 				//	SMTO_BLOCK, 5000, &dwRc);
+
 				//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
-				MsgSrvStartedArg arg = {hConWnd, pIn->hdr.nSrcPID, nStartTick};
+				MsgSrvStartedArg arg = {hConWnd, pIn->hdr.nSrcPID, pIn->SrvStartStop.dwKeybLayout, nStartTick};
 				SendMessage(ghWnd, gpConEmu->mn_MsgSrvStarted, 0, (LPARAM)&arg);
 				HWND hWndDC = arg.hWndDc;
 				HWND hWndBack = arg.hWndBack;
@@ -361,7 +370,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				ppReply->StartStopRet.hWndBack = hWndBack;
 				ppReply->StartStopRet.dwPID = GetCurrentProcessId();
 			}
-			else if (pIn->dwData[0] == 101)
+			else if (pIn->SrvStartStop.Started == srv_Stopped)
 			{
 				// Процесс сервера завершается
 				CRealConsole* pRCon = NULL;

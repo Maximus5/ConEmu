@@ -1084,7 +1084,11 @@ struct PipeServer
 			pPipe->nThreadId = 0;
 			//pPipe->hThreadEnd = CreateEvent(NULL, TRUE, FALSE, NULL);
 			PLOG("StartPipeInstance.Thread");
+			DWORD nCreateBegin = GetTickCount();
 			pPipe->hThread = CreateThread(NULL, 0, _PipeServerThread, pPipe, 0, &pPipe->nThreadId);
+			DWORD nCreateEnd = GetTickCount();
+			DWORD nThreadCreationTime = nCreateEnd - nCreateBegin;
+			UNREFERENCED_PARAMETER(nThreadCreationTime);
 			if (pPipe->hThread == NULL)
 			{
 				//_ASSERTEX(m_Pipes[i].hThread!=NULL);

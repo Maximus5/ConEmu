@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -809,7 +809,7 @@ void Settings::LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECu
 
 	// Is there new style was saved?
 	bool bActive = reg->Load(L"CursorTypeActive", pActive->Raw);
-	DEBUGTEST(bInactive = false);
+	DEBUGTEST(bool bInactive = false);
 
 	if (bActive)
 	{

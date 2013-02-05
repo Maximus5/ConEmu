@@ -58,10 +58,12 @@ $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\Options.obj \
 $(INTDIR)\OptionsClass.obj \
 $(INTDIR)\OptionsFast.obj \
+$(INTDIR)\OptionsHelp.obj \
 $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\RealBuffer.obj \
 $(INTDIR)\RealConsole.obj \
 $(INTDIR)\RealServer.obj \
+$(INTDIR)\RunQueue.obj \
 $(INTDIR)\Recreate.obj \
 $(INTDIR)\Registry.obj \
 $(INTDIR)\RgnDetect.obj \
@@ -290,6 +292,8 @@ $(INTDIR)\OptionsClass.obj: OptionsClass.cpp OptionsClass.h Options.h Background
 
 $(INTDIR)\OptionsFast.obj: OptionsFast.cpp OptionsFast.h Options.h
 
+$(INTDIR)\OptionsHelp.obj: OptionsHelp.cpp OptionsHelp.h
+
 $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
 
 $(INTDIR)\RealBuffer.obj: RealBuffer.cpp RealBuffer.h RealConsole.h  ../common/Common.hpp
@@ -297,6 +301,8 @@ $(INTDIR)\RealBuffer.obj: RealBuffer.cpp RealBuffer.h RealConsole.h  ../common/C
 $(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h RealServer.h ../common/RConStartArgs.h ../common/Common.hpp ../common/PipeServer.h
 
 $(INTDIR)\RealServer.obj: RealServer.cpp RealConsole.h RealServer.h ../common/Common.hpp ../common/PipeServer.h
+
+$(INTDIR)\RunQueue.obj: RunQueue.cpp RunQueue.h
 
 $(INTDIR)\Recreate.obj: Recreate.cpp Recreate.h
 

@@ -24,9 +24,11 @@ SRCS =  \
 		Options.cpp        \
 		OptionsClass.cpp   \
 		OptionsFast.cpp    \
+		OptionsHelp.cpp    \
 		RealBuffer.cpp     \
 		RealConsole.cpp    \
 		RealServer.cpp     \
+		RunQueue.cpp       \
 		Recreate.cpp       \
 		Registry.cpp       \
 		ScreenDump.cpp     \

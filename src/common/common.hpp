@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    122
+#define CESERVER_REQ_VER    123
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1380,6 +1380,19 @@ struct CESERVER_REQ_SETGUIEXTERN
 	//RECT rcOldPos; // Если bDetach - здесь передается "старое" положение окна
 };
 
+enum SrvStartStopType
+{
+	srv_Started = 1,
+	srv_Stopped = 101,
+};
+
+struct CESERVER_REQ_SRVSTARTSTOP
+{
+	SrvStartStopType Started;
+	HWND2 hConWnd;
+	DWORD dwKeybLayout;
+};
+
 enum StartStopType
 {
 	sst_ServerStart    = 0,
@@ -1404,6 +1417,7 @@ struct CESERVER_REQ_STARTSTOP
 	BOOL  bRootIsCmdExe;
 	BOOL  bUserIsAdmin;
 	BOOL  bMainServerClosing; // if (nStarted == sst_AltServerStop)
+	DWORD dwKeybLayout; // Только при запуске сервера
 	// А это приходит из консоли, вдруго консольная программа успела поменять размер буфера
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 	// Максимальный размер консоли на текущем шрифте
@@ -1735,6 +1749,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_RETSIZE SetSizeRet;
 		CESERVER_REQ_OUTPUTFILE OutputFile;
 		CESERVER_REQ_NEWCMD NewCmd;
+		CESERVER_REQ_SRVSTARTSTOP SrvStartStop;
 		CESERVER_REQ_STARTSTOP StartStop;
 		CESERVER_REQ_STARTSTOPRET StartStopRet;
 		CESERVER_REQ_CONEMUTAB Tabs;

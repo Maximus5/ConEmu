@@ -228,6 +228,7 @@ protected:
 		COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
 		USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
 		DWORD LastStartInitBuffersTick, LastEndInitBuffersTick, LastStartReadBufferTick, LastEndReadBufferTick;
+		BOOL bInGetConsoleData;
 		wchar_t *pConChar;
 		WORD  *pConAttr;
 		COORD mcr_FileLineStart, mcr_FileLineEnd; // Подсветка строк ошибок компиляторов

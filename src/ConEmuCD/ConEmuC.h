@@ -276,6 +276,7 @@ HWND FindConEmuByPID();
 typedef BOOL (__stdcall *FGetConsoleKeyboardLayoutName)(wchar_t*);
 extern FGetConsoleKeyboardLayoutName pfnGetConsoleKeyboardLayoutName;
 void CheckKeyboardLayout();
+bool IsKeyboardLayoutChanged(DWORD* pdwLayout);
 int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
 typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dwProcessCount);
 extern FGetConsoleProcessList pfnGetConsoleProcessList;
@@ -364,6 +365,7 @@ typedef enum tag_RunMode
 
 extern RunMode gnRunMode;
 
+extern BOOL gbDumpServerInitStatus;
 extern BOOL gbNoCreateProcess;
 extern BOOL gbDebugProcess;
 extern int  gnCmdUnicodeMode;

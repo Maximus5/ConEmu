@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_SERVER_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
+	#define SHOW_STARTED_PRINT_LITE
 //	#define SHOW_INJECT_MSGBOX
 //	#define SHOW_INJECTREM_MSGBOX
 //	#define SHOW_ATTACH_MSGBOX
@@ -183,6 +184,7 @@ HANDLE ghFarInExecuteEvent;
 
 RunMode gnRunMode = RM_UNDEFINED;
 
+BOOL  gbDumpServerInitStatus = FALSE;
 BOOL  gbNoCreateProcess = FALSE;
 BOOL  gbDontInjectConEmuHk = FALSE;
 BOOL  gbDebugProcess = FALSE;
@@ -296,7 +298,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			#ifdef SHOW_STARTED_MSGBOX
 			if (!IsDebuggerPresent())
 			{
-				char szMsg[128]; msprintf(szMsg, countof(szMsg), "ConEmuCD*.dll loaded, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+				char szMsg[128]; msprintf(szMsg, countof(szMsg), WIN3264TEST("ConEmuCD.dll","ConEmuCD64.dll") " loaded, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 				MessageBoxA(NULL, szMsg, "ConEmu server" WIN3264TEST(""," x64"), 0);
 			}
 			#endif
@@ -670,10 +672,30 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 		}
 	}
 
+#if defined(SHOW_STARTED_PRINT_LITE)
+	DWORD nStartTick = GetTickCount();
+	if (gnRunMode == RM_SERVER)
+	{
+		_printf("Starting root: ");
+		_wprintf(lpCommandLine ? lpCommandLine : lpApplicationName ? lpApplicationName : L"<NULL>");
+	}
+#endif
+
 	SetLastError(0);
 
 	BOOL lbRc = CreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 	DWORD dwErr = GetLastError();
+
+#if defined(SHOW_STARTED_PRINT_LITE)
+	DWORD nStartDuration = GetTickCount() - nStartTick;
+	if (gnRunMode == RM_SERVER)
+	{
+		if (lbRc)
+			_printf("\nSuccess (%u ms), PID=%u\n\n", nStartDuration, lpProcessInformation->dwProcessId);
+		else
+			_printf("\nFailed (%u ms), Error code=%u(x%04X)\n", nStartDuration, dwErr, dwErr);
+	}
+#endif
 
 	#ifdef _DEBUG
 	OnProcessCreatedDbg(lbRc, dwErr, lpProcessInformation, NULL);
@@ -757,7 +779,8 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	//	#endif
 	//	return CERR_NOTENOUGHMEM1;
 	//}
-#ifdef SHOW_STARTED_PRINT
+
+#if defined(SHOW_STARTED_PRINT)
 	BOOL lbDbgWrite; DWORD nDbgWrite; HANDLE hDbg; char szDbgString[255], szHandles[128];
 	sprintf(szDbgString, "ConEmuC: PID=%u", GetCurrentProcessId());
 	MessageBoxA(0, GetCommandLineA(), szDbgString, MB_SYSTEMMODAL);
@@ -775,7 +798,16 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	CloseHandle(hDbg);
 	//sprintf(szDbgString, "ConEmuC: PID=%u", GetCurrentProcessId());
 	//MessageBoxA(0, "Press Ok to continue", szDbgString, MB_SYSTEMMODAL);
+#elif defined(SHOW_STARTED_PRINT_LITE)
+	{
+	wchar_t szPath[MAX_PATH]; GetModuleFileNameW(NULL, szPath, countof(szPath));
+	wchar_t szDbgMsg[MAX_PATH*2];
+	_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s started, PID=%u\n", PointToName(szPath), GetCurrentProcessId());
+	_wprintf(szDbgMsg);
+	gbDumpServerInitStatus = TRUE;
+	}
 #endif
+
 	int iRc = 100;
 	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
 	STARTUPINFOW si = {sizeof(STARTUPINFOW)};
@@ -1586,6 +1618,13 @@ wait:
 wrap:
 	ShutdownSrvStep(L"Finalizing.1");
 
+#if defined(SHOW_STARTED_PRINT_LITE)
+	if (gnRunMode == RM_SERVER)
+	{
+		_printf("\n" WIN3264TEST("ConEmuC.exe","ConEmuC64.exe") " finalizing, PID=%u\n", GetCurrentProcessId());
+	}
+#endif
+
 	#ifdef VALIDATE_AND_DELAY_ON_TERMINATE
 	// Проверка кучи
 	xf_validate(NULL);
@@ -1863,7 +1902,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 		#ifdef SHOW_ALTERNATIVE_MSGBOX
 		if (!IsDebuggerPresent())
 		{
-			char szMsg[128]; msprintf(szMsg, countof(szMsg), "AltServer: ConEmuCD*.dll loaded, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+			char szMsg[128]; msprintf(szMsg, countof(szMsg), "AltServer: " WIN3264TEST("ConEmuCD.dll","ConEmuCD64.dll") " loaded, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 			MessageBoxA(NULL, szMsg, "ConEmu AltServer" WIN3264TEST(""," x64"), 0);
 		}
 		#endif
@@ -4693,9 +4732,11 @@ void SendStarted()
 		{
 		case RM_SERVER:
 			pIn->StartStop.nStarted = sst_ServerStart;
+			IsKeyboardLayoutChanged(&pIn->StartStop.dwKeybLayout);
 			break;
 		case RM_ALTSERVER:
 			pIn->StartStop.nStarted = sst_AltServerStart;
+			IsKeyboardLayoutChanged(&pIn->StartStop.dwKeybLayout);
 			break;
 		case RM_COMSPEC:
 			pIn->StartStop.nParentFarPID = gpSrv->dwParentFarPID;
@@ -9324,9 +9365,10 @@ void DisableAutoConfirmExit(BOOL abFromFarPlugin)
 //	return(b);
 //}
 
-//WARNING("BUGBUG: x64 US-Dvorak"); - done
-void CheckKeyboardLayout()
+bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 {
+	bool bChanged = false;
+
 	if (pfnGetConsoleKeyboardLayoutName)
 	{
 		wchar_t szCurKeybLayout[32];
@@ -9340,13 +9382,13 @@ void CheckKeyboardLayout()
 		{
 			if (lstrcmpW(szCurKeybLayout, gpSrv->szKeybLayout))
 			{
-#ifdef _DEBUG
+				#ifdef _DEBUG
 				wchar_t szDbg[128];
 				_wsprintf(szDbg, SKIPLEN(countof(szDbg))
 				          L"ConEmuC: InputLayoutChanged (GetConsoleKeyboardLayoutName returns) '%s'\n",
 				          szCurKeybLayout);
 				OutputDebugString(szDbg);
-#endif
+				#endif
 
 				if (gpLogSize)
 				{
@@ -9358,27 +9400,48 @@ void CheckKeyboardLayout()
 
 				// Сменился
 				wcscpy_c(gpSrv->szKeybLayout, szCurKeybLayout);
-				// Отошлем в GUI
-				wchar_t *pszEnd = szCurKeybLayout+8;
-				//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифт. Это LayoutNAME, а не string(HKL)
-				// LayoutName: "00000409", "00010409", ...
-				// А HKL от него отличается, так что передаем DWORD
-				// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
-				DWORD dwLayout = wcstoul(szCurKeybLayout, &pszEnd, 16);
-				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)); //-V119
-
-				if (pIn)
-				{
-					//memmove(pIn->Data, &dwLayout, 4);
-					pIn->dwData[0] = dwLayout;
-					CESERVER_REQ* pOut = NULL;
-					pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-
-					if (pOut) ExecuteFreeResult(pOut);
-
-					ExecuteFreeResult(pIn);
-				}
+				bChanged = true;
 			}
+		}
+	}
+
+	if (pdwLayout)
+	{
+		wchar_t *pszEnd = NULL; //szCurKeybLayout+8;
+		//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифт. Это LayoutNAME, а не string(HKL)
+		// LayoutName: "00000409", "00010409", ...
+		// А HKL от него отличается, так что передаем DWORD
+		// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
+		*pdwLayout = wcstoul(gpSrv->szKeybLayout, &pszEnd, 16);
+	}
+
+	return bChanged;
+}
+
+//WARNING("BUGBUG: x64 US-Dvorak"); - done
+void CheckKeyboardLayout()
+{
+	DWORD dwLayout = 0;
+
+	//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифт. Это LayoutNAME, а не string(HKL)
+	// LayoutName: "00000409", "00010409", ...
+	// А HKL от него отличается, так что передаем DWORD
+	// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
+
+	if (IsKeyboardLayoutChanged(&dwLayout))
+	{
+		// Сменился, Отошлем в GUI
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)); //-V119
+
+		if (pIn)
+		{
+			//memmove(pIn->Data, &dwLayout, 4);
+			pIn->dwData[0] = dwLayout;
+
+			CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+
+			ExecuteFreeResult(pOut);
+			ExecuteFreeResult(pIn);
 		}
 	}
 }

@@ -609,6 +609,9 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 			}
 		}
 
+		if (!Check7zipInstalled())
+			goto wrap; // Error already reported
+
 		//if (!CanUpdateInstallation())
 		//{
 		//	// Значит 7zip обломается при попытке распаковки
@@ -678,7 +681,8 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 		goto wrap;
 	}
 
-	Assert(mb_ManualCallMode==FALSE && mpsz_PendingBatchFile==NULL);
+	Assert(mb_ManualCallMode==TRUE);
+	Assert(mpsz_PendingBatchFile==NULL);
 
 	mpsz_PendingPackageFile = pszLocalPackage;
 	pszLocalPackage = NULL;
@@ -856,6 +860,10 @@ DWORD CConEmuUpdate::CheckProcInt()
 	
 	if (mb_RequestTerminate)
 		goto wrap;
+
+	// It returns true, if updating with "exe" installer.
+	if (!Check7zipInstalled())
+		goto wrap; // Error already reported
 
 	if (!QueryConfirmation(us_ConfirmDownload, pszSource))
 	{
@@ -1950,6 +1958,27 @@ void CConEmuUpdate::DeleteBadTempFiles()
 		DeleteFile(mpsz_DeleteBatchFile);
 		SafeFree(mpsz_DeleteBatchFile);
 	}
+}
+
+bool CConEmuUpdate::Check7zipInstalled()
+{
+	if (mp_Set->UpdateDownloadSetup() == 1)
+		return true; // Инсталлер, архиватор не требуется!
+
+	LPCWSTR pszCmd = mp_Set->UpdateArcCmdLine();
+	wchar_t sz7zip[MAX_PATH+1];
+	if (NextArg(&pszCmd, sz7zip) != 0)
+	{
+		ReportError(L"Invalid update command\nGoto 'Update' page and check 7-zip command", 0);
+		return false;
+	}
+
+	if (FileExists(sz7zip))
+		return true;
+
+	WARNING("Suggest to download 7zip");
+	ReportError(L"7zip not found! It is not installed?\n%s\nGoto 'Update' page and check 7-zip command", 0);
+	return false;
 }
 
 bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR asParm)

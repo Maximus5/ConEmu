@@ -28,6 +28,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define HOOKS_VIRTUAL_ALLOC
+#ifdef _DEBUG
+	#define REPORT_VIRTUAL_ALLOC
+#else
+	#undef REPORT_VIRTUAL_ALLOC
+#endif
+
 #define DROP_SETCP_ON_WIN2K3R2
 //#define SHOWDEBUGSTR -- специально отключено, CONEMU_MINIMAL, OutputDebugString могут нарушать работу процессов
 //#define SKIPHOOKLOG
@@ -4862,19 +4868,24 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 		//_ASSERTE(lpResult != NULL);
 		wchar_t szText[MAX_PATH*2], szTitle[64];
 		msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-		msprintf(szText, countof(szText), L"VirtualAlloc failed (0x%08X..0x%08X)\nErrorCode=0x%08X\n\nWarning! This will be an error in Release!\n\n",
-			(DWORD)lpAddress, (DWORD)((LPBYTE)lpAddress+dwSize));
+		msprintf(szText, countof(szText),
+			L"\nVirtualAlloc " WIN3264TEST(L"%u",L"x%X%08X") L" bytes failed (0x%08X..0x%08X)\nErrorCode=%u %s\n\nWarning! This will be an error in Release!\n\n",
+			WIN3264WSPRINT(dwSize),
+			(DWORD)lpAddress, (DWORD)((LPBYTE)lpAddress+dwSize),
+			nErr, (nErr == 487) ? L"(ERROR_INVALID_ADDRESS)" : L"");
 		GetModuleFileName(NULL, szText+lstrlen(szText), MAX_PATH);
-#if 1
+
+	#if defined(REPORT_VIRTUAL_ALLOC)
 		int iBtn = GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL|MB_ICONSTOP);
 		SetLastError(nErr);
 		if (iBtn == IDOK)
 		{
 			lpResult = F(VirtualAlloc)(NULL, dwSize, flAllocationType, flProtect);
 		}
-#else
+	#else
+		OutputDebugString(szText);
 		SetLastError(nErr);
-#endif
+	#endif
 	}
 	return lpResult;
 }

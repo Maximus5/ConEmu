@@ -128,6 +128,7 @@ void SafeDelete(T*& p)
 
 char* lstrdup(const char* asText);
 wchar_t* lstrdup(const wchar_t* asText);
+wchar_t* lstrdupW(const char* asText, UINT cp = CP_ACP);
 wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL);
 
 //const char* PointToName(const char* asFileOrPath);

@@ -213,10 +213,23 @@ struct ConEmuHotKey
 		if (!pszDescr)
 			return L"";
 
+		_ASSERTE(cchMaxLen>200);
+
 		LPCWSTR pszRc = pszDescr;
 		bool lbColon = false;
 
 		*pszDescr = 0;
+
+		if (this->Enabled)
+		{
+			if (!this->Enabled())
+			{
+				lstrcpyn(pszDescr, L"[Disabled] ", cchMaxLen);
+				int nLen = lstrlen(pszDescr);
+				pszDescr += nLen;
+				cchMaxLen -= nLen;
+			}
+		}
 
 		if (bAddMacroIndex && (HkType == chk_Macro))
 		{

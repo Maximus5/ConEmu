@@ -63,6 +63,7 @@ enum ConEmuWindowMode;
 class CDefaultTerminal;
 class CConEmuMenu;
 class CConEmuInside;
+class CRunQueue;
 struct CEFindDlg;
 
 
@@ -70,6 +71,7 @@ struct MsgSrvStartedArg
 {
 	HWND  hConWnd;
 	DWORD nSrcPID;
+	DWORD dwKeybLayout;
 	DWORD timeStart;
 	DWORD timeRecv;
 	DWORD timeFin;
@@ -91,15 +93,15 @@ typedef BOOL (WINAPI* ImmSetCompositionWindow_t)(HIMC hIMC, LPCOMPOSITIONFORM lp
 typedef HIMC (WINAPI* ImmGetContext_t)(HWND hWnd);
 
 
-struct GuiShellExecuteExArg
-{
-	CVirtualConsole* pVCon;
-	SHELLEXECUTEINFO* lpShellExecute;
-	HANDLE hReadyEvent;
-	BOOL bInProcess;
-	BOOL bResult;
-	DWORD dwErrCode;
-};
+//struct GuiShellExecuteExArg
+//{
+//	CVirtualConsole* pVCon;
+//	SHELLEXECUTEINFO* lpShellExecute;
+//	HANDLE hReadyEvent;
+//	BOOL bInProcess;
+//	BOOL bResult;
+//	DWORD dwErrCode;
+//};
 
 
 
@@ -182,6 +184,7 @@ class CConEmuMain :
 		MFileLog *mp_Log;
 		CDefaultTerminal *mp_DefTrm;
 		CEFindDlg *mp_Find;
+		CRunQueue *mp_RunQueue;
 
 		void CreateLog();
 		void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
@@ -434,6 +437,7 @@ class CConEmuMain :
 		void CtrlWinAltSpace();
 	protected:
 		friend class CConEmuCtrl;
+		friend class CRunQueue;
 		//BOOL LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode);
 		//DWORD_PTR mn_CurrentKeybLayout;
 		// Registered messages
@@ -457,7 +461,7 @@ class CConEmuMain :
 		UINT mn_MsgWinKeyFromHook;
 		//UINT mn_MsgConsoleHookedKey;
 		UINT mn_MsgSheelHook;
-		UINT mn_ShellExecuteEx;
+		//UINT mn_ShellExecuteEx;
 		UINT mn_PostConsoleResize;
 		UINT mn_ConsoleLangChanged;
 		UINT mn_MsgPostOnBufferHeight;
@@ -480,6 +484,9 @@ class CConEmuMain :
 		UINT mn_MsgTaskBarCreated;
 		UINT mn_MsgPanelViewMapCoord;
 		UINT mn_MsgTaskBarBtnCreated;
+		UINT mn_MsgRequestRunProcess;
+
+		void SetRunQueueTimer(bool bSet, UINT uElapse);
 
 		//
 		virtual void OnUseGlass(bool abEnableGlass);
@@ -493,10 +500,13 @@ class CConEmuMain :
 		static INT_PTR CALLBACK aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 
 		//
-		CRITICAL_SECTION mcs_ShellExecuteEx;
-		MArray<GuiShellExecuteExArg*> m_ShellExecuteQueue;
-		void GuiShellExecuteExQueue();
-		bool mb_InShellExecuteQueue;
+		//CRITICAL_SECTION mcs_ShellExecuteEx;
+		//MArray<GuiShellExecuteExArg*> m_ShellExecuteQueue;
+		//void GuiShellExecuteExQueue();
+		//bool mb_InShellExecuteQueue;
+
+		bool ExecuteProcessPrepare();
+		void ExecuteProcessFinished(bool bOpt);
 
 	public:
 		DWORD CheckProcesses();
@@ -573,7 +583,7 @@ class CConEmuMain :
 		void SetWindowStyleEx(HWND ahWnd, DWORD anStyleEx);
 		DWORD GetWorkWindowStyle();
 		DWORD GetWorkWindowStyleEx();
-		LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, CVirtualConsole* apVCon);
+		//LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, CVirtualConsole* apVCon);
 		BOOL Init();
 		void InitInactiveDC(CVirtualConsole* apVCon);
 		void Invalidate(CVirtualConsole* apVCon);
