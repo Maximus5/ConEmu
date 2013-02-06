@@ -11,6 +11,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[*] Interprocess communication changes.
+
+
 2013.02.05
 [*] Some improvements for «stress mode».
 [*] «Disabled» will be shown in «Keys & Macro» if specified action is disabled in settings.

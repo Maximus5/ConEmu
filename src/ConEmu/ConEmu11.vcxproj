@@ -952,6 +952,11 @@
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|ARM'">
+    <Link>
+      <Profile>true</Profile>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Attach.cpp" />
     <ClCompile Include="Background.cpp" />
@@ -1042,6 +1047,7 @@
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="MenuIds.h" />
+    <ClInclude Include="..\common\MPipe.h" />
     <ClInclude Include="..\common\MSecurity.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="Options.h" />

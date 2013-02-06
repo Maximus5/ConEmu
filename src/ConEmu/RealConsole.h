@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../Common/RgnDetect.h"
 //#include "../Common/WinObjects.h"
 #include "../Common/MArray.h"
+#include "../Common/MPipe.h"
 
 #define DEFINE_EXIT_DESC
 #include "../ConEmuCD/ExitCodes.h"

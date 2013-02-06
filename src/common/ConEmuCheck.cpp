@@ -179,50 +179,69 @@ LPCWSTR ModuleName(LPCWSTR asDefault)
 	return szFile;
 }
 
+#ifdef _DEBUG
+BOOL IsProcessDebugged(DWORD nPID)
+{
+	BOOL lbServerIsDebugged = FALSE;
+
+	// WinXP SP1 и выше
+	typedef BOOL (WINAPI* CheckRemoteDebuggerPresent_t)(HANDLE hProcess, PBOOL pbDebuggerPresent);
+	static CheckRemoteDebuggerPresent_t _CheckRemoteDebuggerPresent = NULL;
+
+	if (!_CheckRemoteDebuggerPresent)
+	{
+		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+		_CheckRemoteDebuggerPresent = hKernel ? (CheckRemoteDebuggerPresent_t)GetProcAddress(hKernel, "CheckRemoteDebuggerPresent") : NULL;
+	}
+	
+	if (_CheckRemoteDebuggerPresent)
+	{
+		HANDLE hProcess = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, nPID);
+		if (hProcess)
+		{
+			BOOL lb = FALSE;
+
+			if (_CheckRemoteDebuggerPresent(hProcess, &lb) && lb)
+				lbServerIsDebugged = TRUE;
+
+			CloseHandle(hProcess);
+		}
+	}
+
+	return lbServerIsDebugged;
+}
+#endif
+
 // nTimeout - таймаут подключения
-HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule, DWORD nServerPID, DWORD nTimeout)
+HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule, DWORD nServerPID, DWORD nTimeout, BOOL Overlapped /*= FALSE*/, HANDLE hStop /*= NULL*/)
 {
 	HANDLE hPipe = NULL;
 	DWORD dwErr = 0, dwMode = 0;
 	BOOL fSuccess = FALSE;
 	DWORD dwStartTick = GetTickCount();
 	DWORD nSleepError = 10;
-	int nTries = 10; // допустимое количество обломов, отличных от ERROR_PIPE_BUSY. после каждого - Sleep(nSleepError);
-	DWORD nOpenPipeTimeout = nTimeout ? max(nTimeout,EXECUTE_CMD_OPENPIPE_TIMEOUT) : EXECUTE_CMD_OPENPIPE_TIMEOUT;
+	// допустимое количество обломов, отличных от ERROR_PIPE_BUSY. после каждого - Sleep(nSleepError);
+	int nTries = 10;
+	// nTimeout должен ограничивать ВЕРХНЮЮ границу времени ожидания
+	_ASSERTE(EXECUTE_CMD_OPENPIPE_TIMEOUT >= nTimeout);
+	DWORD nOpenPipeTimeout = nTimeout ? min(nTimeout,EXECUTE_CMD_OPENPIPE_TIMEOUT) : EXECUTE_CMD_OPENPIPE_TIMEOUT;
+	_ASSERTE(nOpenPipeTimeout > 0);
+	DWORD nWaitPipeTimeout = min(250,nOpenPipeTimeout);
+
 	BOOL bWaitPipeRc = FALSE, bWaitCalled = FALSE;
 	DWORD nWaitPipeErr = 0;
 	DWORD nDuration = 0;
-#ifdef _DEBUG
+	DWORD nStopWaitRc = (DWORD)-1;
+
+	#ifdef _DEBUG
 	wchar_t szDbgMsg[512], szTitle[128];
-#endif
+	#endif
 
-	_ASSERTE(LocalSecurity()!=NULL);
-
-#ifdef _DEBUG
-	BOOL lbServerIsDebugged = FALSE;
 	// WinXP SP1 и выше
-	typedef BOOL (WINAPI* CheckRemoteDebuggerPresent_t)(HANDLE hProcess, PBOOL pbDebuggerPresent);
-	static CheckRemoteDebuggerPresent_t _CheckRemoteDebuggerPresent = NULL;
-	if (nServerPID)
-	{
-		if (!_CheckRemoteDebuggerPresent)
-			_CheckRemoteDebuggerPresent = (CheckRemoteDebuggerPresent_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "CheckRemoteDebuggerPresent");
-		
-		if (_CheckRemoteDebuggerPresent)
-		{
-			HANDLE hProcess = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, nServerPID);
-			if (hProcess)
-			{
-				BOOL lb = FALSE;
+	DEBUGTEST(BOOL lbServerIsDebugged = nServerPID ? IsProcessDebugged(nServerPID) : FALSE);
 
-				if (_CheckRemoteDebuggerPresent(hProcess, &lb) && lb)
-					lbServerIsDebugged = TRUE;
-
-				CloseHandle(hProcess);
-			}
-		}
-	}
-#endif
+	
+	_ASSERTE(LocalSecurity()!=NULL);
 
 
 	// Try to open a named pipe; wait for it, if necessary.
@@ -234,13 +253,16 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		            0,              // no sharing
 		            LocalSecurity(), // default security attributes
 		            OPEN_EXISTING,  // opens existing pipe
-		            0,              // default attributes
+		            (Overlapped ? FILE_FLAG_OVERLAPPED : 0), // default attributes
 		            NULL);          // no template file
 		dwErr = GetLastError();
 
 		// Break if the pipe handle is valid.
 		if (hPipe != INVALID_HANDLE_VALUE)
+		{
+			_ASSERTE(hPipe);
 			break; // OK, открыли
+		}
 
 		#ifdef _DEBUG
 		if (gbPipeDebugBoxes)
@@ -257,14 +279,24 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 
 		nDuration = GetTickCount() - dwStartTick;
 
+		if (hStop)
+		{
+			// Затребовано завершение приложения или еще что-то
+			nStopWaitRc = WaitForSingleObject(hStop, 0);
+			if (nStopWaitRc == WAIT_OBJECT_0)
+			{
+				return NULL;
+			}
+		}
+
 		if (dwErr == ERROR_PIPE_BUSY)
 		{
 			if ((nTries > 0) && (nDuration < nOpenPipeTimeout))
 			{
 				bWaitCalled = TRUE;
 
-				// All pipe instances are busy, so wait for 500 ms.
-				bWaitPipeRc = WaitNamedPipe(szPipeName, 500);
+				// All pipe instances are busy, so wait for a while (not more 500 ms).
+				bWaitPipeRc = WaitNamedPipe(szPipeName, nWaitPipeTimeout);
 				nWaitPipeErr = GetLastError();
 				UNREFERENCED_PARAMETER(bWaitPipeRc); UNREFERENCED_PARAMETER(nWaitPipeErr);
 				// -- 120602 раз они заняты (но живы), то будем ждать, пока не освободятся
@@ -295,6 +327,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		// Может быть пайп еще не создан (в процессе срабатывания семафора)
 		if (dwErr == ERROR_FILE_NOT_FOUND)
 		{
+			// Wait for a while (10 ms)
 			Sleep(nSleepError);
 			continue;
 		}

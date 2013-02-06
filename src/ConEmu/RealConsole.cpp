@@ -3378,6 +3378,9 @@ void CRealConsole::InitNames()
 	MCHKHEAP;
 	_ASSERTE(mn_AltSrv_PID==0); // Инициализация должна идти на основной сервер
 	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", mn_MainSrv_PID);
+	// Enable overlapped mode and termination by event
+	_ASSERTE(mh_TermEvent!=NULL);
+	m_GetDataPipe.SetTermEvent(mh_TermEvent);
 }
 
 // Если включена прокрутка - скорректировать индекс ячейки из экранных в буферные

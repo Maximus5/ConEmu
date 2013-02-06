@@ -2160,6 +2160,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\MPipe.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\MSecurity.h"
 				>
 			</File>
