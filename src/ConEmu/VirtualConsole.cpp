@@ -1094,8 +1094,15 @@ bool CVirtualConsole::isCharRTL(wchar_t inChar)
 }
 
 
-void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight, COLORREF crBack)
+void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF crBack)
 {
+	WARNING("CVirtualConsole::PaintBackgroundImage - crBack игнорируетс€");
+
+	const int inX = rcText.left;
+	const int inY = rcText.top;
+	const int inWidth = rcText.right - rcText.left;
+	const int inHeight = rcText.bottom - rcText.top;
+
 	#ifdef _DEBUG
 	BOOL lbDump = FALSE;
 	if (lbDump) DumpImage(hBgDc, NULL, bgBmpSize.X, bgBmpSize.Y, L"F:\\bgtemp.png");
@@ -1117,11 +1124,11 @@ void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight,
 		hBr = hBrush0;
 		#endif
 
-		RECT rect = {inX, inY, inX+inWidth, inY+inHeight};
-		FillRect((HDC)m_DC, &rect, hBr);
+		FillRect((HDC)m_DC, &rcText, hBr);
 
 		int xShift = ((gpSet->bgOperation == eUpRight) || (gpSet->bgOperation == eDownRight)) ? max(0,(Width - bgBmpSize.X)) : 0;
 		int yShift = ((gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight)) ? max(0,(Height - bgBmpSize.Y)) : 0;
+
 		if (bgBmpSize.X>(inX-xShift) && bgBmpSize.Y>(inY-yShift))
 		{
 			//BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
@@ -2622,9 +2629,9 @@ void CVirtualConsole::UpdateText()
 #endif
 
 	//BUGBUG: хорошо бы отрисовывать последнюю строку, даже если она чуть не влазит
-	for(; pos <= nMaxPos;
-	        ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
-	        pos += nFontHeight, row++)
+	for (; pos <= nMaxPos;
+	       ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
+	       pos += nFontHeight, row++)
 	{
 		if (row >= (int)TextHeight)
 		{
@@ -2668,7 +2675,7 @@ void CVirtualConsole::UpdateText()
 		int NextDialogX = -1, CurDialogX1 = 0, CurDialogX2 = 0, CurDialogI = 0;
 		DWORD CurDialogFlags = 0;
 
-		for(; j < end; j = j2)
+		for (; j < end; j = j2)
 		{
 			if (NextDialog || (j == NextDialogX))
 			{
@@ -2923,7 +2930,9 @@ void CVirtualConsole::UpdateText()
 					}
 					else if (drawImage)
 					{
-						BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, PrevAttr.crBackColor);
+						// «аливка пропущенной области
+						RECT rcFill = {rect.left, rect.top, rect.right, rect.bottom};
+						PaintBackgroundImage(rcFill, PrevAttr.crBackColor);
 					} HEAPVAL
 
 					if (gbNoDblBuffer) GdiFlush();
@@ -3212,7 +3221,9 @@ void CVirtualConsole::UpdateText()
 				}
 				else if (drawImage)
 				{
-					BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, attr.crBackColor);
+					// ѕодготовка фона (BgImage) дл€ отрисовки текста на нем
+					RECT rcFill = {rect.left, rect.top, rect.right, rect.bottom};
+					PaintBackgroundImage(rcFill, attr.crBackColor);
 					lbImgDrawn = TRUE;
 				}
 
@@ -3871,31 +3882,35 @@ void CVirtualConsole::Free(LPVOID ptr)
 	}
 }
 
-void CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight)
+bool CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight)
 {
 	if (!this)
-		return;
+		return false;
 
 	if (!gpConEmu->isMainThread())
 	{
 		_ASSERTE(gpConEmu->isMainThread());
-		return;
+		return false;
 	}
 
 	if (!(HDC)m_DC && mpsz_ConChar)
 	{
 		Update();
 	}
+
+	bool bPaintRC = false;
 	
 	if ((HDC)m_DC)
 	{
 		SetStretchBltMode(hPaintDC, HALFTONE);
-		StretchBlt(hPaintDC, anX,anY,anShowWidth,anShowHeight, (HDC)m_DC, 0,0,Width,Height, SRCCOPY);
+		bPaintRC = StretchBlt(hPaintDC, anX,anY,anShowWidth,anShowHeight, (HDC)m_DC, 0,0,Width,Height, SRCCOPY);
 	}
 	else
 	{
 		_ASSERTE((HDC)m_DC!=NULL);
 	}
+
+	return bPaintRC;
 }
 
 HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COLORREF *pColors /*= NULL*/)
@@ -3927,9 +3942,51 @@ HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COL
 	return hBr;
 }
 
-// hdc - это DC родительского окна (ghWnd)
+// PaintRect may be specified for stretching
+bool CVirtualConsole::PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT PaintRect)
+{
+	BOOL lbBltRc = FALSE;
+	CVirtualConsole* pVCon = this;
+	CVConGuard guard(pVCon);
+
+	if (!pVCon)
+		return false;
+
+	if (!gpConEmu->isMainThread())
+	{
+		_ASSERTE(gpConEmu->isMainThread());
+		return false;
+	}
+
+	if (((HDC)m_DC) != NULL)
+	{
+		RECT rcClient = GetDcClientRect();
+
+		if (PaintRect == NULL)
+		{
+			lbBltRc = StretchPaint(hPrintDc, PaintRect->left, PaintRect->top, PaintRect->right-PaintRect->left, PaintRect->bottom-PaintRect->top);
+		}
+		else
+		{
+			if (bAllowRepaint)
+			{
+				Update(mb_RequiredForceUpdate);
+			}
+
+			lbBltRc = BitBlt(
+				hPrintDc, 0, 0, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top,
+				(HDC)m_DC, 0, 0,
+				SRCCOPY);
+		}
+	}
+
+	UNREFERENCED_PARAMETER(lbBltRc);
+	return (lbBltRc != 0);
+}
+
+// hPaintDc - это DC ViewWnd!!!
 // rcClient - это место, куда нужно "положить" битмап. может быть произвольным!
-void CVirtualConsole::PaintVCon(HDC hPaintDc, RECT rcClient)
+void CVirtualConsole::PaintVCon(HDC hPaintDc)
 {
 	// ≈сли "завис" PostUpdate
 	if (gpConEmu->mp_TabBar->NeedPostUpdate())
@@ -3944,8 +4001,22 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc, RECT rcClient)
 	CVirtualConsole* pVCon = this;
 	CVConGuard guard(pVCon);
 
+	if (!gpConEmu->isMainThread())
+	{
+		_ASSERTE(gpConEmu->isMainThread());
+		return;
+	}
+
+	RECT rcClient = GetDcClientRect();
+
 	_ASSERTE(hPaintDc);
 	_ASSERTE(rcClient.left!=rcClient.right && rcClient.top!=rcClient.bottom);
+
+	WARNING("TODO: Need to offset mrc_Client if padding exists");
+	mrc_Client = rcClient;
+	WARNING("TODO: Need to calculate mrc_Back = {0,0}-{BackWidth,BackHeight}");
+	mrc_Back = mrc_Client;
+
 //#ifdef _DEBUG
 //    if (this) {
 //        if (!mp_RCon || !mp_RCon->isPackets()) {

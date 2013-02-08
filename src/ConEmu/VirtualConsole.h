@@ -111,6 +111,7 @@ class CVirtualConsole :
 		HDC GetIntDC();
 	private:
 		bool    mb_InUpdate;
+		RECT    mrc_Client, mrc_Back;
 		CEDC    m_DC;
 		HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
 		HBRUSH  CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COLORREF *pColors = NULL);
@@ -282,11 +283,12 @@ class CVirtualConsole :
 		static bool isCharNonSpacing(wchar_t inChar);
 		static bool isCharSpace(wchar_t inChar);
 		static bool isCharRTL(wchar_t inChar);
-		void BlitPictureTo(int inX, int inY, int inWidth, int inHeight, COLORREF crBack);
+		void PaintBackgroundImage(const RECT& rcText, const COLORREF crBack);
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
-		void PaintVCon(HDC hPaintDc, RECT rcClient);
-		void StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight);
+		void PaintVCon(HDC hPaintDc);
+		bool PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT PaintRect);
+		bool StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight);
 		void UpdateInfo();
 		//void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };
 		//DWORD GetConsoleCP() { return mp_RCon->GetConsoleCP(); };

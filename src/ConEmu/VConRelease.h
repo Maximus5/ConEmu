@@ -46,12 +46,14 @@ class CVConGuard
 {
 private:
 	CVirtualConsole *mp_Ref;
+	void Attach(CVirtualConsole* apRef);
 	
 public:
 	CVConGuard();
 	CVConGuard(CVirtualConsole* apRef);
 	~CVConGuard();
 	void Release();
+	
 
 public:
 	// Dereference
@@ -59,7 +61,7 @@ public:
 
 	// Releases any current VCon and loads specified
 	CVConGuard& operator=(CVirtualConsole* apRef);
-	
+
 	// Ptr, No Asserts
 	CVirtualConsole* VCon();
 };

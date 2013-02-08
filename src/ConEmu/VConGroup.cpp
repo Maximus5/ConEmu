@@ -1287,6 +1287,7 @@ void CVConGroup::InvalidateAll()
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		CVConGuard VCon(gp_VCon[i]);
+
 		if (VCon.VCon() && isVisible(VCon.VCon()))
 			VCon.VCon()->Invalidate();
 	}
@@ -1321,8 +1322,8 @@ void CVConGroup::RePaint()
 			if (hView)
 			{
 				HDC hDc = GetDC(hView);
-				RECT rcClient = pVCon->GetDcClientRect();
-				pVCon->PaintVCon(hDc, rcClient);
+				//RECT rcClient = pVCon->GetDcClientRect();
+				pVCon->PaintVCon(hDc/*, rcClient*/);
 				ReleaseDC(ghWnd, hDc);
 			}
 		}
@@ -3720,6 +3721,16 @@ void CVConGroup::Redraw()
 
 void CVConGroup::InvalidateGaps()
 {
+	if (ghWndWork)
+	{
+		InvalidateRect(ghWndWork, NULL, FALSE);
+	}
+	else
+	{
+		_ASSERTE(ghWndWork!=NULL);
+	}
+
+#if 0
 	int iRc = SIMPLEREGION;
 
 	RECT rc = {};
@@ -3771,6 +3782,7 @@ void CVConGroup::InvalidateGaps()
 
 wrap:
 	DeleteObject(h);
+#endif
 }
 
 // Должно вызываться ТОЛЬКО для DC в ghWndWork!!!

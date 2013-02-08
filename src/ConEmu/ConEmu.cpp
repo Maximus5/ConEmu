@@ -1242,7 +1242,7 @@ RECT CConEmuMain::GetDefaultRect()
 	COORD conSize;
 	conSize = MakeCoord(gpConEmu->wndWidth,gpConEmu->wndHeight);
 
-	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS);
+	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD);
 	int nShiftX = rcFrameMargin.left + rcFrameMargin.right;
 	int nShiftY = rcFrameMargin.top + rcFrameMargin.bottom;
 	RECT rcTabMargins = mp_TabBar->GetMargins();
@@ -4621,7 +4621,9 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			if (bIconic || (changeFromWindowMode != wmMaximized))
 			{
 				mb_IgnoreSizeChange = true;
+
 				InvalidateAll();
+
 				if (!gpSet->isDesktopMode)
 				{
 					DEBUGTEST(WINDOWPLACEMENT wpl1 = {sizeof(wpl1)}; GetWindowPlacement(ghWnd, &wpl1););
@@ -8454,7 +8456,13 @@ void CConEmuMain::InvalidateAll()
 
 	CVConGroup::InvalidateAll();
 
-	gpConEmu->mp_TabBar->Invalidate();
+	CVConGroup::InvalidateGaps();
+
+	if (mp_TabBar)
+		mp_TabBar->Invalidate();
+
+	if (mp_Status)
+		mp_Status->InvalidateStatusBar();
 }
 
 void CConEmuMain::UpdateWindowChild(CVirtualConsole* apVCon)

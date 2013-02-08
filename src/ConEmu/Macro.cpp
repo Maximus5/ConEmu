@@ -1330,27 +1330,30 @@ LPWSTR CConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon)
 
 	COORD cr = {};
 	apRCon->GetConsoleCursorInfo(NULL, &cr);
+
+	#ifdef _DEBUG
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	apRCon->GetConsoleScreenBufferInfo(&csbi);
+	#endif
 
-	WARNING("TODO: buffered selection!");
-	if (cr.X >= csbi.srWindow.Left)
-	{
-		cr.X -= csbi.srWindow.Left;
-	}
-	else
-	{
-		_ASSERTE(cr.X >= csbi.srWindow.Left);
-	}
+	//WARNING("TODO: buffered selection!");
+	//if (cr.X >= csbi.srWindow.Left)
+	//{
+	//	cr.X -= csbi.srWindow.Left;
+	//}
+	//else
+	//{
+	//	_ASSERTE(cr.X >= csbi.srWindow.Left);
+	//}
 
-	if (cr.Y >= csbi.srWindow.Top)
-	{
-		cr.Y -= csbi.srWindow.Top;
-	}
-	else
-	{
-		_ASSERTE(cr.Y >= csbi.srWindow.Top);
-	}
+	//if (cr.Y >= csbi.srWindow.Top)
+	//{
+	//	cr.Y -= csbi.srWindow.Top;
+	//}
+	//else
+	//{
+	//	_ASSERTE(cr.Y >= csbi.srWindow.Top);
+	//}
 
 	if (nType == 0)
 	{

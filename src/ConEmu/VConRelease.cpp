@@ -56,6 +56,7 @@ void CVConRelease::AddRef()
 		_ASSERTE(this!=NULL);
 		return;
 	}
+	
 	InterlockedIncrement(&mn_RefCount);
 }
 
@@ -63,7 +64,9 @@ int CVConRelease::Release()
 {
 	if (!this)
 		return 0;
+
 	InterlockedDecrement(&mn_RefCount);
+	
 	_ASSERTE(mn_RefCount>=0);
 	if (mn_RefCount <= 0)
 	{
@@ -72,6 +75,7 @@ int CVConRelease::Release()
 		delete pVCon;
 		return 0;
 	}
+
 	return mn_RefCount;
 }
 
@@ -83,21 +87,34 @@ CVConGuard::CVConGuard()
 
 CVConGuard::CVConGuard(CVirtualConsole* apRef)
 {
-	mp_Ref = apRef;
-	if (mp_Ref)
-	{
-		mp_Ref->AddRef();
+	mp_Ref = NULL;
 
-		// -- не получается. вызывается еще на этапе WM_CREATE
-		//if (!gpConEmu->isValid(mp_Ref))
-		//{
-		//	MBoxAssert(gpConEmu->isValid(mp_Ref));
-		//	apRef = NULL;
-		//}
-		//else
-		//{
-		//	mp_Ref->AddRef();
-		//}
+	Attach(apRef);
+}
+
+void CVConGuard::Attach(CVirtualConsole* apRef)
+{
+	if (mp_Ref == apRef)
+	{
+		_ASSERTE((apRef == NULL || mp_Ref != apRef) && "Already assigned?");
+		return;
+	}
+
+	CVirtualConsole *pOldRef = mp_Ref;
+
+	mp_Ref = apRef;
+
+	if (pOldRef != mp_Ref)
+	{
+		if (mp_Ref)
+		{
+			mp_Ref->AddRef();
+		}
+
+		if (pOldRef)
+		{
+			pOldRef->Release();
+		}
 	}
 }
 
@@ -125,13 +142,7 @@ CVirtualConsole* CVConGuard::operator->() const
 // Releases any current VCon and loads specified
 CVConGuard& CVConGuard::operator=(CVirtualConsole* apRef)
 {
-	// Release current
-	Release();
-	
-	// Attach
-	mp_Ref = apRef;
-	if (mp_Ref)
-		mp_Ref->AddRef();
+	Attach(apRef);
 
 	return *this;
 }

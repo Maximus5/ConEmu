@@ -375,7 +375,7 @@ void DumpEscape(LPCWSTR buf, size_t cchLen, bool bUnknown)
 {
 	if (!buf || !cchLen)
 	{
-		_ASSERTE(buf && cchLen);
+		_ASSERTE((buf && cchLen) || (gnAllowClinkUsage && buf));
 	}
 	else if (bUnknown)
 	{
@@ -393,45 +393,57 @@ void DumpEscape(LPCWSTR buf, size_t cchLen, bool bUnknown)
 
 	size_t nStart = lstrlenW(szDbg);
 	wchar_t* pszDst = szDbg + nStart;
-	const wchar_t* pszSrc = (wchar_t*)buf;
-	size_t nCur = 0;
-	while (nLen)
-	{
-		switch (*pszSrc)
-		{
-		case L'\r':
-			*(pszDst++) = L'\\'; *(pszDst++) = L'r';
-			break;
-		case L'\n':
-			*(pszDst++) = L'\\'; *(pszDst++) = L'n';
-			break;
-		case L'\t':
-			*(pszDst++) = L'\\'; *(pszDst++) = L't';
-			break;
-		case L'\x1B':
-			*(pszDst++) = szAnalogues[0x1B];
-			break;
-		case 0:
-			*(pszDst++) = L'\\'; *(pszDst++) = L'0';
-			break;
-		case L'\\':
-			*(pszDst++) = L'\\'; *(pszDst++) = L'\\';
-			break;
-		default:
-			*(pszDst++) = *pszSrc;
-		}
-		pszSrc++;
-		nLen--;
-		nCur++;
 
-		if (nCur >= 80)
+	if (buf && cchLen)
+	{
+		const wchar_t* pszSrc = (wchar_t*)buf;
+		size_t nCur = 0;
+		while (nLen)
 		{
-			*(pszDst++) = L'\n'; *pszDst = 0;
-			DebugString(szDbg);
-			wmemset(szDbg, L' ', nStart);
-			nCur = 0;
-			pszDst = szDbg + nStart;
+			switch (*pszSrc)
+			{
+			case L'\r':
+				*(pszDst++) = L'\\'; *(pszDst++) = L'r';
+				break;
+			case L'\n':
+				*(pszDst++) = L'\\'; *(pszDst++) = L'n';
+				break;
+			case L'\t':
+				*(pszDst++) = L'\\'; *(pszDst++) = L't';
+				break;
+			case L'\x1B':
+				*(pszDst++) = szAnalogues[0x1B];
+				break;
+			case 0:
+				*(pszDst++) = L'\\'; *(pszDst++) = L'0';
+				break;
+			case L'\\':
+				*(pszDst++) = L'\\'; *(pszDst++) = L'\\';
+				break;
+			default:
+				*(pszDst++) = *pszSrc;
+			}
+			pszSrc++;
+			nLen--;
+			nCur++;
+
+			if (nCur >= 80)
+			{
+				*(pszDst++) = L'\n'; *pszDst = 0;
+				DebugString(szDbg);
+				wmemset(szDbg, L' ', nStart);
+				nCur = 0;
+				pszDst = szDbg + nStart;
+			}
 		}
+	}
+	else if (gnAllowClinkUsage)
+	{
+		pszDst -= 2;
+		const wchar_t* psEmptyClink = L" - <empty sequence, clink?>";
+		size_t nClinkLen = lstrlenW(psEmptyClink);
+		wmemcpy(pszDst, psEmptyClink, nClinkLen);
+		pszDst += nClinkLen;
 	}
 	*(pszDst++) = L'\n'; *pszDst = 0;
 

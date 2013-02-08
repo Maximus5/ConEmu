@@ -113,7 +113,7 @@ extern InQueue gInQueue;
 extern size_t   gcchLastWriteConsoleMax;
 extern wchar_t *gpszLastWriteConsole;
 extern bool     gbClinkInitialized;
-extern DWORD    gnAllowClinkUsage;
+extern DWORD    gnAllowClinkUsage; // 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
 extern bool     InitializeClink();
 /* ************ Globals for clink ************ */
 

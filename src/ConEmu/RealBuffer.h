@@ -122,17 +122,22 @@ public:
 	BOOL GetRBtnDrag(COORD* pcrMouse);
 	void SetRBtnDrag(BOOL abRBtnDrag, const COORD* pcrMouse = NULL);
 
+private:
 	bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
-	void MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensitive, bool abWholeWords);
+	bool DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int X1, int Y1, int X2, int Y2);
+
+public:
+	void MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensitive, bool abWholeWords); // <<== CRealConsole::DoFindText
 	void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE, UINT anFromMsg=0, COORD *pcrTo=NULL);
 	void ExpandSelection(SHORT anX=-1, SHORT anY=-1);
 	bool DoSelectionFinalize(bool abCopy, WPARAM wParam = 0);
 	void DoSelectionStop();
 	bool DoSelectionCopy(bool bCopyAll = false);
 	void UpdateSelection();
-	BOOL isConSelectMode();
-	BOOL isSelfSelectMode();
-	BOOL isStreamSelection();
+	bool isConSelectMode();
+	bool isSelfSelectMode();
+	bool isStreamSelection();
+
 	bool OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 	
 	COORD GetDefaultNtvdmHeight();
@@ -260,7 +265,8 @@ protected:
 		size_t    cbDataSize;
 		LPBYTE    ptrData;
 		wchar_t*  pszTitle;
-		COORD     crSize, crCursor;
+		COORD     crSize;
+		COORD     crCursor;
 		//BOOL      NeedApply;
 		// ** Block 1 **
 		BOOL      Block1;

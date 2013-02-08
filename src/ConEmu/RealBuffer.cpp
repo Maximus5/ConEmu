@@ -1252,7 +1252,10 @@ BOOL CRealBuffer::PreInit()
 	con.nTextWidth = rcCon.right;
 	con.nTextHeight = rcCon.bottom;
 
+	con.nTopVisibleLine = 0;
+
 	con.m_sbi.wAttributes = 7;
+	con.m_sbi.srWindow.Left = con.m_sbi.srWindow.Top = 0;
 	con.m_sbi.srWindow.Right = rcCon.right-1; con.m_sbi.srWindow.Bottom = rcCon.bottom-1;
 	con.m_sbi.dwMaximumWindowSize = con.m_sbi.dwSize;
 	con.m_ci.dwSize = 15; con.m_ci.bVisible = TRUE;
@@ -2436,6 +2439,9 @@ COORD CRealBuffer::ScreenToBuffer(COORD crMouse)
 
 	if (isScroll())
 	{
+		// Прокрутка может быть заблокирована?
+		_ASSERTE(con.nTopVisibleLine == con.m_sbi.srWindow.Top);
+
 		crMouse.X += con.m_sbi.srWindow.Left;
 		crMouse.Y += con.m_sbi.srWindow.Top;
 	}
@@ -2969,9 +2975,12 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	}
 
 	// Получить известные координаты символов
-	COORD cr = mp_RCon->mp_VCon->ClientToConsole(x,y);
-	if (cr.X<0) cr.X = 0; else if (cr.X >= (int)TextWidth()) cr.X = TextWidth()-1;
-	if (cr.Y<0) cr.Y = 0; else if (cr.Y >= (int)TextHeight()) cr.Y = TextHeight()-1;
+	COORD crScreen = mp_RCon->mp_VCon->ClientToConsole(x,y);
+	MinMax(crScreen.X, 0, TextWidth()-1);
+	MinMax(crScreen.Y, 0, TextHeight()-1);
+
+	COORD cr = ScreenToBuffer(crScreen);
+
 
 	if (messg == WM_LBUTTONDOWN)
 	{
@@ -3045,12 +3054,12 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		// 2. DblClick. Генерятся WM_LBUTTONUP WM_LBUTTONDBLCLK. Выделение "Слова".
 		// 3. TripleCLick. Генерятся WM_LBUTTONUP WM_LBUTTONDBLCLK WM_LBUTTONDOWN WM_LBUTTONUP. Выделение "Строки".
 
-		TODO("Горизонтальная прокрутка?");
-		// Если мыша за пределами окна консоли - скорректировать координаты (MinMax)
-		if (cr.X<0 || cr.X>=(int)TextWidth())
-			cr.X = GetMinMax(cr.X, 0, TextWidth());
-		if (cr.Y<0 || cr.Y>=(int)TextHeight())
-			cr.Y = GetMinMax(cr.Y, 0, TextHeight());
+		//TODO("Горизонтальная прокрутка?");
+		//// Если мыша за пределами окна консоли - скорректировать координаты (MinMax)
+		//if (cr.X<0 || cr.X>=(int)TextWidth())
+		//	cr.X = GetMinMax(cr.X, 0, TextWidth());
+		//if (cr.Y<0 || cr.Y>=(int)TextHeight())
+		//	cr.Y = GetMinMax(cr.Y, 0, TextHeight());
 
 		// Теперь проверки Double/Triple.
 		if ((messg == WM_LBUTTONUP)
@@ -3174,7 +3183,8 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 
 		if (isSelectionPresent())
 		{
-			nFrom = con.m_sel.srSelection.Left + (con.m_sel.srSelection.Top * nWidth);
+			COORD crSelScrn = BufferToScreen(MakeCoord(con.m_sel.srSelection.Left, con.m_sel.srSelection.Top));
+			nFrom = crSelScrn.X + (crSelScrn.Y * nWidth);
 			_ASSERTE(nFrom>=0);
 
 			if (nDirection >= 0)
@@ -3322,11 +3332,13 @@ done:
 	else
 	{
 		con.m_sel.dwFlags = CONSOLE_SELECTION_IN_PROGRESS | CONSOLE_TEXT_SELECTION;
-		con.m_sel.dwSelectionAnchor = crStart;
-		con.m_sel.srSelection.Left = crStart.X;
-		con.m_sel.srSelection.Top = crStart.Y;
-		con.m_sel.srSelection.Right = crEnd.X;
-		con.m_sel.srSelection.Bottom = crEnd.Y;
+		COORD crStartBuf = ScreenToBuffer(crStart);
+		COORD crEndBuf = ScreenToBuffer(crEnd);
+		con.m_sel.dwSelectionAnchor = crStartBuf;
+		con.m_sel.srSelection.Left = crStartBuf.X;
+		con.m_sel.srSelection.Top = crStartBuf.Y;
+		con.m_sel.srSelection.Right = crEndBuf.X;
+		con.m_sel.srSelection.Bottom = crEndBuf.Y;
 	}
 
 	UpdateSelection();
@@ -3334,6 +3346,8 @@ done:
 
 void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=-1*/, BOOL abByMouse/*=FALSE*/, UINT anFromMsg/*=0*/, COORD *pcrTo/*=NULL*/)
 {
+	_ASSERTE(anY==-1 || anY>=con.nTopVisibleLine);
+
 	if (!(con.m_sel.dwFlags & (CONSOLE_BLOCK_SELECTION|CONSOLE_TEXT_SELECTION)) && gpSet->isCTSFreezeBeforeSelect)
 	{
 		if (m_Type == rbt_Primary)
@@ -3359,28 +3373,41 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	WARNING("Доработать для режима с прокруткой - выделение протяжкой, как в обычной консоли");
 	if (anX == -1 && anY == -1)
 	{
-		anX = con.m_sbi.dwCursorPosition.X - con.m_sbi.srWindow.Left;
-		anY = con.m_sbi.dwCursorPosition.Y - con.m_sbi.srWindow.Top;
+		// Absolute coordinates now!
+		anX = con.m_sbi.dwCursorPosition.X; // - con.m_sbi.srWindow.Left;
+		anY = con.m_sbi.dwCursorPosition.Y; // - con.m_sbi.srWindow.Top;
 	}
+	
 	// Если начало выделение не видимо - ставим ближайший угол
 	if (anX < 0)
-		anX = 0;
-	else if (anX >= TextWidth())
-		anX = TextWidth()-1;
-	if (anY < 0)
-		anY = anX = 0;
-	else if (anY >= TextHeight())
 	{
+		_ASSERTE(FALSE && "Started (x) in not visible area?");
 		anX = 0;
-		anY = TextHeight()-1;
+	}
+	else if (anX >= GetBufferWidth())
+	{
+		_ASSERTE(FALSE && "Started beyond right margin");
+		anX = GetBufferWidth()-1;
+	}
+
+	if (anY < 0)
+	{
+		_ASSERTE(FALSE && "Started (y) in not visible area?");
+		anY = anX = 0;
+	}
+	else if (anY >= GetBufferHeight())
+	{
+		_ASSERTE(FALSE && "Started beyond bottom margin");
+		anX = 0;
+		anY = GetBufferHeight()-1;
 	}
 
 	COORD cr = {anX,anY};
 
-	if (cr.X<0 || cr.X>=TextWidth() || cr.Y<0 || cr.Y>=TextHeight())
+	if (cr.X<0 || cr.X>=GetBufferWidth() || cr.Y<0 || cr.Y>=GetBufferHeight())
 	{
-		_ASSERTE(cr.X>=0 && cr.X<TextWidth());
-		_ASSERTE(cr.Y>=0 && cr.Y<TextHeight());
+		_ASSERTE(cr.X>=0 && cr.X<GetBufferWidth());
+		_ASSERTE(cr.Y>=0 && cr.Y<GetBufferHeight());
 		return; // Ошибка в координатах
 	}
 
@@ -3397,6 +3424,8 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	con.m_sel.dwSelectionAnchor = cr;
 	con.m_sel.srSelection.Left = con.m_sel.srSelection.Right = cr.X;
 	con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
+	_ASSERTE(cr.Y>=con.nTopVisibleLine && cr.Y<GetBufferHeight());
+
 	UpdateSelection();
 
 	if ((anFromMsg == WM_LBUTTONDBLCLK) || (pcrTo && (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)))
@@ -3429,12 +3458,15 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 void CRealBuffer::ExpandSelection(SHORT anX/*=-1*/, SHORT anY/*=-1*/)
 {
 	_ASSERTE(con.m_sel.dwFlags!=0);
+	// Добавил "-3" чтобы на прокрутку не ругалась
+	_ASSERTE(anY==-1 || anY>=(con.nTopVisibleLine-3));
+
 	COORD cr = {anX,anY};
 
-	if (cr.X<0 || cr.X>=(int)TextWidth() || cr.Y<0 || cr.Y>=(int)TextHeight())
+	if (cr.X<0 || cr.X>=GetBufferWidth() || cr.Y<0 || cr.Y>=GetBufferHeight())
 	{
-		_ASSERTE(cr.X>=0 && cr.X<(int)TextWidth());
-		_ASSERTE(cr.Y>=0 && cr.Y<(int)TextHeight());
+		_ASSERTE(cr.X>=0 && cr.X<GetBufferWidth());
+		_ASSERTE(cr.Y>=0 && cr.Y<GetBufferHeight());
 		return; // Ошибка в координатах
 	}
 
@@ -3505,11 +3537,75 @@ void CRealBuffer::DoSelectionStop()
 
 bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 {
+	bool bRc = false;
+
+	RealBufferType bufType = m_Type;
+
 	if (!con.m_sel.dwFlags)
 	{
 		MBoxAssert(con.m_sel.dwFlags != 0);
-		return false;
 	}
+	else
+	{
+		bool  lbStreamMode = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
+		bool  lbProcessed = false;
+
+		// Сначала проверим, помещается ли "выделенная область" в "ВИДИМУЮ область"
+		if (m_Type == rbt_Primary)
+		{
+			COORD crStart = BufferToScreen(MakeCoord(con.m_sel.srSelection.Left, con.m_sel.srSelection.Top));
+			COORD crEnd = BufferToScreen(MakeCoord(con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom));
+
+			int nTextWidth = this->GetTextWidth();
+			int nTextHeight = this->GetTextHeight();
+
+			if ((crStart.X < 0) || (crStart.X >= nTextWidth)
+				|| (crStart.Y < 0) || (crStart.Y >= nTextHeight)
+				|| (crEnd.X < 0) || (crEnd.X >= nTextWidth)
+				|| (crEnd.Y < 0) || (crEnd.Y >= nTextHeight))
+			{
+				if (mp_RCon->LoadAlternativeConsole(lam_FullBuffer) && (mp_RCon->mp_ABuf != this))
+				{
+					bRc = mp_RCon->mp_ABuf->DoSelectionCopyInt(bCopyAll, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom);
+					lbProcessed = true;
+					bufType = rbt_Selection;
+				}
+				else
+				{
+					_ASSERTE(FALSE && "Failed to load full console data?");
+				}
+			}
+		}
+		
+		if (!lbProcessed)
+		{
+			bRc = DoSelectionCopyInt(bCopyAll, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom);
+		}
+	}
+
+	// Fin, Сбрасываем
+	if (bRc)
+	{
+		DoSelectionStop(); // con.m_sel.dwFlags = 0;
+		
+		if (bufType == rbt_Selection)
+		{
+			mp_RCon->SetActiveBuffer(rbt_Primary);
+			// Сразу на выход!
+		}
+		
+		if (m_Type == rbt_Primary)
+		{
+			UpdateSelection(); // обновить на экране
+		}
+	}
+
+	return bRc;
+}
+
+bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2)
+{
+	// Warning!!! Здесь уже нельзя ориентироваться на con.m_sel !!!
 
 	LPCWSTR pszDataStart = NULL;
 	int nTextWidth = 0, nTextHeight = 0;
@@ -3520,6 +3616,14 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 		nTextWidth = this->GetTextWidth();
 		nTextHeight = this->GetTextHeight();
 		_ASSERTE(pszDataStart[nTextWidth*nTextHeight] == 0); // Должно быть ASCIIZ
+
+		// Выделение "с прокруткой" обрабатываем только в альтернативных буферах,
+		// а здесь нам нужны только "экранные" координаты
+
+		COORD cr = BufferToScreen(MakeCoord(srSelection_X1, srSelection_Y1));
+		srSelection_X1 = cr.X; srSelection_Y1 = cr.Y;
+		cr = BufferToScreen(MakeCoord(srSelection_X2, srSelection_Y2));
+		srSelection_X2 = cr.X; srSelection_Y2 = cr.Y;
 	}
 	else if (dump.pszBlock1)
 	{
@@ -3569,22 +3673,20 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 	DWORD dwErr = 0;
 	BOOL  lbRc = FALSE;
 	bool  Result = false;
-	BOOL lbStreamMode = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
-	int nSelWidth = con.m_sel.srSelection.Right - con.m_sel.srSelection.Left;
-	int nSelHeight = con.m_sel.srSelection.Bottom - con.m_sel.srSelection.Top;
-	//int nTextWidth = con.nTextWidth;
+	int   nSelWidth = srSelection_X2 - srSelection_X1;
+	int   nSelHeight = srSelection_Y2 - srSelection_Y1;
 
-	//if (nSelWidth<0 || nSelHeight<0)
-	if (con.m_sel.srSelection.Left > (con.m_sel.srSelection.Right+(con.m_sel.srSelection.Bottom-con.m_sel.srSelection.Top)*nTextWidth))
+
+	if (srSelection_X1 > (srSelection_X2+(srSelection_Y2-srSelection_Y1)*nTextWidth))
 	{
-		Assert(con.m_sel.srSelection.Left <= (con.m_sel.srSelection.Right+(con.m_sel.srSelection.Bottom-con.m_sel.srSelection.Top)*nTextWidth));
+		Assert(srSelection_X1 <= (srSelection_X2+(srSelection_Y2-srSelection_Y1)*nTextWidth));
 		return false;
 	}
 
 	nSelWidth++; nSelHeight++;
 	int nCharCount = 0;
 
-	if (!lbStreamMode)
+	if (!bStreamMode)
 	{
 		nCharCount = ((nSelWidth+2/* "\r\n" */) * nSelHeight) - 2; // после последней строки "\r\n" не ставится
 	}
@@ -3597,13 +3699,13 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 		else if (nSelHeight == 2)
 		{
 			// На первой строке - до конца строки, вторая строка - до окончания блока, + "\r\n"
-			nCharCount = (con.nTextWidth - con.m_sel.srSelection.Left) + (con.m_sel.srSelection.Right + 1) + 2;
+			nCharCount = (con.nTextWidth - srSelection_X1) + (srSelection_X2 + 1) + 2;
 		}
 		else
 		{
 			Assert(nSelHeight>2);
 			// На первой строке - до конца строки, последняя строка - до окончания блока, + "\r\n"
-			nCharCount = (con.nTextWidth - con.m_sel.srSelection.Left) + (con.m_sel.srSelection.Right + 1) + 2
+			nCharCount = (con.nTextWidth - srSelection_X1) + (srSelection_X2 + 1) + 2
 			             + ((nSelHeight - 2) * (con.nTextWidth + 2)); // + серединка * (длину консоли + "\r\n")
 		}
 	}
@@ -3626,21 +3728,21 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 	}
 
 	// Заполнить данными
-	if ((con.m_sel.srSelection.Left + nSelWidth) > con.nTextWidth)
+	if ((srSelection_X1 + nSelWidth) > con.nTextWidth)
 	{
-		Assert((con.m_sel.srSelection.Left + nSelWidth) <= con.nTextWidth);
-		nSelWidth = con.nTextWidth - con.m_sel.srSelection.Left;
+		Assert((srSelection_X1 + nSelWidth) <= con.nTextWidth);
+		nSelWidth = con.nTextWidth - srSelection_X1;
 	}
 
-	if ((con.m_sel.srSelection.Top + nSelHeight) > con.nTextHeight)
+	if ((srSelection_Y1 + nSelHeight) > con.nTextHeight)
 	{
-		Assert((con.m_sel.srSelection.Top + nSelHeight) <= con.nTextHeight);
-		nSelHeight = con.nTextHeight - con.m_sel.srSelection.Top;
+		Assert((srSelection_Y1 + nSelHeight) <= con.nTextHeight);
+		nSelHeight = con.nTextHeight - srSelection_Y1;
 	}
 
 	nSelHeight--;
 
-	if (!lbStreamMode)
+	if (!bStreamMode)
 	{
 		// Блоковое выделение
 		for (int Y = 0; Y <= nSelHeight; Y++)
@@ -3649,12 +3751,12 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 
 			if (m_Type == rbt_Primary)
 			{
-				pszCon = con.pConChar + con.nTextWidth*(Y+con.m_sel.srSelection.Top) + con.m_sel.srSelection.Left;
+				pszCon = con.pConChar + con.nTextWidth*(Y+srSelection_Y1) + srSelection_X1;
 			}
 			else if (pszDataStart && (Y < nTextHeight))
 			{
 				WARNING("Проверить для режима с прокруткой!");
-				pszCon = pszDataStart + dump.crSize.X*(Y+con.m_sel.srSelection.Top) + con.m_sel.srSelection.Left;
+				pszCon = pszDataStart + dump.crSize.X*(Y+srSelection_Y1) + srSelection_X1;
 			}
 
 			int nMaxX = nSelWidth - 1;
@@ -3671,7 +3773,9 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 				if (nTrimTailing == 1)
 				{
 					while ((pch > pchStart) && (*(pch-1) == L' '))
+					{
 						*(--pch) = 0;
+					}
 				}
 			}
 			else if (nTrimTailing != 1)
@@ -3711,21 +3815,21 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 		//}
 		for (int Y = 0; Y <= nSelHeight; Y++)
 		{
-			nX1 = (Y == 0) ? con.m_sel.srSelection.Left : 0;
-			nX2 = (Y == nSelHeight) ? con.m_sel.srSelection.Right : (con.nTextWidth-1);
+			nX1 = (Y == 0) ? srSelection_X1 : 0;
+			nX2 = (Y == nSelHeight) ? srSelection_X2 : (con.nTextWidth-1);
 			LPCWSTR pszCon = NULL;
 			LPCWSTR pszNextLine = NULL;
 			
 			if (m_Type == rbt_Primary)
 			{
-				pszCon = con.pConChar + con.nTextWidth*(Y+con.m_sel.srSelection.Top) + nX1;
-				pszNextLine = ((Y + 1) <= nSelHeight) ? (con.pConChar + con.nTextWidth*(Y+1+con.m_sel.srSelection.Top)) : NULL;
+				pszCon = con.pConChar + con.nTextWidth*(Y+srSelection_Y1) + nX1;
+				pszNextLine = ((Y + 1) <= nSelHeight) ? (con.pConChar + con.nTextWidth*(Y+1+srSelection_Y1)) : NULL;
 			}
 			else if (pszDataStart && (Y < nTextHeight))
 			{
 				WARNING("Проверить для режима с прокруткой!");
-				pszCon = pszDataStart + dump.crSize.X*(Y+con.m_sel.srSelection.Top) + nX1;
-				pszNextLine = ((Y + 1) <= nSelHeight) ? (pszDataStart + dump.crSize.X*(Y+1+con.m_sel.srSelection.Top)) : NULL;
+				pszCon = pszDataStart + dump.crSize.X*(Y+srSelection_Y1) + nX1;
+				pszNextLine = ((Y + 1) <= nSelHeight) ? (pszDataStart + dump.crSize.X*(Y+1+srSelection_Y1)) : NULL;
 			}
 
 			wchar_t* pchStart = pch;
@@ -3772,7 +3876,9 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 					if (nTrimTailing)
 					{
 						while ((pch > pchStart) && (*(pch-1) == L' '))
+						{
 							*(--pch) = 0;
+						}
 					}
 
 					switch (nEOL)
@@ -3791,7 +3897,9 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 				if (nTrimTailing)
 				{
 					while ((pch > pchStart) && (*(pch-1) == L' '))
+					{
 						*(--pch) = 0;
+					}
 				}
 			}
 		}
@@ -3828,22 +3936,6 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 
 	lbRc = CloseClipboard();
 
-	// Fin, Сбрасываем
-	if (Result)
-	{
-		DoSelectionStop(); // con.m_sel.dwFlags = 0;
-		
-		if (m_Type == rbt_Selection)
-		{
-			mp_RCon->SetActiveBuffer(rbt_Primary);
-			// Сразу на выход!
-		}
-		else
-		{
-			UpdateSelection(); // обновить на экране
-		}
-	}
-
 	return Result;
 }
 
@@ -3856,7 +3948,7 @@ void CRealBuffer::UpdateSelection()
 	mp_RCon->mp_VCon->Redraw();
 }
 
-BOOL CRealBuffer::isConSelectMode()
+bool CRealBuffer::isConSelectMode()
 {
 	if (!this) return false;
 
@@ -3873,14 +3965,14 @@ BOOL CRealBuffer::isConSelectMode()
 	return false;
 }
 
-BOOL CRealBuffer::isSelfSelectMode()
+bool CRealBuffer::isSelfSelectMode()
 {
 	if (!this) return false;
 	
 	return (con.m_sel.dwFlags != 0);
 }
 
-BOOL CRealBuffer::isStreamSelection()
+bool CRealBuffer::isStreamSelection()
 {
 	if (!this) return false;
 	
@@ -3932,13 +4024,15 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		else
 		{
 			COORD cr; ConsoleCursorPos(&cr);
-			// Поправить
-			cr.Y -= con.nTopVisibleLine;
+
+			// -- координаты нужны абсолютные
+			//// Поправить
+			//cr.Y -= con.nTopVisibleLine;
 
 			if (wParam == VK_LEFT)  { if (cr.X>0) cr.X--; }
-			else if (wParam == VK_RIGHT) { if (cr.X<(con.nTextWidth-1)) cr.X++; }
+			else if (wParam == VK_RIGHT) { if (cr.X<(GetBufferWidth()-1)) cr.X++; }
 			else if (wParam == VK_UP)    { if (cr.Y>0) cr.Y--; }
-			else if (wParam == VK_DOWN)  { if (cr.Y<(con.nTextHeight-1)) cr.Y++; }
+			else if (wParam == VK_DOWN)  { if (cr.Y<(GetBufferHeight()-1)) cr.Y++; }
 
 			// Теперь - двигаем
 			BOOL bShift = isPressed(VK_SHIFT);
@@ -4569,12 +4663,16 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 		if (con.m_sel.dwFlags)
 		{
-			BOOL lbStreamMode = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
-			SMALL_RECT rc = con.m_sel.srSelection;
-			if (rc.Left<0) rc.Left = 0; else if (rc.Left>=nWidth) rc.Left = nWidth-1;
-			if (rc.Top<0) rc.Top = 0; else if (rc.Top>=nHeight) rc.Top = nHeight-1;
-			if (rc.Right<0) rc.Right = 0; else if (rc.Right>=nWidth) rc.Right = nWidth-1;
-			if (rc.Bottom<0) rc.Bottom = 0; else if (rc.Bottom>=nHeight) rc.Bottom = nHeight-1;
+			bool lbStreamMode = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
+			// srSelection in Absolute coordinates now!
+			// Поскольку здесь нас интересует только отображение - можно поступить просто
+			COORD crStart = BufferToScreen(MakeCoord(con.m_sel.srSelection.Left, con.m_sel.srSelection.Top));
+			COORD crEnd = BufferToScreen(MakeCoord(con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom));
+
+			SMALL_RECT rc = {crStart.X, crStart.Y, crEnd.X, crEnd.Y};
+			// Коррекция по видимой области
+			MinMax(rc.Left, 0, nWidth-1); MinMax(rc.Right, 0, nWidth-1);
+			MinMax(rc.Top, 0, nHeight-1); MinMax(rc.Bottom, 0, nHeight-1);
 
 			// для прямоугольника выделения сбрасываем прозрачность и ставим стандартный цвет выделения (lcaSel)
 			//CharAttr lcaSel = lcaTable[gpSet->isCTSColorIndex]; // Black on LtGray
@@ -4584,11 +4682,12 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			COLORREF crBackColor = mp_RCon->mp_VCon->mp_Colors[nBackIdx];
 			int nX1, nX2;
 
-			// Block mode
+			
 			for (nY = rc.Top; nY <= rc.Bottom; nY++)
 			{
 				if (!lbStreamMode)
 				{
+					// Block mode
 					nX1 = rc.Left; nX2 = rc.Right;
 				}
 				else
@@ -4599,7 +4698,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 				pcaDst = pAttr + nWidth*nY + nX1;
 
-				for(nX = nX1; nX <= nX2; nX++, pcaDst++)
+				for (nX = nX1; nX <= nX2; nX++, pcaDst++)
 				{
 					//pcaDst[nX] = lcaSel; -- чтобы не сбрасывать флаги рамок и диалогов - ставим по полям
 					pcaDst->crForeColor = pcaDst->crOrigForeColor = crForeColor;
@@ -5235,15 +5334,17 @@ void CRealBuffer::ConsoleCursorPos(COORD *pcr)
 	if (con.m_sel.dwFlags)
 	{
 		// В режиме выделения - положение курсора ставим сами
+		// con.m_sel.srSelection уже содержит "абсолютные" координаты
+
 		if (con.m_sel.dwSelectionAnchor.X == con.m_sel.srSelection.Left)
 			pcr->X = con.m_sel.srSelection.Right;
 		else
 			pcr->X = con.m_sel.srSelection.Left;
 
 		if (con.m_sel.dwSelectionAnchor.Y == con.m_sel.srSelection.Top)
-			pcr->Y = con.m_sel.srSelection.Bottom + con.nTopVisibleLine;
+			pcr->Y = con.m_sel.srSelection.Bottom; // + con.nTopVisibleLine;
 		else
-			pcr->Y = con.m_sel.srSelection.Top + con.nTopVisibleLine;
+			pcr->Y = con.m_sel.srSelection.Top; // + con.nTopVisibleLine;
 	}
 	else
 	{

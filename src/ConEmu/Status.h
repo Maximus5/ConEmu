@@ -165,8 +165,6 @@ private:
 
 	bool isSettingsOpened(UINT nOpenPageID = 0);
 
-	void InvalidateStatusBar(LPRECT rcInvalidated = NULL);
-
 public:
 	CStatus();
 	virtual ~CStatus();
@@ -176,6 +174,7 @@ public:
 public:
 	void PaintStatus(HDC hPaint, LPRECT prcStatus = NULL);
 	void UpdateStatusBar(bool abForce = false, bool abRepaintNow = false);
+	void InvalidateStatusBar(LPRECT rcInvalidated = NULL);
 
 	void OnTimer();
 	void OnWindowReposition(const RECT* prcNew = NULL);

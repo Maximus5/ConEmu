@@ -410,7 +410,7 @@ class CRealConsole
 		LRESULT OnScroll(int nDirection);
 		LRESULT OnSetScrollPos(WPARAM wParam);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
-		BOOL isConSelectMode();
+		bool isConSelectMode();
 		bool isFar(bool abPluginRequired=false);
 		bool isFarBufferSupported();
 		bool isFarInStack();
@@ -431,7 +431,7 @@ class CRealConsole
 		void ShowGuiClientExt(int nMode, BOOL bDetach = FALSE); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowGuiClientInt(bool bShow);
 		void ChildSystemMenu();
-		BOOL isDetached();
+		bool isDetached();
 		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		BOOL RecreateProcess(RConStartArgs *args);
 		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);

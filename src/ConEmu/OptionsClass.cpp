@@ -4891,7 +4891,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbTryToCenter:
 			gpSet->isTryToCenter = IsChecked(hWnd2, cbTryToCenter);
-			gpConEmu->OnSize(false);
+			// ресайзим консоль, иначе после включения/отключения PAD-size
+			// размер консоли не изменится и она отрисуется с некорректным размером
+			gpConEmu->OnSize(true);
 			gpConEmu->InvalidateAll();
 			break;
 		case rbScrollbarHide:

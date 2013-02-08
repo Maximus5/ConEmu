@@ -295,6 +295,7 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 
 				if (!bLockSnapshoot)
 				{
+					WARNING("TODO: Use WM_PRINT & WM_PRINTCLIENT?");
 					// Нужно фото экрана
 					#if 1
 					// Этот метод вроде срабатывает, но
@@ -317,7 +318,7 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 			{
 				// Просто отрисуем "консоль" на нашем DC
 				RECT rcPaint = m_TabSize.UsedRect;
-				mp_VCon->PaintVCon(hdcMem, rcPaint);
+				mp_VCon->PrintClient(hdcMem, true, &rcPaint);
 			}
 
 			SelectObject(hdcMem, hOld);

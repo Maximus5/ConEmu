@@ -11,7 +11,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.02.08
 [*] Interprocess communication changes.
+[%] Issue 926: Pad around console redraw lag.
+[%] Issue 928: Regression of 130205: Restart of console does not works.
+[*] Preparing for multi-page selection.
 
 
 2013.02.05

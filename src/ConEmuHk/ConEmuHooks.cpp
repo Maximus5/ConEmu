@@ -185,7 +185,7 @@ wchar_t *gpszLastWriteConsole = NULL;
 HMODULE  ghClinkDll = NULL;
 call_readline_t gpfnClinkReadLine = NULL;
 bool     gbClinkInitialized = false;
-DWORD    gnAllowClinkUsage = 0; // cmd.exe only
+DWORD    gnAllowClinkUsage = 0; // cmd.exe only. 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
 /* ************ Globals for clink ************ */
 
 /* ************ Globals for powershell ************ */

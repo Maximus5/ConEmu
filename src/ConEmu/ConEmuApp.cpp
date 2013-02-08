@@ -1206,6 +1206,13 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine)
 
 	if (nRet == IDRETRY)
 	{
+		#ifdef _DEBUG
+		if (IsDebuggerPresent())
+		{
+			MyAssertTrap();
+		}
+		#endif
+
 		gpConEmu->OnInfo_ReportBug();
 	}
 }

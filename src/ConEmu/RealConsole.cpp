@@ -2818,7 +2818,7 @@ BOOL CRealConsole::StartProcess()
 	mb_InCreateRoot = TRUE;
 	mb_InCloseConsole = FALSE;
 	mb_SwitchActiveServer = false;
-	mb_WasStartDetached = FALSE;
+	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
 	ZeroStruct(m_ServerClosing);
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
@@ -4437,18 +4437,27 @@ BOOL CRealConsole::isAlternative()
 	return (mp_ABuf && (mp_ABuf != mp_RBuf));
 }
 
-BOOL CRealConsole::isConSelectMode()
+bool CRealConsole::isConSelectMode()
 {
-	if (!this || !mp_ABuf) return false;
+	if (!this || !mp_ABuf)
+	{
+		return false;
+	}
 
 	return mp_ABuf->isConSelectMode();
 }
 
-BOOL CRealConsole::isDetached()
+bool CRealConsole::isDetached()
 {
-	if (this == NULL) return FALSE;
+	if (this == NULL)
+	{
+		return FALSE;
+	}
 
-	if (!m_Args.bDetached) return FALSE;
+	if (!mb_WasStartDetached && !mn_InRecreate)
+	{
+		return FALSE;
+	}
 
 	// Флажок ВООБЩЕ не сбрасываем - ориентируемся на хэндлы
 	//_ASSERTE(!mb_Detached || (mb_Detached && (hConWnd==NULL)));
@@ -6916,7 +6925,13 @@ BOOL CRealConsole::RecreateProcessStart()
 {
 	bool lbRc = false;
 
-	if (mn_InRecreate && mn_ProcessCount == 0 && !mb_ProcessRestarted)
+
+	if ((mn_InRecreate == 0) || (mn_ProcessCount != 0) || mb_ProcessRestarted)
+	{
+		// Must not be called twice, while Restart is still pending, or was not prepared
+		_ASSERTE((mn_InRecreate == 0) || (mn_ProcessCount != 0) || mb_ProcessRestarted);
+	}
+	else
 	{
 		mb_ProcessRestarted = TRUE;
 
@@ -6946,25 +6961,29 @@ BOOL CRealConsole::RecreateProcessStart()
 		m_RConServer.Stop();
 
 		ResetEvent(mh_TermEvent);
+		ResetEvent(mh_StartExecuted);
+
 		mb_NeedStartProcess = TRUE;
+		mb_StartResult = FALSE;
+
+		// Взведем флажочек, т.к. консоль как бы отключилась от нашего VCon
+		mb_WasStartDetached = TRUE;
+
+		{
+			// Push request to "startup queue"
+			mb_WaitingRootStartup = TRUE;
+			gpConEmu->mp_RunQueue->RequestRConStartup(this);
+		}
+
 		lbRc = StartMonitorThread();
 
 		if (!lbRc)
 		{
+			mb_NeedStartProcess = FALSE;
 			mn_InRecreate = 0;
 			mb_ProcessRestarted = FALSE;
 		}
 
-		//if (!StartProcess())
-		//{
-		//	mn_InRecreate = 0;
-		//	mb_ProcessRestarted = FALSE;
-		//}
-		//else
-		//{
-		//	ResetEvent(mh_TermEvent);
-		//	lbRc = StartMonitorThread();
-		//}
 	}
 
 	return lbRc;

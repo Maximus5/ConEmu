@@ -306,8 +306,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		case WM_PRINTCLIENT:
 			if (wParam && (lParam & PRF_CLIENT))
 			{
-				RECT rcClient = pVCon->GetDcClientRect();
-				pVCon->PaintVCon((HDC)wParam, rcClient);
+				pVCon->PrintClient((HDC)wParam, false, NULL);
 			}
 			break;
 		case WM_SIZE:
@@ -519,7 +518,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 					// иначе во время запуска PID фара еще может быть не известен...
 					//gpConEmu->OnTimer(0,0); не получилось. индекс конмана не менялся, из-за этого индекс активного фара так и остался 0
 					WARNING("gpConEmu->mp_TabBar->Retrieve() ничего уже не делает вообще");
-					_ASSERT(FALSE);
+					_ASSERTE(FALSE);
 					gpConEmu->mp_TabBar->Retrieve();
 				}
 			}
@@ -826,7 +825,7 @@ LRESULT CConEmuChild::OnPaint()
 	BOOL lbSkipDraw = FALSE;
 	//if (gbInPaint)
 	//    break;
-	//_ASSERT(FALSE);
+	//_ASSERTE(FALSE);
 
 	//2009-09-28 может так (autotabs)
 	if (mb_DisableRedraw)
@@ -903,8 +902,8 @@ LRESULT CConEmuChild::OnPaint()
 		HDC hDc = BeginPaint(mh_WndDC, &ps);
 		UNREFERENCED_PARAMETER(hDc);
 
-		RECT rcClient = pVCon->GetDcClientRect();
-		pVCon->PaintVCon(ps.hdc, rcClient);
+		//RECT rcClient = pVCon->GetDcClientRect();
+		pVCon->PaintVCon(ps.hdc);
 
 		if (bRightClickingPaint)
 		{
@@ -1144,6 +1143,15 @@ void CConEmuChild::Invalidate()
 	else
 	{
 		_ASSERTE(mh_WndDC != NULL);
+	}
+
+	if (mh_WndBack)
+	{
+		InvalidateRect(mh_WndBack, NULL, FALSE);
+	}
+	else
+	{
+		_ASSERTE(mh_WndBack!=NULL);
 	}
 
 	UNREFERENCED_PARAMETER(pVCon);
