@@ -96,7 +96,7 @@ void CVConGuard::Attach(CVirtualConsole* apRef)
 {
 	if (mp_Ref == apRef)
 	{
-		_ASSERTE((apRef == NULL || mp_Ref != apRef) && "Already assigned?");
+		//_ASSERTE((apRef == NULL || mp_Ref != apRef) && "Already assigned?");
 		return;
 	}
 

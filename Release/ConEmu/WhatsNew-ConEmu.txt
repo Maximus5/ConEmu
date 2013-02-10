@@ -11,6 +11,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.02.10
+[%] Regression. Sometimes ConEmu.exe may crash on startup or quake-sliding.
+[+] Issue 932: Support UltraEdit decimal color format.
+
+
 2013.02.08
 [*] Interprocess communication changes.
 [%] Issue 926: Pad around console redraw lag.

@@ -6468,6 +6468,14 @@ bool CSettings::GetColorRef(LPCWSTR pszText, COLORREF* pCR)
 				b = pch ? wcstol(pch, &pchEnd, 10) : 0;
 			}
 
+			// decimal format of UltraEdit?
+			if ((r > 255) && !g && !b)
+			{
+				g = (r & 0xFF00) >> 8;
+				b = (r & 0xFF0000) >> 16;
+				r &= 0xFF;
+			}
+
 			// Достаточно ввода одной компоненты
 			if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && *pCR != RGB(r, g, b))
 			{

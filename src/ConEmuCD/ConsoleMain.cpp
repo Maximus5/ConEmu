@@ -6916,6 +6916,8 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	MCHKHEAP;
 
+	DWORD nTick1 = 0, nTick2 = 0, nTick3 = 0, nTick4 = 0, nTick5 = 0;
+
 	if (in.hdr.cbSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETSIZE)))
 	{
 		USHORT nBufferHeight = 0;
@@ -6988,9 +6990,11 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		}
 
 		gpSrv->nTopVisibleLine = nNewTopVisible;
+		nTick1 = GetTickCount();
 		WARNING("Если указан dwFarPID - это что-ли два раза подряд выполнится?");
 		SetConsoleSize(nBufferHeight, crNewSize, rNewRect, ":CECMD_SETSIZESYNC");
 		WARNING("!! Не может ли возникнуть конфликт с фаровским фиксом для убирания полос прокрутки?");
+		nTick2 = GetTickCount();
 
 		if (in.hdr.nCmd == CECMD_SETSIZESYNC)
 		{
@@ -7039,11 +7043,17 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	MCHKHEAP;
 
+	nTick3 = GetTickCount();
+
 	// Prepare result
 	(*out)->SetSizeRet.crMaxSize = MyGetLargestConsoleWindowSize(ghConOut);
 
+	nTick4 = GetTickCount();
+
 	PCONSOLE_SCREEN_BUFFER_INFO psc = &((*out)->SetSizeRet.SetSizeRet);
 	MyGetConsoleScreenBufferInfo(ghConOut, psc);
+
+	nTick5 = GetTickCount();
 	
 	DWORD lnNextPacketId = ++gpSrv->nLastPacketID;
 	(*out)->SetSizeRet.nNextPacketId = lnNextPacketId;
@@ -7053,6 +7063,11 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 	MCHKHEAP;
 	lbRc = TRUE;
 
+	UNREFERENCED_PARAMETER(nTick1);
+	UNREFERENCED_PARAMETER(nTick2);
+	UNREFERENCED_PARAMETER(nTick3);
+	UNREFERENCED_PARAMETER(nTick4);
+	UNREFERENCED_PARAMETER(nTick5);
 	return lbRc;
 }
 

@@ -5706,6 +5706,25 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	_ASSERTE(iconic == ((dwStyle & WS_MINIMIZE) == WS_MINIMIZE));
 	#endif
 
+	// В процессе раскрытия/сворачивания могут меняться стили и вызвается ...Changing
+	if (!gpSet->isQuakeStyle && (changeFromWindowMode != wmNotChanging))
+	{
+		if (!zoomed && (WindowMode == wmMaximized))
+		{
+			zoomed = true;
+			// Это может быть в случае смены стилей окна в процессе раскрытия (HideCaption)
+			_ASSERTE(changeFromWindowMode!=wmMaximized && );
+		}
+		else if (zoomed && (WindowMode == wmNormal))
+		{
+			_ASSERTE(FALSE && "Must be not zoomed?");
+			zoomed = false;
+		}
+		else if (WindowMode == wmFullScreen)
+		{
+			_ASSERTE(FALSE && "Need to check 'zoomed' state");
+		}
+	}
 
 	wchar_t szInfo[255];
 	if (gpSetCls->isAdvLogging >= 2)

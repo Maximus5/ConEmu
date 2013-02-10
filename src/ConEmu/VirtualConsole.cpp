@@ -3961,8 +3961,16 @@ bool CVirtualConsole::PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT
 	if (((HDC)m_DC) != NULL)
 	{
 		RECT rcClient = GetDcClientRect();
+		int  nPrintX = 0, nPrintY = 0;
 
-		if (PaintRect == NULL)
+		bool bNeedStretch = false;
+		if (PaintRect != NULL)
+		{
+			bNeedStretch = (((rcClient.right-rcClient.left) != (PaintRect->right-PaintRect->left))
+				|| ((rcClient.bottom-rcClient.top) != (PaintRect->bottom-PaintRect->top)));
+		}
+
+		if (bNeedStretch)
 		{
 			lbBltRc = StretchPaint(hPrintDc, PaintRect->left, PaintRect->top, PaintRect->right-PaintRect->left, PaintRect->bottom-PaintRect->top);
 		}
@@ -3974,7 +3982,7 @@ bool CVirtualConsole::PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT
 			}
 
 			lbBltRc = BitBlt(
-				hPrintDc, 0, 0, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top,
+				hPrintDc, nPrintX, nPrintY, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top,
 				(HDC)m_DC, 0, 0,
 				SRCCOPY);
 		}
