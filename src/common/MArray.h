@@ -89,12 +89,12 @@ class MArray
             return ((_Ty*)mp_Elements)[_P];
         }
 
-        void push_back(const _Ty& _X)
+        INT_PTR push_back(const _Ty& _X)
         {
             if (mn_TySize==0)
             {
                 _ARRAY_ASSERTE(!(mn_TySize==0));
-                return;
+                return -1;
             }
             MCHKHEAP;
             if (mn_MaxSize<=mn_Elements)
@@ -102,11 +102,13 @@ class MArray
             	_ARRAY_ASSERTE(mn_MaxSize==mn_Elements);
                 addsize(max(256,mn_MaxSize));
             }
+			INT_PTR nPos = mn_Elements++;
             memmove(
                 ((_Ty*)mp_Elements)+
-                (mn_Elements++),
+                nPos,
                 &_X, mn_TySize);
             MCHKHEAP;
+			return nPos;
         }
         void insert(INT_PTR nPos, const _Ty& _X)
         {

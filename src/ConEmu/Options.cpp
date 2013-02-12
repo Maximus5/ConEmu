@@ -2506,7 +2506,11 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"FontSizeX3", FontSizeX3);
 		reg->Load(L"FontSizeX2", FontSizeX2);
 		reg->Load(L"FontCharSet", mn_LoadFontCharSet); mb_CharSetWasSet = FALSE;
+
 		reg->Load(L"Anti-aliasing", mn_AntiAlias);
+		// Must be explicitly defined, 0 - not allowed
+		if (mn_AntiAlias!=NONANTIALIASED_QUALITY && mn_AntiAlias!=ANTIALIASED_QUALITY && mn_AntiAlias!=CLEARTYPE_NATURAL_QUALITY)
+			mn_AntiAlias = NONANTIALIASED_QUALITY;
 		
 		reg->Load(L"ConsoleFontName", ConsoleFont.lfFaceName, countof(ConsoleFont.lfFaceName));
 		reg->Load(L"ConsoleFontWidth", ConsoleFont.lfWidth);

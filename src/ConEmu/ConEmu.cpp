@@ -5713,7 +5713,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		{
 			zoomed = true;
 			// Ёто может быть в случае смены стилей окна в процессе раскрыти€ (HideCaption)
-			_ASSERTE(changeFromWindowMode!=wmMaximized && );
+			_ASSERTE(changeFromWindowMode!=wmMaximized);
 		}
 		else if (zoomed && (WindowMode == wmNormal))
 		{
@@ -5809,7 +5809,9 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		}
 		else if (zoomed)
 		{
-			RECT rc = CalcRect((WindowMode == wmFullScreen) ? CER_FULLSCREEN : CER_MAXIMIZED, NULL);
+			// «десь может быть попытка перемещени€ на другой монитор. Ќужно обрабатывать x/y/cx/cy!
+			RECT rcNewMain = {p->x, p->y, p->x + p->cx, p->y + p->cy};
+			RECT rc = CalcRect((WindowMode == wmFullScreen) ? CER_FULLSCREEN : CER_MAXIMIZED, rcNewMain, CER_MAIN);
 			p->x = rc.left;
 			p->y = rc.top;
 			p->cx = rc.right - rc.left;

@@ -4007,6 +4007,7 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount /*= 1*/)
 	if (!isServerAlive())
 	{
 		//DisplayLastError(L"ConEmuC was terminated");
+		LogString("PostConsoleEventPipe skipped due to server not alive");
 		return false;
 	}
 
@@ -4016,7 +4017,10 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount /*= 1*/)
 	{
 		// Try to open a named pipe; wait for it, if necessary.
 		if (!OpenConsoleEventPipe())
+		{
+			LogString("PostConsoleEventPipe skipped due to OpenConsoleEventPipe failed");
 			return false;
+		}
 
 		//int nSteps = 10;
 		//while ((nSteps--) > 0)

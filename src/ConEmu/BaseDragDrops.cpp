@@ -300,16 +300,16 @@ HRESULT CreateDropSource(IDropSource **ppDropSource, CDragDropData* pCallback)
 CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count)
 {
 	m_lRefCount  = 1;
-	m_nMaxNumFormats = 32 + max(32,count); //-V112
-	m_nNumFormats = count;
-	m_pFormatEtc  = (FORMATETC*)calloc(m_nMaxNumFormats,sizeof(FORMATETC));
-	m_pStgMedium  = (STGMEDIUM*)calloc(m_nMaxNumFormats,sizeof(STGMEDIUM));
+
+	m_Data.alloc(32+max(count,32));
 
 	for (int i = 0; i < count; i++)
 	{
 		_ASSERTE(fmtetc && stgmed);
-		m_pFormatEtc[i] = fmtetc[i];
-		m_pStgMedium[i] = stgmed[i];
+		m_Data[i].fUsed = TRUE;
+		m_Data[i].fRelease = TRUE;
+		m_Data[i].FormatEtc = fmtetc[i];
+		m_Data[i].StgMedium = stgmed[i];
 	}
 }
 
@@ -319,15 +319,17 @@ CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count)
 CDataObject::~CDataObject()
 {
 	// Освобождать данные в m_pStgMedium.hGlobal
-	for (int i = 0; i < m_nNumFormats; i++)
+	for (int i = 0; i < m_Data.size(); i++)
 	{
-		ReleaseStgMedium(m_pStgMedium+i);
+		if (m_Data[i].fUsed && m_Data[i].fRelease)
+		{
+			ReleaseStgMedium(&(m_Data[i].StgMedium));
+			m_Data[i].fRelease = FALSE;
+		}
 	}
 
 	// cleanup
-	SafeFree(m_pFormatEtc);
-
-	SafeFree(m_pStgMedium);
+	m_Data.clear();
 
 	DEBUGSTR(L"CDataObject::~CDataObject()\n");
 }
@@ -394,11 +396,12 @@ HGLOBAL DupMem(HGLOBAL hMem)
 
 int CDataObject::LookupFormatEtc(FORMATETC *pFormatEtc)
 {
-	for(int i = 0; i < m_nNumFormats; i++)
+	for (int i = 0; i < m_Data.size(); i++)
 	{
-		if ((pFormatEtc->tymed    &  m_pFormatEtc[i].tymed)   &&
-		        pFormatEtc->cfFormat == m_pFormatEtc[i].cfFormat &&
-		        pFormatEtc->dwAspect == m_pFormatEtc[i].dwAspect)
+		if (m_Data[i].fUsed
+			&& (pFormatEtc->tymed    &  m_Data[i].FormatEtc.tymed)
+			&& (pFormatEtc->cfFormat == m_Data[i].FormatEtc.cfFormat)
+			&& (pFormatEtc->dwAspect == m_Data[i].FormatEtc.dwAspect))
 		{
 			return i;
 		}
@@ -470,14 +473,14 @@ HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 		|| lstrcmp(pszName, L"DisableDragText")==0
 		)		
 	{
-		LPDWORD pdw = (LPDWORD)GlobalLock(m_pStgMedium[idx].hGlobal);
+		LPDWORD pdw = (LPDWORD)GlobalLock(m_Data[idx].StgMedium.hGlobal);
 		if (pdw)
 		{
 			nData = *pdw;
 			int nLen = lstrlen(szDbg);
 			_wsprintf(szDbg+nLen, SKIPLEN(countof(szDbg)-nLen) L", Data=x%02X(%u)", nData, nData);
 		}
-		GlobalUnlock(m_pStgMedium[idx].hGlobal);
+		GlobalUnlock(m_Data[idx].StgMedium.hGlobal);
 	}
 	wcscat_c(szDbg, L"\n");
 	DEBUGSTRDATA(szDbg);
@@ -487,36 +490,36 @@ HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 	HRESULT hr = DV_E_FORMATETC;
 
 
-	switch (m_pFormatEtc[idx].tymed)
+	switch (m_Data[idx].FormatEtc.tymed)
 	{
 		case TYMED_HGLOBAL:
 			//ReleaseStgMedium(pMedium);
-			pMedium->hGlobal = DupMem(m_pStgMedium[idx].hGlobal);
-			pMedium->pUnkForRelease = m_pStgMedium[idx].pUnkForRelease;
+			pMedium->hGlobal = DupMem(m_Data[idx].StgMedium.hGlobal);
+			pMedium->pUnkForRelease = NULL; // m_Data[idx].StgMedium.pUnkForRelease;
 			hr = S_OK;
 			break;
 
 		case TYMED_ISTREAM:
-			_ASSERTE(pMedium->pstm != m_pStgMedium[idx].pstm);
+			_ASSERTE(pMedium->pstm != m_Data[idx].StgMedium.pstm);
 			//ReleaseStgMedium(pMedium);
-			pMedium->pstm = m_pStgMedium[idx].pstm;
-			if (m_pStgMedium[idx].pstm)
-				m_pStgMedium[idx].pstm->AddRef();
-			pMedium->pUnkForRelease = m_pStgMedium[idx].pUnkForRelease;
+			pMedium->pstm = m_Data[idx].StgMedium.pstm;
+			if (m_Data[idx].StgMedium.pstm)
+				m_Data[idx].StgMedium.pstm->AddRef();
+			pMedium->pUnkForRelease = m_Data[idx].StgMedium.pUnkForRelease;
 			hr = S_OK;
 			break;
 
 		case TYMED_ISTORAGE:
-			_ASSERTE(pMedium->pstg != m_pStgMedium[idx].pstg);
+			_ASSERTE(pMedium->pstg != m_Data[idx].StgMedium.pstg);
 			//ReleaseStgMedium(pMedium);
-			pMedium->pstg = m_pStgMedium[idx].pstg;
-			if (m_pStgMedium[idx].pstg)
-				m_pStgMedium[idx].pstg->AddRef();
-			pMedium->pUnkForRelease = m_pStgMedium[idx].pUnkForRelease;
+			pMedium->pstg = m_Data[idx].StgMedium.pstg;
+			if (m_Data[idx].StgMedium.pstg)
+				m_Data[idx].StgMedium.pstg->AddRef();
+			pMedium->pUnkForRelease = m_Data[idx].StgMedium.pUnkForRelease;
 			hr = S_OK;
 			break;
 		default:
-			AssertMsg(L"Unsupported value in m_pFormatEtc[idx].tymed");
+			AssertMsg(L"Unsupported value in m_Data[idx].FormatEtc.tymed");
 	}
 
 	if (hr == S_OK)
@@ -524,14 +527,14 @@ HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 		//
 		// found a match! transfer the data into the supplied storage-medium
 		//
-		pMedium->tymed			 = m_pFormatEtc[idx].tymed;
-		//Assert(pMedium->pUnkForRelease==NULL && m_pStgMedium[idx].pUnkForRelease==NULL);
+		pMedium->tymed			 = m_Data[idx].FormatEtc.tymed;
+		//Assert(pMedium->pUnkForRelease==NULL && m_Data[idx].StgMedium.pUnkForRelease==NULL);
 		//pMedium->pUnkForRelease  = NULL;
 	}
 	else
 	{
 		#ifdef _DEBUG
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"!!! CDataObject::GetData(tymed=%u) failed", m_pFormatEtc[idx].tymed);
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"!!! CDataObject::GetData(tymed=%u) failed", m_Data[idx].FormatEtc.tymed);
 		DEBUGSTRDATA(szDbg);
 		//_ASSERTE(FALSE && "Unsupported tymed!");
 		#endif
@@ -622,7 +625,6 @@ HRESULT CDataObject::SetDataInt(LPCWSTR sFmtName, const void* hData, DWORD nData
 //
 HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium,  BOOL fRelease)
 {
-	Assert(fRelease);
 	_ASSERTE(pMedium && pMedium->pUnkForRelease==NULL);
 
 	#ifdef _DEBUG
@@ -662,13 +664,20 @@ HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 
 	if (nIndex >= 0)
 	{
-		if ((pMedium != (m_pStgMedium+nIndex)) && (pMedium->hGlobal != m_pStgMedium[nIndex].hGlobal))
+		if ((pMedium != &(m_Data[nIndex].StgMedium)) && (pMedium->hGlobal != &(m_Data[nIndex].StgMedium)))
 		{
-			ReleaseStgMedium(m_pStgMedium+nIndex);
+			if (m_Data[nIndex].fRelease)
+			{
+				ReleaseStgMedium(&m_Data[nIndex].StgMedium);
+			}
+			else
+			{
+				ZeroStruct(m_Data[nIndex].StgMedium);
+			}
 		}
 		else
 		{
-			Assert((pMedium != (m_pStgMedium+nIndex)) && (pMedium->hGlobal != m_pStgMedium[nIndex].hGlobal));
+			Assert((pMedium != &(m_Data[nIndex].StgMedium)) && (pMedium->hGlobal != &(m_Data[nIndex].StgMedium)));
 		}
 	}
 	else //	if (nIndex < 0)
@@ -676,42 +685,14 @@ HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 		DEBUGTEST(bNew = true);
 		_ASSERTE(nIndex < 0);
 
-		// Если нужно - увеличим размерность массивов
-		if (m_nNumFormats >= m_nMaxNumFormats)
-		{
-			_ASSERTE(m_nNumFormats == m_nMaxNumFormats);
-			LONG nNewMaxNumFormats = m_nNumFormats + 32; //-V112
-			FORMATETC *pNewFormatEtc = (FORMATETC*)calloc(nNewMaxNumFormats,sizeof(FORMATETC));
-			STGMEDIUM *pNewStgMedium = (STGMEDIUM*)calloc(nNewMaxNumFormats,sizeof(STGMEDIUM));
-
-			if (!pNewFormatEtc || !pNewStgMedium)
-			{
-				SafeFree(pNewFormatEtc);
-				SafeFree(pNewStgMedium);
-
-				return E_OUTOFMEMORY;
-			}
-
-			for (LONG i = 0; i < m_nNumFormats; i++)
-			{
-				pNewFormatEtc[i] = m_pFormatEtc[i];
-				pNewStgMedium[i] = m_pStgMedium[i];
-			}
-
-			m_nMaxNumFormats = nNewMaxNumFormats;
-
-			SafeFree(m_pFormatEtc);
-			m_pFormatEtc = pNewFormatEtc;
-
-			SafeFree(m_pStgMedium);
-			m_pStgMedium = pNewStgMedium;
-		}
-
-		nIndex = m_nNumFormats++;
-		m_pFormatEtc[nIndex] = *pFormatEtc;
+		DragData newItem = {};
+		newItem.FormatEtc = *pFormatEtc;
+		nIndex = m_Data.push_back(newItem);
 	}
 
-	m_pStgMedium[nIndex] = *pMedium;
+	m_Data[nIndex].fUsed = TRUE;
+	m_Data[nIndex].fRelease = fRelease;
+	m_Data[nIndex].StgMedium = *pMedium;
 
 	return S_OK;
 }
@@ -721,17 +702,34 @@ HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 //
 HRESULT __stdcall CDataObject::EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC **ppEnumFormatEtc)
 {
+	HRESULT hr = E_NOTIMPL;
+
 	if (dwDirection == DATADIR_GET)
 	{
 		// for Win2k+ you can use the SHCreateStdEnumFmtEtc API call, however
 		// to support all Windows platforms we need to implement IEnumFormatEtc ourselves.
-		return CreateEnumFormatEtc(m_nNumFormats, m_pFormatEtc, ppEnumFormatEtc);
+
+		UINT nNumFormats = m_Data.size();
+		FORMATETC *pFormats = nNumFormats ? (FORMATETC*)calloc(nNumFormats,sizeof(*pFormats)) : NULL;
+		if (!pFormats)
+		{
+			return E_OUTOFMEMORY;
+		}
+
+		for (UINT i = 0; i < nNumFormats; i++)
+		{
+			pFormats[i] = m_Data[i].FormatEtc;
+		}
+
+		hr = CreateEnumFormatEtc(nNumFormats, pFormats, ppEnumFormatEtc);
+
+		SafeFree(pFormats);
 	}
 	else
 	{
 		// the direction specified is not support for drag+drop
-		return E_NOTIMPL;
 	}
+	return hr;
 }
 
 //
@@ -831,10 +829,10 @@ CEnumFormatEtc::CEnumFormatEtc(FORMATETC *pFormatEtc, int nNumFormats)
 	m_lRefCount   = 1;
 	m_nIndex      = 0;
 	m_nNumFormats = nNumFormats;
-	m_pFormatEtc  = (FORMATETC*)calloc(nNumFormats,sizeof(FORMATETC));
+	m_pFormatEtc  = nNumFormats ? (FORMATETC*)calloc(nNumFormats,sizeof(FORMATETC)) : NULL;
 
 	// copy the FORMATETC structures
-	for(int i = 0; i < nNumFormats; i++)
+	for (int i = 0; i < nNumFormats; i++)
 	{
 		DeepCopyFormatEtc(&m_pFormatEtc[i], &pFormatEtc[i]);
 	}
@@ -847,7 +845,7 @@ CEnumFormatEtc::~CEnumFormatEtc()
 {
 	if (m_pFormatEtc)
 	{
-		for(ULONG i = 0; i < m_nNumFormats; i++)
+		for (ULONG i = 0; i < m_nNumFormats; i++)
 		{
 			if (m_pFormatEtc[i].ptd)
 				CoTaskMemFree(m_pFormatEtc[i].ptd);
@@ -919,7 +917,7 @@ HRESULT __stdcall CEnumFormatEtc::Next(ULONG celt, FORMATETC *pFormatEtc, ULONG 
 		return E_INVALIDARG;
 
 	// copy FORMATETC structures into caller's buffer
-	while(m_nIndex < m_nNumFormats && copied < celt)
+	while (m_nIndex < m_nNumFormats && copied < celt)
 	{
 		DeepCopyFormatEtc(&pFormatEtc[copied], &m_pFormatEtc[m_nIndex]);
 		copied++;

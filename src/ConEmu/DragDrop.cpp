@@ -1242,7 +1242,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	{
 		if (mb_selfdrag || lbDropFileNamesOnly)
 		{
-			MBoxA(_T("Drag object does not contains known formats!"));
+			//MBoxA(_T("Drag object does not contains known formats!"));
+			ReportUnknownData(pDataObject, L"Drag object does not contains real file names!\nCan't drop here from containers like Zip or Outlook!");
 			return S_OK;
 		}
 

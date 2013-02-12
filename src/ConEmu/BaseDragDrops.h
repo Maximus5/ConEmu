@@ -1,6 +1,8 @@
 #pragma once
 #include <windows.h>
 
+#include "../common/MArray.h"
+
 #define DROPEFFECT_STOP_INTERNAL ((DWORD)-1)
 
 class CDragDropData;
@@ -108,10 +110,15 @@ class CDataObject : public IDataObject
 		//
 		LONG	   m_lRefCount;
 
-		FORMATETC *m_pFormatEtc;
-		STGMEDIUM *m_pStgMedium;
-		LONG	   m_nNumFormats;
-		LONG       m_nMaxNumFormats;
+		// Data storage
+		struct DragData
+		{
+			STGMEDIUM StgMedium; // 12 bytes (x86) or 20 bytes (x64)
+			BOOL fRelease;
+			FORMATETC FormatEtc; // 20 bytes (x86)
+			BOOL fUsed;
+		};
+		MArray<DragData> m_Data;
 };
 
 

@@ -2525,7 +2525,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/bypass")))
 				{
-					// Этот ключик был придуман для "скрытого" запуска консоли
+					// Этот ключик был придуман для прозрачного запуска консоли
 					// в режиме администратора
 					// (т.е. чтобы окно UAC нормально всплывало, но не мелькало консольное окно)
 					// Но не получилось, пока требуются хэндлы процесса, а их не получается
@@ -2598,9 +2598,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					wchar_t szCurDir[MAX_PATH+1] = L"";
 					GetCurrentDirectory(countof(szCurDir), szCurDir);
 
+					BOOL b;
 					DWORD nErr = 0;
-					BOOL b = CreateProcessRestricted(NULL, cmdNew, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
-						szCurDir, &si, &pi, &nErr);
+					
+					b = CreateProcessRestricted(NULL, cmdNew, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+							szCurDir, &si, &pi, &nErr);
 
 
 					// -- Странно, IShellDispatch2::ShellExecute запускает с правами текущего процесса, а не от Explorer.exe

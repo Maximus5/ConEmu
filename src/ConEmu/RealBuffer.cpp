@@ -5437,6 +5437,10 @@ bool CRealBuffer::FindRangeStart(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out
 {
 	bool lbRc = false;
 
+	WARNING("Тут пока работаем в экранных координатах");
+	_ASSERTE(crFrom.Y>=con.m_sbi.srWindow.Top && crFrom.Y<GetTextHeight());
+	_ASSERTE(crTo.Y>=con.m_sbi.srWindow.Top && crTo.Y<GetTextHeight());
+
 	// Курсор над комментарием?
 	// Попробуем найти начало имени файла
 	while ((crFrom.X) > 0 && !wcschr(bUrlMode ? pszUrlDelim : pszBreak, pChar[crFrom.X-1]))
@@ -5499,6 +5503,10 @@ bool CRealBuffer::CheckValidUrl(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out]
 {
 	bool lbRc = false;
 
+	WARNING("Тут пока работаем в экранных координатах");
+	_ASSERTE(crFrom.Y>=con.m_sbi.srWindow.Top && crFrom.Y<GetTextHeight());
+	_ASSERTE(crTo.Y>=con.m_sbi.srWindow.Top && crTo.Y<GetTextHeight());
+
 	// URL? (Курсор мог стоять над протоколом)
 	while ((crTo.X < nLen) && wcschr(pszProtocol, pChar[crTo.X]))
 		crTo.X++;
@@ -5547,24 +5555,28 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 {
 	ExpandTextRangeType result = etr_None;
 
-	crTo = crFrom; // Initialize
+	WARNING("Тут пока работаем в экранных координатах");
+	_ASSERTE(crFrom.Y>=con.m_sbi.srWindow.Top && crFrom.Y<GetTextHeight());
 
-	COORD crMouse = crFrom; // Save
+	COORD lcrFrom = BufferToScreen(crFrom);
+	COORD lcrTo = lcrFrom;
+
+	//COORD crMouse = lcrFrom; // Save
 
 	// Нужно получить строку
 	MSectionLock csData; csData.Lock(&csCON);
 	wchar_t* pChar = NULL;
 	int nLen = 0;
 
-	if (mp_RCon->mp_VCon && GetConsoleLine(crFrom.Y, &pChar, /*NULL,*/ &nLen, &csData) && pChar)
+	if (mp_RCon->mp_VCon && GetConsoleLine(lcrFrom.Y, &pChar, /*NULL,*/ &nLen, &csData) && pChar)
 	{
 		TODO("Проверить на ошибки после добавления горизонтальной прокрутки");
 		if (etr == etr_Word)
 		{
-			while ((crFrom.X) > 0 && !(mp_RCon->mp_VCon->isCharSpace(pChar[crFrom.X-1]) || mp_RCon->mp_VCon->isCharNonSpacing(pChar[crFrom.X-1])))
-				crFrom.X--;
-			while (((crTo.X+1) < nLen) && !(mp_RCon->mp_VCon->isCharSpace(pChar[crTo.X]) || mp_RCon->mp_VCon->isCharNonSpacing(pChar[crTo.X])))
-				crTo.X++;
+			while ((lcrFrom.X) > 0 && !(mp_RCon->mp_VCon->isCharSpace(pChar[lcrFrom.X-1]) || mp_RCon->mp_VCon->isCharNonSpacing(pChar[lcrFrom.X-1])))
+				lcrFrom.X--;
+			while (((lcrTo.X+1) < nLen) && !(mp_RCon->mp_VCon->isCharSpace(pChar[lcrTo.X]) || mp_RCon->mp_VCon->isCharNonSpacing(pChar[lcrTo.X])))
+				lcrTo.X++;
 			result = etr; // OK
 		}
 		else if (etr == etr_FileAndLine)
@@ -5599,16 +5611,16 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 
 			// Курсор над комментарием?
 			// Попробуем найти начало имени файла
-			if (!FindRangeStart(crFrom, crTo, bUrlMode, pszBreak, pszUrlDelim, pszSpacing, pszUrl, pszProtocol, pChar, nLen))
+			if (!FindRangeStart(lcrFrom, lcrTo, bUrlMode, pszBreak, pszUrlDelim, pszSpacing, pszUrl, pszProtocol, pChar, nLen))
 				goto wrap;
 
 			// URL? (Курсор мог стоять над протоколом)
-			if (!CheckValidUrl(crFrom, crTo, bUrlMode, pszUrlDelim, pszUrl, pszProtocol, pChar, nLen))
+			if (!CheckValidUrl(lcrFrom, lcrTo, bUrlMode, pszUrlDelim, pszUrl, pszProtocol, pChar, nLen))
 				goto wrap;
 
 
 			// Чтобы корректно флаги обработались (типа наличие расширения и т.п.)
-			crTo.X = crFrom.X;
+			lcrTo.X = lcrFrom.X;
 
 			// Теперь - найти конец.
 			// Считаем, что для файлов конец это двоеточие, после которого идет описание ошибки
@@ -5649,30 +5661,30 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			// Поехали
 			if (bUrlMode)
 			{
-				while (((crTo.X+1) < nLen) && !wcschr(pszUrlDelim, pChar[crTo.X+1]))
-					crTo.X++;
+				while (((lcrTo.X+1) < nLen) && !wcschr(pszUrlDelim, pChar[lcrTo.X+1]))
+					lcrTo.X++;
 			}
-			else while ((crTo.X+1) < nLen)
-				//&& ((pChar[crTo.X] != L':') || (pChar[crTo.X] == L':' && wcschr(pszDigits, pChar[crTo.X+1]))))
+			else while ((lcrTo.X+1) < nLen)
+				//&& ((pChar[lcrTo.X] != L':') || (pChar[lcrTo.X] == L':' && wcschr(pszDigits, pChar[lcrTo.X+1]))))
 			{
-				if ((pChar[crTo.X] == L'/') && ((crTo.X+1) < nLen) && (pChar[crTo.X+1] == L'/')
-					&& !((crTo.X > 1) && (pChar[crTo.X] == L':'))) // и НЕ URL адрес
+				if ((pChar[lcrTo.X] == L'/') && ((lcrTo.X+1) < nLen) && (pChar[lcrTo.X+1] == L'/')
+					&& !((lcrTo.X > 1) && (pChar[lcrTo.X] == L':'))) // и НЕ URL адрес
 				{
 					goto wrap; // Не оно (комментарий в строке)
 				}
 
 				if (bWasSeparator 
-					&& ((pChar[crTo.X] >= L'0' && pChar[crTo.X] <= L'9')
-						|| (bDigits && (pChar[crTo.X] == L',')))) // FarCtrl.pas(1002,49) Error: 
+					&& ((pChar[lcrTo.X] >= L'0' && pChar[lcrTo.X] <= L'9')
+						|| (bDigits && (pChar[lcrTo.X] == L',')))) // FarCtrl.pas(1002,49) Error: 
 				{
 					if (bLineNumberFound)
 					{
 						// gcc такие строки тоже может выкинуть
 						// file.cpp:29:29: error
-						crTo.X--;
+						lcrTo.X--;
 						break;
 					}
-					if (!bDigits && (crFrom.X < crTo.X) /*&& (pChar[crTo.X-1] == L':')*/)
+					if (!bDigits && (lcrFrom.X < lcrTo.X) /*&& (pChar[lcrTo.X-1] == L':')*/)
 					{
 						bDigits = true;
 					}
@@ -5683,13 +5695,13 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 					{
 						if (!iExtFound)
 						{
-							if (pChar[crTo.X] == L'.')
+							if (pChar[lcrTo.X] == L'.')
 								iExtFound = 1;
 						}
 						else
 						{
 							// Не особо заморачиваясь с точками и прочим. Просто небольшая страховка от ложных срабатываний...
-							if ((pChar[crTo.X] >= L'a' && pChar[crTo.X] <= L'z') || (pChar[crTo.X] >= L'A' && pChar[crTo.X] <= L'Z'))
+							if ((pChar[lcrTo.X] >= L'a' && pChar[lcrTo.X] <= L'z') || (pChar[lcrTo.X] >= L'A' && pChar[lcrTo.X] <= L'Z'))
 							{
 								iExtFound = 2;
 								iBracket = 0;
@@ -5699,19 +5711,19 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 
 					if (iExtFound == 2)
 					{
-						if (pChar[crTo.X] == L'.')
+						if (pChar[lcrTo.X] == L'.')
 						{
 							iExtFound = 1;
 							iBracket = 0;
 						}
-						else if (wcschr(pszSlashes, pChar[crTo.X]) != NULL)
+						else if (wcschr(pszSlashes, pChar[lcrTo.X]) != NULL)
 						{
 							// Был слеш, значит расширения - еще нет
 							iExtFound = 0;
 							iBracket = 0;
 							bWasSeparator = false;
 						}
-						else if (wcschr(pszSpacing, pChar[crTo.X]) && wcschr(pszSpacing, pChar[crTo.X+1]))
+						else if (wcschr(pszSpacing, pChar[lcrTo.X]) && wcschr(pszSpacing, pChar[lcrTo.X+1]))
 						{
 							// Слишком много пробелов
 							iExtFound = 0;
@@ -5719,21 +5731,21 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 							bWasSeparator = false;
 						}
 						else
-							bWasSeparator = (wcschr(pszSeparat, pChar[crTo.X]) != NULL);
+							bWasSeparator = (wcschr(pszSeparat, pChar[lcrTo.X]) != NULL);
 					}
 
 					// Расчитано на закрывающие : или ) или ,
 					_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L',' && pszTermint[3]==0);
-					if (bDigits && wcschr(pszTermint, pChar[crTo.X]) /*pChar[crTo.X] == L':'*/)
+					if (bDigits && wcschr(pszTermint, pChar[lcrTo.X]) /*pChar[lcrTo.X] == L':'*/)
 					{
 						// Если номер строки обрамлен скобками - скобки должны быть сбалансированы
-						if (((pChar[crTo.X] == L':')
-								&& (wcschr(pszSpacing, pChar[crTo.X+1])
-									|| wcschr(pszDigits, pChar[crTo.X+1])))
-						|| ((pChar[crTo.X] == L')') && (iBracket == 1)
-								&& ((pChar[crTo.X+1] == L':')
-									|| wcschr(pszSpacing, pChar[crTo.X+1])
-									|| wcschr(pszDigits, pChar[crTo.X+1])))
+						if (((pChar[lcrTo.X] == L':')
+								&& (wcschr(pszSpacing, pChar[lcrTo.X+1])
+									|| wcschr(pszDigits, pChar[lcrTo.X+1])))
+						|| ((pChar[lcrTo.X] == L')') && (iBracket == 1)
+								&& ((pChar[lcrTo.X+1] == L':')
+									|| wcschr(pszSpacing, pChar[lcrTo.X+1])
+									|| wcschr(pszDigits, pChar[lcrTo.X+1])))
 							)
 						{
 							_ASSERTE(bLineNumberFound==false);
@@ -5743,7 +5755,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 					}
 					bDigits = false;
 
-					switch (pChar[crTo.X])
+					switch (pChar[lcrTo.X])
 					{
 					case L'(': iBracket++; break;
 					case L')': iBracket--; break;
@@ -5753,26 +5765,26 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 						{
 							bMaybeMail = false;
 						}
-						else if (((crTo.X > 0) && wcschr(pszEMail, pChar[crTo.X-1]))
-							&& (((crTo.X+1) < nLen) && wcschr(pszEMail, pChar[crTo.X+1])))
+						else if (((lcrTo.X > 0) && wcschr(pszEMail, pChar[lcrTo.X-1]))
+							&& (((lcrTo.X+1) < nLen) && wcschr(pszEMail, pChar[lcrTo.X+1])))
 						{
 							bMaybeMail = true;
-							MailX = crTo.X;
+							MailX = lcrTo.X;
 						}
 						break;
 					}
 
-					if (pChar[crTo.X] == L':')
+					if (pChar[lcrTo.X] == L':')
 						nColons++;
-					else if (pChar[crTo.X] == L'\\' || pChar[crTo.X] == L'/')
+					else if (pChar[lcrTo.X] == L'\\' || pChar[lcrTo.X] == L'/')
 						nColons = 0;
 				}
 
 				if (nColons >= 2)
 					break;
 
-				crTo.X++;
-				if (wcschr(bUrlMode ? pszUrlDelim : pszBreak, pChar[crTo.X]))
+				lcrTo.X++;
+				if (wcschr(bUrlMode ? pszUrlDelim : pszBreak, pChar[lcrTo.X]))
 				{
 					if (bMaybeMail)
 						break;
@@ -5793,19 +5805,19 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 				if (bLineNumberFound)
 					bMaybeMail = false;
 
-				if ((pChar[crTo.X] != L':' && pChar[crTo.X] != L' ' && !(pChar[crTo.X] == L')' && iBracket == 1)) || !bLineNumberFound || (nColons > 2))
+				if ((pChar[lcrTo.X] != L':' && pChar[lcrTo.X] != L' ' && !(pChar[lcrTo.X] == L')' && iBracket == 1)) || !bLineNumberFound || (nColons > 2))
 				{
 					if (!bMaybeMail)
 						goto wrap;
 				}
-				if (bMaybeMail || (!bMaybeMail && pChar[crTo.X] != L')'))
-					crTo.X--;
+				if (bMaybeMail || (!bMaybeMail && pChar[lcrTo.X] != L')'))
+					lcrTo.X--;
 				// Откатить ненужные пробелы
-				while ((crFrom.X < crTo.X) && wcschr(pszSpacing, pChar[crFrom.X]))
-					crFrom.X++;
-				while ((crTo.X > crFrom.X) && wcschr(pszSpacing, pChar[crTo.X]))
-					crTo.X--;
-				if ((crFrom.X + 4) > crTo.X) // 1.c:1: //-V112
+				while ((lcrFrom.X < lcrTo.X) && wcschr(pszSpacing, pChar[lcrFrom.X]))
+					lcrFrom.X++;
+				while ((lcrTo.X > lcrFrom.X) && wcschr(pszSpacing, pChar[lcrTo.X]))
+					lcrTo.X--;
+				if ((lcrFrom.X + 4) > lcrTo.X) // 1.c:1: //-V112
 				{
 					// Слишком коротко, считаем что не оно
 					goto wrap;
@@ -5813,8 +5825,8 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 				if (!bMaybeMail)
 				{
 					// Проверить, чтобы был в наличии номер строки
-					if (!(pChar[crTo.X] >= L'0' && pChar[crTo.X] <= L'9') // ConEmuC.cpp:49:
-						&& !(pChar[crTo.X] == L')' && (pChar[crTo.X-1] >= L'0' && pChar[crTo.X-1] <= L'9'))) // ConEmuC.cpp(49) :
+					if (!(pChar[lcrTo.X] >= L'0' && pChar[lcrTo.X] <= L'9') // ConEmuC.cpp:49:
+						&& !(pChar[lcrTo.X] == L')' && (pChar[lcrTo.X-1] >= L'0' && pChar[lcrTo.X-1] <= L'9'))) // ConEmuC.cpp(49) :
 					{
 						goto wrap; // Номера строки нет
 					}
@@ -5822,7 +5834,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 					// 29.11.2011 18:31:47
 					{
 						bool bNoDigits = false;
-						for (int i = crFrom.X; i <= crTo.X; i++)
+						for (int i = lcrFrom.X; i <= lcrTo.X; i++)
 						{
 							if (pChar[i] < L'0' || pChar[i] > L'9')
 							{
@@ -5833,8 +5845,8 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 							goto wrap;
 					}
 					// -- уже включены // Для красивости в VC включить скобки
-					//if ((pChar[crTo.X] == L')') && (pChar[crTo.X+1] == L':'))
-					//	crTo.X++;
+					//if ((pChar[lcrTo.X] == L')') && (pChar[lcrTo.X+1] == L':'))
+					//	lcrTo.X++;
 				}
 				else // bMaybeMail
 				{
@@ -5842,16 +5854,16 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 					int x = MailX - 1; _ASSERTE(x>=0);
 					while ((x > 0) && wcschr(pszEMail, pChar[x-1]))
 						x--;
-					crFrom.X = x;
+					lcrFrom.X = x;
 					x = MailX + 1; _ASSERTE(x<nLen);
 					while (((x+1) < nLen) && wcschr(pszEMail, pChar[x+1]))
 						x++;
-					crTo.X = x;
+					lcrTo.X = x;
 				}
 			} // end "else / if (bUrlMode)"
 
 			// Check mouse pos, it must be inside region
-			if ((crMouse.X < crFrom.X) || (crMouse.X > crTo.X))
+			if ((crFrom.X < lcrFrom.X) || (crFrom.X > lcrTo.X))
 			{
 				goto wrap;
 			}
@@ -5861,7 +5873,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			{
 				_ASSERTE(!bMaybeMail || !bUrlMode); // Одновременно - флаги не могут быть выставлены!
 				int iMailTo = (bMaybeMail && !bUrlMode) ? lstrlen(L"mailto:") : 0;
-				if ((crTo.X - crFrom.X + 1 + iMailTo) >= (INT_PTR)cchTextMax)
+				if ((lcrTo.X - lcrFrom.X + 1 + iMailTo) >= (INT_PTR)cchTextMax)
 					goto wrap; // Недостаточно места под текст
 				if (iMailTo)
 				{
@@ -5871,8 +5883,8 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 					cchTextMax -= iMailTo;
 					bUrlMode = true;
 				}
-				memmove(pszText, pChar+crFrom.X, (crTo.X - crFrom.X + 1)*sizeof(*pszText));
-				pszText[crTo.X - crFrom.X + 1] = 0;
+				memmove(pszText, pChar+lcrFrom.X, (lcrTo.X - lcrFrom.X + 1)*sizeof(*pszText));
+				pszText[lcrTo.X - lcrFrom.X + 1] = 0;
 
 				#ifdef _DEBUG
 				if (!bUrlMode && wcsstr(pszText, L"//")!=NULL)
@@ -5888,7 +5900,14 @@ wrap:
 	// Fail?
 	if (result == etr_None)
 	{
-		crFrom = crTo = MakeCoord(0,0);
+		// Reset coordinates
+		crFrom = MakeCoord(0,0);
+		crTo = MakeCoord(0,0);
+	}
+	else
+	{
+		crFrom = ScreenToBuffer(lcrFrom);
+		crTo = ScreenToBuffer(lcrTo);
 	}
 	StoreLastTextRange(result);
 	return result;
