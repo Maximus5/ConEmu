@@ -46,9 +46,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRAPPS(s) DEBUGSTR(s)
 
 
-// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
-const ConEmuHotKey* ConEmuSkipHotKey = ((ConEmuHotKey*)INVALID_HANDLE_VALUE);
-
 // Текущая обрабатываемая клавиша
 const ConEmuHotKey* gpCurrentHotKey = NULL;
 
@@ -74,7 +71,7 @@ CConEmuCtrl::~CConEmuCtrl()
 // pRCon may be NULL, pszChars may be NULL
 const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars, CRealConsole* pRCon)
 {
-	UINT vk = gpSet->GetHotkey(VkState);
+	UINT vk = ConEmuHotKey::GetHotkey(VkState);
 	if (!(vk >= '0' && vk <= '9'))
 		ResetDoubleKeyConsoleNum();
 
@@ -680,7 +677,7 @@ bool CConEmuCtrl::key_SystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 	POINT ptCur = {-32000,-32000}; // Default pos of Alt+Space
 	if (gpCurrentHotKey)
 	{
-		DWORD vk = gpSet->GetHotkey(gpCurrentHotKey->VkMod);
+		DWORD vk = ConEmuHotKey::GetHotkey(gpCurrentHotKey->VkMod);
 		if (vk == VK_LBUTTON || vk == VK_RBUTTON || vk == VK_MBUTTON)
 		{
 			GetCursorPos(&ptCur);
@@ -704,7 +701,7 @@ bool CConEmuCtrl::key_TabMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 	POINT ptCur = {-32000,-32000};
 	if (gpCurrentHotKey)
 	{
-		DWORD vk = gpSet->GetHotkey(gpCurrentHotKey->VkMod);
+		DWORD vk = ConEmuHotKey::GetHotkey(gpCurrentHotKey->VkMod);
 		if (vk == VK_LBUTTON || vk == VK_RBUTTON || vk == VK_MBUTTON)
 		{
 			GetCursorPos(&ptCur);

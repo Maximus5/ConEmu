@@ -47,12 +47,14 @@ $(INTDIR)\FindDlg.obj \
 $(INTDIR)\FrameHolder.obj \
 $(INTDIR)\GestureEngine.obj \
 $(INTDIR)\GuiServer.obj \
+$(INTDIR)\Hotkeys.obj \
 $(INTDIR)\Inside.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\Menu.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
+$(INTDIR)\Monitors.obj \
 $(INTDIR)\MSecurity.obj \
 $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\Options.obj \
@@ -80,6 +82,7 @@ $(INTDIR)\VConChild.obj \
 $(INTDIR)\VConGroup.obj \
 $(INTDIR)\VConRelease.obj \
 $(INTDIR)\VirtualConsole.obj \
+$(INTDIR)\WinConsole.obj \
 $(INTDIR)\WinObjects.obj
 
 
@@ -270,6 +273,8 @@ $(INTDIR)\GestureEngine.obj: GestureEngine.cpp GestureEngine.h
 
 $(INTDIR)\GuiServer.obj: GuiServer.cpp GuiServer.h ConEmu.h RealConsole.h VirtualConsole.h
 
+$(INTDIR)\Hotkeys.obj: Hotkeys.cpp Hotkeys.h
+
 $(INTDIR)\Inside.obj: Inside.cpp Inside.h
 
 $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
@@ -281,6 +286,8 @@ $(INTDIR)\Menu.obj: Menu.cpp Menu.h MenuIds.h FindDlg.h
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
+
+$(INTDIR)\Monitors.obj: ../common/Monitors.cpp
 
 $(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 
@@ -335,6 +342,8 @@ $(INTDIR)\VConGroup.obj: VConGroup.cpp VConRelease.h VirtualConsole.h VConChild.
 $(INTDIR)\VConRelease.obj: VConRelease.cpp VConRelease.h VirtualConsole.h VConChild.h
 
 $(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h VConChild.h VConGroup.h
+
+$(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp
 
 $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
 

@@ -282,6 +282,8 @@ BEGIN
     vkFontLarger            "Make main font larger"
     vkFontSmaller           "Make main font smaller"
     vkForceFullScreen       "Enter TEXT fullscreen mode, when available. If not - standard fullscreen and always on top"
+	vkJumpNextMonitor       "Move ConEmu window to next monitor"
+	vkJumpPrevMonitor       "Move ConEmu window to previous monitor"
     vkLDragKey              "LDrag modifier"
     vkMinimizeRestore       "Minimize/Restore"
     vkMinimizeRestor2       "Minimize/Restore (alternative)"

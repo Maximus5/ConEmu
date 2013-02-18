@@ -910,10 +910,12 @@
     </ClCompile>
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
+    <ClCompile Include="..\common\Monitors.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="PluginBackground.cpp" />
     <ClCompile Include="PluginSrv.cpp" />
+    <ClCompile Include="..\common\WinConsole.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -1001,12 +1003,14 @@
     <ClInclude Include="..\ConEmu\DragDrop.h" />
     <ClInclude Include="..\common\farcolor.hpp" />
     <ClInclude Include="..\common\Memory.h" />
+    <ClInclude Include="..\common\Monitors.h" />
     <ClInclude Include="..\common\MSecurity.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="PluginBackground.h" />
     <ClInclude Include="PluginHeader.h" />
     <ClInclude Include="PluginSrv.h" />
     <ClInclude Include="..\ConEmuHk\SetHook.h" />
+    <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
     <ClInclude Include="..\common\ConEmuColors.h" />
     <ClInclude Include="..\common\ConEmuColors3.h" />

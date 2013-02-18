@@ -15,10 +15,12 @@ SRCS = ConsoleMain.cpp \
        ../common/Execute.cpp \
        ../common/InQueue.cpp \
        ../common/MAssert.cpp \
+       ../common/Monitors.cpp \
        ../common/MSecurity.cpp \
        ../common/MStrSafe.cpp \
        ../common/Memory.cpp \
        ../common/RConStartArgs.cpp \
+       ../common/WinConsole.cpp \
        ../common/WinObjects.cpp
 
 

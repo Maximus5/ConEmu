@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "../common/ConsoleAnnotation.h"
 #include "../common/WinObjects.h"
+#include "../common/WinConsole.h"
 #include "../common/TerminalMode.h"
 #include "../common/FarVersion.h"
 #include "../ConEmu/version.h"

@@ -82,6 +82,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "../common/clink.h"
 #include "../common/UnicodeChars.h"
+#include "../common/WinConsole.h"
 
 
 bool USE_INTERNAL_QUEUE = true;
@@ -4112,6 +4113,15 @@ BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	//if (gpFarInfo && bMainThread)
 	//	TouchReadPeekConsoleInputs(0);
 	BOOL lbRc = FALSE;
+
+	#if defined(_DEBUG)
+	#if 1
+	UINT nCp = GetConsoleCP();
+	UINT nOutCp = GetConsoleOutputCP();
+	UINT nOemCp = GetOEMCP();
+	UINT nAnsiCp = GetACP();
+	#endif
+	#endif
 
 	if (ph && ph->PreCallBack)
 	{

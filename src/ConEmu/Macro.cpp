@@ -1010,34 +1010,83 @@ LPWSTR CConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon)
 	LPCWSTR sMIN = L"MIN";
 	LPCWSTR sTSA = L"TSA";
 	LPCWSTR sNOR = L"NOR";
+	LPCWSTR sTileLeft = L"TLEFT";
+	LPCWSTR sTileRight = L"TRIGHT";
+	LPCWSTR sTileHeight = L"THEIGHT";
+	LPCWSTR sMonitorPrev = L"MPREV";
+	LPCWSTR sMonitorNext = L"MNEXT";
 
-	if (p->GetStrArg(0, pszMode))
+	ConEmuWindowCommand Cmd = cwc_Current;
+
+	if (p->IsIntArg(0))
+	{
+		int iCmd = 0;
+		if (p->GetIntArg(0, iCmd) && (iCmd >= cwc_Current && iCmd < cwc_LastCmd))
+		{
+			Cmd = (ConEmuWindowCommand)iCmd;
+		}
+	}
+	else if (p->IsStrArg(0) && p->GetStrArg(0, pszMode))
 	{
 		if (lstrcmpi(pszMode, sFS) == 0)
-		{
-			pszRc = sFS;
-			gpConEmu->SetWindowMode(wmFullScreen);
-		}
+			Cmd = cwc_FullScreen;
 		else if (lstrcmpi(pszMode, sMAX) == 0)
-		{
-			pszRc = sMAX;
-			gpConEmu->SetWindowMode(wmMaximized);
-		}
+			Cmd = cwc_Maximize;
 		else if (lstrcmpi(pszMode, sMIN) == 0)
-		{
-			pszRc = sMIN;
-			PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
-		}
+			Cmd = cwc_Minimize;
 		else if (lstrcmpi(pszMode, sTSA) == 0)
-		{
-			pszRc = sTSA;
-			Icon.HideWindowToTray();
-		}
+			Cmd = cwc_MinimizeTSA;
+		else if (lstrcmpi(pszMode, sTileLeft) == 0)
+			Cmd = cwc_TileLeft;
+		else if (lstrcmpi(pszMode, sTileRight) == 0)
+			Cmd = cwc_TileRight;
+		else if (lstrcmpi(pszMode, sTileHeight) == 0)
+			Cmd = cwc_TileHeight;
+		else if (lstrcmpi(pszMode, sMonitorPrev) == 0)
+			Cmd = cwc_PrevMonitor;
+		else if (lstrcmpi(pszMode, sMonitorNext) == 0)
+			Cmd = cwc_NextMonitor;
 		else //if (lstrcmpi(pszMode, sNOR) == 0)
-		{
-			pszRc = sNOR;
-			gpConEmu->SetWindowMode(wmNormal);
-		}
+			Cmd = cwc_Restore;
+	}
+
+	switch (Cmd)
+	{
+	case cwc_Restore:
+		pszRc = sNOR;
+		gpConEmu->SetWindowMode(wmNormal);
+		break;
+	case cwc_Minimize:
+		pszRc = sMIN;
+		PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+		break;
+	case cwc_MinimizeTSA:
+		pszRc = sTSA;
+		Icon.HideWindowToTray();
+		break;
+	case cwc_Maximize:
+		pszRc = sMAX;
+		gpConEmu->SetWindowMode(wmMaximized);
+		break;
+	case cwc_FullScreen:
+		pszRc = sFS;
+		gpConEmu->SetWindowMode(wmFullScreen);
+		break;
+	case cwc_TileLeft:
+	case cwc_TileRight:
+	case cwc_TileHeight:
+		if (gpConEmu->SetTileMode(Cmd))
+			pszRc = (Cmd==cwc_TileLeft) ? sTileLeft : (Cmd==cwc_TileRight) ? sTileRight : sTileHeight;
+		else
+			pszRc = L"";
+		break;
+	case cwc_PrevMonitor:
+	case cwc_NextMonitor:
+		if (gpConEmu->JumpNextMonitor(Cmd==cwc_NextMonitor))
+			pszRc = (Cmd==cwc_NextMonitor) ? sMonitorNext : sMonitorPrev;
+		else
+		pszRc = L"";
+		break;
 	}
 
 	pszRc = pszRc ? pszRc :

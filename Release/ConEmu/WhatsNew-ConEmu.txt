@@ -11,6 +11,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Issue 939: Update failes if full path to 7za.exe was not specified, but 7za.exe is located in %PATH%.
+[%] Issue 946: Exception in some cases running with "/Log2" switch.
+[%] Issue 946: Blinking then ConEmu starting minimized.
+[+] Issue 912: (the beginning) Internal processing of Win+Shift+Left/Right - move ConEmu window to previous/next monitor.
+
+
+
 2013.02.12
 [%] Issue 912: Resize changes (Full Screen Does Not Allow Win+Shift+Arrow to Move Monitors).
 [%] Issue 937: Drag&Drop once more (AIMP3).

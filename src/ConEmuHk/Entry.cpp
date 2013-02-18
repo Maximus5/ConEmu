@@ -79,6 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Injects.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/ConsoleAnnotation.h"
+#include "../common/WinConsole.h"
 
 #undef FULL_STARTUP_ENV
 #include "../common/StartupEnv.h"

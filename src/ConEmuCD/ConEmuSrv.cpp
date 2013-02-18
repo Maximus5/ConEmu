@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleRead.h"
 #include "../common/Execute.h"
 #include "../common/MStrSafe.h"
+#include "../common/WinConsole.h"
 #include "TokenHelper.h"
 #include "SrvPipes.h"
 #include "Queue.h"

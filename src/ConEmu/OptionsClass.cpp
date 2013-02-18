@@ -261,10 +261,11 @@ namespace SettingsNS
 
 CSettings::CSettings()
 {
-	gpSetCls = this; // сразу!
-	
+	// Prepare global pointers
+	gpSetCls = this;
 	gpSet = &m_Settings;
 
+	// Go
 	isAdvLogging = 0;
 	m_ActivityLoggingType = glt_None; mn_ActivityCmdStartTick = 0;
 	bForceBufferHeight = false; nForceBufferHeight = 1000; /* устанавливается в true, из ком.строки /BufferHeight */
@@ -420,7 +421,7 @@ void CSettings::InitVars_Hotkeys()
 	}
 
 	// Горячие клавиши (умолчания)
-	m_HotKeys = gpSet->AllocateHotkeys();
+	m_HotKeys = ConEmuHotKey::AllocateHotkeys();
 
 	mp_ActiveHotKey = NULL;
 }
@@ -447,7 +448,7 @@ void CSettings::SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod)
 // pRCon may be NULL
 const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealConsole* pRCon)
 {
-	DWORD vk = gpSet->GetHotkey(VkMod);
+	DWORD vk = ConEmuHotKey::GetHotkey(VkMod);
 	// На сами модификаторы - действий не вешается
 	if (vk == VK_LWIN || vk == VK_RWIN /*|| vk == VK_APPS*/
 		|| vk == VK_SHIFT || vk == VK_LSHIFT || vk == VK_RSHIFT
@@ -469,7 +470,7 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 
 		WARNING("ConEmuHotKey: Требуется заменить. Указатели вообще не нужны, вся инфа должна храниться в m_HotKeys");
 		DWORD TestVkMod = m_HotKeys[i].VkMod;
-		if (gpSet->GetHotkey(TestVkMod) != vk)
+		if (ConEmuHotKey::GetHotkey(TestVkMod) != vk)
 			continue; // Не совпадает сама кнопка
 
 		DWORD TestMask = cvk_DISTINCT;
@@ -477,7 +478,7 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 
 		for (int k = 1; k <= 3; k++)
 		{
-			switch (gpSet->GetModifier(TestVkMod, k))
+			switch (ConEmuHotKey::GetModifier(TestVkMod, k))
 			{
 			case 0:
 				break; // нету
@@ -522,7 +523,7 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 			#ifdef _DEBUG
 			default:
 				// Неизвестный!
-				_ASSERTE(gpSet->GetModifier(TestVkMod, k)==0);
+				_ASSERTE(ConEmuHotKey::GetModifier(TestVkMod, k)==0);
 			#endif
 			}
 		}
@@ -563,10 +564,10 @@ bool CSettings::HasSingleWinHotkey()
 		if (m_HotKeys[i].HkType == chk_Modifier)
 			continue;
 		DWORD VkMod = m_HotKeys[i].VkMod;
-		if (gpSet->GetModifier(VkMod, 1) == VK_LWIN)
+		if (ConEmuHotKey::GetModifier(VkMod, 1) == VK_LWIN)
 		{
 			// Win+<другой модификатор> вроде винда в приложение таки присылает?
-        	if (gpSet->GetModifier(VkMod, 2) == 0)
+        	if (ConEmuHotKey::GetModifier(VkMod, 2) == 0)
         		return true; // А вот если больше модификаторов нет...
 		}
 	}
@@ -617,16 +618,16 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 
 			DWORD VkMod = m_HotKeys[i].VkMod;
 
-			if (!gpSet->HasModifier(VkMod, VK_LWIN))
+			if (!ConEmuHotKey::HasModifier(VkMod, VK_LWIN))
 				continue;
 
 			if (m_HotKeys[i].Enabled && !m_HotKeys[i].Enabled())
 				continue;
 
-			DWORD nFlags = gpSet->GetHotkey(VkMod);
+			DWORD nFlags = ConEmuHotKey::GetHotkey(VkMod);
 			for (int i = 1; i <= 3; i++)
 			{
-				switch (gpSet->GetModifier(VkMod, i))
+				switch (ConEmuHotKey::GetModifier(VkMod, i))
 				{
 				case 0:
 					break;
@@ -1073,44 +1074,7 @@ void CSettings::ApplyStartupOptions()
 	}
 }
 
-/*
-[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla\Fonts\Font3]
-"Title"="CJK"
-"Used"=hex:01 ; Для быстрого включения/отключения группы
-"CharRange"="2E80-2EFF;3000-303F;3200-4DB5;4E00-9FC3;F900-FAFF;FE30-FE4F;"
-"FontFace"="Arial Unicode MS"
-"Width"=dword:00000000
-"Height"=dword:00000009
-"Charset"=hex:00
-"Bold"=hex:00
-"Italic"=hex:00
-"Anti-aliasing"=hex:04
-*/
-//BOOL CSettings::FontRangeLoad(SettingsBase* reg, int Idx)
-//{
-//	_ASSERTE(FALSE); // Не реализовано
-//
-//	BOOL lbOpened = FALSE, lbNeedCreateVanilla = FALSE;
-//	wchar_t szFontKey[MAX_PATH+20];
-//	_wsprintf(szFontKey, SKIPLEN(countof(szFontKey)) L"%s\\Font%i", ConfigPath, (Idx+1));
-//	
-//	
-//	
-//	lbOpened = reg->OpenKey(szFontKey, KEY_READ);
-//	if (lbOpened)
-//	{
-//		TODO("Загрузить поля m_Fonts[Idx], очистив hFonts, не забыть про nLoadHeight/nLoadWidth");
-//
-//		reg->CloseKey();
-//	}
-//	
-//	return lbOpened;
-//}
-//BOOL CSettings::FontRangeSave(SettingsBase* reg, int Idx)
-//{
-//	_ASSERTE(FALSE); // Не реализовано
-//	return FALSE;
-//}
+
 
 void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
 {
@@ -2726,7 +2690,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 				ListView_SetItemState(hList, nItem, 0, LVIS_SELECTED|LVIS_FOCUSED);
 			}
 			
-			gpSet->GetHotkeyName(ppHK, szName);
+			ppHK->GetHotkeyName(szName);
 
 			ListView_SetItemText(hList, nItem, klc_Hotkey, szName);
 			
@@ -2866,7 +2830,7 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 				//nVK = pk ? *pk->VkPtr : 0;
 				//if ((pk->Type == 0) || (pk->Type == 2))
-				BYTE vk = gpSet->GetHotkey(VkMod);
+				BYTE vk = ConEmuHotKey::GetHotkey(VkMod);
 				if (bHotKeyEnabled)
 				{
 					SendMessage(hHk, HKM_SETHOTKEY, 
@@ -2910,7 +2874,7 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		BOOL bShow = (mp_ActiveHotKey && (mp_ActiveHotKey->HkType != chk_Modifier));
 		for (int n = 0; n < 3; n++)
 		{
-			BYTE b = (bShow && VkMod) ? gpSet->GetModifier(VkMod,n+1) : 0;
+			BYTE b = (bShow && VkMod) ? ConEmuHotKey::GetModifier(VkMod,n+1) : 0;
 			FillListBoxByte(hWnd2, lbHotKeyMod1+n, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
 			EnableWindow(GetDlgItem(hWnd2, lbHotKeyMod1+n), bEnabled);
 		}
@@ -2972,8 +2936,8 @@ int CSettings::HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 		case 1:
 			// Hotkey
 			{
-				wchar_t szFull1[128]; gpSet->GetHotkeyName(pHk1, szFull1);
-				wchar_t szFull2[128]; gpSet->GetHotkeyName(pHk2, szFull2);
+				wchar_t szFull1[128]; pHk1->GetHotkeyName(szFull1);
+				wchar_t szFull2[128]; pHk2->GetHotkeyName(szFull2);
 				nCmp = lstrcmp(szFull1, szFull2);
 				if (nCmp == 0)
 					nCmp = (pHk1 < pHk2) ? -1 : (pHk1 > pHk2) ? 1 : 0;
@@ -7326,7 +7290,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			}
 
 			if (vk)
-				nModifers = gpSet->SetModifier(nModifers, vk, false);
+				nModifers = ConEmuHotKey::SetModifier(nModifers, vk, false);
 		}
 
 		_ASSERTE((nModifers & 0xFF) == 0); // Модификаторы должны быть строго в старших 3-х байтах

@@ -822,6 +822,7 @@
     <ClInclude Include="GuiHooks.h" />
     <ClInclude Include="..\ConEmuHk\Injects.h" />
     <ClInclude Include="..\common\Memory.h" />
+    <ClInclude Include="..\common\Monitors.h" />
     <ClInclude Include="..\common\MSecurity.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\PipeServer.h" />
@@ -830,6 +831,7 @@
     <ClInclude Include="RegPrepare.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="..\common\InQueue.h" />
+    <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
     <CustomBuildStep Include="header.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">true</ExcludedFromBuild>
@@ -1134,6 +1136,7 @@
     <ClCompile Include="..\ConEmuHk\Injects.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
+    <ClCompile Include="..\common\Monitors.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="Queue.cpp" />
@@ -1141,6 +1144,7 @@
     <ClCompile Include="RegPrepare.cpp" />
     <ClCompile Include="SrvPipes.cpp" />
     <ClCompile Include="..\common\InQueue.cpp" />
+    <ClCompile Include="..\common\WinConsole.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
     <ClCompile Include="RE_Config.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">true</ExcludedFromBuild>

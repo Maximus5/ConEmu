@@ -1502,10 +1502,10 @@ LPCWSTR CConEmuMenu::MenuAccel(int DescrID, LPCWSTR asText)
 	
 	const ConEmuHotKey* pHK = NULL;
 	DWORD VkMod = gpSet->GetHotkeyById(DescrID, &pHK);
-	if (!gpSet->GetHotkey(VkMod) || !pHK)
+	if (!ConEmuHotKey::GetHotkey(VkMod) || !pHK)
 		return asText;
 
-	gpSet->GetHotkeyName(pHK, szKey);
+	pHK->GetHotkeyName(szKey);
 	if (!*szKey)
 		return asText;
 	int nLen = lstrlen(szKey);
@@ -1753,7 +1753,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 		case ID_TOMONITOR:
 		{
-			if (gpSet->isQuakeStyle || gpConEmu->mp_Inside)
+			if (!gpConEmu->IsSizeFree())
 				return 0;
 			if (!IsWindowVisible(ghWnd))
 				Icon.RestoreWindowFromTray();

@@ -202,7 +202,7 @@ class CConEmuMain :
 		bool isRestoreFromMinimized;
 		bool isWndNotFSMaximized; // ставится в true, если при переходе в FullScreen - был Maximized
 		bool isQuakeMinimized;    // изврат, для случая когда "Quake" всегда показывается на таскбаре
-		HMONITOR GetNearestMonitor(MONITORINFO* pmi = NULL, LPRECT prcWnd = NULL);
+		HMONITOR GetNearestMonitor(MONITORINFO* pmi = NULL, LPCRECT prcWnd = NULL);
 		HMONITOR GetPrimaryMonitor(MONITORINFO* pmi = NULL);
 		void StorePreMinimizeMonitor();
 
@@ -660,6 +660,10 @@ class CConEmuMain :
 		ConEmuWindowMode GetWindowMode();
 		bool SetWindowMode(ConEmuWindowMode inMode, BOOL abForce = FALSE, BOOL abFirstShow = FALSE);
 		bool SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode = wmNotChanging, bool bFromDlg = false);
+		bool SetTileMode(ConEmuWindowCommand Tile);
+		ConEmuWindowCommand GetTileMode(bool Estimate);
+		bool IsSizeFree(ConEmuWindowMode CheckMode = wmFullScreen);
+		bool JumpNextMonitor(bool Next);
 	private:
 		struct {
 			bool bWasSaved;
@@ -670,6 +674,12 @@ class CConEmuMain :
 			ConEmuWindowMode WindowMode;
 			IdealRectInfo rcIdealInfo;
 		} m_QuakePrevSize;
+		ConEmuWindowCommand m_TileMode;
+		struct {
+			RECT rcNewPos;
+			bool bInJump;
+			bool bFullScreen, bMaximized;
+		} m_JumpMonitor;
 	public:
 		//void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
 		//void ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags);

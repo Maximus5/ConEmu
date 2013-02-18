@@ -137,11 +137,6 @@ struct CEStartupEnv
 
 #ifndef CONEMU_MINIMAL
 HANDLE DuplicateProcessHandle(DWORD anTargetPID);
-void ChangeScreenBufferSize(CONSOLE_SCREEN_BUFFER_INFO& sbi, SHORT VisibleX, SHORT VisibleY, SHORT BufferX, SHORT BufferY);
-BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int nCurWidth, int nCurHeight, DWORD nCurScroll, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll);
-void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName, WORD anTextColors = 0, WORD anPopupColors = 0);
-int EvaluateDefaultFontWidth(int inSizeY, const wchar_t *asFontName);
-void EmergencyShow(HWND hConWnd);
 void FindComspec(ConEmuComspec* pOpt); // используется в GUI при загрузке настроек
 void UpdateComspec(ConEmuComspec* pOpt);
 void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue);
@@ -149,25 +144,6 @@ void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue);
 LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits = csb_SameOS);
 wchar_t* GetComspec(const ConEmuComspec* pOpt);
 
-struct MY_CONSOLE_SCREEN_BUFFER_INFOEX
-{
-	ULONG      cbSize;
-	COORD      dwSize;
-	COORD      dwCursorPosition;
-	WORD       wAttributes;
-	SMALL_RECT srWindow;
-	COORD      dwMaximumWindowSize;
-	WORD       wPopupAttributes;
-	BOOL       bFullscreenSupported;
-	COLORREF   ColorTable[16];
-};
-
-BOOL apiGetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
-BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
-
-BOOL apiGetConsoleFontSize(HANDLE hOutput, int &SizeY, int &SizeX, wchar_t (&rsFontName)[LF_FACESIZE]); //Vista+ only!
-BOOL apiSetConsoleFontSize(HANDLE hOutput, int inSizeY, int inSizeX, const wchar_t *asFontName); //Vista+ only!
-BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize);
 
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////

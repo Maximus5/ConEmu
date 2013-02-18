@@ -903,6 +903,7 @@
     <ClInclude Include="ShellProcessor.h" />
     <ClInclude Include="UserImp.h" />
     <ClInclude Include="..\common\InQueue.h" />
+    <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
     <ClInclude Include="..\common\RConStartArgs.h" />
   </ItemGroup>
@@ -928,6 +929,7 @@
     <ClCompile Include="ShellProcessor.cpp" />
     <ClCompile Include="UserImp.cpp" />
     <ClCompile Include="..\common\InQueue.cpp" />
+    <ClCompile Include="..\common\WinConsole.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
     <ClCompile Include="..\common\RConStartArgs.cpp" />
   </ItemGroup>

@@ -70,6 +70,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RConStartArgs.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConsoleRead.h"
+#include "../common/WinConsole.h"
 #include "TokenHelper.h"
 #include "ConsoleHelp.h"
 #include "UnicodeTest.h"

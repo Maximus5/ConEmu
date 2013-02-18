@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuCD"
 	ProjectGUID="{F9CB1F86-E724-4BDF-AEA3-649CCF9B0F3F}"
 	RootNamespace="ConEmuCD"
@@ -1647,6 +1647,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\Monitors.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\MSecurity.h"
 				>
 			</File>
@@ -1676,6 +1680,10 @@
 			</File>
 			<File
 				RelativePath="..\common\StartupEnv.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\WinConsole.h"
 				>
 			</File>
 			<File
@@ -1777,6 +1785,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\Monitors.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\common\MSecurity.cpp"
 				>
 			</File>
@@ -1798,6 +1810,10 @@
 			</File>
 			<File
 				RelativePath=".\SrvPipes.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\WinConsole.cpp"
 				>
 			</File>
 			<File

@@ -43,9 +43,11 @@ $(OBJDIR)\ConsoleRead.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\Memory.obj \
+$(OBJDIR)\Monitors.obj \
 $(OBJDIR)\MSecurity.obj \
 $(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\RConStartArgs.obj \
+$(OBJDIR)\WinConsole.obj \
 $(OBJDIR)\WinObjects.obj
 
 USERLIBS = 
@@ -286,10 +288,14 @@ $(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
 
 $(OBJDIR)\Memory.obj: ../common/Memory.cpp
 
+$(OBJDIR)\Monitors.obj: ../common/Monitors.cpp
+
 $(OBJDIR)\MSecurity.obj: ../common/MSecurity.cpp
 
 $(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
 $(OBJDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
+
+$(OBJDIR)\WinConsole.obj: ../common/WinConsole.cpp ../common/WinConsole.h
 
 $(OBJDIR)\WinObjects.obj: ../common/WinObjects.cpp ../common/WinObjects.h

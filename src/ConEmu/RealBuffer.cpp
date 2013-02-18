@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/Execute.h"
 #include "../common/RgnDetect.h"
+#include "../common/WinConsole.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "ConEmuPipe.h"
@@ -2513,13 +2514,15 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 		
 	bool lbProcessed = false;
 	
-	//if (messg == WM_MOUSEMOVE || messg == WM_LBUTTONDOWN || messg == WM_LBUTTONUP || messg == WM_LBUTTONDBLCLK)
-	//{
-	COORD crStart = MakeCoord(crFrom.X - con.m_sbi.srWindow.Left, crFrom.Y - con.m_sbi.srWindow.Top);
+	// переходим на абсолютные координаты
+	COORD crStart = crFrom; // MakeCoord(crFrom.X - con.m_sbi.srWindow.Left, crFrom.Y - con.m_sbi.srWindow.Top);
+
 	// Во время скролла координата может быстро улететь
-	if ((crStart.Y < 0 || crStart.Y >= con.nTextHeight)
-		|| (crStart.X < 0 || crStart.X >= con.nTextWidth))
+	if ((crStart.Y < 0 || crStart.Y >= GetBufferHeight())
+		|| (crStart.X < 0 || crStart.X >= GetBufferWidth()))
 	{
+		_ASSERTE((crStart.X==-1 && crStart.Y==-1) && "Must not get here");
+
 		bool bChanged = false;
 		ResetLastMousePos();
 		if (con.etrLast != etr_None)
@@ -5438,8 +5441,8 @@ bool CRealBuffer::FindRangeStart(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out
 	bool lbRc = false;
 
 	WARNING("Тут пока работаем в экранных координатах");
-	_ASSERTE(crFrom.Y>=con.m_sbi.srWindow.Top && crFrom.Y<GetTextHeight());
-	_ASSERTE(crTo.Y>=con.m_sbi.srWindow.Top && crTo.Y<GetTextHeight());
+	_ASSERTE(crFrom.Y>=0 && crFrom.Y<GetTextHeight());
+	_ASSERTE(crTo.Y>=0 && crTo.Y<GetTextHeight());
 
 	// Курсор над комментарием?
 	// Попробуем найти начало имени файла
@@ -5504,8 +5507,8 @@ bool CRealBuffer::CheckValidUrl(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out]
 	bool lbRc = false;
 
 	WARNING("Тут пока работаем в экранных координатах");
-	_ASSERTE(crFrom.Y>=con.m_sbi.srWindow.Top && crFrom.Y<GetTextHeight());
-	_ASSERTE(crTo.Y>=con.m_sbi.srWindow.Top && crTo.Y<GetTextHeight());
+	_ASSERTE(crFrom.Y>=0 && crFrom.Y<GetTextHeight());
+	_ASSERTE(crTo.Y>=0 && crTo.Y<GetTextHeight());
 
 	// URL? (Курсор мог стоять над протоколом)
 	while ((crTo.X < nLen) && wcschr(pszProtocol, pChar[crTo.X]))
@@ -5555,8 +5558,8 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 {
 	ExpandTextRangeType result = etr_None;
 
-	WARNING("Тут пока работаем в экранных координатах");
-	_ASSERTE(crFrom.Y>=con.m_sbi.srWindow.Top && crFrom.Y<GetTextHeight());
+	WARNING("Тут пока работаем в экранных координатах, а приходят - абсолютные буферные");
+	_ASSERTE(crFrom.Y>=con.m_sbi.srWindow.Top && crFrom.Y<GetBufferHeight());
 
 	COORD lcrFrom = BufferToScreen(crFrom);
 	COORD lcrTo = lcrFrom;

@@ -926,6 +926,8 @@
 #define cbSingleInstance                2578
 #define cbCTSEndCopyBefore              2579
 #define IDC_HELP_DESCR                  2580
+#define vkJumpNextMonitor               2581
+#define vkJumpPrevMonitor               2582
 
 // Next default values for new objects
 // 
@@ -933,7 +935,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        222
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2581
+#define _APS_NEXT_CONTROL_VALUE         2583
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

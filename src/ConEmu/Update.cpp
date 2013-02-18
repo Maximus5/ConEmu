@@ -612,6 +612,9 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 		if (!Check7zipInstalled())
 			goto wrap; // Error already reported
 
+		// Forcing usage of 7zip package!
+		mp_Set->isUpdateDownloadSetup = 2;
+
 		//if (!CanUpdateInstallation())
 		//{
 		//	// Значит 7zip обломается при попытке распаковки
@@ -1973,11 +1976,12 @@ bool CConEmuUpdate::Check7zipInstalled()
 		return false;
 	}
 
-	if (FileExists(sz7zip))
+	if (FileExistsSearch(sz7zip, countof(sz7zip)))
 		return true;
 
-	WARNING("Suggest to download 7zip");
-	ReportError(L"7zip not found! It is not installed?\n%s\nGoto 'Update' page and check 7-zip command", 0);
+	WARNING("TODO: Suggest to download 7zip");
+
+	ReportError(L"7zip or WinRar not found! Not installed?\n%s\nGoto 'Update' page and check 7-zip command", sz7zip, 0);
 	return false;
 }
 

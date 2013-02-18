@@ -193,6 +193,23 @@ enum ConEmuStatusCommand
 	csc_SetStatusText = 1,
 };
 
+enum ConEmuWindowCommand
+{
+	cwc_Current     = 0,
+	cwc_Restore     = 1,  // wmNormal
+	cwc_Minimize    = 2,  // SC_MINIMIZE
+	cwc_MinimizeTSA = 3,  // HideWindowToTray
+	cwc_Maximize    = 4,  // wmMaximized
+	cwc_FullScreen  = 5,  // wmFullScreen
+	cwc_TileLeft    = 6,  // Same as Win+Left in Win7
+	cwc_TileRight   = 7,  // Same as Win+Right in Win7
+	cwc_TileHeight  = 8,  // Same as Win+Shift+Up in Win7
+	cwc_PrevMonitor = 9,  // Same as Win+Shift+Left in Win7
+	cwc_NextMonitor = 10, // Same as Win+Shift+Right in Win7
+	// for comparision
+	cwc_LastCmd
+};
+
 enum CONSOLE_KEY_ID
 {
 	ID_ALTTAB,

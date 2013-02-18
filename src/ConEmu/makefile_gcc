@@ -17,6 +17,7 @@ SRCS =  \
 		FrameHolder.cpp    \
 		GestureEngine.cpp  \
 		GuiServer.cpp      \
+		Hotkeys.cpp        \
 		Inside.cpp         \
 		LoadImg.cpp        \
 		Macro.cpp          \
@@ -48,10 +49,12 @@ SRCS =  \
 		../common/ConEmuCheck.cpp   \
 		../common/execute.cpp       \
 		../common/Memory.cpp        \
+		../common/Monitors.cpp      \
 		../common/MSecurity.cpp     \
 		../common/MStrSafe.cpp      \
 		../common/RConStartArgs.cpp \
 		../common/RgnDetect.cpp     \
+        ../common/WinConsole.cpp    \
         ../common/WinObjects.cpp
 
 USERLIBS = -lversion -lshlwapi -loleaut32 -lNetapi32 -lwinmm

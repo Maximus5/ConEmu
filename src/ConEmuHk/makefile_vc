@@ -51,6 +51,7 @@ $(OBJDIR)\Execute.obj \
 $(OBJDIR)\ExtConsole.obj \
 $(OBJDIR)\SetHook.obj \
 $(OBJDIR)\ShellProcessor.obj \
+$(OBJDIR)\WinConsole.obj \
 $(OBJDIR)\WinObjects.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\Common.obj \
@@ -290,6 +291,8 @@ $(OBJDIR)\ExtConsole.obj: ExtConsole.cpp ExtConsole.h
 $(OBJDIR)\SetHook.obj: SetHook.cpp SetHook.h
 
 $(OBJDIR)\ShellProcessor.obj: ShellProcessor.cpp ShellProcessor.h
+
+$(OBJDIR)\WinConsole.obj: ../common/WinConsole.cpp ../common/WinConsole.h
 
 $(OBJDIR)\WinObjects.obj: ../common/WinObjects.cpp ../common/WinObjects.h
 

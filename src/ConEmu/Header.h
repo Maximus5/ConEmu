@@ -472,3 +472,55 @@ bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval);
 extern const wchar_t* gsHomePage;  // = L"http://conemu-maximus5.googlecode.com";
 extern const wchar_t* gsReportBug; // = L"http://code.google.com/p/conemu-maximus5/issues/entry";
 extern const wchar_t* gsWhatsNew;  // = L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";
+
+template <class T>
+T GetMinMax(T a, int v1, int v2)
+{
+	if (a < (T)v1)
+		a = (T)v1;
+	else if (a > (T)v2)
+		a = (T)v2;
+	return a;
+}
+
+template <class T>
+void MinMax(T &a, int v1, int v2)
+{
+	if (a < (T)v1)
+		a = (T)v1;
+	else if (a > (T)v2)
+		a = (T)v2;
+}
+
+template <class T>
+void MinMax(T &a, int v2)
+{
+	if (a > (T)v2)
+		a = (T)v2;
+}
+
+
+#include <pshpack1.h>
+typedef struct tagMYRGB
+{
+	union
+	{
+		COLORREF color;
+		struct
+		{
+			BYTE    rgbBlue;
+			BYTE    rgbGreen;
+			BYTE    rgbRed;
+			BYTE    rgbReserved;
+		};
+	};
+} MYRGB, MYCOLORREF;
+#include <poppack.h>
+
+#define CmdFilePrefix     L'@'
+#define DropLnkPrefix     L'?'
+#define TaskBracketLeft   L'{'
+#define TaskBracketRight  L'}'
+#define AutoStartTaskName L"<Startup>"
+
+bool NextLine(const wchar_t*& pszFrom, wchar_t** pszLine);

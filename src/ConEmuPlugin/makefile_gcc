@@ -10,8 +10,10 @@ SRCS = ConEmuPlugin.cpp \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp \
        ../common/Memory.cpp \
+       ../common/Monitors.cpp \
        ../common/MSecurity.cpp \
        ../common/MStrSafe.cpp \
+       ../common/WinConsole.cpp \
        ../common/WinObjects.cpp
 
 USERLIBS = -lversion -lwininet

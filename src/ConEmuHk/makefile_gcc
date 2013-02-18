@@ -18,6 +18,7 @@ SRCS = Entry.cpp \
        ../common/MStrSafe.cpp \
        ../common/Memory.cpp \
        ../common/RConStartArgs.cpp \
+       ../common/WinConsole.cpp \
        ../common/WinObjects.cpp
 
 

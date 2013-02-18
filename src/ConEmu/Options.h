@@ -29,32 +29,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-template <class T>
-T GetMinMax(T a, int v1, int v2)
-{
-	if (a < (T)v1)
-		a = (T)v1;
-	else if (a > (T)v2)
-		a = (T)v2;
-	return a;
-}
-
-template <class T>
-void MinMax(T &a, int v1, int v2)
-{
-	if (a < (T)v1)
-		a = (T)v1;
-	else if (a > (T)v2)
-		a = (T)v2;
-}
-
-template <class T>
-void MinMax(T &a, int v2)
-{
-	if (a > (T)v2)
-		a = (T)v2;
-}
-
 #define MIN_ALPHA_VALUE 40
 #define MIN_INACTIVE_ALPHA_VALUE 0
 #define MAX_FONT_STYLES 8  //normal/(bold|italic|underline)
@@ -70,23 +44,6 @@ void MinMax(T &a, int v2)
 
 #define QUAKEANIMATION_DEF 300
 #define QUAKEANIMATION_MAX 2000
-
-#include <pshpack1.h>
-typedef struct tagMYRGB
-{
-	union
-	{
-		COLORREF color;
-		struct
-		{
-			BYTE    rgbBlue;
-			BYTE    rgbGreen;
-			BYTE    rgbRed;
-			BYTE    rgbReserved;
-		};
-	};
-} MYRGB, MYCOLORREF;
-#include <poppack.h>
 
 enum FarMacroVersion
 {
@@ -108,171 +65,18 @@ enum FarMacroVersion
 
 #define BgImageColorsDefaults (1|2)
 
+#include "Hotkeys.h"
 #include "UpdateSet.h"
 
 class CSettings;
 class CVirtualConsole;
 
-#define CmdFilePrefix     L'@'
-#define DropLnkPrefix     L'?'
-#define TaskBracketLeft   L'{'
-#define TaskBracketRight  L'}'
-#define AutoStartTaskName L"<Startup>"
 
 #define SCROLLBAR_DELAY_MIN 100
 #define SCROLLBAR_DELAY_MAX 15000
 
 #define CENTERCONSOLEPAD_MIN 0
 #define CENTERCONSOLEPAD_MAX 64
-
-#define CEHOTKEY_MODMASK    0xFFFFFF00
-#define CEHOTKEY_NUMHOSTKEY 0xFFFFFF00
-#define CEHOTKEY_ARRHOSTKEY 0xFEFEFE00
-#define CEHOTKEY_NOMOD      0x80808000
-
-enum ConEmuHotKeyType
-{
-	chk_User = 0,  // обычный настраиваемый hotkey
-	chk_Modifier,  // для драга, например
-	chk_Modifier2, // для драга, например (когда нужно задать более одного модификатора)
-	chk_NumHost,   // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
-	chk_ArrHost,   // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
-	chk_System,    // predefined hotkeys, ненастраиваемые (пока?)
-	chk_Global,    // globally registered hotkey
-	chk_Local,     // locally registered hotkey
-	chk_Macro,     // GUI Macro
-};
-
-// Уехал в common.hpp
-//enum ConEmuModifiers
-//{
-//	// Для удобства, в младшем байте VkMod хранится VK кнопки
-//	cvk_VK_MASK  = 0x000000FF,
-//
-//	// Модификаторы, которые юзер просил различать, правый или левый
-//	cvk_LCtrl    = 0x00000100,
-//	cvk_RCtrl    = 0x00000200,
-//	cvk_LAlt     = 0x00000400,
-//	cvk_RAlt     = 0x00000800,
-//	cvk_LShift   = 0x00001000,
-//	cvk_RShift   = 0x00002000,
-//
-//	// Если без разницы, правый или левый
-//	cvk_Ctrl     = 0x00010000,
-//	cvk_Alt      = 0x00020000,
-//	cvk_Shift    = 0x00040000,
-//	cvk_Win      = 0x00080000,
-//	cvk_Apps     = 0x00100000,
-//
-//	// Маска всех с учетом правый/левый
-//	cvk_DISTINCT = cvk_LCtrl|cvk_RCtrl|cvk_LAlt|cvk_RAlt|cvk_LShift|cvk_RShift|cvk_Win|cvk_Apps,
-//	// Маска вообще всех допустимых флагов, за исключением самого VK
-//	cvk_ALLMASK  = 0xFFFFFF00,
-//};
-
-struct ConEmuHotKey
-{
-	int DescrLangID;
-	
-	ConEmuHotKeyType HkType; // 0 - hotkey, 1 - modifier (для драга, например), 2 - system hotkey (настройка nMultiHotkeyModifier)
-
-	bool   (*Enabled)();
-
-	wchar_t Name[64];
-	
-	//// User. Если NULL - значит системный, не изменяемый
-	//union
-	//{
-	//	DWORD* VkModPtr; // (HkType==chk_User, chk_Hostkey, chk_System, chk_Global)
-	//	BYTE*  ModPtr;   // (HkType==chk_Modifier)
-	//};
-	
-	DWORD VkMod;
-
-    bool (WINAPI *fkey)(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-обработали, false-пропустить в консоль
-	bool OnKeyUp; // Некоторые комбинации нужно обрабатывать "на отпускание" (показ диалогов, меню, ...)
-
-	wchar_t* GuiMacro;
-
-	// Internal
-	size_t cchGuiMacroMax;
-	bool   NotChanged;
-
-	bool CanChangeVK() const
-	{
-		//chk_System - пока не настраивается
-		if (HkType==chk_User || HkType==chk_Global || HkType==chk_Local || HkType==chk_Macro)
-		{
-			return true;
-		}
-		return false;
-	};
-
-	LPCWSTR GetDescription(wchar_t* pszDescr, int cchMaxLen, bool bAddMacroIndex = false) const
-	{
-		if (!pszDescr)
-			return L"";
-
-		_ASSERTE(cchMaxLen>200);
-
-		LPCWSTR pszRc = pszDescr;
-		bool lbColon = false;
-
-		*pszDescr = 0;
-
-		if (this->Enabled)
-		{
-			if (!this->Enabled())
-			{
-				lstrcpyn(pszDescr, L"[Disabled] ", cchMaxLen);
-				int nLen = lstrlen(pszDescr);
-				pszDescr += nLen;
-				cchMaxLen -= nLen;
-			}
-		}
-
-		if (bAddMacroIndex && (HkType == chk_Macro))
-		{
-			_wsprintf(pszDescr, SKIPLEN(cchMaxLen) L"Macro %02i: ", DescrLangID-vkGuMacro01+1);
-			int nLen = lstrlen(pszDescr);
-			pszDescr += nLen;
-			cchMaxLen -= nLen;
-			lbColon = true;
-		}
-
-		if ((HkType != chk_Macro) && !LoadString(g_hInstance, DescrLangID, pszDescr, cchMaxLen))
-		{
-			if ((HkType == chk_User) && GuiMacro && *GuiMacro)
-				lstrcpyn(pszDescr, GuiMacro, cchMaxLen);
-			else
-				_wsprintf(pszDescr, SKIPLEN(cchMaxLen) L"#%i", DescrLangID);
-		}
-		else if ((cchMaxLen >= 16) && GuiMacro && *GuiMacro)
-		{
-			size_t nLen = _tcslen(pszDescr);
-			pszDescr += nLen;
-			cchMaxLen -= nLen;
-
-			if (!lbColon && (cchMaxLen > 2) && (pszDescr > pszRc))
-			{
-				lstrcpyn(pszDescr, L": ", cchMaxLen);
-				pszDescr += 2;
-				cchMaxLen -= 2;
-			}
-			lstrcpyn(pszDescr, GuiMacro, cchMaxLen);
-		}
-
-		return pszRc;
-	};
-
-	void Free()
-	{
-		SafeFree(GuiMacro);
-	};
-};
-
-// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
-extern const ConEmuHotKey* ConEmuSkipHotKey; // = ((ConEmuHotKey*)INVALID_HANDLE_VALUE)
 
 
 struct FindTextOptions
@@ -330,6 +134,7 @@ struct Settings
 	protected:
 		friend class CSettings;
 	
+	    void ResetSettings();
 		void ReleasePointers();		
 	public:
 
@@ -1269,6 +1074,9 @@ struct Settings
 		DWORD nHostkeyNumberModifier; // Используется для 0..9, WinSize
 		//reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); TestHostkeyModifiers();
 		DWORD nHostkeyArrowModifier; // Используется для WinSize
+		public:
+		DWORD HostkeyNumberModifier() { return nHostkeyNumberModifier; };
+		DWORD HostkeyArrowModifier() { return nHostkeyArrowModifier; };
 		//
 		public:
 		//reg->Load(L"Multi.NewConsole", vmMultiNew);
@@ -1338,21 +1146,6 @@ struct Settings
 
 		// VkMod = LOBYTE - VK, старшие три байта - модификаторы (тоже VK)
 
-		// Задать или сбросить модификатор в VkMod
-		DWORD SetModifier(DWORD VkMod, BYTE Mod/*VK*/, bool Xor=true);
-		// Сервисная функция для инициализации. Формирует готовый VkMod
-		DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
-		// Вернуть назначенные модификаторы (idx = 1..3). Возвращает 0 (нету) или VK
-		DWORD GetModifier(DWORD VkMod, int idx/*1..3*/);
-		// Вернуть имя модификатора (типа "Apps+Space")
-		LPCWSTR GetHotkeyName(const ConEmuHotKey* ppHK, wchar_t (&szFull)[128]);
-		void GetVkKeyName(BYTE vk, wchar_t (&szName)[32]);
-		// Извлечь сам VK
-		DWORD GetHotkey(DWORD VkMod);
-		// набор флагов MOD_xxx для RegisterHotKey
-		DWORD GetHotKeyMod(DWORD VkMod);
-		// Есть ли в этом (VkMod) хоткее - модификатор Mod (VK)
-		bool  HasModifier(DWORD VkMod, BYTE Mod/*VK*/);
 		// Вернуть заданный VkMod, или 0 если не задан. nDescrID = vkXXX (e.g. vkMinimizeRestore)
 		DWORD GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK = NULL);
 		// Проверить, задан ли этот hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore)
@@ -1368,9 +1161,6 @@ struct Settings
 	private:
 		void LoadHotkeys(SettingsBase* reg);
 		void SaveHotkeys(SettingsBase* reg);
-		// nHostMod в младших 3-х байтах может содержать VK (модификаторы).
-		// Функция проверяет, чтобы они не дублировались
-		void TestHostkeyModifiers(DWORD& nHostMod);
 	public:
 
 		/* *** Заголовки табов *** */
@@ -1474,18 +1264,17 @@ struct Settings
 		/* *** HotKeys & GuiMacros *** */
 		//reg->Load(L"GuiMacro<N>.Key", &Macros.vk);
 		//reg->Load(L"GuiMacro<N>.Macro", &Macros.szGuiMacro);
-		struct HotGuiMacro
-		{
-			union {
-				BYTE vk;
-				LPVOID dummy;
-			};
-			wchar_t* szGuiMacro;
-		};
-		HotGuiMacro Macros[24];
+		//struct HotGuiMacro
+		//{
+		//	union {
+		//		BYTE vk;
+		//		LPVOID dummy;
+		//	};
+		//	wchar_t* szGuiMacro;
+		//};
+		//HotGuiMacro Macros[24];
 		
 	public:
-		ConEmuHotKey* AllocateHotkeys();
 		void LoadSettings(bool *rbNeedCreateVanilla);
 		void InitSettings();
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
@@ -1511,79 +1300,6 @@ struct Settings
 		SettingsBase* CreateSettings(const SettingsStorage* apStorage);
 		
 		void GetSettingsType(SettingsStorage& Storage, bool& ReadOnly);
-		
-	private:
-		struct CEFontRange
-		{
-		public:
-			bool    bUsed;              // Для быстрого включения/отключения
-			wchar_t sTitle[64];         // "Title"="Borders and scrollbars"
-			wchar_t sRange[1024];       // "CharRange"="2013-25C4;"
-			wchar_t sFace[LF_FACESIZE]; // "FontFace"="Andale Mono"
-			LONG    nHeight;            // "Height"=dword:00000012
-			LONG    nWidth;             // "Width"=dword:00000000
-			LONG    nLoadHeight;        // Для корректного вычисления относительных размеров шрифта при
-			LONG    nLoadWidth;         // ресайзе GUI, или изменения из макроса - запомнить исходные
-			BYTE    nCharset;           // "Charset"=hex:00
-			bool    bBold;              // "Bold"=hex:00
-			bool    bItalic;            // "Italic"=hex:00
-			BYTE    nQuality;           // "Anti-aliasing"=hex:03
-			/*    */
-		private:
-			LOGFONT LF;
-		public:
-			LOGFONT& LogFont()
-			{
-				LF.lfHeight = nHeight;
-				LF.lfWidth = nWidth;
-				LF.lfEscapement = 0;
-				LF.lfOrientation = 0;
-				LF.lfWeight = bBold?FW_BOLD:FW_NORMAL;
-				LF.lfItalic = bItalic ? 1 : 0;
-				LF.lfUnderline = 0;
-				LF.lfStrikeOut = 0;
-				LF.lfQuality = nQuality;
-				LF.lfCharSet = nCharset;
-				LF.lfOutPrecision = OUT_TT_PRECIS;
-				LF.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-				LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-				lstrcpyn(LF.lfFaceName, sFace, countof(LF.lfFaceName));
-				return LF;
-			};
-			void Scale(LONG anMainHeight, LONG anMainLoadHeight)
-			{
-				// Высота
-				if (nLoadHeight == 0 || !anMainLoadHeight)
-				{
-					nHeight = anMainHeight; // Высота равна высоте в Main
-				}
-				else
-				{
-					nHeight = nLoadHeight * anMainHeight / anMainLoadHeight;
-				}
-				// Ширина
-				if (nLoadWidth == 0 || !anMainLoadHeight)
-				{
-					nWidth = 0;
-				}
-				else
-				{
-					nWidth = nLoadWidth * anMainHeight / anMainLoadHeight;
-				}
-			};
-			/*    */
-			HFONT hFonts[MAX_FONT_STYLES]; //normal/(bold|italic|underline)
-			/*    */
-			BYTE RangeData[0x10000];
-		};
-		CEFontRange m_Fonts[MAX_FONT_GROUPS]; // 0-Main, 1-Borders, 2 и более - user defined
-		BOOL FontRangeLoad(SettingsBase* reg, int Idx);
-		BOOL FontRangeSave(SettingsBase* reg, int Idx);
-
-	protected:
-		static bool UseWinNumber() { return gpSet->isMulti && gpSet->isUseWinNumber; };
-		static bool UseWinArrows() { return gpSet->isUseWinArrows; };
-		static bool UseCTSShiftArrow(); // { return gpSet->isUseWinArrows; }; // { return (OverrideClipboard || !AppNames) ? isCTSShiftArrowStart : gpSet->AppStd.isCTSShiftArrowStart; };
 };
 
 #include "OptionsClass.h"
