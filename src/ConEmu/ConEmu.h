@@ -169,9 +169,20 @@ class CConEmuMain :
 		int mn_QuakePercent; // 0 - отключен, иначе (>0 && <=100) - идет анимаци€ Quake
 		bool mb_InCreateWindow;
 		HMONITOR mh_MinFromMonitor;
+		bool mb_InShowMinimized; // true на врем€ выполнени€ ShowWindow(SW_SHOWMIN...)
 	public:
 		bool InCreateWindow();
 		bool InQuakeAnimation();
+		UINT IsQuakeVisible();
+		bool InMinimizing();
+	protected:
+		struct WindowsOverQuake
+		{
+			RECT rcWnd;
+			HRGN hRgn;
+			int  iRc;
+		};
+		static BOOL CALLBACK EnumWindowsOverQuake(HWND hWnd, LPARAM lpData);
 	public:
 		//CConEmuChild *m_Child;
 		//CConEmuBack  *m_Back;

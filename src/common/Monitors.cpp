@@ -28,12 +28,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include <windows.h>
+#include "common.hpp"
 #include "MAssert.h"
 #include "MArray.h"
 #include "Monitors.h"
 
 
-static BOOL CALLBACK FindMonitorsWorkspace(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+BOOL CALLBACK FindMonitorsWorkspace(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
 	LPRECT lprc = (LPRECT)dwData;
 
@@ -78,7 +79,7 @@ struct _FindPrimaryMonitor
 	MONITORINFO mi;
 };
 
-static BOOL CALLBACK FindPrimaryMonitor(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+BOOL CALLBACK FindPrimaryMonitor(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
 	MONITORINFO mi = {sizeof(mi)};
 
@@ -172,7 +173,7 @@ struct _FindAllMonitors
 	MArray<HMONITOR> MonArray;
 };
 
-static BOOL CALLBACK EnumAllMonitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+BOOL CALLBACK EnumAllMonitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
 	_FindAllMonitors* p = (_FindAllMonitors*)dwData;
 	p->MonArray.push_back(hMonitor);

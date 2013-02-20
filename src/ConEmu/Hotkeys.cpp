@@ -650,6 +650,23 @@ bool ConEmuHotKey::UseCTSShiftArrow()
 	return pApp->CTSShiftArrowStart();
 }
 
+bool ConEmuHotKey::DontHookJumps(const ConEmuHotKey* pHK)
+{
+	bool bDontHook = false;
+#if 0
+	switch (pHK->DescrLangID)
+	{
+	case vkJumpPrevMonitor:
+		bDontHook = (pHK->VkMod == MakeHotKey(VK_LEFT,VK_LWIN,VK_SHIFT));
+		break;
+	case vkJumpNextMonitor:
+		bDontHook = (pHK->VkMod == MakeHotKey(VK_RIGHT,VK_LWIN,VK_SHIFT));
+		break;
+	}
+#endif
+	return bDontHook;
+}
+
 
 
 
@@ -737,8 +754,8 @@ ConEmuHotKey* ConEmuHotKey::AllocateHotkeys()
 		{vkPasteFilePath,  chk_User,  NULL,    L"PasteFileKey",          MakeHotKey('F',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Paste(4)")},
 		{vkPasteDirectory, chk_User,  NULL,    L"PastePathKey",          MakeHotKey('D',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Paste(5)")},
 		{vkPasteCygwin,    chk_User,  NULL,    L"PasteCygwinKey",        MakeHotKey(VK_INSERT,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Paste(8)")},
-		{vkJumpPrevMonitor,chk_User,  NULL,    L"Key.JumpPrevMonitor",   MakeHotKey(VK_LEFT,VK_LWIN,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowMode(9)")},
-		{vkJumpNextMonitor,chk_User,  NULL,    L"Key.JumpNextMonitor",   MakeHotKey(VK_RIGHT,VK_LWIN,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowMode(10)")},
+		{vkJumpPrevMonitor,chk_User,  NULL,    L"Key.JumpPrevMonitor",   MakeHotKey(VK_LEFT,VK_LWIN,VK_SHIFT),  CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowMode(9)"),  DontHookJumps},
+		{vkJumpNextMonitor,chk_User,  NULL,    L"Key.JumpNextMonitor",   MakeHotKey(VK_RIGHT,VK_LWIN,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowMode(10)"), DontHookJumps},
 		// GUI Macros
 		{vkGuMacro01,      chk_Macro, NULL,    L"KeyMacro01", 0, CConEmuCtrl::key_GuiMacro},
 		{vkGuMacro02,      chk_Macro, NULL,    L"KeyMacro02", 0, CConEmuCtrl::key_GuiMacro},

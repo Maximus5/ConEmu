@@ -1475,6 +1475,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			// Proxy User/Password
 			if (ProxyName)
 			{
+				// Похоже, что установка логина/пароля для mh_Internet смысла не имеет
 				if (mp_Set->szUpdateProxyUser && *mp_Set->szUpdateProxyUser)
 				{
 					if (!wi->_InternetSetOptionW(mh_Internet, INTERNET_OPTION_PROXY_USERNAME, (LPVOID)mp_Set->szUpdateProxyUser, lstrlen(mp_Set->szUpdateProxyUser)))
@@ -1554,31 +1555,34 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			goto wrap;
 		}
 
-		//if (ProxyName)
-		//{
-		//	if (mp_Set->szUpdateProxyUser && *mp_Set->szUpdateProxyUser)
-		//	{
-		//		if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_PROXY_USERNAME, (LPVOID)mp_Set->szUpdateProxyUser, lstrlen(mp_Set->szUpdateProxyUser)))
-		//		{
-		//			ReportError(L"ProxyUserName failed, code=%u", GetLastError());
-		//			goto wrap;
-		//		}
-		//	}
-		//	if (mp_Set->szUpdateProxyPassword && *mp_Set->szUpdateProxyPassword)
-		//	{
-		//		if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_PROXY_PASSWORD, (LPVOID)mp_Set->szUpdateProxyPassword, lstrlen(mp_Set->szUpdateProxyPassword)))
-		//		{
-		//			ReportError(L"ProxyPassword failed, code=%u", GetLastError());
-		//			goto wrap;
-		//		}
-		//	}
-		//}
+		if (ProxyName)
+		{
+			// Похоже, что установка логина/пароля для mh_Internet смысла не имеет
+			// Поэтому повторяем здесь для хэндла mh_Connect
+			if (mp_Set->szUpdateProxyUser && *mp_Set->szUpdateProxyUser)
+			{
+				if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_PROXY_USERNAME, (LPVOID)mp_Set->szUpdateProxyUser, lstrlen(mp_Set->szUpdateProxyUser)))
+				{
+					ReportError(L"ProxyUserName failed, code=%u", GetLastError());
+					goto wrap;
+				}
+			}
+			if (mp_Set->szUpdateProxyPassword && *mp_Set->szUpdateProxyPassword)
+			{
+				if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_PROXY_PASSWORD, (LPVOID)mp_Set->szUpdateProxyPassword, lstrlen(mp_Set->szUpdateProxyPassword)))
+				{
+					ReportError(L"ProxyPassword failed, code=%u", GetLastError());
+					goto wrap;
+				}
+			}
+		}
 
-		//if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_HTTP_VERSION, &httpver, sizeof(httpver)))
-		//{
-		//	ReportError(L"HttpVersion failed, code=%u", GetLastError());
-		//	goto wrap;
-		//}
+		// Повторим для mh_Connect, на всякий случай
+		if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_HTTP_VERSION, &httpver, sizeof(httpver)))
+		{
+			ReportError(L"HttpVersion failed, code=%u", GetLastError());
+			goto wrap;
+		}
 
 		//INTERNET_OPTION_RECEIVE_TIMEOUT - Sets or retrieves an unsigned long integer value that contains the time-out value, in milliseconds");
 		//nConnTimeout, nConnTimeoutSet, nFileTimeout, nFileTimeoutSet

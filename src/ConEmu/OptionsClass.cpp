@@ -624,6 +624,9 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 			if (m_HotKeys[i].Enabled && !m_HotKeys[i].Enabled())
 				continue;
 
+			if (m_HotKeys[i].DontWinHook && m_HotKeys[i].DontWinHook(&(m_HotKeys[i])))
+				continue;
+
 			DWORD nFlags = ConEmuHotKey::GetHotkey(VkMod);
 			for (int i = 1; i <= 3; i++)
 			{

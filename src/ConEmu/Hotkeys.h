@@ -74,6 +74,9 @@ struct ConEmuHotKey
 
 	wchar_t* GuiMacro;
 
+	// May be NULL. if "true" - dont intercept this key with KeyboardHooks, try to pass it to Windows.
+	bool   (*DontWinHook)(const ConEmuHotKey* pHK);
+
 	// Internal
 	size_t cchGuiMacroMax;
 	bool   NotChanged;
@@ -109,6 +112,7 @@ struct ConEmuHotKey
 	static bool UseWinNumber();
 	static bool UseWinArrows();
 	static bool UseCTSShiftArrow(); // { return gpSet->isUseWinArrows; }; // { return (OverrideClipboard || !AppNames) ? isCTSShiftArrowStart : gpSet->AppStd.isCTSShiftArrowStart; };
+	static bool DontHookJumps(const ConEmuHotKey* pHK);
 
 	// *** Default and all possible ConEmu hotkeys ***
 	static ConEmuHotKey* AllocateHotkeys();

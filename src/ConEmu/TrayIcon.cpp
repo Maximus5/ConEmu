@@ -260,19 +260,40 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			#endif
 			if (gpSet->isQuakeStyle)
 			{
+				bool bJustActivate = false;
 				SingleInstanceShowHideType sih = sih_ShowHideTSA;
+				SingleInstanceShowHideType sihHide = gpSet->isMinToTray() ? sih_HideTSA : sih_Minimize;
+
 				if (IsWindowVisible(ghWnd))
 				{
 					if (gpSet->isAlwaysOnTop || (gpSet->isQuakeStyle == 2))
 					{
-						sih = sih_HideTSA;
+						sih = sihHide;
 					}
 					else
 					{
-						// Хм. Тут проблема. Если поверх ConEmu есть какое-то окно, то ConEmu нужно поднять?
+						UINT nVisiblePart = gpConEmu->IsQuakeVisible();
+						if (nVisiblePart >= QUAKEVISIBLELIMIT)
+						{
+							sih = sihHide;
+						}
+						else
+						{
+							// Если поверх ConEmu есть какое-то окно, то ConEmu нужно поднять?
+							// Не "выезжать" а просто "вынести наверх", если видимая область достаточно большая
+							bJustActivate = (nVisiblePart >= QUAKEVISIBLETRASH) && !gpConEmu->isIconic();
+						}
 					}
 				}
-				gpConEmu->OnMinimizeRestore(sih);
+
+				if (bJustActivate)
+				{
+					SetForegroundWindow(ghWnd);
+				}
+				else
+				{
+					gpConEmu->OnMinimizeRestore(sih);
+				}
 			}
 			else if (gpSet->isAlwaysShowTrayIcon && IsWindowVisible(ghWnd))
 			{

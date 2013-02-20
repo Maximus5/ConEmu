@@ -302,6 +302,7 @@ CConEmuMain::CConEmuMain()
 	WindowStartTSA = false;
 	ForceMinimizeToTray = false;
 	mb_InCreateWindow = true;
+	mb_InShowMinimized = false;
 	mh_MinFromMonitor = NULL;
 	
 	wndX = gpSet->_wndX; wndY = gpSet->_wndY;
@@ -2507,7 +2508,9 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 		// Normal
 		if (gpSet->isCaptionHidden())
 		{
-			if ((mn_QuakePercent != 0) || !isMouseOverFrame())
+			if ((mn_QuakePercent != 0)
+				|| !isMouseOverFrame()
+				|| (gpSet->isQuakeStyle && (gpSet->HideCaptionAlwaysFrame() != 0)))
 			{
 				// Рамка невидима (мышка не над рамкой или заголовком)
 				RECT rcClient = GetGuiClientRect();
@@ -2528,8 +2531,12 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 							rcClient.right = rcClient.left + 1;
 						}
 						rcClient.bottom = min(rcClient.bottom, (rcClient.top+nQuakeHeight));
+						bRoundTitle = false;
 					}
-					bRoundTitle = false;
+					else
+					{
+						// Видимо все, но нужно "отрезать" верхнюю часть рамки
+					}
 				}
 
 				int nFrame = gpSet->HideCaptionAlwaysFrame();
@@ -2550,12 +2557,16 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				int rgnY = bFullFrame ? 0 : (rcFrame.top - nFrame);
 				int rgnX2 = (rcFrame.left - rgnX) + (bFullFrame ?  rcFrame.right : nFrame);
 				int rgnY2 = (rcFrame.top - rgnY) + (bFullFrame ? rcFrame.bottom : nFrame);
-				if (gpSet->isQuakeStyle && (gpSet->_WindowMode != wmNormal))
+				if (gpSet->isQuakeStyle)
 				{
-					// ConEmu window is maximized to fullscreen or work area
-					// Need to cut left/top/bottom frame edges
-					rgnX = rcFrame.left;
-					rgnX2 = rcFrame.left + rcFrame.right;
+					if (gpSet->_WindowMode != wmNormal)
+					{
+						// ConEmu window is maximized to fullscreen or work area
+						// Need to cut left/top/bottom frame edges
+						rgnX = rcFrame.left;
+						rgnX2 = rcFrame.left - rcFrame.right;
+					}
+					// top - cut always
 					rgnY = rcFrame.top;
 				}
 				int rgnWidth = rcClient.right + rgnX2;
@@ -3198,7 +3209,15 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 	WINDOWPLACEMENT wpl = {sizeof(wpl)};
 	int nGetStyle = 0;
 
-	bool bNeedCalc = (isIconic() || mp_Menu->GetRestoreFromMinimized());
+	bool bNeedCalc = (isIconic() || mp_Menu->GetRestoreFromMinimized() || !IsWindowVisible(ghWnd));
+	if (!bNeedCalc)
+	{
+		if (InMinimizing())
+		{
+			_ASSERTE(!InMinimizing());
+			bNeedCalc = true;
+		}
+	}
 
 	if (bNeedCalc)
 	{
@@ -4149,6 +4168,9 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 		}
 	}
 
+	bool bOldShowMinimized = mb_InShowMinimized;
+	mb_InShowMinimized = (anCmdShow == SW_SHOWMINIMIZED) || (anCmdShow == SW_SHOWMINNOACTIVE);
+
 	if (bUseApi)
 	{
 		bool b, bAllowPreserve = false;
@@ -4198,6 +4220,8 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 
 		AnimateWindow(ghWnd, nAnimationMS, nFlags);
 	}
+
+	mb_InShowMinimized = bOldShowMinimized;
 
 	return lbRc;
 }
@@ -4370,14 +4394,50 @@ bool CConEmuMain::JumpNextMonitor(bool Next)
 		return false;
 	}
 
-	RECT rcMain = CalcRect(CER_MAIN);
+	wchar_t szInfo[100];
+
+	HWND hJump = getForegroundWindow();
+	if (!hJump)
+	{
+		Assert(hJump!=NULL);
+		LogString(L"JumpNextMonitor skipped, no foreground window");
+		return false;
+	}
+	DWORD nWndPID = 0; GetWindowThreadProcessId(hJump, &nWndPID);
+	if (nWndPID != GetCurrentProcessId())
+	{
+		if (gpSetCls->isAdvLogging)
+		{
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+				L"JumpNextMonitor skipped, not our window PID=%u, HWND=x%08X",
+				nWndPID, (DWORD)hJump);
+			LogString(szInfo);
+		}
+		return false;
+	}
+
+	RECT rcMain = {};
+	bool bFullScreen = false;
+	bool bMaximized = false;
+	DWORD nStyles = GetWindowLong(hJump, GWL_STYLE);
+
+	if (hJump == ghWnd)
+	{
+		rcMain = CalcRect(CER_MAIN);
+		bFullScreen = isFullScreen();
+		bMaximized = bFullScreen ? false : isZoomed();
+	}
+	else
+	{
+		GetWindowRect(hJump, &rcMain);
+	}
+
 	MONITORINFO mi = {};
 	HMONITOR hNext = GetNextMonitorInfo(&mi, &rcMain, Next);
 	if (!hNext)
 	{
 		if (gpSetCls->isAdvLogging)
 		{
-			wchar_t szInfo[100];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 				L"JumpNextMonitor(%i) skipped, GetNextMonitorInfo({%i,%i}-{%i,%i}) returns NULL",
 				(int)Next, rcMain.left, rcMain.top, rcMain.right, rcMain.bottom);
@@ -4387,7 +4447,6 @@ bool CConEmuMain::JumpNextMonitor(bool Next)
 	}
 	else if (gpSetCls->isAdvLogging)
 	{
-		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 			L"JumpNextMonitor(%i), GetNextMonitorInfo({%i,%i}-{%i,%i}) returns 0x%08X ({%i,%i}-{%i,%i})",
 			(int)Next, rcMain.left, rcMain.top, rcMain.right, rcMain.bottom,
@@ -4398,18 +4457,17 @@ bool CConEmuMain::JumpNextMonitor(bool Next)
 	MONITORINFO miCur;
 	GetNearestMonitor(&miCur, &rcMain);
 
-	bool bFullScreen = isFullScreen();
-	bool bMaximized = bFullScreen ? false : isZoomed();
-
 	RECT rcNewMain = rcMain;
 
-	if (bFullScreen || bMaximized)
+	if ((bFullScreen || bMaximized) && (hJump == ghWnd))
 	{
+		_ASSERTE(hJump == ghWnd);
 		rcNewMain = CalcRect(bFullScreen ? CER_FULLSCREEN : CER_MAXIMIZED, mi.rcMonitor, CER_MAIN);
 	}
 	else
 	{
-		_ASSERTE(WindowMode==wmNormal);
+		_ASSERTE(WindowMode==wmNormal || hJump!=ghWnd);
+
 		RECT rcPrevMon = bFullScreen ? miCur.rcMonitor : miCur.rcWork;
 		RECT rcNextMon = bFullScreen ? mi.rcMonitor : mi.rcWork;
 
@@ -4452,34 +4510,49 @@ bool CConEmuMain::JumpNextMonitor(bool Next)
 		rcNewMain.bottom = rcNewMain.top + Height;
 	}
 
-	// Коррекция (заранее)
-	OnMoving(&rcNewMain);
-
-	m_JumpMonitor.rcNewPos = rcNewMain;
-	m_JumpMonitor.bInJump = true;
-	m_JumpMonitor.bFullScreen = bFullScreen;
-	m_JumpMonitor.bMaximized = bMaximized;
-
-	DWORD nStyles = GetWindowLong(ghWnd, GWL_STYLE);
-	if (bFullScreen)
+	
+	// Поскольку кнопки мы перехватываем - нужно предусмотреть
+	// прыжки и для других окон, например окна настроек
+	if (hJump == ghWnd)
 	{
-		// Win8. Не хочет прыгать обратно
-		SetWindowStyle(ghWnd, nStyles & ~WS_MAXIMIZE);
+		// Коррекция (заранее)
+		OnMoving(&rcNewMain);
+
+		m_JumpMonitor.rcNewPos = rcNewMain;
+		m_JumpMonitor.bInJump = true;
+		m_JumpMonitor.bFullScreen = bFullScreen;
+		m_JumpMonitor.bMaximized = bMaximized;
+
+		GetWindowLong(ghWnd, GWL_STYLE);
+		if (bFullScreen)
+		{
+			// Win8. Не хочет прыгать обратно
+			SetWindowStyle(ghWnd, nStyles & ~WS_MAXIMIZE);
+		}
+
+		AutoSizeFont(rcNewMain, CER_MAIN);
+		// Расчитать размер консоли по оптимальному WindowRect
+		CVConGroup::PreReSize(WindowMode, rcNewMain);
 	}
+
 
 	// И перемещение
-	SetWindowPos(ghWnd, NULL, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER/*|SWP_DRAWFRAME*/);
-	//MoveWindow(ghWnd, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, FALSE);
+	SetWindowPos(hJump, NULL, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER/*|SWP_DRAWFRAME*/|SWP_NOCOPYBITS);
+	//MoveWindow(hJump, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, FALSE);
 
-	if (bFullScreen)
+
+	if (hJump == ghWnd)
 	{
-		// вернуть
-		SetWindowStyle(ghWnd, nStyles);
-		// Check it
-		_ASSERTE(WindowMode == wmFullScreen);
-	}
+		if (bFullScreen)
+		{
+			// вернуть
+			SetWindowStyle(ghWnd, nStyles);
+			// Check it
+			_ASSERTE(WindowMode == wmFullScreen);
+		}
 
-	m_JumpMonitor.bInJump = false;
+		m_JumpMonitor.bInJump = false;
+	}
 
 	return false;
 }
@@ -4646,7 +4719,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				}
 
 				//RePaint();
-				mb_IgnoreSizeChange = FALSE;
+				mb_IgnoreSizeChange = false;
 
 				//// Сбросить (заранее), вдруг оно isIconic?
 				//if (mb_MaximizedHideCaption)
@@ -4796,7 +4869,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 						rcMax.right-rcMax.left, rcMax.bottom-rcMax.top,
 						SWP_NOCOPYBITS|SWP_SHOWWINDOW);
 				}
-				mb_IgnoreSizeChange = FALSE;
+				mb_IgnoreSizeChange = false;
 
 				//RePaint();
 				InvalidateAll();
@@ -4812,7 +4885,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			{
 				mb_IgnoreSizeChange = true;
 				ShowWindow((abFirstShow && WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED);
-				mb_IgnoreSizeChange = FALSE;
+				mb_IgnoreSizeChange = false;
 
 				if (gpSetCls->isAdvLogging) LogString("OnSize(false).3");
 			}
@@ -4875,7 +4948,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				//if (mb_MaximizedHideCaption)
 				//	mb_MaximizedHideCaption = FALSE;
 
-				mb_IgnoreSizeChange = FALSE;
+				mb_IgnoreSizeChange = false;
 				//120820 - лишняя перерисовка?
 				//-- RePaint();
 			}
@@ -4916,7 +4989,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			{
 				mb_IgnoreSizeChange = true;
 				ShowWindow((abFirstShow && WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL);
-				mb_IgnoreSizeChange = FALSE;
+				mb_IgnoreSizeChange = false;
 				//WindowMode = inMode; // Запомним!
 
 				if (gpSetCls->isAdvLogging) LogString("OnSize(false).5");
@@ -5849,7 +5922,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		{
 			zoomed = true;
 			// Это может быть, например, в случае смены стилей окна в процессе раскрытия (HideCaption)
-			_ASSERTE(changeFromWindowMode==wmNormal || mb_InCreateWindow);
+			_ASSERTE(changeFromWindowMode==wmNormal || mb_InCreateWindow || iconic);
 		}
 		else if (zoomed && (WindowMode == wmNormal))
 		{
@@ -5934,7 +6007,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	// -- // Если у нас режим скрытия заголовка (при максимизации/фулскрине)
 	// При любой смене. Т.к. мы меняем WM_GETMINMAXINFO - нужно корректировать и размеры :(
 	// Иначе возможны глюки
-	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && !mp_Menu->GetInScMinimize())
+	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && !InMinimizing())
 	{
 		if (gpSet->isQuakeStyle)
 		{
@@ -10791,8 +10864,22 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 		else if (lbSetFocus && gpSet->isQuakeStyle && isQuakeMinimized)
 		{
-			// Обработать клик по кнопке на таскбаре
-			OnMinimizeRestore(sih_ShowMinimize);
+			bool lbSkipQuakeActivation = false;
+			if ((LOWORD(wParam) == WA_ACTIVE) && (HIWORD(wParam) != 0))
+			{
+				// Сюда мы попадаем если "активируется" кнопка на таскбаре, но без разворачивания окна
+				// Пример. Наше окно единственное, жмем кнопку минимизации в тулбаре,
+				// Quake сворачивается, но т.к. других окон нет - фокус "остается" в нашем
+				// окне (в кнопке на таскбаре) и приходит WM_ACTIVATE.
+				// Здесь его нужно игнорировать, иначе Quake нифига не "свернется"
+				lbSkipQuakeActivation = true;
+			}
+
+			if (!lbSkipQuakeActivation)
+			{
+				// Обработать клик по кнопке на таскбаре
+				OnMinimizeRestore(sih_ShowMinimize);
+			}
 		}
 
 		#ifdef _DEBUG
@@ -11411,7 +11498,7 @@ void CConEmuMain::OnHideCaption()
 		//{
 		//	m_FixPosAfterStyle = 0;
 		//}
-		mb_IgnoreSizeChange = FALSE;
+		mb_IgnoreSizeChange = false;
 
 		//if (changeFromWindowMode == wmNotChanging)
 		//{
@@ -11602,6 +11689,145 @@ bool CConEmuMain::InCreateWindow()
 bool CConEmuMain::InQuakeAnimation()
 {
 	return (mn_QuakePercent != 0);
+}
+
+BOOL CConEmuMain::EnumWindowsOverQuake(HWND hWnd, LPARAM lpData)
+{
+	DWORD nStyle = GetWindowLong(hWnd, GWL_STYLE);
+	if (!(nStyle & WS_VISIBLE))
+		return TRUE; // Не видимые окна не интересуют
+	if (nStyle & WS_CHILD)
+		return TRUE; // Внезапно "дочерние" - тоже
+	DWORD nStyleEx = GetWindowLong(hWnd, GWL_EXSTYLE);
+	if ((nStyleEx & WS_EX_TOOLWINDOW) != 0)
+		return TRUE; // Палитры/тулбары - пропускаем
+
+	DWORD nPID;
+	GetWindowThreadProcessId(hWnd, &nPID);
+	if (nPID == GetCurrentProcessId())
+	{
+		// Все, раз дошли до нашего окна - значит всех кто сверху уже перебрали
+		// Но hWnd может быть нашим диалогом, так что прекращаем только на ghWnd
+		return (hWnd != ghWnd);
+	}
+
+	WindowsOverQuake* pOur = (WindowsOverQuake*)lpData;
+	RECT rcWnd = {}, rcOver = {};
+
+	if (GetWindowRect(hWnd, &rcWnd))
+	{
+		if (IntersectRect(&rcOver, &pOur->rcWnd, &rcWnd))
+		{
+			// Окно лежит поверх нашего
+			if (memcmp(&rcOver, pOur, sizeof(rcOver)) == 0)
+			{
+				pOur->iRc = NULLREGION;
+				return FALSE; // Окно полностью скрыто
+			}
+
+			// Начинаются расчеты
+			HRGN hWndRgn = CreateRectRgn(rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
+			pOur->iRc = CombineRgn(pOur->hRgn, pOur->hRgn, hWndRgn, RGN_DIFF);
+			DeleteObject(hWndRgn);
+
+			_ASSERTE(pOur->iRc != ERROR);
+			if (pOur->iRc == NULLREGION)
+			{
+				// Окно полностью скрыто
+				return FALSE;
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+UINT CConEmuMain::IsQuakeVisible()
+{
+	if (!IsWindowVisible(ghWnd))
+		return 0;
+	if (isIconic())
+		return 0;
+
+	RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
+	if (IsRectEmpty(&rcWnd))
+	{
+		_ASSERTE(FALSE && "rcWnd must not be empty");
+		return 0;
+	}
+
+	int nFullSq = (rcWnd.right - rcWnd.left) * (rcWnd.bottom - rcWnd.top);
+	if (nFullSq <= 0)
+	{
+		_ASSERTE(nFullSq > 0);
+		return 0;
+	}
+
+	WindowsOverQuake rcFree = {rcWnd, NULL, SIMPLEREGION};
+	rcFree.hRgn = CreateRectRgn(rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
+	EnumWindows(EnumWindowsOverQuake, (LPARAM)&rcFree);
+
+	UINT  nVisiblePart = 100; // в процентах
+	
+	// Если "Видимая область" окна стала менее VisibleLimit(%) - считаем что окно стало "не видимым"
+	if (rcFree.iRc == NULLREGION)
+	{
+		nVisiblePart = 0;
+	}
+	else
+	{
+		int nLeftSq = 0; //(rcFree.right - rcFree.left) * (rcFree.bottom - rcFree.top);
+		DWORD cbSize = GetRegionData(rcFree.hRgn, 0, NULL);
+		if (cbSize > sizeof(PRGNDATA))
+		{
+			LPRGNDATA lpRgnData = (LPRGNDATA)calloc(cbSize,1);
+			lpRgnData->rdh.dwSize = sizeof(lpRgnData->rdh);
+			cbSize = GetRegionData(rcFree.hRgn, cbSize, lpRgnData);
+			if (cbSize && (lpRgnData->rdh.iType == RDH_RECTANGLES))
+			{
+				LPRECT pRc = (LPRECT)lpRgnData->Buffer;
+				for (DWORD i = 0; i < lpRgnData->rdh.nCount; i++)
+				{
+					nLeftSq += (pRc[i].right - pRc[i].left) * (pRc[i].bottom - pRc[i].top);
+				}
+			}
+			else
+			{
+				_ASSERTE(lpRgnData->rdh.iType == RDH_RECTANGLES);
+			}
+			free(lpRgnData);
+
+			// Видимость в процентах
+			nVisiblePart = (nLeftSq * 100 / nFullSq);
+			if (nVisiblePart > 100)
+			{
+				_ASSERTE(nVisiblePart <= 100);
+				nVisiblePart = 100;
+			}
+			else if (nVisiblePart < 0)
+			{
+				_ASSERTE(nVisiblePart >= 0);
+				nVisiblePart = 0;
+			}
+		}
+		else
+		{
+			_ASSERTE(cbSize > sizeof(PRGNDATA));
+		}
+	}
+
+	DeleteObject(rcFree.hRgn);
+
+	return nVisiblePart;
+}
+
+bool CConEmuMain::InMinimizing()
+{
+	if (mb_InShowMinimized)
+		return true;
+	if (mp_Menu && mp_Menu->GetInScMinimize())
+		return true;
+	return false;
 }
 
 void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= sih_None*/)

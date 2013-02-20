@@ -11,11 +11,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.02.19
+[%] Issue 592: Quake activation/deactivation changes.
+[+] Issue 912: Internal processing of Win+Shift+Left/Right - move ConEmu window to previous/next monitor.
 [%] Issue 939: Update failes if full path to 7za.exe was not specified, but 7za.exe is located in %PATH%.
 [%] Issue 946: Exception in some cases running with "/Log2" switch.
-[%] Issue 946: Blinking then ConEmu starting minimized.
-[+] Issue 912: (the beginning) Internal processing of Win+Shift+Left/Right - move ConEmu window to previous/next monitor.
-
+[%] Issue 946: Blinking when ConEmu starting minimized.
+[%] Update: Failed with proxy requires authentification.
 
 
 2013.02.12

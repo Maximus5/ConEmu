@@ -44,6 +44,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define QUAKEANIMATION_DEF 300
 #define QUAKEANIMATION_MAX 2000
+#define QUAKEVISIBLELIMIT 80 // ≈сли "¬идима€ область" окна стала менее (%) - считаем что окно стало "не видимым"
+#define QUAKEVISIBLETRASH 10 // Ќе "выезжать" а просто "вынести наверх", если видима€ область достаточно больша€
 
 enum FarMacroVersion
 {
