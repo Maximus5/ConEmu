@@ -11,6 +11,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.02.20
+[%] Issue 949: Selection failed with buffer and «Freeze console» checked.
+
+
 2013.02.19
 [%] Issue 592: Quake activation/deactivation changes.
 [+] Issue 912: Internal processing of Win+Shift+Left/Right - move ConEmu window to previous/next monitor.

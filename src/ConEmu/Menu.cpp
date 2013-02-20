@@ -1207,6 +1207,7 @@ HMENU CConEmuMenu::CreateDebugMenuPopup()
 	#ifdef _DEBUG
 	AppendMenu(hDebug, MF_SEPARATOR, 0, NULL);
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_TRAP, _T("Raise exception"));
+	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_ASSERT, _T("Show assertion"));
 	#endif
 	#ifdef TRACK_MEMORY_ALLOCATIONS
 	AppendMenu(hDebug, MF_SEPARATOR, 0, NULL);
@@ -1684,6 +1685,9 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		#ifdef _DEBUG
 		case ID_DEBUG_TRAP:
 			MyAssertTrap();
+			return 0;
+		case ID_DEBUG_ASSERT:
+			Assert(FALSE && "This is test assertion");
 			return 0;
 		#endif
 

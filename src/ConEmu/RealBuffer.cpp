@@ -3646,8 +3646,8 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 		//nTextHeight = this->GetTextHeight();
 		_ASSERTE(dump.pszBlock1[nTextWidth*nTextHeight] == 0); // Должно быть ASCIIZ
 
-		pszDataStart = dump.pszBlock1 + con.m_sbi.srWindow.Top * nTextWidth;
-		nTextHeight = min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1));
+		pszDataStart = dump.pszBlock1; // + con.m_sbi.srWindow.Top * nTextWidth; -- работаем с полным буфером
+		//nTextHeight = min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1));
 	}
 
 	//if (!con.pConChar)
@@ -3740,17 +3740,18 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	}
 
 	// Заполнить данными
-	if ((srSelection_X1 + nSelWidth) > con.nTextWidth)
+	if ((srSelection_X1 + nSelWidth) > nTextWidth)
 	{
-		Assert((srSelection_X1 + nSelWidth) <= con.nTextWidth);
-		nSelWidth = con.nTextWidth - srSelection_X1;
+		Assert((srSelection_X1 + nSelWidth) <= nTextWidth);
+		nSelWidth = nTextWidth - srSelection_X1;
 	}
 
-	if ((srSelection_Y1 + nSelHeight) > con.nTextHeight)
+	if ((srSelection_Y1 + nSelHeight) > nTextHeight)
 	{
-		Assert((srSelection_Y1 + nSelHeight) <= con.nTextHeight);
-		nSelHeight = con.nTextHeight - srSelection_Y1;
+		Assert((srSelection_Y1 + nSelHeight) <= nTextHeight);
+		nSelHeight = nTextHeight - srSelection_Y1;
 	}
+
 
 	nSelHeight--;
 
