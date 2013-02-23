@@ -236,6 +236,18 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 	return lbRc;
 }
 
+// AutoAttach делать нельзя, когда ConEmu запускает процесс обновления
+bool IsAutoAttachAllowed()
+{
+	if (!ghConWnd)
+		return false;
+	if (!IsWindowVisible(ghConWnd))
+		return false;
+	if (IsIconic(ghConWnd))
+		return false;
+	return true;
+}
+
 // Вызывается при запуске сервера: (gbNoCreateProcess && (gbAttachMode || gpSrv->bDebuggerActive))
 int AttachRootProcess()
 {

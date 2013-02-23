@@ -37,11 +37,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <dbghelp.h>
 #include <shobjidl.h>
 #include <propkey.h>
+#include <taskschd.h>
 #else
 #include "../common/DbgHlpGcc.h"
 #endif
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
+//#include "../common/TokenHelper.h"
 #include "Options.h"
 #include "ConEmu.h"
 #include "Inside.h"
@@ -916,8 +918,7 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	HANDLE hToken = NULL, hTokenRest = NULL;
 
 	if (OpenProcessToken(GetCurrentProcess(),
-	                    //TOKEN_ASSIGN_PRIMARY|TOKEN_DUPLICATE|TOKEN_QUERY|TOKEN_ADJUST_DEFAULT,
-	                    TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY,
+	                    TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY | TOKEN_EXECUTE,
 	                    &hToken))
 	{
 		enum WellKnownAuthorities
@@ -969,6 +970,537 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	}
 	else
 	{
+		if (pdwLastError) *pdwLastError = GetLastError();
+	}
+
+	return lbRc;
+}
+
+
+BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
+							 LPDWORD pdwLastError)
+{
+	BOOL lbRc = FALSE;
+	BOOL lbTryStdCreate = FALSE;
+
+	Assert(lpApplicationName==NULL);
+
+	LPCWSTR pszCmdArgs = lpCommandLine;
+	wchar_t szExe[MAX_PATH+1];
+	if (0 != NextArg(&pszCmdArgs, szExe))
+	{
+		DisplayLastError(L"Invalid cmd line. Executable not exists", -1);
+		return 100;
+	}
+
+	// Task не выносит окна созданных задач "наверх"
+	HWND hPrevEmu = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
+	HWND hCreated = NULL;
+	
+
+
+#if !defined(__GNUC__)
+	// Really working method: Run cmd-line via task sheduler
+	// But there is one caveat: Task sheduler may be disable on PC!
+
+	wchar_t szUniqTaskName[128];
+	_wsprintf(szUniqTaskName, SKIPLEN(countof(szUniqTaskName)) L"ConEmu %02u%02u%02u%s starter ParentPID=%u", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), GetCurrentProcessId());
+
+	BSTR bsTaskName = SysAllocString(szUniqTaskName);
+	BSTR bsExecutablePath = SysAllocString(szExe);
+	BSTR bsArgs = SysAllocString(pszCmdArgs ? pszCmdArgs : L"");
+	BSTR bsDir = lpCurrentDirectory ? SysAllocString(lpCurrentDirectory) : NULL;
+	BSTR bsRoot = SysAllocString(L"\\");
+
+	VARIANT vtUsersSID = {VT_BSTR}; vtUsersSID.bstrVal = SysAllocString(L"S-1-5-32-545");
+	VARIANT vtZeroStr = {VT_BSTR}; vtZeroStr.bstrVal = SysAllocString(L"");
+	VARIANT vtEmpty = {VT_EMPTY};
+
+	const IID CLSID_TaskScheduler = {0x0f87369f, 0xa4e5, 0x4cfc, {0xbd, 0x3e, 0x73, 0xe6, 0x15, 0x45, 0x72, 0xdd}};
+	const IID IID_IExecAction     = {0x4c3d624d, 0xfd6b, 0x49a3, {0xb9, 0xb7, 0x09, 0xcb, 0x3c, 0xd3, 0xf0, 0x47}};
+	const IID IID_ITaskService    = {0x2faba4c7, 0x4da9, 0x4013, {0x96, 0x97, 0x20, 0xcc, 0x3f, 0xd4, 0x0f, 0x85}};
+
+	IRegisteredTask *pRegisteredTask = NULL;
+	IAction *pAction = NULL;
+	IExecAction *pExecAction = NULL;
+	IActionCollection *pActionCollection = NULL;
+	ITrigger *pTrigger = NULL;
+	ITriggerCollection *pTriggerCollection = NULL;
+	ITaskDefinition *pTask = NULL;
+	ITaskFolder *pRootFolder = NULL;
+	ITaskService *pService = NULL;
+	HRESULT hr;
+	TASK_STATE taskState;
+	bool bCoInitialized = false;
+	DWORD nTickStart, nDuration;
+	const DWORD nMaxTaskWait = 20000;
+	const DWORD nMaxWindowWait = 20000;
+
+	//  ------------------------------------------------------
+	//  Initialize COM.
+	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"CoInitializeEx failed: 0x%08X", hr);
+		goto wrap;
+	}
+	bCoInitialized = true;
+
+	//  Set general COM security levels.
+	hr = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"CoInitializeSecurity failed: 0x%08X", hr);
+		goto wrap;
+	}
+
+	//  ------------------------------------------------------
+	//  Create an instance of the Task Service. 
+	hr = CoCreateInstance( CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskService, (void**)&pService );  
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"Failed to CoCreate an instance of the TaskService class: 0x%08X", hr);
+		goto wrap;
+	}
+
+	//  Connect to the task service.
+	hr = pService->Connect(vtEmpty, vtEmpty, vtEmpty, vtEmpty);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"ITaskService::Connect failed: 0x%08X", hr);
+		goto wrap;
+	}
+
+	//  ------------------------------------------------------
+	//  Get the pointer to the root task folder.  This folder will hold the
+	//  new task that is registered.
+	hr = pService->GetFolder(bsRoot, &pRootFolder);
+	if( FAILED(hr) )
+	{
+		DisplayLastError(L"Cannot get Root Folder pointer: 0x%08X", hr);
+		goto wrap;
+	}
+
+	//  Check if the same task already exists. If the same task exists, remove it.
+	hr = pRootFolder->DeleteTask(bsTaskName, 0);
+	// We are creating "unique" task name, admitting it can't exists already, so ignore deletion error
+	UNREFERENCED_PARAMETER(hr);
+
+	//  Create the task builder object to create the task.
+	hr = pService->NewTask(0, &pTask);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"Failed to CoCreate an instance of the TaskService class: 0x%08X", hr);
+		goto wrap;
+	}
+
+	SafeRelease(pService);  // COM clean up.  Pointer is no longer used.
+
+	//  ------------------------------------------------------
+	//  Get the trigger collection to insert the registration trigger.
+	hr = pTask->get_Triggers(&pTriggerCollection);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"Cannot get trigger collection: 0x%08X", hr);
+		goto wrap;
+	}
+
+	//  Add the registration trigger to the task.
+	hr = pTriggerCollection->Create( TASK_TRIGGER_REGISTRATION, &pTrigger);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"Cannot add registration trigger to the Task 0x%08X", hr);
+		goto wrap;
+	}
+	SafeRelease(pTriggerCollection);  // COM clean up.  Pointer is no longer used.
+	SafeRelease(pTrigger);
+
+	//  ------------------------------------------------------
+	//  Add an Action to the task.     
+
+	//  Get the task action collection pointer.
+	hr = pTask->get_Actions(&pActionCollection);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"Cannot get Task collection pointer: 0x%08X", hr);
+		goto wrap;
+	}
+
+	//  Create the action, specifying that it is an executable action.
+	hr = pActionCollection->Create(TASK_ACTION_EXEC, &pAction);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"pActionCollection->Create failed: 0x%08X", hr);
+		goto wrap;
+	}
+	SafeRelease(pActionCollection);  // COM clean up.  Pointer is no longer used.
+
+	hr = pAction->QueryInterface(IID_IExecAction, (void**)&pExecAction);
+	if( FAILED(hr) )
+	{
+		DisplayLastError(L"pAction->QueryInterface failed: 0x%08X", hr);
+		goto wrap;
+	}
+	SafeRelease(pAction);
+
+	//  Set the path of the executable to the user supplied executable.
+	hr = pExecAction->put_Path(bsExecutablePath);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"Cannot set path of executable: 0x%08X", hr);
+		goto wrap;
+	}
+
+	hr = pExecAction->put_Arguments(bsArgs);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"Cannot set arguments of executable: 0x%08X", hr);
+		goto wrap;
+	}
+
+	if (bsDir)
+	{
+		hr = pExecAction->put_WorkingDirectory(bsDir);
+		if (FAILED(hr))
+		{
+			DisplayLastError(L"Cannot set working directory of executable: 0x%08X", hr);
+			goto wrap;
+		}
+	}
+
+	//  ------------------------------------------------------
+	//  Save the task in the root folder.
+	//  Using Well Known SID for \\Builtin\Users group
+	hr = pRootFolder->RegisterTaskDefinition(bsTaskName, pTask, TASK_CREATE, vtUsersSID, vtEmpty, TASK_LOGON_GROUP, vtZeroStr, &pRegisteredTask);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"Error saving the Task : 0x%08X", hr);
+		goto wrap;
+	}
+	
+	// Success! Task successfully registered.
+	// Give 20 seconds for the task to start
+	nTickStart = GetTickCount();
+	nDuration = 0;
+	taskState = TASK_STATE_UNKNOWN;
+	while (nDuration <= nMaxTaskWait/*20000*/)
+	{
+		hr = pRegisteredTask->get_State(&taskState);
+		if (taskState == TASK_STATE_RUNNING)
+		{
+			// Task is running
+			break;
+		}
+		Sleep(100);
+		nDuration = (GetTickCount() - nTickStart);
+	}
+	
+	if (taskState != TASK_STATE_RUNNING)
+	{
+		wchar_t* pszErr = lstrmerge(L"Failed to start task in user mode, timeout!\n", lpCommandLine);
+		DisplayLastError(pszErr, hr);
+		free(pszErr);
+	}
+	else
+	{	
+		// OK, считаем что успешно запустились
+		lbRc = TRUE;
+
+		// Success! Program was started.
+		// Give 20 seconds for new window appears and bring it to front
+		LPCWSTR pszExeName = PointToName(szExe);
+		if (lstrcmpi(pszExeName, L"ConEmu.exe") == 0 || lstrcmpi(pszExeName, L"ConEmu64.exe") == 0)
+		{
+			nTickStart = GetTickCount();
+			nDuration = 0;
+			_ASSERTE(hCreated==NULL);
+			hCreated = NULL;
+			
+			while (nDuration <= nMaxWindowWait/*20000*/)
+			{
+				HWND hTop = NULL;
+				while ((hTop = FindWindowEx(NULL, hTop, VirtualConsoleClassMain, NULL)) != NULL)
+				{
+					if (!IsWindowVisible(hTop) || (hTop == hPrevEmu))
+						continue;
+					
+					hCreated = hTop;
+					SetForegroundWindow(hCreated);
+					break;
+				}
+
+				if (hCreated != NULL)
+				{
+					// Window found, activated
+					break;
+				}
+
+				Sleep(100);
+				nDuration = (GetTickCount() - nTickStart);
+			}
+		}
+		// Window activation end
+	}
+
+	//Delete the task when done
+	hr = pRootFolder->DeleteTask(bsTaskName, NULL);
+	if( FAILED(hr) )
+	{
+		DisplayLastError(L"Error deleting the Task : 0x%08X", hr);
+		goto wrap;
+	}
+	// Task successfully deleted
+	
+wrap:
+	// Clean up
+	SysFreeString(bsTaskName);
+	SysFreeString(bsExecutablePath);
+	SysFreeString(bsArgs);
+	if (bsDir) SysFreeString(bsDir);
+	SysFreeString(bsRoot);
+	VariantClear(&vtUsersSID);
+	VariantClear(&vtZeroStr);
+	SafeRelease(pRegisteredTask);
+	SafeRelease(pAction);
+	SafeRelease(pExecAction);
+	SafeRelease(pActionCollection);
+	SafeRelease(pTrigger);
+	SafeRelease(pTriggerCollection);
+	SafeRelease(pTask);
+	SafeRelease(pRootFolder);
+	SafeRelease(pService);
+	// Finalize
+	if (bCoInitialized)
+		CoUninitialize();
+	if (pdwLastError) *pdwLastError = hr;
+	// End of Task-sheduler mode
+#endif
+
+	#if defined(__GNUC__)
+	if (!lbRc)
+	{
+		lbTryStdCreate = TRUE;
+	}
+	#endif
+
+
+#if 0
+	// There is IShellDispatch2::ShellExecute but explorer does not create/connect OutProcess servers...
+
+	LPCWSTR pszDefCmd = cmdNew;
+	wchar_t szExe[MAX_PATH+1];
+	if (0 != NextArg(&pszDefCmd, szExe))
+	{
+		DisplayLastError(L"Invalid cmd line. ConEmu.exe not exists", -1);
+		return 100;
+	}
+
+	OleInitialize(NULL);
+
+	b = FALSE;
+    IShellDispatch2 *pshl;
+	CLSCTX ctx = CLSCTX_INPROC_HANDLER; // CLSCTX_SERVER;
+    HRESULT hr = CoCreateInstance(CLSID_Shell, NULL, ctx, IID_IShellDispatch2, (void**)&pshl);
+    if (SUCCEEDED(hr))
+    {
+    	BSTR bsFile = SysAllocString(szExe);
+    	VARIANT vtArgs; vtArgs.vt = VT_BSTR; vtArgs.bstrVal = SysAllocString(pszDefCmd);
+    	VARIANT vtDir; vtDir.vt = VT_BSTR; vtDir.bstrVal = SysAllocString(gpConEmu->ms_ConEmuExeDir);
+    	VARIANT vtOper; vtOper.vt = VT_BSTR; vtOper.bstrVal = SysAllocString(L"open");
+    	VARIANT vtShow; vtShow.vt = VT_I4; vtShow.lVal = SW_SHOWNORMAL;
+		
+		hr = pshl->ShellExecute(bsFile, vtArgs, vtDir, vtOper, vtShow);
+		b = SUCCEEDED(hr);
+
+		VariantClear(&vtArgs);
+		VariantClear(&vtDir);
+		VariantClear(&vtOper);
+		SysFreeString(bsFile);
+
+    	pshl->Release();
+	}
+#endif
+
+
+#if 0
+	// CreateRestrictedToken method - fails
+	// This starts GUI, but it fails when trying to start console server - weird error 0xC0000142
+
+	HANDLE hToken = NULL, hTokenRest = NULL;
+
+	if (OpenProcessToken(GetCurrentProcess(),
+	                    TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_EXECUTE,
+	                    &hToken))
+	{
+		enum WellKnownAuthorities
+		{
+			NullAuthority = 0, WorldAuthority, LocalAuthority, CreatorAuthority,
+			NonUniqueAuthority, NtAuthority, MandatoryLabelAuthority = 16
+		};
+		SID *pAdmSid = (SID*)calloc(sizeof(SID)+sizeof(DWORD)*2,1);
+		pAdmSid->Revision = SID_REVISION;
+		pAdmSid->SubAuthorityCount = 2;
+		pAdmSid->IdentifierAuthority.Value[5] = NtAuthority;
+		pAdmSid->SubAuthority[0] = SECURITY_BUILTIN_DOMAIN_RID;
+		pAdmSid->SubAuthority[1] = DOMAIN_ALIAS_RID_ADMINS;
+		//TOKEN_GROUPS grp = {1, {pAdmSid, SE_GROUP_USE_FOR_DENY_ONLY}};
+		SID_AND_ATTRIBUTES sidsToDisable[] =
+		{
+			{pAdmSid, SE_GROUP_USE_FOR_DENY_ONLY}
+		};
+		
+		#ifdef __GNUC__
+		//HMODULE hAdvApi = GetModuleHandle(L"AdvApi32.dll");
+		//CreateRestrictedToken_t CreateRestrictedToken = (CreateRestrictedToken_t)GetProcAddress(hAdvApi, "CreateRestrictedToken");
+		#endif
+
+		if (!CreateRestrictedToken(hToken, 0,
+		                         countof(sidsToDisable), sidsToDisable,
+		                         0, NULL,
+								 0, NULL,
+								 &hTokenRest))
+		{
+			if (pdwLastError) *pdwLastError = GetLastError();
+		}
+		//if (!DuplicateToken(hToken, SecurityImpersonation, &hTokenRest))
+		//{
+		//	if (pdwLastError) *pdwLastError = GetLastError();
+		//}
+		//else if (!AdjustTokenGroups(hTokenRest, TRUE, &grp, 0, NULL, NULL))
+		//{
+		//	if (pdwLastError) *pdwLastError = GetLastError();
+		//}
+		else
+		{
+			if (CreateProcessAsUserW(hTokenRest, lpApplicationName, lpCommandLine,
+							 lpProcessAttributes, lpThreadAttributes,
+							 bInheritHandles, dwCreationFlags, lpEnvironment,
+							 lpCurrentDirectory, lpStartupInfo, lpProcessInformation))
+			{
+				lbRc = TRUE;
+			}
+			else
+			{
+				if (pdwLastError) *pdwLastError = GetLastError();
+			}
+		}
+
+		if (hTokenRest) CloseHandle(hTokenRest);
+
+		free(pAdmSid);
+		CloseHandle(hToken);
+	}
+	else
+	{
+		if (pdwLastError) *pdwLastError = GetLastError();
+	}
+
+	// End of CreateRestrictedToken method
+#endif
+
+
+#if 0
+	// Trying to use Token from Shell (explorer/desktop)
+	// Fails. Create process returns error.
+
+	// GetDesktopWindow() - это не то, оно к CSRSS принадлежит (Win8 по крайней мере)
+	HWND hDesktop = GetShellWindow();
+	if (!hDesktop)
+	{
+		if (pdwLastError) *pdwLastError = GetLastError();
+		DisplayLastError(L"Failed to find desktop window!");
+		return FALSE;
+	}
+
+	DWORD nDesktopPID = 0; GetWindowThreadProcessId(hDesktop, &nDesktopPID);
+	HANDLE hProcess = OpenProcess(MAXIMUM_ALLOWED, FALSE, nDesktopPID);
+	if (!hProcess)
+	{
+		DWORD nErrCode = GetLastError();
+		if (pdwLastError) *pdwLastError = nErrCode;
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Failed to open handle for desktop process!\nDesktopWND=x%08X, PID=%u", (DWORD)hDesktop, nDesktopPID);
+		DisplayLastError(szInfo, nErrCode);
+		return FALSE;
+	}
+
+	HANDLE hTokenDesktop = NULL;
+	if (OpenProcessToken(hProcess,
+	                    TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY | TOKEN_DUPLICATE | TOKEN_IMPERSONATE |
+						TOKEN_ASSIGN_PRIMARY | TOKEN_EXECUTE | TOKEN_ADJUST_SESSIONID | TOKEN_READ | TOKEN_WRITE,
+	                    &hTokenDesktop))
+	{
+		//CAdjustProcessToken Adjust;
+		//Adjust.Enable(2, SE_ASSIGNPRIMARYTOKEN_NAME, SE_INCREASE_QUOTA_NAME);
+
+		//SetLastError(0);
+		//BOOL bImpRc = ImpersonateLoggedOnUser(hTokenDesktop);
+		//DWORD nImpErr = GetLastError();
+
+		//if (!bImpRc)
+		//{
+		//	if (pdwLastError) *pdwLastError = nImpErr;
+		//	DisplayLastError(L"Failed to impersonate to desktop logon!", nImpErr);
+		//}
+		//else
+		{
+			lpStartupInfo->lpDesktop = L"winsta0\\default";
+
+			#ifdef _DEBUG
+			DWORD cbRet;
+			TOKEN_TYPE tt;
+			TOKEN_SOURCE ts;
+			DWORD nDeskSessionId, nOurSessionId;
+			GetTokenInformation(hTokenDesktop, TokenType, &tt, sizeof(tt), &cbRet);
+			GetTokenInformation(hTokenDesktop, TokenSource, &ts, sizeof(ts), &cbRet);
+			GetTokenInformation(hTokenDesktop, TokenSessionId, &nDeskSessionId, sizeof(nDeskSessionId), &cbRet);
+			#endif
+
+			lbRc = 
+				CreateProcessWithTokenW(hTokenDesktop, LOGON_WITH_PROFILE,
+				//CreateProcessAsUserW(hTokenDesktop,
+				//CreateProcessW(
+					lpApplicationName, lpCommandLine,
+					//lpProcessAttributes, lpThreadAttributes, bInheritHandles, 
+					dwCreationFlags, lpEnvironment,
+					lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+
+			RevertToSelf();
+
+			if (!lbRc)
+			{
+				DWORD nErrCode = GetLastError();
+				if (pdwLastError) *pdwLastError = nErrCode;
+				DisplayLastError(L"Failed to impersonate to desktop logon!", nErrCode);
+			}
+			else
+			{
+				if (pdwLastError) *pdwLastError = 0;
+			}
+
+			
+		}
+
+		CloseHandle(hTokenDesktop);
+	}
+	else
+	{
+		if (pdwLastError) *pdwLastError = GetLastError();
+	}
+
+	CloseHandle(hProcess);
+#endif
+
+	// If all methods fails - try to execute "as is"?
+	if (lbTryStdCreate)
+	{
+		lbRc = CreateProcess(lpApplicationName, lpCommandLine,
+							 lpProcessAttributes, lpThreadAttributes,
+							 bInheritHandles, dwCreationFlags, lpEnvironment,
+							 lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 		if (pdwLastError) *pdwLastError = GetLastError();
 	}
 
@@ -2606,15 +3138,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return 100;
 					}
 
-					#if 0
-					LPCWSTR pszDefCmd = cmdNew;
-					wchar_t szExe[MAX_PATH+1];
-					if (0 != NextArg(&pszDefCmd, szExe))
-					{
-						DisplayLastError(L"Invalid cmd line. ConEmu.exe not exists", -1);
-						return 100;
-					}
-					#endif
 
 					// Information
 					#ifdef _DEBUG
@@ -2633,36 +3156,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					BOOL b;
 					DWORD nErr = 0;
 					
-					b = CreateProcessRestricted(NULL, cmdNew, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+
+					b = CreateProcessDemoted(NULL, cmdNew, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
 
-
-					// -- Странно, IShellDispatch2::ShellExecute запускает с правами текущего процесса, а не от Explorer.exe
-					#if 0
-					OleInitialize(NULL);
-
-					BOOL b = FALSE;
-				    IShellDispatch2 *pshl;
-				    HRESULT hr = CoCreateInstance(CLSID_Shell, NULL, CLSCTX_SERVER, IID_IShellDispatch2, (void**)&pshl);
-				    if (SUCCEEDED(hr))
-				    {
-				    	BSTR bsFile = SysAllocString(szExe);
-				    	VARIANT vtArgs; vtArgs.vt = VT_BSTR; vtArgs.bstrVal = SysAllocString(pszDefCmd);
-				    	VARIANT vtDir; vtDir.vt = VT_BSTR; vtDir.bstrVal = SysAllocString(gpConEmu->ms_ConEmuExeDir);
-				    	VARIANT vtOper; vtOper.vt = VT_BSTR; vtOper.bstrVal = SysAllocString(L"open");
-				    	VARIANT vtShow; vtShow.vt = VT_I4; vtShow.lVal = SW_SHOWNORMAL;
-						
-						hr = pshl->ShellExecute(bsFile, vtArgs, vtDir, vtOper, vtShow);
-						b = SUCCEEDED(hr);
-
-						VariantClear(&vtArgs);
-						VariantClear(&vtDir);
-						VariantClear(&vtOper);
-						SysFreeString(bsFile);
-
-				    	pshl->Release();
-					}
-					#endif
 
 					if (b)
 					{
@@ -2783,7 +3280,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 										// перебрать все ConEmu, может кто-то уже подцеплен?
 										HWND hEmu = NULL;
 
-										while((hEmu = FindWindowEx(NULL, hEmu, VirtualConsoleClassMain, NULL)) != NULL)
+										while ((hEmu = FindWindowEx(NULL, hEmu, VirtualConsoleClassMain, NULL)) != NULL)
 										{
 											if (hCon == (HWND)GetWindowLongPtr(hEmu, GWLP_USERDATA))
 											{
@@ -3199,6 +3696,28 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 
+	// Update package was dropped on ConEmu icon?
+	if (cmdNew && *cmdNew && (params == (uint)-1))
+	{
+		wchar_t szPath[MAX_PATH+1];
+		LPCWSTR pszCmdLine = cmdNew;
+		if (0 == NextArg(&pszCmdLine, szPath))
+		{
+			if (CConEmuUpdate::IsUpdatePackage(szPath))
+			{
+				// Чтобы при запуске НОВОЙ версии опять не пошло обновление - грохнуть ком-строку
+				SafeFree(gpConEmu->mpsz_ConEmuArgs);
+
+				// Создание скрипта обновления, запуск будет выполнен в деструкторе gpUpd
+				CConEmuUpdate::LocalUpdate(szPath);
+
+				// Перейти к завершению процесса и запуску обновления
+				goto done;
+			}
+		}
+	}
+
+
 //------------------------------------------------------------------------
 ///| Continue normal work mode  |/////////////////////////////////////////
 //------------------------------------------------------------------------
@@ -3528,6 +4047,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 	MessageLoop();
+
+done:
 	ShutdownGuiStep(L"MessageLoop terminated");
 //------------------------------------------------------------------------
 ///| Deinitialization |///////////////////////////////////////////////////

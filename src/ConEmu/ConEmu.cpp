@@ -7652,7 +7652,11 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 	// Win+Esc by default
 	else if ((wParam == HOTKEY_SETFOCUSSWITCH_ID) || (wParam == HOTKEY_SETFOCUSGUI_ID) || (wParam == HOTKEY_SETFOCUSCHILD_ID))
 	{
-		OnSwitchGuiFocus((int)LOWORD(wParam));
+		SwitchGuiFocusOp FocusOp = 
+			(wParam == HOTKEY_SETFOCUSSWITCH_ID) ? sgf_FocusSwitch :
+			(wParam == HOTKEY_SETFOCUSGUI_ID) ? sgf_FocusGui :
+			(wParam == HOTKEY_SETFOCUSCHILD_ID) ? sgf_FocusChild : sgf_None;
+		OnSwitchGuiFocus(FocusOp);
 	}
 	else if (wParam == HOTKEY_CHILDSYSMENU_ID)
 	{
@@ -8378,8 +8382,11 @@ void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
 // »наче - отображаетс€ максимальное значение процентов из всех консолей
 void CConEmuMain::UpdateProgress()
 {
-	if (!this)
+	if (!this || (ghWnd == NULL))
+	{
+		_ASSERTE(this && ghWnd);
 		return;
+	}
 
 	if (GetCurrentThreadId() != mn_MainThreadId)
 	{
@@ -12276,16 +12283,22 @@ void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 	}
 }
 
-void CConEmuMain::OnSwitchGuiFocus(int DescrID)
+void CConEmuMain::OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp)
 {
+	if (!((FocusOp > sgf_None) && (FocusOp < sgf_Last)))
+	{
+		Assert((FocusOp > sgf_None) && (FocusOp < sgf_Last));
+		return;
+	}
+
 	CVConGuard VCon;
 	//HWND hSet = ghWnd;
 
 	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
 	{
-		bool bSetChild = (DescrID == vkSetFocusChild);
+		bool bSetChild = (FocusOp == sgf_FocusChild);
 
-		if (DescrID == vkSetFocusSwitch)
+		if (FocusOp == sgf_FocusSwitch)
 		{
 			DWORD nFocusPID = 0;
 			HWND hGet = GetFocus();
@@ -12305,6 +12318,7 @@ void CConEmuMain::OnSwitchGuiFocus(int DescrID)
 		{
 			// ¬ернуть фокус в дочернее приложение
 			VCon->RCon()->GuiWndFocusRestore();
+			return;
 		}
 	}
 
@@ -14917,14 +14931,18 @@ void CConEmuMain::RequestExitUpdate()
 		return;
 	}
 
-	if (isMainThread())
+	// May be null, if update package was dropped on ConEmu icon
+	if (ghWnd)
 	{
-		UpdateProgress();
-		PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
-	}
-	else
-	{
-		PostMessage(ghWnd, mn_MsgRequestUpdate, 2, 0);
+		if (isMainThread())
+		{
+			UpdateProgress();
+			PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+		}
+		else
+		{
+			PostMessage(ghWnd, mn_MsgRequestUpdate, 2, 0);
+		}
 	}
 }
 

@@ -100,6 +100,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMU_HOOKS L"ConEmuHooks" // when this is "OFF" - don't set hooks from "ConEmuHk.dll"
 #define ENV_CONEMU_HOOKS_ENABLED L"Enabled" // Informational
 #define ENV_CONEMU_HOOKS_DISABLED L"OFF" // This is only significant value
+#define ENV_CONEMU_INUPDATE L"ConEmuInUpdate" // This is set to "YES" during AutoUpdate script execution
+#define ENV_CONEMU_INUPDATE_YES L"YES" // This is set to "YES" during AutoUpdate script execution
 
 
 

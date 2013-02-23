@@ -296,6 +296,10 @@ CConEmuUpdate::~CConEmuUpdate()
 		// Обязательно двойное окавычивание. cmd.exe отбрасывает кавычки,
 		// и при наличии разделителей (пробелы, скобки,...) получаем проблемы
 		_wsprintf(pszParm, SKIPLEN(cchParmMax) L"/c \"\"%s\"\"", mpsz_PendingBatchFile);
+
+		// Наверное на Elevated процесс это не распространится, но для четкости - взведем флажок
+		SetEnvironmentVariable(ENV_CONEMU_INUPDATE, ENV_CONEMU_INUPDATE_YES);
+
 		// ghWnd уже закрыт
 		INT_PTR nShellRc = (INT_PTR)ShellExecute(NULL, bNeedRunElevation ? L"runas" : L"open", pszCmd, pszParm, NULL, SW_SHOWMINIMIZED);
 		if (nShellRc <= 32)
@@ -446,7 +450,11 @@ bool CConEmuUpdate::ShowConfirmation()
 {
 	bool lbConfirm = false;
 
-	gpConEmu->UpdateProgress();
+	// May be null, if update package was dropped on ConEmu icon
+	if (ghWnd)
+	{
+		gpConEmu->UpdateProgress();
+	}
 
 	if (ms_LastErrorInfo && *ms_LastErrorInfo)
 	{
@@ -474,7 +482,11 @@ bool CConEmuUpdate::ShowConfirmation()
 	if (!lbConfirm)
 	{
 		mb_RequestTerminate = true;
-		gpConEmu->UpdateProgress();
+		// May be null, if update package was dropped on ConEmu icon
+		if (ghWnd)
+		{
+			gpConEmu->UpdateProgress();
+		}
 	}
 
 	return lbConfirm;
@@ -497,7 +509,11 @@ DWORD CConEmuUpdate::CheckThreadProc(LPVOID lpParameter)
 	}
 	
 	pUpdate->mb_InCheckProcedure = FALSE;
-	gpConEmu->UpdateProgress();
+	// May be null, if update package was dropped on ConEmu icon
+	if (ghWnd)
+	{
+		gpConEmu->UpdateProgress();
+	}
 	return nRc;
 }
 
@@ -538,6 +554,53 @@ bool CConEmuUpdate::CanUpdateInstallation()
 	return true;
 }
 #endif
+
+// static
+bool CConEmuUpdate::LocalUpdate(LPCWSTR asDownloadedPackage)
+{
+	bool bOk = false;
+
+	if (!gpUpd)
+		gpUpd = new CConEmuUpdate;
+
+	if (gpUpd)
+		bOk = gpUpd->StartLocalUpdate(asDownloadedPackage);
+
+	return bOk;
+}
+
+// static
+bool CConEmuUpdate::IsUpdatePackage(LPCWSTR asFilePath)
+{
+	bool bIsUpdatePackage = false;
+
+	if (asFilePath && *asFilePath && lstrlen(asFilePath) <= MAX_PATH)
+	{
+		wchar_t szName[MAX_PATH+1];
+		LPCWSTR pszName = PointToName(asFilePath);
+		if (pszName && *pszName)
+		{
+			lstrcpyn(szName, pszName, countof(szName));
+			CharLowerBuff(szName, lstrlen(szName));
+			LPCWSTR pszExt = PointToExt(szName);
+			if (pszExt)
+			{
+				if ((wcsncmp(szName, L"conemupack.", 11) == 0)
+					&& (wcscmp(pszExt, L".7z") == 0))
+				{
+					bIsUpdatePackage = true;
+				}
+				else if ((wcsncmp(szName, L"conemusetup.", 12) == 0)
+					&& (wcscmp(pszExt, L".exe") == 0))
+				{
+					bIsUpdatePackage = true;
+				}
+			}
+		}
+	}
+
+	return bIsUpdatePackage;
+}
 
 bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 {
@@ -877,7 +940,11 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 	mn_InternetContentReady = mn_InternetContentLen = 0;
 	m_UpdateStep = us_Downloading;
-	gpConEmu->UpdateProgress();
+	// May be null, if update package was dropped on ConEmu icon
+	if (ghWnd)
+	{
+		gpConEmu->UpdateProgress();
+	}
 
 	pszFileName = wcsrchr(pszSource, lbSourceLocal ? L'\\' : L'/');
 	if (!pszFileName)
@@ -1036,6 +1103,9 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	
 	WRITE_BATCH_A("@echo off\r\n");
 
+	// "set ConEmuInUpdate=YES"
+	WRITE_BATCH_W(L"\r\nset " ENV_CONEMU_INUPDATE L"=" ENV_CONEMU_INUPDATE_YES L"\r\n");
+
 	WRITE_BATCH_A("cd /d \"");
 	WRITE_BATCH_W(gpConEmu->ms_ConEmuExeDir);
 	WRITE_BATCH_A("\\\"\r\necho Current folder\r\ncd\r\necho .\r\n\r\necho Starting update...\r\n");
@@ -1132,6 +1202,9 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 		WRITE_BATCH_A("\r\n");
 	}
 
+	// Сброс переменной окружения: "set ConEmuInUpdate="
+	WRITE_BATCH_W(L"\r\nset " ENV_CONEMU_INUPDATE L"=\r\n");
+
 	// Перезапуск ConEmu
 	WRITE_BATCH_A("\r\necho Starting ConEmu...\r\nstart \"ConEmu\" \"");
 	WRITE_BATCH_W(gpConEmu->ms_ConEmuExe);
@@ -1162,8 +1235,9 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 		WRITE_BATCH_A("\"\r\n");
 	}
 
-	// Грохнуть сам батч
-	WRITE_BATCH_A("del \"%~0\"\r\n");
+	// Грохнуть сам батч и позвать "exit" чтобы в консоли
+	// не появлялось "Batch not found" при попытке выполнить следующую строку файла
+	WRITE_BATCH_A("del \"%~0\" & exit\r\n");
 
 	//// Для отладки
 	//WRITE_BATCH_A("\r\npause\r\n");
@@ -1724,7 +1798,12 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 		}
 
 		mn_InternetContentReady += nRead;
-		gpConEmu->UpdateProgress();
+
+		// May be null, if update package was dropped on ConEmu icon
+		if (ghWnd)
+		{
+			gpConEmu->UpdateProgress();
+		}
 	}
 	
 	// Succeeded

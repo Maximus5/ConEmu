@@ -330,6 +330,8 @@ void DisableAutoConfirmExit(BOOL abFromFarPlugin=FALSE);
 
 int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn);
 
+bool IsAutoAttachAllowed();
+
 //int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui);
 
 #ifdef _DEBUG

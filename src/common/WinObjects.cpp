@@ -229,6 +229,8 @@ BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 	if (!asFilePath || !*asFilePath)
 		return FALSE;
 
+	_ASSERTE(wcschr(asFilePath, L'\t')==NULL);
+
 	WIN32_FIND_DATAW fnd = {0};
 	HANDLE hFind = FindFirstFile(asFilePath, &fnd);
 
@@ -3903,7 +3905,7 @@ void FindComspec(ConEmuComspec* pOpt)
 		wchar_t szPath[MAX_PATH+1];
 
 		// Если tcc.exe положили в папку с ConEmuC.exe берем его?
-		DWORD nExpand = ExpandEnvironmentStrings(L"%ConEmuBaseDir%\tcc.exe", szPath, countof(szPath));
+		DWORD nExpand = ExpandEnvironmentStrings(L"%ConEmuBaseDir%\\tcc.exe", szPath, countof(szPath));
 		if (nExpand && (nExpand < countof(szPath)))
 		{
 			if (FileExists(szPath))

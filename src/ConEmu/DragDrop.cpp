@@ -1172,14 +1172,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		_ASSERTE(!mb_IsUpdatePackage || mpsz_UpdatePackage);
 		if (mb_IsUpdatePackage && mpsz_UpdatePackage)
 		{
-			if (!gpUpd)
-				gpUpd = new CConEmuUpdate;
-
-			if (gpUpd)
-			{
-				gpUpd->StartLocalUpdate(mpsz_UpdatePackage);
-				return S_OK;
-			}
+			CConEmuUpdate::LocalUpdate(mpsz_UpdatePackage);
+			return S_OK;
 		}
 		return S_FALSE;
 	}

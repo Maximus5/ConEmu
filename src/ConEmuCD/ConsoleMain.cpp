@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
 //  #define SHOW_COMSPEC_STARTED_MSGBOX
-//	#define SHOW_SERVER_STARTED_MSGBOX
+	#define SHOW_SERVER_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
 	#define SHOW_STARTED_PRINT_LITE
@@ -1661,6 +1661,7 @@ wrap:
 	        && ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE
 					&& iRc!=CERR_UNICODE_CHK_FAILED && iRc!=CERR_UNICODE_CHK_OKAY
 					&& iRc!=CERR_GUIMACRO_SUCCEEDED && iRc!=CERR_GUIMACRO_FAILED
+					&& iRc!=CERR_AUTOATTACH_NOT_ALLOWED
 					&& !(gnRunMode!=RM_SERVER && iRc==CERR_CREATEPROCESS))
 				|| gbAlwaysConfirmExit)
 	  )
@@ -3300,6 +3301,16 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 			//ConEmu autorun (c) Maximus5
 			//Starting "%ConEmuPath%" in "Attach" mode (NewWnd=%FORCE_NEW_WND%)
+
+			if (!IsAutoAttachAllowed())
+			{
+				if (ghConWnd && IsWindowVisible(ghConWnd))
+				{
+					_printf("AutoAttach was requested, but skipped\n");
+				}
+				//_ASSERTE(FALSE && "AutoAttach was called while Update process is in progress?");
+				return CERR_AUTOATTACH_NOT_ALLOWED;
+			}
 		}
 		else if (wcsncmp(szArg, L"/GUIATTACH=", 11)==0)
 		{

@@ -437,7 +437,7 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128]) const
 	wchar_t szName[32];
 	szFull[0] = 0;
 
-	DWORD VkMod = 0;
+	DWORD lVkMod = 0;
 	
 	switch (HkType)
 	{
@@ -445,32 +445,32 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128]) const
 	case chk_Local:
 	case chk_User:
 	case chk_Modifier2:
-		VkMod = VkMod;
+		lVkMod = VkMod;
 		break;
 	case chk_Macro:
-		VkMod = VkMod;
+		lVkMod = VkMod;
 		break;
 	case chk_Modifier:
-		VkMod = VkMod;
+		lVkMod = VkMod;
 		break;
 	case chk_NumHost:
 		_ASSERTE((VkMod & CEHOTKEY_MODMASK) == CEHOTKEY_NUMHOSTKEY);
-		VkMod = (VkMod & 0xFF) | (gpSet->HostkeyNumberModifier() << 8);
+		lVkMod = (VkMod & 0xFF) | (gpSet->HostkeyNumberModifier() << 8);
 		break;
 	case chk_ArrHost:
 		_ASSERTE((VkMod & CEHOTKEY_MODMASK) == CEHOTKEY_ARRHOSTKEY);
-		VkMod = (VkMod & 0xFF) | (gpSet->HostkeyArrowModifier() << 8);
+		lVkMod = (VkMod & 0xFF) | (gpSet->HostkeyArrowModifier() << 8);
 		break;
 	case chk_System:
-		VkMod = VkMod;
+		lVkMod = VkMod;
 		break;
 	default:
 		// Неизвестный тип!
 		_ASSERTE(HkType == chk_User);
-		VkMod = 0;
+		lVkMod = 0;
 	}
 
-	if (GetHotkey(VkMod) == 0)
+	if (GetHotkey(lVkMod) == 0)
 	{
 		szFull[0] = 0; // Поле "Кнопка" оставляем пустым
 	}
@@ -478,7 +478,7 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128]) const
 	{
 		for (int k = 1; k <= 3; k++)
 		{
-			DWORD vk = (HkType == chk_Modifier) ? VkMod : GetModifier(VkMod, k);
+			DWORD vk = (HkType == chk_Modifier) ? lVkMod : GetModifier(lVkMod, k);
 			if (vk)
 			{
 				GetVkKeyName(vk, szName);
@@ -492,7 +492,7 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128]) const
 	if (HkType != chk_Modifier2)
 	{
 		szName[0] = 0;
-		GetVkKeyName(GetHotkey(VkMod), szName);
+		GetVkKeyName(GetHotkey(lVkMod), szName);
 		
 		if (szName[0])
 		{

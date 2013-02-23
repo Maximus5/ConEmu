@@ -11,6 +11,15 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.02.23
+[%] Regression: Hotkey names not displayed on «Keys & Macro» page.
+[%] Some focus-switch hotkeys was not working.
+[+] Switch "/demote" for ConEmu.exe allows to run commands de-elevated via Task Sheduler.
+[%] AutoUpdate fixes.
+[%] Don't execute «ConEmu autorun» when console window is minimized (AutoUpdate issue).
+[%] «Duplicate root» fails sometimes with error code 0xC0000148.
+    
+
 2013.02.20
 [%] Issue 949: Selection failed with buffer and «Freeze console» checked.
 

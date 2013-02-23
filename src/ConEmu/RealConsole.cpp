@@ -7474,7 +7474,8 @@ void CRealConsole::OnDeactivate(int nNewNum)
 	// Чтобы все в одном месте было
 	OnGuiFocused(FALSE);
 
-	if (hFore == ghWnd)
+	if ((hFore == ghWnd) // фокус был в ConEmu
+		|| (hGuiWnd && (hFore == hGuiWnd))) // или в дочернем приложении
 	{
 		gpConEmu->setFocus();
 	}
@@ -8026,7 +8027,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg/* = false*/, LPCWSTR asAddArgs /*
 				pIn->Duplicate.nAID = pRCon->GetMonitorThreadID();
 				pIn->Duplicate.bRunAs = bRunAsAdmin;
 				pIn->Duplicate.nWidth = pRCon->mp_RBuf->TextWidth();
-				pIn->Duplicate.nHeight = pRCon->mp_RBuf->TextWidth();
+				pIn->Duplicate.nHeight = pRCon->mp_RBuf->TextHeight();
 				pIn->Duplicate.nBufferHeight = pRCon->mp_RBuf->GetBufferHeight();
 
 				BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;

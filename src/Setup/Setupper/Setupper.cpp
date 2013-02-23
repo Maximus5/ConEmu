@@ -449,13 +449,15 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	if (!gbExtractOnly)
 	{
 		wchar_t szInstallPath[MAX_PATH+32];
+		bool bInstalled;
 		HKEY hk;
 	
 		lstrcpyn(gsMessage, L"Choose version to install", countof(gsMessage));
 		
-			szInstallPath[0] = 0;
-			struct {HKEY hk; LPCWSTR path; LPCWSTR name;}
+			szInstallPath[0] = 0; bInstalled = false;
+			struct {HKEY hk; LPCWSTR path; LPCWSTR name; bool our;}
 				Keys[] = {
+					{HKEY_LOCAL_MACHINE,L"SOFTWARE\\ConEmu",L"InstallDir",true},
 					{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far Manager",L"InstallDir"},
 					{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far2",L"InstallDir"},
 					{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far",L"InstallDir"},
@@ -468,9 +470,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 					wchar_t szPath[MAX_PATH+1] = {}; DWORD cbSize = sizeof(szPath)-2;
 					LONG lRc = RegQueryValueEx(hk, Keys[s].name, NULL, NULL, (LPBYTE)szPath, &cbSize);
 					RegCloseKey(hk);
-					if (!lRc)
+					if (!lRc && *szPath)
 					{
+						bInstalled = Keys[s].our;
 						lstrcpy(szInstallPath, szPath);
+						cbSize = lstrlen(szInstallPath);
+						if (szInstallPath[cbSize-1] == L'\\') szInstallPath[cbSize-1] = 0;
 						break;
 					}
 				}
@@ -478,19 +483,19 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 			if (szInstallPath[0] == 0)
 			{
 				GetEnvironmentVariable(L"ProgramFiles", szInstallPath, MAX_PATH);
-				wsprintf(gsVer86, L"%s x86\nDefault installation folder is\n%s\\ConEmu", CONEMUVERL, szInstallPath);
+				int nLen = lstrlen(szInstallPath);
+				lstrcat(szInstallPath, (nLen > 0 && szInstallPath[nLen-1] != L'\\') ? L"\\ConEmu" : L"ConEmu");
 			}
-			else
-			{
-				wsprintf(gsVer86, L"%s x86\nCurrent installation folder is\n%s", CONEMUVERL, szInstallPath);
-			}
+			wsprintf(gsVer86, L"%s x86\n%s installation folder is\n%s", CONEMUVERL, bInstalled ? L"Current" : L"Default", szInstallPath);
+
 			
 		if (isWin64)
 		{
 			
-				szInstallPath[0] = 0;
-				struct {HKEY hk; LPCWSTR path; LPCWSTR name;}
+				szInstallPath[0] = 0; bInstalled = false;
+				struct {HKEY hk; LPCWSTR path; LPCWSTR name; bool our;}
 					Keys[] = {
+						{HKEY_LOCAL_MACHINE,L"SOFTWARE\\ConEmu",L"InstallDir_x64",true},
 						{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far Manager",L"InstallDir_x64"},
 						{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far2",L"InstallDir_x64"},
 						{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far",L"InstallDir_x64"},
@@ -502,22 +507,23 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 						wchar_t szPath[MAX_PATH+1] = {}; DWORD cbSize = sizeof(szPath)-2;
 						LONG lRc = RegQueryValueEx(hk, Keys[s].name, NULL, NULL, (LPBYTE)szPath, &cbSize);
 						RegCloseKey(hk);
-						if (!lRc)
+						if (!lRc && *szPath)
 						{
+							bInstalled = Keys[s].our;
 							lstrcpy(szInstallPath, szPath);
+							cbSize = lstrlen(szInstallPath);
+							if (szInstallPath[cbSize-1] == L'\\') szInstallPath[cbSize-1] = 0;
 							break;
 						}
 					}
 				}
 				if (szInstallPath[0] == 0)
 				{
-					GetEnvironmentVariable(L"ProgramW6432", szInstallPath, MAX_PATH);	
-					wsprintf(gsVer64, L"%s x64\nDefault installation folder is\n%s\\ConEmu", CONEMUVERL, szInstallPath);
+					GetEnvironmentVariable(L"ProgramW6432", szInstallPath, MAX_PATH);
+					int nLen = lstrlen(szInstallPath);
+					lstrcat(szInstallPath, (nLen > 0 && szInstallPath[nLen-1] != L'\\') ? L"\\ConEmu" : L"ConEmu");
 				}
-				else
-				{
-					wsprintf(gsVer64, L"%s x64\nCurrent installation folder is\n%s", CONEMUVERL, szInstallPath);
-				}
+				wsprintf(gsVer64, L"%s x64\n%s installation folder is\n%s", CONEMUVERL, bInstalled ? L"Current" : L"Default", szInstallPath);
 
 			wsprintf(gsFull, L"%s\n\nPress `Yes` to install x64 version\nPress `No` to install x86 version", gsMessage);
 		}

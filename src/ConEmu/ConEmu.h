@@ -740,7 +740,7 @@ class CConEmuMain :
 		void OnAltF9(BOOL abPosted=FALSE);
 		void OnMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
 		void OnForcedFullScreen(bool bSet = true);
-		void OnSwitchGuiFocus(int DescrID);
+		void OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp);
 		void OnAlwaysOnTop();
 		void OnAlwaysShowScrollbar(bool abSync = true);
 		void OnBufferHeight();

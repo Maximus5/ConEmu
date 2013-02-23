@@ -300,6 +300,8 @@ struct SettingsStorage
 #define IsWindows7 ((gOSVer.dwMajorVersion > 6) || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion > 0))
 #define IsWindows8 ((gOSVer.dwMajorVersion > 6) || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion > 1))
 
+#define SafeRelease(p) if ((p)!=NULL) { (p)->Release(); (p)=NULL; }
+
 // GNU C HEADER PATCH
 #ifdef __GNUC__
 typedef BOOL (WINAPI* AlphaBlend_t)(HDC hdcDest, int xoriginDest, int yoriginDest, int wDest, int hDest, HDC hdcSrc, int xoriginSrc, int yoriginSrc, int wSrc, int hSrc, BLENDFUNCTION ftn);
@@ -464,6 +466,15 @@ enum ToolbarCommandIdx
 	TID_APPCLOSE,
 	TID_COPYING,
 	TID_MINIMIZE_SEP = 110,
+};
+
+enum SwitchGuiFocusOp
+{
+	sgf_None = 0,
+	sgf_FocusSwitch,
+	sgf_FocusGui,
+	sgf_FocusChild,
+	sgf_Last
 };
 
 bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval);

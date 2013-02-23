@@ -1174,31 +1174,12 @@ bool CDragDropData::CheckIsUpdatePackage(IDataObject * pDataObject)
 
 			if (SUCCEEDED(hr) && stgMedium.hGlobal)
 			{
+				// Нас интересует только первый файл (больше одного быть не может)
 				LPCWSTR pszFileNames = (LPCWSTR)GlobalLock(stgMedium.hGlobal);
 
-				if (pszFileNames && *pszFileNames && lstrlen(pszFileNames) <= MAX_PATH)
+				if (pszFileNames && *pszFileNames)
 				{
-					wchar_t szName[MAX_PATH+1];
-					LPCWSTR pszName = PointToName(pszFileNames);
-					if (pszName && *pszName)
-					{
-						lstrcpyn(szName, pszName, countof(szName));
-						CharLowerBuff(szName, lstrlen(szName));
-						LPCWSTR pszExt = PointToExt(szName);
-						if (pszExt)
-						{
-							if ((wcsncmp(szName, L"conemupack.", 11) == 0)
-								&& (wcscmp(pszExt, L".7z") == 0))
-							{
-								bHasUpdatePackage = true;
-							}
-							else if ((wcsncmp(szName, L"conemusetup.", 12) == 0)
-								&& (wcscmp(pszExt, L".exe") == 0))
-							{
-								bHasUpdatePackage = true;
-							}
-						}
-					}
+					bHasUpdatePackage = CConEmuUpdate::IsUpdatePackage(pszFileNames);
 
 					if (bHasUpdatePackage)
 					{

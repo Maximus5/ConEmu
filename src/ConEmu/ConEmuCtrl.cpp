@@ -803,8 +803,22 @@ bool CConEmuCtrl::key_SwitchGuiFocus(DWORD VkMod, bool TestOnly, const ConEmuHot
 	if (TestOnly)
 		return true;
 
-	// Должно обрабатываться через WM_HOTKEY
-	gpConEmu->OnSwitchGuiFocus(hk->DescrLangID);
+	// Должно обрабатываться через WM_HOTKEY, но позовем
+
+	SwitchGuiFocusOp FocusOp;
+	switch (hk->DescrLangID)
+	{
+	case vkSetFocusSwitch:
+		FocusOp = sgf_FocusSwitch; break;
+	case vkSetFocusGui:
+		FocusOp = sgf_FocusGui; break;
+	case vkSetFocusChild:
+		FocusOp = sgf_FocusChild; break;
+	default:
+		FocusOp = sgf_None;
+	}
+
+	gpConEmu->OnSwitchGuiFocus(FocusOp);
 	return true;
 }
 

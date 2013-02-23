@@ -69,6 +69,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/BufferHeight <lines> - Set console buffer height.\r\n" \
 	L"/Palette <name> - Choose named color palette.\r\n" \
 	L"/Log[1|2] - Used to create debug log files.\r\n" \
+	L"/Demote /cmd <command> - Run command de-elevated.\r\n" \
 	L"/Reset - Don't load settings from registry/xml.\r\n" \
 	L"/UpdateJumpList - Update Windows 7 taskbar jump list.\r\n" \
 	L"/LoadCfgFile <file> - Use specified xml file as configuration storage.\r\n" \
