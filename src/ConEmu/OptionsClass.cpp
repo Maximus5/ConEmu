@@ -5398,14 +5398,23 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rbActivityShell:
 		case rbActivityInput:
 		case rbActivityCmd:
+		case rbActivityAnsi:
 			{
 				HWND hList = GetDlgItem(hWnd2, lbActivityLog);
 				//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
-				gpSetCls->m_ActivityLoggingType =
-					(LOWORD(wParam) == rbActivityShell) ? glt_Processes :
-					(LOWORD(wParam) == rbActivityInput) ? glt_Input :
-					(LOWORD(wParam) == rbActivityCmd)   ? glt_Commands :
-					glt_None;
+				switch (LOWORD(wParam))
+				{
+				case rbActivityShell:
+					gpSetCls->m_ActivityLoggingType = glt_Processes; break;
+				case rbActivityInput:
+					gpSetCls->m_ActivityLoggingType = glt_Input; break;
+				case rbActivityCmd:
+					gpSetCls->m_ActivityLoggingType = glt_Commands; break;
+				case rbActivityAnsi:
+					gpSetCls->m_ActivityLoggingType = glt_Ansi; break;
+				default:
+					gpSetCls->m_ActivityLoggingType = glt_None;
+				}
 				ListView_DeleteAllItems(hList);
 				for (int c = 0; (c <= 40) && ListView_DeleteColumn(hList, 0); c++);
 				//ListView_DeleteAllItems(hDetails);
@@ -5484,6 +5493,18 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					wcscpy_c(szTitle, L"Pipe");		ListView_InsertColumn(hList, lcc_Pipe, &col);
 					wcscpy_c(szTitle, L"Extra");	ListView_InsertColumn(hList, lcc_Extra, &col);
 
+				}
+				else if (gpSetCls->m_ActivityLoggingType == glt_Ansi)
+				{
+					LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+					wchar_t szTitle[64]; col.pszText = szTitle;
+
+					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
+					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
+					
+					wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, lac_Time, &col);
+					col.cx = 500;
+					wcscpy_c(szTitle, L"Event");	ListView_InsertColumn(hList, lac_Sequence, &col);
 				}
 				else
 				{

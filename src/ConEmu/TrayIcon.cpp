@@ -261,10 +261,10 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			if (gpSet->isQuakeStyle)
 			{
 				bool bJustActivate = false;
-				SingleInstanceShowHideType sih = sih_ShowHideTSA;
+				SingleInstanceShowHideType sih = sih_QuakeShowHide;
 				SingleInstanceShowHideType sihHide = gpSet->isMinToTray() ? sih_HideTSA : sih_Minimize;
 
-				if (IsWindowVisible(ghWnd))
+				if (IsWindowVisible(ghWnd) && !gpConEmu->isIconic())
 				{
 					if (gpSet->isAlwaysOnTop || (gpSet->isQuakeStyle == 2))
 					{
@@ -347,8 +347,10 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			#endif
 			POINT mPos;
 			GetCursorPos(&mPos);
+			gpConEmu->mb_IgnoreQuakeActivation = true;
 			apiSetForegroundWindow(ghWnd);
 			gpConEmu->mp_Menu->ShowSysmenu(mPos.x, mPos.y);
+			gpConEmu->mb_IgnoreQuakeActivation = false;
 			PostMessage(hWnd, WM_NULL, 0, 0);
 		}
 		break;

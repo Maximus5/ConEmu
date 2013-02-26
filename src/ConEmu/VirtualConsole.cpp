@@ -1582,7 +1582,8 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	// start timer before "Read Console Output*" calls, they do take time
 	//gpSetCls->Performance(tPerfRead, FALSE);
 	//if (gbNoDblBuffer) isForce = TRUE; // Debug, dblbuffer
-	isForeground = gpConEmu->isMeForeground(false) && gpConEmu->isActive(this);
+	isForeground = (gpConEmu->InQuakeAnimation() || gpConEmu->isMeForeground(false))
+		&& gpConEmu->isActive(this);
 
 	if (isFade == isForeground && gpSet->isFadeInactive)
 		isForce = true;

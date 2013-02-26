@@ -92,10 +92,17 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 
 	mh_Parent = (apArgs->aRecreate == cra_EditTab) ? ghOpWnd : ghWnd;
 
-	gpConEmu->SetSkipOnFocus(TRUE);
+	#ifdef _DEBUG
+	if ((mh_Parent == ghWnd) && gpConEmu->isIconic())
+	{
+		_ASSERTE(FALSE && "Window must be shown before dialog!");
+	}
+	#endif
+
+	bool bPrev = gpConEmu->SetSkipOnFocus(true);
 	int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), mh_Parent, RecreateDlgProc, (LPARAM)this);
 	UNREFERENCED_PARAMETER(nRc);
-	gpConEmu->SetSkipOnFocus(FALSE);
+	gpConEmu->SetSkipOnFocus(bPrev);
 
 	//if (gpConEmu->mh_RecreatePasswFont)
 	//{
@@ -389,7 +396,8 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			return lbRc;
 		}
 		case (WM_APP+1):
-			gpConEmu->SetSkipOnFocus(FALSE);
+			//TODO: Не совсем корректно, не учитывается предыдущее значение флажка
+			gpConEmu->SetSkipOnFocus(false);
 			return FALSE;
 		case WM_CTLCOLORSTATIC:
 

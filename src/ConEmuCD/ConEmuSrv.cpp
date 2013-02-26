@@ -569,7 +569,8 @@ int ServerInitAttach2Gui()
 	if (!hDcWnd)
 	{
 		//_printf("Available ConEmu GUI window not found!\n"); -- не будем гадить в консоль
-		gbAlwaysConfirmExit = TRUE; gbInShutdown = TRUE;
+		gbInShutdown = TRUE;
+		DisableAutoConfirmExit();
 		iRc = CERR_ATTACHFAILED; goto wrap;
 	}
 
@@ -2345,33 +2346,50 @@ bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
 			_ASSERTE(pMap->hConEmuRoot==NULL || pMap->nGuiPID!=0);
 		}
 
-		//DisableAutoConfirmExit();
-
-		// В принципе, консоль может действительно запуститься видимой. В этом случае ее скрывать не нужно
-		// Но скорее всего, консоль запущенная под Админом в Win7 будет отображена ошибочно
-		// 110807 - Если gbAttachMode, тоже консоль нужно спрятать
-		if (gbForceHideConWnd || gbAttachMode)
-			apiShowWindow(ghConWnd, SW_HIDE);
-
-		// Установить шрифт в консоли
-		if (pOut->StartStopRet.Font.cbSize == sizeof(CESERVER_REQ_SETFONT))
+		// Только если подцепились успешно
+		if (ghConEmuWnd)
 		{
-			lstrcpy(gpSrv->szConsoleFont, pOut->StartStopRet.Font.sFontName);
-			gpSrv->nConFontHeight = pOut->StartStopRet.Font.inSizeY;
-			gpSrv->nConFontWidth = pOut->StartStopRet.Font.inSizeX;
-			ServerInitFont();
+			//DisableAutoConfirmExit();
+
+			// В принципе, консоль может действительно запуститься видимой. В этом случае ее скрывать не нужно
+			// Но скорее всего, консоль запущенная под Админом в Win7 будет отображена ошибочно
+			// 110807 - Если gbAttachMode, тоже консоль нужно спрятать
+			if (gbForceHideConWnd || gbAttachMode)
+				apiShowWindow(ghConWnd, SW_HIDE);
+
+			// Установить шрифт в консоли
+			if (pOut->StartStopRet.Font.cbSize == sizeof(CESERVER_REQ_SETFONT))
+			{
+				lstrcpy(gpSrv->szConsoleFont, pOut->StartStopRet.Font.sFontName);
+				gpSrv->nConFontHeight = pOut->StartStopRet.Font.inSizeY;
+				gpSrv->nConFontWidth = pOut->StartStopRet.Font.inSizeX;
+				ServerInitFont();
+			}
+
+			COORD crNewSize = {(SHORT)pOut->StartStopRet.nWidth, (SHORT)pOut->StartStopRet.nHeight};
+			//SMALL_RECT rcWnd = {0,pIn->StartStop.sbi.srWindow.Top};
+			SMALL_RECT rcWnd = {0};
+			SetConsoleSize((USHORT)pOut->StartStopRet.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
 		}
 
-		COORD crNewSize = {(SHORT)pOut->StartStopRet.nWidth, (SHORT)pOut->StartStopRet.nHeight};
-		//SMALL_RECT rcWnd = {0,pIn->StartStop.sbi.srWindow.Top};
-		SMALL_RECT rcWnd = {0};
-		SetConsoleSize((USHORT)pOut->StartStopRet.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
 		// Установить переменную среды с дескриптором окна
 		SetConEmuEnvVar(ghConEmuWnd);
-		CheckConEmuHwnd();
-		ExecuteFreeResult(pOut);
 		
-		bConnected = true;
+		// Только если подцепились успешно
+		if (ghConEmuWnd)
+		{
+			CheckConEmuHwnd();
+			bConnected = true;
+		}
+		else
+		{
+			//-- не надо, это сделает вызывающая функция
+			//SetTerminateEvent(ste_Attach2GuiFailed);
+			//DisableAutoConfirmExit();
+			bConnected = false;
+		}
+
+		ExecuteFreeResult(pOut);
 	}
 
 	return bConnected;

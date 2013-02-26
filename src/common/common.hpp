@@ -897,6 +897,7 @@ enum GuiLoggingType
 	glt_Input = 2,
 	glt_Commands = 3,
 	glt_Debugger = 4,
+	glt_Ansi = 5,
 	// glt_Files, ...
 };
 
@@ -1339,6 +1340,8 @@ enum SingleInstanceShowHideType
 	sih_SetForeground = 4,
 	sih_HideTSA = 5,
 	sih_Minimize = 6,
+	sih_AutoHide = 7,
+	sih_QuakeShowHide = 8,
 };
 
 struct CESERVER_REQ_NEWCMD // CECMD_NEWCMD

@@ -2343,12 +2343,13 @@ int CVConGroup::GetConCount(bool bNoDetached /*= false*/)
 
 BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
 {
-	CVirtualConsole* pVCon = NULL;
-	CRealConsole* pRCon = NULL;
+	//CVirtualConsole* pVCon = NULL;
+	CVConGuard VCon;
+	bool bFound = false;
 	_ASSERTE(pStartStop->dwPID!=0);
 
 	// Может быть какой-то VCon ждет аттача?
-	if (!pVCon)
+	if (!bFound)
 	{
 		#ifdef _DEBUG
 		if (pStartStop->dwAID == 0)
@@ -2363,13 +2364,15 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 
 		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
-			if (gp_VCon[i] && (pRCon = gp_VCon[i]->RCon()) != NULL)
+			VCon = gp_VCon[i];
+			CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
+			if (pRCon != NULL)
 			{
 				if (pStartStop->dwAID)
 				{
 					if (pRCon->GetMonitorThreadID() == pStartStop->dwAID)
 					{
-						pVCon = gp_VCon[i];
+						bFound = true;
 						break;
 					}
 				}
@@ -2377,7 +2380,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 				{
 					if (pRCon->GetServerPID() == pStartStop->dwPID)
 					{
-						pVCon = gp_VCon[i];
+						bFound = true;
 						break;
 					}
 				}
@@ -2385,15 +2388,18 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 		}
 	}
 
-	if (!pVCon)
+	// Если по ИД не нашли - ищем любую "ожидающую" аттача
+	if (!bFound)
 	{
 		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
-			if (gp_VCon[i] && (pRCon = gp_VCon[i]->RCon()) != NULL)
+			VCon = gp_VCon[i];
+			CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
+			if (pRCon != NULL)
 			{
 				if (pRCon->isDetached())
 				{
-					pVCon = gp_VCon[i];
+					bFound = true;
 					break;
 				}
 			}
@@ -2401,26 +2407,34 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 	}
 
 	// Если не нашли - определим, можно ли добавить новую консоль?
-	if (!pVCon)
+	if (!bFound)
 	{
 		RConStartArgs* pArgs = new RConStartArgs;
 		pArgs->bDetached = TRUE;
 		pArgs->bBackgroundTab = pStartStop->bRunInBackgroundTab;
 
 		// т.к. это приходит из серверного потока - зовем в главном
-		pVCon = (CVirtualConsole*)SendMessage(ghWnd, gpConEmu->mn_MsgCreateCon, gpConEmu->mn_MsgCreateCon, (LPARAM)pArgs);
-		if (pVCon && !isValid(pVCon))
+		VCon = (CVirtualConsole*)SendMessage(ghWnd, gpConEmu->mn_MsgCreateCon, gpConEmu->mn_MsgCreateCon, (LPARAM)pArgs);
+		if (VCon.VCon() && !isValid(VCon.VCon()))
 		{
-			_ASSERTE(isValid(pVCon));
-			pVCon = NULL;
+			_ASSERTE(FALSE && "MsgCreateCon failed");
+			VCon = NULL;
 		}
 		//if ((pVCon = CreateCon(&args)) == NULL)
 		//	return FALSE;
 	}
 
-	// Пытаемся подцепить консоль
-	if (!pVCon->RCon()->AttachConemuC(ahConWnd, pStartStop->dwPID, pStartStop, pRet))
+	if (!bFound || !VCon.VCon())
+	{
+		//Assert? Report?
 		return FALSE;
+	}
+
+	// Пытаемся подцепить консоль
+	if (VCon->RCon()->AttachConemuC(ahConWnd, pStartStop->dwPID, pStartStop, pRet))
+	{
+		return FALSE;
+	}
 
 	// OK
 	return TRUE;
@@ -2776,7 +2790,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 	CVirtualConsole* pVCon = NULL;
 
 	// When no command specified - choose default one. Now!
-	if (!args->pszSpecialCmd || !*args->pszSpecialCmd)
+	if (!args->bDetached && (!args->pszSpecialCmd || !*args->pszSpecialCmd))
 	{
 		_ASSERTE(args->pszSpecialCmd==NULL);
 
@@ -2797,6 +2811,8 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 	}
 
 	//wchar_t* pszScript = NULL; //, szScript[MAX_PATH];
+
+	Assert((args->bDetached==FALSE) == (args->pszSpecialCmd!=NULL));
 
 	if (args->pszSpecialCmd
 		&& (*args->pszSpecialCmd == CmdFilePrefix

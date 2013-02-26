@@ -116,9 +116,9 @@ void CAttachDlg::AttachDlg()
 		return;
 	}
 	
-	gpConEmu->SetSkipOnFocus(TRUE);
+	bool bPrev = gpConEmu->SetSkipOnFocus(true);
 	mh_Dlg = CreateDialogParam(g_hInstance, MAKEINTRESOURCE(IDD_ATTACHDLG), NULL, AttachDlgProc, (LPARAM)this);
-	gpConEmu->SetSkipOnFocus(FALSE);
+	gpConEmu->SetSkipOnFocus(bPrev);
 
 	//DWORD_PTR nAttachParm[3] = {};
 	//int nRc = DialogBoxParam(nAttachParm);

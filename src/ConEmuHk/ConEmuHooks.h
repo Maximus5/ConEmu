@@ -132,6 +132,10 @@ extern bool gbIsVimProcess;
 extern bool gbIsVimAnsi;
 /* ************ Globals for ViM ************ */
 
+/* ************ Globals for MinTTY ************ */
+extern bool gbIsMinTtyProcess;
+/* ************ Globals for ViM ************ */
+
 /* ************ Globals for HIEW32.EXE ************ */
 extern bool gbIsHiewProcess;
 /* ************ Globals for HIEW32.EXE ************ */

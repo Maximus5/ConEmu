@@ -92,8 +92,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
-#define DEBUGSTRFOCUS(s) LogFocusInfo(s)
-#define DEBUGSTRFOCUS2(s) //LogFocusInfo(s)
 #define DEBUGSTRFOREGROUND(s) //DEBUGSTR(s)
 #define DEBUGSTRLLKB(s) //DEBUGSTR(s)
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
@@ -116,6 +114,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define TIMER_MAIN_ID 0
+#define TIMER_MAIN_ELAPSE 500
 #define TIMER_CONREDRAW_ID 1
 #define TIMER_CAPTION_APPEAR_ID 3
 #define TIMER_CAPTION_DISAPPEAR_ID 4
@@ -124,6 +123,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TIMER_ADMSHIELD_ID 7
 #define TIMER_ADMSHIELD_ELAPSE 1000
 #define TIMER_RUNQUEUE_ID 8
+#define TIMER_QUAKE_AUTOHIDE_ID 9
+#define TIMER_QUAKE_AUTOHIDE_ELAPSE 100
 
 #define HOTKEY_CTRLWINALTSPACE_ID 0x0201 // this is wParam for WM_HOTKEY
 #define HOTKEY_SETFOCUSSWITCH_ID  0x0202 // this is wParam for WM_HOTKEY
@@ -251,6 +252,11 @@ namespace ConEmuMsgLogger
 		}
 	} // void LogPos(const MSG& msg)
 }
+
+const wchar_t gsFocusShellActivated[] = L"HSHELL_WINDOWACTIVATED";
+const wchar_t gsFocusCheckTimer[] = L"TIMER_MAIN_ID";
+const wchar_t gsFocusQuakeCheckTimer[] = L"TIMER_QUAKE_AUTOHIDE_ID";
+#define QUAKE_FOCUS_CHECK_TIMER_DELAY 500
 
 CConEmuMain::CConEmuMain()
 {
@@ -391,6 +397,9 @@ CConEmuMain::CConEmuMain()
 	//mh_RecreatePasswFont = NULL;
 	mb_SkipOnFocus = false;
 	mb_LastConEmuFocusState = false;
+	mn_ForceTimerCheckLoseFocus = 0;
+	mb_IgnoreQuakeActivation = false;
+	mn_LastQuakeShowHide = 0;
 	mb_CloseGuiConfirmed = false;
 	mb_UpdateJumpListOnStartup = false;
 	ZeroStruct(m_QuakePrevSize);
@@ -721,19 +730,26 @@ CConEmuMain::CConEmuMain()
 	//InitFrameHolder();
 }
 
-void LogFocusInfo(LPCWSTR asInfo)
+void LogFocusInfo(LPCWSTR asInfo, int Level/*=1*/)
 {
-#ifdef _DEBUG
 	if (!asInfo)
 		return;
 
-	gpConEmu->LogString(asInfo, TRUE);
+	if (Level <= gpSetCls->isAdvLogging)
+	{
+		gpConEmu->LogString(asInfo, TRUE);
 
-	wchar_t szFull[255];
-	lstrcpyn(szFull, asInfo, countof(szFull)-3);
-	wcscat_c(szFull, L"\n");
-	DEBUGSTR(szFull);
-#endif
+	}
+
+	#ifdef _DEBUG
+	if ((Level == 1) || (Level <= gpSetCls->isAdvLogging))
+	{
+		wchar_t szFull[255];
+		lstrcpyn(szFull, asInfo, countof(szFull)-3);
+		wcscat_c(szFull, L"\n");
+		DEBUGSTR(szFull);
+	}
+	#endif
 }
 
 void CConEmuMain::RefreshConEmuCurDir()
@@ -3214,7 +3230,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 	{
 		if (InMinimizing())
 		{
-			_ASSERTE(!InMinimizing());
+			//_ASSERTE(!InMinimizing() || InQuakeAnimation()); -- вызывается при обновлении статусной строки, ну его...
 			bNeedCalc = true;
 		}
 	}
@@ -3230,9 +3246,27 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 		}
 		else
 		{
-			GetWindowPlacement(ghWnd, &wpl);
-			
-			rcMain = wpl.rcNormalPosition;
+			// Win 8 Bug? Offered screen coordinates, but return - desktop workspace coordinates.
+			// Thats why only for zoomed modes (need to detect "monitor"), however, this may be buggy too?
+			if ((WindowMode == wmMaximized) || (WindowMode == wmFullScreen))
+			{
+				if (mrc_StoredNormalRect.right > mrc_StoredNormalRect.left && mrc_StoredNormalRect.bottom > mrc_StoredNormalRect.top)
+				{
+					rcMain = mrc_StoredNormalRect;
+					nGetStyle = 3;
+				}
+				else
+				{
+					GetWindowPlacement(ghWnd, &wpl);
+					rcMain = wpl.rcNormalPosition;
+					nGetStyle = 4;
+				}
+			}
+			else
+			{
+				GetWindowRect(ghWnd, &rcMain);
+				nGetStyle = 5;
+			}
 
 			if (rcMain.left <= -32000 && rcMain.top <= -32000)
 			{
@@ -3250,7 +3284,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 					_ASSERTE(FALSE && "mrc_StoredNormalRect was not saved yet, using GetDefaultRect()");
 
 					rcMain = GetDefaultRect();
-					nGetStyle = 5;
+					nGetStyle = 7;
 				}
 			}
 
@@ -5127,7 +5161,7 @@ bool CConEmuMain::isIconic(bool abRaw /*= false*/)
 	bool bIconic = ::IsIconic(ghWnd);
 	if (!abRaw && !bIconic)
 	{
-		bIconic = (gpSet->isQuakeStyle && isQuakeMinimized);
+		bIconic = (gpSet->isQuakeStyle && isQuakeMinimized) || !IsWindowVisible(ghWnd);
 	}
 	return bIconic;
 }
@@ -5774,6 +5808,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
 
 	DEBUGTEST(WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl););
+	DEBUGTEST(WINDOWPOS ps = *p);
 
 	if (gpSetCls->isAdvLogging >= 2)
 	{
@@ -5826,8 +5861,12 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	//	}
 	//}
 
+	DEBUGTEST(WINDOWPOS ps1 = *p);
+
 	// Иначе могут не вызваться события WM_SIZE/WM_MOVE
 	result = DefWindowProc(hWnd, uMsg, wParam, lParam);
+
+	DEBUGTEST(WINDOWPOS ps2 = *p);
 
 	//WindowPosStackCount--;
 
@@ -5895,6 +5934,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	LRESULT result = 0;
 
 	WINDOWPOS *p = (WINDOWPOS*)lParam;
+	DEBUGTEST(WINDOWPOS ps = *p);
 
 	bool zoomed = ::IsZoomed(ghWnd);
 	bool iconic = ::IsIconic(ghWnd);
@@ -10562,7 +10602,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		if (mp_Inside)
 		{
 			if ((hCurForeground == ghWnd) || (hCurForeground != mp_Inside->mh_InsideParentRoot))
-				SetForegroundWindow(mp_Inside->mh_InsideParentRoot);
+				apiSetForegroundWindow(mp_Inside->mh_InsideParentRoot);
 			SetWindowPos(ghWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
 		}
 		else if ((hCurForeground == ghWnd) && !WindowStartMinimized)
@@ -10595,7 +10635,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		//RegisterHotKeys();
 		//SetParent(GetParent(GetShellWindow()));
-		UINT n = SetTimer(ghWnd, TIMER_MAIN_ID, 500/*gpSet->nMainTimerElapse*/, NULL);
+		UINT n = SetTimer(ghWnd, TIMER_MAIN_ID, TIMER_MAIN_ELAPSE/*gpSet->nMainTimerElapse*/, NULL);
 		#ifdef _DEBUG
 		DWORD dw = GetLastError();
 		#endif
@@ -10728,6 +10768,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	KillTimer(ghWnd, TIMER_CONREDRAW_ID);
 	KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID);
 	KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
+	KillTimer(ghWnd, TIMER_QUAKE_AUTOHIDE_ID);
 	PostQuitMessage(0);
 	return 0;
 }
@@ -10761,9 +10802,11 @@ void CConEmuMain::setFocus()
 	SetFocus(ghWnd);
 }
 
-void CConEmuMain::SetSkipOnFocus(bool abSkipOnFocus)
+bool CConEmuMain::SetSkipOnFocus(bool abSkipOnFocus)
 {
+	bool bPrev = mb_SkipOnFocus;
 	mb_SkipOnFocus = abSkipOnFocus;
+	return bPrev;
 }
 
 LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom /*= NULL*/, BOOL abForceChild /*= FALSE*/)
@@ -10775,10 +10818,9 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 	bool lbSetFocus = false;
+	DWORD lnForceTimerCheckLoseFocus = mn_ForceTimerCheckLoseFocus;
 	
-	#ifdef _DEBUG
 	WCHAR szDbg[128];
-	#endif
 
 	LPCWSTR pszMsgName = L"Unknown";
 	HWND hNewFocus = NULL;
@@ -10787,10 +10829,8 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (messg == WM_SETFOCUS)
 	{
 		lbSetFocus = true;
-		#ifdef _DEBUG
 		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SETFOCUS(From=0x%08X)", (DWORD)wParam);
-		DEBUGSTRFOCUS(szDbg);
-		#endif
+		LogFocusInfo(szDbg);
 		pszMsgName = L"WM_SETFOCUS";
 	}
 	else if (messg == WM_ACTIVATE)
@@ -10881,6 +10921,11 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				// Здесь его нужно игнорировать, иначе Quake нифига не "свернется"
 				lbSkipQuakeActivation = true;
 			}
+			else if (mb_IgnoreQuakeActivation)
+			{
+				// Правый клик на иконке в TSA, тоже НЕ выезжать
+				lbSkipQuakeActivation = true;
+			}
 
 			if (!lbSkipQuakeActivation)
 			{
@@ -10889,13 +10934,11 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 		}
 
-		#ifdef _DEBUG
 		if (LOWORD(wParam)==WA_ACTIVE)
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_ACTIVATE(From=0x%08X)", (DWORD)lParam);
 		else
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_ACTIVATE.WA_INACTIVE(To=0x%08X) OurFocus=%i", (DWORD)lParam, lbSetFocus);
-		DEBUGSTRFOCUS(szDbg);
-		#endif
+		LogFocusInfo(szDbg);
 
 		pszMsgName = L"WM_ACTIVATE";
 	}
@@ -10907,19 +10950,24 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			hNewFocus = hForeground = GetForegroundWindow();
 		}
 
-		#ifdef _DEBUG
 		if (lbSetFocus)
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_ACTIVATEAPP.Activate(FromTID=%i)", (DWORD)lParam);
 		else
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_ACTIVATEAPP.Deactivate(ToTID=%i) OurFocus=%i", (DWORD)lParam, lbSetFocus);
-		DEBUGSTRFOCUS(szDbg);
-		#endif
+		LogFocusInfo(szDbg);
 
 		if (!lbSetFocus)
 		{
 			if (CVConGroup::isOurWindow(hNewFocus))
 			{
 				lbSetFocus = true; // Считать, что фокус мы не теряем!
+			}
+		}
+		else if (gpSet->isQuakeStyle)
+		{
+			if (!mb_IgnoreQuakeActivation)
+			{
+				OnMinimizeRestore(sih_Show);
 			}
 		}
 
@@ -10936,10 +10984,8 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			lbSetFocus = true; // Считать, что фокус мы не теряем!
 		}
 
-		#ifdef _DEBUG
 		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_KILLFOCUS(To=0x%08X) OurFocus=%i", (DWORD)wParam, lbSetFocus);
-		DEBUGSTRFOCUS(szDbg);
-		#endif
+		LogFocusInfo(szDbg);
 
 	}
 	else
@@ -10963,21 +11009,33 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		lbSetFocus = CVConGroup::isOurWindow(hNewFocus);
 
-		if (!lbSetFocus || mb_LastConEmuFocusState)
+		if (!lbSetFocus && (asMsgFrom == gsFocusQuakeCheckTimer)
+			&& mn_ForceTimerCheckLoseFocus
+			//&& ((GetTickCount() - mn_ForceTimerCheckLoseFocus) >= QUAKE_FOCUS_CHECK_TIMER_DELAY)
+			)
 		{
-			#ifdef _DEBUG
-			HWND hFocus = GetFocus();
-			wchar_t szInfo[128];
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Focus event skipped, lbSetFocus=%u, mb_LastConEmuFocusState=%u, ghWnd=x%08X, hFore=x%08X, hFocus=x%08X", lbSetFocus, mb_LastConEmuFocusState, (DWORD)ghWnd, (DWORD)hNewFocus, (DWORD)hFocus);
-			DEBUGSTRFOCUS2(szInfo);
-			#endif
+			// сброс, однократная проверка для "Hide on focus lose"
+			mn_ForceTimerCheckLoseFocus = 0;
+		}
+		else if (!lbSetFocus || mb_LastConEmuFocusState)
+		{
+			// Logging
+			bool bNeedLog = RELEASEDEBUGTEST((gpSetCls->isAdvLogging>=2),true);
+			if (bNeedLog)
+			{
+				HWND hFocus = GetFocus();
+				wchar_t szInfo[128];
+				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Focus event skipped, lbSetFocus=%u, mb_LastConEmuFocusState=%u, ghWnd=x%08X, hFore=x%08X, hFocus=x%08X", lbSetFocus, mb_LastConEmuFocusState, (DWORD)ghWnd, (DWORD)hNewFocus, (DWORD)hFocus);
+				LogFocusInfo(szInfo, 2);
+			}
+
 			// Не дергаться
 			return 0;
 		}
 
 		// Сюда мы доходим, если произошла какая-то ошибка, и ConEmu не получил
 		// информации о том, что его окно было активировано. Нужно уведомить сервер.
-		_ASSERTE(lbSetFocus);
+		_ASSERTE(lbSetFocus || lnForceTimerCheckLoseFocus);
 	}
 
 
@@ -11009,16 +11067,14 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				setFocus();
 				hNewFocus = GetFocus();
 
-				#ifdef _DEBUG
 				if (hNewFocus != ghWnd)
 				{
 					_ASSERTE(hNewFocus == ghWnd);
 				}
 				else
 				{
-					DEBUGSTRFOCUS(L"Focus was returned to ConEmu");
+					LogFocusInfo(L"Focus was returned to ConEmu");
 				}
-				#endif
 
 				lbSetFocus = (hNewFocus == ghWnd);
 				break;
@@ -11073,7 +11129,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	UpdateGuiInfoMappingActive(lbSetFocus);
 
 	mb_LastConEmuFocusState = lbSetFocus;
-	DEBUGSTRFOCUS(lbSetFocus ? L"mb_LastConEmuFocusState set to TRUE" : L"mb_LastConEmuFocusState set to FALSE");
+	LogFocusInfo(lbSetFocus ? L"mb_LastConEmuFocusState set to TRUE" : L"mb_LastConEmuFocusState set to FALSE");
 
 
 	// Если для активного и НЕактивного окна назначены разные значения
@@ -11116,24 +11172,46 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		&& IsWindowVisible(ghWnd))
 	{
 		wchar_t szClassName[255]; szClassName[0] = 0;
-		bool bIsTaskbar = false;
+		bool bIsTaskbar = false, bIsTrayNotifyWnd = false;
 		HWND h = hNewFocus;
-		while (h)
+
+		if (messg != 0)
 		{
-			GetClassName(h, szClassName, countof(szClassName));
-			if (lstrcmpi(szClassName, L"Shell_TrayWnd") == 0)
+			while (h)
 			{
-				bIsTaskbar = true;
-				break;
+				GetClassName(h, szClassName, countof(szClassName));
+				if (lstrcmpi(szClassName, L"Shell_TrayWnd") == 0)
+				{
+					bIsTaskbar = true;
+					break;
+				}
+				else if (lstrcmpi(szClassName, L"TrayNotifyWnd") == 0)
+				{
+					bIsTrayNotifyWnd = true;
+				}
+				h = GetParent(h);
 			}
-			h = GetParent(h);
+		}
+
+		if (RELEASEDEBUGTEST(gpSetCls->isAdvLogging,true))
+		{
+			wchar_t szInfo[512];
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"MinimizeOnFocusLose: Class=%s, IsTaskbar=%u, IsTrayNotifyWnd=%u, Timer=%u",
+				szClassName, bIsTaskbar, bIsTrayNotifyWnd, mn_ForceTimerCheckLoseFocus);
+			LogFocusInfo(szInfo);
 		}
 
 		// Если активируется TaskBar - не дергаться.
 		// Иначе получается бред при клике на иконку в TSA.
 		if (!bIsTaskbar)
 		{
-			OnMinimizeRestore(gpSet->isQuakeStyle ? sih_HideTSA : sih_Minimize);
+			OnMinimizeRestore(sih_AutoHide);
+		}
+		else if (!mn_ForceTimerCheckLoseFocus)
+		{
+			mn_ForceTimerCheckLoseFocus = GetTickCount();
+			_ASSERTE(mn_ForceTimerCheckLoseFocus!=0);
+			SetTimer(ghWnd, TIMER_QUAKE_AUTOHIDE_ID, TIMER_QUAKE_AUTOHIDE_ELAPSE, NULL);
 		}
 	}
 	
@@ -11846,12 +11924,61 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	if (bInFunction)
 		return;
 
-	bool bIsForeground = isMeForeground(true, true);
+	HWND hCurForeground = GetForegroundWindow();
+	bool bIsForeground = CVConGroup::isOurWindow(hCurForeground);
 	bool bIsIconic = isIconic();
 	BOOL bVis = IsWindowVisible(ghWnd);
 
+	wchar_t szInfo[120];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"OnMinimizeRestore(%i) Fore=x%08X Our=%u Iconic=%u Vis=%u",
+		ShowHideType, (DWORD)hCurForeground, bIsForeground, bIsIconic, bVis);
+	LogFocusInfo(szInfo);
+
+	if (ShowHideType == sih_QuakeShowHide)
+	{
+		if (bIsIconic)
+		{
+			if (mn_LastQuakeShowHide && gpSet->isMinimizeOnLoseFocus())
+			{
+				DWORD nDelay = GetTickCount() - mn_LastQuakeShowHide;
+				if (nDelay < QUAKE_FOCUS_CHECK_TIMER_DELAY)
+				{
+					_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"OnMinimizeRestore skipped, delay was %u ms", nDelay);
+					LogFocusInfo(szInfo);
+					return;
+				}
+			}
+
+			ShowHideType = sih_Show;
+		}
+		else
+		{
+			ShowHideType = sih_AutoHide; // дальше разберемся
+		}
+	}
+
+	if (ShowHideType == sih_AutoHide)
+	{
+		if (gpSet->isQuakeStyle)
+		{
+			bool bMin2TSA = gpSet->isMinToTray();
+
+			if (bMin2TSA)
+				ShowHideType = sih_HideTSA;
+			else
+				ShowHideType = sih_Minimize;
+		}
+		else
+		{
+			ShowHideType = sih_Minimize;
+		}
+	}
+
 	if ((ShowHideType == sih_HideTSA) || (ShowHideType == sih_Minimize))
 	{
+		// Some trick for clicks on taskbar and "Hide on focus lose"
+		mn_ForceTimerCheckLoseFocus = 0;
+
 		if (bIsIconic || !bVis)
 		{
 			return;
@@ -11922,18 +12049,65 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		}
 	}
 
+	DEBUGTEST(static DWORD nLastQuakeHide);
+
+	// Logging
+	if (RELEASEDEBUGTEST((gpSetCls->isAdvLogging>0),true))
+	{
+		switch (cmd)
+		{
+		case sih_None:
+			LogFocusInfo(L"OnMinimizeRestore(sih_None)"); break;
+		case sih_ShowMinimize:
+			LogFocusInfo(L"OnMinimizeRestore(sih_ShowMinimize)"); break;
+		case sih_ShowHideTSA:
+			LogFocusInfo(L"OnMinimizeRestore(sih_ShowHideTSA)"); break;
+		case sih_Show:
+			LogFocusInfo(L"OnMinimizeRestore(sih_Show)"); break;
+		case sih_SetForeground:
+			LogFocusInfo(L"OnMinimizeRestore(sih_SetForeground)"); break;
+		case sih_HideTSA:
+			LogFocusInfo(L"OnMinimizeRestore(sih_HideTSA)"); break;
+		case sih_Minimize:
+			LogFocusInfo(L"OnMinimizeRestore(sih_Minimize)"); break;
+		case sih_AutoHide:
+			LogFocusInfo(L"OnMinimizeRestore(sih_AutoHide)"); break;
+		case sih_QuakeShowHide:
+			LogFocusInfo(L"OnMinimizeRestore(sih_QuakeShowHide)"); break;
+		default:
+			LogFocusInfo(L"OnMinimizeRestore(Unknown cmd)");
+		}
+	}
+
 	if (cmd == sih_SetForeground)
 	{
 		apiSetForegroundWindow(ghWnd);
 	}
 	else if (cmd == sih_Show)
 	{
-		HWND hWndFore = GetForegroundWindow();
+		HWND hWndFore = hCurForeground;
+		DEBUGTEST(DWORD nHideShowDelay = GetTickCount() - nLastQuakeHide);
 		// Если активация идет кликом по кнопке на таскбаре (Quake без скрытия) то на WinXP
 		// может быть глюк - двойная отрисовка раскрытия (WM_ACTIVATE, WM_SYSCOMMAND)
 		bool bNoQuakeAnimation = false;
 
+		bool bPrevInRestore = false;
+		if (bIsIconic)
+			bPrevInRestore = mp_Menu->SetRestoreFromMinimized(true);
+
 		//apiSetForegroundWindow(ghWnd);
+
+		if (gpSet->isFadeInactive)
+		{
+			CVConGuard VCon;
+			if (GetActiveVCon(&VCon) >= 0)
+			{
+				// Чтобы при "Fade inactive" все сразу красиво отрисовалось
+				int iCur = mn_QuakePercent; mn_QuakePercent = 100;
+				VCon->Update();
+				mn_QuakePercent = iCur;
+			}
+		}
 
 		DEBUGTEST(bool bWasQuakeIconic = isQuakeMinimized);
 
@@ -12061,6 +12235,9 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			VCon->PostRestoreChildFocus();
 			//gpConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"From OnMinimizeRestore(sih_Show)");
 		}
+
+		if (bIsIconic)
+			mp_Menu->SetRestoreFromMinimized(bPrevInRestore);
 	}
 	else
 	{
@@ -12078,8 +12255,11 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		if ((ghLastForegroundWindow != ghWnd) && (ghLastForegroundWindow != ghOpWnd))
 		{
 			// Фокус не там где надо - например, в дочернем GUI приложении
-			setFocus();
-			SetForegroundWindow(ghWnd);
+			if (CVConGroup::isOurWindow(ghLastForegroundWindow))
+			{
+				setFocus();
+				apiSetForegroundWindow(ghWnd);
+			}
 			//TODO: Тут наверное нужно выйти и позвать Post для OnMinimizeRestore(cmd)
 			//TODO: иначе при сворачивании не активируется "следующее" окно, фокус ввода
 			//TODO: остается в дочернем Notepad (ввод текста идет в него)
@@ -12176,24 +12356,31 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				// Раз попали сюда - значит скрывать иконку с таскбара не хотят. Нужен изврат...
 
 				// Найти окно "под" нами
-				HWND hNext = FindWindowEx(NULL, ghWnd, NULL, NULL);
-				while (hNext)
+				HWND hNext = NULL;
+				if (hCurForeground && !bIsForeground)
 				{
-					if (::IsWindowVisible(hNext))
+					// Вернуть фокус туда где он был до наших ексерсизов
+					hNext = hCurForeground;
+				}
+				else
+				{
+					while ((hNext = FindWindowEx(NULL, hNext, NULL, NULL)) != NULL)
 					{
-						// Доп условия, аналог Alt-Tab?
-						DWORD nStylesEx = GetWindowLong(hNext, GWL_EXSTYLE);
-						DEBUGTEST(DWORD nStyles = GetWindowLong(hNext, GWL_STYLE));
-						if (!(nStylesEx & WS_EX_TOOLWINDOW))
+						if (::IsWindowVisible(hNext))
 						{
-							break;
+							// Доп условия, аналог Alt-Tab?
+							DWORD nStylesEx = GetWindowLong(hNext, GWL_EXSTYLE);
+							DEBUGTEST(DWORD nStyles = GetWindowLong(hNext, GWL_STYLE));
+							if (!(nStylesEx & WS_EX_TOOLWINDOW))
+							{
+								break;
+							}
 						}
 					}
-					hNext = FindWindowEx(NULL, hNext, NULL, NULL);
 				}
 				// И задвинуть в зад
-				SetWindowPos(ghWnd, NULL, -32000, -32000, 0,0, SWP_NOZORDER|SWP_NOSIZE);
-				SetForegroundWindow(hNext ? hNext : GetDesktopWindow());
+				SetWindowPos(ghWnd, NULL, -32000, -32000, 0,0, SWP_NOZORDER|SWP_NOSIZE|SWP_NOACTIVATE);
+				apiSetForegroundWindow(hNext ? hNext : GetDesktopWindow());
 			}
 			else
 			{
@@ -12201,7 +12388,12 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 			}
 		}
+
+		DEBUGTEST(nLastQuakeHide = GetTickCount());
 	}
+
+	mn_LastQuakeShowHide = GetTickCount();
+	LogFocusInfo(L"OnMinimizeRestore finished");
 
 	bInFunction = false;
  }
@@ -13550,7 +13742,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		HWND hFocus = GetFocus();
 		HWND hFore = GetForegroundWindow();
 		#endif
-		SetForegroundWindow(ghWnd);
+		apiSetForegroundWindow(ghWnd);
 		SetFocus(ghWnd);
 	}
 
@@ -15321,7 +15513,7 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 			#endif
 
 			//CheckFocus(L"HSHELL_WINDOWACTIVATED");
-			OnFocus(NULL, 0, 0, 0, L"HSHELL_WINDOWACTIVATED");
+			OnFocus(NULL, 0, 0, 0, gsFocusShellActivated);
 		}
 		break;
 	}
@@ -15845,6 +16037,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		case TIMER_RUNQUEUE_ID:
 			mp_RunQueue->ProcessRunQueue(false);
 			break;
+
+		case TIMER_QUAKE_AUTOHIDE_ID:
+			OnTimer_QuakeFocus();
+			break;
 	}
 
 	mb_InTimer = FALSE;
@@ -16095,7 +16291,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	// -- Замена на OnFocus
 	//CheckFocus(L"TIMER_MAIN_ID");
 	// Проверить, может ConEmu был активирован, а сервер нет?
-	OnFocus(NULL, 0, 0, 0, L"TIMER_MAIN_ID");
+	OnFocus(NULL, 0, 0, 0, gsFocusCheckTimer);
 
 	if (!lbIsPicView && gpSet->UpdSet.isUpdateCheckHourly)
 	{
@@ -16139,6 +16335,28 @@ void CConEmuMain::OnTimer_AdmShield()
 	{
 		KillTimer(ghWnd, TIMER_ADMSHIELD_ID);
 	}
+}
+
+void CConEmuMain::OnTimer_QuakeFocus()
+{
+	if (mn_ForceTimerCheckLoseFocus)
+	{
+		if (RELEASEDEBUGTEST(gpSetCls->isAdvLogging,true))
+		{
+			wchar_t szInfo[80];
+			DWORD nDelay = GetTickCount() - mn_ForceTimerCheckLoseFocus;
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"OnTimer_QuakeFocus, delay %u ms", nDelay);
+			LogFocusInfo(szInfo);
+		}
+
+		OnFocus(NULL, 0, 0, 0, gsFocusQuakeCheckTimer);
+	}
+	else
+	{
+		LogFocusInfo(L"OnTimer_QuakeFocus skipped, already processed (TSA)");
+	}
+
+	KillTimer(ghWnd, TIMER_QUAKE_AUTOHIDE_ID);
 }
 
 void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*= true*/)
@@ -16912,7 +17130,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 			if (gpConEmu->mp_Inside)
 			{
-				SetForegroundWindow(ghWnd);
+				apiSetForegroundWindow(ghWnd);
 			}
 
 			result = DefWindowProc(hWnd, messg, wParam, lParam);

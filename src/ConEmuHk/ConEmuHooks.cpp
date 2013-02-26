@@ -204,6 +204,10 @@ bool gbIsVimProcess = false;
 bool gbIsVimAnsi = false;
 /* ************ Globals for ViM ************ */
 
+/* ************ Globals for MinTTY ************ */
+bool gbIsMinTtyProcess;
+/* ************ Globals for ViM ************ */
+
 /* ************ Globals for HIEW32.EXE ************ */
 bool gbIsHiewProcess = false;
 /* ************ Globals for HIEW32.EXE ************ */
@@ -331,6 +335,7 @@ BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc);
 HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow);
+BOOL WINAPI OnShowCursor(BOOL bShow);
 HWND WINAPI OnSetParent(HWND hWndChild, HWND hWndNewParent);
 HWND WINAPI OnGetParent(HWND hWnd);
 HWND WINAPI OnGetWindow(HWND hWnd, UINT uCmd);
@@ -600,6 +605,7 @@ bool InitHooksUser32()
 		//{(void*)OnCreateWindowW,		"CreateWindowW",		user32}, -- таких экспортов нет
 		{(void*)OnCreateWindowExA,		"CreateWindowExA",		user32},
 		{(void*)OnCreateWindowExW,		"CreateWindowExW",		user32},
+		{(void*)OnShowCursor,			"ShowCursor",			user32},
 		{(void*)OnShowWindow,			"ShowWindow",			user32},
 		{(void*)OnSetParent,			"SetParent",			user32},
 		{(void*)OnGetParent,			"GetParent",			user32},
@@ -1705,6 +1711,28 @@ BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint)
 }
 
 
+BOOL WINAPI OnShowCursor(BOOL bShow)
+{
+	typedef BOOL (WINAPI* OnShowCursor_t)(BOOL bShow);
+	ORIGINALFASTEX(ShowCursor,NULL);
+	BOOL bRc = FALSE;
+
+	if (gbIsMinTtyProcess)
+	{
+		if (!bShow)
+		{
+			_ASSERTEX(bShow!=FALSE);
+			bShow = TRUE;
+		}
+	}
+	
+	if (F(ShowCursor))
+	{
+		bRc = F(ShowCursor)(bShow);
+	}
+
+	return bRc;
+}
 
 BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 {

@@ -436,7 +436,7 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 	}
 	else
 	{
-		_ASSERTE(args->pszSpecialCmd && *args->pszSpecialCmd && "Command line must be specified already!");
+		_ASSERTE((args->bDetached || (args->pszSpecialCmd && *args->pszSpecialCmd)) && "Command line must be specified already!");
 	}
 
 	mb_NeedStartProcess = FALSE;
@@ -6174,7 +6174,7 @@ void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 T
 		nMode = mb_GuiExternMode ? 0 : 1;
 	}
 
-	gpConEmu->SetSkipOnFocus(TRUE);
+	bool bPrev = gpConEmu->SetSkipOnFocus(true);
 
 	// ¬ынести Gui приложение из вкладки ConEmu (но Detach не делать)	
 	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETGUIEXTERN, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETGUIEXTERN));
@@ -6195,7 +6195,7 @@ void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 T
 		SetOtherWindowPos(hGuiWnd, ghWnd, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	}
 
-	gpConEmu->SetSkipOnFocus(FALSE);
+	gpConEmu->SetSkipOnFocus(bPrev);
 	
 	mp_VCon->Invalidate();
 }

@@ -325,8 +325,12 @@ class CConEmuMain :
 		CDragDrop *mp_DragDrop;
 		bool mb_SkipOnFocus;
 		bool mb_LastConEmuFocusState;
+		DWORD mn_ForceTimerCheckLoseFocus; // GetTickCount()
+		bool mb_IgnoreQuakeActivation;
 		//DWORD mn_SysMenuOpenTick, mn_SysMenuCloseTick;
 	protected:
+		DWORD mn_LastQuakeShowHide;
+
 		friend class CVConGroup;
 
 		friend class CGuiServer;
@@ -666,7 +670,7 @@ class CConEmuMain :
 		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
 		//void SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*/ bool bSetRedraw = false);
 		void SetDragCursor(HCURSOR hCur);
-		void SetSkipOnFocus(bool abSkipOnFocus);
+		bool SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);
 		ConEmuWindowMode GetWindowMode();
 		bool SetWindowMode(ConEmuWindowMode inMode, BOOL abForce = FALSE, BOOL abFirstShow = FALSE);
@@ -792,6 +796,7 @@ class CConEmuMain :
 		void OnTimer_FrameAppearDisappear(WPARAM wParam);
 		void OnTimer_RClickPaint();
 		void OnTimer_AdmShield();
+		void OnTimer_QuakeFocus();
 		void OnTransparent(bool abFromFocus = false, bool bSetFocus = true);
 		void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args);
 		LRESULT OnVConClosed(CVirtualConsole* apVCon, BOOL abPosted = FALSE);

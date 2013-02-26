@@ -719,12 +719,13 @@ BEGIN
     CONTROL         "Sh&ell",rbActivityShell,"Button",BS_AUTORADIOBUTTON,54,14,30,8
     CONTROL         "&Input",rbActivityInput,"Button",BS_AUTORADIOBUTTON,86,14,35,8
     CONTROL         "Cmd",rbActivityCmd,"Button",BS_AUTORADIOBUTTON,122,14,29,8
-    CONTROL         "Debug",rbActivityDebug,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,154,14,37,8
-    PUSHBUTTON      "&Reset",cbActivityReset,215,10,50,14
-    PUSHBUTTON      "Save &as...",cbActivitySaveAs,269,10,50,14
+    CONTROL         "Debug",rbActivityDebug,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,186,14,37,8
+    PUSHBUTTON      "&Reset",cbActivityReset,227,10,45,14
+    PUSHBUTTON      "Save &as...",cbActivitySaveAs,274,10,45,14
     CONTROL         "List1",lbActivityLog,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,28,311,135
     EDITTEXT        ebActivityApp,8,166,311,14,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        ebActivityParm,8,182,311,44,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL
+    CONTROL         "Ansi",rbActivityAnsi,"Button",BS_AUTORADIOBUTTON,155,14,26,8
 END
 
 IDD_RESTART DIALOGEX 0, 0, 310, 167

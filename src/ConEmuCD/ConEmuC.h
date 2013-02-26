@@ -97,6 +97,7 @@ enum SetTerminateEventPlace
 	ste_WriteMiniDump,
 	ste_CmdDetachCon,
 	ste_HandlerRoutine,
+	ste_Attach2GuiFailed,
 };
 extern SetTerminateEventPlace gTerminateEventPlace;
 void SetTerminateEvent(SetTerminateEventPlace eFrom);

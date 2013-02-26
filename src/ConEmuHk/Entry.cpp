@@ -545,6 +545,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		gbIsVimProcess = true;
 		StartVimTerm(true);
 	}
+	else if (lstrcmpni(pszName, L"mintty", 6) == 0)
+	{
+		gbIsMinTtyProcess = true;
+	}
 
 	// ѕоскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
 	// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);

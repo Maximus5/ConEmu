@@ -11,6 +11,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.02.??
+[%] Win8: Resize bugfix.
+[%] Issue 592: Quake-style autohide when clicking on taskbar.
+[%] Issue 888: Fixing MinTTY bug.
+[%] Issue 960: Sometimes ConEmu crashes while attaching external console.
+
+
 2013.02.23
 [%] Regression: Hotkey names not displayed on «Keys & Macro» page.
 [%] Some focus-switch hotkeys was not working.

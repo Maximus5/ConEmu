@@ -579,6 +579,11 @@ class CSettings
 			lcc_Pipe,
 			lcc_Extra,
 		};
+		enum LogAnsiColumns
+		{
+			lac_Time = 0,
+			lac_Sequence,
+		};
 		struct LogCommandsData
 		{
 			BOOL  bInput, bMainThread;
