@@ -11,11 +11,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
-2013.02.??
+2013.02.27
 [%] Win8: Resize bugfix.
 [%] Issue 592: Quake-style autohide when clicking on taskbar.
 [%] Issue 888: Fixing MinTTY bug.
-[%] Issue 960: Sometimes ConEmu crashes while attaching external console.
+[%] Issue 960: Sometimes ConEmu crashes while attaching external console (in progress).
+[%] Crash on GuiMacro WindowMaximize().
 
 
 2013.02.23

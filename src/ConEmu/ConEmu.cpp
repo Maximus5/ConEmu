@@ -4398,6 +4398,8 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 
 ConEmuWindowCommand CConEmuMain::GetTileMode(bool Estimate)
 {
+	_ASSERTE(FALSE && "Доделать");
+
 	if (Estimate && IsSizeFree())
 	{
 	}
