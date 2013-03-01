@@ -137,7 +137,8 @@ class CConEmuMain :
 		HKEY mh_PortableRoot; // Это открытый ключ
 		bool PreparePortableReg();
 		bool mb_UpdateJumpListOnStartup;
-	public:
+	private:
+		bool mb_BlockChildrenDebuggers;
 	private:
 		bool CheckBaseDir();
 		BOOL CheckDosBoxExists();

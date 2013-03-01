@@ -546,6 +546,18 @@ CConEmuMain::CConEmuMain()
 		gpSetCls->SetDefaultCmd(L"sh.exe --login -i");
 	}
 
+	mb_BlockChildrenDebuggers = false;
+	if (IsDebuggerPresent())
+	{
+		wchar_t szDebuggers[32];
+		if (GetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS, szDebuggers, countof(szDebuggers)))
+		{
+			mb_BlockChildrenDebuggers = (lstrcmp(szDebuggers, ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES) == 0);
+		}
+	}
+	// И сразу сбросить ее, чтобы не было мусора
+	SetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS, NULL);
+
 
 	// Добавить в окружение переменную с папкой к ConEmu.exe
 	SetEnvironmentVariable(ENV_CONEMUDIR_VAR_W, ms_ConEmuExeDir);
@@ -2228,7 +2240,8 @@ void CConEmuMain::FinalizePortableReg()
 
 void CConEmuMain::GetComSpecCopy(ConEmuComspec& ComSpec)
 {
-	_ASSERTE(m_GuiInfo.ComSpec.csType==gpSet->ComSpec.csType && m_GuiInfo.ComSpec.csBits==gpSet->ComSpec.csBits);
+	_ASSERTE(m_GuiInfo.ComSpec.csType==gpSet->ComSpec.csType);
+	_ASSERTE(m_GuiInfo.ComSpec.csBits==(mb_BlockChildrenDebuggers ? csb_SameApp : gpSet->ComSpec.csBits));
 	ComSpec = m_GuiInfo.ComSpec;
 }
 
@@ -2257,11 +2270,24 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	
 	m_GuiInfo.nLoggingType = (ghOpWnd && gpSetCls->mh_Tabs[gpSetCls->thi_Debug]) ? gpSetCls->m_ActivityLoggingType : glt_None;
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0) ; // ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
-	m_GuiInfo.bUseTrueColor = gpSet->isTrueColorer;
-	m_GuiInfo.bProcessAnsi = (gpSet->isProcessAnsi ? 1 : 0);
-	m_GuiInfo.bUseClink = gpSet->isUseClink(); // использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
+	SetConsoleFlags(m_GuiInfo.Flags,CECF_UseTrueColor,(gpSet->isTrueColorer ? CECF_UseTrueColor : 0));
+	SetConsoleFlags(m_GuiInfo.Flags,CECF_ProcessAnsi,(gpSet->isProcessAnsi ? CECF_ProcessAnsi : 0));
+	// использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
+	switch (gpSet->isUseClink())
+	{
+	case 1:
+		SetConsoleFlags(m_GuiInfo.Flags,CECF_UseClink_Any,CECF_UseClink_1);
+		break;
+	case 2:
+		SetConsoleFlags(m_GuiInfo.Flags,CECF_UseClink_Any,CECF_UseClink_2);
+		break;
+	default:
+		_ASSERTE(gpSet->isUseClink()==0);
+	}
 
-	m_GuiInfo.bSleepInBackg = gpSet->isSleepInBackground;
+	SetConsoleFlags(m_GuiInfo.Flags,CECF_BlockChildDbg,(mb_BlockChildrenDebuggers ? CECF_BlockChildDbg : 0));
+	
+	SetConsoleFlags(m_GuiInfo.Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
 	m_GuiInfo.bGuiActive = isMeForeground(true, true);
 	{
 	CVConGuard VCon;
@@ -2270,7 +2296,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.dwActiveTick = GetTickCount();
 
 	mb_DosBoxExists = CheckDosBoxExists();
-	m_GuiInfo.bDosBox = mb_DosBoxExists;
+	SetConsoleFlags(m_GuiInfo.Flags,CECF_DosBox,(mb_DosBoxExists ? CECF_DosBox : 0));
 	
 	m_GuiInfo.isHookRegistry = (mb_PortableRegExist ? (gpSet->isPortableReg ? 3 : 1) : 0);
 	wcscpy_c(m_GuiInfo.sHiveFileName, ms_PortableRegHive);
@@ -2325,7 +2351,8 @@ void CConEmuMain::UpdateGuiInfoMapping()
 
 		// Теперь перенести в мэппинг, для информирования других процессов
 		ComSpecType csType = gpSet->ComSpec.csType;
-		ComSpecBits csBits = gpSet->ComSpec.csBits;
+		// Если мы в режиме "отладки дерева процессов" - предпочитать ComSpec битности приложения!
+		ComSpecBits csBits = mb_BlockChildrenDebuggers ? csb_SameApp : gpSet->ComSpec.csBits;
 		//m_GuiInfo.ComSpec.csType = gpSet->ComSpec.csType;
 		//m_GuiInfo.ComSpec.csBits = gpSet->ComSpec.csBits;
 		wchar_t szExpand[MAX_PATH] = {}, szFull[MAX_PATH] = {}, *pszFile;
@@ -2442,7 +2469,7 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive)
 	CVConGuard VCon;
 	HWND hActiveRCon = (GetActiveVCon(&VCon) >= 0) ? VCon->RCon()->ConWnd() : NULL;
 
-	m_GuiInfo.bSleepInBackg = gpSet->isSleepInBackground;
+	SetConsoleFlags(m_GuiInfo.Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
 	m_GuiInfo.bGuiActive = bActive;
 	m_GuiInfo.hActiveCon = hActiveRCon;
 	m_GuiInfo.dwActiveTick = GetTickCount();
@@ -2451,11 +2478,11 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive)
 
 	if (pData)
 	{
-		if ((pData->bSleepInBackg != (BOOL)gpSet->isSleepInBackground)
-			|| (pData->bGuiActive != (BOOL)bActive)
+		if ((((pData->Flags & CECF_SleepInBackg)!=0) != (gpSet->isSleepInBackground != FALSE))
+			|| ((pData->bGuiActive!=FALSE) != (bActive!=FALSE))
 			|| (pData->hActiveCon != hActiveRCon))
 		{
-			pData->bSleepInBackg = gpSet->isSleepInBackground;
+			SetConsoleFlags(pData->Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
 			pData->bGuiActive = bActive;
 			pData->hActiveCon = hActiveRCon;
 			pData->dwActiveTick = m_GuiInfo.dwActiveTick;
@@ -5163,7 +5190,10 @@ bool CConEmuMain::isIconic(bool abRaw /*= false*/)
 	bool bIconic = ::IsIconic(ghWnd);
 	if (!abRaw && !bIconic)
 	{
-		bIconic = (gpSet->isQuakeStyle && isQuakeMinimized) || !IsWindowVisible(ghWnd);
+		bIconic = (gpSet->isQuakeStyle && isQuakeMinimized)
+			// Don't assume "iconic" while creating window
+			// otherwise "StoreNormalRect" will fails
+			|| (!mb_InCreateWindow && !IsWindowVisible(ghWnd));
 	}
 	return bIconic;
 }

@@ -126,12 +126,15 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 	{
 		HWND hConWnd = GetConEmuHWND(2);
 		HWND hGuiWnd = ghConEmuWnd;
-		#ifndef CONEMU_MINIMAL
-		if (hGuiWnd == NULL)
-		{
-			hGuiWnd = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
-		}
-		#endif
+
+		// -- искать - нельзя. Если мы НЕ в ConEmu - нельзя стучаться в другие копии!!!
+		//#ifndef CONEMU_MINIMAL
+		//if (hGuiWnd == NULL)
+		//{
+		//	hGuiWnd = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
+		//}
+		//#endif
+
 		if (hGuiWnd && !gbInMyAssertTrap)
 		{
 			gbInMyAssertTrap = true;

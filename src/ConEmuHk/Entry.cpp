@@ -347,9 +347,14 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 			gnGuiPID = gpConInfo->nGuiPID;
 			ghConEmuWnd = gpConInfo->hConEmuRoot;
 			_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
+			
 			SetConEmuHkWindows(gpConInfo->hConEmuWndDc, gpConInfo->hConEmuWndBack);
-			_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
-			_ASSERTE(ghConEmuWndBack && user->isWindow(ghConEmuWndBack));
+			
+			// ѕроверка. Ќо если в GUI аттачитс€ существующа€ консоль - ConEmuHk может загрузитьс€ раньше,
+			// чем создадутс€ HWND, т.е. GuiPID известен, но HWND еще вообще нету.
+			_ASSERTE(!ghConEmuWnd || ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
+			_ASSERTE(!ghConEmuWnd || ghConEmuWndBack && user->isWindow(ghConEmuWndBack));
+
 			gnServerPID = gpConInfo->nServerPID;
 		}
 		else
@@ -368,7 +373,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 	}
 	
 wrap:
-	bAnsi = ((gpConInfo != NULL) && (gpConInfo->bProcessAnsi != FALSE));
+	bAnsi = ((gpConInfo != NULL) && ((gpConInfo->Flags & CECF_ProcessAnsi) != 0));
 	if (abForceRecreate || (bLastAnsi != bAnsi))
 	{
 		bLastAnsi = bAnsi;

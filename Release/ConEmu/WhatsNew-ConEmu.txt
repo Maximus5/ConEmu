@@ -11,6 +11,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.02.28
+[%] Issue 964: Duplicate Root shows an assert.
+[%] Issue 965: Regression: stored fixed position for normal mode was ignored.
+[+] Settings->Info: showing "conhost.exe" in processes list for Windows 8 and higher.
+[+] New debug switch: "ConEmuC /debugtree <command_line>".
+
+
 2013.02.27
 [%] Win8: Resize bugfix.
 [%] Issue 592: Quake-style autohide when clicking on taskbar.

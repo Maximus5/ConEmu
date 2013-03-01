@@ -54,6 +54,11 @@ public:
 		return true;
 	};
 
+	bool Initialized()
+	{
+		return (mp_Items && mn_MaxCount);
+	};
+
 	void CheckKey(const KEY_T& key)
 	{
 	#ifdef _DEBUG
@@ -130,7 +135,8 @@ public:
 	{
 		if (!mp_Items || !mn_MaxCount)
 		{
-			_ASSERTE(mp_Items && mn_MaxCount && "MMap::Set - Storage must be allocated first");
+			// -- если еще пустой - не важно
+			//_ASSERTE(mp_Items && mn_MaxCount && "MMap::Set - Storage must be allocated first");
 			return;
 		}
 		for (size_t i = 0; i < mn_MaxCount; i++)

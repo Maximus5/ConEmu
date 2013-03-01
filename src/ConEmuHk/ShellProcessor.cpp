@@ -318,7 +318,8 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 		m_SrvMapping.hConEmuRoot = ghConEmuWnd;
 		m_SrvMapping.hConEmuWndDc = NULL/*ghConEmuWndDC*/; // ???
 		m_SrvMapping.hConEmuWndBack = NULL;
-		m_SrvMapping.bDosBox = m_GuiMapping.bDosBox;       // DosBox установлен, можно пользоваться
+		//m_SrvMapping.bDosBox = m_GuiMapping.bDosBox;       // DosBox установлен, можно пользоваться
+		m_SrvMapping.Flags = m_GuiMapping.Flags;
 		m_SrvMapping.bUseInjects = 1;   // 0-off, 1-on, 3-exe only. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 		m_SrvMapping.ComSpec = m_GuiMapping.ComSpec;
 
@@ -848,7 +849,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	}
 	else if (ImageBits == 16)
 	{
-		if (m_SrvMapping.cbSize && m_SrvMapping.bDosBox)
+		if (m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
 		{
 			wcscpy_c(szDosBoxExe, m_SrvMapping.sConEmuBaseDir);
 			wcscat_c(szDosBoxExe, L"\\DosBox\\DosBox.exe");
@@ -1449,7 +1450,15 @@ int CShellProc::PrepareExecuteParms(
 
 		if ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS))
 		{
-			bDebugWasRequested = TRUE;
+			// Для поиска трапов в дереве запускаемых процессов
+			if (m_SrvMapping.Flags & CECF_BlockChildDbg)
+			{
+				(*anCreateFlags) &= ~(DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS);
+			}
+			else
+			{
+				bDebugWasRequested = TRUE;
+			}
 			// Пока продолжим, нам нужно определить, а консольное ли это приложение?
 		}
 	}
@@ -1633,7 +1642,7 @@ int CShellProc::PrepareExecuteParms(
 				// А вот "-cur_console" нужно обрабатывать _здесь_
 				bCurConsoleArg = true;
 
-				if (args.bForceDosBox && m_SrvMapping.cbSize && m_SrvMapping.bDosBox)
+				if (args.bForceDosBox && m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
 				{
 					mn_ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
 					mn_ImageBits = 16;
@@ -1779,7 +1788,7 @@ int CShellProc::PrepareExecuteParms(
 					))
 			// если это Дос-приложение - то если включен DosBox, вставляем ConEmuC.exe /DOSBOX
 			|| ((mn_ImageBits == 16) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
-				&& m_SrvMapping.cbSize && m_SrvMapping.bDosBox));
+				&& m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox)));
 	}
 
 	if (bGoChangeParm)

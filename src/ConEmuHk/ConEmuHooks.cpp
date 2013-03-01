@@ -3565,19 +3565,22 @@ bool InitializeClink()
 		return false;
 
 	CESERVER_CONSOLE_MAPPING_HDR* pConMap = GetConMap();
-	if (!pConMap || !pConMap->bUseClink)
+	if (!pConMap || !(pConMap->Flags & CECF_UseClink_Any))
 	{
 		gnAllowClinkUsage = 0;
 		return false;
 	}
 
 	// Запомнить режим
-	gnAllowClinkUsage = pConMap->bUseClink;
+	gnAllowClinkUsage =
+		(pConMap->Flags & CECF_UseClink_2) ? 2 :
+		(pConMap->Flags & CECF_UseClink_1) ? 1 :
+		CECF_Empty;
 
 	BOOL bRunRc = FALSE;
 	DWORD nErrCode = 0;
 
-	if (pConMap->bUseClink == 2)
+	if (gnAllowClinkUsage == 2)
 	{
 		// New style. TODO
 		wchar_t szClinkDir[MAX_PATH+32], szClinkArgs[MAX_PATH+64];
@@ -3608,7 +3611,7 @@ bool InitializeClink()
 			UNREFERENCED_PARAMETER(bRunRc);
 		}
 	}
-	else if (pConMap->bUseClink == 1)
+	else if (gnAllowClinkUsage == 1)
 	{
 		if (!ghClinkDll)
 		{

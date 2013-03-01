@@ -2412,6 +2412,8 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 		RConStartArgs* pArgs = new RConStartArgs;
 		pArgs->bDetached = TRUE;
 		pArgs->bBackgroundTab = pStartStop->bRunInBackgroundTab;
+		_ASSERTE(pStartStop->sCmdLine[0]!=0);
+		pArgs->pszSpecialCmd = lstrdup(pStartStop->sCmdLine);
 
 		// т.к. это приходит из серверного потока - зовем в главном
 		VCon = (CVirtualConsole*)SendMessage(ghWnd, gpConEmu->mn_MsgCreateCon, gpConEmu->mn_MsgCreateCon, (LPARAM)pArgs);
@@ -2812,9 +2814,10 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 
 	//wchar_t* pszScript = NULL; //, szScript[MAX_PATH];
 
-	Assert((args->bDetached==FALSE) == (args->pszSpecialCmd!=NULL));
+	_ASSERTE(args->pszSpecialCmd!=NULL);
 
-	if (args->pszSpecialCmd
+	if (!args->bDetached
+		&& args->pszSpecialCmd
 		&& (*args->pszSpecialCmd == CmdFilePrefix
 			|| *args->pszSpecialCmd == DropLnkPrefix
 			|| *args->pszSpecialCmd == TaskBracketLeft))

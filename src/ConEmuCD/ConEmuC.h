@@ -441,6 +441,7 @@ struct SrvInfo
 	// —писок процессов нам нужен, чтобы определить, когда консоль уже не нужна.
 	// Ќапример, запустили FAR, он запустил Update, FAR перезапущен...
 	UINT nProcessCount, nMaxProcesses;
+	UINT nConhostPID; // Windows 7 and higher: "conhost.exe"
 	DWORD *pnProcesses, *pnProcessesGet, *pnProcessesCopy, nProcessStartTick;
 	DWORD dwProcessLastCheckTick;
 #ifndef WIN64

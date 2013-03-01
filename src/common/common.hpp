@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    123
+#define CESERVER_REQ_VER    124
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -102,6 +102,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMU_HOOKS_DISABLED L"OFF" // This is only significant value
 #define ENV_CONEMU_INUPDATE L"ConEmuInUpdate" // This is set to "YES" during AutoUpdate script execution
 #define ENV_CONEMU_INUPDATE_YES L"YES" // This is set to "YES" during AutoUpdate script execution
+#define ENV_CONEMU_BLOCKCHILDDEBUGGERS L"ConEmuBlockChildDebuggers" // When ConEmuC tries to debug process tree - force disable DEBUG_PROCESS/DEBUG_ONLY_THIS_PROCESS flags when creating subchildren
+#define ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES L"YES"
+
 
 
 
@@ -934,6 +937,26 @@ struct ConEmuComspec
 	wchar_t      ConEmuBaseDir[MAX_PATH]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 };
 
+
+
+typedef DWORD ConEmuConsoleFlags;
+const ConEmuConsoleFlags
+	CECF_DosBox          = 0x00000001, // DosBox установлен, можно пользоваться
+	CECF_UseTrueColor    = 0x00000002, // включен флажок "TrueMod support"
+	CECF_ProcessAnsi     = 0x00000004, // ANSI X3.64 & XTerm-256-colors Support
+
+	CECF_UseClink_1      = 0x00000008, // использовать расширение командной строки (ReadConsole). 1 - старая версия (0.1.1)
+	CECF_UseClink_2      = 0x00000010, // использовать расширение командной строки (ReadConsole) - 2 - новая версия
+	CECF_UseClink_Any    = CECF_UseClink_1|CECF_UseClink_2,
+
+	CECF_SleepInBackg    = 0x00000020,
+
+	CECF_BlockChildDbg   = 0x00000040, // When ConEmuC tries to debug process tree - force disable DEBUG_PROCESS/DEBUG_ONLY_THIS_PROCESS flags when creating subchildren
+
+	CECF_Empty = 0
+	;
+#define SetConsoleFlags(v,m,f) (v) = ((v) & ~(m)) | (f)
+
 struct ConEmuGuiMapping
 {
 	DWORD    cbSize;
@@ -953,11 +976,14 @@ struct ConEmuGuiMapping
 	BOOL     bUseDefaultTerminal;
 
 	DWORD    bUseInjects;   // 0-off, 1-on, 3-exe only. Далее могут быть (пока не используется) доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
-	BOOL     bUseTrueColor; // включен флажок "TrueMod support"
-	BOOL     bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
-	DWORD    bUseClink;     // использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
+	
+	ConEmuConsoleFlags Flags;
+	//BOOL     bUseTrueColor; // включен флажок "TrueMod support"
+	//BOOL     bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
+	//DWORD    bUseClink;     // использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
 
-	BOOL     bSleepInBackg; // Sleep in background
+	//BOOL     bSleepInBackg; // Sleep in background
+
 	BOOL     bGuiActive;    // Gui is In focus or Not
 	HWND2    hActiveCon;    // Active Real console HWND
 	DWORD    dwActiveTick;  // Tick, when hActiveCon/bGuiActive was changed
@@ -972,7 +998,7 @@ struct ConEmuGuiMapping
 	wchar_t sMountKey[MAX_PATH]; // Для Win2k&XP здесь хранится имя ключа, в который загружен hive
 	
 	// DosBox
-	BOOL     bDosBox; // наличие DosBox
+	//BOOL     bDosBox; // наличие DosBox
 	//wchar_t  sDosBoxExe[MAX_PATH+1]; // полный путь к DosBox.exe
 	//wchar_t  sDosBoxEnv[8192]; // команды загрузки (mount, и пр.)
 
@@ -1229,11 +1255,13 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	HWND2 hConEmuWndBack;
 
 	DWORD nLoggingType;  // enum GuiLoggingType
-	BOOL  bDosBox;       // DosBox установлен, можно пользоваться
 	DWORD bUseInjects;   // 0-off, 1-on, 3-exe only. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
-	BOOL  bUseTrueColor; // включен флажок "TrueMod support"
-	BOOL  bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
-	DWORD bUseClink;     // использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
+
+	ConEmuConsoleFlags Flags;
+	//BOOL  bDosBox;       // DosBox установлен, можно пользоваться
+	//BOOL  bUseTrueColor; // включен флажок "TrueMod support"
+	//BOOL  bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
+	//DWORD bUseClink;     // использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
 	
 	// Перехват реестра
 	DWORD   isHookRegistry; // bitmask. 1 - supported, 2 - current

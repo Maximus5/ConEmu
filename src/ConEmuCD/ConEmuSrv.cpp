@@ -205,11 +205,12 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 			// !!! Warning !!! Изменил здесь, поменяй и CreateMapHeader() !!!
 			
 			gpSrv->pConsole->hdr.nLoggingType = gpSrv->guiSettings.nLoggingType;
-			gpSrv->pConsole->hdr.bDosBox = gpSrv->guiSettings.bDosBox;
 			gpSrv->pConsole->hdr.bUseInjects = gpSrv->guiSettings.bUseInjects;
-			gpSrv->pConsole->hdr.bUseTrueColor = gpSrv->guiSettings.bUseTrueColor;
-			gpSrv->pConsole->hdr.bProcessAnsi = gpSrv->guiSettings.bProcessAnsi;
-			gpSrv->pConsole->hdr.bUseClink = gpSrv->guiSettings.bUseClink;
+			//gpSrv->pConsole->hdr.bDosBox = gpSrv->guiSettings.bDosBox;
+			//gpSrv->pConsole->hdr.bUseTrueColor = gpSrv->guiSettings.bUseTrueColor;
+			//gpSrv->pConsole->hdr.bProcessAnsi = gpSrv->guiSettings.bProcessAnsi;
+			//gpSrv->pConsole->hdr.bUseClink = gpSrv->guiSettings.bUseClink;
+			gpSrv->pConsole->hdr.Flags = gpSrv->guiSettings.Flags;
 			
 			// Обновить пути к ConEmu
 			wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
@@ -2580,7 +2581,11 @@ HWND Attach2Gui(DWORD nTimeout)
 	DWORD dwStart = GetTickCount(), dwDelta = 0, dwCur = 0;
 	CESERVER_REQ *pIn = NULL;
 	_ASSERTE(sizeof(CESERVER_REQ_STARTSTOP) >= sizeof(CESERVER_REQ_STARTSTOPRET));
-	DWORD nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP)+(gpszRunCmd ? lstrlen(gpszRunCmd) : 0)*sizeof(wchar_t);
+	DWORD cchCmdMax = max((gpszRunCmd ? lstrlen(gpszRunCmd) : 0),(MAX_PATH + 2)) + 1;
+	DWORD nInSize =
+		sizeof(CESERVER_REQ_HDR)
+		+sizeof(CESERVER_REQ_STARTSTOP)
+		+cchCmdMax*sizeof(wchar_t);
 	pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, nInSize);
 	pIn->StartStop.nStarted = sst_ServerStart;
 	pIn->StartStop.hWnd = ghConWnd;
@@ -2602,6 +2607,15 @@ HWND Attach2Gui(DWORD nTimeout)
 		IsNeedCmd(gpszRunCmd, NULL, &lbNeedCutQuot, pIn->StartStop.sModuleName, lbRootIsCmd, lbConfirmExit, lbAutoDisable);
 		lstrcpy(pIn->StartStop.sCmdLine, gpszRunCmd);
 	}
+	else if (gpSrv->dwRootProcess)
+	{
+		PROCESSENTRY32 pi;
+		if (GetProcessInfo(gpSrv->dwRootProcess, &pi))
+		{
+			msprintf(pIn->StartStop.sCmdLine, cchCmdMax, L"\"%s\"", pi.szExeFile);
+		}
+	}
+	_ASSERTE(pIn->StartStop.sCmdLine[0]!=0); // Должно быть указано, а то в ConEmu может неправильно AppDistinct инициализироваться
 
 	// Если GUI запущен не от имени админа - то он обломается при попытке
 	// открыть дескриптор процесса сервера. Нужно будет ему помочь.
@@ -3967,11 +3981,11 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		}
 
 		if ((ghConWnd == gpSrv->guiSettings.hActiveCon) || (gpSrv->guiSettings.hActiveCon == NULL) || bConsoleVisible)
-			bNewActive = gpSrv->guiSettings.bGuiActive || !gpSrv->guiSettings.bSleepInBackg;
+			bNewActive = gpSrv->guiSettings.bGuiActive || !(gpSrv->guiSettings.Flags & CECF_SleepInBackg);
 		else
 			bNewActive = FALSE;
 
-		bNewFellInSleep = gpSrv->guiSettings.bSleepInBackg && !bNewActive;
+		bNewFellInSleep = (gpSrv->guiSettings.Flags & CECF_SleepInBackg) && !bNewActive;
 
 		//if (gpSrv->pConsoleMap->IsValid())
 		//{

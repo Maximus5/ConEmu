@@ -352,7 +352,7 @@ bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL)
 					//else
 					//	bAnsiAllowed = true;
 
-					bAnsiAllowed = ((pMap != NULL) && (pMap->bProcessAnsi != FALSE));
+					bAnsiAllowed = ((pMap != NULL) && ((pMap->Flags & CECF_ProcessAnsi) != 0));
 
 					//free(pMap);
 				}
