@@ -92,30 +92,29 @@ CVConGuard::CVConGuard(CVirtualConsole* apRef)
 	Attach(apRef);
 }
 
-void CVConGuard::Attach(CVirtualConsole* apRef)
+bool CVConGuard::Attach(CVirtualConsole* apRef)
 {
-	if (mp_Ref == apRef)
+	if (mp_Ref != apRef)
 	{
-		//_ASSERTE((apRef == NULL || mp_Ref != apRef) && "Already assigned?");
-		return;
-	}
+		CVirtualConsole *pOldRef = mp_Ref;
 
-	CVirtualConsole *pOldRef = mp_Ref;
+		mp_Ref = apRef;
 
-	mp_Ref = apRef;
-
-	if (pOldRef != mp_Ref)
-	{
-		if (mp_Ref)
+		if (pOldRef != mp_Ref)
 		{
-			mp_Ref->AddRef();
-		}
+			if (mp_Ref)
+			{
+				mp_Ref->AddRef();
+			}
 
-		if (pOldRef)
-		{
-			pOldRef->Release();
+			if (pOldRef)
+			{
+				pOldRef->Release();
+			}
 		}
 	}
+
+	return (mp_Ref != NULL);
 }
 
 void CVConGuard::Release()

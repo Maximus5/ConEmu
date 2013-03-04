@@ -538,7 +538,7 @@ void Settings::InitSettings()
 	isRegisterOnOsStartup = false;
 	isDefaultTerminalNoInjects = false;
 	nDefaultTerminalConfirmClose = 1 /* Always */;
-	SetDefaultTerminalApps(NULL/* to default value */); // "|"-delimited string -> MSZ
+	SetDefaultTerminalApps(L"explorer.exe"/* to default value */); // "|"-delimited string -> MSZ
 
 	isProcessAnsi = true;
 	mb_UseClink = true;
@@ -4750,7 +4750,10 @@ void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
 {
 	SafeFree(psDefaultTerminalApps);
 	if (!apszApps || !*apszApps)
+	{
+		_ASSERTE(apszApps && *apszApps);
 		apszApps = L"explorer.exe";
+	}
 
 	// "|" delimited String -> MSZ
 	INT_PTR nLen = _tcslen(apszApps);
@@ -4784,6 +4787,11 @@ void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
 
 			psDefaultTerminalApps = pszDst;
 		}
+	}
+
+	if (gpConEmu)
+	{
+		gpConEmu->OnDefaultTermChanged();
 	}
 }
 

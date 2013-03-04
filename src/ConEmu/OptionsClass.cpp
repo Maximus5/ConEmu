@@ -3599,6 +3599,8 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			wchar_t* pszApps = gpSet->GetDefaultTerminalApps();
 			_ASSERTE(pszApps!=NULL);
 			SetDlgItemText(hWnd2, tDefaultTerminal, pszApps);
+			if (wcschr(pszApps, L',') != NULL && wcschr(pszApps, L'|') == NULL)
+				Icon.ShowTrayIcon(L"List of hooked executables must be delimited with \"|\" but not commas", tsa_Default_Term);
 			SafeFree(pszApps);
 
 			bSkipCbSel = false;
@@ -3702,6 +3704,12 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 					if (!bSkipCbSel)
 					{
 						wchar_t* pszApps = GetDlgItemText(hWnd2, tDefaultTerminal);
+						if (!pszApps || !*pszApps)
+						{
+							SafeFree(pszApps);
+							pszApps = lstrdup(L"explorer.exe");
+							SetDlgItemText(hWnd2, tDefaultTerminal, pszApps);
+						}
 						gpSet->SetDefaultTerminalApps(pszApps);
 						SafeFree(pszApps);
 					}

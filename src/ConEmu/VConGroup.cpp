@@ -1885,10 +1885,28 @@ void CVConGroup::OnPanelViewSettingsChanged()
 
 void CVConGroup::OnTaskbarSettingsChanged()
 {
+	CVConGuard VCon;
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		if (gp_VCon[i])
-			gp_VCon[i]->OnTaskbarSettingsChanged();
+		if (VCon.Attach(gp_VCon[i]))
+			VCon->OnTaskbarSettingsChanged();
+	}
+}
+
+void CVConGroup::OnTaskbarCreated()
+{
+	CVConGuard VCon;
+	HWND hGhost = NULL;
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		if (VCon.Attach(gp_VCon[i]))
+		{
+			hGhost = VCon->GhostWnd();
+			if (hGhost)
+			{
+				gpConEmu->OnGhostCreated(VCon.VCon(), hGhost);
+			}
+		}
 	}
 }
 

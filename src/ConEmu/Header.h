@@ -260,6 +260,9 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 #include "../common/RConStartArgs.h"
 
 
+bool isKey(DWORD wp,DWORD vk);
+bool isConsoleService(LPCWSTR pszProcessName);
+
 
 //------------------------------------------------------------------------
 ///| Registry |///////////////////////////////////////////////////////////

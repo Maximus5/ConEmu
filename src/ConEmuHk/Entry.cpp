@@ -554,6 +554,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	{
 		gbIsMinTtyProcess = true;
 	}
+	else if ((lstrcmpi(pszName, L"notepad.exe") == 0) || (lstrcmpi(pszName, L"notepad") == 0))
+	{
+		//_ASSERTE(FALSE && "Notepad.exe started!");
+	}
 
 	// ѕоскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
 	// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);

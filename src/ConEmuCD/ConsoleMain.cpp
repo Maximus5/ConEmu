@@ -192,7 +192,7 @@ BOOL  gbDontInjectConEmuHk = FALSE;
 BOOL  gbDebugProcess = FALSE;
 BOOL  gbDebugProcessTree = FALSE;
 int   gnDebugDumpProcess = 0; // 1 - ask user, 2 - minidump, 3 - fulldump
-MMap<DWORD,HANDLE> gDebugTreeProcesses;
+MMap<DWORD,HANDLE>* gpDebugTreeProcesses = NULL;
 //wchar_t szDebugDumpPath[MAX_PATH] = {}; // Может быть указана папка, в которую нужно складировать дампы
 int   gnCmdUnicodeMode = 0;
 BOOL  gbUseDosBox = FALSE; HANDLE ghDosBoxProcess = NULL; DWORD gnDosBoxPID = 0;
@@ -5945,12 +5945,13 @@ HANDLE GetProcessHandleForDebug(DWORD nPID)
 	}
 	else
 	{
-		if (!gDebugTreeProcesses.Initialized())
+		if (!gpDebugTreeProcesses)
 		{
-			gDebugTreeProcesses.Init(255);
+			gpDebugTreeProcesses = (MMap<DWORD,HANDLE>*)calloc(1,sizeof(*gpDebugTreeProcesses));
+			gpDebugTreeProcesses->Init(255);
 		}
 
-		if (gDebugTreeProcesses.Get(nPID, &hProcess) && hProcess)
+		if (gpDebugTreeProcesses->Get(nPID, &hProcess) && hProcess)
 		{
 			// Уже
 		}
@@ -5977,7 +5978,7 @@ HANDLE GetProcessHandleForDebug(DWORD nPID)
 			if (nPID != gpSrv->dwRootProcess)
 			{
 				// Запомнить дескриптор
-				gDebugTreeProcesses.Set(nPID, hProcess);
+				gpDebugTreeProcesses->Set(nPID, hProcess);
 			}
 		}
 	}
@@ -6451,8 +6452,8 @@ void ProcessDebugEvent()
 				if (evt.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT)
 				{
 					HANDLE hProcess = NULL;
-					if (gDebugTreeProcesses.Initialized()
-						&& gDebugTreeProcesses.Get(evt.dwProcessId, &hProcess, true)
+					if (gpDebugTreeProcesses
+						&& gpDebugTreeProcesses->Get(evt.dwProcessId, &hProcess, true)
 						&& hProcess)
 					{
 						CloseHandle(hProcess);
@@ -7534,6 +7535,11 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 		// Наверх выносится ConEmu вместо "отцепленного" GUI приложения
 		EmergencyShow(ghConWnd);
 	}
+
+	DisableAutoConfirmExit(FALSE);
+
+	SafeCloseHandle(gpSrv->hRootProcess);
+	SafeCloseHandle(gpSrv->hRootThread);
 
 	if (hGuiApp != NULL)
 	{
@@ -9212,6 +9218,23 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 	// Windows 7 and higher: there is "conhost.exe"
 	if (gnOsVer >= 0x0601)
 	{
+		#if 0
+		typedef BOOL (WINAPI* GetNamedPipeServerProcessId_t)(HANDLE Pipe,PULONG ServerProcessId);
+		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+		GetNamedPipeServerProcessId_t GetNamedPipeServerProcessId_f = hKernel
+			? (GetNamedPipeServerProcessId_t)GetProcAddress(hKernel, "GetNamedPipeServerProcessId") : NULL;
+		HANDLE hOut; BOOL bSrv = FALSE; ULONG nSrvPid = 0;
+		_ASSERTE(FALSE && "calling GetNamedPipeServerProcessId_f");
+		if (GetNamedPipeServerProcessId_f)
+		{
+			hOut = (HANDLE)ghConOut;
+			if (hOut)
+			{
+				bSrv = GetNamedPipeServerProcessId_f(hOut, &nSrvPid);
+			}
+		}
+		#endif
+
 		if (!gpSrv->nConhostPID)
 		{
 			// Найти порожденный conhost.exe

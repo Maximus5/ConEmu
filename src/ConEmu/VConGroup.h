@@ -152,6 +152,7 @@ public:
 	static void OnUpdateGuiInfoMapping(ConEmuGuiMapping* apGuiInfo);
 	static void OnPanelViewSettingsChanged();
 	static void OnTaskbarSettingsChanged();
+	static void OnTaskbarCreated();
 
 	static void MoveAllVCon(CVirtualConsole* pVConCurrent, RECT rcNewCon);
 	static HRGN GetExclusionRgn(bool abTestOnly = false);

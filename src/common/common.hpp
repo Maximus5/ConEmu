@@ -104,7 +104,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMU_INUPDATE_YES L"YES" // This is set to "YES" during AutoUpdate script execution
 #define ENV_CONEMU_BLOCKCHILDDEBUGGERS L"ConEmuBlockChildDebuggers" // When ConEmuC tries to debug process tree - force disable DEBUG_PROCESS/DEBUG_ONLY_THIS_PROCESS flags when creating subchildren
 #define ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES L"YES"
+#define ENV_CONEMU_MONITOR_INTERNAL L"ConEmuMonitorThreadId" // Used internally
 
+#define CONEMU_CONHOST_CREATED_MSG L"ConEmu: ConHost was created PID=" // L"%u\n"
 
 
 

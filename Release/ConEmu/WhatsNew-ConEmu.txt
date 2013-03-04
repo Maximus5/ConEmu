@@ -11,6 +11,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.03.04
+[%] Regression: GUI applications attach failed.
+[%] Issue 971: Sending dead chars to child GUI applications.
+[%] Issue 972: Regression: Duplicate root failed.
+
+
 2013.02.28
 [%] Issue 964: Duplicate Root shows an assert.
 [%] Issue 965: Regression: stored fixed position for normal mode was ignored.

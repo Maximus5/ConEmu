@@ -186,7 +186,8 @@ HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive)
 {
 	HRESULT hr;
 
-	_ASSERTE(mp_TaskBar1!=NULL);
+	// mp_TaskBar1 may be NULL if NO task bar is created (e.g. 'explorer.exe' is closed)
+	_ASSERTE(mp_TaskBar1!=NULL || FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL)==NULL);
 	
     // Tell the taskbar about this tab window
 	if (mp_TaskBar3)

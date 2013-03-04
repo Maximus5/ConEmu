@@ -41,6 +41,9 @@ public:
 	void PostCreated(bool bWaitForReady = false, bool bShowErrors = false);
 	void CheckRegisterOsStartup();
 	bool IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax);
+	void OnHookedListChanged();
+
+	bool isDefaultTerminalAllowed();
 
 private:
 	struct ProcessInfo
@@ -62,6 +65,8 @@ private:
 	void ClearProcessed(bool bForceAll);
 	static DWORD WINAPI PostCreatedThread(LPVOID lpParameter);
 	static DWORD WINAPI PostCheckThread(LPVOID lpParameter);
+	bool CheckShellWindow();
+	bool mb_Initialized;
 	DWORD mn_PostThreadId;
 	bool  mb_PostCreatedThread;
 	MArray<HANDLE> m_Threads;

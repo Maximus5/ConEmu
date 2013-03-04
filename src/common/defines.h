@@ -111,7 +111,6 @@ WARNING("WIN64 was not defined");
 
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
-bool isKey(DWORD wp,DWORD vk);
 
 #ifdef ARRAYSIZE
 #define countof(a) (ARRAYSIZE(a)) // (sizeof((a))/(sizeof(*(a))))

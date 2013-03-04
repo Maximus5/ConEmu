@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+// This template is NOT THREAD SAFE
+
 template<class KEY_T,class VAL_T>
 struct MMap
 {
@@ -41,10 +43,10 @@ protected:
 	MapItems *mp_Items;
 	size_t mn_MaxCount;
 public:
-	bool Init(size_t nMaxCount = 255)
+	bool Init(size_t nMaxCount = 256)
 	{
 		_ASSERTE(mp_Items == NULL);
-		mp_Items = (MapItems*)calloc(nMaxCount,sizeof(MapItems));
+		mp_Items = (MapItems*)calloc(nMaxCount,sizeof(*mp_Items));
 		if (!mp_Items)
 		{
 			_ASSERTE(mp_Items!=NULL && "Failed to allocate MMap storage");
@@ -58,6 +60,24 @@ public:
 	{
 		return (mp_Items && mn_MaxCount);
 	};
+
+	void Release()
+	{
+		mn_MaxCount = 0;
+		if (mp_Items)
+		{
+			free(mp_Items);
+			mp_Items = NULL;
+		}
+	};
+
+	void Reset()
+	{
+		if (mp_Items && mn_MaxCount)
+		{
+			memset(mp_Items, 0, mn_MaxCount*sizeof(*mp_Items));
+		}
+	}
 
 	void CheckKey(const KEY_T& key)
 	{
@@ -76,6 +96,7 @@ public:
 			_ASSERTE(mp_Items && mn_MaxCount && "MMap::Get - Storage must be allocated first");
 			return false;
 		}
+
 		for (size_t i = 0; i < mn_MaxCount; i++)
 		{
 			if (mp_Items[i].used && (key == mp_Items[i].key))
@@ -95,16 +116,61 @@ public:
 				return true;
 			}
 		}
+
 		return false;
 	};
+
+	bool GetNext(const KEY_T* prev/*pass NULL to get first key*/, KEY_T* next_key, VAL_T* next_val)
+	{
+		if (!mp_Items || !mn_MaxCount)
+		{
+			_ASSERTE(mp_Items && mn_MaxCount && "MMap::Get - Storage must be allocated first");
+			return false;
+		}
+
+		INT_PTR iFrom = -1;
+
+		if (prev != NULL)
+		{
+			while (iFrom < mn_MaxCount)
+			{
+				if (mp_Items[iFrom].used && (mp_Items[iFrom].key == *prev))
+					break;
+				iFrom++;
+			}
+		}
+
+		for (INT_PTR i = iFrom+1; i < mn_MaxCount; i++)
+		{
+			if (mp_Items[i].used)
+			{
+				if (next_key)
+					*next_key = mp_Items[i].key;
+
+				if (next_val)
+					*val = mp_Items[i].val;
+
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	bool Set(const KEY_T& key, const VAL_T& val)
 	{
 		if (!mp_Items || !mn_MaxCount)
 		{
+			// Ругнемся, для четкости
 			_ASSERTE(mp_Items && mn_MaxCount && "MMap::Set - Storage must be allocated first");
-			return false;
+
+			// Но разрешим автоинит
+			if (!Init())
+			{
+				return false;
+			}
 		}
+
 		for (size_t i = 0; i < mn_MaxCount; i++)
 		{
 			if (mp_Items[i].used && (key == mp_Items[i].key))
@@ -115,19 +181,42 @@ public:
 				return true;
 			}
 		}
-		for (size_t i = 0; i < mn_MaxCount; i++)
+
+		bool bFirst = true;
+		while (true)
 		{
-			if (!mp_Items[i].used)
+			for (size_t i = 0; i < mn_MaxCount; i++)
 			{
-				mp_Items[i].used = true;
-				mp_Items[i].key = key;
-				mp_Items[i].val = val;
-				// Multithread?
-				_ASSERTE(mp_Items[i].used && (mp_Items[i].key == key) && !memcmp(&mp_Items[i].val, &val, sizeof(val)));
-				return true;
+				if (!mp_Items[i].used)
+				{
+					mp_Items[i].used = true;
+					mp_Items[i].key = key;
+					mp_Items[i].val = val;
+					// Multithread?
+					_ASSERTE(mp_Items[i].used && (mp_Items[i].key == key) && !memcmp(&mp_Items[i].val, &val, sizeof(val)));
+					return true;
+				}
 			}
+
+			if (!bFirst)
+			{
+				_ASSERTE(FALSE && "Can't add item to MMap, not enough storage");
+				break;
+			}
+			bFirst = false;
+
+			size_t nNewMaxCount = mn_MaxCount + 256;
+			MapItems* pNew = (MapItems*)realloc(mp_Items,nNewMaxCount*sizeof(*pNew));
+			if (!pNew)
+			{
+				_ASSERTE(pNew!=NULL);
+				return false;
+			}
+			memset(pNew+mn_MaxCount, 0, (nNewMaxCount - mn_MaxCount)*sizeof(*pNew));
+			mp_Items = pNew;
 		}
-		_ASSERTE(FALSE && "Can't add item to MMap, not enough storage");
+
+		_ASSERTE(FALSE && "Must not get here");
 		return false;
 	};
 

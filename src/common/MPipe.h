@@ -139,6 +139,8 @@ class MPipe
 			ms_Error[0] = 0;
 			*rpOut = &m_Tmp;
 
+			DEBUGTEST(DWORD nOpenTick = GetTickCount());
+
 			if (!Open())  // Пайп может быть уже открыт, функция это учитывает
 				return FALSE;
 
@@ -160,9 +162,7 @@ class MPipe
 				*rpOut = mp_Out;
 			}
 
-			#ifdef _DEBUG
-			DWORD nStartTick = GetTickCount();
-			#endif
+			DEBUGTEST(DWORD nStartTick = GetTickCount());
 
 			//SetLastError(0);
 
@@ -170,6 +170,9 @@ class MPipe
 			fSuccess = TransactNamedPipe(mh_Pipe, (LPVOID)apIn, anInSize, ptrOut, cbReadBuf, &cbRead, mb_Overlapped ? &m_Ovl : NULL);
 			dwErr = fSuccess ? 0 : GetLastError();
 			SaveErrorCode(dwErr);
+
+			DEBUGTEST(DWORD nStartTick2 = GetTickCount());
+			DEBUGTEST(DWORD nTickOvl = 0);
 
 			if (mb_Overlapped && (!fSuccess || !cbRead))
 			{
@@ -193,11 +196,14 @@ class MPipe
 				fSuccess = GetOverlappedResult(mh_Pipe, &m_Ovl, &cbRead, FALSE);
 				dwErr = GetLastError();
 				SaveErrorCode(dwErr);
+
+				DEBUGTEST(nTickOvl = GetTickCount());
 			}
 
 			#ifdef _DEBUG
 			DWORD nEndTick = GetTickCount();
 			DWORD nDelta = nEndTick - nStartTick;
+			int nTermWait = mh_TermEvent ? WaitForSingleObject(mh_TermEvent, 0) : -1;
 			if (nDelta >= TRANSACT_WARN_TIMEOUT && !IsDebuggerPresent())
 			{
 				_ASSERTE(nDelta <= TRANSACT_WARN_TIMEOUT);
@@ -261,6 +267,10 @@ class MPipe
 				return FALSE;
 			}
 
+			#ifdef _DEBUG
+			DWORD nMoreDataTick[6] = {GetTickCount()};
+			#endif
+
 			if (dwErr == ERROR_MORE_DATA)
 			{
 				int nAllSize = ((CESERVER_REQ_HDR*)ptrOut)->cbSize;
@@ -294,11 +304,14 @@ class MPipe
 
 				while (nAllSize>0)
 				{
+					DEBUGTEST(nMoreDataTick[1] = GetTickCount());
 					// Read from the pipe if there is more data in the message.
 					//WARNING: Если в буфере пайпа данных меньше чем nAllSize - повиснем!
 					fSuccess = ReadFile(mh_Pipe, ptrData, nAllSize, &cbRead, NULL);
 					dwErr = fSuccess ? 0 : GetLastError();
 					SaveErrorCode(dwErr);
+
+					DEBUGTEST(nMoreDataTick[2] = GetTickCount());
 
 					if (mb_Overlapped && (!fSuccess || !cbRead))
 					{
@@ -311,6 +324,8 @@ class MPipe
 						{
 							nOverlappedWait = WaitForSingleObject(m_Ovl.hEvent, TRANSACT_MAX_TIMEOUT);
 						}
+
+						DEBUGTEST(nMoreDataTick[3] = GetTickCount());
 
 						if ((nOverlappedWait == WAIT_TIMEOUT) || (nOverlappedWait == (WAIT_OBJECT_0+1)))
 						{
@@ -356,8 +371,12 @@ class MPipe
 					//	}
 				}
 
+				DEBUGTEST(nMoreDataTick[4] = GetTickCount());
+
 				// Надо ли это?
 				fSuccess = FlushFileBuffers(mh_Pipe);
+
+				DEBUGTEST(nMoreDataTick[5] = GetTickCount());
 			}
 
 			return TRUE;

@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../Common/RgnDetect.h"
 //#include "../Common/WinObjects.h"
 #include "../Common/MArray.h"
+#include "../Common/MMap.h"
 #include "../Common/MPipe.h"
 
 #define DEFINE_EXIT_DESC
@@ -140,10 +141,12 @@ typedef struct _CONSOLE_INFO
 struct ConProcess
 {
 	DWORD ProcessID, ParentPID; //, InputTID;
+	bool  IsMainSrv; // Root ConEmuC
+	bool  IsConHost; // conhost.exe (Win7 и выше)
 	bool  IsFar, IsFarPlugin;
-	bool  IsTelnet; // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
-	bool  IsNtvdm;  // 16bit приложения
-	bool  IsCmd;    // значит фар выполняет команду
+	bool  IsTelnet;  // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
+	bool  IsNtvdm;   // 16bit приложения
+	bool  IsCmd;     // значит фар выполняет команду
 	bool  NameChecked, RetryName;
 	bool  Alive, inConsole;
 	wchar_t Name[64]; // чтобы полная инфа об ошибке влезала
@@ -289,6 +292,7 @@ class CRealConsole
 	public:
 		BOOL    isGuiVisible();
 		BOOL    isGuiOverCon();
+		void    StoreGuiChildRect(LPRECT prcNewPos);
 		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
 		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui);
 
@@ -359,9 +363,10 @@ class CRealConsole
 		static DWORD WINAPI PostMacroThread(LPVOID lpParameter);
 		HANDLE mh_PostMacroThread; DWORD mn_PostMacroThreadID;
 		void PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData);
+		DWORD mn_InPostDeadChar;
 	public:
 		//BOOL FlushInputQueue(DWORD nTimeout = 500);
-		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
+		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg);
 		void ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false, bool abFromTouch = false);
@@ -386,7 +391,7 @@ class CRealConsole
 		//void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 		void OnServerStarted(HWND ahConWnd, DWORD anServerPID, DWORD dwKeybLayout);
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
-		int  GetProcesses(ConProcess** ppPrc);
+		int  GetProcesses(ConProcess** ppPrc, bool ClientOnly = false);
 		DWORD GetFarPID(bool abPluginRequired=false);
 		void SetFarPID(DWORD nFarPID);
 		void SetFarPluginPID(DWORD nFarPluginPID);
@@ -553,6 +558,11 @@ class CRealConsole
 		void SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/);
 		// Сервер и альтернативный сервер
 		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
+		DWORD mn_ConHost_PID;
+		MMap<DWORD,BOOL>* mp_ConHostSearch;
+		void ConHostSearchPrepare();
+		DWORD ConHostSearch(bool bFinal);
+		void ConHostSetPID(DWORD nConHostPID);
 		bool  mb_MainSrv_Ready; // Сервер готов принимать команды?
 		DWORD mn_ActiveLayout;
 		DWORD mn_AltSrv_PID;  //HANDLE mh_AltSrv;
@@ -607,6 +617,7 @@ class CRealConsole
 		//static DWORD WINAPI InputThread(LPVOID lpParameter);
 		//HANDLE mh_InputThread; DWORD mn_InputThreadID;
 
+		DWORD mn_TermEventTick;
 		HANDLE mh_TermEvent, mh_ApplyFinished;
 		HANDLE mh_StartExecuted;
 		BOOL mb_StartResult, mb_WaitingRootStartup;
@@ -681,7 +692,7 @@ class CRealConsole
 		//
 		MSection csPRC; //DWORD ncsTPRC;
 		MArray<ConProcess> m_Processes;
-		int mn_ProcessCount;
+		int mn_ProcessCount, mn_ProcessClientCount;
 		DWORD m_FarPlugPIDs[128];
 		UINT mn_FarPlugPIDsCount;
 		BOOL mb_SkipFarPidChange;

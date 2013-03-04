@@ -550,7 +550,7 @@ class CConEmuMain :
 		BOOL Activate(CVirtualConsole* apVCon);
 		int ActiveConNum(); // 0-based
 		int GetConCount(); // количество открытых консолей
-		static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
+		static void AddMargins(RECT& rc, const RECT& rcAddShift, BOOL abExpand=FALSE);
 		void AskChangeBufferHeight();
 		void AskChangeAlternative();
 		void AttachToDialog();
@@ -811,6 +811,7 @@ class CConEmuMain :
 		void OnTaskbarCreated();
 		void OnTaskbarButtonCreated();
 		void OnTaskbarSettingsChanged();
+		void OnDefaultTermChanged();
 		#ifdef __GNUC__
 		AlphaBlend_t GdiAlphaBlend;
 		#endif

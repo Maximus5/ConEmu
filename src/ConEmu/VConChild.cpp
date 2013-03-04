@@ -774,6 +774,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 				{
 					pVCon->RCon()->GuiWndFocusRestore();
 				}
+				pVCon->RCon()->StoreGuiChildRect(NULL);
 			}
 			else
 			{

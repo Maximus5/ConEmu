@@ -46,13 +46,14 @@ class CVConGuard
 {
 private:
 	CVirtualConsole *mp_Ref;
-	void Attach(CVirtualConsole* apRef);
 	
 public:
 	CVConGuard();
 	CVConGuard(CVirtualConsole* apRef);
 	~CVConGuard();
 	void Release();
+
+	bool Attach(CVirtualConsole* apRef);
 	
 
 public:

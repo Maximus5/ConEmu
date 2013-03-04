@@ -43,6 +43,7 @@ CDefaultTerminal::CDefaultTerminal()
 	mh_SignEvent = NULL;
 	mn_PostThreadId = 0;
 	mb_PostCreatedThread = false;
+	mb_Initialized = false;
 	InitializeCriticalSection(&mcs);
 }
 
@@ -147,6 +148,29 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 	}
 }
 
+void CDefaultTerminal::OnHookedListChanged()
+{
+	if (!mb_Initialized)
+		return;
+	if (!isDefaultTerminalAllowed())
+		return;
+
+	EnterCriticalSection(&mcs);
+	ClearProcessed(true);
+	LeaveCriticalSection(&mcs);
+
+	// Если проводника в списке НЕ было, а сейчас появился...
+	// Проверить процесс шелла
+	CheckShellWindow();
+}
+
+bool CDefaultTerminal::isDefaultTerminalAllowed()
+{
+	if (gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
+		return false;
+	return true;
+}
+
 void CDefaultTerminal::PostCreated(bool bWaitForReady /*= false*/, bool bShowErrors /*= false*/)
 {
 	if (!ghWnd)
@@ -158,7 +182,7 @@ void CDefaultTerminal::PostCreated(bool bWaitForReady /*= false*/, bool bShowErr
 		return;
 	}
 
-	if (gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
+	if (!isDefaultTerminalAllowed())
 	{
 		_ASSERTE(bWaitForReady == false);
 		if (bShowErrors && gpConEmu->DisableSetDefTerm)
@@ -224,31 +248,15 @@ void CDefaultTerminal::PostCreated(bool bWaitForReady /*= false*/, bool bShowErr
 		_ASSERTE(hPostThread!=NULL);
 		mb_PostCreatedThread = false;
 	}
+
+	mb_Initialized = true;
 }
 
 DWORD CDefaultTerminal::PostCreatedThread(LPVOID lpParameter)
 {
 	CDefaultTerminal *pTerm = (CDefaultTerminal*)lpParameter;
-	bool bHooked = false;
-	HWND hDesktop = GetDesktopWindow(); //csrss.exe on Windows 8
-	HWND hTrayWnd = FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL);
-	DWORD nDesktopPID = 0, nTrayPID = 0;
 
-	if (!bHooked && hTrayWnd)
-	{
-		if (GetWindowThreadProcessId(hTrayWnd, &nTrayPID) && nTrayPID)
-		{
-			bHooked = pTerm->CheckForeground(hTrayWnd, nTrayPID, false);
-		}
-	}
-
-	if (!bHooked && hDesktop)
-	{
-		if (GetWindowThreadProcessId(hDesktop, &nDesktopPID) && nDesktopPID && (nTrayPID != nDesktopPID))
-		{
-			bHooked = pTerm->CheckForeground(hDesktop, nDesktopPID, false);
-		}
-	}
+	pTerm->CheckShellWindow();
 
 	// Done
 	pTerm->mb_PostCreatedThread = false;
@@ -256,6 +264,46 @@ DWORD CDefaultTerminal::PostCreatedThread(LPVOID lpParameter)
 	return 0;
 }
 
+// Поставить хук в процесс шелла (explorer.exe)
+bool CDefaultTerminal::CheckShellWindow()
+{
+	bool bHooked = false;
+	HWND hDesktop = GetDesktopWindow(); //csrss.exe on Windows 8
+	HWND hShell = GetShellWindow();
+	HWND hTrayWnd = FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL);
+	DWORD nDesktopPID = 0, nShellPID = 0, nTrayPID = 0;
+
+	if (!bHooked && hShell)
+	{
+		if (GetWindowThreadProcessId(hShell, &nShellPID) && nShellPID)
+		{
+			bHooked = CheckForeground(hShell, nShellPID, false);
+		}
+	}
+
+	if (!bHooked && hTrayWnd)
+	{
+		if (GetWindowThreadProcessId(hTrayWnd, &nTrayPID) && nTrayPID
+			&& (nTrayPID != nShellPID))
+		{
+			bHooked = CheckForeground(hTrayWnd, nTrayPID, false);
+		}
+	}
+
+	if (!bHooked && hDesktop)
+	{
+		if (GetWindowThreadProcessId(hDesktop, &nDesktopPID) && nDesktopPID
+			&& (nDesktopPID != nTrayPID) && (nDesktopPID != nShellPID))
+		{
+			bHooked = CheckForeground(hDesktop, nDesktopPID, false);
+		}
+	}
+
+	return bHooked;
+}
+
+// Чтобы избежать возможного зависания в процессе установки
+// хука в процесс шелла (explorer.exe) при старте ConEmu
 DWORD CDefaultTerminal::PostCheckThread(LPVOID lpParameter)
 {
 	bool bRc = false;
@@ -268,9 +316,11 @@ DWORD CDefaultTerminal::PostCheckThread(LPVOID lpParameter)
 	return bRc;
 }
 
+// Проверка окна переднего плана. Если оно принадлежит к хукаемым процесса - вставить хук.
+// ДИАЛОГИ НЕ ПРОВЕРЯЮТСЯ
 bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread /*= true*/)
 {
-	if (gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
+	if (!isDefaultTerminalAllowed())
 		return false;
 
 	bool lbRc = false;
@@ -422,7 +472,7 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 		goto wrap;
 	}
 
-	_ASSERTE(gpSet->isSetDefaultTerminal && !gpConEmu->DisableSetDefTerm);
+	_ASSERTE(isDefaultTerminalAllowed());
 
 	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, nForePID);
 	if (!hProcess)

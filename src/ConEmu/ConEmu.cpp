@@ -2869,7 +2869,7 @@ CConEmuMain::~CConEmuMain()
 #endif
 
 /*!!!static!!*/
-void CConEmuMain::AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand/*=FALSE*/)
+void CConEmuMain::AddMargins(RECT& rc, const RECT& rcAddShift, BOOL abExpand/*=FALSE*/)
 {
 	if (!abExpand)
 	{
@@ -11695,8 +11695,16 @@ void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 void CConEmuMain::OnTaskbarCreated()
 {
 	Icon.OnTaskbarCreated();
-	if (mp_DragDrop)
-		mp_DragDrop->OnTaskbarCreated();
+
+	// Т.к. создан TaskBar - нужно (пере)создать интерфейсы
+	Taskbar_Release();
+	Taskbar_Init();
+
+	// И передернуть все TaskBarGhost
+	CVConGroup::OnTaskbarCreated();
+
+	// Dummy
+	if (mp_DragDrop) mp_DragDrop->OnTaskbarCreated();
 }
 
 void CConEmuMain::OnTaskbarButtonCreated()
@@ -11724,6 +11732,14 @@ void CConEmuMain::OnTaskbarButtonCreated()
 			SetTimer(ghWnd, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE, NULL);
 		}
 	}
+}
+
+void CConEmuMain::OnDefaultTermChanged()
+{
+	if (!this || !mp_DefTrm)
+		return;
+
+	mp_DefTrm->OnHookedListChanged();
 }
 
 void CConEmuMain::OnTaskbarSettingsChanged()
@@ -12638,6 +12654,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	int iProcessDeadChars = 0;
 	//static bool bWasDeadChar = false;
 	//static LPARAM nDeadCharLParam = 0;
+	MSG DeadCharMsg = {};
 
 	if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN)
 	{
@@ -12695,6 +12712,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 					_ASSERTE(iProcessDeadChars==0 && "Must be first entrance");
 					//lbDeadChar = TRUE;
 					iProcessDeadChars = 1;
+					DeadCharMsg = msg;
 				}
 				else if (msg.message == WM_KEYDOWN)
 				{
@@ -12900,7 +12918,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	CVConGuard VCon;
 	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
 	{
-		VCon->RCon()->OnKeyboard(hWnd, messg, wParam, lParam, szTranslatedChars);
+		_ASSERTE(iProcessDeadChars==0 || iProcessDeadChars==1);
+		VCon->RCon()->OnKeyboard(hWnd, messg, wParam, lParam, szTranslatedChars, iProcessDeadChars?&DeadCharMsg:NULL);
 	}
 	else if (((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST))
 	{

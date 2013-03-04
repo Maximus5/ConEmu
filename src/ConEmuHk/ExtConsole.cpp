@@ -1156,6 +1156,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				if (ScrollRegion && (ScrollBottom < csbi.dwSize.Y))
 				{
 					y2 = ScrollBottom - 1;
+					_ASSERTEX((int)y2 == (int)(ScrollBottom - 1));
 					
 					crScrollCursor.X = x2;
 					crScrollCursor.Y = y2;

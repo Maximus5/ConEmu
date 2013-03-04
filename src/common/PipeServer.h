@@ -496,6 +496,11 @@ struct PipeServer
 				pPipe->cbReadSize = cbRead;
 				PLOG("PipeServerRead.memmoved");
 			}
+			else if (cbWholeSize >= 0x7FFFFFFF)
+			{
+				_ASSERTEX(cbWholeSize < 0x7FFFFFFF);
+				return FALSE;
+			}
 			else
 			{
 				int nAllSize = cbWholeSize;
