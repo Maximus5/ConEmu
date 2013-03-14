@@ -1352,6 +1352,7 @@ void CDragDropData::RetrieveDragToInfo(POINTL pt)
 		|| ((pVCon = VCon.VCon()) == NULL)
 		|| ((pRCon = pVCon->RCon()) == NULL))
 	{
+		DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo() -> NULL\n");
 		SetDragToInfo(NULL, 0, NULL);
 		return;
 	}
@@ -1364,10 +1365,13 @@ void CDragDropData::RetrieveDragToInfo(POINTL pt)
 	if (nFarPID == 0)
 	{
 		//SetDragToInfo(NULL, 0, pRCon);
+		DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo() -> (nFarPID == 0)\n");
 	}
 	else if (!pRCon->isAlive())
 	{
+		DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo() -> (!pRCon->isAlive())\n");
 		gpConEmu->DebugStep(_T("DnD: Far is not alive, drop disabled"));
+		_ASSERTE(FALSE && "DnD: Far is not alive, drop disabled");
 		//SetDragToInfo(NULL, 0, pRCon);
 	}
 	else
@@ -1406,8 +1410,24 @@ void CDragDropData::RetrieveDragToInfo(POINTL pt)
 							free(pBuf);
 						}
 					}
+					else
+					{
+						DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo() -> cbStructSize failed\n");
+					}
+				}
+				else
+				{
+					DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo() -> pipe.Read failed\n");
 				}
 			}
+			else
+			{
+				DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo() -> pipe.Execute failed\n");
+			}
+		}
+		else
+		{
+			DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo() -> pipe.Init failed\n");
 		}
 
 		gpConEmu->DebugStep(NULL);

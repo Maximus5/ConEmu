@@ -11,6 +11,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.03.14
+[%] Issue 858: Drop files to Far panels failed second time.
+[*] Some internal changes.
+
+
 2013.03.13
 [%] Scrollbar was not appears/works when mouse was over padding on right edge.
 [+] Updated debug switch: "ConEmuC /debugtree <command_line>".

@@ -4499,6 +4499,12 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			// Собственно данные
 			for (nY = 0; nY < nYMax; nY++)
 			{
+				if ((pszSrcStart != con.pConChar) || (pnSrcStart != con.pConAttr))
+				{
+					Assert(pszSrcStart==con.pConChar && pnSrcStart==con.pConAttr);
+					break;
+				}
+
 				if (nY == 1) lcaTable = lcaTableExt;
 
 				// Текст

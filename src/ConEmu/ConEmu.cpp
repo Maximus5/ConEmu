@@ -97,6 +97,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
 #define DEBUGSTRMSG(s) //DEBUGSTR(s)
 #define DEBUGSTRANIMATE(s) //DEBUGSTR(s)
+#define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -759,7 +760,7 @@ void LogFocusInfo(LPCWSTR asInfo, int Level/*=1*/)
 		wchar_t szFull[255];
 		lstrcpyn(szFull, asInfo, countof(szFull)-3);
 		wcscat_c(szFull, L"\n");
-		DEBUGSTR(szFull);
+		DEBUGSTRFOCUS(szFull);
 	}
 	#endif
 }

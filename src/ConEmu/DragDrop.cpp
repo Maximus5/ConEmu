@@ -49,9 +49,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTROVL(s) //DEBUGSTR(s)
 #define DEBUGSTRBACK(s) //DEBUGSTR(s)
-#define DEBUGSTROVER(s) DEBUGSTR(s)
+#define DEBUGSTROVER(s) //DEBUGSTR(s)
 #define DEBUGSTRSTEP(s) //DEBUGSTR(s)
 #define DEBUGSTROVERINT(s) //DEBUGSTR(s)
+#define DEBUGSTRFAR(s) //DEBUGSTR(s)
 
 
 #define DUMP_DRAGGED_ITEMS_INFO
@@ -78,7 +79,7 @@ CDragDrop::CDragDrop()
 
 void CDragDrop::DebugLog(LPCWSTR asInfo, BOOL abErrorSeverity/*=FALSE*/)
 {
-	gpConEmu->DebugStep(asInfo);
+	gpConEmu->DebugStep(asInfo, abErrorSeverity);
 	if (asInfo)
 	{
 		DEBUGSTRSTEP(asInfo);
@@ -1457,7 +1458,12 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	// Drag over inactive pane?
 	if (NeedRefreshToInfo(pt))
 	{
+		DEBUGSTRFAR(L"DragOver: NeedRefreshToInfo -> RetrieveDragToInfo");
 		RetrieveDragToInfo(pt);
+	}
+	else
+	{
+		DEBUGSTRFAR(L"DragOver: skipping RetrieveDragToInfo");
 	}
 
 	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
@@ -1650,15 +1656,22 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 
 	//bool bNeedLoadImg = false;
 
-	if (gpSet->isDropEnabled /*&& !mb_selfdrag*/ && NeedRefreshToInfo(pt))
+	// При "DragEnter" считывать информацию из фара нужно всегда
+	if (gpSet->isDropEnabled /*&& !mb_selfdrag*/ /*&& NeedRefreshToInfo(pt)*/)
 	{
+		DEBUGSTRFAR(L"DragEnter: NeedRefreshToInfo -> RetrieveDragToInfo");
 		// при "своем" драге - информация уже получена
 		RetrieveDragToInfo(pt);
 	}
 	else if (!m_pfpi)
 	{
+		DEBUGSTRFAR(L"DragEnter: (!m_pfpi) -> RetrieveDragToInfo");
 		_ASSERTE(m_pfpi!=NULL); // Must be retrieved already!
 		RetrieveDragToInfo(pt);
+	}
+	else
+	{
+		DEBUGSTRFAR(L"DragEnter: skipping RetrieveDragToInfo");
 	}
 
 	// Скорректировать допустимые действия
