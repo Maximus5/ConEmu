@@ -2061,7 +2061,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		{
 		wchar_t* pszApps = NULL;
 		reg->Load(L"DefaultTerminalApps", &pszApps);
-		SetDefaultTerminalApps(pszApps); // "|"-delimited string -> MSZ
+		SetDefaultTerminalApps((pszApps && *pszApps) ? pszApps : DEFAULT_TERMINAL_APPS); // "|"-delimited string -> MSZ
 		SafeFree(pszApps);
 		}
 
@@ -4752,7 +4752,7 @@ void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
 	if (!apszApps || !*apszApps)
 	{
 		_ASSERTE(apszApps && *apszApps);
-		apszApps = L"explorer.exe";
+		apszApps = DEFAULT_TERMINAL_APPS/*L"explorer.exe"*/;
 	}
 
 	// "|" delimited String -> MSZ

@@ -1346,7 +1346,7 @@ void CStatus::ShowStatusSetupMenu()
 	mb_InPopupMenu = false;
 }
 
-void CStatus::OnDataChanged(CEStatusItems *ChangedID, size_t Count, bool abForceOnChange /*= false*/)
+bool CStatus::OnDataChanged(CEStatusItems *ChangedID, size_t Count, bool abForceOnChange /*= false*/)
 {
 	//if (!mb_Invalidated && IsKeyboardChanged())
 	//{
@@ -1363,11 +1363,13 @@ void CStatus::OnDataChanged(CEStatusItems *ChangedID, size_t Count, bool abForce
 				if (lstrcmp(m_Items[i].sText, m_Values[ChangedID[k]].sText) != 0)
 				{
 					UpdateStatusBar(abForceOnChange);
-					return;
+					return true;
 				}
 			}
 		}
 	}
+
+	return false;
 }
 
 void CStatus::OnWindowReposition(const RECT *prcNew)
@@ -1419,7 +1421,11 @@ void CStatus::OnWindowReposition(const RECT *prcNew)
 
 	CEStatusItems Changed[] = {csi_WindowPos, csi_WindowSize, csi_WindowClient, csi_WindowWork};
 	// -- обновл€ем сразу, иначе получаютс€ странные эффекты "отставани€" статуса от размера окна...
-	OnDataChanged(Changed, countof(Changed), true);
+	if (!OnDataChanged(Changed, countof(Changed), true))
+	{
+		// –азмер окна изменилс€ - даже если колонки не мен€лись, все равно нужно отрисоватьс€
+		InvalidateStatusBar();
+	}
 }
 
 // bForceUpdate надо ставить в true, после изменени€ размеров консоли! „тобы при ресайзе

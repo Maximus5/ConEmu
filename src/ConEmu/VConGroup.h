@@ -106,6 +106,8 @@ public:
 	static bool isVConExists(int nIdx);
 	static bool isInGroup(CVirtualConsole* apVCon, CVConGroup* apGroup);
 	static bool isConSelectMode();
+	static bool isInCreateRoot();
+	static bool isDetached();
 	static bool isFilePanel(bool abPluginAllowed=false);
 	static bool isNtvdm(BOOL abCheckAllConsoles=FALSE);
 	static bool isOurConsoleWindow(HWND hCon);

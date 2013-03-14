@@ -128,6 +128,8 @@ enum TabStyle
 	ts_Win8   = 1,
 };
 
+#define DEFAULT_TERMINAL_APPS L"explorer.exe"
+
 struct Settings
 {
 	public:

@@ -2,6 +2,7 @@ NAME = ConEmuCD
 SRCS = ConsoleMain.cpp \
        ConEmuCmd.cpp \
        ConEmuSrv.cpp \
+       Debugger.cpp \
        GuiHooks.cpp \
        Infiltrate.cpp \
        InjectRemote.cpp \

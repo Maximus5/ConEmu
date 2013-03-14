@@ -1595,6 +1595,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Debugger.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\ConEmuCheck.h"
 				>
 			</File>
@@ -1720,6 +1724,10 @@
 			</File>
 			<File
 				RelativePath=".\ConEmuSrv.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Debugger.cpp"
 				>
 			</File>
 			<File

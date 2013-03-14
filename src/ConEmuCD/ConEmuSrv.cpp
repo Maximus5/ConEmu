@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Execute.h"
 #include "../common/MStrSafe.h"
 #include "../common/WinConsole.h"
-#include "TokenHelper.h"
+//#include "TokenHelper.h"
 #include "SrvPipes.h"
 #include "Queue.h"
 
@@ -249,14 +249,14 @@ bool IsAutoAttachAllowed()
 	return true;
 }
 
-// Вызывается при запуске сервера: (gbNoCreateProcess && (gbAttachMode || gpSrv->bDebuggerActive))
+// Вызывается при запуске сервера: (gbNoCreateProcess && (gbAttachMode || gpSrv->DbgInfo.bDebuggerActive))
 int AttachRootProcess()
 {
 	DWORD dwErr = 0;
 
 	_ASSERTE((gpSrv->hRootProcess == NULL || gpSrv->hRootProcess == GetCurrentProcess()) && "Must not be opened yet");
 
-	if (!gpSrv->bDebuggerActive && !IsWindowVisible(ghConWnd) && !(gpSrv->dwGuiPID || gbAttachFromFar))
+	if (!gpSrv->DbgInfo.bDebuggerActive && !IsWindowVisible(ghConWnd) && !(gpSrv->dwGuiPID || gbAttachFromFar))
 	{
 		PRINT_COMSPEC(L"Console windows is not visible. Attach is unavailable. Exiting...\n", 0);
 		DisableAutoConfirmExit();
@@ -268,15 +268,15 @@ int AttachRootProcess()
 		return CERR_RUNNEWCONSOLE;
 	}
 
-	if (gpSrv->dwRootProcess == 0 && !gpSrv->bDebuggerActive)
+	if (gpSrv->dwRootProcess == 0 && !gpSrv->DbgInfo.bDebuggerActive)
 	{
 		// Нужно попытаться определить PID корневого процесса.
 		// Родительским может быть cmd (comspec, запущенный из FAR)
 		DWORD dwParentPID = 0, dwFarPID = 0;
 		DWORD dwServerPID = 0; // Вдруг в этой консоли уже есть сервер?
-		_ASSERTE(!gpSrv->bDebuggerActive);
+		_ASSERTE(!gpSrv->DbgInfo.bDebuggerActive);
 
-		if (gpSrv->nProcessCount >= 2 && !gpSrv->bDebuggerActive)
+		if (gpSrv->nProcessCount >= 2 && !gpSrv->DbgInfo.bDebuggerActive)
 		{
 			HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
 
@@ -420,7 +420,7 @@ int AttachRootProcess()
 	}
 	else
 	{
-		int iAttachRc = AttachDebuggingProcess();
+		int iAttachRc = AttachRootProcessHandle();
 		if (iAttachRc != 0)
 			return iAttachRc;
 	}
@@ -580,7 +580,7 @@ wrap:
 }
 
 // Дернуть ConEmu, чтобы он отдал HWND окна отрисовки
-// (!gbAttachMode && !gpSrv->bDebuggerActive)
+// (!gbAttachMode && !gpSrv->DbgInfo.bDebuggerActive)
 int ServerInitGuiTab()
 {
 	int iRc = 0;
@@ -899,7 +899,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 
 	// Шрифт в консоли нужно менять в самом начале, иначе могут быть проблемы с установкой размера консоли
-	if ((anWorkMode == 0) && !gpSrv->bDebuggerActive && !gbNoCreateProcess)
+	if ((anWorkMode == 0) && !gpSrv->DbgInfo.bDebuggerActive && !gbNoCreateProcess)
 		//&& (!gbNoCreateProcess || (gbAttachMode && gbNoCreateProcess && gpSrv->dwRootProcess))
 		//)
 	{
@@ -951,7 +951,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	// при показе консоли через Ctrl+Win+Alt+Space
 	// Но вот если консоль уже видима, и это "/root", тогда
 	// попытаемся поставить окну консоли флаг "OnTop"
-	if (!gbNoCreateProcess && !gbDebugProcess && !gbIsWine /*&& !gnDefPopupColors*/)
+	if (!gbNoCreateProcess && !gpSrv->DbgInfo.bDebugProcess && !gbIsWine /*&& !gnDefPopupColors*/)
 	{
 		//if (!gbVisibleOnStartup)
 		//	ShowWindow(ghConWnd, SW_HIDE);
@@ -986,7 +986,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 
 	//2009-08-27 Перенес снизу
-	if (!gpSrv->hConEmuGuiAttached && (!gbDebugProcess || gpSrv->dwGuiPID || gpSrv->hGuiWnd))
+	if (!gpSrv->hConEmuGuiAttached && (!gpSrv->DbgInfo.bDebugProcess || gpSrv->dwGuiPID || gpSrv->hGuiWnd))
 	{
 		wchar_t szTempName[MAX_PATH];
 		_wsprintf(szTempName, SKIPLEN(countof(szTempName)) CEGUIRCONSTARTED, (DWORD)ghConWnd); //-V205
@@ -1057,7 +1057,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	// в принципе, серверный режим может быть вызван из фара, чтобы подцепиться к GUI.
 	// больше двух процессов в консоли вполне может быть, например, еще не отвалился
 	// предыдущий conemuc.exe, из которого этот запущен немодально.
-	_ASSERTE(gpSrv->bDebuggerActive || (gpSrv->nProcessCount<=2) || ((gpSrv->nProcessCount>2) && gbAttachMode && gpSrv->dwRootProcess));
+	_ASSERTE(gpSrv->DbgInfo.bDebuggerActive || (gpSrv->nProcessCount<=2) || ((gpSrv->nProcessCount>2) && gbAttachMode && gpSrv->dwRootProcess));
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
 	gpSrv->hInputEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	gpSrv->hInputWasRead = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -1110,7 +1110,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 
 
-	if (!gbAttachMode && !gpSrv->bDebuggerActive)
+	if (!gbAttachMode && !gpSrv->DbgInfo.bDebuggerActive)
 	{
 		DumpInitStatus("\nServerInit: ServerInitGuiTab");
 		iRc = ServerInitGuiTab();
@@ -1120,7 +1120,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 
 	// Если "корневой" процесс консоли запущен не нами (аттач или дебаг)
 	// то нужно к нему "подцепиться" (открыть HANDLE процесса)
-	if (gbNoCreateProcess && (gbAttachMode || (gpSrv->bDebuggerActive && (gpSrv->hRootProcess == NULL))))
+	if (gbNoCreateProcess && (gbAttachMode || (gpSrv->DbgInfo.bDebuggerActive && (gpSrv->hRootProcess == NULL))))
 	{
 		DumpInitStatus("\nServerInit: AttachRootProcess");
 		iRc = AttachRootProcess();
@@ -1261,7 +1261,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	//DumpInitStatus("\nServerInit: UpdateConsoleMapHeader");
 	UpdateConsoleMapHeader();
 
-	if (!gpSrv->bDebuggerActive)
+	if (!gpSrv->DbgInfo.bDebuggerActive)
 	{
 		DumpInitStatus("\nServerInit: SendStarted");
 		SendStarted();
@@ -1381,11 +1381,11 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	}
 
 	// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется
-	if (gpSrv->bDebuggerActive)
+	if (gpSrv->DbgInfo.bDebuggerActive)
 	{
 		if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(gpSrv->dwRootProcess);
 
-		gpSrv->bDebuggerActive = FALSE;
+		gpSrv->DbgInfo.bDebuggerActive = FALSE;
 	}
 
 
@@ -2181,7 +2181,7 @@ void CheckConEmuHwnd()
 	//HWND hWndFocus = GetFocus();
 	DWORD dwGuiThreadId = 0;
 
-	if (gpSrv->bDebuggerActive)
+	if (gpSrv->DbgInfo.bDebuggerActive)
 	{
 		HWND  hDcWnd = NULL;
 		ghConEmuWnd = FindConEmuByPID();
@@ -4067,7 +4067,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 		// Если можем - проверим текущую раскладку в консоли
 		// 120507 - Если крутится альт.сервер - то игнорировать
-		if (!nAltWait && !gpSrv->bDebuggerActive)
+		if (!nAltWait && !gpSrv->DbgInfo.bDebuggerActive)
 		{
 			if (pfnGetConsoleKeyboardLayoutName)
 				CheckKeyboardLayout();
@@ -4077,7 +4077,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		/* Перечитать консоль */
 		/* ****************** */
 		// 120507 - Если крутится альт.сервер - то игнорировать
-		if (!nAltWait && !gpSrv->bDebuggerActive)
+		if (!nAltWait && !gpSrv->DbgInfo.bDebuggerActive)
 		{
 			bool lbReloadNow = true;
 			#if defined(TEST_REFRESH_DELAYED)

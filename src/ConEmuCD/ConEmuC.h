@@ -102,8 +102,6 @@ enum SetTerminateEventPlace
 extern SetTerminateEventPlace gTerminateEventPlace;
 void SetTerminateEvent(SetTerminateEventPlace eFrom);
 
-int AttachDebuggingProcess();
-
 /*  Global  */
 extern DWORD   gnSelfPID;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
@@ -370,7 +368,6 @@ extern RunMode gnRunMode;
 
 extern BOOL gbDumpServerInitStatus;
 extern BOOL gbNoCreateProcess;
-extern BOOL gbDebugProcess;
 extern int  gnCmdUnicodeMode;
 extern BOOL gbUseDosBox;
 extern BOOL gbRootIsCmdExe;
@@ -402,12 +399,13 @@ struct AltServerInfo
 	DWORD  nPrevPID;
 };
 
+#include "Debugger.h"
+
 struct SrvInfo
 {
 	HANDLE hRootProcess, hRootThread;
 	DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
 	DWORD dwParentFarPID;
-	LPWSTR pszDebuggingCmdLine;
 
 	HANDLE hMainServer; DWORD dwMainServerPID;
 	HANDLE hServerStartedEvent;
@@ -418,7 +416,7 @@ struct SrvInfo
 
 	HANDLE hFreezeRefreshThread;
 	HWND   hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
-	BOOL   bDebuggerActive, bDebuggerRequestDump; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
+	DebuggerInfo DbgInfo;
 	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
 	DWORD  dwGuiAID; // ConEmu internal ID of started CRealConsole
 	HWND   hGuiWnd; // передается через аргумент "/GHWND=%08X", чтобы окно не искать
@@ -559,6 +557,8 @@ extern OSVERSIONINFO gOSVer;
 extern WORD gnOsVer;
 extern bool gbIsWine;
 extern bool gbIsDBCS;
+extern BOOL gbRootAliveLess10sec;
+extern BOOL	gbTerminateOnCtrlBreak;
 
 extern HMODULE ghOurModule;
 
@@ -566,6 +566,7 @@ extern HMODULE ghOurModule;
 #define CHECK_IDLE_TIMEOUT 250 /* 1000 / 4 */
 #define USER_ACTIVITY ((gnBufferHeight == 0) || ((GetTickCount() - gpSrv->dwLastUserTick) <= USER_IDLE_TIMEOUT))
 
+void PrintVersion();
 
 //#pragma pack(push, 1)
 //extern CESERVER_CONSAVE* gpStoredOutput;

@@ -132,15 +132,14 @@ public:
 
 		if (prev != NULL)
 		{
-			while (iFrom < mn_MaxCount)
+			while ((size_t)(++iFrom) < mn_MaxCount)
 			{
 				if (mp_Items[iFrom].used && (mp_Items[iFrom].key == *prev))
 					break;
-				iFrom++;
 			}
 		}
 
-		for (INT_PTR i = iFrom+1; i < mn_MaxCount; i++)
+		for (size_t i = iFrom+1; i < mn_MaxCount; i++)
 		{
 			if (mp_Items[i].used)
 			{
@@ -148,7 +147,7 @@ public:
 					*next_key = mp_Items[i].key;
 
 				if (next_val)
-					*val = mp_Items[i].val;
+					*next_val = mp_Items[i].val;
 
 				return true;
 			}

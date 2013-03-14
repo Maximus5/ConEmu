@@ -296,6 +296,12 @@ void TabBarClass::Retrieve()
 	//}
 }
 
+int TabBarClass::GetTabIcon(bool bAdmin)
+{
+	int iIconIdx = (bAdmin && gpSet->bAdminShield) ? mn_AdminIcon : -1;
+	return iIconIdx;
+}
+
 // ƒобавл€ет закладку, или мен€ет (при необходимости) заголовок существующей
 void TabBarClass::AddTab(LPCWSTR text, int i, bool bAdmin)
 {
@@ -306,7 +312,7 @@ void TabBarClass::AddTab(LPCWSTR text, int i, bool bAdmin)
 		tie.mask = TCIF_TEXT | (mh_TabIcons ? TCIF_IMAGE : 0);
 		tie.iImage = -1;
 		tie.pszText = (LPWSTR)text ;
-		tie.iImage = bAdmin ? mn_AdminIcon : -1; // ѕока иконка только одна - дл€ табов со щитом
+		tie.iImage = GetTabIcon(bAdmin); // ѕока иконка только одна - дл€ табов со щитом
 		int nCurCount = GetItemCount();
 
 		if (i>=nCurCount)

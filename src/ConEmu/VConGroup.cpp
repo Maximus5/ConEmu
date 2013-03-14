@@ -1396,6 +1396,34 @@ bool CVConGroup::isConSelectMode()
 	return false;
 }
 
+bool CVConGroup::isInCreateRoot()
+{
+	CVConGuard VCon;
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		if (VCon.Attach(gp_VCon[i]))
+		{
+			if (VCon->RCon()->InCreateRoot())
+				return true;
+		}
+	}
+	return false;
+}
+
+bool CVConGroup::isDetached()
+{
+	CVConGuard VCon;
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		if (VCon.Attach(gp_VCon[i]))
+		{
+			if (VCon->RCon()->isDetached())
+				return true;
+		}
+	}
+	return false;
+}
+
 bool CVConGroup::isFilePanel(bool abPluginAllowed/*=false*/)
 {
 	if (!gp_VActive) return false;
@@ -1592,9 +1620,11 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 		{
 			
 			HWND hView = VCon->GetView();
-			if (hView)
+			HWND hBack = VCon->GetBack();
+			if (hView && hBack)
 			{
-				RECT rcView; GetWindowRect(hView, &rcView);
+				// Check hBack, because it is larger and ScrollBar may lie outside of hView
+				RECT rcView; GetWindowRect(hBack, &rcView);
 
 				if (PtInRect(&rcView, ptScreen))
 				{
@@ -1606,7 +1636,7 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 			}
 			else
 			{
-				_ASSERTE(FALSE && "(hView = VCon->GetView()) != NULL");
+				_ASSERTE((hView && hBack) && "(hView = VCon->GetView()) != NULL");
 			}
 		}
 	}

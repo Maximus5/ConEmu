@@ -83,6 +83,7 @@ class TabBarClass //: public CToolTip
 		HFONT mh_TabFont;
 		TOOLINFO tiBalloon; wchar_t ms_TabErrText[512];
 		HIMAGELIST mh_TabIcons; int mn_AdminIcon;
+		int GetTabIcon(bool bAdmin);
 		//struct CmdHistory
 		//{
 		//	int nCmd;

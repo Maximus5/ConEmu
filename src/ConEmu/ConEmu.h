@@ -722,6 +722,7 @@ class CConEmuMain :
 		void SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout);
 		//void TabCommand(UINT nTabCmd);
 		BOOL TrackMouse();
+		void SetSkipMouseEvent(UINT nMsg1, UINT nMsg2, UINT nReplaceDblClk);
 		//int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, HWND hWnd, RECT *prcRect = NULL);
 		void Update(bool isForce = false);
 		void UpdateActiveGhost(CVirtualConsole* apVCon);
@@ -739,6 +740,7 @@ class CConEmuMain :
 		static LRESULT CALLBACK WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		BOOL isDialogMessage(MSG &Msg);
 		//LPCWSTR MenuAccel(int DescrID, LPCWSTR asText);
+		BOOL setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		void OnAltEnter();

@@ -11,6 +11,15 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.03.13
+[%] Scrollbar was not appears/works when mouse was over padding on right edge.
+[+] Updated debug switch: "ConEmuC /debugtree <command_line>".
+[%] Flickering when starting Quake mode in TSA.
+[%] Drawing artefacts in the Status bar when resizing window.
+[%] Issue 969: Disabling "Multiple consoles in one ConEmu window" has no effect for "Default terminal".
+[*] The continue of "/debugtree".
+
+
 2013.03.04
 [%] Regression: GUI applications attach failed.
 [%] Issue 971: Sending dead chars to child GUI applications.

@@ -3707,7 +3707,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 						if (!pszApps || !*pszApps)
 						{
 							SafeFree(pszApps);
-							pszApps = lstrdup(L"explorer.exe");
+							pszApps = lstrdup(DEFAULT_TERMINAL_APPS/*L"explorer.exe"*/);
 							SetDlgItemText(hWnd2, tDefaultTerminal, pszApps);
 						}
 						gpSet->SetDefaultTerminalApps(pszApps);

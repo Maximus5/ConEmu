@@ -199,11 +199,11 @@ bool CAttachDlg::OnStartAttach()
 		goto wrap;
 	}
 
-	// „тобы клик от мышки в консоль не провалилс€
-	WARNING(" лик от мышки в консоль проваливаетс€");
-	gpConEmu->mouse.nSkipEvents[0] = WM_LBUTTONUP;
-	gpConEmu->mouse.nSkipEvents[1] = 0;
-	gpConEmu->mouse.nReplaceDblClk = 0;
+	//// „тобы клик от мышки в консоль не провалилс€
+	//WARNING(" лик от мышки в консоль проваливаетс€");
+	//gpConEmu->mouse.nSkipEvents[0] = WM_LBUTTONUP;
+	//gpConEmu->mouse.nSkipEvents[1] = 0;
+	//gpConEmu->mouse.nReplaceDblClk = 0;
 
 	// ¬се, диалог закрываем, чтобы не мешалс€
 	Close();
@@ -552,6 +552,14 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 				if (lpnmitem->hdr.code == (UINT)NM_DBLCLK)
 				{
 					PostMessage(hDlg, WM_COMMAND, IDOK, 0);
+
+					// ≈сли мышка над консолью - то клик (LBtnUp) может в нее провалитьс€, а не должен
+					POINT ptCur; GetCursorPos(&ptCur);
+					RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+					if (PtInRect(&rcWnd, ptCur))
+					{
+						gpConEmu->SetSkipMouseEvent(WM_MOUSEMOVE, WM_LBUTTONUP, 0);
+					}
 				}
 			}
 			break;
@@ -627,6 +635,15 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	{
 		MBoxAssert(ahAttachWnd && anPID && anBits && anType);
 		goto wrap;
+	}
+
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szInfo[128];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+			L"CAttachDlg::StartAttach HWND=x%08X, PID=%u, Bits%u, Type=%u, AltMode=%u",
+			(DWORD)(DWORD_PTR)ahAttachWnd, anPID, anBits, (UINT)anType, abAltMode);
+		gpConEmu->LogString(szInfo);
 	}
 
 	if (LoadSrvMapping(ahAttachWnd, srv))

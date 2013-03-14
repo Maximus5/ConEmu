@@ -816,6 +816,7 @@
     <ClInclude Include="ConEmuC.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConsoleRead.h" />
+    <ClInclude Include="Debugger.h" />
     <ClInclude Include="..\common\defines.h" />
     <ClInclude Include="..\common\Execute.h" />
     <ClInclude Include="ExitCodes.h" />
@@ -1124,6 +1125,7 @@
     <ClCompile Include="ConEmuCmd.cpp" />
     <ClCompile Include="ConEmuSrv.cpp" />
     <ClCompile Include="ConsoleMain.cpp" />
+    <ClCompile Include="Debugger.cpp" />
     <ClCompile Include="..\common\Execute.cpp" />
     <ClCompile Include="GuiHooks.cpp" />
     <ClCompile Include="Infiltrate.cpp">

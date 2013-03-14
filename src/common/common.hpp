@@ -1372,6 +1372,7 @@ enum SingleInstanceShowHideType
 	sih_Minimize = 6,
 	sih_AutoHide = 7,
 	sih_QuakeShowHide = 8,
+	sih_StartDetached = 9,
 };
 
 struct CESERVER_REQ_NEWCMD // CECMD_NEWCMD

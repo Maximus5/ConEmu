@@ -4835,7 +4835,8 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				LogString(szInfo);
 			}
 
-			SetWindowPos(ghWnd, NULL, rcNew.left, rcNew.top, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top, SWP_NOZORDER);
+			setWindowPos(NULL, rcNew.left, rcNew.top, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top, SWP_NOZORDER);
+
 			#ifdef _DEBUG
 			GetWindowPlacement(ghWnd, &wpl);
 			#endif
@@ -4910,7 +4911,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 					DEBUGTEST(WINDOWPLACEMENT wpl2 = {sizeof(wpl2)}; GetWindowPlacement(ghWnd, &wpl2););
 					if (changeFromWindowMode == wmFullScreen)
 					{
-						SetWindowPos(ghWnd, HWND_TOP, 
+						setWindowPos(HWND_TOP, 
 							rcMax.left, rcMax.top, 
 							rcMax.right-rcMax.left, rcMax.bottom-rcMax.top,
 							SWP_NOCOPYBITS|SWP_SHOWWINDOW);
@@ -5041,10 +5042,10 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			// ptFullScreenSize содержит "скорректированный" размер (он больше монитора)
 			UpdateWindowRgn(rcFrame.left, rcFrame.top,
 				            mi.rcMonitor.right-mi.rcMonitor.left, mi.rcMonitor.bottom-mi.rcMonitor.top);
-			/* */ SetWindowPos(ghWnd, NULL,
-				                -rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top,
-				                ptFullScreenSize.x,ptFullScreenSize.y,
-				                SWP_NOZORDER);
+			setWindowPos(NULL,
+			                -rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top,
+			                ptFullScreenSize.x,ptFullScreenSize.y,
+			                SWP_NOZORDER);
 
 			gpSetCls->UpdateWindowMode(wmFullScreen);
 
@@ -7958,6 +7959,16 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				// "ShowHide" must be "sih_None"
 
 				pIn->NewCmd.ShowHide = gpSetCls->SingleInstanceShowHide;
+				if (gpSetCls->SingleInstanceShowHide == sih_None)
+				{
+					if (gpConEmu->mb_StartDetached)
+						pIn->NewCmd.ShowHide = sih_StartDetached;
+				}
+				else
+				{
+					_ASSERTE(gpConEmu->mb_StartDetached==FALSE);
+				}
+
 				GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
 
 				//GetModuleFileName(NULL, pIn->NewCmd.szConEmu, countof(pIn->NewCmd.szConEmu));
@@ -9924,6 +9935,38 @@ bool CConEmuMain::isCloseConfirmed()
 	return gpSet->isCloseConsoleConfirm ? mb_CloseGuiConfirmed : true;
 }
 
+BOOL CConEmuMain::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
+{
+	BOOL lbRc;
+
+	bool bInCreate = InCreateWindow();
+	bool bPrevIgnore = mb_IgnoreQuakeActivation;
+	bool bQuake = gpSet->isQuakeStyle && !(gpSet->isDesktopMode || mp_Inside);
+
+	if (bInCreate)
+	{
+		if (WindowStartTSA || (WindowStartMinimized && gpSet->isMinToTray()))
+		{
+			uFlags |= SWP_NOACTIVATE;
+			uFlags &= ~SWP_SHOWWINDOW;
+		}
+
+		if (bQuake)
+		{
+			mb_IgnoreQuakeActivation = true;
+		}
+	}
+
+	lbRc = SetWindowPos(ghWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
+
+	if (bInCreate && bQuake)
+	{
+		mb_IgnoreQuakeActivation = bPrevIgnore;
+	}
+
+	return lbRc;
+}
+
 LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 {
 	_ASSERTE(ghWnd == hWnd); // ”же должно было быть выставлено (CConEmuMain::MainWndProc)
@@ -10043,7 +10086,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		if ((WindowMode == wmNormal) && !mp_Inside)
 		{
 			RECT rcWnd = GetDefaultRect();
-			SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOZORDER);
+			setWindowPos(NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOZORDER);
 			UpdateIdealRect(rcWnd);
 		}
 	}
@@ -10899,6 +10942,18 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					}
 				}
 			}
+			else if (hNewFocus)
+			{
+				// «апускаетс€ нова€ консоль в режиме "администратора"?
+				if (CVConGroup::isInCreateRoot())
+				{
+					wchar_t szClass[MAX_PATH];
+					if (GetClassName(hNewFocus, szClass, countof(szClass)) && isConsoleClass(szClass))
+					{
+						lbSetFocus = true;
+					}
+				}
+			}
 		}
 
 		if (!lbSetFocus && gpSet->isDesktopMode && mh_ShellWindow)
@@ -11237,7 +11292,10 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		// »наче получаетс€ бред при клике на иконку в TSA.
 		if (!bIsTaskbar)
 		{
-			OnMinimizeRestore(sih_AutoHide);
+			if (!mb_IgnoreQuakeActivation)
+			{
+				OnMinimizeRestore(sih_AutoHide);
+			}
 		}
 		else if (!mn_ForceTimerCheckLoseFocus)
 		{
@@ -13543,6 +13601,13 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 	return 0;
 }
 
+void CConEmuMain::SetSkipMouseEvent(UINT nMsg1, UINT nMsg2, UINT nReplaceDblClk)
+{
+	mouse.nSkipEvents[0] = nMsg1 /*WM_LBUTTONDOWN*/;
+	mouse.nSkipEvents[1] = nMsg2 /*WM_LBUTTONUP*/;
+	mouse.nReplaceDblClk = nReplaceDblClk /*WM_LBUTTONDBLCLK*/;
+}
+
 bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam, bool& isPrivate)
 {
 	isPrivate = false;
@@ -13575,23 +13640,17 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 				{
 					if (messg == WM_LBUTTONDOWN)
 					{
-						gpConEmu->mouse.nSkipEvents[0] = WM_LBUTTONDOWN;
-						gpConEmu->mouse.nSkipEvents[1] = WM_LBUTTONUP;
-						gpConEmu->mouse.nReplaceDblClk = WM_LBUTTONDBLCLK;
+						SetSkipMouseEvent(WM_LBUTTONDOWN, WM_LBUTTONUP, WM_LBUTTONDBLCLK);
 						//bSkipThisEvent = true;
 					}
 					else if (messg == WM_RBUTTONDOWN)
 					{
-						gpConEmu->mouse.nSkipEvents[0] = WM_RBUTTONDOWN;
-						gpConEmu->mouse.nSkipEvents[1] = WM_RBUTTONUP;
-						gpConEmu->mouse.nReplaceDblClk = WM_RBUTTONDBLCLK;
+						SetSkipMouseEvent(WM_RBUTTONDOWN, WM_RBUTTONUP, WM_RBUTTONDBLCLK);
 						//bSkipThisEvent = true;
 					}
 					else if (messg == WM_MBUTTONDOWN)
 					{
-						gpConEmu->mouse.nSkipEvents[0] = WM_MBUTTONDOWN;
-						gpConEmu->mouse.nSkipEvents[1] = WM_MBUTTONUP;
-						gpConEmu->mouse.nReplaceDblClk = WM_MBUTTONDBLCLK;
+						SetSkipMouseEvent(WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MBUTTONDBLCLK);
 						//bSkipThisEvent = true;
 					}
 				}
@@ -14039,7 +14098,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (mouse.nReplaceDblClk == messg)
 			{
-				switch(mouse.nReplaceDblClk)
+				switch (mouse.nReplaceDblClk)
 				{
 					case WM_LBUTTONDBLCLK:
 						messg = WM_LBUTTONDOWN;

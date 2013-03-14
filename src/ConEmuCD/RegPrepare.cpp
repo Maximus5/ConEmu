@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "ConEmuC.h"
 #include "RegPrepare.h"
-#include "TokenHelper.h"
+#include "../common/TokenHelper.h"
 #include "PrivilegesHelper.h"
 
 

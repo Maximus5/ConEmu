@@ -141,9 +141,11 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 {
 	Assert(apVCon && args);
 
+	mp_VCon = apVCon;
+	mp_Log = NULL;
+
 	MCHKHEAP;
 	SetConStatus(L"Initializing ConEmu (2)", true, true);
-	mp_VCon = apVCon;
 	//mp_VCon->mp_RCon = this;
 	HWND hView = apVCon->GetView();
 	if (!hView)
@@ -283,7 +285,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	//hFileMapping = NULL; pConsoleData = NULL;
 	mn_Focused = -1;
 	mn_LastVKeyPressed = 0;
-	mp_Log = NULL;
 	//mh_LogInput = NULL; mpsz_LogInputFile = NULL; //mpsz_LogPackets = NULL; mn_LogPackets = 0;
 	//mh_FileMapping = mh_FileMappingData = mh_FarFileMapping =
 	//mh_FarAliveEvent = NULL;
@@ -415,6 +416,17 @@ CVirtualConsole* CRealConsole::VCon()
 bool CRealConsole::PreCreate(RConStartArgs *args)
 {
 	_ASSERTE(args!=NULL);
+
+	// В этот момент логи данной консоли еще не созданы, пишем в GUI-шный
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szPrefix[128];
+		_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::PreCreate, hView=x%08X, Detached=%u, AsAdmin=%u, Cmd=",
+			(DWORD)(DWORD_PTR)mp_VCon->GetView(), args->bDetached, args->bRunAsAdministrator);
+		wchar_t* pszInfo = lstrmerge(szPrefix, args->pszSpecialCmd ? args->pszSpecialCmd : L"<NULL>");
+		gpConEmu->LogString(pszInfo ? pszInfo : szPrefix);
+		SafeFree(pszInfo);
+	}
 
 	bool bCopied = m_Args.AssignFrom(args);
 
@@ -2771,7 +2783,9 @@ void CRealConsole::OnStartProcessAllowed()
 		return;
 	}
 
-	if (!StartProcess())
+	BOOL bStartRc = StartProcess();
+
+	if (!bStartRc)
 	{
 		wchar_t szErrInfo[128];
 		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't start root process, ErrCode=0x%08X...", GetLastError());
@@ -3333,7 +3347,12 @@ BOOL CRealConsole::StartProcess()
 				SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", true);
 				//lbRc = gpConEmu->GuiShellExecuteEx(mp_sei, mp_VCon);
 
+				bool bPrevIgnore = gpConEmu->mb_IgnoreQuakeActivation;
+				gpConEmu->mb_IgnoreQuakeActivation = true;
+
 				lbRc = ShellExecuteEx(mp_sei);
+
+				gpConEmu->mb_IgnoreQuakeActivation = bPrevIgnore;
 
 				// ошибку покажем дальше
 				dwLastError = GetLastError();
@@ -3496,7 +3515,17 @@ BOOL CRealConsole::StartProcess()
 
 wrap:
 	//SetEvent(mh_CreateRootEvent);
-	mb_InCreateRoot = FALSE;
+
+	// В режиме "администратора" мы будем в "CreateRoot" до тех пор, пока нам не отчитается запущенный сервер
+	if (!lbRc || mn_MainSrv_PID)
+	{
+		mb_InCreateRoot = FALSE;
+	}
+	else
+	{
+		_ASSERTE(m_Args.bRunAsAdministrator);
+	}
+
 	mb_StartResult = lbRc;
 	mb_NeedStartProcess = FALSE;
 	SetEvent(mh_StartExecuted);
@@ -4367,6 +4396,8 @@ bool CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 void CRealConsole::StopSignal()
 {
 	DEBUGSTRCON(L"CRealConsole::StopSignal()\n");
+
+	LogString(L"CRealConsole::StopSignal()", TRUE);
 
 	if (!this)
 		return;
@@ -6302,18 +6333,32 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 	if (nLen>=63) pszSlash[63]=0;
 
 	lstrcpyW(ConPrc.Name, pszSlash);
-	ConPrc.IsMainSrv = lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0
-	               || lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0;
+
+	ConPrc.IsMainSrv = (ConPrc.ProcessID == mn_MainSrv_PID);
+	if (ConPrc.IsMainSrv)
+	{
+		// 
+		_ASSERTE(lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0 || lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0);
+	}
+	else if (lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0 || lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0)
+	{
+		_ASSERTE(mn_MainSrv_PID!=0 && "Main server PID was not detemined?");
+	}
+
+	// Тут главное не промахнуться, и не посчитать корневой conemuc, из которого запущен сам FAR, или который запустил плагин, чтобы GUI прицепился к этой консоли
+	ConPrc.IsCmd = !ConPrc.IsMainSrv
+			&& (lstrcmpi(ConPrc.Name, _T("cmd.exe"))==0
+				|| lstrcmpi(ConPrc.Name, _T("tcc.exe"))==0
+				|| lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0
+				|| lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0);
+
 	ConPrc.IsConHost = lstrcmpi(ConPrc.Name, _T("conhost.exe"))==0
-	               || lstrcmpi(ConPrc.Name, _T("csrss.exe"))==0;
+				|| lstrcmpi(ConPrc.Name, _T("csrss.exe"))==0;
+
 	ConPrc.IsFar = IsFarExe(ConPrc.Name);
 	ConPrc.IsNtvdm = lstrcmpi(ConPrc.Name, _T("ntvdm.exe"))==0;
 	ConPrc.IsTelnet = lstrcmpi(ConPrc.Name, _T("telnet.exe"))==0;
-	TODO("Тут главное не промахнуться, и не посчитать корневой conemuc, из которого запущен сам FAR, или который запустил плагин, чтобы GUI прицепился к этой консоли");
-	ConPrc.IsCmd = lstrcmpi(ConPrc.Name, _T("cmd.exe"))==0
-	               || lstrcmpi(ConPrc.Name, _T("tcc.exe"))==0
-	               || lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0
-	               || lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0;
+
 	ConPrc.NameChecked = true;
 
 	if (!mn_ConHost_PID && ConPrc.IsConHost)
@@ -6688,6 +6733,13 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 			if (!abForceApprove)
 				return;
 		}
+	}
+
+	if (ahConWnd && mb_InCreateRoot)
+	{
+		// При запуске "под администратором" mb_InCreateRoot сразу не сбрасывается
+		_ASSERTE(m_Args.bRunAsAdministrator);
+		mb_InCreateRoot = FALSE;
 	}
 
 	hConWnd = ahConWnd;
@@ -7136,6 +7188,19 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 
 	_ASSERTE(m_Args.pszStartupDir==NULL || (m_Args.pszStartupDir && args->pszStartupDir));
 	SafeFree(m_Args.pszStartupDir);
+
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szPrefix[128];
+		_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::RecreateProcess, hView=x%08X, Detached=%u, AsAdmin=%u, Cmd=",
+			(DWORD)(DWORD_PTR)mp_VCon->GetView(), args->bDetached, args->bRunAsAdministrator);
+		wchar_t* pszInfo = lstrmerge(szPrefix, args->pszSpecialCmd ? args->pszSpecialCmd : L"<NULL>");
+		if (mp_Log)
+			mp_Log->LogString(pszInfo ? pszInfo : szPrefix);
+		else
+			gpConEmu->LogString(pszInfo ? pszInfo : szPrefix);
+		SafeFree(pszInfo);
+	}
 
 	bool bCopied = m_Args.AssignFrom(args);
 
@@ -11600,6 +11665,18 @@ LPCWSTR CRealConsole::GetConStatus()
 
 void CRealConsole::SetConStatus(LPCWSTR asStatus, bool abResetOnConsoleReady /*= false*/, bool abDontUpdate /*= false*/)
 {
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szPrefix[128];
+		_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::SetConStatus, hView=x%08X: ", (DWORD)(DWORD_PTR)mp_VCon->GetView());
+		wchar_t* pszInfo = lstrmerge(szPrefix, (asStatus && *asStatus) ? asStatus : L"<Empty>");
+		if (mp_Log)
+			LogString(pszInfo, TRUE);
+		else
+			gpConEmu->LogString(pszInfo);
+		SafeFree(pszInfo);
+	}
+
 	lstrcpyn(ms_ConStatus, asStatus ? asStatus : L"", countof(ms_ConStatus));
 	mb_ResetStatusOnConsoleReady = abResetOnConsoleReady;
 
@@ -11955,6 +12032,8 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 {
 	if (!this)
 		return;
+
+	LogString(L"CRealConsole::Detach", TRUE);
 
 	if (hGuiWnd)
 	{

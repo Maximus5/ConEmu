@@ -148,7 +148,7 @@ private:
 	//bool  mb_Invalidated;
 	DWORD mn_LastPaintTick;
 
-	void OnDataChanged(CEStatusItems *ChangedID, size_t Count, bool abForceOnChange = false);
+	bool OnDataChanged(CEStatusItems *ChangedID, size_t Count, bool abForceOnChange = false);
 
 	bool LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMax);
 

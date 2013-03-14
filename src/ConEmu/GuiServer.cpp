@@ -148,6 +148,20 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			// Приходит из другой копии ConEmu.exe, когда она запущена с ключом /single, /showhide, /showhideTSA
 			DEBUGSTR(L"GUI recieved CECMD_NEWCMD\n");
 
+			if (gpSetCls->isAdvLogging)
+			{
+				size_t cchAll = 120 + _tcslen(pIn->NewCmd.szConEmu) + _tcslen(pIn->NewCmd.szCurDir) + _tcslen(pIn->NewCmd.szCommand);
+				wchar_t* pszInfo = (wchar_t*)malloc(cchAll*sizeof(*pszInfo));
+				if (pszInfo)
+				{
+					_wsprintf(pszInfo, SKIPLEN(cchAll) L"CECMD_NEWCMD: Wnd=x%08X, Act=%u, ConEmu=%s, Dir=%s, Cmd=%s",
+						(DWORD)(DWORD_PTR)pIn->NewCmd.hFromConWnd, pIn->NewCmd.ShowHide,
+						pIn->NewCmd.szConEmu, pIn->NewCmd.szCurDir, pIn->NewCmd.szCommand);
+					gpConEmu->LogString(pszInfo);
+					free(pszInfo);
+				}
+			}
+
 			BOOL bAccepted = FALSE;
 
 			if (pIn->NewCmd.szConEmu[0])
@@ -161,12 +175,14 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 			if (bAccepted)
 			{
-				gpConEmu->OnMinimizeRestore((pIn->NewCmd.ShowHide == sih_None) ? sih_SetForeground : pIn->NewCmd.ShowHide);
+				bool bCreateTab = (pIn->NewCmd.ShowHide == sih_None || pIn->NewCmd.ShowHide == sih_StartDetached);
+				gpConEmu->OnMinimizeRestore(bCreateTab ? sih_SetForeground : pIn->NewCmd.ShowHide);
 
 				// Может быть пусто
-				if ((pIn->NewCmd.ShowHide == sih_None) && pIn->NewCmd.szCommand[0])
+				if (bCreateTab && pIn->NewCmd.szCommand[0])
 				{
 					RConStartArgs *pArgs = new RConStartArgs;
+					pArgs->bDetached = (pIn->NewCmd.ShowHide == sih_StartDetached);
 					pArgs->pszSpecialCmd = lstrdup(pIn->NewCmd.szCommand);
 					if (pIn->NewCmd.szCurDir[0] == 0)
 					{
@@ -177,7 +193,16 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 						pArgs->pszStartupDir = lstrdup(pIn->NewCmd.szCurDir);
 					}
 
-					gpConEmu->PostCreateCon(pArgs);
+					if (gpSet->isMulti || CVConGroup::isDetached())
+					{
+						gpConEmu->PostCreateCon(pArgs);
+					}
+					else
+					{
+						// Если хотят в одном окне - только одну консоль
+						gpConEmu->CreateWnd(pArgs);
+						SafeDelete(pArgs);
+					}
 				}
 				else
 				{

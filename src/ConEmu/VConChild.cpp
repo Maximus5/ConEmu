@@ -284,7 +284,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				HWND hGui = pVCon->GuiWnd();
 				if (hGui)
 				{
-					_ASSERTE(FALSE && "Show DC while GuiWnd exists");
+					_ASSERTE((wParam==0) && "Show DC while GuiWnd exists");
 				}
 				#endif
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
@@ -568,19 +568,19 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 		gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
 	}
 
-	CVirtualConsole* pVCon = NULL;
+	CVConGuard guard;
 	if (messg == WM_CREATE || messg == WM_NCCREATE)
 	{
 		LPCREATESTRUCT lp = (LPCREATESTRUCT)lParam;
-		pVCon = (CVirtualConsole*)lp->lpCreateParams;
-		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)pVCon);
+		guard = (CVirtualConsole*)lp->lpCreateParams;
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)guard.VCon());
 	}
 	else
 	{
-		pVCon = (CVirtualConsole*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		guard = (CVirtualConsole*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	}
 
-	CVConGuard guard(pVCon);
+	CVirtualConsole* pVCon = guard.VCon();
 
 	if (messg == WM_SYSCHAR)
 	{
@@ -624,10 +624,11 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 				int nAppId = -1;
 				int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
-				if (pVCon->RCon())
+				CRealConsole* pRCon = pVCon->RCon();
+				if (pRCon)
 				{
-					nAppId = pVCon->RCon()->GetActiveAppSettingsId();
-					nColorIdx = pVCon->RCon()->GetDefaultBackColorIdx();
+					nAppId = pRCon->GetActiveAppSettingsId();
+					nColorIdx = pRCon->GetDefaultBackColorIdx();
 				}
 
 				HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(nAppId, !gpConEmu->isMeForeground())[nColorIdx]);
@@ -770,11 +771,16 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 			if (pVCon && (messg == pVCon->mn_MsgRestoreChildFocus))
 			{
+				CRealConsole* pRCon = pVCon->RCon();
 				if (gpConEmu->isActive(pVCon, false))
 				{
-					pVCon->RCon()->GuiWndFocusRestore();
+					pRCon->GuiWndFocusRestore();
 				}
-				pVCon->RCon()->StoreGuiChildRect(NULL);
+
+				if (pRCon->GuiWnd())
+				{
+					pRCon->StoreGuiChildRect(NULL);
+				}
 			}
 			else
 			{
@@ -1285,7 +1291,7 @@ BOOL CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 			{
 				POINT ptCur; RECT rcScroll, rcClient;
 				GetCursorPos(&ptCur);
-				GetWindowRect(mh_WndDC, &rcClient);
+				GetWindowRect(mh_WndBack, &rcClient);
 				//GetWindowRect(mh_WndScroll, &rcScroll);
 				rcScroll = rcClient;
 				rcScroll.left = rcScroll.right - GetSystemMetrics(SM_CXVSCROLL);

@@ -31,6 +31,7 @@ $(OBJDIR)\GuiHooks.obj \
 $(OBJDIR)\RegPrepare.obj \
 $(OBJDIR)\ConEmuCmd.obj \
 $(OBJDIR)\ConEmuSrv.obj \
+$(OBJDIR)\Debugger.obj \
 $(OBJDIR)\Injects.obj \
 $(OBJDIR)\Infiltrate.obj \
 $(OBJDIR)\InjectRemote.obj \
@@ -265,6 +266,8 @@ $(OBJDIR)\Common.obj: ../common/Common.cpp
 $(OBJDIR)\ConEmuCmd.obj: ConEmuCmd.cpp ../common/PipeServer.h
 
 $(OBJDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ../common/PipeServer.h
+
+$(OBJDIR)\ConEmuSrv.obj: Debugger.cpp Debugger.h
 
 $(OBJDIR)\Injects.obj: ..\ConEmuHk\Injects.cpp
 
