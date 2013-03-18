@@ -3302,11 +3302,11 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 		CESERVER_CONSOLE_MAPPING_HDR *Info = (CESERVER_CONSOLE_MAPPING_HDR*)calloc(1,sizeof(*Info));
 		if (Info && ::LoadSrvMapping(ghConWnd, *Info))
 		{
-			size_t cchMax = countof(Info->sConEmuBaseDir)+64;
+			size_t cchMax = countof(Info->ComSpec.ConEmuBaseDir)+64;
 			wchar_t* pszFullPath = (wchar_t*)calloc(cchMax,sizeof(*pszFullPath));
 			if (pszFullPath)
 			{
-				_wcscpy_c(pszFullPath, cchMax, Info->sConEmuBaseDir);
+				_wcscpy_c(pszFullPath, cchMax, Info->ComSpec.ConEmuBaseDir);
 				_wcscat_c(pszFullPath, cchMax, WIN3264TEST(L"\\ExtendedConsole.dll",L"\\ExtendedConsole64.dll"));
 
 				module = ((OnLoadLibraryW_t)lpfn)(pszFullPath);

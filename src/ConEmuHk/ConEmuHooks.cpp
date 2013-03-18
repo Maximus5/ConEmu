@@ -3585,7 +3585,7 @@ bool InitializeClink()
 		// New style. TODO
 		wchar_t szClinkDir[MAX_PATH+32], szClinkArgs[MAX_PATH+64];
 
-		wcscpy_c(szClinkDir, pConMap->sConEmuBaseDir);
+		wcscpy_c(szClinkDir, pConMap->ComSpec.ConEmuBaseDir);
 		wcscat_c(szClinkDir, L"\\clink");
 
 		wcscpy_c(szClinkArgs, L"\"");
@@ -3617,7 +3617,7 @@ bool InitializeClink()
 		{
 			wchar_t szClinkModule[MAX_PATH+30];
 			_wsprintf(szClinkModule, SKIPLEN(countof(szClinkModule)) L"%s\\clink\\%s",
-				pConMap->sConEmuBaseDir, WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
+				pConMap->ComSpec.ConEmuBaseDir, WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
 			
 			ghClinkDll = LoadLibrary(szClinkModule);
 			if (!ghClinkDll)

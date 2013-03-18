@@ -160,6 +160,7 @@ class CConEmuMain :
 		wchar_t *mpsz_ConEmuArgs;    // Аргументы
 		void GetComSpecCopy(ConEmuComspec& ComSpec);
 		void CreateGuiAttachMapping(DWORD nGuiAppPID);
+		void InitComSpecStr(ConEmuComspec& ComSpec);
 	private:
 		ConEmuGuiMapping m_GuiInfo;
 		MFileMapping<ConEmuGuiMapping> m_GuiInfoMapping;
@@ -344,9 +345,10 @@ class CConEmuMain :
 		TCHAR TitleTemplate[128];
 		short mn_Progress;
 		//LPTSTR GetTitleStart();
-		BOOL mb_InTimer;
-		BOOL mb_ProcessCreated, mb_WorkspaceErasedOnClose; //DWORD mn_StartTick;
-		bool mb_CloseGuiConfirmed;
+		bool mb_InTimer;
+		bool mb_ProcessCreated;
+		bool mb_WorkspaceErasedOnClose;
+		bool mb_CloseGuiConfirmed; // Устанавливается в TRUE в CVConGroup::CloseQuery
 		#ifndef _WIN64
 		HWINEVENTHOOK mh_WinHook; //, mh_PopupHook;
 		static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
@@ -609,6 +611,7 @@ class CConEmuMain :
 		bool isActive(CVirtualConsole* apVCon, bool abAllowGroup = true);
 		//bool isChildWindowVisible();
 		bool isCloseConfirmed();
+		bool isDestroyOnClose();
 		bool isConSelectMode();
 		bool isConsolePID(DWORD nPID);
 		bool isDragging();

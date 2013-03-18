@@ -138,8 +138,9 @@ struct CEStartupEnv
 #ifndef CONEMU_MINIMAL
 HANDLE DuplicateProcessHandle(DWORD anTargetPID);
 void FindComspec(ConEmuComspec* pOpt); // используется в GUI при загрузке настроек
-void UpdateComspec(ConEmuComspec* pOpt);
+void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath = false);
 void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue);
+wchar_t* GetEnvVar(LPCWSTR VarName, DWORD cchDefaultMax = 2000);
 #endif
 LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits = csb_SameOS);
 wchar_t* GetComspec(const ConEmuComspec* pOpt);
@@ -209,6 +210,26 @@ class MSectionLock
 		MSectionLock();
 		~MSectionLock();
 };
+
+
+#ifndef CONEMU_MINIMAL
+class MSectionLockSimple
+{
+	protected:
+		CRITICAL_SECTION* mp_S;
+		#ifdef _DEBUG
+		DWORD mn_LockTID, mn_LockTick;
+		#endif
+		bool mb_Locked;
+	public:
+		BOOL Lock(CRITICAL_SECTION* apS, DWORD anTimeout=-1);
+		void Unlock();
+		BOOL isLocked();
+	public:
+		MSectionLockSimple();
+		~MSectionLockSimple();
+};
+#endif
 
 
 #ifndef CONEMU_MINIMAL

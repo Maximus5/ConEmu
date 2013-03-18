@@ -578,6 +578,7 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 			{
 				if (::LoadSrvMapping(hConWnd, *Info))
 				{
+					_ASSERTE(Info->ComSpec.ConEmuExeDir[0] && Info->ComSpec.ConEmuBaseDir[0]);
 					bEnabled = (Info->nLoggingType == glt_Processes);
 				}
 				free(Info);
@@ -1292,10 +1293,10 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
 		ConMap.InitName(CECONMAPNAME, (DWORD)myGetConsoleWindow()); //-V205
 		CESERVER_CONSOLE_MAPPING_HDR* p = ConMap.Open();
-		if (p && p->sConEmuBaseDir[0])
+		if (p && p->ComSpec.ConEmuBaseDir[0])
 		{
 			// Успешно
-			wcscpy_c(rsConEmuBaseDir, p->sConEmuBaseDir);
+			wcscpy_c(rsConEmuBaseDir, p->ComSpec.ConEmuBaseDir);
 			wcscpy_c(rsConEmuExe, p->sConEmuExe);
 			return TRUE;
 		}
@@ -1311,9 +1312,9 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 			MFileMapping<ConEmuGuiMapping> GuiMap;
 			GuiMap.InitName(CEGUIINFOMAPNAME, dwGuiPID);
 			ConEmuGuiMapping* p = GuiMap.Open();
-			if (p && p->sConEmuBaseDir[0])
+			if (p && p->ComSpec.ConEmuBaseDir[0])
 			{
-				wcscpy_c(rsConEmuBaseDir, p->sConEmuBaseDir);
+				wcscpy_c(rsConEmuBaseDir, p->ComSpec.ConEmuBaseDir);
 				wcscpy_c(rsConEmuExe, p->sConEmuExe);
 				return TRUE;
 			}

@@ -314,14 +314,16 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 		m_SrvMapping.nGuiPID = m_GuiMapping.nGuiPID;
 		m_SrvMapping.nProtocolVersion = m_GuiMapping.nProtocolVersion;
 		lstrcpy(m_SrvMapping.sConEmuExe, m_GuiMapping.sConEmuExe);
-		lstrcpy(m_SrvMapping.sConEmuBaseDir, m_GuiMapping.sConEmuBaseDir);
+		//lstrcpy(m_SrvMapping.sConEmuBaseDir, m_GuiMapping.sConEmuBaseDir);
+		m_SrvMapping.ComSpec = m_GuiMapping.ComSpec;
 		m_SrvMapping.hConEmuRoot = ghConEmuWnd;
 		m_SrvMapping.hConEmuWndDc = NULL/*ghConEmuWndDC*/; // ???
 		m_SrvMapping.hConEmuWndBack = NULL;
 		//m_SrvMapping.bDosBox = m_GuiMapping.bDosBox;       // DosBox установлен, можно пользоваться
 		m_SrvMapping.Flags = m_GuiMapping.Flags;
 		m_SrvMapping.bUseInjects = 1;   // 0-off, 1-on, 3-exe only. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
-		m_SrvMapping.ComSpec = m_GuiMapping.ComSpec;
+
+		_ASSERTE(m_SrvMapping.ComSpec.ConEmuExeDir[0] && m_SrvMapping.ComSpec.ConEmuBaseDir[0]);
 
 		return TRUE;
 	}
@@ -330,6 +332,7 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 	{
 		if (!::LoadSrvMapping(ghConWnd, m_SrvMapping))
 			return FALSE;
+		_ASSERTE(m_SrvMapping.ComSpec.ConEmuExeDir[0] && m_SrvMapping.ComSpec.ConEmuBaseDir[0]);
 	}
 
 	if (!m_SrvMapping.hConEmuWndDc || !user->isWindow(m_SrvMapping.hConEmuWndDc))
@@ -500,6 +503,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		goto wrap;
 	}
 
+	_ASSERTEX(m_SrvMapping.sConEmuExe[0]!=0 && m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
+
 	if (gbPrepareDefaultTerminal)
 	{
 		_ASSERTEX(ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE);
@@ -507,7 +512,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	}
 	else
 	{
-		_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.sConEmuBaseDir);
+		_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.ComSpec.ConEmuBaseDir);
 		_wcscat_c(szConEmuC, cchConEmuC, L"\\");
 	}
 	
@@ -851,9 +856,9 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	{
 		if (m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
 		{
-			wcscpy_c(szDosBoxExe, m_SrvMapping.sConEmuBaseDir);
+			wcscpy_c(szDosBoxExe, m_SrvMapping.ComSpec.ConEmuBaseDir);
 			wcscat_c(szDosBoxExe, L"\\DosBox\\DosBox.exe");
-			wcscpy_c(szDosBoxCfg, m_SrvMapping.sConEmuBaseDir);
+			wcscpy_c(szDosBoxCfg, m_SrvMapping.ComSpec.ConEmuBaseDir);
 			wcscat_c(szDosBoxCfg, L"\\DosBox\\DosBox.conf");
 
 			if (!FileExists(szDosBoxExe) || !FileExists(szDosBoxCfg))
@@ -2302,10 +2307,11 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				wchar_t* pszCmdLine = (wchar_t*)malloc(cchMax*sizeof(*pszCmdLine));
 				if (pszCmdLine)
 				{
-					msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /CONPID=%u", m_SrvMapping.sConEmuBaseDir, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"), lpPI->dwProcessId);
+					_ASSERTEX(m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
+					msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /CONPID=%u", m_SrvMapping.ComSpec.ConEmuBaseDir, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"), lpPI->dwProcessId);
 					STARTUPINFO si = {sizeof(si)};
 					PROCESS_INFORMATION pi = {};
-					bAttachCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, m_SrvMapping.sConEmuBaseDir, &si, &pi);
+					bAttachCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
 					if (bAttachCreated)
 					{
 						CloseHandle(pi.hProcess);

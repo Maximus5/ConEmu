@@ -280,18 +280,22 @@ BEGIN
                     "Button",BS_AUTORADIOBUTTON,158,62,159,8
     CONTROL         "Show Shield overlay (Win7 and higher)",cbTaskbarShield,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,77,143,8
-    GROUPBOX        "When last console (tab) is closed",IDC_STATIC,4,98,319,29
-    CONTROL         "Close ConEmu window",rbMultiLastClose,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,111,95,8
-    CONTROL         "Leave ConEmu opened",rbMultiLastLeave,"Button",BS_AUTORADIOBUTTON,113,111,99,8
-    CONTROL         "Hide ConEmu to the TSA",rbMultiLastTSA,"Button",BS_AUTORADIOBUTTON,218,111,101,8
-    GROUPBOX        "Minimize ConEmu automatically",IDC_STATIC,4,132,319,57
+    GROUPBOX        "Action on closing last console (tab) and 'cross clicking'",IDC_STATIC,4,98,319,42
+    GROUPBOX        "Minimize ConEmu automatically",IDC_STATIC,4,145,319,57
     CONTROL         "Minimize on focus lose (not in Quake style)",cbMinimizeOnLoseFocus,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,145,199,8
-    GROUPBOX        "When Esc pressed",IDC_STATIC,4,160,319,29
-    CONTROL         "If all consoles closed",rbMinByEscEmpty,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,173,99,8
-    CONTROL         "Always",rbMinByEscAlways,"Button",BS_AUTORADIOBUTTON,113,173,42,8
-    CONTROL         "Never",rbMinByEscNever,"Button",BS_AUTORADIOBUTTON,161,173,38,8
-    CONTROL         "Map Shift+Esc to Esc",cbMapShiftEscToEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,173,101,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,158,199,8
+    GROUPBOX        "When Esc pressed",IDC_STATIC,4,173,319,29
+    CONTROL         "If all consoles closed",rbMinByEscEmpty,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,186,99,8
+    CONTROL         "Always",rbMinByEscAlways,"Button",BS_AUTORADIOBUTTON,113,186,42,8
+    CONTROL         "Never",rbMinByEscNever,"Button",BS_AUTORADIOBUTTON,161,186,38,8
+    CONTROL         "Map Shift+Esc to Esc",cbMapShiftEscToEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,186,101,8
+    CONTROL         "Quit on close (e.g. caption bar cross clicking)",cbCloseConEmuOnCrossClicking,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,111,168,8
+    CONTROL         "Minimize on closing last tab",cbMinimizeOnLastTabClose,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,125,110,8
+    CONTROL         "Hide to the TSA",cbHideOnLastTabClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,125,66,8
+    CONTROL         "Close ConEmu with last tab",cbCloseConEmuWithLastTab,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,111,113,8
 END
 
 IDD_SPG_CURSOR DIALOGEX 0, 0, 328, 235
@@ -642,7 +646,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Used command processor",gbComspec,4,1,319,143
+    GROUPBOX        "Used command processor",gbComspec,4,1,319,154
     CONTROL         "Auto (tcc - if installed, %ComSpec% - otherwise)",rbComspecAuto,
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,9,12,178,8
     CONTROL         "%ComSpec% (env.var.)",rbComspecEnvVar,"Button",BS_AUTORADIOBUTTON,189,12,98,8
@@ -660,9 +664,9 @@ BEGIN
     PUSHBUTTON      "Test",cbComspecTest,269,60,50,14
     LTEXT           "Cmd.exe output codepage:",IDC_STATIC,11,100,94,8
     COMBOBOX        lbCmdOutputCP,108,98,81,30,CBS_DROPDOWNLIST | WS_TABSTOP
-    CONTROL         "Add %ConEmuBaseDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,117,309,8
+    CONTROL         "Add %ConEmuDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,139,150,8
     CONTROL         "Support UNC paths in cmd.exe (\\\\server\\share\\folder)",cbComspecUncPaths,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,130,309,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,114,309,8
     GROUPBOX        "Automatic attach of cmd && Tcc/Le to ConEmu (new window will be started if not found)",IDC_STATIC,4,168,319,65
     LTEXT           "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\nCurrent command stored in registry «AutoRun» (HKLM value is not processed here):",IDC_STATIC,11,178,308,16
     EDITTEXT        tCmdAutoAttach,9,197,308,13,ES_AUTOHSCROLL | ES_READONLY
@@ -670,6 +674,9 @@ BEGIN
     PUSHBUTTON      "Register ConEmu autorun",bCmdAutoRegister,126,213,100,14
     PUSHBUTTON      "Unregister",bCmdAutoUnregister,230,213,50,14
     PUSHBUTTON      "Clear",bCmdAutoClear,283,213,34,14
+    GROUPBOX        "Add to %PATH% environment variable",IDC_STATIC,4,127,319,28
+    CONTROL         "Add %ConEmuBaseDir% to %PATH%",cbAddConEmuBase2Path,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,165,139,152,8
 END
 
 IDD_SPG_FEATURE_FAR DIALOGEX 0, 0, 328, 235

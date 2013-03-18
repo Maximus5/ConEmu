@@ -1105,9 +1105,9 @@ struct Settings
 		//reg->Load(L"Multi.AutoCreate", isMultiAutoCreate);
 		bool isMultiAutoCreate;
 		//reg->Load(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
-		bool isMultiLeaveOnClose;
+		BYTE isMultiLeaveOnClose; // 0 - закрыватьс€, 1 - оставатьс€, 2 - Ќ≈ оставатьс€ при закрытии "крестиком"
 		//reg->Load(L"Multi.HideOnClose", isMultiHideOnClose);
-		bool isMultiHideOnClose;
+		BYTE isMultiHideOnClose; // 0 - не скрыватьс€, 1 - в трей, 2 - просто минимизаци€
 		//reg->Load(L"Multi.MinByEsc", isMultiMinByEsc);
 		BYTE isMultiMinByEsc; // 0 - Never, 1 - Always, 2 - NoConsoles
 		//reg->Load(L"MapShiftEscToEsc", isMapShiftEscToEsc);

@@ -930,8 +930,10 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig,
 	}
 
 	//wcscpy_c(gpSet->ComSpec.ConEmuDir, gpConEmu->ms_ConEmuDir);
-	wcscpy_c(gpSet->ComSpec.ConEmuBaseDir, gpConEmu->ms_ConEmuBaseDir);
-	UpdateComspec(&gpSet->ComSpec);
+	gpConEmu->InitComSpecStr(gpSet->ComSpec);
+	// -- должно вообще вызываться в UpdateGuiInfoMapping
+	//UpdateComspec(&gpSet->ComSpec);
+
 	// Обновить реестр на предмет поддержки UNC путей в cmd.exe
 	if (gpSet->ComSpec.isAllowUncPaths)
 	{
@@ -1036,6 +1038,11 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig,
 			gpConEmu->wndY = rcWnd.top + nShift;
 			break; // нашли, сдвинулись, выходим
 		}
+	}
+
+	if (!gpConEmu->InCreateWindow())
+	{
+		gpConEmu->OnGlobalSettingsChanged();
 	}
 
 	MCHKHEAP
@@ -1890,10 +1897,6 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 
 	//checkDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon);
 
-	//checkDlgButton(hWnd2, cbMultiLeaveOnClose, gpSet->isMultiLeaveOnClose);
-	//checkDlgButton(hWnd2, cbMultiHideOnClose, gpSet->isMultiHideOnClose);
-	//EnableWindow(GetDlgItem(hWnd2, cbMultiHideOnClose), gpSet->isMultiLeaveOnClose);
-
 	//checkRadioButton(hWnd2, rbTaskbarBtnActive, rbTaskbarBtnHidden, 
 	//	(gpSet->m_isTabsOnTaskBar == 3) ? rbTaskbarBtnHidden :
 	//	(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
@@ -1964,10 +1967,6 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon);
 
-	//checkDlgButton(hWnd2, cbMultiLeaveOnClose, gpSet->isMultiLeaveOnClose);
-	//checkDlgButton(hWnd2, cbMultiHideOnClose, gpSet->isMultiHideOnClose);
-	//EnableWindow(GetDlgItem(hWnd2, cbMultiHideOnClose), gpSet->isMultiLeaveOnClose);
-
 	checkRadioButton(hWnd2, rbTaskbarBtnActive, rbTaskbarBtnHidden, 
 		(gpSet->m_isTabsOnTaskBar == 3) ? rbTaskbarBtnHidden :
 		(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
@@ -1975,8 +1974,16 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 		: rbTaskbarBtnActive);
 	checkDlgButton(hWnd2, cbTaskbarShield, gpSet->isTaskbarShield);
 
-	checkRadioButton(hWnd2, rbMultiLastClose, rbMultiLastTSA,
-		gpSet->isMultiLeaveOnClose ? (gpSet->isMultiHideOnClose ? rbMultiLastTSA : rbMultiLastLeave) : rbMultiLastClose);
+	//checkRadioButton(hWnd2, rbMultiLastClose, rbMultiLastTSA,
+	//	gpSet->isMultiLeaveOnClose ? (gpSet->isMultiHideOnClose ? rbMultiLastTSA : rbMultiLastLeave) : rbMultiLastClose);
+	checkDlgButton(hWnd2, cbCloseConEmuWithLastTab, (gpSet->isMultiLeaveOnClose == 0) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbCloseConEmuOnCrossClicking, (gpSet->isMultiLeaveOnClose == 2) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbMinimizeOnLastTabClose, (gpSet->isMultiHideOnClose != 0) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiHideOnClose == 1) ? BST_CHECKED : BST_UNCHECKED);
+	//
+	EnableDlgItem(hWnd2, cbCloseConEmuOnCrossClicking, (gpSet->isMultiLeaveOnClose != 0));
+	EnableDlgItem(hWnd2, cbMinimizeOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0));
+	EnableDlgItem(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0) && (gpSet->isMultiHideOnClose != 0));
 
 
 	checkDlgButton(hWnd2, cbMinimizeOnLoseFocus, gpSet->mb_MinimizeOnLoseFocus);
@@ -2376,7 +2383,8 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 	checkRadioButton(hWnd2, rbComspec_OSbit, rbComspec_x32, rbComspec_OSbit+gpSet->ComSpec.csBits);
 
 	checkDlgButton(hWnd2, cbComspecUpdateEnv, gpSet->ComSpec.isUpdateEnv ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hWnd2, cbAddConEmu2Path, gpSet->ComSpec.isAddConEmu2Path ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbAddConEmu2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbAddConEmuBase2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuBaseDir) ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbComspecUncPaths, gpSet->ComSpec.isAllowUncPaths ? BST_CHECKED : BST_UNCHECKED);
 
 	// Cmd.exe output cp
@@ -4707,7 +4715,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
 		case cbAddConEmu2Path:
-			gpSet->ComSpec.isAddConEmu2Path = IsChecked(hWnd2, cbAddConEmu2Path);
+			SetConEmuFlags(gpSet->ComSpec.AddConEmu2Path, CEAP_AddConEmuExeDir, IsChecked(hWnd2, cbAddConEmu2Path) ? CEAP_AddConEmuExeDir : CEAP_None);
+			gpConEmu->OnGlobalSettingsChanged();
+			break;
+		case cbAddConEmuBase2Path:
+			SetConEmuFlags(gpSet->ComSpec.AddConEmu2Path, CEAP_AddConEmuBaseDir, IsChecked(hWnd2, cbAddConEmuBase2Path) ? CEAP_AddConEmuBaseDir : CEAP_None);
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
 		case cbComspecUncPaths:
@@ -5228,11 +5240,39 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->bShowFarWindows = IsChecked(hWnd2, cbShowFarWindows);
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
-		case rbMultiLastClose:
-		case rbMultiLastLeave:
-		case rbMultiLastTSA:
-			gpSet->isMultiHideOnClose = IsChecked(hWnd2, rbMultiLastTSA);
-			gpSet->isMultiLeaveOnClose = gpSet->isMultiHideOnClose || IsChecked(hWnd2, rbMultiLastLeave);
+		case cbCloseConEmuWithLastTab:
+			if (IsChecked(hWnd2, CB))
+			{
+				gpSet->isMultiLeaveOnClose = 0;
+			}
+			else
+			{
+				gpSet->isMultiLeaveOnClose = IsChecked(hWnd2, cbCloseConEmuOnCrossClicking) ? 2 : 1;
+			}
+			EnableDlgItem(hWnd2, cbCloseConEmuOnCrossClicking, (gpSet->isMultiLeaveOnClose != 0));
+			EnableDlgItem(hWnd2, cbMinimizeOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0));
+			EnableDlgItem(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0) && (gpSet->isMultiHideOnClose != 0));
+			break;
+		case cbCloseConEmuOnCrossClicking:
+			if (!IsChecked(hWnd2, CB))
+			{
+				gpSet->isMultiLeaveOnClose = IsChecked(hWnd2, cbCloseConEmuOnCrossClicking) ? 2 : 1;
+			}
+			break;
+		case cbMinimizeOnLastTabClose:
+		case cbHideOnLastTabClose:
+			if (!IsChecked(hWnd2, CB))
+			{
+				if (!IsChecked(hWnd2, cbMinimizeOnLastTabClose))
+				{
+					gpSet->isMultiHideOnClose = 0;
+				}
+				else
+				{
+					gpSet->isMultiHideOnClose = IsChecked(hWnd2, cbHideOnLastTabClose) ? 1 : 2;
+				}
+				EnableDlgItem(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0) && (gpSet->isMultiHideOnClose != 0));
+			}
 			break;
 		case rbMinByEscNever:
 		case rbMinByEscEmpty:

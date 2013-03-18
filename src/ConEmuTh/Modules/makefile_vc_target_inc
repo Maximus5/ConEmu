@@ -64,7 +64,7 @@ clean:
 	@move "$(DLLFULLNAME)" $(RELEASEDIR)
 	@move "$(PDBNAME)" "$(RELEASEDIR)\$(DLLNAME).pdb"
 	@move "$(MAP)" "$(RELEASEDIR)\$(DLLNAME).map"
-	@del /Q $(OBJDIR)\*.*
-	@del /Q $(OUTDIR)\*.*
+	@cmd /c del /Q $(OBJDIR)\*.*
+	@cmd /c del /Q $(OUTDIR)\*.*
 	@rd $(OBJDIR)
 	@rd $(OUTDIR)

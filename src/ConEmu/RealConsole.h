@@ -550,6 +550,7 @@ class CRealConsole
 		//static void Box(LPCTSTR szText, DWORD nBtns = 0);
 
 		void OnStartProcessAllowed();
+		void OnTimerCheck();
 
 	protected:
 		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
@@ -793,7 +794,7 @@ class CRealConsole
 		BOOL ApplyConsoleInfo();
 		BOOL mb_DataChanged;
 		void OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout);
-		void OnRConStartedSuccess();
+		void OnStartedSuccess();
 		BOOL mb_RConStartedSuccess;
 		//
 		BOOL PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName);

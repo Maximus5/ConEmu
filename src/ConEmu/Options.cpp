@@ -322,7 +322,9 @@ void Settings::InitSettings()
 	//vmMinimizeRestore = 'C' | (nMultiHotkeyModifier << 8);
 	//vmMultiClose = VK_DELETE | (nMultiHotkeyModifier << 8);
 	//vmMultiCmd = 'X' | (nMultiHotkeyModifier << 8);
-	isMultiAutoCreate = false; isMultiLeaveOnClose = isMultiHideOnClose = false; isMultiIterate = true;
+	isMultiAutoCreate = false;
+	isMultiLeaveOnClose = isMultiHideOnClose = 1;
+	isMultiIterate = true;
 	isMultiMinByEsc = 2; isMapShiftEscToEsc = true; // isMapShiftEscToEsc used only when isMultiMinByEsc==1 and only for console apps
 	isMultiNewConfirm = true;
 	isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false;
@@ -341,7 +343,7 @@ void Settings::InitSettings()
 	isMonitorConsoleLang = 3;
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
 	nCmdOutputCP = 0;
-	ComSpec.isAddConEmu2Path = TRUE;
+	ComSpec.AddConEmu2Path = CEAP_AddAll;
 	{
 		ComSpec.isAllowUncPaths = FALSE;
 		// Load defaults from windows registry (Command Processor settings)
@@ -2239,9 +2241,13 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"ComSpec.UpdateEnv", nVal);
 		ComSpec.isUpdateEnv = (nVal != 0);
 		//
-		nVal = ComSpec.isAddConEmu2Path;
+		nVal = (BYTE)((ComSpec.AddConEmu2Path & CEAP_AddConEmuBaseDir) == CEAP_AddConEmuBaseDir);
 		reg->Load(L"ComSpec.EnvAddPath", nVal);
-		ComSpec.isAddConEmu2Path = (nVal != 0);
+		SetConEmuFlags(ComSpec.AddConEmu2Path, CEAP_AddConEmuBaseDir, nVal ? CEAP_AddConEmuBaseDir : CEAP_None);
+		//
+		nVal = (BYTE)((ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) == CEAP_AddConEmuExeDir);
+		reg->Load(L"ComSpec.EnvAddExePath", nVal);
+		SetConEmuFlags(ComSpec.AddConEmu2Path, CEAP_AddConEmuExeDir, nVal ? CEAP_AddConEmuExeDir : CEAP_None);
 		//
 		nVal = ComSpec.isAllowUncPaths;
 		reg->Load(L"ComSpec.UncPaths", nVal);
@@ -2251,7 +2257,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		//-- wcscpy_c(ComSpec.ComspecInitial, gpConEmu->ms_ComSpecInitial);
 		// ќбработать 32/64 (найти tcc.exe и т.п.)
 		FindComspec(&ComSpec);
-		//UpdateComspec(&ComSpec); --> CSettings::SettingsLoaded
+		//Update Comspec(&ComSpec); --> CSettings::SettingsLoaded
 
 		reg->Load(L"ConsoleTextSelection", isConsoleTextSelection); if (isConsoleTextSelection>2) isConsoleTextSelection = 2;
 
@@ -3086,7 +3092,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ComSpec.Type", (BYTE)ComSpec.csType);
 		reg->Save(L"ComSpec.Bits", (BYTE)ComSpec.csBits);
 		reg->Save(L"ComSpec.UpdateEnv", (bool)ComSpec.isUpdateEnv);
-		reg->Save(L"ComSpec.EnvAddPath", (bool)ComSpec.isAddConEmu2Path);
+		reg->Save(L"ComSpec.EnvAddPath", (bool)((ComSpec.AddConEmu2Path & CEAP_AddConEmuBaseDir) == CEAP_AddConEmuBaseDir));
+		reg->Save(L"ComSpec.EnvAddExePath", (bool)((ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) == CEAP_AddConEmuExeDir));
 		reg->Save(L"ComSpec.UncPaths", (bool)ComSpec.isAllowUncPaths);
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
 		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);

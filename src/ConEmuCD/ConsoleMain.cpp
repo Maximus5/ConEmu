@@ -33,11 +33,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
-//  #define SHOW_COMSPEC_STARTED_MSGBOX
+//	#define SHOW_COMSPEC_STARTED_MSGBOX
 //	#define SHOW_SERVER_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
-	#define SHOW_STARTED_PRINT_LITE
+//	#define SHOW_STARTED_PRINT_LITE
 //	#define SHOW_INJECT_MSGBOX
 //	#define SHOW_INJECTREM_MSGBOX
 //	#define SHOW_ATTACH_MSGBOX
@@ -2526,6 +2526,8 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 			CESERVER_CONSOLE_MAPPING_HDR* pInfo = (CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(*pInfo));
 			if (pInfo && LoadSrvMapping(ghConWnd, *pInfo))
 			{
+				_ASSERTE(pInfo->ComSpec.ConEmuExeDir[0] && pInfo->ComSpec.ConEmuBaseDir[0]);
+
 				HWND hWnd = pInfo->hConEmuWndDc;
 				if (hWnd && IsWindow(hWnd))
 				{
@@ -2930,7 +2932,10 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	// Find current server (even if no server or no GUI - apply environment to parent tree)
 	lbMapExist = LoadSrvMapping(ghConWnd, test);
 	if (lbMapExist)
+	{
+		_ASSERTE(test.ComSpec.ConEmuExeDir[0] && test.ComSpec.ConEmuBaseDir[0]);
 		nSrvPID = test.nServerPID;
+	}
 
 	// Allocate memory for process tree
 	pList = (ProcInfo*)malloc(cchMax*sizeof(*pList));
@@ -5883,6 +5888,9 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	MCHKHEAP;
 
+	// Need to block all requests to output buffer in other threads
+	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+
 	DWORD nTick1 = 0, nTick2 = 0, nTick3 = 0, nTick4 = 0, nTick5 = 0;
 
 	if (in.hdr.cbSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETSIZE)))
@@ -5958,10 +5966,14 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		gpSrv->nTopVisibleLine = nNewTopVisible;
 		nTick1 = GetTickCount();
+		csRead.Unlock();
 		WARNING("≈сли указан dwFarPID - это что-ли два раза подр€д выполнитс€?");
 		SetConsoleSize(nBufferHeight, crNewSize, rNewRect, ":CECMD_SETSIZESYNC");
 		WARNING("!! Ќе может ли возникнуть конфликт с фаровским фиксом дл€ убирани€ полос прокрутки?");
 		nTick2 = GetTickCount();
+
+		// вернуть блокировку
+		csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
 		if (in.hdr.nCmd == CECMD_SETSIZESYNC)
 		{
@@ -5995,8 +6007,16 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 
 			SetEvent(gpSrv->hAllowInputEvent);
 			gpSrv->bInSyncResize = FALSE;
+
+			// ReloadFullConsoleInfo - передает управление в Refresh thread,
+			// поэтому блокировку нужно предварительно сн€ть
+			csRead.Unlock();
+
 			// ѕередернуть RefreshThread - перечитать консоль
-			ReloadFullConsoleInfo(FALSE); // вызовет Refresh в нити Refresh
+			ReloadFullConsoleInfo(FALSE); // вызовет Refresh в Refresh thread
+
+			// вернуть блокировку
+			csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 		}
 
 		MCHKHEAP;

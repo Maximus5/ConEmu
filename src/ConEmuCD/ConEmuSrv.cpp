@@ -160,6 +160,7 @@ BOOL LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
 				&& pInfo->nProtocolVersion == CESERVER_REQ_VER)
 			{
 				memmove(&GuiMapping, pInfo, pInfo->cbSize);
+				_ASSERTE(GuiMapping.ComSpec.ConEmuExeDir[0]!=0 && GuiMapping.ComSpec.ConEmuBaseDir[0]!=0);
 				lbRc = TRUE;
 			}
 		}
@@ -181,17 +182,22 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 	else
 	{
 		gpSrv->guiSettings.cbSize = sizeof(ConEmuGuiMapping);
-		lbRc = LoadGuiSettings(gpSrv->guiSettings) && (gpSrv->guiSettingsChangeNum != gpSrv->guiSettings.nChangeNum);
+		lbRc = LoadGuiSettings(gpSrv->guiSettings)
+			&& ((gpSrv->guiSettingsChangeNum != gpSrv->guiSettings.nChangeNum)
+				|| (gpSrv->pConsole && gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0] == 0));
 	}
 
 	if (lbRc)
 	{
+		gpSrv->guiSettingsChangeNum = gpSrv->guiSettings.nChangeNum;
+
 		gbLogProcess = (gpSrv->guiSettings.nLoggingType == glt_Processes);
 
 		UpdateComspec(&gpSrv->guiSettings.ComSpec); // isAddConEmu2Path, ...
 
-		SetEnvironmentVariableW(ENV_CONEMUDIR_VAR_W, gpSrv->guiSettings.sConEmuDir);
-		SetEnvironmentVariableW(ENV_CONEMUBASEDIR_VAR_W, gpSrv->guiSettings.sConEmuBaseDir);
+		_ASSERTE(gpSrv->guiSettings.ComSpec.ConEmuExeDir[0]!=0 && gpSrv->guiSettings.ComSpec.ConEmuBaseDir[0]!=0);
+		SetEnvironmentVariableW(ENV_CONEMUDIR_VAR_W, gpSrv->guiSettings.ComSpec.ConEmuExeDir);
+		SetEnvironmentVariableW(ENV_CONEMUBASEDIR_VAR_W, gpSrv->guiSettings.ComSpec.ConEmuBaseDir);
 
 		// Не будем ставить сами, эту переменную заполняет Gui при своем запуске
 		// соответственно, переменная наследуется серверами
@@ -203,7 +209,18 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 		if (gpSrv->pConsole)
 		{
 			// !!! Warning !!! Изменил здесь, поменяй и CreateMapHeader() !!!
+
+			gpSrv->pConsole->hdr.ComSpec = gpSrv->guiSettings.ComSpec;
 			
+			if (gpSrv->guiSettings.sConEmuExe[0] != 0)
+			{
+				wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
+			}
+			else
+			{
+				_ASSERTE(gpSrv->guiSettings.sConEmuExe[0]!=0);
+			}
+
 			gpSrv->pConsole->hdr.nLoggingType = gpSrv->guiSettings.nLoggingType;
 			gpSrv->pConsole->hdr.bUseInjects = gpSrv->guiSettings.bUseInjects;
 			//gpSrv->pConsole->hdr.bDosBox = gpSrv->guiSettings.bDosBox;
@@ -213,8 +230,9 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 			gpSrv->pConsole->hdr.Flags = gpSrv->guiSettings.Flags;
 			
 			// Обновить пути к ConEmu
+			_ASSERTE(gpSrv->guiSettings.sConEmuExe[0]!=0);
 			wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
-			wcscpy_c(gpSrv->pConsole->hdr.sConEmuBaseDir, gpSrv->guiSettings.sConEmuBaseDir);
+			//wcscpy_c(gpSrv->pConsole->hdr.sConEmuBaseDir, gpSrv->guiSettings.sConEmuBaseDir);
 
 			// И настройки командного процессора
 			gpSrv->pConsole->hdr.ComSpec = gpSrv->guiSettings.ComSpec;
@@ -460,6 +478,8 @@ int ServerInitCheckExisting(bool abAlternative)
 	CESERVER_CONSOLE_MAPPING_HDR test = {};
 
 	BOOL lbExist = LoadSrvMapping(ghConWnd, test);
+	_ASSERTE(!lbExist || (test.ComSpec.ConEmuExeDir[0] && test.ComSpec.ConEmuBaseDir[0]));
+
 	if (abAlternative == FALSE)
 	{
 		_ASSERTE(gnRunMode==RM_SERVER);
@@ -694,6 +714,16 @@ int ServerInitGuiTab()
 			SetConEmuWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
 			gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
 			
+			// Обновить настройки через GuiMapping
+			if (ghConEmuWnd)
+			{
+				ReloadGuiSettings(NULL);
+			}
+			else
+			{
+				_ASSERTE(ghConEmuWnd!=NULL && "Must be set!");
+			}
+
 			#ifdef _DEBUG
 			DWORD nGuiPID; GetWindowThreadProcessId(ghConEmuWnd, &nGuiPID);
 			_ASSERTEX(pOut->hdr.nSrcPID==nGuiPID);
@@ -1945,37 +1975,12 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 	// Запомнить/обновить sbi
 	pData->info = lsbi;
 
-	MSectionLock csRead; csRead.Lock(gpSrv->csReadConsoleInfo, TRUE, 1000);
+	// Need to block all requests to output buffer in other threads
+	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+
 	pData->Succeeded = MyReadConsoleOutput(ghConOut, pData->Data, BufSize, ReadRect);
+	
 	csRead.Unlock();
-
-#if 0
-	// [Roman Kuzmin]
-	// In FAR Manager source code this is mentioned as "fucked method". Yes, it is.
-	// Functions ReadConsoleOutput* fail if requested data size exceeds their buffer;
-	// MSDN says 64K is max but it does not say how much actually we can request now.
-	// Experiments show that this limit is floating and it can be much less than 64K.
-	// The solution below is not optimal when a user sets small font and large window,
-	// but it is safe and practically optimal, because most of users set larger fonts
-	// for large window and ReadConsoleOutput works OK. More optimal solution for all
-	// cases is not that difficult to develop but it will be increased complexity and
-	// overhead often for nothing, not sure that we really should use it.
-
-	if ((nReadLen > MAX_CONREAD_SIZE)
-		!ReadConsoleOutput(ghConOut, pData->Data, BufSize, coord, &nbActuallyRead)
-		|| (nbActuallyRead != nReadLen))
-	{
-		DEBUGSTR(L"--- Full block read failed: read line by line\n");
-		wchar_t* ConCharNow = gpStoredOutput->Data;
-		nReadLen = lsbi.dwSize.X;
-
-		for(int y = 0; y < (int)lsbi.dwSize.Y; y++, coord.Y++)
-		{
-			ReadConsoleOutputCharacter(ghConOut, ConCharNow, nReadLen, coord, &nbActuallyRead);
-			ConCharNow += lsbi.dwSize.X;
-		}
-	}
-#endif
 
 	DEBUGSTR(L"--- CmdOutputStore end\n");
 }
@@ -2779,6 +2784,40 @@ int CreateMapHeader()
 		goto wrap;
 	}
 
+	gpSrv->pConsoleMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
+
+	if (!gpSrv->pConsoleMap)
+	{
+		_printf("ConEmuC: calloc(MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>) failed, pConsoleMap is null", 0); //-V576
+		goto wrap;
+	}
+
+	gpSrv->pConsoleMap->InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
+
+	BOOL lbCreated;
+	if (gnRunMode == RM_SERVER)
+		lbCreated = (gpSrv->pConsoleMap->Create() != NULL);
+	else
+		lbCreated = (gpSrv->pConsoleMap->Open() != NULL);
+
+	if (!lbCreated)
+	{
+		_wprintf(gpSrv->pConsoleMap->GetErrorText());
+		delete gpSrv->pConsoleMap; gpSrv->pConsoleMap = NULL;
+		iRc = CERR_CREATEMAPPINGERR; goto wrap;
+	}
+	else if (gnRunMode == RM_ALTSERVER)
+	{
+		// На всякий случай, перекинем параметры
+		if (gpSrv->pConsoleMap->GetTo(&gpSrv->pConsole->hdr))
+		{
+			if (gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0] && gpSrv->pConsole->hdr.ComSpec.ConEmuBaseDir[0])
+			{
+				gpSrv->guiSettings.ComSpec = gpSrv->pConsole->hdr.ComSpec;
+			}
+		}
+	}
+
 	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings() !!!
 	gpSrv->pConsole->cbMaxSize = nTotalSize;
 	//gpSrv->pConsole->cbActiveSize = ((LPBYTE)&(gpSrv->pConsole->data)) - ((LPBYTE)gpSrv->pConsole);
@@ -2806,6 +2845,26 @@ int CreateMapHeader()
 	if (ghConEmuWnd) // если уже известен - тогда можно
 		ReloadGuiSettings(NULL);
 
+	// По идее, уже должно быть настроено
+	if (gpSrv->guiSettings.ComSpec.ConEmuExeDir[0]!=0 && gpSrv->guiSettings.ComSpec.ConEmuBaseDir[0]!=0)
+	{
+		gpSrv->pConsole->hdr.ComSpec = gpSrv->guiSettings.ComSpec;
+	}
+	else
+	{
+		_ASSERTE(gpSrv->guiSettings.ComSpec.ConEmuExeDir[0]!=0 && gpSrv->guiSettings.ComSpec.ConEmuBaseDir[0]!=0);
+	}
+
+	if (gpSrv->guiSettings.sConEmuExe[0] != 0)
+	{
+		wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
+	}
+	else
+	{
+		_ASSERTE((ghConEmuWnd==NULL) || (gpSrv->guiSettings.sConEmuExe[0]!=0));
+	}
+
+
 	//WARNING! В начале структуры info идет CESERVER_REQ_HDR для унификации общения через пайпы
 	gpSrv->pConsole->info.cmd.cbSize = sizeof(gpSrv->pConsole->info); // Пока тут - только размер заголовка
 	gpSrv->pConsole->info.hConWnd = ghConWnd; _ASSERTE(ghConWnd!=NULL);
@@ -2815,29 +2874,7 @@ int CreateMapHeader()
 	
 	//WARNING! Сразу ставим флаг измененности чтобы данные сразу пошли в GUI
 	gpSrv->pConsole->bDataChanged = TRUE;
-	
-	gpSrv->pConsoleMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
 
-	if (!gpSrv->pConsoleMap)
-	{
-		_printf("ConEmuC: calloc(MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>) failed, pConsoleMap is null", 0); //-V576
-		goto wrap;
-	}
-
-	gpSrv->pConsoleMap->InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
-
-	BOOL lbCreated;
-	if (gnRunMode == RM_SERVER)
-		lbCreated = (gpSrv->pConsoleMap->Create() != NULL);
-	else
-		lbCreated = (gpSrv->pConsoleMap->Open() != NULL);
-
-	if (!lbCreated)
-	{
-		_wprintf(gpSrv->pConsoleMap->GetErrorText());
-		delete gpSrv->pConsoleMap; gpSrv->pConsoleMap = NULL;
-		iRc = CERR_CREATEMAPPINGERR; goto wrap;
-	}
 
 	//gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
 	UpdateConsoleMapHeader();
@@ -2909,6 +2946,26 @@ void UpdateConsoleMapHeader()
 
 		if (gpSrv->pConsoleMap)
 		{
+			if (gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0]==0 || gpSrv->pConsole->hdr.ComSpec.ConEmuBaseDir[0]==0)
+			{
+				_ASSERTE(gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0]!=0 && gpSrv->pConsole->hdr.ComSpec.ConEmuBaseDir[0]!=0);
+				wchar_t szSelfPath[MAX_PATH+1];
+				if (GetModuleFileName(NULL, szSelfPath, countof(szSelfPath)))
+				{
+					wchar_t* pszSlash = wcsrchr(szSelfPath, L'\\');
+					if (pszSlash)
+					{
+						*pszSlash = 0;
+						lstrcpy(gpSrv->pConsole->hdr.ComSpec.ConEmuBaseDir, szSelfPath);
+					}
+				}
+			}
+
+			if (gpSrv->pConsole->hdr.sConEmuExe[0] == 0)
+			{
+				_ASSERTE(gpSrv->pConsole->hdr.sConEmuExe[0]!=0);
+			}
+
 			gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
 		}
 	}
@@ -3598,9 +3655,11 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 	if (abForceSend)
 		gpSrv->pConsole->bDataChanged = TRUE;
 
-	MSectionLock csRead; csRead.Lock(gpSrv->csReadConsoleInfo, TRUE, 1000);
+	// Need to block all requests to output buffer in other threads
+	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+
+	// Read sizes flags and other information
 	int iInfoRc = ReadConsoleInfo();
-	csRead.Unlock();
 
 	if (iInfoRc == -1)
 	{
@@ -3611,6 +3670,7 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 		if (iInfoRc == 1)
 			lbChanged = TRUE;
 
+		// Read chars and attributes for visible (or locked) area
 		if (ReadConsoleData())
 			lbChanged = lbDataChanged = TRUE;
 
@@ -3645,6 +3705,8 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 			//}
 		}
 	}
+
+	csRead.Unlock();
 
 	return lbChanged;
 }

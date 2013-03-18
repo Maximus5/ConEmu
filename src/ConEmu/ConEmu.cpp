@@ -348,7 +348,7 @@ CConEmuMain::CConEmuMain()
 	//mb_InClose = FALSE;
 	//memset(m_ProcList, 0, 1000*sizeof(DWORD));
 	m_ProcCount=0;
-	mb_ProcessCreated = FALSE; /*mn_StartTick = 0;*/ mb_WorkspaceErasedOnClose = FALSE;
+	mb_ProcessCreated = false; /*mn_StartTick = 0;*/ mb_WorkspaceErasedOnClose = false;
 	mb_IgnoreSizeChange = false;
 	mb_InCaptionChange = false;
 	m_FixPosAfterStyle = 0;
@@ -1827,7 +1827,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	OnTransparent();
 	//if (gpConEmu->WindowMode == wmFullScreen || gpConEmu->WindowMode == wmMaximized)
 	//	gpConEmu->SetWindowMode(gpConEmu->WindowMode);
-	UpdateGuiInfoMapping();
+	OnGlobalSettingsChanged();
 	return TRUE;
 }
 
@@ -2259,6 +2259,13 @@ void CConEmuMain::CreateGuiAttachMapping(DWORD nGuiAppPID)
 	}
 }
 
+// ”становить пути в структуре
+void CConEmuMain::InitComSpecStr(ConEmuComspec& ComSpec)
+{
+	wcscpy_c(ComSpec.ConEmuExeDir, ms_ConEmuExeDir);
+	wcscpy_c(ComSpec.ConEmuBaseDir, ms_ConEmuBaseDir);
+}
+
 void CConEmuMain::UpdateGuiInfoMapping()
 {
 	m_GuiInfo.nProtocolVersion = CESERVER_REQ_VER;
@@ -2271,24 +2278,25 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	
 	m_GuiInfo.nLoggingType = (ghOpWnd && gpSetCls->mh_Tabs[gpSetCls->thi_Debug]) ? gpSetCls->m_ActivityLoggingType : glt_None;
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0) ; // ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
-	SetConsoleFlags(m_GuiInfo.Flags,CECF_UseTrueColor,(gpSet->isTrueColorer ? CECF_UseTrueColor : 0));
-	SetConsoleFlags(m_GuiInfo.Flags,CECF_ProcessAnsi,(gpSet->isProcessAnsi ? CECF_ProcessAnsi : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_UseTrueColor,(gpSet->isTrueColorer ? CECF_UseTrueColor : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessAnsi,(gpSet->isProcessAnsi ? CECF_ProcessAnsi : 0));
 	// использовать расширение командной строки (ReadConsole). 0 - нет, 1 - стара€ верси€ (0.1.1), 2 - нова€ верси€
 	switch (gpSet->isUseClink())
 	{
 	case 1:
-		SetConsoleFlags(m_GuiInfo.Flags,CECF_UseClink_Any,CECF_UseClink_1);
+		SetConEmuFlags(m_GuiInfo.Flags,CECF_UseClink_Any,CECF_UseClink_1);
 		break;
 	case 2:
-		SetConsoleFlags(m_GuiInfo.Flags,CECF_UseClink_Any,CECF_UseClink_2);
+		SetConEmuFlags(m_GuiInfo.Flags,CECF_UseClink_Any,CECF_UseClink_2);
 		break;
 	default:
 		_ASSERTE(gpSet->isUseClink()==0);
+		SetConEmuFlags(m_GuiInfo.Flags,CECF_UseClink_Any,CECF_Empty);
 	}
 
-	SetConsoleFlags(m_GuiInfo.Flags,CECF_BlockChildDbg,(mb_BlockChildrenDebuggers ? CECF_BlockChildDbg : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_BlockChildDbg,(mb_BlockChildrenDebuggers ? CECF_BlockChildDbg : 0));
 	
-	SetConsoleFlags(m_GuiInfo.Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
 	m_GuiInfo.bGuiActive = isMeForeground(true, true);
 	{
 	CVConGuard VCon;
@@ -2297,7 +2305,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.dwActiveTick = GetTickCount();
 
 	mb_DosBoxExists = CheckDosBoxExists();
-	SetConsoleFlags(m_GuiInfo.Flags,CECF_DosBox,(mb_DosBoxExists ? CECF_DosBox : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_DosBox,(mb_DosBoxExists ? CECF_DosBox : 0));
 	
 	m_GuiInfo.isHookRegistry = (mb_PortableRegExist ? (gpSet->isPortableReg ? 3 : 1) : 0);
 	wcscpy_c(m_GuiInfo.sHiveFileName, ms_PortableRegHive);
@@ -2305,8 +2313,9 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	wcscpy_c(m_GuiInfo.sMountKey, ms_PortableMountKey);
 	
 	wcscpy_c(m_GuiInfo.sConEmuExe, ms_ConEmuExe);
-	wcscpy_c(m_GuiInfo.sConEmuDir, ms_ConEmuExeDir);
-	wcscpy_c(m_GuiInfo.sConEmuBaseDir, ms_ConEmuBaseDir);
+	//-- переехали в m_GuiInfo.ComSpec
+	//wcscpy_c(m_GuiInfo.sConEmuDir, ms_ConEmuExeDir);
+	//wcscpy_c(m_GuiInfo.sConEmuBaseDir, ms_ConEmuBaseDir);
 	_wcscpyn_c(m_GuiInfo.sConEmuArgs, countof(m_GuiInfo.sConEmuArgs), mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(m_GuiInfo.sConEmuArgs));
 
 	/* Default terminal begin */
@@ -2344,8 +2353,9 @@ void CConEmuMain::UpdateGuiInfoMapping()
 		SetEnvVarExpanded(L"ComSpec", ms_ComSpecInitial); // т.к. функции могут ориентироватьс€ на окружение
 		FindComspec(&gpSet->ComSpec);
 		//wcscpy_c(gpSet->ComSpec.ConEmuDir, gpConEmu->ms_ConEmuDir);
-		wcscpy_c(gpSet->ComSpec.ConEmuBaseDir, gpConEmu->ms_ConEmuBaseDir);
-		UpdateComspec(&gpSet->ComSpec); // установит переменную окружени€, если просили (isAddConEmu2Path)
+		InitComSpecStr(gpSet->ComSpec);
+		// установит переменную окружени€ ComSpec, если просили (isAddConEmu2Path)
+		UpdateComspec(&gpSet->ComSpec, true/*но не трогать %PATH%*/);
 
 		// —копируем всю структуру сначала, потом будет "править" то что нужно
 		m_GuiInfo.ComSpec = gpSet->ComSpec;
@@ -2470,7 +2480,7 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive)
 	CVConGuard VCon;
 	HWND hActiveRCon = (GetActiveVCon(&VCon) >= 0) ? VCon->RCon()->ConWnd() : NULL;
 
-	SetConsoleFlags(m_GuiInfo.Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
 	m_GuiInfo.bGuiActive = bActive;
 	m_GuiInfo.hActiveCon = hActiveRCon;
 	m_GuiInfo.dwActiveTick = GetTickCount();
@@ -2483,7 +2493,7 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive)
 			|| ((pData->bGuiActive!=FALSE) != (bActive!=FALSE))
 			|| (pData->hActiveCon != hActiveRCon))
 		{
-			SetConsoleFlags(pData->Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
+			SetConEmuFlags(pData->Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
 			pData->bGuiActive = bActive;
 			pData->hActiveCon = hActiveRCon;
 			pData->dwActiveTick = m_GuiInfo.dwActiveTick;
@@ -9749,7 +9759,7 @@ bool CConEmuMain::isPictureView()
 
 bool CConEmuMain::isProcessCreated()
 {
-	return (mb_ProcessCreated != FALSE);
+	return mb_ProcessCreated;
 }
 
 bool CConEmuMain::isSizing()
@@ -10694,8 +10704,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				if (WindowStartTSA)
 				{
-					gpSet->isMultiLeaveOnClose = true;
-					gpSet->isMultiHideOnClose = true;
+					gpSet->isMultiLeaveOnClose = 1;
+					gpSet->isMultiHideOnClose = 1;
 				}
 			}
 			else if (IsWindowVisible(ghWnd) && !isIconic())
@@ -11713,7 +11723,11 @@ void CConEmuMain::OnGlobalSettingsChanged()
 
 void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 {
-	gpConEmu->UpdateGuiInfoMapping();
+	// UpdateGuiInfoMapping будет вызван после завершени€ создани€ окна
+	if (!InCreateWindow())
+	{
+		UpdateGuiInfoMapping();
+	}
 	
 	// «аполнить цвета gpSet->ThSet.crPalette[16], gpSet->ThSet.crFadePalette[16]
 	COLORREF *pcrNormal = gpSet->GetColors(-1, FALSE);
@@ -16215,7 +16229,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		{
 			OnAllVConClosed();
 			// Once. Otherwise window we can't show window when "Auto hide" is on...
-			mb_ProcessCreated = FALSE;
+			mb_ProcessCreated = false;
 			return;
 		}
 	}
@@ -16224,12 +16238,15 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		//if (!mb_ProcessCreated && m_ProcCount>=1) --> OnRConStartedSuccess
 		//{
 		//	if ((GetTickCount() - mn_StartTick)>PROCESS_WAIT_START_TIME)
-		//		mb_ProcessCreated = TRUE;
+		//		mb_ProcessCreated = true;
 		//}
 
 		if (!mb_WorkspaceErasedOnClose)
-			mb_WorkspaceErasedOnClose = FALSE;
+			mb_WorkspaceErasedOnClose = false;
 	}
+
+	// „тобы не возникало "зависаний/блокировок" в потоке чтени€ консоли - провер€ем "живость" сервера
+	CVConGroup::OnRConTimerCheck();
 
 	// TODO: поддержку SlideShow повесить на отдельный таймер
 	BOOL lbIsPicView = isPictureView();
@@ -16630,6 +16647,21 @@ void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *ar
 	CVConGroup::OnVConCreated(apVCon, args);
 }
 
+// «ависит от настроек и того, как закрывали
+bool CConEmuMain::isDestroyOnClose()
+{
+	if (!gpSet->isMultiLeaveOnClose)
+		return true;
+	if (gpSet->isMultiLeaveOnClose == 1)
+		return false;
+	// —юда мы попадаем, если просили оставл€ть ConEmu только если
+	// закрыта была вкладка, а не нажат "крестик" в заголовке
+	_ASSERTE(gpSet->isMultiLeaveOnClose == 2);
+	// mb_CloseGuiConfirmed выставл€етс€ в true при закрытии крестиком
+	// “о есть, если нажали "крестик" - вызываем закрытие окна ConEmu
+	return mb_CloseGuiConfirmed;
+}
+
 void CConEmuMain::OnAllVConClosed()
 {
 	ShutdownGuiStep(L"AllVConClosed");
@@ -16638,23 +16670,28 @@ void CConEmuMain::OnAllVConClosed()
 
 	Taskbar_SetShield(false);
 
-	if (!gpSet->isMultiLeaveOnClose)
+	if (isDestroyOnClose())
 	{
 		Destroy();
 	}
 	else
 	{
-		if (gpSet->isMultiHideOnClose)
+		if (gpSet->isMultiHideOnClose == 1)
 		{
 			if (IsWindowVisible(ghWnd))
 			{
 				Icon.HideWindowToTray();
 			}
 		}
+		else if (gpSet->isMultiHideOnClose == 2)
+		{
+			if (!gpConEmu->isIconic())
+				SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+		}
 
 		if (!mb_WorkspaceErasedOnClose)
 		{
-			mb_WorkspaceErasedOnClose = TRUE;
+			mb_WorkspaceErasedOnClose = true;
 			UpdateTitle();
 			InvalidateAll();
 		}
@@ -16702,7 +16739,8 @@ void CConEmuMain::OnAllGhostClosed()
 void CConEmuMain::OnRConStartedSuccess(CRealConsole* apRCon)
 {
 	// Note, apRCon MAY be NULL
-	mb_ProcessCreated = TRUE;
+	mb_ProcessCreated = true;
+	mb_CloseGuiConfirmed = false; // сброс
 }
 
 LRESULT CConEmuMain::OnVConClosed(CVirtualConsole* apVCon, BOOL abPosted /*= FALSE*/)

@@ -1586,6 +1586,22 @@ bool CVConGroup::isPictureView()
 	return lbRc;
 }
 
+void CVConGroup::OnRConTimerCheck()
+{
+	CVConGuard VCon;
+	CRealConsole* pRCon;
+
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		if (!VCon.Attach(gp_VCon[i]))
+			continue;
+		pRCon = VCon->RCon();
+		if (!pRCon)
+			continue;
+		pRCon->OnTimerCheck();
+	}
+}
+
 // nIdx - 0 based
 bool CVConGroup::GetVCon(int nIdx, CVConGuard* pVCon /*= NULL*/)
 {
@@ -1763,10 +1779,11 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 
 		if (rbMsgConfirmed)
 			*rbMsgConfirmed = true;
-
-		if (rbCloseGuiConfirmed)
-			*rbCloseGuiConfirmed = true;
 	}
+
+	// Выставить флажок, чтобы ConEmu знал: "закрытие инициировано пользователем через крестик/меню"
+	if (rbCloseGuiConfirmed)
+		*rbCloseGuiConfirmed = true;
 
 	return true; // можно
 }
@@ -1895,9 +1912,10 @@ void CVConGroup::OnUpdateGuiInfoMapping(ConEmuGuiMapping* apGuiInfo)
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		if (gp_VCon[i] && gp_VCon[i]->RCon())
+		CVConGuard VCon;
+		if (VCon.Attach(gp_VCon[i]) && VCon->RCon())
 		{
-			gp_VCon[i]->RCon()->UpdateGuiInfoMapping(apGuiInfo);
+			VCon->RCon()->UpdateGuiInfoMapping(apGuiInfo);
 		}
 	}
 }
@@ -2020,8 +2038,8 @@ bool CVConGroup::OnScClose()
 		}
 	}
 
-	// Если просили НЕ закрывать ConEmu при закрытии последнего таба - закрыть окно вообще нельзя
-	if (lbAllowed && gpSet->isMultiLeaveOnClose && !nConCount && !nDetachedCount)
+	// Закрыть окно, если просили
+	if (lbAllowed && gpConEmu->isDestroyOnClose() && !nConCount && !nDetachedCount)
 	{
 		// Поэтому проверяем, и если никого не осталось, то по крестику - прибиваемся
 		gpConEmu->Destroy();

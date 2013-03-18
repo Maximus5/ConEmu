@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"vim.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"xxx.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -1716,7 +1716,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	// go
 	STARTUPINFO si = {sizeof(si)};
 	PROCESS_INFORMATION pi = {};
-	size_t cchCmdLine = 300 + lstrlen(GuiMapping->sConEmuBaseDir) + lstrlen(gpStartEnv->pszCmdLine);
+	size_t cchCmdLine = 300 + lstrlen(GuiMapping->ComSpec.ConEmuBaseDir) + lstrlen(gpStartEnv->pszCmdLine);
 	wchar_t *pszCmd, *pszName;
 	BOOL bSrvFound;
 
@@ -1728,7 +1728,8 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	}
 
 	*pszCmd = L'"';
-	lstrcpy(pszCmd+1, GuiMapping->sConEmuBaseDir);
+	_ASSERTEX(GuiMapping->ComSpec.ConEmuBaseDir[0]!=0);
+	lstrcpy(pszCmd+1, GuiMapping->ComSpec.ConEmuBaseDir);
 	pszName = pszCmd + lstrlen(pszCmd);
 	lstrcpy(pszName, WIN3264TEST(L"\\ConEmuC.exe",L"\\ConEmuC64.exe"));
 	bSrvFound = FileExists(pszCmd+1);

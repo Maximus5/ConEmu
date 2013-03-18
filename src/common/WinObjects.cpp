@@ -3274,6 +3274,87 @@ BOOL MSectionLock::isLocked(BOOL abExclusiveOnly/*=FALSE*/)
 
 
 #ifndef CONEMU_MINIMAL
+MSectionLockSimple::MSectionLockSimple()
+{
+	mp_S = NULL;
+	mb_Locked = false;
+	#ifdef _DEBUG
+	mn_LockTID = mn_LockTick = 0;
+	#endif
+}
+
+MSectionLockSimple::~MSectionLockSimple()
+{
+	if (mb_Locked)
+	{
+		Unlock();
+	}
+}
+
+BOOL MSectionLockSimple::Lock(CRITICAL_SECTION* apS, DWORD anTimeout/*=-1*/)
+{
+	if (mb_Locked && (mp_S != apS))
+		Unlock();
+
+	mp_S = apS;
+
+	if (!mp_S)
+	{
+		_ASSERTEX(apS);
+		return FALSE;
+	}
+
+	_ASSERTEX(!mb_Locked);
+	
+	bool bLocked = false;
+	DWORD nStartTick = GetTickCount(), nDelta;
+	while (true)
+	{
+		if (TryEnterCriticalSection(apS))
+		{
+			bLocked = mb_Locked = true;
+			#ifdef _DEBUG
+			mn_LockTID = GetCurrentThreadId();
+			mn_LockTick = GetTickCount();
+			#endif
+			break;
+		}
+
+		if (anTimeout != (DWORD)-1)
+		{
+			nDelta = GetTickCount() - nStartTick;
+			if (nDelta >= anTimeout)
+			{
+				_ASSERTEX(FALSE && "Failed to lock CriticalSection, timeout");
+				break;
+			}
+		}
+
+		Sleep(10);
+	}
+
+	return bLocked;
+}
+
+void MSectionLockSimple::Unlock()
+{
+	if (mb_Locked)
+	{
+		if (mp_S)
+			LeaveCriticalSection(mp_S);
+		mb_Locked = false;
+	}
+}
+
+BOOL MSectionLockSimple::isLocked()
+{
+	return mb_Locked;
+}
+#endif
+
+
+
+#ifndef CONEMU_MINIMAL
 MFileLog::MFileLog(LPCWSTR asName, LPCWSTR asDir /*= NULL*/, DWORD anPID /*= 0*/)
 {
 	mh_LogFile = NULL;
@@ -4077,7 +4158,57 @@ void FindComspec(ConEmuComspec* pOpt)
 		GetComspecFromEnvVar(pOpt->Comspec64, countof(pOpt->Comspec64), csb_x64);
 }
 
-void UpdateComspec(ConEmuComspec* pOpt)
+wchar_t* GetEnvVar(LPCWSTR VarName, DWORD cchDefaultMax /*= 2000*/)
+{
+	if (!VarName || !*VarName)
+	{
+		return NULL;
+	}
+
+	_ASSERTE(cchDefaultMax >= MAX_PATH);
+
+	DWORD cchMax = cchDefaultMax, nRc, nErr;
+	wchar_t* pszVal = (wchar_t*)malloc(cchMax*sizeof(*pszVal));
+	if (!pszVal)
+	{
+		_ASSERTE((pszVal!=NULL) && "GetEnvVar memory allocation failed");
+		return NULL;
+	}
+
+	nRc = GetEnvironmentVariable(VarName, pszVal, cchMax);
+	if (nRc == 0)
+	{
+		// Weird. This may be empty variable or not existing variable
+		nErr = GetLastError();
+		if (nErr == ERROR_ENVVAR_NOT_FOUND)
+			SafeFree(pszVal);
+		return pszVal;
+	}
+
+	// If buffer is not large enough to hold the data, the return value is the buffer size,
+	// in characters, required to hold the string and its terminating null character.
+	if (nRc >= cchMax)
+	{
+		cchMax = nRc+1;
+		pszVal = (wchar_t*)realloc(pszVal, cchMax*sizeof(*pszVal));
+		if (!pszVal)
+		{
+			_ASSERTE((pszVal!=NULL) && "GetEnvVar memory reallocation failed");
+			return NULL;
+		}
+
+		nRc = GetEnvironmentVariable(VarName, pszVal, cchMax);
+		if ((nRc == 0) || (nRc >= cchMax))
+		{
+			_ASSERTE(nRc > 0 && nRc < cchMax);
+			SafeFree(pszVal);
+		}
+	}
+
+	return pszVal;
+}
+
+void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 {
 	if (!pOpt)
 	{
@@ -4128,47 +4259,124 @@ void UpdateComspec(ConEmuComspec* pOpt)
 		}
 	}
 
-	if (pOpt->isAddConEmu2Path)
+	if (pOpt->AddConEmu2Path && !DontModifyPath)
 	{
-		if (pOpt->ConEmuBaseDir[0] == 0)
+		if ((pOpt->ConEmuBaseDir[0] == 0) || (pOpt->ConEmuExeDir[0] == 0))
 		{
 			_ASSERTE(pOpt->ConEmuBaseDir[0] != 0);
+			_ASSERTE(pOpt->ConEmuExeDir[0] != 0);
 		}
 		else
 		{
-			DWORD cchMax = 32767;
-			wchar_t* pszCur = (wchar_t*)malloc(cchMax*sizeof(*pszCur));
-			wchar_t* pszUpr = (wchar_t*)malloc(cchMax*sizeof(*pszCur));
-			wchar_t* pszDirUpr = (wchar_t*)malloc(MAX_PATH*sizeof(*pszCur));
+			wchar_t* pszCur = GetEnvVar(L"PATH");
 
-			if (pszCur && pszUpr && pszDirUpr)
+			if (!pszCur || !*pszCur)
 			{
-				DWORD n = GetEnvironmentVariable(L"PATH", pszCur, cchMax);
-				if (n < cchMax)
+				// Not existing or empty, just add
+				SafeFree(pszCur);
+				
+				// ConEmuC.exe is near to ConEmu.exe?
+				if (lstrcmp(pOpt->ConEmuBaseDir, pOpt->ConEmuExeDir) == 0)
 				{
-					if (!n)
-						*pszCur = 0;
-					lstrcpyn(pszUpr, pszCur, cchMax);
-					if (n)
-						CharUpperBuff(pszUpr, n);
-					lstrcpyn(pszDirUpr, pOpt->ConEmuBaseDir, MAX_PATH);
-					CharUpperBuff(pszDirUpr, lstrlen(pszDirUpr));
-					int nDirLen = lstrlen(pszDirUpr);
-					LPCWSTR pszFind = wcsstr(pszUpr, pszDirUpr);
-					if (!(pszFind && (pszFind[nDirLen] == L';' || pszFind[nDirLen] == 0))
-						&& ((n + nDirLen + 1) < cchMax))
-					{
-						lstrcpy(pszUpr, pOpt->ConEmuBaseDir);
-						lstrcat(pszUpr, L";");
-						lstrcat(pszUpr, pszCur);
-						SetEnvironmentVariable(L"PATH", pszUpr);
-					}
+					SetEnvironmentVariable(L"PATH", pOpt->ConEmuBaseDir);
+				}
+				else
+				{
+					pszCur = lstrmerge(pOpt->ConEmuBaseDir, L";", pOpt->ConEmuExeDir, L";");
+					_ASSERTE(pszCur && *pszCur);
+					SetEnvironmentVariable(L"PATH", pszCur);
 				}
 			}
+			else
+			{
+				DWORD n = lstrlen(pszCur);
+				wchar_t* pszUpr = lstrdup(pszCur);
+				wchar_t* pszDirUpr = (wchar_t*)malloc(MAX_PATH*sizeof(*pszCur));
 
+				MCHKHEAP;
+
+				if (!pszUpr || !pszDirUpr)
+				{
+					_ASSERTE(pszUpr && pszDirUpr);
+				}
+				else
+				{
+					bool bChanged = false;
+					wchar_t* pszAdd = NULL;
+
+					CharUpperBuff(pszUpr, n);
+
+					for (int i = 0; i <= 1; i++)
+					{
+						switch (i)
+						{
+						case 0:
+							if (!(pOpt->AddConEmu2Path & CEAP_AddConEmuExeDir))
+								continue;
+							pszAdd = pOpt->ConEmuExeDir;
+							break;
+						case 1:
+							if (!(pOpt->AddConEmu2Path & CEAP_AddConEmuBaseDir))
+								continue;
+							if (lstrcmp(pOpt->ConEmuExeDir, pOpt->ConEmuBaseDir) == 0)
+								continue; // второй раз ту же директорию не добавляем
+							pszAdd = pOpt->ConEmuBaseDir;
+							break;
+						}
+
+						int nDirLen = lstrlen(pszAdd);
+						lstrcpyn(pszDirUpr, pszAdd, MAX_PATH);
+						CharUpperBuff(pszDirUpr, nDirLen);
+
+						MCHKHEAP;
+
+						// Need to find exact match!
+						bool bFound = false;
+						
+						LPCWSTR pszFind = wcsstr(pszUpr, pszDirUpr);
+						while (pszFind)
+						{
+							if (pszFind[nDirLen] == L';' || pszFind[nDirLen] == 0)
+							{
+								// OK, found
+								bFound = true;
+								break;
+							}
+							// Next try (may be partial match of subdirs...)
+							pszFind = wcsstr(pszFind+nDirLen, pszDirUpr);
+						}
+
+						if (!bFound)
+						{
+							wchar_t* pszNew = lstrmerge(pszAdd, L";", pszCur);
+							if (!pszNew)
+							{
+								_ASSERTE(pszNew && "Failed to reallocate PATH variable");
+								break;
+							}
+							MCHKHEAP;
+							SafeFree(pszCur);
+							pszCur = pszNew;
+							bChanged = true; // Set flag, check next dir
+						}
+					}
+
+					MCHKHEAP;
+
+					if (bChanged)
+					{
+						SetEnvironmentVariable(L"PATH", pszCur);
+					}
+				}
+
+				MCHKHEAP;
+				
+				SafeFree(pszUpr);
+				SafeFree(pszDirUpr);
+
+				MCHKHEAP;
+			}
 			SafeFree(pszCur);
-			SafeFree(pszUpr);
-			SafeFree(pszDirUpr);
 		}
 	}
 }

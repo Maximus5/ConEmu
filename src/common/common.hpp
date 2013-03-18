@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    124
+#define CESERVER_REQ_VER    125
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -926,17 +926,25 @@ enum ComSpecBits
 	csb_Last = csb_x32,
 };
 
+typedef DWORD CEAdd2Path;
+const CEAdd2Path
+	CEAP_AddConEmuBaseDir      = 0x00000001,
+	CEAP_AddConEmuExeDir       = 0x00000002,
+	CEAP_AddAll                = CEAP_AddConEmuBaseDir|CEAP_AddConEmuExeDir,
+	CEAP_None                  = 0;
+
 struct ConEmuComspec
 {
 	ComSpecType  csType;
 	ComSpecBits  csBits;
 	BOOL         isUpdateEnv;
-	BOOL         isAddConEmu2Path;
+	CEAdd2Path   AddConEmu2Path;
 	BOOL         isAllowUncPaths;
 	wchar_t      ComspecExplicit[MAX_PATH]; // этот - хранится в настройке
 	wchar_t      Comspec32[MAX_PATH]; // развернутые, готовые к использованию
 	wchar_t      Comspec64[MAX_PATH]; // развернутые, готовые к использованию
 	wchar_t      ConEmuBaseDir[MAX_PATH]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
+	wchar_t      ConEmuExeDir[MAX_PATH]; // БЕЗ завершающего слеша. Папка содержит ConEmu.exe, Far.exe (optional)
 };
 
 
@@ -957,7 +965,7 @@ const ConEmuConsoleFlags
 
 	CECF_Empty = 0
 	;
-#define SetConsoleFlags(v,m,f) (v) = ((v) & ~(m)) | (f)
+#define SetConEmuFlags(v,m,f) (v) = ((v) & ~(m)) | (f)
 
 struct ConEmuGuiMapping
 {
@@ -970,8 +978,8 @@ struct ConEmuGuiMapping
 	DWORD    nLoggingType; // enum GuiLoggingType
 	
 	wchar_t  sConEmuExe[MAX_PATH+1]; // полный путь к ConEmu.exe (GUI)
-	wchar_t  sConEmuDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
-	wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
+	// --> ComSpec.ConEmuBaseDir:  wchar_t  sConEmuDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
+	// --> ComSpec.ConEmuBaseDir:  wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 	wchar_t  sConEmuArgs[MAX_PATH*2];
 
 	wchar_t  sDefaultTermArg[MAX_PATH]; // "/config", параметры для "confirm" и "no-injects"
@@ -1245,7 +1253,7 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	DWORD nServerInShutdown; // GetTickCount() начала закрытия сервера
 	//
 	wchar_t  sConEmuExe[MAX_PATH+1]; // полный путь к ConEmu.exe (GUI)
-	wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
+	// --> ComSpec.ConEmuBaseDir:  wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 	//
 	DWORD nAltServerPID;  //
 

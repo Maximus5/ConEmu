@@ -1707,6 +1707,37 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 //    return 0;
 //}
 
+void CRealConsole::OnTimerCheck()
+{
+	if (!this)
+		return;
+	if (InCreateRoot() || InRecreate())
+		return;
+
+	//TODO: На проверку пайпов а не хэндла процесса
+	if (!mh_MainSrv)
+		return;
+
+	DWORD nWait = WaitForSingleObject(mh_MainSrv, 0);
+	if (nWait == WAIT_OBJECT_0)
+	{
+		_ASSERTE((mn_TermEventTick!=0 && mn_TermEventTick!=(DWORD)-1) && "Server was terminated, StopSignal was not called");
+		StopSignal();
+		return;
+	}
+
+	// А это наверное вообще излишне, проверим под дебагом, как жить будет
+	#ifdef _DEBUG
+	if (hConWnd && !IsWindow(hConWnd))
+	{
+		_ASSERTE((mn_TermEventTick!=0 && mn_TermEventTick!=(DWORD)-1) && "Console window was destroyed, StopSignal was not called");
+		return;
+	}
+	#endif
+
+	return;
+}
+
 enum
 {
 	IDEVENT_TERM = 0,           // Завершение нити/консоли/conemu
@@ -1815,7 +1846,7 @@ wrap:
 			pRCon->SetConStatus(NULL);
 			// А это чтобы не осталось висеть окно ConEmu, раз сервер завершился корректно
 			if (!lbChildProcessCreated)
-				pRCon->OnRConStartedSuccess();
+				pRCon->OnStartedSuccess();
 		}
 		else
 		{
@@ -2085,7 +2116,7 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			&& ((GetTickCount() - nConsoleStartTick) > PROCESS_WAIT_START_TIME))
 		{
 			rbChildProcessCreated = TRUE;
-			OnRConStartedSuccess();
+			OnStartedSuccess();
 		}
 
 		// IDEVENT_SERVERPH уже проверен, а код возврата обработается при выходе из цикла
@@ -6699,7 +6730,7 @@ void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWO
 
 // Если эта функция вызвана - считаем, что консоль запустилась нормально
 // И при ее закрытии не нужно оставлять висящим окно ConEmu
-void CRealConsole::OnRConStartedSuccess()
+void CRealConsole::OnStartedSuccess()
 {
 	if (this)
 	{

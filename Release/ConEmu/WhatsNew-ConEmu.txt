@@ -11,6 +11,17 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.03.18
+[+] Issue 984: Option "Add %ConEmuDir% to %PATH%" on ComSpec page. Turned ON by default.
+[+] Issue 915: Closing options redesigned. Taskbar page, checkboxes
+    Close ConEmu with last tab
+    Quit on close (e.g. caption bar cross clicking)
+    Minimize on closing last tab
+    Hide to the TSA
+[!] Some changes in console handling.
+[%] Failed to disable "Use clink in prompt" in active session (ConEmu restart was needed).
+
+
 2013.03.14
 [%] Issue 858: Drop files to Far panels failed second time.
 [*] Some internal changes.
