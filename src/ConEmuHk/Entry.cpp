@@ -376,6 +376,7 @@ wrap:
 	bAnsi = ((gpConInfo != NULL) && ((gpConInfo->Flags & CECF_ProcessAnsi) != 0));
 	if (abForceRecreate || (bLastAnsi != bAnsi))
 	{
+		_ASSERTEX(bAnsi && "ANSI was disabled?");
 		bLastAnsi = bAnsi;
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");
 	}

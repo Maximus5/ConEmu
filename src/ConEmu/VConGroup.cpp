@@ -1672,7 +1672,7 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 //	return false;
 //}
 
-bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/, bool* rbCloseGuiConfirmed /*= NULL*/)
+bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/)
 {
 	int nEditors = 0, nProgress = 0, i, nConsoles = 0;
 	if (rbMsgConfirmed)
@@ -1772,8 +1772,6 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 		}
 		else if ((nBtn != IDYES) && (nBtn != IDOK))
 		{
-			if (rbCloseGuiConfirmed)
-				*rbCloseGuiConfirmed = false;
 			return false; // не закрывать
 		}
 
@@ -1781,17 +1779,19 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 			*rbMsgConfirmed = true;
 	}
 
-	// Выставить флажок, чтобы ConEmu знал: "закрытие инициировано пользователем через крестик/меню"
-	if (rbCloseGuiConfirmed)
-		*rbCloseGuiConfirmed = true;
-
 	return true; // можно
 }
 
 bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
 {
-	if (!CloseQuery(NULL, rbMsgConfirmed, &gpConEmu->mb_CloseGuiConfirmed))
+	if (!CloseQuery(NULL, rbMsgConfirmed))
+	{
+		gpConEmu->SetScClosePending(false);
 		return false;
+	}
+
+	// Выставить флажок, чтобы ConEmu знал: "закрытие инициировано пользователем через крестик/меню"
+	gpConEmu->SetScClosePending(true);
 
 	#ifdef _DEBUG
 	if (gbInMyAssertTrap)
@@ -1987,6 +1987,7 @@ bool CVConGroup::OnScClose()
 	int nConCount = 0, nDetachedCount = 0;
 	bool lbProceed = false, lbMsgConfirmed = false;
 
+	// lbMsgConfirmed - был ли показан диалог подтверждения, или юзер не включил эту опцию
 	if (!OnCloseQuery(&lbMsgConfirmed))
 		return false; // не закрывать
 
@@ -2062,7 +2063,7 @@ void CVConGroup::CloseGroup(CVirtualConsole* apVCon/*may be null*/)
 	int nCount = pActiveGroup->GetGroupPanes(Panes);
 	if (nCount > 0)
 	{
-		if (CloseQuery(&Panes, NULL, NULL))
+		if (CloseQuery(&Panes, NULL))
 		{
 			for (int i = (nCount - 1); i >= 0; i--)
 			{

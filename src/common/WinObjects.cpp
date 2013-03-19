@@ -3307,7 +3307,19 @@ BOOL MSectionLockSimple::Lock(CRITICAL_SECTION* apS, DWORD anTimeout/*=-1*/)
 	_ASSERTEX(!mb_Locked);
 	
 	bool bLocked = false;
-	DWORD nStartTick = GetTickCount(), nDelta;
+	DWORD nStartTick = GetTickCount();
+	DWORD nDelta;
+#if 0
+	EnterCriticalSection(apS);
+
+	bLocked = mb_Locked = true;
+
+	nDelta = GetTickCount() - nStartTick;
+	if (nDelta >= anTimeout)
+	{
+		_ASSERTEX(FALSE && "Failed to lock CriticalSection, timeout");
+	}
+#else
 	while (true)
 	{
 		if (TryEnterCriticalSection(apS))
@@ -3330,8 +3342,9 @@ BOOL MSectionLockSimple::Lock(CRITICAL_SECTION* apS, DWORD anTimeout/*=-1*/)
 			}
 		}
 
-		Sleep(10);
+		Sleep(1);
 	}
+#endif
 
 	return bLocked;
 }

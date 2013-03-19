@@ -1977,9 +1977,9 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 	//checkRadioButton(hWnd2, rbMultiLastClose, rbMultiLastTSA,
 	//	gpSet->isMultiLeaveOnClose ? (gpSet->isMultiHideOnClose ? rbMultiLastTSA : rbMultiLastLeave) : rbMultiLastClose);
 	checkDlgButton(hWnd2, cbCloseConEmuWithLastTab, (gpSet->isMultiLeaveOnClose == 0) ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hWnd2, cbCloseConEmuOnCrossClicking, (gpSet->isMultiLeaveOnClose == 2) ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hWnd2, cbMinimizeOnLastTabClose, (gpSet->isMultiHideOnClose != 0) ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiHideOnClose == 1) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbCloseConEmuOnCrossClicking, (gpSet->isMultiLeaveOnClose != 1) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbMinimizeOnLastTabClose, (gpSet->isMultiLeaveOnClose && gpSet->isMultiHideOnClose != 0) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose && gpSet->isMultiHideOnClose == 1) ? BST_CHECKED : BST_UNCHECKED);
 	//
 	EnableDlgItem(hWnd2, cbCloseConEmuOnCrossClicking, (gpSet->isMultiLeaveOnClose != 0));
 	EnableDlgItem(hWnd2, cbMinimizeOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0));
@@ -5249,19 +5249,21 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				gpSet->isMultiLeaveOnClose = IsChecked(hWnd2, cbCloseConEmuOnCrossClicking) ? 2 : 1;
 			}
+			checkDlgButton(hWnd2, cbMinimizeOnLastTabClose, (gpSet->isMultiLeaveOnClose && gpSet->isMultiHideOnClose != 0) ? BST_CHECKED : BST_UNCHECKED);
+			checkDlgButton(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose && gpSet->isMultiHideOnClose == 1) ? BST_CHECKED : BST_UNCHECKED);
 			EnableDlgItem(hWnd2, cbCloseConEmuOnCrossClicking, (gpSet->isMultiLeaveOnClose != 0));
 			EnableDlgItem(hWnd2, cbMinimizeOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0));
 			EnableDlgItem(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0) && (gpSet->isMultiHideOnClose != 0));
 			break;
 		case cbCloseConEmuOnCrossClicking:
-			if (!IsChecked(hWnd2, CB))
+			if (!IsChecked(hWnd2, cbCloseConEmuWithLastTab))
 			{
 				gpSet->isMultiLeaveOnClose = IsChecked(hWnd2, cbCloseConEmuOnCrossClicking) ? 2 : 1;
 			}
 			break;
 		case cbMinimizeOnLastTabClose:
 		case cbHideOnLastTabClose:
-			if (!IsChecked(hWnd2, CB))
+			if (!IsChecked(hWnd2, cbCloseConEmuWithLastTab))
 			{
 				if (!IsChecked(hWnd2, cbMinimizeOnLastTabClose))
 				{
@@ -5271,6 +5273,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				{
 					gpSet->isMultiHideOnClose = IsChecked(hWnd2, cbHideOnLastTabClose) ? 1 : 2;
 				}
+				checkDlgButton(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose && gpSet->isMultiHideOnClose == 1) ? BST_CHECKED : BST_UNCHECKED);
 				EnableDlgItem(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0) && (gpSet->isMultiHideOnClose != 0));
 			}
 			break;

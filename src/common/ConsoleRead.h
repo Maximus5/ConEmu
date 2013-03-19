@@ -28,7 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#define MAX_CONREAD_SIZE 30000 // в байтах
+// Issue 924: "30000" was too large
+#define MAX_CONREAD_SIZE 8000 // in "cells"
 
 LPCSTR GetCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize);
 BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_RECT rgn);

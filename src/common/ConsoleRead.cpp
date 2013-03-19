@@ -78,6 +78,9 @@ LPCSTR GetCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize)
 BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_RECT rgn)
 {
 	BOOL lbRc = FALSE;
+
+	DWORD nTick1 = GetTickCount(), nTick2 = 0, nTick3 = 0, nTick4 = 0, nTick5 = 0;
+
 	static bool bDBCS = false, bDBCS_Checked = false;
 	if (!bDBCS_Checked)
 	{
@@ -125,10 +128,13 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 	COORD bufCoord = {0,0};
 	DWORD dwErrCode = 0;
 
+	nTick2 = GetTickCount();
+
 	if (!bDBCS_CP && (nCurSize <= MAX_CONREAD_SIZE))
 	{
 		if (ReadConsoleOutputW(hOut, pData, bufSize, bufCoord, &rgn))
 			lbRc = TRUE;
+		nTick3 = GetTickCount();
 	}
 
 	if (!lbRc)
@@ -151,6 +157,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 		{
 			for (int y = Y1; y <= Y2; y++, rgn.Top++, pLine+=nBufWidth)
 			{
+				nTick3 = GetTickCount();
 				rgn.Bottom = rgn.Top;
 				lbRc = ReadConsoleOutputW(hOut, pLine, bufSize, bufCoord, &rgn);
 				if (!lbRc)
@@ -159,6 +166,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 					_ASSERTE(FALSE && "ReadConsoleOutputW failed in MyReadConsoleOutput");
 					break;
 				}
+				nTick4 = GetTickCount();
 			}
 		}
 		else
@@ -175,6 +183,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 				CHAR_INFO* pLine = pData;
 				for (; crRead.Y <= Y2; crRead.Y++, pLine+=nBufWidth)
 				{
+					nTick3 = GetTickCount();
 					rgn.Bottom = rgn.Top;
 
 					nChars = nCharsA = nAttrs = 0;
@@ -239,13 +248,21 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 							p->Char.UnicodeChar = L' ';
 						}
 					}
+					nTick4 = GetTickCount();
 				}
 			}
 			SafeFree(pszChars);
 			SafeFree(pszCharsA);
 			SafeFree(pnAttrs);
 		}
+
+		nTick5 = GetTickCount();
 	}
 
+	UNREFERENCED_PARAMETER(nTick1);
+	UNREFERENCED_PARAMETER(nTick2);
+	UNREFERENCED_PARAMETER(nTick3);
+	UNREFERENCED_PARAMETER(nTick4);
+	UNREFERENCED_PARAMETER(nTick5);
 	return lbRc;
 }

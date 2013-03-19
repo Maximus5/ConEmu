@@ -81,7 +81,7 @@ private:
 	CVConGroup* SplitVConGroup(RConStartArgs::SplitType aSplitType = RConStartArgs::eSplitHorz/*eSplitVert*/, UINT anPercent10 = 500);
 	int GetGroupPanes(MArray<CVConGuard*> &rPanes);
 	static void FreePanesArray(MArray<CVConGuard*> &rPanes);
-	static bool CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/, bool* rbCloseGuiConfirmed /*= NULL*/);
+	static bool CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/);
 	
 	CVConGroup(CVConGroup *apParent);
 

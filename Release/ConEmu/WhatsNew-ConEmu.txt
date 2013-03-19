@@ -11,6 +11,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.03.19
+[%] Issue 924: ConHost.exe crashed when maximizing.
+[%] Issue 974: "Leave ConEmu opened" blocks autoupdate.
+[%] Issue 990: Regression. ANSI processor was not initialized properly.
+[%] Issue 994: Regression. Clink loading failed.
+
+
 2013.03.18
 [+] Issue 984: Option "Add %ConEmuDir% to %PATH%" on ComSpec page. Turned ON by default.
 [+] Issue 915: Closing options redesigned. Taskbar page, checkboxes

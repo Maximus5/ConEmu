@@ -330,6 +330,10 @@ class CConEmuMain :
 		DWORD mn_ForceTimerCheckLoseFocus; // GetTickCount()
 		bool mb_IgnoreQuakeActivation;
 		//DWORD mn_SysMenuOpenTick, mn_SysMenuCloseTick;
+	public:
+		void SetScClosePending(bool bFlag);
+	protected:
+		bool mb_ScClosePending; // Устанавливается в TRUE в CVConGroup::CloseQuery
 	protected:
 		DWORD mn_LastQuakeShowHide;
 
@@ -348,7 +352,6 @@ class CConEmuMain :
 		bool mb_InTimer;
 		bool mb_ProcessCreated;
 		bool mb_WorkspaceErasedOnClose;
-		bool mb_CloseGuiConfirmed; // Устанавливается в TRUE в CVConGroup::CloseQuery
 		#ifndef _WIN64
 		HWINEVENTHOOK mh_WinHook; //, mh_PopupHook;
 		static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);

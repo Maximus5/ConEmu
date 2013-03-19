@@ -300,6 +300,7 @@ bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw = false);
 
 int CreateMapHeader();
 void CloseMapHeader();
+void CopySrvMapFromGuiMap();
 void UpdateConsoleMapHeader();
 BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd);
 

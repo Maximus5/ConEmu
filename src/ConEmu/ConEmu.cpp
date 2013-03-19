@@ -401,7 +401,7 @@ CConEmuMain::CConEmuMain()
 	mn_ForceTimerCheckLoseFocus = 0;
 	mb_IgnoreQuakeActivation = false;
 	mn_LastQuakeShowHide = 0;
-	mb_CloseGuiConfirmed = false;
+	mb_ScClosePending = false;
 	mb_UpdateJumpListOnStartup = false;
 	ZeroStruct(m_QuakePrevSize);
 	m_TileMode = cwc_Current;
@@ -9941,9 +9941,14 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 //	return lbProceed;
 //}
 
+void CConEmuMain::SetScClosePending(bool bFlag)
+{
+	mb_ScClosePending = bFlag;
+}
+
 bool CConEmuMain::isCloseConfirmed()
 {
-	return gpSet->isCloseConsoleConfirm ? mb_CloseGuiConfirmed : true;
+	return gpSet->isCloseConsoleConfirm ? mb_ScClosePending : true;
 }
 
 BOOL CConEmuMain::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
@@ -16642,7 +16647,7 @@ LRESULT CConEmuMain::OnUpdateScrollInfo(BOOL abPosted/* = FALSE*/)
 // Чтобы при создании ПЕРВОЙ консоли на экране сразу можно было что-то нарисовать
 void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args)
 {
-	mb_CloseGuiConfirmed = false; // сброс
+	SetScClosePending(false); // сброс
 
 	CVConGroup::OnVConCreated(apVCon, args);
 }
@@ -16650,6 +16655,10 @@ void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *ar
 // Зависит от настроек и того, как закрывали
 bool CConEmuMain::isDestroyOnClose()
 {
+	CConEmuUpdate::UpdateStep step = gpUpd ? gpUpd->InUpdate() : CConEmuUpdate::us_NotStarted;
+	if (step == CConEmuUpdate::us_ExitAndUpdate)
+		return true; // Иначе облом при обновлении
+
 	if (!gpSet->isMultiLeaveOnClose)
 		return true;
 	if (gpSet->isMultiLeaveOnClose == 1)
@@ -16657,9 +16666,9 @@ bool CConEmuMain::isDestroyOnClose()
 	// Сюда мы попадаем, если просили оставлять ConEmu только если
 	// закрыта была вкладка, а не нажат "крестик" в заголовке
 	_ASSERTE(gpSet->isMultiLeaveOnClose == 2);
-	// mb_CloseGuiConfirmed выставляется в true при закрытии крестиком
+	// mb_ScClosePending выставляется в true при закрытии крестиком
 	// То есть, если нажали "крестик" - вызываем закрытие окна ConEmu
-	return mb_CloseGuiConfirmed;
+	return mb_ScClosePending;
 }
 
 void CConEmuMain::OnAllVConClosed()
@@ -16740,7 +16749,11 @@ void CConEmuMain::OnRConStartedSuccess(CRealConsole* apRCon)
 {
 	// Note, apRCon MAY be NULL
 	mb_ProcessCreated = true;
-	mb_CloseGuiConfirmed = false; // сброс
+
+	if (apRCon != NULL)
+	{
+		SetScClosePending(false); // сброс
+	}
 }
 
 LRESULT CConEmuMain::OnVConClosed(CVirtualConsole* apVCon, BOOL abPosted /*= FALSE*/)
