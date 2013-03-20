@@ -188,7 +188,7 @@ BOOL  gbUseDosBox = FALSE; HANDLE ghDosBoxProcess = NULL; DWORD gnDosBoxPID = 0;
 UINT  gnPTYmode = 0; // 1 enable PTY, 2 - disable PTY (work as plain console), 0 - don't change
 BOOL  gbRootIsCmdExe = TRUE;
 BOOL  gbAttachFromFar = FALSE;
-BOOL  gbAlternativeAttach = FALSE;
+BOOL  gbAlternativeAttach = FALSE; // Подцепиться к существующей консоли, без внедрения в процесс ConEmuHk.dll
 BOOL  gbSkipWowChange = FALSE;
 BOOL  gbConsoleModeFlags = TRUE;
 DWORD gnConsoleModeFlags = 0; //(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
@@ -3387,6 +3387,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 				AttachConsole_t AttachConsole_f = hKernel ? (AttachConsole_t)GetProcAddress(hKernel,"AttachConsole") : NULL;
 
+				HWND hSaveCon = GetConsoleWindow();
+
+				RetryAttach:
+
 				if (AttachConsole_f)
 				{
 					// FreeConsole нужно дергать даже если ghConWnd уже NULL. Что-то в винде глючит и
@@ -3394,16 +3398,76 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 					FreeConsole();
 					ghConWnd = NULL;
 
+					// Issue 998: Need to wait, while real console will appears
+					// gpSrv->hRootProcess еще не открыт
+					HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, gpSrv->dwRootProcess);
+					while (hProcess)
+					{
+						DWORD nConPid = 0;
+						HWND hNewCon = FindWindowEx(NULL, NULL, RealConsoleClass, NULL);
+						while (hNewCon)
+						{
+							if (GetWindowThreadProcessId(hNewCon, &nConPid) && (nConPid == gpSrv->dwRootProcess))
+								break;
+							hNewCon = FindWindowEx(NULL, hNewCon, RealConsoleClass, NULL);
+						}
+
+						if ((hNewCon != NULL) || (WaitForSingleObject(hProcess, 100) == WAIT_OBJECT_0))
+							break;
+					}
+					SafeCloseHandle(hProcess);
+
 					bAttach = AttachConsole_f(gpSrv->dwRootProcess);
+				}
+				else
+				{
+					SetLastError(ERROR_PROC_NOT_FOUND);
 				}
 
 				if (!bAttach)
 				{
 					DWORD nErr = GetLastError();
-					wchar_t szMsg[255], szTitle[128];
-					_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"AttachConsole(PID=%u) failed, code=%u", gpSrv->dwRootProcess, nErr);
-					_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC: PID=%u", GetCurrentProcessId());
-					MessageBox(NULL, szMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+					size_t cchMsgMax = 10*MAX_PATH;
+					wchar_t* pszMsg = (wchar_t*)calloc(cchMsgMax,sizeof(*pszMsg));
+					wchar_t szTitle[MAX_PATH];
+					HWND hFindConWnd = FindWindowEx(NULL, NULL, RealConsoleClass, NULL);
+					DWORD nFindConPID = 0; if (hFindConWnd) GetWindowThreadProcessId(hFindConWnd, &nFindConPID);
+
+					PROCESSENTRY32 piCon = {}, piRoot = {};
+					GetProcessInfo(gpSrv->dwRootProcess, &piRoot);
+					if (nFindConPID == gpSrv->dwRootProcess)
+						piCon = piRoot;
+					else if (nFindConPID)
+						GetProcessInfo(nFindConPID, &piCon);
+
+					if (hFindConWnd)
+						GetWindowText(hFindConWnd, szTitle, countof(szTitle));
+					else
+						szTitle[0] = 0;
+
+					_wsprintf(pszMsg, SKIPLEN(cchMsgMax)
+						L"AttachConsole(PID=%u) failed, code=%u\n"
+						L"[%u]: %s\n"
+						L"Top console HWND=x%08X, PID=%u, %s\n%s\n---\n"
+						L"Prev (self) console HWND=x%08X\n\n"
+						L"Retry?",
+						gpSrv->dwRootProcess, nErr,
+						gpSrv->dwRootProcess, piRoot.szExeFile,
+						(DWORD)hFindConWnd, nFindConPID, piCon.szExeFile, szTitle,
+						(DWORD)hSaveCon
+						);
+					
+					_wsprintf(szTitle, SKIPLEN(countof(szTitle)) WIN3264TEST(L"ConEmuC",L"ConEmuC64") L": PID=%u", GetCurrentProcessId());
+
+					int nBtn = MessageBox(NULL, pszMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL|MB_RETRYCANCEL);
+
+					free(pszMsg);
+
+					if (nBtn == IDRETRY)
+					{
+						goto RetryAttach;
+					}
+
 					gbInShutdown = TRUE;
 					gbAlwaysConfirmExit = FALSE;
 					return CERR_CARGUMENT;

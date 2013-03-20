@@ -11,6 +11,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.03.20
+[%] Issue 998: Default terminal may fails with error code 31 when starting debugging session in VS.
+
+
 2013.03.19
 [%] Issue 924: ConHost.exe crashed when maximizing.
 [%] Issue 974: "Leave ConEmu opened" blocks autoupdate.

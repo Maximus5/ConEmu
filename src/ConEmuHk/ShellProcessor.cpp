@@ -1801,9 +1801,25 @@ int CShellProc::PrepareExecuteParms(
 		if (bDebugWasRequested && gbPrepareDefaultTerminal)
 		{
 			mb_NeedInjects = FALSE;
-			lbChanged = FALSE;
 			// We need to post attach ConEmu GUI to started console
 			mb_DebugWasRequested = TRUE;
+			// Пока что не будем убирать "мелькание" окошка.
+			// На факт "видимости" консольного окна ориентируется ConEmuC
+			// при аттаче. Если окошко НЕ видимое - считаем, что оно было
+			// запущено процессом для служебных целей, и не трогаем его...
+			// -> ConsoleMain.cpp: ParseCommandLine: "if (!ghConWnd || !(lbIsWindowVisible = IsWindowVisible(ghConWnd)) || isTerminalMode())"
+			#if 0
+			// Remove flickering?
+			if (anShowCmd)
+			{
+				*anShowCmd = SW_HIDE;
+				lbChanged = TRUE;
+			}
+			else
+			#endif
+			{
+				lbChanged = FALSE;
+			}
 			goto wrap;
 		}
 
@@ -2232,8 +2248,15 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	{
 		if (gbPrepareDefaultTerminal)
 		{
-			// ConEmu itself must starts normally?
-			lpSI->wShowWindow = SW_SHOWNORMAL;
+			if (mb_DebugWasRequested)
+			{
+				lpSI->wShowWindow = nShowCmd; // this is SW_HIDE, disable flickering
+				lbRc = FALSE; // Stop other changes?
+			}
+			else
+			{
+				lpSI->wShowWindow = SW_SHOWNORMAL; // ConEmu itself must starts normally?
+			}
 			lpSI->dwFlags |= STARTF_USESHOWWINDOW;
 		}
 		else if (lpSI->wShowWindow != nShowCmd)
@@ -2243,7 +2266,10 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 				lpSI->dwFlags |= STARTF_USESHOWWINDOW;
 		}
 
-		*asFile = mpwsz_TempRetFile;
+		if (lbRc)
+		{
+			*asFile = mpwsz_TempRetFile;
+		}
 	}
 
 	if (lbRc || mpwsz_TempRetParam)
