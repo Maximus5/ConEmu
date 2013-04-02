@@ -122,7 +122,8 @@ extern bool    gbQuit;           // когда мы в процессе закрытия (юзер уже нажал
 extern int     gnConfirmExitParm;
 extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
 extern int     gbRootWasFoundInCon;
-extern BOOL    gbAttachMode; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console)
+enum AttachModeEnum { am_None = 0, am_Simple, am_Auto };
+extern AttachModeEnum gbAttachMode; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console)
 extern BOOL    gbAlienMode;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
 extern BOOL    gbForceHideConWnd;
 extern DWORD   gdwMainThreadId;

@@ -119,6 +119,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 CGestures::CGestures()
 :   _dwArguments(0), _inRotate(false)
 {
+	DEBUGTEST(GESTUREINFO c = {sizeof(c)});
 	_isTabletPC = GetSystemMetrics(SM_TABLETPC);
 	_isGestures = IsWindows7;
 	if (_isGestures)
@@ -135,6 +136,16 @@ CGestures::CGestures()
 // Destructor
 CGestures::~CGestures()
 {
+}
+
+void CGestures::StartGestureLog()
+{
+	if (!gpConEmu->mp_Log)
+		return;
+
+	wchar_t szInfo[100];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Gestures: TabletPC=%u, Gestures=%u, Enabled=%u", (int)_isTabletPC, (int)_isGestures, (int)IsGesturesEnabled());
+	gpConEmu->LogString(szInfo);
 }
 
 bool CGestures::IsGesturesEnabled()
@@ -154,6 +165,60 @@ bool CGestures::IsGesturesEnabled()
 	return false;
 }
 
+void CGestures::DumpGesture(LPCWSTR tp, const GESTUREINFO& gi)
+{
+	wchar_t szDump[256];
+
+	_wsprintf(szDump, SKIPLEN(countof(szDump))
+		L"Gesture(x%08X {%i,%i} %s",
+		(DWORD)gi.hwndTarget, gi.ptsLocation.x, gi.ptsLocation.y,
+		tp); // tp - имя жеста
+
+	switch (gi.dwID)
+	{
+	case GID_PRESSANDTAP:
+		{
+			DWORD h = LODWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32)
+				L" Dist={%i,%i}", (int)(short)LOWORD(h), (int)(short)HIWORD(h));
+			break;
+		}
+
+	case GID_ROTATE:
+		{
+			DWORD h = LODWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32)
+				L" %i", (int)LOWORD(h));
+			break;
+		}
+	}
+
+	if (gi.dwFlags&GF_BEGIN)
+		wcscat_c(szDump, L" GF_BEGIN");
+
+	if (gi.dwFlags&GF_END)
+		wcscat_c(szDump, L" GF_END");
+
+	if (gi.dwFlags&GF_INERTIA)
+	{
+		wcscat_c(szDump, L" GF_INERTIA");
+		DWORD h = HIDWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32)
+			L" {%i,%i}", (int)(short)LOWORD(h), (int)(short)HIWORD(h));
+	}
+
+
+
+	if (gpSetCls->isAdvLogging >= 2)
+	{
+		gpConEmu->LogString(szDump);
+	}
+	else
+	{
+		#ifdef USE_DUMPGEST
+		wcscat_c(szDump, L")\n");
+		DEBUGSTR(szDump);
+		#endif
+	}
+}
+
 // Main function of this class decodes gesture information
 // in:
 //      hWnd        window handle
@@ -167,6 +232,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	if (!_isGestures)
 	{
 		_ASSERTE(_isGestures);
+		gpConEmu->LogString(L"Gesture message received but not allowed, skipping");
 		return false;
 	}
 
@@ -188,12 +254,18 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{GID_TWOFINGERTAP, GC_TWOFINGERTAP},
         };
 
-		DWORD dwErr = 0;
         BOOL bResult = _SetGestureConfig(hWnd, 0, countof(gc), gc, sizeof(GESTURECONFIG));                        
+		DWORD dwErr = GetLastError();
+
+		if (gpSetCls->isAdvLogging)
+		{
+			wchar_t szNotify[60];
+			_wsprintf(szNotify, SKIPLEN(countof(szNotify)) L"SetGestureConfig -> %u,%u", bResult, dwErr);
+			gpConEmu->LogString(szNotify);
+		}
         
         if (!bResult)
         {
-			dwErr = GetLastError();
             DisplayLastError(L"Error in execution of SetGestureConfig", dwErr);
         }
 
@@ -203,17 +275,18 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	}
 
 	// Остался только WM_GESTURE
-	MBoxAssert(uMsg==WM_GESTURE);
+	Assert(uMsg==WM_GESTURE);
 
     // helper variables
     POINT ptZoomCenter;
     double k;
 
 	GESTUREINFO gi = {sizeof(gi)};
-	if (gi.cbSize != 48)
+	// Checking for compiler alignment errors
+	if (gi.cbSize != WIN3264TEST(48,56))
 	{
 		// Struct member alignment must be 8bytes even on x86
-		MBoxAssert(sizeof(GESTUREINFO)==48);
+		Assert(sizeof(GESTUREINFO)==WIN3264TEST(48,56));
 		_isGestures = false;
 		return false;
 	}
@@ -227,29 +300,36 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         return FALSE;
     }
 
-#ifdef USE_DUMPGEST
-	wchar_t szDump[256];
-	#define DUMPGEST(tp) \
-		_wsprintf(szDump, SKIPLEN(countof(szDump)) \
-			L"Gesture(x%08X {%i,%i} %s", \
-			(DWORD)gi.hwndTarget, gi.ptsLocation.x, gi.ptsLocation.y, \
-			tp); \
-		if (gi.dwID==GID_PRESSANDTAP) { \
-			DWORD h = LODWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32) \
-				L" Dist={%i,%i}", (int)(short)LOWORD(h), (int)(short)HIWORD(h)); } \
-		if (gi.dwID==GID_ROTATE) { \
-			DWORD h = LODWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32) \
-				L" %i", (int)LOWORD(h)); } \
-		if (gi.dwFlags&GF_BEGIN) wcscat_c(szDump, L" GF_BEGIN"); \
-		if (gi.dwFlags&GF_END) wcscat_c(szDump, L" GF_END"); \
-		if (gi.dwFlags&GF_INERTIA) { wcscat_c(szDump, L" GF_INERTIA"); \
-			DWORD h = HIDWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32) \
-				L" {%i,%i}", (int)(short)LOWORD(h), (int)(short)HIWORD(h)); } \
-		wcscat_c(szDump, L")\n"); \
-		DEBUGSTR(szDump)
-#else
-	#define DUMPGEST(s)
-#endif
+    bool bLog = (gpSetCls->isAdvLogging >= 2);
+	#ifdef USE_DUMPGEST
+	bLog = true;
+	#endif
+
+	#define DUMPGEST(tp) DumpGesture(tp, gi)
+
+	//#ifdef USE_DUMPGEST
+	//	wchar_t szDump[256];
+	//	#define DUMPGEST(tp) \
+	//		_wsprintf(szDump, SKIPLEN(countof(szDump)) \
+	//			L"Gesture(x%08X {%i,%i} %s", \
+	//			(DWORD)gi.hwndTarget, gi.ptsLocation.x, gi.ptsLocation.y, \
+	//			tp); \
+	//		if (gi.dwID==GID_PRESSANDTAP) { \
+	//			DWORD h = LODWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32) \
+	//				L" Dist={%i,%i}", (int)(short)LOWORD(h), (int)(short)HIWORD(h)); } \
+	//		if (gi.dwID==GID_ROTATE) { \
+	//			DWORD h = LODWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32) \
+	//				L" %i", (int)LOWORD(h)); } \
+	//		if (gi.dwFlags&GF_BEGIN) wcscat_c(szDump, L" GF_BEGIN"); \
+	//		if (gi.dwFlags&GF_END) wcscat_c(szDump, L" GF_END"); \
+	//		if (gi.dwFlags&GF_INERTIA) { wcscat_c(szDump, L" GF_INERTIA"); \
+	//			DWORD h = HIDWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32) \
+	//				L" {%i,%i}", (int)(short)LOWORD(h), (int)(short)HIWORD(h)); } \
+	//		wcscat_c(szDump, L")\n"); \
+	//		DEBUGSTR(szDump)
+	//#else
+	//#define DUMPGEST(s)
+	//#endif
 
     switch (gi.dwID)
     {

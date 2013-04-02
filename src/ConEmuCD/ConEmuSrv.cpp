@@ -2533,6 +2533,17 @@ HWND Attach2Gui(DWORD nTimeout)
 			return NULL;
 		}
 
+		lstrcpyn(gpSrv->guiSettings.sConEmuExe, pszSelf, countof(gpSrv->guiSettings.sConEmuExe));
+		lstrcpyn(gpSrv->guiSettings.ComSpec.ConEmuExeDir, pszSelf, countof(gpSrv->guiSettings.ComSpec.ConEmuExeDir));
+		wchar_t* pszCut = wcsrchr(gpSrv->guiSettings.ComSpec.ConEmuExeDir, L'\\');
+		if (pszCut)
+			*pszCut = 0;
+		if (gpSrv->pConsole)
+		{
+			lstrcpyn(gpSrv->pConsole->hdr.sConEmuExe, pszSelf, countof(gpSrv->pConsole->hdr.sConEmuExe));
+			lstrcpyn(gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir, gpSrv->guiSettings.ComSpec.ConEmuExeDir, countof(gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir));
+		}
+
 		if (wcschr(pszSelf, L' '))
 		{
 			*(--pszSelf) = L'"';
@@ -2890,7 +2901,7 @@ int CreateMapHeader()
 	}
 	else
 	{
-		_ASSERTE(gpSrv->guiSettings.cbSize==sizeof(ConEmuGuiMapping));
+		_ASSERTE(gpSrv->guiSettings.cbSize==sizeof(ConEmuGuiMapping) || (gbAttachMode && !ghConEmuWnd));
 	}
 
 
@@ -2977,7 +2988,7 @@ void UpdateConsoleMapHeader()
 		{
 			if (gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0]==0 || gpSrv->pConsole->hdr.ComSpec.ConEmuBaseDir[0]==0)
 			{
-				_ASSERTE(gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0]!=0 && gpSrv->pConsole->hdr.ComSpec.ConEmuBaseDir[0]!=0);
+				_ASSERTE((gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0]!=0 && gpSrv->pConsole->hdr.ComSpec.ConEmuBaseDir[0]!=0) || (gbAttachMode && !ghConEmuWnd));
 				wchar_t szSelfPath[MAX_PATH+1];
 				if (GetModuleFileName(NULL, szSelfPath, countof(szSelfPath)))
 				{
@@ -2992,7 +3003,7 @@ void UpdateConsoleMapHeader()
 
 			if (gpSrv->pConsole->hdr.sConEmuExe[0] == 0)
 			{
-				_ASSERTE(gpSrv->pConsole->hdr.sConEmuExe[0]!=0);
+				_ASSERTE((gpSrv->pConsole->hdr.sConEmuExe[0]!=0) || (gbAttachMode && !ghConEmuWnd));
 			}
 
 			gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));

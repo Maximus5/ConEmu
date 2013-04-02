@@ -11,6 +11,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.04.01
+[%] Some more internal diagnostics.
+[%] Issue 1000: Gestures was not working on Windows x64.
+[%] Issue 1003: ConEmu autorun command processor disables testing movie in flash.
+
+
 2013.03.20
 [%] Issue 998: Default terminal may fails with error code 31 when starting debugging session in VS.
 

@@ -156,6 +156,9 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	{
 		PostMessage(apVCon->GetView(), WM_SETCURSOR, -1, -1);
 	}
+
+	DEBUGTEST(mb_MonitorAssertTrap = false);
+
 	//mp_Rgn = new CRgnDetect();
 	//mn_LastRgnFlags = -1;
 	m_ConsoleKeyShortcuts = 0;
@@ -1738,6 +1741,14 @@ void CRealConsole::OnTimerCheck()
 	return;
 }
 
+#ifdef _DEBUG
+void CRealConsole::MonitorAssertTrap()
+{
+	mb_MonitorAssertTrap = true;
+	SetMonitorThreadEvent();
+}
+#endif
+
 enum
 {
 	IDEVENT_TERM = 0,           // Завершение нити/консоли/conemu
@@ -1857,52 +1868,26 @@ wrap:
 	ShutdownGuiStep(L"StopSignal");
 
 	pRCon->StopSignal();
-	// 2010-08-03 - перенес в StopThread, чтобы не задерживать закрытие ЭТОЙ нити
-	//// Завершение серверных нитей этой консоли
-	//DEBUGSTRPROC(L"About to terminate main server thread (MonitorThread)\n");
-	//if (pRCon->ms_VConServer_Pipe[0]) // значит хотя бы одна нить была запущена
-	//{
-	//    pRCon->StopSignal(); // уже должен быть выставлен, но на всякий случай
-	//    //
-	//    HANDLE hPipe = INVALID_HANDLE_VALUE;
-	//    DWORD dwWait = 0;
-	//    // Передернуть пайпы, чтобы нити сервера завершились
-	//    for (int i=0; i<MAX_SERVER_THREADS; i++) {
-	//        DEBUGSTRPROC(L"Touching our server pipe\n");
-	//        HANDLE hServer = pRCon->mh_ActiveRConServerThread;
-	//        hPipe = CreateFile(pRCon->ms_VConServer_Pipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
-	//        if (hPipe == INVALID_HANDLE_VALUE) {
-	//            DEBUGSTRPROC(L"All pipe instances closed?\n");
-	//            break;
-	//        }
-	//        DEBUGSTRPROC(L"Waiting server pipe thread\n");
-	//        dwWait = WaitForSingleObject(hServer, 200); // пытаемся дождаться, пока нить завершится
-	//        // Просто закроем пайп - его нужно было передернуть
-	//        CloseHandle(hPipe);
-	//        hPipe = INVALID_HANDLE_VALUE;
-	//    }
-	//    // Немного подождем, пока ВСЕ нити завершатся
-	//    DEBUGSTRPROC(L"Checking server pipe threads are closed\n");
-	//    WaitForMultipleObjects(MAX_SERVER_THREADS, pRCon->mh_RConServerThreads, TRUE, 500);
-	//    for (int i=0; i<MAX_SERVER_THREADS; i++) {
-	//        if (WaitForSingleObject(pRCon->mh_RConServerThreads[i],0) != WAIT_OBJECT_0) {
-	//            DEBUGSTRPROC(L"### Terminating mh_RConServerThreads\n");
-	//            TerminateThread(pRCon->mh_RConServerThreads[i],0);
-	//        }
-	//        CloseHandle(pRCon->mh_RConServerThreads[i]);
-	//        pRCon->mh_RConServerThreads[i] = NULL;
-	//    }
-	//	pRCon->ms_VConServer_Pipe[0] = 0;
-	//}
-	// Finalize
-	//SafeCloseHandle(pRCon->mh_MonitorThread);
+
 	ShutdownGuiStep(L"Leaving MonitorThread\n");
 	return 0;
+}
+
+int CRealConsole::WorkerExFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep, LPCTSTR szFile, UINT nLine)
+{
+	wchar_t szInfo[100];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Exception 0x%08X triggered in CRealConsole::MonitorThreadWorker", code);
+
+	AssertBox(szInfo, szFile, nLine, ep);
+
+	return EXCEPTION_EXECUTE_HANDLER;
 }
 
 DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCreated)
 {
 	rbChildProcessCreated = FALSE;
+
+	DEBUGTEST(mb_MonitorAssertTrap = false);
 
 	_ASSERTE(IDEVENT_SERVERPH==(EVENTS_COUNT-1)); // Должен быть последним хэндлом!
 	HANDLE hEvents[EVENTS_COUNT];
@@ -2164,6 +2149,14 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 		DWORD dwT1 = GetTickCount();
 		SAFETRY
 		{
+			#ifdef _DEBUG
+			if (mb_MonitorAssertTrap)
+			{
+				mb_MonitorAssertTrap = false;
+				MyAssertTrap();
+			}
+			#endif
+
 			//ResetEvent(mh_EndUpdateEvent);
 
 			// Тут и ApplyConsole вызывается
@@ -2542,9 +2535,13 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 
 			pLastBuf = mp_ABuf;
 
-		} SAFECATCH
+		} SAFECATCHFILTER(WorkerExFilter(GetExceptionCode(), GetExceptionInformation(), _T(__FILE__), __LINE__))
 		{
 			bException = TRUE;
+			// Assertion is shown in WorkerExFilter
+			#if 0
+			AssertBox(L"Exception triggered in CRealConsole::MonitorThread", _T(__FILE__), __LINE__, pExc);
+			#endif
 		}
 		// Чтобы не было слишком быстрой отрисовки (тогда процессор загружается на 100%)
 		// делаем такой расчет задержки
@@ -2558,11 +2555,11 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 		{
 			bException = FALSE;
 
-			#ifdef _DEBUG
-			_ASSERTE(FALSE);
-			#endif
+			//#ifdef _DEBUG
+			//_ASSERTE(FALSE);
+			//#endif
 
-			AssertMsg(L"Exception triggered in CRealConsole::MonitorThread");
+			//AssertMsg(L"Exception triggered in CRealConsole::MonitorThread");
 		}
 
 		//if (bActive)

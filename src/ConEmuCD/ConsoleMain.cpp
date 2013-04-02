@@ -161,7 +161,7 @@ BOOL    gbAlwaysConfirmExit = FALSE;
 BOOL	gbAutoDisableConfirmExit = FALSE; // если корневой процесс проработал достаточно (10 сек) - будет сброшен gbAlwaysConfirmExit
 BOOL    gbRootAliveLess10sec = FALSE; // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
 int     gbRootWasFoundInCon = 0;
-BOOL    gbAttachMode = FALSE; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console, или /GUIATTACH)
+AttachModeEnum gbAttachMode = am_None; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console, или /GUIATTACH)
 BOOL    gbAlienMode = FALSE;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
 BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
@@ -902,7 +902,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		_ASSERTE(anWorkMode==1); // может еще и 2 появится - для StandAloneGui
 		_ASSERTE(gnRunMode == RM_UNDEFINED);
 		gnRunMode = RM_ALTSERVER;
-		gbAttachMode = TRUE;
+		gbAttachMode = am_Simple;
 		gnConfirmExitParm = 2;
 		gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
 		gbNoCreateProcess = TRUE;
@@ -1638,15 +1638,22 @@ wrap:
 	#endif
 
 	if (iRc == CERR_GUIMACRO_SUCCEEDED)
+	{
 		iRc = 0;
-
+	}
 
 	if (gnRunMode == RM_SERVER && gpSrv->hRootProcess)
 		GetExitCodeProcess(gpSrv->hRootProcess, &gnExitCode);
 	else if (pi.hProcess)
 		GetExitCodeProcess(pi.hProcess, &gnExitCode);
 	// Ассерт может быть если был запрос на аттач, который не удался
-	_ASSERTE(gnExitCode!=STILL_ACTIVE || (iRc==CERR_ATTACHFAILED));
+	_ASSERTE(gnExitCode!=STILL_ACTIVE || (iRc==CERR_ATTACHFAILED) || (iRc==CERR_RUNNEWCONSOLE));
+
+	if (iRc && (gbAttachMode == am_Auto))
+	{
+		// Issue 1003: Non zero exit codes leads to problems in some applications...
+		iRc = 0;
+	}
 
 	ShutdownSrvStep(L"Finalizing.2");
 
@@ -3268,7 +3275,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 			#endif
 
-			gbAttachMode = TRUE;
+			if (!gbAttachMode)
+				gbAttachMode = am_Simple;
 			gnRunMode = RM_SERVER;
 		}
 		else if (wcscmp(szArg, L"/AUTOATTACH")==0)
@@ -3283,7 +3291,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			#endif
 
 			gnRunMode = RM_SERVER;
-			gbAttachMode = TRUE;
+			gbAttachMode = am_Auto;
 			gbAlienMode = TRUE;
 			gbNoCreateProcess = TRUE;
 
@@ -3298,6 +3306,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				{
 					_printf("AutoAttach was requested, but skipped\n");
 				}
+				DisableAutoConfirmExit();
 				//_ASSERTE(FALSE && "AutoAttach was called while Update process is in progress?");
 				return CERR_AUTOATTACH_NOT_ALLOWED;
 			}
@@ -3313,7 +3322,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 			#endif
 
-			gbAttachMode = TRUE;
+			if (!gbAttachMode)
+				gbAttachMode = am_Simple;
 			lbAttachGuiApp = TRUE;
 			wchar_t* pszEnd;
 			HWND hAppWnd = (HWND)wcstoul(szArg+11, &pszEnd, 16);
@@ -4987,7 +4997,7 @@ void SendStarted()
 
 			UpdateConsoleMapHeader();
 
-			_ASSERTE(gnMainServerPID==0 || gnMainServerPID==pOut->StartStopRet.dwMainSrvPID);
+			_ASSERTE(gnMainServerPID==0 || gnMainServerPID==pOut->StartStopRet.dwMainSrvPID || (gbAttachMode && gbAlienMode && (pOut->StartStopRet.dwMainSrvPID==gnSelfPID)));
 			gnMainServerPID = pOut->StartStopRet.dwMainSrvPID;
 			gnAltServerPID = pOut->StartStopRet.dwAltSrvPID;
 
@@ -8467,7 +8477,7 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 
 	if (pfnGetConsoleKeyboardLayoutName)
 	{
-		wchar_t szCurKeybLayout[32];
+		wchar_t szCurKeybLayout[32] = L"";
 
 		//#ifdef _DEBUG
 		//wchar_t szDbgKeybLayout[KL_NAMELENGTH/*==9*/];

@@ -100,6 +100,7 @@ WARNING("WIN64 was not defined");
 
 	#define SAFETRY   __try
 	#define SAFECATCH __except(EXCEPTION_EXECUTE_HANDLER)
+	#define SAFECATCHFILTER(f) __except(f)
 #else
 	#if defined(_MSC_VER) && !defined(HIDE_USE_EXCEPTION_INFO)
 	#pragma message ("Compiling NOT using exception handler")
@@ -107,6 +108,7 @@ WARNING("WIN64 was not defined");
 
 	#define SAFETRY   if (true)
 	#define SAFECATCH else
+	#define SAFECATCHFILTER(f) else
 #endif
 
 

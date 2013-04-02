@@ -146,9 +146,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define CONEMU_ANIMATE_DURATION 200
 //#define CONEMU_ANIMATE_DURATION_MAX 5000
 
-const wchar_t* gsHomePage  = L"http://conemu-maximus5.googlecode.com";
-const wchar_t* gsReportBug = L"http://code.google.com/p/conemu-maximus5/issues/entry";
-const wchar_t* gsWhatsNew  = L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";
+const wchar_t* gsHomePage    = L"http://conemu-maximus5.googlecode.com";
+const wchar_t* gsReportBug   = L"http://code.google.com/p/conemu-maximus5/issues/entry";
+const wchar_t* gsReportCrash = L"http://code.google.com/p/conemu-maximus5/issues/entry";
+const wchar_t* gsWhatsNew    = L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";
 
 static struct RegisteredHotKeys
 {
@@ -1648,10 +1649,13 @@ DWORD CConEmuMain::GetWorkWindowStyleEx()
 
 void CConEmuMain::CreateLog()
 {
-	if (!gpSetCls->isAdvLogging)
-	{
-		SafeDelete(mp_Log);
-	}
+	_ASSERTE(gpSetCls->isAdvLogging && !mp_Log);
+
+	SafeDelete(mp_Log);
+
+	//if (!gpSetCls->isAdvLogging)
+	//{
+	//}
 
 	mp_Log = new MFileLog(L"ConEmu-gui", ms_ConEmuExeDir, GetCurrentProcessId());
 
@@ -16090,6 +16094,24 @@ void CConEmuMain::OnInfo_ReportBug()
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
+	}
+}
+
+void CConEmuMain::OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg)
+{
+	if (asDumpWasCreatedMsg && !*asDumpWasCreatedMsg)
+	{
+		asDumpWasCreatedMsg = NULL;
+	}
+
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsReportCrash, NULL, NULL, SW_SHOWNORMAL);
+	if (shellRc <= 32)
+	{
+		DisplayLastError(L"ShellExecute failed", shellRc);
+	}
+	else if (asDumpWasCreatedMsg)
+	{
+		MessageBox(asDumpWasCreatedMsg, MB_OK|MB_ICONEXCLAMATION|MB_SYSTEMMODAL);
 	}
 }
 

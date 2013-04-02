@@ -127,7 +127,7 @@ extern HWND ghLastForegroundWindow;
 HWND getForegroundWindow();
 
 int MessageBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND hParent = NULL);
-void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine);
+void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS ExceptionInfo = NULL);
 
 #define Assert(V) if ((V)==FALSE) { AssertBox(_T(#V), _T(__FILE__), __LINE__); }
 #define AssertMsg(V) AssertBox(V, _T(__FILE__), __LINE__);

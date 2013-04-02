@@ -2415,6 +2415,22 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 	bool bFound = false;
 	_ASSERTE(pStartStop->dwPID!=0);
 
+	if (gpSetCls->isAdvLogging)
+	{
+		size_t cchAll = 255 + _tcslen(pStartStop->sCmdLine) + _tcslen(pStartStop->sModuleName);
+		wchar_t* pszLog = (wchar_t*)malloc(cchAll*sizeof(*pszLog));
+		_wsprintf(pszLog, SKIPLEN(cchAll)
+			L"Attach requested. HWND=x%08X, AID=%u, PID=%u, Sys=%u, Bit=%u, Adm=%u, Hkl=x%08X, Wnd={%u-%u}, Buf={%u-%u}, Max={%u-%u}, Cmd=%s",
+			(DWORD)(DWORD_PTR)pStartStop->hWnd, pStartStop->dwAID, pStartStop->dwPID,
+			pStartStop->nSubSystem, pStartStop->nImageBits, pStartStop->bUserIsAdmin, pStartStop->dwKeybLayout,
+			pStartStop->sbi.srWindow.Right-pStartStop->sbi.srWindow.Left+1, pStartStop->sbi.srWindow.Bottom-pStartStop->sbi.srWindow.Top+1,
+			pStartStop->sbi.dwSize.X, pStartStop->sbi.dwSize.Y,
+			pStartStop->crMaxSize.X, pStartStop->crMaxSize.Y,
+			pStartStop->sCmdLine[0] ? pStartStop->sCmdLine : pStartStop->sModuleName);
+		gpConEmu->LogString(pszLog);
+		free(pszLog);
+	}
+
 	// Может быть какой-то VCon ждет аттача?
 	if (!bFound)
 	{

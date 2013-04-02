@@ -64,6 +64,8 @@ public:
     CGestures();
     virtual ~CGestures();
 
+    void StartGestureLog();
+
 public:
 	bool IsGesturesEnabled();
 
@@ -87,6 +89,7 @@ public:
 
 private:
 	void SendRClick(HWND hWnd, const LONG ldx, const LONG ldy);
+	void DumpGesture(LPCWSTR tp, const GESTUREINFO& gi);
 private:
 	// При Pan и прочем это первая точка, в отличие от _ptFirst не меняется
 	// в процессе перетаскивания и содержит ЭКРАННЫЕ координаты
