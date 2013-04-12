@@ -1118,6 +1118,9 @@
   <ItemGroup>
     <ResourceCompile Include="ConEmu.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="!ToDo.!000!.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

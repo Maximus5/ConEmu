@@ -5147,7 +5147,7 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 		pp->bVisible = FALSE;
 		return FALSE;
 	}
-	else if (!pp->bVisible || !pp->bRegister)
+	else if (/*!pp->bVisible ||*/ !pp->bRegister)
 	{
 		if (IsWindowVisible(pp->hWnd))
 			mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);

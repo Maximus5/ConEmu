@@ -899,6 +899,7 @@
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">false</ShowIncludes>
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">false</ShowIncludes>
     </ClCompile>
+    <ClCompile Include="ConEmuPlugin2800.cpp" />
     <ClCompile Include="ConEmuPlugin995.cpp" />
     <ClCompile Include="ConEmuPluginA.cpp" />
     <ClCompile Include="..\common\execute.cpp" />

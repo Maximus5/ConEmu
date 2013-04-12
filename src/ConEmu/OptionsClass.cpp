@@ -6756,7 +6756,8 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		{
 			temp[31] = 0; // страховка
 
-			if (wcsstr(temp, L"%s") || wcsstr(temp, L"%n"))
+			//03.04.2013, via gmail, просили не добавлять автоматом %s
+			//if (wcsstr(temp, L"%s") || wcsstr(temp, L"%n"))
 			{
 				if (TB == tTabConsole)
 					wcscpy_c(gpSet->szTabConsole, temp);

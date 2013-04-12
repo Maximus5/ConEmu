@@ -107,6 +107,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PTDIFFTEST(C,D) PtDiffTest(C, ptCur.x, ptCur.y, D)
 //(((abs(C.x-(short)LOWORD(lParam)))<D) && ((abs(C.y-(short)HIWORD(lParam)))<D))
 
+#define _ASSERTEL(x) if (!(x)) { LogString(#x); _ASSERTE(x); }
 
 
 #if defined(__GNUC__)
@@ -12777,21 +12778,26 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			if (GetMessage(&msg1, 0,0,0))  // убрать из буфера
 			{
 				ConEmuMsgLogger::Log(msg1, ConEmuMsgLogger::msgCommon);
-				_ASSERTE(msg1.message == msg.message && msg1.wParam == msg.wParam && msg1.lParam == msg.lParam);
+				_ASSERTEL(msg1.message == msg.message && msg1.wParam == msg.wParam && msg1.lParam == msg.lParam);
 				msgList[++iAddMsgList] = msg1;
+
+				if (gpSetCls->isAdvLogging >= 4)
+				{
+					gpConEmu->LogMessage(msg1.hwnd, msg1.message, msg1.wParam, msg1.lParam);
+				}
 
 				if (msg.message == WM_CHAR || msg.message == WM_SYSCHAR)
 				{
 					szTranslatedChars[nTranslatedChars ++] = (wchar_t)msg1.wParam;
 					if (iProcessDeadChars == 1)
 					{
-						_ASSERTE(iProcessDeadChars == 2); // уже должно было быть выставлено в WM_KEYDOWN
+						_ASSERTEL(iProcessDeadChars == 2); // уже должно было быть выставлено в WM_KEYDOWN
 						iProcessDeadChars = 2;
 					}
 				}
 				else if (msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR)
 				{
-					_ASSERTE(iProcessDeadChars==0 && "Must be first entrance");
+					_ASSERTEL(iProcessDeadChars==0 && "Must be first entrance");
 					//lbDeadChar = TRUE;
 					iProcessDeadChars = 1;
 					DeadCharMsg = msg;
@@ -12823,8 +12829,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 		if (iProcessDeadChars == 2)
 		{
-			_ASSERTE(iDeadMsgIndex>0);
-			_ASSERTE(msgList[iDeadMsgIndex].message == messg);
+			_ASSERTEL(iDeadMsgIndex>0);
+			_ASSERTEL(msgList[iDeadMsgIndex].message == messg);
 			wParam = msgList[iDeadMsgIndex].wParam;
 			lParam = msgList[iDeadMsgIndex].lParam;
 			bVK = (WORD)(wParam & 0xFF);
@@ -12842,7 +12848,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 		//if (lbDeadChar && nTranslatedChars)
 		//{
-		//	_ASSERTE(FALSE && "Dead char does not produces szTranslatedChars");
+		//	_ASSERTEL(FALSE && "Dead char does not produces szTranslatedChars");
 		//	lbDeadChar = FALSE;
 		//}
 
@@ -12850,7 +12856,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	}
 	else
 	{
-		_ASSERTE((messg == WM_KEYUP || messg == WM_SYSKEYUP) && "Unexpected msg");
+		_ASSERTEL((messg == WM_KEYUP || messg == WM_SYSKEYUP) && "Unexpected msg");
 		//if (messg == WM_KEYUP || messg == WM_SYSKEYUP)
 		//{
 		//	if (bWasDeadChar)
@@ -12864,7 +12870,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		//}
 		//else
 		//{
-		//	_ASSERTE((messg == WM_KEYUP || messg == WM_SYSKEYUP) && "Unexpected msg");
+		//	_ASSERTEL((messg == WM_KEYUP || messg == WM_SYSKEYUP) && "Unexpected msg");
 		//}
 
 		szTranslatedChars[0] = m_TranslatedChars[bVK].szTranslatedChars[0];
@@ -12882,7 +12888,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	{
 		#ifdef _DEBUG
 		DWORD dwErr = GetLastError();
-		_ASSERTE(FALSE);
+		_ASSERTEL(FALSE);
 		#endif
 		static bool sbErrShown = false;
 
@@ -12911,7 +12917,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	{
 #ifdef _DEBUG
 		DWORD dwErr = GetLastError();
-		_ASSERTE(FALSE);
+		_ASSERTEL(FALSE);
 #endif
 		static bool sbErrShown = false;
 
@@ -12975,7 +12981,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	if (messg == WM_KEYDOWN && !mb_HotKeyRegistered)
 		RegisterHotKeys(); // Win и прочее
 
-	_ASSERTE(messg != WM_CHAR && messg != WM_SYSCHAR);
+	_ASSERTEL(messg != WM_CHAR && messg != WM_SYSCHAR);
 
 	// Теперь обработаем некоторые "общие" хоткеи
 	if (wParam == VK_ESCAPE)
@@ -13000,13 +13006,13 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	CVConGuard VCon;
 	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
 	{
-		_ASSERTE(iProcessDeadChars==0 || iProcessDeadChars==1);
+		_ASSERTEL(iProcessDeadChars==0 || iProcessDeadChars==1);
 		VCon->RCon()->OnKeyboard(hWnd, messg, wParam, lParam, szTranslatedChars, iProcessDeadChars?&DeadCharMsg:NULL);
 	}
 	else if (((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST))
 	{
 		// Такие коды с клавиатуры приходить не должны, а то для "мышки" ничего не останется
-		_ASSERTE(!(((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST)));
+		_ASSERTEL(!(((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST)));
 	}
 	else
 	{
@@ -15968,6 +15974,19 @@ INT_PTR CConEmuMain::aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 	return FALSE;
 }
 
+void CConEmuMain::OnInfo_Donate()
+{
+	int nBtn = MessageBox(
+		L"You can show your appreciation and support future development by donating.\r\n\r\n"
+		L"Donate (PayPal) button located on project website\r\n"
+		L"under ConEmu sketch (upper right of page)\r\n\r\n"
+		L"Open project website?",
+		MB_YESNO|MB_ICONINFORMATION);
+
+	if (nBtn == IDYES)
+		OnInfo_HomePage();
+}
+
 void CConEmuMain::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 {
 	InitCommCtrls();
@@ -16675,7 +16694,7 @@ void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *ar
 }
 
 // Зависит от настроек и того, как закрывали
-bool CConEmuMain::isDestroyOnClose()
+bool CConEmuMain::isDestroyOnClose(bool ScCloseOnEmpty /*= false*/)
 {
 	CConEmuUpdate::UpdateStep step = gpUpd ? gpUpd->InUpdate() : CConEmuUpdate::us_NotStarted;
 	if (step == CConEmuUpdate::us_ExitAndUpdate)
@@ -16684,13 +16703,13 @@ bool CConEmuMain::isDestroyOnClose()
 	if (!gpSet->isMultiLeaveOnClose)
 		return true;
 	if (gpSet->isMultiLeaveOnClose == 1)
-		return false;
+		return ScCloseOnEmpty;
 	// Сюда мы попадаем, если просили оставлять ConEmu только если
 	// закрыта была вкладка, а не нажат "крестик" в заголовке
 	_ASSERTE(gpSet->isMultiLeaveOnClose == 2);
 	// mb_ScClosePending выставляется в true при закрытии крестиком
 	// То есть, если нажали "крестик" - вызываем закрытие окна ConEmu
-	return mb_ScClosePending;
+	return (mb_ScClosePending || ScCloseOnEmpty);
 }
 
 void CConEmuMain::OnAllVConClosed()
@@ -16847,6 +16866,7 @@ void CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	char szLog[128];
 	#define CASE_MSG(x) case x: lstrcpynA(szLog, #x, 64); break
+	#define CASE_MSG2(x,n) case x: lstrcpynA(szLog, n, 64); break
 	switch (uMsg)
 	{
 	CASE_MSG(WM_CREATE);
@@ -16875,6 +16895,8 @@ void CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	CASE_MSG(WM_SYSKEYUP);
 	CASE_MSG(WM_SYSCHAR);
 	CASE_MSG(WM_SYSDEADCHAR);
+	CASE_MSG2(0x0108,"WM_x0108");
+	CASE_MSG2(0x0109,"WM_UNICHAR");
 	CASE_MSG(WM_COMMAND);
 	CASE_MSG(WM_SYSCOMMAND);
 	CASE_MSG(WM_TIMER);

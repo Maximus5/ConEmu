@@ -3,12 +3,26 @@ English: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=en
 Russian: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=ru
 SVN: http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt
 
+You can show your appreciation and support future development by donating.
+Donate (PayPal) button located on project website under ConEmu sketch (upper right of page)
+http://code.google.com/p/conemu-maximus5
+
 Please, vote for ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 *****************
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
+
+
+2013.04.11
+[!] Quit on close once again... If no opened consoles and cross clicking - ConEmu will terminates.
+[%] Issue 1014: "Extend Fonts" feature does not work (was locked to far.exe only).
+[%] Issue 1011: Typo in installer.
+[*] Some more logging on keyboard input.
+[*] Allow to set tab templates without "%s" and "%n".
+[%] Far 3 (Lua) macro fails: Plugin.Call("bd454d48-448e-46cc-909d-b6cf789c2d65",1).
+[%] Issue 1020: Far 3 build 3277 supported.
 
 
 2013.04.01

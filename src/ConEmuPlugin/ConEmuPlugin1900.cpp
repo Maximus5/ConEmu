@@ -1810,8 +1810,9 @@ HANDLE WINAPI OpenW1900(const void* apInfo)
 				{
 				case FMVT_INTEGER:
 					Item = (INT_PTR)p->Values[0].Integer; break;
-				//case FMVT_DOUBLE:
-				//	Item = (INT_PTR)p->Values[0].Double; break;
+				// Far 3 Lua macros uses Double instead of Int :( Unlock in Far2 for uniform.
+				case FMVT_DOUBLE:
+					Item = (INT_PTR)p->Values[0].Double; break;
 				case FMVT_STRING:
 					_ASSERTE(p->Values[0].String!=NULL);
 					Item = (INT_PTR)p->Values[0].String; break;

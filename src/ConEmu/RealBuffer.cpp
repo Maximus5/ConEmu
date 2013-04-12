@@ -4290,7 +4290,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	// 120331 - зачем ограничивать настройку доп.цветов?
 	bool bExtendColors = /*lbIsFar &&*/ pApp->ExtendColors();
 	BYTE nExtendColorIdx = pApp->ExtendColorIdx();
-	bool bExtendFonts = lbIsFar && pApp->ExtendFonts();
+	bool bExtendFonts = pApp->ExtendFonts();
 	bool lbFade = mp_RCon->mp_VCon->isFade;
 	//BOOL bUseColorKey = gpSet->isColorKey  // Должен быть включен в настройке
 	//	&& mp_RCon->isFar(TRUE/*abPluginRequired*/) // в фаре загружен плагин (чтобы с цветами не проколоться)

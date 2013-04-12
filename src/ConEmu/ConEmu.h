@@ -614,7 +614,7 @@ class CConEmuMain :
 		bool isActive(CVirtualConsole* apVCon, bool abAllowGroup = true);
 		//bool isChildWindowVisible();
 		bool isCloseConfirmed();
-		bool isDestroyOnClose();
+		bool isDestroyOnClose(bool ScCloseOnEmpty = false);
 		bool isConSelectMode();
 		bool isConsolePID(DWORD nPID);
 		bool isDragging();
@@ -770,6 +770,7 @@ class CConEmuMain :
 		LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 		void OnHideCaption();
 		void OnInfo_About(LPCWSTR asPageName = NULL);
+		void OnInfo_Donate();
 		void OnInfo_WhatsNew(bool bLocal);
 		void OnInfo_Help();
 		void OnInfo_HomePage();

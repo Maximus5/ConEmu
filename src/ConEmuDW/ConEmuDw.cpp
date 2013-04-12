@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <crtdbg.h>
 
 #pragma comment(lib, "Comdlg32.lib")
+#pragma comment(lib, "version.lib")
 #endif
 
 #define MASSERT_HEADER_DEFINED
@@ -78,7 +79,7 @@ extern "C" {
 	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
 	//BOOL WINAPI GetTextAttributes(FarColor* Attributes);
 	//BOOL WINAPI SetTextAttributes(const FarColor* Attributes);
-	//BOOL WINAPI ClearExtraRegions(const FarColor* Color);
+	//BOOL WINAPI ClearExtraRegions(const FarColor* Color, int Mode);
 	//BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* ReadRegion);
 	//BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion);
 	//BOOL WINAPI Commit();
@@ -121,6 +122,34 @@ struct {
 } gCurrentAttr;
 
 
+#include "../common/SetExport.h"
+ExportFunc Far3Func[] =
+{
+	{"ClearExtraRegions", ClearExtraRegions, ClearExtraRegionsOld},
+	{NULL}
+};
+
+#include "../common/FarVersion.h"
+
+FarVersion gFarVersion = {};
+#define FAR_NEW_BUILD 3277
+
+BOOL LoadFarVersion()
+{
+	wchar_t ErrText[512]; ErrText[0] = 0;
+	BOOL lbRc = LoadFarVersion(gFarVersion, ErrText);
+
+	if (!lbRc)
+	{
+		gFarVersion.dwVerMajor = 3;
+		gFarVersion.dwVerMinor = 0;
+		gFarVersion.dwBuild = FAR_NEW_BUILD;
+	}
+
+	return lbRc;
+}
+
+
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
 	switch(ul_reason_for_call)
@@ -136,6 +165,20 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 				char szMsg[128]; wsprintfA(szMsg, "ConEmuDW, FAR Pid=%u", GetCurrentProcessId());
 				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuDW*.dll loaded", szMsg, 0);
 				#endif
+
+				bool lbExportsChanged = false;
+				if (LoadFarVersion())
+				{
+					if ((gFarVersion.dwVerMajor == 3) && (gFarVersion.dwBuild < FAR_NEW_BUILD))
+					{
+						lbExportsChanged = ChangeExports( Far3Func, ghOurModule );
+						if (!lbExportsChanged)
+						{
+							_ASSERTE(lbExportsChanged);
+						}
+					}
+				}
+
 			}
 			break;
 		
@@ -770,11 +813,16 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 	return lbRc;
 }
 
-BOOL WINAPI ClearExtraRegions(const FarColor* Color)
+BOOL WINAPI ClearExtraRegions(const FarColor* Color, int Mode)
 {
 	//TODO: Пока работаем через старый Annotation buffer (переделать нужно)
 	//TODO: который по определению соответствует видимой области экрана
 	return SetTextAttributes(Color);
+}
+
+BOOL WINAPI ClearExtraRegionsOld(const FarColor* Color)
+{
+	return ClearExtraRegions(Color, 0);
 }
 
 BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* ReadRegion)

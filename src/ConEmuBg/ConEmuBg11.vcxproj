@@ -926,6 +926,7 @@
   <ItemGroup>
     <ClCompile Include="ConEmuBg.cpp" />
     <ClCompile Include="ConEmuBg1900.cpp" />
+    <ClCompile Include="ConEmuBg2800.cpp" />
     <ClCompile Include="ConEmuBg995.cpp" />
     <ClCompile Include="ConEmuBgA.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />

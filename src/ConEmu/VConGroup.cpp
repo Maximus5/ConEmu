@@ -1981,6 +1981,7 @@ bool CVConGroup::isConsolePID(DWORD nPID)
 	return lbPidFound;
 }
 
+// returns true if gpConEmu->Destroy() was called
 bool CVConGroup::OnScClose()
 {
 	bool lbAllowed = false;
@@ -2039,11 +2040,17 @@ bool CVConGroup::OnScClose()
 		}
 	}
 
+	bool bEmpty = (!nConCount && !nDetachedCount);
+
 	// Закрыть окно, если просили
-	if (lbAllowed && gpConEmu->isDestroyOnClose() && !nConCount && !nDetachedCount)
+	if (lbAllowed && bEmpty && gpConEmu->isDestroyOnClose(bEmpty))
 	{
 		// Поэтому проверяем, и если никого не осталось, то по крестику - прибиваемся
 		gpConEmu->Destroy();
+	}
+	else
+	{
+		lbAllowed = false;
 	}
 
 	return lbAllowed;

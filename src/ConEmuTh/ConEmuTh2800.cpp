@@ -167,10 +167,12 @@ HANDLE OpenW2800(const void* aInfo)
 				{
 				case FMVT_INTEGER:
 					Item = (INT_PTR)p->Values[0].Integer; break;
-				//case FMVT_DOUBLE:
-				//	Item = (INT_PTR)p->Values[0].Double; break;
+				// Far 3 Lua macros uses Double instead of Int :(
+				case FMVT_DOUBLE:
+					Item = (INT_PTR)p->Values[0].Double; break;
 				case FMVT_STRING:
 					_ASSERTE(p->Values[0].String!=NULL);
+					_ASSERTE(p->Values[0].Type!=FMVT_STRING); // No use in current version
 					Item = (INT_PTR)p->Values[0].String; break;
 				default:
 					_ASSERTE(p->Values[0].Type==FMVT_INTEGER || p->Values[0].Type==FMVT_STRING);

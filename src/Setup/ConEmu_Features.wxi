@@ -141,7 +141,7 @@
         <ComponentRef Id="Thumbnails_KeyBar.reg1"/>
         <ComponentRef Id="FontSize.reg1"/>
       </Feature>
-      <Feature Id="FConEmuAnsiSamples" AllowAdvertise="no" Title="ANSI X3.64 exapmles" Level="1"
+      <Feature Id="FConEmuAnsiSamples" AllowAdvertise="no" Title="ANSI X3.64 examples" Level="1"
                Description="Sample ANSI X3.64 files">
         <ComponentRef Id="AnsiColors16.ans"/>
         <ComponentRef Id="AnsiColors16t.ans"/>

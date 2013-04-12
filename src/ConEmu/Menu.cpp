@@ -1366,9 +1366,12 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 			AppendMenu(hMenu, MF_STRING | MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNew,L"New console..."));
 			AppendMenu(hMenu, MF_STRING | MF_ENABLED, IDM_ATTACHTO,  MenuAccel(vkMultiNewAttach,L"Attach to..."));
 		}
+		#if 0
+		// Смысл выносить избранный макро заточенный только под редактор Far?
 		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_SAVE,      L"&Save");
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_SAVEALL,   L"Save &all");
+		#endif
 	}
 
 	if (apVCon)
@@ -1480,6 +1483,7 @@ HMENU CConEmuMenu::CreateHelpMenuPopup()
 	}
 	
 	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HOMEPAGE, _T("&Visit home page"));
+	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_DONATE_LINK, _T("&Donate (PayPal)"));
 
 	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_WHATS_NEW_FILE, _T("Whats &new (local)"));
 	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_WHATS_NEW_WWW, _T("Whats new (&web)"));
@@ -1753,6 +1757,12 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		case ID_HOTKEYS:
 		{
 			CSettings::Dialog(IDD_SPG_KEYS);
+			return 0;
+		}
+
+		case ID_DONATE_LINK:
+		{
+			gpConEmu->OnInfo_About();
 			return 0;
 		}
 
