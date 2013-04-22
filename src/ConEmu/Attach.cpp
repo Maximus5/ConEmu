@@ -152,6 +152,8 @@ void CAttachDlg::Close()
 		delete mp_ProcessData;
 		mp_ProcessData = NULL;
 	}
+
+	gpConEmu->OnOurDialogClosed();
 }
 
 bool CAttachDlg::OnStartAttach()
@@ -435,6 +437,8 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 	{
 		case WM_INITDIALOG:
 		{
+			gpConEmu->OnOurDialogOpened();
+
 			// Если ConEmu - AlwaysOnTop, то и диалогу нужно выставит этот флаг
 			if (GetWindowLongPtr(ghWnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
 				SetWindowPos(hDlg, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);

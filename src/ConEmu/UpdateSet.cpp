@@ -63,7 +63,7 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	isUpdateCheckOnStartup = false;
 	isUpdateCheckHourly = false;
 	isUpdateConfirmDownload = true; // true-Show MessageBox, false-notify via TSA only
-	isUpdateUseBuilds = 0; // 0-спросить пользовател€ при первом запуске, 1-stable only, 2-latest
+	isUpdateUseBuilds = 0; // 0-спросить пользовател€ при первом запуске, 1-stable only, 2-latest, 3-preview
 	isUpdateUseProxy = false;
 	szUpdateProxy = szUpdateProxyUser = szUpdateProxyPassword = NULL; // "Server:port"
 	// ѕровер€ем, была ли программа установлена через ConEmuSetup.exe?
@@ -190,7 +190,7 @@ void ConEmuUpdateSettings::LoadFrom(ConEmuUpdateSettings* apFrom)
 	isUpdateCheckOnStartup = apFrom->isUpdateCheckOnStartup;
 	isUpdateCheckHourly = apFrom->isUpdateCheckHourly;
 	isUpdateConfirmDownload = apFrom->isUpdateConfirmDownload;
-	isUpdateUseBuilds = (apFrom->isUpdateUseBuilds == 1) ? 1 : 2; // 1-stable only, 2-latest
+	isUpdateUseBuilds = (apFrom->isUpdateUseBuilds >= 1 && apFrom->isUpdateUseBuilds <= 3) ? apFrom->isUpdateUseBuilds : 2; // 1-stable only, 2-latest, 3-preivew
 	isUpdateUseProxy = apFrom->isUpdateUseProxy;
 	szUpdateProxy = lstrdup(apFrom->szUpdateProxy); // "Server:port"
 	szUpdateProxyUser = lstrdup(apFrom->szUpdateProxyUser);
@@ -217,7 +217,7 @@ bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])
 		return false; // Ќе указано расположение обновлени€
 	}
 
-	if (isUpdateUseBuilds != 1 && isUpdateUseBuilds != 2)
+	if (isUpdateUseBuilds != 1 && isUpdateUseBuilds != 2 && isUpdateUseBuilds != 3)
 	{
 		wcscpy_c(szReason, L"Update.UseBuilds is not specified");
 		return false; // Ќе указано, какие сборки можно загружать

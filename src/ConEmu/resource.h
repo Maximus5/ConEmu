@@ -434,7 +434,8 @@
 #define tUpdateVerLocation              2052
 #define cbShowFarWindows                2053
 #define rbUpdateStableOnly              2054
-#define rbUpdateLatestAvailable         2055
+#define rbUpdatePreview                 2055
+#define rbUpdateLatestAvailable         2056
 #define cbUpdateCheckOnStartup          2058
 #define cbUpdateUseProxy                2059
 #define tUpdateProxy                    2060
@@ -462,8 +463,6 @@
 #define stUpdateProxyPassword           2085
 #define cbUseKeyboardHooksFast          2086
 #define cbEnableAutoUpdateFast          2087
-#define rbAutoUpdateStableFast          2088
-#define rbAutoUpdateDeveloperFast       2089
 #define cbDisableConImeFast             2090
 #define stUseKeyboardHooksFast1         2091
 #define stUseKeyboardHooksFast2         2092
@@ -931,6 +930,9 @@
 #define cbMinimizeOnLastTabClose        2586
 #define cbHideOnLastTabClose            2587
 #define cbCloseConEmuWithLastTab        2588
+#define rbAutoUpdateStableFast          2589
+#define rbAutoUpdatePreviewFast         2590
+#define rbAutoUpdateDeveloperFast       2591
 
 // Next default values for new objects
 // 
@@ -938,7 +940,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        222
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2589
+#define _APS_NEXT_CONTROL_VALUE         2592
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

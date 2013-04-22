@@ -1253,7 +1253,7 @@ struct Settings
 		//bool isUpdateCheckOnStartup;
 		//bool isUpdateCheckHourly;
 		//bool isUpdateConfirmDownload;
-		//BYTE isUpdateUseBuilds; // 1-stable only, 2-latest
+		//BYTE isUpdateUseBuilds; // 1-stable only, 2-latest, 3-preview
 		//bool isUpdateUseProxy;
 		//wchar_t *szUpdateProxy; // "Server:port"
 		//wchar_t *szUpdateProxyUser;

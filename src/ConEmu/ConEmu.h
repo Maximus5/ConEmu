@@ -329,8 +329,11 @@ class CConEmuMain :
 		bool mb_LastConEmuFocusState;
 		DWORD mn_ForceTimerCheckLoseFocus; // GetTickCount()
 		bool mb_IgnoreQuakeActivation;
-		//DWORD mn_SysMenuOpenTick, mn_SysMenuCloseTick;
+		bool mb_AllowAutoChildFocus;
 	public:
+		void OnOurDialogOpened();
+		void OnOurDialogClosed();
+		void CheckAllowAutoChildFocus(DWORD nDeactivatedTID);
 		void SetScClosePending(bool bFlag);
 	protected:
 		bool mb_ScClosePending; // Устанавливается в TRUE в CVConGroup::CloseQuery
@@ -584,13 +587,20 @@ class CConEmuMain :
 		BOOL CreateWorkWindow();
 		HRGN CreateWindowRgn(bool abTestOnly=false);
 		HRGN CreateWindowRgn(bool abTestOnly,bool abRoundTitle,int anX, int anY, int anWndWidth, int anWndHeight);
-		void Destroy();
 		void DebugStep(LPCWSTR asMsg, BOOL abErrorSeverity=FALSE);
 		void ForceShowTabs(BOOL abShow);
 		DWORD_PTR GetActiveKeyboardLayout();
 		RECT GetDefaultRect();
 		RECT GetGuiClientRect();
 		//HMENU GetSysMenu(BOOL abInitial = FALSE);
+
+	public:
+		void Destroy();
+	private:
+		#ifdef _DEBUG
+		bool mb_DestroySkippedInAssert;
+		#endif
+
 	//protected:
 	//	void UpdateSysMenu(HMENU hSysMenu);
 	public:

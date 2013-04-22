@@ -1441,9 +1441,31 @@ int CShellProc::PrepareExecuteParms(
 	{
 		_ASSERTEX(aCmd == eCreateProcess); // Пока расчитано только на него
 
-		if ((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS))
+		if (aCmd == eCreateProcess)
 		{
-			// Creating process without console window, not our case
+			if (anCreateFlags && ((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS)))
+			{
+				// Creating process without console window, not our case
+				return 0;
+			}
+		}
+		else if (aCmd == eShellExecute)
+		{
+			// We need to hook only "Run as administrator" action
+			if (!asAction || (lstrcmpi(asAction, L"runas") != 0))
+			{
+				return 0;
+			}
+			// Skip some executions
+			if (anShellFlags
+				&& ((*anShellFlags) & (SEE_MASK_CLASSNAME|SEE_MASK_CLASSKEY|SEE_MASK_IDLIST|SEE_MASK_INVOKEIDLIST)))
+			{
+				return 0;
+			}
+		}
+		else
+		{
+			_ASSERTE(FALSE && "Unsupported in Default terminal");
 			return 0;
 		}
 
@@ -1453,7 +1475,7 @@ int CShellProc::PrepareExecuteParms(
 			return 0;
 		}
 
-		if ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS))
+		if (anCreateFlags && ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS)))
 		{
 			// Для поиска трапов в дереве запускаемых процессов
 			if (m_SrvMapping.Flags & CECF_BlockChildDbg)

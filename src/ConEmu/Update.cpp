@@ -873,7 +873,9 @@ DWORD CConEmuUpdate::CheckProcInt()
 	}
 	
 	// Проверить версии
-	_wcscpy_c(szSection, countof(szSection), (mp_Set->isUpdateUseBuilds==1) ? L"ConEmu_Stable" : L"ConEmu_Devel");
+	_wcscpy_c(szSection, countof(szSection),
+		(mp_Set->isUpdateUseBuilds==1) ? L"ConEmu_Stable" :
+		(mp_Set->isUpdateUseBuilds==3) ? L"ConEmu_Preview" : L"ConEmu_Devel");
 	_wcscpy_c(szItem, countof(szItem), (mp_Set->UpdateDownloadSetup()==1) ? L"location_exe" : L"location_arc");
 	
 	if (!GetPrivateProfileString(szSection, L"version", ms_CurVersion, ms_NewVersion, countof(ms_NewVersion), pszUpdateVerLocation))
@@ -895,7 +897,8 @@ DWORD CConEmuUpdate::CheckProcInt()
 		// Новых версий нет
 		if (mb_ManualCallMode)
 		{
-			ReportError(L"Your current ConEmu version is (%s)\nNo newer %s version available", ms_CurVersion, (mp_Set->isUpdateUseBuilds==1) ? L"stable" : L"developer", 0);
+			ReportError(L"Your current ConEmu version is (%s)\nNo newer %s version available", ms_CurVersion,
+				(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer", 0);
 		}
 
 		if (bTempUpdateVerLocation && pszUpdateVerLocation && *pszUpdateVerLocation)
@@ -2102,7 +2105,7 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 				}
 
 				_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\n\n%s\n%s\n\nDownload?",
-					(mp_Set->isUpdateUseBuilds==1) ? L"stable" : L"developer",
+					(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer",
 					ms_NewVersion, asParm ? asParm : L"", pszFile ? pszFile : L"");
 				SafeFree(pszDup);
 
@@ -2112,7 +2115,7 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 			else
 			{
 				_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\nClick here to download",
-					(mp_Set->isUpdateUseBuilds==1) ? L"stable" : L"developer",
+					(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer",
 					ms_NewVersion);
 				Icon.ShowTrayIcon(pszMsg, tsa_Source_Updater);
 
@@ -2126,7 +2129,8 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 		_wsprintf(pszMsg, SKIPLEN(cchMax)
 			L"Do you want to close ConEmu and\n"
 			L"update to %s version %s?",
-			mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new stable" : L"new developer", ms_NewVersion);
+			mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new stable"
+			: (mp_Set->isUpdateUseBuilds==3) ? L"new preview" : L"new developer", ms_NewVersion);
 		m_UpdateStep = step;
 		lbRc = QueryConfirmationInt(pszMsg);
 		break;

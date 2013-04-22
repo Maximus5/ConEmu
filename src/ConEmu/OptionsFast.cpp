@@ -78,6 +78,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 			{
 				EnableWindow(GetDlgItem(hDlg, cbEnableAutoUpdateFast), FALSE);
 				EnableWindow(GetDlgItem(hDlg, rbAutoUpdateStableFast), FALSE);
+				EnableWindow(GetDlgItem(hDlg, rbAutoUpdatePreviewFast), FALSE);
 				EnableWindow(GetDlgItem(hDlg, rbAutoUpdateDeveloperFast), FALSE);
 				EnableWindow(GetDlgItem(hDlg, stEnableAutoUpdateFast), FALSE);
 			}
@@ -85,7 +86,9 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 			{
 				if (gpSet->UpdSet.isUpdateUseBuilds != 0)
 					CheckDlgButton(hDlg, cbEnableAutoUpdateFast, gpSet->UpdSet.isUpdateCheckOnStartup|gpSet->UpdSet.isUpdateCheckHourly);
-				CheckRadioButton(hDlg, rbAutoUpdateStableFast, rbAutoUpdateDeveloperFast, (gpSet->UpdSet.isUpdateUseBuilds == 1) ? rbAutoUpdateStableFast : rbAutoUpdateDeveloperFast);
+				CheckRadioButton(hDlg, rbAutoUpdateStableFast, rbAutoUpdateDeveloperFast,
+					(gpSet->UpdSet.isUpdateUseBuilds == 1) ? rbAutoUpdateStableFast :
+					(gpSet->UpdSet.isUpdateUseBuilds == 3) ? rbAutoUpdatePreviewFast : rbAutoUpdateDeveloperFast);
 			}
 
 			if (!bCheckIme)
@@ -181,7 +184,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 						gpSet->UpdSet.isUpdateCheckHourly = false;
 						gpSet->UpdSet.isUpdateConfirmDownload = true; // true-Show MessageBox, false-notify via TSA only
 					}
-					gpSet->UpdSet.isUpdateUseBuilds = IsDlgButtonChecked(hDlg, rbAutoUpdateStableFast) ? 1 : 2;
+					gpSet->UpdSet.isUpdateUseBuilds = IsDlgButtonChecked(hDlg, rbAutoUpdateStableFast) ? 1 : IsDlgButtonChecked(hDlg, rbAutoUpdateDeveloperFast) ? 2 : 3;
 
 
 					/* Save settings */

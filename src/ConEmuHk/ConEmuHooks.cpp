@@ -574,6 +574,8 @@ bool InitHooksDefaultTrm()
 		{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
 		// Used in some programs, Issue 853
 		{(void*)OnWinExec,				"WinExec",				kernel32},
+		// Need for hook "Run as administrator"
+		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
 		/* ************************ */
 		{0}
 	};
@@ -1721,8 +1723,9 @@ BOOL WINAPI OnShowCursor(BOOL bShow)
 	{
 		if (!bShow)
 		{
-			_ASSERTEX(bShow!=FALSE);
-			bShow = TRUE;
+			// Issue 888: ConEmu-Mintty: Mouse Cursor is hidden after application switch
+			// _ASSERTEX(bShow!=FALSE);
+			bShow = TRUE; // Disallow cursor hiding
 		}
 	}
 	

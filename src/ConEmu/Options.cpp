@@ -297,6 +297,7 @@ Settings::~Settings()
 
 void Settings::InitSettings()
 {
+	if (gpConEmu) gpConEmu->LogString(L"Settings::InitSettings()");
 	MCHKHEAP
 
 	// Освободить память, т.к. функция может быть вызвана из окна интерфейса настроек	
@@ -323,7 +324,8 @@ void Settings::InitSettings()
 	//vmMultiClose = VK_DELETE | (nMultiHotkeyModifier << 8);
 	//vmMultiCmd = 'X' | (nMultiHotkeyModifier << 8);
 	isMultiAutoCreate = false;
-	isMultiLeaveOnClose = isMultiHideOnClose = 1;
+	isMultiLeaveOnClose = 0;
+	isMultiHideOnClose = 0;
 	isMultiIterate = true;
 	isMultiMinByEsc = 2; isMapShiftEscToEsc = true; // isMapShiftEscToEsc used only when isMultiMinByEsc==1 and only for console apps
 	isMultiNewConfirm = true;
@@ -534,7 +536,7 @@ void Settings::InitSettings()
 	wndCascade = true;
 	isAutoSaveSizePos = false; mb_SizePosAutoSaved = false;
 	isConVisible = false; //isLockRealConsolePos = false;
-	isUseInjects = false; // гррр... Disclaimer#2
+	isUseInjects = true; // Fuck... Features or speed. User must choose!
 
 	isSetDefaultTerminal = false;
 	isRegisterOnOsStartup = false;
@@ -1948,6 +1950,8 @@ void Settings::FreeProgresses()
 
 void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 {
+	if (gpConEmu) gpConEmu->LogString(L"Settings::LoadSettings");
+
 	MCHKHEAP
 	mb_CharSetWasSet = FALSE;
 
@@ -2575,7 +2579,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"Update.CheckOnStartup", UpdSet.isUpdateCheckOnStartup);
 		reg->Load(L"Update.CheckHourly", UpdSet.isUpdateCheckHourly);
 		reg->Load(L"Update.ConfirmDownload", UpdSet.isUpdateConfirmDownload);
-		reg->Load(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds); if (UpdSet.isUpdateUseBuilds>2) UpdSet.isUpdateUseBuilds = 2; // 1-stable only, 2-latest
+		reg->Load(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds); if (UpdSet.isUpdateUseBuilds>3) UpdSet.isUpdateUseBuilds = 3; // 1-stable only, 2-latest, 3-preview
 		reg->Load(L"Update.UseProxy", UpdSet.isUpdateUseProxy);
 		reg->Load(L"Update.Proxy", &UpdSet.szUpdateProxy);
 		reg->Load(L"Update.ProxyUser", &UpdSet.szUpdateProxyUser);
@@ -2917,6 +2921,8 @@ void Settings::SaveStatusSettings(SettingsBase* reg)
 
 BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* apStorage /*= NULL*/)
 {
+	if (gpConEmu) gpConEmu->LogString(L"Settings::SaveSettings");
+
 	BOOL lbRc = FALSE;
 
 	gpSetCls->SettingsPreSave();

@@ -1762,7 +1762,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 		case ID_DONATE_LINK:
 		{
-			gpConEmu->OnInfo_About();
+			gpConEmu->OnInfo_Donate();
 			return 0;
 		}
 

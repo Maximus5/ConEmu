@@ -8258,6 +8258,7 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	{
 		case WM_INITDIALOG:
 		{
+			gpConEmu->OnOurDialogOpened();
 			_ASSERTE(pRCon!=NULL);
 			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)pRCon);
 
@@ -8308,6 +8309,7 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			break;
 
 		case WM_CLOSE:
+			gpConEmu->OnOurDialogClosed();
 			EndDialog(hDlg, IDCANCEL);
 			break;
 

@@ -265,6 +265,8 @@ CConEmuMain::CConEmuMain()
 {
 	gpConEmu = this; // сразу!
 
+	DEBUGTEST(mb_DestroySkippedInAssert=false);
+
 	CVConGroup::Initialize();
 
 	getForegroundWindow();
@@ -401,6 +403,7 @@ CConEmuMain::CConEmuMain()
 	mb_SkipOnFocus = false;
 	mb_LastConEmuFocusState = false;
 	mn_ForceTimerCheckLoseFocus = 0;
+	mb_AllowAutoChildFocus = false;
 	mb_IgnoreQuakeActivation = false;
 	mn_LastQuakeShowHide = 0;
 	mb_ScClosePending = false;
@@ -2761,14 +2764,22 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 
 void CConEmuMain::Destroy()
 {
+	LogString(L"CConEmuMain::Destroy()");
 	CVConGroup::StopSignalAll();
 
 	if (gbInDisplayLastError)
+	{
+		LogString(L"-- Destroy skipped due to gbInDisplayLastError");
 		return; // Чтобы не схлопывались окна с сообщениями об ошибках
+	}
 
 	#ifdef _DEBUG
 	if (gbInMyAssertTrap)
+	{
+		LogString(L"-- Destroy skipped due to gbInMyAssertTrap");
+		mb_DestroySkippedInAssert = true;
 		return;
+	}
 	#endif
 
 	if (ghWnd)
@@ -2777,6 +2788,10 @@ void CConEmuMain::Destroy()
 		//ghWnd = NULL;
 		//DestroyWindow(hWnd); -- может быть вызывано из другой нити
 		PostMessage(ghWnd, mn_MsgMyDestroy, GetCurrentThreadId(), 0);
+	}
+	else
+	{
+		LogString(L"-- Destroy skipped due to ghWnd");		
 	}
 }
 
@@ -10418,7 +10433,10 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 {
 	if (gpSetCls->isAdvLogging)
 	{
-		LogString(abReceived ? L"PostCreate.2.begin" : L"PostCreate.1.begin");
+		wchar_t sInfo[100];
+		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"PostCreate.%u.begin (LeaveOnClose=%u, HideOnClose=%u)",
+			abReceived ? 2 : 1, (UINT)gpSet->isMultiLeaveOnClose, (UINT)gpSet->isMultiHideOnClose);
+		LogString(sInfo);
 	}
 
 	mn_StartupFinished = abReceived ? ss_PostCreate2Called : ss_PostCreate1Called;
@@ -10714,6 +10732,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				if (WindowStartTSA)
 				{
+					LogString(L"Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1} due to WindowStartTSA");
+					_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1}");
 					gpSet->isMultiLeaveOnClose = 1;
 					gpSet->isMultiHideOnClose = 1;
 				}
@@ -10774,6 +10794,8 @@ HWND CConEmuMain::PostCreateView(CConEmuChild* pChild)
 
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
+	LogString(L"CConEmuMain::OnDestroy()");
+
 	// Нужно проверить, вдруг окно закрылось без нашего ведома (InsideIntegration)
 	CVConGroup::OnDestroyConEmu();
 
@@ -10903,6 +10925,56 @@ bool CConEmuMain::SetSkipOnFocus(bool abSkipOnFocus)
 	bool bPrev = mb_SkipOnFocus;
 	mb_SkipOnFocus = abSkipOnFocus;
 	return bPrev;
+}
+
+void CConEmuMain::OnOurDialogOpened()
+{
+	mb_AllowAutoChildFocus = false;
+}
+
+void CConEmuMain::OnOurDialogClosed()
+{
+	CheckAllowAutoChildFocus((DWORD)-1);
+}
+
+void CConEmuMain::CheckAllowAutoChildFocus(DWORD nDeactivatedTID)
+{
+	if (!gpSet->isFocusInChildWindows)
+	{
+		mb_AllowAutoChildFocus = false;
+		return;
+	}
+
+	bool bAllowAutoChildFocus = false;
+	CVConGuard VCon;
+	HWND hChild = NULL;
+
+	if (gpConEmu->GetActiveVCon(&VCon) >= 0
+		&& ((hChild = VCon->GuiWnd()) != NULL))
+	{
+		if (nDeactivatedTID == (DWORD)-1)
+		{
+			bAllowAutoChildFocus = true;
+		}
+		// просто так фокус в дочернее окно ставить нельзя
+		// если переключать фокус в дочернее приложение по любому чиху
+		// вообще не получается активировать окно ConEmu, открыть системное меню,
+		// клацнуть по крестику в заголовке и т.п.
+		else if (nDeactivatedTID)
+		{
+			DWORD nChildTID = GetWindowThreadProcessId(hChild, NULL);
+			DWORD nConEmuTID = GetWindowThreadProcessId(ghWnd, NULL);
+
+			if ((nDeactivatedTID != nChildTID)
+				&& (nDeactivatedTID != nConEmuTID)) // это на всякий случай...
+			{
+				// gpConEmu->isMeForeground(true, true) -- уже дает неправильный результат, ConEmu считается активным
+				bAllowAutoChildFocus = true;
+			}
+		}
+	}
+
+	mb_AllowAutoChildFocus = bAllowAutoChildFocus;
 }
 
 LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom /*= NULL*/, BOOL abForceChild /*= FALSE*/)
@@ -13529,7 +13601,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 	BOOL lbFound = FALSE;
 	int iUnused = -1;
 
-	for (i = 0; !lbFound && i < countof(m_LayoutNames); i++)
+	for (i = 0; i < countof(m_LayoutNames); i++)
 	{
 		if (!m_LayoutNames[i].bUsed)
 		{
@@ -13552,7 +13624,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 	{
 		DWORD_PTR dwTest = dwNewKeybLayout | (dwNewKeybLayout << 16);
 
-		for(i = 0; !lbFound && i < nCount; i++)
+		for (i = 0; i < nCount; i++)
 		{
 			if (((DWORD_PTR)hKeyb[i]) == dwTest)
 			{
@@ -13561,30 +13633,49 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 				break;
 			}
 		}
+
+		// Если опять не нашли - то сравниваем старшее (HIWORD) слово раскладки
+		if (!lbFound)
+		{
+			WORD wTest = LOWORD(dwNewKeybLayout);
+
+			for (i = 0; i < nCount; i++)
+			{
+				if (HIWORD((DWORD_PTR)hKeyb[i]) == wTest)
+				{
+					lbFound = TRUE;
+					dwNewKeybLayout = (DWORD_PTR)hKeyb[i];
+					break;
+				}
+			}
+		}
 	}
 
 	if (!lbFound)
 	{
-		wchar_t szLayoutName[9] = {0};
-		_wsprintf(szLayoutName, SKIPLEN(countof(szLayoutName)) L"%08X", dwLayoutName);
+		// Загружать НОВЫЕ раскладки - некорректно (Issue 944)
+		Assert(lbFound);
 
-		if (gpSetCls->isAdvLogging > 1)
-		{
-			WCHAR szInfo[255];
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole -> LoadKeyboardLayout(0x%08X)", dwLayoutName);
-			LogString(szInfo);
-		}
+		//wchar_t szLayoutName[9] = {0};
+		//_wsprintf(szLayoutName, SKIPLEN(countof(szLayoutName)) L"%08X", dwLayoutName);
 
-		dwNewKeybLayout = (DWORD_PTR)LoadKeyboardLayout(szLayoutName, 0);
+		//if (gpSetCls->isAdvLogging > 1)
+		//{
+		//	WCHAR szInfo[255];
+		//	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole -> LoadKeyboardLayout(0x%08X)", dwLayoutName);
+		//	LogString(szInfo);
+		//}
 
-		if (gpSetCls->isAdvLogging > 1)
-		{
-			WCHAR szInfo[255];
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole -> LoadKeyboardLayout()=0x%08X", (DWORD)dwNewKeybLayout);
-			LogString(szInfo);
-		}
+		//dwNewKeybLayout = (DWORD_PTR)LoadKeyboardLayout(szLayoutName, 0);
 
-		lbFound = TRUE;
+		//if (gpSetCls->isAdvLogging > 1)
+		//{
+		//	WCHAR szInfo[255];
+		//	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole -> LoadKeyboardLayout()=0x%08X", (DWORD)dwNewKeybLayout);
+		//	LogString(szInfo);
+		//}
+
+		//lbFound = TRUE;
 	}
 
 	if (lbFound && iUnused != -1)
@@ -15839,6 +15930,7 @@ INT_PTR CConEmuMain::aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 	{
 		case WM_INITDIALOG:
 		{
+			gpConEmu->OnOurDialogOpened();
 			gpConEmu->mh_AboutDlg = hWnd2;
 
 			if ((ghOpWnd && IsWindow(ghOpWnd)) || (WS_EX_TOPMOST & GetWindowLongPtr(ghWnd, GWL_EXSTYLE)))
@@ -15958,6 +16050,7 @@ INT_PTR CConEmuMain::aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 
 		case WM_CLOSE:
 			//if (ghWnd == NULL)
+			gpConEmu->OnOurDialogClosed();
 			EndDialog(hWnd2, IDOK);
 			//else
 			//	DestroyWindow(hWnd2);
@@ -15979,7 +16072,7 @@ void CConEmuMain::OnInfo_Donate()
 	int nBtn = MessageBox(
 		L"You can show your appreciation and support future development by donating.\r\n\r\n"
 		L"Donate (PayPal) button located on project website\r\n"
-		L"under ConEmu sketch (upper right of page)\r\n\r\n"
+		L"under ConEmu sketch (upper right of page).\r\n\r\n"
 		L"Open project website?",
 		MB_YESNO|MB_ICONINFORMATION);
 
@@ -16237,6 +16330,25 @@ void CConEmuMain::SetRunQueueTimer(bool bSet, UINT uElapse)
 
 void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 {
+	#ifdef _DEBUG
+	if (mb_DestroySkippedInAssert)
+	{
+		if (!gbInMyAssertTrap)
+		{
+			if (CVConGroup::GetConCount() == 0)
+			{
+				LogString(L"-- Destroy was skipped due to gbInMyAssertTrap, reposting");
+				Destroy();
+				return;
+			}
+			else
+			{
+				mb_DestroySkippedInAssert = false;
+			}
+		}
+	}
+	#endif
+
 	//Maximus5. Hack - если какая-то зараза задизеблила окно
 	if (!gbDontEnable)
 	{
@@ -16697,23 +16809,47 @@ void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *ar
 bool CConEmuMain::isDestroyOnClose(bool ScCloseOnEmpty /*= false*/)
 {
 	CConEmuUpdate::UpdateStep step = gpUpd ? gpUpd->InUpdate() : CConEmuUpdate::us_NotStarted;
-	if (step == CConEmuUpdate::us_ExitAndUpdate)
-		return true; // Иначе облом при обновлении
 
-	if (!gpSet->isMultiLeaveOnClose)
-		return true;
-	if (gpSet->isMultiLeaveOnClose == 1)
-		return ScCloseOnEmpty;
-	// Сюда мы попадаем, если просили оставлять ConEmu только если
-	// закрыта была вкладка, а не нажат "крестик" в заголовке
-	_ASSERTE(gpSet->isMultiLeaveOnClose == 2);
-	// mb_ScClosePending выставляется в true при закрытии крестиком
-	// То есть, если нажали "крестик" - вызываем закрытие окна ConEmu
-	return (mb_ScClosePending || ScCloseOnEmpty);
+	bool bNeedDestroy = false;
+
+	if (step == CConEmuUpdate::us_ExitAndUpdate)
+	{
+		bNeedDestroy = true; // Иначе облом при обновлении
+	}
+	else if (!gpSet->isMultiLeaveOnClose)
+	{
+		bNeedDestroy = true;
+	}
+	else if (gpSet->isMultiLeaveOnClose == 1)
+	{
+		bNeedDestroy = ScCloseOnEmpty;
+	}
+	else
+	{
+		// Сюда мы попадаем, если просили оставлять ConEmu только если
+		// закрыта была вкладка, а не нажат "крестик" в заголовке
+		_ASSERTE(gpSet->isMultiLeaveOnClose == 2);
+		// mb_ScClosePending выставляется в true при закрытии крестиком
+		// То есть, если нажали "крестик" - вызываем закрытие окна ConEmu
+		bNeedDestroy = (mb_ScClosePending || ScCloseOnEmpty);
+	}
+
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t sInfo[100];
+		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"isDestroyOnClose(%u) {%u,%u,%u} -> %u",
+			(UINT)ScCloseOnEmpty,
+			(UINT)step, (UINT)gpSet->isMultiLeaveOnClose, (UINT)mb_ScClosePending,
+			bNeedDestroy);
+		LogString(sInfo);
+	}
+
+	return bNeedDestroy;
 }
 
 void CConEmuMain::OnAllVConClosed()
 {
+	LogString(L"CConEmuMain::OnAllVConClosed()");
 	ShutdownGuiStep(L"AllVConClosed");
 
 	OnAllGhostClosed();
@@ -17275,29 +17411,56 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 		break;
 #endif
+
 		case WM_ACTIVATE:
-#ifdef MSGLOGGER
 			result = gpConEmu->OnFocus(hWnd, messg, wParam, lParam);
+			if (gpConEmu->mb_AllowAutoChildFocus)
+			{
+				HWND hFore = getForegroundWindow();
+				CVConGuard VCon;
+				// Если это наш диалог - пропустить возврат фокуса!
+				if (hFore && (hFore != ghWnd) && isMeForeground(false, true))
+				{
+					gpConEmu->mb_AllowAutoChildFocus = false; // для отладчика
+				}
+				else if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
+				{
+					VCon->PostRestoreChildFocus();
+				}
+				gpConEmu->mb_AllowAutoChildFocus = false; // однократно
+			}
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;
-#endif
 		case WM_ACTIVATEAPP:
-#ifdef MSGLOGGER
+			// просто так фокус в дочернее окно ставить нельзя
+			// если переключать фокус в дочернее приложение по любому чиху
+			// вообще не получается активировать окно ConEmu, открыть системное меню,
+			// клацнуть по крестику в заголовке и т.п.
+			if (wParam && lParam && gpSet->isFocusInChildWindows)
+			{
+				CheckAllowAutoChildFocus((DWORD)lParam);
+			}
 			result = gpConEmu->OnFocus(hWnd, messg, wParam, lParam);
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;
-#endif
 		case WM_KILLFOCUS:
-#ifdef MSGLOGGER
 			result = gpConEmu->OnFocus(hWnd, messg, wParam, lParam);
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;
-#endif
 		case WM_SETFOCUS:
 			result = gpConEmu->OnFocus(hWnd, messg, wParam, lParam);
 			result = DefWindowProc(hWnd, messg, wParam, lParam); //-V519
 			break;
 		case WM_MOUSEACTIVATE:
+			// просто так фокус в дочернее окно ставить нельзя
+			// если переключать фокус в дочернее приложение по любому чиху
+			// вообще не получается активировать окно ConEmu, открыть системное меню,
+			// клацнуть по крестику в заголовке и т.п.
+			if (wParam && lParam && gpSet->isFocusInChildWindows)
+			{
+				CheckAllowAutoChildFocus((DWORD)lParam);
+			}
+
 			//return MA_ACTIVATEANDEAT; -- ест все подряд, а LBUTTONUP пропускает :(
 			gpConEmu->mouse.nSkipEvents[0] = 0;
 			gpConEmu->mouse.nSkipEvents[1] = 0;
@@ -17341,6 +17504,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;
+
 		case WM_MOUSEMOVE:
 		case WM_MOUSEWHEEL:
 		case WM_RBUTTONDOWN:

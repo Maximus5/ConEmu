@@ -1100,8 +1100,9 @@ BEGIN
     CONTROL         "Check on startup",cbUpdateCheckOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,70,8
     CONTROL         "Hourly",cbUpdateCheckHourly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,83,13,38,8
     CONTROL         "Show TSA balloon",cbUpdateConfirmDownload,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,126,13,78,8
-    CONTROL         "Stable only",rbUpdateStableOnly,"Button",BS_AUTORADIOBUTTON,214,13,52,8
-    CONTROL         "Latest",rbUpdateLatestAvailable,"Button",BS_AUTORADIOBUTTON,272,13,42,8
+    CONTROL         "Stable",rbUpdateStableOnly,"Button",BS_AUTORADIOBUTTON,200,13,38,8
+    CONTROL         "Preview",rbUpdatePreview,"Button",BS_AUTORADIOBUTTON,240,13,38,8
+    CONTROL         "Latest",rbUpdateLatestAvailable,"Button",BS_AUTORADIOBUTTON,280,13,38,8
     GROUPBOX        "",IDC_STATIC,4,30,319,27
     CONTROL         "Use proxy",cbUpdateUseProxy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,29,51,10
     LTEXT           "Server:port",stUpdateProxy,10,41,42,8,WS_DISABLED
@@ -1143,12 +1144,13 @@ BEGIN
     GROUPBOX        "You can change this on 'Features' page of Settings dialog later",IDC_STATIC,3,86,316,54
     CONTROL         " Inject ConEmuHk.dll into all processes started in ConEmu tabs (may cause lags)",cbInjectConEmuHkFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,97,295,10
-    LTEXT           "Required for some features (-new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (dialogs and menus behind of ConEmu window, chcp hungs, and so on...)",stInjectConEmuHkFast1,20,110,292,25
+    LTEXT           "Required for many features (ANSI X3.64, -new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (telnet in Windows 7, dialogs and menus behind of ConEmu window, chcp hungs, and so on...)",stInjectConEmuHkFast1,20,110,292,25
     GROUPBOX        "You can change settings on 'Update' page of Settings dialog later",IDC_STATIC,3,141,316,27
     CONTROL         " Enable automatic updates",cbEnableAutoUpdateFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,152,104,10
-    CONTROL         "«Stable» builds",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,116,152,67,10
-    CONTROL         "Developer builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,187,152,71,10
+    CONTROL         "«Stable»",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,120,152,46,10
+    CONTROL         "«Preview»",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,170,152,50,10
+    CONTROL         "«Developer» builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,224,152,71,10
     GROUPBOX        "",gbDisableConImeFast,3,170,316,61
     CONTROL         " Disable ConIme.exe autorun (Vista only)",cbDisableConImeFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,178,295,10

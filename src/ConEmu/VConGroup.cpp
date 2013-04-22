@@ -1786,6 +1786,7 @@ bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
 {
 	if (!CloseQuery(NULL, rbMsgConfirmed))
 	{
+		gpConEmu->LogString(L"CloseQuery blocks closing");
 		gpConEmu->SetScClosePending(false);
 		return false;
 	}
@@ -1795,7 +1796,10 @@ bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
 
 	#ifdef _DEBUG
 	if (gbInMyAssertTrap)
+	{
+		gpConEmu->LogString(L"CloseQuery skipped due to gbInMyAssertTrap");
 		return false;
+	}
 	#endif
 
 	// Чтобы мог сработать таймер закрытия
@@ -1984,6 +1988,8 @@ bool CVConGroup::isConsolePID(DWORD nPID)
 // returns true if gpConEmu->Destroy() was called
 bool CVConGroup::OnScClose()
 {
+	gpConEmu->LogString(L"CVConGroup::OnScClose()");
+
 	bool lbAllowed = false;
 	int nConCount = 0, nDetachedCount = 0;
 	bool lbProceed = false, lbMsgConfirmed = false;

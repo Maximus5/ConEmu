@@ -130,7 +130,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n" \
 	CECOPYRIGHTSTRING_W /*\x00A9 2009-2011 ConEmu.Maximus5@gmail.com*/ L"\r\n" \
 	L"\r\n" \
-	L"Read more online: http://code.google.com/p/conemu-maximus5/wiki/ConEmu\r\n"
+	L"Online documentation: http://code.google.com/p/conemu-maximus5/wiki/ConEmu\r\n" \
+	L"\r\n" \
+	L"You can show your appreciation and support future development by donating. " \
+	L"Donate (PayPal) button located on project website " \
+	L"under ConEmu sketch (upper right of page)."
 
 
 #define pConsoleHelpFull \

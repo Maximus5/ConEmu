@@ -4437,7 +4437,8 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2)
 	checkDlgButton(hWnd2, cbUpdateCheckOnStartup, p->isUpdateCheckOnStartup);
 	checkDlgButton(hWnd2, cbUpdateCheckHourly, p->isUpdateCheckHourly);
 	checkDlgButton(hWnd2, cbUpdateConfirmDownload, !p->isUpdateConfirmDownload);
-	checkRadioButton(hWnd2, rbUpdateStableOnly, rbUpdateLatestAvailable, (p->isUpdateUseBuilds==1) ? rbUpdateStableOnly : rbUpdateLatestAvailable);
+	checkRadioButton(hWnd2, rbUpdateStableOnly, rbUpdateLatestAvailable,
+		(p->isUpdateUseBuilds==1) ? rbUpdateStableOnly : (p->isUpdateUseBuilds==3) ? rbUpdatePreview : rbUpdateLatestAvailable);
 	
 	checkDlgButton(hWnd2, cbUpdateUseProxy, p->isUpdateUseProxy);
 	OnButtonClicked(hWnd2, cbUpdateUseProxy, 0); // Enable/Disable proxy fields
@@ -5240,6 +5241,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->bShowFarWindows = IsChecked(hWnd2, cbShowFarWindows);
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
+
 		case cbCloseConEmuWithLastTab:
 			if (IsChecked(hWnd2, CB))
 			{
@@ -5247,20 +5249,27 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			}
 			else
 			{
+				_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1/2}");
 				gpSet->isMultiLeaveOnClose = IsChecked(hWnd2, cbCloseConEmuOnCrossClicking) ? 2 : 1;
 			}
+			gpConEmu->LogString(L"isMultiLeaveOnClose changed from dialog (cbCloseConEmuWithLastTab)");
+
 			checkDlgButton(hWnd2, cbMinimizeOnLastTabClose, (gpSet->isMultiLeaveOnClose && gpSet->isMultiHideOnClose != 0) ? BST_CHECKED : BST_UNCHECKED);
 			checkDlgButton(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose && gpSet->isMultiHideOnClose == 1) ? BST_CHECKED : BST_UNCHECKED);
 			EnableDlgItem(hWnd2, cbCloseConEmuOnCrossClicking, (gpSet->isMultiLeaveOnClose != 0));
 			EnableDlgItem(hWnd2, cbMinimizeOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0));
 			EnableDlgItem(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0) && (gpSet->isMultiHideOnClose != 0));
 			break;
+
 		case cbCloseConEmuOnCrossClicking:
 			if (!IsChecked(hWnd2, cbCloseConEmuWithLastTab))
 			{
+				_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1/2}");
 				gpSet->isMultiLeaveOnClose = IsChecked(hWnd2, cbCloseConEmuOnCrossClicking) ? 2 : 1;
+				gpConEmu->LogString(L"isMultiLeaveOnClose changed from dialog (cbCloseConEmuOnCrossClicking)");
 			}
 			break;
+
 		case cbMinimizeOnLastTabClose:
 		case cbHideOnLastTabClose:
 			if (!IsChecked(hWnd2, cbCloseConEmuWithLastTab))
@@ -5277,6 +5286,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				EnableDlgItem(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0) && (gpSet->isMultiHideOnClose != 0));
 			}
 			break;
+
 		case rbMinByEscNever:
 		case rbMinByEscEmpty:
 		case rbMinByEscAlways:
@@ -5286,13 +5296,6 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbMapShiftEscToEsc:
 			gpSet->isMapShiftEscToEsc = IsChecked(hWnd2, CB);
 			break;
-		//case cbMultiLeaveOnClose:
-		//	gpSet->isMultiLeaveOnClose = IsChecked(hWnd2, cbMultiLeaveOnClose);
-		//	EnableWindow(GetDlgItem(hWnd2, cbMultiHideOnClose), gpSet->isMultiLeaveOnClose);
-		//	break;
-		//case cbMultiHideOnClose:
-		//	gpSet->isMultiHideOnClose = IsChecked(hWnd2, cbMultiHideOnClose);
-		//	break;
 
 		case cbGuiMacroHelp:
 			gpConEmu->OnInfo_About(L"Macro");
@@ -5777,8 +5780,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->UpdSet.isUpdateConfirmDownload = (IsChecked(hWnd2, CB) == BST_UNCHECKED);
 			break;
 		case rbUpdateStableOnly:
+		case rbUpdatePreview:
 		case rbUpdateLatestAvailable:
-			gpSet->UpdSet.isUpdateUseBuilds = IsChecked(hWnd2, rbUpdateStableOnly) ? 1 : 2;
+			gpSet->UpdSet.isUpdateUseBuilds = IsChecked(hWnd2, rbUpdateStableOnly) ? 1 : IsChecked(hWnd2, rbUpdateLatestAvailable) ? 2 : 3;
 			break;
 		case cbUpdateUseProxy:
 			gpSet->UpdSet.isUpdateUseProxy = IsChecked(hWnd2, CB);
@@ -8003,6 +8007,8 @@ void CSettings::OnClose()
 		gpConEmu->RegisterHooks();
 	else if (gpSet->m_isKeyboardHooks == 2)
 		gpConEmu->UnRegisterHooks();
+
+	gpConEmu->OnOurDialogClosed();
 }
 
 void CSettings::OnResetOrReload(BOOL abResetOnly)
@@ -8096,6 +8102,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 	switch (messg)
 	{
 		case WM_INITDIALOG:
+			gpConEmu->OnOurDialogOpened();
 			ghOpWnd = hWnd2;
 			SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hWnd2, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);

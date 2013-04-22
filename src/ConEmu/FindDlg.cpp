@@ -101,6 +101,7 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 	{
 		case WM_INITDIALOG:
 		{
+			gpConEmu->OnOurDialogOpened();
 			gpConEmu->mp_Find->mh_FindDlg = hWnd2;
 
 			SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
@@ -210,6 +211,7 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 			break;
 
 		case WM_CLOSE:
+			gpConEmu->OnOurDialogClosed();
 			DestroyWindow(hWnd2);
 			break;
 
