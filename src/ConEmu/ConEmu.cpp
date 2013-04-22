@@ -81,7 +81,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
-#define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
+#define DEBUGSTRLANG(s) DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRRCLICK(s) //DEBUGSTR(s)
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
@@ -1663,7 +1663,7 @@ void CConEmuMain::CreateLog()
 
 	mp_Log = new MFileLog(L"ConEmu-gui", ms_ConEmuExeDir, GetCurrentProcessId());
 
-	HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-gui", GetCurrentProcessId()) : E_UNEXPECTED;
+	HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-gui", GetCurrentProcessId(), gpSetCls->isAdvLogging) : E_UNEXPECTED;
 	if (hr != 0)
 	{
 		wchar_t szError[MAX_PATH*2];
@@ -10452,6 +10452,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		GetWindowPlacement(ghWnd, &wpl);
 #endif
 
+		CheckActiveLayoutName();
+
 		if (gpSet->isHideCaptionAlways())
 		{
 			OnHideCaption();
@@ -13351,6 +13353,47 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 	return result;
 }
 
+void CConEmuMain::CheckActiveLayoutName()
+{
+	wchar_t szLayout[KL_NAMELENGTH] = {0}, *pszEnd = NULL;
+	GetKeyboardLayoutName(szLayout);
+
+	DWORD dwLayout = wcstoul(szLayout, &pszEnd, 16);
+
+	int i, iUnused = -1;
+
+	for (i = 0; i < (int)countof(m_LayoutNames); i++)
+	{
+		if (!m_LayoutNames[i].bUsed)
+		{
+			if (iUnused == -1) iUnused = i; continue;
+		}
+
+		if (m_LayoutNames[i].klName == dwLayout)
+		{
+			iUnused = -1; break;
+		}
+	}
+
+	if (iUnused != -1)
+	{
+		HKL hkl = GetKeyboardLayout(0);
+
+		// —таршие слова совпадать не будут (если совпадают, то случайно)
+		// ј вот младшие - об€заны
+		if (LOWORD(hkl) == LOWORD(dwLayout))
+		{
+			m_LayoutNames[iUnused].bUsed = TRUE;
+			m_LayoutNames[iUnused].klName = dwLayout;
+			m_LayoutNames[iUnused].hkl = (DWORD_PTR)hkl;
+		}
+		else
+		{
+			_ASSERTE(LOWORD(hkl) == LOWORD(dwLayout));
+		}
+	}
+}
+
 LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	/*
@@ -13436,7 +13479,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	// «апомнить, что получилось в m_LayoutNames
 	int i, iUnused = -1;
 
-	for(i = 0; i < (int)countof(m_LayoutNames); i++)
+	for (i = 0; i < (int)countof(m_LayoutNames); i++)
 	{
 		if (!m_LayoutNames[i].bUsed)
 		{
@@ -13453,6 +13496,8 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	{
 		m_LayoutNames[iUnused].bUsed = TRUE;
 		m_LayoutNames[iUnused].klName = dwLayoutAfterChange;
+		DEBUGTEST(HKL hkl = GetKeyboardLayout(0));
+		_ASSERTE((DWORD_PTR)hkl == (DWORD_PTR)lParam);
 		m_LayoutNames[iUnused].hkl = lParam;
 	}
 
@@ -13548,6 +13593,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 
 	if (!isMainThread())
 	{
+		// --> не "нравитс€" руслату обращение к раскладкам из фоновых потоков. ѕоэтому выпол€етс€ в основном потоке
 		if (gpSetCls->isAdvLogging > 1)
 		{
 			WCHAR szInfo[255];
@@ -13568,23 +13614,28 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 		}
 	}
 
-#ifdef _DEBUG
+
+	wchar_t szName[10]; _wsprintf(szName, SKIPLEN(countof(szName)) L"%08X", dwLayoutName);
+
+
+	#ifdef _DEBUG
 	//Sleep(2000);
 	WCHAR szMsg[255];
-	// --> ¬идимо именно это не "нравитс€" руслату. Ќужно переправить Post'ом в основную нить
 	HKL hkl = GetKeyboardLayout(0);
-	_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"ConEmu: GetKeyboardLayout(0) in OnLangChangeConsole after GetKeyboardLayout(0) = 0x%08I64X\n",
-	          (unsigned __int64)(DWORD_PTR)hkl);
+	_wsprintf(szMsg, SKIPLEN(countof(szMsg))
+		L"ConEmu: GetKeyboardLayout(0) in OnLangChangeConsole after GetKeyboardLayout(0) = "
+		WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"\n",
+	    WIN3264WSPRINT((DWORD_PTR)hkl));
 	DEBUGSTRLANG(szMsg);
 	//Sleep(2000);
-#endif
-	wchar_t szName[10]; _wsprintf(szName, SKIPLEN(countof(szName)) L"%08X", dwLayoutName);
-#ifdef _DEBUG
+	#endif
+
+	#ifdef _DEBUG
 	DEBUGSTRLANG(szName);
-#endif
-	// --> “ут слетает!
+	#endif
+
 	DWORD_PTR dwNewKeybLayout = dwLayoutName; //(DWORD_PTR)LoadKeyboardLayout(szName, 0);
-	HKL hKeyb[20]; UINT nCount, i;
+	HKL hKeyb[20]; UINT nCount, i, j, s;
 	nCount = GetKeyboardLayoutList(countof(hKeyb), hKeyb);
 	/*
 	HKL:
@@ -13601,6 +13652,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 	BOOL lbFound = FALSE;
 	int iUnused = -1;
 
+	// Check first, this layout may be found already
 	for (i = 0; i < countof(m_LayoutNames); i++)
 	{
 		if (!m_LayoutNames[i].bUsed)
@@ -13619,35 +13671,135 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 		}
 	}
 
-	// ≈сли не нашли, и это "классическа€" раскладка, в которой ид раскладки совпадает с €зыком
-	if (!lbFound && ((dwLayoutName & 0xFFFF) == dwLayoutName))
+	// s - number of items in (switch)
+	for (s = 0; !lbFound && (s <= 3); s++)
 	{
-		DWORD_PTR dwTest = dwNewKeybLayout | (dwNewKeybLayout << 16);
-
-		for (i = 0; i < nCount; i++)
+		for (i = 0; (i < nCount); i++)
 		{
-			if (((DWORD_PTR)hKeyb[i]) == dwTest)
+			// "классическа€" раскладка, в которой ид раскладки совпадает с €зыком?
+			if ((s == 0) && ((dwLayoutName & 0xFFFF) != dwLayoutName))
+				continue;
+
+			bool bIgnore = false;
+			for (j = 0; j < countof(m_LayoutNames); j++)
 			{
-				lbFound = TRUE;
+				if (!m_LayoutNames[j].bUsed)
+					continue;
+
+				if (m_LayoutNames[j].hkl == (DWORD_PTR)hKeyb[i])
+				{
+					bIgnore = true;
+					break;
+				}
+			}
+			if (bIgnore)
+				continue;
+
+			switch (s)
+			{
+			case 0:
+				// это "классическа€" раскладка, в которой ид раскладки совпадает с €зыком?
+				lbFound = (((DWORD_PTR)hKeyb[i]) == (dwNewKeybLayout | (dwNewKeybLayout << 16)));
+				break;
+			case 1:
+				// Issue 1035: dwLayoutName=0x00020409; hKeyb={0xfffffffff0010414,0xfffffffff0010409}
+				// Ћюба€ (свободна€/необработанна€) раскладка дл€ требуемого €зыка?
+				lbFound = (HIWORD(hKeyb[i]) != LOWORD(hKeyb[i])) && (LOWORD(hKeyb[i]) == LOWORD(dwNewKeybLayout));
+				//lbFound = ((((DWORD_PTR)hKeyb[i]) & 0xFFFFFFF) == dwNewKeybLayout);
+				break;
+			case 2:
+				// ѕо младшему слову
+				lbFound = (LOWORD((DWORD_PTR)hKeyb[i]) == LOWORD(dwNewKeybLayout));
+				break;
+			case 3:
+				// ≈сли оп€ть не нашли - то сравниваем старшее (HIWORD) слово раскладки
+				lbFound = (HIWORD((DWORD_PTR)hKeyb[i]) == LOWORD(dwNewKeybLayout));
+				break;
+			//case 3:
+			//	// Last change - check LOWORD of both HKL & Layout
+			//	// Issue 1035: dwLayoutName=0x00020409; hKeyb={0xfffffffff0010414,0xfffffffff0010409}
+			//	lbFound = (LOWORD((DWORD_PTR)hKeyb[i]) == LOWORD(dwNewKeybLayout));
+			//	break;
+			default:
+				Assert(FALSE && "Invalid index");
+			}
+
+			if (lbFound)
+			{
 				dwNewKeybLayout = (DWORD_PTR)hKeyb[i];
 				break;
 			}
 		}
+	}
 
-		// ≈сли оп€ть не нашли - то сравниваем старшее (HIWORD) слово раскладки
-		if (!lbFound)
+	//// ≈сли не нашли, и это "классическа€" раскладка, в которой ид раскладки совпадает с €зыком
+	//if (!lbFound && ((dwLayoutName & 0xFFFF) == dwLayoutName))
+	//{
+	//	DWORD_PTR dwTest = dwNewKeybLayout | (dwNewKeybLayout << 16);
+
+	//	for (i = 0; i < nCount; i++)
+	//	{
+	//		if (((DWORD_PTR)hKeyb[i]) == dwTest)
+	//		{
+	//			lbFound = TRUE;
+	//			dwNewKeybLayout = (DWORD_PTR)hKeyb[i];
+	//			break;
+	//		}
+	//	}
+
+	//	// ≈сли оп€ть не нашли - то сравниваем старшее (HIWORD) слово раскладки
+	//	if (!lbFound)
+	//	{
+	//		WORD wTest = LOWORD(dwNewKeybLayout);
+
+	//		for (i = 0; i < nCount; i++)
+	//		{
+	//			if (HIWORD((DWORD_PTR)hKeyb[i]) == wTest)
+	//			{
+	//				lbFound = TRUE;
+	//				dwNewKeybLayout = (DWORD_PTR)hKeyb[i];
+	//				break;
+	//			}
+	//		}
+	//	}
+	//}
+
+	//// Last change - check LOWORD of both HKL & Layout
+	//// Issue 1035: dwLayoutName=0x00020409; hKeyb={0xfffffffff0010414,0xfffffffff0010409}
+	//if (!lbFound)
+	//{
+	//	WORD wTest = LOWORD(dwNewKeybLayout);
+
+	//	for (i = 0; i < nCount; i++)
+	//	{
+	//		if (LOWORD((DWORD_PTR)hKeyb[i]) == wTest)
+	//		{
+	//			lbFound = TRUE;
+	//			dwNewKeybLayout = (DWORD_PTR)hKeyb[i];
+	//			break;
+	//		}
+	//	}
+	//}
+
+	if ((!lbFound && gpSetCls->isAdvLogging) || (gpSetCls->isAdvLogging >= 2))
+	{
+		WCHAR szInfo[255];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Keyboard layout lookup (0x%08X) %s", dwLayoutName, lbFound ? L"Succeeded" : L"FAILED");
+		LogString(szInfo);
+
+		HKL hkl = GetKeyboardLayout(0);
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+			L"  Current keyboard layout:\r\n       " WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"\n",
+		    WIN3264WSPRINT((DWORD_PTR)hkl));
+	    LogString(szInfo, false, false);
+
+		LogString(L"  Installed keyboard layouts:\r\n", false, false);
+    	for (i = 0; i < nCount; i++)
 		{
-			WORD wTest = LOWORD(dwNewKeybLayout);
-
-			for (i = 0; i < nCount; i++)
-			{
-				if (HIWORD((DWORD_PTR)hKeyb[i]) == wTest)
-				{
-					lbFound = TRUE;
-					dwNewKeybLayout = (DWORD_PTR)hKeyb[i];
-					break;
-				}
-			}
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+				L"    %u: " WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"\n",
+			    i+1, WIN3264WSPRINT(hKeyb[i]));
+		    LogString(szInfo, false, false);
 		}
 	}
 

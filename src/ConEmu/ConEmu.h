@@ -402,6 +402,7 @@ class CConEmuMain :
 		//BOOL mb_InRestore; // во время восстановления из Maximized
 		BOOL mb_MouseCaptured;
 		//BYTE m_KeybStates[256];
+		void CheckActiveLayoutName();
 		DWORD_PTR m_ActiveKeybLayout;
 		struct
 		{

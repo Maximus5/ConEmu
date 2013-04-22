@@ -6858,7 +6858,7 @@ void CRealConsole::CreateLogFiles()
 		mp_Log = new MFileLog(L"ConEmu-input", gpConEmu->ms_ConEmuExeDir, mn_MainSrv_PID);
 	}
 
-	HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-input", mn_MainSrv_PID) : E_UNEXPECTED;
+	HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-input", mn_MainSrv_PID, gpSetCls->isAdvLogging) : E_UNEXPECTED;
 	if (hr != 0)
 	{
 		wchar_t szError[MAX_PATH*2];

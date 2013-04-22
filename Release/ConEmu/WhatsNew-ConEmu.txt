@@ -15,6 +15,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.04.21a
+[%] Issue 1035: Assertion on startup with some keyboard layouts.
+
+
 2013.04.21
 [!] Option «Inject ConEmuHk» is enabled by default (for new configurations).
 [*] Some more internal logging.

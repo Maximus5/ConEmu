@@ -3431,7 +3431,7 @@ void MFileLog::CloseLogFile()
 	SafeFree(ms_FileName);
 }
 // Returns 0 if succeeded, otherwise - GetLastError() code
-HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/)
+HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, DWORD anLevel /*= 0*/)
 {
 	if (!this)
 		return -1;
@@ -3460,7 +3460,10 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/)
 	DWORD dwErr = (DWORD)-1;
 
 	wchar_t szVer[2] = {MVV_4a[0],0}, szConEmu[64];
-	_wsprintf(szConEmu, SKIPLEN(countof(szConEmu)) L"ConEmu %u%02u%02u%s[%s] log", MVV_1,MVV_2,MVV_3,szVer,WIN3264TEST(L"32",L"64"));
+	wchar_t szLevel[16] = L"";
+	if (anLevel > 0)
+		_wsprintf(szLevel, SKIPLEN(countof(szLevel)) L"[%u]", anLevel);
+	_wsprintf(szConEmu, SKIPLEN(countof(szConEmu)) L"ConEmu %u%02u%02u%s[%s] log%s", MVV_1,MVV_2,MVV_3,szVer,WIN3264TEST(L"32",L"64"),szLevel);
 
 	if (!ms_FilePathName)
 	{
