@@ -403,6 +403,7 @@ class CConEmuMain :
 		BOOL mb_MouseCaptured;
 		//BYTE m_KeybStates[256];
 		void CheckActiveLayoutName();
+		void StoreLayoutName(int iIdx, DWORD dwLayout, HKL hkl);
 		DWORD_PTR m_ActiveKeybLayout;
 		struct
 		{
@@ -792,7 +793,7 @@ class CConEmuMain :
 		LRESULT OnKeyboardHook(DWORD VkMod);
 		LRESULT OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam);
-		LRESULT OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayoutName);
+		LRESULT OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD adwLayoutName);
 		LRESULT OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
 		LRESULT OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);

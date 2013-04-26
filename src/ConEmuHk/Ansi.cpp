@@ -45,6 +45,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "ExtConsole.h"
 
+///* ***************** */
+//#include "Ansi.h"
+//DWORD AnsiTlsIndex = 0;
+///* ***************** */
+
 #undef isPressed
 #define isPressed(inp) ((user->getKeyState(inp) & 0x8000) == 0x8000)
 
@@ -382,14 +387,15 @@ void DumpEscape(LPCWSTR buf, size_t cchLen, bool bUnknown)
 		_ASSERTE(FALSE && "Unknown Esc Sequence!");
 	}
 
-	wchar_t szDbg[190];
+	wchar_t szDbg[200];
 	size_t nLen = cchLen;
 	static int nWriteCallNo = 0;
 
 	if (bUnknown)
-		wcscpy_c(szDbg, L"###Unknown Esc Sequence: ");
+		//wcscpy_c(szDbg, L"###Unknown Esc Sequence: ");
+		msprintf(szDbg, countof(szDbg), L"[%5u] ###Unknown Esc Sequence: ", GetCurrentThreadId());
 	else
-		msprintf(szDbg, countof(szDbg), L"AnsiDump #%u: ", ++nWriteCallNo);
+		msprintf(szDbg, countof(szDbg), L"[%5u] AnsiDump #%u: ", GetCurrentThreadId(), ++nWriteCallNo);
 
 	size_t nStart = lstrlenW(szDbg);
 	wchar_t* pszDst = szDbg + nStart;

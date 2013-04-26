@@ -5137,7 +5137,7 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 
 // Это приходит из ConEmuC.exe::ServerInitGuiTab (CECMD_SRVSTARTSTOP)
 // здесь сервер только "запускается" и еще не готов принимать команды
-void CRealConsole::OnServerStarted(HWND ahConWnd, DWORD anServerPID, DWORD dwKeybLayout)
+void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout)
 {
 	if (!this)
 	{
@@ -10799,14 +10799,14 @@ void CRealConsole::GuiWndFocusStore()
 
 	GUITHREADINFO gti = {sizeof(gti)};
 	
-	DWORD nPID;
+	DWORD nPID = 0, nGetPID = 0, nErr = 0;
+	BOOL bAttached = FALSE, bAttachCalled = FALSE;
 
 	DWORD nTID = GetWindowThreadProcessId(hGuiWnd, &nPID);
 
 	DEBUGTEST(BOOL bGuiInfo = )
 	GetGUIThreadInfo(nTID, &gti);
 
-	DWORD nGetPID;
 	if (gti.hwndFocus)
 	{
 		GetWindowThreadProcessId(gti.hwndFocus, &nGetPID);
@@ -10814,11 +10814,17 @@ void CRealConsole::GuiWndFocusStore()
 		{
 			mh_GuiWndFocusStore = gti.hwndFocus;
 
-			BOOL bAttached = FALSE, bAttachCalled = FALSE; DWORD nErr;
 			GuiWndFocusThread(gti.hwndFocus, bAttached, bAttachCalled, nErr);
 
 			_ASSERTE(bAttached);
 		}
+	}
+
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GuiWndFocusStore for PID=%u, hWnd=x%08X", nPID, (DWORD)mh_GuiWndFocusStore);
+		LogString(szInfo);
 	}
 }
 
@@ -10860,13 +10866,13 @@ void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 		//SetForegroundWindow(hGuiWnd);
 		SetFocus(hSetFocus);
 
-		#ifdef _DEBUG
+		
 		wchar_t sInfo[200];
 		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"GuiWndFocusRestore to x%08X, hGuiWnd=x%08X, Attach=%s, Err=%u",
 			(DWORD)hSetFocus, (DWORD)hGuiWnd,
 			bAttachCalled ? (bAttached ? L"Called" : L"Failed") : L"Skipped", nErr);
 		DEBUGSTRFOCUS(sInfo);
-		#endif
+        LogString(sInfo);
 	}
 	else
 	{
@@ -11291,7 +11297,7 @@ BOOL CRealConsole::isMouseButtonDown()
 }
 
 // Аргумент - DWORD(!) а не DWORD_PTR. Это приходит из консоли.
-void CRealConsole::OnConsoleKeyboardLayout(DWORD dwNewLayout)
+void CRealConsole::OnConsoleKeyboardLayout(const DWORD dwNewLayout)
 {
 	_ASSERTE(dwNewLayout!=0);
 
@@ -11955,6 +11961,37 @@ void CRealConsole::PostDragCopy(BOOL abMove)
 	}
 
 	PostMacro(mcr, TRUE/*abAsync*/);
+}
+
+bool CRealConsole::GetFarVersion(FarVersion* pfv)
+{
+	if (!this)
+		return false;
+
+	DWORD nPID = GetFarPID(TRUE/*abPluginRequired*/);
+
+	if (!nPID)
+		return false;
+
+	const CEFAR_INFO_MAPPING* pInfo = GetFarInfo();
+	if (!pInfo)
+	{
+		_ASSERTE(pInfo!=NULL);
+		return false;
+	}
+	
+	if (pfv)
+		*pfv = pInfo->FarVer;
+
+	return (pInfo->FarVer.dwVerMajor >= 1);
+}
+
+bool CRealConsole::IsFarLua()
+{
+	FarVersion fv;
+	if (GetFarVersion(&fv))
+		return fv.IsFarLua();
+	return false;
 }
 
 void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)

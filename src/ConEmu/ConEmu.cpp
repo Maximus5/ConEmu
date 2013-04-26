@@ -6371,12 +6371,23 @@ void CConEmuMain::OnSizePanels(COORD cr)
 				mouse.LClkCon = cr;
 				wchar_t szMacro[128]; szMacro[0] = L'@';
 
-				if (nRepeat > 1)
-					wsprintf(szMacro+1, L"$Rep (%i) %s $End", nRepeat, szKey);
+				if (pRCon->IsFarLua())
+				{
+					// "$Rep (%i)" -> "for RCounter= %i,1,-1 do Keys(\"%s\") end"
+					if (nRepeat > 1)
+						wsprintf(szMacro+1, L"for RCounter= %i,1,-1 do Keys(\"%s\") end", nRepeat, szKey);
+					else
+						wsprintf(szMacro+1, L"Keys(\"%s\")", szKey);
+				}
 				else
-					wcscpy(szMacro+1, szKey);
+				{
+					if (nRepeat > 1)
+						wsprintf(szMacro+1, L"$Rep (%i) %s $End", nRepeat, szKey);
+					else
+						wcscpy(szMacro+1, szKey);
+				}
 
-				PostMacro(szMacro);
+				pRCon->PostMacro(szMacro);
 			}
 		}
 		else
@@ -9846,14 +9857,18 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 		return;
 	}
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CConEmuMain::SwitchKeyboardLayout(0x%08I64X)\n", (unsigned __int64)dwNewKeybLayout);
 	DEBUGSTRLANG(szDbg);
-#endif
-	HKL hKeyb[20]; UINT nCount, i; BOOL lbFound = FALSE;
+	#endif
+	
+	HKL hKeyb[20] = {};
+	UINT nCount, i;
+	BOOL lbFound = FALSE;
+	
 	nCount = GetKeyboardLayoutList(countof(hKeyb), hKeyb);
 
-	for(i = 0; !lbFound && i < nCount; i++)
+	for (i = 0; !lbFound && i < nCount; i++)
 	{
 		if (hKeyb[i] == (HKL)dwNewKeybLayout)
 			lbFound = TRUE;
@@ -9861,7 +9876,7 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 
 	WARNING("Похоже с другими раскладками будет глючить. US Dvorak?");
 
-	for(i = 0; !lbFound && i < nCount; i++)
+	for (i = 0; !lbFound && i < nCount; i++)
 	{
 		if ((((DWORD_PTR)hKeyb[i]) & 0xFFFF) == (dwNewKeybLayout & 0xFFFF))
 		{
@@ -13357,41 +13372,57 @@ void CConEmuMain::CheckActiveLayoutName()
 {
 	wchar_t szLayout[KL_NAMELENGTH] = {0}, *pszEnd = NULL;
 	GetKeyboardLayoutName(szLayout);
-
+	HKL hkl = GetKeyboardLayout(0);
 	DWORD dwLayout = wcstoul(szLayout, &pszEnd, 16);
 
 	int i, iUnused = -1;
 
-	for (i = 0; i < (int)countof(m_LayoutNames); i++)
+	if (dwLayout)
 	{
-		if (!m_LayoutNames[i].bUsed)
+		for (i = 0; i < (int)countof(m_LayoutNames); i++)
 		{
-			if (iUnused == -1) iUnused = i; continue;
-		}
+			if (!m_LayoutNames[i].bUsed)
+			{
+				if (iUnused == -1) iUnused = i; continue;
+			}
 
-		if (m_LayoutNames[i].klName == dwLayout)
-		{
-			iUnused = -1; break;
+			if (m_LayoutNames[i].klName == dwLayout)
+			{
+				iUnused = -1; break;
+			}
 		}
 	}
 
 	if (iUnused != -1)
 	{
-		HKL hkl = GetKeyboardLayout(0);
-
 		// Старшие слова совпадать не будут (если совпадают, то случайно)
 		// А вот младшие - обязаны
-		if (LOWORD(hkl) == LOWORD(dwLayout))
+		// Или хотя бы "Primary Language ID"
+		if ((LOWORD(hkl) & 0xFF) == (LOWORD(dwLayout) & 0xFF))
 		{
-			m_LayoutNames[iUnused].bUsed = TRUE;
-			m_LayoutNames[iUnused].klName = dwLayout;
-			m_LayoutNames[iUnused].hkl = (DWORD_PTR)hkl;
+			StoreLayoutName(iUnused, dwLayout, hkl);
 		}
 		else
 		{
-			_ASSERTE(LOWORD(hkl) == LOWORD(dwLayout));
+			Assert(LOWORD(hkl)==LOWORD(dwLayout));
 		}
 	}
+	else
+	{
+		Assert(iUnused!=-1); // Startup keyboard layout must be detected
+	}
+}
+
+void CConEmuMain::StoreLayoutName(int iIdx, DWORD dwLayout, HKL hkl)
+{
+	_ASSERTE(iIdx>=0 && iIdx<countof(m_LayoutNames) && !m_LayoutNames[iIdx].bUsed);
+	wchar_t szInfo[100];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"StoreLayoutName(%i,x%08X," WIN3264TEST(L"0x%08X",L"0x%08X%08X") L")", iIdx, dwLayout, WIN3264WSPRINT(hkl));
+	LogString(szInfo);
+
+	m_LayoutNames[iIdx].bUsed = TRUE;
+	m_LayoutNames[iIdx].klName = dwLayout;
+	m_LayoutNames[iIdx].hkl = (DWORD_PTR)hkl;
 }
 
 LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
@@ -13494,11 +13525,9 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 
 	if (iUnused != -1)
 	{
-		m_LayoutNames[iUnused].bUsed = TRUE;
-		m_LayoutNames[iUnused].klName = dwLayoutAfterChange;
 		DEBUGTEST(HKL hkl = GetKeyboardLayout(0));
 		_ASSERTE((DWORD_PTR)hkl == (DWORD_PTR)lParam);
-		m_LayoutNames[iUnused].hkl = lParam;
+		StoreLayoutName(iUnused, dwLayoutAfterChange, (HKL)(DWORD_PTR)lParam);
 	}
 
 	//}
@@ -13583,7 +13612,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 }
 
 // dwLayoutName содержит не HKL, а "имя" (i.e. "00030409") сконвертированное в DWORD
-LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayoutName)
+LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD adwLayoutName)
 {
 	if ((gpSet->isMonitorConsoleLang & 1) != 1)
 		return 0;
@@ -13591,12 +13620,16 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 	if (!isValid(apVCon))
 		return 0;
 
+	wchar_t szInfo[255];
+
+	// bypass x64 debugger bug
+	DWORD dwLayoutName = adwLayoutName;
+
 	if (!isMainThread())
 	{
 		// --> не "нравится" руслату обращение к раскладкам из фоновых потоков. Поэтому выполяется в основном потоке
 		if (gpSetCls->isAdvLogging > 1)
 		{
-			WCHAR szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole (0x%08X), Posting to main thread", dwLayoutName);
 			LogString(szInfo);
 		}
@@ -13608,7 +13641,6 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 	{
 		if (gpSetCls->isAdvLogging > 1)
 		{
-			WCHAR szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole (0x%08X), MainThread", dwLayoutName);
 			LogString(szInfo);
 		}
@@ -13635,12 +13667,16 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 	#endif
 
 	DWORD_PTR dwNewKeybLayout = dwLayoutName; //(DWORD_PTR)LoadKeyboardLayout(szName, 0);
-	HKL hKeyb[20]; UINT nCount, i, j, s;
+	HKL hKeyb[20] = {};
+	UINT nCount, i, j, s, nErr;
+	SetLastError(0);
 	nCount = GetKeyboardLayoutList(countof(hKeyb), hKeyb);
+	nErr = GetLastError();
 	/*
 	HKL:
 	0x0000000004090409 - US
 	0x0000000004190419 - Russian
+	0xfffffffff0010409 - US - International
 	0xfffffffff0020409 - US - Dvorak
 	0xfffffffff01a0409 - US - Dvorak left hand
 	0xfffffffff01b0409 - US - Dvorak right hand
@@ -13671,8 +13707,10 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 		}
 	}
 
+	// LCIDToLocaleName(dwLayoutName, ...) 
+
 	// s - number of items in (switch)
-	for (s = 0; !lbFound && (s <= 3); s++)
+	for (s = 0; !lbFound && (s <= 4); s++)
 	{
 		for (i = 0; (i < nCount); i++)
 		{
@@ -13714,6 +13752,10 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 			case 3:
 				// Если опять не нашли - то сравниваем старшее (HIWORD) слово раскладки
 				lbFound = (HIWORD((DWORD_PTR)hKeyb[i]) == LOWORD(dwNewKeybLayout));
+				break;
+			case 4:
+				// Last chance - Primary Language ID
+				lbFound = ((LOWORD((DWORD_PTR)hKeyb[i]) & 0xFF) == (LOWORD(dwNewKeybLayout) & 0xFF));
 				break;
 			//case 3:
 			//	// Last change - check LOWORD of both HKL & Layout
@@ -13783,7 +13825,6 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 
 	if ((!lbFound && gpSetCls->isAdvLogging) || (gpSetCls->isAdvLogging >= 2))
 	{
-		WCHAR szInfo[255];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Keyboard layout lookup (0x%08X) %s", dwLayoutName, lbFound ? L"Succeeded" : L"FAILED");
 		LogString(szInfo);
 
@@ -13805,8 +13846,22 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 
 	if (!lbFound)
 	{
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"dwLayoutName not found: Count=%u,Err=%u,%08X\r\n", nCount, nErr, dwLayoutName);
+		INT_PTR nLen = _tcslen(szInfo);
+		INT_PTR cchLen = countof(szInfo) - nLen - 1;
+		i = 0;
+		wchar_t* pszStr = szInfo + nLen;
+		while ((i < nCount) && (cchLen > 40))
+		{
+			_wsprintf(pszStr, SKIPLEN(cchLen) WIN3264TEST(L"0x%08X",L"0x%08X%08X") L" ", WIN3264WSPRINT(hKeyb[i]));
+			nLen = _tcslen(pszStr);
+			cchLen -= nLen;
+			pszStr += nLen;
+			i++;
+		}
+
 		// Загружать НОВЫЕ раскладки - некорректно (Issue 944)
-		Assert(lbFound);
+		AssertMsg(szInfo);
 
 		//wchar_t szLayoutName[9] = {0};
 		//_wsprintf(szLayoutName, SKIPLEN(countof(szLayoutName)) L"%08X", dwLayoutName);
@@ -13832,10 +13887,10 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 
 	if (lbFound && iUnused != -1)
 	{
-		m_LayoutNames[iUnused].bUsed = TRUE;
-		m_LayoutNames[iUnused].klName = dwLayoutName;
-		m_LayoutNames[iUnused].hkl = dwNewKeybLayout;
+		StoreLayoutName(iUnused, dwLayoutName, (HKL)dwNewKeybLayout);
 	}
+
+	UNREFERENCED_PARAMETER(nCount);
 
 	//dwNewKeybLayout = (DWORD_PTR)hklNew;
 	//for (i = 0; !lbFound && i < nCount; i++)
@@ -14854,23 +14909,42 @@ LRESULT CConEmuMain::OnMouse_LBtnDblClk(CVirtualConsole* pVCon, HWND hWnd, UINT&
 	{
 		wchar_t szMacro[128]; szMacro[0] = 0;
 
+		bool lbIsLua = pRCon->IsFarLua();
+
 		if (dpb == DPB_SPLIT)
 		{
 			RECT rcRight; pRCon->GetPanelRect(TRUE, &rcRight, TRUE);
 			int  nCenter = pRCon->TextWidth() / 2;
 
-			if (nCenter < rcRight.left)
-				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$Rep (%i) CtrlLeft $End", rcRight.left - nCenter);
-			else if (nCenter > rcRight.left)
-				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$Rep (%i) CtrlRight $End", nCenter - rcRight.left);
+			if (lbIsLua)
+			{
+				if (nCenter < rcRight.left)
+					_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"for RCounter= %i,1,-1 do Keys(\"CtrlLeft\") end", rcRight.left - nCenter);
+				else if (nCenter > rcRight.left)
+					_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"for RCounter= %i,1,-1 do Keys(\"CtrlRight\") end", nCenter - rcRight.left);
+			}
+			else
+			{
+				if (nCenter < rcRight.left)
+					_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$Rep (%i) CtrlLeft $End", rcRight.left - nCenter);
+				else if (nCenter > rcRight.left)
+					_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$Rep (%i) CtrlRight $End", nCenter - rcRight.left);
+			}
 		}
 		else
 		{
-			_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$Rep (%i) CtrlDown $End", pRCon->TextHeight());
+			if (lbIsLua)
+			{
+				wsprintf(szMacro+1, L"for RCounter= %i,1,-1 do Keys(\"CtrlDown\") end", pRCon->TextHeight());
+			}
+			else
+			{
+				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$Rep (%i) CtrlDown $End", pRCon->TextHeight());
+			}
 		}
 
 		if (szMacro[0])
-			PostMacro(szMacro);
+			pRCon->PostMacro(szMacro);
 
 		return 0;
 	}
@@ -17352,10 +17426,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (messg == WM_SYSCHAR)  // Для пересылки в консоль не используется, но чтобы не пищало - необходимо
 		return TRUE;
 
-	if (gpConEmu->ProcessNcMessage(hWnd, messg, wParam, lParam, result))
+	if (this->ProcessNcMessage(hWnd, messg, wParam, lParam, result))
 		return result;
 
-	if (gpConEmu->ProcessGestureMessage(hWnd, messg, wParam, lParam, result))
+	if (this->ProcessGestureMessage(hWnd, messg, wParam, lParam, result))
 		return result;
 		
 	//if (messg == WM_CHAR)
@@ -17364,7 +17438,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	switch (messg)
 	{
 		case WM_CREATE:
-			result = gpConEmu->OnCreate(hWnd, (LPCREATESTRUCT)lParam);
+			result = this->OnCreate(hWnd, (LPCREATESTRUCT)lParam);
 			break;
 
 		case WM_SETHOTKEY:
@@ -17375,27 +17449,27 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_NOTIFY:
 		{
 			#if !defined(CONEMU_TABBAR_EX)
-			if (gpConEmu->mp_TabBar)
-				result = gpConEmu->mp_TabBar->OnNotify((LPNMHDR)lParam);
+			if (this->mp_TabBar)
+				result = this->mp_TabBar->OnNotify((LPNMHDR)lParam);
 			#endif
 
 			break;
 		}
 		case WM_COMMAND:
 		{
-			if (gpConEmu->mp_TabBar)
-				gpConEmu->mp_TabBar->OnCommand(wParam, lParam);
+			if (this->mp_TabBar)
+				this->mp_TabBar->OnCommand(wParam, lParam);
 
 			result = 0;
 			break;
 		}
 		case WM_INITMENUPOPUP:
-			return gpConEmu->mp_Menu->OnInitMenuPopup(hWnd, (HMENU)wParam, lParam);
+			return this->mp_Menu->OnInitMenuPopup(hWnd, (HMENU)wParam, lParam);
 		case WM_MENUSELECT:
-			gpConEmu->mp_Menu->OnMenuSelected((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
+			this->mp_Menu->OnMenuSelected((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
 			return 0;
 		case WM_MENURBUTTONUP:
-			gpConEmu->mp_Menu->OnMenuRClick((HMENU)lParam, (UINT)wParam);
+			this->mp_Menu->OnMenuRClick((HMENU)lParam, (UINT)wParam);
 			return 0;
 		case WM_ERASEBKGND:
 			//return 0;
@@ -17407,11 +17481,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		//case 0x31E: // WM_DWMCOMPOSITIONCHANGED:
 		//case 0xAE: // WM_NCUAHDRAWCAPTION:
 		//case 0xAF: // WM_NCUAHDRAWFRAME:
-		//	//result = gpConEmu->OnNcPaint((HRGN)wParam);
-		//	result = gpConEmu->OnNcMessage(hWnd, messg, wParam, lParam);
+		//	//result = this->OnNcPaint((HRGN)wParam);
+		//	result = this->OnNcMessage(hWnd, messg, wParam, lParam);
 		//	break;
 		//case WM_PAINT:
-		//	result = gpConEmu->OnPaint(wParam, lParam);
+		//	result = this->OnPaint(wParam, lParam);
 		//	break;
 		case WM_PRINTCLIENT:
 			DefWindowProc(hWnd, messg, wParam, lParam);
@@ -17426,7 +17500,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			break;
 		case WM_TIMER:
-			result = gpConEmu->OnTimer(wParam, lParam);
+			result = this->OnTimer(wParam, lParam);
 			break;
 		case WM_SIZING:
 		{
@@ -17434,7 +17508,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SIZING (Edge%i, {%i-%i}-{%i-%i})\n", (DWORD)wParam, pRc->left, pRc->top, pRc->right, pRc->bottom);
 
 			if (!isIconic())
-				result = gpConEmu->OnSizing(wParam, lParam);
+				result = this->OnSizing(wParam, lParam);
 
 			size_t cchLen = wcslen(szDbg);
 			_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i-%i}-{%i-%i})\n", pRc->left, pRc->top, pRc->right, pRc->bottom);
@@ -17449,7 +17523,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_MOVING ({%i-%i}-{%i-%i})", pRc->left, pRc->top, pRc->right, pRc->bottom);
 
-				result = gpConEmu->OnMoving(pRc, true);
+				result = this->OnMoving(pRc, true);
 
 				size_t cchLen = wcslen(szDbg);
 				_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i-%i}-{%i-%i})", pRc->left, pRc->top, pRc->right, pRc->bottom);
@@ -17466,18 +17540,18 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			if (wParam == FALSE)
 			{
-				if (!Icon.isWindowInTray() && !Icon.isHidingToTray() && !gpConEmu->InQuakeAnimation())
+				if (!Icon.isWindowInTray() && !Icon.isHidingToTray() && !this->InQuakeAnimation())
 				{
 					//_ASSERTE(Icon.isHidingToTray());
 					Icon.HideWindowToTray(gpSet->isDownShowHiddenMessage ? NULL : _T("ConEmu was hidden from some program"));
-					gpConEmu->mb_ExternalHidden = TRUE;
+					this->mb_ExternalHidden = TRUE;
 				}
 			}
 			else
 			{
-				if (gpConEmu->mb_ExternalHidden)
+				if (this->mb_ExternalHidden)
 					Icon.RestoreWindowFromTray(TRUE);
-				gpConEmu->mb_ExternalHidden = FALSE;
+				this->mb_ExternalHidden = FALSE;
 			}
 
 			//Логирование, что получилось
@@ -17506,7 +17580,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				_ASSERTE(rcShift.left==0 && rcShift.bottom==0 && rcShift.right==0); // Only top shift allowed
 				if ((UINT)rcShift.top > newClientHeight)
 					newClientHeight -= rcShift.top;
-				result = gpConEmu->OnSize(HIWORD(wParam)!=2, LOWORD(wParam), newClientWidth, newClientHeight);
+				result = this->OnSize(HIWORD(wParam)!=2, LOWORD(wParam), newClientWidth, newClientHeight);
 			}
 		} break;
 		case WM_MOVE:
@@ -17518,7 +17592,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		} break;
 		case WM_WINDOWPOSCHANGING:
 		{
-			result = gpConEmu->OnWindowPosChanging(hWnd, messg, wParam, lParam);
+			result = this->OnWindowPosChanging(hWnd, messg, wParam, lParam);
 		} break;
 		//case WM_NCCALCSIZE:
 		//	{
@@ -17531,7 +17605,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_GETMINMAXINFO:
 		{
 			LPMINMAXINFO pInfo = (LPMINMAXINFO)lParam;
-			result = gpConEmu->OnGetMinMaxInfo(pInfo);
+			result = this->OnGetMinMaxInfo(pInfo);
 			break;
 		}
 		case WM_KEYDOWN:
@@ -17540,7 +17614,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_SYSKEYUP:
 			//case WM_CHAR: -- убрал. Теперь пользуем ToUnicodeEx.
 			//case WM_SYSCHAR:
-			result = gpConEmu->OnKeyboard(hWnd, messg, wParam, lParam);
+			result = this->OnKeyboard(hWnd, messg, wParam, lParam);
 
 			if (messg == WM_SYSKEYUP || messg == WM_SYSKEYDOWN)
 				result = TRUE;
@@ -17558,32 +17632,34 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				(messg == WM_CHAR) ? L"WM_CHAR" : (messg == WM_SYSCHAR) ? L"WM_SYSCHAR" : (messg == WM_SYSDEADCHAR) ? L"WM_DEADCHAR" : L"WM_DEADCHAR",
 			                              (DWORD)wParam, (wchar_t)wParam, ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
 			//_ASSERTE(FALSE && "WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard");
-			gpConEmu->DebugStep(L"WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard", TRUE);
+			this->DebugStep(L"WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard", TRUE);
 			DEBUGSTRCHAR(szDbg);
 		}
 		break;
 #endif
 
 		case WM_ACTIVATE:
-			result = gpConEmu->OnFocus(hWnd, messg, wParam, lParam);
-			if (gpConEmu->mb_AllowAutoChildFocus)
+			LogString((wParam == WA_CLICKACTIVE) ? L"Window was activated by mouse click" : (wParam == WA_CLICKACTIVE) ? L"Window was activated somehow" : L"Window was deactivated");
+			result = this->OnFocus(hWnd, messg, wParam, lParam);
+			if (this->mb_AllowAutoChildFocus)
 			{
 				HWND hFore = getForegroundWindow();
 				CVConGuard VCon;
 				// Если это наш диалог - пропустить возврат фокуса!
 				if (hFore && (hFore != ghWnd) && isMeForeground(false, true))
 				{
-					gpConEmu->mb_AllowAutoChildFocus = false; // для отладчика
+					this->mb_AllowAutoChildFocus = false; // для отладчика
 				}
-				else if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
+				else if ((this->GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
 				{
 					VCon->PostRestoreChildFocus();
 				}
-				gpConEmu->mb_AllowAutoChildFocus = false; // однократно
+				this->mb_AllowAutoChildFocus = false; // однократно
 			}
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;
 		case WM_ACTIVATEAPP:
+			LogString(wParam ? L"Application activating" : L"Application deactivating");
 			// просто так фокус в дочернее окно ставить нельзя
 			// если переключать фокус в дочернее приложение по любому чиху
 			// вообще не получается активировать окно ConEmu, открыть системное меню,
@@ -17592,18 +17668,19 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				CheckAllowAutoChildFocus((DWORD)lParam);
 			}
-			result = gpConEmu->OnFocus(hWnd, messg, wParam, lParam);
+			result = this->OnFocus(hWnd, messg, wParam, lParam);
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;
 		case WM_KILLFOCUS:
-			result = gpConEmu->OnFocus(hWnd, messg, wParam, lParam);
+			result = this->OnFocus(hWnd, messg, wParam, lParam);
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;
 		case WM_SETFOCUS:
-			result = gpConEmu->OnFocus(hWnd, messg, wParam, lParam);
+			result = this->OnFocus(hWnd, messg, wParam, lParam);
 			result = DefWindowProc(hWnd, messg, wParam, lParam); //-V519
 			break;
 		case WM_MOUSEACTIVATE:
+			LogString(L"Activation by mouse");
 			// просто так фокус в дочернее окно ставить нельзя
 			// если переключать фокус в дочернее приложение по любому чиху
 			// вообще не получается активировать окно ConEmu, открыть системное меню,
@@ -17614,14 +17691,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 
 			//return MA_ACTIVATEANDEAT; -- ест все подряд, а LBUTTONUP пропускает :(
-			gpConEmu->mouse.nSkipEvents[0] = 0;
-			gpConEmu->mouse.nSkipEvents[1] = 0;
+			this->mouse.nSkipEvents[0] = 0;
+			this->mouse.nSkipEvents[1] = 0;
 
-			if (gpConEmu->mouse.bForceSkipActivation  // принудительная активация окна, лежащего на Desktop
+			if (this->mouse.bForceSkipActivation  // принудительная активация окна, лежащего на Desktop
 			        || (gpSet->isMouseSkipActivation && LOWORD(lParam) == HTCLIENT
 					&& !isMeForeground(false,false)))
 			{
-				gpConEmu->mouse.bForceSkipActivation = FALSE; // Однократно
+				this->mouse.bForceSkipActivation = FALSE; // Однократно
 				POINT ptMouse = {0}; GetCursorPos(&ptMouse);
 				//RECT  rcDC = {0}; GetWindowRect('ghWnd DC', &rcDC);
 				//if (PtInRect(&rcDC, ptMouse))
@@ -17630,26 +17707,26 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				{
 					if (HIWORD(lParam) == WM_LBUTTONDOWN)
 					{
-						gpConEmu->mouse.nSkipEvents[0] = WM_LBUTTONDOWN;
-						gpConEmu->mouse.nSkipEvents[1] = WM_LBUTTONUP;
-						gpConEmu->mouse.nReplaceDblClk = WM_LBUTTONDBLCLK;
+						this->mouse.nSkipEvents[0] = WM_LBUTTONDOWN;
+						this->mouse.nSkipEvents[1] = WM_LBUTTONUP;
+						this->mouse.nReplaceDblClk = WM_LBUTTONDBLCLK;
 					}
 					else if (HIWORD(lParam) == WM_RBUTTONDOWN)
 					{
-						gpConEmu->mouse.nSkipEvents[0] = WM_RBUTTONDOWN;
-						gpConEmu->mouse.nSkipEvents[1] = WM_RBUTTONUP;
-						gpConEmu->mouse.nReplaceDblClk = WM_RBUTTONDBLCLK;
+						this->mouse.nSkipEvents[0] = WM_RBUTTONDOWN;
+						this->mouse.nSkipEvents[1] = WM_RBUTTONUP;
+						this->mouse.nReplaceDblClk = WM_RBUTTONDBLCLK;
 					}
 					else if (HIWORD(lParam) == WM_MBUTTONDOWN)
 					{
-						gpConEmu->mouse.nSkipEvents[0] = WM_MBUTTONDOWN;
-						gpConEmu->mouse.nSkipEvents[1] = WM_MBUTTONUP;
-						gpConEmu->mouse.nReplaceDblClk = WM_MBUTTONDBLCLK;
+						this->mouse.nSkipEvents[0] = WM_MBUTTONDOWN;
+						this->mouse.nSkipEvents[1] = WM_MBUTTONUP;
+						this->mouse.nReplaceDblClk = WM_MBUTTONDBLCLK;
 					}
 				}
 			}
 
-			if (gpConEmu->mp_Inside)
+			if (this->mp_Inside)
 			{
 				apiSetForegroundWindow(ghWnd);
 			}
@@ -17671,7 +17748,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_XBUTTONDOWN:
 		case WM_XBUTTONUP:
 		case WM_XBUTTONDBLCLK:
-			result = gpConEmu->OnMouse(hWnd, messg, wParam, lParam);
+			result = this->OnMouse(hWnd, messg, wParam, lParam);
 			break;
 		case WM_CLOSE:
 			_ASSERTE(FALSE && "WM_CLOSE is not called in normal behavior");
@@ -17679,7 +17756,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = 0;
 			break;
 		case WM_SYSCOMMAND:
-			result = gpConEmu->mp_Menu->OnSysCommand(hWnd, wParam, lParam);
+			result = this->mp_Menu->OnSysCommand(hWnd, wParam, lParam);
 			break;
 		case WM_NCLBUTTONDOWN:
 			// Note: При ресайзе WM_NCLBUTTONUP к сожалению не приходит
@@ -17692,9 +17769,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_NCLBUTTONDBLCLK:
-			gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL; // чтобы в консоль не провалился LBtnUp если окошко развернется
+			this->mouse.state |= MOUSE_SIZING_DBLCKL; // чтобы в консоль не провалился LBtnUp если окошко развернется
 
-			if (gpConEmu->OnMouse_NCBtnDblClk(hWnd, messg, wParam, lParam))
+			if (this->OnMouse_NCBtnDblClk(hWnd, messg, wParam, lParam))
 				result = 0;
 			else
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
@@ -17713,11 +17790,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_HOTKEY:
-			gpConEmu->OnWmHotkey(wParam);
+			this->OnWmHotkey(wParam);
 			return 0;
 
 		case WM_SETCURSOR:
-			result = gpConEmu->OnSetCursor(wParam, lParam);
+			result = this->OnSetCursor(wParam, lParam);
 
 			if (!result && (lParam != -1))
 			{
@@ -17729,7 +17806,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			// If an application processes this message, it should return TRUE to halt further processing or FALSE to continue.
 			return result;
 		case WM_DESTROY:
-			result = gpConEmu->OnDestroy(hWnd);
+			result = this->OnDestroy(hWnd);
 			break;
 		case WM_IME_CHAR:
 		case WM_IME_COMPOSITION:
@@ -17743,13 +17820,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_IME_SELECT:
 		case WM_IME_SETCONTEXT:
 		case WM_IME_STARTCOMPOSITION:
-			result = gpConEmu->OnKeyboardIme(hWnd, messg, wParam, lParam);
+			result = this->OnKeyboardIme(hWnd, messg, wParam, lParam);
 			break;
 		case WM_INPUTLANGCHANGE:
 		case WM_INPUTLANGCHANGEREQUEST:
 
 			if (hWnd == ghWnd)
-				result = gpConEmu->OnLangChange(messg, wParam, lParam);
+				result = this->OnLangChange(messg, wParam, lParam);
 			else
 				break;
 
@@ -17758,8 +17835,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			//	{
 			//		/*result = -1;
 			//		if (gpSet->isHideCaptionAlways && gpSet->isTabs) {
-			//			if (gpConEmu->mp_TabBar->IsShown()) {
-			//				HWND hTabBar = gpConEmu->mp_TabBar->GetTabbar();
+			//			if (this->mp_TabBar->IsShown()) {
+			//				HWND hTabBar = this->mp_TabBar->GetTabbar();
 			//				RECT rcWnd; GetWindowRect(hTabBar, &rcWnd);
 			//				TCHITTESTINFO tch = {{(int)(short)LOWORD(lParam),(int)(short)HIWORD(lParam)}};
 			//				if (PtInRect(&rcWnd, tch.pt)) {
@@ -17774,54 +17851,54 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			//		}
 			//		if (result == -1)*/
 			//		result = DefWindowProc(hWnd, messg, wParam, lParam);
-			//		if (gpSet->isHideCaptionAlways() && !gpConEmu->mp_TabBar->IsShown() && result == HTTOP)
+			//		if (gpSet->isHideCaptionAlways() && !this->mp_TabBar->IsShown() && result == HTTOP)
 			//			result = HTCAPTION;
 			//	} break;
 		default:
 
-			if (messg == gpConEmu->mn_MsgPostCreate)
+			if (messg == this->mn_MsgPostCreate)
 			{
-				gpConEmu->PostCreate(TRUE);
+				this->PostCreate(TRUE);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgPostCopy)
+			else if (messg == this->mn_MsgPostCopy)
 			{
-				gpConEmu->PostDragCopy(lParam!=0, TRUE);
+				this->PostDragCopy(lParam!=0, TRUE);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgMyDestroy)
+			else if (messg == this->mn_MsgMyDestroy)
 			{
 				ShutdownGuiStep(L"DestroyWindow");
-				//gpConEmu->OnDestroy(hWnd);
+				//this->OnDestroy(hWnd);
 				DestroyWindow(hWnd);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgUpdateSizes)
+			else if (messg == this->mn_MsgUpdateSizes)
 			{
-				gpConEmu->UpdateSizes();
+				this->UpdateSizes();
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgUpdateCursorInfo)
+			else if (messg == this->mn_MsgUpdateCursorInfo)
 			{
 				COORD cr; cr.X = LOWORD(wParam); cr.Y = HIWORD(wParam);
 				CONSOLE_CURSOR_INFO ci; ci.dwSize = LOWORD(lParam); ci.bVisible = HIWORD(lParam);
-				gpConEmu->UpdateCursorInfo(NULL, cr, ci);
+				this->UpdateCursorInfo(NULL, cr, ci);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgSetWindowMode)
+			else if (messg == this->mn_MsgSetWindowMode)
 			{
-				gpConEmu->SetWindowMode((ConEmuWindowMode)wParam);
+				this->SetWindowMode((ConEmuWindowMode)wParam);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgUpdateTitle)
+			else if (messg == this->mn_MsgUpdateTitle)
 			{
-				//gpConEmu->UpdateTitle(TitleCmp);
-				gpConEmu->UpdateTitle(/*mp_ VActive->RCon()->GetTitle()*/);
+				//this->UpdateTitle(TitleCmp);
+				this->UpdateTitle(/*mp_ VActive->RCon()->GetTitle()*/);
 				return 0;
-				//} else if (messg == gpConEmu->mn_MsgAttach) {
-				//    return gpConEmu->AttachRequested ( (HWND)wParam, (DWORD)lParam );
+				//} else if (messg == this->mn_MsgAttach) {
+				//    return this->AttachRequested ( (HWND)wParam, (DWORD)lParam );
 			}
-			else if (messg == gpConEmu->mn_MsgSrvStarted)
+			else if (messg == this->mn_MsgSrvStarted)
 			{
 				MsgSrvStartedArg *pArg = (MsgSrvStartedArg*)lParam;
 				HWND hWndDC = NULL, hWndBack = NULL;
@@ -17838,6 +17915,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 				pArg->hWndDc = hWndDC;
 				pArg->hWndBack = hWndBack;
+
+				UNREFERENCED_PARAMETER(dwKeybLayout);
+				UNREFERENCED_PARAMETER(hWndCon);
 
 				pArg->timeFin = timeGetTime();
 				if (hWndDC == NULL)
@@ -17860,7 +17940,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 				return (LRESULT)hWndDC;
 			}
-			else if (messg == gpConEmu->mn_MsgVConTerminated)
+			else if (messg == this->mn_MsgVConTerminated)
 			{
 				#ifdef _DEBUG
 				int i = -100;
@@ -17883,37 +17963,37 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				}
 				#endif
 
-				return gpConEmu->OnVConClosed((CVirtualConsole*)lParam, TRUE);
+				return this->OnVConClosed((CVirtualConsole*)lParam, TRUE);
 			}
-			else if (messg == gpConEmu->mn_MsgUpdateScrollInfo)
+			else if (messg == this->mn_MsgUpdateScrollInfo)
 			{
 				return OnUpdateScrollInfo(TRUE);
 			}
-			else if (messg == gpConEmu->mn_MsgUpdateTabs)
+			else if (messg == this->mn_MsgUpdateTabs)
 			{
 				DEBUGSTRTABS(L"OnUpdateTabs\n");
-				gpConEmu->mp_TabBar->Update(TRUE);
+				this->mp_TabBar->Update(TRUE);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgOldCmdVer)
+			else if (messg == this->mn_MsgOldCmdVer)
 			{
 				CESERVER_REQ_HDR* p = (CESERVER_REQ_HDR*)lParam;
 				_ASSERTE(p->cbSize == sizeof(CESERVER_REQ_HDR));
-				gpConEmu->ReportOldCmdVersion(p->nCmd, p->nVersion, (int)wParam, p->nSrcPID, p->hModule, p->nBits);
+				this->ReportOldCmdVersion(p->nCmd, p->nVersion, (int)wParam, p->nSrcPID, p->hModule, p->nBits);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgTabCommand)
+			else if (messg == this->mn_MsgTabCommand)
 			{
-				gpConEmu->TabCommand((ConEmuTabCommand)(int)wParam);
+				this->TabCommand((ConEmuTabCommand)(int)wParam);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgTabSwitchFromHook)
+			else if (messg == this->mn_MsgTabSwitchFromHook)
 			{
-				gpConEmu->TabCommand((wParam & cvk_Shift) ? ctc_SwitchPrev : ctc_SwitchNext);
+				this->TabCommand((wParam & cvk_Shift) ? ctc_SwitchPrev : ctc_SwitchNext);
 				if (!gpSet->isTabLazy)
 				{
 					mb_InWinTabSwitch = FALSE;
-					gpConEmu->TabCommand(ctc_SwitchCommit);
+					this->TabCommand(ctc_SwitchCommit);
 				}
 				else
 				{
@@ -17921,73 +18001,73 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				}
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgWinKeyFromHook)
+			else if (messg == this->mn_MsgWinKeyFromHook)
 			{
 				// Тут должно передавать ВСЕ модификаторы!
 				DWORD VkMod = (DWORD)wParam;
-				gpConEmu->OnKeyboardHook(VkMod);
+				this->OnKeyboardHook(VkMod);
 				//BOOL lbShift = (lParam!=0);
 				//OnKeyboardHook(vk, lbShift);
 				return 0;
 			}
 			#if 0
-			else if (messg == gpConEmu->mn_MsgConsoleHookedKey)
+			else if (messg == this->mn_MsgConsoleHookedKey)
 			{
 				WORD vk = LOWORD(wParam);
-				gpConEmu->OnConsoleKey(vk, lParam);
+				this->OnConsoleKey(vk, lParam);
 				return 0;
 			}
 			#endif
-			else if (messg == gpConEmu->mn_MsgSheelHook)
+			else if (messg == this->mn_MsgSheelHook)
 			{
-				gpConEmu->OnShellHook(wParam, lParam);
+				this->OnShellHook(wParam, lParam);
 				return 0;
 			}
-			//else if (messg == gpConEmu->mn_ShellExecuteEx)
+			//else if (messg == this->mn_ShellExecuteEx)
 			//{
-			//	gpConEmu->GuiShellExecuteExQueue();
+			//	this->GuiShellExecuteExQueue();
 			//	return 0;
 			//	//GuiShellExecuteExArg* pArg = (GuiShellExecuteExArg*)wParam;
 			//	//if (pArg && (wParam != TRUE))
 			//	//{
 			//	//	_ASSERTE(pArg->lpShellExecute == (SHELLEXECUTEINFO*)lParam);
-			//	//	result = gpConEmu->GuiShellExecuteEx(pArg->lpShellExecute, pArg->pVCon);
+			//	//	result = this->GuiShellExecuteEx(pArg->lpShellExecute, pArg->pVCon);
 			//	//	SafeFree(pArg);
 			//	//}
 			//	//return result;
 			//}
-			else if (messg == gpConEmu->mn_PostConsoleResize)
+			else if (messg == this->mn_PostConsoleResize)
 			{
-				gpConEmu->OnConsoleResize(TRUE);
+				this->OnConsoleResize(TRUE);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_ConsoleLangChanged)
+			else if (messg == this->mn_ConsoleLangChanged)
 			{
-				gpConEmu->OnLangChangeConsole((CVirtualConsole*)lParam, (DWORD)wParam);
+				this->OnLangChangeConsole((CVirtualConsole*)lParam, (DWORD)wParam);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgPostOnBufferHeight)
+			else if (messg == this->mn_MsgPostOnBufferHeight)
 			{
 				CVConGuard VCon;
-				if (gpConEmu->GetActiveVCon(&VCon) >= 0)
+				if (this->GetActiveVCon(&VCon) >= 0)
 				{
 					VCon->RCon()->OnBufferHeight();
 				}
 				return 0;
-				//} else if (messg == gpConEmu->mn_MsgSetForeground) {
+				//} else if (messg == this->mn_MsgSetForeground) {
 				//	apiSetForegroundWindow((HWND)lParam);
 				//	return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgFlashWindow)
+			else if (messg == this->mn_MsgFlashWindow)
 			{
 				return OnFlashWindow((DWORD)(wParam & 0xFF000000) >> 24, (DWORD)wParam & 0xFFFFFF, (HWND)lParam);
 			}
-			else if (messg == gpConEmu->mn_MsgPostAltF9)
+			else if (messg == this->mn_MsgPostAltF9)
 			{
 				OnAltF9(TRUE);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgInitInactiveDC)
+			else if (messg == this->mn_MsgInitInactiveDC)
 			{
 				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
 				if (isValid(pVCon) && !isActive(pVCon))
@@ -17999,98 +18079,98 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgUpdateProcDisplay)
+			else if (messg == this->mn_MsgUpdateProcDisplay)
 			{
-				gpConEmu->UpdateProcessDisplay(wParam!=0);
+				this->UpdateProcessDisplay(wParam!=0);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgAutoSizeFont)
+			else if (messg == this->mn_MsgAutoSizeFont)
 			{
 				gpSetCls->MacroFontSetSize((int)wParam, (int)lParam);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgMacroFontSetName)
+			else if (messg == this->mn_MsgMacroFontSetName)
 			{
-				gpConEmu->PostMacroFontSetName((wchar_t*)lParam, (WORD)(((DWORD)wParam & 0xFFFF0000)>>16), (WORD)(wParam & 0xFFFF), TRUE);
+				this->PostMacroFontSetName((wchar_t*)lParam, (WORD)(((DWORD)wParam & 0xFFFF0000)>>16), (WORD)(wParam & 0xFFFF), TRUE);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgDisplayRConError)
+			else if (messg == this->mn_MsgDisplayRConError)
 			{
 				CRealConsole *pRCon = (CRealConsole*)wParam;
 				wchar_t* pszErrMsg = (wchar_t*)lParam;
 
-				if (gpConEmu->isValid(pRCon))
-					MessageBox(ghWnd, pszErrMsg, gpConEmu->GetLastTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
+				if (this->isValid(pRCon))
+					MessageBox(ghWnd, pszErrMsg, this->GetLastTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
 
 				free(pszErrMsg);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgCreateViewWindow)
+			else if (messg == this->mn_MsgCreateViewWindow)
 			{
 				CConEmuChild* pChild = (CConEmuChild*)lParam;
 				HWND hChild = pChild ? pChild->CreateView() : NULL;
 				return (LRESULT)hChild;
 			}
-			else if (messg == gpConEmu->mn_MsgPostTaskbarActivate)
+			else if (messg == this->mn_MsgPostTaskbarActivate)
 			{
 				mb_PostTaskbarActivate = FALSE;
 				HWND hFore = GetForegroundWindow();
 				CVConGuard VCon;
-				if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && (hFore == ghWnd))
+				if ((this->GetActiveVCon(&VCon) >= 0) && (hFore == ghWnd))
 					VCon->OnTaskbarFocus();
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgInitVConGhost)
+			else if (messg == this->mn_MsgInitVConGhost)
 			{
 				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
-				if (gpConEmu->isValid(pVCon))
+				if (this->isValid(pVCon))
 					pVCon->InitGhost();
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgCreateCon)
+			else if (messg == this->mn_MsgCreateCon)
 			{
-				_ASSERTE(wParam == gpConEmu->mn_MsgCreateCon || wParam == (gpConEmu->mn_MsgCreateCon+1));
+				_ASSERTE(wParam == this->mn_MsgCreateCon || wParam == (this->mn_MsgCreateCon+1));
 				RConStartArgs *pArgs = (RConStartArgs*)lParam;
-				CVirtualConsole* pVCon = CreateCon(pArgs, (wParam == (gpConEmu->mn_MsgCreateCon+1)));
+				CVirtualConsole* pVCon = CreateCon(pArgs, (wParam == (this->mn_MsgCreateCon+1)));
 				UNREFERENCED_PARAMETER(pVCon);
 				delete pArgs;
 				return (LRESULT)pVCon;
 			}
-			else if (messg == gpConEmu->mn_MsgRequestUpdate)
+			else if (messg == this->mn_MsgRequestUpdate)
 			{
 				switch (wParam)
 				{
 				case 0:
-					gpConEmu->ReportUpdateError();
+					this->ReportUpdateError();
 					return 0;
 				case 1:
-					return (LRESULT)gpConEmu->ReportUpdateConfirmation();
+					return (LRESULT)this->ReportUpdateConfirmation();
 				case 2:
-					gpConEmu->RequestExitUpdate();
+					this->RequestExitUpdate();
 					return 0;
 				}
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgTaskBarCreated)
+			else if (messg == this->mn_MsgTaskBarCreated)
 			{
-				gpConEmu->OnTaskbarCreated();
+				this->OnTaskbarCreated();
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 				return result;
 			}
-			else if (messg == gpConEmu->mn_MsgTaskBarBtnCreated)
+			else if (messg == this->mn_MsgTaskBarBtnCreated)
 			{
-				gpConEmu->OnTaskbarButtonCreated();
+				this->OnTaskbarButtonCreated();
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 				return result;
 			}
-			else if (messg == gpConEmu->mn_MsgRequestRunProcess)
+			else if (messg == this->mn_MsgRequestRunProcess)
 			{
-				gpConEmu->mp_RunQueue->ProcessRunQueue(true);
+				this->mp_RunQueue->ProcessRunQueue(true);
 				return 0;
 			}
 
-			//else if (messg == gpConEmu->mn_MsgCmdStarted || messg == gpConEmu->mn_MsgCmdStopped) {
-			//  return gpConEmu->OnConEmuCmd( (messg == gpConEmu->mn_MsgCmdStarted), (HWND)wParam, (DWORD)lParam);
+			//else if (messg == this->mn_MsgCmdStarted || messg == this->mn_MsgCmdStopped) {
+			//  return this->OnConEmuCmd( (messg == this->mn_MsgCmdStarted), (HWND)wParam, (DWORD)lParam);
 			//}
 
 

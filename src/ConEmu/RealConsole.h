@@ -347,6 +347,8 @@ class CRealConsole
 		BOOL SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOOL bRedraw);
 		void PostDragCopy(BOOL abMove);
 		void PostMacro(LPCWSTR asMacro, BOOL abAsync = FALSE);
+		bool GetFarVersion(FarVersion* pfv);
+		bool IsFarLua();
 	private:
 		struct PostMacroAnyncArg
 		{
@@ -389,7 +391,7 @@ class CRealConsole
 		void SyncConsole2Window(BOOL abNtvdmOff=FALSE, LPRECT prcNewWnd=NULL);
 		void SyncGui2Window(RECT* prcClient=NULL);
 		//void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
-		void OnServerStarted(HWND ahConWnd, DWORD anServerPID, DWORD dwKeybLayout);
+		void OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout);
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
 		int  GetProcesses(ConProcess** ppPrc, bool ClientOnly = false);
 		DWORD GetFarPID(bool abPluginRequired=false);

@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FrameHolder.h"
 #include "ConEmu.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "Status.h"
 #include "Menu.h"
 
@@ -1017,6 +1018,13 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 LRESULT CFrameHolder::OnNcActivate(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	mb_NcActive = (wParam != 0);
+
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CFrameHolder::OnNcActivate(%u,x%X)", (DWORD)wParam, (DWORD)(DWORD_PTR)lParam);
+		gpConEmu->LogString(szInfo);
+	}
 	
 	if (gpConEmu->IsGlass() || !gpSet->isTabsInCaption)
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);

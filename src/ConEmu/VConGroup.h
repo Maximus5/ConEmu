@@ -145,7 +145,7 @@ public:
 	static void UpdateWindowChild(CVirtualConsole* apVCon);
 	static void RePaint();
 	static void Update(bool isForce = false);
-	static HWND DoSrvCreated(DWORD nServerPID, HWND hWndCon, DWORD dwKeybLayout, DWORD& t1, DWORD& t2, DWORD& t3, int& iFound, HWND& hWndBack);
+	static HWND DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const DWORD dwKeybLayout, DWORD& t1, DWORD& t2, DWORD& t3, int& iFound, HWND& hWndBack);
 	static void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args);
 	static void OnGuiFocused(BOOL abFocus, BOOL abForceChild = FALSE);
 

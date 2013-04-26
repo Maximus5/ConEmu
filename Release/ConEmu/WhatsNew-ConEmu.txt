@@ -15,7 +15,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
-2013.04.21a
+2013.04.25
+[%] Issue 1040: Resize Far 3 panels macro error.
+[%] Issue 1035: Assertion on startup with some keyboard layouts (again).
+
+
+2013.04.22
 [%] Issue 1035: Assertion on startup with some keyboard layouts.
 
 
