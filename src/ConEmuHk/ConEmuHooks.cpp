@@ -79,6 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShellProcessor.h"
 #include "UserImp.h"
 #include "GuiAttach.h"
+#include "Ansi.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/clink.h"
 #include "../common/UnicodeChars.h"
@@ -168,7 +169,6 @@ GetConsoleWindow_T gfGetRealConsoleWindow = NULL;
 //extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
 extern HANDLE ghCurrentOutBuffer;
 HANDLE ghStdOutHandle = NULL;
-extern HANDLE ghLastAnsiCapable, ghLastAnsiNotCapable;
 HANDLE ghLastConInHandle = NULL, ghLastNotConInHandle = NULL;
 /* ************ Globals for SetHook ************ */
 
@@ -363,7 +363,7 @@ BOOL WINAPI OnGetCurrentConsoleFont(HANDLE hConsoleOutput, BOOL bMaximumWindow, 
 COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont);
 HWND WINAPI OnGetActiveWindow();
 BOOL WINAPI OnSetMenu(HWND hWnd, HMENU hMenu);
-BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode);
+//BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode);
 HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
 BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput);
 BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
@@ -380,13 +380,13 @@ BOOL WINAPI OnBitBlt(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 BOOL WINAPI OnStretchBlt(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest, HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc, DWORD dwRop);
 
 //#ifdef HOOK_ANSI_SEQUENCES
-BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-BOOL WINAPI OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
-BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
-BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
-BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
-BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
+//BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
+//BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
+//BOOL WINAPI OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+//BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
+//BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
+//BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
+//BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
 //#ifdef _DEBUG
 //BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode);
 //#endif
@@ -429,22 +429,23 @@ bool InitHooksCommon()
 		{(void*)OnWriteConsoleInputW,	"WriteConsoleInputW",	kernel32},
 		/* ANSI Escape Sequences SUPPORT */
 		//#ifdef HOOK_ANSI_SEQUENCES
-		{(void*)OnWriteFile,			"WriteFile",  			kernel32},
-		{(void*)OnWriteConsoleA,		"WriteConsoleA",  		kernel32},
-		{(void*)OnWriteConsoleW,		"WriteConsoleW",  		kernel32},
-		{(void*)OnScrollConsoleScreenBufferA,
+		{(void*)CEAnsi::OnWriteFile,	"WriteFile",  			kernel32},
+		{(void*)CEAnsi::OnWriteConsoleA,"WriteConsoleA",  		kernel32},
+		{(void*)CEAnsi::OnWriteConsoleW,"WriteConsoleW",  		kernel32},
+		{(void*)CEAnsi::OnScrollConsoleScreenBufferA,
 										"ScrollConsoleScreenBufferA",
 																kernel32},
-		{(void*)OnScrollConsoleScreenBufferW,
+		{(void*)CEAnsi::OnScrollConsoleScreenBufferW,
 										"ScrollConsoleScreenBufferW",
 																kernel32},
-		{(void*)OnWriteConsoleOutputCharacterA,
+		{(void*)CEAnsi::OnWriteConsoleOutputCharacterA,
 										"WriteConsoleOutputCharacterA",
 																kernel32},
-		{(void*)OnWriteConsoleOutputCharacterW,
+		{(void*)CEAnsi::OnWriteConsoleOutputCharacterW,
 										"WriteConsoleOutputCharacterW",
 																kernel32},
-		{(void*)OnSetConsoleMode,		"SetConsoleMode",  		kernel32},
+		{(void*)CEAnsi::OnSetConsoleMode,
+										"SetConsoleMode",  		kernel32},
 		//#endif
 		/* Others console functions */
 		{(void*)OnSetConsoleTextAttribute, "SetConsoleTextAttribute", kernel32},
@@ -1274,13 +1275,13 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
-	if (ghLastAnsiCapable && (ghLastAnsiCapable == hObject))
+	if (CEAnsi::ghLastAnsiCapable && (CEAnsi::ghLastAnsiCapable == hObject))
 	{
-		ghLastAnsiCapable = NULL;
+		CEAnsi::ghLastAnsiCapable = NULL;
 	}
-	if (ghLastAnsiNotCapable && (ghLastAnsiNotCapable == hObject))
+	if (CEAnsi::ghLastAnsiNotCapable && (CEAnsi::ghLastAnsiNotCapable == hObject))
 	{
-		ghLastAnsiNotCapable = NULL;
+		CEAnsi::ghLastAnsiNotCapable = NULL;
 	}
 	if (ghLastConInHandle && (ghLastConInHandle == hObject))
 	{

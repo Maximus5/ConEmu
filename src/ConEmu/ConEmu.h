@@ -403,16 +403,18 @@ class CConEmuMain :
 		BOOL mb_MouseCaptured;
 		//BYTE m_KeybStates[256];
 		void CheckActiveLayoutName();
+		void AppendHKL(wchar_t* szInfo, size_t cchInfoMax, HKL* hKeyb, int nCount);
+		void AppendRegisteredLayouts(wchar_t* szInfo, size_t cchInfoMax);
 		void StoreLayoutName(int iIdx, DWORD dwLayout, HKL hkl);
 		DWORD_PTR m_ActiveKeybLayout;
-		struct
+		struct LayoutNames
 		{
 			BOOL      bUsed;
 			//wchar_t   klName[KL_NAMELENGTH/*==9*/];
 			DWORD     klName;
 			DWORD_PTR hkl;
 		} m_LayoutNames[20];
-		struct
+		struct TranslatedCharacters
 		{
 			wchar_t szTranslatedChars[16];
 		} m_TranslatedChars[256];

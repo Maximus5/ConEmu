@@ -313,6 +313,7 @@ void Settings::InitSettings()
 	nHostkeyNumberModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyNumberModifier);
 	nHostkeyArrowModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyArrowModifier);
 	isSingleInstance = false;
+	isShowHelpTooltips = true;
 	isMulti = true;
 	isMultiShowButtons = true;
 	isNumberInCaption = false;
@@ -2131,6 +2132,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		reg->Load(L"CmdLineHistory", &psCmdHistory); nCmdHistorySize = 0; HistoryCheck();
 		reg->Load(L"SingleInstance", isSingleInstance);
+		reg->Load(L"ShowHelpTooltips", isShowHelpTooltips);
 		reg->Load(L"Multi", isMulti);
 		reg->Load(L"Multi.ShowButtons", isMultiShowButtons);
 		reg->Load(L"Multi.NumberInCaption", isNumberInCaption);
@@ -2999,6 +3001,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 			reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
 
 		reg->Save(L"SingleInstance", isSingleInstance);
+		reg->Save(L"ShowHelpTooltips", isShowHelpTooltips);
 		reg->Save(L"Multi", isMulti);
 		reg->Save(L"Multi.ShowButtons", isMultiShowButtons);
 		reg->Save(L"Multi.NumberInCaption", isNumberInCaption);

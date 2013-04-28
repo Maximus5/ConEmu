@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"xxx.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"vim.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -77,6 +77,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UserImp.h"
 #include "GuiAttach.h"
 #include "Injects.h"
+#include "Ansi.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/WinConsole.h"
@@ -157,8 +158,8 @@ extern DWORD GetMainThreadId(bool bUseCurrentAsMain);
 extern HHOOK ghGuiClientRetHook;
 //extern bool gbAllowAssertThread;
 #endif
-extern void StartVimTerm(bool bFromDllStart);
-extern void StopVimTerm();
+//extern void StartVimTerm(bool bFromDllStart);
+//extern void StopVimTerm();
 
 CEStartupEnv* gpStartEnv = NULL;
 DWORD   gnSelfPID = 0;
@@ -188,8 +189,6 @@ RequestLocalServer_t gfRequestLocalServer = NULL;
 TODO("AnnotationHeader* gpAnnotationHeader");
 AnnotationHeader* gpAnnotationHeader = NULL;
 HANDLE ghCurrentOutBuffer = NULL; // Устанавливается при SetConsoleActiveScreenBuffer
-
-bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL);
 
 
 #ifdef USEPIPELOG
@@ -504,7 +503,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	if ((lstrcmpi(pszName, L"powershell.exe") == 0) || (lstrcmpi(pszName, L"powershell") == 0))
 	{
 		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-		if (IsOutputHandle(hStdOut))
+		if (CEAnsi::IsOutputHandle(hStdOut))
 		{
 			gbPowerShellMonitorProgress = true;
 			MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
@@ -549,7 +548,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	else if ((lstrcmpi(pszName, L"vim.exe") == 0) || (lstrcmpi(pszName, L"vim") == 0))
 	{
 		gbIsVimProcess = true;
-		StartVimTerm(true);
+		CEAnsi::StartVimTerm(true);
 	}
 	else if (lstrcmpni(pszName, L"mintty", 6) == 0)
 	{
@@ -971,7 +970,7 @@ void DllStop()
 
 	if (gbIsVimProcess)
 	{
-		StopVimTerm();
+		CEAnsi::StopVimTerm();
 	}
 
 	TODO("Stop redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");

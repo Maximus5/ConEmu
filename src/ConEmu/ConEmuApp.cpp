@@ -1842,7 +1842,7 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 	nLen = _tcslen(dmpfile);
 	_wsprintf(dmpfile+nLen, SKIPLEN(countof(dmpfile)-nLen) L"\\Trap-%02u%02u%02u%s-%u.dmp", MVV_1, MVV_2, MVV_3,_T(MVV_4a), GetCurrentProcessId());
 	
-	hDmpFile = CreateFileW(dmpfile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH, NULL);
+	hDmpFile = CreateFileW(dmpfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL/*|FILE_FLAG_WRITE_THROUGH*/, NULL);
 	if (hDmpFile == INVALID_HANDLE_VALUE)
 	{
 		pszError = L"CreateDumpForReport called, create dump file failed";

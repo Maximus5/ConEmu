@@ -1489,6 +1489,92 @@ int CShellProc::PrepareExecuteParms(
 			// Пока продолжим, нам нужно определить, а консольное ли это приложение?
 		}
 	}
+
+	// Может быть указан *.lnk а не физический файл...
+	if (aCmd == eShellExecute)
+	{
+#if 1
+		bool bDbg = 1;
+#else
+		// Считаем, что один файл (*.exe, *.cmd, ...) или ярлык (*.lnk)
+		// это одна запускаемая консоль в ConEmu.
+		wchar_t szPart[MAX_PATH+1], szExe[MAX_PATH+1], szArguments[32768], szDir[MAX_PATH+1];
+		HRESULT hr = S_OK;
+		IShellLinkW* pShellLink = NULL;
+		IPersistFile* pFile = NULL;
+		if (StrStrI(asSource, L".lnk"))
+		{
+			hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (void**)&pShellLink);
+			if (FAILED(hr) || !pShellLink)
+			{
+				DisplayLastError(L"Can't create IID_IShellLinkW", (DWORD)hr);
+				return NULL;
+			}
+			hr = pShellLink->QueryInterface(IID_IPersistFile, (void**)&pFile);
+			if (FAILED(hr) || !pFile)
+			{
+				DisplayLastError(L"Can't create IID_IPersistFile", (DWORD)hr);
+				pShellLink->Release();
+				return NULL;
+			}
+		}
+		
+		// Поехали
+		LPWSTR pszConsoles[MAX_CONSOLE_COUNT] = {};
+		size_t cchLen, cchAllLen = 0, iCount = 0;
+		while ((iCount < MAX_CONSOLE_COUNT) && (0 == NextArg(&asSource, szPart)))
+		{
+			if (lstrcmpi(PointToExt(szPart), L".lnk") == 0)
+			{
+				// Ярлык
+				hr = pFile->Load(szPart, STGM_READ);
+				if (SUCCEEDED(hr))
+				{
+					hr = pShellLink->GetPath(szExe, countof(szExe), NULL, 0);
+					if (SUCCEEDED(hr) && *szExe)
+					{
+						hr = pShellLink->GetArguments(szArguments, countof(szArguments));
+						if (FAILED(hr))
+							szArguments[0] = 0;
+						hr = pShellLink->GetWorkingDirectory(szDir, countof(szDir));
+						if (FAILED(hr))
+							szDir[0] = 0;
+
+						cchLen = _tcslen(szExe)+3
+							+ _tcslen(szArguments)+1
+							+ (*szDir ? (_tcslen(szDir)+32) : 0); // + "-new_console:d<Dir>
+						pszConsoles[iCount] = (wchar_t*)malloc(cchLen*sizeof(wchar_t));
+						_wsprintf(pszConsoles[iCount], SKIPLEN(cchLen) L"\"%s\"%s%s",
+							Unquote(szExe), *szArguments ? L" " : L"", szArguments);
+						if (*szDir)
+						{
+							_wcscat_c(pszConsoles[iCount], cchLen, L" \"-new_console:d");
+							_wcscat_c(pszConsoles[iCount], cchLen, Unquote(szDir));
+							_wcscat_c(pszConsoles[iCount], cchLen, L"\"");
+						}
+						iCount++;
+
+						cchAllLen += cchLen+3;
+					}
+				}
+			}
+			else
+			{
+				cchLen = _tcslen(szPart) + 3;
+				pszConsoles[iCount] = (wchar_t*)malloc(cchLen*sizeof(wchar_t));
+				_wsprintf(pszConsoles[iCount], SKIPLEN(cchLen) L"\"%s\"", szPart);
+				iCount++;
+
+				cchAllLen += cchLen+3;
+			}
+		}
+
+		if (pShellLink)
+			pShellLink->Release();
+		if (pFile)
+			pFile->Release();
+#endif
+	}
 		
 	//wchar_t *szTest = (wchar_t*)malloc(MAX_PATH*2*sizeof(wchar_t)); //[MAX_PATH*2]
 	//wchar_t *szExe = (wchar_t*)malloc((MAX_PATH+1)*sizeof(wchar_t)); //[MAX_PATH+1];

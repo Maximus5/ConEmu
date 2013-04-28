@@ -1067,6 +1067,8 @@ struct Settings
 		//DWORD vmMinimizeRestore;
 		//reg->Load(L"SingleInstance", isSingleInstance);
 		bool isSingleInstance;
+		//reg->Load(L"ShowHelpTooltips", isShowHelpTooltips);
+		bool isShowHelpTooltips;
 		//reg->Load(L"Multi", isMulti);
 		bool isMulti;
 		//reg->Load(L"Multi.ShowButtons", isMultiShowButtons);

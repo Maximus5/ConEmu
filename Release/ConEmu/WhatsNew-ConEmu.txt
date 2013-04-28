@@ -15,6 +15,15 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[*] Minor changes in mouse-over-scrollbar processing.
+
+
+2013.04.27
+[%] Issue 1035, 1050: Keyboard layouts once more.
+[%] Issue 1047: Assertion on start file dragging.
+[%] Issue 1052: New option «Show balloon help tooltips» on «Appearance» page.
+
+
 2013.04.25
 [%] Issue 1040: Resize Far 3 panels macro error.
 [%] Issue 1035: Assertion on startup with some keyboard layouts (again).

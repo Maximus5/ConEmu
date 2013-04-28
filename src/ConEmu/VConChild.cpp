@@ -1298,9 +1298,12 @@ BOOL CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 
 				if (PtInRect(&rcScroll, ptCur))
 				{
+					// Если прокрутка УЖЕ видна - то мышку в консоль не пускать! Она для прокрутки!
+					if (mb_ScrollVisible)
+						lbOverVScroll = TRUE;
 					// Если не проверять - не получится начать выделение с правого края окна
 					//if (!gpSet->isSelectionModifierPressed())
-					if (!(isPressed(VK_SHIFT) || isPressed(VK_CONTROL) || isPressed(VK_MENU) || isPressed(VK_LBUTTON)))
+					else if (!(isPressed(VK_SHIFT) || isPressed(VK_CONTROL) || isPressed(VK_MENU) || isPressed(VK_LBUTTON)))
 						lbOverVScroll = TRUE;
 				}
 			}

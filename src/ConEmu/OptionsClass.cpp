@@ -1957,6 +1957,8 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbSingleInstance, IsSingleInstanceArg());
 	EnableDlgItem(hWnd2, cbSingleInstance, (gpSet->isQuakeStyle == 0));
 
+	checkDlgButton(hWnd2, cbShowHelpTooltips, gpSet->isShowHelpTooltips);
+
 	return 0;
 }
 
@@ -4628,6 +4630,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		//	break;
 		case cbSingleInstance:
 			gpSet->isSingleInstance = IsChecked(hWnd2, cbSingleInstance);
+			break;
+		case cbShowHelpTooltips:
+			gpSet->isShowHelpTooltips = IsChecked(hWnd2, cbShowHelpTooltips);
 			break;
 		case cbMultiCon:
 			gpSet->isMulti = IsChecked(hWnd2, cbMultiCon);
@@ -8086,9 +8091,16 @@ INT_PTR CSettings::ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 	}
 	else
 	{
-		mp_HelpPopup->GetItemHelp(0, (HWND)lpnmtdi->hdr.idFrom, szHint, countof(szHint));
+		if (gpSet->isShowHelpTooltips)
+		{
+			mp_HelpPopup->GetItemHelp(0, (HWND)lpnmtdi->hdr.idFrom, szHint, countof(szHint));
 
-		lpnmtdi->lpszText = szHint;
+			lpnmtdi->lpszText = szHint;
+		}
+		else
+		{
+			szHint[0] = 0;
+		}
 	}
 
 	lpnmtdi->szText[0] = 0;
@@ -10621,6 +10633,9 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 
 		if (!hwndTip) return;  // не смогли создать
 
+		//if (!gpSet->isShowHelpTooltips)
+		//	return;
+
 		HWND hChild = NULL, hEdit = NULL;
 		BOOL lbRc = FALSE;
 		//TCHAR szText[0x200];
@@ -10642,7 +10657,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 				toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
 				toolInfo.uId = (UINT_PTR)hChild;
 
-				// Use ProcessTipHelp dynamically
+				// Use CSettings::ProcessTipHelp dynamically
 				toolInfo.lpszText = LPSTR_TEXTCALLBACK;
 
 				lbRc = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);

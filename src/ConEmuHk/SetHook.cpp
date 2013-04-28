@@ -57,6 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetHook.h"
 #include "ConEmuHooks.h"
 #include "UserImp.h"
+#include "Ansi.h"
 
 //#include <WinInet.h>
 //#pragma comment(lib, "wininet.lib")
@@ -451,7 +452,7 @@ BOOL WINAPI OnFreeLibraryExp(HMODULE hModule);
 #endif
 
 //#ifdef HOOK_ANSI_SEQUENCES
-BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
+//BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 //#endif
 
 
@@ -721,7 +722,7 @@ FARPROC WINAPI GetWriteConsoleW()
 
 	//#ifdef HOOK_ANSI_SEQUENCES
 	HookItem* ph;
-	return (FARPROC)GetOriginalAddress((void*)(FARPROC)OnWriteConsoleW, (void*)(FARPROC)WriteConsoleW, FALSE, &ph);
+	return (FARPROC)GetOriginalAddress((void*)(FARPROC)CEAnsi::OnWriteConsoleW, (void*)(FARPROC)WriteConsoleW, FALSE, &ph);
 	//#else
 	//return (FARPROC)WriteConsoleW;
 	//#endif

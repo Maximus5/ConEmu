@@ -13368,12 +13368,51 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 	return result;
 }
 
+void CConEmuMain::AppendHKL(wchar_t* szInfo, size_t cchInfoMax, HKL* hKeyb, int nCount)
+{
+	INT_PTR nLen = _tcslen(szInfo);
+	INT_PTR cchLen = cchInfoMax - nLen - 1;
+	int i = 0;
+	wchar_t* pszStr = szInfo + nLen;
+	while ((i < nCount) && (cchLen > 40))
+	{
+		_wsprintf(pszStr, SKIPLEN(cchLen) WIN3264TEST(L"0x%08X",L"0x%08X%08X") L" ", WIN3264WSPRINT(hKeyb[i]));
+		nLen = _tcslen(pszStr);
+		cchLen -= nLen;
+		pszStr += nLen;
+		i++;
+	}
+}
+
+void CConEmuMain::AppendRegisteredLayouts(wchar_t* szInfo, size_t cchInfoMax)
+{
+	INT_PTR nLen = _tcslen(szInfo);
+	INT_PTR cchLen = cchInfoMax - nLen - 1;
+	wchar_t* pszStr = szInfo + nLen;
+	for (size_t i = 0; (i < countof(m_LayoutNames)) && (cchLen > 40); i++)
+	{
+		if (!m_LayoutNames[i].bUsed)
+			continue;
+		_wsprintf(pszStr, SKIPLEN(cchLen) L"{0x%08X," WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"} ",
+			m_LayoutNames[i].klName, WIN3264WSPRINT(m_LayoutNames[i].hkl));
+		nLen = _tcslen(pszStr);
+		cchLen -= nLen;
+		pszStr += nLen;
+	}
+}
+
 void CConEmuMain::CheckActiveLayoutName()
 {
 	wchar_t szLayout[KL_NAMELENGTH] = {0}, *pszEnd = NULL;
 	GetKeyboardLayoutName(szLayout);
 	HKL hkl = GetKeyboardLayout(0);
 	DWORD dwLayout = wcstoul(szLayout, &pszEnd, 16);
+	HKL hKeyb[20] = {};
+	UINT nCount = GetKeyboardLayoutList(countof(hKeyb), hKeyb);
+
+	wchar_t szInfo[200];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Layout=%s, HKL=" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L", Count=%u\n", szLayout, WIN3264WSPRINT(hkl), nCount);
+	AppendHKL(szInfo, countof(szInfo), hKeyb, nCount);
 
 	int i, iUnused = -1;
 
@@ -13396,20 +13435,23 @@ void CConEmuMain::CheckActiveLayoutName()
 	if (iUnused != -1)
 	{
 		// Старшие слова совпадать не будут (если совпадают, то случайно)
-		// А вот младшие - обязаны
-		// Или хотя бы "Primary Language ID"
-		if ((LOWORD(hkl) & 0xFF) == (LOWORD(dwLayout) & 0xFF))
+		// А вот младшие - должны бы, или хотя бы "Primary Language ID". Но...
+		// Issue 1050 #10: Layout=00020405, HKL=0xFFFFFFFFF00A0409. Weird...
+		if ((LOWORD(hkl) & 0xFF) != (LOWORD(dwLayout) & 0xFF))
 		{
-			StoreLayoutName(iUnused, dwLayout, hkl);
+			wcscat_c(szInfo, L"\nLOWORD(hkl)==LOWORD(dwLayout) -- Warning, strange layout ID");
+			wchar_t* psz = szInfo; while (psz && (psz = wcschr(psz, L'\n'))) *psz = L' ';
+			LogString(szInfo);
 		}
-		else
-		{
-			Assert(LOWORD(hkl)==LOWORD(dwLayout));
-		}
+
+		// So, always store "startup" layout and HKL for further reference...
+		StoreLayoutName(iUnused, dwLayout, hkl);
 	}
 	else
 	{
-		Assert(iUnused!=-1); // Startup keyboard layout must be detected
+		// Startup keyboard layout must be detected
+		wcscat_c(szInfo, L"\niUnused!=-1");
+		AssertMsg(szInfo);
 	}
 }
 
@@ -13419,6 +13461,20 @@ void CConEmuMain::StoreLayoutName(int iIdx, DWORD dwLayout, HKL hkl)
 	wchar_t szInfo[100];
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"StoreLayoutName(%i,x%08X," WIN3264TEST(L"0x%08X",L"0x%08X%08X") L")", iIdx, dwLayout, WIN3264WSPRINT(hkl));
 	LogString(szInfo);
+
+	// Check. This layout must not be stored already!
+	for (int i = 0; i < countof(m_LayoutNames); i++)
+	{
+		if (m_LayoutNames[i].bUsed
+			&& ((m_LayoutNames[i].klName == dwLayout)
+				|| (m_LayoutNames[i].hkl == (DWORD_PTR)hkl)))
+		{
+			wchar_t szAssert[255];
+			_wsprintf(szAssert, SKIPLEN(countof(szAssert)) L"Layout 0x%08X was already registered (hkl=" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L")\nRegList: ", dwLayout, WIN3264WSPRINT(hkl));
+			AppendRegisteredLayouts(szAssert, countof(szAssert));
+			AssertMsg(szAssert);
+		}
+	}
 
 	m_LayoutNames[iIdx].bUsed = TRUE;
 	m_LayoutNames[iIdx].klName = dwLayout;
@@ -13686,7 +13742,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 	0x00040409 - US - Dvorak right hand
 	*/
 	BOOL lbFound = FALSE;
-	int iUnused = -1;
+	int iUnused = -1, iUnknownLeft = -1;
 
 	// Check first, this layout may be found already
 	for (i = 0; i < countof(m_LayoutNames); i++)
@@ -13710,7 +13766,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 	// LCIDToLocaleName(dwLayoutName, ...) 
 
 	// s - number of items in (switch)
-	for (s = 0; !lbFound && (s <= 4); s++)
+	for (s = 0; !lbFound && (s <= 5); s++)
 	{
 		for (i = 0; (i < nCount); i++)
 		{
@@ -13756,6 +13812,32 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 			case 4:
 				// Last chance - Primary Language ID
 				lbFound = ((LOWORD((DWORD_PTR)hKeyb[i]) & 0xFF) == (LOWORD(dwNewKeybLayout) & 0xFF));
+				break;
+			case 5:
+				// If there is only "unlinked" HKL - choose it
+				iUnknownLeft = 0;
+				for (UINT i1 = 0; i1 < nCount; i1++)
+				{
+					bool bKnown = false;
+					for (size_t i2 = 0; i2 < countof(m_LayoutNames); i2++)
+					{
+						if (!m_LayoutNames[i2].bUsed)
+							continue;
+
+						if (m_LayoutNames[i2].hkl == (DWORD_PTR)hKeyb[i1])
+						{
+							bKnown = true;
+							break;
+						}
+					}
+					if (!bKnown)
+					{
+						iUnknownLeft++;
+					}
+				}
+				lbFound = (iUnknownLeft == 1);
+				wsprintf(szInfo, L"hkl=0x%08X, dwLayout=" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L" -- Warning, strange layout ID", dwLayoutName, hKeyb[i]);
+				LogString(szInfo);
 				break;
 			//case 3:
 			//	// Last change - check LOWORD of both HKL & Layout
@@ -13846,19 +13928,8 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 
 	if (!lbFound)
 	{
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"dwLayoutName not found: Count=%u,Err=%u,%08X\r\n", nCount, nErr, dwLayoutName);
-		INT_PTR nLen = _tcslen(szInfo);
-		INT_PTR cchLen = countof(szInfo) - nLen - 1;
-		i = 0;
-		wchar_t* pszStr = szInfo + nLen;
-		while ((i < nCount) && (cchLen > 40))
-		{
-			_wsprintf(pszStr, SKIPLEN(cchLen) WIN3264TEST(L"0x%08X",L"0x%08X%08X") L" ", WIN3264WSPRINT(hKeyb[i]));
-			nLen = _tcslen(pszStr);
-			cchLen -= nLen;
-			pszStr += nLen;
-			i++;
-		}
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"dwLayoutName not found: Count=%u,Left=%i,Err=%u,%08X\r\n", nCount, iUnknownLeft, nErr, dwLayoutName);
+		AppendHKL(szInfo, countof(szInfo), hKeyb, nCount);
 
 		// Загружать НОВЫЕ раскладки - некорректно (Issue 944)
 		AssertMsg(szInfo);
@@ -14306,7 +14377,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		return 0; //2009-04-22 После DblCkl по заголовку в консоль мог проваливаться LBUTTONUP
 	}
 
-	if (messg == WM_MOUSEMOVE)
+	//-- Вообще, если курсор над полосой прокрутки - любые события мышки в консоль не нужно слать...
+	//if (messg == WM_MOUSEMOVE)
 	{
 		if (TrackMouse())
 			return 0;
