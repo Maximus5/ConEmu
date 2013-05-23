@@ -934,6 +934,8 @@
 #define rbAutoUpdatePreviewFast         2590
 #define rbAutoUpdateDeveloperFast       2591
 #define cbShowHelpTooltips              2592
+#define tTabDblClickAction              2593
+#define cbIntegralSize                  2594
 
 // Next default values for new objects
 // 
@@ -941,7 +943,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        222
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2593
+#define _APS_NEXT_CONTROL_VALUE         2595
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

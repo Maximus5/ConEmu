@@ -177,7 +177,7 @@ public:
 	static void SyncWindowToConsole(); // -- функция пустая, игнорируется
 	static void SyncConsoleToWindow(LPRECT prcNewWnd=NULL, bool bSync=false);
 	static void LockSyncConsoleToWindow(bool abLockSync);
-	static void SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*/ bool bSetRedraw /*= false*/, bool bResizeConEmuWnd = false);
+	static void SetAllConsoleWindowsSize(COORD size, bool bSetRedraw /*= false*/);
 	static void SyncAllConsoles2Window(RECT rcWnd, enum ConEmuRect tFrom = CER_MAIN, bool bSetRedraw = false);
 	static void OnConsoleResize(bool abSizingToDo);
 	static void ReSizePanes(RECT mainClient);
@@ -194,10 +194,10 @@ public:
 
 	static void ExportEnvVarAll(CESERVER_REQ* pIn, CRealConsole* pExceptRCon);
 
-	// Это некие сводные размеры, соответствующие тому, как если бы была
-	// только одна активная консоль, БЕЗ Split-screen
-	static uint TextWidth();
-	static uint TextHeight();
+	//// Это некие сводные размеры, соответствующие тому, как если бы была
+	//// только одна активная консоль, БЕЗ Split-screen
+	//static uint TextWidth();
+	//static uint TextHeight();
 
 	static RECT AllTextRect(bool abMinimal = false);
 

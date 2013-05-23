@@ -1190,7 +1190,7 @@ void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 			if (gpConEmu->WindowMode != wmNormal)
 				pVCon->RCon()->SyncConsole2Window();
 			else
-				gpConEmu->SyncWindowToConsole(); // -- функция пустая, игнорируется
+				CVConGroup::SyncWindowToConsole(); // -- функция пустая, игнорируется
 		}
 
 		m_LastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;

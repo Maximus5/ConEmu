@@ -1241,7 +1241,9 @@ BOOL CRealBuffer::PreInit()
 	if (gpConEmu->isWindowNormal() && gpConEmu->isIconic())
 	{
 		// —юда попадаем только при wmNormal&Minimized
-		rcCon = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
+		//rcCon = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
+		SIZE sz = gpConEmu->GetDefaultSize(true);
+		rcCon = MakeRect(sz.cx, sz.cy);
 	}
 	else
 	{

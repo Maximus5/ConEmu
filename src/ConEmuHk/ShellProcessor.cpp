@@ -2358,7 +2358,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 		{
 			if (mb_DebugWasRequested)
 			{
-				lpSI->wShowWindow = nShowCmd; // this is SW_HIDE, disable flickering
+				lpSI->wShowWindow = LOWORD(nShowCmd); // this is SW_HIDE, disable flickering
 				lbRc = FALSE; // Stop other changes?
 			}
 			else

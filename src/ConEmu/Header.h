@@ -300,6 +300,7 @@ struct SettingsStorage
 #include "../common/defines.h"
 #include "../common/WinObjects.h"
 
+#define IsWindowsXP ((gOSVer.dwMajorVersion >= 6) || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion > 0))
 #define IsWindows7 ((gOSVer.dwMajorVersion > 6) || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion > 0))
 #define IsWindows8 ((gOSVer.dwMajorVersion > 6) || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion > 1))
 
@@ -479,6 +480,130 @@ enum SwitchGuiFocusOp
 	sgf_FocusChild,
 	sgf_Last
 };
+
+enum CESizeStyle
+{
+	ss_Standard = 0,
+	ss_Pixels   = 1,
+	ss_Percents = 2,
+};
+
+union CESize
+{
+	DWORD Raw;
+
+	struct
+	{
+		int         Value: 24;
+		CESizeStyle Style: 8;
+
+		wchar_t TempSZ[12];
+	};
+
+	const wchar_t* AsString()
+	{
+		switch (Style)
+		{
+		case ss_Pixels:
+			_wsprintf(TempSZ, SKIPLEN(countof(TempSZ)) L"%ipx", Value);
+			break;
+		case ss_Percents:
+			_wsprintf(TempSZ, SKIPLEN(countof(TempSZ)) L"%i%%", Value);
+			break;
+		//case ss_Standard:
+		default:
+			_wsprintf(TempSZ, SKIPLEN(countof(TempSZ)) L"%i", Value);
+		}
+		return TempSZ;
+	};
+
+	bool IsValid(bool IsWidth) const
+	{
+		bool bValid;
+		switch (Style)
+		{
+		case ss_Percents:
+			bValid = (Value >= 1 && Value <= 100);
+			break;
+		case ss_Pixels:
+			// Treat width/height as values for font size 4x2 (minimal)
+			if (IsWidth)
+				bValid = (Value >= (MIN_CON_WIDTH*4));
+			else
+				bValid = (Value >= (MIN_CON_HEIGHT*2));
+			break;
+		default:
+			if (IsWidth)
+				bValid = (Value >= MIN_CON_WIDTH);
+			else
+				bValid = (Value >= MIN_CON_HEIGHT);
+		}
+		return bValid;
+	};
+
+	bool Set(bool IsWidth, CESizeStyle NewStyle, int NewValue)
+	{
+		if (NewStyle == ss_Standard)
+		{
+			int nDef = IsWidth ? 80 : 25;
+			int nMax = IsWidth ? 1000 : 500;
+			if (NewValue <= 0) NewValue = nDef; else if (NewValue > nMax) NewValue = nMax;
+		}
+		else if (NewStyle == ss_Percents)
+		{
+			int nDef = IsWidth ? 50 : 30;
+			int nMax = 100;
+			if (NewValue <= 0) NewValue = nDef; else if (NewValue > nMax) NewValue = nMax;
+		}
+
+		if (!NewValue)
+		{
+			// Size can't be empty
+			_ASSERTE(NewValue);
+			// Fail
+			return false;
+		}
+
+		Value = NewValue;
+		Style = NewStyle;
+		return true;
+	};
+
+	void SetFromRaw(bool IsWidth, DWORD Raw)
+	{
+		CESize v; v.Raw = Raw;
+		if (v.Style == ss_Standard || v.Style == ss_Pixels || v.Style == ss_Percents)
+		{
+			this->Set(IsWidth, v.Style, v.Value);
+		}
+	};
+
+	bool SetFromString(bool IsWidth, const wchar_t* sValue)
+	{
+		if (!sValue || !*sValue)
+			return false;
+		wchar_t* pszEnd = NULL;
+		// Try to convert
+		int NewValue = wcstol(sValue, &pszEnd, 10);
+		if (!NewValue)
+			return false;
+
+		CESizeStyle NewStyle = ss_Standard;
+		if (pszEnd)
+		{
+			switch (*SkipNonPrintable(pszEnd))
+			{
+			case L'%':
+				NewStyle = ss_Percents; break;
+			case L'p':
+				NewStyle = ss_Pixels; break;
+			}
+		}
+		// Done
+		return Set(IsWidth, NewStyle, NewValue);
+	};
+};
+
 
 bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval);
 #define LockFrequentExecute(Interval) static DWORD LastExecuteTick; if (CheckLockFrequentExecute(LastExecuteTick,Interval))

@@ -1023,7 +1023,9 @@ void ProcessDebugEvent()
 							|| (bDumpOnBreakPoint && (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT))))
 					)
 				{
-					BOOL bGenerateTreeBreak = gpSrv->DbgInfo.bDebuggerRequestDump || lbNonContinuable;
+					BOOL bGenerateTreeBreak = gpSrv->DbgInfo.bDebugProcessTree
+						&& (gpSrv->DbgInfo.bDebuggerRequestDump || lbNonContinuable);
+
 					if (gpSrv->DbgInfo.bDebugProcessTree
 						&& !bGenerateTreeBreak
 						&& (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT))

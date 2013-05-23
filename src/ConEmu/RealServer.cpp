@@ -545,7 +545,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 							// Хотя, может быть, например, команда "mode con lines=25 cols=80"
 							_ASSERTE(crNewSize.X == nNewWidth && crNewSize.Y == nNewHeight);
 							
-							//gpConEmu->SyncWindowToConsole(); - его использовать нельзя. во первых это не главная нить, во вторых - размер pVCon может быть еще не изменен
+							//CVConGroup::SyncWindowToConsole(); - его использовать нельзя. во первых это не главная нить, во вторых - размер pVCon может быть еще не изменен
 							lbNeedResizeWnd = TRUE;
 							
 							crNewSize.X = nNewWidth;

@@ -3537,14 +3537,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						wchar_t* pszExpand = NULL;
 						if (wcschr(curCommand, L'%') && ((pszExpand = ExpandEnvStr(curCommand)) != NULL))
 						{
-							SetCurrentDirectory(pszExpand);
+							gpConEmu->StoreWorkDir(pszExpand);
 							SafeFree(pszExpand);
 						}
 						else
 						{
-							SetCurrentDirectory(curCommand);
+							gpConEmu->StoreWorkDir(curCommand);
 						}
-						gpConEmu->RefreshConEmuCurDir();
 					}
 				}
 				else if (!klstricmp(curCommand, _T("/updatejumplist")))

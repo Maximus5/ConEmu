@@ -2744,7 +2744,7 @@ void TabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	if (abPreSyncConsole && (gpConEmu->WindowMode == wmNormal))
 	{
 		RECT rcIdeal = gpConEmu->GetIdealRect();
-		gpConEmu->SyncConsoleToWindow(&rcIdeal, TRUE);
+		CVConGroup::SyncConsoleToWindow(&rcIdeal, TRUE);
 	}
 	UpdatePosition();
 #endif
@@ -2766,7 +2766,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 	if (abPreSyncConsole && !(gpConEmu->isZoomed() || gpConEmu->isFullScreen()))
 	{
 		RECT rcIdeal = gpConEmu->GetIdealRect();
-		gpConEmu->SyncConsoleToWindow(&rcIdeal, true);
+		CVConGroup::SyncConsoleToWindow(&rcIdeal, true);
 	}
 	UpdatePosition();
 #endif
@@ -3060,10 +3060,10 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //		dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 //		#endif
 //
-//		//gpConEmu->SyncConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
+//		//CVConGroup::SyncConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
 //		gpConEmu->ReSize(TRUE);
 //    } else {
-//		//gpConEmu->SyncConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
+//		//CVConGroup::SyncConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
 //		gpConEmu->ReSize(TRUE);
 //		// _active уже сбросили, поэтому реально спрятать можно и позже
 //        if (mh_Rebar) {

@@ -299,8 +299,9 @@ class CSettings
 		//void UpdateMargins(RECT arcMargins);
 		static void Dialog(int IdShowPage = 0);
 		void UpdateWindowMode(WORD WndMode);
+		void UpdatePosSizeEnabled(HWND hWnd2);
 		void UpdatePos(int x, int y, bool bGetRect = false);
-		void UpdateSize(UINT w, UINT h);
+		void UpdateSize(const CESize w, const CESize h);
 		void UpdateTTF(BOOL bNewTTF);
 		void UpdateFontInfo();
 		void Performance(UINT nID, BOOL bEnd);

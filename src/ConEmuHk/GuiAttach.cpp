@@ -516,6 +516,21 @@ bool IsDotNetWindow(HWND hWindow)
 	return false;
 }
 
+bool IsQtWindow(LPCSTR asClassA, LPCWSTR asClassW)
+{
+	if (asClassW && (((DWORD_PTR)asClassW) > 0xFFFF))
+	{
+		if (lstrcmp(asClassW, L"QWidget") == 0)
+			return true;
+	}
+	else if (asClassA && (((DWORD_PTR)asClassA) > 0xFFFF))
+	{
+		if (lstrcmpA(asClassA, "QWidget") == 0)
+			return true;
+	}
+	return false;
+}
+
 // Если (anFromShowWindow != -1), значит функу зовут из ShowWindow
 void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asClassW, DWORD anStyle, DWORD anStyleEx, BOOL abStyleHidden, int anFromShowWindow/*=-1*/)
 {
@@ -588,7 +603,10 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	// так не возникает проблем с активацией и т.д.
 	else if (user->getMenu(hWindow) == NULL)
 	{
-		gnAttachGuiClientFlags |= (agaf_NoMenu|agaf_WS_CHILD);
+		if (IsQtWindow(asClassA, asClassW))
+			gnAttachGuiClientFlags |= (agaf_NoMenu|agaf_QtWindow|agaf_WS_CHILD);
+		else
+			gnAttachGuiClientFlags |= (agaf_NoMenu|agaf_WS_CHILD);
 	}
 	pIn->AttachGuiApp.nFlags = gnAttachGuiClientFlags;
 	pIn->AttachGuiApp.nPID = GetCurrentProcessId();

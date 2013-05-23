@@ -95,6 +95,23 @@ BOOL CALLBACK FindPrimaryMonitor(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcM
 	return TRUE;
 }
 
+bool GetMonitorInfoSafe(HMONITOR hMon, MONITORINFO& mi)
+{
+	if (!hMon)
+	{
+		return false;
+	}
+
+	mi.cbSize = sizeof(mi);
+	BOOL bMonitor = GetMonitorInfo(hMon, &mi);
+	if (!bMonitor)
+	{
+		GetPrimaryMonitorInfo(&mi);
+	}
+	
+	return (bMonitor!=FALSE);
+}
+
 HMONITOR GetPrimaryMonitorInfo(MONITORINFO* pmi /*= NULL*/)
 {
 	_FindPrimaryMonitor m = {NULL};

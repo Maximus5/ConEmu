@@ -875,6 +875,24 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	#endif
 
 
+	wchar_t szSelfExe[MAX_PATH*2] = {}, szSelfDir[MAX_PATH+1] = {};
+	DWORD nSelfLen = GetModuleFileNameW(NULL, szSelfExe, countof(szSelfExe));
+	if (!nSelfLen || (nSelfLen >= countof(szSelfExe)))
+	{
+		_ASSERTE(FALSE && "GetModuleFileNameW(NULL) failed");
+		szSelfExe[0] = 0;
+	}
+	else
+	{
+		lstrcpyn(szSelfDir, szSelfExe, countof(szSelfDir));
+		wchar_t* pszSlash = wcsrchr(szSelfDir, L'\\');
+		if (pszSlash)
+			*pszSlash = 0;
+		else
+			szSelfDir[0] = 0;
+	}
+
+
 	PRINT_COMSPEC(L"ConEmuC started: %s\n", GetCommandLineW());
 	nExitPlaceStep = 50;
 	xf_check();
@@ -1098,7 +1116,6 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		#endif
 
 		LPCWSTR pszCurDir = NULL;
-		wchar_t szSelf[MAX_PATH*2];
 		WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");
 
 		if (gbUseDosBox)
@@ -1195,8 +1212,11 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		if (!lbRc && (gnRunMode == RM_SERVER) && dwErr == ERROR_FILE_NOT_FOUND)
 		{
 			// Фикс для перемещения ConEmu.exe в подпапку фара. т.е. far.exe находится на одну папку выше
-			if (GetModuleFileNameW(NULL, szSelf, countof(szSelf)))
+			if (szSelfExe[0] != 0)
 			{
+				wchar_t szSelf[MAX_PATH*2];
+				wcscpy_c(szSelf, szSelfExe);
+
 				wchar_t* pszSlash = wcsrchr(szSelf, L'\\');
 
 				if (pszSlash)
@@ -1384,6 +1404,10 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	/* *** Ожидание запуска *** */
 	/* ************************ */
 
+	// Чтобы не блокировать папку запуска
+	if (szSelfDir[0])
+		SetCurrentDirectory(szSelfDir);
+
 	if (gnRunMode == RM_SERVER)
 	{
 		//DWORD dwWaitGui = -1;
@@ -1506,6 +1530,11 @@ wait:
 		gbPipeDebugBoxes = false;
 	}
 #endif
+
+	
+	// Чтобы не блокировать папку запуска (на всякий случай, если на метку goto был)
+	if (szSelfDir[0])
+		SetCurrentDirectory(szSelfDir);
 
 
 	if (gnRunMode == RM_ALTSERVER)
@@ -1666,6 +1695,10 @@ wrap:
 				|| gbAlwaysConfirmExit)
 	  )
 	{
+		// Чтобы не блокировать папку запуска (если вдруг ошибка была, и папку не меняли)
+		if (szSelfDir[0])
+			SetCurrentDirectory(szSelfDir);
+
 		//#ifdef _DEBUG
 		//if (!gbInShutdown)
 		//	MessageBox(0, L"ExitWaitForKey", L"ConEmuC", MB_SYSTEMMODAL);

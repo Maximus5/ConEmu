@@ -96,6 +96,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRLLKB(s) //DEBUGSTR(s)
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
 #define DEBUGSTRMSG(s) //DEBUGSTR(s)
+#define DEBUGSTRMSG2(s) DEBUGSTR(s)
 #define DEBUGSTRANIMATE(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #ifdef _DEBUG
@@ -272,7 +273,7 @@ CConEmuMain::CConEmuMain()
 	getForegroundWindow();
 
 	_ASSERTE(gOSVer.dwMajorVersion>=5);
-	//memset(&gOSVer,0,sizeof(gOSVer));
+	//ZeroStruct(gOSVer);
 	//gOSVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	//GetVersionEx(&gOSVer);
 
@@ -317,7 +318,7 @@ CConEmuMain::CConEmuMain()
 	mh_MinFromMonitor = NULL;
 	
 	wndX = gpSet->_wndX; wndY = gpSet->_wndY;
-	wndWidth = gpSet->_wndWidth; wndHeight = gpSet->_wndHeight;
+	WndWidth = gpSet->wndWidth; WndHeight = gpSet->wndHeight;
 	
 	mn_QuakePercent = 0; // 0 - отключен
 	DisableAutoUpdate = false;
@@ -327,7 +328,7 @@ CConEmuMain::CConEmuMain()
 	//mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	//mb_PassSysCommand = false;
 	mb_ExternalHidden = FALSE;
-	memset(&mrc_StoredNormalRect, 0, sizeof(mrc_StoredNormalRect));
+	ZeroStruct(mrc_StoredNormalRect);
 	isWndNotFSMaximized = false;
 	isQuakeMinimized = false;
 	mb_StartDetached = FALSE;
@@ -385,19 +386,20 @@ CConEmuMain::CConEmuMain()
 	mh_SplitV = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITV));
 	mh_SplitH = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITH));
 	//ms_LogCreateProcess[0] = 0; mb_CreateProcessLogged = false;
-	memset(&mouse, 0, sizeof(mouse));
+	ZeroStruct(mouse);
 	mouse.lastMMW=-1;
 	mouse.lastMML=-1;
-	memset(m_TranslatedChars, 0, sizeof(m_TranslatedChars));
+	ZeroStruct(session);
+	ZeroStruct(m_TranslatedChars);
 	//GetKeyboardState(m_KeybStates);
 	//memset(m_KeybStates, 0, sizeof(m_KeybStates));
 	m_ActiveKeybLayout = GetActiveKeyboardLayout();
-	memset(m_LayoutNames, 0, sizeof(m_LayoutNames));
+	ZeroStruct(m_LayoutNames);
 	//wchar_t szTranslatedChars[16];
 	//HKL hkl = (HKL)GetActiveKeyboardLayout();
 	//int nTranslatedChars = ToUnicodeEx(0, 0, m_KeybStates, szTranslatedChars, 15, 0, hkl);
 	mn_LastPressedVK = 0;
-	memset(&m_GuiInfo, 0, sizeof(m_GuiInfo));
+	ZeroStruct(m_GuiInfo);
 	m_GuiInfo.cbSize = sizeof(m_GuiInfo);
 	//mh_RecreatePasswFont = NULL;
 	mb_SkipOnFocus = false;
@@ -413,37 +415,6 @@ CConEmuMain::CConEmuMain()
 	ZeroStruct(m_JumpMonitor);
 
 	mps_IconPath = NULL;
-
-	// Попробуем "родное" из реестра?
-	HKEY hk;
-	ms_ComSpecInitial[0] = 0;
-	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", 0, KEY_READ, &hk))
-	{
-		DWORD nSize = sizeof(ms_ComSpecInitial)-sizeof(wchar_t);
-		if (RegQueryValueEx(hk, L"ComSpec", NULL, NULL, (LPBYTE)ms_ComSpecInitial, &nSize))
-			ms_ComSpecInitial[0] = 0;
-		RegCloseKey(hk);
-	}
-	if (!*ms_ComSpecInitial)
-	{
-		GetComspecFromEnvVar(ms_ComSpecInitial, countof(ms_ComSpecInitial));
-	}
-	_ASSERTE(*ms_ComSpecInitial);
-
-	mpsz_ConEmuArgs = NULL;
-	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = 0;
-	//ms_ConEmuCExe[0] = 
-	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
-	ms_ConEmuXml[0] = ms_ConEmuIni[0] = ms_ConEmuChm[0] = 0;
-	//ms_ConEmuCExeName[0] = 0;
-	wchar_t *pszSlash = NULL;
-
-	if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH) || !(pszSlash = wcsrchr(ms_ConEmuExe, L'\\')))
-	{
-		DisplayLastError(L"GetModuleFileName failed");
-		TerminateProcess(GetCurrentProcess(), 100);
-		return;
-	}
 
 	#ifdef __GNUC__
 	HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
@@ -483,11 +454,49 @@ CConEmuMain::CConEmuMain()
 		}
 	}
 
+
+	// Попробуем "родное" из реестра?
+	HKEY hk;
+	ms_ComSpecInitial[0] = 0;
+	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", 0, KEY_READ, &hk))
+	{
+		DWORD nSize = sizeof(ms_ComSpecInitial)-sizeof(wchar_t);
+		if (RegQueryValueEx(hk, L"ComSpec", NULL, NULL, (LPBYTE)ms_ComSpecInitial, &nSize))
+			ms_ComSpecInitial[0] = 0;
+		RegCloseKey(hk);
+	}
+	if (!*ms_ComSpecInitial)
+	{
+		GetComspecFromEnvVar(ms_ComSpecInitial, countof(ms_ComSpecInitial));
+	}
+	_ASSERTE(*ms_ComSpecInitial);
+
+	mpsz_ConEmuArgs = NULL;
+	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = ms_ConEmuWorkDir[0] = 0;
+	//ms_ConEmuCExe[0] = 
+	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
+	ms_ConEmuXml[0] = ms_ConEmuIni[0] = ms_ConEmuChm[0] = 0;
+	//ms_ConEmuCExeName[0] = 0;
+	wchar_t *pszSlash = NULL;
+
+	if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH) || !(pszSlash = wcsrchr(ms_ConEmuExe, L'\\')))
+	{
+		DisplayLastError(L"GetModuleFileName failed");
+		TerminateProcess(GetCurrentProcess(), 100);
+		return;
+	}
+
+	// Запомнить текущую папку (на момент запуска)
+	StoreWorkDir();
+
 	//LoadVersionInfo(ms_ConEmuExe);
 	// Папка программы
 	wcscpy_c(ms_ConEmuExeDir, ms_ConEmuExe);
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 	*pszSlash = 0;
+
+	// Чтобы не блокировать папку запуска - CD
+	SetCurrentDirectory(ms_ConEmuExeDir);
 
 	bool lbBaseFound = false;
 
@@ -611,50 +620,9 @@ CConEmuMain::CConEmuMain()
 		wcscpy_c(ms_ConEmuC64Full, ms_ConEmuC32Full);
 	}
 
-	//// Если ConEmu.exe запущен с сетевого ресурса -  Сетевые пути не менять
-	//if (ms_ConEmuExe[0] == L'\\' /*|| wcschr(ms_ConEmuExe, L' ') == NULL*/)
-	//{
-	//	wcscpy_c(ms_ConEmuCExe, ms_ConEmuCExeFull);
-	//}
-	//else
-	//{
-	//	wchar_t* pszShort = GetShortFileNameEx(ms_ConEmuCExeFull);
 
-	//	if (pszShort)
-	//	{
-	//		wcscpy_c(ms_ConEmuCExe, pszShort);
-	//		free(pszShort);
-	//	}
-	//	else
-	//	{
-	//		wcscpy_c(ms_ConEmuCExe, ms_ConEmuCExeFull);
-	//	}
 
-	//	//pszSlash = ms_ConEmuCExe + _tcslen(ms_ConEmuCExe);
-	//	//if (*(pszSlash-1) != L'\\')
-	//	//{
-	//	//	*(pszSlash++) = L'\\'; *pszSlash = 0;
-	//	//}
-	//}
 
-	//WARNING("Убрать ConEmuC64.exe - научиться работать с редиректором");
-	//if (IsWindows64())
-	//{
-	//	wcscpy(pszSlash, L"ConEmuC64.exe");
-	//	if (!FileExists(ms_ConEmuCExe)) // попробовать "ConEmuC.exe"
-	//	{
-	//		wcscpy(pszSlash, L"ConEmuC.exe");
-	//		if (!FileExists(ms_ConEmuCExe)) // вернуть 64 взад, раз 32 не нашли
-	//			wcscpy(pszSlash, L"ConEmuC64.exe");
-	//	}
-	//}
-	//else
-	//{
-	//	wcscpy(pszSlash, L"ConEmuC.exe");
-	//}
-	//wcscpy(ms_ConEmuCExeName, pszSlash);
-	// Запомнить текущую папку (на момент запуска)
-	RefreshConEmuCurDir();
 
 	
 	// DosBox (единственный способ запуска Dos-приложений в 64-битных OS)
@@ -698,50 +666,56 @@ CConEmuMain::CConEmuMain()
 	//memset(mp_VCon, 0, sizeof(mp_VCon));
 	mp_AttachDlg = NULL;
 	mp_RecreateDlg = NULL;
+
+	// Dynamic messages
 	UINT nAppMsg = WM_APP+10;
-	mn_MsgPostCreate = ++nAppMsg;
-	mn_MsgPostCopy = ++nAppMsg;
-	mn_MsgMyDestroy = ++nAppMsg;
-	mn_MsgUpdateSizes = ++nAppMsg;
-	mn_MsgUpdateCursorInfo = ++nAppMsg;
-	mn_MsgSetWindowMode = ++nAppMsg;
-	mn_MsgUpdateTitle = ++nAppMsg;
-	//mn_MsgAttach = RegisterWindowMessage(CONEMUMSG_ATTACH);
-	mn_MsgSrvStarted = ++nAppMsg; //RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
-	mn_MsgVConTerminated = ++nAppMsg;
-	mn_MsgUpdateScrollInfo = ++nAppMsg;
-	mn_MsgUpdateTabs = ++nAppMsg; //RegisterWindowMessage(CONEMUMSG_UPDATETABS);
-	mn_MsgOldCmdVer = ++nAppMsg; mb_InShowOldCmdVersion = FALSE;
-	mn_MsgTabCommand = ++nAppMsg;
-	mn_MsgTabSwitchFromHook = RegisterWindowMessage(CONEMUMSG_SWITCHCON); //mb_InWinTabSwitch = FALSE;
-	mn_MsgWinKeyFromHook = RegisterWindowMessage(CONEMUMSG_HOOKEDKEY);
+	mn__FirstAppMsg = WM_APP+10;
+	ZeroStruct(m__AppMsgs);
+	m__AppMsgs.Init();
+	// Go
+	mn_MsgPostCreate = RegisterMessage("PostCreate");
+	mn_MsgPostCopy = RegisterMessage("PostCopy");
+	mn_MsgMyDestroy = RegisterMessage("MyDestroy");
+	mn_MsgUpdateSizes = RegisterMessage("UpdateSizes");
+	mn_MsgUpdateCursorInfo = RegisterMessage("UpdateCursorInfo");
+	mn_MsgSetWindowMode = RegisterMessage("SetWindowMode");
+	mn_MsgUpdateTitle = RegisterMessage("UpdateTitle");
+	//mn_MsgAttach = RegisterMessage(...,CONEMUMSG_ATTACH);
+	mn_MsgSrvStarted = RegisterMessage("SrvStarted"); //RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
+	mn_MsgVConTerminated = RegisterMessage("VConTerminated");
+	mn_MsgUpdateScrollInfo = RegisterMessage("UpdateScrollInfo");
+	mn_MsgUpdateTabs = RegisterMessage("UpdateTabs"); //RegisterWindowMessage(CONEMUMSG_UPDATETABS);
+	mn_MsgOldCmdVer = RegisterMessage("OldCmdVer"); mb_InShowOldCmdVersion = FALSE;
+	mn_MsgTabCommand = RegisterMessage("TabCommand");
+	mn_MsgTabSwitchFromHook = RegisterMessage("CONEMUMSG_SWITCHCON",CONEMUMSG_SWITCHCON); //mb_InWinTabSwitch = FALSE;
+	mn_MsgWinKeyFromHook = RegisterMessage("CONEMUMSG_HOOKEDKEY",CONEMUMSG_HOOKEDKEY);
 	//mn_MsgConsoleHookedKey = RegisterWindowMessage(CONEMUMSG_CONSOLEHOOKEDKEY);
 	//mn_ShellExecuteEx = ++nAppMsg;
 	//	InitializeCriticalSection(&mcs_ShellExecuteEx);
 	//	mb_InShellExecuteQueue = false;
-	mn_PostConsoleResize = ++nAppMsg;
-	mn_ConsoleLangChanged = ++nAppMsg;
-	mn_MsgPostOnBufferHeight = ++nAppMsg;
-	//mn_MsgSetForeground = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
-	mn_MsgFlashWindow = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
-	mn_MsgPostAltF9 = ++nAppMsg;
+	mn_PostConsoleResize = RegisterMessage("PostConsoleResize");
+	mn_ConsoleLangChanged = RegisterMessage("ConsoleLangChanged");
+	mn_MsgPostOnBufferHeight = RegisterMessage("PostOnBufferHeight");
+	//mn_MsgSetForeground = RegisterMessage(...,CONEMUMSG_SETFOREGROUND);
+	mn_MsgFlashWindow = RegisterMessage("CONEMUMSG_FLASHWINDOW",CONEMUMSG_FLASHWINDOW);
+	mn_MsgPostAltF9 = RegisterMessage("PostAltF9");
 	//mn_MsgPostSetBackground = ++nAppMsg;
-	mn_MsgInitInactiveDC = ++nAppMsg;
-	//mn_MsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
-	mn_MsgUpdateProcDisplay = ++nAppMsg;
-	mn_MsgAutoSizeFont = ++nAppMsg;
-	mn_MsgDisplayRConError = ++nAppMsg;
-	mn_MsgMacroFontSetName = ++nAppMsg;
-	mn_MsgCreateViewWindow = ++nAppMsg;
-	mn_MsgPostTaskbarActivate = ++nAppMsg; mb_PostTaskbarActivate = FALSE;
-	mn_MsgInitVConGhost = ++nAppMsg;
-	mn_MsgCreateCon = ++nAppMsg;
-	mn_MsgRequestUpdate = ++nAppMsg;
-	mn_MsgPanelViewMapCoord = RegisterWindowMessage(CONEMUMSG_PNLVIEWMAPCOORD);
-	mn_MsgTaskBarCreated = RegisterWindowMessage(L"TaskbarCreated");
-	mn_MsgTaskBarBtnCreated = RegisterWindowMessage(L"TaskbarButtonCreated");
-	mn_MsgSheelHook = RegisterWindowMessage(L"SHELLHOOK");
-	mn_MsgRequestRunProcess = ++nAppMsg;
+	mn_MsgInitInactiveDC = RegisterMessage("InitInactiveDC");
+	//mn_MsgActivateCon = RegisterMessage(...,CONEMUMSG_ACTIVATECON);
+	mn_MsgUpdateProcDisplay = RegisterMessage("UpdateProcDisplay");
+	mn_MsgAutoSizeFont = RegisterMessage("AutoSizeFont");
+	mn_MsgDisplayRConError = RegisterMessage("DisplayRConError");
+	mn_MsgMacroFontSetName = RegisterMessage("MacroFontSetName");
+	mn_MsgCreateViewWindow = RegisterMessage("CreateViewWindow");
+	mn_MsgPostTaskbarActivate = RegisterMessage("PostTaskbarActivate"); mb_PostTaskbarActivate = FALSE;
+	mn_MsgInitVConGhost = RegisterMessage("InitVConGhost");
+	mn_MsgCreateCon = RegisterMessage("CreateCon");
+	mn_MsgRequestUpdate = RegisterMessage("RequestUpdate");
+	mn_MsgPanelViewMapCoord = RegisterMessage("CONEMUMSG_PNLVIEWMAPCOORD",CONEMUMSG_PNLVIEWMAPCOORD);
+	mn_MsgTaskBarCreated = RegisterMessage("TaskbarCreated",L"TaskbarCreated");
+	mn_MsgTaskBarBtnCreated = RegisterMessage("TaskbarButtonCreated",L"TaskbarButtonCreated");
+	mn_MsgSheelHook = RegisterMessage("SHELLHOOK",L"SHELLHOOK");
+	mn_MsgRequestRunProcess = RegisterMessage("RequestRunProcess");
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 
@@ -770,19 +744,39 @@ void LogFocusInfo(LPCWSTR asInfo, int Level/*=1*/)
 	#endif
 }
 
-void CConEmuMain::RefreshConEmuCurDir()
+void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)
 {
-	// Запомнить текущую папку (на момент запуска)
-	DWORD nDirLen = GetCurrentDirectory(MAX_PATH, ms_ConEmuCurDir);
+	if (asNewCurDir)
+	{
+		if (*asNewCurDir)
+		{
+			wcscpy_c(ms_ConEmuWorkDir, asNewCurDir);
+		}
+	}
+	else
+	{
+		// Запомнить текущую папку (на момент запуска)
+		DWORD nDirLen = GetCurrentDirectory(MAX_PATH, ms_ConEmuWorkDir);
 
-	if (!nDirLen || nDirLen>MAX_PATH)
-	{
-		ms_ConEmuCurDir[0] = 0;
+		if (!nDirLen || nDirLen>MAX_PATH)
+		{
+			//ms_ConEmuWorkDir[0] = 0;
+			wcscpy_c(ms_ConEmuWorkDir, ms_ConEmuExeDir);
+		}
+		else if (ms_ConEmuWorkDir[nDirLen-1] == L'\\')
+		{
+			ms_ConEmuWorkDir[nDirLen-1] = 0; // пусть будет БЕЗ слеша, для однообразия с ms_ConEmuExeDir
+		}
 	}
-	else if (ms_ConEmuCurDir[nDirLen-1] == L'\\')
-	{
-		ms_ConEmuCurDir[nDirLen-1] = 0; // пусть будет БЕЗ слеша, для однообразия с ms_ConEmuExeDir
-	}
+}
+
+LPCWSTR CConEmuMain::WorkDir(LPCWSTR asOverrideCurDir /*= NULL*/)
+{
+	if (asOverrideCurDir && *asOverrideCurDir)
+		return asOverrideCurDir;
+	
+	_ASSERTE(this && ms_ConEmuWorkDir[0]!=0);
+	return ms_ConEmuWorkDir;
 }
 
 bool CConEmuMain::CheckRequiredFiles()
@@ -1251,6 +1245,176 @@ void CConEmuMain::OnUseDwm(bool abEnableDwm)
 	//CheckMenuItem(GetSysMenu(false), ID_ISDWM, MF_BYCOMMAND | (abEnableDwm ? MF_CHECKED : MF_UNCHECKED));
 }
 
+// Например при вызове из диалога "Settings..." и нажатия кнопки "Apply" (Size & Pos)
+bool CConEmuMain::SizeWindow(const CESize sizeW, const CESize sizeH)
+{
+	if (mp_Inside)
+	{
+		// В Inside - размер окна не меняется. Оно всегда подгоняется под родителя.
+		return false;
+	}
+
+	ConEmuWindowMode wndMode = GetWindowMode();
+	if (wndMode == wmMaximized || wndMode == wmFullScreen)
+	{
+		// Если окно развернуто - его размер таким образом (по консоли например) менять запрещается
+
+		// Quake??? Разрешить?
+
+		_ASSERTE(wndMode != wmMaximized && wndMode != wmFullScreen);
+		return false;
+	}
+
+	// Установить размер окна по расчетным значениям
+
+	RECT rcMargins = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD|CEM_TAB);
+	SIZE szPixelSize = GetDefaultSize(false, &sizeW, &sizeH);
+
+	_ASSERTE(rcMargins.left>=0 && rcMargins.right>=0 && rcMargins.top>=0 && rcMargins.bottom>=0);
+
+	int nWidth  = szPixelSize.cx + rcMargins.left + rcMargins.right;
+	int nHeight = szPixelSize.cy + rcMargins.top + rcMargins.bottom;
+
+	bool bSizeOK = false;
+
+	WndWidth.Set(true, sizeW.Style, sizeW.Value);
+	WndHeight.Set(false, sizeH.Style, sizeH.Value);
+
+	if (SetWindowPos(ghWnd, NULL, 0,0, nWidth, nHeight, SWP_NOMOVE|SWP_NOZORDER))
+	{
+		bSizeOK = true;
+	}
+
+	return bSizeOK;
+}
+
+// bCells==true - вернуть расчетный консольный размер, bCells==false - размер в пикселях (только консоль, без рамок-отступов-табов-прочая)
+// pSizeW и pSizeH указываются если нужно установить конкретные размеры
+// hMon может быть указан при переносе окна между мониторами например
+SIZE CConEmuMain::GetDefaultSize(bool bCells, const CESize* pSizeW/*=NULL*/, const CESize* pSizeH/*=NULL*/, HMONITOR hMon/*=NULL*/)
+{
+	//WARNING! Function must NOT call CalcRect to avoid cycling!
+
+	_ASSERTE(mp_Inside == NULL); // Must not be called in "Inside"?
+
+	SIZE sz = {80,25}; // This has no matter unless fatal errors
+
+	CESize sizeW = {WndWidth.Raw};
+	if (pSizeW && pSizeW->Value)
+		sizeW.Set(true, pSizeW->Style, pSizeW->Value);
+	CESize sizeH = {WndHeight.Raw};
+	if (pSizeH && pSizeH->Value)
+		sizeH.Set(false, pSizeH->Style, pSizeH->Value);
+
+	// Шрифт
+	int nFontWidth = gpSetCls->FontWidth();
+	int nFontHeight = gpSetCls->FontHeight();
+	if ((nFontWidth <= 0) || (nFontHeight <= 0))
+	{
+		Assert(nFontWidth>0 && nFontHeight>0);
+		return sz;
+	}
+
+
+
+	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD);
+	int nFrameX = rcFrameMargin.left + rcFrameMargin.right;
+	int nFrameY = rcFrameMargin.top + rcFrameMargin.bottom;
+	RECT rcTabMargins = mp_TabBar->GetMargins();
+
+	COORD conSize = {80, 25};
+
+	// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
+	bool bTabs = this->isTabsShown();
+	int nShiftX = nFrameX + (bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0);
+	int nShiftY = nFrameY + (bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
+
+	// Информация по монитору нам нужна только если размеры заданы в процентах
+	MONITORINFO mi = {sizeof(mi)};
+	if (sizeW.Style == ss_Percents || sizeH.Style == ss_Percents)
+	{
+		BOOL bMonitor = FALSE;
+		if (hMon != NULL)
+		{
+			GetMonitorInfoSafe(hMon, mi);
+		}
+		// по ghWnd - монитор не ищем (окно может быть свернуто), только по координатам
+		else
+		{
+			RECT rc = {this->wndX, this->wndY, this->wndX, this->wndY};
+			GetNearestMonitorInfo(&mi, NULL, &rc);
+		}
+	}
+
+	//// >> rcWnd
+	//rcWnd.left = this->wndX;
+	//rcWnd.top = this->wndY;
+
+	int nPixelWidth = 0, nPixelHeight = 0;
+
+	// Calculate width
+	if (sizeW.Style == ss_Pixels)
+	{
+		nPixelWidth = sizeW.Value;
+	}
+	else if (sizeW.Style == ss_Percents)
+	{
+		nPixelWidth = ((mi.rcWork.right - mi.rcWork.left) * sizeW.Value / 100) - nShiftX;
+	}
+	else if (sizeW.Value > 0)
+	{
+		conSize.X = sizeW.Value;
+	}
+
+	if (nPixelWidth <= 0)
+		nPixelWidth = conSize.X * nFontWidth;
+
+	//// >> rcWnd
+	//rcWnd.right = this->wndX + nPixelWidth + nShiftX;
+
+	// Calculate height
+	if (sizeH.Style == ss_Pixels)
+	{
+		nPixelHeight = sizeH.Value;
+	}
+	else if (sizeH.Style == ss_Percents)
+	{
+		nPixelHeight = ((mi.rcWork.bottom - mi.rcWork.top) * sizeH.Value / 100) - nShiftY;
+	}
+	else if (sizeH.Value > 0)
+	{
+		conSize.Y = sizeH.Value;
+	}
+	
+	if (nPixelHeight <= 0)
+		nPixelHeight = conSize.Y * nFontHeight;
+
+	//// >> rcWnd
+	//rcWnd.bottom = this->wndY + nPixelHeight + nShiftY;
+
+	if (bCells)
+	{
+		sz.cx = nPixelWidth / nFontWidth;
+		sz.cy = nPixelHeight / nFontHeight;
+	}
+	else
+	{
+		sz.cx = nPixelWidth;
+		sz.cy = nPixelHeight;
+	}
+
+	return sz;
+}
+
+bool CConEmuMain::isTabsShown()
+{
+	if (gpSet->isTabs == 1)
+		return true;
+	if (mp_TabBar && mp_TabBar->IsTabsShown())
+		return true;
+	return false;
+}
+
 // Вызывается при старте программы, для вычисления mrc_Ideal - размера окна по умолчанию
 RECT CConEmuMain::GetDefaultRect()
 {
@@ -1262,11 +1426,12 @@ RECT CConEmuMain::GetDefaultRect()
 		{
 			WindowMode = wmNormal;
 
-			gpConEmu->wndX = rcWnd.left;
-			gpConEmu->wndY = rcWnd.top;
+			this->wndX = rcWnd.left;
+			this->wndY = rcWnd.top;
 			RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);
-			gpConEmu->wndWidth = rcCon.right;
-			gpConEmu->wndHeight = rcCon.bottom;
+			// In the "Inside" mode we are interested only in "cells"
+			this->WndWidth.Set(true, ss_Standard, rcCon.right);
+			this->WndHeight.Set(false, ss_Standard, rcCon.bottom);
 
 			OnMoving(&rcWnd);
 
@@ -1274,44 +1439,53 @@ RECT CConEmuMain::GetDefaultRect()
 		}
 	}
 
-	int nWidth, nHeight;
-	MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
+	Assert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
 
-	COORD conSize;
-	conSize = MakeCoord(gpConEmu->wndWidth,gpConEmu->wndHeight);
 
 	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD);
-	int nShiftX = rcFrameMargin.left + rcFrameMargin.right;
-	int nShiftY = rcFrameMargin.top + rcFrameMargin.bottom;
+	int nFrameX = rcFrameMargin.left + rcFrameMargin.right;
+	int nFrameY = rcFrameMargin.top + rcFrameMargin.bottom;
 	RECT rcTabMargins = mp_TabBar->GetMargins();
-	// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
-	nWidth  = conSize.X * gpSetCls->FontWidth() + nShiftX
-	          + ((gpSet->isTabs == 1) ? (rcTabMargins.left+rcTabMargins.right) : 0);
-	nHeight = conSize.Y * gpSetCls->FontHeight() + nShiftY
-	          + ((gpSet->isTabs == 1) ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
-	rcWnd = MakeRect(gpConEmu->wndX, gpConEmu->wndY, gpConEmu->wndX+nWidth, gpConEmu->wndY+nHeight);
 
+	// Если табы показываются всегда (или сейчас) - сразу добавим их размер, чтобы размер консоли был заказанным
+	bool bTabs = this->isTabsShown();
+	int nShiftX = nFrameX + (bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0);
+	int nShiftY = nFrameY + (bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
+
+	// Расчет размеров
+	SIZE szConPixels = GetDefaultSize(false);
+
+	// >> rcWnd
+	rcWnd.left = this->wndX;
+	rcWnd.top = this->wndY;
+	rcWnd.right = this->wndX + szConPixels.cx + nShiftX;
+	rcWnd.bottom = this->wndY + szConPixels.cy + nShiftY;
+
+
+	// Go
 	if (gpSet->isQuakeStyle)
 	{
 		HMONITOR hMon;
-		POINT pt = {gpConEmu->wndX+2*nShiftX,gpConEmu->wndY+2*nShiftY};
+		POINT pt = {this->wndX+2*nFrameX,this->wndY+2*nFrameY};
 		if (ghWnd)
 		{
-			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
-			pt.x = (rcWnd.left+rcWnd.right)/2;
-			pt.y = (rcWnd.top+rcWnd.bottom)/2;
+			RECT rcReal; GetWindowRect(ghWnd, &rcReal);
+			pt.x = (rcReal.left+rcReal.right)/2;
+			pt.y = (rcReal.top+rcReal.bottom)/2;
 		}
 		hMon = MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
 
 		MONITORINFO mi = {sizeof(mi)};
-		if (!GetMonitorInfo(hMon, &mi))
-			SystemParametersInfo(SPI_GETWORKAREA, 0, &mi.rcWork, 0);
+		GetMonitorInfoSafe(hMon, mi);
 
 		bool bChange = false;
 
 		// Если успешно - подгоняем по экрану
 		if (mi.rcWork.right > mi.rcWork.left)
 		{
+			int nWidth = rcWnd.right - rcWnd.left;
+			int nHeight = rcWnd.bottom - rcWnd.top;
+
 			switch (gpSet->_WindowMode)
 			{
 				case wmMaximized:
@@ -1338,8 +1512,11 @@ RECT CConEmuMain::GetDefaultRect()
 
 				case wmNormal:
 				{
-					int nWidth = rcWnd.right - rcWnd.left;
-					rcWnd.left = max(mi.rcWork.left,((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
+					// Если выбран режим "Fixed" - разрешим задавать левую координату
+					if (!gpSet->wndCascade)
+						rcWnd.left = max(mi.rcWork.left,min(gpConEmu->wndX,(mi.rcWork.right - nWidth)));
+					else
+						rcWnd.left = max(mi.rcWork.left,((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
 					rcWnd.right = min(mi.rcWork.right,(rcWnd.left + nWidth));
 					rcWnd.top = mi.rcWork.top - rcFrameMargin.top;
 					rcWnd.bottom = rcWnd.top + nHeight;
@@ -1353,17 +1530,18 @@ RECT CConEmuMain::GetDefaultRect()
 		if (bChange)
 		{
 			ptFullScreenSize.x = rcWnd.right - rcWnd.left + 1;
-			ptFullScreenSize.y = mi.rcMonitor.bottom - mi.rcMonitor.top + nShiftY;
+			ptFullScreenSize.y = mi.rcMonitor.bottom - mi.rcMonitor.top + nFrameY;
 
 			DEBUGTEST(RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN));
 			//if (rcCon.right)
-			//	gpConEmu->wndWidth = rcCon.right;
+			//	this->wndWidth = rcCon.right;
 
-			gpConEmu->wndX = rcWnd.left;
-			gpConEmu->wndY = rcWnd.top;
+			this->wndX = rcWnd.left;
+			this->wndY = rcWnd.top;
 		}
 	}
-	else if ( gpSet->wndCascade)
+	// При старте, если указан "Cascade" (то есть только при создании окна)
+	else if (gpSet->wndCascade && !ghWnd)
 	{
 		RECT rcScreen = MakeRect(800,600);
 		int nMonitors = GetSystemMetrics(SM_CMONITORS);
@@ -1427,8 +1605,8 @@ RECT CConEmuMain::GetDefaultRect()
 		}
 
 		// Скорректировать X/Y при каскаде
-		gpConEmu->wndX = rcWnd.left;
-		gpConEmu->wndY = rcWnd.top;
+		this->wndX = rcWnd.left;
+		this->wndY = rcWnd.top;
 	}
 
 	OnMoving(&rcWnd);
@@ -1771,7 +1949,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	//_ASSERTE(WindowMode==wmNormal);
 
 	// Расчет размеров окна в Normal режиме
-	if ((gpConEmu->wndWidth && gpConEmu->wndHeight) || mp_Inside)
+	if ((this->WndWidth.Value && this->WndHeight.Value) || mp_Inside)
 	{
 		MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
 		//COORD conSize; conSize.X=gpSet->wndWidth; conSize.Y=gpSet->wndHeight;
@@ -1782,9 +1960,9 @@ BOOL CConEmuMain::CreateMainWindow()
 		//int nShiftY = rcFrameMargin.top + rcFrameMargin.bottom;
 		//// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
 		//nWidth  = conSize.X * gpSetCls->FontWidth() + nShiftX
-		//	+ ((gpSet->isTabs == 1) ? (gpSet->rcTabMargins.left+gpSet->rcTabMargins.right) : 0);
+		//	+ (this->isTabsShown() ? (gpSet->rcTabMargins.left+gpSet->rcTabMargins.right) : 0);
 		//nHeight = conSize.Y * gpSetCls->FontHeight() + nShiftY
-		//	+ ((gpSet->isTabs == 1) ? (gpSet->rcTabMargins.top+gpSet->rcTabMargins.bottom) : 0);
+		//	+ (this->isTabsShown() ? (gpSet->rcTabMargins.top+gpSet->rcTabMargins.bottom) : 0);
 		//mrc_Ideal = MakeRect(gpSet->wndX, gpSet->wndY, gpSet->wndX+nWidth, gpSet->wndY+nHeight);
 		RECT rcWnd = GetDefaultRect();
 		UpdateIdealRect(rcWnd);
@@ -1793,7 +1971,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	}
 	else
 	{
-		_ASSERTE(gpConEmu->wndWidth && gpConEmu->wndHeight);
+		_ASSERTE(this->WndWidth.Value && this->WndHeight.Value);
 	}
 
 	HWND hParent = mp_Inside ? mp_Inside->mh_InsideParentWND : ghWndApp;
@@ -1803,15 +1981,15 @@ BOOL CConEmuMain::CreateMainWindow()
 		wchar_t szCreate[128];
 		_wsprintf(szCreate, SKIPLEN(countof(szCreate)) L"Creating main window.%s%s%s Parent=x%08X X=%i Y=%i W=%i H=%i style=x%08X exStyle=x%08X Mode=%u",
 			gpSet->isQuakeStyle ? L" Quake" : L"",
-			gpConEmu->mp_Inside ? L" Inside" : L"",
+			this->mp_Inside ? L" Inside" : L"",
 			gpSet->isDesktopMode ? L" Desktop" : L"",
 			(DWORD)hParent,
-			gpConEmu->wndX, gpConEmu->wndY, nWidth, nHeight, style, styleEx,
+			this->wndX, this->wndY, nWidth, nHeight, style, styleEx,
 			gpSet->isQuakeStyle ? gpSet->_WindowMode : WindowMode);
 		LogString(szCreate);
 	}
 
-	//if (gpConEmu->WindowMode == wmMaximized) style |= WS_MAXIMIZE;
+	//if (this->WindowMode == wmMaximized) style |= WS_MAXIMIZE;
 	//style |= WS_VISIBLE;
 	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
 	WARNING("На ноуте вылезает за пределы рабочей области");
@@ -3963,155 +4141,9 @@ bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
 	return true;
 }
 
-//// returns difference between window size and client area size of inWnd in outShift->x, outShift->y
-//void CConEmuMain::GetCWShift(HWND inWnd, POINT *outShift)
-//{
-//    RECT cRect;
-//
-//    GetCWShift ( inWnd, &cRect );
-//
-//    outShift->x = cRect.right  - cRect.left;
-//    outShift->y = cRect.bottom - cRect.top;
-//}
-//
-//// returns margins between window frame and client area
-//void CConEmuMain::GetCWShift(HWND inWnd, RECT *outShift)
-//{
-//    RECT cRect, wRect;
-//    Get ClientRect(inWnd, &cRect); // The left and top members are zero. The right and bottom members contain the width and height of the window.
-//    MapWindowPoints(inWnd, NULL, (LPPOINT)&cRect, 2);
-//    GetWindowRect(inWnd, &wRect); // screen coordinates of the upper-left and lower-right corners of the window
-//    outShift->top = wRect.top - cRect.top;          // <0
-//    outShift->left = wRect.left - cRect.left;       // <0
-//    outShift->bottom = wRect.bottom - cRect.bottom; // >0
-//    outShift->right = wRect.right - cRect.right;    // >0
-//}
-
-//// Вернуть отступы со всех сторон от краев клиентской части главного окна до краев окна отрисовки
-//RECT CConEmuMain::ConsoleOffsetRect()
-//{
-//    RECT rect; memset(&rect, 0, sizeof(rect));
-//
-//  if (gpConEmu->mp_TabBar->IsActive())
-//      rect = gpConEmu->mp_TabBar->GetMargins();
-//
-//  /*rect.top = gpConEmu->mp_TabBar->IsActive()?gpConEmu->mp_TabBar->Height():0;
-//    rect.left = 0;
-//    rect.bottom = 0;
-//    rect.right = 0;*/
-//
-//  return rect;
-//}
-
-//// Положение дочернего окна отрисовки
-//RECT CConEmuMain::DCClientRect(RECT* pClient/*=NULL*/)
-//{
-//    RECT rect;
-//  if (pClient)
-//      rect = *pClient;
-//  else
-//      Get ClientRect(ghWnd, &rect);
-//  if (gpConEmu->mp_TabBar->IsActive()) {
-//      RECT mr = gpConEmu->mp_TabBar->GetMargins();
-//      //rect.top += gpConEmu->mp_TabBar->Height();
-//      rect.top += mr.top;
-//      rect.left += mr.left;
-//      rect.right -= mr.right;
-//      rect.bottom -= mr.bottom;
-//  }
-//
-//  if (pClient)
-//      *pClient = rect;
-//    return rect;
-//}
-
-//// returns console size in columns and lines calculated from current window size
-//// rectInWindow - если true - с рамкой, false - только клиент
-//COORD CConEmuMain::ConsoleSizeFromWindow(RECT* arect /*= NULL*/, bool frameIncluded /*= false*/, bool alreadyClient /*= false*/)
-//{
-//    COORD size;
-//
-//  if (!gpSet->Log Font.lfWidth || !gpSet->Log Font.lfHeight) {
-//      MBoxAssert(FALSE);
-//      // размер шрифта еще не инициализирован! вернем текущий размер консоли! TODO:
-//      CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-//      GetConsoleScreenBufferInfo(mp_ VActive->hConOut(), &inf);
-//      size = inf.dwSize;
-//      return size;
-//  }
-//
-//    RECT rect, consoleRect;
-//    if (arect == NULL)
-//    {
-//      frameIncluded = false;
-//        Get ClientRect(ghWnd, &rect);
-//      consoleRect = ConsoleOffsetRect();
-//    }
-//    else
-//    {
-//        rect = *arect;
-//      if (alreadyClient)
-//          memset(&consoleRect, 0, sizeof(consoleRect));
-//      else
-//          consoleRect = ConsoleOffsetRect();
-//    }
-//
-//    size.X = (rect.right - rect.left - (frameIncluded ? cwShift.x : 0) - consoleRect.left - consoleRect.right)
-//      / gpSet->LogFont.lfWidth;
-//    size.Y = (rect.bottom - rect.top - (frameIncluded ? cwShift.y : 0) - consoleRect.top - consoleRect.bottom)
-//      / gpSet->LogFont.lfHeight;
-//    #ifdef MSGLOGGER
-//        char szDbg[100]; wsprintfA(szDbg, "   ConsoleSizeFromWindow={%i,%i}\n", size.X, size.Y);
-//        DEBUGLOGFILE(szDbg);
-//    #endif
-//    return size;
-//}
-
-//// return window size in pixels calculated from console size
-//RECT CConEmuMain::WindowSizeFromConsole(COORD consoleSize, bool rectInWindow /*= false*/, bool clientOnly /*= false*/)
-//{
-//    RECT rect;
-//    rect.top = 0;
-//    rect.left = 0;
-//    RECT offsetRect;
-//  if (clientOnly)
-//      memset(&offsetRect, 0, sizeof(RECT));
-//  else
-//      offsetRect = ConsoleOffsetRect();
-//    rect.bottom = consoleSize.Y * gpSet->LogFont.lfHeight + (rectInWindow ? cwShift.y : 0) + offsetRect.top + offsetRect.bottom;
-//    rect.right = consoleSize.X * gpSet->LogFont.lfWidth + (rectInWindow ? cwShift.x : 0) + offsetRect.left + offsetRect.right;
-//    #ifdef MSGLOGGER
-//        char szDbg[100]; wsprintfA(szDbg, "   WindowSizeFromConsole={%i,%i}\n", rect.right,rect.bottom);
-//        DEBUGLOGFILE(szDbg);
-//    #endif
-//    return rect;
-//}
-
-//// size in columns and lines
-//// здесь нужно привести размер GUI к "общей" ширине консолей в символах
-//// т.е. если по горизонтали есть 2 консоли, и просят размер 80x25
-//// то эти две консоли должны стать 40x25 а GUI отресайзиться под 80x25
-//void CConEmuMain::SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*/ bool bSetRedraw /*= false*/)
-//{
-//	CVConGroup::SetAllConsoleWindowsSize(size, /*updateInfo,*/ bSetRedraw);
-//}
-
-// Изменить размер консоли по размеру окна (главного)
-void CConEmuMain::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/, bool bSync/*=false*/)
-{
-	CVConGroup::SyncConsoleToWindow(prcNewWnd, bSync);
-}
-
 void CConEmuMain::SyncNtvdm()
 {
 	OnSize();
-}
-
-// -- функция пустая, игнорируется
-// Установить размер основного окна по текущему размеру mp_ VActive
-void CConEmuMain::SyncWindowToConsole()
-{
-	CVConGroup::SyncWindowToConsole();
 }
 
 void CConEmuMain::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
@@ -4123,9 +4155,16 @@ void CConEmuMain::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
 	if (isNtvdm())
 		return;
 
-	if (!wndWidth || !wndHeight)
+	if (!WndWidth.Value || !WndHeight.Value)
 	{
-		MBoxAssert(wndWidth!=0 && wndHeight!=0);
+		Assert(WndWidth.Value!=0 && WndHeight.Value!=0);
+		return;
+	}
+
+	if ((WndWidth.Style != ss_Standard) || (WndHeight.Style != ss_Standard))
+	{
+		//TODO: Ниже WndWidth&WndHeight используется для расчета размера шрифта...
+		Assert(WndWidth.Value!=0 && WndHeight.Value!=0);
 		return;
 	}
 
@@ -4148,11 +4187,11 @@ void CConEmuMain::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
 	}
 
 	// !!! Для CER_DC размер в rc.right
-	int nFontW = (rc.right - rc.left) / wndWidth;
+	int nFontW = (rc.right - rc.left) / WndWidth.Value;
 
 	if (nFontW < 5) nFontW = 5;
 
-	int nFontH = (rc.bottom - rc.top) / wndHeight;
+	int nFontH = (rc.bottom - rc.top) / WndHeight.Value;
 
 	if (nFontH < 8) nFontH = 8;
 
@@ -4205,8 +4244,37 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 			// При ресайзе через окно настройки - mp_ VActive еще не перерисовался
 			// так что и TextWidth/TextHeight не обновился
 			//-- gpSetCls->UpdateSize(mp_ VActive->TextWidth, mp_ VActive->TextHeight);
-			RECT rcAll = CVConGroup::AllTextRect();
-			gpSetCls->UpdateSize(rcAll.right, rcAll.bottom);
+			CESize w = {this->WndWidth.Raw};
+			CESize h = {this->WndHeight.Raw};
+			
+			// Если хранятся размеры в ячейках - нужно позвать CVConGroup::AllTextRect()
+			if ((w.Style == ss_Standard) || (h.Style == ss_Standard))
+			{
+				RECT rcAll = CVConGroup::AllTextRect();
+				if (w.Style == ss_Standard)
+					w.Set(true, ss_Standard, rcAll.right);
+				if (h.Style == ss_Standard)
+					h.Set(false, ss_Standard, rcAll.bottom);
+			}
+
+			// Размеры в процентах от монитора?
+			if ((w.Style == ss_Percents) || (h.Style == ss_Percents))
+			{
+				MONITORINFO mi;
+				GetNearestMonitorInfo(&mi, NULL, &rcNormal);
+
+				if (w.Style == ss_Percents)
+					w.Set(true, ss_Percents, (rcNormal.right-rcNormal.left)*100/(mi.rcWork.right - mi.rcWork.left) );
+				if (h.Style == ss_Percents)
+					h.Set(false, ss_Percents, (rcNormal.bottom-rcNormal.top)*100/(mi.rcWork.bottom - mi.rcWork.top) );
+			}
+
+			if (w.Style == ss_Pixels)
+				w.Set(true, ss_Pixels, rcNormal.right-rcNormal.left);
+			if (h.Style == ss_Pixels)
+				h.Set(false, ss_Pixels, rcNormal.bottom-rcNormal.top);
+
+			gpSetCls->UpdateSize(w, h);
 		}
 	}
 }
@@ -4370,8 +4438,8 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	if (gpSet->isQuakeStyle && !bPrevStyle)
 	{
 		m_QuakePrevSize.bWasSaved = true;
-		m_QuakePrevSize.wndWidth = gpConEmu->wndWidth;
-		m_QuakePrevSize.wndHeight = gpConEmu->wndHeight;
+		m_QuakePrevSize.wndWidth = gpConEmu->WndWidth;
+		m_QuakePrevSize.wndHeight = gpConEmu->WndHeight;
 		m_QuakePrevSize.wndX = gpConEmu->wndX;
 		m_QuakePrevSize.wndY = gpConEmu->wndY;
 		m_QuakePrevSize.nFrame = gpSet->nHideCaptionAlwaysFrame;
@@ -4381,8 +4449,8 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	}
 	else if (!gpSet->isQuakeStyle && m_QuakePrevSize.bWasSaved)
 	{
-		gpConEmu->wndWidth = m_QuakePrevSize.wndWidth;
-		gpConEmu->wndHeight = m_QuakePrevSize.wndHeight;
+		gpConEmu->WndWidth = m_QuakePrevSize.wndWidth;
+		gpConEmu->WndHeight = m_QuakePrevSize.wndHeight;
 		gpConEmu->wndX = m_QuakePrevSize.wndX;
 		gpConEmu->wndY = m_QuakePrevSize.wndY;
 		gpSet->nHideCaptionAlwaysFrame = m_QuakePrevSize.nFrame;
@@ -4451,15 +4519,54 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 		return false;
 	}
 
+	m_TileMode = Tile;
+
 	return true;
 }
 
 ConEmuWindowCommand CConEmuMain::GetTileMode(bool Estimate)
 {
-	_ASSERTE(FALSE && "Доделать");
+	_ASSERTE(IsWindowVisible(ghWnd) && !isFullScreen() && !isZoomed() && !isIconic());
 
 	if (Estimate && IsSizeFree())
 	{
+		ConEmuWindowCommand CurTile = cwc_Current;
+
+		MONITORINFO mi;
+		GetNearestMonitorInfo(&mi, NULL, NULL, ghWnd);
+		RECT rcWnd;
+		GetWindowRect(ghWnd, &rcWnd);
+		// _abs(x1-x2) <= 1 ?
+		if ((rcWnd.right == mi.rcWork.right)
+			&& (rcWnd.top == mi.rcWork.top)
+			&& (rcWnd.bottom == mi.rcWork.bottom))
+		{
+			int nCenter = ((mi.rcWork.right + mi.rcWork.left) >> 1) - rcWnd.left;
+			if (_abs(nCenter) <= 4)
+			{
+				CurTile = cwc_TileRight;
+			}
+		}
+		else if ((rcWnd.left == mi.rcWork.left)
+			&& (rcWnd.top == mi.rcWork.top)
+			&& (rcWnd.bottom == mi.rcWork.bottom))
+		{
+			int nCenter = ((mi.rcWork.right + mi.rcWork.left) >> 1) - rcWnd.right;
+			if (_abs(nCenter) <= 4)
+			{
+				CurTile = cwc_TileLeft;
+			}
+		}
+
+		if (m_TileMode != CurTile)
+		{
+			// Сменился!
+			wchar_t szTile[100];
+			_wsprintf(szTile, SKIPLEN(countof(szTile)) L"Tile mode was changed externally: Old=%u, New=%u", (int)m_TileMode, (int)CurTile);
+			LogString(szTile);
+
+			m_TileMode = CurTile;
+		}
 	}
 
 	return m_TileMode;
@@ -4549,7 +4656,8 @@ bool CConEmuMain::JumpNextMonitor(bool Next)
 	}
 
 	MONITORINFO miCur;
-	GetNearestMonitor(&miCur, &rcMain);
+	DEBUGTEST(HMONITOR hCurMonitor = )
+		GetNearestMonitor(&miCur, &rcMain);
 
 	RECT rcNewMain = rcMain;
 
@@ -4571,6 +4679,30 @@ bool CConEmuMain::JumpNextMonitor(bool Next)
 
 		int Width = (rcMain.right - rcMain.left);
 		int Height = (rcMain.bottom - rcMain.top);
+
+		// Если ширина или высота были заданы в процентах (от монитора)
+		if ((WndWidth.Style == ss_Percents) || (WndHeight.Style == ss_Percents))
+		{
+			_ASSERTE(!gpSet->isQuakeStyle); // Quake?
+
+			if ((WindowMode == wmNormal) && hNext)
+			{
+				RECT rcMargins = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD|CEM_TAB);
+				SIZE szNewSize = GetDefaultSize(false, &this->WndWidth, &this->WndHeight, hNext);
+				if ((szNewSize.cx > 0) && (szNewSize.cy > 0))
+				{
+					if (WndWidth.Style == ss_Percents)
+						Width = szNewSize.cx + rcMargins.left + rcMargins.right;
+					if (WndHeight.Style == ss_Percents)
+						Height = szNewSize.cy + rcMargins.top + rcMargins.bottom;
+				}
+				else
+				{
+					_ASSERTE((szNewSize.cx > 0) && (szNewSize.cy > 0));
+				}
+			}
+		}
+
 
 		if (ShiftX > 0)
 		{
@@ -4769,7 +4901,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 		case wmNormal:
 		{
 			DEBUGLOGFILE("SetWindowMode(wmNormal)\n");
-			RECT consoleSize;
+			//RECT consoleSize;
 
 			RECT rcIdeal = (gpSet->isQuakeStyle) ? GetDefaultRect() : GetIdealRect();
 			AutoSizeFont(rcIdeal, CER_MAIN);
@@ -4780,7 +4912,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				goto wrap;
 			}
 
-			consoleSize = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
+			//consoleSize = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
 
 			// Тут именно "::IsZoomed(ghWnd)"
 			if (isIconic() || ::IsZoomed(ghWnd))
@@ -4828,18 +4960,14 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			//if (mb_MaximizedHideCaption)
 			//	mb_MaximizedHideCaption = FALSE;
 
-			RECT rcNew;
-			if (mp_Inside)
+			RECT rcNew = GetDefaultRect();
+			if (mp_Inside == NULL)
 			{
-				rcNew = GetDefaultRect();
-			}
-			else
-			{
-				rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE_ALL);
-				//int nWidth = rcNew.right-rcNew.left;
-				//int nHeight = rcNew.bottom-rcNew.top;
-				//rcNew.left+=gpConEmu->wndX; rcNew.top+=gpConEmu->wndY;
-				//rcNew.right+=gpConEmu->wndX; rcNew.bottom+=gpConEmu->wndY;
+				//130508 - интересует только ширина-высота
+				//rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE_ALL);
+				rcNew.right -= rcNew.left; rcNew.bottom -= rcNew.top;
+				rcNew.top = rcNew.left = 0;
+
 				if ((mrc_StoredNormalRect.right > mrc_StoredNormalRect.left) && (mrc_StoredNormalRect.bottom > mrc_StoredNormalRect.top))
 				{
 					rcNew.left+=mrc_StoredNormalRect.left; rcNew.top+=mrc_StoredNormalRect.top;
@@ -4852,12 +4980,9 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 					rcNew.right+=mi.rcWork.left; rcNew.bottom+=mi.rcWork.top;
 				}
 			}
-			// 2010-02-14 Проверку делаем ТОЛЬКО при загрузке настроек и включенном каскаде
-			//// Параметры именно такие, результат - просто подгонка rcNew под рабочую область текущего монитора
-			//rcNew = CalcRect(CER_CORRECTED, rcNew, CER_MAXIMIZED);
+
 			#ifdef _DEBUG
-			WINDOWPLACEMENT wpl; memset(&wpl,0,sizeof(wpl)); wpl.length = sizeof(wpl);
-			GetWindowPlacement(ghWnd, &wpl);
+			WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl);
 			#endif
 
 			if (gpSetCls->isAdvLogging)
@@ -5475,10 +5600,10 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 		if (!lbPosted)
 		{
 			lbPosted = true; // чтобы post не накапливались
-			#ifdef _DEBUG
-			int nCurConWidth = (int)CVConGroup::TextWidth();
-			int nCurConHeight = (int)CVConGroup::TextHeight();
-			#endif
+			//#ifdef _DEBUG
+			//int nCurConWidth = (int)CVConGroup::TextWidth();
+			//int nCurConHeight = (int)CVConGroup::TextHeight();
+			//#endif
 			PostMessage(ghWnd, mn_PostConsoleResize, 0,0);
 		}
 
@@ -8454,6 +8579,20 @@ void CConEmuMain::UpdateSizes()
 	}
 }
 
+void CConEmuMain::CheckNeedUpdateTitle(LPCWSTR asRConTitle)
+{
+	if (!asRConTitle)
+		return;
+
+	// Issue 1004: overflow of mn_MsgUpdateTitle when "/title" option was specified
+	if (TitleTemplate[0] != 0)
+		return;
+
+	// Если в консоли заголовок не менялся, но он отличается от заголовка в ConEmu
+	if (wcscmp(asRConTitle, GetLastTitle(false)))
+		UpdateTitle();
+}
+
 // !!!Warning!!! Никаких return. в конце функции вызывается необходимый CheckProcesses
 void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
 {
@@ -10469,6 +10608,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		CheckActiveLayoutName();
 
+		session.SetSessionNotification(true);
+
 		if (gpSet->isHideCaptionAlways())
 		{
 			OnHideCaption();
@@ -10812,6 +10953,8 @@ HWND CConEmuMain::PostCreateView(CConEmuChild* pChild)
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
 	LogString(L"CConEmuMain::OnDestroy()");
+
+	session.SetSessionNotification(false);
 
 	// Нужно проверить, вдруг окно закрылось без нашего ведома (InsideIntegration)
 	CVConGroup::OnDestroyConEmu();
@@ -11501,7 +11644,7 @@ HMONITOR CConEmuMain::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prc
 	}
 	else if (!ghWnd || (gpSet->isQuakeStyle && isIconic()))
 	{
-		_ASSERTE(gpConEmu->wndWidth>0 && gpConEmu->wndHeight>0);
+		_ASSERTE(gpConEmu->WndWidth.Value>0 && gpConEmu->WndHeight.Value>0);
 		RECT rcEvalWnd = GetDefaultRect();
 		hMon = GetNearestMonitorInfo(&mi, NULL, &rcEvalWnd);
 	}
@@ -16749,7 +16892,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	{
 		// После скрытия/закрытия PictureView нужно передернуть консоль - ее размер мог измениться
 		isPiewUpdate = false;
-		SyncConsoleToWindow();
+		CVConGroup::SyncConsoleToWindow();
 		//INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
 		InvalidateAll();
 	}
@@ -17304,6 +17447,7 @@ void CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg)
 	{
 	CASE_MSG(WM_CREATE);
+	CASE_MSG(WM_WTSSESSION_CHANGE);
 	CASE_MSG(WM_SHOWWINDOW);
 	CASE_MSG(WM_PAINT);
 	CASE_MSG(WM_SETHOTKEY);
@@ -17336,7 +17480,13 @@ void CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	CASE_MSG(WM_TIMER);
 	CASE_MSG(WM_VSCROLL);
 	default:
-		_wsprintfA(szLog, SKIPLEN(countof(szLog)) "Msg%04X(%u)", uMsg, uMsg);
+		{
+			LPCSTR pszReg = NULL;
+			if ((uMsg >= WM_APP) && m__AppMsgs.Get(uMsg, &pszReg) && pszReg && *pszReg)
+				_wsprintfA(szLog, SKIPLEN(countof(szLog)) "Msg%04X(%s)", uMsg, pszReg);
+			else
+				_wsprintfA(szLog, SKIPLEN(countof(szLog)) "Msg%04X(%u)", uMsg, uMsg);
+		}
 	}
 	#undef CASE_MSG
 
@@ -17463,6 +17613,17 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	return result;
 }
 
+UINT CConEmuMain::RegisterMessage(LPCSTR asLocal, LPCWSTR asGlobal)
+{
+	UINT nMsg;
+	if (asGlobal)
+		nMsg = RegisterWindowMessage(asGlobal);
+	else
+		nMsg = ++mn__FirstAppMsg;
+	m__AppMsgs.Set(nMsg, asLocal);
+	return nMsg;
+}
+
 // Window procedure for ghWnd
 // BUT! It may be called from child windows, e.g. for keyboard processing
 LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -17487,6 +17648,15 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	else if (messg >= WM_APP)
 	{
 		bool lbDbg2 = false;
+
+		wchar_t szDbg[127], szName[64];
+		LPCSTR pszReg = NULL;
+		if (m__AppMsgs.Get(messg, &pszReg) && pszReg && *pszReg)
+			MultiByteToWideChar(CP_ACP, 0, pszReg, -1, szName, countof(szName));
+		else
+			_wsprintf(szName, SKIPLEN(countof(szName)) L"x%03X", messg);
+		 _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WndProc(%i{%s},%i,%i)\n", messg, szName, (DWORD)wParam, (DWORD)lParam);
+		DEBUGSTRMSG2(szDbg);
 	}
 	else
 	{
@@ -17516,6 +17686,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_SETHOTKEY:
 			gnWndSetHotkeyOk = wParam;
 			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
+			break;
+
+		case WM_WTSSESSION_CHANGE:
+			result = this->session.SessionChanged(wParam, lParam);
 			break;
 
 		case WM_NOTIFY:

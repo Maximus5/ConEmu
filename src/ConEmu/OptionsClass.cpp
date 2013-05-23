@@ -197,6 +197,13 @@ namespace SettingsNS
 	const WORD nSizeCtrlId[] = {tWndWidth, stWndWidth, tWndHeight, stWndHeight};
 	const WORD nTaskCtrlId[] = {tCmdGroupName, tCmdGroupGuiArg, tCmdGroupCommands, stCmdTaskAdd, cbCmdGroupApp, cbCmdTasksDir, cbCmdTasksParm, cbCmdTasksActive};
 	const WORD nStatusColorIds[] = {stStatusColorBack, tc35, c35, stStatusColorLight, tc36, c36, stStatusColorDark, tc37, c37};
+	const struct TabDefaultClickAction { int value; WCHAR *name; } tabDblClickActions[4] =
+	{
+		{ 0, L"No action" },
+		{ 1, L"Auto" },
+		{ 2, L"Maximize/restore window size" },
+		{ 3, L"Open new shell" }
+	};
 };
 
 #define FillListBox(hDlg,nDlgID,Items,Values,Value) \
@@ -221,6 +228,16 @@ namespace SettingsNS
 		SendDlgItemMessage(hDlg, nDlgID, CB_SETCURSEL, num, 0); \
 	}
 
+#define FillListBoxTabDefaultClickAction(hDlg,nDlgID,Value) \
+	{ \
+		u8 num = Value;  \
+		for (size_t i = 0; i < countof(SettingsNS::tabDblClickActions); i++) \
+		{ \
+			SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, (LPARAM)SettingsNS::tabDblClickActions[i].name); \
+			if (SettingsNS::tabDblClickActions[i].value == num) num = i; \
+		} \
+		SendDlgItemMessage(hDlg, nDlgID, CB_SETCURSEL, num, 0); \
+	}
 
 #define GetListBox(hDlg,nDlgID,Items,Values,Value) \
 	_ASSERTE(countof(Items) == countof(Values)); \
@@ -972,8 +989,8 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig,
 	{
 		gpConEmu->wndX = gpSet->_wndX;
 		gpConEmu->wndY = gpSet->_wndY;
-		gpConEmu->wndWidth = gpSet->_wndWidth;
-		gpConEmu->wndHeight = gpSet->_wndHeight;
+		gpConEmu->WndWidth.Raw = gpSet->wndWidth.Raw;
+		gpConEmu->WndHeight.Raw = gpSet->wndHeight.Raw;
 	}
 
 	if (ghWnd == NULL)
@@ -2018,15 +2035,16 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 		checkRadioButton(hWnd2, rNormal, rFullScreen, rNormal);
 
 	//swprintf_c(temp, L"%i", wndWidth);   SetDlgItemText(hWnd2, tWndWidth, temp);
-	SendDlgItemMessage(hWnd2, tWndWidth, EM_SETLIMITTEXT, 3, 0);
+	SendDlgItemMessage(hWnd2, tWndWidth, EM_SETLIMITTEXT, 6, 0);
 	//swprintf_c(temp, L"%i", wndHeight);  SetDlgItemText(hWnd2, tWndHeight, temp);
-	SendDlgItemMessage(hWnd2, tWndHeight, EM_SETLIMITTEXT, 3, 0);
+	SendDlgItemMessage(hWnd2, tWndHeight, EM_SETLIMITTEXT, 6, 0);
 	
-	UpdateSize(gpConEmu->wndWidth, gpConEmu->wndHeight);
+	UpdateSize(gpConEmu->WndWidth, gpConEmu->WndHeight);
 
 	EnableWindow(GetDlgItem(hWnd2, cbApplyPos), FALSE);
 	SendDlgItemMessage(hWnd2, tWndX, EM_SETLIMITTEXT, 6, 0);
 	SendDlgItemMessage(hWnd2, tWndY, EM_SETLIMITTEXT, 6, 0);
+	UpdatePosSizeEnabled(hWnd2);
 	MCHKHEAP
 
 	UpdatePos(gpConEmu->wndX, gpConEmu->wndY, true);
@@ -2056,6 +2074,8 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
 	SetDlgItemInt(hWnd2, tPadSize, gpSet->nCenterConsolePad, FALSE);
+
+	checkDlgButton(hWnd2, cbIntegralSize, !gpSet->mb_IntegralSize);
 
 	checkDlgButton(hWnd2, cbSnapToDesktopEdges, gpSet->isSnapToDesktopEdges);
 
@@ -3124,6 +3144,7 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbMultiIterate, gpSet->isMultiIterate);
 
+	FillListBoxTabDefaultClickAction(hWnd2, tTabDblClickAction, gpSet->nTabDblClickAction);
 
 	//
 	//SetupHotkeyChecks(hTabs);
@@ -4519,28 +4540,47 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case cbApplyPos:
+			if (!gpConEmu->mp_Inside)
 			{
-				if (!gpSet->isQuakeStyle)
+				if (gpSet->isQuakeStyle
+					|| (IsChecked(hWnd2, rNormal) == BST_CHECKED))
 				{
-					if (IsChecked(hWnd2, rNormal) == BST_CHECKED)
+					int newX, newY;
+					wchar_t* psSize;
+					CESize newW, newH;
+					//wchar_t temp[MAX_PATH];
+					//GetDlgItemText(hWnd2, tWndWidth, temp, countof(temp));  newW = klatoi(temp);
+					//GetDlgItemText(hWnd2, tWndHeight, temp, countof(temp)); newH = klatoi(temp);
+					BOOL lbOk;
+
+					psSize = GetDlgItemText(hWnd2, tWndWidth);
+					if (!psSize || !newW.SetFromString(true, psSize))
+						newW.Raw = gpConEmu->WndWidth.Raw;
+					SafeFree(psSize);
+					psSize = GetDlgItemText(hWnd2, tWndHeight);
+					if (!psSize || !newH.SetFromString(false, psSize))
+						newH.Raw = gpConEmu->WndHeight.Raw;
+					SafeFree(psSize);
+
+					newX = (int)GetDlgItemInt(hWnd2, tWndX, &lbOk, TRUE);
+					if (!lbOk) newX = gpConEmu->wndX;
+					newY = (int)GetDlgItemInt(hWnd2, tWndY, &lbOk, TRUE);
+					if (!lbOk) newY = gpConEmu->wndY;
+
+					if (gpSet->isQuakeStyle)
 					{
-						int newX, newY;
-						DWORD newW, newH;
-						//wchar_t temp[MAX_PATH];
-						//GetDlgItemText(hWnd2, tWndWidth, temp, countof(temp));  newW = klatoi(temp);
-						//GetDlgItemText(hWnd2, tWndHeight, temp, countof(temp)); newH = klatoi(temp);
-						BOOL lbOk;
-
-						newW = GetDlgItemInt(hWnd2, tWndWidth, &lbOk, FALSE);
-						if (!lbOk) newW = gpConEmu->wndWidth;
-						newH = GetDlgItemInt(hWnd2, tWndHeight, &lbOk, FALSE);
-						if (!lbOk) newH = gpConEmu->wndHeight;
-
-						newX = (int)GetDlgItemInt(hWnd2, tWndX, &lbOk, TRUE);
-						if (!lbOk) newX = gpConEmu->wndX;
-						newY = (int)GetDlgItemInt(hWnd2, tWndY, &lbOk, TRUE);
-						if (!lbOk) newY = gpConEmu->wndY;
-
+						SetFocus(GetDlgItem(hWnd2, tWndWidth));
+						// Чтобы GetDefaultRect сработал правильно - сразу обновим значения
+						if (!gpSet->wndCascade)
+							gpConEmu->wndX = newX;
+						gpConEmu->WndWidth.Set(true, newW.Style, newW.Value);
+						gpConEmu->WndHeight.Set(false, newH.Style, newH.Value);
+						RECT rcQuake = gpConEmu->GetDefaultRect();
+						// And size/move!
+						SetWindowPos(ghWnd, NULL, rcQuake.left, rcQuake.top, rcQuake.right-rcQuake.left, rcQuake.bottom-rcQuake.top, SWP_NOZORDER);
+					}
+					else
+					{
 						SetFocus(GetDlgItem(hWnd2, rNormal));
 
 						if (gpConEmu->isZoomed() || gpConEmu->isIconic() || gpConEmu->isFullScreen())
@@ -4549,36 +4589,39 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 
 						// Установить размер
-						CVConGroup::SetAllConsoleWindowsSize(MakeCoord(newW, newH), /*true,*/ true, true);
+						gpConEmu->SizeWindow(newW, newH);
 
 						SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 					}
-					else if (IsChecked(hWnd2, rMaximized) == BST_CHECKED)
-					{
-						SetFocus(GetDlgItem(hWnd2, rMaximized));
-
-						if (!gpConEmu->isZoomed())
-							gpConEmu->SetWindowMode(wmMaximized);
-					}
-					else if (IsChecked(hWnd2, rFullScreen) == BST_CHECKED)
-					{
-						SetFocus(GetDlgItem(hWnd2, rFullScreen));
-
-						if (!gpConEmu->isFullScreen())
-							gpConEmu->SetWindowMode(wmFullScreen);
-					}
-
-					// Запомнить "идеальный" размер окна, выбранный пользователем
-					gpConEmu->StoreIdealRect();
-					//gpConEmu->UpdateIdealRect(TRUE);
 				}
+				else if (IsChecked(hWnd2, rMaximized) == BST_CHECKED)
+				{
+					SetFocus(GetDlgItem(hWnd2, rMaximized));
+
+					if (!gpConEmu->isZoomed())
+						gpConEmu->SetWindowMode(wmMaximized);
+				}
+				else if (IsChecked(hWnd2, rFullScreen) == BST_CHECKED)
+				{
+					SetFocus(GetDlgItem(hWnd2, rFullScreen));
+
+					if (!gpConEmu->isFullScreen())
+						gpConEmu->SetWindowMode(wmFullScreen);
+				}
+
+				// Запомнить "идеальный" размер окна, выбранный пользователем
+				gpConEmu->StoreIdealRect();
+				//gpConEmu->UpdateIdealRect(TRUE);
+
 				EnableWindow(GetDlgItem(hWnd2, cbApplyPos), FALSE);
 				apiSetForegroundWindow(ghOpWnd);
 			} // cbApplyPos
 			break;
 		case rCascade:
 		case rFixed:
-			gpSet->wndCascade = CB == rCascade;
+			gpSet->wndCascade = (CB == rCascade);
+			if (gpSet->isQuakeStyle)
+				UpdatePosSizeEnabled(hWnd2);
 			break;
 		case cbUseCurrentSizePos:
 			gpSet->isUseCurrentSizePos = IsChecked(hWnd2, cbUseCurrentSizePos);
@@ -4586,7 +4629,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				UpdateWindowMode(gpConEmu->WindowMode);
 				UpdatePos(gpConEmu->wndX, gpConEmu->wndY, true);
-				UpdateSize(gpConEmu->wndWidth, gpConEmu->wndHeight);
+				UpdateSize(gpConEmu->WndWidth, gpConEmu->WndHeight);
 			}
 			break;
 		case cbAutoSaveSizePos:
@@ -4890,15 +4933,18 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpConEmu->OnSize(true);
 			gpConEmu->InvalidateAll();
 			break;
+		case cbIntegralSize:
+			gpSet->mb_IntegralSize = (IsChecked(hWnd2, cbIntegralSize) == BST_UNCHECKED);
+			break;
 		case rbScrollbarHide:
 		case rbScrollbarShow:
 		case rbScrollbarAuto:
 			gpSet->isAlwaysShowScrollbar = CB - rbScrollbarHide;
 			if (!gpSet->isAlwaysShowScrollbar) gpConEmu->OnAlwaysShowScrollbar(false);
 			if (gpConEmu->isZoomed() || gpConEmu->isFullScreen())
-				gpConEmu->SyncConsoleToWindow();
+				CVConGroup::SyncConsoleToWindow();
 			else
-				CVConGroup::SetAllConsoleWindowsSize(MakeCoord(gpConEmu->wndWidth, gpConEmu->wndHeight), /*true,*/ true, true);
+				gpConEmu->SizeWindow(gpConEmu->WndWidth, gpConEmu->WndHeight);
 			if (gpSet->isAlwaysShowScrollbar) gpConEmu->OnAlwaysShowScrollbar(false);
 			gpConEmu->ReSize();
 			//gpConEmu->OnSize(true);
@@ -5163,7 +5209,13 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			if (gpSet->mb_UseClink && !gpSet->isUseClink())
 			{
 				checkDlgButton(hWnd2, cbUseClink, BST_UNCHECKED);
-				MessageBox(L"Clink was not found in '%ConEmuBaseDir%\\clink'\nDownload and unpack clink files\nhttp://code.google.com/p/clink/", MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
+				wchar_t szErrInfo[MAX_PATH+200];
+				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
+					L"Clink was not found in '%s\\clink'. Download and unpack clink files\nhttp://code.google.com/p/clink/\n\n"
+					L"Note that you don't need to check 'Use clink'\nif you already have set up clink globally.",
+					gpConEmu->ms_ConEmuBaseDir);
+				//MessageBox(L"Clink was not found in '%ConEmuBaseDir%\\clink'\nDownload and unpack clink files\nhttp://code.google.com/p/clink/", MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
+				MessageBox(szErrInfo, MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
 			}
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
@@ -6611,13 +6663,25 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 	case tWndX:
 	case tWndY:
+		if (IsChecked(hWnd2, rNormal) == BST_CHECKED)
+		{
+			wchar_t *pVal = GetDlgItemText(hWnd2, TB);
+			BOOL bValid = (pVal && isDigit(*pVal));
+			EnableWindow(GetDlgItem(hWnd2, cbApplyPos), bValid);
+			SafeFree(pVal);
+		}
+		break; // case tWndX: case tWndY:
 	case tWndWidth:
 	case tWndHeight:
-	{
 		if (IsChecked(hWnd2, rNormal) == BST_CHECKED)
-			EnableWindow(GetDlgItem(hWnd2, cbApplyPos), TRUE);
-		break;
-	} // case tWndX: case tWndY: case tWndWidth: case tWndHeight:
+		{
+			CESize sz = {0};
+			wchar_t *pVal = GetDlgItemText(hWnd2, TB);
+			BOOL bValid = (pVal && sz.SetFromString(false, pVal));
+			EnableWindow(GetDlgItem(hWnd2, cbApplyPos), bValid);
+			SafeFree(pVal);
+		}
+		break; // case tWndWidth: case tWndHeight:
 
 	case tPadSize:
 	{
@@ -7462,6 +7526,27 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		gpConEmu->mp_TabBar->UpdateTabFont();
 		break;
 	} // tTabFontFace, tTabFontHeight, tTabFontCharset
+
+	case tTabDblClickAction:
+	{
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+			switch(wId)
+			{
+			case tTabDblClickAction:
+				if (nSel >= 0 && nSel < (INT_PTR)countof(SettingsNS::tabDblClickActions))
+				{
+					gpSet->nTabDblClickAction = SettingsNS::tabDblClickActions[nSel].value;
+				} else 
+				{
+					gpSet->nTabDblClickAction = TAB_DEFAULT_CLICK_ACTION;
+				}
+				break;
+			}
+		}
+		break;
+	} // tTabDblClickAction
 
 	case tStatusFontFace:
 	case tStatusFontHeight:
@@ -10337,6 +10422,14 @@ void CSettings::UpdateWindowMode(WORD WndMode)
 	}
 }
 
+void CSettings::UpdatePosSizeEnabled(HWND hWnd2)
+{
+	EnableWindow(GetDlgItem(hWnd2, tWndX), !gpConEmu->mp_Inside && !(gpSet->isQuakeStyle && gpSet->wndCascade));
+	EnableWindow(GetDlgItem(hWnd2, tWndY), !(gpSet->isQuakeStyle || gpConEmu->mp_Inside));
+	EnableWindow(GetDlgItem(hWnd2, tWndWidth), !gpConEmu->mp_Inside);
+	EnableWindow(GetDlgItem(hWnd2, tWndHeight), !gpConEmu->mp_Inside);
+}
+
 void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 {
 	int x = ax, y = ay;
@@ -10378,32 +10471,33 @@ void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 	}
 }
 
-void CSettings::UpdateSize(UINT w, UINT h)
+void CSettings::UpdateSize(const CESize w, const CESize h)
 {
 	bool bUserCurSize = gpSet->isUseCurrentSizePos;
+	//Issue ???: Сохранять размер Quake?
 	bool bIgnoreWidth = (gpSet->isQuakeStyle != 0) && (gpSet->_WindowMode != wmNormal);
 
-	if (w>=MIN_CON_WIDTH && h>=MIN_CON_HEIGHT)
+	if (w.IsValid(true) && h.IsValid(false))
 	{
-		if (w!=gpConEmu->wndWidth || h!=gpConEmu->wndHeight)
+		if ((w.Raw != gpConEmu->WndWidth.Raw) || (h.Raw != gpConEmu->WndHeight.Raw))
 		{
-			gpConEmu->wndWidth = w;
-			gpConEmu->wndHeight = h;
+			gpConEmu->WndWidth.Set(true, w.Style, w.Value);
+			gpConEmu->WndHeight.Set(false, h.Style, h.Value);
 		}
 
-		if (bUserCurSize && (w!=gpSet->_wndWidth || h!=gpSet->_wndHeight))
+		if (bUserCurSize && ((w.Raw != gpSet->wndWidth.Raw) || (h.Raw != gpSet->wndHeight.Raw)))
 		{
 			if (!bIgnoreWidth)
-				gpSet->_wndWidth = w;
-			gpSet->_wndHeight = h;
+				gpSet->wndWidth.Set(true, w.Style, w.Value);
+			gpSet->wndHeight.Set(false, h.Style, h.Value);
 		}
 	}
 
 	if (ghOpWnd && mh_Tabs[thi_SizePos])
 	{
 		mb_IgnoreEditChanged = TRUE;
-		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndWidth, bUserCurSize ? gpConEmu->wndWidth : gpSet->_wndWidth, FALSE);
-		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndHeight, bUserCurSize ? gpConEmu->wndHeight : gpSet->_wndHeight, FALSE);
+		SetDlgItemText(mh_Tabs[thi_SizePos], tWndWidth, bUserCurSize ? gpConEmu->WndWidth.AsString() : gpSet->wndWidth.AsString());
+		SetDlgItemText(mh_Tabs[thi_SizePos], tWndHeight, bUserCurSize ? gpConEmu->WndHeight.AsString() : gpSet->wndHeight.AsString());
 		mb_IgnoreEditChanged = FALSE;
 
 		// Во избежание недоразумений - запретим элементы размера для Max/Fullscreen
@@ -10418,7 +10512,9 @@ void CSettings::UpdateSize(UINT w, UINT h)
 	if (isAdvLogging >= 2)
 	{
 		wchar_t szLabel[128];
-		_wsprintf(szLabel, SKIPLEN(countof(szLabel)) L"UpdateSize A={%i,%i} C={%i,%i} S={%i,%i}", w,h, gpConEmu->wndWidth, gpConEmu->wndHeight, gpSet->_wndWidth, gpSet->_wndHeight);
+		CESize ws = {w.Raw};
+		CESize hs = {h.Raw};
+		_wsprintf(szLabel, SKIPLEN(countof(szLabel)) L"UpdateSize A={%s,%s} C={%s,%s} S={%s,%s}", ws.AsString(), hs.AsString(), gpConEmu->WndWidth.AsString(), gpConEmu->WndHeight.AsString(), gpSet->wndWidth.AsString(), gpSet->wndHeight.AsString());
 		gpConEmu->LogWindowPos(szLabel);
 	}
 }
@@ -10728,9 +10824,9 @@ void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WOR
 		gpConEmu->Update(true);
 
 		if (gpConEmu->WindowMode == wmNormal)
-			gpConEmu->SyncWindowToConsole(); // -- функция пустая, игнорируется
+			CVConGroup::SyncWindowToConsole(); // -- функция пустая, игнорируется
 		else
-			gpConEmu->SyncConsoleToWindow();
+			CVConGroup::SyncConsoleToWindow();
 
 		gpConEmu->ReSize();
 	}
@@ -10830,9 +10926,9 @@ void CSettings::RecreateFont(WORD wFromID)
 			gpConEmu->Update(true);
 
 			if (gpConEmu->WindowMode == wmNormal)
-				gpConEmu->SyncWindowToConsole(); // -- функция пустая, игнорируется
+				CVConGroup::SyncWindowToConsole(); // -- функция пустая, игнорируется
 			else
-				gpConEmu->SyncConsoleToWindow();
+				CVConGroup::SyncConsoleToWindow();
 
 			gpConEmu->ReSize();
 		}
@@ -12383,7 +12479,7 @@ void CSettings::RegisterFonts()
 		RegisterFontsInt(gpConEmu->ms_ConEmuBaseDir); // зарегистрировать шрифты и из базовой папки
 
 	// Если папка запуска отличается от папки программы
-	if (lstrcmpiW(gpConEmu->ms_ConEmuExeDir, gpConEmu->ms_ConEmuCurDir))
+	if (lstrcmpiW(gpConEmu->ms_ConEmuExeDir, gpConEmu->WorkDir()))
 	{
 		BOOL lbSkipCurDir = FALSE;
 		wchar_t szFontsDir[MAX_PATH+1];
@@ -12391,13 +12487,13 @@ void CSettings::RegisterFonts()
 		if (SHGetSpecialFolderPath(ghWnd, szFontsDir, CSIDL_FONTS, FALSE))
 		{
 			// Oops, папка запуска совпала с системной папкой шрифтов?
-			lbSkipCurDir = (lstrcmpiW(szFontsDir, gpConEmu->ms_ConEmuCurDir) == 0);
+			lbSkipCurDir = (lstrcmpiW(szFontsDir, gpConEmu->WorkDir()) == 0);
 		}
 
 		if (!lbSkipCurDir)
 		{
 			// зарегистрировать шрифты и из папки запуска
-			RegisterFontsInt(gpConEmu->ms_ConEmuCurDir);
+			RegisterFontsInt(gpConEmu->WorkDir());
 		}
 	}
 
@@ -14180,7 +14276,9 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 						sei.lpFile = WIN3264TEST(gpConEmu->ms_ConEmuC32Full,gpConEmu->ms_ConEmuC64Full);
 						_wsprintf(szCommandLine, SKIPLEN(countof(szCommandLine)) L" \"/REGCONFONT=%s\"", szFaceName);
 						sei.lpParameters = szCommandLine;
-						sei.lpDirectory = gpConEmu->ms_ConEmuCurDir;
+						wchar_t szWorkDir[MAX_PATH+1];
+						wcscpy_c(szWorkDir, gpConEmu->WorkDir());
+						sei.lpDirectory = szWorkDir;
 						sei.nShow = SW_SHOWMINIMIZED;
 						BOOL lbRunAsRc = ::ShellExecuteEx(&sei);
 

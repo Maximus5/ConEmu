@@ -3259,11 +3259,21 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				//2010-01-19
 				if (gpSet->isFontAutoSize)
 				{
-					if (gpConEmu->wndWidth && rc.right > (LONG)gpConEmu->wndWidth)
-						rc.right = gpConEmu->wndWidth;
+					//if (gpConEmu->wndWidth && rc.right > (LONG)gpConEmu->wndWidth)
+					//	rc.right = gpConEmu->wndWidth;
 
-					if (gpConEmu->wndHeight && rc.bottom > (LONG)gpConEmu->wndHeight)
-						rc.bottom = gpConEmu->wndHeight;
+					//if (gpConEmu->wndHeight && rc.bottom > (LONG)gpConEmu->wndHeight)
+					//	rc.bottom = gpConEmu->wndHeight;
+
+					TODO("Проверить, нужно ли это?");
+
+					SIZE curSize = gpConEmu->GetDefaultSize(true);
+
+					if (curSize.cx && rc.right > curSize.cx)
+						rc.right = curSize.cx;
+
+					if (curSize.cy && rc.bottom > curSize.cy)
+						rc.bottom = curSize.cy;
 				}
 
 				#ifdef _DEBUG
@@ -3456,7 +3466,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 // т.е. если по горизонтали есть 2 консоли, и просят размер 80x25
 // то эти две консоли должны стать 40x25 а GUI отресайзиться под 80x25
 // В принципе, эту функцию можно было бы и в CConEmu оставить, но для общности путь здесь будет
-void CVConGroup::SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*/ bool bSetRedraw /*= false*/, bool bResizeConEmuWnd /*= false*/)
+void CVConGroup::SetAllConsoleWindowsSize(COORD size, bool bSetRedraw /*= false*/)
 {
 	CVConGuard VCon(gp_VActive);
 	CVConGroup* pRoot = GetRootOfVCon(VCon.VCon());
@@ -3509,31 +3519,6 @@ void CVConGroup::SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*
 	{
 		SetRedraw(TRUE);
 		Redraw();
-	}
-
-
-	//// update size info
-	//// !!! Это вроде делает консоль
-	//WARNING("updateInfo убить");
-	///*if (updateInfo && !mb_isFullScreen && !isZoomed() && !isIconic())
-	//{
-	//    gpSet->UpdateSize(size.X, size.Y);
-	//}*/
-	//RECT rcCon = MakeRect(size.X,size.Y);
-
-	//if (apVCon)
-	//{
-	//	if (!apVCon->RCon()->SetConsoleSize(size.X,size.Y))
-	//		rcCon = MakeRect(apVCon->TextWidth,apVCon->TextHeight);
-	//}
-
-	// При вызове из диалога "Settings..." и нажатия кнопки "Apply" (Size & Pos)
-	if (bResizeConEmuWnd)
-	{
-		/* Считать БЕЗОТНОСИТЕЛЬНО активной консоли */
-		RECT rcWnd = gpConEmu->CalcRect(CER_MAIN, rcCon, CER_CONSOLE_ALL, NULL);
-		RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
-		MOVEWINDOW(ghWnd, wndR.left, wndR.top, rcWnd.right, rcWnd.bottom, 1);
 	}
 }
 
@@ -3637,80 +3622,80 @@ void CVConGroup::SyncWindowToConsole()
 #endif
 }
 
-// Это некие сводные размеры, соответствующие тому, как если бы была
-// только одна активная консоль, БЕЗ Split-screen
-uint CVConGroup::TextWidth()
-{
-	uint nWidth = gpSet->_wndWidth;
-	if (!gp_VActive)
-	{
-		_ASSERTE(FALSE && "No active VCon");
-	}
-	else
-	{
-		CVConGuard VCon(gp_VActive);
-		CVConGroup* p = NULL;
-		if (gp_VActive && gp_VActive->mp_Group)
-		{
-			p = ((CVConGroup*)gp_VActive->mp_Group)->GetRootGroup();
-		}
-
-		if (p != NULL)
-		{
-			SIZE sz; p->GetAllTextSize(sz);
-        	nWidth = sz.cx; // p->AllTextWidth();
-		}
-		else
-		{
-			_ASSERTE(p && "CVConGroup MUST BE DEFINED!");
-
-			if (gp_VActive->RCon())
-			{
-				// При ресайзе через окно настройки - gp_VActive еще не перерисовался
-				// так что и TextWidth/TextHeight не обновился
-				//-- gpSetCls->UpdateSize(gp_VActive->TextWidth, gp_VActive->TextHeight);
-				nWidth = gp_VActive->RCon()->TextWidth();
-			}
-		}
-	}
-	return nWidth;
-}
-uint CVConGroup::TextHeight()
-{
-	uint nHeight = gpSet->_wndHeight;
-	if (!gp_VActive)
-	{
-		_ASSERTE(FALSE && "No active VCon");
-	}
-	else
-	{
-		CVConGuard VCon(gp_VActive);
-		CVConGroup* p = NULL;
-		if (gp_VActive && gp_VActive->mp_Group)
-		{
-			p = ((CVConGroup*)gp_VActive->mp_Group)->GetRootGroup();
-		}
-
-		if (p != NULL)
-		{
-			SIZE sz; p->GetAllTextSize(sz);
-        	nHeight = sz.cy; // p->AllTextHeight();
-		}
-		else
-		{
-			_ASSERTE(p && "CVConGroup MUST BE DEFINED!");
-
-			if (gp_VActive->RCon())
-			{
-				// При ресайзе через окно настройки - gp_VActive еще не перерисовался
-				// так что и TextWidth/TextHeight не обновился
-				//-- gpSetCls->UpdateSize(gp_VActive->TextWidth, gp_VActive->TextHeight);
-				nHeight = gp_VActive->RCon()->TextHeight();
-			}
-		}
-	}
-	return nHeight;
-}
+//// Это некие сводные размеры, соответствующие тому, как если бы была
+//// только одна активная консоль, БЕЗ Split-screen
+//uint CVConGroup::TextWidth()
+//{
+//	uint nWidth = gpSet->_wndWidth;
+//	if (!gp_VActive)
+//	{
+//		_ASSERTE(FALSE && "No active VCon");
+//	}
+//	else
+//	{
+//		CVConGuard VCon(gp_VActive);
+//		CVConGroup* p = NULL;
+//		if (gp_VActive && gp_VActive->mp_Group)
+//		{
+//			p = ((CVConGroup*)gp_VActive->mp_Group)->GetRootGroup();
+//		}
+//
+//		if (p != NULL)
+//		{
+//			SIZE sz; p->GetAllTextSize(sz);
+//        	nWidth = sz.cx; // p->AllTextWidth();
+//		}
+//		else
+//		{
+//			_ASSERTE(p && "CVConGroup MUST BE DEFINED!");
+//
+//			if (gp_VActive->RCon())
+//			{
+//				// При ресайзе через окно настройки - gp_VActive еще не перерисовался
+//				// так что и TextWidth/TextHeight не обновился
+//				//-- gpSetCls->UpdateSize(gp_VActive->TextWidth, gp_VActive->TextHeight);
+//				nWidth = gp_VActive->RCon()->TextWidth();
+//			}
+//		}
+//	}
+//	return nWidth;
+//}
+//uint CVConGroup::TextHeight()
+//{
+//	uint nHeight = gpSet->_wndHeight;
+//	if (!gp_VActive)
+//	{
+//		_ASSERTE(FALSE && "No active VCon");
+//	}
+//	else
+//	{
+//		CVConGuard VCon(gp_VActive);
+//		CVConGroup* p = NULL;
+//		if (gp_VActive && gp_VActive->mp_Group)
+//		{
+//			p = ((CVConGroup*)gp_VActive->mp_Group)->GetRootGroup();
+//		}
+//
+//		if (p != NULL)
+//		{
+//			SIZE sz; p->GetAllTextSize(sz);
+//        	nHeight = sz.cy; // p->AllTextHeight();
+//		}
+//		else
+//		{
+//			_ASSERTE(p && "CVConGroup MUST BE DEFINED!");
+//
+//			if (gp_VActive->RCon())
+//			{
+//				// При ресайзе через окно настройки - gp_VActive еще не перерисовался
+//				// так что и TextWidth/TextHeight не обновился
+//				//-- gpSetCls->UpdateSize(gp_VActive->TextWidth, gp_VActive->TextHeight);
+//				nHeight = gp_VActive->RCon()->TextHeight();
+//			}
+//		}
+//	}
+//	return nHeight;
+//}
 
 RECT CVConGroup::AllTextRect(bool abMinimal /*= false*/)
 {
@@ -3784,7 +3769,15 @@ bool CVConGroup::PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*
 
 	RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, tFrom, gp_VActive);
 
-	if (!rcCon.right || !rcCon.bottom) { rcCon.right = gpConEmu->wndWidth; rcCon.bottom = gpConEmu->wndHeight; }
+	if (!rcCon.right || !rcCon.bottom)
+	{
+		Assert(rcCon.right && rcCon.bottom);
+		//rcCon.right = gpConEmu->wndWidth;
+		//rcCon.bottom = gpConEmu->wndHeight;
+		SIZE szCon = gpConEmu->GetDefaultSize(true);
+		rcCon.right = szCon.cx;
+		rcCon.bottom = szCon.cy;
+	}
 
 	COORD size = {rcCon.right, rcCon.bottom};
 	if (isVConExists(0))

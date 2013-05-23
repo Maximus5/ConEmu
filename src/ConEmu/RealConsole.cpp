@@ -2440,8 +2440,7 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			else if (bActive)
 			{
 				// Если в консоли заголовок не менялся, но он отличается от заголовка в ConEmu
-				if (wcscmp(GetTitle(), gpConEmu->GetLastTitle(false)))
-					gpConEmu->UpdateTitle();
+				gpConEmu->CheckNeedUpdateTitle(GetTitle());
 			}
 
 			if (lbForceUpdateProgress)
@@ -3247,7 +3246,7 @@ BOOL CRealConsole::StartProcess()
 				lbRc = CreateProcessWithLogonW(m_Args.pszUserName, m_Args.pszDomain, m_Args.szUserPassword,
 				                           LOGON_WITH_PROFILE, NULL, psCurCmd,
 				                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-				                           , NULL, pszStartupDir, &si, &pi);
+				                           , NULL, gpConEmu->WorkDir(pszStartupDir), &si, &pi);
 					//if (CreateProcessAsUser(m_Args.hLogonToken, NULL, psCurCmd, NULL, NULL, FALSE,
 					//	NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 					//	, NULL, m_Args.pszStartupDir, &si, &pi))
@@ -3269,7 +3268,7 @@ BOOL CRealConsole::StartProcess()
 				nCreateBegin = GetTickCount();
 				lbRc = CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
 				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-				                        , NULL, m_Args.pszStartupDir, &si, &pi, &dwLastError);
+				                        , NULL, gpConEmu->WorkDir(m_Args.pszStartupDir), &si, &pi, &dwLastError);
 				nCreateEnd = GetTickCount();
 
 				if (lbRc)
@@ -3285,7 +3284,7 @@ BOOL CRealConsole::StartProcess()
 				lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE,
 				                     NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 				                     //|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
-				                     , NULL, m_Args.pszStartupDir, &si, &pi);
+				                     , NULL, gpConEmu->WorkDir(m_Args.pszStartupDir), &si, &pi);
 				nCreateEnd = GetTickCount();
 
 				if (!lbRc)
@@ -3326,10 +3325,7 @@ BOOL CRealConsole::StartProcess()
 
 				wchar_t szCurrentDirectory[MAX_PATH+1];
 
-				if (m_Args.pszStartupDir)
-					wcscpy(szCurrentDirectory, m_Args.pszStartupDir);
-				else if (!GetCurrentDirectory(MAX_PATH+1, szCurrentDirectory))
-					szCurrentDirectory[0] = 0;
+				wcscpy(szCurrentDirectory, gpConEmu->WorkDir(m_Args.pszStartupDir));
 
 				int nWholeSize = sizeof(SHELLEXECUTEINFO)
 				                 + sizeof(wchar_t) *
@@ -10238,10 +10234,7 @@ LPCWSTR CRealConsole::GetDir()
 {
 	if (!this) return L"";
 
-	if (m_Args.pszSpecialCmd)
-		return m_Args.pszStartupDir;
-	else
-		return gpConEmu->ms_ConEmuCurDir;
+	return gpConEmu->WorkDir(m_Args.pszSpecialCmd);
 }
 
 wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)
@@ -12356,7 +12349,7 @@ void CRealConsole::ShowPropertiesDialog()
 //
 //		if (ms_LogShellActivity[0] == 0)
 //		{
-//			lstrcpyn(ms_LogShellActivity, gpConEmu->ms_ConEmuCurDir, MAX_PATH-32);
+//			lstrcpyn(ms_LogShellActivity, gpConEmu->WorkDir(), MAX_PATH-32);
 //			int nCurLen = _tcslen(ms_LogShellActivity);
 //			_wsprintf(ms_LogShellActivity+nCurLen, SKIPLEN(countof(ms_LogShellActivity)-nCurLen)
 //			          L"\\ShellLog-%u.log", nFarPID);

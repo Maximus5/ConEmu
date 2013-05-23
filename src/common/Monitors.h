@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RECT GetAllMonitorsWorkspace();
 
+bool GetMonitorInfoSafe(HMONITOR hMon, MONITORINFO& mi);
 HMONITOR GetPrimaryMonitorInfo(MONITORINFO* pmi = NULL);
 HMONITOR GetNearestMonitorInfo(MONITORINFO* pmi = NULL, HMONITOR hDefault = NULL, LPCRECT prcWnd = NULL, HWND hWnd = NULL);
 HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next);

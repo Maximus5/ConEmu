@@ -1510,7 +1510,7 @@ void CConEmuCtrl::StatusCommand(ConEmuStatusCommand nStatusCmd, int IntParm, LPC
 
 			if (!gpConEmu->isZoomed() && !gpConEmu->isFullScreen())
 			{
-				gpConEmu->SyncConsoleToWindow(&rcIdeal, true);
+				CVConGroup::SyncConsoleToWindow(&rcIdeal, true);
 			}
 
 			gpConEmu->ReSize(TRUE);

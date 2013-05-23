@@ -759,6 +759,9 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 	int iRc = 0;
 	wchar_t wc;
 
+	LPCWSTR lpSaveStart = lpBuffer;
+	lpStart = lpBuffer;
+
 	_ASSERTEX(cchPrevPart==0);
 
 	if (gnPrevAnsiPart && !ReEntrance)
@@ -773,6 +776,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 			wmemcpy(gsPrevAnsiPart+nCurPrevLen, lpBuffer, nAdd);
 			gsPrevAnsiPart[nCurPrevLen+nAdd] = 0;
 
+			WARNING("Проверить!!!");
 			LPCWSTR lpReStart, lpReNext;
 			int iCall = NextEscCode(gsPrevAnsiPart, gsPrevAnsiPart+nAdd+gnPrevAnsiPart, szPreDump, cchPrevPart, lpReStart, lpReNext, Code, TRUE);
 			if (iCall == 1)
@@ -807,6 +811,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					_ASSERTE(lpReStart == gsPrevAnsiPart);
 					lpStart = lpBuffer; // nothing to dump before Esc-sequence
 					_ASSERTE((lpReNext - gsPrevAnsiPart) >= gnPrevAnsiPart);
+					WARNING("Проверить!!!");
 					lpNext = lpBuffer + (lpReNext - gsPrevAnsiPart - gnPrevAnsiPart);
 				}
 				else
@@ -816,13 +821,15 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 				}
 				gnPrevAnsiPart = 0;
 				gsPrevAnsiPart[0] = 0;
-				return 1;
+				iRc = 1;
+				goto wrap2;
 			}
 			else if (iCall == 2)
 			{
 				gnPrevAnsiPart = nCurPrevLen+nAdd;
 				_ASSERTE(gsPrevAnsiPart[nCurPrevLen+nAdd] == 0);
-				return 2;
+				iRc = 2;
+				goto wrap2;
 			}
 
 			_ASSERTE((iCall == 1) && "Invalid esc sequence, need dump to screen?");
@@ -833,9 +840,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 		}
 	}
 
-	LPCWSTR lpSaveStart = lpBuffer;
-	lpStart = lpBuffer;
-
+	
 	while (lpBuffer < lpEnd)
 	{
 		switch (*lpBuffer)
@@ -1078,7 +1083,8 @@ wrap:
 	if (iRc == 1)
 		Code.nTotalLen = (lpEnd - Code.pszEscStart);
 	#endif
-
+wrap2:
+	_ASSERTEX((iRc==0) || (lpStart>=lpBuffer && lpStart<lpEnd));
 	return iRc;
 }
 
@@ -1313,6 +1319,8 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 		{
 			if (lpStart > lpBuffer)
 			{
+				_ASSERTEX((lpStart-lpBuffer) < (INT_PTR)nNumberOfCharsToWrite);
+
 				if (lbApply)
 				{
 					ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);

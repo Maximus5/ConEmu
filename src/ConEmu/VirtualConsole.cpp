@@ -302,11 +302,24 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	hOldBrush = NULL;
 	hOldFont = NULL;
 
-	if (gpConEmu->wndWidth)
-		TextWidth = gpConEmu->wndWidth;
+	RECT rcConAll;
+	if (gpConEmu->WndWidth.Value && gpConEmu->WndHeight.Value)
+	{
+		//if (gpConEmu->wndWidth)  TextWidth = gpConEmu->wndWidth;
+		//if (gpConEmu->wndHeight) TextHeight = gpConEmu->wndHeight;
 
-	if (gpConEmu->wndHeight)
-		TextHeight = gpConEmu->wndHeight;
+		rcConAll = gpConEmu->CalcRect(CER_CONSOLE_ALL);
+		if (rcConAll.right && rcConAll.bottom)
+		{
+			TextWidth = rcConAll.right;
+			TextHeight = rcConAll.bottom;
+		}
+	}
+	else
+	{
+		Assert(gpConEmu->WndWidth.Value && gpConEmu->WndHeight.Value);
+	}
+
 
 	DEBUGTEST(mb_DebugDumpDC = false);
 

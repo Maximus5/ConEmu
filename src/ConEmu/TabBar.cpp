@@ -810,7 +810,7 @@ void TabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	if (abPreSyncConsole && (gpConEmu->WindowMode == wmNormal))
 	{
 		RECT rcIdeal = gpConEmu->GetIdealRect();
-		gpConEmu->SyncConsoleToWindow(&rcIdeal, TRUE);
+		CVConGroup::SyncConsoleToWindow(&rcIdeal, TRUE);
 	}
 	UpdatePosition();
 }
@@ -824,7 +824,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 	if (abPreSyncConsole && !(gpConEmu->isZoomed() || gpConEmu->isFullScreen()))
 	{
 		RECT rcIdeal = gpConEmu->GetIdealRect();
-		gpConEmu->SyncConsoleToWindow(&rcIdeal, true);
+		CVConGroup::SyncConsoleToWindow(&rcIdeal, true);
 	}
 	UpdatePosition();
 }

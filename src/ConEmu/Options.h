@@ -80,7 +80,6 @@ class CVirtualConsole;
 #define CENTERCONSOLEPAD_MIN 0
 #define CENTERCONSOLEPAD_MAX 64
 
-
 struct FindTextOptions
 {
 	size_t   cchTextMax;
@@ -129,6 +128,8 @@ enum TabStyle
 };
 
 #define DEFAULT_TERMINAL_APPS L"explorer.exe"
+
+#define TAB_DEFAULT_CLICK_ACTION 1
 
 struct Settings
 {
@@ -721,6 +722,8 @@ struct Settings
 		bool isHideChildCaption; // Hide caption of child GUI applications, started in ConEmu tabs (PuTTY, Notepad, etc.)
 		//reg->Load(L"FocusInChildWindows", isFocusInChildWindows);
 		bool isFocusInChildWindows;
+		//reg->Load(L"IntegralSize", mb_IntegralSize);
+		bool mb_IntegralSize;
 		//reg->Load(L"QuakeStyle", isQuakeStyle);
 		BYTE isQuakeStyle; // 0 - NoQuake, 1 - Quake, 2 - Quake+HideOnLoseFocus
 		DWORD nQuakeAnimation;
@@ -981,7 +984,7 @@ struct Settings
 		bool isTabLazy;
 
 		//reg->Load(L"TabDblClick", nTabDblClickAction);
-		DWORD nTabDblClickAction; // 0-None, 1-Auto, 2-Maximize/Restore, 3-NewTab.
+		DWORD nTabDblClickAction; // 0-None, 1-Auto, 2-Maximize/Restore, 3-NewTab (SettingsNS::tabDefaultClickActions)
 		
 		//TODO:
 		bool isTabsInCaption;
@@ -1018,9 +1021,9 @@ struct Settings
 		//reg->Load(L"ToolbarAddSpace", nToolbarAddSpace);
 		int nToolbarAddSpace;
 		//reg->Load(L"ConWnd Width", wndWidth);
-		DWORD _wndWidth;
+		CESize wndWidth;
 		//reg->Load(L"ConWnd Height", wndHeight);
-		DWORD _wndHeight;
+		CESize wndHeight;
 		//reg->Load(L"16bit Height", ntvdmHeight);
 		DWORD ntvdmHeight; // в символах
 		//reg->Load(L"ConWnd X", wndX);
