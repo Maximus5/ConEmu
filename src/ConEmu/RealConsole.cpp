@@ -4010,7 +4010,42 @@ void CRealConsole::DoSelectionStop()
 
 bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/)
 {
-	return mp_ABuf->DoSelectionCopy(bCopyAll);
+	bool bCopyRc = false;
+	bool bReturnPrimary = false;
+	CRealBuffer* pBuf = mp_ABuf;
+
+	if (bCopyAll)
+	{
+		if (pBuf->m_Type == rbt_Primary)
+		{
+			COORD crEnd = {0,0};
+			mp_ABuf->GetCursorInfo(&crEnd, NULL);
+			crEnd.X = mp_ABuf->GetBufferWidth()-1;
+			//crEnd = mp_ABuf->ScreenToBuffer(crEnd);
+
+			if (LoadAlternativeConsole(lam_FullBuffer) && (mp_ABuf->m_Type != rbt_Primary))
+			{
+				bReturnPrimary = true;
+				pBuf = mp_ABuf;
+				pBuf->m_Type = rbt_Selection;
+				pBuf->StartSelection(TRUE, 0, 0);
+				pBuf->ExpandSelection(crEnd.X, crEnd.Y);
+			}
+		}
+		else
+		{
+			MessageBox(L"Return to Primary buffer first!", MB_ICONEXCLAMATION);
+			goto wrap;
+		}
+	}
+
+	bCopyRc = pBuf->DoSelectionCopy(bCopyAll);
+wrap:
+	if (bReturnPrimary)
+	{
+		SetActiveBuffer(rbt_Primary);
+	}
+	return bCopyRc;
 }
 
 void CRealConsole::DoFindText(int nDirection)

@@ -15,6 +15,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.05.23
 [!] Don't lock current (startup) directory.
 [!] Width and Height may be set up in cells/pixels/percents.
     For example, Width = "90%", Height = "400px".
@@ -24,11 +25,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [*] Minor changes in mouse-over-scrollbar processing.
 [%] Issue 1004: overflow of SetTitle when "/title" option was specified.
 [*] Issue 1067: missing linking dependency for ConEmuDW project.
-[*] Issue 1068: UI interface for "Default tab click action" (patch from peter.sunde).
+[*] Issue 1068: UI interface for «Default tab click action» (patch from peter.sunde).
 [*] Issue 1069: better clink error message (check box «Use clink in prompt»).
 [*] Some more internal logging.
-[%] Issue ????: Allow change quake-mode window size from Settings dialog.
+[%] Issue 868: Allow change quake-mode window size from Settings dialog.
 [+] Allow set position (X-coord) of quake-mode window size. Choose radio "Fixed" instead of "Cascade" before.
+[+] Issue 852: New menu item «Copy all», this will copy all text from the beginning of the buffer to the cursor line (including).
 
 
 2013.04.27
