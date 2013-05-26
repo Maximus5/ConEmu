@@ -593,7 +593,7 @@ bool CConEmuCtrl::key_DuplicateRootAs(DWORD VkMod, bool TestOnly, const ConEmuHo
 //	if (TestOnly)
 //		return true;
 //
-//	PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+//	PostScClose();
 //	return true;
 //}
 

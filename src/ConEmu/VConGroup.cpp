@@ -1709,7 +1709,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 		}
 	}
 
-	if (nProgress || nEditors || (gpSet->isCloseConsoleConfirm && (nConsoles > 1)))
+	if (nProgress || nEditors || (gpSet->isCloseConsoleConfirm && (nConsoles >= 1)))
 	{
 		int nBtn = IDCANCEL;
 

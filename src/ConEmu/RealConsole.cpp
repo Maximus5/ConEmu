@@ -211,7 +211,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mh_StartExecuted = CreateEvent(NULL,FALSE,FALSE,NULL); ResetEvent(mh_StartExecuted);
 	mb_StartResult = mb_WaitingRootStartup = FALSE;
 	mh_MonitorThreadEvent = CreateEvent(NULL,TRUE,FALSE,NULL); //2009-09-09 Поставил Manual. Нужно для определения, что можно убирать флаг Detached
-	mh_UpdateServerActiveEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+	mn_ServerActiveTick1 = mn_ServerActiveTick2 = 0;
+	mh_UpdateServerActiveEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
 	//mb_UpdateServerActive = FALSE;
 	mh_ApplyFinished = CreateEvent(NULL,TRUE,FALSE,NULL);
 	//mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -1906,7 +1907,7 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 	if (hEvents[IDEVENT_SERVERPH] == NULL)
 		nEvents --;
 
-	DWORD  nWait = 0, nSrvWait = -1;
+	DWORD  nWait = 0, nSrvWait = -1, nAcvWait = -1;
 	BOOL   bException = FALSE, bIconic = FALSE, /*bFirst = TRUE,*/ bActive = TRUE, bGuiVisible = FALSE;
 	DWORD nElapse = max(10,gpSet->nMainTimerElapse);
 	DWORD nInactiveElapse = max(10,gpSet->nMainTimerInactiveElapse);
@@ -2055,15 +2056,24 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			SetEvent(mh_ActiveServerSwitched);
 		}
 
-		if (nWait == IDEVENT_UPDATESERVERACTIVE)
+		bool bNeedUpdateServerActive = (nWait == IDEVENT_UPDATESERVERACTIVE);
+		if (!bNeedUpdateServerActive && mn_ServerActiveTick1)
+		{
+			nAcvWait = WaitForSingleObject(mh_UpdateServerActiveEvent, 0);
+			bNeedUpdateServerActive = (nAcvWait == WAIT_OBJECT_0);
+		}
+		if (bNeedUpdateServerActive)
 		{
 			if (isServerCreated(true))
 			{
 				_ASSERTE(hConWnd!=NULL && "Console window must be already detected!");
+				mn_ServerActiveTick2 = GetTickCount();
+				DWORD nDelay = mn_ServerActiveTick2 - mn_ServerActiveTick1;
 
 				UpdateServerActive(TRUE);
 			}
 			ResetEvent(mh_UpdateServerActiveEvent);
+			mn_ServerActiveTick1 = 0;
 		}
 
 		// Это событие теперь ManualReset
@@ -2866,41 +2876,50 @@ DWORD CRealConsole::ConHostSearch(bool bFinal)
 		return 0;
 	}
 
-	// Ищем новые процессы "conhost.exe"
-	MArray<DWORD> CreatedHost;
-	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (h && (h != INVALID_HANDLE_VALUE))
+	for (int s = 0; s <= 1; s++)
 	{
-		PROCESSENTRY32 PI = {sizeof(PI)};
-		if (Process32First(h, &PI))
+		// Ищем новые процессы "conhost.exe"
+		MArray<PROCESSENTRY32> CreatedHost;
+		HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (h && (h != INVALID_HANDLE_VALUE))
 		{
-			BOOL bFlag = TRUE;
-			do {
-				if (lstrcmpi(PI.szExeFile, L"conhost.exe") == 0)
-				{
-					if (!mp_ConHostSearch->Get(PI.th32ProcessID, NULL))
+			PROCESSENTRY32 PI = {sizeof(PI)};
+			if (Process32First(h, &PI))
+			{
+				BOOL bFlag = TRUE;
+				do {
+					if (lstrcmpi(PI.szExeFile, L"conhost.exe") == 0)
 					{
-						CreatedHost.push_back(PI.th32ProcessID);
+						if (!mp_ConHostSearch->Get(PI.th32ProcessID, NULL))
+						{
+							CreatedHost.push_back(PI);
+						}
 					}
-				}
-			} while (Process32Next(h, &PI));
+				} while (Process32Next(h, &PI));
+			}
+			CloseHandle(h);
 		}
-		CloseHandle(h);
+
+		if (CreatedHost.size() <= 0)
+		{
+			_ASSERTE(!bFinal && "Created conhost.exe was not found!");
+			goto wrap;
+		}
+		else if (CreatedHost.size() > 1)
+		{
+			_ASSERTE(FALSE && "More than one created conhost.exe was found!");
+			Sleep(250); // Попробовать еще раз? Может кто-то левый проехал...
+			continue;
+		}
+		else
+		{
+			// Установить mn_ConHost_PID
+			ConHostSetPID(CreatedHost[0].th32ProcessID);
+			break;
+		}
 	}
 
-	if (CreatedHost.size() <= 0)
-	{
-		_ASSERTE(!bFinal && "Created conhost.exe was not found!");
-	}
-	else if (CreatedHost.size() > 1)
-	{
-		_ASSERTE(FALSE && "More than one created conhost.exe was found!");
-	}
-	else
-	{
-		ConHostSetPID(CreatedHost[0]);
-	}
-
+wrap:
 	return mn_ConHost_PID;
 }
 
@@ -8011,7 +8030,11 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 	if (!this) return;
 
 	//mb_UpdateServerActive = abActive;
-	BOOL bActiveNonSleep = isActive() && (!gpSet->isSleepInBackground || gpConEmu->isMeForeground(true, true));
+	bool bActiveNonSleep = false;
+	if (isActive())
+	{
+		bActiveNonSleep = (!gpSet->isSleepInBackground || gpConEmu->isMeForeground(true, true));
+	}
 
 	if (!bActiveNonSleep)
 		return; // команду в сервер посылаем только при активации
@@ -8032,6 +8055,7 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 
 		DEBUGSTRFOCUS(L"UpdateServerActive - delayed, event");
 		_ASSERTE(mh_UpdateServerActiveEvent!=NULL);
+		mn_ServerActiveTick1 = GetTickCount();
 		SetEvent(mh_UpdateServerActiveEvent);
 		return;
 	}

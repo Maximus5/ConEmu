@@ -122,10 +122,14 @@ class CConEmuMacro
 		static LPWSTR Menu(GuiMacro* p, CRealConsole* apRCon);
 		// MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
 		static LPWSTR MsgBox(GuiMacro* p, CRealConsole* apRCon);
+		// Copy (<What>)
+		static LPWSTR Copy(GuiMacro* p, CRealConsole* apRCon);
 		// Paste (<Cmd>[,"<Text>"])
 		static LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon);
 		// print("<Text>") - alias for Paste(2,"<Text>")
 		static LPWSTR Print(GuiMacro* p, CRealConsole* apRCon);
+		// Keys("<Combo1>"[,"<Combo2>"[...]])
+		static LPWSTR Keys(GuiMacro* p, CRealConsole* apRCon);
 		// Progress(<Type>[,<Value>])
 		static LPWSTR Progress(GuiMacro* p, CRealConsole* apRCon);
 		// Rename(<Type>,"<Title>")

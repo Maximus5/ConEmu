@@ -82,6 +82,11 @@ void CFrameHolder::InitFrameHolder()
 	RecalculateFrameSizes();
 }
 
+void CFrameHolder::PostScClose()
+{
+	PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+}
+
 // returns false if message not handled
 bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult)
 {
@@ -266,7 +271,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	//		POINT pt = MakePoint(LOWORD(lParam),HIWORD(lParam));
 	//		if (gpConEmu->PtDiffTest(pt, ptLastNcClick.x, ptLastNcClick.y, 4))
 	//		{
-	//			PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+	//			PostScClose();
 	//			lResult = 0;
 	//			return true;
 	//		}

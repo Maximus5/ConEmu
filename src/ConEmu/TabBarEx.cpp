@@ -3296,7 +3296,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //		gpConEmu->OnAltF9(TRUE);
 //    } else
 //    if (wParam == TID_APPCLOSE) {
-//    	PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+//    	PostScClose();
 //    }
 //}
 
@@ -3975,7 +3975,7 @@ void TabBarClass::OnToolbarCommand(LPARAM lParam, int anPaneID, int anCmd, bool 
 		break;
 
 	case TID_APPCLOSE:
-		PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+		PostScClose();
 		break;
 
 	case TID_COPYING:

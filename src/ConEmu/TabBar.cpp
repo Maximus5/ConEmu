@@ -1594,7 +1594,7 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 	else if (wParam == TID_APPCLOSE)
 	{
-		PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+		gpConEmu->PostScClose();
 	}
 	else if (wParam == TID_COPYING)
 	{

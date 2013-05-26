@@ -47,6 +47,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define DEBUGSTRINPUTWRITEFAIL(s) DEBUGSTR(s) // ### WriteConsoleInput(Write=
 //#define DEBUGSTRCHANGES(s) DEBUGSTR(s)
 
+#ifdef _DEBUG
+	//#define DEBUG_SLEEP_NUMLCK
+	#undef DEBUG_SLEEP_NUMLCK
+#else
+	#undef DEBUG_SLEEP_NUMLCK
+#endif
+
 #define MAX_EVENTS_PACK 20
 
 #ifdef _DEBUG
@@ -3791,7 +3798,6 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	BOOL bFellInSleep = FALSE; // Если TRUE - снизить нагрузку на conhost
 	BOOL bConsoleActive = TRUE;
 	BOOL bConsoleVisible = TRUE;
-	DWORD nLastConsoleActiveTick = 0;
 	BOOL bOnlyCursorChanged;
 	BOOL bSetRefreshDoneEvent;
 	DWORD nWaitCursor = 99;
@@ -4090,11 +4096,12 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		BOOL bNewActive = TRUE;
 		BOOL bNewFellInSleep = FALSE;
 
+		DWORD nLastConsoleActiveTick = gpSrv->nLastConsoleActiveTick;
 		if (!nLastConsoleActiveTick || ((GetTickCount() - nLastConsoleActiveTick) >= REFRESH_FELL_SLEEP_TIMEOUT))
 		{
 			ReloadGuiSettings(NULL);
 			bConsoleVisible = IsWindowVisible(ghConEmuWndDC);
-			nLastConsoleActiveTick = GetTickCount();
+			gpSrv->nLastConsoleActiveTick = GetTickCount();
 		}
 
 		if ((ghConWnd == gpSrv->guiSettings.hActiveCon) || (gpSrv->guiSettings.hActiveCon == NULL) || bConsoleVisible)
@@ -4148,6 +4155,15 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			DWORD nCurTick = GetTickCount();
 			nDelta = nCurTick - nLastReadTick;
 
+			#ifdef DEBUG_SLEEP_NUMLCK
+			bool bNum = (GetKeyState(VK_NUMLOCK) & 1) == 1;
+			if (bNum)
+			{
+				keybd_event(VK_NUMLOCK, 0, 0, 0);
+				keybd_event(VK_NUMLOCK, 0, KEYEVENTF_KEYUP, 0);
+			}
+			#endif
+
 			// #define MAX_FORCEREFRESH_INTERVAL 500
 			if (nDelta <= MAX_FORCEREFRESH_INTERVAL)
 			{
@@ -4155,6 +4171,17 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 				continue;
 			}
 		}
+		#ifdef DEBUG_SLEEP_NUMLCK
+		else
+		{
+			bool bNum = (GetKeyState(VK_NUMLOCK) & 1) == 1;
+			if (!bNum)
+			{
+				keybd_event(VK_NUMLOCK, 0, 0, 0);
+				keybd_event(VK_NUMLOCK, 0, KEYEVENTF_KEYUP, 0);
+			}
+		}
+		#endif
 
 		#ifdef _DEBUG
 		if (nWait == nRefreshEventId)

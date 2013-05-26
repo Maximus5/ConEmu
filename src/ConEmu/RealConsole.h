@@ -622,6 +622,7 @@ class CRealConsole
 		HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
 		HANDLE mh_MonitorThreadEvent;
 		HANDLE mh_UpdateServerActiveEvent;
+		DWORD mn_ServerActiveTick1, mn_ServerActiveTick2;
 		//BOOL mb_UpdateServerActive;
 		DWORD mn_LastUpdateServerActive;
 		// Для пересылки событий ввода в консоль

@@ -6446,6 +6446,9 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 		//// Если консоль активировали - то принудительно перечитать ее содержимое
 		//if (gpSrv->pConsole->hdr.bConsoleActive)
 
+		// Принудить RefreshThread перечитать статус активности консоли
+		gpSrv->nLastConsoleActiveTick = 0;
+
 		ReloadFullConsoleInfo(TRUE);
 	}
 	

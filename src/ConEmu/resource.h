@@ -936,6 +936,7 @@
 #define cbShowHelpTooltips              2592
 #define tTabDblClickAction              2593
 #define cbIntegralSize                  2594
+#define vkCTSVkCopyAll                  2595
 
 // Next default values for new objects
 // 
@@ -943,7 +944,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        222
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2595
+#define _APS_NEXT_CONTROL_VALUE         2596
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

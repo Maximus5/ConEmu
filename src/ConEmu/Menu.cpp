@@ -1068,7 +1068,7 @@ void CConEmuMenu::OnNcIconLClick()
 
 	if (mn_SysMenuOpenTick && (nOpenDelay < nDoubleTime))
 	{
-		PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+		gpConEmu->PostScClose();
 	}
 	else if (mn_SysMenuCloseTick && (nCloseDelay < (nDoubleTime/2)))
 	{
@@ -1077,7 +1077,8 @@ void CConEmuMenu::OnNcIconLClick()
 		int nDbg = 0;
 		#endif
 	}
-	else
+	// When Alt is hold down - sysmenu will be immediately closed
+	else if (!isPressed(VK_MENU))
 	{
 		ShowSysmenu();
 	}
@@ -1449,9 +1450,9 @@ HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		hMenu = CreatePopupMenu();
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKBLOCK, MenuAccel(vkCTSVkBlockStart,L"Mark &block"));
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKTEXT, MenuAccel(vkCTSVkTextStart,L"Mar&k text"));
-		AppendMenu(hMenu, MF_STRING | (lbSelectionExist?MF_ENABLED:MF_GRAYED), ID_CON_COPY, _T("Cop&y"));
-		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_COPY_ALL, _T("Copy &all"));
-		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_PASTE, _T("&Paste"));
+		AppendMenu(hMenu, MF_STRING | (lbSelectionExist?MF_ENABLED:MF_GRAYED), ID_CON_COPY, L"Cop&y");
+		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_COPY_ALL, MenuAccel(vkCTSVkCopyAll,L"Copy &all"));
+		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_PASTE, L"&Paste");
 		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_FIND, MenuAccel(vkFindTextDlg,L"&Find text..."));
 	}

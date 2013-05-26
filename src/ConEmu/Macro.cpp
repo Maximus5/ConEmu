@@ -554,6 +554,8 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 			pszResult = IsRealVisible(p, apRCon);
 		else if (!lstrcmpi(szFunction, L"IsConsoleActive"))
 			pszResult = IsConsoleActive(p, apRCon);
+		else if (!lstrcmpi(szFunction, L"Copy"))
+			pszResult = Copy(p, apRCon);
 		else if (!lstrcmpi(szFunction, L"Paste"))
 			pszResult = Paste(p, apRCon);
 		else if (!lstrcmpi(szFunction, L"Print"))
@@ -1222,6 +1224,36 @@ LPWSTR CConEmuMacro::FontSetName(GuiMacro* p, CRealConsole* apRCon)
 	return lstrdup(L"InvalidArg");
 }
 
+// Copy (<What>)
+LPWSTR CConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon)
+{
+	int nWhat = 0;
+	LPWSTR pszText = NULL;
+
+	if (!apRCon)
+		return lstrdup(L"InvalidArg");
+
+	bool bCopy = false;
+
+	if (p->GetIntArg(0, nWhat))
+	{
+		switch (nWhat)
+		{
+		case 0:
+			bCopy = apRCon->DoSelectionCopy(false);
+			break;
+		case 1:
+			bCopy = apRCon->DoSelectionCopy(true);
+			break;
+		}
+
+		if (bCopy)
+			return lstrdup(L"OK");
+	}
+
+	return lstrdup(L"InvalidArg");
+}
+
 // Paste (<Cmd>[,"<Text>"])
 LPWSTR CConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon)
 {
@@ -1303,6 +1335,125 @@ LPWSTR CConEmuMacro::Print(GuiMacro* p, CRealConsole* apRCon)
 	apRCon->Paste(false, pszText, true);
 
 	return lstrdup(L"OK");
+}
+
+// Keys("<Combo1>"[,"<Combo2>"[...]])
+LPWSTR CConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon)
+{
+	// Наверное имеет смысл поддержать синтаксис AHK (допускаю, что многие им пользуются)
+	// Но по хорошему, проще всего разрешить что-то типа
+	// Keys("CtrlC","ControlV","ShiftIns")
+
+	// Префиксы:
+	//	# - Win
+	//	! - Alt
+	//	^ - Control
+	//	+ - Shift
+	//	% - Apps
+	//	< - use Left modifier
+	//	> - use Right modifier
+	//	<^>! - special combo for AltGr!
+	//	Down/Up - Used for emulating of series keypresses.
+
+	// KeyNames? (From AHK "List of Keys, Mouse Buttons, and Joystick Controls")
+	/*
+	WheelDown Turn the wheel downward (toward you). 
+	WheelUp Turn the wheel upward (away from you). 
+
+	WheelLeft
+	WheelRight [v1.0.48+]: Scroll to the left or right.
+
+	 
+	CapsLock Caps lock 
+	Space Space bar 
+	Tab Tab key 
+	Enter (or Return) Enter key 
+	Escape (or Esc) Esc key 
+	Backspace (or BS) Backspace 
+
+	 
+	ScrollLock Scroll lock 
+	Delete (or Del) Delete key 
+	Insert (or Ins) Insert key 
+	Home Home key 
+	End End key 
+	PgUp Page Up key 
+	PgDn Page Down key 
+	Up Up arrow key 
+	Down Down arrow key 
+	Left Left arrow key 
+	Right Right arrow key 
+
+
+	NumLock 
+	Numpad0 NumpadIns 0 / Insert key 
+	Numpad1 NumpadEnd 1 / End key 
+	Numpad2 NumpadDown 2 / Down arrow key 
+	Numpad3 NumpadPgDn 3 / Page Down key 
+	Numpad4 NumpadLeft 4 / Left arrow key 
+	Numpad5 NumpadClear 5 / typically does nothing 
+	Numpad6 NumpadRight 6 / Right arrow key 
+	Numpad7 NumpadHome 7 / Home key 
+	Numpad8 NumpadUp 8 / Up arrow key 
+	Numpad9 NumpadPgUp 9 / Page Up key 
+	NumpadDot NumpadDel Decimal separation / Delete key 
+	NumpadDiv NumpadDiv Divide 
+	NumpadMult NumpadMult Multiply 
+	NumpadAdd NumpadAdd Add 
+	NumpadSub NumpadSub Subtract 
+	NumpadEnter NumpadEnter Enter key 
+
+
+	F1 - F24 The 12 or more function keys at the top of most keyboards. 
+
+	 
+	LWin Left Windows logo key. Corresponds to the <# hotkey prefix. 
+	RWin Right Windows logo key. Corresponds to the ># hotkey prefix.
+	Control (or Ctrl) Control key. As a hotkey (Control::) it fires upon release unless it has the tilde prefix. Corresponds to the ^ hotkey prefix. 
+	Alt Alt key. As a hotkey (Alt::) it fires upon release unless it has the tilde prefix. Corresponds to the ! hotkey prefix. 
+	Shift Shift key. As a hotkey (Shift::) it fires upon release unless it has the tilde prefix. Corresponds to the + hotkey prefix. 
+	LControl (or LCtrl) Left Control key. Corresponds to the <^ hotkey prefix. 
+	RControl (or RCtrl) Right Control key. Corresponds to the >^ hotkey prefix. 
+	LShift Left Shift key. Corresponds to the <+ hotkey prefix. 
+	RShift Right Shift key. Corresponds to the >+ hotkey prefix. 
+	LAlt Left Alt key. Corresponds to the <! hotkey prefix. 
+	RAlt Right Alt key. Corresponds to the >! hotkey prefix.
+		Note: If your keyboard layout has AltGr instead of RAlt, you can probably use it as a hotkey prefix via <^>! as described here. In addition, LControl & RAlt:: would make AltGr itself into a hotkey. 
+	 
+	Browser_Back Back 
+	Browser_Forward Forward 
+	Browser_Refresh Refresh 
+	Browser_Stop Stop 
+	Browser_Search Search 
+	Browser_Favorites Favorites 
+	Browser_Home Homepage 
+	Volume_Mute Mute the volume 
+	Volume_Down Lower the volume 
+	Volume_Up Increase the volume 
+	Media_Next Next Track 
+	Media_Prev Previous Track 
+	Media_Stop Stop 
+	Media_Play_Pause Play/Pause 
+	Launch_Mail Launch default e-mail program 
+	Launch_Media Launch default media player 
+	Launch_App1 Launch My Computer 
+	Launch_App2 Launch Calculator 
+		Note: The function assigned to each of the keys listed above can be overridden by modifying the Windows registry. This table shows the default function of each key on most versions of Windows. 
+
+
+	AppsKey Menu key. This is the key that invokes the right-click context menu. 
+	PrintScreen Print screen 
+	CtrlBreak 
+	 
+	Pause Pause key 
+	Break Break key. Since this is synonymous with Pause, use ^CtrlBreak in hotkeys instead of ^Pause or ^Break. 
+	Help Help key. This probably doesn't exist on most keyboards. It's usually not the same as F1. 
+	Sleep Sleep key. Note that the sleep key on some keyboards might not work with this. 
+	SCnnn Specify for nnn the scan code of a key. Recognizes unusual keys not mentioned above. See Special Keys for details. 
+	VKnn Specify for nn the hexadecimal virtual key code of a key. 
+	*/
+
+	return lstrdup(L"NotImplementedYet");
 }
 
 // Progress(<Type>[,<Value>])

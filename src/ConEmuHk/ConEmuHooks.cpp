@@ -4917,10 +4917,10 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 	{
 		DWORD nErr = GetLastError();
 		//_ASSERTE(lpResult != NULL);
-		wchar_t szText[MAX_PATH*2], szTitle[64];
+		wchar_t szText[MAX_PATH*3], szTitle[64];
 		msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 		msprintf(szText, countof(szText),
-			L"\nVirtualAlloc " WIN3264TEST(L"%u",L"x%X%08X") L" bytes failed (0x%08X..0x%08X)\nErrorCode=%u %s\n\nWarning! This will be an error in Release!\n\n",
+			L"\nVirtualAlloc " WIN3264TEST(L"%u",L"x%X%08X") L" bytes failed (0x%08X..0x%08X)\nErrorCode=%u %s\n\nWarning! This may cause an errors in Release!\nPress <OK> to VirtualAlloc at the default address\n\n",
 			WIN3264WSPRINT(dwSize),
 			(DWORD)lpAddress, (DWORD)((LPBYTE)lpAddress+dwSize),
 			nErr, (nErr == 487) ? L"(ERROR_INVALID_ADDRESS)" : L"");

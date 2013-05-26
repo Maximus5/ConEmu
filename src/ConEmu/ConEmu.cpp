@@ -8136,7 +8136,8 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 					_ASSERTE(gpConEmu->mb_StartDetached==FALSE);
 				}
 
-				GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
+				//GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
+				lstrcpyn(pIn->NewCmd.szCurDir, WorkDir(), countof(pIn->NewCmd.szCurDir));
 
 				//GetModuleFileName(NULL, pIn->NewCmd.szConEmu, countof(pIn->NewCmd.szConEmu));
 				wcscpy_c(pIn->NewCmd.szConEmu, ms_ConEmuExeDir);
@@ -15801,7 +15802,7 @@ void CConEmuMain::RequestExitUpdate()
 		if (isMainThread())
 		{
 			UpdateProgress();
-			PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+			PostScClose();
 		}
 		else
 		{

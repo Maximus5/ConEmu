@@ -15,6 +15,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.05.26
+[%] One more fix for "Sleep in backgound".
+[%] Issue 1076: Regression: Second instance (with single instance mode) always starts in %ConEmuDir%.
+
+
 2013.05.23
 [!] Don't lock current (startup) directory.
 [!] Width and Height may be set up in cells/pixels/percents.

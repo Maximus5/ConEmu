@@ -272,6 +272,7 @@ BEGIN
     vkCTSVkAct              "Right and middle mouse buttons modifier (Text selection)"
     vkCTSVkBlock            "Block selection modifier"
     vkCTSVkBlockStart       "Start vertical block selection (like standard console)"
+	vkCTSVkCopyAll          "Copy all active console text output (buffer including)"
     vkCTSVkText             "Text selection modifier"
     vkCTSVkTextStart        "Start text selection (like text editors)"
     vkCTSVkPromptClk        "Change prompt text cursor position with left mouse click (cmd, powershell, tcc/le, ...)"
