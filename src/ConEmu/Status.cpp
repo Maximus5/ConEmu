@@ -858,7 +858,7 @@ wrap:
 		{
 			#ifdef _DEBUG
 			nErr = GetLastError();
-			_ASSERTE(bPaintOK);
+			_ASSERTE(bPaintOK || !gpConEmu->session.Connected());
 			bPaintOK = FALSE;
 			#endif
 		}

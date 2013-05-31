@@ -15,9 +15,20 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.05.30
+[%] One more fix for "Sleep in backgound".
+[%] Wheel was not working while mouse was over scrollbar.
+[%] Buffer (scrolling and contents) was not restored after Vim exit.
+[+] When Vim started current buffer output stored, and may be viewed by as Alternative buffer («lock» button on toolbar or Win+A by default).
+[%] Issue 1077: Sometimes assertion (keyboard layout related) may occurs on startup.
+
+
 2013.05.26
 [%] One more fix for "Sleep in backgound".
 [%] Issue 1076: Regression: Second instance (with single instance mode) always starts in %ConEmuDir%.
+[+] New GuiMacro: Copy(<What>) - Copy active console contents
+	* What==0: current selection
+	* What==1: all buffer contents
 
 
 2013.05.23

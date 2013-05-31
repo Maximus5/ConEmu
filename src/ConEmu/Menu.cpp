@@ -1211,12 +1211,10 @@ HMENU CConEmuMenu::CreateDebugMenuPopup()
 //	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_MONITOR_SHELLACTIVITY, _T("Enable &shell log..."));
 //#endif
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_SHOWRECTS, _T("Show debug rec&ts"));
-	#ifdef _DEBUG
 	AppendMenu(hDebug, MF_SEPARATOR, 0, NULL);
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_TRAP, _T("Raise exception (Main thread)"));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_TRAP2, _T("Raise exception (Monitor thread)"));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_ASSERT, _T("Show assertion"));
-	#endif
 	#ifdef TRACK_MEMORY_ALLOCATIONS
 	AppendMenu(hDebug, MF_SEPARATOR, 0, NULL);
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMP_MEM_BLK, _T("Dump used memory blocks"));
@@ -1694,21 +1692,27 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			gpConEmu->InvalidateAll();
 			return 0;
 
-		#ifdef _DEBUG
 		case ID_DEBUG_TRAP:
-			MyAssertTrap();
+			if (MessageBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's main thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
+			{
+				#ifdef _DEBUG
+				MyAssertTrap();
+				#else
+				DebugBreak();
+				#endif
+			}
 			return 0;
 		case ID_DEBUG_TRAP2:
-		{
-			CVConGuard VCon;
-			if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())
-				VCon->RCon()->MonitorAssertTrap();
+			if (MessageBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's monitor thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
+			{
+				CVConGuard VCon;
+				if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())
+					VCon->RCon()->MonitorAssertTrap();
+			}
 			return 0;
-		}
 		case ID_DEBUG_ASSERT:
 			Assert(FALSE && "This is test assertion");
 			return 0;
-		#endif
 
 		case ID_DUMP_MEM_BLK:
 			#ifdef TRACK_MEMORY_ALLOCATIONS

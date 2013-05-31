@@ -527,7 +527,34 @@ bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 
 	if (iMode == lam_Default)
 	{
-		iMode = (mp_RCon->isFar() && gpSet->AutoBufferHeight) ? lam_LastOutput : lam_FullBuffer;
+		if (mp_RCon->isFar() && gpSet->AutoBufferHeight)
+		{
+			iMode = lam_LastOutput;
+		}
+		else
+		{
+			// При открытии Vim (например) буфер отключается и переходим в режим без прокрутки
+			// А вот старый буфер как раз и хочется посмотреть
+			bool lbAltBufSwitched = false;
+			if (!mp_RCon->isBufferHeight())
+			{
+				mp_RCon->GetServerPID();
+
+				CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_ALTBUFFERSTATE, sizeof(CESERVER_REQ_HDR));
+				if (pIn)
+				{
+					CESERVER_REQ *pOut = ExecuteSrvCmd(mp_RCon->GetServerPID(), pIn, ghWnd);
+					if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
+					{
+						lbAltBufSwitched = (pOut->dwData[0]!=0);
+					}
+					ExecuteFreeResult(pOut);
+					ExecuteFreeResult(pIn);
+				}
+			}
+
+			iMode = lbAltBufSwitched ? lam_LastOutput : lam_FullBuffer;
+		}
 	}
 
 	if (iMode == lam_LastOutput)

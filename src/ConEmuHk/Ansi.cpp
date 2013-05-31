@@ -876,7 +876,10 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 				}
 				else
 				{
+					// Set lpSaveStart to current start of Esc sequence, it was set to beginning of buffer
+					_ASSERTEX(lpSaveStart <= lpBuffer);
 					lpSaveStart = lpBuffer;
+
 					Code.First = 27;
 					Code.Second = *(++lpBuffer);
 					Code.ArgC = 0;
@@ -1084,7 +1087,7 @@ wrap:
 		Code.nTotalLen = (lpEnd - Code.pszEscStart);
 	#endif
 wrap2:
-	_ASSERTEX((iRc==0) || (lpStart>=lpBuffer && lpStart<lpEnd));
+	_ASSERTEX((iRc==0) || (lpStart>=lpSaveStart && lpStart<lpEnd));
 	return iRc;
 }
 
@@ -2171,18 +2174,36 @@ void CEAnsi::StartVimTerm(bool bFromDllStart)
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
 	{
-		if (csbi.dwSize.Y > (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
+		// -- Turn on "alternative" buffer even if not scrolling exist now
+		//if (csbi.dwSize.Y > (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
 		{
-			COORD crNoScroll = {csbi.srWindow.Right-csbi.srWindow.Left+1, csbi.srWindow.Bottom-csbi.srWindow.Top+1};
-			BOOL bRc = SetConsoleScreenBufferSize(hOut, crNoScroll);
-			if (bRc)
+			CESERVER_REQ *pIn = NULL, *pOut = NULL;
+			pIn = ExecuteNewCmd(CECMD_ALTBUFFER,sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ALTBUFFER));
+			if (pIn)
 			{
-				gnVimTermWasChangedBuffer = csbi.dwSize.Y;
+				pIn->AltBuf.AbFlags = abf_BufferOff|abf_SaveContents;
+				pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
+				if (pOut)
+				{
+					TODO("BufferWidth");
+					gnVimTermWasChangedBuffer = csbi.dwSize.Y;
+					gbVimTermWasChangedBuffer = true;
+				}
+				ExecuteFreeResult(pIn);
+				ExecuteFreeResult(pOut);
 			}
-			else
-			{
-				_ASSERTEX(FALSE && "Failed to reset buffer height to ViM");
-			}
+
+			//COORD crNoScroll = {csbi.srWindow.Right-csbi.srWindow.Left+1, csbi.srWindow.Bottom-csbi.srWindow.Top+1};
+			//BOOL bRc = SetConsoleScreenBufferSize(hOut, crNoScroll);
+			//if (bRc)
+			//{
+			//	gnVimTermWasChangedBuffer = csbi.dwSize.Y;
+			//	gbVimTermWasChangedBuffer = true;
+			//}
+			//else
+			//{
+			//	_ASSERTEX(FALSE && "Failed to reset buffer height to ViM");
+			//}
 		}
 	}
 }
@@ -2192,6 +2213,34 @@ void CEAnsi::StopVimTerm()
 	if (!gbVimTermWasChangedBuffer)
 		return;
 
+	// Однократно
+	gbVimTermWasChangedBuffer = false;
+
+	// Сброс расширенных атрибутов!
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
+	{
+		WORD nDefAttr = GetDefaultTextAttr();
+		ExtFillOutputParm fill = {sizeof(fill), efof_ResetExt|efof_Attribute|efof_Character,
+			hOut, {CECF_NONE,nDefAttr&0xF,(nDefAttr&0xF0)>>4}, L' ', {0,0}, csbi.dwSize.X * csbi.dwSize.Y};
+		ExtFillOutput(&fill);
+	}
+
+	// Восстановление прокрутки и данных
+	CESERVER_REQ *pIn = NULL, *pOut = NULL;
+	pIn = ExecuteNewCmd(CECMD_ALTBUFFER,sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ALTBUFFER));
+	if (pIn)
+	{
+		TODO("BufferWidth");
+		pIn->AltBuf.AbFlags = abf_BufferOn|abf_RestoreContents;
+		pIn->AltBuf.BufferHeight = gnVimTermWasChangedBuffer;
+		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd, TRUE/*bAsyncNoResult*/);
+		ExecuteFreeResult(pIn);
+		ExecuteFreeResult(pOut);
+	}
+
+	/*
 	TODO("Переделать на команду сервера?");
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
@@ -2208,4 +2257,5 @@ void CEAnsi::StopVimTerm()
 			}
 		}
 	}
+	*/
 }

@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/MinTSA - start minimized in taskbar status area on startup only.\r\n" \
 	L"/Detached - start ConEmu without consoles.\r\n" \
 	L"/Icon <file> - Take icon from file (exe, dll, ico).\r\n" \
+	L"/Title <title> - Set fixed(!) title for ConEmu window. You may use environment variables in <title>.\r\n" \
 	L"/Multi | /NoMulti - Enable or disable multiconsole features.\r\n" \
 	L"/Single - New console will be started in new tab of existing ConEmu.\r\n" \
 	L"/ShowHide | /ShowHideTSA - Works like \"Minimize/Restore\" global hotkey.\r\n" \
@@ -243,5 +244,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     returns previous window mode\r\n" \
 	L"WindowMode([\"<Mode>\"])\r\n" \
 	L"  - Returns or set current window mode\r\n" \
-	L"     \"NOR\", \"MAX\", \"FS\", \"MIN\", \"TSA\"\r\n" \
+	L"     \"NOR\", \"MAX\", \"FS\" (fullscreen), \"MIN\", \"TSA\",\r\n" \
+    L"     \"TLEFT\", \"TRIGHT\" (tile to left/right), \"THEIGHT\",\r\n" \
+    L"     \"MPREF\", \"MNEXT\" (move ConEmu to prev/next monitor)\r\n" \
 	L""

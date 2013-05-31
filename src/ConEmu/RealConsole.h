@@ -554,12 +554,10 @@ class CRealConsole
 		void OnStartProcessAllowed();
 		void OnTimerCheck();
 
-	#ifdef _DEBUG
 	public:
 		void MonitorAssertTrap();
 	private:
 		bool mb_MonitorAssertTrap;
-	#endif
 
 	protected:
 		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль

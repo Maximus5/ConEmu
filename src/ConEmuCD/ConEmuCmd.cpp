@@ -207,7 +207,7 @@ int ComspecInit()
 	}
 
 	SendStarted();
-	//ghConOut.Close();
+	//ConOutCloseHandle()
 	return 0;
 }
 
@@ -223,7 +223,7 @@ void ComspecDone(int aiRc)
 
 	// Это необходимо делать, т.к. при смене буфера (SetConsoleActiveScreenBuffer) приложением,
 	// дескриптор нужно закрыть, иначе conhost может не вернуть предыдущий буфер
-	//ghConOut.Close();
+	//ConOutCloseHandle()
 
 	// Поддержка алиасов
 	if (gpSrv->szComSpecName[0] && gpSrv->szSelfName[0])
@@ -344,7 +344,7 @@ void ComspecDone(int aiRc)
 		//	SMALL_RECT rc = {0};
 		//	SetConsoleSize(0, gpSrv->sbi.dwSize, rc, "ComspecDone");
 		//}
-		//ghConOut.Close();
+		//ConOutCloseHandle()
 		CONSOLE_SCREEN_BUFFER_INFO l_csbi = {{0}};
 		lbRc2 = GetConsoleScreenBufferInfo(hOut2 = GetStdHandle(STD_OUTPUT_HANDLE), &l_csbi);
 

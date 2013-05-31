@@ -297,11 +297,16 @@ class CConEmuMain :
 				return nWheelScrollLines;
 			};
 		} mouse;
-		struct
+		struct SessionInfo
 		{
 			HMODULE hWtsApi;
 			WPARAM  wState;     // session state change event
 			LPARAM  lSessionID; // session ID
+
+			bool Connected()
+			{
+				return (wState!=WTS_SESSION_LOCK) && (wState!=WTS_SESSION_LOCK);
+			}
 
 			LRESULT SessionChanged(WPARAM State, LPARAM SessionID)
 			{

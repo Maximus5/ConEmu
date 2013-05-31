@@ -1775,6 +1775,18 @@ BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& 
 	return lbRc;
 }
 
+void ConOutCloseHandle()
+{
+	if (gpSrv->bReopenHandleAllowed)
+	{
+		// Need to block all requests to output buffer in other threads
+		MSectionLockSimple csRead;
+		if (csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_REOPENCONOUT_TIMEOUT))
+		{
+			ghConOut.Close();
+		}
+	}
+}
 
 bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData)
 {
@@ -1785,9 +1797,11 @@ bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*
 	// ¬ итоге, буфер вывода telnet'а схлопываетс€!
 	if (gpSrv->bReopenHandleAllowed)
 	{
-		ghConOut.Close();
+		ConOutCloseHandle();
 	}
 
+	// Need to block all requests to output buffer in other threads
+	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
 	// !!! Ќас интересует реальное положение дел в консоли,
 	//     а не скорректированное функцией MyGetConsoleScreenBufferInfo
@@ -1920,6 +1934,9 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
 	CESERVER_CONSAVE_MAP* pData = NULL;
 
+	// Need to block all requests to output buffer in other threads
+	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+
 	if (!CmdOutputOpenMap(lsbi, pHdr, pData))
 		return;
 
@@ -1971,9 +1988,6 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 	// «апомнить/обновить sbi
 	pData->info = lsbi;
 
-	// Need to block all requests to output buffer in other threads
-	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
-
 	pData->Succeeded = MyReadConsoleOutput(ghConOut, pData->Data, BufSize, ReadRect);
 	
 	csRead.Unlock();
@@ -1981,10 +1995,21 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 	DEBUGSTR(L"--- CmdOutputStore end\n");
 }
 
-void CmdOutputRestore()
+// abSimpleMode==true  - просто восстановить экран на момент вызова CmdOutputStore
+//             ==false - пытатьс€ подогн€ть строки вывода по текущее состо€ние
+//                       задел на будущее дл€ выполнени€ команд из Far (без /w), mc, или еще кого.
+void CmdOutputRestore(bool abSimpleMode)
 {
-	WARNING("ѕеределать/доделать CmdOutputRestore");
-#if 0
+	if (!abSimpleMode)
+	{
+		//_ASSERTE(FALSE && "Non Simple mode is not supported!");
+		WARNING("ѕеределать/доделать CmdOutputRestore дл€ Far");
+		return;
+	}
+
+	// Need to block all requests to output buffer in other threads
+	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
 	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
 	CESERVER_CONSAVE_MAP* pData = NULL;
@@ -2051,20 +2076,39 @@ void CmdOutputRestore()
 
 
 	CONSOLE_SCREEN_BUFFER_INFO storedSbi = pData->info;
+	COORD crOldBufSize = pData->info.dwSize; // ћожет быть шире или уже чем текуща€ консоль!
+	SMALL_RECT rcWrite = {0,0,min(crOldBufSize.X,lsbi.dwSize.X)-1,min(crOldBufSize.Y,lsbi.dwSize.Y)-1};
+	COORD crBufPos = {0,0};
 
-	SHORT nStoredHeight = min(storedSbi.srWindow.Top,rcBottom.Top);
-	if (nStoredHeight < 1)
+	if (!abSimpleMode)
 	{
-		// Nothing to restore?
-		return;
+		// „то восстанавливать - при выполнении команд из фара - нужно
+		// восстановить только область выше первой видимой строки,
+		// т.к. видимую область фар восстанавливает сам
+		SHORT nStoredHeight = min(storedSbi.srWindow.Top,rcBottom.Top);
+		if (nStoredHeight < 1)
+		{
+			// Nothing to restore?
+			return;
+		}
+
+		rcWrite.Top = rcBottom.Top-nStoredHeight;
+		rcWrite.Right = min(crOldBufSize.X,lsbi.dwSize.X)-1;
+		rcWrite.Bottom = rcBottom.Top-1;
+
+		crBufPos.Y = storedSbi.srWindow.Top-nStoredHeight;
+	}
+	else
+	{
+		// ј в "простом" режиме - тупо восстановить консоль как она была на момент сохранени€!
 	}
 
-	COORD crOldBufSize = pData->info.dwSize; // ћожет быть шире или уже чем текуща€ консоль!
-	SMALL_RECT rcWrite = {0,rcBottom.Top-nStoredHeight,min(crOldBufSize.X,lsbi.dwSize.X)-1,rcBottom.Top-1};
-	COORD crBufPos = {0, storedSbi.srWindow.Top-nStoredHeight};
-
 	MyWriteConsoleOutput(ghConOut, pData->Data, crOldBufSize, crBufPos, rcWrite);
-#endif
+
+	if (abSimpleMode)
+	{
+		SetConsoleTextAttribute(ghConOut, pData->info.wAttributes);
+	}
 }
 
 static BOOL CALLBACK FindConEmuByPidProc(HWND hwnd, LPARAM lParam)
@@ -3265,6 +3309,9 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 
 static int ReadConsoleInfo()
 {
+	// Need to block all requests to output buffer in other threads
+	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+
 	//int liRc = 1;
 	BOOL lbChanged = gpSrv->pConsole->bDataChanged; // ≈сли что-то еще не отослали - сразу TRUE
 	//CONSOLE_SELECTION_INFO lsel = {0}; // GetConsoleSelectionInfo
@@ -3510,6 +3557,9 @@ static int ReadConsoleInfo()
 
 static BOOL ReadConsoleData()
 {
+	// Need to block all requests to output buffer in other threads
+	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+
 	BOOL lbRc = FALSE, lbChanged = FALSE;
 #ifdef _DEBUG
 	CONSOLE_SCREEN_BUFFER_INFO dbgSbi = gpSrv->sbi;
@@ -3933,7 +3983,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			&& !nAltWait
 			&& ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT))
 		{
-			ghConOut.Close();
+			// Need to block all requests to output buffer in other threads
+			ConOutCloseHandle();
 			nLastConHandleTick = GetTickCount();
 		}
 

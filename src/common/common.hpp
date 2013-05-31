@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    125
+#define CESERVER_REQ_VER    126
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -333,6 +333,8 @@ const CECMD
 	CECMD_DUPLICATE      = 69, // CESERVER_REQ_DUPLICATE. sent to root console process (cmd, far, powershell), processed with ConEmuHk - Create new tab reproducing current state.
 	CECMD_BSDELETEWORD   = 70, // CESERVER_REQ_PROMPTACTION - default action for Ctrl+BS (prompt) - delete word to the left of the cursor
 	CECMD_GUICLIENTSHIFT = 71, // GuiStylesAndShifts
+	CECMD_ALTBUFFER      = 72, // CESERVER_REQ_ALTBUFFER: CmdOutputStore/Restore
+	CECMD_ALTBUFFERSTATE = 73, // Проверить, разрешен ли Alt.Buffer?
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1796,6 +1798,20 @@ struct CESERVER_REQ_DUPLICATE
 	DWORD nColors;
 };
 
+enum ALTBUFFER_FLAGS
+{
+	abf_SaveContents    = 0x0001,
+	abf_RestoreContents = 0x0002,
+	abf_BufferOn        = 0x0004,
+	abf_BufferOff       = 0x0008,
+};
+
+struct CESERVER_REQ_ALTBUFFER
+{
+	DWORD  AbFlags; // ALTBUFFER_FLAGS
+	USHORT BufferHeight; // In/Out
+};
+
 struct CESERVER_REQ
 {
 	CESERVER_REQ_HDR hdr;
@@ -1845,6 +1861,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_SETCONSOLORS SetConColor;
 		CESERVER_REQ_PROMPTACTION Prompt;
 		CESERVER_REQ_DUPLICATE Duplicate;
+		CESERVER_REQ_ALTBUFFER AltBuf;
 	};
 
 	DWORD DataSize() { return this ? (hdr.cbSize - sizeof(hdr)) : 0; };

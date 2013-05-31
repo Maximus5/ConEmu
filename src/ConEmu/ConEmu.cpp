@@ -27,8 +27,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
+
 #ifdef _DEBUG
 //  #define SHOW_GUIATTACH_START
+	#define TEST_JP_LANS
 #endif
 
 
@@ -13550,9 +13552,16 @@ void CConEmuMain::CheckActiveLayoutName()
 	wchar_t szLayout[KL_NAMELENGTH] = {0}, *pszEnd = NULL;
 	GetKeyboardLayoutName(szLayout);
 	HKL hkl = GetKeyboardLayout(0);
-	DWORD dwLayout = wcstoul(szLayout, &pszEnd, 16);
 	HKL hKeyb[20] = {};
 	UINT nCount = GetKeyboardLayoutList(countof(hKeyb), hKeyb);
+
+	#ifdef TEST_JP_LANS
+	wcscpy_c(szLayout, L"00000411");
+	hkl = (HKL)0x04110411;
+	nCount = 3; hKeyb[0] = (HKL)0x04110411; hKeyb[0] = (HKL)0xE0200411; hKeyb[0] = (HKL)0x04090409;
+	#endif
+
+	DWORD dwLayout = wcstoul(szLayout, &pszEnd, 16);
 
 	wchar_t szInfo[200];
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Layout=%s, HKL=" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L", Count=%u\n", szLayout, WIN3264WSPRINT(hkl), nCount);
@@ -13566,17 +13575,19 @@ void CConEmuMain::CheckActiveLayoutName()
 		{
 			if (!m_LayoutNames[i].bUsed)
 			{
-				if (iUnused == -1) iUnused = i; continue;
+				if (iUnused == -1) iUnused = i;
+				continue;
 			}
 
 			if (m_LayoutNames[i].klName == dwLayout)
 			{
-				iUnused = -1; break;
+				iUnused = -2; // set "-2" to avoid assert lower
+				break;
 			}
 		}
 	}
 
-	if (iUnused != -1)
+	if (iUnused >= 0)
 	{
 		// —таршие слова совпадать не будут (если совпадают, то случайно)
 		// ј вот младшие - должны бы, или хот€ бы "Primary Language ID". Ќо...
@@ -13591,10 +13602,10 @@ void CConEmuMain::CheckActiveLayoutName()
 		// So, always store "startup" layout and HKL for further reference...
 		StoreLayoutName(iUnused, dwLayout, hkl);
 	}
-	else
+	else if (iUnused == -1)
 	{
 		// Startup keyboard layout must be detected
-		wcscat_c(szInfo, L"\niUnused!=-1");
+		wcscat_c(szInfo, L"\niUnused==-1");
 		AssertMsg(szInfo);
 	}
 }
@@ -14522,7 +14533,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 	//-- ¬ообще, если курсор над полосой прокрутки - любые событи€ мышки в консоль не нужно слать...
+	//-- Ќо если мышка над скроллом - то обработкой Wheel занимаетс€ RealConsole и слать таки нужно...
 	//if (messg == WM_MOUSEMOVE)
+	if ((messg != WM_MOUSEWHEEL) && (messg != WM_MOUSEHWHEEL))
 	{
 		if (TrackMouse())
 			return 0;

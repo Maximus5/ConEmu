@@ -171,6 +171,7 @@ extern wchar_t gszDbgModLabel[6];
 #define GUIATTACHEVENT_TIMEOUT 250
 #define REFRESH_FELL_SLEEP_TIMEOUT 3000
 #define LOCK_READOUTPUT_TIMEOUT 10000
+#define LOCK_REOPENCONOUT_TIMEOUT 250
 
 //#define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
@@ -254,7 +255,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi);
 WARNING("¬место GetConsoleScreenBufferInfo нужно использовать MyGetConsoleScreenBufferInfo!");
 BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc);
 void CmdOutputStore(bool abCreateOnly = false);
-void CmdOutputRestore();
+void CmdOutputRestore(bool abSimpleMode);
 void CheckConEmuHwnd();
 HWND FindConEmuByPID();
 typedef BOOL (__stdcall *FGetConsoleKeyboardLayoutName)(wchar_t*);
@@ -294,7 +295,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR dll);
 int ParseCommandLine(LPCWSTR asCmdLine /*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/); // –азбор параметров командной строки
 void Help();
 void DosBoxHelp();
-void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
+int  ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
 bool IsMainServerPID(DWORD nPID);
 
 bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw = false);
@@ -331,7 +332,7 @@ bool IsAutoAttachAllowed();
 /* Console Handles */
 //extern MConHandle ghConIn;
 extern MConHandle ghConOut;
-
+void ConOutCloseHandle();
 
 
 typedef enum tag_RunMode
@@ -464,6 +465,7 @@ struct SrvInfo
 	DWORD dwConsoleCP, dwConsoleOutputCP, dwConsoleMode;
 	DWORD dwSbiRc; CONSOLE_SCREEN_BUFFER_INFO sbi; // MyGetConsoleScreenBufferInfo
 	DWORD dwDisplayMode;
+	BOOL  bAltBufferEnabled;
 	//USHORT nUsedHeight; // ¬ысота, используема€ в GUI - вместо него используем gcrBufferSize.Y
 	SHORT nTopVisibleLine; // ѕрокрутка в GUI может быть заблокирована. ≈сли -1 - без блокировки, используем текущее значение
 	SHORT nVisibleHeight;  // ѕо идее, должен быть равен (gcrBufferSize.Y). Ёто гарантированное количество строк psChars & pnAttrs

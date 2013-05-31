@@ -157,7 +157,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 		PostMessage(apVCon->GetView(), WM_SETCURSOR, -1, -1);
 	}
 
-	DEBUGTEST(mb_MonitorAssertTrap = false);
+	mb_MonitorAssertTrap = false;
 
 	//mp_Rgn = new CRgnDetect();
 	//mn_LastRgnFlags = -1;
@@ -1742,13 +1742,11 @@ void CRealConsole::OnTimerCheck()
 	return;
 }
 
-#ifdef _DEBUG
 void CRealConsole::MonitorAssertTrap()
 {
 	mb_MonitorAssertTrap = true;
 	SetMonitorThreadEvent();
 }
-#endif
 
 enum
 {
@@ -1888,7 +1886,7 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 {
 	rbChildProcessCreated = FALSE;
 
-	DEBUGTEST(mb_MonitorAssertTrap = false);
+	mb_MonitorAssertTrap = false;
 
 	_ASSERTE(IDEVENT_SERVERPH==(EVENTS_COUNT-1)); // Должен быть последним хэндлом!
 	HANDLE hEvents[EVENTS_COUNT];
@@ -2159,13 +2157,15 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 		DWORD dwT1 = GetTickCount();
 		SAFETRY
 		{
-			#ifdef _DEBUG
 			if (mb_MonitorAssertTrap)
 			{
 				mb_MonitorAssertTrap = false;
+				#ifdef _DEBUG
 				MyAssertTrap();
+				#else
+				DebugBreak();
+				#endif
 			}
-			#endif
 
 			//ResetEvent(mh_EndUpdateEvent);
 
