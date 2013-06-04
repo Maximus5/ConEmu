@@ -1930,6 +1930,8 @@ wrap:
 // Сохранить данные ВСЕЙ консоли в gpStoredOutput
 void CmdOutputStore(bool abCreateOnly /*= false*/)
 {
+	LogString("CmdOutputStore called");
+
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
 	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
 	CESERVER_CONSAVE_MAP* pData = NULL;
@@ -1992,6 +1994,7 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 	
 	csRead.Unlock();
 
+	LogString("CmdOutputStore finished");
 	DEBUGSTR(L"--- CmdOutputStore end\n");
 }
 
@@ -2006,6 +2009,8 @@ void CmdOutputRestore(bool abSimpleMode)
 		WARNING("Переделать/доделать CmdOutputRestore для Far");
 		return;
 	}
+
+	LogString("CmdOutputRestore called");
 
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
@@ -2109,6 +2114,8 @@ void CmdOutputRestore(bool abSimpleMode)
 	{
 		SetConsoleTextAttribute(ghConOut, pData->info.wAttributes);
 	}
+
+	LogString("CmdOutputRestore finished");
 }
 
 static BOOL CALLBACK FindConEmuByPidProc(HWND hwnd, LPARAM lParam)
@@ -2455,6 +2462,7 @@ HWND Attach2Gui(DWORD nTimeout)
 	HWND hGui = NULL, hDcWnd = NULL;
 	//UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
 	BOOL bNeedStartGui = FALSE;
+	DWORD nStartedGuiPID = 0;
 	DWORD dwErr = 0;
 	DWORD dwStartWaitIdleResult = -1;
 	// Будем подцепляться заново
@@ -2529,7 +2537,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 	if (bNeedStartGui)
 	{
-		wchar_t szSelf[MAX_PATH+128];
+		wchar_t szSelf[MAX_PATH+320];
 		wchar_t* pszSelf = szSelf+1, *pszSlash = NULL;
 
 		if (!GetModuleFileName(NULL, pszSelf, MAX_PATH))
@@ -2602,6 +2610,16 @@ HWND Attach2Gui(DWORD nTimeout)
 			lstrcatW(pszSlash, L"\"");
 		}
 
+		// "/config"!
+		wchar_t szConfigName[MAX_PATH] = {};
+		DWORD nCfgNameLen = GetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, szConfigName, countof(szConfigName));
+		if (nCfgNameLen && (nCfgNameLen < countof(szConfigName)) && *szConfigName)
+		{
+			lstrcatW(pszSelf, L" /config \"");
+			lstrcatW(pszSelf, szConfigName);
+			lstrcatW(pszSelf, L"\"");
+		}
+
 		//else
 		//{
 		//	lstrcpyW(pszSlash, L"ConEmu.exe");
@@ -2627,6 +2645,7 @@ HWND Attach2Gui(DWORD nTimeout)
 		}
 
 		//delete psNewCmd; psNewCmd = NULL;
+		nStartedGuiPID = pi.dwProcessId;
 		AllowSetForegroundWindow(pi.dwProcessId);
 		PRINT_COMSPEC(L"Detached GUI was started. PID=%i, Attaching...\n", pi.dwProcessId);
 		dwStartWaitIdleResult = WaitForInputIdle(pi.hProcess, INFINITE); // был nTimeout, видимо часто обламывался
@@ -2706,9 +2725,19 @@ HWND Attach2Gui(DWORD nTimeout)
 		else
 		{
 			HWND hFindGui = NULL;
+			DWORD nFindPID;
 
 			while ((hFindGui = FindWindowEx(NULL, hFindGui, VirtualConsoleClassMain, NULL)) != NULL)
 			{
+				// Если ConEmu.exe мы запустили сами
+				if (nStartedGuiPID)
+				{
+					// то цепляемся ТОЛЬКО к этому PID!
+					GetWindowThreadProcessId(hFindGui, &nFindPID);
+					if (nFindPID != nStartedGuiPID)
+						continue;					
+				}
+
 				if (TryConnect2Gui(hFindGui, hDcWnd, pIn))
 					break; // OK
 			}
@@ -3825,6 +3854,32 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 
 
 
+BOOL CheckIndicateSleepNum()
+{
+	static BOOL  bCheckIndicateSleepNum = FALSE;
+	static DWORD nLastCheckTick = 0;
+
+	if (!nLastCheckTick || ((GetTickCount() - nLastCheckTick) >= 3000))
+	{
+		wchar_t szVal[32];
+		DWORD nLen = GetEnvironmentVariable(ENV_CONEMU_SLEEP_INDICATE, szVal, countof(szVal));
+		if (nLen && (nLen < countof(szVal)))
+		{
+			szVal[3] = 0; // только "NUM" - хвост отрезать (возможные пробелы не интересуют)
+			bCheckIndicateSleepNum = (lstrcmpi(szVal, ENV_CONEMU_SLEEP_INDICATE_NUM) == 0);
+		}
+		else
+		{
+			bCheckIndicateSleepNum = FALSE; // Надо, ибо может быть обратный сброс переменной
+		}
+		nLastCheckTick = GetTickCount();
+	}
+
+	return bCheckIndicateSleepNum;
+}
+
+
+
 
 
 
@@ -3852,6 +3907,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	BOOL bSetRefreshDoneEvent;
 	DWORD nWaitCursor = 99;
 	DWORD nWaitCommit = 99;
+	BOOL bIndicateSleepNum = FALSE;
 
 	while (TRUE)
 	{
@@ -4190,6 +4246,10 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		}
 
 
+		// Обновляется по таймауту
+		bIndicateSleepNum = CheckIndicateSleepNum();
+
+
 		// Чтобы не грузить процессор неактивными консолями спим, если
 		// только что не было затребовано изменение размера консоли
 		if (!lbWasSizeChange
@@ -4206,14 +4266,15 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			DWORD nCurTick = GetTickCount();
 			nDelta = nCurTick - nLastReadTick;
 
-			#ifdef DEBUG_SLEEP_NUMLCK
-			bool bNum = (GetKeyState(VK_NUMLOCK) & 1) == 1;
-			if (bNum)
+			if (bIndicateSleepNum)
 			{
-				keybd_event(VK_NUMLOCK, 0, 0, 0);
-				keybd_event(VK_NUMLOCK, 0, KEYEVENTF_KEYUP, 0);
+				bool bNum = (GetKeyState(VK_NUMLOCK) & 1) == 1;
+				if (bNum)
+				{
+					keybd_event(VK_NUMLOCK, 0, 0, 0);
+					keybd_event(VK_NUMLOCK, 0, KEYEVENTF_KEYUP, 0);
+				}
 			}
-			#endif
 
 			// #define MAX_FORCEREFRESH_INTERVAL 500
 			if (nDelta <= MAX_FORCEREFRESH_INTERVAL)
@@ -4222,8 +4283,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 				continue;
 			}
 		}
-		#ifdef DEBUG_SLEEP_NUMLCK
-		else
+		else if (bIndicateSleepNum)
 		{
 			bool bNum = (GetKeyState(VK_NUMLOCK) & 1) == 1;
 			if (!bNum)
@@ -4232,7 +4292,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 				keybd_event(VK_NUMLOCK, 0, KEYEVENTF_KEYUP, 0);
 			}
 		}
-		#endif
+
 
 		#ifdef _DEBUG
 		if (nWait == nRefreshEventId)

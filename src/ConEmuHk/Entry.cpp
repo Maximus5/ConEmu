@@ -81,6 +81,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/WinConsole.h"
+#include "../common/WinObjects.h"
 
 #undef FULL_STARTUP_ENV
 #include "../common/StartupEnv.h"
@@ -375,6 +376,7 @@ wrap:
 	bAnsi = ((gpConInfo != NULL) && ((gpConInfo->Flags & CECF_ProcessAnsi) != 0));
 	if (abForceRecreate || (bLastAnsi != bAnsi))
 	{
+		// Ёто может случитьс€ при запуске нового "чистого" cmd - "start cmd" из ConEmu\cmd
 		_ASSERTEX(bAnsi && "ANSI was disabled?");
 		bLastAnsi = bAnsi;
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");
@@ -1961,19 +1963,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 		break;
 	case CECMD_EXPORTVARS:
 		{
-			LPCWSTR pszSrc = (LPCWSTR)pCmd->wData;
-			while (*pszSrc)
-			{
-				LPCWSTR pszName = pszSrc;
-				LPCWSTR pszVal = pszName + lstrlen(pszName) + 1;
-				LPCWSTR pszNext = pszVal + lstrlen(pszVal) + 1;
-				// Skip ConEmu's internals!
-				if (lstrcmpni(pszName, L"ConEmu", 6) != 0)
-				{
-					SetEnvironmentVariableW(pszName, pszVal);
-				}
-				pszSrc = pszNext;
-			}
+			ApplyExportEnvVar((LPCWSTR)pCmd->wData);
 
 			lbRc = true; // ¬ернуть результат однозначно
 

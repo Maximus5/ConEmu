@@ -762,7 +762,7 @@ class CConEmuMain :
 		bool SetWindowMode(ConEmuWindowMode inMode, BOOL abForce = FALSE, BOOL abFirstShow = FALSE);
 		bool SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode = wmNotChanging, bool bFromDlg = false);
 		bool SetTileMode(ConEmuWindowCommand Tile);
-		ConEmuWindowCommand GetTileMode(bool Estimate);
+		ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi=NULL);
 		bool IsSizeFree(ConEmuWindowMode CheckMode = wmFullScreen);
 		bool JumpNextMonitor(bool Next);
 	private:

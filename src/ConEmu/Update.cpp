@@ -897,7 +897,23 @@ DWORD CConEmuUpdate::CheckProcInt()
 		// Новых версий нет
 		if (mb_ManualCallMode)
 		{
-			ReportError(L"Your current ConEmu version is (%s)\nNo newer %s version available", ms_CurVersion,
+			wchar_t szInfo[100], szTest[64]; // Дописать stable/preview/alpha
+
+			wcscpy_c(szInfo, ms_CurVersion);
+	
+			if (GetPrivateProfileString(L"ConEmu_Stable", L"version", L"", szTest, countof(szTest), pszUpdateVerLocation)
+				&& (lstrcmp(szTest, ms_CurVersion) >= 0))
+				wcscat_c(szInfo, L" stable");
+			else if (GetPrivateProfileString(L"ConEmu_Preview", L"version", L"", szTest, countof(szTest), pszUpdateVerLocation)
+				&& (lstrcmp(szTest, ms_CurVersion) >= 0))
+				wcscat_c(szInfo, L" preview");
+			else if (GetPrivateProfileString(L"ConEmu_Devel", L"version", L"", szTest, countof(szTest), pszUpdateVerLocation)
+				&& (lstrcmp(szTest, ms_CurVersion) >= 0))
+				wcscat_c(szInfo, L" alpha");
+
+			DEBUGTEST(int iCmp = lstrcmp(szTest, ms_CurVersion));
+
+			ReportError(L"Your current ConEmu version is %s\nNo newer %s version is available", szInfo,
 				(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer", 0);
 		}
 

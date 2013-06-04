@@ -287,12 +287,12 @@ class MArray
         };
         #endif
 
-        void alloc(INT_PTR _nCount)
+        bool alloc(INT_PTR _nCount)
         {
             if (mn_TySize==0)
             {
                 _ARRAY_ASSERTE(!(mn_TySize==0));
-                return;
+                return false;
             }
             if (_nCount>mn_Elements)
             {
@@ -304,6 +304,7 @@ class MArray
                 // 01.03.2005 !!! Only allocate memory, Not initialize values!
                 //mn_Elements = min(_nCount,mn_MaxSize); 
             }
+			return true;
         }
         void set_at(INT_PTR _P, _Ty & _X)
         {

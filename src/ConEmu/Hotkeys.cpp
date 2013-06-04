@@ -757,6 +757,8 @@ ConEmuHotKey* ConEmuHotKey::AllocateHotkeys()
 		{vkPasteCygwin,    chk_User,  NULL,    L"PasteCygwinKey",        MakeHotKey(VK_INSERT,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Paste(8)")},
 		{vkJumpPrevMonitor,chk_User,  NULL,    L"Key.JumpPrevMonitor",   MakeHotKey(VK_LEFT,VK_LWIN,VK_SHIFT),  CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowMode(9)"),  DontHookJumps},
 		{vkJumpNextMonitor,chk_User,  NULL,    L"Key.JumpNextMonitor",   MakeHotKey(VK_RIGHT,VK_LWIN,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowMode(10)"), DontHookJumps},
+		{vkTileToLeft,     chk_User,  NULL,    L"Key.TileToLeft",        MakeHotKey(VK_LEFT,VK_LWIN),  CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowMode(6)"),  DontHookJumps},
+		{vkTileToRight,    chk_User,  NULL,    L"Key.TileToRIght",       MakeHotKey(VK_RIGHT,VK_LWIN), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowMode(7)"), DontHookJumps},
 		// GUI Macros
 		{vkGuMacro01,      chk_Macro, NULL,    L"KeyMacro01", 0, CConEmuCtrl::key_GuiMacro},
 		{vkGuMacro02,      chk_Macro, NULL,    L"KeyMacro02", 0, CConEmuCtrl::key_GuiMacro},

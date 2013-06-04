@@ -145,6 +145,9 @@ wchar_t* GetEnvVar(LPCWSTR VarName, DWORD cchDefaultMax = 2000);
 LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits = csb_SameOS);
 wchar_t* GetComspec(const ConEmuComspec* pOpt);
 
+bool IsExportEnvVarAllowed(LPCWSTR szName);
+void ApplyExportEnvVar(LPCWSTR asEnvNameVal);
+
 
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////

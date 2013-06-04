@@ -68,6 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../common/execute.h"
 #include "../ConEmuHk/Injects.h"
+#include "../common/MArray.h"
 #include "../common/MMap.h"
 #include "../common/RConStartArgs.h"
 #include "../common/ConsoleAnnotation.h"
@@ -2818,12 +2819,12 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = false)
 {
 	int iRc = CERR_CARGUMENT;
-	size_t cchMax = 0x4000, nCount = 0;
 	struct ProcInfo {
 		DWORD nPID, nParentPID;
 		DWORD_PTR Flags;
 	};
-	ProcInfo* pList = NULL;
+	//ProcInfo* pList = NULL;
+	MArray<ProcInfo> List;
 	LPWSTR pszAllVars = NULL, pszSrc;
 	CESERVER_REQ *pIn = NULL;
 	DWORD nPID = GetCurrentProcessId();
@@ -2834,6 +2835,8 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	HANDLE h;
 	size_t cchMaxEnvLen = 0;
 	wchar_t* pszBuffer;
+
+	//_ASSERTE(FALSE && "Continue with exporting environment");
 
 	#define ExpFailedPref "ConEmuC: can't export environment"
 
@@ -2862,7 +2865,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	{
 		LPWSTR pszName = pszSrc;
 		LPWSTR pszVal = pszName + lstrlen(pszName) + 1;
-		pszSrc = pszVal + lstrlen(pszVal) + 1;
+		pszSrc = pszVal;
 	}
 	cchMaxEnvLen = pszSrc - pszAllVars + 1;
 	
@@ -2899,7 +2902,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 			LPWSTR pszName = pszSrc;
 			LPWSTR pszVal = pszName + lstrlen(pszName) + 1;
 			LPWSTR pszNext = pszVal + lstrlen(pszVal) + 1;
-			if (lstrcmpni(pszName, L"ConEmu", 6) != 0)
+			if (IsExportEnvVarAllowed(pszName))
 			{
 				// Non ConEmu's internals, transfer it
 				size_t cchAdd = pszNext - pszName;
@@ -2939,7 +2942,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 				LPWSTR pszName = pszSrc;
 				LPWSTR pszVal = pszName + lstrlen(pszName) + 1;
 				LPWSTR pszNext = pszVal + lstrlen(pszVal) + 1;
-				if (lstrcmpni(pszName, L"ConEmu", 6) != 0
+				if (IsExportEnvVarAllowed(pszName)
 					&& CompareFileMask(pszName, szTest)) // limited
 				{
 					// Non ConEmu's internals, transfer it
@@ -2985,11 +2988,12 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	}
 
 	// Allocate memory for process tree
-	pList = (ProcInfo*)malloc(cchMax*sizeof(*pList));
-	if (!pList)
+	//pList = (ProcInfo*)malloc(cchMax*sizeof(*pList));
+	//if (!pList)
+	if (!List.alloc(4096))
 	{
 		if (!bSilent)
-			_printf(ExpFailedPref ", pList allocation failed\n");
+			_printf(ExpFailedPref ", List allocation failed\n");
 		goto wrap;
 	}
 
@@ -3009,22 +3013,12 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 				}
 				CharUpperBuff(PI.szExeFile, lstrlen(PI.szExeFile));
 				LPCWSTR pszName = PointToName(PI.szExeFile);
-				pList[nCount].nPID = PI.th32ProcessID;
-				pList[nCount].nParentPID = PI.th32ParentProcessID;
-				pList[nCount].Flags = ((lstrcmp(pszName, L"CONEMUC.EXE") == 0) || (lstrcmp(pszName, L"CONEMUC64.EXE") == 0)) ? 1 : 0;
-				nCount++;
-				if (nCount == cchMax)
-				{
-					size_t cchNew = cchMax+0x4000;
-					ProcInfo* pNew = (ProcInfo*)realloc(pList, cchNew*sizeof(*pList));
-					if (!pNew)
-					{
-						_ASSERTE(pNew);
-						break;
-					}
-					cchMax = cchNew;
-					pList = pNew;
-				}
+				ProcInfo pi = {
+					PI.th32ProcessID,
+					PI.th32ParentProcessID,
+					((lstrcmp(pszName, L"CONEMUC.EXE") == 0) || (lstrcmp(pszName, L"CONEMUC64.EXE") == 0)) ? 1 : 0
+				};
+				List.push_back(pi);
 			} while (Process32Next(h, &PI));
 		}
 
@@ -3032,23 +3026,25 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	}
 
 	// Send to parents tree
-	if (nCount && (nParentPID != nPID))
+	if (!List.empty() && (nParentPID != nPID))
 	{
 		DWORD nOurParentPID = nParentPID;
 		// Loop while parent is found
-		bool bParentFound = true, bFirst = true;
-		while ((nParentPID != nSrvPID) && bParentFound)
+		bool bParentFound = true;
+		while (nParentPID != nSrvPID)
 		{
 			nPID = nParentPID;
 			bParentFound = false;
 			// find next parent
-			size_t i = 0;
+			INT_PTR i = 0;
+			INT_PTR nCount = List.size();
 			while (i < nCount)
 			{
-				if (pList[i].nPID == nPID)
+				const ProcInfo& pi = List[i];
+				if (pi.nPID == nPID)
 				{
-					nParentPID = pList[i].nParentPID;
-					if (pList[i].Flags & 1)
+					nParentPID = pi.nParentPID;
+					if (pi.Flags & 1)
 					{
 						// ConEmuC - пропустить
 						i = 0;
@@ -3061,21 +3057,37 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 				i++;
 			}
 
-			if (bParentFound && (nPID != nSrvPID) && (nPID != nOurParentPID))
+			if (nPID == nSrvPID)
+				break; // Fin, this is root server
+			if (bParentFound)
+				break; // Fin, no more parents
+
+			_ASSERTE(nPID != nOurParentPID);
+
+			// Apply environment
+			CESERVER_REQ *pOut = ExecuteHkCmd(nPID, pIn, ghConWnd);
+
+			if (!pOut && !bSilent)
 			{
-				// go
-				CESERVER_REQ *pOut = ExecuteHkCmd(nPID, pIn, ghConWnd);
-				if (!pOut)
-				{
-					if (!bSilent)
-						_printf(ExpFailedPref " to PID=%u, check <Inject ConEmuHk>\n", nPID);
-				}
-				else
-				{
-					bFirst = false;
-					ExecuteFreeResult(pOut);
-				}
+				_printf(ExpFailedPref " to PID=%u, check <Inject ConEmuHk>\n", nPID);
 			}
+
+			ExecuteFreeResult(pOut);
+		}
+	}
+
+	// В корневом сервере тоже применить
+	{
+		CESERVER_REQ *pOut = ExecuteSrvCmd(nSrvPID, pIn, ghConWnd);
+
+		if (!pOut)
+		{
+			if (!bSilent)
+				_printf(ExpFailedPref " to PID=%u, root server was terminated?\n", nPID);
+		}
+		else
+		{
+			ExecuteFreeResult(pOut);
 		}
 	}
 
@@ -3093,8 +3105,6 @@ wrap:
 		FreeEnvironmentStringsW((LPWCH)pszAllVars);
 	if (pIn)
 		ExecuteFreeResult(pIn);
-	if (pList)
-		free(pList);
 
 	return iRc;
 }
@@ -4872,23 +4882,27 @@ void SendStarted()
 			pIn->StartStop.nImageBits = gnImageBits;
 
 		pIn->StartStop.bRootIsCmdExe = gbRootIsCmdExe; //2009-09-14
+
 		// НЕ MyGet..., а то можем заблокироваться...
-		HANDLE hOut = NULL;
-
-		// Need to block all requests to output buffer in other threads
-		MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
-
-		if ((gnRunMode == RM_SERVER) || (gnRunMode == RM_ALTSERVER))
-			hOut = (HANDLE)ghConOut;
-		else
-			hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-
 		DWORD dwErr1 = 0;
-		BOOL lbRc1 = GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
+		BOOL lbRc1;
 
-		if (!lbRc1) dwErr1 = GetLastError();
+		{
+			HANDLE hOut;
+			// Need to block all requests to output buffer in other threads
+			MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
-		pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
+			if ((gnRunMode == RM_SERVER) || (gnRunMode == RM_ALTSERVER))
+				hOut = (HANDLE)ghConOut;
+			else
+				hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+			lbRc1 = GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
+
+			if (!lbRc1) dwErr1 = GetLastError();
+
+			pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
+		}
 
 		// Если (для ComSpec) указан параметр "-cur_console:h<N>"
 		if (gbParmBufSize)
@@ -7621,6 +7635,26 @@ BOOL cmd_AltBufferState(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_ApplyExportVars(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+
+	ApplyExportEnvVar((LPCWSTR)in.wData);
+
+	size_t cbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_EXPORTVARS, cbReplySize);
+	if ((*out) != NULL)
+	{
+		(*out)->dwData[0] = TRUE;
+	}
+	else
+	{
+		lbRc = FALSE;
+	}
+
+	return lbRc;
+}
+
 bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 {
 	bool lbProcessed = false;
@@ -7636,7 +7670,7 @@ bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 
 BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 {
-	BOOL lbRc = FALSE;
+	BOOL lbRc;
 	MCHKHEAP;
 
 	switch(in.hdr.nCmd)
@@ -7800,6 +7834,16 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 				lbRc = cmd_AltBufferState(in, out);
 			}
 		} break;
+		case CECMD_EXPORTVARS:
+		{
+			lbRc = cmd_ApplyExportVars(in, out);
+		} break;
+		default:
+		{
+			// Отлов необработанных
+			_ASSERTE(FALSE && "Command was not processed");
+			lbRc = FALSE;
+		}
 	}
 
 	if (gbInRecreateRoot) gbInRecreateRoot = FALSE;

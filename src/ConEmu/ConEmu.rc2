@@ -340,6 +340,8 @@ BEGIN
     vkTabPane               "Switch to next visible pane (SplitScreen)"
     vkTabPaneShift          "Switch to previous visible pane (SplitScreen)"
     vkTerminateApp          "Terminate active process in current console"
+	vkTileToLeft            "Tile ConEmu window to the left edge of monitor"
+	vkTileToRight           "Tile ConEmu window to the right edge of monitor"
     vkWinAltA               "Show «About» dialog"
     vkWinAltK               "Show «Hotkeys»"
     vkWinAltP               "Show «Settings» dialog"

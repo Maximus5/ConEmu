@@ -2850,6 +2850,8 @@ void CRealConsole::ConHostSearchPrepare()
 		return;
 	}
 
+	LogString(L"Prepare searching for conhost", TRUE);
+
 	mp_ConHostSearch->Reset();
 
 	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -2866,6 +2868,8 @@ void CRealConsole::ConHostSearchPrepare()
 		}
 		CloseHandle(h);
 	}
+
+	LogString(L"Prepare searching for conhost - Done", TRUE);
 }
 
 DWORD CRealConsole::ConHostSearch(bool bFinal)
@@ -2875,6 +2879,14 @@ DWORD CRealConsole::ConHostSearch(bool bFinal)
 		_ASSERTE(this && mp_ConHostSearch);
 		return 0;
 	}
+
+	if (!mn_ConHost_PID)
+	{
+		_ASSERTE(mn_ConHost_PID==0);
+		mn_ConHost_PID = 0;
+	}
+
+	LogString(L"Searching for conhost", TRUE);
 
 	for (int s = 0; s <= 1; s++)
 	{
@@ -2920,6 +2932,14 @@ DWORD CRealConsole::ConHostSearch(bool bFinal)
 	}
 
 wrap:
+
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"ConHostPID=%u", mn_ConHost_PID);
+		LogString(szInfo, TRUE);
+	}
+
 	return mn_ConHost_PID;
 }
 

@@ -4611,3 +4611,40 @@ wchar_t* GetComspec(const ConEmuComspec* pOpt)
 	return pszComSpec;
 }
 
+
+bool IsExportEnvVarAllowed(LPCWSTR szName)
+{
+	if (!szName || !*szName)
+		return false;
+
+	// ’от€ некоторые внутренние переменные мен€ть можно
+	if (lstrcmpi(szName, ENV_CONEMU_SLEEP_INDICATE) == 0)
+		return true;
+
+	// Ќо большинство внутренних переменных ConEmu запрещено мен€ть (экспортировать)
+	wchar_t szTemp[8];
+	lstrcpyn(szTemp, szName, 7); szTemp[7] = 0;
+	if (lstrcmpi(szTemp, L"ConEmu") == 0)
+		return false;
+
+	return true;
+}
+
+void ApplyExportEnvVar(LPCWSTR asEnvNameVal)
+{
+	if (!asEnvNameVal)
+		return;
+
+	while (*asEnvNameVal)
+	{
+		LPCWSTR pszName = asEnvNameVal;
+		LPCWSTR pszVal = pszName + lstrlen(pszName) + 1;
+		LPCWSTR pszNext = pszVal + lstrlen(pszVal) + 1;
+		// Skip ConEmu's internals!
+		if (IsExportEnvVarAllowed(pszName))
+		{
+			SetEnvironmentVariableW(pszName, pszVal);
+		}
+		asEnvNameVal = pszNext;
+	}
+}

@@ -2518,6 +2518,8 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 			_ASSERTE(FALSE && "MsgCreateCon failed");
 			VCon = NULL;
 		}
+
+		bFound = (VCon.VCon() != NULL);
 		//if ((pVCon = CreateCon(&args)) == NULL)
 		//	return FALSE;
 	}
@@ -2525,17 +2527,15 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 	if (!bFound || !VCon.VCon())
 	{
 		//Assert? Report?
-		return FALSE;
+		bFound = FALSE;
 	}
-
-	// ѕытаемс€ подцепить консоль
-	if (VCon->RCon()->AttachConemuC(ahConWnd, pStartStop->dwPID, pStartStop, pRet))
+	else
 	{
-		return FALSE;
+		// ѕытаемс€ подцепить консоль
+		bFound = VCon->RCon()->AttachConemuC(ahConWnd, pStartStop->dwPID, pStartStop, pRet);
 	}
 
-	// OK
-	return TRUE;
+	return bFound;
 }
 
 CRealConsole* CVConGroup::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID)

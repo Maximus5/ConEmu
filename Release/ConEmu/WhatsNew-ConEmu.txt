@@ -15,6 +15,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.06.04
+[%] Issue 1080, Issue 1082: Regression: 5 sec delay when starting new console.
+[+] Issue 1083: Process Win+Left/Win+Right internally (tile to left/right).
+[%] Issue 1087: cmd autoattach ignores disabled multi console option.
+[%] Some fixes in "ConEmuC /export ...".
+[+] Debug purposes: new environment variable (may be set by user) ConEmuSleepIndicator=NUM.
+
+
 2013.05.30
 [%] One more fix for "Sleep in backgound".
 [%] Wheel was not working while mouse was over scrollbar.

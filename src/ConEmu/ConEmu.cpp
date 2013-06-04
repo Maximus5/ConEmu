@@ -4509,6 +4509,11 @@ ConEmuWindowMode CConEmuMain::GetWindowMode()
 
 bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 {
+	if (isIconic())
+	{
+		return false;
+	}
+
 	if (!IsSizeFree())
 	{
 		_ASSERTE(FALSE && "Tiling not allowed in Quake and Inside modes");
@@ -4521,12 +4526,68 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 		return false;
 	}
 
-	m_TileMode = Tile;
+	MONITORINFO mi = {0};
+	ConEmuWindowCommand CurTile = GetTileMode(true/*Estimate*/, &mi);
+	ConEmuWindowMode wm = GetWindowMode();
+	
+	if (mi.cbSize)
+	{
+		bool bChange = false;
+		RECT rcNewWnd = {};
+
+		if ((wm == wmNormal) && (Tile == cwc_Current))
+		{
+			StoreNormalRect(NULL);
+		}
+
+		if ((Tile == cwc_TileLeft) && (CurTile == cwc_TileRight))
+			Tile = cwc_Current;
+		else if ((Tile == cwc_TileRight) && (CurTile == cwc_TileLeft))
+			Tile = cwc_Current;
+
+		if (Tile == cwc_Current)
+		{
+			// Вернуться из Tile-режима в нормальный
+			rcNewWnd = GetDefaultRect();
+			bChange = true;
+		}
+		else if (Tile == cwc_TileLeft)
+		{
+			rcNewWnd.left = mi.rcWork.left;
+			rcNewWnd.top = mi.rcWork.top;
+			rcNewWnd.bottom = mi.rcWork.bottom;
+			rcNewWnd.right = (mi.rcWork.left + mi.rcWork.right) >> 1;
+			bChange = true;
+		}
+		else if (Tile == cwc_TileRight)
+		{
+			rcNewWnd.right = mi.rcWork.right;
+			rcNewWnd.top = mi.rcWork.top;
+			rcNewWnd.bottom = mi.rcWork.bottom;
+			rcNewWnd.left = (mi.rcWork.left + mi.rcWork.right) >> 1;
+			bChange = true;
+		}
+
+		if (bChange)
+		{
+			// Выйти из FullScreen/Maximized режима
+			if (GetWindowMode() != wmNormal)
+				SetWindowMode(wmNormal);
+
+			// Сразу меняем, чтобы DefaultRect не слетел...
+			m_TileMode = Tile;
+			changeFromWindowMode = wmNormal;
+
+			SetWindowPos(ghWnd, NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
+			
+			changeFromWindowMode = wmNotChanging;
+		}
+	}
 
 	return true;
 }
 
-ConEmuWindowCommand CConEmuMain::GetTileMode(bool Estimate)
+ConEmuWindowCommand CConEmuMain::GetTileMode(bool Estimate, MONITORINFO* pmi/*=NULL*/)
 {
 	_ASSERTE(IsWindowVisible(ghWnd) && !isFullScreen() && !isZoomed() && !isIconic());
 
@@ -4536,6 +4597,9 @@ ConEmuWindowCommand CConEmuMain::GetTileMode(bool Estimate)
 
 		MONITORINFO mi;
 		GetNearestMonitorInfo(&mi, NULL, NULL, ghWnd);
+		if (pmi)
+			*pmi = mi;
+
 		RECT rcWnd;
 		GetWindowRect(ghWnd, &rcWnd);
 		// _abs(x1-x2) <= 1 ?
@@ -17493,6 +17557,8 @@ void CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	CASE_MSG(WM_SYSCOMMAND);
 	CASE_MSG(WM_TIMER);
 	CASE_MSG(WM_VSCROLL);
+	CASE_MSG(WM_GETICON);
+	CASE_MSG(WM_SETTEXT);
 	default:
 		{
 			LPCSTR pszReg = NULL;
