@@ -173,6 +173,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
 #define DEBUGLOGFILE(m)
 #endif
 
+void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
 
 //#if !defined(__GNUC__)
 //#pragma warning (disable : 4005)
@@ -263,6 +264,8 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 bool isKey(DWORD wp,DWORD vk);
 bool isConsoleService(LPCWSTR pszProcessName);
 
+
+void RaiseTestException();
 
 //------------------------------------------------------------------------
 ///| Registry |///////////////////////////////////////////////////////////

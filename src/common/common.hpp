@@ -80,6 +80,12 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECOPYRIGHTSTRING_A "(c) 2009-2013, ConEmu.Maximus5@gmail.com"
 #define CECOPYRIGHTSTRING_W L"\x00A9 2009-2013 ConEmu.Maximus5@gmail.com"
 
+#define CEHOMEPAGE     L"http://conemu-maximus5.googlecode.com"
+#define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/issues/entry"
+#define CEREPORTCRASH  L"http://code.google.com/p/conemu-maximus5/issues/entry"
+#define CEWHATSNEW     L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New"
+
+
 // EnvVars
 #define ENV_CONEMUDIR_VAR_A  "ConEmuDir"
 #define ENV_CONEMUDIR_VAR_W L"ConEmuDir"
@@ -967,6 +973,8 @@ const ConEmuConsoleFlags
 	CECF_SleepInBackg    = 0x00000020,
 
 	CECF_BlockChildDbg   = 0x00000040, // When ConEmuC tries to debug process tree - force disable DEBUG_PROCESS/DEBUG_ONLY_THIS_PROCESS flags when creating subchildren
+
+	CECF_SuppressBells   = 0x00000080, // Suppress output of char(7) to console (wich producess annoing bell sound)
 
 	CECF_Empty = 0
 	;

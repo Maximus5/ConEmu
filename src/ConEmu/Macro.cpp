@@ -814,7 +814,7 @@ LPWSTR CConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon)
 		}
 		break;
 	case 2:
-		if (CVConGroup::OnScClose())
+		if (gpConEmu->OnScClose())
 			pszResult = lstrdup(L"OK");
 		break;
 	case 3:

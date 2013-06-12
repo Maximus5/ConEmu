@@ -148,6 +148,9 @@ wchar_t* GetComspec(const ConEmuComspec* pOpt);
 bool IsExportEnvVarAllowed(LPCWSTR szName);
 void ApplyExportEnvVar(LPCWSTR asEnvNameVal);
 
+#ifndef CONEMU_MINIMAL
+bool CopyToClipboard(LPCWSTR asText);
+#endif
 
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////

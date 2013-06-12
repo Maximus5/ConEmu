@@ -86,6 +86,44 @@ static bool gbVimTermWasChangedBuffer = false;
 HANDLE CEAnsi::ghLastAnsiCapable = NULL;
 HANDLE CEAnsi::ghLastAnsiNotCapable = NULL;
 
+void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
+{
+	static DWORD nLastCheck = 0;
+	static bool bAnsiAllowed = true;
+	static bool bSuppressBells = true;
+
+	if (nLastCheck || ((GetTickCount() - nLastCheck) > ANSI_MAP_CHECK_TIMEOUT))
+	{
+		CESERVER_CONSOLE_MAPPING_HDR* pMap = GetConMap();
+		//	(CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(CESERVER_CONSOLE_MAPPING_HDR));
+		if (pMap)
+		{
+			//if (!::LoadSrvMapping(ghConWnd, *pMap) || !pMap->bProcessAnsi)
+			//	bAnsiAllowed = false;
+			//else
+			//	bAnsiAllowed = true;
+
+			bAnsiAllowed = ((pMap != NULL) && ((pMap->Flags & CECF_ProcessAnsi) != 0));
+			bSuppressBells = ((pMap != NULL) && ((pMap->Flags & CECF_SuppressBells) != 0));
+
+			//free(pMap);
+		}
+		nLastCheck = GetTickCount();
+	}
+
+	if (pbAnsiAllowed)
+		*pbAnsiAllowed = bAnsiAllowed;
+	if (pbSuppressBells)
+		*pbSuppressBells = bSuppressBells;
+}
+
+bool CEAnsi::IsSuppressBells()
+{
+	bool bSuppressBells;
+	GetFeatures(NULL, &bSuppressBells);
+	return bSuppressBells;
+}
+
 bool CEAnsi::IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput /*= NULL*/)
 {
 	bool bAnsi = false;
@@ -121,26 +159,7 @@ bool CEAnsi::IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput /*= NULL*/)
 		
 		if (bAnsi)
 		{
-			static DWORD nLastCheck = 0;
-			static bool bAnsiAllowed = true;
-
-			if (nLastCheck || ((GetTickCount() - nLastCheck) > ANSI_MAP_CHECK_TIMEOUT))
-			{
-				CESERVER_CONSOLE_MAPPING_HDR* pMap = GetConMap();
-				//	(CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(CESERVER_CONSOLE_MAPPING_HDR));
-				if (pMap)
-				{
-					//if (!::LoadSrvMapping(ghConWnd, *pMap) || !pMap->bProcessAnsi)
-					//	bAnsiAllowed = false;
-					//else
-					//	bAnsiAllowed = true;
-
-					bAnsiAllowed = ((pMap != NULL) && ((pMap->Flags & CECF_ProcessAnsi) != 0));
-
-					//free(pMap);
-				}
-				nLastCheck = GetTickCount();
-			}
+			bool bAnsiAllowed; GetFeatures(&bAnsiAllowed, NULL);
 
 			if (!bAnsiAllowed)
 				bAnsi = false;

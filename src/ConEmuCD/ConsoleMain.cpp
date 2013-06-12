@@ -717,6 +717,32 @@ extern "C" {
 };
 #endif
 
+// Возвращает текст с информацией о пути к сохраненному дампу
+DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024]);
+#include "../common/Dump.h"
+
+LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
+{
+	wchar_t szFull[1024] = L"";
+	DWORD dwErr = CreateDumpForReport(ExceptionInfo, szFull);
+	wchar_t szAdd[1200];
+	wcscpy_c(szAdd, szFull);
+	wcscat_c(szAdd, L"\r\n\r\nPress <Yes> to copy this text to clipboard\r\nand open project web page");
+	wchar_t szTitle[100];
+	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu crashed, PID=%u", GetCurrentProcessId());
+
+	int nBtn = MessageBox(NULL, szAdd, szTitle, MB_YESNO|MB_ICONSTOP|MB_SYSTEMMODAL);
+	if (nBtn == IDYES)
+	{
+		CopyToClipboard(szFull);
+		ShellExecute(NULL, L"open", CEREPORTCRASH, NULL, NULL, SW_SHOWNORMAL);
+	}
+
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
+
+
 // Main entry point for ConEmuC.exe
 int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserved*/)
 {
@@ -731,6 +757,11 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 	if (!anWorkMode)
 	{
+		if (!IsDebuggerPresent())
+		{
+			SetUnhandledExceptionFilter(CreateDumpOnException);
+		}
+
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT);
 
@@ -3242,6 +3273,14 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		// Далее - требуется чтобы у аргумента был "/"
 		if (szArg[0] != L'/')
 			continue;
+
+		#ifdef _DEBUG
+		if (lstrcmpi(szArg, L"/DEBUGTRAP")==0)
+		{
+			int i, j = 1; j--; i = 1 / j;
+		}
+		else
+		#endif
 
 		if (wcsncmp(szArg, L"/REGCONFONT=", 12)==0)
 		{

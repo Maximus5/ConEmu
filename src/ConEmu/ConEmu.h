@@ -392,7 +392,9 @@ class CConEmuMain :
 		void OnOurDialogOpened();
 		void OnOurDialogClosed();
 		void CheckAllowAutoChildFocus(DWORD nDeactivatedTID);
+		bool CanSetChildFocus();
 		void SetScClosePending(bool bFlag);
+		bool OnScClose();
 	protected:
 		bool mb_ScClosePending; // Устанавливается в TRUE в CVConGroup::CloseQuery
 	protected:
@@ -854,6 +856,7 @@ class CConEmuMain :
 		void OnInfo_HomePage();
 		void OnInfo_ReportBug();
 		void OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg);
+		void OnInfo_ThrowTrapException(bool bMainThread);
 		//LRESULT OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam);
 		LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnKeyboardHook(DWORD VkMod);

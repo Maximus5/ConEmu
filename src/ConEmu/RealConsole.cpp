@@ -2160,11 +2160,12 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			if (mb_MonitorAssertTrap)
 			{
 				mb_MonitorAssertTrap = false;
-				#ifdef _DEBUG
-				MyAssertTrap();
-				#else
-				DebugBreak();
-				#endif
+				//#ifdef _DEBUG
+				//MyAssertTrap();
+				//#else
+				//DebugBreak();
+				//#endif
+				RaiseTestException();
 			}
 
 			//ResetEvent(mh_EndUpdateEvent);
@@ -10313,7 +10314,7 @@ LPCWSTR CRealConsole::GetDir()
 {
 	if (!this) return L"";
 
-	return gpConEmu->WorkDir(m_Args.pszSpecialCmd);
+	return gpConEmu->WorkDir(m_Args.pszStartupDir);
 }
 
 wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)

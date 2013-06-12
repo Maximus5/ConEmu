@@ -552,6 +552,12 @@ wrap:
 
 void CConEmuChild::PostRestoreChildFocus()
 {
+	if (!gpConEmu->CanSetChildFocus())
+	{
+		_ASSERTE(FALSE && "Must not get here?");
+		return;
+	}
+
 	PostMessage(mh_WndBack, mn_MsgRestoreChildFocus, 0, 0);
 }
 
@@ -771,15 +777,23 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 			if (pVCon && (messg == pVCon->mn_MsgRestoreChildFocus))
 			{
-				CRealConsole* pRCon = pVCon->RCon();
-				if (gpConEmu->isActive(pVCon, false))
+				if (!gpConEmu->CanSetChildFocus())
 				{
-					pRCon->GuiWndFocusRestore();
+					// Клик по иконке открывает системное меню
+					//_ASSERTE(FALSE && "Must not get here?");
 				}
-
-				if (pRCon->GuiWnd())
+				else
 				{
-					pRCon->StoreGuiChildRect(NULL);
+					CRealConsole* pRCon = pVCon->RCon();
+					if (gpConEmu->isActive(pVCon, false))
+					{
+						pRCon->GuiWndFocusRestore();
+					}
+
+					if (pRCon->GuiWnd())
+					{
+						pRCon->StoreGuiChildRect(NULL);
+					}
 				}
 			}
 			else

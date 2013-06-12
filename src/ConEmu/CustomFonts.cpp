@@ -612,7 +612,9 @@ bool CEDC::CreateDC(UINT Width, UINT Height)
 	//	gpConEmu->UpdateSizes();
 	//**************************
 
-	if (GetDeviceCaps(hScreenDC, BITSPIXEL) == 32)
+	int iRemote = -1;
+	int nPixels = GetDeviceCaps(hScreenDC, BITSPIXEL);
+	if (nPixels >= 32)
 	{
 		// For custom font rendering
 		BITMAPINFO bmi;
@@ -628,9 +630,19 @@ bool CEDC::CreateDC(UINT Width, UINT Height)
 	}
 	else
 	{
+		wchar_t szInfo[128];
+		DWORD nErr = GetLastError();
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Warning! Color depth of your display is low (%i), 32bit recommended! ErrCode=%u", nPixels, nErr);
+		::LogString(szInfo);
+
 		hBitmap = CreateCompatibleBitmap(hScreenDC, Width, Height);
-		_ASSERTE(pPixels);
+
+		// May be performance drawbacks when using bdf fonts (m_Font.iType == CEFONT_CUSTOM)
+		iRemote = GetSystemMetrics(0x1000/*SM_REMOTESESSION*/);
+		// Remote desktop to Win2k8 gets here and (nPixels==16)
+		_ASSERTE((pPixels || (iRemote==1)) && "Remote desktop? Caps(BitsPerPixel)!=32");
 	}
+	UNREFERENCED_PARAMETER(iRemote);
 
 	if (hBitmap)
 	{

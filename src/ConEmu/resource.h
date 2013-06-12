@@ -939,6 +939,7 @@
 #define vkCTSVkCopyAll                  2595
 #define vkTileToLeft                    2596
 #define vkTileToRight                   2597
+#define cbSuppressBells                 2598
 
 // Next default values for new objects
 // 

@@ -858,6 +858,7 @@ wrap:
 		{
 			#ifdef _DEBUG
 			nErr = GetLastError();
+			// ассерт может возникнуть в RemoteDesktop пока был запрос на UAC
 			_ASSERTE(bPaintOK || !gpConEmu->session.Connected());
 			bPaintOK = FALSE;
 			#endif

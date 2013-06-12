@@ -1150,6 +1150,7 @@ void CConEmuMenu::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
 	//mb_InTrackSysMenu = FALSE;
 	if (command == 0)
 	{
+		bool bLbnPressed = isPressed(VK_LBUTTON);
 		mn_SysMenuCloseTick = GetTickCount();
 
 		if ((mn_SysMenuCloseTick - mn_SysMenuOpenTick) < GetDoubleClickTime())
@@ -1693,22 +1694,10 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			return 0;
 
 		case ID_DEBUG_TRAP:
-			if (MessageBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's main thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
-			{
-				#ifdef _DEBUG
-				MyAssertTrap();
-				#else
-				DebugBreak();
-				#endif
-			}
+			gpConEmu->OnInfo_ThrowTrapException(true);
 			return 0;
 		case ID_DEBUG_TRAP2:
-			if (MessageBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's monitor thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
-			{
-				CVConGuard VCon;
-				if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())
-					VCon->RCon()->MonitorAssertTrap();
-			}
+			gpConEmu->OnInfo_ThrowTrapException(false);
 			return 0;
 		case ID_DEBUG_ASSERT:
 			Assert(FALSE && "This is test assertion");
@@ -1869,7 +1858,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			break;
 			
 		case SC_CLOSE:
-			CVConGroup::OnScClose();
+			gpConEmu->OnScClose();
 			break;
 		
 		case SC_MAXIMIZE:

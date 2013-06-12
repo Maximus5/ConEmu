@@ -1986,19 +1986,16 @@ bool CVConGroup::isConsolePID(DWORD nPID)
 }
 
 // returns true if gpConEmu->Destroy() was called
-bool CVConGroup::OnScClose()
+// bMsgConfirmed - был ли показан диалог подтверждения, или юзер не включил эту опцию
+bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 {
 	gpConEmu->LogString(L"CVConGroup::OnScClose()");
 
 	bool lbAllowed = false;
 	int nConCount = 0, nDetachedCount = 0;
-	bool lbProceed = false, lbMsgConfirmed = false;
+	bool lbProceed = false;
 
-	// lbMsgConfirmed - был ли показан диалог подтверждения, или юзер не включил эту опцию
-	if (!OnCloseQuery(&lbMsgConfirmed))
-		return false; // не закрывать
-
-	bool bConfirmEach = (lbMsgConfirmed || !gpSet->isCloseConsoleConfirm) ? false : true;
+	bool bConfirmEach = (bMsgConfirmed || !gpSet->isCloseConsoleConfirm) ? false : true;
 
 	// Сохраним размер перед закрытием консолей, а то они могут напакостить и "вернуть" старый размер
 	gpSet->SaveSizePosOnExit();

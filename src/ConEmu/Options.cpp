@@ -547,6 +547,7 @@ void Settings::InitSettings()
 	SetDefaultTerminalApps(L"explorer.exe"/* to default value */); // "|"-delimited string -> MSZ
 
 	isProcessAnsi = true;
+	isSuppressBells = false; // пока не доделано - false
 	mb_UseClink = true;
 	#ifdef USEPORTABLEREGISTRY
 	isPortableReg = true; // включено по умолчанию, DEBUG
@@ -2079,6 +2080,8 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		reg->Load(L"ProcessAnsi", isProcessAnsi);
 
+		reg->Load(L"SuppressBells", isSuppressBells);
+
 		reg->Load(L"UseClink", mb_UseClink);
 
 		#ifdef USEPORTABLEREGISTRY
@@ -2984,6 +2987,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		}
 
 		reg->Save(L"ProcessAnsi", isProcessAnsi);
+
+		_ASSERTE(isSuppressBells==false); // пока не доделано - не сохраняем
+		//reg->Save(L"SuppressBells", isSuppressBells);
 
 		reg->Save(L"UseClink", mb_UseClink);
 

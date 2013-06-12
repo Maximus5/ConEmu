@@ -150,10 +150,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define CONEMU_ANIMATE_DURATION 200
 //#define CONEMU_ANIMATE_DURATION_MAX 5000
 
-const wchar_t* gsHomePage    = L"http://conemu-maximus5.googlecode.com";
-const wchar_t* gsReportBug   = L"http://code.google.com/p/conemu-maximus5/issues/entry";
-const wchar_t* gsReportCrash = L"http://code.google.com/p/conemu-maximus5/issues/entry";
-const wchar_t* gsWhatsNew    = L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";
+const wchar_t* gsHomePage    = CEHOMEPAGE;    //L"http://conemu-maximus5.googlecode.com";
+const wchar_t* gsReportBug   = CEREPORTBUG;   //L"http://code.google.com/p/conemu-maximus5/issues/entry";
+const wchar_t* gsReportCrash = CEREPORTCRASH; //L"http://code.google.com/p/conemu-maximus5/issues/entry";
+const wchar_t* gsWhatsNew    = CEWHATSNEW;    //L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";
 
 static struct RegisteredHotKeys
 {
@@ -2468,6 +2468,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0) ; // ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_UseTrueColor,(gpSet->isTrueColorer ? CECF_UseTrueColor : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessAnsi,(gpSet->isProcessAnsi ? CECF_ProcessAnsi : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_SuppressBells,(gpSet->isSuppressBells ? CECF_SuppressBells : 0));
 	// использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
 	switch (gpSet->isUseClink())
 	{
@@ -4529,7 +4530,7 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 	MONITORINFO mi = {0};
 	ConEmuWindowCommand CurTile = GetTileMode(true/*Estimate*/, &mi);
 	ConEmuWindowMode wm = GetWindowMode();
-	
+
 	if (mi.cbSize)
 	{
 		bool bChange = false;
@@ -4540,10 +4541,27 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 			StoreNormalRect(NULL);
 		}
 
-		if ((Tile == cwc_TileLeft) && (CurTile == cwc_TileRight))
-			Tile = cwc_Current;
-		else if ((Tile == cwc_TileRight) && (CurTile == cwc_TileLeft))
-			Tile = cwc_Current;
+
+		// When window is tiled to the right edge, and user press Win+Right
+		// ConEmu must jump to next monitor and set tile to Left
+		if ((CurTile == Tile) && (CurTile == cwc_TileLeft || CurTile == cwc_TileRight))
+		{
+			MONITORINFO nxt = {0};
+			HMONITOR hNext = GetNextMonitorInfo(&nxt, &mi.rcWork, (CurTile == cwc_TileRight)/*Next*/);
+			if (hNext && nxt.cbSize && memcmp(&mi.rcWork, &nxt.rcWork, sizeof(nxt.rcWork)))
+			{
+				memmove(&mi, &nxt, sizeof(nxt));
+				Tile = (CurTile == cwc_TileRight) ? cwc_TileLeft : cwc_TileRight;
+			}
+		}
+		else
+		{
+			if ((Tile == cwc_TileLeft) && (CurTile == cwc_TileRight))
+				Tile = cwc_Current;
+			else if ((Tile == cwc_TileRight) && (CurTile == cwc_TileLeft))
+				Tile = cwc_Current;
+		}
+
 
 		if (Tile == cwc_Current)
 		{
@@ -10182,6 +10200,20 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 //	return lbProceed;
 //}
 
+// returns true if gpConEmu->Destroy() was called
+bool CConEmuMain::OnScClose()
+{
+	gpConEmu->LogString(L"CVConGroup::OnScClose()");
+
+	bool lbMsgConfirmed = false;
+
+	// lbMsgConfirmed - был ли показан диалог подтверждения, или юзер не включил эту опцию
+	if (!CVConGroup::OnCloseQuery(&lbMsgConfirmed))
+		return false; // не закрывать
+
+	return CVConGroup::DoCloseAllVCon(lbMsgConfirmed);
+}
+
 void CConEmuMain::SetScClosePending(bool bFlag)
 {
 	mb_ScClosePending = bFlag;
@@ -11162,6 +11194,13 @@ void CConEmuMain::OnOurDialogOpened()
 void CConEmuMain::OnOurDialogClosed()
 {
 	CheckAllowAutoChildFocus((DWORD)-1);
+}
+
+bool CConEmuMain::CanSetChildFocus()
+{
+	if (mp_Menu->GetTrackMenuPlace() != tmp_None)
+		return false;
+	return true;
 }
 
 void CConEmuMain::CheckAllowAutoChildFocus(DWORD nDeactivatedTID)
@@ -16746,6 +16785,32 @@ void CConEmuMain::OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg)
 	}
 }
 
+void CConEmuMain::OnInfo_ThrowTrapException(bool bMainThread)
+{
+	if (bMainThread)
+	{
+		if (MessageBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's main thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
+		{
+			//#ifdef _DEBUG
+			//MyAssertTrap();
+			//#else
+			//DebugBreak();
+			//#endif
+			// -- trigger division by 0
+			RaiseTestException();
+		}
+	}
+	else
+	{
+		if (MessageBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's monitor thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
+		{
+			CVConGuard VCon;
+			if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())
+				VCon->RCon()->MonitorAssertTrap();
+		}
+	}
+}
+
 LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
@@ -17976,7 +18041,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				{
 					this->mb_AllowAutoChildFocus = false; // для отладчика
 				}
-				else if ((this->GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
+				else if (this->CanSetChildFocus() && (this->GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
 				{
 					VCon->PostRestoreChildFocus();
 				}
@@ -18078,7 +18143,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			break;
 		case WM_CLOSE:
 			_ASSERTE(FALSE && "WM_CLOSE is not called in normal behavior");
-			CVConGroup::OnScClose();
+			this->OnScClose();
 			result = 0;
 			break;
 		case WM_SYSCOMMAND:

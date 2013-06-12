@@ -117,6 +117,9 @@ public:
 
 	static bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL);
 	static bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
+	static bool IsSuppressBells();
+
+	static void GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells);
 
 	static HANDLE ghLastAnsiCapable /*= NULL*/;
 	static HANDLE ghLastAnsiNotCapable /*= NULL*/;

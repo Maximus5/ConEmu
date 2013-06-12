@@ -2351,6 +2351,8 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbProcessAnsi, gpSet->isProcessAnsi);
 
+	checkDlgButton(hWnd2, cbSuppressBells, gpSet->isSuppressBells);
+
 	checkDlgButton(hWnd2, cbUseClink, gpSet->isUseClink() ? BST_CHECKED : BST_UNCHECKED);
 
 	checkDlgButton(hWnd2, cbDosBox, gpConEmu->mb_DosBoxExists);
@@ -5202,6 +5204,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbProcessAnsi:
 			gpSet->isProcessAnsi = IsChecked(hWnd2, cbProcessAnsi);
+			gpConEmu->OnGlobalSettingsChanged();
+			break;
+		case cbSuppressBells:
+			gpSet->isSuppressBells = IsChecked(hWnd2, cbSuppressBells);
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
 		case cbUseClink:

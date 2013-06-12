@@ -1239,6 +1239,8 @@ struct Settings
 		DWORD isUseClink(bool abCheckVersion = false);
 		//reg->Load(L"PortableReg", isPortableReg);
 		bool isPortableReg;
+		//reg->Load(L"SuppressBells", isSuppressBells);
+		bool isSuppressBells;
 
 		/* *** Debugging *** */
 		//reg->Load(L"ConVisible", isConVisible);
