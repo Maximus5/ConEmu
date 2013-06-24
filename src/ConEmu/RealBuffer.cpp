@@ -3389,6 +3389,13 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 {
 	_ASSERTE(anY==-1 || anY>=con.nTopVisibleLine);
 
+	// ≈сли начинаетс€ выделение - запретить фару начинать драг, а то подеремс€
+	if (abByMouse)
+	{
+		Assert(!(gpConEmu->mouse.state & (DRAG_L_STARTED|DRAG_R_STARTED)));
+		gpConEmu->mouse.state &= ~(DRAG_L_ALLOWED | DRAG_R_STARTED);
+	}
+
 	if (!(con.m_sel.dwFlags & (CONSOLE_BLOCK_SELECTION|CONSOLE_TEXT_SELECTION)) && gpSet->isCTSFreezeBeforeSelect)
 	{
 		if (m_Type == rbt_Primary)
@@ -4662,8 +4669,10 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				pcaDst += nWidth; //pnSrc += con.nTextWidth;
 			}
 
+			#ifndef __GNUC__
 			UNREFERENCED_PARAMETER(pszSrcStart);
 			UNREFERENCED_PARAMETER(pnSrcStart);
+			#endif
 			UNREFERENCED_PARAMETER(nSrcCells);
 		}
 	} // rbt_Primary

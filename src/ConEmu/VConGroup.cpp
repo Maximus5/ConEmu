@@ -162,6 +162,7 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 		// После диалога могли измениться параметры группы
 	}
 
+	void* pActiveGroupVConPtr = NULL;
 	CVConGroup* pGroup = NULL;
 	if (gp_VActive && args->eSplit)
 	{
@@ -171,6 +172,10 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 			&& VCon->mp_Group)
 		{
 			pGroup = ((CVConGroup*)VCon->mp_Group)->SplitVConGroup(args->eSplit, args->nSplitValue);
+			if (pGroup)
+			{
+				pActiveGroupVConPtr = ((CVConGroup*)VCon->mp_Group)->mp_ActiveGroupVConPtr;
+			}
 		}
 		
 		_ASSERTE((pGroup!=NULL) && "No active VCon?");
@@ -187,6 +192,7 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 	CVirtualConsole* pVCon = new CVirtualConsole();
 	ppVConI = pVCon;
 	pGroup->mp_Item = pVCon;
+	pGroup->mp_ActiveGroupVConPtr = pActiveGroupVConPtr ? pActiveGroupVConPtr : pVCon;
 	pVCon->mp_Group = pGroup;
 
 	//pVCon->Constructor(args);
@@ -223,6 +229,7 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 	mrc_Splitter = MakeRect(0,0);
 	mp_Grp1 = mp_Grp2 = NULL; // Ссылки на "дочерние" панели
 	mp_Parent = apParent; // Ссылка на "родительскую" панель
+	mp_ActiveGroupVConPtr = NULL;
 
 	EnterCriticalSection(&gcs_VGroups);
 	bool bAdded = false;
@@ -1370,6 +1377,26 @@ bool CVConGroup::isActive(CVirtualConsole* apVCon, bool abAllowGroup /*= true*/)
 	return false;
 }
 
+bool CVConGroup::isActiveGroupVCon(CVirtualConsole* pVCon)
+{
+	CVConGroup* pGr = GetRootOfVCon(pVCon);
+	if (!pGr)
+		return false;
+
+	if (pGr->mp_ActiveGroupVConPtr == (void*)pVCon)
+		return true;
+
+	// Та, что была ранее активной - могла закрыться
+	if (!isValid((CVirtualConsole*)pGr->mp_ActiveGroupVConPtr))
+	{
+		// Тогда ставим первой - эту консоль!
+		pGr->StoreActiveVCon(pVCon);
+		return true;
+	}
+
+	return false;
+}
+
 bool CVConGroup::isVisible(CVirtualConsole* apVCon)
 {
 	if (!apVCon)
@@ -1674,6 +1701,8 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 
 bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/)
 {
+	CVConGuard VCon(gp_VActive);
+
 	int nEditors = 0, nProgress = 0, i, nConsoles = 0;
 	if (rbMsgConfirmed)
 		*rbMsgConfirmed = false;
@@ -1715,39 +1744,49 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 
 		if (rpPanes)
 		{
-			wchar_t szText[360], *pszText;
-			//wcscpy_c(szText, L"Close confirmation.\r\n\r\n");
-			_wsprintf(szText, SKIPLEN(countof(szText)) L"About to close %u console%s.\r\n", nConsoles, (nConsoles>1)?L"s":L"");
-			pszText = szText+_tcslen(szText);
-
-			if (nProgress || nEditors)
+			// Use TaskDialog?
+			if (gOSVer.dwMajorVersion >= 6)
 			{
-				*(pszText++) = L'\r'; *(pszText++) = L'\n'; *(pszText) = 0;
+				ConfirmCloseParam Parm;
+				Parm.bGroup = TRUE;
+				Parm.nConsoles = nConsoles;
+				Parm.nOperations = nProgress;
+				Parm.nUnsavedEditors = nEditors;
 
-				if (nProgress)
-				{
-					_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", nProgress);
-					pszText += _tcslen(pszText);
-				}
-				if (nEditors)
-				{
-					_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", nEditors);
-					pszText += _tcslen(pszText);
-				}
+				nBtn = ConfirmCloseConsoles(Parm);
 			}
-
-			if (rpPanes)
-				wcscat_c(szText, L"\r\nProceed with close group?");
 			else
-    			wcscat_c(szText,
-					L"\r\nPress button <No> to close active console only\r\n"
-					L"\r\nProceed with close ConEmu?");
+			{
+				TODO("Перенести в ConfirmDlg.cpp");
 
-			nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), (rpPanes ? MB_OKCANCEL : MB_YESNOCANCEL)|MB_ICONEXCLAMATION);
+				wchar_t szText[360], *pszText;
+				//wcscpy_c(szText, L"Close confirmation.\r\n\r\n");
+				_wsprintf(szText, SKIPLEN(countof(szText)) L"About to close %u console%s.\r\n", nConsoles, (nConsoles>1)?L"s":L"");
+				pszText = szText+_tcslen(szText);
+
+				if (nProgress || nEditors)
+				{
+					*(pszText++) = L'\r'; *(pszText++) = L'\n'; *(pszText) = 0;
+
+					if (nProgress)
+					{
+						_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", nProgress);
+						pszText += _tcslen(pszText);
+					}
+					if (nEditors)
+					{
+						_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", nEditors);
+						pszText += _tcslen(pszText);
+					}
+				}
+
+				wcscat_c(szText, L"\r\nProceed with close group?");
+
+				nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), MB_OKCANCEL|MB_ICONEXCLAMATION);
+			}
 		}
 		else if (nConsoles == 1)
 		{
-			CVConGuard VCon(gp_VActive);
 			if (VCon.VCon())
 			{
 				if (VCon->RCon()->isCloseConfirmed(NULL, true))
@@ -1758,12 +1797,16 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 		}
 		else
 		{
-			nBtn = ConfirmCloseConsoles(nConsoles, nProgress, nEditors);
+			ConfirmCloseParam Parm;
+			Parm.nConsoles = nConsoles;
+			Parm.nOperations = nProgress;
+			Parm.nUnsavedEditors = nEditors;
+
+			nBtn = ConfirmCloseConsoles(Parm);
 		}
 
 		if (nBtn == IDNO)
 		{
-			CVConGuard VCon(gp_VActive);
 			if (VCon.VCon())
 			{
 				VCon->RCon()->CloseConsole(false, false);
@@ -2070,7 +2113,7 @@ void CVConGroup::CloseGroup(CVirtualConsole* apVCon/*may be null*/)
 		return;
 
 	MArray<CVConGuard*> Panes;
-	int nCount = pActiveGroup->GetGroupPanes(Panes);
+	int nCount = pActiveGroup->GetGroupPanes(&Panes);
 	if (nCount > 0)
 	{
 		if (CloseQuery(&Panes, NULL))
@@ -2619,7 +2662,7 @@ bool CVConGroup::ConActivateNext(bool abNext)
 	return false;
 }
 
-int CVConGroup::GetGroupPanes(MArray<CVConGuard*> &rPanes)
+int CVConGroup::GetGroupPanes(MArray<CVConGuard*>* rPanes)
 {
 	if (!this)
 	{
@@ -2635,8 +2678,11 @@ int CVConGroup::GetGroupPanes(MArray<CVConGuard*> &rPanes)
 	{
 		if (mp_Item)
 		{
-			CVConGuard* pVConG = new CVConGuard(mp_Item);
-			rPanes.push_back(pVConG);
+			if (rPanes)
+			{
+				CVConGuard* pVConG = new CVConGuard(mp_Item);
+				rPanes->push_back(pVConG);
+			}
 			nAdd++;
 		}
 	}
@@ -2674,7 +2720,7 @@ bool CVConGroup::PaneActivateNext(bool abNext)
 	CVConGroup* pActiveGroup = GetRootOfVCon(gp_VActive);
 	MArray<CVConGuard*> Panes;
 	
-	int nCount = pActiveGroup->GetGroupPanes(Panes);
+	int nCount = pActiveGroup->GetGroupPanes(&Panes);
 	
 	if (nCount > 1)
 	{
@@ -2739,6 +2785,28 @@ void CVConGroup::ShowActiveGroup(CVirtualConsole* pOldActive)
 		pOldGroup->ShowAllVCon(SW_HIDE);
 
 	InvalidateAll();
+}
+
+void CVConGroup::OnConActivated(CVirtualConsole* pVCon)
+{
+	CVConGroup* pRoot = GetRootOfVCon(pVCon);
+	if (pRoot)
+	{
+		pRoot->StoreActiveVCon(pVCon);
+	}
+}
+
+void CVConGroup::StoreActiveVCon(CVirtualConsole* pVCon)
+{
+	mp_ActiveGroupVConPtr = pVCon;
+
+	if (m_SplitType!=RConStartArgs::eSplitNone)
+	{
+		if (mp_Grp1)
+			mp_Grp1->StoreActiveVCon(pVCon);
+		if (mp_Grp2)
+			mp_Grp2->StoreActiveVCon(pVCon);
+	}
 }
 
 // nCon - zero-based index of console
@@ -4276,6 +4344,37 @@ bool CVConGroup::isInGroup(CVirtualConsole* apVCon, CVConGroup* apGroup)
 	}
 
 	return false;
+}
+
+// rpActiveVCon <<== recieves active VCon in group (it may NOT be active in ConEmu)
+bool CVConGroup::isGroup(CVirtualConsole* apVCon, CVConGroup** rpRoot /*= NULL*/, CVConGuard* rpActiveVCon /*= NULL*/)
+{
+	if (rpRoot)
+		*rpRoot = NULL;
+
+	if (!apVCon)
+		return false;
+
+	CVConGroup* pGr = GetRootOfVCon(apVCon);
+	if (!pGr)
+		return false;
+
+	int nGroupPanes = pGr->GetGroupPanes(NULL);
+	if (nGroupPanes <= 1)
+		return false;
+	
+	if (rpRoot)
+		*rpRoot = pGr;
+
+	if (rpActiveVCon)
+	{
+		if (isActiveGroupVCon(apVCon))
+			*rpActiveVCon = apVCon;
+		else
+			*rpActiveVCon = (CVirtualConsole*)pGr->mp_ActiveGroupVConPtr;
+	}
+	
+	return true;
 }
 
 wchar_t* CVConGroup::GetTasks(CVConGroup* apRoot /*= NULL*/)

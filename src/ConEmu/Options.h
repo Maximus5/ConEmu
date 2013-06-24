@@ -976,6 +976,8 @@ struct Settings
 		char isTabs;
 		//reg->Load(L"TabsLocation", nTabsLocation);
 		BYTE nTabsLocation; // 0 - top, 1 - bottom
+		//reg->Load(L"OneTabPerGroup", isOneTabPerGroup);
+		bool isOneTabPerGroup;
 		//reg->Load(L"TabSelf", isTabSelf);
 		bool isTabSelf;
 		//reg->Load(L"TabRecent", isTabRecent);

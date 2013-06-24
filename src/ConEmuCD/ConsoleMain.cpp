@@ -721,6 +721,7 @@ extern "C" {
 DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024]);
 #include "../common/Dump.h"
 
+LPTOP_LEVEL_EXCEPTION_FILTER gpfnPrevExFilter = NULL;
 LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 {
 	wchar_t szFull[1024] = L"";
@@ -738,7 +739,16 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 		ShellExecute(NULL, L"open", CEREPORTCRASH, NULL, NULL, SW_SHOWNORMAL);
 	}
 
-	return EXCEPTION_EXECUTE_HANDLER;
+	LONG lExRc = EXCEPTION_EXECUTE_HANDLER;
+
+	if (gpfnPrevExFilter)
+	{
+		// если фильтр уже был установлен перед нашим - будем звать его
+		// все-равно уже свалились, на валидность адреса можно не проверяться
+        lExRc = gpfnPrevExFilter(ExceptionInfo);
+	}
+
+	return lExRc;
 }
 
 
@@ -769,6 +779,16 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		#if 0
 		SetConsoleTextAttribute(hOut, 7);
 		#endif
+	}
+	else if (anWorkMode == 1)
+	{
+		// Far 3.x, telnet, Vim, etc.
+		// В этих программах ConEmuCD.dll может загружаться для работы с альтернативными буферами и TrueColor
+		if (!IsDebuggerPresent())
+		{
+			// Сохраним, если фильтр уже был установлен - будем звать его из нашей функции
+			gpfnPrevExFilter = SetUnhandledExceptionFilter(CreateDumpOnException);
+		}
 	}
 
 

@@ -2241,7 +2241,8 @@ void CEAnsi::StopVimTerm()
 	if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
 	{
 		WORD nDefAttr = GetDefaultTextAttr();
-		ExtFillOutputParm fill = {sizeof(fill), efof_ResetExt|efof_Attribute|efof_Character,
+		// Сброс только расширенных атрибутов
+		ExtFillOutputParm fill = {sizeof(fill), efof_ResetExt/*|efof_Attribute|efof_Character*/,
 			hOut, {CECF_NONE,nDefAttr&0xF,(nDefAttr&0xF0)>>4}, L' ', {0,0}, csbi.dwSize.X * csbi.dwSize.Y};
 		ExtFillOutput(&fill);
 	}
@@ -2254,7 +2255,8 @@ void CEAnsi::StopVimTerm()
 		TODO("BufferWidth");
 		pIn->AltBuf.AbFlags = abf_BufferOn|abf_RestoreContents;
 		pIn->AltBuf.BufferHeight = gnVimTermWasChangedBuffer;
-		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd, TRUE/*bAsyncNoResult*/);
+		// Async - нельзя. Иначе cmd может отрисовать prompt раньше чем управится сервер.
+		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
 		ExecuteFreeResult(pIn);
 		ExecuteFreeResult(pOut);
 	}

@@ -74,6 +74,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#undef DEBUG_DUMP_IMAGE
 #endif
 
+// COM TaskBarList interface support
+#if defined(__GNUC__) && defined(USE_DRAG_HELPER)
+const IID IID_IDragSourceHelper2 = {0x83E07D0D, 0x0C5F, 0x4163, {0xBF, 0x1A, 0x60, 0xB2, 0x74, 0x05, 0x1E, 0x40}};
+#endif
+
 //#define MSG_STARTDRAG (WM_APP+10)
 
 WARNING("Заменить GlobalFree на ReleaseStgMedium, проверить, что оно реально освобождает hGlobal и кучу не рушит");

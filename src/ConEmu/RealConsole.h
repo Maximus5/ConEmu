@@ -483,7 +483,7 @@ class CRealConsole
 		DWORD CanActivateFarWindow(int anWndIndex);
 		void OnConsoleKeyboardLayout(DWORD dwNewLayout);
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
-		void CloseConsole(bool abForceTerminate, bool abConfirm);
+		void CloseConsole(bool abForceTerminate, bool abConfirm, bool abAllowMacro = true);
 		void CloseConsoleWindow(bool abConfirm);
 		bool isCloseConfirmed(LPCWSTR asConfirmation, bool bForceAsk = false);
 		void CloseConfirmReset();

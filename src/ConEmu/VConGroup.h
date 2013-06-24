@@ -46,6 +46,7 @@ protected:
 	RECT mrc_Splitter;
 	bool mb_ResizeFlag; // взводится в true для корня, когда в группе что-то меняется
 	void SetResizeFlags();
+	void* mp_ActiveGroupVConPtr; // указатель (CVirtualConsole*) на последнюю активную консоль в этой группе
 
 	CVConGroup* GetRootGroup();
 	static CVConGroup* GetRootOfVCon(CVirtualConsole* apVCon);
@@ -60,6 +61,8 @@ protected:
 
 	void GetAllTextSize(SIZE& sz, bool abMinimal = false);
 	void SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync);
+
+	void StoreActiveVCon(CVirtualConsole* pVCon);
 	
 protected:
 	//static CVirtualConsole* mp_VCon[MAX_CONSOLE_COUNT];
@@ -79,7 +82,7 @@ private:
 	
 	static CVConGroup* CreateVConGroup();
 	CVConGroup* SplitVConGroup(RConStartArgs::SplitType aSplitType = RConStartArgs::eSplitHorz/*eSplitVert*/, UINT anPercent10 = 500);
-	int GetGroupPanes(MArray<CVConGuard*> &rPanes);
+	int GetGroupPanes(MArray<CVConGuard*>* rPanes);
 	static void FreePanesArray(MArray<CVConGuard*> &rPanes);
 	static bool CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/);
 	
@@ -100,11 +103,13 @@ public:
 
 public:
 	static bool isActive(CVirtualConsole* apVCon, bool abAllowGroup = true);
+	static bool isActiveGroupVCon(CVirtualConsole* pVCon);
 	static bool isVisible(CVirtualConsole* apVCon);
 	static bool isValid(CRealConsole* apRCon);
 	static bool isValid(CVirtualConsole* apVCon);
 	static bool isVConExists(int nIdx);
 	static bool isInGroup(CVirtualConsole* apVCon, CVConGroup* apGroup);
+	static bool isGroup(CVirtualConsole* apVCon, CVConGroup** rpRoot = NULL, CVConGuard* rpActiveVCon = NULL);
 	static bool isConSelectMode();
 	static bool isInCreateRoot();
 	static bool isDetached();
@@ -159,6 +164,7 @@ public:
 
 	static void MoveAllVCon(CVirtualConsole* pVConCurrent, RECT rcNewCon);
 	static HRGN GetExclusionRgn(bool abTestOnly = false);
+	static void OnConActivated(CVirtualConsole* pVCon);
 	static bool ConActivate(int nCon);
 	static bool ConActivateNext(bool abNext);
 	static bool PaneActivateNext(bool abNext);

@@ -36,6 +36,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <commctrl.h>
 #include <shlobj.h>
 
+#ifdef __GNUC__
+#include "ShObjIdl_Part.h"
+#endif // __GNUC__
+
 #include "../ConEmuCD/ExitCodes.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "Background.h"
@@ -2479,40 +2483,62 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 
 void CSettings::CheckSelectionModifiers(HWND hWnd2)
 {
-	WORD nCtrlID[] = {lbCTSBlockSelection, lbCTSTextSelection, lbCTSClickPromptPosition/*, lbFarGotoEditorVk*/};
-	TabHwndIndex nDlgID[] = {thi_Selection, thi_Selection, thi_KeybMouse};
-	bool bEnabled[] = {gpSet->isCTSSelectBlock, gpSet->isCTSSelectText, gpSet->AppStd.isCTSClickPromptPosition, gpSet->isFarGotoEditor};
-	int nVkIdx[] = {vkCTSVkBlock, vkCTSVkText, vkCTSVkPromptClk}; 
-	BYTE Vk[] = {0,0,0,0};
-	LPCWSTR Descr[] = {L"Block selection", L"Text selection", L"Prompt position", L"Highlight and goto"};
+	struct {
+		WORD nCtrlID;
+		LPCWSTR Descr;
+		TabHwndIndex nDlgID;
+		bool bEnabled;
+		int nVkIdx;
+		BYTE Vk;
+	} Keys[] = {
+		{lbCTSBlockSelection, L"Block selection", thi_Selection, gpSet->isCTSSelectBlock, vkCTSVkBlock},
+		{lbCTSTextSelection, L"Text selection", thi_Selection, gpSet->isCTSSelectText, vkCTSVkText},
+		{lbCTSClickPromptPosition, L"Prompt position", thi_KeybMouse, gpSet->AppStd.isCTSClickPromptPosition, vkCTSVkPromptClk},
+
+		// Don't check it?
+		// -- {lbFarGotoEditorVk, L"Highlight and goto", ..., gpSet->isFarGotoEditor},
+
+		// Far manager only
+		{lbLDragKey, L"Far Manager LDrag", thi_Far, (gpSet->isDragEnabled & DRAG_L_ALLOWED), vkLDragKey},
+		{0},
+	};
+
+	bool bIsFar = gpConEmu->isFar(true);
+
 	//HWND hDlg = gpSetCls->mh_Tabs[];
 	//if (!hDlg)
 	//	return;
 
-	for (size_t i = 0; i < countof(nCtrlID); i++)
+	for (size_t i = 0; Keys[i].nCtrlID; i++)
 	{
+		if (!bIsFar && (Keys[i].nCtrlID == lbLDragKey))
+		{
+			Keys[i].nCtrlID = 0;
+			break;
+		}
+
 		//GetListBoxByte(hDlg, nCtrlID[i], SettingsNS::szKeysAct, SettingsNS::nKeysAct, Vk[i]);
-		DWORD VkMod = gpSet->GetHotkeyById(nVkIdx[i]);
+		DWORD VkMod = gpSet->GetHotkeyById(Keys[i].nVkIdx);
 		_ASSERTE((VkMod & 0xFF) == VkMod); // One modifier only?
-		Vk[i] = (BYTE)(VkMod & 0xFF);
+		Keys[i].Vk = (BYTE)(VkMod & 0xFF);
 	}
 
-	for (size_t i = 0; i < (countof(nCtrlID)-1); i++)
+	for (size_t i = 0; Keys[i+1].nCtrlID; i++)
 	{
-		if (!bEnabled[i])
+		if (!Keys[i].bEnabled)
 			continue;
 
-		for (size_t j = i+1; j < countof(nCtrlID); j++)
+		for (size_t j = i+1; Keys[j].nCtrlID; j++)
 		{
-			if (!bEnabled[j])
+			if (!Keys[j].bEnabled)
 				continue;
 
-			if (Vk[i] == Vk[j])
+			if (Keys[i].Vk == Keys[j].Vk)
 			{
 				wchar_t szInfo[255];
-				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"You must set different\nmodifiers for\n<%s> and\n<%s>", Descr[i], Descr[j]);
+				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"You must set different\nmodifiers for\n<%s> and\n<%s>", Keys[i].Descr, Keys[j].Descr);
 				HWND hDlg = hWnd2;
-				WORD nID = (gpSetCls->mh_Tabs[nDlgID[j]] == hWnd2) ? nCtrlID[j] : nCtrlID[i];
+				WORD nID = (gpSetCls->mh_Tabs[Keys[j].nDlgID] == hWnd2) ? Keys[j].nCtrlID : Keys[i].nCtrlID;
 				ShowErrorTip(szInfo, hDlg, nID, gpSetCls->szSelectionModError, countof(gpSetCls->szSelectionModError),
 							 gpSetCls->hwndBalloon, &gpSetCls->tiBalloon, gpSetCls->hwndTip, FAILED_SELMOD_TIMEOUT, true);
 				return;
@@ -3123,6 +3149,8 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	checkRadioButton(hWnd2, rbTabsAlways, rbTabsNone, (gpSet->isTabs == 2) ? rbTabsAuto : gpSet->isTabs ? rbTabsAlways : rbTabsNone);
 
 	checkDlgButton(hWnd2, cbTabsLocationBottom, (gpSet->nTabsLocation == 1) ? BST_CHECKED : BST_UNCHECKED);
+
+	checkDlgButton(hWnd2, cbOneTabPerGroup, gpSet->isOneTabPerGroup);
 
 	checkDlgButton(hWnd2, cbTabSelf, gpSet->isTabSelf);
 
@@ -4809,11 +4837,12 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 								  L"while 'Darkening' is 0. Increase it?",
 								  gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION)!=IDNO)
 					{
-						gpSet->bgImageDarker = 0x46;
-						SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
-						TCHAR tmp[10];
-						_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%i", gpSet->bgImageDarker);
-						SetDlgItemText(hWnd2, tDarker, tmp);
+						SetBgImageDarker(0x46, false);
+						//gpSet->bgImageDarker = 0x46;
+						//SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
+						//TCHAR tmp[10];
+						//_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%i", gpSet->bgImageDarker);
+						//SetDlgItemText(hWnd2, tDarker, tmp);
 						lbNeedLoad = TRUE;
 					}
 				}
@@ -5037,6 +5066,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbTabsLocationBottom:
 			gpSet->nTabsLocation = IsChecked(hWnd2, cbTabsLocationBottom);
 			gpConEmu->OnSize();
+			break;
+		case cbOneTabPerGroup:
+			gpSet->isOneTabPerGroup = IsChecked(hWnd2, cbOneTabPerGroup);
+			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
 		case cbTabSelf:
 			gpSet->isTabSelf = IsChecked(hWnd2, cbTabSelf);
@@ -6719,16 +6752,18 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 		if (newV < 256 && newV != gpSet->bgImageDarker)
 		{
-			gpSet->bgImageDarker = newV;
-			SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
+			SetBgImageDarker(newV, true);
 
-			// Картинку может установить и плагин
-			if (gpSet->isShowBgImage && gpSet->sBgImage[0])
-				LoadBackgroundFile(gpSet->sBgImage);
-			else
-				NeedBackgroundUpdate();
+			//gpSet->bgImageDarker = newV;
+			//SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
 
-			gpConEmu->Update(true);
+			//// Картинку может установить и плагин
+			//if (gpSet->isShowBgImage && gpSet->sBgImage[0])
+			//	LoadBackgroundFile(gpSet->sBgImage);
+			//else
+			//	NeedBackgroundUpdate();
+
+			//gpConEmu->Update(true);
 		}
 		break;
 	} //case tDarker:
@@ -8824,18 +8859,20 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 					if (newV != gpSet->bgImageDarker)
 					{
-						gpSet->bgImageDarker = newV;
-						TCHAR tmp[10];
-						_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%i", gpSet->bgImageDarker);
-						SetDlgItemText(hWnd2, tDarker, tmp);
+						gpSetCls->SetBgImageDarker(newV, true);
 
-						// Картинку может установить и плагин
-						if (gpSet->isShowBgImage && gpSet->sBgImage[0])
-							gpSetCls->LoadBackgroundFile(gpSet->sBgImage);
-						else
-							gpSetCls->NeedBackgroundUpdate();
+						//gpSet->bgImageDarker = newV;
+						//TCHAR tmp[10];
+						//_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%i", gpSet->bgImageDarker);
+						//SetDlgItemText(hWnd2, tDarker, tmp);
 
-						gpConEmu->Update(true);
+						//// Картинку может установить и плагин
+						//if (gpSet->isShowBgImage && gpSet->sBgImage[0])
+						//	gpSetCls->LoadBackgroundFile(gpSet->sBgImage);
+						//else
+						//	gpSetCls->NeedBackgroundUpdate();
+
+						//gpConEmu->Update(true);
 					}
 				}
 				else if (gpSetCls->mh_Tabs[thi_Transparent] && (HWND)lParam == GetDlgItem(gpSetCls->mh_Tabs[thi_Transparent], slTransparent))
@@ -13715,6 +13752,34 @@ bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 }
 
 #ifndef APPDISTINCTBACKGROUND
+void CSettings::SetBgImageDarker(u8 newValue, bool bUpdate)
+{
+	if (/*newV < 256*/ newValue != gpSet->bgImageDarker)
+	{
+		gpSet->bgImageDarker = newValue;
+
+		if (ghOpWnd && mh_Tabs[thi_Main])
+		{
+			SendDlgItemMessage(mh_Tabs[thi_Main], slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
+
+			TCHAR tmp[10];
+			_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%u", (UINT)gpSet->bgImageDarker);
+			SetDlgItemText(mh_Tabs[thi_Main], tDarker, tmp);
+		}
+
+		if (bUpdate)
+		{
+			// Картинку может установить и плагин
+			if (gpSet->isShowBgImage && gpSet->sBgImage[0])
+				LoadBackgroundFile(gpSet->sBgImage);
+			else
+				NeedBackgroundUpdate();
+
+			gpConEmu->Update(true);
+		}
+	}
+}
+
 bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 {
 	//_ASSERTE(gpConEmu->isMainThread());

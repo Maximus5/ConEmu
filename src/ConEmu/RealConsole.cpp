@@ -7818,6 +7818,10 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	_ASSERTE(isActive());
 	// Чтобы можно было найти хэндл окна по хэндлу консоли
 	gpConEmu->OnActiveConWndStore(hConWnd);
+
+	// Чтобы корректно таб для группы показывать
+	CVConGroup::OnConActivated(mp_VCon);
+
 	#ifdef _DEBUG
 	ghConWnd = hConWnd; // на удаление
 	#endif
@@ -9521,8 +9525,14 @@ bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation, bool bForceAsk /*= f
 
 	int nBtn = 0;
 	{
-		nBtn = ConfirmCloseConsoles(1, (GetProgress(NULL,NULL)>=0) ? 1 : 0, GetModifiedEditors(), NULL,
-			asConfirmation ? asConfirmation : hGuiWnd ? gsCloseGui : gsCloseCon, Title);
+		ConfirmCloseParam Parm;
+		Parm.nConsoles = 1;
+		Parm.nOperations = (GetProgress(NULL,NULL)>=0) ? 1 : 0;
+		Parm.nUnsavedEditors = GetModifiedEditors();
+		Parm.asSingleConsole = asConfirmation ? asConfirmation : hGuiWnd ? gsCloseGui : gsCloseCon;
+		Parm.asSingleTitle = Title;
+
+		nBtn = ConfirmCloseConsoles(Parm);
 
 		//DontEnable de;
 		////nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
@@ -9559,7 +9569,7 @@ void CRealConsole::CloseConsoleWindow(bool abConfirm)
 	}
 }
 
-void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
+void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAllowMacro /*= true*/)
 {
 	if (!this) return;
 
@@ -9594,44 +9604,48 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 			return;
 		}
 
-		if (gpSet->isSafeFarClose && !abForceTerminate)
+		if (gpSet->isSafeFarClose && !abForceTerminate && abAllowMacro)
 		{
-			LPCWSTR pszMacro = gpSet->SafeFarCloseMacro(fmv_Default);
-			_ASSERTE(pszMacro && *pszMacro);
-
-			BOOL lbExecuted = FALSE;
 			DWORD nFarPID = GetFarPID(TRUE/*abPluginRequired*/);
 
-			// GuiMacro выполняется безотносительно "фар/не фар"
-			if (*pszMacro == GUI_MACRO_PREFIX/*L'#'*/)
+			if (nFarPID)
 			{
-				// Для удобства. Она сама позовет CConEmuMacro::ExecuteMacro
-				PostMacro(pszMacro, TRUE);
-				lbExecuted = TRUE;
-			}
+				LPCWSTR pszMacro = gpSet->SafeFarCloseMacro(fmv_Default);
+				_ASSERTE(pszMacro && *pszMacro);
 
-			// FarMacro выполняется асинхронно, так что не будем смотреть на "isAlive"
-			if (!lbExecuted && nFarPID /*&& isAlive()*/)
-			{
-				mb_InCloseConsole = TRUE;
-				gpConEmu->DebugStep(_T("ConEmu: Execute SafeFarCloseMacro"));
+				BOOL lbExecuted = FALSE;
 
-				if (!lbCleared)
+				// GuiMacro выполняется безотносительно "фар/не фар"
+				if (*pszMacro == GUI_MACRO_PREFIX/*L'#'*/)
 				{
-					lbCleared = true;
-					mp_VCon->SetBackgroundImageData(&BackClear);
+					// Для удобства. Она сама позовет CConEmuMacro::ExecuteMacro
+					PostMacro(pszMacro, TRUE);
+					lbExecuted = TRUE;
 				}
 
-				// Async, иначе ConEmu зависнуть может
-				PostMacro(pszMacro, TRUE);
+				// FarMacro выполняется асинхронно, так что не будем смотреть на "isAlive"
+				if (!lbExecuted && nFarPID /*&& isAlive()*/)
+				{
+					mb_InCloseConsole = TRUE;
+					gpConEmu->DebugStep(_T("ConEmu: Execute SafeFarCloseMacro"));
 
-				lbExecuted = TRUE;
+					if (!lbCleared)
+					{
+						lbCleared = true;
+						mp_VCon->SetBackgroundImageData(&BackClear);
+					}
 
-				gpConEmu->DebugStep(NULL);
+					// Async, иначе ConEmu зависнуть может
+					PostMacro(pszMacro, TRUE);
+
+					lbExecuted = TRUE;
+
+					gpConEmu->DebugStep(NULL);
+				}
+
+				if (lbExecuted)
+					return;
 			}
-
-			if (lbExecuted)
-				return;
 		}
 
 		if (abForceTerminate && GetActivePID() && !mn_InRecreate)
@@ -9845,9 +9859,15 @@ void CRealConsole::CloseTab()
 
 
 		if (bCanCloseMacro)
+		{
+			// Это для закрытия редакторов и прочая
 			PostMacro(gpSet->TabCloseMacro(fmv_Default), TRUE/*async*/);
+		}
 		else
-			PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
+		{
+			//PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
+			CloseConsole(false,false);
+		}
 	}
 }
 

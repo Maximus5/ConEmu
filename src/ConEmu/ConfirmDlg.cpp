@@ -194,50 +194,55 @@ typedef HRESULT (WINAPI* TaskDialogIndirect_t)(const TASKDIALOGCONFIG *pTaskConf
 static TaskDialogIndirect_t TaskDialogIndirect_f = NULL; //(TaskDialogIndirect_t)(hDll?GetProcAddress(hDll, "TaskDialogIndirect"):NULL);
 
 
-int ConfirmCloseConsoles(UINT nConsoles, UINT nOperations, UINT nUnsavedEditors, bool* rpLeaveConEmuOpened /*= NULL*/, LPCWSTR asSingleConsole /*= NULL*/, LPCWSTR asSingleTitle /*= NULL*/)
+// IDYES    - Close All consoles
+// IDNO     - Close active console only
+// IDCANCEL - As is
+int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 {
 	DontEnable de;
 
-	if (rpLeaveConEmuOpened) *rpLeaveConEmuOpened = false;
+	if (Parm.rpLeaveConEmuOpened) *Parm.rpLeaveConEmuOpened = false;
 
 	// Use TaskDialog?
 	if (gOSVer.dwMajorVersion >= 6)
 	{
 		// must be already initialized: CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
-		wchar_t szMessage[128];  lstrcpyn(szMessage, asSingleConsole ? asSingleConsole : L"Confirm closing?", countof(szMessage));
+		wchar_t szMessage[128];  lstrcpyn(szMessage, Parm.asSingleConsole ? Parm.asSingleConsole : L"Confirm closing?", countof(szMessage));
 		wchar_t szWWW[MAX_PATH]; _wsprintf(szWWW, SKIPLEN(countof(szWWW)) L"<a href=\"%s\">%s</a>", gsHomePage, gsHomePage);
 
 		wchar_t szCloseAll[MAX_PATH*2]; wchar_t *pszText;
-		if (asSingleConsole)
+		if (Parm.asSingleConsole)
 		{
 			wcscpy_c(szCloseAll, L"Yes\n");
 			pszText = szCloseAll + _tcslen(szCloseAll);
-			lstrcpyn(pszText, asSingleTitle, min(MAX_PATH,(countof(szCloseAll)-(pszText-szCloseAll))));
+			lstrcpyn(pszText, Parm.asSingleTitle, min(MAX_PATH,(countof(szCloseAll)-(pszText-szCloseAll))));
 			pszText += _tcslen(pszText);
 		}
 		else
 		{
-			_wsprintf(szCloseAll, SKIPLEN(countof(szCloseAll)) L"Close all %u console%s.", nConsoles, (nConsoles>1)?L"s":L"");
+			_wsprintf(szCloseAll, SKIPLEN(countof(szCloseAll))
+				(Parm.bGroup && (Parm.nConsoles>1)) ? L"Close group (%u console%s)" : L"Close all %u console%s.",
+				Parm.nConsoles, (Parm.nConsoles>1)?L"s":L"");
 			pszText = szCloseAll + _tcslen(szCloseAll);
 		}
-		if ((asSingleConsole == NULL) || (nOperations || nUnsavedEditors))
+		if ((Parm.asSingleConsole == NULL) || (Parm.nOperations || Parm.nUnsavedEditors))
 		{
 			//if (nOperations)
 			{
-				_wsprintf(pszText, SKIPLEN(countof(szCloseAll)-(pszText-szCloseAll)) L"\nIncomplete operations: %i", nOperations);
+				_wsprintf(pszText, SKIPLEN(countof(szCloseAll)-(pszText-szCloseAll)) L"\nIncomplete operations: %i", Parm.nOperations);
 				pszText += _tcslen(pszText);
 			}
 			//if (nUnsavedEditors)
 			{
-				_wsprintf(pszText, SKIPLEN(countof(szCloseAll)-(pszText-szCloseAll)) L"\nUnsaved editor windows: %i", nUnsavedEditors);
+				_wsprintf(pszText, SKIPLEN(countof(szCloseAll)-(pszText-szCloseAll)) L"\nUnsaved editor windows: %i", Parm.nUnsavedEditors);
 				pszText += _tcslen(pszText);
 			}
 		}
 
 		wchar_t szCloseOne[MAX_PATH];
 		wcscpy_c(szCloseOne, L"Close active console only");
-		if (nConsoles > 1)
+		if (Parm.nConsoles > 1)
 		{
 			CVConGuard VCon;
 			int iCon = gpConEmu->GetActiveVCon(&VCon);
@@ -261,7 +266,7 @@ int ConfirmCloseConsoles(UINT nConsoles, UINT nOperations, UINT nUnsavedEditors,
 		                                        { IDCANCEL, szCancel },			                                        
 		                                      };
 		config.cButtons                     = countof(buttons);
-		if (nConsoles <= 1)
+		if (Parm.nConsoles <= 1)
 		{
 			buttons[1] = buttons[2];
 			config.cButtons--;
@@ -324,33 +329,33 @@ int ConfirmCloseConsoles(UINT nConsoles, UINT nOperations, UINT nUnsavedEditors,
 	// Иначе - через стандартный MessageBox
 	wchar_t szText[360], *pszText;
 
-	if (asSingleConsole)
+	if (Parm.asSingleConsole)
 	{
-		lstrcpyn(szText, asSingleTitle, countof(szText));
+		lstrcpyn(szText, Parm.asSingleTitle, countof(szText));
 	}
 	else
 	{
-		_wsprintf(szText, SKIPLEN(countof(szText)) L"About to close %u console%s.\r\n", nConsoles, (nConsoles>1)?L"s":L"");
+		_wsprintf(szText, SKIPLEN(countof(szText)) L"About to close %u console%s.\r\n", Parm.nConsoles, (Parm.nConsoles>1)?L"s":L"");
 	}
 	pszText = szText+_tcslen(szText);
 
-	if (nOperations || nUnsavedEditors)
+	if (Parm.nOperations || Parm.nUnsavedEditors)
 	{
 		*(pszText++) = L'\r'; *(pszText++) = L'\n'; *(pszText) = 0;
 
-		if (nOperations)
+		if (Parm.nOperations)
 		{
-			_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", nOperations);
+			_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", Parm.nOperations);
 			pszText += _tcslen(pszText);
 		}
-		if (nUnsavedEditors)
+		if (Parm.nUnsavedEditors)
 		{
-			_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", nUnsavedEditors);
+			_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", Parm.nUnsavedEditors);
 			pszText += _tcslen(pszText);
 		}
 	}
 
-	if (nConsoles > 1)
+	if (Parm.nConsoles > 1)
 	{
 		//if (rpPanes)
 		//	wcscat_c(szText, L"\r\nProceed with close group?");
@@ -360,7 +365,7 @@ int ConfirmCloseConsoles(UINT nConsoles, UINT nOperations, UINT nUnsavedEditors,
 				L"\r\nProceed with close ConEmu?");
 	}
 
-	int nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), (/*rpPanes ? MB_OKCANCEL :*/ (nConsoles>1) ? MB_YESNOCANCEL : MB_OKCANCEL)|MB_ICONEXCLAMATION);
+	int nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), (/*rpPanes ? MB_OKCANCEL :*/ (Parm.nConsoles>1) ? MB_YESNOCANCEL : MB_OKCANCEL)|MB_ICONEXCLAMATION);
 
 	if (nBtn == IDOK)
 	{

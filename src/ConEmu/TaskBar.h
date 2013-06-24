@@ -37,7 +37,7 @@ typedef interface ITaskbarList4 ITaskbarList4;
 #define __ITaskbarList3_FWD_DEFINED__
 typedef interface ITaskbarList3 ITaskbarList3;
 
-//typedef /* [v1_enum] */
+// -- defined in <ShObjIdl.h> or "ShObjIdl_Part.h"
 //enum TBPFLAG
 //{
 //	TBPF_NOPROGRESS	= 0,

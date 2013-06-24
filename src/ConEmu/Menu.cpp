@@ -678,7 +678,10 @@ void CConEmuMenu::ExecPopupMenuCmd(CVirtualConsole* apVCon, int nCmd)
 	switch (nCmd)
 	{
 		case IDM_CLOSE:
-			apVCon->RCon()->CloseTab();
+			if (CVConGroup::isGroup(apVCon))
+				CVConGroup::CloseGroup(apVCon);
+			else
+				apVCon->RCon()->CloseTab();
 			break;
 		case IDM_DETACH:
 			apVCon->RCon()->Detach();

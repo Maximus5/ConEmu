@@ -15,8 +15,18 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.06.21
+[*] Show IBeam cursor when mouse is used for selection.
+[*] Checking conflicts between key modifiers for text selection and Far Manager D&D.
+[+] Close confirmation from tab belonging to group (splits) will suggest closing whole group.
+[+] New option "One tab per group", disabled by default. Weird with Far Manager editor windows yet.
+[%] Issue 1095: Transparency was not changed after Quake activation.
+[%] Incorrect cursor position in console after vim exiting.
+[+] Issue 1103: GuiMacro: SetOption("bgImageDarker",<value>) - change darkening of background image, 0..255.
+
+
 2013.06.12
-[%] Issue 1090: Regression: Win+Left/Right does not move ConEmu anymore between multiple monitors.
+[%] Issue 1090: Regression: Win+Left/Right does not move ConEmu anymore between multiple monitors (beginning).
 [%] Regression: Wrong working directory in recreate dialog.
 [*] Automatic crashdump creation when exception occures in ConEmuC.
 [%] ConEmu may close unexpectedly when clicking on ConEmu system icon while GUI child application is running in tab.
@@ -3565,6 +3575,10 @@ alex_itd - 2009.01.18
 
 = 2009.01.18 === (NightRoman changelog below) ===
 
+Roman Kuzmin (aka NightRoman)
+http://code.google.com/p/farnet/
+PowerShell and .NET in FAR Manager
+
 *) Решена проблема отрисовки больших окон с мелкими шрифтами, иными словами
 большого буфера данных, на котором функции ReadConsoleOutput*() не работают.
 Идея построчного чтения буфера заимствована из FAR исходников, но этот режим
@@ -3767,11 +3781,3 @@ Render time (округлено на глазок, в худшую для нов
 Наблюдался нежелательный эффект - символ под курсором в режиме исправления
 рамок иногда рисовался юникодным фонтом (видимо, последним выбранным до
 этого для рамок). Исправлено.
-
-
-
-= Author =
-
-Roman Kuzmin (aka NightRoman)
-http://code.google.com/p/farnet/
-PowerShell and .NET in FAR Manager

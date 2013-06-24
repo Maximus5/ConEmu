@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ToolBarClass.h"
 #include "TabBarEx.h"
+#include "Options.h"
 #include "../common/WinObjects.h"
 #include "resource.h"
 
@@ -717,7 +718,7 @@ CToolBarClass::ToolInfo* CToolBarClass::AddTool(PaneInfo* aPane, int anCmd, DWOR
 		aPane->pTool = pt;
 	}
 
-	ToolInfo ti = {{aPane->nPane, anCmd}, anFlags, rcBmp};
+	ToolInfo ti = {{{{aPane->nPane, anCmd}}}, anFlags, rcBmp};
 	if (asTip)
 	{
 		SetToolTip(&ti, asTip);
@@ -803,7 +804,7 @@ bool CToolBarClass::MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	//point.y = HIWORD(lParam) - wr.top;
 	
 	EnterCriticalSection(&m_CS);
-	ToolId hover = {{-1,-1}};
+	ToolId hover = {{{-1,-1}}};
 	PaneInfo* hoverPane = NULL;
 	POINT ptWhere = {};
 	RECT rcTool = {};

@@ -1584,6 +1584,7 @@ LPWSTR CConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon)
 // SetOption("<Name>",<Value>)
 LPWSTR CConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon)
 {
+	LPWSTR pszResult = NULL;
 	LPWSTR pszName = NULL;
 	int nValue = 0;
 
@@ -1611,13 +1612,25 @@ LPWSTR CConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon)
 				break;
 			}
 		}
+		pszResult = lstrdup(L"OK");
+	}
+	else if (!lstrcmpi(pszName, L"bgImageDarker"))
+	{
+		if (p->GetIntArg(1, nValue))
+		{
+			if (nValue >= 0 && nValue < 256 && nValue != (int)(UINT)gpSet->bgImageDarker)
+			{
+				gpSetCls->SetBgImageDarker(nValue, true);
+			}
+		}
+		pszResult = lstrdup(L"OK");
 	}
 	else
 	{
 		//TODO: More options on demand
 	}
-	
-	return lstrdup(L"UnknownOption");
+
+	return pszResult ? pszResult : lstrdup(L"UnknownOption");
 }
 
 // ShellExecute

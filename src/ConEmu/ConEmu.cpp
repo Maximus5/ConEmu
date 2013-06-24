@@ -317,6 +317,7 @@ CConEmuMain::CConEmuMain()
 	ForceMinimizeToTray = false;
 	mb_InCreateWindow = true;
 	mb_InShowMinimized = false;
+	mb_LastTransparentFocused = false;
 	mh_MinFromMonitor = NULL;
 	
 	wndX = gpSet->_wndX; wndY = gpSet->_wndY;
@@ -382,6 +383,7 @@ CConEmuMain::CConEmuMain()
 	mh_CursorWait = LoadCursor(NULL, IDC_WAIT);
 	mh_CursorArrow = LoadCursor(NULL, IDC_ARROW);
 	mh_CursorMove = LoadCursor(NULL, IDC_SIZEALL);
+	mh_CursorIBeam = LoadCursor(NULL, IDC_IBEAM);
 	mh_DragCursor = NULL;
 	mh_CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
 	// g_hInstance еще не инициализирован
@@ -672,8 +674,7 @@ CConEmuMain::CConEmuMain()
 	// Dynamic messages
 	UINT nAppMsg = WM_APP+10;
 	mn__FirstAppMsg = WM_APP+10;
-	ZeroStruct(m__AppMsgs);
-	m__AppMsgs.Init();
+	m__AppMsgs.Init(128, true);
 	// Go
 	mn_MsgPostCreate = RegisterMessage("PostCreate");
 	mn_MsgPostCopy = RegisterMessage("PostCopy");
@@ -11455,6 +11456,11 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		lbSetFocus = CVConGroup::isOurWindow(hNewFocus);
 
+		if (mb_LastTransparentFocused != lbSetFocus)
+		{
+			OnTransparentSeparate(lbSetFocus);
+		}
+
 		if (!lbSetFocus && (asMsgFrom == gsFocusQuakeCheckTimer)
 			&& mn_ForceTimerCheckLoseFocus
 			//&& ((GetTickCount() - mn_ForceTimerCheckLoseFocus) >= QUAKE_FOCUS_CHECK_TIMER_DELAY)
@@ -11579,13 +11585,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 
 	// Если для активного и НЕактивного окна назначены разные значения
-	if (gpSet->isTransparentSeparate
-		&& (gpSet->nTransparent != gpSet->nTransparentInactive)
-		&& gpSet->isTransparentAllowed())
-	{
-		// То нужно обновить "прозрачность"
-		OnTransparent(true, lbSetFocus);
-	}
+	OnTransparentSeparate(lbSetFocus);
 
 	//
 	if (!lbSetFocus)
@@ -16095,7 +16095,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 		}
 		else if (pRCon->isSelectionPresent())
 		{
-			hCur = LoadCursor(NULL, IDC_IBEAM);
+			hCur = mh_CursorIBeam; // LoadCursor(NULL, IDC_IBEAM);
 		}
 		else if ((etr = pRCon->GetLastTextRangeType()) != etr_None)
 		{
@@ -16137,6 +16137,16 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 						hCur = mh_SplitV;
 						DEBUGSTRSETCURSOR(L" ---> SplitV (allow)\n");
 					}
+				}
+			}
+
+			// If mouse is used for selection, or specified modifier is pressed
+			if (!hCur && lbMeFore)
+			{
+				if ((gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, true))
+					|| (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, true)))
+				{
+					hCur = mh_CursorIBeam;
 				}
 			}
 		}
@@ -17229,7 +17239,30 @@ void CConEmuMain::OnTimer_QuakeFocus()
 	KillTimer(ghWnd, TIMER_QUAKE_AUTOHIDE_ID);
 }
 
-void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*= true*/)
+void CConEmuMain::OnTransparentSeparate(bool bSetFocus)
+{
+	if (gpSet->isTransparentSeparate
+		&& (gpSet->nTransparent != gpSet->nTransparentInactive)
+		&& gpSet->isTransparentAllowed())
+	{
+		// То нужно обновить "прозрачность"
+		OnTransparent(true, bSetFocus);
+	}
+}
+
+void CConEmuMain::OnTransparent()
+{
+	// Don't touch transparency during Quake-animation
+	if (mn_QuakePercent != 0)
+		return;
+
+	bool bSetFocus = mp_Menu->GetRestoreFromMinimized();
+	bool bFromFocus = bSetFocus;
+
+	OnTransparent(bFromFocus, bSetFocus);
+}
+
+void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*= false*/)
 {
 	bool bForceLayered = false;
 	bool bActive = abFromFocus ? bSetFocus : isMeForeground();
@@ -17258,6 +17291,9 @@ void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*=
 	// return true - when state was changes
 	if (SetTransparent(ghWnd, nAlpha, bColorKey, gpSet->nColorKeyValue, bForceLayered))
 	{
+		// Запомнить
+		mb_LastTransparentFocused = bActive;
+
 		if (mp_Menu->GetTrackMenuPlace() == tmp_None)
 		{
 			OnSetCursor();

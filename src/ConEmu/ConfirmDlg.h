@@ -31,4 +31,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // IDYES    - Close All consoles
 // IDNO     - Close active console only
 // IDCANCEL - As is
-int ConfirmCloseConsoles(UINT nConsoles, UINT nOperations, UINT nUnsavedEditors, bool* rpLeaveConEmuOpened = NULL, LPCWSTR asSingleConsole = NULL, LPCWSTR asSingleTitle = NULL);
+struct ConfirmCloseParam
+{
+	UINT nConsoles;
+	BOOL bGroup;
+	UINT nOperations;
+	UINT nUnsavedEditors;
+	bool* rpLeaveConEmuOpened;
+	LPCWSTR asSingleConsole;
+	LPCWSTR asSingleTitle;
+
+	ConfirmCloseParam() { memset(this,0,sizeof(*this)); };
+};
+int ConfirmCloseConsoles(const ConfirmCloseParam& Parm);

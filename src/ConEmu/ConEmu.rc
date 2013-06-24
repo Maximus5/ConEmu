@@ -831,19 +831,19 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,1,319,75
+    GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,1,319,76
     CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,28,64,8
     CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,28,66,8
     CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,162,28,59,8
     CONTROL         "Far windows",cbShowFarWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,42,56,8
     CONTROL         "Active console only",cbHideInactiveConTabs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,42,77,8
-    CONTROL         "Hide disabled tabs",cbHideDisabledTabs,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,233,28,75,8
-    RTEXT           "Tabs font:",IDC_STATIC,21,58,42,8
-    COMBOBOX        tTabFontFace,69,56,107,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
-    CTEXT           "x",IDC_STATIC,181,58,8,8
-    COMBOBOX        tTabFontHeight,192,56,29,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Charset:",IDC_STATIC,226,58,32,8
-    COMBOBOX        tTabFontCharset,264,56,54,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Hide disabled tabs",cbHideDisabledTabs,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,239,73,75,8
+    RTEXT           "Tabs font:",IDC_STATIC,21,59,42,8
+    COMBOBOX        tTabFontFace,69,57,107,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    CTEXT           "x",IDC_STATIC,181,59,8,8
+    COMBOBOX        tTabFontHeight,192,57,29,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Charset:",IDC_STATIC,226,59,32,8
+    COMBOBOX        tTabFontCharset,264,57,54,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Tab templates",IDC_STATIC,4,82,319,85
     RTEXT           "Panels:",IDC_STATIC,8,131,30,8
     EDITTEXT        tTabConsole,42,112,40,12,ES_AUTOHSCROLL
@@ -872,6 +872,7 @@ BEGIN
     GROUPBOX        "Tab extras",IDC_STATIC,4,170,319,35
     LTEXT           "Default tab click action:",IDC_STATIC,12,183,117,8
     COMBOBOX        tTabDblClickAction,95,180,111,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "One tab per group",cbOneTabPerGroup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,233,28,82,8
 END
 
 IDD_SPG_STATUSBAR DIALOGEX 0, 0, 328, 235

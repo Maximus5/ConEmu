@@ -223,6 +223,7 @@ class CSettings
 		bool PrepareBackground(CVirtualConsole* apVCon, HDC* phBgDc, COORD* pbgBmpSize);
 		bool PollBackgroundFile(); // true, если файл изменен
 		bool LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
+		void SetBgImageDarker(u8 newValue, bool bUpdate);
 		bool IsBackgroundEnabled(CVirtualConsole* apVCon);
 		void NeedBackgroundUpdate();
 		//CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);

@@ -6,6 +6,10 @@
 #include <shlobj.h>
 #include <tchar.h>
 
+#ifdef __GNUC__
+#include "ShObjIdl_Part.h"
+#endif // __GNUC__
+
 #include "BaseDragDrops.h"
 #include "ConEmu.h"
 #include "DragDrop.h"

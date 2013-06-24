@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "ConsoleRead.h"
 
+//#define DUMP_TEST_READS
+#undef DUMP_TEST_READS
 
 LPCSTR GetCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize)
 {
@@ -127,6 +129,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 
 	COORD bufCoord = {0,0};
 	DWORD dwErrCode = 0;
+	CONSOLE_SCREEN_BUFFER_INFO sbi_tmp = {}; BOOL bSbiTmp = (BOOL)-1;
 
 	nTick2 = GetTickCount();
 
@@ -159,7 +162,17 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 			{
 				nTick3 = GetTickCount();
 				rgn.Bottom = rgn.Top;
+
+				#ifdef DUMP_TEST_READS
+				bSbiTmp = GetConsoleScreenBufferInfo(hOut, &sbi_tmp);
+				#endif
+
 				lbRc = ReadConsoleOutputW(hOut, pLine, bufSize, bufCoord, &rgn);
+
+				#ifdef DUMP_TEST_READS
+				UNREFERENCED_PARAMETER(sbi_tmp.dwSize.Y);
+				#endif
+
 				if (!lbRc)
 				{
 					dwErrCode = GetLastError();
@@ -264,5 +277,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 	UNREFERENCED_PARAMETER(nTick3);
 	UNREFERENCED_PARAMETER(nTick4);
 	UNREFERENCED_PARAMETER(nTick5);
+	UNREFERENCED_PARAMETER(sbi_tmp.dwSize.Y);
+	UNREFERENCED_PARAMETER(bSbiTmp);
 	return lbRc;
 }

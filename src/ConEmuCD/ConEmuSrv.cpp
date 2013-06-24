@@ -2045,7 +2045,16 @@ void CmdOutputRestore(bool abSimpleMode)
 		return;
 	}
 
-	SMALL_RECT rcBottom = {0, crMoveTo.Y, lsbi.srWindow.Right, lsbi.dwSize.Y-1};
+	short h = lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1;
+	short w = lsbi.srWindow.Right - lsbi.srWindow.Left + 1;
+
+	if (abSimpleMode)
+	{
+		
+		crMoveTo.Y = min(pData->info.srWindow.Top,max(0,lsbi.dwSize.Y-h));
+	}
+
+	SMALL_RECT rcBottom = {0, crMoveTo.Y, w - 1, crMoveTo.Y + h - 1};
 	SetConsoleWindowInfo(ghConOut, TRUE, &rcBottom);
 
 	COORD crNewPos = {lsbi.dwCursorPosition.X, lsbi.dwCursorPosition.Y + crMoveTo.Y};

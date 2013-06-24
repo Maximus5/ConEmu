@@ -955,16 +955,49 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	MCHKHEAP
 	_ASSERTE(m_Tab2VCon.size()==0);
 
+	MMap<CVConGroup*,CVirtualConsole*> Groups; Groups.Init(MAX_CONSOLE_COUNT, true);
+
 	for (V = 0; V < MAX_CONSOLE_COUNT; V++)
 	{
-		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
-		CVConGuard guard(pVCon);
+		//if (!(pVCon = gpConEmu->GetVCon(V))) continue;
+		CVConGuard guard;
+		if (!CVConGroup::GetVCon(V, &guard))
+			continue;
+		pVCon = guard.VCon();
 
 		BOOL lbActive = gpConEmu->isActive(pVCon, false);
 
 		if (gpSet->bHideInactiveConsoleTabs)
 		{
 			if (!lbActive) continue;
+		}
+
+		if (gpSet->isOneTabPerGroup)
+		{
+			CVConGroup *pGr;
+			CVConGuard VGrActive;
+			if (CVConGroup::isGroup(pVCon, &pGr, &VGrActive))
+			{
+				CVirtualConsole* pGrVCon;
+
+				if (Groups.Get(pGr, &pGrVCon))
+					continue; // эта группа уже есть
+
+				pGrVCon = VGrActive.VCon();
+				Groups.Set(pGr, pGrVCon);
+
+				// И показывать таб нужно от "активной" консоли, а не от первой в группе
+				if (pVCon != pGrVCon)
+				{
+					guard = pGrVCon;
+					pVCon = pGrVCon;
+				}
+
+				if (!lbActive)
+				{
+					lbActive = gpConEmu->isActive(pVCon, true);
+				}
+			}
 		}
 
 		CRealConsole *pRCon = pVCon->RCon();

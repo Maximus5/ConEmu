@@ -940,6 +940,7 @@
 #define vkTileToLeft                    2596
 #define vkTileToRight                   2597
 #define cbSuppressBells                 2598
+#define cbOneTabPerGroup                2599
 
 // Next default values for new objects
 // 
@@ -947,7 +948,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        222
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2598
+#define _APS_NEXT_CONTROL_VALUE         2600
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

@@ -6141,10 +6141,14 @@ BOOL StartDebugger()
 
 	if (ConEmuHwnd)
 	{
+		DWORD nGuiPID = 0; GetWindowThreadProcessId(ConEmuHwnd, &nGuiPID);
 		// Откроем дебаггер в новой вкладке ConEmu. При желании юзеру проще сделать Detach
 		// "/DEBUGPID=" обязательно должен быть первым аргументом
+
 		_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /ROOT \"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=9999",
 		          szConEmuC, szConEmuC, dwSelfPID, w, h);
+		//_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%u /GHWND=%08X /ROOT \"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=9999",
+		//          szConEmuC, nGuiPID, (DWORD)(DWORD_PTR)ConEmuHwnd, szConEmuC, dwSelfPID, w, h);
 	}
 	else
 	{

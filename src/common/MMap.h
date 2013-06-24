@@ -43,8 +43,10 @@ protected:
 	MapItems *mp_Items;
 	size_t mn_MaxCount;
 public:
-	bool Init(size_t nMaxCount = 256)
+	bool Init(size_t nMaxCount = 256, bool bOnCreate = false)
 	{
+		if (bOnCreate)
+			memset(this, 0, sizeof(*this));
 		_ASSERTE(mp_Items == NULL);
 		mp_Items = (MapItems*)calloc(nMaxCount,sizeof(*mp_Items));
 		if (!mp_Items)

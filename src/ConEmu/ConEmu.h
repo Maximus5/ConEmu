@@ -174,6 +174,7 @@ class CConEmuMain :
 		bool mb_InCreateWindow;
 		HMONITOR mh_MinFromMonitor;
 		bool mb_InShowMinimized; // true на время выполнения ShowWindow(SW_SHOWMIN...)
+		bool mb_LastTransparentFocused; // нужно для проверки gpSet->isTransparentSeparate
 	public:
 		bool InCreateWindow();
 		bool InQuakeAnimation();
@@ -305,7 +306,7 @@ class CConEmuMain :
 
 			bool Connected()
 			{
-				return (wState!=WTS_SESSION_LOCK) && (wState!=WTS_SESSION_LOCK);
+				return (wState!=7/*WTS_SESSION_LOCK*/);
 			}
 
 			LRESULT SessionChanged(WPARAM State, LPARAM SessionID)
@@ -379,7 +380,7 @@ class CConEmuMain :
 		//OSVERSIONINFO m_osv;
 		BOOL mb_IsUacAdmin; // ConEmu itself is started elevated
 		bool IsActiveConAdmin();
-		HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove;
+		HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove, mh_CursorIBeam;
 		HCURSOR mh_SplitV, mh_SplitH;
 		HCURSOR mh_DragCursor;
 		CDragDrop *mp_DragDrop;
@@ -889,7 +890,9 @@ class CConEmuMain :
 		void OnTimer_RClickPaint();
 		void OnTimer_AdmShield();
 		void OnTimer_QuakeFocus();
-		void OnTransparent(bool abFromFocus = false, bool bSetFocus = true);
+		void OnTransparent();
+		void OnTransparent(bool abFromFocus/* = false*/, bool bSetFocus/* = false*/);
+		void OnTransparentSeparate(bool bSetFocus);
 		void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args);
 		LRESULT OnVConClosed(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 		void OnAllVConClosed();

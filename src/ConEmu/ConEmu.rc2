@@ -86,6 +86,7 @@ BEGIN
     cbMultiIterate          "Iterate opened Far windows with «Host-key»+Number"
     cbNewConfirm            "Confirm new console creation.\r\nYou may change cmd line for it, or turn on ""Run as..."" feature.\r\nEven if unchecked, You may hold ""Shift"" to display dialog."
     cbNumberInCaption       "Show [ActiveCon/TotalCon] in window caption"
+	cbOneTabPerGroup        "Show only one tab for all splits in the group"
     cbOptionSearch          "Continue search all setup pages controls for specified text"
     cbPortableRegistry      "Enable portable mode for Far manager"
     cbProcessAnsi           "Enable processing of ANSI escape sequences, «Inject ConEmuHk» must be checked if you want to work with second level processes (e.g. cmd.exe -> app.exe)"

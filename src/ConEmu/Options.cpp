@@ -620,7 +620,7 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_ConEmuView] = true;
 	isStatusColumnHidden[csi_ServerHWND] = true;
 
-	isTabs = 1; nTabsLocation = 0;
+	isTabs = 1; nTabsLocation = 0; isOneTabPerGroup = false;
 	isTabSelf = true; isTabRecent = true; isTabLazy = true; nTabDblClickAction = TAB_DEFAULT_CLICK_ACTION;
 	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
@@ -2480,6 +2480,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		//reg->Load(L"GUIpb", isGUIpb);
 		reg->Load(L"Tabs", isTabs);
 		reg->Load(L"TabsLocation", nTabsLocation);
+		reg->Load(L"OneTabPerGroup", isOneTabPerGroup);
 		reg->Load(L"TabSelf", isTabSelf);
 		reg->Load(L"TabLazy", isTabLazy);
 		reg->Load(L"TabRecent", isTabRecent);
@@ -3195,6 +3196,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		SaveStatusSettings(reg);
 		reg->Save(L"Tabs", isTabs);
 		reg->Save(L"TabsLocation", nTabsLocation);
+		reg->Save(L"OneTabPerGroup", isOneTabPerGroup);
 		reg->Save(L"TabSelf", isTabSelf);
 		reg->Save(L"TabLazy", isTabLazy);
 		reg->Save(L"TabRecent", isTabRecent);

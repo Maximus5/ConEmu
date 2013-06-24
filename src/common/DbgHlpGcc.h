@@ -1,4 +1,6 @@
 
+#pragma once
+
 typedef enum _MINIDUMP_TYPE {
   MiniDumpNormal                           = 0x00000000,
   MiniDumpWithDataSegs                     = 0x00000001,
