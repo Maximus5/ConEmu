@@ -136,9 +136,16 @@ int RunDebugger()
 	//gpSrv->DbgInfo.bDebuggerActive = TRUE;
 	//PrintDebugInfo();
 
-	int iAttachRc = AttachRootProcessHandle();
-	if (iAttachRc != 0)
-		return iAttachRc;
+	if (gpSrv->DbgInfo.pszDebuggingCmdLine == NULL)
+	{
+		int iAttachRc = AttachRootProcessHandle();
+		if (iAttachRc != 0)
+			return iAttachRc;
+	}
+	else
+	{
+		_ASSERTE(!gpSrv->DbgInfo.bDebuggerActive);
+	}
 
 	_ASSERTE(((gpSrv->hRootProcess!=NULL) || (gpSrv->DbgInfo.pszDebuggingCmdLine!=NULL)) && "Process handle must be opened");
 

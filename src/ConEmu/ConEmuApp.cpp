@@ -2633,7 +2633,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	return bSucceeded;
 }
 
-bool GetCfgParm(uint& i, TCHAR*& curCommand, bool& Prm, TCHAR*& Val, int nMaxLen)
+bool GetCfgParm(uint& i, TCHAR*& curCommand, bool& Prm, TCHAR*& Val, int nMaxLen, bool bExpandAndDup = false)
 {
 	if (!curCommand || !*curCommand)
 	{
@@ -2665,7 +2665,12 @@ bool GetCfgParm(uint& i, TCHAR*& curCommand, bool& Prm, TCHAR*& Val, int nMaxLen
 
 	// Ok
 	Prm = true;
-	Val = curCommand;
+
+	// We need independent absolute file paths, Working dir changes during ConEmu session
+	if (bExpandAndDup)
+		Val = GetFullPathNameEx(curCommand);
+	else
+		Val = curCommand;
 
 	return true;
 }
@@ -3455,7 +3460,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/LoadCfgFile")) && i + 1 < params)
 				{
 					// используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, LoadCfgFilePrm, LoadCfgFile, MAX_PATH))
+					if (!GetCfgParm(i, curCommand, LoadCfgFilePrm, LoadCfgFile, MAX_PATH, true))
 					{
 						return 100;
 					}
@@ -3463,7 +3468,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/SaveCfgFile")) && i + 1 < params)
 				{
 					// используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, SaveCfgFilePrm, SaveCfgFile, MAX_PATH))
+					if (!GetCfgParm(i, curCommand, SaveCfgFilePrm, SaveCfgFile, MAX_PATH, true))
 					{
 						return 100;
 					}
@@ -3554,6 +3559,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		// При ошибке - не выходим, просто покажем ее пользователю
 		gpConEmu->SetConfigFile(LoadCfgFile);
+		// Release mem
+		SafeFree(LoadCfgFile);
 	}
 
 	// preparing settings
@@ -3612,6 +3619,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				if (!iMainRc) iMainRc = 12;
 			}
 		}
+		// Release mem
+		SafeFree(SaveCfgFile);
 	}
 
 	// Only when ExitAfterActionPrm, otherwise - it will be called from ConEmu's PostCreate

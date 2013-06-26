@@ -2689,7 +2689,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 
 				if (bHideEmpties)
 				{
-					if (ppHK->VkMod == 0)
+					if ((ppHK->VkMod == 0) || (ppHK->VkMod == CEHOTKEY_NOMOD))
 						continue;
 				}
 

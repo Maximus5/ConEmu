@@ -1331,6 +1331,43 @@ wchar_t* ExpandEnvStr(LPCWSTR pszCommand)
 	return NULL;
 }
 
+// GetFullPathName & ExpandEnvStr
+wchar_t* GetFullPathNameEx(LPCWSTR asPath)
+{
+	wchar_t* pszResult = NULL;
+	wchar_t* pszTemp = NULL;
+
+	if (wcschr(asPath, L'%'))
+	{
+		if ((pszTemp = ExpandEnvStr(asPath)) != NULL)
+		{
+			asPath = pszTemp;
+		}
+	}
+
+	DWORD cchMax = MAX_PATH+1;
+	pszResult = (wchar_t*)calloc(cchMax,sizeof(*pszResult));
+	if (pszResult)
+	{
+		wchar_t* pszFilePart;
+		DWORD nLen = GetFullPathName(asPath, cchMax, pszResult, &pszFilePart);
+		if (!nLen  || (nLen >= cchMax))
+		{
+			_ASSERTEX(FALSE && "GetFullPathName failed");
+			SafeFree(pszResult);
+		}
+	}
+	
+	if (!pszResult)
+	{
+		_ASSERTEX(pszResult!=NULL);
+		pszResult = lstrdup(asPath);
+	}
+
+	SafeFree(pszTemp);
+	return pszResult;
+}
+
 
 
 #ifndef __GNUC__

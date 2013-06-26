@@ -720,6 +720,8 @@ class CConEmuMain :
 		bool isRightClickingPaint();		
 		bool isSizing();
 		void BeginSizing(bool bFromStatusBar);
+		void SetSizingFlags(DWORD nSetFlags = MOUSE_SIZING_BEGIN);
+		void ResetSizingFlags(DWORD nDropFlags = MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 		void EndSizing();
 		bool isValid(CRealConsole* apRCon);
 		bool isValid(CVirtualConsole* apVCon);

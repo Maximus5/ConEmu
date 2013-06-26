@@ -86,6 +86,7 @@ const wchar_t* PointToExt(const wchar_t* asFullPath);
 const wchar_t* Unquote(wchar_t* asParm);
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount);
 wchar_t* ExpandEnvStr(LPCWSTR pszCommand);
+wchar_t* GetFullPathNameEx(LPCWSTR asPath);
 
 BOOL IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars = NULL);
 BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQuot,

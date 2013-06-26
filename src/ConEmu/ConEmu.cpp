@@ -1332,9 +1332,13 @@ SIZE CConEmuMain::GetDefaultSize(bool bCells, const CESize* pSizeW/*=NULL*/, con
 	int nShiftX = nFrameX + (bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0);
 	int nShiftY = nFrameY + (bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
 
+	ConEmuWindowMode wmCurMode = GetWindowMode();
+
 	// Информация по монитору нам нужна только если размеры заданы в процентах
 	MONITORINFO mi = {sizeof(mi)};
-	if (sizeW.Style == ss_Percents || sizeH.Style == ss_Percents)
+	if ((sizeW.Style == ss_Percents || sizeH.Style == ss_Percents)
+		|| gpSet->isQuakeStyle
+		|| (wmCurMode == wmMaximized || wmCurMode == wmFullScreen))
 	{
 		BOOL bMonitor = FALSE;
 		if (hMon != NULL)
@@ -1391,6 +1395,33 @@ SIZE CConEmuMain::GetDefaultSize(bool bCells, const CESize* pSizeW/*=NULL*/, con
 	
 	if (nPixelHeight <= 0)
 		nPixelHeight = conSize.Y * nFontHeight;
+
+
+	// Для Quake & FS/Maximized нужно убедиться, что размеры НЕ превышают размеры монитора/рабочей области
+	if (gpSet->isQuakeStyle || (wmCurMode == wmMaximized || wmCurMode == wmFullScreen))
+	{
+		if (mi.cbSize)
+		{
+			int nMaxWidth  = (wmCurMode == wmFullScreen) ? (mi.rcMonitor.right - mi.rcMonitor.left) : (mi.rcWork.right - mi.rcWork.left);
+			int nMaxHeight = (wmCurMode == wmFullScreen) ? (mi.rcMonitor.bottom - mi.rcMonitor.top) : (mi.rcWork.bottom - mi.rcWork.top);
+			// Maximized/Fullscreen - frame may come out of working area
+			RECT rcFrameOnly = CalcMargins(CEM_FRAMEONLY);
+			_ASSERTE(nFrameX>=0 && nFrameY>=0 && rcFrameOnly.left>=0 && rcFrameOnly.top>=0 && rcFrameOnly.right>=0 && rcFrameOnly.bottom>=0);
+			WARNING("Новое уточнение, может на что-то еще повлиять");
+			nMaxWidth += (rcFrameOnly.left + rcFrameOnly.right) - nFrameX;
+			nMaxHeight += (rcFrameOnly.top + rcFrameOnly.bottom) - nFrameY;
+			// Check it
+			if (nPixelWidth > nMaxWidth)
+				nPixelWidth = nMaxWidth;
+			if (nPixelHeight > nMaxHeight)
+				nPixelHeight = nMaxHeight;
+		}
+		else
+		{
+			_ASSERTE(mi.cbSize!=0);
+		}
+	}
+
 
 	//// >> rcWnd
 	//rcWnd.bottom = this->wndY + nPixelHeight + nShiftY;
@@ -2707,11 +2738,11 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 
 	WARNING("Установка любого НЕ NULL региона сбивает темы при отрисовке кнопок в заголовке");
 
-	if ((WindowMode == wmFullScreen)
-		// Условие именно такое (для isZoomed) - здесь регион ставится на весь монитор
-		|| ((WindowMode == wmMaximized) && (gpSet->isHideCaption || gpSet->isHideCaptionAlways())))
+	if (!gpSet->isQuakeStyle
+		&& ((WindowMode == wmFullScreen)
+			// Условие именно такое (для isZoomed) - здесь регион ставится на весь монитор
+			|| ((WindowMode == wmMaximized) && (gpSet->isHideCaption || gpSet->isHideCaptionAlways()))))
 	{
-		_ASSERTE(!gpSet->isQuakeStyle);
 		if (abTestOnly)
 			return (HRGN)1;
 
@@ -2730,9 +2761,9 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 		// rcFrame, т.к. регион ставится относительно верхнего левого угла ОКНА
 		hRgn = CreateWindowRgn(abTestOnly, false, rcFrame.left, rcFrame.top, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
 	}
-	else if (WindowMode == wmMaximized)
+	else if (!gpSet->isQuakeStyle
+		&& (WindowMode == wmMaximized))
 	{
-		_ASSERTE(!gpSet->isQuakeStyle);
 		if (!hExclusion)
 		{
 			// Если прозрачных участков в консоли нет - ничего не делаем
@@ -4928,7 +4959,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	bool lbRc = false;
 	static bool bWasSetFullscreen = false;
 	// Сброс флагов ресайза мышкой
-	mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
+	ResetSizingFlags(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 
 	bool bNewFullScreen = (inMode == wmFullScreen) || (gpSet->isQuakeStyle && (gpSet->_WindowMode == wmFullScreen));
 
@@ -5713,7 +5744,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 	if (lbIsSizing && !lbLBtnPressed)
 	{
 		// Сборс всех флагов ресайза мышкой
-		mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
+		ResetSizingFlags(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 	}
 
 	if (gpSetCls->isAdvLogging)
@@ -5867,7 +5898,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 			if ((mouse.state & (MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))==MOUSE_SIZING_BEGIN
 			        && isPressed(VK_LBUTTON))
 			{
-				mouse.state |= MOUSE_SIZING_TODO;
+				SetSizingFlags(MOUSE_SIZING_TODO);
 			}
 
 			wndSizeRect = *pRect;
@@ -6325,10 +6356,59 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	{
 		if (gpSet->isQuakeStyle)
 		{
+			// Разрешить менять и ширину окна Quake
+			//CESize SaveWidth = {WndWidth.Raw};
+			bool tempChanged = false;
+
 			RECT rc = GetDefaultRect();
-			p->x = rc.left;
+			
 			p->y = rc.top;
-			p->cx = rc.right - rc.left; // + 1;
+
+			TODO("разрешить изменение ширины в Quake!");
+#if 0
+			ConEmuWindowMode wmCurQuake = GetWindowMode();
+
+			if (isSizing() && p->cx && (wmCurQuake == wmNormal))
+			{
+				// Поскольку оно центрируется (wndCascade)... изменение ширину нужно множить на 2
+				RECT rcQNow = {}; GetWindowRect(hWnd, &rcQNow);
+				int width = rcQNow.right - rcQNow.left;
+				int shift = p->cx - width;
+				// TODO: разрешить изменение ширины в Quake!
+				if (shift)
+				{
+					//_ASSERTE(shift==0);
+					#ifndef _DEBUG
+					shift = 0;
+					#endif
+				}
+				//WndWidth.Set(true, ss_Pixels, width + 2*shift);
+				if (gpSet->wndCascade)
+				{
+					// Скорректировать координату!
+					wndX = rc.left - shift;
+					
+					p->x -= shift;
+					p->cx += shift;
+				}
+				else
+				{
+					//p->cx = rc.right - rc.left + shift*(gpSet->wndCascade ? 2 : 1); // + 1;
+				}
+			}
+			else
+#endif
+			{
+				p->x = rc.left;
+				p->cx = rc.right - rc.left; // + 1;
+			}
+
+
+			//// Вернуть WndWidth, т.к. это было временно
+			//if (tempChanged)
+			//{
+			//	WndWidth.Set(true, SaveWidth.Style, SaveWidth.Value);
+			//}
 		}
 		else if (zoomed)
 		{
@@ -10037,6 +10117,9 @@ bool CConEmuMain::isSizing()
 
 void CConEmuMain::BeginSizing(bool bFromStatusBar)
 {
+	// Перенес снизу, а то ассерты вылезают
+	SetSizingFlags(MOUSE_SIZING_BEGIN);
+
 	// When resizing by dragging status-bar corner
 	if (bFromStatusBar)
 	{
@@ -10049,8 +10132,6 @@ void CConEmuMain::BeginSizing(bool bFromStatusBar)
 		}
 	}
 
-	gpConEmu->mouse.state |= MOUSE_SIZING_BEGIN;
-
 	if (gpSet->isHideCaptionAlways())
 	{
 		KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
@@ -10061,9 +10142,30 @@ void CConEmuMain::BeginSizing(bool bFromStatusBar)
 	}
 }
 
+void CConEmuMain::SetSizingFlags(DWORD nSetFlags /*= MOUSE_SIZING_BEGIN*/)
+{
+	_ASSERTE((nSetFlags & (~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))) == 0); // Допустимые флаги
+
+	#ifdef _DEBUG
+	if (!(gpConEmu->mouse.state & nSetFlags)) // For debug purposes (breakpoints)
+	#endif
+	gpConEmu->mouse.state |= nSetFlags;
+}
+
+void CConEmuMain::ResetSizingFlags(DWORD nDropFlags /*= MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO*/)
+{
+	_ASSERTE((nDropFlags & (~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))) == 0); // Допустимые флаги
+
+	#ifdef _DEBUG
+	if ((gpConEmu->mouse.state & nDropFlags)) // For debug purposes (breakpoints)
+	#endif
+	mouse.state &= ~nDropFlags;
+}
+
 void CConEmuMain::EndSizing()
 {
-	mouse.state &= ~MOUSE_SIZING_BEGIN;
+	_ASSERTE((mouse.state & MOUSE_SIZING_TODO) == 0); // Уже должен быть сброшен?
+	ResetSizingFlags(MOUSE_SIZING_BEGIN);
 
 	if (IsWindowVisible(ghWnd) && !isIconic())
 	{
@@ -17066,7 +17168,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 
 		//if (isSizing() && !isPressed(VK_LBUTTON)) {
 		//    // Сборс всех флагов ресайза мышкой
-		//    mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
+		//    ResetSizingFlags(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 		//}
 
 		//TODO("возможно весь ресайз (кроме SyncNtvdm?) нужно перенести в нить консоли")

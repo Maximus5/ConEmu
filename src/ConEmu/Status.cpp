@@ -1064,6 +1064,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			if (uMsg == WM_LBUTTONUP)
 			{
 				SetCapture(NULL);
+				gpConEmu->EndSizing();
 				mb_StatusResizing = false;
 				DEBUGSTRSIZE(L"Resize from status bar grip finished");
 			}

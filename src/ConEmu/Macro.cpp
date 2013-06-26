@@ -182,7 +182,7 @@ wchar_t* GuiMacro::AsString()
 
 bool GuiMacro::GetIntArg(size_t idx, int& val)
 {
-	if ((argc < idx)
+	if ((idx >= argc)
 		|| (argv[idx].Type != gmt_Int && argv[idx].Type != gmt_Hex))
 	{
 		val = 0;
@@ -195,7 +195,7 @@ bool GuiMacro::GetIntArg(size_t idx, int& val)
 
 bool GuiMacro::GetStrArg(size_t idx, LPWSTR& val)
 {
-	if ((argc < idx)
+	if ((idx >= argc)
 		|| (argv[idx].Type != gmt_Str && argv[idx].Type != gmt_VStr))
 	{
 		val = NULL;
@@ -208,7 +208,7 @@ bool GuiMacro::GetStrArg(size_t idx, LPWSTR& val)
 
 bool GuiMacro::IsIntArg(size_t idx)
 {
-	if ((argc < idx)
+	if ((idx >= argc)
 		|| (argv[idx].Type != gmt_Int && argv[idx].Type != gmt_Hex))
 	{
 		return false;
@@ -218,7 +218,7 @@ bool GuiMacro::IsIntArg(size_t idx)
 
 bool GuiMacro::IsStrArg(size_t idx)
 {
-	if ((argc < idx)
+	if ((idx >= argc)
 		|| (argv[idx].Type != gmt_Str && argv[idx].Type != gmt_VStr))
 	{
 		return false;

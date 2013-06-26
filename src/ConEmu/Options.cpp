@@ -4097,8 +4097,10 @@ void Settings::GetSettingsType(SettingsStorage& Storage, bool& ReadOnly)
 				}
 				else
 				{
+					DWORD nErr = GetLastError();
 					//EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
 					ReadOnly = true;
+					UNREFERENCED_PARAMETER(nErr);
 				}
 			}
 		}

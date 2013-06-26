@@ -15,6 +15,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.06.25
+[%] Issue 1096: Possible crash while executing some GuiMacro.
+[%] Issue 1107: Some unassigned hotkeys can't be hidden in Options dialog.
+[%] Some internal changes in GUI resize.
+
+
 2013.06.21
 [*] Show IBeam cursor when mouse is used for selection.
 [*] Checking conflicts between key modifiers for text selection and Far Manager D&D.
