@@ -620,8 +620,9 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_ConEmuView] = true;
 	isStatusColumnHidden[csi_ServerHWND] = true;
 
-	isTabs = 1; nTabsLocation = 0; isOneTabPerGroup = false;
-	isTabSelf = true; isTabRecent = true; isTabLazy = true; nTabDblClickAction = TAB_DEFAULT_CLICK_ACTION;
+	isTabs = 1; nTabsLocation = 0; isOneTabPerGroup = false; isActivateSplitMouseOver = true;
+	isTabSelf = true; isTabRecent = true; isTabLazy = true;
+	nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION; nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
 	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
 	isTaskbarShield = true;
@@ -2481,10 +2482,12 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"Tabs", isTabs);
 		reg->Load(L"TabsLocation", nTabsLocation);
 		reg->Load(L"OneTabPerGroup", isOneTabPerGroup);
+		reg->Load(L"ActivateSplitMouseOver", isActivateSplitMouseOver);
 		reg->Load(L"TabSelf", isTabSelf);
 		reg->Load(L"TabLazy", isTabLazy);
 		reg->Load(L"TabRecent", isTabRecent);
-		reg->Load(L"TabDblClick", nTabDblClickAction); MinMax(nTabDblClickAction, 3);
+		reg->Load(L"TabDblClick", nTabBarDblClickAction); MinMax(nTabBarDblClickAction, 3);
+		reg->Load(L"TabBtnDblClick", nTabBtnDblClickAction); MinMax(nTabBtnDblClickAction, 4);
 		reg->Load(L"TabsOnTaskBar", m_isTabsOnTaskBar);
 		reg->Load(L"TaskBarOverlay", isTaskbarShield);
 
@@ -3197,10 +3200,12 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"Tabs", isTabs);
 		reg->Save(L"TabsLocation", nTabsLocation);
 		reg->Save(L"OneTabPerGroup", isOneTabPerGroup);
+		reg->Save(L"ActivateSplitMouseOver", isActivateSplitMouseOver);
 		reg->Save(L"TabSelf", isTabSelf);
 		reg->Save(L"TabLazy", isTabLazy);
 		reg->Save(L"TabRecent", isTabRecent);
-		reg->Save(L"TabDblClick", nTabDblClickAction);
+		reg->Save(L"TabDblClick", nTabBarDblClickAction);
+		reg->Save(L"TabBtnDblClick", nTabBtnDblClickAction);
 		reg->Save(L"TabsOnTaskBar", m_isTabsOnTaskBar);
 		reg->Save(L"TaskBarOverlay", isTaskbarShield);
 		reg->Save(L"TabCloseMacro", sTabCloseMacro);

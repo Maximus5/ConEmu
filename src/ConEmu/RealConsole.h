@@ -471,7 +471,7 @@ class CRealConsole
 		void UpdateScrollInfo();
 		void SetTabs(ConEmuTab* tabs, int tabsCount);
 		void DoRenameTab();
-		bool DuplicateRoot(bool bSkipMsg = false, LPCWSTR asAddArgs = NULL, bool bRunAsAdmin = false);
+		bool DuplicateRoot(bool bSkipMsg = false, bool bRunAsAdmin = false, LPCWSTR asNewConsole = NULL, LPCWSTR asApp = NULL, LPCWSTR asParm = NULL);
 		void RenameTab(LPCWSTR asNewTabText = NULL);
 		void RenameWindow(LPCWSTR asNewWindowText = NULL);
 		int GetTabCount(BOOL abVisibleOnly = FALSE);

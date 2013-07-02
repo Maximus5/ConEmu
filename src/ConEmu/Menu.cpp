@@ -678,7 +678,7 @@ void CConEmuMenu::ExecPopupMenuCmd(CVirtualConsole* apVCon, int nCmd)
 	switch (nCmd)
 	{
 		case IDM_CLOSE:
-			if (CVConGroup::isGroup(apVCon))
+			if (gpSet->isOneTabPerGroup && CVConGroup::isGroup(apVCon))
 				CVConGroup::CloseGroup(apVCon);
 			else
 				apVCon->RCon()->CloseTab();
@@ -712,10 +712,10 @@ void CConEmuMenu::ExecPopupMenuCmd(CVirtualConsole* apVCon, int nCmd)
 			//apVCon->RCon()->CloseConsoleWindow();
 			CVConGroup::CloseGroup(apVCon);
 			break;
+
 		case IDM_RESTART:
 		case IDM_RESTARTAS:
 		case IDM_RESTARTDLG:
-
 			if (gpConEmu->isActive(apVCon))
 			{
 				gpConEmu->RecreateAction(cra_RecreateTab/*TRUE*/, (nCmd==IDM_RESTARTDLG) || isPressed(VK_SHIFT), (nCmd==IDM_RESTARTAS));
@@ -726,18 +726,21 @@ void CConEmuMenu::ExecPopupMenuCmd(CVirtualConsole* apVCon, int nCmd)
 			}
 
 			break;
+
 		case ID_NEWCONSOLE:
 			gpConEmu->RecreateAction(gpSet->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			break;
 		case IDM_ATTACHTO:
 			OnSysCommand(ghWnd, IDM_ATTACHTO, 0);
 			break;
+
 		case IDM_SAVE:
 			apVCon->RCon()->PostMacro(L"F2");
 			break;
 		case IDM_SAVEALL:
 			apVCon->RCon()->PostMacro(gpSet->sSaveAllMacro);
 			break;
+
 		default:
 			if (nCmd >= 0xAB00)
 			{
@@ -1007,6 +1010,8 @@ int CConEmuMenu::trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, 
 
 	if (!(uFlags & (TPM_HORIZONTAL|TPM_VERTICAL)))
 		uFlags |= TPM_HORIZONTAL;
+
+	//SetCursor(LoadCursor(NULL, IDC_ARROW));
 
 	int cmd = TrackPopupMenuEx(hMenu, uFlags, x, y, hWnd, &ex);
 

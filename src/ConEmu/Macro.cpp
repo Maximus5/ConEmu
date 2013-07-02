@@ -1657,15 +1657,26 @@ LPWSTR CConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon)
 				nShowCmd = SW_SHOWNORMAL;
 		}
 
-		if (!(pszFile && *pszFile) && !(pszParm && *pszParm) && apRCon)
+		bool bNewConsoleVerb = (pszOper && (wmemcmp(pszOper, L"new_console", 11) == 0));
+		bool bForceDuplicate = false;
+		if (bNewConsoleVerb)
+		{
+			RConStartArgs args; args.pszSpecialCmd = lstrmerge(L"\"-", pszOper, L"\"");
+			args.ProcessNewConArg();
+			// new_console:I
+			bForceDuplicate = (args.bForceInherit != FALSE);
+		}
+
+
+		if ((bForceDuplicate || (!(pszFile && *pszFile) && !(pszParm && *pszParm))) && apRCon)
 		{
 			LPCWSTR pszCmd;
 
-			if (pszOper && (wmemcmp(pszOper, L"new_console", 11) == 0))
+			if (bNewConsoleVerb)
 			{
-				wchar_t* pszAddArgs = lstrmerge(L"\"-", pszOper, L"\"");
-				bool bOk = apRCon->DuplicateRoot(true, pszAddArgs);
-				SafeFree(pszAddArgs);
+				wchar_t* pszNewConsoleArgs = lstrmerge(L"\"-", pszOper, L"\"");
+				bool bOk = apRCon->DuplicateRoot(true, false, pszNewConsoleArgs, pszFile, pszParm);
+				SafeFree(pszNewConsoleArgs);
 				if (bOk)
 				{
 					pszRc = lstrdup(L"OK");

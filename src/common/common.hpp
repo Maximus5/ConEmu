@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    126
+#define CESERVER_REQ_VER    127
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1807,6 +1807,7 @@ struct CESERVER_REQ_DUPLICATE
 	DWORD nWidth, nHeight;
 	DWORD nBufferHeight;
 	DWORD nColors;
+	WCHAR sCommand[1]; // variable length, NULL usually
 };
 
 enum ALTBUFFER_FLAGS

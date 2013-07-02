@@ -1824,6 +1824,11 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 
 		if (!bProcessed)
 		{
+			//-- Не нужно, да и дамп некорректно формируется, если "руками" ex формировать.
+			//EXCEPTION_RECORD er0 = {0xC0000005}; er0.ExceptionAddress = AssertBox;
+			//EXCEPTION_POINTERS ex0 = {&er0};
+			//if (!ExceptionInfo) ExceptionInfo = &ex0;
+
 			CreateDumpForReport(ExceptionInfo, szFullInfo);
 		}
 

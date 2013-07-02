@@ -80,6 +80,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ansi.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/ConsoleAnnotation.h"
+#include "../common/RConStartArgs.h"
 #include "../common/WinConsole.h"
 #include "../common/WinObjects.h"
 
@@ -1707,8 +1708,13 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 {
 	if (!gpStartEnv)
 		return -1;
-	if (!gpStartEnv->pszCmdLine || !*gpStartEnv->pszCmdLine)
+
+	// Well, allow user to run anything inheriting active process state
+	LPCWSTR pszCmdLine = Duplicate->sCommand[0] ? Duplicate->sCommand : gpStartEnv->pszCmdLine;
+
+	if (!pszCmdLine || !*pszCmdLine)
 		return -2;
+
 	if (!Duplicate->hGuiWnd || !Duplicate->nGuiPID || !Duplicate->nAID)
 		return -3;
 
@@ -1719,11 +1725,17 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 		return -4;
 	}
 
+	RConStartArgs args; // Strip and process "-new_console" switches
+	args.pszSpecialCmd = lstrdup(pszCmdLine);
+	args.ProcessNewConArg();
+	if (args.pszSpecialCmd && *args.pszSpecialCmd)
+		pszCmdLine = args.pszSpecialCmd;
+
 	int iRc = -10;
 	// go
 	STARTUPINFO si = {sizeof(si)};
 	PROCESS_INFORMATION pi = {};
-	size_t cchCmdLine = 300 + lstrlen(GuiMapping->ComSpec.ConEmuBaseDir) + lstrlen(gpStartEnv->pszCmdLine);
+	size_t cchCmdLine = 300 + lstrlen(GuiMapping->ComSpec.ConEmuBaseDir) + (lstrlen(pszCmdLine) + 128/*опции сервера*/);
 	wchar_t *pszCmd, *pszName;
 	BOOL bSrvFound;
 
@@ -1753,20 +1765,17 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 		iRc = -12;
 		goto wrap;
 	}
+	_wcscat_c(pszCmd, cchCmdLine, L"\"");
+
+	// /CONFIRM | /NOCONFIRM | /NOINJECT
+	args.AppendServerArgs(pszCmd, cchCmdLine);
 
 	pszName = pszCmd + lstrlen(pszCmd);
-
-	if (!Duplicate->bRunAs)
-	{
-		*(pszName++) = L'"';
-		*pszName = 0;
-	}
-	
 	msprintf(pszName, cchCmdLine-(pszName-pszCmd),
 		L" /ATTACH /GID=%u /GHWND=%08X /AID=%u /TA=%08X /BW=%i /BH=%i /BZ=%i /HIDE /ROOT %s",
 		Duplicate->nGuiPID, (DWORD)Duplicate->hGuiWnd, Duplicate->nAID,
 		Duplicate->nColors, Duplicate->nWidth, Duplicate->nHeight, Duplicate->nBufferHeight,
-		gpStartEnv->pszCmdLine);
+		pszCmdLine);
 
 	si.dwFlags = STARTF_USESHOWWINDOW;
 

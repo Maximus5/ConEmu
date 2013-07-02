@@ -201,12 +201,20 @@ namespace SettingsNS
 	const WORD nSizeCtrlId[] = {tWndWidth, stWndWidth, tWndHeight, stWndHeight};
 	const WORD nTaskCtrlId[] = {tCmdGroupName, tCmdGroupGuiArg, tCmdGroupCommands, stCmdTaskAdd, cbCmdGroupApp, cbCmdTasksDir, cbCmdTasksParm, cbCmdTasksActive};
 	const WORD nStatusColorIds[] = {stStatusColorBack, tc35, c35, stStatusColorLight, tc36, c36, stStatusColorDark, tc37, c37};
-	const struct TabDefaultClickAction { int value; WCHAR *name; } tabDblClickActions[4] =
-	{
+	const struct TabDefaultClickAction { int value; WCHAR *name; } tabBtnDblClickActions[] =
+	{// gpSet->nTabBtnDblClickAction
+		{ 0, L"No action" },
+		{ 1, L"Maximize/restore window size" },
+		{ 2, L"Close tab" },
+		{ 3, L"Restart tab" },
+		{ 4, L"Duplicate tab" },
+	};
+	const struct TabDefaultClickAction tabBarDblClickActions[] =
+	{// gpSet->nTabBarDblClickAction
 		{ 0, L"No action" },
 		{ 1, L"Auto" },
 		{ 2, L"Maximize/restore window size" },
-		{ 3, L"Open new shell" }
+		{ 3, L"Open new shell" },
 	};
 };
 
@@ -232,13 +240,13 @@ namespace SettingsNS
 		SendDlgItemMessage(hDlg, nDlgID, CB_SETCURSEL, num, 0); \
 	}
 
-#define FillListBoxTabDefaultClickAction(hDlg,nDlgID,Value) \
+#define FillListBoxTabDefaultClickAction(tt,hDlg,nDlgID,Value) \
 	{ \
 		u8 num = Value;  \
-		for (size_t i = 0; i < countof(SettingsNS::tabDblClickActions); i++) \
+		for (size_t i = 0; i < countof(SettingsNS::tt##DblClickActions); i++) \
 		{ \
-			SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, (LPARAM)SettingsNS::tabDblClickActions[i].name); \
-			if (SettingsNS::tabDblClickActions[i].value == num) num = i; \
+		SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, (LPARAM)SettingsNS::tt##DblClickActions[i].name); \
+			if (SettingsNS::tt##DblClickActions[i].value == num) num = i; \
 		} \
 		SendDlgItemMessage(hDlg, nDlgID, CB_SETCURSEL, num, 0); \
 	}
@@ -3152,6 +3160,8 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbOneTabPerGroup, gpSet->isOneTabPerGroup);
 
+	checkDlgButton(hWnd2, cbActivateSplitMouseOver, gpSet->isActivateSplitMouseOver);
+
 	checkDlgButton(hWnd2, cbTabSelf, gpSet->isTabSelf);
 
 	checkDlgButton(hWnd2, cbTabRecent, gpSet->isTabRecent);
@@ -3174,7 +3184,8 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbMultiIterate, gpSet->isMultiIterate);
 
-	FillListBoxTabDefaultClickAction(hWnd2, tTabDblClickAction, gpSet->nTabDblClickAction);
+	FillListBoxTabDefaultClickAction(tabBar, hWnd2, tTabBarDblClickAction, gpSet->nTabBarDblClickAction);
+	FillListBoxTabDefaultClickAction(tabBtn, hWnd2, tTabBtnDblClickAction, gpSet->nTabBtnDblClickAction);
 
 	//
 	//SetupHotkeyChecks(hTabs);
@@ -5070,6 +5081,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbOneTabPerGroup:
 			gpSet->isOneTabPerGroup = IsChecked(hWnd2, cbOneTabPerGroup);
 			gpConEmu->mp_TabBar->Update(TRUE);
+			break;
+		case cbActivateSplitMouseOver:
+			gpSet->isActivateSplitMouseOver = IsChecked(hWnd2, cbActivateSplitMouseOver);
 			break;
 		case cbTabSelf:
 			gpSet->isTabSelf = IsChecked(hWnd2, cbTabSelf);
@@ -7568,20 +7582,30 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		break;
 	} // tTabFontFace, tTabFontHeight, tTabFontCharset
 
-	case tTabDblClickAction:
+	case tTabBarDblClickAction:
+	case tTabBtnDblClickAction:
 	{
 		if (HIWORD(wParam) == CBN_SELCHANGE)
 		{
 			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
 			switch(wId)
 			{
-			case tTabDblClickAction:
-				if (nSel >= 0 && nSel < (INT_PTR)countof(SettingsNS::tabDblClickActions))
+			case tTabBarDblClickAction:
+				if (nSel >= 0 && nSel < (INT_PTR)countof(SettingsNS::tabBarDblClickActions))
 				{
-					gpSet->nTabDblClickAction = SettingsNS::tabDblClickActions[nSel].value;
+					gpSet->nTabBarDblClickAction = SettingsNS::tabBarDblClickActions[nSel].value;
 				} else 
 				{
-					gpSet->nTabDblClickAction = TAB_DEFAULT_CLICK_ACTION;
+					gpSet->nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION;
+				}
+				break;
+			case tTabBtnDblClickAction:
+				if (nSel >= 0 && nSel < (INT_PTR)countof(SettingsNS::tabBtnDblClickActions))
+				{
+					gpSet->nTabBtnDblClickAction = SettingsNS::tabBtnDblClickActions[nSel].value;
+				} else 
+				{
+					gpSet->nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
 				}
 				break;
 			}
@@ -11023,6 +11047,13 @@ void CSettings::SaveFontSizes(LOGFONT *pCreated, bool bAuto, bool bSendChanges)
 // Вызов из GUI-макросов - увеличить/уменьшить шрифт, без изменения размера (в пикселях) окна
 bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 {
+	wchar_t szLog[128];
+	if (isAdvLogging)
+	{
+		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"MacroFontSetSize(%i,%i)", nRelative, nValue);
+		gpConEmu->LogString(szLog);
+	}
+
 	// Пытаемся создать новый шрифт
 	LOGFONT LF = LogFont;
 
@@ -11030,7 +11061,10 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 	{
 		// По абсолютному значению (высота шрифта)
 		if (nValue < 5)
+		{
+			gpConEmu->LogString(L"-- Skipped! Absolute value less than 5");
 			return false;
+		}
 
 		LF.lfHeight = nValue;
 	}
@@ -11042,7 +11076,10 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 	else if (nRelative == 1)
 	{
 		if (nValue == 0)
+		{
+			gpConEmu->LogString(L"-- Skipped! Relative value is zero");
 			return false;
+		}
 
 		// уменьшить/увеличить шрифт
 		LF.lfHeight += nValue;
@@ -11050,7 +11087,10 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 
 	// Не должен стать менее 5 пунктов
 	if (LF.lfHeight < 5)
+	{
+		gpConEmu->LogString(L"-- Warning! New absolute value can't be less than 5");
 		LF.lfHeight = 5;
+	}
 
 	// Если задана ширина - подкорректировать
 	if (gpSet->FontSizeX && gpSet->FontSizeY)
@@ -11058,10 +11098,14 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 	else
 		LF.lfWidth = 0;
 
-	if (LF.lfHeight == LogFont.lfHeight && ((LF.lfWidth == LogFont.lfWidth) || (LF.lfWidth == 0)))
+	if ((LF.lfHeight == LogFont.lfHeight) && ((LF.lfWidth == LogFont.lfWidth) || (LF.lfWidth == 0)))
+	{
+		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Skipped! Old font {%i,%i}, New font {%i,%i}", LogFont.lfHeight, LogFont.lfWidth, LF.lfHeight, LF.lfWidth);
+		gpConEmu->LogString(szLog);
 		return false;
+	}
 
-	for(int nRetry = 0; nRetry < 10; nRetry++)
+	for (int nRetry = 0; nRetry < 10; nRetry++)
 	{
 		CEFONT hf = CreateFontIndirectMy(&LF);
 
@@ -11094,31 +11138,48 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 				}
 			}
 
+			_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Succeeded! New font {'%s',%i,%i} was created", LF.lfFaceName, LF.lfHeight, LF.lfWidth, LF.lfHeight, LF.lfWidth);
+			gpConEmu->LogString(szLog);
+
 			return true;
 		}
 
 		hf.Delete();
 
 		if (nRelative == 0)
-			return 0;
+		{
+			gpConEmu->LogString(L"-- Failed? (nRelative==0)?");
+			return false;
+		}
 
 		// Если пытаются изменить относительный размер, а шрифт не создался - попробовать следующий размер
 		//if (nRelative == -1)
 		//	LF.lfHeight -= nValue; // уменьшить шрифт
 		//else
 		if (nRelative == 1)
+		{
 			LF.lfHeight += nValue; // уменьшить/увеличить шрифт
+		}
 		else
+		{
+			gpConEmu->LogString(L"-- Failed! (nRelative!=1)?");
 			return false;
+		}
 
 		// Не должен стать менее 5 пунктов
 		if (LF.lfHeight < 5)
+		{
+			gpConEmu->LogString(L"-- Failed! Created font height less than 5");
 			return false;
+		}
 
 		// Если задана ширина - подкорректировать
 		if (LogFont.lfWidth && LogFont.lfHeight)
 			LF.lfWidth = LogFont.lfWidth * LF.lfHeight / LogFont.lfHeight;
 	}
+
+	_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Failed! New font {'%s',%i,%i} was not created", LF.lfFaceName, LF.lfHeight, LF.lfWidth, LF.lfHeight, LF.lfWidth);
+	gpConEmu->LogString(szLog);
 
 	return false;
 }

@@ -581,7 +581,7 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 		/*case WM_RBUTTONDOWN:*/ case WM_RBUTTONUP: //case WM_RBUTTONDBLCLK:
 
 			if (((uMsg == WM_RBUTTONUP)
-					|| ((uMsg == WM_LBUTTONDBLCLK) && gpSet->nTabDblClickAction)
+					|| ((uMsg == WM_LBUTTONDBLCLK) && gpSet->nTabBarDblClickAction)
 					|| gpSet->isCaptionHidden())
 				&& gpSet->isTabs)
 			{
@@ -593,16 +593,16 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 
 					if (uMsg == WM_LBUTTONDBLCLK)
 					{
-						if ((gpSet->nTabDblClickAction == 2)
-							|| ((gpSet->nTabDblClickAction == 1) && gpSet->isCaptionHidden()))
+						if ((gpSet->nTabBarDblClickAction == 2)
+							|| ((gpSet->nTabBarDblClickAction == 1) && gpSet->isCaptionHidden()))
 						{
 							// Чтобы клик случайно не провалился в консоль
 							gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
 							// Аналог AltF9
 							gpConEmu->OnAltF9(TRUE);
 						}
-						else if ((gpSet->nTabDblClickAction == 3)
-							|| ((gpSet->nTabDblClickAction == 1) && !gpSet->isCaptionHidden()))
+						else if ((gpSet->nTabBarDblClickAction == 3)
+							|| ((gpSet->nTabBarDblClickAction == 1) && !gpSet->isCaptionHidden()))
 						{
 							gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 						}
@@ -662,6 +662,7 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		case WM_MBUTTONUP:
 		case WM_RBUTTONUP:
+		case WM_LBUTTONDBLCLK:
 		{
 			gpConEmu->mp_TabBar->OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 			return 0;
@@ -1645,7 +1646,9 @@ void TabBarClass::OnMouse(int message, int x, int y)
 		return;
 	}
 
-	if (message == WM_MBUTTONUP || message == WM_RBUTTONUP)
+	if ((message == WM_MBUTTONUP)
+		|| (message == WM_RBUTTONUP)
+		|| ((message == WM_LBUTTONDBLCLK) && gpSet->nTabBtnDblClickAction))
 	{
 		TCHITTESTINFO htInfo;
 		htInfo.pt.x = x;
@@ -1665,7 +1668,28 @@ void TabBarClass::OnMouse(int message, int x, int y)
 				CVConGuard guard(pVCon);
 				BOOL lbCtrlPressed = isPressed(VK_CONTROL);
 
-				if (message == WM_RBUTTONUP && !lbCtrlPressed)
+				if (message == WM_LBUTTONDBLCLK)
+				{
+					switch (gpSet->nTabBtnDblClickAction)
+					{
+					case 1:
+						// Чтобы клик случайно не провалился в консоль
+						gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
+						// Аналог AltF9
+						gpConEmu->OnAltF9(TRUE);
+						break;
+					case 2:
+						guard->RCon()->CloseTab();
+						break;
+					case 3:
+						gpConEmu->mp_Menu->ExecPopupMenuCmd(guard.VCon(), IDM_RESTART);
+						break;
+					case 4:
+						gpConEmu->mp_Menu->ExecPopupMenuCmd(guard.VCon(), IDM_DUPLICATE);
+						break;
+					}
+				}
+				else if (message == WM_RBUTTONUP && !lbCtrlPressed)
 				{
 					gpConEmu->mp_Menu->ShowPopupMenu(guard.VCon(), ptCur);
 				}

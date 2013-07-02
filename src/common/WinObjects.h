@@ -545,6 +545,8 @@ class MFileLog
 		wchar_t* ms_DefPath;
 		HANDLE   mh_LogFile;
 		HRESULT  InitFileName(LPCWSTR asName = NULL, DWORD anPID = 0);
+	protected:
+		CRITICAL_SECTION mcs_Lock;
 	public:
 		MFileLog(LPCWSTR asName, LPCWSTR asDir = NULL, DWORD anPID = 0);
 		~MFileLog();

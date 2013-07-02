@@ -15,6 +15,16 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.07.02
+[+] GuiMacro: new option "I" (capital 'i', case sensitive) for "shell" function.
+    It forces inheriting of root process contents, like "Duplicate root" feature.
+    Example: shell("new_console:Ibn","cmd","/k start explorer \"%CD%\" && exit")
+[*] Debug logging of macro function "FontSetSize".
+[+] Issue 1113: New option "Tab button double click action".
+[*] 130621 regression: all group tabs was closed even if "One tab per group" was not checked.
+[+] Issue 929: New option "Activate split on mouse over".
+
+
 2013.06.25
 [%] Issue 1096: Possible crash while executing some GuiMacro.
 [%] Issue 1107: Some unassigned hotkeys can't be hidden in Options dialog.
@@ -25,7 +35,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [*] Show IBeam cursor when mouse is used for selection.
 [*] Checking conflicts between key modifiers for text selection and Far Manager D&D.
 [+] Close confirmation from tab belonging to group (splits) will suggest closing whole group.
-[+] New option "One tab per group", disabled by default. Weird with Far Manager editor windows yet.
+[+] Issue 978: New option "One tab per group", disabled by default. Weird with Far Manager editor windows yet.
 [%] Issue 1095: Transparency was not changed after Quake activation.
 [%] Incorrect cursor position in console after vim exiting.
 [+] Issue 1103: GuiMacro: SetOption("bgImageDarker",<value>) - change darkening of background image, 0..255.

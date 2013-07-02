@@ -70,6 +70,7 @@ _DBGHLP(L"     /DOSBOX -> use DosBox\r\n") \
         L"     c - force enable 'Press Enter or Esc to close console' (default)\r\n" \
         L"     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\r\n" \
         L"     i - don't inject ConEmuHk into starting process\r\n" \
+        L"     I - (GuiMacro only) forces inheriting of root process contents, like \"Duplicate root\" feature\r\n" \
 _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
         L"     n - disable 'Press Enter or Esc to close console'\r\n" \
         L"     o - don't enable 'Long console output' when starting command from Far Manager\r\n" \

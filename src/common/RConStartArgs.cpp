@@ -108,7 +108,7 @@ void RConStartArgs::RunArgTests()
 RConStartArgs::RConStartArgs()
 {
 	bDetached = bRunAsAdministrator = bRunAsRestricted = bNewConsole = FALSE;
-	bForceUserDialog = bBackgroundTab = bNoDefaultTerm = bForceDosBox = FALSE;
+	bForceUserDialog = bBackgroundTab = bNoDefaultTerm = bForceDosBox = bForceInherit = FALSE;
 	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = pszRenameTab = NULL;
@@ -236,6 +236,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	cchMaxLen += (bInjectsDisable ? 15 : 0); // -new_console:i
 	cchMaxLen += (eConfirmation ? 15 : 0); // -new_console:c / -new_console:n
 	cchMaxLen += (bForceDosBox ? 15 : 0); // -new_console:x
+	cchMaxLen += (bForceInherit ? 15 : 0); // -new_console:I
 	cchMaxLen += (eSplit ? 64 : 0); // -new_console:s[<SplitTab>T][<Percents>](H|V)
 
 	pszFull = (wchar_t*)malloc(cchMaxLen*sizeof(*pszFull));
@@ -274,6 +275,9 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 
 	if (bForceDosBox)
 		wcscat_c(szAdd, L"x");
+
+	if (bForceInherit)
+		wcscat_c(szAdd, L"I");
 	
 	if (eConfirmation == eConfAlways)
 		wcscat_c(szAdd, L"c");
@@ -368,6 +372,17 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	}
 
 	return pszFull;
+}
+
+void RConStartArgs::AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax)
+{
+	if (eConfirmation == RConStartArgs::eConfAlways)
+		_wcscat_c(rsServerCmdLine, cchMax, L" /CONFIRM");
+	else if (eConfirmation == RConStartArgs::eConfNever)
+		_wcscat_c(rsServerCmdLine, cchMax, L" /NOCONFIRM");
+
+	if (bInjectsDisable)
+		_wcscat_c(rsServerCmdLine, cchMax, L" /NOINJECT");
 }
 
 BOOL RConStartArgs::CheckUserToken(HWND hPwd)
@@ -647,6 +662,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					case L'x':
 						// x - Force using dosbox for .bat files
 						bForceDosBox = TRUE;
+						break;
+
+					case L'I':
+						// I - tell GuiMacro to execute new command inheriting active process state. This is only usage ATM.
+						bForceInherit = TRUE;
 						break;
 						
 					// "Long" code blocks below: 'd', 'u', 's' and so on (in future)

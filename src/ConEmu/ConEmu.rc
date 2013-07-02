@@ -831,48 +831,52 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,1,319,76
+    GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,1,319,66
     CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,28,64,8
-    CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,28,66,8
-    CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,162,28,59,8
+    CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,28,66,8
+    CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,28,59,8
     CONTROL         "Far windows",cbShowFarWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,42,56,8
-    CONTROL         "Active console only",cbHideInactiveConTabs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,42,77,8
-    CONTROL         "Hide disabled tabs",cbHideDisabledTabs,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,239,73,75,8
-    RTEXT           "Tabs font:",IDC_STATIC,21,59,42,8
-    COMBOBOX        tTabFontFace,69,57,107,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
-    CTEXT           "x",IDC_STATIC,181,59,8,8
-    COMBOBOX        tTabFontHeight,192,57,29,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Charset:",IDC_STATIC,226,59,32,8
-    COMBOBOX        tTabFontCharset,264,57,54,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Tab templates",IDC_STATIC,4,82,319,85
-    RTEXT           "Panels:",IDC_STATIC,8,131,30,8
-    EDITTEXT        tTabConsole,42,112,40,12,ES_AUTOHSCROLL
-    RTEXT           "Viewer:",IDC_STATIC,85,131,29,8
-    EDITTEXT        tTabViewer,119,129,40,12,ES_AUTOHSCROLL
-    RTEXT           "Editor:",IDC_STATIC,166,131,22,8
-    EDITTEXT        tTabEditor,192,129,40,12,ES_AUTOHSCROLL
-    RTEXT           "Modified:",IDC_STATIC,237,131,36,8
-    EDITTEXT        tTabEditorMod,278,129,40,12,ES_AUTOHSCROLL
-    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %n - Name of active process, %% - %,\n%i - Far window number (you can see it in standard F12 menu)",IDC_STATIC,10,93,309,17
-    RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,151,107,8
-    EDITTEXT        tTabLenMax,119,149,40,12,ES_AUTOHSCROLL
-    EDITTEXT        tAdminSuffix,261,149,57,12,ES_AUTOHSCROLL
+    CONTROL         "Active console only",cbHideInactiveConTabs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,55,77,8
+    CONTROL         "Hide disabled tabs",cbHideDisabledTabs,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,259,28,57,8
+    COMBOBOX        tTabFontFace,10,83,166,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    CTEXT           "x",IDC_STATIC,181,85,8,8
+    COMBOBOX        tTabFontHeight,192,83,29,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Charset:",IDC_STATIC,226,85,32,8
+    COMBOBOX        tTabFontCharset,264,83,54,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Tab templates",IDC_STATIC,4,107,319,85
+    RTEXT           "Panels:",IDC_STATIC,8,156,30,8
+    EDITTEXT        tTabConsole,42,137,40,12,ES_AUTOHSCROLL
+    RTEXT           "Viewer:",IDC_STATIC,85,156,29,8
+    EDITTEXT        tTabViewer,119,154,40,12,ES_AUTOHSCROLL
+    RTEXT           "Editor:",IDC_STATIC,166,156,22,8
+    EDITTEXT        tTabEditor,192,154,40,12,ES_AUTOHSCROLL
+    RTEXT           "Modified:",IDC_STATIC,237,156,36,8
+    EDITTEXT        tTabEditorMod,278,154,40,12,ES_AUTOHSCROLL
+    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %n - Name of active process, %% - %,\n%i - Far window number (you can see it in standard F12 menu)",IDC_STATIC,10,118,309,17
+    RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,176,107,8
+    EDITTEXT        tTabLenMax,119,174,40,12,ES_AUTOHSCROLL
+    EDITTEXT        tAdminSuffix,261,174,57,12,ES_AUTOHSCROLL
     CONTROL         "«Host-key»+Number iterates Far windows",cbMultiIterate,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,162,42,155,8
-    CONTROL         "Admin shield",rbAdminShield,"Button",BS_AUTORADIOBUTTON,167,151,55,8
-    CONTROL         "suffix",rbAdminSuffix,"Button",BS_AUTORADIOBUTTON,223,151,34,8
-    RTEXT           "Console:",IDC_STATIC,8,115,30,8
-    EDITTEXT        tTabPanels,42,129,40,12,ES_AUTOHSCROLL
-    LTEXT           "Skip words from title:",IDC_STATIC,91,115,69,8
-    EDITTEXT        tTabSkipWords,162,112,156,12,ES_AUTOHSCROLL
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,42,155,8
+    CONTROL         "Admin shield",rbAdminShield,"Button",BS_AUTORADIOBUTTON,167,176,55,8
+    CONTROL         "suffix",rbAdminSuffix,"Button",BS_AUTORADIOBUTTON,223,176,34,8
+    RTEXT           "Console:",IDC_STATIC,8,140,30,8
+    EDITTEXT        tTabPanels,42,154,40,12,ES_AUTOHSCROLL
+    LTEXT           "Skip words from title:",IDC_STATIC,91,140,69,8
+    EDITTEXT        tTabSkipWords,162,137,156,12,ES_AUTOHSCROLL
     CONTROL         "Always show",rbTabsAlways,"Button",BS_AUTORADIOBUTTON,10,14,65,8
-    CONTROL         "Auto show",rbTabsAuto,"Button",BS_AUTORADIOBUTTON,80,14,57,8
-    CONTROL         "Don't show",rbTabsNone,"Button",BS_AUTORADIOBUTTON,162,14,64,8
-    CONTROL         "Tabs on bottom",cbTabsLocationBottom,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,233,14,75,8
-    GROUPBOX        "Tab extras",IDC_STATIC,4,170,319,35
-    LTEXT           "Default tab click action:",IDC_STATIC,12,183,117,8
-    COMBOBOX        tTabDblClickAction,95,180,111,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "One tab per group",cbOneTabPerGroup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,233,28,82,8
+    CONTROL         "Auto show",rbTabsAuto,"Button",BS_AUTORADIOBUTTON,75,14,57,8
+    CONTROL         "Don't show",rbTabsNone,"Button",BS_AUTORADIOBUTTON,133,14,55,8
+    CONTROL         "Tabs on bottom",cbTabsLocationBottom,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,14,75,8
+    GROUPBOX        "Tab double click actions",IDC_STATIC,4,197,319,31
+    LTEXT           "Tab button (labels):",IDC_STATIC,12,211,75,8
+    COMBOBOX        tTabBtnDblClickAction,90,209,82,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Tab bar:",IDC_STATIC,176,211,47,8
+    COMBOBOX        tTabBarDblClickAction,234,209,82,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "One tab per group",cbOneTabPerGroup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,55,82,8
+    GROUPBOX        "Tabs font",IDC_STATIC,4,72,319,30
+    CONTROL         "Activate split on mouse over",cbActivateSplitMouseOver,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,55,123,8
 END
 
 IDD_SPG_STATUSBAR DIALOGEX 0, 0, 328, 235

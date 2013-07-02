@@ -14377,9 +14377,12 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 	else // Для остальных lParam содержит клиентские координаты
 		ClientToScreen(ghWnd, &ptCurScreen);
 
-	if (mb_MouseCaptured || (messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN) || (messg == WM_MBUTTONDOWN))
+	if (mb_MouseCaptured
+		|| (messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN) || (messg == WM_MBUTTONDOWN)
+		|| ((messg == WM_MOUSEMOVE) && gpSet->isActivateSplitMouseOver))
 	{
 		HWND hChild = ::ChildWindowFromPointEx(ghWnd, ptCurClient, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
+
 		CVConGuard VCon;
 		if (isVConHWND(hChild, &VCon)/*(hChild != ghWnd)*/) // Это должна быть VCon
 		{
@@ -14390,7 +14393,7 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 
 			//bool bSkipThisEvent = false;
 
-			WARNING("Тут строго, без учета активности группы!");
+			// WARNING! Тут строго, без учета активности группы!
 			if (VCon.VCon() && isVisible(VCon.VCon()) && !isActive(VCon.VCon(), false))
 			{
 				Activate(VCon.VCon());
@@ -16183,6 +16186,11 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	BOOL lbMeFore = TRUE;
 	ExpandTextRangeType etr = etr_None;
 
+	if (mp_Menu->GetTrackMenuPlace())
+	{
+		goto DefaultCursor;
+	}
+
 	if (LOWORD(lParam) == HTCLIENT && pVCon)
 	{
 		if (mouse.state & MOUSE_WINDOW_DRAG)
@@ -16275,6 +16283,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 		}
 	}
 
+DefaultCursor:
 	if (!hCur)
 	{
 		hCur = mh_CursorArrow;

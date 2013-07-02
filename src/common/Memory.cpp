@@ -520,3 +520,18 @@ wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* 
 
 	return pszRet;
 }
+
+bool lstrmerge(wchar_t** apsStr1, const wchar_t* asStr2, const wchar_t* asStr3 /*= NULL*/, const wchar_t* asStr4 /*= NULL*/)
+{
+	_ASSERTE(apsStr1!=NULL);
+
+	wchar_t* pszNew = lstrmerge(*apsStr1, asStr2, asStr3, asStr4);
+	if (!pszNew)
+		return false;
+
+	if (*apsStr1)
+		free(*apsStr1);
+	*apsStr1 = pszNew;
+
+	return true;
+}

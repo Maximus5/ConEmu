@@ -73,6 +73,8 @@ struct RConStartArgs
 
 	BOOL     bForceDosBox;        // -new_console:x (may be useful with .bat files)
 
+	BOOL     bForceInherit;
+
 	enum SplitType {              // -new_console:s[<SplitTab>T][<Percents>](H|V)
 		eSplitNone = 0,
 		eSplitHorz = 1,
@@ -92,6 +94,7 @@ struct RConStartArgs
 	int ProcessNewConArg(bool bForceCurConsole = false);
 
 	wchar_t* CreateCommandLine(bool abForTasks = false);
+	void AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax);
 
 	bool AssignFrom(const struct RConStartArgs* args);
 

@@ -129,7 +129,8 @@ enum TabStyle
 
 #define DEFAULT_TERMINAL_APPS L"explorer.exe"
 
-#define TAB_DEFAULT_CLICK_ACTION 1
+#define TABBAR_DEFAULT_CLICK_ACTION 1
+#define TABBTN_DEFAULT_CLICK_ACTION 0
 
 struct Settings
 {
@@ -978,6 +979,8 @@ struct Settings
 		BYTE nTabsLocation; // 0 - top, 1 - bottom
 		//reg->Load(L"OneTabPerGroup", isOneTabPerGroup);
 		bool isOneTabPerGroup;
+		//reg->Load(L"ActivateSplitMouseOver", isActivateSplitMouseOver);
+		bool isActivateSplitMouseOver;
 		//reg->Load(L"TabSelf", isTabSelf);
 		bool isTabSelf;
 		//reg->Load(L"TabRecent", isTabRecent);
@@ -986,7 +989,8 @@ struct Settings
 		bool isTabLazy;
 
 		//reg->Load(L"TabDblClick", nTabDblClickAction);
-		DWORD nTabDblClickAction; // 0-None, 1-Auto, 2-Maximize/Restore, 3-NewTab (SettingsNS::tabDefaultClickActions)
+		DWORD nTabBarDblClickAction; // 0-None, 1-Auto, 2-Maximize/Restore, 3-NewTab (SettingsNS::tabBarDefaultClickActions)
+		DWORD nTabBtnDblClickAction; // 0-None, 1-Maximize/Restore, 2-Close, 3-Restart, 4-Duplicate (SettingsNS::tabBtnDefaultClickActions)
 		
 		//TODO:
 		bool isTabsInCaption;
