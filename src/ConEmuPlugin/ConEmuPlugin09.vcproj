@@ -1634,6 +1634,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\ConEmuCheckEx.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuInjects.cpp"
 				>
 			</File>
@@ -1777,6 +1781,10 @@
 			</File>
 			<File
 				RelativePath="..\common\ConEmuCheck.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\ConEmuCheckEx.h"
 				>
 			</File>
 			<File

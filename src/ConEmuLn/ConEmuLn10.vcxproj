@@ -892,6 +892,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
   <ItemGroup>
     <ClCompile Include="ConEmuLn.cpp" />
     <ClCompile Include="ConEmuLn1900.cpp" />
+    <ClCompile Include="ConEmuLn2800.cpp" />
     <ClCompile Include="ConEmuLn995.cpp" />
     <ClCompile Include="ConEmuLnA.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />

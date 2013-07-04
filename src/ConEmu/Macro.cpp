@@ -386,7 +386,7 @@ GuiMacro* CConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t**
 			|| (bEndBracket && (asString[0] == L')'))
 			|| (!bEndBracket && (asString[0] == L';')))
 		{
-			if (*asString)
+			while (*asString && wcschr(L"); \t\r\n", *asString))
 				asString++;
 			// OK
 			break;
@@ -831,12 +831,16 @@ LPWSTR CConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon)
 			pszResult = lstrdup(L"OK");
 		}
 		break;
+	case 5:
+		if (apRCon)
+		{
+			CVConGroup::CloseAllButActive(apRCon->VCon());
+			pszResult = lstrdup(L"OK");
+		}
+		break;
 	}
 
-	if (!pszResult)
-		lstrdup(L"Failed");
-
-	return pszResult;
+	return pszResult ? pszResult : lstrdup(L"Failed");
 }
 
 // Найти окно и активировать его. // LPWSTR asName

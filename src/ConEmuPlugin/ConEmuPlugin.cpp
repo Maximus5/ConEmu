@@ -57,6 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif
+#include "../common/ConEmuCheckEx.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/WinObjects.h"
 #include "../common/WinConsole.h"

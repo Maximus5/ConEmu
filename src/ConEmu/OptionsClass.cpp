@@ -11105,6 +11105,8 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 		return false;
 	}
 
+	int nNewHeight = LF.lfHeight; // Issue 1130
+
 	for (int nRetry = 0; nRetry < 10; nRetry++)
 	{
 		CEFONT hf = CreateFontIndirectMy(&LF);
@@ -11158,7 +11160,8 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 		//else
 		if (nRelative == 1)
 		{
-			LF.lfHeight += nValue; // уменьшить/увеличить шрифт
+			nNewHeight += nValue; // уменьшить/увеличить шрифт
+			LF.lfHeight = nNewHeight;
 		}
 		else
 		{

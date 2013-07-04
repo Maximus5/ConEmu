@@ -36,6 +36,7 @@ $(OBJDIR)\PluginSrv.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\Execute.obj \
 $(OBJDIR)\ConEmuCheck.obj \
+$(OBJDIR)\ConEmuCheckEx.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\Memory.obj \
 $(OBJDIR)\Monitors.obj \
@@ -255,6 +256,8 @@ $(OBJDIR)\PluginSrv.obj: PluginSrv.cpp ../common/PipeServer.h
 $(OBJDIR)\Common.obj: ..\common\Common.cpp
 
 $(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
+
+$(OBJDIR)\ConEmuCheckEx.obj: ..\common\ConEmuCheckEx.cpp
 
 $(OBJDIR)\Execute.obj: ..\common\execute.cpp
 

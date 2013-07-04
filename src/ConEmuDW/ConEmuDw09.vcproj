@@ -225,7 +225,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../common/libCRT.lib chkstk.obj kernel32.lib user32.lib gdi32.lib"
+				AdditionalDependencies="../common/libCRT.lib chkstk.obj kernel32.lib version.lib"
 				OutputFile="..\..\Release\ConEmu\ExtendedConsole.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="true"
@@ -310,7 +310,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../common/libCRT64.lib chkstk.obj kernel32.lib user32.lib gdi32.lib"
+				AdditionalDependencies="../common/libCRT64.lib chkstk.obj kernel32.lib version.lib"
 				OutputFile="..\..\Release\ConEmu\ExtendedConsole64.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="true"

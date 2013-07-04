@@ -2102,6 +2102,40 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 	return lbAllowed;
 }
 
+void CVConGroup::CloseAllButActive(CVirtualConsole* apVCon/*may be null*/)
+{
+	int i;
+	MArray<CVConGuard*> VCons;
+	CVConGuard* pGuard;
+
+	for (i = (int)(countof(gp_VCon)-1); i >= 0; i--)
+	{
+		if ((gp_VCon[i] == NULL) || (gp_VCon[i] == apVCon))
+			continue;
+
+		pGuard = new CVConGuard(gp_VCon[i]);
+		VCons.push_back(pGuard);
+	}
+
+	if (CloseQuery(&VCons, NULL))
+	{
+		gpConEmu->SetScClosePending(true); // Disable confirmation of each console closing
+
+		for (i = 0; i < VCons.size(); i++)
+		{
+			pGuard = VCons[i];
+			(*pGuard)->RCon()->CloseTab();
+		}
+
+		gpConEmu->SetScClosePending(false);
+	}
+
+	while (VCons.pop_back(pGuard))
+	{
+		SafeDelete(pGuard);
+	}
+}
+
 void CVConGroup::CloseGroup(CVirtualConsole* apVCon/*may be null*/)
 {
 	CVConGuard VCon(gp_VActive);

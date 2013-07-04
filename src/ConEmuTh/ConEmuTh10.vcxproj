@@ -891,6 +891,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="ConEmuTh.cpp" />
     <ClCompile Include="ConEmuTh1900.cpp" />
+    <ClCompile Include="ConEmuTh2800.cpp" />
     <ClCompile Include="ConEmuTh995.cpp" />
     <ClCompile Include="ConEmuThA.cpp" />
     <ClCompile Include="Display.cpp" />

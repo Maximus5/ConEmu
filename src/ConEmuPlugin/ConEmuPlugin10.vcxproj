@@ -902,6 +902,7 @@
   <ItemGroup>
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
+    <ClCompile Include="..\common\ConEmuCheckEx.cpp" />
     <ClCompile Include="ConEmuInjects.cpp" />
     <ClCompile Include="ConEmuPlugin.cpp" />
     <ClCompile Include="ConEmuPlugin1900.cpp">
@@ -909,6 +910,7 @@
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">false</ShowIncludes>
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">false</ShowIncludes>
     </ClCompile>
+    <ClCompile Include="ConEmuPlugin2800.cpp" />
     <ClCompile Include="ConEmuPlugin995.cpp" />
     <ClCompile Include="ConEmuPluginA.cpp" />
     <ClCompile Include="..\common\execute.cpp" />
@@ -1044,6 +1046,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\common.hpp" />
+    <ClInclude Include="..\common\ConEmuCheckEx.h" />
     <ClInclude Include="ConEmu_Lang.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConsoleAnnotation.h" />

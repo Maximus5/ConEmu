@@ -142,12 +142,12 @@ class MArray
             mn_Elements++;
             MCHKHEAP;
         }
-        void pop_back(_Ty& _X)
+        bool pop_back(_Ty& _X)
         {
             if (mn_TySize==0)
             {
                 _ARRAY_ASSERTE(!(mn_TySize==0));
-                return;
+                return false;
             }
             MCHKHEAP;
             memmove(
@@ -156,6 +156,7 @@ class MArray
                  mn_TySize);
             MCHKHEAP;
             mn_Elements--;
+            return true;
         }
         _Ty* detach()
         {

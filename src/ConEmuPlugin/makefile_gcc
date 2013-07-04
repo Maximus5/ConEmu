@@ -9,6 +9,7 @@ SRCS = ConEmuPlugin.cpp \
        PluginSrv.cpp \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp \
+       ../common/ConEmuCheckEx.cpp \
        ../common/Memory.cpp \
        ../common/Monitors.cpp \
        ../common/MSecurity.cpp \

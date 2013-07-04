@@ -142,6 +142,7 @@ public:
 	static void OnUpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 	static bool OnCloseQuery(bool* rbMsgConfirmed = NULL);
 	static bool DoCloseAllVCon(bool bMsgConfirmed = false);
+	static void CloseAllButActive(CVirtualConsole* apVCon/*may be null*/);
 	static void CloseGroup(CVirtualConsole* apVCon/*may be null*/);
 	static void OnDestroyConEmu();
 	static void OnVConClosed(CVirtualConsole* apVCon);

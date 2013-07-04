@@ -157,6 +157,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    close ConEmu window (2)\r\n" \
 	L"    close active tab (3)\r\n" \
 	L"    close active group (4)\r\n" \
+	L"    close all tabs but active (5)\r\n" \
 	L"Copy(<What>)\r\n" \
 	L"  - Copy active console contents\r\n" \
 	L"    What==0: current selection\r\n" \

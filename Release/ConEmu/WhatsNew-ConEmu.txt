@@ -15,6 +15,16 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.07.03
+[%] GuiMacro delimiting fixed. Examples:
+    print("qqq"); WindowMinimize();
+    print("qqq") WindowMinimize()
+    print: "qqq"; WindowMinimize
+[+] GuiMacro: Close(5) - close all tabs but active.
+[%] Issue 1130: Decreasing font may stuck on some values.
+[*] Some fixes in build files.
+
+
 2013.07.02
 [+] GuiMacro: new option "I" (capital 'i', case sensitive) for "shell" function.
     It forces inheriting of root process contents, like "Duplicate root" feature.
