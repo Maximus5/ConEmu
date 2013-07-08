@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "Status.h"
 #include "Menu.h"
+#include "TrayIcon.h"
 
 #ifdef _DEBUG
 static int _nDbgStep = 0; wchar_t _szDbg[512];
@@ -259,6 +260,13 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 				{
 					gpConEmu->mp_Menu->ShowSysmenu((short)LOWORD(lParam),(short)HIWORD(lParam));
 				}
+				lResult = 0;
+				lbRc = true;
+			}
+			else if ((uMsg == WM_NCRBUTTONDOWN || uMsg == WM_NCRBUTTONUP)
+				&& (wParam == HTCLOSE || wParam == HTMINBUTTON))
+			{
+				Icon.HideWindowToTray();
 				lResult = 0;
 				lbRc = true;
 			}

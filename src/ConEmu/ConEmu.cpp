@@ -9804,11 +9804,6 @@ bool CConEmuMain::isDragging()
 	return true;
 }
 
-bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
-{
-	return CVConGroup::isFilePanel(abPluginAllowed);
-}
-
 bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 {
 	if (!mb_AliveInitialized)
@@ -9903,22 +9898,6 @@ bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 
 	// Смотря что просили
 	return bFolderIgnore ? mb_ConEmuAliveOwnedNoDir : mb_ConEmuAliveOwned;
-}
-
-bool CConEmuMain::isEditor()
-{
-	return CVConGroup::isEditor();
-}
-
-bool CConEmuMain::isFar(bool abPluginRequired/*=false*/)
-{
-	return CVConGroup::isFar(abPluginRequired);
-}
-
-// Если ли фар где-то?
-bool CConEmuMain::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asName/*=NULL*/, CVConGuard* rpVCon/*=NULL*/)
-{
-	return CVConGroup::isFarExist(anWindowType, asName, rpVCon);
 }
 
 bool CConEmuMain::isLBDown()
@@ -14908,7 +14887,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	//       MOVEWINDOW(ghConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
 	//}
 
-	if (!isFar())
+	if (!CVConGroup::isFar())
 	{
 		if (messg != WM_MOUSEMOVE) { DEBUGLOGFILE("FAR not active, all clicks forced to console"); }
 
@@ -15107,7 +15086,7 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 				BOOL lbLeftDrag = (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
 				LogString(lbLeftDrag ? "Left drag about to start" : "Right drag about to start");
 				// Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
-				bool bFilePanel = isFilePanel();
+				bool bFilePanel = CVConGroup::isFilePanel();
 
 				if (!bFilePanel)
 				{
@@ -15263,7 +15242,7 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 		return 0;
 	}
 
-	if (!isConSelectMode() && isFilePanel() && pVCon &&
+	if (!isConSelectMode() && CVConGroup::isFilePanel() && pVCon &&
 	        pVCon->RCon()->CoordInPanel(mouse.LClkCon))
 	{
 		//SetCapture('ghWnd DC'); --2009-03-14
@@ -15408,7 +15387,7 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 	bool bSelect = false, bPanel = false, bActive = false, bCoord = false;
 
 	if (!(bSelect = isConSelectMode())
-	        && (bPanel = isFilePanel())
+	        && (bPanel = CVConGroup::isFilePanel())
 	        && (bActive = (pVCon != NULL))
 	        && (bCoord = pVCon->RCon()->CoordInPanel(mouse.RClkCon)))
 	{
@@ -18314,13 +18293,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			else
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 
-			break;
-
-		case WM_NCRBUTTONUP:
-			if (wParam == HTCLOSE)
-			{
-				Icon.HideWindowToTray();
-			}
 			break;
 
 		case WM_TRAYNOTIFY:

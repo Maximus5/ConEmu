@@ -356,14 +356,14 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">
-    <OutDir>\Far3\Plugins\ConEmu\Background\</OutDir>
+    <OutDir>$(ConEmuDebugF3)\Plugins\ConEmu\Background\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmuBg</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
-    <OutDir>F:\Utils\FAR\Far2x64\Plugins\ConEmu\Background\</OutDir>
+    <OutDir>$(ConEmuDebugF3)\Plugins\ConEmu\Background\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmuBg.x64</TargetName>
     <TargetExt>.dll</TargetExt>
@@ -829,7 +829,7 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command />
+      <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Background\ConEmuBg_*.lng" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">

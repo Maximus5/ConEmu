@@ -91,8 +91,20 @@
         <ComponentRef Id="ConEmuInside.reg"/>
         <ComponentRef Id="ConEmuInsideUninstall.reg"/>
       </Feature>
-      <Feature Id="FConEmuAddonsMacroReg3" AllowAdvertise="no" Title="Far3 macros (*.reg)" Level="1"
-               Description="Sample macros (in reg-files), useful with ConEmu">
+      <Feature Id="FConEmuAddonsMacroLua3" AllowAdvertise="no" Title="Far3 macros (*.lua)" Level="1"
+               Description="Sample macros (in lua-files), useful with ConEmu">
+        <ComponentRef Id="CtrlO.lua3"/>
+        <ComponentRef Id="CtrlShiftT.lua3"/>
+        <ComponentRef Id="Editor.lua3"/>
+        <ComponentRef Id="FontSize.lua3"/>
+        <ComponentRef Id="ShiftEnter.lua3"/>
+        <ComponentRef Id="TabList.lua3"/>
+        <ComponentRef Id="Thumbnails.lua3"/>
+        <ComponentRef Id="Thumbnails_KeyBar.xml.lua3"/>
+        <ComponentRef Id="Editor.MsRClick.lua3"/>
+      </Feature>
+      <Feature Id="FConEmuAddonsMacroReg3" AllowAdvertise="no" Title="Far3 macros (*.fml)" Level="1"
+               Description="Sample macros (in fml-files), useful with ConEmu">
         <ComponentRef Id="CtrlO.fml3"/>
         <ComponentRef Id="CtrlShiftT.fml3"/>
         <ComponentRef Id="Editor.fml3"/>

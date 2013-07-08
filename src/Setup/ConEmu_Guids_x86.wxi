@@ -64,6 +64,16 @@
 	<?define Guid.ConEmuInside.reg = "DCCA7E45-6FC3-48C4-852F-A178550954A5" ?>
 	<?define Guid.ConEmuInsideUninstall.reg = "03978C0D-C502-40AA-BECF-C7E853252196" ?>
 
+	<?define Guid.CtrlO.lua3 = "B0AD7E8D-9C41-4420-A2F8-2B94F7D18A6C" ?>
+	<?define Guid.CtrlShiftT.lua3 = "4CA1CAF6-E314-4400-A916-30C1F9E5E464" ?>
+	<?define Guid.ShiftEnter.lua3 = "19995D8F-0DFD-4962-9AC0-41B9359CF047" ?>
+	<?define Guid.TabList.lua3 = "59681813-B723-42FE-AFAC-5EC191B61367" ?>
+	<?define Guid.Editor.lua3 = "041B8FE0-AC07-495A-9983-A57EFA8DDD23" ?>
+	<?define Guid.FontSize.lua3 = "6828D3FE-C496-4210-A9E6-7997B9BD0B72" ?>
+	<?define Guid.Thumbnails.lua3 = "6198ECE1-5A9F-4A73-BDBD-D4D43234D520" ?>
+	<?define Guid.Thumbnails_KeyBar.xml.lua3 = "9B586A89-18CB-47FA-994E-2ECEFC5C3912" ?>
+	<?define Guid.Editor.MsRClick.lua3 = "25836FB0-FAFB-480C-AC92-41A18D0A19B5" ?>
+
 	<?define Guid.CtrlO.fml3 = "F0D7F686-FAAA-458A-820D-C618E7905414" ?>
 	<?define Guid.CtrlShiftT.fml3 = "2227BA9A-1F71-411C-8D43-6D0A64FE98B1" ?>
 	<?define Guid.ShiftEnter.fml3 = "26806B63-88AF-4C68-B01A-C33A004E23B4" ?>

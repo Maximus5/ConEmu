@@ -370,7 +370,7 @@
     <LinkKeyFile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">
-    <OutDir>\Far3\ConEmu\</OutDir>
+    <OutDir>$(ConEmuDebugF3)\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmuC</TargetName>
     <TargetExt>.exe</TargetExt>
@@ -378,7 +378,7 @@
     <LinkKeyFile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
-    <OutDir>\Far3\ConEmu\</OutDir>
+    <OutDir>$(ConEmuDebugF3)\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmuC64</TargetName>
     <TargetExt>.exe</TargetExt>

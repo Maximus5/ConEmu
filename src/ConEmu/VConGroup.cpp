@@ -1018,15 +1018,17 @@ bool CVConGroup::isFar(bool abPluginRequired/*=false*/)
 }
 
 // Если ли фар где-то?
-bool CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asName/*=NULL*/, CVConGuard* rpVCon/*=NULL*/)
+// Return "1-based"(!) value. 1 - Far Panels (or console), 2,3,... - Far Editor/Viewer windows
+int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asName/*=NULL*/, CVConGuard* rpVCon/*=NULL*/)
 {
-	bool bFound = false, bLocked = false;
+	int iFound = 0;
+	bool lbLocked = false;
 	CVConGuard VCon;
 
 	if (rpVCon)
 		*rpVCon = NULL;
 
-	for (INT_PTR i = -1; !bFound && (i < (INT_PTR)countof(gp_VCon)); i++)
+	for (INT_PTR i = -1; !iFound && (i < (INT_PTR)countof(gp_VCon)); i++)
 	{
 		if (i == -1)
 			VCon = gp_VActive;
@@ -1037,16 +1039,19 @@ bool CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asN
 		{
 			// Это фар?
 			CRealConsole* pRCon = VCon->RCon();
+			if (!pRCon)
+				continue;
+
 			if (pRCon && pRCon->isFar(anWindowType & fwt_PluginRequired))
 			{
 				// Ищем что-то конкретное?
-				if (!(anWindowType & (fwt_TypeMask|fwt_Elevated|fwt_NonElevated|fwt_Modal|fwt_NonModal|fwt_ActivateFound)) && !(asName && *asName))
+				if (!(anWindowType & (fwt_TypeMask|fwt_Elevated|fwt_NonElevated|fwt_Modal|fwt_NonModal|fwt_ActivateFound|fwt_ActivateOther)) && !(asName && *asName))
 				{
-					bFound = true;
+					iFound = 1; // Just "exists"
 					break;
 				}
 
-				if (!(anWindowType & (fwt_TypeMask|fwt_ActivateFound)) && !(asName && *asName))
+				if (!(anWindowType & (fwt_TypeMask|fwt_ActivateFound|fwt_ActivateOther)) && !(asName && *asName))
 				{
 					CEFarWindowType t = pRCon->GetActiveTabType();
 
@@ -1067,7 +1072,7 @@ bool CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asN
 					if ((anWindowType & fwt_NonModal) && (t & fwt_Modal))
 						continue;
 
-					bFound = true;
+					iFound = 1; // Just "exists"
 					break;
 				}
 				else
@@ -1084,7 +1089,7 @@ bool CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asN
 							pszNameOnly = pszSlash+1;
 					}
 
-					for (int j = 0; !bFound; j++)
+					for (int j = 0; !iFound; j++)
 					{
 						if (!pRCon->GetTab(j, &tab))
 							break;
@@ -1114,31 +1119,34 @@ bool CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asN
 						{
 							if (lstrcmpi(tab.Name, asName) == 0)
 							{
-								bFound = true;
+								iFound = (j+1);
 							}
 							else if ((pszNameOnly != asName) && (lstrcmpi(PointToName(tab.Name), pszNameOnly) == 0))
 							{
-								bFound = true;
+								iFound = (j+1);
 							}
 						}
 						else
 						{
-							bFound = true;
+							iFound = (j+1);
 						}
 
 
-						if (bFound)
+						if (iFound)
 						{
-							if (anWindowType & fwt_ActivateFound)
+							if (anWindowType & (fwt_ActivateFound|fwt_ActivateOther))
 							{
-								if (pRCon->ActivateFarWindow(j))
+								bool bNeedActivateWnd = (anWindowType & fwt_ActivateFound)
+									|| ((anWindowType & fwt_ActivateOther) && !pRCon->isActive(false));
+
+								if (bNeedActivateWnd && !pRCon->ActivateFarWindow(j))
+								{
+									lbLocked = true;
+								}
+
+								if (!lbLocked && !pRCon->isActive(false))
 								{
 									gpConEmu->Activate(VCon.VCon());
-									bLocked = false;
-								}
-								else
-								{
-									bLocked = true;
 								}
 							}
 
@@ -1151,17 +1159,17 @@ bool CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asN
 	}
 
 	// Нашли?
-	if (bFound)
+	if (iFound)
 	{
 		if (rpVCon)
 		{
 			*rpVCon = VCon.VCon();
-			if (bLocked)
-				bFound = false;
+			if (lbLocked)
+				iFound = 0; // Failed (FALSE!)
 		}
 	}
 
-	return bFound;
+	return iFound;
 }
 
 // Возвращает индекс (0-based) активной консоли

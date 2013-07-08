@@ -700,10 +700,6 @@ class CConEmuMain :
 		bool isConSelectMode();
 		bool isConsolePID(DWORD nPID);
 		bool isDragging();
-		bool isEditor();
-		bool isFar(bool abPluginRequired=false);
-		bool isFarExist(CEFarWindowType anWindowType=fwt_Any, LPWSTR asName=NULL, CVConGuard* rpVCon=NULL);
-		bool isFilePanel(bool abPluginAllowed=false);
 		bool isFirstInstance(bool bFolderIgnore = false);
 		bool isFullScreen();
 		//bool IsGlass();		

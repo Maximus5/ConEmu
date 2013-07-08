@@ -357,7 +357,7 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">
-    <OutDir>\Far3\ConEmu\</OutDir>
+    <OutDir>$(ConEmuDebugF3)\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmuCD</TargetName>
     <TargetExt>.dll</TargetExt>
@@ -365,7 +365,7 @@
     <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
-    <OutDir>\Far3\ConEmu\</OutDir>
+    <OutDir>$(ConEmuDebugF3)\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmuCD64</TargetName>
     <TargetExt>.dll</TargetExt>

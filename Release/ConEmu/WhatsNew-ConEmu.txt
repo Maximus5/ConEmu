@@ -15,6 +15,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[!] Far Macro "ConEmu.Editor.fml" was changed! Update your copies in MacroLib!
+[+] ConEmu macros adopted for Far Manager 3 (tested in build 3502).
+    New macros located in "%ConEmuBaseDir\Far3_lua". You need to copy
+    selected files to your "%FARPROFILE%\Macros\scripts" folder.
+[+] Right click on «Minimize» button hides ConEmu to TSA.
+[%] Issue 1123: "Close(5)" crashes.
+
+
 2013.07.03
 [%] GuiMacro delimiting fixed. Examples:
     print("qqq"); WindowMinimize();

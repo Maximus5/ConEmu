@@ -370,7 +370,7 @@
     <LinkKeyFile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">
-    <OutDir>\Far3\</OutDir>
+    <OutDir>$(ConEmuDebugF3)\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmu</TargetName>
     <TargetExt>.exe</TargetExt>
@@ -378,7 +378,7 @@
     <LinkKeyFile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
-    <OutDir>\Far3\</OutDir>
+    <OutDir>$(ConEmuDebugF3)\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmu64</TargetName>
     <TargetExt>.exe</TargetExt>
@@ -852,6 +852,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <KeyContainer />
       <Profile>false</Profile>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -883,7 +884,7 @@
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
-      <Profile>true</Profile>
+      <Profile>false</Profile>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>

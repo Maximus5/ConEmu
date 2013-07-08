@@ -165,7 +165,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"FindEditor(\"<FullEditFileName>\")\r\n" \
 	L"FindViewer(\"<FullViewerFileName>\")\r\n" \
 	L"FindFarWindow(<WindowType>,\"<WindowTitle>\")\r\n" \
-	L"  - Returns \"Found:<index of RealConsole>\", \"Blocked\", or \"NotFound\"\r\n" \
+	L"  - Returns \"Found:<index of RealConsole>\", \"Active:<Far window number>\",  \"Blocked\", or \"NotFound\"\r\n" \
 	L"     <WindowType> is number from Far Manager enum WINDOWINFO_TYPE\r\n" \
 	L"FontSetName(\"<FontFaceName>\"[,FontHeight[,FontWidth]])\r\n" \
 	L"  - Change font face name and (optionally) height/width.\r\n" \

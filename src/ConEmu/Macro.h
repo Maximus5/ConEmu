@@ -88,7 +88,7 @@ class CConEmuMacro
 		~CConEmuMacro() {};
 	public:
 		// Общая функция, для обработки любого известного макроса
-		static LPWSTR ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon);
+		static LPWSTR ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin = false);
 		// Конвертация из "старого" в "новый" формат
 		static LPWSTR ConvertMacro(LPCWSTR asMacro, BYTE FromVersion, bool bShowErrorTip = true);
 	protected:
@@ -104,10 +104,10 @@ class CConEmuMacro
 		// Закрыть/прибить текущую консоль
 		static LPWSTR Close(GuiMacro* p, CRealConsole* apRCon);
 		// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
-		static LPWSTR FindEditor(GuiMacro* p, CRealConsole* apRCon);
-		static LPWSTR FindViewer(GuiMacro* p, CRealConsole* apRCon);
-		static LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon);
-		static LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon); // helper, это не макро-фукнция
+		static LPWSTR FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin = false);
+		static LPWSTR FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin = false);
+		static LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin = false);
+		static LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon, bool abFromPlugin = false); // helper, это не макро-фукнция
 		// Изменить имя основного шрифта. string
 		static LPWSTR FontSetName(GuiMacro* p, CRealConsole* apRCon);
 		// Изменить размер шрифта. int nRelative, int N

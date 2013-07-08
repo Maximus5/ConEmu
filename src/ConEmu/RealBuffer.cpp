@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TabBar.h"
 #include "TrayIcon.h"
 #include "VConChild.h"
+#include "VConGroup.h"
 #include "VirtualConsole.h"
 
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
@@ -2680,7 +2681,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 						else
 						{
 							CVConGuard VCon;
-							if (!gpConEmu->isFarExist(fwt_NonModal|fwt_PluginRequired, NULL, &VCon))
+							if (!CVConGroup::isFarExist(fwt_NonModal|fwt_PluginRequired, NULL, &VCon))
 							{
 								if (gpSet->sFarGotoEditor && *gpSet->sFarGotoEditor)
 								{

@@ -2073,9 +2073,9 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 {
 	MSectionLock SCON; SCON.Lock(&csCON);
 	attrBackLast = 0;
-	isEditor = gpConEmu->isEditor();
-	isViewer = gpConEmu->isViewer();
-	isFilePanel = gpConEmu->isFilePanel(true);
+	isEditor = CVConGroup::isEditor();
+	isViewer = CVConGroup::isViewer();
+	isFilePanel = CVConGroup::isFilePanel(true);
 	isFade = !isForeground && gpSet->isFadeInactive;
 	mp_Colors = gpSet->GetColors(mp_RCon->GetActiveAppSettingsId(), isFade);
 	if ((nFontHeight != gpSetCls->FontHeight()) || (nFontWidth != gpSetCls->FontWidth()))
@@ -4492,6 +4492,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 	{
 		gpConEmu->DebugStep(L"ConEmu: Sleeping in CVirtualConsole::PaintVCon for 1s");
 		Sleep(1000);
+		gpSetCls->PostUpdateCounters(true); // Force update "Info" counters
 		gpConEmu->DebugStep(NULL);
 	}
 	#endif

@@ -144,9 +144,9 @@ class MArray
         }
         bool pop_back(_Ty& _X)
         {
-            if (mn_TySize==0)
+            if ((mn_TySize==0) || (mn_Elements<=0))
             {
-                _ARRAY_ASSERTE(!(mn_TySize==0));
+                _ARRAY_ASSERTE((!(mn_TySize==0))&&(mn_Elements>=0));
                 return false;
             }
             MCHKHEAP;

@@ -1036,14 +1036,15 @@ static const CEFarWindowType
 	fwt_Editor         = 3,
 	fwt_TypeMask       = 0x00FF,
 
-	fwt_Elevated       = 0x0100,
-	fwt_NonElevated    = 0x0200, // Аргумент для поиска окна
-	fwt_Modal          = 0x0400,
-	fwt_NonModal       = 0x0800, // Аргумент для поиска окна
-	fwt_PluginRequired = 0x1000, // Аргумент для поиска окна
-	fwt_ActivateFound  = 0x2000, // Активировать найденный таб. Аргумент для поиска окна
-	fwt_Disabled       = 0x4000, // Таб заблокирован другим модальным табом (или диалогом?)
-	fwt_Renamed        = 0x8000  // Таб был принудительно переименован пользователем
+	fwt_Elevated       = 0x00100,
+	fwt_NonElevated    = 0x00200, // Аргумент для поиска окна
+	fwt_Modal          = 0x00400,
+	fwt_NonModal       = 0x00800, // Аргумент для поиска окна
+	fwt_PluginRequired = 0x01000, // Аргумент для поиска окна
+	fwt_ActivateFound  = 0x02000, // Активировать найденный таб. Аргумент для поиска окна
+	fwt_Disabled       = 0x04000, // Таб заблокирован другим модальным табом (или диалогом?)
+	fwt_Renamed        = 0x08000, // Таб был принудительно переименован пользователем
+	fwt_ActivateOther  = 0x10000  // Активировать найденный таб если он НЕ в активной консоли. Аргумент для поиска окна
 	;
 
 //TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");

@@ -507,7 +507,7 @@ GuiMacro* CConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t**
 
 
 // ќбща€ функци€, дл€ обработки любого известного макроса
-LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
+LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
 {
 	wchar_t* pszErr = NULL;
 	GuiMacro* p = GetNextMacro(asMacro, false, &pszErr);
@@ -529,11 +529,11 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 		else if (!lstrcmpi(szFunction, L"Close"))
 			pszResult = Close(p, apRCon);
 		else if (!lstrcmpi(szFunction, L"FindEditor"))
-			pszResult = FindEditor(p, apRCon);
+			pszResult = FindEditor(p, apRCon, abFromPlugin);
 		else if (!lstrcmpi(szFunction, L"FindViewer"))
-			pszResult = FindViewer(p, apRCon);
+			pszResult = FindViewer(p, apRCon, abFromPlugin);
 		else if (!lstrcmpi(szFunction, L"FindFarWindow"))
-			pszResult = FindFarWindow(p, apRCon);
+			pszResult = FindFarWindow(p, apRCon, abFromPlugin);
 		else if (!lstrcmpi(szFunction, L"WindowFullscreen"))
 			pszResult = WindowFullscreen(p, apRCon);
 		else if (!lstrcmpi(szFunction, L"WindowMaximize"))
@@ -844,7 +844,7 @@ LPWSTR CConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // Ќайти окно и активировать его. // LPWSTR asName
-LPWSTR CConEmuMacro::FindEditor(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR CConEmuMacro::FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
 {
 	LPWSTR pszName = NULL;
 
@@ -855,10 +855,10 @@ LPWSTR CConEmuMacro::FindEditor(GuiMacro* p, CRealConsole* apRCon)
 	if (!pszName || !*pszName)
 		return lstrdup(L"");
 
-	return FindFarWindowHelper(3/*WTYPE_EDITOR*/, pszName, apRCon);
+	return FindFarWindowHelper(3/*WTYPE_EDITOR*/, pszName, apRCon, abFromPlugin);
 }
 // Ќайти окно и активировать его. // LPWSTR asName
-LPWSTR CConEmuMacro::FindViewer(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR CConEmuMacro::FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
 {
 	LPWSTR pszName = NULL;
 
@@ -869,10 +869,10 @@ LPWSTR CConEmuMacro::FindViewer(GuiMacro* p, CRealConsole* apRCon)
 	if (!pszName || !*pszName)
 		return lstrdup(L"");
 
-	return FindFarWindowHelper(2/*WTYPE_VIEWER*/, pszName, apRCon);
+	return FindFarWindowHelper(2/*WTYPE_VIEWER*/, pszName, apRCon, abFromPlugin);
 }
 // Ќайти окно и активировать его. // int nWindowType, LPWSTR asName
-LPWSTR CConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR CConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
 {
 	int nWindowType = 0;
 	LPWSTR pszName = NULL;
@@ -884,83 +884,33 @@ LPWSTR CConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon)
 	if (!pszName || !*pszName)
 		return lstrdup(L"");
 
-	return FindFarWindowHelper(nWindowType, pszName, apRCon);
+	return FindFarWindowHelper(nWindowType, pszName, apRCon, abFromPlugin);
 }
 LPWSTR CConEmuMacro::FindFarWindowHelper(
     CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3, |(Elevated=0x100), |(NotElevated=0x200), |(Modal=0x400)*/,
-    LPWSTR asName, CRealConsole* apRCon)
+    LPWSTR asName, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
 {
 	CVConGuard VCon;
-	int iFound = 0;
-	bool bFound = gpConEmu->isFarExist(anWindowType|fwt_ActivateFound, asName, &VCon);
 
-	if (!bFound && VCon.VCon())
-		iFound = -1; // редактор есть, но заблокирован модальным диалогом/другим редактором
-	else if (bFound)
-		iFound = gpConEmu->isVConValid(VCon.VCon()); //1-based
+	// Need to get active con index BEFORE switching to found window
+	int iActiveCon = CVConGroup::ActiveConNum()+1; //need 1-based value
 
-	//CRealConsole* pRCon, *pActiveRCon = NULL;
-	//CVirtualConsole* pVCon;
-	//ConEmuTab tab;
-	//int iFound = 0;
-	//DWORD nElevateFlag = (anWindowType & 0x300);
-	//pVCon = gpConEmu->ActiveCon();
+	int iFoundCon = 0;
+	int iFoundWnd = CVConGroup::isFarExist(anWindowType|(abFromPlugin?fwt_ActivateOther:fwt_ActivateFound), asName, &VCon);
 
-	//if (pVCon)
-	//	pActiveRCon = pVCon->RCon();
-
-	//for (int i = 0; !iFound && (i < MAX_CONSOLE_COUNT); i++)
-	//{
-	//	if (!(pVCon = gpConEmu->GetVCon(i)))
-	//		break;
-
-	//	if (!(pRCon = pVCon->RCon()) || pRCon == pActiveRCon)
-	//		continue;
-
-	//	for (int j = 0; !iFound; j++)
-	//	{
-	//		if (!pRCon->GetTab(j, &tab))
-	//			break;
-
-	//		// ≈сли передали 0 - интересует любое окно
-	//		if (anWindowType)
-	//		{
-	//			if ((tab.Type & 0xFF) != (anWindowType & 0xFF))
-	//				continue;
-
-	//			if (nElevateFlag)
-	//			{
-	//				if ((nElevateFlag == 0x100) && !(tab.Type & 0x100))
-	//					continue;
-
-	//				if ((nElevateFlag == 0x200) && (tab.Type & 0x100))
-	//					continue;
-	//			}
-	//		}
-
-	//		if (lstrcmpi(tab.Name, asName) == 0)
-	//		{
-	//			if (pRCon->ActivateFarWindow(j))
-	//			{
-	//				iFound = i+1;
-	//				gpConEmu->Activate(pVCon);
-	//			}
-	//			else
-	//			{
-	//				iFound = -1;
-	//			}
-
-	//			break;
-	//		}
-	//	}
-	//}
+	if ((iFoundWnd <= 0) && VCon.VCon())
+		iFoundCon = -1; // редактор есть, но заблокирован модальным диалогом/другим редактором
+	else if (iFoundWnd)
+		iFoundCon = gpConEmu->isVConValid(VCon.VCon()); //1-based
 
 	int cchSize = 32; //-V112
 	LPWSTR pszResult = (LPWSTR)malloc(2*cchSize);
 
-	if (iFound > 0)
-		_wsprintf(pszResult, SKIPLEN(cchSize) L"Found:%i", iFound);
-	else if (iFound == -1)
+	if ((iFoundCon > 0) && (iFoundCon == iActiveCon))
+		_wsprintf(pszResult, SKIPLEN(cchSize) L"Active:%i", (iFoundWnd-1)); // Need return 0-based Far window index
+	else if (iFoundCon > 0)
+		_wsprintf(pszResult, SKIPLEN(cchSize) L"Found:%i", iFoundCon);
+	else if (iFoundCon == -1)
 		lstrcpyn(pszResult, L"Blocked", cchSize);
 	else
 		lstrcpyn(pszResult, L"NotFound", cchSize);

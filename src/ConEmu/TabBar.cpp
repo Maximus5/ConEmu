@@ -247,7 +247,7 @@ void TabBarClass::Retrieve()
 	if (gpSet->isTabs == 0)
 		return; // если табов нет ¬ќќЅў≈ - и читать ничего не нужно
 
-	if (!gpConEmu->isFar())
+	if (!CVConGroup::isFar())
 	{
 		Reset();
 		return;
@@ -757,14 +757,15 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 			}
 			else
 			{
-				LRESULT nTestIdx = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_APPCLOSE, 0);
-				if (nIdx == nTestIdx)
+				LRESULT nTestIdxMin = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_MINIMIZE, 0);
+				LRESULT nTestIdxClose = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_APPCLOSE, 0);
+				if ((nIdx == nTestIdxMin) || (nIdx == nTestIdxClose))
 				{
 					Icon.HideWindowToTray();
 					return 0;
 				}
 
-				nTestIdx = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_CREATE_CON, 0);
+				LRESULT nTestIdx = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_CREATE_CON, 0);
 				if (nIdx == nTestIdx)
 				{
 					gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, TRUE);

@@ -306,6 +306,7 @@ class CSettings
 		void UpdateTTF(BOOL bNewTTF);
 		void UpdateFontInfo();
 		void Performance(UINT nID, BOOL bEnd);
+		void PostUpdateCounters(bool bPosted);
 		void SetArgBufferHeight(int anBufferHeight);
 		void InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
 		BOOL RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
@@ -460,7 +461,7 @@ class CSettings
 		typedef HRESULT(STDAPICALLTYPE *EnableThemeDialogTextureT)(HWND hwnd,DWORD dwFlags);
 		EnableThemeDialogTextureT EnableThemeDialogTextureF;
 #endif
-		UINT mn_MsgUpdateCounter;
+		UINT mn_MsgUpdateCounter; BOOL mb_MsgUpdateCounter;
 		//wchar_t temp[MAX_PATH];
 		UINT mn_MsgRecreateFont;
 		UINT mn_MsgLoadFontFromMain;

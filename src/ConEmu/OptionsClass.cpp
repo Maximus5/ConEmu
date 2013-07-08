@@ -417,7 +417,7 @@ CSettings::CSettings()
 	}
 	#endif
 
-	mn_MsgUpdateCounter = RegisterWindowMessage(L"ConEmuSettings::Counter");
+	mn_MsgUpdateCounter = RegisterWindowMessage(L"ConEmuSettings::Counter"); mb_MsgUpdateCounter = FALSE;
 	mn_MsgRecreateFont = RegisterWindowMessage(L"Settings::RecreateFont");
 	mn_MsgLoadFontFromMain = RegisterWindowMessage(L"Settings::LoadFontNames");
 	mn_ActivateTabMsg = RegisterWindowMessage(L"Settings::ActivateTab");
@@ -2511,7 +2511,7 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 		{0},
 	};
 
-	bool bIsFar = gpConEmu->isFar(true);
+	bool bIsFar = CVConGroup::isFar(true);
 
 	//HWND hDlg = gpSetCls->mh_Tabs[];
 	//if (!hDlg)
@@ -8974,49 +8974,8 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			}
 			else if (messg == gpSetCls->mn_MsgUpdateCounter)
 			{
-				wchar_t sTemp[64];
-
-				if (gpSetCls->mn_Freq!=0)
-				{
-					i64 v = 0;
-
-					if (wParam == (tPerfFPS-tPerfFPS) || wParam == (tPerfInterval-tPerfFPS))
-					{
-						i64 *pFPS = NULL;
-						UINT nCount = 0;
-
-						if (wParam == (tPerfFPS-tPerfFPS))
-						{
-							pFPS = gpSetCls->mn_FPS; nCount = countof(gpSetCls->mn_FPS);
-						}
-						else
-						{
-							pFPS = gpSetCls->mn_RFPS; nCount = countof(gpSetCls->mn_RFPS);
-						}
-
-						i64 tmin = 0, tmax = 0;
-						tmin = pFPS[0];
-
-						for(UINT i = 0; i < nCount; i++)
-						{
-							if (pFPS[i] < tmin) tmin = pFPS[i]; //-V108
-
-							if (pFPS[i] > tmax) tmax = pFPS[i]; //-V108
-						}
-
-						if (tmax > tmin)
-							v = ((__int64)200)* gpSetCls->mn_Freq / (tmax - tmin);
-					}
-					else
-					{
-						v = (10000*(__int64)gpSetCls->mn_CounterMax[wParam])/gpSetCls->mn_Freq;
-					}
-
-					// WinApi не умеет float/double
-					_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"%u.%u", (int)(v/10), (int)(v%10));
-					SetDlgItemText(gpSetCls->mh_Tabs[thi_Info], wParam+tPerfFPS, sTemp); //-V107
-				} // if (gpSetCls->mn_Freq!=0)
-			} // if (messg == gpSetCls->mn_MsgUpdateCounter)
+				gpSetCls->PostUpdateCounters(true);
+			}
 			else if (messg == DBGMSG_LOG_ID && hWnd2 == gpSetCls->mh_Tabs[thi_Debug])
 			{
 				if (wParam == DBGMSG_LOG_SHELL_MAGIC)
@@ -10616,6 +10575,86 @@ void CSettings::UpdateFontInfo()
 	SetDlgItemText(mh_Tabs[thi_Info], tRealFontBorders, szTemp);
 }
 
+void CSettings::PostUpdateCounters(bool bPosted)
+{
+	if (!bPosted)
+	{
+		if (!mb_MsgUpdateCounter)
+		{
+			mb_MsgUpdateCounter = TRUE;
+			PostMessage(gpSetCls->mh_Tabs[thi_Info], mn_MsgUpdateCounter, 0, 0);
+		}
+		return;
+	}
+
+	wchar_t szTotal[256] = L"";
+
+	if (mn_Freq!=0)
+	{
+		for (INT_PTR nID = tPerfFPS; nID <= tPerfInterval; nID++)
+		{
+			wchar_t sTemp[64];
+
+			i64 v = 0;
+
+			if (nID == tPerfFPS || nID == tPerfInterval)
+			{
+				i64 *pFPS = NULL;
+				UINT nCount = 0;
+
+				if (nID == tPerfFPS)
+				{
+					pFPS = mn_FPS; nCount = countof(mn_FPS);
+				}
+				else
+				{
+					pFPS = mn_RFPS; nCount = countof(mn_RFPS);
+				}
+
+				i64 tmin = 0, tmax = 0;
+				tmin = pFPS[0];
+
+				for (UINT i = 0; i < nCount; i++)
+				{
+					if (pFPS[i] < tmin) tmin = pFPS[i]; //-V108
+
+					if (pFPS[i] > tmax) tmax = pFPS[i]; //-V108
+				}
+
+				if (tmax > tmin)
+					v = ((__int64)200)* mn_Freq / (tmax - tmin);
+			}
+			else
+			{
+				v = (10000*(__int64)mn_CounterMax[nID-tPerfFPS])/mn_Freq;
+			}
+
+			// WinApi не умеет float/double
+			_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"%u.%u", (int)(v/10), (int)(v%10));
+
+			switch (nID)
+			{
+			case tPerfFPS:
+				wcscat_c(szTotal, L"   FPS:"); break;
+			case tPerfData:
+				wcscat_c(szTotal, L"   Data:"); break;
+			case tPerfRender:
+				wcscat_c(szTotal, L"   Render:"); break;
+			case tPerfBlt:
+				wcscat_c(szTotal, L"   Blt:"); break;
+			case tPerfInterval:
+				wcscat_c(szTotal, L"   RPS:"); break;
+			}
+			wcscat_c(szTotal, sTemp);
+		} // if (mn_Freq!=0)
+	}
+
+	SetDlgItemText(mh_Tabs[thi_Info], tPerfCounters, SkipNonPrintable(szTotal)); //-V107
+
+	// Done, allow next show cycle
+	mb_MsgUpdateCounter = FALSE;
+}
+
 void CSettings::Performance(UINT nID, BOOL bEnd)
 {
 	if (nID == gbPerformance)  //groupbox ctrl id
@@ -10631,11 +10670,8 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 			//swprintf(sTemp, L"Performance counters (%.3f GHz)", ((double)(mn_Freq/1000)/1000000));
 			_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"Performance counters (%I64i)", ((i64)(mn_Freq/1000)));
 			SetDlgItemText(mh_Tabs[thi_Info], nID, sTemp);
-
-			for (nID = tPerfFPS; mn_Freq && (nID <= tPerfInterval); nID++)
-			{
-				SendMessage(gpSetCls->mh_Tabs[thi_Info], mn_MsgUpdateCounter, nID-tPerfFPS, 0);
-			}
+			// Обновить сразу (значений еще нет)
+			PostUpdateCounters(true);
 		}
 
 		return;
@@ -10654,7 +10690,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 		if (mn_FPS_CUR_FRAME >= (int)countof(mn_FPS)) mn_FPS_CUR_FRAME = 0;
 
 		if (ghOpWnd)
-			PostMessage(gpSetCls->mh_Tabs[thi_Info], mn_MsgUpdateCounter, nID-tPerfFPS, 0);
+			PostUpdateCounters(false);
 
 		return;
 	}
@@ -10670,7 +10706,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 			mn_RFPS_CUR_FRAME = 0;
 
 		if (ghOpWnd)
-			PostMessage(gpSetCls->mh_Tabs[thi_Info], mn_MsgUpdateCounter, nID-tPerfFPS, 0);
+			PostUpdateCounters(false);
 
 		return;
 	}
@@ -10696,9 +10732,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 		mn_CounterTick[nID-tPerfFPS] = GetTickCount();
 
 		if (ghOpWnd)
-		{
-			PostMessage(gpSetCls->mh_Tabs[thi_Info], mn_MsgUpdateCounter, nID-tPerfFPS, 0);
-		}
+			PostUpdateCounters(false);
 	}
 }
 

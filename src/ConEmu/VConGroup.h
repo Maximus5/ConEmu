@@ -122,7 +122,7 @@ public:
 	static bool isEditor();
 	static bool isViewer();
 	static bool isFar(bool abPluginRequired=false);
-	static bool isFarExist(CEFarWindowType anWindowType=fwt_Any, LPWSTR asName=NULL, CVConGuard* rpVCon=NULL);
+	static int isFarExist(CEFarWindowType anWindowType=fwt_Any, LPWSTR asName=NULL, CVConGuard* rpVCon=NULL);
 	static bool isVConHWND(HWND hChild, CVConGuard* rpVCon = NULL);
 	static bool isConsolePID(DWORD nPID);
 	static DWORD GetFarPID(BOOL abPluginRequired=FALSE);

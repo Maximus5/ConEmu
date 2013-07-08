@@ -166,6 +166,36 @@
     </DirectoryRef>
 
     <!-- Macroses -->
+    <DirectoryRef Id="ConEmuFar3Lua">
+      <Component Id="CtrlO.lua3" Guid="$(var.Guid.CtrlO.lua3)" Win64="$(var.Win64)">
+        <File Id="CtrlO.lua3" Source="..\..\Release\ConEmu\Far3_lua\ConEmu.CtrlO.lua"  KeyPath="yes" />
+      </Component>
+      <Component Id="CtrlShiftT.lua3" Guid="$(var.Guid.CtrlShiftT.lua3)" Win64="$(var.Win64)">
+        <File Id="CtrlShiftT.lua3" Source="..\..\Release\ConEmu\Far3_lua\ConEmu.CtrlShiftT.lua"  KeyPath="yes" />
+      </Component>
+      <Component Id="Editor.lua3" Guid="$(var.Guid.Editor.lua3)" Win64="$(var.Win64)">
+        <File Id="Editor.lua3" Source="..\..\Release\ConEmu\Far3_lua\ConEmu.Editor.lua"  KeyPath="yes" />
+      </Component>
+      <Component Id="FontSize.lua3" Guid="$(var.Guid.FontSize.lua3)" Win64="$(var.Win64)">
+        <File Id="FontSize.lua3" Source="..\..\Release\ConEmu\Far3_lua\ConEmu.FontSize.lua"  KeyPath="yes" />
+      </Component>
+      <Component Id="ShiftEnter.lua3" Guid="$(var.Guid.ShiftEnter.lua3)" Win64="$(var.Win64)">
+        <File Id="ShiftEnter.lua3" Source="..\..\Release\ConEmu\Far3_lua\ConEmu.ShiftEnter.lua"  KeyPath="yes" />
+      </Component>
+      <Component Id="TabList.lua3" Guid="$(var.Guid.TabList.lua3)" Win64="$(var.Win64)">
+        <File Id="TabList.lua3" Source="..\..\Release\ConEmu\Far3_lua\ConEmu.TabList.lua"  KeyPath="yes" />
+      </Component>
+      <Component Id="Thumbnails.lua3" Guid="$(var.Guid.Thumbnails.lua3)" Win64="$(var.Win64)">
+        <File Id="Thumbnails.lua3" Source="..\..\Release\ConEmu\Far3_lua\ConEmu.Thumbnails.lua"  KeyPath="yes" />
+      </Component>
+      <Component Id="Thumbnails_KeyBar.xml.lua3" Guid="$(var.Guid.Thumbnails_KeyBar.xml.lua3)" Win64="$(var.Win64)">
+        <File Id="Thumbnails_KeyBar.xml.lua3" Source="..\..\Release\ConEmu\Far3_lua\Thumbnails_KeyBar.farconfig"  KeyPath="yes" />
+      </Component>
+      <Component Id="Editor.MsRClick.lua3" Guid="$(var.Guid.Editor.MsRClick.lua3)" Win64="$(var.Win64)">
+        <File Id="Editor.MsRClick.lua3" Source="..\..\Release\ConEmu\Far3_lua\Editor.MsRClick.lua"  KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
     <DirectoryRef Id="ConEmuFar3Fml">
       <Component Id="CtrlO.fml3" Guid="$(var.Guid.CtrlO.fml3)" Win64="$(var.Win64)">
         <File Id="CtrlO.fml3" Source="..\..\Release\ConEmu\Far3_fml\ConEmu.CtrlO.fml"  KeyPath="yes" />

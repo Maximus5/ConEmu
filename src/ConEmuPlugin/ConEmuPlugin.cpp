@@ -425,6 +425,8 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 							SetEnvironmentVariable(CEGUIMACRORETENVVAR,
 							                       pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : NULL);
 							ExecuteFreeResult(pOut);
+							// 130708 -- Otherwise Far Macro "Plugin.Call" returns "0" always...
+							hResult = (HANDLE)TRUE;
 						}
 						else
 						{

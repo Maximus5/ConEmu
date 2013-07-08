@@ -356,14 +356,14 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">
-    <OutDir>\Far3\Plugins\ConEmu\Thumbs\</OutDir>
+    <OutDir>$(ConEmuDebugF3)\Plugins\ConEmu\Thumbs\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmuTh</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
-    <OutDir>F:\Utils\FAR\Far2x64\Plugins\ConEmu\Thumbs\</OutDir>
+    <OutDir>$(ConEmuDebugF3)\Plugins\ConEmu\Thumbs\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmuTh.x64</TargetName>
     <TargetExt>.dll</TargetExt>

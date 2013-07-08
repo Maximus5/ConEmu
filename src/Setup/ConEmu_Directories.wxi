@@ -14,6 +14,7 @@
           <Directory Id="ConEmuFar2Fml" Name="Far2_fml"/>
           <Directory Id="ConEmuFar2Reg" Name="Far2_reg"/>
           <Directory Id="ConEmuFar3Fml" Name="Far3_fml"/>
+          <Directory Id="ConEmuFar3Lua" Name="Far3_lua"/>
           <Directory Id="KeyEventsDir" Name="KeyEvents"/>
           <Directory Id="DosBox" Name="DosBox"/>
           <Directory Id="clink" Name="clink"/>

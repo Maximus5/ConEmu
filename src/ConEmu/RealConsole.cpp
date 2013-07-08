@@ -7477,7 +7477,7 @@ bool CRealConsole::IsFarHyperlinkAllowed(bool abFarRequired)
 	if (abFarRequired)
 	{
 		// А вот чтобы открыть в редакторе файл - нужен фар и плагин
-		if (!gpConEmu->isFarExist(fwt_NonModal|fwt_PluginRequired))
+		if (!CVConGroup::isFarExist(fwt_NonModal|fwt_PluginRequired))
 		{
 			return false;
 		}
