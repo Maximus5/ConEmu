@@ -111,6 +111,7 @@ WARNING("TB_GETIDEALSIZE - awailable on XP only, use insted TB_GETMAXSIZE");
 TabBarClass::TabBarClass()
 {
 	_active = false;
+	_visible = false;
 	_tabHeight = 0;
 	mb_ForceRecalcHeight = false;
 	mb_DisableRedraw = FALSE;
@@ -550,12 +551,20 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 	{
 		case WM_WINDOWPOSCHANGING:
 		{
+			LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
 			if (gpConEmu->mp_TabBar->_tabHeight)
 			{
-				LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
 				pos->cy = gpConEmu->mp_TabBar->_tabHeight;
 				return 0;
 			}
+			break;
+		}
+		case WM_WINDOWPOSCHANGED:
+		{
+			#ifdef _DEBUG
+			LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
+			#endif
+			break;
 		}
 		case WM_SETFOCUS:
 		{
@@ -797,7 +806,7 @@ bool TabBarClass::IsTabsShown()
 		_ASSERTE(this!=NULL);
 		return false;
 	}
-	return _active && IsWindowVisible(mh_Tabbar);
+	return _active && _visible/*IsWindowVisible(mh_Tabbar)*/;
 }
 
 void TabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
@@ -1221,6 +1230,8 @@ void TabBarClass::UpdatePosition()
 
 	if (_active)
 	{
+		_visible = true;
+
 		if (mh_Rebar)
 		{
 			if (!IsWindowVisible(mh_Rebar))
@@ -1251,6 +1262,8 @@ void TabBarClass::UpdatePosition()
 	}
 	else
 	{
+		_visible = false;
+
 		//gpConEmu->Sync ConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
 		gpConEmu->ReSize(TRUE);
 
@@ -1424,6 +1437,7 @@ LRESULT TabBarClass::OnNotify(LPNMHDR nmhdr)
 		//  return FALSE;
 		//}
 		_prevTab = GetCurSel();
+		// Returns TRUE to prevent the selection from changing, or FALSE to allow the selection to change.
 		return FALSE; // разрешаем
 	}
 

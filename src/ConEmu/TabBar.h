@@ -59,7 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DwmHelper.h"
 
 
-class TabBarClass //: public CToolTip
+class TabBarClass
 {
 	private:
 		// Пока - банально. VCon, номер в FAR
@@ -92,7 +92,7 @@ class TabBarClass //: public CToolTip
 		//} m_CmdPopupMenu[MAX_CMD_HISTORY+1]; // структура для меню выбора команды новой консоли
 		//bool mb_InNewConPopup, mb_InNewConRPopup;
 		//int mn_FirstTaskID, mn_LastTaskID; // MenuItemID for Tasks, when mb_InNewConPopup==true
-		bool _active;
+		bool _active, _visible;
 		int _tabHeight;
 		bool mb_ForceRecalcHeight;
 		int mn_ThemeHeightDiff;

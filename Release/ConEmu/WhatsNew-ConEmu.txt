@@ -15,6 +15,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.07.08
 [!] Far Macro "ConEmu.Editor.fml" was changed! Update your copies in MacroLib!
 [+] ConEmu macros adopted for Far Manager 3 (tested in build 3502).
     New macros located in "%ConEmuBaseDir\Far3_lua". You need to copy
