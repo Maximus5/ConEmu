@@ -316,6 +316,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 			{
 				msprintf(szErr, countof(szErr), L"%s.%u: CreateFile(%s) failed, code=0x%08X, Timeout",
 				          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
+				_ASSERTEX(FALSE && "Pipe open failed with timeout!");
 			}
 			return NULL;
 		}

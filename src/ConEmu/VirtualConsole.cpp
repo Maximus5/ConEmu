@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -4608,6 +4608,22 @@ void CVirtualConsole::OnConsoleSizeChanged()
 	mb_InPaintCall = TRUE; // чтобы Invalidate лишний раз не дергался
 	Update(mb_RequiredForceUpdate);
 	mb_InPaintCall = lbLast;
+}
+
+void CVirtualConsole::OnConsoleSizeReset(USHORT sizeX, USHORT sizeY)
+{
+	// Это должно быть только на этапе создания новой консоли (например, появилась панель табов)
+	_ASSERTE((mp_RCon && mp_RCon->ConWnd()==NULL) || mp_RCon->mb_InCloseConsole);
+	// И по идее, DC еще создан быть не должен был
+	if (Width==0 && Height==0)
+	{
+		TextWidth = sizeX;
+		TextHeight = sizeY;
+	}
+	else
+	{
+		_ASSERTE((Width==0 && Height==0) || mp_RCon->mb_InCloseConsole);
+	}
 }
 
 POINT CVirtualConsole::ConsoleToClient(LONG x, LONG y)

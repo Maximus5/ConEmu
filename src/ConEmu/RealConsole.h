@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -389,7 +389,7 @@ class CRealConsole
 		DWORD GetConsoleOutputCP();
 		DWORD GetConsoleMode();
 		void SyncConsole2Window(BOOL abNtvdmOff=FALSE, LPRECT prcNewWnd=NULL);
-		void SyncGui2Window(RECT* prcClient=NULL);
+		void SyncGui2Window(const RECT rcVConBack);
 		//void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 		void OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout);
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
@@ -503,6 +503,7 @@ class CRealConsole
 		bool isVisible();
 		bool isNtvdm();
 		//bool isPackets();
+		const RConStartArgs& GetArgs();
 		LPCWSTR GetCmd();
 		LPCWSTR GetDir();
 		wchar_t* CreateCommandLine(bool abForTasks = false);

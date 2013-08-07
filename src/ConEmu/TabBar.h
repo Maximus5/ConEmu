@@ -198,6 +198,7 @@ class TabBarClass
 		//void OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos);
 		void OnCommand(WPARAM wParam, LPARAM lParam);
 		void OnMouse(int message, int x, int y);
+		LRESULT OnTimer(WPARAM wParam);
 		// Переключение табов
 		void Switch(BOOL abForward, BOOL abAltStyle=FALSE);
 		void SwitchNext(BOOL abAltStyle=FALSE);

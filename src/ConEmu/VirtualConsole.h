@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -301,6 +301,7 @@ class CVirtualConsole :
 		COORD ClientToConsole(LONG x, LONG y, bool StrictMonospace=false);
 		POINT ConsoleToClient(LONG x, LONG y);
 		void OnConsoleSizeChanged();
+		void OnConsoleSizeReset(USHORT sizeX, USHORT sizeY);
 		static void ClearPartBrushes();
 		HRGN GetExclusionRgn(bool abTestOnly=false);
 		COORD FindOpaqueCell();

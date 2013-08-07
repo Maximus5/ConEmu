@@ -15,9 +15,50 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.08.07
+[!] Forbid Far Manager plugins to change window styles of ConEmu windows.
+[*] Some fixes in Far Manager command execution interceptor.
+[+] New color scheme: "<Solarized (Luke Maciak)>".
+[+] New switch "-new_console:f" forces starting console active. May be useful when starting several consoles simultaneously.
+    Example:
+    ConEmu.exe /cmdlist powershell -new_console:f ||| cmd -new_console:sH
+[%] Wrong size and pos of child GUI windows in split.
+[*] Hotkey «Close current tab» must close group when option «One tab per group» is enabled.
+[+] GuiMacro: Close(6) - close active tab or group, Close(7) - all active processes of the active group.
+[+] Activate pane by mouse over works now with GUI child applications.
+
+
+2013.07.26
+[+] Issue 1133: New option on "Status" page: "Use vertical padding". With unchecked you may use same status bar height and font as font in console.
+[+] Issue 1158: Provide "ConEmu Here" menu item for Windows 7 libraries. Have no sense for library root - select smth or open library folder.
+[%] Issue 1159: Crash when trying to put focus in bottom split while there was horizonal split only.
+[%] Issue 1159: Split to bottom and split to right hotkeys was messed up.
+
+
+2013.07.25
+[+] GuiMacro: new function "Split(<Cmd>,<Horz>,<Vert>)"
+    Cmd=0, Horz=1..99, Vert=0: Duplicate active «shell» split to right, same as Shell("new_console:s50Hn")
+    Cmd=0, Horz=0, Vert=1..99: Duplicate active «shell» split to bottom, same as Shell("new_console:s50Vn")
+    Cmd=1, Horz=-1..1, Vert=-1..1: Move splitter between panes (aka resize panes)
+    Cmd=2, Horz=-1..1, Vert=-1..1: Put cursor to the nearest pane (preferred direction may be choosed).
+[+] New hotkeys: Apps+Shift+Arrows - resize splits, Apps+Arrows - put focus to next split.
+[%] Far 3 macro "ConEmu.ShiftEnter.lua" updated.
+
+
+2013.07.22
+[*] Build number stored in xml-configuration file when saving settings.
+[*] Keys & Macros: "Drag ConEmu window by client area" renamed to "Move ConEmu window by dragging client area".
+[+] Settings->Mark & Paste: New option "Show IBeam cursor".
+[%] Issue 1152: Hungs on wheel when "sreen per time" was choosed in mouse settings.
+[*] Don't resize real console until mouse button released (Far Manager still resized «on the fly»).
+[%] Issue 1141: Tab bar position fails after restoring ConEmu when «Auto show» (tabs) is selected.
+[*] Some more internal logging.
+[%] Macro ConEmu.ShiftEnter.lua fails in Far 3.
+
+
 2013.07.08
 [!] Far Macro "ConEmu.Editor.fml" was changed! Update your copies in MacroLib!
-[+] ConEmu macros adopted for Far Manager 3 (tested in build 3502).
+[+] Issue 1126: ConEmu macros adopted for Far Manager 3 (tested in build 3502).
     New macros located in "%ConEmuBaseDir\Far3_lua". You need to copy
     selected files to your "%FARPROFILE%\Macros\scripts" folder.
 [+] Right click on «Minimize» button hides ConEmu to TSA.

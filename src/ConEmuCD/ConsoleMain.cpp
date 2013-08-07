@@ -729,8 +729,11 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 	wchar_t szAdd[1200];
 	wcscpy_c(szAdd, szFull);
 	wcscat_c(szAdd, L"\r\n\r\nPress <Yes> to copy this text to clipboard\r\nand open project web page");
-	wchar_t szTitle[100];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu crashed, PID=%u", GetCurrentProcessId());
+	wchar_t szTitle[100], szExe[MAX_PATH] = L"", *pszExeName;
+	GetModuleFileName(NULL, szExe, countof(szExe));
+	pszExeName = (wchar_t*)PointToName(szExe);
+	if (pszExeName && lstrlen(pszExeName) > 63) pszExeName[63] = 0;
+	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s crashed, PID=%u", pszExeName ? pszExeName : L"<process>", GetCurrentProcessId());
 
 	int nBtn = MessageBox(NULL, szAdd, szTitle, MB_YESNO|MB_ICONSTOP|MB_SYSTEMMODAL);
 	if (nBtn == IDYES)
@@ -6990,7 +6993,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		if (!ghConEmuWnd || !IsWindow(ghConEmuWnd))
 		{
-			_ASSERTE(FALSE && "ConEmu GUI was terminated? Invalid ghConEmuWnd");
+			_ASSERTE((ghConEmuWnd==NULL) && "ConEmu GUI was terminated? Invalid ghConEmuWnd");
 		}
 		else
 		{

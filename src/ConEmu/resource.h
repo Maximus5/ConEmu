@@ -51,6 +51,7 @@
 #define IDD_RENAMETAB                   219
 #define IDD_CMDPROMPT                   220
 #define IDD_HELP                        221
+#define IDD_ACTION                      222
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -783,12 +784,6 @@
 #define rbBgReplaceIndexes              2426
 #define tDarkerPlugin                   2427
 #define slDarkerPlugin                  2428
-#define vkSplit2Right                   2429
-#define vkSplit2Bottom                  2430
-#define vkSplitUp                       2431
-#define vkSplitDown                     2432
-#define vkSplitLeft                     2433
-#define vkSplitRight                    2434
 #define cbShowWasHiddenMsg              2435
 #define cbCTSEndOnKeyPress              2436
 #define vkShowCaption                   2437
@@ -810,8 +805,6 @@
 #define vkFontLarger                    2453
 #define vkFontSmaller                   2454
 #define vkShowTabsList2                 2455
-#define vkNewConSplitV                  2456
-#define vkNewConSplitH                  2457
 #define cbClipStartBlockSelection       2458
 #define cbClipStartTextSelection        2459
 #define lbClipStartBlockSelection       2460
@@ -944,6 +937,25 @@
 #define tTabBarDblClickAction           2600
 #define cbActivateSplitMouseOver        2601
 #define tPerfCounters                   2602
+#define cbCTSIBeam                      2603
+#define vkSplitNewConV                  2604
+#define vkSplitNewConH                  2605
+#define vkSplitSizeVup                  2606
+#define vkSplitSizeVdown                2607
+#define vkSplitSizeHleft                2608
+#define vkSplitSizeHright               2609
+#define vkSplitFocusUp                  2610
+#define vkSplitFocusDown                2611
+#define vkSplitFocusLeft                2612
+#define vkSplitFocusRight               2613
+#define cbClinkWebPage                  2614
+#define cbStatusVertPad                 2615
+#define cbActionChk1                    2616
+#define stActionTitle                   2617
+#define cbActionBtn1                    2618
+#define cbActionBtn2                    2619
+#define cbActionBtn3                    2620
+#define vkCloseGroupPrc                 2621
 
 // Next default values for new objects
 // 
@@ -951,7 +963,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        222
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2603
+#define _APS_NEXT_CONTROL_VALUE         2622
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

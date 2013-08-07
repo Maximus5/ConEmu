@@ -86,6 +86,9 @@ class CConEmuChild
 	protected:
 		virtual void OnDestroy() = 0; // WM_DESTROY
 
+		#define CRITICAL_DCWND_STYLES (WS_CAPTION|WS_VSCROLL|WS_HSCROLL|WS_SYSMENU|WS_THICKFRAME|WS_GROUP|WS_TABSTOP)
+		DWORD mn_WndDCStyle;
+		DWORD mn_WndDCExStyle;
 		HWND mh_WndDC;
 		HWND mh_WndBack; // скроллинг и фон
 		HWND mh_LastGuiChild;

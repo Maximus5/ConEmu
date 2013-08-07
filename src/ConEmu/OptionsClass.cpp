@@ -2446,6 +2446,7 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 		(gpSet->isConsoleTextSelection == 1) ? rbCTSAlways : rbCTSBufferOnly);
 
 	checkDlgButton(hWnd2, cbCTSAutoCopy, gpSet->isCTSAutoCopy);
+	checkDlgButton(hWnd2, cbCTSIBeam, gpSet->isCTSIBeam);
 	checkDlgButton(hWnd2, cbCTSEndOnTyping, (gpSet->isCTSEndOnTyping != 0));
 	checkDlgButton(hWnd2, cbCTSEndOnKeyPress, (gpSet->isCTSEndOnTyping != 0) && gpSet->isCTSEndOnKeyPress);
 	checkDlgButton(hWnd2, cbCTSEndCopyBefore, (gpSet->isCTSEndOnTyping == 1));
@@ -3239,6 +3240,7 @@ LRESULT CSettings::OnInitDialog_Status(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbStatusVertSep, (gpSet->isStatusBarFlags & csf_VertDelim) ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbStatusHorzSep, (gpSet->isStatusBarFlags & csf_HorzDelim) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbStatusVertPad, (gpSet->isStatusBarFlags & csf_NoVerticalPad)==0 ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbStatusSystemColors, (gpSet->isStatusBarFlags & csf_SystemColors) ? BST_CHECKED : BST_UNCHECKED);
 
 	EnableDlgItems(hWnd2, SettingsNS::nStatusColorIds, countof(SettingsNS::nStatusColorIds), !(gpSet->isStatusBarFlags & csf_SystemColors));
@@ -4049,8 +4051,9 @@ void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, L
 	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /dir \"%1\" /cmd powershell -cur_console:n"
 
 	int iSucceeded = 0;
+	bool bHasLibraries = IsWindows7;
 
-	for (int i = 1; i <= 4; i++)
+	for (int i = 1; i <= 6; i++)
 	{
 		_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\" ", gpConEmu->ms_ConEmuExe);
 		if (asOpt && *asOpt)
@@ -4077,11 +4080,22 @@ void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, L
 			pszRoot = L"Software\\Classes\\Directory\\Background\\shell";
 			break;
 		case 3:
+			if (!bHasLibraries)
+				continue;
+			pszRoot = L"Software\\Classes\\LibraryFolder\\Background\\shell";
+			break;
+		case 4:
 			pszRoot = L"Software\\Classes\\Directory\\shell";
 			_wcscat_c(pszCmd, cchMax, L"/dir \"%1\" ");
 			break;
-		case 4:
+		case 5:
 			pszRoot = L"Software\\Classes\\Drive\\shell";
+			_wcscat_c(pszCmd, cchMax, L"/dir \"%1\" ");
+			break;
+		case 6:
+			if (!bHasLibraries)
+				continue;
+			pszRoot = L"Software\\Classes\\LibraryFolder\\shell";
 			_wcscat_c(pszCmd, cchMax, L"/dir \"%1\" ");
 			break;
 		}
@@ -4133,6 +4147,8 @@ void CSettings::UnregisterShell(LPCWSTR asName)
 	DeleteRegKeyRecursive(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell", asName);
 	DeleteRegKeyRecursive(HKEY_CURRENT_USER, L"Software\\Classes\\Drive\\shell", asName);
 	DeleteRegKeyRecursive(HKEY_CURRENT_USER, L"Software\\Classes\\*\\shell", asName);
+	DeleteRegKeyRecursive(HKEY_CURRENT_USER, L"Software\\Classes\\LibraryFolder\\Background\\shell", asName);
+	DeleteRegKeyRecursive(HKEY_CURRENT_USER, L"Software\\Classes\\LibraryFolder\\shell", asName);
 }
 
 bool CSettings::DeleteRegKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName)
@@ -5083,6 +5099,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
 		case cbActivateSplitMouseOver:
+			GetCursorPos(&gpConEmu->mouse.ptLastSplitOverCheck);
 			gpSet->isActivateSplitMouseOver = IsChecked(hWnd2, cbActivateSplitMouseOver);
 			break;
 		case cbTabSelf:
@@ -5271,6 +5288,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				MessageBox(szErrInfo, MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
 			}
 			gpConEmu->OnGlobalSettingsChanged();
+			break;
+		case cbClinkWebPage:
+			ShellExecute(NULL, L"open", L"http://code.google.com/p/clink", NULL, NULL, SW_SHOWNORMAL);
 			break;
 		case cbPortableRegistry:
 			#ifdef USEPORTABLEREGISTRY
@@ -5814,6 +5834,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCTSAutoCopy:
 			gpSet->isCTSAutoCopy = IsChecked(hWnd2,CB);
 			break;
+		case cbCTSIBeam:
+			gpSet->isCTSIBeam = IsChecked(hWnd2,CB);
+			gpConEmu->OnSetCursor();
+			break;
 		case cbCTSEndOnTyping:
 		case cbCTSEndCopyBefore:
 			gpSet->isCTSEndOnTyping = IsChecked(hWnd2,cbCTSEndOnTyping) ? IsChecked(hWnd2,cbCTSEndCopyBefore) ? 1 : 2 : 0;
@@ -6138,6 +6162,16 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpSet->isStatusBarFlags |= csf_HorzDelim;
 					else
 						gpSet->isStatusBarFlags &= ~csf_HorzDelim;
+					gpConEmu->mp_Status->UpdateStatusFont();
+					gpConEmu->mp_Status->UpdateStatusBar(true);
+					break;
+
+				case cbStatusVertPad:
+					if (!IsChecked(hWnd2,CB))
+						gpSet->isStatusBarFlags |= csf_NoVerticalPad;
+					else
+						gpSet->isStatusBarFlags &= ~csf_NoVerticalPad;
+					gpConEmu->mp_Status->UpdateStatusFont();
 					gpConEmu->mp_Status->UpdateStatusBar(true);
 					break;
 

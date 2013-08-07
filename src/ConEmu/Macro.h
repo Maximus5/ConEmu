@@ -140,6 +140,8 @@ class CConEmuMacro
 		static LPWSTR SetOption(GuiMacro* p, CRealConsole* apRCon);
 		// Shell (ShellExecute)
 		static LPWSTR Shell(GuiMacro* p, CRealConsole* apRCon);
+		// Split
+		static LPWSTR Split(GuiMacro* p, CRealConsole* apRCon);
 		// Status
 		static LPWSTR Status(GuiMacro* p, CRealConsole* apRCon);
 		// Tabs

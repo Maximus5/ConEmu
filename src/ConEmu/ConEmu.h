@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define RCLICKAPPS_START 100 // начало отрисовки кружка вокруг курсора
 //#define RCLICKAPPSTIMEOUT_MAX 10000
 //#define RCLICKAPPSDELTA 3
-#define DRAG_DELTA 5
+//#define DRAG_DELTA 5
 
 //typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
 
@@ -259,6 +259,9 @@ class CConEmuMain :
 			COORD RClkDC, RClkCon;
 			DWORD RClkTick;
 
+			// Для обработки gpSet->isActivateSplitMouseOver
+			POINT  ptLastSplitOverCheck;
+
 			// Чтобы не слать в консоль бесконечные WM_MOUSEMOVE
 			UINT   lastMsg;
 			WPARAM lastMMW;
@@ -289,6 +292,7 @@ class CConEmuMain :
 			{
 				if (!nWheelScrollChars)
 					ReloadWheelScroll();
+				_ASSERTE(nWheelScrollChars<=3);
 				return nWheelScrollChars;
 			};
 			UINT GetWheelScrollLines()
@@ -454,6 +458,7 @@ class CConEmuMain :
 	public:
 		void StoreIdealRect();
 		RECT GetIdealRect();
+		void OnTabbarActivated(bool bTabbarVisible);
 	protected:
 		BOOL mn_InResize;
 		//bool mb_InScMinimize;
@@ -714,11 +719,11 @@ class CConEmuMain :
 		bool isPictureView();		
 		bool isProcessCreated();		
 		bool isRightClickingPaint();		
-		bool isSizing();
+		bool isSizing(UINT nMouseMsg=0);
 		void BeginSizing(bool bFromStatusBar);
 		void SetSizingFlags(DWORD nSetFlags = MOUSE_SIZING_BEGIN);
 		void ResetSizingFlags(DWORD nDropFlags = MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
-		void EndSizing();
+		void EndSizing(UINT nMouseMsg=0);
 		bool isValid(CRealConsole* apRCon);
 		bool isValid(CVirtualConsole* apVCon);
 		bool isVConExists(int nIdx);
@@ -881,6 +886,7 @@ class CConEmuMain :
 		void OnSizePanels(COORD cr);
 		LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);
 		//LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
+		UINT_PTR SetKillTimer(bool bEnable, UINT nTimerID, UINT nTimerElapse);
 		LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 		void OnTimer_Main(CVirtualConsole* pVCon);
 		void OnTimer_ConRedraw(CVirtualConsole* pVCon);

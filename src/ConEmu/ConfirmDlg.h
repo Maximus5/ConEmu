@@ -37,6 +37,8 @@ struct ConfirmCloseParam
 	BOOL bGroup;
 	UINT nOperations;
 	UINT nUnsavedEditors;
+	BOOL bForceKill; // Use terminate instead of "close"
+	BOOL bReserved;
 	bool* rpLeaveConEmuOpened;
 	LPCWSTR asSingleConsole;
 	LPCWSTR asSingleTitle;

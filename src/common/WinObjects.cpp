@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -3742,6 +3742,25 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 	FlushFileBuffers(mh_LogFile);
 #endif
 }
+BOOL MFileLog::MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+{
+	MFileLog* p = (MFileLog*)dwData;
+	wchar_t szInfo[200];
+
+	MONITORINFO mi = {sizeof(mi)};
+	GetMonitorInfo(hMonitor, &mi);
+
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+		L"  %08X: {%i,%i}-{%i,%i} (%ix%i), Working: {%i,%i}-{%i,%i} (%ix%i)%s",
+		(DWORD)(DWORD_PTR)hMonitor,
+		lprcMonitor->left, lprcMonitor->top, lprcMonitor->right, lprcMonitor->bottom, lprcMonitor->right-lprcMonitor->left, lprcMonitor->bottom-lprcMonitor->top,
+		mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom, mi.rcWork.right-mi.rcWork.left, mi.rcWork.bottom-mi.rcWork.top,
+		(mi.dwFlags & MONITORINFOF_PRIMARY) ? L" <<== Primary" : L"");
+
+	p->LogString(szInfo, false, NULL, true);
+
+	return TRUE;
+}
 void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 {
 	if (!apStartEnv || (apStartEnv->cbSize < sizeof(*apStartEnv)))
@@ -3751,7 +3770,7 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 	}
 
 	// Пишем инфу
-	wchar_t szSI[MAX_PATH*4], szDesktop[128], szTitle[128];
+	wchar_t szSI[MAX_PATH*4], szDesktop[128] = L"", szTitle[128] = L"";
 	lstrcpyn(szDesktop, apStartEnv->si.lpDesktop ? apStartEnv->si.lpDesktop : L"", countof(szDesktop));
 	lstrcpyn(szTitle, apStartEnv->si.lpTitle ? apStartEnv->si.lpTitle : L"", countof(szTitle));
 
@@ -3842,6 +3861,34 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 	LogString(apStartEnv->pszRegConFonts ? apStartEnv->pszRegConFonts : L"<NULL>", false, NULL, true);
 
 	// szSI уже не используется, можно
+
+	HWND hFore = GetForegroundWindow();
+	RECT rcFore = {0}; if (hFore) GetWindowRect(hFore, &rcFore);
+	if (hFore) GetClassName(hFore, szDesktop, countof(szDesktop)-1); else szDesktop[0] = 0;
+	if (hFore) GetWindowText(hFore, szTitle, countof(szTitle)-1); else szTitle[0] = 0;
+	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Foreground: x%08X {%i,%i}-{%i,%i} '%s' - %s", (DWORD)(DWORD_PTR)hFore, rcFore.left, rcFore.top, rcFore.right, rcFore.bottom, szDesktop, szTitle);
+	LogString(szSI, false, NULL, true);
+
+	POINT ptCur = {0}; GetCursorPos(&ptCur);
+	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Cursor: {%i,%i}", ptCur.x, ptCur.y);
+	LogString(szSI, false, NULL, true);
+
+	HDC hdcScreen = GetDC(NULL);
+	int nBits = GetDeviceCaps(hdcScreen,BITSPIXEL);
+	int nPlanes = GetDeviceCaps(hdcScreen,PLANES);
+	int nAlignment = GetDeviceCaps(hdcScreen,BLTALIGNMENT);
+	int nVRefr = GetDeviceCaps(hdcScreen,VREFRESH);
+	int nShadeCaps = GetDeviceCaps(hdcScreen,SHADEBLENDCAPS);
+	int nDevCaps = GetDeviceCaps(hdcScreen,RASTERCAPS);
+	_wsprintf(szSI, SKIPLEN(countof(szSI))
+		L"Display: bpp=%i, planes=%i, align=%i, vrefr=%i, shade=x%08X, rast=x%08X",
+		nBits, nPlanes, nAlignment, nVRefr, nShadeCaps, nDevCaps);
+	ReleaseDC(NULL, hdcScreen);
+	LogString(szSI, false, NULL, true);
+
+	LogString("Monitors:", false, NULL, true);
+	EnumDisplayMonitors(NULL, NULL, MFileLog::MonitorEnumProc, (LPARAM)this);
+
 	LogString("Modules:", false, NULL, true);
 	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
 	MODULEENTRY32W mi = {sizeof(mi)};

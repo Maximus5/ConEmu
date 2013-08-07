@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -328,6 +328,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	_ASSERTE(mb_WasStartDetached == args->bDetached);
 
 	// -- т.к. автопоказ табов может вызвать ресайз - то табы в самом конце инициализации!
+	_ASSERTE(gpConEmu->isMainThread()); // Иначе табы сразу не перетряхнутся
 	SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
 	MCHKHEAP;
 
@@ -666,7 +667,7 @@ BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer,
 	return mp_RBuf->SetConsoleSize(sizeX, sizeY, sizeBuffer, anCmdID);
 }
 
-void CRealConsole::SyncGui2Window(RECT* prcClient)
+void CRealConsole::SyncGui2Window(const RECT rcVConBack)
 {
 	if (!this)
 		return;
@@ -682,21 +683,12 @@ void CRealConsole::SyncGui2Window(RECT* prcClient)
 			return;
 		}
 
-
-		RECT rcGui = {};
-		RECT rcClient = {};
-		if (prcClient)
-		{
-			rcClient = *prcClient;
-		}
-		else
-		{
-			rcClient = gpConEmu->GetGuiClientRect();
-		}
-
+		#ifdef _DEBUG
+		RECT rcTemp = gpConEmu->CalcRect(CER_BACK, mp_VCon);
+		#endif
 		// Окошко гуевого приложения нужно разместить поверх области, отведенной под наш VCon.
 		// Но! тут нужна вся область, без отрезания прокруток и округлений размеров под знакоместо
-		rcGui = gpConEmu->CalcRect(CER_BACK, rcClient, CER_MAINCLIENT, mp_VCon);
+		RECT rcGui = rcVConBack;
 		OffsetRect(&rcGui, -rcGui.left, -rcGui.top);
 
 		DWORD dwExStyle = GetWindowLong(hGuiWnd, GWL_EXSTYLE);
@@ -761,8 +753,13 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	RECT newCon = gpConEmu->CalcRect(abNtvdmOff ? CER_CONSOLE_NTVDMOFF : CER_CONSOLE_CUR, rcClient, CER_MAINCLIENT, mp_VCon);
 	_ASSERTE(newCon.right>=MIN_CON_WIDTH && newCon.bottom>=MIN_CON_HEIGHT);
 	
+	#if 0
 	if (hGuiWnd && !mb_GuiExternMode)
-		SyncGui2Window(&rcClient);
+	{
+		_ASSERTE(FALSE && "Fails on DoubleView?");
+		SyncGui2Window(rcClient);
+	}
+	#endif
 
 	// Меняем активный буфер (пусть даже и виртуальный...)
 	mp_ABuf->SyncConsole2Window(newCon.right, newCon.bottom);
@@ -3110,6 +3107,7 @@ BOOL CRealConsole::StartProcess()
 	SafeFree(mpsz_CmdBuffer);
 	mpsz_CmdBuffer = ParseConEmuSubst(lpszRawCmd);
 	LPCWSTR lpszCmd = mpsz_CmdBuffer ? mpsz_CmdBuffer : lpszRawCmd;
+	LPCWSTR lpszWorkDir = NULL;
 	
 	DWORD nCreateBegin, nCreateEnd, nCreateDuration = 0;
 
@@ -3279,10 +3277,11 @@ BOOL CRealConsole::StartProcess()
 				}
 
 				nCreateBegin = GetTickCount();
+				lpszWorkDir = gpConEmu->WorkDir(pszStartupDir);
 				lbRc = CreateProcessWithLogonW(m_Args.pszUserName, m_Args.pszDomain, m_Args.szUserPassword,
 				                           LOGON_WITH_PROFILE, NULL, psCurCmd,
 				                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-				                           , NULL, gpConEmu->WorkDir(pszStartupDir), &si, &pi);
+										   , NULL, lpszWorkDir, &si, &pi);
 					//if (CreateProcessAsUser(m_Args.hLogonToken, NULL, psCurCmd, NULL, NULL, FALSE,
 					//	NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 					//	, NULL, m_Args.pszStartupDir, &si, &pi))
@@ -3302,9 +3301,10 @@ BOOL CRealConsole::StartProcess()
 			else if (m_Args.bRunAsRestricted)
 			{
 				nCreateBegin = GetTickCount();
+				lpszWorkDir = gpConEmu->WorkDir(m_Args.pszStartupDir);
 				lbRc = CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
 				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-				                        , NULL, gpConEmu->WorkDir(m_Args.pszStartupDir), &si, &pi, &dwLastError);
+				                        , NULL, lpszWorkDir, &si, &pi, &dwLastError);
 				nCreateEnd = GetTickCount();
 
 				if (lbRc)
@@ -3317,10 +3317,11 @@ BOOL CRealConsole::StartProcess()
 			else
 			{
 				nCreateBegin = GetTickCount();
+				lpszWorkDir = gpConEmu->WorkDir(m_Args.pszStartupDir);
 				lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE,
 				                     NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 				                     //|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
-				                     , NULL, gpConEmu->WorkDir(m_Args.pszStartupDir), &si, &pi);
+				                     , NULL, lpszWorkDir, &si, &pi);
 				nCreateEnd = GetTickCount();
 
 				if (!lbRc)
@@ -3361,7 +3362,8 @@ BOOL CRealConsole::StartProcess()
 
 				wchar_t szCurrentDirectory[MAX_PATH+1];
 
-				wcscpy(szCurrentDirectory, gpConEmu->WorkDir(m_Args.pszStartupDir));
+				lpszWorkDir = gpConEmu->WorkDir(m_Args.pszStartupDir);
+				wcscpy(szCurrentDirectory, lpszWorkDir);
 
 				int nWholeSize = sizeof(SHELLEXECUTEINFO)
 				                 + sizeof(wchar_t) *
@@ -3452,7 +3454,7 @@ BOOL CRealConsole::StartProcess()
 		//Box("Cannot execute the command.");
 		//DWORD dwLastError = GetLastError();
 		DEBUGSTRPROC(L"CreateProcess failed\n");
-		size_t nErrLen = _tcslen(psCurCmd)+100;
+		size_t nErrLen = _tcslen(psCurCmd)+100+(lpszWorkDir ? _tcslen(lpszWorkDir) : 0);
 		TCHAR* pszErr = (TCHAR*)Alloc(nErrLen,sizeof(TCHAR));
 
 		if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -3466,7 +3468,10 @@ BOOL CRealConsole::StartProcess()
 		TCHAR* psz = (TCHAR*)Alloc(nErrLen+100,sizeof(TCHAR));
 		int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
 		_wcscpy_c(psz, nErrLen, _T("Command execution failed\n\n"));
-		_wcscat_c(psz, nErrLen, psCurCmd); _wcscat_c(psz, nErrLen, _T("\n\n"));
+		_wcscat_c(psz, nErrLen, psCurCmd);
+		_wcscat_c(psz, nErrLen, _T("\n\nWorking folder:"));
+		_wcscat_c(psz, nErrLen, lpszWorkDir ? lpszWorkDir : L"");
+		_wcscat_c(psz, nErrLen, _T("\n\n"));
 		_wcscat_c(psz, nErrLen, pszErr);
 
 		if (m_Args.pszSpecialCmd == NULL)
@@ -10358,6 +10363,11 @@ bool CRealConsole::isNtvdm()
 	}
 
 	return false;
+}
+
+const RConStartArgs& CRealConsole::GetArgs()
+{
+	return m_Args;
 }
 
 LPCWSTR CRealConsole::GetCmd()

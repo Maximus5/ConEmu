@@ -137,6 +137,12 @@ const CONEMUDEFCOLORS DefColors[] =
 		}
 	},
 	{
+		L"<Solarized (Luke Maciak)>", {
+			0x00423607, 0x00d28b26, 0x00009985, 0x000089b5, 0x002f32dc, 0x008236d3, 0x0098a12a, 0x00d5e8ee,
+			0x00362b00, 0x00aaa897, 0x00756e58, 0x00837b65, 0x00004ff2, 0x00c4716c, 0x00a1a193, 0x00e3f6fd
+		}
+	},
+	{
 		L"<Solarized (John Doe)>", {
 			0x00362b00, 0x00423607, 0x00756e58, 0x00837b65, 0x002f32dc, 0x00c4716c, 0x00164bcb, 0x00d5e8ee,
 			0x00a1a193, 0x00d28b26, 0x00009985, 0x0098a12a, 0x00969483, 0x008236d3, 0x000089b5, 0x00e3f6fd		
@@ -577,6 +583,7 @@ void Settings::InitSettings()
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
 	isConsoleTextSelection = 1; // Always
 	isCTSAutoCopy = true;
+	isCTSIBeam = true;
 	isCTSEndOnTyping = false;
 	isCTSEndOnKeyPress = false;
 	isCTSFreezeBeforeSelect = false;
@@ -2277,6 +2284,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"ConsoleTextSelection", isConsoleTextSelection); if (isConsoleTextSelection>2) isConsoleTextSelection = 2;
 
 		reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
+		reg->Load(L"CTS.IBeam", isCTSIBeam);
 		reg->Load(L"CTS.EndOnTyping", isCTSEndOnTyping); MinMax(isCTSEndOnTyping, 2);
 		reg->Load(L"CTS.EndOnKeyPress", isCTSEndOnKeyPress);
 		reg->Load(L"CTS.Freeze", isCTSFreezeBeforeSelect);
@@ -3124,6 +3132,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
 		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
 		reg->Save(L"CTS.AutoCopy", isCTSAutoCopy);
+		reg->Save(L"CTS.IBeam", isCTSIBeam);
 		reg->Save(L"CTS.EndOnTyping", isCTSEndOnTyping);
 		reg->Save(L"CTS.EndOnKeyPress", isCTSEndOnKeyPress);
 		reg->Save(L"CTS.Freeze", isCTSFreezeBeforeSelect);
@@ -3307,6 +3316,22 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 	//MessageBoxA(ghOpWnd, "Failed", "Information", MB_ICONERROR);
 	return lbRc;
 }
+
+int Settings::StatusBarFontHeight()
+{
+	return max(4,nStatusFontHeight);
+}
+
+int Settings::StatusBarHeight()
+{
+	int iHeight = StatusBarFontHeight();
+	if (isStatusBarFlags & csf_NoVerticalPad)
+		iHeight += (isStatusBarFlags & csf_HorzDelim) ? 1 : 0;
+	else
+		iHeight += (isStatusBarFlags & csf_HorzDelim) ? 2 : 1;
+	return iHeight;
+}
+
 
 DWORD Settings::isUseClink(bool abCheckVersion /*= false*/)
 {

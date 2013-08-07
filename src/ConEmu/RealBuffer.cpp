@@ -6,7 +6,7 @@
 //TODO: ChangeXXX - послать в консоль и установить значение переменной
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1058,6 +1058,15 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 		//Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
 		if (gpSetCls->isAdvLogging) mp_RCon->LogString("SetConsoleSize skipped (!mp_RCon->hConWnd || !mp_RCon->ms_ConEmuC_Pipe)");
 
+		// Это должно быть только на этапе создания новой консоли (например, появилась панель табов)
+		if (con.nTextWidth != sizeX || con.nTextHeight != sizeY)
+		{
+			_ASSERTE(mp_RCon->hConWnd==NULL || mp_RCon->mb_InCloseConsole);
+			con.nTextWidth = sizeX;
+			con.nTextHeight = sizeY;
+			mp_RCon->VCon()->OnConsoleSizeReset(sizeX, sizeY);
+		}
+
 		DEBUGSTRSIZE(L"SetConsoleSize skipped (!mp_RCon->hConWnd || !mp_RCon->ms_ConEmuC_Pipe)\n");
 		return false; // консоль пока не создана?
 	}
@@ -1094,11 +1103,21 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 		lbRc = SetConsoleSizePlugin(sizeX, sizeY, sizeBuffer, anCmdID);
 	else*/
 	HEAPVAL;
-	// Чтобы ВО время ресайза пакеты НЕ обрабатывались
-	ResetEvent(con.hInSetSize); con.bInSetSize = TRUE;
-	lbRc = SetConsoleSizeSrv(sizeX, sizeY, sizeBuffer, anCmdID);
-	con.bInSetSize = FALSE; SetEvent(con.hInSetSize);
-	HEAPVAL;
+
+	// Попробовать для консолей (cmd, и т.п.) делать ресайз после отпускания мышки
+	if ((gpConEmu->mouse.state & MOUSE_SIZING_BEGIN)
+		&& (!mp_RCon->GuiWnd() && !mp_RCon->GetFarPID()))
+	{
+		if (gpSetCls->isAdvLogging) mp_RCon->LogString("SetConsoleSize skipped until LMouseButton not released");
+	}
+	else
+	{
+		// Чтобы ВО время ресайза пакеты НЕ обрабатывались
+		ResetEvent(con.hInSetSize); con.bInSetSize = TRUE;
+		lbRc = SetConsoleSizeSrv(sizeX, sizeY, sizeBuffer, anCmdID);
+		con.bInSetSize = FALSE; SetEvent(con.hInSetSize);
+		HEAPVAL;
+	}
 
 #if 0
 	if (lbRc && mp_RCon->isActive())
@@ -2091,7 +2110,11 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		}
 		else
 		{
-			MBoxA(mp_RCon->m_GetDataPipe.GetErrorText());
+			wchar_t szInfo[128];
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"mp_RCon->m_GetDataPipe.Transact failed, code=%i\r\n", (int)mp_RCon->m_GetDataPipe.GetErrorCode());
+			wchar_t* pszFull = lstrmerge(szInfo, mp_RCon->m_GetDataPipe.GetErrorText());
+			MBoxA(pszFull);
+			SafeFree(pszFull);
 		}
 		#endif
 	}
@@ -6226,6 +6249,11 @@ LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/, UINT nCo
 	{
 		_ASSERTE(nCount >= 1);
 		nCount = 1;
+	}
+	// returns "-1" when user choose "one screen per time"
+	else if ((UINT)nCount >= (UINT)nVisible)
+	{
+		nCount = max(1,(nVisible-1));
 	}
 
 	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP

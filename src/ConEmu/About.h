@@ -158,6 +158,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    close active tab (3)\r\n" \
 	L"    close active group (4)\r\n" \
 	L"    close all tabs but active (5)\r\n" \
+	L"    close active tab or group (6)\r\n" \
+	L"    close all active processes of the active group (7)\r\n" \
 	L"Copy(<What>)\r\n" \
 	L"  - Copy active console contents\r\n" \
 	L"    What==0: current selection\r\n" \
@@ -216,6 +218,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"        Shell(\"\",\"\",\"cmd.exe /k -new_console:b\"),\r\n" \
 	L"        Shell(\"new_console:b\",\"\",\"cmd.exe /k\")\r\n" \
 	L"        Shell(\"new_console:sV\")\r\n" \
+	L"Split(<Cmd>,<Horz>,<Vert>)\r\n" \
+	L"  - Cmd=0, Horz=1..99, Vert=0: Duplicate active \"shell\" split to right\r\n" \
+	L"    Cmd=0, Horz=0, Vert=1..99: Duplicate active \"shell\" split to bottom\r\n" \
+	L"    Cmd=1, Horz=-1..1, Vert=-1..1: Move splitter between panes (aka resize panes)\r\n" \
+	L"    Cmd=2, Horz=-1..1, Vert=-1..1: Put cursor to the nearest pane\r\n" \
 	L"Status(0[,<Parm>])\r\n" \
 	L"  - Show/Hide status bar, Parm=1 - Show, Parm=2 - Hide\r\n" \
 	L"Status(1[,\"<Text>\"])\r\n" \

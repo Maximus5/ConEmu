@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@ protected:
 	UINT mn_SplitPercent10; // (0.1% - 99.9%)*10
 	CVConGroup *mp_Grp1, *mp_Grp2; // —сылки на "дочерние" панели
 	CVConGroup *mp_Parent; // —сылка на "родительскую" панель
+	RECT mrc_Full;
 	RECT mrc_Splitter;
 	bool mb_ResizeFlag; // взводитс€ в true дл€ корн€, когда в группе что-то мен€етс€
 	void SetResizeFlags();
@@ -55,7 +56,9 @@ protected:
 	void RepositionVCon(RECT rcNewCon, bool bVisible);
 	void CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter);
 	void CalcSplitRootRect(RECT rcAll, RECT& rcCon, CVConGroup* pTarget = NULL);
+	#if 0
 	void CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2);
+	#endif
 	void ShowAllVCon(int nShowCmd);
 	static void ShowActiveGroup(CVirtualConsole* pOldActive);
 
@@ -63,6 +66,9 @@ protected:
 	void SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync);
 
 	void StoreActiveVCon(CVirtualConsole* pVCon);
+	bool ReSizeSplitter(int iCells);
+
+	CVConGroup* FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/);
 	
 protected:
 	//static CVirtualConsole* mp_VCon[MAX_CONSOLE_COUNT];
@@ -84,7 +90,7 @@ private:
 	CVConGroup* SplitVConGroup(RConStartArgs::SplitType aSplitType = RConStartArgs::eSplitHorz/*eSplitVert*/, UINT anPercent10 = 500);
 	int GetGroupPanes(MArray<CVConGuard*>* rPanes);
 	static void FreePanesArray(MArray<CVConGuard*> &rPanes);
-	static bool CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/);
+	static bool CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/, bool bForceKill = false);
 	
 	CVConGroup(CVConGroup *apParent);
 
@@ -143,7 +149,7 @@ public:
 	static bool OnCloseQuery(bool* rbMsgConfirmed = NULL);
 	static bool DoCloseAllVCon(bool bMsgConfirmed = false);
 	static void CloseAllButActive(CVirtualConsole* apVCon/*may be null*/);
-	static void CloseGroup(CVirtualConsole* apVCon/*may be null*/);
+	static void CloseGroup(CVirtualConsole* apVCon/*may be null*/, bool abKillActiveProcess = false);
 	static void OnDestroyConEmu();
 	static void OnVConClosed(CVirtualConsole* apVCon);
 	static void OnUpdateProcessDisplay(HWND hInfo);
@@ -156,6 +162,7 @@ public:
 	static void OnGuiFocused(BOOL abFocus, BOOL abForceChild = FALSE);
 
 	static bool Activate(CVirtualConsole* apVCon);
+	static bool ActivateNextPane(CVirtualConsole* apVCon, int nHorz = 0, int nVert = 0);
 	static void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
 
 	static void OnUpdateGuiInfoMapping(ConEmuGuiMapping* apGuiInfo);
@@ -188,6 +195,7 @@ public:
 	static void SyncAllConsoles2Window(RECT rcWnd, enum ConEmuRect tFrom = CER_MAIN, bool bSetRedraw = false);
 	static void OnConsoleResize(bool abSizingToDo);
 	static void ReSizePanes(RECT mainClient);
+	static bool ReSizeSplitter(CVirtualConsole* apVCon, int iHorz = 0, int iVert = 0);
 
 	static void NotifyChildrenWindows();
 

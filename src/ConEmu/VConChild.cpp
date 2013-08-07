@@ -77,6 +77,7 @@ CConEmuChild::CConEmuChild()
 	mb_RedrawPosted = FALSE;
 	ZeroStruct(Caret);
 	mb_DisableRedraw = FALSE;
+	mn_WndDCStyle = mn_WndDCExStyle = 0;
 	mh_WndDC = NULL;
 	mh_WndBack = NULL;
 	mh_LastGuiChild = NULL;
@@ -145,6 +146,8 @@ HWND CConEmuChild::CreateView()
 	mh_WndBack = CreateWindowEx(styleEx, gsClassNameBack, L"BackWND", style,
 		rcBack.left, rcBack.top, rcBack.right - rcBack.left, rcBack.bottom - rcBack.top, hParent, NULL, (HINSTANCE)g_hInstance, pVCon);
 
+	mn_WndDCStyle = style;
+	mn_WndDCExStyle = styleEx;
 	mh_WndDC = CreateWindowEx(styleEx, gsClassName, L"DrawWND", style,
 		rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hParent, NULL, (HINSTANCE)g_hInstance, pVCon);
 
@@ -388,7 +391,31 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 
 				TODO("Обработка ghWndWork");
 				HWND hParent = ghWnd;
-				_ASSERTE(GetParent(hWnd)==ghWnd);
+				static bool bInFixStyle = false;
+				if (!bInFixStyle)
+				{
+					hParent = GetParent(hWnd);
+					if (hParent != ghWnd)
+					{
+						// Неправомерные действия плагинов фара?
+						bInFixStyle = true;
+						_ASSERTE(GetParent(hWnd)==ghWnd);
+						SetParent(hWnd, ghWnd);
+						bInFixStyle = false;
+						hParent = ghWnd;
+					}
+
+					DWORD curStyle = GetWindowLong(hWnd, GWL_STYLE);
+				
+					if ((curStyle & CRITICAL_DCWND_STYLES) != (pVCon->mn_WndDCStyle & CRITICAL_DCWND_STYLES))
+					{
+						// DC window styles was changed externally!
+						bInFixStyle = true;
+						_ASSERTEX(((curStyle & CRITICAL_DCWND_STYLES) != (pVCon->mn_WndDCStyle & CRITICAL_DCWND_STYLES)));
+						SetWindowLongPtr(hWnd, GWL_STYLE, (LONG_PTR)(DWORD_PTR)pVCon->mn_WndDCStyle);
+						bInFixStyle = false;
+					}
+				}
 
 				if (messg >= WM_MOUSEFIRST && messg <= WM_MOUSELAST)
 				{

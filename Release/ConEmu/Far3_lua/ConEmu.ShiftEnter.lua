@@ -32,10 +32,10 @@ local DisableFlicker = 0
 --  Area="Shell Search ShellACompl"
 
 Macro {
-  area="Shell Search ShellACompl"; key="ShiftEnter AltEnter"; flags=""; description="ConEmu: Run <File under cursor> or <Command line> in new console of ConEmu"; action = function()
+  area="Shell Search ShellAutoCompletion"; key="ShiftEnter AltEnter"; flags=""; description="ConEmu: Run <File under cursor> or <Command line> in new console of ConEmu"; action = function()
 
   -- history.enable(0xff)
-    
+
   if  akey(1,1)=="ShiftEnter"  and  UseBackgroundTab then 
     add = " -new_console:b";
     if  DisableCloseConfirm then  add = add .. "n"; end
@@ -44,12 +44,16 @@ Macro {
     add = " -new_console";
     if  DisableCloseConfirm then  add = add .. ":n"; end
   end
-  
+
   oldcmd = "";
-  if  Area.Search then 
-    -- Save and clear command line - about to execute panel(!) item
-    oldcmd = CmdLine.Value; oldpos = CmdLine.CurPos;
-    Keys("Esc Esc")  -- First - close search, second - clear command line
+  if  Area.ShellAutoCompletion then
+    Keys("Esc") -- close autocompletion
+  else
+    if  Area.Search then 
+      -- Save and clear command line - about to execute panel(!) item
+      oldcmd = CmdLine.Value; oldpos = CmdLine.CurPos;
+      Keys("Esc Esc")  -- First - close search, second - clear command line
+    end
   end
   
   if   not CmdLine.Empty then 
@@ -93,7 +97,7 @@ Macro {
     for RCounter=CmdLine.ItemCount,1,-1 do  Keys("CtrlS") end
     print("ConEmu:run:")
   end
-  
+
   Keys("Enter") -- Execute
   
   -- Restore old command line state (running file from Panel in QSearch mode)

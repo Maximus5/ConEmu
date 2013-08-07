@@ -14,13 +14,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Russian resources
+// Russian (Russia) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
-#ifdef _WIN32
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 #pragma code_page(1251)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -50,18 +48,16 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
-#endif    // Russian resources
+#endif    // Russian (Russia) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -585,16 +581,6 @@ BEGIN
     EDITTEXT        tsTopPID,40,45,54,12,ES_AUTOHSCROLL | ES_READONLY
     LISTBOX         lbProcesses,9,76,173,109,NOT LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
     EDITTEXT        tPerfCounters,9,13,307,12,ES_AUTOHSCROLL | ES_READONLY
-    //RTEXT           "FPS:",IDC_STATIC,9,14,18,8
-    //EDITTEXT        tPerfFPS,29,13,36,12,ES_AUTOHSCROLL | ES_READONLY
-    //RTEXT           "Data:",IDC_STATIC,69,14,22,8
-    //EDITTEXT        tPerfData,93,13,36,12,ES_AUTOHSCROLL | ES_READONLY
-    //RTEXT           "Render:",IDC_STATIC,133,14,27,8
-    //EDITTEXT        tPerfRender,162,13,36,12,ES_AUTOHSCROLL | ES_READONLY
-    //RTEXT           "Blt:",IDC_STATIC,204,14,12,8
-    //EDITTEXT        tPerfBlt,218,13,36,12,ES_AUTOHSCROLL | ES_READONLY
-    //RTEXT           "RPS:",IDC_STATIC,258,14,22,8
-    //EDITTEXT        tPerfInterval,282,13,36,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Current command line",IDC_STATIC,4,190,319,29
     EDITTEXT        tCurCmdLine,9,201,307,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Sizes",IDC_STATIC,195,65,128,125
@@ -638,12 +624,13 @@ BEGIN
     CONTROL         "Portable registry",cbPortableRegistry,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,90,75,8
     PUSHBUTTON      "...",bPortableRegistrySettings,213,89,13,11,WS_DISABLED
     CONTROL         "ANSI X3.64 / xterm 256 colors",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,90,119,8
-    CONTROL         "Use Clink in prompt",cbUseClink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,74,87,8
+    CONTROL         "Use Clink in prompt",cbUseClink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,74,75,8
     CONTROL         "Suppress bells",cbSuppressBells,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,231,90,87,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,132,41,89,8
     CONTROL         "Show «was hidden» warning",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,41,119,8
     GROUPBOX        "In-console options",IDC_STATIC,4,62,319,45
     CONTROL         "Focus in child windows",cbFocusInChildWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,27,87,8
+    PUSHBUTTON      "...",cbClinkWebPage,306,72,13,11
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235
@@ -814,6 +801,7 @@ BEGIN
     RTEXT           "Find:",IDC_STATIC,269,47,22,8,NOT WS_VISIBLE | WS_DISABLED
     COMBOBOX        lbCTSFindIdx,293,45,24,30,CBS_DROPDOWNLIST | CBS_SORT | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Copy on Left Button release",cbCTSAutoCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,91,125,8
+    CONTROL         "Show IBeam cursor",cbCTSIBeam,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,91,125,8
     CONTROL         "Detect line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,11,44,66,8
     CONTROL         "Bash margin",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,81,44,52,8
     CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTO3STATE | WS_TABSTOP,137,44,77,8
@@ -903,9 +891,9 @@ BEGIN
     EDITTEXT        tc37,250,40,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
     LTEXT           "",c37,298,40,12,12,SS_NOTIFY | SS_SUNKEN
     GROUPBOX        "Font and color",IDC_STATIC,9,12,307,59
-    RTEXT           "Style:",IDC_STATIC,17,58,22,8
-    CONTROL         "Horizontal separator",cbStatusHorzSep,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,44,58,96,8
-    CONTROL         "Vertical separators",cbStatusVertSep,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,58,89,8
+    RTEXT           "Lines:",IDC_STATIC,14,58,25,8
+    CONTROL         "Horizontal",cbStatusHorzSep,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,44,58,50,8
+    CONTROL         "Vertical",cbStatusVertSep,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,96,58,42,8
     CONTROL         "System colors",cbStatusSystemColors,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,250,58,61,8
     LTEXT           "Available columns:",IDC_STATIC,11,76,60,8
     LTEXT           "Selected columns:",IDC_STATIC,181,76,58,8
@@ -915,6 +903,7 @@ BEGIN
     PUSHBUTTON      ">",cbStatusAddSelected,151,111,23,14
     PUSHBUTTON      "<",cbStatusDelSelected,151,129,23,14
     PUSHBUTTON      "<<",cbStatusDelAll,151,145,23,14
+    CONTROL         "Use vertical padding",cbStatusVertPad,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,144,58,101,8
 END
 
 IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319
@@ -1001,7 +990,7 @@ BEGIN
     CONTROL         "Restore on Far startup",cbThumbRestoreOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,214,134,101,10
 END
 
-IDD_MORE_CONFONT DIALOG  0, 0, 236, 156
+IDD_MORE_CONFONT DIALOG 0, 0, 236, 156
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Real console font"
 FONT 8, "MS Sans Serif"
@@ -1111,8 +1100,8 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     CONTROL         "Check on startup",cbUpdateCheckOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,70,8
-    CONTROL         "Hourly",cbUpdateCheckHourly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,83,13,38,8
-    CONTROL         "Show TSA balloon",cbUpdateConfirmDownload,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,126,13,78,8
+    CONTROL         "Hourly",cbUpdateCheckHourly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,83,13,34,8
+    CONTROL         "Show TSA balloon",cbUpdateConfirmDownload,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,13,73,8
     CONTROL         "Stable",rbUpdateStableOnly,"Button",BS_AUTORADIOBUTTON,200,13,38,8
     CONTROL         "Preview",rbUpdatePreview,"Button",BS_AUTORADIOBUTTON,240,13,38,8
     CONTROL         "Latest",rbUpdateLatestAvailable,"Button",BS_AUTORADIOBUTTON,280,13,38,8
@@ -1298,17 +1287,18 @@ BEGIN
     EDITTEXT        tInactiveCursorMinSize,256,99,25,12,ES_AUTOHSCROLL
 END
 
-IDD_ABOUT DIALOGEX 0, 0, 325, 205
+IDD_ABOUT DIALOGEX 0, 0, 325, 157
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Dialog"
+CAPTION "Choose action"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,268,187,50,14
     ICON            IDI_ICON1,IDC_STATIC,7,7,21,20,WS_DISABLED
-    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,302,16
-    EDITTEXT        tAboutText,7,50,311,131,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
-    LTEXT           "Console emulation program. Visit home page:",stConEmuAbout,50,7,268,8
-    LTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,50,18,268,8,SS_NOTIFY
+    LTEXT           "Description",stActionTitle,50,7,268,19
+    LTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,7,145,268,8,SS_NOTIFY
+    PUSHBUTTON      "",cbActionBtn1,49,37,269,26,BS_LEFT | BS_MULTILINE
+    PUSHBUTTON      "",cbActionBtn2,49,99,269,26,BS_LEFT | BS_MULTILINE
+    PUSHBUTTON      "",cbActionBtn3,49,68,269,26,BS_LEFT | BS_MULTILINE
+    CONTROL         "Check1",cbActionChk1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,133,268,10
 END
 
 IDD_RENAMETAB DIALOGEX 0, 0, 187, 54
@@ -1332,6 +1322,19 @@ BEGIN
     EDITTEXT        IDC_HELP_DESCR,0,0,166,75,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY
 END
 
+IDD_ACTION DIALOGEX 0, 0, 325, 205
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,268,187,50,14
+    ICON            IDI_ICON1,IDC_STATIC,7,7,21,20,WS_DISABLED
+    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,302,16
+    EDITTEXT        tAboutText,7,50,311,131,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
+    LTEXT           "Console emulation program. Visit home page:",stConEmuAbout,50,7,268,8
+    LTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,50,18,268,8,SS_NOTIFY
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1339,7 +1342,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_CMDPROMPT, DIALOG
     BEGIN
@@ -1367,6 +1370,14 @@ BEGIN
         BOTTOMMARGIN, 216
     END
 
+    IDD_SPG_FEATURE, DIALOG
+    BEGIN
+    END
+
+    IDD_SPG_STATUSBAR, DIALOG
+    BEGIN
+    END
+
     IDD_SPG_VIEWS, DIALOG
     BEGIN
         BOTTOMMARGIN, 236
@@ -1388,6 +1399,10 @@ BEGIN
         BOTTOMMARGIN, 146
     END
 
+    IDD_SPG_UPDATE, DIALOG
+    BEGIN
+    END
+
     IDD_FAST_CONFIG, DIALOG
     BEGIN
         LEFTMARGIN, 3
@@ -1406,7 +1421,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 318
         TOPMARGIN, 7
-        BOTTOMMARGIN, 178
+        BOTTOMMARGIN, 143
     END
 
     IDD_RENAMETAB, DIALOG
@@ -1415,6 +1430,14 @@ BEGIN
         RIGHTMARGIN, 180
         TOPMARGIN, 6
         BOTTOMMARGIN, 48
+    END
+
+    IDD_ACTION, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 318
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 178
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -1454,7 +1477,7 @@ IDI_ICON1               ICON                    "ConEmu.ico"
 IDI_ICON2               ICON                    "Far.ico"
 IDI_ICON3               ICON                    "Far2.ico"
 IDI_SHIELD              ICON                    "shield.ico"
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,12 +28,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-enum CEStatusFlags
-{
-	csf_VertDelim           = 0x00000001,
-	csf_HorzDelim           = 0x00000002,
-	csf_SystemColors        = 0x00000004,
-};
+// --> Header.h
+//enum CEStatusFlags
+//{
+//	csf_VertDelim           = 0x00000001,
+//	csf_HorzDelim           = 0x00000002,
+//	csf_SystemColors        = 0x00000004,
+//	csf_NoVerticalPad       = 0x00000008,
+//};
 
 
 // Добавлять можно в любое место, настройки именованые

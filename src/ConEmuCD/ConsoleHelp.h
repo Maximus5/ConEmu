@@ -68,6 +68,7 @@ _DBGHLP(L"     /DOSBOX -> use DosBox\r\n") \
         L"     a - RunAs shell verb (as Admin on Vista+, login/passw in Win2k and WinXP)\r\n" \
         L"     b - Create background tab\r\n" \
         L"     c - force enable 'Press Enter or Esc to close console' (default)\r\n" \
+        L"     f - force starting console active, useful when starting several consoles simultaneously\r\n" \
         L"     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\r\n" \
         L"     i - don't inject ConEmuHk into starting process\r\n" \
         L"     I - (GuiMacro only) forces inheriting of root process contents, like \"Duplicate root\" feature\r\n" \

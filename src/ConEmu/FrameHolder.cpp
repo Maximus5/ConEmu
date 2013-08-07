@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -229,7 +229,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		ptLastNcClick = MakePoint(LOWORD(lParam),HIWORD(lParam));
 
 		if ((uMsg == WM_NCMOUSEMOVE) || (uMsg == WM_NCLBUTTONUP))
-			gpConEmu->isSizing(); // могло не сброситься, проверим
+			gpConEmu->isSizing(uMsg); // могло не сброситься, проверим
 
 		if (gpSet->isTabsInCaption)
 		{

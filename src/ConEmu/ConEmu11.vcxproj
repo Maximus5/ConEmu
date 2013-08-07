@@ -950,6 +950,8 @@
     <ClCompile Include="..\common\WinObjects.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\ConEmuCD\ConsoleHelp.h" />
+    <ClInclude Include="About.h" />
     <ClInclude Include="Attach.h" />
     <ClInclude Include="Background.h" />
     <ClInclude Include="BaseDragDrops.h" />
@@ -1052,7 +1054,12 @@
     <ResourceCompile Include="ConEmu.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="!ToDo.!000!.txt" />
+    <Text Include="!ToDo.!111!.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Copy24.bmp" />
+    <Image Include="Copy4.bmp" />
+    <Image Include="Scroll.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

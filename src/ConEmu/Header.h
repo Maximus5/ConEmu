@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -108,6 +108,25 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if !defined(CONSOLE_APPLICATION_16BIT)
 #define CONSOLE_APPLICATION_16BIT       0x0001
 #endif
+
+
+#define TIMER_MAIN_ID 0
+#define TIMER_MAIN_ELAPSE 500
+#define TIMER_CONREDRAW_ID 1
+#define TIMER_CAPTION_APPEAR_ID 3
+#define TIMER_CAPTION_DISAPPEAR_ID 4
+#define TIMER_RCLICKPAINT 5
+#define TIMER_RCLICKPAINT_ELAPSE 20
+#define TIMER_ADMSHIELD_ID 7
+#define TIMER_ADMSHIELD_ELAPSE 1000
+#define TIMER_RUNQUEUE_ID 8
+#define TIMER_QUAKE_AUTOHIDE_ID 9
+#define TIMER_QUAKE_AUTOHIDE_ELAPSE 100
+#define TIMER_FAILED_TABBAR_ID 10 // FAILED_TABBAR_TIMERID
+#define TIMER_FAILED_TABBAR_ELAPSE 3000 // FAILED_TABBAR_TIMEOUT 
+
+#define ACTIVATE_TAB_CRITICAL  300
+#define POST_UPDATE_TIMEOUT   2000
 
 // Undocumented console message
 #define WM_SETCONSOLEINFO           (WM_USER+201)
@@ -482,6 +501,14 @@ enum SwitchGuiFocusOp
 	sgf_FocusGui,
 	sgf_FocusChild,
 	sgf_Last
+};
+
+enum CEStatusFlags
+{
+	csf_VertDelim           = 0x00000001,
+	csf_HorzDelim           = 0x00000002,
+	csf_SystemColors        = 0x00000004,
+	csf_NoVerticalPad       = 0x00000008,
 };
 
 enum CESizeStyle

@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -108,7 +108,7 @@ void RConStartArgs::RunArgTests()
 RConStartArgs::RConStartArgs()
 {
 	bDetached = bRunAsAdministrator = bRunAsRestricted = bNewConsole = FALSE;
-	bForceUserDialog = bBackgroundTab = bNoDefaultTerm = bForceDosBox = bForceInherit = FALSE;
+	bForceUserDialog = bBackgroundTab = bForegroungTab = bNoDefaultTerm = bForceDosBox = bForceInherit = FALSE;
 	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = pszRenameTab = NULL;
@@ -183,6 +183,7 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 	}
 
 	this->bBackgroundTab = args->bBackgroundTab;
+	this->bForegroungTab = args->bForegroungTab;
 	this->bNoDefaultTerm = args->bNoDefaultTerm; _ASSERTE(args->bNoDefaultTerm == FALSE);
 	this->bBufHeight = args->bBufHeight;
 	this->nBufHeight = args->nBufHeight;
@@ -229,6 +230,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 						+ (szUserPassword ? lstrlen(szUserPassword) : 0)) : 0);
 	cchMaxLen += (bForceUserDialog ? 15 : 0); // -new_console:u
 	cchMaxLen += (bBackgroundTab ? 15 : 0); // -new_console:b
+	cchMaxLen += (bForegroungTab ? 15 : 0); // -new_console:f
 	cchMaxLen += (bBufHeight ? 32 : 0); // -new_console:h<lines>
 	cchMaxLen += (bLongOutputDisable ? 15 : 0); // -new_console:o
 	cchMaxLen += (bOverwriteMode ? 15 : 0); // -new_console:w
@@ -270,8 +272,11 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	
 	if (bForceUserDialog)
 		wcscat_c(szAdd, L"u");
+
 	if (bBackgroundTab)
 		wcscat_c(szAdd, L"b");
+	else if (bForegroungTab)
+		wcscat_c(szAdd, L"f");
 
 	if (bForceDosBox)
 		wcscat_c(szAdd, L"x");
@@ -574,7 +579,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						
 					case L'b':
 						// b - background, не активировать таб
-						bBackgroundTab = TRUE;
+						bBackgroundTab = TRUE; bForegroungTab = FALSE;
+						break;
+					case L'f':
+						// f - foreground, активировать таб (аналог ">" в Tasks)
+						bForegroungTab = TRUE; bBackgroundTab = FALSE;
 						break;
 
 					case L'z':

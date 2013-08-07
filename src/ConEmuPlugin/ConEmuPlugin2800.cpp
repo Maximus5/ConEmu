@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1844,6 +1844,7 @@ HANDLE WINAPI OpenW2800(const void* apInfo)
 		return NULL;
 	
 	INT_PTR Item = Info->Data;
+
 	if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_FROMMACRO)
 	{
 		Item = 0; // Сразу сброс
@@ -1871,6 +1872,11 @@ HANDLE WINAPI OpenW2800(const void* apInfo)
 		{
 			_ASSERTE(p->StructSize >= sizeof(*p));
 		}
+	}
+	else if (Info->OpenFrom == OPEN_COMMANDLINE)
+	{
+		OpenCommandLineInfo* p = (OpenCommandLineInfo*)Info->Data;
+		Item = (INT_PTR)p->CommandLine;
 	}
 
 	HANDLE h = OpenPluginWcmn(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));

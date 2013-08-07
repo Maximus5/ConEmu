@@ -208,7 +208,11 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 	{
 		// must be already initialized: CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
-		wchar_t szMessage[128];  lstrcpyn(szMessage, Parm.asSingleConsole ? Parm.asSingleConsole : L"Confirm closing?", countof(szMessage));
+		wchar_t szMessage[128];
+		lstrcpyn(szMessage,
+			Parm.asSingleConsole ? Parm.asSingleConsole : Parm.bForceKill ? L"Confirm killing?" : L"Confirm closing?",
+			countof(szMessage));
+
 		wchar_t szWWW[MAX_PATH]; _wsprintf(szWWW, SKIPLEN(countof(szWWW)) L"<a href=\"%s\">%s</a>", gsHomePage, gsHomePage);
 
 		wchar_t szCloseAll[MAX_PATH*2]; wchar_t *pszText;

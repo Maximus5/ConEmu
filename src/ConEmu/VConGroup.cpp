@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -226,6 +226,7 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 	//apVCon->mp_Group = this;
 	m_SplitType = RConStartArgs::eSplitNone;
 	mn_SplitPercent10 = 500; // Default - пополам
+	mrc_Full = MakeRect(0,0);
 	mrc_Splitter = MakeRect(0,0);
 	mp_Grp1 = mp_Grp2 = NULL; // Ссылки на "дочерние" панели
 	mp_Parent = apParent; // Ссылка на "родительскую" панель
@@ -382,6 +383,7 @@ void CVConGroup::MoveToParent(CVConGroup* apParent)
 	apParent->mp_Item = mp_Item;
 	apParent->m_SplitType = m_SplitType; // eSplitNone/eSplitHorz/eSplitVert
 	apParent->mn_SplitPercent10 = mn_SplitPercent10; // (0.1% - 99.9%)*10
+	apParent->mrc_Full = mrc_Full;
 	apParent->mrc_Splitter = mrc_Splitter;
 
 	// Ссылки на "дочерние" панели
@@ -609,7 +611,7 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 
 		//RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
 		//gpConEmu->AddMargins(rcNewCon, rcScroll);
-		
+
 		HWND hWndDC = mp_Item ? VConI->GetView() : NULL;
 		HWND hBack = mp_Item ? VConI->GetBack() : NULL;
 		if (hWndDC)
@@ -653,9 +655,11 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 			}
 		}
 
+		mrc_Full = rcNewCon;
+
 		if (VConI->RCon()->GuiWnd())
 		{
-			VConI->RCon()->SyncGui2Window(NULL);
+			VConI->RCon()->SyncGui2Window(rcNewCon);
 		}
 	}
 	else if (mp_Grp1 && mp_Grp2)
@@ -663,7 +667,9 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 		RECT rcCon1, rcCon2, rcSplitter;
 		CalcSplitRect(rcNewCon, rcCon1, rcCon2, rcSplitter);
 
+		mrc_Full = rcNewCon;
 		mrc_Splitter = rcSplitter;
+
 		mp_Grp1->RepositionVCon(rcCon1, bVisible);
 		mp_Grp2->RepositionVCon(rcCon2, bVisible);
 	}
@@ -671,6 +677,161 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 	{
 		_ASSERTE(mp_Grp1 && mp_Grp2);
 	}
+}
+
+bool CVConGroup::ReSizeSplitter(int iCells)
+{
+	bool bChanged = false;
+
+	int nSaveSplitPercent10 = mn_SplitPercent10;
+
+	int nCellSize = (m_SplitType == RConStartArgs::eSplitVert) ? gpSetCls->FontHeight() : gpSetCls->FontWidth();
+	int nMinCells = (m_SplitType == RConStartArgs::eSplitVert) ? MIN_CON_HEIGHT : MIN_CON_WIDTH;
+
+	// Нашли? Корректируем mn_SplitPercent10
+	if (mp_Grp1 && mp_Grp1->mp_Item && mp_Grp2 && mp_Grp2->mp_Item && (nCellSize > 0))
+	{
+		RECT rcCon1 = {0}, rcCon2 = {0}, rcSplitter = {0};
+		CalcSplitRect(mrc_Full, rcCon1, rcCon2, rcSplitter);
+
+		int iSize1 = (m_SplitType == RConStartArgs::eSplitVert) ? mrc_Splitter.top-mrc_Full.top : mrc_Splitter.left-mrc_Full.left;
+		int iSize2 = (m_SplitType == RConStartArgs::eSplitVert) ? mrc_Full.bottom-mrc_Splitter.bottom : mrc_Full.right-mrc_Splitter.right;
+		int iPadSize = gpSet->isTryToCenter ? 2*gpSet->nCenterConsolePad : 0;
+		int iDiff = iCells*nCellSize;
+		int iCellHalf = max(1,(nCellSize/2));
+
+		bool bCanResize = (iCells < 0)
+			? ((iSize1 - iPadSize) >= (nCellSize*(nMinCells+1)))
+			: ((iSize2 - iPadSize) >= (nCellSize*(nMinCells+1)));
+		if (bCanResize)
+		{
+			int iNewSize1, iNewSize2;
+			if (iCells < 0)
+			{
+				iNewSize1 = max((iPadSize+nCellSize*nMinCells),(iSize1 + iDiff + iCellHalf));
+				_ASSERTE(iNewSize1 < iSize1);
+				iNewSize2 = iSize2 + (iSize1 - iNewSize1);
+			}
+			else
+			{
+				iNewSize2 = max((iPadSize+nCellSize*nMinCells),(iSize2 - iDiff + iCellHalf));
+				_ASSERTE(iNewSize2 < iSize2);
+				iNewSize1 = iSize1 + (iSize2 - iNewSize2);
+			}
+			_ASSERTE(((iSize1+iSize2)==(iNewSize1+iNewSize2)) && ((iNewSize1+iNewSize2)>0));
+
+			// Считаем новый процент
+			int nNewSplitPercent10 = (iNewSize1 * 1000 / (iNewSize1 + iNewSize2));
+			// Из-за округлений - могли "несмочь"
+			//if (nNewSplitPercent10 != mn_SplitPercent10)
+			{
+				int nOldPercent = mn_SplitPercent10;
+				mn_SplitPercent10 = max(1,min(nNewSplitPercent10,999)); // (0.1% - 99.9%)*10
+
+				RECT rcNewCon1 = {0}, rcNewCon2 = {0}, rcNewSplitter = {0};
+				CalcSplitRect(mrc_Full, rcNewCon1, rcNewCon2, rcNewSplitter);
+
+				int iChanged = ((m_SplitType == RConStartArgs::eSplitVert) ? rcNewSplitter.top : rcNewSplitter.left) - ((m_SplitType == RConStartArgs::eSplitVert) ? rcSplitter.top : rcSplitter.left);
+				int iCellsChanged = iChanged / nCellSize;
+
+				bChanged = (m_SplitType == RConStartArgs::eSplitVert) ? (rcNewSplitter.top != rcSplitter.top) : (rcNewSplitter.left != rcSplitter.left);
+
+				// Из-за округлений - могли "несмочь"
+				if (!bChanged)
+				{
+					int nTries = 20;
+					int nDiff = (iCells > 0)
+						? ((nCellSize * (1000/4)) / (iNewSize1 + iNewSize2))
+						: ((nCellSize * (-1000/4)) / (iNewSize1 + iNewSize2));
+					while (!bChanged && ((nTries--) > 0))
+					{
+						nNewSplitPercent10 = max(1,min(mn_SplitPercent10+nDiff,999)); // (0.1% - 99.9%)*10
+						if (nNewSplitPercent10 == mn_SplitPercent10)
+							break; // дальше некуда
+						mn_SplitPercent10 = nNewSplitPercent10;
+						// Пробуем еще раз
+						CalcSplitRect(mrc_Full, rcNewCon1, rcNewCon2, rcNewSplitter);
+						bChanged = (m_SplitType == RConStartArgs::eSplitVert) ? (rcNewSplitter.top != rcSplitter.top) : (rcNewSplitter.left != rcSplitter.left);
+					}
+				}
+
+				// Если размер консоли окажется менее минимального - откатим
+				if (((m_SplitType == RConStartArgs::eSplitVert)
+						&& (((rcNewCon1.bottom-rcNewCon1.top) < (iPadSize+nCellSize*nMinCells))
+							|| ((rcNewCon2.bottom-rcNewCon2.top) < (iPadSize+nCellSize*nMinCells))))
+					|| ((m_SplitType == RConStartArgs::eSplitHorz)
+						&& (((rcNewCon1.right-rcNewCon1.left) < (iPadSize+nCellSize*nMinCells))
+							|| ((rcNewCon2.right-rcNewCon2.left) < (iPadSize+nCellSize*nMinCells))))
+					)
+				{
+					mn_SplitPercent10 = nSaveSplitPercent10;
+				}
+
+				bChanged = (nSaveSplitPercent10 != mn_SplitPercent10);
+			}
+		}
+	}
+
+	return bChanged;
+}
+
+bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int iVert /*= 0*/)
+{
+	if (!apVCon || (!iHorz && !iVert))
+	{
+		_ASSERTE(apVCon && (iHorz || iVert));
+		return false;
+	}
+	
+	CVConGuard VCon(apVCon);
+	if (!apVCon->mp_Group)
+	{
+		_ASSERTE(apVCon->mp_Group);
+		return false;
+	}
+
+	bool bChanged = false;
+
+	CVConGroup* p = (CVConGroup*)apVCon->mp_Group;
+
+	if (iHorz != 0)
+	{
+		// Нужно найти ближайшую группу, разделенную слева-направо
+		CVConGroup* ps = p;
+		while (ps && (ps->m_SplitType != RConStartArgs::eSplitHorz))
+		{
+			ps = ps->mp_Parent;
+		}
+		// Нашли? Корректируем mn_SplitPercent10
+		if (ps && ps->ReSizeSplitter(iHorz))
+		{
+			bChanged = true;
+		}
+	}
+
+	if (iVert != 0)
+	{
+		// Нужно найти ближайшую группу, разделенную сверху-вниз
+		CVConGroup* ps = p;
+		while (ps && (ps->m_SplitType != RConStartArgs::eSplitVert))
+		{
+			ps = ps->mp_Parent;
+		}
+		// Нашли? Корректируем mn_SplitPercent10
+		if (ps && ps->ReSizeSplitter(iVert))
+		{
+			bChanged = true;
+		}
+	}
+
+	if (bChanged)
+	{
+		RECT mainClient = gpConEmu->CalcRect(CER_MAINCLIENT, gp_VActive);
+		CVConGroup::SyncAllConsoles2Window(mainClient, CER_MAINCLIENT);
+		CVConGroup::ReSizePanes(mainClient);
+	}
+
+	return bChanged;
 }
 
 // Разбиение в координатах DC (pixels)
@@ -696,6 +857,8 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 		_ASSERTE((m_SplitType != RConStartArgs::eSplitNone) && "Need no split");
 		return;
 	}
+
+	WARNING("Не учитывается gpSet->nCenterConsolePad?");
 
 	UINT nSplit = max(1,min(mn_SplitPercent10,999));
 	//UINT nPadSizeX = 0, nPadSizeY = 0;
@@ -745,7 +908,7 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 		rcCon2 = MakeRect(rcNewCon.right - nCon2Width, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
 		rcSplitter = MakeRect(rcCon1.right+1, rcCon1.top, rcCon2.left, rcCon2.bottom);
 	}
-	else
+	else // RConStartArgs::eSplitVert
 	{
 		UINT nHeight = rcNewCon.bottom - rcNewCon.top;
 		UINT nPadY = gpSet->nSplitHeight;
@@ -1707,7 +1870,7 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 //	return false;
 //}
 
-bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/)
+bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/, bool bForceKill /*= false*/)
 {
 	CVConGuard VCon(gp_VActive);
 
@@ -1757,6 +1920,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 			{
 				ConfirmCloseParam Parm;
 				Parm.bGroup = TRUE;
+				Parm.bForceKill = bForceKill;
 				Parm.nConsoles = nConsoles;
 				Parm.nOperations = nProgress;
 				Parm.nUnsavedEditors = nEditors;
@@ -1806,6 +1970,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 		else
 		{
 			ConfirmCloseParam Parm;
+			Parm.bForceKill = bForceKill;
 			Parm.nConsoles = nConsoles;
 			Parm.nOperations = nProgress;
 			Parm.nUnsavedEditors = nEditors;
@@ -2144,7 +2309,7 @@ void CVConGroup::CloseAllButActive(CVirtualConsole* apVCon/*may be null*/)
 	}
 }
 
-void CVConGroup::CloseGroup(CVirtualConsole* apVCon/*may be null*/)
+void CVConGroup::CloseGroup(CVirtualConsole* apVCon/*may be null*/, bool abKillActiveProcess /*= false*/)
 {
 	CVConGuard VCon(gp_VActive);
 	if (!gp_VActive)
@@ -2158,14 +2323,14 @@ void CVConGroup::CloseGroup(CVirtualConsole* apVCon/*may be null*/)
 	int nCount = pActiveGroup->GetGroupPanes(&Panes);
 	if (nCount > 0)
 	{
-		if (CloseQuery(&Panes, NULL))
+		if (CloseQuery(&Panes, NULL, abKillActiveProcess))
 		{
 			for (int i = (nCount - 1); i >= 0; i--)
 			{
 				CVirtualConsole* pVCon = Panes[i]->VCon();
 				if (pVCon)
 				{
-					pVCon->RCon()->CloseConsole(false, false);
+					pVCon->RCon()->CloseConsole(abKillActiveProcess, false);
 				}
 			}
 		}
@@ -2400,6 +2565,112 @@ HWND CVConGroup::DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const 
 	}
 
 	return hWndDC;
+}
+
+CVConGroup* CVConGroup::FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/)
+{
+	CVConGroup* pNext = this;
+	CVConGroup* pCmp = this;
+
+	if (nHorz == 0 && nVert != 0)
+	{
+		if (pNext->mp_Parent->m_SplitType != RConStartArgs::eSplitVert)
+		{
+			// We need nearest vertical split, find it
+			while (pNext->mp_Parent && pNext->mp_Parent->mp_Parent && (pNext->mp_Parent->m_SplitType != RConStartArgs::eSplitVert))
+			{
+				pCmp = pNext;
+				pNext = pNext->mp_Parent;
+			}
+		}
+
+		if (pNext->mp_Parent && pNext->mp_Parent->m_SplitType == RConStartArgs::eSplitVert)
+		{
+			if (pNext == pNext->mp_Parent->mp_Grp1 && nVert > 0)
+			{
+				pNext = pNext->mp_Parent->mp_Grp2->FindNextPane(rcPrev, 0, 0);
+				goto wrap;
+			}
+			if (pNext == pNext->mp_Parent->mp_Grp2 && nVert < 0)
+			{
+				pNext = pNext->mp_Parent->mp_Grp1->FindNextPane(rcPrev, 0, 0);
+				goto wrap;
+			}
+		}
+	}
+
+	if (nVert == 0 && nHorz != 0)
+	{
+		if (pNext->mp_Parent->m_SplitType != RConStartArgs::eSplitHorz)
+		{
+			// We need nearest horizontal split, find it
+			while (pNext->mp_Parent && pNext->mp_Parent->mp_Parent && (pNext->mp_Parent->m_SplitType != RConStartArgs::eSplitHorz))
+			{
+				pCmp = pNext;
+				pNext = pNext->mp_Parent;
+			}
+		}
+
+		if (pNext->mp_Parent && pNext->mp_Parent->m_SplitType == RConStartArgs::eSplitHorz)
+		{
+			if (pNext == pNext->mp_Parent->mp_Grp1 && nHorz > 0)
+			{
+				pNext = pNext->mp_Parent->mp_Grp2->FindNextPane(rcPrev, 0, 0);
+				goto wrap;
+			}
+			if (pNext == pNext->mp_Parent->mp_Grp2 && nHorz < 0)
+			{
+				pNext = pNext->mp_Parent->mp_Grp1->FindNextPane(rcPrev, 0, 0);
+				goto wrap;
+			}
+		}
+	}
+
+
+	if (pNext && (pNext->mp_Grp1 && pNext->mp_Grp2))
+	{
+		int iCenterNeed = (pNext->m_SplitType == RConStartArgs::eSplitHorz) ? ((rcPrev.right+rcPrev.left)>>1) : ((rcPrev.bottom+rcPrev.top)>>1);
+		RECT rc1 = pNext->mp_Grp1->mrc_Full;
+		RECT rc2 = pNext->mp_Grp2->mrc_Full;
+		int iCenter1 = (pNext->m_SplitType == RConStartArgs::eSplitHorz) ? ((rc1.right+rc1.left)>>1) : ((rc1.bottom+rc1.top)>>1);
+		int iCenter2 = (pNext->m_SplitType == RConStartArgs::eSplitHorz) ? ((rc2.right+rc2.left)>>1) : ((rc2.bottom+rc2.top)>>1);
+
+		if (_abs(iCenter1-iCenterNeed) < _abs(iCenter2-iCenterNeed))
+			pNext = pNext->mp_Grp1->FindNextPane(rcPrev, 0, 0);
+		else if (pNext->mp_Grp2)
+			pNext = pNext->mp_Grp2->FindNextPane(rcPrev, 0, 0);
+		goto wrap;
+	}
+
+wrap:
+	return pNext;
+}
+
+bool CVConGroup::ActivateNextPane(CVirtualConsole* apVCon, int nHorz /*= 0*/, int nVert /*= 0*/)
+{
+	CVConGuard guard(apVCon);
+	if (!isValid(apVCon))
+		return false;
+	CVConGroup* pGrp = (CVConGroup*)apVCon->mp_Group;
+	if (!pGrp || !pGrp->mp_Parent)
+		return false;
+	RECT wasRect = pGrp->mrc_Full;
+
+	bool bActivated = false;
+	CVConGroup* pNext = pGrp->FindNextPane(wasRect, nHorz, nVert);
+	if (pNext)
+	{
+		if ((pNext != pGrp) && (pNext->mp_Item))
+		{
+			bActivated = CVConGroup::Activate(pNext->mp_Item);
+		}
+		else
+		{
+			_ASSERTE((pNext != pGrp) && (pNext->mp_Item));
+		}
+	}
+
+	return bActivated;
 }
 
 bool CVConGroup::Activate(CVirtualConsole* apVCon)
@@ -3062,6 +3333,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 
 		if (!gp_VCon[i])
 		{
+			bool bTabbar = gpConEmu->mp_TabBar->IsTabsShown();
 			CVirtualConsole* pOldActive = gp_VActive;
 			gb_CreatingActive = true;
 			pVCon = CVConGroup::CreateVCon(args, gp_VCon[i]);
@@ -3106,6 +3378,12 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 					//if (pOldActive && (pOldActive != gp_VActive) && !pOldActive->isVisible())
 					//	pOldActive->ShowView(SW_HIDE);
 					//	//ShowWindow(pOldActive->GetView(), SW_HIDE);
+				}
+
+				// Если была смена конфигурации окна (появились табы)
+				if (!bTabbar && gpConEmu->mp_TabBar->IsTabsShown())
+				{
+					gpConEmu->OnTabbarActivated(true);
 				}
 			}
 
@@ -3172,6 +3450,14 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 	// Теперь rc должен соответствовать CER_MAINCLIENT/CER_BACK
 	RECT rcAddShift = MakeRect(0,0);
 
+#ifdef _DEBUG
+	if ((tWhat == CER_DC || tWhat == CER_BACK) && (tFrom == CER_MAIN || tFrom == CER_MAINCLIENT))
+	{
+		//_ASSERTE(FALSE && "Fails in DoubleView"); // нужно переделать для split, считает по целой области
+		bool bDbg = false;
+	}
+#endif
+
 	if ((tWhat == CER_DC) && (tFrom != CER_CONSOLE_CUR))
 	{
 		_ASSERTE(pVCon!=NULL);
@@ -3236,12 +3522,12 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 	
 	switch (tWhat)
 	{
-		case CER_BACK: // switch (tWhat)
-		{
-			TODO("DoubleView");
-			RECT rcShift = gpConEmu->CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
-			CConEmuMain::AddMargins(rc, rcShift);
-		} break;
+		//case CER_BACK: // switch (tWhat)
+		//{
+		//	TODO("DoubleView");
+		//	RECT rcShift = gpConEmu->CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
+		//	CConEmuMain::AddMargins(rc, rcShift);
+		//} break;
 		case CER_SCROLL: // switch (tWhat)
 		{
 			RECT rcShift = gpConEmu->CalcMargins(tTabAction);
@@ -3250,6 +3536,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			return rc; // Иначе внизу еще будет коррекция по DC (rcAddShift)
 		} break;
 		case CER_DC: // switch (tWhat)
+		case CER_BACK: // switch (tWhat)
 		case CER_CONSOLE_ALL: // switch (tWhat)
 		case CER_CONSOLE_CUR: // switch (tWhat)
 		case CER_CONSOLE_NTVDMOFF: // switch (tWhat)
@@ -3284,7 +3571,8 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			}
 
 			// Коррекция отступов
-			if (tFrom == CER_MAINCLIENT || tFrom == CER_BACK || tFrom == CER_WORKSPACE)
+			if ((tFrom == CER_MAINCLIENT || tFrom == CER_BACK || tFrom == CER_WORKSPACE)
+				&& (tWhat != CER_BACK))
 			{
 				// Прокрутка. Пока только справа (планируется и внизу)
 				RECT rcShift = gpConEmu->CalcMargins(CEM_SCROLL);
@@ -3426,6 +3714,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 	return rc;
 }
 
+#if 0
 void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
 {
 	sz1 = size; sz2 = size;
@@ -3480,6 +3769,7 @@ void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
 		sz2.Y = max(rcCon2.bottom,MIN_CON_HEIGHT);
 	}
 }
+#endif
 
 void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync)
 {
@@ -3672,7 +3962,7 @@ void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/, bool bSync/*=fal
 	else
 		rcWnd = gpConEmu->CalcRect(CER_MAINCLIENT, VCon.VCon());
 
-	SyncAllConsoles2Window(rcWnd, CER_MAINCLIENT, bSync);
+	SyncAllConsoles2Window(rcWnd, CER_MAINCLIENT, bSync/*abSetRedraw*/);
 }
 
 // -- функция пустая, игнорируется

@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -363,8 +363,8 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	#endif
 	mb_DataChanged = false;
 
-	int nStatusWidth = rcStatus.right-rcStatus.left+1;
-	int nStatusHeight = rcStatus.bottom-rcStatus.top+1;
+	int nStatusWidth = rcStatus.right - rcStatus.left + 1;
+	int nStatusHeight = rcStatus.bottom - rcStatus.top + ((gpSet->isStatusBarFlags & csf_NoVerticalPad) ? 0 : 1);
 
 	// Проверить клавиатуру
 	IsKeyboardChanged();
@@ -765,7 +765,9 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				;
 			}
 
-			RECT rcText = {rcField.left+1, rcField.top+1, rcField.right-1, rcField.bottom-1};
+			int iTopPad = (gpSet->isStatusBarFlags & csf_HorzDelim) ? 1 : 0;
+			int iBottomPad = ((gpSet->isStatusBarFlags & csf_NoVerticalPad) && !(gpSet->isStatusBarFlags & csf_HorzDelim)) ? 0 : 1;
+			RECT rcText = {rcField.left+1, rcField.top+iTopPad, rcField.right-1, rcField.bottom-iBottomPad};
 
 			#ifdef DUMP_STATUS_IMG
 			if (bNeedDumpImage)

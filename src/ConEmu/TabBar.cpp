@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -99,12 +99,6 @@ WARNING("TB_GETIDEALSIZE - awailable on XP only, use insted TB_GETMAXSIZE");
 //	BID_TOOLBAR_LAST_IDX,
 //};
 
-#define POST_UPDATE_TIMEOUT 2000
-
-#define FAILED_TABBAR_TIMERID 101
-#define FAILED_TABBAR_TIMEOUT 3000
-
-#define ACTIVATE_TAB_CRITICAL 300
 
 //typedef long (WINAPI* ThemeFunction_t)();
 
@@ -681,17 +675,20 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
 			gpConEmu->setFocus();
 			return 0;
 		}
-		case WM_TIMER:
-
-			if (wParam == FAILED_TABBAR_TIMERID)
-			{
-				KillTimer(hwnd, wParam);
-				SendMessage(gpConEmu->mp_TabBar->mh_Balloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gpConEmu->mp_TabBar->tiBalloon);
-				SendMessage(gpConEmu->mp_TabBar->mh_TabTip, TTM_ACTIVATE, TRUE, 0);
-			};
 	}
 
 	return CallWindowProc(_defaultTabProc, hwnd, uMsg, wParam, lParam);
+}
+
+LRESULT TabBarClass::OnTimer(WPARAM wParam)
+{
+	if (wParam == TIMER_FAILED_TABBAR_ID)
+	{
+		gpConEmu->SetKillTimer(false, TIMER_FAILED_TABBAR_ID, 0);
+		SendMessage(gpConEmu->mp_TabBar->mh_Balloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gpConEmu->mp_TabBar->tiBalloon);
+		SendMessage(gpConEmu->mp_TabBar->mh_TabTip, TTM_ACTIVATE, TRUE, 0);
+	}
+	return 0;
 }
 
 // Window procedure for Toolbar (Multiconsole & BufferHeight)
@@ -818,11 +815,12 @@ void TabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	}
 
 	_active = true;
-	if (abPreSyncConsole && (gpConEmu->WindowMode == wmNormal))
+	if (abPreSyncConsole && gpConEmu->WindowMode == wmNormal)
 	{
 		RECT rcIdeal = gpConEmu->GetIdealRect();
 		CVConGroup::SyncConsoleToWindow(&rcIdeal, TRUE);
 	}
+	gpConEmu->OnTabbarActivated(true);
 	UpdatePosition();
 }
 
@@ -837,6 +835,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 		RECT rcIdeal = gpConEmu->GetIdealRect();
 		CVConGroup::SyncConsoleToWindow(&rcIdeal, true);
 	}
+	gpConEmu->OnTabbarActivated(false);
 	UpdatePosition();
 }
 
@@ -3018,7 +3017,7 @@ void TabBarClass::ShowTabError(LPCTSTR asInfo, int tabIndex)
 		//int pty = 0; //(rcControl.top + rcControl.bottom) / 2;
 		SendMessage(mh_Balloon, TTM_TRACKPOSITION, 0, MAKELONG((rcTab.left+rcTab.right)>>1,rcTab.bottom));
 		SendMessage(mh_Balloon, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tiBalloon);
-		SetTimer(mh_Tabbar, FAILED_TABBAR_TIMERID, FAILED_TABBAR_TIMEOUT, 0);
+		gpConEmu->SetKillTimer(true, TIMER_FAILED_TABBAR_ID, TIMER_FAILED_TABBAR_ELAPSE);
 	}
 	else
 	{

@@ -344,6 +344,12 @@ int WINAPI OnGetClassNameA(HWND hWnd, LPSTR lpClassName, int nMaxCount);
 int WINAPI OnGetClassNameW(HWND hWnd, LPWSTR lpClassName, int nMaxCount);
 BOOL WINAPI OnMoveWindow(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint);
 BOOL WINAPI OnSetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
+LONG WINAPI OnSetWindowLongA(HWND hWnd, int nIndex, LONG dwNewLong);
+LONG WINAPI OnSetWindowLongW(HWND hWnd, int nIndex, LONG dwNewLong);
+#ifdef WIN64
+LONG_PTR WINAPI OnSetWindowLongPtrA(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
+LONG_PTR WINAPI OnSetWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
+#endif
 BOOL WINAPI OnGetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
 BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
 BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -619,6 +625,12 @@ bool InitHooksUser32()
 		{(void*)OnGetActiveWindow,		"GetActiveWindow",		user32},
 		{(void*)OnMoveWindow,			"MoveWindow",			user32},
 		{(void*)OnSetWindowPos,			"SetWindowPos",			user32},
+		{(void*)OnSetWindowLongA,		"SetWindowLongA",		user32},
+		{(void*)OnSetWindowLongW,		"SetWindowLongW",		user32},
+		#ifdef WIN64
+		{(void*)OnSetWindowLongPtrA,	"SetWindowLongPtrA",	user32},
+		{(void*)OnSetWindowLongPtrW,	"SetWindowLongPtrW",	user32},
+		#endif
 		{(void*)OnGetWindowPlacement,	"GetWindowPlacement",	user32},
 		{(void*)OnSetWindowPlacement,	"SetWindowPlacement",	user32},
 		{(void*)OnPostMessageA,			"PostMessageA",			user32},
@@ -2122,6 +2134,86 @@ BOOL WINAPI OnMoveWindow(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL 
 
 	return lbRc;
 }
+
+LONG WINAPI OnSetWindowLongA(HWND hWnd, int nIndex, LONG dwNewLong)
+{
+	typedef BOOL (WINAPI* OnSetWindowLongA_t)(HWND hWnd, int nIndex, LONG dwNewLong);
+	ORIGINALFASTEX(SetWindowLongA,NULL);
+	LONG lRc = 0;
+
+	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
+	{
+		_ASSERTRESULT(FALSE);
+		SetLastError(ERROR_INVALID_HANDLE);
+		lRc = 0; // обманем. приложениям запрещено менять ConEmuDC
+	}
+	else if (F(SetWindowLongA))
+	{
+		lRc = F(SetWindowLongA)(hWnd, nIndex, dwNewLong);
+	}
+
+	return lRc;
+}
+LONG WINAPI OnSetWindowLongW(HWND hWnd, int nIndex, LONG dwNewLong)
+{
+	typedef BOOL (WINAPI* OnSetWindowLongW_t)(HWND hWnd, int nIndex, LONG dwNewLong);
+	ORIGINALFASTEX(SetWindowLongW,NULL);
+	LONG lRc = 0;
+
+	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
+	{
+		_ASSERTRESULT(FALSE);
+		SetLastError(ERROR_INVALID_HANDLE);
+		lRc = 0; // обманем. приложениям запрещено менять ConEmuDC
+	}
+	else if (F(SetWindowLongW))
+	{
+		lRc = F(SetWindowLongW)(hWnd, nIndex, dwNewLong);
+	}
+
+	return lRc;
+}
+#ifdef WIN64
+LONG_PTR WINAPI OnSetWindowLongPtrA(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
+{
+	typedef BOOL (WINAPI* OnSetWindowLongPtrA_t)(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
+	ORIGINALFASTEX(SetWindowLongPtrA,NULL);
+	LONG_PTR lRc = 0;
+
+	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
+	{
+		_ASSERTRESULT(FALSE);
+		SetLastError(ERROR_INVALID_HANDLE);
+		lRc = 0; // обманем. приложениям запрещено менять ConEmuDC
+	}
+	else if (F(SetWindowLongPtrA))
+	{
+		lRc = F(SetWindowLongPtrA)(hWnd, nIndex, dwNewLong);
+	}
+
+	return lRc;
+}
+LONG_PTR WINAPI OnSetWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
+{
+	typedef BOOL (WINAPI* OnSetWindowLongPtrW_t)(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
+	ORIGINALFASTEX(SetWindowLongPtrW,NULL);
+	LONG_PTR lRc = 0;
+
+	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
+	{
+		_ASSERTRESULT(FALSE);
+		SetLastError(ERROR_INVALID_HANDLE);
+		lRc = 0; // обманем. приложениям запрещено менять ConEmuDC
+	}
+	else if (F(SetWindowLongPtrW))
+	{
+		lRc = F(SetWindowLongPtrW)(hWnd, nIndex, dwNewLong);
+	}
+
+	return lRc;
+}
+#endif
+
 
 BOOL WINAPI OnSetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
 {

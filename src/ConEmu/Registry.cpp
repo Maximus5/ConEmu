@@ -662,6 +662,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 			_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%04i-%02i-%02i %02i:%02i:%02i",
 				st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 			SetAttr(mp_Key, L"modified", szTime);
+			SetAttr(mp_Key, L"build", gpConEmu->ms_ConEmuBuild);
 		}
 
 		lbRc = true;
