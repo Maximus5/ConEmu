@@ -627,7 +627,8 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_ConEmuView] = true;
 	isStatusColumnHidden[csi_ServerHWND] = true;
 
-	isTabs = 1; nTabsLocation = 0; isOneTabPerGroup = false; isActivateSplitMouseOver = true;
+	isTabs = 1; nTabsLocation = 0; isOneTabPerGroup = false;
+	isActivateSplitMouseOver = false;
 	isTabSelf = true; isTabRecent = true; isTabLazy = true;
 	nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION; nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
 	ilDragHeight = 10;

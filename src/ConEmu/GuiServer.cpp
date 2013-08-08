@@ -148,6 +148,20 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			// Приходит из другой копии ConEmu.exe, когда она запущена с ключом /single, /showhide, /showhideTSA
 			DEBUGSTR(L"GUI recieved CECMD_NEWCMD\n");
 
+			if (pIn->NewCmd.isAdvLogging && !gpSetCls->isAdvLogging)
+			{
+				gpSetCls->isAdvLogging = pIn->NewCmd.isAdvLogging;
+				gpConEmu->CreateLog();
+			}
+
+			if (gpSetCls->isAdvLogging && (pIn->NewCmd.isAdvLogging > gpSetCls->isAdvLogging))
+			{
+				wchar_t szLogLevel[80];
+				_wsprintf(szLogLevel, SKIPLEN(countof(szLogLevel)) L"Changing log level! Old=%u, New=%u", (UINT)gpSetCls->isAdvLogging, (UINT)pIn->NewCmd.isAdvLogging);
+				gpConEmu->LogString(szLogLevel);
+				gpSetCls->isAdvLogging = pIn->NewCmd.isAdvLogging;
+			}
+
 			if (gpSetCls->isAdvLogging)
 			{
 				size_t cchAll = 120 + _tcslen(pIn->NewCmd.szConEmu) + _tcslen(pIn->NewCmd.szCurDir) + _tcslen(pIn->NewCmd.szCommand);

@@ -271,6 +271,7 @@ CConEmuMain::CConEmuMain()
 	//GetVersionEx(&gOSVer);
 
 	mp_Log = NULL;
+	InitializeCriticalSection(&mcs_Log);
 
 	mb_CommCtrlsInitialized = false;
 	mh_AboutDlg = NULL;
@@ -1869,15 +1870,18 @@ DWORD CConEmuMain::GetWorkWindowStyleEx()
 	return styleEx;
 }
 
-void CConEmuMain::CreateLog()
+bool CConEmuMain::CreateLog()
 {
 	_ASSERTE(gpSetCls->isAdvLogging && !mp_Log);
 
-	SafeDelete(mp_Log);
+	if (mp_Log!=NULL)
+	{
+		_ASSERTE(mp_Log==NULL);
+		return true; // создан уже
+	}
 
-	//if (!gpSetCls->isAdvLogging)
-	//{
-	//}
+	bool bRc = false;
+	EnterCriticalSection(&mcs_Log);
 
 	mp_Log = new MFileLog(L"ConEmu-gui", ms_ConEmuExeDir, GetCurrentProcessId());
 
@@ -1888,10 +1892,18 @@ void CConEmuMain::CreateLog()
 		_wsprintf(szError, SKIPLEN(countof(szError)) L"Create log file failed! ErrCode=0x%08X\n%s\n", (DWORD)hr, mp_Log->GetLogFileName());
 		MBoxA(szError);
 		SafeDelete(mp_Log);
-		return;
+		// Сброс!
+		gpSetCls->isAdvLogging = 0;
+	}
+	else
+	{
+		mp_Log->LogStartEnv(gpStartEnv);
+		bRc = true;
 	}
 
-	mp_Log->LogStartEnv(gpStartEnv);
+	LeaveCriticalSection(&mcs_Log);
+
+	return bRc;
 }
 
 void CConEmuMain::LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/)
@@ -3096,6 +3108,7 @@ CConEmuMain::~CConEmuMain()
 	LoadImageFinalize();
 
 	SafeDelete(mp_Log);
+	DeleteCriticalSection(&mcs_Log);
 
 	_ASSERTE(mh_LLKeyHookDll==NULL);
 	CommonShutdown();
@@ -8309,6 +8322,8 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				// If need to run command in new tab of existing window,
 				// "ShowHide" must be "sih_None"
 
+				pIn->NewCmd.isAdvLogging = gpSetCls->isAdvLogging;
+
 				pIn->NewCmd.ShowHide = gpSetCls->SingleInstanceShowHide;
 				if (gpSetCls->SingleInstanceShowHide == sih_None)
 				{
@@ -9930,7 +9945,7 @@ bool CConEmuMain::isMainThread()
 	return dwTID == mn_MainThreadId;
 }
 
-bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*=true*/)
+bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*=true*/, HWND* phFore/*=NULL*/)
 {
 	if (!this) return false;
 
@@ -9938,6 +9953,8 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 	static bool isMe = false;
 	static bool bLastRealAlso, bLastDialogsAlso;
 	HWND h = getForegroundWindow();
+	if (phFore)
+		*phFore = h;
 
 	if ((h != hLastFore) || (bLastRealAlso != abRealAlso) || (bLastDialogsAlso != abDialogsAlso))
 	{
@@ -17087,7 +17104,8 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 			EnableWindow(ghWnd, TRUE);
 	}
 
-	bool bForeground = isMeForeground();
+	HWND hForeWnd = NULL;
+	bool bForeground = isMeForeground(false, true, &hForeWnd);
 	if (bForeground && !m_GuiInfo.bGuiActive)
 	{
 		UpdateGuiInfoMappingActive(true);
@@ -17101,7 +17119,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		if (!PTDIFFTEST(mouse.ptLastSplitOverCheck, SPLITOVERCHECK_DELTA))
 		{
 			mouse.ptLastSplitOverCheck = ptCur;
-			if (!isIconic() && (bForeground || isMeForeground(true, false)))
+			if (!isIconic() && (hForeWnd == ghWnd || CVConGroup::isOurGuiChildWindow(hForeWnd)))
 			{
 				// Курсор над ConEmu?
 				RECT rcClient = CalcRect(CER_MAIN);
@@ -17110,15 +17128,25 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 				{
 					if (CVConGroup::GetVConFromPoint(ptCur, &VConFromPoint))
 					{
-						if (Activate(VConFromPoint.VCon()))
+						bool bActive = isActive(VConFromPoint.VCon(), false);
+						if (!bActive)
 						{
-							pVCon = VConFromPoint.VCon();
-						}
+							// Если был активирован GUI CHILD - то фокус нужно сначала поставить в ConEmu
+							if (!bForeground && pVCon && pVCon->RCon()->GuiWnd())
+							{
+								apiSetForegroundWindow(ghWnd);
+							}
 
-						// Если был активен GUI CHILD - то ConEmu может НЕ активироваться
-						if (!bForeground && !VConFromPoint.VCon()->RCon()->GuiWnd())
-						{
-							apiSetForegroundWindow(ghWnd);
+							if (Activate(VConFromPoint.VCon()))
+							{
+								pVCon = VConFromPoint.VCon();
+							}
+
+							// Если был активен GUI CHILD - то ConEmu может НЕ активироваться
+							if (!bForeground && !VConFromPoint.VCon()->RCon()->GuiWnd())
+							{
+								apiSetForegroundWindow(ghWnd);
+							}
 						}
 					}
 				}

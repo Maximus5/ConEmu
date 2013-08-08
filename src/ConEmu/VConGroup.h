@@ -122,6 +122,7 @@ public:
 	static bool isFilePanel(bool abPluginAllowed=false);
 	static bool isNtvdm(BOOL abCheckAllConsoles=FALSE);
 	static bool isOurConsoleWindow(HWND hCon);
+	static bool isOurGuiChildWindow(HWND hWnd);
 	static bool isOurWindow(HWND hAnyWnd);
 	static bool isChildWindowVisible();
 	static bool isPictureView();

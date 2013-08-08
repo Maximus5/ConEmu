@@ -197,12 +197,12 @@ class CConEmuMain :
 		CConEmuInside *mp_Inside;
 		CStatus *mp_Status;
 		CToolTip *mp_Tip;
-		MFileLog *mp_Log;
+		MFileLog *mp_Log; CRITICAL_SECTION mcs_Log; // mcs_Log - для создания
 		CDefaultTerminal *mp_DefTrm;
 		CEFindDlg *mp_Find;
 		CRunQueue *mp_RunQueue;
 
-		void CreateLog();
+		bool CreateLog();
 		void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
 		void LogString(LPCSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
 		void LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -712,7 +712,7 @@ class CConEmuMain :
 		bool isInImeComposition();		
 		bool isLBDown();
 		bool isMainThread();
-		bool isMeForeground(bool abRealAlso=false, bool abDialogsAlso=true);
+		bool isMeForeground(bool abRealAlso=false, bool abDialogsAlso=true, HWND* phFore=NULL);
 		bool isMouseOverFrame(bool abReal=false);		
 		bool isNtvdm(BOOL abCheckAllConsoles=FALSE);		
 		bool isOurConsoleWindow(HWND hCon);		

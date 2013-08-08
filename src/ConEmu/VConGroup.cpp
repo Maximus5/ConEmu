@@ -1711,6 +1711,32 @@ bool CVConGroup::isOurWindow(HWND hAnyWnd)
 	return false;
 }
 
+bool CVConGroup::isOurGuiChildWindow(HWND hWnd)
+{
+	if (!hWnd)
+		return false;
+
+	DWORD nPID = 0;
+	if (!GetWindowThreadProcessId(hWnd, &nPID))
+		return false;
+	// интересует только Child GUI
+	if (nPID == GetCurrentProcessId())
+		return false;
+
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		CVConGuard VCon(gp_VCon[i]);
+		CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
+		if (!pRCon)
+			continue;
+
+		if ((pRCon->GuiWnd() == hWnd) || (pRCon->GuiWndPID() == nPID))
+			return true;
+	}
+
+	return false;
+}
+
 bool CVConGroup::isChildWindowVisible()
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)

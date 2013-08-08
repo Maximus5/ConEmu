@@ -15,6 +15,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.08.08
+[%] Issue 1181: Activate pane by mouse over works now with GUI child applications.
+[*] Option "Activate split on mouse over" is disabled by default.
+[*] Internal log changing: "ConEmu /log /single" will affect existing instance.
+
+
 2013.08.07
 [!] Forbid Far Manager plugins to change window styles of ConEmu windows.
 [*] Some fixes in Far Manager command execution interceptor.
