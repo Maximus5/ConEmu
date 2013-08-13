@@ -325,6 +325,7 @@ class CSettings
 	private:
 		void RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, LPCWSTR asCmd, LPCWSTR asIcon);
 		void UnregisterShell(LPCWSTR asName);
+		void UnregisterShellInvalids();
 		bool DeleteRegKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName);
 	public:
 		void UnregisterFonts();

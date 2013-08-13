@@ -2519,6 +2519,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_UseTrueColor,(gpSet->isTrueColorer ? CECF_UseTrueColor : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessAnsi,(gpSet->isProcessAnsi ? CECF_ProcessAnsi : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_SuppressBells,(gpSet->isSuppressBells ? CECF_SuppressBells : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_ConExcHandler,(gpSet->isConsoleExceptionHandler ? CECF_ConExcHandler : 0));
 	// использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
 	switch (gpSet->isUseClink())
 	{
@@ -4617,9 +4618,19 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 		else
 		{
 			if ((Tile == cwc_TileLeft) && (CurTile == cwc_TileRight))
-				Tile = cwc_Current;
+			{
+				rcNewWnd = GetDefaultRect();
+				m_TileMode = Tile = cwc_Current;
+				HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+				JumpNextMonitor(ghWnd, hMon, false, rcNewWnd);
+			}
 			else if ((Tile == cwc_TileRight) && (CurTile == cwc_TileLeft))
-				Tile = cwc_Current;
+			{
+				rcNewWnd = GetDefaultRect();
+				m_TileMode = Tile = cwc_Current;
+				HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+				JumpNextMonitor(ghWnd, hMon, true, rcNewWnd);
+			}
 		}
 
 
@@ -4627,7 +4638,7 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 		{
 			// Вернуться из Tile-режима в нормальный
 			rcNewWnd = GetDefaultRect();
-			bChange = true;
+			//bChange = true;
 		}
 		else if (Tile == cwc_TileLeft)
 		{
@@ -4740,6 +4751,7 @@ bool CConEmuMain::JumpNextMonitor(bool Next)
 	}
 
 	wchar_t szInfo[100];
+	RECT rcMain;
 
 	HWND hJump = getForegroundWindow();
 	if (!hJump)
@@ -4761,24 +4773,40 @@ bool CConEmuMain::JumpNextMonitor(bool Next)
 		return false;
 	}
 
-	RECT rcMain = {};
-	bool bFullScreen = false;
-	bool bMaximized = false;
-	DWORD nStyles = GetWindowLong(hJump, GWL_STYLE);
-
 	if (hJump == ghWnd)
 	{
 		rcMain = CalcRect(CER_MAIN);
-		bFullScreen = isFullScreen();
-		bMaximized = bFullScreen ? false : isZoomed();
 	}
 	else
 	{
 		GetWindowRect(hJump, &rcMain);
 	}
 
+	return JumpNextMonitor(hJump, NULL, Next, rcMain);
+}
+
+bool CConEmuMain::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd)
+{
+	wchar_t szInfo[100];
+	RECT rcMain = {};
+	bool bFullScreen = false;
+	bool bMaximized = false;
+	DWORD nStyles = GetWindowLong(hJumpWnd, GWL_STYLE);
+
+	rcMain = rcJumpWnd;
+	if (hJumpWnd == ghWnd)
+	{
+		//-- rcMain = CalcRect(CER_MAIN);
+		bFullScreen = isFullScreen();
+		bMaximized = bFullScreen ? false : isZoomed();
+	}
+	else
+	{
+		//-- GetWindowRect(hJumpWnd, &rcMain);
+	}
+
 	MONITORINFO mi = {};
-	HMONITOR hNext = GetNextMonitorInfo(&mi, &rcMain, Next);
+	HMONITOR hNext = hJumpMon ? (GetMonitorInfoSafe(hJumpMon, mi) ? hJumpMon : NULL) : GetNextMonitorInfo(&mi, &rcMain, Next);
 	if (!hNext)
 	{
 		if (gpSetCls->isAdvLogging)
@@ -4805,14 +4833,14 @@ bool CConEmuMain::JumpNextMonitor(bool Next)
 
 	RECT rcNewMain = rcMain;
 
-	if ((bFullScreen || bMaximized) && (hJump == ghWnd))
+	if ((bFullScreen || bMaximized) && (hJumpWnd == ghWnd))
 	{
-		_ASSERTE(hJump == ghWnd);
+		_ASSERTE(hJumpWnd == ghWnd);
 		rcNewMain = CalcRect(bFullScreen ? CER_FULLSCREEN : CER_MAXIMIZED, mi.rcMonitor, CER_MAIN);
 	}
 	else
 	{
-		_ASSERTE(WindowMode==wmNormal || hJump!=ghWnd);
+		_ASSERTE(WindowMode==wmNormal || hJumpWnd!=ghWnd);
 
 		RECT rcPrevMon = bFullScreen ? miCur.rcMonitor : miCur.rcWork;
 		RECT rcNextMon = bFullScreen ? mi.rcMonitor : mi.rcWork;
@@ -4883,7 +4911,7 @@ bool CConEmuMain::JumpNextMonitor(bool Next)
 	
 	// Поскольку кнопки мы перехватываем - нужно предусмотреть
 	// прыжки и для других окон, например окна настроек
-	if (hJump == ghWnd)
+	if (hJumpWnd == ghWnd)
 	{
 		// Коррекция (заранее)
 		OnMoving(&rcNewMain);
@@ -4907,11 +4935,11 @@ bool CConEmuMain::JumpNextMonitor(bool Next)
 
 
 	// И перемещение
-	SetWindowPos(hJump, NULL, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER/*|SWP_DRAWFRAME*/|SWP_NOCOPYBITS);
-	//MoveWindow(hJump, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, FALSE);
+	SetWindowPos(hJumpWnd, NULL, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER/*|SWP_DRAWFRAME*/|SWP_NOCOPYBITS);
+	//MoveWindow(hJumpWnd, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, FALSE);
 
 
-	if (hJump == ghWnd)
+	if (hJumpWnd == ghWnd)
 	{
 		if (bFullScreen)
 		{

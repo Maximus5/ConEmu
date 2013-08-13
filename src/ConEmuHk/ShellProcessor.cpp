@@ -1231,7 +1231,11 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	}
 
 	if (lbEndQuote)
-		_wcscat_c((*psParam), nCchSize, L" \"");
+	{
+		// [conemu_ml:254] TCC fails while executing: ""F:\program files\take command\tcc.exe" /C "alias where" "
+		//--_wcscat_c((*psParam), nCchSize, L" \"");
+		_wcscat_c((*psParam), nCchSize, L"\"");
+	}
 
 
 #ifdef _DEBUG

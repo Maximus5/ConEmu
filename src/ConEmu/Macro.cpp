@@ -1754,13 +1754,34 @@ LPWSTR CConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon)
 			{
 				int nRc = (int)ShellExecuteW(ghWnd, pszOper, pszFile, pszParm, pszDir, nShowCmd);
 				
-				size_t cchSize = 16;
-				pszRc = (LPWSTR)malloc(2*cchSize);
-
 				if (nRc <= 32)
-					_wsprintf(pszRc, SKIPLEN(cchSize) L"Failed:%i", nRc);
+				{
+					switch (nRc)
+					{
+					case 0:
+						pszRc = lstrdup(L"OUT_OF_MEMORY"); break;
+					case ERROR_FILE_NOT_FOUND:
+						pszRc = lstrdup(L"ERROR_FILE_NOT_FOUND"); break;
+					case ERROR_PATH_NOT_FOUND:
+						pszRc = lstrdup(L"ERROR_PATH_NOT_FOUND"); break;
+					case ERROR_BAD_FORMAT:
+						pszRc = lstrdup(L"ERROR_BAD_FORMAT"); break;
+					case SE_ERR_ACCESSDENIED:
+						pszRc = lstrdup(L"SE_ERR_ACCESSDENIED"); break;
+					case SE_ERR_SHARE:
+						pszRc = lstrdup(L"SE_ERR_SHARE"); break;
+					default:
+						{
+							size_t cchSize = 16;
+							pszRc = (LPWSTR)malloc(2*cchSize);
+							_wsprintf(pszRc, SKIPLEN(cchSize) L"Failed:%i", nRc);
+						}
+					}
+				}
 				else
-					lstrcpyn(pszRc, L"OK", cchSize);
+				{
+					pszRc = lstrdup(L"OK");
+				}
 				
 				goto wrap;
 			}
@@ -1769,7 +1790,7 @@ LPWSTR CConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon)
 
 wrap:
 	SafeFree(pszBuf);
-	return lstrdup(L"InvalidArg");
+	return pszRc ? pszRc : lstrdup(L"InvalidArg");
 }
 
 LPWSTR CConEmuMacro::Split(GuiMacro* p, CRealConsole* apRCon)

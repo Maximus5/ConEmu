@@ -628,9 +628,11 @@ BEGIN
     CONTROL         "Suppress bells",cbSuppressBells,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,231,90,87,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,132,41,89,8
     CONTROL         "Show «was hidden» warning",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,41,119,8
-    GROUPBOX        "In-console options",IDC_STATIC,4,62,319,45
+    GROUPBOX        "In-console options",IDC_STATIC,4,62,319,58
     CONTROL         "Focus in child windows",cbFocusInChildWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,27,87,8
     PUSHBUTTON      "...",cbClinkWebPage,306,72,13,11
+    CONTROL         "Exception handler (debug)",cbConsoleExceptionHandler,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,105,119,8
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235
@@ -651,7 +653,7 @@ BEGIN
     CONTROL         "Same as OS",rbComspec_OSbit,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,63,54,8
     CONTROL         "Same as running application",rbComspec_AppBit,"Button",BS_AUTORADIOBUTTON,80,63,112,8
     CONTROL         "x32 always",rbComspec_x32,"Button",BS_AUTORADIOBUTTON,196,63,56,8
-    CONTROL         "Set ComSpec environment variable for child processes to 'tcc.exe'",cbComspecUpdateEnv,
+    CONTROL         "Set ComSpec environment variable for child processes to selected value",cbComspecUpdateEnv,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,84,309,8
     PUSHBUTTON      "Test",cbComspecTest,269,60,50,14
     LTEXT           "Cmd.exe output codepage:",IDC_STATIC,11,100,94,8
@@ -1371,6 +1373,10 @@ BEGIN
     END
 
     IDD_SPG_FEATURE, DIALOG
+    BEGIN
+    END
+
+    IDD_SPG_COMSPEC, DIALOG
     BEGIN
     END
 

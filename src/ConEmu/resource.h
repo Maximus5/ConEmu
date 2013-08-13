@@ -956,6 +956,8 @@
 #define cbActionBtn2                    2619
 #define cbActionBtn3                    2620
 #define vkCloseGroupPrc                 2621
+#define IDC_CHECK1                      2622
+#define cbConsoleExceptionHandler       2622
 
 // Next default values for new objects
 // 
@@ -963,7 +965,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        222
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2622
+#define _APS_NEXT_CONTROL_VALUE         2623
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

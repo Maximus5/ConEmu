@@ -1052,6 +1052,11 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 
 	_ASSERTE((ghConEmuWndDC==NULL) || (gpSrv->pColorerMapping!=NULL));
 
+	if ((gnRunMode == RM_ALTSERVER) && gpSrv->pConsole && (gpSrv->pConsole->hdr.Flags & CECF_ConExcHandler))
+	{
+		SetupCreateDumpOnException();
+	}
+
 	gpSrv->csAltSrv = new MSection();
 	gpSrv->csProc = new MSection();
 	gpSrv->nMainTimerElapse = 10;

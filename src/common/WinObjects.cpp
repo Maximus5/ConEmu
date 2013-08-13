@@ -4385,7 +4385,7 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 		return;
 	}
 
-	if (pOpt->isUpdateEnv)
+	if (pOpt->isUpdateEnv && (pOpt->csType != cst_EnvVar))
 	{
 		//if (pOpt->csType == cst_AutoTccCmd) -- always, if isUpdateEnv
 		{

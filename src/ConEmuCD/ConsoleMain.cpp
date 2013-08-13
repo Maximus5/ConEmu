@@ -754,6 +754,18 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 	return lExRc;
 }
 
+void SetupCreateDumpOnException()
+{
+	_ASSERTE(gnRunMode == RM_ALTSERVER);
+
+	// Far 3.x, telnet, Vim, etc.
+	// В этих программах ConEmuCD.dll может загружаться для работы с альтернативными буферами и TrueColor
+	if (!gpfnPrevExFilter && !IsDebuggerPresent())
+	{
+		// Сохраним, если фильтр уже был установлен - будем звать его из нашей функции
+		gpfnPrevExFilter = SetUnhandledExceptionFilter(CreateDumpOnException);
+	}
+}
 
 
 // Main entry point for ConEmuC.exe
@@ -772,6 +784,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	{
 		if (!IsDebuggerPresent())
 		{
+			// Наш exe-шник, gpfnPrevExFilter не нужен
 			SetUnhandledExceptionFilter(CreateDumpOnException);
 		}
 
@@ -783,6 +796,8 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		SetConsoleTextAttribute(hOut, 7);
 		#endif
 	}
+	#if 0
+	// Issue 1183, 1188, 1189: Exception filter вызывается (некорректно?) при обработке EMenu или закрытии NetBox
 	else if (anWorkMode == 1)
 	{
 		// Far 3.x, telnet, Vim, etc.
@@ -793,6 +808,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			gpfnPrevExFilter = SetUnhandledExceptionFilter(CreateDumpOnException);
 		}
 	}
+	#endif
 
 
 	// На всякий случай - сбросим

@@ -1249,6 +1249,8 @@ struct Settings
 		bool isPortableReg;
 		//reg->Load(L"SuppressBells", isSuppressBells);
 		bool isSuppressBells;
+		//reg->Load(L"ConsoleExceptionHandler", isConsoleExceptionHandler);
+		bool isConsoleExceptionHandler; // 
 
 		/* *** Debugging *** */
 		//reg->Load(L"ConVisible", isConVisible);

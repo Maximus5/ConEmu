@@ -229,6 +229,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое 
 int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/); // Создать необходимые события и нити
 void ServerDone(int aiRc, bool abReportShutdown = false);
 BOOL ServerInitConsoleMode();
+void SetupCreateDumpOnException();
 int ComspecInit();
 void ComspecDone(int aiRc);
 BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = NULL);

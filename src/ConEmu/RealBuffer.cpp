@@ -753,12 +753,20 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 
 	if (gpSetCls->isAdvLogging)
 	{
-		char szInfo[128];
+		char szInfo[128], szSizeCmd[32];
+		switch (anCmdID)
+		{
+		case CECMD_SETSIZESYNC:
+			lstrcpynA(szSizeCmd, "CECMD_SETSIZESYNC", countof(szSizeCmd)); break;
+		case CECMD_CMDSTARTED:
+			lstrcpynA(szSizeCmd, "CECMD_CMDSTARTED", countof(szSizeCmd)); break;
+		case CECMD_CMDFINISHED:
+			lstrcpynA(szSizeCmd, "CECMD_CMDFINISHED", countof(szSizeCmd)); break;
+		default:
+			_wsprintfA(szSizeCmd, SKIPLEN(countof(szSizeCmd)) "SizeCmd=%u", anCmdID);
+		}
 		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%s(Cols=%i, Rows=%i, Buf=%i, Top=%i)",
-		           (anCmdID==CECMD_SETSIZESYNC) ? "CECMD_SETSIZESYNC" :
-		           (anCmdID==CECMD_CMDSTARTED) ? "CECMD_CMDSTARTED" :
-		           (anCmdID==CECMD_CMDFINISHED) ? "CECMD_CMDFINISHED" :
-		           "UnknownSizeCommand", sizeX, sizeY, sizeBuffer, pIn->SetSize.nSendTopLine);
+		           szSizeCmd, sizeX, sizeY, sizeBuffer, pIn->SetSize.nSendTopLine);
 		mp_RCon->LogString(szInfo, TRUE);
 	}
 
@@ -815,12 +823,12 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 
 	gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, mp_RCon->ms_ConEmuC_Pipe, pOut);
 
-	if (!fSuccess || (pOut->hdr.cbSize < nOutSize))
+	if (!fSuccess || (pOut && (pOut->hdr.cbSize < nOutSize)))
 	{
 		if (gpSetCls->isAdvLogging)
 		{
 			char szInfo[128]; DWORD dwErr = GetLastError();
-			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv.ExecuteCmd FAILED!!! ErrCode=0x%08X, Bytes read=%i", dwErr, pOut->hdr.cbSize);
+			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv.ExecuteCmd FAILED!!! ErrCode=0x%08X, Bytes read=%i", dwErr, pOut ? pOut->hdr.cbSize : 0);
 			mp_RCon->LogString(szInfo);
 		}
 

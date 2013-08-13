@@ -976,6 +976,8 @@ const ConEmuConsoleFlags
 
 	CECF_SuppressBells   = 0x00000080, // Suppress output of char(7) to console (wich producess annoing bell sound)
 
+	CECF_ConExcHandler   = 0x00000100, // Set up "SetUnhandledExceptionFilter(CreateDumpOnException)" in alternative servers too
+
 	CECF_Empty = 0
 	;
 #define SetConEmuFlags(v,m,f) (v) = ((v) & ~(m)) | (f)

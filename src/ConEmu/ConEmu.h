@@ -771,6 +771,7 @@ class CConEmuMain :
 		ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi=NULL);
 		bool IsSizeFree(ConEmuWindowMode CheckMode = wmFullScreen);
 		bool JumpNextMonitor(bool Next);
+		bool JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd);
 	private:
 		struct {
 			bool bWasSaved;

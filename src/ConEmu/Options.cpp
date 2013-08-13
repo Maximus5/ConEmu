@@ -554,6 +554,7 @@ void Settings::InitSettings()
 
 	isProcessAnsi = true;
 	isSuppressBells = false; // пока не доделано - false
+	isConsoleExceptionHandler = false; // по умолчанию - false
 	mb_UseClink = true;
 	#ifdef USEPORTABLEREGISTRY
 	isPortableReg = true; // включено по умолчанию, DEBUG
@@ -2091,6 +2092,8 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		reg->Load(L"SuppressBells", isSuppressBells);
 
+		reg->Load(L"ConsoleExceptionHandler", isConsoleExceptionHandler);
+
 		reg->Load(L"UseClink", mb_UseClink);
 
 		#ifdef USEPORTABLEREGISTRY
@@ -3003,6 +3006,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 
 		_ASSERTE(isSuppressBells==false); // пока не доделано - не сохраняем
 		//reg->Save(L"SuppressBells", isSuppressBells);
+
+		reg->Save(L"ConsoleExceptionHandler", isConsoleExceptionHandler);
 
 		reg->Save(L"UseClink", mb_UseClink);
 
