@@ -1040,13 +1040,17 @@ static const CEFarWindowType
 
 	fwt_Elevated       = 0x00100,
 	fwt_NonElevated    = 0x00200, // Аргумент для поиска окна
-	fwt_Modal          = 0x00400,
+	fwt_ModalFarWnd    = 0x00400, // Бывший ConEmuTab.Modal
 	fwt_NonModal       = 0x00800, // Аргумент для поиска окна
 	fwt_PluginRequired = 0x01000, // Аргумент для поиска окна
 	fwt_ActivateFound  = 0x02000, // Активировать найденный таб. Аргумент для поиска окна
 	fwt_Disabled       = 0x04000, // Таб заблокирован другим модальным табом (или диалогом?)
-	fwt_Renamed        = 0x08000, // Таб был принудительно переименован пользователем
-	fwt_ActivateOther  = 0x10000  // Активировать найденный таб если он НЕ в активной консоли. Аргумент для поиска окна
+	fwt_Renamed        = 0x08000, // Таб был принудительно переименован пользователем (?)
+	fwt_ActivateOther  = 0x10000, // Аргумент для поиска окна. Активировать найденный таб если он НЕ в активной консоли
+	fwt_CurrentFarWnd  = 0x20000, // Бывший ConEmuTab.Current
+	fwt_ModifiedFarWnd = 0x40000, // Бывший ConEmuTab.Modified
+
+	fwt_CompareFlags   = fwt_Elevated|fwt_ModalFarWnd|fwt_Disabled|fwt_Renamed|fwt_CurrentFarWnd|fwt_ModifiedFarWnd;
 	;
 
 //TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");

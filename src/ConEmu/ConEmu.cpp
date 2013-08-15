@@ -7650,7 +7650,12 @@ void CConEmuMain::PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0
 
 void CConEmuMain::PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg)
 {
+#ifdef _DEBUG
+	CVConGuard VCon(apRCon->VCon());
+	SendMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, (LPARAM)pszErrMsg);
+#else
 	PostMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, (LPARAM)pszErrMsg);
+#endif
 }
 
 bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
@@ -18744,7 +18749,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				wchar_t* pszErrMsg = (wchar_t*)lParam;
 
 				if (this->isValid(pRCon))
+				{
+					CVConGuard VCon(pRCon->VCon());
 					MessageBox(ghWnd, pszErrMsg, this->GetLastTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
+				}
 
 				free(pszErrMsg);
 				return 0;

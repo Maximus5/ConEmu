@@ -29,8 +29,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include "DwmApi_Part.h"
-//#include "TabBarClass.h"
-//#include "FrameHolder.h"
 #include "ConEmu.h"
 #include "Options.h"
 

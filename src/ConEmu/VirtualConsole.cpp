@@ -584,6 +584,12 @@ int CVirtualConsole::GetActiveTab()
 
 bool CVirtualConsole::GetTab(int tabIdx, /*OUT*/ CTab* pTab)
 {
+	if (!this || !mp_RCon)
+	{
+		_ASSERTE(this && mp_RCon);
+		return false;
+	}
+
 	ConEmuTab tab = {};
 	if (!GetTab(tabIdx, &tab))
 		return false;

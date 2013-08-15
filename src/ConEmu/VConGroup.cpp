@@ -1208,7 +1208,7 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 			if (pRCon && pRCon->isFar(anWindowType & fwt_PluginRequired))
 			{
 				// »щем что-то конкретное?
-				if (!(anWindowType & (fwt_TypeMask|fwt_Elevated|fwt_NonElevated|fwt_Modal|fwt_NonModal|fwt_ActivateFound|fwt_ActivateOther)) && !(asName && *asName))
+				if (!(anWindowType & (fwt_TypeMask|fwt_Elevated|fwt_NonElevated|fwt_ModalFarWnd|fwt_NonModal|fwt_ActivateFound|fwt_ActivateOther)) && !(asName && *asName))
 				{
 					iFound = 1; // Just "exists"
 					break;
@@ -1228,11 +1228,11 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 
 					// ћодальное окно?
 					WARNING("Ќужно еще учитывать <модальность> заблокированным диалогом, или меню, или еще чем-либо!");
-					if ((anWindowType & fwt_Modal) && !(t & fwt_Modal))
+					if ((anWindowType & fwt_ModalFarWnd) && !(t & fwt_ModalFarWnd))
 						continue;
 					// ¬ табе устанавливаетс€ флаг fwt_Modal
 					// fwt_NonModal используетс€ только как аргумент поиска
-					if ((anWindowType & fwt_NonModal) && (t & fwt_Modal))
+					if ((anWindowType & fwt_NonModal) && (t & fwt_ModalFarWnd))
 						continue;
 
 					iFound = 1; // Just "exists"
@@ -1270,11 +1270,11 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 
 						// ћодальное окно?
 						WARNING("Ќужно еще учитывать <модальность> заблокированным диалогом, или меню, или еще чем-либо!");
-						if ((anWindowType & fwt_Modal) && !(tab.Type & fwt_Modal))
+						if ((anWindowType & fwt_ModalFarWnd) && !(tab.Type & fwt_ModalFarWnd))
 							continue;
 						// ¬ табе устанавливаетс€ флаг fwt_Modal
 						// fwt_NonModal используетс€ только как аргумент поиска
-						if ((anWindowType & fwt_NonModal) && (tab.Type & fwt_Modal))
+						if ((anWindowType & fwt_NonModal) && (tab.Type & fwt_ModalFarWnd))
 							continue;
 
 						// ≈сли ищем конкретный редактор/вьювер

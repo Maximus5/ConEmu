@@ -956,7 +956,6 @@
 #define cbActionBtn2                    2619
 #define cbActionBtn3                    2620
 #define vkCloseGroupPrc                 2621
-#define IDC_CHECK1                      2622
 #define cbConsoleExceptionHandler       2622
 
 // Next default values for new objects

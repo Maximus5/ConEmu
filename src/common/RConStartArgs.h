@@ -46,6 +46,7 @@ struct RConStartArgs
 
 	wchar_t* pszSpecialCmd; // собственно, command line
 	wchar_t* pszStartupDir; // "-new_console:d:<dir>"
+
 	wchar_t* pszRenameTab; // "-new_console:t:<name>"
 	
 	BOOL     bRunAsAdministrator; // -new_console:a

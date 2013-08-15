@@ -15,6 +15,19 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.08.15
+[%] Issue 1183: Sometimes Far x64 crashes on context menu.
+
+
+2013.08.14
+[%] Sometimes 0-size crash dump files were created.
+
+
+2013.08.13.1
+[%] Issue 1193: PowerShell: Get-Credential crashes. Bug appears in 130807.
+[%] ConEmu About dialog was broken.
+
+
 2013.08.13
 [%] Crashed sometimes with "ConEmu /log".
 

@@ -1018,7 +1018,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		}
 
 		// (Panels=1, Viewer=2, Editor=3) |(Elevated=0x100) |(NotElevated=0x200) |(Modal=0x400)
-		bool bAllWindows = (bShowFarWindows && !(pRCon->GetActiveTabType() & fwt_Modal));
+		bool bAllWindows = (bShowFarWindows && !(pRCon->GetActiveTabType() & fwt_ModalFarWnd));
 		rFrom = bAllWindows ? 0 : pRCon->GetActiveTab();
 		rFound = 0;
 		

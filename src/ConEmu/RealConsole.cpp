@@ -2377,8 +2377,8 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			if (mb_DataChanged || mb_TabsWasChanged)
 			{
 				lbForceUpdate = true; // чтобы если консоль неактивна - не забыть при ее активации передернуть что нужно...
-				mb_TabsWasChanged = FALSE;
-				mb_DataChanged = FALSE;
+				mb_TabsWasChanged = false;
+				mb_DataChanged = false;
 				// Функция загружает ТОЛЬКО ms_PanelTitle, чтобы показать
 				// корректный текст в закладке, соответсвующей панелям
 				CheckPanelTitle();
@@ -4521,6 +4521,7 @@ void CRealConsole::StopSignal()
 		// Чтобы при закрытии не было попытка активировать
 		// другую вкладку ЭТОЙ консоли
 		mn_tabsCount = 0;
+
 		// Очистка массива консолей и обновление вкладок
 		gpConEmu->OnVConClosed(mp_VCon);
 	}
@@ -5325,6 +5326,30 @@ void CRealConsole::OnServerClosing(DWORD anSrvPID)
 	{
 		_ASSERTE(anSrvPID == mn_MainSrv_PID);
 	}
+}
+
+bool CRealConsole::isProcessExist(DWORD anPID)
+{
+	if (mn_InRecreate || isDetached() || !mn_ProcessCount)
+		return false;
+
+	bool bExist = false;
+	MSectionLock SPRC; SPRC.Lock(&csPRC);
+	int dwProcCount = (int)m_Processes.size();
+
+	for (int i = 0; i < dwProcCount; i++)
+	{
+		ConProcess prc = m_Processes[i];
+		if (prc.ProcessID == anPID)
+		{
+			bExist = true;
+			break;
+		}
+	}
+
+	SPRC.Unlock();
+
+	return bExist;
 }
 
 int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
@@ -8273,7 +8298,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 		{
 			for (i = 0; i < tabsCount; i++)
 			{
-				tabs[i].Type |= 0x100;
+				tabs[i].Type |= fwt_Elevated;
 			}
 		}
 		//else
@@ -8822,7 +8847,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 			//{
 			//	if (gpSet->bAdminShield)
 			//	{
-			//		pTab->Type |= 0x100;
+			//		pTab->Type |= fwt_Elevated;
 			//	}
 			//	else
 			//	{
@@ -8841,7 +8866,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 
 	//if (tabIdx == 0 && isAdministrator() && gpSet->bAdminShield)
 	//{
-	//	pTab->Type |= 0x100;
+	//	pTab->Type |= fwt_Elevated;
 	//}
 
 	wchar_t* pszAmp = pTab->Name;
@@ -8938,7 +8963,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	// Если идет процесс (в заголовке консоли {n%}) - выходим
 	// Если висит диалог - выходим (диалог обработает сам плагин)
 
-	if (anWndIndex<0 || anWndIndex>=mn_tabsCount)
+	if (anWndIndex < 0 || anWndIndex >= mn_tabsCount)
 	{
 		AssertCantActivate((anWndIndex>=0 && anWndIndex<mn_tabsCount));
 		return 0;
@@ -11566,7 +11591,7 @@ void CRealConsole::CloseColorMapping()
 	//	CloseHandle(mh_ColorMapping);
 	//	mh_ColorMapping = NULL;
 	//}
-	mb_DataChanged = TRUE;
+	mb_DataChanged = true;
 	mn_LastColorFarID = 0;
 }
 
@@ -11849,7 +11874,7 @@ void CRealConsole::CloseMapHeader()
 	if (mp_EBuf) mp_EBuf->ResetBuffer();
 	if (mp_SBuf) mp_SBuf->ResetBuffer();
 
-	mb_DataChanged = TRUE;
+	mb_DataChanged = true;
 }
 
 bool CRealConsole::isAlive()

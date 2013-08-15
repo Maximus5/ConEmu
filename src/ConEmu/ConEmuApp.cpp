@@ -2748,8 +2748,11 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 
 void RaiseTestException()
 {
-	OutputDebugString(L"ConEmu will now raise 'division by 0' exception by user request!\n");
-	int ii = 1, jj = 1; jj --; ii = 1 / jj;
+	//Removed by optimizer in "Release", need to change...
+	//OutputDebugString(L"ConEmu will now raise 'division by 0' exception by user request!\n");
+	//int ii = 1, jj = 1; jj --; ii = 1 / jj;
+
+	DebugBreak();
 }
 
 

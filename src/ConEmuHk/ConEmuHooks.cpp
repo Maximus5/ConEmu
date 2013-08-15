@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -2137,7 +2137,7 @@ BOOL WINAPI OnMoveWindow(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL 
 
 LONG WINAPI OnSetWindowLongA(HWND hWnd, int nIndex, LONG dwNewLong)
 {
-	typedef BOOL (WINAPI* OnSetWindowLongA_t)(HWND hWnd, int nIndex, LONG dwNewLong);
+	typedef LONG (WINAPI* OnSetWindowLongA_t)(HWND hWnd, int nIndex, LONG dwNewLong);
 	ORIGINALFASTEX(SetWindowLongA,NULL);
 	LONG lRc = 0;
 
@@ -2156,7 +2156,7 @@ LONG WINAPI OnSetWindowLongA(HWND hWnd, int nIndex, LONG dwNewLong)
 }
 LONG WINAPI OnSetWindowLongW(HWND hWnd, int nIndex, LONG dwNewLong)
 {
-	typedef BOOL (WINAPI* OnSetWindowLongW_t)(HWND hWnd, int nIndex, LONG dwNewLong);
+	typedef LONG (WINAPI* OnSetWindowLongW_t)(HWND hWnd, int nIndex, LONG dwNewLong);
 	ORIGINALFASTEX(SetWindowLongW,NULL);
 	LONG lRc = 0;
 
@@ -2176,7 +2176,7 @@ LONG WINAPI OnSetWindowLongW(HWND hWnd, int nIndex, LONG dwNewLong)
 #ifdef WIN64
 LONG_PTR WINAPI OnSetWindowLongPtrA(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 {
-	typedef BOOL (WINAPI* OnSetWindowLongPtrA_t)(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
+	typedef LONG_PTR (WINAPI* OnSetWindowLongPtrA_t)(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
 	ORIGINALFASTEX(SetWindowLongPtrA,NULL);
 	LONG_PTR lRc = 0;
 
@@ -2195,7 +2195,7 @@ LONG_PTR WINAPI OnSetWindowLongPtrA(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 }
 LONG_PTR WINAPI OnSetWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 {
-	typedef BOOL (WINAPI* OnSetWindowLongPtrW_t)(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
+	typedef LONG_PTR (WINAPI* OnSetWindowLongPtrW_t)(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
 	ORIGINALFASTEX(SetWindowLongPtrW,NULL);
 	LONG_PTR lRc = 0;
 

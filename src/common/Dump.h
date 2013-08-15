@@ -55,6 +55,7 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 	        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
 	        PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
 	MiniDumpWriteDump_t MiniDumpWriteDump_f = NULL;
+	DWORD nSharingOption;
 
 	SetCursor(LoadCursor(NULL, IDC_WAIT));
 
@@ -73,7 +74,10 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 	nLen = lstrlen(dmpfile);
 	_wsprintf(dmpfile+nLen, SKIPLEN(countof(dmpfile)-nLen) L"\\Trap-%02u%02u%02u%s-%u.dmp", MVV_1, MVV_2, MVV_3,_T(MVV_4a), GetCurrentProcessId());
 	
-	hDmpFile = CreateFileW(dmpfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL/*|FILE_FLAG_WRITE_THROUGH*/, NULL);
+	nSharingOption = /*FILE_SHARE_READ;
+	if (IsWindowsXP)
+		nSharingOption =*/ FILE_SHARE_READ|FILE_SHARE_WRITE;
+	hDmpFile = CreateFileW(dmpfile, GENERIC_READ|GENERIC_WRITE, nSharingOption, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL/*|FILE_FLAG_WRITE_THROUGH*/, NULL);
 	if (hDmpFile == INVALID_HANDLE_VALUE)
 	{
 		pszError = L"CreateDumpForReport called, create dump file failed";
@@ -175,17 +179,23 @@ wrap:
 	}
 	else
 	{
+		wchar_t szExeName[MAX_PATH+1] = L"";
+		GetModuleFileName(NULL, szExeName, countof(szExeName)-1);
+		LPCWSTR pszExeName = PointToName(szExeName);
+
 		wchar_t what[64];
 		if (ExceptionInfo && ExceptionInfo->ExceptionRecord)
 			_wsprintf(what, SKIPLEN(countof(what)) L"Exception 0x%08X", ExceptionInfo->ExceptionRecord->ExceptionCode);
 		else
 			wcscpy_c(what, L"Assertion");
 
-		_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo)) L"%s was occurred (ConEmu%s %02u%02u%02u%s)\r\n\r\n"
+		_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo)) L"%s was occurred (%s, PID=%u)\r\nConEmu build %02u%02u%02u%s %s\r\n\r\n"
 			L"Memory dump was saved to\r\n%s\r\n\r\n"
-			L"Please Zip it and send to developer\r\n"
+			L"Please Zip it and send to developer (via DropBox etc.)\r\n"
 			L"%s" /*gsReportCrash -> http://code.google.com/p/conemu-maximus5/... */,
-			what, WIN3264TEST(L"",L"64"), (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), dmpfile, CEREPORTCRASH);
+			what, pszExeName, GetCurrentProcessId(),
+			(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), WIN3264TEST(L"",L"64"),
+			dmpfile, CEREPORTCRASH);
 	}
 	if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != NULL)
 	{

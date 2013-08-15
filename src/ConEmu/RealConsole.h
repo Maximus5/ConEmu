@@ -393,6 +393,7 @@ class CRealConsole
 		//void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 		void OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout);
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
+		bool isProcessExist(DWORD anPID);
 		int  GetProcesses(ConProcess** ppPrc, bool ClientOnly = false);
 		DWORD GetFarPID(bool abPluginRequired=false);
 		void SetFarPID(DWORD nFarPID);
@@ -802,7 +803,7 @@ class CRealConsole
 		//BOOL ReopenMapData();
 		void CloseMapHeader();
 		BOOL ApplyConsoleInfo();
-		BOOL mb_DataChanged;
+		bool mb_DataChanged;
 		void OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout);
 		void OnStartedSuccess();
 		BOOL mb_RConStartedSuccess;
