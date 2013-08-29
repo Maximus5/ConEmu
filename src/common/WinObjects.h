@@ -70,7 +70,7 @@ BOOL IsUserAdmin();
 BOOL GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
 bool IsWine();
 bool IsDbcs();
-BOOL IsWindows64();
+bool IsWindows64();
 int GetProcessBits(DWORD nPID, HANDLE hProcess = NULL);
 BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL = FALSE);
 bool IsModuleValid(HMODULE module);

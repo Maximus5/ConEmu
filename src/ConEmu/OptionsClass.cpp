@@ -324,10 +324,9 @@ CSettings::CSettings()
 	// вызвана потом из интерфейса диалога настроек
 	wcscpy_c(ConfigPath, CONEMU_ROOT_KEY L"\\.Vanilla");
 	ConfigName[0] = 0;
-	//Type[0] = 0;
-	//gpSet->psCmd = NULL; gpSet->psCurCmd = NULL;
+
+	pszCurCmd = NULL; isCurCmdList = false;
 	SetDefaultCmd(L"far");
-	//gpSet->psCmdHistory = NULL; gpSet->nCmdHistorySize = 0;
 	
 	m_ThSetMap.InitName(CECONVIEWSETNAME, GetCurrentProcessId());
 	if (!m_ThSetMap.Create())
@@ -842,6 +841,8 @@ CSettings::~CSettings()
 	SafeFree(m_Pages);
 
 	SafeDelete(mp_HelpPopup);
+
+	SafeFree(pszCurCmd);
 }
 
 LPCWSTR CSettings::GetConfigPath()
@@ -1106,19 +1107,19 @@ void CSettings::SettingsPreSave()
 	if (gpSet->sSaveAllMacro && (lstrcmp(gpSet->sSaveAllMacro, gpSet->SaveAllMacroDefault(fmv_Default)) == 0 || lstrcmp(gpSet->sSaveAllMacro, gpSet->SaveAllMacroDefault(fmv_Lua)) == 0))
 		SafeFree(gpSet->sSaveAllMacro);
 
-	ApplyStartupOptions();
+	//ApplyStartupOptions();
 }
 
-void CSettings::ApplyStartupOptions()
-{
-	if (ghOpWnd && IsWindow(mh_Tabs[thi_Startup]))
-	{
-		//GetString(mh_Tabs[thi_Startup], tCmdLine, &gpSet->psStartSingleApp);
-		ResetCmdArg();
-
-		//TODO: пендюрки всякие, типа "Auto save/restore open tabs", "Far editor/viewer also"
-	}
-}
+//void CSettings::ApplyStartupOptions()
+//{
+//	if (ghOpWnd && IsWindow(mh_Tabs[thi_Startup]))
+//	{
+//		//GetString(mh_Tabs[thi_Startup], tCmdLine, &gpSet->psStartSingleApp);
+//		ResetCmdArg();
+//
+//		//TODO: пендюрки всякие, типа "Auto save/restore open tabs", "Far editor/viewer also"
+//	}
+//}
 
 
 
@@ -8251,7 +8252,7 @@ wrap:
 
 void CSettings::OnClose()
 {
-	ApplyStartupOptions();
+	//ApplyStartupOptions();
 
 	//if (gpSet->isTabs==1)
 	//	gpConEmu->ForceShowTabs(TRUE);
@@ -9947,12 +9948,15 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 										int iPal = (nIdx == 0) ? -1 : gpSet->PaletteGetIndex(pszText);
 										if ((nIdx == 0) || (iPal >= 0))
 										{
-											lstrcpyn(pApp->szPaletteName, (nIdx == 0) ? L"" : pszText, countof(pApp->szPaletteName));
-											_ASSERTE(iCur>=0 && iCur<gpSet->AppCount && gpSet->AppColors);
+											pApp->SetPaletteName((nIdx == 0) ? L"" : pszText);
+
+											_ASSERTE(iCur>=0 && iCur<gpSet->AppCount /*&& gpSet->AppColors*/);
 											const Settings::ColorPalette* pPal = gpSet->PaletteGet(iPal);
 											if (pPal)
 											{
-												memmove(gpSet->AppColors[iCur]->Colors, pPal->Colors, sizeof(pPal->Colors));
+												//memmove(gpSet->AppColors[iCur]->Colors, pPal->Colors, sizeof(pPal->Colors));
+												//gpSet->AppColors[iCur]->FadeInitialized = false;
+
 												BOOL bTextAttr = (pApp->nTextColorIdx != pPal->nTextColorIdx) || (pApp->nBackColorIdx != pPal->nBackColorIdx);
 												pApp->nTextColorIdx = pPal->nTextColorIdx;
 												pApp->nBackColorIdx = pPal->nBackColorIdx;
@@ -9961,7 +9965,6 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 												pApp->nPopBackColorIdx = pPal->nPopBackColorIdx;
 												pApp->isExtendColors = pPal->isExtendColors;
 												pApp->nExtendColorIdx = pPal->nExtendColorIdx;
-												gpSet->AppColors[iCur]->FadeInitialized = false;
 												if (bTextAttr || bPopupAttr)
 													gpSetCls->UpdateTextColorSettings(bTextAttr, bPopupAttr);
 												bRedraw = true;
@@ -12283,6 +12286,144 @@ void CSettings::SetDefaultCmd(LPCWSTR asCmd)
 	}
 }
 
+void CSettings::SetCurCmd(wchar_t*& pszNewCmd, bool bIsCmdList)
+{
+	_ASSERTE((pszNewCmd || isCurCmdList) && pszCurCmd != pszNewCmd);
+
+	if (pszNewCmd != pszCurCmd)
+		SafeFree(pszCurCmd);
+
+	pszCurCmd = pszNewCmd;
+	isCurCmdList = bIsCmdList;
+}
+
+LPCTSTR CSettings::GetCurCmd(bool *pIsCmdList /*= NULL*/)
+{
+	if (pszCurCmd && *pszCurCmd)
+	{
+		if (pIsCmdList)
+		{
+			*pIsCmdList = isCurCmdList;
+		}
+		else
+		{
+			//_ASSERTE(isCurCmdList == false);
+		}
+		return pszCurCmd;
+	}
+
+	return NULL;
+}
+
+LPCTSTR CSettings::GetCmd(bool *pIsCmdList)
+{
+	LPCWSTR pszCmd = GetCurCmd(pIsCmdList);
+	if (pszCmd)
+		return pszCmd;
+
+	if (pIsCmdList)
+		*pIsCmdList = false;
+
+	switch (gpSet->nStartType)
+	{
+	case 0:
+		if (gpSet->psStartSingleApp && *gpSet->psStartSingleApp)
+			return gpSet->psStartSingleApp;
+		break;
+	case 1:
+		if (gpSet->psStartTasksFile && *gpSet->psStartTasksFile)
+			return gpSet->psStartTasksFile;
+		break;
+	case 2:
+		if (gpSet->psStartTasksName && *gpSet->psStartTasksName)
+			return gpSet->psStartTasksName;
+		break;
+	}
+
+	wchar_t* pszNewCmd = NULL;
+
+	// Хорошо бы более корректно определить версию фара, но это не всегда просто
+	// Например x64 файл сложно обработать в x86 ConEmu.
+	DWORD nFarSize = 0;
+
+	if (lstrcmpi(gpSetCls->GetDefaultCmd(), L"far") == 0)
+	{
+		// Ищем фар. (1) В папке ConEmu, (2) в текущей директории, (2) на уровень вверх от папки ConEmu
+		wchar_t szFar[MAX_PATH*2], *pszSlash;
+		szFar[0] = L'"';
+		wcscpy_add(1, szFar, gpConEmu->ms_ConEmuExeDir); // Теперь szFar содержит путь запуска программы
+		pszSlash = szFar + _tcslen(szFar);
+		_ASSERTE(pszSlash > szFar);
+		BOOL lbFound = FALSE;
+
+		// (1) В папке ConEmu
+		if (!lbFound)
+		{
+			wcscpy_add(pszSlash, szFar, L"\\Far.exe");
+
+			if (FileExists(szFar+1, &nFarSize))
+				lbFound = TRUE;
+		}
+
+		// (2) в текущей директории
+		if (!lbFound && lstrcmpi(gpConEmu->WorkDir(), gpConEmu->ms_ConEmuExeDir))
+		{
+			szFar[0] = L'"';
+			wcscpy_add(1, szFar, gpConEmu->WorkDir());
+			wcscat_add(1, szFar, L"\\Far.exe");
+
+			if (FileExists(szFar+1, &nFarSize))
+				lbFound = TRUE;
+		}
+
+		// (3) на уровень вверх
+		if (!lbFound)
+		{
+			szFar[0] = L'"';
+			wcscpy_add(1, szFar, gpConEmu->ms_ConEmuExeDir);
+			pszSlash = szFar + _tcslen(szFar);
+			*pszSlash = 0;
+			pszSlash = wcsrchr(szFar, L'\\');
+
+			if (pszSlash)
+			{
+				wcscpy_add(pszSlash+1, szFar, L"Far.exe");
+
+				if (FileExists(szFar+1, &nFarSize))
+					lbFound = TRUE;
+			}
+		}
+
+		if (lbFound)
+		{
+			// 110124 - нафиг, если пользователю надо - сам или параметр настроит, или реестр
+			//// far чаще всего будет установлен в "Program Files", поэтому для избежания проблем - окавычиваем
+			//// Пока тупо - если far.exe > 1200K - считаем, что это Far2
+			//wcscat_c(szFar, (nFarSize>1228800) ? L"\" /w" : L"\"");
+			wcscat_c(szFar, L"\"");
+
+			// Finally - Result
+			pszNewCmd = lstrdup(szFar);
+		}
+		else
+		{
+			// Если Far.exe не найден рядом с ConEmu - запустить cmd.exe
+			pszNewCmd = GetComspec(&gpSet->ComSpec);
+			//wcscpy_c(szFar, L"cmd");
+		}
+
+	}
+	else
+	{
+		// Simple Copy
+		pszNewCmd = lstrdup(gpSetCls->GetDefaultCmd());
+	}
+
+	SetCurCmd(pszNewCmd, false);
+
+	return GetCurCmd(pIsCmdList);
+}
+
 LPCTSTR CSettings::GetDefaultCmd()
 {
 	_ASSERTE(szDefCmd[0]!=0);
@@ -12304,10 +12445,16 @@ bool CSettings::IsSingleInstanceArg()
 // загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
 void CSettings::ResetCmdArg()
 {
-	SingleInstanceArg = sgl_Default;
-	// Сбросить нужно только gpSet->psCurCmd, gpSet->psCmd не меняется - загружается только из настройки
-	SafeFree(gpSet->psCurCmd);
-	gpSet->isCurCmdList = false;
+	//SingleInstanceArg = sgl_Default;
+	//// Сбросить нужно только gpSet->psCurCmd, gpSet->psCmd не меняется - загружается только из настройки
+	//SafeFree(gpSet->psCurCmd);
+	//gpSet->isCurCmdList = false;
+
+	if (isCurCmdList)
+	{
+		wchar_t* pszReset = NULL;
+		SetCurCmd(pszReset, false);
+	}
 }
 
 bool CSettings::ResetCmdHistory(HWND hParent)
@@ -13220,99 +13367,6 @@ BOOL CSettings::GetFontNameFromFile_BDF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 	lstrcpy(rsFullFontName, rsFontName);
 	return TRUE;
 }
-
-//void CSettings::HistoryCheck()
-//{
-//	if (!gpSet->psCmdHistory || !*gpSet->psCmdHistory)
-//	{
-//		gpSet->nCmdHistorySize = 0;
-//	}
-//	else
-//	{
-//		const wchar_t* psz = gpSet->psCmdHistory;
-//
-//		while(*psz)
-//			psz += _tcslen(psz)+1;
-//
-//		if (psz == gpSet->psCmdHistory)
-//			gpSet->nCmdHistorySize = 0;
-//		else
-//			gpSet->nCmdHistorySize = (psz - gpSet->psCmdHistory + 1)*sizeof(wchar_t);
-//	}
-//}
-
-//void CSettings::HistoryAdd(LPCWSTR asCmd)
-//{
-//	if (!asCmd || !*asCmd)
-//		return;
-//
-//	if (gpSet->psCmd && lstrcmp(gpSet->psCmd, asCmd)==0)
-//		return;
-//
-//	if (gpSet->psCurCmd && lstrcmp(gpSet->psCurCmd, asCmd)==0)
-//		return;
-//
-//	HEAPVAL
-//	wchar_t *pszNewHistory, *psz;
-//	int nCount = 0;
-//	DWORD nCchNewSize = (gpSet->nCmdHistorySize>>1) + _tcslen(asCmd) + 2;
-//	DWORD nNewSize = nCchNewSize*2;
-//	pszNewHistory = (wchar_t*)malloc(nNewSize);
-//
-//	//wchar_t* pszEnd = pszNewHistory + nNewSize/sizeof(wchar_t);
-//	if (!pszNewHistory) return;
-//
-//	_wcscpy_c(pszNewHistory, nCchNewSize, asCmd);
-//	psz = pszNewHistory + _tcslen(pszNewHistory) + 1;
-//	nCount++;
-//
-//	if (gpSet->psCmdHistory)
-//	{
-//		wchar_t* pszOld = gpSet->psCmdHistory;
-//		int nLen;
-//		HEAPVAL;
-//
-//		while(nCount < MAX_CMD_HISTORY && *pszOld /*&& psz < pszEnd*/)
-//		{
-//			const wchar_t *pszCur = pszOld;
-//			pszOld += _tcslen(pszOld) + 1;
-//
-//			if (lstrcmp(pszCur, asCmd) == 0)
-//				continue;
-//
-//			_wcscpy_c(psz, nCchNewSize-(psz-pszNewHistory), pszCur);
-//			psz += (nLen = (_tcslen(psz)+1));
-//			nCount ++;
-//		}
-//	}
-//
-//	*psz = 0;
-//	HEAPVAL;
-//	free(gpSet->psCmdHistory);
-//	gpSet->psCmdHistory = pszNewHistory;
-//	gpSet->nCmdHistorySize = (psz - pszNewHistory + 1)*sizeof(wchar_t);
-//	HEAPVAL;
-//	// И сразу сохранить в настройках
-//	SettingsBase* reg = CreateSettings();
-//
-//	if (reg->OpenKey(ConfigPath, KEY_WRITE))
-//	{
-//		HEAPVAL;
-//		reg->SaveMSZ(L"CmdLineHistory", gpSet->psCmdHistory, gpSet->nCmdHistorySize);
-//		HEAPVAL;
-//		reg->CloseKey();
-//	}
-//
-//	delete reg;
-//}
-
-//LPCWSTR CSettings::HistoryGet()
-//{
-//	if (gpSet->psCmdHistory && *gpSet->psCmdHistory)
-//		return gpSet->psCmdHistory;
-//
-//	return NULL;
-//}
 
 // Показать в "Инфо" текущий режим консоли
 void CSettings::UpdateConsoleMode(DWORD nMode)

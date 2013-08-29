@@ -815,7 +815,7 @@ void TabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	}
 
 	_active = true;
-	if (abPreSyncConsole && gpConEmu->WindowMode == wmNormal)
+	if (abPreSyncConsole && (gpConEmu->WindowMode == wmNormal))
 	{
 		RECT rcIdeal = gpConEmu->GetIdealRect();
 		CVConGroup::SyncConsoleToWindow(&rcIdeal, TRUE);

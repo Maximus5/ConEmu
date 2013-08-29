@@ -49,6 +49,7 @@ struct DebuggerInfo
 	DWORD  dwDebugThreadId;
 
 	MMap<DWORD,CEDebugProcessInfo>* pDebugTreeProcesses /*= NULL*/;
+	MArray<DWORD>* pDebugAttachProcesses /*= NULL*/;
 	BOOL  bDebugProcess /*= FALSE*/;
 	BOOL  bDebugProcessTree /*= FALSE*/;
 	int   nDebugDumpProcess /*= 0*/; // 1 - ask user, 2 - minidump, 3 - fulldump

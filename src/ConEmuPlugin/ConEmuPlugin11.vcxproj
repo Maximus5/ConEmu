@@ -799,6 +799,7 @@
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\ConEmuPlugin_*.lng" "$(TargetDir)"</Command>

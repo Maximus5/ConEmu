@@ -3819,6 +3819,17 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
 			}
+
+			if (pszEnd && (*pszEnd == L','))
+			{
+				gpSrv->DbgInfo.pDebugAttachProcesses = new MArray<DWORD>;
+				while (pszEnd && (*pszEnd == L','))
+				{
+					DWORD nPID = wcstoul(pszEnd+1, &pszEnd, 10);
+					if (nPID != 0)
+						gpSrv->DbgInfo.pDebugAttachProcesses->push_back(nPID);
+				}
+			}
 		}
 		else if (lstrcmpi(szArg, L"/DEBUGEXE")==0 || lstrcmpi(szArg, L"/DEBUGTREE")==0)
 		{

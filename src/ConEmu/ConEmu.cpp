@@ -995,7 +995,20 @@ LPWSTR CConEmuMain::ConEmuXml()
 
 	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
 
-	// Ищем файл портабельных настроек. Сначала пробуем в BaseDir
+	// Ищем файл портабельных настроек
+
+	// Пробуем в %APPDATA%
+	wchar_t* pszAppDataXml = ExpandEnvStr(L"%APPDATA%\\ConEmu.xml");
+	if (pszAppDataXml && *pszAppDataXml)
+	{
+		wcscpy_c(ms_ConEmuXml, pszAppDataXml);
+		if (FileExists(ms_ConEmuXml))
+		{
+			goto fin;
+		}
+	}
+	
+	// пробуем в BaseDir
 	wcscpy_c(ms_ConEmuXml, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
 
 	if (!FileExists(ms_ConEmuXml))
@@ -1012,6 +1025,8 @@ LPWSTR CConEmuMain::ConEmuXml()
 		}
 	}
 
+fin:
+	SafeFree(pszAppDataXml);
 	return ms_ConEmuXml;
 }
 
@@ -1527,13 +1542,15 @@ RECT CConEmuMain::GetDefaultRect()
 			int nWidth = rcWnd.right - rcWnd.left;
 			int nHeight = rcWnd.bottom - rcWnd.top;
 
+			RECT rcFrameOnly = CalcMargins(CEM_FRAMECAPTION);
+
 			switch (gpSet->_WindowMode)
 			{
 				case wmMaximized:
 				{
-					rcWnd.left = mi.rcWork.left - rcFrameMargin.left;
-					rcWnd.right = mi.rcWork.right + rcFrameMargin.right;
-					rcWnd.top = mi.rcWork.top - rcFrameMargin.top;
+					rcWnd.left = mi.rcWork.left - rcFrameOnly.left;
+					rcWnd.right = mi.rcWork.right + rcFrameOnly.right;
+					rcWnd.top = mi.rcWork.top - rcFrameOnly.top;
 					rcWnd.bottom = rcWnd.top + nHeight;
 
 					bChange = true;
@@ -1542,9 +1559,9 @@ RECT CConEmuMain::GetDefaultRect()
 
 				case wmFullScreen:
 				{
-					rcWnd.left = mi.rcMonitor.left - rcFrameMargin.left;
-					rcWnd.right = mi.rcMonitor.right + rcFrameMargin.right;
-					rcWnd.top = mi.rcMonitor.top - rcFrameMargin.top;
+					rcWnd.left = mi.rcMonitor.left - rcFrameOnly.left;
+					rcWnd.right = mi.rcMonitor.right + rcFrameOnly.right;
+					rcWnd.top = mi.rcMonitor.top - rcFrameOnly.top;
 					rcWnd.bottom = rcWnd.top + nHeight;
 
 					bChange = true;
@@ -1559,7 +1576,7 @@ RECT CConEmuMain::GetDefaultRect()
 					else
 						rcWnd.left = max(mi.rcWork.left,((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
 					rcWnd.right = min(mi.rcWork.right,(rcWnd.left + nWidth));
-					rcWnd.top = mi.rcWork.top - rcFrameMargin.top;
+					rcWnd.top = mi.rcWork.top - rcFrameOnly.top;
 					rcWnd.bottom = rcWnd.top + nHeight;
 
 					bChange = true;
@@ -2045,7 +2062,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	//style |= WS_VISIBLE;
 	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
 	WARNING("На ноуте вылезает за пределы рабочей области");
-	ghWnd = CreateWindowEx(styleEx, gsClassNameParent, gpSet->GetCmd(), style,
+	ghWnd = CreateWindowEx(styleEx, gsClassNameParent, gpSetCls->GetCmd(), style,
 	                       gpConEmu->wndX, gpConEmu->wndY, nWidth, nHeight, hParent, NULL, (HINSTANCE)g_hInstance, NULL);
 
 	if (!ghWnd)
@@ -8247,7 +8264,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 			if (!args.pszSpecialCmd || !*args.pszSpecialCmd)
 			{
 				_ASSERTE((args.pszSpecialCmd && *args.pszSpecialCmd) || !abConfirm);
-				args.pszSpecialCmd = lstrdup(gpSet->GetCmd());
+				args.pszSpecialCmd = lstrdup(gpSetCls->GetCmd());
 			}
 
 			if (!args.pszSpecialCmd || !*args.pszSpecialCmd)
@@ -8314,7 +8331,7 @@ int CConEmuMain::RecreateDlg(RConStartArgs* apArg)
 BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd /*= NULL*/)
 {
 	BOOL lbAccepted = FALSE;
-	LPCWSTR lpszCmd = apszCmd ? apszCmd : gpSet->GetCmd();
+	LPCWSTR lpszCmd = apszCmd ? apszCmd : gpSetCls->GetCmd();
 
 	if ((lpszCmd && *lpszCmd) || (gpSetCls->SingleInstanceShowHide != sih_None))
 	{
@@ -11003,7 +11020,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 			BOOL lbCreated = FALSE;
 			bool isScript = false;
-			LPCWSTR pszCmd = gpSet->GetCmd(&isScript);
+			LPCWSTR pszCmd = gpSetCls->GetCmd(&isScript);
 			_ASSERTE(pszCmd!=NULL && *pszCmd!=0); // Must be!
 
 			if (isScript)
@@ -11056,12 +11073,12 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				SafeFree(pszDataW);
 				SafeFree(pszStartupDir);
 
-				// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
-				// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
-				if (gpSetCls->SingleInstanceArg)
-				{
-					gpSetCls->ResetCmdArg();
-				}
+				//// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
+				//// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
+				//if (gpSetCls->SingleInstanceArg)
+				//{
+				//	gpSetCls->ResetCmdArg();
+				//}
 
 				lbCreated = TRUE;
 			}
@@ -11073,7 +11090,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				if (!args.bDetached)
 				{
-					args.pszSpecialCmd = lstrdup(gpSet->GetCmd());
+					args.pszSpecialCmd = lstrdup(gpSetCls->GetCmd());
 
 					if (!CreateCon(&args, TRUE))
 					{
@@ -14456,7 +14473,11 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 			// WARNING! Тут строго, без учета активности группы!
 			if (VCon.VCon() && isVisible(VCon.VCon()) && !isActive(VCon.VCon(), false))
 			{
-				//Activate(VCon.VCon());
+				// по клику - активировать кликнутый сплит
+				if ((messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN) || (messg == WM_MBUTTONDOWN))
+				{
+					Activate(VCon.VCon());
+				}
 
 				if (gpSet->isMouseSkipActivation)
 				{
@@ -17146,7 +17167,8 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 
 	CVConGuard VConFromPoint;
 	// bForeground - does not fit our needs (it ignores GUI children)
-	if (gpSet->isActivateSplitMouseOver)
+	// 130821 - Don't try to change focus during popup menu active!
+	if (gpSet->isActivateSplitMouseOver && (mp_Menu->GetTrackMenuPlace() != tmp_None))
 	{
 		POINT ptCur; GetCursorPos(&ptCur);
 		if (!PTDIFFTEST(mouse.ptLastSplitOverCheck, SPLITOVERCHECK_DELTA))

@@ -786,15 +786,16 @@ bool IsDbcs()
 typedef BOOL (WINAPI* IsWow64Process_t)(HANDLE hProcess, PBOOL Wow64Process);
 
 // Проверить битность OS
-BOOL IsWindows64()
+bool IsWindows64()
 {
-	static BOOL is64bitOs = FALSE, isOsChecked = FALSE;
+	static bool is64bitOs = false, isOsChecked = false;
 	if (isOsChecked)
 		return is64bitOs;
 
-	BOOL isWow64process = FALSE;
+	bool isWow64process = false;
+
 #ifdef WIN64
-	is64bitOs = TRUE; isWow64process = FALSE;
+	is64bitOs = true; isWow64process = true;
 #else
 	// Проверяем, где мы запущены
 	isWow64process = FALSE;
@@ -810,7 +811,7 @@ BOOL IsWindows64()
 
 			if (IsWow64Process_f(GetCurrentProcess(), &bWow64) && bWow64)
 			{
-				isWow64process = TRUE;
+				isWow64process = true;
 			}
 		}
 	}
@@ -818,7 +819,7 @@ BOOL IsWindows64()
 	is64bitOs = isWow64process;
 #endif
 
-	isOsChecked = TRUE;
+	isOsChecked = true;
 	return is64bitOs;
 }
 

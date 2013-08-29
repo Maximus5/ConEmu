@@ -814,6 +814,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Thumbs\ConEmuTh_*.lng" "$(TargetDir)"</Command>

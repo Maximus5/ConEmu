@@ -15,6 +15,27 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.08.27
+[!] New search sequence for ConEmu.xml file:
+    * %APPDATA%\ConEmu.xml
+    * %ConEmuBaseDir%\ConEmu.xml
+    * %ConEmuDir%\ConEmu.xml
+[+] New user may choose settings storage location on the first start (Fast configuration dialog).
+[+] New option "SaveCmdHistory", may be changed via reg/xml configuration.
+[%] Issue 1210: Don't reset default command specified with "/cmd" argument in Quake mode.
+[%] Wrong Quake position (top) when "Pad size" was set.
+[%] When running "-new_console:sVb" - "b" was ignored.
+[%] Issue 1090: Win+Left/Right on three monitors once again.
+
+
+2013.08.22
+[%] Issue 1195: Assertion.
+[%] Issue 1198: Crash when exporting xml configuration to read-only folder.
+[%] Split was erroneously activated by mouse hover while any menu (tab, system, etc.) was active.
+[*] Trying to search "msxml3.dll" in %PATH% when it is not available via COM and is not found in the ConEmu's folder.
+[%] Fails to typing japanese/chinese in the python prompt.
+
+
 2013.08.15
 [%] Issue 1183: Sometimes Far x64 crashes on context menu.
 
@@ -132,7 +153,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [+] Close confirmation from tab belonging to group (splits) will suggest closing whole group.
 [+] Issue 978: New option "One tab per group", disabled by default. Weird with Far Manager editor windows yet.
 [%] Issue 1095: Transparency was not changed after Quake activation.
-[%] Incorrect cursor position in console after vim exiting.
+[%] Incorrect cursor position in console after vim exiting. Don't forget enable «Inject ConEmuHk»!
 [+] Issue 1103: GuiMacro: SetOption("bgImageDarker",<value>) - change darkening of background image, 0..255.
 
 
@@ -154,7 +175,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 2013.05.30
 [%] One more fix for "Sleep in backgound".
 [%] Wheel was not working while mouse was over scrollbar.
-[%] Buffer (scrolling and contents) was not restored after Vim exit.
+[%] Buffer (scrolling and contents) was not restored after Vim exit. Don't forget enable «Inject ConEmuHk»!
 [+] When Vim started current buffer output stored, and may be viewed by as Alternative buffer («lock» button on toolbar or Win+A by default).
 [%] Issue 1077: Sometimes assertion (keyboard layout related) may occurs on startup.
 

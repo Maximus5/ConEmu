@@ -3296,7 +3296,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 	{
 		_ASSERTE(args->pszSpecialCmd==NULL);
 
-		args->pszSpecialCmd = lstrdup(gpSet->GetCmd());
+		args->pszSpecialCmd = lstrdup(gpSetCls->GetCmd());
 
 		_ASSERTE(args->pszSpecialCmd && *args->pszSpecialCmd);
 	}
@@ -3365,7 +3365,8 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 			pVCon = CVConGroup::CreateVCon(args, gp_VCon[i]);
 			gb_CreatingActive = false;
 
-			BOOL lbInBackground = args->bBackgroundTab && (pOldActive != NULL) && !args->eSplit;
+			// 130826 - "-new_console:sVb" - "b" was ignored!
+			BOOL lbInBackground = args->bBackgroundTab && (pOldActive != NULL); // && !args->eSplit;
 
 			if (pVCon)
 			{

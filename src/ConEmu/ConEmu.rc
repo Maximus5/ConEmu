@@ -1133,37 +1133,39 @@ BEGIN
     GROUPBOX        "ConEmu latest version location info",IDC_STATIC,5,193,319,28
 END
 
-IDD_FAST_CONFIG DIALOGEX 0, 0, 322, 251
+IDD_FAST_CONFIG DIALOGEX 0, 0, 323, 287
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "ConEmu fast configuration"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "You can change this on 'Appearance' page of Settings dialog later",IDC_STATIC,3,1,316,29
+    GROUPBOX        "You can change this on 'Appearance' page of Settings dialog later",IDC_STATIC,3,35,317,29
     CONTROL         "Single instance mode (use existing window instead of running new instance)",cbSingleInstance,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,14,295,8
-    GROUPBOX        "You can change this on 'Controls' page of Settings dialog later",IDC_STATIC,3,32,316,52
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,48,295,8
+    GROUPBOX        "You can change this on 'Controls' page of Settings dialog later",IDC_STATIC,3,66,317,52
     CONTROL         " Install keyboard hooks (required for Win+Number, Win+Tab, PrntScrn and so on)",cbUseKeyboardHooksFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,43,295,10
-    LTEXT           "Required for some keyboard combinations. When checked, ConEmu will install keyboard hook when ConEmu is foreground window. So, You must allow that in antiviral software (AVP for example).",stUseKeyboardHooksFast1,20,56,292,25
-    GROUPBOX        "You can change this on 'Features' page of Settings dialog later",IDC_STATIC,3,86,316,54
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,77,295,10
+    LTEXT           "Required for some keyboard combinations. When checked, ConEmu will install keyboard hook when ConEmu is foreground window. So, You must allow that in antiviral software (AVP for example).",stUseKeyboardHooksFast1,20,90,292,25
+    GROUPBOX        "You can change this on 'Features' page of Settings dialog later",IDC_STATIC,3,120,317,54
     CONTROL         " Inject ConEmuHk.dll into all processes started in ConEmu tabs (may cause lags)",cbInjectConEmuHkFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,97,295,10
-    LTEXT           "Required for many features (ANSI X3.64, -new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (telnet in Windows 7, dialogs and menus behind of ConEmu window, chcp hungs, and so on...)",stInjectConEmuHkFast1,20,110,292,25
-    GROUPBOX        "You can change settings on 'Update' page of Settings dialog later",IDC_STATIC,3,141,316,27
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,131,295,10
+    LTEXT           "Required for many features (ANSI X3.64, -new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (crash in Windows 8, telnet in Windows 7, dialogs and menus behind of ConEmu window, chcp hungs, and so on...)",stInjectConEmuHkFast1,20,144,292,25
+    GROUPBOX        "You can change settings on 'Update' page of Settings dialog later",IDC_STATIC,3,175,317,27
     CONTROL         " Enable automatic updates",cbEnableAutoUpdateFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,152,104,10
-    CONTROL         "«Stable»",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,120,152,46,10
-    CONTROL         "«Preview»",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,170,152,50,10
-    CONTROL         "«Developer» builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,224,152,71,10
-    GROUPBOX        "",gbDisableConImeFast,3,170,316,61
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,186,104,10
+    CONTROL         "«Stable»",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,120,186,46,10
+    CONTROL         "«Preview»",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,170,186,50,10
+    CONTROL         "«Developer» builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,224,186,71,10
+    GROUPBOX        "",gbDisableConImeFast,3,204,317,61
     CONTROL         " Disable ConIme.exe autorun (Vista only)",cbDisableConImeFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,178,295,10
-    LTEXT           "Unwanted value of «LoadConIme» registry parameter! This may cause hunging of other console applications! ConEmu may disable ConIme.exe via registry:",stDisableConImeFast1,20,190,292,19
-    LTEXT           "[HKEY_CURRENT_USER\\Console]",stDisableConImeFast2,20,209,292,8
-    LTEXT           """LoadConIme""=dword:00000000",stDisableConImeFast3,20,218,292,8
-    DEFPUSHBUTTON   "OK",IDOK,215,234,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,269,234,50,14
-    LTEXT           "http://conemu-maximus5.googlecode.com",stHomePage,10,236,150,8,SS_NOTIFY
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,212,295,10
+    LTEXT           "Unwanted value of «LoadConIme» registry parameter! This may cause hunging of other console applications! ConEmu may disable ConIme.exe via registry:",stDisableConImeFast1,20,224,292,19
+    LTEXT           "[HKEY_CURRENT_USER\\Console]",stDisableConImeFast2,20,243,292,8
+    LTEXT           """LoadConIme""=dword:00000000",stDisableConImeFast3,20,252,292,8
+    DEFPUSHBUTTON   "OK",IDOK,215,270,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,270,270,50,14
+    LTEXT           "http://conemu-maximus5.googlecode.com",stHomePage,10,272,150,8,SS_NOTIFY
+    GROUPBOX        "Choose ConEmu settings storage location (You may turn on portable mode here)",IDC_STATIC,3,3,317,30
+    COMBOBOX        lbStorageLocation,8,14,308,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_SPG_CMDTASKS DIALOGEX 0, 0, 328, 235
@@ -1412,9 +1414,9 @@ BEGIN
     IDD_FAST_CONFIG, DIALOG
     BEGIN
         LEFTMARGIN, 3
-        RIGHTMARGIN, 319
+        RIGHTMARGIN, 320
         TOPMARGIN, 3
-        BOTTOMMARGIN, 248
+        BOTTOMMARGIN, 284
     END
 
     IDD_SPG_APPDISTINCT2, DIALOG
@@ -1430,20 +1432,19 @@ BEGIN
         BOTTOMMARGIN, 143
     END
 
+    IDD_ACTION, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 318
+        TOPMARGIN, 7
+    END
+
     IDD_RENAMETAB, DIALOG
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 180
         TOPMARGIN, 6
         BOTTOMMARGIN, 48
-    END
-
-    IDD_ACTION, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 318
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 178
     END
 END
 #endif    // APSTUDIO_INVOKED

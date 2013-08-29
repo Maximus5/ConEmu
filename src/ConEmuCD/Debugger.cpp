@@ -366,97 +366,145 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	}
 
 
-	_ASSERTE(gpSrv->hRootProcess!=NULL && "Process handle must be opened");
-
-
-	// Битность отладчика должна соответствовать битности приложения!
-	if (IsWindows64())
+	/* ************************* */
+	int iDbgIdx = 0, iAttachedCount = 0;
+	while (true)
 	{
-		int nBits = GetProcessBits(gpSrv->dwRootProcess, gpSrv->hRootProcess);
-		if ((nBits == 32 || nBits == 64) && (nBits != WIN3264TEST(32,64)))
+		HANDLE hDbgProcess = NULL;
+		DWORD  nDbgProcessID = 0;
+
+		bool bFirstPID = ((iDbgIdx++) == 0);
+		if (bFirstPID)
 		{
-			if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
+			hDbgProcess = gpSrv->hRootProcess;
+			nDbgProcessID = gpSrv->dwRootProcess;
+		}
+		else
+		{
+			// Взять из pDebugAttachProcesses
+			if (!gpSrv->DbgInfo.pDebugAttachProcesses)
+				break;
+			if (!gpSrv->DbgInfo.pDebugAttachProcesses->pop_back(nDbgProcessID))
+				break;
+			hDbgProcess = GetProcessHandleForDebug(nDbgProcessID);
+			if (!hDbgProcess)
 			{
-				_printf("Bitness of ConEmuC and debugging program does not match\n");
+				_ASSERTE(hDbgProcess!=NULL && "Can't open debugging process handle");
+				continue;
+			}
+		}
+	
+
+		_ASSERTE(hDbgProcess!=NULL && "Process handle must be opened");
+
+
+		// Битность отладчика должна соответствовать битности приложения!
+		if (IsWindows64())
+		{
+			int nBits = GetProcessBits(nDbgProcessID, hDbgProcess);
+			if ((nBits == 32 || nBits == 64) && (nBits != WIN3264TEST(32,64)))
+			{
+				if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
+				{
+					_printf("Bitness of ConEmuC and debugging program does not match\n");
+					if (bFirstPID)
+						return CERR_CANTSTARTDEBUGGER;
+					else
+						continue;
+				}
+
+				wchar_t szExe[MAX_PATH+16];
+				wchar_t szCmdLine[MAX_PATH*2];
+				if (GetModuleFileName(NULL, szExe, countof(szExe)-16))
+				{
+					wchar_t* pszName = (wchar_t*)PointToName(szExe);
+					_wcscpy_c(pszName, 16, (nBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
+					_wsprintf(szCmdLine, SKIPLEN(countof(szCmdLine))
+						L"\"%s\" /DEBUGPID=%u %s", szExe, nDbgProcessID,
+						(gpSrv->DbgInfo.nDebugDumpProcess == 1) ? L"/DUMP" :
+						(gpSrv->DbgInfo.nDebugDumpProcess == 2) ? L"/MINIDUMP" :
+						(gpSrv->DbgInfo.nDebugDumpProcess == 3) ? L"/FULLDUMP" : L"");
+
+					STARTUPINFO si = {sizeof(si)};
+					PROCESS_INFORMATION pi = {};
+					if (CreateProcess(NULL, szCmdLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
+					{
+						// Ждать НЕ будем, сразу на выход
+
+						//HANDLE hEvents[2] = {pi.hProcess, ghExitQueryEvent};
+						//nWait = WaitForMultipleObjects(countof(hEvents), hEvents, FALSE, INFINITE);
+						//if (nWait == WAIT_OBJECT_0)
+						//{
+						//	//GetExitCodeProcess(pi.hProcess, &nExternalExitCode);
+						//	nExternalExitCode = 0;
+						//}
+
+						//CloseHandle(pi.hProcess);
+						//CloseHandle(pi.hThread);
+
+						//if (nExternalExitCode == 0)
+						//{
+						//	goto done;
+						//}
+
+						// Может там еще процессы в списке на дамп?
+						continue;
+					}
+					else
+					{
+						DWORD dwErr = GetLastError();
+						_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't start external debugger '%s'. ErrCode=0x%08X\n",
+							szCmdLine, dwErr);
+						_wprintf(szInfo);
+						if (bFirstPID)
+							return CERR_CANTSTARTDEBUGGER;
+						else
+							continue;
+					}
+				}
+
+
+				wchar_t szProc[64]; szProc[0] = 0;
+				PROCESSENTRY32 pi = {sizeof(pi)};
+				if (GetProcessInfo(nDbgProcessID, &pi))
+					_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
+
+				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Bits are incompatible. Can't debug '%s' PID=%i\n",
+					szProc[0] ? szProc : L"not found", nDbgProcessID);
+				_wprintf(szInfo);
+				if (bFirstPID)
+					return CERR_CANTSTARTDEBUGGER;
+				else
+					continue;
+			}
+		}
+
+		if (gpSrv->DbgInfo.pszDebuggingCmdLine == NULL)
+		{
+			if (!DebugActiveProcess(nDbgProcessID))
+			{
+				DWORD dwErr = GetLastError();
+
+				wchar_t szProc[64]; szProc[0] = 0;
+				PROCESSENTRY32 pi = {sizeof(pi)};
+				if (GetProcessInfo(nDbgProcessID, &pi))
+					_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
+
+				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't attach debugger to '%s' PID=%i. ErrCode=0x%08X\n",
+					szProc[0] ? szProc : L"not found", nDbgProcessID, dwErr);
+				_wprintf(szInfo);
 				return CERR_CANTSTARTDEBUGGER;
 			}
-
-			wchar_t szExe[MAX_PATH+16];
-			wchar_t szCmdLine[MAX_PATH*2];
-			if (GetModuleFileName(NULL, szExe, countof(szExe)-16))
-			{
-				wchar_t* pszName = (wchar_t*)PointToName(szExe);
-				_wcscpy_c(pszName, 16, (nBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
-				_wsprintf(szCmdLine, SKIPLEN(countof(szCmdLine))
-					L"\"%s\" /DEBUGPID=%u %s", szExe, gpSrv->dwRootProcess,
-					(gpSrv->DbgInfo.nDebugDumpProcess == 1) ? L"/DUMP" :
-					(gpSrv->DbgInfo.nDebugDumpProcess == 2) ? L"/MINIDUMP" :
-					(gpSrv->DbgInfo.nDebugDumpProcess == 3) ? L"/FULLDUMP" : L"");
-
-				STARTUPINFO si = {sizeof(si)};
-				PROCESS_INFORMATION pi = {};
-				if (CreateProcess(NULL, szCmdLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
-				{
-					// Ждать НЕ будем, сразу на выход
-
-					//HANDLE hEvents[2] = {pi.hProcess, ghExitQueryEvent};
-					//nWait = WaitForMultipleObjects(countof(hEvents), hEvents, FALSE, INFINITE);
-					//if (nWait == WAIT_OBJECT_0)
-					//{
-					//	//GetExitCodeProcess(pi.hProcess, &nExternalExitCode);
-					//	nExternalExitCode = 0;
-					//}
-
-					//CloseHandle(pi.hProcess);
-					//CloseHandle(pi.hThread);
-
-					//if (nExternalExitCode == 0)
-					//{
-					//	goto done;
-					//}
-
-					return 0;
-				}
-				else
-				{
-					DWORD dwErr = GetLastError();
-					_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't start external debugger '%s'. ErrCode=0x%08X\n",
-						szCmdLine, dwErr);
-					_wprintf(szInfo);
-					return CERR_CANTSTARTDEBUGGER;
-				}
-			}
-
-
-			wchar_t szProc[64]; szProc[0] = 0;
-			PROCESSENTRY32 pi = {sizeof(pi)};
-			if (GetProcessInfo(gpSrv->dwRootProcess, &pi))
-				_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
-
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Bits are incompatible. Can't debug '%s' PID=%i\n",
-				szProc[0] ? szProc : L"not found", gpSrv->dwRootProcess);
-			_wprintf(szInfo);
-			return CERR_CANTSTARTDEBUGGER;
 		}
+
+		iAttachedCount++;
 	}
 
-	if (gpSrv->DbgInfo.pszDebuggingCmdLine == NULL)
+	if (iAttachedCount == 0)
 	{
-		if (!DebugActiveProcess(gpSrv->dwRootProcess))
-		{
-			DWORD dwErr = GetLastError();
-
-			wchar_t szProc[64]; szProc[0] = 0;
-			PROCESSENTRY32 pi = {sizeof(pi)};
-			if (GetProcessInfo(gpSrv->dwRootProcess, &pi))
-				_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
-
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't attach debugger to '%s' PID=%i. ErrCode=0x%08X\n",
-				szProc[0] ? szProc : L"not found", gpSrv->dwRootProcess, dwErr);
-			_wprintf(szInfo);
-			return CERR_CANTSTARTDEBUGGER;
-		}
+		return CERR_CANTSTARTDEBUGGER;
 	}
+	/* **************** */
 
 	// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
 	// к закрытию "отлаживаемой" программы

@@ -771,6 +771,7 @@
       <BaseAddress>0x6F780000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
@@ -799,6 +800,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\common\common.hpp" />
+    <ClInclude Include="..\common\MArray.h" />
+    <ClInclude Include="..\common\MMap.h" />
     <ClInclude Include="ConEmuC.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConsoleRead.h" />

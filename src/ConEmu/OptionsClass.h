@@ -145,10 +145,16 @@ class CSettings
 		//LPTSTR psCurCmd;
 	private:
 		/* 'Default' command line (if nor Registry, nor /cmd specified) */
-		WCHAR  szDefCmd[MAX_PATH+32];
+		wchar_t  szDefCmd[MAX_PATH+32];
+		/* Current command line, specified with "/cmd" or "/cmdlist" switches */
+		wchar_t* pszCurCmd;
+		bool isCurCmdList; // а это если был указан /cmdlist
 	public:
+		/* Store/retrieve command line, specified with "/cmd" or "/cmdlist" switches */
+		void SetCurCmd(wchar_t*& pszNewCmd, bool bIsCmdList);
+		LPCTSTR GetCurCmd(bool *pIsCmdList = NULL);
 		/* "Active" command line */
-		//LPCTSTR GetCmd();
+		LPCTSTR GetCmd(bool *pIsCmdList = NULL);
 		/* "Default" command line "far/cmd", based on /BufferHeight switch */
 		LPCTSTR GetDefaultCmd();
 		void    SetDefaultCmd(LPCWSTR asCmd);
@@ -313,7 +319,7 @@ class CSettings
 		void RegisterFonts();
 	private:
 		void RegisterFontsInt(LPCWSTR asFromDir);
-		void ApplyStartupOptions();
+		//void ApplyStartupOptions();
 	public:
 		enum ShellIntegrType
 		{

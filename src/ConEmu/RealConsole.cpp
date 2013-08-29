@@ -1265,6 +1265,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 	}
 
 	bool lbRc = false;
+	bool lbIsFar = isFar();
 	//wchar_t szMsg[128];
 
 	size_t cchSucceeded = 0;
@@ -1287,6 +1288,15 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 		}
 
 		TranslateKeyPress(0, 0, *pch, -1, r, r+1);
+		
+		// 130822 - Japanese+iPython - (wVirtualKeyCode!=0) fails with pyreadline
+		if (lbIsFar && (r->EventType == KEY_EVENT) && !r->Event.KeyEvent.wVirtualKeyCode)
+		{
+			// Если в RealConsole валится VK=0, но его фар игнорит
+			r[0].Event.KeyEvent.wVirtualKeyCode = VK_PROCESSKEY;
+			r[1].Event.KeyEvent.wVirtualKeyCode = VK_PROCESSKEY;
+		}
+
 		PackInputRecord(r, pir);
 		PackInputRecord(r+1, pir+1);
 		cchSucceeded += 2;
@@ -1771,18 +1781,6 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	{
 		_ASSERTE(pRCon->mh_MainSrv==NULL);
 
-		#if 1
-
-		//if (!pRCon->mb_ProcessRestarted)
-		//{
-		//	if (!pRCon->PreInit())
-		//	{
-		//		DEBUGSTRPROC(L"### RCon:PreInit failed\n");
-		//		pRCon->SetConStatus(L"RCon:PreInit failed");
-		//		return 0;
-		//	}
-		//}
-
 		// -- pushed to queue from ::Constructor!
 		//// Move all "CreateProcess-es" to Main Thread
 		//gpConEmu->mp_RunQueue->RequestRConStartup(pRCon);
@@ -1800,26 +1798,6 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		UNREFERENCED_PARAMETER(nNumber);
 		#endif
 
-		#else
-
-		pRCon->mb_NeedStartProcess = FALSE;
-
-		if (!pRCon->StartProcess())
-		{
-			wchar_t szErrInfo[128];
-			_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't start root process, ErrCode=0x%08X...", GetLastError());
-			DEBUGSTRPROC(L"### Can't start process\n");
-			pRCon->SetConStatus(szErrInfo);
-			return 0;
-		}
-
-		// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
-		// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
-		if (gpSetCls->SingleInstanceArg == sgl_Enabled)
-		{
-			gpSetCls->ResetCmdArg();
-		}
-		#endif
 	}
 
 	pRCon->mb_WaitingRootStartup = FALSE;
@@ -2833,12 +2811,12 @@ void CRealConsole::OnStartProcessAllowed()
 		return;
 	}
 
-	// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
-	// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
-	if (gpSetCls->SingleInstanceArg == sgl_Enabled)
-	{
-		gpSetCls->ResetCmdArg();
-	}
+	//// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
+	//// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
+	//if (gpSetCls->SingleInstanceArg == sgl_Enabled)
+	//{
+	//	gpSetCls->ResetCmdArg();
+	//}
 }
 
 void CRealConsole::ConHostSearchPrepare()
@@ -3102,7 +3080,7 @@ BOOL CRealConsole::StartProcess()
 	}
 
 	// Prepare cmd line
-	LPCWSTR lpszRawCmd = (m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd) ? m_Args.pszSpecialCmd : gpSet->GetCmd();
+	LPCWSTR lpszRawCmd = (m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd) ? m_Args.pszSpecialCmd : gpSetCls->GetCmd();
 	_ASSERTE(lpszRawCmd && *lpszRawCmd);
 	SafeFree(mpsz_CmdBuffer);
 	mpsz_CmdBuffer = ParseConEmuSubst(lpszRawCmd);
@@ -3478,7 +3456,7 @@ BOOL CRealConsole::StartProcess()
 		{
 			if (psz[_tcslen(psz)-1]!=_T('\n')) _wcscat_c(psz, nErrLen, _T("\n"));
 
-			if (!gpSet->psCurCmd && StrStrI(gpSet->GetCmd(), gpSetCls->GetDefaultCmd())==NULL)
+			if (!gpSetCls->GetCurCmd() && StrStrI(gpSetCls->GetCmd(), gpSetCls->GetDefaultCmd())==NULL)
 			{
 				_wcscat_c(psz, nErrLen, _T("\n\n"));
 				_wcscat_c(psz, nErrLen, _T("Do You want to simply start "));
@@ -3521,8 +3499,12 @@ BOOL CRealConsole::StartProcess()
 		// Выполнить стандартную команду...
 		if (m_Args.pszSpecialCmd == NULL)
 		{
-			_ASSERTE(gpSet->psCurCmd==NULL);
-			gpSet->psCurCmd = lstrdup(gpSetCls->GetDefaultCmd());
+			if (!gpSetCls->GetCurCmd())
+			{
+				Assert(gpSetCls->GetCurCmd()==NULL);
+				wchar_t* pszTmpCmd = lstrdup(gpSetCls->GetDefaultCmd());
+				gpSetCls->SetCurCmd(pszTmpCmd, false);
+			}
 		}
 
 		nStep ++;
@@ -5127,7 +5109,8 @@ void CRealConsole::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	WORD nShift = 0x8000 & (WORD)GetKeyState(VK_SHIFT);
 
 	r.Event.KeyEvent.wRepeatCount = 1; // Repeat count. Since the first byte and second byte is continuous, this is always 1.
-	r.Event.KeyEvent.wVirtualKeyCode = VK_PROCESSKEY; // В RealConsole валится VK=0, но его фар игнорит
+	// 130822 - Japanese+iPython - (wVirtualKeyCode!=0) fails with pyreadline
+	r.Event.KeyEvent.wVirtualKeyCode = isFar() ? VK_PROCESSKEY : 0; // В RealConsole валится VK=0, но его фар игнорит
 	r.Event.KeyEvent.uChar.UnicodeChar = (wchar_t)wParam;
 	r.Event.KeyEvent.bKeyDown = TRUE; //(messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN);
 	r.Event.KeyEvent.wVirtualScanCode = ((DWORD)lParam & 0xFF0000) >> 16; // 16-23 - Specifies the scan code. The value depends on the OEM.
@@ -5839,7 +5822,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 		// may return task name instead of real command.
 		_ASSERTE(m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd && "Command line must be specified already!");
 
-		lpszCmd = gpSet->GetCmd();
+		lpszCmd = gpSetCls->GetCmd();
 		
 		// May be this is batch?
 		pszBuffer = gpConEmu->LoadConsoleBatch(lpszCmd);
@@ -6145,6 +6128,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 	TODO("OPTIMIZE: хорошо бы от секции вообще избавиться, да и не всегда обновлять нужно...");
 	MSectionLock SPRC; SPRC.Lock(&csPRC);
 	BOOL lbRecreateOk = FALSE;
+	bool bIsWin64 = IsWindows64();
 
 	if (mn_InRecreate && mn_ProcessCount == 0)
 	{
@@ -6351,6 +6335,29 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 								ProcessCheckName(cp, p.szExeFile); //far, telnet, cmd, tcc, conemuc, и пр.
 								cp.Alive = true;
 								cp.inConsole = true;
+
+								bool bIsWowProcess = false;
+								if (bIsWin64)
+								{
+									MODULEENTRY32 mi = {sizeof(mi)};
+									HANDLE hMod = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, cp.ProcessID);
+									DWORD nErrCode = (hMod == INVALID_HANDLE_VALUE) ? GetLastError() : 0;
+									if (hMod != INVALID_HANDLE_VALUE)
+									{
+										if (Module32First(hMod, &mi))
+										{
+											do {
+												if (lstrcmpi(mi.szModule, L"wow64.dll") == 0)
+												{
+													bIsWowProcess = true; break;
+												}
+											} while (Module32Next(hMod, &mi));
+										}
+										SafeCloseHandle(hMod);
+									}
+								}
+
+
 								SPRC.RelockExclusive(300); // Заблокировать, если это еще не сделано
 								m_Processes.push_back(cp);
 							}
@@ -10402,7 +10409,7 @@ LPCWSTR CRealConsole::GetCmd()
 	if (m_Args.pszSpecialCmd)
 		return m_Args.pszSpecialCmd;
 	else
-		return gpSet->GetCmd();
+		return gpSetCls->GetCmd();
 }
 
 LPCWSTR CRealConsole::GetDir()

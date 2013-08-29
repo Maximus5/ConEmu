@@ -63,9 +63,56 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 				SetWindowText(hDlg, szTitle);
 			}
 
+
+			// lbStorageLocation
+			SettingsStorage Storage = {}; bool ReadOnly = false;
+			gpSet->GetSettingsType(Storage, ReadOnly);
+			wchar_t* pszSettingsPlaces[] = {
+				lstrdup(L"HKEY_CURRENT_USER\\Software\\ConEmu"),
+				ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"),
+				ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"),
+				ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"),
+				NULL
+			};
+			int iAllowed = 0;
+			if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_XML) == 0)
+			{
+				iAllowed = 1; // Реестр уже низя
+				if (Storage.pszFile)
+				{
+					if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[1]) == 0)
+						iAllowed = 1; // OK, перебить может любой другой xml
+					else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[2]) == 0)
+						iAllowed = 2; // "Перебить" может только %APPDATA%
+					else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[3]) == 0)
+						iAllowed = 3; // Приоритетнее настроек нет
+					else
+					{
+						// Этот xml мог быть указан в "/LoadCfgFile ..."
+						SafeFree(pszSettingsPlaces[3]);
+						pszSettingsPlaces[3] = lstrdup(Storage.pszFile);
+						iAllowed = 3; // Приоритетнее настроек нет
+					}
+				}
+			}
+			while (pszSettingsPlaces[iAllowed])
+			{
+				SendDlgItemMessage(hDlg, lbStorageLocation, CB_ADDSTRING, 0, (LPARAM)pszSettingsPlaces[iAllowed]);
+				iAllowed++;
+			}
+			SendDlgItemMessage(hDlg, lbStorageLocation, CB_SETCURSEL, 0, 0);
+			for (int i = 0; pszSettingsPlaces[i]; i++)
+			{
+				SafeFree(pszSettingsPlaces[i]);
+			}
+
+
+			// continue
 			CheckDlgButton(hDlg, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
 
 			CheckDlgButton(hDlg, cbUseKeyboardHooksFast, gpSet->isKeyboardHooks(true));
+
+			
 
 			// Debug purposes only. ConEmu.exe switch "/nokeyhooks"
 			#ifdef _DEBUG
@@ -168,6 +215,21 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 			{
 			case IDOK:
 				{
+					SettingsStorage CurStorage = {}; bool ReadOnly = false;
+					gpSet->GetSettingsType(CurStorage, ReadOnly);
+					LRESULT lSelStorage = SendDlgItemMessage(hDlg, lbStorageLocation, CB_GETCURSEL, 0, 0);
+					if (lSelStorage > 0)
+					{
+						// Значит юзер выбрал "создать настройки" в другом месте
+						wchar_t* pszNewPlace = GetDlgItemText(hDlg, lbStorageLocation);
+						if (!gpConEmu->SetConfigFile(pszNewPlace, true))
+						{
+							// Ошибка уже показана
+							return 1;
+						}
+					}
+
+
 					/* Force Single instance mode */
 					gpSet->isSingleInstance = IsDlgButtonChecked(hDlg, cbSingleInstance);
 

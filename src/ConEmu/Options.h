@@ -191,8 +191,12 @@ struct Settings
 			//reg->Load(L"PopBackColorIdx", nPopBackColorIdx);
 			BYTE nPopBackColorIdx; // 0..15,16
 
-
+			// Loaded
 			COLORREF Colors[0x20];
+
+			// Computed
+			COLORREF ColorsFade[0x20];
+			bool FadeInitialized;
 
 			void FreePtr()
 			{
@@ -213,6 +217,11 @@ struct Settings
 
 			bool OverridePalette; // Palette+Extend
 			wchar_t szPaletteName[128];
+			//TODO: Тут хорошо бы индекс палитры хранить...
+			int GetPaletteIndex();
+			void SetPaletteName(LPCWSTR asNewPaletteName);
+			void ResetPaletteIndex();
+
 			//reg->Load(L"ExtendColors", isExtendColors);
 			bool isExtendColors;
 			char ExtendColors() const { return (OverridePalette || !AppNames) ? isExtendColors : gpSet->AppStd.isExtendColors; };
@@ -524,6 +533,7 @@ struct Settings
 		bool CmdTaskXch(int anIndex1, int anIndex2); // 0-based, index of CmdTasks
 
 		const ColorPalette* PaletteGet(int anIndex); // 0-based, index of Palettes
+		int PaletteGetIndex(LPCWSTR asName);
 		void PaletteSaveAs(LPCWSTR asName); // Save active colors to named palette
 		void PaletteDelete(LPCWSTR asName); // Delete named palette
 		void PaletteSetStdIndexes();
@@ -566,7 +576,7 @@ struct Settings
 
 		int PaletteCount;
 		ColorPalette** Palettes;
-		int PaletteGetIndex(LPCWSTR asName);
+		ColorPalette* PaletteGetPtr(int anIndex); // 0-based, index of Palettes
 		void SavePalettes(SettingsBase* reg);
 		void SortPalettes();
 		void FreePalettes();
@@ -585,20 +595,20 @@ struct Settings
 		COLORREF ColorsFade[0x20];
 		bool mb_FadeInitialized;
 
-		struct CEAppColors
-		{
-			COLORREF Colors[0x20];
-			COLORREF ColorsFade[0x20];
-			bool FadeInitialized;
-		} **AppColors; // [AppCount]
+		//struct CEAppColors
+		//{
+		//	COLORREF Colors[0x20];
+		//	COLORREF ColorsFade[0x20];
+		//	bool FadeInitialized;
+		//} **AppColors; // [AppCount]
 
 		void LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECursorType* pInactive);
 
 		void LoadAppSettings(SettingsBase* reg, bool abFromOpDlg = false);
-		void LoadAppSettings(SettingsBase* reg, AppSettings* pApp, COLORREF* pColors);
-		void SaveAppSettings(SettingsBase* reg, AppSettings* pApp, COLORREF* pColors);
+		void LoadAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/);
+		void SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/);
 
-		void FreeApps(int NewAppCount = 0, AppSettings** NewApps = NULL, Settings::CEAppColors** NewAppColors = NULL);
+		void FreeApps(int NewAppCount = 0, AppSettings** NewApps = NULL/*, Settings::CEAppColors** NewAppColors = NULL*/);
 
 		DWORD mn_FadeMul;
 		inline BYTE GetFadeColorItem(BYTE c);
@@ -656,6 +666,8 @@ struct Settings
 		DWORD nColorKeyValue;
 
 		/* *** Command Line History (from start dialog) *** */
+		//reg->Load(L"SaveCmdHistory", isSaveCmdHistory);
+		bool isSaveCmdHistory;
 		//reg->Load(L"CmdLineHistory", &psCmdHistory);
 		LPWSTR psCmdHistory;
 		//nCmdHistorySize = 0; HistoryCheck();
@@ -681,16 +693,17 @@ struct Settings
 		bool isStoreTaskbarCommands;
 
 		
-		/* Command Line ("/cmd" arg) */
-		LPTSTR psCurCmd;
-		bool isCurCmdList; // а это если был указан /cmdlist
+	//	/* Command Line ("/cmd" arg) */
+	//private:
+	//	LPTSTR psCurCmd;
+	//public:
+	//	LPCTSTR GetCurCmd();
+	//	void SetCmdPtr(wchar_t*& psNewCmd);
+
 
 		/* 'Default' command line (if nor Registry, nor /cmd specified) */
 		//WCHAR  szDefCmd[16];
 	public:
-		/* "Active" command line */
-		LPCTSTR GetCmd(bool *pIsCmdList = NULL);
-
 		RecreateActionParm GetDefaultCreateAction();
 
 		//reg->Load(L"FontName", inFont, countof(inFont))

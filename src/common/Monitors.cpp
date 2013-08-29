@@ -185,16 +185,39 @@ HMONITOR GetNearestMonitorInfo(MONITORINFO* pmi /*= NULL*/, HMONITOR hDefault /*
 	return hMon;
 }
 
+struct _FindAllMonitorsItem
+{
+	HMONITOR hMon;
+	RECT rcMon;
+	POINT ptCenter;
+};
+
 struct _FindAllMonitors
 {
-	MArray<HMONITOR> MonArray;
+	MArray<_FindAllMonitorsItem> MonArray;
 };
 
 BOOL CALLBACK EnumAllMonitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
 	_FindAllMonitors* p = (_FindAllMonitors*)dwData;
-	p->MonArray.push_back(hMonitor);
+	_FindAllMonitorsItem Info = {hMonitor, *lprcMonitor};
+	Info.ptCenter.x = (Info.rcMon.left + Info.rcMon.right) >> 1;
+	Info.ptCenter.y = (Info.rcMon.top + Info.rcMon.bottom) >> 1;
+	p->MonArray.push_back(Info);
 	return TRUE;
+}
+
+int MonitorSortCallback(_FindAllMonitorsItem &e1, _FindAllMonitorsItem &e2)
+{
+	if (e1.ptCenter.x < e2.ptCenter.x)
+		return -1;
+	else if (e1.ptCenter.x > e2.ptCenter.x)
+		return 1;
+	else if (e1.ptCenter.y < e2.ptCenter.y)
+		return -1;
+	else if (e1.ptCenter.y > e2.ptCenter.y)
+		return 1;
+	return 0;
 }
 
 HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)
@@ -203,7 +226,8 @@ HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)
 	
 	EnumDisplayMonitors(NULL, NULL, EnumAllMonitors, (LPARAM)&Monitors);
 
-	if (Monitors.MonArray.size() < 2)
+	INT_PTR iMonCount = Monitors.MonArray.size();
+	if (iMonCount < 2)
 		return NULL;
 
 	HMONITOR hFound = NULL;
@@ -211,21 +235,34 @@ HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)
 	_ASSERTE(prcWnd!=NULL); // Иначе будем искать от Primary
 
 	HMONITOR hNearest = prcWnd ? MonitorFromRect(prcWnd, MONITOR_DEFAULTTONEAREST) : GetPrimaryMonitorInfo(NULL);
+	MONITORINFO mi; GetMonitorInfoSafe(hNearest, mi);
 
-	for (INT_PTR i = Monitors.MonArray.size(); (i--) > 0;)
+	TODO("Доработать упорядочивание мониторов?");
+	Monitors.MonArray.sort(MonitorSortCallback);
+
+	for (INT_PTR i = iMonCount; (i--) > 0;)
 	{
-		if (Monitors.MonArray[i] == hNearest)
+		_FindAllMonitorsItem& Item = Monitors.MonArray[i];
+		if (Item.hMon == hNearest)
 		{
+			//POINT ptNext = {
+			//	Next ? (Item.rcMon.right + 100) : (Item.rcMon.left - 100),
+			//	Item.ptCenter.y};
+			//hFound = MonitorFromPoint(ptNext, MONITOR_DEFAULTTONEAREST);
+			//if (hFound != hNearest)
+			//	break; // нашли что-то подходящее
+
+
 			INT_PTR j;
 			if (Next)
 			{
-				j = ((i + 1) < Monitors.MonArray.size()) ? (i + 1) : 0;
+				j = ((i + 1) < iMonCount) ? (i + 1) : 0;
 			}
 			else
 			{
-				j = (i > 0) ? (i - 1) : (Monitors.MonArray.size() - 1);
+				j = (i > 0) ? (i - 1) : (iMonCount - 1);
 			}
-			hFound = Monitors.MonArray[j];
+			hFound = Monitors.MonArray[j].hMon;
 			break;
 		}
 	}
@@ -236,11 +273,11 @@ HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)
 
 		if (Next)
 		{
-			hFound = Monitors.MonArray[0];
+			hFound = Monitors.MonArray[0].hMon;
 		}
 		else
 		{
-			hFound = Monitors.MonArray[Monitors.MonArray.size()-1];
+			hFound = Monitors.MonArray[iMonCount-1].hMon;
 		}
 	}
 

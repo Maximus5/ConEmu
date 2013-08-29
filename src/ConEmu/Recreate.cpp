@@ -186,7 +186,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			                 ? pArgs->pszSpecialCmd
 			                 : pRCon ? pRCon->GetCmd() : NULL;
 
-			LPCWSTR pszSystem = gpSet->GetCmd();
+			LPCWSTR pszSystem = gpSetCls->GetCmd();
 
 			if (pArgs->aRecreate == cra_RecreateTab)
 			{
@@ -442,7 +442,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			if (*pszCmd && (nId < 0)) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszCmd);
 
-			LPCWSTR pszSystem = gpSet->GetCmd();
+			LPCWSTR pszSystem = gpSetCls->GetCmd();
 
 			if (pszSystem != pszCmd && (pszSystem && pszCmd && (lstrcmpi(pszSystem, pszCmd) != 0)))
 			{

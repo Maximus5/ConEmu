@@ -1377,7 +1377,9 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 	// ≈сли требуетс€ увеличить или создать (первично) буфера
 	if (!con.pConChar || (con.nTextWidth*con.nTextHeight) < (nNewWidth*nNewHeight))
 	{
+		// Exclusive(!) Lock
 		MSectionLock sc; sc.Lock(&csCON, TRUE);
+
 		MCHKHEAP;
 		con.LastStartInitBuffersTick = GetTickCount();
 
@@ -1491,7 +1493,10 @@ SHORT CRealBuffer::GetBufferPosX()
 
 SHORT CRealBuffer::GetBufferPosY()
 {
-	#ifdef _DEBUG
+	//-- по факту - не интересно, ассерт часто возникал в процессе обильного скролла-вывода текста
+	//-- (con.nTopVisibleLine и csbi.srWindow.Top оказывались рассинхронизированными)
+	//#if defined(_DEBUG)
+	#if 0
 	USHORT nTop = con.nTopVisibleLine;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = con.m_sbi;
 	bool bInScroll = mp_RCon->InScroll();
@@ -4375,9 +4380,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	
 	lcaTable = lcaTableOrg;
 
-	con.bInGetConsoleData = TRUE;
-
+	// NonExclusive lock (need to ensure that buffers will not be recreated during processing)
 	MSectionLock csData; csData.Lock(&csCON);
+	con.bInGetConsoleData = TRUE;
 
 	con.LastStartReadBufferTick = GetTickCount();
 

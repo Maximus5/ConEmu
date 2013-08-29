@@ -372,6 +372,7 @@ extern BOOL  gbVisibleOnStartup;
 #endif
 
 #include "../common/PipeServer.h"
+#include "../common/MArray.h"
 #include "../common/MMap.h"
 
 struct AltServerInfo

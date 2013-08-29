@@ -606,6 +606,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
 	fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
 
+	// Error ERROR_INVALID_HANDLE may occurs when ConEmu was Attached to some external console with redirected input.
 
 #ifdef _DEBUG
 	DWORD dwErr = GetLastError();
@@ -619,8 +620,8 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"*** WriteConsoleInput(Write=%i, Written=%i, Left=%i)\n", nCount, cbWritten, gpSrv->InputQueue.GetNumberOfBufferEvents());
 		DEBUGSTRINPUTWRITEALL(szDbg);
 	}
+	_ASSERTE((fSuccess && cbWritten==nCount) || (!fSuccess && dwErr==ERROR_INVALID_HANDLE && gbAttachMode));
 #endif
-	_ASSERTE(fSuccess && cbWritten==nCount);
 
 	if (prNew) free(prNew);
 

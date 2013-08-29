@@ -392,20 +392,36 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size
 		if (!hMsXml3)
 		{
 			wchar_t szDll[MAX_PATH+16];
+			struct FindPlaces { LPCWSTR sDir, sSlash; } findPlaces[] = {
+				{gpConEmu->ms_ConEmuExeDir,  L"\\"},
+				{gpConEmu->ms_ConEmuBaseDir, L"\\"},
+				{L"", L""}, {NULL}};
 
-			_wsprintf(szDll, SKIPLEN(countof(szDll)) L"%s\\msxml3.dll", gpConEmu->ms_ConEmuExeDir);
-			hMsXml3 = LoadLibrary(szDll);
-			hFact = hMsXml3 ? 0 : (HRESULT)GetLastError();
-
-			if (!hMsXml3 
-				&& (((DWORD)hFact) == ERROR_MOD_NOT_FOUND
-					|| ((DWORD)hFact) == ERROR_BAD_EXE_FORMAT
-					|| ((DWORD)hFact) == ERROR_FILE_NOT_FOUND))
+			for (FindPlaces* fp = findPlaces; fp->sDir; fp++)
 			{
-				_wsprintf(szDll, SKIPLEN(countof(szDll)) L"%s\\msxml3.dll", gpConEmu->ms_ConEmuBaseDir);
+				_wsprintf(szDll, SKIPLEN(countof(szDll)) L"%s%smsxml3.dll", fp->sDir, fp->sSlash);
 				hMsXml3 = LoadLibrary(szDll);
 				hFact = hMsXml3 ? 0 : (HRESULT)GetLastError();
+				if (hMsXml3)
+					break;
+			//if (!hMsXml3 
+			//	&& (((DWORD)hFact) == ERROR_MOD_NOT_FOUND
+			//		|| ((DWORD)hFact) == ERROR_BAD_EXE_FORMAT
+			//		|| ((DWORD)hFact) == ERROR_FILE_NOT_FOUND))
 			}
+
+			//_wsprintf(szDll, SKIPLEN(countof(szDll)) L"%s\\msxml3.dll", gpConEmu->ms_ConEmuExeDir);
+			//hMsXml3 = LoadLibrary(szDll);
+			//hFact = hMsXml3 ? 0 : (HRESULT)GetLastError();
+			//if (!hMsXml3 
+			//	&& (((DWORD)hFact) == ERROR_MOD_NOT_FOUND
+			//		|| ((DWORD)hFact) == ERROR_BAD_EXE_FORMAT
+			//		|| ((DWORD)hFact) == ERROR_FILE_NOT_FOUND))
+			//{
+			//	_wsprintf(szDll, SKIPLEN(countof(szDll)) L"%s\\msxml3.dll", gpConEmu->ms_ConEmuBaseDir);
+			//	hMsXml3 = LoadLibrary(szDll);
+			//	hFact = hMsXml3 ? 0 : (HRESULT)GetLastError();
+			//}
 
 			if (!hMsXml3)
 			{

@@ -68,6 +68,7 @@ _DBGHLP(L"     /DOSBOX -> use DosBox\r\n") \
         L"     a - RunAs shell verb (as Admin on Vista+, user/pwd in Win2k and WinXP)\r\n" \
         L"     b - Create background tab\r\n" \
         L"     c - force enable 'Press Enter or Esc to close console' (default)\r\n" \
+        L"     d - see below\r\n" \
         L"     f - force starting console active, useful when starting several consoles simultaneously\r\n" \
         L"     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\r\n" \
         L"     i - don't inject ConEmuHk into starting process\r\n" \
@@ -77,16 +78,19 @@ _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
         L"     o - don't enable 'Long console output' when starting command from Far Manager\r\n" \
         L"     r - run as restricted user\r\n" \
         L"     s[<SplitTab>T][<Percents>](H|V)\r\n" \
+        L"     t - see below\r\n" \
 _DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r\n") \
         L"     u - ConEmu choose user dialog\r\n" \
 		L"     w - Enable 'Overwrite' mode in command prompt by default\r\n" \
 		L"     z - Don't use 'Default terminal' feature for this command\r\n" \
+		L"\r\n" \
 		L"  Switch: \"-new_console:d:dir\"\r\n" \
 		L"       - specify working directory, MUST BE LAST or single OPTION\r\n" \
 		L"  Switch: \"-new_console:t:tabname\"\r\n" \
 		L"       - rename new created tab, MUST BE LAST or single OPTION\r\n" \
 		L"  Switch: \"-new_console:u:user:pwd\"\r\n" \
         L"       - specify user/pwd in args, MUST BE LAST or single OPTION\r\n" \
+		L"\r\n" \
         L"  Warning: Option 'Inject ConEmuHk' must be enabled in ConEmu settings!\r\n" \
 		L"  Example: dir \"-new_console:bh9999c\" \"-new_console:dC:\\\"  c:\\Users /s\r\n" \
 		L"  Note: Some switches may be used in similar \"-cur_console:...\"\r\n"

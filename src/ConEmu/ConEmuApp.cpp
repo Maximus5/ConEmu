@@ -3726,7 +3726,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Если запускается conman (нафига?) - принудительно включить флажок "Обновлять handle"
 	//TODO("Deprecated: isUpdConHandle использоваться не должен");
 
-	if (gpSet->isMulti || StrStrI(gpSet->GetCmd(), L"conman.exe"))
+	if (gpSet->isMulti || StrStrI(gpSetCls->GetCmd(), L"conman.exe"))
 	{
 		//gpSet->isUpdConHandle = TRUE;
 
@@ -3829,12 +3829,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		MCHKHEAP
-		// могло быть создано в gpSet->GetCmd()
-		SafeFree(gpSet->psCurCmd);
 
 		// Запоминаем
-		gpSet->psCurCmd = pszReady; pszReady = NULL;
-		gpSet->isCurCmdList = isScript;
+		gpSetCls->SetCurCmd(pszReady, isScript);
 	}
 
 	//if (FontFilePrm) {
