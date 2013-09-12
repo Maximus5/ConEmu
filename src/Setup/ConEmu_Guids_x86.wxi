@@ -32,6 +32,7 @@
 	<?define Guid.ExtendedConsole64.dll = "92B68F0B-9B34-4E4B-A83F-18B1A19C1F06" ?>
 	<!-- Cmd Extensions -->
 	<?define Guid.Attach.cmd = "A3007778-A4CE-4E61-BED5-B5A31B638549" ?>
+	<?define Guid.ClsEx.cmd = "601C3B50-2AC4-48C4-AF2A-776A531A75F9" ?>
 	<?define Guid.Cmd_Autorun.cmd = "FFA943E1-0E3A-4B97-A142-1678CFE82935" ?>
 	<?define Guid.ColorPrompt.cmd = "318DFA50-3987-4ABC-A3F5-524F963BA5BE" ?>
 	<?define Guid.csudo.cmd = "BAE56189-FB6F-40E9-A716-943FBE276898" ?>

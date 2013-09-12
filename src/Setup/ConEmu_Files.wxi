@@ -55,6 +55,9 @@
       <Component Id="Attach.cmd" Guid="$(var.Guid.Attach.cmd)" Win64="$(var.Win64)">
         <File Id="Attach.cmd" Source="..\..\Release\ConEmu\Attach.cmd"  KeyPath="yes" />
       </Component>
+      <Component Id="ClsEx.cmd" Guid="$(var.Guid.ClsEx.cmd)" Win64="$(var.Win64)">
+        <File Id="ClsEx.cmd" Source="..\..\Release\ConEmu\ClsEx.cmd"  KeyPath="yes" />
+      </Component>
       <Component Id="Cmd_Autorun.cmd" Guid="$(var.Guid.Cmd_Autorun.cmd)" Win64="$(var.Win64)">
         <File Id="Cmd_Autorun.cmd" Source="..\..\Release\ConEmu\Cmd_Autorun.cmd"  KeyPath="yes" />
       </Component>

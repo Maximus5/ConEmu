@@ -992,6 +992,8 @@ struct Settings
 		char isTabs;
 		//reg->Load(L"TabsLocation", nTabsLocation);
 		BYTE nTabsLocation; // 0 - top, 1 - bottom
+		//reg->Load(L"TabIcons", isTabIcons);
+		bool isTabIcons;
 		//reg->Load(L"OneTabPerGroup", isOneTabPerGroup);
 		bool isOneTabPerGroup;
 		//reg->Load(L"ActivateSplitMouseOver", isActivateSplitMouseOver);

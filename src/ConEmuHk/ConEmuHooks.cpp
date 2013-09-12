@@ -218,6 +218,7 @@ bool gbDosBoxProcess = false;
 
 /* ************ Globals for "Default terminal ************ */
 bool gbPrepareDefaultTerminal = false;
+//HANDLE ghDefaultTerminalReady = NULL; // 
 ConEmuGuiMapping* gpDefaultTermParm = NULL;
 
 bool isDefaultTerminalEnabled()

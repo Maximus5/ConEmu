@@ -15,6 +15,28 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.09.12
+[+] Show icons in tab bar. By default, root application (your shell) icon is displayed.
+    Also, you may specify any special icon when starting tab with -new_console switch.
+[+] New switch "-new_console:C:<IconFile>" set icon for a tab. Example:
+    ConEmu.exe /cmd C:\GIT\git-bash.bat -cur_console:C:C\GIT\etc\git.ico
+[*] Changes in «Win+N» popup menu (plus sign on toolbar).
+    Tasks menu items are true submenu now. When task contains more than one item,
+    «All task tabs» sub-item appears to run all task tabs.
+    You may quickly run all task tabs with RightClick on Task menu item itself
+    (don't wait for submenu appears).
+    Also, if you define more than 10 tasks, all sequent tasks are available
+    via «More tasks» submenus.
+[*] Default terminal: ConEmuHk.dll will be reloaded after updating to new ConEmu build
+    (logoff/logon is not needed anymore).
+[*] Switch tabs by clicking over tab in fullscreen mode (actually, when caption is hidden).
+[%] Saving start command line history was disabled by default (130827). Enabled now.
+[+] Do you want to get your cmd.exe prompt bottom aligned? On ConEmu startup and after "cls"?
+    It is possible, run this file as your shell:
+    cmd.exe /k ClsEx.cmd
+
+
+
 2013.08.27
 [!] New search sequence for ConEmu.xml file:
     * %APPDATA%\ConEmu.xml

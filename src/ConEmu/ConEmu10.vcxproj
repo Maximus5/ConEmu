@@ -954,6 +954,7 @@
     <ClCompile Include="GestureEngine.cpp" />
     <ClCompile Include="GuiServer.cpp" />
     <ClCompile Include="Hotkeys.cpp" />
+    <ClCompile Include="IconList.cpp" />
     <ClCompile Include="Inside.cpp" />
     <ClCompile Include="LoadImg.cpp" />
     <ClCompile Include="Macro.cpp" />
@@ -1020,6 +1021,7 @@
     <ClInclude Include="Header.h" />
     <ClInclude Include="kl_parts.h" />
     <ClInclude Include="Hotkeys.h" />
+    <ClInclude Include="IconList.h" />
     <ClInclude Include="Inside.h" />
     <ClInclude Include="LoadImg.h" />
     <ClInclude Include="Macro.h" />

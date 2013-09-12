@@ -213,7 +213,9 @@ int PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 	}
 
 	szVer[0] = MVV_4a[0];
-	_wsprintf(szAddName, SKIPLEN(countof(szAddName)) L"\\ConEmuHk%s.%02u%02u%02u%s.dll", WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szVer);
+	_wsprintf(szAddName, SKIPLEN(countof(szAddName))
+		L"\\" CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
+		WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szVer);
 
 	nLen = lstrlen(szNewPath);
 	if (szNewPath[nLen-1] != L'\\')

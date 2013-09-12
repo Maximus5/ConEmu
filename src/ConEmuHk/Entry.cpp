@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#endif
 
 #include <windows.h>
+#include <Tlhelp32.h>
 
 #ifndef TESTLINK
 #include "../common/common.hpp"
@@ -78,6 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "GuiAttach.h"
 #include "Injects.h"
 #include "Ansi.h"
+#include "../ConEmu/version.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/RConStartArgs.h"
@@ -423,12 +425,61 @@ PipeServer<CESERVER_REQ> *gpHookServer = NULL;
 
 bool gbShowExeMsgBox = false;
 
-void InitDefaultTerm()
+bool InitDefaultTerm()
 {
+	bool lbRc = true;
+
 	gpDefaultTermParm = (ConEmuGuiMapping*)calloc(sizeof(*gpDefaultTermParm),1);
 
 	CShellProc sp;
 	sp.LoadSrvMapping(TRUE);
+
+	HMODULE hPrevHooks = NULL;
+	_ASSERTEX(gnSelfPID!=0 && ghOurModule!=NULL);
+	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, gnSelfPID);
+	if (hSnap != INVALID_HANDLE_VALUE)
+	{
+		MODULEENTRY32 mi = {sizeof(mi)};
+		//wchar_t szOurName[MAX_PATH] = L"";
+		//GetModuleFileName(ghOurModule, szOurName, MAX_PATH);
+		wchar_t szVer[2] = {MVV_4a[0], 0};
+		wchar_t szAddName[32];
+		_wsprintf(szAddName, SKIPLEN(countof(szAddName))
+			CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
+			WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szVer);
+		//LPCWSTR pszOurName = PointToName(szOurName);
+		wchar_t* pszDot = wcschr(szAddName, L'.');
+		wchar_t szCheckName[MAX_PATH+1];
+
+		if (pszDot && Module32First(hSnap, &mi))
+		{
+			pszDot[1] = 0; // Need to check only name, without version number
+			int nCurLen = lstrlen(szAddName);
+			do {
+				if (mi.hModule == ghOurModule)
+					continue;
+				lstrcpyn(szCheckName, PointToName(mi.szExePath), nCurLen+1);
+				if (lstrcmpi(szCheckName, szAddName) == 0)
+				{
+					hPrevHooks = mi.hModule;
+					break; // Prev (old version) instance found!
+				}
+			} while (Module32Next(hSnap, &mi));
+		}
+
+		CloseHandle(hSnap);
+	}
+
+	//ghDefaultTerminalReady  = ... ;
+	if (hPrevHooks)
+	{
+		if (!FreeLibrary(hPrevHooks))
+		{
+			lbRc = false;
+		}
+	}
+
+	return lbRc;
 }
 
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
@@ -650,6 +701,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	
 #ifdef USE_PIPE_SERVER
 	_ASSERTEX(gpHookServer==NULL);
+	// gbPrepareDefaultTerminal turned on in DllMain
 	if (!gbPrepareDefaultTerminal)
 	{
 		print_timings(L"gpHookServer");
@@ -680,6 +732,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 #endif
 
 	
+	// gbPrepareDefaultTerminal turned on in DllMain
 	if (gbPrepareDefaultTerminal)
 	{
 		TODO("Дополнительная инициализация, если нужно, для установки перехватов под DefaultTerminal");
@@ -817,9 +870,13 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		}
 	}
 
+	// gbPrepareDefaultTerminal turned on in DllMain
 	if (gbPrepareDefaultTerminal)
 	{
-		InitDefaultTerm();
+		if (!InitDefaultTerm())
+		{
+
+		}
 	}
 
 	//if (!gbSkipInjects)
@@ -1270,7 +1327,14 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			//DWORD nThreadWait = WaitForMultipleObjects(hEvents, countof(hEvents), FALSE, INFINITE);
 			//CloseHandle(hEvents[0]);
 			#else
-			DllStart(NULL);
+			if (DllStart(NULL) != 0)
+			{
+				if (gbPrepareDefaultTerminal)
+				{
+					_ASSERTEX(gbPrepareDefaultTerminal && "Failed to set up default terminal");
+					lbAllow = FALSE;
+				}
+			}
 			#endif
 			DLOGEND1();
 			

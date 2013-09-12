@@ -476,6 +476,7 @@ class CRealConsole
 		void RenameTab(LPCWSTR asNewTabText = NULL);
 		void RenameWindow(LPCWSTR asNewWindowText = NULL);
 		int GetTabCount(BOOL abVisibleOnly = FALSE);
+		int GetRootProcessIcon();
 		int GetActiveTab();
 		CEFarWindowType GetActiveTabType();
 		bool GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
@@ -637,6 +638,7 @@ class CRealConsole
 		RConStartArgs m_Args;
 		BOOL mb_WasStartDetached;
 		wchar_t ms_RootProcessName[MAX_PATH];
+		int mn_RootProcessIcon;
 		// Replace in asCmd some env.vars (!ConEmuBackHWND! and so on)
 		wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
 		wchar_t* mpsz_CmdBuffer;

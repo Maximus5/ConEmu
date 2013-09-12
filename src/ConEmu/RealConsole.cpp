@@ -273,6 +273,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	ZeroStruct(m_ServerClosing);
 	ZeroStruct(m_Args);
 	ms_RootProcessName[0] = 0;
+	mn_RootProcessIcon = -1;
 	mn_LastInvalidateTick = 0;
 
 	hConWnd = NULL;
@@ -5804,6 +5805,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	wchar_t szExe[MAX_PATH+1];
 	wchar_t szName[MAX_PATH+1];
 	LPCWSTR pszTemp = NULL;
+	LPCWSTR pszIconFile = (m_Args.pszIconFile && *m_Args.pszIconFile) ? m_Args.pszIconFile : NULL;
 	bool bAsAdmin = false;
 
 	if (m_Args.pszSpecialCmd)
@@ -5842,6 +5844,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	if (0 == NextArg(&pszTemp, szExe))
 	{
 		pszName = PointToName(szExe);
+
 		pszTemp = (*lpszCmd == L'"') ? NULL : PointToName(lpszCmd);
 		if (pszTemp && (wcschr(pszName, L'.') == NULL) && (wcschr(pszTemp, L'.') != NULL))
 		{
@@ -5849,6 +5852,9 @@ int CRealConsole::GetDefaultAppSettingsId()
 			if (FileExists(lpszCmd))
 				pszName = pszTemp;
 		}
+
+		if (pszName != pszTemp)
+			lpszCmd = szExe;
 	}
 
 	if (!pszName)
@@ -5873,8 +5879,16 @@ int CRealConsole::GetDefaultAppSettingsId()
 	// Done. Get AppDistinct ID
 	iAppId = gpSet->GetAppSettingsId(pszName, bAsAdmin);
 
+	if (!pszIconFile)
+		pszIconFile = lpszCmd;
+
 wrap:
+	// Load (or create) icon for new tab
+	mn_RootProcessIcon = gpConEmu->mp_TabBar->CreateTabIcon(pszIconFile, bAsAdmin);
+	// Fin
 	SafeFree(pszBuffer);
+	if (!*ms_RootProcessName)
+		mn_RootProcessIcon = -1;
 	return iAppId;
 }
 
@@ -8646,6 +8660,11 @@ void CRealConsole::RenameWindow(LPCWSTR asNewWindowText /*= NULL*/)
 		ExecuteFreeResult(pOut);
 		ExecuteFreeResult(pIn);
 	}
+}
+
+int CRealConsole::GetRootProcessIcon()
+{
+	return gpSet->isTabIcons ? mn_RootProcessIcon : -1;
 }
 
 int CRealConsole::GetTabCount(BOOL abVisibleOnly /*= FALSE*/)

@@ -1714,6 +1714,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\IconList.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Inside.cpp"
 				>
 			</File>
@@ -2149,6 +2153,10 @@
 			</File>
 			<File
 				RelativePath=".\Hotkeys.h"
+				>
+			</File>
+			<File
+				RelativePath=".\IconList.h"
 				>
 			</File>
 			<File

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    128
+#define CESERVER_REQ_VER    129
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -146,6 +146,12 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECONOUTPUTNAME     L"ConEmuLastOutputMapping.%08X"    // --> CESERVER_CONSAVE_MAPHDR ( %X == (DWORD)ghConWnd )
 #define CECONOUTPUTITEMNAME L"ConEmuLastOutputMapping.%08X.%u" // --> CESERVER_CONSAVE_MAP ( %X == (DWORD)ghConWnd, %u = CESERVER_CONSAVE_MAPHDR.nCurrentIndex )
 
+// Default terminal hook module name
+#define CEDEFTERMDLLFORMAT  L"ConEmuHk%s.%02u%02u%02u%s.dll"
+#define CEDEFAULTTERMHOOK   L"ConEmuDefaultTerm.%u" // Если Event взведен - нужно загрузить хуки в процесс только для перехвата запуска консольных приложений
+//#define CEDEFAULTTERMMUTEX  L"IsConEmuDefaultTerm.%u" // Если Mutex есть - значит какая-то версия длл-ки уже была загружена в обрабатываемый процесс
+
+// Events
 #define CEDATAREADYEVENT    L"ConEmuSrvDataReady.%u"
 #define CEFARWRITECMTEVENT  L"ConEmuSrvFarWriteCommit.%u"
 #define CECURSORCHANGEEVENT L"ConEmuSrvCursorChanged.%u"
@@ -162,7 +168,6 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEGHOSTSKIPACTIVATE L"ConEmuGhostActivate.%u"
 #define CECONEMUROOTPROCESS L"ConEmuRootProcess.%u" // Если Event взведен - значит это корневой процесс, облегченную версию хуков не использовать!
 #define CECONEMUROOTTHREAD  L"ConEmuRootThread.%u"  // Если Event взведен - ConEmuHk загружен в главной нити, гонять snapshoot в GetMainThreadId не требуется
-#define CEDEFAULTTERMHOOK   L"ConEmuDefaultTerm.%u" // Если Event взведен - нужно загрузить хуки в процесс только для перехвата запуска консольных приложений
 
 #define CESECURITYNAME       "ConEmuLocalData"
 

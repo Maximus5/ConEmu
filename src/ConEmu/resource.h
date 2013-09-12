@@ -11,6 +11,7 @@
 #define IDB_SCROLL                      104
 #define IDB_COPY4                       105
 #define IDB_COPY24                      106
+#define IDB_SHIELD16                    107
 #define IDC_COPY                        120
 #define IDC_LINK                        121
 #define IDC_MOVE                        122

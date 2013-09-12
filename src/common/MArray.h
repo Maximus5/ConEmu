@@ -261,7 +261,7 @@ class MArray
         void sort(int(*MARRAYSORTCALLBACK)(_Ty &e1, _Ty &e2))
         {
             MCHKHEAP;
-            int liMin, liCmp;
+            INT_PTR liMin, liCmp;
             _Ty tmp;
             for (INT_PTR i=0; i<mn_Elements-1; i++)
             {

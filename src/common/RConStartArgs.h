@@ -48,6 +48,8 @@ struct RConStartArgs
 	wchar_t* pszStartupDir; // "-new_console:d:<dir>"
 
 	wchar_t* pszRenameTab; // "-new_console:t:<name>"
+
+	wchar_t* pszIconFile; // "-new_console:C:<icon>"
 	
 	BOOL     bRunAsAdministrator; // -new_console:a
 	BOOL     bRunAsRestricted;    // -new_console:r

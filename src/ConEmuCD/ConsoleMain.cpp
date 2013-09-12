@@ -2832,23 +2832,44 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		MODULEENTRY32 mi = {sizeof(mi)};
 		if (hSnap && Module32First(hSnap, &mi))
 		{
+			// 130829 - Let load newer(!) ConEmuHk.dll into target process.
+
 			LPCWSTR pszConEmuHk = WIN3264TEST(L"conemuhk.", L"conemuhk64.");
+			size_t nDllNameLen = lstrlen(pszConEmuHk);
+			// Out preferred module name
+			wchar_t szOurName[32] = {}, szVer[2] = {MVV_4a[0],0};
+			_wsprintf(szOurName, SKIPLEN(countof(szOurName))
+				CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
+				WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szVer);
+			CharLowerBuff(szOurName, lstrlen(szOurName));
+
+			// Go to enumeration
+			wchar_t szName[64];
 			do {
 				LPCWSTR pszName = PointToName(mi.szModule);
 				// Name of hooked module may be changed (copied to %APPDATA%)
 				if (pszName && *pszName)
 				{
-					wchar_t szName[64]; lstrcpyn(szName, pszName, countof(szName));
+					lstrcpyn(szName, pszName, countof(szName));
 					CharLowerBuff(szName, lstrlen(szName));
-					if (wmemcmp(szName, pszConEmuHk, lstrlen(pszConEmuHk)) == 0
+					// ConEmuHk*.*.dll?
+					if (wmemcmp(szName, pszConEmuHk, nDllNameLen) == 0
 						&& wmemcmp(szName+lstrlen(szName)-4, L".dll", 4) == 0)
 					{
 						// Yes! ConEmuHk.dll already loaded into nRemotePID!
-						iHookRc = 0;
+						// But what is the version? Let don't downgrade loaded version!
+						if (lstrcmp(szName, szOurName) >= 0)
+						{
+							// OK, szName is newer or equal to our build
+							iHookRc = 0;
+						}
+						// Stop enumeration
 						break;
 					}
 				}
 			} while (Module32Next(hSnap, &mi));
+
+			// Check done
 		}
 		SafeCloseHandle(hSnap);
 

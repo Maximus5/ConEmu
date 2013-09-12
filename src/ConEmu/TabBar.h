@@ -39,6 +39,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MArray.h"
 #include "../common/WinObjects.h"
 
+#include "IconList.h"
+
 //#define CONEMUMSG_UPDATETABS _T("ConEmuMain::UpdateTabs")
 
 #define HT_CONEMUTAB HTBORDER
@@ -82,8 +84,9 @@ class TabBarClass
 		HWND mh_Tabbar, mh_Toolbar, mh_Rebar, mh_TabTip, mh_Balloon;
 		HFONT mh_TabFont;
 		TOOLINFO tiBalloon; wchar_t ms_TabErrText[512];
-		HIMAGELIST mh_TabIcons; int mn_AdminIcon;
-		int GetTabIcon(bool bAdmin);
+		//HIMAGELIST mh_TabIcons; int mn_AdminIcon;
+		//int GetTabIcon(bool bAdmin);
+		CIconList m_TabIcons;
 		//struct CmdHistory
 		//{
 		//	int nCmd;
@@ -100,12 +103,12 @@ class TabBarClass
 		bool _titleShouldChange;
 		int _prevTab;
 		BOOL mb_ChangeAllowed; //, mb_Enabled;
-		void AddTab(LPCWSTR text, int i, bool bAdmin);
+		void AddTab(LPCWSTR text, int i, bool bAdmin, int iTabIcon);
 		void SelectTab(int i);
 		CVirtualConsole* FarSendChangeTab(int tabIndex);
 		LONG mn_LastToolbarWidth;
 		void UpdateToolbarPos();
-		void PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon);
+		int PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon);
 		BOOL GetVConFromTab(int nTabIdx, CVirtualConsole** rpVCon, DWORD* rpWndIndex);
 		ConEmuTab m_Tab4Tip;
 		WCHAR  ms_TmpTabText[MAX_PATH];
@@ -127,7 +130,7 @@ class TabBarClass
 		static WNDPROC _defaultToolProc;
 		static LRESULT CALLBACK ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		static WNDPROC _defaultReBarProc;
-		static LRESULT TabHitTest(bool abForce = false);
+		static LRESULT TabHitTest(bool abForce = false, int* pnOverTabHit = NULL);
 
 		//typedef union tag_FAR_WND_ID {
 		//	struct {
@@ -182,6 +185,7 @@ class TabBarClass
 		//void Update(ConEmuTab* tabs, int tabsCount);
 		bool GetRebarClientRect(RECT* rc);
 		void Update(BOOL abPosted=FALSE);
+		int CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin);
 		BOOL NeedPostUpdate();
 		void UpdatePosition();
 		void UpdateTabFont();

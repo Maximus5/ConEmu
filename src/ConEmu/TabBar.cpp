@@ -115,8 +115,7 @@ TabBarClass::TabBarClass()
 	_prevTab = -1;
 	mb_ChangeAllowed = FALSE;
 	//mb_Enabled = TRUE;
-	mh_Toolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL; mh_TabIcons = NULL; mn_LastToolbarWidth = 0;
-	mn_AdminIcon = 0;
+	mh_Toolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL; mn_LastToolbarWidth = 0;
 	mb_PostUpdateCalled = FALSE;
 	mb_PostUpdateRequested = FALSE;
 	mn_PostUpdateTick = 0;
@@ -291,23 +290,29 @@ void TabBarClass::Retrieve()
 	//}
 }
 
-int TabBarClass::GetTabIcon(bool bAdmin)
+//int TabBarClass::GetTabIcon(bool bAdmin)
+//{
+//	int iIconIdx = (bAdmin && gpSet->bAdminShield) ? mn_AdminIcon : -1;
+//	return iIconIdx;
+//}
+
+int TabBarClass::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin)
 {
-	int iIconIdx = (bAdmin && gpSet->bAdminShield) ? mn_AdminIcon : -1;
-	return iIconIdx;
+	if (!gpSet->isTabIcons)
+		return -1;
+	return m_TabIcons.CreateTabIcon(asIconDescr, bAdmin);
 }
 
 // Добавляет закладку, или меняет (при необходимости) заголовок существующей
-void TabBarClass::AddTab(LPCWSTR text, int i, bool bAdmin)
+void TabBarClass::AddTab(LPCWSTR text, int i, bool bAdmin, int iTabIcon)
 {
 	if (mh_Tabbar)
 	{
 		TCITEM tie;
 		// иконку обновляем всегда. она может измениться для таба
-		tie.mask = TCIF_TEXT | (mh_TabIcons ? TCIF_IMAGE : 0);
-		tie.iImage = -1;
+		tie.mask = TCIF_TEXT | (m_TabIcons.IsInitialized() ? TCIF_IMAGE : 0);
 		tie.pszText = (LPWSTR)text ;
-		tie.iImage = GetTabIcon(bAdmin); // Пока иконка только одна - для табов со щитом
+		tie.iImage = (iTabIcon > 0) ? iTabIcon : m_TabIcons.GetTabIcon(bAdmin); // Пока иконка только одна - для табов со щитом
 		int nCurCount = GetItemCount();
 
 		if (i>=nCurCount)
@@ -514,21 +519,42 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 	return pVCon;
 }
 
-LRESULT TabBarClass::TabHitTest(bool abForce /*= false*/)
+LRESULT TabBarClass::TabHitTest(bool abForce /*= false*/, int* pnOverTabHit /*= NULL*/)
 {
+	if (pnOverTabHit)
+		*pnOverTabHit = -1; // reset, mean "not clicked overtab"
+
 	if (gpSet->isTabs && (abForce || gpSet->isCaptionHidden()))
 	{
 		if (gpConEmu->mp_TabBar->IsTabsShown())
 		{
 			TCHITTESTINFO tch = {{0,0}};
-			HWND hTabBar = gpConEmu->mp_TabBar->mh_Tabbar;
-			RECT rcWnd; GetWindowRect(hTabBar, &rcWnd);
 			GetCursorPos(&tch.pt); // Screen coordinates
 
-			if (PtInRect(&rcWnd, tch.pt))
+			HWND hTabBar = gpConEmu->mp_TabBar->mh_Tabbar;
+			HWND hReBar = gpConEmu->mp_TabBar->mh_Rebar;
+			RECT rcWnd; GetWindowRect(hTabBar, &rcWnd);
+			RECT rcBar; GetWindowRect(hReBar, &rcBar);
+
+			// 130911 - Let allow switching tabs by clicking over tabs headers (may be useful with fullscreen)
+			RECT rcFull = {rcWnd.left, rcBar.top, rcWnd.right, rcWnd.bottom};
+			if (PtInRect(&rcFull, tch.pt))
 			{
-				tch.pt.x -= rcWnd.left; tch.pt.y -= rcWnd.top;
+				tch.pt.x -= rcWnd.left;
+				tch.pt.y -= rcWnd.top;
+
 				LRESULT nTest = SendMessage(hTabBar, TCM_HITTEST, 0, (LPARAM)&tch);
+
+				if (nTest == -1)
+				{
+					// Clicked over tab?
+					tch.pt.y = (rcWnd.bottom - rcWnd.top)/2;
+					nTest = SendMessage(hTabBar, TCM_HITTEST, 0, (LPARAM)&tch);
+					if ((nTest >= 0) && pnOverTabHit)
+					{
+						*pnOverTabHit = (int)nTest;
+					}
+				}
 
 				if (nTest == -1)
 					return HTCAPTION;
@@ -580,7 +606,8 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 
 			break;
 		case WM_MOUSEMOVE:
-		case WM_LBUTTONDOWN: case WM_LBUTTONUP: case WM_LBUTTONDBLCLK:
+		case WM_LBUTTONDOWN: case WM_LBUTTONUP:
+		case WM_LBUTTONDBLCLK:
 		/*case WM_RBUTTONDOWN:*/ case WM_RBUTTONUP: //case WM_RBUTTONDBLCLK:
 
 			if (((uMsg == WM_RBUTTONUP)
@@ -588,7 +615,8 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 					|| gpSet->isCaptionHidden())
 				&& gpSet->isTabs)
 			{
-				if (TabHitTest(true)==HTCAPTION)
+				int nOverTabHit = -1;
+				if (TabHitTest(true, &nOverTabHit)==HTCAPTION)
 				{
 					POINT ptScr; GetCursorPos(&ptScr);
 					lParam = MAKELONG(ptScr.x,ptScr.y);
@@ -620,6 +648,18 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 					}
 
 					return lRc;
+				}
+				else if ((nOverTabHit >= 0) && ((uMsg == WM_LBUTTONDOWN) || (uMsg == WM_LBUTTONUP)))
+				{
+					if (uMsg == WM_LBUTTONDOWN)
+					{
+						int lnCurTab = gpConEmu->mp_TabBar->GetCurSel();
+						if (lnCurTab != nOverTabHit)
+						{
+							gpConEmu->mp_TabBar->FarSendChangeTab(nOverTabHit);
+							//gpConEmu->mp_TabBar->SelectTab(nOverTabHit);
+						}
+					}
 				}
 			}
 
@@ -665,6 +705,7 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		case WM_MBUTTONUP:
 		case WM_RBUTTONUP:
+		case WM_LBUTTONUP:
 		case WM_LBUTTONDBLCLK:
 		{
 			gpConEmu->mp_TabBar->OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
@@ -1057,7 +1098,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			#endif
 			
 			
-			PrepareTab(&tab, pVCon);
+			int iTabIcon = PrepareTab(&tab, pVCon);
 			vct.pVCon = pVCon;
 			vct.nFarWindowId = I;
 
@@ -1072,7 +1113,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 			AddTab2VCon(vct);
 			// Добавляет закладку, или меняет (при необходимости) заголовок существующей
-			AddTab(tab.Name, tabIdx, (tab.Type & fwt_Elevated)==fwt_Elevated);
+			AddTab(tab.Name, tabIdx, (tab.Type & fwt_Elevated)==fwt_Elevated, iTabIcon);
 
 			if (lbActive && tab.Current)
 				nCurTab = tabIdx;
@@ -1101,7 +1142,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		vct.nFarWindowId = 0;
 		AddTab2VCon(vct); //2009-06-14. Не было!
 		// Добавляет закладку, или меняет (при необходимости) заголовок существующей
-		AddTab(tab.Name, tabIdx, (tab.Type & fwt_Elevated)==fwt_Elevated);
+		AddTab(tab.Name, tabIdx, (tab.Type & fwt_Elevated)==fwt_Elevated, -1);
 		nCurTab = tabIdx;
 		tabIdx++;
 	}
@@ -1728,6 +1769,16 @@ void TabBarClass::OnMouse(int message, int x, int y)
 			}
 		}
 	}
+	else if (message == WM_LBUTTONUP)
+	{
+		TODO("Обработать клик НАД табами");
+		TCHITTESTINFO htInfo;
+		htInfo.pt.x = x;
+		htInfo.pt.y = y;
+		int iPage = TabCtrl_HitTest(mh_Tabbar, &htInfo);
+
+		int iDbg = 0;
+	}
 }
 
 void TabBarClass::Invalidate()
@@ -2130,10 +2181,9 @@ HWND TabBarClass::CreateTabbar(bool abDummyCreate /*= false*/)
 	if (mh_Tabbar)
 		return mh_Tabbar; // Уже создали
 
-	if (!abDummyCreate && !mh_TabIcons)
+	if (!abDummyCreate && !m_TabIcons.IsInitialized())
 	{
-		mh_TabIcons = ImageList_LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_SHIELD), 14, 1, RGB(128,0,0), IMAGE_BITMAP, LR_CREATEDIBSECTION);
-		mn_AdminIcon = (gOSVer.dwMajorVersion >= 6) ? 0 : 1;
+		m_TabIcons.Initialize();
 	}
 
 	// Важно проверку делать после создания главного окна, иначе IsAppThemed будет возвращать FALSE
@@ -2189,7 +2239,7 @@ HWND TabBarClass::CreateTabbar(bool abDummyCreate /*= false*/)
 
 		// Надо
 		_defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)TabProc);
-		SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)mh_TabIcons);
+		SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)(HIMAGELIST)m_TabIcons);
 
 		if (!mh_TabTip || !IsWindow(mh_TabTip))
 		{
@@ -2236,7 +2286,7 @@ HWND TabBarClass::CreateTabbar(bool abDummyCreate /*= false*/)
 
 	// Добавляет закладку, или меняет (при необходимости) заголовок существующей
 	//AddTab(gpConEmu->isFar() ? gpSet->szTabPanels : gpSet->pszTabConsole, 0);
-	AddTab(gpConEmu->GetLastTitle(), 0, gpConEmu->mb_IsUacAdmin);
+	AddTab(gpConEmu->GetLastTitle(), 0, gpConEmu->mb_IsUacAdmin, -1);
 	// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
 	rcClient = MakeRect(600, 400);
 	//rcClient = gpConEmu->GetGuiClientRect();
@@ -2355,8 +2405,10 @@ void TabBarClass::CreateRebar()
 	//_hwndTab = mh_Rebar; // пока...
 }
 
-void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
+int TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 {
+	int iTabIcon = -1;
+
 #ifdef _DEBUG
 
 	if (this != gpConEmu->mp_TabBar)
@@ -2379,6 +2431,10 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	CRealConsole* pRCon = apVCon ? apVCon->RCon() : NULL;
 	bool bIsFar = pRCon ? pRCon->isFar() : false;
 
+	if (apVCon && (pTab->Pos == 0))
+	{
+		iTabIcon = apVCon->RCon()->GetRootProcessIcon();
+	}
 
 	if (pTab->Name[0]==0 || (pTab->Type & 0xFF) == 1/*WTYPE_PANELS*/)
 	{
@@ -2615,7 +2671,9 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	}
 	*pszDst = 0;
 	
-	MCHKHEAP
+	MCHKHEAP;
+
+	return iTabIcon;
 }
 
 

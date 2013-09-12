@@ -144,7 +144,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_CMD_HISTORY 100
 #define MAX_CMD_HISTORY_SHOW 16
-#define MAX_CMD_GROUP_SHOW 16
+#define MAX_CMD_GROUP_SHOW 10
 
 #define MAX_RENAME_TAB_LEN 128
 
@@ -431,8 +431,8 @@ enum TrackMenuPlace
 	tmp_None = 0,
 	tmp_System,
 	tmp_VCon,
-	tmp_Cmd,
-	tmp_CmdPopup,
+	tmp_Cmd, // Tasks & Last commands
+	tmp_CmdPopup, // Task contents (RClick) -- 4del
 	tmp_KeyBar,
 	tmp_TabsList,
 	tmp_PasteCmdLine,

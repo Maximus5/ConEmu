@@ -351,6 +351,7 @@ void Settings::InitSettings()
 	isSendAltTab = isSendAltEsc = isSendAltPrintScrn = isSendPrintScrn = isSendCtrlEsc = false;
 	isMonitorConsoleLang = 3;
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
+	isSaveCmdHistory = true;
 	nCmdOutputCP = 0;
 	ComSpec.AddConEmu2Path = CEAP_AddAll;
 	{
@@ -628,7 +629,7 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_ConEmuView] = true;
 	isStatusColumnHidden[csi_ServerHWND] = true;
 
-	isTabs = 1; nTabsLocation = 0; isOneTabPerGroup = false;
+	isTabs = 1; nTabsLocation = 0; isTabIcons = true; isOneTabPerGroup = false;
 	isActivateSplitMouseOver = false;
 	isTabSelf = true; isTabRecent = true; isTabLazy = true;
 	nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION; nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
@@ -2535,6 +2536,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		//reg->Load(L"GUIpb", isGUIpb);
 		reg->Load(L"Tabs", isTabs);
 		reg->Load(L"TabsLocation", nTabsLocation);
+		reg->Load(L"TabIcons", isTabIcons);
 		reg->Load(L"OneTabPerGroup", isOneTabPerGroup);
 		reg->Load(L"ActivateSplitMouseOver", isActivateSplitMouseOver);
 		reg->Load(L"TabSelf", isTabSelf);
@@ -3264,6 +3266,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		SaveStatusSettings(reg);
 		reg->Save(L"Tabs", isTabs);
 		reg->Save(L"TabsLocation", nTabsLocation);
+		reg->Save(L"TabIcons", isTabIcons);
 		reg->Save(L"OneTabPerGroup", isOneTabPerGroup);
 		reg->Save(L"ActivateSplitMouseOver", isActivateSplitMouseOver);
 		reg->Save(L"TabSelf", isTabSelf);

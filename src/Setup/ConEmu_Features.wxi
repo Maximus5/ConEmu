@@ -51,6 +51,7 @@
              Description="Batch files for: attach any console window to ConEmu, change text color of command prompt, check if console belongs ConEmu, change tab text, console title, progress state, etc.">
       <!--<ComponentRef Id="CEExtConsoleDir" />-->
       <ComponentRef Id="Attach.cmd" />
+      <ComponentRef Id="ClsEx.cmd" />
       <ComponentRef Id="Cmd_Autorun.cmd" />
       <ComponentRef Id="ColorPrompt.cmd" />
       <ComponentRef Id="csudo.cmd" />

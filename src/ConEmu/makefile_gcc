@@ -18,6 +18,7 @@ SRCS =  \
 		GestureEngine.cpp  \
 		GuiServer.cpp      \
 		Hotkeys.cpp        \
+		IconList.cpp       \
 		Inside.cpp         \
 		LoadImg.cpp        \
 		Macro.cpp          \
