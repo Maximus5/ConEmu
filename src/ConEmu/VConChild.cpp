@@ -666,29 +666,8 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			result = 0;
 			break;
 		case WM_PAINT:
-			{
-				PAINTSTRUCT ps = {};
-				BeginPaint(hWnd, &ps);
-
-				int nAppId = -1;
-				int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
-				CRealConsole* pRCon = pVCon->RCon();
-				if (pRCon)
-				{
-					nAppId = pRCon->GetActiveAppSettingsId();
-					nColorIdx = pRCon->GetDefaultBackColorIdx();
-				}
-
-				HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(nAppId, !gpConEmu->isMeForeground())[nColorIdx]);
-				if (hBrush)
-				{
-					FillRect(ps.hdc, &ps.rcPaint, hBrush);
-
-					DeleteObject(hBrush);
-				}
-
-				EndPaint(hWnd, &ps);
-			} // WM_PAINT
+			_ASSERTE(hWnd == pVCon->mh_WndBack);
+			pVCon->OnPaintGaps();
 			break;
 		case WM_KEYDOWN:
 		case WM_KEYUP:
@@ -876,6 +855,45 @@ INT_PTR CConEmuChild::DbgChildDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LP
 	return 0;
 }
 #endif
+
+LRESULT CConEmuChild::OnPaintGaps()
+{
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	if (!pVCon)
+	{
+		_ASSERTE(pVCon!=NULL);
+		return 0;
+	}
+
+	int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
+	COLORREF* clrPalette = pVCon->GetColors();
+	if (!clrPalette)
+	{
+		_ASSERTE(clrPalette!=NULL);
+		return 0;
+	}
+
+	CRealConsole* pRCon = pVCon->RCon();
+	if (pRCon)
+	{
+		nColorIdx = pRCon->GetDefaultBackColorIdx();
+	}
+
+	PAINTSTRUCT ps = {};
+	BeginPaint(mh_WndBack, &ps);
+
+	HBRUSH hBrush = CreateSolidBrush(clrPalette[nColorIdx]);
+	if (hBrush)
+	{
+		FillRect(ps.hdc, &ps.rcPaint, hBrush);
+
+		DeleteObject(hBrush);
+	}
+
+	EndPaint(mh_WndBack, &ps);
+
+	return 0;
+}
 
 LRESULT CConEmuChild::OnPaint()
 {

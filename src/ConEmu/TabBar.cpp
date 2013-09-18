@@ -2466,9 +2466,9 @@ int TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 		}
 
 		lstrcpyn(fileName, pTab->Name, countof(fileName));
-		if (gpSet->szTabSkipWords[0])
+		if (gpSet->pszTabSkipWords && *gpSet->pszTabSkipWords)
 		{
-			LPCWSTR pszWord = gpSet->szTabSkipWords;
+			LPCWSTR pszWord = gpSet->pszTabSkipWords;
 			while (pszWord && *pszWord)
 			{
 				LPCWSTR pszNext = wcschr(pszWord, L'|');
@@ -2479,7 +2479,7 @@ int TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 				{
 					lstrcpyn(dummy, pszWord, min((int)countof(dummy),(nLen+1)));
 					wchar_t* pszFound;
-					while ((pszFound = wcsstr(fileName, dummy)) != NULL)
+					while ((pszFound = StrStrI(fileName, dummy)) != NULL)
 					{
 						size_t nLeft = _tcslen(pszFound);
 						if (nLeft <= (size_t)nLen)

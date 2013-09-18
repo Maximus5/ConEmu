@@ -129,6 +129,7 @@ struct HookItem
 	const void*     NewAddress;
 	const char*     Name;
 	const wchar_t*  DllName;
+	DWORD           NameOrdinal;
 	char DllNameA[32];
 
 	DWORD NameCRC;

@@ -401,13 +401,13 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 
 
 #if defined(DUMP_UNKNOWN_ESCAPES) || defined(DUMP_WRITECONSOLE_LINES)
-void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, bool bUnknown)
+void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 {
 	if (!buf || !cchLen)
 	{
 		_ASSERTE((buf && cchLen) || (gnAllowClinkUsage && buf));
 	}
-	else if (bUnknown)
+	else if (iUnknown == 1)
 	{
 		_ASSERTE(FALSE && "Unknown Esc Sequence!");
 	}
@@ -416,11 +416,18 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, bool bUnknown)
 	size_t nLen = cchLen;
 	static int nWriteCallNo = 0;
 
-	if (bUnknown)
+	switch (iUnknown)
+	{
+	case 1:
 		//wcscpy_c(szDbg, L"###Unknown Esc Sequence: ");
 		msprintf(szDbg, countof(szDbg), L"[%u] ###Unknown Esc Sequence: ", GetCurrentThreadId());
-	else
+		break;
+	case 2:
+		msprintf(szDbg, countof(szDbg), L"[%u] ###Bad Unicode Translation: ", GetCurrentThreadId());
+		break;
+	default:
 		msprintf(szDbg, countof(szDbg), L"[%u] AnsiDump #%u: ", GetCurrentThreadId(), ++nWriteCallNo);
+	}
 
 	size_t nStart = lstrlenW(szDbg);
 	wchar_t* pszDst = szDbg + nStart;
@@ -539,6 +546,12 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumbe
 	ORIGINALFAST(WriteFile);
 	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
+	DWORD nDBCSCP = 0;
+
+	//if (gpStartEnv->bIsDbcs)
+	//{
+	//	nDBCSCP = GetConsoleOutputCP();
+	//}
 
 	if (lpBuffer && nNumberOfBytesToWrite && IsAnsiCapable(hFile))
 		lbRc = OnWriteConsoleA(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, NULL);
@@ -554,14 +567,51 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuf
 	ORIGINALFAST(WriteConsoleA);
 	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
+	wchar_t* buf = NULL;
+	DWORD len, cp;
+	static bool badUnicode = false;
+	DEBUGTEST(bool curBadUnicode = badUnicode);
+	DEBUGTEST(wchar_t szTmp[2] = L"");
+
+	if (badUnicode)
+	{
+		badUnicode = false;
+		#ifdef _DEBUG
+		if (lpBuffer && nNumberOfCharsToWrite)
+		{
+			szTmp[0] = ((char*)lpBuffer)[0];
+			DumpEscape(szTmp, 1, 2);
+		}
+		#endif
+		goto badchar;
+	}
 
 	if (lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput))
 	{
-		wchar_t* buf = NULL;
-		DWORD len, cp;
-		
 		cp = GetConsoleOutputCP();
-		len = MultiByteToWideChar(cp, 0, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, 0, 0);
+
+		DWORD nLastErr = 0;
+		DWORD nFlags = 0; //MB_ERR_INVALID_CHARS;
+
+		if (! ((cp == 42) || (cp == 65000) || (cp >= 57002 && cp <= 57011) || (cp >= 50220 && cp <= 50229)) )
+		{
+			nFlags = MB_ERR_INVALID_CHARS;
+			nLastErr = GetLastError();
+		}
+
+		len = MultiByteToWideChar(cp, nFlags, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, 0, 0);
+
+		if (nFlags /*gpStartEnv->bIsDbcs*/ && (GetLastError() == ERROR_NO_UNICODE_TRANSLATION))
+		{
+			badUnicode = true;
+			#ifdef _DEBUG
+			szTmp[0] = ((char*)lpBuffer)[0];
+			DumpEscape(szTmp, 1, 2);
+			#endif
+			SetLastError(nLastErr);
+			goto badchar;
+		}
+
 		buf = (wchar_t*)malloc((len+1)*sizeof(wchar_t));
 		if (buf == NULL)
 		{
@@ -570,22 +620,22 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuf
 		}
 		else
 		{
-			DWORD newLen = MultiByteToWideChar(cp, 0, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, buf, len);
+			DWORD newLen = MultiByteToWideChar(cp, nFlags, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, buf, len);
 			_ASSERTE(newLen==len);
 			buf[newLen] = 0; // ASCII-Z, хотя, если функцию WriteConsoleW зовет приложение - "\0" может и не быть...
 
 			lbRc = OnWriteConsoleW(hConsoleOutput, buf, len, lpNumberOfCharsWritten, NULL);
-
-			free( buf );
 		}
-	}
-	else
-	{
-		// По идее, сюда попадать не должны. Ошибка в параметрах?
-		_ASSERTE(lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput));
-		lbRc = F(WriteConsoleA)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
+		goto fin;
 	}
 
+badchar:
+	// По идее, сюда попадать не должны. Ошибка в параметрах?
+	_ASSERTE((lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput)) || (curBadUnicode||badUnicode));
+	lbRc = F(WriteConsoleA)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
+
+fin:
+	SafeFree(buf);
 	return lbRc;
 }
 

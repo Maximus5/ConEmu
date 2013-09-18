@@ -59,6 +59,9 @@ extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
 
+struct CEStartupEnv;
+extern CEStartupEnv* gpStartEnv;
+
 
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"

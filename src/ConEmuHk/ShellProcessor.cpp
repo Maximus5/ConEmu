@@ -502,15 +502,21 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		_ASSERTE(szConEmuC!=NULL);
 		goto wrap;
 	}
+	szConEmuC[0] = 0;
 
 	_ASSERTEX(m_SrvMapping.sConEmuExe[0]!=0 && m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
 
 	if (gbPrepareDefaultTerminal)
 	{
 		_ASSERTEX(ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE);
-		_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.sConEmuExe);
+		if (aCmd != eShellExecute)
+		{
+			_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.sConEmuExe);
+		}
+		// Для "runas" для "Default terminal" будем работать через /AUTOATTACH
 	}
-	else
+
+	if (!*szConEmuC)
 	{
 		_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.ComSpec.ConEmuBaseDir);
 		_wcscat_c(szConEmuC, cchConEmuC, L"\\");
@@ -741,7 +747,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 			BOOL lbNeedCutStartEndQuot = FALSE;
 			DWORD nFileAttrs = (DWORD)-1;
 			ms_ExeTmp[0] = 0;
-			IsNeedCmd(SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
+			IsNeedCmd(false, SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
 			// это может быть команда ком.процессора!
 			// поэтому, наверное, искать и проверять битность будем только для
 			// файлов с указанным расширением.
@@ -843,6 +849,10 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	{
 		// szConEmuC already has m_SrvMapping.sConEmuExe);
 		lbUseDosBox = FALSE; // Don't set now
+		if (aCmd == eShellExecute)
+		{
+			wcscat_c(szConEmuC, (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe"); //-V112
+		}
 	}
 	else if (ImageBits == 32) //-V112
 	{
@@ -956,7 +966,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	if (gbPrepareDefaultTerminal)
 	{
 		// reserve space for m_GuiMapping.sDefaultTermArg
-		nCchSize += lstrlen(m_GuiMapping.sDefaultTermArg)+2;
+		nCchSize += lstrlen(m_GuiMapping.sDefaultTermArg)+16;
 	}
 	
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
@@ -1028,7 +1038,14 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 			pszNewCon = m_GuiMapping.sDefaultTermArg;
 		}
 
-		_wcscat_c((*psParam), nCchSize, L" /single /cmd ");
+		if (aCmd == eShellExecute)
+		{
+			_wcscat_c((*psParam), nCchSize, L" /AUTOATTACH /ROOT ");
+		}
+		else
+		{
+			_wcscat_c((*psParam), nCchSize, L" /single /cmd ");
+		}
 
 		if (pszNewCon && *pszNewCon)
 		{
@@ -1105,7 +1122,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
 				BOOL lbNeedCutStartEndQuot = FALSE;
 				ms_ExeTmp[0] = 0;
-				IsNeedCmd(SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
+				IsNeedCmd(false, SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
 
 				if (ms_ExeTmp[0])
 				{
@@ -1450,7 +1467,7 @@ int CShellProc::PrepareExecuteParms(
 	// Some additional checks for "Default terminal" mode
 	if (gbPrepareDefaultTerminal)
 	{
-		_ASSERTEX(aCmd == eCreateProcess); // Пока расчитано только на него
+		_ASSERTEX(aCmd == eCreateProcess || (asAction && lstrcmpi(asAction,L"runas")==0)); // Пока расчитано только на него
 
 		if (aCmd == eCreateProcess)
 		{
@@ -1621,7 +1638,7 @@ int CShellProc::PrepareExecuteParms(
 	else
 	{
 		BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
-		IsNeedCmd(SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
+		IsNeedCmd(false, SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
 	}
 	
 	if (ms_ExeTmp[0])
@@ -1800,32 +1817,42 @@ int CShellProc::PrepareExecuteParms(
 		// !!! anFlags может быть NULL;
 		DWORD nFlagsMask = (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NO_CONSOLE);
 		DWORD nFlags = (anShellFlags ? *anShellFlags : 0) & nFlagsMask;
-		// Если bNewConsoleArg - то однозначно стартовать в новой вкладке ConEmu (GUI теперь тоже цеплять умеем)
-		if (bNewConsoleArg || bForceNewConsole)
+		if (gbPrepareDefaultTerminal)
 		{
-			if (anShellFlags)
+			if (!asAction || (lstrcmpiW(asAction, L"runas") != 0))
 			{
-				// 111211 - "-new_console" выполняется в GUI
-				// Будет переопределение на ConEmuC, и его нужно запустить в ЭТОЙ консоли
-				//--WARNING("Хотя, наверное нужно не так, чтобы он не гадил в консоль, фар ведь ждать не будет, он думает что запустил ГУЙ");
-				//--*anShellFlags = (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS);
-				if (anShowCmd && !(*anShellFlags & SEE_MASK_NO_CONSOLE))
+				goto wrap; // хватаем только runas
+			}
+		}
+		else
+		{
+			// Если bNewConsoleArg - то однозначно стартовать в новой вкладке ConEmu (GUI теперь тоже цеплять умеем)
+			if (bNewConsoleArg || bForceNewConsole)
+			{
+				if (anShellFlags)
 				{
-					*anShowCmd = SW_HIDE;
+					// 111211 - "-new_console" выполняется в GUI
+					// Будет переопределение на ConEmuC, и его нужно запустить в ЭТОЙ консоли
+					//--WARNING("Хотя, наверное нужно не так, чтобы он не гадил в консоль, фар ведь ждать не будет, он думает что запустил ГУЙ");
+					//--*anShellFlags = (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS);
+					if (anShowCmd && !(*anShellFlags & SEE_MASK_NO_CONSOLE))
+					{
+						*anShowCmd = SW_HIDE;
+					}
+				}
+				else
+				{
+					_ASSERTE(anShellFlags!=NULL);
 				}
 			}
-			else
+			else if (nFlags != nFlagsMask)
 			{
-				_ASSERTE(anShellFlags!=NULL);
+				goto wrap; // пока так - это фар выполняет консольную команду
 			}
-		}
-		else if (nFlags != nFlagsMask)
-		{
-			goto wrap; // пока так - это фар выполняет консольную команду
-		}
-		if (asAction && (lstrcmpiW(asAction, L"open") != 0))
-		{
-			goto wrap; // runas, print, и прочая нас не интересует
+			if (asAction && (lstrcmpiW(asAction, L"open") != 0))
+			{
+				goto wrap; // runas, print, и прочая нас не интересует
+			}
 		}
 	}
 	else

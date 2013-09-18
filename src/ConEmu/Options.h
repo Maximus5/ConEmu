@@ -372,6 +372,7 @@ struct Settings
 		int GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated);
 		const AppSettings* GetAppSettings(int anAppId=-1);
 		COLORREF* GetColors(int anAppId=-1, BOOL abFade = FALSE);
+		COLORREF* GetPaletteColors(LPCWSTR asPalette, BOOL abFade = FALSE);
 		COLORREF GetFadeColor(COLORREF cr);
 		void ResetFadeColors();
 
@@ -580,6 +581,8 @@ struct Settings
 		void SavePalettes(SettingsBase* reg);
 		void SortPalettes();
 		void FreePalettes();
+
+		COLORREF* GetColorsPrepare(COLORREF *pColors, COLORREF *pColorsFade, bool* pbFadeInitialized, BOOL abFade);
 
 		int ProgressesCount;
 		ConEmuProgressStore** Progresses;
@@ -1198,8 +1201,8 @@ struct Settings
 		/* *** Заголовки табов *** */
 		//reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
 		WCHAR szTabConsole[32];
-		//reg->Load(L"TabSkipWords", szTabSkipWords, countof(szTabSkipWords));
-		WCHAR szTabSkipWords[255];
+		//reg->Load(L"TabSkipWords", &pszTabSkipWords);
+		wchar_t* pszTabSkipWords;
 		//reg->Load(L"TabPanels", szTabPanels, countof(szTabPanels));
 		WCHAR szTabPanels[32];
 		//reg->Load(L"TabEditor", szTabEditor, countof(szTabEditor));

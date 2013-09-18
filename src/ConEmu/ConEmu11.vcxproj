@@ -1062,6 +1062,7 @@
     <Image Include="Copy24.bmp" />
     <Image Include="Copy4.bmp" />
     <Image Include="Scroll.bmp" />
+    <Image Include="Shield16.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

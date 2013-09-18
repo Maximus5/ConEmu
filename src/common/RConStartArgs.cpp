@@ -111,7 +111,8 @@ RConStartArgs::RConStartArgs()
 	bForceUserDialog = bBackgroundTab = bForegroungTab = bNoDefaultTerm = bForceDosBox = bForceInherit = FALSE;
 	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
-	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = pszRenameTab = pszIconFile = NULL;
+	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = pszRenameTab = NULL;
+	pszIconFile = pszPalette = pszWallpaper = NULL;
 	bBufHeight = FALSE; nBufHeight = 0; bLongOutputDisable = FALSE;
 	bOverwriteMode = FALSE; nPTY = 0;
 	bInjectsDisable = FALSE;
@@ -145,6 +146,8 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 		{&this->pszStartupDir, args->pszStartupDir},
 		{&this->pszRenameTab, args->pszRenameTab},
 		{&this->pszIconFile, args->pszIconFile},
+		{&this->pszPalette, args->pszPalette},
+		{&this->pszWallpaper, args->pszWallpaper},
 		{NULL}
 	};
 
@@ -209,6 +212,8 @@ RConStartArgs::~RConStartArgs()
 	SafeFree(pszStartupDir); // именно SafeFree
 	SafeFree(pszRenameTab);
 	SafeFree(pszIconFile);
+	SafeFree(pszPalette);
+	SafeFree(pszWallpaper);
 	SafeFree(pszUserName);
 	SafeFree(pszDomain);
 	//SafeFree(pszUserProfile);
@@ -225,8 +230,10 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	size_t cchMaxLen =
 				 (pszSpecialCmd ? (lstrlen(pszSpecialCmd) + 3) : 0); // только команда
 	cchMaxLen += (pszStartupDir ? (lstrlen(pszStartupDir) + 20) : 0); // "-new_console:d:..."
-	cchMaxLen += (pszRenameTab  ? (lstrlen(pszRenameTab) + 20) : 0); // "-new_console:t:..."
+	cchMaxLen += (pszRenameTab  ? (lstrlen(pszRenameTab)*2 + 20) : 0); // "-new_console:t:..."
 	cchMaxLen += (pszIconFile   ? (lstrlen(pszIconFile) + 20) : 0); // "-new_console:C:..."
+	cchMaxLen += (pszPalette    ? (lstrlen(pszPalette)*2 + 20) : 0); // "-new_console:P:..."
+	cchMaxLen += (pszWallpaper  ? (lstrlen(pszWallpaper) + 20) : 0); // "-new_console:W:..."
 	cchMaxLen += (bRunAsAdministrator ? 15 : 0); // -new_console:a
 	cchMaxLen += (bRunAsRestricted ? 15 : 0); // -new_console:r
 	cchMaxLen += (pszUserName ? (lstrlen(pszUserName) + 32 // "-new_console:u:<user>:<pwd>"
@@ -330,11 +337,13 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 		_wcscat_c(pszFull, cchMaxLen, szAdd);
 	}
 
-	struct CopyValues { wchar_t cOpt; LPCWSTR pVal; } values[] =
+	struct CopyValues { wchar_t cOpt; bool bEscape; LPCWSTR pVal; } values[] =
 	{
-		{L'd', this->pszStartupDir},
-		{L't', this->pszRenameTab},
-		{L'C', this->pszIconFile},
+		{L'd', false, this->pszStartupDir},
+		{L't', true,  this->pszRenameTab},
+		{L'C', false, this->pszIconFile},
+		{L'P', true,  this->pszPalette},
+		{L'W', false, this->pszWallpaper},
 		{0}
 	};
 
@@ -346,12 +355,29 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 			bool bQuot = wcschr(p->pVal, L' ') != NULL;
 
 			if (bQuot)
-				msprintf(pszFull, cchMaxLen, bNewConsole ? L" \"-new_console:%c:" : L" \"-cur_console:%c:", p->cOpt);
+				msprintf(szCat, countof(szCat), bNewConsole ? L" \"-new_console:%c:" : L" \"-cur_console:%c:", p->cOpt);
 			else
-				msprintf(pszFull, cchMaxLen, bNewConsole ? L" -new_console:%c:" : L" -cur_console:%c:", p->cOpt);
+				msprintf(szCat, countof(szCat), bNewConsole ? L" -new_console:%c:" : L" -cur_console:%c:", p->cOpt);
 			
 			_wcscat_c(pszFull, cchMaxLen, szCat);
-			_wcscat_c(pszFull, cchMaxLen, p->pVal);
+
+			if (p->bEscape)
+			{
+				wchar_t* pD = pszFull + lstrlen(pszFull);
+				const wchar_t* pS = p->pVal;
+				while (*pS)
+				{
+					if (wcschr(L"<>&|^\"", *pS))
+						*(pD++) = L'^';
+					*(pD++) = *(pS++);
+				}
+				_ASSERTE(pD < (pszFull+cchMaxLen));
+				*pD = 0;
+			}
+			else
+			{
+				_wcscat_c(pszFull, cchMaxLen, p->pVal);
+			}
 
 			if (bQuot)
 				_wcscat_c(pszFull, cchMaxLen, L"\"");
@@ -712,10 +738,14 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						} // L'd':
 						break;
 
-					case L'C':
-						// C:<IconFile>. MUST be last options
 					case L't':
 						// t:<TabName>. MUST be last options
+					case L'C':
+						// C:<IconFile>. MUST be last options
+					case L'P':
+						// P:<Palette>. MUST be last options
+					case L'W':
+						// W:<Wallpaper>. MUST be last options
 						{
 							if (*pszEnd == L':')
 								pszEnd++;
@@ -724,14 +754,34 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 								pszEnd++;
 							if (pszEnd > pszTab)
 							{
-								wchar_t** pptr = (cOpt == L'C') ? &pszIconFile : &pszRenameTab;
+								wchar_t** pptr = NULL;
+								switch (cOpt)
+								{
+								case L't': pptr = &pszRenameTab; break;
+								case L'C': pptr = &pszIconFile; break;
+								case L'P': pptr = &pszPalette; break;
+								case L'W': pptr = &pszWallpaper; break;
+								}
 								size_t cchLen = pszEnd - pszTab;
 								SafeFree(*pptr);
 								*pptr = (wchar_t*)malloc((cchLen+1)*sizeof(**pptr));
 								if (*pptr)
 								{
-									wmemmove(*pptr, pszTab, cchLen);
-									(*pptr)[cchLen] = 0;
+									// We need to process escape sequences ("^>" -> ">", "^&" -> "&", etc.)
+									//wmemmove(*pptr, pszTab, cchLen);
+									wchar_t* pD = *pptr;
+									const wchar_t* pS = pszTab;
+									// There is enough room allocated
+									while (pS < pszEnd)
+									{
+										if ((*pS == L'^') && ((pS + 1) < pszEnd))
+											pS++; // Skip control char, goto escaped char
+
+										*(pD++) = *(pS++);
+									}
+									// Terminate with '\0'
+									_ASSERTE(pD <= ((*pptr)+cchLen));
+									*pD = 0;
 								}
 							}
 						} // L't':

@@ -573,7 +573,9 @@ void Settings::InitSettings()
 	//wcscpy_c(szTabViewer, L"<%c.%i>[%s] `%p`" /* L"{%s}" */);
 	wcscpy_c(szTabConsole, L"<%c> %s");
 	//wcscpy_c(szTabSkipWords, L"Administrator:|Администратор:");
+	wchar_t szTabSkipWords[64];
 	MultiByteToWideChar(1251/*rus*/, 0, "Administrator:|Администратор:", -1, szTabSkipWords, countof(szTabSkipWords));
+	pszTabSkipWords = lstrdup(szTabSkipWords);
 	wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
 	wcscpy_c(szTabEditor, L"<%c.%i>{%s}");
 	wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] *");
@@ -1532,6 +1534,11 @@ Settings::ColorPalette* Settings::PaletteGetPtr(int anIndex)
 	if ((anIndex >= 0) && (anIndex < PaletteCount) && Palettes && Palettes[anIndex])
 	{
 		return Palettes[anIndex];
+	}
+
+	if (anIndex != -1)
+	{
+		return NULL;
 	}
 
 	_ASSERTE(anIndex==-1);
@@ -2567,7 +2574,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		
 		
 		reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
-		reg->Load(L"TabSkipWords", szTabSkipWords, countof(szTabSkipWords));
+		reg->Load(L"TabSkipWords", &pszTabSkipWords);
 		wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
 		reg->Load(L"TabPanels", szTabPanels, countof(szTabPanels));
 		reg->Load(L"TabEditor", szTabEditor, countof(szTabEditor));
@@ -3285,7 +3292,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		//reg->Save(L"TabMargins", rcTabMargins);
 		reg->Save(L"ToolbarAddSpace", nToolbarAddSpace);
 		reg->Save(L"TabConsole", szTabConsole);
-		reg->Save(L"TabSkipWords", szTabSkipWords);
+		reg->Save(L"TabSkipWords", pszTabSkipWords);
 		reg->Save(L"TabPanels", szTabPanels);
 		reg->Save(L"TabEditor", szTabEditor);
 		reg->Save(L"TabEditorModified", szTabEditorModified);
@@ -4210,11 +4217,33 @@ void Settings::ResetFadeColors()
 	}
 }
 
+COLORREF* Settings::GetPaletteColors(LPCWSTR asPalette, BOOL abFade /*= FALSE*/)
+{
+	COLORREF *pColors = Colors;
+	COLORREF *pColorsFade = ColorsFade;
+	bool* pbFadeInitialized = &mb_FadeInitialized;
+
+	_ASSERTE(asPalette && *asPalette);
+	int iPalIdx = PaletteGetIndex(asPalette);
+	if (iPalIdx >= 0)
+	{
+		ColorPalette* palPtr = PaletteGetPtr(iPalIdx);
+		_ASSERTE(palPtr && countof(Colors)==countof(palPtr->Colors) && countof(ColorsFade)==countof(palPtr->ColorsFade));
+
+		pColors = palPtr->Colors;
+		pColorsFade = palPtr->ColorsFade;
+		pbFadeInitialized = &palPtr->FadeInitialized;
+	}
+
+	return GetColorsPrepare(pColors, pColorsFade, pbFadeInitialized, abFade);
+}
+
 COLORREF* Settings::GetColors(int anAppId/*=-1*/, BOOL abFade)
 {
 	COLORREF *pColors = Colors;
 	COLORREF *pColorsFade = ColorsFade;
 	bool* pbFadeInitialized = &mb_FadeInitialized;
+
 	if ((anAppId >= 0) && (anAppId < AppCount) && Apps[anAppId]->OverridePalette && Apps[anAppId]->szPaletteName[0])
 	{
 		ColorPalette* palPtr = PaletteGetPtr(Apps[anAppId]->GetPaletteIndex());
@@ -4225,6 +4254,11 @@ COLORREF* Settings::GetColors(int anAppId/*=-1*/, BOOL abFade)
 		pbFadeInitialized = &palPtr->FadeInitialized;
 	}
 
+	return GetColorsPrepare(pColors, pColorsFade, pbFadeInitialized, abFade);
+}
+
+COLORREF* Settings::GetColorsPrepare(COLORREF *pColors, COLORREF *pColorsFade, bool* pbFadeInitialized, BOOL abFade)
+{
 	if (!abFade || !isFadeInactive)
 		return pColors;
 
@@ -4903,6 +4937,10 @@ void Settings::CheckHotkeyUnique()
 		if ((ppHK1->HkType == chk_Modifier) || (ConEmuHotKey::GetHotkey(ppHK1->VkMod) == 0))
 			continue;
 
+		// Отключен пользователем?
+		if (ppHK1->Enabled && !ppHK1->Enabled())
+			continue;
+
 		// Некоторые хоткеи не проверять
 		bSkip = false;
 		for (size_t i = 0; i < countof(SkipCheckID); i++)
@@ -4918,6 +4956,10 @@ void Settings::CheckHotkeyUnique()
 		for (ConEmuHotKey *ppHK2 = ppHK1+1; ppHK2[0].DescrLangID; ++ppHK2)
 		{
 			if ((ppHK2->HkType == chk_Modifier) || (ConEmuHotKey::GetHotkey(ppHK2->VkMod) == 0))
+				continue;
+
+			// Отключен пользователем?
+			if (ppHK2->Enabled && !ppHK2->Enabled())
 				continue;
 
 			// Некоторые хоткеи не проверять

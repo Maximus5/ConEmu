@@ -4211,7 +4211,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 		gpszCheck4NeedCmd = asCmdLine; // Для отладки
 
-		gbRunViaCmdExe = IsNeedCmd(asCmdLine, &pszArguments4EnvVar, &lbNeedCutStartEndQuot, szExeTest, 
+		gbRunViaCmdExe = IsNeedCmd((gnRunMode == RM_SERVER), asCmdLine, &pszArguments4EnvVar, &lbNeedCutStartEndQuot, szExeTest, 
 			gbRootIsCmdExe, bAlwaysConfirmExit, bAutoDisableConfirmExit);
 
 		if (gnConfirmExitParm == 0)

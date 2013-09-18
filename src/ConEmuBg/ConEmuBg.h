@@ -49,6 +49,7 @@ extern FarVersion gFarVersion;
 //Settings
 extern BOOL gbBackgroundEnabled;
 extern wchar_t gsXmlConfigFile[MAX_PATH];
+extern BOOL gbMonitorFileChange;
 extern const wchar_t* szDefaultXmlName;
 bool CheckXmlFile(bool abUpdateName = false);
 //extern COLORREF gcrLinesColor;

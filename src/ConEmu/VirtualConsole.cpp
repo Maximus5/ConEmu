@@ -2075,6 +2075,21 @@ bool CVirtualConsole::LoadConsoleData()
 	return true;
 }
 
+COLORREF* CVirtualConsole::GetColors()
+{
+	// Update AppID if needed
+	int nCurAppId = mp_RCon ? mp_RCon->GetActiveAppSettingsId() : -1;
+
+	// Retrieve palette colors
+	LPCWSTR pszPalName = mp_RCon ? mp_RCon->GetArgs().pszPalette : NULL;
+	if (pszPalName && *pszPalName)
+		mp_Colors = gpSet->GetPaletteColors(pszPalName, isFade);
+	else
+		mp_Colors = gpSet->GetColors(nCurAppId, isFade);
+
+	return mp_Colors;
+}
+
 bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock *pSCON)
 {
 	MSectionLock SCON; SCON.Lock(&csCON);
@@ -2083,7 +2098,10 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	isViewer = CVConGroup::isViewer();
 	isFilePanel = CVConGroup::isFilePanel(true);
 	isFade = !isForeground && gpSet->isFadeInactive;
-	mp_Colors = gpSet->GetColors(mp_RCon->GetActiveAppSettingsId(), isFade);
+
+	// Retrieve palette colors
+	GetColors();
+
 	if ((nFontHeight != gpSetCls->FontHeight()) || (nFontWidth != gpSetCls->FontWidth()))
 		isFontSizeChanged = true;
 	nFontHeight = gpSetCls->FontHeight();
@@ -4077,7 +4095,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 		// —брос блокировки, если была
 		LockDcRect(false);
 
-		COLORREF *pColors = gpSet->GetColors(mp_RCon->GetActiveAppSettingsId());
+		COLORREF *pColors = GetColors();
 		
 		bool lbDelBrush = false;
 		HBRUSH hBr = CreateBackBrush(lbGuiVisible, lbDelBrush, pColors);

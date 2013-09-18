@@ -286,6 +286,7 @@ class CVirtualConsole :
 		void PaintBackgroundImage(const RECT& rcText, const COLORREF crBack);
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
+		COLORREF* GetColors();
 		void PaintVCon(HDC hPaintDc);
 		bool PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT PaintRect);
 		bool StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight);

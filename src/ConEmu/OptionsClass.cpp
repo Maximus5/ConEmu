@@ -2034,6 +2034,10 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbMapShiftEscToEsc, gpSet->isMapShiftEscToEsc);
 	EnableWindow(GetDlgItem(hWnd2, cbMapShiftEscToEsc), (gpSet->isMultiMinByEsc == 1 /*Always*/));
 
+	checkDlgButton(hWnd2, cbCmdTaskbarTasks, gpSet->isStoreTaskbarkTasks);
+	checkDlgButton(hWnd2, cbCmdTaskbarCommands, gpSet->isStoreTaskbarCommands);
+	EnableWindow(GetDlgItem(hWnd2, cbCmdTaskbarUpdate), (gnOsVer >= 0x601));
+
 	return 0;
 }
 
@@ -2630,6 +2634,11 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 	_ASSERTE(gpSet->isDisableFarFlashing==0 || gpSet->isDisableFarFlashing==1 || gpSet->isDisableFarFlashing==2);
 	checkDlgButton(hWnd2, cbDisableFarFlashing, gpSet->isDisableFarFlashing);
 
+	SetDlgItemText(hWnd2, tTabPanels, gpSet->szTabPanels);
+	SetDlgItemText(hWnd2, tTabViewer, gpSet->szTabViewer);
+	SetDlgItemText(hWnd2, tTabEditor, gpSet->szTabEditor);
+	SetDlgItemText(hWnd2, tTabEditorMod, gpSet->szTabEditorModified);
+
 	return 0;
 }
 
@@ -3221,11 +3230,7 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	//	checkDlgButton(hTabs, cbUseWinNumber, BST_CHECKED);
 
 	SetDlgItemText(hWnd2, tTabConsole, gpSet->szTabConsole);
-	SetDlgItemText(hWnd2, tTabSkipWords, gpSet->szTabSkipWords);
-	SetDlgItemText(hWnd2, tTabPanels, gpSet->szTabPanels);
-	SetDlgItemText(hWnd2, tTabViewer, gpSet->szTabViewer);
-	SetDlgItemText(hWnd2, tTabEditor, gpSet->szTabEditor);
-	SetDlgItemText(hWnd2, tTabEditorMod, gpSet->szTabEditorModified);
+	SetDlgItemText(hWnd2, tTabSkipWords, gpSet->pszTabSkipWords ? gpSet->pszTabSkipWords : L"");
 	SetDlgItemInt(hWnd2, tTabLenMax, gpSet->nTabLenMax, FALSE);
 
 	checkRadioButton(hWnd2, rbAdminShield, rbAdminSuffix, gpSet->bAdminShield ? rbAdminShield : rbAdminSuffix);
@@ -3479,10 +3484,6 @@ LRESULT CSettings::OnInitDialog_Tasks(HWND hWnd2, bool abForceReload)
 	OnComboBox(hWnd2, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
 
 	mb_IgnoreCmdGroupEdit = false;
-
-	checkDlgButton(hWnd2, cbCmdTaskbarTasks, gpSet->isStoreTaskbarkTasks);
-	checkDlgButton(hWnd2, cbCmdTaskbarCommands, gpSet->isStoreTaskbarCommands);
-	EnableWindow(GetDlgItem(hWnd2, cbCmdTaskbarUpdate), (gnOsVer >= 0x601));
 
 	return 0;
 }
@@ -6651,13 +6652,13 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 		} // cbCmdTasksReload
 		break;
 
-	case cbCmdTaskbarTasks:
+	case cbCmdTaskbarTasks: // Находится в IDD_SPG_TASKBAR!
 		gpSet->isStoreTaskbarkTasks = IsChecked(hWnd2, CB);
 		break;
-	case cbCmdTaskbarCommands:
+	case cbCmdTaskbarCommands: // Находится в IDD_SPG_TASKBAR!
 		gpSet->isStoreTaskbarCommands = IsChecked(hWnd2, CB);
 		break;
-	case cbCmdTaskbarUpdate:
+	case cbCmdTaskbarUpdate: // Находится в IDD_SPG_TASKBAR!
 		if (!gpSet->SaveCmdTasks(NULL))
 		{
 			LPCWSTR pszMsg = L"Can't save task list to settings!\r\nJump list may be not working!\r\nUpdate Windows 7 task list now?";
@@ -6977,7 +6978,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 	case tTabSkipWords:
 	{
-		GetDlgItemText(hWnd2, TB, gpSet->szTabSkipWords, countof(gpSet->szTabSkipWords));
+		gpSet->pszTabSkipWords = GetDlgItemText(hWnd2, TB);
 		gpConEmu->mp_TabBar->Update(TRUE);
 		break;
 	}

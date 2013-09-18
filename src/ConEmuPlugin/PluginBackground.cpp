@@ -312,10 +312,14 @@ void CPluginBackground::SetForceCheck()
 	gbNeedBgActivate = TRUE;
 }
 
-void CPluginBackground::SetForceUpdate()
+void CPluginBackground::SetForceUpdate(bool bFlagsOnly /*= false*/)
 {
 	mn_ReqActions |= (ra_UpdateBackground|ra_CheckPanelFolders);
-	gbNeedBgActivate = TRUE;
+
+	if (!bFlagsOnly)
+	{
+		gbNeedBgActivate = TRUE;
+	}
 }
 
 void CPluginBackground::SetForceThLoad()
@@ -441,10 +445,18 @@ void CPluginBackground::SetDcPanelRect(RECT *rcDc, PaintBackgroundArg::BkPanelIn
 			nConH = 1;
 		}
 
-		rcDc->left = (Panel->rcPanelRect.left - Arg->rcConWorkspace.left) * Arg->dcSizeX / nConW;
-		rcDc->top = (Panel->rcPanelRect.top - Arg->rcConWorkspace.top) * Arg->dcSizeY / nConH;
-		rcDc->right = (Panel->rcPanelRect.right - Arg->rcConWorkspace.left + 1) * Arg->dcSizeX / nConW;
-		rcDc->bottom = (Panel->rcPanelRect.bottom - Arg->rcConWorkspace.left + 1) * Arg->dcSizeY / nConH;
+		int nShiftLeft = 0, nShiftTop = 0;
+		if (Panel->rcPanelRect.top > 1)
+		{
+			_ASSERTE(Panel->rcPanelRect.top >= Arg->rcConWorkspace.top);
+			nShiftLeft = Arg->rcConWorkspace.left;
+			nShiftTop = Arg->rcConWorkspace.top;
+		}
+
+		rcDc->left = (Panel->rcPanelRect.left - nShiftLeft) * Arg->dcSizeX / nConW;
+		rcDc->top = (Panel->rcPanelRect.top - nShiftTop) * Arg->dcSizeY / nConH;
+		rcDc->right = (Panel->rcPanelRect.right - nShiftLeft + 1) * Arg->dcSizeX / nConW;
+		rcDc->bottom = (Panel->rcPanelRect.bottom - nShiftTop + 1) * Arg->dcSizeY / nConH;
 	}
 }
 

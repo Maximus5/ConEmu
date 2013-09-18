@@ -112,6 +112,7 @@ struct ConEmuHotKey
 	static bool UseWinNumber();
 	static bool UseWinArrows();
 	static bool UseCTSShiftArrow(); // { return gpSet->isUseWinArrows; }; // { return (OverrideClipboard || !AppNames) ? isCTSShiftArrowStart : gpSet->AppStd.isCTSShiftArrowStart; };
+	static bool UseCtrlTab();
 	static bool DontHookJumps(const ConEmuHotKey* pHK);
 
 	// *** Default and all possible ConEmu hotkeys ***

@@ -47,9 +47,11 @@ struct RConStartArgs
 	wchar_t* pszSpecialCmd; // собственно, command line
 	wchar_t* pszStartupDir; // "-new_console:d:<dir>"
 
-	wchar_t* pszRenameTab; // "-new_console:t:<name>"
+	wchar_t* pszRenameTab;  // "-new_console:t:<name>"
 
-	wchar_t* pszIconFile; // "-new_console:C:<icon>"
+	wchar_t* pszIconFile;   // "-new_console:C:<icon>"
+	wchar_t* pszPalette;    // "-new_console:P:<palette>"
+	wchar_t* pszWallpaper;  // "-new_console:W:<wallpaper>"
 	
 	BOOL     bRunAsAdministrator; // -new_console:a
 	BOOL     bRunAsRestricted;    // -new_console:r

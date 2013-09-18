@@ -2638,8 +2638,19 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 	const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetDefaultAppSettingsId());
 	_ASSERTE(pApp!=NULL);
 
-	nTextColorIdx = pApp->TextColorIdx(); // 0..15,16
-	nBackColorIdx = pApp->BackColorIdx(); // 0..15,16
+	// User choose special palette for this console?
+	const Settings::ColorPalette* pPal = NULL;
+	if (m_Args.pszPalette && *m_Args.pszPalette)
+	{
+		int iPalIdx = gpSet->PaletteGetIndex(m_Args.pszPalette);
+		if (iPalIdx >= 0)
+		{
+			pPal = gpSet->PaletteGet(iPalIdx);
+		}
+	}
+
+	nTextColorIdx = pPal ? pPal->nTextColorIdx : pApp->TextColorIdx(); // 0..15,16
+	nBackColorIdx = pPal ? pPal->nBackColorIdx : pApp->BackColorIdx(); // 0..15,16
 	if (nTextColorIdx <= 15 || nBackColorIdx <= 15)
 	{
 		if (nTextColorIdx >= 16) nTextColorIdx = 7;
@@ -2663,8 +2674,8 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 		mn_BackColorIdx = 0;
 	}
 
-	nPopTextColorIdx = pApp->PopTextColorIdx(); // 0..15,16
-	nPopBackColorIdx = pApp->PopBackColorIdx(); // 0..15,16
+	nPopTextColorIdx = pPal ? pPal->nPopTextColorIdx : pApp->PopTextColorIdx(); // 0..15,16
+	nPopBackColorIdx = pPal ? pPal->nPopBackColorIdx : pApp->PopBackColorIdx(); // 0..15,16
 	if (nPopTextColorIdx <= 15 || nPopBackColorIdx <= 15)
 	{
 		if (nPopTextColorIdx >= 16) nPopTextColorIdx = 5;
@@ -5757,7 +5768,14 @@ void CRealConsole::SetFarPID(DWORD nFarPID)
 
 void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 {
+	bool bNeedUpdate = (mn_FarPID_PluginDetected != nFarPluginPID);
 	mn_FarPID_PluginDetected = nFarPluginPID;
+
+	// Для фара могут быть настроены другие параметры фона и прочего...
+	if (bNeedUpdate)
+	{
+		mp_VCon->Update(true);
+	}
 }
 
 // Вернуть PID "условно активного" процесса в консоли
@@ -6092,7 +6110,8 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 		// не мелькали цветные артефакты (пример - вызов ActiveHelp из редактора)
 		lbChanged = TRUE;
 	}
-	mn_FarPID = dwFarPID;
+	//mn_FarPID = dwFarPID;
+	SetFarPID(dwFarPID);
 	
 	if (mn_ActivePID != dwActivePID)
 		SetActivePID(dwActivePID);

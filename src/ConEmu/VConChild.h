@@ -46,6 +46,7 @@ class CConEmuChild
 		static LRESULT WINAPI BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		LRESULT OnPaint();
+		LRESULT OnPaintGaps();
 		HWND CreateView();
 		HWND GetView();
 		HWND GetBack();

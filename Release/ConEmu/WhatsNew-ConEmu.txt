@@ -15,10 +15,41 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.09.18
+[%] Issue 1239: Regression: commands with redirection fails in Far Manager.
+[%] Issue 1137: Don't warn about Ctrl+Tab duplicate if internal Ctrl+Tab processing is disabled.
+[%] Regression: «Activate split on mouse over» was not working.
+[*] Issue 1125: Default terminal not activated when starting cmd from Windows 7 start menu Ctrl+Shift+Enter.
+
+
+2013.09.17
+[%] Issue 1211: Redirection heuristic disabled. If one needs redirection in root command -
+    call "cmd /c your-command-line".
+[%] Issue 1228: In some cases ConEmu fails to display DBCS characters with «ANSI X3.64» enabled.
+    Need to rewrite ANSI processor... Temporary workaround was created.
+[%] Issue 1220: When starting "far /co" plugin ConEmu background fails to initialize.
+[%] Issue 1230: Far plugin ConEmu background stops viewer autoupdating.
+[%] When starting "far /w" plugin ConEmu background fails to draw icons.
+[+] You may force Far Manager background plugins to update using Far macro.
+    This may be useful for minimizing lags after Ctrl-O, Ctrl-O for example.
+    Plugin.Call("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b", 99)
+[*] Some clarifications in «ConEmu received wrong version packet» message.
+[%] Some fixes in padding painting.
+[*] Update Windows 7 jump list controls are moved to «Task bar» settings page.
+[*] Far Manager tab templates are moved to «Far Manager» settings page.
+
+
+2013.09.13
+[%] Issue 1229: Special prefix symbols '>' and '*' (task item) was not stripped when starting new console from task menu.
+[%] Some changes in color palette processing.
+[+] New switch "-new_console:P:PaletteName" allows set fixed color palette for specified tab.
+    Example: ConEmu /cmd cmd -new_console:P:^<PowerShell^>
+
+
 2013.09.12
 [+] Show icons in tab bar. By default, root application (your shell) icon is displayed.
     Also, you may specify any special icon when starting tab with -new_console switch.
-[+] New switch "-new_console:C:<IconFile>" set icon for a tab. Example:
+[+] New switch "-new_console:C:IconFile" set icon for a tab. Example:
     ConEmu.exe /cmd C:\GIT\git-bash.bat -cur_console:C:C\GIT\etc\git.ico
 [*] Changes in «Win+N» popup menu (plus sign on toolbar).
     Tasks menu items are true submenu now. When task contains more than one item,

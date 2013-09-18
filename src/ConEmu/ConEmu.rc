@@ -269,32 +269,37 @@ BEGIN
     GROUPBOX        "Taskbar status area (TSA)",IDC_STATIC,4,1,319,29
     CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,89,8
     CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,14,89,8
-    GROUPBOX        "Taskbar buttons",IDC_STATIC,4,34,319,59
+    GROUPBOX        "Taskbar buttons",IDC_STATIC,4,34,319,55
     CONTROL         "Show all consoles (Win7 and higher)",rbTaskbarBtnWin7,
-                    "Button",BS_AUTORADIOBUTTON | WS_GROUP,11,49,137,8
-    CONTROL         "Show all consoles (all OS)",rbTaskbarBtnAll,"Button",BS_AUTORADIOBUTTON,158,49,160,8
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP,11,46,137,8
+    CONTROL         "Show all consoles (all OS)",rbTaskbarBtnAll,"Button",BS_AUTORADIOBUTTON,158,46,160,8
     CONTROL         "Active console only (ConEmu window)",rbTaskbarBtnActive,
-                    "Button",BS_AUTORADIOBUTTON,11,62,140,8
+                    "Button",BS_AUTORADIOBUTTON,11,59,140,8
     CONTROL         "Don't show ConEmu window on Taskbar",rbTaskbarBtnHidden,
-                    "Button",BS_AUTORADIOBUTTON,158,62,159,8
+                    "Button",BS_AUTORADIOBUTTON,158,59,159,8
     CONTROL         "Show Shield overlay (Win7 and higher)",cbTaskbarShield,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,77,143,8
-    GROUPBOX        "Action on closing last console (tab) and 'cross clicking'",IDC_STATIC,4,98,319,42
-    GROUPBOX        "Minimize ConEmu automatically",IDC_STATIC,4,145,319,57
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,74,143,8
+    GROUPBOX        "Action on closing last console (tab) and 'cross clicking'",IDC_STATIC,4,93,319,42
+    GROUPBOX        "Minimize ConEmu automatically",IDC_STATIC,4,140,319,57
     CONTROL         "Minimize on focus lose (not in Quake style)",cbMinimizeOnLoseFocus,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,158,199,8
-    GROUPBOX        "When Esc pressed",IDC_STATIC,4,173,319,29
-    CONTROL         "If all consoles closed",rbMinByEscEmpty,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,186,99,8
-    CONTROL         "Always",rbMinByEscAlways,"Button",BS_AUTORADIOBUTTON,113,186,42,8
-    CONTROL         "Never",rbMinByEscNever,"Button",BS_AUTORADIOBUTTON,161,186,38,8
-    CONTROL         "Map Shift+Esc to Esc",cbMapShiftEscToEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,186,101,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,153,199,8
+    GROUPBOX        "When Esc pressed",IDC_STATIC,4,168,319,29
+    CONTROL         "If all consoles closed",rbMinByEscEmpty,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,181,99,8
+    CONTROL         "Always",rbMinByEscAlways,"Button",BS_AUTORADIOBUTTON,113,181,42,8
+    CONTROL         "Never",rbMinByEscNever,"Button",BS_AUTORADIOBUTTON,161,181,38,8
+    CONTROL         "Map Shift+Esc to Esc",cbMapShiftEscToEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,181,101,8
     CONTROL         "Quit on close (e.g. caption bar cross clicking)",cbCloseConEmuOnCrossClicking,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,111,168,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,106,168,8
     CONTROL         "Minimize on closing last tab",cbMinimizeOnLastTabClose,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,125,110,8
-    CONTROL         "Hide to the TSA",cbHideOnLastTabClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,125,66,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,120,110,8
+    CONTROL         "Hide to the TSA",cbHideOnLastTabClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,120,66,8
     CONTROL         "Close ConEmu with last tab",cbCloseConEmuWithLastTab,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,111,113,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,106,113,8
+    GROUPBOX        "Windows 7 taskbar (Jump list)",gbCmdTasks7,4,202,319,29
+    CONTROL         "Add ConEmu tasks to taskbar",cbCmdTaskbarTasks,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,215,114,8
+    CONTROL         "Add commands from history, too",cbCmdTaskbarCommands,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,215,123,8
+    PUSHBUTTON      "Update Now!",cbCmdTaskbarUpdate,259,211,58,14
 END
 
 IDD_SPG_CURSOR DIALOGEX 0, 0, 328, 235
@@ -678,7 +683,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Shell style Drag and Drop (Far Manager only)",IDC_STATIC,4,1,319,42
+    GROUPBOX        "Shell style Drag and Drop (Far Manager only)",IDC_STATIC,4,1,319,41
     CONTROL         "LDrag",cbDragL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,12,36,8
     COMBOBOX        lbLDragKey,47,11,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Drop && Confirmation",cbDropEnabled,"Button",BS_AUTO3STATE | WS_TABSTOP,107,12,82,8
@@ -688,26 +693,36 @@ BEGIN
     COMBOBOX        lbRDragKey,47,25,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,107,27,66,8
     CONTROL         "Use drop menu",cbDropUseMenu,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,27,66,8
-    GROUPBOX        "Far Manager options",IDC_STATIC,4,45,319,50
-    CONTROL         "Hourglass if not responding",cbFarHourglass,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,57,101,8
-    PUSHBUTTON      "...",bFarHourglass,113,56,13,11,WS_DISABLED
-    CONTROL         "Extend Unicode CharMap",cbExtendUCharMap,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,69,117,8
-    CONTROL         "Resize panels by mouse",cbDragPanel,"Button",BS_AUTO3STATE | WS_TABSTOP,131,57,104,8
-    CONTROL         "ASCII sort function in Far",cbFARuseASCIIsort,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,81,104,8
-    CONTROL         "Right selection fix",cbRSelectionFix,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,57,81,8
-    CONTROL         "No zone check",cbShellNoZoneCheck,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,69,81,8
-    CONTROL         "KeyBar RClick",cbKeyBarRClick,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,81,81,8
-    CONTROL         "Disable Far flashing",cbDisableFarFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,9,81,117,8
-    GROUPBOX        "Far macros",IDC_STATIC,4,97,319,77
-    CONTROL         "&RightClick 4 EMenu",cbRClick,"Button",BS_AUTO3STATE | WS_TABSTOP,9,109,78,8
-    EDITTEXT        tRClickMacro,88,107,229,12,ES_AUTOHSCROLL
-    CONTROL         "Safe Far close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,126,78,8
-    EDITTEXT        tSafeFarCloseMacro,88,124,229,12,ES_AUTOHSCROLL
-    LTEXT           "Close tab:",IDC_STATIC,10,142,54,8
-    EDITTEXT        tCloseTabMacro,70,140,247,12,ES_AUTOHSCROLL
-    LTEXT           "Save all editors:",IDC_STATIC,10,158,54,8
-    EDITTEXT        tSaveAllMacro,70,156,247,12,ES_AUTOHSCROLL
-    CONTROL         "use both panel edges",cbDragPanelBothEdges,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,141,69,94,8
+    GROUPBOX        "Far Manager options",IDC_STATIC,4,44,319,48
+    CONTROL         "Hourglass if not responding",cbFarHourglass,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,55,101,8
+    PUSHBUTTON      "...",bFarHourglass,113,54,13,11,WS_DISABLED
+    CONTROL         "Extend Unicode CharMap",cbExtendUCharMap,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,67,117,8
+    CONTROL         "Resize panels by mouse",cbDragPanel,"Button",BS_AUTO3STATE | WS_TABSTOP,131,55,104,8
+    CONTROL         "ASCII sort function in Far",cbFARuseASCIIsort,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,79,104,8
+    CONTROL         "Right selection fix",cbRSelectionFix,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,55,81,8
+    CONTROL         "No zone check",cbShellNoZoneCheck,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,67,81,8
+    CONTROL         "KeyBar RClick",cbKeyBarRClick,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,79,81,8
+    CONTROL         "Disable Far flashing",cbDisableFarFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,9,79,117,8
+    GROUPBOX        "Far macros",IDC_STATIC,4,95,319,73
+    CONTROL         "&RightClick 4 EMenu",cbRClick,"Button",BS_AUTO3STATE | WS_TABSTOP,9,107,78,8
+    EDITTEXT        tRClickMacro,88,105,229,12,ES_AUTOHSCROLL
+    CONTROL         "Safe Far close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,122,78,8
+    EDITTEXT        tSafeFarCloseMacro,88,120,229,12,ES_AUTOHSCROLL
+    LTEXT           "Close tab:",IDC_STATIC,10,137,54,8
+    EDITTEXT        tCloseTabMacro,70,135,247,12,ES_AUTOHSCROLL
+    LTEXT           "Save all editors:",IDC_STATIC,10,152,54,8
+    EDITTEXT        tSaveAllMacro,70,150,247,12,ES_AUTOHSCROLL
+    CONTROL         "use both panel edges",cbDragPanelBothEdges,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,141,67,94,8
+    GROUPBOX        "Tab templates",IDC_STATIC,4,170,319,62
+    RTEXT           "Panels:",IDC_STATIC,8,200,30,8
+    RTEXT           "Viewer:",IDC_STATIC,168,200,29,8
+    EDITTEXT        tTabViewer,201,198,117,12,ES_AUTOHSCROLL
+    RTEXT           "Editor:",IDC_STATIC,16,218,22,8
+    EDITTEXT        tTabEditor,42,216,117,12,ES_AUTOHSCROLL
+    RTEXT           "Modified:",IDC_STATIC,161,218,36,8
+    EDITTEXT        tTabEditorMod,201,216,117,12,ES_AUTOHSCROLL
+    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %n - Name of active process, %% - %,\n%i - Far window number (you can see it in standard F12 menu)",IDC_STATIC,10,179,309,17
+    EDITTEXT        tTabPanels,42,198,117,12,ES_AUTOHSCROLL
 END
 
 IDD_SPG_DEBUG DIALOGEX 0, 0, 328, 235
@@ -835,15 +850,8 @@ BEGIN
     RTEXT           "Charset:",IDC_STATIC,226,85,32,8
     COMBOBOX        tTabFontCharset,264,83,54,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Tab templates",IDC_STATIC,4,107,319,85
-    RTEXT           "Panels:",IDC_STATIC,8,156,30,8
-    EDITTEXT        tTabConsole,42,137,40,12,ES_AUTOHSCROLL
-    RTEXT           "Viewer:",IDC_STATIC,85,156,29,8
-    EDITTEXT        tTabViewer,119,154,40,12,ES_AUTOHSCROLL
-    RTEXT           "Editor:",IDC_STATIC,166,156,22,8
-    EDITTEXT        tTabEditor,192,154,40,12,ES_AUTOHSCROLL
-    RTEXT           "Modified:",IDC_STATIC,237,156,36,8
-    EDITTEXT        tTabEditorMod,278,154,40,12,ES_AUTOHSCROLL
-    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %n - Name of active process, %% - %,\n%i - Far window number (you can see it in standard F12 menu)",IDC_STATIC,10,118,309,17
+    EDITTEXT        tTabConsole,46,137,141,12,ES_AUTOHSCROLL
+    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %n - Name of active process, %% - %",IDC_STATIC,10,118,309,8
     RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,176,107,8
     EDITTEXT        tTabLenMax,119,174,40,12,ES_AUTOHSCROLL
     EDITTEXT        tAdminSuffix,261,174,57,12,ES_AUTOHSCROLL
@@ -851,10 +859,9 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,42,155,8
     CONTROL         "Admin shield",rbAdminShield,"Button",BS_AUTORADIOBUTTON,167,176,55,8
     CONTROL         "suffix",rbAdminSuffix,"Button",BS_AUTORADIOBUTTON,223,176,34,8
-    RTEXT           "Console:",IDC_STATIC,8,140,30,8
-    EDITTEXT        tTabPanels,42,154,40,12,ES_AUTOHSCROLL
-    LTEXT           "Skip words from title:",IDC_STATIC,91,140,69,8
-    EDITTEXT        tTabSkipWords,162,137,156,12,ES_AUTOHSCROLL
+    RTEXT           "Template:",IDC_STATIC,8,139,35,8
+    RTEXT           "Skip words from title:",IDC_STATIC,33,159,81,8
+    EDITTEXT        tTabSkipWords,119,156,199,12,ES_AUTOHSCROLL
     CONTROL         "Always show",rbTabsAlways,"Button",BS_AUTORADIOBUTTON,10,14,65,8
     CONTROL         "Auto show",rbTabsAuto,"Button",BS_AUTORADIOBUTTON,75,14,57,8
     CONTROL         "Don't show",rbTabsNone,"Button",BS_AUTORADIOBUTTON,133,14,55,8
@@ -868,6 +875,7 @@ BEGIN
     GROUPBOX        "Tabs font",IDC_STATIC,4,72,319,30
     CONTROL         "Activate split on mouse over",cbActivateSplitMouseOver,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,55,123,8
+    LTEXT           "Far Manager templates are located on 'Far Manager' page",IDC_STATIC,196,135,120,16
 END
 
 IDD_SPG_STATUSBAR DIALOGEX 0, 0, 328, 235
@@ -1173,29 +1181,24 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Predefined tasks (command groups)",gbCmdTasks,4,1,319,199
-    LISTBOX         lbCmdTasks,9,12,93,147,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    GROUPBOX        "Predefined tasks (command groups)",gbCmdTasks,4,1,319,230
+    LISTBOX         lbCmdTasks,9,12,93,180,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
     LTEXT           "Task name (alias), surrounded by {...}, used in «[+] menu», «Recreate dialog» or «/cmd» agrument of ConEmu.exe",stCmdGroupName,111,11,207,16
     EDITTEXT        tCmdGroupName,109,29,208,12,ES_AUTOHSCROLL
     LTEXT           "Commands (application, arguments, ""-new_console"" params)\nDelimit commands with empty lines\nEach command creates tab in ConEmu when group started\nMark active console tab with '>' sign\nStart console 'As Administrator' with '*' sign",stCmdGroupCommands,111,71,208,41
-    EDITTEXT        tCmdGroupCommands,109,113,208,64,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
-    PUSHBUTTON      "Tab...",cbCmdGroupApp,132,180,34,14
-    PUSHBUTTON      "File path...",cbCmdTasksParm,221,180,47,14
-    PUSHBUTTON      "+",cbCmdTasksAdd,9,180,17,14
-    PUSHBUTTON      "-",cbCmdTasksDel,27,180,17,14
-    PUSHBUTTON      "Up",cbCmdTasksUp,47,180,27,14
-    PUSHBUTTON      "Down",cbCmdTasksDown,75,180,27,14
-    PUSHBUTTON      "Reload...",cbCmdTasksReload,9,163,93,14
-    GROUPBOX        "Windows 7 taskbar (Jump list)",gbCmdTasks7,4,202,319,29
-    CONTROL         "Add ConEmu tasks to taskbar",cbCmdTaskbarTasks,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,215,114,8
-    CONTROL         "Add commands from history, too",cbCmdTaskbarCommands,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,215,123,8
-    PUSHBUTTON      "Update Now!",cbCmdTaskbarUpdate,259,211,58,14
+    EDITTEXT        tCmdGroupCommands,109,113,208,97,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
+    PUSHBUTTON      "Tab...",cbCmdGroupApp,132,213,34,14
+    PUSHBUTTON      "File path...",cbCmdTasksParm,221,213,47,14
+    PUSHBUTTON      "+",cbCmdTasksAdd,9,213,17,14
+    PUSHBUTTON      "-",cbCmdTasksDel,27,213,17,14
+    PUSHBUTTON      "Up",cbCmdTasksUp,47,213,27,14
+    PUSHBUTTON      "Down",cbCmdTasksDown,75,213,27,14
+    PUSHBUTTON      "Reload...",cbCmdTasksReload,9,196,93,14
     LTEXT           "Task parameters. Example: /dir ""C:\\"" /icon ""cmd.exe"" /single",stCmdGroupGuiArg,111,44,208,8
     EDITTEXT        tCmdGroupGuiArg,110,54,208,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "Startup dir...",cbCmdTasksDir,167,180,53,14
-    RTEXT           "Add:",stCmdTaskAdd,106,184,21,8
-    PUSHBUTTON      "Active tabs",cbCmdTasksActive,270,180,49,14
+    PUSHBUTTON      "Startup dir...",cbCmdTasksDir,167,213,53,14
+    RTEXT           "Add:",stCmdTaskAdd,106,217,21,8
+    PUSHBUTTON      "Active tabs",cbCmdTasksActive,270,213,49,14
 END
 
 IDD_SPG_APPDISTINCT DIALOGEX 0, 0, 328, 235
@@ -1364,6 +1367,10 @@ BEGIN
         BOTTOMMARGIN, 181
     END
 
+    IDD_SPG_TASKBAR, DIALOG
+    BEGIN
+    END
+
     IDD_SPG_COLORS, DIALOG
     BEGIN
         BOTTOMMARGIN, 234
@@ -1379,6 +1386,14 @@ BEGIN
     END
 
     IDD_SPG_COMSPEC, DIALOG
+    BEGIN
+    END
+
+    IDD_SPG_FEATURE_FAR, DIALOG
+    BEGIN
+    END
+
+    IDD_SPG_TABS, DIALOG
     BEGIN
     END
 
@@ -1417,6 +1432,10 @@ BEGIN
         RIGHTMARGIN, 320
         TOPMARGIN, 3
         BOTTOMMARGIN, 284
+    END
+
+    IDD_SPG_CMDTASKS, DIALOG
+    BEGIN
     END
 
     IDD_SPG_APPDISTINCT2, DIALOG

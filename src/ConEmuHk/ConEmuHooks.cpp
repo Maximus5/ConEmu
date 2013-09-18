@@ -273,6 +273,7 @@ BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int nReserv
 BOOL WINAPI OnTrackPopupMenuEx(HMENU hmenu, UINT fuFlags, int x, int y, HWND hWnd, LPTPMPARAMS lptpm);
 BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo);
 BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo);
+HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags);
 HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, INT nShowCmd);
 HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
 BOOL WINAPI OnFlashWindow(HWND hWnd, BOOL bInvert);
@@ -584,9 +585,23 @@ bool InitHooksDefaultTrm()
 		{(void*)OnWinExec,				"WinExec",				kernel32},
 		// Need for hook "Run as administrator"
 		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
+		// Issue 1125: "Run as administrator" too. Must be last export
+		{(void*)OnShellExecCmdLine,		"ShellExecCmdLine",		shell32,   265},
 		/* ************************ */
 		{0}
 	};
+
+	if (!(gpStartEnv->os.dwMajorVersion == 6 && gpStartEnv->os.dwMinorVersion <= 1))
+	{
+		size_t nCmdLineIdx = countof(HooksCommon)-2;
+		_ASSERTEX(HooksCommon[nCmdLineIdx].NameOrdinal == 265);
+		memset(HooksCommon+nCmdLineIdx, 0, sizeof(*HooksCommon));
+	}
+	else
+	{
+		//_ASSERTEX(FALSE && "Continue to hook");
+	}
+
 	InitHooks(HooksCommon);
 
 	return true;
@@ -1566,6 +1581,51 @@ BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 
 	SetLastError(dwErr);
 	return lbRc;
+}
+
+// Issue 1125: Hook undocumented function used for running commands typed in Windows 7 Win-menu search string.
+HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags)
+{
+	typedef BOOL (WINAPI* OnShellExecCmdLine_t)(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags);
+	ORIGINALFASTEX(ShellExecCmdLine,NULL);
+	HRESULT hr = S_OK;
+
+	if (nShow && (dwSeclFlags & 0x40) && pwszCommand && pwszStartDir)
+	{
+		if (!IsBadStringPtrW(pwszCommand, MAX_PATH) && !IsBadStringPtrW(pwszStartDir, MAX_PATH))
+		{
+			// Bad thing, ShellExecuteEx needs File&Parm, but we get both in pwszCommand
+			wchar_t szExe[MAX_PATH+1];
+			LPCWSTR pszFile = pwszCommand;
+			LPCWSTR pszParm = pwszCommand;
+			if (NextArg(&pszParm, szExe) == 0)
+			{
+				pszFile = szExe; pszParm = SkipNonPrintable(pszParm);
+			}
+			else
+			{
+				// Failed
+				pszFile = pwszCommand; pszParm = NULL;
+			}
+
+			SHELLEXECUTEINFO sei = {sizeof(sei), 0, hwnd, L"runas", pszFile, pszParm, pwszStartDir, nShow};
+			BOOL bShell = OnShellExecuteExW(&sei);
+			hr = bShell ? S_OK : HRESULT_FROM_WIN32(GetLastError());
+			goto wrap;
+		}
+	}
+
+	if (!F(ShellExecCmdLine))
+	{
+		hr = HRESULT_FROM_WIN32(ERROR_INVALID_FUNCTION);
+	}
+	else
+	{
+		hr = F(ShellExecCmdLine)(hwnd, pwszCommand, pwszStartDir, nShow, pUnused, dwSeclFlags);
+	}
+
+wrap:
+	return hr;
 }
 
 

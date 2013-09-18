@@ -89,6 +89,7 @@ ConEmuBgSettings gSettings[] = {
 
 BOOL gbBackgroundEnabled = FALSE;
 wchar_t gsXmlConfigFile[MAX_PATH] = {};
+BOOL gbMonitorFileChange = FALSE;
 //COLORREF gcrLinesColor = RGB(0,0,0xA8); // чуть светлее синего
 //int giHilightType = 0; // 0 - линии, 1 - полосы
 //BOOL gbHilightPlugins = FALSE;
@@ -346,7 +347,17 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 				else
 					pszSlash[1] = 0;
 			}
-			ghXmlNotification = FindFirstChangeNotification(gpszXmlFolder, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
+
+			//Issue 1230
+			if (gbMonitorFileChange)
+			{
+				ghXmlNotification = FindFirstChangeNotification(gpszXmlFolder, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
+			}
+			else
+			{
+				_ASSERTE(ghXmlNotification==NULL);
+				lbNeedCheck = true;
+			}
 		}
 	}
 
@@ -1958,11 +1969,24 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 		
 	COORD bufSize = {(SHORT)(rcPanel.right-rcPanel.left+1),min(10,(SHORT)(rcPanel.bottom-rcPanel.top))};
 	COORD bufCoord = {0,0};
+
+	HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	short nShiftX = 0, nShiftY = 0;
+	if (GetConsoleScreenBufferInfo(hStd, &csbi))
+	{
+		// Начиная с какой-то версии в фаре поменяли координаты :(
+		if (rcPanel.top <= 1)
+		{
+			nShiftY = csbi.dwSize.Y - (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+		}
+	}
+
 	SMALL_RECT readRect = {
-		(SHORT)rcPanel.left,
-		(SHORT)(rcPanel.bottom-bufSize.Y),
-		(SHORT)rcPanel.right,
-		(SHORT)rcPanel.bottom
+		(SHORT)rcPanel.left + nShiftX,
+		(SHORT)(rcPanel.bottom-bufSize.Y)+nShiftY,
+		(SHORT)rcPanel.right+nShiftX,
+		(SHORT)rcPanel.bottom+nShiftY
 	};
 	
 	PCHAR_INFO pChars = (PCHAR_INFO)malloc(bufSize.X*bufSize.Y*sizeof(*pChars));
@@ -1974,7 +1998,7 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 	
 	int nLines = 0;
 	
-	BOOL lbReadRc = ReadConsoleOutputW(GetStdHandle(STD_OUTPUT_HANDLE), pChars, bufSize, bufCoord, &readRect);
+	BOOL lbReadRc = ReadConsoleOutputW(hStd, pChars, bufSize, bufCoord, &readRect);
 	if (!lbReadRc)
 	{
 		_ASSERTE(lbReadRc);

@@ -921,6 +921,7 @@ bool __stdcall InitHooks(HookItem* apHooks)
 			}
 
 			gpHooks[j].Name = apHooks[i].Name;
+			gpHooks[j].NameOrdinal = apHooks[i].NameOrdinal;
 			gpHooks[j].DllName = apHooks[i].DllName;
 			gpHooks[j].NewAddress = apHooks[i].NewAddress;
 			gpHooks[j].NameCRC = NameCRC;
@@ -959,7 +960,8 @@ bool __stdcall InitHooks(HookItem* apHooks)
 			else
 			{
 				WARNING("Тут часто возвращается XXXStub вместо самой функции!");
-				gpHooks[i].OldAddress = (void*)GetProcAddress(mod, gpHooks[i].Name);
+				const char* ExportName = gpHooks[i].NameOrdinal ? ((const char*)gpHooks[i].NameOrdinal) : gpHooks[i].Name;
+				gpHooks[i].OldAddress = (void*)GetProcAddress(mod, ExportName);
 
 				if (gpHooks[i].OldAddress == NULL)
 				{

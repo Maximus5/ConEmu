@@ -709,7 +709,8 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 					mp_RCon->m_FarPlugPIDs[i] = 0;
 			}
 
-			mp_RCon->mn_FarPID_PluginDetected = mp_RCon->mn_FarPID = 0;
+			mp_RCon->SetFarPID(0);
+			mp_RCon->SetFarPluginPID(0);
 			mp_RCon->CloseFarMapData();
 
 			if (mp_RCon->isActive()) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
@@ -984,7 +985,7 @@ CESERVER_REQ* CRealServer::cmdResources(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	}
 
 	// Запомним, что в фаре есть плагин
-	mp_RCon->mn_FarPID_PluginDetected = nPID;
+	mp_RCon->SetFarPluginPID(nPID);
 	mp_RCon->OpenFarMapData(); // переоткроет мэппинг с информацией о фаре
 	// Разрешить мониторинг PID фара в MonitorThread (оно будет переоткрывать mp_RCon->OpenFarMapData)
 	mp_RCon->mb_SkipFarPidChange = FALSE;

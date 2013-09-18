@@ -42,7 +42,7 @@ class CPluginBackground
 		~CPluginBackground();
 
 		void SetForceCheck();
-		void SetForceUpdate();
+		void SetForceUpdate(bool bFlagsOnly = false);
 		void SetForceThLoad();
 
 		// Может вызываться в произвольном потоке

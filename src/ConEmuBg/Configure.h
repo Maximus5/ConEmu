@@ -82,12 +82,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 enum
 {
 	cfgTitle         = 0,
-	cfgPluginEnabled = 1,
-	cfgPathLabel     = 2,
-	cfgPath          = 3,
-	cfgSeparator     = 4,
-	cfgOk            = 5,
-	cfgCancel        = 6,
+	cfgPluginEnabled /*= 1*/,
+	cfgPathLabel     /*= 2*/,
+	cfgPath          /*= 3*/,
+	cfgMonitorFile   /*= 4*/,
+	cfgSeparator     /*= 5*/,
+	cfgOk            /*= 6*/,
+	cfgCancel        /*= 7*/,
 };
 
 extern bool gbGdiPlusInitialized;
@@ -102,11 +103,16 @@ static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 	{
 		if (Param1 == cfgPluginEnabled)
 		{
-			if (Param1 == cfgPluginEnabled)
-				gbBackgroundEnabled = (int)Param2; //-V205
+			gbBackgroundEnabled = (Param2 != 0);
 
 			// Обновить или отключить
 			StartPlugin(TRUE /*НЕ считывать параметры из реестра*/);
+		}
+		else if (Param1 == cfgMonitorFile)
+		{
+			//Issue 1230
+			gbMonitorFileChange = (Param2 != 0);
+			CheckXmlFile(true);
 		}
 	}
 	else if (Msg == DN_EDITCHANGE)
@@ -138,7 +144,7 @@ static int ConfigureProc(int ItemNumber)
 	if (!InfoT)
 		return false;
 
-	int height = 11, width = 50;
+	int height = 12, width = 50;
 	FarDialogItem items[] =
 	{
 		{DI_DOUBLEBOX, 3,  1,  width - 4, height - 2}, //cfgTitle
@@ -146,7 +152,7 @@ static int ConfigureProc(int ItemNumber)
 		#if FAR_UNICODE>=1867
 		{DI_CHECKBOX,  5,  3,  0,  0, {0}, NULL, NULL, DIF_FOCUS},    //cfgPluginEnabled
 		#else
-		{DI_CHECKBOX,  5,  3,  0,  0, true},    //cfgShowLines
+		{DI_CHECKBOX,  5,  3,  0,  0, true},    //cfgPluginEnabled
 		#endif
 
 		{DI_TEXT,      5,  5,  0,  0},   //cfgPathLabel, cfgPath
@@ -155,19 +161,25 @@ static int ConfigureProc(int ItemNumber)
 		#else
 		{DI_EDIT,  5,  6,  width - 6, 0},
 		#endif
+
+		#if FAR_UNICODE>=1867
+		{DI_CHECKBOX,  5,  7},    //cfgMonitorFile
+		#else
+		{DI_CHECKBOX,  5,  7},    //cfgMonitorFile
+		#endif
 		
 		#if FAR_UNICODE>=1867
-		{DI_TEXT,      0, 7,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_SEPARATOR},
+		{DI_TEXT,      0, 8,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_SEPARATOR},
 		#else
-		{DI_TEXT,      0, 7,  0,  0, false, {(DWORD_PTR)0}, DIF_SEPARATOR},
+		{DI_TEXT,      0, 8,  0,  0, false, {(DWORD_PTR)0}, DIF_SEPARATOR},
 		#endif
 
 		#if FAR_UNICODE>=1867
-		{DI_BUTTON,    0, 8,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP|DIF_DEFAULTBUTTON},  //cfgOk
-		{DI_BUTTON,    0, 8,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP}, //cfgCancel
+		{DI_BUTTON,    0, 9,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP|DIF_DEFAULTBUTTON},  //cfgOk
+		{DI_BUTTON,    0, 9,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP}, //cfgCancel
 		#else
-		{DI_BUTTON,    0, 8,  0,  0, false,  {(DWORD_PTR)true},        DIF_CENTERGROUP, true},  //cfgOk
-		{DI_BUTTON,    0, 8,  0,  0, false,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //cfgCancel
+		{DI_BUTTON,    0, 9,  0,  0, false,  {(DWORD_PTR)true},        DIF_CENTERGROUP, true},  //cfgOk
+		{DI_BUTTON,    0, 9,  0,  0, false,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //cfgCancel
 		#endif
 	};
 	SETTEXT(items[cfgTitle], GetMsgT(CEPluginName));
@@ -181,6 +193,8 @@ static int ConfigureProc(int ItemNumber)
 	WideCharToMultiByte(CP_OEMCP, 0, *gsXmlConfigFile ? gsXmlConfigFile : szDefaultXmlName, -1, szXmlConfigFile, countof(szXmlConfigFile), 0,0);
 	SETTEXT(items[cfgPath], szXmlConfigFile);
 #endif
+	SETTEXT(items[cfgMonitorFile], GetMsgT(CEMonitorFileChange));
+	items[cfgMonitorFile].Selected = gbMonitorFileChange;
 	SETTEXT(items[cfgOk], GetMsgT(CEBtnOK));
 	SETTEXT(items[cfgCancel], GetMsgT(CEBtnCancel));
 	FAR_INT dialog_res = 0;

@@ -1618,7 +1618,10 @@ RECT CConEmuMain::GetDefaultRect()
 			SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, 0);
 		}
 
-		int nX = GetSystemMetrics(SM_CXSIZEFRAME), nY = GetSystemMetrics(SM_CYSIZEFRAME);
+		//-- SM_CXSIZEFRAME/SM_CYSIZEFRAME fails in Windows 8
+		//int nX = GetSystemMetrics(SM_CXSIZEFRAME), nY = GetSystemMetrics(SM_CYSIZEFRAME);
+		RECT rcFrame = CalcMargins(CEM_FRAMEONLY, wmNormal);
+		int nX = rcFrame.left, nY = rcFrame.top;
 		int nWidth = rcWnd.right - rcWnd.left;
 		int nHeight = rcWnd.bottom - rcWnd.top;
 		// Теперь, если новый размер выходит за пределы экрана - сдвинуть в левый верхний угол
@@ -8454,16 +8457,25 @@ void CConEmuMain::ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServe
 	#else
 	h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nFromProcess);
 	#endif
+
+	wchar_t szSrcExe[MAX_PATH] = L"";
+
 	if (h && h != INVALID_HANDLE_VALUE)
 	{
-		LPCTSTR pszExePath = NULL;
 		if (Module32First(h, &mi))
 		{
 			do {
 				if (mi.th32ProcessID == nFromProcess)
 				{
-					if (!pszExePath)
-						pszExePath = mi.szExePath[0] ? mi.szExePath : mi.szModule;
+					if (!*szSrcExe)
+					{
+						LPCWSTR pszExePath = mi.szExePath[0] ? mi.szExePath : mi.szModule;
+						LPCWSTR pszExt = PointToExt(pszExePath);
+						if (lstrcmpi(pszExt, L".exe") == 0)
+						{
+							lstrcpyn(szSrcExe, pszExePath, countof(szSrcExe));
+						}
+					}
 
 					if (!hFromModule || (mi.hModule == (HMODULE)hFromModule))
 					{
@@ -8471,13 +8483,19 @@ void CConEmuMain::ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServe
 						break;
 					}
 				}
+				else
+				{
+					_ASSERTE(mi.th32ProcessID == nFromProcess);
+				}
 			} while (Module32Next(h, &mi));
-			if (!pszCallPath && pszExePath)
-				pszCallPath = pszExePath;
+
+			//if (!pszCallPath && pszExePath)
+			//	pszCallPath = pszExePath;
 		}
 		CloseHandle(h);
 	}
-	if (!pszCallPath)
+
+	if (!*szSrcExe)
 	{
 		h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 		if (h && h != INVALID_HANDLE_VALUE)
@@ -8487,24 +8505,38 @@ void CConEmuMain::ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServe
 				do {
 					if (pi.th32ProcessID == nFromProcess)
 					{
-						pszCallPath = pi.szExeFile;
+						lstrcpyn(szSrcExe, pi.szExeFile, countof(szSrcExe));
 						break;
 					}
 				} while (Process32Next(h, &pi));
 			}
 			CloseHandle(h);
 		}
-		pszCallPath = _T("");
+	}
+
+	if (!pszCallPath && *szSrcExe)
+	{
+		LPCWSTR pszExeName = PointToName(szSrcExe);
+		if (IsFarExe(pszExeName))
+		{
+			pszCallPath = L"(Check plugins in %FARHOME%\\Plugins folder)";
+		}
 	}
 
 	lbErrorShowed = true;
-	int nMaxLen = 255+_tcslen(pszCallPath);
+	int nMaxLen = 255+(pszCallPath ? _tcslen(pszCallPath) : 0)+_tcslen(ms_ConEmuExe)+_tcslen(szSrcExe)+_tcslen(ms_ConEmuDefTitle);
 	wchar_t *pszMsg = (wchar_t*)calloc(nMaxLen,sizeof(wchar_t));
 	_wsprintf(pszMsg, SKIPLEN(nMaxLen)
-		L"ConEmu received wrong version packet!\nCommandID: %i, Version: %i, ReqVersion: %i, PID: %u\nPlease check %s\n%s",
+		L"%s received wrong version packet!\n"
+		L"%s\n\n"
+		L"CommandID: %i, Version: %i, ReqVersion: %i, PID: %u\n"
+		L"%s\n%s\n%s"
+		L"Please check installation files",
+		ms_ConEmuDefTitle, ms_ConEmuExe,
 		nCmd, nVersion, CESERVER_REQ_VER, nFromProcess,
-		(bFromServer==1) ? L"ConEmuC*.exe" : (bFromServer==0) ? L"ConEmu*.dll and Far plugins" : L"ConEmuC*.exe and ConEmu*.dll",
-		pszCallPath);
+		szSrcExe, pszCallPath ? pszCallPath : L"", pszCallPath ? L"\n" : L""
+		/*(bFromServer==1) ? L"ConEmuC*.exe" : (bFromServer==0) ? L"ConEmu*.dll and Far plugins" : L"ConEmuC*.exe and ConEmu*.dll"*/
+		);
 	MBox(pszMsg);
 	free(pszMsg);
 	mb_InShowOldCmdVersion = FALSE; // теперь можно показать еще одно...
@@ -17168,7 +17200,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	CVConGuard VConFromPoint;
 	// bForeground - does not fit our needs (it ignores GUI children)
 	// 130821 - Don't try to change focus during popup menu active!
-	if (gpSet->isActivateSplitMouseOver && (mp_Menu->GetTrackMenuPlace() != tmp_None))
+	if (gpSet->isActivateSplitMouseOver && (mp_Menu->GetTrackMenuPlace() == tmp_None))
 	{
 		POINT ptCur; GetCursorPos(&ptCur);
 		if (!PTDIFFTEST(mouse.ptLastSplitOverCheck, SPLITOVERCHECK_DELTA))

@@ -123,6 +123,7 @@ private:
 
 		void Reset(CmdTaskPopupItemType newItemType, int newCmdId, LPCWSTR asName = NULL);
 		void SetShortName(LPCWSTR asName);
+		static void SetMenuName(wchar_t* pszDisplay, INT_PTR cchDisplayMax, LPCWSTR asName, bool bTrailingPeriod);
 	};
 	MArray<CmdTaskPopupItem> m_CmdTaskPopup;
 	int mn_CmdLastID;

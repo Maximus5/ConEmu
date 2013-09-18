@@ -164,30 +164,40 @@ void CConEmuMenu::CmdTaskPopupItem::Reset(CmdTaskPopupItemType newItemType, int 
 
 void CConEmuMenu::CmdTaskPopupItem::SetShortName(LPCWSTR asName)
 {
-	int nCurLen = _tcslen(this->szShort);
-	int nMaxShort = countof(this->szShort); // wchar_t szShort[32];
+	CConEmuMenu::CmdTaskPopupItem::SetMenuName(this->szShort, countof(this->szShort), asName, (ItemType == eTaskPopup));
+}
+
+void CConEmuMenu::CmdTaskPopupItem::SetMenuName(wchar_t* pszDisplay, INT_PTR cchDisplayMax, LPCWSTR asName, bool bTrailingPeriod)
+{
+	int nCurLen = _tcslen(pszDisplay);
+	//int nMaxShort = cchDisplayMax; // wchar_t szShort[32];
 	int nLen = _tcslen(asName);
 
-	wchar_t *pszDst = this->szShort+nLen;
-	wchar_t *pszEnd = this->szShort+nMaxShort-1;
+	wchar_t *pszDst = pszDisplay+nCurLen;
+	wchar_t *pszEnd = pszDisplay+cchDisplayMax-1;
+	_ASSERTE((pszDst+8) < pszEnd); // ƒолжно быть место
 	const wchar_t *pszSrc = asName;
+	//bool bAddPeriods = false;
+	//bool bEndPeriods = false;
 
-	if (ItemType == eTaskPopup)
+	if (bTrailingPeriod)
 	{
 		//nMaxShort -= 2;
+		//bEndPeriods = true;
 
-		if ((nLen+nCurLen) >= nMaxShort)
-		{
-			lstrcpyn(this->szShort+nCurLen, asName, nMaxShort-nCurLen-1);
-			this->szShort[nMaxShort-2] = /*Е*/L'\x2026';
-			this->szShort[nMaxShort-1] = 0;
-			//nLen = nMaxShort-1;
-		}
-		else
-		{
-			lstrcpyn(this->szShort+nCurLen, asName, countof(this->szShort)-nCurLen);
-			//nLen = lstrlen(this->szShort);
-		}
+		//if ((nLen+nCurLen) >= nMaxShort)
+		//{
+		//	bAddPeriods = true;
+		//	//lstrcpyn(this->szShort+nCurLen, asName, nMaxShort-nCurLen-1);
+		//	//this->szShort[nMaxShort-2] = /*Е*/L'\x2026';
+		//	//this->szShort[nMaxShort-1] = 0;
+		//	////nLen = nMaxShort-1;
+		//}
+		//else
+		//{
+		//	//lstrcpyn(this->szShort+nCurLen, asName, countof(this->szShort)-nCurLen);
+		//	////nLen = lstrlen(this->szShort);
+		//}
 
 		//_ASSERTE((nLen+3) < nMaxShort);
 		//this->szShort[nLen] = L'\t';
@@ -197,31 +207,51 @@ void CConEmuMenu::CmdTaskPopupItem::SetShortName(LPCWSTR asName)
 	}
 	else
 	{
-		if (nLen >= nMaxShort)
+		if (nLen >= cchDisplayMax)
 		{
-			this->szShort[nCurLen] = /*Е*/L'\x2026';
-			_wcscpyn_c(this->szShort+nCurLen+1, nMaxShort-nCurLen-1, asName+nLen-nMaxShort+nCurLen+2, nMaxShort-nCurLen-1);
-			this->szShort[nMaxShort-1] = 0;
+			*(pszDst++) = /*Е*/L'\x2026';
+			pszSrc = asName+nLen-cchDisplayMax+nCurLen+2;
+			_ASSERTE((pszSrc >= asName) && (pszSrc < (asName+nLen)));
+			//this->szShort[nCurLen] = /*Е*/L'\x2026';
+			//_wcscpyn_c(this->szShort+nCurLen+1, nMaxShort-nCurLen-1, asName+nLen-nMaxShort+nCurLen+2, nMaxShort-nCurLen-1);
+			//this->szShort[nMaxShort-1] = 0;
 		}
 		else
 		{
-			_wcscpyn_c(this->szShort+nCurLen, nMaxShort-nCurLen, asName, nMaxShort-nCurLen);
+			//_wcscpyn_c(this->szShort+nCurLen, nMaxShort-nCurLen, asName, nMaxShort-nCurLen);
 		}
 	}
 
-	//while (*pszSrc && (pszDst < pszEnd))
-	//{
+	while (*pszSrc && (pszDst < pszEnd))
+	{
+		if (*pszSrc == L'&')
+		{
+			if ((pszDst+2) >= pszEnd)
+				break;
+			*(pszDst++) = L'&';
+		}
 
-	//}
+        *(pszDst++) = *(pszSrc++);
+	}
 
-	//if (pszDst <= pszEnd)
-	//{
-	//	*pszDst = 0;
-	//}
-	//else
-	//{
-	//	_ASSERTE(pszDst <= pszEnd)
-	//}
+	if (bTrailingPeriod && *pszSrc)
+	{
+		if ((pszDst + 1) >= pszEnd)
+			pszDst = pszDisplay+cchDisplayMax-2;
+			
+		*(pszDst++) = /*Е*/L'\x2026';
+	}
+
+	// Terminate with '\0'
+	if (pszDst <= pszEnd)
+	{
+		*pszDst = 0;
+	}
+	else
+	{
+		_ASSERTE(pszDst <= pszEnd)
+		pszDisplay[cchDisplayMax-1] = 0;
+	}
 }
 
 void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
@@ -286,7 +316,8 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 		{
 			if ((nCurGroupCount++) >= MAX_CMD_GROUP_SHOW)
 			{
-				itm.Reset(CmdTaskPopupItem::eMore, -1, L"&More tasks");
+				itm.Reset(CmdTaskPopupItem::eMore, -1);
+				wcscpy_c(itm.szShort, L"&More tasks"); // отдельной функцией, т.к. "Reset" - экранирует "&"
 				itm.hPopup = CreatePopupMenu();
 				if (!InsertMenu(hCurPopup, nInsertPos, MF_BYPOSITION|MF_POPUP|MF_STRING|MF_ENABLED, (UINT_PTR)itm.hPopup, itm.szShort))
 					break;
@@ -436,9 +467,23 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 				con.pszSpecialCmd = lstrdup(pGrp->pszName);
 				_ASSERTE(con.pszSpecialCmd && *con.pszSpecialCmd==TaskBracketLeft && con.pszSpecialCmd[lstrlen(con.pszSpecialCmd)-1]==TaskBracketRight);
 			}
-			else if ((itm.ItemType == CmdTaskPopupItem::eCmd) || (itm.ItemType == CmdTaskPopupItem::eTaskCmd))
+			else if (itm.ItemType == CmdTaskPopupItem::eTaskCmd)
 			{
+				bool lbSetActive = false;
+				bool lbRunAdmin = false;
+
+				// Task pre-options, for example ">*cmd"
+				con.pszSpecialCmd = lstrdup(gpConEmu->ParseScriptLineOptions(itm.pszCmd, &lbRunAdmin, &lbSetActive));
+				con.bRunAsAdministrator = lbRunAdmin;
+
+				_ASSERTE(con.pszSpecialCmd && *con.pszSpecialCmd);
+			}
+			else if (itm.ItemType == CmdTaskPopupItem::eCmd)
+			{
+				_ASSERTE(itm.pszCmd && (*itm.pszCmd != L'>'));
+
 				con.pszSpecialCmd = lstrdup(itm.pszCmd);
+
 				_ASSERTE(con.pszSpecialCmd && *con.pszSpecialCmd);
 			}
 
@@ -1181,8 +1226,13 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 							_wsprintf(itm.szShort, SKIPLEN(countof(itm.szShort)) L"&%c: ", sMenuHotkey[nCount]);
 						else
 							itm.szShort[0] = 0;
-						TODO("ќбработка '&' чтобы их было в меню видно");
-						itm.pszTaskBuf = lstrmerge(itm.szShort, pszLine);
+
+						// ќбработать возможные "&" в строке запуска, чтобы они в меню видны были
+						//itm.pszTaskBuf = lstrmerge(itm.szShort, pszLine);
+						INT_PTR cchItemMax = _tcslen(itm.szShort) + 2*_tcslen(pszLine) + 1;
+						itm.pszTaskBuf = (wchar_t*)malloc(cchItemMax*sizeof(*itm.pszTaskBuf));
+						_wcscpy_c(itm.pszTaskBuf, cchItemMax, itm.szShort);
+						CmdTaskPopupItem::SetMenuName(itm.pszTaskBuf, cchItemMax, pszLine, true);
 
 						InsertMenu(hMenu, -1, MF_BYPOSITION|MF_ENABLED|MF_STRING, itm.nCmd, itm.pszTaskBuf);
 						m_CmdTaskPopup.push_back(itm);

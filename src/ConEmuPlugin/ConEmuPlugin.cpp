@@ -82,8 +82,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
 
 //#define ConEmu_SysID 0x43454D55 // 'CEMU'
-#define SETWND_CALLPLUGIN_SENDTABS 100
-#define SETWND_CALLPLUGIN_BASE (SETWND_CALLPLUGIN_SENDTABS+1)
+enum CallPluginCmdId
+{
+	// Add new items - before first numbered item!
+	CE_CALLPLUGIN_UPDATEBG = 99,
+	CE_CALLPLUGIN_SENDTABS = 100,
+	SETWND_CALLPLUGIN_BASE /*= (CE_CALLPLUGIN_SENDTABS+1)*/
+	// Following number are reserved for "SetWnd(idx)" switching
+};
 #define CHECK_RESOURCES_INTERVAL 5000
 #define CHECK_FARINFO_INTERVAL 2000
 #define ATTACH_START_SERVER_TIMEOUT 10000
@@ -453,15 +459,24 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 				SetEvent(ghSetWndSendTabsEvent);
 				return hResult;
 			}
-			else if (Item == SETWND_CALLPLUGIN_SENDTABS)
+			else if (Item == CE_CALLPLUGIN_SENDTABS)
 			{
-				DEBUGSTRCMD(L"Plugin: SETWND_CALLPLUGIN_SENDTABS\n");
+				DEBUGSTRCMD(L"Plugin: CE_CALLPLUGIN_SENDTABS\n");
 				// Force Send tabs to ConEmu
 				//MSectionLock SC; SC.Lock(csTabs, TRUE);
 				//SendTabs(gnCurTabCount, TRUE);
 				//SC.Unlock();
 				UpdateConEmuTabs(0,false,false);
 				SetEvent(ghSetWndSendTabsEvent);
+				return hResult;
+			}
+			else if (Item == CE_CALLPLUGIN_UPDATEBG)
+			{
+				if (gpBgPlugin)
+				{
+					gpBgPlugin->SetForceUpdate(true);
+					gpBgPlugin->OnMainThreadActivated();
+				}
 				return hResult;
 			}
 		}
@@ -659,17 +674,17 @@ void OnMainThreadActivated()
 			if (gFarVersion.dwVerMajor == 2)
 			{
 				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"$if (Search) Esc $end $if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
-					  ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
+					  ConEmu_SysID, nTabShift, ConEmu_SysID, CE_CALLPLUGIN_SENDTABS);
 			}
 			else if (!gFarVersion.IsFarLua())
 			{
 				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"$if (Search) Esc $end $if (Shell||Viewer||Editor) callplugin(\"%s\",%i) $else callplugin(\"%s\",%i) $end",
-					  ConEmu_GuidS, nTabShift, ConEmu_GuidS, SETWND_CALLPLUGIN_SENDTABS);
+					  ConEmu_GuidS, nTabShift, ConEmu_GuidS, CE_CALLPLUGIN_SENDTABS);
 			}
 			else
 			{
 				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"if Area.Search then Keys(\"Esc\") end if Area.Shell or Area.Viewer or Area.Editor then Plugin.Call(\"%s\",%i) else Plugin.Call(\"%s\",%i) end",
-					  ConEmu_GuidS, nTabShift, ConEmu_GuidS, SETWND_CALLPLUGIN_SENDTABS);
+					  ConEmu_GuidS, nTabShift, ConEmu_GuidS, CE_CALLPLUGIN_SENDTABS);
 			}
 			gnReqCommand = -1;
 			gpReqCommandData = NULL;
@@ -819,7 +834,7 @@ void OnConsolePeekReadInput(BOOL abPeek)
 	//
 	//	// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
 	//	_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"$if (Search) Esc $end $if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
-	//		ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
+	//		ConEmu_SysID, nTabShift, ConEmu_SysID, CE_CALLPLUGIN_SENDTABS);
 	//
 	//	gnReqCommand = -1;
 	//	gpReqCommandData = NULL;
@@ -1512,7 +1527,7 @@ int WINAPI ProcessSynchroEventW(int Event,void *Param)
 //
 //					// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
 //					_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"$if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
-//						ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
+//						ConEmu_SysID, nTabShift, ConEmu_SysID, CE_CALLPLUGIN_SENDTABS);
 //
 //					gnReqCommand = -1;
 //					gpReqCommandData = NULL;
@@ -3648,6 +3663,30 @@ void CommonPluginStartup()
 	// Надо табы загрузить
 	UpdateConEmuTabs(0,false,false);
 
+
+	// Пробежаться по всем загруженным в данный момент плагинам и дернуть в них "OnConEmuLoaded"
+	// А все из за того, что при запуске "Far.exe /co" - порядок загрузки плагинов МЕНЯЕТСЯ
+	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
+	if (snapshot != INVALID_HANDLE_VALUE)
+	{
+		OnConEmuLoaded_t fnOnConEmuLoaded;
+		MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
+
+		for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
+		{
+			OnConEmuLoaded_t ;
+
+			if (((fnOnConEmuLoaded = (OnConEmuLoaded_t)GetProcAddress(module.hModule, "OnConEmuLoaded")) != NULL)
+				&& /* Наверное, только для плагинов фара */
+				((GetProcAddress(module.hModule, "SetStartupInfoW") || GetProcAddress(module.hModule, "SetStartupInfo"))))
+			{
+				OnLibraryLoaded(module.hModule);
+			}
+		}
+
+		CloseHandle(snapshot);
+	}
+
 	
 	//if (gpConMapInfo)  //2010-03-04 Имеет смысл только при запуске из-под ConEmu
 	//{
@@ -4651,7 +4690,7 @@ void NotifyConEmuUnloaded()
 	{
 		MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
 
-		for(BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
+		for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
 		{
 			if ((fnOnConEmuLoaded = (OnConEmuLoaded_t)GetProcAddress(module.hModule, "OnConEmuLoaded")) != NULL)
 			{

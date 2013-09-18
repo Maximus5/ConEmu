@@ -73,10 +73,11 @@ _DBGHLP(L"     /DOSBOX -> use DosBox\r\n") \
         L"     f - force starting console active, useful when starting several consoles simultaneously\r\n" \
         L"     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\r\n" \
         L"     i - don't inject ConEmuHk into starting process\r\n" \
-        L"     I - (GuiMacro only) forces inheriting of root process contents, like \"Duplicate root\" feature\r\n" \
+        L"     I - (GuiMacro only) forces inheriting of root process contents, like \"Duplicate root\"\r\n" \
 _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
         L"     n - disable 'Press Enter or Esc to close console'\r\n" \
         L"     o - don't enable 'Long console output' when starting command from Far Manager\r\n" \
+        L"     P - see below\r\n" \
         L"     r - run as restricted user\r\n" \
         L"     s[<SplitTab>T][<Percents>](H|V)\r\n" \
         L"     t - see below\r\n" \
@@ -89,6 +90,8 @@ _DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r
 		L"       - specify icon used in tab, MUST BE LAST or single OPTION\r\n" \
 		L"  Switch: \"-new_console:d:dir\"\r\n" \
 		L"       - specify working directory, MUST BE LAST or single OPTION\r\n" \
+		L"  Switch: \"-new_console:P:palettename\"\r\n" \
+		L"       - set fixed palette for tab, MUST BE LAST or single OPTION\r\n" \
 		L"  Switch: \"-new_console:t:tabname\"\r\n" \
 		L"       - rename new created tab, MUST BE LAST or single OPTION\r\n" \
 		L"  Switch: \"-new_console:u:user:pwd\"\r\n" \

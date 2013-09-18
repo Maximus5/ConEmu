@@ -875,7 +875,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	{
 		if (!InitDefaultTerm())
 		{
-
+			TODO("Show error message?");
 		}
 	}
 

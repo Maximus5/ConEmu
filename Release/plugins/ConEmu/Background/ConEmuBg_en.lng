@@ -4,5 +4,6 @@
 "ConEmu Background"
 "&Enable plugin"
 "&Settings file path (Background.xml)"
+"&Monitor xml-file changes"
 "OK"
 "Cancel"
