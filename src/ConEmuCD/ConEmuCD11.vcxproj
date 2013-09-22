@@ -802,6 +802,7 @@
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\MArray.h" />
     <ClInclude Include="..\common\MMap.h" />
+    <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="ConEmuC.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConsoleRead.h" />

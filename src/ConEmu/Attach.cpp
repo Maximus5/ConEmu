@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Inside.h"
 #include "OptionsClass.h"
 #include "VConGroup.h"
+#include "../common/Monitors.h"
 #include "../common/WinObjects.h"
 #include "../common/ProcList.h"
 #include "../ConEmuCD/ExitCodes.h"
@@ -245,6 +246,8 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 {
 	if (IsWindowVisible(hFind))
 	{
+		CAttachDlg* pDlg = (CAttachDlg*)lParam;
+
 		// Условия?
 		DWORD_PTR nStyle = GetWindowLongPtr(hFind, GWL_STYLE);
 		DWORD_PTR nStyleEx = GetWindowLongPtr(hFind, GWL_EXSTYLE);
@@ -259,6 +262,8 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			lbCan = ((nStyle & WS_MAXIMIZEBOX) == WS_MAXIMIZEBOX) || ((nStyle & WS_THICKFRAME) == WS_THICKFRAME);
 		}
 		if (lbCan && nPID == GetCurrentProcessId())
+			lbCan = false;
+		if (lbCan && nPID == pDlg->mn_ExplorerPID)
 			lbCan = false;
 		if (lbCan && (nStyle & WS_CHILD))
 			lbCan = false;
@@ -290,7 +295,6 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 				return TRUE;
 			#endif
 
-			CAttachDlg* pDlg = (CAttachDlg*)lParam;
 			HWND hList = pDlg->mh_List;
 			if (nPID)
 			{
@@ -412,6 +416,39 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 	return TRUE; // Продолжить
 }
 
+RECT CAttachDlg::CenterInParent(RECT rcDlg, HWND hParent)
+{
+	RECT rcParent; GetWindowRect(ghWnd, &rcParent);
+
+	int nWidth  = (rcDlg.right - rcDlg.left);
+	int nHeight = (rcDlg.bottom - rcDlg.top);
+
+	MONITORINFO mi = {sizeof(mi)};
+	GetNearestMonitorInfo(&mi, NULL, &rcParent);
+
+	RECT rcCenter = {
+		max(mi.rcWork.left,(rcParent.left+rcParent.right-rcDlg.right+rcDlg.left)/2),
+		max(mi.rcWork.top,(rcParent.top+rcParent.bottom-rcDlg.bottom+rcDlg.top)/2)
+	};
+
+	if (((rcCenter.left + nWidth) > mi.rcWork.right)
+		&& (rcCenter.left > mi.rcWork.left))
+	{
+		rcCenter.left = max(mi.rcWork.left, (mi.rcWork.right - nWidth));
+	}
+
+	if (((rcCenter.top + nWidth) > mi.rcWork.bottom)
+		&& (rcCenter.top > mi.rcWork.top))
+	{
+		rcCenter.top = max(mi.rcWork.top, (mi.rcWork.bottom - nHeight));
+	}
+
+	rcCenter.right = rcCenter.left + nWidth;
+	rcCenter.bottom = rcCenter.top + nHeight;
+
+	return rcCenter;
+}
+
 INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	CAttachDlg* pDlg = NULL;
@@ -479,6 +516,12 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 			CVConGroup::LogString(L"CAttachDlg::AttachDlgEnumWin::Begin", TRUE);
 
+			HWND hTaskBar = FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL);
+			if (hTaskBar)
+				GetWindowThreadProcessId(hTaskBar, &pDlg->mn_ExplorerPID);
+			else
+				pDlg->mn_ExplorerPID = 0;
+
 			EnumWindows(AttachDlgEnumWin, (LPARAM)pDlg);
 
 			CVConGroup::LogString(L"CAttachDlg::AttachDlgEnumWin::End", TRUE);
@@ -488,13 +531,9 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 			AttachDlgProc(hDlg, WM_SIZE, 0, 0);
 
-			RECT rect;
-			GetWindowRect(hDlg, &rect);
-			RECT rcParent;
-			GetWindowRect(ghWnd, &rcParent);
-			MoveWindow(hDlg,
-			           (rcParent.left+rcParent.right-rect.right+rect.left)/2,
-			           (rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2,
+			RECT rect; GetWindowRect(hDlg, &rect);
+			RECT rcCenter = CenterInParent(rect, ghWnd);
+			MoveWindow(hDlg, rcCenter.left, rcCenter.top,
 			           rect.right - rect.left, rect.bottom - rect.top, false);
 			
 			ShowWindow(hDlg, SW_SHOWNORMAL);

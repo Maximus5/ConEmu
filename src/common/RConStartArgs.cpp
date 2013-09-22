@@ -352,7 +352,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	{
 		if (p->pVal && *p->pVal)
 		{
-			bool bQuot = wcschr(p->pVal, L' ') != NULL;
+			bool bQuot = wcspbrk(p->pVal, L" \"") != NULL;
 
 			if (bQuot)
 				msprintf(szCat, countof(szCat), bNewConsole ? L" \"-new_console:%c:" : L" \"-cur_console:%c:", p->cOpt);
@@ -367,8 +367,8 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 				const wchar_t* pS = p->pVal;
 				while (*pS)
 				{
-					if (wcschr(L"<>&|^\"", *pS))
-						*(pD++) = L'^';
+					if (wcschr(L"<>()&|^\"", *pS))
+						*(pD++) = (*pS == L'"') ? L'"' : L'^';
 					*(pD++) = *(pS++);
 				}
 				_ASSERTE(pD < (pszFull+cchMaxLen));
@@ -776,6 +776,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 									{
 										if ((*pS == L'^') && ((pS + 1) < pszEnd))
 											pS++; // Skip control char, goto escaped char
+										else if ((*pS == L'"') && ((pS + 1) < pszEnd) && (*(pS+1) == L'"'))
+											pS++; // Skip qoubled qouble quote
 
 										*(pD++) = *(pS++);
 									}

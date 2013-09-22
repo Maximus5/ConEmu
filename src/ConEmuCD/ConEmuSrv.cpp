@@ -513,20 +513,25 @@ int ServerInitConsoleSize()
 		{
 			gpSrv->crReqSizeNewSize = lsbi.dwSize;
 			_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
-			gcrVisibleSize.X = lsbi.dwSize.X;
 
-			if (lsbi.dwSize.Y > lsbi.dwMaximumWindowSize.Y)
-			{
-				// Буферный режим
-				gcrVisibleSize.Y = (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1);
-				gnBufferHeight = lsbi.dwSize.Y;
-			}
-			else
-			{
-				// Режим без прокрутки!
-				gcrVisibleSize.Y = lsbi.dwSize.Y;
-				gnBufferHeight = 0;
-			}
+			gcrVisibleSize.X = lsbi.srWindow.Right - lsbi.srWindow.Left + 1;
+			gcrVisibleSize.Y = lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1;
+			gnBufferHeight = (lsbi.dwSize.Y == gcrVisibleSize.Y) ? 0 : lsbi.dwSize.Y;
+			gnBufferWidth = (lsbi.dwSize.X == gcrVisibleSize.X) ? 0 : lsbi.dwSize.X;
+
+			//gcrVisibleSize.X = lsbi.dwSize.X;
+			//if (lsbi.dwSize.Y > lsbi.dwMaximumWindowSize.Y)
+			//{
+			//	// Буферный режим
+			//	gcrVisibleSize.Y = (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1);
+			//	gnBufferHeight = lsbi.dwSize.Y;
+			//}
+			//else
+			//{
+			//	// Режим без прокрутки!
+			//	gcrVisibleSize.Y = lsbi.dwSize.Y;
+			//	gnBufferHeight = 0;
+			//}
 		}
 	}
 
@@ -1167,7 +1172,8 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	//gpSrv->pConsole->hdr.bConsoleActive = TRUE;
 	//gpSrv->pConsole->hdr.bThawRefreshThread = TRUE;
 
-	// Если указаны параметры (gbParmBufferSize && gcrVisibleSize.X && gcrVisibleSize.Y) - установить размер
+	// Если указаны параметры ((gbParmVisibleSize || gbParmBufSize) && gcrVisibleSize.X && gcrVisibleSize.Y)
+	//       - установить размер
 	// Иначе - получить текущие размеры из консольного окна
 	//DumpInitStatus("\nServerInit: ServerInitConsoleSize");
 	ServerInitConsoleSize();
@@ -3434,6 +3440,7 @@ static int ReadConsoleInfo()
 		DWORD nCurScroll = (gnBufferHeight ? rbs_Vert : 0) | (gnBufferWidth ? rbs_Horz : 0);
 		DWORD nNewScroll = 0;
 		int TextWidth = 0, TextHeight = 0;
+		short nMaxWidth = -1, nMaxHeight = -1;
 		BOOL bSuccess = ::GetConWindowSize(lsbi, gcrVisibleSize.X, gcrVisibleSize.Y, nCurScroll, &TextWidth, &TextHeight, &nNewScroll);
 
 		// Скорректировать "видимый" буфер. Видимым считаем то, что показывается в ConEmu
@@ -3443,13 +3450,15 @@ static int ReadConsoleInfo()
 			if (!(nNewScroll & rbs_Horz))
 			{
 				lsbi.srWindow.Left = 0;
-				lsbi.srWindow.Right = lsbi.dwSize.X-1;
+				nMaxWidth = max(gpSrv->pConsole->hdr.crMaxConSize.X,(lsbi.srWindow.Right-lsbi.srWindow.Left+1));
+				lsbi.srWindow.Right = min(nMaxWidth,lsbi.dwSize.X-1);
 			}
 
 			if (!(nNewScroll & rbs_Vert))
 			{
 				lsbi.srWindow.Top = 0;
-				lsbi.srWindow.Bottom = lsbi.dwSize.Y-1;
+				nMaxHeight = max(gpSrv->pConsole->hdr.crMaxConSize.Y,(lsbi.srWindow.Bottom-lsbi.srWindow.Top+1));
+				lsbi.srWindow.Bottom = min(nMaxHeight,lsbi.dwSize.Y-1);
 			}
 		}
 
@@ -3470,11 +3479,21 @@ static int ReadConsoleInfo()
 			// Консольное приложение могло изменить размер буфера
 			if (!NTVDMACTIVE)  // НЕ при запущенном 16битном приложении - там мы все жестко фиксируем, иначе съезжает размер при закрытии 16бит
 			{
+				// ширина
+				if ((lsbi.srWindow.Left == 0  // или окно соответсвует полному буферу
+				        && lsbi.dwSize.X == (lsbi.srWindow.Right - lsbi.srWindow.Left + 1)))
+				{
+					// Это значит, что прокрутки нет, и консольное приложение изменило размер буфера
+					gnBufferWidth = 0;
+					gcrVisibleSize.X = lsbi.dwSize.X;
+				}
+				// высота
 				if ((lsbi.srWindow.Top == 0  // или окно соответсвует полному буферу
 				        && lsbi.dwSize.Y == (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1)))
 				{
 					// Это значит, что прокрутки нет, и консольное приложение изменило размер буфера
-					gnBufferHeight = 0; gcrVisibleSize = lsbi.dwSize;
+					gnBufferHeight = 0;
+					gcrVisibleSize.Y = lsbi.dwSize.Y;
 				}
 
 				if (lsbi.dwSize.X != gpSrv->sbi.dwSize.X
@@ -3619,11 +3638,20 @@ static BOOL ReadConsoleData()
 	DWORD nCurScroll = (gnBufferHeight ? rbs_Vert : 0) | (gnBufferWidth ? rbs_Horz : 0);
 	DWORD nNewScroll = 0;
 	int TextWidth = 0, TextHeight = 0;
+	short nMaxWidth = -1, nMaxHeight = -1;
+	char sFailedInfo[128];
 	BOOL bSuccess = ::GetConWindowSize(gpSrv->sbi, gcrVisibleSize.X, gcrVisibleSize.Y, nCurScroll, &TextWidth, &TextHeight, &nNewScroll);
 	UNREFERENCED_PARAMETER(bSuccess);
 	//TextWidth  = gpSrv->sbi.dwSize.X;
 	//TextHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
 	TextLen = TextWidth * TextHeight;
+
+	if (!gpSrv->pConsole)
+	{
+		_ASSERTE(gpSrv->pConsole!=NULL);
+		LogString("gpSrv->pConsole == NULL");
+		goto wrap;
+	}
 
 	//rgn = gpSrv->sbi.srWindow;
 	if (nNewScroll & rbs_Horz)
@@ -3634,7 +3662,8 @@ static BOOL ReadConsoleData()
 	else
 	{
 		rgn.Left = 0;
-		rgn.Right = gpSrv->sbi.dwSize.X-1;
+		nMaxWidth = max(gpSrv->pConsole->hdr.crMaxConSize.X,(gpSrv->sbi.srWindow.Right-gpSrv->sbi.srWindow.Left+1));
+		rgn.Right = min(nMaxWidth,(gpSrv->sbi.dwSize.X-1));
 	}
 
 	if (nNewScroll & rbs_Vert)
@@ -3645,7 +3674,8 @@ static BOOL ReadConsoleData()
 	else
 	{
 		rgn.Top = 0;
-		rgn.Bottom = gpSrv->sbi.dwSize.Y-1;
+		nMaxHeight = max(gpSrv->pConsole->hdr.crMaxConSize.Y,(gpSrv->sbi.srWindow.Bottom-gpSrv->sbi.srWindow.Top+1));
+		rgn.Bottom = min(nMaxHeight,(gpSrv->sbi.dwSize.Y-1));
 	}
 	
 
@@ -3658,17 +3688,22 @@ static BOOL ReadConsoleData()
 	nCurSize = TextLen * sizeof(CHAR_INFO);
 	nHdrSize = sizeof(CESERVER_REQ_CONINFO_FULL)-sizeof(CHAR_INFO);
 
-	if (!gpSrv->pConsole || gpSrv->pConsole->cbMaxSize < (nCurSize+nHdrSize))
+	if (gpSrv->pConsole->cbMaxSize < (nCurSize+nHdrSize))
 	{
 		_ASSERTE(gpSrv->pConsole && gpSrv->pConsole->cbMaxSize >= (nCurSize+nHdrSize));
-		TextHeight = (gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y) / TextWidth;
 
-		if (!TextHeight)
+		_wsprintfA(sFailedInfo, SKIPLEN(countof(sFailedInfo)) "ReadConsoleData FAIL: MaxSize(%u) < CurSize(%u), TextSize(%ux%u)", gpSrv->pConsole->cbMaxSize, (nCurSize+nHdrSize), TextWidth, TextHeight);
+		LogString(sFailedInfo);
+
+		TextHeight = (gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y - (TextWidth-1)) / TextWidth;
+
+		if (TextHeight <= 0)
 		{
-			_ASSERTE(TextHeight);
+			_ASSERTE(TextHeight > 0);
 			goto wrap;
 		}
 
+		rgn.Bottom = min(rgn.Bottom,(rgn.Top+TextHeight-1));
 		TextLen = TextWidth * TextHeight;
 		nCurSize = TextLen * sizeof(CHAR_INFO);
 		// Если MapFile еще не создавался, или был увеличен размер консоли
@@ -3746,6 +3781,7 @@ static BOOL ReadConsoleData()
 wrap:
 	//if (lbChanged)
 	//	gpSrv->pConsole->bDataChanged = TRUE;
+	UNREFERENCED_PARAMETER(nMaxWidth); UNREFERENCED_PARAMETER(nMaxHeight);
 	return lbChanged;
 }
 

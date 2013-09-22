@@ -15,6 +15,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.09.21
+[%] Issue 1242: DPI aware dialogs and font inconsistency.
+[%] App distinct palette settings was ignored when starting GuiMacro: shell("new_console:In","powershell").
+[%] Crash in ConEmuC when attaching wide buffer consoles.
+[*] Some improvements on Default Terminal feature (to be continued).
+
+
 2013.09.18
 [%] Issue 1239: Regression: commands with redirection fails in Far Manager.
 [%] Issue 1137: Don't warn about Ctrl+Tab duplicate if internal Ctrl+Tab processing is disabled.

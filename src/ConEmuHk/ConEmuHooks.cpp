@@ -591,7 +591,7 @@ bool InitHooksDefaultTrm()
 		{0}
 	};
 
-	if (!(gpStartEnv->os.dwMajorVersion == 6 && gpStartEnv->os.dwMinorVersion <= 1))
+	if (!(gpStartEnv->os.dwMajorVersion == 6 && gpStartEnv->os.dwMinorVersion <= 2))
 	{
 		size_t nCmdLineIdx = countof(HooksCommon)-2;
 		_ASSERTEX(HooksCommon[nCmdLineIdx].NameOrdinal == 265);

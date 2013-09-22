@@ -7672,6 +7672,7 @@ void CConEmuMain::PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg)
 {
 #ifdef _DEBUG
 	CVConGuard VCon(apRCon->VCon());
+	_ASSERTE(FALSE && "Strange 'ConEmuCInput not found' error");
 	SendMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, (LPARAM)pszErrMsg);
 #else
 	PostMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, (LPARAM)pszErrMsg);

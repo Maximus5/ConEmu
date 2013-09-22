@@ -2890,6 +2890,11 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 		_ASSERTE(pStartStop->sCmdLine[0]!=0);
 		pArgs->pszSpecialCmd = lstrdup(pStartStop->sCmdLine);
 
+		if (gpConEmu->isIconic())
+		{
+			gpConEmu->OnMinimizeRestore(sih_SetForeground);
+		}
+
 		// т.к. это приходит из серверного потока - зовем в главном
 		VCon = (CVirtualConsole*)SendMessage(ghWnd, gpConEmu->mn_MsgCreateCon, gpConEmu->mn_MsgCreateCon, (LPARAM)pArgs);
 		if (VCon.VCon() && !isValid(VCon.VCon()))

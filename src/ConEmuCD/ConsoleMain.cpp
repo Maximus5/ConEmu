@@ -8394,8 +8394,9 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	// Делаем это ПОСЛЕ MyGetConsoleScreenBufferInfo, т.к. некоторые коррекции размера окна
 	// она делает ориентируясь на gnBufferHeight
 	gnBufferHeight = BufferHeight;
+	// Размер видимой области (слишком большой?)
+	_ASSERTE(crNewSize.X<=500 && crNewSize.Y<=300);
 	gcrVisibleSize = crNewSize;
-	_ASSERTE(gcrVisibleSize.Y<200);
 	
 	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
 		UpdateConsoleMapHeader(); // Обновить pConsoleMap.crLockedVisible

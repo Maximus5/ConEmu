@@ -355,7 +355,8 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			//CESERVER_REQ* pOut = ExecuteNewCmd(CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOPRET));
 
 			gpConEmu->AttachRequested(pIn->StartStop.hWnd, &(pIn->StartStop), &(ppReply->StartStopRet));
-			_ASSERTE((ppReply->StartStopRet.nBufferHeight == 0) || ((int)ppReply->StartStopRet.nBufferHeight > pIn->StartStop.sbi.dwSize.X));
+
+			_ASSERTE((ppReply->StartStopRet.nBufferHeight == 0) || ((int)ppReply->StartStopRet.nBufferHeight > (pIn->StartStop.sbi.srWindow.Bottom-pIn->StartStop.sbi.srWindow.Top)));
 
 			lbRc = TRUE;
 			//ExecuteFreeResult(pOut);

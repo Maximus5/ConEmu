@@ -946,7 +946,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	// Передернуть нить MonitorThread
 	SetMonitorThreadEvent();
 
-	_ASSERTE((pRet->nBufferHeight == 0) || ((int)pRet->nBufferHeight > rStartStop->sbi.dwSize.X));
+	_ASSERTE((pRet->nBufferHeight == 0) || ((int)pRet->nBufferHeight > (rStartStop->sbi.srWindow.Bottom-rStartStop->sbi.srWindow.Top)));
 
 	return TRUE;
 }
@@ -2640,9 +2640,13 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 
 	// User choose special palette for this console?
 	const Settings::ColorPalette* pPal = NULL;
-	if (m_Args.pszPalette && *m_Args.pszPalette)
+	_ASSERTE(countof(pApp->szPaletteName)>0); // must be array, not pointer
+	LPCWSTR pszPalette = (m_Args.pszPalette && *m_Args.pszPalette) ? m_Args.pszPalette
+		: (pApp->OverridePalette && *pApp->szPaletteName) ? pApp->szPaletteName
+		: NULL;
+	if (pszPalette && pszPalette)
 	{
-		int iPalIdx = gpSet->PaletteGetIndex(m_Args.pszPalette);
+		int iPalIdx = gpSet->PaletteGetIndex(pszPalette);
 		if (iPalIdx >= 0)
 		{
 			pPal = gpSet->PaletteGet(iPalIdx);

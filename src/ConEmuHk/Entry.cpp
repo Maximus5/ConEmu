@@ -380,7 +380,11 @@ wrap:
 	if (abForceRecreate || (bLastAnsi != bAnsi))
 	{
 		// Это может случиться при запуске нового "чистого" cmd - "start cmd" из ConEmu\cmd
-		_ASSERTEX(bAnsi && "ANSI was disabled?");
+		#ifdef _DEBUG
+		wchar_t szCurAnsiVar[32] = L""; GetEnvironmentVariableW(ENV_CONEMUANSI_VAR_W, szCurAnsiVar, countof(szCurAnsiVar));
+		// Или при аттаче свободно-запущенной-ранее консоли в ConEmu
+		_ASSERTEX((bAnsi || !*szCurAnsiVar) && "ANSI was disabled?");
+		#endif
 		bLastAnsi = bAnsi;
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");
 	}
@@ -1841,7 +1845,20 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 		Duplicate->nColors, Duplicate->nWidth, Duplicate->nHeight, Duplicate->nBufferHeight,
 		pszCmdLine);
 
-	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.dwFlags |= STARTF_USESHOWWINDOW;
+	si.wShowWindow = user->isWindowVisible(ghConWnd) ? SW_SHOWNORMAL : SW_HIDE;
+
+	if (Duplicate->nColors)
+	{
+		DWORD nTextColorIdx = (Duplicate->nColors & 0xFF);
+		DWORD nBackColorIdx = (Duplicate->nColors & 0xFF00) >> 8;
+		if (nTextColorIdx <= 15 && nBackColorIdx <= 15)
+		{
+			si.dwFlags |= STARTF_USEFILLATTRIBUTE;
+			si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
+		}
+	}
+
 
 	if (!CreateProcess(NULL, pszCmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi))
 	{
@@ -2012,6 +2029,13 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 					_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /GID=%u /GHWND=%08X /ATTACH /PID=%u",
 						pCmd->NewServer.nGuiPID, (DWORD)pCmd->NewServer.hGuiWnd, GetCurrentProcessId());
 				}
+
+				if (user->isWindowVisible(ghConWnd))
+				{
+					si.dwFlags |= STARTF_USESHOWWINDOW;
+					si.wShowWindow = SW_SHOWNORMAL;
+				}
+
 				lbRc = CreateProcess(szSelf, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 				if (lbRc)
 				{

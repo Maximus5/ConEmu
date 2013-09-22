@@ -56,9 +56,11 @@ protected:
 	// Данные о запущенных процессах в системе
 	CProcessData *mp_ProcessData;
 	BOOL  mb_IsWin64;
+	DWORD mn_ExplorerPID;
 protected:
 	bool OnStartAttach();
 	static bool StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType, BOOL abAltMode);
+	static RECT CenterInParent(RECT rcDlg, HWND hParent);
 public:
 	static DWORD WINAPI StartAttachThread(AttachParm* lpParam);
 public:

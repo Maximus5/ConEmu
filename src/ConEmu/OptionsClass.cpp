@@ -393,6 +393,8 @@ CSettings::CSettings()
 	//mn_FadeMul = gpSet->mn_FadeHigh - gpSet->mn_FadeLow;
 	//gpSet->mn_LastFadeSrc = gpSet->mn_LastFadeDst = -1;
 
+	UpdateDpi();
+
 	try
 	{
 		GetStartupInfoW(&ourSI);
@@ -435,6 +437,20 @@ CSettings::CSettings()
 
 	// ¬кладки-диалоги
 	InitVars_Pages();
+}
+
+int CSettings::UpdateDpi()
+{
+	_dpiY = 96;
+	HDC hdc = GetDC(NULL);
+	if (hdc)
+	{
+		_dpiY = GetDeviceCaps(hdc, LOGPIXELSY);
+		ReleaseDC(NULL, hdc);
+		if (_dpiY < 96)
+			_dpiY = 96;
+	}
+	return _dpiY;
 }
 
 void CSettings::InitVars_Hotkeys()
@@ -8664,7 +8680,8 @@ INT_PTR CSettings::OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 		|| wID == tTabFontFace || wID == tStatusFontFace)
 	{
 		MEASUREITEMSTRUCT *pItem = (MEASUREITEMSTRUCT*)lParam;
-		pItem->itemHeight = 15; //pItem->itemHeight;
+		_ASSERTE(_dpiY >= 96);
+		pItem->itemHeight = 15 * _dpiY / 96;
 	}
 
 	return TRUE;
@@ -8701,9 +8718,9 @@ INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 		FillRect(pItem->hDC, &rc, hBr);
 		DeleteObject(hBr);
 		rc.left++;
-		HFONT hFont = CreateFont(8, 0,0,0,(bAlmostMonospace==1)?FW_BOLD:FW_NORMAL,0,0,0,
+		HFONT hFont = CreateFont(-8*_dpiY/72, 0,0,0,(bAlmostMonospace==1)?FW_BOLD:FW_NORMAL,0,0,0,
 		                         ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH,
-		                         L"MS Sans Serif");
+		                         L"MS Shell Dlg");
 		HFONT hOldF = (HFONT)SelectObject(pItem->hDC, hFont);
 		DrawText(pItem->hDC, szText, _tcslen(szText), &rc, DT_LEFT|DT_VCENTER|DT_NOPREFIX);
 		SelectObject(pItem->hDC, hOldF);

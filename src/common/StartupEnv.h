@@ -159,6 +159,10 @@ CEStartupEnv* LoadStartupEnv()
 	if (pEnv)
 	{
 		pEnv->cbSize = cchTotal;
+
+		pEnv->OsBits = IsWindows64() ? 64 : 32;
+		pEnv->hConWnd = GetConsoleWindow();
+
 		pEnv->si = si;
 		pEnv->os = os;
 
