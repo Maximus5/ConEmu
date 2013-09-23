@@ -1028,6 +1028,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 			}
 			else
 			{
+				if (*(pszNewCon-1) == L'"') pszNewCon--; // For future use. Some "-new_console:t:..." args may be quoted
 				// sDefaultTermArg contains something like this:
 				// "/config CfgName -new_console:c"
 				lstrcpyn((*psParam)+lstrlen(*psParam), m_GuiMapping.sDefaultTermArg, (DWORD)(DWORD_PTR)(pszNewCon - m_GuiMapping.sDefaultTermArg + 1));

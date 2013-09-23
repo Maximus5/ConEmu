@@ -1577,7 +1577,7 @@ LRESULT TabBarClass::OnNotify(LPNMHDR nmhdr)
 			OnChooseTabPopup();
 			break;
 		case TID_CREATE_CON:
-			gpConEmu->mp_Menu->OnNewConPopupMenu();
+			gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, isPressed(VK_SHIFT));
 			break;
 		}
 		return TBDDRET_DEFAULT;
@@ -1652,7 +1652,7 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	else if (wParam == TID_CREATE_CON)
 	{
 		if (gpConEmu->IsGesturesEnabled())
-			gpConEmu->mp_Menu->OnNewConPopupMenu();
+			gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, isPressed(VK_SHIFT));
 		else
 			gpConEmu->RecreateAction(gpSet->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 	}

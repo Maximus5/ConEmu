@@ -118,8 +118,12 @@ OSVERSIONINFO gOSVer = {};
 WORD gnOsVer = 0x500;
 bool gbIsWine = false;
 bool gbIsDBCS = false;
+// Drawing console font face name (default)
 wchar_t gsDefGuiFont[32] = L"Lucida Console"; // gbIsWine ? L"Liberation Mono" : L"Lucida Console"
+// Set this font (default) in real console window to enable unicode support
 wchar_t gsDefConFont[32] = L"Lucida Console"; // DBCS ? L"Liberation Mono" : L"Lucida Console"
+// Use this (default) in ConEmu interface, where allowed (tabs, status, panel views, ...)
+wchar_t gsDefMUIFont[32] = L"Tahoma";         // WindowsVista ? L"Segoe UI" : L"Tahoma"
 
 
 #ifdef MSGLOGGER
@@ -2779,7 +2783,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	gbIsWine = IsWine(); // В общем случае, на флажок ориентироваться нельзя. Это для информации.
 	if (gbIsWine)
+	{
 		wcscpy_c(gsDefGuiFont, L"Liberation Mono");
+	}
+	else if (IsWindowsVista)
+	{
+		// Vista+ and ClearType? May be "Consolas" font need to be default in Console.
+		BOOL bClearType = FALSE;
+		if (SystemParametersInfo(SPI_GETCLEARTYPE, 0, &bClearType, 0) && bClearType)
+		{
+			wcscpy_c(gsDefGuiFont, L"Consolas");
+		}
+		// Default UI?
+		wcscpy_c(gsDefMUIFont, L"Segoe UI");
+	}
+
 
 	gbIsDBCS = IsDbcs();
 	if (gbIsDBCS)

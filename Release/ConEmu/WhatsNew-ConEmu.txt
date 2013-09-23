@@ -15,6 +15,18 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.09.23
+[*] Issue 1234: Tasks menu changes (Win+N, button [+])
+    * by default - does not expand to submenus, RClick on task - show submenu with task commands;
+    * Shift+Click on [+] arrow - creates submenus for tasks, RClick on task - run all task commands;
+    * also, user may set new hotkey for «Show create new console popup menu with task submenus».
+[%] Issue 1238: Running particular command from task submenus - was ignored «/dir ...» switch.
+[*] Vista and higher: Default console font - «Consolas» (if ClearType is enabled in system).
+[*] Vista and higher: Default tab and status bars font - «Segoe UI».
+[*] Default(!) font height (console, tab and status bars) takes into account monitor DPI (e.g. 150%).
+[%] Issue 1240: Window size wasn't saved on exit (sizing by grip in status bar).
+
+
 2013.09.21
 [%] Issue 1242: DPI aware dialogs and font inconsistency.
 [%] App distinct palette settings was ignored when starting GuiMacro: shell("new_console:In","powershell").

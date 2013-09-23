@@ -455,7 +455,15 @@ bool CConEmuCtrl::key_MultiNewPopupMenu(DWORD VkMod, bool TestOnly, const ConEmu
 	if (TestOnly)
 		return true;
 	// Создать новую консоль
-	gpConEmu->mp_Menu->OnNewConPopupMenu();
+	gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, false);
+	return true;
+}
+bool CConEmuCtrl::key_MultiNewPopupMenu2(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+	// Создать новую консоль
+	gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, true);
 	return true;
 }
 

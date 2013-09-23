@@ -3895,7 +3895,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 // т.е. если по горизонтали есть 2 консоли, и прос€т размер 80x25
 // то эти две консоли должны стать 40x25 а GUI отресайзитьс€ под 80x25
 // ¬ принципе, эту функцию можно было бы и в CConEmu оставить, но дл€ общности путь здесь будет
-void CVConGroup::SetAllConsoleWindowsSize(COORD size, bool bSetRedraw /*= false*/)
+void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN or CER_MAINCLIENT*/, COORD size, bool bSetRedraw /*= false*/)
 {
 	CVConGuard VCon(gp_VActive);
 	CVConGroup* pRoot = GetRootOfVCon(VCon.VCon());
@@ -3938,7 +3938,7 @@ void CVConGroup::SetAllConsoleWindowsSize(COORD size, bool bSetRedraw /*= false*
 	}
 
 	// ƒл€ разбиени€ имеет смысл использовать текущий размер окна в пиксел€х
-	RECT rcWorkspace = gpConEmu->CalcRect(CER_WORKSPACE);
+	RECT rcWorkspace = gpConEmu->CalcRect(CER_WORKSPACE, rcWnd, tFrom);
 
 	// Go (size real consoles)
 	pRoot->SetConsoleSizes(size, rcWorkspace, bSetRedraw/*as Sync*/);
@@ -3958,7 +3958,7 @@ void CVConGroup::SyncAllConsoles2Window(RECT rcWnd, enum ConEmuRect tFrom /*= CE
 	CVConGuard VCon(gp_VActive);
 	RECT rcAllCon = gpConEmu->CalcRect(CER_CONSOLE_ALL, rcWnd, tFrom, VCon.VCon());
 	COORD crNewAllSize = {rcAllCon.right,rcAllCon.bottom};
-	SetAllConsoleWindowsSize(crNewAllSize, bSetRedraw);
+	SetAllConsoleWindowsSize(rcWnd, tFrom, crNewAllSize, bSetRedraw);
 }
 
 void CVConGroup::LockSyncConsoleToWindow(bool abLockSync)
@@ -4211,7 +4211,7 @@ bool CVConGroup::PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*
 	COORD size = {rcCon.right, rcCon.bottom};
 	if (isVConExists(0))
 	{
-		SetAllConsoleWindowsSize(size, bSetRedraw);
+		SetAllConsoleWindowsSize(rcWnd, tFrom, size, bSetRedraw);
 	}
 
 	//if (bSetRedraw /*&& gp_VActive*/)

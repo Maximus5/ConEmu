@@ -38,7 +38,7 @@ public:
 	~CConEmuMenu();
 
 public:
-	void OnNewConPopupMenu(POINT* ptWhere = NULL, DWORD nFlags = 0);
+	void OnNewConPopupMenu(POINT* ptWhere = NULL, DWORD nFlags = 0, bool bShowTaskItems = false);
 
 	LRESULT OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam);
 	bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags);
@@ -110,24 +110,22 @@ private:
 	{
 		enum CmdTaskPopupItemType { eNone, eTaskPopup, eTaskAll, eTaskCmd, eMore, eCmd, eNewDlg, eSetupTasks, eClearHistory } ItemType;
 		int nCmd;
-		//int iFromGrpNo;
-		union
-		{
-			const void/*Settings::CommandTasks*/* pGrp;
-			LPCWSTR pszCmd;
-		};
+		const void/*Settings::CommandTasks*/* pGrp;
+		LPCWSTR pszCmd;
 		wchar_t szShort[32];
 		HMENU hPopup;
 		wchar_t* pszTaskBuf;
 		BOOL bPopupInitialized;
 
 		void Reset(CmdTaskPopupItemType newItemType, int newCmdId, LPCWSTR asName = NULL);
-		void SetShortName(LPCWSTR asName);
-		static void SetMenuName(wchar_t* pszDisplay, INT_PTR cchDisplayMax, LPCWSTR asName, bool bTrailingPeriod);
+		void SetShortName(LPCWSTR asName, bool bRightQuote = false);
+		static void SetMenuName(wchar_t* pszDisplay, INT_PTR cchDisplayMax, LPCWSTR asName, bool bTrailingPeriod, bool bRightQuote = false);
 	};
+	bool mb_CmdShowTaskItems;
 	MArray<CmdTaskPopupItem> m_CmdTaskPopup;
 	int mn_CmdLastID;
 	CmdTaskPopupItem* mp_CmdRClickForce;
+	int FillTaskPopup(HMENU hMenu, CmdTaskPopupItem* pParent);
 
 	// Эти из CConEmuMain
 	HMENU mh_SysDebugPopup, mh_SysEditPopup, mh_ActiveVConPopup, mh_TerminateVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu

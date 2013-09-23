@@ -10206,7 +10206,6 @@ bool CConEmuMain::isSizing(UINT nMouseMsg/*=0*/)
 	if ((nMouseMsg==WM_NCLBUTTONUP) || !isPressed(VK_LBUTTON))
 	{
 		EndSizing(nMouseMsg);
-		mouse.bCheckNormalRect = true;
 		return false;
 	}
 
@@ -10275,6 +10274,15 @@ void CConEmuMain::EndSizing(UINT nMouseMsg/*=0*/)
 	if (bApplyResize)
 	{
 		CVConGroup::SyncConsoleToWindow();
+	}
+
+	if (!isIconic())
+	{
+		// —ама разберетс€, что надо/не надо
+		StoreNormalRect(NULL);
+		// “еоретически, в некоторых случа€х размер окна может (?) изменитьс€ с задержкой,
+		// в следующем цикле таймера - проверить размер
+		mouse.bCheckNormalRect = true;
 	}
 
 	if (IsWindowVisible(ghWnd) && !isIconic())

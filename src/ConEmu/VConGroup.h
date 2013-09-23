@@ -192,7 +192,7 @@ public:
 	static void SyncWindowToConsole(); // -- функция пустая, игнорируется
 	static void SyncConsoleToWindow(LPRECT prcNewWnd=NULL, bool bSync=false);
 	static void LockSyncConsoleToWindow(bool abLockSync);
-	static void SetAllConsoleWindowsSize(COORD size, bool bSetRedraw /*= false*/);
+	static void SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN or CER_MAINCLIENT*/, COORD size, bool bSetRedraw /*= false*/);
 	static void SyncAllConsoles2Window(RECT rcWnd, enum ConEmuRect tFrom = CER_MAIN, bool bSetRedraw = false);
 	static void OnConsoleResize(bool abSizingToDo);
 	static void ReSizePanes(RECT mainClient);

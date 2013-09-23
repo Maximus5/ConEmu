@@ -377,7 +377,7 @@ void Settings::InitSettings()
 	//memset(&LogFont, 0, sizeof(LogFont));
 	//memset(&LogFont2, 0, sizeof(LogFont2));
 	/*LogFont.lfHeight = mn_FontHeight =*/
-	FontSizeY = 16;
+	FontSizeY = 16 * gpSetCls->_dpiY / 96;
 	//-- Issue 577: Для иероглифов - сделаем "пошире", а то глифы в консоль не влезут...
 	//-- пошире не будем. DBCS консоль хитрая, на каждый иероглиф отводится 2 ячейки
 	//-- "не влезть" может только если выполнить "chcp 65001", что врядли, а у если надо - руками пусть ставят
@@ -610,7 +610,8 @@ void Settings::InitSettings()
 	nStatusBarBack = RGB(64,64,64);
 	nStatusBarLight = RGB(255,255,255);
 	nStatusBarDark = RGB(160,160,160);
-	wcscpy_c(sStatusFontFace, L"Tahoma"); nStatusFontCharSet = ANSI_CHARSET; nStatusFontHeight = 14;
+	wcscpy_c(sStatusFontFace, gsDefMUIFont); nStatusFontCharSet = ANSI_CHARSET;
+	nStatusFontHeight = 14 * gpSetCls->_dpiY / 96;
 	//nHideStatusColumns = ces_CursorInfo;
 	_ASSERTE(countof(isStatusColumnHidden)>csi_Last);
 	memset(isStatusColumnHidden, 0, sizeof(isStatusColumnHidden));
@@ -644,7 +645,8 @@ void Settings::InitSettings()
 	isTabsInCaption = true;
 	#endif
 
-	wcscpy_c(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
+	wcscpy_c(sTabFontFace, gsDefMUIFont); nTabFontCharSet = ANSI_CHARSET;
+	nTabFontHeight = 16 * gpSetCls->_dpiY / 96;
 	sTabCloseMacro = sSaveAllMacro = NULL;
 	nToolbarAddSpace = 0;
 	wcscpy_c(szAdminTitleSuffix, L" (Admin)");
@@ -683,9 +685,9 @@ void Settings::InitSettings()
 	SetThumbColor(ThSet.crSelectFrame, RGB(192,192,192), 7, FALSE);
 	/* теперь разнообразные размеры */
 	// отступы для preview
-	SetThumbSize(ThSet.Thumbs,96,1,1,5,20,2,0,L"Tahoma",14);
+	SetThumbSize(ThSet.Thumbs,96,1,1,5,20,2,0,gsDefMUIFont,14);
 	// отступы для tiles
-	SetThumbSize(ThSet.Tiles,48,4,4,172,4,4,1,L"Tahoma",14); //-V112
+	SetThumbSize(ThSet.Tiles,48,4,4,172,4,4,1,gsDefMUIFont,14); //-V112
 	// Прочие параметры загрузки
 	ThSet.bLoadPreviews = 3;   // bitmask of {1=Thumbs, 2=Tiles}
 	ThSet.bLoadFolders = true; // true - load infolder previews (only for Thumbs)

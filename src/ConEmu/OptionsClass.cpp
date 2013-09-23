@@ -294,6 +294,8 @@ CSettings::CSettings()
 	gpSetCls = this;
 	gpSet = &m_Settings;
 
+	UpdateDpi();
+
 	// Go
 	isAdvLogging = 0;
 	m_ActivityLoggingType = glt_None; mn_ActivityCmdStartTick = 0;
@@ -392,8 +394,6 @@ CSettings::CSettings()
 	memset(&tiBalloon, 0, sizeof(tiBalloon));
 	//mn_FadeMul = gpSet->mn_FadeHigh - gpSet->mn_FadeLow;
 	//gpSet->mn_LastFadeSrc = gpSet->mn_LastFadeDst = -1;
-
-	UpdateDpi();
 
 	try
 	{

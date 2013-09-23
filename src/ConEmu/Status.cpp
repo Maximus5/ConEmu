@@ -789,13 +789,13 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 			if (!i && szVerSize.cx > 0)
 			{
 				bDrawRC = DrawText(hDrawDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &rcText, 
-					DT_RIGHT|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS);
+					DT_RIGHT|DT_NOPREFIX|DT_SINGLELINE|/*DT_VCENTER|*/DT_END_ELLIPSIS);
 				rcText.right -= szVerSize.cx;
 			}
 
 			bDrawRC = DrawText(hDrawDC, m_Items[i].sText, m_Items[i].nTextLen, &rcText, 
 				((m_Items[i].nID == csi_Info) ? DT_LEFT : DT_CENTER)
-				|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS);
+				|DT_NOPREFIX|DT_SINGLELINE|/*DT_VCENTER|*/DT_END_ELLIPSIS);
 
 			if (bDrawRC <= 0)
 				nDrawErr = GetLastError();
@@ -1150,7 +1150,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 					break;
 				case csi_NewVCon:
 					if (uMsg == WM_LBUTTONDOWN)
-						gpConEmu->mp_Menu->OnNewConPopupMenu((POINT*)&rcClient, TPM_LEFTALIGN|TPM_BOTTOMALIGN);
+						gpConEmu->mp_Menu->OnNewConPopupMenu((POINT*)&rcClient, TPM_LEFTALIGN|TPM_BOTTOMALIGN, isPressed(VK_SHIFT));
 					break;
 				case csi_Transparency:
 					if (uMsg == WM_LBUTTONDOWN)

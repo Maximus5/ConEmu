@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"Command line examples\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"ConEmu.exe /cmd Far.exe /w\r\n" \
-	L"ConEmu.exe /font \"Lucida Console\" /size 16 /bufferheight 9999 /cmd powershell\r\n" \
+	L"ConEmu.exe /font \"Consolas\" /size 16 /bufferheight 9999 /cmd powershell\r\n" \
 	L"ConEmu.exe /config \"Hiew\" /cmd \"C:\\Tools\\HIEW32.EXE\"\r\n" \
 	L"ConEmu.exe /cmd {Shells}\r\n" \
 	L"ConEmu.exe /tsa /min /icon \"cmd.exe\" /cmd cmd /c dir c:\\ /s\r\n" \

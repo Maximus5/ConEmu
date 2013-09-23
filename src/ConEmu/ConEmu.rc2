@@ -302,6 +302,7 @@ BEGIN
     vkMultiNew              "Create new console or new window (check «Multiple consoles in one ConEmu window»)"
     vkMultiNewShift         "Create new console (after «Create confirmation»)"
     vkMultiNewPopup         "Show create new console popup menu"
+	vkMultiNewPopup2        "Show create new console popup menu with task submenus"
     vkMultiNewWnd           "Create new window (after «Create confirmation»)"
     vkMultiNewAttach        "Attach existing Console or GUI application"
     vkMultiNext             "Switch next console"
