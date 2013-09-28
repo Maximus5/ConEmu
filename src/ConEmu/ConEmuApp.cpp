@@ -3736,7 +3736,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	if (MultiConPrm)
-		gpSet->isMulti = MultiConValue;
+		gpSet->mb_isMulti = MultiConValue;
 
 	if (VisValue)
 		gpSet->isConVisible = VisPrm;
@@ -3744,7 +3744,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Если запускается conman (нафига?) - принудительно включить флажок "Обновлять handle"
 	//TODO("Deprecated: isUpdConHandle использоваться не должен");
 
-	if (gpSet->isMulti || StrStrI(gpSetCls->GetCmd(), L"conman.exe"))
+	if (gpSetCls->IsMulti() || StrStrI(gpSetCls->GetCmd(), L"conman.exe"))
 	{
 		//gpSet->isUpdConHandle = TRUE;
 

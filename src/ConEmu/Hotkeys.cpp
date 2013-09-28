@@ -625,7 +625,7 @@ DWORD ConEmuHotKey::GetHotkey(DWORD VkMod)
 
 bool ConEmuHotKey::UseWinNumber()
 {
-	return gpSet->isMulti && gpSet->isUseWinNumber;
+	return gpSetCls->IsMulti() && gpSet->isUseWinNumber;
 }
 
 bool ConEmuHotKey::UseWinArrows()
@@ -731,6 +731,8 @@ ConEmuHotKey* ConEmuHotKey::AllocateHotkeys()
 		{vkCloseTab,       chk_User,  NULL,    L"CloseTabKey",           MakeHotKey(VK_DELETE,VK_LWIN,VK_MENU), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Close(6)")},
 		{vkCloseGroup,     chk_User,  NULL,    L"CloseGroupKey",         0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Close(4)")},
 		{vkCloseGroupPrc,  chk_User,  NULL,    L"CloseGroupPrcKey",      0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Close(7)")},
+		{vkCloseAllCon,    chk_User,  NULL,    L"CloseAllConKey",        0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Close(8)")},
+		{vkCloseExceptCon, chk_User,  NULL,    L"CloseExceptConKey",     0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Close(5)")},
 		{vkTerminateApp,   chk_User,  NULL,    L"TerminateProcessKey",   MakeHotKey(VK_DELETE,VK_LWIN,VK_SHIFT), CConEmuCtrl::key_TerminateProcess/*sort of Close*/},
 		{vkDuplicateRoot,  chk_User,  NULL,    L"DuplicateRootKey",      0, CConEmuCtrl::key_DuplicateRoot},
 		//{vkDuplicateRootAs,chk_User,  NULL,    L"DuplicateRootAsKey",    0, CConEmuCtrl::key_DuplicateRootAs},

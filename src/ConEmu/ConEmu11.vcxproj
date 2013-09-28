@@ -979,6 +979,7 @@
     <ClInclude Include="GuiServer.h" />
     <ClInclude Include="..\ConEmuCD\GuiHooks.h" />
     <ClInclude Include="Header.h" />
+    <ClInclude Include="HtmlCopy.h" />
     <ClInclude Include="IconList.h" />
     <ClInclude Include="kl_parts.h" />
     <ClInclude Include="Hotkeys.h" />

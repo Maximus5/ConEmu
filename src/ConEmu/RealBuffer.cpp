@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "ConEmuPipe.h"
 #include "FindDlg.h"
+#include "HtmlCopy.h"
 #include "Macro.h"
 #include "Menu.h"
 #include "RealBuffer.h"
@@ -3693,11 +3694,14 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	// Warning!!! Здесь уже нельзя ориентироваться на con.m_sel !!!
 
 	LPCWSTR pszDataStart = NULL;
+	WORD* pAttrStart = NULL;
+	CharAttr* pAttrStartEx = NULL;
 	int nTextWidth = 0, nTextHeight = 0;
 
 	if (m_Type == rbt_Primary)
 	{
 		pszDataStart = con.pConChar;
+		pAttrStart = con.pConAttr;
 		nTextWidth = this->GetTextWidth();
 		nTextHeight = this->GetTextHeight();
 		_ASSERTE(pszDataStart[nTextWidth*nTextHeight] == 0); // Должно быть ASCIIZ
@@ -3720,10 +3724,10 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 		_ASSERTE(dump.pszBlock1[nTextWidth*nTextHeight] == 0); // Должно быть ASCIIZ
 
 		pszDataStart = dump.pszBlock1; // + con.m_sbi.srWindow.Top * nTextWidth; -- работаем с полным буфером
+		pAttrStartEx = dump.pcaBlock1;
 		//nTextHeight = min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1));
 	}
 
-	//if (!con.pConChar)
 	if (!pszDataStart || !nTextWidth || !nTextHeight)
 	{
 		Assert(pszDataStart != NULL);
@@ -3828,6 +3832,32 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 
 	nSelHeight--;
 
+	COLORREF *pPal = mp_RCon->VCon()->GetColors();
+
+	bool bUseHtml = (gpSet->isCTSHtmlFormat != 0);
+	
+	CHtmlCopy html;
+	
+	if (bUseHtml)
+	{
+		COLORREF crFore = 0xC0C0C0, crBack = 0;
+		if ((m_Type == rbt_Primary) && pAttrStart)
+		{
+			WORD *pAttr = pAttrStart + con.nTextWidth*srSelection_Y1 + srSelection_X1;
+			crFore = pPal[(*pAttr)&0xF]; crBack = pPal[((*pAttr)&0xF0)>>4];
+		}
+		else if (pAttrStartEx)
+		{
+			CharAttr* pAttr = pAttrStartEx + con.nTextWidth*srSelection_Y1 + srSelection_X1;
+			crFore = pAttr->crForeColor; crBack = pAttr->crBackColor;
+		}
+
+		//wchar_t szClass[64]; _wsprintf(szClass, SKIPLEN(countof(szClass)) L"ConEmu%s%s", gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x32",L"x64"));
+		html.Init(gpConEmu->ms_ConEmuBuild, gpSet->inFont, crFore, crBack);
+	}
+
+
+	TODO("Переделать на GetConsoleLine! Иначе могут не будут работать расширенные атрибуты");
 	if (!bStreamMode)
 	{
 		// Блоковое выделение
@@ -3837,13 +3867,16 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 
 			if (m_Type == rbt_Primary)
 			{
-				pszCon = con.pConChar + con.nTextWidth*(Y+srSelection_Y1) + srSelection_X1;
+				pszCon = pszDataStart + con.nTextWidth*(Y+srSelection_Y1) + srSelection_X1;
 			}
 			else if (pszDataStart && (Y < nTextHeight))
 			{
 				WARNING("Проверить для режима с прокруткой!");
 				pszCon = pszDataStart + dump.crSize.X*(Y+srSelection_Y1) + srSelection_X1;
 			}
+
+			//LPCWSTR pszDstStart = pch;
+			LPCWSTR pszSrcStart = pszCon;
 
 			int nMaxX = nSelWidth - 1;
 
@@ -3863,6 +3896,16 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 						*(--pch) = 0;
 					}
 				}
+
+				if (bUseHtml)
+				{
+					INT_PTR nLineStart = pszSrcStart - pszDataStart;
+					if ((m_Type == rbt_Primary) && pAttrStart)
+						html.LineAdd(pszSrcStart, pAttrStart+nLineStart, pPal, nSelWidth);
+					else if (pAttrStartEx)
+						html.LineAdd(pszSrcStart, pAttrStartEx+nLineStart, nSelWidth);
+				}
+
 			}
 			else if (nTrimTailing != 1)
 			{
@@ -3889,27 +3932,18 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	{
 		// Потоковое (текстовое) выделение
 		int nX1, nX2;
-		//for (nY = rc.Top; nY <= rc.Bottom; nY++) {
-		//	pnDst = pAttr + nWidth*nY;
 
-		//	nX1 = (nY == rc.Top) ? rc.Left : 0;
-		//	nX2 = (nY == rc.Bottom) ? rc.Right : (nWidth-1);
-
-		//	for (nX = nX1; nX <= nX2; nX++) {
-		//		pnDst[nX] = lcaSel;
-		//	}
-		//}
 		for (int Y = 0; Y <= nSelHeight; Y++)
 		{
 			nX1 = (Y == 0) ? srSelection_X1 : 0;
 			nX2 = (Y == nSelHeight) ? srSelection_X2 : (con.nTextWidth-1);
 			LPCWSTR pszCon = NULL;
 			LPCWSTR pszNextLine = NULL;
-			
+
 			if (m_Type == rbt_Primary)
 			{
-				pszCon = con.pConChar + con.nTextWidth*(Y+srSelection_Y1) + nX1;
-				pszNextLine = ((Y + 1) <= nSelHeight) ? (con.pConChar + con.nTextWidth*(Y+1+srSelection_Y1)) : NULL;
+				pszCon = pszDataStart + con.nTextWidth*(Y+srSelection_Y1) + nX1;
+				pszNextLine = ((Y + 1) <= nSelHeight) ? (pszDataStart + con.nTextWidth*(Y+1+srSelection_Y1)) : NULL;
 			}
 			else if (pszDataStart && (Y < nTextHeight))
 			{
@@ -3917,6 +3951,9 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 				pszCon = pszDataStart + dump.crSize.X*(Y+srSelection_Y1) + nX1;
 				pszNextLine = ((Y + 1) <= nSelHeight) ? (pszDataStart + dump.crSize.X*(Y+1+srSelection_Y1)) : NULL;
 			}
+
+			LPCWSTR pszDstStart = pch;
+			LPCWSTR pszSrcStart = pszCon;
 
 			wchar_t* pchStart = pch;
 
@@ -3926,6 +3963,17 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 				{
 					*(pch++) = *(pszCon++);
 				}
+
+				if (bUseHtml)
+				{
+					INT_PTR nLineStart = pszSrcStart - pszDataStart;
+					INT_PTR nLineLen = pch - pszDstStart;
+					if ((m_Type == rbt_Primary) && pAttrStart)
+						html.LineAdd(pszSrcStart, pAttrStart+nLineStart, pPal, nLineLen);
+					else if (pAttrStartEx)
+						html.LineAdd(pszSrcStart, pAttrStartEx+nLineStart, nLineLen);
+				}
+
 			}
 			else
 			{
@@ -3993,6 +4041,8 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 
 	// Ready
 	GlobalUnlock(hUnicode);
+	// HTML?
+	HGLOBAL hHtml = bUseHtml ? html.CreateResult(gpSet->isCTSHtmlFormat == 1) : NULL;
 
 	// Открыть буфер обмена
 	while (!(lbRc = OpenClipboard(ghWnd)))
@@ -4000,12 +4050,19 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 		dwErr = GetLastError();
 
 		if (IDRETRY != DisplayLastError(L"OpenClipboard failed!", dwErr, MB_RETRYCANCEL|MB_ICONSTOP))
+		{
+			GlobalFree(hUnicode);
+			if (hHtml) GlobalFree(hHtml);
 			return false;
+		}
 	}
+
+	UINT i_CF_HTML = bUseHtml ? RegisterClipboardFormat(L"HTML Format") : 0;
 
 	lbRc = EmptyClipboard();
 	// Установить данные
-	Result = SetClipboardData(CF_UNICODETEXT, hUnicode);
+	Result = SetClipboardData(CF_UNICODETEXT, hUnicode)
+		&& (!i_CF_HTML || SetClipboardData(i_CF_HTML, hHtml));
 
 	while (!Result)
 	{
@@ -4014,10 +4071,12 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 		if (IDRETRY != DisplayLastError(L"SetClipboardData(CF_UNICODETEXT, ...) failed!", dwErr, MB_RETRYCANCEL|MB_ICONSTOP))
 		{
 			GlobalFree(hUnicode); hUnicode = NULL;
+			if (hHtml) GlobalFree(hHtml); hHtml = NULL;
 			break;
 		}
 
-		Result = SetClipboardData(CF_UNICODETEXT, hUnicode);
+		Result = SetClipboardData(CF_UNICODETEXT, hUnicode)
+			&& (!i_CF_HTML || SetClipboardData(i_CF_HTML, hHtml));
 	}
 
 	lbRc = CloseClipboard();

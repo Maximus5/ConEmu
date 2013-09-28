@@ -707,8 +707,6 @@ struct Settings
 		/* 'Default' command line (if nor Registry, nor /cmd specified) */
 		//WCHAR  szDefCmd[16];
 	public:
-		RecreateActionParm GetDefaultCreateAction();
-
 		//reg->Load(L"FontName", inFont, countof(inFont))
 		wchar_t inFont[LF_FACESIZE];
 		//reg->Load(L"FontName2", inFont2, countof(inFont2))
@@ -805,6 +803,9 @@ struct Settings
 		bool isCTSSelectBlock;
 		//reg->Load(L"CTS.SelectText", isCTSSelectText);
 		bool isCTSSelectText;
+		//reg->Load(L"CTS.HtmlFormat", isCTSHtmlFormat);
+		BYTE isCTSHtmlFormat; // 0 - Plain text only, 1 - HTML formatting, 2 - Copy as HTML
+
 		////reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
 		//BYTE isCTSClickPromptPosition; // & vkCTSVkPromptClk
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
@@ -1098,11 +1099,11 @@ struct Settings
 		bool isSingleInstance;
 		//reg->Load(L"ShowHelpTooltips", isShowHelpTooltips);
 		bool isShowHelpTooltips;
-		//reg->Load(L"Multi", isMulti);
-		bool isMulti;
+		//reg->Load(L"Multi", mb_isMulti);
+		bool mb_isMulti;
 		//reg->Load(L"Multi.ShowButtons", isMultiShowButtons);
 		bool isMultiShowButtons;
-		//reg->Load(L"NumberInCaption", isMulti);
+		//reg->Load(L"NumberInCaption", isNumberInCaption);
 		bool isNumberInCaption;
 		private:
 		//reg->Load(L"Multi.Modifier", nHostkeyModifier); TestHostkeyModifiers();

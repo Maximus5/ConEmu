@@ -120,8 +120,8 @@ static BOOL gbInSendConEvent = FALSE;
 
 wchar_t CRealConsole::ms_LastRConStatus[80] = {};
 
-const wchar_t gsCloseGui[] = L"Confirm closing current window?";
-const wchar_t gsCloseCon[] = L"Confirm closing console window?";
+const wchar_t gsCloseGui[] = L"Confirm closing active child window?";
+const wchar_t gsCloseCon[] = L"Confirm closing console?";
 //const wchar_t gsCloseAny[] = L"Confirm closing console?";
 const wchar_t gsCloseEditor[] = L"Confirm closing Far editor?";
 const wchar_t gsCloseViewer[] = L"Confirm closing Far viewer?";

@@ -435,7 +435,7 @@ bool CConEmuCtrl::key_MultiNew(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 	if (TestOnly)
 		return true;
 	// Создать новую консоль
-	gpConEmu->RecreateAction(gpSet->GetDefaultCreateAction(), gpSet->isMultiNewConfirm);
+	gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), gpSet->isMultiNewConfirm);
 	return true;
 }
 

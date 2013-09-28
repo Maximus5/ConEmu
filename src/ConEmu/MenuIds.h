@@ -1,4 +1,7 @@
 
+#define ID_CON_COPY_HTML0 0xABA9 // Plain text only
+#define ID_CON_COPY_HTML1 0xABAA // Copy HTML format
+#define ID_CON_COPY_HTML2 0xABAB // Copy as HTML
 #define ID_DONATE_LINK 0xABAC
 #define ID_DEBUG_TRAP2 0xABAD
 #define ID_DEBUG_ASSERT 0xABAE
@@ -45,8 +48,8 @@
 #define IDM_CLOSE IDM_VCONCMD_FIRST
 #define IDM_RESTART 0xABD2
 #define IDM_RESTARTAS 0xABD3
-#define IDM_TERMINATEPRC 0xABD4 // Terminate -> Active process
-#define IDM_TERMINATECON 0xABD5 // Terminate -> Close (console)
+#define IDM_TERMINATEPRC 0xABD4 // Terminate -> Kill &active process
+#define IDM_TERMINATECON 0xABD5 // Terminate -> Close active &console
 #define IDM_ADMIN_DUPLICATE 0xABD6
 #define IDM_SAVE 0xABD7
 #define IDM_SAVEALL 0xABD8
@@ -54,11 +57,14 @@
 #define IDM_ATTACHTO 0xABDA
 #define IDM_RENAMETAB 0xABDB
 #define IDM_DUPLICATE 0xABDC
-#define IDM_TERMINATEGROUP 0xABDD // Terminate -> Close (group)
+#define IDM_TERMINATEGROUP 0xABDD // Terminate -> Close active &group
 #define IDM_RESTARTDLG 0xABDE
 #define IDM_CHILDSYSMENU 0xABDF
-#define IDM_TERMINATEPRCGROUP 0xABE0
-#define IDM_VCONCMD_LAST IDM_TERMINATEPRCGROUP
+#define IDM_TERMINATEPRCGROUP 0xABE0 // Terminate -> Kill active &processes
+#define IDM_TERMINATEALLCON 0xABE1 // Terminate -> Close all consoles
+#define IDM_TERMINATECONEXPT 0xABE2 // Terminate -> Close except active
+#define IDM_VCONCMD_LAST IDM_TERMINATECONEXPT
+
 // Consoles // DWORD MAKELONG(WORD wLow,WORD wHigh);
-#define IDM_VCON_FIRST MAKELONG(1,1)
-#define IDM_VCON_LAST  MAKELONG(0,MAX_CONSOLE_COUNT+1)
+#define IDM_VCON_FIRST MAKELONG(1,1)                   // 0x00010001
+#define IDM_VCON_LAST  MAKELONG(0,MAX_CONSOLE_COUNT+1) // 0x001f0000

@@ -1654,7 +1654,7 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (gpConEmu->IsGesturesEnabled())
 			gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, isPressed(VK_SHIFT));
 		else
-			gpConEmu->RecreateAction(gpSet->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+			gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 	}
 	else if (wParam == TID_ALTERNATIVE)
 	{

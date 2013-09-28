@@ -8217,7 +8217,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 		// Создать новую консоль
 		BOOL lbSlotFound = (args.aRecreate == cra_CreateWindow);
 
-		if (args.aRecreate == cra_CreateWindow && gpSet->isMulti)
+		if (args.aRecreate == cra_CreateWindow && gpSetCls->IsMulti())
 			abConfirm = TRUE;
 
 		if (args.aRecreate == cra_CreateTab)
@@ -8998,7 +8998,7 @@ void CConEmuMain::UpdateProgress()
 		wsprintf(MultiTitle+_tcslen(MultiTitle), L"{*%i%%} ", mn_Progress);
 	}
 
-	if (gpSet->isMulti && (gpSet->isNumberInCaption || !gpConEmu->mp_TabBar->IsTabsShown()))
+	if (gpSetCls->IsMulti() && (gpSet->isNumberInCaption || !gpConEmu->mp_TabBar->IsTabsShown()))
 	{
 		int nCur = 1, nCount = 0;
 

@@ -207,7 +207,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 						pArgs->pszStartupDir = lstrdup(pIn->NewCmd.szCurDir);
 					}
 
-					if (gpSet->isMulti || CVConGroup::isDetached())
+					if (gpSetCls->IsMulti() || CVConGroup::isDetached())
 					{
 						gpConEmu->PostCreateCon(pArgs);
 					}

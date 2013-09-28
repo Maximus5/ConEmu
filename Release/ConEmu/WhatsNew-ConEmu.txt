@@ -15,6 +15,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.09.28
+[*] Default anti-aliasing method will be «ClearType» if it is turned on in your OS.
+[%] Infinite run loop when «Single instance» was ON and «Multiple consoles» was OFF.
+[+] GuiMacro: Close(8) - close all consoles.
+[+] New menu items in «Close or kill submenus»: «Close all consoles» and «Close except active».
+[+] Issue 714: Copying text to clipboard using CF_HTML formatting. May be disabled from Edit submenu (Copy HTML format).
+
+
 2013.09.23
 [*] Issue 1234: Tasks menu changes (Win+N, button [+])
     * by default - does not expand to submenus, RClick on task - show submenu with task commands;

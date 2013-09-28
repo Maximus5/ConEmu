@@ -54,6 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static CVirtualConsole* gp_VCon[MAX_CONSOLE_COUNT] = {};
 
 static CVirtualConsole* gp_VActive = NULL;
+static CVirtualConsole* gp_GroupPostCloseActivate = NULL; // Если открыты сплиты - то при закрытии одного pane - остаться в активной группе
 static bool gb_CreatingActive = false, gb_SkipSyncSize = false;
 static UINT gn_CreateGroupStartVConIdx = 0;
 static bool gb_InCreateGroup = false;
@@ -1896,7 +1897,7 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 //	return false;
 //}
 
-bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/, bool bForceKill /*= false*/)
+bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/, bool bForceKill /*= false*/, bool bNoGroup /*= false*/)
 {
 	CVConGuard VCon(gp_VActive);
 
@@ -1945,7 +1946,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 			if (gOSVer.dwMajorVersion >= 6)
 			{
 				ConfirmCloseParam Parm;
-				Parm.bGroup = TRUE;
+				Parm.bGroup = bNoGroup ? ConfirmCloseParam::eNoGroup : ConfirmCloseParam::eGroup;
 				Parm.bForceKill = bForceKill;
 				Parm.nConsoles = nConsoles;
 				Parm.nOperations = nProgress;
@@ -2316,7 +2317,7 @@ void CVConGroup::CloseAllButActive(CVirtualConsole* apVCon/*may be null*/)
 		VCons.push_back(pGuard);
 	}
 
-	if (CloseQuery(&VCons, NULL))
+	if (CloseQuery(&VCons, NULL, false, true))
 	{
 		gpConEmu->SetScClosePending(true); // Disable confirmation of each console closing
 
@@ -2434,8 +2435,22 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 			// будет попытка активировать другую вкладку закрываемой консоли
 			//gpConEmu->mp_TabBar->Update(TRUE); -- а и не сможет он другую активировать, т.к. RCon вернет FALSE
 
+			bool bAllowRecent = true;
+
+			if (gp_GroupPostCloseActivate)
+			{
+				if (isValid(gp_GroupPostCloseActivate))
+				{
+					if (Activate(gp_GroupPostCloseActivate))
+					{
+						bAllowRecent = false;
+					}
+				}
+				gp_GroupPostCloseActivate = NULL;
+			}
+
 			// Эта комбинация должна активировать предыдущую консоль (если активна текущая)
-			if (gpSet->isTabRecent && apVCon == gp_VActive)
+			if (bAllowRecent && gpSet->isTabRecent && apVCon == gp_VActive)
 			{
 				if (gpConEmu->GetVCon(1))
 				{

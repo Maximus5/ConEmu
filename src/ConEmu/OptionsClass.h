@@ -68,6 +68,9 @@ class CSettings
 
 		wchar_t szFontError[512];
 
+		bool IsMulti();
+		RecreateActionParm GetDefaultCreateAction();
+
 		SingleInstanceArgEnum SingleInstanceArg; // по умолчанию = sgl_Default, но дл€ Quake переключаетс€ на = sgl_Enabled
 		bool IsSingleInstanceArg();
 		SingleInstanceShowHideType SingleInstanceShowHide; // по умолчанию = sih_None

@@ -320,7 +320,7 @@ void Settings::InitSettings()
 	nHostkeyArrowModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyArrowModifier);
 	isSingleInstance = false;
 	isShowHelpTooltips = true;
-	isMulti = true;
+	mb_isMulti = true;
 	isMultiShowButtons = true;
 	isNumberInCaption = false;
 	//vmMultiNew = 'W' | (nMultiHotkeyModifier << 8);
@@ -390,7 +390,11 @@ void Settings::InitSettings()
 	/*LogFont.lfCharSet*/ mn_LoadFontCharSet = DEFAULT_CHARSET;
 	//LogFont.lfOutPrecision = OUT_TT_PRECIS;
 	//LogFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-	/*LogFont.lfQuality =*/ mn_AntiAlias = ANTIALIASED_QUALITY;
+	/*LogFont.lfQuality =*/
+	BOOL bClearType = FALSE; if (SystemParametersInfo(SPI_GETCLEARTYPE, 0, &bClearType, 0) && bClearType)
+		mn_AntiAlias = CLEARTYPE_NATURAL_QUALITY;
+	else
+		mn_AntiAlias = ANTIALIASED_QUALITY;
 	//LogFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
 	inFont[0] = inFont2[0] = 0;
 	//wcscpy_c(inFont, gsLucidaConsole);
@@ -593,6 +597,7 @@ void Settings::InitSettings()
 	isCTSFreezeBeforeSelect = false;
 	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
 	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
+	isCTSHtmlFormat = 1; // Use HTML Copy formatting
 	//vmCTSVkBlockStart = 0; // при желании, пользователь может назначить hotkey запуска выделения
 	//vmCTSVkTextStart = 0;  // при желании, пользователь может назначить hotkey запуска выделения
 	isCTSActMode = 2; // BufferOnly
@@ -2205,7 +2210,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"CmdLineHistory", &psCmdHistory); nCmdHistorySize = 0; HistoryCheck();
 		reg->Load(L"SingleInstance", isSingleInstance);
 		reg->Load(L"ShowHelpTooltips", isShowHelpTooltips);
-		reg->Load(L"Multi", isMulti);
+		reg->Load(L"Multi", mb_isMulti);
 		reg->Load(L"Multi.ShowButtons", isMultiShowButtons);
 		reg->Load(L"Multi.NumberInCaption", isNumberInCaption);
 		//LoadVkMod(reg, L"Multi.NewConsole", vmMultiNew, vmMultiNew);
@@ -2348,6 +2353,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
 		//LoadVkMod(reg, L"CTS.VkBlockStart", vmCTSVkBlockStart, vmCTSVkBlockStart);
 		reg->Load(L"CTS.SelectText", isCTSSelectText);
+		reg->Load(L"CTS.HtmlFormat", isCTSHtmlFormat);
 		//reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition); if (isCTSClickPromptPosition > 2) isCTSClickPromptPosition = 2;
 		//reg->Load(L"CTS.VkText", isCTSVkText);
 		//LoadVkMod(reg, L"CTS.VkTextStart", vmCTSVkTextStart, vmCTSVkTextStart);
@@ -3093,7 +3099,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 
 		reg->Save(L"SingleInstance", isSingleInstance);
 		reg->Save(L"ShowHelpTooltips", isShowHelpTooltips);
-		reg->Save(L"Multi", isMulti);
+		reg->Save(L"Multi", mb_isMulti);
 		reg->Save(L"Multi.ShowButtons", isMultiShowButtons);
 		reg->Save(L"Multi.NumberInCaption", isNumberInCaption);
 		//reg->Save(L"Multi.NewConsole", vmMultiNew);
@@ -3207,6 +3213,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		//reg->Save(L"CTS.VkBlock", isCTSVkBlock);
 		//reg->Save(L"CTS.VkBlockStart", vmCTSVkBlockStart);
 		reg->Save(L"CTS.SelectText", isCTSSelectText);
+		reg->Save(L"CTS.HtmlFormat", isCTSHtmlFormat);
 		//reg->Save(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
 		//reg->Save(L"CTS.VkText", isCTSVkText);
 		//reg->Save(L"CTS.VkTextStart", vmCTSVkTextStart);
@@ -3510,11 +3517,6 @@ bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/)
 //	// Release it
 //	psNewCmd = NULL;
 //}
-
-RecreateActionParm Settings::GetDefaultCreateAction()
-{
-	return isMulti ? cra_CreateTab : cra_CreateWindow;
-}
 
 void Settings::HistoryCheck()
 {

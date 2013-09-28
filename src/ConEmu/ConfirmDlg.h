@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct ConfirmCloseParam
 {
 	UINT nConsoles;
-	BOOL bGroup;
+	enum { eNormal = 0, eGroup, eNoGroup } bGroup;
 	UINT nOperations;
 	UINT nUnsavedEditors;
 	BOOL bForceKill; // Use terminate instead of "close"

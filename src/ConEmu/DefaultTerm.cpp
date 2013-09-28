@@ -582,13 +582,13 @@ void CDefaultTerminal::ClearProcessed(bool bForceAll)
 		}
 	}
 
-	if (mh_LastWnd && !IsWindow(mh_LastWnd))
+	if (mh_LastWnd && (bForceAll || !IsWindow(mh_LastWnd)))
 	{
 		if (mh_LastIgnoredWnd == mh_LastWnd)
 			mh_LastIgnoredWnd = NULL;
 		mh_LastWnd = NULL;
 	}
-	if (mh_LastIgnoredWnd && !IsWindow(mh_LastIgnoredWnd))
+	if (mh_LastIgnoredWnd && (bForceAll || !IsWindow(mh_LastIgnoredWnd)))
 	{
 		mh_LastIgnoredWnd = NULL;
 	}

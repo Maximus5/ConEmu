@@ -226,7 +226,11 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		else
 		{
 			_wsprintf(szCloseAll, SKIPLEN(countof(szCloseAll))
-				(Parm.bGroup && (Parm.nConsoles>1)) ? L"Close group (%u console%s)" : L"Close all %u console%s.",
+				(Parm.bGroup && (Parm.nConsoles>1)) 
+					? ((Parm.bGroup == ConfirmCloseParam::eGroup)
+						? L"Close group (%u console%s)"
+						: L"Close (%u console%s)")
+					: L"Close all %u console%s.",
 				Parm.nConsoles, (Parm.nConsoles>1)?L"s":L"");
 			pszText = szCloseAll + _tcslen(szCloseAll);
 		}

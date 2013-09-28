@@ -322,20 +322,12 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				//GCC hack. иначе не собирается
 				SetDlgItemTextA(hDlg, IDC_RESTART_MSG,  "Create new console");
 
-				CheckDlgButton(hDlg, cbRunInNewWindow, (pArgs->aRecreate == cra_CreateWindow || !gpSet->isMulti) ? BST_CHECKED : BST_UNCHECKED);
-				EnableWindow(GetDlgItem(hDlg, cbRunInNewWindow), gpSet->isMulti);
-				//if (pArgs->aRecreate == cra_CreateWindow)
-				//{
-				//	SetWindowText(hDlg, L"ConEmu - Create new window");
-				//	//GCC hack. иначе не собирается
-				//	SetDlgItemTextA(hDlg, IDC_RESTART_MSG,  "Create new window");
-				//}
-				//else
-				//{
-				//	//GCC hack. иначе не собирается
-				//	SetDlgItemTextA(hDlg, IDC_RESTART_MSG,  "Create new console");
-				//}
+				// Если ВЫКЛЮЧЕН "Multi consoles in one window"
+				// - Check & Disable "New window" checkbox
+				CheckDlgButton(hDlg, cbRunInNewWindow, (pArgs->aRecreate == cra_CreateWindow || !gpSetCls->IsMulti()) ? BST_CHECKED : BST_UNCHECKED);
+				EnableWindow(GetDlgItem(hDlg, cbRunInNewWindow), gpSetCls->IsMulti());
 
+				//
 				SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_QUESTION), 0);
 				POINT pt = {0,0};
 				MapWindowPoints(GetDlgItem(hDlg, IDC_TERMINATE), hDlg, &pt, 1);

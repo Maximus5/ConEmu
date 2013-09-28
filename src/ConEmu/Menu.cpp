@@ -427,7 +427,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 	
 		if (itm.ItemType == CmdTaskPopupItem::eNewDlg)
 		{
-			gpConEmu->RecreateAction(gpSet->GetDefaultCreateAction(), TRUE);
+			gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), TRUE);
 		}
 		else if (itm.ItemType == CmdTaskPopupItem::eSetupTasks)
 		{
@@ -490,7 +490,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			}
 
 			//Собственно, запуск
-			if (gpSet->isMulti)
+			if (gpSetCls->IsMulti())
 				gpConEmu->CreateCon(&con, true);
 			else
 				gpConEmu->CreateWnd(&con);
@@ -680,7 +680,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 				//}
 
 				//Собственно, запуск
-				if (gpSet->isMulti)
+				if (gpSetCls->IsMulti())
 					gpConEmu->CreateCon(&con, true);
 				else
 					gpConEmu->CreateWnd(&con);
@@ -907,6 +907,10 @@ void CConEmuMenu::ExecPopupMenuCmd(CVirtualConsole* apVCon, int nCmd)
 			//apVCon->RCon()->CloseConsoleWindow();
 			CVConGroup::CloseGroup(apVCon, (nCmd==IDM_TERMINATEPRCGROUP));
 			break;
+		case IDM_TERMINATEALLCON:
+		case IDM_TERMINATECONEXPT:
+			CVConGroup::CloseAllButActive((nCmd == IDM_TERMINATECONEXPT) ? apVCon : NULL);
+			break;
 
 		case IDM_RESTART:
 		case IDM_RESTARTAS:
@@ -923,7 +927,7 @@ void CConEmuMenu::ExecPopupMenuCmd(CVirtualConsole* apVCon, int nCmd)
 			break;
 
 		case ID_NEWCONSOLE:
-			gpConEmu->RecreateAction(gpSet->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+			gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			break;
 		case IDM_ATTACHTO:
 			OnSysCommand(ghWnd, IDM_ATTACHTO, 0);
@@ -1742,6 +1746,9 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEGROUP, MenuAccel(vkCloseGroup,L"Close active &group"));
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEPRCGROUP, MenuAccel(vkCloseGroupPrc,L"Kill active &processes"));
+		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
+		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEALLCON, MenuAccel(vkCloseAllCon,L"Close &all consoles"));
+		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATECONEXPT, MenuAccel(vkMultiClose,L"Close e&xcept active"));
 		AppendMenu(hMenu, MF_POPUP | MF_ENABLED, (UINT_PTR)hTerminate, L"Close or &kill");
 		AppendMenu(hMenu, MF_STRING | ((apVCon && apVCon->GuiWnd()) ? MF_ENABLED : 0),     IDM_CHILDSYSMENU,    MenuAccel(vkChildSystemMenu,L"Child system menu..."));
 		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
@@ -1846,9 +1853,14 @@ HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		hMenu = CreatePopupMenu();
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKBLOCK, MenuAccel(vkCTSVkBlockStart,L"Mark &block"));
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKTEXT, MenuAccel(vkCTSVkTextStart,L"Mar&k text"));
+		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
 		AppendMenu(hMenu, MF_STRING | (lbSelectionExist?MF_ENABLED:MF_GRAYED), ID_CON_COPY, L"Cop&y");
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_COPY_ALL, MenuAccel(vkCTSVkCopyAll,L"Copy &all"));
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_PASTE, L"&Paste");
+		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+		//AppendMenu(hMenu, MF_STRING | ((gpSet->isCTSHtmlFormat == 0)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML0, L"Plain &text only");
+		AppendMenu(hMenu, MF_STRING | ((gpSet->isCTSHtmlFormat == 1)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML1, L"Copy &HTML format");
+		//AppendMenu(hMenu, MF_STRING | ((gpSet->isCTSHtmlFormat == 2)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML2, L"Copy a&s HTML");
 		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_FIND, MenuAccel(vkFindTextDlg,L"&Find text..."));
 	}
@@ -1860,6 +1872,9 @@ HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		EnableMenuItem(hMenu, ID_CON_COPY_ALL, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
 		EnableMenuItem(hMenu, ID_CON_PASTE, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
 		EnableMenuItem(hMenu, ID_CON_FIND, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
+		//CheckMenuItem(hMenu, ID_CON_COPY_HTML0, MF_BYCOMMAND | ((gpSet->isCTSHtmlFormat == 0)?MF_CHECKED:MF_UNCHECKED));
+		CheckMenuItem(hMenu, ID_CON_COPY_HTML1, MF_BYCOMMAND | ((gpSet->isCTSHtmlFormat == 1)?MF_CHECKED:MF_UNCHECKED));
+		//CheckMenuItem(hMenu, ID_CON_COPY_HTML2, MF_BYCOMMAND | ((gpSet->isCTSHtmlFormat == 2)?MF_CHECKED:MF_UNCHECKED));
 	}
 	
 	return hMenu;
@@ -1965,7 +1980,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		case ID_NEWCONSOLE:
 			// Создать новую консоль
-			gpConEmu->RecreateAction(gpSet->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+			gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			return 0;
 			
 		case IDM_ATTACHTO:
@@ -2011,6 +2026,16 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					VCon->RCon()->StartSelection(LOWORD(wParam) == ID_CON_MARKTEXT);
 				}
 			}
+			return 0;
+
+		case ID_CON_COPY_HTML0:
+			gpSet->isCTSHtmlFormat = 0;
+			return 0;
+		case ID_CON_COPY_HTML1:
+			gpSet->isCTSHtmlFormat = 1;
+			return 0;
+		case ID_CON_COPY_HTML2:
+			gpSet->isCTSHtmlFormat = 2;
 			return 0;
 			
 		#ifdef SHOW_AUTOSCROLL

@@ -705,39 +705,6 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 
 			*(pn++) = nFlags;
 		}
-		
-		//if (gpSet->isMulti)
-		//{
-		//	if (gpSet->HasModifier(gpSet->vmMultiNew, VK_LWIN))
-		//		*(pn++) = gpSet->vmMultiNew;
-		//	if (gpSet->HasModifier(gpSet->vmMultiNewShift, VK_LWIN))
-		//		*(pn++) = gpSet->vmMultiNewShift;
-		//	if (gpSet->HasModifier(gpSet->vmMultiNext, VK_LWIN))
-		//		*(pn++) = gpSet->vmMultiNext;
-		//	if (gpSet->HasModifier(gpSet->vmMultiNextShift, VK_LWIN))
-		//		*(pn++) = gpSet->vmMultiNextShift;
-		//	if (gpSet->HasModifier(gpSet->vmMultiRecreate, VK_LWIN))
-		//		*(pn++) = gpSet->vmMultiRecreate;
-		//	if (gpSet->HasModifier(gpSet->vmMultiBuffer, VK_LWIN))
-		//		*(pn++) = gpSet->vmMultiBuffer;
-		//	if (gpSet->HasModifier(gpSet->vmMultiClose, VK_LWIN))
-		//		*(pn++) = gpSet->vmMultiClose;
-		//	if (gpSet->HasModifier(gpSet->vmMultiCmd, VK_LWIN))
-		//		*(pn++) = gpSet->vmMultiCmd;
-		//}
-
-		//if (gpSet->isUseWinArrows)
-		//{
-		//	*(pn++) = VK_LEFT;
-		//	*(pn++) = VK_RIGHT;
-		//	*(pn++) = VK_UP;
-		//	*(pn++) = VK_DOWN;
-		//}
-
-		//if (gpSet->HasModifier(gpSet->vmCTSVkBlockStart, VK_LWIN))
-		//	*(pn++) = gpSet->vmCTSVkBlockStart;
-		//if (gpSet->HasModifier(gpSet->vmCTSVkTextStart, VK_LWIN))
-		//	*(pn++) = gpSet->vmCTSVkTextStart;
 
 		*pn = 0;
 		_ASSERTE((pn - pnHookedKeys) < (HookedKeysMaxCount-1));
@@ -2001,7 +1968,7 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbNumberInCaption, gpSet->isNumberInCaption);
 
-	checkDlgButton(hWnd2, cbMultiCon, gpSet->isMulti);
+	checkDlgButton(hWnd2, cbMultiCon, gpSet->mb_isMulti);
 	checkDlgButton(hWnd2, cbMultiShowButtons, gpSet->isMultiShowButtons);
 	checkDlgButton(hWnd2, cbNewConfirm, gpSet->isMultiNewConfirm);
 	checkDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
@@ -3185,7 +3152,7 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 
 LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 {
-	//checkDlgButton(hWnd2, cbMultiCon, gpSet->isMulti);
+	//checkDlgButton(hWnd2, cbMultiCon, gpSet->mb_isMulti);
 	//checkDlgButton(hWnd2, cbNewConfirm, gpSet->isMultiNewConfirm);
 	//checkDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
 	//checkDlgButton(hWnd2, cbCloseEditViewConfirm, gpSet->isCloseEditViewConfirm);
@@ -4822,7 +4789,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isShowHelpTooltips = IsChecked(hWnd2, cbShowHelpTooltips);
 			break;
 		case cbMultiCon:
-			gpSet->isMulti = IsChecked(hWnd2, cbMultiCon);
+			gpSet->mb_isMulti = IsChecked(hWnd2, cbMultiCon);
 			gpConEmu->UpdateWinHookSettings();
 			break;
 		case cbMultiShowButtons:
@@ -12446,6 +12413,23 @@ LPCTSTR CSettings::GetDefaultCmd()
 {
 	_ASSERTE(szDefCmd[0]!=0);
 	return szDefCmd;
+}
+
+RecreateActionParm CSettings::GetDefaultCreateAction()
+{
+	return IsMulti() ? cra_CreateTab : cra_CreateWindow;
+}
+
+bool CSettings::IsMulti()
+{
+	if (!gpSet->mb_isMulti)
+	{
+		// "SingleInstance" has more weight
+		if (!IsSingleInstanceArg())
+			return false;
+		// Otherwise we'll get infinite loop
+	}
+	return true;
 }
 
 bool CSettings::IsSingleInstanceArg()
