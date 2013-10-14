@@ -166,6 +166,8 @@ void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
 		return;
 	}
 
+	gpConEmu->LogString(L"TrayIcon::HideWindowToTray");
+
 	mb_InHidingToTray = true;
 
 	ShowTrayIcon(asInfoTip);

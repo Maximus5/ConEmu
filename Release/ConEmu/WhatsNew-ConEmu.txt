@@ -15,6 +15,43 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Environment variables are allowed in tab icon paths.
+
+
+2013.10.10
+[!] ConEmuC will expand environment variables before running commands.
+[*] Support PortableApps.com folder structure from the box. No need for explicit '/LoadCfgFile "%PAL:DataDir%\settings\ConEmu.xml"'.
+[%] Issue 1274: Hang on "cmd --new_console".
+[%] Switch "/icon" was ignored for startup task.
+[%] Trailing spaces was increased when used «Auto save/restore of opened tabs».
+[%] Issue 1275: When minimized into TSA and all VCon are closed we need to restore and run new tab.
+[+] New color scheme: "<Monokai>".
+[%] Issue 1277: Far Manager shows «DrawWND» in the window title instead of panel path.
+[%] Issue 1279: Copy to clipboard fails if "Plain text only" is the active option.
+[+] New environment variables "ConEmuDrive" and "ConEmuWorkDrive".
+
+
+2013.10.06
+[+] New option on «Startup» page: «Auto save/restore of opened tabs».
+[+] New environment variable "ConEmuWorkDir", it contains folder from where your shell was started.
+    User may use it when starting shell, with «ConEmu Here» feature for example:
+	"C:\Program Files\Far Manager\far.exe" "!ConEmuWorkDir!"
+[*] «Default terminal» settings are moved to own page. «Integration» page contains only «ConEmu Here» and «ConEmu Inside».
+[%] After unregistering «ConEmu Here» or «ConEmu Inside» item drop down was refreshed but not edit fields.
+[*] Issue 1269: More debug logging of Win+Left/Win+Right.
+[%] Issue 1262: ConEmu.Editor.lua bug.
+[+] Debug purposes: "/basic" and "/resetdefault" switch.
+
+
+2013.09.29
+[+] Issue 714: Font size fixed when copying using CF_HTML formatting.
+    You may choose from Edit submenu one of the following options:
+	* Plain text only (don't copy HTML formatting);
+	* Copy HTML format (text will be ready for pasting in Word, Outlook etc.);
+	* Copy as HTML (you want RAW HTML? choose this option).
+[+] Send cursor keys to vim with xterm control sequences.
+
+
 2013.09.28
 [*] Default anti-aliasing method will be «ClearType» if it is turned on in your OS.
 [%] Infinite run loop when «Single instance» was ON and «Multiple consoles» was OFF.
@@ -269,7 +306,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 2013.05.23
-[!] Don't lock current (startup) directory.
+[!] Issue 1049: Don't lock current (startup) directory.
 [!] Width and Height may be set up in cells/pixels/percents.
     For example, Width = "90%", Height = "400px".
     Without modifier - treated as cells.

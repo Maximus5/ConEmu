@@ -60,7 +60,7 @@ protected:
 protected:
 	bool OnStartAttach();
 	static bool StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType, BOOL abAltMode);
-	static RECT CenterInParent(RECT rcDlg, HWND hParent);
+	//static RECT CenterInParent(RECT rcDlg, HWND hParent);
 public:
 	static DWORD WINAPI StartAttachThread(AttachParm* lpParam);
 public:

@@ -80,24 +80,37 @@ void CDefaultTerminal::ClearThreads(bool bForceTerminate)
 	}
 }
 
-bool CDefaultTerminal::IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax)
+bool CDefaultTerminal::IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, bool* pbLeaveInTSA)
 {
-	LPCWSTR ValueName = StartupValueName;
-	bool bCurState = false;
+	LPCWSTR ValueName = StartupValueName /* L"ConEmuDefaultTerminal" */;
+	bool bCurState = false, bLeaveTSA = gpSet->isRegisterOnOsStartupTSA;
 	HKEY hk;
 	DWORD nSize, nType = 0;
 	LONG lRc;
+	bool bNeedFree = false;
 
 	if (0 == (lRc = RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_READ, &hk)))
 	{
+		if (!rsValue)
+		{
+			cchMax = MAX_PATH*3;
+			rsValue = (wchar_t*)calloc(cchMax+1,sizeof(*rsValue));
+		}
+
 		nSize = cchMax*sizeof(*rsValue);
 		if ((0 == (lRc = RegQueryValueEx(hk, ValueName, NULL, &nType, (LPBYTE)rsValue, &nSize)) && (nType == REG_SZ) && (nSize > sizeof(wchar_t))))
 		{
 			bCurState = true;
+			if (rsValue)
+			{
+				bLeaveTSA = (StrStrI(rsValue, L"/Exit") == NULL);
+			}
 		}
 		RegCloseKey(hk);
 	}
 
+	if (pbLeaveInTSA)
+		*pbLeaveInTSA = bLeaveTSA;
 	return bCurState;
 }
 
@@ -111,10 +124,12 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 	wchar_t szCurValue[MAX_PATH*3] = {};
 	wchar_t szNeedValue[MAX_PATH+80] = {};
 	LONG lRc;
+	bool bPrevTSA = false;
 
-	_wsprintf(szNeedValue, SKIPLEN(countof(szNeedValue)) L"\"%s\" /SetDefTerm /Detached /MinTSA", gpConEmu->ms_ConEmuExe);
+	_wsprintf(szNeedValue, SKIPLEN(countof(szNeedValue)) L"\"%s\" /SetDefTerm /Detached /MinTSA%s", gpConEmu->ms_ConEmuExe,
+		gpSet->isRegisterOnOsStartupTSA ? L"" : L" /Exit");
 
-	if (IsRegisteredOsStartup(szCurValue, countof(szCurValue)-1) && *szCurValue)
+	if (IsRegisteredOsStartup(szCurValue, countof(szCurValue)-1, &bPrevTSA) && *szCurValue)
 	{
 		bCurState = true;
 	}
@@ -256,10 +271,32 @@ DWORD CDefaultTerminal::PostCreatedThread(LPVOID lpParameter)
 {
 	CDefaultTerminal *pTerm = (CDefaultTerminal*)lpParameter;
 
+	// Проверит Shell (Taskbar) и активное окно (GetForegroundWindow)
 	pTerm->CheckShellWindow();
 
 	// Done
 	pTerm->mb_PostCreatedThread = false;
+
+	// Просили выйти после установки хуков?
+	if (gpSetCls->ibExitAfterDefTermSetup)
+	{
+		//EnterCriticalSection(&pTerm->mcs);
+		//INT_PTR iWaiting = 0;
+		//for (INT_PTR i = 0; i < pTerm->m_Processed.size(); i++)
+		//{
+		//	if (!pTerm->m_Processed[i].bHooksSucceeded)
+		//	{
+		//		iWaiting++;
+		//	}
+		//}
+		//LeaveCriticalSection(&pTerm->mcs);
+
+		//// Если уже все захукано - выходим
+		//if (iWaiting == 0)
+		{
+			gpConEmu->PostScClose();
+		}
+	}
 
 	return 0;
 }
@@ -268,10 +305,11 @@ DWORD CDefaultTerminal::PostCreatedThread(LPVOID lpParameter)
 bool CDefaultTerminal::CheckShellWindow()
 {
 	bool bHooked = false;
+	HWND hFore = GetForegroundWindow();
 	HWND hDesktop = GetDesktopWindow(); //csrss.exe on Windows 8
 	HWND hShell = GetShellWindow();
 	HWND hTrayWnd = FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL);
-	DWORD nDesktopPID = 0, nShellPID = 0, nTrayPID = 0;
+	DWORD nDesktopPID = 0, nShellPID = 0, nTrayPID = 0, nForePID = 0;
 
 	if (!bHooked && hShell)
 	{
@@ -299,6 +337,17 @@ bool CDefaultTerminal::CheckShellWindow()
 		}
 	}
 
+	// Поскольку это выполняется на старте, то ConEmu могли запустить специально
+	// для установки перехвата терминала. Поэтому нужно проверить и ForegroundWindow!
+	if (hFore)
+	{
+		if (GetWindowThreadProcessId(hFore, &nForePID)
+			&& (nForePID != nShellPID) && (nForePID != nDesktopPID) && (nForePID != nTrayPID))
+		{
+			CheckForeground(hFore, nForePID, false);
+		}
+	}
+
 	return bHooked;
 }
 
@@ -317,7 +366,6 @@ DWORD CDefaultTerminal::PostCheckThread(LPVOID lpParameter)
 }
 
 // Проверка окна переднего плана. Если оно принадлежит к хукаемым процесса - вставить хук.
-// ДИАЛОГИ НЕ ПРОВЕРЯЮТСЯ
 bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread /*= true*/)
 {
 	if (!isDefaultTerminalAllowed())
@@ -526,13 +574,14 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 	GetExitCodeProcess(pi.hProcess, &nResult);
 	CloseHandle(pi.hProcess);
 	// And what?
-	if (nResult == (UINT)CERR_HOOKS_WAS_SET)
+	if ((nResult == (UINT)CERR_HOOKS_WAS_SET) || (nResult == (UINT)CERR_HOOKS_WAS_ALREADY_SET))
 	{
 		mh_LastWnd = hFore;
 		ProcessInfo inf = {};
 		inf.hProcess = hProcess;
 		hProcess = NULL; // его закрывать НЕ нужно, сохранен в массиве
 		inf.nPID = nForePID;
+		//inf.bHooksSucceeded = (nResult == (UINT)CERR_HOOKS_WAS_ALREADY_SET);
 		inf.nHookTick = GetTickCount();
 		m_Processed.push_back(inf);
 		lbRc = true;
@@ -549,6 +598,36 @@ wrap:
 	}
 	return lbRc;
 }
+
+//void CDefaultTerminal::OnDefTermStarted(CESERVER_REQ* pIn)
+//{
+//	DWORD nPID = (pIn->DataSize() >= sizeof(DWORD)) ? pIn->dwData[0] : 0;
+//	if (!nPID)
+//	{
+//		_ASSERTE(nPID!=0);
+//		return;
+//	}
+//
+//	EnterCriticalSection(&mcs);
+//	INT_PTR iWaiting = 0;
+//	for (INT_PTR i = 0; i < m_Processed.size(); i++)
+//	{
+//		if (m_Processed[i].nPID == pIn->hdr.nSrcPID)
+//		{
+//			m_Processed[i].bHooksSucceeded = TRUE;
+//		}
+//		else if (!m_Processed[i].bHooksSucceeded)
+//		{
+//			iWaiting++;
+//		}
+//	}
+//	LeaveCriticalSection(&mcs);
+//
+//	if (gpSetCls->ibExitAfterDefTermSetup && (iWaiting == 0))
+//	{
+//		gpConEmu->PostScClose();
+//	}
+//}
 
 void CDefaultTerminal::ClearProcessed(bool bForceAll)
 {

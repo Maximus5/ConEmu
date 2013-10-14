@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    129
+#define CESERVER_REQ_VER    131
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -81,6 +81,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECOPYRIGHTSTRING_W L"\x00A9 2009-2013 ConEmu.Maximus5@gmail.com"
 
 #define CEHOMEPAGE     L"http://conemu-maximus5.googlecode.com"
+#define CEHOMEPAGE_A    "http://conemu-maximus5.googlecode.com"
 #define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/issues/entry"
 #define CEREPORTCRASH  L"http://code.google.com/p/conemu-maximus5/issues/entry"
 #define CEWHATSNEW     L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New"
@@ -91,6 +92,12 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMUDIR_VAR_W L"ConEmuDir"
 #define ENV_CONEMUBASEDIR_VAR_A  "ConEmuBaseDir"
 #define ENV_CONEMUBASEDIR_VAR_W L"ConEmuBaseDir"
+#define ENV_CONEMUWORKDIR_VAR_A  "ConEmuWorkDir"
+#define ENV_CONEMUWORKDIR_VAR_W L"ConEmuWorkDir"
+#define ENV_CONEMUDRIVE_VAR_A  "ConEmuDrive"
+#define ENV_CONEMUDRIVE_VAR_W L"ConEmuDrive"
+#define ENV_CONEMUWORKDRIVE_VAR_A  "ConEmuWorkDrive"
+#define ENV_CONEMUWORKDRIVE_VAR_W L"ConEmuWorkDrive"
 #define ENV_CONEMUHWND_VAR_A  "ConEmuHWND"
 #define ENV_CONEMUHWND_VAR_W L"ConEmuHWND"
 #define ENV_CONEMUDRAW_VAR_A  "ConEmuDrawHWND"
@@ -252,6 +259,13 @@ enum RealBufferScroll
 	rbs_Any  = 3,
 };
 
+// Generally used for control keys (arrows e.g.) translation
+enum TermEmulationType
+{
+	te_win32 = 0,
+	te_xterm = 1,
+};
+
 //#define CONEMUMAPPING    L"ConEmuPluginData%u"
 //#define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
 //#define CONEMUDRAGTO     L"ConEmuDragTo%u"
@@ -349,6 +363,8 @@ const CECMD
 	CECMD_GUICLIENTSHIFT = 71, // GuiStylesAndShifts
 	CECMD_ALTBUFFER      = 72, // CESERVER_REQ_ALTBUFFER: CmdOutputStore/Restore
 	CECMD_ALTBUFFERSTATE = 73, // Проверить, разрешен ли Alt.Buffer?
+	CECMD_STARTXTERM     = 74, // dwData[0]=bool, start/stop xterm input
+	//CECMD_DEFTERMSTARTED = 75, // Уведомить GUI, что инициализация хуков для Default Terminal была завершена -- не требуется, ConEmuC ждет успеха
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1054,6 +1070,7 @@ static const CEFarWindowType
 	fwt_ActivateOther  = 0x10000, // Аргумент для поиска окна. Активировать найденный таб если он НЕ в активной консоли
 	fwt_CurrentFarWnd  = 0x20000, // Бывший ConEmuTab.Current
 	fwt_ModifiedFarWnd = 0x40000, // Бывший ConEmuTab.Modified
+	fwt_FarFullPathReq = 0x80000, // Аргумент для поиска окна
 
 	fwt_CompareFlags   = fwt_Elevated|fwt_ModalFarWnd|fwt_Disabled|fwt_Renamed|fwt_CurrentFarWnd|fwt_ModifiedFarWnd;
 	;
@@ -1957,10 +1974,10 @@ struct CESERVER_REQ
 
 //#define MAX_INPUT_QUEUE_EMPTY_WAIT 1000
 
-int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar_t** rsArgStart=NULL);
-int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsArgStart=NULL);
-const wchar_t* SkipNonPrintable(const wchar_t* asParams);
-bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
+//int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar_t** rsArgStart=NULL);
+////int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsArgStart=NULL);
+//const wchar_t* SkipNonPrintable(const wchar_t* asParams);
+//bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
 
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64::MsgStr* pMsg);
 BOOL UnpackInputRecord(const MSG64::MsgStr* piMsg, INPUT_RECORD* pRec);

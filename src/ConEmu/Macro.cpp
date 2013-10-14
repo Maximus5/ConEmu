@@ -910,7 +910,7 @@ LPWSTR CConEmuMacro::FindFarWindowHelper(
 	int iActiveCon = CVConGroup::ActiveConNum()+1; //need 1-based value
 
 	int iFoundCon = 0;
-	int iFoundWnd = CVConGroup::isFarExist(anWindowType|(abFromPlugin?fwt_ActivateOther:fwt_ActivateFound), asName, &VCon);
+	int iFoundWnd = CVConGroup::isFarExist(anWindowType|fwt_FarFullPathReq|(abFromPlugin?fwt_ActivateOther:fwt_ActivateFound), asName, &VCon);
 
 	if ((iFoundWnd <= 0) && VCon.VCon())
 		iFoundCon = -1; // редактор есть, но заблокирован модальным диалогом/другим редактором
@@ -1030,6 +1030,7 @@ LPWSTR CConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon)
 		gpConEmu->SetWindowMode(wmNormal);
 		break;
 	case cwc_Minimize:
+		gpConEmu->LogString(L"GuiMacro: WindowMode(cwc_Minimize)");
 		PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 		break;
 	case cwc_MinimizeTSA:

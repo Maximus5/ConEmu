@@ -71,7 +71,7 @@ void UpdateDebuggerTitle()
 	wchar_t szTitle[100];
 	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) CE_TREE_TEMPLATE,
 		GetCurrentProcessId(), gpSrv->dwRootProcess, gpSrv->DbgInfo.nProcessCount);
-	SetConsoleTitle(szTitle);
+	SetTitle(false, szTitle);
 }
 
 
@@ -294,7 +294,7 @@ int AttachRootProcessHandle()
 	{
 		wchar_t szTitle[64];
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Debugging PID=%u, Debugger PID=%u", gpSrv->dwRootProcess, GetCurrentProcessId());
-		SetConsoleTitleW(szTitle);
+		SetTitle(false, szTitle);
 
 		UpdateDebuggerTitle();
 	}

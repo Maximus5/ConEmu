@@ -318,7 +318,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 			CloseHandle(pi64.hProcess); CloseHandle(pi64.hThread);
 			CloseHandle(hProcess); CloseHandle(hThread);
 
-			if ((int)nErrCode == CERR_HOOKS_WAS_SET)
+			if (((int)nErrCode == CERR_HOOKS_WAS_SET) || ((int)nErrCode == CERR_HOOKS_WAS_ALREADY_SET))
 			{
 				iRc = 0;
 				goto wrap;

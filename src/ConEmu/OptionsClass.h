@@ -66,6 +66,16 @@ class CSettings
 		LPCWSTR GetConfigName();
 		void SetConfigName(LPCWSTR asConfigName);
 
+		// === Аргументы из командной строки ===
+		// Default terminal installation
+		bool ibExitAfterDefTermSetup;
+		// Для отладочных целей.
+		bool isResetBasicSettings;
+		bool isFastSetupDisabled;
+		bool isDontCascade;
+		// === Запрет сохранения опций при выходе ===
+		bool ibDisableSaveSettingsOnExit;
+
 		wchar_t szFontError[512];
 
 		bool IsMulti();
@@ -91,6 +101,7 @@ class CSettings
 		LPCWSTR FontFaceName();
 		LONG FontWidth();
 		LONG FontHeight();
+		LONG FontHeightPx();
 		LPCWSTR BorderFontFaceName();
 		LONG BorderFontWidth();
 		BYTE FontCharSet();
@@ -157,7 +168,7 @@ class CSettings
 		void SetCurCmd(wchar_t*& pszNewCmd, bool bIsCmdList);
 		LPCTSTR GetCurCmd(bool *pIsCmdList = NULL);
 		/* "Active" command line */
-		LPCTSTR GetCmd(bool *pIsCmdList = NULL);
+		LPCTSTR GetCmd(bool *pIsCmdList = NULL, bool bNoTask = false);
 		/* "Default" command line "far/cmd", based on /BufferHeight switch */
 		LPCTSTR GetDefaultCmd();
 		void    SetDefaultCmd(LPCWSTR asCmd);
@@ -258,8 +269,9 @@ class CSettings
 			thi_Transparent,  //   "Transparency"
 			thi_Tabs,         //   "Tabs"
 			thi_Status,       //   "Status bar"
-			thi_Integr,       //   "Integration"
 			thi_Apps,         //   "App distinct"
+			thi_Integr,       // "Integration"
+			thi_DefTerm,      //   "Default terminal"
 			thi_Keys,         // "Keys & Macro"
 			thi_KeybMouse,    //   "Controls"
 			thi_Selection,    //   "Mark & Paste"
@@ -401,6 +413,7 @@ class CSettings
 		LRESULT OnInitDialog_Tasks(HWND hWnd2, bool abForceReload);
 		LRESULT OnInitDialog_Apps(HWND hWnd2, bool abForceReload);
 		LRESULT OnInitDialog_Integr(HWND hWnd2, BOOL abInitial);
+		LRESULT OnInitDialog_DefTerm(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Views(HWND hWnd2);
 		void OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...); // скопировать список шрифтов с вкладки hMain
 		LRESULT OnInitDialog_Debug(HWND hWnd2);

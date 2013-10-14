@@ -40,17 +40,19 @@ public:
 	bool CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread = true);
 	void PostCreated(bool bWaitForReady = false, bool bShowErrors = false);
 	void CheckRegisterOsStartup();
-	bool IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax);
+	bool IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, bool* pbLeaveInTSA);
 	void OnHookedListChanged();
+	//void OnDefTermStarted(CESERVER_REQ* pIn);
 
 	bool isDefaultTerminalAllowed();
 
 private:
 	struct ProcessInfo
 	{
-		HANDLE  hProcess;
-		DWORD   nPID; // alignment issues
-		DWORD   nHookTick;
+		HANDLE    hProcess;
+		DWORD     nPID;
+		//BOOL    bHooksSucceeded;
+		DWORD     nHookTick; // informational field
 	};
 	struct ProcessIgnore
 	{

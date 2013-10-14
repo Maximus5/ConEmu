@@ -3669,12 +3669,11 @@ void CommonPluginStartup()
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
 	if (snapshot != INVALID_HANDLE_VALUE)
 	{
-		OnConEmuLoaded_t fnOnConEmuLoaded;
 		MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
 
 		for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
 		{
-			OnConEmuLoaded_t ;
+			OnConEmuLoaded_t fnOnConEmuLoaded;
 
 			if (((fnOnConEmuLoaded = (OnConEmuLoaded_t)GetProcAddress(module.hModule, "OnConEmuLoaded")) != NULL)
 				&& /* Наверное, только для плагинов фара */
@@ -6346,10 +6345,6 @@ bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent/*
 	}
 	else
 	{
-		//wchar_t strCmd[MAX_PATH+1];
-		//wchar_t* strArgs = pszCommand;
-		//NextArg((const wchar_t**)&strArgs, strCmd);
-		//wchar_t strDir[10]; lstrcpy(strDir, L"C:\\");
 		STARTUPINFO cif= {sizeof(STARTUPINFO)};
 		PROCESS_INFORMATION pri= {0};
 		HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);

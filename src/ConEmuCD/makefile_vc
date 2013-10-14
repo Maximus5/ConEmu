@@ -41,6 +41,7 @@ $(OBJDIR)\SrvPipes.obj \
 $(OBJDIR)\execute.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\ConsoleRead.obj \
+$(OBJDIR)\CmdLine.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\Memory.obj \
@@ -260,6 +261,8 @@ $(OBJDIR)\ConsoleMain.obj: ConsoleMain.cpp ../common/PipeServer.h
 $(OBJDIR)\GuiHooks.obj: GuiHooks.cpp GuiHooks.h
 
 $(OBJDIR)\RegPrepare.obj: RegPrepare.cpp
+
+$(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
 
 $(OBJDIR)\Common.obj: ../common/Common.cpp
 

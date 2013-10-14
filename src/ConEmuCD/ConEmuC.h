@@ -294,6 +294,9 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false);
 int InfiltrateDll(HANDLE hProcess, LPCWSTR dll);
 
 int ParseCommandLine(LPCWSTR asCmdLine /*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/); // –азбор параметров командной строки
+wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
+void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot);
+BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle);
 void Help();
 void DosBoxHelp();
 int  ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
@@ -590,61 +593,8 @@ extern MFileLog* gpLogSize;
 
 extern BOOL gbInRecreateRoot;
 
-//enum CmdOnCreateType
-//{
-//	eShellExecute = 1,
-//	eCreateProcess,
-//	eInjectingHooks,
-//	eHooksLoaded,
-//};
-
-//CESERVER_REQ* NewCmdOnCreateA(
-//				enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags, 
-//				LPCSTR asFile, LPCSTR asParam, int nImageBits, int nImageSubsystem,
-//				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr);
-//CESERVER_REQ* NewCmdOnCreateW(
-//				enum CmdOnCreateType aCmd, LPCWSTR asAction, DWORD anFlags, 
-//				LPCWSTR asFile, LPCWSTR asParam, int nImageBits, int nImageSubsystem,
-//				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
-//				wchar_t (&szBaseDir)[MAX_PATH+2]);
-
-//#define CES_NTVDM 0x10 -- common.hpp
-//DWORD dwActiveFlags = 0;
 
 
-//#define CERR_GETCOMMANDLINE 100
-//#define CERR_CARGUMENT 101
-//#define CERR_CMDEXENOTFOUND 102
-//#define CERR_NOTENOUGHMEM1 103
-//#define CERR_CREATESERVERTHREAD 104
-//#define CERR_CREATEPROCESS 105
-//#define CERR_WINEVENTTHREAD 106
-//#define CERR_CONINFAILED 107
-//#define CERR_GETCONSOLEWINDOW 108
-//#define CERR_EXITEVENT 109
-//#define CERR_GLOBALUPDATE 110
-//#define CERR_WINHOOKNOTCREATED 111
-//#define CERR_CREATEINPUTTHREAD 112
-//#define CERR_CONOUTFAILED 113
-//#define CERR_PROCESSTIMEOUT 114
-//#define CERR_REFRESHEVENT 115
-//#define CERR_CREATEREFRESHTHREAD 116
-//#define CERR_HELPREQUESTED 118
-//#define CERR_ATTACHFAILED 119
-//#define CERR_RUNNEWCONSOLE 121
-//#define CERR_CANTSTARTDEBUGGER 122
-//#define CERR_CREATEMAPPINGERR 123
-//#define CERR_MAPVIEWFILEERR 124
-//#define CERR_COLORERMAPPINGERR 125
-//#define CERR_EMPTY_COMSPEC_CMDLINE 126
-//#define CERR_CONEMUHK_NOTFOUND 127
-//#define CERR_CONSOLEMAIN_NOTFOUND 128
-//#define CERR_HOOKS_WAS_SET 129
-//#define CERR_HOOKS_FAILED 130
-//#define CERR_DLLMAIN_SKIPPED 131
-//#define CERR_ATTACH_NO_CONWND 132
-//#define CERR_GUIMACRO_SUCCEEDED 133
-//#define CERR_GUIMACRO_FAILED 134
 #include "ExitCodes.h"
 
 

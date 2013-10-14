@@ -86,6 +86,9 @@ static bool gbVimTermWasChangedBuffer = false;
 HANDLE CEAnsi::ghLastAnsiCapable = NULL;
 HANDLE CEAnsi::ghLastAnsiNotCapable = NULL;
 
+// VIM, etc. Some programs waiting control keys as xterm sequences. Need to inform ConEmu GUI.
+bool CEAnsi::gbWasXTermOutput = false;
+
 void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
 {
 	static DWORD nLastCheck = 0;
@@ -2085,6 +2088,12 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 							// vim-xterm-emulation
 							lbApply = TRUE;
 
+							if (!gbWasXTermOutput)
+							{
+								gbWasXTermOutput = true;
+								CEAnsi::StartXTermMode(true);
+							}
+
 							switch (Code.Action)
 							{
 							case L'm':
@@ -2114,6 +2123,9 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 										case 112:
 											gDisplayParm.Inverse = TRUE;
 											gDisplayParm.WasSet = TRUE;
+											break;
+										case 143:
+											// What is this?
 											break;
 										default:
 											DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
@@ -2279,6 +2291,12 @@ void CEAnsi::StartVimTerm(bool bFromDllStart)
 
 void CEAnsi::StopVimTerm()
 {
+	if (gbWasXTermOutput)
+	{
+		gbWasXTermOutput = false;
+		CEAnsi::StartXTermMode(false);
+	}
+
 	if (!gbVimTermWasChangedBuffer)
 		return;
 
@@ -2292,9 +2310,14 @@ void CEAnsi::StopVimTerm()
 	{
 		WORD nDefAttr = GetDefaultTextAttr();
 		// Сброс только расширенных атрибутов
-		ExtFillOutputParm fill = {sizeof(fill), efof_ResetExt/*|efof_Attribute|efof_Character*/,
+		ExtFillOutputParm fill = {sizeof(fill), /*efof_ResetExt|*/efof_Attribute/*|efof_Character*/,
 			hOut, {CECF_NONE,nDefAttr&0xF,(nDefAttr&0xF0)>>4}, L' ', {0,0}, csbi.dwSize.X * csbi.dwSize.Y};
 		ExtFillOutput(&fill);
+		CEAnsi* pObj = CEAnsi::Object();
+		if (pObj)
+			pObj->ReSetDisplayParm(hOut, TRUE, TRUE);
+		else
+			SetConsoleTextAttribute(hOut, nDefAttr);
 	}
 
 	// Восстановление прокрутки и данных
@@ -2329,4 +2352,18 @@ void CEAnsi::StopVimTerm()
 		}
 	}
 	*/
+}
+
+void CEAnsi::StartXTermMode(bool bStart)
+{
+	_ASSERTEX(gbVimTermWasChangedBuffer && (gbWasXTermOutput==bStart));
+
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+	if (pIn)
+	{
+		pIn->dwData[0] = bStart ? te_xterm : te_win32;
+		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+		ExecuteFreeResult(pIn);
+		ExecuteFreeResult(pOut);
+	}
 }

@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/DbgHlpGcc.h"
 #endif
 #include "../common/ConEmuCheck.h"
+#include "../common/CmdLine.h"
 #include "../common/execute.h"
 //#include "../common/TokenHelper.h"
 #include "Options.h"
@@ -57,6 +58,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define FULL_STARTUP_ENV
 #include "../common/StartupEnv.h"
+
+#include "../common/Monitors.h"
 
 #ifdef _DEBUG
 //	#define SHOW_STARTED_MSGBOX
@@ -1890,6 +1893,39 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 	return nBtn;
 }
 
+RECT CenterInParent(RECT rcDlg, HWND hParent)
+{
+	RECT rcParent; GetWindowRect(hParent, &rcParent);
+
+	int nWidth  = (rcDlg.right - rcDlg.left);
+	int nHeight = (rcDlg.bottom - rcDlg.top);
+
+	MONITORINFO mi = {sizeof(mi)};
+	GetNearestMonitorInfo(&mi, NULL, &rcParent);
+
+	RECT rcCenter = {
+		max(mi.rcWork.left,(rcParent.left+rcParent.right-rcDlg.right+rcDlg.left)/2),
+		max(mi.rcWork.top,(rcParent.top+rcParent.bottom-rcDlg.bottom+rcDlg.top)/2)
+	};
+
+	if (((rcCenter.left + nWidth) > mi.rcWork.right)
+		&& (rcCenter.left > mi.rcWork.left))
+	{
+		rcCenter.left = max(mi.rcWork.left, (mi.rcWork.right - nWidth));
+	}
+
+	if (((rcCenter.top + nWidth) > mi.rcWork.bottom)
+		&& (rcCenter.top > mi.rcWork.top))
+	{
+		rcCenter.top = max(mi.rcWork.top, (mi.rcWork.bottom - nHeight));
+	}
+
+	rcCenter.right = rcCenter.left + nWidth;
+	rcCenter.bottom = rcCenter.top + nHeight;
+
+	return rcCenter;
+}
+
 
 void MessageLoop()
 {
@@ -2079,9 +2115,8 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, bool& isScript, uint& p
 	{
 		// Эта переменная нужна для того, чтобы conemu можно было перезапустить
 		// из cmd файла с теми же аргументами (selfupdate)
-		SetEnvironmentVariableW(L"ConEmuArgs", cmdLine);
-		//lstrcpyn(gpConEmu->ms_ConEmuArgs, cmdLine, ARRAYSIZE(gpConEmu->ms_ConEmuArgs));
-		gpConEmu->mpsz_ConEmuArgs = lstrdup(cmdLine);
+		gpConEmu->mpsz_ConEmuArgs = lstrdup(SkipNonPrintable(cmdLine));
+		SetEnvironmentVariableW(L"ConEmuArgs", gpConEmu->mpsz_ConEmuArgs);
 
 		// Теперь проверяем наличие слеша
 		if (*pszStart != L'/' && *pszStart != L'-' && !wcschr(pszStart, L'/'))
@@ -2725,10 +2760,37 @@ void UnitMaskTests()
 	bCheck = true;
 }
 
-void UnitTests()
+void UnitDriveTests()
+{
+	struct {
+		LPCWSTR asPath, asResult;
+	} Tests[] = {
+		{L"C:", L"C:"},
+		{L"C:\\Dir1\\Dir2\\File.txt", L"C:"},
+		{L"\\\\Server\\Share", L"\\\\Server\\Share"},
+		{L"\\\\Server\\Share\\Dir1\\Dir2\\File.txt", L"\\\\Server\\Share"},
+		{L"\\\\?\\UNC\\Server\\Share", L"\\\\?\\UNC\\Server\\Share"},
+		{L"\\\\?\\UNC\\Server\\Share\\Dir1\\Dir2\\File.txt", L"\\\\?\\UNC\\Server\\Share"},
+		{L"\\\\?\\C:", L"\\\\?\\C:"},
+		{L"\\\\?\\C:\\Dir1\\Dir2\\File.txt", L"\\\\?\\C:"},
+		{NULL}
+	};
+	bool bCheck;
+	wchar_t szDrive[MAX_PATH];
+	for (size_t i = 0; Tests[i].asPath; i++)
+	{
+		wmemset(szDrive, L'z', countof(szDrive));
+		bCheck = (wcscmp(GetDrive(Tests[i].asPath, szDrive, countof(szDrive)), Tests[i].asResult) == 0);
+		_ASSERTE(bCheck);
+	}
+	bCheck = true;
+}
+
+void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
 	UnitMaskTests();
+	UnitDriveTests();
 }
 #endif
 
@@ -2846,7 +2908,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//msprintf(szDbg, countof(szDbg), L"xx=0x%X.", 0);
 	#endif
 
-	DEBUGTEST(UnitTests());
+	DEBUGTEST(DebugUnitTests());
 
 //#ifdef _DEBUG
 //	wchar_t* pszShort = GetShortFileNameEx(L"T:\\VCProject\\FarPlugin\\ConEmu\\Maximus5\\Debug\\Far2x86\\ConEmu\\ConEmu.exe");
@@ -3380,7 +3442,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					if (!IconPrm && *curCommand)
 					{
 						IconPrm = true;
-						gpConEmu->mps_IconPath = lstrdup(curCommand);
+						gpConEmu->mps_IconPath = ExpandEnvStr(curCommand);
 					}
 				}
 				else if (!klstricmp(curCommand, _T("/dir")) && i + 1 < params)
@@ -3430,9 +3492,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					gpSetCls->SingleInstanceShowHide = !klstricmp(curCommand, _T("/showhide"))
 						? sih_ShowMinimize : sih_ShowHideTSA;
 				}
-				else if (!klstricmp(curCommand, _T("/reset")))
+				else if (!klstricmp(curCommand, _T("/reset"))
+					|| !klstricmp(curCommand, _T("/resetdefault"))
+					|| !klstricmp(curCommand, _T("/basic")))
 				{
 					ResetSettings = true;
+					if (!klstricmp(curCommand, _T("/resetdefault")))
+					{
+						gpSetCls->isFastSetupDisabled = true;
+					}
+					else if (!klstricmp(curCommand, _T("/basic")))
+					{
+						gpSetCls->isFastSetupDisabled = true;
+						gpSetCls->isResetBasicSettings = true;
+					}
+				}
+				else if (!klstricmp(curCommand, _T("/nocascade"))
+					|| !klstricmp(curCommand, _T("/dontcascade")))
+				{
+					gpSetCls->isDontCascade = true;
 				}
 				//else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
 				//{
@@ -3515,6 +3593,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return 100;
 					}
 					gpConEmu->SetTitleTemplate(pszTitle);
+				}
+				else if (!klstricmp(curCommand, _T("/FindBugMode")))
+				{
+					gpConEmu->mb_FindBugMode = true;
 				}
 				else if (!klstricmp(curCommand, _T("/?")) || !klstricmp(curCommand, _T("/h")) || !klstricmp(curCommand, _T("/help")))
 				{
@@ -3654,13 +3736,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		if (ExitAfterActionPrm)
 		{
-			MessageBox(L"'/Exit' switch can not be used together with '/SetDefTerm'!", MB_ICONSTOP);
+			//Just will exit after all running processes will be infiltrated
+			//MessageBox(L"'/Exit' switch can not be used together with '/SetDefTerm'!", MB_ICONSTOP);
+			gpSetCls->ibExitAfterDefTermSetup = true;
+			gpSetCls->ibDisableSaveSettingsOnExit = true;
+			ExitAfterActionPrm = false;
 		}
-		else
-		{
-			gpSet->isSetDefaultTerminal = true;
-			gpSet->isRegisterOnOsStartup = true;
-		}
+
+		gpSet->isSetDefaultTerminal = true;
+		gpSet->isRegisterOnOsStartup = true;
 	}
 
 	// Actions done

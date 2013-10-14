@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef TEST_REFRESH_DELAYED
 
 #include "ConEmuC.h"
+#include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConsoleRead.h"
 #include "../common/Execute.h"
@@ -210,8 +211,9 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 		// соответственно, переменная наследуется серверами
 		//SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
 
-		wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
-		SetEnvironmentVariableW(ENV_CONEMUHWND_VAR_W, szHWND);
+		//wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
+		//SetEnvironmentVariableW(ENV_CONEMUHWND_VAR_W, szHWND);
+		SetConEmuEnvVar(gpSrv->guiSettings.hGuiWnd);
 
 		if (gpSrv->pConsole)
 		{
@@ -840,8 +842,9 @@ void ServerInitEnvVars()
 		// соответственно, переменная наследуется серверами
 		//SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
 
-		wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
-		SetEnvironmentVariableW(ENV_CONEMUHWND_VAR_W, szHWND);
+		//wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
+		//SetEnvironmentVariableW(ENV_CONEMUHWND_VAR_W, szHWND);
+		SetConEmuEnvVar(gpSrv->guiSettings.hGuiWnd);
 
 		bool bAnsi = ((gpSrv->guiSettings.Flags & CECF_ProcessAnsi) != 0);
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");
@@ -2222,27 +2225,7 @@ void SetConEmuWindows(HWND hDcWnd, HWND hBackWnd)
 	ghConEmuWndDC = hDcWnd;
 	ghConEmuWndBack = hBackWnd;
 
-	wchar_t szHWND[16];
-
-	if (ghConEmuWndDC)
-	{
-		_wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", (DWORD)(DWORD_PTR)ghConEmuWndDC);
-		SetEnvironmentVariableW(ENV_CONEMUDRAW_VAR_W, szHWND);
-	}
-	else
-	{
-		SetEnvironmentVariableW(ENV_CONEMUDRAW_VAR_W, NULL);
-	}
-
-	if (ghConEmuWndBack)
-	{
-		_wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", (DWORD)(DWORD_PTR)ghConEmuWndBack);
-		SetEnvironmentVariableW(ENV_CONEMUBACK_VAR_W, szHWND);
-	}
-	else
-	{
-		SetEnvironmentVariableW(ENV_CONEMUBACK_VAR_W, NULL);
-	}
+	SetConEmuEnvVarChild(hDcWnd, hBackWnd);
 }
 
 void CheckConEmuHwnd()

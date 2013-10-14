@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "GuiAttach.h"
 #include "../common/WinObjects.h"
 #include "../common/RConStartArgs.h"
+#include "../common/CmdLine.h"
 #include "UserImp.h"
 
 #ifndef SEE_MASK_NOZONECHECKS

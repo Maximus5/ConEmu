@@ -1618,6 +1618,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\CmdLine.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\common.hpp"
 				>
 			</File>
@@ -1731,6 +1735,10 @@
 			>
 			<File
 				RelativePath=".\Ansi.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\CmdLine.cpp"
 				>
 			</File>
 			<File

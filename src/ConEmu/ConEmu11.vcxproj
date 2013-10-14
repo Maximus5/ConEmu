@@ -242,7 +242,7 @@
     <_ProjectFileVersion>11.0.50214.1</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">
-    <OutDir>E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmu\</OutDir>
+    <OutDir>T:\Utils\Portable\PortableApps\ConEmuPortable\App\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmu</TargetName>
     <TargetExt>.exe</TargetExt>
@@ -388,7 +388,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;MSGLOGGER;_WIN32_WINNT=0x510;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;MSGLOGGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -891,6 +891,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="Attach.cpp" />
     <ClCompile Include="Background.cpp" />
     <ClCompile Include="BaseDragDrops.cpp" />
@@ -951,6 +952,7 @@
     <ClCompile Include="..\common\WinObjects.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\ConEmuCD\ConsoleHelp.h" />
     <ClInclude Include="About.h" />
     <ClInclude Include="Attach.h" />

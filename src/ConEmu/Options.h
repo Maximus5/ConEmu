@@ -163,6 +163,7 @@ struct Settings
 		// Replace default terminal
 		bool isSetDefaultTerminal;
 		bool isRegisterOnOsStartup;
+		bool isRegisterOnOsStartupTSA;
 		bool isDefaultTerminalNoInjects;
 		BYTE nDefaultTerminalConfirmClose; // "Press Enter to close console". 0 - Auto, 1 - Always, 2 - Never
 		wchar_t* GetDefaultTerminalApps(); // "|" delimited
@@ -400,7 +401,12 @@ struct Settings
 			void SetName(LPCWSTR asName, int anCmdIndex)
 			{
 				wchar_t szCmd[16];
-				if (!asName || !*asName)
+				if (anCmdIndex == -1)
+				{
+					wcscpy_c(szCmd, AutoStartTaskName);
+					asName = szCmd;
+				}
+				else if (!asName || !*asName)
 				{
 					_wsprintf(szCmd, SKIPLEN(countof(szCmd)) L"Group%i", (anCmdIndex+1));
 					asName = szCmd;
@@ -492,7 +498,7 @@ struct Settings
 				wchar_t szArg[MAX_PATH+1];
 				while (0 == NextArg(&pszArgs, szArg))
 				{
-					if (lstrcmpi(szArg, L"/DIR") == 0)
+					if (lstrcmpi(szArg, L"/dir") == 0)
 					{
 						if (0 != NextArg(&pszArgs, szArg))
 							break;
@@ -509,7 +515,7 @@ struct Settings
 							*pszDir = pszExpand ? pszExpand : lstrdup(szArg);
 						}
 					}
-					else if (lstrcmpi(szArg, L"/ICON") == 0)
+					else if (lstrcmpi(szArg, L"/icon") == 0)
 					{
 						if (0 != NextArg(&pszArgs, szArg))
 							break;
@@ -678,7 +684,7 @@ struct Settings
 
 		/* *** Startup options *** */
 		//reg->Load(L"StartType", nStartType);
-		BYTE nStartType; // 0-cmd line, 1-cmd task file, 2-named task, 3-auto saved task
+		BYTE nStartType; // 0-cmd line, 1-cmd task file, 2-named task, 3-auto saved task (*StartupTask)
 		//reg->Load(L"CmdLine", &psStartSingleApp);
 		LPTSTR psStartSingleApp;
 		//reg->Load(L"StartTasksFile", &psStartTasksFile);
@@ -1071,7 +1077,7 @@ struct Settings
 	private:
 		// При закрытии окна крестиком - сохранять только один раз,
 		// а то размер может в процессе закрытия консолей измениться
-		bool mb_SizePosAutoSaved;
+		bool mb_ExitSettingsAutoSaved;
 	public:
 		//reg->Load(L"SlideShowElapse", nSlideShowElapse);
 		DWORD nSlideShowElapse;
@@ -1324,9 +1330,9 @@ struct Settings
 		void SaveAppSettings(SettingsBase* reg);
 		bool SaveCmdTasks(SettingsBase* reg);
 		bool SaveProgresses(SettingsBase* reg);
-		void SaveSizePosOnExit();
 		void SaveConsoleFont();
 		void SaveFindOptions(SettingsBase* reg = NULL);
+		void SaveSettingsOnExit();
 		//void UpdateMargins(RECT arcMargins);
 	public:
 		void HistoryCheck();

@@ -80,6 +80,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UserImp.h"
 #include "GuiAttach.h"
 #include "Ansi.h"
+#include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/clink.h"
 #include "../common/UnicodeChars.h"

@@ -62,6 +62,8 @@ bool SettingsRegistry::OpenKey(HKEY inHKEY, const wchar_t *regPath, uint access,
 {
 	bool res = false;
 
+	_ASSERTE(!gpConEmu->IsResetBasicSettings() || !(access & KEY_WRITE) || !lstrcmpi(regPath, L"Software\\Microsoft\\Command Processor"));
+
 	if ((access & KEY_WRITE) == KEY_WRITE)
 		res = RegCreateKeyEx(inHKEY, regPath, 0, NULL, 0, access, 0, &regMy, 0) == ERROR_SUCCESS;
 	else
@@ -213,6 +215,8 @@ SettingsINI::~SettingsINI()
 
 bool SettingsINI::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
 {
+	_ASSERTE(!gpConEmu->IsResetBasicSettings() || !(access & KEY_WRITE));
+
 	SafeFree(mpsz_Section);
 
 	if (!regPath || !*regPath)
@@ -502,6 +506,8 @@ bool SettingsXML::IsXmlAllowed()
 
 bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
 {
+	_ASSERTE(!gpConEmu->IsResetBasicSettings() || !(access & KEY_WRITE));
+
 	bool lbRc = false;
 	HRESULT hr = S_OK;
 	wchar_t szErr[512]; szErr[0] = 0;

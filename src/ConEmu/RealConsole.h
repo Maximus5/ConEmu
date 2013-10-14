@@ -376,6 +376,7 @@ class CRealConsole
 
 		void StopSignal();
 		void StopThread(BOOL abRecreating=FALSE);
+		void StartStopXTerm(DWORD nPID, bool xTerm);
 		bool InScroll();
 		BOOL isBufferHeight();
 		BOOL isAlternative();
@@ -506,8 +507,8 @@ class CRealConsole
 		bool isNtvdm();
 		//bool isPackets();
 		const RConStartArgs& GetArgs();
-		LPCWSTR GetCmd();
-		LPCWSTR GetDir();
+		LPCWSTR GetCmd(bool bThisOnly = false);
+		LPCWSTR GetStartupDir();
 		wchar_t* CreateCommandLine(bool abForTasks = false);
 		BOOL GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, BOOL* pbRestricted);
 		short GetProgress(int* rpnState/*1-error,2-ind*/, BOOL* rpbNotFromTitle = NULL);
@@ -636,12 +637,13 @@ class CRealConsole
 		BOOL mb_StartResult, mb_WaitingRootStartup;
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
+		wchar_t ms_ProfilePathTemp[MAX_PATH+1];
 		BOOL mb_WasStartDetached;
 		wchar_t ms_RootProcessName[MAX_PATH];
 		int mn_RootProcessIcon;
 		// Replace in asCmd some env.vars (!ConEmuBackHWND! and so on)
-		wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
-		wchar_t* mpsz_CmdBuffer;
+		//wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
+		//wchar_t* mpsz_CmdBuffer;
 		//BOOL mb_AdminShieldChecked;
 		//wchar_t* ms_SpecialCmd;
 		//BOOL mb_RunAsAdministrator;
@@ -724,7 +726,7 @@ class CRealConsole
 		wchar_t    ms_RenameFirstTab[MAX_RENAME_TAB_LEN/*128*/];
 		MSection   msc_Tabs;
 		int mn_tabsCount, mn_MaxTabs, mn_ActiveTab;
-		BOOL mb_TabsWasChanged;
+		bool mb_TabsWasChanged;
 		void CheckPanelTitle();
 		//
 		//void ProcessAdd(DWORD addPID);
@@ -809,6 +811,12 @@ class CRealConsole
 		void OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout);
 		void OnStartedSuccess();
 		BOOL mb_RConStartedSuccess;
+		//
+		struct TermEmulation
+		{
+			DWORD nCallTermPID; // PID процесса запросившего эмул€цию терминала
+			TermEmulationType Term;
+		} m_Term;
 		//
 		BOOL PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName);
 		HANDLE PrepareOutputFileCreate(wchar_t* pszFilePathName);

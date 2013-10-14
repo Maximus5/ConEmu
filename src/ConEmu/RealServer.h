@@ -81,5 +81,6 @@ protected:
 	CESERVER_REQ* cmdRenameTab(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdSetProgress(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdExportEnvVarAll(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+	CESERVER_REQ* cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	//CESERVER_REQ* cmdAssert(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 };

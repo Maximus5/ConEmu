@@ -77,7 +77,6 @@ bool IsModuleValid(HMODULE module);
 typedef struct tagPROCESSENTRY32W PROCESSENTRY32W;
 bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
 bool isTerminalMode();
-bool IsFarExe(LPCWSTR asModuleName);
 
 void RemoveOldComSpecC();
 const wchar_t* PointToName(const wchar_t* asFullPath);
@@ -87,11 +86,6 @@ const wchar_t* Unquote(wchar_t* asParm);
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount);
 wchar_t* ExpandEnvStr(LPCWSTR pszCommand);
 wchar_t* GetFullPathNameEx(LPCWSTR asPath);
-
-BOOL IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars = NULL);
-BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQuot,
-			   wchar_t (&szExe)[MAX_PATH+1],
-			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit);
 
 //BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1]);
 

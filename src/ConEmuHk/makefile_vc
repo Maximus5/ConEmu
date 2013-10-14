@@ -54,6 +54,7 @@ $(OBJDIR)\ShellProcessor.obj \
 $(OBJDIR)\WinConsole.obj \
 $(OBJDIR)\WinObjects.obj \
 $(OBJDIR)\ConEmuCheck.obj \
+$(OBJDIR)\CmdLine.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\InQueue.obj \
 $(OBJDIR)\MAssert.obj \
@@ -267,6 +268,8 @@ clean:
 $(OBJDIR)\Entry.obj: Entry.cpp ../common/PipeServer.h
 
 $(OBJDIR)\Injects.obj: Injects.cpp Console2.h
+
+$(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
 
 $(OBJDIR)\Common.obj: ../common/Common.cpp
 

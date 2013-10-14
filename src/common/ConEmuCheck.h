@@ -72,6 +72,8 @@ HWND GetConEmuHWND(int aiType);
 
 // hConEmuWnd - HWND с отрисовкой!
 void SetConEmuEnvVar(HWND hConEmuWnd);
+void SetConEmuEnvVarChild(HWND hDcWnd, HWND hBackWnd);
+void SetConEmuEnvHWND(LPCWSTR pszVarName, HWND hWnd);
 
 //LPCWSTR CreatePipeName(wchar_t (&szGuiPipeName)[128], LPCWSTR asFormat, DWORD anValue);
 int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBtns);

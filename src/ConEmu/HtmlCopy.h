@@ -26,14 +26,41 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/*
+Sample
+
+Version:0.9
+StartHTML:0000000???
+EndHTML:0000000???
+StartFragment:0000000???
+EndFragment:0000000???
+SourceURL:https://e.mail.ru/compose/...
+<html>
+<body>
+<!--StartFragment-->
+<span style="color: rgb(255, 255, 255); font-family: 'comic sans ms', sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(23, 59, 211); display: inline !important; float: none;">
+Text
+</span>
+<!--EndFragment-->
+</body>
+</html>
+
+*/
+
 #pragma once
 
 class CHtmlCopy
 {
 protected:
+	bool bPlainHtml;
 	struct txt {
 		INT_PTR nLen;
-		char* psz;
+		union
+		{
+			char* pasz;
+			wchar_t* pwsz;
+			void* ptr;
+		};
 	};
 	MArray<txt> m_Items; // UTF-8
 	size_t mn_AllItemsLen, mn_TextStart, mn_TextEnd;
@@ -53,10 +80,12 @@ public:
 	{
 		mcr_Fore = 7; mcr_Back = 0; mn_AllItemsLen = 0; mb_Finalized = mb_ParOpened = false;
 		mn_TextStart = 0; mn_TextEnd = 0;
+		bPlainHtml = false;
 	}
 
-	void Init(LPCWSTR asBuild, LPCWSTR asFont, COLORREF crFore, COLORREF crBack)
+	void Init(bool abPlainHtml, LPCWSTR asBuild, LPCWSTR asFont, int anFontHeight, COLORREF crFore, COLORREF crBack)
 	{
+		bPlainHtml = abPlainHtml;
 		LPCWSTR pszHtml = L"<!DOCTYPE>\r\n"
 			L"<HTML>\r\n"
 			L"<HEAD>\r\n"
@@ -72,15 +101,15 @@ public:
 
 		mn_TextStart = mn_AllItemsLen; mn_TextEnd = 0;
 		_wsprintf(szTemp, SKIPLEN(countof(szTemp))
-			L"<DIV class=\"%s\" style=\"font-family:%s;background-color: %s; color: %s\">\r\n",
-			asBuild, asFont, FormatColor(crBack, szBack), FormatColor(crFore, szFore));
+			L"<DIV class=\"%s\" style=\"font-family: '%s'; font-size: %upx; background-color: %s; color: %s; text-align: start; text-indent: 0px;\">\r\n",
+			asBuild, asFont, anFontHeight, FormatColor(crBack, szBack), FormatColor(crFore, szFore));
 		RawAdd(szTemp, _tcslen(szTemp));
 	};
 
 	~CHtmlCopy()
 	{
 		for (int i = 0; i < m_Items.size(); i++)
-			free(m_Items[i].psz);
+			free(m_Items[i].ptr);
 		m_Items.clear();
 	};
 
@@ -236,19 +265,31 @@ public:
 	void RawAdd(LPCWSTR asText, INT_PTR cchLen)
 	{
 		//TODO("Optimization?");
-		int nUtfLen = WideCharToMultiByte(CP_UTF8, 0, asText, cchLen, szUTF8, countof(szUTF8)-1, 0, 0);
-		if (nUtfLen > 0)
+		if (bPlainHtml)
 		{
-			txt t = {nUtfLen};
-			t.psz = (char*)malloc(nUtfLen+1);
-			memmove(t.psz, szUTF8, nUtfLen);
-			t.psz[nUtfLen] = 0;
+			txt t = {cchLen};
+			t.pwsz = (wchar_t*)malloc((cchLen+1)*sizeof(wchar_t));
+			wmemmove(t.pwsz, asText, cchLen);
+			t.pwsz[cchLen] = 0;
 			m_Items.push_back(t);
-			mn_AllItemsLen += nUtfLen;
+			mn_AllItemsLen += cchLen;
+		}
+		else
+		{
+			int nUtfLen = WideCharToMultiByte(CP_UTF8, 0, asText, cchLen, szUTF8, countof(szUTF8)-1, 0, 0);
+			if (nUtfLen > 0)
+			{
+				txt t = {nUtfLen};
+				t.pasz = (char*)malloc(nUtfLen+1);
+				memmove(t.pasz, szUTF8, nUtfLen);
+				t.pasz[nUtfLen] = 0;
+				m_Items.push_back(t);
+				mn_AllItemsLen += nUtfLen;
+			}
 		}
 	};
 
-	HGLOBAL CreateResult(bool abAddFormatHdr)
+	HGLOBAL CreateResult()
 	{
 		if (!mb_Finalized)
 		{
@@ -262,60 +303,88 @@ public:
 			RawAdd(pszFin, _tcslen(pszFin));
 		}
 
-		char szHdr[200];
+		char szHdr[255];
 		INT_PTR nHdrLen = 0;
-		if (abAddFormatHdr)
+		if (!bPlainHtml)
 		{
 			// First, we need to calculate header len
-			LPCSTR pszHdrFmt = "Version:1.0\r\nStartHTML:%09u\r\nEndHTML:%09u\r\nStartFragment:%09u\r\nEndFragment:%09u\r\nStartSelection:%09u\r\nEndSelection:%09u\r\n";
-			_wsprintfA(szHdr, SKIPLEN(countof(szHdr)) pszHdrFmt, 0,0,0,0,0,0);
+			LPCSTR pszURL = CEHOMEPAGE_A;
+			LPCSTR pszHdrFmt = "Version:1.0\r\n"
+					"StartHTML:%09u\r\n"
+					"EndHTML:%09u\r\n"
+					"StartFragment:%09u\r\n"
+					"EndFragment:%09u\r\n"
+					"StartSelection:%09u\r\n"
+					"EndSelection:%09u\r\n"
+					"SourceURL:%s\r\n";
+			_wsprintfA(szHdr, SKIPLEN(countof(szHdr)) pszHdrFmt, 0,0,0,0,0,0, pszURL);
 			nHdrLen = strlen(szHdr);
 			// Calculate positions
 			_wsprintfA(szHdr, SKIPLEN(countof(szHdr)) pszHdrFmt,
 				(UINT)(nHdrLen), (UINT)(nHdrLen+mn_AllItemsLen),
 				(UINT)(nHdrLen+mn_TextStart), (UINT)(nHdrLen+mn_TextEnd),
-				(UINT)(nHdrLen+mn_TextStart), (UINT)(nHdrLen+mn_TextEnd));
+				(UINT)(nHdrLen+mn_TextStart), (UINT)(nHdrLen+mn_TextEnd),
+				pszURL);
 			_ASSERTE(nHdrLen == strlen(szHdr));
 		}
 
 		INT_PTR nCharCount = (nHdrLen/*Header*/ + mn_AllItemsLen + 3);
-		HGLOBAL hUTF = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, nCharCount+1);
+		HGLOBAL hCopy = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, (nCharCount+1)*(bPlainHtml ? sizeof(wchar_t) : sizeof(char)));
 
-		if (!hUTF)
+		if (!hCopy)
 		{
-			Assert(hUTF != NULL);
+			Assert(hCopy != NULL);
 		}
-		else
+		else if (bPlainHtml)
 		{
-			char *pch = (char*)GlobalLock(hUTF);
+			wchar_t *pch = (wchar_t*)GlobalLock(hCopy);
 			if (!pch)
 			{
 				Assert(pch != NULL);
-				GlobalFree(hUTF);
-				hUTF = NULL;
+				GlobalFree(hCopy);
+				hCopy = NULL;
 			}
 			else
 			{
-				if (abAddFormatHdr)
-				{
-					memmove(pch, szHdr, nHdrLen);
-					pch += nHdrLen;
-				}
-				
 				for (int i = 0; i < m_Items.size(); i++)
 				{
 					txt t = m_Items[i];
-					memmove(pch, t.psz, t.nLen);
+					wmemmove(pch, t.pwsz, t.nLen);
 					pch += t.nLen;
 				}
 
 				*pch = 0;
 
-				GlobalUnlock(hUTF);
+				GlobalUnlock(hCopy);
 			}
+		}
+		else
+		{
+			char *pch = (char*)GlobalLock(hCopy);
+			if (!pch)
+			{
+				Assert(pch != NULL);
+				GlobalFree(hCopy);
+				hCopy = NULL;
+			}
+			else
+			{
+				memmove(pch, szHdr, nHdrLen);
+				pch += nHdrLen;
+				
+				for (int i = 0; i < m_Items.size(); i++)
+				{
+					txt t = m_Items[i];
+					memmove(pch, t.pasz, t.nLen);
+					pch += t.nLen;
+				}
 
+				*pch = 0;
+
+				GlobalUnlock(hCopy);
+			}
 		}
 
-		return hUTF;
+		return hCopy;
 	}
 };

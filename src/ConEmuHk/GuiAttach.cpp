@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UserImp.h"
 #include "GuiAttach.h"
 #include "../common/common.hpp"
+#include "../common/CmdLine.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/WinObjects.h"
 

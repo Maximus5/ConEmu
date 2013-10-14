@@ -163,13 +163,16 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	//mn_LastRgnFlags = -1;
 	m_ConsoleKeyShortcuts = 0;
 	memset(Title,0,sizeof(Title)); memset(TitleCmp,0,sizeof(TitleCmp));
-	mn_tabsCount = 0; ms_PanelTitle[0] = 0; mn_ActiveTab = 0;
-	mn_MaxTabs = 20; mb_TabsWasChanged = FALSE;
+	mn_tabsCount = 0;
+	ms_PanelTitle[0] = 0;
+	mn_ActiveTab = 0;
+	mn_MaxTabs = 20;
+	mb_TabsWasChanged = false;
 	mp_tabs = (ConEmuTab*)Alloc(mn_MaxTabs, sizeof(ConEmuTab));
+	_ASSERTE(mp_tabs!=NULL);
 	
 	lstrcpyn(ms_RenameFirstTab, args->pszRenameTab ? args->pszRenameTab : L"", countof(ms_RenameFirstTab));
 
-	_ASSERTE(mp_tabs!=NULL);
 	//memset(&m_PacketQueue, 0, sizeof(m_PacketQueue));
 	mn_FlushIn = mn_FlushOut = 0;
 	mb_MouseButtonDown = FALSE;
@@ -223,7 +226,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	//mh_CursorChanged = NULL;
 	//mb_Detached = FALSE;
 	//m_Args.pszSpecialCmd = NULL; -- не требуется
-	mpsz_CmdBuffer = NULL;
+	//mpsz_CmdBuffer = NULL;
 	mb_FullRetrieveNeeded = FALSE;
 	//mb_AdminShieldChecked = FALSE;
 	ZeroStruct(m_LastMouse);
@@ -388,8 +391,12 @@ CRealConsole::~CRealConsole()
 
 
 	if (mp_tabs) Free(mp_tabs);
-
-	mp_tabs = NULL; mn_tabsCount = 0; mn_ActiveTab = 0; mn_MaxTabs = 0;
+	mp_tabs = NULL;
+	mn_MaxTabs = 0;
+	
+	mn_ActiveTab = 0;
+	mn_tabsCount = 0;
+	
 	//
 	CloseLogFiles();
 
@@ -405,7 +412,7 @@ CRealConsole::~CRealConsole()
 	CloseMapHeader(); // CloseMapData() & CloseFarMapData() зовет сам CloseMapHeader
 	CloseColorMapping(); // Colorer data
 
-	SafeFree(mpsz_CmdBuffer);
+	//SafeFree(mpsz_CmdBuffer);
 
 	//if (mp_Rgn)
 	//{
@@ -2740,49 +2747,85 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 	}
 }
 
-wchar_t* CRealConsole::ParseConEmuSubst(LPCWSTR asCmd)
-{
-	if (!this || !mp_VCon || !asCmd || !*asCmd)
-		return NULL;
-
-	wchar_t* pszChange = lstrdup(asCmd);
-	LPCWSTR szNames[] = {ENV_CONEMUHWND_VAR_W, ENV_CONEMUDRAW_VAR_W, ENV_CONEMUBACK_VAR_W};
-	HWND hWnd[] = {ghWnd, mp_VCon->GetView(), mp_VCon->GetBack()};
-	bool bChanged = false;
-
-	for (size_t i = 0; i < countof(szNames); ++i)
-	{
-		wchar_t szReplace[16];
-		_wsprintf(szReplace, SKIPLEN(countof(szReplace)) L"0x%08X", (DWORD)(DWORD_PTR)(hWnd[i]));
-		size_t rLen = _tcslen(szReplace); _ASSERTE(rLen==10);
-
-		size_t iLen = _tcslen(szNames[i]); _ASSERTE(iLen>=rLen);
-
-		wchar_t* pszStart = StrStrI(pszChange, szNames[i]);
-		if (!pszStart || pszStart == pszChange)
-			continue;
-		while (pszStart)
-		{
-			if ((pszStart > pszChange)
-				&& ((*(pszStart-1) == L'!' && *(pszStart+iLen) == L'!')
-					|| (*(pszStart-1) == L'%' && *(pszStart+iLen) == L'%')))
-			{
-				bChanged = true;
-				pszStart--;
-				memmove(pszStart, szReplace, rLen*sizeof(*szReplace));
-				wchar_t* pszEnd = pszStart + iLen+2;
-				_ASSERTE(*(pszEnd-1)==L'!' || *(pszEnd-1)==L'%');
-				size_t cchLeft = _tcslen(pszEnd)+1;
-				memmove(pszStart+rLen, pszEnd, cchLeft*sizeof(*pszEnd));
-			}
-			pszStart = StrStrI(pszStart+2, szNames[i]);
-		}
-	}
-
-	if (!bChanged)
-		SafeFree(pszChange);
-	return pszChange;
-}
+//// Заменить подстановки вида: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
+//wchar_t* CRealConsole::ParseConEmuSubst(LPCWSTR asCmd)
+//{
+//	if (!this || !mp_VCon || !asCmd || !*asCmd)
+//		return NULL;
+//
+//	size_t cchMax = _tcslen(asCmd) + 1;
+//
+//	// Прикинуть, сколько путей нужно будет заменять
+//	size_t nPathCount = 0;
+//	wchar_t* pszCount = StrStrI(asCmd, ENV_CONEMUWORKDIR_VAR_W);
+//	while (pszCount)
+//	{
+//		nPathCount++;
+//		pszCount = StrStrI(pszCount+_tcslen(ENV_CONEMUWORKDIR_VAR_W), ENV_CONEMUWORKDIR_VAR_W);
+//	}
+//	LPCWSTR pszStartupDir = NULL;
+//	if (nPathCount > 0)
+//	{
+//		pszStartupDir = GetStartupDir();
+//		cchMax += _tcslen(pszStartupDir)*nPathCount;
+//	}
+//
+//
+//	wchar_t* pszChange = (wchar_t*)calloc(cchMax, sizeof(*pszChange)); //lstrdup(asCmd);
+//	_wcscpy_c(pszChange, cchMax, asCmd);
+//	LPCWSTR szNames[] = {ENV_CONEMUHWND_VAR_W, ENV_CONEMUDRAW_VAR_W, ENV_CONEMUBACK_VAR_W, ENV_CONEMUWORKDIR_VAR_W};
+//	struct { HWND hWnd; LPCWSTR pszStr; } Repl[] = {{ghWnd}, {mp_VCon->GetView()}, {mp_VCon->GetBack()}, {NULL, pszStartupDir}};
+//	bool bChanged = false;
+//
+//	for (size_t i = 0; i < countof(szNames); ++i)
+//	{
+//		wchar_t szTemp[16];
+//		LPCWSTR pszReplace = NULL;
+//		if (Repl[i].hWnd)
+//		{
+//			_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"0x%08X", (DWORD)(DWORD_PTR)(Repl[i].hWnd));
+//			pszReplace = szTemp;
+//		}
+//		else if (Repl[i].pszStr)
+//		{
+//			pszReplace = Repl[i].pszStr;
+//		}
+//		else
+//		{
+//			continue;
+//		}
+//
+//		size_t rLen = _tcslen(pszReplace); _ASSERTE(rLen==10 || Repl[i].pszStr!=NULL);
+//
+//		size_t iLen = _tcslen(szNames[i]); _ASSERTE(iLen>=rLen || Repl[i].pszStr!=NULL);
+//
+//		wchar_t* pszStart = StrStrI(pszChange, szNames[i]);
+//		if (!pszStart /*|| pszStart == pszChange*/)
+//			continue;
+//		while (pszStart)
+//		{
+//			if ((pszStart > pszChange)
+//				&& ((*(pszStart-1) == L'!' && *(pszStart+iLen) == L'!')
+//					|| (*(pszStart-1) == L'%' && *(pszStart+iLen) == L'%')))
+//			{
+//				bChanged = true;
+//				pszStart--;
+//				wchar_t* pszEnd = pszStart + iLen+2;
+//				_ASSERTE(*(pszEnd-1)==L'!' || *(pszEnd-1)==L'%');
+//
+//				size_t cchLeft = _tcslen(pszEnd)+1;
+//				// Сначала - двигаем хвост, т.к. тело может быть перетерто, если rLen>iLen
+//				memmove(pszStart+rLen, pszEnd, cchLeft*sizeof(*pszEnd));
+//				memmove(pszStart, pszReplace, rLen*sizeof(*pszReplace));
+//			}
+//			pszStart = StrStrI(pszStart+2, szNames[i]);
+//		}
+//	}
+//
+//	if (!bChanged)
+//		SafeFree(pszChange);
+//	return pszChange;
+//}
 
 void CRealConsole::OnStartProcessAllowed()
 {
@@ -2950,6 +2993,51 @@ void CRealConsole::ConHostSetPID(DWORD nConHostPID)
 	}
 }
 
+LPCWSTR CRealConsole::GetStartupDir()
+{
+	LPCWSTR pszStartupDir = m_Args.pszStartupDir;
+
+	if (m_Args.pszUserName != NULL)
+	{
+		// When starting under another credentials - try to use %USERPROFILE% instead of "system32"
+		if (!pszStartupDir || !*pszStartupDir)
+		{
+			HANDLE hLogonToken = m_Args.CheckUserToken();
+			if (hLogonToken)
+			{
+				HRESULT hr = E_FAIL;
+
+				// Windows 2000 - hLogonToken - not supported
+				if (gOSVer.dwMajorVersion <= 5 && gOSVer.dwMinorVersion == 0)
+				{
+					if (ImpersonateLoggedOnUser(hLogonToken))
+					{
+						memset(ms_ProfilePathTemp, 0, sizeof(ms_ProfilePathTemp));
+						hr = SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, SHGFP_TYPE_CURRENT, ms_ProfilePathTemp);
+						RevertToSelf();
+					}
+				}
+				else
+				{
+					memset(ms_ProfilePathTemp, 0, sizeof(ms_ProfilePathTemp));
+					hr = SHGetFolderPath(NULL, CSIDL_PROFILE, hLogonToken, SHGFP_TYPE_CURRENT, ms_ProfilePathTemp);
+				}
+
+				if (SUCCEEDED(hr) && *ms_ProfilePathTemp)
+				{
+					pszStartupDir = ms_ProfilePathTemp;
+				}
+
+				CloseHandle(hLogonToken);
+			}
+		}
+	}
+
+	LPCWSTR lpszWorkDir = gpConEmu->WorkDir(pszStartupDir);
+
+	return lpszWorkDir;
+}
+
 BOOL CRealConsole::StartProcess()
 {
 	if (!this)
@@ -2965,6 +3053,8 @@ BOOL CRealConsole::StartProcess()
 
 	BOOL lbRc = FALSE;
 	SetConStatus(L"Preparing process startup line...", true);
+
+	SetConEmuEnvVarChild(mp_VCon->GetView(), mp_VCon->GetBack());
 
 	// Для валидации объектов
 	CVirtualConsole* pVCon = mp_VCon;
@@ -3098,9 +3188,10 @@ BOOL CRealConsole::StartProcess()
 	// Prepare cmd line
 	LPCWSTR lpszRawCmd = (m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd) ? m_Args.pszSpecialCmd : gpSetCls->GetCmd();
 	_ASSERTE(lpszRawCmd && *lpszRawCmd);
-	SafeFree(mpsz_CmdBuffer);
-	mpsz_CmdBuffer = ParseConEmuSubst(lpszRawCmd);
-	LPCWSTR lpszCmd = mpsz_CmdBuffer ? mpsz_CmdBuffer : lpszRawCmd;
+	//SafeFree(mpsz_CmdBuffer);
+	//mpsz_CmdBuffer = ParseConEmuSubst(lpszRawCmd);
+	//LPCWSTR lpszCmd = mpsz_CmdBuffer ? mpsz_CmdBuffer : lpszRawCmd;
+	LPCWSTR lpszCmd = lpszRawCmd;
 	LPCWSTR lpszWorkDir = NULL;
 	
 	DWORD nCreateBegin, nCreateEnd, nCreateDuration = 0;
@@ -3237,41 +3328,11 @@ BOOL CRealConsole::StartProcess()
 
 			if (m_Args.pszUserName != NULL)
 			{
-				// When starting under another credentials - try to use %USERPROFILE% instead of "system32"
-				LPCWSTR pszStartupDir = m_Args.pszStartupDir;
-				wchar_t szProfilePath[MAX_PATH+1] = {};
-				if (!pszStartupDir || !*pszStartupDir)
-				{
-					HANDLE hLogonToken = m_Args.CheckUserToken();
-					if (hLogonToken)
-					{
-						HRESULT hr = E_FAIL;
-
-						// Windows 2000 - hLogonToken - not supported
-						if (gOSVer.dwMajorVersion <= 5 && gOSVer.dwMinorVersion == 0)
-						{
-							if (ImpersonateLoggedOnUser(hLogonToken))
-							{
-								hr = SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, SHGFP_TYPE_CURRENT, szProfilePath);
-								RevertToSelf();
-							}
-						}
-						else
-						{
-							hr = SHGetFolderPath(NULL, CSIDL_PROFILE, hLogonToken, SHGFP_TYPE_CURRENT, szProfilePath);
-						}
-
-						if (SUCCEEDED(hr) && *szProfilePath)
-						{
-							pszStartupDir = szProfilePath;
-						}
-
-						CloseHandle(hLogonToken);
-					}
-				}
-
 				nCreateBegin = GetTickCount();
-				lpszWorkDir = gpConEmu->WorkDir(pszStartupDir);
+
+				// When starting under another credentials - try to use %USERPROFILE% instead of "system32"
+				lpszWorkDir = GetStartupDir();
+				
 				lbRc = CreateProcessWithLogonW(m_Args.pszUserName, m_Args.pszDomain, m_Args.szUserPassword,
 				                           LOGON_WITH_PROFILE, NULL, psCurCmd,
 				                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
@@ -3295,7 +3356,7 @@ BOOL CRealConsole::StartProcess()
 			else if (m_Args.bRunAsRestricted)
 			{
 				nCreateBegin = GetTickCount();
-				lpszWorkDir = gpConEmu->WorkDir(m_Args.pszStartupDir);
+				lpszWorkDir = GetStartupDir();
 				lbRc = CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
 				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 				                        , NULL, lpszWorkDir, &si, &pi, &dwLastError);
@@ -3311,7 +3372,7 @@ BOOL CRealConsole::StartProcess()
 			else
 			{
 				nCreateBegin = GetTickCount();
-				lpszWorkDir = gpConEmu->WorkDir(m_Args.pszStartupDir);
+				lpszWorkDir = GetStartupDir();
 				lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE,
 				                     NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 				                     //|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
@@ -3336,7 +3397,7 @@ BOOL CRealConsole::StartProcess()
 			//if (m_Args.hLogonToken) { CloseHandle(m_Args.hLogonToken); m_Args.hLogonToken = NULL; }
 			LockSetForegroundWindow(LSFW_UNLOCK);
 		}
-		else
+		else // m_Args.bRunAsAdministrator
 		{
 			LPCWSTR pszCmd = psCurCmd;
 			wchar_t szExec[MAX_PATH+1];
@@ -3356,7 +3417,7 @@ BOOL CRealConsole::StartProcess()
 
 				wchar_t szCurrentDirectory[MAX_PATH+1];
 
-				lpszWorkDir = gpConEmu->WorkDir(m_Args.pszStartupDir);
+				lpszWorkDir = GetStartupDir();
 				wcscpy(szCurrentDirectory, lpszWorkDir);
 
 				int nWholeSize = sizeof(SHELLEXECUTEINFO)
@@ -3449,35 +3510,45 @@ BOOL CRealConsole::StartProcess()
 		//DWORD dwLastError = GetLastError();
 		DEBUGSTRPROC(L"CreateProcess failed\n");
 		size_t nErrLen = _tcslen(psCurCmd)+100+(lpszWorkDir ? _tcslen(lpszWorkDir) : 0);
-		TCHAR* pszErr = (TCHAR*)Alloc(nErrLen,sizeof(TCHAR));
 
+		// Get description of 'dwLastError'
+		size_t cchFormatMax = 1024;
+		TCHAR* pszErr = (TCHAR*)Alloc(cchFormatMax,sizeof(TCHAR));
 		if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		                    NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-		                    pszErr, 1024, NULL))
+		                    pszErr, cchFormatMax, NULL))
 		{
-			_wsprintf(pszErr, SKIPLEN(nErrLen) L"Unknown system error: 0x%x", dwLastError);
+			_wsprintf(pszErr, SKIPLEN(cchFormatMax) L"Unknown system error: 0x%x", dwLastError);
 		}
 
 		nErrLen += _tcslen(pszErr);
-		TCHAR* psz = (TCHAR*)Alloc(nErrLen+100,sizeof(TCHAR));
+		TCHAR* psz = (TCHAR*)Alloc(nErrLen+255,sizeof(TCHAR));
 		int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
-		_wcscpy_c(psz, nErrLen, _T("Command execution failed\n\n"));
-		_wcscat_c(psz, nErrLen, psCurCmd);
-		_wcscat_c(psz, nErrLen, _T("\n\nWorking folder:"));
-		_wcscat_c(psz, nErrLen, lpszWorkDir ? lpszWorkDir : L"");
-		_wcscat_c(psz, nErrLen, _T("\n\n"));
+		switch (dwLastError)
+		{
+		case ERROR_ACCESS_DENIED:
+			_wsprintf(psz, SKIPLEN(nErrLen) L"Can't create new console, check your antivirus (code 0x%x)!\r\n", dwLastError); break;
+		default:
+			_wsprintf(psz, SKIPLEN(nErrLen) L"Can't create new console, command execution failed (code 0x%x)\r\n", dwLastError);
+		}
 		_wcscat_c(psz, nErrLen, pszErr);
+		_wcscat_c(psz, nErrLen, L"\r\n\r\n");
+		_wcscat_c(psz, nErrLen, psCurCmd);
+		_wcscat_c(psz, nErrLen, L"\r\n\r\nWorking folder:");
+		_wcscat_c(psz, nErrLen, lpszWorkDir ? lpszWorkDir : L"");
+		
+		
 
 		if (m_Args.pszSpecialCmd == NULL)
 		{
-			if (psz[_tcslen(psz)-1]!=_T('\n')) _wcscat_c(psz, nErrLen, _T("\n"));
+			if (psz[_tcslen(psz)-1]!=L'\n') _wcscat_c(psz, nErrLen, L"\r\n");
 
 			if (!gpSetCls->GetCurCmd() && StrStrI(gpSetCls->GetCmd(), gpSetCls->GetDefaultCmd())==NULL)
 			{
-				_wcscat_c(psz, nErrLen, _T("\n\n"));
-				_wcscat_c(psz, nErrLen, _T("Do You want to simply start "));
+				_wcscat_c(psz, nErrLen, L"\r\n\r\n");
+				_wcscat_c(psz, nErrLen, L"Do You want to start ");
 				_wcscat_c(psz, nErrLen, gpSetCls->GetDefaultCmd());
-				_wcscat_c(psz, nErrLen, _T("?"));
+				_wcscat_c(psz, nErrLen, L"?");
 				nButtons |= MB_YESNO;
 			}
 		}
@@ -4525,6 +4596,19 @@ void CRealConsole::StopSignal()
 	}
 }
 
+void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
+{
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"StartStopXTerm(nPID=%u, xTerm=%u)", nPID, (UINT)xTerm);
+		LogString(szInfo);
+	}
+
+	m_Term.nCallTermPID = nPID;
+	m_Term.Term = xTerm ? te_xterm : te_win32;
+}
+
 void CRealConsole::StopThread(BOOL abRecreating)
 {
 #ifdef _DEBUG
@@ -5045,14 +5129,16 @@ void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, con
 
 	r.Event.KeyEvent.dwControlKeyState = gpConEmu->GetControlKeyState(lParam);
 
-	if ((mn_LastVKeyPressed == VK_ESCAPE)
-		&& (gpSet->isMapShiftEscToEsc && (gpSet->isMultiMinByEsc == 1))
-		&& ((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) == SHIFT_PRESSED))
+	if (mn_LastVKeyPressed == VK_ESCAPE)
 	{
-		// When enabled feature "Minimize by Esc always"
-		// we need easy way to send simple "Esc" to console
-		// There is an option for this: Map Shift+Esc to Esc
-		r.Event.KeyEvent.dwControlKeyState &= ~ALL_MODIFIERS;
+		if ((gpSet->isMapShiftEscToEsc && (gpSet->isMultiMinByEsc == 1))
+			&& ((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) == SHIFT_PRESSED))
+		{
+			// When enabled feature "Minimize by Esc always"
+			// we need easy way to send simple "Esc" to console
+			// There is an option for this: Map Shift+Esc to Esc
+			r.Event.KeyEvent.dwControlKeyState &= ~ALL_MODIFIERS;
+		}
 	}
 
 	#ifdef _DEBUG
@@ -5075,6 +5161,73 @@ void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, con
 		//if (dwFarPID)
 		AllowSetForegroundWindow(mn_FarPID);
 		mn_LastSetForegroundPID = mn_FarPID;
+	}
+
+	// Эмуляция терминала?
+	static struct xTermKey {
+		UINT vk;
+		wchar_t szKeys[16];
+	} xTermKeys[] = {
+		// From vim "term.c"
+		{VK_UP,		L"\033O*A"},
+		{VK_DOWN,	L"\033O*B"},
+		{VK_RIGHT,	L"\033O*C"},
+		{VK_LEFT,	L"\033O*D"},
+		{VK_F1,		L"\033[11;*~"},
+		{VK_F2,		L"\033[12;*~"},
+		{VK_F3,		L"\033[13;*~"},
+		{VK_F4,		L"\033[14;*~"},
+		{VK_F5,		L"\033[15;*~"},
+		{VK_F6,		L"\033[17;*~"},
+		{VK_F7,		L"\033[18;*~"},
+		{VK_F8,		L"\033[19;*~"},
+		{VK_F9,		L"\033[20;*~"},
+		{VK_F10,	L"\033[21;*~"},
+		{VK_F11,	L"\033[23;*~"},
+		{VK_F12,	L"\033[24;*~"},
+		{VK_INSERT,	L"\033[2;*~"},
+		{VK_HOME,	L"\033[1;*H"},
+		{VK_END,	L"\033[1;*F"},
+		{VK_PRIOR,	L"\033[5;*~"},
+		{VK_NEXT,	L"\033[6;*~"},
+		{VK_DELETE,	L"\033[3;*~"}, // ???
+		{0}
+	};
+	xTermKey x = {0};
+	if (m_Term.Term)
+	{
+		// Processed keys?
+		
+		for (int i = 0; xTermKeys[i].vk; i++)
+		{
+			if (xTermKeys[i].vk == r.Event.KeyEvent.wVirtualKeyCode)
+			{
+				x = xTermKeys[i];
+				break;
+			}
+		}
+
+		if (x.vk)
+		{
+			if (!isProcessExist(m_Term.nCallTermPID))
+			{
+				StartStopXTerm(0,false/*te_win32*/);
+			}
+			else if (!r.Event.KeyEvent.bKeyDown)
+			{
+				// only key pressed are sent to terminal
+				return;
+			}
+			else
+			{
+				PostString(x.szKeys, _tcslen(x.szKeys));
+				//pszChars = x.szKeys;
+				//r.Event.KeyEvent.wVirtualScanCode = 0;
+				//r.Event.KeyEvent.wVirtualKeyCode = x.szKeys[0]; // VK_ESCAPE?
+				//r.Event.KeyEvent.uChar.UnicodeChar = x.szKeys[0];
+				return;
+			}
+		}
 	}
 
 	PostConsoleEvent(&r);
@@ -5756,6 +5909,8 @@ void CRealConsole::SetFarStatus(DWORD nNewFarStatus)
 // Вызывается при запуске в консоли ComSpec
 void CRealConsole::SetFarPID(DWORD nFarPID)
 {
+	bool bNeedUpdate = (mn_FarPID != nFarPID);
+
 	if (nFarPID)
 	{
 		if ((mn_ProgramStatus & (CES_FARACTIVE|CES_FARINSTACK)) != (CES_FARACTIVE|CES_FARINSTACK))
@@ -5768,6 +5923,12 @@ void CRealConsole::SetFarPID(DWORD nFarPID)
 	}
 
 	mn_FarPID = nFarPID;
+
+	// Для фара могут быть настроены другие параметры фона и прочего...
+	if (bNeedUpdate)
+	{
+		mp_VCon->Update(true);
+	}
 }
 
 void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
@@ -10252,6 +10413,8 @@ void CRealConsole::OnTitleChanged()
 	#endif
 	
 	wcscpy(Title, TitleCmp);
+	SetWindowText(mp_VCon->GetView(), TitleCmp);
+
 	// Обработка прогресса операций
 	//short nLastProgress = mn_Progress;
 	short nNewProgress;
@@ -10444,21 +10607,16 @@ const RConStartArgs& CRealConsole::GetArgs()
 	return m_Args;
 }
 
-LPCWSTR CRealConsole::GetCmd()
+LPCWSTR CRealConsole::GetCmd(bool bThisOnly /*= false*/)
 {
 	if (!this) return L"";
 
 	if (m_Args.pszSpecialCmd)
 		return m_Args.pszSpecialCmd;
-	else
+	else if (!bThisOnly)
 		return gpSetCls->GetCmd();
-}
-
-LPCWSTR CRealConsole::GetDir()
-{
-	if (!this) return L"";
-
-	return gpConEmu->WorkDir(m_Args.pszStartupDir);
+	else
+		return L"";
 }
 
 wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)

@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TabBar.h"
 #include "TrayIcon.h"
 #include "VConChild.h"
+#include "VConGroup.h"
 #include "VirtualConsole.h"
 
 
@@ -119,16 +120,22 @@ const CONEMUDEFCOLORS DefColors[] =
 		}
 	},
 	{
-		L"<PowerShell>", {
-			0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00562401, 0x00F0EDEE, 0x00C0C0C0,
-			0x00808080, 0x00ff0000, 0x0000FF00, 0x00FFFF00, 0x000000FF, 0x00FF00FF, 0x0000FFFF, 0x00FFFFFF
-		}, {6,5,3,15}
+		L"<Monokai>", {
+			0x00222827, 0x009e5401, 0x0004aa74, 0x00a6831a, 0x003403a7, 0x009c5689, 0x0049b6b6, 0x00cacaca,
+			0x007c7c7c, 0x00f58303, 0x0006d08d, 0x00e5c258, 0x004b04f3, 0x00b87da8, 0x0081cccc, 0x00ffffff
+		}
 	},
 	{
 		L"<Murena scheme>", {
 			0x00000000, 0x00644100, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
 			0x00808080, 0x00ff0000, 0x0076c587, 0x00ffff00, 0x00004bff, 0x00d78ce6, 0x0000ffff, 0x00ffffff
 		}
+	},
+	{
+		L"<PowerShell>", {
+			0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00562401, 0x00F0EDEE, 0x00C0C0C0,
+			0x00808080, 0x00ff0000, 0x0000FF00, 0x00FFFF00, 0x000000FF, 0x00FF00FF, 0x0000FFFF, 0x00FFFFFF
+		}, {6,5,3,15}
 	},
 	{
 		L"<Solarized>", {
@@ -155,7 +162,7 @@ const CONEMUDEFCOLORS DefColors[] =
 		}
 	},
 	{
-		L"<Solarized Me>", {
+		L"<SolarMe>", {
 			0x00E3F6FD, 0x00D5E8EE, 0x00756E58, 0x008C8A77, 0x00164BCB, 0x00C4716C, 0x002F32DC, 0x00586E75,
 			0x00423607, 0x00D28B26, 0x0000BB7E, 0x0098A12A, 0x00837B65, 0x008236D3, 0x000089B5, 0x00362B00
 		}
@@ -179,15 +186,21 @@ const CONEMUDEFCOLORS DefColors[] =
 		}
 	},
 	{
-		L"<xterm>", {
-			0x00000000, 0x00ee0000, 0x0000cd00, 0x00cdcd00, 0x000000cd, 0x00cd00cd, 0x0000cdcd, 0x00e5e5e5,
-			0x007f7f7f, 0x00ff5c5c, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
-		}
-	},
-	{
 		L"<Twilight>", {
 			0x00141414, 0x004c6acf, 0x00619083, 0x0069a8ce, 0x00a68775, 0x009d859b, 0x00b3a605, 0x00d7d7d7,
 			0x00666666, 0x00a68775, 0x004da459, 0x00e6e60a, 0x00520ad8, 0x008b00e6, 0x003eeee1, 0x00e6e6e6
+		}
+	},
+	{
+		L"<Ubuntu>", { // Need to set up backround "picture" with colorfill #300A24
+			0x0036342e, 0x00a46534, 0x00069a4e, 0x009a9806, 0x000000cc, 0x007b5075, 0x0000a0c4, 0x00cfd7d3,
+			0x00535755, 0x00cf9f72, 0x0034e28a, 0x00e2e234, 0x002929ef, 0x00a87fad, 0x004fe9fc, 0x00eceeee			
+		}, {15, 0, 0, 0}, {true, 0x00240A30}
+	},
+	{
+		L"<xterm>", {
+			0x00000000, 0x00ee0000, 0x0000cd00, 0x00cdcd00, 0x000000cd, 0x00cd00cd, 0x0000cdcd, 0x00e5e5e5,
+			0x007f7f7f, 0x00ff5c5c, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
 		}
 	},
 	{
@@ -195,12 +208,6 @@ const CONEMUDEFCOLORS DefColors[] =
 			0x003f3f3f, 0x00af6464, 0x00008000, 0x00808000, 0x00232333, 0x00aa50aa, 0x0000dcdc, 0x00ccdcdc,
 			0x008080c0, 0x00ffafaf, 0x007f9f7f, 0x00d3d08c, 0x007071e3, 0x00c880c8, 0x00afdff0, 0x00ffffff
 		},
-	},
-	{
-		L"<Ubuntu>", { // Need to set up backround "picture" with colorfill #300A24
-			0x0036342e, 0x00a46534, 0x00069a4e, 0x009a9806, 0x000000cc, 0x007b5075, 0x0000a0c4, 0x00cfd7d3,
-			0x00535755, 0x00cf9f72, 0x0034e28a, 0x00e2e234, 0x002929ef, 0x00a87fad, 0x004fe9fc, 0x00eceeee			
-		}, {15, 0, 0, 0}, {true, 0x00240A30}
 	},
 };
 //const DWORD *dwDefColors = DefColors[0].dwDefColors;
@@ -547,12 +554,14 @@ void Settings::InitSettings()
 		_wndX = rcWork.left; _wndY = rcWork.top;
 	}
 	wndCascade = true;
-	isAutoSaveSizePos = false; mb_SizePosAutoSaved = false;
+	isAutoSaveSizePos = false;
+	mb_ExitSettingsAutoSaved = false;
 	isConVisible = false; //isLockRealConsolePos = false;
 	isUseInjects = true; // Fuck... Features or speed. User must choose!
 
 	isSetDefaultTerminal = false;
 	isRegisterOnOsStartup = false;
+	isRegisterOnOsStartupTSA = true;
 	isDefaultTerminalNoInjects = false;
 	nDefaultTerminalConfirmClose = 1 /* Always */;
 	SetDefaultTerminalApps(L"explorer.exe"/* to default value */); // "|"-delimited string -> MSZ
@@ -1000,7 +1009,7 @@ void Settings::FreeCmdTasks()
 	if (StartupTask)
 	{
 		StartupTask->FreePtr();
-		SafeFree(StartupTask);
+		StartupTask = NULL; // освобождается в FreePtr
 	}
 }
 
@@ -1032,7 +1041,23 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 	wcscat_c(szCmdKey, L"\\Tasks");
 	wchar_t* pszCmdKey = szCmdKey+lstrlen(szCmdKey);
 
+
+	{
+		// Таск автозагрузки
+		_wcscpy_c(pszCmdKey, 32, L"\\" AutoStartTaskName);
+		lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
+		if (lbOpened)
+		{
+			LoadCmdTask(reg, StartupTask, -1);
+
+			reg->CloseKey();
+		}
+		// Обязательно вернуть "начальный" путь
+		*pszCmdKey = 0;
+	}
+
 	int NewTasksCount = 0;
+	
 	
 	lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
 	if (lbOpened)
@@ -1073,11 +1098,20 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 	int iCmdMax = 0, iCmdCount = 0;
 
 	wchar_t* pszNameSet = NULL;
-	if (!reg->Load(L"Name", &pszNameSet) || !*pszNameSet)
+	if (iIndex >= 0)
 	{
-		SafeFree(pszNameSet);
-		goto wrap;
+		if (!reg->Load(L"Name", &pszNameSet) || !*pszNameSet)
+		{
+			SafeFree(pszNameSet);
+			goto wrap;
+		}
 	}
+	else
+	{
+		_ASSERTE(&pTask == &StartupTask);
+	}
+
+	_ASSERTE(pTask==NULL);
 
 	pTask = (CommandTasks*)calloc(1, sizeof(CommandTasks));
 	if (!pTask)
@@ -1219,7 +1253,11 @@ bool Settings::SaveCmdTask(SettingsBase* reg, CommandTasks* pTask)
 	int nActive = 0; // 1-based
 	wchar_t szVal[32];
 
-	reg->Save(L"Name", pTask->pszName);
+	if (pTask != StartupTask)
+	{
+		reg->Save(L"Name", pTask->pszName);
+	}
+
 	reg->Save(L"GuiArgs", pTask->pszGuiArgs);
 
 	if (pTask->pszCommands)
@@ -2135,6 +2173,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		reg->Load(L"SetDefaultTerminal", isSetDefaultTerminal);
 		reg->Load(L"SetDefaultTerminalStartup", isRegisterOnOsStartup);
+		reg->Load(L"SetDefaultTerminalStartupTSA", isRegisterOnOsStartupTSA);
 		reg->Load(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
 		reg->Load(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
@@ -2338,8 +2377,8 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		//
 		reg->Load(L"ComSpec.Path", ComSpec.ComspecExplicit, countof(ComSpec.ComspecExplicit));
 		//-- wcscpy_c(ComSpec.ComspecInitial, gpConEmu->ms_ComSpecInitial);
-		// Обработать 32/64 (найти tcc.exe и т.п.)
-		FindComspec(&ComSpec);
+		//// Обработать 32/64 (найти tcc.exe и т.п.)
+		//FindComspec(&ComSpec);
 		//Update Comspec(&ComSpec); --> CSettings::SettingsLoaded
 
 		reg->Load(L"ConsoleTextSelection", isConsoleTextSelection); if (isConsoleTextSelection>2) isConsoleTextSelection = 2;
@@ -2781,22 +2820,33 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 	//gpSetCls->SettingsLoaded();
 }
 
-void Settings::SaveSizePosOnExit()
+void Settings::SaveSettingsOnExit()
 {
-	if (!this || !(isAutoSaveSizePos || mb_StatusSettingsWasChanged))
+	if (!this)
 		return;
 
-	// При закрытии окна крестиком - сохранять только один раз,
-	// а то размер может в процессе закрытия консолей измениться
-	if (mb_SizePosAutoSaved)
+	// При закрытии окна крестиком - сохранять только один раз!
+	// а то размер/таски/настройки могут в процессе закрытия консолей измениться
+	if (mb_ExitSettingsAutoSaved)
 		return;
-	mb_SizePosAutoSaved = true;
+	mb_ExitSettingsAutoSaved = true;
 
-	gpConEmu->LogWindowPos(L"SaveSizePosOnExit");
+	// В некоторых случаях сохранение опций при выходе не допустимо
+	if (!gpConEmu->IsAllowSaveSettingsOnExit())
+		return;
+
+	bool bTaskAutoSave = (nStartType == (rbStartLastTabs - rbStartSingleApp));
+
+	// Смотрим, нужно ли сохранять что-либо при выходе?
+	if (!isAutoSaveSizePos && !mb_StatusSettingsWasChanged && !bTaskAutoSave)
+		return;
+
+	gpConEmu->LogWindowPos(L"SaveSettingsOnExit");
 		
 	SettingsBase* reg = CreateSettings(NULL);
 	if (!reg)
 	{
+		gpConEmu->LogWindowPos(L"SaveSettingsOnExit - FAILED(CreateSettings)");
 		_ASSERTE(reg!=NULL);
 		return;
 	}
@@ -2822,19 +2872,64 @@ void Settings::SaveSizePosOnExit()
 		}
 
 		if (mb_StatusSettingsWasChanged)
+		{
 			SaveStatusSettings(reg);
-		//{
-		//	mb_StatusSettingsWasChanged = false;
-		//	reg->Save(L"StatusBar.Show", isStatusBarShow);
-		//	for (int i = csi_Info; i < csi_Last; i++)
-		//	{
-		//		LPCWSTR pszName = gpConEmu->mp_Status->GetSettingName((CEStatusItems)i);
-		//		if (pszName)
-		//			reg->Save(pszName, isStatusColumnHidden[i]);
-		//	}
-		//}
+		}
+
+		if (bTaskAutoSave)
+		{
+			reg->Save(L"StartType", nStartType);
+		}
 
 		reg->CloseKey();
+
+		// Таски пишутся в отдельный ключ
+		if (bTaskAutoSave)
+		{
+			wchar_t* pszTabs = CVConGroup::GetTasks(NULL);
+			if (pszTabs && *pszTabs)
+			{
+				BOOL lbOpened = FALSE;
+				wchar_t szCmdKey[MAX_PATH+64];
+				wcscpy_c(szCmdKey, gpSetCls->GetConfigPath());
+				wcscat_c(szCmdKey, L"\\Tasks\\");
+				wcscat_c(szCmdKey, AutoStartTaskName);
+				lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
+				if (lbOpened)
+				{
+					if (!StartupTask)
+						StartupTask = (CommandTasks*)calloc(1, sizeof(CommandTasks));
+
+					if (StartupTask)
+					{
+						wchar_t szConfig[300] = L"";
+						LPCWSTR pszConfigName = gpSetCls->GetConfigName();
+						if (pszConfigName && *pszConfigName)
+						{
+							_wsprintf(szConfig, SKIPLEN(countof(szConfig)) L"/config \"%s\"", pszConfigName);
+						}
+						StartupTask->SetGuiArg(szConfig);
+
+					
+						StartupTask->SetCommands(pszTabs);
+					
+
+						SaveCmdTask(reg, StartupTask);
+					}
+
+					reg->CloseKey();
+				}
+				else
+				{
+					gpConEmu->LogWindowPos(L"SaveSettingsOnExit - FAILED(OpenKey(AutoStartTaskName, KEY_WRITE))");
+				}
+			}
+			SafeFree(pszTabs);
+		}
+	}
+	else
+	{
+		gpConEmu->LogWindowPos(L"SaveSettingsOnExit - FAILED(OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))");
 	}
 
 	delete reg;
@@ -3057,6 +3152,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 
 		reg->Save(L"SetDefaultTerminal", isSetDefaultTerminal);
 		reg->Save(L"SetDefaultTerminalStartup", isRegisterOnOsStartup);
+		reg->Save(L"SetDefaultTerminalStartupTSA", isRegisterOnOsStartupTSA);
 		reg->Save(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
 		reg->Save(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
@@ -3178,7 +3274,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ConWnd Y", isUseCurrentSizePos ? gpConEmu->wndY : _wndY);
 		reg->Save(L"16bit Height", ntvdmHeight);
 		reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
-		mb_SizePosAutoSaved = false; // Раз было инициированное пользователей сохранение настроек - сбросим флажок
+		mb_ExitSettingsAutoSaved = false; // Раз было инициированное пользователем сохранение настроек - сбросим флажок
 		reg->Save(L"IntegralSize", mb_IntegralSize);
 		reg->Save(L"QuakeStyle", isQuakeStyle);
 		reg->Save(L"QuakeAnimation", nQuakeAnimation);
@@ -3411,7 +3507,10 @@ int Settings::StatusBarHeight()
 DWORD Settings::isUseClink(bool abCheckVersion /*= false*/)
 {
 	if (!mb_UseClink)
-		return false;
+		return 0;
+
+	if (gpConEmu->IsResetBasicSettings())
+		return 0;
 
 	wchar_t szClink32[MAX_PATH+30], szClink64[MAX_PATH+30];
 	
@@ -3431,7 +3530,7 @@ DWORD Settings::isUseClink(bool abCheckVersion /*= false*/)
 
 	if (!szClink32[0] && !szClink64[0])
 	{
-		return false;
+		return 0;
 	}
 
 	static int nVersionChecked = 0;
@@ -4509,7 +4608,8 @@ const Settings::CommandTasks* Settings::CmdTaskGet(int anIndex)
 {
 	if (anIndex == -1)
 	{
-		_ASSERTE(StartupTask!=NULL);
+		if (!StartupTask)
+			StartupTask = (CommandTasks*)calloc(1, sizeof(CommandTasks));
 		// Создать!
 		return StartupTask;
 	}

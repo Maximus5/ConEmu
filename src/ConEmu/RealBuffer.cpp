@@ -3853,7 +3853,7 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 		}
 
 		//wchar_t szClass[64]; _wsprintf(szClass, SKIPLEN(countof(szClass)) L"ConEmu%s%s", gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x32",L"x64"));
-		html.Init(gpConEmu->ms_ConEmuBuild, gpSet->inFont, crFore, crBack);
+		html.Init((gpSet->isCTSHtmlFormat == 2), gpConEmu->ms_ConEmuBuild, gpSetCls->FontFaceName(), gpSetCls->FontHeightPx(), crFore, crBack);
 	}
 
 
@@ -4042,7 +4042,28 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	// Ready
 	GlobalUnlock(hUnicode);
 	// HTML?
-	HGLOBAL hHtml = bUseHtml ? html.CreateResult(gpSet->isCTSHtmlFormat == 1) : NULL;
+	HGLOBAL hHtml = NULL;
+	if (bUseHtml)
+	{
+		hHtml = html.CreateResult();
+		if (!hHtml)
+		{
+			dwErr = GetLastError();
+			DisplayLastError(L"Creating HTML format failed!", dwErr, MB_ICONSTOP);
+			GlobalFree(hUnicode);
+			return false;
+		}
+	}
+
+	// User asked to copy HTML instead of HTML formatted (put HTML in CF_UNICODE)
+	if ((gpSet->isCTSHtmlFormat == 2) && hHtml)
+	{
+		WARNING("hUnicode Overhead...");
+		GlobalFree(hUnicode);
+		hUnicode = hHtml;
+		hHtml = NULL;
+		bUseHtml = false;
+	}
 
 	// Открыть буфер обмена
 	while (!(lbRc = OpenClipboard(ghWnd)))

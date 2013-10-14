@@ -1858,9 +1858,9 @@ HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_COPY_ALL, MenuAccel(vkCTSVkCopyAll,L"Copy &all"));
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_PASTE, L"&Paste");
 		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
-		//AppendMenu(hMenu, MF_STRING | ((gpSet->isCTSHtmlFormat == 0)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML0, L"Plain &text only");
+		AppendMenu(hMenu, MF_STRING | ((gpSet->isCTSHtmlFormat == 0)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML0, L"Plain &text only");
 		AppendMenu(hMenu, MF_STRING | ((gpSet->isCTSHtmlFormat == 1)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML1, L"Copy &HTML format");
-		//AppendMenu(hMenu, MF_STRING | ((gpSet->isCTSHtmlFormat == 2)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML2, L"Copy a&s HTML");
+		AppendMenu(hMenu, MF_STRING | ((gpSet->isCTSHtmlFormat == 2)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML2, L"Copy a&s HTML");
 		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_FIND, MenuAccel(vkFindTextDlg,L"&Find text..."));
 	}
@@ -1872,9 +1872,9 @@ HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		EnableMenuItem(hMenu, ID_CON_COPY_ALL, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
 		EnableMenuItem(hMenu, ID_CON_PASTE, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
 		EnableMenuItem(hMenu, ID_CON_FIND, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
-		//CheckMenuItem(hMenu, ID_CON_COPY_HTML0, MF_BYCOMMAND | ((gpSet->isCTSHtmlFormat == 0)?MF_CHECKED:MF_UNCHECKED));
+		CheckMenuItem(hMenu, ID_CON_COPY_HTML0, MF_BYCOMMAND | ((gpSet->isCTSHtmlFormat == 0)?MF_CHECKED:MF_UNCHECKED));
 		CheckMenuItem(hMenu, ID_CON_COPY_HTML1, MF_BYCOMMAND | ((gpSet->isCTSHtmlFormat == 1)?MF_CHECKED:MF_UNCHECKED));
-		//CheckMenuItem(hMenu, ID_CON_COPY_HTML2, MF_BYCOMMAND | ((gpSet->isCTSHtmlFormat == 2)?MF_CHECKED:MF_UNCHECKED));
+		CheckMenuItem(hMenu, ID_CON_COPY_HTML2, MF_BYCOMMAND | ((gpSet->isCTSHtmlFormat == 2)?MF_CHECKED:MF_UNCHECKED));
 	}
 	
 	return hMenu;
@@ -1884,7 +1884,7 @@ HMENU CConEmuMenu::CreateHelpMenuPopup()
 {
 	HMENU hHelp = CreatePopupMenu();
 
-	if (!gpConEmu->mb_MingwMode)
+	if (gpConEmu->isUpdateAllowed())
 	{
 		if (gpUpd && gpUpd->InUpdate())
 			AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_STOPUPDATE, _T("&Stop updates checking"));

@@ -343,7 +343,7 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 		GetExitCodeProcess(pi.hProcess, &nWrapperResult);
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
-		if (nWrapperResult != CERR_HOOKS_WAS_SET)
+		if ((nWrapperResult != CERR_HOOKS_WAS_SET) && (nWrapperResult != CERR_HOOKS_WAS_ALREADY_SET))
 		{
 			iRc = -203;
 			SetLastError(nWrapperResult);

@@ -106,6 +106,14 @@ typedef HIMC (WINAPI* ImmGetContext_t)(HWND hWnd);
 //};
 
 
+typedef DWORD ConEmuInstallMode;
+const ConEmuInstallMode
+	cm_Normal       = 0x0000,
+	cm_MinGW        = 0x0001, // ConEmu установлен как пакет MinGW
+	cm_PortableApps = 0x0002, // ConEmu установлен как пакет PortableApps.com
+	cm_MSysStartup  = 0x1000  // найден баш из msys: "%ConEmuDir%\..\msys\1.0\bin\sh.exe" (MinGW mode)
+	;
+
 
 class CConEmuMain :
 	public CDwmHelper,
@@ -127,9 +135,14 @@ class CConEmuMain :
 		LPCWSTR WorkDir(LPCWSTR asOverrideCurDir = NULL);
 		wchar_t ms_ComSpecInitial[MAX_PATH];
 		wchar_t *mps_IconPath;
+		void SetWindowIcon(LPCWSTR asNewIcon);
 		BOOL mb_DosBoxExists;
-		BOOL mb_MingwMode;   // ConEmu установлен как пакет MinGW
-		BOOL mb_MSysStartup; // найден баш из msys: "%ConEmuDir%\..\msys\1.0\bin\sh.exe" (MinGW mode)
+		//BOOL mb_MingwMode;   // ConEmu установлен как пакет MinGW
+		//BOOL mb_MSysStartup; // найден баш из msys: "%ConEmuDir%\..\msys\1.0\bin\sh.exe" (MinGW mode)
+		ConEmuInstallMode m_InstallMode;
+		bool isMingwMode();
+		bool isMSysStartup();
+		bool isUpdateAllowed();
 		// Portable Far Registry
 		BOOL mb_PortableRegExist;
 		wchar_t ms_PortableRegHive[MAX_PATH]; // полный путь к "Portable.S-x-x-..."
@@ -142,6 +155,7 @@ class CConEmuMain :
 		HKEY mh_PortableRoot; // Это открытый ключ
 		bool PreparePortableReg();
 		bool mb_UpdateJumpListOnStartup;
+		bool mb_FindBugMode;
 	private:
 		bool mb_BlockChildrenDebuggers;
 	private:
@@ -163,6 +177,9 @@ class CConEmuMain :
 		void GetComSpecCopy(ConEmuComspec& ComSpec);
 		void CreateGuiAttachMapping(DWORD nGuiAppPID);
 		void InitComSpecStr(ConEmuComspec& ComSpec);
+		bool IsResetBasicSettings();
+		bool IsFastSetupDisabled();
+		bool IsAllowSaveSettingsOnExit();
 	private:
 		ConEmuGuiMapping m_GuiInfo;
 		MFileMapping<ConEmuGuiMapping> m_GuiInfoMapping;
@@ -767,6 +784,7 @@ class CConEmuMain :
 		ConEmuWindowMode GetWindowMode();
 		bool SetWindowMode(ConEmuWindowMode inMode, BOOL abForce = FALSE, BOOL abFirstShow = FALSE);
 		bool SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode = wmNotChanging, bool bFromDlg = false);
+		static LPCWSTR FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, size_t cchBufMax);
 		bool SetTileMode(ConEmuWindowCommand Tile);
 		ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi=NULL);
 		bool IsSizeFree(ConEmuWindowMode CheckMode = wmFullScreen);

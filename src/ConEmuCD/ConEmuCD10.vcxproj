@@ -812,6 +812,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="ConEmuC.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
@@ -1119,6 +1120,7 @@
     <ResourceCompile Include="ConEmuCD.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="..\common\ConsoleRead.cpp" />

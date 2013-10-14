@@ -146,6 +146,10 @@ const wchar_t* gsReportBug   = CEREPORTBUG;   //L"http://code.google.com/p/conem
 const wchar_t* gsReportCrash = CEREPORTCRASH; //L"http://code.google.com/p/conemu-maximus5/issues/entry";
 const wchar_t* gsWhatsNew    = CEWHATSNEW;    //L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";
 
+#define gsPortableApps_LauncherIni  L"\\..\\AppInfo\\Launcher\\ConEmuPortable.ini"
+#define gsPortableApps_DefaultXml   L"\\..\\DefaultData\\settings\\ConEmu.xml"
+#define gsPortableApps_ConEmuXmlDir L"\\..\\..\\Data\\settings"
+
 static struct RegisteredHotKeys
 {
 	int DescrID;
@@ -258,6 +262,7 @@ const wchar_t gsFocusQuakeCheckTimer[] = L"TIMER_QUAKE_AUTOHIDE_ID";
 CConEmuMain::CConEmuMain()
 {
 	gpConEmu = this; // сразу!
+	mb_FindBugMode = false;
 
 	DEBUGTEST(mb_DestroySkippedInAssert=false);
 
@@ -498,20 +503,24 @@ CConEmuMain::CConEmuMain()
 	bool lbBaseFound = false;
 
 	// Mingw/msys installation?
-	mb_MingwMode = FALSE; // проверка ниже
-	wchar_t szBashFile[MAX_PATH+64];
-	wcscpy_c(szBashFile, ms_ConEmuExeDir);
-	pszSlash = wcsrchr(szBashFile, L'\\');
+	m_InstallMode = cm_Normal; // проверка ниже
+	wchar_t szFindFile[MAX_PATH+64];
+	wcscpy_c(szFindFile, ms_ConEmuExeDir);
+	pszSlash = wcsrchr(szFindFile, L'\\');
 	if (pszSlash) *pszSlash = 0;
-	pszSlash = szBashFile + _tcslen(szBashFile);
-	wcscat_c(szBashFile, L"\\msys\\1.0\\bin\\sh.exe");
-	mb_MSysStartup = FileExists(szBashFile);
-	if (!mb_MSysStartup)
+	pszSlash = szFindFile + _tcslen(szFindFile);
+	wcscat_c(szFindFile, L"\\msys\\1.0\\bin\\sh.exe");
+	if (FileExists(szFindFile))
+	{
+		m_InstallMode |= cm_MSysStartup;
+	}
+	else
 	{
 		// Git-bash mode
 		*pszSlash = 0;
-		wcscat_c(szBashFile, L"\\bin\\sh.exe");
-		mb_MSysStartup = FileExists(szBashFile);
+		wcscat_c(szFindFile, L"\\bin\\sh.exe");
+		if (FileExists(szFindFile))
+			m_InstallMode |= cm_MSysStartup;
 	}
 
 	// Сначала проверяем подпапку
@@ -542,7 +551,7 @@ CConEmuMain::CConEmuMain()
 			lbBaseFound = CheckBaseDir();
 			if (lbBaseFound)
 			{
-				mb_MingwMode = lbBaseFound;
+				m_InstallMode |= cm_MinGW;
 			}
 			else
 			{
@@ -552,11 +561,62 @@ CConEmuMain::CConEmuMain()
 		}
 	}
 
-	if (mb_MingwMode && mb_MSysStartup)
+	if (isMingwMode() && isMSysStartup())
 	{
 		// This is example. Will be replaced with full path.
 		gpSetCls->SetDefaultCmd(L"sh.exe --login -i");
 	}
+
+	if (!isMingwMode())
+	{
+		// PortableApps.com?
+		LPCWSTR pszCheck[] = {
+			gsPortableApps_LauncherIni /* L"\\..\\AppInfo\\Launcher\\ConEmuPortable.ini" */,
+			gsPortableApps_DefaultXml /* L"\\..\\DefaultData\\settings\\ConEmu.xml"*/};
+		for (size_t c = 0; c < countof(pszCheck); c++)
+		{
+			wcscpy_c(szFindFile, ms_ConEmuExeDir);
+			wcscat_c(szFindFile, pszCheck[c]);
+			if (!FileExists(szFindFile))
+				goto NonPortable;
+		}
+		
+		// Ищем где должен лежать файл настроек в структуре PortableApps
+		wcscpy_c(ms_ConEmuXml, ms_ConEmuExeDir);
+		wchar_t* pszCut = wcsrchr(ms_ConEmuXml, L'\\');
+		if (pszCut)
+		{
+			*pszCut = 0;
+			pszCut = wcsrchr(ms_ConEmuXml, L'\\');
+			// gsPortableApps_ConEmuXml   L"\\..\\..\\Data\\settings"
+			if (pszCut)
+			{
+				LPCWSTR pszAppendPath = gsPortableApps_ConEmuXmlDir;
+				_ASSERTE(wcsncmp(pszAppendPath, L"\\..\\..\\D", 8)==0);
+				*pszCut = 0;
+				wcscat_c(ms_ConEmuXml, pszAppendPath+6);
+				if (!DirectoryExists(ms_ConEmuXml))
+					MyCreateDirectory(ms_ConEmuXml);
+				wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
+				if (!FileExists(ms_ConEmuXml))
+				{
+					// Нужно скопировать дефолтный файл настроек?
+					CopyFile(szFindFile, ms_ConEmuXml, FALSE);
+				}
+				// Turn it on
+				m_InstallMode |= cm_PortableApps;
+			}
+
+			if (!(m_InstallMode & cm_PortableApps))
+			{
+				// Fail
+				ms_ConEmuXml[0] = 0;
+			}
+		}
+
+
+	}
+	NonPortable:
 
 	mb_BlockChildrenDebuggers = false;
 	if (IsDebuggerPresent())
@@ -577,6 +637,10 @@ CConEmuMain::CConEmuMain()
 	SetEnvironmentVariable(ENV_CONEMUANSI_BUILD_W, ms_ConEmuBuild);
 	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, L"");
 	// переменная "ConEmuArgs" заполняется в ConEmuApp.cpp:PrepareCommandLine
+
+	wchar_t szDrive[MAX_PATH];
+	SetEnvironmentVariable(ENV_CONEMUDRIVE_VAR_W, GetDrive(ms_ConEmuExeDir, szDrive, countof(szDrive)));
+	
 
 	// Ищем файл портабельных настроек. Сначала пробуем в BaseDir
 	ConEmuXml();
@@ -718,6 +782,21 @@ CConEmuMain::CConEmuMain()
 	//InitFrameHolder();
 }
 
+bool CConEmuMain::isMingwMode()
+{
+	return (m_InstallMode & cm_MinGW) == cm_MinGW;
+}
+
+bool CConEmuMain::isUpdateAllowed()
+{
+	return !(m_InstallMode & (cm_MinGW));
+}
+
+bool CConEmuMain::isMSysStartup()
+{
+	return (m_InstallMode & cm_MSysStartup) == cm_MSysStartup;
+}
+
 void LogFocusInfo(LPCWSTR asInfo, int Level/*=1*/)
 {
 	if (!asInfo)
@@ -769,6 +848,9 @@ void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)
 			ms_ConEmuWorkDir[nDirLen-1] = 0; // пусть будет БЕЗ слеша, для однообразия с ms_ConEmuExeDir
 		}
 	}
+
+	wchar_t szDrive[MAX_PATH];
+	SetEnvironmentVariable(ENV_CONEMUWORKDRIVE_VAR_W, GetDrive(ms_ConEmuWorkDir, szDrive, countof(szDrive)));
 }
 
 LPCWSTR CConEmuMain::WorkDir(LPCWSTR asOverrideCurDir /*= NULL*/)
@@ -1255,6 +1337,21 @@ BOOL CConEmuMain::Init()
 	InitFrameHolder();
 
 	return TRUE;
+}
+
+bool CConEmuMain::IsResetBasicSettings()
+{
+	return gpSetCls->isResetBasicSettings;
+}
+
+bool CConEmuMain::IsFastSetupDisabled()
+{
+	return (gpSetCls->isResetBasicSettings || gpSetCls->isFastSetupDisabled);
+}
+
+bool CConEmuMain::IsAllowSaveSettingsOnExit()
+{
+	return !(gpSetCls->ibDisableSaveSettingsOnExit || gpSetCls->ibExitAfterDefTermSetup);
 }
 
 void CConEmuMain::OnUseGlass(bool abEnableGlass)
@@ -4589,22 +4686,51 @@ ConEmuWindowMode CConEmuMain::GetWindowMode()
 	return wndMode;
 }
 
+LPCWSTR CConEmuMain::FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, size_t cchBufMax)
+{
+	switch (Tile)
+	{
+	case cwc_TileLeft:
+		_wcscpy_c(pchBuf, cchBufMax, L"cwc_TileLeft"); break;
+	case cwc_TileRight:
+		_wcscpy_c(pchBuf, cchBufMax, L"cwc_TileRight"); break;
+	case cwc_TileHeight:
+		_wcscpy_c(pchBuf, cchBufMax, L"cwc_TileHeight"); break;
+	default:
+		_wsprintf(pchBuf, SKIPLEN(cchBufMax) L"%u", (UINT)Tile);
+	}
+
+	return pchBuf;
+}
+
 bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 {
+	wchar_t szInfo[200], szName[32];
+
+	if (gpSetCls->isAdvLogging)
+	{
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetTileMode(%s)", FormatTileMode(Tile,szName,countof(szName)));
+		gpConEmu->LogString(szInfo);
+	}
+
+
 	if (isIconic())
 	{
+		gpConEmu->LogString(L"SetTileMode SKIPPED due to isIconic");
 		return false;
 	}
 
 	if (!IsSizeFree())
 	{
 		_ASSERTE(FALSE && "Tiling not allowed in Quake and Inside modes");
+		gpConEmu->LogString(L"SetTileMode SKIPPED due to Quake/Inside");
 		return false;
 	}
 
 	if (Tile != cwc_TileLeft && Tile != cwc_TileRight)
 	{
 		_ASSERTE(Tile==cwc_TileLeft || Tile==cwc_TileRight);
+		gpConEmu->LogString(L"SetTileMode SKIPPED due to invalid mode");
 		return false;
 	}
 
@@ -4622,14 +4748,15 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 			StoreNormalRect(NULL);
 		}
 
+		HMONITOR hMon = NULL;
 
 		// When window is tiled to the right edge, and user press Win+Right
 		// ConEmu must jump to next monitor and set tile to Left
 		if ((CurTile == Tile) && (CurTile == cwc_TileLeft || CurTile == cwc_TileRight))
 		{
 			MONITORINFO nxt = {0};
-			HMONITOR hNext = GetNextMonitorInfo(&nxt, &mi.rcWork, (CurTile == cwc_TileRight)/*Next*/);
-			if (hNext && nxt.cbSize && memcmp(&mi.rcWork, &nxt.rcWork, sizeof(nxt.rcWork)))
+			hMon = GetNextMonitorInfo(&nxt, &mi.rcWork, (CurTile == cwc_TileRight)/*Next*/);
+			if (hMon && nxt.cbSize && memcmp(&mi.rcWork, &nxt.rcWork, sizeof(nxt.rcWork)))
 			{
 				memmove(&mi, &nxt, sizeof(nxt));
 				Tile = (CurTile == cwc_TileRight) ? cwc_TileLeft : cwc_TileRight;
@@ -4641,14 +4768,14 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 			{
 				rcNewWnd = GetDefaultRect();
 				m_TileMode = Tile = cwc_Current;
-				HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+				hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
 				JumpNextMonitor(ghWnd, hMon, false, rcNewWnd);
 			}
 			else if ((Tile == cwc_TileRight) && (CurTile == cwc_TileLeft))
 			{
 				rcNewWnd = GetDefaultRect();
 				m_TileMode = Tile = cwc_Current;
-				HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+				hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
 				JumpNextMonitor(ghWnd, hMon, true, rcNewWnd);
 			}
 		}
@@ -4690,6 +4817,22 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 			SetWindowPos(ghWnd, NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
 			
 			changeFromWindowMode = wmNotChanging;
+		}
+
+		if (gpSetCls->isAdvLogging)
+		{
+			RECT rc = {}; GetWindowRect(ghWnd, &rc);
+			ConEmuWindowCommand NewTile = GetTileMode(true/*Estimate*/, &mi);
+			wchar_t szNewTile[32];
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"result of SetTileMode(%s) -> %u {%i,%i}-{%i,%i} x%08X -> %s {%i,%i}-{%i,%i}", 
+				 FormatTileMode(Tile,szName,countof(szName)),
+				 (UINT)bChange,
+				 rcNewWnd.left, rcNewWnd.top, rcNewWnd.right, rcNewWnd.bottom,
+				 (DWORD)(DWORD_PTR)hMon,
+				 FormatTileMode(NewTile,szNewTile,countof(szNewTile)),
+				 rc.left, rc.top, rc.right, rc.bottom
+				 );
+			gpConEmu->LogString(szInfo);
 		}
 	}
 
@@ -7476,6 +7619,31 @@ void CConEmuMain::ExecuteProcessFinished(bool bOpt)
 //    return (dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_BREAK_EVENT ? true : false);
 //}
 
+void CConEmuMain::SetWindowIcon(LPCWSTR asNewIcon)
+{
+	if (!asNewIcon || !*asNewIcon)
+		return;
+
+	HICON hOldClassIcon = hClassIcon, hOldClassIconSm = hClassIconSm;
+	hClassIcon = NULL; hClassIconSm = NULL;
+	SafeFree(gpConEmu->mps_IconPath);
+	gpConEmu->mps_IconPath = ExpandEnvStr(asNewIcon);
+
+	LoadIcons();
+
+	if (hClassIcon)
+	{
+		SetClassLongPtr(ghWnd, GCLP_HICON, (LONG_PTR)hClassIcon);
+		SetClassLongPtr(ghWnd, GCLP_HICONSM, (LONG_PTR)hClassIconSm);
+		SendMessage(ghWnd, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+		SendMessage(ghWnd, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+	}
+	else
+	{
+		hClassIcon = hOldClassIcon; hClassIconSm = hOldClassIconSm;
+	}
+}
+
 // Нужно вызывать после загрузки настроек!
 void CConEmuMain::LoadIcons()
 {
@@ -7670,13 +7838,16 @@ void CConEmuMain::PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0
 
 void CConEmuMain::PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg)
 {
-#ifdef _DEBUG
-	CVConGuard VCon(apRCon->VCon());
-	_ASSERTE(FALSE && "Strange 'ConEmuCInput not found' error");
-	SendMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, (LPARAM)pszErrMsg);
-#else
+	//CVConGuard VCon(apRCon->VCon());
+	//SendMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, (LPARAM)pszErrMsg);
+
+	if (RELEASEDEBUGTEST(gpConEmu->mb_FindBugMode,true))
+	{
+		//_ASSERTE(FALSE && "Strange 'ConEmuCInput not found' error");
+		RaiseTestException();
+	}
+
 	PostMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, (LPARAM)pszErrMsg);
-#endif
 }
 
 bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
@@ -10860,17 +11031,34 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 		wchar_t* psz = wcschr(szName, TaskBracketRight);
 		if (psz) psz[1] = 0;
 
-		const Settings::CommandTasks* pGrp;
-		for (int i = 0; (pGrp = gpSet->CmdTaskGet(i)) != NULL; i++)
+		const Settings::CommandTasks* pGrp = NULL;
+		if (lstrcmp(asSource, AutoStartTaskName) == 0)
 		{
-			if (lstrcmpi(pGrp->pszName, szName) == 0)
+			pGrp = gpSet->CmdTaskGet(-1);
+		}
+		else
+		{
+			for (int i = 0; (pGrp = gpSet->CmdTaskGet(i)) != NULL; i++)
 			{
-				pszDataW = lstrdup(pGrp->pszCommands);
-				if (ppszStartupDir && !*ppszStartupDir && pGrp->pszGuiArgs)
+				if (lstrcmpi(pGrp->pszName, szName) == 0)
 				{
-					pGrp->ParseGuiArgs(ppszStartupDir, NULL);
+					break;
 				}
-				break;
+			}
+		}
+		if (pGrp)
+		{
+			pszDataW = lstrdup(pGrp->pszCommands);
+			if (ppszStartupDir && !*ppszStartupDir && pGrp->pszGuiArgs)
+			{
+				wchar_t* pszIcon = NULL;
+				pGrp->ParseGuiArgs(ppszStartupDir, &pszIcon);
+
+				if (pszIcon)
+				{
+					SetWindowIcon(pszIcon);
+					SafeFree(pszIcon);
+				}
 			}
 		}
 
@@ -10878,7 +11066,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 		{
 			size_t cchMax = _tcslen(szName)+100;
 			wchar_t* pszErrMsg = (wchar_t*)calloc(cchMax,sizeof(*pszErrMsg));
-			_wsprintf(pszErrMsg, SKIPLEN(cchMax) L"Command group %s %s!\nStart default shell?",
+			_wsprintf(pszErrMsg, SKIPLEN(cchMax) L"Command group %s %s!\nChoose your shell?",
 				szName, pszDataW ? L"is empty" : L"not found");
 
 			int nBtn = MessageBox(pszErrMsg, MB_YESNO|MB_ICONEXCLAMATION);
@@ -10886,10 +11074,23 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 			SafeFree(pszErrMsg);
 			SafeFree(pszDataW);
 
-			if (nBtn != IDNO)
+			if (nBtn == IDYES)
 			{
 				LPCWSTR pszDefCmd = gpSetCls->GetDefaultCmd();
-				return lstrdup(pszDefCmd);
+
+				RConStartArgs args;
+				args.aRecreate = cra_EditTab;
+				if (pszDefCmd && *pszDefCmd)
+					args.pszSpecialCmd = lstrdup(pszDefCmd);
+
+				int nCreateRc = gpConEmu->RecreateDlg(&args);
+
+				if (nCreateRc == IDC_START)
+				{
+					wchar_t* pszNewCmd = args.CreateCommandLine();
+					return pszNewCmd;
+					//return lstrdup(pszDefCmd);
+				}
 			}
 			return NULL;
 		}
@@ -11093,7 +11294,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				lbCreated = TRUE;
 			}
-			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft) && !gpConEmu->mb_StartDetached)
+			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && !gpConEmu->mb_StartDetached)
 			{
 				wchar_t* pszStartupDir = NULL;
 				// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
@@ -11211,7 +11412,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				if (WindowStartTSA)
 				{
 					LogString(L"Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1} due to WindowStartTSA");
-					_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1}");
+					//_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1}");
 					gpSet->isMultiLeaveOnClose = 1;
 					gpSet->isMultiHideOnClose = 1;
 				}
@@ -11289,7 +11490,9 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 		mp_RecreateDlg->Close();
 	}
 	
-	gpSet->SaveSizePosOnExit();
+	// Выполняется однократно (само проверит)
+	gpSet->SaveSettingsOnExit();
+
 	// Делать обязательно перед ResetEvent(mh_ConEmuAliveEvent), чтобы у другого
 	// экземпляра не возникло проблем с регистрацией hotkey
 	RegisterMinRestore(false);
@@ -16084,7 +16287,7 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 
 void CConEmuMain::CheckUpdates(BOOL abShowMessages)
 {
-	if (gpConEmu->mb_MingwMode)
+	if (!gpConEmu->isUpdateAllowed())
 		return;
 
 	_ASSERTE(isMainThread());

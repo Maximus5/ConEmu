@@ -81,6 +81,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ansi.h"
 #include "../ConEmu/version.h"
 #include "../ConEmuCD/ExitCodes.h"
+#include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/RConStartArgs.h"
 #include "../common/WinConsole.h"
@@ -958,6 +959,27 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	
 	//if (hStartedEvent)
 	//	SetEvent(hStartedEvent);
+
+	// -- Не требуется, ConEmuC ждет успеха
+	//if (gbPrepareDefaultTerminal)
+	//{
+	//	if (!gpDefaultTermParm || !gpDefaultTermParm->hGuiWnd)
+	//	{
+	//		_ASSERTEX(gpDefaultTermParm && gpDefaultTermParm->hGuiWnd);
+	//	}
+	//	else
+	//	{
+	//		// Уведомить GUI, что инициализация хуков для Default Terminal была завершена
+	//		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DEFTERMSTARTED, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+	//		if (pIn)
+	//		{
+	//			pIn->dwData[0] = GetCurrentProcessId();
+	//			CESERVER_REQ* pOut = ExecuteGuiCmd(gpDefaultTermParm->hGuiWnd, pIn, NULL, TRUE);
+	//			ExecuteFreeResult(pIn);
+	//			ExecuteFreeResult(pOut);
+	//		}
+	//	}
+	//}
 
 	print_timings(L"DllStart - done");
 

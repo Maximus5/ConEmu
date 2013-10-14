@@ -127,17 +127,19 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin)
 		return icn.nIconIdx;
 	}
 
+	wchar_t* pszExpanded = ExpandEnvStr(asIconDescr);
+
 	// Need to be created!
 	int iIconIdx = -1;
 	HICON hFileIcon = NULL;
 	wchar_t szTemp[MAX_PATH];
-	LPCWSTR lpszExt = (wchar_t*)PointToExt(asIconDescr);
-	LPCWSTR pszLoadFile = asIconDescr;
+	LPCWSTR pszLoadFile = pszExpanded ? pszExpanded : asIconDescr;
+	LPCWSTR lpszExt = (wchar_t*)PointToExt(pszLoadFile);
 
 	if (!lpszExt)
 	{
 		LPWSTR pszFile = NULL;
-		if (SearchPath(NULL, asIconDescr, L".exe", countof(szTemp), szTemp, &pszFile))
+		if (SearchPath(NULL, pszLoadFile, L".exe", countof(szTemp), szTemp, &pszFile))
 		{
 			pszLoadFile = szTemp;
 			lpszExt = (wchar_t*)PointToExt(pszLoadFile);
@@ -197,5 +199,6 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin)
 	}
 
 wrap:
+	SafeFree(pszExpanded);
 	return iIconIdx;
 }

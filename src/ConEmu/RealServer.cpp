@@ -1415,6 +1415,21 @@ CESERVER_REQ* CRealServer::cmdExportEnvVarAll(LPVOID pInst, CESERVER_REQ* pIn, U
 	return pOut;
 }
 
+CESERVER_REQ* CRealServer::cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	DWORD nCmd = pIn->hdr.nCmd;
+	DEBUGSTRCMD(L"GUI recieved CECMD_STARTXTERM\n");
+
+	// В свой процесс тоже засосать переменные, чтобы для новых табов применялись
+	mp_RCon->StartStopXTerm(pIn->hdr.nSrcPID, (pIn->dwData[0] != 0));
+
+	// pIn->hdr.nCmd перебивается на CECMD_EXPORTVARS, поэтому возвращаем сохраненный ID
+	CESERVER_REQ* pOut = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+	if (pOut)
+		pOut->dwData[0] = TRUE;
+	return pOut;
+}
+
 // Эта функция пайп не закрывает!
 //void CRealServer::ServerThreadCommand(HANDLE hPipe)
 BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
@@ -1519,6 +1534,9 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 	case CECMD_EXPORTVARS:
 	case CECMD_EXPORTVARSALL:
 		pOut = pRSrv->cmdExportEnvVarAll(pInst, pIn, nDataSize);
+		break;
+	case CECMD_STARTXTERM:
+		pOut = pRSrv->cmdStartXTerm(pInst, pIn, nDataSize);
 		break;
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(pInst, pIn, nDataSize);

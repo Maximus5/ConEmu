@@ -854,7 +854,10 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 	//	CloseHandle(hPipe);
 	//	return NULL;
 	//}
-	_ASSERTE(pIn->hdr.nSrcThreadId==GetCurrentThreadId());
+	#ifdef _DEBUG
+	bool bIsAltSrvCmd = (pIn->hdr.nCmd==CECMD_ALTBUFFER || pIn->hdr.nCmd==CECMD_ALTBUFFERSTATE);
+	_ASSERTE(pIn->hdr.nSrcThreadId==GetCurrentThreadId() || (bIsAltSrvCmd && pIn->hdr.nSrcPID!=GetCurrentProcessId()));
+	#endif
 
 	if (bAsyncNoResult)
 	{
@@ -1195,16 +1198,27 @@ wrap:
 // hConEmuWnd - HWND с отрисовкой!
 void SetConEmuEnvVar(HWND hConEmuWnd)
 {
-	if (hConEmuWnd)
+	SetConEmuEnvHWND(ENV_CONEMUHWND_VAR_W, hConEmuWnd);
+}
+
+void SetConEmuEnvVarChild(HWND hDcWnd, HWND hBackWnd)
+{
+	SetConEmuEnvHWND(ENV_CONEMUDRAW_VAR_W, hDcWnd);
+	SetConEmuEnvHWND(ENV_CONEMUBACK_VAR_W, hBackWnd);
+}
+
+void SetConEmuEnvHWND(LPCWSTR pszVarName, HWND hWnd)
+{
+	if (hWnd)
 	{
 		// Установить переменную среды с дескриптором окна
 		wchar_t szVar[16];
-		msprintf(szVar, countof(szVar), L"0x%08X", (DWORD)hConEmuWnd); //-V205
-		SetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, szVar);
+		msprintf(szVar, countof(szVar), L"0x%08X", (DWORD)(DWORD_PTR)hWnd); //-V205
+		SetEnvironmentVariable(pszVarName, szVar);
 	}
 	else
 	{
-		SetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, NULL);
+		SetEnvironmentVariable(pszVarName, NULL);
 	}
 }
 

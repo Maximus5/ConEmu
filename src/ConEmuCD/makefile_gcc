@@ -10,6 +10,7 @@ SRCS = ConsoleMain.cpp \
        SrvPipes.cpp \
        RegPrepare.cpp \
        ../ConEmuHk/Injects.cpp \
+       ../common/CmdLine.cpp \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp \
        ../common/ConsoleRead.cpp \

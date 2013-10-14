@@ -15,11 +15,11 @@ Macro {
 
   if   not APanel.Empty  and  (APanel.Current~="..") then 
     s=APanel.Path..mf.iif(mf.substr(s,mf.len(s)-1)=="\\","","\\")..APanel.Current;
-    -- MsgBox("Current item", %s)
+    -- msgbox("Current item", %s)
     c = mf.substr(k,mf.len(k)-1,1);
     cmd = mf.iif(c=="4","FindEditor:","FindViewer:")..s;
     iRc=Plugin.Call(ConEmu,cmd);
-    -- MsgBox("EditOpen result", "callplugin="+%iRc+"\n<"+env("ConEmuMacroResult")+">")
+    -- msgbox("EditOpen result", "callplugin="+%iRc+"\n<"+env("ConEmuMacroResult")+">")
     if  iRc~=0 then 
       r = mf.env("ConEmuMacroResult");
       if  mf.substr(r,0,5)=="Found" then 
@@ -28,7 +28,7 @@ Macro {
         Keys("F12 "..mf.substr(r,7))
         exit() -- Ok
       else if  r=="Blocked" then 
-        -- MsgBox("ConEmu macro","Tab can't be activated now\n"+%s);
+        -- msgbox("ConEmu macro","Tab can't be activated now\n"+%s);
       end end end
     end
   end

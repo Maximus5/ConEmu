@@ -1642,6 +1642,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\CmdLine.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\common\Common.cpp"
 				>
 			</File>
@@ -2045,6 +2049,10 @@
 			</File>
 			<File
 				RelativePath=".\BaseDragDrops.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\CmdLine.h"
 				>
 			</File>
 			<File

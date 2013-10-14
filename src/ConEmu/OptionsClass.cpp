@@ -297,6 +297,11 @@ CSettings::CSettings()
 	UpdateDpi();
 
 	// Go
+	ibExitAfterDefTermSetup = false;
+	isResetBasicSettings = false;
+	isFastSetupDisabled = false;
+	isDontCascade = false;
+	ibDisableSaveSettingsOnExit = false;
 	isAdvLogging = 0;
 	m_ActivityLoggingType = glt_None; mn_ActivityCmdStartTick = 0;
 	bForceBufferHeight = false; nForceBufferHeight = 1000; /* устанавливается в true, из ком.строки /BufferHeight */
@@ -730,8 +735,9 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_TRANSPARENT, 1, L"Transparency",   thi_Transparent/*, OnInitDialog_Transparent*/},
 		{IDD_SPG_TABS,        1, L"Tabs",           thi_Tabs/*,    OnInitDialog_Tabs*/},
 		{IDD_SPG_STATUSBAR,   1, L"Status bar",     thi_Status,/*  OnInitDialog_Status*/},
-		{IDD_SPG_INTEGRATION, 1, L"Integration",    thi_Integr/*,  OnInitDialog_Integr*/},
 		{IDD_SPG_APPDISTINCT, 1, L"App distinct",   thi_Apps/*,    OnInitDialog_CmdTasks*/},
+		{IDD_SPG_INTEGRATION, 0, L"Integration",    thi_Integr/*,  OnInitDialog_Integr*/},
+		{IDD_SPG_DEFTERM,     1, L"Default term",   thi_DefTerm/*,  OnInitDialog_DefTerm*/},
 		{IDD_SPG_KEYS,        0, L"Keys & Macro",   thi_Keys/*,    OnInitDialog_Keys*/},
 		{IDD_SPG_CONTROL,     1, L"Controls",       thi_KeybMouse/*,OnInitDialog_Control*/},
 		{IDD_SPG_SELECTION,   1, L"Mark & Paste",   thi_Selection/*OnInitDialog_Selection*/},
@@ -764,14 +770,6 @@ void CSettings::InitVars_Pages()
 
 	m_Pages = (ConEmuSetupPages*)malloc(sizeof(Pages));
 	memmove(m_Pages, Pages, sizeof(Pages));
-	//ConEmuSetupPages* p = m_Pages;
-	//for (int i = 0; i < countof(Pages); i++)
-	//{
-	//	// Если установлено как пакет MinGW - стандартное обновление через googlecode не работает.
-	//	if ((Pages[i].PageID == IDD_SPG_UPDATE) && gpConEmu->mb_MingwMode)
-	//		continue;
-	//	*(p++) = Pages[i];
-	//}
 }
 
 void CSettings::ReleaseHandles()
@@ -857,6 +855,9 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 
 void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig, LPCWSTR pszCmdLine /*= NULL*/, bool abOnResetReload /*= false*/)
 {
+	// Обработать 32/64 (найти tcc.exe и т.п.)
+	FindComspec(&gpSet->ComSpec);
+
 	// Зовем "FastConfiguration" (перед созданием новой/чистой конфигурации)
 	if (abAllowFastConfig)
 	{
@@ -1027,7 +1028,7 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig,
 			SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, 0);
 		}
 
-		HWND hPrev = FindWindow(VirtualConsoleClassMain, NULL);
+		HWND hPrev = isDontCascade ? NULL : FindWindow(VirtualConsoleClassMain, NULL);
 
 		while (hPrev)
 		{
@@ -1624,8 +1625,14 @@ LRESULT CSettings::OnInitDialog()
 	SettingsStorage Storage = {};
 	bool ReadOnly = false;
 	gpSet->GetSettingsType(Storage, ReadOnly);
-	if (ReadOnly)
+	if (ReadOnly || isResetBasicSettings)
+	{
 		EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
+		if (isResetBasicSettings)
+		{
+			SetDlgItemText(ghOpWnd, bSaveSettings, L"Basic settings");
+		}
+	}
 
 	if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_REG) == 0)
 	{
@@ -1656,7 +1663,7 @@ LRESULT CSettings::OnInitDialog()
 		bool bNeedExpand = true;
 		for (size_t i = 0; m_Pages[i].PageID; i++)
 		{
-			if ((m_Pages[i].PageID == IDD_SPG_UPDATE) && gpConEmu->mb_MingwMode)
+			if ((m_Pages[i].PageID == IDD_SPG_UPDATE) && !gpConEmu->isUpdateAllowed())
 			{
 				m_Pages[i].hTI = NULL;
 				continue;
@@ -2205,9 +2212,9 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 						EnableWindow(GetDlgItem(hWnd2, cbStartTasksFile), (CB == rbStartTasksFile));
 						//
 						EnableWindow(GetDlgItem(hWnd2, lbStartNamedTask), (CB == rbStartNamedTask));
-						//
-						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreFolders), (CB == rbStartLastTabs));
-						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreEditors), (CB == rbStartLastTabs));
+						// -- пока не поддерживается
+						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreFolders), FALSE/*(CB == rbStartLastTabs)*/);
+						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreEditors), FALSE/*(CB == rbStartLastTabs)*/);
 						// 
 						EnableWindow(GetDlgItem(hWnd2, stCmdGroupCommands), (CB == rbStartNamedTask) || (CB == rbStartLastTabs));
 						EnableWindow(GetDlgItem(hWnd2, tCmdGroupCommands), (CB == rbStartNamedTask) || (CB == rbStartLastTabs));
@@ -3497,6 +3504,27 @@ LRESULT CSettings::OnInitDialog_Integr(HWND hWnd2, BOOL abInitial)
 	return 0;
 }
 
+LRESULT CSettings::OnInitDialog_DefTerm(HWND hWnd2, BOOL abInitial)
+{
+	// Default terminal apps
+	CheckDlgButton(hWnd2, cbDefaultTerminal, gpSet->isSetDefaultTerminal);
+	bool bLeaveInTSA = gpSet->isRegisterOnOsStartupTSA;
+	bool bRegister = gpSet->isRegisterOnOsStartup || gpConEmu->mp_DefTrm->IsRegisteredOsStartup(NULL,0,&bLeaveInTSA);
+	CheckDlgButton(hWnd2, cbDefaultTerminalStartup, bRegister);
+	CheckDlgButton(hWnd2, cbDefaultTerminalTSA, bLeaveInTSA);
+	EnableWindow(GetDlgItem(hWnd2, cbDefaultTerminalTSA), bRegister);
+	CheckDlgButton(hWnd2, cbDefaultTerminalNoInjects, gpSet->isDefaultTerminalNoInjects);
+	CheckRadioButton(hWnd2, rbDefaultTerminalConfAuto, rbDefaultTerminalConfNever, rbDefaultTerminalConfAuto+gpSet->nDefaultTerminalConfirmClose);
+	wchar_t* pszApps = gpSet->GetDefaultTerminalApps();
+	_ASSERTE(pszApps!=NULL);
+	SetDlgItemText(hWnd2, tDefaultTerminal, pszApps);
+	if (wcschr(pszApps, L',') != NULL && wcschr(pszApps, L'|') == NULL)
+		Icon.ShowTrayIcon(L"List of hooked executables must be delimited with \"|\" but not commas", tsa_Default_Term);
+	SafeFree(pszApps);
+
+	return 0;
+}
+
 // Load current value of "HKCU\Software\Microsoft\Command Processor" : "AutoRun"
 // (bClear==true) - remove from it our "... Cmd_Autorun.cmd ..." part
 static wchar_t* LoadAutorunValue(HKEY hkCmd, bool bClear)
@@ -3661,18 +3689,6 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				SetDlgItemText(hWnd2, tHereIcon, szIcon);
 			}
 
-			// Default terminal apps
-			CheckDlgButton(hWnd2, cbDefaultTerminal, gpSet->isSetDefaultTerminal);
-			CheckDlgButton(hWnd2, cbDefaultTerminalStartup, gpSet->isRegisterOnOsStartup || gpConEmu->mp_DefTrm->IsRegisteredOsStartup(NULL,0));
-			CheckDlgButton(hWnd2, cbDefaultTerminalNoInjects, gpSet->isDefaultTerminalNoInjects);
-			CheckRadioButton(hWnd2, rbDefaultTerminalConfAuto, rbDefaultTerminalConfNever, rbDefaultTerminalConfAuto+gpSet->nDefaultTerminalConfirmClose);
-			wchar_t* pszApps = gpSet->GetDefaultTerminalApps();
-			_ASSERTE(pszApps!=NULL);
-			SetDlgItemText(hWnd2, tDefaultTerminal, pszApps);
-			if (wcschr(pszApps, L',') != NULL && wcschr(pszApps, L'|') == NULL)
-				Icon.ShowTrayIcon(L"List of hooked executables must be delimited with \"|\" but not commas", tsa_Default_Term);
-			SafeFree(pszApps);
-
 			bSkipCbSel = false;
 		}
 		break; // WM_INITDIALOG
@@ -3682,7 +3698,6 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 		{
 		case BN_CLICKED:
 			{
-				bool bUpdateGuiMapping = false, bSetupDefaultTerminal = false;
 				WORD CB = LOWORD(wParam);
 
 				switch (CB)
@@ -3697,64 +3712,16 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				case bInsideUnregister:
 					ShellIntegration(hWnd2, ShellIntgr_Inside, CB==bInsideRegister);
 					pageOpProc_Integr(hWnd2, UM_RELOAD_HERE_LIST, UM_RELOAD_HERE_LIST, 0);
+					if (CB==bInsideUnregister)
+						pageOpProc_Integr(hWnd2, WM_COMMAND, MAKELONG(cbInsideName,CBN_SELCHANGE), 0);
 					break;
 				case bHereRegister:
 				case bHereUnregister:
 					ShellIntegration(hWnd2, ShellIntgr_Here, CB==bHereRegister);
 					pageOpProc_Integr(hWnd2, UM_RELOAD_HERE_LIST, UM_RELOAD_HERE_LIST, 0);
+					if (CB==bHereUnregister)
+						pageOpProc_Integr(hWnd2, WM_COMMAND, MAKELONG(cbHereName,CBN_SELCHANGE), 0);
 					break;
-				case cbDefaultTerminal:
-					gpSet->isSetDefaultTerminal = IsChecked(hWnd2, cbDefaultTerminal);
-					bUpdateGuiMapping = true;
-					bSetupDefaultTerminal = gpSet->isSetDefaultTerminal;
-					break;
-				case cbDefaultTerminalStartup:
-					if (IsChecked(hWnd2, cbDefaultTerminalStartup))
-					{
-						if (!gpSet->isSetDefaultTerminal)
-						{
-							if (MessageBox(L"Default Terminal feature was not enabled. Enable it now?", MB_YESNO, NULL, ghOpWnd) != IDYES)
-								break;
-							gpSet->isSetDefaultTerminal = true;
-							checkDlgButton(hWnd2, cbDefaultTerminal, BST_CHECKED);
-							bUpdateGuiMapping = true;
-							bSetupDefaultTerminal = true;
-						}
-						gpSet->isRegisterOnOsStartup = true;
-					}
-					else
-					{
-						gpSet->isRegisterOnOsStartup = false;
-					}
-					gpConEmu->mp_DefTrm->CheckRegisterOsStartup();
-					break;
-				case cbDefaultTerminalNoInjects:
-					gpSet->isDefaultTerminalNoInjects = IsChecked(hWnd2, cbDefaultTerminalNoInjects);
-					bUpdateGuiMapping = true;
-					break;
-				case rbDefaultTerminalConfAuto:
-				case rbDefaultTerminalConfAlways:
-				case rbDefaultTerminalConfNever:
-					gpSet->nDefaultTerminalConfirmClose = 
-						IsChecked(hWnd2, rbDefaultTerminalConfAuto) ? 0 : 
-						IsChecked(hWnd2, rbDefaultTerminalConfAlways) ? 1 : 2;
-					bUpdateGuiMapping = true;
-					break;
-				}
-
-				if (bUpdateGuiMapping)
-				{
-					gpConEmu->OnGlobalSettingsChanged();
-				}
-
-				if (gpSet->isSetDefaultTerminal && bSetupDefaultTerminal)
-				{
-					// Change mouse cursor due to long operation
-					SetCursor(LoadCursor(NULL,IDC_WAIT));
-					// Redraw checkboxes to avoid lags in painting while installing hooks
-					RedrawWindow(hWnd2, NULL, NULL, RDW_UPDATENOW|RDW_ALLCHILDREN);
-					// Инициировать эксплорер, если он еще не был обработан
-					gpConEmu->mp_DefTrm->PostCreated(true, true);
 				}
 			}
 			break; // BN_CLICKED
@@ -6069,6 +6036,83 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCmdTaskbarUpdate:
 			return OnButtonClicked_Tasks(hWnd2, wParam, lParam);
 		/* *** Command groups *** */
+
+
+		/* *** Default terminal *** */
+		case cbDefaultTerminal:
+		case cbDefaultTerminalStartup:
+		case cbDefaultTerminalTSA:
+		case cbDefaultTerminalNoInjects:
+		case rbDefaultTerminalConfAuto:
+		case rbDefaultTerminalConfAlways:
+		case rbDefaultTerminalConfNever:
+			{
+				bool bUpdateGuiMapping = false;
+				bool bSetupDefaultTerminal = false;
+
+				switch (CB)
+				{
+				case cbDefaultTerminal:
+					gpSet->isSetDefaultTerminal = IsChecked(hWnd2, cbDefaultTerminal);
+					bUpdateGuiMapping = true;
+					bSetupDefaultTerminal = gpSet->isSetDefaultTerminal;
+					break;
+				case cbDefaultTerminalStartup:
+				case cbDefaultTerminalTSA:
+					if (IsChecked(hWnd2, cbDefaultTerminalStartup))
+					{
+						if (!gpSet->isSetDefaultTerminal)
+						{
+							if (MessageBox(L"Default Terminal feature was not enabled. Enable it now?", MB_YESNO, NULL, ghOpWnd) != IDYES)
+								break;
+							gpSet->isSetDefaultTerminal = true;
+							checkDlgButton(hWnd2, cbDefaultTerminal, BST_CHECKED);
+							bUpdateGuiMapping = true;
+							bSetupDefaultTerminal = true;
+						}
+						gpSet->isRegisterOnOsStartup = true;
+					}
+					else
+					{
+						gpSet->isRegisterOnOsStartup = false;
+					}
+					gpSet->isRegisterOnOsStartupTSA = IsChecked(hWnd2, cbDefaultTerminalTSA);
+					EnableWindow(GetDlgItem(hWnd2, cbDefaultTerminalTSA), gpSet->isRegisterOnOsStartup);
+					// And update registry
+					gpConEmu->mp_DefTrm->CheckRegisterOsStartup();
+					break;
+				case cbDefaultTerminalNoInjects:
+					gpSet->isDefaultTerminalNoInjects = IsChecked(hWnd2, cbDefaultTerminalNoInjects);
+					bUpdateGuiMapping = true;
+					break;
+				case rbDefaultTerminalConfAuto:
+				case rbDefaultTerminalConfAlways:
+				case rbDefaultTerminalConfNever:
+					gpSet->nDefaultTerminalConfirmClose = 
+						IsChecked(hWnd2, rbDefaultTerminalConfAuto) ? 0 : 
+						IsChecked(hWnd2, rbDefaultTerminalConfAlways) ? 1 : 2;
+					bUpdateGuiMapping = true;
+					break;
+				}
+
+				if (bUpdateGuiMapping)
+				{
+					gpConEmu->OnGlobalSettingsChanged();
+				}
+
+				if (gpSet->isSetDefaultTerminal && bSetupDefaultTerminal)
+				{
+					// Change mouse cursor due to long operation
+					SetCursor(LoadCursor(NULL,IDC_WAIT));
+					// Redraw checkboxes to avoid lags in painting while installing hooks
+					RedrawWindow(hWnd2, NULL, NULL, RDW_UPDATENOW|RDW_ALLCHILDREN);
+					// Инициировать эксплорер, если он еще не был обработан
+					gpConEmu->mp_DefTrm->PostCreated(true, true);
+				}
+			}
+			break;
+		/* *** Default terminal *** */
+
 
 		case bGotoEditorCmd:
 			{
@@ -8427,6 +8471,13 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 					{
 					case bSaveSettings:
 						{
+							if (/*ReadOnly || */gpSetCls->isResetBasicSettings)
+							{
+								//DisplayLastError(isResetBasicSettings ? L"Not allowed in '/Basic' mode" : L"Settings storage is read only", -1);
+								DisplayLastError(L"Not allowed in '/Basic' mode", -1);
+								return 0;
+							}
+
 							HWND hFocus = GetFocus();
 							WORD wFocusID = GetDlgCtrlID(hFocus);
 							bool isShiftPressed = isPressed(VK_SHIFT);
@@ -8791,6 +8842,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_INTEGRATION:
 			gpSetCls->OnInitDialog_Integr(hWnd2, true);
 			break;
+		case IDD_SPG_DEFTERM:
+			gpSetCls->OnInitDialog_DefTerm(hWnd2, true);
+			break;
 		case IDD_SPG_VIEWS:
 			gpSetCls->OnInitDialog_Views(hWnd2);
 			break;
@@ -8874,6 +8928,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			break;
 		case IDD_SPG_INTEGRATION:
 			gpSetCls->OnInitDialog_Integr(hWnd2, false);
+			break;
+		case IDD_SPG_DEFTERM:
+			gpSetCls->OnInitDialog_DefTerm(hWnd2, false);
 			break;
 		case IDD_SPG_VIEWS:   /*gpSetCls->OnInitDialog_Views(hWnd2);*/  break;
 		case IDD_SPG_DEBUG:   /*gpSetCls->OnInitDialog_Debug(hWnd2);*/  break;
@@ -12238,7 +12295,7 @@ void CSettings::SetArgBufferHeight(int anBufferHeight)
 
 void CSettings::SetDefaultCmd(LPCWSTR asCmd)
 {
-	if (gpConEmu && gpConEmu->mb_MingwMode && gpConEmu->mb_MSysStartup)
+	if (gpConEmu && gpConEmu->isMingwMode() && gpConEmu->isMSysStartup())
 	{
 		wchar_t szSearch[MAX_PATH+32], *pszFile;
 		wcscpy_c(szSearch, gpConEmu->ms_ConEmuExeDir);
@@ -12300,7 +12357,7 @@ LPCTSTR CSettings::GetCurCmd(bool *pIsCmdList /*= NULL*/)
 	return NULL;
 }
 
-LPCTSTR CSettings::GetCmd(bool *pIsCmdList)
+LPCTSTR CSettings::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 {
 	LPCWSTR pszCmd = GetCurCmd(pIsCmdList);
 	if (pszCmd)
@@ -12316,13 +12373,21 @@ LPCTSTR CSettings::GetCmd(bool *pIsCmdList)
 			return gpSet->psStartSingleApp;
 		break;
 	case 1:
+		if (bNoTask)
+			return NULL;
 		if (gpSet->psStartTasksFile && *gpSet->psStartTasksFile)
 			return gpSet->psStartTasksFile;
 		break;
 	case 2:
+		if (bNoTask)
+			return NULL;
 		if (gpSet->psStartTasksName && *gpSet->psStartTasksName)
 			return gpSet->psStartTasksName;
 		break;
+	case 3:
+		if (bNoTask)
+			return NULL;
+		return AutoStartTaskName;
 	}
 
 	wchar_t* pszNewCmd = NULL;
@@ -12497,6 +12562,24 @@ LONG CSettings::FontHeight()
 	{
 		_ASSERTE(LogFont.lfHeight!=0);
 		return 12;
+	}
+
+	_ASSERTE(gpSetCls->mn_FontHeight==LogFont.lfHeight);
+	return gpSetCls->mn_FontHeight;
+}
+
+LONG CSettings::FontHeightPx()
+{
+	if (!LogFont.lfHeight)
+	{
+		_ASSERTE(LogFont.lfHeight!=0);
+		return 12;
+	}
+
+	if (m_otm[0] && (m_otm[0]->otmrcFontBox.top > 0))
+	{
+		_ASSERTE(((m_otm[0]->otmrcFontBox.top * 1.3) >= LogFont.lfHeight) && (m_otm[0]->otmrcFontBox.top <= LogFont.lfHeight));
+		return m_otm[0]->otmrcFontBox.top;
 	}
 
 	_ASSERTE(gpSetCls->mn_FontHeight==LogFont.lfHeight);

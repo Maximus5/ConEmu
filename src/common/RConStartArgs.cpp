@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RConStartArgs.h"
 #include "common.hpp"
 #include "WinObjects.h"
+#include "CmdLine.h"
 
 #ifdef __GNUC__
 #define SecureZeroMemory(p,s) memset(p,0,s)
@@ -268,7 +269,12 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 
 		// Ќе окавычиваем. Ётим должен озаботитьс€ пользователь
 		_wcscat_c(pszFull, cchMaxLen, pszSpecialCmd);
-		_wcscat_c(pszFull, cchMaxLen, L" ");
+
+		//131008 - лишние пробелы не нужны
+		wchar_t* pS = pszFull + lstrlen(pszFull);
+		while ((pS > pszFull) && wcschr(L" \t\r\n", *(pS - 1)))
+			*(--pS) = 0;
+		//_wcscat_c(pszFull, cchMaxLen, L" ");
 	}
 	else
 	{
@@ -326,8 +332,11 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 		wcscat_c(szAdd, L"s");
 		if (nSplitPane)
 			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"%uT", nSplitPane);
-		if ((int)(nSplitValue/10) != 0)
-			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"%u", (UINT)(nSplitValue/10));
+		if (nSplitValue > 0 && nSplitValue < 1000)
+		{
+			UINT iPercent = (1000-nSplitValue)/10;
+			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"%u", max(1,min(iPercent,99)));
+		}
 		wcscat_c(szAdd, (eSplit == eSplitHorz) ? L"H" : L"V");
 	}
 
@@ -542,10 +551,12 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 	_ASSERTE(lstrlen(pszCurCon)==nNewConLen);
 	bool bStop = false;
 
+	wchar_t* pszFrom = pszSpecialCmd;
+
 	while (!bStop)
 	{
-		wchar_t* pszFindNew = wcsstr(pszSpecialCmd, pszNewCon);
-		wchar_t* pszFind = pszFindNew ? pszFindNew : wcsstr(pszSpecialCmd, pszCurCon);
+		wchar_t* pszFindNew = wcsstr(pszFrom, pszNewCon);
+		wchar_t* pszFind = pszFindNew ? pszFindNew : wcsstr(pszFrom, pszCurCon);
 		if (pszFindNew)
 			bNewConsole = TRUE;
 		else if (!pszFind)
@@ -553,9 +564,14 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 		// ѕроверка валидности
 		_ASSERTE(pszFind >= pszSpecialCmd);
-		if (((pszFind == pszSpecialCmd) || (*(pszFind-1) == L'"') || (*(pszFind-1) == L' ')) // начало аргумента
+		if (!(((pszFind == pszFrom) || (*(pszFind-1) == L'"') || (*(pszFind-1) == L' ')) // начало аргумента
 			&& (pszFind[nNewConLen] == L' ' || pszFind[nNewConLen] == L':' 
-				|| pszFind[nNewConLen] == L'"' || pszFind[nNewConLen] == 0))
+				|| pszFind[nNewConLen] == L'"' || pszFind[nNewConLen] == 0)))
+		{
+			// Ќ≈ наш аргумент
+			pszFrom = pszFind+nNewConLen;
+		}
+		else
 		{
 			// -- не будем пока, мешает. например, при запуске задач
 			//// ѕо умолчанию, принудительно включить "Press Enter or Esc to close console"
@@ -976,8 +992,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 				*pszFind = 0;
 				nChanges++;
 			}
-		}
-	}
+		} // if ((((pszFind == pszFrom) ...
+	} // while (!bStop)
 
 	return nChanges;
-}
+} // int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)

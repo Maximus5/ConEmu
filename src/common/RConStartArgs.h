@@ -85,7 +85,7 @@ struct RConStartArgs
 		eSplitHorz = 1,
 		eSplitVert = 2,
 	} eSplit;
-	UINT nSplitValue; // (0.1 - 99.9%)0, по умолчанию - "50"
+	UINT nSplitValue; // 1..999 (0.1 - 99.9%)0, по умолчанию - "50"
     UINT nSplitPane;  // по умолчанию - "0", иначе - 1-based индекс консоли, которую нужно разбить
 	
 	RecreateActionParm aRecreate; // Информационно и для CRecreateDlg

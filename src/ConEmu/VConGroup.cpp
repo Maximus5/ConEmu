@@ -1243,7 +1243,7 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 				{
 					// Ќужны доп.проверки окон фара
 					ConEmuTab tab;
-					LPCWSTR pszNameOnly = asName ? PointToName(asName) : NULL;
+					LPCWSTR pszNameOnly = (anWindowType & fwt_FarFullPathReq) ? NULL : asName ? PointToName(asName) : NULL;
 					if (pszNameOnly)
 					{
 						// ќбработаем как обратные (в PointToName), так и пр€мые слеши
@@ -1285,7 +1285,8 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 							{
 								iFound = (j+1);
 							}
-							else if ((pszNameOnly != asName) && (lstrcmpi(PointToName(tab.Name), pszNameOnly) == 0))
+							else if (pszNameOnly && (pszNameOnly != asName)
+								&& (lstrcmpi(PointToName(tab.Name), pszNameOnly) == 0))
 							{
 								iFound = (j+1);
 							}
@@ -2241,7 +2242,7 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 	bool bConfirmEach = (bMsgConfirmed || !gpSet->isCloseConsoleConfirm) ? false : true;
 
 	// —охраним размер перед закрытием консолей, а то они могут напакостить и "вернуть" старый размер
-	gpSet->SaveSizePosOnExit();
+	gpSet->SaveSettingsOnExit();
 		
 	for (int i = (int)(countof(gp_VCon)-1); i >= 0; i--)
 	{
@@ -3314,9 +3315,29 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 	// When no command specified - choose default one. Now!
 	if (!args->bDetached && (!args->pszSpecialCmd || !*args->pszSpecialCmd))
 	{
+		_ASSERTE(gpConEmu->mn_StartupFinished == CConEmuMain::ss_Started);
 		_ASSERTE(args->pszSpecialCmd==NULL);
 
-		args->pszSpecialCmd = lstrdup(gpSetCls->GetCmd());
+		// —юда мы попадаем, если юзер жмет Win+W (создание без подтверждени€)
+		LPCWSTR pszSysCmd = gpSetCls->GetCmd(NULL, true);
+		CVConGuard vActive;
+		// OK, если ConEmu стартовал с задачей (именованой или <Startup>)
+		if (!pszSysCmd || !*pszSysCmd)
+		{
+			// “о нельз€ запускать _консоль_ с _задачей_ или вообще "без команды"
+			if (GetActiveVCon(&vActive) >= 0)
+			{
+				// ѕопробовать вз€ть команду из текущей консоли?
+				pszSysCmd = vActive->RCon()->GetCmd(true);
+			}
+			// ’м?  оманда по умолчанию тогда.
+			if (!pszSysCmd || !*pszSysCmd)
+			{
+				pszSysCmd = gpSetCls->GetDefaultCmd();
+			}
+		}
+
+		args->pszSpecialCmd = lstrdup(pszSysCmd);
 
 		_ASSERTE(args->pszSpecialCmd && *args->pszSpecialCmd);
 	}

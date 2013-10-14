@@ -160,6 +160,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    close all tabs but active (5)\r\n" \
 	L"    close active tab or group (6)\r\n" \
 	L"    close all active processes of the active group (7)\r\n" \
+	L"    close all tabs (8)\r\n" \
 	L"Copy(<What>)\r\n" \
 	L"  - Copy active console contents\r\n" \
 	L"    What==0: current selection\r\n" \

@@ -90,7 +90,7 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 	mn_DlgRc = IDCANCEL;
 	mp_Args = apArgs;
 
-	mh_Parent = (apArgs->aRecreate == cra_EditTab) ? ghOpWnd : ghWnd;
+	mh_Parent = (apArgs->aRecreate == cra_EditTab && ghOpWnd) ? ghOpWnd : ghWnd;
 
 	#ifdef _DEBUG
 	if ((mh_Parent == ghWnd) && gpConEmu->isIconic())
@@ -180,18 +180,19 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			RConStartArgs* pArgs = pDlg->mp_Args;
 
 			_ASSERTE(pArgs);
-			_ASSERTE(pRCon || pArgs->aRecreate == cra_CreateTab);
+			_ASSERTE(pRCon || (pArgs->aRecreate == cra_CreateTab || pArgs->aRecreate == cra_EditTab));
 
 			LPCWSTR pszCmd = pArgs->pszSpecialCmd
 			                 ? pArgs->pszSpecialCmd
 			                 : pRCon ? pRCon->GetCmd() : NULL;
 
-			LPCWSTR pszSystem = gpSetCls->GetCmd();
+			// В диалоге запуска новой консоли - нечего делать автостартующему таску?
+			LPCWSTR pszSystem = gpSetCls->GetCmd(NULL, true);
 
 			if (pArgs->aRecreate == cra_RecreateTab)
 			{
 				SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
-				SetDlgItemText(hDlg, IDC_STARTUP_DIR, pRCon ? pRCon->GetDir() : L"");
+				SetDlgItemText(hDlg, IDC_STARTUP_DIR, pRCon ? pRCon->GetStartupDir() : L"");
 				// Hide Split's
 				ShowWindow(GetDlgItem(hDlg, gbRecreateSplit), SW_HIDE);
 				ShowWindow(GetDlgItem(hDlg, rbRecreateSplitNone), SW_HIDE);
@@ -202,7 +203,8 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			}
 			else
 			{
-				SetDlgItemText(hDlg, IDC_RESTART_CMD, pArgs->pszSpecialCmd ? pArgs->pszSpecialCmd : pszSystem);
+				LPCWSTR pszSetCmd = pArgs->pszSpecialCmd ? pArgs->pszSpecialCmd : (pszSystem ? pszSystem : pszCmd);
+				SetDlgItemText(hDlg, IDC_RESTART_CMD, pszSetCmd ? pszSetCmd : L"");
 				SetDlgItemText(hDlg, IDC_STARTUP_DIR, pArgs->pszStartupDir ? pArgs->pszStartupDir : L"");
 				// Fill splits
 				SetDlgItemInt(hDlg, tRecreateSplit, (1000-pArgs->nSplitValue)/10, FALSE);
@@ -361,19 +363,22 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 					pt.x-(rcBox2.right-rcBox2.left), pt.y, 0,0, SWP_NOSIZE);
 			}
 
-			RECT rect;
-			GetWindowRect(hDlg, &rect);
-			RECT rcParent;
-			GetWindowRect(pDlg->mh_Parent, &rcParent);
+			//RECT rect;
+			//GetWindowRect(hDlg, &rect);
+			//RECT rcParent;
+			//GetWindowRect(pDlg->mh_Parent, &rcParent);
 
 			// Ensure, it will be "on screen"
-			RECT rcFix = {(rcParent.left+rcParent.right-rect.right+rect.left)/2,
-				(rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2};
-			rcFix.right = rcFix.left + (rect.right - rect.left);
-			rcFix.bottom = rcFix.top + (rect.bottom - rect.top);
-			gpConEmu->FixWindowRect(rcFix, 0, true);
-
-			MoveWindow(hDlg, rcFix.left, rcFix.top, rcFix.right-rcFix.left, rcFix.bottom-rcFix.top, false);
+			RECT rect; GetWindowRect(hDlg, &rect);
+			RECT rcCenter = CenterInParent(rect, pDlg->mh_Parent);
+			MoveWindow(hDlg, rcCenter.left, rcCenter.top,
+			           rect.right - rect.left, rect.bottom - rect.top, false);
+			//RECT rcFix = {(rcParent.left+rcParent.right-rect.right+rect.left)/2,
+			//	(rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2};
+			//rcFix.right = rcFix.left + (rect.right - rect.left);
+			//rcFix.bottom = rcFix.top + (rect.bottom - rect.top);
+			//gpConEmu->FixWindowRect(rcFix, 0, true);
+			//MoveWindow(hDlg, rcFix.left, rcFix.top, rcFix.right-rcFix.left, rcFix.bottom-rcFix.top, false);
 
 			PostMessage(hDlg, (WM_APP+1), 0,0);
 
@@ -425,7 +430,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			CVConGuard VCon;
 			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
 			CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
-			_ASSERTE(pRCon || pArgs->aRecreate == cra_CreateTab);
+			_ASSERTE(pRCon || (pArgs->aRecreate == cra_CreateTab || pArgs->aRecreate == cra_EditTab));
 
 			LPCWSTR pszCmd = pArgs->pszSpecialCmd
 			                 ? pArgs->pszSpecialCmd
@@ -434,7 +439,8 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			if (*pszCmd && (nId < 0)) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszCmd);
 
-			LPCWSTR pszSystem = gpSetCls->GetCmd();
+			// В диалоге запуска новой консоли - нечего делать автостартующему таску?
+			LPCWSTR pszSystem = gpSetCls->GetCmd(NULL, true);
 
 			if (pszSystem != pszCmd && (pszSystem && pszCmd && (lstrcmpi(pszSystem, pszCmd) != 0)))
 			{

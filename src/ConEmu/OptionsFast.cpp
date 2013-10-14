@@ -121,7 +121,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 			CheckDlgButton(hDlg, cbInjectConEmuHkFast, gpSet->isUseInjects);
 
-			if (gpConEmu->mb_MingwMode)
+			if (!gpConEmu->isUpdateAllowed())
 			{
 				EnableWindow(GetDlgItem(hDlg, cbEnableAutoUpdateFast), FALSE);
 				EnableWindow(GetDlgItem(hDlg, rbAutoUpdateStableFast), FALSE);
@@ -342,6 +342,12 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 void CheckOptionsFast(LPCWSTR asTitle, bool abCreatingVanilla /*= false*/)
 {
+	if (gpConEmu->IsFastSetupDisabled())
+	{
+		gpConEmu->LogString(L"CheckOptionsFast was skipped due to '/basic' or '/resetdefault' switch");
+		return;
+	}
+
 	bVanilla = abCreatingVanilla;
 
 	bCheckHooks = (gpSet->m_isKeyboardHooks == 0);
