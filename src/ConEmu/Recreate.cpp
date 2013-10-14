@@ -42,6 +42,10 @@ CRecreateDlg::CRecreateDlg()
 	, mn_DlgRc(0)
 	, mp_Args(NULL)
 	, mh_Parent(NULL)
+	, mpsz_DefCmd(NULL)
+	, mpsz_CurCmd(NULL)
+	, mpsz_SysCmd(NULL)
+	, mpsz_DefDir(NULL)
 {
 	ms_CurUser[0] = 0;
 }
@@ -99,10 +103,14 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 	}
 	#endif
 
+	InitVars();
+
 	bool bPrev = gpConEmu->SetSkipOnFocus(true);
 	int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), mh_Parent, RecreateDlgProc, (LPARAM)this);
 	UNREFERENCED_PARAMETER(nRc);
 	gpConEmu->SetSkipOnFocus(bPrev);
+
+	FreeVars();
 
 	//if (gpConEmu->mh_RecreatePasswFont)
 	//{
@@ -156,43 +164,43 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			LRESULT lbRc = FALSE;
 			
 
+			// Visual
 			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+			// Set password style (avoid "bars" on some OS)
+			SendDlgItemMessage(hDlg, tRunAsPassword, WM_SETFONT, (LPARAM)(HFONT)GetStockObject(DEFAULT_GUI_FONT), 0);
 
+
+			// Add menu items
 			HMENU hSysMenu = GetSystemMenu(hDlg, FALSE);
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+			InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED,
+					   ID_RESETCMDHISTORY, L"Clear history...");
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED
-					   | ((GetWindowLong(ghOpWnd,GWL_EXSTYLE)&WS_EX_TOPMOST) ? MF_CHECKED : 0),
-					   ID_RESETCMDHISTORY, _T("Clear history..."));
+					   | (gpSet->isSaveCmdHistory ? MF_CHECKED : 0),
+					   ID_STORECMDHISTORY, L"Store history");
+			
+			
 
 
-			SendDlgItemMessage(hDlg, tRunAsPassword, WM_SETFONT, (LPARAM)(HFONT)GetStockObject(DEFAULT_GUI_FONT), 0);
 
 			//#ifdef _DEBUG
 			//SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 			//#endif
 
-			SendMessage(hDlg, UM_FILL_CMDLIST, TRUE, 0);
-			
-			CVConGuard VCon;
-			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
-			CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
 			RConStartArgs* pArgs = pDlg->mp_Args;
-
 			_ASSERTE(pArgs);
-			_ASSERTE(pRCon || (pArgs->aRecreate == cra_CreateTab || pArgs->aRecreate == cra_EditTab));
 
-			LPCWSTR pszCmd = pArgs->pszSpecialCmd
-			                 ? pArgs->pszSpecialCmd
-			                 : pRCon ? pRCon->GetCmd() : NULL;
+			// Fill command and task drop down
+			SendMessage(hDlg, UM_FILL_CMDLIST, TRUE, 0);
 
-			// В диалоге запуска новой консоли - нечего делать автостартующему таску?
-			LPCWSTR pszSystem = gpSetCls->GetCmd(NULL, true);
+			// Set text in command and folder fields
+			SetDlgItemText(hDlg, IDC_RESTART_CMD, pDlg->mpsz_DefCmd ? pDlg->mpsz_DefCmd : L"");
+			SetDlgItemText(hDlg, IDC_STARTUP_DIR, pDlg->mpsz_DefDir ? pDlg->mpsz_DefDir : pArgs->pszStartupDir ? pArgs->pszStartupDir : gpConEmu->WorkDir());
 
+			// Split controls
 			if (pArgs->aRecreate == cra_RecreateTab)
 			{
-				SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
-				SetDlgItemText(hDlg, IDC_STARTUP_DIR, pRCon ? pRCon->GetStartupDir() : L"");
 				// Hide Split's
 				ShowWindow(GetDlgItem(hDlg, gbRecreateSplit), SW_HIDE);
 				ShowWindow(GetDlgItem(hDlg, rbRecreateSplitNone), SW_HIDE);
@@ -203,20 +211,17 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			}
 			else
 			{
-				LPCWSTR pszSetCmd = pArgs->pszSpecialCmd ? pArgs->pszSpecialCmd : (pszSystem ? pszSystem : pszCmd);
-				SetDlgItemText(hDlg, IDC_RESTART_CMD, pszSetCmd ? pszSetCmd : L"");
-				SetDlgItemText(hDlg, IDC_STARTUP_DIR, pArgs->pszStartupDir ? pArgs->pszStartupDir : L"");
 				// Fill splits
 				SetDlgItemInt(hDlg, tRecreateSplit, (1000-pArgs->nSplitValue)/10, FALSE);
 				CheckRadioButton(hDlg, rbRecreateSplitNone, rbRecreateSplit2Bottom, rbRecreateSplitNone+pArgs->eSplit);
 				EnableWindow(GetDlgItem(hDlg, tRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
 				EnableWindow(GetDlgItem(hDlg, stRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
-				if (pArgs->aRecreate == cra_EditTab)
-				{
-					// Спрятать флажок "New window"
-					ShowWindow(GetDlgItem(hDlg, cbRunInNewWindow), SW_HIDE);
-				}
 			}
+
+			// Спрятать флажок "New window"
+			bool bRunInNewWindow_Hidden = (pArgs->aRecreate == cra_EditTab || pArgs->aRecreate == cra_RecreateTab);
+			ShowWindow(GetDlgItem(hDlg, cbRunInNewWindow), bRunInNewWindow_Hidden ? SW_HIDE : SW_SHOWNORMAL);
+
 
 			const wchar_t *pszUser = pArgs->pszUserName;
 			const wchar_t *pszDomain = pArgs->pszDomain;
@@ -231,6 +236,9 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			SetDlgItemText(hDlg, rbCurrentUser, szRbCaption);
 
 			wchar_t szOtherUser[MAX_PATH*2+1]; szOtherUser[0] = 0;
+
+			CVConGuard VCon;
+			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
 
 			if ((pArgs->pszUserName && *pArgs->pszUserName)
 				|| ((pArgs->aRecreate == cra_RecreateTab) && pVCon && pVCon->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted)))
@@ -315,8 +323,6 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
 				// Выровнять флажок по кнопке
 				GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
-				// Спрятать флажок "New window"
-				ShowWindow(GetDlgItem(hDlg, cbRunInNewWindow), SW_HIDE);
 				lbRc = TRUE;
 			}
 			else
@@ -339,7 +345,6 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
 				// Выровнять флажок по кнопке
 				GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
-				//SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
 			}
 
 			if (rcBtnBox.left)
@@ -351,10 +356,10 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				pt.x = rcBtnBox.left - (rcBox.right - rcBox.left) - 5;
 				pt.y = rcBtnBox.top + ((rcBtnBox.bottom-rcBtnBox.top) - (rcBox.bottom-rcBox.top))/2;
 				SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-				//SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
 			}
 
-			if ((pArgs->aRecreate != cra_RecreateTab) && (pArgs->aRecreate != cra_EditTab))
+			// Correct cbRunInNewWindow position
+			if (!bRunInNewWindow_Hidden)
 			{
 				POINT pt = {};
 				MapWindowPoints(GetDlgItem(hDlg, cbRunAsAdmin), hDlg, &pt, 1);
@@ -363,26 +368,19 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 					pt.x-(rcBox2.right-rcBox2.left), pt.y, 0,0, SWP_NOSIZE);
 			}
 
-			//RECT rect;
-			//GetWindowRect(hDlg, &rect);
-			//RECT rcParent;
-			//GetWindowRect(pDlg->mh_Parent, &rcParent);
 
 			// Ensure, it will be "on screen"
 			RECT rect; GetWindowRect(hDlg, &rect);
 			RECT rcCenter = CenterInParent(rect, pDlg->mh_Parent);
 			MoveWindow(hDlg, rcCenter.left, rcCenter.top,
 			           rect.right - rect.left, rect.bottom - rect.top, false);
-			//RECT rcFix = {(rcParent.left+rcParent.right-rect.right+rect.left)/2,
-			//	(rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2};
-			//rcFix.right = rcFix.left + (rect.right - rect.left);
-			//rcFix.bottom = rcFix.top + (rect.bottom - rect.top);
-			//gpConEmu->FixWindowRect(rcFix, 0, true);
-			//MoveWindow(hDlg, rcFix.left, rcFix.top, rcFix.right-rcFix.left, rcFix.bottom-rcFix.top, false);
 
+
+			// Была отключена обработка CConEmuMain::OnFocus (лишние телодвижения)
 			PostMessage(hDlg, (WM_APP+1), 0,0);
 
 
+			// Default focus control
 			if (pArgs->aRecreate == cra_RecreateTab)
 				SetFocus(GetDlgItem(hDlg, IDC_START)); // Win+~ (Recreate tab), Focus on "Restart" button"
 			else if ((pArgs->pszUserName && *pArgs->pszUserName) && !*pArgs->szUserPassword)
@@ -427,28 +425,12 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			RConStartArgs* pArgs = pDlg->mp_Args;
 			_ASSERTE(pArgs);
 
-			CVConGuard VCon;
-			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
-			CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
-			_ASSERTE(pRCon || (pArgs->aRecreate == cra_CreateTab || pArgs->aRecreate == cra_EditTab));
+			pDlg->AddCommandList(pArgs->pszSpecialCmd);
+			pDlg->AddCommandList(pDlg->mpsz_SysCmd, pArgs->pszSpecialCmd ? -1 : 0);
+			pDlg->AddCommandList(pDlg->mpsz_CurCmd);
+			pDlg->AddCommandList(pDlg->mpsz_DefCmd);
 
-			LPCWSTR pszCmd = pArgs->pszSpecialCmd
-			                 ? pArgs->pszSpecialCmd
-			                 : pRCon ? pRCon->GetCmd() : L"";
-			int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszCmd);
-
-			if (*pszCmd && (nId < 0)) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszCmd);
-
-			// В диалоге запуска новой консоли - нечего делать автостартующему таску?
-			LPCWSTR pszSystem = gpSetCls->GetCmd(NULL, true);
-
-			if (pszSystem != pszCmd && (pszSystem && pszCmd && (lstrcmpi(pszSystem, pszCmd) != 0)))
-			{
-				nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszSystem);
-
-				if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, pArgs->pszSpecialCmd ? -1 : 0, (LPARAM)pszSystem);
-			}
-
+			// Может быть позван после очистки истории из меню, тогда нет смысла и дергаться
 			if (wParam)
 			{
 				LPCWSTR pszHistory = gpSet->HistoryGet();
@@ -457,25 +439,19 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				{
 					while (*pszHistory)
 					{
-						nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszHistory);
-						if (nId < 0)
-							SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pszHistory);
+						pDlg->AddCommandList(pszHistory);
 
 						pszHistory += _tcslen(pszHistory)+1;
 					}
 				}
 			}
 
-			//// Обновить группы команд
-			//gpSet->LoadCmdTasks(NULL);
-
+			// Tasks
 			int nGroup = 0;
 			const Settings::CommandTasks* pGrp = NULL;
 			while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
 			{
-				nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pGrp->pszName);
-				if (nId < 0)
-					SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pGrp->pszName);
+				pDlg->AddCommandList(pGrp->pszName);
 			}
 		}
 		return 0;
@@ -554,8 +530,10 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		return 0;
 
 		case WM_SYSCOMMAND:
-			if (LOWORD(wParam) == ID_RESETCMDHISTORY)
+			switch (LOWORD(wParam))
 			{
+			case ID_RESETCMDHISTORY:
+				// Подтверждение спросит ResetCmdHistory
 				if (gpSetCls->ResetCmdHistory(hDlg))
 				{
                 	wchar_t* pszCmd = GetDlgItemText(hDlg, IDC_RESTART_CMD);
@@ -566,6 +544,15 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
                 		SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
                 		free(pszCmd);
                 	}
+				}
+				SetWindowLongPtr(hDlg, DWLP_MSGRESULT, 0);
+				return 1;
+			case ID_STORECMDHISTORY:
+				if (MessageBox(gpSet->isSaveCmdHistory ? L"Do you want to disable history?" : L"Do you want to enable history?", MB_YESNO|MB_ICONQUESTION, NULL, hDlg) == IDYES)
+				{
+					gpSetCls->SetSaveCmdHistory(!gpSet->isSaveCmdHistory);
+					HMENU hSysMenu = GetSystemMenu(hDlg, FALSE);
+					CheckMenuItem(hSysMenu, ID_STORECMDHISTORY, MF_BYCOMMAND|(gpSet->isSaveCmdHistory ? MF_CHECKED : 0));
 				}
 				SetWindowLongPtr(hDlg, DWLP_MSGRESULT, 0);
 				return 1;
@@ -580,42 +567,12 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				{
 					case IDC_CHOOSE:
 					{
-						wchar_t *pszFilePath = SelectFile(L"Choose program to run", NULL, hDlg, L"Executables (*.exe)\0*.exe\0\0", true, false, false);
+						wchar_t *pszFilePath = SelectFile(L"Choose program to run", NULL, hDlg, L"Executables (*.exe)\0*.exe\0All files (*.*)\0*.*\0\0", true, false, false);
 						if (pszFilePath)
 						{
 							SetDlgItemText(hDlg, IDC_RESTART_CMD, pszFilePath);
 							SafeFree(pszFilePath);
 						}
-
-						//wchar_t *pszFilePath = NULL;
-						//int nLen = MAX_PATH*2;
-						//pszFilePath = (wchar_t*)calloc(nLen+3,2); // +2*'"'+\0
-
-						//if (!pszFilePath) return 1;
-
-						//OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
-						//ofn.lStructSize=sizeof(ofn);
-						//ofn.hwndOwner = hDlg;
-						//ofn.lpstrFilter = _T("Executables (*.exe)\0*.exe\0\0");
-						//ofn.nFilterIndex = 1;
-						//ofn.lpstrFile = pszFilePath+1;
-						//ofn.nMaxFile = nLen;
-						//ofn.lpstrTitle = _T("Choose program to run");
-						//ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-						//            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
-
-						//if (GetOpenFileName(&ofn))
-						//{
-						//	LPCWSTR pszNewText = pszFilePath + 1;
-						//	if (wcschr(pszFilePath, L' '))
-						//	{
-						//		pszFilePath[0] = L'"'; _wcscat_c(pszFilePath, nLen+3, L"\"");
-						//		pszNewText = pszFilePath;
-						//	}
-						//	SetDlgItemText(hDlg, IDC_RESTART_CMD, pszNewText);
-						//}
-
-						//SafeFree(pszFilePath);
 						return 1;
 					}
 					case IDC_CHOOSE_DIR:
@@ -628,28 +585,6 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 							SafeFree(pszFolder);
 						}
 						SafeFree(pszDefFolder);
-
-						//BROWSEINFO bi = {hDlg};
-						//wchar_t szFolder[MAX_PATH+1] = {0};
-						//GetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder, countof(szFolder));
-						//bi.pszDisplayName = szFolder;
-						//wchar_t szTitle[100];
-						//bi.lpszTitle = wcscpy(szTitle, L"Choose startup directory");
-						//bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
-						//bi.lpfn = BrowseCallbackProc;
-						//bi.lParam = (LPARAM)szFolder;
-						//LPITEMIDLIST pRc = SHBrowseForFolder(&bi);
-
-						//if (pRc)
-						//{
-						//	if (SHGetPathFromIDList(pRc, szFolder))
-						//	{
-						//		SetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder);
-						//	}
-
-						//	CoTaskMemFree(pRc);
-						//}
-
 						return 1;
 					}
 					case cbRunAsAdmin:
@@ -811,4 +746,123 @@ int CRecreateDlg::BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM
 	}
 
 	return 0;
+}
+
+void CRecreateDlg::InitVars()
+{
+	if (mpsz_DefCmd || mpsz_CurCmd || mpsz_SysCmd || mpsz_DefDir)
+	{
+		_ASSERTE(!(mpsz_DefCmd || mpsz_CurCmd || mpsz_SysCmd || mpsz_DefDir));
+		FreeVars();
+	}
+
+	// Если уже передана команда через параметры - из текущей консоли не извлекать
+	if (!mp_Args || mp_Args->pszSpecialCmd)
+	{
+		_ASSERTE(mp_Args!=NULL);
+		return;
+	}
+
+	// AutoStartTaskName - не возвращаем никогда.
+	//   Если он выбран при старте - то либо текущая консоль, либо первая команда из AutoStartTaskName, либо команда по умолчанию
+	// Диалог может быть вызван в следующих случаях
+	// * Recreate
+	// * Свободный выбор = cra_EditTab (добавление новой команды в task или выбор шелла при обломе на старте)
+	// * Ни одной консоли нет (предложить то что запускается при старте - Task, команда)
+	// * Консоли есть (пусть наверное будет то что запускается при старте - Task, команда)
+
+	CVConGuard VCon;
+	CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+	CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
+	wchar_t* pszBuf = NULL;
+
+	_ASSERTE(pRCon || (mp_Args->aRecreate == cra_CreateTab || mp_Args->aRecreate == cra_EditTab));
+
+	LPCWSTR pszCmd = pRCon ? pRCon->GetCmd() : NULL;
+	if (pszCmd && *pszCmd)
+		mpsz_CurCmd = lstrdup(pszCmd);
+
+	LPCWSTR pszSystem = gpSetCls->GetCmd();
+	if (pszSystem && *pszSystem && (lstrcmpi(pszSystem, AutoStartTaskName) != 0))
+		mpsz_SysCmd = lstrdup(pszSystem);
+
+	bool bDirFromRCon = false;
+
+	if (mp_Args->aRecreate == cra_RecreateTab)
+	{
+		// When recreate - always show active console command line
+		_ASSERTE(pRCon);
+		mpsz_DefCmd = lstrdup(pszCmd);
+		bDirFromRCon = true;
+	}
+	else
+	{
+		// В диалоге запуска новой консоли - нечего делать автостартующему таску?
+		if (lstrcmpi(pszSystem, AutoStartTaskName) == 0)
+		{
+			// Раз активной консоли нет - попробовать взять первую команду из AutoStartTaskName
+			if (!pszCmd)
+			{
+				pszBuf = gpConEmu->LoadConsoleBatch(AutoStartTaskName);
+				wchar_t* pszLine = wcschr(pszBuf, L'\n');
+				if (pszLine > pszBuf && *(pszLine-1) == L'\r')
+					pszLine--;
+				if (pszLine)
+					*pszLine = 0;
+				bool lbRunAdmin = (mp_Args->bRunAsAdministrator != FALSE);
+
+				pszCmd = gpConEmu->ParseScriptLineOptions(pszBuf, &lbRunAdmin, NULL);
+
+				if (lbRunAdmin)
+					mp_Args->bRunAsAdministrator = TRUE;
+			}
+			else
+			{
+				bDirFromRCon = true;
+			}
+		}
+		else if (pszSystem && *pszSystem)
+		{
+			pszCmd = pszSystem;
+		}
+		else
+		{
+			bDirFromRCon = true;
+		}
+
+		mpsz_DefCmd = lstrdup(pszCmd);
+		//mpsz_DefDir = lstrdup(mp_Args->pszStartupDir ? mp_Args->pszStartupDir : L"");
+	}
+
+	if (bDirFromRCon)
+	{
+		TODO("May be try to retrieve current directory of the shell?");
+		mpsz_DefDir = lstrdup(pRCon ? pRCon->GetStartupDir() : L"");
+	}
+
+	SafeFree(pszBuf);
+}
+
+void CRecreateDlg::FreeVars()
+{
+	SafeFree(mpsz_DefCmd);
+	SafeFree(mpsz_CurCmd);
+	SafeFree(mpsz_SysCmd);
+	SafeFree(mpsz_DefDir);
+}
+
+void CRecreateDlg::AddCommandList(LPCWSTR asCommand, INT_PTR iAfter /*= -1*/)
+{
+	if (!asCommand || !*asCommand)
+		return;
+	if (lstrcmpi(asCommand, AutoStartTaskName) == 0)
+		return;
+
+	//Already exist?
+	INT_PTR nId = SendDlgItemMessage(mh_Dlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)asCommand);
+
+	if (nId < 0)
+	{
+		SendDlgItemMessage(mh_Dlg, IDC_RESTART_CMD, CB_INSERTSTRING, iAfter, (LPARAM)asCommand);
+	}
 }

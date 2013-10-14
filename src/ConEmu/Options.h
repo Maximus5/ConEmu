@@ -1342,6 +1342,7 @@ struct Settings
 		//void UpdateConsoleMode(DWORD nMode);
 		//BOOL CheckConIme();
 		void CheckConsoleSettings();
+		void ResetSavedOnExit();
 		
 		SettingsBase* CreateSettings(const SettingsStorage* apStorage);
 		

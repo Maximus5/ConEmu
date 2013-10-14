@@ -3186,7 +3186,7 @@ BOOL CRealConsole::StartProcess()
 	}
 
 	// Prepare cmd line
-	LPCWSTR lpszRawCmd = (m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd) ? m_Args.pszSpecialCmd : gpSetCls->GetCmd();
+	LPCWSTR lpszRawCmd = (m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd) ? m_Args.pszSpecialCmd : gpSetCls->GetCmd(NULL, true);
 	_ASSERTE(lpszRawCmd && *lpszRawCmd);
 	//SafeFree(mpsz_CmdBuffer);
 	//mpsz_CmdBuffer = ParseConEmuSubst(lpszRawCmd);
@@ -3543,7 +3543,7 @@ BOOL CRealConsole::StartProcess()
 		{
 			if (psz[_tcslen(psz)-1]!=L'\n') _wcscat_c(psz, nErrLen, L"\r\n");
 
-			if (!gpSetCls->GetCurCmd() && StrStrI(gpSetCls->GetCmd(), gpSetCls->GetDefaultCmd())==NULL)
+			if (!gpSetCls->GetCurCmd() && StrStrI(gpSetCls->GetCmd(NULL, true), gpSetCls->GetDefaultCmd())==NULL)
 			{
 				_wcscat_c(psz, nErrLen, L"\r\n\r\n");
 				_wcscat_c(psz, nErrLen, L"Do You want to start ");
@@ -5983,7 +5983,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 
 	int iAppId = -1;
 	LPCWSTR lpszCmd = NULL;
-	wchar_t* pszBuffer = NULL;
+	//wchar_t* pszBuffer = NULL;
 	LPCWSTR pszName = NULL;
 	wchar_t szExe[MAX_PATH+1];
 	wchar_t szName[MAX_PATH+1];
@@ -6007,12 +6007,12 @@ int CRealConsole::GetDefaultAppSettingsId()
 		// may return task name instead of real command.
 		_ASSERTE(m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd && "Command line must be specified already!");
 
-		lpszCmd = gpSetCls->GetCmd();
+		lpszCmd = gpSetCls->GetCmd(NULL, true);
 		
-		// May be this is batch?
-		pszBuffer = gpConEmu->LoadConsoleBatch(lpszCmd);
-		if (pszBuffer && *pszBuffer)
-			lpszCmd = pszBuffer;
+		//// May be this is batch?
+		//pszBuffer = gpConEmu->LoadConsoleBatch(lpszCmd);
+		//if (pszBuffer && *pszBuffer)
+		//	lpszCmd = pszBuffer;
 	}
 
 	if (!lpszCmd || !*lpszCmd)
@@ -6069,7 +6069,6 @@ wrap:
 	// Load (or create) icon for new tab
 	mn_RootProcessIcon = gpConEmu->mp_TabBar->CreateTabIcon(pszIconFile, bAsAdmin);
 	// Fin
-	SafeFree(pszBuffer);
 	if (!*ms_RootProcessName)
 		mn_RootProcessIcon = -1;
 	return iAppId;
@@ -10614,7 +10613,7 @@ LPCWSTR CRealConsole::GetCmd(bool bThisOnly /*= false*/)
 	if (m_Args.pszSpecialCmd)
 		return m_Args.pszSpecialCmd;
 	else if (!bThisOnly)
-		return gpSetCls->GetCmd();
+		return gpSetCls->GetCmd(NULL, true);
 	else
 		return L"";
 }

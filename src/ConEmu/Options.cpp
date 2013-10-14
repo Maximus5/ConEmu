@@ -718,6 +718,11 @@ void Settings::InitSettings()
 	UpdSet.ResetToDefaults();
 }
 
+void Settings::ResetSavedOnExit()
+{
+	mb_ExitSettingsAutoSaved = false;
+}
+
 // В Desktop, Inside (и еще может быть когда) Transparent включать нельзя
 bool Settings::isTransparentAllowed()
 {
@@ -3274,7 +3279,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ConWnd Y", isUseCurrentSizePos ? gpConEmu->wndY : _wndY);
 		reg->Save(L"16bit Height", ntvdmHeight);
 		reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
-		mb_ExitSettingsAutoSaved = false; // Раз было инициированное пользователем сохранение настроек - сбросим флажок
+		ResetSavedOnExit(); // Раз было инициированное пользователем сохранение настроек - сбросим флажок (mb_ExitSettingsAutoSaved)
 		reg->Save(L"IntegralSize", mb_IntegralSize);
 		reg->Save(L"QuakeStyle", isQuakeStyle);
 		reg->Save(L"QuakeAnimation", nQuakeAnimation);

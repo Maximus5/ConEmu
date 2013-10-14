@@ -35,7 +35,17 @@ protected:
 	int    mn_DlgRc;
 	RConStartArgs* mp_Args;
 	HWND   mh_Parent;
+	// Defaults
+	wchar_t* mpsz_DefCmd;
+	wchar_t* mpsz_CurCmd;
+	wchar_t* mpsz_SysCmd;
+	wchar_t* mpsz_DefDir;
+	// Buffer
 	wchar_t ms_CurUser[MAX_PATH*2+1];
+protected:
+	void InitVars();
+	void FreeVars();
+	void AddCommandList(LPCWSTR asCommand, INT_PTR iAfter = -1);
 public:
 	CRecreateDlg();
 	~CRecreateDlg();

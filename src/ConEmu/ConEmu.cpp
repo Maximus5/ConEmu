@@ -17917,6 +17917,9 @@ void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *ar
 {
 	SetScClosePending(false); // сброс
 
+	// Если ConEmu не был закрыт после закрытия всех табов, и запущен новый таб...
+	gpSet->ResetSavedOnExit();
+
 	CVConGroup::OnVConCreated(apVCon, args);
 }
 

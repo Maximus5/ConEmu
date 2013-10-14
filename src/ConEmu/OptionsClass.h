@@ -86,6 +86,7 @@ class CSettings
 		SingleInstanceShowHideType SingleInstanceShowHide; // по умолчанию = sih_None
 		void ResetCmdArg();
 		bool ResetCmdHistory(HWND hParent = NULL);
+		void SetSaveCmdHistory(bool bSaveHistory);
 
 		//int DefaultBufferHeight;
 		bool bForceBufferHeight; int nForceBufferHeight;

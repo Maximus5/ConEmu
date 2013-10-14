@@ -5405,7 +5405,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			}
 			else
 			{
-				_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1/2}");
+				//_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1/2}");
 				gpSet->isMultiLeaveOnClose = IsChecked(hWnd2, cbCloseConEmuOnCrossClicking) ? 2 : 1;
 			}
 			gpConEmu->LogString(L"isMultiLeaveOnClose changed from dialog (cbCloseConEmuWithLastTab)");
@@ -5420,7 +5420,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCloseConEmuOnCrossClicking:
 			if (!IsChecked(hWnd2, cbCloseConEmuWithLastTab))
 			{
-				_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1/2}");
+				//_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1/2}");
 				gpSet->isMultiLeaveOnClose = IsChecked(hWnd2, cbCloseConEmuOnCrossClicking) ? 2 : 1;
 				gpConEmu->LogString(L"isMultiLeaveOnClose changed from dialog (cbCloseConEmuOnCrossClicking)");
 			}
@@ -12526,12 +12526,33 @@ void CSettings::ResetCmdArg()
 
 bool CSettings::ResetCmdHistory(HWND hParent)
 {
-	if (IDYES != MessageBox(L"Clear command history?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), hParent ? hParent : ghWnd))
+	if (IDYES != MessageBox(L"Do you want to clear current history?\nThis can not be undone!", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), hParent ? hParent : ghWnd))
 		return false;
 
 	gpSet->HistoryReset();
 
 	return true;
+}
+
+void CSettings::SetSaveCmdHistory(bool bSaveHistory)
+{
+	gpSet->isSaveCmdHistory = bSaveHistory;
+
+	// И сразу сохранить в настройках
+	SettingsBase* reg = gpSet->CreateSettings(NULL);
+	if (!reg)
+	{
+		_ASSERTE(reg!=NULL);
+		return;
+	}
+
+	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+	{
+		reg->Save(L"SaveCmdHistory", gpSet->isSaveCmdHistory);
+		reg->CloseKey();
+	}
+
+	delete reg;
 }
 
 void CSettings::GetMainLogFont(LOGFONT& lf)

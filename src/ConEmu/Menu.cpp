@@ -1560,7 +1560,10 @@ void CConEmuMenu::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
 		mn_SysMenuCloseTick = 0;
 	}
 
-	if (Icon.isWindowInTray() && gpConEmu->isIconic())
+	wchar_t szInfo[64]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"ShowSysmenu result: %i", command);
+	LogString(szInfo);
+
+	if (command && Icon.isWindowInTray() && gpConEmu->isIconic())
 	{
 		_ASSERTE(!gpConEmu->mp_Inside);
 
