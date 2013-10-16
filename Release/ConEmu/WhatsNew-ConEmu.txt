@@ -16,6 +16,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 [+] New switch "-new_console:W:Background" allows set background image per tab or split.
+[%] Regression. When prompting for password (-new_console:u:User) command field was not filled.
 
 
 2013.10.15

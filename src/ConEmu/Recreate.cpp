@@ -195,7 +195,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			SendMessage(hDlg, UM_FILL_CMDLIST, TRUE, 0);
 
 			// Set text in command and folder fields
-			SetDlgItemText(hDlg, IDC_RESTART_CMD, pDlg->mpsz_DefCmd ? pDlg->mpsz_DefCmd : L"");
+			SetDlgItemText(hDlg, IDC_RESTART_CMD, pDlg->mpsz_DefCmd ? pDlg->mpsz_DefCmd : pArgs->pszSpecialCmd ? pArgs->pszSpecialCmd : L"");
 			SetDlgItemText(hDlg, IDC_STARTUP_DIR, pDlg->mpsz_DefDir ? pDlg->mpsz_DefDir : pArgs->pszStartupDir ? pArgs->pszStartupDir : gpConEmu->WorkDir());
 
 			// Split controls

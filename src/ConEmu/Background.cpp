@@ -1015,9 +1015,7 @@ CBackgroundInfo* CBackgroundInfo::CreateBackgroundObject(LPCWSTR inPath, bool ab
 		p = new CBackgroundInfo(inPath);
 		if (inPath && *inPath && !p->LoadBackgroundFile(abShowErrors))
 		{
-			// SafeDelete - функция, она не доберется до protected деструктора
-			delete p;
-			p = NULL;
+			SafeRelease(p);
 		}
 	}
 
