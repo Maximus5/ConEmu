@@ -1184,7 +1184,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		nExitPlaceStep = 350;
 
 		// Process environment variables
-		wchar_t* pszExpandedCmd = ParseConEmuSubst(gpszRunCmd);
+		wchar_t* pszExpandedCmd = ParseConEmuSubst(gpszRunCmd, true/*UpdateTitle*/);
 		if (pszExpandedCmd)
 		{
 			free(gpszRunCmd);
@@ -2933,8 +2933,8 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	MArray<ProcInfo> List;
 	LPWSTR pszAllVars = NULL, pszSrc;
 	CESERVER_REQ *pIn = NULL;
-	DWORD nPID = GetCurrentProcessId();
-	DWORD nParentPID;
+	const DWORD nSelfPID = GetCurrentProcessId();
+	DWORD nTestPID, nParentPID;
 	DWORD nSrvPID = 0;
 	CESERVER_CONSOLE_MAPPING_HDR test = {};
 	BOOL lbMapExist = false;
@@ -3104,7 +3104,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	}
 
 	// Go, build tree (first step - query all running PIDs in the system)
-	nParentPID = nPID;
+	nParentPID = nSelfPID;
 	h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (h && (h != INVALID_HANDLE_VALUE))
 	{
@@ -3112,7 +3112,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 		if (Process32First(h, &PI))
 		{
 			do {
-				if (PI.th32ProcessID == nPID)
+				if (PI.th32ProcessID == nSelfPID)
 				{
 					// On the first step we'll get our parent process
 					nParentPID = PI.th32ParentProcessID;
@@ -3132,14 +3132,14 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	}
 
 	// Send to parents tree
-	if (!List.empty() && (nParentPID != nPID))
+	if (!List.empty() && (nParentPID != nSelfPID))
 	{
 		DWORD nOurParentPID = nParentPID;
 		// Loop while parent is found
 		bool bParentFound = true;
 		while (nParentPID != nSrvPID)
 		{
-			nPID = nParentPID;
+			nTestPID = nParentPID;
 			bParentFound = false;
 			// find next parent
 			INT_PTR i = 0;
@@ -3147,14 +3147,14 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 			while (i < nCount)
 			{
 				const ProcInfo& pi = List[i];
-				if (pi.nPID == nPID)
+				if (pi.nPID == nTestPID)
 				{
 					nParentPID = pi.nParentPID;
 					if (pi.Flags & 1)
 					{
 						// ConEmuC - пропустить
 						i = 0;
-						nPID = nParentPID;
+						nTestPID = nParentPID;
 						continue;
 					}
 					bParentFound = true;
@@ -3163,19 +3163,19 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 				i++;
 			}
 
-			if (nPID == nSrvPID)
+			if (nTestPID == nSrvPID)
 				break; // Fin, this is root server
-			if (bParentFound)
+			if (!bParentFound)
 				break; // Fin, no more parents
 
-			_ASSERTE(nPID != nOurParentPID);
+			//_ASSERTE(nTestPID != nOurParentPID); - вполне себе может far->conemuc->cmd->conemuc/export
 
 			// Apply environment
-			CESERVER_REQ *pOut = ExecuteHkCmd(nPID, pIn, ghConWnd);
+			CESERVER_REQ *pOut = ExecuteHkCmd(nTestPID, pIn, ghConWnd);
 
 			if (!pOut && !bSilent)
 			{
-				_printf(ExpFailedPref " to PID=%u, check <Inject ConEmuHk>\n", nPID);
+				_printf(ExpFailedPref " to PID=%u, check <Inject ConEmuHk>\n", nTestPID);
 			}
 
 			ExecuteFreeResult(pOut);
@@ -3189,7 +3189,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 		if (!pOut)
 		{
 			if (!bSilent)
-				_printf(ExpFailedPref " to PID=%u, root server was terminated?\n", nPID);
+				_printf(ExpFailedPref " to PID=%u, root server was terminated?\n", nSrvPID);
 		}
 		else
 		{
@@ -3201,7 +3201,14 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	if ((eExecAction != ea_ExportCon) && lbMapExist && test.hConEmuRoot && IsWindow((HWND)test.hConEmuRoot))
 	{
 		if (eExecAction == ea_ExportAll)
+		{
 			pIn->hdr.nCmd = CECMD_EXPORTVARSALL;
+		}
+		else
+		{
+			_ASSERTE(pIn->hdr.nCmd == CECMD_EXPORTVARS);
+		}
+
 		ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, TRUE);
 	}
 
@@ -3306,7 +3313,7 @@ void SetWorkEnvVar()
 
 // 1. Заменить подстановки вида: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
 // 2. Развернуть переменные окружения (PowerShell, например, не признает переменные в качестве параметров)
-wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
+wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle /*= false*/)
 {
 	if (!asCmd || !*asCmd)
 		return NULL;
@@ -3329,7 +3336,8 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
 #endif
 
 	// Если ничего похожего нет, то и не дергаться
-	bool bExclSubst = (StrStrI(asCmd, L"!ConEmu") != NULL);
+	wchar_t szFind[] = L"!ConEmu";
+	bool bExclSubst = (StrStrI(asCmd, szFind) != NULL);
 	if (!bExclSubst && (wcschr(asCmd, L'%') == NULL))
 		return NULL;
 
@@ -3364,10 +3372,10 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
 	}
 
 	wchar_t* pszExpand = ExpandEnvStr(asCmd);
-	if (pszExpand)
+	if (bUpdateTitle && pszExpand)
 	{
 		BOOL lbNeedCutStartEndQuot = (pszExpand[0] == L'"');
-		UpdateConsoleTitle(pszExpand, /* IN/OUT */lbNeedCutStartEndQuot);
+		UpdateConsoleTitle(pszExpand, /* IN/OUT */lbNeedCutStartEndQuot, false);
 	}
 
 	SafeFree(pszCmdCopy);
@@ -3376,13 +3384,13 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
 
 BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle)
 {
-	wchar_t* pszExpanded = (bExpandVars && lsTitle) ? ParseConEmuSubst(lsTitle) : NULL;
+	wchar_t* pszExpanded = (bExpandVars && lsTitle) ? ParseConEmuSubst(lsTitle, false) : NULL;
 	BOOL bRc = SetConsoleTitle(pszExpanded ? pszExpanded : lsTitle ? lsTitle : L"");
 	SafeFree(pszExpanded);
 	return bRc;
 }
 
-void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot)
+void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bExpandVars)
 {
 	// Сменим заголовок консоли
 	if (*lsCmdLine == L'"')
@@ -3451,7 +3459,7 @@ void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot)
 				}
 			}
 
-			SetTitle(true, pszTitle);
+			SetTitle(bExpandVars/*true*/, pszTitle);
 
 			if (pszEndQ) *pszEndQ = L'"';
 
@@ -3476,7 +3484,7 @@ void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot)
 			}
 		}
 
-		SetTitle(true, lsCmdLine);
+		SetTitle(bExpandVars/*true*/, lsCmdLine);
 	}
 }
 
@@ -4548,7 +4556,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	// !!! gpszRunCmd может поменяться ниже!
 
 	// Сменим заголовок консоли
-	UpdateConsoleTitle(lsCmdLine, /* IN/OUT */lbNeedCutStartEndQuot);
+	UpdateConsoleTitle(lsCmdLine, /* IN/OUT */lbNeedCutStartEndQuot, true);
 
 	// ====
 	if (gbRunViaCmdExe)

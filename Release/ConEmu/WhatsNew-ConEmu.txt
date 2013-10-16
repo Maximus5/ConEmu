@@ -15,10 +15,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.10.15
 [%] Environment variables are allowed in tab icon paths.
 [%] Issue 1275: ConEmu window was restored from TSA unexpectedly after RClick-Esc.
 [+] Menu item «Store history» in the create new console dialog (right-click on title bar).
 [*] Minor changes in «New console» dialog.
+[%] Environment export was not working in Far Manager. Example:
+    vcvarsall.bat x86 & ConEmuC /export=CON
+[%] Regression: crash of ConEmuC while expanding environment variables.
 
 
 2013.10.10

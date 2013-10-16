@@ -6710,74 +6710,74 @@ bool CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 	if (!GetDlgItemText(hDlg, TB, temp, countof(temp)) || !*temp)
 		return false;
 
-	return GetColorRef(temp, pCR);
+	return ::GetColorRef(temp, pCR);
 }
 
-bool CSettings::GetColorRef(LPCWSTR pszText, COLORREF* pCR)
-{
-	if (!pszText || !*pszText)
-		return false;
-
-	bool result = false;
-	int r = 0, g = 0, b = 0;
-	const wchar_t *pch;
-	wchar_t *pchEnd;
-
-	if ((pszText[0] == L'#') || (pszText[0] == L'x' || pszText[0] == L'X') || (pszText[0] == L'0' && (pszText[1] == L'x' || pszText[1] == L'X')))
-	{
-		pch = (pszText[0] == L'0') ? (pszText+2) : (pszText+1);
-		// Считаем значение 16-ричным rgb кодом
-		pchEnd = NULL;
-		COLORREF clr = wcstoul(pch, &pchEnd, 16);
-		if (clr && (pszText[0] == L'#'))
-		{
-			// "#rrggbb", обменять местами rr и gg, нам нужен COLORREF (bbggrr)
-			clr = ((clr & 0xFF)<<16) | ((clr & 0xFF00)) | ((clr & 0xFF0000)>>16);
-		}
-		// Done
-		if (pchEnd && (pchEnd > (pszText+1)) && (clr <= 0xFFFFFF) && (*pCR != clr))
-		{
-			*pCR = clr;
-			result = true;
-		}
-	}
-	else
-	{
-		pch = (wchar_t*)wcspbrk(pszText, L"0123456789");
-		pchEnd = NULL;
-		r = pch ? wcstol(pch, &pchEnd, 10) : 0;
-		if (pchEnd && (pchEnd > pch))
-		{
-			pch = (wchar_t*)wcspbrk(pchEnd, L"0123456789");
-			pchEnd = NULL;
-			g = pch ? wcstol(pch, &pchEnd, 10) : 0;
-
-			if (pchEnd && (pchEnd > pch))
-			{
-				pch = (wchar_t*)wcspbrk(pchEnd, L"0123456789");
-				pchEnd = NULL;
-				b = pch ? wcstol(pch, &pchEnd, 10) : 0;
-			}
-
-			// decimal format of UltraEdit?
-			if ((r > 255) && !g && !b)
-			{
-				g = (r & 0xFF00) >> 8;
-				b = (r & 0xFF0000) >> 16;
-				r &= 0xFF;
-			}
-
-			// Достаточно ввода одной компоненты
-			if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && *pCR != RGB(r, g, b))
-			{
-				*pCR = RGB(r, g, b);
-				result = true;
-			}
-		}
-	}
-
-	return result;
-}
+//bool CSettings::GetColorRef(LPCWSTR pszText, COLORREF* pCR)
+//{
+//	if (!pszText || !*pszText)
+//		return false;
+//
+//	bool result = false;
+//	int r = 0, g = 0, b = 0;
+//	const wchar_t *pch;
+//	wchar_t *pchEnd;
+//
+//	if ((pszText[0] == L'#') || (pszText[0] == L'x' || pszText[0] == L'X') || (pszText[0] == L'0' && (pszText[1] == L'x' || pszText[1] == L'X')))
+//	{
+//		pch = (pszText[0] == L'0') ? (pszText+2) : (pszText+1);
+//		// Считаем значение 16-ричным rgb кодом
+//		pchEnd = NULL;
+//		COLORREF clr = wcstoul(pch, &pchEnd, 16);
+//		if (clr && (pszText[0] == L'#'))
+//		{
+//			// "#rrggbb", обменять местами rr и gg, нам нужен COLORREF (bbggrr)
+//			clr = ((clr & 0xFF)<<16) | ((clr & 0xFF00)) | ((clr & 0xFF0000)>>16);
+//		}
+//		// Done
+//		if (pchEnd && (pchEnd > (pszText+1)) && (clr <= 0xFFFFFF) && (*pCR != clr))
+//		{
+//			*pCR = clr;
+//			result = true;
+//		}
+//	}
+//	else
+//	{
+//		pch = (wchar_t*)wcspbrk(pszText, L"0123456789");
+//		pchEnd = NULL;
+//		r = pch ? wcstol(pch, &pchEnd, 10) : 0;
+//		if (pchEnd && (pchEnd > pch))
+//		{
+//			pch = (wchar_t*)wcspbrk(pchEnd, L"0123456789");
+//			pchEnd = NULL;
+//			g = pch ? wcstol(pch, &pchEnd, 10) : 0;
+//
+//			if (pchEnd && (pchEnd > pch))
+//			{
+//				pch = (wchar_t*)wcspbrk(pchEnd, L"0123456789");
+//				pchEnd = NULL;
+//				b = pch ? wcstol(pch, &pchEnd, 10) : 0;
+//			}
+//
+//			// decimal format of UltraEdit?
+//			if ((r > 255) && !g && !b)
+//			{
+//				g = (r & 0xFF00) >> 8;
+//				b = (r & 0xFF0000) >> 16;
+//				r &= 0xFF;
+//			}
+//
+//			// Достаточно ввода одной компоненты
+//			if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && *pCR != RGB(r, g, b))
+//			{
+//				*pCR = RGB(r, g, b);
+//				result = true;
+//			}
+//		}
+//	}
+//
+//	return result;
+//}
 
 LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 {
@@ -13926,7 +13926,6 @@ bool CSettings::PollBackgroundFile()
 
 	return lbChanged;
 }
-#endif
 
 // Должна вернуть true, если файл изменился
 // Работает ТОЛЬКО с файлом. Данные плагинов обрабатываются в самом CVirtualConsole!
@@ -14091,6 +14090,7 @@ bool CSettings::PrepareBackground(CVirtualConsole* apVCon, HDC* phBgDc, COORD* p
 
 	return lbForceUpdate;
 }
+#endif
 
 bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 {
@@ -14166,7 +14166,7 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 	{
 		// May be "Solid color"
 		COLORREF clr = (COLORREF)-1;
-		if (GetColorRef(inPath, &clr))
+		if (::GetColorRef(inPath, &clr))
 		{
 			pBkImgData = CreateSolidImage(clr, 128, 128);
 		}

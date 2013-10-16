@@ -43,6 +43,7 @@ class CBackground;
 class CTaskBarGhost;
 class CVConGroup;
 class CTab;
+class CBackgroundInfo;
 
 class CVirtualConsole :
 	public CVConRelease,
@@ -230,26 +231,28 @@ class CVirtualConsole :
 		//void FreeBackgroundImage(); // Освободить (если создан) HBITMAP для mp_BkImgData
 		SetBackgroundResult SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData); // вызывается при получении нового Background
 		bool HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight);
-		void NeedBackgroundUpdate();
+		//void NeedBackgroundUpdate();
 	protected:
-		bool mb_NeedBgUpdate;
-		bool mb_BgLastFade;
-		CBackground* mp_Bg;
-		MSection *mcs_BkImgData;
-		size_t mn_BkImgDataMax;
-		CESERVER_REQ_SETBACKGROUND* mp_BkImgData; // followed by image data
-		bool mb_BkImgChanged; // Данные в mp_BkImgData были изменены плагином, требуется отрисовка
-		bool mb_BkImgExist; //, mb_BkImgDelete;
-		LONG mn_BkImgWidth, mn_BkImgHeight;
-		// Поддержка EMF
-		size_t mn_BkEmfDataMax;
-		CESERVER_REQ_SETBACKGROUND* mp_BkEmfData; // followed by EMF data
-		bool mb_BkEmfChanged; // Данные в mp_BkEmfData были изменены плагином, требуется отрисовка
-		//// Для проверки, что пришедшая в основную нить картинка является актуальной
-		//const CESERVER_REQ_SETBACKGROUND* mp_LastImgData;
-		UINT IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, bool* rpIsEmf) const; // возвращает размер данных, или 0 при ошибке
-		bool PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height); // Положить в pBack свою картинку
-		bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
+		// Содержит текущий фон (из плагина или из файла-цвета по настройке)
+		CBackground*     mp_Bg;
+		//CBackgroundInfo* mp_BgInfo; // RefRelease, global object list
+
+		//bool mb_NeedBgUpdate;
+		//bool mb_BgLastFade;
+		////CBackground* mp_PluginBg;
+		//MSection *mcs_BkImgData;
+		//size_t mn_BkImgDataMax;
+		//CESERVER_REQ_SETBACKGROUND* mp_BkImgData; // followed by image data
+		//bool mb_BkImgChanged; // Данные в mp_BkImgData были изменены плагином, требуется отрисовка
+		//bool mb_BkImgExist; //, mb_BkImgDelete;
+		//LONG mn_BkImgWidth, mn_BkImgHeight;
+		//// Поддержка EMF
+		//size_t mn_BkEmfDataMax;
+		//CESERVER_REQ_SETBACKGROUND* mp_BkEmfData; // followed by EMF data
+		//bool mb_BkEmfChanged; // Данные в mp_BkEmfData были изменены плагином, требуется отрисовка
+		//UINT IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, bool* rpIsEmf) const; // возвращает размер данных, или 0 при ошибке
+		//bool PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height); // Положить в pBack свою картинку
+		//bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
 //public:
 		//MSection csBkImgData;
 

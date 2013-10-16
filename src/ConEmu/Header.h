@@ -34,6 +34,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NEWRUNSTYLE
 //#undef NEWRUNSTYLE
 
+//#define APPDISTINCTBACKGROUND
+
 //#define USEPORTABLEREGISTRY
 #undef USEPORTABLEREGISTRY
 
@@ -260,6 +262,7 @@ BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2);
 wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*, bool bEscapes = false*/);
 BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes = false*/);
+bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
 
 extern const wchar_t* gsEscaped;
 //wchar_t* EscapeString(bool bSet, LPCWSTR pszSrc);

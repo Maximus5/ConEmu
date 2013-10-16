@@ -141,7 +141,7 @@ class CSettings
 		/* Background image */
 		//WCHAR sBgImage[MAX_PATH];
 		//char isShowBgImage;
-		bool isBackgroundImageValid;
+		//bool isBackgroundImageValid;
 		//u8 bgImageDarker;
 		//DWORD nBgImageColors;
 		//char bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2}
@@ -235,16 +235,21 @@ class CSettings
 		//HDC      hBgDc;
 		CBackground* mp_Bg;
 		//MSection mcs_BgImgData;
+		#ifndef APPDISTINCTBACKGROUND
 		BITMAPFILEHEADER* mp_BgImgData;
 		BOOL mb_NeedBgUpdate; //, mb_WasVConBgImage;
-		bool mb_BgLastFade;
 		FILETIME ftBgModified;
 		DWORD nBgModifiedTick;
+		bool isBackgroundImageValid;
+		#endif
+		bool mb_BgLastFade;
 	public:
 		bool PrepareBackground(CVirtualConsole* apVCon, HDC* phBgDc, COORD* pbgBmpSize);
+		#ifndef APPDISTINCTBACKGROUND
 		bool PollBackgroundFile(); // true, если файл изменен
-		bool LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
 		void SetBgImageDarker(u8 newValue, bool bUpdate);
+		bool LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
+		#endif
 		bool IsBackgroundEnabled(CVirtualConsole* apVCon);
 		void NeedBackgroundUpdate();
 		//CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);
@@ -530,7 +535,7 @@ class CSettings
 		//COLORREF mn_LastFadeSrc, mn_LastFadeDst;
 		//COLORREF ColorsFade[0x20];
 		bool GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
-		bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
+		//bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
 		//inline BYTE GetFadeColorItem(BYTE c);
 		//
 		bool mb_ThemingEnabled;

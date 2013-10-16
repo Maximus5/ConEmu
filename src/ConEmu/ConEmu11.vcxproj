@@ -1005,6 +1005,7 @@
     <ClInclude Include="RealConsole.h" />
     <ClInclude Include="RealServer.h" />
     <ClInclude Include="Recreate.h" />
+    <ClInclude Include="RefRelease.h" />
     <ClInclude Include="Registry.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="..\common\RgnDetect.h" />

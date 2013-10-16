@@ -30,16 +30,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CVirtualConsole;
 
-class CVConRelease
+#include "RefRelease.h"
+
+class CVConRelease : public CRefRelease
 {
-private:
-	LONG volatile mn_RefCount;
-public:
-	CVConRelease();
-	void AddRef();
-	int Release();
 protected:
-	virtual ~CVConRelease();
+	virtual void FinalRelease();
 };
 
 class CVConGuard
