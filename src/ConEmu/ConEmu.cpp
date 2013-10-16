@@ -11222,7 +11222,9 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		gpSet->CheckConsoleSettings();
 
 		if (gpSet->isShowBgImage)
+		{
 			gpSetCls->LoadBackgroundFile(gpSet->sBgImage);
+		}
 
 		// Перенес перед созданием консоли, чтобы не блокировать SendMessage
 		// (mp_DragDrop->Register() может быть относительно длительной операцией)
@@ -17633,11 +17635,13 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
 		isFirstInstance(); // Заодно и проверит...
 
+	#ifndef APPDISTINCTBACKGROUND
 	// Если был изменен файл background
 	if (gpSetCls->PollBackgroundFile())
 	{
 		gpConEmu->Update(true);
 	}
+	#endif
 
 	if (mp_Menu->GetTrackMenuPlace() != tmp_None && mp_Tip)
 	{

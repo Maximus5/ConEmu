@@ -32,6 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Background.h"
 #include "ConEmu.h"
 #include "LoadImg.h"
+#include "VirtualConsole.h"
+#include "../common/CmdLine.h"
 
 CBackground::CBackground()
 {
@@ -51,7 +53,7 @@ CBackground::CBackground()
 	GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : NULL);
 	#endif
 
-	mb_NeedBgUpdate = FALSE; mb_BgLastFade = false;
+	mb_NeedBgUpdate = false; mb_BgLastFade = false;
 	mp_BkImgData = NULL; mn_BkImgDataMax = 0; mb_BkImgChanged = FALSE; mb_BkImgExist = /*mb_BkImgDelete =*/ FALSE;
 	mp_BkEmfData = NULL; mn_BkEmfDataMax = 0; mb_BkEmfChanged = FALSE;
 	mcs_BkImgData = NULL;
@@ -537,7 +539,7 @@ void CBackground::NeedBackgroundUpdate()
 		return;
 	}
 
-	mb_NeedBgUpdate = TRUE;
+	mb_NeedBgUpdate = true;
 }
 
 // Создает (или возвращает уже созданный) HDC (CompatibleDC) для mp_BkImgData
@@ -714,6 +716,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 	_ASSERTE(gpConEmu->isMainThread() && "Must be executed in main thread");
 
 	bool bSucceeded = true;
+	bool lbForceUpdate = false;
 	LONG lBgWidth = 0, lBgHeight = 0;
 	BOOL lbVConImage = FALSE;
 
@@ -726,6 +729,10 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 		}
 	}
 
+	LONG lMaxBgWidth = 0, lMaxBgHeight = 0;
+	bool bIsForeground = gpConEmu->isMeForeground(false);
+
+
 	// Если плагин свой фон не подсунул
 	if (!lbVConImage)
 	{
@@ -735,52 +742,179 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 		//	mp_PluginBg = NULL;
 		//}
 
+		#ifndef APPDISTINCTBACKGROUND
 		// То работаем на общих основаниях, через настройки (или AppDistinct)
 		return gpSetCls->PrepareBackground(pVCon, &phBgDc, &pbgBmpSize);
-	}
+		#else
 
-	bool lbForceUpdate = false;
-	LONG lMaxBgWidth = 0, lMaxBgHeight = 0;
-	bool bIsForeground = gpConEmu->isMeForeground(false);
-
-	if (!mb_NeedBgUpdate)
-	{
-		if ((mb_BgLastFade == bIsForeground && gpSet->isFadeInactive)
-			|| (!gpSet->isFadeInactive && mb_BgLastFade))
+		CBackgroundInfo* pBgFile = pVCon->GetBackgroundObject();
+		if (!pBgFile)
 		{
-			NeedBackgroundUpdate();
-		}
-	}
-
-	//if (mp_PluginBg == NULL)
-	//{
-	//	NeedBackgroundUpdate();
-	//}
-
-	if (mb_NeedBgUpdate)
-	{
-		mb_NeedBgUpdate = FALSE;
-		lbForceUpdate = true;
-
-		//if (!mp_PluginBg)
-		//	mp_PluginBg = new CBackground;
-
-		mb_BgLastFade = (!bIsForeground && gpSet->isFadeInactive);
-		TODO("Переделать, ориентироваться только на размер картинки - неправильно");
-		TODO("DoubleView - скорректировать X,Y");
-
-		if (lMaxBgWidth && lMaxBgHeight)
-		{
-			lBgWidth = lMaxBgWidth;
-			lBgHeight = lMaxBgHeight;
+			_ASSERTE(FALSE && "Background object must be created in VCon");
+			return false;
 		}
 
-		if (!CreateField(lBgWidth, lBgHeight) ||
-			!PutPluginBackgroundImage(0,0, lBgWidth, lBgHeight))
+		if (!mb_NeedBgUpdate)
 		{
-			//delete mp_PluginBg;
-			//mp_PluginBg = NULL;
-			bSucceeded = false;
+			if ((mb_BgLastFade == bIsForeground && gpSet->isFadeInactive)
+					|| (!gpSet->isFadeInactive && mb_BgLastFade))
+			{
+				NeedBackgroundUpdate();
+			}
+		}
+
+		pBgFile->PollBackgroundFile();
+
+		// необходимо проверить размер требуемой картинки
+		// -- здесь - всегда только файловая подложка
+		if ((gpSet->bgOperation == eUpLeft) || (gpSet->bgOperation == eUpRight)
+			|| (gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight))
+		{
+			// MemoryDC создается всегда по размеру картинки, т.е. изменение размера окна - игнорируется
+		}
+		else
+		{
+			//RECT rcWork = gpConEmu->CalcRect(CER_DC, pVCon);
+			RECT rcWork = {0,0,pVCon->Width,pVCon->Height};
+
+			// Смотрим дальше
+			if (gpSet->bgOperation == eStretch)
+			{
+				// Строго по размеру клиентской (точнее Workspace) области окна
+				lMaxBgWidth = rcWork.right - rcWork.left;
+				lMaxBgHeight = rcWork.bottom - rcWork.top;
+			}
+			else if (gpSet->bgOperation == eTile)
+			{
+				// Max между клиентской (точнее Workspace) областью окна и размером текущего монитора
+				// Окно может быть растянуто на несколько мониторов, т.е. размер клиентской области может быть больше
+				HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+				MONITORINFO mon = {sizeof(MONITORINFO)};
+				GetMonitorInfo(hMon, &mon);
+				//
+				lMaxBgWidth = klMax(rcWork.right - rcWork.left,mon.rcMonitor.right - mon.rcMonitor.left);
+				lMaxBgHeight = klMax(rcWork.bottom - rcWork.top,mon.rcMonitor.bottom - mon.rcMonitor.top);
+			}
+
+			if (bgSize.X != lMaxBgWidth || bgSize.Y != lMaxBgHeight)
+				NeedBackgroundUpdate();
+		}
+
+		if (mb_NeedBgUpdate)
+		{
+			mb_NeedBgUpdate = false;
+			lbForceUpdate = true;
+			_ASSERTE(gpConEmu->isMainThread());
+			//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
+			//BITMAPFILEHEADER* pImgData = mp_BgImgData;
+			BackgroundOp op = (BackgroundOp)gpSet->bgOperation;
+			const BITMAPFILEHEADER* pBgImgData = pBgFile->GetBgImgData();
+			BOOL lbImageExist = (pBgImgData != NULL);
+			//BOOL lbVConImage = FALSE;
+			//LONG lBgWidth = 0, lBgHeight = 0;
+			//CVirtualConsole* pVCon = gpConEmu->ActiveCon();
+
+			////MSectionLock SBK;
+			//if (apVCon && gpSet->isBgPluginAllowed)
+			//{
+			//	//SBK.Lock(&apVCon->csBkImgData);
+			//	if (apVCon->HasBackgroundImage(&lBgWidth, &lBgHeight)
+			//	        && lBgWidth && lBgHeight)
+			//	{
+			//		lbVConImage = lbImageExist = TRUE;
+			//	}
+			//}
+
+			//mb_WasVConBgImage = lbVConImage;
+
+			if (lbImageExist)
+			{
+				mb_BgLastFade = (!bIsForeground && gpSet->isFadeInactive);
+				TODO("Переделать, ориентироваться только на размер картинки - неправильно");
+				TODO("DoubleView - скорректировать X,Y");
+
+				//if (lbVConImage)
+				//{
+				//	if (lMaxBgWidth && lMaxBgHeight)
+				//	{
+				//		lBgWidth = lMaxBgWidth;
+				//		lBgHeight = lMaxBgHeight;
+				//	}
+
+				//	if (!mp_Bg->CreateField(lBgWidth, lBgHeight) ||
+				//	        !apVCon->PutBackgroundImage(mp_Bg, 0,0, lBgWidth, lBgHeight))
+				//	{
+				//		delete mp_Bg;
+				//		mp_Bg = NULL;
+				//	}
+				//}
+				//else
+				{
+					const BITMAPINFOHEADER* pBmp = (const BITMAPINFOHEADER*)(pBgImgData+1);
+
+					if (!lMaxBgWidth || !lMaxBgHeight)
+					{
+						// Сюда мы можем попасть только в случае eUpLeft/eUpRight/eDownLeft/eDownRight
+						lMaxBgWidth = pBmp->biWidth;
+						lMaxBgHeight = pBmp->biHeight;
+					}
+
+					if (!CreateField(lMaxBgWidth, lMaxBgHeight) ||
+						!FillBackground(pBgImgData, 0,0, lMaxBgWidth, lMaxBgHeight, op, mb_BgLastFade))
+					{
+						bSucceeded = false;
+					}
+				}
+			}
+			else
+			{
+				bSucceeded = false;
+			}
+		}
+
+		#endif
+	}
+	else
+	{
+		if (!mb_NeedBgUpdate)
+		{
+			if ((mb_BgLastFade == bIsForeground && gpSet->isFadeInactive)
+				|| (!gpSet->isFadeInactive && mb_BgLastFade))
+			{
+				NeedBackgroundUpdate();
+			}
+		}
+
+		//if (mp_PluginBg == NULL)
+		//{
+		//	NeedBackgroundUpdate();
+		//}
+
+		if (mb_NeedBgUpdate)
+		{
+			mb_NeedBgUpdate = false;
+			lbForceUpdate = true;
+
+			//if (!mp_PluginBg)
+			//	mp_PluginBg = new CBackground;
+
+			mb_BgLastFade = (!bIsForeground && gpSet->isFadeInactive);
+			TODO("Переделать, ориентироваться только на размер картинки - неправильно");
+			TODO("DoubleView - скорректировать X,Y");
+
+			if (lMaxBgWidth && lMaxBgHeight)
+			{
+				lBgWidth = lMaxBgWidth;
+				lBgHeight = lMaxBgHeight;
+			}
+
+			if (!CreateField(lBgWidth, lBgHeight) ||
+				!PutPluginBackgroundImage(0,0, lBgWidth, lBgHeight))
+			{
+				//delete mp_PluginBg;
+				//mp_PluginBg = NULL;
+				bSucceeded = false;
+			}
 		}
 	}
 
@@ -840,17 +974,69 @@ bool CBackground::HasPluginBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)
 
 #ifdef APPDISTINCTBACKGROUND
 
-PRAGMA_ERROR("Заменить gpSet на pApp и this");
+MArray<CBackgroundInfo*> CBackgroundInfo::g_Backgrounds;
 
-CBackgroundInfo::CBackgroundInfo()
+CBackgroundInfo* CBackgroundInfo::CreateBackgroundObject(LPCWSTR inPath, bool abShowErrors)
 {
-	ms_BgImage[0] = 0;
+	if (inPath && _tcslen(inPath)>=MAX_PATH)
+	{
+		if (abShowErrors)
+			MBoxA(L"Invalid 'BgImagePath' in CBackgroundInfo::CreateBackgroundObject");
+		return NULL;
+	}
+
+	// Допускается и пустой путь!
+	inPath = SkipNonPrintable(inPath);
+	if (!inPath)
+		inPath = L"";
+
+	CBackgroundInfo* p = NULL;
+
+	for (INT_PTR i = 0; i < g_Backgrounds.size(); i++)
+	{
+		if (!g_Backgrounds[i])
+		{
+			_ASSERTE(g_Backgrounds[i]!=NULL);
+			continue;
+		}
+		if (lstrcmpi(g_Backgrounds[i]->BgImage(), inPath) == 0)
+		{
+			p = g_Backgrounds[i];
+			break;
+		}
+	}
+
+	if (p)
+	{
+		p->AddRef();
+	}
+	else
+	{
+		p = new CBackgroundInfo(inPath);
+		if (inPath && *inPath && !p->LoadBackgroundFile(abShowErrors))
+		{
+			// SafeDelete - функция, она не доберется до protected деструктора
+			delete p;
+			p = NULL;
+		}
+	}
+
+	return p;
+}
+
+CBackgroundInfo::CBackgroundInfo(LPCWSTR inPath)
+{
+	wcscpy_c(ms_BgImage, inPath ? inPath : L"");
+
 	ZeroStruct(ftBgModified);
 	nBgModifiedTick = 0;
 	//mb_IsFade = bFade;
-	mb_NeedBgUpdate = false;
+	//mb_NeedBgUpdate = false;
 	mb_IsBackgroundImageValid = false;
 	mp_BgImgData = NULL;
+
+	CBackgroundInfo* p = this;
+	g_Backgrounds.push_back(p);
 }
 
 void CBackgroundInfo::FinalRelease()
@@ -862,11 +1048,34 @@ void CBackgroundInfo::FinalRelease()
 CBackgroundInfo::~CBackgroundInfo()
 {
 	SafeFree(mp_BgImgData);
+
+	CBackgroundInfo* p = this;
+	for (INT_PTR i = 0; i < g_Backgrounds.size(); i++)
+	{
+		if (g_Backgrounds[i] == p)
+		{
+			g_Backgrounds.erase(i);
+			break;
+		}
+	}
 }
 
 const wchar_t* CBackgroundInfo::BgImage()
 {
+	if (!this) return L"";
 	return ms_BgImage;
+}
+
+//bool CBackgroundInfo::IsImageExist()
+//{
+//	if (!this) return false;
+//	return (mp_BgImgData != NULL);
+//}
+
+const BITMAPFILEHEADER* CBackgroundInfo::GetBgImgData()
+{
+	if (!this) return NULL;
+	return mp_BgImgData;
 }
 
 //bool CBackgroundInfo::IsFade()
@@ -874,10 +1083,10 @@ const wchar_t* CBackgroundInfo::BgImage()
 //	return mb_IsFade;
 //}
 
-void CBackgroundInfo::NeedBackgroundUpdate()
-{
-	mb_NeedBgUpdate = true;
-}
+//void CBackgroundInfo::NeedBackgroundUpdate()
+//{
+//	mb_NeedBgUpdate = true;
+//}
 
 bool CBackgroundInfo::PollBackgroundFile()
 {
@@ -895,7 +1104,7 @@ bool CBackgroundInfo::PollBackgroundFile()
 			        || fnd.ftLastWriteTime.dwLowDateTime != ftBgModified.dwLowDateTime)
 			{
 				//NeedBackgroundUpdate(); -- поставит LoadBackgroundFile, если у него получится файл открыть
-				lbChanged = LoadBackgroundFile(gpSet->sBgImage, false);
+				lbChanged = LoadBackgroundFile(false);
 				nBgModifiedTick = GetTickCount();
 			}
 
@@ -906,27 +1115,26 @@ bool CBackgroundInfo::PollBackgroundFile()
 	return lbChanged;
 }
 
-bool CBackgroundInfo::LoadBackgroundFile(const wchar_t* inPath, bool abShowErrors)
+bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 {
-	//_ASSERTE(gpConEmu->isMainThread());
-	if (!inPath || _tcslen(inPath)>=MAX_PATH)
+	// Пустой путь - значит БЕЗ обоев
+	if (!*ms_BgImage)
 	{
-		if (abShowErrors)
-			MBoxA(L"Invalid 'inPath' in Settings::LoadImageFrom");
-
-		return false;
+		return true;
 	}
+
+	//_ASSERTE(gpConEmu->isMainThread());
 
 	_ASSERTE(gpConEmu->isMainThread());
 	bool lRes = false;
 	BY_HANDLE_FILE_INFORMATION inf = {0};
 	BITMAPFILEHEADER* pBkImgData = NULL;
 
-	if (wcspbrk(inPath, L"%\\.") == NULL)
+	if (wcspbrk(ms_BgImage, L"%\\.") == NULL)
 	{
 		// May be "Solid color"
 		COLORREF clr = (COLORREF)-1;
-		if (GetColorRef(inPath, &clr))
+		if (GetColorRef(ms_BgImage, &clr))
 		{
 			pBkImgData = CreateSolidImage(clr, 128, 128);
 		}
@@ -934,9 +1142,8 @@ bool CBackgroundInfo::LoadBackgroundFile(const wchar_t* inPath, bool abShowError
 	
 	if (!pBkImgData)
 	{
-		wchar_t* exPath = ExpandEnvStr(inPath);
+		wchar_t* exPath = ExpandEnvStr(ms_BgImage);
 
-		//if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH))
 		if (!exPath || !*exPath)
 		{
 			if (abShowErrors)
@@ -944,7 +1151,7 @@ bool CBackgroundInfo::LoadBackgroundFile(const wchar_t* inPath, bool abShowError
 				wchar_t szError[MAX_PATH*2];
 				DWORD dwErr = GetLastError();
 				_wsprintf(szError, SKIPLEN(countof(szError)) L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
-				          inPath, dwErr);
+				          ms_BgImage, dwErr);
 				MBoxA(szError);
 			}
 
@@ -958,7 +1165,7 @@ bool CBackgroundInfo::LoadBackgroundFile(const wchar_t* inPath, bool abShowError
 	{
 		ftBgModified = inf.ftLastWriteTime;
 		nBgModifiedTick = GetTickCount();
-		NeedBackgroundUpdate();
+		//NeedBackgroundUpdate();
 		//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
 		SafeFree(mp_BgImgData);
 		mb_IsBackgroundImageValid = true;
@@ -969,164 +1176,164 @@ bool CBackgroundInfo::LoadBackgroundFile(const wchar_t* inPath, bool abShowError
 	return lRes;
 }
 
-// Должна вернуть true, если файл изменился
-// Работает ТОЛЬКО с файлом. Данные плагинов обрабатываются в самом CVirtualConsole!
-bool CBackgroundInfo::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
-{
-	bool lbForceUpdate = false;
-	LONG lMaxBgWidth = 0, lMaxBgHeight = 0;
-	bool bIsForeground = gpConEmu->isMeForeground(false);
-
-	if (!mb_NeedBgUpdate)
-	{
-		if ((mb_BgLastFade == bIsForeground && gpSet->isFadeInactive)
-		        || (!gpSet->isFadeInactive && mb_BgLastFade))
-		{
-			NeedBackgroundUpdate();
-		}
-	}
-
-	PollBackgroundFile();
-
-	if (mp_Bg == NULL)
-	{
-		NeedBackgroundUpdate();
-	}
-
-	// Если это НЕ плагиновая подложка - необходимо проверить размер требуемой картинки
-	// -- здесь - всегда только файловая подложка
-	//if (!mb_WasVConBgImage)
-	{
-		if ((gpSet->bgOperation == eUpLeft) || (gpSet->bgOperation == eUpRight)
-			|| (gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight))
-		{
-			// MemoryDC создается всегда по размеру картинки, т.е. изменение размера окна - игнорируется
-		}
-		else
-		{
-			RECT rcWnd, rcWork; GetClientRect(ghWnd, &rcWnd);
-			WARNING("DoubleView: тут непонятно, какой и чей размер, видимо, нужно ветвиться, и хранить Background в самих VCon");
-			rcWork = gpConEmu->CalcRect(CER_WORKSPACE, rcWnd, CER_MAINCLIENT);
-
-			// Смотрим дальше
-			if (gpSet->bgOperation == eStretch)
-			{
-				// Строго по размеру клиентской (точнее Workspace) области окна
-				lMaxBgWidth = rcWork.right - rcWork.left;
-				lMaxBgHeight = rcWork.bottom - rcWork.top;
-			}
-			else if (gpSet->bgOperation == eTile)
-			{
-				// Max между клиентской (точнее Workspace) областью окна и размером текущего монитора
-				// Окно может быть растянуто на несколько мониторов, т.е. размер клиентской области может быть больше
-				HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
-				MONITORINFO mon = {sizeof(MONITORINFO)};
-				GetMonitorInfo(hMon, &mon);
-				//
-				lMaxBgWidth = klMax(rcWork.right - rcWork.left,mon.rcMonitor.right - mon.rcMonitor.left);
-				lMaxBgHeight = klMax(rcWork.bottom - rcWork.top,mon.rcMonitor.bottom - mon.rcMonitor.top);
-			}
-
-			if (mp_Bg)
-			{
-				if (mp_Bg->bgSize.X != lMaxBgWidth || mp_Bg->bgSize.Y != lMaxBgHeight)
-					NeedBackgroundUpdate();
-			}
-			else
-			{
-				NeedBackgroundUpdate();
-			}
-		}
-	}
-
-	if (mb_NeedBgUpdate)
-	{
-		mb_NeedBgUpdate = FALSE;
-		lbForceUpdate = true;
-		_ASSERTE(gpConEmu->isMainThread());
-		//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
-		//BITMAPFILEHEADER* pImgData = mp_BgImgData;
-		BackgroundOp op = (BackgroundOp)gpSet->bgOperation;
-		BOOL lbImageExist = (mp_BgImgData != NULL);
-		//BOOL lbVConImage = FALSE;
-		//LONG lBgWidth = 0, lBgHeight = 0;
-		//CVirtualConsole* pVCon = gpConEmu->ActiveCon();
-
-		////MSectionLock SBK;
-		//if (apVCon && gpSet->isBgPluginAllowed)
-		//{
-		//	//SBK.Lock(&apVCon->csBkImgData);
-		//	if (apVCon->HasBackgroundImage(&lBgWidth, &lBgHeight)
-		//	        && lBgWidth && lBgHeight)
-		//	{
-		//		lbVConImage = lbImageExist = TRUE;
-		//	}
-		//}
-
-		//mb_WasVConBgImage = lbVConImage;
-
-		if (lbImageExist)
-		{
-			if (!mp_Bg)
-				mp_Bg = new CBackground;
-
-			mb_BgLastFade = (!bIsForeground && gpSet->isFadeInactive);
-			TODO("Переделать, ориентироваться только на размер картинки - неправильно");
-			TODO("DoubleView - скорректировать X,Y");
-
-			//if (lbVConImage)
-			//{
-			//	if (lMaxBgWidth && lMaxBgHeight)
-			//	{
-			//		lBgWidth = lMaxBgWidth;
-			//		lBgHeight = lMaxBgHeight;
-			//	}
-
-			//	if (!mp_Bg->CreateField(lBgWidth, lBgHeight) ||
-			//	        !apVCon->PutBackgroundImage(mp_Bg, 0,0, lBgWidth, lBgHeight))
-			//	{
-			//		delete mp_Bg;
-			//		mp_Bg = NULL;
-			//	}
-			//}
-			//else
-			{
-				BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(mp_BgImgData+1);
-
-				if (!lMaxBgWidth || !lMaxBgHeight)
-				{
-					// Сюда мы можем попасть только в случае eUpLeft/eUpRight/eDownLeft/eDownRight
-					lMaxBgWidth = pBmp->biWidth;
-					lMaxBgHeight = pBmp->biHeight;
-				}
-
-				if (!mp_Bg->CreateField(lMaxBgWidth, lMaxBgHeight) ||
-				        !mp_Bg->FillBackground(mp_BgImgData, 0,0, lMaxBgWidth, lMaxBgHeight, op, mb_BgLastFade))
-				{
-					delete mp_Bg;
-					mp_Bg = NULL;
-				}
-			}
-		}
-		else
-		{
-			delete mp_Bg;
-			mp_Bg = NULL;
-		}
-	}
-
-	if (mp_Bg)
-	{
-		*phBgDc = mp_Bg->hBgDc;
-		*pbgBmpSize = mp_Bg->bgSize;
-	}
-	else
-	{
-		*phBgDc = NULL;
-		*pbgBmpSize = MakeCoord(0,0);
-	}
-
-	return lbForceUpdate;
-}
+//// Должна вернуть true, если файл изменился
+//// Работает ТОЛЬКО с файлом. Данные плагинов обрабатываются в самом CVirtualConsole!
+//bool CBackgroundInfo::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
+//{
+//	bool lbForceUpdate = false;
+//	LONG lMaxBgWidth = 0, lMaxBgHeight = 0;
+//	bool bIsForeground = gpConEmu->isMeForeground(false);
+//
+//	if (!mb_NeedBgUpdate)
+//	{
+//		if ((mb_BgLastFade == bIsForeground && gpSet->isFadeInactive)
+//		        || (!gpSet->isFadeInactive && mb_BgLastFade))
+//		{
+//			NeedBackgroundUpdate();
+//		}
+//	}
+//
+//	PollBackgroundFile();
+//
+//	if (mp_Bg == NULL)
+//	{
+//		NeedBackgroundUpdate();
+//	}
+//
+//	// Если это НЕ плагиновая подложка - необходимо проверить размер требуемой картинки
+//	// -- здесь - всегда только файловая подложка
+//	//if (!mb_WasVConBgImage)
+//	{
+//		if ((gpSet->bgOperation == eUpLeft) || (gpSet->bgOperation == eUpRight)
+//			|| (gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight))
+//		{
+//			// MemoryDC создается всегда по размеру картинки, т.е. изменение размера окна - игнорируется
+//		}
+//		else
+//		{
+//			RECT rcWnd, rcWork; GetClientRect(ghWnd, &rcWnd);
+//			WARNING("DoubleView: тут непонятно, какой и чей размер, видимо, нужно ветвиться, и хранить Background в самих VCon");
+//			rcWork = gpConEmu->CalcRect(CER_WORKSPACE, rcWnd, CER_MAINCLIENT);
+//
+//			// Смотрим дальше
+//			if (gpSet->bgOperation == eStretch)
+//			{
+//				// Строго по размеру клиентской (точнее Workspace) области окна
+//				lMaxBgWidth = rcWork.right - rcWork.left;
+//				lMaxBgHeight = rcWork.bottom - rcWork.top;
+//			}
+//			else if (gpSet->bgOperation == eTile)
+//			{
+//				// Max между клиентской (точнее Workspace) областью окна и размером текущего монитора
+//				// Окно может быть растянуто на несколько мониторов, т.е. размер клиентской области может быть больше
+//				HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+//				MONITORINFO mon = {sizeof(MONITORINFO)};
+//				GetMonitorInfo(hMon, &mon);
+//				//
+//				lMaxBgWidth = klMax(rcWork.right - rcWork.left,mon.rcMonitor.right - mon.rcMonitor.left);
+//				lMaxBgHeight = klMax(rcWork.bottom - rcWork.top,mon.rcMonitor.bottom - mon.rcMonitor.top);
+//			}
+//
+//			if (mp_Bg)
+//			{
+//				if (mp_Bg->bgSize.X != lMaxBgWidth || mp_Bg->bgSize.Y != lMaxBgHeight)
+//					NeedBackgroundUpdate();
+//			}
+//			else
+//			{
+//				NeedBackgroundUpdate();
+//			}
+//		}
+//	}
+//
+//	if (mb_NeedBgUpdate)
+//	{
+//		mb_NeedBgUpdate = FALSE;
+//		lbForceUpdate = true;
+//		_ASSERTE(gpConEmu->isMainThread());
+//		//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
+//		//BITMAPFILEHEADER* pImgData = mp_BgImgData;
+//		BackgroundOp op = (BackgroundOp)gpSet->bgOperation;
+//		BOOL lbImageExist = (mp_BgImgData != NULL);
+//		//BOOL lbVConImage = FALSE;
+//		//LONG lBgWidth = 0, lBgHeight = 0;
+//		//CVirtualConsole* pVCon = gpConEmu->ActiveCon();
+//
+//		////MSectionLock SBK;
+//		//if (apVCon && gpSet->isBgPluginAllowed)
+//		//{
+//		//	//SBK.Lock(&apVCon->csBkImgData);
+//		//	if (apVCon->HasBackgroundImage(&lBgWidth, &lBgHeight)
+//		//	        && lBgWidth && lBgHeight)
+//		//	{
+//		//		lbVConImage = lbImageExist = TRUE;
+//		//	}
+//		//}
+//
+//		//mb_WasVConBgImage = lbVConImage;
+//
+//		if (lbImageExist)
+//		{
+//			if (!mp_Bg)
+//				mp_Bg = new CBackground;
+//
+//			mb_BgLastFade = (!bIsForeground && gpSet->isFadeInactive);
+//			TODO("Переделать, ориентироваться только на размер картинки - неправильно");
+//			TODO("DoubleView - скорректировать X,Y");
+//
+//			//if (lbVConImage)
+//			//{
+//			//	if (lMaxBgWidth && lMaxBgHeight)
+//			//	{
+//			//		lBgWidth = lMaxBgWidth;
+//			//		lBgHeight = lMaxBgHeight;
+//			//	}
+//
+//			//	if (!mp_Bg->CreateField(lBgWidth, lBgHeight) ||
+//			//	        !apVCon->PutBackgroundImage(mp_Bg, 0,0, lBgWidth, lBgHeight))
+//			//	{
+//			//		delete mp_Bg;
+//			//		mp_Bg = NULL;
+//			//	}
+//			//}
+//			//else
+//			{
+//				BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(mp_BgImgData+1);
+//
+//				if (!lMaxBgWidth || !lMaxBgHeight)
+//				{
+//					// Сюда мы можем попасть только в случае eUpLeft/eUpRight/eDownLeft/eDownRight
+//					lMaxBgWidth = pBmp->biWidth;
+//					lMaxBgHeight = pBmp->biHeight;
+//				}
+//
+//				if (!mp_Bg->CreateField(lMaxBgWidth, lMaxBgHeight) ||
+//				        !mp_Bg->FillBackground(mp_BgImgData, 0,0, lMaxBgWidth, lMaxBgHeight, op, mb_BgLastFade))
+//				{
+//					delete mp_Bg;
+//					mp_Bg = NULL;
+//				}
+//			}
+//		}
+//		else
+//		{
+//			delete mp_Bg;
+//			mp_Bg = NULL;
+//		}
+//	}
+//
+//	if (mp_Bg)
+//	{
+//		*phBgDc = mp_Bg->hBgDc;
+//		*pbgBmpSize = mp_Bg->bgSize;
+//	}
+//	else
+//	{
+//		*phBgDc = NULL;
+//		*pbgBmpSize = MakeCoord(0,0);
+//	}
+//
+//	return lbForceUpdate;
+//}
 
 #endif

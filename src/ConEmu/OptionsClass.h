@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CustomFonts.h"
 
 class CBackground;
+class CBackgroundInfo;
 struct DebugLogShellActivity;
 struct CEHelpPopup;
 
@@ -230,26 +231,24 @@ class CSettings
 
 		// Working variables...
 	private:
-		//HBITMAP  hBgBitmap;
-		//COORD    bgBmp;
-		//HDC      hBgDc;
-		CBackground* mp_Bg;
-		//MSection mcs_BgImgData;
 		#ifndef APPDISTINCTBACKGROUND
+		CBackground* mp_Bg;
 		BITMAPFILEHEADER* mp_BgImgData;
 		BOOL mb_NeedBgUpdate; //, mb_WasVConBgImage;
 		FILETIME ftBgModified;
 		DWORD nBgModifiedTick;
 		bool isBackgroundImageValid;
-		#endif
 		bool mb_BgLastFade;
-	public:
-		bool PrepareBackground(CVirtualConsole* apVCon, HDC* phBgDc, COORD* pbgBmpSize);
-		#ifndef APPDISTINCTBACKGROUND
-		bool PollBackgroundFile(); // true, если файл изменен
-		void SetBgImageDarker(u8 newValue, bool bUpdate);
-		bool LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
+		#else
+		CBackgroundInfo* mp_BgInfo;
 		#endif
+	public:
+		void SetBgImageDarker(u8 newValue, bool bUpdate);
+		#ifndef APPDISTINCTBACKGROUND
+		bool PrepareBackground(CVirtualConsole* apVCon, HDC* phBgDc, COORD* pbgBmpSize);
+		bool PollBackgroundFile(); // true, если файл изменен
+		#endif
+		bool LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
 		bool IsBackgroundEnabled(CVirtualConsole* apVCon);
 		void NeedBackgroundUpdate();
 		//CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);

@@ -233,6 +233,9 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	mn_LastBitsPixel = 0;
 	//mb_NeedBgUpdate = FALSE; mb_BgLastFade = false;
 	mp_Bg = new CBackground();
+	#ifdef APPDISTINCTBACKGROUND
+	mp_BgInfo = CBackgroundInfo::CreateBackgroundObject(args->pszWallpaper ? args->pszWallpaper : gpSet->sBgImage, false);
+	#endif
 	//mp_BkImgData = NULL; mn_BkImgDataMax = 0; mb_BkImgChanged = FALSE; mb_BkImgExist = /*mb_BkImgDelete =*/ FALSE;
 	//mp_BkEmfData = NULL; mn_BkEmfDataMax = 0; mb_BkEmfChanged = FALSE;
 	//mcs_BkImgData = NULL;
@@ -442,6 +445,9 @@ CVirtualConsole::~CVirtualConsole()
 	//}
 
 	SafeDelete(mp_Bg);
+	#ifdef APPDISTINCTBACKGROUND
+	SafeRelease(mp_BgInfo);
+	#endif
 
 	//FreeBackgroundImage();
 }
@@ -5990,6 +5996,20 @@ SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACK
 //	}
 //	
 //	return rc;
+}
+
+#ifdef APPDISTINCTBACKGROUND
+CBackgroundInfo* CVirtualConsole::GetBackgroundObject()
+{
+	if (!this) return NULL;
+	return mp_BgInfo;
+}
+#endif
+
+void CVirtualConsole::NeedBackgroundUpdate()
+{
+	if (this && mp_Bg)
+		mp_Bg->NeedBackgroundUpdate();
 }
 
 bool CVirtualConsole::HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)

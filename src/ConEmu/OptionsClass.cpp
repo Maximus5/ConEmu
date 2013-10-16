@@ -378,11 +378,16 @@ CSettings::CSettings()
 	memset(mn_RFPS, 0, sizeof(mn_RFPS)); mn_RFPS_CUR_FRAME = 0;
 	memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
 	//hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL;
+	#ifndef APPDISTINCTBACKGROUND
+	mb_BgLastFade = false;
+	mp_Bg = NULL;
+	mp_BgImgData = NULL;
 	isBackgroundImageValid = false;
 	mb_NeedBgUpdate = FALSE; //mb_WasVConBgImage = FALSE;
-	mb_BgLastFade = false;
 	ftBgModified.dwHighDateTime = ftBgModified.dwLowDateTime = nBgModifiedTick = 0;
-	mp_Bg = NULL; mp_BgImgData = NULL;
+	#else
+	mp_BgInfo = NULL;
+	#endif
 	ZeroStruct(mh_Font);
 	mh_Font2 = NULL;
 	ZeroStruct(m_tm);
@@ -779,9 +784,12 @@ void CSettings::ReleaseHandles()
 	//if (sSaveAllMacro) {free(sSaveAllMacro); sSaveAllMacro = NULL;}
 	//if (sRClickMacro) {free(sRClickMacro); sRClickMacro = NULL;}
 
-	if (mp_Bg) { delete mp_Bg; mp_Bg = NULL; }
-
+	#ifndef APPDISTINCTBACKGROUND
+	SafeDelete(mp_Bg);
 	SafeFree(mp_BgImgData);
+	#else
+	SafeRelease(mp_BgInfo);
+	#endif
 }
 
 CSettings::~CSettings()
@@ -4877,7 +4885,12 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				//EnableWindow(GetDlgItem(hWnd2, rBgUpLeft), gpSet->isShowBgImage);
 				//EnableWindow(GetDlgItem(hWnd2, rBgStretch), gpSet->isShowBgImage);
 				//EnableWindow(GetDlgItem(hWnd2, rBgTile), gpSet->isShowBgImage);
-				BOOL lbNeedLoad = (mp_Bg == NULL);
+				BOOL lbNeedLoad;
+				#ifndef APPDISTINCTBACKGROUND
+				lbNeedLoad = (mp_Bg == NULL);
+				#else
+				lbNeedLoad = (mp_BgInfo == NULL) || (lstrcmpi(mp_BgInfo->BgImage(), gpSet->sBgImage) != 0);
+				#endif
 
 				if (gpSet->isShowBgImage && gpSet->bgImageDarker == 0)
 				{
@@ -14104,8 +14117,14 @@ bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 	}
 
 	// Иначе - по настрокам ConEmu
+	#ifndef APPDISTINCTBACKGROUND
 	if (!isBackgroundImageValid)
 		return false;
+	#else
+	CBackgroundInfo* pBgObject = apVCon ? apVCon->GetBackgroundObject() : mp_BgInfo;
+	if (!pBgObject->GetBgImgData())
+		return false;
+	#endif
 
 	if (apVCon && (apVCon->isEditor || apVCon->isViewer))
 	{
@@ -14117,7 +14136,6 @@ bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 	}
 }
 
-#ifndef APPDISTINCTBACKGROUND
 void CSettings::SetBgImageDarker(u8 newValue, bool bUpdate)
 {
 	if (/*newV < 256*/ newValue != gpSet->bgImageDarker)
@@ -14148,6 +14166,14 @@ void CSettings::SetBgImageDarker(u8 newValue, bool bUpdate)
 
 bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 {
+	bool lRes = false;
+
+#ifdef APPDISTINCTBACKGROUND
+	CBackgroundInfo* pNew = CBackgroundInfo::CreateBackgroundObject(inPath, abShowErrors);
+	SafeRelease(mp_BgInfo);
+	mp_BgInfo = pNew;
+	lRes = (mp_BgInfo != NULL);
+#else
 	//_ASSERTE(gpConEmu->isMainThread());
 	if (!inPath || _tcslen(inPath)>=MAX_PATH)
 	{
@@ -14158,7 +14184,6 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 	}
 
 	_ASSERTE(gpConEmu->isMainThread());
-	bool lRes = false;
 	BY_HANDLE_FILE_INFORMATION inf = {0};
 	BITMAPFILEHEADER* pBkImgData = NULL;
 
@@ -14204,14 +14229,22 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 		mp_BgImgData = pBkImgData;
 		lRes = true;
 	}
-	
+#endif
 	return lRes;
 }
-#endif
+
 
 void CSettings::NeedBackgroundUpdate()
 {
+	#ifndef APPDISTINCTBACKGROUND
 	mb_NeedBgUpdate = TRUE;
+	#else
+	CVConGuard VCon;
+	for (INT_PTR i = 0; CVConGroup::GetVCon(i, &VCon); i++)
+	{
+		VCon->NeedBackgroundUpdate();
+	}
+	#endif
 }
 
 // общая функция

@@ -232,10 +232,16 @@ class CVirtualConsole :
 		SetBackgroundResult SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData); // вызывается при получении нового Background
 		bool HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight);
 		//void NeedBackgroundUpdate();
+		#ifdef APPDISTINCTBACKGROUND
+		CBackgroundInfo* GetBackgroundObject();
+		#endif
+		void NeedBackgroundUpdate();
 	protected:
 		// Содержит текущий фон (из плагина или из файла-цвета по настройке)
 		CBackground*     mp_Bg;
-		//CBackgroundInfo* mp_BgInfo; // RefRelease, global object list
+		#ifdef APPDISTINCTBACKGROUND
+		CBackgroundInfo* mp_BgInfo; // RefRelease, global object list
+		#endif
 
 		//bool mb_NeedBgUpdate;
 		//bool mb_BgLastFade;
