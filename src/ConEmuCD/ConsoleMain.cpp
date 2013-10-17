@@ -2136,6 +2136,7 @@ void Help()
 {
 	PrintVersion();
 	_wprintf(pConsoleHelp);
+	_wprintf(pNewConsoleHelp);
 	
 	//_printf(
 	//	    "This is a console part of ConEmu product.\n"

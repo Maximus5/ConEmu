@@ -1413,7 +1413,8 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 
 			// ѕослать в GUI уведомление, что сервер закрываетс€
 			/*CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, 1000);*/
-			CESERVER_REQ* pOut = ExecuteCmd(szServerPipe, pIn, 1000, ghConWnd, TRUE/*bAsyncNoResult*/);
+			// 131017 ѕри закрытии не успевает отработать. —ерверу нужно дождатьс€ ответа как обычно
+			CESERVER_REQ* pOut = ExecuteCmd(szServerPipe, pIn, 1000, ghConWnd, FALSE/*bAsyncNoResult*/);
 
 			ExecuteFreeResult(pIn);
 			ExecuteFreeResult(pOut);

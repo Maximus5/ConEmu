@@ -2031,11 +2031,17 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			//_ASSERTE(hAltServerHandle!=NULL);
 			//hEvents[IDEVENT_SERVERPH] = hAltServerHandle ? hAltServerHandle : mh_MainSrv;
 
-			ReopenServerPipes();
-
-			// Done
-			mb_SwitchActiveServer = false;
-			SetEvent(mh_ActiveServerSwitched);
+			if (!ReopenServerPipes())
+			{
+				// Try again?
+				mb_SwitchActiveServer = true;
+			}
+			else
+			{
+				// Done
+				mb_SwitchActiveServer = false;
+				SetEvent(mh_ActiveServerSwitched);
+			}
 		}
 
 		bool bNeedUpdateServerActive = (nWait == IDEVENT_UPDATESERVERACTIVE);
@@ -4108,7 +4114,7 @@ void CRealConsole::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*
 	mp_ABuf->StartSelection(abTextMode, anX, anY, abByMouse);
 }
 
-void CRealConsole::ExpandSelection(SHORT anX/*=-1*/, SHORT anY/*=-1*/)
+void CRealConsole::ExpandSelection(SHORT anX, SHORT anY)
 {
 	mp_ABuf->ExpandSelection(anX, anY);
 }
@@ -5465,6 +5471,8 @@ void CRealConsole::OnServerClosing(DWORD anSrvPID)
 {
 	if (anSrvPID == mn_MainSrv_PID && mh_MainSrv)
 	{
+		// 131017 set flags to ON
+		StopSignal();
 		//int nCurProcessCount = m_Processes.size();
 		//_ASSERTE(nCurProcessCount <= 1);
 		m_ServerClosing.nRecieveTick = GetTickCount();

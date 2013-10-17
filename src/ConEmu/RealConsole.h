@@ -429,7 +429,7 @@ class CRealConsole
 		bool isMouseSelectionPresent();
 		void AutoCopyTimer(); // Чтобы разрулить "Auto Copy" & "Double click - select word"
 		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
-		void ExpandSelection(SHORT anX=-1, SHORT anY=-1);
+		void ExpandSelection(SHORT anX, SHORT anY);
 		bool DoSelectionCopy(bool bCopyAll = false);
 		void DoSelectionStop();
 		void DoFindText(int nDirection);

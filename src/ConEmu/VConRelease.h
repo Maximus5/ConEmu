@@ -36,6 +36,8 @@ class CVConRelease : public CRefRelease
 {
 protected:
 	virtual void FinalRelease();
+public:
+	void DeleteFromMainThread();
 };
 
 class CVConGuard

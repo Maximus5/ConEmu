@@ -776,6 +776,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgTaskBarBtnCreated = RegisterMessage("TaskbarButtonCreated",L"TaskbarButtonCreated");
 	mn_MsgSheelHook = RegisterMessage("SHELLHOOK",L"SHELLHOOK");
 	mn_MsgRequestRunProcess = RegisterMessage("RequestRunProcess");
+	mn_MsgDeleteVConMainThread = RegisterMessage("DeleteVConMainThread");
 	//// ¬ Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 
@@ -8366,6 +8367,19 @@ void CConEmuMain::CtrlWinAltSpace()
 	{
 		VCon->RCon()->CtrlWinAltSpace(); // Toggle visibility
 	}
+}
+
+void CConEmuMain::DeleteVConMainThread(CVirtualConsole* apVCon)
+{
+	DEBUGTEST(LRESULT lRc =)
+		SendMessage(ghWnd, mn_MsgDeleteVConMainThread, 0, (LPARAM)apVCon);
+	//if (!lRc)
+	//{
+	//	if (CVConGroup::isValid(apVCon))
+	//	{
+	//		apVCon->DeleteFromMainThread();
+	//	}
+	//}
 }
 
 // abRecreate: TRUE - пересоздать текущую, FALSE - создать новую
@@ -16927,6 +16941,7 @@ INT_PTR CConEmuMain::aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 		{L"Command line", pCmdLine},
 		{L"Macro", pGuiMacro},
 		{L"Console", pConsoleHelpFull},
+		{L"-new_console", pNewConsoleHelpFull},
 		{L"DosBox", pDosBoxHelpFull},
 		{L"Contributors", pAboutContributors},
 		{L"License", pAboutLicense},
@@ -19092,6 +19107,18 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				this->mp_RunQueue->ProcessRunQueue(true);
 				return 0;
+			}
+			else if (messg == this->mn_MsgDeleteVConMainThread)
+			{
+				// “анцы с бубном, если последний Release() пришелс€ в фоновом потоке
+				LRESULT lDelRc = 0;
+				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
+				if (CVConGroup::isValid(pVCon))
+				{
+					pVCon->DeleteFromMainThread();
+					lDelRc = 1;
+				}
+				return lDelRc;
 			}
 
 			//else if (messg == this->mn_MsgCmdStarted || messg == this->mn_MsgCmdStopped) {

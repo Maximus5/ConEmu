@@ -143,7 +143,8 @@ BEGIN
     CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,57,70,47,8
     CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,110,70,48,8
     GROUPBOX        "",IDC_STATIC,4,95,319,98
-    CONTROL         "Back&ground image (bmp, jpg, png):",cbBgImage,"Button",BS_AUTO3STATE | WS_TABSTOP,10,95,128,8
+    CONTROL         "Back&ground image (bmp, jpg, png, tif):",cbBgImage,
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,95,139,8
     LTEXT           "Path:",IDC_STATIC,10,109,18,8
     EDITTEXT        tBgImage,34,107,261,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",bBgImage,299,107,16,12
@@ -1303,17 +1304,17 @@ BEGIN
     EDITTEXT        tInactiveCursorMinSize,256,99,25,12,ES_AUTOHSCROLL
 END
 
-IDD_ABOUT DIALOGEX 0, 0, 325, 205
+IDD_ABOUT DIALOGEX 0, 0, 379, 205
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Dialog"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,268,187,50,14
-    ICON            IDI_ICON1,IDC_STATIC,7,7,21,20,WS_DISABLED
-    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,302,16
-    EDITTEXT        tAboutText,7,50,311,131,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
-    LTEXT           "Console emulation program. Visit home page:",stConEmuAbout,50,7,268,8
-    LTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,50,18,268,8,SS_NOTIFY
+    DEFPUSHBUTTON   "OK",IDOK,322,187,50,14
+    ICON            IDI_ICON1,IDC_STATIC,7,7,20,20,WS_DISABLED
+    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,366,16
+    EDITTEXT        tAboutText,7,50,365,131,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
+    LTEXT           "Console emulation program. Visit home page:",stConEmuAbout,104,7,268,8
+    LTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,104,18,268,8,SS_NOTIFY
 END
 
 IDD_ACTION DIALOGEX 0, 0, 325, 157
@@ -1374,6 +1375,10 @@ BEGIN
         RIGHTMARGIN, 314
         TOPMARGIN, 4
         BOTTOMMARGIN, 181
+    END
+
+    IDD_SPG_MAIN, DIALOG
+    BEGIN
     END
 
     IDD_SPG_TASKBAR, DIALOG
@@ -1467,7 +1472,7 @@ BEGIN
     IDD_ABOUT, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 318
+        RIGHTMARGIN, 372
         TOPMARGIN, 7
         BOTTOMMARGIN, 143
     END

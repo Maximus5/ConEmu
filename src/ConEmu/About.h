@@ -139,7 +139,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define pConsoleHelpFull \
-	pConsoleHelp
+	pConsoleHelp \
+	L"When you run application from ConEmu console, you may use one or more -new_console[:switches]\r\n" \
+	L"Read about them on next page\r\n"
+
+#define pNewConsoleHelpFull \
+	pNewConsoleHelp
+
 
 #define pDosBoxHelpFull \
 	L"ConEmu supports DosBox, read more online:\r\n" \

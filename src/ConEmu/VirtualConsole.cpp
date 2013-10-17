@@ -234,7 +234,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	//mb_NeedBgUpdate = FALSE; mb_BgLastFade = false;
 	mp_Bg = new CBackground();
 	#ifdef APPDISTINCTBACKGROUND
-	mp_BgInfo = CBackgroundInfo::CreateBackgroundObject(args->pszWallpaper ? args->pszWallpaper : gpSet->sBgImage, false);
+	mp_BgInfo = args->pszWallpaper ? CBackgroundInfo::CreateBackgroundObject(args->pszWallpaper, false) : NULL;
 	#endif
 	//mp_BkImgData = NULL; mn_BkImgDataMax = 0; mb_BkImgChanged = FALSE; mb_BkImgExist = /*mb_BkImgDelete =*/ FALSE;
 	//mp_BkEmfData = NULL; mn_BkEmfDataMax = 0; mb_BkEmfChanged = FALSE;
@@ -6002,7 +6002,12 @@ SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACK
 CBackgroundInfo* CVirtualConsole::GetBackgroundObject()
 {
 	if (!this) return NULL;
-	return mp_BgInfo;
+	if (mp_BgInfo)
+	{
+		mp_BgInfo->AddRef();
+		return mp_BgInfo;
+	}
+	return gpSetCls->GetBackgroundObject();
 }
 #endif
 

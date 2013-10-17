@@ -171,6 +171,7 @@ struct PipeServer
 			
 			wchar_t sErrorMsg[128];
 
+			int nLongServerReading;
 			#ifdef _DEBUG
 			int nCreateCount, nConnectCount, nCallCount, nAnswCount;
 			SYSTEMTIME stLastCall, stLastEndCall;
@@ -331,6 +332,7 @@ struct PipeServer
 			DWORD nTimeout = 1000; //RELEASEDEBUGTEST(1000,30000);
 			DWORD nStartTick = GetTickCount();
 			DWORD nDuration = 0, nMaxConnectDuration = 10000;
+			pPipe->nLongServerReading = 0;
 
 			while (!mb_Terminate)
 			{
@@ -378,6 +380,11 @@ struct PipeServer
 					if (fSuccess || dwErrT == ERROR_MORE_DATA)
 						return 1; // OK, клиент подключилс€
 
+					if ((pPipe->dwState == READING_STATE) && (nDuration > 1000))
+					{
+						pPipe->nLongServerReading = 0; // Hunged?
+					}
+
 					if (dwErrT == ERROR_IO_INCOMPLETE)
 					{
 						if ((pPipe->dwState == CONNECTING_STATE) && (nDuration > nMaxConnectDuration))
@@ -390,6 +397,16 @@ struct PipeServer
 							//
 							//_ASSERTEX((nDuration <= nMaxConnectDuration) && "Unknown problem, waiting for connection");
 						}
+						#if 0
+						// некоторые серверы работают в посто€нном чтении, и врем€ ожидани€ (ввода с клавиатуры например)
+						// может вызывать ASSERT
+						else if ((pPipe->dwState == READING_STATE) && (nDuration > nMaxConnectDuration))
+						{
+							// ¬ очень редких случа€х - наблюдаетс€ "зависание" сервера-клиента.
+							// “о есть при запуске фара (AltServer) в GUI отображаетс€ только черный экран
+							_ASSERTEX(FALSE && "Server was hunged at READING_STATE");
+						}
+						#endif
 						else
 						{
 							continue;

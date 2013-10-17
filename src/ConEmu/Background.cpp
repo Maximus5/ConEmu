@@ -872,6 +872,8 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 			}
 		}
 
+		pBgFile->Release();
+
 		#endif
 	}
 	else

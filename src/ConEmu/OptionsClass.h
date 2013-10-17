@@ -247,6 +247,8 @@ class CSettings
 		#ifndef APPDISTINCTBACKGROUND
 		bool PrepareBackground(CVirtualConsole* apVCon, HDC* phBgDc, COORD* pbgBmpSize);
 		bool PollBackgroundFile(); // true, если файл изменен
+		#else
+		CBackgroundInfo* GetBackgroundObject();
 		#endif
 		bool LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
 		bool IsBackgroundEnabled(CVirtualConsole* apVCon);

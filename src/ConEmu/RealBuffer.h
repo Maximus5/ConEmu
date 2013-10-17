@@ -129,7 +129,7 @@ private:
 public:
 	void MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensitive, bool abWholeWords); // <<== CRealConsole::DoFindText
 	void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE, UINT anFromMsg=0, COORD *pcrTo=NULL);
-	void ExpandSelection(SHORT anX=-1, SHORT anY=-1);
+	void ExpandSelection(SHORT anX, SHORT anY);
 	bool DoSelectionFinalize(bool abCopy, WPARAM wParam = 0);
 	void DoSelectionStop();
 	bool DoSelectionCopy(bool bCopyAll = false);

@@ -1891,6 +1891,8 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	//*pszTemp = 0;
 	//SetDlgItemText(hWnd2, tBgImageColors, tmp);
 
+	checkDlgButton(hWnd2, cbBgImage, BST(gpSet->isShowBgImage));
+
 	_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%i", gpSet->bgImageDarker);
 	SendDlgItemMessage(hWnd2, tDarker, EM_SETLIMITTEXT, 3, 0);
 	SetDlgItemText(hWnd2, tDarker, tmp);
@@ -1903,7 +1905,6 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbBgAllowPlugin, BST(gpSet->isBgPluginAllowed));
 
-	checkDlgButton(hWnd2, cbBgImage, BST(gpSet->isShowBgImage));
 	WORD nImgCtrls[] = {tBgImage, bBgImage};
 	EnableDlgItems(hWnd2, nImgCtrls, countof(nImgCtrls), gpSet->isShowBgImage);
 
@@ -4914,6 +4915,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
 				}
 
+				NeedBackgroundUpdate();
+
 				gpConEmu->Update(true);
 
 			} // cbBgImage
@@ -6812,6 +6815,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			if (LoadBackgroundFile(temp, true))
 			{
 				wcscpy_c(gpSet->sBgImage, temp);
+				NeedBackgroundUpdate();
 				gpConEmu->Update(true);
 			}
 		}
@@ -6858,6 +6862,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		if (newBgColors && gpSet->nBgImageColors != newBgColors)
 		{
 			gpSet->nBgImageColors = newBgColors;
+			NeedBackgroundUpdate();
 			gpConEmu->Update(true);
 		}
 		
@@ -8691,7 +8696,15 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 				HELPINFO* hi = (HELPINFO*)lParam;
 				if (hi->cbSize >= sizeof(HELPINFO))
 				{
-					gpSetCls->mp_HelpPopup->ShowItemHelp(hi);
+					switch (hi->iCtrlId)
+					{
+					case tCmdGroupCommands:
+						// Some controls are processed personally
+						gpConEmu->OnInfo_About(L"-new_console");
+						break;
+					default:
+						gpSetCls->mp_HelpPopup->ShowItemHelp(hi);
+					}
 				}
 			}
 			return TRUE;
@@ -14122,7 +14135,9 @@ bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 		return false;
 	#else
 	CBackgroundInfo* pBgObject = apVCon ? apVCon->GetBackgroundObject() : mp_BgInfo;
-	if (!pBgObject->GetBgImgData())
+	bool bBgExist = (pBgObject && pBgObject->GetBgImgData() != NULL);
+	SafeRelease(pBgObject);
+	if (!bBgExist)
 		return false;
 	#endif
 
@@ -14156,12 +14171,19 @@ void CSettings::SetBgImageDarker(u8 newValue, bool bUpdate)
 			// Картинку может установить и плагин
 			if (gpSet->isShowBgImage && gpSet->sBgImage[0])
 				LoadBackgroundFile(gpSet->sBgImage);
-			else
-				NeedBackgroundUpdate();
+
+			NeedBackgroundUpdate();
 
 			gpConEmu->Update(true);
 		}
 	}
+}
+
+CBackgroundInfo* CSettings::GetBackgroundObject()
+{
+	if (mp_BgInfo)
+		mp_BgInfo->AddRef();
+	return mp_BgInfo;
 }
 
 bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)

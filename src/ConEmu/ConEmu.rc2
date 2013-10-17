@@ -175,6 +175,7 @@ BEGIN
     rCursorV                "Vertical text cursor, like standard graphic text editors"
     rCursorB                "Full cell (block) cursor, change «Color» checkbox for changing cursor appearance"
     slTransparent           "Transparency of the main ConEmu window"
+	tBgImage                "Choose background image file (bmp, jpg, png, tif) or specify solid color in any form supported by «Colors» page"
     tBgImageColors          "Choose background color indexes,\r\nwhich will be replaced with background image,\r\ndefault is «#0 #1» Black and Blue.\r\nUse ""*"" (asterisk) for Far Manager panels background color."
     tCloseTabMacro          "Macro for close Editor/Viewer/Panels in Far Manager, when you choose «Close» from tab context menu\r\nClear field to reset to defaults"
     tCursorFixedSize        "Specified size of cursor in percents. Use together with «Fixed cursor size»"

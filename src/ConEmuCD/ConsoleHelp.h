@@ -61,7 +61,9 @@ _DBGHLP(L"     /GHWND=<ConEmu.exe HWND>\r\n") \
 _DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
 _DBGHLP(L"     /INJECT=PID{10}\r\n") \
 _DBGHLP(L"     /DOSBOX -> use DosBox\r\n") \
-	    L"\r\n" \
+	    L"\r\n"
+
+#define pNewConsoleHelp \
 	    L"When you run application from ConEmu console, you may use one or more\r\n" \
       /*L"  Switch: -new_console[:abcd[:dir]h[N]rx[N]y[N]u[:user:pwd]]\r\n")*/ \
 		L"  Switch: -new_console[:switches]\r\n" \
@@ -84,6 +86,7 @@ _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
 _DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r\n") \
         L"     u - ConEmu choose user dialog\r\n" \
 		L"     w - Enable 'Overwrite' mode in command prompt by default\r\n" \
+		L"     W - see below\r\n" \
 		L"     z - Don't use 'Default terminal' feature for this command\r\n" \
 		L"\r\n" \
 		L"  Switch: \"-new_console:C:iconfile\"\r\n" \
@@ -96,9 +99,11 @@ _DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r
 		L"       - rename new created tab, MUST BE LAST or single OPTION\r\n" \
 		L"  Switch: \"-new_console:u:user:pwd\"\r\n" \
         L"       - specify user/pwd in args, MUST BE LAST or single OPTION\r\n" \
+		L"  Switch: \"-new_console:W:tabwallpaper\"\r\n" \
+		L"       - use specified wallpaper for the tab, MUST BE LAST or single OPTION\r\n" \
 		L"\r\n" \
         L"  Warning: Option 'Inject ConEmuHk' must be enabled in ConEmu settings!\r\n" \
-		L"  Example: dir \"-new_console:bh9999c\" \"-new_console:dC:\\\"  c:\\Users /s\r\n" \
+		L"  Example: dir -new_console:bh9999c \"-new_console:dC:\\\" -new_console:P:^<PowerShell^> c:\\Users /s\r\n" \
 		L"  Note: Some switches may be used in similar \"-cur_console:...\"\r\n"
 
 

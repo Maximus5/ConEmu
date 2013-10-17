@@ -3541,11 +3541,21 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	}
 }
 
-void CRealBuffer::ExpandSelection(SHORT anX/*=-1*/, SHORT anY/*=-1*/)
+void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY)
 {
 	_ASSERTE(con.m_sel.dwFlags!=0);
 	// Добавил "-3" чтобы на прокрутку не ругалась
 	_ASSERTE(anY==-1 || anY>=(con.nTopVisibleLine-3));
+
+	// 131017 Scroll content if selection cursor goes out of visible screen
+	if (anY < con.nTopVisibleLine)
+	{
+		OnScroll(SB_LINEUP);
+	}
+	else if (anY >= (con.nTopVisibleLine + con.nTextHeight))
+	{
+		OnScroll(SB_LINEDOWN);
+	}
 
 	COORD cr = {anX,anY};
 
@@ -4843,6 +4853,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			COORD crStart = BufferToScreen(MakeCoord(con.m_sel.srSelection.Left, con.m_sel.srSelection.Top));
 			COORD crEnd = BufferToScreen(MakeCoord(con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom));
 
+			bool bAboveScreen = (con.m_sel.srSelection.Top < con.m_sbi.srWindow.Top);
+			bool bBelowScreen = (con.m_sel.srSelection.Bottom > con.m_sbi.srWindow.Bottom);
+
 			SMALL_RECT rc = {crStart.X, crStart.Y, crEnd.X, crEnd.Y};
 			// Коррекция по видимой области
 			MinMax(rc.Left, 0, nWidth-1); MinMax(rc.Right, 0, nWidth-1);
@@ -4866,8 +4879,8 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				}
 				else
 				{
-					nX1 = (nY == rc.Top) ? rc.Left : 0;
-					nX2 = (nY == rc.Bottom) ? rc.Right : (nWidth-1);
+					nX1 = (nY == rc.Top && !bAboveScreen) ? rc.Left : 0;
+					nX2 = (nY == rc.Bottom && !bBelowScreen) ? rc.Right : (nWidth-1);
 				}
 
 				pcaDst = pAttr + nWidth*nY + nX1;

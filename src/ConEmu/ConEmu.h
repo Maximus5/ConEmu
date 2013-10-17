@@ -546,6 +546,7 @@ class CConEmuMain :
 		void OnWmHotkey(WPARAM wParam);
 		void UpdateWinHookSettings();
 		void CtrlWinAltSpace();
+		void DeleteVConMainThread(CVirtualConsole* apVCon);
 	protected:
 		friend class CConEmuCtrl;
 		friend class CRunQueue;
@@ -600,6 +601,7 @@ class CConEmuMain :
 		UINT mn_MsgPanelViewMapCoord;
 		UINT mn_MsgTaskBarBtnCreated;
 		UINT mn_MsgRequestRunProcess;
+		UINT mn_MsgDeleteVConMainThread;
 
 		void SetRunQueueTimer(bool bSet, UINT uElapse);
 

@@ -36,9 +36,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void CVConRelease::FinalRelease()
 {
+	if (!gpConEmu->isMainThread() && ghWnd)
+	{
+		CVirtualConsole* pVCon = (CVirtualConsole*)this;
+		gpConEmu->DeleteVConMainThread(pVCon);
+		return;
+	}
+	DeleteFromMainThread();
+};
+
+void CVConRelease::DeleteFromMainThread()
+{
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	delete pVCon;
-};
+}
 
 //CVConRelease::CVConRelease()
 //{
