@@ -15,6 +15,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Issue 1291: Python fails to print string sequence with ASCII character followed by Chinese character.
+
+
 2013.10.17
 [+] New switch "-new_console:W:Background" allows set background image per tab or split.
     Option «Background image» must be enabled in main settings (main image path may be empty).

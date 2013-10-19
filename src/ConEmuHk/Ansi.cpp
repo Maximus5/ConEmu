@@ -627,7 +627,12 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuf
 			_ASSERTE(newLen==len);
 			buf[newLen] = 0; // ASCII-Z, хотя, если функцию WriteConsoleW зовет приложение - "\0" может и не быть...
 
-			lbRc = OnWriteConsoleW(hConsoleOutput, buf, len, lpNumberOfCharsWritten, NULL);
+			DWORD nWideWritten = 0;
+			lbRc = OnWriteConsoleW(hConsoleOutput, buf, len, &nWideWritten, NULL);
+
+			// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
+			if (lpNumberOfCharsWritten)
+				*lpNumberOfCharsWritten = (nWideWritten == len) ? nNumberOfCharsToWrite : nWideWritten;
 		}
 		goto fin;
 	}
