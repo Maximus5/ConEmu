@@ -38,6 +38,7 @@ $(OBJDIR)\InjectRemote.obj \
 $(OBJDIR)\InQueue.obj \
 $(OBJDIR)\Queue.obj \
 $(OBJDIR)\SrvPipes.obj \
+$(OBJDIR)\ExecPty.obj \
 $(OBJDIR)\execute.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\ConsoleRead.obj \
@@ -283,6 +284,8 @@ $(OBJDIR)\InQueue.obj: ../common/InQueue.cpp ../common/InQueue.h
 $(OBJDIR)\Queue.obj: Queue.cpp ../common/PipeServer.h ../common/InQueue.h
 
 $(OBJDIR)\SrvPipes.obj: SrvPipes.cpp ../common/PipeServer.h
+
+$(OBJDIR)\ExecPty.obj: ../common/ExecPty.cpp ../common/ExecPty.h
 
 $(OBJDIR)\execute.obj: ../common/execute.cpp ../common/execute.h
 

@@ -2739,7 +2739,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 										args.pszSpecialCmd = pszCmd; pszCmd = NULL;
 										args.pszStartupDir = mp_RCon->m_Args.pszStartupDir ? lstrdup(mp_RCon->m_Args.pszStartupDir) : NULL;
 										args.bRunAsAdministrator = mp_RCon->m_Args.bRunAsAdministrator;
-										args.bForceUserDialog = mp_RCon->m_Args.bRunAsRestricted || (mp_RCon->m_Args.pszUserName != NULL);
+										args.bForceUserDialog = mp_RCon->m_Args.bForceUserDialog || mp_RCon->m_Args.bRunAsRestricted || (mp_RCon->m_Args.pszUserName != NULL);
 										args.bBufHeight = TRUE;
 										//args.eConfirmation = RConStartArgs::eConfNever;
 
@@ -4189,7 +4189,8 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (con.m_sel.dwFlags && messg == WM_KEYDOWN
 	        && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)
 				|| ((wParam == 'C' || wParam == VK_INSERT) && isPressed(VK_CONTROL))
-	            || (wParam == VK_LEFT) || (wParam == VK_RIGHT) || (wParam == VK_UP) || (wParam == VK_DOWN))
+	            || (wParam == VK_LEFT) || (wParam == VK_RIGHT) || (wParam == VK_UP) || (wParam == VK_DOWN)
+				|| (wParam == VK_HOME) || (wParam == VK_END))
 	  )
 	{
 		if ((wParam == VK_ESCAPE) || (wParam == VK_RETURN) || (wParam == 'C' || wParam == VK_INSERT))
@@ -4209,6 +4210,8 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			else if (wParam == VK_RIGHT) { if (cr.X<(GetBufferWidth()-1)) cr.X++; }
 			else if (wParam == VK_UP)    { if (cr.Y>0) cr.Y--; }
 			else if (wParam == VK_DOWN)  { if (cr.Y<(GetBufferHeight()-1)) cr.Y++; }
+			else if (wParam == VK_HOME)  { cr.X = 0; }
+			else if (wParam == VK_END)   { cr.X = (GetBufferWidth()-1); }
 
 			// Теперь - двигаем
 			BOOL bShift = isPressed(VK_SHIFT);

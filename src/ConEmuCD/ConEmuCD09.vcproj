@@ -1627,6 +1627,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\ExecPty.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\Execute.h"
 				>
 			</File>
@@ -1744,6 +1748,10 @@
 			</File>
 			<File
 				RelativePath="..\common\ConsoleRead.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\ExecPty.cpp"
 				>
 			</File>
 			<File

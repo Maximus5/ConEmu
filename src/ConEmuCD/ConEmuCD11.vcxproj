@@ -801,6 +801,7 @@
   <ItemGroup>
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
+    <ClInclude Include="..\common\ExecPty.h" />
     <ClInclude Include="..\common\MArray.h" />
     <ClInclude Include="..\common\MMap.h" />
     <ClInclude Include="..\common\StartupEnv.h" />
@@ -1114,6 +1115,7 @@
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="..\common\ConsoleRead.cpp" />
+    <ClCompile Include="..\common\ExecPty.cpp" />
     <ClCompile Include="ConEmuCmd.cpp" />
     <ClCompile Include="ConEmuSrv.cpp" />
     <ClCompile Include="ConsoleMain.cpp" />

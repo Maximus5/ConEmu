@@ -101,6 +101,46 @@ void RConStartArgs::RunArgTests()
 		}
 		int nDbg = 0;
 	}
+
+	for (size_t i = 0; i <= 4; i++)
+	{
+		RConStartArgs arg;
+		switch (i)
+		{
+		case 0: arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:d:C:\\John Doe\\Home\" "); break;
+		case 1: arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u"); break;
+		case 2: arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max"); break;
+		case 3: arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max:"); break;
+		case 4: arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:P:^<Power\"\"Shell^>\""); break;
+		}
+
+		arg.ProcessNewConArg();
+		int nDbg = lstrcmp(arg.pszSpecialCmd, i ? L"cmd" : L"cmd ");
+		_ASSERTE(nDbg==0);
+
+		switch (i)
+		{
+		case 0:
+			nDbg = lstrcmp(arg.pszStartupDir, L"C:\\John Doe\\Home");
+			_ASSERTE(nDbg==0);
+			break;
+		case 1:
+			_ASSERTE(arg.pszUserName==NULL && arg.pszDomain==NULL && arg.bForceUserDialog);
+			break;
+		case 2:
+			nDbg = lstrcmp(arg.pszUserName,L"Max");
+			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && arg.bForceUserDialog);
+			break;
+		case 3:
+			nDbg = lstrcmp(arg.pszUserName,L"Max");
+			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && !arg.bForceUserDialog);
+			break;
+		case 4:
+			nDbg = lstrcmp(arg.pszPalette, L"<Power\"Shell>");
+			_ASSERTE(nDbg==0);
+			break;
+		}
+	}
 }
 #endif
 
@@ -287,7 +327,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	else if (bRunAsRestricted)
 		wcscat_c(szAdd, L"r");
 	
-	if (bForceUserDialog)
+	if (bForceUserDialog && !(pszUserName && *pszUserName))
 		wcscat_c(szAdd, L"u");
 
 	if (bBackgroundTab)
@@ -403,9 +443,12 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 			_wcscat_c(pszFull, cchMaxLen, L"\\");
 		}
 		_wcscat_c(pszFull, cchMaxLen, pszUserName);
-		if (szUserPassword)
+		if (*szUserPassword || !bForceUserDialog)
 		{
 			_wcscat_c(pszFull, cchMaxLen, L":");
+		}
+		if (*szUserPassword)
+		{
 			_wcscat_c(pszFull, cchMaxLen, szUserPassword);
 		}
 		_wcscat_c(pszFull, cchMaxLen, L"\"");
@@ -620,6 +663,9 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							goto EndFound;
 						break;
 					case L' ':
+						if (!lbQuot)
+							goto EndFound;
+						break;
 					case 0:
 						goto EndFound;
 					}
@@ -923,11 +969,18 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 										wchar_t* pszPwd = wcschr(lpszTemp, L':');
 										if (pszPwd)
 										{
+											// Password was specified, dialog prompt is not required
+											bForceUserDialog = FALSE;
 											*pszPwd = 0;
 											int nPwdLen = lstrlen(pszPwd+1);
 											lstrcpyn(szUserPassword, pszPwd+1, countof(szUserPassword));
 											if (nPwdLen > 0)
 												SecureZeroMemory(pszPwd+1, nPwdLen);
+										}
+										else
+										{
+											// Password was NOT specified, dialog prompt IS required
+											bForceUserDialog = TRUE;
 										}
 										wchar_t* pszSlash = wcschr(lpszTemp, L'\\');
 										if (pszSlash)
