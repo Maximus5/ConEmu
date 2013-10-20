@@ -756,8 +756,9 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 
 		if (!mb_NeedBgUpdate)
 		{
-			if ((mb_BgLastFade == bIsForeground && gpSet->isFadeInactive)
-					|| (!gpSet->isFadeInactive && mb_BgLastFade))
+			if ((hBgDc == NULL)
+				|| (mb_BgLastFade == bIsForeground && gpSet->isFadeInactive)
+				|| (!gpSet->isFadeInactive && mb_BgLastFade))
 			{
 				NeedBackgroundUpdate();
 			}
