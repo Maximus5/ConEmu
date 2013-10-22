@@ -613,6 +613,9 @@ class CRealConsole
 		BOOL AttachPID(DWORD dwPID); //120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
 #endif
 		BOOL StartProcess();
+		private:
+		BOOL StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR& lpszWorkDir, bool bNeedConHostSearch, HWND hSetForeground, DWORD& nCreateBegin, DWORD& nCreateEnd, DWORD& nCreateDuration, BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/, BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/, STARTUPINFO& si, PROCESS_INFORMATION& pi, DWORD& dwLastError);
+		protected:
 		BOOL StartMonitorThread();
 		void SetMonitorThreadEvent();
 		BOOL mb_NeedStartProcess;

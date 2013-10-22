@@ -3061,6 +3061,7 @@ BOOL CRealConsole::StartProcess()
 	SetConStatus(L"Preparing process startup line...", true);
 
 	SetConEmuEnvVarChild(mp_VCon->GetView(), mp_VCon->GetBack());
+	SetConEmuEnvVar(ghWnd);
 
 	// Для валидации объектов
 	CVirtualConsole* pVCon = mp_VCon;
@@ -3120,7 +3121,6 @@ BOOL CRealConsole::StartProcess()
 	//si.dwX = rcDC.left; si.dwY = rcDC.top;
 	ZeroMemory(&pi, sizeof(pi));
 	MCHKHEAP;
-	int nStep = (m_Args.pszSpecialCmd!=NULL) ? 2 : 1;
 	wchar_t* psCurCmd = NULL;
 	_ASSERTE((m_Args.pszStartupDir == NULL) || (*m_Args.pszStartupDir != 0));
 
@@ -3199,7 +3199,7 @@ BOOL CRealConsole::StartProcess()
 	//LPCWSTR lpszCmd = mpsz_CmdBuffer ? mpsz_CmdBuffer : lpszRawCmd;
 	LPCWSTR lpszCmd = lpszRawCmd;
 	LPCWSTR lpszWorkDir = NULL;
-	
+	DWORD dwLastError = 0;
 	DWORD nCreateBegin, nCreateEnd, nCreateDuration = 0;
 
 	bool bNeedConHostSearch = false;
@@ -3223,284 +3223,28 @@ BOOL CRealConsole::StartProcess()
 	}
 
 
+	bool bAllowDefaultCmd = (!m_Args.pszSpecialCmd || !*m_Args.pszSpecialCmd);
+	//int nStep = (m_Args.pszSpecialCmd!=NULL) ? 2 : 1;
+	int nStep = 1;
+
+
 	// Go
 	while (nStep <= 2)
 	{
+		_ASSERTE(nStep==1 || nStep==2);
 		MCHKHEAP;
 		MCHKHEAP;
 
-
-		DWORD nColors = (nTextColorIdx) | (nBackColorIdx << 8) | (nPopTextColorIdx << 16) | (nPopBackColorIdx << 24);
-
-		int nCurLen = 0;
-		int nLen = _tcslen(lpszCmd);
-		nLen += _tcslen(gpConEmu->ms_ConEmuExe) + 330 + MAX_PATH*2;
-		MCHKHEAP;
-		psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
-		_ASSERTE(psCurCmd);
-
-
-		// Begin generation of execution command line
-		*psCurCmd = 0;
-
-		#if 0
-		// Issue 791: Server fails, when GUI started under different credentials (login) as server
-		if (m_Args.bRunAsAdministrator)
-		{
-			_wcscat_c(psCurCmd, nLen, L"\"");
-			_wcscat_c(psCurCmd, nLen, gpConEmu->ms_ConEmuExe);
-			_wcscat_c(psCurCmd, nLen, L"\" /bypass /cmd ");
-		}
-		#endif
-
-		_wcscat_c(psCurCmd, nLen, L"\"");
-		// Copy to psCurCmd full path to ConEmuC.exe or ConEmuC64.exe
-		_wcscat_c(psCurCmd, nLen, gpConEmu->ConEmuCExeFull(lpszCmd));
-		//lstrcat(psCurCmd, L"\\");
-		//lstrcpy(psCurCmd, gpConEmu->ms_ConEmuCExeName);
-		_wcscat_c(psCurCmd, nLen, L"\" ");
-
-		if (m_Args.bRunAsAdministrator && !gpConEmu->mb_IsUacAdmin)
-		{
-			m_Args.bDetached = TRUE;
-			_wcscat_c(psCurCmd, nLen, L" /ATTACH ");
-		}
-
-		if ((gpSet->nConInMode != (DWORD)-1) || m_Args.bOverwriteMode)
-		{
-			DWORD nMode = (gpSet->nConInMode != (DWORD)-1) ? gpSet->nConInMode : 0;
-			if (m_Args.bOverwriteMode)
-			{
-				nMode |= (ENABLE_INSERT_MODE << 16); // Mask
-				nMode &= ~ENABLE_INSERT_MODE; // Turn bit OFF
-			}
-
-			nCurLen = _tcslen(psCurCmd);
-			_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen) L" /CINMODE=%X ", nMode);
-		}
-
-		_ASSERTE(mp_RBuf==mp_ABuf);
-		int nWndWidth = mp_RBuf->GetTextWidth();
-		int nWndHeight = mp_RBuf->GetTextHeight();
-		/*было - GetConWindowSize(con.m_sbi, nWndWidth, nWndHeight);*/
-		_ASSERTE(nWndWidth>0 && nWndHeight>0);
-
-		const DWORD nAID = GetMonitorThreadID();
-		_ASSERTE(gpConEmu->isMainThread());
-		_ASSERTE(mn_MonitorThreadID!=0 && mn_MonitorThreadID==nAID && nAID!=GetCurrentThreadId());
-		
-		nCurLen = _tcslen(psCurCmd);
-		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen)
-		          L"/AID=%u /GID=%u /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i /TA=%08X",
-		          nAID, GetCurrentProcessId(), (DWORD)ghWnd, nWndWidth, nWndHeight, mn_DefaultBufferHeight,
-		          gpSet->ConsoleFont.lfFaceName, gpSet->ConsoleFont.lfWidth, gpSet->ConsoleFont.lfHeight,
-		          nColors);
-
-		/*if (gpSet->FontFile[0]) { --  РЕГИСТРАЦИЯ ШРИФТА НА КОНСОЛЬ НЕ РАБОТАЕТ!
-		    wcscat(psCurCmd, L" \"/FF=");
-		    wcscat(psCurCmd, gpSet->FontFile);
-		    wcscat(psCurCmd, L"\"");
-		}*/
-		if (m_UseLogs) _wcscat_c(psCurCmd, nLen, (m_UseLogs==3) ? L" /LOG3" : (m_UseLogs==2) ? L" /LOG2" : L" /LOG");
-
-		if (!gpSet->isConVisible) _wcscat_c(psCurCmd, nLen, L" /HIDE");
-
-		// /CONFIRM | /NOCONFIRM | /NOINJECT
-		m_Args.AppendServerArgs(psCurCmd, nLen);
-
-		_wcscat_c(psCurCmd, nLen, L" /ROOT ");
-		_wcscat_c(psCurCmd, nLen, lpszCmd);
-		MCHKHEAP;
-		DWORD dwLastError = 0;
-		#ifdef MSGLOGGER
-		DEBUGSTRPROC(psCurCmd); DEBUGSTRPROC(_T("\n"));
-		#endif
-
-		SetConEmuEnvVar(GetView());
-
-		#ifdef _DEBUG
-		wchar_t szMonitorID[20]; _wsprintf(szMonitorID, SKIPLEN(countof(szMonitorID)) L"%u", nAID);
-		SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL, szMonitorID);
-		#endif
-
-		if (bNeedConHostSearch)
-			ConHostSearchPrepare();
-
-		// Если сам ConEmu запущен под админом - нет смысла звать ShellExecuteEx("RunAs")
-		if (!m_Args.bRunAsAdministrator || gpConEmu->mb_IsUacAdmin)
-		{
-			LockSetForegroundWindow(LSFW_LOCK);
-			SetConStatus(L"Starting root process...", true);
-
-			if (m_Args.pszUserName != NULL)
-			{
-				nCreateBegin = GetTickCount();
-
-				// When starting under another credentials - try to use %USERPROFILE% instead of "system32"
-				lpszWorkDir = GetStartupDir();
-				
-				lbRc = CreateProcessWithLogonW(m_Args.pszUserName, m_Args.pszDomain, m_Args.szUserPassword,
-				                           LOGON_WITH_PROFILE, NULL, psCurCmd,
-				                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-										   , NULL, lpszWorkDir, &si, &pi);
-					//if (CreateProcessAsUser(m_Args.hLogonToken, NULL, psCurCmd, NULL, NULL, FALSE,
-					//	NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-					//	, NULL, m_Args.pszStartupDir, &si, &pi))
-				nCreateEnd = GetTickCount();
-				if (lbRc)
-				{
-					//mn_MainSrv_PID = pi.dwProcessId;
-					SetMainSrvPID(pi.dwProcessId, NULL);
-				}
-				else
-				{
-					dwLastError = GetLastError();
-				}
-
-				SecureZeroMemory(m_Args.szUserPassword, sizeof(m_Args.szUserPassword));
-			}
-			else if (m_Args.bRunAsRestricted)
-			{
-				nCreateBegin = GetTickCount();
-				lpszWorkDir = GetStartupDir();
-				lbRc = CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
-				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-				                        , NULL, lpszWorkDir, &si, &pi, &dwLastError);
-				nCreateEnd = GetTickCount();
-
-				if (lbRc)
-				{
-					//mn_MainSrv_PID = pi.dwProcessId;
-					SetMainSrvPID(pi.dwProcessId, NULL);
-				}
-
-			}
-			else
-			{
-				nCreateBegin = GetTickCount();
-				lpszWorkDir = GetStartupDir();
-				lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE,
-				                     NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-				                     //|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
-				                     , NULL, lpszWorkDir, &si, &pi);
-				nCreateEnd = GetTickCount();
-
-				if (!lbRc)
-				{
-					dwLastError = GetLastError();
-				}
-				else
-				{
-					//mn_MainSrv_PID = pi.dwProcessId;
-					SetMainSrvPID(pi.dwProcessId, NULL);
-				}
-			}
-
-			nCreateDuration = nCreateEnd - nCreateBegin;
-			UNREFERENCED_PARAMETER(nCreateDuration);
-
-			DEBUGSTRPROC(L"CreateProcess finished\n");
-			//if (m_Args.hLogonToken) { CloseHandle(m_Args.hLogonToken); m_Args.hLogonToken = NULL; }
-			LockSetForegroundWindow(LSFW_UNLOCK);
-		}
-		else // m_Args.bRunAsAdministrator
-		{
-			LPCWSTR pszCmd = psCurCmd;
-			wchar_t szExec[MAX_PATH+1];
-
-			if (NextArg(&pszCmd, szExec) != 0)
-			{
-				lbRc = FALSE;
-				dwLastError = -1;
-			}
-			else
-			{
-				if (mp_sei)
-				{
-					SafeCloseHandle(mp_sei->hProcess);
-					SafeFree(mp_sei);
-				}
-
-				wchar_t szCurrentDirectory[MAX_PATH+1];
-
-				lpszWorkDir = GetStartupDir();
-				wcscpy(szCurrentDirectory, lpszWorkDir);
-
-				int nWholeSize = sizeof(SHELLEXECUTEINFO)
-				                 + sizeof(wchar_t) *
-				                 (10  /* Verb */
-				                  + _tcslen(szExec)+2
-				                  + ((pszCmd == NULL) ? 0 : (_tcslen(pszCmd)+2))
-				                  + _tcslen(szCurrentDirectory) + 2
-				                 );
-				mp_sei = (SHELLEXECUTEINFO*)calloc(nWholeSize, 1);
-				mp_sei->cbSize = sizeof(SHELLEXECUTEINFO);
-				mp_sei->hwnd = ghWnd;
-				//mp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
-
-				// 121025 - remove SEE_MASK_NOCLOSEPROCESS
-				mp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOASYNC;
-				// Issue 791: Console server fails to duplicate self Process handle to GUI
-				mp_sei->fMask |= SEE_MASK_NOCLOSEPROCESS;
-
-				mp_sei->lpVerb = (wchar_t*)(mp_sei+1);
-				wcscpy((wchar_t*)mp_sei->lpVerb, L"runas");
-				mp_sei->lpFile = mp_sei->lpVerb + _tcslen(mp_sei->lpVerb) + 2;
-				wcscpy((wchar_t*)mp_sei->lpFile, szExec);
-				mp_sei->lpParameters = mp_sei->lpFile + _tcslen(mp_sei->lpFile) + 2;
-
-				if (pszCmd)
-				{
-					*(wchar_t*)mp_sei->lpParameters = L' ';
-					wcscpy((wchar_t*)(mp_sei->lpParameters+1), pszCmd);
-				}
-
-				mp_sei->lpDirectory = mp_sei->lpParameters + _tcslen(mp_sei->lpParameters) + 2;
-
-				if (szCurrentDirectory[0])
-					wcscpy((wchar_t*)mp_sei->lpDirectory, szCurrentDirectory);
-				else
-					mp_sei->lpDirectory = NULL;
-
-				//mp_sei->nShow = gpSet->isConVisible ? SW_SHOWNORMAL : SW_HIDE;
-				//mp_sei->nShow = SW_SHOWMINIMIZED;
-				mp_sei->nShow = SW_SHOWNORMAL;
-
-				// GuiShellExecuteEx запускается в основном потоке, поэтому nCreateDuration здесь не считаем
-				SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", true);
-				//lbRc = gpConEmu->GuiShellExecuteEx(mp_sei, mp_VCon);
-
-				bool bPrevIgnore = gpConEmu->mb_IgnoreQuakeActivation;
-				gpConEmu->mb_IgnoreQuakeActivation = true;
-
-				lbRc = ShellExecuteEx(mp_sei);
-
-				gpConEmu->mb_IgnoreQuakeActivation = bPrevIgnore;
-
-				// ошибку покажем дальше
-				dwLastError = GetLastError();
-			}
-		}
+		// Do actual process creation
+		lbRc = StartProcessInt(lpszCmd, psCurCmd, lpszWorkDir, bNeedConHostSearch, hSetForeground, 
+			nCreateBegin, nCreateEnd, nCreateDuration, nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, si, pi, dwLastError);
 
 		if (lbRc)
 		{
-			if (!m_Args.bRunAsAdministrator)
-			{
-				ProcessUpdate(&pi.dwProcessId, 1);
-				AllowSetForegroundWindow(pi.dwProcessId);
-			}
-
-			apiSetForegroundWindow(hSetForeground);
-			DEBUGSTRPROC(L"CreateProcess OK\n");
-			lbRc = TRUE;
-			/*if (!AttachPID(pi.dwProcessId)) {
-			    DEBUGSTRPROC(_T("AttachPID failed\n"));
-				SetEvent(mh_CreateRootEvent); mb_InCreateRoot = FALSE;
-			    { lbRc = FALSE; goto wrap; }
-			}
-			DEBUGSTRPROC(_T("AttachPID OK\n"));*/
 			break; // OK, запустили
 		}
+
+		/* End of process start-up */
 
 		// ОШИБКА!!
 		if (InRecreate())
@@ -3516,6 +3260,9 @@ BOOL CRealConsole::StartProcess()
 		//DWORD dwLastError = GetLastError();
 		DEBUGSTRPROC(L"CreateProcess failed\n");
 		size_t nErrLen = _tcslen(psCurCmd)+100+(lpszWorkDir ? _tcslen(lpszWorkDir) : 0);
+
+		LPCWSTR pszDefaultCmd = bAllowDefaultCmd ? gpSetCls->GetDefaultCmd() : NULL;
+		nErrLen += pszDefaultCmd ? (100 + _tcslen(pszDefaultCmd)) : 0;
 
 		// Get description of 'dwLastError'
 		size_t cchFormatMax = 1024;
@@ -3533,19 +3280,20 @@ BOOL CRealConsole::StartProcess()
 		switch (dwLastError)
 		{
 		case ERROR_ACCESS_DENIED:
-			_wsprintf(psz, SKIPLEN(nErrLen) L"Can't create new console, check your antivirus (code 0x%x)!\r\n", dwLastError); break;
+			_wsprintf(psz, SKIPLEN(nErrLen) L"Can't create new console, check your antivirus (code %i)!\r\n", (int)dwLastError); break;
 		default:
-			_wsprintf(psz, SKIPLEN(nErrLen) L"Can't create new console, command execution failed (code 0x%x)\r\n", dwLastError);
+			_wsprintf(psz, SKIPLEN(nErrLen) L"Can't create new console, command execution failed (code %i)\r\n", (int)dwLastError);
 		}
 		_wcscat_c(psz, nErrLen, pszErr);
 		_wcscat_c(psz, nErrLen, L"\r\n\r\n");
 		_wcscat_c(psz, nErrLen, psCurCmd);
-		_wcscat_c(psz, nErrLen, L"\r\n\r\nWorking folder:");
+		_wcscat_c(psz, nErrLen, L"\r\n\r\nWorking folder:\r\n\"");
 		_wcscat_c(psz, nErrLen, lpszWorkDir ? lpszWorkDir : L"");
+		_wcscat_c(psz, nErrLen, L"\"");
 		
 		
 
-		if (m_Args.pszSpecialCmd == NULL)
+		if ((nStep==1) && pszDefaultCmd && *pszDefaultCmd)
 		{
 			if (psz[_tcslen(psz)-1]!=L'\n') _wcscat_c(psz, nErrLen, L"\r\n");
 
@@ -3590,7 +3338,7 @@ BOOL CRealConsole::StartProcess()
 		}
 
 		// Выполнить стандартную команду...
-		if (m_Args.pszSpecialCmd == NULL)
+		if (!m_Args.pszSpecialCmd || !*m_Args.pszSpecialCmd)
 		{
 			if (!gpSetCls->GetCurCmd())
 			{
@@ -3603,7 +3351,7 @@ BOOL CRealConsole::StartProcess()
 		nStep ++;
 		MCHKHEAP
 
-		if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
+		SafeFree(psCurCmd);
 
 		// Изменилась команда, пересчитать настройки
 		PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, true);
@@ -3672,6 +3420,309 @@ wrap:
 	#ifdef _DEBUG
 	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL, NULL);
 	#endif
+	return lbRc;
+}
+
+BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR& lpszWorkDir,
+								   bool bNeedConHostSearch, HWND hSetForeground,
+								   DWORD& nCreateBegin, DWORD& nCreateEnd, DWORD& nCreateDuration,
+								   BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/, BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/,
+								   STARTUPINFO& si, PROCESS_INFORMATION& pi, DWORD& dwLastError)
+{
+	BOOL lbRc = FALSE;
+	DWORD nColors = (nTextColorIdx) | (nBackColorIdx << 8) | (nPopTextColorIdx << 16) | (nPopBackColorIdx << 24);
+
+	int nCurLen = 0;
+	if (lpszCmd == NULL)
+	{
+		_ASSERTE(lpszCmd!=NULL);
+		lpszCmd = L"";
+	}
+	int nLen = _tcslen(lpszCmd);
+	nLen += _tcslen(gpConEmu->ms_ConEmuExe) + 330 + MAX_PATH*2;
+	MCHKHEAP;
+	psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
+	_ASSERTE(psCurCmd);
+
+
+	// Begin generation of execution command line
+	*psCurCmd = 0;
+
+	#if 0
+	// Issue 791: Server fails, when GUI started under different credentials (login) as server
+	if (m_Args.bRunAsAdministrator)
+	{
+		_wcscat_c(psCurCmd, nLen, L"\"");
+		_wcscat_c(psCurCmd, nLen, gpConEmu->ms_ConEmuExe);
+		_wcscat_c(psCurCmd, nLen, L"\" /bypass /cmd ");
+	}
+	#endif
+
+	_wcscat_c(psCurCmd, nLen, L"\"");
+	// Copy to psCurCmd full path to ConEmuC.exe or ConEmuC64.exe
+	_wcscat_c(psCurCmd, nLen, gpConEmu->ConEmuCExeFull(lpszCmd));
+	//lstrcat(psCurCmd, L"\\");
+	//lstrcpy(psCurCmd, gpConEmu->ms_ConEmuCExeName);
+	_wcscat_c(psCurCmd, nLen, L"\" ");
+
+	if (m_Args.bRunAsAdministrator && !gpConEmu->mb_IsUacAdmin)
+	{
+		m_Args.bDetached = TRUE;
+		_wcscat_c(psCurCmd, nLen, L" /ATTACH ");
+	}
+
+	if ((gpSet->nConInMode != (DWORD)-1) || m_Args.bOverwriteMode)
+	{
+		DWORD nMode = (gpSet->nConInMode != (DWORD)-1) ? gpSet->nConInMode : 0;
+		if (m_Args.bOverwriteMode)
+		{
+			nMode |= (ENABLE_INSERT_MODE << 16); // Mask
+			nMode &= ~ENABLE_INSERT_MODE; // Turn bit OFF
+		}
+
+		nCurLen = _tcslen(psCurCmd);
+		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen) L" /CINMODE=%X ", nMode);
+	}
+
+	_ASSERTE(mp_RBuf==mp_ABuf);
+	int nWndWidth = mp_RBuf->GetTextWidth();
+	int nWndHeight = mp_RBuf->GetTextHeight();
+	/*было - GetConWindowSize(con.m_sbi, nWndWidth, nWndHeight);*/
+	_ASSERTE(nWndWidth>0 && nWndHeight>0);
+
+	const DWORD nAID = GetMonitorThreadID();
+	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(mn_MonitorThreadID!=0 && mn_MonitorThreadID==nAID && nAID!=GetCurrentThreadId());
+		
+	nCurLen = _tcslen(psCurCmd);
+	_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen)
+		        L"/AID=%u /GID=%u /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i /TA=%08X",
+		        nAID, GetCurrentProcessId(), (DWORD)ghWnd, nWndWidth, nWndHeight, mn_DefaultBufferHeight,
+		        gpSet->ConsoleFont.lfFaceName, gpSet->ConsoleFont.lfWidth, gpSet->ConsoleFont.lfHeight,
+		        nColors);
+
+	/*if (gpSet->FontFile[0]) { --  РЕГИСТРАЦИЯ ШРИФТА НА КОНСОЛЬ НЕ РАБОТАЕТ!
+		wcscat(psCurCmd, L" \"/FF=");
+		wcscat(psCurCmd, gpSet->FontFile);
+		wcscat(psCurCmd, L"\"");
+	}*/
+	if (m_UseLogs) _wcscat_c(psCurCmd, nLen, (m_UseLogs==3) ? L" /LOG3" : (m_UseLogs==2) ? L" /LOG2" : L" /LOG");
+
+	if (!gpSet->isConVisible) _wcscat_c(psCurCmd, nLen, L" /HIDE");
+
+	// /CONFIRM | /NOCONFIRM | /NOINJECT
+	m_Args.AppendServerArgs(psCurCmd, nLen);
+
+	_wcscat_c(psCurCmd, nLen, L" /ROOT ");
+	_wcscat_c(psCurCmd, nLen, lpszCmd);
+	MCHKHEAP;
+	dwLastError = 0;
+	#ifdef MSGLOGGER
+	DEBUGSTRPROC(psCurCmd); DEBUGSTRPROC(_T("\n"));
+	#endif
+
+	#ifdef _DEBUG
+	wchar_t szMonitorID[20]; _wsprintf(szMonitorID, SKIPLEN(countof(szMonitorID)) L"%u", nAID);
+	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL, szMonitorID);
+	#endif
+
+	if (bNeedConHostSearch)
+		ConHostSearchPrepare();
+
+	// Если сам ConEmu запущен под админом - нет смысла звать ShellExecuteEx("RunAs")
+	if (!m_Args.bRunAsAdministrator || gpConEmu->mb_IsUacAdmin)
+	{
+		LockSetForegroundWindow(LSFW_LOCK);
+		SetConStatus(L"Starting root process...", true);
+
+		if (m_Args.pszUserName != NULL)
+		{
+			nCreateBegin = GetTickCount();
+
+			// When starting under another credentials - try to use %USERPROFILE% instead of "system32"
+			lpszWorkDir = GetStartupDir();
+				
+			lbRc = CreateProcessWithLogonW(m_Args.pszUserName, m_Args.pszDomain, m_Args.szUserPassword,
+				                        LOGON_WITH_PROFILE, NULL, psCurCmd,
+				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+										, NULL, lpszWorkDir, &si, &pi);
+				//if (CreateProcessAsUser(m_Args.hLogonToken, NULL, psCurCmd, NULL, NULL, FALSE,
+				//	NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+				//	, NULL, m_Args.pszStartupDir, &si, &pi))
+			nCreateEnd = GetTickCount();
+			if (lbRc)
+			{
+				//mn_MainSrv_PID = pi.dwProcessId;
+				SetMainSrvPID(pi.dwProcessId, NULL);
+			}
+			else
+			{
+				dwLastError = GetLastError();
+			}
+
+			SecureZeroMemory(m_Args.szUserPassword, sizeof(m_Args.szUserPassword));
+		}
+		else if (m_Args.bRunAsRestricted)
+		{
+			nCreateBegin = GetTickCount();
+			lpszWorkDir = GetStartupDir();
+			lbRc = CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
+				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+				                    , NULL, lpszWorkDir, &si, &pi, &dwLastError);
+			nCreateEnd = GetTickCount();
+
+			if (lbRc)
+			{
+				//mn_MainSrv_PID = pi.dwProcessId;
+				SetMainSrvPID(pi.dwProcessId, NULL);
+			}
+
+		}
+		else
+		{
+			nCreateBegin = GetTickCount();
+			lpszWorkDir = GetStartupDir();
+			lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE,
+				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+				                    //|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
+				                    , NULL, lpszWorkDir, &si, &pi);
+			nCreateEnd = GetTickCount();
+
+			if (!lbRc)
+			{
+				dwLastError = GetLastError();
+			}
+			else
+			{
+				//mn_MainSrv_PID = pi.dwProcessId;
+				SetMainSrvPID(pi.dwProcessId, NULL);
+			}
+		}
+
+		nCreateDuration = nCreateEnd - nCreateBegin;
+		UNREFERENCED_PARAMETER(nCreateDuration);
+
+		DEBUGSTRPROC(L"CreateProcess finished\n");
+		//if (m_Args.hLogonToken) { CloseHandle(m_Args.hLogonToken); m_Args.hLogonToken = NULL; }
+		LockSetForegroundWindow(LSFW_UNLOCK);
+	}
+	else // m_Args.bRunAsAdministrator
+	{
+		LPCWSTR pszCmd = psCurCmd;
+		wchar_t szExec[MAX_PATH+1];
+
+		if (NextArg(&pszCmd, szExec) != 0)
+		{
+			lbRc = FALSE;
+			dwLastError = -1;
+		}
+		else
+		{
+			if (mp_sei)
+			{
+				SafeCloseHandle(mp_sei->hProcess);
+				SafeFree(mp_sei);
+			}
+
+			wchar_t szCurrentDirectory[MAX_PATH+1];
+
+			lpszWorkDir = GetStartupDir();
+			wcscpy(szCurrentDirectory, lpszWorkDir);
+
+			int nWholeSize = sizeof(SHELLEXECUTEINFO)
+				                + sizeof(wchar_t) *
+				                (10  /* Verb */
+				                + _tcslen(szExec)+2
+				                + ((pszCmd == NULL) ? 0 : (_tcslen(pszCmd)+2))
+				                + _tcslen(szCurrentDirectory) + 2
+				                );
+			mp_sei = (SHELLEXECUTEINFO*)calloc(nWholeSize, 1);
+			mp_sei->cbSize = sizeof(SHELLEXECUTEINFO);
+			mp_sei->hwnd = ghWnd;
+			//mp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
+
+			// 121025 - remove SEE_MASK_NOCLOSEPROCESS
+			mp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOASYNC;
+			// Issue 791: Console server fails to duplicate self Process handle to GUI
+			mp_sei->fMask |= SEE_MASK_NOCLOSEPROCESS;
+
+			mp_sei->lpVerb = (wchar_t*)(mp_sei+1);
+			wcscpy((wchar_t*)mp_sei->lpVerb, L"runas");
+			mp_sei->lpFile = mp_sei->lpVerb + _tcslen(mp_sei->lpVerb) + 2;
+			wcscpy((wchar_t*)mp_sei->lpFile, szExec);
+			mp_sei->lpParameters = mp_sei->lpFile + _tcslen(mp_sei->lpFile) + 2;
+
+			if (pszCmd)
+			{
+				*(wchar_t*)mp_sei->lpParameters = L' ';
+				wcscpy((wchar_t*)(mp_sei->lpParameters+1), pszCmd);
+			}
+
+			mp_sei->lpDirectory = mp_sei->lpParameters + _tcslen(mp_sei->lpParameters) + 2;
+
+			if (szCurrentDirectory[0])
+				wcscpy((wchar_t*)mp_sei->lpDirectory, szCurrentDirectory);
+			else
+				mp_sei->lpDirectory = NULL;
+
+			//mp_sei->nShow = gpSet->isConVisible ? SW_SHOWNORMAL : SW_HIDE;
+			//mp_sei->nShow = SW_SHOWMINIMIZED;
+			mp_sei->nShow = SW_SHOWNORMAL;
+
+			// GuiShellExecuteEx запускается в основном потоке, поэтому nCreateDuration здесь не считаем
+			SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", true);
+			//lbRc = gpConEmu->GuiShellExecuteEx(mp_sei, mp_VCon);
+
+			bool bPrevIgnore = gpConEmu->mb_IgnoreQuakeActivation;
+			gpConEmu->mb_IgnoreQuakeActivation = true;
+
+			lbRc = ShellExecuteEx(mp_sei);
+
+			gpConEmu->mb_IgnoreQuakeActivation = bPrevIgnore;
+
+			// ошибку покажем дальше
+			dwLastError = GetLastError();
+		}
+	}
+
+	if (lbRc)
+	{
+		if (!m_Args.bRunAsAdministrator)
+		{
+			ProcessUpdate(&pi.dwProcessId, 1);
+			AllowSetForegroundWindow(pi.dwProcessId);
+		}
+
+		// 131022 If any other process was activated by user during our initialization - don't grab the focus
+		HWND hCurFore = NULL;
+		bool bMeFore = gpConEmu->isMeForeground(true/*real*/, true/*dialog*/, &hCurFore) || (hCurFore == NULL);
+		DEBUGTEST(wchar_t szForeClass[255] = L"");
+		if (!bMeFore && !::IsWindowVisible(hCurFore))
+		{
+			// But current console window handle may not initialized yet, try to check it
+			#ifdef _DEBUG
+			GetClassName(hCurFore, szForeClass, countof(szForeClass));
+			_ASSERTE(!isConsoleClass(szForeClass)); // Some other GUI application was started by user?
+			#endif
+			bMeFore = true;
+		}
+		if (bMeFore)
+		{
+			apiSetForegroundWindow(hSetForeground);
+		}
+
+		DEBUGSTRPROC(L"CreateProcess OK\n");
+		//lbRc = TRUE;
+		/*if (!AttachPID(pi.dwProcessId)) {
+			DEBUGSTRPROC(_T("AttachPID failed\n"));
+			SetEvent(mh_CreateRootEvent); mb_InCreateRoot = FALSE;
+			{ lbRc = FALSE; goto wrap; }
+		}
+		DEBUGSTRPROC(_T("AttachPID OK\n"));*/
+		//break; // OK, запустили
+	}
+
+	/* End of process start-up */
 	return lbRc;
 }
 

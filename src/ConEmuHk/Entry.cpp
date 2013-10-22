@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"vim.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"CommandPromptPortable.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -384,7 +384,7 @@ wrap:
 		#ifdef _DEBUG
 		wchar_t szCurAnsiVar[32] = L""; GetEnvironmentVariableW(ENV_CONEMUANSI_VAR_W, szCurAnsiVar, countof(szCurAnsiVar));
 		// Или при аттаче свободно-запущенной-ранее консоли в ConEmu
-		_ASSERTEX((bAnsi || !*szCurAnsiVar) && "ANSI was disabled?");
+		_ASSERTEX((bAnsi || (!*szCurAnsiVar || lstrcmp(szCurAnsiVar,L"OFF")==0)) && "ANSI was disabled?");
 		#endif
 		bLastAnsi = bAnsi;
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");

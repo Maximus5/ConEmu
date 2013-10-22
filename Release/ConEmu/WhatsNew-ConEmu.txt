@@ -15,6 +15,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Issue 1298: ConEmu may crash when starting some incorrect tasks.
+[%] Win+Left, Win+Right once more.
+
+
+2013.10.20
 [%] Issue 1267: Chinese message of previous command crash.
 [%] Issue 1291: Python fails to print string sequence with ASCII character followed by Chinese character.
 [+] Issue 1292: While selection is active, Shift-Home/Shift-End keys extend selection to line begin/end.

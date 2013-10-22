@@ -4407,6 +4407,20 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
 	if ((WindowMode == wmNormal) && !mp_Inside && !isIconic())
 	{
+		if (prcWnd == NULL)
+		{
+			if (isFullScreen() || isZoomed() || isIconic())
+				return;
+
+			//131023 Otherwise, after tiling (Win+Left) 
+			//       and Lose/Get focus (Alt+Tab,Alt+Tab)
+			//       StoreNormalRect will be called unexpectedly
+			// Don't call Estimate here? Avoid excess calculations?
+			ConEmuWindowCommand CurTile = GetTileMode(false/*Estimate*/);
+			if (CurTile != cwc_Current)
+				return;
+		}
+
 		RECT rcNormal = {};
 		if (prcWnd)
 			rcNormal = *prcWnd;
@@ -4757,7 +4771,10 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 		{
 			MONITORINFO nxt = {0};
 			hMon = GetNextMonitorInfo(&nxt, &mi.rcWork, (CurTile == cwc_TileRight)/*Next*/);
-			if (hMon && nxt.cbSize && memcmp(&mi.rcWork, &nxt.rcWork, sizeof(nxt.rcWork)))
+			//131022 - if there is only one monitor - just switch Left/Right tiling...
+			if (!hMon || !nxt.cbSize)
+				hMon = GetNearestMonitorInfo(&nxt, NULL, &mi.rcWork);
+			if (hMon && nxt.cbSize /* && memcmp(&mi.rcWork, &nxt.rcWork, sizeof(nxt.rcWork))*/)
 			{
 				memmove(&mi, &nxt, sizeof(nxt));
 				Tile = (CurTile == cwc_TileRight) ? cwc_TileLeft : cwc_TileRight;
@@ -4842,10 +4859,10 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 
 ConEmuWindowCommand CConEmuMain::GetTileMode(bool Estimate, MONITORINFO* pmi/*=NULL*/)
 {
-	_ASSERTE(IsWindowVisible(ghWnd) && !isFullScreen() && !isZoomed() && !isIconic());
-
 	if (Estimate && IsSizeFree())
 	{
+		_ASSERTE(IsWindowVisible(ghWnd) && !isFullScreen() && !isZoomed() && !isIconic());
+
 		ConEmuWindowCommand CurTile = cwc_Current;
 
 		MONITORINFO mi;
@@ -4880,8 +4897,9 @@ ConEmuWindowCommand CConEmuMain::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 		if (m_TileMode != CurTile)
 		{
 			// Сменился!
-			wchar_t szTile[100];
-			_wsprintf(szTile, SKIPLEN(countof(szTile)) L"Tile mode was changed externally: Old=%u, New=%u", (int)m_TileMode, (int)CurTile);
+			wchar_t szTile[100], szNewTile[32], szOldTile[32];
+			_wsprintf(szTile, SKIPLEN(countof(szTile)) L"Tile mode was changed externally: Our=%s, New=%s",
+				FormatTileMode(m_TileMode,szOldTile,countof(szOldTile)), FormatTileMode(CurTile,szNewTile,countof(szNewTile)));
 			LogString(szTile);
 
 			m_TileMode = CurTile;
@@ -6404,7 +6422,15 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 			if ((changeFromWindowMode == wmNotChanging) && isWindowNormal())
 			{
-				StoreNormalRect(&rc);
+				//131023 Otherwise, after tiling (Win+Left) 
+				//       and Lose/Get focus (Alt+Tab,Alt+Tab)
+				//       StoreNormalRect will be called unexpectedly
+				// Don't call Estimate here? Avoid excess calculations?
+				ConEmuWindowCommand CurTile = GetTileMode(false/*Estimate*/);
+				if (CurTile == cwc_Current)
+				{
+					StoreNormalRect(&rc);
+				}
 			}
 
 			if (gpConEmu->hPictureView)
@@ -10463,6 +10489,16 @@ void CConEmuMain::EndSizing(UINT nMouseMsg/*=0*/)
 
 	if (!isIconic())
 	{
+		if (m_TileMode != cwc_Current)
+		{
+			wchar_t szTile[100], szOldTile[32];
+			_wsprintf(szTile, SKIPLEN(countof(szTile)) L"Tile mode was stopped on resizing: Was=%s, New=cwc_Current",
+				FormatTileMode(m_TileMode,szOldTile,countof(szOldTile)));
+			LogString(szTile);
+
+			m_TileMode = cwc_Current;
+		}
+
 		// Сама разберется, что надо/не надо
 		StoreNormalRect(NULL);
 		// Теоретически, в некоторых случаях размер окна может (?) измениться с задержкой,
