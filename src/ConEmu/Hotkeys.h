@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Forward
 struct ConEmuHotKey;
+class CHotKeyDialog;
 
 // Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
 extern const struct ConEmuHotKey* ConEmuSkipHotKey; // = ((ConEmuHotKey*)INVALID_HANDLE_VALUE)
@@ -117,4 +118,20 @@ struct ConEmuHotKey
 
 	// *** Default and all possible ConEmu hotkeys ***
 	static ConEmuHotKey* AllocateHotkeys();
+};
+
+class CHotKeyDialog
+{
+private:
+	//static MMap<HWND,CHotKeyDialog*> dlgMap;
+private:
+	HWND mh_Dlg;
+	bool mb_Embedded;
+public:
+	static bool EditHotKey(DWORD& VkMod);
+public:
+	CHotKeyDialog(HWND hDlg, bool bEmbedded);
+	~CHotKeyDialog();
+
+	static INT_PTR CALLBACK hkDlgProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 };

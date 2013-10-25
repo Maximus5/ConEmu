@@ -157,33 +157,46 @@ Settings::ColorPalette gLastColors = {};
 
 namespace SettingsNS
 {
-	const WCHAR* szBgOper[] = {L"UpLeft", L"UpRight", L"DownLeft", L"DownRight", L"Stretch", L"Tile"};
-	const DWORD  nBgOper[] =  {eUpLeft,   eUpRight,   eDownLeft,   eDownRight,   eStretch,   eTile};
-	const WCHAR* szKeys[] = {L"<None>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
-	const DWORD  nKeys[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
-	const WCHAR* szModifiers[] = {L" ", L"Win",  L"Apps",  L"Ctrl", L"LCtrl", L"RCtrl",           L"Alt", L"LAlt", L"RAlt",     L"Shift", L"LShift", L"RShift"};
-	const DWORD  nModifiers[] =  {0,    VK_LWIN, VK_APPS,  VK_CONTROL, VK_LCONTROL, VK_RCONTROL,  VK_MENU, VK_LMENU, VK_RMENU,  VK_SHIFT, VK_LSHIFT, VK_RSHIFT};
-	const WCHAR* szKeysAct[] = {L"<Always>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
-	const DWORD  nKeysAct[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
-	const WCHAR* szKeysHot[] = {L"", L"Esc", L"Delete", L"Tab", L"Enter", L"Space", L"Backspace", L"Pause", L"Wheel Up", L"Wheel Down", L"Wheel Left", L"Wheel Right", L"LButton", L"RButton", L"MButton"};
-	const DWORD  nKeysHot[] =  {0, VK_ESCAPE, VK_DELETE, VK_TAB, VK_RETURN, VK_SPACE, VK_BACK, VK_PAUSE, VK_WHEEL_UP, VK_WHEEL_DOWN, VK_WHEEL_LEFT, VK_WHEEL_RIGHT, VK_LBUTTON, VK_RBUTTON, VK_MBUTTON};
+	CSettings::ListBoxItem  BgOper[] = {{eUpLeft,L"UpLeft"}, {eUpRight,L"UpRight"}, {eDownLeft,L"DownLeft"}, {eDownRight,L"DownRight"}, {eStretch,L"Stretch"}, {eAspect,L"Aspect"}, {eTile,L"Tile"}};
+	//const WCHAR* szBgOper[] = {L"UpLeft", L"UpRight", L"DownLeft", L"DownRight", L"Stretch", L"Tile"};
+	//const DWORD  nBgOper[] =  {eUpLeft,   eUpRight,   eDownLeft,   eDownRight,   eStretch,   eTile};
+	CSettings::ListBoxItem  Keys[] = {{0,L"<None>"}, {VK_LCONTROL,L"Left Ctrl"}, {VK_RCONTROL,L"Right Ctrl"}, {VK_LMENU,L"Left Alt"}, {VK_RMENU,L"Right Alt"}, {VK_LSHIFT,L"Left Shift"}, {VK_RSHIFT,L"Right Shift"}};
+	//const WCHAR* szKeys[] = {L"<None>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
+	//const DWORD  nKeys[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
+	CSettings::ListBoxItem  Modifiers[] = {{0,L" "}, {VK_LWIN,L"Win"},  {VK_APPS,L"Apps"},  {VK_CONTROL,L"Ctrl"}, {VK_LCONTROL,L"LCtrl"}, {VK_RCONTROL,L"RCtrl"},           {VK_MENU,L"Alt"}, {VK_LMENU,L"LAlt"}, {VK_RMENU,L"RAlt"},     {VK_SHIFT,L"Shift"}, {VK_LSHIFT,L"LShift"}, {VK_RSHIFT,L"RShift"}};
+	//const WCHAR* szModifiers[] = {L" ", L"Win",  L"Apps",  L"Ctrl", L"LCtrl", L"RCtrl",           L"Alt", L"LAlt", L"RAlt",     L"Shift", L"LShift", L"RShift"};
+	//const DWORD  nModifiers[] =  {0,    VK_LWIN, VK_APPS,  VK_CONTROL, VK_LCONTROL, VK_RCONTROL,  VK_MENU, VK_LMENU, VK_RMENU,  VK_SHIFT, VK_LSHIFT, VK_RSHIFT};
+	CSettings::ListBoxItem  KeysAct[] = {{0,L"<Always>"}, {VK_CONTROL,L"Ctrl"}, {VK_LCONTROL,L"Left Ctrl"}, {VK_RCONTROL,L"Right Ctrl"}, {VK_MENU,L"Alt"}, {VK_LMENU,L"Left Alt"}, {VK_RMENU,L"Right Alt"}, {VK_SHIFT,L"Shift"}, {VK_LSHIFT,L"Left Shift"}, {VK_RSHIFT,L"Right Shift"}};
+	//const WCHAR* szKeysAct[] = {L"<Always>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
+	//const DWORD  nKeysAct[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
+	CSettings::ListBoxItem KeysHot[] = {{0,L""}, {VK_ESCAPE,L"Esc"}, {VK_DELETE,L"Delete"}, {VK_TAB,L"Tab"}, {VK_RETURN,L"Enter"}, {VK_SPACE,L"Space"}, {VK_BACK,L"Backspace"}, {VK_PAUSE,L"Pause"}, {VK_WHEEL_UP,L"Wheel Up"}, {VK_WHEEL_DOWN,L"Wheel Down"}, {VK_WHEEL_LEFT,L"Wheel Left"}, {VK_WHEEL_RIGHT,L"Wheel Right"}, {VK_LBUTTON,L"LButton"}, {VK_RBUTTON,L"RButton"}, {VK_MBUTTON,L"MButton"}};
+	//const WCHAR* szKeysHot[] = {L"", L"Esc", L"Delete", L"Tab", L"Enter", L"Space", L"Backspace", L"Pause", L"Wheel Up", L"Wheel Down", L"Wheel Left", L"Wheel Right", L"LButton", L"RButton", L"MButton"};
+	//const DWORD  nKeysHot[] =  {0, VK_ESCAPE, VK_DELETE, VK_TAB, VK_RETURN, VK_SPACE, VK_BACK, VK_PAUSE, VK_WHEEL_UP, VK_WHEEL_DOWN, VK_WHEEL_LEFT, VK_WHEEL_RIGHT, VK_LBUTTON, VK_RBUTTON, VK_MBUTTON};
 	const DWORD  FSizes[] = {0, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
 	const DWORD  FSizesSmall[] = {5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32};
-	const WCHAR* szClipAct[] = {L"<None>", L"Copy", L"Paste", L"Auto"};
-	const DWORD  nClipAct[] =  {0,         1,       2,        3};
-	const WCHAR* szColorIdx[] = {L" 0", L" 1", L" 2", L" 3", L" 4", L" 5", L" 6", L" 7", L" 8", L" 9", L"10", L"11", L"12", L"13", L"14", L"15", L"None"};
-	const DWORD  nColorIdx[] = {    0,     1,     2,     3,     4,     5,     6,     7,     8,     9,    10,    11,    12,    13,    14,    15,    16};
-	const WCHAR* szColorIdxSh[] = {L"# 0", L"# 1", L"# 2", L"# 3", L"# 4", L"# 5", L"# 6", L"# 7", L"# 8", L"# 9", L"#10", L"#11", L"#12", L"#13", L"#14", L"#15"};
-	const DWORD  nColorIdxSh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15};
-	const WCHAR* szColorIdxTh[] = {L"# 0", L"# 1", L"# 2", L"# 3", L"# 4", L"# 5", L"# 6", L"# 7", L"# 8", L"# 9", L"#10", L"#11", L"#12", L"#13", L"#14", L"#15", L"Auto"};
-	const DWORD  nColorIdxTh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15,    16};
-	const WCHAR* szThumbMaxZoom[] = {L"100%",L"200%",L"300%",L"400%",L"500%",L"600%"};
-	const DWORD  nThumbMaxZoom[] = {100,200,300,400,500,600};
-	const DWORD  nCharSets[] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
-	const WCHAR* szCharSets[] = {L"ANSI", L"Arabic", L"Baltic", L"Chinese Big 5", L"Default", L"East Europe",
-		L"GB 2312", L"Greek", L"Hebrew", L"Hangul", L"Johab", L"Mac", L"OEM", L"Russian", L"Shiftjis",
-		L"Symbol", L"Thai", L"Turkish", L"Vietnamese"
-	};
+	CSettings::ListBoxItem  ClipAct[] = {{0,L"<None>"}, {1,L"Copy"}, {2,L"Paste"}, {3,L"Auto"}};
+	//const WCHAR* szClipAct[] = {L"<None>", L"Copy", L"Paste", L"Auto"};
+	//const DWORD  nClipAct[] =  {0,         1,       2,        3};
+	CSettings::ListBoxItem  ColorIdx[] = {{0,L" 0"}, {1,L" 1"}, {2,L" 2"}, {3,L" 3"}, {4,L" 4"}, {5,L" 5"}, {6,L" 6"}, {7,L" 7"}, {8,L" 8"}, {9,L" 9"}, {10,L"10"}, {11,L"11"}, {12,L"12"}, {13,L"13"}, {14,L"14"}, {15,L"15"}, {16,L"None"}};
+	//const WCHAR* szColorIdx[] = {L" 0", L" 1", L" 2", L" 3", L" 4", L" 5", L" 6", L" 7", L" 8", L" 9", L"10", L"11", L"12", L"13", L"14", L"15", L"None"};
+	//const DWORD  nColorIdx[] = {    0,     1,     2,     3,     4,     5,     6,     7,     8,     9,    10,    11,    12,    13,    14,    15,    16};
+	CSettings::ListBoxItem  ColorIdxSh[] = {{0,L"# 0"}, {1,L"# 1"}, {2,L"# 2"}, {3,L"# 3"}, {4,L"# 4"}, {5,L"# 5"}, {6,L"# 6"}, {7,L"# 7"}, {8,L"# 8"}, {9,L"# 9"}, {10,L"#10"}, {11,L"#11"}, {12,L"#12"}, {13,L"#13"}, {14,L"#14"}, {15,L"#15"}};
+	//const WCHAR* szColorIdxSh[] = {L"# 0", L"# 1", L"# 2", L"# 3", L"# 4", L"# 5", L"# 6", L"# 7", L"# 8", L"# 9", L"#10", L"#11", L"#12", L"#13", L"#14", L"#15"};
+	//const DWORD  nColorIdxSh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15};
+	CSettings::ListBoxItem  ColorIdxTh[] = {{0,L"# 0"}, {1,L"# 1"}, {2,L"# 2"}, {3,L"# 3"}, {4,L"# 4"}, {5,L"# 5"}, {6,L"# 6"}, {7,L"# 7"}, {8,L"# 8"}, {9,L"# 9"}, {10,L"#10"}, {11,L"#11"}, {12,L"#12"}, {13,L"#13"}, {14,L"#14"}, {15,L"#15"}, {16,L"Auto"}};
+	//const WCHAR* szColorIdxTh[] = {L"# 0", L"# 1", L"# 2", L"# 3", L"# 4", L"# 5", L"# 6", L"# 7", L"# 8", L"# 9", L"#10", L"#11", L"#12", L"#13", L"#14", L"#15", L"Auto"};
+	//const DWORD  nColorIdxTh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15,    16};
+	CSettings::ListBoxItem  ThumbMaxZoom[] = {{100,L"100%"},{200,L"200%"},{300,L"300%"},{400,L"400%"},{500,L"500%"},{600,L"600%"}};
+	//const WCHAR* szThumbMaxZoom[] = {L"100%",L"200%",L"300%",L"400%",L"500%",L"600%"};
+	//const DWORD  nThumbMaxZoom[] = {100,200,300,400,500,600};
+	CSettings::ListBoxItem  CharSets[] = {{0,L"ANSI"}, {178,L"Arabic"}, {186,L"Baltic"}, {136,L"Chinese Big 5"}, {1,L"Default"}, {238,L"East Europe"},
+		{134,L"GB 2312"}, {161,L"Greek"}, {177,L"Hebrew"}, {129,L"Hangul"}, {130,L"Johab"}, {77,L"Mac"}, {255,L"OEM"}, {204,L"Russian"}, {128,L"Shiftjis"},
+		{2,L"Symbol"}, {222,L"Thai"}, {162,L"Turkish"}, {163,L"Vietnamese"}};
+	//const DWORD  nCharSets[] = {, , ,        128, 2, 222, 162, 163};
+	//const WCHAR* szCharSets[] = {L"ANSI", L"Arabic", L"Baltic", L"Chinese Big 5", L"Default", L"East Europe",
+	//	L"GB 2312", L"Greek", L"Hebrew", L"Hangul", L"Johab", L"Mac", L"OEM", L"Russian", L"Shiftjis",
+	//	L"Symbol", L"Thai", L"Turkish", L"Vietnamese"
+	//};
 	//const struct StatusBarIds { CEStatusItems stItem; UINT nDlgID; } StatusItems[] = 
 	//{
 	//	{csi_ActiveProcess, cbStatusActiveProcess}, {csi_ConsoleTitle, cbStatusConsoleTitle},
@@ -196,8 +209,9 @@ namespace SettingsNS
 	//	{csi_ConEmuHWND, cbStatusGuiHwnd}, {csi_ConEmuView, cbStatusViewHwnd}, {csi_Server, cbStatusServer},
 	//	{csi_ServerHWND, cbStatusRealHwnd}, {csi_Transparency, cbStatusTransparency}
 	//};
-	const WCHAR* szCRLF[] = {L"CR+LF", L"LF", L"CR"};
-	const DWORD  nCRLF[] =  {0, 1, 2};
+	CSettings::ListBoxItem  CRLF[] = {{0,L"CR+LF"}, {1,L"LF"}, {2,L"CR"}};
+	//const WCHAR* szCRLF[] = {L"CR+LF", L"LF", L"CR"};
+	//const DWORD  nCRLF[] =  {0, 1, 2};
 	const WORD nSizeCtrlId[] = {tWndWidth, stWndWidth, tWndHeight, stWndHeight};
 	const WORD nTaskCtrlId[] = {tCmdGroupName, tCmdGroupGuiArg, tCmdGroupCommands, stCmdTaskAdd, cbCmdGroupApp, cbCmdTasksDir, cbCmdTasksParm, cbCmdTasksActive};
 	const WORD nStatusColorIds[] = {stStatusColorBack, tc35, c35, stStatusColorLight, tc36, c36, stStatusColorDark, tc37, c37};
@@ -218,24 +232,22 @@ namespace SettingsNS
 	};
 };
 
-#define FillListBox(hDlg,nDlgID,Items,Values,Value) \
-	_ASSERTE(countof(Items) == countof(Values)); \
-	FillListBoxItems(GetDlgItem(hDlg,nDlgID), countof(Items), Items, Values, Value)
+#define FillListBox(hDlg,nDlgID,Items,Value) \
+	FillListBoxItems(GetDlgItem(hDlg,nDlgID), countof(Items), Items, Value)
 #define FillListBoxInt(hDlg,nDlgID,Values,Value) \
-	FillListBoxItems(GetDlgItem(hDlg,nDlgID), countof(Values), NULL, Values, Value)
-#define FillListBoxByte(hDlg,nDlgID,Items,Values,Value) \
-	_ASSERTE(countof(Items) == countof(Values)); { \
+	FillListBoxItems(GetDlgItem(hDlg,nDlgID), countof(Values), Values, Value)
+#define FillListBoxByte(hDlg,nDlgID,Items,Value) \
+	{ \
 		DWORD dwVal = Value; \
-		FillListBoxItems(GetDlgItem(hDlg,nDlgID), countof(Items), Items, Values, dwVal); \
+		FillListBoxItems(GetDlgItem(hDlg,nDlgID), countof(Items), Items, dwVal); \
 		Value = dwVal; }
 #define FillListBoxCharSet(hDlg,nDlgID,Value) \
 	{ \
-		_ASSERTE(countof(SettingsNS::nCharSets) == countof(SettingsNS::szCharSets)); \
 		u8 num = 4; /*индекс DEFAULT_CHARSET*/ \
-		for (size_t i = 0; i < countof(SettingsNS::nCharSets); i++) \
+		for (size_t i = 0; i < countof(SettingsNS::CharSets); i++) \
 		{ \
-			SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, (LPARAM)SettingsNS::szCharSets[i]); \
-			if (SettingsNS::nCharSets[i] == Value) num = i; \
+			SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, (LPARAM)SettingsNS::CharSets[i].sValue); \
+			if (SettingsNS::CharSets[i].nValue == Value) num = i; \
 		} \
 		SendDlgItemMessage(hDlg, nDlgID, CB_SETCURSEL, num, 0); \
 	}
@@ -251,13 +263,12 @@ namespace SettingsNS
 		SendDlgItemMessage(hDlg, nDlgID, CB_SETCURSEL, num, 0); \
 	}
 
-#define GetListBox(hDlg,nDlgID,Items,Values,Value) \
-	_ASSERTE(countof(Items) == countof(Values)); \
-	GetListBoxItem(GetDlgItem(hDlg,nDlgID), countof(Items), Items, Values, Value)
-#define GetListBoxByte(hDlg,nDlgID,Items,Values,Value) \
-	_ASSERTE(countof(Items) == countof(Values)); { \
+#define GetListBox(hDlg,nDlgID,Items,Value) \
+	GetListBoxItem(GetDlgItem(hDlg,nDlgID), countof(Items), Items, Value)
+#define GetListBoxByte(hDlg,nDlgID,Items,Value) \
+	{ \
 		DWORD dwVal = Value; \
-		GetListBoxItem(GetDlgItem(hDlg,nDlgID), countof(Items), Items, Values, dwVal); \
+		GetListBoxItem(GetDlgItem(hDlg,nDlgID), countof(Items), Items, dwVal); \
 		Value = dwVal; }
 
 #define BST(v) (int)(v & 3) // BST_UNCHECKED/BST_CHECKED/BST_INDETERMINATE
@@ -764,9 +775,9 @@ void CSettings::InitVars_Pages()
 		{tFontSizeX, sit_ULong, &gpSet->FontSizeX, 0, sit_Byte, SettingsNS::FSizes, countof(SettingsNS::FSizes)},
 		{tFontSizeX2, sit_ULong, &gpSet->FontSizeX2, 0, sit_Byte, SettingsNS::FSizes, countof(SettingsNS::FSizes)},
 		{tFontSizeX3, sit_ULong, &gpSet->FontSizeX3, 0, sit_Byte, SettingsNS::FSizes, countof(SettingsNS::FSizes)},
-		{lbExtendFontBoldIdx, sit_Byte, &gpSet->AppStd.nFontBoldColor, 0, sit_FixString, SettingsNS::szColorIdx, countof(SettingsNS::szColorIdx)},
-		{lbExtendFontItalicIdx, sit_Byte, &gpSet->AppStd.nFontItalicColor, 0, sit_FixString, SettingsNS::szColorIdx, countof(SettingsNS::szColorIdx)},
-		{lbExtendFontNormalIdx, sit_Byte, &gpSet->AppStd.nFontNormalColor, 0, sit_FixString, SettingsNS::szColorIdx, countof(SettingsNS::szColorIdx)},
+		{lbExtendFontBoldIdx, sit_Byte, &gpSet->AppStd.nFontBoldColor, 0, sit_FixString, SettingsNS::ColorIdx, countof(SettingsNS::ColorIdx)},
+		{lbExtendFontItalicIdx, sit_Byte, &gpSet->AppStd.nFontItalicColor, 0, sit_FixString, SettingsNS::ColorIdx, countof(SettingsNS::ColorIdx)},
+		{lbExtendFontNormalIdx, sit_Byte, &gpSet->AppStd.nFontNormalColor, 0, sit_FixString, SettingsNS::ColorIdx, countof(SettingsNS::ColorIdx)},
 		{cbExtendFonts, sit_Bool, &gpSet->AppStd.isExtendFonts},
 		// End
 		{},
@@ -1817,12 +1828,12 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 		SendMessage(GetDlgItem(hWnd2, lbExtendFontBoldIdx), CB_RESETCONTENT, 0, 0);
 		SendMessage(GetDlgItem(hWnd2, lbExtendFontItalicIdx), CB_RESETCONTENT, 0, 0);
 		SendMessage(GetDlgItem(hWnd2, lbExtendFontNormalIdx), CB_RESETCONTENT, 0, 0);
-		for (uint i=0; i < countof(SettingsNS::szColorIdx); i++)
+		for (uint i=0; i < countof(SettingsNS::ColorIdx); i++)
 		{
 			//_wsprintf(temp, SKIPLEN(countof(temp))(i==16) ? L"None" : L"%2i", i);
-			SendDlgItemMessage(hWnd2, lbExtendFontBoldIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
-			SendDlgItemMessage(hWnd2, lbExtendFontItalicIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
-			SendDlgItemMessage(hWnd2, lbExtendFontNormalIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
+			SendDlgItemMessage(hWnd2, lbExtendFontBoldIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::ColorIdx[i].sValue);
+			SendDlgItemMessage(hWnd2, lbExtendFontItalicIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::ColorIdx[i].sValue);
+			SendDlgItemMessage(hWnd2, lbExtendFontNormalIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::ColorIdx[i].sValue);
 		}
 
 		checkDlgButton(hWnd2, cbExtendFonts, gpSet->AppStd.isExtendFonts);
@@ -1901,7 +1912,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	
 	//checkDlgButton(hWnd2, rBgUpLeft+(UINT)gpSet->bgOperation, BST_CHECKED);
 	BYTE b = gpSet->bgOperation;
-	FillListBoxByte(hWnd2, lbBgPlacement, SettingsNS::szBgOper, SettingsNS::nBgOper, b);
+	FillListBoxByte(hWnd2, lbBgPlacement, SettingsNS::BgOper, b);
 
 	checkDlgButton(hWnd2, cbBgAllowPlugin, BST(gpSet->isBgPluginAllowed));
 
@@ -2469,28 +2480,28 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 	checkDlgButton(hWnd2, cbCTSFreezeBeforeSelect, gpSet->isCTSFreezeBeforeSelect);
 	checkDlgButton(hWnd2, cbCTSBlockSelection, gpSet->isCTSSelectBlock);
 	DWORD VkMod = gpSet->GetHotkeyById(vkCTSVkBlock);
-	FillListBoxByte(hWnd2, lbCTSBlockSelection, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+	FillListBoxByte(hWnd2, lbCTSBlockSelection, SettingsNS::KeysAct, VkMod);
 	checkDlgButton(hWnd2, cbCTSTextSelection, gpSet->isCTSSelectText);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkText);
-	FillListBoxByte(hWnd2, lbCTSTextSelection, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+	FillListBoxByte(hWnd2, lbCTSTextSelection, SettingsNS::KeysAct, VkMod);
 	checkDlgButton(hWnd2, (gpSet->isCTSActMode==1)?rbCTSActAlways:rbCTSActBufferOnly, BST_CHECKED);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkAct);
 
-	FillListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
-	FillListBoxByte(hWnd2, lbCTSRBtnAction, SettingsNS::szClipAct, SettingsNS::nClipAct, gpSet->isCTSRBtnAction);
-	FillListBoxByte(hWnd2, lbCTSMBtnAction, SettingsNS::szClipAct, SettingsNS::nClipAct, gpSet->isCTSMBtnAction);
+	FillListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::KeysAct, VkMod);
+	FillListBoxByte(hWnd2, lbCTSRBtnAction, SettingsNS::ClipAct, gpSet->isCTSRBtnAction);
+	FillListBoxByte(hWnd2, lbCTSMBtnAction, SettingsNS::ClipAct, gpSet->isCTSMBtnAction);
 	DWORD idxBack = (gpSet->isCTSColorIndex & 0xF0) >> 4;
 	DWORD idxFore = (gpSet->isCTSColorIndex & 0xF);
-	FillListBoxItems(GetDlgItem(hWnd2, lbCTSForeIdx), countof(SettingsNS::szColorIdx)-1,
-		SettingsNS::szColorIdx, SettingsNS::nColorIdx, idxFore);
-	FillListBoxItems(GetDlgItem(hWnd2, lbCTSBackIdx), countof(SettingsNS::szColorIdx)-1,
-		SettingsNS::szColorIdx, SettingsNS::nColorIdx, idxBack);
+	FillListBoxItems(GetDlgItem(hWnd2, lbCTSForeIdx), countof(SettingsNS::ColorIdx)-1,
+		SettingsNS::ColorIdx, idxFore);
+	FillListBoxItems(GetDlgItem(hWnd2, lbCTSBackIdx), countof(SettingsNS::ColorIdx)-1,
+		SettingsNS::ColorIdx, idxBack);
 
 	checkDlgButton(hWnd2, cbCTSDetectLineEnd, gpSet->AppStd.isCTSDetectLineEnd);
 	checkDlgButton(hWnd2, cbCTSBashMargin, gpSet->AppStd.isCTSBashMargin);
 	checkDlgButton(hWnd2, cbCTSTrimTrailing, gpSet->AppStd.isCTSTrimTrailing);
 	BYTE b = gpSet->AppStd.isCTSEOL;
-	FillListBoxByte(hWnd2, lbCTSEOL, SettingsNS::szCRLF, SettingsNS::nCRLF, b);
+	FillListBoxByte(hWnd2, lbCTSEOL, SettingsNS::CRLF, b);
 
 	checkDlgButton(hWnd2, cbClipShiftIns, gpSet->AppStd.isPasteAllLines);
 	checkDlgButton(hWnd2, cbClipCtrlV, gpSet->AppStd.isPasteFirstLine);
@@ -2582,9 +2593,9 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 
 	// Списки
 	DWORD VkMod = gpSet->GetHotkeyById(vkLDragKey);
-	FillListBoxByte(hWnd2, lbLDragKey, SettingsNS::szKeys, SettingsNS::nKeys, VkMod);
+	FillListBoxByte(hWnd2, lbLDragKey, SettingsNS::Keys, VkMod);
 	VkMod = gpSet->GetHotkeyById(vkRDragKey);
-	FillListBoxByte(hWnd2, lbRDragKey, SettingsNS::szKeys, SettingsNS::nKeys, VkMod);
+	FillListBoxByte(hWnd2, lbRDragKey, SettingsNS::Keys, VkMod);
 
 	if (!abInitial)
 		return 0;
@@ -2928,12 +2939,12 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						||vk==VK_PRIOR||vk==VK_NEXT||vk==VK_HOME||vk==VK_END
 						||vk==VK_INSERT) ? (HOTKEYF_EXT<<8) : 0), 0);
 					// Warning! Если nVK не указан в SettingsNS::nKeysHot - nVK будет обнулен
-					FillListBoxByte(hWnd2, lbHotKeyList, SettingsNS::szKeysHot, SettingsNS::nKeysHot, vk);
+					FillListBoxByte(hWnd2, lbHotKeyList, SettingsNS::KeysHot, vk);
 				}
 				else if (bKeyListEnabled)
 				{
 					SendMessage(hHk, HKM_SETHOTKEY, 0, 0);
-					FillListBoxByte(hWnd2, lbHotKeyList, SettingsNS::szKeys, SettingsNS::nKeys, vk);
+					FillListBoxByte(hWnd2, lbHotKeyList, SettingsNS::Keys, vk);
 				}
 			}
 		}
@@ -2965,7 +2976,7 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		for (int n = 0; n < 3; n++)
 		{
 			BYTE b = (bShow && VkMod) ? ConEmuHotKey::GetModifier(VkMod,n+1) : 0;
-			FillListBoxByte(hWnd2, lbHotKeyMod1+n, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
+			FillListBoxByte(hWnd2, lbHotKeyMod1+n, SettingsNS::Modifiers, b);
 			EnableWindow(GetDlgItem(hWnd2, lbHotKeyMod1+n), bEnabled);
 		}
 		//for (size_t n = 0; n < countof(HostkeyCtrlIds); n++)
@@ -3102,13 +3113,13 @@ LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, BOOL abInitial)
 	// Hyperlinks & compiler errors
 	checkDlgButton(hWnd2, cbFarGotoEditor, gpSet->isFarGotoEditor);
 	DWORD VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
-	FillListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+	FillListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::KeysAct, VkMod);
 	SetDlgItemText(hWnd2, tGotoEditorCmd, gpSet->sFarGotoEditor);
 
 	// Prompt click
 	checkDlgButton(hWnd2, cbCTSClickPromptPosition, gpSet->AppStd.isCTSClickPromptPosition);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkPromptClk);
-	FillListBoxByte(hWnd2, lbCTSClickPromptPosition, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+	FillListBoxByte(hWnd2, lbCTSClickPromptPosition, SettingsNS::KeysAct, VkMod);
 
 	// Ctrl+BS - del left word
 	checkDlgButton(hWnd2, cbCTSDeleteLeftWord, gpSet->AppStd.isCTSDeleteLeftWord);
@@ -3159,9 +3170,9 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 	FillHotKeysList(hWnd2, abInitial);
 		
 	BYTE b = 0;
-	FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
-	FillListBoxByte(hWnd2, lbHotKeyMod2, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
-	FillListBoxByte(hWnd2, lbHotKeyMod3, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
+	FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::Modifiers, b);
+	FillListBoxByte(hWnd2, lbHotKeyMod2, SettingsNS::Modifiers, b);
+	FillListBoxByte(hWnd2, lbHotKeyMod3, SettingsNS::Modifiers, b);
 
 	return 0;
 }
@@ -3342,13 +3353,13 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 		ColorSetEdit(hWnd2, c);
 
 	nVal = gpSet->AppStd.nTextColorIdx;
-	FillListBox(hWnd2, lbConClrText, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	FillListBox(hWnd2, lbConClrText, SettingsNS::ColorIdxTh, nVal);
 	nVal = gpSet->AppStd.nBackColorIdx;
-	FillListBox(hWnd2, lbConClrBack, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	FillListBox(hWnd2, lbConClrBack, SettingsNS::ColorIdxTh, nVal);
 	nVal = gpSet->AppStd.nPopTextColorIdx;
-	FillListBox(hWnd2, lbConClrPopText, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	FillListBox(hWnd2, lbConClrPopText, SettingsNS::ColorIdxTh, nVal);
 	nVal = gpSet->AppStd.nPopBackColorIdx;
-	FillListBox(hWnd2, lbConClrPopBack, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	FillListBox(hWnd2, lbConClrPopBack, SettingsNS::ColorIdxTh, nVal);
 
 	//WARNING("Отладка...");
 	//if (gpSet->AppStd.nPopTextColorIdx <= 15 || gpSet->AppStd.nPopBackColorIdx <= 15
@@ -3359,7 +3370,7 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 	//}
 
 	nVal = gpSet->AppStd.nExtendColorIdx;
-	FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
+	FillListBox(hWnd2, lbExtendIdx, SettingsNS::ColorIdxSh, nVal);
 	gpSet->AppStd.nExtendColorIdx = nVal;
 	checkDlgButton(hWnd2, cbExtendColors, gpSet->AppStd.isExtendColors ? BST_CHECKED : BST_UNCHECKED);
 	OnButtonClicked(hWnd2, cbExtendColors, 0);
@@ -4393,24 +4404,24 @@ LRESULT CSettings::OnInitDialog_Views(HWND hWnd2)
 	SetDlgItemInt(hWnd2, tTilesY2, gpSet->ThSet.Tiles.nSpaceY2, FALSE);
 	SetDlgItemInt(hWnd2, tTilesSpacing, gpSet->ThSet.Tiles.nLabelSpacing, FALSE);
 	SetDlgItemInt(hWnd2, tTilesPadding, gpSet->ThSet.Tiles.nLabelPadding, FALSE);
-	FillListBox(hWnd2, tThumbMaxZoom, SettingsNS::szThumbMaxZoom, SettingsNS::nThumbMaxZoom, gpSet->ThSet.nMaxZoom);
+	FillListBox(hWnd2, tThumbMaxZoom, SettingsNS::ThumbMaxZoom, gpSet->ThSet.nMaxZoom);
 
 	// Colors
 	for(uint c = c32; c <= c34; c++)
 		ColorSetEdit(hWnd2, c);
 
 	nVal = gpSet->ThSet.crBackground.ColorIdx;
-	FillListBox(hWnd2, lbThumbBackColorIdx, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	FillListBox(hWnd2, lbThumbBackColorIdx, SettingsNS::ColorIdxTh, nVal);
 	checkRadioButton(hWnd2, rbThumbBackColorIdx, rbThumbBackColorRGB,
 	                 gpSet->ThSet.crBackground.UseIndex ? rbThumbBackColorIdx : rbThumbBackColorRGB);
 	checkDlgButton(hWnd2, cbThumbPreviewBox, gpSet->ThSet.nPreviewFrame ? 1 : 0);
 	nVal = gpSet->ThSet.crPreviewFrame.ColorIdx;
-	FillListBox(hWnd2, lbThumbPreviewBoxColorIdx, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	FillListBox(hWnd2, lbThumbPreviewBoxColorIdx, SettingsNS::ColorIdxTh, nVal);
 	checkRadioButton(hWnd2, rbThumbPreviewBoxColorIdx, rbThumbPreviewBoxColorRGB,
 	                 gpSet->ThSet.crPreviewFrame.UseIndex ? rbThumbPreviewBoxColorIdx : rbThumbPreviewBoxColorRGB);
 	checkDlgButton(hWnd2, cbThumbSelectionBox, gpSet->ThSet.nSelectFrame ? 1 : 0);
 	nVal = gpSet->ThSet.crSelectFrame.ColorIdx;
-	FillListBox(hWnd2, lbThumbSelectionBoxColorIdx, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	FillListBox(hWnd2, lbThumbSelectionBoxColorIdx, SettingsNS::ColorIdxTh, nVal);
 	checkRadioButton(hWnd2, rbThumbSelectionBoxColorIdx, rbThumbSelectionBoxColorRGB,
 	                 gpSet->ThSet.crSelectFrame.UseIndex ? rbThumbSelectionBoxColorIdx : rbThumbSelectionBoxColorRGB);
 
@@ -6997,9 +7008,9 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	{
 		UINT nHotKey = 0xFF & SendDlgItemMessage(hWnd2, TB, HKM_GETHOTKEY, 0, 0);
 		bool bList = false;
-		for (size_t i = 0; i < countof(SettingsNS::nKeysHot); i++)
+		for (size_t i = 0; i < countof(SettingsNS::KeysHot); i++)
 		{
-			if (SettingsNS::nKeysHot[i] == nHotKey)
+			if (SettingsNS::KeysHot[i].nValue == nHotKey)
 			{
 				SendDlgItemMessage(hWnd2, lbHotKeyList, CB_SETCURSEL, i, 0);
 				bList = true;
@@ -7519,7 +7530,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case lbBgPlacement:
 	{
 		BYTE bg = 0;
-		GetListBoxByte(hWnd2,lbBgPlacement,SettingsNS::szBgOper,SettingsNS::nBgOper,bg);
+		GetListBoxByte(hWnd2,lbBgPlacement,SettingsNS::BgOper,bg);
 		gpSet->bgOperation = bg;
 		gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
 		gpConEmu->Update(true);
@@ -7529,14 +7540,14 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case lbLDragKey:
 	{
 		BYTE VkMod = 0;
-		GetListBoxByte(hWnd2,wId,SettingsNS::szKeys,SettingsNS::nKeys,VkMod);
+		GetListBoxByte(hWnd2,wId,SettingsNS::Keys,VkMod);
 		gpSet->SetHotkeyById(vkLDragKey, VkMod);
 		break;
 	}
 	case lbRDragKey:
 	{
 		BYTE VkMod = 0;
-		GetListBoxByte(hWnd2,wId,SettingsNS::szKeys,SettingsNS::nKeys,VkMod);
+		GetListBoxByte(hWnd2,wId,SettingsNS::Keys,VkMod);
 		gpSet->SetHotkeyById(vkLDragKey, VkMod);
 		break;
 	}
@@ -7590,21 +7601,21 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		{
 			if (mp_ActiveHotKey->CanChangeVK())
 			{
-				GetListBoxByte(hWnd2, wId, SettingsNS::szKeysHot, SettingsNS::nKeysHot, vk);
+				GetListBoxByte(hWnd2, wId, SettingsNS::KeysHot, vk);
 				SendDlgItemMessage(hWnd2, hkHotKeySelect, HKM_SETHOTKEY, vk|(vk==VK_DELETE ? (HOTKEYF_EXT<<8) : 0), 0);
 				DWORD nMod = (CEHOTKEY_MODMASK & mp_ActiveHotKey->VkMod);
 				if (nMod == 0)
 				{
 					// Если модификатора вообще не было - ставим Win
 					BYTE b = VK_LWIN;
-					FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
+					FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::Modifiers, b);
 					nMod = (VK_LWIN << 8);
 				}
 				SetHotkeyVkMod(mp_ActiveHotKey, ((DWORD)vk) | nMod);
 			}
 			else if (mp_ActiveHotKey->HkType == chk_Modifier)
 			{
-				GetListBoxByte(hWnd2, wId, SettingsNS::szKeys, SettingsNS::nKeys, vk);
+				GetListBoxByte(hWnd2, wId, SettingsNS::Keys, vk);
 				SendDlgItemMessage(hWnd2, hkHotKeySelect, HKM_SETHOTKEY, 0, 0);
 				SetHotkeyVkMod(mp_ActiveHotKey, vk);
 			}
@@ -7623,7 +7634,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		for (UINT i = 0; i < 3; i++)
 		{
 			BYTE vk = 0;
-			GetListBoxByte(hWnd2,lbHotKeyMod1+i,SettingsNS::szModifiers,SettingsNS::nModifiers,vk);
+			GetListBoxByte(hWnd2,lbHotKeyMod1+i,SettingsNS::Modifiers,vk);
 			BYTE vkChange = vk;
 
 			// Некоторые модификаторы НЕ допустимы при регистрации глобальных хоткеев (ограничения WinAPI)
@@ -7645,7 +7656,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			if (vkChange != vk)
 			{
 				vk = vkChange;
-				FillListBoxByte(hWnd2, lbHotKeyMod1+i, SettingsNS::szModifiers, SettingsNS::nModifiers, vkChange);
+				FillListBoxByte(hWnd2, lbHotKeyMod1+i, SettingsNS::Modifiers, vkChange);
 			}
 
 			if (vk)
@@ -7727,8 +7738,8 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					gpSet->nTabFontHeight = SettingsNS::FSizesSmall[nSel];
 				break;
 			case tTabFontCharset:
-				if (nSel >= 0 && nSel < (INT_PTR)countof(SettingsNS::nCharSets))
-					gpSet->nTabFontCharSet = SettingsNS::nCharSets[nSel];
+				if (nSel >= 0 && nSel < (INT_PTR)countof(SettingsNS::CharSets))
+					gpSet->nTabFontCharSet = SettingsNS::CharSets[nSel].nValue;
 				else
 					gpSet->nTabFontCharSet = DEFAULT_CHARSET;
 			}
@@ -7797,8 +7808,8 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					gpSet->nStatusFontHeight = SettingsNS::FSizesSmall[nSel];
 				break;
 			case tStatusFontCharset:
-				if (nSel >= 0 && nSel < (INT_PTR)countof(SettingsNS::nCharSets))
-					gpSet->nStatusFontCharSet = SettingsNS::nCharSets[nSel];
+				if (nSel >= 0 && nSel < (INT_PTR)countof(SettingsNS::CharSets))
+					gpSet->nStatusFontCharSet = SettingsNS::CharSets[nSel].nValue;
 				else
 					gpSet->nStatusFontCharSet = DEFAULT_CHARSET;
 			}
@@ -7826,6 +7837,10 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				pszNoBrk[_tcslen(pszNoBrk)-1] = 0;
 			SetDlgItemText(hWnd2, tCmdGroupName, pszNoBrk);
 			SafeFree(pszNoBrk);
+
+			ConEmuHotKey hk = {0, chk_User, NULL, L"", pCmd->VkMod}; wchar_t szKey[128] = L"";
+			SetDlgItemText(hWnd2, tCmdGroupKey, hk.GetHotkeyName(szKey));
+
 			SetDlgItemText(hWnd2, tCmdGroupGuiArg, pCmd->pszGuiArgs ? pCmd->pszGuiArgs : L"");
 			SetDlgItemText(hWnd2, tCmdGroupCommands, pCmd->pszCommands ? pCmd->pszCommands : L"");
 			lbEnable = TRUE;
@@ -8002,13 +8017,13 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					DWORD nVal;
 
 					nVal = pPal->nTextColorIdx;
-					FillListBox(hWnd2, lbConClrText, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+					FillListBox(hWnd2, lbConClrText, SettingsNS::ColorIdxTh, nVal);
 					nVal = pPal->nBackColorIdx;
-					FillListBox(hWnd2, lbConClrBack, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+					FillListBox(hWnd2, lbConClrBack, SettingsNS::ColorIdxTh, nVal);
 					nVal = pPal->nPopTextColorIdx;
-					FillListBox(hWnd2, lbConClrPopText, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+					FillListBox(hWnd2, lbConClrPopText, SettingsNS::ColorIdxTh, nVal);
 					nVal = pPal->nPopBackColorIdx;
-					FillListBox(hWnd2, lbConClrPopBack, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+					FillListBox(hWnd2, lbConClrPopBack, SettingsNS::ColorIdxTh, nVal);
 
 					BOOL bTextChanged = (gpSet->AppStd.nTextColorIdx != pPal->nTextColorIdx) || (gpSet->AppStd.nBackColorIdx != pPal->nBackColorIdx);
 					BOOL bPopupChanged = (gpSet->AppStd.nPopTextColorIdx != pPal->nPopTextColorIdx) || (gpSet->AppStd.nPopBackColorIdx != pPal->nPopBackColorIdx);
@@ -8023,7 +8038,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					}
 
 					nVal = pPal->nExtendColorIdx;
-					FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
+					FillListBox(hWnd2, lbExtendIdx, SettingsNS::ColorIdxSh, nVal);
 					gpSet->AppStd.nExtendColorIdx = nVal;
 					gpSet->AppStd.isExtendColors = pPal->isExtendColors;
 					checkDlgButton(hWnd2, cbExtendColors, pPal->isExtendColors ? BST_CHECKED : BST_UNCHECKED);
@@ -8046,51 +8061,51 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				case lbCTSBlockSelection:
 					{
 						BYTE VkMod = 0;
-						GetListBoxByte(hWnd2, lbCTSBlockSelection, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+						GetListBoxByte(hWnd2, lbCTSBlockSelection, SettingsNS::KeysAct, VkMod);
 						gpSet->SetHotkeyById(vkCTSVkBlock, VkMod);
 						CheckSelectionModifiers(hWnd2);
 					} break;
 				case lbCTSTextSelection:
 					{
 						BYTE VkMod = 0;
-						GetListBoxByte(hWnd2, lbCTSTextSelection, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+						GetListBoxByte(hWnd2, lbCTSTextSelection, SettingsNS::KeysAct, VkMod);
 						gpSet->SetHotkeyById(vkCTSVkText, VkMod);
 						CheckSelectionModifiers(hWnd2);
 					} break;
 				case lbCTSActAlways:
 					{
 						BYTE VkMod = 0;
-						GetListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+						GetListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::KeysAct, VkMod);
 						gpSet->SetHotkeyById(vkCTSVkAct, VkMod);
 					} break;
 				case lbCTSEOL:
 					{
 						BYTE eol = 0;
-						GetListBoxByte(hWnd2,lbCTSEOL,SettingsNS::szCRLF,SettingsNS::nCRLF,eol);
+						GetListBoxByte(hWnd2,lbCTSEOL,SettingsNS::CRLF,eol);
 						gpSet->AppStd.isCTSEOL = eol;
 					} // lbCTSEOL
 					break;
 				case lbCTSRBtnAction:
 					{
-						GetListBoxByte(hWnd2, lbCTSRBtnAction, SettingsNS::szClipAct, SettingsNS::nClipAct, gpSet->isCTSRBtnAction);
+						GetListBoxByte(hWnd2, lbCTSRBtnAction, SettingsNS::ClipAct, gpSet->isCTSRBtnAction);
 					} break;
 				case lbCTSMBtnAction:
 					{
-						GetListBoxByte(hWnd2, lbCTSMBtnAction, SettingsNS::szClipAct, SettingsNS::nClipAct, gpSet->isCTSMBtnAction);
+						GetListBoxByte(hWnd2, lbCTSMBtnAction, SettingsNS::ClipAct, gpSet->isCTSMBtnAction);
 					} break;
 				case lbCTSForeIdx:
 					{
 						DWORD nFore = 0;
-						GetListBoxItem(GetDlgItem(hWnd2, lbCTSForeIdx), countof(SettingsNS::szColorIdx)-1,
-							SettingsNS::szColorIdx, SettingsNS::nColorIdx, nFore);
+						GetListBoxItem(GetDlgItem(hWnd2, lbCTSForeIdx), countof(SettingsNS::ColorIdx)-1,
+							SettingsNS::ColorIdx, nFore);
 						gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF0) | (nFore & 0xF);
 						gpConEmu->Update(true);
 					} break;
 				case lbCTSBackIdx:
 					{
 						DWORD nBack = 0;
-						GetListBoxItem(GetDlgItem(hWnd2, lbCTSBackIdx), countof(SettingsNS::szColorIdx)-1,
-							SettingsNS::szColorIdx, SettingsNS::nColorIdx, nBack);
+						GetListBoxItem(GetDlgItem(hWnd2, lbCTSBackIdx), countof(SettingsNS::ColorIdx)-1,
+							SettingsNS::ColorIdx, nBack);
 						gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF) | ((nBack & 0xF) << 4);
 						gpConEmu->Update(true);
 					} break;
@@ -8108,14 +8123,14 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				case lbCTSClickPromptPosition:
 					{
 						BYTE VkMod = 0;
-						GetListBoxByte(hWnd2, lbCTSClickPromptPosition, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+						GetListBoxByte(hWnd2, lbCTSClickPromptPosition, SettingsNS::KeysAct, VkMod);
 						gpSet->SetHotkeyById(vkCTSVkPromptClk, VkMod);
 						CheckSelectionModifiers(hWnd2);
 					} break;
 				case lbFarGotoEditorVk:
 					{
 						BYTE VkMod = 0;
-						GetListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+						GetListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::KeysAct, VkMod);
 						gpSet->SetHotkeyById(vkFarGotoEditorVk, VkMod);
 					} break;
 				default:
@@ -9384,12 +9399,12 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			SendMessage(GetDlgItem(hChild, lbExtendFontBoldIdx), CB_RESETCONTENT, 0, 0);
 			SendMessage(GetDlgItem(hChild, lbExtendFontItalicIdx), CB_RESETCONTENT, 0, 0);
 			SendMessage(GetDlgItem(hChild, lbExtendFontNormalIdx), CB_RESETCONTENT, 0, 0);
-			for (uint i=0; i < countof(SettingsNS::szColorIdx); i++)
+			for (uint i=0; i < countof(SettingsNS::ColorIdx); i++)
 			{
 				//_wsprintf(temp, SKIPLEN(countof(temp))(i==16) ? L"None" : L"%2i", i);
-				SendDlgItemMessage(hChild, lbExtendFontBoldIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
-				SendDlgItemMessage(hChild, lbExtendFontItalicIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
-				SendDlgItemMessage(hChild, lbExtendFontNormalIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
+				SendDlgItemMessage(hChild, lbExtendFontBoldIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::ColorIdx[i].sValue);
+				SendDlgItemMessage(hChild, lbExtendFontItalicIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::ColorIdx[i].sValue);
+				SendDlgItemMessage(hChild, lbExtendFontNormalIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::ColorIdx[i].sValue);
 			}
 		}
 
@@ -9473,7 +9488,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			checkDlgButton(hChild, cbCTSBashMargin, pApp->isCTSBashMargin);
 			checkDlgButton(hChild, cbCTSTrimTrailing, pApp->isCTSTrimTrailing);
 			b = pApp->isCTSEOL;
-			FillListBoxByte(hChild, lbCTSEOL, SettingsNS::szCRLF, SettingsNS::nCRLF, b);
+			FillListBoxByte(hChild, lbCTSEOL, SettingsNS::CRLF, b);
 			//
 			checkDlgButton(hChild, cbClipShiftIns, pApp->isPasteAllLines);
 			checkDlgButton(hChild, cbClipCtrlV, pApp->isPasteFirstLine);
@@ -9487,7 +9502,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			checkDlgButton(hChild, cbBgImage, BST(pApp->isShowBgImage));
 			SetDlgItemText(hChild, tBgImage, pApp->sBgImage);
 			b = pApp->nBgOperation;
-			FillListBoxByte(hChild, lbBgPlacement, SettingsNS::szBgOper, SettingsNS::nBgOper, b);
+			FillListBoxByte(hChild, lbBgPlacement, SettingsNS::BgOper, b);
 
 		} // UM_FILL_CONTROLS
 		break;
@@ -10050,7 +10065,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 						case lbCTSEOL:
 							{
 								BYTE eol = 0;
-								GetListBoxByte(hChild,lbCTSEOL,SettingsNS::szCRLF,SettingsNS::nCRLF,eol);
+								GetListBoxByte(hChild,lbCTSEOL,SettingsNS::CRLF,eol);
 								pApp->isCTSEOL = eol;
 							} // lbCTSEOL
 							break;
@@ -10058,7 +10073,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 						case lbBgPlacement:
 							{
 								BYTE bg = 0;
-								GetListBoxByte(hChild,lbBgPlacement,SettingsNS::szBgOper,SettingsNS::nBgOper,bg);
+								GetListBoxByte(hChild,lbBgPlacement,SettingsNS::BgOper,bg);
 								pApp->nBgOperation = bg;
 								TODO("LoadBackgroundFile");
 								//gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
@@ -11163,8 +11178,8 @@ void CSettings::RecreateFont(WORD wFromID)
 			//gpSet->mb_CharSetWasSet = FALSE;
 			INT_PTR newCharSet = SendDlgItemMessage(mh_Tabs[thi_Main], tFontCharset, CB_GETCURSEL, 0, 0);
 
-			if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < (INT_PTR)countof(SettingsNS::nCharSets))
-				LF.lfCharSet = SettingsNS::nCharSets[newCharSet];
+			if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < (INT_PTR)countof(SettingsNS::CharSets))
+				LF.lfCharSet = SettingsNS::CharSets[newCharSet].nValue;
 			else
 				LF.lfCharSet = DEFAULT_CHARSET;
 		}
@@ -11879,9 +11894,9 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		{
 			inFont->lfCharSet = m_tm->tmCharSet;
 
-			for (uint i = 0; i < countof(SettingsNS::nCharSets); i++)
+			for (uint i = 0; i < countof(SettingsNS::CharSets); i++)
 			{
-				if (SettingsNS::nCharSets[i] == m_tm->tmCharSet)
+				if (SettingsNS::CharSets[i].nValue == m_tm->tmCharSet)
 				{
 					SendDlgItemMessage(mh_Tabs[thi_Main], tFontCharset, CB_SETCURSEL, i, 0);
 					break;
@@ -13850,7 +13865,7 @@ bool CSettings::SetColorById(WORD nID, COLORREF color)
 	return true;
 }
 
-void CSettings::FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue, BOOL abExact /*= FALSE*/)
+void CSettings::FillListBoxItems(HWND hList, uint nItems, ListBoxItem* Items /*const WCHAR** pszItems, const DWORD* pnValues*/, DWORD& nValue, BOOL abExact /*= FALSE*/)
 {
 	_ASSERTE(hList!=NULL);
 	uint num = 0;
@@ -13860,15 +13875,36 @@ void CSettings::FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems
 
 	for (uint i = 0; i < nItems; i++)
 	{
-		if (pszItems)
-		{
-			SendMessage(hList, CB_ADDSTRING, 0, (LPARAM) pszItems[i]); //-V108
-		}
-		else
-		{
-			_wsprintf(szNumber, SKIPLEN(countof(szNumber)) L"%i", pnValues[i]);
-			SendMessage(hList, CB_ADDSTRING, 0, (LPARAM)szNumber);
-		}
+		SendMessage(hList, CB_ADDSTRING, 0, (LPARAM) Items[i].sValue); //-V108
+
+		if (Items[i].nValue == nValue) num = i; //-V108
+	}
+
+	if (abExact)
+	{
+		_wsprintf(szNumber, SKIPLEN(countof(szNumber)) L"%i", nValue);
+		SelectStringExact(hList, 0, szNumber);
+	}
+	else
+	{
+		if (!num)
+			nValue = 0;  // если код неизвестен?
+		SendMessage(hList, CB_SETCURSEL, num, 0);
+	}
+}
+
+void CSettings::FillListBoxItems(HWND hList, uint nItems, const DWORD* pnValues, DWORD& nValue, BOOL abExact /*= FALSE*/)
+{
+	_ASSERTE(hList!=NULL);
+	uint num = 0;
+	wchar_t szNumber[32];
+
+	SendMessage(hList, CB_RESETCONTENT, 0, 0);
+
+	for (uint i = 0; i < nItems; i++)
+	{
+		_wsprintf(szNumber, SKIPLEN(countof(szNumber)) L"%i", pnValues[i]);
+		SendMessage(hList, CB_ADDSTRING, 0, (LPARAM)szNumber);
 
 		if (pnValues[i] == nValue) num = i; //-V108
 	}
@@ -13886,7 +13922,26 @@ void CSettings::FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems
 	}
 }
 
-void CSettings::GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue)
+void CSettings::GetListBoxItem(HWND hList, uint nItems, ListBoxItem* Items /*const WCHAR** pszItems, const DWORD* pnValues*/, DWORD& nValue)
+{
+	_ASSERTE(hList!=NULL);
+	INT_PTR num = SendMessage(hList, CB_GETCURSEL, 0, 0);
+
+	//int nKeyCount = countof(SettingsNS::szKeys);
+	if (num>=0 && num<(int)nItems)
+	{
+		nValue = Items[num].nValue; //-V108
+	}
+	else
+	{
+		nValue = Items[0].nValue;
+
+		if (num)  // Invalid index?
+			SendMessage(hList, CB_SETCURSEL, num=0, 0);
+	}
+}
+
+void CSettings::GetListBoxItem(HWND hList, uint nItems, const DWORD* pnValues, DWORD& nValue)
 {
 	_ASSERTE(hList!=NULL);
 	INT_PTR num = SendMessage(hList, CB_GETCURSEL, 0, 0);
@@ -13898,7 +13953,7 @@ void CSettings::GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, 
 	}
 	else
 	{
-		nValue = 0;
+		nValue = pnValues[0];
 
 		if (num)  // Invalid index?
 			SendMessage(hList, CB_SETCURSEL, num=0, 0);

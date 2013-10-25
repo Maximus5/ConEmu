@@ -13346,6 +13346,8 @@ void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 {
 	static bool bWasSetTopMost = false;
 
+	// определить возможность перейти в текстовый FullScreen
+#ifdef _WIN64
 	if (!bSet)
 	{
 		// Снять флаг "OnTop", вернуть нормальные приоритеты процессам
@@ -13357,27 +13359,23 @@ void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 		}
 		return;
 	}
-
-	TODO("Пока глюкавит - не открываем");
-#if 0
-	// определить возможность перейти в текстовый FullScreen
-	if (!IsWindows64())
-	{
-		//BOOL WINAPI SetConsoleDisplayMode(HANDLE hConsoleOutput, DWORD dwFlags, PCOORD lpNewScreenBufferDimensions);
-		if (mp_ VActive && mp_ VActive->RCon())
-		{
-			if (!isIconic())
-				SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
-
-			CVConGuard guard(mp_ VActive);
-			if (mp_ VActive->RCon()->SetFullScreen())
-				return;
-
-			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
-		}
-	}
 #endif
 
+	TODO("Пока глюкавит - не открываем");
+#if defined(_DEBUG) && !defined(_WIN64)
+	CVConGuard VCon;
+	if (CVConGroup::GetActiveVCon(&VCon) >= 0)
+	{
+		//BOOL WINAPI SetConsoleDisplayMode(HANDLE hConsoleOutput, DWORD dwFlags, PCOORD lpNewScreenBufferDimensions);
+		//if (!isIconic())
+		//	SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+
+		if (VCon->RCon()->SetFullScreen())
+			return;
+
+		//SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+	}
+#endif
 
 	if (gpSet->isDesktopMode)
 	{

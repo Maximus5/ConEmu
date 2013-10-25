@@ -903,6 +903,7 @@
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="..\common\ConEmuCheckEx.cpp" />
+    <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="ConEmuInjects.cpp" />
     <ClCompile Include="ConEmuPlugin.cpp" />
     <ClCompile Include="ConEmuPlugin1900.cpp">
@@ -1047,6 +1048,7 @@
   <ItemGroup>
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuCheckEx.h" />
+    <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="ConEmu_Lang.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConsoleAnnotation.h" />

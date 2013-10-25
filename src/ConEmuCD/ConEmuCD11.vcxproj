@@ -804,6 +804,7 @@
     <ClInclude Include="..\common\ExecPty.h" />
     <ClInclude Include="..\common\MArray.h" />
     <ClInclude Include="..\common\MMap.h" />
+    <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="ConEmuC.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
@@ -1116,6 +1117,7 @@
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="..\common\ConsoleRead.cpp" />
     <ClCompile Include="..\common\ExecPty.cpp" />
+    <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="ConEmuCmd.cpp" />
     <ClCompile Include="ConEmuSrv.cpp" />
     <ClCompile Include="ConsoleMain.cpp" />

@@ -54,6 +54,7 @@
 #define IDD_CMDPROMPT                   220
 #define IDD_HELP                        221
 #define IDD_ACTION                      222
+#define IDD_HOTKEY                      223
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -965,14 +966,16 @@
 #define vkCloseAllCon                   2625
 #define vkCloseExceptCon                2626
 #define cbDefaultTerminalTSA            2627
+#define tCmdGroupKey                    2628
+#define cbCmdGroupKey                   2629
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        222
+#define _APS_NEXT_RESOURCE_VALUE        224
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2628
+#define _APS_NEXT_CONTROL_VALUE         2630
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

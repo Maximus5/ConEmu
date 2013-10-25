@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuPipeMode.h"
 #include "../common/Execute.h"
 #include "../common/RgnDetect.h"
+#include "../common/SetEnvVar.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "ConEmuPipe.h"
@@ -5100,6 +5101,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				if ((gpSet->isCTSEndOnTyping && (pszChars && *pszChars))
 					// +все, что не генерит символы (стрелки, Fn, и т.п.)
 					|| (gpSet->isCTSEndOnKeyPress
+						&& (messg==WM_KEYDOWN || messg==WM_SYSKEYDOWN)
+						&& !(wParam==VK_SHIFT || wParam==VK_CONTROL || wParam==VK_MENU || wParam==VK_LWIN || wParam==VK_RWIN || wParam==VK_APPS)
 						&& !gpSet->IsModifierPressed(mp_ABuf->isStreamSelection() ? vkCTSVkText : vkCTSVkBlock, false)
 					))
 				{

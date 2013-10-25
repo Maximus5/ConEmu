@@ -1638,6 +1638,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\SetEnvVar.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuInjects.cpp"
 				>
 			</File>
@@ -1785,6 +1789,10 @@
 			</File>
 			<File
 				RelativePath="..\common\ConEmuCheckEx.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\SetEnvVar.h"
 				>
 			</File>
 			<File

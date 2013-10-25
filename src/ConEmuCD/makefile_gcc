@@ -23,6 +23,7 @@ SRCS = ConsoleMain.cpp \
        ../common/MStrSafe.cpp \
        ../common/Memory.cpp \
        ../common/RConStartArgs.cpp \
+       ../common/SetEnvVar.cpp \
        ../common/WinConsole.cpp \
        ../common/WinObjects.cpp
 

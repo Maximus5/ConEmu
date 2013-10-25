@@ -385,6 +385,7 @@ struct Settings
 			wchar_t* pszGuiArgs;
 			size_t   cchCmdMax;
 			wchar_t* pszCommands; // "\r\n" separated commands
+			DWORD    VkMod; // Hotkey
 
 			void FreePtr()
 			{

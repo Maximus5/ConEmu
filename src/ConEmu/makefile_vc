@@ -70,6 +70,7 @@ $(INTDIR)\RealServer.obj \
 $(INTDIR)\RunQueue.obj \
 $(INTDIR)\Recreate.obj \
 $(INTDIR)\Registry.obj \
+$(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\RgnDetect.obj \
 $(INTDIR)\ScreenDump.obj \
 $(INTDIR)\Status.obj \
@@ -320,6 +321,8 @@ $(INTDIR)\RunQueue.obj: RunQueue.cpp RunQueue.h
 $(INTDIR)\Recreate.obj: Recreate.cpp Recreate.h
 
 $(INTDIR)\Registry.obj: Registry.cpp Registry.h
+
+$(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 
 $(INTDIR)\RgnDetect.obj: ../common/RgnDetect.cpp
 

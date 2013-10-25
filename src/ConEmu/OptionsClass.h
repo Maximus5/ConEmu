@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -552,8 +552,13 @@ class CSettings
 		//DWORD nMultiHotkeyModifier;
 		//BYTE mn_HostModOk[15], mn_HostModSkip[15];
 		//bool isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR);
-		static void FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue, BOOL abExact = FALSE);
-		static void GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue);
+	public:
+		struct ListBoxItem { DWORD nValue; LPCWSTR sValue; };
+	private:
+		static void FillListBoxItems(HWND hList, uint nItems, ListBoxItem* Items /*const WCHAR** pszItems, const DWORD* pnValues*/, DWORD& nValue, BOOL abExact = FALSE);
+		static void FillListBoxItems(HWND hList, uint nItems, const DWORD* pnValues, DWORD& nValue, BOOL abExact = FALSE);
+		static void GetListBoxItem(HWND hList, uint nItems, ListBoxItem* Items /*const WCHAR** pszItems, const DWORD* pnValues*/, DWORD& nValue);
+		static void GetListBoxItem(HWND hList, uint nItems, const DWORD* pnValues, DWORD& nValue);
 		static void CenterMoreDlg(HWND hWnd2);
 		static bool IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight);
 	private:

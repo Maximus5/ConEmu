@@ -1194,7 +1194,7 @@ BEGIN
     GROUPBOX        "Predefined tasks (command groups)",gbCmdTasks,4,1,319,230
     LISTBOX         lbCmdTasks,9,12,93,180,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
     LTEXT           "Task name (alias), surrounded by {...}, used in «[+] menu», «Recreate dialog» or «/cmd» agrument of ConEmu.exe",stCmdGroupName,111,11,207,16
-    EDITTEXT        tCmdGroupName,109,29,208,12,ES_AUTOHSCROLL
+    EDITTEXT        tCmdGroupName,109,29,81,12,ES_AUTOHSCROLL
     LTEXT           "Commands (application, arguments, ""-new_console"" params)\nDelimit commands with empty lines\nEach command creates tab in ConEmu when group started\nMark active console tab with '>' sign\nStart console 'As Administrator' with '*' sign",stCmdGroupCommands,111,71,208,41
     EDITTEXT        tCmdGroupCommands,109,113,208,97,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
     PUSHBUTTON      "Tab...",cbCmdGroupApp,132,213,34,14
@@ -1209,6 +1209,9 @@ BEGIN
     PUSHBUTTON      "Startup dir...",cbCmdTasksDir,167,213,53,14
     RTEXT           "Add:",stCmdTaskAdd,106,217,21,8
     PUSHBUTTON      "Active tabs",cbCmdTasksActive,270,213,49,14
+    RTEXT           "Hotkey:",IDC_STATIC,193,30,30,8
+    EDITTEXT        tCmdGroupKey,227,29,72,12,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "...",cbCmdGroupKey,303,28,16,13
 END
 
 IDD_SPG_APPDISTINCT DIALOGEX 0, 0, 328, 235
@@ -1352,6 +1355,21 @@ BEGIN
     EDITTEXT        IDC_HELP_DESCR,0,0,166,75,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY
 END
 
+IDD_HOTKEY DIALOGEX 0, 0, 173, 70
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Choose hotkey"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,116,49,50,14
+    LTEXT           "Key:",stHotKeySelect,7,9,37,8
+    CONTROL         "",hkHotKeySelect,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,45,7,54,13
+    COMBOBOX        lbHotKeyList,104,7,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbHotKeyMod1,45,28,38,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbHotKeyMod2,86,28,38,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbHotKeyMod3,127,28,38,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Modifiers:",IDC_STATIC,7,30,37,8
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1448,6 +1466,10 @@ BEGIN
         BOTTOMMARGIN, 146
     END
 
+    IDD_SPG_KEYS, DIALOG
+    BEGIN
+    END
+
     IDD_SPG_UPDATE, DIALOG
     BEGIN
     END
@@ -1490,6 +1512,14 @@ BEGIN
         RIGHTMARGIN, 180
         TOPMARGIN, 6
         BOTTOMMARGIN, 48
+    END
+
+    IDD_HOTKEY, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 166
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 63
     END
 END
 #endif    // APSTUDIO_INVOKED

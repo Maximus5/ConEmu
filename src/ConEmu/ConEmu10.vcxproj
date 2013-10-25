@@ -937,6 +937,7 @@
     <ClCompile Include="Background.cpp" />
     <ClCompile Include="BaseDragDrops.cpp" />
     <ClCompile Include="..\common\CmdLine.cpp" />
+    <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\execute.cpp" />
     <ClCompile Include="ConEmu.cpp" />
@@ -998,6 +999,7 @@
     <ClInclude Include="Background.h" />
     <ClInclude Include="BaseDragDrops.h" />
     <ClInclude Include="..\common\CmdLine.h" />
+    <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\execute.hpp" />
     <ClInclude Include="ConEmu.h" />

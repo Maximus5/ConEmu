@@ -3223,8 +3223,10 @@ wrap:
 	return iRc;
 }
 
-int DoGuiMacro(LPCWSTR asCmdArg)
+int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
 {
+	HWND hCallWnd = hMacroInstance ? hMacroInstance : ghConWnd;
+
 	// Все что в asCmdArg - выполнить в Gui
 	int iRc = CERR_GUIMACRO_FAILED;
 	int nLen = lstrlen(asCmdArg);
@@ -3232,7 +3234,9 @@ int DoGuiMacro(LPCWSTR asCmdArg)
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
 	pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
 	lstrcpyW(pIn->GuiMacro.sMacro, asCmdArg);
-	pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+
+	pOut = ExecuteGuiCmd(hCallWnd, pIn, ghConWnd);
+
 	if (pOut)
 	{
 		if (pOut->GuiMacro.nSucceeded)
@@ -3252,7 +3256,7 @@ int DoGuiMacro(LPCWSTR asCmdArg)
 	return iRc;
 }
 
-int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */)
+int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */, HWND hMacroInstance = NULL)
 {
 	int iRc = CERR_CARGUMENT;
 
@@ -3277,7 +3281,7 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 		}
 	case ea_GuiMacro:
 		{
-			iRc = DoGuiMacro(asCmdArg);
+			iRc = DoGuiMacro(asCmdArg, hMacroInstance);
 			break;
 		}
 	case ea_CheckUnicodeFont:
@@ -3515,6 +3519,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 	ConEmuStateCheck eStateCheck = ec_None;
 	ConEmuExecAction eExecAction = ea_None;
+	HWND hMacroInstance = NULL; // Special ConEmu instance for GUIMACRO
 
 	if (!lsCmdLine || !*lsCmdLine)
 	{
@@ -3580,10 +3585,44 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			lsCmdLine = szArg+8;
 			break;
 		}
-		else if (lstrcmpi(szArg, L"/GUIMACRO")==0)
+		//else if (lstrcmpi(szArg, L"/GUIMACRO")==0)
+		else if (lstrcmpni(szArg, L"/GUIMACRO", 9) == 0)
 		{
 			// Все что в lsCmdLine - выполнить в Gui
 			eExecAction = ea_GuiMacro;
+			// Могли указать PID или HWND требуемого инстанса
+			if (szArg[9] == L':' || szArg[9] == L'=')
+			{
+				wchar_t* pszID = szArg+10;
+				if (*pszID == L'0') pszID ++;
+				wchar_t* pszEnd;
+				if (*pszID == L'x' || *pszID == L'X')
+				{
+					hMacroInstance = (HWND)(DWORD_PTR)wcstoul(pszID+1, &pszEnd, 16);
+				}
+				else
+				{
+					// Если тут передать "0" - то выполняем в первом попавшемся (наверное в верхнем окне ConEmu)
+					DWORD nPID = wcstoul(pszID+1, &pszEnd, 10);
+					HWND hFind = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
+					while (hFind)
+					{
+						DWORD nTestPID = 0; GetWindowThreadProcessId(hFind, &nTestPID);
+						if (nTestPID == nPID || !nPID)
+						{
+							hMacroInstance = hFind;
+							break;
+						}
+						hFind = FindWindowEx(NULL, hFind, VirtualConsoleClassMain, NULL);
+					}
+				}
+
+				if (hMacroInstance)
+				{
+					DWORD nGuiPID = 0; GetWindowThreadProcessId(hMacroInstance, &nGuiPID);
+					AllowSetForegroundWindow(nGuiPID);
+				}
+			}
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/CHECKUNICODE")==0)
@@ -4200,7 +4239,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 		else if (eExecAction)
 		{
-			iFRc = DoExecAction(eExecAction, lsCmdLine);
+			iFRc = DoExecAction(eExecAction, lsCmdLine, hMacroInstance);
 		}
 
 		// И сразу на выход

@@ -14,6 +14,7 @@ SRCS = ConEmuPlugin.cpp \
        ../common/Monitors.cpp \
        ../common/MSecurity.cpp \
        ../common/MStrSafe.cpp \
+       ../common/SetEnvVar.cpp \
        ../common/WinConsole.cpp \
        ../common/WinObjects.cpp
 

@@ -1195,34 +1195,6 @@ wrap:
 }
 
 
-// hConEmuWnd - HWND с отрисовкой!
-void SetConEmuEnvVar(HWND hConEmuWnd)
-{
-	SetConEmuEnvHWND(ENV_CONEMUHWND_VAR_W, hConEmuWnd);
-}
-
-void SetConEmuEnvVarChild(HWND hDcWnd, HWND hBackWnd)
-{
-	SetConEmuEnvHWND(ENV_CONEMUDRAW_VAR_W, hDcWnd);
-	SetConEmuEnvHWND(ENV_CONEMUBACK_VAR_W, hBackWnd);
-}
-
-void SetConEmuEnvHWND(LPCWSTR pszVarName, HWND hWnd)
-{
-	if (hWnd)
-	{
-		// Установить переменную среды с дескриптором окна
-		wchar_t szVar[16];
-		msprintf(szVar, countof(szVar), L"0x%08X", (DWORD)(DWORD_PTR)hWnd); //-V205
-		SetEnvironmentVariable(pszVarName, szVar);
-	}
-	else
-	{
-		SetEnvironmentVariable(pszVarName, NULL);
-	}
-}
-
-
 // 0 -- All OK (ConEmu found, Version OK)
 // 1 -- NO ConEmu (simple console mode)
 // (obsolete) 2 -- ConEmu found, but old version

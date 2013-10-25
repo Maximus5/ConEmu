@@ -50,6 +50,7 @@ $(OBJDIR)\Monitors.obj \
 $(OBJDIR)\MSecurity.obj \
 $(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\RConStartArgs.obj \
+$(OBJDIR)\SetEnvVar.obj \
 $(OBJDIR)\WinConsole.obj \
 $(OBJDIR)\WinObjects.obj
 
@@ -304,6 +305,8 @@ $(OBJDIR)\MSecurity.obj: ../common/MSecurity.cpp
 $(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
 $(OBJDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
+
+$(OBJDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 
 $(OBJDIR)\WinConsole.obj: ../common/WinConsole.cpp ../common/WinConsole.h
 

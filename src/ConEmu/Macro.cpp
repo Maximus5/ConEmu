@@ -1594,6 +1594,27 @@ LPWSTR CConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon)
 		}
 		pszResult = lstrdup(L"OK");
 	}
+	else if (!lstrcmpi(pszName, L"AlwaysOnTop"))
+	{
+		// SetOption("AlwaysOnTop",0) - Disable top-most
+		// SetOption("AlwaysOnTop",1) - Enable top-most
+		// SetOption("AlwaysOnTop",2) - Switch top-most
+		p->GetIntArg(1, nValue);
+		switch (nValue)
+		{
+		case 0:
+			gpSet->isAlwaysOnTop = false;
+			break;
+		case 1:
+			gpSet->isAlwaysOnTop = true;
+			break;
+		case 2:
+			gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
+			break;
+		}
+		gpConEmu->OnAlwaysOnTop();
+		pszResult = lstrdup(L"OK");
+	}
 	else
 	{
 		//TODO: More options on demand

@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "DefaultTerm.h"
 #include "GuiServer.h"
+#include "Macro.h"
 #include "RealConsole.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
@@ -561,6 +562,35 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			lbRc = TRUE;
 			break;
 		} // CECMD_GUICLIENTSHIFT
+
+		case CECMD_GUIMACRO:
+		{
+			// ƒопустимо, если GuiMacro пытаютс€ выполнить извне
+			CVConGuard VCon; CVConGroup::GetActiveVCon(&VCon);
+
+			DWORD nFarPluginPID = VCon->RCon()->GetFarPID(true);
+			LPWSTR pszResult = CConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, VCon->RCon(), (nFarPluginPID==pIn->hdr.nSrcPID));
+
+			int nLen = pszResult ? _tcslen(pszResult) : 0;
+
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t);
+			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+				goto wrap;
+
+			if (pszResult)
+			{
+				lstrcpy(ppReply->GuiMacro.sMacro, pszResult);
+				ppReply->GuiMacro.nSucceeded = 1;
+				free(pszResult);
+			}
+			else
+			{
+				ppReply->GuiMacro.sMacro[0] = 0;
+				ppReply->GuiMacro.nSucceeded = 0;
+			}
+
+			break;
+		} // CECMD_GUIMACRO
 
 		//case CECMD_DEFTERMSTARTED:
 		//{
