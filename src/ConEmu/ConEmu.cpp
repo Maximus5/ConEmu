@@ -13370,10 +13370,14 @@ void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 		//if (!isIconic())
 		//	SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 
-		if (VCon->RCon()->SetFullScreen())
+		::ShowWindow(ghWnd, SW_SHOWMINNOACTIVE);
+
+		bool bFRc = VCon->RCon()->SetFullScreen();
+
+		if (bFRc)
 			return;
 
-		//SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+		SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 	}
 #endif
 

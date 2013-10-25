@@ -3338,13 +3338,36 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 
 
 
+bool CheckWasFullScreen()
+{
+	bool bFullScreenHW = false;
 
+	if (gpSrv->pfnWasFullscreenMode)
+	{
+		DWORD nModeFlags = 0; gpSrv->pfnWasFullscreenMode(&nModeFlags);
+		if (nModeFlags & CONSOLE_FULLSCREEN_HARDWARE)
+		{
+			bFullScreenHW = true;
+		}
+		else
+		{
+			gpSrv->pfnWasFullscreenMode = NULL;
+		}
+	}
 
+	return bFullScreenHW;
+}
 
 static int ReadConsoleInfo()
 {
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+
+	if (CheckWasFullScreen())
+	{
+		LogString("ReadConsoleInfo was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
+		return -1;
+	}
 
 	//int liRc = 1;
 	BOOL lbChanged = gpSrv->pConsole->bDataChanged; // Если что-то еще не отослали - сразу TRUE
@@ -3777,6 +3800,12 @@ wrap:
 // передернуть GUI по таймауту (не реже 1 сек).
 BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 {
+	if (CheckWasFullScreen())
+	{
+		LogString("ReloadFullConsoleInfo was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
+		return FALSE;
+	}
+
 	BOOL lbChanged = abForceSend;
 	BOOL lbDataChanged = abForceSend;
 	DWORD dwCurThId = GetCurrentThreadId();

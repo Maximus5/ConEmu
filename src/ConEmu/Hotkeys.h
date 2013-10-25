@@ -81,6 +81,7 @@ struct ConEmuHotKey
 	// Internal
 	size_t cchGuiMacroMax;
 	bool   NotChanged;
+	int    iTaskIdx;
 
 	bool CanChangeVK() const;
 
@@ -91,6 +92,7 @@ struct ConEmuHotKey
 	// *** Service functions ***
 	// Вернуть имя модификатора (типа "Apps+Space")
 	LPCWSTR GetHotkeyName(wchar_t (&szFull)[128]) const;
+	static LPCWSTR GetHotkeyName(DWORD aVkMod, wchar_t (&szFull)[128]);
 
 	// nHostMod в младших 3-х байтах может содержать VK (модификаторы).
 	// Функция проверяет, чтобы они не дублировались
@@ -120,18 +122,21 @@ struct ConEmuHotKey
 	static ConEmuHotKey* AllocateHotkeys();
 };
 
+// IDD_HOTKEY { hkHotKeySelect, lbHotKeyList, lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3 }
 class CHotKeyDialog
 {
 private:
-	//static MMap<HWND,CHotKeyDialog*> dlgMap;
-private:
 	HWND mh_Dlg;
-	bool mb_Embedded;
+	HWND mh_Parent;
+	ConEmuHotKey m_HK;
 public:
-	static bool EditHotKey(DWORD& VkMod);
+	static bool EditHotKey(HWND hParent, DWORD& VkMod);
+	DWORD GetVkMod();
 public:
-	CHotKeyDialog(HWND hDlg, bool bEmbedded);
+	static DWORD dlgGetHotkey(HWND hDlg, UINT iEditCtrl = hkHotKeySelect, UINT iListCtrl = lbHotKeyList);
+public:
+	CHotKeyDialog(HWND hParent, DWORD aVkMod);
 	~CHotKeyDialog();
 
-	static INT_PTR CALLBACK hkDlgProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 };

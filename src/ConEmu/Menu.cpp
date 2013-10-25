@@ -358,6 +358,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 				itm.pszCmd = pszHistory;
 
 				InsertMenu(hPopup, nInsertPos, MF_BYPOSITION | MF_STRING | MF_ENABLED, itm.nCmd, itm.szShort);
+				m_CmdTaskPopup.push_back(itm);
 			}
 
 			pszHistory += _tcslen(pszHistory)+1;

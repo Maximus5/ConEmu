@@ -1127,8 +1127,10 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 
 	pTask->SetName(pszNameSet, iIndex);
 
-	if (!reg->Load(L"Hotkey", pTask->VkMod))
-		pTask->VkMod = 0;
+	if (!reg->Load(L"Hotkey", pTask->HotKey.VkMod))
+		pTask->HotKey.VkMod = 0;
+	pTask->HotKey.HkType = chk_User;
+
 
 	if (!reg->Load(L"GuiArgs", &pTask->pszGuiArgs) || !*pTask->pszGuiArgs)
 	{
@@ -1266,7 +1268,7 @@ bool Settings::SaveCmdTask(SettingsBase* reg, CommandTasks* pTask)
 		reg->Save(L"Name", pTask->pszName);
 	}
 
-	reg->Save(L"Hotkey", pTask->VkMod);
+	reg->Save(L"Hotkey", pTask->HotKey.VkMod);
 
 	reg->Save(L"GuiArgs", pTask->pszGuiArgs);
 
@@ -4627,7 +4629,23 @@ const Settings::CommandTasks* Settings::CmdTaskGet(int anIndex)
 	if (!CmdTasks || (anIndex < 0) || (anIndex >= CmdTaskCount))
 		return NULL;
 
+	if (CmdTasks[anIndex] && CmdTasks[anIndex]->HotKey.VkMod)
+	{
+		CmdTasks[anIndex]->HotKey.iTaskIdx = anIndex;
+		CmdTasks[anIndex]->HotKey.fkey = CConEmuCtrl::key_RunTask;
+	}
+
 	return (CmdTasks[anIndex]);
+}
+
+// anIndex - 0-based, index of CmdTasks
+void Settings::CmdTaskSetVkMod(int anIndex, DWORD VkMod)
+{
+	if (!CmdTasks || (anIndex < 0) || (anIndex >= CmdTaskCount))
+		return;
+	if (!CmdTasks[anIndex])
+		return;
+	CmdTasks[anIndex]->HotKey.VkMod = VkMod;
 }
 
 // anIndex - 0-based, index of CmdTasks

@@ -1671,6 +1671,20 @@ bool CConEmuCtrl::key_DeleteWordToLeft(DWORD VkMod, bool TestOnly, const ConEmuH
 	return true;
 }
 
+bool CConEmuCtrl::key_RunTask(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	if (gpSet->CmdTaskGet(hk->iTaskIdx))
+	{
+		wchar_t szMacro[64];
+		_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"Task(%i)", hk->iTaskIdx+1); //1-based
+		CConEmuMacro::ExecuteMacro(szMacro, pRCon);
+	}
+	return true;
+}
+
 bool CConEmuCtrl::key_FindTextDlg(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	// Если это GUI App in Tab - само

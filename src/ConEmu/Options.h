@@ -385,7 +385,8 @@ struct Settings
 			wchar_t* pszGuiArgs;
 			size_t   cchCmdMax;
 			wchar_t* pszCommands; // "\r\n" separated commands
-			DWORD    VkMod; // Hotkey
+
+			ConEmuHotKey HotKey;
 
 			void FreePtr()
 			{
@@ -537,6 +538,7 @@ struct Settings
 			};
 		};
 		const CommandTasks* CmdTaskGet(int anIndex); // 0-based, index of CmdTasks. "-1" == autosaved task
+		void CmdTaskSetVkMod(int anIndex, DWORD VkMod); // 0-based, index of CmdTasks
 		void CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR asCommands); // 0-based, index of CmdTasks
 		bool CmdTaskXch(int anIndex1, int anIndex2); // 0-based, index of CmdTasks
 

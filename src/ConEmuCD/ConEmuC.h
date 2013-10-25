@@ -225,6 +225,7 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out);
 //#endif
 void CheckCursorPos();
 BOOL ReloadFullConsoleInfo(BOOL abForceSend);
+bool CheckWasFullScreen();
 DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
 int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/); // Создать необходимые события и нити
 void ServerDone(int aiRc, bool abReportShutdown = false);
@@ -387,6 +388,9 @@ struct AltServerInfo
 
 #include "Debugger.h"
 
+typedef BOOL (WINAPI* FGetConsoleDisplayMode)(LPDWORD);
+extern FGetConsoleDisplayMode pfnGetConsoleDisplayMode;
+
 struct SrvInfo
 {
 	HANDLE hRootProcess, hRootThread;
@@ -447,6 +451,7 @@ struct SrvInfo
 	CESERVER_REQ_CONINFO_FULL *pConsole;
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
 	CRITICAL_SECTION csReadConsoleInfo;
+	FGetConsoleDisplayMode pfnWasFullscreenMode;
 	// Input
 	HANDLE hInputThread;
 	DWORD dwInputThread; BOOL bInputTermination;

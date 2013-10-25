@@ -16,10 +16,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 [%] Issue 1298: ConEmu may crash when starting some incorrect tasks.
-[%] Win+Left, Win+Right once more.
+[%] Issue 1269: Win+Left, Win+Right once more.
 [+] GuiMacro: SetOption("AlwaysOnTop",Value). Where Value: 2 - switch AlwaysOnTop, 1 - enable, 0 - disable.
 [%] Issue 675: When both "Reset selection on input" and "any key" are checked selection was dropped when Shift (e.g.) was released.
 [+] Issue 685: Allow using simple modifiers for text selection (Shift, Alt, Control).
+[+] Issue 836: Allow to set tasks hotkey.
+[+] Anyone still using WinXP? «Enter TEXT fullscreen mode, when available» hotkey is available.
+    This is a global hotkey, you may (try to) press it even if ConEmu has no focus.
 
 
 2013.10.20

@@ -158,62 +158,29 @@ Settings::ColorPalette gLastColors = {};
 namespace SettingsNS
 {
 	CSettings::ListBoxItem  BgOper[] = {{eUpLeft,L"UpLeft"}, {eUpRight,L"UpRight"}, {eDownLeft,L"DownLeft"}, {eDownRight,L"DownRight"}, {eStretch,L"Stretch"}, {eAspect,L"Aspect"}, {eTile,L"Tile"}};
-	//const WCHAR* szBgOper[] = {L"UpLeft", L"UpRight", L"DownLeft", L"DownRight", L"Stretch", L"Tile"};
-	//const DWORD  nBgOper[] =  {eUpLeft,   eUpRight,   eDownLeft,   eDownRight,   eStretch,   eTile};
-	CSettings::ListBoxItem  Keys[] = {{0,L"<None>"}, {VK_LCONTROL,L"Left Ctrl"}, {VK_RCONTROL,L"Right Ctrl"}, {VK_LMENU,L"Left Alt"}, {VK_RMENU,L"Right Alt"}, {VK_LSHIFT,L"Left Shift"}, {VK_RSHIFT,L"Right Shift"}};
-	//const WCHAR* szKeys[] = {L"<None>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
-	//const DWORD  nKeys[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
+
 	CSettings::ListBoxItem  Modifiers[] = {{0,L" "}, {VK_LWIN,L"Win"},  {VK_APPS,L"Apps"},  {VK_CONTROL,L"Ctrl"}, {VK_LCONTROL,L"LCtrl"}, {VK_RCONTROL,L"RCtrl"},           {VK_MENU,L"Alt"}, {VK_LMENU,L"LAlt"}, {VK_RMENU,L"RAlt"},     {VK_SHIFT,L"Shift"}, {VK_LSHIFT,L"LShift"}, {VK_RSHIFT,L"RShift"}};
-	//const WCHAR* szModifiers[] = {L" ", L"Win",  L"Apps",  L"Ctrl", L"LCtrl", L"RCtrl",           L"Alt", L"LAlt", L"RAlt",     L"Shift", L"LShift", L"RShift"};
-	//const DWORD  nModifiers[] =  {0,    VK_LWIN, VK_APPS,  VK_CONTROL, VK_LCONTROL, VK_RCONTROL,  VK_MENU, VK_LMENU, VK_RMENU,  VK_SHIFT, VK_LSHIFT, VK_RSHIFT};
+	CSettings::ListBoxItem  KeysHot[] = {{0,L""}, {VK_ESCAPE,L"Esc"}, {VK_DELETE,L"Delete"}, {VK_TAB,L"Tab"}, {VK_RETURN,L"Enter"}, {VK_SPACE,L"Space"}, {VK_BACK,L"Backspace"}, {VK_PAUSE,L"Pause"}, {VK_WHEEL_UP,L"Wheel Up"}, {VK_WHEEL_DOWN,L"Wheel Down"}, {VK_WHEEL_LEFT,L"Wheel Left"}, {VK_WHEEL_RIGHT,L"Wheel Right"}, {VK_LBUTTON,L"LButton"}, {VK_RBUTTON,L"RButton"}, {VK_MBUTTON,L"MButton"}};
+	CSettings::ListBoxItem  Keys[] = {{0,L"<None>"}, {VK_LCONTROL,L"Left Ctrl"}, {VK_RCONTROL,L"Right Ctrl"}, {VK_LMENU,L"Left Alt"}, {VK_RMENU,L"Right Alt"}, {VK_LSHIFT,L"Left Shift"}, {VK_RSHIFT,L"Right Shift"}};
 	CSettings::ListBoxItem  KeysAct[] = {{0,L"<Always>"}, {VK_CONTROL,L"Ctrl"}, {VK_LCONTROL,L"Left Ctrl"}, {VK_RCONTROL,L"Right Ctrl"}, {VK_MENU,L"Alt"}, {VK_LMENU,L"Left Alt"}, {VK_RMENU,L"Right Alt"}, {VK_SHIFT,L"Shift"}, {VK_LSHIFT,L"Left Shift"}, {VK_RSHIFT,L"Right Shift"}};
-	//const WCHAR* szKeysAct[] = {L"<Always>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
-	//const DWORD  nKeysAct[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
-	CSettings::ListBoxItem KeysHot[] = {{0,L""}, {VK_ESCAPE,L"Esc"}, {VK_DELETE,L"Delete"}, {VK_TAB,L"Tab"}, {VK_RETURN,L"Enter"}, {VK_SPACE,L"Space"}, {VK_BACK,L"Backspace"}, {VK_PAUSE,L"Pause"}, {VK_WHEEL_UP,L"Wheel Up"}, {VK_WHEEL_DOWN,L"Wheel Down"}, {VK_WHEEL_LEFT,L"Wheel Left"}, {VK_WHEEL_RIGHT,L"Wheel Right"}, {VK_LBUTTON,L"LButton"}, {VK_RBUTTON,L"RButton"}, {VK_MBUTTON,L"MButton"}};
-	//const WCHAR* szKeysHot[] = {L"", L"Esc", L"Delete", L"Tab", L"Enter", L"Space", L"Backspace", L"Pause", L"Wheel Up", L"Wheel Down", L"Wheel Left", L"Wheel Right", L"LButton", L"RButton", L"MButton"};
-	//const DWORD  nKeysHot[] =  {0, VK_ESCAPE, VK_DELETE, VK_TAB, VK_RETURN, VK_SPACE, VK_BACK, VK_PAUSE, VK_WHEEL_UP, VK_WHEEL_DOWN, VK_WHEEL_LEFT, VK_WHEEL_RIGHT, VK_LBUTTON, VK_RBUTTON, VK_MBUTTON};
+
 	const DWORD  FSizes[] = {0, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
 	const DWORD  FSizesSmall[] = {5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32};
-	CSettings::ListBoxItem  ClipAct[] = {{0,L"<None>"}, {1,L"Copy"}, {2,L"Paste"}, {3,L"Auto"}};
-	//const WCHAR* szClipAct[] = {L"<None>", L"Copy", L"Paste", L"Auto"};
-	//const DWORD  nClipAct[] =  {0,         1,       2,        3};
-	CSettings::ListBoxItem  ColorIdx[] = {{0,L" 0"}, {1,L" 1"}, {2,L" 2"}, {3,L" 3"}, {4,L" 4"}, {5,L" 5"}, {6,L" 6"}, {7,L" 7"}, {8,L" 8"}, {9,L" 9"}, {10,L"10"}, {11,L"11"}, {12,L"12"}, {13,L"13"}, {14,L"14"}, {15,L"15"}, {16,L"None"}};
-	//const WCHAR* szColorIdx[] = {L" 0", L" 1", L" 2", L" 3", L" 4", L" 5", L" 6", L" 7", L" 8", L" 9", L"10", L"11", L"12", L"13", L"14", L"15", L"None"};
-	//const DWORD  nColorIdx[] = {    0,     1,     2,     3,     4,     5,     6,     7,     8,     9,    10,    11,    12,    13,    14,    15,    16};
-	CSettings::ListBoxItem  ColorIdxSh[] = {{0,L"# 0"}, {1,L"# 1"}, {2,L"# 2"}, {3,L"# 3"}, {4,L"# 4"}, {5,L"# 5"}, {6,L"# 6"}, {7,L"# 7"}, {8,L"# 8"}, {9,L"# 9"}, {10,L"#10"}, {11,L"#11"}, {12,L"#12"}, {13,L"#13"}, {14,L"#14"}, {15,L"#15"}};
-	//const WCHAR* szColorIdxSh[] = {L"# 0", L"# 1", L"# 2", L"# 3", L"# 4", L"# 5", L"# 6", L"# 7", L"# 8", L"# 9", L"#10", L"#11", L"#12", L"#13", L"#14", L"#15"};
-	//const DWORD  nColorIdxSh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15};
-	CSettings::ListBoxItem  ColorIdxTh[] = {{0,L"# 0"}, {1,L"# 1"}, {2,L"# 2"}, {3,L"# 3"}, {4,L"# 4"}, {5,L"# 5"}, {6,L"# 6"}, {7,L"# 7"}, {8,L"# 8"}, {9,L"# 9"}, {10,L"#10"}, {11,L"#11"}, {12,L"#12"}, {13,L"#13"}, {14,L"#14"}, {15,L"#15"}, {16,L"Auto"}};
-	//const WCHAR* szColorIdxTh[] = {L"# 0", L"# 1", L"# 2", L"# 3", L"# 4", L"# 5", L"# 6", L"# 7", L"# 8", L"# 9", L"#10", L"#11", L"#12", L"#13", L"#14", L"#15", L"Auto"};
-	//const DWORD  nColorIdxTh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15,    16};
-	CSettings::ListBoxItem  ThumbMaxZoom[] = {{100,L"100%"},{200,L"200%"},{300,L"300%"},{400,L"400%"},{500,L"500%"},{600,L"600%"}};
-	//const WCHAR* szThumbMaxZoom[] = {L"100%",L"200%",L"300%",L"400%",L"500%",L"600%"};
-	//const DWORD  nThumbMaxZoom[] = {100,200,300,400,500,600};
 	CSettings::ListBoxItem  CharSets[] = {{0,L"ANSI"}, {178,L"Arabic"}, {186,L"Baltic"}, {136,L"Chinese Big 5"}, {1,L"Default"}, {238,L"East Europe"},
 		{134,L"GB 2312"}, {161,L"Greek"}, {177,L"Hebrew"}, {129,L"Hangul"}, {130,L"Johab"}, {77,L"Mac"}, {255,L"OEM"}, {204,L"Russian"}, {128,L"Shiftjis"},
 		{2,L"Symbol"}, {222,L"Thai"}, {162,L"Turkish"}, {163,L"Vietnamese"}};
-	//const DWORD  nCharSets[] = {, , ,        128, 2, 222, 162, 163};
-	//const WCHAR* szCharSets[] = {L"ANSI", L"Arabic", L"Baltic", L"Chinese Big 5", L"Default", L"East Europe",
-	//	L"GB 2312", L"Greek", L"Hebrew", L"Hangul", L"Johab", L"Mac", L"OEM", L"Russian", L"Shiftjis",
-	//	L"Symbol", L"Thai", L"Turkish", L"Vietnamese"
-	//};
-	//const struct StatusBarIds { CEStatusItems stItem; UINT nDlgID; } StatusItems[] = 
-	//{
-	//	{csi_ActiveProcess, cbStatusActiveProcess}, {csi_ConsoleTitle, cbStatusConsoleTitle},
-	//	{csi_ActiveVCon, cbStatusActiveVCon}, {csi_NewVCon, cbStatusNewVCon}, {csi_CapsLock, cbStatusCapsLock}, {csi_NumLock, cbStatusNumLock},
-	//	{csi_ScrollLock, cbStatusScrlLock}, {csi_InputLocale, cbStatusInputLang}, {csi_WindowPos, cbStatusWindowPos},
-	//	{csi_WindowSize, cbStatusWindowSize}, {csi_WindowClient, cbStatusWindowClient}, {csi_WindowWork, cbStatusWindowWorkspace},
-	//	{csi_ActiveBuffer, cbStatusActiveBuffer}, {csi_ConsolePos, cbStatusConsolePos}, {csi_ConsoleSize, cbStatusConsoleSize},
-	//	{csi_BufferSize, cbStatusBufferSize}, {csi_CursorX, cbStatusCursorX}, {csi_CursorY, cbStatusCursorY},
-	//	{csi_CursorSize, cbStatusCursorSize}, {csi_CursorInfo, cbStatusCursorInfo}, {csi_ConEmuPID, cbStatusGuiPID},
-	//	{csi_ConEmuHWND, cbStatusGuiHwnd}, {csi_ConEmuView, cbStatusViewHwnd}, {csi_Server, cbStatusServer},
-	//	{csi_ServerHWND, cbStatusRealHwnd}, {csi_Transparency, cbStatusTransparency}
-	//};
+	
+	CSettings::ListBoxItem  ClipAct[] = {{0,L"<None>"}, {1,L"Copy"}, {2,L"Paste"}, {3,L"Auto"}};
+
+	CSettings::ListBoxItem  ColorIdx[] = {{0,L" 0"}, {1,L" 1"}, {2,L" 2"}, {3,L" 3"}, {4,L" 4"}, {5,L" 5"}, {6,L" 6"}, {7,L" 7"}, {8,L" 8"}, {9,L" 9"}, {10,L"10"}, {11,L"11"}, {12,L"12"}, {13,L"13"}, {14,L"14"}, {15,L"15"}, {16,L"None"}};
+	CSettings::ListBoxItem  ColorIdxSh[] = {{0,L"# 0"}, {1,L"# 1"}, {2,L"# 2"}, {3,L"# 3"}, {4,L"# 4"}, {5,L"# 5"}, {6,L"# 6"}, {7,L"# 7"}, {8,L"# 8"}, {9,L"# 9"}, {10,L"#10"}, {11,L"#11"}, {12,L"#12"}, {13,L"#13"}, {14,L"#14"}, {15,L"#15"}};
+	CSettings::ListBoxItem  ColorIdxTh[] = {{0,L"# 0"}, {1,L"# 1"}, {2,L"# 2"}, {3,L"# 3"}, {4,L"# 4"}, {5,L"# 5"}, {6,L"# 6"}, {7,L"# 7"}, {8,L"# 8"}, {9,L"# 9"}, {10,L"#10"}, {11,L"#11"}, {12,L"#12"}, {13,L"#13"}, {14,L"#14"}, {15,L"#15"}, {16,L"Auto"}};
+	CSettings::ListBoxItem  ThumbMaxZoom[] = {{100,L"100%"},{200,L"200%"},{300,L"300%"},{400,L"400%"},{500,L"500%"},{600,L"600%"}};
+
 	CSettings::ListBoxItem  CRLF[] = {{0,L"CR+LF"}, {1,L"LF"}, {2,L"CR"}};
-	//const WCHAR* szCRLF[] = {L"CR+LF", L"LF", L"CR"};
-	//const DWORD  nCRLF[] =  {0, 1, 2};
+
 	const WORD nSizeCtrlId[] = {tWndWidth, stWndWidth, tWndHeight, stWndHeight};
-	const WORD nTaskCtrlId[] = {tCmdGroupName, tCmdGroupGuiArg, tCmdGroupCommands, stCmdTaskAdd, cbCmdGroupApp, cbCmdTasksDir, cbCmdTasksParm, cbCmdTasksActive};
+	const WORD nTaskCtrlId[] = {tCmdGroupName, tCmdGroupKey, cbCmdGroupKey, tCmdGroupGuiArg, tCmdGroupCommands, stCmdTaskAdd, cbCmdGroupApp, cbCmdTasksDir, cbCmdTasksParm, cbCmdTasksActive};
 	const WORD nStatusColorIds[] = {stStatusColorBack, tc35, c35, stStatusColorLight, tc36, c36, stStatusColorDark, tc37, c37};
 	const struct TabDefaultClickAction { int value; WCHAR *name; } tabBtnDblClickActions[] =
 	{// gpSet->nTabBtnDblClickAction
@@ -527,87 +494,107 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 
 	DWORD nState = (VkMod & cvk_ALLMASK);
 
-	// Теперь бежим по m_HotKeys и сравниваем требуемые модификаторы
-	for (int i = 0; m_HotKeys[i].DescrLangID; i++)
+	for (int s = 0; !p && s <= 1; s++)
 	{
-		if (m_HotKeys[i].HkType == chk_Modifier)
-			continue;
-
-		WARNING("ConEmuHotKey: Требуется заменить. Указатели вообще не нужны, вся инфа должна храниться в m_HotKeys");
-		DWORD TestVkMod = m_HotKeys[i].VkMod;
-		if (ConEmuHotKey::GetHotkey(TestVkMod) != vk)
-			continue; // Не совпадает сама кнопка
-
-		DWORD TestMask = cvk_DISTINCT;
-		DWORD TestValue = 0;
-
-		for (int k = 1; k <= 3; k++)
+		// Теперь бежим по m_HotKeys и сравниваем требуемые модификаторы
+		for (int i = 0;; i++)
 		{
-			switch (ConEmuHotKey::GetModifier(TestVkMod, k))
+			const ConEmuHotKey* pi;
+
+			if (s == 0)
 			{
-			case 0:
-				break; // нету
-			case VK_LWIN: case VK_RWIN: // RWin быть не должно по идее
-				TestValue |= cvk_Win; break;
-			case VK_APPS:
-				TestValue |= cvk_Apps; break;
-
-			case VK_LCONTROL:
-				TestValue |= cvk_LCtrl; break;
-			case VK_RCONTROL:
-				TestValue |= cvk_RCtrl; break;
-			case VK_CONTROL:
-				TestValue |= cvk_Ctrl;
-				TestValue &= ~(cvk_LCtrl|cvk_RCtrl);
-				TestMask |= cvk_Ctrl;
-				TestMask &= ~(cvk_LCtrl|cvk_RCtrl);
-				break;
-
-			case VK_LMENU:
-				TestValue |= cvk_LAlt; break;
-			case VK_RMENU:
-				TestValue |= cvk_RAlt; break;
-			case VK_MENU:
-				TestValue |= cvk_Alt;
-				TestValue &= ~(cvk_LAlt|cvk_RAlt);
-				TestMask |= cvk_Alt;
-				TestMask &= ~(cvk_LAlt|cvk_RAlt);
-				break;
-
-			case VK_LSHIFT:
-				TestValue |= cvk_LShift; break;
-			case VK_RSHIFT:
-				TestValue |= cvk_RShift; break;
-			case VK_SHIFT:
-				TestValue |= cvk_Shift;
-				TestValue &= ~(cvk_LShift|cvk_RShift);
-				TestMask |= cvk_Shift;
-				TestMask &= ~(cvk_LShift|cvk_RShift);
-				break;
-
-			#ifdef _DEBUG
-			default:
-				// Неизвестный!
-				_ASSERTE(ConEmuHotKey::GetModifier(TestVkMod, k)==0);
-			#endif
+				pi = (m_HotKeys+i);
+				if (!pi->DescrLangID)
+					break;
 			}
-		}
-
-		if ((nState & TestMask) != TestValue)
-			continue;
-
-		if (m_HotKeys[i].fkey)
-		{
-			// Допускается ли этот хоткей в текущем контексте?
-			if (m_HotKeys[i].fkey(VkMod, true, (m_HotKeys+i), pRCon))
+			else
 			{
-				p = (m_HotKeys+i);
-				break; // Нашли
+				const Settings::CommandTasks* pCmd = gpSet->CmdTaskGet(i);
+				if (!pCmd)
+					break;
+				pi = &pCmd->HotKey;
 			}
-		}
-		else
-		{
-			_ASSERTE(m_HotKeys[i].fkey!=NULL);
+
+			if (pi->HkType == chk_Modifier)
+				continue;
+
+			WARNING("ConEmuHotKey: Требуется заменить. Указатели вообще не нужны, вся инфа должна храниться в m_HotKeys");
+			DWORD TestVkMod = pi->VkMod;
+			if (ConEmuHotKey::GetHotkey(TestVkMod) != vk)
+				continue; // Не совпадает сама кнопка
+
+			DWORD TestMask = cvk_DISTINCT;
+			DWORD TestValue = 0;
+
+			for (int k = 1; k <= 3; k++)
+			{
+				switch (ConEmuHotKey::GetModifier(TestVkMod, k))
+				{
+				case 0:
+					break; // нету
+				case VK_LWIN: case VK_RWIN: // RWin быть не должно по идее
+					TestValue |= cvk_Win; break;
+				case VK_APPS:
+					TestValue |= cvk_Apps; break;
+
+				case VK_LCONTROL:
+					TestValue |= cvk_LCtrl; break;
+				case VK_RCONTROL:
+					TestValue |= cvk_RCtrl; break;
+				case VK_CONTROL:
+					TestValue |= cvk_Ctrl;
+					TestValue &= ~(cvk_LCtrl|cvk_RCtrl);
+					TestMask |= cvk_Ctrl;
+					TestMask &= ~(cvk_LCtrl|cvk_RCtrl);
+					break;
+
+				case VK_LMENU:
+					TestValue |= cvk_LAlt; break;
+				case VK_RMENU:
+					TestValue |= cvk_RAlt; break;
+				case VK_MENU:
+					TestValue |= cvk_Alt;
+					TestValue &= ~(cvk_LAlt|cvk_RAlt);
+					TestMask |= cvk_Alt;
+					TestMask &= ~(cvk_LAlt|cvk_RAlt);
+					break;
+
+				case VK_LSHIFT:
+					TestValue |= cvk_LShift; break;
+				case VK_RSHIFT:
+					TestValue |= cvk_RShift; break;
+				case VK_SHIFT:
+					TestValue |= cvk_Shift;
+					TestValue &= ~(cvk_LShift|cvk_RShift);
+					TestMask |= cvk_Shift;
+					TestMask &= ~(cvk_LShift|cvk_RShift);
+					break;
+
+				#ifdef _DEBUG
+				default:
+					// Неизвестный!
+					_ASSERTE(ConEmuHotKey::GetModifier(TestVkMod, k)==0);
+				#endif
+				}
+			}
+
+			if ((nState & TestMask) != TestValue)
+				continue;
+
+			if (pi->fkey)
+			{
+				// Допускается ли этот хоткей в текущем контексте?
+				if (pi->fkey(VkMod, true, pi, pRCon))
+				{
+					p = pi;
+					break; // Нашли
+				}
+			}
+			else
+			{
+				// Хоткей должен знать, что он "делает"
+				_ASSERTE(pi->fkey!=NULL);
+			}
 		}
 	}
 
@@ -2934,17 +2921,23 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				BYTE vk = ConEmuHotKey::GetHotkey(VkMod);
 				if (bHotKeyEnabled)
 				{
-					SendMessage(hHk, HKM_SETHOTKEY, 
-						vk|((vk==VK_DELETE||vk==VK_UP||vk==VK_DOWN||vk==VK_LEFT||vk==VK_RIGHT
-						||vk==VK_PRIOR||vk==VK_NEXT||vk==VK_HOME||vk==VK_END
-						||vk==VK_INSERT) ? (HOTKEYF_EXT<<8) : 0), 0);
+					SetHotkeyField(hHk, vk);
+					//SendMessage(hHk, HKM_SETHOTKEY, 
+					//	vk|((vk==VK_DELETE||vk==VK_UP||vk==VK_DOWN||vk==VK_LEFT||vk==VK_RIGHT
+					//	||vk==VK_PRIOR||vk==VK_NEXT||vk==VK_HOME||vk==VK_END
+					//	||vk==VK_INSERT) ? (HOTKEYF_EXT<<8) : 0), 0);
+
 					// Warning! Если nVK не указан в SettingsNS::nKeysHot - nVK будет обнулен
-					FillListBoxByte(hWnd2, lbHotKeyList, SettingsNS::KeysHot, vk);
+					//FillListBoxByte(hWnd2, lbHotKeyList, SettingsNS::KeysHot, vk);
+					FillListBoxHotKeys(GetDlgItem(hWnd2, lbHotKeyList), eHkKeysHot, vk);
 				}
 				else if (bKeyListEnabled)
 				{
-					SendMessage(hHk, HKM_SETHOTKEY, 0, 0);
-					FillListBoxByte(hWnd2, lbHotKeyList, SettingsNS::Keys, vk);
+					SetHotkeyField(hHk, 0);
+					//SendMessage(hHk, HKM_SETHOTKEY, 0, 0);
+
+					//FillListBoxByte(hWnd2, lbHotKeyList, SettingsNS::Keys, vk);
+					FillListBoxHotKeys(GetDlgItem(hWnd2, lbHotKeyList), eHkKeys, vk);
 				}
 			}
 		}
@@ -2967,7 +2960,8 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		MySetDlgItemText(hWnd2, tGuiMacro, pszDescription/*, bMacroEnabled*/);
 		EnableWindow(GetDlgItem(hWnd2, cbGuiMacroHelp), (mp_ActiveHotKey!=NULL) && bMacroEnabled);
 		if (!bHotKeyEnabled)
-			SendMessage(hHk, HKM_SETHOTKEY, 0, 0);
+			SetHotkeyField(hHk, 0);
+			//SendMessage(hHk, HKM_SETHOTKEY, 0, 0);
 		if (!bKeyListEnabled)
 			SendDlgItemMessage(hWnd2, lbHotKeyList, CB_RESETCONTENT, 0, 0);
 		// Modifiers
@@ -2976,7 +2970,8 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		for (int n = 0; n < 3; n++)
 		{
 			BYTE b = (bShow && VkMod) ? ConEmuHotKey::GetModifier(VkMod,n+1) : 0;
-			FillListBoxByte(hWnd2, lbHotKeyMod1+n, SettingsNS::Modifiers, b);
+			//FillListBoxByte(hWnd2, lbHotKeyMod1+n, SettingsNS::Modifiers, b);
+			FillListBoxHotKeys(GetDlgItem(hWnd2, lbHotKeyMod1+n), eHkModifiers, b);
 			EnableWindow(GetDlgItem(hWnd2, lbHotKeyMod1+n), bEnabled);
 		}
 		//for (size_t n = 0; n < countof(HostkeyCtrlIds); n++)
@@ -3037,9 +3032,8 @@ int CSettings::HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 		case 1:
 			// Hotkey
 			{
-				wchar_t szFull1[128]; pHk1->GetHotkeyName(szFull1);
-				wchar_t szFull2[128]; pHk2->GetHotkeyName(szFull2);
-				nCmp = lstrcmp(szFull1, szFull2);
+				wchar_t szFull1[128], szFull2[128]; ;
+				nCmp = lstrcmp(pHk1->GetHotkeyName(szFull1), pHk2->GetHotkeyName(szFull2));
 				if (nCmp == 0)
 					nCmp = (pHk1 < pHk2) ? -1 : (pHk1 > pHk2) ? 1 : 0;
 			}
@@ -3169,10 +3163,14 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 
 	FillHotKeysList(hWnd2, abInitial);
 		
-	BYTE b = 0;
-	FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::Modifiers, b);
-	FillListBoxByte(hWnd2, lbHotKeyMod2, SettingsNS::Modifiers, b);
-	FillListBoxByte(hWnd2, lbHotKeyMod3, SettingsNS::Modifiers, b);
+	for (int i = 0; i < 3; i++)
+	{
+		BYTE b = 0;
+		FillListBoxHotKeys(GetDlgItem(hWnd2, lbHotKeyMod1+i), eHkModifiers, b);
+	}
+	//FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::Modifiers, b);
+	//FillListBoxByte(hWnd2, lbHotKeyMod2, SettingsNS::Modifiers, b);
+	//FillListBoxByte(hWnd2, lbHotKeyMod3, SettingsNS::Modifiers, b);
 
 	return 0;
 }
@@ -6053,6 +6051,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCmdTasksDel:
 		case cbCmdTasksUp:
 		case cbCmdTasksDown:
+		case cbCmdGroupKey:
 		case cbCmdGroupApp:
 		case cbCmdTasksParm:
 		case cbCmdTasksDir:
@@ -6544,6 +6543,25 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 		} // cbCmdTasksUp, cbCmdTasksDown
 		break;
 
+	case cbCmdGroupKey:
+		{
+			int iCur = (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCURSEL, 0,0);
+			if (iCur < 0)
+				break;
+			const Settings::CommandTasks* pCmd = gpSet->CmdTaskGet(iCur);
+			if (!pCmd)
+				break;
+
+			DWORD VkMod = pCmd->HotKey.VkMod;
+			if (CHotKeyDialog::EditHotKey(ghOpWnd, VkMod))
+			{
+				gpSet->CmdTaskSetVkMod(iCur, VkMod);
+				wchar_t szKey[128] = L"";
+				SetDlgItemText(hWnd2, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.VkMod, szKey));
+			}
+		} // cbCmdGroupKey
+		break;
+
 	case cbCmdGroupApp:
 		{
 			// Добавить команду в группу
@@ -7006,19 +7024,8 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 	case hkHotKeySelect:
 	{
-		UINT nHotKey = 0xFF & SendDlgItemMessage(hWnd2, TB, HKM_GETHOTKEY, 0, 0);
-		bool bList = false;
-		for (size_t i = 0; i < countof(SettingsNS::KeysHot); i++)
-		{
-			if (SettingsNS::KeysHot[i].nValue == nHotKey)
-			{
-				SendDlgItemMessage(hWnd2, lbHotKeyList, CB_SETCURSEL, i, 0);
-				bList = true;
-				break;
-			}
-		}
-		if (!bList)
-			SendDlgItemMessage(hWnd2, lbHotKeyList, CB_SETCURSEL, 0, 0);
+		UINT nHotKey = CHotKeyDialog::dlgGetHotkey(hWnd2, hkHotKeySelect, lbHotKeyList);
+
 		if (mp_ActiveHotKey && mp_ActiveHotKey->CanChangeVK())
 		{
 			DWORD nCurMods = (CEHOTKEY_MODMASK & mp_ActiveHotKey->VkMod);
@@ -7601,14 +7608,19 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		{
 			if (mp_ActiveHotKey->CanChangeVK())
 			{
-				GetListBoxByte(hWnd2, wId, SettingsNS::KeysHot, vk);
-				SendDlgItemMessage(hWnd2, hkHotKeySelect, HKM_SETHOTKEY, vk|(vk==VK_DELETE ? (HOTKEYF_EXT<<8) : 0), 0);
+				//GetListBoxByte(hWnd2, wId, SettingsNS::KeysHot, vk);
+				CSettings::GetListBoxHotKey(GetDlgItem(hWnd2, wId), CSettings::eHkKeysHot, vk);
+
+				SetHotkeyField(GetDlgItem(hWnd2, hkHotKeySelect), vk);
+				//SendDlgItemMessage(hWnd2, hkHotKeySelect, HKM_SETHOTKEY, vk|(vk==VK_DELETE ? (HOTKEYF_EXT<<8) : 0), 0);
+				
 				DWORD nMod = (CEHOTKEY_MODMASK & mp_ActiveHotKey->VkMod);
 				if (nMod == 0)
 				{
 					// Если модификатора вообще не было - ставим Win
 					BYTE b = VK_LWIN;
-					FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::Modifiers, b);
+					//FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::Modifiers, b);
+					FillListBoxHotKeys(GetDlgItem(hWnd2, lbHotKeyMod1), eHkModifiers, b);
 					nMod = (VK_LWIN << 8);
 				}
 				SetHotkeyVkMod(mp_ActiveHotKey, ((DWORD)vk) | nMod);
@@ -7616,7 +7628,8 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			else if (mp_ActiveHotKey->HkType == chk_Modifier)
 			{
 				GetListBoxByte(hWnd2, wId, SettingsNS::Keys, vk);
-				SendDlgItemMessage(hWnd2, hkHotKeySelect, HKM_SETHOTKEY, 0, 0);
+				//SendDlgItemMessage(hWnd2, hkHotKeySelect, HKM_SETHOTKEY, 0, 0);
+				SetHotkeyField(GetDlgItem(hWnd2, hkHotKeySelect), 0);
 				SetHotkeyVkMod(mp_ActiveHotKey, vk);
 			}
 			FillHotKeysList(hWnd2, FALSE);
@@ -7634,7 +7647,8 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		for (UINT i = 0; i < 3; i++)
 		{
 			BYTE vk = 0;
-			GetListBoxByte(hWnd2,lbHotKeyMod1+i,SettingsNS::Modifiers,vk);
+			//GetListBoxByte(hWnd2,lbHotKeyMod1+i,SettingsNS::Modifiers,vk);
+			GetListBoxHotKey(GetDlgItem(hWnd2,lbHotKeyMod1+i),eHkModifiers,vk);
 			BYTE vkChange = vk;
 
 			// Некоторые модификаторы НЕ допустимы при регистрации глобальных хоткеев (ограничения WinAPI)
@@ -7656,7 +7670,8 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			if (vkChange != vk)
 			{
 				vk = vkChange;
-				FillListBoxByte(hWnd2, lbHotKeyMod1+i, SettingsNS::Modifiers, vkChange);
+				//FillListBoxByte(hWnd2, lbHotKeyMod1+i, SettingsNS::Modifiers, vkChange);
+				FillListBoxHotKeys(GetDlgItem(hWnd2, lbHotKeyMod1+i), eHkModifiers, vkChange);
 			}
 
 			if (vk)
@@ -7838,8 +7853,8 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			SetDlgItemText(hWnd2, tCmdGroupName, pszNoBrk);
 			SafeFree(pszNoBrk);
 
-			ConEmuHotKey hk = {0, chk_User, NULL, L"", pCmd->VkMod}; wchar_t szKey[128] = L"";
-			SetDlgItemText(hWnd2, tCmdGroupKey, hk.GetHotkeyName(szKey));
+			wchar_t szKey[128] = L"";
+			SetDlgItemText(hWnd2, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.VkMod, szKey));
 
 			SetDlgItemText(hWnd2, tCmdGroupGuiArg, pCmd->pszGuiArgs ? pCmd->pszGuiArgs : L"");
 			SetDlgItemText(hWnd2, tCmdGroupCommands, pCmd->pszCommands ? pCmd->pszCommands : L"");
@@ -13863,6 +13878,60 @@ bool CSettings::SetColorById(WORD nID, COLORREF color)
 	}
 
 	return true;
+}
+
+uint CSettings::GetHotKeyListItems(eFillListBoxHotKeys eWhat, ListBoxItem** ppItems)
+{
+	uint nItems;
+
+	switch (eWhat)
+	{
+	case eHkModifiers:
+		nItems = countof(SettingsNS::Modifiers); *ppItems = SettingsNS::Modifiers; break;
+	case eHkKeysHot:
+		nItems = countof(SettingsNS::KeysHot); *ppItems = SettingsNS::KeysHot; break;
+	case eHkKeys:
+		nItems = countof(SettingsNS::Keys); *ppItems = SettingsNS::Keys; break;
+	case eHkKeysAct:
+		nItems = countof(SettingsNS::KeysAct); *ppItems = SettingsNS::KeysAct; break;
+	default:
+		_ASSERTE(FALSE && "eFillListBoxHotKeys was not processed");
+		return 0;
+	}
+
+	return nItems;
+}
+
+void CSettings::FillListBoxHotKeys(HWND hList, eFillListBoxHotKeys eWhat, BYTE& vk)
+{
+	ListBoxItem* pItems;
+	uint nItems = GetHotKeyListItems(eWhat, &pItems);
+	if (!nItems)
+		return;
+	
+	DWORD nValue = vk;
+	FillListBoxItems(hList, nItems, pItems, nValue);
+	vk = nValue;
+}
+
+void CSettings::SetHotkeyField(HWND hHk, BYTE vk)
+{
+	SendMessage(hHk, HKM_SETHOTKEY, 
+				vk|((vk==VK_DELETE||vk==VK_UP||vk==VK_DOWN||vk==VK_LEFT||vk==VK_RIGHT
+				||vk==VK_PRIOR||vk==VK_NEXT||vk==VK_HOME||vk==VK_END
+				||vk==VK_INSERT) ? (HOTKEYF_EXT<<8) : 0), 0);
+}
+
+void CSettings::GetListBoxHotKey(HWND hList, eFillListBoxHotKeys eWhat, BYTE& vk)
+{
+	ListBoxItem* pItems;
+	uint nItems = GetHotKeyListItems(eWhat, &pItems);
+	if (!nItems)
+		return;
+	
+	DWORD nValue = vk;
+	GetListBoxItem(hList, nItems, pItems, nValue);
+	vk = nValue;
 }
 
 void CSettings::FillListBoxItems(HWND hList, uint nItems, ListBoxItem* Items /*const WCHAR** pszItems, const DWORD* pnValues*/, DWORD& nValue, BOOL abExact /*= FALSE*/)

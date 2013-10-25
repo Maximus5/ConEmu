@@ -554,6 +554,11 @@ class CSettings
 		//bool isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR);
 	public:
 		struct ListBoxItem { DWORD nValue; LPCWSTR sValue; };
+		enum eFillListBoxHotKeys { eHkModifiers, eHkKeysHot, eHkKeys, eHkKeysAct };
+		static void FillListBoxHotKeys(HWND hList, eFillListBoxHotKeys eWhat, BYTE& vk);
+		static void GetListBoxHotKey(HWND hList, eFillListBoxHotKeys eWhat, BYTE& vk);
+		static void SetHotkeyField(HWND hHk, BYTE vk);
+		static uint GetHotKeyListItems(eFillListBoxHotKeys eWhat, ListBoxItem** ppItems);
 	private:
 		static void FillListBoxItems(HWND hList, uint nItems, ListBoxItem* Items /*const WCHAR** pszItems, const DWORD* pnValues*/, DWORD& nValue, BOOL abExact = FALSE);
 		static void FillListBoxItems(HWND hList, uint nItems, const DWORD* pnValues, DWORD& nValue, BOOL abExact = FALSE);

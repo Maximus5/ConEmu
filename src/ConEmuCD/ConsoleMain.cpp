@@ -121,6 +121,7 @@ FGetConsoleKeyboardLayoutName pfnGetConsoleKeyboardLayoutName = NULL;
 FGetConsoleProcessList pfnGetConsoleProcessList = NULL;
 FDebugActiveProcessStop pfnDebugActiveProcessStop = NULL;
 FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit = NULL;
+FGetConsoleDisplayMode pfnGetConsoleDisplayMode = NULL;
 
 
 /* Console Handles */
@@ -204,6 +205,7 @@ bool gbIsDBCS = false;
 
 
 SrvInfo* gpSrv = NULL;
+
 
 //#pragma pack(push, 1)
 //CESERVER_CONSAVE* gpStoredOutput = NULL;
@@ -917,6 +919,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	{
 		pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress(hKernel, "GetConsoleKeyboardLayoutNameW");
 		pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress(hKernel, "GetConsoleProcessList");
+		pfnGetConsoleDisplayMode = (FGetConsoleDisplayMode)GetProcAddress(hKernel, "GetConsoleDisplayMode");
 	}
 
 
@@ -7589,8 +7592,8 @@ BOOL cmd_SetFullScreen(CESERVER_REQ& in, CESERVER_REQ** out)
 	typedef BOOL (WINAPI* SetConsoleDisplayMode_t)(HANDLE, DWORD, PCOORD);
 	SetConsoleDisplayMode_t _SetConsoleDisplayMode = (SetConsoleDisplayMode_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "SetConsoleDisplayMode");
 
-	size_t cbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
-	*out = ExecuteNewCmd(CECMD_CONSOLEFULL, cbReplySize);
+	size_t cbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_FULLSCREEN);
+	*out = ExecuteNewCmd(CECMD_SETFULLSCREEN, cbReplySize);
 
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
@@ -7607,7 +7610,10 @@ BOOL cmd_SetFullScreen(CESERVER_REQ& in, CESERVER_REQ** out)
 			(*out)->FullScreenRet.bSucceeded = _SetConsoleDisplayMode(ghConOut, 1/*CONSOLE_FULLSCREEN_MODE*/, &(*out)->FullScreenRet.crNewSize);
 			if (!(*out)->FullScreenRet.bSucceeded)
 				(*out)->FullScreenRet.nErrCode = GetLastError();
+			else
+				gpSrv->pfnWasFullscreenMode = pfnGetConsoleDisplayMode;
 		}
+		lbRc = TRUE;
 	}
 	else
 	{
@@ -7626,7 +7632,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
 	size_t cbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETCONSOLORS);
-	*out = ExecuteNewCmd(CECMD_CONSOLEFULL, cbReplySize);
+	*out = ExecuteNewCmd(CECMD_SETCONCOLORS, cbReplySize);
 
 	if ((*out) != NULL)
 	{
@@ -8212,11 +8218,16 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 			gnBufferWidth = 0;
 	}
 
-	if (GetConsoleDisplayMode(&gpSrv->dwDisplayMode) && gpSrv->dwDisplayMode)
+	if (pfnGetConsoleDisplayMode && pfnGetConsoleDisplayMode(&gpSrv->dwDisplayMode))
 	{
-		_ASSERTE(!csbi.srWindow.Left && !csbi.srWindow.Top);
-		csbi.dwSize.X = csbi.srWindow.Right+1;
-		csbi.dwSize.Y = csbi.srWindow.Bottom+1;
+		if (gpSrv->dwDisplayMode)
+		{
+			// While in hardware fullscreen - srWindow still shows window region
+			// as it can be, if returned in GUI mode (I suppose)
+			//_ASSERTE(!csbi.srWindow.Left && !csbi.srWindow.Top);
+			csbi.dwSize.X = csbi.srWindow.Right+1-csbi.srWindow.Left;
+			csbi.dwSize.Y = csbi.srWindow.Bottom+1+csbi.srWindow.Top;
+		}
 	}
 
 	//
@@ -8413,6 +8424,12 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	_ASSERTE(BufferHeight==0 || BufferHeight>crNewSize.Y); // Otherwise - it will be NOT a bufferheight...
 
 	if (!ghConWnd) return FALSE;
+
+	if (CheckWasFullScreen())
+	{
+		LogString("SetConsoleSize was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
+		return FALSE;
+	}
 
 //#ifdef _DEBUG
 //	if (gnRunMode != RM_SERVER || !gpSrv->DbgInfo.bDebuggerActive)

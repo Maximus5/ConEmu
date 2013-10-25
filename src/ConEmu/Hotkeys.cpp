@@ -34,6 +34,212 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "../ConEmuCD/GuiHooks.h"
 
+/* *********** Hotkey editor dialog *********** */
+bool CHotKeyDialog::EditHotKey(HWND hParent, DWORD& VkMod)
+{
+	CHotKeyDialog Dlg(hParent, VkMod);
+	// Модальный
+	INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_HOTKEY), hParent, hkDlgProc, (LPARAM)&Dlg);
+	bool bOk = (iRc == IDOK);
+	if (bOk)
+	{
+		VkMod = Dlg.GetVkMod();
+	}
+	return bOk;
+}
+
+CHotKeyDialog::CHotKeyDialog(HWND hParent, DWORD aVkMod)
+{
+	mh_Dlg = NULL;
+	mh_Parent = hParent;
+	
+	ZeroStruct(m_HK);
+	m_HK.HkType = chk_User;
+	m_HK.VkMod = aVkMod;
+}
+
+CHotKeyDialog::~CHotKeyDialog()
+{
+}
+
+DWORD CHotKeyDialog::GetVkMod()
+{
+	return m_HK.VkMod;
+}
+
+DWORD CHotKeyDialog::dlgGetHotkey(HWND hDlg, UINT iEditCtrl /*= hkHotKeySelect*/, UINT iListCtrl /*= lbHotKeyList*/)
+{
+	DWORD nHotKey = 0xFF & SendDlgItemMessage(hDlg, iEditCtrl, HKM_GETHOTKEY, 0, 0);
+
+	bool bList = false;
+	CSettings::ListBoxItem* pItems = NULL;
+	uint nKeyCount = CSettings::GetHotKeyListItems(CSettings::eHkKeysHot, &pItems);
+	for (size_t i = 0; i < nKeyCount; i++)
+	{
+		if (pItems[i].nValue == nHotKey)
+		{
+			SendDlgItemMessage(hDlg, iListCtrl, CB_SETCURSEL, i, 0);
+			bList = true;
+			break;
+		}
+	}
+
+	if (!bList)
+		SendDlgItemMessage(hDlg, iListCtrl, CB_SETCURSEL, 0, 0);
+
+	return nHotKey;
+}
+
+INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	CHotKeyDialog* pDlg = NULL;
+	if (messg == WM_INITDIALOG)
+	{
+		pDlg = (CHotKeyDialog*)lParam;
+		pDlg->mh_Dlg = hDlg;
+		SetWindowLongPtr(hDlg, DWLP_USER, lParam);
+	}
+	else
+	{
+		pDlg = (CHotKeyDialog*)GetWindowLongPtr(hDlg, DWLP_USER);
+	}
+	if (!pDlg)
+	{
+		return FALSE;
+	}
+
+	switch (messg)
+	{
+		case WM_INITDIALOG:
+		{
+			// Ensure, it will be "on screen"
+			RECT rect; GetWindowRect(hDlg, &rect);
+			RECT rcCenter = CenterInParent(rect, pDlg->mh_Parent);
+			MoveWindow(hDlg, rcCenter.left, rcCenter.top,
+			           rect.right - rect.left, rect.bottom - rect.top, false);
+
+			HWND hHk = GetDlgItem(hDlg, hkHotKeySelect);
+			SendMessage(hHk, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+
+			BYTE vk = ConEmuHotKey::GetHotkey(pDlg->m_HK.VkMod);
+			CSettings::SetHotkeyField(hHk, vk);
+
+			// Warning! Если nVK не указан в SettingsNS::nKeysHot - nVK будет обнулен
+			CSettings::FillListBoxHotKeys(GetDlgItem(hDlg, lbHotKeyList), CSettings::eHkKeysHot, vk);
+
+			for (int n = 0; n < 3; n++)
+			{
+				BYTE b = pDlg->m_HK.VkMod ? ConEmuHotKey::GetModifier(pDlg->m_HK.VkMod,n+1) : 0;
+				CSettings::FillListBoxHotKeys(GetDlgItem(hDlg, lbHotKeyMod1+n), CSettings::eHkModifiers, b);
+			}
+
+			SetFocus(GetDlgItem(hDlg,hkHotKeySelect));
+
+			return FALSE;
+		} // WM_INITDIALOG
+
+		case WM_COMMAND:
+		{
+			switch (HIWORD(wParam))
+			{
+				case BN_CLICKED:
+				{
+					switch (LOWORD(wParam))
+					{
+					case IDOK:
+					case IDCANCEL:
+					case IDCLOSE:
+						EndDialog(hDlg, LOWORD(wParam));
+						return 1;
+					}
+					break;
+				} // BN_CLICKED
+
+				case EN_CHANGE:
+				{
+					UINT nHotKey = dlgGetHotkey(hDlg, hkHotKeySelect, lbHotKeyList);
+
+					DWORD nCurMods = (CEHOTKEY_MODMASK & pDlg->m_HK.VkMod);
+					if (!nCurMods)
+						nCurMods = CEHOTKEY_NOMOD;
+
+					pDlg->m_HK.VkMod = nHotKey | nCurMods;
+
+					break;
+				} // EN_CHANGE
+
+				case CBN_SELCHANGE:
+				{
+					switch (LOWORD(wParam))
+					{
+						case lbHotKeyList:
+						{
+							BYTE vk = 0;
+							CSettings::GetListBoxHotKey(GetDlgItem(hDlg, lbHotKeyList), CSettings::eHkKeysHot, vk);
+
+							CSettings::SetHotkeyField(GetDlgItem(hDlg, hkHotKeySelect), vk);
+							
+							DWORD nMod = (CEHOTKEY_MODMASK & pDlg->m_HK.VkMod);
+							if (nMod == 0)
+							{
+								// Если модификатора вообще не было - ставим Win
+								BYTE b = VK_LWIN;
+								CSettings::FillListBoxHotKeys(GetDlgItem(hDlg, lbHotKeyMod1), CSettings::eHkModifiers, b);
+								nMod = (VK_LWIN << 8);
+							}
+							pDlg->m_HK.VkMod = ((DWORD)vk) | nMod;
+
+							break;
+						} // lbHotKeyList
+
+						case lbHotKeyMod1:
+						case lbHotKeyMod2:
+						case lbHotKeyMod3:
+						{
+							DWORD nModifers = 0;
+
+							for (UINT i = 0; i < 3; i++)
+							{
+								BYTE vk = 0;
+								CSettings::GetListBoxHotKey(GetDlgItem(hDlg,lbHotKeyMod1+i),CSettings::eHkModifiers,vk);
+								if (vk)
+									nModifers = ConEmuHotKey::SetModifier(nModifers, vk, false);
+							}
+
+							_ASSERTE((nModifers & 0xFF) == 0); // Модификаторы должны быть строго в старших 3-х байтах
+
+							if (!nModifers)
+								nModifers = CEHOTKEY_NOMOD;
+
+							pDlg->m_HK.VkMod = (cvk_VK_MASK & pDlg->m_HK.VkMod) | nModifers;
+
+							break;
+						} // lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3
+
+					} // switch (LOWORD(wParam))
+
+					break;
+				} // CBN_SELCHANGE
+
+			} // switch (HIWORD(wParam))
+
+			break;
+		} // WM_COMMAND
+
+		default:
+			return FALSE;
+	}
+}
+
+
+
+
+
+
+
+
+/* *********** Hotkey list processing *********** */
+
 
 // Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
 const struct ConEmuHotKey* ConEmuSkipHotKey = ((ConEmuHotKey*)INVALID_HANDLE_VALUE);
@@ -507,6 +713,12 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128]) const
 	}
 
 	return szFull;
+}
+
+LPCWSTR ConEmuHotKey::GetHotkeyName(DWORD aVkMod, wchar_t (&szFull)[128])
+{
+	ConEmuHotKey hk = {0, chk_User, NULL, L"", aVkMod};
+	return hk.GetHotkeyName(szFull);
 }
 
 void ConEmuHotKey::GetVkKeyName(BYTE vk, wchar_t (&szName)[32])
