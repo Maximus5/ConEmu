@@ -1676,10 +1676,10 @@ bool CConEmuCtrl::key_RunTask(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 	if (TestOnly)
 		return true;
 
-	if (gpSet->CmdTaskGet(hk->iTaskIdx))
+	if (gpSet->CmdTaskGet(hk->GetTaskIndex()))
 	{
 		wchar_t szMacro[64];
-		_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"Task(%i)", hk->iTaskIdx+1); //1-based
+		_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"Task(%i)", hk->GetTaskIndex()+1); //1-based
 		CConEmuMacro::ExecuteMacro(szMacro, pRCon);
 	}
 	return true;

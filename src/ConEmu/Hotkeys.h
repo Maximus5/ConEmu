@@ -52,12 +52,14 @@ enum ConEmuHotKeyType
 	chk_Global,    // globally registered hotkey
 	chk_Local,     // locally registered hotkey
 	chk_Macro,     // GUI Macro
+	chk_Task,      // Task hotkey
 };
 
 
 struct ConEmuHotKey
 {
-	// StringTable resource ID
+	// >0 StringTable resource ID
+	// <0 TaskIdx, 1-based
 	int DescrLangID;
 	
 	// 0 - hotkey, 1 - modifier (для драга, например), 2 - system hotkey (настройка nMultiHotkeyModifier)
@@ -81,9 +83,11 @@ struct ConEmuHotKey
 	// Internal
 	size_t cchGuiMacroMax;
 	bool   NotChanged;
-	int    iTaskIdx;
 
 	bool CanChangeVK() const;
+	bool IsTaskHotKey() const;
+	int GetTaskIndex() const; // 0-based
+	void SetTaskIndex(int iTaskIdx); // 0-based
 
 	LPCWSTR GetDescription(wchar_t* pszDescr, int cchMaxLen, bool bAddMacroIndex = false) const;
 
@@ -91,8 +95,8 @@ struct ConEmuHotKey
 
 	// *** Service functions ***
 	// Вернуть имя модификатора (типа "Apps+Space")
-	LPCWSTR GetHotkeyName(wchar_t (&szFull)[128]) const;
-	static LPCWSTR GetHotkeyName(DWORD aVkMod, wchar_t (&szFull)[128]);
+	LPCWSTR GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone = true) const;
+	static LPCWSTR GetHotkeyName(DWORD aVkMod, wchar_t (&szFull)[128], bool bShowNone = true);
 
 	// nHostMod в младших 3-х байтах может содержать VK (модификаторы).
 	// Функция проверяет, чтобы они не дублировались
@@ -119,7 +123,7 @@ struct ConEmuHotKey
 	static bool DontHookJumps(const ConEmuHotKey* pHK);
 
 	// *** Default and all possible ConEmu hotkeys ***
-	static ConEmuHotKey* AllocateHotkeys();
+	static int AllocateHotkeys(ConEmuHotKey** ppHotKeys);
 };
 
 // IDD_HOTKEY { hkHotKeySelect, lbHotKeyList, lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3 }

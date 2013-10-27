@@ -112,14 +112,14 @@ private:
 		int nCmd;
 		const void/*Settings::CommandTasks*/* pGrp;
 		LPCWSTR pszCmd;
-		wchar_t szShort[32];
+		wchar_t szShort[64];
 		HMENU hPopup;
 		wchar_t* pszTaskBuf;
 		BOOL bPopupInitialized;
 
 		void Reset(CmdTaskPopupItemType newItemType, int newCmdId, LPCWSTR asName = NULL);
-		void SetShortName(LPCWSTR asName, bool bRightQuote = false);
-		static void SetMenuName(wchar_t* pszDisplay, INT_PTR cchDisplayMax, LPCWSTR asName, bool bTrailingPeriod, bool bRightQuote = false);
+		void SetShortName(LPCWSTR asName, bool bRightQuote = false, LPCWSTR asHotKey = NULL);
+		static void SetMenuName(wchar_t* pszDisplay, INT_PTR cchDisplayMax, LPCWSTR asName, bool bTrailingPeriod, bool bRightQuote = false, LPCWSTR asHotKey = NULL);
 	};
 	bool mb_CmdShowTaskItems;
 	MArray<CmdTaskPopupItem> m_CmdTaskPopup;

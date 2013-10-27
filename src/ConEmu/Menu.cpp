@@ -162,12 +162,12 @@ void CConEmuMenu::CmdTaskPopupItem::Reset(CmdTaskPopupItemType newItemType, int 
 	}
 }
 
-void CConEmuMenu::CmdTaskPopupItem::SetShortName(LPCWSTR asName, bool bRightQuote /*= false*/)
+void CConEmuMenu::CmdTaskPopupItem::SetShortName(LPCWSTR asName, bool bRightQuote /*= false*/, LPCWSTR asHotKey /*= NULL*/)
 {
-	CConEmuMenu::CmdTaskPopupItem::SetMenuName(this->szShort, countof(this->szShort), asName, (ItemType == eTaskPopup), bRightQuote);
+	CConEmuMenu::CmdTaskPopupItem::SetMenuName(this->szShort, countof(this->szShort), asName, (ItemType == eTaskPopup), bRightQuote, asHotKey);
 }
 
-void CConEmuMenu::CmdTaskPopupItem::SetMenuName(wchar_t* pszDisplay, INT_PTR cchDisplayMax, LPCWSTR asName, bool bTrailingPeriod, bool bRightQuote /*= false*/)
+void CConEmuMenu::CmdTaskPopupItem::SetMenuName(wchar_t* pszDisplay, INT_PTR cchDisplayMax, LPCWSTR asName, bool bTrailingPeriod, bool bRightQuote /*= false*/, LPCWSTR asHotKey /*= NULL*/)
 {
 	int nCurLen = _tcslen(pszDisplay);
 	int nLen = _tcslen(asName);
@@ -207,14 +207,39 @@ void CConEmuMenu::CmdTaskPopupItem::SetMenuName(wchar_t* pszDisplay, INT_PTR cch
 		*(pszDst++) = /*Е*/L'\x2026';
 	}
 
-	// ƒл€ тасков, покаать ">>" когда они (сейчас) не разворачиваютс€ в SubMenu
+	// ƒл€ тасков, показать "ї" когда они (сейчас) не разворачиваютс€ в SubMenu
+	wchar_t szRight[36] = L"";
 	if (bRightQuote)
 	{
-		if ((pszDst + 2) >= pszEnd)
-			pszDst = pszDisplay+cchDisplayMax-3;
+		if (asHotKey && *asHotKey)
+		{
+			szRight[0] = L'\t';
+			lstrcpyn(szRight+1, asHotKey, 32);
+			wcscat_c(szRight, L" \xBB");
+		}
+		else
+		{
+			wcscpy_c(szRight, L"\t\xBB");
+		}
+	}
+	else if (asHotKey && *asHotKey)
+	{
+		szRight[0] = L'\t';
+		lstrcpyn(szRight+1, asHotKey, 34);
+	}
 
-		*(pszDst++) = L'\t';
-		*(pszDst++) = 0xBB /* RightArrow/Quotes */;
+	if (*szRight)
+	{
+		INT_PTR nRight = _tcslen(szRight);
+		_ASSERTE((nRight+10) < cchDisplayMax);
+
+		if ((pszDst + nRight) >= pszEnd)
+			pszDst = pszDisplay+max(0,(cchDisplayMax-(nRight+1)));
+
+		_wcscpy_c(pszDst, cchDisplayMax-(pszDst-pszDisplay), szRight);
+		pszDst += _tcslen(pszDst);
+		//*(pszDst++) = L'\t';
+		//*(pszDst++) = 0xBB /* RightArrow/Quotes */;
 	}
 
 	// Terminate with '\0'
@@ -313,7 +338,8 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			else
 				itm.szShort[0] = 0;
 
-			itm.SetShortName(pGrp->pszName, !mb_CmdShowTaskItems);
+			wchar_t szHotkey[128];
+			itm.SetShortName(pGrp->pszName, !mb_CmdShowTaskItems, pGrp->HotKey.GetHotkeyName(szHotkey, false));
 
 			if (mb_CmdShowTaskItems)
 			{

@@ -15,6 +15,16 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.10.26
+[+] Showing Task hotkeys in the start menu (Win+N, [+] drop down).
+[+] Task hotkeys may be configured on «Keys & Macro» settings page, too.
+[%] Regression. Changes in «Default terminal» hooked applications was ignored.
+[+] Shift+Home and Shift+End start text selection if «Start selection with Shift+Arrows» is enabled.
+[+] Trim trailing «.,;» from hyperlinks (Ctrl+LClick).
+
+
+2013.10.25
+[%] Issue 1304: Fail to Run history item from dropdown menu.
 [%] Issue 1298: ConEmu may crash when starting some incorrect tasks.
 [%] Issue 1269: Win+Left, Win+Right once more.
 [+] GuiMacro: SetOption("AlwaysOnTop",Value). Where Value: 2 - switch AlwaysOnTop, 1 - enable, 0 - disable.

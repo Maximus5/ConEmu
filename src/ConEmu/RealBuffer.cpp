@@ -5633,7 +5633,8 @@ bool CRealBuffer::FindRangeStart(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out
 
 	// Курсор над комментарием?
 	// Попробуем найти начало имени файла
-	while ((crFrom.X) > 0 && !wcschr(bUrlMode ? pszUrlDelim : pszBreak, pChar[crFrom.X-1]))
+	// 131026 Allows '?', otherwise links like http://go.com/fwlink/?LinkID=1 may fails
+	while ((crFrom.X) > 0 && (pChar[crFrom.X-1]==L'?' || !wcschr(bUrlMode ? pszUrlDelim : pszBreak, pChar[crFrom.X-1])))
 	{
 		if (!bUrlMode && pChar[crFrom.X] == L'/')
 		{
@@ -5792,6 +5793,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			const wchar_t* pszDigits  = L"0123456789";
 			const wchar_t* pszSlashes = L"/\\";
 			const wchar_t* pszUrl = L":/%#ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz;?@&=+$,-_.!~*'()0123456789";
+			const wchar_t* pszUrlTrimRight = L".,;";
 			const wchar_t* pszProtocol = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.";
 			const wchar_t* pszEMail = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
 			const wchar_t* pszUrlDelim = L"\\\"<>{}[]^`' \t\r\n";
@@ -6073,6 +6075,12 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 					cchTextMax -= iMailTo;
 					bUrlMode = true;
 				}
+				if (bUrlMode)
+				{
+					while ((lcrTo.X > lcrFrom.X) && wcschr(pszUrlTrimRight, pChar[lcrTo.X]))
+						lcrTo.X--;
+				}
+				// Return hyperlink target
 				memmove(pszText, pChar+lcrFrom.X, (lcrTo.X - lcrFrom.X + 1)*sizeof(*pszText));
 				pszText[lcrTo.X - lcrFrom.X + 1] = 0;
 

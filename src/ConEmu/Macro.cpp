@@ -1499,11 +1499,12 @@ LPWSTR CConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon)
 		return lstrdup(L"Selection was already started");
 
 	int nType = 0; // 0 - text, 1 - block
-	int nDX = 0, nDY = 0;
+	int nDX = 0, nDY = 0, nHomeEnd = 0;
 
 	p->GetIntArg(0, nType);
 	p->GetIntArg(1, nDX);
 	p->GetIntArg(2, nDY);
+	p->GetIntArg(3, nHomeEnd);
 
 	bool bText = (nType == 0);
 
@@ -1542,9 +1543,15 @@ LPWSTR CConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon)
 
 	apRCon->StartSelection(bText, cr.X, cr.Y);
 
-	if ((nType == 1) && nDY)
+	if (nType == 1)
 	{
-		apRCon->ExpandSelection(cr.X, cr.Y + nDY);
+		if (nDY)
+			apRCon->ExpandSelection(cr.X, cr.Y + nDY);
+	}
+	else if (nType == 0)
+	{
+		if (nHomeEnd)
+			apRCon->ExpandSelection((nHomeEnd < 0) ? 0 : apRCon->BufferWidth()-1, cr.Y);
 	}
 
 	return lstrdup(L"OK");

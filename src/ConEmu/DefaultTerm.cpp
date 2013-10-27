@@ -197,6 +197,8 @@ void CDefaultTerminal::PostCreated(bool bWaitForReady /*= false*/, bool bShowErr
 		return;
 	}
 
+	mb_Initialized = true;
+
 	if (!isDefaultTerminalAllowed())
 	{
 		_ASSERTE(bWaitForReady == false);
@@ -263,8 +265,6 @@ void CDefaultTerminal::PostCreated(bool bWaitForReady /*= false*/, bool bShowErr
 		_ASSERTE(hPostThread!=NULL);
 		mb_PostCreatedThread = false;
 	}
-
-	mb_Initialized = true;
 }
 
 DWORD CDefaultTerminal::PostCreatedThread(LPVOID lpParameter)

@@ -284,7 +284,7 @@ BEGIN
     GROUPBOX        "Minimize ConEmu automatically",IDC_STATIC,4,140,319,57
     CONTROL         "Minimize on focus lose (not in Quake style)",cbMinimizeOnLoseFocus,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,153,199,8
-    GROUPBOX        "When Esc pressed",IDC_STATIC,4,168,319,29
+    GROUPBOX        "Minimize when Esc pressed",IDC_STATIC,4,168,319,29
     CONTROL         "If all consoles closed",rbMinByEscEmpty,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,181,99,8
     CONTROL         "Always",rbMinByEscAlways,"Button",BS_AUTORADIOBUTTON,113,181,42,8
     CONTROL         "Never",rbMinByEscNever,"Button",BS_AUTORADIOBUTTON,161,181,38,8
@@ -837,7 +837,7 @@ BEGIN
     CONTROL         "any key",cbCTSEndOnKeyPress,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,136,45,8
     GROUPBOX        "Select text with mouse (LeftClick+Drag)",IDC_STATIC,4,65,319,40
     GROUPBOX        "Select text with keyboard (Also there are two hotkeys on Keys&Macro page)",IDC_STATIC,4,109,319,42
-    CONTROL         "Start selection with Shift+Arrow (Text = Left/Right, Block = Up/Down)",cbCTSShiftArrowStartSel,
+    CONTROL         "Start selection with Shift+Arrow (Text = Left/Right/Home/End, Block = Up/Down)",cbCTSShiftArrowStartSel,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,122,308,8
     CONTROL         "copy before reset",cbCTSEndCopyBefore,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,163,136,73,8
 END

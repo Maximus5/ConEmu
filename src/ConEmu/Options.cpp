@@ -1127,9 +1127,9 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 
 	pTask->SetName(pszNameSet, iIndex);
 
-	if (!reg->Load(L"Hotkey", pTask->HotKey.VkMod))
+	pTask->HotKey.HkType = chk_Task;
+	if ((iIndex < 0) || !reg->Load(L"Hotkey", pTask->HotKey.VkMod))
 		pTask->HotKey.VkMod = 0;
-	pTask->HotKey.HkType = chk_User;
 
 
 	if (!reg->Load(L"GuiArgs", &pTask->pszGuiArgs) || !*pTask->pszGuiArgs)
@@ -1266,9 +1266,8 @@ bool Settings::SaveCmdTask(SettingsBase* reg, CommandTasks* pTask)
 	if (pTask != StartupTask)
 	{
 		reg->Save(L"Name", pTask->pszName);
+		reg->Save(L"Hotkey", pTask->HotKey.VkMod);
 	}
-
-	reg->Save(L"Hotkey", pTask->HotKey.VkMod);
 
 	reg->Save(L"GuiArgs", pTask->pszGuiArgs);
 
@@ -4629,11 +4628,8 @@ const Settings::CommandTasks* Settings::CmdTaskGet(int anIndex)
 	if (!CmdTasks || (anIndex < 0) || (anIndex >= CmdTaskCount))
 		return NULL;
 
-	if (CmdTasks[anIndex] && CmdTasks[anIndex]->HotKey.VkMod)
-	{
-		CmdTasks[anIndex]->HotKey.iTaskIdx = anIndex;
-		CmdTasks[anIndex]->HotKey.fkey = CConEmuCtrl::key_RunTask;
-	}
+	CmdTasks[anIndex]->HotKey.SetTaskIndex(anIndex);
+	CmdTasks[anIndex]->HotKey.fkey = CConEmuCtrl::key_RunTask;
 
 	return (CmdTasks[anIndex]);
 }
@@ -4834,38 +4830,30 @@ void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
 
 // Вернуть заданный VkMod, или 0 если не задан
 // nDescrID = vkXXX (e.g. vkMinimizeRestore)
+// Используется при отображении клавиш в меню
 DWORD Settings::GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK)
 {
-	if (!gpSetCls || !gpSetCls->m_HotKeys)
-	{
-		_ASSERTE(gpSetCls && gpSetCls->m_HotKeys);
-		return 0;
-	}
-
 	static int iLastFound = -1;
 
 	for (int j = -1;; j++)
 	{
-		ConEmuHotKey *pHK;
+		if (j == -1 && iLastFound == -1)
+			continue;
 
-		if (j == -1)
+		const ConEmuHotKey *pHK = gpSetCls->GetHotKeyPtr((j == -1) ? iLastFound : j);
+		if (!pHK)
 		{
-			if (iLastFound == -1)
+			if (j == -1)
 				continue;
 			else
-				pHK = (gpSetCls->m_HotKeys + iLastFound);
+				break; // Кончились
 		}
-		else
-		{
-			pHK = (gpSetCls->m_HotKeys + j);
-		}
-
-		if (!pHK->DescrLangID)
-			break;
 
 		if (pHK->DescrLangID == nDescrID)
 		{
-			iLastFound = (int)(pHK - gpSetCls->m_HotKeys);
+			if (j >= 0)
+				iLastFound = j;
+
 			DWORD VkMod = pHK->VkMod;
 			if (pHK->HkType == chk_Modifier)
 			{
@@ -4895,19 +4883,26 @@ bool Settings::IsHotkey(int nDescrID)
 // VkMod = LOBYTE - VK, старшие три байта - модификаторы (тоже VK)
 void Settings::SetHotkeyById(int nDescrID, DWORD VkMod)
 {
-	if (!gpSetCls || !gpSetCls->m_HotKeys)
+	if (nDescrID > 0)
 	{
-		_ASSERTE(gpSetCls && gpSetCls->m_HotKeys);
-		return;
-	}
-
-	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
-	{
-		if (ppHK->DescrLangID == nDescrID)
+		if (!gpSetCls || !gpSetCls->mp_HotKeys)
 		{
-			ppHK->VkMod = VkMod;
-			break;
+			_ASSERTE(gpSetCls && gpSetCls->mp_HotKeys);
+			return;
 		}
+
+		for (int i = 0; i < gpSetCls->mn_HotKeys; i++)
+		{
+			if (gpSetCls->mp_HotKeys[i].DescrLangID == nDescrID)
+			{
+				gpSetCls->mp_HotKeys[i].VkMod = VkMod;
+				break;
+			}
+		}
+	}
+	else
+	{
+		_ASSERTE(nDescrID > 0); // Invalid descr!
 	}
 
 	CheckHotkeyUnique();
@@ -4915,14 +4910,12 @@ void Settings::SetHotkeyById(int nDescrID, DWORD VkMod)
 
 bool Settings::isModifierExist(BYTE Mod/*VK*/, bool abStrictSingle /*= false*/)
 {
-	if (!gpSetCls || !gpSetCls->m_HotKeys)
+	for (int i = 0;; i++)
 	{
-		_ASSERTE(gpSetCls && gpSetCls->m_HotKeys);
-		return false;
-	}
+		const ConEmuHotKey *ppHK = gpSetCls->GetHotKeyPtr(i);
+		if (!ppHK)
+			break;
 
-	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
-	{
 		if (ppHK->VkMod == 0)
 			continue;
 
@@ -4949,14 +4942,12 @@ bool Settings::isModifierExist(BYTE Mod/*VK*/, bool abStrictSingle /*= false*/)
 // Есть ли такой хоткей или модификатор (актуально для VK_APPS)
 bool Settings::isKeyOrModifierExist(BYTE Mod/*VK*/)
 {
-	if (!gpSetCls || !gpSetCls->m_HotKeys)
+	for (int i = 0;; i++)
 	{
-		_ASSERTE(gpSetCls && gpSetCls->m_HotKeys);
-		return false;
-	}
+		const ConEmuHotKey *ppHK = gpSetCls->GetHotKeyPtr(i);
+		if (!ppHK)
+			break;
 
-	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
-	{
 		if (ppHK->VkMod == 0)
 			continue;
 
@@ -4972,12 +4963,6 @@ bool Settings::isKeyOrModifierExist(BYTE Mod/*VK*/)
 
 void Settings::LoadHotkeys(SettingsBase* reg)
 {
-	if (!gpSetCls || !gpSetCls->m_HotKeys)
-	{
-		_ASSERTE(gpSetCls && gpSetCls->m_HotKeys);
-		return;
-	}
-
 	reg->Load(L"Multi.Modifier", nHostkeyNumberModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyNumberModifier);
 	nHostkeyArrowModifier = nHostkeyArrowModifier; // Умолчание - то же что и "Multi.Modifier"
 	reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyArrowModifier);
@@ -4988,8 +4973,15 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 	BYTE MacroVersion = 0;
 	reg->Load(L"KeyMacroVersion", MacroVersion);
 
-	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
+	if (!gpSetCls || !gpSetCls->mp_HotKeys)
 	{
+		_ASSERTE(gpSetCls && gpSetCls->mp_HotKeys);
+		return;
+	}
+
+	for (int i = 0; i < gpSetCls->mn_HotKeys; i++)
+	{
+		ConEmuHotKey *ppHK = gpSetCls->mp_HotKeys+i;
 		ppHK->NotChanged = true;
 
 		if (!*ppHK->Name)
@@ -5062,10 +5054,21 @@ void Settings::CheckHotkeyUnique()
 	// А некоторые проверять не хочется
 	int SkipCheckID[] = {vkCtrlTab_Left, vkCtrlTab_Up, vkCtrlTab_Right, vkCtrlTab_Down, vkEscNoConsoles};
 	bool bSkip = false;
+	int iHK1, iHK2;
+	const ConEmuHotKey *ppHK1, *ppHK2;
 
 	// Go
-	for (ConEmuHotKey *ppHK1 = gpSetCls->m_HotKeys; ppHK1[0].DescrLangID && ppHK1[1].DescrLangID; ++ppHK1)
+	for (iHK1 = 0;; iHK1++)
 	{
+		ppHK1 = gpSetCls->GetHotKeyPtr(iHK1);
+		if (!ppHK1)
+			break;
+		// Сразу проверить следующий за ним
+		ppHK2 = gpSetCls->GetHotKeyPtr(iHK1+1);
+		if (!ppHK2)
+			break;
+		
+
 		if ((ppHK1->HkType == chk_Modifier) || (ConEmuHotKey::GetHotkey(ppHK1->VkMod) == 0))
 			continue;
 
@@ -5085,8 +5088,13 @@ void Settings::CheckHotkeyUnique()
 		if (bSkip)
 			continue;
 		
-		for (ConEmuHotKey *ppHK2 = ppHK1+1; ppHK2[0].DescrLangID; ++ppHK2)
+		//for (ConEmuHotKey *ppHK2 = ppHK1+1; ppHK2[0].DescrLangID; ++ppHK2)
+		for (iHK2 = iHK1+1;; iHK2++)
 		{
+			ppHK2 = gpSetCls->GetHotKeyPtr(iHK2);
+			if (!ppHK2)
+				break;
+
 			if ((ppHK2->HkType == chk_Modifier) || (ConEmuHotKey::GetHotkey(ppHK2->VkMod) == 0))
 				continue;
 
@@ -5116,10 +5124,11 @@ void Settings::CheckHotkeyUnique()
 			{
 				if (lstrcmp(ppHK1->GuiMacro, ppHK2->GuiMacro) == 0)
 				{
+					// Нам - можно
 					if (ppHK1->HkType == chk_Macro)
-						ppHK1->VkMod = 0;
+						((ConEmuHotKey*)ppHK1)->VkMod = 0;
 					else
-						ppHK2->VkMod = 0;
+						((ConEmuHotKey*)ppHK2)->VkMod = 0;
 					continue;
 				}
 			}
@@ -5160,22 +5169,25 @@ wrap:
 
 void Settings::SaveHotkeys(SettingsBase* reg)
 {
-	if (!gpSetCls || !gpSetCls->m_HotKeys)
-	{
-		_ASSERTE(gpSetCls && gpSetCls->m_HotKeys);
-		return;
-	}
-
 	reg->Save(L"Multi.Modifier", nHostkeyNumberModifier);
 	reg->Save(L"Multi.ArrowsModifier", nHostkeyArrowModifier);
 
 	BYTE MacroVersion = GUI_MACRO_VERSION;
 	reg->Save(L"KeyMacroVersion", MacroVersion);
 
+	if (!gpSetCls || !gpSetCls->mp_HotKeys)
+	{
+		_ASSERTE(gpSetCls && gpSetCls->mp_HotKeys);
+		return;
+	}
+
 	wchar_t szMacroName[80];
 
-	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
+	// Таски сохраняются отдельно
+	for (int i = 0; i < gpSetCls->mn_HotKeys; i++)
 	{
+		ConEmuHotKey *ppHK = gpSetCls->mp_HotKeys+i;
+
 		if (!*ppHK->Name)
 			continue;
 		
