@@ -681,8 +681,9 @@ int ShowMessageW995(LPCWSTR asMsg, int aiButtons, bool bWarning)
 	if (!InfoW995 || !InfoW995->Message || !InfoW995->GetMsg)
 		return -1;
 
-	return InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE995|FMSG_MB_OK|(bWarning ? FMSG_WARNING : 0), NULL,
-	                         (const wchar_t * const *)asMsg, 0, aiButtons);
+	return InfoW995->Message(InfoW995->ModuleNumber,
+                              FMSG_ALLINONE995|(aiButtons?0:FMSG_MB_OK)|(bWarning ? FMSG_WARNING : 0), NULL,
+	                        (const wchar_t * const *)asMsg, 0, aiButtons);
 }
 
 int ShowMessageW995(int aiMsg, int aiButtons)

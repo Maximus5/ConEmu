@@ -852,7 +852,8 @@ int ShowMessageW2800(LPCWSTR asMsg, int aiButtons, bool bWarning)
 	    0x4950,
 	    {0x90, 0x29, 0xa3, 0xf5, 0x95, 0xc1, 0xc3, 0x51}
 	};
-	return InfoW2800->Message(&guid_ConEmu, &lguid_Msg, FMSG_ALLINONE1900|FMSG_MB_OK|(bWarning ? FMSG_WARNING : 0), NULL,
+	return InfoW2800->Message(&guid_ConEmu, &lguid_Msg, 
+                              FMSG_ALLINONE1900|(aiButtons?0:FMSG_MB_OK)|(bWarning ? FMSG_WARNING : 0), NULL,
 	                         (const wchar_t * const *)asMsg, 0, aiButtons);
 }
 

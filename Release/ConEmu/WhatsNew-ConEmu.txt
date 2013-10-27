@@ -15,6 +15,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Issue 1196: ConEmu's Far plugin language resources.
+
+
 2013.10.26
 [+] Showing Task hotkeys in the start menu (Win+N, [+] drop down).
 [+] Task hotkeys may be configured on «Keys & Macro» settings page, too.

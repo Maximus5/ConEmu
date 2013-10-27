@@ -754,8 +754,9 @@ int ShowMessageA(LPCSTR asMsg, int aiButtons, bool bWarning)
 	if (!InfoA || !InfoA->Message)
 		return -1;
 
-	return InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|(bWarning ? FMSG_WARNING : 0), NULL,
-	                      (const char * const *)asMsg, 0, aiButtons);
+	return InfoA->Message(InfoA->ModuleNumber,
+                          FMSG_ALLINONE|(aiButtons?0:FMSG_MB_OK)|(bWarning ? FMSG_WARNING : 0), NULL,
+	                     (const char * const *)asMsg, 0, aiButtons);
 }
 
 int ShowMessageA(int aiMsg, int aiButtons)

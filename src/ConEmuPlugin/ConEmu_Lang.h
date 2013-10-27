@@ -35,7 +35,6 @@ enum {
 	CECantStartServer3,
 	CEInvalidConHwnd,
 	CEShellExecuteException,
-	CEColorMappingCreateError,
 	CEGetAllTabsFailed,
 	CEBkError_ExecFailed,
 	CEBkError_InvalidArg,

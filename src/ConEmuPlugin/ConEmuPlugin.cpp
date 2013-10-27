@@ -1026,7 +1026,7 @@ VOID WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs)
 {
 	if (pArgs->bMainThread)
 	{
-		ShowMessage(CEShellExecuteException,1);
+		ShowMessage(CEShellExecuteException,0);
 	}
 
 	*((LPBOOL*)pArgs->lpResult) = FALSE;
@@ -5511,13 +5511,13 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 
 	if (!FarHwnd)
 	{
-		ShowMessage(CEInvalidConHwnd,1); // "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL\nOK"
+		ShowMessage(CEInvalidConHwnd,0); // "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL"
 		return;
 	}
 
 	if (IsTerminalMode())
 	{
-		ShowMessage(CEUnavailableInTerminal,1); // "ConEmu plugin\nConEmu is not available in terminal mode\nCheck TERM environment variable\nOK"
+		ShowMessage(CEUnavailableInTerminal,0); // "ConEmu plugin\nConEmu is not available in terminal mode\nCheck TERM environment variable"
 		return;
 	}
 
@@ -5738,7 +5738,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			}
 			else
 			{
-				ShowMessage(CEGetAllTabsFailed, 1);
+				ShowMessage(CEGetAllTabsFailed, 0);
 			}
 			ExecuteFreeResult(pIn);
 		} break;
@@ -6118,13 +6118,13 @@ BOOL StartDebugger()
 {
 	if (IsDebuggerPresent())
 	{
-		ShowMessage(CEAlreadyDebuggerPresent,1); // "ConEmu plugin\nDebugger is already attached to current process\nOK"
+		ShowMessage(CEAlreadyDebuggerPresent,0); // "ConEmu plugin\nDebugger is already attached to current process"
 		return FALSE; // Уже
 	}
 
 	if (IsTerminalMode())
 	{
-		ShowMessage(CECantDebugInTerminal,1); // "ConEmu plugin\nDebugger is not available in terminal mode\nOK"
+		ShowMessage(CECantDebugInTerminal,0); // "ConEmu plugin\nDebugger is not available in terminal mode"
 		return FALSE; // Уже
 	}
 
@@ -6142,7 +6142,7 @@ BOOL StartDebugger()
 
 	if ((nLen = GetEnvironmentVariableW(ENV_CONEMUBASEDIR_VAR_W, szConEmuC, MAX_PATH-16)) < 1)
 	{
-		ShowMessage(CECantDebugNotEnvVar,1); // "ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available\nOK"
+		ShowMessage(CECantDebugNotEnvVar,0); // "ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available"
 		return FALSE; // Облом
 	}
 
@@ -6154,7 +6154,7 @@ BOOL StartDebugger()
 
 		if (((nLen=GetModuleFileName(0, szConEmuC, MAX_PATH-24)) < 1) || ((pszSlash = wcsrchr(szConEmuC, L'\\')) == NULL))
 		{
-			ShowMessage(CECantDebugNotEnvVar,1); // "ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available\nOK"
+			ShowMessage(CECantDebugNotEnvVar,0); // "ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available"
 			return FALSE; // Облом
 		}
 
@@ -6166,7 +6166,7 @@ BOOL StartDebugger()
 
 			if (!FileExists(szConEmuC))
 			{
-				ShowMessage(CECantDebugNotEnvVar,1); // "ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available\nOK"
+				ShowMessage(CECantDebugNotEnvVar,0); // "ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available"
 				return FALSE; // Облом
 			}
 		}
@@ -6212,7 +6212,7 @@ BOOL StartDebugger()
 #ifdef _DEBUG
 		DWORD dwErr = GetLastError();
 #endif
-		ShowMessage(CECantStartDebugger,1); // "ConEmu plugin\nНе удалось запустить процесс отладчика\nOK"
+		ShowMessage(CECantStartDebugger,0); // "ConEmu plugin\nНе удалось запустить процесс отладчика"
 	}
 	else
 	{
