@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //	#define SHOW_STARTED_MSGBOX
+//	#define SHOW_MAIN_MSGBOX
 //	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
 //	#define SHOW_COMSPEC_STARTED_MSGBOX
@@ -94,10 +95,6 @@ namespace PipeServerLogger
     Event g_events[BUFFER_SIZE];
     LONG g_pos = -1;
 }
-#endif
-
-#ifdef _DEBUG
-wchar_t gszDbgModLabel[6] = {0};
 #endif
 
 WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
@@ -776,6 +773,16 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 {
 	TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
 	
+	#ifdef SHOW_MAIN_MSGBOX
+	if (!IsDebuggerPresent())
+	{
+		char szMsg[MAX_PATH+128]; msprintf(szMsg, countof(szMsg), WIN3264TEST("ConEmuCD.dll","ConEmuCD64.dll") " loaded, PID=%u, TID=%u\r\n", GetCurrentProcessId(), GetCurrentThreadId());
+		int nMsgLen = lstrlenA(szMsg);
+		GetModuleFileNameA(NULL, szMsg+nMsgLen, countof(szMsg)-nMsgLen);
+		MessageBoxA(NULL, szMsg, "ConEmu server" WIN3264TEST(""," x64"), 0);
+	}
+	#endif
+
 	//WARNING("После создания AltServer - проверить в ConEmuCD все условия на RM_SERVER!!!");
 	//_ASSERTE(anWorkMode==FALSE);
 
@@ -5206,6 +5213,7 @@ void SendStarted()
 			// Подготовить хэндл своего процесса для MainServer
 			pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)DuplicateProcessHandle(nMainServerPID);
 
+			_ASSERTE(pIn->hdr.nCmd == CECMD_CMDSTARTSTOP);
 			pSrvOut = ExecuteSrvCmd(nMainServerPID, pIn, ghConWnd);
 
 			// MainServer должен был вернуть PID предыдущего AltServer (если он был)
@@ -7243,6 +7251,9 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		}
 	}
 
+	// Обновить мэппинг
+	UpdateConsoleMapHeader();
+
 	CsAlt.Unlock();
 
 	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
@@ -7276,9 +7287,9 @@ BOOL cmd_SetFarPID(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 
-	WARNING("***ALT*** не нужно звать ConEmuC, если вызывающий процесс уже альт.сервер");
-
 	gpSrv->nActiveFarPID = in.hdr.nSrcPID;
+
+	// Will update mapping using MainServer if this is Alternative
 	UpdateConsoleMapHeader();
 
 	return lbRc;
@@ -7951,6 +7962,42 @@ BOOL cmd_ApplyExportVars(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_UpdConMapHdr(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE, lbAccepted = FALSE;
+
+	size_t cbInSize = in.DataSize(), cbReqSize = sizeof(CESERVER_CONSOLE_MAPPING_HDR);
+	if (cbInSize == cbReqSize)
+	{
+		if (in.ConInfo.cbSize == sizeof(CESERVER_CONSOLE_MAPPING_HDR)
+			&& in.ConInfo.nProtocolVersion == CESERVER_REQ_VER
+			&& in.ConInfo.nServerPID == GetCurrentProcessId())
+		{
+			//SetVisibleSize(in.ConInfo.crLockedVisible.X, in.ConInfo.crLockedVisible.Y); // ??
+
+			if (gpSrv->pConsoleMap)
+			{
+				gpSrv->pConsoleMap->SetFrom(&in.ConInfo);
+			}
+
+			lbAccepted = TRUE;
+		}
+	}
+
+	size_t cbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_UPDCONMAPHDR, cbReplySize);
+	if ((*out) != NULL)
+	{
+		(*out)->dwData[0] = lbAccepted;
+	}
+	else
+	{
+		lbRc = FALSE;
+	}
+
+	return lbRc;
+}
+
 bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 {
 	bool lbProcessed = false;
@@ -8133,6 +8180,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_EXPORTVARS:
 		{
 			lbRc = cmd_ApplyExportVars(in, out);
+		} break;
+		case CECMD_UPDCONMAPHDR:
+		{
+			lbRc = cmd_UpdConMapHdr(in, out);
 		} break;
 		default:
 		{
@@ -8525,12 +8576,13 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y)
 			|| ((csbi.srWindow.Right - csbi.srWindow.Left + 1) != crNewSize.X)
 			|| ((csbi.srWindow.Bottom - csbi.srWindow.Top + 1) != crNewSize.Y);
-#ifdef _DEBUG
 
+		#ifdef _DEBUG
 		if (!lbNeedChange)
-			BufferHeight = BufferHeight;
-
-#endif
+		{
+			int nDbg = 0;
+		}
+		#endif
 	}
 
 

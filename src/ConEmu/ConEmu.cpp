@@ -97,7 +97,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRFOREGROUND(s) //DEBUGSTR(s)
 #define DEBUGSTRLLKB(s) //DEBUGSTR(s)
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
-#define DEBUGSTRMSG(s) //DEBUGSTR(s)
+#define DEBUGSTRMSG(s) DEBUGSTR(s)
 #define DEBUGSTRMSG2(s) DEBUGSTR(s)
 #define DEBUGSTRANIMATE(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
@@ -564,7 +564,7 @@ CConEmuMain::CConEmuMain()
 	if (isMingwMode() && isMSysStartup())
 	{
 		// This is example. Will be replaced with full path.
-		gpSetCls->SetDefaultCmd(L"sh.exe --login -i");
+		gpSetCls->SetDefaultCmd(NULL /*L"sh.exe --login -i"*/);
 	}
 
 	if (!isMingwMode())
@@ -1527,9 +1527,9 @@ SIZE CConEmuMain::GetDefaultSize(bool bCells, const CESize* pSizeW/*=NULL*/, con
 			// Maximized/Fullscreen - frame may come out of working area
 			RECT rcFrameOnly = CalcMargins(CEM_FRAMEONLY);
 			_ASSERTE(nFrameX>=0 && nFrameY>=0 && rcFrameOnly.left>=0 && rcFrameOnly.top>=0 && rcFrameOnly.right>=0 && rcFrameOnly.bottom>=0);
-			WARNING("Новое уточнение, может на что-то еще повлиять");
-			nMaxWidth += (rcFrameOnly.left + rcFrameOnly.right) - nFrameX;
-			nMaxHeight += (rcFrameOnly.top + rcFrameOnly.bottom) - nFrameY;
+			// 131029 - Was nFrameX&nFrameY, which was less then required. Quake goes of the screen
+			nMaxWidth += (rcFrameOnly.left + rcFrameOnly.right) - nShiftX;
+			nMaxHeight += (rcFrameOnly.top + rcFrameOnly.bottom) - nShiftY;
 			// Check it
 			if (nPixelWidth > nMaxWidth)
 				nPixelWidth = nMaxWidth;
@@ -3813,7 +3813,7 @@ bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 		rcWnd.top = max(rcWork.top-rcMargins.top,min(rcStore.top,rcWork.bottom-nHeight+rcMargins.bottom));
 
 		// Add Width/Height. They may exceeds monitor in wmNormal.
-		if ((wndMode == wmNormal) && IsSizeFree())
+		if ((wndMode == wmNormal) && !IsCantExceedMonitor())
 		{
 			rcWnd.right = rcWnd.left+nWidth;
 			rcWnd.bottom = rcWnd.top+nHeight;
@@ -4582,6 +4582,30 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 	return lbRc;
 }
 
+void CConEmuMain::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo)
+{
+	wndWidth = awndWidth;
+	wndHeight = awndHeight;
+	wndX = awndX;
+	wndY = awndY;
+	nFrame = anFrame;
+	WindowMode = aWindowMode;
+	rcIdealInfo = arcIdealInfo;
+	//
+	bWasSaved = true;
+}
+
+ConEmuWindowMode CConEmuMain::QuakePrevSize::Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo)
+{
+	rwndWidth = wndWidth;
+	rwndHeight = wndHeight;
+	rwndX = wndX;
+	rwndY = wndY;
+	rnFrame = nFrame;
+	rrcIdealInfo = rcIdealInfo;
+	return WindowMode;
+}
+
 bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode /*= wmNotChanging*/, bool bFromDlg /*= false*/)
 {
 	if (mb_InSetQuakeMode)
@@ -4633,25 +4657,11 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 
 	if (gpSet->isQuakeStyle && !bPrevStyle)
 	{
-		m_QuakePrevSize.bWasSaved = true;
-		m_QuakePrevSize.wndWidth = gpConEmu->WndWidth;
-		m_QuakePrevSize.wndHeight = gpConEmu->WndHeight;
-		m_QuakePrevSize.wndX = gpConEmu->wndX;
-		m_QuakePrevSize.wndY = gpConEmu->wndY;
-		m_QuakePrevSize.nFrame = gpSet->nHideCaptionAlwaysFrame;
-		m_QuakePrevSize.WindowMode = gpConEmu->WindowMode;
-		m_QuakePrevSize.rcIdealInfo = mr_Ideal;
-		//gpSet->nHideCaptionAlwaysFrame = 0;
+		m_QuakePrevSize.Save(this->WndWidth, this->WndHeight, this->wndX, this->wndY, gpSet->nHideCaptionAlwaysFrame, this->WindowMode, mr_Ideal);
 	}
 	else if (!gpSet->isQuakeStyle && m_QuakePrevSize.bWasSaved)
 	{
-		gpConEmu->WndWidth = m_QuakePrevSize.wndWidth;
-		gpConEmu->WndHeight = m_QuakePrevSize.wndHeight;
-		gpConEmu->wndX = m_QuakePrevSize.wndX;
-		gpConEmu->wndY = m_QuakePrevSize.wndY;
-		gpSet->nHideCaptionAlwaysFrame = m_QuakePrevSize.nFrame;
-		nNewWindowMode = m_QuakePrevSize.WindowMode;
-		mr_Ideal = m_QuakePrevSize.rcIdealInfo;
+		nNewWindowMode = m_QuakePrevSize.Restore(this->WndWidth, this->WndHeight, this->wndX, this->wndY, gpSet->nHideCaptionAlwaysFrame, mr_Ideal);
 	}
 
 
@@ -4735,7 +4745,7 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 		return false;
 	}
 
-	if (!IsSizeFree())
+	if (!IsSizePosFree())
 	{
 		_ASSERTE(FALSE && "Tiling not allowed in Quake and Inside modes");
 		gpConEmu->LogString(L"SetTileMode SKIPPED due to Quake/Inside");
@@ -4859,7 +4869,7 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 
 ConEmuWindowCommand CConEmuMain::GetTileMode(bool Estimate, MONITORINFO* pmi/*=NULL*/)
 {
-	if (Estimate && IsSizeFree())
+	if (Estimate && IsSizePosFree())
 	{
 		_ASSERTE(IsWindowVisible(ghWnd) && !isFullScreen() && !isZoomed() && !isIconic());
 
@@ -4915,13 +4925,45 @@ ConEmuWindowCommand CConEmuMain::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 bool CConEmuMain::IsSizeFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
 {
 	// В некоторых режимах - нельзя
-	if (gpSet->isQuakeStyle || mp_Inside)
+	if (mp_Inside)
 		return false;
+
+	// В режиме "Desktop" переходить в FullScreen - нельзя
 	if (gpSet->isDesktopMode && (CheckMode == wmFullScreen))
 		return false;
 
 	// Размер И положение можно менять произвольно
 	return true;
+}
+bool CConEmuMain::IsSizePosFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
+{
+	// В некоторых режимах - нельзя
+	if (gpSet->isQuakeStyle || mp_Inside)
+		return false;
+
+	// В режиме "Desktop" переходить в FullScreen - нельзя
+	if (gpSet->isDesktopMode && (CheckMode == wmFullScreen))
+		return false;
+
+	// Размер И положение можно менять произвольно
+	return true;
+}
+// В некоторых режимах - не должен выходить за пределы экрана
+bool CConEmuMain::IsCantExceedMonitor()
+{
+	_ASSERTE(!mp_Inside);
+	if (gpSet->isQuakeStyle)
+		return true;
+	return false;
+}
+bool CConEmuMain::IsPosLocked()
+{
+	// В некоторых режимах - двигать окно юзеру вообще нельзя
+	if (mp_Inside)
+		return true;
+
+	// Положение - строго не ограничивается
+	return false;
 }
 
 bool CConEmuMain::JumpNextMonitor(bool Next)
@@ -5220,7 +5262,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 		StoreNormalRect(&rcWnd);
 
 	// Коррекция для Quake/Inside/Desktop
-	ConEmuWindowMode NewMode = IsSizeFree(inMode) ? inMode : wmNormal;
+	ConEmuWindowMode NewMode = IsSizePosFree(inMode) ? inMode : wmNormal;
 
 	// И сразу запоминаем _новый_ режим
 	changeFromWindowMode = WindowMode;
@@ -12688,17 +12730,79 @@ void CConEmuMain::OnAltEnter()
 		gpConEmu->SetWindowMode(gpConEmu->isWndNotFSMaximized ? wmMaximized : wmNormal);
 }
 
-void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
+bool CConEmuMain::OnMaximizeWidthHeight(bool bWidth, bool bHeight)
 {
+	RECT rcWnd, rcNewWnd;
+	GetWindowRect(ghWnd, &rcWnd);
+	rcNewWnd = rcWnd;
+	MONITORINFO mon = {sizeof(MONITORINFO)};
+
+	if (bWidth)
+	{
+		// найти новую левую границу
+		POINT pt = {rcWnd.left,((rcWnd.top+rcWnd.bottom)>>2)};
+		HMONITOR hMonLeft = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+
+		if (!GetMonitorInfo(hMonLeft, &mon))
+			return false;
+
+		rcNewWnd.left = mon.rcWork.left;
+		// найти новую правую границу
+		pt.x = rcWnd.right;
+		HMONITOR hMonRight = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+
+		if (hMonRight != hMonLeft)
+			if (!GetMonitorInfo(hMonRight, &mon))
+				return false;
+
+		rcNewWnd.right = mon.rcWork.right;
+
+		//// Скорректировать границы на ширину рамки
+		//RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
+		//rcNewWnd.left -= rcFrame.left;
+		//rcNewWnd.right += rcFrame.right;
+	}
+	
+	if (bHeight)
+	{
+		// найти новую верхнюю границу
+		POINT pt = {((rcWnd.left+rcWnd.right)>>2),rcWnd.top};
+		HMONITOR hMonTop = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+
+		if (!GetMonitorInfo(hMonTop, &mon))
+			return false;
+
+		rcNewWnd.top = mon.rcWork.top;
+		// найти новую нижнюю границу
+		pt.y = rcWnd.bottom;
+		HMONITOR hMonBottom = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+
+		if (hMonBottom != hMonTop)
+			if (!GetMonitorInfo(hMonBottom, &mon))
+				return false;
+
+		rcNewWnd.bottom = mon.rcWork.bottom;
+
+		//// Скорректировать границы на ширину рамки
+		//RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
+		//rcNewWnd.top -= rcFrame.bottom; // т.к. в top учтена высота заголовка
+		//rcNewWnd.bottom += rcFrame.bottom;
+	}
+
+	// Двигаем окошко
+	if (rcNewWnd.left != rcWnd.left || rcNewWnd.right != rcWnd.right || rcNewWnd.top != rcWnd.top || rcNewWnd.bottom != rcWnd.bottom)
+		MOVEWINDOW(ghWnd, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, 1);
+
+	return true;
+}
+
+void CConEmuMain::OnAltF9()
+{
+	// abPosted - removed, all calls was as TRUE
+
 	if (mp_Inside)
 	{
 		_ASSERTE(FALSE && "Must not change mode in the Inside mode");
-		return;
-	}
-
-	if (!abPosted)
-	{
-		PostMessage(ghWnd, gpConEmu->mn_MsgPostAltF9, 0, 0);
 		return;
 	}
 
@@ -16100,63 +16204,7 @@ BOOL CConEmuMain::OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPA
 			return FALSE;
 		}
 
-		RECT rcWnd, rcNewWnd;
-		GetWindowRect(ghWnd, &rcWnd);
-		rcNewWnd = rcWnd;
-		MONITORINFO mon = {sizeof(MONITORINFO)};
-
-		if (wParam == HTLEFT || wParam == HTRIGHT)
-		{
-			// найти новую левую границу
-			POINT pt = {rcWnd.left,((rcWnd.top+rcWnd.bottom)>>2)};
-			HMONITOR hMonLeft = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
-
-			if (!GetMonitorInfo(hMonLeft, &mon))
-				return FALSE;
-
-			rcNewWnd.left = mon.rcWork.left;
-			// найти новую правую границу
-			pt.x = rcWnd.right;
-			HMONITOR hMonRight = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
-
-			if (hMonRight != hMonLeft)
-				if (!GetMonitorInfo(hMonRight, &mon))
-					return FALSE;
-
-			rcNewWnd.right = mon.rcWork.right;
-			// Скорректировать границы на ширину рамки
-			RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
-			rcNewWnd.left -= rcFrame.left;
-			rcNewWnd.right += rcFrame.right;
-		}
-		else if (wParam == HTTOP || wParam == HTBOTTOM)
-		{
-			// найти новую верхнюю границу
-			POINT pt = {((rcWnd.left+rcWnd.right)>>2),rcWnd.top};
-			HMONITOR hMonTop = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
-
-			if (!GetMonitorInfo(hMonTop, &mon))
-				return FALSE;
-
-			rcNewWnd.top = mon.rcWork.top;
-			// найти новую нижнюю границу
-			pt.y = rcWnd.bottom;
-			HMONITOR hMonBottom = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
-
-			if (hMonBottom != hMonTop)
-				if (!GetMonitorInfo(hMonBottom, &mon))
-					return FALSE;
-
-			rcNewWnd.bottom = mon.rcWork.bottom;
-			// Скорректировать границы на ширину рамки
-			RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
-			rcNewWnd.top -= rcFrame.bottom; // т.к. в top учтена высота заголовка
-			rcNewWnd.bottom += rcFrame.bottom;
-		}
-
-		// Двигаем окошко
-		if (rcNewWnd.left != rcWnd.left || rcNewWnd.right != rcWnd.right || rcNewWnd.top != rcWnd.top || rcNewWnd.bottom != rcWnd.bottom)
-			MOVEWINDOW(ghWnd, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, 1);
+		OnMaximizeWidthHeight( (wParam == HTLEFT || wParam == HTRIGHT), (wParam == HTTOP || wParam == HTBOTTOM) );
 
 		return TRUE;
 	}
@@ -19039,7 +19087,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgPostAltF9)
 			{
-				OnAltF9(TRUE);
+				OnAltF9();
 				return 0;
 			}
 			else if (messg == this->mn_MsgInitInactiveDC)

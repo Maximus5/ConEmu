@@ -198,6 +198,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	//mh_InputThread = NULL; mn_InputThreadID = 0;
 	mp_sei = NULL;
 	mn_MainSrv_PID = mn_ConHost_PID = 0; mh_MainSrv = NULL; mb_MainSrv_Ready = false;
+	mn_CheckFreqLock = 0;
 	mp_ConHostSearch = NULL;
 	mn_ActiveLayout = 0;
 	mn_AltSrv_PID = 0;  //mh_AltSrv = NULL;
@@ -5688,7 +5689,7 @@ bool CRealConsole::isServerAlive()
 
 #ifdef _DEBUG
 	DWORD dwExitCode = 0, nSrvPID = 0, nErrCode = 0;
-	LockFrequentExecute(500)
+	LockFrequentExecute(500,mn_CheckFreqLock)
 	{
 		SetLastError(0);
 		BOOL fSuccess = GetExitCodeProcess(mh_MainSrv, &dwExitCode);

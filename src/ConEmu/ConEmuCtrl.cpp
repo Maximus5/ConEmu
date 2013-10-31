@@ -732,7 +732,8 @@ bool CConEmuCtrl::key_AltF9(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, 
 	if (TestOnly)
 		return true;
 
-	gpConEmu->OnAltF9(TRUE);
+	// Called as "Post" to force "Far" resize by Alt-release?
+	gpConEmu->OnAltF9();
 	return true;
 }
 
@@ -1675,6 +1676,8 @@ bool CConEmuCtrl::key_RunTask(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 {
 	if (TestOnly)
 		return true;
+
+	_ASSERTE(hk->HkType==chk_Task);
 
 	if (gpSet->CmdTaskGet(hk->GetTaskIndex()))
 	{

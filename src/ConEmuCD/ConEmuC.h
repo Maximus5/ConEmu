@@ -309,6 +309,7 @@ int CreateMapHeader();
 void CloseMapHeader();
 void CopySrvMapFromGuiMap();
 void UpdateConsoleMapHeader();
+int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2);
 BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd);
 
 int CreateColorerHeader(bool bForceRecreate = false);

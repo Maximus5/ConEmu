@@ -343,6 +343,7 @@ void Settings::InitSettings()
 	isMultiIterate = true;
 	isMultiMinByEsc = 2; isMapShiftEscToEsc = true; // isMapShiftEscToEsc used only when isMultiMinByEsc==1 and only for console apps
 	isMultiNewConfirm = true;
+	isCloseConsoleConfirm = true;
 	isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false;
 	nSplitWidth = nSplitHeight = 4;
 	//nSplitClr1 = nSplitClr2 = RGB(160,160,160);
@@ -4628,6 +4629,7 @@ const Settings::CommandTasks* Settings::CmdTaskGet(int anIndex)
 	if (!CmdTasks || (anIndex < 0) || (anIndex >= CmdTaskCount))
 		return NULL;
 
+	CmdTasks[anIndex]->HotKey.HkType = chk_Task;
 	CmdTasks[anIndex]->HotKey.SetTaskIndex(anIndex);
 	CmdTasks[anIndex]->HotKey.fkey = CConEmuCtrl::key_RunTask;
 

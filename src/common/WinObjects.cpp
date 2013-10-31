@@ -463,6 +463,13 @@ BOOL IsFilePath(LPCWSTR asFilePath)
 	return TRUE;
 }
 
+BOOL IsPathNeedQuot(LPCWSTR asPath)
+{
+	if (wcspbrk(asPath, L"<>()&|^\""))
+		return TRUE;
+	return FALSE;
+}
+
 BOOL GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortName/*[MAX_PATH+1]-name only*/, BOOL abFavorLength=FALSE)
 {
 	WARNING("FindFirstFile использовать нельзя из-за симлинков");
@@ -1304,14 +1311,19 @@ wchar_t* ExpandEnvStr(LPCWSTR pszCommand)
 	if (!pszCommand || !*pszCommand)
 		return NULL;
 
-	DWORD cchMax = MAX_PATH*2;
-	wchar_t* pszExpand = (wchar_t*)malloc(cchMax*sizeof(*pszExpand));
+	DWORD cchMax = ExpandEnvironmentStrings(pszCommand, NULL, 0);
+	if (!cchMax)
+		return lstrdup(pszCommand);
+
+	wchar_t* pszExpand = (wchar_t*)malloc((cchMax+2)*sizeof(*pszExpand));
 	if (pszExpand)
 	{
 		pszExpand[0] = 0;
+		pszExpand[cchMax] = 0xFFFF;
+		pszExpand[cchMax+1] = 0xFFFF;
 
 		DWORD nExp = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
-		if (nExp && (nExp < cchMax) && *pszExpand)
+		if (nExp && (nExp <= cchMax) && *pszExpand)
 			return pszExpand;
 
 		SafeFree(pszExpand);

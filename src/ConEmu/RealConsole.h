@@ -570,6 +570,7 @@ class CRealConsole
 		void SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/);
 		// Сервер и альтернативный сервер
 		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
+		DWORD mn_CheckFreqLock;
 		DWORD mn_ConHost_PID;
 		MMap<DWORD,BOOL>* mp_ConHostSearch;
 		void ConHostSearchPrepare();

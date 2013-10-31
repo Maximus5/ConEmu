@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    131
+#define CESERVER_REQ_VER    132
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -367,6 +367,7 @@ const CECMD
 	CECMD_ALTBUFFERSTATE = 73, // Проверить, разрешен ли Alt.Buffer?
 	CECMD_STARTXTERM     = 74, // dwData[0]=bool, start/stop xterm input
 	//CECMD_DEFTERMSTARTED = 75, // Уведомить GUI, что инициализация хуков для Default Terminal была завершена -- не требуется, ConEmuC ждет успеха
+	CECMD_UPDCONMAPHDR   = 76, // AltServer не может менять CESERVER_CONSOLE_MAPPING_HDR во избежание конфликтов. Это делает только RM_MAINSERVER (req.ConInfo)
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1300,6 +1301,7 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	// --> ComSpec.ConEmuBaseDir:  wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 	//
 	DWORD nAltServerPID;  //
+	DWORD ActiveServerPID() const { return nAltServerPID ? nAltServerPID : nServerPID; };
 
 	// Root(!) ConEmu window
 	HWND2 hConEmuRoot;
@@ -1327,7 +1329,7 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	BOOL  bLockVisibleArea;
 	COORD crLockedVisible;
 	// И какая прокрутка допустима
-	RealBufferScroll rbsAllowed;
+	RealBufferScroll rbsAllowed; // пока любая - rbs_Any
 
 	ConEmuComspec ComSpec;
 };

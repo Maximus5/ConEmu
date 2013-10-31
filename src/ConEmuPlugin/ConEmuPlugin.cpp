@@ -105,10 +105,6 @@ struct SyncExecuteArg
 	LONG_PTR lParam;
 };
 
-#ifdef _DEBUG
-wchar_t gszDbgModLabel[6] = {0};
-#endif
-
 #if defined(__GNUC__)
 extern "C" {
 	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
@@ -744,12 +740,12 @@ void OnConsolePeekReadInput(BOOL abPeek)
 
 			if (nMapPID == 0 || nMapPID != gnSelfPID)
 			{
-				WARNING("***ALT*** не нужно звать ConEmuC, если текущий процесс уже альт.сервер");
+				//Выполнить команду в главном сервере, альтернативный не имеет права писать в мэппинг
 				bNeedReload = true;
 				dwLastTickCount = GetTickCount();
 				CESERVER_REQ_HDR in;
 				ExecutePrepareCmd(&in, CECMD_SETFARPID, sizeof(CESERVER_REQ_HDR));
-				CESERVER_REQ *pOut = ExecuteSrvCmd(gpConMapInfo->nServerPID, (CESERVER_REQ*)&in, FarHwnd);
+				CESERVER_REQ *pOut = ExecuteSrvCmd(gpConMapInfo->ActiveServerPID(), (CESERVER_REQ*)&in, FarHwnd);
 				if (pOut)
 					ExecuteFreeResult(pOut);
 			}

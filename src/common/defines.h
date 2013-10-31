@@ -121,7 +121,7 @@ WARNING("WIN64 was not defined");
 #endif
 #define ZeroStruct(s) memset(&(s), 0, sizeof(s))
 
-#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
+#define SafeCloseHandle(h) { if ((h) && (h)!=INVALID_HANDLE_VALUE) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 
 #define isDriveLetter(c) ((c>=L'A' && c<=L'Z') || (c>=L'a' && c<=L'z'))
 #define isDigit(c) (c>=L'0' && c<=L'9')
@@ -179,16 +179,8 @@ extern wchar_t gszDbgModLabel[6];
 		else wcscpy_c(gszDbgModLabel, L"dll"); \
 	}
 #ifdef SHOWDEBUGSTR
-#define DEBUGSTR(s) { \
-	MCHKHEAP; CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[1040]; _wsprintf(szDEBUGSTRTime, SKIPLEN(countof(szDEBUGSTRTime)) L"%i:%02i:%02i.%03i(%s.%i.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentProcessId(), GetCurrentThreadId()); \
-	LPCWSTR psz = s; int nSLen = lstrlen(psz); \
-	if (nSLen < 999) { \
-		wcscat_c(szDEBUGSTRTime, s); \
-		{ if (nSLen && psz[nSLen-1]!=L'\n') wcscat_c(szDEBUGSTRTime, L"\n"); } \
-		OutputDebugString(szDEBUGSTRTime); \
-	} else { \
-		OutputDebugString(szDEBUGSTRTime); OutputDebugString(psz); if (nSLen && psz[nSLen-1]!=L'\n') OutputDebugString(L"\n"); \
-	}}
+extern void _DEBUGSTR(LPCWSTR s);
+#define DEBUGSTR(s) _DEBUGSTR(s)
 #else
 #ifndef DEBUGSTR
 #define DEBUGSTR(s)

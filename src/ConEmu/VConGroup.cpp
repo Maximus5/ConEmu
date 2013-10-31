@@ -233,7 +233,9 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 	mp_Parent = apParent; // Ссылка на "родительскую" панель
 	mp_ActiveGroupVConPtr = NULL;
 
-	EnterCriticalSection(&gcs_VGroups);
+
+	MSectionLockSimple lockGroups; lockGroups.Lock(&gcs_VGroups);
+	
 	bool bAdded = false;
 	for (size_t i = 0; i < countof(gp_VGroups); i++)
 	{
@@ -245,7 +247,8 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 		}
 	}
 	_ASSERTE(bAdded && "gp_VGroups overflow");
-	LeaveCriticalSection(&gcs_VGroups);
+
+	lockGroups.Unlock();
 }
 
 CVConGroup::~CVConGroup()
@@ -254,10 +257,9 @@ CVConGroup::~CVConGroup()
 
 	// Не должно быть дочерних панелей
 	_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
-	//SafeDelete(mp_Grp1);
-	//SafeDelete(mp_Grp2);
 
-	EnterCriticalSection(&gcs_VGroups);
+
+	MSectionLockSimple lockGroups; lockGroups.Lock(&gcs_VGroups);
 
 	if (mp_Parent)
 	{
@@ -287,7 +289,7 @@ CVConGroup::~CVConGroup()
 	}
 	_ASSERTE(bRemoved && "Was not pushed in gp_VGroups?");
 
-	LeaveCriticalSection(&gcs_VGroups);
+	lockGroups.Unlock();
 }
 
 void CVConGroup::OnVConDestroyed(CVirtualConsole* apVCon)
@@ -3841,6 +3843,7 @@ void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
 
 void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync)
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(&gcs_VGroups);
 	CVConGuard VCon(mp_Item);
 
 	// Некорректно. Нужно прокрутку просто вводить. А игнорировать установку размера окна нельзя.
@@ -3875,7 +3878,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 	CVConGuard VCon1(mp_Grp1 ? mp_Grp1->mp_Item : NULL);
 	CVConGuard VCon2(mp_Grp2 ? mp_Grp2->mp_Item : NULL);
 
-	if ((m_SplitType == RConStartArgs::eSplitNone) || !mp_Grp1 || !mp_Grp2)
+	if ((m_SplitType == RConStartArgs::eSplitNone) || !VCon1.VCon() || !VCon2.VCon())
 	{
 		_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
 
@@ -3912,8 +3915,8 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 	RECT rcCon1, rcCon2, rcSplitter, rcSize1, rcSize2;
 	CalcSplitRect(rcNewCon, rcCon1, rcCon2, rcSplitter);
 
-	rcSize1 = CalcRect(CER_CONSOLE_CUR, rcCon1, CER_BACK, mp_Grp1->mp_Item);
-	rcSize2 = CalcRect(CER_CONSOLE_CUR, rcCon2, CER_BACK, mp_Grp2->mp_Item);
+	rcSize1 = CalcRect(CER_CONSOLE_CUR, rcCon1, CER_BACK, VCon1.VCon());
+	rcSize2 = CalcRect(CER_CONSOLE_CUR, rcCon2, CER_BACK, VCon2.VCon());
 
 	COORD sz1 = {rcSize1.right,rcSize1.bottom}, sz2 = {rcSize2.right,rcSize2.bottom};
 
@@ -3933,6 +3936,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 // В принципе, эту функцию можно было бы и в CConEmu оставить, но для общности путь здесь будет
 void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN or CER_MAINCLIENT*/, COORD size, bool bSetRedraw /*= false*/)
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(&gcs_VGroups);
 	CVConGuard VCon(gp_VActive);
 	CVConGroup* pRoot = GetRootOfVCon(VCon.VCon());
 
@@ -3979,6 +3983,7 @@ void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= 
 	// Go (size real consoles)
 	pRoot->SetConsoleSizes(size, rcWorkspace, bSetRedraw/*as Sync*/);
 
+	lockGroups.Unlock();
 
 	if (bSetRedraw /*&& gp_VActive*/)
 	{

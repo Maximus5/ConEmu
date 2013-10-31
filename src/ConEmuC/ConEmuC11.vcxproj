@@ -322,7 +322,7 @@
     <LinkKeyFile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">
-    <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\ConEmu\</OutDir>
+    <OutDir>T:\Utils\ConEmu\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmuC</TargetName>
     <TargetExt>.exe</TargetExt>
@@ -330,7 +330,7 @@
     <LinkKeyFile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">
-    <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\ConEmu\</OutDir>
+    <OutDir>T:\Utils\ConEmu\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmuC64</TargetName>
     <TargetExt>.exe</TargetExt>
@@ -623,7 +623,8 @@
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(TargetPath) \VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\ConEmu\</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_PDB|Win32'">

@@ -1499,7 +1499,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 			//	if ((gThSet.bLoadPreviews & PVM) == 0)
 			//		continue; // для этого режима превьюшки не просили
 			//}
-			_ASSERTE(nTopItem>=0 && nTopItem<nItemCount && nItemCount>=0);
+			_ASSERTE(nTopItem>=0 && (nTopItem<nItemCount || (nTopItem==0 && nItemCount==0)) && nItemCount>=0);
 			INT_PTR nItem = nTopItem;
 			int nYCoord = 0, nXCoord = 0;
 			int X = -1, Y = -1;

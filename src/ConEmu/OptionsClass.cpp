@@ -500,7 +500,10 @@ const ConEmuHotKey* CSettings::GetHotKeyPtr(int idx)
 		{
 			const Settings::CommandTasks* pCmd = gpSet->CmdTaskGet(idx - mn_HotKeys);
 			if (pCmd)
+			{
+				_ASSERTE(pCmd->HotKey.HkType==chk_Task && pCmd->HotKey.GetTaskIndex()==(idx-mn_HotKeys));
 				pHK = &pCmd->HotKey;
+			}
 		}
 	}
 
@@ -765,7 +768,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_KEYS,        0, L"Keys & Macro",   thi_Keys/*,    OnInitDialog_Keys*/},
 		{IDD_SPG_CONTROL,     1, L"Controls",       thi_KeybMouse/*,OnInitDialog_Control*/},
 		{IDD_SPG_SELECTION,   1, L"Mark & Paste",   thi_Selection/*OnInitDialog_Selection*/},
-		{IDD_SPG_FEATURE_FAR, 0, L"Far Manager",    thi_Far/*,     OnInitDialog_Ext*/, true/*Collapsed*/},
+		{IDD_SPG_FEATURE_FAR, 0, L"Far Manager",    thi_Far/*,     OnInitDialog_Far*/, true/*Collapsed*/},
 		{IDD_SPG_VIEWS,       1, L"Views",          thi_Views/*,   OnInitDialog_Views*/},
 		{IDD_SPG_INFO,        0, L"Info",           thi_Info/*,    OnInitDialog_Info*/, RELEASEDEBUGTEST(true,false)/*Collapsed in Release*/},
 		{IDD_SPG_DEBUG,       1, L"Debug",          thi_Debug/*,   OnInitDialog_Debug*/},
@@ -906,7 +909,7 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig,
 		// Single instance?
 		if (gpSet->isSingleInstance && (gpSetCls->SingleInstanceArg == sgl_Default))
 		{
-			if (pszCmdLine && *pszCmdLine)
+			if ((pszCmdLine && *pszCmdLine) || gpConEmu->mb_StartDetached)
 			{
 				// ƒолжен быть "sih_None" иначе существующа€ копи€ не запустит команду
 				_ASSERTE(SingleInstanceShowHide == sih_None);
@@ -2593,11 +2596,6 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 {
-	#if 0
-	if (gpSetCls->EnableThemeDialogTextureF)
-		gpSetCls->EnableThemeDialogTextureF(hWnd2, 6/*ETDT_ENABLETAB*/);
-	#endif
-
 	// —начала - то что обновл€етс€ при активации вкладки
 
 	// —писки

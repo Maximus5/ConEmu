@@ -85,9 +85,6 @@ BOOL gbNoDblBuffer = false;
 #endif
 BOOL gbMessagingStarted = FALSE;
 
-#ifdef _DEBUG
-wchar_t gszDbgModLabel[6] = {0};
-#endif
 
 
 //externs
@@ -405,6 +402,7 @@ int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
 }
 int MDEBUG_CHK = TRUE;
 #endif
+
 
 void LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/)
 {
@@ -3590,7 +3588,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				//{
 				//    gpConEmu->setParent = true; gpConEmu->setParent2 = true;
 				//}
-				else if (!klstricmp(curCommand, _T("/BufferHeight")) && i + 1 < params)
+				else if ((!klstricmp(curCommand, _T("/Buffer")) || !klstricmp(curCommand, _T("/BufferHeight")))
+					&& i + 1 < params)
 				{
 					curCommand += _tcslen(curCommand) + 1; i++;
 

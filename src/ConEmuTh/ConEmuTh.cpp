@@ -62,10 +62,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define ConEmuTh_SysID 0x43455568 // 'CETh'
 
-#ifdef _DEBUG
-wchar_t gszDbgModLabel[6] = {0};
-#endif
-
 #if defined(__GNUC__)
 extern "C" {
 	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);

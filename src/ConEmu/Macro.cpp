@@ -942,7 +942,7 @@ LPWSTR CConEmuMacro::WindowFullscreen(GuiMacro* p, CRealConsole* apRCon)
 	return pszRc;
 }
 
-// Fullscreen
+// WindowMaximize
 LPWSTR CConEmuMacro::WindowMaximize(GuiMacro* p, CRealConsole* apRCon)
 {
 	LPWSTR pszRc = WindowMode(NULL, NULL);
@@ -1672,7 +1672,7 @@ LPWSTR CConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon)
 			if (bNewConsoleVerb)
 			{
 				wchar_t* pszNewConsoleArgs = lstrmerge(L"\"-", pszOper, L"\"");
-				bool bOk = apRCon->DuplicateRoot(true, false, pszNewConsoleArgs, pszFile, pszParm);
+				bool bOk = apRCon->DuplicateRoot(true/*bSkipMsg*/, false/*bRunAsAdmin*/, pszNewConsoleArgs, pszFile, pszParm);
 				SafeFree(pszNewConsoleArgs);
 				if (bOk)
 				{

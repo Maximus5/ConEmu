@@ -790,17 +790,23 @@ class CConEmuMain :
 		bool SetTileMode(ConEmuWindowCommand Tile);
 		ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi=NULL);
 		bool IsSizeFree(ConEmuWindowMode CheckMode = wmFullScreen);
+		bool IsSizePosFree(ConEmuWindowMode CheckMode = wmFullScreen);
+		bool IsCantExceedMonitor();
+		bool IsPosLocked();
 		bool JumpNextMonitor(bool Next);
 		bool JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd);
 	private:
-		struct {
+		struct QuakePrevSize {
 			bool bWasSaved;
 			bool bWaitReposition; // Требуется смена позиции при OnHideCaption
 			CESize wndWidth, wndHeight; // Консоль
 			int wndX, wndY; // GUI
-			DWORD nFrame;
+			DWORD nFrame; // it's BYTE, DWORD here for alignment
 			ConEmuWindowMode WindowMode;
 			IdealRectInfo rcIdealInfo;
+			// helper methods
+			void Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo);
+			ConEmuWindowMode Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo);
 		} m_QuakePrevSize;
 		ConEmuWindowCommand m_TileMode;
 		struct {
@@ -855,7 +861,8 @@ class CConEmuMain :
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		void OnAltEnter();
-		void OnAltF9(BOOL abPosted=FALSE);
+		void OnAltF9();
+		bool OnMaximizeWidthHeight(bool bWidth, bool bHeight);
 		void OnMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
 		void OnForcedFullScreen(bool bSet = true);
 		void OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp);

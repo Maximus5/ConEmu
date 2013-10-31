@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsFast.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
+#include "../common/WinObjects.h"
 
 static bool bCheckHooks, bCheckUpdate, bCheckIme;
 // Если файл конфигурации пуст, то после вызова CheckOptionsFast
@@ -345,7 +346,8 @@ void CheckOptionsFast(LPCWSTR asTitle, bool abCreatingVanilla /*= false*/)
 	if (gpConEmu->IsFastSetupDisabled())
 	{
 		gpConEmu->LogString(L"CheckOptionsFast was skipped due to '/basic' or '/resetdefault' switch");
-		return;
+
+		goto checkTasks;
 	}
 
 	bVanilla = abCreatingVanilla;
@@ -412,5 +414,231 @@ void CheckOptionsFast(LPCWSTR asTitle, bool abCreatingVanilla /*= false*/)
 		SkipOneShowWindow();
 
 		DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_FAST_CONFIG), NULL, CheckOptionsFastProc, (LPARAM)asTitle);
+	}
+
+checkTasks:
+	// Just run
+	CreateDefaultTasks();
+}
+
+
+
+
+
+/* **************************************** */
+/*         Creating default tasks           */
+/* **************************************** */
+
+// Search on asFirstDrive and all (other) fixed drive letters
+// asFirstDrive may be letter ("C:") or network (\\server\share)
+// asSearchPath is path to executable (\cygwin\bin\sh.exe)
+static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&rsFound)[MAX_PATH+1])
+{
+	bool bFound = false;
+	wchar_t* pszExpanded = NULL;
+
+	// Using environment variables?
+	if (wcschr(asSearchPath, L'%'))
+	{
+		pszExpanded = ExpandEnvStr(asSearchPath);
+		if (pszExpanded && FileExists(pszExpanded))
+		{
+			lstrcpyn(rsFound, asSearchPath, countof(rsFound));
+			bFound = true;
+		}
+		goto wrap;
+	}
+
+	// Only executable name was specified?
+	if (!wcschr(asSearchPath, L'\\'))
+	{
+		DWORD nFind = SearchPath(NULL, asSearchPath, NULL, countof(rsFound), rsFound, NULL);
+		if (nFind && nFind < countof(rsFound))
+		{
+			lstrcpyn(rsFound, asSearchPath, countof(rsFound));
+			bFound = true;
+		}
+		goto wrap;
+	}
+
+	if (asFirstDrive && *asFirstDrive)
+	{
+		INT_PTR nDrvLen = _tcslen(asFirstDrive);
+		lstrcpyn(rsFound, asFirstDrive, countof(rsFound));
+		lstrcpyn(rsFound+nDrvLen, asSearchPath, countof(rsFound)-nDrvLen);
+		if (FileExists(rsFound))
+		{
+			bFound = true;
+			goto wrap;
+		}
+	}
+
+	wchar_t szDrive[4] = L"C:\\";
+	for (szDrive[0] = L'C'; szDrive[0] <= L'Z'; szDrive[0]++)
+	{
+		UINT nType = GetDriveType(szDrive);
+		if (nType != DRIVE_FIXED)
+			continue;
+		lstrcpyn(rsFound, szDrive, countof(rsFound));
+		lstrcpyn(rsFound+2, asSearchPath, countof(rsFound)-2);
+		if (FileExists(rsFound))
+		{
+			bFound = true;
+			goto wrap;
+		}
+	}
+
+wrap:
+	SafeFree(pszExpanded);
+	return bFound;
+}
+
+void CreateDefaultTasks(bool bForceAdd /*= false*/)
+{
+	int iCreatIdx = 0;
+
+	if (!bForceAdd)
+	{
+		const Settings::CommandTasks* pExist = gpSet->CmdTaskGet(iCreatIdx);
+		if (pExist != NULL)
+		{
+			// At least one task was already created
+			return;
+		}
+	}
+
+	wchar_t szConEmuDrive[MAX_PATH] = L"";
+	GetDrive(gpConEmu->ms_ConEmuExeDir, szConEmuDrive, countof(szConEmuDrive));
+
+	/*
+		Far Manager
+		cmd.exe
+		powershell.exe
+		MinGW/GIT/CygWin bash (and GOW?)
+		C:\cygwin\bin\bash.exe --login -i
+		TCC/LE
+		Visual C++ environment (2008/2010/2012) x86 platform
+		PuTTY?
+	*/
+
+	struct {
+		LPCWSTR asName, asExePath, asArgs, asGuiArg;
+		LPWSTR  pszFound;
+	} FindTasks[] = {
+		// Far Manager
+		{L"Far Manager",         L"%ConEmuDir%\\far.exe"},
+		{L"Far Manager",         L"far.exe"},
+		
+		// TakeCommand
+		{L"TCC",                 L"tcc.exe",                           NULL},
+		{L"TCC (Admin)",         L"tcc.exe",                           L" -new_console:a"},
+
+		// NYAOS - !!!TODO!!!
+		{L"NYAOS",               L"nyaos.exe",                         NULL},
+		{L"NYAOS (Admin)",       L"nyaos.exe",                         L" -new_console:a"},
+
+		// Windows internal
+		{L"cmd",                 L"cmd.exe",                           NULL},
+		{L"cmd (Admin)",         L"cmd.exe",                           L" -new_console:a"},
+		{L"PowerShell",          L"powershell.exe",                    NULL},
+		{L"PowerShell (Admin)",  L"powershell.exe",                    L" -new_console:a"},
+
+		// Bash
+		{L"CygWin bash",    L"\\CygWin\\bin\\sh.exe",                  L" --login -i"},
+//		{L"CygWin mintty",  L"\\CygWin\\bin\\mintty.exe",              L" -"},
+		{L"MinGW bash",     L"\\MinGW\\msys\\1.0\\bin\\sh.exe",        L" --login -i"},
+//		{L"MinGW mintty",   L"\\MinGW\\msys\\1.0\\bin\\mintty.exe",    L" -"},
+		{L"Git bash",       L"%ProgramFiles%\\Git\\bin\\sh.exe",       L" --login -i"},
+		{L"bash",           L"sh.exe",                                 L" --login -i"}, // Last chance for bash
+		// Putty?
+		{L"Putty",          L"Putty.exe",                              NULL},
+		
+		// C++ build environments (Visual Studio) - !!!TODO!!!
+		
+		// FIN
+		{NULL}
+	};
+
+	wchar_t szFound[MAX_PATH+1], szUnexpand[MAX_PATH+1], *pszFull = NULL;
+	for (int i = 0; FindTasks[i].asName; i++)
+	{
+		if (!FindOnDrives(szConEmuDrive, FindTasks[i].asExePath, szFound))
+			continue;
+		// May be it was already found before?
+		bool bAlready = false;
+		for (int j = 0; j < i; j++)
+		{
+			if (FindTasks[i].pszFound && lstrcmpi(szFound, FindTasks[i].pszFound) == 0)
+			{
+				bAlready = true; break;
+			}
+		}
+		if (bAlready)
+			continue;
+
+		// Go
+		FindTasks[i].pszFound = lstrdup(szFound);
+
+		// Try to use system env vars?
+		LPCWSTR pszFound = szFound;
+		if (PathUnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)))
+			pszFound = szUnexpand;
+
+		// Spaces in path? (use expanded path)
+		if (IsPathNeedQuot(szFound))
+			pszFull = lstrmerge(L"\"", pszFound, L"\"", FindTasks[i].asArgs);
+		else
+			pszFull = lstrmerge(pszFound, FindTasks[i].asArgs);
+
+		// Create task
+		if (pszFull)
+		{
+			gpSet->CmdTaskSet(iCreatIdx++, FindTasks[i].asName, FindTasks[i].asGuiArg, pszFull);
+			SafeFree(pszFull);
+		}
+	}
+
+	// Windows SDK
+	HKEY hk;
+	if (0 == RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", 0, KEY_READ, &hk))
+	{
+		UINT n = 0;
+		wchar_t szVer[34] = L""; DWORD cchMax = countof(szVer) - 1;
+		while (0 == RegEnumKeyEx(hk, n++, szVer, &cchMax, NULL, NULL, NULL, NULL))
+		{
+			HKEY hkVer;
+			if (0 == RegOpenKeyEx(hk, szVer, 0, KEY_READ, &hkVer))
+			{
+				wchar_t szVerPath[MAX_PATH+1] = L"";
+				DWORD cbSize = sizeof(szVerPath)-sizeof(szVerPath[0]);
+				if (0 == RegQueryValueEx(hkVer, L"InstallationFolder", NULL, NULL, (LPBYTE)szVerPath, &cbSize))
+				{
+					wchar_t* pszCmd = lstrmerge(szVerPath, L"Bin\\SetEnv.Cmd");
+					if (pszCmd && FileExists(pszCmd))
+					{
+						pszFull = lstrmerge(L"cmd /V /K \"", pszCmd, L"\"");
+						// Create task
+						if (pszFull)
+						{
+							wcscpy_c(szVerPath, L"WinSDK ");
+							wcscat_c(szVerPath, szVer);
+							gpSet->CmdTaskSet(iCreatIdx++, szVerPath, L"", pszFull);
+							SafeFree(pszFull);
+						}
+
+					}
+					SafeFree(pszCmd);
+				}
+				RegCloseKey(hkVer);
+			}
+			
+			cchMax = countof(szVer) - 1;
+		}
+		RegCloseKey(hk);
+	}
+
+	for (int i = 0; FindTasks[i].asName; i++)
+	{
+		SafeFree(FindTasks[i].pszFound);
 	}
 }

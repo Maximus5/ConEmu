@@ -322,7 +322,7 @@
     <LinkKeyFile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">
-    <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\ConEmu\</OutDir>
+    <OutDir>T:\Utils\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmu</TargetName>
     <TargetExt>.exe</TargetExt>
@@ -330,7 +330,7 @@
     <LinkKeyFile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">
-    <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\ConEmu\</OutDir>
+    <OutDir>T:\Utils\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ConEmu64</TargetName>
     <TargetExt>.exe</TargetExt>
@@ -1050,7 +1050,6 @@
     <None Include="Version.rc2" />
     <None Include="vsplit.cur" />
     <None Include="!Todo.Tablet.txt" />
-    <None Include="!Todo.txt" />
     <None Include="..\..\Release\ConEmu\About-ConEmu.txt" />
     <None Include="ClassDiagram1.cd" />
     <None Include="..\..\Release\ConEmu\FAQ-ConEmu.txt" />
@@ -1063,6 +1062,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="!ToDo.!111!.txt" />
+    <Text Include="..\..\..\Maximus5\src\ConEmu\!Todo.txt" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Copy24.bmp" />

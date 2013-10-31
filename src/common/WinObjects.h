@@ -66,6 +66,7 @@ BOOL FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax);
 BOOL DirectoryExists(LPCWSTR asPath);
 BOOL MyCreateDirectory(wchar_t* asPath);
 BOOL IsFilePath(LPCWSTR asFilePath);
+BOOL IsPathNeedQuot(LPCWSTR asPath);
 BOOL IsUserAdmin();
 BOOL GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
 bool IsWine();

@@ -521,20 +521,6 @@ int ServerInitConsoleSize()
 			gcrVisibleSize.Y = lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1;
 			gnBufferHeight = (lsbi.dwSize.Y == gcrVisibleSize.Y) ? 0 : lsbi.dwSize.Y;
 			gnBufferWidth = (lsbi.dwSize.X == gcrVisibleSize.X) ? 0 : lsbi.dwSize.X;
-
-			//gcrVisibleSize.X = lsbi.dwSize.X;
-			//if (lsbi.dwSize.Y > lsbi.dwMaximumWindowSize.Y)
-			//{
-			//	// Буферный режим
-			//	gcrVisibleSize.Y = (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1);
-			//	gnBufferHeight = lsbi.dwSize.Y;
-			//}
-			//else
-			//{
-			//	// Режим без прокрутки!
-			//	gcrVisibleSize.Y = lsbi.dwSize.Y;
-			//	gnBufferHeight = 0;
-			//}
 		}
 	}
 
@@ -3007,6 +2993,28 @@ wrap:
 	return iRc;
 }
 
+int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2)
+{
+	if (!p1 || !p2)
+	{
+		_ASSERTE(FALSE && "Invalid arguments");
+		return 0;
+	}
+	#ifdef _DEBUG
+	_ASSERTE(p1->cbSize==sizeof(CESERVER_CONSOLE_MAPPING_HDR) && (p1->cbSize==p2->cbSize || p2->cbSize==0));
+	if (p1->cbSize != p2->cbSize)
+		return 1;
+	if (p1->nAltServerPID != p2->nAltServerPID)
+		return 2;
+	if (p1->nActiveFarPID != p2->nActiveFarPID)
+		return 3;
+	if (memcmp(&p1->crLockedVisible, &p2->crLockedVisible, sizeof(p1->crLockedVisible))!=0)
+		return 4;
+	#endif
+	int nCmp = memcmp(p1, p2, p1->cbSize);
+	return nCmp;
+};
+
 void UpdateConsoleMapHeader()
 {
 	WARNING("***ALT*** не нужно обновлять мэппинг одновременно и в сервере и в альт.сервере");
@@ -3021,6 +3029,7 @@ void UpdateConsoleMapHeader()
 				CreateColorerHeader(bRecreate);
 			}
 			gpSrv->pConsole->hdr.nServerPID = GetCurrentProcessId();
+			gpSrv->pConsole->hdr.nAltServerPID = gpSrv->dwAltServerPID;
 		}
 		else if (gnRunMode == RM_ALTSERVER)
 		{
@@ -3062,10 +3071,29 @@ void UpdateConsoleMapHeader()
 		_ASSERTE(gpSrv->pConsole->hdr.hConEmuRoot==NULL || gpSrv->pConsole->hdr.nGuiPID!=0);
 		gpSrv->pConsole->hdr.nActiveFarPID = gpSrv->nActiveFarPID;
 
+		#ifdef _DEBUG
+		int nMapCmp = -100;
+		if (gpSrv->pConsoleMap)
+			nMapCmp = Compare(&gpSrv->pConsole->hdr, gpSrv->pConsoleMap->Ptr());
+		#endif
+
 		// Нельзя альт.серверу мэппинг менять - подерутся
 		if (gnRunMode != RM_SERVER /*&& gnRunMode != RM_ALTSERVER*/)
 		{
 			_ASSERTE(gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER);
+			// Могли измениться: gcrVisibleSize, nActiveFarPID
+			if (gpSrv->dwMainServerPID && gpSrv->dwMainServerPID != GetCurrentProcessId())
+			{
+				size_t nReqSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_CONSOLE_MAPPING_HDR);
+				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_UPDCONMAPHDR, nReqSize);
+				if (pIn)
+				{
+					pIn->ConInfo = gpSrv->pConsole->hdr;
+					CESERVER_REQ* pOut = ExecuteSrvCmd(gpSrv->dwMainServerPID, pIn, ghConWnd);
+					ExecuteFreeResult(pIn);
+					ExecuteFreeResult(pOut);
+				}
+			}
 			return;
 		}
 
@@ -3877,7 +3905,9 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 			gpSrv->pConsole->hdr.bDataReady = TRUE;
 		}
 
-		if (memcmp(&(gpSrv->pConsole->hdr), gpSrv->pConsoleMap->Ptr(), gpSrv->pConsole->hdr.cbSize))
+		//if (memcmp(&(gpSrv->pConsole->hdr), gpSrv->pConsoleMap->Ptr(), gpSrv->pConsole->hdr.cbSize))
+		int iMapCmp = Compare(&gpSrv->pConsole->hdr, gpSrv->pConsoleMap->Ptr());
+		if (iMapCmp)
 		{
 			lbChanged = TRUE;
 			//gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
@@ -4034,6 +4064,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 									AltServerWasStarted(info.nPrevPID, info.hPrev, true);
 								}
 							}
+							// Обновить мэппинг
+							UpdateConsoleMapHeader();
 						}
 
 						CsAlt.Unlock();

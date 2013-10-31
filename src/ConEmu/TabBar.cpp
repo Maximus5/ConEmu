@@ -630,7 +630,7 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 							// Чтобы клик случайно не провалился в консоль
 							gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
 							// Аналог AltF9
-							gpConEmu->OnAltF9(TRUE);
+							gpConEmu->OnAltF9();
 						}
 						else if ((gpSet->nTabBarDblClickAction == 3)
 							|| ((gpSet->nTabBarDblClickAction == 1) && !gpSet->isCaptionHidden()))
@@ -1679,7 +1679,7 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 		// Чтобы клик случайно не провалился в консоль
 		gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
 		// Аналог AltF9
-		gpConEmu->OnAltF9(TRUE);
+		gpConEmu->OnAltF9();
 	}
 	else if (wParam == TID_APPCLOSE)
 	{
@@ -1731,7 +1731,7 @@ void TabBarClass::OnMouse(int message, int x, int y)
 						// Чтобы клик случайно не провалился в консоль
 						gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
 						// Аналог AltF9
-						gpConEmu->OnAltF9(TRUE);
+						gpConEmu->OnAltF9();
 						break;
 					case 2:
 						guard->RCon()->CloseTab();

@@ -32,8 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FarRClickMacroDefault3 L"@if not CmdLine.Empty then Flg_Cmd=1; CmdCurPos=CmdLine.ItemCount-CmdLine.CurPos+1; CmdVal=CmdLine.Value; Keys(\"Esc\") else Flg_Cmd=0; end print(\"rclk_gui:\") Keys(\"Enter\") if Flg_Cmd==1 then print(CmdVal) Flg_Cmd=0; Num=CmdCurPos; while Num~=0 do Num=Num-1; Keys(\"CtrlS\") end end"
 
 
-#define FarSafeCloseMacroDefault2 L"@$while (Dialog||Editor||Viewer||Menu||Disks||MainMenu||UserMenu||Other||Help) $if (Editor) ShiftF10 $else Esc $end $end  Esc  $if (Shell) F10 $if (Dialog) Enter $end $Exit $end  F10"
-#define FarSafeCloseMacroDefault3 L"@while Area.Dialog or Area.Editor or Area.Viewer or Area.Menu or Area.Disks or Area.MainMenu or Area.UserMenu or Area.Other or Area.Help do if Area.Editor then Keys(\"ShiftF10\") else Keys(\"Esc\") end end Keys(\"Esc\") if Area.Shell then Keys(\"F10\") if Area.Dialog then Keys(\"Enter\") end exit() end Keys(\"F10\")"
+#define FarSafeCloseMacroDefault2 L"@$while (Dialog||Editor||Viewer||Menu||Disks||MainMenu||UserMenu||Other||Help) $if (Editor) ShiftF10 $if (Dialog) $Exit $end $else Esc $end $end  Esc  $if (Shell) F10 $if (Dialog) Enter $end $Exit $end  F10"
+#define FarSafeCloseMacroDefault3 L"@while Area.Dialog or Area.Editor or Area.Viewer or Area.Menu or Area.Disks or Area.MainMenu or Area.UserMenu or Area.Other or Area.Help do if Area.Editor then Keys(\"ShiftF10\") if Area.Dialog then exit() end else Keys(\"Esc\") end end Keys(\"Esc\") if Area.Shell then Keys(\"F10\") if Area.Dialog then Keys(\"Enter\") end exit() end Keys(\"F10\")"
 
 
 #define FarTabCloseMacroDefault2 L"@$if (Shell) F10 $if (Dialog) Enter $end $else F10 $end"
