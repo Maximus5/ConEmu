@@ -1191,25 +1191,26 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Predefined tasks (command groups)",gbCmdTasks,4,1,319,230
+    GROUPBOX        "&Predefined tasks (command groups)",gbCmdTasks,4,1,319,230
     LISTBOX         lbCmdTasks,9,12,93,180,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
-    LTEXT           "Task name (alias), surrounded by {...}, used in «[+] menu», «Recreate dialog» or «/cmd» agrument of ConEmu.exe",stCmdGroupName,111,11,207,16
+    LTEXT           "&Task name (alias), surrounded by {...}, used in «[+] menu», «Recreate dialog» or «/cmd» agrument of ConEmu.exe",stCmdGroupName,111,11,207,16
     EDITTEXT        tCmdGroupName,109,29,81,12,ES_AUTOHSCROLL
-    LTEXT           "Commands (application, arguments, ""-new_console"" params)\nDelimit commands with empty lines\nEach command creates tab in ConEmu when group started\nMark active console tab with '>' sign\nStart console 'As Administrator' with '*' sign",stCmdGroupCommands,111,71,208,41
+    LTEXT           "&Commands (application, arguments, ""-new_console"" params)\nDelimit commands with empty lines\nEach command creates tab in ConEmu when group started\nMark active console tab with '>' sign\nStart console 'As Administrator' with '*' sign",stCmdGroupCommands,111,71,208,41
     EDITTEXT        tCmdGroupCommands,109,113,208,97,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
-    PUSHBUTTON      "Tab...",cbCmdGroupApp,132,213,34,14
-    PUSHBUTTON      "File path...",cbCmdTasksParm,221,213,47,14
-    PUSHBUTTON      "+",cbCmdTasksAdd,9,213,17,14
-    PUSHBUTTON      "-",cbCmdTasksDel,27,213,17,14
-    PUSHBUTTON      "Up",cbCmdTasksUp,47,213,27,14
-    PUSHBUTTON      "Down",cbCmdTasksDown,75,213,27,14
+    PUSHBUTTON      "&+",cbCmdTasksAdd,9,213,17,14
+    PUSHBUTTON      "&-",cbCmdTasksDel,27,213,17,14
+    PUSHBUTTON      "&Up",cbCmdTasksUp,47,213,27,14
+    PUSHBUTTON      "&Down",cbCmdTasksDown,75,213,27,14
+    PUSHBUTTON      "Add default tasks...",cbAddDefaults,9,179,93,14
     PUSHBUTTON      "Reload...",cbCmdTasksReload,9,196,93,14
     LTEXT           "Task parameters. Example: /dir ""C:\\"" /icon ""cmd.exe"" /single",stCmdGroupGuiArg,111,44,208,8
     EDITTEXT        tCmdGroupGuiArg,110,54,208,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "Startup dir...",cbCmdTasksDir,167,213,53,14
     RTEXT           "Add:",stCmdTaskAdd,106,217,21,8
+    PUSHBUTTON      "Tab...",cbCmdGroupApp,132,213,34,14
+    PUSHBUTTON      "Startup dir...",cbCmdTasksDir,167,213,53,14
+    PUSHBUTTON      "File path...",cbCmdTasksParm,221,213,47,14
     PUSHBUTTON      "Active tabs",cbCmdTasksActive,270,213,49,14
-    RTEXT           "Hotkey:",IDC_STATIC,193,30,30,8
+    RTEXT           "&Hotkey:",IDC_STATIC,193,30,30,8
     EDITTEXT        tCmdGroupKey,227,29,72,12,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "...",cbCmdGroupKey,303,28,16,13
 END

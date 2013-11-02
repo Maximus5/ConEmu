@@ -60,20 +60,20 @@ typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 
 // Some WinAPI related functions
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
-BOOL FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);
-BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
-BOOL FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax);
-BOOL DirectoryExists(LPCWSTR asPath);
-BOOL MyCreateDirectory(wchar_t* asPath);
-BOOL IsFilePath(LPCWSTR asFilePath);
-BOOL IsPathNeedQuot(LPCWSTR asPath);
-BOOL IsUserAdmin();
-BOOL GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
+bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);
+bool FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
+bool FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax);
+bool DirectoryExists(LPCWSTR asPath);
+bool MyCreateDirectory(wchar_t* asPath);
+bool IsFilePath(LPCWSTR asFilePath);
+bool IsPathNeedQuot(LPCWSTR asPath);
+bool IsUserAdmin();
+bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
 bool IsWine();
 bool IsDbcs();
 bool IsWindows64();
 int GetProcessBits(DWORD nPID, HANDLE hProcess = NULL);
-BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL = FALSE);
+bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL = FALSE);
 bool IsModuleValid(HMODULE module);
 typedef struct tagPROCESSENTRY32W PROCESSENTRY32W;
 bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
@@ -83,7 +83,7 @@ void RemoveOldComSpecC();
 const wchar_t* PointToName(const wchar_t* asFullPath);
 const char* PointToName(const char* asFileOrPath);
 const wchar_t* PointToExt(const wchar_t* asFullPath);
-const wchar_t* Unquote(wchar_t* asParm);
+const wchar_t* Unquote(wchar_t* asParm, bool abFirstQuote = false);
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount);
 wchar_t* ExpandEnvStr(LPCWSTR pszCommand);
 wchar_t* GetFullPathNameEx(LPCWSTR asPath);
@@ -136,7 +136,7 @@ struct CEStartupEnv
 
 #ifndef CONEMU_MINIMAL
 HANDLE DuplicateProcessHandle(DWORD anTargetPID);
-void FindComspec(ConEmuComspec* pOpt); // используется в GUI при загрузке настроек
+void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso = true); // используется в GUI при загрузке настроек
 void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath = false);
 void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue);
 wchar_t* GetEnvVar(LPCWSTR VarName, DWORD cchDefaultMax = 2000);

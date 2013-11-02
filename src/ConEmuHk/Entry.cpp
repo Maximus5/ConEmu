@@ -384,7 +384,7 @@ wrap:
 		#ifdef _DEBUG
 		wchar_t szCurAnsiVar[32] = L""; GetEnvironmentVariableW(ENV_CONEMUANSI_VAR_W, szCurAnsiVar, countof(szCurAnsiVar));
 		// Или при аттаче свободно-запущенной-ранее консоли в ConEmu
-		_ASSERTEX((bAnsi || (!*szCurAnsiVar || lstrcmp(szCurAnsiVar,L"OFF")==0)) && "ANSI was disabled?");
+		_ASSERTEX((bAnsi || (!*szCurAnsiVar || lstrcmp(szCurAnsiVar,L"OFF")==0) || !gpConMap) && "ANSI was disabled?");
 		#endif
 		bLastAnsi = bAnsi;
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");

@@ -6046,6 +6046,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCmdTasksDir:
 		case cbCmdTasksActive:
 		case cbCmdTasksReload:
+		case cbAddDefaults:
 		case cbCmdTaskbarTasks:
 		case cbCmdTaskbarCommands:
 		case cbCmdTaskbarUpdate:
@@ -6640,6 +6641,20 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 				SafeFree(pszTasks);
 			}
 		}
+		break;
+
+	case cbAddDefaults:
+		{
+			if (MessageBox(ghOpWnd, L"Do you want to ADD default tasks in your task list?",
+					gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION) != IDYES)
+				break;
+
+			// Добавить таски В КОНЕЦ
+			CreateDefaultTasks(true);
+
+			// Обновить список на экране
+			OnInitDialog_Tasks(hWnd2, true);
+		} // case cbAddDefaults:
 		break;
 
 	case cbCmdTasksReload:

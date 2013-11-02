@@ -58,6 +58,7 @@
       <ComponentRef Id="IsConEmu.cmd" />
       <ComponentRef Id="RenameTab.cmd" />
       <ComponentRef Id="SetConTitle.cmd" />
+      <ComponentRef Id="SetEscChar.cmd" />
       <ComponentRef Id="SetProgress.cmd" />
       <ComponentRef Id="TypeBuildErrors.cmd" />
       <ComponentRef Id="Command_Processor.reg" />

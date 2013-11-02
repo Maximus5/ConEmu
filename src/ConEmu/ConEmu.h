@@ -247,6 +247,8 @@ class CConEmuMain :
 		bool  ForceMinimizeToTray;  // ключики "/tsa" или "/tray"
 		bool  DisableAutoUpdate;    // ключик "/noupdate"
 		bool  DisableKeybHooks;     // ключик "/nokeyhook"
+		bool  DisableAllMacro;      // ключик "/nomacro"
+		bool  DisableAllHotkeys;    // ключик "/nohotkey"
 		bool  DisableSetDefTerm;    // ключик "/nodeftrm"
 		bool  DisableRegisterFonts; // ключик "/noregfont"
 

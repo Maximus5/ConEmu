@@ -177,9 +177,9 @@ BOOL isWindow(HWND hWnd)
 	return TRUE;
 }
 
-BOOL FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2)
+bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2)
 {
-	BOOL bMatch = FALSE;
+	bool bMatch = false;
 	HANDLE hFile1, hFile2 = NULL;
 	LPBYTE pBuf1 = NULL, pBuf2 = NULL;
 	LARGE_INTEGER lSize1 = {}, lSize2 = {};
@@ -225,10 +225,10 @@ wrap:
 }
 
 // pnSize заполняется только в том случае, если файл найден
-BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
+bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 {
 	if (!asFilePath || !*asFilePath)
-		return FALSE;
+		return false;
 
 	_ASSERTE(wcschr(asFilePath, L'\t')==NULL);
 
@@ -237,7 +237,7 @@ BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 
 	if (hFind == INVALID_HANDLE_VALUE)
 	{
-		BOOL lbFileFound = FALSE;
+		bool lbFileFound = false;
 
 		// FindFirstFile может обломаться из-за симлинков
 		if (GetLastError() == ERROR_ACCESS_DENIED)
@@ -250,7 +250,7 @@ BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 
 				if (GetFileInformationByHandle(hFind, &fi) && !(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 				{
-					lbFileFound = TRUE;
+					lbFileFound = true;
 
 					if (pnSize)
 						*pnSize = fi.nFileSizeHigh ? 0xFFFFFFFF : fi.nFileSizeLow; //-V112
@@ -263,13 +263,13 @@ BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 		return lbFileFound;
 	}
 
-	BOOL lbFound = FALSE;
+	bool lbFound = false;
 
 	do
 	{
 		if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
 		{
-			lbFound = TRUE;
+			lbFound = true;
 
 			if (pnSize)
 				*pnSize = fnd.nFileSizeHigh ? 0xFFFFFFFF : fnd.nFileSizeLow; //-V112
@@ -283,39 +283,44 @@ BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 	return lbFound;
 }
 
-BOOL FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax)
+bool FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax)
 {
 	if (!rsFilePath || !*rsFilePath)
 	{
 		_ASSERTEX(rsFilePath && *rsFilePath);
-		return FALSE;
+		return false;
 	}
 
 	if (FileExists(rsFilePath))
 	{
-		return TRUE;
+		return true;
 	}
 
 	// Переменные окружения
 	if (wcschr(rsFilePath, L'%'))
 	{
+		bool bFound = false;
 		wchar_t* pszExpand = ExpandEnvStr(rsFilePath);
-		if (pszExpand)
+		if (pszExpand && FileExists(rsFilePath))
 		{
 			_ASSERTEX(lstrlen(pszExpand) < (INT_PTR)cchPathMax);
 			lstrcpyn(rsFilePath, pszExpand, (int)cchPathMax);
+			bFound = true;
 		}
 		SafeFree(pszExpand);
 
-		if (FileExists(rsFilePath))
+		if (bFound)
 		{
-			return TRUE;
+			return true;
 		}
 	}
 
 	// Search "Path"
 	LPCWSTR pszSearchFile = rsFilePath;
 	LPCWSTR pszSlash = wcsrchr(rsFilePath, L'\\');
+	if (pszSlash && ((pszSlash - rsFilePath) >= MAX_PATH))
+		return FALSE; // No need to continue, this is invalid path to executable
+
 	wchar_t* pszSearchPath = NULL;
 	if (pszSlash)
 	{
@@ -339,22 +344,22 @@ BOOL FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax)
 	{
 		_ASSERTEX(lstrlen(szFind) < (INT_PTR)cchPathMax);
 		lstrcpyn(rsFilePath, szFind, (int)cchPathMax);
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
-BOOL DirectoryExists(LPCWSTR asPath)
+bool DirectoryExists(LPCWSTR asPath)
 {
 	if (!asPath || !*asPath)
-		return FALSE;
+		return false;
 
 	WIN32_FIND_DATAW fnd = {0};
 	HANDLE hFind = FindFirstFile(asPath, &fnd);
 	if (hFind == INVALID_HANDLE_VALUE)
 	{
-		return FALSE;
+		return false;
 	}
 
 	BOOL lbFound = FALSE;
@@ -373,13 +378,13 @@ BOOL DirectoryExists(LPCWSTR asPath)
 	while (FindNextFile(hFind, &fnd));
 
 	FindClose(hFind);
-	return lbFound;
+	return (lbFound != FALSE);
 }
 
-BOOL MyCreateDirectory(wchar_t* asPath)
+bool MyCreateDirectory(wchar_t* asPath)
 {
 	if (!asPath || !*asPath)
-		return FALSE;
+		return false;
 
 	BOOL bOk = FALSE;
 	DWORD dwErr = 0;
@@ -397,13 +402,13 @@ BOOL MyCreateDirectory(wchar_t* asPath)
 		if ((pszSlash[1] == 0) && DirectoryExists(asPath))
 		{
 			*pszSlash = L'\\';
-			return TRUE;
+			return true;
 		}
 	}
 	else
 	{
 		if (DirectoryExists(asPath))
-			return TRUE;
+			return true;
 	}
 
 	if (CreateDirectory(asPath, NULL))
@@ -428,11 +433,11 @@ BOOL MyCreateDirectory(wchar_t* asPath)
 		*pszSlash = L'\\';
 	}
 
-	return bOk;
+	return (bOk != FALSE);
 }
 
 // Первичная проверка, может ли asFilePath быть путем
-BOOL IsFilePath(LPCWSTR asFilePath)
+bool IsFilePath(LPCWSTR asFilePath)
 {
 	// Если в пути встречаются недопустимые символы
 	if (wcschr(asFilePath, L'"') ||
@@ -440,7 +445,7 @@ BOOL IsFilePath(LPCWSTR asFilePath)
 	        wcschr(asFilePath, L'<') ||
 	        wcschr(asFilePath, L'|')
 	  )
-		return FALSE;
+		return false;
 
 	// Пропуск UNC "\\?\"
 	if (asFilePath[0] == L'\\' && asFilePath[1] == L'\\' && asFilePath[2] == L'?' && asFilePath[3] == L'\\')
@@ -453,21 +458,21 @@ BOOL IsFilePath(LPCWSTR asFilePath)
 	{
 		// Если есть ":", то это должен быть путь вида "X:\xxx", т.е. ":" - второй символ
 		if (pszColon != (asFilePath+1))
-			return FALSE;
+			return false;
 
 		if (wcschr(pszColon+1, L':'))
-			return FALSE;
+			return false;
 	}
 
 	// May be file path
-	return TRUE;
+	return true;
 }
 
-BOOL IsPathNeedQuot(LPCWSTR asPath)
+bool IsPathNeedQuot(LPCWSTR asPath)
 {
 	if (wcspbrk(asPath, L"<>()&|^\""))
-		return TRUE;
-	return FALSE;
+		return true;
+	return false;
 }
 
 BOOL GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortName/*[MAX_PATH+1]-name only*/, BOOL abFavorLength=FALSE)
@@ -668,14 +673,14 @@ wrap:
 //}
 
 #ifndef CONEMU_MINIMAL
-BOOL IsUserAdmin()
+bool IsUserAdmin()
 {
 	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
 	GetVersionEx(&osv);
 
 	// Проверять нужно только для висты, чтобы на XP лишний "Щит" не отображался
 	if (osv.dwMajorVersion < 6)
-		return FALSE;
+		return false;
 
 	BOOL b;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
@@ -698,15 +703,15 @@ BOOL IsUserAdmin()
 		FreeSid(AdministratorsGroup);
 	}
 
-	return(b);
+	return (b != FALSE);
 }
 
 
 #include <Sddl.h> // ConvertSidToStringSid
 // *ppszSID - must be LocalFree'd
-BOOL GetLogonSID (HANDLE hToken, wchar_t **ppszSID)
+bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID)
 {
-	BOOL bSuccess = FALSE;
+	bool bSuccess = false;
 	//DWORD dwIndex;
 	DWORD dwLength = 0;
 	TOKEN_USER user;
@@ -755,7 +760,7 @@ BOOL GetLogonSID (HANDLE hToken, wchar_t **ppszSID)
 	if (!ConvertSidToStringSid(ptu->User.Sid, ppszSID) || (*ppszSID == NULL))
 		goto Cleanup;
 
-	bSuccess = TRUE;
+	bSuccess = true;
 
 Cleanup: 
 
@@ -1037,17 +1042,17 @@ bool IsModuleValid(HMODULE module)
 #endif
 }
 
-BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL)
+bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL)
 {
 	if ((hModule == NULL) || (hModule == INVALID_HANDLE_VALUE) || LDR_IS_RESOURCE(hModule))
 	{
 		_ASSERTE((hModule != NULL) && (hModule != INVALID_HANDLE_VALUE) && !LDR_IS_RESOURCE(hModule));
-		return FALSE;
+		return false;
 	}
 	if (!CallBack || !ProcCount)
 	{
 		_ASSERTE(CallBack && ProcCount);
-		return FALSE;
+		return false;
 	}
 
 	DWORD_PTR nModulePtr = (DWORD_PTR)hModule;
@@ -1068,7 +1073,7 @@ BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 		if (!IsModuleValid(hModule))
 		{
 			_ASSERTE("!IsModuleValid(hModule)" && 0);
-			return FALSE;
+			return false;
 		}
 
 		IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)hModule + ((IMAGE_DOS_HEADER*)hModule)->e_lfanew);
@@ -1088,25 +1093,25 @@ BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 		if (!(CallBack[i]))
 		{
 			_ASSERTE((CallBack[i])!=NULL);
-			return FALSE;
+			return false;
 		}
 
 		if ((((DWORD_PTR)(CallBack[i])) < nModulePtr)
 			&& (!nModulePtr2 || (((DWORD_PTR)(CallBack[i])) < nModulePtr2)))
 		{
 			_ASSERTE(((DWORD_PTR)(CallBack[i])) >= nModulePtr);
-			return FALSE;
+			return false;
 		}
 
 		if ((((DWORD_PTR)(CallBack[i])) > (nModuleSize + nModulePtr))
 			&& (!nModulePtr2 || (((DWORD_PTR)(CallBack[i])) > (nModuleSize2 + nModulePtr2))))
 		{
 			_ASSERTE(((DWORD_PTR)(CallBack[i])) <= (nModuleSize + nModulePtr));
-			return FALSE;
+			return false;
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 #ifndef CONEMU_MINIMAL
@@ -1207,14 +1212,14 @@ const wchar_t* PointToExt(const wchar_t* asFullPath)
 
 // !!! Меняет asParm !!!
 // Cut leading and trailing quotas
-const wchar_t* Unquote(wchar_t* asParm)
+const wchar_t* Unquote(wchar_t* asParm, bool abFirstQuote /*= false*/)
 {
 	if (!asParm)
 		return NULL;
 	if (*asParm != L'"')
 		return asParm;
-	wchar_t* pszEndQ = wcsrchr(asParm, L'"');
-	if (!pszEndQ || (pszEndQ == asParm))
+	wchar_t* pszEndQ = abFirstQuote ? wcschr(asParm+1, L'"') : wcsrchr(asParm+1, L'"');
+	if (!pszEndQ)
 	{
 		*asParm = 0;
 		return asParm;
@@ -3688,7 +3693,7 @@ HANDLE DuplicateProcessHandle(DWORD anTargetPID)
 
 #ifndef CONEMU_MINIMAL
 // используется в GUI при загрузке настроек
-void FindComspec(ConEmuComspec* pOpt)
+void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 {
 	if (!pOpt)
 		return;
@@ -3714,6 +3719,7 @@ void FindComspec(ConEmuComspec* pOpt)
 			}
 		}
 
+		// On this step - check "Take Command"!
 		if (!*pOpt->Comspec32 || !*pOpt->Comspec64)
 		{
 			// [HKEY_LOCAL_MACHINE\SOFTWARE\JP Software\Take Command 13.0]
@@ -3733,34 +3739,30 @@ void FindComspec(ConEmuComspec* pOpt)
 						HKEY hk2;
 						if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
 						{
-							memset(szPath, 0, sizeof(szPath)); DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
-							if (!RegQueryValueExW(hk2, NULL, NULL, NULL, (LPBYTE)szPath, &nSize) && *szPath)
+							// Just in case, check "Path" too
+							LPCWSTR rsNames[] = {NULL, L"Path"};
+
+							for (size_t n = 0; n < countof(rsNames); n++)
 							{
-								wchar_t* psz, *pszEnd;
-								if (szPath[0] == L'"')
+								memset(szPath, 0, sizeof(szPath)); DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
+								if (!RegQueryValueExW(hk2, rsNames[n], NULL, NULL, (LPBYTE)szPath, &nSize) && *szPath)
 								{
-									psz = szPath + 1;
-									pszEnd = wcschr(psz, L'"');
-									if (pszEnd)
-										*pszEnd = 0;
+									wchar_t* psz, *pszEnd;
+									psz = (wchar_t*)Unquote(szPath, true);
+									pszEnd = wcsrchr(psz, L'\\');
+									if (!pszEnd || lstrcmpi(pszEnd, L"\\tcmd.exe") || !FileExists(psz))
+										continue;
+									lstrcpyn(pszEnd+1, L"tcc.exe", 8);
+									if (FileExists(psz))
+									{
+										bFound = true;
+										if (b == 0)
+                                			wcscpy_c(pOpt->Comspec32, psz);
+                            			else
+                                			wcscpy_c(pOpt->Comspec64, psz);
+									}
 								}
-								else
-								{
-									psz = szPath;
-								}
-								pszEnd = wcsrchr(psz, L'\\');
-								if (!pszEnd || lstrcmpi(pszEnd, L"\\tcmd.exe") || !FileExists(psz))
-									continue;
-								lstrcpyn(pszEnd+1, L"tcc.exe", 8);
-								if (FileExists(psz))
-								{
-									bFound = true;
-									if (b == 0)
-                                		wcscpy_c(pOpt->Comspec32, psz);
-                            		else
-                                		wcscpy_c(pOpt->Comspec64, psz);
-								}
-							}
+							} // for (size_t n = 0; n < countof(rsNames); n++)
 							RegCloseKey(hk2);
 						}
 					} //  for, подключи
@@ -3775,6 +3777,7 @@ void FindComspec(ConEmuComspec* pOpt)
 				wcscpy_c(pOpt->Comspec32, pOpt->Comspec64);
 		}
 
+		// If "Take Command" not installed - try "TCC/LE"
 		if (!*pOpt->Comspec32 || !*pOpt->Comspec64)
 		{
 			// [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{16A21882-4138-4ADA-A390-F62DC27E4504}]

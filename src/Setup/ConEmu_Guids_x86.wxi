@@ -39,6 +39,7 @@
 	<?define Guid.IsConEmu.cmd = "CF06CB3D-2686-4CDE-8B70-740ADF91886F" ?>
 	<?define Guid.RenameTab.cmd = "39671AC8-9A58-4F50-99EE-AFC200C054DD" ?>
 	<?define Guid.SetConTitle.cmd = "9229F284-2896-4294-AEAD-46AC72F6E169" ?>
+	<?define Guid.SetEscChar.cmd = "3F74B4EF-FB96-41C7-A2A7-1FEE4DE26DBA" ?>
 	<?define Guid.SetProgress.cmd = "EEB001C1-D25F-46D7-95C1-9BF980046B61" ?>
 	<?define Guid.TypeBuildErrors.cmd = "19F695EF-0F16-4601-ADD4-38B0CD9CCA96" ?>
 	<?define Guid.Command_Processor.reg = "24F69FDE-C0DD-48C4-AAFF-ECB2146F6E32" ?>

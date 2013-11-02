@@ -3265,6 +3265,10 @@ HMODULE WINAPI OnLoadLibraryAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 	if (gbHooksTemporaryDisabled)
 		return module;
 
+	// Issue 1079: Almost hangs with PHP
+	if (lstrcmpiA(lpFileName, "kernel32.dll") == 0)
+		return module;
+
 	if (PrepareNewModule(module, lpFileName, NULL))
 	{
 		if (ph && ph->PostCallBack)
@@ -3327,6 +3331,10 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 	DWORD dwLoadErrCode = GetLastError();
 
 	if (gbHooksTemporaryDisabled)
+		return module;
+
+	// Issue 1079: Almost hangs with PHP
+	if (lstrcmpi(lpFileName, L"kernel32.dll") == 0)
 		return module;
 
 	// Больше не требуется. Загрузка ExtendedConsole обработана выше

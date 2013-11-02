@@ -71,6 +71,13 @@ CConEmuCtrl::~CConEmuCtrl()
 // pRCon may be NULL, pszChars may be NULL
 const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars, CRealConsole* pRCon)
 {
+	// For testing and checking purposes
+	// User may disable "GuiMacro" processing with "ConEmu /NoHotkey"
+	if (gpConEmu->DisableAllHotkeys)
+	{
+		return NULL;
+	}
+
 	UINT vk = ConEmuHotKey::GetHotkey(VkState);
 	if (!(vk >= '0' && vk <= '9'))
 		ResetDoubleKeyConsoleNum();
@@ -80,8 +87,18 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, con
 
 	if (pHotKey && (pHotKey != ConEmuSkipHotKey))
 	{
+		// For testing and checking purposes
+		// User may disable "GuiMacro" processing with "ConEmu /NoMacro"
+		if (pHotKey && !gpConEmu->DisableAllMacro)
+		{
+			if ((pHotKey->HkType == chk_Macro) || (pHotKey->GuiMacro && *pHotKey->GuiMacro))
+			{
+				pHotKey = NULL;
+			}
+		}
+		
 		bool bEnabled = true;
-		if (pHotKey->Enabled)
+		if (pHotKey && pHotKey->Enabled)
 		{
 			bEnabled = pHotKey->Enabled();
 			if (!bEnabled)

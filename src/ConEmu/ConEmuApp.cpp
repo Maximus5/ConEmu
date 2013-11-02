@@ -2850,11 +2850,26 @@ void UnitDriveTests()
 	bCheck = true;
 }
 
+void UnitExpandTest()
+{
+	wchar_t szChoc[MAX_PATH] = L"powershell -NoProfile -ExecutionPolicy unrestricted -Command \"iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin";
+	wchar_t* pszExpanded = ExpandEnvStr(szChoc);
+	int nLen = pszExpanded ? lstrlen(pszExpanded) : 0;
+	BOOL bFound = FileExistsSearch(szChoc, countof(szChoc));
+	wcscpy_c(szChoc, gpConEmu->ms_ConEmuExeDir);
+	wcscat_c(szChoc, L"\\Tests\\Executables\\abcd");
+	bFound = FileExistsSearch(szChoc, countof(szChoc));
+	// TakeCommand
+	ConEmuComspec tcc = {cst_AutoTccCmd};
+	FindComspec(&tcc, false);
+}
+
 void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
 	UnitMaskTests();
 	UnitDriveTests();
+	UnitExpandTest();
 }
 #endif
 
@@ -3441,6 +3456,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					|| !klstricmp(curCommand, _T("/nokeybhooks")))
 				{
 					gpConEmu->DisableKeybHooks = true;
+				}
+				else if (!klstricmp(curCommand, _T("/nomacro")))
+				{
+					gpConEmu->DisableAllMacro = true;
+				}
+				else if (!klstricmp(curCommand, _T("/nohotkey"))
+					|| !klstricmp(curCommand, _T("/nohotkeys")))
+				{
+					gpConEmu->DisableAllHotkeys = true;
 				}
 				else if (!klstricmp(curCommand, _T("/nodeftrm"))
 					|| !klstricmp(curCommand, _T("/nodefterm")))

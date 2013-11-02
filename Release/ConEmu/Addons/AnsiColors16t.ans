@@ -1,3 +1,31 @@
+This file contains full map of standard ANSI colors
+Read about enabling ANSI support in ConEmu
+  http://code.google.com/p/conemu-maximus5\wiki\AnsiEscapeCodes
+
+To view this file colored just "type" it in your cmd/tcc/powershell prompt
+  Example: type "C:\Program Files\ConEmu\ConEmu\Addon\AnsiColors16t.ans"
+
+How to use ANSI in your scripts
+
+  cmd. Most tricky. You need to echo real \u001B character.
+    First, define "ESC" environment variable with this helper batch:
+      SetEscChar.cmd
+    Second, use it in your "echo" commands:
+      echo %ESC%[1;33;40m Yellow on black %ESC%[0m
+
+  PowerShell. If you need, PS can change output colors itself.
+    Define variable with "[char]0x001b" and use it in Write-Host:
+      $E=[char]0x001b; Write-Host "$E`[1;33;40m Yellow on black $E`[0m"
+
+  tcc, tcc/le. This command processor knows about special character ^E,
+    Moreover, it process ANSI internally (without ConEmu)! Just use it:
+      echo ^E[1;33;40m Yellow on black ^E[m
+
+  Bash. Unix ports known about ANSI and process codes internally!
+    Just use it:
+      echo -e "\e[1;33;40m Yellow on black \e[m"
+    
+
 [0;30;40m   $E[30;40m   [0m [0;1;30;40m  $E[1;30;40m  [0m [0;30;4;40m  $E[30;4;40m  [0m [0;1;30;4;40m $E[1;30;4;40m [0m [0;30;5;40m  $E[30;5;40m  [0m [0;1;30;5;40m $E[1;30;5;40m [0m 
 [0;31;40m   $E[31;40m   [0m [0;1;31;40m  $E[1;31;40m  [0m [0;31;4;40m  $E[31;4;40m  [0m [0;1;31;4;40m $E[1;31;4;40m [0m [0;31;5;40m  $E[31;5;40m  [0m [0;1;31;5;40m $E[1;31;5;40m [0m 
 [0;32;40m   $E[32;40m   [0m [0;1;32;40m  $E[1;32;40m  [0m [0;32;4;40m  $E[32;4;40m  [0m [0;1;32;4;40m $E[1;32;4;40m [0m [0;32;5;40m  $E[32;5;40m  [0m [0;1;32;5;40m $E[1;32;5;40m [0m 

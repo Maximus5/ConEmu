@@ -432,10 +432,11 @@ checkTasks:
 // Search on asFirstDrive and all (other) fixed drive letters
 // asFirstDrive may be letter ("C:") or network (\\server\share)
 // asSearchPath is path to executable (\cygwin\bin\sh.exe)
-static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&rsFound)[MAX_PATH+1])
+static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&rsFound)[MAX_PATH+1], bool& bNeedQuot)
 {
 	bool bFound = false;
 	wchar_t* pszExpanded = NULL;
+	bNeedQuot = false;
 
 	// Using environment variables?
 	if (wcschr(asSearchPath, L'%'))
@@ -443,6 +444,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		pszExpanded = ExpandEnvStr(asSearchPath);
 		if (pszExpanded && FileExists(pszExpanded))
 		{
+			bNeedQuot = IsPathNeedQuot(pszExpanded);
 			lstrcpyn(rsFound, asSearchPath, countof(rsFound));
 			bFound = true;
 		}
@@ -455,6 +457,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		DWORD nFind = SearchPath(NULL, asSearchPath, NULL, countof(rsFound), rsFound, NULL);
 		if (nFind && nFind < countof(rsFound))
 		{
+			bNeedQuot = IsPathNeedQuot(asSearchPath);
 			lstrcpyn(rsFound, asSearchPath, countof(rsFound));
 			bFound = true;
 		}
@@ -468,6 +471,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		lstrcpyn(rsFound+nDrvLen, asSearchPath, countof(rsFound)-nDrvLen);
 		if (FileExists(rsFound))
 		{
+			bNeedQuot = IsPathNeedQuot(rsFound);
 			bFound = true;
 			goto wrap;
 		}
@@ -483,6 +487,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		lstrcpyn(rsFound+2, asSearchPath, countof(rsFound)-2);
 		if (FileExists(rsFound))
 		{
+			bNeedQuot = IsPathNeedQuot(rsFound);
 			bFound = true;
 			goto wrap;
 		}
@@ -506,6 +511,12 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 			return;
 		}
 	}
+	else
+	{
+		// Find LAST USED index
+		while (gpSet->CmdTaskGet(iCreatIdx))
+			iCreatIdx++;
+	}
 
 	wchar_t szConEmuDrive[MAX_PATH] = L"";
 	GetDrive(gpConEmu->ms_ConEmuExeDir, szConEmuDrive, countof(szConEmuDrive));
@@ -526,7 +537,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		LPWSTR  pszFound;
 	} FindTasks[] = {
 		// Far Manager
-		{L"Far Manager",         L"%ConEmuDir%\\far.exe"},
+		// -- {L"Far Manager",         L"%ConEmuDir%\\far.exe"}, 
 		{L"Far Manager",         L"far.exe"},
 		
 		// TakeCommand
@@ -549,6 +560,10 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		{L"MinGW bash",     L"\\MinGW\\msys\\1.0\\bin\\sh.exe",        L" --login -i"},
 //		{L"MinGW mintty",   L"\\MinGW\\msys\\1.0\\bin\\mintty.exe",    L" -"},
 		{L"Git bash",       L"%ProgramFiles%\\Git\\bin\\sh.exe",       L" --login -i"},
+		{L"Git bash",       L"%ProgramW6432%\\Git\\bin\\sh.exe",       L" --login -i"},
+		#ifdef _WIN64
+		{L"Git bash",       L"%ProgramFiles(x86)%\\Git\\bin\\sh.exe",  L" --login -i"},
+		#endif
 		{L"bash",           L"sh.exe",                                 L" --login -i"}, // Last chance for bash
 		// Putty?
 		{L"Putty",          L"Putty.exe",                              NULL},
@@ -559,10 +574,10 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		{NULL}
 	};
 
-	wchar_t szFound[MAX_PATH+1], szUnexpand[MAX_PATH+1], *pszFull = NULL;
+	wchar_t szFound[MAX_PATH+1], szUnexpand[MAX_PATH+1], *pszFull = NULL; bool bNeedQuot = false;
 	for (int i = 0; FindTasks[i].asName; i++)
 	{
-		if (!FindOnDrives(szConEmuDrive, FindTasks[i].asExePath, szFound))
+		if (!FindOnDrives(szConEmuDrive, FindTasks[i].asExePath, szFound, bNeedQuot))
 			continue;
 		// May be it was already found before?
 		bool bAlready = false;
@@ -585,7 +600,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 			pszFound = szUnexpand;
 
 		// Spaces in path? (use expanded path)
-		if (IsPathNeedQuot(szFound))
+		if (bNeedQuot)
 			pszFull = lstrmerge(L"\"", pszFound, L"\"", FindTasks[i].asArgs);
 		else
 			pszFull = lstrmerge(pszFound, FindTasks[i].asArgs);
@@ -597,6 +612,22 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 			SafeFree(pszFull);
 		}
 	}
+
+	// For 64bit Windows create task with splitted cmd 64/32
+	if (IsWindows64())
+	{
+		gpSet->CmdTaskSet(iCreatIdx++, L"cmd 64/32", L"", L">\"%windir%\\system32\\cmd.exe\" /k ver & echo This is Native cmd.exe\r\n\r\n\"%windir%\\syswow64\\cmd.exe\" /k ver & echo This is 32 bit cmd.exe -new_console:s50V");
+	}
+
+	// Type ANSI color codes
+	// cmd /k type "%ConEmuBaseDir%\Addons\AnsiColors16t.ans" -cur_console:n
+	if (FindOnDrives(NULL, L"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans", szFound, bNeedQuot))
+	{
+		gpSet->CmdTaskSet(iCreatIdx++, L"Show ANSI colors", L"", L"cmd /k type \"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans\" -cur_console:n");
+	}
+
+	// Chocolatey gallery
+	gpSet->CmdTaskSet(iCreatIdx++, L"Chocolatey", L"", L"cmd /k powershell -NoProfile -ExecutionPolicy unrestricted -Command \"iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin");
 
 	// Windows SDK
 	HKEY hk;

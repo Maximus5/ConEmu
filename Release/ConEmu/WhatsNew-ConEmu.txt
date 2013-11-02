@@ -15,12 +15,16 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Issue 1079: Console hangs when running PHP console scripts.
 [%] Issue 1195: Invalid size locking region was used after resizing window when Far is active.
 [%] Issue 1196: ConEmu's Far plugin language resources.
 [%] Issue 1300: Failed (hanged) while closing Far Manager using «Safe Far close macro» in some cases.
 [%] Issue 1307: Some resize fixes in Quake mode.
 [%] Regression: Task hotkeys was broken.
 [+] On the first run (with Fast configuration dialog) task list will be filled with some predefined shells found on PC.
+[+] File "AnsiColors16t.ans" was updated with "How to use ANSI" recommendations.
+[+] Batch file "SetEscChar.cmd" provided for use with cmd.exe scripts.
+[*] Issue 1308: Don't use copy with HTML formatting (by default).
 
 
 2013.10.26

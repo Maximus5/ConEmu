@@ -76,6 +76,9 @@
       <Component Id="SetConTitle.cmd" Guid="$(var.Guid.SetConTitle.cmd)" Win64="$(var.Win64)">
         <File Id="SetConTitle.cmd" Source="..\..\Release\ConEmu\SetConTitle.cmd"  KeyPath="yes" />
       </Component>
+      <Component Id="SetEscChar.cmd" Guid="$(var.Guid.SetEscChar.cmd)" Win64="$(var.Win64)">
+        <File Id="SetEscChar.cmd" Source="..\..\Release\ConEmu\SetEscChar.cmd"  KeyPath="yes" />
+      </Component>
       <Component Id="SetProgress.cmd" Guid="$(var.Guid.SetProgress.cmd)" Win64="$(var.Win64)">
         <File Id="SetProgress.cmd" Source="..\..\Release\ConEmu\SetProgress.cmd"  KeyPath="yes" />
       </Component>

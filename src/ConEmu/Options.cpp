@@ -607,7 +607,7 @@ void Settings::InitSettings()
 	isCTSFreezeBeforeSelect = false;
 	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
 	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
-	isCTSHtmlFormat = 1; // Use HTML Copy formatting
+	isCTSHtmlFormat = 0; // Don't use HTML formatting with copy (by default)
 	//vmCTSVkBlockStart = 0; // при желании, пользователь может назначить hotkey запуска выделения
 	//vmCTSVkTextStart = 0;  // при желании, пользователь может назначить hotkey запуска выделения
 	isCTSActMode = 2; // BufferOnly
@@ -3734,23 +3734,27 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 	psCmdHistory = pszNewHistory;
 	nCmdHistorySize = (psz - pszNewHistory + 1)*sizeof(wchar_t);
 	HEAPVAL;
-	// И сразу сохранить в настройках
-	SettingsBase* reg = CreateSettings(NULL);
-	if (!reg)
-	{
-		_ASSERTE(reg!=NULL);
-		return;
-	}
 
-	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+	if (!gpConEmu->IsResetBasicSettings())
 	{
-		HEAPVAL;
-		reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
-		HEAPVAL;
-		reg->CloseKey();
-	}
+		// И сразу сохранить в настройках
+		SettingsBase* reg = CreateSettings(NULL);
+		if (!reg)
+		{
+			_ASSERTE(reg!=NULL);
+			return;
+		}
 
-	delete reg;
+		if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+		{
+			HEAPVAL;
+			reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
+			HEAPVAL;
+			reg->CloseKey();
+		}
+
+		delete reg;
+	}
 }
 
 LPCWSTR Settings::HistoryGet()
