@@ -291,9 +291,17 @@ LPCWSTR ConEmuHotKey::GetDescription(wchar_t* pszDescr, int cchMaxLen, bool bAdd
 
 	if (this->Enabled)
 	{
-		if (!this->Enabled())
+		if (this->Enabled == InSelection)
+		{
+			lstrcpyn(pszDescr, L"[InSelection] ", cchMaxLen);
+		}
+		else if (!this->Enabled())
 		{
 			lstrcpyn(pszDescr, L"[Disabled] ", cchMaxLen);
+		}
+
+		if (*pszDescr)
+		{
 			int nLen = lstrlen(pszDescr);
 			pszDescr += nLen;
 			cchMaxLen -= nLen;
@@ -879,6 +887,16 @@ bool ConEmuHotKey::UseWinArrows()
 	return gpSet->isUseWinArrows;
 }
 
+bool ConEmuHotKey::InSelection()
+{
+	CVConGuard VCon;
+	if (gpConEmu->GetActiveVCon(&VCon) < 0)
+		return false;
+	if (!VCon->RCon()->isSelectionPresent())
+		return false;
+	return true;
+}
+
 bool ConEmuHotKey::UseCTSShiftArrow()
 {
 	CVConGuard VCon;
@@ -989,6 +1007,9 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkMultiCmd,       chk_User,  NULL,    L"Multi.CmdKey",          /*&vmMultiCmd,*/ MakeHotKey('X',VK_LWIN), CConEmuCtrl::key_MultiCmd},
 		{vkCTSVkBlockStart,chk_User,  NULL,    L"CTS.VkBlockStart",      /*&vmCTSVkBlockStart,*/ 0, CConEmuCtrl::key_CTSVkBlockStart}, // запуск выделения блока
 		{vkCTSVkTextStart, chk_User,  NULL,    L"CTS.VkTextStart",       /*&vmCTSVkTextStart,*/ 0, CConEmuCtrl::key_CTSVkTextStart},   // запуск выделения текста
+		{vkCTSCopyHtml0,   chk_User,  InSelection, L"CTS.VkCopyFmt0",    MakeHotKey('C',VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Copy(0,0)")},
+		{vkCTSCopyHtml1,   chk_User,  InSelection, L"CTS.VkCopyFmt1",    MakeHotKey('C',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Copy(0,1)")},
+		{vkCTSCopyHtml2,   chk_User,  InSelection, L"CTS.VkCopyFmt2",    0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Copy(0,2)")},
 		{vkCTSVkCopyAll,   chk_User,  NULL,    L"CTS.VkCopyAll",         0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Copy(1)")},
 		{vkShowTabsList,   chk_User,  NULL,    L"Multi.ShowTabsList",    /*MakeHotKey(VK_F12)*/ 0, CConEmuCtrl::key_ShowTabsList},
 		{vkShowTabsList2,  chk_User,  NULL,    L"Multi.ShowTabsList2",   MakeHotKey(VK_F12,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Tabs(8)")},

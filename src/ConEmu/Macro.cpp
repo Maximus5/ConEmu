@@ -1196,7 +1196,7 @@ LPWSTR CConEmuMacro::FontSetName(GuiMacro* p, CRealConsole* apRCon)
 // Copy (<What>)
 LPWSTR CConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon)
 {
-	int nWhat = 0;
+	int nWhat = 0, nFormat;
 	LPWSTR pszText = NULL;
 
 	if (!apRCon)
@@ -1206,13 +1206,14 @@ LPWSTR CConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon)
 
 	if (p->GetIntArg(0, nWhat))
 	{
+		if (!p->GetIntArg(1, nFormat))
+			nFormat = gpSet->isCTSHtmlFormat;
+
 		switch (nWhat)
 		{
 		case 0:
-			bCopy = apRCon->DoSelectionCopy(false);
-			break;
 		case 1:
-			bCopy = apRCon->DoSelectionCopy(true);
+			bCopy = apRCon->DoSelectionCopy((nWhat==1), nFormat);
 			break;
 		}
 

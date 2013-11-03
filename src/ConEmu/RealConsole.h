@@ -238,6 +238,7 @@ enum LoadAltMode
 };
 
 enum ExpandTextRangeType;
+struct ConEmuHotKey;
 
 #include "RealServer.h"
 
@@ -369,6 +370,7 @@ class CRealConsole
 	public:
 		//BOOL FlushInputQueue(DWORD nTimeout = 500);
 		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg);
+		const ConEmuHotKey* ProcessSelectionHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars);
 		void ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false, bool abFromTouch = false);
@@ -430,7 +432,7 @@ class CRealConsole
 		void AutoCopyTimer(); // Чтобы разрулить "Auto Copy" & "Double click - select word"
 		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
 		void ExpandSelection(SHORT anX, SHORT anY);
-		bool DoSelectionCopy(bool bCopyAll = false);
+		bool DoSelectionCopy(bool bCopyAll = false, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */);
 		void DoSelectionStop();
 		void DoFindText(int nDirection);
 		void DoEndFindText();

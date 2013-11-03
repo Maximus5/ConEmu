@@ -2961,7 +2961,7 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		EnableWindow(hMacro, (mp_ActiveHotKey!=NULL));
 		SendMessage(hMacro, EM_SETREADONLY, !bMacroEnabled, 0);
 		MySetDlgItemText(hWnd2, tGuiMacro, pszDescription/*, bMacroEnabled*/);
-		EnableWindow(GetDlgItem(hWnd2, cbGuiMacroHelp), (mp_ActiveHotKey!=NULL) && bMacroEnabled);
+		EnableWindow(GetDlgItem(hWnd2, cbGuiMacroHelp), (mp_ActiveHotKey!=NULL) && (bMacroEnabled || mp_ActiveHotKey->GuiMacro));
 		if (!bHotKeyEnabled)
 			SetHotkeyField(hHk, 0);
 			//SendMessage(hHk, HKM_SETHOTKEY, 0, 0);

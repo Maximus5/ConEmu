@@ -21,6 +21,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [%] Issue 1300: Failed (hanged) while closing Far Manager using «Safe Far close macro» in some cases.
 [%] Issue 1307: Some resize fixes in Quake mode.
 [*] Issue 1308: Copy text without HTML formatting by default.
+[+] GuiMacro: Copy(<What>[,<Format>]). User may specify format regardless of current setting (choosed from menu).
+    0: plain text, not formatting; 1: copy HTML format; 2: copy as HTML.
+[+] New hotkeys (active while selection is present), Ctrl+C (plain text), Ctrl+Shift+C (HTML format) and unassigned for (as HTML).
 [%] Regression: Task hotkeys was broken.
 [+] On the first run (with Fast configuration dialog) task list will be filled with some predefined shells found on PC.
 [+] File "AnsiColors16t.ans" was updated with "How to use ANSI" recommendations.

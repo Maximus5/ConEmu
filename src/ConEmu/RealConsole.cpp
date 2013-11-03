@@ -4177,7 +4177,7 @@ void CRealConsole::DoSelectionStop()
 	mp_ABuf->DoSelectionStop();
 }
 
-bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/)
+bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */)
 {
 	bool bCopyRc = false;
 	bool bReturnPrimary = false;
@@ -4208,7 +4208,7 @@ bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/)
 		}
 	}
 
-	bCopyRc = pBuf->DoSelectionCopy(bCopyAll);
+	bCopyRc = pBuf->DoSelectionCopy(bCopyAll, nFormat);
 wrap:
 	if (bReturnPrimary)
 	{
@@ -4939,6 +4939,14 @@ LRESULT CRealConsole::OnSetScrollPos(WPARAM wParam)
 	if (!this) return 0;
 
 	return mp_ABuf->OnSetScrollPos(wParam);
+}
+
+const ConEmuHotKey* CRealConsole::ProcessSelectionHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars)
+{
+	if (!isSelectionPresent())
+		return NULL;
+
+	return mp_ABuf->ProcessSelectionHotKey(VkState, bKeyDown, pszChars);
 }
 
 void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg)

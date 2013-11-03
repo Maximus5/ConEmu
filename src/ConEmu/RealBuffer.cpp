@@ -3631,7 +3631,7 @@ void CRealBuffer::DoSelectionStop()
 	con.m_sel.dwFlags = 0;
 }
 
-bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
+bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */)
 {
 	bool bRc = false;
 
@@ -3662,7 +3662,7 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 			{
 				if (mp_RCon->LoadAlternativeConsole(lam_FullBuffer) && (mp_RCon->mp_ABuf != this))
 				{
-					bRc = mp_RCon->mp_ABuf->DoSelectionCopyInt(bCopyAll, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom);
+					bRc = mp_RCon->mp_ABuf->DoSelectionCopyInt(bCopyAll, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, nFormat);
 					lbProcessed = true;
 					bufType = rbt_Selection;
 				}
@@ -3675,7 +3675,7 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 		
 		if (!lbProcessed)
 		{
-			bRc = DoSelectionCopyInt(bCopyAll, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom);
+			bRc = DoSelectionCopyInt(bCopyAll, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, nFormat);
 		}
 	}
 
@@ -3699,7 +3699,7 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/)
 	return bRc;
 }
 
-bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2)
+bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */)
 {
 	// Warning!!! Здесь уже нельзя ориентироваться на con.m_sel !!!
 
@@ -3707,6 +3707,9 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	WORD* pAttrStart = NULL;
 	CharAttr* pAttrStartEx = NULL;
 	int nTextWidth = 0, nTextHeight = 0;
+
+	if (nFormat == 0xFF)
+		nFormat = gpSet->isCTSHtmlFormat;
 
 	if (m_Type == rbt_Primary)
 	{
@@ -3844,7 +3847,7 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 
 	COLORREF *pPal = mp_RCon->VCon()->GetColors();
 
-	bool bUseHtml = (gpSet->isCTSHtmlFormat != 0);
+	bool bUseHtml = (nFormat != 0);
 	
 	CHtmlCopy html;
 	
@@ -3863,7 +3866,7 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 		}
 
 		//wchar_t szClass[64]; _wsprintf(szClass, SKIPLEN(countof(szClass)) L"ConEmu%s%s", gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x32",L"x64"));
-		html.Init((gpSet->isCTSHtmlFormat == 2), gpConEmu->ms_ConEmuBuild, gpSetCls->FontFaceName(), gpSetCls->FontHeightPx(), crFore, crBack);
+		html.Init((nFormat == 2), gpConEmu->ms_ConEmuBuild, gpSetCls->FontFaceName(), gpSetCls->FontHeightPx(), crFore, crBack);
 	}
 
 
@@ -4066,7 +4069,7 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	}
 
 	// User asked to copy HTML instead of HTML formatted (put HTML in CF_UNICODE)
-	if ((gpSet->isCTSHtmlFormat == 2) && hHtml)
+	if ((nFormat == 2) && hHtml)
 	{
 		WARNING("hUnicode Overhead...");
 		GlobalFree(hUnicode);
@@ -4182,18 +4185,38 @@ bool CRealBuffer::DoSelectionFinalize(bool abCopy, WPARAM wParam)
 }
 
 // pszChars may be NULL
+const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars)
+{
+	if (!this || !con.m_sel.dwFlags)
+		return NULL;
+
+	// If these was not processed by user HotKeys, lets do it...
+	if (VkState == ConEmuHotKey::MakeHotKey('C', VK_CONTROL)
+		|| VkState == ConEmuHotKey::MakeHotKey(VK_INSERT, VK_CONTROL))
+	{
+		if (bKeyDown)
+		{
+			DoSelectionFinalize(true, ConEmuHotKey::GetHotkey(VkState));
+		}
+		return ConEmuSkipHotKey;
+	}
+
+	return NULL;
+}
+
+// pszChars may be NULL
 bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars)
 {
 	// Обработка Left/Right/Up/Down при выделении
 
 	if (con.m_sel.dwFlags && messg == WM_KEYDOWN
 	        && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)
-				|| ((wParam == 'C' || wParam == VK_INSERT) && isPressed(VK_CONTROL))
+				/*|| ((wParam == 'C' || wParam == VK_INSERT) && isPressed(VK_CONTROL)) -- moved to ProcessSelectionHotKey */
 	            || (wParam == VK_LEFT) || (wParam == VK_RIGHT) || (wParam == VK_UP) || (wParam == VK_DOWN)
 				|| (wParam == VK_HOME) || (wParam == VK_END))
 	  )
 	{
-		if ((wParam == VK_ESCAPE) || (wParam == VK_RETURN) || (wParam == 'C' || wParam == VK_INSERT))
+		if ((wParam == VK_ESCAPE) || (wParam == VK_RETURN) /*|| (wParam == 'C' || wParam == VK_INSERT)*/)
 		{
 			if (DoSelectionFinalize(wParam != VK_ESCAPE, wParam))
 				return true;

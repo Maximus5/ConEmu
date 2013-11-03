@@ -85,11 +85,16 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, con
 	const ConEmuHotKey* pHotKey = gpSetCls->GetHotKeyInfo(VkState, bKeyDown, pRCon);
 	gpCurrentHotKey = pHotKey;
 
+	if (pHotKey == NULL && pRCon && pRCon->isSelectionPresent())
+	{
+		pHotKey = pRCon->ProcessSelectionHotKey(VkState, bKeyDown, pszChars);
+	}
+
 	if (pHotKey && (pHotKey != ConEmuSkipHotKey))
 	{
 		// For testing and checking purposes
 		// User may disable "GuiMacro" processing with "ConEmu /NoMacro"
-		if (pHotKey && !gpConEmu->DisableAllMacro)
+		if (pHotKey && gpConEmu->DisableAllMacro)
 		{
 			if ((pHotKey->HkType == chk_Macro) || (pHotKey->GuiMacro && *pHotKey->GuiMacro))
 			{
