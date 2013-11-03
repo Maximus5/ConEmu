@@ -471,7 +471,11 @@ enum BackgroundOp
 	eUpRight = 3,
 	eDownLeft = 4,
 	eDownRight = 5,
-	eAspect = 6, // Stretch aspect ratio
+	eFit = 6, // Stretch aspect ratio (Fit)
+	eFill = 7, // Stretch aspect ratio (Fill)
+	eCenter = 8,
+	//
+	eOpLast = eCenter,
 };
 
 enum ToolbarMainBitmapIdx

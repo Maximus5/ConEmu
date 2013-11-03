@@ -335,8 +335,8 @@ struct Settings
 			WCHAR sBgImage[MAX_PATH]; // tBgImage
 			LPCWSTR BgImage() const { return (OverrideBgImage || !AppNames) ? sBgImage : gpSet->AppStd.sBgImage; };
 			//reg->Load(L"bgOperation", nBgOperation);
-			char nBgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
-			char BgOperation() const { return (OverrideBgImage || !AppNames) ? nBgOperation : gpSet->AppStd.nBgOperation; };
+			BYTE nBgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
+			BYTE BgOperation() const { return (OverrideBgImage || !AppNames) ? nBgOperation : gpSet->AppStd.nBgOperation; };
 
 
 			void SetNames(LPCWSTR asAppNames)
@@ -653,7 +653,7 @@ struct Settings
 		//reg->Load(L"bgImageColors", nBgImageColors);
 		DWORD nBgImageColors;
 		//reg->Load(L"bgOperation", bgOperation);
-		char bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
+		BYTE bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
 		//reg->Load(L"bgPluginAllowed", isBgPluginAllowed);
 		char isBgPluginAllowed;
 		

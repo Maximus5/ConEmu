@@ -323,6 +323,8 @@ CConEmuMain::CConEmuMain()
 	mn_QuakePercent = 0; // 0 - отключен
 	DisableAutoUpdate = false;
 	DisableKeybHooks = false;
+	DisableAllMacro = false;
+	DisableAllHotkeys = false;
 	DisableSetDefTerm = false;
 	DisableRegisterFonts = false;
 	//mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;

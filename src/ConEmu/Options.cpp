@@ -2524,13 +2524,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"bgImageDarker", bgImageDarker);
 		reg->Load(L"bgImageColors", nBgImageColors);
 		if (!nBgImageColors) nBgImageColors = (DWORD)-1; //1|2 == BgImageColorsDefaults;
-		reg->Load(L"bgOperation", bgOperation);
-		if (bgOperation!=eUpLeft && bgOperation!=eUpRight
-			&& bgOperation!=eDownLeft && bgOperation!=eDownRight
-			&& bgOperation!=eStretch && bgOperation!=eTile)
-		{
-			bgOperation = eUpLeft;
-		}
+		reg->Load(L"bgOperation", bgOperation); MinMax(bgOperation, eOpLast);
 		reg->Load(L"bgPluginAllowed", isBgPluginAllowed);
 		if (isBgPluginAllowed!=0 && isBgPluginAllowed!=1 && isBgPluginAllowed!=2) isBgPluginAllowed = 1;
 

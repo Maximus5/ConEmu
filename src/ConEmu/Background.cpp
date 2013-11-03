@@ -149,7 +149,7 @@ bool CBackground::CreateField(int anWidth, int anHeight)
 bool CBackground::FillBackground(
     const BITMAPFILEHEADER* apBkImgData, // Содержимое *.bmp файла
     LONG X, LONG Y, LONG Width, LONG Height, // Куда нужно положить картинку
-    BackgroundOp Operation,              // {eUpLeft = 0, eStretch = 1, eTile = 2, eUpRight = 4}
+    BackgroundOp Operation,              // {eUpLeft = 0, eStretch = 1, eTile = 2, eUpRight = 4, ...}
     bool abFade)                         // затемнение картинки, когда ConEmu НЕ в фокусе
 {
 	if (!hBgDc)
@@ -241,16 +241,34 @@ bool CBackground::FillBackground(
 				}
 
 				if ((Operation == eUpLeft) || (Operation == eUpRight)
-					|| (Operation == eDownLeft) || (Operation == eDownRight))
+					|| (Operation == eDownLeft) || (Operation == eDownRight)
+					|| (Operation == eCenter))
 				{
 					int W = klMin(Width,pHdr->biWidth); int H = klMin(Height,pHdr->biHeight);
 
 					if (GdiAlphaBlend(hBgDc, X, Y, W, H, hLoadDC, 0, 0, W, H, bf))
 						lbRc = true;
 				}
-				else if (Operation == eStretch)
+				else if (Operation == eStretch || Operation == eFit)
 				{
 					if (GdiAlphaBlend(hBgDc, X, Y, Width, Height, hLoadDC, 0, 0, pHdr->biWidth, pHdr->biHeight, bf))
+						lbRc = true;
+				}
+				else if (Operation == eFill)
+				{
+					int srcX = 0, srcY = 0, srcW = pHdr->biWidth, srcH = pHdr->biHeight;
+					if (Width && Width > Height)
+					{
+						srcH = srcW * Height / Width;
+						srcY = (pHdr->biHeight - srcH) / 2;
+					}
+					else if (Height)
+					{
+						srcW = srcH * Width / Height;
+						srcX = (pHdr->biWidth - srcW) / 2;
+					}
+
+					if (GdiAlphaBlend(hBgDc, X, Y, Width, Height, hLoadDC, srcX, srcY, srcW, srcH, bf))
 						lbRc = true;
 				}
 				else if (Operation == eTile)
@@ -766,24 +784,52 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 
 		pBgFile->PollBackgroundFile();
 
+		RECT rcWork = {0,0,pVCon->Width,pVCon->Height};
+
 		// необходимо проверить размер требуемой картинки
 		// -- здесь - всегда только файловая подложка
 		if ((gpSet->bgOperation == eUpLeft) || (gpSet->bgOperation == eUpRight)
-			|| (gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight))
+			|| (gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight)
+			|| (gpSet->bgOperation == eCenter))
 		{
 			// MemoryDC создается всегда по размеру картинки, т.е. изменение размера окна - игнорируется
 		}
 		else
 		{
-			//RECT rcWork = gpConEmu->CalcRect(CER_DC, pVCon);
-			RECT rcWork = {0,0,pVCon->Width,pVCon->Height};
-
 			// Смотрим дальше
 			if (gpSet->bgOperation == eStretch)
 			{
 				// Строго по размеру клиентской (точнее Workspace) области окна
 				lMaxBgWidth = rcWork.right - rcWork.left;
 				lMaxBgHeight = rcWork.bottom - rcWork.top;
+			}
+			else if (gpSet->bgOperation == eFit || gpSet->bgOperation == eFill)
+			{
+				lMaxBgWidth = rcWork.right - rcWork.left;
+				lMaxBgHeight = rcWork.bottom - rcWork.top;
+				// Correct aspect ratio
+				const BITMAPFILEHEADER* pBgImgData = pBgFile->GetBgImgData();
+				const BITMAPINFOHEADER* pBmp = pBgImgData ? (const BITMAPINFOHEADER*)(pBgImgData+1) : NULL;
+				if (pBmp
+					&& (rcWork.bottom - rcWork.top) > 0 && (rcWork.right - rcWork.left) > 0)
+				{
+					double ldVCon = (rcWork.right - rcWork.left) / (double)(rcWork.bottom - rcWork.top);
+					double ldImg = pBmp->biWidth / (double)pBmp->biHeight;
+					if (ldVCon > ldImg)
+					{
+						if (gpSet->bgOperation == eFit)
+							lMaxBgWidth = lMaxBgHeight * ldImg;
+						else
+							lMaxBgHeight = lMaxBgWidth / ldImg;
+					}
+					else
+					{
+						if (gpSet->bgOperation == eFill)
+							lMaxBgWidth = lMaxBgHeight * ldImg;
+						else
+							lMaxBgHeight = lMaxBgWidth / ldImg;
+					}
+				}
 			}
 			else if (gpSet->bgOperation == eTile)
 			{
@@ -860,8 +906,31 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 						lMaxBgHeight = pBmp->biHeight;
 					}
 
+					//LONG lImgX = 0, lImgY = 0, lImgW = lMaxBgWidth, lImgH = lMaxBgHeight;
+					
+					//if ((gpSet->bgOperation == eFit || gpSet->bgOperation == eFill)
+					//	&& (rcWork.bottom - rcWork.top) > 0 && (rcWork.right - rcWork.left) > 0)
+					//{
+					//	double ldVCon = (rcWork.right - rcWork.left) / (double)(rcWork.bottom - rcWork.top);
+					//	double ldImg = pBmp->biWidth / (double)pBmp->biHeight;
+					//	if (ldVCon > ldImg)
+					//	{
+					//		if (gpSet->bgOperation == eFit)
+					//			lMaxBgWidth = lMaxBgHeight * ldImg;
+					//		else
+					//			lMaxBgHeight = lMaxBgWidth / ldImg;
+					//	}
+					//	else
+					//	{
+					//		if (gpSet->bgOperation == eFill)
+					//			lMaxBgWidth = lMaxBgHeight * ldImg;
+					//		else
+					//			lMaxBgHeight = lMaxBgWidth / ldImg;
+					//	}
+					//}
+
 					if (!CreateField(lMaxBgWidth, lMaxBgHeight) ||
-						!FillBackground(pBgImgData, 0,0, lMaxBgWidth, lMaxBgHeight, op, mb_BgLastFade))
+						!FillBackground(pBgImgData, 0,0,lMaxBgWidth,lMaxBgHeight, op, mb_BgLastFade))
 					{
 						bSucceeded = false;
 					}
@@ -1176,165 +1245,4 @@ bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 	
 	return lRes;
 }
-
-//// Должна вернуть true, если файл изменился
-//// Работает ТОЛЬКО с файлом. Данные плагинов обрабатываются в самом CVirtualConsole!
-//bool CBackgroundInfo::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
-//{
-//	bool lbForceUpdate = false;
-//	LONG lMaxBgWidth = 0, lMaxBgHeight = 0;
-//	bool bIsForeground = gpConEmu->isMeForeground(false);
-//
-//	if (!mb_NeedBgUpdate)
-//	{
-//		if ((mb_BgLastFade == bIsForeground && gpSet->isFadeInactive)
-//		        || (!gpSet->isFadeInactive && mb_BgLastFade))
-//		{
-//			NeedBackgroundUpdate();
-//		}
-//	}
-//
-//	PollBackgroundFile();
-//
-//	if (mp_Bg == NULL)
-//	{
-//		NeedBackgroundUpdate();
-//	}
-//
-//	// Если это НЕ плагиновая подложка - необходимо проверить размер требуемой картинки
-//	// -- здесь - всегда только файловая подложка
-//	//if (!mb_WasVConBgImage)
-//	{
-//		if ((gpSet->bgOperation == eUpLeft) || (gpSet->bgOperation == eUpRight)
-//			|| (gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight))
-//		{
-//			// MemoryDC создается всегда по размеру картинки, т.е. изменение размера окна - игнорируется
-//		}
-//		else
-//		{
-//			RECT rcWnd, rcWork; GetClientRect(ghWnd, &rcWnd);
-//			WARNING("DoubleView: тут непонятно, какой и чей размер, видимо, нужно ветвиться, и хранить Background в самих VCon");
-//			rcWork = gpConEmu->CalcRect(CER_WORKSPACE, rcWnd, CER_MAINCLIENT);
-//
-//			// Смотрим дальше
-//			if (gpSet->bgOperation == eStretch)
-//			{
-//				// Строго по размеру клиентской (точнее Workspace) области окна
-//				lMaxBgWidth = rcWork.right - rcWork.left;
-//				lMaxBgHeight = rcWork.bottom - rcWork.top;
-//			}
-//			else if (gpSet->bgOperation == eTile)
-//			{
-//				// Max между клиентской (точнее Workspace) областью окна и размером текущего монитора
-//				// Окно может быть растянуто на несколько мониторов, т.е. размер клиентской области может быть больше
-//				HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
-//				MONITORINFO mon = {sizeof(MONITORINFO)};
-//				GetMonitorInfo(hMon, &mon);
-//				//
-//				lMaxBgWidth = klMax(rcWork.right - rcWork.left,mon.rcMonitor.right - mon.rcMonitor.left);
-//				lMaxBgHeight = klMax(rcWork.bottom - rcWork.top,mon.rcMonitor.bottom - mon.rcMonitor.top);
-//			}
-//
-//			if (mp_Bg)
-//			{
-//				if (mp_Bg->bgSize.X != lMaxBgWidth || mp_Bg->bgSize.Y != lMaxBgHeight)
-//					NeedBackgroundUpdate();
-//			}
-//			else
-//			{
-//				NeedBackgroundUpdate();
-//			}
-//		}
-//	}
-//
-//	if (mb_NeedBgUpdate)
-//	{
-//		mb_NeedBgUpdate = FALSE;
-//		lbForceUpdate = true;
-//		_ASSERTE(gpConEmu->isMainThread());
-//		//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
-//		//BITMAPFILEHEADER* pImgData = mp_BgImgData;
-//		BackgroundOp op = (BackgroundOp)gpSet->bgOperation;
-//		BOOL lbImageExist = (mp_BgImgData != NULL);
-//		//BOOL lbVConImage = FALSE;
-//		//LONG lBgWidth = 0, lBgHeight = 0;
-//		//CVirtualConsole* pVCon = gpConEmu->ActiveCon();
-//
-//		////MSectionLock SBK;
-//		//if (apVCon && gpSet->isBgPluginAllowed)
-//		//{
-//		//	//SBK.Lock(&apVCon->csBkImgData);
-//		//	if (apVCon->HasBackgroundImage(&lBgWidth, &lBgHeight)
-//		//	        && lBgWidth && lBgHeight)
-//		//	{
-//		//		lbVConImage = lbImageExist = TRUE;
-//		//	}
-//		//}
-//
-//		//mb_WasVConBgImage = lbVConImage;
-//
-//		if (lbImageExist)
-//		{
-//			if (!mp_Bg)
-//				mp_Bg = new CBackground;
-//
-//			mb_BgLastFade = (!bIsForeground && gpSet->isFadeInactive);
-//			TODO("Переделать, ориентироваться только на размер картинки - неправильно");
-//			TODO("DoubleView - скорректировать X,Y");
-//
-//			//if (lbVConImage)
-//			//{
-//			//	if (lMaxBgWidth && lMaxBgHeight)
-//			//	{
-//			//		lBgWidth = lMaxBgWidth;
-//			//		lBgHeight = lMaxBgHeight;
-//			//	}
-//
-//			//	if (!mp_Bg->CreateField(lBgWidth, lBgHeight) ||
-//			//	        !apVCon->PutBackgroundImage(mp_Bg, 0,0, lBgWidth, lBgHeight))
-//			//	{
-//			//		delete mp_Bg;
-//			//		mp_Bg = NULL;
-//			//	}
-//			//}
-//			//else
-//			{
-//				BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(mp_BgImgData+1);
-//
-//				if (!lMaxBgWidth || !lMaxBgHeight)
-//				{
-//					// Сюда мы можем попасть только в случае eUpLeft/eUpRight/eDownLeft/eDownRight
-//					lMaxBgWidth = pBmp->biWidth;
-//					lMaxBgHeight = pBmp->biHeight;
-//				}
-//
-//				if (!mp_Bg->CreateField(lMaxBgWidth, lMaxBgHeight) ||
-//				        !mp_Bg->FillBackground(mp_BgImgData, 0,0, lMaxBgWidth, lMaxBgHeight, op, mb_BgLastFade))
-//				{
-//					delete mp_Bg;
-//					mp_Bg = NULL;
-//				}
-//			}
-//		}
-//		else
-//		{
-//			delete mp_Bg;
-//			mp_Bg = NULL;
-//		}
-//	}
-//
-//	if (mp_Bg)
-//	{
-//		*phBgDc = mp_Bg->hBgDc;
-//		*pbgBmpSize = mp_Bg->bgSize;
-//	}
-//	else
-//	{
-//		*phBgDc = NULL;
-//		*pbgBmpSize = MakeCoord(0,0);
-//	}
-//
-//	return lbForceUpdate;
-//}
-
 #endif

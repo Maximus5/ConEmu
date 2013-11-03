@@ -627,7 +627,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	}
 
 	// Chocolatey gallery
-	gpSet->CmdTaskSet(iCreatIdx++, L"Chocolatey", L"", L"cmd /k powershell -NoProfile -ExecutionPolicy unrestricted -Command \"iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin");
+	gpSet->CmdTaskSet(iCreatIdx++, L"Chocolatey", L"", L"*cmd /k powershell -NoProfile -ExecutionPolicy unrestricted -Command \"iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin");
 
 	// Windows SDK
 	HKEY hk;

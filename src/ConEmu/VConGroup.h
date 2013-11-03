@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "RefRelease.h"
 #include "VConRelease.h"
 #include "../common/RConStartArgs.h"
 #include "../common/MArray.h"
@@ -35,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CVirtualConsole;
 class CVConGuard;
 
-class CVConGroup
+class CVConGroup : public CRefRelease
 {
 protected:
 	CVirtualConsole* mp_Item;     // консоль, к которой привязан этот "Pane"
@@ -94,8 +95,9 @@ private:
 	
 	CVConGroup(CVConGroup *apParent);
 
-public:
-	~CVConGroup();
+protected:
+	virtual ~CVConGroup();
+	virtual void FinalRelease();
 
 public:
 	static void Initialize();
@@ -222,4 +224,28 @@ public:
 //public:
 //	bool ResizeConsoles(const RECT &rFrom, enum ConEmuRect tFrom);
 //	bool ResizeViews(bool bResizeRCon=true, WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
+};
+
+class CGroupGuard
+{
+private:
+	CVConGroup *mp_Ref;
+	
+public:
+	CGroupGuard(CVConGroup* apRef);
+	~CGroupGuard();
+	
+	void Release();
+	bool Attach(CVConGroup* apRef);
+	
+
+public:
+	// Dereference
+	CVConGroup* operator->() const;
+
+	// Releases any current VCon and loads specified
+	CGroupGuard& operator=(CVConGroup* apRef);
+
+	// Ptr, No Asserts
+	CVConGroup* VGroup();
 };

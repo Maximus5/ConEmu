@@ -1095,80 +1095,149 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 
 	const int inX = rcText.left;
 	const int inY = rcText.top;
-	const int inWidth = rcText.right - rcText.left;
-	const int inHeight = rcText.bottom - rcText.top;
+	const int inX2 = rcText.right;
+	const int inY2 = rcText.bottom;
+	const int inWidth = inX2 - inX;
+	const int inHeight = inY2 - inY;
 
 	#ifdef _DEBUG
 	BOOL lbDump = FALSE;
 	if (lbDump) DumpImage(hBgDc, NULL, bgBmpSize.X, bgBmpSize.Y, L"F:\\bgtemp.png");
 	#endif
 
-	if ((gpSet->bgOperation == eUpRight)
-		|| (gpSet->bgOperation == eDownLeft)
-		|| (gpSet->bgOperation == eDownRight))
+	RECT rcFill1 = {0}, rcFill2 = {0};
+	int bgX = inX, bgY = inY;
+
+	BackgroundOp op = (BackgroundOp)gpSet->bgOperation;
+
+	if ((op == eUpRight) || (op == eDownLeft) || (op == eDownRight))
 	{
-		HBRUSH hBr = NULL;
-		#if 0
-		hBr = PartBrush(L' ', crBack, 0);
-		#else
-		if (hBrush0 == NULL)
+		//HBRUSH hBr = NULL;
+		//#if 0
+		//hBr = PartBrush(L' ', crBack, 0);
+		//#else
+		//if (hBrush0 == NULL)
+		//{
+		//	hBrush0 = CreateSolidBrush(mp_Colors[0]);
+		//	SelectBrush(hBrush0);
+		//}
+		//hBr = hBrush0;
+		//#endif
+
+		//FillRect((HDC)m_DC, &rcText, hBr);
+
+		int xShift = ((gpSet->bgOperation == eUpRight) || (gpSet->bgOperation == eDownRight)) ? max(0,((int)Width - bgBmpSize.X)) : 0;
+		int yShift = ((gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight)) ? max(0,((int)Height - bgBmpSize.Y)) : 0;
+
+		bgX = inX - xShift; bgY = inY - yShift;
+
+		if ((bgBmpSize.X < (int)Width) || (bgBmpSize.Y < (int)Height))
 		{
-			hBrush0 = CreateSolidBrush(mp_Colors[0]);
-			SelectBrush(hBrush0);
+			rcFill1 = MakeRect(inX, inY, inX2, min(yShift,inY2));
+			rcFill2 = MakeRect(inX, max(inY,yShift), min(inX2,xShift), inY2);
 		}
-		hBr = hBrush0;
-		#endif
 
-		FillRect((HDC)m_DC, &rcText, hBr);
+		//if (bgBmpSize.X>(inX-xShift) && bgBmpSize.Y>(inY-yShift))
+		//{
+		//	//BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
+		//	BitBlt((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, bgX /*inX-xShift*/, bgY /*inY-yShift*/, SRCCOPY);
+		//}
+	}
+	else if ((op == eFit) || (op == eFill) || (op == eCenter))
+	{
+		int xShift = ((int)Width - bgBmpSize.X)/2;
+		int yShift = ((int)Height - bgBmpSize.Y)/2;
 
-		int xShift = ((gpSet->bgOperation == eUpRight) || (gpSet->bgOperation == eDownRight)) ? max(0,(Width - bgBmpSize.X)) : 0;
-		int yShift = ((gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight)) ? max(0,(Height - bgBmpSize.Y)) : 0;
+		bgX = inX - xShift; bgY = inY - yShift;
 
-		if (bgBmpSize.X>(inX-xShift) && bgBmpSize.Y>(inY-yShift))
+		if (op == eFit)
 		{
-			//BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-			BitBlt((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, inX-xShift, inY-yShift, SRCCOPY);
-			//GdiAlphaBlend((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, inX-xShift, inY, inWidth, inHeight, bf);
+			if (xShift > 0)
+			{
+				rcFill1 = MakeRect(inX, inY, min(inX2,xShift), inY2);
+				if (inX2 > (bgBmpSize.X + xShift))
+					rcFill2 = MakeRect(xShift+bgBmpSize.X, inY, inX2, inY2);
+			}
+			else if (yShift > 0)
+			{
+				rcFill1 = MakeRect(inX, inY, inX2, min(inY2,yShift));
+				if (inY2 > (bgBmpSize.Y + yShift))
+					rcFill2 = MakeRect(inX, yShift+bgBmpSize.Y, inX2, inY2);
+			}
 		}
 	}
 	else
 	{
-		if (bgBmpSize.X>inX && bgBmpSize.Y>inY)
-		{
-			BitBlt((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, inX, inY, SRCCOPY);
-		}
+		//if (bgBmpSize.X>inX && bgBmpSize.Y>inY)
+		//{
+		//	BitBlt((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, inX, inY, SRCCOPY);
+		//}
 
 		// Заливка цветом (там где нет картинки)
 		if ((bgBmpSize.X < (inX+inWidth)) || (bgBmpSize.Y < (inY+inHeight)))
 		{
-			if (hBrush0 == NULL)
-			{
-				hBrush0 = CreateSolidBrush(mp_Colors[0]);
-				SelectBrush(hBrush0);
-			}
+			//if (hBrush0 == NULL)
+			//{
+			//	hBrush0 = CreateSolidBrush(mp_Colors[0]);
+			//	SelectBrush(hBrush0);
+			//}
 
-			RECT rect = {max(inX,bgBmpSize.X), inY, inX+inWidth, inY+inHeight};
+			rcFill1 = MakeRect(max(inX,bgBmpSize.X), inY, inX+inWidth, inY+inHeight);
 
-			#ifndef SKIP_ALL_FILLRECT
-			if (!IsRectEmpty(&rect))
-			{
-				FillRect((HDC)m_DC, &rect, hBrush0);
-			}
-			#endif
+			//#ifndef SKIP_ALL_FILLRECT
+			//if (!IsRectEmpty(&rect))
+			//{
+			//	FillRect((HDC)m_DC, &rect, hBrush0);
+			//}
+			//#endif
 
 			if (bgBmpSize.X>inX)
 			{
-				rect.left = inX; rect.top = max(inY,bgBmpSize.Y); rect.right = bgBmpSize.X;
+				//rect.left = inX; rect.top = max(inY,bgBmpSize.Y); rect.right = bgBmpSize.X;
+				rcFill2 = MakeRect(inX, max(inY,bgBmpSize.Y), bgBmpSize.X, inY+inHeight);
 
-				#ifndef SKIP_ALL_FILLRECT
-				if (!IsRectEmpty(&rect))
-				{
-					FillRect((HDC)m_DC, &rect, hBrush0);
-				}
-				#endif
+				//#ifndef SKIP_ALL_FILLRECT
+				//if (!IsRectEmpty(&rect))
+				//{
+				//	FillRect((HDC)m_DC, &rect, hBrush0);
+				//}
+				//#endif
 			}
 		}
 	}
+
+
+	// Bacground part
+	if (bgBmpSize.X>bgX && bgBmpSize.Y>bgY)
+	{
+		BitBlt((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, bgX, bgY, SRCCOPY);
+	}
+
+
+	// Fill with color#0 (if background image is not large enough)
+	HBRUSH hBr = NULL;
+	#if 0
+	hBr = PartBrush(L' ', crBack, 0);
+	#else
+	if (hBrush0 == NULL)
+	{
+		hBrush0 = CreateSolidBrush(mp_Colors[0]);
+		//SelectBrush(hBrush0);
+	}
+	hBr = hBrush0;
+	#endif
+
+	#ifndef SKIP_ALL_FILLRECT
+	if (!IsRectEmpty(&rcFill1))
+	{
+		FillRect((HDC)m_DC, &rcFill1, hBrush0);
+	}
+
+	if (!IsRectEmpty(&rcFill2))
+	{
+		FillRect((HDC)m_DC, &rcFill2, hBrush0);
+	}
+	#endif
 }
 
 void CVirtualConsole::SelectFont(CEFONT hNew)
@@ -5544,286 +5613,6 @@ void CVirtualConsole::CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr)
 	pAttr->crBackColor = pAttr->crOrigBackColor = mp_Colors[pAttr->nBackIdx];
 }
 
-
-//// Создает (или возвращает уже созданный) HDC (CompatibleDC) для mp_BkImgData
-//bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height)
-//{
-//	if (!this) return NULL;
-//
-//	_ASSERTE(gpConEmu->isMainThread());
-//
-//	// Сразу
-//	mb_BkImgChanged = FALSE;
-//
-//	/*if (mb_BkImgDelete && mp_BkImgData)
-//	{
-//		free(mp_BkImgData); mp_BkImgData = NULL;
-//		mb_BkImgExist = FALSE;
-//		return false;
-//	}*/
-//	if (!mb_BkImgExist)
-//		return false;
-//		
-//	MSectionLock SC;
-//	SC.Lock(mcs_BkImgData, FALSE);
-//
-//	if (mb_BkEmfChanged)
-//	{
-//		// Сразу сброс
-//		mb_BkEmfChanged = FALSE;
-//		
-//		if (!mp_BkEmfData)
-//		{
-//			_ASSERTE(mp_BkEmfData!=NULL);
-//			return false;
-//		}
-//		
-//		// Нужно перекинуть EMF в mp_BkImgData
-//		BITMAPINFOHEADER bi = mp_BkEmfData->bi;
-//		size_t nBitSize = bi.biWidth*bi.biHeight*sizeof(COLORREF);
-//		size_t nWholeSize = sizeof(CESERVER_REQ_SETBACKGROUND)+nBitSize; //-V103 //-V119
-//		if (!mp_BkImgData || (mn_BkImgDataMax < nWholeSize))
-//		{
-//			if (mp_BkImgData)
-//				free(mp_BkImgData);
-//			mp_BkImgData = (CESERVER_REQ_SETBACKGROUND*)malloc(nWholeSize);
-//			if (!mp_BkImgData)
-//			{
-//				_ASSERTE(mp_BkImgData!=NULL);
-//				return false;
-//			}
-//		}
-//		
-//		*mp_BkImgData = *mp_BkEmfData;
-//		mp_BkImgData->bmp.bfType = 0x4D42/*BM*/;
-//		mp_BkImgData->bmp.bfSize = nBitSize+sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER); //-V119
-//		
-//		// Теперь нужно сформировать DIB и нарисовать в нем EMF
-//		HDC hScreen = GetDC(NULL);
-//		//RECT rcMeta = {0,0, mn_BkImgWidth, mn_BkImgHeight}; // (in pixels)
-//		//RECT rcMetaMM = {0,0, mn_BkImgWidth*10, mn_BkImgHeight*10}; // (in .01-millimeter units)
-//		//HDC hdcEmf = CreateEnhMetaFile(NULL, NULL, &rcMetaMM, L"ConEmu\0Far Background\0\0");
-//		//if (!hdcEmf)
-//		//{
-//		//	_ASSERTE(hdcEmf!=NULL);
-//		//	return;
-//		//}
-//
-//		HDC hdcDib = CreateCompatibleDC(hScreen);
-//		if (!hdcDib)
-//		{
-//			_ASSERTE(hdcDib!=NULL);
-//			//DeleteEnhMetaFile(hdcEmf);
-//			return false;
-//		}
-//		COLORREF* pBits = NULL;
-//		HBITMAP hDib = CreateDIBSection(hScreen, (BITMAPINFO*)&bi, DIB_RGB_COLORS, (void**)&pBits, NULL, 0);
-//		ReleaseDC(NULL, hScreen); hScreen = NULL;
-//		
-//		HBITMAP hOld = (HBITMAP)SelectObject(hdcDib, hDib);
-//	
-//		size_t nBitsSize = bi.biWidth*bi.biHeight*sizeof(COLORREF);
-//		// Залить черным - по умолчанию
-//		#ifdef _DEBUG
-//			memset(pBits, 128, nBitSize);
-//		#else
-//			memset(pBits, 0, nBitsSize);
-//		#endif
-//		
-//		DWORD nEmfBits = mp_BkEmfData->bmp.bfSize - sizeof(BITMAPFILEHEADER) - sizeof(BITMAPINFOHEADER);
-//		LPBYTE pEmfBits = (LPBYTE)(mp_BkEmfData+1);
-//		HENHMETAFILE hdcEmf = SetEnhMetaFileBits(nEmfBits, pEmfBits);
-//		RECT rcPlay = {0,0, bi.biWidth, bi.biHeight};
-//		DWORD nPlayErr = 0;
-//		if (hdcEmf)
-//		{
-//			#ifdef _DEBUG
-//			ENHMETAHEADER	emh = {0};
-//			DWORD			PixelsX, PixelsY, MMX, MMY, cx, cy;
-//			emh.nSize = sizeof(ENHMETAHEADER);
-//			if( GetEnhMetaFileHeader( hdcEmf, sizeof( ENHMETAHEADER ), &emh ) )
-//			{
-//				// Get the characteristics of the output device
-//				HDC hDC = GetDC(NULL);
-//				PixelsX = GetDeviceCaps( hDC, HORZRES );
-//				PixelsY = GetDeviceCaps( hDC, VERTRES );
-//				MMX = GetDeviceCaps( hDC, HORZSIZE ) * 100;
-//				MMY = GetDeviceCaps( hDC, VERTSIZE ) * 100;
-//				ReleaseDC(NULL, hDC);
-//
-//				// Calculate the rect in which to draw the metafile based on the
-//				// intended size and the current output device resolution
-//				// Remember that the intended size is given in 0.01mm units, so
-//				// convert those to device units on the target device
-//				cx = (int)((float)(emh.rclFrame.right - emh.rclFrame.left) * PixelsX / (MMX));
-//				cy = (int)((float)(emh.rclFrame.bottom - emh.rclFrame.top) * PixelsY / (MMY));
-//				//pw->PreferredSize.cx = ip.MulDivI32((emh.rclFrame.right - emh.rclFrame.left), PixelsX, MMX);
-//				//pw->PreferredSize.cy = ip.MulDivI32((emh.rclFrame.bottom - emh.rclFrame.top), PixelsY, MMY);
-//				_ASSERTE(cx>0 && cy>0);
-//				//if (pw->PreferredSize.cx < 0) pw->PreferredSize.cx = -pw->PreferredSize.cx;
-//				//if (pw->PreferredSize.cy < 0) pw->PreferredSize.cy = -pw->PreferredSize.cy;
-//				//rcPlay = MakeRect(emh.rclBounds.left,emh.rclBounds.top,emh.rclBounds.right,emh.rclBounds.bottom);
-//			}
-//			#endif
-//
-//			if (!PlayEnhMetaFile(hdcDib, hdcEmf, &rcPlay))
-//			{
-//				nPlayErr = GetLastError();
-//				_ASSERTE(FALSE && (nPlayErr == 0));
-//			}
-//
-//			GdiFlush();
-//			memmove(mp_BkImgData+1, pBits, nBitSize);
-//		}
-//		
-//		SelectObject(hdcDib, hOld);
-//		DeleteObject(hDib);
-//		DeleteDC(hdcDib);
-//		if (hdcEmf)
-//		{
-//			DeleteEnhMetaFile(hdcEmf);
-//		}
-//		else
-//		{
-//			return false;
-//		}
-//	}
-//
-//	if (!mp_BkImgData)
-//	{
-//		// Нужен ли тут? Или допустимая ситуация?
-//		_ASSERTE(mp_BkImgData!=NULL);
-//		return false;
-//	}
-//
-//	bool lbFade = false;
-//
-//	if (gpSet->isFadeInactive && !gpConEmu->isMeForeground(false))
-//		lbFade = true;
-//
-//	bool lbRc = pBack->FillBackground(&mp_BkImgData->bmp, X, Y, Width, Height, eUpLeft, lbFade);
-//	//mb_BkImgChanged = FALSE;
-//	return lbRc;
-//}
-
-//// Освободить (если создан) HBITMAP для mp_BkImgData
-//void CVirtualConsole::FreeBackgroundImage()
-//{
-//	if (!this) return;
-//    if (mp_BkImage)
-//    {
-//    	delete mp_BkImage;
-//    	mp_BkImage = NULL;
-//    }
-//}
-
-
-
-//void CVirtualConsole::NeedBackgroundUpdate()
-//{
-//	if (!this)
-//	{
-//		_ASSERTE(this!=NULL);
-//		return;
-//	}
-//
-//	mb_NeedBgUpdate = TRUE;
-//}
-
-//// Должна вернуть true, если данные изменились (то есть будет isForce при полной перерисовке)
-//bool CVirtualConsole::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
-//{
-//	if (!this)
-//	{
-//		_ASSERTE(this!=NULL);
-//		return false;
-//	}
-//
-//	_ASSERTE(gpConEmu->isMainThread() && "Must be executed in main thread");
-//
-//	LONG lBgWidth = 0, lBgHeight = 0;
-//	BOOL lbVConImage = FALSE;
-//
-//	if (gpSet->isBgPluginAllowed)
-//	{
-//		if (HasBackgroundImage(&lBgWidth, &lBgHeight)
-//			&& lBgWidth && lBgHeight)
-//		{
-//			lbVConImage = TRUE;
-//		}
-//	}
-//
-//	// Если плагин свой фон не подсунул
-//	if (!lbVConImage)
-//	{
-//		if (mp_PluginBg)
-//		{
-//			delete mp_PluginBg;
-//			mp_PluginBg = NULL;
-//		}
-//
-//		// То работаем на общих основаниях, через настройки (или AppDistinct)
-//		return gpSetCls->PrepareBackground(this, phBgDc, pbgBmpSize);
-//	}
-//
-//	bool lbForceUpdate = false;
-//	LONG lMaxBgWidth = 0, lMaxBgHeight = 0;
-//	bool bIsForeground = gpConEmu->isMeForeground(false);
-//
-//	if (!mb_NeedBgUpdate)
-//	{
-//		if ((mb_BgLastFade == bIsForeground && gpSet->isFadeInactive)
-//			|| (!gpSet->isFadeInactive && mb_BgLastFade))
-//		{
-//			NeedBackgroundUpdate();
-//		}
-//	}
-//
-//	if (mp_PluginBg == NULL)
-//	{
-//		NeedBackgroundUpdate();
-//	}
-//
-//	if (mb_NeedBgUpdate)
-//	{
-//		mb_NeedBgUpdate = FALSE;
-//		lbForceUpdate = true;
-//
-//		if (!mp_PluginBg)
-//			mp_PluginBg = new CBackground;
-//
-//		mb_BgLastFade = (!bIsForeground && gpSet->isFadeInactive);
-//		TODO("Переделать, ориентироваться только на размер картинки - неправильно");
-//		TODO("DoubleView - скорректировать X,Y");
-//
-//		if (lMaxBgWidth && lMaxBgHeight)
-//		{
-//			lBgWidth = lMaxBgWidth;
-//			lBgHeight = lMaxBgHeight;
-//		}
-//
-//		if (!mp_PluginBg->CreateField(lBgWidth, lBgHeight) ||
-//			!PutBackgroundImage(mp_PluginBg, 0,0, lBgWidth, lBgHeight))
-//		{
-//			delete mp_PluginBg;
-//			mp_PluginBg = NULL;
-//		}
-//	}
-//
-//	if (mp_PluginBg)
-//	{
-//		*phBgDc = mp_PluginBg->hBgDc;
-//		*pbgBmpSize = mp_PluginBg->bgSize;
-//	}
-//	else
-//	{
-//		*phBgDc = NULL;
-//		*pbgBmpSize = MakeCoord(0,0);
-//	}
-//
-//	return lbForceUpdate;
-//}
-
 // вызывается при получении нового Background (CECMD_SETBACKGROUND) из плагина
 // и для очистки при закрытии (рестарте) консоли
 SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData)
@@ -5846,156 +5635,6 @@ SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACK
 
 	return rc;
 
-//	bool bIsEmf = false;
-//	UINT nSize = IsBackgroundValid(apImgData, &bIsEmf);
-//
-//	if (!nSize)
-//	{
-//		_ASSERTE(FALSE && "!IsBackgroundValid(apImgData, NULL)");
-//		return esbr_InvalidArg;
-//	}
-//
-//	if (!apImgData->bEnabled)
-//	{
-//		//mb_BkImgDelete = TRUE;
-//		mb_BkImgExist = FALSE;
-//		NeedBackgroundUpdate();
-//		Update(true/*bForce*/);
-//		return gpSet->isBgPluginAllowed ? esbr_OK : esbr_PluginForbidden;
-//	}
-//
-//#ifdef _DEBUG
-//
-//	if ((GetKeyState(VK_SCROLL) & 1))
-//	{
-//		static UINT nBackIdx = 0;
-//		wchar_t szFileName[32];
-//		_wsprintf(szFileName, SKIPLEN(countof(szFileName)) L"PluginBack_%04u.bmp", nBackIdx++);
-//		char szAdvInfo[512];
-//		BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)((&apImgData->bmp)+1);
-//		_wsprintfA(szAdvInfo, SKIPLEN(countof(szAdvInfo)) "\r\nnType=%i, bEnabled=%i,\r\nWidth=%i, Height=%i, Bits=%i, Encoding=%i\r\n",
-//		           apImgData->nType, apImgData->bEnabled,
-//		           pBmp->biWidth, pBmp->biHeight, pBmp->biBitCount, pBmp->biCompression);
-//		HANDLE hFile = CreateFile(szFileName, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-//
-//		if (hFile != INVALID_HANDLE_VALUE)
-//		{
-//			DWORD cbWrite;
-//			WriteFile(hFile, &apImgData->bmp, apImgData->bmp.bfSize, &cbWrite, 0);
-//			WriteFile(hFile, szAdvInfo, lstrlenA(szAdvInfo), &cbWrite, 0);
-//			CloseHandle(hFile);
-//		}
-//	}
-//
-//#endif
-//
-//	//	// Поскольку вызов асинхронный (сразу возвращаем в плагин), то нужно сделать копию данных
-//	//	CESERVER_REQ_SETBACKGROUND* pCopy = (CESERVER_REQ_SETBACKGROUND*)malloc(nSize);
-//	//	if (!pCopy)
-//	//		return esbr_Unexpected;
-//	//	memmove(pCopy, apImgData, nSize);
-//	//	// Запомнить последний актуальный, и послать в главную нить
-//	//	mp_LastImgData = pCopy;
-//	//	mb_BkImgDelete = FALSE;
-//	//	gpConEmu->PostSetBackground(this, pCopy);
-//	//	return gpSet->isBgPluginAllowed ? esbr_OK : esbr_PluginForbidden;
-//	//}
-//
-//	//// Если вызов пришел во время закрытия консоли - игнорировать
-//	//if (mp_RCon->isConsoleClosing())
-//	////// Этот apImgData уже не актуален. Во время обработки сообщения пришел новый Background.
-//	////	|| (mp_LastImgData && mp_LastImgData != apImgData))
-//	//{
-//	//	free(apImgData);
-//	//	return esbr_Unexpected;
-//	//}
-//
-//	// Ссылку на актуальный - не сбрасываем. Она просто информационная, и есть возможность наколоться с многопоточностью
-//	//mp_LastImgData = NULL;
-//
-//	//UINT nSize = IsBackgroundValid(apImgData);
-//	//if (!nSize)
-//	//{
-//	//	// Не допустимый apImgData. Вроде такого быть не должно - все уже проверено
-//	//	_ASSERTE(IsBackgroundValid(apImgData) != 0);
-//	//	//free(apImgData);
-//	//	return esbr_InvalidArg;
-//	//}
-//
-//	//MSectionLock SBK; SBK.Lock(&csBkImgData);
-//	//_ASSERTE(gpConEmu->isMainThread());
-//
-//	if (!mcs_BkImgData)
-//		mcs_BkImgData = new MSection();
-//
-//	MSectionLock SC;
-//	SC.Lock(mcs_BkImgData, TRUE);
-//
-//	if (bIsEmf)
-//	{
-//		if (!mp_BkEmfData || mn_BkEmfDataMax < nSize)
-//		{
-//			if (mp_BkEmfData)
-//			{
-//				free(mp_BkEmfData); mp_BkEmfData = NULL;
-//				mb_BkImgChanged = mb_BkEmfChanged = TRUE;
-//				mb_BkImgExist = FALSE;
-//				mn_BkImgWidth = mn_BkImgHeight = 0;
-//			}
-//
-//			mn_BkEmfDataMax = nSize+8192;
-//			mp_BkEmfData = (CESERVER_REQ_SETBACKGROUND*)malloc(mn_BkEmfDataMax);
-//		}
-//	}
-//	else
-//	{
-//		if (!mp_BkImgData || mn_BkImgDataMax < nSize)
-//		{
-//			if (mp_BkImgData)
-//			{
-//				free(mp_BkImgData); mp_BkImgData = NULL;
-//				mb_BkImgChanged = TRUE;
-//				mb_BkImgExist = FALSE;
-//				mn_BkImgWidth = mn_BkImgHeight = 0;
-//			}
-//
-//			mp_BkImgData = (CESERVER_REQ_SETBACKGROUND*)malloc(nSize);
-//		}
-//	}
-//	
-//	SetBackgroundResult rc;
-//
-//	if (!(bIsEmf ? mp_BkEmfData : mp_BkImgData))
-//	{
-//		_ASSERTE((bIsEmf ? mp_BkEmfData : mp_BkImgData)!=NULL);
-//		rc = esbr_Unexpected;
-//	}
-//	else
-//	{
-//		if (bIsEmf)
-//			memmove(mp_BkEmfData, apImgData, nSize);
-//		else
-//			memmove(mp_BkImgData, apImgData, nSize);
-//		mb_BkImgChanged = TRUE;
-//		mb_BkEmfChanged = bIsEmf;
-//		mb_BkImgExist = TRUE;
-//		BITMAPINFOHEADER* pBmp = bIsEmf ? (&mp_BkEmfData->bi) : (&mp_BkImgData->bi);
-//		mn_BkImgWidth = pBmp->biWidth;
-//		mn_BkImgHeight = pBmp->biHeight;
-//		NeedBackgroundUpdate();
-//
-//		//// Это была копия данных - нужно освободить
-//		//free(apImgData); apImgData = NULL;
-//
-//		if (gpConEmu->isVisible(this) && gpSet->isBgPluginAllowed)
-//		{
-//			Update(true/*bForce*/);
-//		}
-//		
-//		rc = esbr_OK;
-//	}
-//	
-//	return rc;
 }
 
 #ifdef APPDISTINCTBACKGROUND

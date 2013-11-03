@@ -67,6 +67,79 @@ static CVConGroup* gp_VGroups[MAX_CONSOLE_COUNT*2] = {}; // на каждое разбиение 
 static COORD g_LastConSize = {0,0}; // console size after last resize (in columns and lines)
 
 
+/* Group Guard */
+
+CGroupGuard::CGroupGuard(CVConGroup* apRef)
+{
+	mp_Ref = NULL;
+	Attach(apRef);
+}
+
+CGroupGuard::~CGroupGuard()
+{
+	Release();
+}
+	
+void CGroupGuard::Release()
+{
+	if (mp_Ref)
+	{
+		mp_Ref->Release();
+		mp_Ref = NULL;
+	}
+}
+
+bool CGroupGuard::Attach(CVConGroup* apRef)
+{
+	if (mp_Ref != apRef)
+	{
+		CVConGroup *pOldRef = mp_Ref;
+
+		mp_Ref = apRef;
+
+		if (pOldRef != mp_Ref)
+		{
+			if (mp_Ref)
+			{
+				mp_Ref->AddRef();
+			}
+
+			if (pOldRef)
+			{
+				pOldRef->Release();
+			}
+		}
+	}
+
+	return (mp_Ref != NULL);
+}
+	
+// Dereference
+CVConGroup* CGroupGuard::operator->() const
+{
+	_ASSERTE(mp_Ref!=NULL);
+	return mp_Ref;
+}
+
+// Releases any current VCon and loads specified
+CGroupGuard& CGroupGuard::operator=(CVConGroup* apRef)
+{
+	Attach(apRef);
+	return *this;
+}
+
+// Ptr, No Asserts
+CVConGroup* CGroupGuard::VGroup()
+{
+	return mp_Ref;
+}
+
+
+
+
+/* **************************************** */
+
+
 void CVConGroup::Initialize()
 {
 	InitializeCriticalSection(&gcs_VGroups);
@@ -114,8 +187,8 @@ CVConGroup* CVConGroup::SplitVConGroup(RConStartArgs::SplitType aSplitType /*eSp
 	if (!mp_Grp1 || !mp_Grp2)
 	{
 		_ASSERTE(mp_Grp1 && mp_Grp2);
-		SafeDelete(mp_Grp1);
-		SafeDelete(mp_Grp2);
+		SafeRelease(mp_Grp1);
+		SafeRelease(mp_Grp2);
 		return NULL;
 	}
 
@@ -251,6 +324,13 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 	lockGroups.Unlock();
 }
 
+void CVConGroup::FinalRelease()
+{
+	_ASSERTE(gpConEmu->isMainThread());
+	CVConGroup* pGroup = (CVConGroup*)this;
+	delete pGroup;
+};
+
 CVConGroup::~CVConGroup()
 {
 	_ASSERTE(gpConEmu->isMainThread()); // во избежание сбоев в индексах?
@@ -273,7 +353,7 @@ CVConGroup::~CVConGroup()
 		else
 		{
 			p->MoveToParent(mp_Parent);
-			delete p;
+			p->Release();
 		}
 	}
 
@@ -298,7 +378,7 @@ void CVConGroup::OnVConDestroyed(CVirtualConsole* apVCon)
 	{
 		CVConGroup* p = (CVConGroup*)apVCon->mp_Group;
 		apVCon->mp_Group = NULL;
-		delete p;
+		p->Release();
 	}
 }
 
