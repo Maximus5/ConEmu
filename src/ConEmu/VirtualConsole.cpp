@@ -1106,6 +1106,9 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 	#endif
 
 	RECT rcFill1 = {0}, rcFill2 = {0};
+	#if 0
+	RECT rcFill3 = {0}, rcFill4 = {0};
+	#endif
 	int bgX = inX, bgY = inY;
 
 	BackgroundOp op = (BackgroundOp)gpSet->bgOperation;
@@ -1165,6 +1168,54 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 					rcFill2 = MakeRect(inX, yShift+bgBmpSize.Y, inX2, inY2);
 			}
 		}
+		else if (op == eCenter)
+		{
+			WARNING("OPTIMIZE!");
+		#if 1
+			if (inX < xShift || inY < yShift || inX2 > (bgBmpSize.X + xShift) || inY2 > (bgBmpSize.Y + yShift))
+				rcFill1 = rcText;
+		#else
+			LPRECT prc[] = {&rcFill1, &rcFill2, &rcFill3, &rcFill4}; int iRct = 0;
+
+			// Full?
+			if (((yShift > 0) && ((yShift >= inY2) || (inY >= (bgBmpSize.Y + yShift)))) // All above or below
+				|| ((xShift > 0) && ((xShift >= inX2) || (inX >= (bgBmpSize.X + xShift))))) // All leftward or rightward
+			{
+				*(prc[iRct++]) = MakeRect(inX, inY, inX2, min(inY2,yShift));
+			}
+			else
+			{
+				// Parts
+				if (xShift > 0)
+				{
+					*(prc[iRct++]) = MakeRect(inX, inY, min(inX2,xShift), inY2);
+
+					if (inX2 > (bgBmpSize.X + xShift))
+					{
+						if (iRct < countof(prc))
+							*(prc[iRct++]) = MakeRect(xShift+bgBmpSize.X, inY, inX2, inY2);
+						else
+							_ASSERTE(iRct<=1);
+					}
+				}
+				if (yShift > 0)
+				{
+					if (iRct < countof(prc))
+						*(prc[iRct++]) = MakeRect(inX, inY, inX2, min(inY2,yShift));
+					else
+						_ASSERTE(iRct<=1);
+
+					if (inY2 > (bgBmpSize.Y + yShift))
+					{
+						if (iRct < countof(prc))
+							*(prc[iRct++]) = MakeRect(inX, yShift+bgBmpSize.Y, inX2, inY2);
+						else
+							_ASSERTE(iRct<=1);
+					}
+				}
+			}
+		#endif
+		}
 	}
 	else
 	{
@@ -1206,38 +1257,56 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 		}
 	}
 
-
-	// Bacground part
-	if (bgBmpSize.X>bgX && bgBmpSize.Y>bgY)
+	for (int i = 0; i <= 1; i++)
 	{
-		BitBlt((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, bgX, bgY, SRCCOPY);
-	}
+		if (((i == 0) && (op != eCenter)) || ((i != 0) && (op == eCenter)))
+		{
+			// Bacground part
+			if (bgBmpSize.X>bgX && bgBmpSize.Y>bgY)
+			{
+				BitBlt((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, bgX, bgY, SRCCOPY);
+			}
+		}
+		else
+		{
+			// Fill with color#0 (if background image is not large enough)
+			HBRUSH hBr = NULL;
+			#if 0
+			hBr = PartBrush(L' ', crBack, 0);
+			#else
+			if (hBrush0 == NULL)
+			{
+				hBrush0 = CreateSolidBrush(mp_Colors[0]);
+				//SelectBrush(hBrush0);
+			}
+			hBr = hBrush0;
+			#endif
 
+			#ifndef SKIP_ALL_FILLRECT
+			if (!IsRectEmpty(&rcFill1))
+			{
+				FillRect((HDC)m_DC, &rcFill1, hBrush0);
+			}
 
-	// Fill with color#0 (if background image is not large enough)
-	HBRUSH hBr = NULL;
-	#if 0
-	hBr = PartBrush(L' ', crBack, 0);
-	#else
-	if (hBrush0 == NULL)
-	{
-		hBrush0 = CreateSolidBrush(mp_Colors[0]);
-		//SelectBrush(hBrush0);
-	}
-	hBr = hBrush0;
-	#endif
+			if (!IsRectEmpty(&rcFill2))
+			{
+				FillRect((HDC)m_DC, &rcFill2, hBrush0);
+			}
 
-	#ifndef SKIP_ALL_FILLRECT
-	if (!IsRectEmpty(&rcFill1))
-	{
-		FillRect((HDC)m_DC, &rcFill1, hBrush0);
-	}
+			#if 0
+			if (!IsRectEmpty(&rcFill3))
+			{
+				FillRect((HDC)m_DC, &rcFill3, hBrush0);
+			}
 
-	if (!IsRectEmpty(&rcFill2))
-	{
-		FillRect((HDC)m_DC, &rcFill2, hBrush0);
+			if (!IsRectEmpty(&rcFill4))
+			{
+				FillRect((HDC)m_DC, &rcFill4, hBrush0);
+			}
+			#endif
+			#endif
+		}
 	}
-	#endif
 }
 
 void CVirtualConsole::SelectFont(CEFONT hNew)

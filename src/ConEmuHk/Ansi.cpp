@@ -408,7 +408,7 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 {
 	if (!buf || !cchLen)
 	{
-		_ASSERTE((buf && cchLen) || (gnAllowClinkUsage && buf));
+		_ASSERTE((buf && cchLen) || (gszClinkCmdLine && buf));
 	}
 	else if (iUnknown == 1)
 	{
@@ -478,7 +478,7 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 			}
 		}
 	}
-	else if (gnAllowClinkUsage)
+	else if (gszClinkCmdLine)
 	{
 		pszDst -= 2;
 		const wchar_t* psEmptyClink = L" - <empty sequence, clink?>";
@@ -733,6 +733,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuf
 	//ExtWriteTextParm wrt = {sizeof(wrt), ewtf_None, hConsoleOutput};
 	bool bIsConOut = false;
 
+#if 0
 	// Store prompt(?) for clink 0.1.1
 	if ((gnAllowClinkUsage == 1) && nNumberOfCharsToWrite && lpBuffer && gpszLastWriteConsole && gcchLastWriteConsoleMax)
 	{
@@ -740,6 +741,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuf
 		gpszLastWriteConsole[cchMax] = 0;
 		wmemmove(gpszLastWriteConsole, (const wchar_t*)lpBuffer, cchMax);
 	}
+#endif
 
 	#ifdef DUMP_WRITECONSOLE_LINES
 	// Логирование в отладчик ВСЕГО, что пишется в консольный Output

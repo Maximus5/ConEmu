@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"CommandPromptPortable.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"cmd.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -143,7 +143,7 @@ extern const wchar_t *user32  ;// = L"user32.dll";
 //extern const wchar_t *advapi32;// = L"Advapi32.dll";
 //extern const wchar_t *comdlg32;// = L"comdlg32.dll";
 extern bool gbHookExecutableOnly;
-extern DWORD gnAllowClinkUsage;
+//extern DWORD gnAllowClinkUsage;
 
 ConEmuHkDllState gnDllState = ds_Undefined;
 int gnDllThreadCount = 0;
@@ -580,7 +580,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 	else if ((lstrcmpi(pszName, L"cmd.exe") == 0) || (lstrcmpi(pszName, L"cmd") == 0))
 	{
-		gnAllowClinkUsage = 1; // пока не известно
+		gbIsCmdProcess = true;
 	}
 	else if ((lstrcmpi(pszName, L"sh.exe") == 0) || (lstrcmpi(pszName, L"sh") == 0)
 		|| (lstrcmpi(pszName, L"bash.exe") == 0) || (lstrcmpi(pszName, L"bash") == 0)
@@ -1294,8 +1294,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			DLOGEND1();
 
 			DLOG1_("DllMain.InQueue",ul_reason_for_call);
-			gcchLastWriteConsoleMax = 4096;
-			gpszLastWriteConsole = (wchar_t*)calloc(gcchLastWriteConsoleMax,sizeof(*gpszLastWriteConsole));
+			//gcchLastWriteConsoleMax = 4096;
+			//gpszLastWriteConsole = (wchar_t*)calloc(gcchLastWriteConsoleMax,sizeof(*gpszLastWriteConsole));
 			gInQueue.Initialize(512, NULL);
 			DLOGEND1();
 

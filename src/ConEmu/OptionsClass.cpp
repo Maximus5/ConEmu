@@ -985,12 +985,6 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig,
 	gpConEmu->InitComSpecStr(gpSet->ComSpec);
 	// -- должно вообще вызываться в UpdateGuiInfoMapping
 	//UpdateComspec(&gpSet->ComSpec);
-
-	// Обновить реестр на предмет поддержки UNC путей в cmd.exe
-	if (gpSet->ComSpec.isAllowUncPaths)
-	{
-		UpdateComSpecUncSupport();
-	}
 	
 	// Инициализация кастомной палитры для диалога выбора цвета
 	memmove(acrCustClr, gpSet->Colors, sizeof(COLORREF)*16);
@@ -2430,17 +2424,6 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	}
 	
 	return 0;
-}
-
-void CSettings::UpdateComSpecUncSupport()
-{
-	// Обновить реестр на предмет поддержки UNC путей в cmd.exe
-	SettingsRegistry UncChk;
-	if (UncChk.OpenKey(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", KEY_WRITE))
-	{
-		DWORD DisableUNCCheck = gpSet->ComSpec.isAllowUncPaths ? 1 : 0;
-		UncChk.Save(L"DisableUNCCheck", (LPBYTE)&DisableUNCCheck, REG_DWORD, DisableUNCCheck);
-	}
 }
 
 LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
@@ -4859,7 +4842,6 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbComspecUncPaths:
 			gpSet->ComSpec.isAllowUncPaths = IsChecked(hWnd2, cbComspecUncPaths);
-			UpdateComSpecUncSupport();
 			break;
 		case cbCmdAutorunNewWnd:
 			// does not insterested in ATM, this is used in ShellIntegration function only

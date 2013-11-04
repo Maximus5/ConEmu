@@ -82,7 +82,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ansi.h"
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
-#include "../common/clink.h"
+//#include "../common/clink.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WinConsole.h"
 
@@ -181,14 +181,17 @@ HANDLE ghConsoleCursorChanged = NULL;
 /* ************ Globals for Far Hooks ************ */
 
 
-/* ************ Globals for clink ************ */
-size_t   gcchLastWriteConsoleMax = 0;
-wchar_t *gpszLastWriteConsole = NULL;
-HMODULE  ghClinkDll = NULL;
-call_readline_t gpfnClinkReadLine = NULL;
-bool     gbClinkInitialized = false;
-DWORD    gnAllowClinkUsage = 0; // cmd.exe only. 0 - нет, 1 - стара€ верси€ (0.1.1), 2 - нова€ верси€
-/* ************ Globals for clink ************ */
+/* ************ Globals for cmd.exe/clink ************ */
+bool     gbIsCmdProcess = false;
+//size_t   gcchLastWriteConsoleMax = 0;
+//wchar_t *gpszLastWriteConsole = NULL;
+//HMODULE  ghClinkDll = NULL;
+//call_readline_t gpfnClinkReadLine = NULL;
+int      gnCmdInitialized = 0; // 0 - Not already, 1 - OK, -1 - Fail
+bool     gbAllowClinkUsage = false;
+bool     gbAllowUncPaths = false;
+wchar_t* gszClinkCmdLine = NULL;
+/* ************ Globals for cmd.exe/clink ************ */
 
 /* ************ Globals for powershell ************ */
 bool gbPowerShellMonitorProgress = false;
@@ -720,7 +723,8 @@ bool InitHooksFar()
 
 bool InitHooksClink()
 {
-	if (!gnAllowClinkUsage)
+	//if (!gnAllowClinkUsage)
+	if (!gbIsCmdProcess)
 		return true;
 
 	HookItem HooksCmdOnly[] =
@@ -927,7 +931,8 @@ BOOL StartupHooks(HMODULE ahOurDll)
 		HLOGEND1();
 
 		// Cmd.exe only functions
-		if (gnAllowClinkUsage)
+		//if (gnAllowClinkUsage)
+		if (gbIsCmdProcess)
 		{
 			HLOG1_("StartupHooks.InitHooks",3);
 			InitHooksClink();
@@ -3715,81 +3720,108 @@ BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 
 bool InitializeClink()
 {
-	if (gbClinkInitialized)
+	if (gnCmdInitialized)
 		return true;
-	gbClinkInitialized = true; // Single
+	gnCmdInitialized = 1; // Single
 
-	if (!gnAllowClinkUsage)
-		return false;
+	//if (!gnAllowClinkUsage)
+	//	return false;
 
 	CESERVER_CONSOLE_MAPPING_HDR* pConMap = GetConMap();
-	if (!pConMap || !(pConMap->Flags & CECF_UseClink_Any))
+	if (!pConMap /*|| !(pConMap->Flags & CECF_UseClink_Any)*/)
 	{
-		gnAllowClinkUsage = 0;
+		//gnAllowClinkUsage = 0;
+		gnCmdInitialized = -1;
 		return false;
 	}
 
 	// «апомнить режим
-	gnAllowClinkUsage =
-		(pConMap->Flags & CECF_UseClink_2) ? 2 :
-		(pConMap->Flags & CECF_UseClink_1) ? 1 :
-		CECF_Empty;
+	//gnAllowClinkUsage =
+	//	(pConMap->Flags & CECF_UseClink_2) ? 2 :
+	//	(pConMap->Flags & CECF_UseClink_1) ? 1 :
+	//	CECF_Empty;
+	gbAllowClinkUsage = ((pConMap->Flags & CECF_UseClink_Any) != 0);
+	gbAllowUncPaths = (pConMap->ComSpec.isAllowUncPaths != FALSE);
 
-	BOOL bRunRc = FALSE;
-	DWORD nErrCode = 0;
-
-	if (gnAllowClinkUsage == 2)
+	if (gbAllowClinkUsage)
 	{
-		// New style. TODO
-		wchar_t szClinkDir[MAX_PATH+32], szClinkArgs[MAX_PATH+64];
-
-		wcscpy_c(szClinkDir, pConMap->ComSpec.ConEmuBaseDir);
-		wcscat_c(szClinkDir, L"\\clink");
-
-		wcscpy_c(szClinkArgs, L"\"");
-		wcscat_c(szClinkArgs, szClinkDir);
-		wcscat_c(szClinkArgs, WIN3264TEST(L"\\clink_x86.exe",L"\\clink_x64.exe"));
-		wcscat_c(szClinkArgs, L"\" inject");
-
-		STARTUPINFO si = {sizeof(si)};
-		PROCESS_INFORMATION pi = {};
-		bRunRc = CreateProcess(NULL, szClinkArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, szClinkDir, &si, &pi);
-		
-		if (bRunRc)
+		wchar_t szClinkBat[MAX_PATH+32];
+		wcscpy_c(szClinkBat, pConMap->ComSpec.ConEmuBaseDir);
+		wcscat_c(szClinkBat, L"\\clink\\clink.bat");
+		if (!FileExists(szClinkBat))
 		{
-			WaitForSingleObject(pi.hProcess, INFINITE);
-			CloseHandle(pi.hProcess);
-			CloseHandle(pi.hThread);
+			gbAllowClinkUsage = false;
 		}
 		else
 		{
-			nErrCode = GetLastError();
-			_ASSERTEX(FALSE && "Clink loader failed");
-			UNREFERENCED_PARAMETER(nErrCode);
-			UNREFERENCED_PARAMETER(bRunRc);
-		}
-	}
-	else if (gnAllowClinkUsage == 1)
-	{
-		if (!ghClinkDll)
-		{
-			wchar_t szClinkModule[MAX_PATH+30];
-			_wsprintf(szClinkModule, SKIPLEN(countof(szClinkModule)) L"%s\\clink\\%s",
-				pConMap->ComSpec.ConEmuBaseDir, WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
-			
-			ghClinkDll = LoadLibrary(szClinkModule);
-			if (!ghClinkDll)
-				return false;
-		}
-
-		if (!gpfnClinkReadLine)
-		{
-			gpfnClinkReadLine = (call_readline_t)GetProcAddress(ghClinkDll, "call_readline");
-			_ASSERTEX(gpfnClinkReadLine!=NULL);
+			int iLen = lstrlen(szClinkBat) + 16;
+			gszClinkCmdLine = (wchar_t*)malloc(iLen*sizeof(*gszClinkCmdLine));
+			if (gszClinkCmdLine)
+			{
+				*gszClinkCmdLine = L'"';
+				_wcscpy_c(gszClinkCmdLine+1, iLen-1, szClinkBat);
+				_wcscat_c(gszClinkCmdLine, iLen, L"\" inject");
+			}
 		}
 	}
 
-	return (gpfnClinkReadLine != NULL);
+	return true;
+
+	//BOOL bRunRc = FALSE;
+	//DWORD nErrCode = 0;
+
+	//if (gnAllowClinkUsage == 2)
+	//{
+	//	// New style. TODO
+	//	wchar_t szClinkDir[MAX_PATH+32], szClinkArgs[MAX_PATH+64];
+
+	//	wcscpy_c(szClinkDir, pConMap->ComSpec.ConEmuBaseDir);
+	//	wcscat_c(szClinkDir, L"\\clink");
+
+	//	wcscpy_c(szClinkArgs, L"\"");
+	//	wcscat_c(szClinkArgs, szClinkDir);
+	//	wcscat_c(szClinkArgs, WIN3264TEST(L"\\clink_x86.exe",L"\\clink_x64.exe"));
+	//	wcscat_c(szClinkArgs, L"\" inject");
+
+	//	STARTUPINFO si = {sizeof(si)};
+	//	PROCESS_INFORMATION pi = {};
+	//	bRunRc = CreateProcess(NULL, szClinkArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, szClinkDir, &si, &pi);
+	//	
+	//	if (bRunRc)
+	//	{
+	//		WaitForSingleObject(pi.hProcess, INFINITE);
+	//		CloseHandle(pi.hProcess);
+	//		CloseHandle(pi.hThread);
+	//	}
+	//	else
+	//	{
+	//		nErrCode = GetLastError();
+	//		_ASSERTEX(FALSE && "Clink loader failed");
+	//		UNREFERENCED_PARAMETER(nErrCode);
+	//		UNREFERENCED_PARAMETER(bRunRc);
+	//	}
+	//}
+	//else if (gnAllowClinkUsage == 1)
+	//{
+	//	if (!ghClinkDll)
+	//	{
+	//		wchar_t szClinkModule[MAX_PATH+30];
+	//		_wsprintf(szClinkModule, SKIPLEN(countof(szClinkModule)) L"%s\\clink\\%s",
+	//			pConMap->ComSpec.ConEmuBaseDir, WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
+	//		
+	//		ghClinkDll = LoadLibrary(szClinkModule);
+	//		if (!ghClinkDll)
+	//			return false;
+	//	}
+
+	//	if (!gpfnClinkReadLine)
+	//	{
+	//		gpfnClinkReadLine = (call_readline_t)GetProcAddress(ghClinkDll, "call_readline");
+	//		_ASSERTEX(gpfnClinkReadLine!=NULL);
+	//	}
+	//}
+
+	//return (gpfnClinkReadLine != NULL);
 }
 
 // cmd.exe only!
@@ -3797,20 +3829,114 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 {
 	typedef LONG (WINAPI* OnRegQueryValueExW_t)(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
 	ORIGINALFASTEX(RegQueryValueExW,NULL);
-	BOOL bMainThread = TRUE; // Does not care
+	//BOOL bMainThread = TRUE; // Does not care
 	LONG lRc = -1;
+	bool bNeedAppendClink = false;
 
-	if (!gbClinkInitialized && hKey && lpValueName)
+	if (gbIsCmdProcess && hKey && lpValueName)
 	{
-		if (lstrcmpi(lpValueName, L"AutoRun") == 0)
+		if (InitializeClink())
 		{
-			InitializeClink();
+			if (lstrcmpi(lpValueName, L"DisableUNCCheck") == 0)
+			{
+				if (lpData)
+				{
+					if (lpcbData && *lpcbData >= sizeof(DWORD))
+						*((LPDWORD)lpData) = gbAllowUncPaths;
+					else
+						*lpData = gbAllowUncPaths;
+				}
+				if (lpType)
+					*lpType = REG_DWORD;
+				if (lpcbData)
+					*lpcbData = sizeof(DWORD);
+				lRc = 0;
+				goto wrap;
+			}
+			if (gbAllowClinkUsage && gszClinkCmdLine && lstrcmpi(lpValueName, L"AutoRun") == 0)
+			{
+				
+				// Is already loaded?
+				HMODULE hClink = GetModuleHandle(WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
+				if (hClink == NULL)
+				{
+					// May be it is set up itself?
+					typedef LONG (WINAPI* RegOpenKeyEx_t)(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
+					typedef LONG (WINAPI* RegCloseKey_t)(HKEY hKey);
+					HMODULE hAdvApi = LoadLibrary(L"AdvApi32.dll");
+					if (hAdvApi)
+					{
+						RegOpenKeyEx_t _RegOpenKeyEx = (RegOpenKeyEx_t)GetProcAddress(hAdvApi, "RegOpenKeyExW");
+						RegCloseKey_t  _RegCloseKey  = (RegCloseKey_t)GetProcAddress(hAdvApi, "RegCloseKey");
+						if (_RegOpenKeyEx && _RegCloseKey)
+						{
+							const DWORD cchMax = 0x3FF0;
+							const DWORD cbMax = cchMax*2;
+							wchar_t* pszCmd = (wchar_t*)malloc(cbMax);
+							if (pszCmd)
+							{
+								DWORD cbSize;
+								bool bClinkInstalled = false;
+								for (int i = 0; i <= 1 && !bClinkInstalled; i++)
+								{
+									HKEY hk;
+									if (_RegOpenKeyEx(i?HKEY_LOCAL_MACHINE:HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &hk))
+										continue;
+									if (!F(RegQueryValueExW)(hk, lpValueName, NULL, NULL, (LPBYTE)pszCmd, &(cbSize = cbMax))
+										&& (cbSize+2) < cbMax)
+									{
+										cbSize /= 2; pszCmd[cbSize] = 0;
+										CharLowerBuffW(pszCmd, cbSize);
+										if (wcsstr(pszCmd, L"\\clink.bat"))
+											bClinkInstalled = true;
+									}
+									_RegCloseKey(hk);
+								}
+								// Not installed via "Autorun"
+								if (!bClinkInstalled)
+								{
+									bNeedAppendClink = true;
+
+									int iLen = lstrlen(gszClinkCmdLine);
+									_wcscpy_c(pszCmd, cchMax, gszClinkCmdLine);
+									_wcscpy_c(pszCmd+iLen, cchMax-iLen, L" & "); // conveyer next command indifferent to %errorlevel%
+
+									cbSize = cbMax - (iLen + 3)*sizeof(*pszCmd);
+									if (F(RegQueryValueExW)(hKey, lpValueName, NULL, NULL, (LPBYTE)pszCmd, &(cbSize = cbMax))
+										|| (pszCmd[iLen+3] == 0))
+									{
+										pszCmd[iLen] = 0; // There is no self value in registry
+									}
+									cbSize = (lstrlen(pszCmd)+1)*sizeof(*pszCmd);
+
+									// Return
+									lRc = 0;
+									if (lpData && lpcbData)
+									{
+										if (*lpcbData < cbSize)
+											lRc = ERROR_MORE_DATA;
+										else
+											_wcscpy_c((wchar_t*)lpData, (*lpcbData)/2, pszCmd);
+									}
+									if (lpcbData)
+										*lpcbData = cbSize;
+									free(pszCmd);
+									goto wrap;
+								}
+								free(pszCmd);
+							}
+						}
+						FreeLibrary(hAdvApi);
+					}
+				}
+			}
 		}
 	}
 
 	if (F(RegQueryValueExW))
 		lRc = F(RegQueryValueExW)(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData);
 
+wrap:
 	return lRc;
 }
 
@@ -3826,6 +3952,7 @@ BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 
 	OnReadConsoleStart(TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 
+#if 0
 	// «апускаемс€ только в главном потоке
 	// ѕопытка стартовать в telnet.exe (запущенном без параметров в Win7 x64) привела к зависанию
 	if ((gnAllowClinkUsage == 1) && bMainThread && (nNumberOfCharsToRead > 1))
@@ -3869,6 +3996,7 @@ BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 			}
 		}
 	}
+#endif
 
 	// ≈сли не обработано через clink - то стандартно, через API
 	if (!lbProcessed)
@@ -3880,6 +4008,59 @@ BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 	}
 
 	OnReadConsoleEnd(lbRc, TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+
+	// cd \\server\share\dir\...
+	if (gbAllowUncPaths && lpBuffer && lpNumberOfCharsRead && *lpNumberOfCharsRead
+		&& (nNumberOfCharsToRead >= *lpNumberOfCharsRead) && (nNumberOfCharsToRead > 6))
+	{
+		wchar_t* pszCmd = (wchar_t*)lpBuffer;
+		// "cd " ?
+		if ((pszCmd[0]==L'c' || pszCmd[0]==L'C') && (pszCmd[1]==L'd' || pszCmd[1]==L'D') && pszCmd[2] == L' ')
+		{
+			pszCmd[*lpNumberOfCharsRead] = 0;
+			wchar_t* pszPath = (wchar_t*)SkipNonPrintable(pszCmd+3);
+			// Don't worry about local paths, check only network
+			if (pszPath[0] == L'\\' && pszPath[1] == L'\\')
+			{
+				wchar_t* pszEnd;
+				if (*pszPath == L'"')
+					pszEnd = wcschr(++pszPath, L'"');
+				else
+					pszEnd = wcspbrk(pszPath, L"\r\n\t&| ");
+				if (!pszEnd)
+					pszEnd = pszPath + lstrlen(pszPath);
+				if ((pszEnd - pszPath) < MAX_PATH)
+				{
+					wchar_t ch = *pszEnd; *pszEnd = 0;
+					BOOL bSet = SetCurrentDirectory(pszPath);
+					if (ch) *pszEnd = ch;
+					if (bSet)
+					{
+						if (*pszEnd == L'"') pszEnd++;
+						pszEnd = (wchar_t*)SkipNonPrintable(pszEnd);
+						if (*pszEnd && wcschr(L"&|", *pszEnd))
+						{
+							while (*pszEnd && wcschr(L"&|", *pszEnd)) pszEnd++;
+							pszEnd = (wchar_t*)SkipNonPrintable(pszEnd);
+						}
+						// Return anything...
+						if (*pszEnd)
+						{
+							int nLeft = lstrlen(pszEnd);
+							memmove(lpBuffer, pszEnd, (nLeft+1)*sizeof(*pszEnd));
+						}
+						else
+						{
+							lstrcpyn((wchar_t*)lpBuffer, L"cd\r\n", nNumberOfCharsToRead);
+						
+						}
+						*lpNumberOfCharsRead = lstrlen((wchar_t*)lpBuffer);
+					}
+				}
+			}
+		}
+	}
+
 	SetLastError(nErr);
 
 	UNREFERENCED_PARAMETER(nStartTick);

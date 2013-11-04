@@ -110,15 +110,18 @@ BOOL OnExecutePromptCmd(LPCWSTR asCmd);
 
 /* ************ Globals for Far ************ */
 extern InQueue gInQueue;
-/* ************ Globals for clink ************ */
+/* ************ Globals for Far ************ */
 
-/* ************ Globals for clink ************ */
-extern size_t   gcchLastWriteConsoleMax;
-extern wchar_t *gpszLastWriteConsole;
-extern bool     gbClinkInitialized;
-extern DWORD    gnAllowClinkUsage; // 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
-extern bool     InitializeClink();
-/* ************ Globals for clink ************ */
+/* ************ Globals for cmd.exe/clink ************ */
+extern bool     gbIsCmdProcess;
+//extern size_t   gcchLastWriteConsoleMax;
+//extern wchar_t *gpszLastWriteConsole;
+extern int      gnCmdInitialized; // 0 - Not already, 1 - OK, -1 - Fail
+extern bool     gbAllowClinkUsage;
+extern bool     gbAllowUncPaths;
+extern wchar_t* gszClinkCmdLine;
+//extern bool     InitializeClink();
+/* ************ Globals for cmd.exe/clink ************ */
 
 /* ************ Globals for powershell ************ */
 extern bool gbPowerShellMonitorProgress;
