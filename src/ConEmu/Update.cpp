@@ -369,7 +369,7 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 	wchar_t szReason[128];
 	if (!mp_Set->UpdatesAllowed(szReason))
 	{
-		wchar_t szErrMsg[255]; wcscpy_c(szErrMsg, L"Updates are not enabled in ConEmu settings\n");
+		wchar_t szErrMsg[255]; wcscpy_c(szErrMsg, L"Updates are not enabled in ConEmu settings\r\n");
 		wcscat_c(szErrMsg, szReason);
 		DisplayLastError(szErrMsg, -1);
 		return;
@@ -380,7 +380,11 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 	if (!mh_CheckThread)
 	{
 		mb_InCheckProcedure = FALSE;
-		DisplayLastError(L"CreateThread(CheckThreadProc) failed");
+		DWORD nErrCode = GetLastError();
+		wchar_t szErrMsg[255]; wcscpy_c(szErrMsg, L"ConEmu automatic update check failed!\r\n");
+		if (nErrCode == ERROR_ACCESS_DENIED) wcscat_c(szErrMsg, L"Check your antivirus software\r\n");
+		wcscat_c(szErrMsg, L"\r\nCreateThread(CheckThreadProc) failed\r\n");
+		DisplayLastError(szErrMsg, nErrCode);
 		return;
 	}
 	// OK
