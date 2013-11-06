@@ -57,6 +57,7 @@ private:
 	BOOL mb_WasSuspended; // Если TRUE - значит при вызове CreateProcessXXX уже был флаг CREATE_SUSPENDED
 	BOOL mb_NeedInjects;
 	BOOL mb_DebugWasRequested;
+	BOOL mb_PostInjectWasRequested;
 	//BOOL mb_DosBoxAllowed;
 	
 	//static int mn_InShellExecuteEx;
@@ -108,6 +109,8 @@ public:
 	// Вызывается после успешного создания процесса
 	void OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI);
 	void OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess);
+	// Или консоли (*.vshost.exe)
+	void OnAllocConsoleFinished();
 };
 
 // Service functions

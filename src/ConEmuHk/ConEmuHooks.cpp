@@ -222,9 +222,12 @@ bool gbDosBoxProcess = false;
 
 /* ************ Globals for "Default terminal ************ */
 bool gbPrepareDefaultTerminal = false;
+bool gbIsNetVsHost = false;
 //HANDLE ghDefaultTerminalReady = NULL; // 
 ConEmuGuiMapping* gpDefaultTermParm = NULL;
-
+// forward
+bool InitHooksDefaultTrm();
+// helper
 bool isDefaultTerminalEnabled()
 {
 	if (!gbPrepareDefaultTerminal || !gpDefaultTermParm)
@@ -591,15 +594,29 @@ bool InitHooksDefaultTrm()
 		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
 		// Issue 1125: "Run as administrator" too. Must be last export
 		{(void*)OnShellExecCmdLine,		"ShellExecCmdLine",		shell32,   265},
+		// Issue 1312: .Net applications runs in "*.vshost.exe" helper GUI apllication when debugging
+		{(void*)OnAllocConsole,			"AllocConsole",			kernel32}, // Only for "*.vshost.exe"?
 		/* ************************ */
 		{0}
 	};
 
+	size_t iNullIdx = countof(HooksCommon)-1;
+	size_t iAllocIdx = countof(HooksCommon)-2;
+	size_t iCmdLineIdx = countof(HooksCommon)-3;
+
+	//if (GetModuleHandle(L"MSCOREE.DLL") != NULL) -- excess check?
+	_ASSERTE(HooksCommon[iAllocIdx].NewAddress == (void*)OnAllocConsole);
+	if (!gbIsNetVsHost)
+	{
+		HooksCommon[iAllocIdx] = HooksCommon[iNullIdx];
+	}
+
+	// Windows 8. There is new undocumented function "ShellExecCmdLine" used by Explorer
 	if (!(gpStartEnv->os.dwMajorVersion == 6 && gpStartEnv->os.dwMinorVersion <= 2))
 	{
-		size_t nCmdLineIdx = countof(HooksCommon)-2;
-		_ASSERTEX(HooksCommon[nCmdLineIdx].NameOrdinal == 265);
-		memset(HooksCommon+nCmdLineIdx, 0, sizeof(*HooksCommon));
+		_ASSERTEX(HooksCommon[iCmdLineIdx].NameOrdinal == 265);
+		HooksCommon[iCmdLineIdx] = HooksCommon[iAllocIdx];
+		HooksCommon[iAllocIdx] = HooksCommon[iNullIdx];
 	}
 	else
 	{
@@ -4685,7 +4702,7 @@ BOOL WINAPI OnAllocConsole(void)
 
 	// GUI приложение во вкладке. Если окна консоли еще нет - попробовать прицепиться
 	// к родительской консоли (консоли серверного процесса)
-	if (gbAttachGuiClient || ghAttachGuiClient)
+	if ((gbAttachGuiClient || ghAttachGuiClient) && !gbPrepareDefaultTerminal)
 	{
 		HWND hCurCon = GetRealConsoleWindow();
 		if (hCurCon == NULL && gnServerPID != 0)
@@ -4714,7 +4731,7 @@ BOOL WINAPI OnAllocConsole(void)
 	{
 		lbRc = F(AllocConsole)();
 
-		if (lbRc && IsVisibleRectLocked(crLocked))
+		if (lbRc && !gbPrepareDefaultTerminal && IsVisibleRectLocked(crLocked))
 		{
 			// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
 			// Размер может менять только пользователь ресайзом окна ConEmu
@@ -4743,6 +4760,19 @@ BOOL WINAPI OnAllocConsole(void)
 
 	// Обновить ghConWnd и мэппинг
 	OnConWndChanged(GetRealConsoleWindow());
+
+	_ASSERTEX(lbRc && ghConWnd);
+
+	if (gbPrepareDefaultTerminal && gbIsNetVsHost)
+	{
+		CShellProc* sp = new CShellProc();
+		if (sp)
+		{
+			sp->OnAllocConsoleFinished();
+			delete sp;
+		}
+		SetLastError(0);
+	}
 
 	TODO("Можно бы по настройке установить параметры. Кодовую страницу, например");
 

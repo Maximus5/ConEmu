@@ -954,6 +954,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\CmdLine.h" />
+    <ClInclude Include="..\common\DefTermHooker.h" />
     <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\ConEmuCD\ConsoleHelp.h" />
     <ClInclude Include="About.h" />

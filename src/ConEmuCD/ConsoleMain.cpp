@@ -2828,18 +2828,26 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		#endif
 
 		// Preparing Events
-		wchar_t szName[64]; HANDLE hEvent;
+		wchar_t szName[64]; HANDLE hEvent = NULL, hEventReady = NULL;
+		_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOK, nRemotePID);
 		if (!abDefTermOnly)
 		{
 			// When running in normal mode (NOT set up as default terminal)
 			// we need full initialization procedure, not a light one when hooking explorer.exe
-			_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOK, nRemotePID);
 			hEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szName);
 			if (hEvent)
 			{
 				ResetEvent(hEvent);
 				CloseHandle(hEvent);
 			}
+		}
+		else
+		{
+			hEvent = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
+			SetEvent(hEvent);
+			_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOKOK, nRemotePID);
+			hEventReady = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
+			ResetEvent(hEventReady);
 		}
 		// Creating as remote thread, need to determine MainThread?
 		_wsprintf(szName, SKIPLEN(countof(szName)) CECONEMUROOTTHREAD, nRemotePID);
@@ -2904,7 +2912,19 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		if (iHookRc == -1)
 		{
 			iHookRc = InjectRemote(nRemotePID, abDefTermOnly);
+			// Дождаться, пока поток стартует и можно будет закрыть hEventReady
+			if (hEventReady)
+			{
+				DWORD nWaitReady = WaitForSingleObject(hEventReady, CEDEFAULTTERMHOOKWAIT);
+				if (nWaitReady == WAIT_TIMEOUT)
+				{
+					iHookRc = -300; // Failed to start hooking thread in remote process
+				}
+			}
 		}
+
+		SafeCloseHandle(hEvent);
+		SafeCloseHandle(hEventReady);
 
 		if (iHookRc == 0)
 		{

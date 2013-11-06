@@ -826,6 +826,7 @@
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
+    <ClInclude Include="..\common\DefTermHooker.h" />
     <ClInclude Include="ConEmuHooks.h" />
     <ClInclude Include="Console2.h" />
     <ClInclude Include="..\common\defines.h" />

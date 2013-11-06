@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"cmd.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"xxx.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -559,6 +559,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 	#endif
 
+
 	if ((lstrcmpi(pszName, L"powershell.exe") == 0) || (lstrcmpi(pszName, L"powershell") == 0))
 	{
 		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -616,6 +617,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	else if ((lstrcmpi(pszName, L"notepad.exe") == 0) || (lstrcmpi(pszName, L"notepad") == 0))
 	{
 		//_ASSERTE(FALSE && "Notepad.exe started!");
+	}
+	else if (IsVsNetHostExe(pszName)) // "*.vshost.exe"
+	{
+		gbIsNetVsHost = true;
 	}
 
 	// ѕоскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
@@ -1282,6 +1287,15 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 				{
 					nWaitRoot = WaitForSingleObject(hRootProcessFlag, 0);
 					gbPrepareDefaultTerminal = (nWaitRoot == WAIT_OBJECT_0);
+					SafeCloseHandle(hRootProcessFlag);
+					// ≈сли ждут, что мы отметимс€...
+					if (gbPrepareDefaultTerminal)
+					{
+						msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOKOK, gnSelfPID);
+						hRootProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+						if (hRootProcessFlag)
+							SetEvent(hRootProcessFlag);
+					}
 				}
 				SafeCloseHandle(hRootProcessFlag);
 			}

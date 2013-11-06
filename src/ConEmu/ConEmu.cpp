@@ -8441,8 +8441,9 @@ void CConEmuMain::CtrlWinAltSpace()
 
 void CConEmuMain::DeleteVConMainThread(CVirtualConsole* apVCon)
 {
+	// We can't use SendMessage because of server thread blocking
 	DEBUGTEST(LRESULT lRc =)
-		SendMessage(ghWnd, mn_MsgDeleteVConMainThread, 0, (LPARAM)apVCon);
+		PostMessage(ghWnd, mn_MsgDeleteVConMainThread, 0, (LPARAM)apVCon);
 	//if (!lRc)
 	//{
 	//	if (CVConGroup::isValid(apVCon))
@@ -13453,7 +13454,6 @@ void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 	static bool bWasSetTopMost = false;
 
 	// определить возможность перейти в текстовый FullScreen
-#ifdef _WIN64
 	if (!bSet)
 	{
 		// Снять флаг "OnTop", вернуть нормальные приоритеты процессам
@@ -13465,27 +13465,27 @@ void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 		}
 		return;
 	}
-#endif
 
-	TODO("Пока глюкавит - не открываем");
-#if defined(_DEBUG) && !defined(_WIN64)
-	CVConGuard VCon;
-	if (CVConGroup::GetActiveVCon(&VCon) >= 0)
+	if (IsHwFullScreenAvailable())
 	{
-		//BOOL WINAPI SetConsoleDisplayMode(HANDLE hConsoleOutput, DWORD dwFlags, PCOORD lpNewScreenBufferDimensions);
-		//if (!isIconic())
-		//	SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 
-		::ShowWindow(ghWnd, SW_SHOWMINNOACTIVE);
+		CVConGuard VCon;
+		if (CVConGroup::GetActiveVCon(&VCon) >= 0)
+		{
+			//BOOL WINAPI SetConsoleDisplayMode(HANDLE hConsoleOutput, DWORD dwFlags, PCOORD lpNewScreenBufferDimensions);
+			//if (!isIconic())
+			//	SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 
-		bool bFRc = VCon->RCon()->SetFullScreen();
+			::ShowWindow(ghWnd, SW_SHOWMINNOACTIVE);
 
-		if (bFRc)
-			return;
+			bool bFRc = VCon->RCon()->SetFullScreen();
 
-		SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+			if (bFRc)
+				return;
+
+			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+		}
 	}
-#endif
 
 	if (gpSet->isDesktopMode)
 	{

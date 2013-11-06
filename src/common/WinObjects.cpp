@@ -836,6 +836,30 @@ bool IsWindows64()
 	return is64bitOs;
 }
 
+bool IsHwFullScreenAvailable()
+{
+	if (IsWindows64())
+		return false;
+
+	// HW FullScreen was available in Win2k & WinXP (32bit)
+	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
+	GetVersionEx(&osv);
+	return (osv.dwMajorVersion <= 5);
+}
+
+bool IsVsNetHostExe(LPCWSTR asFilePatName)
+{
+	bool bVsNetHostRequested = false;
+	int iNameLen = asFilePatName ? lstrlen(asFilePatName) : 0;
+	LPCWSTR pszVsHostSuffix = L".vshost.exe";
+	int iVsHostSuffix = lstrlen(pszVsHostSuffix);
+	if ((iNameLen >= iVsHostSuffix) && (lstrcmpi(asFilePatName+iNameLen-iVsHostSuffix, pszVsHostSuffix) == 0))
+	{
+		bVsNetHostRequested = true;
+	}
+	return bVsNetHostRequested;
+}
+
 // Check running process bits - 32/64
 int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
 {

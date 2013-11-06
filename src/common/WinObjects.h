@@ -72,6 +72,8 @@ bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
 bool IsWine();
 bool IsDbcs();
 bool IsWindows64();
+bool IsHwFullScreenAvailable();
+bool IsVsNetHostExe(LPCWSTR asFilePatName);
 int GetProcessBits(DWORD nPID, HANDLE hProcess = NULL);
 bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL = FALSE);
 bool IsModuleValid(HMODULE module);

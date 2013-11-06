@@ -1159,8 +1159,18 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		// pParm->rgrc[2] rectangle contains the valid source rectangle
 		pParm->rgrc[0] = rcClient;
 		//TODO:
-		pParm->rgrc[1] = rcClient; // Mark as valid - only client area. Let system to redraw the frame and caption.
-		pParm->rgrc[2] = r[2];
+		#if 0
+		if (!bAllowPreserveClient)
+		{
+			pParm->rgrc[1] = MakeRect(0,0,0,0);
+			pParm->rgrc[2] = MakeRect(0,0,0,0);
+		}
+		else
+		#endif
+		{
+			pParm->rgrc[1] = rcClient; // Mark as valid - only client area. Let system to redraw the frame and caption.
+			pParm->rgrc[2] = r[2];
+		}
 
 		if (bAllowPreserveClient)
 		{

@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "TrayIcon.h"
 #include "../ConEmuCD/ExitCodes.h"
+#include "../common/DefTermHooker.h" // iHookerRc = StartDefTermHooker(nForePID, hProcess, nResult, gpConEmu->ms_ConEmuBaseDir, nErrCode);
 
 #define StartupValueName L"ConEmuDefaultTerminal"
 
@@ -40,7 +41,7 @@ CDefaultTerminal::CDefaultTerminal()
 {
 	mh_LastWnd = mh_LastIgnoredWnd = mh_LastCall = NULL;
 	mb_ReadyToHook = FALSE;
-	mh_SignEvent = NULL;
+	//mh_SignEvent = NULL;
 	mn_PostThreadId = 0;
 	mb_PostCreatedThread = false;
 	mb_Initialized = false;
@@ -55,7 +56,7 @@ CDefaultTerminal::~CDefaultTerminal()
 
 	DeleteCriticalSection(&mcs);
 
-	SafeCloseHandle(mh_SignEvent);
+	//SafeCloseHandle(mh_SignEvent);
 }
 
 void CDefaultTerminal::ClearThreads(bool bForceTerminate)
@@ -380,11 +381,13 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 	const wchar_t* pszMonitored = NULL;
 	HANDLE hProcess = NULL;
 	int nBits = 0;
-	wchar_t szCmdLine[MAX_PATH*3];
-	wchar_t szName[64];
-	PROCESS_INFORMATION pi = {};
-	STARTUPINFO si = {sizeof(si)};
-	BOOL bStarted = FALSE;
+	//wchar_t szCmdLine[MAX_PATH*3];
+	//wchar_t szName[64];
+	//PROCESS_INFORMATION pi = {};
+	//STARTUPINFO si = {sizeof(si)};
+	//BOOL bStarted = FALSE;
+	DWORD nErrCode = 0;
+	int iHookerRc = -1;
 
 	// Если главное окно еще не создано
 	if (!mb_ReadyToHook)
@@ -522,57 +525,68 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 
 	_ASSERTE(isDefaultTerminalAllowed());
 
-	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, nForePID);
-	if (!hProcess)
-	{
-		// Failed to hook
-		mh_LastIgnoredWnd = hFore;
-		goto wrap;
-	}
-
-	// Need to be hooked
-	nBits = GetProcessBits(nForePID, hProcess);
-	switch (nBits)
-	{
-	case 32:
-		_wsprintf(szCmdLine, SKIPLEN(countof(szCmdLine)) L"\"%s\\%s\" /DEFTRM=%u",
-			gpConEmu->ms_ConEmuBaseDir, L"ConEmuC.exe", nForePID);
-		break;
-	case 64:
-		_wsprintf(szCmdLine, SKIPLEN(countof(szCmdLine)) L"\"%s\\%s\" /DEFTRM=%u",
-			gpConEmu->ms_ConEmuBaseDir, L"ConEmuC64.exe", nForePID);
-		break;
-	}
-	if (!*szCmdLine)
-	{
-		// Unsupported bitness?
-		CloseHandle(hProcess);
-		mh_LastIgnoredWnd = hFore;
-		goto wrap;
-	}
-
-	// Prepare event
-	_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOK, nForePID);
-	SafeCloseHandle(mh_SignEvent);
-	mh_SignEvent = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
-	if (mh_SignEvent) SetEvent(mh_SignEvent); // May be excess, but if event already exists...
-
-	// Run hooker
-	si.dwFlags = STARTF_USESHOWWINDOW;
-	bStarted = CreateProcess(NULL, szCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-	if (!bStarted)
-	{
-		DisplayLastError(L"Failed to start hooking application!\nDefault terminal feature will not be available!");
-		CloseHandle(hProcess);
-		mh_LastIgnoredWnd = hFore;
-		goto wrap;
-	}
-	CloseHandle(pi.hThread);
-	// Waiting for result
 	TODO("Show status in status line?");
-	WaitForSingleObject(pi.hProcess, INFINITE);
-	GetExitCodeProcess(pi.hProcess, &nResult);
-	CloseHandle(pi.hProcess);
+
+	iHookerRc = StartDefTermHooker(nForePID, hProcess, nResult, gpConEmu->ms_ConEmuBaseDir, nErrCode);
+	if (iHookerRc != 0)
+	{
+		mh_LastIgnoredWnd = hFore;
+		if (iHookerRc == -3)
+			DisplayLastError(L"Failed to start hooking application!\nDefault terminal feature will not be available!", nErrCode);
+		goto wrap;
+	}
+
+	//hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, nForePID);
+	//if (!hProcess)
+	//{
+	//	// Failed to hook
+	//	mh_LastIgnoredWnd = hFore;
+	//	goto wrap;
+	//}
+
+	//// Need to be hooked
+	//nBits = GetProcessBits(nForePID, hProcess);
+	//switch (nBits)
+	//{
+	//case 32:
+	//	_wsprintf(szCmdLine, SKIPLEN(countof(szCmdLine)) L"\"%s\\%s\" /DEFTRM=%u",
+	//		gpConEmu->ms_ConEmuBaseDir, L"ConEmuC.exe", nForePID);
+	//	break;
+	//case 64:
+	//	_wsprintf(szCmdLine, SKIPLEN(countof(szCmdLine)) L"\"%s\\%s\" /DEFTRM=%u",
+	//		gpConEmu->ms_ConEmuBaseDir, L"ConEmuC64.exe", nForePID);
+	//	break;
+	//}
+	//if (!*szCmdLine)
+	//{
+	//	// Unsupported bitness?
+	//	CloseHandle(hProcess);
+	//	mh_LastIgnoredWnd = hFore;
+	//	goto wrap;
+	//}
+
+	//// Prepare event
+	//_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOK, nForePID);
+	//SafeCloseHandle(mh_SignEvent);
+	//mh_SignEvent = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
+	//if (mh_SignEvent) SetEvent(mh_SignEvent); // May be excess, but if event already exists...
+
+	//// Run hooker
+	//si.dwFlags = STARTF_USESHOWWINDOW;
+	//bStarted = CreateProcess(NULL, szCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+	//if (!bStarted)
+	//{
+	//	DisplayLastError(L"Failed to start hooking application!\nDefault terminal feature will not be available!");
+	//	CloseHandle(hProcess);
+	//	mh_LastIgnoredWnd = hFore;
+	//	goto wrap;
+	//}
+	//CloseHandle(pi.hThread);
+	//// Waiting for result
+	//WaitForSingleObject(pi.hProcess, INFINITE);
+	//GetExitCodeProcess(pi.hProcess, &nResult);
+	//CloseHandle(pi.hProcess);
+
 	// And what?
 	if ((nResult == (UINT)CERR_HOOKS_WAS_SET) || (nResult == (UINT)CERR_HOOKS_WAS_ALREADY_SET))
 	{

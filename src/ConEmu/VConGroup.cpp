@@ -4060,6 +4060,12 @@ void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= 
 	// Для разбиения имеет смысл использовать текущий размер окна в пикселях
 	RECT rcWorkspace = gpConEmu->CalcRect(CER_WORKSPACE, rcWnd, tFrom);
 
+	// Избежать мерцания панелей в Far
+	if (!bSetRedraw && pRoot->mp_Item && pRoot->m_SplitType == RConStartArgs::eSplitNone)
+	{
+		bSetRedraw = pRoot->mp_Item->RCon()->isFar(true);
+	}
+
 	// Go (size real consoles)
 	pRoot->SetConsoleSizes(size, rcWorkspace, bSetRedraw/*as Sync*/);
 

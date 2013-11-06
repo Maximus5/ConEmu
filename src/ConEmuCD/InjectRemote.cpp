@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <shlobj.h>
 
 // 0 - OK, иначе - ошибка
+// Здесь вызывается CreateRemoteThread
 int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 {
 	int iRc = -150;

@@ -61,7 +61,7 @@ private:
 	};
 private:
 	HWND mh_LastWnd, mh_LastIgnoredWnd, mh_LastCall;
-	HANDLE mh_SignEvent;
+	//HANDLE mh_SignEvent;
 	BOOL mb_ReadyToHook;
 	MArray<ProcessInfo> m_Processed;
 	void ClearProcessed(bool bForceAll);

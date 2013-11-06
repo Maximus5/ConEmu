@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WinObjects.h"
 #include "../common/RConStartArgs.h"
 #include "../common/CmdLine.h"
+#include "../common/DefTermHooker.h"
 #include "UserImp.h"
 
 #ifndef SEE_MASK_NOZONECHECKS
@@ -123,6 +124,7 @@ CShellProc::CShellProc()
 	mb_WasSuspended = FALSE;
 	mb_NeedInjects = FALSE;
 	mb_DebugWasRequested = FALSE;
+	mb_PostInjectWasRequested = FALSE;
 	// int CShellProc::mn_InShellExecuteEx = 0; <-- static
 	mb_InShellExecuteEx = FALSE;
 	//mb_DosBoxAllowed = FALSE;
@@ -264,7 +266,7 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 
 	if (gbPrepareDefaultTerminal)
 	{
-		_ASSERTEX(ghConWnd==NULL);
+		_ASSERTEX(ghConWnd==NULL && "ConWnd was not initialized");
 
 		if (!gpDefaultTermParm)
 		{
@@ -1428,8 +1430,9 @@ int CShellProc::PrepareExecuteParms(
 	// Service object
 	RConStartArgs args;
 
-	BOOL bDebugWasRequested = FALSE;
+	BOOL bDebugWasRequested = FALSE, bVsNetHostRequested = FALSE;
 	mb_DebugWasRequested = FALSE;
+	mb_PostInjectWasRequested = FALSE;
 		
 	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить
 	//            левый хэндл (hStdOutput = 0x00010001), иногда получается 0x00060265
@@ -1505,7 +1508,10 @@ int CShellProc::PrepareExecuteParms(
 			return 0;
 		}
 
-		if (anCreateFlags && ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS)))
+		// Issue 1312: .Net applications runs as "CREATE_SUSPENDED" when debugging in VS
+		//    Also: How to Disable the Hosting Process
+		//    http://msdn.microsoft.com/en-us/library/ms185330.aspx
+		if (anCreateFlags && ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS|CREATE_SUSPENDED)))
 		{
 			// Для поиска трапов в дереве запускаемых процессов
 			if (m_SrvMapping.Flags & CECF_BlockChildDbg)
@@ -1645,11 +1651,9 @@ int CShellProc::PrepareExecuteParms(
 	
 	if (ms_ExeTmp[0])
 	{
-		//wchar_t *pszNamePart = NULL;
 		int nLen = lstrlen(ms_ExeTmp);
 		// Длина больше 0 и не заканчивается слешом
 		BOOL lbMayBeFile = (nLen > 0) && (ms_ExeTmp[nLen-1] != L'\\') && (ms_ExeTmp[nLen-1] != L'/');
-		//const wchar_t* pszExt = PointToExt(ms_ExeTmp);
 
 		BOOL lbSubsystemOk = FALSE;
 		mn_ImageBits = 0;
@@ -1660,68 +1664,29 @@ int CShellProc::PrepareExecuteParms(
 			mn_ImageBits = 0;
 			mn_ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
 		}
-		//else if (pszExt && (!lstrcmpi(pszExt, L".cmd") || !lstrcmpi(pszExt, L".bat")))
-		//{
-		//	lbGuiApp = FALSE;
-		//	mn_ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
-		//	mn_ImageBits = IsWindows64() ? 64 : 32;
-		//	lbSubsystemOk = TRUE;
-		//}
 		else if (FindImageSubsystem(ms_ExeTmp, mn_ImageSubsystem, mn_ImageBits, nFileAttrs))
 		{
 			lbGuiApp = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
 			lbSubsystemOk = TRUE;
+			if (gbPrepareDefaultTerminal)
+			{
+				bVsNetHostRequested = IsVsNetHostExe(ms_ExeTmp);
+			}
 		}
-		//else if (GetFullPathName(ms_ExeTmp, countof(szTest), szTest, &pszNamePart)
-		//	&& GetImageSubsystem(szTest, mn_ImageSubsystem, mn_ImageBits, nFileAttrs))
-		//{
-		//	lbGuiApp = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
-		//	lbSubsystemOk = TRUE;
-		//}
-		//else if (SearchPath(NULL, ms_ExeTmp, NULL, countof(szTest), szTest, &pszNamePart)
-		//	&& GetImageSubsystem(szTest, mn_ImageSubsystem, mn_ImageBits, nFileAttrs))
-		//{
-		//	lbGuiApp = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
-		//	lbSubsystemOk = TRUE;
-		//}
-		//else
-		//{
-		//	szTest[0] = 0;
-		//}
-		
 
-		//if (!lbSubsystemOk)
-		//{
-		//	mn_ImageBits = 0;
-		//	mn_ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
 
-		//	if ((nFileAttrs != (DWORD)-1) && !(nFileAttrs & FILE_ATTRIBUTE_DIRECTORY))
-		//	{
-		//		LPCWSTR pszExt = wcsrchr(szTest, L'.');
-		//		if (pszExt)
-		//		{
-		//			if ((lstrcmpiW(pszExt, L".cmd") == 0) || (lstrcmpiW(pszExt, L".bat") == 0))
-		//			{
-		//				#ifdef _WIN64
-		//				mn_ImageBits = 64;
-		//				#else
-		//				mn_ImageBits = IsWindows64() ? 64 : 32;
-		//				#endif
-		//				mn_ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
-		//			}
-		//		}
-		//	}
-		//}
+		LPCWSTR pszName = PointToName(ms_ExeTmp);
+
+		if (lstrcmpi(pszName, L"ANSI-LLW.exe") == 0)
+		{
+			_ASSERTEX(FALSE && "Trying to start 'ANSI-LLW.exe'");
+		}
+		else if (lstrcmpi(pszName, L"ansicon.exe") == 0)
+		{
+			_ASSERTEX(FALSE && "Trying to start 'ansicon.exe'");
+		}
 	}
 
-	if (lstrcmpi(ms_ExeTmp, L"ANSI-LLW.exe") == 0)
-	{
-		_ASSERTEX(FALSE && "Trying to start 'ANSI-LLW.exe'");
-	}
-	else if (lstrcmpi(ms_ExeTmp, L"ansicon.exe") == 0)
-	{
-		_ASSERTEX(FALSE && "Trying to start 'ansicon.exe'");
-	}
 	
 	BOOL lbChanged = FALSE;
 	mb_NeedInjects = FALSE;
@@ -1885,7 +1850,7 @@ int CShellProc::PrepareExecuteParms(
 	//if (GetImageSubsystem(pszExecFile,ImageSubsystem,ImageBits))
 	//lbGuiApp = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
 
-	if (lbGuiApp && !(bNewConsoleArg || bForceNewConsole))
+	if (lbGuiApp && !(bNewConsoleArg || bForceNewConsole || bVsNetHostRequested))
 		goto wrap; // гуй - не перехватывать (если только не указан "-new_console")
 
 	// Подставлять ConEmuC.exe нужно только для того, чтобы 
@@ -1924,7 +1889,7 @@ int CShellProc::PrepareExecuteParms(
 	if (gbPrepareDefaultTerminal)
 	{
 		// set up default terminal
-		bGoChangeParm = (!args.bNoDefaultTerm && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
+		bGoChangeParm = (!args.bNoDefaultTerm && (bVsNetHostRequested || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
 	}
 	else
 	{
@@ -1950,7 +1915,10 @@ int CShellProc::PrepareExecuteParms(
 		{
 			mb_NeedInjects = FALSE;
 			// We need to post attach ConEmu GUI to started console
-			mb_DebugWasRequested = TRUE;
+			if (bVsNetHostRequested)
+				mb_PostInjectWasRequested = TRUE;
+			else
+				mb_DebugWasRequested = TRUE;
 			// Пока что не будем убирать "мелькание" окошка.
 			// На факт "видимости" консольного окна ориентируется ConEmuC
 			// при аттаче. Если окошко НЕ видимое - считаем, что оно было
@@ -2398,16 +2366,23 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	{
 		if (gbPrepareDefaultTerminal)
 		{
-			if (mb_DebugWasRequested)
+			if (mb_PostInjectWasRequested)
 			{
-				lpSI->wShowWindow = LOWORD(nShowCmd); // this is SW_HIDE, disable flickering
 				lbRc = FALSE; // Stop other changes?
 			}
 			else
 			{
-				lpSI->wShowWindow = SW_SHOWNORMAL; // ConEmu itself must starts normally?
+				if (mb_DebugWasRequested)
+				{
+					lpSI->wShowWindow = LOWORD(nShowCmd); // this is SW_HIDE, disable flickering
+					lbRc = FALSE; // Stop other changes?
+				}
+				else
+				{
+					lpSI->wShowWindow = SW_SHOWNORMAL; // ConEmu itself must starts normally?
+				}
+				lpSI->dwFlags |= STARTF_USESHOWWINDOW;
 			}
-			lpSI->dwFlags |= STARTF_USESHOWWINDOW;
 		}
 		else if (lpSI->wShowWindow != nShowCmd)
 		{
@@ -2433,6 +2408,41 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	}
 
 	return TRUE;
+}
+
+void CShellProc::OnAllocConsoleFinished()
+{
+	if (!LoadSrvMapping() || !m_SrvMapping.ComSpec.ConEmuBaseDir[0])
+		return;
+
+	BOOL bAttachCreated = FALSE;
+	_ASSERTEX(gbPrepareDefaultTerminal && gbIsNetVsHost);
+
+	size_t cchMax = MAX_PATH+80;
+	wchar_t* pszCmdLine = (wchar_t*)malloc(cchMax*sizeof(*pszCmdLine));
+	if (pszCmdLine)
+	{
+		_ASSERTEX(m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
+		msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH", m_SrvMapping.ComSpec.ConEmuBaseDir, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
+		STARTUPINFO si = {sizeof(si)};
+		PROCESS_INFORMATION pi = {};
+		bAttachCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
+		if (bAttachCreated)
+		{
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+		}
+		#ifdef _DEBUG
+		else
+		{
+			DWORD nErr = GetLastError();
+			wchar_t* pszDbg = (wchar_t*)malloc(MAX_PATH*3*sizeof(*pszDbg));
+			msprintf(pszDbg, MAX_PATH*3, L"ConEmuHk: Failed to start attach server, Err=%u! %s\n", nErr, pszCmdLine);
+			OutputDebugString(pszDbg);
+		}
+		#endif
+		free(pszCmdLine);
+	}
 }
 
 void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI)
@@ -2474,8 +2484,17 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 		if (gbPrepareDefaultTerminal)
 		{
 			_ASSERTEX(!mb_NeedInjects);
+			// Starting .Net debugging session from VS
+			if (mb_PostInjectWasRequested)
+			{
+				// This is "*.vshost.exe", it is GUI wich can be used for debugging .Net console applications
+				HANDLE hProcess = NULL; DWORD nResult = 0, nErrCode = 0;
+				int iHookRc = StartDefTermHooker(lpPI->dwProcessId, hProcess, nResult, m_SrvMapping.ComSpec.ConEmuBaseDir, nErrCode);
+				SafeCloseHandle(hProcess); // This is a handle of started "ConEmuC.exe /DEFTRM=..."
+				UNREFERENCED_PARAMETER(iHookRc);
+			}
 			// Starting debugging session from VS (for example)?
-			if (mb_DebugWasRequested)
+			else if (mb_DebugWasRequested)
 			{
 				// We need to start console app directly, but it will be nice
 				// to attach it to the existing or new ConEmu window.

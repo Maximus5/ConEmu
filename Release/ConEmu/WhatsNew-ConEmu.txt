@@ -15,6 +15,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.11.05
+[%] Issue 1312:	Visual Studio 2013 console window not hooked
+[%] Regression. «Always on top» was not cleared after exiting FullScreen mode (Alt+Enter).
+[%] Issue 218: Far Manager panels flickering while maximize/restore.
+
+
 2013.11.03
 [%] Issue 1079: Console hangs when running PHP console scripts.
 [%] Issue 1195: Invalid size locking region was used after resizing window when Far is active.
