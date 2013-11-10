@@ -15,6 +15,20 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.11.07
+[+] Now it is possible to execute GuiMacro from outside of ConEmu window.
+    Would remind that you may call several macros, delimited with semicolon, in a time.
+    Syntax: ConEmuC /GUIMACRO[:PID|HWND] <GuiMacro>
+    PID is a ConEmu.exe process identifier. HWND is a %ConEmuHWND%.
+    Also, you may call "/GUIMACRO:0" to affect first found instance.
+[%] Split created with command "cmd -new_console:bsV" was left invisible.
+[+] Compatibility section for Windows 8.1 added to the ConEmu manifest.
+[*] Issue 1277: Far Manager shows «Copy» in the window title instead of panel path.
+[%] Issue 1312: Default Terminal: Visual Studio 2013 console window not hooked.
+[%] Issue 1317: Task GuiMacro was ignored directory parameter.
+[%] Issue 1319: Crashes as soon as opened.
+
+
 2013.11.05
 [%] Issue 1312:	Visual Studio 2013 console window not hooked
 [%] Regression. «Always on top» was not cleared after exiting FullScreen mode (Alt+Enter).
