@@ -111,6 +111,9 @@ public:
 	void OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess);
 	// Или консоли (*.vshost.exe)
 	void OnAllocConsoleFinished();
+public:
+	// Helper
+	int StartDefTermHooker(DWORD nForePID);
 };
 
 // Service functions

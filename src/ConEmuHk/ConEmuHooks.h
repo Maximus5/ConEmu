@@ -153,6 +153,7 @@ extern bool gbDosBoxProcess;
 /* ************ Globals for "Default terminal ************ */
 extern bool gbPrepareDefaultTerminal;
 extern bool gbIsNetVsHost;
+extern bool gbIsVStudio;
 //extern HANDLE ghDefaultTerminalReady;
 extern ConEmuGuiMapping* gpDefaultTermParm; // полный путь к ConEmu.exe (GUI), "/config", параметры для "confirm" и "no-injects"
 bool isDefaultTerminalEnabled();

@@ -223,10 +223,12 @@ bool gbDosBoxProcess = false;
 /* ************ Globals for "Default terminal ************ */
 bool gbPrepareDefaultTerminal = false;
 bool gbIsNetVsHost = false;
+bool gbIsVStudio = false;
 //HANDLE ghDefaultTerminalReady = NULL; // 
 ConEmuGuiMapping* gpDefaultTermParm = NULL;
-// forward
+// forward and external
 bool InitHooksDefaultTrm();
+extern bool InitDefaultTerm();
 // helper
 bool isDefaultTerminalEnabled()
 {
@@ -359,6 +361,12 @@ LONG WINAPI OnSetWindowLongW(HWND hWnd, int nIndex, LONG dwNewLong);
 LONG_PTR WINAPI OnSetWindowLongPtrA(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
 LONG_PTR WINAPI OnSetWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
 #endif
+int WINAPI OnGetWindowTextLengthA(HWND hWnd);
+int WINAPI OnGetWindowTextLengthW(HWND hWnd);
+int WINAPI OnGetWindowTextA(HWND hWnd, LPSTR lpString, int nMaxCount);
+int WINAPI OnGetWindowTextW(HWND hWnd, LPWSTR lpString, int nMaxCount);
+BOOL WINAPI OnSetConsoleTitleA(LPCSTR lpConsoleTitle);
+BOOL WINAPI OnSetConsoleTitleW(LPCWSTR lpConsoleTitle);
 BOOL WINAPI OnGetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
 BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
 BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -461,6 +469,8 @@ bool InitHooksCommon()
 																kernel32},
 		{(void*)CEAnsi::OnSetConsoleMode,
 										"SetConsoleMode",  		kernel32},
+		{(void*)OnSetConsoleTitleA,		"SetConsoleTitleA",		kernel32},
+		{(void*)OnSetConsoleTitleW,		"SetConsoleTitleW",		kernel32},
 		//#endif
 		/* Others console functions */
 		{(void*)OnSetConsoleTextAttribute, "SetConsoleTextAttribute", kernel32},
@@ -668,6 +678,11 @@ bool InitHooksUser32()
 		{(void*)OnSetWindowLongPtrA,	"SetWindowLongPtrA",	user32},
 		{(void*)OnSetWindowLongPtrW,	"SetWindowLongPtrW",	user32},
 		#endif
+		{(void*)OnGetWindowTextLengthA,	"GetWindowTextLengthA",	user32},
+		{(void*)OnGetWindowTextLengthW,	"GetWindowTextLengthW",	user32},
+		{(void*)OnGetWindowTextA,		"GetWindowTextA",		user32},
+		{(void*)OnGetWindowTextW,		"GetWindowTextW",		user32},
+		//
 		{(void*)OnGetWindowPlacement,	"GetWindowPlacement",	user32},
 		{(void*)OnSetWindowPlacement,	"SetWindowPlacement",	user32},
 		{(void*)OnPostMessageA,			"PostMessageA",			user32},
@@ -2298,6 +2313,84 @@ LONG_PTR WINAPI OnSetWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 }
 #endif
 
+void FixHwnd4ConText(HWND& hWnd)
+{
+	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
+		hWnd = ghConWnd;
+}
+
+int WINAPI OnGetWindowTextLengthA(HWND hWnd)
+{
+	typedef int (WINAPI* OnGetWindowTextLengthA_t)(HWND hWnd);
+	ORIGINALFASTEX(GetWindowTextLengthA,NULL);
+	int iRc = 0;
+
+	FixHwnd4ConText(hWnd);
+
+	if (F(GetWindowTextLengthA))
+		iRc = F(GetWindowTextLengthA)(hWnd);
+
+	return iRc;
+}
+int WINAPI OnGetWindowTextLengthW(HWND hWnd)
+{
+	typedef int (WINAPI* OnGetWindowTextLengthW_t)(HWND hWnd);
+	ORIGINALFASTEX(GetWindowTextLengthW,NULL);
+	int iRc = 0;
+
+	FixHwnd4ConText(hWnd);
+
+	if (F(GetWindowTextLengthW))
+		iRc = F(GetWindowTextLengthW)(hWnd);
+
+	return iRc;
+}
+int WINAPI OnGetWindowTextA(HWND hWnd, LPSTR lpString, int nMaxCount)
+{
+	typedef int (WINAPI* OnGetWindowTextA_t)(HWND hWnd, LPSTR lpString, int nMaxCount);
+	ORIGINALFASTEX(GetWindowTextA,NULL);
+	int iRc = 0;
+
+	FixHwnd4ConText(hWnd);
+
+	if (F(GetWindowTextA))
+		iRc = F(GetWindowTextA)(hWnd, lpString, nMaxCount);
+
+	return iRc;
+}
+int WINAPI OnGetWindowTextW(HWND hWnd, LPWSTR lpString, int nMaxCount)
+{
+	typedef int (WINAPI* OnGetWindowTextW_t)(HWND hWnd, LPWSTR lpString, int nMaxCount);
+	ORIGINALFASTEX(GetWindowTextW,NULL);
+	int iRc = 0;
+
+	FixHwnd4ConText(hWnd);
+
+	if (F(GetWindowTextW))
+		iRc = F(GetWindowTextW)(hWnd, lpString, nMaxCount);
+
+	return iRc;
+}
+// Не перехватываются пока, для информации
+BOOL WINAPI OnSetConsoleTitleA(LPCSTR lpConsoleTitle)
+{
+	typedef BOOL (WINAPI* OnSetConsoleTitleA_t)(LPCSTR lpConsoleTitle);
+	ORIGINALFASTEX(SetConsoleTitleA,NULL);
+	BOOL bRc = FALSE;
+	if (F(SetConsoleTitleA))
+		bRc = F(SetConsoleTitleA)(lpConsoleTitle);
+	return bRc;
+}
+BOOL WINAPI OnSetConsoleTitleW(LPCWSTR lpConsoleTitle)
+{
+	typedef BOOL (WINAPI* OnSetConsoleTitleW_t)(LPCWSTR lpConsoleTitle);
+	ORIGINALFASTEX(SetConsoleTitleW,NULL);
+	BOOL bRc = FALSE;
+	if (F(SetConsoleTitleW))
+		bRc = F(SetConsoleTitleW)(lpConsoleTitle);
+	return bRc;
+}
+
 
 BOOL WINAPI OnSetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
 {
@@ -2396,6 +2489,8 @@ bool CanSendMessage(HWND& hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT&
 			case WM_CLOSE:
 			case WM_ENABLE:
 			case WM_SETREDRAW:
+			case WM_GETTEXT:
+			case WM_GETTEXTLENGTH:
 				// Эти сообщения - нужно посылать в RealConsole
 				hWnd = ghConWnd;
 				return true;
@@ -4691,6 +4786,7 @@ BOOL WINAPI OnAllocConsole(void)
 	HMODULE hKernel = NULL;
 	DWORD nErrCode = 0;
 	BOOL lbAttachRc = FALSE;
+	HWND hOldConWnd = GetRealConsoleWindow();
 
 	if (ph && ph->PreCallBack)
 	{
@@ -4758,12 +4854,21 @@ BOOL WINAPI OnAllocConsole(void)
 		ph->PostCallBack(&args);
 	}
 
+	HWND hNewConWnd = GetRealConsoleWindow();
+
 	// Обновить ghConWnd и мэппинг
-	OnConWndChanged(GetRealConsoleWindow());
+	OnConWndChanged(hNewConWnd);
 
-	_ASSERTEX(lbRc && ghConWnd);
+	#ifdef _DEBUG
+	//_ASSERTEX(lbRc && ghConWnd);
+	wchar_t szAlloc[500], szFile[MAX_PATH];
+	GetModuleFileName(NULL, szFile, countof(szFile));
+	msprintf(szAlloc, countof(szAlloc), L"OnAllocConsole\nOld=x%08X, New=x%08X, ghConWnd=x%08X\ngbPrepareDefaultTerminal=%i, gbIsNetVsHost=%i\n%s",
+		(DWORD)hOldConWnd, (DWORD)hNewConWnd, (DWORD)ghConWnd, gbPrepareDefaultTerminal, gbIsNetVsHost, szFile);
+	MessageBox(NULL, szAlloc, L"OnAllocConsole called", MB_SYSTEMMODAL);
+	#endif
 
-	if (gbPrepareDefaultTerminal && gbIsNetVsHost)
+	if (hNewConWnd && (hNewConWnd != hOldConWnd) && gbPrepareDefaultTerminal && gbIsNetVsHost)
 	{
 		CShellProc* sp = new CShellProc();
 		if (sp)

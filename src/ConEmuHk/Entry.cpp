@@ -484,6 +484,30 @@ bool InitDefaultTerm()
 		}
 	}
 
+	// For Visual Studio check all spawned processes (children of gnSelfPID), find *.vshost.exe
+	if (gbIsVStudio)
+	{
+		//_ASSERTE(FALSE && "Continue to find existing *.vshost.exe");
+		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (hSnap != INVALID_HANDLE_VALUE)
+		{
+			PROCESSENTRY32 pe = {sizeof(pe)};
+			if (Process32First(hSnap, &pe)) do
+			{
+				if (pe.th32ParentProcessID == gnSelfPID)
+				{
+					if (IsVsNetHostExe(pe.szExeFile)) // *.vshost.exe
+					{
+						// Found! Hook it!
+						sp.StartDefTermHooker(pe.th32ProcessID);
+						break;
+					}
+				}
+			} while (Process32Next(hSnap, &pe));
+			CloseHandle(hSnap);
+		}
+	}
+
 	return lbRc;
 }
 
@@ -621,6 +645,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	else if (IsVsNetHostExe(pszName)) // "*.vshost.exe"
 	{
 		gbIsNetVsHost = true;
+	}
+	else if ((lstrcmpi(pszName, L"devenv.exe") == 0) || (lstrcmpi(pszName, L"WDExpress.exe") == 0))
+	{
+		gbIsVStudio = true;
 	}
 
 	// ѕоскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес

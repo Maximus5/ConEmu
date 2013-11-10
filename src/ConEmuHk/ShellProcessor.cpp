@@ -180,6 +180,14 @@ CShellProc::~CShellProc()
 		free(mlp_ExecInfoW);
 }
 
+int CShellProc::StartDefTermHooker(DWORD nForePID)
+{
+	HANDLE hProcess = NULL;
+	DWORD nResult = 0, nErrCode = 0;
+	int iRc = ::StartDefTermHooker(nForePID, hProcess, nResult, m_SrvMapping.ComSpec.ConEmuBaseDir, nErrCode);
+	return iRc;
+}
+
 HWND CShellProc::FindCheckConEmuWindow()
 {
 	if (!gbPrepareDefaultTerminal)
@@ -266,7 +274,8 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 
 	if (gbPrepareDefaultTerminal)
 	{
-		_ASSERTEX(ghConWnd==NULL && "ConWnd was not initialized");
+		// ghConWnd may be NULL (if was started for devenv.exe) or NOT NULL (after AllocConsole in *.vshost.exe)
+		//_ASSERTEX(ghConWnd!=NULL && "ConWnd was not initialized");
 
 		if (!gpDefaultTermParm)
 		{
@@ -1670,7 +1679,7 @@ int CShellProc::PrepareExecuteParms(
 			lbSubsystemOk = TRUE;
 			if (gbPrepareDefaultTerminal)
 			{
-				bVsNetHostRequested = IsVsNetHostExe(ms_ExeTmp);
+				bVsNetHostRequested = IsVsNetHostExe(ms_ExeTmp); // *.vshost.exe
 			}
 		}
 
@@ -2423,10 +2432,10 @@ void CShellProc::OnAllocConsoleFinished()
 	if (pszCmdLine)
 	{
 		_ASSERTEX(m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
-		msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH", m_SrvMapping.ComSpec.ConEmuBaseDir, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
+		msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /TRMPID=%u", m_SrvMapping.ComSpec.ConEmuBaseDir, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"), gnSelfPID);
 		STARTUPINFO si = {sizeof(si)};
 		PROCESS_INFORMATION pi = {};
-		bAttachCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
+		bAttachCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
 		if (bAttachCreated)
 		{
 			CloseHandle(pi.hProcess);
@@ -2488,9 +2497,9 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			if (mb_PostInjectWasRequested)
 			{
 				// This is "*.vshost.exe", it is GUI wich can be used for debugging .Net console applications
-				HANDLE hProcess = NULL; DWORD nResult = 0, nErrCode = 0;
-				int iHookRc = StartDefTermHooker(lpPI->dwProcessId, hProcess, nResult, m_SrvMapping.ComSpec.ConEmuBaseDir, nErrCode);
-				SafeCloseHandle(hProcess); // This is a handle of started "ConEmuC.exe /DEFTRM=..."
+				//HANDLE hProcess = NULL; DWORD nResult = 0, nErrCode = 0;
+				int iHookRc = StartDefTermHooker(lpPI->dwProcessId); //, hProcess, nResult, m_SrvMapping.ComSpec.ConEmuBaseDir, nErrCode);
+				//SafeCloseHandle(hProcess); // This is a handle of started "ConEmuC.exe /DEFTRM=..."
 				UNREFERENCED_PARAMETER(iHookRc);
 			}
 			// Starting debugging session from VS (for example)?
