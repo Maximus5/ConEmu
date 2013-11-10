@@ -37,6 +37,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WinObjects.h"
 #include "CmdLine.h"
 
+// Restricted in ConEmuHk!
+#ifdef MCHKHEAP
+#undef MCHKHEAP
+#define MCHKHEAP PRAGMA_ERROR("Restricted in ConEmuHk")
+#endif
+
 #ifdef __GNUC__
 #define SecureZeroMemory(p,s) memset(p,0,s)
 #endif
