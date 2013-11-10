@@ -76,16 +76,8 @@ What's new: http://code.google.com/p/conemu-maximus5/wiki/Whats_New
 
  
 ## Screenshots
-![Splits and tabs in ConEmu](http://conemu-maximus5.googlecode.com/svn/files/ConEmuSplits.png)
+![Splits and tabs in ConEmu](https://github.com/Maximus5/ConEmu/wiki/ConEmuSplits.png)
 
-ConEmu Thumbnails & Tiles + FAR 2.0
-http://conemu-maximus5.googlecode.com/svn/files/ConEmuPanelViews.png
+![ANSI X3.64 and xterm 256 colors in ConEmu](https://github.com/Maximus5/ConEmu/wiki/ConEmuAnsi.png)
 
-FAR 3.0 + ConEmu (simple console mode)
-http://conemu-maximus5.googlecode.com/svn/files/ConEmuVanilla.png
-
-ConEmu + FAR 2.0*, using anti-aliased font
-http://conemu-maximus5.googlecode.com/svn/files/ConEmu.png
-
-ConEmu + FAR 2.0 Editor*, anti-aliasing disabled
-http://conemu-maximus5.googlecode.com/svn/files/ConEmuItalic.png
+[More screenshots](http://code.google.com/p/conemu-maximus5/wiki/Screenshots)
