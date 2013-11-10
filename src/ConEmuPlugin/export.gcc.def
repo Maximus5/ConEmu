@@ -1,0 +1,33 @@
+-- нужно синхронизировать с VC
+
+EXPORTS
+;  Unicode
+	SetStartupInfoW=SetStartupInfoW@4
+	GetPluginInfoW=GetPluginInfoWcmn@4
+	ProcessEditorInputW=ProcessEditorInputW@4
+	ProcessEditorEventW=ProcessEditorEventW@8
+	ProcessViewerEventW=ProcessViewerEventW@8
+	GetMinFarVersionW=GetMinFarVersionW@0
+	ExitFARW=ExitFARW@0
+	OpenPluginW=OpenPluginW@8
+	ProcessSynchroEventW=ProcessSynchroEventW@8
+	ProcessDialogEventW=ProcessDialogEventW@8
+;  Ansi
+	SetStartupInfo=SetStartupInfo@4
+	GetPluginInfo=GetPluginInfo@4
+	ProcessEditorInput=ProcessEditorInput@4
+	ProcessEditorEvent=ProcessEditorEvent@8
+	ProcessViewerEvent=ProcessViewerEvent@8
+	GetMinFarVersion=GetMinFarVersion@0
+	ExitFAR=ExitFAR@0
+	OpenPlugin=OpenPlugin@8
+	ProcessDialogEvent=ProcessDialogEvent@8
+;  ConEmu API (Far independent)
+	GetFarVersion=GetFarVersion@4
+	GetFarHWND=GetFarHWND@0
+	GetFarHWND2=GetFarHWND2@4
+	IsConsoleActive=IsConsoleActive@0
+	RegisterPanelView=RegisterPanelView@4
+	RegisterBackground=RegisterBackground@4
+	ActivateConsole=ActivateConsole@0
+	SyncExecute=SyncExecute@12

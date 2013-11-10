@@ -1,0 +1,19 @@
+LIBRARY
+
+EXPORTS
+; functions
+	LLKeybHook=LLKeybHook@12
+	ConsoleMain2=ConsoleMain2@4
+	HandlerRoutine=HandlerRoutine@4
+	MountVirtualHive=MountVirtualHive@24
+	UnMountVirtualHive=UnMountVirtualHive@12
+	PrivateEntry=RequestLocalServer@4
+
+; LLKeyHooks (ConEmu GUI)
+	ghKeyHook
+	gnVkWinFix
+	gbWinTabHook
+	gnConsoleKeyShortcuts
+	gnHookedKeys
+	ghKeyHookConEmuRoot
+	ghActiveGhost

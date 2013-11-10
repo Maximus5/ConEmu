@@ -1,0 +1,11 @@
+LIBRARY
+
+EXPORTS
+; functions
+	SetHookCallbacks
+	SetLoadLibraryCallback
+	SetFarHookMode
+	GetRealConsoleWindow
+	GetLoadLibraryW
+	GetWriteConsoleW
+	RequestLocalServer

@@ -1,0 +1,239 @@
+﻿#hpp file name
+ConEmu_Lang.h
+#number of languages
+2
+#id:0 language file name, language name, language description
+..\..\Release\plugins\ConEmu\ConEmuPlugin_ru.lng Russian "Russian (Русский)"
+#id:1 language file name, language name, language description
+..\..\Release\plugins\ConEmu\ConEmuPlugin_en.lng English "English"
+
+#head of the hpp file
+hhead:
+hhead:#pragma once
+hhead:
+
+#tail of the hpp file
+#htail:
+#htail:
+#and so on as much as needed
+
+#--------------------------------------------------------------------
+#now come the lng feeds
+#--------------------------------------------------------------------
+#first comes the text name from the enum which can be preceded with
+#comments that will go to the hpp file
+#h://This comment will appear before MYes
+#he://This comment will appear after MYes
+#MYes
+#now come the lng lines for all the languages in the order defined
+#above, they can be preceded with comments as shown below
+#l://This comment will appear in all the lng files before the lng line
+#le://This comment will appear in all the lng files after the lng line
+#ls://This comment will appear only in Russian lng file before the lng line
+#lse://This comment will appear only in Russian lng file after the lng line
+#"Да"
+#ls://This comment will appear only in English lng file before the lng line
+#lse://This comment will appear only in English lng file after the lng line
+#"Yes"
+#ls://This comment will appear only in Czech lng file before the lng line
+#lse://This comment will appear only in Czech lng file after the lng line
+#upd:"Ano"
+#
+#lng lines marked with "upd:" will cause a warning to be printed to the
+#screen reminding that this line should be updated/translated
+
+
+CEPluginName=0
+l:// Plugin title
+"ConEmu"
+"ConEmu"
+
+CEPluginMsgTitle
+"ConEmu plugin"
+"ConEmu plugin"
+
+# ####################
+#   Some resources,
+#   required by GUI
+# ####################
+CELngEdit
+"редактирование"
+"edit"
+
+CELngView
+"просмотр"
+"view"
+
+CELngTemp
+"{Временная панель"
+"{Temporary panel"
+
+# ####################
+#  Plugin internally
+# ####################
+CEConsoleOutput
+"Консольный вывод"
+"Console output"
+
+CEStopSynchroWaiting
+"Остановить ожидание Synchro"
+"Stop Synchro waiting"
+
+# ####################
+#     Menu Items
+# ####################
+
+CEMenuEditOutput
+"&1. Открыть консольный вывод (edit)"
+"&1. Edit console output"
+
+CEMenuViewOutput
+"&2. Открыть консольный вывод (view)"
+"&2. View console output"
+
+CEMenuShowHideTabs
+"&3. Показать/спрятать табы"
+"&3. Switch tab visibility"
+
+CEMenuNextTab
+"&4. На следующую закладку"
+"&4. Switch next tab"
+
+CEMenuPrevTab
+"&5. На предыдущую закладку"
+"&5. Switch previous tab"
+
+CEMenuCommitTab
+"&6. Отобразить закладку"
+"&6. Switch tab commit"
+
+CEMenuShowTabsList
+"&T. Показать список табов"
+"&T. Show all tabs list"
+
+CEMenuGuiMacro
+"&~. Выполнить макрос ConEmu"
+"&~. Execute ConEmu macro"
+
+CEMenuAttach
+"&7. Прицепить к ConEmu"
+"&7. Attach to ConEmu"
+
+CEMenuDebug
+"&8. Запустить ConEmu debug"
+"&8. Start ConEmu debug"
+
+CEMenuConInfo
+"&9. Информация о консоли"
+"&9. Console information"
+
+# ####################
+#     GuiMacroDlg
+# ####################
+
+CEGuiMacroTitle
+"ConEmu GUI Macro"
+"ConEmu GUI Macro"
+
+CEGuiMacroCommand
+"Текст &макроса:"
+"&Macro text:"
+
+CEGuiMacroResult
+"&Результат:"
+"&Result:"
+
+CEGuiMacroExecute
+"&Выполнить"
+"&Run"
+
+CEGuiMacroCancel
+"Отмена"
+"Cancel"
+
+# ####################
+#    Error messages
+# ####################
+CEUnavailableInTerminal
+"ConEmu plugin\nВ терминальном режиме ConEmu недоступен"
+"ConEmu plugin\nConEmu is not available in terminal mode"
+
+CEAlreadyDebuggerPresent
+"ConEmu plugin\nТекущий процесс уже под отладчиком"
+"ConEmu plugin\nDebugger is already attached to current process"
+
+CECantDebugInTerminal
+"ConEmu plugin\nВ терминальном режиме отладчик недоступен"
+"ConEmu plugin\nDebugger is not available in terminal mode"
+
+CECantDebugNotEnvVar
+"ConEmu plugin\nНе определена переменная окружения 'ConEmuBaseDir'\nОтладчик недоступен"
+"ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available"
+
+CECantStartDebugger
+"ConEmu plugin\nНе удалось запустить процесс отладчика"
+"ConEmu plugin\nCan't create debugger process"
+
+CECantStartServer
+"Не удалось запустить процесс сервера консоли (ConEmuC.exe)"
+"Can't start console server process (ConEmuC.exe)"
+
+CECantStartServer2
+"Не удалось найти файл сервера консоли (ConEmuC.exe)"
+"Can't find console server file (ConEmuC.exe)"
+
+CECantStartServer3
+"Не удалось запустить процесс сервера консоли (ConEmuC.exe)\nConEmuC.exe не найден"
+"Can't start console server process (ConEmuC.exe)\nConEmuC.exe not found"
+
+CEInvalidConHwnd
+"ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL"
+"ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL"
+
+CEShellExecuteException
+"ConEmu plugin\nПроизошло исключение в функции ShellExecuteEx.\nРекомендуется перезапустить FAR."
+"ConEmu plugin\nShellExecuteEx raised exception.\nFAR restart is recommended."
+
+#CEColorMappingCreateError
+#"При попытке создать секцию для AnnotationInfo произошла ошибка.\nФункции TrueMod будут недоступны.\n"
+#"Createing AnnotationInfo section failed.\nTrueMod function will be unavailable.\n"
+
+# ошибка CECMD_GETALLTABS
+CEGetAllTabsFailed
+"ConEmu plugin\nНе удалось получить информацию об открытых табах!"
+"ConEmu plugin\nCan't retrieve opened tabs information!"
+
+# ошибка выполнения CESERVER_REQ *pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+CEBkError_ExecFailed
+"ConEmu plugin\nНе удалось выполнить команду CECMD_SETBACKGROUND"
+"ConEmu plugin\nCECMD_SETBACKGROUND command execution failed"
+
+# esbr_InvalidArg
+CEBkError_InvalidArg
+"ConEmu plugin\nInvalid *RegisterBackgroundArg"
+"ConEmu plugin\nInvalid *RegisterBackgroundArg"
+
+# esbr_PluginForbidden
+CEBkError_PluginForbidden
+"ConEmu plugin\n\Флажок \"Allow plugins\" выключен в настройках ConEmu (вкладка \"Main\")"
+"ConEmu plugin\n\"Allow plugins\" unchecked in ConEmu settings (\"Main\" page)"
+
+# esbr_ConEmuInShutdown
+CEBkError_ConEmuInShutdown
+"ConEmu plugin\nConsole is closing. This is not an error, just information"
+"ConEmu plugin\nConsole is closing. This is not an error, just information"
+
+# esbr_Unexpected
+CEBkError_Unexpected
+"ConEmu plugin\nUnexpected error in ConEmu"
+"ConEmu plugin\nUnexpected error in ConEmu"
+
+# esbr_InvalidArgSize
+CEBkError_InvalidArgSize
+"ConEmu plugin\nInvalid RegisterBackgroundArg.cbSize"
+"ConEmu plugin\nInvalid RegisterBackgroundArg.cbSize"
+
+# esbr_InvalidArgProc
+CEBkError_InvalidArgProc
+"ConEmu plugin\nInvalid RegisterBackgroundArg.PaintConEmuBackground"
+"ConEmu plugin\nInvalid RegisterBackgroundArg.PaintConEmuBackground"

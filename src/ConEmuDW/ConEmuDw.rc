@@ -1,0 +1,89 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "../ConEmu/afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Russian resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
+#ifdef _WIN32
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+#pragma code_page(1251)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""../ConEmu/afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#include ""ConEmuDw.rc2""\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_COLORS DIALOGEX 0, 0, 191, 110
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
+CAPTION "Choose colors"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "&Set",IDOK,43,92,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,97,92,50,14
+    GROUPBOX        "",IDC_STATIC,5,1,180,86
+    LTEXT           "Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text",IDC_TEXT,12,12,111,30
+    PUSHBUTTON      "&Foreground",IDC_FORE,12,48,75,14
+    PUSHBUTTON      "&Background",IDC_BACK,12,66,75,14
+    CONTROL         "&Transparent",IDC_FORE_TRANS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,127,51,53,8
+    CONTROL         "T&ransparent",IDC_BACK_TRANS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,127,68,53,8
+    CONTROL         "Bol&d",IDC_BOLD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,11,44,10
+    CONTROL         "&Italic",IDC_ITALIC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,22,44,10
+    CONTROL         "&Underline",IDC_UNDERLINE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,33,44,10
+    CONTROL         "4bit",IDC_FORE_4BIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,94,51,27,8
+    CONTROL         "4bit",IDC_BACK_4BIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,94,68,27,8
+END
+
+#endif    // Russian resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#include "ConEmuDw.rc2"
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

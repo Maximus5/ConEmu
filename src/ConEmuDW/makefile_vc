@@ -1,0 +1,265 @@
+
+.SILENT:
+
+NAME=ConEmuDw
+DIRNAME=$(NAME)
+RELEASEDIR=..\..\Release\ConEmu
+
+!include ../makefile_vc_defs
+
+DEF_NAME = export
+
+NEEDENTRY=1
+
+!ifndef DEBUG
+!undef NEEDDEFLIB
+!else
+NEEDDEFLIB = 1
+!endif
+
+USE_PDB = 1
+
+!if defined(AMD64) || "$(CPU)" == "AMD64"
+OUTNAME = ExtendedConsole64
+!else
+OUTNAME = ExtendedConsole
+!endif
+
+CPPWINVER=/D_WIN32_WINNT=0x0500
+
+BASEADDRESS=/DYNAMICBASE
+
+RC_NAME = ConEmuDw
+
+LINK_OBJS = \
+	$(OBJDIR)\ConEmuDw.obj \
+	$(OBJDIR)\Common.obj \
+	$(OBJDIR)\ConEmuCheck.obj \
+	$(OBJDIR)\ConsoleRead.obj \
+	$(OBJDIR)\MAssert.obj \
+	$(OBJDIR)\Memory.obj \
+	$(OBJDIR)\MSecurity.obj \
+	$(OBJDIR)\MStrSafe.obj \
+	$(OBJDIR)\WinObjects.obj
+	
+
+USERLIBS = 
+
+
+!ifndef RC_NAME
+RC_NAME=$(NAME)
+!endif
+
+!ifndef DEF_NAME
+DEF_NAME=$(NAME)
+!endif
+
+#COMMON = ..
+COMINC = ..
+EXT = dll
+DLLNAME = $(OUTNAME).$(EXT)
+DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
+DEF = $(DEF_NAME).def
+MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
+RES = $(OBJDIR)\$(RC_NAME).res
+
+!ifdef VC8
+COMPAT64=/Wp64
+NOWIN98=/OPT:NOWIN98
+!endif
+
+PDBNAME="$(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb"
+
+!ifndef DEBUG
+CPP_OPT=/DNDEBUG /O1i /Fd$(PDBNAME) /DHIDE_TODO /DCRTPRINTF /DCONEMU_MINIMAL /DCRTSTARTUP
+#/DCRTSTARTUP
+!else
+CPP_OPT=/DDEBUG /Od /Fd$(PDBNAME) /DCRTPRINTF /DCONEMU_MINIMAL
+#/DCRTSTARTUP
+!endif
+
+!ifdef AMD64
+COMMONLIB = ../common/libCRT64.lib 
+#../common/chkstk64.obj
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(USERCPP)
+ULOUT=-Tpd+
+LINK_MACHINE = /MACHINE:X64
+!elseif defined(IA64)
+COMMONLIB = ../common/libCRTIA64.lib 
+#../common/chkstkIA64.obj
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(USERCPP)
+ULOUT=-Tpd+
+LINK_MACHINE = /MACHINE:X64
+!else
+COMMONLIB = ../common/libCRT.lib 
+#../common/chkstk.obj
+#../pvdCRT.lib
+!ifdef CPP_UNALIGN
+CPP_ALIGN=/Zp1
+!endif
+# /I"$(COMMON)"
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c-a- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(CPPWINVER) $(USERCPP)
+ULOUT=-Tpd -Re
+LINK_MACHINE = /MACHINE:X86
+!endif
+CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
+
+#!ifdef EXCLUDECRT
+#!undef COMMONLIB
+#!endif
+#Wininet.lib
+LIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib version.lib Comdlg32.lib $(USERLIBS)
+LIBS = $(COMMONLIB) chkstk.obj $(LIBS)
+
+!ifdef _BIN_PATH_
+!ifndef _CL_PATH_
+_CL_PATH_=$(_BIN_PATH_)
+!endif
+!ifndef _RC_PATH_
+_RC_PATH_=$(_BIN_PATH_)
+!endif
+!ifndef _LINK_PATH_
+_LINK_PATH_=$(_BIN_PATH_)
+!endif
+!endif
+
+
+LNK=$(_LINK_PATH_)link.exe
+
+#!ifdef DEBUG
+#USE_PDB = 1
+#!endif
+
+!ifndef USE_PDB
+LINK_DEBUG=/map:"$(MAP)" /pdb:$(PDBNAME)
+CPP_DEBUG=
+!else
+LINK_DEBUG=/map:"$(MAP)" /debug /pdb:$(PDBNAME)
+CPP_DEBUG=/Zi
+!endif
+
+!ifndef NEEDDEFLIB
+NODEFLIB = /nodefaultlib
+!endif
+
+#/merge:.rdata=.text /SUBSYSTEM:WINDOWS
+#/ENTRY:_DllMainCRTStartup
+LINK_FLAGS=/nologo /DLL /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
+
+
+CFLAGS_NO = $(MP) $(CPP_PROJ_NO) $(CPP_DEBUG) $(CPP_OPT)
+CFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
+
+!ifndef CC
+CC=$(_CL_PATH_)cl.exe
+!endif
+
+!ifndef LIBR
+LIBR=$(_LINK_PATH_)lib.exe
+!endif
+
+!ifndef RC
+RC=$(_RC_PATH)rc.exe
+!endif
+
+!if !defined(SRC_PATHS_DEFINED) && defined(__MAKE__)
+SRC_PATHS=.;..\common
+.path.cpp=$(SRC_PATHS)
+.path.c=$(SRC_PATHS)
+.path.hpp=$(SRC_PATHS)
+.path.h=$(SRC_PATHS)
+.path.rc=$(SRC_PATHS)
+.path.def=$(SRC_PATHS)
+!endif
+
+ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
+
+$(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
+!ifndef __MAKE__
+	@echo $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+	@$(LNK) @<<
+	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+<<
+!else
+	@echo $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+	@$(LNK) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+!endif
+!ifdef DOCS
+!ifndef WIDE
+!ifndef __MAKE__
+	@for %%i in ($(DOCS)) do @copy /Y %%i $(OUTDIR)$(ADDOUTDIR) > nul 2> nul
+!else
+	@for %i in ($(DOCS)) do @copy /Y %i $(OUTDIR)$(ADDOUTDIR) > nul 2> nul
+!endif
+!else
+	@$(COMMON)\convert.exe $(DOCS) $(OUTDIR)$(ADDOUTDIR)
+!endif
+!endif
+
+!ifndef __MAKE__
+.cpp{$(OBJDIR)}.obj::
+	@$(CC) @<<
+	$(CFLAGS) $<
+<<
+{../common/}.cpp{$(OBJDIR)}.obj::
+	$(CC) @<<
+	$(CFLAGS) $<
+<<
+!else
+.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+
+{../common/}.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+!endif
+
+$(RES): $(RC_NAME).rc
+	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
+
+.PHONY: dirs
+dirs:
+!ifdef INSTALL
+	@if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
+!endif
+	@if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
+	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
+	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
+
+.PHONY: clean
+clean:
+	@echo copying release files
+	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	@echo move $(DLLFULLNAME) $(RELEASEDIR)\$(OUTNAME).dll
+	@move $(DLLFULLNAME) $(RELEASEDIR)\$(OUTNAME).dll
+#!ifdef DEBUG
+	@echo move $(PDBNAME) $(RELEASEDIR)\$(OUTNAME).pdb
+	@move $(PDBNAME) $(RELEASEDIR)\$(OUTNAME).pdb
+#!else
+#	@if exist $(PDBNAME) del $(PDBNAME)
+#!endif
+	@echo move $(MAP) $(RELEASEDIR)\$(OUTNAME).map
+	@move $(MAP) $(RELEASEDIR)\$(OUTNAME).map
+#Remove from old locations
+	if exist "$(RELEASEDIR)\..\$(OUTNAME).dll" del "$(RELEASEDIR)\..\$(OUTNAME).dll"
+	if exist "$(RELEASEDIR)\..\$(OUTNAME).map" del "$(RELEASEDIR)\..\$(OUTNAME).map"
+	if exist "$(RELEASEDIR)\..\$(OUTNAME).pdb" del "$(RELEASEDIR)\..\$(OUTNAME).pdb"
+
+
+
+$(OBJDIR)\ConEmuDw.obj: ConEmuDw.cpp
+
+$(OBJDIR)\Common.obj: ../common/Common.cpp
+
+$(OBJDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp
+
+$(OBJDIR)\ConsoleRead.obj: ../common/ConsoleRead.cpp ../common/ConsoleRead.h
+
+$(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
+
+$(OBJDIR)\Memory.obj: ../common/Memory.cpp
+
+$(OBJDIR)\MSecurity.obj: ../common/MSecurity.cpp
+
+$(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+
+$(OBJDIR)\WinObjects.obj: ../common/WinObjects.cpp

@@ -1,0 +1,125 @@
+
+RELEASEDIR = ..\..\..\..\Release\plugins\ConEmu\Thumbs
+COMMONWORKDIR = ..\..\..\_VCBUILD
+
+!if defined(AMD64) || "$(CPU)" == "AMD64" || "$(PLATFORM)" == "x64"
+EXT = t64
+!elseif defined(IA64) || "$(CPU)" == "IA64" || "$(PLATFORM)" == "Itanium"
+EXT = t64
+!else
+EXT = t32
+!endif
+
+!include ../../../makefile_vc_defs
+
+!ifndef RC_NAME
+RC_NAME=$(NAME)
+!endif
+
+!ifndef DEF_NAME
+DEF_NAME=$(NAME)
+!endif
+
+#COMMON = ..
+COMINC = ..
+DLLNAME = $(OUTNAME).$(EXT)
+DLLFULLNAME = $(OUTDIR)\$(DLLNAME)
+DEF = $(DEF_NAME).def
+MAP = $(OUTDIR)\$(OUTNAME).$(EXT).map
+RES = $(OBJDIR)\$(NAME).res
+
+!ifdef VC8
+COMPAT64=/Wp64
+NOWIN98=/OPT:NOWIN98
+!endif
+
+PDBNAME=$(OUTDIR)\$(OUTNAME).$(EXT).pdb
+!ifndef DEBUG
+CPP_OPT=/DNDEBUG /O1i /Fd"$(PDBNAME)"
+!else
+CPP_OPT=/DDEBUG /Od /Fd"$(PDBNAME)"
+!endif
+
+!ifdef AMD64
+COMMONLIB = ../../../common/libCRT64.lib
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+ULOUT=-Tpd+
+LINK_MACHINE = /MACHINE:X64
+!elseif defined(IA64)
+COMMONLIB = ../../../common/libCRTIA64.lib
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+ULOUT=-Tpd+
+LINK_MACHINE = /MACHINE:X64
+!else
+COMMONLIB = ../../../common/libCRT.lib
+!ifdef CPP_UNALIGN
+CPP_ALIGN=/Zp1
+!endif
+# /I"$(COMMON)"
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+ULOUT=-Tpd -Re
+LINK_MACHINE = /MACHINE:X86
+!endif
+CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
+
+#!ifdef EXCLUDECRT
+#!undef COMMONLIB
+#!endif
+LIBS = $(COMMONLIB) chkstk.obj kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib $(USERLIBS)
+
+!ifdef _BIN_PATH_
+!ifndef _CL_PATH_
+_CL_PATH_=$(_BIN_PATH_)
+!endif
+!ifndef _RC_PATH_
+_RC_PATH_=$(_BIN_PATH_)
+!endif
+!ifndef _LINK_PATH_
+_LINK_PATH_=$(_BIN_PATH_)
+!endif
+!endif
+
+
+LNK=$(_LINK_PATH_)link.exe
+!ifndef DEBUG
+LINK_DEBUG=/debug /pdb:"$(PDBNAME)" /map:"$(MAP)"
+CPP_DEBUG=
+!else
+LINK_DEBUG=/debug /pdb:"$(PDBNAME)" /map:"$(MAP)"
+CPP_DEBUG=/Zi
+!endif
+
+!ifndef NEEDENTRY
+NOENTRY = /noentry
+!endif
+!ifndef NEEDDEFLIB
+NODEFLIB = /nodefaultlib
+!endif
+
+LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
+
+
+
+CFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
+
+!ifndef CC
+CC=$(_CL_PATH_)cl.exe
+!endif
+
+!ifndef LIBR
+LIBR=$(_LINK_PATH_)lib.exe
+!endif
+
+!ifndef RC
+RC=$(_RC_PATH)rc.exe
+!endif
+
+!if !defined(SRC_PATHS_DEFINED) && defined(__MAKE__)
+SRC_PATHS=.;..
+.path.cpp=$(SRC_PATHS)
+.path.c=$(SRC_PATHS)
+.path.hpp=$(SRC_PATHS)
+.path.h=$(SRC_PATHS)
+.path.rc=$(SRC_PATHS)
+.path.def=$(SRC_PATHS)
+!endif

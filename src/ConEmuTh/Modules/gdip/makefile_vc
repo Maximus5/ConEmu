@@ -1,0 +1,18 @@
+
+.SILENT:
+
+NAME = gdip
+DIRNAME=$(NAME)
+OUTNAME = gdi+
+
+USERCPP=/D_NO_EXEPTION_=1
+
+LINK_OBJS = $(OBJDIR)\gdip.obj
+
+USERLIBS = 
+
+!include ..\makefile_vc_def_inc
+
+!include ..\makefile_vc_target_inc
+
+$(OBJDIR)\gdip.obj: gdip.cpp ..\ThumbSDK.h MStream.h

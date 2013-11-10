@@ -1,0 +1,277 @@
+
+.SILENT:
+
+NAME=ConEmu
+DIRNAME=$(NAME)Plugin
+RELEASEDIR=..\..\Release\plugins\ConEmu
+NEEDENTRY = 1
+USE_PDB = 1
+NO_OPTIMIZE = 1
+
+!include ../makefile_vc_defs
+
+DEF_NAME = export.release
+
+!if defined(AMD64) || "$(CPU)" == "AMD64"
+OUTNAME = ConEmu.x64
+!else
+OUTNAME = ConEmu
+!endif
+
+PDBNAME="$(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb"
+
+!if "$(EXTERNAL_HOOK_LIBRARY)" == "1"
+USERCPP=$(USERCPP) /DEXTERNAL_HOOK_LIBRARY
+!endif                   
+
+LINK_OBJS = \
+$(OBJDIR)\ConEmuInjects.obj \
+$(OBJDIR)\ConEmuPlugin.obj \
+$(OBJDIR)\ConEmuPlugin995.obj \
+$(OBJDIR)\ConEmuPlugin1900.obj \
+$(OBJDIR)\ConEmuPlugin2800.obj \
+$(OBJDIR)\ConEmuPluginA.obj \
+$(OBJDIR)\PluginBackground.obj \
+$(OBJDIR)\PluginSrv.obj \
+$(OBJDIR)\Common.obj \
+$(OBJDIR)\Execute.obj \
+$(OBJDIR)\ConEmuCheck.obj \
+$(OBJDIR)\ConEmuCheckEx.obj \
+$(OBJDIR)\MAssert.obj \
+$(OBJDIR)\Memory.obj \
+$(OBJDIR)\Monitors.obj \
+$(OBJDIR)\MSecurity.obj \
+$(OBJDIR)\MStrSafe.obj \
+$(OBJDIR)\SetEnvVar.obj \
+$(OBJDIR)\WinConsole.obj \
+$(OBJDIR)\WinObjects.obj
+
+#!if "$(EXTERNAL_HOOK_LIBRARY)" == "0"
+#LINK_OBJS = $(LINK_OBJS) $(OBJDIR)\SetHook.obj
+#!endif
+
+#$(OBJDIR)\LogBrowser.obj
+
+USERLIBS = version.lib wininet.lib
+
+RC_NAME=$(NAME)
+
+#COMMON = ..
+COMINC = ..
+EXT = dll
+DLLNAME = $(OUTNAME).$(EXT)
+DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
+DEF = $(DEF_NAME).def
+MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
+PDB = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb
+RES = $(OBJDIR)\$(NAME).res
+
+!ifdef VC8
+COMPAT64=/Wp64
+NOWIN98=/OPT:NOWIN98
+!endif
+
+
+!ifndef DEBUG
+CPP_OPT=$(CPP_OPT) /DNDEBUG /Fd$(PDB) /DHIDE_TODO /DCRTSTARTUP
+!else
+CPP_OPT=$(CPP_OPT) /DDEBUG /Fd$(PDB) /DCRTSTARTUP
+!endif
+
+
+!if "$(USE_PDB)" == "1"
+LINK_DEBUG=/map:"$(MAP)" /debug /pdb:$(PDBNAME)
+CPP_DEBUG=/Zi
+!else
+LINK_DEBUG=/map:"$(MAP)" /pdb:$(PDBNAME)
+CPP_DEBUG=
+!endif
+
+COMMONLIB=
+
+!ifdef AMD64
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+#COMMONLIB = ../common/libCRT64.lib chkstk.obj
+ULOUT=-Tpd+
+LINK_MACHINE = /MACHINE:X64
+!elseif defined(IA64)
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+#COMMONLIB = ../common/libCRTIA64.lib chkstk.obj
+ULOUT=-Tpd+
+LINK_MACHINE = /MACHINE:X64
+!else
+#COMMONLIB = ../common/libCRT.lib chkstk.obj
+#../pvdCRT.lib
+!ifdef CPP_UNALIGN
+CPP_ALIGN=/Zp1
+!endif
+# /I"$(COMMON)"
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+ULOUT=-Tpd -Re
+LINK_MACHINE = /MACHINE:X86
+!endif
+CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
+
+#!ifdef EXCLUDECRT
+#!undef COMMONLIB
+#!endif
+LIBS = $(COMMONLIB) kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib $(USERLIBS)
+
+!ifdef _BIN_PATH_
+!ifndef _CL_PATH_
+_CL_PATH_=$(_BIN_PATH_)
+!endif
+!ifndef _RC_PATH_
+_RC_PATH_=$(_BIN_PATH_)
+!endif
+!ifndef _LINK_PATH_
+_LINK_PATH_=$(_BIN_PATH_)
+!endif
+!endif
+
+
+LNK=$(_LINK_PATH_)link.exe
+LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
+#LINK_FLAGS=/DEBUG /DEF:"export.def" /DLL /DYNAMICBASE /INCREMENTAL:NO /LTCG /MACHINE:X86 /MAP /NODEFAULTLIB /SUBSYSTEM:WINDOWS /OUT:"$(DLLFULLNAME)"
+
+
+CFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
+
+!ifndef CC
+CC=$(_CL_PATH_)cl.exe
+!endif
+
+!ifndef LIBR
+LIBR=$(_LINK_PATH_)lib.exe
+!endif
+
+!ifndef RC
+RC=$(_RC_PATH)rc.exe
+!endif
+
+!if !defined(SRC_PATHS_DEFINED) && defined(__MAKE__)
+SRC_PATHS=.;..\common
+.path.cpp=$(SRC_PATHS)
+.path.c=$(SRC_PATHS)
+.path.hpp=$(SRC_PATHS)
+.path.h=$(SRC_PATHS)
+.path.rc=$(SRC_PATHS)
+.path.def=$(SRC_PATHS)
+!endif
+
+ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
+
+$(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
+!ifndef __MAKE__
+	@echo (__MAKE__) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+	@$(LNK) @<<
+	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+<<
+!else
+	@echo (LNK) $(LINK_FLAGS)
+	@$(LNK) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+!endif
+!ifdef DOCS
+!ifndef WIDE
+!ifndef __MAKE__
+	@for %%i in ($(DOCS)) do @copy /Y %%i $(OUTDIR)$(ADDOUTDIR) > nul 2> nul
+!else
+	@for %i in ($(DOCS)) do @copy /Y %i $(OUTDIR)$(ADDOUTDIR) > nul 2> nul
+!endif
+!else
+	@$(COMMON)\convert.exe $(DOCS) $(OUTDIR)$(ADDOUTDIR)
+!endif
+!endif
+
+!ifndef __MAKE__
+.cpp{$(OBJDIR)}.obj::
+	@$(CC) @<<
+	$(CFLAGS) $<
+<<
+{../common/}.cpp{$(OBJDIR)}.obj::
+	$(CC) @<<
+	$(CFLAGS) $<
+<<
+{../ConEmuC/}.cpp{$(OBJDIR)}.obj::
+	$(CC) @<<
+	$(CFLAGS) $<
+<<
+!else
+.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+
+{../common/}.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+
+{../ConEmuC/}.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+
+!endif
+
+$(RES): $(RC_NAME).rc
+	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
+
+.PHONY: dirs
+dirs:
+!ifdef INSTALL
+	@if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
+!endif
+	@if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
+	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
+	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
+
+.PHONY: clean
+clean:
+	@echo Copying release files
+	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	@echo moving "$(DLLFULLNAME)" to "$(RELEASEDIR)"
+	@move $(DLLFULLNAME) $(RELEASEDIR)
+	@cd
+!ifdef USE_PDB
+	@echo moving "$(PDB)" to "$(RELEASEDIR)"
+	@move $(PDB) $(RELEASEDIR)
+!else
+	@if exist $(PDB) del $(PDB)
+!endif
+	@echo moving "$(MAP)" to "$(RELEASEDIR)"
+	@move $(MAP) $(RELEASEDIR)
+
+
+
+$(OBJDIR)\ConEmuInjects.obj: ConEmuInjects.cpp
+
+$(OBJDIR)\ConEmuPlugin.obj: ConEmuPlugin.cpp
+
+$(OBJDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
+
+$(OBJDIR)\ConEmuPlugin1900.obj: ConEmuPlugin1900.cpp
+
+$(OBJDIR)\ConEmuPlugin2800.obj: ConEmuPlugin2800.cpp
+
+$(OBJDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
+
+$(OBJDIR)\PluginBackground.obj: PluginBackground.cpp
+
+$(OBJDIR)\PluginSrv.obj: PluginSrv.cpp ../common/PipeServer.h
+
+$(OBJDIR)\Common.obj: ..\common\Common.cpp
+
+$(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
+
+$(OBJDIR)\ConEmuCheckEx.obj: ..\common\ConEmuCheckEx.cpp
+
+$(OBJDIR)\Execute.obj: ..\common\execute.cpp
+
+$(OBJDIR)\SetEnvVar.obj: ..\common\SetEnvVar.cpp
+
+$(OBJDIR)\WinConsole.obj: ..\common\WinConsole.cpp
+
+$(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp
+
+$(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
+
+$(OBJDIR)\Monitors.obj: ..\common\Monitors.cpp
+
+$(OBJDIR)\Memory.obj: ..\common\Memory.cpp
+
+$(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp

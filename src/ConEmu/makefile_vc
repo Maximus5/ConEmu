@@ -1,0 +1,370 @@
+
+.SILENT:
+
+NAME=ConEmu
+DIRNAME=$(NAME)
+RELEASEDIR=..\..\Release
+
+!include ../makefile_vc_defs
+
+!if defined(AMD64)
+OUTNAME=ConEmu64
+!elseif defined(IA64)
+OUTNAME=ConEmuIA64
+!else
+OUTNAME=ConEmu
+!endif
+
+LINK=link.exe
+ULINK=ulink.exe
+M4=tools\m4 -P -DFARBIT=$(DIRBIT)
+GAWK=tools\gawk
+
+#DEF_FILE = ".\$(NAME).def"
+
+RES_FILE = "$(INTDIR)\$(NAME).res"
+
+#PCH_FILE = "$(INTDIR)\headers.pch"
+
+LINK_OBJS = \
+$(INTDIR)\Attach.obj \
+$(INTDIR)\Background.obj \
+$(INTDIR)\BaseDragDrops.obj \
+$(INTDIR)\CmdLine.obj \
+$(INTDIR)\Common.obj \
+$(INTDIR)\ConEmu.obj \
+$(INTDIR)\ConEmuApp.obj \
+$(INTDIR)\ConEmuCheck.obj \
+$(INTDIR)\ConEmuCtrl.obj \
+$(INTDIR)\ConEmuPipe.obj \
+$(INTDIR)\ConfirmDlg.obj \
+$(INTDIR)\CustomFonts.obj \
+$(INTDIR)\DefaultTerm.obj \
+$(INTDIR)\DragDrop.obj \
+$(INTDIR)\DragDropData.obj \
+$(INTDIR)\DwmHelper.obj \
+$(INTDIR)\Execute.obj \
+$(INTDIR)\FindDlg.obj \
+$(INTDIR)\FrameHolder.obj \
+$(INTDIR)\GestureEngine.obj \
+$(INTDIR)\GuiServer.obj \
+$(INTDIR)\Hotkeys.obj \
+$(INTDIR)\IconList.obj \
+$(INTDIR)\Inside.obj \
+$(INTDIR)\LoadImg.obj \
+$(INTDIR)\Macro.obj \
+$(INTDIR)\Menu.obj \
+$(INTDIR)\MAssert.obj \
+$(INTDIR)\Memory.obj \
+$(INTDIR)\Monitors.obj \
+$(INTDIR)\MSecurity.obj \
+$(INTDIR)\MStrSafe.obj \
+$(INTDIR)\Options.obj \
+$(INTDIR)\OptionsClass.obj \
+$(INTDIR)\OptionsFast.obj \
+$(INTDIR)\OptionsHelp.obj \
+$(INTDIR)\RConStartArgs.obj \
+$(INTDIR)\RealBuffer.obj \
+$(INTDIR)\RealConsole.obj \
+$(INTDIR)\RealServer.obj \
+$(INTDIR)\RunQueue.obj \
+$(INTDIR)\Recreate.obj \
+$(INTDIR)\Registry.obj \
+$(INTDIR)\SetEnvVar.obj \
+$(INTDIR)\RgnDetect.obj \
+$(INTDIR)\ScreenDump.obj \
+$(INTDIR)\Status.obj \
+$(INTDIR)\TabBar.obj \
+$(INTDIR)\TabID.obj \
+$(INTDIR)\TaskBar.obj \
+$(INTDIR)\TaskBarGhost.obj \
+$(INTDIR)\TrayIcon.obj \
+$(INTDIR)\Update.obj \
+$(INTDIR)\UpdateSet.obj \
+$(INTDIR)\VConChild.obj \
+$(INTDIR)\VConGroup.obj \
+$(INTDIR)\VConRelease.obj \
+$(INTDIR)\VirtualConsole.obj \
+$(INTDIR)\WinConsole.obj \
+$(INTDIR)\WinObjects.obj
+
+
+LINK_LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib version.lib shlwapi.lib comctl32.lib Comdlg32.lib Winmm.lib Oleaut32.lib Netapi32.lib
+
+DEFINES=\
+	/DUNICODE \
+	/D_UNICODE \
+	/D$(USEDEBUG) \
+	/DHIDE_TODO \
+	/DCRTPRINTF \
+	/D_CRT_SECURE_NO_WARNINGS \
+	/D_CRT_NON_CONFORMING_SWPRINTFS \
+	/DUSE_SEH
+
+# common
+CPPFLAGS=/nologo $(MP) /W3 /wd4995 $(FARSYSLOG) /EHsc $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
+LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat
+!ifndef NO_RELEASE_PDB
+LINKFLAGS=$(LINKFLAGS) /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
+!endif
+ULINKFLAGS=-q -m- -ap -Gz -O- -o- -Gh -Gh-
+#__GNUC__ чтобы манифест включился
+RFLAGS=$(RCWIN64) /D__GNUC__ /l 0x409 /fo"$(RES_FILE)" /d $(USEDEBUG)
+
+# config-cpecific
+!ifdef DEBUG
+CPPFLAGS=$(CPPFLAGS) /MTd /Od /Zi
+LINKFLAGS=$(LINKFLAGS)
+ULINKFLAGS=$(ULINKFLAGS) -v
+!else
+CPPFLAGS=$(CPPFLAGS) /MT /O2 /Oy-
+!ifndef NO_RELEASE_PDB
+CPPFLAGS=$(CPPFLAGS) /Zi
+LINKFLAGS=$(LINKFLAGS)
+!endif
+LINKFLAGS=$(LINKFLAGS) /incremental:no /OPT:REF /OPT:ICF
+!endif
+
+# platform-cpecific
+!ifdef X86
+#Struct member alignment must be 8bytes even on x86 (Win7 API)
+CPPFLAGS=$(CPPFLAGS) /Zp8
+LINKFLAGS=$(LINKFLAGS) /machine:i386
+!elseifdef AMD64
+CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
+LINKFLAGS=$(LINKFLAGS) /machine:amd64
+ULINKFLAGS=$(ULINKFLAGS) -Tpe+
+!elseifdef IA64
+CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
+LINKFLAGS=$(LINKFLAGS) /machine:IA64
+!endif
+
+# compiler-cpecific
+!if "$(VC)"=="8"
+CPPFLAGS=$(CPPFLAGS) /Wp64
+LINKFLAGS=$(LINKFLAGS) /opt:nowin98
+!else
+RFLAGS=$(RFLAGS) 
+!endif
+
+ALL: AllDirs build clean
+#ALL: AllDirs lng depfile
+#	$(MAKE) /nologo /f makefile_vc build USEDEPS=1
+
+#.PHONY: lng
+#lng: farlang.templ
+#	echo generating language files
+#	tools\lng.generator.exe -nc -i lang.ini -ol "$(OUTDIR)" farlang.templ
+
+#.PHONY: depfile
+#depfile:
+#	$(GAWK) -f .\scripts\mkdep.awk mkdep.list > $(DEPFILE)
+
+.PHONY: build
+build: "$(OUTDIR)\$(OUTNAME).exe"
+
+.PHONY: AllDirs
+AllDirs:
+	if not exist "$(OUTDIR)\" mkdir "$(OUTDIR)"
+	if not exist "$(INTDIR)\" mkdir "$(INTDIR)"
+	if not exist "$(CODDIR)\" mkdir "$(CODDIR)"
+
+"$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) conemu.gcc.manifest
+	echo linking $@
+!ifndef LINK_ULINK
+	$(LINK) @<<
+	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
+<<
+!else
+	$(ULINK) +- @+<<
+	$(ULINKFLAGS) $(LINK_OBJS)
+	,"$(OUTDIR)\$(OUTNAME).exe","$(OUTDIR)\$(OUTNAME).map"
+	,$(LINK_LIBS)
+	,"$(DEF_FILE)","$(RES_FILE)"
+<<
+!endif
+
+#$(PCH_FILE): headers.cpp headers.hpp
+#	echo making precompiled headers
+#	$(CPP) $(CPPFLAGS) headers.cpp /Yc /Fp"$(PCH_FILE)"
+
+#.c{$(INTDIR)}.obj::
+#	$(CPP) @<<
+#	$(CPPFLAGS) $<
+# << 
+
+.cpp{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+{../common/}.cpp{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+{../ConEmuPlugin/}.cpp{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+#{UCD}.c{$(INTDIR)}.obj::
+#	$(CPP) @<<
+#	$(CPPFLAGS) $<
+# <<
+
+#{UCD}.cpp{$(INTDIR)}.obj::
+#	$(CPP) @<<
+#	$(CPPFLAGS) $<
+# <<
+
+$(RES_FILE): ConEmu.rc Version.h
+	echo compiling resource file
+	$(RC) $(RFLAGS) ConEmu.rc
+
+#!ifdef USEDEPS
+#!include "$(DEPFILE)"
+#!endif
+
+MSG=echo generating $@
+
+#Far.exe.manifest: $@.m4 farversion.m4 tools.m4 vbuild.m4
+#	$(MSG)
+#	$(M4) $@.m4 > $@
+
+#ConEmuC.rc: $@.m4 farversion.m4 tools.m4 vbuild.m4 Far.exe.manifest res.hpp
+#	$(MSG)
+#	$(M4) $@.m4 > $@
+
+$(INTDIR)\Attach.obj: Attach.cpp Attach.h ../common/ProcList.h
+
+$(INTDIR)\Background.obj: Background.cpp Background.h
+
+$(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDropData.h
+
+$(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
+
+$(INTDIR)\Common.obj: ../common/Common.cpp ../common/Common.hpp
+
+$(INTDIR)\ConEmu.obj: ConEmu.cpp Version.h GuiServer.h GestureEngine.h ../common/PipeServer.h
+
+$(INTDIR)\ConEmuApp.obj: ConEmuApp.cpp Version.h
+
+$(INTDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp
+
+$(INTDIR)\ConEmuCtrl.obj: ConEmuCtrl.cpp ConEmuCtrl.h FindDlg.h
+
+$(INTDIR)\ConEmuPipe.obj: ConEmuPipe.cpp
+
+$(INTDIR)\ConfirmDlg.obj: ConfirmDlg.cpp ConfirmDlg.h
+
+$(INTDIR)\CustomFonts.obj: CustomFonts.cpp CustomFonts.h
+
+$(INTDIR)\DefaultTerm.obj: DefaultTerm.cpp DefaultTerm.h
+
+$(INTDIR)\DragDrop.obj: DragDrop.cpp BaseDragDrops.h DragDrop.h DragDropData.h
+
+$(INTDIR)\DragDropData.obj: DragDropData.cpp BaseDragDrops.h DragDrop.h DragDropData.h
+
+$(INTDIR)\DwmHelper.obj: DwmHelper.cpp DwmHelper.h
+
+$(INTDIR)\Execute.obj: ../common/execute.cpp ../common/execute.h
+
+$(INTDIR)\FindDlg.obj: FindDlg.cpp FindDlg.h
+
+$(INTDIR)\FrameHolder.obj: FrameHolder.cpp FrameHolder.h
+
+$(INTDIR)\GestureEngine.obj: GestureEngine.cpp GestureEngine.h
+
+$(INTDIR)\GuiServer.obj: GuiServer.cpp GuiServer.h ConEmu.h RealConsole.h VirtualConsole.h
+
+$(INTDIR)\Hotkeys.obj: Hotkeys.cpp Hotkeys.h
+
+$(INTDIR)\IconList.obj: IconList.cpp IconList.h
+
+$(INTDIR)\Inside.obj: Inside.cpp Inside.h
+
+$(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
+
+$(INTDIR)\Macro.obj: Macro.cpp Macro.h
+
+$(INTDIR)\Menu.obj: Menu.cpp Menu.h MenuIds.h FindDlg.h
+
+$(INTDIR)\MAssert.obj: ../common/MAssert.cpp
+
+$(INTDIR)\Memory.obj: ../common/Memory.cpp
+
+$(INTDIR)\Monitors.obj: ../common/Monitors.cpp
+
+$(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
+
+$(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+
+$(INTDIR)\Options.obj: Options.cpp Options.h UpdateSet.h Version.h
+
+$(INTDIR)\OptionsClass.obj: OptionsClass.cpp OptionsClass.h Options.h Background.h UpdateSet.h Version.h
+
+$(INTDIR)\OptionsFast.obj: OptionsFast.cpp OptionsFast.h Options.h
+
+$(INTDIR)\OptionsHelp.obj: OptionsHelp.cpp OptionsHelp.h
+
+$(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
+
+$(INTDIR)\RealBuffer.obj: RealBuffer.cpp RealBuffer.h RealConsole.h  ../common/Common.hpp
+
+$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h RealServer.h ../common/RConStartArgs.h ../common/Common.hpp ../common/PipeServer.h
+
+$(INTDIR)\RealServer.obj: RealServer.cpp RealConsole.h RealServer.h ../common/Common.hpp ../common/PipeServer.h
+
+$(INTDIR)\RunQueue.obj: RunQueue.cpp RunQueue.h
+
+$(INTDIR)\Recreate.obj: Recreate.cpp Recreate.h
+
+$(INTDIR)\Registry.obj: Registry.cpp Registry.h
+
+$(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
+
+$(INTDIR)\RgnDetect.obj: ../common/RgnDetect.cpp
+
+$(INTDIR)\ScreenDump.obj: ScreenDump.cpp
+
+$(INTDIR)\Status.obj: Status.cpp
+
+$(INTDIR)\TabBar.obj: TabBar.cpp
+
+$(INTDIR)\TabID.obj: TabID.cpp
+
+$(INTDIR)\TaskBar.obj: TaskBar.cpp
+
+$(INTDIR)\TaskBarGhost.obj: TaskBarGhost.cpp
+
+$(INTDIR)\TrayIcon.obj: TrayIcon.cpp
+
+$(INTDIR)\Update.obj: Update.cpp Update.h UpdateSet.h Version.h
+
+$(INTDIR)\UpdateSet.obj: UpdateSet.cpp UpdateSet.h Version.h
+
+$(INTDIR)\VConChild.obj: VConChild.cpp VConRelease.h VirtualConsole.h VConChild.h
+
+$(INTDIR)\VConGroup.obj: VConGroup.cpp VConRelease.h VirtualConsole.h VConChild.h VConGroup.h
+
+$(INTDIR)\VConRelease.obj: VConRelease.cpp VConRelease.h VirtualConsole.h VConChild.h
+
+$(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h VConChild.h VConGroup.h
+
+$(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp
+
+$(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
+
+.PHONY: CLEAN
+CLEAN:
+	@echo Copying release files
+	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	@echo moving "$(OUTDIR)\$(OUTNAME).exe" to "$(RELEASEDIR)"
+	@move "$(OUTDIR)\$(OUTNAME).exe" $(RELEASEDIR)
+	@echo moving "$(OUTDIR)\$(OUTNAME).map" to "$(RELEASEDIR)"
+	@move "$(OUTDIR)\$(OUTNAME).map" $(RELEASEDIR)
+!ifndef NO_RELEASE_PDB
+	@echo moving "$(OUTDIR)\$(OUTNAME).pdb" to "$(RELEASEDIR)"
+	@move "$(OUTDIR)\$(OUTNAME).pdb" $(RELEASEDIR)
+!endif

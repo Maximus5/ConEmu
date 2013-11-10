@@ -1,0 +1,17 @@
+EXPORTS
+;
+	SetStartupInfoW=SetStartupInfoW@4
+	GetPluginInfoW=GetPluginInfoWcmn@4
+	GetMinFarVersionW=GetMinFarVersionW@0
+	ExitFARW=ExitFARW@0
+	OpenPluginW=OpenPluginW@8
+	ConfigureW=ConfigureW@4
+;
+	SetStartupInfo=SetStartupInfo@4
+	GetPluginInfo=GetPluginInfo@4
+	GetMinFarVersion=GetMinFarVersion@0
+	ExitFAR=ExitFAR@0
+	OpenPlugin=OpenPlugin@8
+	Configure=Configure@4
+;
+	OnConEmuLoaded=OnConEmuLoaded@4

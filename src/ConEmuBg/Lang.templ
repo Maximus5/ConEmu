@@ -1,0 +1,68 @@
+﻿#hpp file name
+ConEmuBg_Lang.h
+#number of languages
+2
+#id:0 language file name, language name, language description
+..\..\Release\plugins\ConEmu\Background\ConEmuBg_ru.lng Russian "Russian (Русский)"
+#id:1 language file name, language name, language description
+..\..\Release\plugins\ConEmu\Background\ConEmuBg_en.lng English "English"
+
+#head of the hpp file
+hhead:
+hhead:#pragma once
+hhead:
+
+#tail of the hpp file
+#htail:
+#htail:
+#and so on as much as needed
+
+#--------------------------------------------------------------------
+#now come the lng feeds
+#--------------------------------------------------------------------
+#first comes the text name from the enum which can be preceded with
+#comments that will go to the hpp file
+#h://This comment will appear before MYes
+#he://This comment will appear after MYes
+#MYes
+#now come the lng lines for all the languages in the order defined
+#above, they can be preceded with comments as shown below
+#l://This comment will appear in all the lng files before the lng line
+#le://This comment will appear in all the lng files after the lng line
+#ls://This comment will appear only in Russian lng file before the lng line
+#lse://This comment will appear only in Russian lng file after the lng line
+#"Да"
+#ls://This comment will appear only in English lng file before the lng line
+#lse://This comment will appear only in English lng file after the lng line
+#"Yes"
+#ls://This comment will appear only in Czech lng file before the lng line
+#lse://This comment will appear only in Czech lng file after the lng line
+#upd:"Ano"
+#
+#lng lines marked with "upd:" will cause a warning to be printed to the
+#screen reminding that this line should be updated/translated
+
+CEPluginName=0
+l:// Plugin title
+"ConEmu Background"
+"ConEmu Background"
+
+CEPluginEnable
+"Плагин &включен"
+"&Enable plugin"
+
+CEPathLabel
+"&Путь к файлу настроек (Background.xml)"
+"&Settings file path (Background.xml)"
+
+CEMonitorFileChange
+"&Следить за изменениями xml-файла"
+"&Monitor xml-file changes"
+
+CEBtnOK
+"OK"
+"OK"
+
+CEBtnCancel
+"Отмена"
+"Cancel"

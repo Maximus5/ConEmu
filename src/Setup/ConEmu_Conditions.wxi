@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Include>
+  <Upgrade Id="$(var.Guid.UpgradeCode)">
+    <UpgradeVersion Property="UPGRADE" Minimum="$(var.MajorVersion).0.0" Maximum="$(var.Version)" />
+    <UpgradeVersion Property="DONTUPGRADE" Maximum="$(var.MajorVersion).0.0" IncludeMaximum="yes" />
+    <!--<UpgradeVersion Property="UPGRADE" OnlyDetect="yes" Maximum="$(var.Version)" />-->
+    <UpgradeVersion Property="DOWNGRADE" Minimum="$(var.MajorVersion).0.0" Maximum="$(var.MajorVersion).250.2319" IncludeMinimum="no" MigrateFeatures="yes" />
+    <UpgradeVersion Property="DONTDOWNGRADE" Minimum="$(var.MajorVersion).250.2319" IncludeMinimum="no" />
+    <UpgradeVersion Minimum="0.0.0" Property="PREVIOUSVERSIONSINSTALLED" MigrateFeatures="yes" IncludeMinimum="yes" />
+  </Upgrade>
+  <Condition Message="Installed version of ConEmu is not upgradeable to [ProductName]. Please, uninstall previous version first. Setup will now exit.">
+    <![CDATA[NOT (PREVIOUSVERSIONSINSTALLED AND DONTUPGRADE)]]>
+  </Condition>
+  <Condition Message="Installed version of ConEmu is not downgradeable to [ProductName]. Please, uninstall previous version first. Setup will now exit.">
+    <![CDATA[NOT DONTDOWNGRADE]]>
+  </Condition>
+  <!--<Condition Message="PREVIOUSVERSIONSINSTALLED == FALSE">
+    <![CDATA[PREVIOUSVERSIONSINSTALLED]]>
+  </Condition>-->
+  <!--<Condition Message="PREVIOUSVERSIONSINSTALLED == FALSE">
+    <![CDATA[PREVIOUSVERSIONSINSTALLED]]>
+  </Condition>
+  <Condition Message="DONTDOWNGRADE == FALSE">
+    <![CDATA[DONTDOWNGRADE]]>
+  </Condition>
+  <Condition Message="DONTUPGRADE == FALSE">
+    <![CDATA[DONTUPGRADE]]>
+  </Condition>-->
+  <Condition Message="[ProductName] requires Windows 2000 or above.">
+    <![CDATA[NOT Version9X AND (VersionNT >= 500)]]>
+  </Condition>
+</Include>

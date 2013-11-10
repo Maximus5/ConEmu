@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Include>
+
+      <?ifdef Debug?>
+        <?define ConEmuShortcutArgs = '/config MsiDebugTest' ?>
+      <?else?>
+        <?define ConEmuShortcutArgs = ' ' ?>
+      <?endif?>
+
+  <DirectoryRef Id="ApplicationProgramsFolder">
+  <!--<DirectoryRef Id="StartMenuFolder">-->
+    <Component Id="ConEmuStartShortcut" Guid="$(var.Guid.ConEmuStartShortcut)">
+      <Shortcut Id="SConEmuStartShortcut"
+                Name="ConEmu"
+                Description="ConEmu $(var.ConEmuVerS)"
+                Target='[APPLICATIONFOLDER]ConEmu.exe'
+                Arguments='$(var.ConEmuShortcutArgs)'
+                WorkingDirectory="APPLICATIONFOLDER"/>
+      <RegistryValue Root="HKCU" Key="$(var.RegKey)"
+                     Name="ConEmuStartShortcutInstalled" Type="integer" Value="1" KeyPath="yes"/>
+    </Component>
+    <Component Id="ConEmuStartShortcut64" Guid="$(var.Guid.ConEmuStartShortcut64)">
+      <Shortcut Id="SConEmuStartShortcut64"
+                Name="ConEmu (x64)"
+                Description="ConEmu x64 $(var.ConEmuVerS)"
+                Target='[APPLICATIONFOLDER]ConEmu64.exe'
+                Arguments='$(var.ConEmuShortcutArgs)'
+                WorkingDirectory="APPLICATIONFOLDER"/>
+      <RegistryValue Root="HKCU" Key="$(var.RegKey)"
+                     Name="ConEmuStartShortcut64Installed" Type="integer" Value="1" KeyPath="yes"/>
+    </Component>
+    <!--<Component Id="KeyEventsShortcut" Guid="$(var.Guid.KeyEventsShortcut)">
+      <Shortcut Id="SKeyEventsShortcut"
+                Name="KeyEvents"
+                Description="Keyboard and mouse troubleshooting utility"
+                Target='[APPLICATIONFOLDER]ConEmu\KeyEvents\KeyEvents.exe'
+                WorkingDirectory="APPLICATIONFOLDER"/>
+      <RegistryValue Root="HKCU" Key="$(var.RegKey)"
+                     Name="ConEmuStartShortcut64Installed" Type="integer" Value="1" KeyPath="yes"/>
+    </Component>-->
+    <Component Id="UninstallShortcut" Guid="$(var.Guid.UninstallShortcut)">
+      <Shortcut Id="UninstallShortcut"
+                Name="Uninstall ConEmu $(var.Platform)"
+                Target="[System64Folder]msiexec.exe"
+                Arguments="/x [ProductCode]"
+                Description="Uninstalls My Application" />
+      <RegistryValue Root="HKCU" Key="$(var.RegKey)"
+                     Name="UninstallShortcutInstalled" Type="integer" Value="1" KeyPath="yes"/>
+    </Component>
+    <Component Id="ConEmuStartShortcutFolder" Guid="$(var.Guid.ConEmuStartShortcutFolder)">
+      <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
+      <RegistryValue Root="HKMU" Key="$(var.RegKey)"
+                     Name="ConEmuStartShortcutFolder" Type="integer" Value="1" KeyPath="yes"/>
+    </Component>
+  </DirectoryRef>
+
+
+  <DirectoryRef Id="DesktopFolder">
+    <Component Id="ConEmuDesktopShortcut" Guid="$(var.Guid.ConEmuDesktopShortcut)">
+      <Shortcut Id="SConEmuDesktopShortcut"
+                Name="ConEmu"
+                Description="ConEmu $(var.ConEmuVerS)"
+                Target='[APPLICATIONFOLDER]ConEmu.exe'
+                Arguments='$(var.ConEmuShortcutArgs)'
+                WorkingDirectory="APPLICATIONFOLDER"/>
+      <RegistryValue Root="HKCU" Key="$(var.RegKey)"
+                     Name="ConEmuDesktopShortcutInstalled" Type="integer" Value="1" KeyPath="yes"/>
+    </Component>
+    <Component Id="ConEmuDesktopShortcut64" Guid="$(var.Guid.ConEmuDesktopShortcut64)">
+      <Shortcut Id="SConEmuDesktopShortcut64"
+                Name="ConEmu (x64)"
+                Description="ConEmu x64 $(var.ConEmuVerS)"
+                Target='[APPLICATIONFOLDER]ConEmu64.exe'
+                Arguments='$(var.ConEmuShortcutArgs)'
+                WorkingDirectory="APPLICATIONFOLDER"/>
+      <RegistryValue Root="HKCU" Key="$(var.RegKey)"
+                     Name="ConEmuDesktopShortcut64Installed" Type="integer" Value="1" KeyPath="yes"/>
+    </Component>
+    <Component Id="ConEmuDesktopShortcutFolder" Guid="$(var.Guid.ConEmuDesktopShortcutFolder)">
+      <RegistryValue Root="HKCU" Key="$(var.RegKey)"
+                     Name="ConEmuDesktopShortcutFolder" Type="integer" Value="1" KeyPath="yes"/>
+    </Component>
+  </DirectoryRef>
+</Include>

@@ -1,0 +1,49 @@
+
+// Manifest
+1 24 "Setupper.manifest"
+
+//#define MSI86 "../ConEmu." CONEMUVERS ".x86.msi"
+//#define MSI64 "../ConEmu." CONEMUVERS ".x64.msi"
+#include "VersionI.h"
+
+// Installer files
+Ver86 "DATA" MSI86
+Ver64 "DATA" MSI64
+CABFILE "DATA" "../ConEmu.cab"
+EXEFILE "DATA" "Executor.exe"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION CONEMUVERN
+ PRODUCTVERSION CONEMUVERN
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "FileDescription", "ConEmu Installer"
+            VALUE "FileVersion", CONEMUVERS
+            VALUE "LegalCopyright", "(C) 2011 Maximus5"
+            VALUE "OriginalFilename", "ConEmuSetup.exe"
+            VALUE "ProductName", "ConEmu"
+            VALUE "ProductVersion", CONEMUVERS
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END

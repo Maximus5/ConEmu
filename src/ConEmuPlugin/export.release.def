@@ -1,0 +1,36 @@
+EXPORTS
+;  Unicode (common)
+	GetPluginInfoW=GetPluginInfoWcmn
+	SetStartupInfoW
+	ExitFARW
+	ProcessEditorInputW
+	ProcessEditorEventW
+	ProcessViewerEventW
+	ProcessSynchroEventW
+	ProcessDialogEventW
+; Far2 (only)
+	GetMinFarVersionW
+	OpenPluginW
+;  Far3 (only)
+   GetGlobalInfoW
+   OpenW
+   ProcessConsoleInputW
+;  Ansi
+	GetPluginInfo
+	SetStartupInfo
+	ExitFAR
+	ProcessEditorInput
+	ProcessEditorEvent
+	ProcessViewerEvent
+	GetMinFarVersion
+	OpenPlugin
+	ProcessDialogEvent
+;  ConEmu API (Far independent)
+	GetFarVersion
+	GetFarHWND
+	GetFarHWND2
+	IsConsoleActive
+	RegisterPanelView
+	RegisterBackground
+	ActivateConsole
+	SyncExecute

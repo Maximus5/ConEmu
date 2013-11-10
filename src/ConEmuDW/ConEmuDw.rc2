@@ -1,0 +1,48 @@
+
+#include <windows.h>
+#include "../ConEmu/version.h"
+
+/////////////////////////////////////////////////////////////////////////////
+// Russian resources
+
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+#pragma code_page(1251)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION CONEMUVERN
+ PRODUCTVERSION CONEMUVERN
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "FileDescription", "ConEmu R/W handler" CONEMUPLTFRM
+            VALUE "FileVersion", CONEMUVERS
+            VALUE "LegalCopyright", "(C) 2009-2011 Maximus5"
+            VALUE "OriginalFilename", "ConEmuDw*.dll"
+            VALUE "ProductName", "ConEmu"
+            VALUE "ProductVersion", CONEMUVERS
+            VALUE "Comments", "Far truecolor extension for ConEmu"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END
+
+/////////////////////////////////////////////////////////////////////////////

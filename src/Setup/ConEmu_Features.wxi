@@ -1,0 +1,295 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Include>
+  <Feature Id="ProductFeature" AllowAdvertise="no" Absent="disallow"
+           Title="ConEmu" 
+           ConfigurableDirectory="APPLICATIONFOLDER"
+           Display="collapse" Level="1" Description="ConEmu-Maximus5 product and features">
+    <ComponentRef Id="CEInstallDir" />
+    <ComponentRef Id="ConEmuLicense" />
+    <!-- ConEmu Core Files -->
+    <Feature Id="FConEmuGui" AllowAdvertise="no" Display="collapse" Absent="disallow" Level="1"
+             Title="ConEmu GUI"
+             Description="Graphical part of ConEmu (ConEmu.exe or ConEmu64.exe)">
+      <Feature Id="FConEmuGui32" AllowAdvertise="no" Level="$(var.GuiWin32)"
+               Title="32-bit version"
+               Description="Graphical part of ConEmu (ConEmu.exe, 32-bit version)">
+        <ComponentRef Id="ConEmuGui32" />
+      </Feature>
+      <Feature Id="FConEmuGui64" AllowAdvertise="no" Level="$(var.GuiWin64)"
+               Title="64-bit version"
+               Description="Graphical part of ConEmu (ConEmu64.exe, 64-bit version)">
+        <ComponentRef Id="ConEmuGui64" />
+      </Feature>
+    </Feature>
+    <!-- ConEmu Base Files -->
+    <Feature Id="FConEmuBase" AllowAdvertise="no" Display="collapse" Level="1" Absent="disallow"
+             Title="Core files"
+             Description="ConEmuC.exe, ConEmuHk.dll, and other required files">
+      <Feature Id="FConEmuBase32" AllowAdvertise="no" Absent="disallow" Level="1"
+               Title="32-bit version"
+               Description="ConEmuC.exe, ConEmuCD.dll, ConEmuHk.dll">
+        <ComponentRef Id="ConEmuC.exe" />
+        <ComponentRef Id="ConEmuCD.dll" />
+        <ComponentRef Id="ConEmuHk.dll" />
+      </Feature>
+      <Feature Id="FConEmuBase64" AllowAdvertise="no" Level="1"
+               Title="64-bit version"
+               Description="ConEmuC64.exe, ConEmuCD64.dll, ConEmuHk64.dll">
+        <ComponentRef Id="ConEmuC64.exe" />
+        <ComponentRef Id="ConEmuCD64.dll" />
+        <ComponentRef Id="ConEmuHk64.dll" />
+      </Feature>
+      <!-- RGB Console for Far3 -->
+      <Feature Id="FExtendedConsole" AllowAdvertise="no" Title="Far3 ExtendedConsole" Level="1"
+               Description="RGB support for Far3">
+        <ComponentRef Id="ExtendedConsole.dll"/>
+        <ComponentRef Id="ExtendedConsole64.dll"/>
+      </Feature>
+    </Feature>
+    <!-- Cmd Extensions -->
+    <Feature Id="FConEmuCmdExt" AllowAdvertise="no" Title="Cmd extensions" Level="1"
+             Description="Batch files for: attach any console window to ConEmu, change text color of command prompt, check if console belongs ConEmu, change tab text, console title, progress state, etc.">
+      <!--<ComponentRef Id="CEExtConsoleDir" />-->
+      <ComponentRef Id="Attach.cmd" />
+      <ComponentRef Id="ClsEx.cmd" />
+      <ComponentRef Id="Cmd_Autorun.cmd" />
+      <ComponentRef Id="ColorPrompt.cmd" />
+      <ComponentRef Id="csudo.cmd" />
+      <ComponentRef Id="IsConEmu.cmd" />
+      <ComponentRef Id="RenameTab.cmd" />
+      <ComponentRef Id="SetConTitle.cmd" />
+      <ComponentRef Id="SetEscChar.cmd" />
+      <ComponentRef Id="SetProgress.cmd" />
+      <ComponentRef Id="TypeBuildErrors.cmd" />
+      <ComponentRef Id="Command_Processor.reg" />
+      <ComponentRef Id="Command_Processor_Off.reg" />
+    </Feature>
+    <!-- Documentation -->
+    <Feature Id="FConEmuDocs" AllowAdvertise="no" Title="Documentation" Level="1"
+             Description="WhatsNew-ConEmu.txt, FAQ-ConEmu.txt, ConEmu_Sample.xml, ConEmu_Tilde.xml and other information">
+      <ComponentRef Id="About_ConEmu.txt" />
+      <ComponentRef Id="Portable.txt" />
+      <ComponentRef Id="ConEmu_Sample.xml" />
+      <ComponentRef Id="ConEmu_Tilde.xml" />
+      <ComponentRef Id="FAQ_ConEmu.txt" />
+      <ComponentRef Id="Settings_ConEmu.reg" />
+      <ComponentRef Id="WhatsNew_ConEmu.txt" />
+    </Feature>
+    <!-- ConEmu.Addons directory -->
+    <Feature Id="FConEmuAddons" AllowAdvertise="no" Title="Addons" Level="1" Display="collapse"
+             Description="Some macros, sample background images, etc.">
+      <!--<Feature Id="FConEmuCertificate" AllowAdvertise="no" Title="FarHere" Level="1"
+               Description="Certificate">
+        <ComponentRef Id="ConEmu.cer"/>
+      </Feature>-->
+      <Feature Id="FConEmuAddonsHere" AllowAdvertise="no" Title="FarHere" Level="1"
+               Description="Cmd files for install/uninstall 'Far-in-ConEmu here' explorer popup menu item">
+        <ComponentRef Id="FarHereInstall.cmd"/>
+        <ComponentRef Id="FarHereUninstall.cmd"/>
+        <ComponentRef Id="FarHere.dat"/>
+      </Feature>
+      <Feature Id="FConEmuAddonsInside" AllowAdvertise="no" Title="ConEmu Inside" Level="1"
+               Description="Reg files for install/uninstall 'ConEmu Inside' explorer popup menu item">
+        <ComponentRef Id="ConEmuInside.reg"/>
+        <ComponentRef Id="ConEmuInsideUninstall.reg"/>
+      </Feature>
+      <Feature Id="FConEmuAddonsMacroLua3" AllowAdvertise="no" Title="Far3 macros (*.lua)" Level="1"
+               Description="Sample macros (in lua-files), useful with ConEmu">
+        <ComponentRef Id="CtrlO.lua3"/>
+        <ComponentRef Id="CtrlShiftT.lua3"/>
+        <ComponentRef Id="Editor.lua3"/>
+        <ComponentRef Id="FontSize.lua3"/>
+        <ComponentRef Id="ShiftEnter.lua3"/>
+        <ComponentRef Id="TabList.lua3"/>
+        <ComponentRef Id="Thumbnails.lua3"/>
+        <ComponentRef Id="Thumbnails_KeyBar.xml.lua3"/>
+        <ComponentRef Id="Editor.MsRClick.lua3"/>
+      </Feature>
+      <Feature Id="FConEmuAddonsMacroReg3" AllowAdvertise="no" Title="Far3 macros (*.fml)" Level="1"
+               Description="Sample macros (in fml-files), useful with ConEmu">
+        <ComponentRef Id="CtrlO.fml3"/>
+        <ComponentRef Id="CtrlShiftT.fml3"/>
+        <ComponentRef Id="Editor.fml3"/>
+        <ComponentRef Id="FontSize.fml3"/>
+        <ComponentRef Id="ShiftEnter.fml3"/>
+        <ComponentRef Id="TabList.fml3"/>
+        <ComponentRef Id="Thumbnails.fml3"/>
+        <ComponentRef Id="Thumbnails_KeyBar.xml3"/>
+        <ComponentRef Id="Editor.MsRClick.fml3"/>
+      </Feature>
+      <Feature Id="FConEmuAddonsMacroFml" AllowAdvertise="no" Title="Far2 macros (*.fml)" Level="1"
+               Description="Sample macros (in fml-files), useful with ConEmu">
+        <ComponentRef Id="ConEmu.fml"/>
+        <ComponentRef Id="ConEmu.Editor.fml"/>
+        <ComponentRef Id="ConEmu.FontSize.fml"/>
+        <ComponentRef Id="ConEmu.ShiftEnter.fml"/>
+        <ComponentRef Id="ConEmu.TabList.fml"/>
+      </Feature>
+      <Feature Id="FConEmuAddonsMacroReg2" AllowAdvertise="no" Title="Far2 macros (*.reg)" Level="1"
+               Description="Sample macros (in reg-files), useful with ConEmu">
+        <ComponentRef Id="AltEnter_Exec.reg2"/>
+        <ComponentRef Id="AltEnter_Props.reg2"/>
+        <ComponentRef Id="CtrlAltD.reg2"/>
+        <ComponentRef Id="CtrlO.reg2"/>
+        <ComponentRef Id="CtrlO_View.reg2"/>
+        <ComponentRef Id="CtrlShiftT.reg2"/>
+        <ComponentRef Id="FAR_AutoAttach.reg2"/>
+        <ComponentRef Id="ShiftEnter.reg2"/>
+        <ComponentRef Id="Thumbnails.reg2"/>
+        <ComponentRef Id="Thumbnails_KeyBar.reg2"/>
+        <ComponentRef Id="UCharMap.reg2"/>
+        <ComponentRef Id="FontSize.reg2"/>
+      </Feature>
+      <Feature Id="FConEmuAddonsMacroReg1" AllowAdvertise="no" Title="Far1 macros (*.reg)" Level="1"
+               Description="Sample macros (in reg-files), useful with ConEmu">
+        <ComponentRef Id="AltEnter_Exec.reg1"/>
+        <ComponentRef Id="AltEnter_Props.reg1"/>
+        <ComponentRef Id="CtrlAltD.reg1"/>
+        <ComponentRef Id="CtrlO.reg1"/>
+        <ComponentRef Id="CtrlO_View.reg1"/>
+        <ComponentRef Id="CtrlShiftT.reg1"/>
+        <ComponentRef Id="FAR_AutoAttach.reg1"/>
+        <ComponentRef Id="ShiftEnter.reg1"/>
+        <ComponentRef Id="TabList.reg1"/>
+        <ComponentRef Id="Thumbnails.reg1"/>
+        <ComponentRef Id="Thumbnails_KeyBar.reg1"/>
+        <ComponentRef Id="FontSize.reg1"/>
+      </Feature>
+      <Feature Id="FConEmuAnsiSamples" AllowAdvertise="no" Title="ANSI X3.64 examples" Level="1"
+               Description="Sample ANSI X3.64 files">
+        <ComponentRef Id="AnsiColors16.ans"/>
+        <ComponentRef Id="AnsiColors16t.ans"/>
+        <ComponentRef Id="AnsiColors256.ans"/>
+      </Feature>
+      <Feature Id="FConEmuAddonsBackground" AllowAdvertise="no" Title="Background images" Level="1"
+               Description="Sample background images">
+        <ComponentRef Id="Blues16.bmp"/>
+        <ComponentRef Id="Greys16.bmp"/>
+        <ComponentRef Id="Lines16.bmp"/>
+        <ComponentRef Id="Lines16a.bmp"/>
+        <ComponentRef Id="Lines18.bmp"/>
+        <ComponentRef Id="Lines18a.bmp"/>
+      </Feature>
+      <Feature Id="FConEmuAddonsMisc" AllowAdvertise="no" Title="Miscellaneous" Level="1"
+               Description="Disable_ConIme.reg, CallPlugin.txt, etc.">
+        <ComponentRef Id="Disable_ConIme.reg"/>
+        <ComponentRef Id="CallPlugin.txt"/>
+      </Feature>
+      <Feature Id="FDosBox" AllowAdvertise="no" Title="DosBox" Level="1"
+               Description="Sample DosBox configuration file">
+        <ComponentRef Id="DosBox_Sample.conf"/>
+      </Feature>
+      <!--
+      <Feature Id="FPortable" AllowAdvertise="no" Title="Portable registry" Level="1"
+               Description="How to enable portable registry for console applications">
+        <ComponentRef Id="Portable_Readme.txt"/>
+      </Feature>
+      -->
+    </Feature>
+    <Feature Id="FClink" AllowAdvertise="no" Title="clink" Level="1"
+             Description="clink - bash style completion readme.txt">
+      <ComponentRef Id="clink_readme.txt"/>
+    </Feature>
+    <!-- Troubleshooting -->
+    <Feature Id="FSupportTools" AllowAdvertise="no" Title="Tools" Level="1" Display="collapse"
+             Description="Troubleshooting utilities">
+      <!-- KeyEvents directory -->
+      <Feature Id="FKeyEvents" AllowAdvertise="no" Title="KeyEvents" Level="2"
+               Description="Keyboard and mouse troubleshooting utility">
+        <ComponentRef Id="KeyEvents.exe"/>
+        <ComponentRef Id="KeyEvents.cpp"/>
+        <ComponentRef Id="KeyEvents.rc"/>
+        <ComponentRef Id="KeyEvents.h"/>
+        <ComponentRef Id="KeyEvents.makefile_gcc"/>
+      </Feature>
+    </Feature>
+  </Feature>
+  <!-- ConEmu Far Plugins -->
+  <Feature Id="FConEmuFarPlugins" AllowAdvertise="no" Title="Far Manager plugins" Level="1"
+           ConfigurableDirectory="FARPLUGINSCONEMU"
+           Description="Far Manager Plugins: ConEmu, PanelViews, Underlines. Default path: &quot;%FARHOME%\Plugins\ConEmu&quot;.">
+    <ComponentRef Id="CEFarPluginsDir" />
+    <ComponentRef Id="PluginReadme.txt"/>
+    <ComponentRef Id="ConEmu.dll"/>
+    <ComponentRef Id="ConEmu.map"/>
+    <ComponentRef Id="ConEmu.x64.dll"/>
+    <ComponentRef Id="ConEmu.x64.map"/>
+    <ComponentRef Id="ConEmuPlugin_en.lng"/>
+    <ComponentRef Id="ConEmuPlugin_ru.lng"/>
+    <ComponentRef Id="ConEmuBg.dll"/>
+    <ComponentRef Id="ConEmuBg.map"/>
+    <ComponentRef Id="ConEmuBg.x64.dll"/>
+    <ComponentRef Id="ConEmuBg.x64.map"/>
+    <ComponentRef Id="ConEmuBg_en.lng"/>
+    <ComponentRef Id="ConEmuBg_ru.lng"/>
+    <ComponentRef Id="Background.xml"/>
+    <ComponentRef Id="archive.png"/>
+    <ComponentRef Id="caution.png"/>
+    <ComponentRef Id="database.png"/>
+    <ComponentRef Id="downloads.png"/>
+    <ComponentRef Id="drive_cdrom.png"/>
+    <ComponentRef Id="drive_cloud.png"/>
+    <ComponentRef Id="drive_fixed.png"/>
+    <ComponentRef Id="drive_network.png"/>
+    <ComponentRef Id="drive_ramdisk.png"/>
+    <ComponentRef Id="drive_removable.png"/>
+    <ComponentRef Id="dropbox.png"/>
+    <ComponentRef Id="globe.png"/>
+    <ComponentRef Id="music.png"/>
+    <ComponentRef Id="network.png"/>
+    <ComponentRef Id="plugin.png"/>
+    <ComponentRef Id="recycle.png"/>
+    <ComponentRef Id="science.png"/>
+    <ComponentRef Id="trash.png"/>
+    <ComponentRef Id="ConEmuLn.dll"/>
+    <ComponentRef Id="ConEmuLn.map"/>
+    <ComponentRef Id="ConEmuLn.x64.dll"/>
+    <ComponentRef Id="ConEmuLn.x64.map"/>
+    <ComponentRef Id="ConEmuLn_en.lng"/>
+    <ComponentRef Id="ConEmuLn_ru.lng"/>
+    <ComponentRef Id="ConEmuTh.dll"/>
+    <ComponentRef Id="ConEmuTh.map"/>
+    <ComponentRef Id="ConEmuTh.x64.dll"/>
+    <ComponentRef Id="ConEmuTh.x64.map"/>
+    <ComponentRef Id="ConEmuTh_en.lng"/>
+    <ComponentRef Id="ConEmuTh_ru.lng"/>
+    <ComponentRef Id="gdi.t32"/>
+    <ComponentRef Id="gdi.t32.map"/>
+    <ComponentRef Id="gdi.t64"/>
+    <ComponentRef Id="gdi.t64.map"/>
+    <ComponentRef Id="ico.t32"/>
+    <ComponentRef Id="ico.t32.map"/>
+    <ComponentRef Id="ico.t64"/>
+    <ComponentRef Id="ico.t64.map"/>
+    <ComponentRef Id="pe.t32"/>
+    <ComponentRef Id="pe.t32.map"/>
+    <ComponentRef Id="pe.t64"/>
+    <ComponentRef Id="pe.t64.map"/>
+  </Feature>
+  <!-- Shortcuts -->
+  <Feature Id="FConEmuShortcut" AllowAdvertise="no" Title="Create shortcuts" Level="1" Display="expand"
+           Description="Create ConEmu shortcuts in the Start menu or Desktop">
+    <Feature Id="FCEShortcutStart" AllowAdvertise="no" Title="Start menu" Level="1">
+      <ComponentRef Id="ConEmuStartShortcutFolder" />
+      <ComponentRef Id="UninstallShortcut" />
+    </Feature>
+    <Feature Id="FCEShortcutDesktop" AllowAdvertise="no" Title="Desktop" Level="1">
+      <ComponentRef Id="ConEmuDesktopShortcutFolder" />
+    </Feature>
+  </Feature>
+  <Feature Id="FCEShortcutStart.FConEmuGui32" AllowAdvertise="no" Display="hidden" Level="2">
+    <ComponentRef Id="ConEmuStartShortcut" />
+  </Feature>
+  <Feature Id="FCEShortcutStart.FConEmuGui64" AllowAdvertise="no" Display="hidden" Level="2">
+    <ComponentRef Id="ConEmuStartShortcut64" />
+  </Feature>
+  <Feature Id="FCEShortcutDesktop.FConEmuGui32" AllowAdvertise="no" Display="hidden" Level="2">
+    <ComponentRef Id="ConEmuDesktopShortcut" />
+  </Feature>
+  <Feature Id="FCEShortcutDesktop.FConEmuGui64" AllowAdvertise="no" Display="hidden" Level="2">
+    <ComponentRef Id="ConEmuDesktopShortcut64" />
+  </Feature>
+  <!--<Feature Id="FCEShortcutStart.FKeyEvents" AllowAdvertise="no" Display="hidden" Level="2">
+    <ComponentRef Id="KeyEventsShortcut" />
+  </Feature>-->
+</Include>
