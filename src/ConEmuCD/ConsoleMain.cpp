@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define SHOW_EXITWAITKEY_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 //	#define SHOW_INJECTREM_MSGBOX
-//	#define SHOW_ATTACH_MSGBOX
+	#define SHOW_ATTACH_MSGBOX
 //  #define SHOW_ROOT_STARTED
 	#define WINE_PRINT_PROC_INFO
 //	#define USE_PIPE_DEBUG_BOXES
@@ -2721,18 +2721,9 @@ int DoInjectHooks(LPWSTR asCmdArg)
 	LPWSTR pszEnd = NULL;
 	BOOL lbForceGui = FALSE;
 	PROCESS_INFORMATION pi = {NULL};
+
+
 	pi.hProcess = (HANDLE)wcstoul(pszNext, &pszEnd, 16);
-
-
-	#ifdef SHOW_INJECT_MSGBOX
-	wchar_t szDbgMsg[512], szTitle[128];
-	PROCESSENTRY32 pinf;
-	GetProcessInfo(nRemotePID, &pinf);
-	swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuCD PID=%u", GetCurrentProcessId());
-	swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"InjectsTo PID=%s {%s}\nConEmuCD PID=%u", asCmdArg ? asCmdArg : L"", pinf.szExeFile, GetCurrentProcessId());
-	MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-	#endif
-
 
 	if (pi.hProcess && pszEnd && *pszEnd)
 	{
@@ -2758,6 +2749,17 @@ int DoInjectHooks(LPWSTR asCmdArg)
 		lbForceGui = wcstoul(pszNext, &pszEnd, 10);
 	}
 	
+
+	#ifdef SHOW_INJECT_MSGBOX
+	wchar_t szDbgMsg[512], szTitle[128];
+	PROCESSENTRY32 pinf;
+	GetProcessInfo(pi.dwProcessId, &pinf);
+	swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuCD PID=%u", GetCurrentProcessId());
+	swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"InjectsTo PID=%s {%s}\nConEmuCD PID=%u", asCmdArg ? asCmdArg : L"", pinf.szExeFile, GetCurrentProcessId());
+	MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	#endif
+
+
 	if (pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId)
 	{
 		//BOOL gbLogProcess = FALSE;
@@ -2913,7 +2915,7 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		{
 			iHookRc = InjectRemote(nRemotePID, abDefTermOnly);
 			// Дождаться, пока поток стартует и можно будет закрыть hEventReady
-			if (hEventReady)
+			if ((iHookRc == 0) && hEventReady)
 			{
 				DWORD nWaitReady = WaitForSingleObject(hEventReady, CEDEFAULTTERMHOOKWAIT);
 				if (nWaitReady == WAIT_TIMEOUT)
@@ -3615,7 +3617,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			lsCmdLine = szArg+8;
 			break;
 		}
-		//else if (lstrcmpi(szArg, L"/GUIMACRO")==0)
+		// /GUIMACRO[:PID|HWND] <Macro string>
 		else if (lstrcmpni(szArg, L"/GUIMACRO", 9) == 0)
 		{
 			// Все что в lsCmdLine - выполнить в Gui
@@ -3626,9 +3628,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				wchar_t* pszID = szArg+10;
 				if (*pszID == L'0') pszID ++;
 				wchar_t* pszEnd;
-				if (*pszID == L'x' || *pszID == L'X')
+				if ((pszID[0] == L'0' && (pszID[1] == L'x' || pszID[1] == L'X'))
+					|| (pszID[0] == L'x' || pszID[0] == L'X'))
 				{
-					hMacroInstance = (HWND)(DWORD_PTR)wcstoul(pszID+1, &pszEnd, 16);
+					hMacroInstance = (HWND)(DWORD_PTR)wcstoul(pszID[0] == L'0' ? (pszID+2) : (pszID+1), &pszEnd, 16);
 				}
 				else
 				{
@@ -3776,14 +3779,21 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			pszStart = szArg+14;
 			gpSrv->dwParentFarPID = wcstoul(pszStart, &pszEnd, 10);
 		}
-		else if (wcsncmp(szArg, L"/PID=", 5)==0 || wcsncmp(szArg, L"/FARPID=", 8)==0 || wcsncmp(szArg, L"/CONPID=", 8)==0)
+		else if (wcsncmp(szArg, L"/PID=", 5)==0 || wcsncmp(szArg, L"/TRMPID=", 8)==0
+			|| wcsncmp(szArg, L"/FARPID=", 8)==0 || wcsncmp(szArg, L"/CONPID=", 8)==0)
 		{
 			gnRunMode = RM_SERVER;
-			gbNoCreateProcess = TRUE;
-			gbAlienMode = TRUE;
+			gbNoCreateProcess = TRUE; // Процесс УЖЕ запущен
+			gbAlienMode = TRUE; // Консоль создана НЕ нами
 			wchar_t* pszEnd = NULL, *pszStart;
 
-			if (wcsncmp(szArg, L"/FARPID=", 8)==0)
+			if (wcsncmp(szArg, L"/TRMPID=", 8)==0)
+			{
+				// This is called from *.vshost.exe when "AllocConsole" just created
+				gbDontInjectConEmuHk = TRUE;
+				pszStart = szArg+8;
+			}
+			else if (wcsncmp(szArg, L"/FARPID=", 8)==0)
 			{
 				gbAttachFromFar = TRUE;
 				gbRootIsCmdExe = FALSE;
@@ -4253,6 +4263,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 
 			break; // lsCmdLine уже указывает на запускаемую программу
+		}
+		else
+		{
+			_ASSERTE(FALSE && "Unknown switch!");
+			_wprintf(L"Unknown switch: ");
+			_wprintf(szArg);
+			_wprintf(L"\r\n");
 		}
 	}
 

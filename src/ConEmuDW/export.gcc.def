@@ -1,0 +1,12 @@
+LIBRARY
+
+EXPORTS
+; functions
+	GetTextAttributes=GetTextAttributes@4
+	SetTextAttributes=SetTextAttributes@4
+	ClearExtraRegions=ClearExtraRegions@4
+	ReadOutput=ReadOutput@16
+	WriteOutput=WriteOutput@16
+	WriteText=WriteText@20
+	Commit=Commit@0
+	GetColorDialog=GetColorDialog@12

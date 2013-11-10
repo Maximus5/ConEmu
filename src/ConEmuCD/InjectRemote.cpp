@@ -204,6 +204,7 @@ int PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 	int iRc = -251;
 	wchar_t szNewPath[MAX_PATH+16] = {}, szAddName[32] = {}, szVer[2] = {};
 	INT_PTR nLen = 0;
+	bool bAlreadyExists = false;
 
 	// Copy szModule to CSIDL_LOCAL_APPDATA and return new path
 	HRESULT hr = SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, szNewPath);
@@ -242,12 +243,28 @@ int PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 
 	wcscat_c(szNewPath, szAddName);
 
-	if (FileExists(szNewPath) && FileCompare(szNewPath, szModule))
+	if ((bAlreadyExists = FileExists(szNewPath)) && FileCompare(szNewPath, szModule))
 	{
 		// OK, file exists and match the required
 	}
 	else
 	{
+		if (bAlreadyExists)
+		{
+			_ASSERTE(FALSE && "Continue to overwrite existing ConEmuHk in AppLocal");
+
+			// Try to delete or rename old version
+			if (!DeleteFile(szNewPath))
+			{
+				//SYSTEMTIME st; GetLocalTime(&st);
+				wchar_t szBakPath[MAX_PATH+32]; wcscpy_c(szBakPath, szNewPath);
+				wchar_t* pszExt = (wchar_t*)PointToExt(szBakPath);
+				msprintf(pszExt, 16, L".%u.dll", GetTickCount());
+				DeleteFile(szBakPath);
+				MoveFile(szNewPath, szBakPath);
+			}
+		}
+
 		if (!CopyFile(szModule, szNewPath, FALSE))
 		{
 			iRc = -254;
