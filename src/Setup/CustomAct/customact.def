@@ -1,0 +1,7 @@
+EXPORTS
+  UpdateFeatureState
+;  SaveShortcutProps
+;  SaveShortcutProps2
+;  RestoreShortcutProps
+;  RestoreShortcutProps2
+;  LaunchShortcut

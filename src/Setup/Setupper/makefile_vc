@@ -1,0 +1,44 @@
+#!include params.mak
+
+!if "$(CPU)" == "AMD64"
+!if "$(PLATFORM)" != "x64"
+!error "$(PLATFORM) != $(CPU)"
+!endif
+!else
+!if "$(PLATFORM)" != "x86"
+!error "$(PLATFORM) != $(CPU)"
+!endif
+!endif
+
+CPPFLAGS = -nologo -D_WIN32_WINNT=0x0600 -D_UNICODE -DUNICODE
+LINKFLAGS = -nologo -incremental:no -machine:$(PLATFORM)
+
+!ifdef RELEASE
+OUTDIR = Release
+CPPFLAGS = $(CPPFLAGS) -O1 -DNDEBUG
+!else
+OUTDIR = Debug
+CPPFLAGS = $(CPPFLAGS) -Fd$(OUTDIR)\ -Zi
+LINKFLAGS = $(LINKFLAGS) -debug
+!endif
+
+OUTDIR = $(OUTDIR).$(PLATFORM).$(VER_MAJOR)
+CPPFLAGS = -Fo$(OUTDIR)\ $(CPPFLAGS)
+
+
+$(OUTDIR)\Setupper.exe: $(OUTDIR) Setupper.cpp $(OUTDIR)\Setupper.res
+  cl $(CPPFLAGS) /EHs-c- Setupper.cpp -link $(LINKFLAGS) /subsystem:WINDOWS /out:$@ /NODEFAULTLIB $(OUTDIR)\Setupper.res MSVCRT6.LIB shell32.lib rpcrt4.lib Kernel32.lib Ole32.lib comctl32.lib User32.lib
+
+$(OUTDIR)\Setupper.res: Setupper.rc
+  rc -DOUTDIR=$(OUTDIR) -fo$@ Setupper.rc
+
+$(OUTDIR):
+  if not exist $(OUTDIR) mkdir $(OUTDIR)
+
+
+clean:
+#  if exist $(OUTDIR) rd /s /q $(OUTDIR)
+
+
+.SUFFIXES: .wxs
+.PHONY: clean
