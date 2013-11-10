@@ -4627,9 +4627,12 @@ const Settings::CommandTasks* Settings::CmdTaskGet(int anIndex)
 	if (!CmdTasks || (anIndex < 0) || (anIndex >= CmdTaskCount))
 		return NULL;
 
-	CmdTasks[anIndex]->HotKey.HkType = chk_Task;
-	CmdTasks[anIndex]->HotKey.SetTaskIndex(anIndex);
-	CmdTasks[anIndex]->HotKey.fkey = CConEmuCtrl::key_RunTask;
+	if (CmdTasks[anIndex])
+	{
+		CmdTasks[anIndex]->HotKey.HkType = chk_Task;
+		CmdTasks[anIndex]->HotKey.SetTaskIndex(anIndex);
+		CmdTasks[anIndex]->HotKey.fkey = CConEmuCtrl::key_RunTask;
+	}
 
 	return (CmdTasks[anIndex]);
 }

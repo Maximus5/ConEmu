@@ -1162,8 +1162,8 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		#if 0
 		if (!bAllowPreserveClient)
 		{
-			pParm->rgrc[1] = MakeRect(0,0,0,0);
-			pParm->rgrc[2] = MakeRect(0,0,0,0);
+			pParm->rgrc[1] = MakeRect(rcClient.left, rcClient.top, rcClient.left, rcClient.top);
+			pParm->rgrc[2] = MakeRect(r[2].left, r[2].top, r[2].left, r[2].top);
 		}
 		else
 		#endif

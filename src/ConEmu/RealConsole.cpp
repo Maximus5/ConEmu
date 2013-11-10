@@ -141,6 +141,7 @@ CRealConsole::CRealConsole()
 bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 {
 	Assert(apVCon && args);
+	MCHKHEAP;
 
 	mp_VCon = apVCon;
 	mp_Log = NULL;
@@ -350,6 +351,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 
 CRealConsole::~CRealConsole()
 {
+	MCHKHEAP;
 	DEBUGSTRCON(L"CRealConsole::~CRealConsole()\n");
 
 	if (!gpConEmu->isMainThread())
@@ -421,6 +423,7 @@ CRealConsole::~CRealConsole()
 	//	delete mp_Rgn;
 	//	mp_Rgn = NULL;
 	//}
+	MCHKHEAP;
 }
 
 CVirtualConsole* CRealConsole::VCon()
@@ -3234,7 +3237,6 @@ BOOL CRealConsole::StartProcess()
 	while (nStep <= 2)
 	{
 		_ASSERTE(nStep==1 || nStep==2);
-		MCHKHEAP;
 		MCHKHEAP;
 
 		// Do actual process creation

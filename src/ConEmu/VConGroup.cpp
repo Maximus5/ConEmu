@@ -326,9 +326,11 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 
 void CVConGroup::FinalRelease()
 {
+	MCHKHEAP;
 	_ASSERTE(gpConEmu->isMainThread());
 	CVConGroup* pGroup = (CVConGroup*)this;
 	delete pGroup;
+	MCHKHEAP;
 };
 
 CVConGroup::~CVConGroup()
@@ -630,6 +632,7 @@ void CVConGroup::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTr
 
 void CVConGroup::StopSignalAll()
 {
+	MCHKHEAP;
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		if (gp_VCon[i])
@@ -641,6 +644,7 @@ void CVConGroup::StopSignalAll()
 
 void CVConGroup::DestroyAllVCon()
 {
+	MCHKHEAP;
 	for (size_t i = countof(gp_VCon); i--;)
 	{
 		if (gp_VCon[i])
@@ -650,6 +654,7 @@ void CVConGroup::DestroyAllVCon()
 			p->Release();
 		}
 	}
+	MCHKHEAP;
 }
 
 void CVConGroup::OnDestroyConEmu()
@@ -3391,6 +3396,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		MBoxAssert(gpConEmu->isMainThread());
 		return NULL;
 	}
+	MCHKHEAP;
 
 	CVirtualConsole* pVCon = NULL;
 
@@ -3460,6 +3466,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		pVCon = gpConEmu->CreateConGroup(pszDataW, args->bRunAsAdministrator, NULL/*ignored when 'args' specified*/, args);
 
 		SafeFree(pszDataW);
+		MCHKHEAP;
 		return pVCon;
 	}
 
@@ -3490,6 +3497,8 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 
 			// 130826 - "-new_console:sVb" - "b" was ignored!
 			BOOL lbInBackground = args->bBackgroundTab && (pOldActive != NULL); // && !args->eSplit;
+			// 131106 - "cmd -new_console:bsV" fails, split was left invisible
+			BOOL lbShowSplit = (args->eSplit != RConStartArgs::eSplitNone);
 
 			if (pVCon)
 			{
@@ -3516,18 +3525,11 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 				{
 					pVCon->RCon()->OnActivate(i, ActiveConNum());
 
-					//mn_ActiveCon = i;
-					//Update(true);
-
 					ShowActiveGroup(pOldActive);
-					//TODO("DoubleView: показать на неактивной?");
-					//// Теперь можно показать активную
-					//gp_VActive->ShowView(SW_SHOW);
-					////ShowWindow(gp_VActive->GetView(), SW_SHOW);
-					//// и спрятать деактивированную
-					//if (pOldActive && (pOldActive != gp_VActive) && !pOldActive->isVisible())
-					//	pOldActive->ShowView(SW_HIDE);
-					//	//ShowWindow(pOldActive->GetView(), SW_HIDE);
+				}
+				else if (lbShowSplit)
+				{
+					ShowActiveGroup(NULL);
 				}
 
 				// Если была смена конфигурации окна (появились табы)
@@ -4076,6 +4078,8 @@ void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= 
 		SetRedraw(TRUE);
 		Redraw();
 	}
+
+	MCHKHEAP;
 }
 
 void CVConGroup::SyncAllConsoles2Window(RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN*/, bool bSetRedraw /*= false*/)

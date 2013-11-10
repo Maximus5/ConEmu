@@ -2036,7 +2036,7 @@ LPWSTR CConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon)
 LPWSTR CConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon)
 {
 	LPCWSTR pszResult = NULL;
-	LPCWSTR pszName = NULL, pszDir = NULL;
+	LPCWSTR pszName = NULL;
 	wchar_t* pszBuf = NULL;
 	int nTaskIndex = 0;
 
@@ -2082,7 +2082,8 @@ LPWSTR CConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon)
 		RConStartArgs *pArgs = new RConStartArgs;
 		pArgs->pszSpecialCmd = lstrdup(pszName);
 
-		if (pszDir)
+		LPWSTR pszDir = NULL;
+		if (p->GetStrArg(1, pszDir) && pszDir && *pszDir)
 			pArgs->pszStartupDir = lstrdup(pszDir);
 
 		gpConEmu->PostCreateCon(pArgs);

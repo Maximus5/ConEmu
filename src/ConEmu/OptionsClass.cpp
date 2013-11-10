@@ -12302,6 +12302,7 @@ void CSettings::SetArgBufferHeight(int anBufferHeight)
 
 void CSettings::SetDefaultCmd(LPCWSTR asCmd)
 {
+	// !!! gpConEmu may be NULL due starting time !!!
 	if (gpConEmu && gpConEmu->isMingwMode() && gpConEmu->isMSysStartup())
 	{
 		wchar_t szSearch[MAX_PATH+32], *pszFile;

@@ -115,7 +115,7 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 
 #ifdef _DEBUG
 //#undef HEAPVAL
-#define HEAPVAL //HeapValidate(mh_Heap, 0, NULL);
+#define HEAPVAL HeapValidate(mh_Heap, 0, NULL);
 #define CURSOR_ALWAYS_VISIBLE
 #else
 #define HEAPVAL
@@ -633,9 +633,8 @@ void CVirtualConsole::PointersFree()
 bool CVirtualConsole::PointersAlloc()
 {
 	mb_PointersAllocated = false;
-#ifdef _DEBUG
-	HeapValidate(mh_Heap, 0, NULL);
-#endif
+	HEAPVAL;
+
 	uint nWidthHeight = (nMaxTextWidth * nMaxTextHeight);
 #ifdef AllocArray
 #undef AllocArray
@@ -4009,14 +4008,12 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 
 LPVOID CVirtualConsole::Alloc(size_t nCount, size_t nSize)
 {
-#ifdef _DEBUG
-	//HeapValidate(mh_Heap, 0, NULL);
-#endif
+	HEAPVAL;
+	
 	size_t nWhole = nCount * nSize;
 	LPVOID ptr = HeapAlloc(mh_Heap, HEAP_GENERATE_EXCEPTIONS|HEAP_ZERO_MEMORY, nWhole);
-#ifdef _DEBUG
-	//HeapValidate(mh_Heap, 0, NULL);
-#endif
+	
+	//HEAPVAL;
 	return ptr;
 }
 
@@ -4024,13 +4021,11 @@ void CVirtualConsole::Free(LPVOID ptr)
 {
 	if (ptr && mh_Heap)
 	{
-#ifdef _DEBUG
-		//HeapValidate(mh_Heap, 0, NULL);
-#endif
+		HEAPVAL;
+
 		HeapFree(mh_Heap, 0, ptr);
-#ifdef _DEBUG
-		//HeapValidate(mh_Heap, 0, NULL);
-#endif
+
+		//HEAPVAL;
 	}
 }
 

@@ -3150,6 +3150,7 @@ void CConEmuMain::Destroy()
 CConEmuMain::~CConEmuMain()
 {
 	_ASSERTE(ghWnd==NULL || !IsWindow(ghWnd));
+	MCHKHEAP;
 	//ghWnd = NULL;
 
 	SafeDelete(mp_DefTrm);

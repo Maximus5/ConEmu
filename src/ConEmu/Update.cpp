@@ -335,8 +335,11 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 		// Already in update procedure
 		if (m_UpdateStep == us_ExitAndUpdate)
 		{
-			// Повторно?
-			gpConEmu->RequestExitUpdate();
+			if (gpConEmu)
+			{
+				// Повторно?
+				gpConEmu->RequestExitUpdate();
+			}
 		}
 		else if (abShowMessages)
 		{
@@ -455,7 +458,7 @@ bool CConEmuUpdate::ShowConfirmation()
 	bool lbConfirm = false;
 
 	// May be null, if update package was dropped on ConEmu icon
-	if (ghWnd)
+	if (gpConEmu && ghWnd)
 	{
 		gpConEmu->UpdateProgress();
 	}
@@ -487,7 +490,7 @@ bool CConEmuUpdate::ShowConfirmation()
 	{
 		mb_RequestTerminate = true;
 		// May be null, if update package was dropped on ConEmu icon
-		if (ghWnd)
+		if (gpConEmu && ghWnd)
 		{
 			gpConEmu->UpdateProgress();
 		}
@@ -514,7 +517,7 @@ DWORD CConEmuUpdate::CheckThreadProc(LPVOID lpParameter)
 	
 	pUpdate->mb_InCheckProcedure = FALSE;
 	// May be null, if update package was dropped on ConEmu icon
-	if (ghWnd)
+	if (gpConEmu && ghWnd)
 	{
 		gpConEmu->UpdateProgress();
 	}
@@ -620,7 +623,7 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 	LPCWSTR pszSetupPref = L"conemusetup.";
 	size_t lnSetupPref = _tcslen(pszSetupPref);
 
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(gpConEmu && gpConEmu->isMainThread());
 
 	if (InUpdate() != us_NotStarted)
 	{
@@ -759,7 +762,8 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 	mpsz_PendingBatchFile = pszBatchFile;
 	pszBatchFile = NULL;
 	m_UpdateStep = us_ExitAndUpdate;
-	gpConEmu->RequestExitUpdate();
+	if (gpConEmu)
+		gpConEmu->RequestExitUpdate();
 	lbExecuteRc = TRUE;
 
 wrap:
@@ -964,7 +968,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	mn_InternetContentReady = mn_InternetContentLen = 0;
 	m_UpdateStep = us_Downloading;
 	// May be null, if update package was dropped on ConEmu icon
-	if (ghWnd)
+	if (gpConEmu && ghWnd)
 	{
 		gpConEmu->UpdateProgress();
 	}
@@ -1043,7 +1047,8 @@ DWORD CConEmuUpdate::CheckProcInt()
 	mpsz_PendingBatchFile = pszBatchFile;
 	pszBatchFile = NULL;
 	m_UpdateStep = us_ExitAndUpdate;
-	gpConEmu->RequestExitUpdate();
+	if (gpConEmu)
+		gpConEmu->RequestExitUpdate();
 	lbExecuteRc = TRUE;
 
 wrap:
@@ -1109,6 +1114,11 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	wchar_t szPID[16]; _wsprintf(szPID, SKIPLEN(countof(szPID)) L"%u", GetCurrentProcessId());
 	wchar_t szCPU[4]; wcscpy_c(szCPU, WIN3264TEST(L"x86",L"x64"));
 	WARNING("Битность установщика? Если ставим в ProgramFiles64 на Win64");
+
+	if (!gpConEmu)
+	{
+		ReportError(L"CreateBatchFile failed, gpConEmu==NULL", 0); goto wrap;
+	}
 	
 	pszBatch = CreateTempFile(mp_Set->szUpdateDownloadPath, L"ConEmuUpdate.cmd", hBatch);
 	if (!pszBatch)
@@ -1823,7 +1833,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 		mn_InternetContentReady += nRead;
 
 		// May be null, if update package was dropped on ConEmu icon
-		if (ghWnd)
+		if (gpConEmu && ghWnd)
 		{
 			gpConEmu->UpdateProgress();
 		}
@@ -1942,7 +1952,8 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 	ms_LastErrorInfo = asErrorInfo;
 	SC.Unlock();
 
-	gpConEmu->ReportUpdateError();
+	if (gpConEmu)
+		gpConEmu->ReportUpdateError();
 }
 
 void CConEmuUpdate::ReportError(LPCWSTR asFormat, DWORD nErrCode)
@@ -1989,6 +2000,9 @@ void CConEmuUpdate::ReportError(LPCWSTR asFormat, LPCWSTR asArg1, LPCWSTR asArg2
 
 bool CConEmuUpdate::NeedRunElevation()
 {
+	if (!gpConEmu)
+		return false;
+
 	//TODO: В каких случаях нужен "runas"
 	//TODO: Vista+: (если сейчас НЕ "Admin") && (установка в %ProgramFiles%)
 	//TODO: WinXP-: (установка в %ProgramFiles%) && (нет доступа в %ProgramFiles%)
@@ -2166,7 +2180,7 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 
 bool CConEmuUpdate::QueryConfirmationInt(LPCWSTR asConfirmInfo)
 {
-	if (mb_InShowLastError)
+	if (mb_InShowLastError || !gpConEmu)
 		return false; // Если отображается ошибк - не звать
 
 	bool lbConfirm;
