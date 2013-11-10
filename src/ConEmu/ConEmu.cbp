@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="ConEmu" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option platforms="Windows;" />
+				<Option output="../Debug/ConEmu" prefix_auto="1" extension_auto="1" />
+				<Option object_output="../.codeblocks/obj/Debug/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option platforms="Windows;" />
+				<Option output="../Release/ConEmu" prefix_auto="1" extension_auto="1" />
+				<Option object_output="../.codeblocks/obj/Release/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-D_UNICODE" />
+			<Add option="-DUNICODE" />
+			<Add option="-D_WIN32_WINNT=0x0500" />
+			<Add option="-DWINVER=0x0500" />
+			<Add option="-D_WIN32_IE=0x0500" />
+		</Compiler>
+		<Linker>
+			<Add library="gdi32" />
+			<Add library="user32" />
+			<Add library="kernel32" />
+			<Add library="comctl32" />
+			<Add library="version" />
+			<Add library="shlwapi" />
+			<Add library="oleaut32" />
+			<Add library="Netapi32" />
+			<Add library="winmm" />
+			<Add library="ole32" />
+			<Add library="uuid" />
+		</Linker>
+		<Unit filename="../common/Common.cpp" />
+		<Unit filename="../common/ConEmuCheck.cpp" />
+		<Unit filename="../common/MAssert.cpp" />
+		<Unit filename="../common/MSecurity.cpp" />
+		<Unit filename="../common/MStrSafe.cpp" />
+		<Unit filename="../common/Memory.cpp" />
+		<Unit filename="../common/Monitors.cpp" />
+		<Unit filename="../common/RConStartArgs.cpp" />
+		<Unit filename="../common/RgnDetect.cpp" />
+		<Unit filename="../common/WinConsole.cpp" />
+		<Unit filename="../common/WinObjects.cpp" />
+		<Unit filename="../common/execute.cpp" />
+		<Unit filename="Attach.cpp" />
+		<Unit filename="Background.cpp" />
+		<Unit filename="BaseDragDrops.cpp" />
+		<Unit filename="ConEmu.cpp" />
+		<Unit filename="ConEmu.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
+		<Unit filename="ConEmuApp.cpp" />
+		<Unit filename="ConEmuCtrl.cpp" />
+		<Unit filename="ConEmuPipe.cpp" />
+		<Unit filename="ConfirmDlg.cpp" />
+		<Unit filename="CustomFonts.cpp" />
+		<Unit filename="DefaultTerm.cpp" />
+		<Unit filename="DragDrop.cpp" />
+		<Unit filename="DragDropData.cpp" />
+		<Unit filename="DwmHelper.cpp" />
+		<Unit filename="FindDlg.cpp" />
+		<Unit filename="FrameHolder.cpp" />
+		<Unit filename="GestureEngine.cpp" />
+		<Unit filename="GuiServer.cpp" />
+		<Unit filename="Hotkeys.cpp" />
+		<Unit filename="IconList.cpp" />
+		<Unit filename="Inside.cpp" />
+		<Unit filename="LoadImg.cpp" />
+		<Unit filename="Macro.cpp" />
+		<Unit filename="Menu.cpp" />
+		<Unit filename="Options.cpp" />
+		<Unit filename="OptionsClass.cpp" />
+		<Unit filename="OptionsFast.cpp" />
+		<Unit filename="OptionsHelp.cpp" />
+		<Unit filename="RealBuffer.cpp" />
+		<Unit filename="RealConsole.cpp" />
+		<Unit filename="RealServer.cpp" />
+		<Unit filename="Recreate.cpp" />
+		<Unit filename="Registry.cpp" />
+		<Unit filename="RunQueue.cpp" />
+		<Unit filename="ScreenDump.cpp" />
+		<Unit filename="Status.cpp" />
+		<Unit filename="TabBar.cpp" />
+		<Unit filename="TabID.cpp" />
+		<Unit filename="TaskBar.cpp" />
+		<Unit filename="TaskBarGhost.cpp" />
+		<Unit filename="ToolBarClass.cpp" />
+		<Unit filename="TrayIcon.cpp" />
+		<Unit filename="Update.cpp" />
+		<Unit filename="UpdateSet.cpp" />
+		<Unit filename="VConChild.cpp" />
+		<Unit filename="VConGroup.cpp" />
+		<Unit filename="VConRelease.cpp" />
+		<Unit filename="VirtualConsole.cpp" />
+		<Unit filename="version.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
