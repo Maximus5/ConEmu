@@ -11,10 +11,13 @@ Today, ConEmu can be used with any other console application or simple GUI tools
 (like PuTTY for example). ConEmu is an active project, open to
 [suggestions](http://code.google.com/p/conemu-maximus5/issues/list).
 
-Download: http://www.fosshub.com/ConEmu.html  
-Source code (svn): http://conemu-maximus5.googlecode.com/svn/trunk/
-
 This fork grew up from ConEmu by Zoin.
+
+### Some links
+Download: http://www.fosshub.com/ConEmu.html  
+Source code (svn): http://conemu-maximus5.googlecode.com/svn/trunk/  
+Donate this project: [PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3LV8XTRBK9K4E)
+
 
 
 ## Description
