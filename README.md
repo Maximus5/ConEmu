@@ -15,7 +15,8 @@ This fork grew up from ConEmu by Zoin.
 
 ### Some links
 Download: http://www.fosshub.com/ConEmu.html  
-Source code (svn): http://conemu-maximus5.googlecode.com/svn/trunk/  
+Wiki: http://code.google.com/p/conemu-maximus5/wiki/ConEmu  
+What's new: http://code.google.com/p/conemu-maximus5/wiki/Whats_New  
 Donate this project: [PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3LV8XTRBK9K4E)
 
 
@@ -49,11 +50,6 @@ are applied. You may easily use several named configurations (for different PCs 
 
 ## Requirements
   * Windows 2000 or later.
-
-
-## Documentation
-Wiki: http://code.google.com/p/conemu-maximus5/wiki/ConEmu  
-What's new: http://code.google.com/p/conemu-maximus5/wiki/Whats_New
 
 
 ## Installation
