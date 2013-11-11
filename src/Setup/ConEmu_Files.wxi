@@ -330,19 +330,19 @@
 
     <DirectoryRef Id="KeyEventsDir">
       <Component Id="KeyEvents.exe" Guid="$(var.Guid.KeyEvents.exe)" Win64="$(var.Win64)">
-        <File Id="KeyEvents.exe" Source="..\..\..\KeyEvents.SysLog\KeyEvents.exe"  KeyPath="yes" />
+        <File Id="KeyEvents.exe" Source="..\..\..\..\KeyEvents.SysLog\KeyEvents.exe"  KeyPath="yes" />
       </Component>
       <Component Id="KeyEvents.cpp" Guid="$(var.Guid.KeyEvents.cpp)" Win64="$(var.Win64)">
-        <File Id="KeyEvents.cpp" Source="..\..\..\KeyEvents.SysLog\KeyEvents.cpp"  KeyPath="yes" />
+        <File Id="KeyEvents.cpp" Source="..\..\..\..\KeyEvents.SysLog\KeyEvents.cpp"  KeyPath="yes" />
       </Component>
       <Component Id="KeyEvents.rc" Guid="$(var.Guid.KeyEvents.rc)" Win64="$(var.Win64)">
-        <File Id="KeyEvents.rc" Source="..\..\..\KeyEvents.SysLog\KeyEvents.rc"  KeyPath="yes" />
+        <File Id="KeyEvents.rc" Source="..\..\..\..\KeyEvents.SysLog\KeyEvents.rc"  KeyPath="yes" />
       </Component>
       <Component Id="KeyEvents.h" Guid="$(var.Guid.KeyEvents.h)" Win64="$(var.Win64)">
-        <File Id="KeyEvents.h" Source="..\..\..\KeyEvents.SysLog\resource.h"  KeyPath="yes" />
+        <File Id="KeyEvents.h" Source="..\..\..\..\KeyEvents.SysLog\resource.h"  KeyPath="yes" />
       </Component>
       <Component Id="KeyEvents.makefile_gcc" Guid="$(var.Guid.KeyEvents.makefile_gcc)" Win64="$(var.Win64)">
-        <File Id="KeyEvents.makefile_gcc" Source="..\..\..\KeyEvents.SysLog\makefile_gcc"  KeyPath="yes" />
+        <File Id="KeyEvents.makefile_gcc" Source="..\..\..\..\KeyEvents.SysLog\makefile_gcc"  KeyPath="yes" />
       </Component>
     </DirectoryRef>
 
