@@ -1,18 +1,15 @@
 About
 =====
-Far Manager plugins are located here.
+Far Manager plugins are located in this folder.
+
+You may download Far Manager from official site:
 http://www.farmanager.com/download.php
 
 Supported Far Manager versions:
 1.75 build 2479 or higher (x86 & x64)
 2.0  build 1761 or higher (x86 & x64)
-3.0  build .... (x86 & x64)
-
-3.0 does not have «stable» builds yet.
-
-Latest official build of 2.0 is 1807, however,
-it has several annoying bugs... Some of them are fixed here:
-http://code.google.com/p/conemu-maximus5/downloads/list?q=far2bis
+3.0  build 2798 [pre Lua] (x86 & x64)
+3.0  build 2876 or higher (x86 & x64)
 
 
 List of plugins
