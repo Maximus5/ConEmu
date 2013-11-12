@@ -105,6 +105,13 @@ static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 		{
 			gbBackgroundEnabled = (Param2 != 0);
 
+			// If plugin was already loaded, and checkbox turned ON again
+			if (gbBackgroundEnabled && WasXmlLoaded())
+			{
+				// Force recheck xml file
+				CheckXmlFile(true);
+			}
+
 			// Обновить или отключить
 			StartPlugin(TRUE /*НЕ считывать параметры из реестра*/);
 		}

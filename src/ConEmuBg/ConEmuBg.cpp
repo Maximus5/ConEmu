@@ -275,6 +275,11 @@ wchar_t* gpszXmlFolder = NULL;
 HANDLE ghXmlNotification = NULL;
 const wchar_t* szDefaultXmlName = L"Background.xml";
 
+bool WasXmlLoaded()
+{
+	return (XmlFile.FileData != NULL);
+}
+
 // Возвращает TRUE, если файл изменился
 bool CheckXmlFile(bool abUpdateName /*= false*/)
 {

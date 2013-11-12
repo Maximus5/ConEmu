@@ -52,6 +52,7 @@ extern wchar_t gsXmlConfigFile[MAX_PATH];
 extern BOOL gbMonitorFileChange;
 extern const wchar_t* szDefaultXmlName;
 bool CheckXmlFile(bool abUpdateName = false);
+bool WasXmlLoaded();
 //extern COLORREF gcrLinesColor;
 //extern int giHilightType; // 0 - линии, 1 - полосы
 //extern BOOL gbHilightPlugins;
