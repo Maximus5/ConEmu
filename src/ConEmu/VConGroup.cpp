@@ -3408,6 +3408,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 
 		// Сюда мы попадаем, если юзер жмет Win+W (создание без подтверждения)
 		LPCWSTR pszSysCmd = gpSetCls->GetCmd(NULL, true);
+		LPCWSTR pszSysDir = NULL;
 		CVConGuard vActive;
 		// OK, если ConEmu стартовал с задачей (именованой или <Startup>)
 		if (!pszSysCmd || !*pszSysCmd)
@@ -3417,6 +3418,8 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 			{
 				// Попробовать взять команду из текущей консоли?
 				pszSysCmd = vActive->RCon()->GetCmd(true);
+				if (pszSysCmd && *pszSysCmd && !args->pszStartupDir)
+					pszSysDir = vActive->RCon()->GetStartupDir();
 			}
 			// Хм? Команда по умолчанию тогда.
 			if (!pszSysCmd || !*pszSysCmd)
@@ -3426,6 +3429,12 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		}
 
 		args->pszSpecialCmd = lstrdup(pszSysCmd);
+
+		if (pszSysDir)
+		{
+			_ASSERTE(args->pszStartupDir==NULL);
+			args->pszStartupDir = lstrdup(pszSysDir);
+		}
 
 		_ASSERTE(args->pszSpecialCmd && *args->pszSpecialCmd);
 	}

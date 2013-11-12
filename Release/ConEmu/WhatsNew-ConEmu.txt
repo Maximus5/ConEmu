@@ -16,6 +16,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 [*] Minor fix in "ConEmuC /export". Don't try to export to direct parent of ConEmuC.exe process.
+[%] Issue 581: Task "/dir" switch was ignored when starting second tab.
 
 
 2013.11.07
