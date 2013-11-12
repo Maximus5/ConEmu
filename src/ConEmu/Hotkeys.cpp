@@ -1028,7 +1028,7 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkMaximize,       chk_User,  NULL,    L"Key.Maximize",          MakeHotKey(VK_F9,VK_MENU), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowMaximize()")}, // Maximize window
 		{vkMaximizeWidth,  chk_User,  NULL,    L"Key.MaximizeWidth",     0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowMaximize(1)")}, // Maximize window width
 		{vkMaximizeHeight, chk_User,  NULL,    L"Key.MaximizeHeight",    0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowMaximize(2)")}, // Maximize window height
-		{vkAltEnter,       chk_User,  NULL,    L"Key.FullScreen",        MakeHotKey(VK_RETURN,VK_MENU), CConEmuCtrl::key_AltEnter}, // Full screen
+		{vkAltEnter,       chk_User,  NULL,    L"Key.FullScreen",        MakeHotKey(VK_RETURN,VK_MENU), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowFullscreen()")}, // Full screen
 		{vkSystemMenu,     chk_User,  NULL,    L"Key.SysMenu",           MakeHotKey(VK_SPACE,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
 		{vkSystemMenu2,    chk_User,  NULL,    L"Key.SysMenu2",          MakeHotKey(VK_RBUTTON,VK_CONTROL), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
 		{vkCtrlUp,         chk_User,  NULL,    L"Key.BufUp",             MakeHotKey(VK_UP,VK_CONTROL), CConEmuCtrl::key_BufferScrollUp}, // Buffer scroll
@@ -1095,7 +1095,7 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkWinAltP,        chk_System, NULL, L"", MakeHotKey('P',VK_LWIN,VK_MENU), CConEmuCtrl::key_Settings, true/*OnKeyUp*/}, // Settings
 		{vkWinAltSpace,    chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_LWIN,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
 		{vkCtrlWinAltSpace,chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_CONTROL,VK_LWIN,VK_MENU), CConEmuCtrl::key_ShowRealConsole}, // Show real console
-		{vkCtrlWinEnter,   chk_System, NULL, L"", MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL), CConEmuCtrl::key_FullScreen},
+		{vkCtrlWinEnter,   chk_System, NULL, L"", MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowFullscreen()")},
 		{vkCtrlTab,        chk_System, UseCtrlTab, L"", MakeHotKey(VK_TAB,VK_CONTROL), CConEmuCtrl::key_CtrlTab}, // Tab switch
 		{vkCtrlShiftTab,   chk_System, UseCtrlTab, L"", MakeHotKey(VK_TAB,VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_CtrlShiftTab}, // Tab switch
 		{vkCtrlTab_Left,   chk_System, NULL, L"", MakeHotKey(VK_LEFT,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Prev}, // Tab switch

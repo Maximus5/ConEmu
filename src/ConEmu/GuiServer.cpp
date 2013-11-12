@@ -195,7 +195,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				bool bCreateTab = (pIn->NewCmd.ShowHide == sih_None || pIn->NewCmd.ShowHide == sih_StartDetached)
 					// Issue 1275: When minimized into TSA (on all VCon are closed) we need to restore and run new tab
 					|| (pIn->NewCmd.szCommand[0] && !CVConGroup::isVConExists(0));
-				gpConEmu->OnMinimizeRestore(bCreateTab ? sih_SetForeground : pIn->NewCmd.ShowHide);
+				gpConEmu->DoMinimizeRestore(bCreateTab ? sih_SetForeground : pIn->NewCmd.ShowHide);
 
 				// Может быть пусто
 				if (bCreateTab && pIn->NewCmd.szCommand[0])

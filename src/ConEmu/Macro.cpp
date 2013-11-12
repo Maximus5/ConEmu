@@ -937,7 +937,7 @@ LPWSTR CConEmuMacro::WindowFullscreen(GuiMacro* p, CRealConsole* apRCon)
 {
 	LPWSTR pszRc = WindowMode(NULL, NULL);
 
-	gpConEmu->OnAltEnter();
+	gpConEmu->DoFullScreen();
 
 	return pszRc;
 }
@@ -954,12 +954,12 @@ LPWSTR CConEmuMacro::WindowMaximize(GuiMacro* p, CRealConsole* apRCon)
 	{
 	case 1:
 		// By width
-		gpConEmu->OnMaximizeWidthHeight(true,false); break;
+		gpConEmu->DoMaximizeWidthHeight(true,false); break;
 	case 2:
 		// By height
-		gpConEmu->OnMaximizeWidthHeight(false,true); break;
+		gpConEmu->DoMaximizeWidthHeight(false,true); break;
 	default:
-		gpConEmu->OnAltF9();
+		gpConEmu->DoMaximizeRestore();
 	}
 
 	return pszRc;

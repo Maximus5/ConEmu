@@ -5215,7 +5215,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	if ((inMode != wmFullScreen) && (WindowMode == wmFullScreen))
 	{
 		// Отмена vkForceFullScreen
-		OnForcedFullScreen(false);
+		DoForcedFullScreen(false);
 	}
 
 	#ifdef _DEBUG
@@ -8405,7 +8405,7 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 		//// vmMinimizeRestore -> Win+C
 		//else if (gpConEmu->mn_MinRestoreRegistered && (int)wParam == gpConEmu->mn_MinRestoreRegistered)
 		//{
-		//	gpConEmu->OnMinimizeRestore();
+		//	gpConEmu->DoMinimizeRestore();
 		//}
 
 		for (size_t i = 0; i < countof(gRegisteredHotKeys); i++)
@@ -8416,13 +8416,13 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 				{
 				case vkMinimizeRestore:
 				case vkMinimizeRestor2:
-					OnMinimizeRestore();
+					DoMinimizeRestore();
 					break;
 				case vkGlobalRestore:
-					OnMinimizeRestore(sih_Show);
+					DoMinimizeRestore(sih_Show);
 					break;
 				case vkForceFullScreen:
-					OnForcedFullScreen(true);
+					DoForcedFullScreen(true);
 					break;
 				}
 				break;
@@ -11898,7 +11898,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			if (!lbSkipQuakeActivation)
 			{
 				// Обработать клик по кнопке на таскбаре
-				OnMinimizeRestore(sih_ShowMinimize);
+				DoMinimizeRestore(sih_ShowMinimize);
 			}
 		}
 
@@ -11935,7 +11935,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 			if (!mb_IgnoreQuakeActivation)
 			{
-				OnMinimizeRestore(sih_Show);
+				DoMinimizeRestore(sih_Show);
 			}
 		}
 
@@ -12174,7 +12174,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 			if (!mb_IgnoreQuakeActivation)
 			{
-				OnMinimizeRestore(sih_AutoHide);
+				DoMinimizeRestore(sih_AutoHide);
 			}
 		}
 		else if (!mn_ForceTimerCheckLoseFocus)
@@ -12716,7 +12716,7 @@ void CConEmuMain::OnTaskbarSettingsChanged()
 	apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
 }
 
-void CConEmuMain::OnAltEnter()
+void CConEmuMain::DoFullScreen()
 {
 	if (mp_Inside)
 	{
@@ -12734,7 +12734,7 @@ void CConEmuMain::OnAltEnter()
 		gpConEmu->SetWindowMode(gpConEmu->isWndNotFSMaximized ? wmMaximized : wmNormal);
 }
 
-bool CConEmuMain::OnMaximizeWidthHeight(bool bWidth, bool bHeight)
+bool CConEmuMain::DoMaximizeWidthHeight(bool bWidth, bool bHeight)
 {
 	RECT rcWnd, rcNewWnd;
 	GetWindowRect(ghWnd, &rcWnd);
@@ -12800,7 +12800,7 @@ bool CConEmuMain::OnMaximizeWidthHeight(bool bWidth, bool bHeight)
 	return true;
 }
 
-void CConEmuMain::OnAltF9()
+void CConEmuMain::DoMaximizeRestore()
 {
 	// abPosted - removed, all calls was as TRUE
 
@@ -12967,7 +12967,7 @@ bool CConEmuMain::InMinimizing()
 	return false;
 }
 
-void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= sih_None*/)
+void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= sih_None*/)
 {
 	if (mp_Inside)
 		return;
@@ -12982,7 +12982,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	BOOL bVis = IsWindowVisible(ghWnd);
 
 	wchar_t szInfo[120];
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"OnMinimizeRestore(%i) Fore=x%08X Our=%u Iconic=%u Vis=%u",
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DoMinimizeRestore(%i) Fore=x%08X Our=%u Iconic=%u Vis=%u",
 		ShowHideType, (DWORD)hCurForeground, bIsForeground, bIsIconic, bVis);
 	LogFocusInfo(szInfo);
 
@@ -12995,7 +12995,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				DWORD nDelay = GetTickCount() - mn_LastQuakeShowHide;
 				if (nDelay < QUAKE_FOCUS_CHECK_TIMER_DELAY)
 				{
-					_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"OnMinimizeRestore skipped, delay was %u ms", nDelay);
+					_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DoMinimizeRestore skipped, delay was %u ms", nDelay);
 					LogFocusInfo(szInfo);
 					return;
 				}
@@ -13109,25 +13109,25 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		switch (cmd)
 		{
 		case sih_None:
-			LogFocusInfo(L"OnMinimizeRestore(sih_None)"); break;
+			LogFocusInfo(L"DoMinimizeRestore(sih_None)"); break;
 		case sih_ShowMinimize:
-			LogFocusInfo(L"OnMinimizeRestore(sih_ShowMinimize)"); break;
+			LogFocusInfo(L"DoMinimizeRestore(sih_ShowMinimize)"); break;
 		case sih_ShowHideTSA:
-			LogFocusInfo(L"OnMinimizeRestore(sih_ShowHideTSA)"); break;
+			LogFocusInfo(L"DoMinimizeRestore(sih_ShowHideTSA)"); break;
 		case sih_Show:
-			LogFocusInfo(L"OnMinimizeRestore(sih_Show)"); break;
+			LogFocusInfo(L"DoMinimizeRestore(sih_Show)"); break;
 		case sih_SetForeground:
-			LogFocusInfo(L"OnMinimizeRestore(sih_SetForeground)"); break;
+			LogFocusInfo(L"DoMinimizeRestore(sih_SetForeground)"); break;
 		case sih_HideTSA:
-			LogFocusInfo(L"OnMinimizeRestore(sih_HideTSA)"); break;
+			LogFocusInfo(L"DoMinimizeRestore(sih_HideTSA)"); break;
 		case sih_Minimize:
-			LogFocusInfo(L"OnMinimizeRestore(sih_Minimize)"); break;
+			LogFocusInfo(L"DoMinimizeRestore(sih_Minimize)"); break;
 		case sih_AutoHide:
-			LogFocusInfo(L"OnMinimizeRestore(sih_AutoHide)"); break;
+			LogFocusInfo(L"DoMinimizeRestore(sih_AutoHide)"); break;
 		case sih_QuakeShowHide:
-			LogFocusInfo(L"OnMinimizeRestore(sih_QuakeShowHide)"); break;
+			LogFocusInfo(L"DoMinimizeRestore(sih_QuakeShowHide)"); break;
 		default:
-			LogFocusInfo(L"OnMinimizeRestore(Unknown cmd)");
+			LogFocusInfo(L"DoMinimizeRestore(Unknown cmd)");
 		}
 	}
 
@@ -13285,7 +13285,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		if (GetActiveVCon(&VCon) >= 0)
 		{
 			VCon->PostRestoreChildFocus();
-			//gpConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"From OnMinimizeRestore(sih_Show)");
+			//gpConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"From DoMinimizeRestore(sih_Show)");
 		}
 
 		if (bIsIconic)
@@ -13312,7 +13312,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				setFocus();
 				apiSetForegroundWindow(ghWnd);
 			}
-			//TODO: Тут наверное нужно выйти и позвать Post для OnMinimizeRestore(cmd)
+			//TODO: Тут наверное нужно выйти и позвать Post для DoMinimizeRestore(cmd)
 			//TODO: иначе при сворачивании не активируется "следующее" окно, фокус ввода
 			//TODO: остается в дочернем Notepad (ввод текста идет в него)
 		}
@@ -13445,12 +13445,12 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	}
 
 	mn_LastQuakeShowHide = GetTickCount();
-	LogFocusInfo(L"OnMinimizeRestore finished");
+	LogFocusInfo(L"DoMinimizeRestore finished");
 
 	bInFunction = false;
  }
 
-void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
+void CConEmuMain::DoForcedFullScreen(bool bSet /*= true*/)
 {
 	static bool bWasSetTopMost = false;
 
@@ -13949,7 +13949,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			//{
 			//	if (messg == WM_KEYUP)
 			//	{
-			//		OnMinimizeRestore(sih_Minimize);
+			//		DoMinimizeRestore(sih_Minimize);
 			//	}
 			//}
 		}
@@ -13995,7 +13995,7 @@ void CConEmuMain::OnConsoleKey(WORD vk, LPARAM Mods)
 		_ASSERTE(vk != VK_RETURN);
 		if (!gpSet->isSendAltEnter)
 		{
-			OnAltEnter();
+			DoFullScreen();
 			return;
 		}
 	}
@@ -16207,7 +16207,7 @@ BOOL CConEmuMain::OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPA
 			return FALSE;
 		}
 
-		OnMaximizeWidthHeight( (wParam == HTLEFT || wParam == HTRIGHT), (wParam == HTTOP || wParam == HTBOTTOM) );
+		DoMaximizeWidthHeight( (wParam == HTLEFT || wParam == HTRIGHT), (wParam == HTTOP || wParam == HTBOTTOM) );
 
 		return TRUE;
 	}
@@ -19090,7 +19090,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgPostAltF9)
 			{
-				OnAltF9();
+				DoMaximizeRestore();
 				return 0;
 			}
 			else if (messg == this->mn_MsgInitInactiveDC)

@@ -417,7 +417,7 @@ bool CConEmuCtrl::key_MinimizeRestore(DWORD VkMod, bool TestOnly, const ConEmuHo
 		return true;
 	// ƒолжно обрабатыватьс€ через WM_HOTKEY
 	_ASSERTE(FALSE && "CConEmuCtrl::key_MinimizeRestore");
-	gpConEmu->OnMinimizeRestore();
+	gpConEmu->DoMinimizeRestore();
 	return true;
 }
 
@@ -436,7 +436,7 @@ bool CConEmuCtrl::key_MinimizeByEsc(DWORD VkMod, bool TestOnly, const ConEmuHotK
 	if (TestOnly)
 		return true;
 
-	gpConEmu->OnMinimizeRestore((gpConEmu->WindowStartTSA || (gpSet->isMultiHideOnClose == 1) || gpSet->isMinToTray()) ? sih_HideTSA : sih_Minimize);
+	gpConEmu->DoMinimizeRestore((gpConEmu->WindowStartTSA || (gpSet->isMultiHideOnClose == 1) || gpSet->isMinToTray()) ? sih_HideTSA : sih_Minimize);
 	return true;
 }
 
@@ -447,7 +447,7 @@ bool CConEmuCtrl::key_GlobalRestore(DWORD VkMod, bool TestOnly, const ConEmuHotK
 		return true;
 	// ƒолжно обрабатыватьс€ через WM_HOTKEY
 	_ASSERTE(FALSE && "CConEmuCtrl::key_GlobalRestore");
-	gpConEmu->OnMinimizeRestore(sih_Show);
+	gpConEmu->DoMinimizeRestore(sih_Show);
 	return true;
 }
 
@@ -746,20 +746,6 @@ bool CConEmuCtrl::key_TabMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_AltF9(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	//if (gpSet->isSendAltF9)
-	//	return false;
-
-	if (TestOnly)
-		return true;
-
-	// Called as "Post" to force "Far" resize by Alt-release?
-	gpConEmu->OnAltF9();
-	return true;
-}
-
-// pRCon may be NULL
 bool CConEmuCtrl::key_ShowRealConsole(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
@@ -772,60 +758,13 @@ bool CConEmuCtrl::key_ShowRealConsole(DWORD VkMod, bool TestOnly, const ConEmuHo
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_AltEnter(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	//if (gpSet->isSendAltEnter)
-	//	return false;
-
-	if (TestOnly)
-		return true;
-
-	//if (gpSet->isSendAltEnter)
-	//{
-	//	#if 0
-	//	INPUT_RECORD r = {KEY_EVENT};
-	//	//On Keyboard(hConWnd, WM_KEYDOWN, VK_MENU, 0); -- Alt слать не нужно - он уже послан
-	//	WARNING("ј надо ли так заморачиватьс€?");
-	//	//On Keyboard(hConWnd, WM_KEYDOWN, VK_RETURN, 0);
-	//	r.Event.KeyEvent.bKeyDown = TRUE;
-	//	r.Event.KeyEvent.wRepeatCount = 1;
-	//	r.Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
-	//	r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_RETURN, 0/*MAPVK_VK_TO_VSC*/);
-	//	r.Event.KeyEvent.dwControlKeyState = NUMLOCK_ON|LEFT_ALT_PRESSED /*0x22*/;
-	//	r.Event.KeyEvent.uChar.UnicodeChar = pszChars[0];
-	//	PostConsoleEvent(&r);
-	//	//On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
-	//	r.Event.KeyEvent.bKeyDown = FALSE;
-	//	r.Event.KeyEvent.dwControlKeyState = NUMLOCK_ON;
-	//	PostConsoleEvent(&r);
-	//	//On Keyboard(hConWnd, WM_KEYUP, VK_MENU, 0); -- Alt слать не нужно - он будет послан сам позже
-	//	#endif
-	//	_ASSERTE(pszChars[0]==13);
-	//	PostKeyPress(VK_RETURN, LEFT_ALT_PRESSED, pszChars[0]);
-	//}
-	//else
-	//{
-	//	// „тобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
-	//	if (gpSet->isFixAltOnAltTab)
-	//		PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
-	//	// Change fullscreen mode
-	//	gpConEmu->OnAltEnter();
-	//	//isSkipNextAltUp = true;
-	//}
-
-
-	gpConEmu->OnAltEnter();
-	return true;
-}
-
-// pRCon may be NULL
 bool CConEmuCtrl::key_ForcedFullScreen(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
 
 	// ƒолжно обрабатыватьс€ через WM_HOTKEY
-	gpConEmu->OnForcedFullScreen();
+	gpConEmu->DoForcedFullScreen();
 	return true;
 }
 
@@ -864,16 +803,6 @@ bool CConEmuCtrl::key_ChildSystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHo
 	{
 		VCon->RCon()->ChildSystemMenu();
 	}
-	return true;
-}
-
-// pRCon may be NULL
-bool CConEmuCtrl::key_FullScreen(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	if (TestOnly)
-		return true;
-
-	gpConEmu->OnAltEnter();
 	return true;
 }
 

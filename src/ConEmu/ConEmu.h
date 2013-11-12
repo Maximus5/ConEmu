@@ -862,11 +862,11 @@ class CConEmuMain :
 		BOOL setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
-		void OnAltEnter();
-		void OnAltF9();
-		bool OnMaximizeWidthHeight(bool bWidth, bool bHeight);
-		void OnMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
-		void OnForcedFullScreen(bool bSet = true);
+		void DoFullScreen();
+		void DoMaximizeRestore();
+		bool DoMaximizeWidthHeight(bool bWidth, bool bHeight);
+		void DoMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
+		void DoForcedFullScreen(bool bSet = true);
 		void OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp);
 		void OnAlwaysOnTop();
 		void OnAlwaysShowScrollbar(bool abSync = true);

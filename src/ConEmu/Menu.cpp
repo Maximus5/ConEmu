@@ -1607,7 +1607,7 @@ void CConEmuMenu::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
 			default:
 				//SendMessage(ghWnd, WM_TRAYNOTIFY, 0, WM_LBUTTONDOWN);
 				//Icon.OnTryIcon(ghWnd, WM_TRAYNOTIFY, 0, WM_LBUTTONDOWN);
-				gpConEmu->OnMinimizeRestore(sih_Show);
+				gpConEmu->DoMinimizeRestore(sih_Show);
 				break;
 		}
 	}
@@ -2347,7 +2347,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 				if (gpSet->isQuakeStyle)
 				{
-					gpConEmu->OnMinimizeRestore(sih_Show/*sih_HideTSA*/);
+					gpConEmu->DoMinimizeRestore(sih_Show/*sih_HideTSA*/);
 					break;
 				}
 
@@ -2398,7 +2398,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 				if (gpSet->isQuakeStyle)
 				{
-					gpConEmu->OnMinimizeRestore(sih_AutoHide);
+					gpConEmu->DoMinimizeRestore(sih_AutoHide);
 				}
 				else if (bMin2TSA)
 				{

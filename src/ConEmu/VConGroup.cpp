@@ -2995,7 +2995,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 
 		if (gpConEmu->isIconic())
 		{
-			gpConEmu->OnMinimizeRestore(sih_SetForeground);
+			gpConEmu->DoMinimizeRestore(sih_SetForeground);
 		}
 
 		// т.к. это приходит из серверного потока - зовем в главном
