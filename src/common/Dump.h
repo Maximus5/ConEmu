@@ -183,11 +183,26 @@ wrap:
 		GetModuleFileName(NULL, szExeName, countof(szExeName)-1);
 		LPCWSTR pszExeName = PointToName(szExeName);
 
-		wchar_t what[64];
+		wchar_t what[100];
 		if (ExceptionInfo && ExceptionInfo->ExceptionRecord)
-			_wsprintf(what, SKIPLEN(countof(what)) L"Exception 0x%08X", ExceptionInfo->ExceptionRecord->ExceptionCode);
+		{
+			_wsprintf(what, SKIPLEN(countof(what)) L"Exception 0x%08X", ExceptionInfo->ExceptionRecord->ExceptionCode)
+			if (EXCEPTION_ACCESS_VIOLATION == ExceptionInfo->ExceptionRecord->ExceptionCode
+				&& ExceptionInfo->ExceptionRecord->NumberParameters >= 2)
+			{
+				ULONG_PTR iType = ExceptionInfo->ExceptionRecord->ExceptionInformation[0];
+				ULONG_PTR iAddr = ExceptionInfo->ExceptionRecord->ExceptionInformation[1];
+				INT_PTR iLen = lstrlen(what);
+				_wsprintf(what+iLen, SKIPLEN(countof(what)-iLen)
+					WIN3264TEST(L" (%sx%08X)",L" (%s x%08X%08X)"),
+					(iType==0) ? L"Read " : (iType==1) ? L"Write " : (iType==8) ? L"DEP " : L"",
+					WIN3264WSPRINT(iAddr));
+			}
+		}
 		else
+		{
 			wcscpy_c(what, L"Assertion");
+		}
 
 		_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo)) L"%s was occurred (%s, PID=%u)\r\nConEmu build %02u%02u%02u%s %s\r\n\r\n"
 			L"Memory dump was saved to\r\n%s\r\n\r\n"
