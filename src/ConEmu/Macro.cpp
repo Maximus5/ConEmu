@@ -947,7 +947,20 @@ LPWSTR CConEmuMacro::WindowMaximize(GuiMacro* p, CRealConsole* apRCon)
 {
 	LPWSTR pszRc = WindowMode(NULL, NULL);
 
-	gpConEmu->OnAltF9();
+	int nStyle = 0; // 
+	p->GetIntArg(0, nStyle);
+
+	switch (nStyle)
+	{
+	case 1:
+		// By width
+		gpConEmu->OnMaximizeWidthHeight(true,false); break;
+	case 2:
+		// By height
+		gpConEmu->OnMaximizeWidthHeight(false,true); break;
+	default:
+		gpConEmu->OnAltF9();
+	}
 
 	return pszRc;
 }

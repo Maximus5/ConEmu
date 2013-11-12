@@ -2738,9 +2738,9 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 				pHK->VkMod = 0; // Сбросить VkMod для vkAltEnter
 			}
 			// Если раньше был включен флажок "Send Alt+F9 to console"
-			if (bSendAltF9 && GetHotkeyById(vkAltF9, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == ConEmuHotKey::MakeHotKey(VK_F9,VK_MENU)))
+			if (bSendAltF9 && GetHotkeyById(vkMaximize, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == ConEmuHotKey::MakeHotKey(VK_F9,VK_MENU)))
 			{
-				pHK->VkMod = 0; // Сбросить VkMod для vkAltF9
+				pHK->VkMod = 0; // Сбросить VkMod для vkMaximize
 			}
 		}
 

@@ -257,8 +257,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"WindowFullscreen()\r\n" \
 	L"  - Switch fullscreen window mode\r\n" \
 	L"     returns previous window mode\r\n" \
-	L"WindowMaximize()\r\n" \
-	L"  - Switch maximized window mode\r\n" \
+	L"WindowMaximize([<Cmd>])\r\n" \
+	L"  - Switch maximized window mode (Cmd==0)\r\n" \
+	L"  - Maximize window by width (Cmd==1) or height (Cmd==2)\r\n" \
 	L"     returns previous window mode\r\n" \
 	L"WindowMinimize() or WindowMinimize(1)\r\n" \
 	L"  - Minimize ConEmu window (\"1\" means \"minimize to the TSA\")\r\n" \

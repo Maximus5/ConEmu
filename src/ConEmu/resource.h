@@ -399,7 +399,7 @@
 #define vkRDragKey                      2012
 #define vkWinAltP                       2013
 #define vkWinAltSpace                   2014
-#define vkAltF9                         2015
+#define vkMaximize                      2015
 #define vkCtrlWinAltSpace               2016
 #define vkAltEnter                      2017
 #define vkSystemMenu                    2018
@@ -975,6 +975,8 @@
 #define vkCTSCopyHtml0                  2633
 #define vkCTSCopyHtml1                  2634
 #define vkCTSCopyHtml2                  2635
+#define vkMaximizeWidth                 2636
+#define vkMaximizeHeight                2637
 
 // Next default values for new objects
 // 
@@ -982,7 +984,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        224
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2636
+#define _APS_NEXT_CONTROL_VALUE         2640
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
