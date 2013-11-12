@@ -228,7 +228,7 @@ void ReportFail(LPCWSTR asInfo)
 
 struct DrawInfo
 {
-	LPCWSTR  szVolume, szVolumeRoot, szVolumeSize;
+	LPCWSTR  szVolume, szVolumeRoot, szVolumeSize, szVolumeFree;
 	DWORD    nDriveType;
 	enum {
 		dib_Small = 0, dib_Large = 1, dib_Off = 2
@@ -1582,6 +1582,8 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 											lstrcpyn(szTemp, pDraw->szVolume, countof(szTemp));
 										else if (lstrcmpi(szTemp, L"VOLUMESIZE") == 0)
 											lstrcpyn(szTemp, pDraw->szVolumeSize, countof(szTemp));
+										else if (lstrcmpi(szTemp, L"VOLUMEFREE") == 0)
+											lstrcpyn(szTemp, pDraw->szVolumeFree, countof(szTemp));
 										else if (lstrcmpi(szTemp, L"PANELFORMAT") == 0)
 											lstrcpyn(szTemp, pPanel->szFormat ? pPanel->szFormat : L"", countof(szTemp));
 
@@ -2039,6 +2041,36 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 }
 
 
+void FormatSize(ULARGE_INTEGER size, wchar_t* out)
+{
+	if (size.QuadPart)
+	{
+		// Сформатировать размер
+		u64 lSize = size.QuadPart, lDec = 0;
+		const wchar_t *SizeSymbol[]={L"B",L"KB",L"MB",L"GB",L"TB",L"PB"};
+		for (size_t n = 0; n < countof(SizeSymbol); n++)
+		{
+			if (lSize < 1000)
+			{
+				if (lDec > 0 && lDec < 10 && lSize < 10)
+					_wsprintf(out, SKIPLEN(MAX_PATH) L"%u.%u %s", (UINT)lSize, (UINT)lDec, SizeSymbol[n]);
+				else
+					_wsprintf(out, SKIPLEN(MAX_PATH) L"%u %s", (UINT)lSize, SizeSymbol[n]);
+				break;
+			}
+
+			u64 lNext = lSize >> 10;
+			lDec = (lSize % 1024) / 100;
+			lSize = lNext;
+		}
+		//if (!*szVolumeSize)
+		//{
+		//	_wsprintf(szVolumeSize, SKIPLEN(MAX_PATH) L"%u %s", (UINT)lSize, SizeSymbol[countof(SizeSymbol)-1]);
+		//}
+	}
+}
+
+
 int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColor, int& cOtherDrive)
 {
 	DrawInfo* pDraw = (DrawInfo*)calloc(sizeof(*pDraw), 1);
@@ -2081,6 +2113,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 	int nMaxVolumeLen = lstrlen(bkInfo->szCurDir ? bkInfo->szCurDir : L"");
 	wchar_t* szVolumeRoot = (wchar_t*)calloc(nMaxVolumeLen+2,sizeof(*szVolumeRoot));
 	wchar_t* szVolumeSize = (wchar_t*)calloc(MAX_PATH,sizeof(*szVolumeSize));
+	wchar_t* szVolumeFree = (wchar_t*)calloc(MAX_PATH,sizeof(*szVolumeFree));
 	wchar_t* szVolume = (wchar_t*)calloc(MAX_PATH,sizeof(*szVolume));
 	if (bkInfo->szCurDir && *bkInfo->szCurDir)
 	{
@@ -2132,31 +2165,8 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 				}
 			}
 			
-			if (llTotalSize.QuadPart)
-			{
-				// Сформатировать размер
-				u64 lSize = llTotalSize.QuadPart, lDec = 0;
-				const wchar_t *SizeSymbol[]={L"B",L"KB",L"MB",L"GB",L"TB",L"PB"};
-				for (size_t n = 0; n < countof(SizeSymbol); n++)
-				{
-					if (lSize < 1000)
-					{
-						if (lDec > 0 && lDec < 10 && lSize < 10)
-							_wsprintf(szVolumeSize, SKIPLEN(MAX_PATH) L"%u.%u %s", (UINT)lSize, (UINT)lDec, SizeSymbol[n]);
-						else
-							_wsprintf(szVolumeSize, SKIPLEN(MAX_PATH) L"%u %s", (UINT)lSize, SizeSymbol[n]);
-						break;
-					}
-					
-					u64 lNext = lSize >> 10;
-					lDec = (lSize % 1024) / 100;
-					lSize = lNext;
-				}
-				//if (!*szVolumeSize)
-				//{
-				//	_wsprintf(szVolumeSize, SKIPLEN(MAX_PATH) L"%u %s", (UINT)lSize, SizeSymbol[countof(SizeSymbol)-1]);
-				//}
-			}
+			FormatSize(llTotalSize, szVolumeSize);
+			FormatSize(llFreeSize, szVolumeFree);
 		}
 		
 		// Извлечь "Букву" диска
@@ -2179,6 +2189,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 	pDraw->szVolume = szVolume;
 	pDraw->szVolumeRoot = szVolumeRoot;
 	pDraw->szVolumeSize = szVolumeSize;
+	pDraw->szVolumeFree = szVolumeFree;
 	pDraw->nDriveType = nDriveType;
 
 	if (nDriveType != DRIVE_UNKNOWN && nDriveType != DRIVE_CDROM && nDriveType != DRIVE_NO_ROOT_DIR)
@@ -2632,6 +2643,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 	free(pDraw);
 	free(szVolume);
 	free(szVolumeSize);
+	free(szVolumeFree);
 	return TRUE;
 }
 

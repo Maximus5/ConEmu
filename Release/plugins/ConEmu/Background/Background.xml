@@ -76,6 +76,7 @@
 			PanelFormat - [A|P]Panel.Prefix or [A|P]Panel.Format
 			Volume      - drive letter with colon
 			VolumeSize  - drive size
+			VolumeFree  - free drive space
 	example:
 		<title>Volume+" "+VolumeSize</title>
 
