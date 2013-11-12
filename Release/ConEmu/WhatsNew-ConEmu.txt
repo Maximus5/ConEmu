@@ -1,4 +1,4 @@
-﻿You can read online version of this file
+You can read online version of this file
 English: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=en
 Russian: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=ru
 SVN: http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt

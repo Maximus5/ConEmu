@@ -1,0 +1,2 @@
+﻿
+[!] Scrollable horizontal buffer. Work in progress.
