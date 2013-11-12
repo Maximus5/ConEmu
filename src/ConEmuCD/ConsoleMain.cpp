@@ -3200,8 +3200,8 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 				break; // Fin, this is root server
 			if (!bParentFound)
 				break; // Fin, no more parents
-
-			//_ASSERTE(nTestPID != nOurParentPID); - вполне себе может far->conemuc->cmd->conemuc/export
+			if (nTestPID == nOurParentPID)
+				continue; // Useless, we just inherited ALL those variables from our parent
 
 			// Apply environment
 			CESERVER_REQ *pOut = ExecuteHkCmd(nTestPID, pIn, ghConWnd);

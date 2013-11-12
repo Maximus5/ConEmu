@@ -15,6 +15,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[*] Minor fix in "ConEmuC /export". Don't try to export to direct parent of ConEmuC.exe process.
+
+
 2013.11.07
 [+] Now it is possible to execute GuiMacro from outside of ConEmu window.
     Would remind that you may call several macros, delimited with semicolon, in a time.
