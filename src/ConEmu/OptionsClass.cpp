@@ -769,6 +769,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_CONTROL,     1, L"Controls",       thi_KeybMouse/*,OnInitDialog_Control*/},
 		{IDD_SPG_SELECTION,   1, L"Mark & Paste",   thi_Selection/*OnInitDialog_Selection*/},
 		{IDD_SPG_FEATURE_FAR, 0, L"Far Manager",    thi_Far/*,     OnInitDialog_Far*/, true/*Collapsed*/},
+		{IDD_SPG_FARMACRO,    1, L"Far macros",     thi_FarMacro/*, OnInitDialog_FarMacro*/},
 		{IDD_SPG_VIEWS,       1, L"Views",          thi_Views/*,   OnInitDialog_Views*/},
 		{IDD_SPG_INFO,        0, L"Info",           thi_Info/*,    OnInitDialog_Info*/, RELEASEDEBUGTEST(true,false)/*Collapsed in Release*/},
 		{IDD_SPG_DEBUG,       1, L"Debug",          thi_Debug/*,   OnInitDialog_Debug*/},
@@ -2590,17 +2591,6 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 	if (!abInitial)
 		return 0;
 
-	_ASSERTE(gpSet->isRClickSendKey==0 || gpSet->isRClickSendKey==1 || gpSet->isRClickSendKey==2);
-	checkDlgButton(hWnd2, cbRClick, gpSet->isRClickSendKey);
-	SetDlgItemText(hWnd2, tRClickMacro, gpSet->RClickMacro(fmv_Default));
-
-	checkDlgButton(hWnd2, cbSafeFarClose, gpSet->isSafeFarClose);
-	SetDlgItemText(hWnd2, tSafeFarCloseMacro, gpSet->SafeFarCloseMacro(fmv_Default));
-
-	SetDlgItemText(hWnd2, tCloseTabMacro, gpSet->TabCloseMacro(fmv_Default));
-	
-	SetDlgItemText(hWnd2, tSaveAllMacro, gpSet->SaveAllMacro(fmv_Default));
-
 	checkDlgButton(hWnd2, cbFARuseASCIIsort, gpSet->isFARuseASCIIsort);
 
 	checkDlgButton(hWnd2, cbShellNoZoneCheck, gpSet->isShellNoZoneCheck);
@@ -2638,6 +2628,26 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 	SetDlgItemText(hWnd2, tTabViewer, gpSet->szTabViewer);
 	SetDlgItemText(hWnd2, tTabEditor, gpSet->szTabEditor);
 	SetDlgItemText(hWnd2, tTabEditorMod, gpSet->szTabEditorModified);
+
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_FarMacro(HWND hWnd2, BOOL abInitial)
+{
+	_ASSERTE(gpSet->isRClickSendKey==0 || gpSet->isRClickSendKey==1 || gpSet->isRClickSendKey==2);
+	checkDlgButton(hWnd2, cbRClick, gpSet->isRClickSendKey);
+	if (abInitial || GetWindowTextLength(GetDlgItem(hWnd2, tRClickMacro)) == 0)
+		SetDlgItemText(hWnd2, tRClickMacro, gpSet->RClickMacro(fmv_Default));
+
+	checkDlgButton(hWnd2, cbSafeFarClose, gpSet->isSafeFarClose);
+	if (abInitial || GetWindowTextLength(GetDlgItem(hWnd2, tSafeFarCloseMacro)) == 0)
+		SetDlgItemText(hWnd2, tSafeFarCloseMacro, gpSet->SafeFarCloseMacro(fmv_Default));
+
+	if (abInitial || GetWindowTextLength(GetDlgItem(hWnd2, tCloseTabMacro)) == 0)
+		SetDlgItemText(hWnd2, tCloseTabMacro, gpSet->TabCloseMacro(fmv_Default));
+	
+	if (abInitial || GetWindowTextLength(GetDlgItem(hWnd2, tSaveAllMacro)) == 0)
+		SetDlgItemText(hWnd2, tSaveAllMacro, gpSet->SaveAllMacro(fmv_Default));
 
 	return 0;
 }
@@ -8806,6 +8816,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_FEATURE_FAR:
 			gpSetCls->OnInitDialog_Far(hWnd2, TRUE);
 			break;
+		case IDD_SPG_FARMACRO:
+			gpSetCls->OnInitDialog_FarMacro(hWnd2, TRUE);
+			break;
 		case IDD_SPG_KEYS:
 			{
 			bool lbOld = bSkipSelChange; bSkipSelChange = true;
@@ -8904,6 +8917,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_SELECTION: /*gpSetCls->OnInitDialog_Selection(hWnd2);*/    break;
 		case IDD_SPG_FEATURE_FAR:
 			gpSetCls->OnInitDialog_Far(hWnd2, FALSE);
+			break;
+		case IDD_SPG_FARMACRO:
+			gpSetCls->OnInitDialog_FarMacro(hWnd2, FALSE);
 			break;
 		case IDD_SPG_KEYS:
 			{

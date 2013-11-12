@@ -703,36 +703,43 @@ BEGIN
     COMBOBOX        lbRDragKey,47,25,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,107,27,66,8
     CONTROL         "Use drop menu",cbDropUseMenu,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,27,66,8
-    GROUPBOX        "Far Manager options",IDC_STATIC,4,44,319,48
+    GROUPBOX        "Far Manager options",IDC_STATIC,4,44,319,60
     CONTROL         "Hourglass if not responding",cbFarHourglass,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,55,101,8
     PUSHBUTTON      "...",bFarHourglass,113,54,13,11,WS_DISABLED
     CONTROL         "Extend Unicode CharMap",cbExtendUCharMap,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,67,117,8
     CONTROL         "Resize panels by mouse",cbDragPanel,"Button",BS_AUTO3STATE | WS_TABSTOP,131,55,104,8
+    CONTROL         "use both panel edges",cbDragPanelBothEdges,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,141,67,94,8
     CONTROL         "ASCII sort function in Far",cbFARuseASCIIsort,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,79,104,8
     CONTROL         "Right selection fix",cbRSelectionFix,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,55,81,8
     CONTROL         "No zone check",cbShellNoZoneCheck,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,67,81,8
     CONTROL         "KeyBar RClick",cbKeyBarRClick,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,79,81,8
     CONTROL         "Disable Far flashing",cbDisableFarFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,9,79,117,8
-    GROUPBOX        "Far macros",IDC_STATIC,4,95,319,73
-    CONTROL         "&RightClick 4 EMenu",cbRClick,"Button",BS_AUTO3STATE | WS_TABSTOP,9,107,78,8
-    EDITTEXT        tRClickMacro,88,105,229,12,ES_AUTOHSCROLL
-    CONTROL         "Safe Far close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,122,78,8
-    EDITTEXT        tSafeFarCloseMacro,88,120,229,12,ES_AUTOHSCROLL
-    LTEXT           "Close tab:",IDC_STATIC,10,137,54,8
-    EDITTEXT        tCloseTabMacro,70,135,247,12,ES_AUTOHSCROLL
-    LTEXT           "Save all editors:",IDC_STATIC,10,152,54,8
-    EDITTEXT        tSaveAllMacro,70,150,247,12,ES_AUTOHSCROLL
-    CONTROL         "use both panel edges",cbDragPanelBothEdges,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,141,67,94,8
-    GROUPBOX        "Tab templates",IDC_STATIC,4,170,319,62
-    RTEXT           "Panels:",IDC_STATIC,8,200,30,8
-    RTEXT           "Viewer:",IDC_STATIC,168,200,29,8
-    EDITTEXT        tTabViewer,201,198,117,12,ES_AUTOHSCROLL
-    RTEXT           "Editor:",IDC_STATIC,16,218,22,8
-    EDITTEXT        tTabEditor,42,216,117,12,ES_AUTOHSCROLL
-    RTEXT           "Modified:",IDC_STATIC,161,218,36,8
-    EDITTEXT        tTabEditorMod,201,216,117,12,ES_AUTOHSCROLL
-    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %n - Name of active process, %% - %,\n%i - Far window number (you can see it in standard F12 menu)",IDC_STATIC,10,179,309,17
-    EDITTEXT        tTabPanels,42,198,117,12,ES_AUTOHSCROLL
+    GROUPBOX        "Tab templates",IDC_STATIC,4,107,319,63
+    RTEXT           "Panels:",IDC_STATIC,8,137,30,8
+    EDITTEXT        tTabPanels,42,135,117,12,ES_AUTOHSCROLL
+    RTEXT           "Viewer:",IDC_STATIC,168,137,29,8
+    EDITTEXT        tTabViewer,201,135,117,12,ES_AUTOHSCROLL
+    RTEXT           "Editor:",IDC_STATIC,16,155,22,8
+    EDITTEXT        tTabEditor,42,153,117,12,ES_AUTOHSCROLL
+    RTEXT           "Modified:",IDC_STATIC,161,155,36,8
+    EDITTEXT        tTabEditorMod,201,153,117,12,ES_AUTOHSCROLL
+    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %n - Name of active process, %% - %,\n%i - Far window number (you can see it in standard F12 menu)",IDC_STATIC,10,116,309,17
+END
+
+IDD_SPG_FARMACRO DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Far Manager macros",IDC_STATIC,4,1,319,131
+    CONTROL         "&RightClick 4 EMenu",cbRClick,"Button",BS_AUTO3STATE | WS_TABSTOP,10,13,306,8
+    EDITTEXT        tRClickMacro,9,25,308,12,ES_AUTOHSCROLL
+    CONTROL         "Safe Far close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,44,306,8
+    EDITTEXT        tSafeFarCloseMacro,9,56,308,12,ES_AUTOHSCROLL
+    LTEXT           "Close tab (Panel, Editor, Viewer):",IDC_STATIC,10,74,306,8
+    EDITTEXT        tCloseTabMacro,9,84,308,12,ES_AUTOHSCROLL
+    LTEXT           "Save all editors:",IDC_STATIC,10,102,306,8
+    EDITTEXT        tSaveAllMacro,9,113,308,12,ES_AUTOHSCROLL
 END
 
 IDD_SPG_DEBUG DIALOGEX 0, 0, 328, 235
@@ -1435,6 +1442,10 @@ BEGIN
     END
 
     IDD_SPG_FEATURE_FAR, DIALOG
+    BEGIN
+    END
+
+    IDD_SPG_FARMACRO, DIALOG
     BEGIN
     END
 

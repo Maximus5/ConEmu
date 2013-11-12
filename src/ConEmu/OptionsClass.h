@@ -126,46 +126,14 @@ class CSettings
 		void SaveFontSizes(LOGFONT *pCreated, bool bAuto, bool bSendChanges);
 		LPOUTLINETEXTMETRIC LoadOutline(HDC hDC, HFONT hFont);
 		void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);
-	public:
-		//bool isFontAutoSize;
-		//bool isAutoRegisterFonts;
-		//wchar_t FontFile[MAX_PATH];
-		//LOGFONT ConsoleFont;
-		//COLORREF* GetColors(BOOL abFade = FALSE);
-		//COLORREF GetFadeColor(COLORREF cr);
-		//bool NeedDialogDetect();
-		//COLORREF ColorKey;
-		//bool isExtendColors;
-		//char nExtendColorIdx;
-		//bool isExtendFonts, isTrueColorer;
-		//char nFontNormalColor, nFontBoldColor, nFontItalicColor;
 
-		/* Background image */
-		//WCHAR sBgImage[MAX_PATH];
-		//char isShowBgImage;
-		//bool isBackgroundImageValid;
-		//u8 bgImageDarker;
-		//DWORD nBgImageColors;
-		//char bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2}
-		//char isBgPluginAllowed;
-
-		/* Transparency */
-		//u8 nTransparent;
-		//bool isUserScreenTransparent;
-
-		/* Command Line History (from start dialog) */
-		//LPWSTR psCmdHistory; DWORD nCmdHistorySize;
-
-		/* Command Line (Registry) */
-		//LPTSTR psCmd;
-		/* Command Line ("/cmd" arg) */
-		//LPTSTR psCurCmd;
 	private:
 		/* 'Default' command line (if nor Registry, nor /cmd specified) */
 		wchar_t  szDefCmd[MAX_PATH+32];
 		/* Current command line, specified with "/cmd" or "/cmdlist" switches */
 		wchar_t* pszCurCmd;
 		bool isCurCmdList; // а это если был указан /cmdlist
+
 	public:
 		/* Store/retrieve command line, specified with "/cmd" or "/cmdlist" switches */
 		void SetCurCmd(wchar_t*& pszNewCmd, bool bIsCmdList);
@@ -178,41 +146,6 @@ class CSettings
 		/* OUR(!) startup info */
 		STARTUPINFOW ourSI;
 		
-		/* If Attach to PID requested */
-#if 0
-		//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
-		DWORD nAttachPID;
-		HWND hAttachConWnd;
-#endif
-
-		//DWORD FontSizeY;  // высота основного шрифта (загруженная из настроек!)
-		//DWORD FontSizeX;  // ширина основного шрифта
-		//DWORD FontSizeX2; // ширина для FixFarBorders (ширина создаваемого шрифта для отрисовки рамок, не путать со знакоместом)
-		//DWORD FontSizeX3; // ширина знакоместа при моноширном режиме (не путать с FontSizeX2)
-		//bool isFullScreen, isHideCaption;
-		//bool isHideCaptionAlways();
-		//BYTE nHideCaptionAlwaysFrame;
-		//DWORD nHideCaptionAlwaysDelay, nHideCaptionAlwaysDisappear;
-		//bool isDownShowHiddenMessage;
-		//bool isAlwaysOnTop, isDesktopMode;
-		//BYTE isFixFarBorders;
-		//bool isExtendUCharMap;
-		//bool isDisableMouse;
-		//bool isMouseSkipActivation, isMouseSkipMoving;
-		//bool isFarHourglass; DWORD nFarHourglassDelay;
-		//BYTE isDisableFarFlashing, isDisableAllFlashing;
-		
-		// Text selection
-		//BYTE isConsoleTextSelection;
-		//bool isCTSSelectBlock, isCTSSelectText;
-		//BYTE isCTSVkBlock, isCTSVkText; // модификатор запуска выделения мышкой
-		//BYTE isCTSActMode, isCTSVkAct; // режим и модификатор разрешения действий правой и средней кнопки мышки
-		//BYTE isCTSRBtnAction, isCTSMBtnAction; // 0-off, 1-copy, 2-paste
-		//BYTE isCTSColorIndex;
-		//bool isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
-		//BYTE isFarGotoEditorVk; // Клавиша-модификатор для isFarGotoEditor
-		//bool isModifierPressed(DWORD vk);
-		//bool isSelectionModifierPressed();
 	protected:
 		
 		BYTE isMonospaceSelected; // 0 - proportional, 1 - monospace, 2 - forcemonospace
@@ -284,6 +217,7 @@ class CSettings
 			thi_KeybMouse,    //   "Controls"
 			thi_Selection,    //   "Mark & Paste"
 			thi_Far,          // "Far Manager"
+			thi_FarMacro,     //   "Far macros"
 			thi_Views,        //   "Views"
 			thi_Info,         // "Info"
 			thi_Debug,        //   "Debug"
@@ -411,6 +345,7 @@ class CSettings
 		//LRESULT OnInitDialog_Output(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Selection(HWND hWnd2);
 		LRESULT OnInitDialog_Far(HWND hWnd2, BOOL abInitial);
+		LRESULT OnInitDialog_FarMacro(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Keys(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Control(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);

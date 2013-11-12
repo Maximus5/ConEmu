@@ -17,6 +17,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 [*] Minor fix in "ConEmuC /export". Don't try to export to direct parent of ConEmuC.exe process.
 [%] Issue 581: Task "/dir" switch was ignored when starting second tab.
+[*] Far Manager macros settings are moved to «Far macros» page.
 
 
 2013.11.07

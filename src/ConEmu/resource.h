@@ -44,6 +44,7 @@
 #define IDD_SPG_SHOW                    174
 #define IDD_SPG_TASKBAR                 175
 #define IDD_SPG_DEFTERM                 176
+#define IDD_SPG_FARMACRO                177
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_ATTACHDLG                   212
