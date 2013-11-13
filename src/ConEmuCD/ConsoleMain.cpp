@@ -3665,6 +3665,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 		else if (lstrcmpni(szArg, L"/EXPORT", 7)==0)
 		{
+			//_ASSERTE(FALSE && "Continue to export");
 			if (lstrcmpi(szArg, L"/EXPORT=ALL")==0 || lstrcmpi(szArg, L"/EXPORTALL")==0)
 				eExecAction = ea_ExportAll;
 			else if (lstrcmpi(szArg, L"/EXPORT=CON")==0 || lstrcmpi(szArg, L"/EXPORTCON")==0)

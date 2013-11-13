@@ -2232,7 +2232,7 @@ void CVConGroup::ExportEnvVarAll(CESERVER_REQ* pIn, CRealConsole* pExceptRCon)
 			// Apply to all processes in this tab (console)
 			for (int i = 0; i < nCount; i++)
 			{
-				if (pP[i].ProcessID != nSrvPID)
+				if (pP[i].ProcessID != nSrvPID && !pP[i].IsConHost)
 				{
 					CESERVER_REQ* pOut = ExecuteHkCmd(pP[i].ProcessID, pIn, ghWnd);
 					ExecuteFreeResult(pOut);
