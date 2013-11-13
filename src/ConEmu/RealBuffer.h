@@ -169,6 +169,7 @@ public:
 
 	DWORD GetConsoleCP();
 	DWORD GetConsoleOutputCP();
+	DWORD GetConsoleMode();
 
 	void FindPanels();
 	BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE, BOOL abIncludeEdges = FALSE);

@@ -2853,18 +2853,19 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		}
 	}
 
-	BOOL lbFarBufferSupported = mp_RCon->isFarBufferSupported();
-	BOOL lbMouseOverScroll = FALSE;
+	bool lbFarBufferSupported = mp_RCon->isFarBufferSupported();
+	bool lbMouseSendAllowed = mp_RCon->isSendMouseAllowed();
+	bool lbMouseOverScroll = false;
 	// Проверять мышку имеет смысл только если она пересылается в фар, а не работает на прокрутку
 	if ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL))
 	{
-		if (con.bBufferHeight && (m_Type == rbt_Primary) && lbFarBufferSupported)
+		if (con.bBufferHeight && (m_Type == rbt_Primary) && lbFarBufferSupported && lbMouseSendAllowed)
 		{
 			lbMouseOverScroll = mp_RCon->mp_VCon->CheckMouseOverScroll(true);
 		}
 	}
 
-	if (con.bBufferHeight && ((m_Type != rbt_Primary) || !lbFarBufferSupported || lbMouseOverScroll))
+	if (con.bBufferHeight && ((m_Type != rbt_Primary) || !lbFarBufferSupported || !lbMouseSendAllowed || lbMouseOverScroll))
 	{
 		if (messg == WM_MOUSEWHEEL)
 		{
@@ -5644,6 +5645,11 @@ DWORD CRealBuffer::GetConsoleCP()
 DWORD CRealBuffer::GetConsoleOutputCP()
 {
 	return con.m_dwConsoleOutputCP;
+}
+
+DWORD CRealBuffer::GetConsoleMode()
+{
+	return con.m_dwConsoleMode;
 }
 
 bool CRealBuffer::FindRangeStart(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out]*/, bool& bUrlMode, LPCWSTR pszBreak, LPCWSTR pszUrlDelim, LPCWSTR pszSpacing, LPCWSTR pszUrl, LPCWSTR pszProtocol, LPCWSTR pChar, int nLen)

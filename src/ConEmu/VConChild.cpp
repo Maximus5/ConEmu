@@ -1320,22 +1320,22 @@ BOOL CConEmuChild::TrackMouse()
 	return lbCapture;
 }
 
-BOOL CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
+bool CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 {
 	if (abCheckVisible)
 	{
 		if (gpSet->isAlwaysShowScrollbar == 0)
 		{
-			return FALSE; // не показываетс€ вообще
+			return false; // не показываетс€ вообще
 		}
 		else if ((gpSet->isAlwaysShowScrollbar != 1) // 1 -- показывать всегда
 			&& !mb_ScrollVisible)
 		{
-			return FALSE; // не показываетс€ сейчас
+			return false; // не показываетс€ сейчас
 		}
 	}
 
-	BOOL lbOverVScroll = FALSE;
+	bool lbOverVScroll = false;
 
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	CVConGuard guard(pVCon);
@@ -1360,7 +1360,7 @@ BOOL CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 			// чтобы полоса не скрылась, когда ее тащат мышкой
 			if (mb_VTracking)
 			{
-				lbOverVScroll = TRUE;
+				lbOverVScroll = true;
 			}
 			else // “еперь проверим, если мышь в над скроллбаром - показать его
 			{
@@ -1375,11 +1375,11 @@ BOOL CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 				{
 					// ≈сли прокрутка ”∆≈ видна - то мышку в консоль не пускать! ќна дл€ прокрутки!
 					if (mb_ScrollVisible)
-						lbOverVScroll = TRUE;
+						lbOverVScroll = true;
 					// ≈сли не провер€ть - не получитс€ начать выделение с правого кра€ окна
 					//if (!gpSet->isSelectionModifierPressed())
 					else if (!(isPressed(VK_SHIFT) || isPressed(VK_CONTROL) || isPressed(VK_MENU) || isPressed(VK_LBUTTON)))
-						lbOverVScroll = TRUE;
+						lbOverVScroll = true;
 				}
 			}
 		}

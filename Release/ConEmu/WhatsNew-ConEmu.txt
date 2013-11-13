@@ -23,6 +23,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [-] GuiMacro: WindowMaximize(<Cmd>) - maximize window by width (Cmd==1) or height (Cmd==2). Same as doubleclick on the window frame edges.
 [+] New hotkeys on «Keys & Macro» page: Maximize width and Maximize height.
 [%] Issue 1329: Support env.vars in the "/icon" task argument when creating Jump lists.
+[%] Issue 1165: Scroll console (don't send wheel events) if console mode has ENABLE_QUICK_EDIT_MODE.
 
 
 2013.11.07

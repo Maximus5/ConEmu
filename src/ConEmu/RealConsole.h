@@ -424,6 +424,7 @@ class CRealConsole
 		bool isConSelectMode();
 		bool isFar(bool abPluginRequired=false);
 		bool isFarBufferSupported();
+		bool isSendMouseAllowed();
 		bool isFarInStack();
 		bool isFarKeyBarShown();
 		bool isSelectionAllowed();

@@ -3894,7 +3894,13 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	if (gpSet->isDisableMouse)
 		return;
 
-	BOOL lbFarBufferSupported = isFarBufferSupported(); UNREFERENCED_PARAMETER(lbFarBufferSupported);
+	// Issue 1165: Don't send "Mouse events" into console input buffer if ENABLE_QUICK_EDIT_MODE
+	if (!abForceSend && !isSendMouseAllowed())
+	{
+		return;
+	}
+
+	DEBUGTEST(bool lbFarBufferSupported = isFarBufferSupported());
 
 	// Если консоль в режиме с прокруткой - не посылать мышь в консоль
 	// Иначе получаются казусы. Если во время выполнения команды (например "dir c: /s")
@@ -11686,6 +11692,19 @@ bool CRealConsole::isFarBufferSupported()
 		return false;
 
 	return (m_FarInfo.cbSize && m_FarInfo.bBufferSupport && (m_FarInfo.nFarPID == GetFarPID()));
+}
+
+// Проверить, разрешен ли в консоли прием мышиных сообщений
+// Программы могут отключать прием через SetConsoleMode
+bool CRealConsole::isSendMouseAllowed()
+{
+	if (!this || (mp_ABuf->m_Type != rbt_Primary))
+		return false;
+
+	if (mp_ABuf->GetConsoleMode() & ENABLE_QUICK_EDIT_MODE)
+		return false;
+
+	return true;
 }
 
 bool CRealConsole::isFarKeyBarShown()
