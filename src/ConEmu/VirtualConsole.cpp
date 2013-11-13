@@ -148,6 +148,36 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 //	}
 //}
 
+namespace VConCreateLogger
+{
+	static const int BUFFER_SIZE = 64;   // Must be a power of 2
+	enum EventType
+	{
+		eCreate,
+		eDelete,
+	} Event;
+	struct VConNewDel
+	{
+		CVirtualConsole* pVCon;
+		EventType Event;
+		DWORD Tick;
+	};
+	VConNewDel g_pos[BUFFER_SIZE] = {{NULL}};
+	LONG g_posidx = -1;
+
+	void Log(CVirtualConsole* pVCon, EventType Event)
+	{
+		// Get next message index
+		LONG i = _InterlockedIncrement(&g_posidx);
+		// Write a message at this index
+		VConNewDel& e = g_pos[i & (BUFFER_SIZE - 1)]; // Wrap to buffer size
+
+		e.pVCon = pVCon;
+		e.Event = Event;
+		e.Tick = GetTickCount(); // msg.time == 0 скорее всего
+	}
+}
+
 
 
 CVirtualConsole::PARTBRUSHES CVirtualConsole::m_PartBrushes[MAX_COUNT_PART_BRUSHES] = {{0}};
@@ -202,6 +232,7 @@ CVirtualConsole::CVirtualConsole()
 	, mp_Group(NULL)
 	, m_DC(NULL)
 {
+	VConCreateLogger::Log(this, VConCreateLogger::eCreate);
 	mh_WndDC = NULL;
 }
 
@@ -450,6 +481,8 @@ CVirtualConsole::~CVirtualConsole()
 	#endif
 
 	//FreeBackgroundImage();
+
+	VConCreateLogger::Log(this, VConCreateLogger::eDelete);
 }
 
 void CVirtualConsole::InitGhost()
@@ -4153,8 +4186,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 		return;
 	}
 
-	CVirtualConsole* pVCon = this;
-	CVConGuard guard(pVCon);
+	CVConGuard guard(this);
 
 	if (!gpConEmu->isMainThread())
 	{
@@ -4244,7 +4276,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 		if (lbDelBrush)
 			DeleteObject(hBr);
 			
-		if (pVCon && mp_Ghost)
+		if (guard.VCon() && mp_Ghost)
 			mp_Ghost->UpdateTabSnapshoot(TRUE); //CreateTabSnapshoot(hPaintDc, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
 		
 		//EndPaint('ghWnd DC', &ps);

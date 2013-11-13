@@ -44,6 +44,8 @@ class CVConGuard
 {
 private:
 	CVirtualConsole *mp_Ref;
+	int mi_Valid;
+	DWORD mn_Tick;
 	
 public:
 	CVConGuard();

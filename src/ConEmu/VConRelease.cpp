@@ -100,11 +100,15 @@ void CVConRelease::DeleteFromMainThread()
 CVConGuard::CVConGuard()
 {
 	mp_Ref = NULL;
+	mi_Valid = 0;
+	mn_Tick = GetTickCount();
 }
 
 CVConGuard::CVConGuard(CVirtualConsole* apRef)
 {
 	mp_Ref = NULL;
+	mi_Valid = 0;
+	mn_Tick = GetTickCount();
 
 	Attach(apRef);
 }
@@ -130,6 +134,9 @@ bool CVConGuard::Attach(CVirtualConsole* apRef)
 			}
 		}
 	}
+
+	mi_Valid = mp_Ref ? CVConGroup::isValid(mp_Ref) ? 1 : -1 : 0;
+	Assert(mi_Valid >= 0);
 
 	return (mp_Ref != NULL);
 }
