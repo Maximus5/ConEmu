@@ -17,7 +17,7 @@ This fork grew up from ConEmu by Zoin.
 Download: http://www.fosshub.com/ConEmu.html  
 Wiki: http://code.google.com/p/conemu-maximus5/wiki/ConEmu  
 What's new: http://code.google.com/p/conemu-maximus5/wiki/Whats_New  
-Donate this project: [PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3LV8XTRBK9K4E)
+Donate this project: <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3LV8XTRBK9K4E"><img src="https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif" alt="Donation" title="Donate ConEmu"/></a> <a href="http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub" target="_blank"><img src="http://api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0" /></a>
 
 
 
