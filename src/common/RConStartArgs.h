@@ -64,6 +64,8 @@ struct RConStartArgs
 
 	UINT     nPTY;                // -new_console:p[N] - 1 enable PTY, 2 - disable PTY (work as plain console), 0 - don't change
 	
+	BOOL     bBufWidth;           // -new_console:H<cols>
+	UINT     nBufWidth;           //
 	BOOL     bBufHeight;          // -new_console:h<lines>
 	UINT     nBufHeight;          //
 

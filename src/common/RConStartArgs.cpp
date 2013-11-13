@@ -160,7 +160,9 @@ RConStartArgs::RConStartArgs()
 	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = pszRenameTab = NULL;
 	pszIconFile = pszPalette = pszWallpaper = NULL;
-	bBufHeight = FALSE; nBufHeight = 0; bLongOutputDisable = FALSE;
+	bBufWidth = FALSE; nBufWidth = 0;
+	bBufHeight = FALSE; nBufHeight = 0;
+	bLongOutputDisable = FALSE;
 	bOverwriteMode = FALSE; nPTY = 0;
 	bInjectsDisable = FALSE;
 	eConfirmation = eConfDefault;
@@ -237,6 +239,8 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 	this->bBackgroundTab = args->bBackgroundTab;
 	this->bForegroungTab = args->bForegroungTab;
 	this->bNoDefaultTerm = args->bNoDefaultTerm; _ASSERTE(args->bNoDefaultTerm == FALSE);
+	this->bBufWidth = args->bBufWidth;
+	this->nBufWidth = args->nBufWidth;
 	this->bBufHeight = args->bBufHeight;
 	this->nBufHeight = args->nBufHeight;
 	this->eConfirmation = args->eConfirmation;
@@ -289,6 +293,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	cchMaxLen += (bForceUserDialog ? 15 : 0); // -new_console:u
 	cchMaxLen += (bBackgroundTab ? 15 : 0); // -new_console:b
 	cchMaxLen += (bForegroungTab ? 15 : 0); // -new_console:f
+	cchMaxLen += (bBufWidth ? 32 : 0); // -new_console:H<cols>
 	cchMaxLen += (bBufHeight ? 32 : 0); // -new_console:h<lines>
 	cchMaxLen += (bLongOutputDisable ? 15 : 0); // -new_console:o
 	cchMaxLen += (bOverwriteMode ? 15 : 0); // -new_console:w
@@ -364,6 +369,14 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	if (bInjectsDisable)
 		wcscat_c(szAdd, L"i");
 
+	if (bBufWidth)
+	{
+		if (nBufWidth)
+			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"H%u", nBufWidth);
+		else
+			wcscat_c(szAdd, L"H");
+	}
+
 	if (bBufHeight)
 	{
 		if (nBufHeight)
@@ -422,6 +435,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 				const wchar_t* pS = p->pVal;
 				while (*pS)
 				{
+					// Same char set as in IsPathNeedQuot(LPCWSTR asPath)
 					if (wcschr(L"<>()&|^\"", *pS))
 						*(pD++) = (*pS == L'"') ? L'"' : L'^';
 					*(pD++) = *(pS++);
@@ -757,6 +771,24 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					case L'i':
 						// i - don't inject ConEmuHk into the starting application
 						bInjectsDisable = TRUE;
+						break;
+
+					case L'H':
+						// "H0" - отключить буфер, "H9999" - включить буфер в 9999 колонок
+						{
+							bBufWidth = TRUE;
+							if (isDigit(*pszEnd))
+							{
+								wchar_t* pszDigits = NULL;
+								nBufWidth = wcstoul(pszEnd, &pszDigits, 10);
+								if (pszDigits)
+									pszEnd = pszDigits;
+							}
+							else
+							{
+								nBufWidth = 0;
+							}
+						} // L'H':
 						break;
 
 					case L'h':

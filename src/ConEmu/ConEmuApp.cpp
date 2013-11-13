@@ -2919,6 +2919,28 @@ void RaiseTestException()
 	DebugBreak();
 }
 
+RealBufferScroll ParseBufferSizeParm(wchar_t* psNumArg, wchar_t** ppsEnd, COORD& rsBufferSize)
+{
+	RealBufferScroll BufType = rbs_None;
+	wchar_t* psEnd = NULL;
+	int iVal1 = wcstol(psNumArg, &psEnd, 10);
+	if (psEnd && (*psEnd == L','))
+	{
+		int iVal2 = wcstol(psEnd+1, &psEnd, 10);
+		MinMax(iVal1,0,LONGOUTPUTHEIGHT_MAX); MinMax(iVal2,0,LONGOUTPUTWIDTH_MAX);
+		rsBufferSize = MakeCoord(iVal1,iVal2);
+		BufType = rbs_Both;
+	}
+	else
+	{
+		MinMax(iVal1,0,LONGOUTPUTHEIGHT_MAX);
+		rsBufferSize = MakeCoord(0,iVal1);
+		BufType = rbs_Vert;
+	}
+	if (ppsEnd)
+		*ppsEnd = psEnd;
+	return BufType;
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -3063,7 +3085,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool FontPrm = false; TCHAR* FontVal = NULL;
 	bool IconPrm = false;
 	bool SizePrm = false; LONG SizeVal = 0;
-	bool BufferHeightPrm = false; int BufferHeightVal = 0;
+	RealBufferScroll BufferHeightPrm = rbs_None; COORD BufferHeightVal = {0,0};
 	bool ConfigPrm = false; TCHAR* ConfigVal = NULL;
 	bool PalettePrm = false; TCHAR* PaletteVal = NULL;
 	//bool FontFilePrm = false; TCHAR* FontFile = NULL; //ADD fontname; by Mors
@@ -3638,21 +3660,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					curCommand += _tcslen(curCommand) + 1; i++;
 
+					// Format: /Buffer [<Width>,]<Height>
+
 					if (!BufferHeightPrm)
 					{
-						BufferHeightPrm = true;
-						BufferHeightVal = klatoi(curCommand);
-
-						if (BufferHeightVal < 0)
-						{
-							//setParent = true; -- Maximus5 - нефиг, все ручками
-							BufferHeightVal = -BufferHeightVal;
-						}
-
-						if (BufferHeightVal < LONGOUTPUTHEIGHT_MIN)
-							BufferHeightVal = LONGOUTPUTHEIGHT_MIN;
-						else if (BufferHeightVal > LONGOUTPUTHEIGHT_MAX)
-							BufferHeightVal = LONGOUTPUTHEIGHT_MAX;
+						BufferHeightPrm = ParseBufferSizeParm(curCommand, NULL, BufferHeightVal);
 					}
 				}
 				else if (!klstricmp(curCommand, _T("/Config")) && i + 1 < params)

@@ -1,2 +1,7 @@
 ﻿
 [!] Scrollable horizontal buffer. Work in progress.
+[*] Checkbox «Long console output» moved to «Far Manager» settings page.
+[+] New option for «Buffer width» on «Size & Pos» settings page.
+    «0» means «No horizonal scrolling».
+    Large values may cause longer switching delay into alternative buffer.
+[+] New option "-new_console:H<width>" for setting buffer width.

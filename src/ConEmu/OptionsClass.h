@@ -91,7 +91,7 @@ class CSettings
 		void SetSaveCmdHistory(bool bSaveHistory);
 
 		//int DefaultBufferHeight;
-		bool bForceBufferHeight; int nForceBufferHeight;
+		bool bForceBufferSize; COORD ForceBufferSize;
 
 		#ifdef SHOW_AUTOSCROLL
 		bool AutoScroll;

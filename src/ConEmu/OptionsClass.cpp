@@ -2092,12 +2092,15 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 
 	checkRadioButton(hWnd2, rCascade, rFixed, gpSet->wndCascade ? rCascade : rFixed);
 
+	// -- moved to "Far manager" page
+	//checkDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
 
-	checkDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
 	TODO("Ќадо бы увеличить, но нужно сервер допиливать");
-	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 4, 0);
-	SetDlgItemInt(hWnd2, tLongOutputHeight, gpSet->DefaultBufferHeight, FALSE);
-	//EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
+	SendDlgItemMessage(hWnd2, tBufferHeight, EM_SETLIMITTEXT, 4, 0);
+	SetDlgItemInt(hWnd2, tBufferHeight, gpSet->DefaultBufferHeight, FALSE);
+
+	SendDlgItemMessage(hWnd2, tBufferWidth, EM_SETLIMITTEXT, 4, 0);
+	SetDlgItemInt(hWnd2, tBufferWidth, gpSet->DefaultBufferWidth, FALSE);
 
 
 	// 16bit Height
@@ -2587,6 +2590,8 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 	FillListBoxByte(hWnd2, lbLDragKey, SettingsNS::Keys, VkMod);
 	VkMod = gpSet->GetHotkeyById(vkRDragKey);
 	FillListBoxByte(hWnd2, lbRDragKey, SettingsNS::Keys, VkMod);
+
+	checkDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
 
 	if (!abInitial)
 		return 0;
@@ -4772,7 +4777,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbLongOutput:
 			gpSet->AutoBufferHeight = IsChecked(hWnd2, cbLongOutput);
 			gpConEmu->UpdateFarSettings();
-			EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
+			//EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
 			break;
 		case rbComspecAuto:
 		case rbComspecEnvVar:
@@ -6918,25 +6923,33 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	} //case tCursorFixedSize, tInactiveCursorFixedSize, tCursorMinSize, tInactiveCursorMinSize
 	
 
-	case tLongOutputHeight:
+	case tBufferWidth:  // TB
+	case tBufferHeight:
 	{
 		BOOL lbOk = FALSE;
-		wchar_t szTemp[16];
-		UINT nNewVal = GetDlgItemInt(hWnd2, tLongOutputHeight, &lbOk, FALSE);
+		UINT nNewVal = GetDlgItemInt(hWnd2, TB, &lbOk, FALSE);
+		UINT nMax = (TB==tBufferHeight ? LONGOUTPUTHEIGHT_MAX : LONGOUTPUTWIDTH_MAX);
+		bool lbBhBefore = (gpSet->DefaultBufferHeight > LONGOUTPUTHEIGHT_MIN);
 
-		if (lbOk)
+		if (lbOk && (nNewVal <= nMax))
 		{
-			if (nNewVal >= LONGOUTPUTHEIGHT_MIN && nNewVal <= LONGOUTPUTHEIGHT_MAX)
+			if (TB == tBufferHeight)
 				gpSet->DefaultBufferHeight = nNewVal;
-			else if (nNewVal > LONGOUTPUTHEIGHT_MAX)
-				SetDlgItemInt(hWnd2, TB, gpSet->DefaultBufferHeight, FALSE);
+			else
+				gpSet->DefaultBufferWidth = nNewVal;
 		}
-		else
+		else if (lbOk)
 		{
-			SetDlgItemText(hWnd2, TB, _ltow(gpSet->DefaultBufferHeight, szTemp, 10));
+			SetDlgItemInt(hWnd2, TB, (TB == tBufferHeight) ? gpSet->DefaultBufferHeight : gpSet->DefaultBufferWidth, FALSE);
+		}
+
+		bool lbBhAfter = (gpSet->DefaultBufferHeight > LONGOUTPUTHEIGHT_MIN);
+		if (lbBhAfter != lbBhBefore)
+		{
+			gpSet->AutoBufferHeight = lbBhAfter;
 		}
 		break;
-	} //case tLongOutputHeight:
+	} //case tBufferWidth: case tBufferHeight:
 
 	case tComspecExplicit:
 	{
@@ -12296,24 +12309,13 @@ int CSettings::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 // "”молчательна€" высота буфера.
 // + ConEmu стартует в буферном режиме
 // + команда по умолчанию (если не задана в реестре или ком.строке) будет "cmd", а не "far"
-void CSettings::SetArgBufferHeight(int anBufferHeight)
+void CSettings::SetArgBufferHeight(COORD aBufferSize)
 {
-	_ASSERTE(anBufferHeight>=0);
-	//if (anBufferHeight>=0) gpSet->DefaultBufferHeight = anBufferHeight;
-	//ForceBufferHeight = (gpSet->DefaultBufferHeight != 0);
+	_ASSERTE(aBufferSize.X>=0 && aBufferSize.Y>=0);
 	bForceBufferHeight = true;
-	nForceBufferHeight = anBufferHeight;
-	if (anBufferHeight==0)
-	{
-		SetDefaultCmd(L"far");
-	}
-	else
-	{
-		wchar_t* pszComspec = GetComspec(&gpSet->ComSpec);
-		_ASSERTE(pszComspec!=NULL);
-		SetDefaultCmd(pszComspec ? pszComspec : L"cmd");
-		SafeFree(pszComspec);
-	}
+	ForceBufferSize = aBufferSize;
+
+	SetDefaultCmd(NULL);
 }
 
 void CSettings::SetDefaultCmd(LPCWSTR asCmd)
@@ -12346,9 +12348,20 @@ void CSettings::SetDefaultCmd(LPCWSTR asCmd)
 				: L"%s --login -i" /* -new_console:n" */,
 			szSearch);
 	}
+	else if (bForceBufferHeight && !ForceBufferSize.X && !ForceBufferSize.Y)
+	{
+		SetDefaultCmd(L"far");
+	}
+	else if (asCmd && *asCmd)
+	{
+		wcscpy_c(szDefCmd, asCmd);
+	}
 	else
 	{
-		wcscpy_c(szDefCmd, asCmd ? asCmd : L"cmd");
+		wchar_t* pszComspec = GetComspec(&gpSet->ComSpec);
+		_ASSERTE(pszComspec!=NULL);
+		SetDefaultCmd(pszComspec ? pszComspec : L"cmd");
+		SafeFree(pszComspec);
 	}
 }
 

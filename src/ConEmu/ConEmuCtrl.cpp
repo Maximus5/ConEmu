@@ -824,16 +824,16 @@ bool CConEmuCtrl::key_BufferScroll(bool TestOnly, BYTE vk, CRealConsole* pRCon)
 	switch (vk)
 	{
 		case VK_DOWN:
-			pRCon->OnScroll(SB_LINEDOWN);
+			pRCon->OnScroll(rbs_Vert, SB_LINEDOWN);
 			break;
 		case VK_UP:
-			pRCon->OnScroll(SB_LINEUP);
+			pRCon->OnScroll(rbs_Vert, SB_LINEUP);
 			break;
 		case VK_NEXT:
-			pRCon->OnScroll(SB_PAGEDOWN);
+			pRCon->OnScroll(rbs_Vert, SB_PAGEDOWN);
 			break;
 		case VK_PRIOR:
-			pRCon->OnScroll(SB_PAGEUP);
+			pRCon->OnScroll(rbs_Vert, SB_PAGEUP);
 			break;
 	}
 	return true;

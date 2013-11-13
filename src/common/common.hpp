@@ -257,13 +257,14 @@ enum CONSOLE_KEY_ID
 
 #define EvalBufferTurnOnSize(Now) (2*Now+32)
 
-enum RealBufferScroll
-{
+typedef DWORD RealBufferScroll;
+const RealBufferScroll
 	rbs_None = 0,
 	rbs_Vert = 1,
 	rbs_Horz = 2,
-	rbs_Any  = 3,
-};
+	rbs_Both = (rbs_Vert|rbs_Horz),
+	rbs_Any  = 255
+;
 
 // Generally used for control keys (arrows e.g.) translation
 enum TermEmulationType
@@ -1397,11 +1398,15 @@ struct CESERVER_REQ_CONINFO_FULL
 //	};
 //} CESERVER_REQ_CONINFO;
 
+
 struct CESERVER_REQ_SETSIZE
 {
-	USHORT nBufferHeight; // 0 или высота буфера (режим с прокруткой)
+	//USHORT nBufferHeight; // 0 или высота буфера (режим с прокруткой)
+	RealBufferScroll rbs;
+	COORD  buffer;
 	COORD  size;
-	SHORT  nSendTopLine;  // -1 или 0based номер строки зафиксированной в GUI (только для режима с прокруткой)
+	COORD  crSendUL; // Upper-left corner: -1 или 0based номер строки зафиксированной в GUI (только для режима с прокруткой)
+	//SHORT  nSendTopLine;  // -1 или 0based номер строки зафиксированной в GUI (только для режима с прокруткой)
 	SMALL_RECT rcWindow;  // координаты видимой области для режима с прокруткой
 	DWORD  dwFarPID;      // Если передано - сервер должен сам достучаться до FAR'а и обновить его размер через плагин ПЕРЕД возвратом
 };
@@ -1536,10 +1541,11 @@ struct CESERVER_REQ_STARTSTOP
 	// Максимальный размер консоли на текущем шрифте
 	COORD crMaxSize;
 	// Только ComSpec
-	BOOL  bWasBufferHeight;
+	RealBufferScroll WasBufferSize;
 	// "-cur_console:h<N>" для ComSpec
-	BOOL  bForceBufferHeight;
-	DWORD nForceBufferHeight;
+	// "-cur_console:H<N>" для ComSpec
+	RealBufferScroll ForceBufferSize;
+	COORD BufferSize;
 	// Только при аттаче. Может быть NULL-ом
 	u64   hServerProcessHandle;
 	// При завершении
@@ -1580,7 +1586,7 @@ struct CESERVER_REQ_ONCREATEPROCESSRET
 {
 	BOOL  bContinue;
 	//BOOL  bUnicode;
-	BOOL  bForceBufferHeight;
+	RealBufferScroll ForceBufferSize;
 	BOOL  bAllowDosbox;
 	//int   nFileLen;
 	//int   nBaseLen;
@@ -1594,12 +1600,14 @@ struct CESERVER_REQ_ONCREATEPROCESSRET
 // _ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
 struct CESERVER_REQ_STARTSTOPRET
 {
-	BOOL  bWasBufferHeight;
 	HWND2 hWnd; // при возврате в консоль - GUI (главное окно)
 	HWND2 hWndDc;
 	HWND2 hWndBack;
 	DWORD dwPID; // при возврате в консоль - PID ConEmu.exe
-	DWORD nBufferHeight, nWidth, nHeight;
+	RealBufferScroll WasBufferSize;
+	COORD BufferSize;
+	COORD VisibleSize;
+	//DWORD nBufferHeight, nWidth, nHeight;
 	DWORD dwMainSrvPID;
 	DWORD dwAltSrvPID;
 	DWORD dwPrevAltServerPID;
@@ -1843,8 +1851,10 @@ struct CESERVER_REQ_DUPLICATE
 	DWORD nGuiPID;
 	DWORD nAID; // внутренний ID в ConEmu
 	BOOL  bRunAs;
-	DWORD nWidth, nHeight;
-	DWORD nBufferHeight;
+	//DWORD nWidth, nHeight;
+	//DWORD nBufferHeight;
+	COORD BufferSize;
+	COORD VisibleSize;
 	DWORD nColors;
 	WCHAR sCommand[1]; // variable length, NULL usually
 };
@@ -1860,7 +1870,8 @@ enum ALTBUFFER_FLAGS
 struct CESERVER_REQ_ALTBUFFER
 {
 	DWORD  AbFlags; // ALTBUFFER_FLAGS
-	USHORT BufferHeight; // In/Out
+	//USHORT BufferHeight; // In/Out
+	COORD BufferSize; // In/Out
 };
 
 struct CESERVER_REQ

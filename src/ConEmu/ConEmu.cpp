@@ -7303,24 +7303,24 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 		{
 			while (pszLine[0] == L'/')
 			{
-				if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
-				                               pszLine, 14, L"/bufferheight ", 14))
+				bool bShort = (lstrcmpni(pszLine, L"/Buffer ", 8) == 0);
+				if (bShort || (lstrcmpni(pszLine, L"/BufferHeight ", 14) == 0))
 				{
-					pszLine += 14;
-
-					while(*pszLine == L' ') pszLine++;
+					pszLine += bShort ? 8 : 14;
 
 					wchar_t* pszEnd = NULL;
-					long lBufHeight = wcstol(pszLine, &pszEnd, 10);
-					gpSetCls->SetArgBufferHeight(lBufHeight);
+					COORD BufferSize = {0,0};
+					RealBufferScroll BufType = ParseBufferSizeParm(pszLine, &pszEnd, BufferSize);
+					gpSetCls->SetArgBufferHeight(BufferSize);
 
 					if (pszEnd) pszLine = pszEnd;
 				}
 
 				TODO("Когда появится ключ /mouse - добавить сюда обработку");
 
-				if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
-				                               pszLine, 5, L"/cmd ", 5))
+				//if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
+				//                               pszLine, 5, L"/cmd ", 5))
+				if (lstrcmpni(pszLine, L"/cmd ", 5) == 0)
 				{
 					pszLine += 5;
 				}

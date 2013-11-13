@@ -358,7 +358,9 @@ void Settings::InitSettings()
 	//isSendAltEnter = isSendAltSpace = isSendAltF9 = false;
 	isSendAltTab = isSendAltEsc = isSendAltPrintScrn = isSendPrintScrn = isSendCtrlEsc = false;
 	isMonitorConsoleLang = 3;
-	DefaultBufferHeight = 1000; AutoBufferHeight = true;
+	DefaultBufferWidth = 0; // Disable horizontal scrolling by default
+	DefaultBufferHeight = 1000;
+	AutoBufferHeight = true; // Far manager related
 	isSaveCmdHistory = true;
 	nCmdOutputCP = 0;
 	ComSpec.AddConEmu2Path = CEAP_AddAll;
@@ -2352,12 +2354,14 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		if (ntvdmHeight!=0 && ntvdmHeight!=25 && ntvdmHeight!=28 && ntvdmHeight!=43 && ntvdmHeight!=50) ntvdmHeight = 25;
 
-		reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);
+		reg->Load(L"DefaultBufferWidth",  DefaultBufferWidth);   MinMax(DefaultBufferWidth, 0, LONGOUTPUTWIDTH_MAX);
+		reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);  MinMax(DefaultBufferWidth, 0, LONGOUTPUTHEIGHT_MAX);
 
-		if (DefaultBufferHeight < LONGOUTPUTHEIGHT_MIN)
-			DefaultBufferHeight = LONGOUTPUTHEIGHT_MIN;
-		else if (DefaultBufferHeight > LONGOUTPUTHEIGHT_MAX)
-			DefaultBufferHeight = LONGOUTPUTHEIGHT_MAX;
+		// -- не вижу смысла ограничивать здесь. Тут еще и 0 может быть...
+		//if (DefaultBufferHeight < LONGOUTPUTHEIGHT_MIN)
+		//	DefaultBufferHeight = LONGOUTPUTHEIGHT_MIN;
+		//else if (DefaultBufferHeight > LONGOUTPUTHEIGHT_MAX)
+		//	DefaultBufferHeight = LONGOUTPUTHEIGHT_MAX;
 
 		reg->Load(L"AutoBufferHeight", AutoBufferHeight);
 		//reg->Load(L"FarSyncSize", FarSyncSize);
@@ -3295,6 +3299,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ConsoleFontName", ConsoleFont.lfFaceName);
 		reg->Save(L"ConsoleFontWidth", ConsoleFont.lfWidth);
 		reg->Save(L"ConsoleFontHeight", ConsoleFont.lfHeight);
+		reg->Save(L"DefaultBufferWidth", DefaultBufferWidth);
 		reg->Save(L"DefaultBufferHeight", DefaultBufferHeight);
 		reg->Save(L"AutoBufferHeight", AutoBufferHeight);
 		reg->Save(L"CmdOutputCP", nCmdOutputCP);

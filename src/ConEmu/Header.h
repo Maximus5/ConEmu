@@ -286,7 +286,7 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 
 bool isKey(DWORD wp,DWORD vk);
 bool isConsoleService(LPCWSTR pszProcessName);
-
+RealBufferScroll ParseBufferSizeParm(wchar_t* psNumArg, wchar_t** ppsEnd, COORD& rsBufferSize);
 
 void RaiseTestException();
 

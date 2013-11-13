@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define LONGOUTPUTHEIGHT_MIN 300
 #define LONGOUTPUTHEIGHT_MAX 9999
+#define LONGOUTPUTWIDTH_MAX  9999
 
 #define CURSORSIZE_MIN 5
 #define CURSORSIZE_MAX 100
@@ -148,6 +149,8 @@ struct Settings
 
 		bool IsConfigNew; // true, если конфигурация новая
 
+		//reg->Load(L"DefaultBufferWidth", DefaultBufferWidth);
+		int DefaultBufferWidth;
 		//reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);
 		int DefaultBufferHeight;
 		
