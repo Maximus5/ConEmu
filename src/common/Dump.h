@@ -186,7 +186,7 @@ wrap:
 		wchar_t what[100];
 		if (ExceptionInfo && ExceptionInfo->ExceptionRecord)
 		{
-			_wsprintf(what, SKIPLEN(countof(what)) L"Exception 0x%08X", ExceptionInfo->ExceptionRecord->ExceptionCode)
+			_wsprintf(what, SKIPLEN(countof(what)) L"Exception 0x%08X", ExceptionInfo->ExceptionRecord->ExceptionCode);
 			if (EXCEPTION_ACCESS_VIOLATION == ExceptionInfo->ExceptionRecord->ExceptionCode
 				&& ExceptionInfo->ExceptionRecord->NumberParameters >= 2)
 			{
