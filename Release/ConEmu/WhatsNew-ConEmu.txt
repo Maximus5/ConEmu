@@ -22,6 +22,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [+] ConEmuBg: Force check xml file on plugin enabled.
 [-] GuiMacro: WindowMaximize(<Cmd>) - maximize window by width (Cmd==1) or height (Cmd==2). Same as doubleclick on the window frame edges.
 [+] New hotkeys on «Keys & Macro» page: Maximize width and Maximize height.
+[%] Issue 1329: Support env.vars in the "/icon" task argument when creating Jump lists.
 
 
 2013.11.07

@@ -2346,9 +2346,11 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 			}
 			if (pszIcon && *pszIcon)
 			{
+				wchar_t* pszIconEx = ExpandEnvStr(pszIcon);
+				if (pszIconEx) pszIcon = pszIconEx;
 				DWORD n;
 				wchar_t* pszFilePart;
-				n = GetFullPathName(szTmp, countof(szIcon), szIcon, &pszFilePart);
+				n = GetFullPathName(pszIcon, countof(szIcon), szIcon, &pszFilePart);
 				if (!n || (n >= countof(szIcon)) || !FileExists(szIcon))
 				{
 					n = SearchPath(NULL, pszIcon, NULL, countof(szIcon), szIcon, &pszFilePart);
@@ -2357,6 +2359,7 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 					if (!n || (n >= countof(szIcon)))
 						szIcon[0] = 0;
 				}
+				SafeFree(pszIconEx);
 			}
 			SafeFree(pszBatch);
 			psl->SetIconLocation(szIcon[0] ? szIcon : szAppPath, 0);
