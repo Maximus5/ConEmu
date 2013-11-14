@@ -1,0 +1,88 @@
+@echo off
+setlocal
+
+if "%~1"=="" goto usage
+if "%~1"=="/?" goto usage
+
+rem Parsing version
+set VR=%~1
+
+set MVV_1=%VR:~0,2%
+if "%MVV_1%"=="" goto err_parm
+if "%MVV_1:~0,1%"=="0" goto err_parm
+if "%MVV_1:~1,1%"=="" goto err_parm
+set chk=
+set /A chk=%MVV_1%+1-1
+if errorlevel 1 goto err_parm
+if NOT "%chk%"=="%MVV_1%" goto err_parm
+if /I %MVV_1% GEQ 99 goto err_parm
+
+set MVV_2=%VR:~2,2%
+if "%MVV_2:~0,1%"=="0" set MVV_2=%MVV_2:~1,1%
+if "%MVV_2%"=="" goto err_parm
+if "%MVV_2%"=="0" goto err_parm
+set chk=
+set /A chk=%MVV_2%+1-1
+if errorlevel 1 goto err_parm
+if NOT "%chk%"=="%MVV_2%" goto err_parm
+if /I %MVV_2% GEQ 12 goto err_parm
+
+set MVV_3=%VR:~4,2%
+if "%MVV_3:~0,1%"=="0" set MVV_3=%MVV_3:~1,1%
+if "%MVV_3%"=="" goto err_parm
+if "%MVV_3%"=="0" goto err_parm
+set chk=
+set /A chk=%MVV_3%+1-1
+if errorlevel 1 goto err_parm
+if NOT "%chk%"=="%MVV_3%" goto err_parm
+if /I %MVV_3% GEQ 31 goto err_parm
+
+set MVV_4=0
+set MVV_4a=%VR:~6,1%
+if "%MVV_4a%"=="" goto run
+rem translate letter in build no into 4-d number
+set Found=N
+FOR /D %%L IN ("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","--") DO call :chk_4 %%L
+if /I %MVV_4% GTR 26 goto err_parm
+goto run
+:chk_4
+if %Found%==Y goto :EOF
+set /A MVV_4=%MVV_4%+1
+if "%~1"=="%MVV_4a%" set Found=Y
+goto :EOF
+:inc_4
+goto :EOF
+
+:run
+
+rem echo '%MVV_1%' '%MVV_2%' '%MVV_3%' '%MVV_4%' '%MVV_4a%'
+rem goto :EOF
+
+rem Creating version.ini
+set verh="%~dp0version.h"
+echo //>%verh%
+echo #define MVV_1 %MVV_1% 1>>%verh%
+echo #define MVV_2 %MVV_2% 1>>%verh%
+echo #define MVV_3 %MVV_3% 1>>%verh%
+echo #define MVV_4 %MVV_4% 1>>%verh%
+echo #define MVV_4a "%MVV_4a%">>%verh%
+echo //>>%verh%
+echo #include "version_macro.h">>%verh%
+exit /B 0
+goto :EOF
+
+:usage
+echo Usage:   "%~nx0" ^<BuildNo^>
+echo Example: "%~nx0" ^<131113c^>
+:err_parm
+echo Bad version was specified: '%~1'
+exit /B 99
+goto :EOF
+
+rem #define MVV_1 13
+rem #define MVV_2 11
+rem #define MVV_3 7
+rem #define MVV_4 0
+rem #define MVV_4a ""
+rem 
+rem #include "version_macro.h"
