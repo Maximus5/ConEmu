@@ -5721,16 +5721,35 @@ bool GetTime(bool bSystem, LPSYSTEMTIME lpSystemTime)
 			goto wrap;
 		if (!(st.wDay = wcstol(p+1, &p, 10)) || !p || (*p != L'T' && *p != L' '))
 			goto wrap;
-		if (((st.wHour = wcstol(p+1, &p, 10))>=24) || !p || (*p != L':' && *p != L'.'))
-			goto wrap;
-		if (((st.wMinute = wcstol(p+1, &p, 10))>=60))
-			goto wrap;
+		// Possible format 'dd.mm.yyyy'? This is returned by "cmd /k echo %DATE%"
+		if (st.wDay >= 1900 && st.wYear <= 31)
+		{
+			WORD w = st.wDay; st.wDay = st.wYear; st.wYear = w;
+		}
 
-		// Seconds and MS are optional
-		if ((p && (*p == L':' || *p == L'.')) && ((st.wSecond = wcstol(p+1, &p, 10)) >= 60))
-			goto wrap;
-		if ((p && (*p == L':' || *p == L'.')) && ((st.wMilliseconds = (10*wcstol(p+1, &p, 10))) >= 1000))
-			goto wrap;
+		// Time. Optional?
+		if (!p || !*p)
+		{
+			SYSTEMTIME lt; GetLocalTime(&lt);
+			st.wHour = lt.wHour;
+			st.wMinute = lt.wMinute;
+			st.wSecond = lt.wSecond;
+			st.wMilliseconds = lt.wMilliseconds;
+		}
+		else
+		{
+			if (((st.wHour = wcstol(p+1, &p, 10))>=24) || !p || (*p != L':' && *p != L'.'))
+				goto wrap;
+			if (((st.wMinute = wcstol(p+1, &p, 10))>=60))
+				goto wrap;
+
+			// Seconds and MS are optional
+			if ((p && (*p == L':' || *p == L'.')) && ((st.wSecond = wcstol(p+1, &p, 10)) >= 60))
+				goto wrap;
+			// cmd`s %TIME% shows Milliseconds as two digits
+			if ((p && (*p == L':' || *p == L'.')) && ((st.wMilliseconds = (10*wcstol(p+1, &p, 10))) >= 1000))
+				goto wrap;
+		}
 
 		// Check it
 		if (!SystemTimeToFileTime(&st, &ft))
