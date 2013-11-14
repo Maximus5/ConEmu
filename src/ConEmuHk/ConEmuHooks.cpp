@@ -421,6 +421,10 @@ LPCH WINAPI OnGetEnvironmentStringsA();
 #endif
 LPWCH WINAPI OnGetEnvironmentStringsW();
 
+void WINAPI OnGetSystemTime(LPSYSTEMTIME lpSystemTime);
+void WINAPI OnGetLocalTime(LPSYSTEMTIME lpSystemTime);
+void WINAPI OnGetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
+
 
 
 bool InitHooksCommon()
@@ -537,15 +541,19 @@ bool InitHooksCommon()
 			kernel32
 		},
 		#endif
-		{(void*)OnGetEnvironmentVariableA, "GetEnvironmentVariableA", kernel32},
-		{(void*)OnGetEnvironmentVariableW, "GetEnvironmentVariableW", kernel32},
+		{(void*)OnGetEnvironmentVariableA,	"GetEnvironmentVariableA",	kernel32},
+		{(void*)OnGetEnvironmentVariableW,	"GetEnvironmentVariableW",	kernel32},
 		#if 0
-		{(void*)OnGetEnvironmentStringsA,  "GetEnvironmentStringsA",  kernel32},
+		{(void*)OnGetEnvironmentStringsA,  "GetEnvironmentStringsA",	kernel32},
 		#endif
-		{(void*)OnGetEnvironmentStringsW,  "GetEnvironmentStringsW",  kernel32},
+		{(void*)OnGetEnvironmentStringsW,	"GetEnvironmentStringsW",	kernel32},
 		/* ************************ */
-		{(void*)OnGetCurrentConsoleFont, "GetCurrentConsoleFont", kernel32},
-		{(void*)OnGetConsoleFontSize,    "GetConsoleFontSize",    kernel32},
+		{(void*)OnGetSystemTime,			"GetSystemTime",			kernel32},
+		{(void*)OnGetLocalTime,				"GetLocalTime",				kernel32},
+		{(void*)OnGetSystemTimeAsFileTime,	"GetSystemTimeAsFileTime",	kernel32},
+		/* ************************ */
+		{(void*)OnGetCurrentConsoleFont, "GetCurrentConsoleFont",		kernel32},
+		{(void*)OnGetConsoleFontSize,    "GetConsoleFontSize",			kernel32},
 		/* ************************ */
 
 		#ifdef _DEBUG
@@ -5687,6 +5695,96 @@ LPWCH WINAPI OnGetEnvironmentStringsW()
 	LPWCH lpRc = F(GetEnvironmentStringsW)();
 	return lpRc;
 }
+
+
+// Helper function
+bool LocalToSystemTime(LPFILETIME lpLocal, LPSYSTEMTIME lpSystem)
+{
+	false;
+	FILETIME ftSystem;
+	bool bOk = LocalFileTimeToFileTime(lpLocal, &ftSystem)
+		&& FileTimeToSystemTime(&ftSystem, lpSystem);
+	return bOk;
+}
+
+bool GetTime(bool bSystem, LPSYSTEMTIME lpSystemTime)
+{
+	bool bHacked = false;
+	wchar_t szEnvVar[32] = L""; // 2013-01-01T15:16:17.95
+	if (GetEnvironmentVariable(ENV_CONEMURELAYDT_VAR_W, szEnvVar, countof(szEnvVar)) && *szEnvVar)
+	{
+		SYSTEMTIME st = {0}; FILETIME ft; wchar_t* p = szEnvVar;
+
+		if (!(st.wYear = wcstol(p, &p, 10)) || !p || (*p != L'-' && *p != L'.'))
+			goto wrap;
+		if (!(st.wMonth = wcstol(p+1, &p, 10)) || !p || (*p != L'-' && *p != L'.'))
+			goto wrap;
+		if (!(st.wDay = wcstol(p+1, &p, 10)) || !p || (*p != L'T' && *p != L' '))
+			goto wrap;
+		if (((st.wHour = wcstol(p+1, &p, 10))>=24) || !p || (*p != L':' && *p != L'.'))
+			goto wrap;
+		if (((st.wMinute = wcstol(p+1, &p, 10))>=60))
+			goto wrap;
+
+		// Seconds and MS are optional
+		if ((p && (*p == L':' || *p == L'.')) && ((st.wSecond = wcstol(p+1, &p, 10)) >= 60))
+			goto wrap;
+		if ((p && (*p == L':' || *p == L'.')) && ((st.wMilliseconds = (10*wcstol(p+1, &p, 10))) >= 1000))
+			goto wrap;
+
+		// Check it
+		if (!SystemTimeToFileTime(&st, &ft))
+			goto wrap;
+		if (bSystem)
+		{
+			if (!LocalToSystemTime(&ft, lpSystemTime))
+				goto wrap;
+		}
+		else
+		{
+			*lpSystemTime = st;
+		}
+		bHacked = true;
+	}
+wrap:
+	return bHacked;
+}
+
+// TODO: GetSystemTimeAsFileTime??
+void WINAPI OnGetSystemTime(LPSYSTEMTIME lpSystemTime)
+{
+	typedef void (WINAPI* OnGetSystemTime_t)(LPSYSTEMTIME);
+	ORIGINALFAST(GetSystemTime);
+
+	if (!GetTime(true, lpSystemTime))
+		F(GetSystemTime)(lpSystemTime);
+}
+
+void WINAPI OnGetLocalTime(LPSYSTEMTIME lpSystemTime)
+{
+	typedef void (WINAPI* OnGetLocalTime_t)(LPSYSTEMTIME);
+	ORIGINALFAST(GetLocalTime);
+
+	if (!GetTime(false, lpSystemTime))
+		F(GetLocalTime)(lpSystemTime);
+}
+
+void WINAPI OnGetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
+{
+	typedef void (WINAPI* OnGetSystemTimeAsFileTime_t)(LPFILETIME);
+	ORIGINALFAST(GetSystemTimeAsFileTime);
+
+	SYSTEMTIME st;
+	if (GetTime(true, &st))
+	{
+		SystemTimeToFileTime(&st, lpSystemTimeAsFileTime);
+	}
+	else
+	{
+		F(GetSystemTimeAsFileTime)(lpSystemTimeAsFileTime);
+	}
+}
+
 
 BOOL IsVisibleRectLocked(COORD& crLocked)
 {
