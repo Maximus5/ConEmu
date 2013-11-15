@@ -15,6 +15,8 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.11.14
+[!] Issue 1333: Internal changes in WndProc, GWLP_USERDATA is not used anymore.
 [*] Minor fix in "ConEmuC /export". Don't try to export to (a) direct parent of ConEmuC.exe process and (b) conhost.exe.
 [%] Issue 581: Task "/dir" switch was ignored when starting second tab.
 [*] Far Manager macros settings are moved to «Far macros» page.
@@ -26,7 +28,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [%] Issue 1165: Scroll console (don't send wheel events) if console mode has ENABLE_QUICK_EDIT_MODE.
 [+] New Environment variable "ConEmuRelyDT". That will cheat system and local current time for console processes.
     Use carefully! Console applications will think that time was freezed! «Inject ConEmuHk» must be on!
-    Examples (cmd):
+    Some examples (cmd):
     set ConEmuRelyDT=%DATE% %TIME%
     set ConEmuRelyDT=2013-12-31T23:59:59.99
     set ConEmuRelyDT=2013-01-31 9:0:0
