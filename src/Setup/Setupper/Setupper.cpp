@@ -410,9 +410,16 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	
 	while (0 == NextArg(&pszCmdToken, szArg))
 	{
-		if (lstrcmp(szArg, L"/?") == 0 || lstrcmp(szArg, L"-?") == 0)
+		if (lstrcmp(szArg, L"/?") == 0 || lstrcmp(szArg, L"-?") == 0 || lstrcmp(szArg, L"-h") == 0
+			|| lstrcmp(szArg, L"-help") == 0 || lstrcmp(szArg, L"--help") == 0)
 		{
-			MessageBox(NULL, L"Usage:\nConEmuSetup [/e[:<extract path>]] [/p:x86 | /p:x64] [<msi args>]", gsTitle, MB_ICONINFORMATION);
+			MessageBox(NULL,
+				L"Usage:\n"
+				L"   ConEmuSetup [/p:x86[,adm] | /p:x64[,adm]] [<msi args>]\n"
+				L"   ConEmuSetup [/e[:<extract path>]] [/p:x86 | /p:x64]\n"
+				L"Example (run x64 auto update as administrator):\n"
+				L"   ConEmuSetup /p:x64,adm /qr",
+				gsTitle, MB_ICONINFORMATION);
 			return 1;
 		}
 		
@@ -428,10 +435,28 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 				continue;
 			}
 		
-			if (lstrcmpi(szArg, L"/p:x86") == 0)
-				nInstallVer = Ver86;
-			else if (lstrcmpi(szArg, L"/p:x64") == 0)
-				nInstallVer = Ver64;
+		    if (memcmp(szArg, L"/p:x", 4*sizeof(*szArg)) == 0)
+		    {
+		    	gbAlreadyAdmin = IsUserAdmin();
+				if (lstrcmpi(szArg+4, L"86") == 0)
+				{
+					nInstallVer = Ver86;
+				}
+				else if (lstrcmpi(szArg+4, L"86,adm") == 0)
+				{
+					nInstallVer = Ver86;
+					gbUseElevation = !gbAlreadyAdmin;
+				}
+				else if (lstrcmpi(szArg+4, L"64") == 0)
+				{
+					nInstallVer = Ver64;
+				}
+				else if (lstrcmpi(szArg+4, L"64,adm") == 0)
+				{
+					nInstallVer = Ver64;
+					gbUseElevation = !gbAlreadyAdmin;
+				}
+			}
 			else
 				pszCmdToken = pszCmdLineW;
 			break;
