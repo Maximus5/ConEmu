@@ -4215,7 +4215,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 //#endif
 	BOOL lbSimpleBlack = FALSE, lbGuiVisible = FALSE;
 
-	if (!pVCon)
+	if (!guard.VCon())
 		lbSimpleBlack = TRUE;
 	else if (!mp_RCon)
 		lbSimpleBlack = TRUE;

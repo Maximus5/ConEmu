@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include "../common/common.hpp"
+#include "../common/MMap.h"
 #include "../common/SetEnvVar.h"
 #include "../common/WinObjects.h"
 #include "ConEmu.h"
@@ -60,6 +61,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define LOCK_DC_RECT_TIMEOUT      2000
 #define TIMER_AUTOCOPY_DELAY      (GetDoubleClickTime()*10/9)
 #define TIMER_AUTOCOPY            3204
+
+extern MMap<HWND,CVirtualConsole*> gVConDcMap;
+extern MMap<HWND,CVirtualConsole*> gVConBkMap;
+static HWND ghDcInDestroing = NULL;
+static HWND ghBkInDestroing = NULL;
 
 CConEmuChild::CConEmuChild()
 {
@@ -97,16 +103,23 @@ CConEmuChild::CConEmuChild()
 
 CConEmuChild::~CConEmuChild()
 {
+	ghDcInDestroing = mh_WndDC;
+	ghBkInDestroing = mh_WndBack;
+	// Remove from MMap before DestroyWindow, because pVCon is no longer Valid
 	if (mh_WndDC)
 	{
+		gVConDcMap.Del(mh_WndDC);
 		DestroyWindow(mh_WndDC);
 		mh_WndDC = NULL;
 	}
 	if (mh_WndBack)
 	{
+		gVConBkMap.Del(mh_WndBack);
 		DestroyWindow(mh_WndBack);
 		mh_WndBack = NULL;
 	}
+	ghDcInDestroing = NULL;
+	ghBkInDestroing = NULL;
 }
 
 HWND CConEmuChild::CreateView()
@@ -256,28 +269,31 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
 	}
 
+	CVConGuard guard;
 	CVirtualConsole* pVCon = NULL;
 	if (messg == WM_CREATE || messg == WM_NCCREATE)
 	{
 		LPCREATESTRUCT lp = (LPCREATESTRUCT)lParam;
-		pVCon = (CVirtualConsole*)lp->lpCreateParams;
-		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)pVCon);
+		guard = (CVirtualConsole*)lp->lpCreateParams;
+		pVCon = guard.VCon();
+		if (pVCon)
+		{
+			gVConDcMap.Set(hWnd, pVCon);
 
-		pVCon->m_TAutoCopy.Init(hWnd, TIMER_AUTOCOPY, TIMER_AUTOCOPY_DELAY);
+			pVCon->m_TAutoCopy.Init(hWnd, TIMER_AUTOCOPY, TIMER_AUTOCOPY_DELAY);
 
-		pVCon->m_TScrollShow.Init(hWnd, TIMER_SCROLL_SHOW, TIMER_SCROLL_SHOW_DELAY);
-		pVCon->m_TScrollHide.Init(hWnd, TIMER_SCROLL_HIDE, TIMER_SCROLL_HIDE_DELAY);
-		#ifndef SKIP_HIDE_TIMER
-		pVCon->m_TScrollCheck.Init(hWnd, TIMER_SCROLL_CHECK, TIMER_SCROLL_CHECK_DELAY);
-		#endif
-
+			pVCon->m_TScrollShow.Init(hWnd, TIMER_SCROLL_SHOW, TIMER_SCROLL_SHOW_DELAY);
+			pVCon->m_TScrollHide.Init(hWnd, TIMER_SCROLL_HIDE, TIMER_SCROLL_HIDE_DELAY);
+			#ifndef SKIP_HIDE_TIMER
+			pVCon->m_TScrollCheck.Init(hWnd, TIMER_SCROLL_CHECK, TIMER_SCROLL_CHECK_DELAY);
+			#endif
+		}
 	}
-	else
+	else if (hWnd != ghDcInDestroing)
 	{
-		pVCon = (CVirtualConsole*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (!gVConDcMap.Get(hWnd, &pVCon) || !guard.Attach(pVCon))
+			pVCon = NULL;
 	}
-
-	CVConGuard guard(pVCon);
 
 
 	if (messg == WM_SYSCHAR)
@@ -290,7 +306,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 
 	if (!pVCon)
 	{
-		_ASSERTE(pVCon!=NULL);
+		_ASSERTE(pVCon!=NULL || hWnd==ghDcInDestroing);
 		result = DefWindowProc(hWnd, messg, wParam, lParam);
 		goto wrap;
 	}
@@ -618,18 +634,20 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 	}
 
 	CVConGuard guard;
+	CVirtualConsole* pVCon = NULL;
 	if (messg == WM_CREATE || messg == WM_NCCREATE)
 	{
 		LPCREATESTRUCT lp = (LPCREATESTRUCT)lParam;
 		guard = (CVirtualConsole*)lp->lpCreateParams;
-		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)guard.VCon());
+		pVCon = guard.VCon();
+		if (pVCon)
+			gVConBkMap.Set(hWnd, pVCon);
 	}
-	else
+	else if (hWnd != ghBkInDestroing)
 	{
-		guard = (CVirtualConsole*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (!gVConBkMap.Get(hWnd, &pVCon) || !guard.Attach(pVCon))
+			pVCon = NULL;
 	}
-
-	CVirtualConsole* pVCon = guard.VCon();
 
 	if (messg == WM_SYSCHAR)
 	{
@@ -641,7 +659,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 	if (!pVCon)
 	{
-		_ASSERTE(pVCon!=NULL);
+		_ASSERTE(pVCon!=NULL || hWnd==ghBkInDestroing);
 		result = DefWindowProc(hWnd, messg, wParam, lParam);
 		goto wrap;
 	}
@@ -862,12 +880,12 @@ LRESULT CConEmuChild::OnPaintGaps()
 	CVConGuard VCon((CVirtualConsole*)this);
 	if (!VCon.VCon())
 	{
-		_ASSERTE(pVCon!=NULL);
+		_ASSERTE(VCon.VCon()!=NULL);
 		return 0;
 	}
 
 	int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
-	COLORREF* clrPalette = pVCon->GetColors();
+	COLORREF* clrPalette = VCon->GetColors();
 	if (!clrPalette)
 	{
 		_ASSERTE(clrPalette!=NULL);

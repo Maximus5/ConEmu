@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "../common/ConEmuCheck.h"
 #include "../common/CmdLine.h"
+#include "../common/MMap.h"
 #include "../common/execute.h"
 //#include "../common/TokenHelper.h"
 #include "Options.h"
@@ -112,6 +113,10 @@ const TCHAR *const gsClassNameParent = VirtualConsoleClassMain; // главное окно
 const TCHAR *const gsClassNameWork = VirtualConsoleClassWork; // Holder для всех VCon
 const TCHAR *const gsClassNameBack = VirtualConsoleClassBack; // Подложка (со скроллерами) для каждого VCon
 const TCHAR *const gsClassNameApp = VirtualConsoleClassApp;
+
+
+MMap<HWND,CVirtualConsole*> gVConDcMap;
+MMap<HWND,CVirtualConsole*> gVConBkMap;
 
 
 OSVERSIONINFO gOSVer = {};
@@ -1883,13 +1888,11 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 	{
 		bool bProcessed = false;
 
-		#ifdef _DEBUG
 		if (IsDebuggerPresent())
 		{
 			MyAssertTrap();
 			bProcessed = true;
 		}
-		#endif
 
 		wchar_t szFullInfo[1024] = L"";
 
@@ -2971,6 +2974,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	gpSetCls = new CSettings;
 	gpConEmu = new CConEmuMain;
+	gVConDcMap.Init(MAX_CONSOLE_COUNT,true);
+	gVConBkMap.Init(MAX_CONSOLE_COUNT,true);
 	/*int nCmp;
 	nCmp = StrCmpI(L" ", L"A"); // -1
 	nCmp = StrCmpI(L" ", L"+");

@@ -18299,10 +18299,8 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 
 	if (hWnd == ghWnd)
 		result = gpConEmu->WndProc(hWnd, messg, wParam, lParam);
-	else //if (hWnd == 'ghWnd DC')
+	else
 		result = CConEmuChild::ChildWndProc(hWnd, messg, wParam, lParam);
-	//else if (messg)
-	//	result = DefWindowProc(hWnd, messg, wParam, lParam);
 
 	return result;
 }
@@ -18896,6 +18894,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				ShutdownGuiStep(L"DestroyWindow");
 				//this->OnDestroy(hWnd);
+				_ASSERTE(hWnd == ghWnd);
 				DestroyWindow(hWnd);
 				return 0;
 			}

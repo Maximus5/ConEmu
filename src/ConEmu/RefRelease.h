@@ -51,6 +51,7 @@ public:
 			return;
 		}
 	
+		_ASSERTE(mn_RefCount != REF_FINALIZE);
 		InterlockedIncrement(&mn_RefCount);
 	};
 
@@ -59,6 +60,11 @@ public:
 		if (!this)
 			return 0;
 
+		if (mn_RefCount == REF_FINALIZE)
+		{
+			_ASSERTE(FALSE && "Must not be destroyed yet?");
+			return 0;
+		}
 		InterlockedDecrement(&mn_RefCount);
 	
 		_ASSERTE(mn_RefCount>=0);

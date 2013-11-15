@@ -1659,13 +1659,15 @@ bool CVConGroup::isActiveGroupVCon(CVirtualConsole* pVCon)
 
 bool CVConGroup::isVisible(CVirtualConsole* apVCon)
 {
-	if (!apVCon)
+	if (!apVCon || !isValid(apVCon))
 		return false;
 
 	if (apVCon == gp_VActive)
 		return true;
 
-	CVConGroup* pActiveRoot = GetRootOfVCon(gp_VActive);
+	_ASSERTE(gp_VActive || gpConEmu->mb_ScClosePending);
+
+	CVConGroup* pActiveRoot = gp_VActive ? GetRootOfVCon(gp_VActive) : NULL;
 	CVConGroup* pRoot = GetRootOfVCon(apVCon);
 	if (pRoot && pActiveRoot && (pRoot == pActiveRoot))
 		return true;
