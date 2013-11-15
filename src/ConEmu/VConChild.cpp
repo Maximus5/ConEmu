@@ -69,6 +69,8 @@ static HWND ghBkInDestroing = NULL;
 
 CConEmuChild::CConEmuChild()
 {
+	mn_AlreadyDestroyed = 0;
+
 	mn_MsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 	mn_MsgPostFullPaint = RegisterWindowMessage(L"CConEmuChild::PostFullPaint");
 	mn_MsgSavePaneSnapshoot = RegisterWindowMessage(L"CConEmuChild::SavePaneSnapshoot");
@@ -103,6 +105,23 @@ CConEmuChild::CConEmuChild()
 
 CConEmuChild::~CConEmuChild()
 {
+	if (mh_WndDC || mh_WndBack)
+	{
+		DoDestroyDcWindow();
+	}
+}
+
+bool CConEmuChild::isAlreadyDestroyed()
+{
+	return (mn_AlreadyDestroyed!=0);
+}
+
+void CConEmuChild::DoDestroyDcWindow()
+{
+	// Set flag immediately
+	mn_AlreadyDestroyed = GetTickCount();
+
+	// Go
 	ghDcInDestroing = mh_WndDC;
 	ghBkInDestroing = mh_WndBack;
 	// Remove from MMap before DestroyWindow, because pVCon is no longer Valid

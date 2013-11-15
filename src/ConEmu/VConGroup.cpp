@@ -2509,6 +2509,12 @@ void CVConGroup::OnUpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL 
 
 void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 {
+	if (!isValid(apVCon) || apVCon->isAlreadyDestroyed())
+	{
+		ShutdownGuiStep(L"OnVConClosed - was already closed");
+		return;
+	}
+
 	ShutdownGuiStep(L"OnVConClosed");
 
 	bool bDbg1 = false, bDbg2 = false, bDbg3 = false, bDbg4 = false;
@@ -2598,6 +2604,7 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 				gp_VActive = NULL;
 			}
 
+			apVCon->DoDestroyDcWindow();
 			apVCon->Release();
 			break;
 		}

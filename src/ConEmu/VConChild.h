@@ -45,6 +45,9 @@ class CConEmuChild
 		static LRESULT WINAPI ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		static LRESULT WINAPI BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
+		bool isAlreadyDestroyed();
+		void DoDestroyDcWindow();
+
 		LRESULT OnPaint();
 		LRESULT OnPaintGaps();
 		HWND CreateView();
@@ -86,6 +89,7 @@ class CConEmuChild
 
 	protected:
 		virtual void OnDestroy() = 0; // WM_DESTROY
+		DWORD mn_AlreadyDestroyed;
 
 		#define CRITICAL_DCWND_STYLES (WS_CAPTION|WS_VSCROLL|WS_HSCROLL|WS_SYSMENU|WS_THICKFRAME|WS_GROUP|WS_TABSTOP)
 		DWORD mn_WndDCStyle;

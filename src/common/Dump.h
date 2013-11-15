@@ -41,12 +41,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 // Возвращает текст с информацией о пути к сохраненному дампу
-DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024])
+DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024], LPWSTR pszComment = NULL)
 {
 	DWORD dwErr = 0;
 	const wchar_t *pszError = NULL;
 	INT_PTR nLen;
 	MINIDUMP_TYPE dumpType = MiniDumpWithFullMemory;
+	MINIDUMP_USER_STREAM_INFORMATION cmt;
+	MINIDUMP_USER_STREAM cmt1;
 	//bool bDumpSucceeded = false;
 	HANDLE hDmpFile = NULL;
 	HMODULE hDbghelp = NULL;
@@ -58,6 +60,15 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 	DWORD nSharingOption;
 
 	SetCursor(LoadCursor(NULL, IDC_WAIT));
+
+	if (pszComment)
+	{
+		cmt1.Type = 11/*CommentStreamW*/;
+		cmt1.BufferSize = (lstrlen(pszComment)+1)*sizeof(*pszComment);
+		cmt1.Buffer = pszComment;
+		cmt.UserStreamCount = 1;
+		cmt.UserStreamArray = &cmt1;
+	}
 
 	memset(szFullInfo, 0, sizeof(szFullInfo));
 
@@ -109,7 +120,8 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 		                    hDmpFile,
 		                    dumpType,
 		                    &mei,
-		                    NULL, NULL);
+		                    pszComment ? &cmt : NULL,
+		                    NULL);
 
 		if (!lbDumpRc)
 		{

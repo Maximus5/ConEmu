@@ -88,7 +88,7 @@ void MyAssertTrap()
 int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool abNoPipe)
 {
 #ifdef _DEBUG
-	bool lbSkip = false;
+	static bool lbSkip = false;
 	if (lbSkip)
 		return 1;
 #endif

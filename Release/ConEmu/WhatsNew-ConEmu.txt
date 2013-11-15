@@ -15,6 +15,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Issue 1339: Crash on close ConEmu window (multiple assertions actually, regression of 131114).
+
+
 2013.11.14
 [!] Issue 1333: Internal changes in WndProc, GWLP_USERDATA is not used anymore.
 [*] Minor fix in "ConEmuC /export". Don't try to export to (a) direct parent of ConEmuC.exe process and (b) conhost.exe.
