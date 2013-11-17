@@ -64,8 +64,14 @@
       <Component Id="ColorPrompt.cmd" Guid="$(var.Guid.ColorPrompt.cmd)" Win64="$(var.Win64)">
         <File Id="ColorPrompt.cmd" Source="..\..\Release\ConEmu\ColorPrompt.cmd"  KeyPath="yes" />
       </Component>
+      <Component Id="cecho.cmd" Guid="$(var.Guid.cecho.cmd)" Win64="$(var.Win64)">
+        <File Id="cecho.cmd" Source="..\..\Release\ConEmu\cecho.cmd"  KeyPath="yes" />
+      </Component>
       <Component Id="csudo.cmd" Guid="$(var.Guid.csudo.cmd)" Win64="$(var.Win64)">
         <File Id="csudo.cmd" Source="..\..\Release\ConEmu\csudo.cmd"  KeyPath="yes" />
+      </Component>
+      <Component Id="GitShowBranch.cmd" Guid="$(var.Guid.GitShowBranch.cmd)" Win64="$(var.Win64)">
+        <File Id="GitShowBranch.cmd" Source="..\..\Release\ConEmu\GitShowBranch.cmd"  KeyPath="yes" />
       </Component>
       <Component Id="IsConEmu.cmd" Guid="$(var.Guid.IsConEmu.cmd)" Win64="$(var.Win64)">
         <File Id="IsConEmu.cmd" Source="..\..\Release\ConEmu\IsConEmu.cmd"  KeyPath="yes" />
@@ -121,6 +127,9 @@
       <!--<Component Id="ConEmu.cer" Guid="$(var.Guid.ConEmu.cer)" Win64="$(var.Win64)">
         <File Id="ConEmu.cer" Source="..\..\Release\ConEmu\Addons\ConEmu.cer"  KeyPath="yes" />
       </Component>-->
+      <Component Id="git.cmd" Guid="$(var.Guid.git.cmd)" Win64="$(var.Win64)">
+        <File Id="git.cmd" Source="..\..\Release\ConEmu\Addons\git.cmd"  KeyPath="yes" />
+      </Component>
       <Component Id="FarHereInstall.cmd" Guid="$(var.Guid.FarHereInstall.cmd)" Win64="$(var.Win64)">
         <File Id="FarHereInstall.cmd" Source="..\..\Release\ConEmu\Addons\FarHereInstall.cmd"  KeyPath="yes" />
       </Component>
@@ -330,19 +339,19 @@
 
     <DirectoryRef Id="KeyEventsDir">
       <Component Id="KeyEvents.exe" Guid="$(var.Guid.KeyEvents.exe)" Win64="$(var.Win64)">
-        <File Id="KeyEvents.exe" Source="..\..\..\..\KeyEvents.SysLog\KeyEvents.exe"  KeyPath="yes" />
+        <File Id="KeyEvents.exe" Source="..\KeyEvents.SysLog\KeyEvents.exe"  KeyPath="yes" />
       </Component>
       <Component Id="KeyEvents.cpp" Guid="$(var.Guid.KeyEvents.cpp)" Win64="$(var.Win64)">
-        <File Id="KeyEvents.cpp" Source="..\..\..\..\KeyEvents.SysLog\KeyEvents.cpp"  KeyPath="yes" />
+        <File Id="KeyEvents.cpp" Source="..\KeyEvents.SysLog\KeyEvents.cpp"  KeyPath="yes" />
       </Component>
       <Component Id="KeyEvents.rc" Guid="$(var.Guid.KeyEvents.rc)" Win64="$(var.Win64)">
-        <File Id="KeyEvents.rc" Source="..\..\..\..\KeyEvents.SysLog\KeyEvents.rc"  KeyPath="yes" />
+        <File Id="KeyEvents.rc" Source="..\KeyEvents.SysLog\KeyEvents.rc"  KeyPath="yes" />
       </Component>
       <Component Id="KeyEvents.h" Guid="$(var.Guid.KeyEvents.h)" Win64="$(var.Win64)">
-        <File Id="KeyEvents.h" Source="..\..\..\..\KeyEvents.SysLog\resource.h"  KeyPath="yes" />
+        <File Id="KeyEvents.h" Source="..\KeyEvents.SysLog\resource.h"  KeyPath="yes" />
       </Component>
       <Component Id="KeyEvents.makefile_gcc" Guid="$(var.Guid.KeyEvents.makefile_gcc)" Win64="$(var.Win64)">
-        <File Id="KeyEvents.makefile_gcc" Source="..\..\..\..\KeyEvents.SysLog\makefile_gcc"  KeyPath="yes" />
+        <File Id="KeyEvents.makefile_gcc" Source="..\KeyEvents.SysLog\makefile_gcc"  KeyPath="yes" />
       </Component>
     </DirectoryRef>
 

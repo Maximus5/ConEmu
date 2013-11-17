@@ -15,15 +15,18 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
-[%] Live preview peek was broken in Windows 8.
+2013.11.17
+[%] Live preview peeks were broken in Windows 8.
 [+] New ConEmu specific ANSI OSC.
     ESC ] 9 ; 7 ; "cmd" ST - Run some process with arguments
     ESC ] 9 ; 8 ; "env" ST - Output value of environment variable
     Usage example:
     prompt $P$E]9;7;"cmd /cGitExportBranch.cmd"$e\$E]9;8;"gitbranch"$e\$g
-[*] Don't print "nothing to export" when exported variable is not defined. Example:
+[*] Don't print "nothing to export" when exported variable is not defined.
     ConEmuC /export=CON gitbranch
 [*] 60 sec delay between each OnInfo_ReportCrash.
+[+] Helper batch file «cecho.cmd» may be used to colored print from batches.
+    Call "cecho /?" for usage examples.
 
 
 2013.11.15

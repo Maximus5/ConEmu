@@ -35,6 +35,7 @@
 	<?define Guid.ClsEx.cmd = "A6778698-97C2-4CA6-88C2-E0E3E774B4AB" ?>
 	<?define Guid.Cmd_Autorun.cmd = "E4DDDE2E-D547-480A-BA5A-67B5FDE011A3" ?>
 	<?define Guid.ColorPrompt.cmd = "8622B482-B737-4B4B-92B1-745AC7471752" ?>
+	<?define Guid.cecho.cmd = "62E78F5D-93C0-4FB5-8D23-B0D98CE542BA" ?>
 	<?define Guid.csudo.cmd = "A270A9A8-E549-474C-A6FE-E02E36796F82" ?>
 	<?define Guid.IsConEmu.cmd = "F82207EC-9049-4733-85C4-0FC45ECA0565" ?>
 	<?define Guid.RenameTab.cmd = "6D4D21A6-2B71-4F7A-AC72-1E888C83E385" ?>
@@ -44,6 +45,9 @@
 	<?define Guid.TypeBuildErrors.cmd = "EDC8B83F-B009-479E-A046-6B8D60E9D9B1" ?>
 	<?define Guid.Command_Processor.reg = "59CD0952-7C04-476D-9AF6-9C285E5241F1" ?>
 	<?define Guid.Command_Processor_Off.reg = "156ABF33-83DC-4705-8D34-061C2837AC8E" ?>
+	<!-- GIT Extensions -->
+	<?define Guid.GitShowBranch.cmd = "75F13A29-817E-4FAE-B93B-3134F0A2DE11" ?>
+	<?define Guid.git.cmd = "ACA3C5DB-A1DB-4D48-93DB-B3F823E7E52F" ?>
 	<!-- clink -->
 	<?define Guid.clink_readme.txt = "C13746E4-0168-46B8-8266-E84117146A96" ?>
 	<!-- DosBox -->
