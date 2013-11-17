@@ -1902,7 +1902,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 
 		if (nRet == IDABORT)
 		{
-			MyAssertTrap();
+			RaiseTestException();
 			bProcessed = true;
 		}
 
