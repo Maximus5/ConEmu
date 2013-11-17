@@ -180,7 +180,6 @@ bool CTaskBar::Taskbar_GhostSnapshootRequired()
 {
 	_ASSERTE(mp_TaskBar1!=NULL);
 	return gpConEmu->IsDwm();
-		//(gOSVer.dwMajorVersion >= 6);
 }
 
 HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive)

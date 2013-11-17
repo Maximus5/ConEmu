@@ -15,6 +15,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Live preview peek was broken in Windows 8.
+
+
 2013.11.15
 [%] Issue 1339: Crash on close ConEmu window (multiple assertions actually, regression of 131114).
 [+] ConEmuSetup.exe: `/p:x[86|64],adm` starts MSI as admin right away.

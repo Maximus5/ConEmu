@@ -228,19 +228,16 @@ void CDwmHelper::InitDwm()
 
 bool CDwmHelper::IsDwm()
 {
-	if (IsWindows8)
-		return false;
 	if (!mb_DwmAllowed)
 		return false;
 	BOOL composition_enabled = FALSE;
-	return _DwmIsCompositionEnabled(&composition_enabled) == S_OK &&
+	bool isDwm = _DwmIsCompositionEnabled(&composition_enabled) == S_OK &&
 		composition_enabled;
+	return isDwm;
 }
 
 bool CDwmHelper::IsDwmAllowed()
 {
-	if (IsWindows8)
-		return false;
 	return mb_DwmAllowed;
 }
 
@@ -330,6 +327,7 @@ void CDwmHelper::CheckGlassAttribute()
 		_DwmSetWindowAttribute(ghWnd, DWMWA_NCRENDERING_POLICY,
 			&policy, sizeof(DWMNCRENDERINGPOLICY));
 
+		TODO("Replace IsDwm with IsGlass?");
 	    OnUseDwm(IsDwm());
 
 		ExtendWindowFrame();
