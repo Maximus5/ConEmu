@@ -2975,7 +2975,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	size_t cchMaxEnvLen = 0;
 	wchar_t* pszBuffer;
 
-	_ASSERTE(FALSE && "Continue with exporting environment");
+	//_ASSERTE(FALSE && "Continue with exporting environment");
 
 	#define ExpFailedPref "ConEmuC: can't export environment"
 
@@ -3065,6 +3065,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 				goto wrap;
 			}
 
+			bool bFound = false;
 			size_t cchLeft = cchMaxEnvLen - 1;
 			// Loop through variable names
 			pszSrc = pszAllVars;
@@ -3097,9 +3098,29 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 					pszBuffer += cchAdd;
 					_ASSERTE(*pszBuffer == 0);
 					cchLeft -= cchAdd;
+					bFound = true;
 				}
 				*pszEq = L'=';
 				pszSrc = pszNext;
+
+				// continue scan, only if it is a mask
+				if (bFound && !wcschr(szTest, L'*'))
+					break;
+			} // end of 'while (*pszSrc)'
+
+			if (!bFound && !wcschr(szTest, L'*'))
+			{
+				// To avoid "nothing to export"
+				size_t cchAdd = lstrlen(szTest) + 1;
+				if (cchAdd < cchLeft)
+				{
+					// Copy "Name\0\0"
+					wmemmove(pszBuffer, szTest, cchAdd);
+					cchAdd++; // We need second zero after a Name
+					pszBuffer += cchAdd;
+					cchLeft -= cchAdd;
+					_ASSERTE(*pszBuffer == 0);
+				}
 			}
 		}
 	}
