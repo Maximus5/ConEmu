@@ -2975,7 +2975,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	size_t cchMaxEnvLen = 0;
 	wchar_t* pszBuffer;
 
-	//_ASSERTE(FALSE && "Continue with exporting environment");
+	_ASSERTE(FALSE && "Continue with exporting environment");
 
 	#define ExpFailedPref "ConEmuC: can't export environment"
 
