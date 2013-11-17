@@ -1864,14 +1864,22 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 
 							case L'n':
 								{
-									TODO("ECMA-48 Status Report Commands");
-									//ESC [ 5 n
-									//      Device status report (DSR): Answer is ESC [ 0 n (Terminal OK).
-									//
-									//ESC [ 6 n
-									//      Cursor position report (CPR): Answer is ESC [ y ; x R, where x,y is the
-									//      cursor location.
-									DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+									switch (*Code.ArgSZ)
+									{
+									case '5':
+									case '6':
+										DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+										break;
+									default:
+										TODO("ECMA-48 Status Report Commands");
+										//ESC [ 5 n
+										//      Device status report (DSR): Answer is ESC [ 0 n (Terminal OK).
+										//
+										//ESC [ 6 n
+										//      Cursor position report (CPR): Answer is ESC [ y ; x R, where x,y is the
+										//      cursor location.
+										DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+									}
 								}
 								break;
 
