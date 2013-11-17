@@ -620,13 +620,13 @@ CConEmuMain::CConEmuMain()
 	}
 	NonPortable:
 
-	mb_BlockChildrenDebuggers = false;
+	ZeroStruct(m_DbgInfo);
 	if (IsDebuggerPresent())
 	{
 		wchar_t szDebuggers[32];
 		if (GetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS, szDebuggers, countof(szDebuggers)))
 		{
-			mb_BlockChildrenDebuggers = (lstrcmp(szDebuggers, ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES) == 0);
+			m_DbgInfo.bBlockChildrenDebuggers = (lstrcmp(szDebuggers, ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES) == 0);
 		}
 	}
 	// И сразу сбросить ее, чтобы не было мусора
@@ -2600,7 +2600,7 @@ void CConEmuMain::FinalizePortableReg()
 void CConEmuMain::GetComSpecCopy(ConEmuComspec& ComSpec)
 {
 	_ASSERTE(m_GuiInfo.ComSpec.csType==gpSet->ComSpec.csType);
-	_ASSERTE(m_GuiInfo.ComSpec.csBits==(mb_BlockChildrenDebuggers ? csb_SameApp : gpSet->ComSpec.csBits));
+	_ASSERTE(m_GuiInfo.ComSpec.csBits==(m_DbgInfo.bBlockChildrenDebuggers ? csb_SameApp : gpSet->ComSpec.csBits));
 	ComSpec = m_GuiInfo.ComSpec;
 }
 
@@ -2654,7 +2654,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 		SetConEmuFlags(m_GuiInfo.Flags,CECF_UseClink_Any,CECF_Empty);
 	}
 
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_BlockChildDbg,(mb_BlockChildrenDebuggers ? CECF_BlockChildDbg : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_BlockChildDbg,(m_DbgInfo.bBlockChildrenDebuggers ? CECF_BlockChildDbg : 0));
 	
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
 	m_GuiInfo.bGuiActive = isMeForeground(true, true);
@@ -2723,7 +2723,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 		// Теперь перенести в мэппинг, для информирования других процессов
 		ComSpecType csType = gpSet->ComSpec.csType;
 		// Если мы в режиме "отладки дерева процессов" - предпочитать ComSpec битности приложения!
-		ComSpecBits csBits = mb_BlockChildrenDebuggers ? csb_SameApp : gpSet->ComSpec.csBits;
+		ComSpecBits csBits = m_DbgInfo.bBlockChildrenDebuggers ? csb_SameApp : gpSet->ComSpec.csBits;
 		//m_GuiInfo.ComSpec.csType = gpSet->ComSpec.csType;
 		//m_GuiInfo.ComSpec.csBits = gpSet->ComSpec.csBits;
 		wchar_t szExpand[MAX_PATH] = {}, szFull[MAX_PATH] = {}, *pszFile;
@@ -17321,6 +17321,17 @@ void CConEmuMain::OnInfo_ReportBug()
 
 void CConEmuMain::OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg)
 {
+	if (m_DbgInfo.nLastCrashReported)
+	{
+		// if previous gsReportCrash was opened less than 60 sec ago
+		DWORD nLast = GetTickCount() - m_DbgInfo.nLastCrashReported;
+		if (nLast < 60000)
+		{
+			// Skip this time
+			return;
+		}
+	}
+
 	if (asDumpWasCreatedMsg && !*asDumpWasCreatedMsg)
 	{
 		asDumpWasCreatedMsg = NULL;
@@ -17335,6 +17346,8 @@ void CConEmuMain::OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg)
 	{
 		MessageBox(asDumpWasCreatedMsg, MB_OK|MB_ICONEXCLAMATION|MB_SYSTEMMODAL);
 	}
+
+	m_DbgInfo.nLastCrashReported = GetTickCount();
 }
 
 void CConEmuMain::OnInfo_ThrowTrapException(bool bMainThread)

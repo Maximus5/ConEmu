@@ -23,6 +23,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
     prompt $P$E]9;7;"cmd /cGitExportBranch.cmd"$e\$E]9;8;"gitbranch"$e\$g
 [*] Don't print "nothing to export" when exported variable is not defined. Example:
     ConEmuC /export=CON gitbranch
+[*] 60 sec delay between each OnInfo_ReportCrash.
 
 
 2013.11.15

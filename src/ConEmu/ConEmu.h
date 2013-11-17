@@ -157,7 +157,11 @@ class CConEmuMain :
 		bool mb_UpdateJumpListOnStartup;
 		bool mb_FindBugMode;
 	private:
-		bool mb_BlockChildrenDebuggers;
+		struct
+		{
+			DWORD nLastCrashReported;
+			bool  bBlockChildrenDebuggers;
+		} m_DbgInfo;
 	private:
 		bool CheckBaseDir();
 		BOOL CheckDosBoxExists();
