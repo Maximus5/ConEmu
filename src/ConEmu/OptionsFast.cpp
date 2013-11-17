@@ -555,7 +555,13 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		{L"PowerShell (Admin)",  L"powershell.exe",                    L" -new_console:a"},
 
 		// Bash
+
+		// For cygwin we can check registry keys (todo?)
+		// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
+		// HKLM\SOFTWARE\Cygwin\setup\rootdir
+		// HKCU\Software\Cygwin\setup\rootdir
 		{L"CygWin bash",    L"\\CygWin\\bin\\sh.exe",                  L" --login -i"},
+
 //		{L"CygWin mintty",  L"\\CygWin\\bin\\mintty.exe",              L" -"},
 		{L"MinGW bash",     L"\\MinGW\\msys\\1.0\\bin\\sh.exe",        L" --login -i"},
 //		{L"MinGW mintty",   L"\\MinGW\\msys\\1.0\\bin\\mintty.exe",    L" -"},
