@@ -1352,7 +1352,7 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 				else
 				{
 					// Нужны доп.проверки окон фара
-					ConEmuTab tab;
+					CTab tab;
 					LPCWSTR pszNameOnly = (anWindowType & fwt_FarFullPathReq) ? NULL : asName ? PointToName(asName) : NULL;
 					if (pszNameOnly)
 					{
@@ -1365,38 +1365,40 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 
 					for (int j = 0; !iFound; j++)
 					{
-						if (!pRCon->GetTab(j, &tab))
+						if (!pRCon->GetTab(j, tab))
 							break;
 
-						if ((tab.Type & fwt_TypeMask) != (anWindowType & fwt_TypeMask))
+						CEFarWindowType tabFlags = tab->Info.Type;
+						if ((tabFlags & fwt_TypeMask) != (anWindowType & fwt_TypeMask))
 							continue;
 
 						// Этот Far Elevated?
-						if ((anWindowType & fwt_Elevated) && !(tab.Type & fwt_Elevated))
+						if ((anWindowType & fwt_Elevated) && !(tabFlags & fwt_Elevated))
 							continue;
 						// В табе устанавливается флаг fwt_Elevated
 						// fwt_NonElevated используется только как аргумент поиска
-						if ((anWindowType & fwt_NonElevated) && (tab.Type & fwt_Elevated))
+						if ((anWindowType & fwt_NonElevated) && (tabFlags & fwt_Elevated))
 							continue;
 
 						// Модальное окно?
 						WARNING("Нужно еще учитывать <модальность> заблокированным диалогом, или меню, или еще чем-либо!");
-						if ((anWindowType & fwt_ModalFarWnd) && !(tab.Type & fwt_ModalFarWnd))
+						if ((anWindowType & fwt_ModalFarWnd) && !(tabFlags & fwt_ModalFarWnd))
 							continue;
 						// В табе устанавливается флаг fwt_Modal
 						// fwt_NonModal используется только как аргумент поиска
-						if ((anWindowType & fwt_NonModal) && (tab.Type & fwt_ModalFarWnd))
+						if ((anWindowType & fwt_NonModal) && (tabFlags & fwt_ModalFarWnd))
 							continue;
 
 						// Если ищем конкретный редактор/вьювер
 						if (asName && *asName)
 						{
-							if (lstrcmpi(tab.Name, asName) == 0)
+							LPCWSTR tabName = tab->Name.Ptr();
+							if (lstrcmpi(tabName, asName) == 0)
 							{
 								iFound = (j+1);
 							}
 							else if (pszNameOnly && (pszNameOnly != asName)
-								&& (lstrcmpi(PointToName(tab.Name), pszNameOnly) == 0))
+								&& (lstrcmpi(PointToName(tabName), pszNameOnly) == 0))
 							{
 								iFound = (j+1);
 							}
