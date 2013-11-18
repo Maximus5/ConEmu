@@ -58,7 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CConEmuChild;
 class CConEmuBack;
-class TabBarClass;
+class CTabBarClass;
 class CConEmuMacro;
 class CAttachDlg;
 class CRecreateDlg;
@@ -219,7 +219,7 @@ class CConEmuMain :
 		//CConEmuBack  *m_Back;
 		//CConEmuMacro *m_Macro;
 		CConEmuMenu *mp_Menu;
-		TabBarClass *mp_TabBar;
+		CTabBarClass *mp_TabBar;
 		CConEmuInside *mp_Inside;
 		CStatus *mp_Status;
 		CToolTip *mp_Tip;
