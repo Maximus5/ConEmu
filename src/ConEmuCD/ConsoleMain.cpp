@@ -214,8 +214,9 @@ SrvInfo* gpSrv = NULL;
 COORD gcrVisibleSize = {80,25}; // gcrBufferSize переименован в gcrVisibleSize
 BOOL  gbParmVisibleSize = FALSE;
 BOOL  gbParmBufSize = FALSE;
-SHORT gnBufferHeight = 0;
-SHORT gnBufferWidth = 0; // Определяется в MyGetConsoleScreenBufferInfo
+COORD gcrBufferSize = {0,0}; // .X определяется в MyGetConsoleScreenBufferInfo
+//SHORT gnBufferHeight = 0;
+//SHORT gnBufferWidth = 0; // Определяется в MyGetConsoleScreenBufferInfo
 wchar_t* gpszPrevConTitle = NULL;
 
 MFileLog* gpLogSize = NULL;
@@ -2057,8 +2058,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 		// MyGetConsoleScreenBufferInfo пользовать нельзя - оно gpSrv и gnRunMode хочет
 		if (GetConsoleScreenBufferInfo(ghConOut, &sbi))
 		{
-			gcrVisibleSize.X = sbi.srWindow.Right - sbi.srWindow.Left + 1;
-			gcrVisibleSize.Y = sbi.srWindow.Bottom - sbi.srWindow.Top + 1;
+			SetVisibleSize(sbi.srWindow.Right - sbi.srWindow.Left + 1, sbi.srWindow.Bottom - sbi.srWindow.Top + 1);
 			gbParmVisibleSize = FALSE;
 			gnBufferHeight = (sbi.dwSize.Y == gcrVisibleSize.Y) ? 0 : sbi.dwSize.Y;
 			gnBufferWidth = (sbi.dwSize.X == gcrVisibleSize.X) ? 0 : sbi.dwSize.X;
@@ -3980,11 +3980,17 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 			if (wcsncmp(szArg, L"/BW=", 4)==0)
 			{
-				gcrVisibleSize.X = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmVisibleSize = TRUE;
+				int X = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmVisibleSize = TRUE;
+				SetVisibleSize(X, gcrVisibleSize.Y); // gcrVisibleSize
 			}
 			else if (wcsncmp(szArg, L"/BH=", 4)==0)
 			{
-				gcrVisibleSize.Y = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmVisibleSize = TRUE;
+				int Y = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmVisibleSize = TRUE;
+				SetVisibleSize(gcrVisibleSize.X, Y); // gcrVisibleSize
+			}
+			else if (wcsncmp(szArg, L"/BY=", 4)==0)
+			{
+				gnBufferWidth = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmBufSize = TRUE;
 			}
 			else if (wcsncmp(szArg, L"/BZ=", 4)==0)
 			{
@@ -4737,12 +4743,20 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	}
 	//
 	gbRunInBackgroundTab = args.bBackgroundTab;
+
 	if (args.bBufHeight)
 	{
 		TODO("gcrBufferSize - и ширину буфера");
 		gnBufferHeight = args.nBufHeight;
 		gbParmBufSize = TRUE;
 	}
+	if (args.bBufWidth)
+	{
+		TODO("gcrBufferSize - и ширину буфера");
+		gnBufferWidth = args.nBufWidth;
+		gbParmBufSize = TRUE;
+	}
+
 	// DosBox?
 	if (args.bForceDosBox)
 	{
@@ -5426,8 +5440,7 @@ void SendStarted()
 			gbParmBufSize = TRUE;
 			// gcrBufferSize переименован в gcrVisibleSize
 			_ASSERTE(pOut->StartStopRet.nWidth && pOut->StartStopRet.nHeight);
-			gcrVisibleSize.X = (SHORT)pOut->StartStopRet.nWidth;
-			gcrVisibleSize.Y = (SHORT)pOut->StartStopRet.nHeight;
+			SetVisibleSize((SHORT)pOut->StartStopRet.nWidth, (SHORT)pOut->StartStopRet.nHeight); // gcrVisibleSize
 			gbParmVisibleSize = TRUE;			
 
 			if ((gnRunMode == RM_SERVER) || (gnRunMode == RM_ALTSERVER))
@@ -8524,14 +8537,21 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 }
 
 
+void SetVisibleSize(SHORT x, SHORT y)
+{
+	COORD cr = {x,y};
+	gcrVisibleSize = cr;
+}
 
-// BufferHeight  - высота БУФЕРА (0 - без прокрутки)
+
+// crBufferSize  - размер БУФЕРА (0 - без прокрутки)
 // crNewSize     - размер ОКНА (ширина окна == ширине буфера)
 // rNewRect      - для (BufferHeight!=0) определяет new upper-left and lower-right corners of the window
-BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel)
+BOOL SetConsoleSize(COORD crBufferSize, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel)
 {
 	_ASSERTE(ghConWnd);
-	_ASSERTE(BufferHeight==0 || BufferHeight>crNewSize.Y); // Otherwise - it will be NOT a bufferheight...
+	_ASSERTE(crBufferSize.Y==0 || crBufferSize.Y>crNewSize.Y); // Otherwise - it will be NOT a bufferheight...
+	_ASSERTE(crBufferSize.X==0 || crBufferSize.X>crNewSize.Y); // Otherwise - it will be NOT a bufferwidth...
 
 	if (!ghConWnd) return FALSE;
 
@@ -8559,7 +8579,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	if ((gnRunMode == RM_SERVER) || (gnRunMode == RM_ALTSERVER))
 	{
 		// Запомним то, что последний раз установил сервер. пригодится
-		gpSrv->nReqSizeBufferHeight = BufferHeight;
+		gpSrv->crReqSizeBufferSize = crBufferSize;
 		gpSrv->crReqSizeNewSize = crNewSize;
 		_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
 		gpSrv->rReqSizeNewRect = rNewRect;
@@ -8631,7 +8651,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 
 	if (MyGetConsoleScreenBufferInfo(ghConOut, &csbi))
 	{
-		// Используется только при (gnBufferHeight == 0)
+		// Используется только при (crBufferSize == 0)
 		lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y)
 			|| ((csbi.srWindow.Right - csbi.srWindow.Left + 1) != crNewSize.X)
 			|| ((csbi.srWindow.Bottom - csbi.srWindow.Top + 1) != crNewSize.Y);
@@ -8700,11 +8720,12 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	}
 
 	// Делаем это ПОСЛЕ MyGetConsoleScreenBufferInfo, т.к. некоторые коррекции размера окна
-	// она делает ориентируясь на gnBufferHeight
-	gnBufferHeight = BufferHeight;
+	// она делает ориентируясь на gcrBufferSize
+	gcrBufferSize = crBufferSize;
 	// Размер видимой области (слишком большой?)
 	_ASSERTE(crNewSize.X<=500 && crNewSize.Y<=300);
-	gcrVisibleSize = crNewSize;
+	
+	SetVisibleSize(crNewSize.X, crNewSize.Y); // gcrVisibleSize
 	
 	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
 		UpdateConsoleMapHeader(); // Обновить pConsoleMap.crLockedVisible

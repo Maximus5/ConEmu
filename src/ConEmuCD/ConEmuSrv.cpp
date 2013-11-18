@@ -517,8 +517,8 @@ int ServerInitConsoleSize()
 			gpSrv->crReqSizeNewSize = lsbi.dwSize;
 			_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
 
-			gcrVisibleSize.X = lsbi.srWindow.Right - lsbi.srWindow.Left + 1;
-			gcrVisibleSize.Y = lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1;
+			SetVisibleSize(lsbi.srWindow.Right - lsbi.srWindow.Left + 1, lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1); // gcrVisibleSize
+
 			gnBufferHeight = (lsbi.dwSize.Y == gcrVisibleSize.Y) ? 0 : lsbi.dwSize.Y;
 			gnBufferWidth = (lsbi.dwSize.X == gcrVisibleSize.X) ? 0 : lsbi.dwSize.X;
 		}
@@ -3515,13 +3515,14 @@ static int ReadConsoleInfo()
 			// Консольное приложение могло изменить размер буфера
 			if (!NTVDMACTIVE)  // НЕ при запущенном 16битном приложении - там мы все жестко фиксируем, иначе съезжает размер при закрытии 16бит
 			{
+				COORD newVisibleSize = gcrVisibleSize;
 				// ширина
 				if ((lsbi.srWindow.Left == 0  // или окно соответсвует полному буферу
 				        && lsbi.dwSize.X == (lsbi.srWindow.Right - lsbi.srWindow.Left + 1)))
 				{
 					// Это значит, что прокрутки нет, и консольное приложение изменило размер буфера
 					gnBufferWidth = 0;
-					gcrVisibleSize.X = lsbi.dwSize.X;
+					newVisibleSize.X = lsbi.dwSize.X;
 				}
 				// высота
 				if ((lsbi.srWindow.Top == 0  // или окно соответсвует полному буферу
@@ -3529,8 +3530,10 @@ static int ReadConsoleInfo()
 				{
 					// Это значит, что прокрутки нет, и консольное приложение изменило размер буфера
 					gnBufferHeight = 0;
-					gcrVisibleSize.Y = lsbi.dwSize.Y;
+					newVisibleSize.Y = lsbi.dwSize.Y;
 				}
+				// Apply gcrVisibleSize
+				SetVisibleSize(newVisibleSize.X, newVisibleSize.Y);
 
 				if (lsbi.dwSize.X != gpSrv->sbi.dwSize.X
 				        || (lsbi.srWindow.Bottom - lsbi.srWindow.Top) != (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top))

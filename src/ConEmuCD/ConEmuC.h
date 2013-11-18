@@ -496,7 +496,7 @@ struct SrvInfo
 	// Смена размера консоли через RefreshThread
 	int nRequestChangeSize;
 	BOOL bRequestChangeSizeResult;
-	USHORT nReqSizeBufferHeight;
+	COORD crReqSizeBufferSize;
 	COORD crReqSizeNewSize;
 	SMALL_RECT rReqSizeNewRect;
 	LPCSTR sReqSizeLabel;
@@ -587,6 +587,7 @@ void PrintVersion();
 //extern CmdInfo* gpSrv;
 
 extern COORD gcrVisibleSize;
+void SetVisibleSize(SHORT x, SHORT y);
 extern BOOL  gbParmVisibleSize, gbParmBufSize;
 extern SHORT gnBufferHeight, gnBufferWidth;
 extern wchar_t* gpszPrevConTitle;
