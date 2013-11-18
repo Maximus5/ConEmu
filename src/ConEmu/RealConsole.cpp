@@ -9783,7 +9783,6 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 	}
 
 	// Теперь сформируем пакет
-	wchar_t szMsg[128];
 	LPCWSTR pszEnd = pszBuf + _tcslen(pszBuf);
 
 	// Смотрим первую строку / наличие второй
@@ -9797,9 +9796,33 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 		}
 		else if (gpSet->isPasteConfirmEnter && !abNoConfirm)
 		{
-			wcscpy_c(szMsg, L"Pasting text involves <Enter> keypress!\nContinue?");
+			//wcscpy_c(szMsg, L"Pasting text involves <Enter> keypress!\nContinue?");
+			wchar_t* pszConfirm = NULL;
+			LPCWSTR psWarn = L"Pasting text involves <Enter> keypress!\n\n";
+			LPCWSTR psWarn2 = L"Pasting text involves <Enter> keypress!\n\nAlso, you may paste first line of text with {";
+			LPCWSTR psQstn = L"Continue?";
+			LPCWSTR psQstn2 = L"} hotkey.\n\nContinue?";
 
-			if (MessageBox(ghWnd, szMsg, GetTitle(), MB_OKCANCEL) != IDOK)
+			// Suggest use Ctrl+V to paste one line of text
+			
+			const ConEmuHotKey* pHK = NULL;
+			DWORD VkMod = gpSet->GetHotkeyById(vkPasteFirstLine, &pHK);
+			if (pHK && ConEmuHotKey::GetHotkey(VkMod))
+			{
+				wchar_t szKey[128] = {};
+				pszConfirm = lstrmerge(psWarn2, pHK->GetHotkeyName(szKey), psQstn2);
+			}
+			else
+			{
+				pszConfirm = lstrmerge(psWarn, psQstn);
+			}
+
+
+
+			int iConfirm = MessageBox(ghWnd, pszConfirm, GetTitle(), MB_OKCANCEL);
+			SafeFree(pszConfirm);
+
+			if (iConfirm != IDOK)
 			{
 				goto wrap;
 			}
@@ -9808,6 +9831,7 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 
 	if (gpSet->nPasteConfirmLonger && !abNoConfirm && ((size_t)(pszEnd - pszBuf) > (size_t)gpSet->nPasteConfirmLonger))
 	{
+		wchar_t szMsg[128];
 		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Pasting text length is %u chars!\nContinue?", (DWORD)(pszEnd - pszBuf));
 
 		if (MessageBox(ghWnd, szMsg, GetTitle(), MB_OKCANCEL) != IDOK)
