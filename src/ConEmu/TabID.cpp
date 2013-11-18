@@ -34,6 +34,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 
 /* Simple fixed-max-length string class { struct } */
+TabName::TabName()
+{
+	nLen = 0; sz[0] = 0;
+}
+TabName::TabName(LPCWSTR asName)
+{
+	nLen = 0; sz[0] = 0;
+	Set(asName);
+}
 LPCWSTR TabName::Set(LPCWSTR asName)
 {
 	#ifdef _DEBUG
@@ -50,18 +59,18 @@ void TabName::Release()
 	sz[0] = 0;
 	nLen = 0;
 }
-LPCWSTR TabName::Upper()
-{
-	if (*sz)
-	{
-		CharUpperBuffW(sz, nLen);
-	}
-	else
-	{
-		_ASSERTE(*sz!=0);
-	}
-	return sz;
-}
+//LPCWSTR TabName::MakeUpper()
+//{
+//	if (*sz)
+//	{
+//		CharUpperBuffW(sz, nLen);
+//	}
+//	else
+//	{
+//		_ASSERTE(*sz!=0);
+//	}
+//	return sz;
+//}
 LPCWSTR TabName::Ptr() const
 {
 	_ASSERTE(*sz!=0);
@@ -77,15 +86,14 @@ int TabName::Length() const
 
 
 /* Uniqualizer for Each tab */
-CTabID::CTabID(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
+CTabID::CTabID(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID)
 {
-	mn_RefCount = 0;
 	memset(&Info, 0, sizeof(Info));
 	memset(&DrawInfo, 0, sizeof(DrawInfo));
 
 	//bExisted = true;
 	Info.pVCon = apVCon;
-	Set(asName, anType, anPID, anFarWindowID, anViewEditID, anFlags);
+	Set(asName, anType, anPID, anFarWindowID, anViewEditID);
 
 
 	//Info.Status = tisValid;
@@ -97,26 +105,31 @@ CTabID::CTabID(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, i
 	//// Name
 	//Name.Init(asName);
 	//Upper.Init(asName);
-	//Upper.Upper();
+	//Upper.MakeUpper();
 }
-void CTabID::Set(LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
+void CTabID::Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID)
 {
 	//bExisted = true;
 	Info.Status = tisValid;
-	Info.Flags = anFlags;
-	Info.Type = anType; // etfPanels/etfEditor/etfViewer
+	Info.Type = anType; // enum CEFarWindowType (fwt_...)
 	Info.nPID = anPID; // ИД процесса, содержащего таб (актуально для редакторов/вьюверов)
 	Info.nFarWindowID = anFarWindowID;
 	Info.nViewEditID = anViewEditID;
 	// Name
 	Name.Set(asName);
-	Upper.Set(asName);
-	Upper.Upper();
+	//Upper.Set(asName);
+	//Upper.MakeUpper();
 }
 CTabID::~CTabID()
 {
 	Name.Release();
+	Renamed.Release();
 	ReleaseDrawRegion();
+}
+void CTabID::FinalRelease()
+{
+	CTabID* p = this;
+	delete p;
 }
 void CTabID::ReleaseDrawRegion()
 {
@@ -126,19 +139,12 @@ void CTabID::ReleaseDrawRegion()
 		DrawInfo.rgnTab = NULL;
 	}
 }
-int CTabID::AddRef()
+bool CTabID::IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anViewEditID)
 {
-	int nNewCount = InterlockedIncrement(&mn_RefCount);
-	return nNewCount;
+	TabName t(asName);
+	return IsEqual(apVCon, t, anType, anPID, anViewEditID);
 }
-int CTabID::Release()
-{
-	int n = InterlockedDecrement(&mn_RefCount);
-	if (n <= 0)
-		delete this;
-	return n;
-}
-bool CTabID::IsEqual(CVirtualConsole* apVCon, const TabName& asNameUpper, int anType, int anPID, int anViewEditID)
+bool CTabID::IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindowType anType, int anPID, int anViewEditID)
 {
 	if (!this)
 		return false; // Invalid arguments
@@ -160,7 +166,7 @@ bool CTabID::IsEqual(CVirtualConsole* apVCon, const TabName& asNameUpper, int an
 	//		return false;
 	//}
 	
-	if (anType != this->Info.Type)
+	if ((anType & (fwt_TypeMask|fwt_CompareFlags)) != (this->Info.Type & (fwt_TypeMask|fwt_CompareFlags)))
 		return false;
 
 	//// Для редактора/вьювера проверям ИД процесса FAR & ИД редактора/вьювера
@@ -177,11 +183,12 @@ bool CTabID::IsEqual(CVirtualConsole* apVCon, const TabName& asNameUpper, int an
 	//}
 
 	// -- достаточно бы заложиться на ViewerEditorID, но его пока нет
-	LPCWSTR psz1 = asNameUpper.Ptr();
-	LPCWSTR psz2 = this->Upper.Ptr();
-	if (asNameUpper.Length() != this->Upper.Length())
+	LPCWSTR psz1 = asName.Ptr();
+	LPCWSTR psz2 = this->Name.Ptr();
+	int nNameLen = this->Name.Length();
+	if (asName.Length() != nNameLen)
 		return false;
-	if (memcmp(psz1, psz2, this->Upper.Length()*2))
+	if (wmemcmp(psz1, psz2, nNameLen))
 		return false;
 
 	// OK, различия не найдены, закладки совпадают
@@ -204,7 +211,7 @@ bool CTabID::IsEqual(const CTabID* pTabId, bool abIgnoreWindowId /*= false*/)
 			return false;
 	}
 
-	return IsEqual( pTabId->Info.pVCon, pTabId->Upper, pTabId->Info.Type, pTabId->Info.nPID,
+	return IsEqual( pTabId->Info.pVCon, pTabId->Name, pTabId->Info.Type, pTabId->Info.nPID,
 					pTabId->Info.nViewEditID );
 
 	//if (pTabId->pVCon != this->pVCon)
@@ -271,6 +278,7 @@ CTabStack::CTabStack()
 	mp_Section = new MSection;
 	//mp_UpdateLock = NULL;
 	mn_UpdatePos = -1;
+	mb_FarUpdateMode = false;
 }
 CTabStack::~CTabStack()
 {
@@ -553,54 +561,61 @@ HANDLE CTabStack::UpdateBegin()
 //}
 
 // Должен вызываться только из CRealConsole!
-void CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
+// Возвращает "true" если были изменения
+bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID)
 {
 	MSectionLock* pUpdateLock = (MSectionLock*)hUpdate;
-	
+
 	// Функция должна вызваться ТОЛЬКО между UpdateBegin & UpdateEnd
 	if (mn_UpdatePos < 0 || !pUpdateLock)
 	{
 		_ASSERTE(mn_UpdatePos>=0);
 		_ASSERTE(pUpdateLock!=NULL);
-		return;
+		return false;
 	}
 
+	bool bChanged = false;
 	CTabID* pTab = NULL;
+
+	mb_FarUpdateMode = true;
 
 	// Первый (FarWindow==0) таб консоли всегда обновляется!
 	if (mn_UpdatePos == 0)
 	{
 		if (mn_Used == 0)
 		{
-			pTab = new CTabID(apVCon, asName, anType, anPID, anFarWindowID, anViewEditID, anFlags);
+			pTab = new CTabID(apVCon, asName, anType, anPID, anFarWindowID, anViewEditID);
 			// Вобщем-то без разницы abMoveFirst или нет - массив сейчас все-равно пуст (консоль только что открыта)
 			AppendInt(pTab, TRUE/*abMoveFirst*/, pUpdateLock);
+			bChanged = true;
 		}
 		else
 		{
 			pTab = mpp_Stack[0];
+			// Изменился?
+			bChanged = (pTab->Info.nFarWindowID != anFarWindowID)
+				|| (pTab->Info.Status == tisEmpty || pTab->Info.Status == tisInvalid)
+				|| (!pTab->IsEqual(apVCon, asName, anType, anPID, anViewEditID));
 			// Обновляем все подряд. Вместо панелей теперь может быть модальный редактор/вьювер
-			pTab->Set(asName, anType, anPID, anFarWindowID, anViewEditID, anFlags);
+			pTab->Set(asName, anType, anPID, anFarWindowID, anViewEditID);
 		}
 		// Следующий
 		mn_UpdatePos = 1;
 
 		// OK, с первым табом (FarWindow==0) закончили
-		return;
 	}
-
+	else
+	{
 	// Теперь - поехали обновлять. Правила такие:
 	// 1. Новая вкладка в ФАР может появиться ТОЛЬКО в конце
 	// 2. Закрыта может быть любая вкладка
 
-	TabName upr; upr.Set(asName); upr.Upper();
-
-	pTab = NULL;
-	int i = 0;
-	while (i < mn_Used)
-	{
-		if (mpp_Stack[i]->IsEqual(apVCon, upr, anType, anPID, anViewEditID))
+		pTab = NULL;
+		int i = 0;
+		while (i < mn_Used)
 		{
+			if (mpp_Stack[i]->IsEqual(apVCon, asName, anType, anPID, anViewEditID))
+			{
 			// OK, таб совпадает
 			pTab = mpp_Stack[i];
 
@@ -608,6 +623,7 @@ void CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 			break;
 		}
 		// таб был закрыт
+			bChanged = true;
 		mpp_Stack[i]->Info.Status = tisInvalid;
 		mpp_Stack[i]->Release();
 		mpp_Stack[i] = NULL;
@@ -622,22 +638,26 @@ void CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 			pUpdateLock->RelockExclusive();
 			// Все что между {mn_UpdatePos .. (i-1)} теперь уже забито NULL
 			memmove(mpp_Stack+mn_UpdatePos, mpp_Stack+i, (mn_Used - i) * sizeof(CTabID**));
+			}
+			mn_Used -= (i - mn_UpdatePos);
+			memset(mpp_Stack+mn_Used, 0, (i - mn_UpdatePos) * sizeof(CTabID**));
 		}
-		mn_Used -= (i - mn_UpdatePos);
-		memset(mpp_Stack+mn_Used, 0, (i - mn_UpdatePos) * sizeof(CTabID**));
-	}
 
 	// Если таб новый
 	if (pTab == NULL)
 	{
 		// это новая вкладка, добавляемая в конец
-		pTab = new CTabID(apVCon, asName, anType, anPID, anFarWindowID, anViewEditID, anFlags);
+			pTab = new CTabID(apVCon, asName, anType, anPID, anFarWindowID, anViewEditID);
 		_ASSERTE(mn_Used == mn_UpdatePos);
 		AppendInt(pTab, FALSE/*abMoveFirst*/, pUpdateLock);
+			bChanged = true;
+		}
+
+		mn_UpdatePos++;
+		_ASSERTE(mn_UpdatePos>1 && mn_UpdatePos<=mn_Used);
 	}
 
-	mn_UpdatePos++;
-	_ASSERTE(mn_UpdatePos>1 && mn_UpdatePos<=mn_Used);
+	return bChanged;
 }
 
 void CTabStack::UpdateAppend(HANDLE hUpdate, CTab& Tab, BOOL abMoveFirst)
@@ -742,7 +762,9 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 //	delete mp_MarkTemp;
 //	mp_MarkTemp = NULL;
 //}
-void CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
+
+// Возвращает "true" если были изменения в КОЛИЧЕСТВЕ табов (ЗДЕСЬ больше ничего не проверяется)
+bool CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 {
 	MSectionLock* pUpdateLock = (MSectionLock*)hUpdate;
 	
@@ -750,10 +772,10 @@ void CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 	if (mn_UpdatePos < 0)
 	{
 		_ASSERTE(mn_UpdatePos>=0);
-		return;
+		return false;
 	}
 
-	if (mn_UpdatePos == 0)
+	if (!mb_FarUpdateMode && (mn_UpdatePos == 0))
 	{
 		if (!CVConGroup::isVConExists(0))
 		{
@@ -768,12 +790,14 @@ void CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 			delete pUpdateLock;
 			//mp_UpdateLock = NULL;
 			mn_UpdatePos = -1;
-			return;
+			return false;
 		}
 	}
 
 	if (!abForceReleaseTail && mn_UpdatePos > 1)
 		abForceReleaseTail = TRUE;
+
+	bool bChanged = (mn_Used != mn_UpdatePos);
 
 	if (abForceReleaseTail && mn_UpdatePos < mn_Used)
 	{
@@ -795,6 +819,8 @@ void CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 	pUpdateLock->Unlock();
 	delete pUpdateLock;
 	//mp_UpdateLock = NULL;
+
+	return bChanged;
 }
 void CTabStack::ReleaseTabs(BOOL abInvalidOnly /*= TRUE*/)
 {
