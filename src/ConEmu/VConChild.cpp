@@ -90,14 +90,22 @@ CConEmuChild::CConEmuChild()
 	mh_WndDC = NULL;
 	mh_WndBack = NULL;
 	mh_LastGuiChild = NULL;
-	mb_ScrollVisible = FALSE; mb_Scroll2Visible = FALSE; /*mb_ScrollTimerSet = FALSE;*/ mb_ScrollAutoPopup = FALSE;
-	mb_VTracking = FALSE;
 
-	ZeroStruct(m_si);
-	m_si.cbSize = sizeof(m_si);
-	m_si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE /*| SIF_DISABLENOSCROLL*/;
-	mb_ScrollDisabled = FALSE;
-	m_LastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
+	ZeroStruct(m_HScroll);
+	ZeroStruct(m_VScroll);
+	//mb_ScrollVisible = FALSE; mb_Scroll2Visible = FALSE; /*mb_ScrollTimerSet = FALSE;*/ mb_ScrollAutoPopup = FALSE;
+	//mb_VTracking = FALSE;
+	//ZeroStruct(m_si);
+
+	m_VScroll.si.cbSize = sizeof(m_VScroll.si);
+	m_VScroll.si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE /*| SIF_DISABLENOSCROLL*/;
+	m_HScroll.si.cbSize = sizeof(m_HScroll.si);
+	m_HScroll.si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE /*| SIF_DISABLENOSCROLL*/;
+
+	//mb_ScrollDisabled = FALSE;
+	//m_LastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
+	m_VScroll.nLastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
+
 	mb_ScrollRgnWasSet = false;
 	
 	ZeroStruct(m_LockDc);
@@ -411,17 +419,32 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 						{
 						case SB_THUMBTRACK:
 						case SB_THUMBPOSITION:
-							pVCon->mb_VTracking = TRUE;
+							pVCon->m_VScroll.bTracking = TRUE;
 							break;
 						case SB_ENDSCROLL:
-							pVCon->mb_VTracking = FALSE;
+							pVCon->m_VScroll.bTracking = FALSE;
 							break;
 						}
-						pVCon->RCon()->OnSetScrollPos(wParam);
+						pVCon->RCon()->OnSetScrollPos(rbs_Vert, wParam);
+						break;
+
+					case WM_HSCROLL:
+						switch (LOWORD(wParam))
+						{
+						case SB_THUMBTRACK:
+						case SB_THUMBPOSITION:
+							pVCon->m_HScroll.bTracking = TRUE;
+							break;
+						case SB_ENDSCROLL:
+							pVCon->m_HScroll.bTracking = FALSE;
+							break;
+						}
+						pVCon->RCon()->OnSetScrollPos(rbs_Horz, wParam);
 						break;
 
 					case WM_LBUTTONUP:
-						pVCon->mb_VTracking = FALSE;
+						pVCon->m_HScroll.bTracking = FALSE;
+						pVCon->m_VScroll.bTracking = FALSE;
 						break;
 				}
 
@@ -522,6 +545,8 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 
 		case WM_TIMER:
 			{
+				RealBufferScroll rbsOver = rbs_None;
+
 				switch(wParam)
 				{
 				#ifndef SKIP_HIDE_TIMER // Не будем прятать по таймеру - только по движению мышки
@@ -539,11 +564,16 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				#endif
 
 				case TIMER_SCROLL_SHOW:
-
-					if (pVCon->CheckMouseOverScroll() || pVCon->CheckScrollAutoPopup())
-						pVCon->ShowScroll(TRUE/*abImmediate*/);
+					// Сначала зовем CheckMouseOverScroll т.к. он может ставить MouseCapture когда курсор над прокруткой
+					if (((rbsOver = pVCon->CheckMouseOverScroll()) != rbs_None) || ((rbsOver = pVCon->CheckScrollAutoPopup()) != rbs_None))
+					{
+						pVCon->ShowScroll(rbsOver, TRUE/*abImmediate*/);
+					}
 					else
-						pVCon->mb_Scroll2Visible = FALSE;
+					{
+						pVCon->m_VScroll.bScroll2Visible = FALSE;
+						pVCon->m_HScroll.bScroll2Visible = FALSE;
+					}
 
 					if (pVCon->m_TScrollShow.IsStarted())
 						pVCon->m_TScrollShow.Stop();
@@ -552,10 +582,15 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 
 				case TIMER_SCROLL_HIDE:
 
-					if (!pVCon->CheckMouseOverScroll())
-						pVCon->HideScroll(TRUE/*abImmediate*/);
+					if ((rbsOver = pVCon->CheckMouseOverScroll()) == rbs_None)
+					{
+						pVCon->HideScroll(rbs_Both, TRUE/*abImmediate*/);
+					}
 					else
-						pVCon->mb_Scroll2Visible = TRUE;
+					{
+						pVCon->m_VScroll.bScroll2Visible = TRUE;
+						pVCon->m_HScroll.bScroll2Visible = TRUE;
+					}
 
 					if (pVCon->m_TScrollHide.IsStarted())
 						pVCon->m_TScrollHide.Stop();
@@ -740,17 +775,32 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 						{
 						case SB_THUMBTRACK:
 						case SB_THUMBPOSITION:
-							pVCon->mb_VTracking = TRUE;
+							pVCon->m_VScroll.bTracking = TRUE;
 							break;
 						case SB_ENDSCROLL:
-							pVCon->mb_VTracking = FALSE;
+							pVCon->m_VScroll.bTracking = FALSE;
 							break;
 						}
-						pVCon->RCon()->OnSetScrollPos(wParam);
+						pVCon->RCon()->OnSetScrollPos(rbs_Vert, wParam);
+						break;
+
+					case WM_HSCROLL:
+						switch (LOWORD(wParam))
+						{
+						case SB_THUMBTRACK:
+						case SB_THUMBPOSITION:
+							pVCon->m_HScroll.bTracking = TRUE;
+							break;
+						case SB_ENDSCROLL:
+							pVCon->m_HScroll.bTracking = FALSE;
+							break;
+						}
+						pVCon->RCon()->OnSetScrollPos(rbs_Horz, wParam);
 						break;
 
 					case WM_LBUTTONUP:
-						pVCon->mb_VTracking = FALSE;
+						pVCon->m_VScroll.bTracking = FALSE;
+						pVCon->m_HScroll.bTracking = FALSE;
 						break;
 				}
 
@@ -1285,15 +1335,16 @@ void CConEmuChild::Invalidate()
 
 void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 {
-	if (m_LastAlwaysShowScrollbar != gpSet->isAlwaysShowScrollbar)
+	TODO("Horizontal too?");
+	if (m_VScroll.nLastAlwaysShowScrollbar != gpSet->isAlwaysShowScrollbar)
 	{
 		CVirtualConsole* pVCon = (CVirtualConsole*)this;
 		CVConGuard guard(pVCon);
 
 		if (gpSet->isAlwaysShowScrollbar == 1)
-			ShowScroll(TRUE);
-		else if (!m_si.nMax)
-			HideScroll(TRUE);
+			ShowScroll(rbs_Vert,TRUE);
+		else if (!m_VScroll.si.nMax)
+			HideScroll(rbs_Vert,TRUE);
 		else
 			TrackMouse();
 
@@ -1305,7 +1356,7 @@ void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 				CVConGroup::SyncWindowToConsole(); // -- функция пустая, игнорируется
 		}
 
-		m_LastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
+		m_VScroll.nLastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
 	}
 }
 
@@ -1320,23 +1371,23 @@ BOOL CConEmuChild::TrackMouse()
 
 	#ifdef _DEBUG
 	CRealConsole* pRCon = pVCon->RCon();
-	BOOL lbBufferMode = pRCon->isBufferHeight() && !pRCon->GuiWnd();
+	BOOL lbBufferMode = pRCon->isBuffer() && !pRCon->GuiWnd();
 	#endif
 
-	BOOL lbOverVScroll = CheckMouseOverScroll();
+	RealBufferScroll rbsOverScroll = CheckMouseOverScroll();
 
 	if (gpSet->isAlwaysShowScrollbar == 1)
 	{
 		// Если полоса прокрутки показывается всегда - то она и не прячется
-		if (!mb_ScrollVisible)
-			ShowScroll(TRUE);
+		if (!m_VScroll.bScrollVisible)
+			ShowScroll(rbs_Vert, TRUE);
 	}
-	else if (lbOverVScroll)
+	else if (rbsOverScroll == rbs_Vert)
 	{
-		if (!mb_Scroll2Visible)
+		if (!m_VScroll.bScroll2Visible)
 		{
-			mb_Scroll2Visible = TRUE;
-			ShowScroll(FALSE/*abImmediate*/); // Если gpSet->isAlwaysShowScrollbar==1 - сама разберется
+			m_VScroll.bScroll2Visible = TRUE;
+			ShowScroll(rbs_Vert, FALSE/*abImmediate*/); // Если gpSet->isAlwaysShowScrollbar==1 - сама разберется
 		}
 		#ifndef SKIP_HIDE_TIMER
 		else if (mb_ScrollVisible && (gpSet->isAlwaysShowScrollbar != 1) && !m_TScrollCheck.IsStarted())
@@ -1345,19 +1396,39 @@ BOOL CConEmuChild::TrackMouse()
 		}
 		#endif
 	}
-	else if (mb_Scroll2Visible || mb_ScrollVisible)
+	else if (rbsOverScroll == rbs_Horz)
 	{
-		_ASSERTE(gpSet->isAlwaysShowScrollbar != 1);
-		mb_Scroll2Visible = FALSE;
-		// Запустить таймер скрытия
-		HideScroll(FALSE/*abImmediate*/);
+		if (!m_HScroll.bScroll2Visible)
+		{
+			m_HScroll.bScroll2Visible = TRUE;
+			ShowScroll(rbs_Horz, FALSE/*abImmediate*/);
+		}
+	}
+	else
+	{
+		// Vert
+		if (m_VScroll.bScroll2Visible || m_VScroll.bScrollVisible)
+		{
+			_ASSERTE(gpSet->isAlwaysShowScrollbar != 1);
+			m_VScroll.bScroll2Visible = FALSE;
+			// Запустить таймер скрытия
+			HideScroll(rbs_Vert, FALSE/*abImmediate*/);
+		}
+		// Horz too
+		if (m_HScroll.bScroll2Visible || m_HScroll.bScrollVisible)
+		{
+			_ASSERTE(gpSet->isAlwaysShowScrollbar != 1);
+			m_HScroll.bScroll2Visible = FALSE;
+			// Запустить таймер скрытия
+			HideScroll(rbs_Horz, FALSE/*abImmediate*/);
+		}
 	}
 
-	lbCapture = (lbOverVScroll && mb_ScrollVisible);
+	lbCapture = ((rbsOverScroll == rbs_Vert) && m_VScroll.bScrollVisible) || ((rbsOverScroll == rbs_Horz) && m_HScroll.bScrollVisible);
 	return lbCapture;
 }
 
-bool CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
+RealBufferScroll CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 {
 	if (abCheckVisible)
 	{
@@ -1366,13 +1437,13 @@ bool CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 			return false; // не показывается вообще
 		}
 		else if ((gpSet->isAlwaysShowScrollbar != 1) // 1 -- показывать всегда
-			&& !mb_ScrollVisible)
+			&& !(m_VScroll.bScrollVisible || m_HScroll.bScrollVisible))
 		{
 			return false; // не показывается сейчас
 		}
 	}
 
-	bool lbOverVScroll = false;
+	RealBufferScroll rbsOverScroll = rbs_None;
 
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	CVConGuard guard(pVCon);
@@ -1383,121 +1454,145 @@ bool CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 
 	if (pRCon)
 	{
-		BOOL lbBufferMode = pRCon->isBufferHeight() && !pRCon->GuiWnd();
-
-		if (lbBufferMode)
+		bool lbVBuffer = false, lbHBuffer = false;
+		if (!pRCon->GuiWnd())
 		{
-			// Если прокрутку тащили мышкой и отпустили
-			if (mb_VTracking && !isPressed(VK_LBUTTON))
-			{
-				// Сбросим флажок
-				mb_VTracking = FALSE;
-			}
+			lbHBuffer = pRCon->isBuffer(rbs_Horz);
+			lbVBuffer = pRCon->isBuffer(rbs_Vert);
+		}
 
-			// чтобы полоса не скрылась, когда ее тащат мышкой
-			if (mb_VTracking)
-			{
-				lbOverVScroll = true;
-			}
-			else // Теперь проверим, если мышь в над скроллбаром - показать его
-			{
-				POINT ptCur; RECT rcScroll, rcClient;
-				GetCursorPos(&ptCur);
-				GetWindowRect(mh_WndBack, &rcClient);
-				//GetWindowRect(mh_WndScroll, &rcScroll);
-				rcScroll = rcClient;
-				rcScroll.left = rcScroll.right - GetSystemMetrics(SM_CXVSCROLL);
+		_ASSERTE((rbs_Vert+1)==rbs_Horz);
 
-				if (PtInRect(&rcScroll, ptCur))
+		for (RealBufferScroll rbs = rbs_Vert; rbs <= rbs_Horz; rbs++)
+		{
+			if ((rbs == rbs_Vert ? lbVBuffer : lbHBuffer))
+			{
+				CEScrollInfo* p = (rbs == rbs_Vert) ? &m_VScroll : &m_HScroll;
+
+				// Если прокрутку тащили мышкой и отпустили
+				if (p->bTracking && !isPressed(VK_LBUTTON))
 				{
-					// Если прокрутка УЖЕ видна - то мышку в консоль не пускать! Она для прокрутки!
-					if (mb_ScrollVisible)
-						lbOverVScroll = true;
-					// Если не проверять - не получится начать выделение с правого края окна
-					//if (!gpSet->isSelectionModifierPressed())
-					else if (!(isPressed(VK_SHIFT) || isPressed(VK_CONTROL) || isPressed(VK_MENU) || isPressed(VK_LBUTTON)))
-						lbOverVScroll = true;
+					// Сбросим флажок
+					p->bTracking = FALSE;
+				}
+
+				// чтобы полоса не скрылась, когда ее тащат мышкой
+				if (p->bTracking)
+				{
+					rbsOverScroll |= rbs;
+				}
+				else // Теперь проверим, если мышь в над скроллбаром - показать его
+				{
+					POINT ptCur; RECT rcScroll, rcClient;
+					GetCursorPos(&ptCur);
+					GetWindowRect(mh_WndBack, &rcClient);
+					rcScroll = rcClient;
+					if (rbs == rbs_Vert)
+						rcScroll.left = rcScroll.right - GetSystemMetrics(SM_CXVSCROLL);
+					else
+						rcScroll.top = rcScroll.bottom - GetSystemMetrics(SM_CYHSCROLL);
+
+					if (PtInRect(&rcScroll, ptCur))
+					{
+						// Если прокрутка УЖЕ видна - то мышку в консоль не пускать! Она для прокрутки!
+						if (p->bScrollVisible)
+							rbsOverScroll |= rbs;
+						// Если не проверять - не получится начать выделение с правого края окна
+						//if (!gpSet->isSelectionModifierPressed())
+						else if (!(isPressed(VK_SHIFT) || isPressed(VK_CONTROL) || isPressed(VK_MENU) || isPressed(VK_LBUTTON)))
+							rbsOverScroll |= rbs;
+					}
 				}
 			}
 		}
 	}
 
-	return lbOverVScroll;
+	return rbsOverScroll;
 }
 
-BOOL CConEmuChild::CheckScrollAutoPopup()
+RealBufferScroll CConEmuChild::CheckScrollAutoPopup()
 {
-	return mb_ScrollAutoPopup;
+	RealBufferScroll rbs = rbs_None;
+	if (m_VScroll.bScrollAutoPopup)
+		rbs |= rbs_Vert;
+	if (m_HScroll.bScrollAutoPopup)
+		rbs |= rbs_Horz;
+	return rbs;
 }
 
-bool CConEmuChild::InScroll()
+RealBufferScroll CConEmuChild::isInScroll()
 {
-	if (mb_VTracking)
+	bool bTracking = false;
+
+	if (m_VScroll.bTracking || m_HScroll.bTracking)
 	{
 		if (!isPressed(VK_LBUTTON))
-			mb_VTracking = FALSE;
+			m_VScroll.bTracking = m_HScroll.bTracking = false;
+		else
+			bTracking = true;
 	}
 
-	return (mb_VTracking != FALSE);
+	return bTracking;
 }
 
-void CConEmuChild::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight)
+void CConEmuChild::SetScroll(RealBufferScroll Bar, BOOL abEnabled, int anTop, int anVisible, int anHeight)
 {
+	CEScrollInfo* p = (Bar == rbs_Horz) ? &m_HScroll : &m_VScroll;
 	//int nCurPos = 0;
 	//BOOL lbScrollRc = FALSE;
 	//SCROLLINFO si;
 	//ZeroMemory(&si, sizeof(si));
-	m_si.cbSize = sizeof(m_si);
-	m_si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE; // | SIF_TRACKPOS;
-	m_si.nMin = 0;
+	p->si.cbSize = sizeof(p->si);
+	p->si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE; // | SIF_TRACKPOS;
+	p->si.nMin = 0;
 
 	if (!abEnabled)
 	{
-		m_si.nPos = 0;
-		m_si.nPage = 0;
-		m_si.nMax = 0; //(gpSet->isAlwaysShowScrollbar == 1) ? 1 : 0;
+		p->si.nPos = 0;
+		p->si.nPage = 0;
+		p->si.nMax = 0; //(gpSet->isAlwaysShowScrollbar == 1) ? 1 : 0;
 		//m_si.fMask |= SIF_DISABLENOSCROLL;
 	}
 	else
 	{
-		m_si.nPos = anTop;
-		m_si.nPage = anVisible - 1;
-		m_si.nMax = anHeight;
+		p->si.nPos = anTop;
+		p->si.nPage = anVisible - 1;
+		p->si.nMax = anHeight;
 	}
 
 	//// Если режим "BufferHeight" включен - получить из консольного окна текущее состояние полосы прокрутки
 	//if (con.bBufferHeight) {
-	//    lbScrollRc = GetScrollInfo(hConWnd, SB_VERT, &si);
+	//    lbScrollRc = GetScrollInfo(hConWnd, ???, &si);
 	//} else {
 	//    // Сбросываем параметры так, чтобы полоса не отображалась (все на 0)
 	//}
 	//TODO("Нужно при необходимости 'всплыть' полосу прокрутки");
-	//nCurPos = SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, true);
+	//nCurPos = SetScrollInfo(mh_WndDC/*mh_WndScroll*/, ???, &m_si, true);
 
 	if (!abEnabled)
 	{
-		mb_ScrollAutoPopup = FALSE;
+		p->bScrollAutoPopup = FALSE;
 
-		if (gpSet->isAlwaysShowScrollbar == 1)
+		if ((gpSet->isAlwaysShowScrollbar == 1) && (Bar == rbs_Vert))
 		{
-			if (!mb_ScrollVisible)
+			if (!p->bScrollVisible)
 			{
-				ShowScroll(TRUE);
+				ShowScroll(Bar, TRUE);
 			}
 			else
 			{
-				MySetScrollInfo(TRUE, FALSE);
-				//SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, TRUE);
+				MySetScrollInfo(Bar, TRUE, FALSE);
+				//SetScrollInfo(mh_WndDC/*mh_WndScroll*/, ???, &m_si, TRUE);
 				//if (!mb_ScrollDisabled)
 				//{
-				//	EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
+				//	EnableScrollBar(mh_WndDC/*mh_WndScroll*/, ???, ESB_DISABLE_BOTH);
 				//	mb_ScrollDisabled = TRUE;
 				//}
 			}
 		}
 		else
 		{
-			HideScroll(TRUE/*сразу!*/);
+			HideScroll(Bar, TRUE/*сразу!*/);
 		}
 	}
 	else
@@ -1505,44 +1600,44 @@ void CConEmuChild::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHei
 		//if (!IsWindowEnabled(mh_WndScroll))
 		//{
 		//	//EnableWindow(mh_WndScroll, TRUE);
-		//	EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
+		//	EnableScrollBar(mh_WndDC/*mh_WndScroll*/, ???, ESB_ENABLE_BOTH);
 		//}
 
 		// Показать прокрутку, если например буфер скроллится с клавиатуры
-		if ((m_si.nPos > 0) && (m_si.nPos < (m_si.nMax - (int)m_si.nPage - 1)) && gpSet->isAlwaysShowScrollbar)
+		if ((p->si.nPos > 0) && (p->si.nPos < (p->si.nMax - (int)p->si.nPage - 1)) && gpSet->isAlwaysShowScrollbar)
 		{
-			mb_ScrollAutoPopup = (gpSet->isAlwaysShowScrollbar == 2);
+			p->bScrollAutoPopup = (gpSet->isAlwaysShowScrollbar == 2);
 
-			if (!mb_Scroll2Visible)
+			if (!p->bScroll2Visible)
 			{
-				ShowScroll((gpSet->isAlwaysShowScrollbar == 1));
+				ShowScroll(Bar, (gpSet->isAlwaysShowScrollbar == 1));
 			}
 		}
 		else
 		{
-			mb_ScrollAutoPopup = FALSE;
+			p->bScrollAutoPopup = FALSE;
 		}
 
-		if (mb_ScrollVisible)
+		if (p->bScrollVisible)
 		{
-			MySetScrollInfo(TRUE, TRUE);
-			//SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, TRUE);
+			MySetScrollInfo(Bar, TRUE, TRUE);
+			//SetScrollInfo(mh_WndDC/*mh_WndScroll*/, ???, &m_si, TRUE);
 			//if (mb_ScrollDisabled)
 			//{
-			//	EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
+			//	EnableScrollBar(mh_WndDC/*mh_WndScroll*/, ???, ESB_ENABLE_BOTH);
 			//	mb_ScrollDisabled = FALSE;
 			//}
 		}
 	}
 }
 
-void CConEmuChild::MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue)
+void CConEmuChild::MySetScrollInfo(RealBufferScroll Bar, BOOL abSetEnabled, BOOL abEnableValue)
 {
-	SCROLLINFO si = m_si;
+	SCROLLINFO si = (Bar == rbs_Horz) ? m_HScroll.si : m_VScroll.si;
 
-	if (/*!mb_ScrollVisible &&*/ !m_si.nMax && (gpSet->isAlwaysShowScrollbar == 1))
+	if (/*!mb_ScrollVisible &&*/ !si.nMax && (gpSet->isAlwaysShowScrollbar == 1))
 	{
-		ShowScrollBar(mh_WndBack, SB_VERT, TRUE);
+		ShowScrollBar(mh_WndBack, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, TRUE);
 		// Прокрутка всегда показывается! Скрывать нельзя!
 		si.nPage = 1;
 		si.nMax = 100;
@@ -1550,42 +1645,53 @@ void CConEmuChild::MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue)
 
 	si.fMask |= SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/;
 
-	SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);
+	SetScrollInfo(mh_WndBack, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, &si, TRUE);
 
 	if (abSetEnabled)
 	{
-		if (abEnableValue)
-		{
-			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
-			mb_ScrollDisabled = FALSE;
-		}
+		EnableScrollBar(mh_WndBack/*mh_WndScroll*/, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, abEnableValue ? ESB_ENABLE_BOTH : ESB_DISABLE_BOTH);
+
+		if (Bar == rbs_Horz)
+			m_HScroll.bScrollDisabled = !abEnableValue;
 		else
-		{
-			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
-			mb_ScrollDisabled = TRUE;
-		}
+			m_VScroll.bScrollDisabled = !abEnableValue;
 	}
 }
 
 void CConEmuChild::UpdateScrollRgn(bool abForce /*= false*/)
 {
-	bool bNeedRgn = (mb_ScrollVisible && (gpSet->isAlwaysShowScrollbar == 2));
+	bool bNeedRgn = ((m_VScroll.bScrollVisible || m_HScroll.bScrollVisible) && (gpSet->isAlwaysShowScrollbar == 2));
 
 	if ((bNeedRgn == mb_ScrollRgnWasSet) && !abForce)
 		return;
 
 	HRGN hRgn = NULL;
-	if (mb_ScrollVisible && (gpSet->isAlwaysShowScrollbar == 2))
+	if (bNeedRgn)
 	{
 		RECT rcDc = {}; GetClientRect(mh_WndDC, &rcDc);
 		RECT rcScroll = {}; GetWindowRect(mh_WndBack, &rcScroll);
 		MapWindowPoints(NULL, mh_WndDC, (LPPOINT)&rcScroll, 2);
-		rcScroll.left = rcScroll.right - GetSystemMetrics(SM_CXVSCROLL);
-		TODO("Horizontal scrolling");
+
 		hRgn = CreateRectRgn(rcDc.left, rcDc.top, rcDc.right, rcDc.bottom);
-		HRGN hScrlRgn = CreateRectRgn(rcScroll.left, rcScroll.top, rcScroll.right, rcScroll.bottom);
-		int iRc = CombineRgn(hRgn, hRgn, hScrlRgn, RGN_DIFF);
-		DeleteObject(hScrlRgn);
+
+		int iRc;
+
+		if (m_VScroll.bScrollVisible)
+		{
+			int left = rcScroll.right - GetSystemMetrics(SM_CXVSCROLL);
+			HRGN hScrlRgn = CreateRectRgn(left, rcScroll.top, rcScroll.right, rcScroll.bottom);
+			iRc = CombineRgn(hRgn, hRgn, hScrlRgn, RGN_DIFF);
+			DeleteObject(hScrlRgn);
+		}
+
+		if (m_HScroll.bScrollVisible)
+		{
+			int top = rcScroll.bottom - GetSystemMetrics(SM_CYHSCROLL);
+			HRGN hScrlRgn = CreateRectRgn(rcScroll.left, top, rcScroll.right, rcScroll.bottom);
+			iRc = CombineRgn(hRgn, hRgn, hScrlRgn, RGN_DIFF);
+			DeleteObject(hScrlRgn);
+		}
+
 		UNREFERENCED_PARAMETER(iRc);
 	}
 
@@ -1599,49 +1705,50 @@ void CConEmuChild::UpdateScrollRgn(bool abForce /*= false*/)
 	}
 }
 
-void CConEmuChild::ShowScroll(BOOL abImmediate)
+void CConEmuChild::ShowScroll(RealBufferScroll Bar, BOOL abImmediate)
 {
+	CEScrollInfo* p = (Bar == rbs_Horz) ? &m_HScroll : &m_VScroll;
 	bool bTShow = false, bTCheck = false;
 
 	if (abImmediate || (gpSet->isAlwaysShowScrollbar == 1))
 	{
-		if (!mb_ScrollVisible && !m_si.nMax)
+		if (!p->bScrollVisible && !p->si.nMax)
 		{
 			// Прокрутка всегда показывается! Скрывать нельзя!
 			//m_si.nMax = (gpSet->isAlwaysShowScrollbar == 1) ? 1 : 0;
 			SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1};
-			SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);
+			SetScrollInfo(mh_WndBack, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, &si, TRUE);
 		}
 
-		mb_ScrollVisible = TRUE; mb_Scroll2Visible = TRUE;
+		p->bScrollVisible = TRUE; p->bScroll2Visible = TRUE;
 
 		#ifdef _DEBUG
 		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE};
-		GetScrollInfo(mh_WndBack, SB_VERT, &si);
+		GetScrollInfo(mh_WndBack, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, &si);
 		#endif
 
 		//int nCurPos = -1;
-		if (m_si.nMax || (gpSet->isAlwaysShowScrollbar == 1))
+		if (p->si.nMax || (gpSet->isAlwaysShowScrollbar == 1))
 		{
-			MySetScrollInfo(FALSE, FALSE);
-			//nCurPos = SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, TRUE); UNREFERENCED_PARAMETER(nCurPos);
+			MySetScrollInfo(Bar, FALSE, FALSE);
+			//nCurPos = SetScrollInfo(mh_WndDC/*mh_WndScroll*/, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, &m_si, TRUE); UNREFERENCED_PARAMETER(nCurPos);
 		}
 
-		if (mb_ScrollDisabled && m_si.nMax > 1)
+		if (p->bScrollDisabled && p->si.nMax > 1)
 		{
-			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
-			mb_ScrollDisabled = FALSE;
+			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, ESB_ENABLE_BOTH);
+			p->bScrollDisabled = FALSE;
 		}
-		else if (!mb_ScrollDisabled && !m_si.nMax)
+		else if (!p->bScrollDisabled && !si.nMax)
 		{
-			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
-			mb_ScrollDisabled = TRUE;
+			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, ESB_DISABLE_BOTH);
+			p->bScrollDisabled = TRUE;
 		}
 
-		ShowScrollBar(mh_WndBack, SB_VERT, TRUE);
+		ShowScrollBar(mh_WndBack, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, TRUE);
 
 		#ifdef _DEBUG
-		GetScrollInfo(mh_WndBack, SB_VERT, &si);
+		GetScrollInfo(mh_WndBack, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, &si);
 		#endif
 
 		TODO("Scroll: Horizontal");
@@ -1664,7 +1771,7 @@ void CConEmuChild::ShowScroll(BOOL abImmediate)
 	}
 	else
 	{
-		mb_Scroll2Visible = TRUE;
+		p->bScroll2Visible = TRUE;
 		bTShow = true;
 	}
 
@@ -1683,7 +1790,7 @@ void CConEmuChild::ShowScroll(BOOL abImmediate)
 
 	//
 	if (bTShow)
-		m_TScrollShow.Start(mb_ScrollAutoPopup ? TIMER_SCROLL_SHOW_DELAY2 : TIMER_SCROLL_SHOW_DELAY);
+		m_TScrollShow.Start(p->bScrollAutoPopup ? TIMER_SCROLL_SHOW_DELAY2 : TIMER_SCROLL_SHOW_DELAY);
 	else if (m_TScrollShow.IsStarted())
 		m_TScrollShow.Stop();
 
@@ -1692,30 +1799,31 @@ void CConEmuChild::ShowScroll(BOOL abImmediate)
 		m_TScrollHide.Stop();
 }
 
-void CConEmuChild::HideScroll(BOOL abImmediate)
+void CConEmuChild::HideScroll(RealBufferScroll Bar, BOOL abImmediate)
 {
+	CEScrollInfo* p = (Bar == rbs_Horz) ? &m_HScroll : &m_VScroll;
 	bool bTHide = false;
-	mb_ScrollAutoPopup = FALSE;
+	p->bScrollAutoPopup = FALSE;
 
 	if (gpSet->isAlwaysShowScrollbar == 1)
 	{
 		// Прокрутка всегда показывается! Скрывать нельзя!
 		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1};
-		SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);
-		if (!mb_ScrollDisabled)
+		SetScrollInfo(mh_WndBack, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, &si, TRUE);
+		if (!p->bScrollDisabled)
 		{
-			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
-			mb_ScrollDisabled = TRUE;
+			EnableScrollBar(mh_WndBack/*mh_WndScroll*/, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, ESB_DISABLE_BOTH);
+			p->bScrollDisabled = TRUE;
 		}
 		Invalidate();
 	}
 	else if (abImmediate)
 	{
-		mb_ScrollVisible = FALSE;
-		mb_Scroll2Visible = FALSE;
+		p->bScrollVisible = FALSE;
+		p->bScroll2Visible = FALSE;
 
 		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE};
-		int nCurPos = SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);  UNREFERENCED_PARAMETER(nCurPos);
+		int nCurPos = SetScrollInfo(mh_WndBack, (Bar == rbs_Horz) ? SB_HORZ : SB_VERT, &si, TRUE);  UNREFERENCED_PARAMETER(nCurPos);
 
 		TODO("Scroll: Horizontal");
 		#ifdef _DEBUG
@@ -1735,7 +1843,7 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 	}
 	else
 	{
-		mb_Scroll2Visible = FALSE;
+		p->bScroll2Visible = FALSE;
 		bTHide = true;
 		//m_TScrollHide.Start(TIMER_SCROLL_HIDE_DELAY);
 	}

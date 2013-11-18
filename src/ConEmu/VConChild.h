@@ -62,8 +62,8 @@ class CConEmuChild
 
 		void SetVConSizePos(RECT arcBack, bool abReSize = true);
 
-		void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
-		bool InScroll();
+		void SetScroll(RealBufferScroll Bar, BOOL abEnabled, int anTop, int anVisible, int anHeight);
+		RealBufferScroll isInScroll();
 		
 		void CheckPostRedraw();
 
@@ -120,22 +120,28 @@ class CConEmuChild
 
 		CTimer m_TAutoCopy;
 
-		BOOL mb_ScrollDisabled, mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup, mb_VTracking;
+		//BOOL mb_ScrollDisabled, mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup, mb_VTracking;
+		struct CEScrollInfo
+		{
+			BOOL bScrollDisabled, bScrollVisible, bScroll2Visible, bScrollAutoPopup, bTracking;
+			SCROLLINFO si;
+			BYTE nLastAlwaysShowScrollbar;
+		} m_HScroll, m_VScroll;
+
 		CTimer m_TScrollShow;
 		CTimer m_TScrollHide;
-		#ifndef SKIP_HIDE_TIMER
-		CTimer m_TScrollCheck;
-		#endif
 
-		BYTE m_LastAlwaysShowScrollbar;
-		SCROLLINFO m_si;
+		//#ifndef SKIP_HIDE_TIMER
+		//CTimer m_TScrollCheck;
+		//#endif
+
 	public:
-		bool CheckMouseOverScroll(bool abCheckVisible = false);
+		RealBufferScroll CheckMouseOverScroll(bool abCheckVisible = false);
 	protected:
-		BOOL CheckScrollAutoPopup();
-		void ShowScroll(BOOL abImmediate);
-		void HideScroll(BOOL abImmediate);
-		void MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue);
+		RealBufferScroll CheckScrollAutoPopup();
+		void ShowScroll(RealBufferScroll Bar, BOOL abImmediate);
+		void HideScroll(RealBufferScroll Bar, BOOL abImmediate);
+		void MySetScrollInfo(RealBufferScroll Bar, BOOL abSetEnabled, BOOL abEnableValue);
 		bool mb_ScrollRgnWasSet;
 		void UpdateScrollRgn(bool abForce = false);
 		
