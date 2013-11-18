@@ -74,8 +74,8 @@ class CVirtualConsole :
 		bool isVisible();
 		int GetTabCount();
 		int GetActiveTab();
-		bool GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
-		bool GetTab(int tabIdx, /*OUT*/ CTab* pTab);
+		//bool GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
+		//bool GetTab(int tabIdx, /*OUT*/ CTab* pTab);
 	public:
 		WARNING("Сделать protected!");
 		uint TextWidth, TextHeight; // размер в символах
