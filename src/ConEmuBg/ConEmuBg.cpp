@@ -2101,15 +2101,6 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 	if (nStatusLines > 0)
 		rcInt.bottom -= ((rcPanel.bottom - rcPanel.top + 1) * (nStatusLines + 1) / nPanelHeight);
 	int nMaxPicSize = (rcInt.bottom - rcInt.top) * 35 / 100;
-	LOGFONT lf = {};
-	lf.lfHeight = max(20, (rcInt.bottom - rcInt.top) * 12 / 100);
-	lf.lfWeight = 700;
-	lstrcpy(lf.lfFaceName, L"Arial");
-
-	#define IMG_SHIFT_X 0
-	#define IMG_SHIFT_Y 0
-	#define LINE_SHIFT_Y (lf.lfHeight)
-	#define LINE_SHIFT_X (lf.lfHeight/6)
 
 	ULARGE_INTEGER llTotalSize = {}, llFreeSize = {};
 	UINT nDriveType = DRIVE_UNKNOWN;
@@ -2385,21 +2376,39 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			FillRect(pBk->hdc, &rcPanel, hBrush);
 			DeleteObject(hBrush);
 		}
-		
-		
 
-
-
+		LOGFONT lf = {};
+		lf.lfHeight = max(20, (rcInt.bottom - rcInt.top) * 12 / 100);
+		lf.lfWeight = 700;
+		lstrcpy(lf.lfFaceName, L"Arial");
 
 		// GO
 		HFONT hText = CreateFontIndirect(&lf);
 		HFONT hOldFont = (HFONT)SelectObject(pBk->hdc, hText);
 
+		#define IMG_SHIFT_X 0
+		#define IMG_SHIFT_Y 0
+		#define LINE_SHIFT_Y (lf.lfHeight)
+		#define LINE_SHIFT_X (lf.lfHeight/6)
 
+		// Determine appropriate font size:
 		int nY = max(rcInt.top, rcInt.bottom - (LINE_SHIFT_Y));
 		RECT rcText = {rcInt.left+IMG_SHIFT_X, nY, rcInt.right-LINE_SHIFT_X, nY+LINE_SHIFT_Y};
-		//wchar_t szText[MAX_PATH*2];
+		RECT rcTemp = rcText;
+
+		DrawText(pBk->hdc, pDraw->szText, -1, &rcTemp, DT_HIDEPREFIX|DT_RIGHT|DT_SINGLELINE|DT_TOP|DT_CALCRECT);
+
+		LONG width = rcText.right - rcText.left;
+		LONG actualWidth = rcTemp.right - rcTemp.left;
 		
+		if (actualWidth > width)
+		{
+			lf.lfHeight *= ((double)width / actualWidth);
+			DeleteObject(hText);
+			hText = CreateFontIndirect(&lf);
+			SelectObject(pBk->hdc, hText);
+		}
+
 		CachedImage* pI = NULL;
 		if (gpDecoder && *pDraw->szPic)
 		{
