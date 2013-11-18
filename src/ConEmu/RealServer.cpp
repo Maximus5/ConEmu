@@ -81,7 +81,7 @@ void CRealServer::Init(CRealConsole* apRCon)
 bool CRealServer::Start()
 {
 	DWORD nConWndID = (DWORD)(((DWORD_PTR)mp_RCon->hConWnd) & 0xFFFFFFFF);
-	_wsprintf(mp_RCon->ms_VConServer_Pipe, SKIPLEN(countof(mp_RCon->ms_VConServer_Pipe)) CEGUIPIPENAME, L".", nConWndID);
+	_wsprintf(mp_RCon->m_Pipes.ms_VConServer_Pipe, SKIPLEN(countof(mp_RCon->m_Pipes.ms_VConServer_Pipe)) CEGUIPIPENAME, L".", nConWndID);
 
 	if (!mh_GuiAttached)
 	{
@@ -89,7 +89,7 @@ bool CRealServer::Start()
 		
 		_wsprintf(szEvent, SKIPLEN(countof(szEvent)) CEGUIRCONSTARTED, nConWndID);
 		//// —корее всего событие в сервере еще не создано
-		//mh_GuiAttached = OpenEvent(EVENT_MODIFY_STATE, FALSE, mp_RCon->ms_VConServer_Pipe);
+		//mh_GuiAttached = OpenEvent(EVENT_MODIFY_STATE, FALSE, mp_RCon->m_Pipes.ms_VConServer_Pipe);
 		//// ¬роде, когда используетс€ run as administrator - event открыть не получаетс€?
 		//if (!mh_GuiAttached) {
 		mh_GuiAttached = CreateEvent(gpLocalSecurity, TRUE, FALSE, szEvent);
@@ -102,7 +102,7 @@ bool CRealServer::Start()
 	mp_RConServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 	
 	// ConEmuC ожидает готовый пайп после возврата из CECMD_SRVSTARTSTOP
-	if (!mp_RConServer->StartPipeServer(mp_RCon->ms_VConServer_Pipe, (LPARAM)this, LocalSecurity(),
+	if (!mp_RConServer->StartPipeServer(mp_RCon->m_Pipes.ms_VConServer_Pipe, (LPARAM)this, LocalSecurity(),
 			ServerCommand, ServerCommandFree, NULL, NULL, ServerThreadReady))
 	{
 		MBoxAssert("mp_RConServer->StartPipeServer"==0);
@@ -243,20 +243,20 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	{
 		// ѕерейти в режим AltServer, переоткрыть m_GetDataPipe
 		// -- команда старта альп.сервера должна приходить из главного сервера
-		_ASSERTE(pIn->StartStop.dwPID == nPID && nPID != pIn->hdr.nSrcPID && pIn->hdr.nSrcPID == mp_RCon->mn_MainSrv_PID);
+		_ASSERTE(pIn->StartStop.dwPID == nPID && nPID != pIn->hdr.nSrcPID && pIn->hdr.nSrcPID == mp_RCon->m_Srv.mn_MainSrv_PID);
 
 		// ѕри закрыти€ альт.сервера может также (сразу) закрыватьс€ и главный сервер
 		// в этом случае, переоткрывать пайпы смысла не имеет!
 		if ((nStarted == sst_AltServerStop)
 			&& pIn->StartStop.bMainServerClosing)
 		{
-			if (pIn->hdr.nSrcPID == mp_RCon->mn_MainSrv_PID) // должно приходить из главного сервера
+			if (pIn->hdr.nSrcPID == mp_RCon->m_Srv.mn_MainSrv_PID) // должно приходить из главного сервера
 			{
-				mp_RCon->OnServerClosing(mp_RCon->mn_MainSrv_PID);
+				mp_RCon->OnServerClosing(mp_RCon->m_Srv.mn_MainSrv_PID);
 			}
 			else
 			{
-				_ASSERTE(pIn->hdr.nSrcPID == mp_RCon->mn_MainSrv_PID && "Must arrive from main server");
+				_ASSERTE(pIn->hdr.nSrcPID == mp_RCon->m_Srv.mn_MainSrv_PID && "Must arrive from main server");
 			}
 		}
 		else
@@ -334,16 +334,16 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		pOut->StartStopRet.dwPID = GetCurrentProcessId();
 		if (nStarted == sst_ServerStart)
 		{
-			_ASSERTE(mp_RCon->mn_MainSrv_PID == pIn->hdr.nSrcPID);
-			pOut->StartStopRet.dwMainSrvPID = mp_RCon->mn_MainSrv_PID;
-			pOut->StartStopRet.dwAltSrvPID = mp_RCon->mn_AltSrv_PID;
+			_ASSERTE(mp_RCon->m_Srv.mn_MainSrv_PID == pIn->hdr.nSrcPID);
+			pOut->StartStopRet.dwMainSrvPID = mp_RCon->m_Srv.mn_MainSrv_PID;
+			pOut->StartStopRet.dwAltSrvPID = mp_RCon->m_Srv.mn_AltSrv_PID;
 		}
 		else
 		{
 			_ASSERTE(nStarted == sst_ComspecStart);
 			//pOut->StartStopRet.dwSrvPID = mp_RCon->GetServerPID();
-			pOut->StartStopRet.dwMainSrvPID = mp_RCon->mn_MainSrv_PID;
-			pOut->StartStopRet.dwAltSrvPID = mp_RCon->mn_AltSrv_PID;
+			pOut->StartStopRet.dwMainSrvPID = mp_RCon->m_Srv.mn_MainSrv_PID;
+			pOut->StartStopRet.dwAltSrvPID = mp_RCon->m_Srv.mn_AltSrv_PID;
 		}
 		pOut->StartStopRet.bNeedLangChange = FALSE;
 
@@ -356,8 +356,8 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			if (!mp_RCon->m_Args.bRunAsAdministrator && bUserIsAdmin)
 				mp_RCon->m_Args.bRunAsAdministrator = TRUE;
 
-			if (mp_RCon->mn_InRecreate>=1)
-				mp_RCon->mn_InRecreate = 0; // корневой процесс успешно пересоздалс€
+			if (mp_RCon->m_Srv.mn_InRecreate>=1)
+				mp_RCon->m_Srv.mn_InRecreate = 0; // корневой процесс успешно пересоздалс€
 
 			// ≈сли один Layout на все консоли
 			if ((gpSet->isMonitorConsoleLang & 2) == 2)
@@ -1563,7 +1563,7 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		}
 
 		DWORD dwDur = timeGetTime() - dwTimeStart;
-		gpSetCls->debugLogCommand(pIn, TRUE, dwTimeStart, dwDur, pRCon->ms_VConServer_Pipe, pOut);
+		gpSetCls->debugLogCommand(pIn, TRUE, dwTimeStart, dwDur, pRCon->m_Pipes.ms_VConServer_Pipe, pOut);
 
 		ppReply = pOut;
 		if (pOut)
@@ -1579,7 +1579,7 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 	else
 	{
 		DWORD dwDur = timeGetTime() - dwTimeStart;
-		gpSetCls->debugLogCommand(pIn, TRUE, dwTimeStart, dwDur, pRCon->ms_VConServer_Pipe, NULL/*pOut*/);
+		gpSetCls->debugLogCommand(pIn, TRUE, dwTimeStart, dwDur, pRCon->m_Pipes.ms_VConServer_Pipe, NULL/*pOut*/);
 		
 		// Delayed write
 		_ASSERTE(ppReply==NULL);
