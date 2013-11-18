@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/common.hpp"
+#include "RefRelease.h"
 
 // Forwards
 struct TabName;
@@ -101,9 +102,12 @@ private:
 	int nLen;
 	wchar_t sz[CONEMUTABMAX];
 public:
+	TabName();
+	TabName(LPCWSTR asName);
+public:
 	LPCWSTR Set(LPCWSTR asName);
 	void Release();
-	LPCWSTR Upper();
+	//LPCWSTR MakeUpper();
 	LPCWSTR Ptr() const;
 	int Length() const;
 };
@@ -111,20 +115,22 @@ public:
 /* Internal information for Tab drawing */
 struct TabDrawInfo
 {
+public:
 	TabName  Display; // это уже отформатированный текст, который нужно отобразить
 	//DWORD    nFlags;  // enum TabInfoFlags
 	RECT     rcTab;   // Координаты относительно WindowDC
 	HRGN     rgnTab;  // точный регион таба, для реакции на мышку
 	bool     Clipped; // текст был обрезан при отрисовке, показывать тултип
+public:
+	TabDrawInfo() {rgnTab = NULL; Clipped=false;};
 };
 
 struct TabInfo
 {
 	enum TabIdState Status;
-	int  Type; // TabType { etfPanels/etfEditor/etfViewer }
-	CEFarWindowType Flags; // enum of CEFarWindowType
+	CEFarWindowType Type; // enum of CEFarWindowType
 	
-	CVirtualConsole* pVCon;
+	void/*CVirtualConsole*/* pVCon;
 	
 	//TabName Name;
 
@@ -135,21 +141,24 @@ struct TabInfo
 
 
 /* Uniqualizer for Each tab */
-class CTabID
+class CTabID : public CRefRelease
 {
 protected:
-	LONG mn_RefCount;
-	~CTabID();
+	virtual ~CTabID();
+	virtual void FinalRelease();
+public:
+	CTabID(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);
 public:
 	TabInfo Info;
-	CEFarWindowType Flags() { return Info.Flags; };
+	CEFarWindowType Type() { return (Info.Type & fwt_TypeMask); }; // Не нужен вобщем-то
+	CEFarWindowType Flags() { return (Info.Type & ~fwt_TypeMask); }; // Не нужен вобщем-то
 	//enum TabIdState Status;
 	//int  Type; // TabType { etfPanels/etfEditor/etfViewer }
 	//UINT Flags; // enum of TabInfoFlags
 	//CVirtualConsole* pVCon;
 	
-	TabName Name;
-	TabName Upper; // для облегчения сравнения
+	TabName Name, Renamed;
+	//TabName Upper; // для облегчения сравнения
 	
 	//int nPID; // ИД процесса, содержащего таб (актуально для редакторов/вьюверов)
 	//int nFarWindowID; // ИД (а точнее просто 0-based index) окна в FAR. Panels==0, ViewerEditor>=1
@@ -158,13 +167,11 @@ public:
 	// Для внутреннего использования
 	TabDrawInfo DrawInfo;
 
-	CTabID(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags);
-	void Set(LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags);
+	void Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);
 
-	int AddRef();
-	int Release();
 	bool IsEqual(const CTabID* pTabId, bool abIgnoreWindowId = false);
-	bool IsEqual(CVirtualConsole* apVCon, const TabName& asNameUpper, int anType, int anPID, int anViewEditID);
+	bool IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindowType anType, int anPID, int anViewEditID);
+	bool IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anViewEditID);
 	
 	void ReleaseDrawRegion();
 };
@@ -185,6 +192,8 @@ public:
 	CTabID* operator -> () { return mp_Tab; }
 	
 	const CTabID* Tab() { return mp_Tab; }
+
+	CTabID* AddRef() { mp_Tab->AddRef(); return mp_Tab; }
 };
 
 class CTabStack
@@ -195,7 +204,8 @@ protected:
 protected:
 	MSection* mp_Section;
 	//MSectionLock* mp_UpdateLock;
-	int mn_UpdatePos;
+	int  mn_UpdatePos;
+	bool mb_FarUpdateMode;
 	void AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLock* pSC);
 	void RequestSize(int anCount, MSectionLock* pSC);
 public:
@@ -215,10 +225,10 @@ public:
 	void LockTabs(MSectionLock* pLock);
 	
 	HANDLE UpdateBegin();
-	void UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags);
+	bool UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);
 	void UpdateAppend(HANDLE hUpdate, CTab& Tab, BOOL abMoveFirst);
 	void UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst);
-	void UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail);
+	bool UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail);
 
 	void ReleaseTabs(BOOL abInvalidOnly = TRUE);
 };
