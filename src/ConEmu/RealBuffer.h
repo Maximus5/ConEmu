@@ -64,10 +64,10 @@ public:
 	void ReleaseMem();
 	void PreFillBuffers();
 	
-	BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
+	BOOL SetConsoleSize(COORD size, COORD buffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	void SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY);
 	
-	BOOL isScroll(RealBufferScroll aiScroll=rbs_Any);
+	bool isScroll(RealBufferScroll aiScroll=rbs_Any);
 	BOOL isConsoleDataChanged();
 	
 	void InitSBI(CONSOLE_SCREEN_BUFFER_INFO* ap_sbi);
@@ -80,7 +80,9 @@ public:
 	BOOL PreInit();
 	void ResetBuffer();
 	
-	int BufferHeight(uint nNewBufferHeight=0);
+	RealBufferScroll BufferSize(COORD& SetBufferSize);
+	RealBufferScroll BufferSize();
+
 	SHORT GetBufferWidth();
 	SHORT GetBufferHeight();
 	SHORT GetBufferPosX();
@@ -99,11 +101,11 @@ public:
 	BOOL isBuferModeChangeLocked();
 	BOOL BuferModeChangeLock();
 	void BuferModeChangeUnlock();
-	BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
+	RealBufferScroll BufferHeightTurnedOn(const CONSOLE_SCREEN_BUFFER_INFO* psbi);
 	void OnBufferHeight();
 
-	LRESULT OnScroll(int nDirection, short nTrackPos = -1, UINT nCount = 1);
-	LRESULT OnSetScrollPos(WPARAM wParam);
+	LRESULT OnScroll(RealBufferScroll Bar, int nDirection, short nTrackPos = -1, UINT nCount = 1);
+	LRESULT OnSetScrollPos(RealBufferScroll Bar, WPARAM wParam);
 	
 	BOOL ApplyConsoleInfo();
 	
@@ -244,7 +246,10 @@ protected:
 		int nTextWidth, nTextHeight, nBufferHeight;
 		BOOL bLockChange2Text;
 		int nChange2TextWidth, nChange2TextHeight;
-		BOOL bBufferHeight; // TRUE, если есть прокрутка
+		
+		//BOOL bBufferHeight; // TRUE, если есть прокрутка
+		RealBufferScroll rbsBuffer;
+
 		//DWORD nPacketIdx;
 		DWORD_PTR dwKeybLayout;
 		BOOL bRBtnDrag; // в консоль посылаетс€ драг правой кнопкой (выделение в FAR)

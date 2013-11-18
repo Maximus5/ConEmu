@@ -1184,10 +1184,15 @@ void CRealBuffer::SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY)
 	}
 }
 
-BOOL CRealBuffer::isScroll(RealBufferScroll aiScroll/*=rbs_Any*/)
+bool CRealBuffer::isScroll(RealBufferScroll aiScroll/*=rbs_Any*/)
 {
-	TODO("горизонтальная прокрутка");
-	return con.bBufferHeight;
+	//return con.bBufferHeight;
+	if (aiScroll == rbs_Any)
+		return ((con.rbsBuffer & rbs_Both) != 0);
+	else if ((aiScroll == rbs_Vert) || (aiScroll == rbs_Horz))
+		return ((con.rbsBuffer & aiScroll) != 0);
+	else
+		return false;
 }
 
 // Вызывается при аттаче (CRealConsole::AttachConemuC)
@@ -1588,6 +1593,11 @@ int CRealBuffer::GetWindowHeight()
 	int nHeight = con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1;
 	_ASSERTE(nHeight>=MIN_CON_HEIGHT && nHeight <= 300);
 	return nHeight;
+}
+
+RealBufferScroll CRealBuffer::BufferSize()
+{
+	COORD crNone = {0,0};
 }
 
 int CRealBuffer::BufferHeight(uint nNewBufferHeight/*=0*/)
@@ -2452,10 +2462,9 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 }
 
 // По переданному CONSOLE_SCREEN_BUFFER_INFO определяет, включена ли прокрутка
-// static
-BOOL CRealBuffer::BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi)
+RealBufferScroll CRealBuffer::BufferHeightTurnedOn(const CONSOLE_SCREEN_BUFFER_INFO* psbi)
 {
-	BOOL lbTurnedOn = FALSE;
+	RealBufferScroll rbsCheck = rbs_None;
 	TODO("!!! Скорректировать");
 
 	if (psbi->dwSize.Y <= (psbi->srWindow.Bottom - psbi->srWindow.Top + 1))
@@ -2491,7 +2500,7 @@ BOOL CRealBuffer::BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 		//TODO: однако, если высота слишком велика для отображения в GUI окне - нужно включить BufferHeight
 	}
 
-	return lbTurnedOn;
+	return rbsCheck;
 }
 
 void CRealBuffer::OnBufferHeight()
@@ -2876,11 +2885,11 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 			if (nDir > 0)
 			{
-				OnScroll(lbCtrl ? SB_PAGEUP : SB_LINEUP, -1, nCount);
+				OnScroll(rbs_Vert, lbCtrl ? SB_PAGEUP : SB_LINEUP, -1, nCount);
 			}
 			else if (nDir < 0)
 			{
-				OnScroll(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN, -1, nCount);
+				OnScroll(rbs_Vert, lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN, -1, nCount);
 			}
 
 			return true; // уже обработано
@@ -3551,11 +3560,11 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY)
 	// 131017 Scroll content if selection cursor goes out of visible screen
 	if (anY < con.nTopVisibleLine)
 	{
-		OnScroll(SB_LINEUP);
+		OnScroll(rbs_Vert, SB_LINEUP);
 	}
 	else if (anY >= (con.nTopVisibleLine + con.nTextHeight))
 	{
-		OnScroll(SB_LINEDOWN);
+		OnScroll(rbs_Vert, SB_LINEDOWN);
 	}
 
 	COORD cr = {anX,anY};
@@ -6385,9 +6394,15 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 	return nProgress;
 }
 
-LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/, UINT nCount /*= 1*/)
+LRESULT CRealBuffer::OnScroll(RealBufferScroll Bar, int nDirection, short nTrackPos /*= -1*/, UINT nCount /*= 1*/)
 {
 	if (!this) return 0;
+
+	if (Bar != rbs_Vert)
+	{
+		_ASSERTE(FALSE && "Only vertical scrolling supported now");
+		return 0;
+	}
 
 	int nVisible = GetTextHeight();
 
@@ -6500,12 +6515,12 @@ LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/, UINT nCo
 	return 0;
 }
 
-LRESULT CRealBuffer::OnSetScrollPos(WPARAM wParam)
+LRESULT CRealBuffer::OnSetScrollPos(RealBufferScroll Bar, WPARAM wParam)
 {
 	if (!this) return 0;
 
 	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
-	OnScroll(LOWORD(wParam),HIWORD(wParam));
+	OnScroll(Bar, LOWORD(wParam),HIWORD(wParam));
 	return 0;
 }
 
