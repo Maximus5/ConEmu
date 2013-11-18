@@ -1287,7 +1287,7 @@ BOOL CConEmuMain::Init()
 	LoadIcons();
 
 	mp_Tip = new CToolTip();
-	mp_TabBar = new TabBarClass();
+	mp_TabBar = new CTabBarClass();
 	//m_Child = new CConEmuChild();
 	//m_Back = new CConEmuBack();
 	//m_Macro = new CConEmuMacro();
