@@ -4814,16 +4814,16 @@ void CRealConsole::StopThread(BOOL abRecreating)
 
 bool CRealConsole::InScroll()
 {
-	if (!this || !mp_VCon || !isBufferHeight())
+	if (!this || !mp_VCon || !isBuffer())
 		return false;
 
 	return mp_VCon->InScroll();
 }
 
-BOOL CRealConsole::isGuiVisible()
+bool CRealConsole::isGuiVisible()
 {
 	if (!this)
-		return FALSE;
+		return false;
 
 	if (hGuiWnd)
 	{
@@ -4832,7 +4832,7 @@ BOOL CRealConsole::isGuiVisible()
 		DWORD_PTR nStyle = GetWindowLongPtr(hGuiWnd, GWL_STYLE);
 		return (nStyle & WS_VISIBLE) != 0;
 	}
-	return FALSE;
+	return false;
 }
 
 BOOL CRealConsole::isGuiOverCon()
@@ -4849,7 +4849,8 @@ BOOL CRealConsole::isGuiOverCon()
 }
 
 // Проверить, включен ли буфер (TRUE). Или высота окна равна высоте буфера (FALSE).
-BOOL CRealConsole::isBufferHeight()
+// Бывший isBufferHeight
+BOOL CRealConsole::isBuffer(RealBufferScroll aiScroll/*=rbs_Any*/)
 {
 	if (!this)
 		return FALSE;
@@ -4859,7 +4860,7 @@ BOOL CRealConsole::isBufferHeight()
 		return !isGuiVisible();
 	}
 
-	return mp_ABuf->isScroll();
+	return mp_ABuf->isScroll(aiScroll);
 }
 
 // TRUE - если консоль "заморожена" (альтернативный буфер)
@@ -4935,18 +4936,18 @@ LPCTSTR CRealConsole::GetTitle(bool abGetRenamed/*=false*/)
 	return TitleFull;
 }
 
-LRESULT CRealConsole::OnScroll(int nDirection)
+LRESULT CRealConsole::OnScroll(RealBufferScroll Bar, int nDirection)
 {
 	if (!this) return 0;
 
-	return mp_ABuf->OnScroll(nDirection);
+	return mp_ABuf->OnScrollEx(Bar, nDirection);
 }
 
-LRESULT CRealConsole::OnSetScrollPos(WPARAM wParam)
+LRESULT CRealConsole::OnSetScrollPos(RealBufferScroll Bar, WPARAM wParam)
 {
 	if (!this) return 0;
 
-	return mp_ABuf->OnSetScrollPos(wParam);
+	return mp_ABuf->OnSetScrollPos(Bar, wParam);
 }
 
 const ConEmuHotKey* CRealConsole::ProcessSelectionHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars)

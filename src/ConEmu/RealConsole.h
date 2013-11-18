@@ -251,7 +251,7 @@ class CRealConsole
 
 		uint TextWidth();
 		uint TextHeight();
-		uint BufferHeight(uint nNewBufferHeight=0);
+		//uint BufferHeight(uint nNewBufferHeight=0);
 		uint BufferWidth();
 		void OnBufferHeight();
 
@@ -291,7 +291,7 @@ class CRealConsole
 	private:
 		void    GuiWndFocusThread(HWND hSetFocus, BOOL& bAttached, BOOL& bAttachCalled, DWORD& nErr);
 	public:
-		BOOL    isGuiVisible();
+		bool    isGuiVisible();
 		BOOL    isGuiOverCon();
 		void    StoreGuiChildRect(LPRECT prcNewPos);
 		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
@@ -380,7 +380,7 @@ class CRealConsole
 		void StopThread(BOOL abRecreating=FALSE);
 		void StartStopXTerm(DWORD nPID, bool xTerm);
 		bool InScroll();
-		BOOL isBufferHeight();
+		BOOL isBuffer(RealBufferScroll aiScroll=rbs_Any);
 		BOOL isAlternative();
 		HWND isPictureView(BOOL abIgnoreNonModal=FALSE);
 		BOOL isWindowVisible();
@@ -418,8 +418,8 @@ class CRealConsole
 		bool isServerCreated(bool bFullRequired = false);
 		bool isServerAvailable();
 		bool isServerClosing();
-		LRESULT OnScroll(int nDirection);
-		LRESULT OnSetScrollPos(WPARAM wParam);
+		LRESULT OnScroll(RealBufferScroll Bar, int nDirection);
+		LRESULT OnSetScrollPos(RealBufferScroll Bar, WPARAM wParam);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 		bool isConSelectMode();
 		bool isFar(bool abPluginRequired=false);
