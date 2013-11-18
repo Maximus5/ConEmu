@@ -15,6 +15,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[+] (Pull#2, ForNeVeR) ConEmuBg: Fit background text width.
+
+
 2013.11.17
 [%] Live preview peeks were broken in Windows 8.
 [+] New ConEmu specific ANSI OSC.
