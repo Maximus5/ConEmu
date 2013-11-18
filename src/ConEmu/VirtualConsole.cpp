@@ -4778,7 +4778,7 @@ void CVirtualConsole::OnConsoleSizeChanged()
 void CVirtualConsole::OnConsoleSizeReset(USHORT sizeX, USHORT sizeY)
 {
 	// Это должно быть только на этапе создания новой консоли (например, появилась панель табов)
-	_ASSERTE((mp_RCon && mp_RCon->ConWnd()==NULL) || mp_RCon->mb_InCloseConsole);
+	_ASSERTE((mp_RCon && mp_RCon->ConWnd()==NULL) || mp_RCon->m_Srv.mb_InCloseConsole);
 	// И по идее, DC еще создан быть не должен был
 	if (Width==0 && Height==0)
 	{
@@ -4787,7 +4787,7 @@ void CVirtualConsole::OnConsoleSizeReset(USHORT sizeX, USHORT sizeY)
 	}
 	else
 	{
-		_ASSERTE((Width==0 && Height==0) || mp_RCon->mb_InCloseConsole);
+		_ASSERTE((Width==0 && Height==0) || mp_RCon->m_Srv.mb_InCloseConsole);
 	}
 }
 
