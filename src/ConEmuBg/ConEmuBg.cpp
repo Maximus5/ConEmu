@@ -2403,10 +2403,14 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		
 		if (actualWidth > width)
 		{
-			lf.lfHeight *= ((double)width / actualWidth);
+			// Delete current font:
+			SelectObject(pBk->hdc, hOldFont);
 			DeleteObject(hText);
+
+			// Create new font of appropriate size:
+			lf.lfHeight *= ((double)width / actualWidth);			
 			hText = CreateFontIndirect(&lf);
-			SelectObject(pBk->hdc, hText);
+			hOldFont = (HFONT)SelectObject(pBk->hdc, hText);
 		}
 
 		CachedImage* pI = NULL;
