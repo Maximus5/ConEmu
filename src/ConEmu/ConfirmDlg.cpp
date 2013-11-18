@@ -335,11 +335,16 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 	}
 
 	// Иначе - через стандартный MessageBox
-	wchar_t szText[360], *pszText;
+	wchar_t szText[512], *pszText;
 
 	if (Parm.asSingleConsole)
 	{
-		lstrcpyn(szText, Parm.asSingleTitle, countof(szText));
+		lstrcpyn(szText,
+			Parm.asSingleConsole ? Parm.asSingleConsole : Parm.bForceKill ? L"Confirm killing?" : L"Confirm closing?",
+			min(128,countof(szText)));
+		wcscat_c(szText, L"\r\n\r\n");
+		int nLen = lstrlen(szText);
+		lstrcpyn(szText+nLen, Parm.asSingleTitle, countof(szText)-nLen);
 	}
 	else
 	{
