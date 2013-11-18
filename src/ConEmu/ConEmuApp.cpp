@@ -1890,7 +1890,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 			L"and report a bug (open project web page)",
 			szText, szFile, nLine);
 
-		nRet = MessageBox(NULL, pszFull, pszTitle, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL);
+		nRet = MessageBox(NULL, pszFull, pszTitle, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL|MB_DEFBUTTON3);
 		DWORD nPostCode = GetLastError();
 		_wsprintf(szCodes, SKIPLEN(countof(szCodes)) L"\r\nPreError=%i, PostError=%i, Result=%i", nPreCode, nPostCode, nRet);
 		_wcscat_c(pszFull, cchMax, szCodes);
