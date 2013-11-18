@@ -12,7 +12,7 @@ set git_fail=NO
 
 
 rem If command may change working state - need check branch after...
-for %%c in ("add","br","branch","checkout","co","commit","pull","rebase","stash") do if /I "%~1" == %%c set check_br=YES&goto cmd_checked
+for %%c in ("add","br","branch","checkout","co","commit","pull","push","rebase","stash") do if /I "%~1" == %%c set check_br=YES&goto cmd_checked
 :cmd_checked
 
 
