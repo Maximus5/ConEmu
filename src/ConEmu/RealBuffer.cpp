@@ -113,10 +113,10 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 	mp_RCon = apRCon;
 	m_Type = aType;
 	mn_LastRgnFlags = -1;
-	
+
 	ZeroStruct(con);
 	con.hInSetSize = CreateEvent(0,TRUE,TRUE,0);
-	
+
 	mb_BuferModeChangeLocked = FALSE;
 	mcr_LastMousePos = MakeCoord(-1,-1);
 
@@ -127,7 +127,7 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 	mr_RightPanel = rcNil;
 
 	mb_LeftPanel = mb_RightPanel = FALSE;
-	
+
 	ZeroStruct(dump);
 
 	InitializeCriticalSection(&m_TrueMode.csLock);
@@ -191,7 +191,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	uint nY = 0;
 	DWORD dwConDataBufSize = 0;
 	DWORD dwConDataBufSizeEx = 0;
-	
+
 	con.m_sel.dwFlags = 0;
 	dump.Close();
 
@@ -200,7 +200,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 		_ASSERTE(asDumpFile!=NULL && *asDumpFile);
 		goto wrap;
 	}
-	
+
 	hFile = CreateFile(asDumpFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 	if (!hFile || hFile == INVALID_HANDLE_VALUE)
 	{
@@ -212,7 +212,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 		DisplayLastError(L"Invalid dump file size", -1);
 		goto wrap;
 	}
-	
+
 	dump.ptrData = (LPBYTE)malloc(liSize.LowPart);
 	if (!dump.ptrData)
 	{
@@ -220,7 +220,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 		goto wrap;
 	}
 	dump.cbDataSize = liSize.LowPart;
-	
+
 	if (!ReadFile(hFile, dump.ptrData, liSize.LowPart, (LPDWORD)&liSize.HighPart, NULL) || (liSize.LowPart != (DWORD)liSize.HighPart))
 	{
 		DisplayLastError(L"Dump file reading failed");
@@ -230,7 +230,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 
 	// Поехали
 	pszDumpTitle = (wchar_t*)dump.ptrData;
-	
+
 	pszRN = wcschr(pszDumpTitle, L'\r');
 	if (!pszRN)
 	{
@@ -256,7 +256,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 
 	// Первый блок
 	dump.pszBlock1 = pszRN + 2;
-	
+
 	pszSize += 6;
 	dump.crSize.X = (SHORT)wcstol(pszSize, &pszRN, 10);
 
@@ -305,25 +305,25 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 
 	dwConDataBufSize = dump.crSize.X * dump.crSize.Y;
 	dwConDataBufSizeEx = dump.crSize.X * dump.crSize.Y * sizeof(CharAttr);
-	
+
 	dump.pcaBlock1 = (CharAttr*)(((WORD*)(dump.pszBlock1)) + dwConDataBufSize);
 	dump.Block1 = (((LPBYTE)(((LPBYTE)(dump.pcaBlock1)) + dwConDataBufSizeEx)) - dump.ptrData) <= (INT_PTR)dump.cbDataSize;
-	
+
 	if (!dump.Block1)
 	{
 		DisplayLastError(L"Dump file invalid format (Block1)", -1);
 		goto wrap;
 	}
-	
+
 	m_Type = rbt_DumpScreen;
 
-	
+
 	// При активации дополнительного буфера нельзя выполнять SyncWindow2Console.
 	// Привести видимую область буфера к текущей.
 	nX = mp_RCon->TextWidth();
 	nY = mp_RCon->TextHeight();
 
-	
+
 	// Почти все готово, осталась инициализация
 	ZeroStruct(con.m_sel);
 	con.m_ci.dwSize = 15; con.m_ci.bVisible = TRUE;
@@ -344,9 +344,9 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	con.nBufferHeight = dump.crSize.Y;
 	con.bBufferHeight = TRUE;
 	TODO("Горизонтальная прокрутка");
-	
+
 	//dump.NeedApply = TRUE;
-	
+
 	// Создание буферов
 	if (!InitBuffers(0))
 	{
@@ -361,7 +361,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 		wchar_t*  pszDst = con.pConChar;
 		TODO("Хорошо бы весь расширенный буфер тут хранить, а не только CHAR_ATTR");
 		WORD*     pnaDst = con.pConAttr;
-		
+
 		wmemmove(pszDst, pszSrc, dwConDataBufSize);
 
 		WARNING("Похоже, что это сейчас не требуется, все равно будет перечитано");
@@ -410,7 +410,7 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 		DisplayLastError(L"Invalid max cell count", -1);
 		goto wrap;
 	}
-	
+
 	dump.ptrData = (LPBYTE)malloc(liSize.LowPart);
 	if (!dump.ptrData)
 	{
@@ -427,16 +427,16 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	dump.pcaBlock1 = (CharAttr*)(dump.pszBlock1 + cchCellCount + 1);
 	dump.Block1 = TRUE;
 
-	
+
 	m_Type = rbt_Alternative;
 
-	
+
 	// При активации дополнительного буфера нельзя выполнять SyncWindow2Console.
 	// Привести видимую область буфера к текущей.
 	nX = mp_RCon->TextWidth();
 	nY = mp_RCon->TextHeight();
 
-	
+
 	// Почти все готово, осталась инициализация
 	ZeroStruct(con.m_sel);
 	con.m_ci.dwSize = 15; con.m_ci.bVisible = TRUE;
@@ -450,7 +450,7 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	con.m_sbi.srWindow.Left = 0;
 	con.m_sbi.srWindow.Bottom = min((storedSbi.srWindow.Top + (int)nY - 1),(storedSbi.dwSize.Y - 1));
 	con.nTopVisibleLine = con.m_sbi.srWindow.Top = max(0,con.m_sbi.srWindow.Bottom - nY + 1);
-	
+
 	con.crMaxSize = mp_RCon->mp_RBuf->con.crMaxSize; //MakeCoord(max(dump.crSize.X,nX),max(dump.crSize.Y,nY));
 	con.m_sbi.dwMaximumWindowSize = con.crMaxSize; //dump.crSize;
 	con.nTextWidth = nX/*dump.crSize.X*/;
@@ -458,9 +458,9 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	con.bBufferHeight = (dump.crSize.Y > (int)nY);
 	con.nBufferHeight = con.bBufferHeight ? dump.crSize.Y : 0;
 	TODO("Горизонтальная прокрутка");
-	
+
 	//dump.NeedApply = TRUE;
-	
+
 	// Создание буферов
 	if (!InitBuffers(0))
 	{
@@ -505,7 +505,7 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 				*pcaDst = lcaTableOrg[0];
 			}
 		}
-		
+
 		//WARNING("Похоже, что это сейчас не требуется, все равно будет перечитано");
 		//wmemmove(con.pConChar, dump.pszBlock1, cchCellCount);
 	}
@@ -523,7 +523,7 @@ wrap:
 bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 {
 	bool lbRc = false;
-	
+
 	con.m_sel.dwFlags = 0;
 	dump.Close();
 
@@ -634,13 +634,13 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	int nVConNo = gpConEmu->isVConValid(mp_RCon->VCon());
 	#endif
 
-	if (!mp_RCon->hConWnd || mp_RCon->ms_ConEmuC_Pipe[0] == 0)
+	if (!mp_RCon->hConWnd || mp_RCon->m_Pipes.ms_ConEmuC_Pipe[0] == 0)
 	{
 		// 19.06.2009 Maks - Она действительно может быть еще не создана
 		//Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
-		DEBUGSTRSIZE(L"SetConsoleSize skipped (!mp_RCon->hConWnd || !mp_RCon->ms_ConEmuC_Pipe)\n");
+		DEBUGSTRSIZE(L"SetConsoleSize skipped (!mp_RCon->hConWnd || !mp_RCon->m_Pipes.ms_ConEmuC_Pipe)\n");
 
-		if (gpSetCls->isAdvLogging) mp_RCon->LogString("SetConsoleSize skipped (!mp_RCon->hConWnd || !mp_RCon->ms_ConEmuC_Pipe)");
+		if (gpSetCls->isAdvLogging) mp_RCon->LogString("SetConsoleSize skipped (!mp_RCon->hConWnd || !mp_RCon->m_Pipes.ms_ConEmuC_Pipe)");
 
 		return FALSE; // консоль пока не создана?
 	}
@@ -781,9 +781,9 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	// С таймаутом
 	nCallTimeout = RELEASEDEBUGTEST(500,30000);
 
-	/*fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);*/
+	/*fSuccess = CallNamedPipe(mp_RCon->m_Pipes.ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);*/
 	_ASSERTE(pOut==NULL);
-	pOut = ExecuteCmd(mp_RCon->ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
+	pOut = ExecuteCmd(mp_RCon->m_Pipes.ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
 	fSuccess = (pOut != NULL);
 
 	if (fSuccess /*&& (dwRead == (DWORD)nOutSize)*/)
@@ -811,9 +811,9 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				// Try again with lesser size?
 				if (bSecondTry)
 				{
-					/*fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);*/
+					/*fSuccess = CallNamedPipe(mp_RCon->m_Pipes.ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);*/
 					ExecuteFreeResult(pOut);
-					pOut = ExecuteCmd(mp_RCon->ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
+					pOut = ExecuteCmd(mp_RCon->m_Pipes.ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
 					fSuccess = (pOut != NULL);
 				}
 				// Inform user
@@ -822,7 +822,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		}
 	}
 
-	gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, mp_RCon->ms_ConEmuC_Pipe, pOut);
+	gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, mp_RCon->m_Pipes.ms_ConEmuC_Pipe, pOut);
 
 	if (!fSuccess || (pOut && (pOut->hdr.cbSize < nOutSize)))
 	{
@@ -886,7 +886,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					mp_RCon->mn_LastConsolePacketIdx--;
 					mp_RCon->SetMonitorThreadEvent();
 					DWORD nWaitTimeout = SETSYNCSIZEAPPLYTIMEOUT;
-					
+
 					#ifdef _DEBUG
 					nWaitTimeout = SETSYNCSIZEAPPLYTIMEOUT*4; //30000;
 					nWait = WaitForSingleObject(mp_RCon->mh_ApplyFinished, nWaitTimeout);
@@ -898,7 +898,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					#else
 					nWait = WaitForSingleObject(mp_RCon->mh_ApplyFinished, nWaitTimeout);
 					#endif
-					
+
 					COORD crDebugCurSize = con.m_sbi.dwSize;
 
 					if (crDebugCurSize.X != sizeX)
@@ -1059,24 +1059,24 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 		return TRUE;
 	}
 
-	//_ASSERTE(mp_RCon->hConWnd && mp_RCon->ms_ConEmuC_Pipe[0]);
+	//_ASSERTE(mp_RCon->hConWnd && mp_RCon->m_Pipes.ms_ConEmuC_Pipe[0]);
 
-	if (!mp_RCon->hConWnd || mp_RCon->ms_ConEmuC_Pipe[0] == 0)
+	if (!mp_RCon->hConWnd || mp_RCon->m_Pipes.ms_ConEmuC_Pipe[0] == 0)
 	{
 		// 19.06.2009 Maks - Она действительно может быть еще не создана
 		//Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
-		if (gpSetCls->isAdvLogging) mp_RCon->LogString("SetConsoleSize skipped (!mp_RCon->hConWnd || !mp_RCon->ms_ConEmuC_Pipe)");
+		if (gpSetCls->isAdvLogging) mp_RCon->LogString("SetConsoleSize skipped (!mp_RCon->hConWnd || !mp_RCon->m_Pipes.ms_ConEmuC_Pipe)");
 
 		// Это должно быть только на этапе создания новой консоли (например, появилась панель табов)
 		if (con.nTextWidth != sizeX || con.nTextHeight != sizeY)
 		{
-			_ASSERTE(mp_RCon->hConWnd==NULL || mp_RCon->mb_InCloseConsole);
+			_ASSERTE(mp_RCon->hConWnd==NULL || mp_RCon->m_Srv.mb_InCloseConsole);
 			con.nTextWidth = sizeX;
 			con.nTextHeight = sizeY;
 			mp_RCon->VCon()->OnConsoleSizeReset(sizeX, sizeY);
 		}
 
-		DEBUGSTRSIZE(L"SetConsoleSize skipped (!mp_RCon->hConWnd || !mp_RCon->ms_ConEmuC_Pipe)\n");
+		DEBUGSTRSIZE(L"SetConsoleSize skipped (!mp_RCon->hConWnd || !mp_RCon->m_Pipes.ms_ConEmuC_Pipe)\n");
 		return false; // консоль пока не создана?
 	}
 
@@ -1168,7 +1168,7 @@ void CRealBuffer::SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY)
 			int nDbg = wndSizeX;
 		}
 		#endif
-		
+
 		// Сразу поставим, чтобы в основной нити при синхронизации размер не слетел
 		// Необходимо заблокировать RefreshThread, чтобы не вызывался ApplyConsoleInfo ДО ЗАВЕРШЕНИЯ SetConsoleSize
 		con.bLockChange2Text = TRUE;
@@ -1263,7 +1263,7 @@ bool CRealBuffer::isFarMenuOrMacro()
 	}
 
 	cs.Unlock();
-	
+
 	return lbMenuActive;
 }
 
@@ -1278,7 +1278,7 @@ BOOL CRealBuffer::PreInit()
 	MCHKHEAP;
 	// Инициализировать переменные m_sbi, m_ci, m_sel
 	//RECT rcWnd; Get ClientRect(ghWnd, &rcWnd);
-	
+
 	// mp_RCon->isBufferHeight использовать нельзя, т.к. mp_RBuf.m_sbi еще не инициализирован!
 	bool bNeedBufHeight = (gpSetCls->bForceBufferHeight && gpSetCls->nForceBufferHeight>0)
 	                      || (!gpSetCls->bForceBufferHeight && mp_RCon->mn_DefaultBufferHeight);
@@ -1343,7 +1343,7 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 {
 	// Эта функция должна вызываться только в MonitorThread.
 	// Тогда блокировка буфера не потребуется
-	
+
 	#ifdef _DEBUG
 	DWORD dwCurThId = GetCurrentThreadId();
 	_ASSERTE((mp_RCon->mn_MonitorThreadID==0 || dwCurThId==mp_RCon->mn_MonitorThreadID || mp_RCon->mb_WaitingRootStartup)
@@ -1576,7 +1576,7 @@ int CRealBuffer::GetTextHeight()
 	_ASSERTE(this!=NULL);
 
 	if (!this) return MIN_CON_HEIGHT;
-	
+
 	_ASSERTE(con.nTextHeight>=MIN_CON_HEIGHT && con.nTextHeight<=200);
 	return con.nTextHeight;
 }
@@ -1640,9 +1640,9 @@ BOOL CRealBuffer::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* p
 	TODO("Заменить на вызов ::GetConWindowSize из WinObjects.cpp");
 	DWORD nScroll = 0; // enum RealBufferScroll
 	int nNewWidth = 0, nNewHeight = 0;
-	
+
 	// Функция возвращает размер ОКНА (видимой области), то есть буфер может быть больше
-	
+
 	int nCurWidth = TextWidth();
 	if (sbi.dwSize.X == nCurWidth)
 	{
@@ -1703,7 +1703,7 @@ BOOL CRealBuffer::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* p
 		Assert(nNewWidth>0 && nNewHeight>0);
 		return FALSE;
 	}
-	
+
 	// Result
 	if (pnNewWidth)
 		*pnNewWidth = nNewWidth;
@@ -1711,9 +1711,9 @@ BOOL CRealBuffer::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* p
 		*pnNewHeight = nNewHeight;
 	if (pnScroll)
 		*pnScroll = nScroll;
-	
+
 	return TRUE;
-	
+
 	//BOOL lbBufferHeight = this->isScroll();
 
 	//// Проверка режимов прокрутки
@@ -1998,7 +1998,7 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 					break;
 				}
 			}
-            
+
             if (idx == -1)
             {
             	lstrcatA(sInfo, ", failed to find change idx");
@@ -2098,7 +2098,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 {
 	BOOL bBufRecreated = FALSE;
 	BOOL lbChanged = FALSE;
-	
+
 	#ifdef _DEBUG
 	if (mp_RCon->mb_DebugLocked)
 		return FALSE;
@@ -2117,7 +2117,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 	const CESERVER_REQ_CONINFO_INFO* pInfo = NULL;
 	CESERVER_REQ_HDR cmd; ExecutePrepareCmd(&cmd, CECMD_CONSOLEDATA, sizeof(cmd));
 
-	if (mp_RCon->mb_SwitchActiveServer)
+	if (mp_RCon->m_Srv.mb_SwitchActiveServer)
 	{
 		// Skip this step. Waiting for new console server.
 	}
@@ -2125,18 +2125,18 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 	{
 		_ASSERTE(mp_RCon->m_ConsoleMap.IsValid());
 	}
-	else if (!mp_RCon->m_GetDataPipe.Transact(&cmd, sizeof(cmd), (const CESERVER_REQ_HDR**)&pInfo) || !pInfo)
+	else if (!mp_RCon->m_Pipes.m_GetDataPipe.Transact(&cmd, sizeof(cmd), (const CESERVER_REQ_HDR**)&pInfo) || !pInfo)
 	{
 		#ifdef _DEBUG
-		if (mp_RCon->m_GetDataPipe.GetErrorCode() == ERROR_PIPE_NOT_CONNECTED)
+		if (mp_RCon->m_Pipes.m_GetDataPipe.GetErrorCode() == ERROR_PIPE_NOT_CONNECTED)
 		{
 			int nDbg = ERROR_PIPE_NOT_CONNECTED;
 		}
 		else
 		{
 			wchar_t szInfo[128];
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"mp_RCon->m_GetDataPipe.Transact failed, code=%i\r\n", (int)mp_RCon->m_GetDataPipe.GetErrorCode());
-			wchar_t* pszFull = lstrmerge(szInfo, mp_RCon->m_GetDataPipe.GetErrorText());
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"mp_RCon->m_Pipes.m_GetDataPipe.Transact failed, code=%i\r\n", (int)mp_RCon->m_Pipes.m_GetDataPipe.GetErrorCode());
+			wchar_t* pszFull = lstrmerge(szInfo, mp_RCon->m_Pipes.m_GetDataPipe.GetErrorText());
 			MBoxA(pszFull);
 			SafeFree(pszFull);
 		}
@@ -2290,7 +2290,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 						char szDbgSize[128]; _wsprintfA(szDbgSize, SKIPLEN(countof(szDbgSize)) "ApplyConsoleInfo: SizeWasChanged(cx=%i, cy=%i)", nNewWidth, nNewHeight);
 						LOGCONSOLECHANGE(szDbgSize);
 					}
-					
+
 					#ifdef _DEBUG
 					wchar_t szDbgSize[128]; _wsprintf(szDbgSize, SKIPLEN(countof(szDbgSize)) L"ApplyConsoleInfo.SizeWasChanged(cx=%i, cy=%i)", nNewWidth, nNewHeight);
 					DEBUGSTRSIZE(szDbgSize);
@@ -2339,7 +2339,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 				mp_RCon->mn_LastConsolePacketIdx = pInfo->nPacketId;
 				DWORD CharCount = pInfo->nDataCount;
 
-				
+
 				#ifdef _DEBUG
 				if (CharCount != (nNewWidth * nNewHeight))
 				{
@@ -2596,9 +2596,9 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 {
 	if (!mp_RCon->IsFarHyperlinkAllowed(false))
 		return false;
-		
+
 	bool lbProcessed = false;
-	
+
 	// переходим на абсолютные координаты
 	COORD crStart = crFrom; // MakeCoord(crFrom.X - con.m_sbi.srWindow.Left, crFrom.Y - con.m_sbi.srWindow.Top);
 
@@ -2635,7 +2635,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 			UpdateSelection(); // обновить на экране
 		}
 	}
-	
+
 	if ((rc == etr_FileAndLine) || (rc == etr_Url))
 	{
 		if ((messg == WM_LBUTTONDOWN) && *szText)
@@ -2682,10 +2682,10 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 
 					//lstrcpyn(cmd.szFile, szText, countof(cmd.szFile));
 					LookupFilePath(szText/*name from console*/, cmd.szFile/*full path*/, countof(cmd.szFile));
-					
+
 					TODO("Для удобства, если лог открыт в редакторе, или пропустить мышь, или позвать макрос");
 					// Только нужно учесть, что текущий таб может быть редактором, но открыт UserScreen (CtrlO)
-					
+
 					// Проверить, может уже открыт таб с этим файлом?
 					LPCWSTR pszFileName = wcsrchr(cmd.szFile, L'\\');
 					if (!pszFileName) pszFileName = cmd.szFile; else pszFileName++;
@@ -2697,7 +2697,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 					//UpdateSelection();
 
 					int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(fwt_Editor|fwt_ActivateFound|fwt_PluginRequired, pszFileName, &pVCon);
-					
+
 					if (liActivated == -2)
 					{
 						// Нашли, но активировать нельзя, TabBar должен был показать всплывающую подсказку с ошибкой
@@ -3034,7 +3034,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	{
 		con.bRClick4KeyBar = FALSE;
 	}
-	
+
 	// Пропускать мышь в консоль только если буфер реальный
 	return (m_Type != rbt_Primary);
 }
@@ -3119,11 +3119,11 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	{
 		// Выделить слово под курсором (как в обычной консоли)
 		BOOL lbStreamSelection = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
-		
+
 		// Нужно получить координаты слова
 		COORD crFrom = cr, crTo = cr;
 		ExpandTextRange(crFrom/*[In/Out]*/, crTo/*[Out]*/, etr_Word);
-		
+
 		// Выполнить выделение
 		StartSelection(lbStreamSelection, crFrom.X, crFrom.Y, TRUE, WM_LBUTTONDBLCLK, &crTo);
 
@@ -3256,7 +3256,7 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 	}
 
 	WARNING("TODO: bFindNext");
-	
+
 	if (pszFrom && asText && *asText && nWidth && nHeight)
 	{
 		int nFindLen = lstrlen(asText);
@@ -3473,7 +3473,7 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 		anX = con.m_sbi.dwCursorPosition.X; // - con.m_sbi.srWindow.Left;
 		anY = con.m_sbi.dwCursorPosition.Y; // - con.m_sbi.srWindow.Top;
 	}
-	
+
 	// Если начало выделение не видимо - ставим ближайший угол
 	if (anX < 0)
 	{
@@ -3682,7 +3682,7 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0x
 				}
 			}
 		}
-		
+
 		if (!lbProcessed)
 		{
 			bRc = DoSelectionCopyInt(bCopyAll, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, nFormat);
@@ -3693,13 +3693,13 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0x
 	if (bRc)
 	{
 		DoSelectionStop(); // con.m_sel.dwFlags = 0;
-		
+
 		if (bufType == rbt_Selection)
 		{
 			mp_RCon->SetActiveBuffer(rbt_Primary);
 			// Сразу на выход!
 		}
-		
+
 		if (m_Type == rbt_Primary)
 		{
 			UpdateSelection(); // обновить на экране
@@ -3858,9 +3858,9 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	COLORREF *pPal = mp_RCon->VCon()->GetColors();
 
 	bool bUseHtml = (nFormat != 0);
-	
+
 	CHtmlCopy html;
-	
+
 	if (bUseHtml)
 	{
 		COLORREF crFore = 0xC0C0C0, crBack = 0;
@@ -4157,14 +4157,14 @@ bool CRealBuffer::isConSelectMode()
 bool CRealBuffer::isSelfSelectMode()
 {
 	if (!this) return false;
-	
+
 	return (con.m_sel.dwFlags != 0);
 }
 
 bool CRealBuffer::isStreamSelection()
 {
 	if (!this) return false;
-	
+
 	return ((con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION);
 }
 
@@ -4344,7 +4344,7 @@ COORD CRealBuffer::GetDefaultNtvdmHeight()
 	else if (cr16bit.Y>=43) cr16bit.Y = 43;
 	else if (cr16bit.Y>=28) cr16bit.Y = 28;
 	else if (cr16bit.Y>=25) cr16bit.Y = 25;
-	
+
 	return cr16bit;
 }
 
@@ -4373,7 +4373,7 @@ BOOL CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,
 	{
 		csData.Lock(&csCON);
 	}
-	
+
 	_ASSERTE(nLine>=0 && nLine<GetWindowHeight());
 	if (nLine < 0 || nLine >= con.nTextHeight)
 	{
@@ -4395,7 +4395,7 @@ BOOL CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,
 		// Вернуть данные
 		if (!con.pConChar || !con.pConAttr)
 			return FALSE;
-		
+
 		if (pChar)
 			*pChar = con.pConChar + (nLine * con.nTextWidth);
 		//if (pAttr)
@@ -4474,7 +4474,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 		return;
 	}
 	#endif
-	
+
 	con.bConsoleDataChanged = FALSE;
 
 	// формирование умолчательных цветов, по атрибутам консоли
@@ -4503,7 +4503,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 	TODO("OPTIMIZE: В принципе, это можно делать не всегда, а только при изменениях");
 	PrepareColorTable(bExtendFonts, lcaTableExt, lcaTableOrg, pApp);
-	
+
 	lcaTable = lcaTableOrg;
 
 	// NonExclusive lock (need to ensure that buffers will not be recreated during processing)
@@ -4667,7 +4667,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			BYTE attrBackLast = 0;
 			int nExtendStartsY = 0;
 			//int nPrevDlgBorder = -1;
-			
+
 			bool lbStoreBackLast = false;
 			if (bExtendColors)
 			{
@@ -4715,7 +4715,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				// Атрибуты
 				DWORD atr = 0;
 
-				if (mp_RCon->mn_InRecreate)
+				if (mp_RCon->m_Srv.mn_InRecreate)
 				{
 					lca = lcaTable[7];
 
@@ -4762,7 +4762,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 							if (pcolSrc >= mp_RCon->mp_TrueColorerData)
 								bUseColorData = TRUE;
 						}
-						
+
 						if (bUseColorData)
 						{
 							if (pcolSrc >= pcolEnd)
@@ -4905,7 +4905,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			COLORREF crBackColor = mp_RCon->mp_VCon->mp_Colors[nBackIdx];
 			int nX1, nX2;
 
-			
+
 			for (nY = rc.Top; nY <= rc.Bottom; nY++)
 			{
 				if (!lbStreamMode)
@@ -4998,7 +4998,7 @@ int CRealBuffer::GetStatusLineCount(int nLeftPanelEdge)
 
 	if (!mp_RCon->isFar() || !con.pConChar || !con.nTextWidth)
 		return 0;
-	
+
 	int nBottom, nLeft;
 	if (nLeftPanelEdge > mr_LeftPanelFull.left)
 	{
@@ -5020,7 +5020,7 @@ int CRealBuffer::GetStatusLineCount(int nLeftPanelEdge)
 			return (i - 1);
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -5032,7 +5032,7 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 
 	TODO("Хорошо бы m_FarInfo тоже в дамп скидывать.");
 	CEFAR_INFO_MAPPING FI;
-	
+
 	if (m_Type == rbt_Primary)
 	{
 		FI = mp_RCon->m_FarInfo;
@@ -5094,7 +5094,7 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 	m_Rgn.SetNeedTransparency(gpSet->isUserScreenTransparent);
 	TODO("При загрузке дампа хорошо бы из него и палитру фара доставать/отдавать");
 	m_Rgn.PrepareTransparent(&FI, mp_RCon->mp_VCon->mp_Colors, GetSBI(), pChar, pAttr, nWidth, nHeight);
-	
+
 	#ifdef _DEBUG
 	int nCount = m_Rgn.GetDetectedDialogs(0,NULL,NULL);
 
@@ -5110,7 +5110,7 @@ void CRealBuffer::FindPanels()
 {
 	TODO("Положение панелей можно бы узнавать из плагина");
 	WARNING("!!! Нужно еще сохранять флажок 'Меню сейчас показано'");
-	
+
 	#ifdef _DEBUG
 	if (mp_RCon->mb_DebugLocked)
 		return;
@@ -6190,7 +6190,7 @@ BOOL CRealBuffer::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/,
 		if (mr_LeftPanel.right <= mr_LeftPanel.left)
 			return FALSE;
 	}
-	
+
 	if (prc && !abFull && abIncludeEdges)
 	{
 		prc->left  = abRight ? mr_RightPanelFull.left  : mr_LeftPanelFull.left;
@@ -6230,14 +6230,14 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 	static wchar_t szPercentRus[16] = {}, szComplRus[16] = {};
 	static int nPercentEngLen = lstrlen(szPercentEng), nComplEngLen = lstrlen(szComplEng);
 	static int nPercentRusLen, nComplRusLen;
-	
+
 	if (szPercentRus[0] == 0)
 	{
 		szPercentRus[0] = L' ';
 		TODO("Хорошо бы и другие национальные названия обрабатывать, брать из настройки");
 		MultiByteToWideChar(CP_ACP,0,"процент",-1,szPercentRus+1,countof(szPercentRus)-1);
 		MultiByteToWideChar(CP_ACP,0,"Завершено:",-1,szComplRus,countof(szComplRus));
-		
+
 		nPercentRusLen = lstrlen(szPercentRus);
 		nComplRusLen = lstrlen(szComplEng);
 	}

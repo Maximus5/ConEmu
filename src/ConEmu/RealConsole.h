@@ -265,7 +265,7 @@ class CRealConsole
 			// Пайп консольного ввода
 			wchar_t ms_ConEmuCInput_Pipe[MAX_PATH];
 			HANDLE  mh_ConInputPipe; // wsprintf(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID)
-			
+
 			wchar_t ms_ConEmuC_Pipe[MAX_PATH], ms_MainSrv_Pipe[MAX_PATH];
 
 			// CRealServer::Start() -- our GUI part
@@ -384,7 +384,7 @@ class CRealConsole
 		BOOL PreInit();
 		void DumpConsole(HANDLE ahFile);
 		bool LoadDumpConsole(LPCWSTR asDumpFile);
-		
+
 		RealBufferType GetActiveBufferType();
 		bool SetActiveBuffer(RealBufferType aBufferType);
 
@@ -638,7 +638,7 @@ class CRealConsole
 		DWORD ConHostSearch(bool bFinal);
 		void ConHostSetPID(DWORD nConHostPID);
 		DWORD mn_ActiveLayout;
-		
+
 		BOOL mb_InCreateRoot;
 		//TCHAR ms_ConEmuC_DataReady[64]; HANDLE mh_ConEmuC_DataReady;
 		void InitNames();
@@ -712,13 +712,13 @@ class CRealConsole
 		CRealBuffer* mp_SBuf; // Временный буфер (полный) для блокирования содержимого (выделение/прокрутка/поиск)
 		CRealBuffer* mp_ABuf; // Активный буфер консоли -- ссылка на один из mp_RBuf/mp_EBuf/mp_SBuf
 		bool mb_ABufChaged; // Сменился активный буфер, обновить консоль
-		
+
 		int mn_DefaultBufferHeight;
 		DWORD mn_LastInactiveRgnCheck;
 		#ifdef _DEBUG
 		BOOL mb_DebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
 		#endif
-		
+
 		//// Эти переменные инициализируются в RetrieveConsoleInfo()
 		//MSection csCON; //DWORD ncsT;
 		//struct RConInfo
@@ -750,7 +750,7 @@ class CRealConsole
 		//	BOOL bDebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
 		//	#endif
 		//} con;
-		
+
 		//BOOL mb_ThawRefreshThread;
 		//
 		MSection csPRC; //DWORD ncsTPRC;
@@ -792,7 +792,7 @@ class CRealConsole
 
 		friend class CRealServer;
 		CRealServer m_RConServer;
-		
+
 		//void ApplyConsoleInfo(CESERVER_REQ* pInfo);
 		void SetHwnd(HWND ahConWnd, BOOL abForceApprove = FALSE);
 		WORD mn_LastVKeyPressed;
