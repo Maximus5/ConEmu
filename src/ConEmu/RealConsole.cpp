@@ -198,20 +198,27 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mh_PostMacroThread = NULL; mn_PostMacroThreadID = 0;
 	//mh_InputThread = NULL; mn_InputThreadID = 0;
 	mp_sei = NULL;
-	mn_MainSrv_PID = mn_ConHost_PID = 0; mh_MainSrv = NULL; mb_MainSrv_Ready = false;
-	mn_CheckFreqLock = 0;
-	mp_ConHostSearch = NULL;
+	
+	m_Srv.mh_MainSrv = NULL;
+	m_Srv.mn_MainSrv_PID = 0;
+	m_Srv.mb_MainSrv_Ready = false;
+	m_Srv.mn_CheckFreqLock = 0;
+	m_Srv.mn_ConHost_PID = 0;
+	m_Srv.mp_ConHostSearch = NULL;
+	m_Srv.mn_AltSrv_PID = 0;  //mh_AltSrv = NULL;
+	m_Srv.mb_SwitchActiveServer = false;
+	m_Srv.mh_SwitchActiveServer = CreateEvent(NULL,FALSE,FALSE,NULL);
+	m_Srv.mh_ActiveServerSwitched = CreateEvent(NULL,FALSE,FALSE,NULL);
+
 	mn_ActiveLayout = 0;
-	mn_AltSrv_PID = 0;  //mh_AltSrv = NULL;
-	mb_SwitchActiveServer = false;
-	mh_SwitchActiveServer = CreateEvent(NULL,FALSE,FALSE,NULL);
-	mh_ActiveServerSwitched = CreateEvent(NULL,FALSE,FALSE,NULL);
-	mh_ConInputPipe = NULL;
-	mb_UseOnlyPipeInput = FALSE;
+	
+	m_Pipes.mh_ConInputPipe = NULL;
+	m_Pipes.ms_MainSrv_Pipe[0] = 0; m_Pipes.ms_ConEmuC_Pipe[0] = 0; m_Pipes.ms_ConEmuCInput_Pipe[0] = 0; m_Pipes.ms_VConServer_Pipe[0] = 0;
+
 	//mh_CreateRootEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	mb_InCreateRoot = FALSE;
 	mb_NeedStartProcess = FALSE; mb_IgnoreCmdStop = FALSE;
-	ms_MainSrv_Pipe[0] = 0; ms_ConEmuC_Pipe[0] = 0; ms_ConEmuCInput_Pipe[0] = 0; ms_VConServer_Pipe[0] = 0;
+	
 	mn_TermEventTick = 0;
 	mh_TermEvent = CreateEvent(NULL,TRUE/*MANUAL - используется в нескольких нитях!*/,FALSE,NULL); ResetEvent(mh_TermEvent);
 	mh_StartExecuted = CreateEvent(NULL,FALSE,FALSE,NULL); ResetEvent(mh_StartExecuted);
@@ -247,8 +254,10 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	memset(m_FarPlugPIDs, 0, sizeof(m_FarPlugPIDs)); mn_FarPlugPIDsCount = 0;
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
 	mb_SkipFarPidChange = FALSE;
-	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
-	CloseConfirmReset();
+	m_Srv.mn_InRecreate = 0;
+	m_Srv.mb_ProcessRestarted = false;
+	m_Srv.mb_InCloseConsole = false;
+	CloseConfirmReset(); // m_Srv.mn_CloseConfirmedTick = 0; m_Srv.mb_CloseFarMacroPosted = false;
 	mb_WasSendClickToReadCon = false;
 	mn_LastSetForegroundPID = 0;
 
@@ -381,12 +390,17 @@ CRealConsole::~CRealConsole()
 
 	SafeCloseHandle(mh_StartExecuted);
 
-	SafeCloseHandle(mh_MainSrv); mn_MainSrv_PID = mn_ConHost_PID = 0; mb_MainSrv_Ready = false;
-	/*SafeCloseHandle(mh_AltSrv);*/  mn_AltSrv_PID = 0;
-	SafeCloseHandle(mh_SwitchActiveServer); mb_SwitchActiveServer = false;
-	SafeCloseHandle(mh_ActiveServerSwitched);
-	SafeCloseHandle(mh_ConInputPipe);
-	m_ConDataChanged.Close();
+	m_Srv.mn_ConHost_PID = 0;
+
+	SafeCloseHandle(m_Srv.mh_MainSrv);
+	m_Srv.mn_MainSrv_PID = 0;
+	m_Srv.mb_MainSrv_Ready = false;
+	m_Srv.mn_AltSrv_PID = 0;
+	SafeCloseHandle(m_Srv.mh_SwitchActiveServer); m_Srv.mb_SwitchActiveServer = false;
+	SafeCloseHandle(m_Srv.mh_ActiveServerSwitched);
+
+	SafeCloseHandle(m_Pipes.mh_ConInputPipe);
+	m_Events.m_ConDataChanged.Close();
 	if (mp_ConHostSearch)
 	{
 		mp_ConHostSearch->Release();
@@ -838,7 +852,8 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	}
 
 	_ASSERTE(hProcess==NULL || (mp_sei && mp_sei->hProcess));
-	_ASSERTE(rStartStop->hServerProcessHandle!=NULL || mh_MainSrv!=NULL);
+
+	_ASSERTE(rStartStop->hServerProcessHandle!=NULL || m_Srv.mh_MainSrv!=NULL);
 
 	if (rStartStop->hServerProcessHandle && (hProcess != (HANDLE)(DWORD_PTR)rStartStop->hServerProcessHandle))
 	{
@@ -909,17 +924,6 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 
 	mp_RBuf->InitSBI(&lsbi);
 	
-	//// Событие "изменения" консоли //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
-	//swprintf_c(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_MainSrv_PID);
-	//mh_CursorChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
-	//if (!mh_CursorChanged) {
-	//    ms_ConEmuC_Pipe[0] = 0;
-	//    DisplayLastError(L"Can't create event!");
-	//    return FALSE;
-	//}
-
-	//mh_MainSrv = hProcess;
-	//mn_MainSrv_PID = anConemuC_PID;
 	SetMainSrvPID(anConemuC_PID, hProcess);
 
 	SetHwnd(ahConWnd);
@@ -929,8 +933,8 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	// Инициализировать имена пайпов, событий, мэппингов и т.п.
 	InitNames();
 	//// Имя пайпа для управления ConEmuC
-	//swprintf_c(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_MainSrv_PID);
-	//swprintf_c(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_MainSrv_PID);
+	//swprintf_c(m_Pipes.ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", m_Srv.mn_MainSrv_PID);
+	//swprintf_c(m_Pipes.ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", m_Srv.mn_MainSrv_PID);
 	//MCHKHEAP
 	// Открыть map с данными, он уже должен быть создан
 	OpenMapHeader(TRUE);
@@ -1033,35 +1037,6 @@ BOOL CRealConsole::AttachPID(DWORD dwPID)
 #endif
 }
 #endif
-
-//BOOL CRealConsole::FlushInputQueue(DWORD nTimeout /*= 500*/)
-//{
-//	if (!this) return FALSE;
-//
-//	if (nTimeout > 1000) nTimeout = 1000;
-//	DWORD dwStartTick = GetTickCount();
-//
-//	mn_FlushOut = mn_FlushIn;
-//	mn_FlushIn++;
-//
-//	_ASSERTE(mn_ConEmuC_Input_TID!=0);
-//
-//	TODO("Активной может быть нить ввода плагина фара а не сервера!");
-//
-//	//TODO("Преверка зависания нити и ее перезапуск");
-//	PostThreadMessage(mn_ConEmuC_Input_TID, INPUT_THREAD_ALIVE_MSG, mn_FlushIn, 0);
-//
-//	while (mn_FlushOut != mn_FlushIn) {
-//		if (WaitForSingleObject(mh_MainSrv, 100) == WAIT_OBJECT_0)
-//			break; // Процесс сервера завершился
-//
-//		DWORD dwCurTick = GetTickCount();
-//		DWORD dwDelta = dwCurTick - dwStartTick;
-//		if (dwDelta > nTimeout) break;
-//	}
-//
-//	return (mn_FlushOut == mn_FlushIn);
-//}
 
 void CRealConsole::ShowKeyBarHint(WORD nID)
 {
@@ -1495,7 +1470,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 	if (!this)
 		return false;
 
-	if (mn_MainSrv_PID == 0 || !m_ConsoleMap.IsValid())
+	if (m_Srv.mn_MainSrv_PID == 0 || !m_ConsoleMap.IsValid())
 		return false; // Сервер еще не стартовал. События будут пропущены...
 
 	bool lbRc = false;
@@ -1684,7 +1659,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 				LogInput(piRec);
 
 			_ASSERTE(msg.msg[0].message!=0);
-			//if (mb_UseOnlyPipeInput) {
+
 			lbRc = PostConsoleEventPipe(&msg);
 
 			#ifdef _DEBUG
@@ -1740,11 +1715,13 @@ void CRealConsole::OnTimerCheck()
 		return;
 
 	//TODO: На проверку пайпов а не хэндла процесса
-	if (!mh_MainSrv)
+	if (!m_Srv.mh_MainSrv)
 		return;
 
-	DWORD nWait = WaitForSingleObject(mh_MainSrv, 0);
-	if (nWait == WAIT_OBJECT_0)
+	//DWORD nWait = WaitForSingleObject(m_Srv.mh_MainSrv, 0);
+	//if (nWait == WAIT_OBJECT_0)
+	int iSrvAlive = isServerAlive();
+	if (iSrvAlive == 0)
 	{
 		_ASSERTE((mn_TermEventTick!=0 && mn_TermEventTick!=(DWORD)-1) && "Server was terminated, StopSignal was not called");
 		StopSignal();
@@ -1783,7 +1760,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 {
 	DWORD nWait = IDEVENT_TERM;
 	CRealConsole* pRCon = (CRealConsole*)lpParameter;
-	BOOL bDetached = pRCon->m_Args.bDetached && !pRCon->mb_ProcessRestarted && !pRCon->mn_InRecreate;
+	BOOL bDetached = pRCon->m_Args.bDetached && !pRCon->m_Srv.mb_ProcessRestarted && !pRCon->m_Srv.mn_InRecreate;
 	BOOL lbChildProcessCreated = FALSE;
 
 	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...", true);
@@ -1792,7 +1769,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 	if (pRCon->mb_NeedStartProcess)
 	{
-		_ASSERTE(pRCon->mh_MainSrv==NULL);
+		_ASSERTE(pRCon->m_Srv.mh_MainSrv==NULL);
 
 		// -- pushed to queue from ::Constructor!
 		//// Move all "CreateProcess-es" to Main Thread
@@ -1815,10 +1792,6 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 	pRCon->mb_WaitingRootStartup = FALSE;
 
-	//_ASSERTE(pRCon->mh_ConChanged!=NULL);
-	// Пока нить запускалась - произошел "аттач" так что все нормально...
-	//_ASSERTE(pRCon->mb_Detached || pRCon->mh_MainSrv!=NULL);
-
 	// а тут мы будем читать консоль...
 	nWait = pRCon->MonitorThreadWorker(bDetached, lbChildProcessCreated);
 
@@ -1828,7 +1801,9 @@ wrap:
 	{
 		//ShutdownGuiStep(L"### Server was terminated\n");
 		DWORD nExitCode = 999;
-		GetExitCodeProcess(pRCon->mh_MainSrv, &nExitCode);
+		if (!pRCon->m_Srv.mh_MainSrv || !GetExitCodeProcess(pRCon->m_Srv.mh_MainSrv, &nExitCode))
+			nExitCode = -1;
+
 		wchar_t szErrInfo[255];
 		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
 			(nExitCode > 0 && nExitCode <= 2048) ?
@@ -1884,9 +1859,8 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 	hEvents[IDEVENT_TERM] = mh_TermEvent;
 	hEvents[IDEVENT_MONITORTHREADEVENT] = mh_MonitorThreadEvent; // Использовать, чтобы вызвать Update & Invalidate
 	hEvents[IDEVENT_UPDATESERVERACTIVE] = mh_UpdateServerActiveEvent; // Дернуть UpdateServerActive()
-	hEvents[IDEVENT_SWITCHSRV] = mh_SwitchActiveServer;
-	hEvents[IDEVENT_SERVERPH] = mh_MainSrv;
-	//HANDLE hAltServerHandle = NULL;
+	hEvents[IDEVENT_SWITCHSRV] = m_Srv.mh_SwitchActiveServer;
+	hEvents[IDEVENT_SERVERPH] = m_Srv.mh_MainSrv;
 
 	DWORD  nEvents = countof(hEvents);
 
@@ -1894,7 +1868,8 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 	if (hEvents[IDEVENT_SERVERPH] == NULL)
 		nEvents --;
 
-	DWORD  nWait = 0, nSrvWait = -1, nAcvWait = -1;
+	DWORD  nWait = 0, /*nSrvWait = -1,*/ nAcvWait = -1;
+	int    iSrvAlive = -100;
 	BOOL   bException = FALSE, bIconic = FALSE, /*bFirst = TRUE,*/ bActive = TRUE, bGuiVisible = FALSE;
 	DWORD nElapse = max(10,gpSet->nMainTimerElapse);
 	DWORD nInactiveElapse = max(10,gpSet->nMainTimerInactiveElapse);
@@ -1928,10 +1903,12 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 		#endif
 
 		// Проверка, вдруг осталась висеть "мертвая" консоль?
-		if (hEvents[IDEVENT_SERVERPH] == NULL && mh_MainSrv)
+		if (hEvents[IDEVENT_SERVERPH] == NULL /*&& m_Srv.mh_MainSrv*/)
 		{
-			nSrvWait = WaitForSingleObject(mh_MainSrv,0);
-			if (nSrvWait == WAIT_OBJECT_0)
+			//nSrvWait = WaitForSingleObject(m_Srv.mh_MainSrv,0);
+			//if (nSrvWait == WAIT_OBJECT_0)
+			int iSrvAlive = isServerAlive();
+			if (iSrvAlive == 0)
 			{
 				// ConEmuC was terminated!
 				_ASSERTE(bDetached == FALSE);
@@ -1978,38 +1955,6 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			#endif
 		}
 
-		//if ((nWait == IDEVENT_SERVERPH) && (hEvents[IDEVENT_SERVERPH] != mh_MainSrv))
-		//{
-		//	// Закрылся альт.сервер, переключиться на основной
-		//	_ASSERTE(mh_MainSrv!=NULL);
-		//	if (mh_AltSrv == hAltServerHandle)
-		//	{
-		//		mh_AltSrv = NULL;
-		//		SetAltSrvPID(0, NULL);
-		//	}
-		//	SafeCloseHandle(hAltServerHandle);
-		//	hEvents[IDEVENT_SERVERPH] = mh_MainSrv;
-
-		//	if (mb_InCloseConsole && mh_MainSrv && (WaitForSingleObject(mh_MainSrv, 0) == WAIT_OBJECT_0))
-		//	{
-		//		ShutdownGuiStep(L"AltServer and MainServer are closed");
-		//		// Подтверждаем nWait, основной сервер закрылся
-		//		nWait = IDEVENT_SERVERPH;
-		//	}
-		//	else
-		//	{
-		//		ShutdownGuiStep(L"AltServer closed, executing ReopenServerPipes");
-		//		if (ReopenServerPipes())
-		//		{
-		//			// Меняем nWait, т.к. основной сервер еще не закрылся (консоль жива)
-		//			nWait = IDEVENT_MONITORTHREADEVENT;
-		//		}
-		//		else
-		//		{
-		//			ShutdownGuiStep(L"ReopenServerPipes failed, exiting from MonitorThread");
-		//		}
-		//	}
-		//}
 
 		if (nWait == IDEVENT_TERM || nWait == IDEVENT_SERVERPH)
 		{
@@ -2030,22 +1975,18 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			break; // требование завершения нити
 		}
 
-		if ((nWait == IDEVENT_SWITCHSRV) || mb_SwitchActiveServer)
+		if ((nWait == IDEVENT_SWITCHSRV) || m_Srv.mb_SwitchActiveServer)
 		{
-			//hAltServerHandle = mh_AltSrv;
-			//_ASSERTE(hAltServerHandle!=NULL);
-			//hEvents[IDEVENT_SERVERPH] = hAltServerHandle ? hAltServerHandle : mh_MainSrv;
-
 			if (!ReopenServerPipes())
 			{
 				// Try again?
-				mb_SwitchActiveServer = true;
+				m_Srv.mb_SwitchActiveServer = true;
 			}
 			else
 			{
 				// Done
-				mb_SwitchActiveServer = false;
-				SetEvent(mh_ActiveServerSwitched);
+				m_Srv.mb_SwitchActiveServer = false;
+				SetEvent(m_Srv.mh_ActiveServerSwitched);
 			}
 		}
 
@@ -2076,15 +2017,15 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			ResetEvent(hEvents[IDEVENT_MONITORTHREADEVENT]);
 
 			// Сюда мы попадаем, например, при запуске новой консоли "Под админом", когда GUI НЕ "Под админом"
-			// В начале нити (mh_MainSrv == NULL), если запуск идет через ShellExecuteEx(runas)
+			// В начале нити (m_Srv.mh_MainSrv == NULL), если запуск идет через ShellExecuteEx(runas)
 			if (hEvents[IDEVENT_SERVERPH] == NULL)
 			{
-				if (mh_MainSrv)
+				if (m_Srv.mh_MainSrv)
 				{
 					if (bDetached || m_Args.bRunAsAdministrator)
 					{
 						bDetached = FALSE;
-						hEvents[IDEVENT_SERVERPH] = mh_MainSrv;
+						hEvents[IDEVENT_SERVERPH] = m_Srv.mh_MainSrv;
 						nEvents = countof(hEvents);
 					}
 					else
@@ -2094,7 +2035,7 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 				}
 				else
 				{
-					_ASSERTE(mh_MainSrv!=NULL);
+					_ASSERTE(m_Srv.mh_MainSrv!=NULL); //TODO: Хорошо бы наличие m_Srv.mh_MainSrv вообще не требовать
 				}
 			}
 		}
@@ -2107,21 +2048,6 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			OnStartedSuccess();
 		}
 
-		// IDEVENT_SERVERPH уже проверен, а код возврата обработается при выходе из цикла
-		//// Проверим, что ConEmuC жив
-		//if (mh_MainSrv)
-		//{
-		//	DWORD dwExitCode = 0;
-		//	#ifdef _DEBUG
-		//	BOOL fSuccess =
-		//	#endif
-		//	    GetExitCodeProcess(mh_MainSrv, &dwExitCode);
-		//	if (dwExitCode!=STILL_ACTIVE)
-		//	{
-		//		StopSignal();
-		//		return 0;
-		//	}
-		//}
 
 		// Если консоль не должна быть показана - но ее кто-то отобразил
 		if (!isShowConsole && !gpSet->isConVisible)
@@ -2245,7 +2171,7 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 				bool bAlive = false;
 
 				//if (nCurFarPID && mn_LastFarReadIdx != mp_ConsoleInfo->nFarReadIdx) {
-				if (nCurFarPID && m_FarInfo.cbSize && m_FarAliveEvent.Open())
+				if (nCurFarPID && m_FarInfo.cbSize && m_Events.m_FarAliveEvent.Open())
 				{
 					DWORD nCurTick = GetTickCount();
 
@@ -2254,7 +2180,7 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 					        (nCurTick - mn_LastFarReadTick) >= (FAR_ALIVE_TIMEOUT/2))
 					{
 						//if (WaitForSingleObject(mh_FarAliveEvent, 0) == WAIT_OBJECT_0)
-						if (m_FarAliveEvent.Wait(0) == WAIT_OBJECT_0)
+						if (m_Events.m_FarAliveEvent.Wait(0) == WAIT_OBJECT_0)
 						{
 							mn_LastFarReadTick = nCurTick ? nCurTick : 1;
 							bAlive = true; // живой
@@ -2329,14 +2255,15 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 				//if ((HWND)mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx
 				//	&& mp_ConsoleInfo->nPacketId
 				//	&& mn_LastConsolePacketIdx != mp_ConsoleInfo->nPacketId)
-				WARNING("!!! Если ожидание m_ConDataChanged будет перенесно выше - то тут нужно пользовать полученное выше значение !!!");
+				WARNING("!!! Если ожидание m_Events.m_ConDataChanged будет перенесно выше - то тут нужно пользовать полученное выше значение !!!");
 
-				if (!m_ConDataChanged.Wait(0,TRUE))
+				if (!m_Events.m_ConDataChanged.Wait(0,TRUE))
 				{
 					// если сменился статус (Far/не Far) - перерисовать на всякий случай, 
 					// чтобы после возврата из батника, гарантированно отрисовалось в режиме фара
 					_ASSERTE(mp_RBuf==mp_ABuf);
-					if (mb_InCloseConsole && mh_MainSrv && (WaitForSingleObject(mh_MainSrv, 0) == WAIT_OBJECT_0))
+					//if (m_Srv.mb_InCloseConsole && m_Srv.mh_MainSrv && (WaitForSingleObject(m_Srv.mh_MainSrv, 0) == WAIT_OBJECT_0))
+					if (m_Srv.mb_InCloseConsole && (isServerAlive() == 0))
 					{
 						// Основной сервер закрылся (консоль закрыта), идем на выход
 						break;
@@ -2571,11 +2498,11 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 		//	gpSetCls->Performance(tPerfInterval, FALSE);
 
 		if (m_ServerClosing.nServerPID
-		        && m_ServerClosing.nServerPID == mn_MainSrv_PID
+		        && m_ServerClosing.nServerPID == m_Srv.mn_MainSrv_PID
 		        && (GetTickCount() - m_ServerClosing.nRecieveTick) >= SERVERCLOSETIMEOUT)
 		{
 			// Видимо, сервер повис во время выхода?
-			isConsoleClosing(); // функция позовет TerminateProcess(mh_MainSrv)
+			isConsoleClosing(); // функция позовет TerminateProcess(m_Srv.mh_MainSrv)
 			nWait = IDEVENT_SERVERPH;
 			break;
 		}
@@ -2613,8 +2540,6 @@ BOOL CRealConsole::StartMonitorThread()
 {
 	BOOL lbRc = FALSE;
 	_ASSERTE(mh_MonitorThread==NULL);
-	//_ASSERTE(mh_InputThread==NULL);
-	//_ASSERTE(mb_Detached || mh_MainSrv!=NULL); -- процесс теперь запускаем в MonitorThread
 	DWORD nCreateBegin = GetTickCount();
 	SetConStatus(L"Initializing ConEmu (4)", true);
 	mh_MonitorThread = CreateThread(NULL, 0, MonitorThread, (LPVOID)this, 0, &mn_MonitorThreadID);
@@ -2853,7 +2778,7 @@ void CRealConsole::OnStartProcessAllowed()
 		return;
 	}
 
-	_ASSERTE(mh_MainSrv==NULL);
+	_ASSERTE(m_Srv.mh_MainSrv==NULL);
 	
 	if (!PreInit())
 	{
@@ -3071,15 +2996,13 @@ BOOL CRealConsole::StartProcess()
 	// Для валидации объектов
 	CVirtualConsole* pVCon = mp_VCon;
 
-	//if (!mb_ProcessRestarted)
+	//if (!m_Srv.mb_ProcessRestarted)
 	//{
 	//	if (!PreInit())
 	//		goto wrap;
 	//}
 
 	HWND hSetForeground = (gpConEmu->isIconic() || !IsWindowVisible(ghWnd)) ? GetForegroundWindow() : ghWnd;
-
-	mb_UseOnlyPipeInput = FALSE;
 
 	if (mp_sei)
 	{
@@ -3090,8 +3013,8 @@ BOOL CRealConsole::StartProcess()
 	//ResetEvent(mh_CreateRootEvent);
 	CloseConfirmReset();
 	mb_InCreateRoot = TRUE;
-	mb_InCloseConsole = FALSE;
-	mb_SwitchActiveServer = false;
+	m_Srv.mb_InCloseConsole = FALSE;
+	m_Srv.mb_SwitchActiveServer = false;
 	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
 	ZeroStruct(m_ServerClosing);
 	STARTUPINFO si;
@@ -3254,8 +3177,10 @@ BOOL CRealConsole::StartProcess()
 		if (InRecreate())
 		{
 			m_Args.bDetached = TRUE;
-			_ASSERTE(mh_MainSrv==NULL);
-			SafeCloseHandle(mh_MainSrv);
+
+			_ASSERTE(m_Srv.mh_MainSrv==NULL);
+			SafeCloseHandle(m_Srv.mh_MainSrv);
+
 			_ASSERTE(isDetached());
 			SetConStatus(L"Restart console failed");
 		}
@@ -3373,10 +3298,7 @@ BOOL CRealConsole::StartProcess()
 	MCHKHEAP
 	//TODO: а делать ли это?
 	SafeCloseHandle(pi.hThread); pi.hThread = NULL;
-	//CloseHandle(pi.hProcess); pi.hProcess = NULL;
 	SetMainSrvPID(pi.dwProcessId, pi.hProcess);
-	//mn_MainSrv_PID = pi.dwProcessId;
-	//mh_MainSrv = pi.hProcess;
 	pi.hProcess = NULL;
 
 	if (bNeedConHostSearch)
@@ -3395,13 +3317,13 @@ BOOL CRealConsole::StartProcess()
 	{
 		CreateLogFiles();
 		//// Событие "изменения" консоль //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
-		//swprintf_c(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_MainSrv_PID);
-		//mh_CursorChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
+		//swprintf_c(m_Pipes.ms_ConEmuC_Pipe, CE_CURSORUPDATE, m_Srv.mn_MainSrv_PID);
+		//mh_CursorChanged = CreateEvent ( NULL, FALSE, FALSE, m_Pipes.ms_ConEmuC_Pipe );
 		// Инициализировать имена пайпов, событий, мэппингов и т.п.
 		InitNames();
 		//// Имя пайпа для управления ConEmuC
-		//swprintf_c(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_MainSrv_PID);
-		//swprintf_c(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_MainSrv_PID);
+		//swprintf_c(m_Pipes.ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", m_Srv.mn_MainSrv_PID);
+		//swprintf_c(m_Pipes.ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", m_Srv.mn_MainSrv_PID);
 		//MCHKHEAP
 	}
 
@@ -3409,7 +3331,7 @@ wrap:
 	//SetEvent(mh_CreateRootEvent);
 
 	// В режиме "администратора" мы будем в "CreateRoot" до тех пор, пока нам не отчитается запущенный сервер
-	if (!lbRc || mn_MainSrv_PID)
+	if (!lbRc || m_Srv.mn_MainSrv_PID)
 	{
 		mb_InCreateRoot = FALSE;
 	}
@@ -3556,7 +3478,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 			nCreateEnd = GetTickCount();
 			if (lbRc)
 			{
-				//mn_MainSrv_PID = pi.dwProcessId;
+				//m_Srv.mn_MainSrv_PID = pi.dwProcessId;
 				SetMainSrvPID(pi.dwProcessId, NULL);
 			}
 			else
@@ -3577,7 +3499,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 			if (lbRc)
 			{
-				//mn_MainSrv_PID = pi.dwProcessId;
+				//m_Srv.mn_MainSrv_PID = pi.dwProcessId;
 				SetMainSrvPID(pi.dwProcessId, NULL);
 			}
 
@@ -3598,7 +3520,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 			}
 			else
 			{
-				//mn_MainSrv_PID = pi.dwProcessId;
+				//m_Srv.mn_MainSrv_PID = pi.dwProcessId;
 				SetMainSrvPID(pi.dwProcessId, NULL);
 			}
 		}
@@ -3735,18 +3657,18 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 void CRealConsole::InitNames()
 {
 	// Имя пайпа для управления ConEmuC
-	_wsprintf(ms_ConEmuC_Pipe, SKIPLEN(countof(ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", mn_MainSrv_PID);
-	_wsprintf(ms_MainSrv_Pipe, SKIPLEN(countof(ms_MainSrv_Pipe)) CESERVERPIPENAME, L".", mn_MainSrv_PID);
-	_wsprintf(ms_ConEmuCInput_Pipe, SKIPLEN(countof(ms_ConEmuCInput_Pipe)) CESERVERINPUTNAME, L".", mn_MainSrv_PID);
+	_wsprintf(m_Pipes.ms_ConEmuC_Pipe, SKIPLEN(countof(m_Pipes.ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", m_Srv.mn_MainSrv_PID);
+	_wsprintf(m_Pipes.ms_MainSrv_Pipe, SKIPLEN(countof(m_Pipes.ms_MainSrv_Pipe)) CESERVERPIPENAME, L".", m_Srv.mn_MainSrv_PID);
+	_wsprintf(m_Pipes.ms_ConEmuCInput_Pipe, SKIPLEN(countof(m_Pipes.ms_ConEmuCInput_Pipe)) CESERVERINPUTNAME, L".", m_Srv.mn_MainSrv_PID);
 	// Имя событие измененности данных в консоли
-	m_ConDataChanged.InitName(CEDATAREADYEVENT, mn_MainSrv_PID);
-	//swprintf_c(ms_ConEmuC_DataReady, CEDATAREADYEVENT, mn_MainSrv_PID);
+	m_Events.m_ConDataChanged.InitName(CEDATAREADYEVENT, m_Srv.mn_MainSrv_PID);
+	//swprintf_c(ms_ConEmuC_DataReady, CEDATAREADYEVENT, m_Srv.mn_MainSrv_PID);
 	MCHKHEAP;
-	_ASSERTE(mn_AltSrv_PID==0); // Инициализация должна идти на основной сервер
-	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", mn_MainSrv_PID);
+	_ASSERTE(m_Srv.mn_AltSrv_PID==0); // Инициализация должна идти на основной сервер
+	m_Pipes.m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", m_Srv.mn_MainSrv_PID);
 	// Enable overlapped mode and termination by event
 	_ASSERTE(mh_TermEvent!=NULL);
-	m_GetDataPipe.SetTermEvent(mh_TermEvent);
+	m_Pipes.m_GetDataPipe.SetTermEvent(mh_TermEvent);
 }
 
 // Если включена прокрутка - скорректировать индекс ячейки из экранных в буферные
@@ -4263,9 +4185,9 @@ void CRealConsole::DoEndFindText()
 
 BOOL CRealConsole::OpenConsoleEventPipe()
 {
-	if (mh_ConInputPipe && mh_ConInputPipe!=INVALID_HANDLE_VALUE)
+	if (m_Pipes.mh_ConInputPipe && m_Pipes.mh_ConInputPipe!=INVALID_HANDLE_VALUE)
 	{
-		CloseHandle(mh_ConInputPipe); mh_ConInputPipe = NULL;
+		SafeCloseHandle(m_Pipes.mh_ConInputPipe);
 	}
 
 	TODO("Если пайп с таким именем не появится в течении 10 секунд (минуты?) - закрыть VirtualConsole показав ошибку");
@@ -4276,8 +4198,8 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 
 	while ((nSteps--) > 0)
 	{
-		mh_ConInputPipe = CreateFile(
-		                      ms_ConEmuCInput_Pipe,// pipe name
+		m_Pipes.mh_ConInputPipe = CreateFile(
+		                      m_Pipes.ms_ConEmuCInput_Pipe,// pipe name
 		                      GENERIC_WRITE,
 		                      0,              // no sharing
 		                      NULL,           // default security attributes
@@ -4286,12 +4208,12 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 		                      NULL);          // no template file
 
 		// Break if the pipe handle is valid.
-		if (mh_ConInputPipe != INVALID_HANDLE_VALUE)
+		if (m_Pipes.mh_ConInputPipe != INVALID_HANDLE_VALUE)
 		{
 			// The pipe connected; change to message-read mode.
 			DWORD dwMode = CE_PIPE_READMODE;
 			fSuccess = SetNamedPipeHandleState(
-			               mh_ConInputPipe,    // pipe handle
+			               m_Pipes.mh_ConInputPipe,    // pipe handle
 			               &dwMode,  // new pipe mode
 			               NULL,     // don't set maximum bytes
 			               NULL);    // don't set maximum time
@@ -4300,7 +4222,7 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 			{
 				DEBUGSTRINPUT(L" - FAILED!\n");
 				dwErr = GetLastError();
-				//SafeCloseHandle(mh_ConInputPipe);
+				//SafeCloseHandle(m_Pipes.mh_ConInputPipe);
 
 				//if (!IsDebuggerPresent())
 				if (!isConsoleClosing() && !gbIsWine)
@@ -4317,8 +4239,8 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 
 		if (dwErr != ERROR_PIPE_BUSY)
 		{
-			TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_MainSrv");
-			dwWait = WaitForSingleObject(mh_MainSrv, 100);
+			TODO("Подождать, пока появится пайп с таким именем, но только пока жив m_Srv.mh_MainSrv");
+			dwWait = WaitForSingleObject(m_Srv.mh_MainSrv, 100);
 
 			if (dwWait == WAIT_OBJECT_0)
 			{
@@ -4335,12 +4257,14 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 		}
 
 		// All pipe instances are busy, so wait for 0.1 second.
-		if (!WaitNamedPipe(ms_ConEmuCInput_Pipe, 100))
+		if (!WaitNamedPipe(m_Pipes.ms_ConEmuCInput_Pipe, 100))
 		{
 			dwErr = GetLastError();
-			dwWait = WaitForSingleObject(mh_MainSrv, 100);
 
-			if (dwWait == WAIT_OBJECT_0)
+			//dwWait = WaitForSingleObject(m_Srv.mh_MainSrv, 100);
+			//if (dwWait == WAIT_OBJECT_0)
+			int iSrvAlive = isServerAlive(false, 100); // Don't try to check pipes!
+			if (iSrvAlive == 0)
 			{
 				DEBUGSTRINPUT(L"ConEmuC was closed. OpenPipe FAILED!\n");
 				return FALSE;
@@ -4353,10 +4277,10 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 		}
 	}
 
-	if (mh_ConInputPipe == NULL || mh_ConInputPipe == INVALID_HANDLE_VALUE)
+	if (m_Pipes.mh_ConInputPipe == NULL || m_Pipes.mh_ConInputPipe == INVALID_HANDLE_VALUE)
 	{
 		// Не дождались появления пайпа. Возможно, ConEmuC еще не запустился
-		//DEBUGSTRINPUT(L" - mh_ConInputPipe not found!\n");
+		//DEBUGSTRINPUT(L" - m_Pipes.mh_ConInputPipe not found!\n");
 #ifdef _DEBUG
 		DWORD dwTick1 = GetTickCount();
 		struct ServerClosing sc1 = m_ServerClosing;
@@ -4377,10 +4301,10 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 			DWORD dwTick3 = GetTickCount();
 			struct ServerClosing sc3 = m_ServerClosing;
 #endif
-			int nLen = _tcslen(ms_ConEmuCInput_Pipe) + 128;
+			int nLen = _tcslen(m_Pipes.ms_ConEmuCInput_Pipe) + 128;
 			wchar_t* pszErrMsg = (wchar_t*)malloc(nLen*sizeof(wchar_t));
-			_wsprintf(pszErrMsg, SKIPLEN(nLen) L"ConEmuCInput not found, ErrCode=0x%08X\n%s", dwErr, ms_ConEmuCInput_Pipe);
-			//DisplayLastError(L"mh_ConInputPipe not found", dwErr);
+			_wsprintf(pszErrMsg, SKIPLEN(nLen) L"ConEmuCInput not found, ErrCode=0x%08X\n%s", dwErr, m_Pipes.ms_ConEmuCInput_Pipe);
+			//DisplayLastError(L"m_Pipes.mh_ConInputPipe not found", dwErr);
 			// Выполняем Post-ом, т.к. консоль может уже закрываться (по стеку сообщений)? А сервер еще не прочухал...
 			gpConEmu->PostDisplayRConError(this, pszErrMsg);
 		}
@@ -4420,7 +4344,7 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount /*= 1*/)
 
 	TODO("Если пайп с таким именем не появится в течении 10 секунд (минуты?) - закрыть VirtualConsole показав ошибку");
 
-	if (mh_ConInputPipe==NULL || mh_ConInputPipe==INVALID_HANDLE_VALUE)
+	if (m_Pipes.mh_ConInputPipe==NULL || m_Pipes.mh_ConInputPipe==INVALID_HANDLE_VALUE)
 	{
 		// Try to open a named pipe; wait for it, if necessary.
 		if (!OpenConsoleEventPipe())
@@ -4428,80 +4352,7 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount /*= 1*/)
 			LogString("PostConsoleEventPipe skipped due to OpenConsoleEventPipe failed");
 			return false;
 		}
-
-		//int nSteps = 10;
-		//while ((nSteps--) > 0)
-		//{
-		//  mh_ConInputPipe = CreateFile(
-		//     ms_ConEmuCInput_Pipe,// pipe name
-		//     GENERIC_WRITE,
-		//     0,              // no sharing
-		//     NULL,           // default security attributes
-		//     OPEN_EXISTING,  // opens existing pipe
-		//     0,              // default attributes
-		//     NULL);          // no template file
-		//
-		//  // Break if the pipe handle is valid.
-		//  if (mh_ConInputPipe != INVALID_HANDLE_VALUE)
-		//     break;
-		//
-		//  // Exit if an error other than ERROR_PIPE_BUSY occurs.
-		//  dwErr = GetLastError();
-		//  if (dwErr != ERROR_PIPE_BUSY)
-		//  {
-		//    TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_MainSrv");
-		//    dwErr = WaitForSingleObject(mh_MainSrv, 100);
-		//    if (dwErr == WAIT_OBJECT_0) {
-		//        return;
-		//    }
-		//    continue;
-		//    //DisplayLastError(L"Could not open pipe", dwErr);
-		//    //return 0;
-		//  }
-		//
-		//  // All pipe instances are busy, so wait for 0.1 second.
-		//  if (!WaitNamedPipe(ms_ConEmuCInput_Pipe, 100) )
-		//  {
-		//    dwErr = WaitForSingleObject(mh_MainSrv, 100);
-		//    if (dwErr == WAIT_OBJECT_0) {
-		//        DEBUGSTRINPUT(L" - FAILED!\n");
-		//        return;
-		//    }
-		//    //DisplayLastError(L"WaitNamedPipe failed");
-		//    //return 0;
-		//  }
-		//}
-		//if (mh_ConInputPipe == NULL || mh_ConInputPipe == INVALID_HANDLE_VALUE) {
-		//    // Не дождались появления пайпа. Возможно, ConEmuC еще не запустился
-		//    DEBUGSTRINPUT(L" - mh_ConInputPipe not found!\n");
-		//    return;
-		//}
-		//
-		//// The pipe connected; change to message-read mode.
-		//dwMode = CE_PIPE_READMODE;
-		//fSuccess = SetNamedPipeHandleState(
-		//  mh_ConInputPipe,    // pipe handle
-		//  &dwMode,  // new pipe mode
-		//  NULL,     // don't set maximum bytes
-		//  NULL);    // don't set maximum time
-		//if (!fSuccess)
-		//{
-		//  DEBUGSTRINPUT(L" - FAILED!\n");
-		//  DWORD dwErr = GetLastError();
-		//  SafeCloseHandle(mh_ConInputPipe);
-		//  if (!IsDebuggerPresent())
-		//    DisplayLastError(L"SetNamedPipeHandleState failed", dwErr);
-		//  return;
-		//}
 	}
-
-	//// Пайп есть. Проверим, что ConEmuC жив
-	//dwExitCode = 0;
-	//fSuccess = GetExitCodeProcess(mh_MainSrv, &dwExitCode);
-	//if (dwExitCode!=STILL_ACTIVE) {
-	//    //DisplayLastError(L"ConEmuC was terminated");
-	//    return;
-	//}
 
 	#ifdef _DEBUG
 	switch (pMsg->msg[0].message)
@@ -4521,7 +4372,7 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount /*= 1*/)
 	pMsg->cbSize = dwSize;
 	pMsg->nCount = cchCount;
 
-	fSuccess = WriteFile(mh_ConInputPipe, pMsg, dwSize, &dwWritten, NULL);
+	fSuccess = WriteFile(m_Pipes.mh_ConInputPipe, pMsg, dwSize, &dwWritten, NULL);
 
 	if (fSuccess)
 	{
@@ -4530,6 +4381,13 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount /*= 1*/)
 	else
 	{
 		dwErr = GetLastError();
+
+		if (gpSetCls->isAdvLogging)
+		{
+			wchar_t szInfo[MAX_PATH+128];
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"PostConsoleEventPipe failed, WriteFile(m_Pipes.mh_ConInputPipe) returns error=%u", dwErr);
+			LogString(szInfo, TRUE);
+		}
 
 		if (!isConsoleClosing())
 		{
@@ -4541,7 +4399,7 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount /*= 1*/)
 
 				if (OpenConsoleEventPipe())
 				{
-					fSuccess = WriteFile(mh_ConInputPipe, pMsg, dwSize, &dwWritten, NULL);
+					fSuccess = WriteFile(m_Pipes.mh_ConInputPipe, pMsg, dwSize, &dwWritten, NULL);
 
 					if (fSuccess)
 					{
@@ -4649,7 +4507,7 @@ void CRealConsole::StopSignal()
 	mn_TermEventTick = GetTickCount();
 	SetEvent(mh_TermEvent);
 
-	if (!mn_InRecreate)
+	if (!m_Srv.mn_InRecreate)
 	{
 		hGuiWnd = mh_GuiWndFocusStore = NULL;
 		//mn_GuiApplicationPID = 0;
@@ -4683,7 +4541,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 	    HeapValidate(mh_Heap, 0, NULL);
 	*/
 #endif
-	_ASSERTE(abRecreating==mb_ProcessRestarted);
+	_ASSERTE((abRecreating!=FALSE)==m_Srv.mb_ProcessRestarted);
 	DEBUGSTRPROC(L"Entering StopThread\n");
 
 	// выставление флагов и завершение потока
@@ -4727,7 +4585,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 	// Завершение серверных нитей этой консоли
 	DEBUGSTRPROC(L"About to terminate main server thread (MonitorThread)\n");
 
-	if (ms_VConServer_Pipe[0])  // значит хотя бы одна нить была запущена
+	if (m_Pipes.ms_VConServer_Pipe[0])  // значит хотя бы одна нить была запущена
 	{
 		StopSignal(); // уже должен быть выставлен, но на всякий случай
 
@@ -4736,7 +4594,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		m_RConServer.Stop();
 
 
-		ms_VConServer_Pipe[0] = 0;
+		m_Pipes.ms_VConServer_Pipe[0] = 0;
 	}
 
 	//if (mh_InputThread) {
@@ -4762,13 +4620,13 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		hConWnd = NULL;
 
 		// Servers
-		_ASSERTE((mn_AltSrv_PID==0) && "AltServer was not terminated?");
+		_ASSERTE((m_Srv.mn_AltSrv_PID==0) && "AltServer was not terminated?");
 		//SafeCloseHandle(mh_AltSrv);
 		SetAltSrvPID(0/*, NULL*/);
-		//mn_AltSrv_PID = 0;
-		SafeCloseHandle(mh_MainSrv);
+		//m_Srv.mn_AltSrv_PID = 0;
+		SafeCloseHandle(m_Srv.mh_MainSrv);
 		SetMainSrvPID(0, NULL);
-		//mn_MainSrv_PID = 0;
+		//m_Srv.mn_MainSrv_PID = 0;
 
 		SetFarPID(0);
 		SetFarPluginPID(0);
@@ -4777,13 +4635,13 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		//mn_FarPID = mn_ActivePID = mn_FarPID_PluginDetected = 0;
 		mn_LastSetForegroundPID = 0;
 		//mn_ConEmuC_Input_TID = 0;
-		SafeCloseHandle(mh_ConInputPipe);
-		m_ConDataChanged.Close();
-		m_GetDataPipe.Close();
+		SafeCloseHandle(m_Pipes.mh_ConInputPipe);
+		m_Events.m_ConDataChanged.Close();
+		m_Pipes.m_GetDataPipe.Close();
 		// Имя пайпа для управления ConEmuC
-		ms_ConEmuC_Pipe[0] = 0;
-		ms_MainSrv_Pipe[0] = 0;
-		ms_ConEmuCInput_Pipe[0] = 0;
+		m_Pipes.ms_ConEmuC_Pipe[0] = 0;
+		m_Pipes.ms_MainSrv_Pipe[0] = 0;
+		m_Pipes.ms_ConEmuCInput_Pipe[0] = 0;
 		// Закрыть все мэппинги
 		CloseMapHeader();
 		CloseColorMapping();
@@ -4892,14 +4750,14 @@ bool CRealConsole::isDetached()
 		return FALSE;
 	}
 
-	if (!mb_WasStartDetached && !mn_InRecreate)
+	if (!mb_WasStartDetached && !m_Srv.mn_InRecreate)
 	{
 		return FALSE;
 	}
 
 	// Флажок ВООБЩЕ не сбрасываем - ориентируемся на хэндлы
 	//_ASSERTE(!mb_Detached || (mb_Detached && (hConWnd==NULL)));
-	return (mh_MainSrv == NULL);
+	return (m_Srv.mh_MainSrv == NULL);
 }
 
 BOOL CRealConsole::isWindowVisible()
@@ -5447,11 +5305,11 @@ void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 		_ASSERTE(this);
 		return;
 	}
-	if ((ahConWnd == NULL) || (hConWnd && (ahConWnd != hConWnd)) || (anServerPID != mn_MainSrv_PID))
+	if ((ahConWnd == NULL) || (hConWnd && (ahConWnd != hConWnd)) || (anServerPID != m_Srv.mn_MainSrv_PID))
 	{
 		MBoxAssert(ahConWnd!=NULL);
 		MBoxAssert((hConWnd==NULL) || (ahConWnd==hConWnd));
-		MBoxAssert(anServerPID==mn_MainSrv_PID);
+		MBoxAssert(anServerPID==m_Srv.mn_MainSrv_PID);
 		return;
 	}
 
@@ -5470,7 +5328,7 @@ void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 //{
 //	_ASSERTE(hwnd!=NULL);
 //
-//	if (hConWnd == NULL && anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_MainSrv_PID)
+//	if (hConWnd == NULL && anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)m_Srv.mn_MainSrv_PID)
 //	{
 //		SetConStatus(L"Waiting for console server...");
 //		SetHwnd(hwnd);
@@ -5490,8 +5348,8 @@ void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 //			//The idObject parameter contains the process identifier of the newly created process.
 //			//If the application is a 16-bit application, the idChild parameter is CONSOLE_APPLICATION_16BIT and idObject is the process identifier of the NTVDM session associated with the console.
 //		{
-//			if (mn_InRecreate>=1)
-//				mn_InRecreate = 0; // корневой процесс успешно пересоздался
+//			if (m_Srv.mn_InRecreate>=1)
+//				m_Srv.mn_InRecreate = 0; // корневой процесс успешно пересоздался
 //
 //			//WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть добавлен и через сервер");
 //			//Process Add(idObject);
@@ -5541,28 +5399,28 @@ void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 
 void CRealConsole::OnServerClosing(DWORD anSrvPID)
 {
-	if (anSrvPID == mn_MainSrv_PID && mh_MainSrv)
+	if (anSrvPID == m_Srv.mn_MainSrv_PID && m_Srv.mh_MainSrv)
 	{
 		// 131017 set flags to ON
 		StopSignal();
 		//int nCurProcessCount = m_Processes.size();
 		//_ASSERTE(nCurProcessCount <= 1);
 		m_ServerClosing.nRecieveTick = GetTickCount();
-		m_ServerClosing.hServerProcess = mh_MainSrv;
+		m_ServerClosing.hServerProcess = m_Srv.mh_MainSrv;
 		m_ServerClosing.nServerPID = anSrvPID;
 		// Поскольку сервер закрывается, пайп более не доступен
-		ms_ConEmuC_Pipe[0] = 0;
-		ms_MainSrv_Pipe[0] = 0;
+		m_Pipes.ms_ConEmuC_Pipe[0] = 0;
+		m_Pipes.ms_MainSrv_Pipe[0] = 0;
 	}
 	else
 	{
-		_ASSERTE(anSrvPID == mn_MainSrv_PID);
+		_ASSERTE(anSrvPID == m_Srv.mn_MainSrv_PID);
 	}
 }
 
 bool CRealConsole::isProcessExist(DWORD anPID)
 {
-	if (mn_InRecreate || isDetached() || !mn_ProcessCount)
+	if (m_Srv.mn_InRecreate || isDetached() || !mn_ProcessCount)
 		return false;
 
 	bool bExist = false;
@@ -5586,19 +5444,19 @@ bool CRealConsole::isProcessExist(DWORD anPID)
 
 int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
 {
-	if (mn_InRecreate)
+	if (m_Srv.mn_InRecreate)
 	{
 		DWORD dwCurTick = GetTickCount();
-		DWORD dwDelta = dwCurTick - mn_InRecreate;
+		DWORD dwDelta = dwCurTick - m_Srv.mn_InRecreate;
 
 		if (dwDelta > CON_RECREATE_TIMEOUT)
 		{
-			mn_InRecreate = 0;
+			m_Srv.mn_InRecreate = 0;
 			m_Args.bDetached = TRUE; // Чтобы GUI не захлопнулся
 		}
 		else if (ppPrc == NULL)
 		{
-			if (mn_InRecreate && !mb_ProcessRestarted && mh_MainSrv)
+			if (m_Srv.mn_InRecreate && !m_Srv.mb_ProcessRestarted && m_Srv.mh_MainSrv)
 			{
 				//DWORD dwExitCode = 0;
 
@@ -5622,7 +5480,7 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
 	{
 		if (ppPrc) *ppPrc = NULL;
 
-		if (hConWnd && !mh_MainSrv)
+		if (hConWnd && !m_Srv.mh_MainSrv)
 		{
 			if (!IsWindow(hConWnd))
 			{
@@ -5659,7 +5517,7 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
 				{
 					continue;
 				}
-				if (prc.ProcessID == mn_MainSrv_PID)
+				if (prc.ProcessID == m_Srv.mn_MainSrv_PID)
 				{
 					_ASSERTE(isConsoleService(prc.Name));
 					continue;
@@ -5699,36 +5557,97 @@ DWORD CRealConsole::GetFarStatus()
 	return mn_FarStatus;
 }
 
-bool CRealConsole::isServerAlive()
+// -1 - Was not started
+//  0 - Server process was terminated
+//  1 - Alive (detected by mh_MainSrv)
+//  2 - Alive (detected by pipe name)
+int CRealConsole::isServerAlive(bool AllowPipeCheck /*= true*/, DWORD Timeout /*= 0*/)
 {
-	if (!this || !mh_MainSrv || mh_MainSrv == INVALID_HANDLE_VALUE)
-		return false;
+	if (!this)
+		return -1;
 
-#ifdef _DEBUG
+	int iAliveRc = -1;
+	DWORD nServerWait = 999, nServerErr = 0;
+	BOOL  bPipeWait = -1;
+	BOOL  bWndClosed = -1;
+
+	#ifdef _DEBUG
 	DWORD dwExitCode = 0, nSrvPID = 0, nErrCode = 0;
-	LockFrequentExecute(500,mn_CheckFreqLock)
-	{
-		SetLastError(0);
-		BOOL fSuccess = GetExitCodeProcess(mh_MainSrv, &dwExitCode);
-		nErrCode = GetLastError();
+	#endif
 
-		typedef DWORD (WINAPI* GetProcessId_t)(HANDLE);
-		static GetProcessId_t getProcessId;
-		if (!getProcessId)
-			getProcessId = (GetProcessId_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetProcessId");
-		if (getProcessId)
+	if (m_Srv.mh_MainSrv && m_Srv.mh_MainSrv != INVALID_HANDLE_VALUE)
+	{
+		#ifdef _DEBUG
+	
+		LockFrequentExecute(500,m_Srv.mn_CheckFreqLock)
 		{
 			SetLastError(0);
-			nSrvPID = getProcessId(mh_MainSrv);
+			BOOL fSuccess = GetExitCodeProcess(m_Srv.mh_MainSrv, &dwExitCode);
 			nErrCode = GetLastError();
+
+			typedef DWORD (WINAPI* GetProcessId_t)(HANDLE);
+			static GetProcessId_t getProcessId;
+			if (!getProcessId)
+				getProcessId = (GetProcessId_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetProcessId");
+			if (getProcessId)
+			{
+				SetLastError(0);
+				nSrvPID = getProcessId(m_Srv.mh_MainSrv);
+				nErrCode = GetLastError();
+			}
+		}
+		#endif
+
+		nServerWait = WaitForSingleObject(m_Srv.mh_MainSrv, Timeout);
+		DEBUGTEST(DWORD nWaitErr = GetLastError());
+
+		switch (nServerWait)
+		{
+		case WAIT_OBJECT_0:
+			iAliveRc = 0; break;
+		case WAIT_TIMEOUT:
+			iAliveRc = 1; break;
+		default:
+			_ASSERTE(nServerWait==WAIT_OBJECT_0 || nServerWait==WAIT_TIMEOUT);
+			iAliveRc = -1; break; // ???
 		}
 	}
-#endif
+	else if (AllowPipeCheck && m_Pipes.ms_MainSrv_Pipe[0])
+	{
+		bPipeWait = WaitNamedPipe(m_Pipes.ms_MainSrv_Pipe, (Timeout == NMPWAIT_USE_DEFAULT_WAIT) ? 1 : Timeout);
+		nServerErr = GetLastError();
+		if (bPipeWait || (nServerErr == ERROR_SEM_TIMEOUT))
+		{
+			iAliveRc = 2;
+		}
+		else
+		{
+			_ASSERTE(nServerErr==ERROR_FILE_NOT_FOUND); // What it will be here?
+			iAliveRc = 0;
+		}
+	}
+	else if (isServerClosing() && (GetTickCount() - m_ServerClosing.nRecieveTick) >= SERVERCLOSETIMEOUT) // (m_ServerClosing.nServerPID && (m_ServerClosing.nServerPID == m_Srv.mn_MainSrv_PID))
+	{
+		_ASSERTE(FALSE && "Termination was not detected above?");
+		iAliveRc = 0;
+	}
+	else if (hConWnd)
+	{
+		bWndClosed = !IsWindow(hConWnd);
+		nServerErr = GetLastError();
+		if (bWndClosed)
+		{
+			_ASSERTE(FALSE && "Console window was closed? Server terminated?");
+			iAliveRc = 0;
+		}
+	}
+	else if (Timeout)
+	{
+		_ASSERTE(FALSE && "Need to sleep waiting for a server?");
+		Sleep(max(10,min(1000,Timeout)));
+	}
 
-	DWORD nServerWait = WaitForSingleObject(mh_MainSrv, 0);
-	DEBUGTEST(DWORD nWaitErr = GetLastError());
-
-	return (nServerWait == WAIT_TIMEOUT);
+	return iAliveRc;
 }
 
 bool CRealConsole::isServerAvailable()
@@ -5747,7 +5666,7 @@ bool CRealConsole::isServerClosing()
 		return true;
 	}
 
-	if (m_ServerClosing.nServerPID && (m_ServerClosing.nServerPID == mn_MainSrv_PID))
+	if (m_ServerClosing.nServerPID && (m_ServerClosing.nServerPID == m_Srv.mn_MainSrv_PID))
 		return true;
 
 	return false;
@@ -5765,52 +5684,55 @@ DWORD CRealConsole::GetServerPID(bool bMainOnly /*= false*/)
 	if (!this)
 		return 0;
 
-	if (mb_InCreateRoot && !mn_MainSrv_PID)
+	if (mb_InCreateRoot && !m_Srv.mn_MainSrv_PID)
 	{
-		_ASSERTE(!mb_InCreateRoot || mn_MainSrv_PID);
+		_ASSERTE(!mb_InCreateRoot || m_Srv.mn_MainSrv_PID);
 		Sleep(500);
-		//_ASSERTE(!mb_InCreateRoot || mn_MainSrv_PID);
+		//_ASSERTE(!mb_InCreateRoot || m_Srv.mn_MainSrv_PID);
 		//if (GetCurrentThreadId() != mn_MonitorThreadID) {
 		//	WaitForSingleObject(mh_CreateRootEvent, 30000); -- низя - DeadLock
 		//}
 	}
 
-	return (mn_AltSrv_PID && !bMainOnly) ? mn_AltSrv_PID : mn_MainSrv_PID;
+	return (m_Srv.mn_AltSrv_PID && !bMainOnly) ? m_Srv.mn_AltSrv_PID : m_Srv.mn_MainSrv_PID;
 }
 
 void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 {
-	_ASSERTE((mh_MainSrv==NULL || mh_MainSrv==ahMainSrv) && "mh_MainSrv must be closed before!");
-	_ASSERTE((anMainSrvPID!=0 || mn_AltSrv_PID==0) && "AltServer must be closed before!");
+	_ASSERTE((m_Srv.mh_MainSrv==NULL || m_Srv.mh_MainSrv==ahMainSrv) && "m_Srv.mh_MainSrv must be closed before!");
+	_ASSERTE((anMainSrvPID!=0 || m_Srv.mn_AltSrv_PID==0) && "AltServer must be closed before!");
 
-	DEBUGTEST(isServerAlive());
+	#ifdef _DEBUG
+	int iSrvAlive1 = isServerAlive();
+	_ASSERTE(iSrvAlive1==-1);
+	#endif
 
-	mh_MainSrv = ahMainSrv;
-	mn_MainSrv_PID = anMainSrvPID;
+	m_Srv.mh_MainSrv = ahMainSrv;
+	m_Srv.mn_MainSrv_PID = anMainSrvPID;
 
 	if (!anMainSrvPID)
 	{
 		// только сброс! установка в OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle)
-		mb_MainSrv_Ready = false;
+		m_Srv.mb_MainSrv_Ready = false;
 		// Устанавливается в OnConsoleLangChange
 		mn_ActiveLayout = 0;
 		// Сброс
 		ConHostSetPID(0);
 	}
 
-	DEBUGTEST(isServerAlive());
+	DEBUGTEST(int iSrvAlive2 = isServerAlive());
 
 	if (isActive())
-		gpConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
+		gpConEmu->mp_Status->OnServerChanged(m_Srv.mn_MainSrv_PID, m_Srv.mn_AltSrv_PID);
 
-	DEBUGTEST(isServerAlive());
+	DEBUGTEST(int iSrvAlive3 = isServerAlive());
 }
 
 void CRealConsole::SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/)
 {
 	//_ASSERTE((mh_AltSrv==NULL || mh_AltSrv==ahAltSrv) && "mh_AltSrv must be closed before!");
 	//mh_AltSrv = ahAltSrv;
-	mn_AltSrv_PID = anAltSrvPID;
+	m_Srv.mn_AltSrv_PID = anAltSrvPID;
 }
 
 bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
@@ -5818,28 +5740,28 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 	// nAltServerPID may be 0, hAltServer вообще убрать
 	bool bOk = false;
 
-	ResetEvent(mh_ActiveServerSwitched);
+	ResetEvent(m_Srv.mh_ActiveServerSwitched);
 
 	//// mh_AltSrv должен закрыться в MonitorThread!
 	//HANDLE hOldAltServer = mh_AltSrv;
 	//mh_AltSrv = NULL;
-	////mn_AltSrv_PID = nAltServerPID;
+	////m_Srv.mn_AltSrv_PID = nAltServerPID;
 	////mh_AltSrv = hAltServer;
 	SetAltSrvPID(nAltServerPID/*, hAltServer*/);
 
 	if (!nAltServerPID && isServerClosing())
 	{
 		// Переоткрывать пайпы смысла нет, консоль закрывается
-		ResetEvent(mh_SwitchActiveServer);
-		mb_SwitchActiveServer = false;
+		ResetEvent(m_Srv.mh_SwitchActiveServer);
+		m_Srv.mb_SwitchActiveServer = false;
 		bOk = true;
 	}
 	else
 	{
-		SetEvent(mh_SwitchActiveServer);
-		mb_SwitchActiveServer = true;
+		SetEvent(m_Srv.mh_SwitchActiveServer);
+		m_Srv.mb_SwitchActiveServer = true;
 
-		HANDLE hWait[] = {mh_ActiveServerSwitched, mh_MonitorThread, mh_MainSrv, mh_TermEvent};
+		HANDLE hWait[] = {m_Srv.mh_ActiveServerSwitched, mh_MonitorThread, m_Srv.mh_MainSrv, mh_TermEvent};
 		DWORD nWait = WAIT_TIMEOUT;
 		DEBUGTEST(DWORD nStartWait = GetTickCount());
 
@@ -5851,7 +5773,8 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 			nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, 100);
 
 			#ifdef _DEBUG
-			if ((nWait == WAIT_TIMEOUT) && nStartWait && ((GetTickCount() - nStartWait) > 2000))
+			DWORD nMaxWait = IsDebuggerPresent() ? 180000 : 2000;
+			if ((nWait == WAIT_TIMEOUT) && nStartWait && ((GetTickCount() - nStartWait) > nMaxWait))
 			{
 				_ASSERTE((nWait == WAIT_OBJECT_0) && "Switching Monitor thread to altarnative server takes more than 2000ms");
 			}
@@ -5860,8 +5783,8 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 
 		if (nWait == WAIT_OBJECT_0)
 		{
-			_ASSERTE(mb_SwitchActiveServer==false && "Must be dropped by MonitorThread");
-			mb_SwitchActiveServer = false;
+			_ASSERTE(m_Srv.mb_SwitchActiveServer==false && "Must be dropped by MonitorThread");
+			m_Srv.mb_SwitchActiveServer = false;
 		}
 		else
 		{
@@ -5872,15 +5795,15 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 	}
 
 	if (isActive())
-		gpConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
+		gpConEmu->mp_Status->OnServerChanged(m_Srv.mn_MainSrv_PID, m_Srv.mn_AltSrv_PID);
 
 	return bOk;
 }
 
 bool CRealConsole::ReopenServerPipes()
 {
-	DWORD nSrvPID = mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID;
-	HANDLE hSrvHandle = mh_MainSrv; // (nSrvPID == mn_MainSrv_PID) ? mh_MainSrv : mh_AltSrv;
+	DWORD nSrvPID = m_Srv.mn_AltSrv_PID ? m_Srv.mn_AltSrv_PID : m_Srv.mn_MainSrv_PID;
+	HANDLE hSrvHandle = m_Srv.mh_MainSrv; // (nSrvPID == m_Srv.mn_MainSrv_PID) ? m_Srv.mh_MainSrv : mh_AltSrv;
 
 	if (isServerClosing())
 	{
@@ -5888,32 +5811,32 @@ bool CRealConsole::ReopenServerPipes()
 	}
 
 	// переоткрыть event изменений в консоли
-	m_ConDataChanged.InitName(CEDATAREADYEVENT, nSrvPID);
-	if (m_ConDataChanged.Open() == NULL)
+	m_Events.m_ConDataChanged.InitName(CEDATAREADYEVENT, nSrvPID);
+	if (m_Events.m_ConDataChanged.Open() == NULL)
 	{
 		bool bSrvClosed = (WaitForSingleObject(hSrvHandle, 0) == WAIT_OBJECT_0);
-		Assert(mb_InCloseConsole && "m_ConDataChanged.Open() != NULL"); UNREFERENCED_PARAMETER(bSrvClosed);
+		Assert(m_Srv.mb_InCloseConsole && "m_Events.m_ConDataChanged.Open() != NULL"); UNREFERENCED_PARAMETER(bSrvClosed);
 		return false;
 	}
 
-	// переоткрыть m_GetDataPipe
-	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", nSrvPID);
-	bool bOpened = m_GetDataPipe.Open();
+	// переоткрыть m_Pipes.m_GetDataPipe
+	m_Pipes.m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", nSrvPID);
+	bool bOpened = m_Pipes.m_GetDataPipe.Open();
 	if (!bOpened)
 	{
 		bool bSrvClosed = (WaitForSingleObject(hSrvHandle, 0) == WAIT_OBJECT_0);
-		Assert((bOpened || mb_InCloseConsole) && "m_GetDataPipe.Open() failed"); UNREFERENCED_PARAMETER(bSrvClosed);
+		Assert((bOpened || m_Srv.mb_InCloseConsole) && "m_Pipes.m_GetDataPipe.Open() failed"); UNREFERENCED_PARAMETER(bSrvClosed);
 		return false;
 	}
 
 	// обновить имя "серверного" пайпа
-	_wsprintf(ms_ConEmuC_Pipe, SKIPLEN(countof(ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", nSrvPID);
-	_wsprintf(ms_MainSrv_Pipe, SKIPLEN(countof(ms_MainSrv_Pipe)) CESERVERPIPENAME, L".", mn_MainSrv_PID);
+	_wsprintf(m_Pipes.ms_ConEmuC_Pipe, SKIPLEN(countof(m_Pipes.ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", nSrvPID);
+	_wsprintf(m_Pipes.ms_MainSrv_Pipe, SKIPLEN(countof(m_Pipes.ms_MainSrv_Pipe)) CESERVERPIPENAME, L".", m_Srv.mn_MainSrv_PID);
 
 	bool bActive = isActive();
 
 	if (bActive)
-		gpConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
+		gpConEmu->mp_Status->OnServerChanged(m_Srv.mn_MainSrv_PID, m_Srv.mn_AltSrv_PID);
 
 	UpdateServerActive(TRUE);
 
@@ -5946,10 +5869,10 @@ bool CRealConsole::ReopenServerPipes()
 // Если bFullRequired - требуется чтобы сервер уже мог принимать команды
 bool CRealConsole::isServerCreated(bool bFullRequired /*= false*/)
 {
-	if (!mn_MainSrv_PID)
+	if (!m_Srv.mn_MainSrv_PID)
 		return false;
 
-	if (bFullRequired && !mb_MainSrv_Ready)
+	if (bFullRequired && !m_Srv.mb_MainSrv_Ready)
 		return false;
 
 	return true;
@@ -6258,7 +6181,7 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 		//ConProcess cp = *iter;
 
 		// Корневой процесс ConEmuC не учитываем!
-		if (iter->ProcessID != mn_MainSrv_PID)
+		if (iter->ProcessID != m_Srv.mn_MainSrv_PID)
 		{
 			_ASSERTE(iter->IsMainSrv==false);
 
@@ -6368,13 +6291,13 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 
 	if (mn_ProcessCount == 0)
 	{
-		if (mn_InRecreate == 0)
+		if (m_Srv.mn_InRecreate == 0)
 		{
 			StopSignal();
 		}
-		else if (mn_InRecreate == 1)
+		else if (m_Srv.mn_InRecreate == 1)
 		{
-			mn_InRecreate = 2;
+			m_Srv.mn_InRecreate = 2;
 		}
 	}
 
@@ -6407,7 +6330,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 	BOOL lbRecreateOk = FALSE;
 	bool bIsWin64 = IsWindows64();
 
-	if (mn_InRecreate && mn_ProcessCount == 0)
+	if (m_Srv.mn_InRecreate && mn_ProcessCount == 0)
 	{
 		// Раз сюда что-то пришло, значит мы получили пакет, значит консоль запустилась
 		lbRecreateOk = TRUE;
@@ -6727,7 +6650,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 
 	//
 	if (lbRecreateOk)
-		mn_InRecreate = 0;
+		m_Srv.mn_InRecreate = 0;
 
 	return lbChanged;
 }
@@ -6743,7 +6666,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 
 	lstrcpyW(ConPrc.Name, pszSlash);
 
-	ConPrc.IsMainSrv = (ConPrc.ProcessID == mn_MainSrv_PID);
+	ConPrc.IsMainSrv = (ConPrc.ProcessID == m_Srv.mn_MainSrv_PID);
 	if (ConPrc.IsMainSrv)
 	{
 		// 
@@ -6751,7 +6674,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 	}
 	else if (lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0 || lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0)
 	{
-		_ASSERTE(mn_MainSrv_PID!=0 && "Main server PID was not detemined?");
+		_ASSERTE(m_Srv.mn_MainSrv_PID!=0 && "Main server PID was not detemined?");
 	}
 
 	// Тут главное не промахнуться, и не посчитать корневой conemuc, из которого запущен сам FAR, или который запустил плагин, чтобы GUI прицепился к этой консоли
@@ -7075,14 +6998,13 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
 // Вызывается при окончании инициализации сервера из ConEmuC.exe:SendStarted (CECMD_CMDSTARTSTOP)
 void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout)
 {
-	_ASSERTE(anServerPID && (anServerPID == mn_MainSrv_PID));
+	_ASSERTE(anServerPID && (anServerPID == m_Srv.mn_MainSrv_PID));
 	if (ahServerHandle != NULL)
 	{
-		if (mh_MainSrv == NULL)
+		if (m_Srv.mh_MainSrv == NULL)
 		{
 			// В принципе, это может быть, если сервер запущен "извне"
-			SetMainSrvPID(mn_MainSrv_PID, ahServerHandle);
-			//mh_MainSrv = ahServerHandle;
+			SetMainSrvPID(m_Srv.mn_MainSrv_PID, ahServerHandle);
 		}
 		else
 		{
@@ -7090,7 +7012,6 @@ void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWO
 		}
 	}
 
-	//if (!mp_ConsoleInfo)
 	if (!m_ConsoleMap.IsValid())
 	{
 		// Инициализировать имена пайпов, событий, мэппингов и т.п.
@@ -7111,7 +7032,7 @@ void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWO
 	OnConsoleKeyboardLayout(dwKeybLayout);
 
 	// Сервер готов принимать команды
-	mb_MainSrv_Ready = true;
+	m_Srv.mb_MainSrv_Ready = true;
 }
 
 // Если эта функция вызвана - считаем, что консоль запустилась нормально
@@ -7166,17 +7087,17 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 	//if (mb_Detached && ahConWnd) // Не сбрасываем, а то нить может не успеть!
 	//  mb_Detached = FALSE; // Сброс флажка, мы уже подключились
 	//OpenColorMapping();
-	mb_ProcessRestarted = FALSE; // Консоль запущена
-	mb_InCloseConsole = FALSE;
+	m_Srv.mb_ProcessRestarted = false; // Консоль запущена
+	m_Srv.mb_InCloseConsole = false;
 	m_Args.bDetached = FALSE;
 	ZeroStruct(m_ServerClosing);
-	if (mn_InRecreate>=1)
-		mn_InRecreate = 0; // корневой процесс успешно пересоздался
+	if (m_Srv.mn_InRecreate>=1)
+		m_Srv.mn_InRecreate = 0; // корневой процесс успешно пересоздался
 
-	if (ms_VConServer_Pipe[0] == 0)
+	if (m_Pipes.ms_VConServer_Pipe[0] == 0)
 	{
 		// Запустить серверный пайп
-		_wsprintf(ms_VConServer_Pipe, SKIPLEN(countof(ms_VConServer_Pipe)) CEGUIPIPENAME, L".", (DWORD)hConWnd); //был mn_MainSrv_PID //-V205
+		_wsprintf(m_Pipes.ms_VConServer_Pipe, SKIPLEN(countof(m_Pipes.ms_VConServer_Pipe)) CEGUIPIPENAME, L".", (DWORD)hConWnd); //был m_Srv.mn_MainSrv_PID //-V205
 
 		m_RConServer.Start();
 	}
@@ -7227,7 +7148,7 @@ void CRealConsole::OnFocus(BOOL abFocused)
 		mn_Focused = abFocused ? 1 : 0;
 
 		if (m_ServerClosing.nServerPID
-			&& m_ServerClosing.nServerPID == mn_MainSrv_PID)
+			&& m_ServerClosing.nServerPID == m_Srv.mn_MainSrv_PID)
 		{
 			return;
 		}
@@ -7244,10 +7165,10 @@ void CRealConsole::CreateLogFiles()
 
 	if (!mp_Log)
 	{
-		mp_Log = new MFileLog(L"ConEmu-input", gpConEmu->ms_ConEmuExeDir, mn_MainSrv_PID);
+		mp_Log = new MFileLog(L"ConEmu-input", gpConEmu->ms_ConEmuExeDir, m_Srv.mn_MainSrv_PID);
 	}
 
-	HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-input", mn_MainSrv_PID, gpSetCls->isAdvLogging) : E_UNEXPECTED;
+	HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-input", m_Srv.mn_MainSrv_PID, gpSetCls->isAdvLogging) : E_UNEXPECTED;
 	if (hr != 0)
 	{
 		wchar_t szError[MAX_PATH*2];
@@ -7273,8 +7194,8 @@ void CRealConsole::CreateLogFiles()
 	//*pszDot = 0;
 	////mpsz_LogPackets = (wchar_t*)calloc(pszDot - szFile + 64, 2);
 	////lstrcpyW(mpsz_LogPackets, szFile);
-	////swprintf_c(mpsz_LogPackets+(pszDot-szFile), L"\\ConEmu-recv-%i-%%i.con", mn_MainSrv_PID); // ConEmu-recv-<ConEmuC_PID>-<index>.con
-	//_wsprintf(pszDot, SKIPLEN(countof(szFile)-(pszDot-szFile)) L"\\ConEmu-input-%i.log", mn_MainSrv_PID);
+	////swprintf_c(mpsz_LogPackets+(pszDot-szFile), L"\\ConEmu-recv-%i-%%i.con", m_Srv.mn_MainSrv_PID); // ConEmu-recv-<ConEmuC_PID>-<index>.con
+	//_wsprintf(pszDot, SKIPLEN(countof(szFile)-(pszDot-szFile)) L"\\ConEmu-input-%i.log", m_Srv.mn_MainSrv_PID);
 	//mh_LogInput = CreateFileW(szFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	//
 	//if (mh_LogInput == INVALID_HANDLE_VALUE)
@@ -7589,15 +7510,15 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	if (!this)
 		return false;
 
-	_ASSERTE((hConWnd && mh_MainSrv) || isDetached());
+	_ASSERTE((hConWnd && m_Srv.mh_MainSrv) || isDetached());
 
-	if ((!hConWnd || !mh_MainSrv) && !isDetached())
+	if ((!hConWnd || !m_Srv.mh_MainSrv) && !isDetached())
 	{
 		AssertMsg(L"Console was not created (CRealConsole::SetConsoleSize)");
 		return false; // консоль пока не создана?
 	}
 
-	if (mn_InRecreate)
+	if (m_Srv.mn_InRecreate)
 	{
 		AssertMsg(L"Console already in recreate...");
 		return false;
@@ -7663,11 +7584,11 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	//m_Args.bRunAsAdministrator = args->bRunAsAdministrator;
 
 	//DWORD nWait = 0;
-	mb_ProcessRestarted = FALSE;
-	mn_InRecreate = GetTickCount();
+	m_Srv.mb_ProcessRestarted = false;
+	m_Srv.mn_InRecreate = GetTickCount();
 	CloseConfirmReset();
 
-	if (!mn_InRecreate)
+	if (!m_Srv.mn_InRecreate)
 	{
 		DisplayLastError(L"GetTickCount failed");
 		return false;
@@ -7675,15 +7596,15 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 
 	if (isDetached())
 	{
-		_ASSERTE(mn_InRecreate && mn_ProcessCount == 0 && !mb_ProcessRestarted);
+		_ASSERTE(m_Srv.mn_InRecreate && mn_ProcessCount == 0 && !m_Srv.mb_ProcessRestarted);
 		RecreateProcessStart();
 	}
 	else
 	{
 		CloseConsole(false, false);
 	}
-	// mb_InCloseConsole сбросим после того, как появится новое окно!
-	//mb_InCloseConsole = FALSE;
+	// m_Srv.mb_InCloseConsole сбросим после того, как появится новое окно!
+	//m_Srv.mb_InCloseConsole = FALSE;
 	//if (con.pConChar && con.pConAttr)
 	//{
 	//	wmemset((wchar_t*)con.pConAttr, 7, con.nTextWidth * con.nTextHeight);
@@ -7700,14 +7621,14 @@ BOOL CRealConsole::RecreateProcessStart()
 	bool lbRc = false;
 
 
-	if ((mn_InRecreate == 0) || (mn_ProcessCount != 0) || mb_ProcessRestarted)
+	if ((m_Srv.mn_InRecreate == 0) || (mn_ProcessCount != 0) || m_Srv.mb_ProcessRestarted)
 	{
 		// Must not be called twice, while Restart is still pending, or was not prepared
-		_ASSERTE((mn_InRecreate == 0) || (mn_ProcessCount != 0) || mb_ProcessRestarted);
+		_ASSERTE((m_Srv.mn_InRecreate == 0) || (mn_ProcessCount != 0) || m_Srv.mb_ProcessRestarted);
 	}
 	else
 	{
-		mb_ProcessRestarted = TRUE;
+		m_Srv.mb_ProcessRestarted = true;
 
 		if ((mn_ProgramStatus & CES_NTVDM) == CES_NTVDM)
 		{
@@ -7732,7 +7653,7 @@ BOOL CRealConsole::RecreateProcessStart()
 		mn_GuiWndStyle = mn_GuiWndStylEx = 0;
 		mn_GuiAttachFlags = 0;
 
-		ms_VConServer_Pipe[0] = 0;
+		m_Pipes.ms_VConServer_Pipe[0] = 0;
 		m_RConServer.Stop();
 
 		ResetEvent(mh_TermEvent);
@@ -7756,8 +7677,8 @@ BOOL CRealConsole::RecreateProcessStart()
 		if (!lbRc)
 		{
 			mb_NeedStartProcess = FALSE;
-			mn_InRecreate = 0;
-			mb_ProcessRestarted = FALSE;
+			m_Srv.mn_InRecreate = 0;
+			m_Srv.mb_ProcessRestarted = false;
 		}
 
 	}
@@ -8345,7 +8266,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 	// 121007 - сервер теперь дергаем только при АКТИВАЦИИ окна
 	////BOOL lbNeedChange = FALSE;
 	//// Разрешит "заморозку" серверной нити и обновит hdr.bConsoleActive в мэппинге
-	//if (m_ConsoleMap.IsValid() && ms_MainSrv_Pipe[0])
+	//if (m_ConsoleMap.IsValid() && m_Pipes.ms_MainSrv_Pipe[0])
 	if (abFocus)
 	{
 		BOOL lbActive = isActive();
@@ -8415,7 +8336,7 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 	BOOL fSuccess = FALSE;
 
 	// -- всегда строго в главном сервере
-	if (ms_MainSrv_Pipe[0])
+	if (m_Pipes.ms_MainSrv_Pipe[0])
 	{
 		size_t nInSize = sizeof(CESERVER_REQ_HDR); //+sizeof(DWORD)*2;
 		//DWORD dwRead = 0;
@@ -8449,11 +8370,11 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 			mn_LastUpdateServerActive = GetTickCount();
 			WARNING("Таймаут, чтобы не зависнуть");
 			
-			/*fSuccess = CallNamedPipe(ms_MainSrv_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, 500);*/
-			pOut = ExecuteCmd(ms_MainSrv_Pipe, pIn, 500, ghWnd);
+			/*fSuccess = CallNamedPipe(m_Pipes.ms_MainSrv_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, 500);*/
+			pOut = ExecuteCmd(m_Pipes.ms_MainSrv_Pipe, pIn, 500, ghWnd);
 			fSuccess = (pOut != NULL);
 
-			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_MainSrv_Pipe, pOut);
+			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, m_Pipes.ms_MainSrv_Pipe, pOut);
 
 			#if 0
 			DEBUGSTRFOCUS(szInfo);
@@ -8473,7 +8394,7 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 #ifdef _DEBUG
 	wchar_t szDbgInfo[512];
 	_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"--> Updating active(%i) %s: %s\n",
-		bActiveNonSleep, fSuccess ? L"OK" : L"Failed!", *ms_MainSrv_Pipe ? (ms_MainSrv_Pipe+18) : L"<NoPipe>");
+		bActiveNonSleep, fSuccess ? L"OK" : L"Failed!", *m_Pipes.ms_MainSrv_Pipe ? (m_Pipes.ms_MainSrv_Pipe+18) : L"<NoPipe>");
 	DEBUGSTRALTSRV(szDbgInfo);
 #endif
 	UNREFERENCED_PARAMETER(fSuccess);
@@ -9494,8 +9415,8 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 	//MPipe<CESERVER_REQ_HDR,CESERVER_REQ> Pipe;
 	//_ASSERTE(sizeof(In)==sizeof(CESERVER_REQ_HDR));
 	//ExecutePrepareCmd(&In, CECMD_GETOUTPUT, sizeof(CESERVER_REQ_HDR));
-	//WARNING("Выполнять в главном сервере? Было в ms_ConEmuC_Pipe");
-	//Pipe.InitName(gpConEmu->GetDefaultTitle(), L"%s", ms_MainSrv_Pipe, 0);
+	//WARNING("Выполнять в главном сервере? Было в m_Pipes.ms_ConEmuC_Pipe");
+	//Pipe.InitName(gpConEmu->GetDefaultTitle(), L"%s", m_Pipes.ms_MainSrv_Pipe, 0);
 
 	//if (!Pipe.Transact(&In, In.cbSize, &pOut))
 	//{
@@ -9661,7 +9582,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 		DEBUGSTRLANG(L"SwitchKeyboardLayout/GUIChild - finished\n");
 	}
 
-	if (ms_ConEmuC_Pipe[0] == 0) return;
+	if (m_Pipes.ms_ConEmuC_Pipe[0] == 0) return;
 
 	if (!hConWnd) return;
 
@@ -9863,30 +9784,32 @@ bool CRealConsole::isConsoleClosing()
 		return true;
 
 	if (m_ServerClosing.nServerPID
-	        && m_ServerClosing.nServerPID == mn_MainSrv_PID
+	        && m_ServerClosing.nServerPID == m_Srv.mn_MainSrv_PID
 	        && (GetTickCount() - m_ServerClosing.nRecieveTick) >= SERVERCLOSETIMEOUT)
 	{
 		// Видимо, сервер повис во время выхода? Но проверим, вдруг он все-таки успел завершиться?
-		if (WaitForSingleObject(mh_MainSrv, 0))
+		//if (WaitForSingleObject(m_Srv.mh_MainSrv, 0))
+		int iSrvAlive = isServerAlive(false, 0);
+		if (iSrvAlive != 0)
 		{
 			#ifdef _DEBUG
 			wchar_t szTitle[128], szText[255];
 			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu, PID=%u", GetCurrentProcessId());
 			_wsprintf(szText, SKIPLEN(countof(szText))
 			          L"This is Debug message.\n\nServer hung. PID=%u\nm_ServerClosing.nServerPID=%u\n\nPress Ok to terminate server",
-			          mn_MainSrv_PID, m_ServerClosing.nServerPID);
+			          m_Srv.mn_MainSrv_PID, m_ServerClosing.nServerPID);
 			MessageBox(NULL, szText, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 			#else
 			_ASSERTE(m_ServerClosing.nServerPID==0);
 			#endif
 
-			TerminateProcess(mh_MainSrv, 100);
+			TerminateProcess(m_Srv.mh_MainSrv, 100);
 		}
 
 		return true;
 	}
 
-	if ((hConWnd == NULL) || mb_InCloseConsole)
+	if ((hConWnd == NULL) || m_Srv.mb_InCloseConsole)
 		return true;
 
 	return false;
@@ -9894,8 +9817,8 @@ bool CRealConsole::isConsoleClosing()
 
 void CRealConsole::CloseConfirmReset()
 {
-	mn_CloseConfirmedTick = 0;
-	mb_CloseFarMacroPosted = false;
+	m_Srv.mn_CloseConfirmedTick = 0;
+	m_Srv.mb_CloseFarMacroPosted = false;
 }
 
 bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation, bool bForceAsk /*= false*/)
@@ -9929,7 +9852,7 @@ bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation, bool bForceAsk /*= f
 		return false;
 	}
 
-	mn_CloseConfirmedTick = GetTickCount();
+	m_Srv.mn_CloseConfirmedTick = GetTickCount();
 	return true;
 }
 
@@ -9941,7 +9864,7 @@ void CRealConsole::CloseConsoleWindow(bool abConfirm)
 			return;
 	}
 
-	mb_InCloseConsole = TRUE;
+	m_Srv.mb_InCloseConsole = TRUE;
 	if (hGuiWnd)
 	{
 		PostConsoleMessage(hGuiWnd, WM_CLOSE, 0, 0);
@@ -9956,7 +9879,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 {
 	if (!this) return;
 
-	_ASSERTE(!mb_ProcessRestarted);
+	_ASSERTE(!m_Srv.mb_ProcessRestarted);
 
 	// Для Terminate - спрашиваем отдельно
 	if (abConfirm && !abForceTerminate)
@@ -10009,7 +9932,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 				// FarMacro выполняется асинхронно, так что не будем смотреть на "isAlive"
 				if (!lbExecuted && nFarPID /*&& isAlive()*/)
 				{
-					mb_InCloseConsole = TRUE;
+					m_Srv.mb_InCloseConsole = TRUE;
 					gpConEmu->DebugStep(_T("ConEmu: Execute SafeFarCloseMacro"));
 
 					if (!lbCleared)
@@ -10031,7 +9954,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 			}
 		}
 
-		if (abForceTerminate && GetActivePID() && !mn_InRecreate)
+		if (abForceTerminate && GetActivePID() && !m_Srv.mn_InRecreate)
 		{
 			// Спросить, чего хотим:
 			// a) Нажать крестик в окне консоли
@@ -10162,7 +10085,7 @@ void CRealConsole::CloseTab()
 
 	// Если консоль "зависла" после рестарта (или на старте)
 	// То нет смысла пытаться что-то послать в сервер, которого нет
-	if (!mn_MainSrv_PID && !mh_MainSrv)
+	if (!m_Srv.mn_MainSrv_PID && !m_Srv.mh_MainSrv)
 	{
 		//Sleep(500); // Подождать чуть-чуть, может сервер все-таки появится?
 
@@ -10276,10 +10199,10 @@ uint CRealConsole::BufferWidth()
 	return TextWidth();
 }
 
-uint CRealConsole::BufferHeight(uint nNewBufferHeight/*=0*/)
-{
-	return mp_ABuf->BufferHeight(nNewBufferHeight);
-}
+//uint CRealConsole::BufferHeight(uint nNewBufferHeight/*=0*/)
+//{
+//	return mp_ABuf->BufferHeight(nNewBufferHeight);
+//}
 
 void CRealConsole::OnBufferHeight()
 {
@@ -12052,15 +11975,15 @@ SkipReopen:
 	_ASSERTE(m__FarInfo.Ptr()->nProtocolVersion == CESERVER_REQ_VER);
 	m__FarInfo.GetTo(&m_FarInfo, sizeof(m_FarInfo));
 
-	m_FarAliveEvent.InitName(CEFARALIVEEVENT, nFarPID);
+	m_Events.m_FarAliveEvent.InitName(CEFARALIVEEVENT, nFarPID);
 
-	if (!m_FarAliveEvent.Open())
+	if (!m_Events.m_FarAliveEvent.Open())
 	{
 		dwErr = GetLastError();
 
 		if (m__FarInfo.IsValid())
 		{
-			_ASSERTE(m_FarAliveEvent.GetHandle()!=NULL);
+			_ASSERTE(m_Events.m_FarAliveEvent.GetHandle()!=NULL);
 		}
 	}
 
@@ -12175,14 +12098,14 @@ void CRealConsole::CloseFarMapData(MSectionLock* pCS)
 	m_FarInfo.cbSize = 0; // сброс
 	m__FarInfo.CloseMap();
 
-	m_FarAliveEvent.Close();
+	m_Events.m_FarAliveEvent.Close();
 }
 
 void CRealConsole::CloseMapHeader()
 {
 	CloseFarMapData();
 	//CloseMapData();
-	m_GetDataPipe.Close();
+	m_Pipes.m_GetDataPipe.Close();
 	m_ConsoleMap.CloseMap();
 	//if (mp_ConsoleInfo) {
 	//	UnmapViewOfFile(mp_ConsoleInfo);
@@ -12583,7 +12506,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 
 	if (abAsync)
 	{
-		if (mb_InCloseConsole)
+		if (m_Srv.mb_InCloseConsole)
 			ShutdownGuiStep(L"PostMacro, creating thread");
 
 		if (mh_PostMacroThread != NULL)
@@ -12619,7 +12542,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		return;
 	}
 
-	if (mb_InCloseConsole)
+	if (m_Srv.mb_InCloseConsole)
 		ShutdownGuiStep(L"PostMacro, calling pipe");
 
 #ifdef _DEBUG
@@ -12635,7 +12558,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		gpConEmu->DebugStep(NULL);
 	}
 
-	if (mb_InCloseConsole)
+	if (m_Srv.mb_InCloseConsole)
 		ShutdownGuiStep(L"PostMacro, done");
 }
 
@@ -12772,12 +12695,12 @@ const CEFAR_INFO_MAPPING* CRealConsole::GetFarInfo()
 
 bool CRealConsole::InCreateRoot()
 {
-	return (this && mb_InCreateRoot && !mn_MainSrv_PID);
+	return (this && mb_InCreateRoot && !m_Srv.mn_MainSrv_PID);
 }
 
 bool CRealConsole::InRecreate()
 {
-	return (this && mb_ProcessRestarted);
+	return (this && m_Srv.mb_ProcessRestarted);
 }
 
 // Можно ли к этой консоли прицепить GUI приложение

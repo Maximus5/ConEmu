@@ -255,6 +255,80 @@ class CRealConsole
 		uint BufferWidth();
 		void OnBufferHeight();
 
+	protected:
+		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
+
+	private:
+		// Structurize our member variables
+		struct
+		{
+			// Пайп консольного ввода
+			wchar_t ms_ConEmuCInput_Pipe[MAX_PATH];
+			HANDLE  mh_ConInputPipe; // wsprintf(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID)
+			
+			wchar_t ms_ConEmuC_Pipe[MAX_PATH], ms_MainSrv_Pipe[MAX_PATH];
+
+			// CRealServer::Start() -- our GUI part
+			wchar_t ms_VConServer_Pipe[MAX_PATH];
+
+			MPipe<CESERVER_REQ_HDR,CESERVER_REQ_HDR> m_GetDataPipe;
+		} m_Pipes;
+
+		struct
+		{
+			MEvent m_FarAliveEvent;
+			MEvent m_ConDataChanged;
+		} m_Events;
+
+		// Сервер и альтернативный сервер
+		struct
+		{
+			DWORD  mn_MainSrv_PID;
+			DWORD  mn_AltSrv_PID;  //HANDLE mh_AltSrv;
+
+			HANDLE mh_MainSrv; // Must be OPTIONAL
+
+			HANDLE mh_SwitchActiveServer;
+			HANDLE mh_ActiveServerSwitched;
+
+			DWORD  mn_CheckFreqLock;
+
+			DWORD mn_InRecreate; // Tick, когда начали пересоздание
+			DWORD mn_CloseConfirmedTick;
+
+			bool mb_MainSrv_Ready; // Сервер готов принимать команды?
+			bool mb_SwitchActiveServer;
+			bool mb_ProcessRestarted;
+			bool mb_InCloseConsole;
+			bool mb_CloseFarMacroPosted;
+
+			DWORD mn_ConHost_PID;
+			MMap<DWORD,BOOL>* mp_ConHostSearch;
+		} m_Srv;
+
+		struct ServerClosing
+		{
+			DWORD  nServerPID;     // PID закрывающегося сервера
+			DWORD  nRecieveTick;   // Tick, когда получено сообщение о закрытии
+			HANDLE hServerProcess; // Handle процесса сервера
+		} m_ServerClosing;
+
+	public:
+		// Servers-related
+		void OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout);
+		void OnServerClosing(DWORD anSrvPID);
+		DWORD GetServerPID(bool bMainOnly = false);
+		int  isServerAlive(bool AllowPipeCheck = true, DWORD Timeout = 0);
+		bool isServerCreated(bool bFullRequired = false);
+		bool isServerAvailable();
+		bool isServerClosing();
+		void UpdateServerActive(BOOL abImmediate = FALSE);
+		protected: // ****
+		void SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv);
+		bool InitAltServer(DWORD nAltServerPID);
+		void SetAltSrvPID(DWORD anAltSrvPID);
+		bool ReopenServerPipes();
+
 	private:
 		HWND    hConWnd;
 		HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
@@ -315,6 +389,7 @@ class CRealConsole
 		bool SetActiveBuffer(RealBufferType aBufferType);
 
 		BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZESYNC);
+
 	private:
 		bool SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEvent = true);
 		bool LoadAlternativeConsole(LoadAltMode iMode = lam_Default);
@@ -394,7 +469,6 @@ class CRealConsole
 		void SyncConsole2Window(BOOL abNtvdmOff=FALSE, LPRECT prcNewWnd=NULL);
 		void SyncGui2Window(const RECT rcVConBack);
 		//void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
-		void OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout);
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
 		bool isProcessExist(DWORD anPID);
 		int  GetProcesses(ConProcess** ppPrc, bool ClientOnly = false);
@@ -412,12 +486,7 @@ class CRealConsole
 		void ResetActiveAppSettingsId();
 		DWORD GetProgramStatus();
 		DWORD GetFarStatus();
-		bool isServerAlive();
-		DWORD GetServerPID(bool bMainOnly = false);
 		DWORD GetMonitorThreadID();
-		bool isServerCreated(bool bFullRequired = false);
-		bool isServerAvailable();
-		bool isServerClosing();
 		LRESULT OnScroll(RealBufferScroll Bar, int nDirection);
 		LRESULT OnSetScrollPos(RealBufferScroll Bar, WPARAM wParam);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
@@ -469,7 +538,6 @@ class CRealConsole
 		void OnDeactivate(int nNewNum);
 		void ShowHideViews(BOOL abShow);
 		void OnGuiFocused(BOOL abFocus, BOOL abForceChild = FALSE);
-		void UpdateServerActive(BOOL abImmediate = FALSE);
 		BOOL CheckBufferSize();
 		//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
 		BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
@@ -496,7 +564,6 @@ class CRealConsole
 		BOOL CanCloseTab(BOOL abPluginRequired = FALSE);
 		void CloseTab();
 		bool isConsoleClosing();
-		void OnServerClosing(DWORD anSrvPID);
 		void Paste(bool abFirstLineOnly = false, LPCWSTR asText = NULL, bool abNoConfirm = false, bool abCygWin = false);
 		void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
 		void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
@@ -567,33 +634,12 @@ class CRealConsole
 		bool mb_MonitorAssertTrap;
 
 	protected:
-		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
-
-		void SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv);
-		void SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/);
-		// Сервер и альтернативный сервер
-		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
-		DWORD mn_CheckFreqLock;
-		DWORD mn_ConHost_PID;
-		MMap<DWORD,BOOL>* mp_ConHostSearch;
 		void ConHostSearchPrepare();
 		DWORD ConHostSearch(bool bFinal);
 		void ConHostSetPID(DWORD nConHostPID);
-		bool  mb_MainSrv_Ready; // Сервер готов принимать команды?
 		DWORD mn_ActiveLayout;
-		DWORD mn_AltSrv_PID;  //HANDLE mh_AltSrv;
-		HANDLE mh_SwitchActiveServer, mh_ActiveServerSwitched;
-		bool mb_SwitchActiveServer;
-		bool InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/);
-		bool ReopenServerPipes();
-
-		// Пайп консольного ввода
-		wchar_t ms_ConEmuCInput_Pipe[MAX_PATH];
-		HANDLE mh_ConInputPipe; // wsprintf(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID)
 		
 		BOOL mb_InCreateRoot;
-		BOOL mb_UseOnlyPipeInput;
-		TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_MainSrv_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
 		//TCHAR ms_ConEmuC_DataReady[64]; HANDLE mh_ConEmuC_DataReady;
 		void InitNames();
 		// Текущий заголовок консоли и его значение для сравнения (для определения изменений)
@@ -706,12 +752,6 @@ class CRealConsole
 		//} con;
 		
 		//BOOL mb_ThawRefreshThread;
-		struct ServerClosing
-		{
-			DWORD  nServerPID;     // PID закрывающегося сервера
-			DWORD  nRecieveTick;   // Tick, когда получено сообщение о закрытии
-			HANDLE hServerProcess; // Handle процесса сервера
-		} m_ServerClosing;
 		//
 		MSection csPRC; //DWORD ncsTPRC;
 		MArray<ConProcess> m_Processes;
@@ -758,11 +798,6 @@ class CRealConsole
 		WORD mn_LastVKeyPressed;
 		BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight, BOOL* pbBufferHeight=NULL);
 		int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
-		DWORD mn_InRecreate; // Tick, когда начали пересоздание
-		BOOL mb_ProcessRestarted;
-		BOOL mb_InCloseConsole;
-		DWORD mn_CloseConfirmedTick;
-		bool mb_CloseFarMacroPosted;
 		bool mb_WasSendClickToReadCon;
 		// Логи
 		BYTE m_UseLogs;
@@ -783,9 +818,6 @@ class CRealConsole
 		//HANDLE mh_FileMapping, mh_FileMappingData,
 		//HANDLE mh_FarFileMapping,
 		//HANDLE mh_FarAliveEvent;
-		MEvent m_FarAliveEvent;
-		MPipe<CESERVER_REQ_HDR,CESERVER_REQ_HDR> m_GetDataPipe;
-		MEvent m_ConDataChanged;
 		//wchar_t ms_HeaderMapName[64], ms_DataMapName[64];
 		//const CESERVER_CONSOLE_MAPPING_HDR *mp_ConsoleInfo;
 		//const CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
