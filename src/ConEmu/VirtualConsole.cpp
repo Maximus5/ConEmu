@@ -597,6 +597,7 @@ int CVirtualConsole::GetActiveTab()
 	return mp_RCon->GetActiveTab();
 }
 
+#if 0
 bool CVirtualConsole::GetTab(int tabIdx, /*OUT*/ CTab* pTab)
 {
 	if (!this || !mp_RCon)
@@ -630,6 +631,7 @@ bool CVirtualConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	}
 	return mp_RCon->GetTab(tabIdx, pTab);
 }
+#endif
 
 void CVirtualConsole::PointersInit()
 {
