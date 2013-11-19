@@ -20,6 +20,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [%] VConGroup.SetConsoleSizes fails on more than 2 splits.
 [*] Fix close confirmation msg on WinXP.
 [*] Default button set to Cancel in Assertion dialog.
+[*] Issue 1345: Menu shortcuts &Edit and Sett&ings.
 
 
 2013.11.17
