@@ -3978,7 +3978,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 	CVConGuard VCon1(mp_Grp1 ? mp_Grp1->mp_Item : NULL);
 	CVConGuard VCon2(mp_Grp2 ? mp_Grp2->mp_Item : NULL);
 
-	if ((m_SplitType == RConStartArgs::eSplitNone) || !VCon1.VCon() || !VCon2.VCon())
+	if ((m_SplitType == RConStartArgs::eSplitNone) || !mp_Grp1 || !mp_Grp2)
 	{
 		_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
 
