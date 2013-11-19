@@ -2408,7 +2408,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			DeleteObject(hText);
 
 			// Create new font of appropriate size:
-			lf.lfHeight *= ((double)width / actualWidth);			
+			lf.lfHeight = lf.lfHeight * width / actualWidth;
 			hText = CreateFontIndirect(&lf);
 			hOldFont = (HFONT)SelectObject(pBk->hdc, hText);
 		}
