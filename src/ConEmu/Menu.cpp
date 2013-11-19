@@ -1067,7 +1067,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		
 		if (mh_SysEditPopup) DestroyMenu(mh_SysEditPopup);
 		mh_SysEditPopup = CreateEditMenuPopup(NULL);
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_SysEditPopup, _T("Ed&it"));
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_SysEditPopup, _T("&Edit"));
 		
 		// --------------------
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
@@ -1092,7 +1092,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSetCls->AutoScroll ? MF_CHECKED : 0),
 			ID_AUTOSCROLL, _T("Auto scro&ll"));
 		#endif
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, MenuAccel(vkWinAltP,L"S&ettings..."));
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, MenuAccel(vkWinAltP,L"Sett&ings..."));
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, IDM_ATTACHTO, MenuAccel(vkMultiNewAttach,L"Attach t&o..."));
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNew,L"New console..."));
 	}
