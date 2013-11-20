@@ -12189,54 +12189,57 @@ INT_PTR CSettings::GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCW
 	
 	if (nLen<=0)
 	{
-		if (*ppszStr) {free(*ppszStr); *ppszStr = NULL;}
+		SafeFree(*ppszStr);
+		return nLen;
+	}
+
+	wchar_t* pszNew = (TCHAR*)calloc(nLen+1, sizeof(TCHAR));
+	if (!pszNew)
+	{
+		_ASSERTE(pszNew!=NULL);
 	}
 	else
 	{
-		wchar_t* pszNew = (TCHAR*)calloc(nLen+1, sizeof(TCHAR));
-		if (!pszNew)
+		if (abListBox)
 		{
-			_ASSERTE(pszNew!=NULL);
+			if (nSel >= 0)
+				SendDlgItemMessage(hParent, nCtrlId, CB_GETLBTEXT, nSel, (LPARAM)pszNew);
 		}
 		else
 		{
-			if (abListBox)
-			{
-				if (nSel >= 0)
-					SendDlgItemMessage(hParent, nCtrlId, CB_GETLBTEXT, nSel, (LPARAM)pszNew);
-			}
-			else
-			{
-				GetDlgItemText(hParent, nCtrlId, pszNew, nLen+1);
-			}
+			GetDlgItemText(hParent, nCtrlId, pszNew, nLen+1);
+		}
 			
 
-			if (*ppszStr)
+		if (*ppszStr)
+		{
+			if (lstrcmp(*ppszStr, pszNew) == 0)
 			{
-				if (lstrcmp(*ppszStr, pszNew) == 0)
-				{
-					free(pszNew);
-					return nLen; // Изменений не было
-				}
-			}
-
-			// Значение "по умолчанию" не запоминаем
-			if (asNoDefault && lstrcmp(pszNew, asNoDefault) == 0)
-			{
-				SafeFree(pszNew); nLen = 0;
-			}
-
-			if (nLen > (*ppszStr ? (INT_PTR)_tcslen(*ppszStr) : 0))
-			{
-				if (*ppszStr) free(*ppszStr);
-				*ppszStr = pszNew; pszNew = NULL;
-			}
-			else
-			{
-				_wcscpy_c(*ppszStr, nLen+1, pszNew ? pszNew : L"");
-				SafeFree(pszNew);
+				free(pszNew);
+				return nLen; // Изменений не было
 			}
 		}
+
+		// Значение "по умолчанию" не запоминаем
+		if (asNoDefault && lstrcmp(pszNew, asNoDefault) == 0)
+		{
+			SafeFree(*ppszStr);
+			SafeFree(pszNew);
+			nLen = 0;
+			// Reset (it is default value!)
+			return nLen;
+		}
+
+		if (nLen > (*ppszStr ? (INT_PTR)_tcslen(*ppszStr) : 0))
+		{
+			if (*ppszStr) free(*ppszStr);
+			*ppszStr = pszNew; pszNew = NULL;
+		}
+		else if (*ppszStr)
+		{
+			_wcscpy_c(*ppszStr, nLen+1, pszNew);
+		}
+		SafeFree(pszNew);
 	}
 	
 	return nLen;
