@@ -251,6 +251,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	CloseConfirmReset();
 	mb_WasSendClickToReadCon = false;
 	mn_LastSetForegroundPID = 0;
+	mb_InPostCloseMacro = false;
 
 	mn_TextColorIdx = 7; mn_BackColorIdx = 0;
 	mn_PopTextColorIdx = 5; mn_PopBackColorIdx = 15;
@@ -9954,6 +9955,12 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 	bool lbCleared = false;
 	//mp_VCon->SetBackgroundImageData(&BackClear);
 
+	if (abAllowMacro && mb_InPostCloseMacro)
+	{
+		abAllowMacro = false;
+		LogString(L"Post close macro in progress, disabling abAllowMacro");
+	}
+
 	if (hConWnd)
 	{
 		if (!IsWindow(hConWnd))
@@ -9968,6 +9975,9 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 
 			if (nFarPID)
 			{
+				// Set flag immediately
+				mb_InPostCloseMacro = true;
+
 				LPCWSTR pszMacro = gpSet->SafeFarCloseMacro(fmv_Default);
 				_ASSERTE(pszMacro && *pszMacro);
 
@@ -10003,6 +10013,9 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 
 				if (lbExecuted)
 					return;
+
+				// Post failed? Continue to simple close
+				mb_InPostCloseMacro = false;
 			}
 		}
 
