@@ -15,7 +15,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
-2013.11.18
+2013.11.19
 [+] (Pull#2, ForNeVeR) ConEmuBg: Fit background text width.
 [%] VConGroup.SetConsoleSizes fails on more than 2 splits.
 [*] Fix close confirmation msg on WinXP.
