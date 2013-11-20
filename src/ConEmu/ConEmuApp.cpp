@@ -2919,6 +2919,12 @@ void RaiseTestException()
 	DebugBreak();
 }
 
+// Clear some rubbish in the environment
+void ResetEnvironmentVariables()
+{
+	SetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR, NULL);
+	SetEnvironmentVariable(ENV_CONEMU_HOOKS, NULL);
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -2984,6 +2990,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 	}
 
+	ResetEnvironmentVariables();
 
 	gpSetCls = new CSettings;
 	gpConEmu = new CConEmuMain;
