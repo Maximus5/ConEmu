@@ -437,7 +437,7 @@ class CSettings
 		static int checkRadioButton(HWND hParent, int nIDFirstButton, int nIDLastButton, int nIDCheckButton);
 		static int IsChecked(HWND hParent, WORD nCtrlId);
 		static int GetNumber(HWND hParent, WORD nCtrlId);
-		static INT_PTR GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCWSTR asNoDefault = NULL);
+		static INT_PTR GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCWSTR asNoDefault = NULL, bool abListBox = false);
 		static INT_PTR GetSelectedString(HWND hParent, WORD nListCtrlId, wchar_t** ppszStr);
 		static int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 		static int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
