@@ -5711,7 +5711,7 @@ bool GetTime(bool bSystem, LPSYSTEMTIME lpSystemTime)
 {
 	bool bHacked = false;
 	wchar_t szEnvVar[32] = L""; // 2013-01-01T15:16:17.95
-	if (GetEnvironmentVariable(ENV_CONEMURELAYDT_VAR_W, szEnvVar, countof(szEnvVar)) && *szEnvVar)
+	if (GetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR, szEnvVar, countof(szEnvVar)) && *szEnvVar)
 	{
 		SYSTEMTIME st = {0}; FILETIME ft; wchar_t* p = szEnvVar;
 
