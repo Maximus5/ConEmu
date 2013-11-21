@@ -113,9 +113,10 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMUANSI_CONFIG_W L"ConEmuConfig"
 #define ENV_CONEMUANSI_WAITKEY L"ConEmuWaitKey"
 #define ENV_CONEMUREPORTEXE_VAR_W L"ConEmuReportExe"
-#define ENV_CONEMU_HOOKS L"ConEmuHooks" // when this is "OFF" - don't set hooks from "ConEmuHk.dll"
+#define ENV_CONEMU_HOOKS L"ConEmuHooks" // Modifies behavior of starting processes inside ConEmu tab
 #define ENV_CONEMU_HOOKS_ENABLED L"Enabled" // Informational
-#define ENV_CONEMU_HOOKS_DISABLED L"OFF" // This is only significant value
+#define ENV_CONEMU_HOOKS_DISABLED L"OFF" // don't set hooks from "ConEmuHk.dll"
+#define ENV_CONEMU_HOOKS_NOARGS L"NOARG" // don't process -new_console & -cur_console arguments
 #define ENV_CONEMU_INUPDATE L"ConEmuInUpdate" // This is set to "YES" during AutoUpdate script execution
 #define ENV_CONEMU_INUPDATE_YES L"YES" // This is set to "YES" during AutoUpdate script execution
 #define ENV_CONEMU_BLOCKCHILDDEBUGGERS L"ConEmuBlockChildDebuggers" // When ConEmuC tries to debug process tree - force disable DEBUG_PROCESS/DEBUG_ONLY_THIS_PROCESS flags when creating subchildren

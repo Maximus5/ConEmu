@@ -59,6 +59,9 @@ private:
 	BOOL mb_DebugWasRequested;
 	BOOL mb_PostInjectWasRequested;
 	//BOOL mb_DosBoxAllowed;
+	bool mb_Opt_DontInject; // ConEmuHooks=OFF
+	bool mb_Opt_SkipNewConsole; // ConEmuHooks=NOARG
+	void CheckHooksDisabled();
 	
 	//static int mn_InShellExecuteEx;
 	BOOL mb_InShellExecuteEx;

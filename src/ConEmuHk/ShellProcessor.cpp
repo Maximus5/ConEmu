@@ -123,6 +123,8 @@ CShellProc::CShellProc()
 	mlp_SaveExecInfoA = NULL; mlp_SaveExecInfoW = NULL;
 	mb_WasSuspended = FALSE;
 	mb_NeedInjects = FALSE;
+	mb_Opt_DontInject = false;
+	mb_Opt_SkipNewConsole = false;
 	mb_DebugWasRequested = FALSE;
 	mb_PostInjectWasRequested = FALSE;
 	// int CShellProc::mn_InShellExecuteEx = 0; <-- static
@@ -483,6 +485,23 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 	//psz += nParamLen;
 	//
 	//return pIn;
+}
+
+bool CShellProc::CheckHooksDisabled()
+{
+	bool bHooksTempDisabled = false;
+	bool bHooksSkipNewConsole = false;
+
+	wchar_t szVar[32] = L"";
+	if (GetEnvironmentVariable(ENV_CONEMU_HOOKS, szVar, countof(szVar)))
+	{
+		CharUpperBuff(szVar, lstrlen(szVar));
+		bHooksTempDisabled = (wcsstr(szVar, ENV_CONEMU_HOOKS_DISABLED) != NULL);
+		bHooksSkipNewConsole = (wcsstr(szVar, ENV_CONEMU_HOOKS_NOARGS) != NULL);
+	}
+
+	mb_Opt_DontInject = bHooksTempDisabled;
+	mb_Opt_SkipNewConsole = bHooksSkipNewConsole;
 }
 
 BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole,
@@ -1427,13 +1446,10 @@ int CShellProc::PrepareExecuteParms(
 		bDetachedOrHidden = (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS)) && anShowCmd && *anShowCmd == 0);
 	BOOL bLongConsoleOutput = gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput && !bDetachedOrHidden;
 
-	BOOL bHooksTempDisabled = FALSE;
-	wchar_t szVar[32] = L"";
-	if (GetEnvironmentVariable(ENV_CONEMU_HOOKS, szVar, countof(szVar)))
-	{
-		szVar[3] = 0; // We interested only in "OFF" - trim other trailing spaces or characters
-		bHooksTempDisabled = (lstrcmpi(szVar, ENV_CONEMU_HOOKS_DISABLED) == 0);
-	}
+	// "ConEmuHooks=OFF" - don't inject the created process
+	// "ConEmuHooks=NOARG" - don't process -new_console and -cur_console args
+	// "ConEmuHooks=..." - any other - all enabled
+	CheckHooksDisabled();
 	
 	bool bNewConsoleArg = false, bForceNewConsole = false, bCurConsoleArg = false;
 	// Service object
@@ -1720,7 +1736,7 @@ int CShellProc::PrepareExecuteParms(
 	}
 
 	// When user set env var "ConEmuHooks=OFF" - don't set hooks
-	if (bHooksTempDisabled)
+	if (mb_Opt_DontInject)
 	{
 		mb_NeedInjects = FALSE;
 		goto wrap;
@@ -1745,7 +1761,7 @@ int CShellProc::PrepareExecuteParms(
 	//wchar_t* pszExecFile = (wchar_t*)pOut->OnCreateProcRet.wsValue;
 	//wchar_t* pszBaseDir = (wchar_t*)(pOut->OnCreateProcRet.wsValue); // + pOut->OnCreateProcRet.nFileLen);
 	
-	if (asParam && *asParam)
+	if (asParam && *asParam && !mb_Opt_SkipNewConsole)
 	{
 		args.pszSpecialCmd = lstrdup(asParam);
 		if (args.ProcessNewConArg() > 0)
