@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    133
+#define CESERVER_REQ_VER    134
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1005,6 +1005,8 @@ const ConEmuConsoleFlags
 	CECF_SuppressBells   = 0x00000080, // Suppress output of char(7) to console (wich producess annoing bell sound)
 
 	CECF_ConExcHandler   = 0x00000100, // Set up "SetUnhandledExceptionFilter(CreateDumpOnException)" in alternative servers too
+
+	CECF_ProcessNewCon   = 0x00000200, // Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs
 
 	CECF_Empty = 0
 	;

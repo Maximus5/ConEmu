@@ -977,6 +977,8 @@
 #define vkCTSCopyHtml2                  2635
 #define vkMaximizeWidth                 2636
 #define vkMaximizeHeight                2637
+#define IDC_CHECK1                      2640
+#define cbProcessNewConArg              2640
 
 // Next default values for new objects
 // 
@@ -984,7 +986,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        224
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2640
+#define _APS_NEXT_CONTROL_VALUE         2641
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

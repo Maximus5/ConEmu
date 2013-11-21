@@ -2393,6 +2393,8 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbProcessAnsi, gpSet->isProcessAnsi);
 
+	checkDlgButton(hWnd2, cbProcessNewConArg, gpSet->isProcessNewConArg);
+
 	checkDlgButton(hWnd2, cbSuppressBells, gpSet->isSuppressBells);
 
 	checkDlgButton(hWnd2, cbConsoleExceptionHandler, gpSet->isConsoleExceptionHandler);
@@ -5328,6 +5330,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbProcessAnsi:
 			gpSet->isProcessAnsi = IsChecked(hWnd2, cbProcessAnsi);
+			gpConEmu->OnGlobalSettingsChanged();
+			break;
+		case cbProcessNewConArg:
+			gpSet->isProcessNewConArg = IsChecked(hWnd2, cbProcessNewConArg);
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
 		case cbSuppressBells:

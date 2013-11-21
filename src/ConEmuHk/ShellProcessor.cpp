@@ -487,7 +487,7 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 	//return pIn;
 }
 
-bool CShellProc::CheckHooksDisabled()
+void CShellProc::CheckHooksDisabled()
 {
 	bool bHooksTempDisabled = false;
 	bool bHooksSkipNewConsole = false;
@@ -496,8 +496,15 @@ bool CShellProc::CheckHooksDisabled()
 	if (GetEnvironmentVariable(ENV_CONEMU_HOOKS, szVar, countof(szVar)))
 	{
 		CharUpperBuff(szVar, lstrlen(szVar));
+
 		bHooksTempDisabled = (wcsstr(szVar, ENV_CONEMU_HOOKS_DISABLED) != NULL);
-		bHooksSkipNewConsole = (wcsstr(szVar, ENV_CONEMU_HOOKS_NOARGS) != NULL);
+
+		bHooksSkipNewConsole = (wcsstr(szVar, ENV_CONEMU_HOOKS_NOARGS) != NULL)
+			|| (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessNewCon));
+	}
+	else
+	{
+		bHooksSkipNewConsole = (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessNewCon));
 	}
 
 	mb_Opt_DontInject = bHooksTempDisabled;
@@ -1445,11 +1452,6 @@ int CShellProc::PrepareExecuteParms(
 	else if (aCmd == eCreateProcess)
 		bDetachedOrHidden = (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS)) && anShowCmd && *anShowCmd == 0);
 	BOOL bLongConsoleOutput = gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput && !bDetachedOrHidden;
-
-	// "ConEmuHooks=OFF" - don't inject the created process
-	// "ConEmuHooks=NOARG" - don't process -new_console and -cur_console args
-	// "ConEmuHooks=..." - any other - all enabled
-	CheckHooksDisabled();
 	
 	bool bNewConsoleArg = false, bForceNewConsole = false, bCurConsoleArg = false;
 	// Service object
@@ -1493,6 +1495,11 @@ int CShellProc::PrepareExecuteParms(
 			return 0;
 		}
 	}
+
+	// "ConEmuHooks=OFF" - don't inject the created process
+	// "ConEmuHooks=NOARG" - don't process -new_console and -cur_console args
+	// "ConEmuHooks=..." - any other - all enabled
+	CheckHooksDisabled();
 
 	// Some additional checks for "Default terminal" mode
 	if (gbPrepareDefaultTerminal)

@@ -93,6 +93,7 @@ BEGIN
     cbOptionSearch          "Continue search all setup pages controls for specified text"
     cbPortableRegistry      "Enable portable mode for Far manager"
     cbProcessAnsi           "Enable processing of ANSI escape sequences, «Inject ConEmuHk» must be checked if you want to work with second level processes (e.g. cmd.exe -> app.exe)"
+	cbProcessNewConArg      "Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs"
     cbQuakeStyle            "Slide console window from the top of the screen like gaming consoles\r\nChoose desired hotkey for «Minimize/Restore» action on «Keys & Macro» page"
     cbRClick                "Off - all RClicks passed to console\r\nOn - EMenu called instead of RClick\r\n3rd-state - Short RClick passed, Long RClick -> EMenu\r\nWarning! This may conflict with RDrag"
     cbRSelectionFix         "Fix dashed selection with fast right mouse drag\r\nFar 3: restore files selection instead of EMenu"

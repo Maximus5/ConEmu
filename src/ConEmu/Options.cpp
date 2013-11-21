@@ -568,6 +568,7 @@ void Settings::InitSettings()
 	SetDefaultTerminalApps(L"explorer.exe"/* to default value */); // "|"-delimited string -> MSZ
 
 	isProcessAnsi = true;
+	isProcessNewConArg = true;
 	isSuppressBells = false; // пока не доделано - false
 	isConsoleExceptionHandler = false; // по умолчанию - false
 	mb_UseClink = true;
@@ -2196,6 +2197,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		}
 
 		reg->Load(L"ProcessAnsi", isProcessAnsi);
+		reg->Load(L"ProcessNewConArg", isProcessNewConArg);
 
 		reg->Load(L"SuppressBells", isSuppressBells);
 
@@ -3168,6 +3170,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		}
 
 		reg->Save(L"ProcessAnsi", isProcessAnsi);
+		reg->Save(L"ProcessNewConArg", isProcessNewConArg);
 
 		_ASSERTE(isSuppressBells==false); // пока не доделано - не сохраняем
 		//reg->Save(L"SuppressBells", isSuppressBells);

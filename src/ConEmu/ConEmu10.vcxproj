@@ -1081,10 +1081,14 @@
     <CustomBuildStep Include="CursorDragMove.cur" />
     <CustomBuildStep Include="Far.ico" />
     <CustomBuildStep Include="FAR2.ico" />
+    <None Include="Copy24.bmp" />
+    <None Include="Copy4.bmp" />
     <None Include="hourglass.bmp" />
     <None Include="hsplit.cur" />
+    <None Include="Scroll.bmp" />
     <None Include="Shield.bmp" />
     <None Include="Shield.ico" />
+    <None Include="Shield16.bmp" />
     <None Include="toolbar1.bmp" />
     <None Include="Version.rc2" />
     <None Include="vsplit.cur" />

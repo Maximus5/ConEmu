@@ -833,6 +833,11 @@ void ServerInitEnvVars()
 		//SetEnvironmentVariableW(ENV_CONEMUHWND_VAR_W, szHWND);
 		SetConEmuEnvVar(gpSrv->guiSettings.hGuiWnd);
 
+		#ifdef _DEBUG
+		bool bNewConArg = ((gpSrv->guiSettings.Flags & CECF_ProcessNewCon) != 0);
+		//SetEnvironmentVariable(ENV_CONEMU_HOOKS, bNewConArg ? ENV_CONEMU_HOOKS_ENABLED : ENV_CONEMU_HOOKS_NOARGS);
+		#endif
+
 		bool bAnsi = ((gpSrv->guiSettings.Flags & CECF_ProcessAnsi) != 0);
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");
 	}
