@@ -886,13 +886,13 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, ConfigName);
 }
 
-void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig, LPCWSTR pszCmdLine /*= NULL*/, bool abOnResetReload /*= false*/)
+void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine /*= NULL*/)
 {
 	// Обработать 32/64 (найти tcc.exe и т.п.)
 	FindComspec(&gpSet->ComSpec);
 
 	// Зовем "FastConfiguration" (перед созданием новой/чистой конфигурации)
-	if (abAllowFastConfig)
+	if (slfFlags & slf_AllowFastConfig)
 	{
 		LPCWSTR pszDef = gpConEmu->GetDefaultTitle();
 		//wchar_t szType[8];
@@ -906,7 +906,8 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig,
 		else
 			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration %s", pszDef, Storage.szType);
 		
-		CheckOptionsFast(szTitle, abNeedCreateVanilla);
+		// Run "Fast configuration dialog" and apply some final defaults (if was Reset of new settings)
+		CheckOptionsFast(szTitle, slfFlags);
 
 		// Single instance?
 		if (gpSet->isSingleInstance && (gpSetCls->SingleInstanceArg == sgl_Default))
@@ -924,9 +925,17 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig,
 	}
 	
 
-	if (abNeedCreateVanilla)
+	if (slfFlags & slf_NeedCreateVanilla)
 	{
-		gpSet->SaveSettings(TRUE/*abSilent*/);
+		if (!gpConEmu->IsResetBasicSettings())
+		{
+			gpSet->SaveSettings(TRUE/*abSilent*/);
+		}
+		else
+		{
+			// Must not be here when using "/basic" switch!
+			_ASSERTE(!gpConEmu->IsResetBasicSettings());
+		}
 	}
 
 	// Issue 1191: ConEmu was launched instead of explorer from taskbar pinned library icon
@@ -1002,7 +1011,7 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig,
 	
 	isMonospaceSelected = gpSet->isMonospace ? gpSet->isMonospace : 1; // запомнить, чтобы выбирать то что нужно при смене шрифта
 
-	if (abOnResetReload)
+	if (slfFlags & slf_OnResetReload)
 	{
 		// Шрифт пере-создать сразу, его характеристики используются при ресайзе окна
 		RecreateFont((WORD)-1);
@@ -1016,7 +1025,7 @@ void CSettings::SettingsLoaded(bool abNeedCreateVanilla, bool abAllowFastConfig,
 	// Т.к. вызывается из Settings::LoadSettings() то проверка на валидность уже не нужно, оставим только ассерт
 	_ASSERTE(gpSet->_WindowMode == rNormal || gpSet->_WindowMode == rMaximized || gpSet->_WindowMode == rFullScreen);
 
-	if ((ghWnd == NULL) || abOnResetReload)
+	if ((ghWnd == NULL) || slfFlags & slf_OnResetReload)
 	{
 		gpConEmu->wndX = gpSet->_wndX;
 		gpConEmu->wndY = gpSet->_wndY;
@@ -8390,7 +8399,11 @@ void CSettings::OnResetOrReload(BOOL abResetOnly)
 		gpSet->LoadSettings(&bNeedCreateVanilla);
 	}
 
-	SettingsLoaded(false, false, NULL, true);
+
+	SettingsLoadedFlags slfFlags = slf_OnResetReload
+		| (abResetOnly ? (slf_DefaultSettings|slf_AllowFastConfig) : slf_None);
+
+	SettingsLoaded(slfFlags, NULL);
 	
 	if (lbWasPos && !ghOpWnd)
 	{

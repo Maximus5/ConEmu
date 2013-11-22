@@ -1367,6 +1367,44 @@ void Settings::FreePalettes()
 	PaletteCount = 0;
 }
 
+void Settings::CreatePredefinedPalettes(int iAddUserCount)
+{
+	_ASSERTE(Palettes == NULL);
+
+	// Predefined
+	Palettes = (ColorPalette**)calloc((iAddUserCount + countof(DefColors)), sizeof(ColorPalette*));
+	for (size_t n = 0; n < countof(DefColors); n++)
+	{
+    	Palettes[n] = (ColorPalette*)calloc(1, sizeof(ColorPalette));
+    	_ASSERTE(DefColors[n].pszTitle && DefColors[n].pszTitle[0]==L'<' && DefColors[n].pszTitle[lstrlen(DefColors[n].pszTitle)-1]==L'>');
+    	Palettes[n]->pszName = lstrdup(DefColors[n].pszTitle);
+    	Palettes[n]->bPredefined = true;
+		Palettes[n]->isExtendColors = false;
+		Palettes[n]->nExtendColorIdx = 14;
+		Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = 16; // Auto
+		Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
+    	_ASSERTE(countof(Palettes[n]->Colors)==0x20 && countof(DefColors[n].dwDefColors)==0x10);
+    	memmove(Palettes[n]->Colors, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
+		if (DefColors[n].isIndexes())
+		{
+			Palettes[n]->nTextColorIdx = DefColors[n].nIndexes[0];
+			Palettes[n]->nBackColorIdx = DefColors[n].nIndexes[1];
+			Palettes[n]->nPopTextColorIdx = DefColors[n].nIndexes[2];
+			Palettes[n]->nPopBackColorIdx = DefColors[n].nIndexes[3];
+		}
+		else
+		{
+			Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = 16; // Auto
+			Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
+		}
+    	// Расширения - инициализируем теми же цветами
+    	memmove(Palettes[n]->Colors+0x10, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
+	}
+
+	// Инициализировали "Палитрами по умолчанию"
+	PaletteCount = (int)countof(DefColors);
+}
+
 void Settings::LoadPalettes(SettingsBase* reg)
 {
 	TCHAR ColorName[] = L"ColorTable00";
@@ -1403,36 +1441,10 @@ void Settings::LoadPalettes(SettingsBase* reg)
 
 	
 	// Predefined
-	Palettes = (ColorPalette**)calloc((UserCount + countof(DefColors)), sizeof(ColorPalette*));
-	for (size_t n = 0; n < countof(DefColors); n++)
-	{
-    	Palettes[n] = (ColorPalette*)calloc(1, sizeof(ColorPalette));
-    	_ASSERTE(DefColors[n].pszTitle && DefColors[n].pszTitle[0]==L'<' && DefColors[n].pszTitle[lstrlen(DefColors[n].pszTitle)-1]==L'>');
-    	Palettes[n]->pszName = lstrdup(DefColors[n].pszTitle);
-    	Palettes[n]->bPredefined = true;
-		Palettes[n]->isExtendColors = false;
-		Palettes[n]->nExtendColorIdx = 14;
-		Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = 16; // Auto
-		Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
-    	_ASSERTE(countof(Palettes[n]->Colors)==0x20 && countof(DefColors[n].dwDefColors)==0x10);
-    	memmove(Palettes[n]->Colors, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
-		if (DefColors[n].isIndexes())
-		{
-			Palettes[n]->nTextColorIdx = DefColors[n].nIndexes[0];
-			Palettes[n]->nBackColorIdx = DefColors[n].nIndexes[1];
-			Palettes[n]->nPopTextColorIdx = DefColors[n].nIndexes[2];
-			Palettes[n]->nPopBackColorIdx = DefColors[n].nIndexes[3];
-		}
-		else
-		{
-			Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = 16; // Auto
-			Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
-		}
-    	// Расширения - инициализируем теми же цветами
-    	memmove(Palettes[n]->Colors+0x10, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
-	}
-	// Инициализировали "Палитрами по умолчанию"
-	PaletteCount = (int)countof(DefColors);
+	CreatePredefinedPalettes(UserCount);
+	_ASSERTE(Palettes!=NULL);
+	// Was initialize with "Default palettes"
+	_ASSERTE(PaletteCount == (int)countof(DefColors));
 
 	// User
 	for (int i = 0; i < UserCount; i++)

@@ -127,6 +127,16 @@ enum TabStyle
 	ts_Win8   = 1,
 };
 
+typedef DWORD SettingsLoadedFlags;
+const SettingsLoadedFlags
+	slf_NeedCreateVanilla = 0x0001, // Call gpSet->SaveSettings after initializing
+	slf_AllowFastConfig   = 0x0002,
+	slf_OnStartupLoad     = 0x0004,
+	slf_OnResetReload     = 0x0008,
+	slf_DefaultSettings   = 0x0010,
+	slf_None              = 0x0000
+;
+
 #define DEFAULT_TERMINAL_APPS L"explorer.exe"
 
 #define TABBAR_DEFAULT_CLICK_ACTION 1
@@ -1330,6 +1340,7 @@ struct Settings
 		void InitSettings();
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadPalettes(SettingsBase* reg);
+		void CreatePredefinedPalettes(int iAddUserCount);
 		void LoadProgresses(SettingsBase* reg);
 		BOOL SaveSettings(BOOL abSilent = FALSE, const SettingsStorage* apStorage = NULL);
 		void SaveAppSettings(SettingsBase* reg);

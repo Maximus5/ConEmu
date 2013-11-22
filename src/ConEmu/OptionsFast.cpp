@@ -341,16 +341,16 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 }
 
 
-void CheckOptionsFast(LPCWSTR asTitle, bool abCreatingVanilla /*= false*/)
+void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 {
 	if (gpConEmu->IsFastSetupDisabled())
 	{
 		gpConEmu->LogString(L"CheckOptionsFast was skipped due to '/basic' or '/resetdefault' switch");
 
-		goto checkTasks;
+		goto checkDefaults;
 	}
 
-	bVanilla = abCreatingVanilla;
+	bVanilla = (slfFlags & slf_NeedCreateVanilla) != slf_None;
 
 	bCheckHooks = (gpSet->m_isKeyboardHooks == 0);
 
@@ -416,9 +416,14 @@ void CheckOptionsFast(LPCWSTR asTitle, bool abCreatingVanilla /*= false*/)
 		DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_FAST_CONFIG), NULL, CheckOptionsFastProc, (LPARAM)asTitle);
 	}
 
-checkTasks:
-	// Just run
-	CreateDefaultTasks();
+checkDefaults:
+	// Always check, if task list is empty - fill with defaults
+	CreateDefaultTasks(); 
+	// Some other settings, which must be filled with predefined values
+	if (slfFlags & slf_DefaultSettings)
+	{
+		gpSet->CreatePredefinedPalettes(0);
+	}
 }
 
 

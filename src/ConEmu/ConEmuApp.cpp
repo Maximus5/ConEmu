@@ -3799,8 +3799,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// load settings from registry
 		gpSet->LoadSettings(&bNeedCreateVanilla);
 	}
+	SettingsLoadedFlags slfFlags = slf_OnStartupLoad | slf_AllowFastConfig
+		| (bNeedCreateVanilla ? slf_NeedCreateVanilla : slf_None)
+		| (ResetSettings ? slf_DefaultSettings : slf_None);
 	// выполнить дополнительные действи€ в классе настроек здесь
-	gpSetCls->SettingsLoaded(bNeedCreateVanilla, true, cmdNew);
+	gpSetCls->SettingsLoaded(slfFlags, cmdNew);
 
 	// ƒл€ gpSet->isQuakeStyle - принудительно включаетс€ gpSetCls->SingleInstanceArg
 
