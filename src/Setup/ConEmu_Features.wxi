@@ -180,8 +180,8 @@
                Description="Sample DosBox configuration file">
         <ComponentRef Id="DosBox_Sample.conf"/>
       </Feature>
-      <Feature Id="FGit" AllowAdvertise="no" Title="GIT" Level="1"
-               Description="Allow showing git branch in cmd and Far prompt">
+      <Feature Id="FGit" AllowAdvertise="no" Title="Git show branch" Level="1"
+               Description="How to show git branch in cmd and Far prompt">
         <ComponentRef Id="GitShowBranch.cmd"/>
         <ComponentRef Id="git.cmd"/>
       </Feature>
