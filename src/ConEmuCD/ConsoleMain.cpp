@@ -2913,11 +2913,13 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		// Go to hook
 		if (iHookRc == -1)
 		{
+			// InjectRemote waits for thread termination
 			iHookRc = InjectRemote(nRemotePID, abDefTermOnly);
-			// Дождаться, пока поток стартует и можно будет закрыть hEventReady
+			// But check the result of the operation
 			if ((iHookRc == 0) && hEventReady)
 			{
-				DWORD nWaitReady = WaitForSingleObject(hEventReady, CEDEFAULTTERMHOOKWAIT);
+				_ASSERTE(abDefTermOnly);
+				DWORD nWaitReady = WaitForSingleObject(hEventReady, CEDEFAULTTERMHOOKWAIT/*==0*/);
 				if (nWaitReady == WAIT_TIMEOUT)
 				{
 					iHookRc = -300; // Failed to start hooking thread in remote process

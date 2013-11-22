@@ -184,6 +184,12 @@ DWORD   gnImageSubsystem = 0;
 DWORD   gnImageBits = WIN3264TEST(32,64); //-V112
 wchar_t gsInitConTitle[512] = {};
 
+struct ProcessEventFlags {
+	HANDLE hProcessFlag; // = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+	DWORD  nWait;
+	DWORD  nErrCode;
+} gEvtProcessRoot = {}, gEvtThreadRoot = {}, gEvtDefTerm = {}, gEvtDefTermOk = {};
+
 ConEmuInOutPipe *gpCEIO_In = NULL, *gpCEIO_Out = NULL, *gpCEIO_Err = NULL;
 void StartPTY();
 void StopPTY();
@@ -1289,43 +1295,52 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 
 			wchar_t szEvtName[64];
 			msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, gnSelfPID);
-			HANDLE hRootProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-			DWORD nWaitRoot = -1;
-			if (hRootProcessFlag)
+			gEvtProcessRoot.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+			if (gEvtProcessRoot.hProcessFlag)
 			{
-				nWaitRoot = WaitForSingleObject(hRootProcessFlag, 0);
-				gbSelfIsRootConsoleProcess = (nWaitRoot == WAIT_OBJECT_0);
+				gEvtProcessRoot.nWait = WaitForSingleObject(gEvtProcessRoot.hProcessFlag, 0);
+				gEvtProcessRoot.nErrCode = GetLastError();
+				gbSelfIsRootConsoleProcess = (gEvtProcessRoot.nWait == WAIT_OBJECT_0);
 			}
-			SafeCloseHandle(hRootProcessFlag);
+			else
+				gEvtProcessRoot.nErrCode = GetLastError();
+			//SafeCloseHandle(gEvtProcessRoot.hProcessFlag);
 
 			msprintf(szEvtName, countof(szEvtName), CECONEMUROOTTHREAD, gnSelfPID);
-			hRootProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-			if (hRootProcessFlag)
+			gEvtThreadRoot.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+			if (gEvtThreadRoot.hProcessFlag)
 			{
-				nWaitRoot = WaitForSingleObject(hRootProcessFlag, 0);
-				bCurrentThreadIsMain = (nWaitRoot == WAIT_OBJECT_0);
+				gEvtThreadRoot.nWait = WaitForSingleObject(gEvtThreadRoot.hProcessFlag, 0);
+				gEvtThreadRoot.nErrCode = GetLastError();
+				bCurrentThreadIsMain = (gEvtThreadRoot.nWait == WAIT_OBJECT_0);
 			}
-			SafeCloseHandle(hRootProcessFlag);
+			else
+				gEvtThreadRoot.nErrCode = GetLastError();
+			//SafeCloseHandle(gEvtThreadRoot.hProcessFlag);
 
 			if (!gbSelfIsRootConsoleProcess)
 			{
 				msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOK, gnSelfPID);
-				hRootProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-				if (hRootProcessFlag)
+				gEvtDefTerm.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+				if (gEvtDefTerm.hProcessFlag)
 				{
-					nWaitRoot = WaitForSingleObject(hRootProcessFlag, 0);
-					gbPrepareDefaultTerminal = (nWaitRoot == WAIT_OBJECT_0);
-					SafeCloseHandle(hRootProcessFlag);
+					gEvtDefTerm.nWait = WaitForSingleObject(gEvtDefTerm.hProcessFlag, 0);
+					gEvtDefTerm.nErrCode = GetLastError();
+					gbPrepareDefaultTerminal = (gEvtDefTerm.nWait == WAIT_OBJECT_0);
+					//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
 					// Если ждут, что мы отметимся...
 					if (gbPrepareDefaultTerminal)
 					{
 						msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOKOK, gnSelfPID);
-						hRootProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-						if (hRootProcessFlag)
-							SetEvent(hRootProcessFlag);
+						gEvtDefTermOk.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+						if (gEvtDefTermOk.hProcessFlag)
+							SetEvent(gEvtDefTermOk.hProcessFlag);
+						gEvtDefTermOk.nErrCode = GetLastError();
 					}
 				}
-				SafeCloseHandle(hRootProcessFlag);
+				else
+					gEvtDefTerm.nErrCode = GetLastError();
+				//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
 			}
 			DLOGEND1();
 
