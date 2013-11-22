@@ -4,5 +4,15 @@ Download and unpack files to this folder
 http://clink.googlecode.com
 
 Note! Clink distribution has subfolders.
-Files clink_dll_x86.dll and clink_dll_x64.dll
-must be located in THIS folder exactly.
+Files must be located in THIS folder exactly:
+
+  clink.bat
+  clink_x64.exe
+  clink_x86.exe
+  clink_dll_x64.dll
+  clink_dll_x86.dll
+
+If you install clink in any other folder,
+ConEmu will not be able to control clink
+loading from ConEmu's settings dialog:
+Settings -> Features -> Use clink in prompt

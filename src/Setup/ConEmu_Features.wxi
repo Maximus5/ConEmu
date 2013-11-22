@@ -192,7 +192,7 @@
       </Feature>
       -->
     </Feature>
-    <Feature Id="FClink" AllowAdvertise="no" Title="clink" Level="1"
+    <Feature Id="FClink" AllowAdvertise="no" Title="clink readme" Level="1"
              Description="clink - bash style completion readme.txt">
       <ComponentRef Id="clink_readme.txt"/>
     </Feature>
