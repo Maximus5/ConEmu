@@ -11831,7 +11831,7 @@ BOOL CRealConsole::isMouseButtonDown()
 // Аргумент - DWORD(!) а не DWORD_PTR. Это приходит из консоли.
 void CRealConsole::OnConsoleKeyboardLayout(const DWORD dwNewLayout)
 {
-	_ASSERTE(dwNewLayout!=0);
+	_ASSERTE(dwNewLayout!=0 || gbIsWine);
 
 	// LayoutName: "00000409", "00010409", ...
 	// А HKL от него отличается, так что передаем DWORD
@@ -11840,7 +11840,10 @@ void CRealConsole::OnConsoleKeyboardLayout(const DWORD dwNewLayout)
 	// Информационно?
 	mn_ActiveLayout = dwNewLayout;
 
-	gpConEmu->OnLangChangeConsole(mp_VCon, dwNewLayout);
+	if (dwNewLayout)
+	{
+		gpConEmu->OnLangChangeConsole(mp_VCon, dwNewLayout);
+	}
 }
 
 // Вызывается из CConEmuMain::OnLangChangeConsole в главной нити
