@@ -14523,6 +14523,14 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 	// bypass x64 debugger bug
 	DWORD dwLayoutName = adwLayoutName;
 
+	if (!dwLayoutName)
+	{
+		// Ubuntu, Wine. Get 0 here.
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole (0x%08X), Wine=%i", dwLayoutName, (int)gbIsWine);
+		LogString(szInfo);
+		return 0;
+	}
+
 	if (!isMainThread())
 	{
 		// --> не "нравится" руслату обращение к раскладкам из фоновых потоков. Поэтому выполяется в основном потоке
