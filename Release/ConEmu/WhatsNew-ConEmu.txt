@@ -15,6 +15,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.11.25
+[%] Issue 1367: ConEmuArgs, ConEmuBaseDir, ConEmuConfig, ConEmuDir was not initialized.
+[%] Excess confirmations when closing Far consoles.
+
+
 2013.11.24
 [%] Crash fix on tabs closing.
 [%] Initialize predefined palettes with "/reset" or "/basic" switches.
