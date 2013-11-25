@@ -18,11 +18,6 @@ OUTNAME = ConEmu.x64
 OUTNAME = ConEmu
 !endif
 
-PDBNAME="$(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb"
-
-!if "$(EXTERNAL_HOOK_LIBRARY)" == "1"
-USERCPP=$(USERCPP) /DEXTERNAL_HOOK_LIBRARY
-!endif                   
 
 LINK_OBJS = \
 $(OBJDIR)\ConEmuInjects.obj \
@@ -46,11 +41,6 @@ $(OBJDIR)\SetEnvVar.obj \
 $(OBJDIR)\WinConsole.obj \
 $(OBJDIR)\WinObjects.obj
 
-#!if "$(EXTERNAL_HOOK_LIBRARY)" == "0"
-#LINK_OBJS = $(LINK_OBJS) $(OBJDIR)\SetHook.obj
-#!endif
-
-#$(OBJDIR)\LogBrowser.obj
 
 USERLIBS = version.lib wininet.lib
 
@@ -63,7 +53,7 @@ DLLNAME = $(OUTNAME).$(EXT)
 DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
 DEF = $(DEF_NAME).def
 MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
-PDB = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb
+PDB = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).Plugin.pdb
 RES = $(OBJDIR)\$(NAME).res
 
 !ifdef VC8
@@ -80,10 +70,10 @@ CPP_OPT=$(CPP_OPT) /DDEBUG /Fd$(PDB) /DCRTSTARTUP
 
 
 !if "$(USE_PDB)" == "1"
-LINK_DEBUG=/map:"$(MAP)" /debug /pdb:$(PDBNAME)
+LINK_DEBUG=/map:"$(MAP)" /debug /pdb:$(PDB)
 CPP_DEBUG=/Zi
 !else
-LINK_DEBUG=/map:"$(MAP)" /pdb:$(PDBNAME)
+LINK_DEBUG=/map:"$(MAP)" /pdb:$(PDB)
 CPP_DEBUG=
 !endif
 

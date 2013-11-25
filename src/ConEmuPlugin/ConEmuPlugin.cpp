@@ -5996,7 +5996,7 @@ BOOL Attach2Gui()
 	szCmdLine[0] = L'"';
 	wcscat_c(szCmdLine, szConEmuBase);
 	wcscat_c(szCmdLine, L"\\");
-	//if ((nLen = GetEnvironmentVariableW(L"ConEmuBaseDir", szCmdLine+1, MAX_PATH)) > 0)
+	//if ((nLen = GetEnvironmentVariableW(ENV_CONEMUBASEDIR_VAR_W, szCmdLine+1, MAX_PATH)) > 0)
 	//{
 	//	if (szCmdLine[nLen] != L'\\') { szCmdLine[nLen+1] = L'\\'; szCmdLine[nLen+2] = 0; }
 	//}

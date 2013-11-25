@@ -28,7 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define DROP_SETCP_ON_WIN2K3R2
-//#define EXTERNAL_HOOK_LIBRARY
 
 // Иначе не опередяется GetConsoleAliases (хотя он должен быть доступен в Win2k)
 #undef _WIN32_WINNT
@@ -65,64 +64,6 @@ extern struct HookModeFar gFarMode;
 #define user32   L"user32.dll"
 #define shell32  L"shell32.dll"
 
-//static BOOL bHooksWin2k3R2Only = FALSE;
-//static HookItem HooksWin2k3R2Only[] = {
-//	{OnSetConsoleCP, "SetConsoleCP", kernel32, 0},
-//	{OnSetConsoleOutputCP, "SetConsoleOutputCP", kernel32, 0},
-//	/* ************************ */
-//	{0, 0, 0}
-//};
-
-
-#ifndef EXTERNAL_HOOK_LIBRARY
-PRAMGA_ERROR("EXTERNAL_HOOK_LIBRARY not defined");
-extern int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
-//
-extern BOOL WINAPI OnHttpSendRequestA(LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
-extern BOOL WINAPI OnHttpSendRequestW(LPVOID hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
-
-static HookItem HooksFarOnly[] =
-{
-//	{OnlstrcmpiA,      "lstrcmpiA",      kernel32, 0},
-	{(void*)OnCompareStringW, "CompareStringW", kernel32, 0},
-	/* ************************ */
-	{(void*)OnHttpSendRequestA, "HttpSendRequestA", wininet, 0},
-	{(void*)OnHttpSendRequestW, "HttpSendRequestW", wininet, 0},
-	/* ************************ */
-	{0, 0, 0}
-};
-#endif // EXTERNAL_HOOK_LIBRARY
-
-
-//void UnsetAllHooks()
-//{
-//	UnsetHook( HooksFarOnly, NULL, TRUE );
-//
-//	/*if (bHooksWin2k3R2Only) {
-//		bHooksWin2k3R2Only = FALSE;
-//		UnsetHook( HooksWin2k3R2Only, NULL, TRUE );
-//	}*/
-//
-//    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
-//    if (snapshot != INVALID_HANDLE_VALUE)
-//    {
-//        MODULEENTRY32 module = {sizeof(module)};
-//		BOOL lbExecutable = TRUE;
-//
-//        for(BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
-//        {
-//            if (module.hModule != ghPluginModule && !IsModuleExcluded(module.hModule))
-//            {
-//                DebugString( module.szModule );
-//                UnsetHook( Hooks, module.hModule, lbExecutable );
-//				if (lbExecutable) lbExecutable = FALSE;
-//            }
-//        }
-//
-//        CloseHandle(snapshot);
-//    }
-//}
-
 
 extern BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs);
 extern VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs);
@@ -137,21 +78,18 @@ extern VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs);
 extern VOID WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs);
 extern VOID WINAPI OnLibraryLoaded(HMODULE ahModule);
 
-#ifdef EXTERNAL_HOOK_LIBRARY
+
 HMODULE ghHooksModule = NULL;
 BOOL gbHooksModuleLoaded = FALSE; // TRUE, если был вызов LoadLibrary("ConEmuHk.dll"), тогда его нужно FreeLibrary при выходе
 SetHookCallbacks_t SetHookCallbacks = NULL;
 SetLoadLibraryCallback_t SetLoadLibraryCallback = NULL;
 SetFarHookMode_t SetFarHookMode = NULL;
-#endif
+
 
 // Эту функцию нужно позвать из DllMain плагина
 BOOL StartupHooks(HMODULE ahOurDll)
 {
 	WARNING("Добавить в аргументы строковый параметр - инфа об ошибке");
-#ifndef EXTERNAL_HOOK_LIBRARY
-	InitHooks(HooksFarOnly);
-#else
 
 	if (ghHooksModule == NULL)
 	{
@@ -209,7 +147,6 @@ BOOL StartupHooks(HMODULE ahOurDll)
 		}
 	}
 
-#endif
 	SetLoadLibraryCallback(ghPluginModule, OnLibraryLoaded, NULL/*OnLibraryUnLoaded*/);
 	SetHookCallbacks("FreeConsole",  kernel32, ghPluginModule, OnConsoleDetaching, NULL, NULL);
 	SetHookCallbacks("AllocConsole", kernel32, ghPluginModule, NULL, OnConsoleWasAttached, NULL);
@@ -222,59 +159,12 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	SetHookCallbacks("GetNumberOfConsoleInputEvents", kernel32, ghPluginModule, NULL, OnGetNumberOfConsoleInputEventsPost, NULL);
 	SetHookCallbacks("ShellExecuteExW", shell32, ghPluginModule, NULL, NULL, OnShellExecuteExW_Except);
 	SetFarHookMode(&gFarMode);
-	bool lbRc = false;
-#ifndef EXTERNAL_HOOK_LIBRARY
-	lbRc = SetAllHooks(ahOurDll);
-#else
-	lbRc = true;
-#endif
-	return lbRc;
-	//HMODULE hKernel = GetModuleHandle( kernel32 );
-	//HMODULE hUser   = GetModuleHandle( user32 );
-	//HMODULE hShell  = GetModuleHandle( shell32 );
-	//if (!hShell) hShell = LoadLibrary ( shell32 );
-	//_ASSERTE(hKernel && hUser && hShell);
-	//if (!hKernel || !hUser || !hShell)
-	//	return FALSE; // модули должны быть загружены ДО conemu.dll
-	//
-	//OSVERSIONINFOEX osv = {sizeof(OSVERSIONINFOEX)};
-	//GetVersionEx((LPOSVERSIONINFO)&osv);
-	//
-	//// Заполнить поле HookItem.OldAddress (реальные процедуры из внешних библиотек)
-	//InitHooks( Hooks );
-	//InitHooks( HooksFarOnly );
-	////InitHooks( HooksWin2k3R2Only );
-	//
-	////  Подменить Импортируемые функции в Far.exe (пока это только сравнивание строк)
-	//SetHook( HooksFarOnly, NULL, TRUE );
-	//
-	//// Windows Server 2003 R2
-	//
-	///*if (osv.dwMajorVersion==5 && osv.dwMinorVersion==2 && osv.wServicePackMajor>=2)
-	//{
-	//	//DWORD dwBuild = GetSystemMetrics(SM_SERVERR2); // нихрена оно не возвращает. 0 тут :(
-	//	bHooksWin2k3R2Only = TRUE;
-	//	SetHook( HooksWin2k3R2Only, NULL );
-	//}*/
-	//
-	//// Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemu.dll
-	//SetHookEx( Hooks, ghPluginModule );
-	//
-	//// Заменить в модуле Module ЭКСпортируемые функции на подменяемые плагином нихрена
-	//// НЕ получится, т.к. в Win32 библиотека shell32 может быть загружена ПОСЛЕ conemu.dll
-	////   что вызовет некорректные смещения функций,
-	//// а в Win64 смещения вообще должны быть 64битными, а структура модуля хранит только 32битные смещения
-	//
-	//return TRUE;
+	return true;
 }
 
 
 void ShutdownHooks()
 {
-#ifndef EXTERNAL_HOOK_LIBRARY
-	UnsetAllHooks();
-#else
-
 	if (SetLoadLibraryCallback)
 	{
 		SetLoadLibraryCallback(ghPluginModule, NULL, NULL);
@@ -313,6 +203,4 @@ void ShutdownHooks()
 			ghHooksModule = NULL;
 		}
 	}
-
-#endif
 }
