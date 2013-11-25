@@ -15,6 +15,22 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.11.24
+[%] Crash fix on tabs closing.
+[%] Initialize predefined palettes with "/reset" or "/basic" switches.
+[*] Setupper. Featute name «clink readme» and «Show git branch».
+[*] Issue1354. Checkbox «Process new_console switches».
+[*] New possible env values "ConEmuHooks=OFF,NOARG".
+[*] Clear "ConEmuFakeDT", "ConEmuHooks" on ConEmu.exe startup.
+[*] ConEmuRelyDT renamed to ConEmuFakeDT.
+[%] Some fixes in CSettings::GetString.
+[*] Settings, FarMacro. Edits -> ComboBoxes.
+[*] Contributors. ForNeVeR.
+[*] Fix stack overflow using #Close(0) in SafeFarClose.
+[*] Internal. Storing event handles in ConEmuHk.DllMain
+[*] Internal. Some changed for Wine (dwLayoutName).
+
+
 2013.11.19
 [+] (Pull#2, ForNeVeR) ConEmuBg: Fit background text width.
 [%] VConGroup.SetConsoleSizes fails on more than 2 splits.
