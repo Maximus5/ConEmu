@@ -3093,6 +3093,8 @@ BOOL CRealConsole::StartProcess()
 	mb_InCreateRoot = TRUE;
 	mb_InCloseConsole = FALSE;
 	mb_SwitchActiveServer = false;
+	//Drop flag after Restart console
+	mb_InPostCloseMacro = false;
 	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
 	ZeroStruct(m_ServerClosing);
 	STARTUPINFO si;
@@ -9935,7 +9937,8 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 	_ASSERTE(!mb_ProcessRestarted);
 
 	// Для Terminate - спрашиваем отдельно
-	if (abConfirm && !abForceTerminate)
+	// Don't show confirmation dialog, if this method was reentered (via GuiMacro call)
+	if (abConfirm && !abForceTerminate && !mb_InPostCloseMacro)
 	{
 		if (!isCloseConfirmed(NULL))
 			return;
@@ -10011,11 +10014,13 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 					gpConEmu->DebugStep(NULL);
 				}
 
+				// Don't return to false, otherwise it is impossible
+				// to close "Hanged Far instance"
+				// -- // Post failed? Continue to simple close
+				//mb_InPostCloseMacro = false;
+
 				if (lbExecuted)
 					return;
-
-				// Post failed? Continue to simple close
-				mb_InPostCloseMacro = false;
 			}
 		}
 
