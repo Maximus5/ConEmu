@@ -101,11 +101,15 @@ DEFINES=\
 	/D_CRT_NON_CONFORMING_SWPRINTFS \
 	/DUSE_SEH
 
+MAP = $(OUTDIR)\$(OUTNAME).Gui.map
+PDB_NAME = $(OUTNAME).pdb
+PDB = $(OUTDIR)\$(PDB_NAME)
+
 # common
-CPPFLAGS=/nologo $(MP) /W3 /wd4995 $(FARSYSLOG) /EHsc $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
-LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat
+CPPFLAGS=/nologo $(MP) /W3 /wd4995 $(FARSYSLOG) /EHsc $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(PDB)" /J /c /FAcs /Fa"$(CODDIR)\\"
+LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(MAP)" /RELEASE /nxcompat
 !ifndef NO_RELEASE_PDB
-LINKFLAGS=$(LINKFLAGS) /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
+LINKFLAGS=$(LINKFLAGS) /DEBUG /pdb:"$(PDB)"
 !endif
 ULINKFLAGS=-q -m- -ap -Gz -O- -o- -Gh -Gh-
 #__GNUC__ чтобы манифест включился
@@ -165,9 +169,9 @@ build: "$(OUTDIR)\$(OUTNAME).exe"
 
 .PHONY: AllDirs
 AllDirs:
-	if not exist "$(OUTDIR)\" mkdir "$(OUTDIR)"
-	if not exist "$(INTDIR)\" mkdir "$(INTDIR)"
-	if not exist "$(CODDIR)\" mkdir "$(CODDIR)"
+	if not exist "$(OUTDIR)" mkdir "$(OUTDIR)"
+	if not exist "$(INTDIR)" mkdir "$(INTDIR)"
+	if not exist "$(CODDIR)" mkdir "$(CODDIR)"
 
 "$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) conemu.gcc.manifest
 	echo linking $@
@@ -178,7 +182,7 @@ AllDirs:
 !else
 	$(ULINK) +- @+<<
 	$(ULINKFLAGS) $(LINK_OBJS)
-	,"$(OUTDIR)\$(OUTNAME).exe","$(OUTDIR)\$(OUTNAME).map"
+	,"$(OUTDIR)\$(OUTNAME).exe","$(MAP)"
 	,$(LINK_LIBS)
 	,"$(DEF_FILE)","$(RES_FILE)"
 <<
@@ -362,9 +366,9 @@ CLEAN:
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@echo moving "$(OUTDIR)\$(OUTNAME).exe" to "$(RELEASEDIR)"
 	@move "$(OUTDIR)\$(OUTNAME).exe" $(RELEASEDIR)
-	@echo moving "$(OUTDIR)\$(OUTNAME).map" to "$(RELEASEDIR)"
-	@move "$(OUTDIR)\$(OUTNAME).map" $(RELEASEDIR)
+	@echo moving "$(MAP)" to "$(RELEASEDIR)"
+	@move "$(MAP)" $(RELEASEDIR)
 !ifndef NO_RELEASE_PDB
-	@echo moving "$(OUTDIR)\$(OUTNAME).pdb" to "$(RELEASEDIR)"
-	@move "$(OUTDIR)\$(OUTNAME).pdb" $(RELEASEDIR)
+	@echo moving "$(PDB)" to "$(RELEASEDIR)\$(PDB_NAME)"
+	@move "$(PDB)" "$(RELEASEDIR)\$(PDB_NAME)"
 !endif

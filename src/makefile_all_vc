@@ -22,6 +22,7 @@ $(ALLDIRS): $(FICTIVE)
 
 .PHONY: PRECLEAN
 PRECLEAN:
+	@echo Calling `clean.bat`
 	@clean.bat
 
 .PHONY: ALLCLEAN

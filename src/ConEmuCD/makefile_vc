@@ -95,18 +95,26 @@ CPP_OPT=$(CPP_OPT) /DDEBUG /Zi /Fd$(PDBNAME) /DCRTPRINTF
 #/DCRTSTARTUP
 !endif
 
+COMMONLIB =
+
 !ifdef AMD64
+!ifndef NEEDDEFLIB
 COMMONLIB = ../common/libCRT64.lib
+!endif
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !elseif defined(IA64)
+!ifndef NEEDDEFLIB
 COMMONLIB = ../common/libCRTIA64.lib
+!endif
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !else
+!ifndef NEEDDEFLIB
 COMMONLIB = ../common/libCRT.lib
+!endif
 #../pvdCRT.lib
 !ifdef CPP_UNALIGN
 CPP_ALIGN=/Zp1
@@ -234,19 +242,20 @@ $(RES): $(RC_NAME).rc
 
 .PHONY: dirs
 dirs:
+	echo "$(WORKDIR)"
 !ifdef INSTALL
-	@if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
+	if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
 !endif
-	@if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
-	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
-	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
+	if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
+	if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
+	if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
 
 .PHONY: clean
 clean:
 	@echo Copying release files
-	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
-	@echo moving "$(DLLFULLNAME)" to "$(RELEASEDIR)\$(OUTNAME).dll"
-	@move $(DLLFULLNAME) $(RELEASEDIR)\$(OUTNAME).dll
+	if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	echo moving "$(DLLFULLNAME)" to "$(RELEASEDIR)\$(OUTNAME).dll"
+	move $(DLLFULLNAME) $(RELEASEDIR)\$(OUTNAME).dll
 #!ifdef DEBUG
 	@echo moving "$(PDBNAME)" to "$(RELEASEDIR)\$(OUTNAME).pdb"
 	@move $(PDBNAME) $(RELEASEDIR)\$(OUTNAME).pdb
