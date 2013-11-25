@@ -2552,7 +2552,10 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 				// Firstly, try to activate pane in the same group
 				if (!ActivateNextPane(apVCon))
 				{
-					gpConEmu->mp_TabBar->SwitchPrev();
+					if (gpSet->isTabRecent)
+						gpConEmu->mp_TabBar->SwitchNext();
+					else
+						gpConEmu->mp_TabBar->SwitchPrev();
 					gpConEmu->mp_TabBar->SwitchCommit();
 				}
 			}
