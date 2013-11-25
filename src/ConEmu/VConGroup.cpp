@@ -54,7 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static CVirtualConsole* gp_VCon[MAX_CONSOLE_COUNT] = {};
 
 static CVirtualConsole* gp_VActive = NULL;
-static CVirtualConsole* gp_GroupPostCloseActivate = NULL; // ≈сли открыты сплиты - то при закрытии одного pane - остатьс€ в активной группе
+//static CVirtualConsole* gp_GroupPostCloseActivate = NULL; // ≈сли открыты сплиты - то при закрытии одного pane - остатьс€ в активной группе
 static bool gb_CreatingActive = false, gb_SkipSyncSize = false;
 static UINT gn_CreateGroupStartVConIdx = 0;
 static bool gb_InCreateGroup = false;
@@ -296,6 +296,7 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 
 CVConGroup::CVConGroup(CVConGroup *apParent)
 {
+	mb_Released = false;
 	mp_Item = NULL/*apVCon*/;     // консоль, к которой прив€зан этот "Pane"
 	//apVCon->mp_Group = this;
 	m_SplitType = RConStartArgs::eSplitNone;
@@ -333,8 +334,11 @@ void CVConGroup::FinalRelease()
 	MCHKHEAP;
 };
 
-CVConGroup::~CVConGroup()
+void CVConGroup::RemoveGroup()
 {
+	if (InterlockedExchange(&mb_Released, TRUE))
+		return;
+
 	_ASSERTE(gpConEmu->isMainThread()); // во избежание сбоев в индексах?
 
 	// Ќе должно быть дочерних панелей
@@ -372,6 +376,14 @@ CVConGroup::~CVConGroup()
 	_ASSERTE(bRemoved && "Was not pushed in gp_VGroups?");
 
 	lockGroups.Unlock();
+}
+
+CVConGroup::~CVConGroup()
+{
+	_ASSERTE(gpConEmu->isMainThread()); // во избежание сбоев в индексах?
+
+	if (!mb_Released)
+		RemoveGroup();
 }
 
 void CVConGroup::OnVConDestroyed(CVirtualConsole* apVCon)
@@ -2509,16 +2521,19 @@ void CVConGroup::OnUpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL 
 
 void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 {
+	bool bDbg1 = false, bDbg2 = false, bDbg3 = false, bDbg4 = false;
+	int iDbg1 = -100, iDbg2 = -100, iDbg3 = -100;
+
 	if (!isValid(apVCon) || apVCon->isAlreadyDestroyed())
 	{
 		ShutdownGuiStep(L"OnVConClosed - was already closed");
-		return;
+		goto wrap;
 	}
 
 	ShutdownGuiStep(L"OnVConClosed");
 
-	bool bDbg1 = false, bDbg2 = false, bDbg3 = false, bDbg4 = false;
-	int iDbg1 = -100, iDbg2 = -100, iDbg3 = -100;
+	//CVConGroup* pClosedGroupRoot = GetRootOfVCon(apVCon);
+	CVConGroup* pClosedGroup = ((CVConGroup*)apVCon->mp_Group);
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -2531,65 +2546,79 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 			// будет попытка активировать другую вкладку закрываемой консоли
 			//gpConEmu->mp_TabBar->Update(TRUE); -- а и не сможет он другую активировать, т.к. RCon вернет FALSE
 
-			bool bAllowRecent = true;
-
-			if (gp_GroupPostCloseActivate)
+			if (apVCon == gp_VActive)
 			{
-				if (isValid(gp_GroupPostCloseActivate))
+				gpConEmu->mp_TabBar->SwitchRollback();
+				// Firstly, try to activate pane in the same group
+				if (!ActivateNextPane(apVCon))
 				{
-					if (Activate(gp_GroupPostCloseActivate))
-					{
-						bAllowRecent = false;
-					}
-				}
-				gp_GroupPostCloseActivate = NULL;
-			}
-
-			// Ёта комбинаци€ должна активировать предыдущую консоль (если активна текуща€)
-			if (bAllowRecent && gpSet->isTabRecent && apVCon == gp_VActive)
-			{
-				if (gpConEmu->GetVCon(1))
-				{
-					bDbg1 = true;
-					gpConEmu->mp_TabBar->SwitchRollback();
-					gpConEmu->mp_TabBar->SwitchNext();
+					gpConEmu->mp_TabBar->SwitchPrev();
 					gpConEmu->mp_TabBar->SwitchCommit();
 				}
 			}
+
+			pClosedGroup->RemoveGroup();
+
+
+			//bool bAllowRecent = true;
+
+			//if (gp_GroupPostCloseActivate)
+			//{
+			//	if (isValid(gp_GroupPostCloseActivate))
+			//	{
+			//		if (Activate(gp_GroupPostCloseActivate))
+			//		{
+			//			bAllowRecent = false;
+			//		}
+			//	}
+			//	gp_GroupPostCloseActivate = NULL;
+			//}
+
+			//// Ёта комбинаци€ должна активировать предыдущую консоль (если активна текуща€)
+			//if (bAllowRecent && gpSet->isTabRecent && apVCon == gp_VActive)
+			//{
+			//	if (gpConEmu->GetVCon(1))
+			//	{
+			//		bDbg1 = true;
+			//		gpConEmu->mp_TabBar->SwitchRollback();
+			//		gpConEmu->mp_TabBar->SwitchNext();
+			//		gpConEmu->mp_TabBar->SwitchCommit();
+			//	}
+			//}
 
 			// “еперь можно очистить переменную массива
 			gp_VCon[i] = NULL;
 			WARNING("¬ообще-то это нужно бы в CriticalSection закрыть. Ќесколько консолей может одновременно закрытьс€");
 
-			if (gp_VActive == apVCon)
-			{
-				bDbg2 = true;
+			//if (gp_VActive == apVCon)
+			//{
+			//	bDbg2 = true;
 
-				for (int j=(i-1); j>=0; j--)
-				{
-					if (gp_VCon[j])
-					{
-						iDbg2 = j;
-						ConActivate(j);
-						break;
-					}
-				}
+			//	for (int j=(i-1); j>=0; j--)
+			//	{
+			//		if (gp_VCon[j])
+			//		{
+			//			iDbg2 = j;
+			//			ConActivate(j);
+			//			break;
+			//		}
+			//	}
 
-				if (gp_VActive == apVCon)
-				{
-					bDbg3 = true;
+			//	if (gp_VActive == apVCon)
+			//	{
+			//		bDbg3 = true;
 
-					for (size_t j = (i+1); j < countof(gp_VCon); j++)
-					{
-						if (gp_VCon[j])
-						{
-							iDbg3 = j;
-							ConActivate(j);
-							break;
-						}
-					}
-				}
-			}
+			//		for (size_t j = (i+1); j < countof(gp_VCon); j++)
+			//		{
+			//			if (gp_VCon[j])
+			//			{
+			//				iDbg3 = j;
+			//				ConActivate(j);
+			//				break;
+			//			}
+			//		}
+			//	}
+			//}
 
 			for (size_t j = (i+1); j < countof(gp_VCon); j++)
 			{
@@ -2633,6 +2662,18 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 	{
 		ShowActiveGroup(gp_VActive);
 	}
+
+wrap:
+	// “еперь перетр€хнуть заголовок (табы могут быть отключены и в заголовке отображаетс€ количество консолей)
+	gpConEmu->UpdateTitle(); // сам перечитает
+	//
+	gpConEmu->mp_TabBar->Update(); // »наче не будет обновлены закладки
+	// ј теперь можно обновить активную закладку
+	int nActiveConNum = gpConEmu->ActiveConNum();
+	gpConEmu->mp_TabBar->OnConsoleActivated(nActiveConNum/*, FALSE*/);
+	// StatusBar
+	CVConGuard VCon;
+	gpConEmu->mp_Status->OnActiveVConChanged(nActiveConNum, (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL);
 }
 
 void CVConGroup::OnUpdateProcessDisplay(HWND hInfo)
@@ -2777,6 +2818,12 @@ CVConGroup* CVConGroup::FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int 
 			pNext = pNext->mp_Grp1->FindNextPane(rcPrev, 0, 0);
 		else if (pNext->mp_Grp2)
 			pNext = pNext->mp_Grp2->FindNextPane(rcPrev, 0, 0);
+		goto wrap;
+	}
+
+	if (pNext && pNext->mp_Parent)
+	{
+		pNext = (pNext->mp_Parent->mp_Grp1 == pNext) ? pNext->mp_Parent->mp_Grp2 : pNext->mp_Parent->mp_Grp1;
 		goto wrap;
 	}
 

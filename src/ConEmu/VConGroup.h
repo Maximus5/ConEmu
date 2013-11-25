@@ -44,6 +44,8 @@ protected:
 	UINT mn_SplitPercent10; // (0.1% - 99.9%)*10
 	CVConGroup *mp_Grp1, *mp_Grp2; // —сылки на "дочерние" панели
 	CVConGroup *mp_Parent; // —сылка на "родительскую" панель
+	long mb_Released;
+	void RemoveGroup();
 	RECT mrc_Full;
 	RECT mrc_Splitter;
 	bool mb_ResizeFlag; // взводитс€ в true дл€ корн€, когда в группе что-то мен€етс€

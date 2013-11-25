@@ -1870,6 +1870,8 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 //	_ASSERTE(FALSE);
 #endif
 
+	static bool bInAssert = false;
+
 	int nRet = IDRETRY;
 
 	DWORD    nPreCode = GetLastError();
@@ -1890,8 +1892,21 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 			L"and report a bug (open project web page)",
 			szText, szFile, nLine);
 
-		nRet = MessageBox(NULL, pszFull, pszTitle, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL|MB_DEFBUTTON3);
-		DWORD nPostCode = GetLastError();
+		DWORD nPostCode = (DWORD)-1;
+
+		if (bInAssert)
+		{
+			nPostCode = (DWORD)-2;
+			nRet = IDCANCEL;
+		}
+		else
+		{
+			bInAssert = true;
+			nRet = MessageBox(NULL, pszFull, pszTitle, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL|MB_DEFBUTTON3);
+			bInAssert = false;
+			nPostCode = GetLastError();
+		}
+		
 		_wsprintf(szCodes, SKIPLEN(countof(szCodes)) L"\r\nPreError=%i, PostError=%i, Result=%i", nPreCode, nPostCode, nRet);
 		_wcscat_c(pszFull, cchMax, szCodes);
 	}

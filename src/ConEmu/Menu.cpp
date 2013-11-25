@@ -906,8 +906,6 @@ void CConEmuMenu::ExecPopupMenuCmd(CVirtualConsole* apVCon, int nCmd)
 			break;
 		case IDM_DETACH:
 			apVCon->RCon()->Detach();
-			//if (apVCon->RCon()->Detach())
-			//	gpConEmu->OnVConClosed(apVCon);
 			break;
 		case IDM_RENAMETAB:
 			apVCon->RCon()->DoRenameTab();

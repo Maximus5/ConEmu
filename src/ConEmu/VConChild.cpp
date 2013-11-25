@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)
+#define DEBUGSTRCONS(s) //DEBUGSTR(s)
 
 //#define SCROLLHIDE_TIMER_ID 1726
 #define TIMER_SCROLL_SHOW         3201
@@ -67,19 +68,25 @@ extern MMap<HWND,CVirtualConsole*> gVConBkMap;
 static HWND ghDcInDestroing = NULL;
 static HWND ghBkInDestroing = NULL;
 
+static UINT gn_MsgVConTerminated = 0; // gpConEmu->GetRegisteredMessage("VConTerminated");
+
 CConEmuChild::CConEmuChild()
 {
 	mn_AlreadyDestroyed = 0;
 
-	mn_MsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
-	mn_MsgPostFullPaint = RegisterWindowMessage(L"CConEmuChild::PostFullPaint");
-	mn_MsgSavePaneSnapshoot = RegisterWindowMessage(L"CConEmuChild::SavePaneSnapshoot");
-	mn_MsgDetachPosted = RegisterWindowMessage(L"CConEmuChild::Detach");
-	mn_MsgRestoreChildFocus = RegisterWindowMessage(CONEMUMSG_RESTORECHILDFOCUS);
-#ifdef _DEBUG
-	mn_MsgCreateDbgDlg = RegisterWindowMessage(L"CConEmuChild::MsgCreateDbgDlg");
+	mn_MsgVConTerminated = 0; // Set when destroing pended
+	if (!gn_MsgVConTerminated)
+		gn_MsgVConTerminated = gpConEmu->GetRegisteredMessage("VConTerminated");
+	mn_MsgTabChanged = gpConEmu->RegisterMessage("CONEMUTABCHANGED",CONEMUTABCHANGED);
+	mn_MsgPostFullPaint = gpConEmu->RegisterMessage("CConEmuChild::PostFullPaint");
+	mn_MsgSavePaneSnapshoot = gpConEmu->RegisterMessage("CConEmuChild::SavePaneSnapshoot");
+	mn_MsgDetachPosted = gpConEmu->RegisterMessage("CConEmuChild::Detach");
+	mn_MsgRestoreChildFocus = gpConEmu->RegisterMessage("CONEMUMSG_RESTORECHILDFOCUS",CONEMUMSG_RESTORECHILDFOCUS);
+	#ifdef _DEBUG
+	mn_MsgCreateDbgDlg = gpConEmu->RegisterMessage("CConEmuChild::MsgCreateDbgDlg");
 	hDlgTest = NULL;
-#endif
+	#endif
+
 	mb_PostFullPaint = FALSE;
 	mn_LastPostRedrawTick = 0;
 	mb_IsPendingRedraw = FALSE;
@@ -139,6 +146,44 @@ void CConEmuChild::DoDestroyDcWindow()
 	}
 	ghDcInDestroing = NULL;
 	ghBkInDestroing = NULL;
+}
+
+void CConEmuChild::PostOnVConClosed()
+{
+	// Must be called FOR VALID objects ONLY (guared from outside)!
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	if (CVConGroup::isValid(pVCon)
+		&& !InterlockedExchange(&this->mn_MsgVConTerminated, gn_MsgVConTerminated))
+	{
+		ShutdownGuiStep(L"ProcessVConClosed - repost");
+		PostMessage(this->mh_WndDC, gn_MsgVConTerminated, 0, (LPARAM)pVCon);
+	}
+	// Must be guarded and thats why valid...
+	_ASSERTE(CVConGroup::isValid(pVCon));
+}
+
+void CConEmuChild::ProcessVConClosed(CVirtualConsole* apVCon, BOOL abPosted /*= FALSE*/)
+{
+	_ASSERTE(apVCon);
+
+	if (!CVConGroup::isValid(apVCon))
+		return;
+
+	if (!abPosted)
+	{
+		apVCon->PostOnVConClosed();
+		//PostMessage(ghWnd, mn_MsgVConTerminated, 0, (LPARAM)apVCon);
+		return;
+	}
+
+	CVConGroup::OnVConClosed(apVCon);
+
+	// Передернуть главный таймер, а то GUI долго думает, если ни одной консоли уже не осталось
+	//if (mp_VCon[0] == NULL)
+	if (!gpConEmu->GetVCon(0))
+		gpConEmu->OnTimer(TIMER_MAIN_ID, 0);
+
+	ShutdownGuiStep(L"ProcessVConClosed - done");
 }
 
 HWND CConEmuChild::CreateView()
@@ -611,6 +656,34 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			else if (messg == pVCon->mn_MsgDetachPosted)
 			{
 				pVCon->RCon()->Detach(true, (lParam == 1));
+			}
+			else if (messg == gn_MsgVConTerminated)
+			{
+				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
+
+				#ifdef _DEBUG
+				int i = -100;
+				wchar_t szDbg[200];
+				{
+					lstrcpy(szDbg, L"gn_MsgVConTerminated");
+
+					i = CVConGroup::GetVConIndex(pVCon);
+					if (i >= 1)
+					{
+						ConEmuTab tab = {0};
+						pVCon->RCon()->GetTab(0, &tab);
+						tab.Name[128] = 0; // чтобы не вылезло из szDbg
+						wsprintf(szDbg+_tcslen(szDbg), L": #%i: %s", i, tab.Name);
+					}
+
+					lstrcat(szDbg, L"\n");
+					DEBUGSTRCONS(szDbg);
+				}
+				#endif
+
+				// Do not "Guard" lParam here, validation will be made in ProcessVConClosed
+				CConEmuChild::ProcessVConClosed(pVCon, TRUE);
+				return 0;
 			}
 			#ifdef _DEBUG
 			else if (messg == pVCon->mn_MsgCreateDbgDlg)

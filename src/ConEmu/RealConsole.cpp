@@ -4660,7 +4660,7 @@ void CRealConsole::StopSignal()
 		mn_tabsCount = 0;
 
 		// ќчистка массива консолей и обновление вкладок
-		gpConEmu->OnVConClosed(mp_VCon);
+		CConEmuChild::ProcessVConClosed(mp_VCon);
 	}
 }
 
@@ -10122,7 +10122,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 		m_Args.bDetached = FALSE;
 
 		if (mp_VCon)
-			gpConEmu->OnVConClosed(mp_VCon);
+			CConEmuChild::ProcessVConClosed(mp_VCon);
 	}
 }
 
@@ -12741,7 +12741,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	// „тобы случайно не закрыть RealConsole?
 	m_Args.bDetached = TRUE;
 	
-	gpConEmu->OnVConClosed(mp_VCon);
+	CConEmuChild::ProcessVConClosed(mp_VCon);
 }
 
 const CEFAR_INFO_MAPPING* CRealConsole::GetFarInfo()

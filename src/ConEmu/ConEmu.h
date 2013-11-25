@@ -553,6 +553,8 @@ class CConEmuMain :
 		void UpdateWinHookSettings();
 		void CtrlWinAltSpace();
 		void DeleteVConMainThread(CVirtualConsole* apVCon);
+		UINT RegisterMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
+		UINT GetRegisteredMessage(LPCSTR asLocal);
 	protected:
 		friend class CConEmuCtrl;
 		friend class CRunQueue;
@@ -563,7 +565,6 @@ class CConEmuMain :
 		// Registered messages
 		UINT mn__FirstAppMsg;
 		MMap<UINT,LPCSTR> m__AppMsgs;
-		UINT RegisterMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
 		UINT mn_MsgPostCreate;
 		UINT mn_MsgPostCopy;
 		UINT mn_MsgMyDestroy;
@@ -573,7 +574,7 @@ class CConEmuMain :
 		UINT mn_MsgUpdateTitle;
 		//UINT mn_MsgAttach;
 		UINT mn_MsgSrvStarted;
-		UINT mn_MsgVConTerminated;
+		//UINT mn_MsgVConTerminated;
 		UINT mn_MsgUpdateScrollInfo;
 		UINT mn_MsgUpdateTabs; // = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 		UINT mn_MsgOldCmdVer; BOOL mb_InShowOldCmdVersion;
@@ -931,7 +932,6 @@ class CConEmuMain :
 		void OnTransparent(bool abFromFocus/* = false*/, bool bSetFocus/* = false*/);
 		void OnTransparentSeparate(bool bSetFocus);
 		void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args);
-		LRESULT OnVConClosed(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 		void OnAllVConClosed();
 		void OnAllGhostClosed();
 		void OnGhostCreated(CVirtualConsole* apVCon, HWND ahGhost);

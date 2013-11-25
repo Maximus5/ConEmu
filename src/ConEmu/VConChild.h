@@ -47,6 +47,7 @@ class CConEmuChild
 	public:
 		bool isAlreadyDestroyed();
 		void DoDestroyDcWindow();
+		static void ProcessVConClosed(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 
 		LRESULT OnPaint();
 		LRESULT OnPaintGaps();
@@ -88,6 +89,7 @@ class CConEmuChild
 #endif
 
 	protected:
+		void PostOnVConClosed();
 		virtual void OnDestroy() = 0; // WM_DESTROY
 		DWORD mn_AlreadyDestroyed;
 
@@ -97,6 +99,7 @@ class CConEmuChild
 		HWND mh_WndDC;
 		HWND mh_WndBack; // скроллинг и фон
 		HWND mh_LastGuiChild;
+		long mn_MsgVConTerminated; // == 0, Registered when post destroing
 		UINT mn_MsgTabChanged;
 		UINT mn_MsgPostFullPaint;
 		UINT mn_MsgSavePaneSnapshoot;

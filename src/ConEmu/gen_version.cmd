@@ -1,6 +1,9 @@
 @echo off
 setlocal
 
+rem set ConEmuRelyDT=2013-12-01 00:00
+echo Today: %DATE%
+
 if "%~1"=="" goto usage
 if "%~1"=="/?" goto usage
 
@@ -25,7 +28,7 @@ set chk=
 set /A chk=%MVV_2%+1-1
 if errorlevel 1 goto err_parm
 if NOT "%chk%"=="%MVV_2%" goto err_parm
-if /I %MVV_2% GEQ 12 goto err_parm
+if /I %MVV_2% GTR 12 goto err_parm
 
 set MVV_3=%VR:~4,2%
 if "%MVV_3:~0,1%"=="0" set MVV_3=%MVV_3:~1,1%
@@ -35,7 +38,7 @@ set chk=
 set /A chk=%MVV_3%+1-1
 if errorlevel 1 goto err_parm
 if NOT "%chk%"=="%MVV_3%" goto err_parm
-if /I %MVV_3% GEQ 31 goto err_parm
+if /I %MVV_3% GTR 31 goto err_parm
 
 set MVV_4=0
 set MVV_4a=%VR:~6,1%
@@ -60,16 +63,20 @@ rem goto :EOF
 
 rem Creating version.ini
 set verh="%~dp0version.h"
-echo //>%verh%
-echo #define MVV_1 %MVV_1% 1>>%verh%
-echo #define MVV_2 %MVV_2% 1>>%verh%
-echo #define MVV_3 %MVV_3% 1>>%verh%
-echo #define MVV_4 %MVV_4% 1>>%verh%
-echo #define MVV_4a "%MVV_4a%">>%verh%
-echo //>>%verh%
-echo #include "version_macro.h">>%verh%
+call :printver>%verh%
 exit /B 0
 goto :EOF
+
+:printver
+@echo // %VR%
+@echo #define MVV_1 %MVV_1%
+@echo #define MVV_2 %MVV_2%
+@echo #define MVV_3 %MVV_3%
+@echo #define MVV_4 %MVV_4%
+@echo #define MVV_4a "%MVV_4a%"
+@echo //
+@echo #include "version_macro.h"
+@goto :EOF
 
 :usage
 echo Usage:   "%~nx0" ^<BuildNo^>
