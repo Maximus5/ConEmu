@@ -2025,15 +2025,17 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 	
 	// Что-то при запуске (1.7x?) иногда картинки прыгают, как будто статус сразу не нашли
 #ifdef _DEBUG
+	int nArea = -1;
 	if (nLines<1)
 	{
 		static bool bWarnLines = false;
 		if (!bWarnLines)
 		{
-			int nArea = GetMacroArea();
+			nArea = GetMacroArea();
 			if (nArea == 1/*MACROAREA_SHELL*/ || nArea == 5/*MACROAREA_SEARCH*/)
 			{
 				bWarnLines = true;
+				// Far 3.0.3716. Assert при старте. Плагин активирован, а панелей на экране еще НЕТ.
 				_ASSERTE(nLines>0);
 			}
 		}
