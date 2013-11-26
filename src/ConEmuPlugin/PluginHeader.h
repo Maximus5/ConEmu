@@ -85,6 +85,7 @@ extern BOOL gbIgnoreUpdateTabs;
 extern BOOL gbRequestUpdateTabs;
 extern BOOL gbClosingModalViewerEditor;
 extern CESERVER_REQ* gpTabs;
+extern int gnCurrentWindowType; // WTYPE_PANELS / WTYPE_VIEWER / WTYPE_EDITOR
 
 typedef struct tag_PanelViewRegInfo
 {

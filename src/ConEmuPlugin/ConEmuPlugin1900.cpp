@@ -728,7 +728,7 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 			}
 			else if (WInfo.Type == WTYPE_PANELS)
 			{
-				gpTabs->Tabs.CurrentType = WInfo.Type;
+				gpTabs->Tabs.CurrentType = gnCurrentWindowType = WInfo.Type;
 			}
 		}
 

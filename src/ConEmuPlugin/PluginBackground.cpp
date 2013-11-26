@@ -31,7 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define MCHKHEAP
 #define DEBUGSTRBG(s) //DEBUGSTR(s)
 
-#define THSET_TIMEOUT 100
+#define THSET_TIMEOUT_PANELS 100
+#define THSET_TIMEOUT_VIEWER 1500
 #undef CREATE_EMF_TEMP_FILES
 
 #define SETBACKGROUND_USE_EMF 1 // Use metafiles
@@ -399,13 +400,13 @@ void CPluginBackground::CheckPanelFolders(int anForceSetPlace /*= 0*/)
 		m_Default.Place = (PaintBackgroundPlaces)anForceSetPlace;
 	else if (!gpTabs)
 		m_Default.Place = pbp_Panels;
-	else if (gpTabs->Tabs.CurrentType == WTYPE_EDITOR)
+	else if (gnCurrentWindowType == WTYPE_EDITOR)
 		m_Default.Place = pbp_Editor;
-	else if (gpTabs->Tabs.CurrentType == WTYPE_VIEWER)
+	else if (gnCurrentWindowType == WTYPE_VIEWER)
 		m_Default.Place = pbp_Viewer;
 	else if (m_Default.LeftPanel.bVisible || m_Default.RightPanel.bVisible)
 	{
-		_ASSERTE(gpTabs->Tabs.CurrentType == WTYPE_PANELS);
+		_ASSERTE(gnCurrentWindowType == WTYPE_PANELS);
 		m_Default.Place = pbp_Panels;
 	}
 
@@ -552,13 +553,13 @@ void CPluginBackground::UpdateBackground()
 	Arg.Place = m_Default.Place;
 	//if (!gpTabs)
 	//	Arg.Place = pbp_Panels;
-	//else if (gpTabs->Tabs.CurrentType == WTYPE_EDITOR)
+	//else if (gnCurrentWindowType == WTYPE_EDITOR)
 	//	Arg.Place = pbp_Editor;
-	//else if (gpTabs->Tabs.CurrentType == WTYPE_VIEWER)
+	//else if (gnCurrentWindowType == WTYPE_VIEWER)
 	//	Arg.Place = pbp_Viewer;
 	//else if (Arg.LeftPanel.bVisible || Arg.RightPanel.bVisible)
 	//{
-	//	_ASSERTE(gpTabs->Tabs.CurrentType == WTYPE_PANELS);
+	//	_ASSERTE(gnCurrentWindowType == WTYPE_PANELS);
 	//	Arg.Place = pbp_Panels;
 	//}
 
@@ -916,8 +917,9 @@ void CPluginBackground::MonitorBackground()
 
 	BOOL lbUpdateRequired = FALSE;
 	DWORD nDelta = (GetTickCount() - m_LastThSetCheck);
+	DWORD nTimeout = (gnCurrentWindowType == WTYPE_PANELS) ? THSET_TIMEOUT_PANELS : THSET_TIMEOUT_VIEWER;
 
-	if (nDelta > THSET_TIMEOUT)
+	if (nDelta > nTimeout)
 	{
 		m_LastThSetCheck = GetTickCount();
 		//BYTE nFarColors[col_LastIndex]; // Массив цветов фара

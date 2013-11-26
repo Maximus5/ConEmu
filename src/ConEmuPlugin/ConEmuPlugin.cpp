@@ -144,6 +144,7 @@ WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 WCHAR gszRootKey[MAX_PATH*2]; // НЕ ВКЛЮЧАЯ "\\Plugins"
 int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
 CESERVER_REQ* gpTabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
+int  gnCurrentWindowType = 0; // WTYPE_PANELS / WTYPE_VIEWER / WTYPE_EDITOR
 BOOL gbIgnoreUpdateTabs = FALSE; // выставляется на время CMD_SETWINDOW
 BOOL gbRequestUpdateTabs = FALSE; // выставляется при получении события FOCUS/KILLFOCUS
 BOOL gbClosingModalViewerEditor = FALSE; // выставляется при закрытии модального редактора/вьювера
@@ -4376,9 +4377,11 @@ bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Para
 			else
 				gpTabs->Tabs.CurrentType = WTYPE_PANELS;
 		}
-	}
 
-	SendTabs(gpTabs->Tabs.nTabCount, lbCh && (gnReqCommand==(DWORD)-1));
+		gnCurrentWindowType = gpTabs->Tabs.CurrentType;
+
+		SendTabs(gpTabs->Tabs.nTabCount, lbCh && (gnReqCommand==(DWORD)-1));
+	}
 
 	if (lbCh && gpBgPlugin)
 	{
@@ -4454,7 +4457,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 
 		if (Current)
 		{
-			gpTabs->Tabs.CurrentType = Type;
+			gpTabs->Tabs.CurrentType = gnCurrentWindowType = Type;
 			gpTabs->Tabs.CurrentIndex = 0;
 		}
 	}
@@ -4507,7 +4510,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		if (gpTabs->Tabs.tabs[tabCount].Current != 0)
 		{
 			lastModifiedStateW = Modified != 0 ? 1 : 0;
-			gpTabs->Tabs.CurrentType = Type;
+			gpTabs->Tabs.CurrentType = gnCurrentWindowType = Type;
 			gpTabs->Tabs.CurrentIndex = tabCount;
 		}
 
