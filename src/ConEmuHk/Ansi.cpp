@@ -82,6 +82,9 @@ static bool gbVimTermWasChangedBuffer = false;
 //void StopVimTerm();
 /* ************ Globals for ViM ************ */
 
+#ifdef _DEBUG
+void FIRST_ANSI_CALL(const BYTE* lpBuf, DWORD nNumberOfBytes);
+#endif
 
 HANDLE CEAnsi::ghLastAnsiCapable = NULL;
 HANDLE CEAnsi::ghLastAnsiNotCapable = NULL;
@@ -551,6 +554,8 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumbe
 	BOOL lbRc = FALSE;
 	DWORD nDBCSCP = 0;
 
+	FIRST_ANSI_CALL((const BYTE*)lpBuffer, nNumberOfBytesToWrite);
+
 	//if (gpStartEnv->bIsDbcs)
 	//{
 	//	nDBCSCP = GetConsoleOutputCP();
@@ -575,6 +580,8 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuf
 	static bool badUnicode = false;
 	DEBUGTEST(bool curBadUnicode = badUnicode);
 	DEBUGTEST(wchar_t szTmp[2] = L"");
+
+	FIRST_ANSI_CALL((const BYTE*)lpBuffer, nNumberOfCharsToWrite);
 
 	if (badUnicode)
 	{
@@ -657,6 +664,8 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LP
 	ORIGINALFAST(WriteConsoleOutputCharacterA);
 	//BOOL bMainThread = FALSE; // поток не важен
 
+	FIRST_ANSI_CALL((const BYTE*)lpCharacter, nLength);
+
 	ExtFillOutputParm fll = {sizeof(fll),
 		efof_Attribute|(gDisplayParm.WasSet ? efof_Current : efof_ResetExt),
 		hConsoleOutput, {}, 0, dwWriteCoord, nLength};
@@ -672,6 +681,8 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LP
 	typedef BOOL (WINAPI* OnWriteConsoleOutputCharacterW_t)(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
 	ORIGINALFAST(WriteConsoleOutputCharacterW);
 	//BOOL bMainThread = FALSE; // поток не важен
+
+	FIRST_ANSI_CALL((const BYTE*)lpCharacter, nLength);
 
 	ExtFillOutputParm fll = {sizeof(fll),
 		efof_Attribute|(gDisplayParm.WasSet ? efof_Current : efof_ResetExt),
@@ -732,6 +743,8 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuf
 	BOOL lbRc = FALSE;
 	//ExtWriteTextParm wrt = {sizeof(wrt), ewtf_None, hConsoleOutput};
 	bool bIsConOut = false;
+
+	FIRST_ANSI_CALL((const BYTE*)lpBuffer, nNumberOfCharsToWrite);
 
 #if 0
 	// Store prompt(?) for clink 0.1.1

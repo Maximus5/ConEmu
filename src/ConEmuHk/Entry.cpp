@@ -31,8 +31,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"xxx.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"vim.exe"
 //	#define SHOW_EXE_TIMINGS
+//	#define SHOW_FIRST_ANSI_CALL
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
@@ -315,6 +316,68 @@ HANDLE ghStartThread = NULL;
 DWORD  gnStartThreadID = 0;
 #endif
 
+
+void ShowStartedMsgBox(LPCWSTR asLabel, LPCWSTR pszName = NULL)
+{
+	wchar_t szMsg[MAX_PATH];
+	STARTUPINFO si = {sizeof(si)};
+	GetStartupInfo(&si);
+	LPCWSTR pszCmd = GetCommandLineW();
+	// GuiMessageBox еще не прокатит, ничего не инициализировано
+	HMODULE hUser = LoadLibrary(user32);
+	typedef int (WINAPI* MessageBoxW_t)(HWND hWnd,LPCTSTR lpText,LPCTSTR lpCaption,UINT uType);
+	if (hUser)
+	{
+		MessageBoxW_t MsgBox = (MessageBoxW_t)GetProcAddress(hUser, "MessageBoxW");
+		if (MsgBox)
+		{
+			if (!pszName || !*pszName)
+			{
+				if (!GetModuleFileName(NULL, szMsg, countof(szMsg)))
+				{
+					wcscpy_c(szMsg, L"GetModuleFileName failed");
+				}
+				else
+				{
+					// Show name only
+					pszName = PointToName(szMsg);
+					if (pszName != szMsg)
+						wmemmove(szMsg, pszName, lstrlen(pszName)+1);
+					szMsg[96] = 0; // trim if longer
+				}
+			}
+			else
+			{
+				lstrcpyn(szMsg, pszName, 96);
+			}
+			
+			lstrcat(szMsg, asLabel/*L" loaded!"*/);
+
+			wchar_t szTitle[64]; msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+			MsgBox(NULL, szMsg, szTitle, MB_SYSTEMMODAL);
+		}
+		FreeLibrary(hUser);
+	}
+}
+
+
+#ifdef _DEBUG
+void FIRST_ANSI_CALL(const BYTE* lpBuf, DWORD nNumberOfBytes)
+{
+#ifdef SHOW_FIRST_ANSI_CALL
+	static bool bTriggered = false;
+	if (!bTriggered)
+	{
+		if (lpBuf && nNumberOfBytes && *lpBuf == 0x1B)
+		{
+			bTriggered = true;
+			ShowStartedMsgBox(L" First ansi call!");
+		}
+	}
+#endif
+}
+#endif
+
 void SetConEmuHkWindows(HWND hDcWnd, HWND hBackWnd)
 {
 	ghConEmuWndDC = hDcWnd;
@@ -560,23 +623,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 	if (gbShowExeMsgBox)
 	{
-		STARTUPINFO si = {sizeof(si)};
-		GetStartupInfo(&si);
-		LPCWSTR pszCmd = GetCommandLineW();
-		// GuiMessageBox еще не прокатит, ничего не инициализировано
-		HMODULE hUser = LoadLibrary(user32);
-		typedef int (WINAPI* MessageBoxW_t)(HWND hWnd,LPCTSTR lpText,LPCTSTR lpCaption,UINT uType);
-		if (hUser)
-		{
-			MessageBoxW_t MsgBox = (MessageBoxW_t)GetProcAddress(hUser, "MessageBoxW");
-			if (MsgBox)
-			{
-				lstrcpyn(szMsg, pszName, 96); lstrcat(szMsg, L" loaded!");
-				wchar_t szTitle[64]; msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-				MsgBox(NULL, szMsg, szTitle, MB_SYSTEMMODAL);
-			}
-			FreeLibrary(hUser);
-		}
+		ShowStartedMsgBox(L" loaded!", pszName);
 	}
 
 
