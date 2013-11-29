@@ -19,6 +19,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
     %ConEmuDir%\ConEmu.xml
     %ConEmuBaseDir%\ConEmu.xml
     %APPDATA%\ConEmu.xml
+[*] Issue 1368. ConEmuBg. Suppress SYNCHRO in viewer/editor.
 
 
 2013.11.25
