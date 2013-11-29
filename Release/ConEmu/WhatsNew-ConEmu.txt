@@ -15,6 +15,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[*] Issue 1375. Xml file search priority changed. First found from following locations will be used:
+    %ConEmuDir%\ConEmu.xml
+    %ConEmuBaseDir%\ConEmu.xml
+    %APPDATA%\ConEmu.xml
+
+
 2013.11.25
 [%] Issue 1367: ConEmuArgs, ConEmuBaseDir, ConEmuConfig, ConEmuDir was not initialized.
 [%] Excess confirmations when closing Far consoles.

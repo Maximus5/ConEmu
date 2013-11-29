@@ -70,9 +70,9 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 			gpSet->GetSettingsType(Storage, ReadOnly);
 			wchar_t* pszSettingsPlaces[] = {
 				lstrdup(L"HKEY_CURRENT_USER\\Software\\ConEmu"),
-				ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"),
-				ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"),
 				ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"),
+				ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"),
+				ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"),
 				NULL
 			};
 			int iAllowed = 0;

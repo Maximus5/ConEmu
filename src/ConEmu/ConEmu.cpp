@@ -1080,38 +1080,31 @@ LPWSTR CConEmuMain::ConEmuXml()
 
 	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
 
-	// Ищем файл портабельных настроек
+	// Ищем файл портабельных настроек (возвращаем первый найденный, приоритет...)
+	LPWSTR pszSearchXml[] = {
+		ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"),
+		ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"),
+		ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"),
+		NULL
+	};
 
-	// Пробуем в %APPDATA%
-	wchar_t* pszAppDataXml = ExpandEnvStr(L"%APPDATA%\\ConEmu.xml");
-	if (pszAppDataXml && *pszAppDataXml)
+	for (size_t i = 0; pszSearchXml[i]; i++)
 	{
-		wcscpy_c(ms_ConEmuXml, pszAppDataXml);
-		if (FileExists(ms_ConEmuXml))
+		if (FileExists(pszSearchXml[i]))
 		{
+			wcscpy_c(ms_ConEmuXml, pszSearchXml[i]);
 			goto fin;
 		}
 	}
-	
-	// пробуем в BaseDir
+
+	// Но если _создавать_ новый, то в BaseDir! Чтобы в корне не мусорить
 	wcscpy_c(ms_ConEmuXml, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
 
-	if (!FileExists(ms_ConEmuXml))
-	{
-		if (lstrcmpi(ms_ConEmuBaseDir, ms_ConEmuExeDir))
-		{
-			wcscpy_c(ms_ConEmuXml, ms_ConEmuExeDir); wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
-
-			if (!FileExists(ms_ConEmuXml))
-			{
-				// Если _создавать_ новый, то в BaseDir! Чтобы в корне не мусорить
-				wcscpy_c(ms_ConEmuXml, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
-			}
-		}
-	}
-
 fin:
-	SafeFree(pszAppDataXml);
+	for (size_t i = 0; i < countof(pszSearchXml); i++)
+	{
+		SafeFree(pszSearchXml[i]);
+	}
 	return ms_ConEmuXml;
 }
 
@@ -1125,23 +1118,31 @@ LPWSTR CConEmuMain::ConEmuIni()
 
 	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
 
-	// Ищем файл портабельных настроек. Сначала пробуем в BaseDir
-	wcscpy_c(ms_ConEmuIni, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuIni, L"\\ConEmu.ini");
+	// Ищем файл портабельных настроек (возвращаем первый найденный, приоритет...)
+	LPWSTR pszSearchIni[] = {
+		ExpandEnvStr(L"%ConEmuDir%\\ConEmu.ini"),
+		ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.ini"),
+		ExpandEnvStr(L"%APPDATA%\\ConEmu.ini"),
+		NULL
+	};
 
-	if (!FileExists(ms_ConEmuIni))
+	for (size_t i = 0; pszSearchIni[i]; i++)
 	{
-		if (lstrcmpi(ms_ConEmuBaseDir, ms_ConEmuExeDir))
+		if (FileExists(pszSearchIni[i]))
 		{
-			wcscpy_c(ms_ConEmuIni, ms_ConEmuExeDir); wcscat_c(ms_ConEmuIni, L"\\ConEmu.ini");
-
-			if (!FileExists(ms_ConEmuIni))
-			{
-				// Если _создавать_ новый, то в BaseDir! Чтобы в корне не мусорить
-				wcscpy_c(ms_ConEmuIni, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuIni, L"\\ConEmu.ini");
-			}
+			wcscpy_c(ms_ConEmuIni, pszSearchIni[i]);
+			goto fin;
 		}
 	}
 
+	// Но если _создавать_ новый, то в BaseDir! Чтобы в корне не мусорить
+	wcscpy_c(ms_ConEmuIni, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuIni, L"\\ConEmu.ini");
+
+fin:
+	for (size_t i = 0; i < countof(pszSearchIni); i++)
+	{
+		SafeFree(pszSearchIni[i]);
+	}
 	return ms_ConEmuIni;
 }
 
