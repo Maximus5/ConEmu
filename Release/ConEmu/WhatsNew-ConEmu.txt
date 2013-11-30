@@ -15,6 +15,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Issue 1381. Portable distribution contains *.map files (ConEmu.Gui.map and ConEmu64.Gui.map).
+
+
 2013.11.29
 [*] Issue 1375. Xml file search priority changed. First found from following locations will be used:
     %ConEmuDir%\ConEmu.xml
