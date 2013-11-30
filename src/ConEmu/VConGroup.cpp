@@ -1631,7 +1631,7 @@ void CVConGroup::Update(bool isForce /*= false*/)
 
 bool CVConGroup::isActive(CVirtualConsole* apVCon, bool abAllowGroup /*= true*/)
 {
-	if (!apVCon)
+	if (!isValid(apVCon))
 		return false;
 
 	if (apVCon == gp_VActive)
@@ -1651,6 +1651,9 @@ bool CVConGroup::isActive(CVirtualConsole* apVCon, bool abAllowGroup /*= true*/)
 
 bool CVConGroup::isActiveGroupVCon(CVirtualConsole* pVCon)
 {
+	if (!isValid(pVCon))
+		return false;
+
 	CVConGroup* pGr = GetRootOfVCon(pVCon);
 	if (!pGr)
 		return false;
@@ -1671,7 +1674,7 @@ bool CVConGroup::isActiveGroupVCon(CVirtualConsole* pVCon)
 
 bool CVConGroup::isVisible(CVirtualConsole* apVCon)
 {
-	if (!apVCon || !isValid(apVCon))
+	if (!isValid(apVCon))
 		return false;
 
 	if (apVCon == gp_VActive)
