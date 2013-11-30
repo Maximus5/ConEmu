@@ -83,7 +83,11 @@ static bool gbVimTermWasChangedBuffer = false;
 /* ************ Globals for ViM ************ */
 
 #ifdef _DEBUG
-void FIRST_ANSI_CALL(const BYTE* lpBuf, DWORD nNumberOfBytes);
+	// Forward (external in Entry.cpp)
+	void FIRST_ANSI_CALL(const BYTE* lpBuf, DWORD nNumberOfBytes);
+#else
+	// Dummy macro
+	#define FIRST_ANSI_CALL(lpBuf,nNumberOfBytes)
 #endif
 
 HANDLE CEAnsi::ghLastAnsiCapable = NULL;
