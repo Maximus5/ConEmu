@@ -185,6 +185,10 @@
         <ComponentRef Id="GitShowBranch.cmd"/>
         <ComponentRef Id="git.cmd"/>
       </Feature>
+      <Feature Id="FChocolatey" AllowAdvertise="no" Title="Chocolatey" Level="1"
+               Description="apt-get style package manager for Windows">
+        <ComponentRef Id="ChocolateyAbout.cmd"/>
+      </Feature>
       <!--
       <Feature Id="FPortable" AllowAdvertise="no" Title="Portable registry" Level="1"
                Description="How to enable portable registry for console applications">

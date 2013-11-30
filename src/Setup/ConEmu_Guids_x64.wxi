@@ -48,6 +48,8 @@
 	<!-- GIT Extensions -->
 	<?define Guid.GitShowBranch.cmd = "75F13A29-817E-4FAE-B93B-3134F0A2DE11" ?>
 	<?define Guid.git.cmd = "ACA3C5DB-A1DB-4D48-93DB-B3F823E7E52F" ?>
+	<!-- Chocolatey -->
+	<?define Guid.ChocolateyAbout.cmd = "6EB1FA8A-2FA0-4361-97BD-DC78F5B93554" ?>
 	<!-- clink -->
 	<?define Guid.clink_readme.txt = "C13746E4-0168-46B8-8266-E84117146A96" ?>
 	<!-- DosBox -->

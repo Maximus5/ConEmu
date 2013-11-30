@@ -127,6 +127,9 @@
       <!--<Component Id="ConEmu.cer" Guid="$(var.Guid.ConEmu.cer)" Win64="$(var.Win64)">
         <File Id="ConEmu.cer" Source="..\..\Release\ConEmu\Addons\ConEmu.cer"  KeyPath="yes" />
       </Component>-->
+      <Component Id="ChocolateyAbout.cmd" Guid="$(var.Guid.ChocolateyAbout.cmd)" Win64="$(var.Win64)">
+        <File Id="ChocolateyAbout.cmd" Source="..\..\Release\ConEmu\Addons\ChocolateyAbout.cmd"  KeyPath="yes" />
+      </Component>
       <Component Id="git.cmd" Guid="$(var.Guid.git.cmd)" Win64="$(var.Win64)">
         <File Id="git.cmd" Source="..\..\Release\ConEmu\Addons\git.cmd"  KeyPath="yes" />
       </Component>
