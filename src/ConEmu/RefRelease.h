@@ -79,6 +79,13 @@ public:
 
 		return mn_RefCount;
 	};
+
+#ifdef _DEBUG
+	int RefCount()
+	{
+		return mn_RefCount;
+	}
+#endif
 protected:
 	virtual ~CRefRelease()
 	{
