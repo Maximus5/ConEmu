@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    134
+#define CESERVER_REQ_VER    135
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -372,6 +372,7 @@ const CECMD
 	CECMD_STARTXTERM     = 74, // dwData[0]=bool, start/stop xterm input
 	//CECMD_DEFTERMSTARTED = 75, // Уведомить GUI, что инициализация хуков для Default Terminal была завершена -- не требуется, ConEmuC ждет успеха
 	CECMD_UPDCONMAPHDR   = 76, // AltServer не может менять CESERVER_CONSOLE_MAPPING_HDR во избежание конфликтов. Это делает только RM_MAINSERVER (req.ConInfo)
+	CECMD_SETCONSCRBUF   = 77, // CESERVER_REQ_SETCONSCRBUF - temporarily block active server reading thread to change console buffer size
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1865,6 +1866,15 @@ struct CESERVER_REQ_ALTBUFFER
 	USHORT BufferHeight; // In/Out
 };
 
+// CECMD_SETCONSCRBUF
+struct CESERVER_REQ_SETCONSCRBUF
+{
+	HANDLE2 hRequestor; // HANDLE of requesting thread
+	HANDLE2 hTemp;      // Used internally, set to NULL when bLock and dont'change
+	BOOL    bLock;      // Lock or release
+	COORD   dwSize;     // Informational, new size of the buffer
+};
+
 struct CESERVER_REQ
 {
 	CESERVER_REQ_HDR hdr;
@@ -1915,6 +1925,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_PROMPTACTION Prompt;
 		CESERVER_REQ_DUPLICATE Duplicate;
 		CESERVER_REQ_ALTBUFFER AltBuf;
+		CESERVER_REQ_SETCONSCRBUF SetConScrBuf;
 	};
 
 	DWORD DataSize() { return this ? (hdr.cbSize - sizeof(hdr)) : 0; };

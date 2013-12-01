@@ -172,6 +172,8 @@ extern wchar_t gszDbgModLabel[6];
 #define REFRESH_FELL_SLEEP_TIMEOUT 3000
 #define LOCK_READOUTPUT_TIMEOUT 10000
 #define LOCK_REOPENCONOUT_TIMEOUT 250
+#define WAIT_SETCONSCRBUF_MAX_TIMEOUT 60000
+#define WAIT_SETCONSCRBUF_MIN_TIMEOUT 15000
 
 //#define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
@@ -406,6 +408,12 @@ struct SrvInfo
 	MMap<DWORD,AltServerInfo> AltServers;
 
 	HANDLE hFreezeRefreshThread;
+
+	// CECMD_SETCONSCRBUF
+	HANDLE hWaitForSetConBufThread;    // Remote thread (check it for abnormal termination)
+	HANDLE hInWaitForSetConBufThread;  // signal that RefreshThread is ready to wait for hWaitForSetConBufThread
+	HANDLE hOutWaitForSetConBufThread; // signal that RefreshThread may continue
+
 	HWND   hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
 	DebuggerInfo DbgInfo;
 	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)

@@ -8059,6 +8059,81 @@ BOOL cmd_UpdConMapHdr(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_SetConScrBuf(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+	DWORD nSafeWait = (DWORD)-1;
+	HANDLE hInEvent = NULL, hOutEvent = NULL, hWaitEvent = NULL;
+	char szLog[200];
+
+	size_t cbInSize = in.DataSize(), cbReqSize = sizeof(CESERVER_REQ_SETCONSCRBUF);
+	if (cbInSize == cbReqSize)
+	{
+		char* pszLogLbl;
+		if (gpLogSize)
+		{
+			msprintf(szLog, countof(szLog), "CECMD_SETCONSCRBUF x%08X {%i,%i} ",
+				(DWORD)(DWORD_PTR)in.SetConScrBuf.hRequestor, (int)in.SetConScrBuf.dwSize.X, (int)in.SetConScrBuf.dwSize.Y);
+			pszLogLbl = szLog + lstrlenA(szLog);
+		}
+
+		if (in.SetConScrBuf.bLock)
+		{
+			if (gpLogSize)
+			{
+				lstrcpynA(pszLogLbl, "Recvd", 10);
+				LogString(szLog);
+			}
+			// Ѕлокируем нить чтени€ и дождемс€ пока она перейдет в режим ожидани€
+			_ASSERTE(gpSrv->hInWaitForSetConBufThread==NULL);
+			gpSrv->hInWaitForSetConBufThread = hInEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+			gpSrv->hOutWaitForSetConBufThread = hOutEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+			gpSrv->hWaitForSetConBufThread = hWaitEvent = in.SetConScrBuf.hRequestor ? in.SetConScrBuf.hRequestor : INVALID_HANDLE_VALUE;
+			nSafeWait = WaitForSingleObject(hInEvent, WAIT_SETCONSCRBUF_MIN_TIMEOUT);
+			if (gpLogSize)
+			{
+				lstrcpynA(pszLogLbl, "Ready", 10);
+				LogString(szLog);
+			}
+		}
+		else
+		{
+			if (gpLogSize)
+			{
+				lstrcpynA(pszLogLbl, "Finish", 10);
+				LogString(szLog);
+			}
+			hOutEvent = gpSrv->hOutWaitForSetConBufThread;
+			// Otherwise - we must be in the call of ANOTHER thread!
+			if (hOutEvent == in.SetConScrBuf.hTemp)
+			{
+				SetEvent(hOutEvent);
+			}
+			else
+			{
+				_ASSERTE(hOutEvent == in.SetConScrBuf.hTemp);
+			}
+		}
+	}
+
+	size_t cbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETCONSCRBUF);
+	*out = ExecuteNewCmd(CECMD_SETCONSCRBUF, cbReplySize);
+	if ((*out) != NULL)
+	{
+		if (in.SetConScrBuf.bLock)
+		{
+			(*out)->SetConScrBuf.bLock = nSafeWait;
+			(*out)->SetConScrBuf.hTemp = hOutEvent;
+		}
+	}
+	else
+	{
+		lbRc = FALSE;
+	}
+
+	return lbRc;
+}
+
 bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 {
 	bool lbProcessed = false;
@@ -8245,6 +8320,14 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_UPDCONMAPHDR:
 		{
 			lbRc = cmd_UpdConMapHdr(in, out);
+		} break;
+		case CECMD_SETCONSCRBUF:
+		{
+			// ≈сли крутитс€ альтернативный сервер - команду нужно выполн€ть в нем
+			if (!ProcessAltSrvCommand(in, out, lbRc))
+			{
+				lbRc = cmd_SetConScrBuf(in, out);
+			}
 		} break;
 		default:
 		{

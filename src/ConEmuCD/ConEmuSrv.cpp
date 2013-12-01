@@ -3984,7 +3984,7 @@ BOOL CheckIndicateSleepNum()
 
 DWORD WINAPI RefreshThread(LPVOID lpvParam)
 {
-	DWORD nWait = 0, nAltWait = 0, nFreezeWait = 0;
+	DWORD nWait = 0, nAltWait = 0, nFreezeWait = 0, nThreadWait = 0;
 	
 	HANDLE hEvents[4] = {ghQuitEvent, gpSrv->hRefreshEvent};
 	DWORD  nEventsBaseCount = 2;
@@ -4024,6 +4024,33 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			HANDLE hFreeze[2] = {gpSrv->hFreezeRefreshThread, ghQuitEvent};
 			nFreezeWait = WaitForMultipleObjects(countof(hFreeze), hFreeze, FALSE, INFINITE);
 			if (nFreezeWait == (WAIT_OBJECT_0+1))
+				break; // затребовано заверешение потока
+		}
+
+		if (gpSrv->hWaitForSetConBufThread)
+		{
+			HANDLE hInEvent = gpSrv->hInWaitForSetConBufThread;
+			HANDLE hOutEvent = gpSrv->hOutWaitForSetConBufThread;
+			HANDLE hWaitEvent = gpSrv->hWaitForSetConBufThread;
+			// Tell server thread, that it is safe to return control to application
+			if (hInEvent)
+				SetEvent(hInEvent);
+			// What we are waiting for...
+			HANDLE hThreadWait[] = {ghQuitEvent, hOutEvent, hWaitEvent};
+			// To avoid infinite blocking - limit waiting time?
+			if (hWaitEvent != INVALID_HANDLE_VALUE)
+				nThreadWait = WaitForMultipleObjects(countof(hThreadWait), hThreadWait, FALSE, WAIT_SETCONSCRBUF_MAX_TIMEOUT);
+			else
+				nThreadWait = WaitForMultipleObjects(countof(hThreadWait)-1, hThreadWait, FALSE, WAIT_SETCONSCRBUF_MIN_TIMEOUT);
+			// Done, close handles, they are no longer needed
+			if (hInEvent == gpSrv->hInWaitForSetConBufThread) gpSrv->hInWaitForSetConBufThread = NULL;
+			if (hOutEvent == gpSrv->hOutWaitForSetConBufThread) gpSrv->hOutWaitForSetConBufThread = NULL;
+			if (hWaitEvent == gpSrv->hWaitForSetConBufThread) gpSrv->hWaitForSetConBufThread = NULL;
+			SafeCloseHandle(hWaitEvent);
+			SafeCloseHandle(hInEvent);
+			SafeCloseHandle(hOutEvent);
+			UNREFERENCED_PARAMETER(nThreadWait);
+			if (nThreadWait == WAIT_OBJECT_0)
 				break; // затребовано заверешение потока
 		}
 

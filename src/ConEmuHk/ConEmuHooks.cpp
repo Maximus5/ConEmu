@@ -2992,20 +2992,21 @@ DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, L
 		// финт ушами
 		if (nError == ERROR_NOT_ENOUGH_MEMORY) // && gdwServerPID)
 		{
-			DWORD nServerPID = 0;
+			DWORD nServerPID = gnServerPID;
 			HWND hConWnd = GetConsoleWindow();
 			_ASSERTE(hConWnd == ghConWnd);
-			MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
-			ConInfo.InitName(CECONMAPNAME, (DWORD)hConWnd); //-V205
-			CESERVER_CONSOLE_MAPPING_HDR *pInfo = ConInfo.Open();
-			if (pInfo 
-				&& (pInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
-				//&& (pInfo->nProtocolVersion == CESERVER_REQ_VER)
-				)
-			{
-				nServerPID = pInfo->nServerPID;
-				ConInfo.CloseMap();
-			}
+
+			//MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
+			//ConInfo.InitName(CECONMAPNAME, (DWORD)hConWnd); //-V205
+			//CESERVER_CONSOLE_MAPPING_HDR *pInfo = ConInfo.Open();
+			//if (pInfo 
+			//	&& (pInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
+			//	//&& (pInfo->nProtocolVersion == CESERVER_REQ_VER)
+			//	)
+			//{
+			//	nServerPID = pInfo->nServerPID;
+			//	ConInfo.CloseMap();
+			//}
 
 			if (nServerPID)
 			{
@@ -5950,9 +5951,82 @@ BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const 
 	}
 
 	if (F(SetConsoleWindowInfo))
+	{
 		lbRc = F(SetConsoleWindowInfo)(hConsoleOutput, bAbsolute, lpConsoleWindow);
+	}
 
 	return lbRc;
+}
+
+// Due to Microsoft bug we need to lock Server reading thread to avoid crash of kernel
+// https://code.google.com/p/conemu-maximus5/wiki/MicrosoftBugs#Exception_in_ReadConsoleOutput
+void LockServerReadingThread(bool bLock, COORD dwSize, CESERVER_REQ*& pIn, CESERVER_REQ*& pOut)
+{
+	DWORD nServerPID = gnServerPID;
+	if (!nServerPID)
+		return;
+
+	DWORD nErrSave = GetLastError();
+
+	if (bLock)
+	{
+		HANDLE hOurThreadHandle = NULL;
+
+		// We need to give our thread handle (to server process) to avoid
+		// locking of server reading thread (in case of our thread fails)
+		DWORD dwErr = -1;
+		HANDLE hServer = OpenProcess(PROCESS_DUP_HANDLE, FALSE, nServerPID);
+		if (!hServer)
+		{
+			dwErr = GetLastError();
+			_ASSERTEX(hServer!=NULL && "Open server handle fails, Can't dup handle!");
+		}
+		else
+		{
+			if (!DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), hServer, &hOurThreadHandle,
+					SYNCHRONIZE|THREAD_QUERY_INFORMATION, FALSE, 0))
+			{
+				dwErr = GetLastError();
+				_ASSERTEX(hServer!=NULL && "DuplicateHandle fails, Can't dup handle!");
+				hOurThreadHandle = NULL;
+			}
+			CloseHandle(hServer);
+		}
+
+		pIn = ExecuteNewCmd(CECMD_SETCONSCRBUF, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETCONSCRBUF));
+		if (pIn)
+		{
+			pIn->SetConScrBuf.bLock = TRUE;
+			pIn->SetConScrBuf.dwSize = dwSize; // Informational
+			pIn->SetConScrBuf.hRequestor = hOurThreadHandle;
+		}
+	}
+	else
+	{
+		if (pIn)
+		{
+			pIn->SetConScrBuf.bLock = FALSE;
+		}
+	}
+
+	if (pIn)
+	{
+		ExecuteFreeResult(pOut);
+		pOut = ExecuteSrvCmd(nServerPID, pIn, ghConWnd);
+		if (pOut && pOut->DataSize() >= sizeof(CESERVER_REQ_SETCONSCRBUF))
+		{
+			pIn->SetConScrBuf.hTemp = pOut->SetConScrBuf.hTemp;
+		}
+	}
+
+	if (!bLock)
+	{
+		ExecuteFreeResult(pIn);
+		ExecuteFreeResult(pOut);
+	}
+
+	// Transparently to calling function...
+	SetLastError(nErrSave);
 }
 
 BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
@@ -5995,6 +6069,9 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 
 	if (F(SetConsoleScreenBufferSize))
 	{
+		CESERVER_REQ *pIn = NULL, *pOut = NULL;
+		LockServerReadingThread(true, dwSize, pIn, pOut);
+
 		lbRc = F(SetConsoleScreenBufferSize)(hConsoleOutput, dwSize);
 		dwErr = GetLastError();
 
@@ -6022,6 +6099,8 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 			if (!lbRc)
 				SetLastError(dwErr); // вернуть "ошибку"
 		}
+
+		LockServerReadingThread(false, dwSize, pIn, pOut);
 	}
 
 	return lbRc;
@@ -6077,8 +6156,15 @@ BOOL WINAPI OnSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, PCONSOLE_SCREE
 
 	if (F(SetConsoleScreenBufferInfoEx))
 	{
+		CESERVER_REQ *pIn = NULL, *pOut = NULL;
+		if (lpConsoleScreenBufferInfoEx)
+			LockServerReadingThread(true, lpConsoleScreenBufferInfoEx->dwSize, pIn, pOut);
+
 		lbRc = F(SetConsoleScreenBufferInfoEx)(hConsoleOutput, lpConsoleScreenBufferInfoEx);
 		dwErr = GetLastError();
+
+		if (lpConsoleScreenBufferInfoEx)
+			LockServerReadingThread(false, lpConsoleScreenBufferInfoEx->dwSize, pIn, pOut);
 	}
 
 	UNREFERENCED_PARAMETER(dwErr);
