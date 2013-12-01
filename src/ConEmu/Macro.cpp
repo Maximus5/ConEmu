@@ -816,9 +816,17 @@ LPWSTR CConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon)
 		}
 		break;
 	case 2:
-		if (gpConEmu->OnScClose())
+	{
+		bool bPrevConfirm = gpSet->isCloseConsoleConfirm;
+		if (nFlags & 1)
+			gpSet->isCloseConsoleConfirm = false;
+		bool bClosed = gpConEmu->OnScClose();
+		if (bClosed)
 			pszResult = lstrdup(L"OK");
+		if (nFlags & 1)
+			gpSet->isCloseConsoleConfirm = bPrevConfirm;
 		break;
+	}
 	case 3:
 		if (apRCon)
 		{

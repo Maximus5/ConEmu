@@ -161,7 +161,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"Close(<What>[,<Flags>])\r\n" \
 	L"  - close current console (0), without confirmation (0,1),\r\n" \
 	L"    terminate active process (1), without confirmation (1,1)\r\n" \
-	L"    close ConEmu window (2)\r\n" \
+	L"    close ConEmu window (2), without confirmation (2,1)\r\n" \
 	L"    close active tab (3)\r\n" \
 	L"    close active group (4)\r\n" \
 	L"    close all tabs but active (5)\r\n" \

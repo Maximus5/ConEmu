@@ -17,6 +17,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 [%] Issue 1381. Portable distribution contains *.map files (ConEmu.Gui.map and ConEmu64.Gui.map).
 [+] Issue 1253: Add selection information to status bar (stream/block, coords, length).
+[+] GuiMacro. "Close(2,1)" will close ConEmu window (same as 'Cross' click) without confirmation.
 
 
 2013.11.29
