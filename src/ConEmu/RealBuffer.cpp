@@ -3701,6 +3701,46 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0x
 	return bRc;
 }
 
+int CRealBuffer::GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, int* pnSelWidth, int* pnSelHeight, int nNewLineLen)
+{
+	int   nCharCount = 0;
+	int   nSelWidth = srSelection_X2 - srSelection_X1 + 1;
+	int   nSelHeight = srSelection_Y2 - srSelection_Y1 + 1;
+
+	_ASSERTE(nNewLineLen==0 || nNewLineLen==1 || nNewLineLen==2);
+
+	if (!bStreamMode)
+	{
+		nCharCount = ((nSelWidth+nNewLineLen/* "\r\n" */) * nSelHeight) - nNewLineLen; // после последней строки "\r\n" не ставитс€
+	}
+	else
+	{
+		if (nSelHeight == 1)
+		{
+			nCharCount = nSelWidth;
+		}
+		else if (nSelHeight == 2)
+		{
+			// Ќа первой строке - до конца строки, втора€ строка - до окончани€ блока, + "\r\n"
+			nCharCount = (con.nTextWidth - srSelection_X1) + (srSelection_X2 + 1) + nNewLineLen;
+		}
+		else
+		{
+			Assert(nSelHeight>2);
+			// Ќа первой строке - до конца строки, последн€€ строка - до окончани€ блока, + "\r\n"
+			nCharCount = (con.nTextWidth - srSelection_X1) + (srSelection_X2 + 1) + nNewLineLen
+			             + ((nSelHeight - 2) * (con.nTextWidth + nNewLineLen)); // + серединка * (длину консоли + "\r\n")
+		}
+	}
+
+	if (pnSelWidth)
+		*pnSelWidth = nSelWidth;
+	if (pnSelHeight)
+		*pnSelHeight = nSelHeight;
+
+	return nCharCount;
+}
+
 bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */)
 {
 	// Warning!!! «десь уже нельз€ ориентироватьс€ на con.m_sel !!!
@@ -3773,46 +3813,21 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 			0 /*ASCIIZ!!!*/
 		};
 
-
-	DWORD dwErr = 0;
-	BOOL  lbRc = FALSE;
-	bool  Result = false;
-	int   nSelWidth = srSelection_X2 - srSelection_X1;
-	int   nSelHeight = srSelection_Y2 - srSelection_Y1;
-
-
+	// Pre validations
 	if (srSelection_X1 > (srSelection_X2+(srSelection_Y2-srSelection_Y1)*nTextWidth))
 	{
 		Assert(srSelection_X1 <= (srSelection_X2+(srSelection_Y2-srSelection_Y1)*nTextWidth));
 		return false;
 	}
 
-	nSelWidth++; nSelHeight++;
-	int nCharCount = 0;
+	DWORD dwErr = 0;
+	BOOL  lbRc = FALSE;
+	bool  Result = false;
+	int   nSelWidth = 0, nSelHeight = 0;
+	int   nNewLineLen = 2; // max "\r\n"
 
-	if (!bStreamMode)
-	{
-		nCharCount = ((nSelWidth+2/* "\r\n" */) * nSelHeight) - 2; // после последней строки "\r\n" не ставитс€
-	}
-	else
-	{
-		if (nSelHeight == 1)
-		{
-			nCharCount = nSelWidth;
-		}
-		else if (nSelHeight == 2)
-		{
-			// Ќа первой строке - до конца строки, втора€ строка - до окончани€ блока, + "\r\n"
-			nCharCount = (con.nTextWidth - srSelection_X1) + (srSelection_X2 + 1) + 2;
-		}
-		else
-		{
-			Assert(nSelHeight>2);
-			// Ќа первой строке - до конца строки, последн€€ строка - до окончани€ блока, + "\r\n"
-			nCharCount = (con.nTextWidth - srSelection_X1) + (srSelection_X2 + 1) + 2
-			             + ((nSelHeight - 2) * (con.nTextWidth + 2)); // + серединка * (длину консоли + "\r\n")
-		}
-	}
+	int   nCharCount = GetSelectionCharCount(bStreamMode, srSelection_X1, srSelection_Y1, srSelection_X2, srSelection_Y2, &nSelWidth, &nSelHeight, nNewLineLen);
+	_ASSERTE((nSelWidth>0) && (nSelHeight>0) && (nCharCount>0));
 
 	HGLOBAL hUnicode = NULL;
 	hUnicode = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, (nCharCount+1)*sizeof(wchar_t));
@@ -4123,6 +4138,22 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 // обновить на экране
 void CRealBuffer::UpdateSelection()
 {
+	// Show current selection state in the Status bar
+	wchar_t szSelInfo[128] = L"";
+	if (con.m_sel.dwFlags)
+	{
+		bool bStreamMode = isStreamSelection();
+		int  nCharCount = GetSelectionCharCount(bStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top,
+			con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, NULL, NULL, 0);
+
+		_wsprintf(szSelInfo, SKIPLEN(countof(szSelInfo)) L"%s selection {%i,%i}-{%i,%i} total %i chars",
+			bStreamMode ? L"Stream" : L"Block",
+			con.m_sel.srSelection.Left, con.m_sel.srSelection.Top,
+			con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom,
+			nCharCount);
+	}
+	mp_RCon->SetConStatus(szSelInfo);
+
 	TODO("Ёто корректно? Ќужно обновить VCon");
 	con.bConsoleDataChanged = TRUE; // ј эта - при вызовах из CVirtualConsole
 	mp_RCon->mp_VCon->Update(true);
