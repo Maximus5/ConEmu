@@ -158,8 +158,12 @@ void CConEmuChild::PostOnVConClosed()
 		ShutdownGuiStep(L"ProcessVConClosed - repost");
 		PostMessage(this->mh_WndDC, gn_MsgVConTerminated, 0, (LPARAM)pVCon);
 	}
+
+#ifdef _DEBUG
 	// Must be guarded and thats why valid...
-	_ASSERTE(CVConGroup::isValid(pVCon));
+	int iRef = pVCon->RefCount();
+	_ASSERTE(CVConGroup::isValid(pVCon) || (iRef>=1 && iRef<10));
+#endif
 }
 
 void CConEmuChild::ProcessVConClosed(CVirtualConsole* apVCon, BOOL abPosted /*= FALSE*/)
