@@ -284,7 +284,7 @@ CConEmuMain::CConEmuMain()
 	//HeapInitialize(); - уже
 	//#define D(N) (1##N-100)
 
-	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L"%02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
+	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L"%02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,RELEASEDEBUGTEST(_T(MVV_4a),_T("dbg")));
 	wcscpy_c(ms_ConEmuDefTitle, L"ConEmu ");
 	wcscat_c(ms_ConEmuDefTitle, ms_ConEmuBuild);
 	wcscat_c(ms_ConEmuDefTitle, WIN3264TEST(L" [32]",L" [64]"));

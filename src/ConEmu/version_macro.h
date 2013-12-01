@@ -21,7 +21,11 @@
   #define MVV_3n MVV_3
 //#endif
 
+#ifndef _DEBUG
 #define CONEMUVERS STRING(MVV_1) MVV_2s MVV_3s MVV_4a
+#else
+#define CONEMUVERS STRING(MVV_1) MVV_2s MVV_3s "dbg"
+#endif
 
 #ifdef __GNUC__
 #define CONEMUVERN MVV_1,MVV_2,MVV_3,MVV_4
