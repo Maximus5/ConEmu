@@ -166,7 +166,7 @@ bool CEAnsi::IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput /*= NULL*/)
 			bAnsi = true;
 		}
 
-		
+
 		if (bAnsi)
 		{
 			bool bAnsiAllowed; GetFeatures(&bAnsiAllowed, NULL);
@@ -197,7 +197,7 @@ bool CEAnsi::IsOutputHandle(HANDLE hFile, DWORD* pMode /*= NULL*/)
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 
 	// GetConsoleMode не совсем подходит, т.к. он проверяет и ConIn & ConOut
-	// Поэтому, добавляем	
+	// Поэтому, добавляем
 	if (GetConsoleMode(hFile, &Mode))
 	{
 		if (!GetConsoleScreenBufferInfoCached(hFile, &csbi, TRUE))
@@ -254,8 +254,8 @@ CEAnsi::DisplayParm CEAnsi::gDisplayParm = {};
 //{
 //    // Internal
 //    COORD StoredCursorPos;
-//	// Esc[?1h 	Set cursor key to application 	DECCKM 
-//	// Esc[?1l 	Set cursor key to cursor 	DECCKM 
+//	// Esc[?1h 	Set cursor key to application 	DECCKM
+//	// Esc[?1l 	Set cursor key to cursor 	DECCKM
 //	BOOL CursorKeysApp; // "1h"
 //} gDisplayCursor = {};
 
@@ -402,7 +402,7 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 			attr.Attributes.BackgroundColor |= ClrMap[BackColor&0x7]
 				| ((gDisplayParm.BackOrUnderline && !Text256) ? 0x8 : 0);
 		}
-		
+
 
 		//SetConsoleTextAttribute(hConsoleOutput, (WORD)wAttrs);
 		ExtSetAttributes(&attr);
@@ -674,7 +674,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LP
 		efof_Attribute|(gDisplayParm.WasSet ? efof_Current : efof_ResetExt),
 		hConsoleOutput, {}, 0, dwWriteCoord, nLength};
 	ExtFillOutput(&fll);
-	
+
 	BOOL lbRc = F(WriteConsoleOutputCharacterA)(hConsoleOutput, lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
 
 	return lbRc;
@@ -692,7 +692,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LP
 		efof_Attribute|(gDisplayParm.WasSet ? efof_Current : efof_ResetExt),
 		hConsoleOutput, {}, 0, dwWriteCoord, nLength};
 	ExtFillOutput(&fll);
-	
+
 	BOOL lbRc = F(WriteConsoleOutputCharacterW)(hConsoleOutput, lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
 
 	return lbRc;
@@ -724,7 +724,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	//lbRc = _WriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nTotalWritten, NULL);
 	write.Buffer = lpBuffer;
 	write.NumberOfCharsToWrite = nNumberOfCharsToWrite;
-	
+
 	lbRc = ExtWriteText(&write);
 	if (lbRc)
 	{
@@ -936,7 +936,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 		}
 	}
 
-	
+
 	while (lpBuffer < lpEnd)
 	{
 		switch (*lpBuffer)
@@ -989,10 +989,10 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						_ASSERTEX(FALSE && "Unsupported control sequence?");
 						continue; // invalid code
 					}
-					
+
 					// Теперь идут параметры.
 					++lpBuffer; // переместим указатель на первый символ ЗА CSI (после '[')
-					
+
 					switch (Code.Second)
 					{
 					case L'|':
@@ -1357,7 +1357,7 @@ void CEAnsi::DoMessage(LPCWSTR asMsg, INT_PTR cchLen)
 		msprintf(szTitle, countof(szTitle), L"PID=%u, %s", GetCurrentProcessId(), PointToName(szExe));
 
 		GuiMessageBox(ghConEmuWnd, pszText, szTitle, MB_ICONINFORMATION|MB_SYSTEMMODAL);
-		
+
 		free(pszText);
 	}
 }
@@ -1577,7 +1577,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 									#ifdef _DEBUG
 									default:
 										_ASSERTE(FALSE && "Missed (sub)case value!");
-									#endif	
+									#endif
 									}
 
 									// проверка Row
@@ -1599,7 +1599,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 								break;
 
 							case L'J': // Clears part of the screen
-								// Clears the screen and moves the cursor to the home position (line 0, column 0). 
+								// Clears the screen and moves the cursor to the home position (line 0, column 0).
 								if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 								{
 									int nCmd = (Code.ArgC > 0) ? Code.ArgV[0] : 0;
@@ -1698,9 +1698,9 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 								//\027[Pt;Pbr
 								//
 								//Pt is the number of the top line of the scrolling region;
-								//Pb is the number of the bottom line of the scrolling region 
+								//Pb is the number of the bottom line of the scrolling region
 								// and must be greater than Pt.
-								//(The default for Pt is line 1, the default for Pb is the end 
+								//(The default for Pt is line 1, the default for Pb is the end
 								// of the screen)
 								//
 								if ((Code.ArgC >= 2) && (Code.ArgV[0] >= 1) && (Code.ArgV[1] >= Code.ArgV[0]))
@@ -1818,7 +1818,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 										//	  character emitted after column 80 (or column 132 of DECCOLM is on)
 										//	  forces a wrap to the beginning of the following line first.
 										//ESC [ = 7 h
-										//    Enables line wrapping 
+										//    Enables line wrapping
 										//ESC [ 7 ; _col_ h
 										//    Our extension. _col_ - wrap at column (1-based), default = 80
 										if ((gDisplayOpt.WrapWasSet = (Code.Action == L'h')))
@@ -2233,7 +2233,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 					case L'>':
 						// xterm "ESC ="
 						break;
-					
+
 					default:
 						DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 					}
@@ -2326,9 +2326,9 @@ BOOL /*WINAPI*/ CEAnsi::OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 }
 
 
-/* 
+/*
 ViM need some hacks in current ConEmu versions
-This is because 
+This is because
 1) 256 colors mode requires NO scroll buffer
 2) can't find ATM legal way to switch Alternative/Primary buffer by request from ViM
 */

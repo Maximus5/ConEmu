@@ -205,8 +205,8 @@ protected:
 	{
 	    // Internal
 	    COORD StoredCursorPos;
-		// Esc[?1h 	Set cursor key to application 	DECCKM 
-		// Esc[?1l 	Set cursor key to cursor 	DECCKM 
+		// Esc[?1h 	Set cursor key to application 	DECCKM
+		// Esc[?1l 	Set cursor key to cursor 	DECCKM
 		BOOL CursorKeysApp; // "1h"
 	}; // gDisplayCursor = {};
 	// Bad thing again...
