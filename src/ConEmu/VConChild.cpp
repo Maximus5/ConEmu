@@ -106,7 +106,7 @@ CConEmuChild::CConEmuChild()
 	mb_ScrollDisabled = FALSE;
 	m_LastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
 	mb_ScrollRgnWasSet = false;
-	
+
 	ZeroStruct(m_LockDc);
 }
 
@@ -221,7 +221,7 @@ HWND CConEmuChild::CreateView()
 	// Имя класса - то же самое, что и у главного окна
 	DWORD style = /*WS_VISIBLE |*/ WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 	DWORD styleEx = 0;
-	
+
 	RECT rcBack = gpConEmu->CalcRect(CER_BACK, pVCon);
 	RECT rc = gpConEmu->CalcRect(CER_DC, rcBack, CER_BACK, pVCon);
 
@@ -491,7 +491,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 					}
 
 					DWORD curStyle = GetWindowLong(hWnd, GWL_STYLE);
-				
+
 					if ((curStyle & CRITICAL_DCWND_STYLES) != (pVCon->mn_WndDCStyle & CRITICAL_DCWND_STYLES))
 					{
 						// DC window styles was changed externally!
@@ -553,7 +553,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			}
 			// If an application processes this message, it should return TRUE to halt further processing or FALSE to continue.
 			break;
-			
+
 		case WM_SYSCOMMAND:
 			// -- лишние ограничения, похоже
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
@@ -886,7 +886,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			}
 			// If an application processes this message, it should return TRUE to halt further processing or FALSE to continue.
 			break;
-			
+
 		case WM_SYSCOMMAND:
 			// -- лишние ограничения, похоже
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
@@ -1315,7 +1315,7 @@ void CConEmuChild::Invalidate()
 	if (mh_WndDC)
 	{
 		DEBUGSTRDRAW(L" +++ Invalidate on DC window called\n");
-		
+
 		if (!m_LockDc.bLocked)
 		{
 			InvalidateRect(mh_WndDC, NULL, FALSE);
@@ -1326,12 +1326,12 @@ void CConEmuChild::Invalidate()
 			HRGN hRgn = CreateRectRgn(0, 0, rcClient.right, rcClient.bottom);
 			HRGN hLock = CreateRectRgn(m_LockDc.rcScreen.left, m_LockDc.rcScreen.top, m_LockDc.rcScreen.right, m_LockDc.rcScreen.bottom);
 			int iRc = CombineRgn(hRgn, hRgn, hLock, RGN_DIFF);
-			
+
 			if (iRc == ERROR)
 				InvalidateRect(mh_WndDC, NULL, FALSE);
 			else if (iRc != NULLREGION)
 				InvalidateRgn(mh_WndDC, hRgn, FALSE);
-			
+
 			DeleteObject(hLock);
 			DeleteObject(hRgn);
 		}
@@ -1391,7 +1391,7 @@ BOOL CConEmuChild::TrackMouse()
 {
 	_ASSERTE(this);
 	BOOL lbCapture = FALSE; // По умолчанию - мышь не перехватывать
-	
+
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	CVConGuard guard(pVCon);
 
@@ -1842,7 +1842,7 @@ int CConEmuChild::IsDcLocked(RECT* CurrentConLockedRect)
 {
 	if (!m_LockDc.bLocked)
 		return 0;
-	
+
 	if (CurrentConLockedRect)
 		*CurrentConLockedRect = m_LockDc.rcCon;
 	_ASSERTE(!(m_LockDc.rcCon.left < 0 || m_LockDc.rcCon.top < 0 || m_LockDc.rcCon.right < 0 || m_LockDc.rcCon.bottom < 0));
@@ -1874,7 +1874,7 @@ void CConEmuChild::LockDcRect(bool bLock, RECT* Rect)
 		CVConGuard guard(pVCon);
 
 		TODO("Хорошо бы здесь запомнить в CompatibleBitmap то, что нарисовали. Это нужно делать в MainThread!!");
-		
+
 		m_LockDc.rcScreen = *Rect;
 		COORD cr = pVCon->ClientToConsole(m_LockDc.rcScreen.left+1, m_LockDc.rcScreen.top+1, true);
 		m_LockDc.rcCon.left = cr.X; m_LockDc.rcCon.top = cr.Y;
@@ -1887,7 +1887,7 @@ void CConEmuChild::LockDcRect(bool bLock, RECT* Rect)
 			LockDcRect(false);
 			return;
 		}
-		
+
 		m_LockDc.nLockTick = GetTickCount();
 		m_LockDc.bLocked = TRUE;
 		ValidateRect(mh_WndDC, &m_LockDc.rcScreen);
