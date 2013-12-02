@@ -464,7 +464,13 @@ struct PipeServer
 
 			if (mb_Overlapped)
 			{
-				if (!fSuccess || !cbRead)
+				if (dwErr == ERROR_BROKEN_PIPE)
+				{
+					PLOG("PipeServerRead.ERROR_BROKEN_PIPE");
+					BreakConnection(pPipe);
+					return FALSE;
+				}
+				else if (!fSuccess || !cbRead)
 				{
 					PLOG("PipeServerRead.WaitOverlapped");
 					nOverRc = WaitOverlapped(pPipe, &cbRead);
@@ -550,7 +556,13 @@ struct PipeServer
 
 					if (mb_Overlapped)
 					{
-						if (!fSuccess || !cbRead)
+						if (dwErr == ERROR_BROKEN_PIPE)
+						{
+							PLOG("PipeServerRead.ERROR_BROKEN_PIPE (more)");
+							BreakConnection(pPipe);
+							return FALSE;
+						}
+						else if (!fSuccess || !cbRead)
 						{
 							nOverRc = WaitOverlapped(pPipe, &cbRead);
 							if (nOverRc == 1)
