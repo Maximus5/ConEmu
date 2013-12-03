@@ -855,7 +855,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 	//	return NULL;
 	//}
 	#ifdef _DEBUG
-	bool bIsAltSrvCmd = (pIn->hdr.nCmd==CECMD_ALTBUFFER || pIn->hdr.nCmd==CECMD_ALTBUFFERSTATE);
+	bool bIsAltSrvCmd = (pIn->hdr.nCmd==CECMD_ALTBUFFER || pIn->hdr.nCmd==CECMD_ALTBUFFERSTATE || pIn->hdr.nCmd==CECMD_SETCONSCRBUF);
 	_ASSERTE(pIn->hdr.nSrcThreadId==GetCurrentThreadId() || (bIsAltSrvCmd && pIn->hdr.nSrcPID!=GetCurrentProcessId()));
 	#endif
 

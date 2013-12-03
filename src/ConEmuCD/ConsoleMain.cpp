@@ -8111,6 +8111,7 @@ BOOL cmd_SetConScrBuf(CESERVER_REQ& in, CESERVER_REQ** out)
 			}
 			else
 			{
+				// Timeout may be, or another process we are waiting for already...
 				_ASSERTE(hOutEvent == in.SetConScrBuf.hTemp);
 			}
 		}
