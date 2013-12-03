@@ -915,7 +915,8 @@ bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info)
 			do {
 				if (PI.th32ProcessID == nPID)
 				{
-					*Info = PI;
+					if (Info)
+						*Info = PI;
 					bFound = true;
 					break;
 				}

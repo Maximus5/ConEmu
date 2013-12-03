@@ -539,8 +539,8 @@ void CVConGroup::GetAllTextSize(SIZE& sz, bool abMinimal /*= false*/)
 	}
 	else
 	{
-		CVConGuard VCon1(mp_Grp1->mp_Item);
-		CVConGuard VCon2(mp_Grp2->mp_Item);
+		CVConGuard VCon1(mp_Grp1 ? mp_Grp1->mp_Item : NULL);
+		CVConGuard VCon2(mp_Grp2 ? mp_Grp2->mp_Item : NULL);
 		SIZE sz1 = {MIN_CON_WIDTH,MIN_CON_HEIGHT}, sz2 = {MIN_CON_WIDTH,MIN_CON_HEIGHT};
 		
 		if (mp_Grp1)

@@ -623,7 +623,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 								continue;
 							}
 
-							wmemmove(pszSubFolder, pszWideName, (nFolderLen + 1)*sizeof(*pszSubFolder));
+							wmemmove(pszSubFolder, pszWideName, (nFolderLen + 1));
 							pszSubFolder[(nFolderLen + 1)] = 0;
 
 							pszNewFolder = FileCreateName(abActive, true, NULL, pszSubFolder);
