@@ -490,17 +490,20 @@ HANDLE/*HPAINTBUFFER*/ CDwmHelper::BeginBufferedPaint(HDC hdcTarget, const RECT&
 		void* pPixels = NULL;
 		HDC hdcPaint = CreateCompatibleDC(hdcTarget);
 		HBITMAP hbmp = CreateDIBSection(hdcPaint, (BITMAPINFO*)&bi, DIB_RGB_COLORS, &pPixels, NULL, 0);
-		HBITMAP hOldBmp = (HBITMAP)SelectObject(hdcPaint, hbmp);
+		if (hbmp)
+		{
+			HBITMAP hOldBmp = (HBITMAP)SelectObject(hdcPaint, hbmp);
 
-		dc.hDC = hdcPaint;
-		dc.rcTarget = rcTarget;
-		dc.hInternal1 = hdcTarget;
-		dc.hInternal2 = hbmp;
-		dc.hInternal3 = hOldBmp;
-		dc.hInternal4 = pPixels;
-		dc.bInternal = true;
+			dc.hDC = hdcPaint;
+			dc.rcTarget = rcTarget;
+			dc.hInternal1 = hdcTarget;
+			dc.hInternal2 = hbmp;
+			dc.hInternal3 = hOldBmp;
+			dc.hInternal4 = pPixels;
+			dc.bInternal = true;
 
-		hResult = (HANDLE)TRUE;
+			hResult = (HANDLE)TRUE;
+		}
 	}
 
 	dc.hBuffered = hResult;

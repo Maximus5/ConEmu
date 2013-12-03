@@ -1103,7 +1103,7 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 {
 	BOOL lbRc = FALSE;
 	HANDLE hBatch = NULL;
-	wchar_t* pszBatch;
+	wchar_t* pszBatch = NULL;
 	wchar_t* pszCommand = NULL;
 	BOOL lbWrite;
 	DWORD nLen, nWritten;

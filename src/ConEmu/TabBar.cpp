@@ -744,7 +744,7 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 
 			if (gpSet->isHideCaptionAlways() && gpSet->nToolbarAddSpace > 0)
 			{
-				SIZE sz;
+				SIZE sz = {0,0};
 
 				if (CallWindowProc(_defaultToolProc, hwnd, TB_GETIDEALSIZE, 0, (LPARAM)&sz))
 				{
