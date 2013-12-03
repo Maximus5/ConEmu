@@ -2009,28 +2009,26 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 
 							if (nRectCount>=nMaxRects)
 							{
-								nMaxRects += TextHeight;
+								int nNewMaxRects = nMaxRects + max((int)TextHeight,(int)(nRectCount-nMaxRects+1));
+								_ASSERTE(nNewMaxRects > nRectCount);
+
 								HEAPVAL;
-								POINT *lpTmpPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT)); // 4 угла
-								//INT   *lpTmpCounts = (INT*)Alloc(nMaxRects,sizeof(INT));
+								POINT *lpTmpPoints = (POINT*)Alloc(nNewMaxRects*4,sizeof(POINT)); // 4 угла
 								HEAPVAL;
 
-								if (!lpTmpPoints /*|| !lpTmpCounts*/)
+								if (!lpTmpPoints)
 								{
-									_ASSERTE(/*lpTmpCounts &&*/ lpTmpPoints);
-									//Free(lpAllCounts);
+									_ASSERTE(lpTmpPoints);
 									Free(lpAllPoints);
 									return false;
 								}
 
-								memmove(lpTmpPoints, lpAllPoints, nRectCount*4*sizeof(POINT));
-								//memmove(lpTmpCounts, lpAllCounts, nRectCount*sizeof(INT));
+								memmove(lpTmpPoints, lpAllPoints, nMaxRects*4*sizeof(POINT));
 								HEAPVAL;
 								lpPoints = lpTmpPoints + (lpPoints - lpAllPoints);
-								//Free(lpAllCounts);
 								Free(lpAllPoints);
 								lpAllPoints = lpTmpPoints;
-								//lpAllCounts = lpTmpCounts;
+								nMaxRects = nNewMaxRects;
 								HEAPVAL;
 							}
 

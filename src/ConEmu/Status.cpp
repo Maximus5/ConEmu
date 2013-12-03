@@ -1315,18 +1315,21 @@ void CStatus::ShowStatusSetupMenu()
 			else
 			{
 				int nIdx = gStatusCols[nCmd-1].nID;
-				gpSet->isStatusColumnHidden[nIdx] = !gpSet->isStatusColumnHidden[nIdx];
+				if (nIdx >= 0 && nIdx < countof(gpSet->isStatusColumnHidden))
+				{
+					gpSet->isStatusColumnHidden[nIdx] = !gpSet->isStatusColumnHidden[nIdx];
 				
-				MENUITEMINFO mi = {sizeof(mi), MIIM_STATE|MIIM_ID};
-				mi.wID = nCmd;
-				GetMenuItemInfo(hPopup, nCmd, FALSE, &mi);
-				if (gpSet->isStatusColumnHidden[nIdx])
-					mi.fState &= ~MF_CHECKED;
-				else
-					mi.fState |= MF_CHECKED;
-				SetMenuItemInfo(hPopup, nCmd, FALSE, &mi);
+					MENUITEMINFO mi = {sizeof(mi), MIIM_STATE|MIIM_ID};
+					mi.wID = nCmd;
+					GetMenuItemInfo(hPopup, nCmd, FALSE, &mi);
+					if (gpSet->isStatusColumnHidden[nIdx])
+						mi.fState &= ~MF_CHECKED;
+					else
+						mi.fState |= MF_CHECKED;
+					SetMenuItemInfo(hPopup, nCmd, FALSE, &mi);
 
-				UpdateStatusBar(true);
+					UpdateStatusBar(true);
+				}
 			}
 
 			if (ghOpWnd && IsWindow(ghOpWnd))

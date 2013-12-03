@@ -3129,7 +3129,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 	if (!gpConEmu)
 	{
 		_ASSERTE(gpConEmu);
-		return;
+		return FALSE;
 	}
 	gpConEmu->LogString(L"Settings::SaveSettings");
 

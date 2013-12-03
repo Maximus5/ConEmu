@@ -3557,14 +3557,14 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 				//	NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 				//	, NULL, m_Args.pszStartupDir, &si, &pi))
 			nCreateEnd = GetTickCount();
-			if (lbRc)
+
+			if (!lbRc)
 			{
-				//mn_MainSrv_PID = pi.dwProcessId;
-				SetMainSrvPID(pi.dwProcessId, NULL);
+				dwLastError = GetLastError();
 			}
 			else
 			{
-				dwLastError = GetLastError();
+				SetMainSrvPID(pi.dwProcessId, pi.hProcess);
 			}
 
 			SecureZeroMemory(m_Args.szUserPassword, sizeof(m_Args.szUserPassword));
@@ -3578,10 +3578,13 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 				                    , NULL, lpszWorkDir, &si, &pi, &dwLastError);
 			nCreateEnd = GetTickCount();
 
-			if (lbRc)
+			if (!lbRc)
 			{
-				//mn_MainSrv_PID = pi.dwProcessId;
-				SetMainSrvPID(pi.dwProcessId, NULL);
+				dwLastError = GetLastError();
+			}
+			else
+			{
+				SetMainSrvPID(pi.dwProcessId, pi.hProcess);
 			}
 
 		}
@@ -3601,8 +3604,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 			}
 			else
 			{
-				//mn_MainSrv_PID = pi.dwProcessId;
-				SetMainSrvPID(pi.dwProcessId, NULL);
+				SetMainSrvPID(pi.dwProcessId, pi.hProcess);
 			}
 		}
 
