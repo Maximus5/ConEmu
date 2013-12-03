@@ -1734,7 +1734,7 @@ LPWSTR CConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon)
 			}
 			
 			// 120830 - пусть shell("","cmd") запускает новую вкладку в ConEmu
-			bool bNewOper = bNewTaskGroup || (*pszOper == 0) || (wmemcmp(pszOper, L"new_console", 11) == 0);
+			bool bNewOper = bNewTaskGroup || !pszOper || !*pszOper || (wmemcmp(pszOper, L"new_console", 11) == 0));
 
 			if (bNewOper || (pszParm && wcsstr(pszParm, L"-new_console")))
 			{

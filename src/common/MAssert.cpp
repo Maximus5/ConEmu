@@ -95,12 +95,14 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 
 	HANDLE hHeap = GetProcessHeap();
 	MyAssertInfo* pa = (MyAssertInfo*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(MyAssertInfo));
+	if (!pa)
+		return -1;
 	wchar_t *szExeName = (wchar_t*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, (MAX_PATH+1)*sizeof(wchar_t));
-	if (!GetModuleFileNameW(NULL, szExeName, MAX_PATH+1)) szExeName[0] = 0;
+	if (szExeName && !GetModuleFileNameW(NULL, szExeName, MAX_PATH+1)) szExeName[0] = 0;
 	pa->bNoPipe = abNoPipe;
 	msprintf(pa->szTitle, countof(pa->szTitle), L"CEAssert PID=%u TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 	msprintf(pa->szDebugInfo, countof(pa->szDebugInfo), L"Assertion in %s\n%s\n\n%s: %i\n\nPress 'Retry' to trap.",
-	                szExeName, pszTest ? pszTest : L"", pszFile, nLine);
+	                szExeName ? szExeName : L"", pszTest ? pszTest : L"", pszFile, nLine);
 	DWORD dwCode = 0;
 
 	if (gAllowAssertThread == am_Thread)

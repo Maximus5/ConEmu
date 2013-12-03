@@ -9955,7 +9955,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 							Settings::AppSettings* pApp = gpSet->GetAppSettingsPtr(iCur);
 							if (!pApp || !pApp->AppNames)
 							{
-								_ASSERTE(!pApp && pApp->AppNames);
+								_ASSERTE(pApp && pApp->AppNames);
 							}
 							else
 							{

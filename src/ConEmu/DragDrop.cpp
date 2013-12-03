@@ -914,9 +914,9 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 			idView,
 		};
 		AppendMenu(hPopup, MF_STRING | MF_ENABLED, idNamesOnly, L"Paste &no prefix");
-		AppendMenu(hPopup, MF_STRING | (iQuantity == 1) ? MF_ENABLED : MF_GRAYED, idGoto,      L"&Goto prefix");
-		AppendMenu(hPopup, MF_STRING | (iQuantity == 1) ? MF_ENABLED : MF_GRAYED, idEdit,      L"&Edit prefix");
-		AppendMenu(hPopup, MF_STRING | (iQuantity == 1) ? MF_ENABLED : MF_GRAYED, idView,      L"&View prefix");
+		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idGoto,      L"&Goto prefix");
+		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idEdit,      L"&Edit prefix");
+		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idView,      L"&View prefix");
 
 		POINT ptCur = {}; ::GetCursorPos(&ptCur);
 

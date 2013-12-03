@@ -501,6 +501,8 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 				{
 					nMaxSize += nItemSize;
 					CIDA* pNew = (CIDA*)GlobalAlloc(GPTR, nMaxSize);
+					if (!pNew)
+						break;
 					memmove(pNew, file_PIDLs, nCurSize);
 					GlobalFree(file_PIDLs);
 					file_PIDLs = pNew;
@@ -519,6 +521,11 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 			{
 				CoTaskMemFree(pItem); pItem = NULL;
 			}
+		}
+
+		if (pItem)
+		{
+			CoTaskMemFree(pItem);
 		}
 	}
 	SAFECATCH //__except(EXCEPTION_EXECUTE_HANDLER)

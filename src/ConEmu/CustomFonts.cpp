@@ -156,7 +156,7 @@ private:
 		b.bmi.bmiHeader.biCompression = BI_RGB;
 		RGBQUAD white = {0xFF,0xFF,0xFF};
 		b.white = white;
-		void* pvBits;
+		void* pvBits = NULL;
 		hBitmap = CreateDIBSection(hDC, &b.bmi, DIB_RGB_COLORS, &pvBits, NULL, 0);
 		if (hBitmap)
 			SelectObject(hDC, hBitmap);
