@@ -2663,7 +2663,7 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 	LPCWSTR pszPalette = (m_Args.pszPalette && *m_Args.pszPalette) ? m_Args.pszPalette
 		: (pApp->OverridePalette && *pApp->szPaletteName) ? pApp->szPaletteName
 		: NULL;
-	if (pszPalette && pszPalette)
+	if (pszPalette && *pszPalette)
 	{
 		int iPalIdx = gpSet->PaletteGetIndex(pszPalette);
 		if (iPalIdx >= 0)

@@ -898,6 +898,8 @@ template <class T> void PidlDump(
 // Если передан hDumpFile - запись полной информации в текстовый файл
 void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile /*= NULL*/)
 {
+	//=== codeanalyze: Excessive stack usage
+
 	//BOOL lbDoEnum = FALSE;
 	//if (!lbDoEnum) return;
 	HRESULT hr = S_OK;

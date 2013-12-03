@@ -2189,7 +2189,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 		{
 			LPNMHDR phdr = (LPNMHDR)lParam;
 
-			if ((phdr->code == TTN_GETDISPINFO) || (phdr->code == TTN_NEEDTEXT))
+			if (phdr->code == TTN_GETDISPINFO)
 			{
 				return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
 			}
@@ -3690,7 +3690,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 		{
 			LPNMHDR phdr = (LPNMHDR)lParam;
 
-			if ((phdr->code == TTN_GETDISPINFO) || (phdr->code == TTN_NEEDTEXT))
+			if (phdr->code == TTN_GETDISPINFO)
 			{
 				return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
 			}
@@ -8673,7 +8673,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		{
 			LPNMHDR phdr = (LPNMHDR)lParam;
 
-			if ((phdr->code == TTN_GETDISPINFO) || (phdr->code == TTN_NEEDTEXT))
+			if (phdr->code == TTN_GETDISPINFO)
 			{
 				return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
 			}
@@ -9164,7 +9164,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		
 		case WM_NOTIFY:
 			{
-				if ((((NMHDR*)lParam)->code == TTN_GETDISPINFO) || (((NMHDR*)lParam)->code == TTN_NEEDTEXT))
+				if (((NMHDR*)lParam)->code == TTN_GETDISPINFO)
 				{
 					return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
 				}
@@ -9257,7 +9257,7 @@ INT_PTR CSettings::pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, L
 		{
 			LPNMHDR phdr = (LPNMHDR)lParam;
 
-			if ((phdr->code == TTN_GETDISPINFO) || (phdr->code == TTN_NEEDTEXT))
+			if (phdr->code == TTN_GETDISPINFO)
 			{
 				return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
 			}
@@ -9492,7 +9492,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 		{
 			LPNMHDR phdr = (LPNMHDR)lParam;
 
-			if ((phdr->code == TTN_GETDISPINFO) || (phdr->code == TTN_NEEDTEXT))
+			if (phdr->code == TTN_GETDISPINFO)
 			{
 				return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
 			}
@@ -14566,7 +14566,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			{
 				LPNMHDR phdr = (LPNMHDR)lParam;
 
-				if ((phdr->code == TTN_GETDISPINFO) || (phdr->code == TTN_NEEDTEXT))
+				if (phdr->code == TTN_GETDISPINFO)
 				{
 					return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
 				}
