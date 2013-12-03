@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -57,34 +57,9 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 	return TRUE;
 }
 
-// 04.12.2009 Maks + "__cdecl"
-int main(
-    //#if defined(__GNUC__)
-    int argc, char** argv
-    //#else
-    //HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow
-    //#endif
-)
-{
-	int iRc = 0;
-	HMODULE hConEmu;
-	char szErrInfo[512];
-	DWORD dwErr, dwOut;
-	typedef int (__stdcall* ConsoleMain2_t)(BOOL abAlternative);
-	ConsoleMain2_t lfConsoleMain2;
-	// Обязательно, иначе по CtrlC мы свалимся
-	SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
-
-	#if defined(SHOW_STARTED_MSGBOX) || defined(SHOW_COMSPEC_STARTED_MSGBOX)
-	if (!IsDebuggerPresent())
-	{
-		wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC Loaded (PID=%i)", GetCurrentProcessId());
-		const wchar_t* pszCmdLine = GetCommandLineW();
-		MessageBox(NULL,pszCmdLine,szTitle,0);
-	}
-	#endif
-
 #ifdef _DEBUG
+void UnitTests()
+{
 	typedef struct _UNICODE_STRING {
 		USHORT Length;
 		USHORT MaximumLength;
@@ -108,14 +83,37 @@ int main(
 		ntStatus = LdrGetDllHandleByName_f(&str, NULL, (PVOID*)&ptrProc);
 		ptrProc += 0x12345;
 	}
+}
 #endif
+
+
+int main(int argc, char** argv)
+{
+	int iRc = 0;
+	HMODULE hConEmu;
+	char szErrInfo[512];
+	DWORD dwErr, dwOut;
+	typedef int (__stdcall* ConsoleMain2_t)(BOOL abAlternative);
+	ConsoleMain2_t lfConsoleMain2;
+	// Обязательно, иначе по CtrlC мы свалимся
+	SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
+
+	#if defined(SHOW_STARTED_MSGBOX) || defined(SHOW_COMSPEC_STARTED_MSGBOX)
+	if (!IsDebuggerPresent())
+	{
+		wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC Loaded (PID=%i)", GetCurrentProcessId());
+		const wchar_t* pszCmdLine = GetCommandLineW();
+		MessageBox(NULL,pszCmdLine,szTitle,0);
+	}
+	#endif
+
+	#ifdef _DEBUG
+	UnitTests();
+	#endif
 	
-	//wchar_t szSkipEventName[128];
-	//_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
-	//HANDLE hSkipEvent = CreateEvent(NULL, TRUE, TRUE, szSkipEventName);
+
 	hConEmu = LoadLibrary(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
 	dwErr = GetLastError();
-	//CloseHandle(hSkipEvent); hSkipEvent = NULL;
 
 	if (!hConEmu)
 	{
