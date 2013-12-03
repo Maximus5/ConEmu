@@ -804,7 +804,7 @@ DoExecute:
 	pOut = ExecuteCmd(szPipe, pIn, 500, ghWnd);
 	if (!pOut || (pOut->hdr.cbSize < pIn->hdr.cbSize) || (pOut->dwData[0] == 0))
 	{
-		_ASSERTE(pOut->hdr.cbSize == (sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_START)));
+		_ASSERTE(pOut && pOut->hdr.cbSize == (sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_START)));
 
 		wchar_t szMsg[255], szTitle[128];
 		wcscpy_c(szMsg, L"Failed to start console server in the remote process");

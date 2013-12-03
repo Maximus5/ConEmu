@@ -390,10 +390,13 @@ HGLOBAL DupMem(HGLOBAL hMem)
 	// lock the source memory object
 	SIZE_T  len    = GlobalSize(hMem);
 	PVOID   source = GlobalLock(hMem);
+	if (!source)
+		return NULL;
 	// create a fixed "global" block - i.e. just
 	// a regular lump of our process heap
 	PVOID   dest   = GlobalAlloc(GMEM_FIXED, len);
-	memcpy(dest, source, len);
+	if (dest)
+		memcpy(dest, source, len);
 	GlobalUnlock(hMem);
 	return dest;
 }
@@ -821,7 +824,8 @@ static void DeepCopyFormatEtc(FORMATETC *dest, FORMATETC *source)
 		// allocate memory for the DVTARGETDEVICE if necessary
 		dest->ptd = (DVTARGETDEVICE*)CoTaskMemAlloc(sizeof(DVTARGETDEVICE));
 		// copy the contents of the source DVTARGETDEVICE into dest->ptd
-		*(dest->ptd) = *(source->ptd);
+		if (dest->ptd)
+			*(dest->ptd) = *(source->ptd);
 	}
 }
 

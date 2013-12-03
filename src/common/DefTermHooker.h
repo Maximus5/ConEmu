@@ -59,6 +59,8 @@ int StartDefTermHooker(DWORD nForePID, HANDLE& hProcess, DWORD& nResult, LPCWSTR
 		msprintf(szCmdLine, countof(szCmdLine), L"\"%s\\%s\" /DEFTRM=%u",
 			asConEmuBaseDir, L"ConEmuC64.exe", nForePID);
 		break;
+	default:
+		szCmdLine[0] = 0;
 	}
 	if (!*szCmdLine)
 	{

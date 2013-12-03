@@ -158,7 +158,8 @@ private:
 		b.white = white;
 		void* pvBits;
 		hBitmap = CreateDIBSection(hDC, &b.bmi, DIB_RGB_COLORS, &pvBits, NULL, 0);
-		SelectObject(hDC, hBitmap);
+		if (hBitmap)
+			SelectObject(hDC, hBitmap);
 		bpBPixels = (BYTE*)pvBits;
 		dwStride = (m_Width * 256) / 8;
   
@@ -653,9 +654,9 @@ bool CEDC::CreateDC(UINT Width, UINT Height)
 	{
 		iWidth = Width;
 		iHeight = Height;
-	}
 
-	mh_OldBitmap = (HBITMAP)::SelectObject(hDC, hBitmap);
+		mh_OldBitmap = (HBITMAP)::SelectObject(hDC, hBitmap);
+	}
 
 	ReleaseDC(0, hScreenDC);
 	

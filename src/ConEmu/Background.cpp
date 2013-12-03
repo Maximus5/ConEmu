@@ -634,6 +634,11 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 		COLORREF* pBits = NULL;
 		HBITMAP hDib = CreateDIBSection(hScreen, (BITMAPINFO*)&bi, DIB_RGB_COLORS, (void**)&pBits, NULL, 0);
 		ReleaseDC(NULL, hScreen); hScreen = NULL;
+		if (!hDib || !pBits)
+		{
+			_ASSERTE(hDib && pBits);
+			return false;
+		}
 		
 		HBITMAP hOld = (HBITMAP)SelectObject(hdcDib, hDib);
 	

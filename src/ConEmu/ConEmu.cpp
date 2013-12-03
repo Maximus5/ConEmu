@@ -987,7 +987,7 @@ bool CConEmuMain::CheckBaseDir()
 bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/)
 {
 	LPCWSTR pszExt = asFilePath ? PointToExt(asFilePath) : NULL;
-	int nLen = lstrlen(asFilePath);
+	int nLen = asFilePath ? lstrlen(asFilePath) : 0;
 
 	if (!asFilePath || !*asFilePath || !pszExt || !*pszExt || (nLen > MAX_PATH))
 	{
@@ -8813,9 +8813,8 @@ bool CConEmuMain::StartDebugLogConsole()
 	WCHAR  szExe[MAX_PATH*2] = {0};
 	bool lbRc = false;
 	//DWORD nLen = 0;
-	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
-	STARTUPINFO si; memset(&si, 0, sizeof(si));
-	si.cb = sizeof(si);
+	PROCESS_INFORMATION pi = {NULL};
+	STARTUPINFO si = {sizeof(si)};
 	DWORD dwSelfPID = GetCurrentProcessId();
 	// "/ATTACH" - низя, а то заблокируемся при попытке подключения к "отлаживаемому" GUI
 	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%u /BW=80 /BH=25 /BZ=%u",
@@ -8837,6 +8836,8 @@ bool CConEmuMain::StartDebugLogConsole()
 	else
 	{
 		gbDebugLogStarted = TRUE;
+		SafeCloseHandle(pi.hProcess);
+		SafeCloseHandle(pi.hThread);
 		lbRc = true;
 	}
 
@@ -8858,7 +8859,7 @@ bool CConEmuMain::StartDebugActiveProcess()
 	WCHAR  szExe[0x400] = {0};
 	bool lbRc = false;
 	//DWORD nLen = 0;
-	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+	PROCESS_INFORMATION pi = {NULL};
 	STARTUPINFO si = {sizeof(si)};
 	WARNING("Наверное лучше переделать на CreateCon...");
 	si.dwFlags |= STARTF_USESHOWWINDOW;
@@ -8887,6 +8888,8 @@ bool CConEmuMain::StartDebugActiveProcess()
 	else
 	{
 		gbDebugLogStarted = TRUE;
+		SafeCloseHandle(pi.hProcess);
+		SafeCloseHandle(pi.hThread);
 		lbRc = true;
 	}
 
@@ -8908,7 +8911,7 @@ bool CConEmuMain::MemoryDumpActiveProcess()
 	WCHAR  szExe[0x400] = {0};
 	bool lbRc = false;
 	//DWORD nLen = 0;
-	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+	PROCESS_INFORMATION pi = {NULL};
 	STARTUPINFO si = {sizeof(si)};
 	si.dwFlags |= STARTF_USESHOWWINDOW;
 	si.wShowWindow = SW_SHOWNORMAL;
@@ -8932,6 +8935,8 @@ bool CConEmuMain::MemoryDumpActiveProcess()
 	else
 	{
 		gbDebugLogStarted = TRUE;
+		SafeCloseHandle(pi.hProcess);
+		SafeCloseHandle(pi.hThread);
 		lbRc = true;
 	}
 
@@ -14688,7 +14693,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 					}
 				}
 				lbFound = (iUnknownLeft == 1);
-				wsprintf(szInfo, L"hkl=0x%08X, dwLayout=" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L" -- Warning, strange layout ID", dwLayoutName, hKeyb[i]);
+				wsprintf(szInfo, L"hkl=0x%08X, dwLayout=" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L" -- Warning, strange layout ID", dwLayoutName, WIN3264WSPRINT(hKeyb[i]));
 				LogString(szInfo);
 				break;
 			//case 3:
