@@ -8141,9 +8141,36 @@ bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 	// Если крутится альтернативный сервер - команду нужно выполнять в нем
 	if (gpSrv->dwAltServerPID && (gpSrv->dwAltServerPID != gnSelfPID))
 	{
+		HANDLE hSave = NULL, hDup = NULL; DWORD nDupError = (DWORD)-1;
+		if ((in.hdr.nCmd == CECMD_SETCONSCRBUF) && (in.DataSize() >= sizeof(in.SetConScrBuf)) && in.SetConScrBuf.bLock)
+		{
+			if (gpSrv->hAltServer)
+			{
+				hSave = in.SetConScrBuf.hRequestor;
+				if (!hSave)
+					nDupError = (DWORD)-3;
+				else if (!DuplicateHandle(GetCurrentProcess(), hSave, gpSrv->hAltServer, &hDup, 0, FALSE, DUPLICATE_SAME_ACCESS))
+					nDupError = GetLastError();
+				else
+					in.SetConScrBuf.hRequestor = hDup;
+			}
+			else
+			{
+				nDupError = (DWORD)-2;
+			}
+		}
+
 		(*out) = ExecuteSrvCmd(gpSrv->dwAltServerPID, &in, ghConWnd);
 		lbProcessed = ((*out) != NULL);
 		lbRc = lbProcessed;
+
+		if (hSave)
+		{
+			in.SetConScrBuf.hRequestor = hSave;
+			if (lbProcessed)
+				SafeCloseHandle(hSave);
+		}
+		UNREFERENCED_PARAMETER(nDupError);
 	}
 	return lbProcessed;
 }
