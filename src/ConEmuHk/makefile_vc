@@ -14,7 +14,11 @@ NO_OPTIMIZE = 1
 
 DEF_NAME = export
 
+!if defined(DONT_USE_SEH)
+DEF_SEH =
+!else
 DEF_SEH = /DUSE_SEH
+!endif
 
 !if defined(AMD64)
 OUTNAME = ConEmuHk64
