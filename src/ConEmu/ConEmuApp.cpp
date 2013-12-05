@@ -2898,12 +2898,35 @@ void UnitExpandTest()
 	FindComspec(&tcc, false);
 }
 
+void UnitModuleTest()
+{
+	wchar_t* pszConEmuCD = lstrmerge(gpConEmu->ms_ConEmuBaseDir, WIN3264TEST(L"\\ConEmuCD.dll","\\ConEmuCD64.dll"));
+	HMODULE hMod;
+	bool bTest;
+
+	_ASSERTE(!IsModuleValid((HMODULE)NULL));
+	_ASSERTE(!IsModuleValid((HMODULE)INVALID_HANDLE_VALUE));
+
+	hMod = GetModuleHandle(L"kernel32.dll");
+	bTest = IsModuleValid(hMod);
+	_ASSERTE(bTest);
+
+	hMod = LoadLibrary(pszConEmuCD);
+	bTest = IsModuleValid(hMod);
+	_ASSERTE(bTest);
+
+	FreeLibrary(hMod);
+	bTest = IsModuleValid(hMod);
+	_ASSERTE(!bTest);
+}
+
 void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
 	UnitMaskTests();
 	UnitDriveTests();
 	UnitExpandTest();
+	UnitModuleTest();
 }
 #endif
 

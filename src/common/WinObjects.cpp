@@ -1024,11 +1024,44 @@ bool IsModuleValid(HMODULE module)
 	if (LDR_IS_RESOURCE(module))
 		return false;
 
-#ifdef USE_SEH
 	bool lbValid = true;
+	#ifdef USE_SEH
 	IMAGE_DOS_HEADER dos;
 	IMAGE_NT_HEADERS nt;
+	#endif
 
+	static bool bSysInfoRetrieved = false;
+	static SYSTEM_INFO si = {};
+	if (!bSysInfoRetrieved)
+	{
+		GetSystemInfo(&si);
+		bSysInfoRetrieved = true;
+	}
+
+	LPBYTE lpTest;
+	SIZE_T cbCommitSize = max(max(4096,sizeof(IMAGE_DOS_HEADER)),si.dwPageSize);
+
+	// Issue 881
+	lpTest = (LPBYTE)VirtualAlloc((LPVOID)module, cbCommitSize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+	if (lpTest)
+	{
+		// If we can lock mem region with (IMAGE_DOS_HEADER) of checking module
+		if ((lpTest <= (LPBYTE)module) && ((lpTest + cbCommitSize) >= (((LPBYTE)module) + sizeof(IMAGE_DOS_HEADER))))
+		{
+			// That means, it was unloaded
+			lbValid = false;
+		}
+		VirtualFree(lpTest, 0, MEM_RELEASE);
+
+		if (!lbValid)
+			goto wrap;
+	}
+	else
+	{
+		// Memory is used (supposing by module)
+	}
+
+#ifdef USE_SEH
 	SAFETRY
 	{
 		memmove(&dos, (void*)module, sizeof(dos));
@@ -1048,23 +1081,31 @@ bool IsModuleValid(HMODULE module)
 		lbValid = false;
 	}
 
-	return lbValid;
 #else
-	if (IsBadReadPtr((void*)module, sizeof(IMAGE_DOS_HEADER)))
-		return false;
-
-	if (((IMAGE_DOS_HEADER*)module)->e_magic != IMAGE_DOS_SIGNATURE /*'ZM'*/)
-		return false;
-
-	IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)module + ((IMAGE_DOS_HEADER*)module)->e_lfanew);
-	if (IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)))
-		return false;
-
-	if (nt_header->Signature != 0x004550)
-		return false;
-
-	return true;
+	if (!IsBadReadPtr((void*)module, sizeof(IMAGE_DOS_HEADER)))
+	{
+		lbValid = false;
+	}
+	else if (((IMAGE_DOS_HEADER*)module)->e_magic != IMAGE_DOS_SIGNATURE /*'ZM'*/)
+	{
+		lbValid = false;
+	}
+	else
+	{
+		IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)module + ((IMAGE_DOS_HEADER*)module)->e_lfanew);
+		if (IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)))
+		{
+			lbValid = false;
+		}
+		else if (nt_header->Signature != 0x004550)
+		{
+			return false;
+		}
+	}
 #endif
+
+wrap:
+	return lbValid;
 }
 
 bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL)
