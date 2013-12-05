@@ -2900,7 +2900,7 @@ void UnitExpandTest()
 
 void UnitModuleTest()
 {
-	wchar_t* pszConEmuCD = lstrmerge(gpConEmu->ms_ConEmuBaseDir, WIN3264TEST(L"\\ConEmuCD.dll","\\ConEmuCD64.dll"));
+	wchar_t* pszConEmuCD = lstrmerge(gpConEmu->ms_ConEmuBaseDir, WIN3264TEST(L"\\ConEmuCD.dll",L"\\ConEmuCD64.dll"));
 	HMODULE hMod;
 	bool bTest;
 
