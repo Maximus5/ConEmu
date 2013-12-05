@@ -5243,11 +5243,11 @@ void CRealBuffer::FindPanels()
 		             && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
 		            ||
 		            ((bFirstCharOk || con.pConChar[nIdx] == ucBoxDblDownRight)
-		             && ((con.pConChar[nIdx+1] == ucBoxDblHorz && bFarShowColNames)
+		             && (((con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == L' ') && bFarShowColNames)
 		                 || con.pConChar[nIdx+1] == ucBoxSinglDownDblHorz // доп.окон нет, только рамка
 						 || con.pConChar[nIdx+1] == ucBoxDblDownDblHorz
 		                 || (con.pConChar[nIdx+1] == L'[' && con.pConChar[nIdx+2] == ucLeftScroll) // ScreenGadgets, default
-						 || (!bFarShowColNames && con.pConChar[nIdx+1] != ucBoxDblHorz
+						 || (!bFarShowColNames && !(con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == L' ')
 							&& con.pConChar[nIdx+1] != ucBoxSinglDownDblHorz && con.pConChar[nIdx+1] != ucBoxDblDownDblHorz)
 		                ))
 		        )
@@ -5257,7 +5257,7 @@ void CRealBuffer::FindPanels()
 			{
 				// Найти правый край левой панели
 				if (con.pConChar[nIdx+i] == ucBoxDblDownLeft
-				        && ((con.pConChar[nIdx+i-1] == ucBoxDblHorz)
+				        && ((con.pConChar[nIdx+i-1] == ucBoxDblHorz || con.pConChar[nIdx+i-1] == L' ')
 				            || con.pConChar[nIdx+i-1] == ucBoxSinglDownDblHorz // правый угол панели
 							|| con.pConChar[nIdx+i-1] == ucBoxDblDownDblHorz
 				            || (con.pConChar[nIdx+i-1] == L']' && con.pConChar[nIdx+i-2] == L'\\') // ScreenGadgets, default
@@ -5344,11 +5344,11 @@ void CRealBuffer::FindPanels()
 					{
 						// ищем левую границу правой панели
 						if (con.pConChar[nIdx+i] == ucBoxDblDownRight
-						        && ((con.pConChar[nIdx+i+1] == ucBoxDblHorz && bFarShowColNames)
+						        && (((con.pConChar[nIdx+i+1] == ucBoxDblHorz || con.pConChar[nIdx+i+1] == L' ') && bFarShowColNames)
 						            || con.pConChar[nIdx+i+1] == ucBoxSinglDownDblHorz // правый угол панели
 									|| con.pConChar[nIdx+i+1] == ucBoxDblDownDblHorz
 						            || (con.pConChar[nIdx+i-1] == L']' && con.pConChar[nIdx+i-2] == L'\\') // ScreenGadgets, default
-									|| (!bFarShowColNames && con.pConChar[nIdx+i+1] != ucBoxDblHorz 
+									|| (!bFarShowColNames && !(con.pConChar[nIdx+i+1] == ucBoxDblHorz || con.pConChar[nIdx+i+1] == L' ')
 										&& con.pConChar[nIdx+i+1] != ucBoxSinglDownDblHorz && con.pConChar[nIdx+i+1] != ucBoxDblDownDblHorz)
 									)
 						        // МОЖЕТ быть закрыто AltHistory
