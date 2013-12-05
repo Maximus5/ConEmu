@@ -89,7 +89,9 @@ WARNING("WIN64 was not defined");
 #endif
 #endif
 
-#ifdef _DEBUG
+#if defined(DONT_USE_SEH)
+#undef USE_SEH
+#elif defined(_DEBUG)
 #define USE_SEH
 #endif
 

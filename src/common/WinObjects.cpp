@@ -1082,7 +1082,7 @@ bool IsModuleValid(HMODULE module)
 	}
 
 #else
-	if (!IsBadReadPtr((void*)module, sizeof(IMAGE_DOS_HEADER)))
+	if (IsBadReadPtr((void*)module, sizeof(IMAGE_DOS_HEADER)))
 	{
 		lbValid = false;
 	}
