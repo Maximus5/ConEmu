@@ -162,44 +162,62 @@ bool CAttachDlg::OnStartAttach()
 	bool lbRc = false;
 	// Тут нужно получить инфу из списка и дернуть собственно аттач
 	wchar_t szItem[128] = {};
-	DWORD nPID = 0, nBits = WIN3264TEST(32,64);
-	AttachProcessType nType = apt_Unknown;
+	//DWORD nPID = 0, nBits = WIN3264TEST(32,64);
+	//AttachProcessType nType = apt_Unknown;
 	wchar_t *psz;
-	int iSel;
+	int iSel, iCur;
 	DWORD nTID;
 	HANDLE hThread = NULL;
 	AttachParm *pParm = NULL;
-	HWND hAttachWnd = NULL;
+	MArray<AttachParm> Parms;
+	//HWND hAttachWnd = NULL;
 
 	ShowWindow(mh_Dlg, SW_HIDE);
 
 	BOOL bAlternativeMode = (IsDlgButtonChecked(mh_Dlg, IDC_ATTACH_ALT) != 0);
 
 	iSel = ListView_GetNextItem(mh_List, -1, LVNI_SELECTED);
-	if (iSel < 0)
-		goto wrap;
-
-	ListView_GetItemText(mh_List, iSel, alc_PID, szItem, countof(szItem)-1);
-	nPID = wcstoul(szItem, &psz, 10);
-	if (nPID)
+	while (iSel >= 0)
 	{
-		psz = wcschr(szItem, L'*');
-		if (psz)
-			nBits = wcstoul(psz+1, &psz, 10);
+		iCur = iSel;
+		iSel = ListView_GetNextItem(mh_List, iCur, LVNI_SELECTED);
+
+		AttachParm L = {NULL, 0, WIN3264TEST(32,64), apt_Unknown, bAlternativeMode};
+
+		ListView_GetItemText(mh_List, iCur, alc_PID, szItem, countof(szItem)-1);
+		L.nPID = wcstoul(szItem, &psz, 10);
+		if (L.nPID)
+		{
+			psz = wcschr(szItem, L'*');
+			if (psz)
+				L.nBits = wcstoul(psz+1, &psz, 10);
+		}
+		ListView_GetItemText(mh_List, iCur, alc_Type, szItem, countof(szItem));
+		if (lstrcmp(szItem, szTypeCon) == 0)
+			L.nType = apt_Console;
+		else if (lstrcmp(szItem, szTypeGui) == 0)
+			L.nType = apt_Gui;
+
+		ListView_GetItemText(mh_List, iCur, alc_HWND, szItem, countof(szItem));
+		L.hAttachWnd = (szItem[0]==L'0' && szItem[1]==L'x') ? (HWND)wcstoul(szItem+2, &psz, 16) : NULL;
+
+		if (!L.nPID || !L.nBits || !L.nType || !L.hAttachWnd)
+		{
+			MBoxAssert(L.nPID && L.nBits && L.nType && L.hAttachWnd);
+			goto wrap;
+		}
+
+		Parms.push_back(L);
 	}
-	ListView_GetItemText(mh_List, iSel, alc_Type, szItem, countof(szItem));
-	if (lstrcmp(szItem, szTypeCon) == 0)
-		nType = apt_Console;
-	else if (lstrcmp(szItem, szTypeGui) == 0)
-		nType = apt_Gui;
 
-	ListView_GetItemText(mh_List, iSel, alc_HWND, szItem, countof(szItem));
-	hAttachWnd = (szItem[0]==L'0' && szItem[1]==L'x') ? (HWND)wcstoul(szItem+2, &psz, 16) : NULL;
-
-	if (!nPID || !nBits || !nType || !hAttachWnd)
+	if (Parms.empty())
 	{
-		MBoxAssert(nPID && nBits && nType && hAttachWnd);
 		goto wrap;
+	}
+	else
+	{
+		AttachParm N = {NULL};
+		Parms.push_back(N);
 	}
 
 	//// Чтобы клик от мышки в консоль не провалился
@@ -213,18 +231,15 @@ bool CAttachDlg::OnStartAttach()
 
 	// Работу делаем в фоновом потоке, чтобы не блокировать главный
 	// (к окну ConEmu должна подцепиться новая вкладка)
-	pParm = (AttachParm*)malloc(sizeof(*pParm));
+	pParm = Parms.detach();
 	if (!pParm)
 	{
 		_wsprintf(szItem, SKIPLEN(countof(szItem)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-		DisplayLastError(L"Can't allocate AttachParm*", ERROR_NOT_ENOUGH_MEMORY, 0, szItem);
+		DisplayLastError(L"Parms.detach() failed", -1, 0, szItem);
 		goto wrap;
 	}
 	else
 	{
-		pParm->hAttachWnd = hAttachWnd;
-		pParm->nPID = nPID; pParm->nBits = nBits; pParm->nType = nType;
-		pParm->bAlternativeMode = bAlternativeMode;
 		hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)StartAttachThread, pParm, 0, &nTID);
 		if (!hThread)
 		{
@@ -236,6 +251,7 @@ bool CAttachDlg::OnStartAttach()
 			lbRc = true;
 	}
 wrap:
+	// We don't need this handle
 	if (hThread)
 		CloseHandle(hThread);
 
@@ -835,7 +851,13 @@ DWORD CAttachDlg::StartAttachThread(AttachParm* lpParam)
 		return 100;
 	}
 
-	bool lbRc = StartAttach(lpParam->hAttachWnd, lpParam->nPID, lpParam->nBits, lpParam->nType, lpParam->bAlternativeMode);
+	bool lbRc = true;
+	
+	for (AttachParm* p = lpParam; p->hAttachWnd; p++)
+	{
+		if (!StartAttach(p->hAttachWnd, p->nPID, p->nBits, p->nType, p->bAlternativeMode))
+			lbRc = false;
+	}
 
 	free(lpParam);
 
