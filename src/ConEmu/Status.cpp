@@ -341,6 +341,8 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 {
 	#ifdef DUMP_STATUS_IMG
 	static bool bNeedDumpImage;
+	LPCWSTR pszDumpImgName = L"C:\\ConEmu\\StatusMem.png";
+	LPCWSTR pszDumpImgDstName = L"C:\\ConEmu\\StatusDst.png";
 	#endif
 
 	_ASSERTE(gpConEmu->isMainThread());
@@ -775,7 +777,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				if (hDrawDC != hPaint)
 				{
 					FillRect(hDrawDC, &rcText, (HBRUSH)GetStockObject(BLACK_BRUSH));
-					DumpImage(mh_MemDC, mh_Bmp, nStatusWidth, nStatusHeight, L"T:\\StatusMem.png");
+					DumpImage(mh_MemDC, mh_Bmp, nStatusWidth, nStatusHeight, pszDumpImgName);
 					FillRect(hDrawDC, &rcText, hBr);
 
 					SelectObject(hDrawDC, hFont);
@@ -805,7 +807,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 			{
 				if (hDrawDC != hPaint)
 				{
-					DumpImage(mh_MemDC, mh_Bmp, nStatusWidth, nStatusHeight, L"T:\\StatusMem.png");
+					DumpImage(mh_MemDC, mh_Bmp, nStatusWidth, nStatusHeight, pszDumpImgName);
 				}
 			}
 			#endif
@@ -847,15 +849,25 @@ wrap:
 	if (bNeedDumpImage)
 	{
 		if (hDrawDC != hPaint)
-			DumpImage(mh_MemDC, mh_Bmp, nStatusWidth, nStatusHeight, L"T:\\StatusMem.png");
-		DumpImage(hPaint, NULL, rcStatus.left, rcStatus.top, nStatusWidth, nStatusHeight, L"T:\\StatusDst.png");
+			DumpImage(mh_MemDC, mh_Bmp, nStatusWidth, nStatusHeight, pszDumpImgName);
+		DumpImage(hPaint, NULL, rcStatus.left, rcStatus.top, nStatusWidth, nStatusHeight, pszDumpImgDstName);
 	}
 	#endif
 
 	if (hDrawDC != hPaint)
 	{
 		DWORD nErr = 0;
-		BOOL bPaintOK = BitBlt(hPaint, rcStatus.left, rcStatus.top, nStatusWidth, nStatusHeight, hDrawDC, 0,0, SRCCOPY);
+		BOOL bPaintOK;
+		#if 0 //def _DEBUG
+		HBRUSH hOldB = (HBRUSH)SelectObject(hPaint, (HBRUSH)GetStockObject(DKGRAY_BRUSH));
+		HPEN hOldP = (HPEN)SelectObject(hPaint, (HPEN)GetStockObject(WHITE_PEN));
+		Rectangle(hPaint, rcStatus.left, rcStatus.top, rcStatus.left+nStatusWidth, rcStatus.top+nStatusHeight);
+		SelectObject(hPaint, hOldB);
+		SelectObject(hPaint, hOldP);
+		bPaintOK = TRUE;
+		#else
+		bPaintOK = BitBlt(hPaint, rcStatus.left, rcStatus.top, nStatusWidth, nStatusHeight, hDrawDC, 0,0, SRCCOPY);
+		#endif
 		if (!bPaintOK)
 		{
 			#ifdef _DEBUG
@@ -1136,7 +1148,28 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				SetClickedItemDesc(csi_Last);
 			}
 			
-			UpdateStatusBar(true);
+			bool bNeedUpdate = true;
+
+			#ifdef _DEBUG
+			static POINT ptLast = {};
+			if (uMsg == WM_MOUSEMOVE)
+			{
+				POINT ptCur = {}; GetCursorPos(&ptCur);
+				if (ptCur.x != ptLast.x || ptCur.y != ptLast.y)
+				{
+					ptLast = ptCur;
+				}
+				else
+				{
+					bNeedUpdate = false;
+				}
+			}
+			#endif
+
+			if (bNeedUpdate)
+			{
+				UpdateStatusBar(true);
+			}
 
 			if ((uMsg == WM_LBUTTONDOWN) || (uMsg == WM_LBUTTONDBLCLK))
 			{

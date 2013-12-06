@@ -15,6 +15,16 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.12.05
+[!] Some fixes in pipe processing.
+[*] Some codeanalyze fixes.
+[*] Some more debug info in MPipe.h.
+[*] IsConEmu.cmd updated, returns errorlevel 0,1,2.
+[%] Issue 881: ConEmuHk causes IBM Java applications to crash.
+[%] Issue 1236: Far Manager. Pathname not fit in left panel causes right mouse click failure.
+[%] Issue 1358: Allow multiple selections in 'Attach To' window.
+
+
 2013.12.02
 [!] Trying to fix MS bug with kernel crash in ReadConsole.
 [!] Some fixes in pipe processing.
