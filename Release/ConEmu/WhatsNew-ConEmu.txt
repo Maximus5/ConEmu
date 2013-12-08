@@ -15,6 +15,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.12.07
+[%] Issue 1385. Fix wrong coloring of DBCS chars in 936/932 cp.
+
 2013.12.05
 [!] Some fixes in pipe processing.
 [*] Some codeanalyze fixes.
