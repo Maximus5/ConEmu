@@ -8605,29 +8605,40 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		if ((nCP != CP_UTF8) && (nCP != CP_UTF7))
 		{
 			UINT MaxCharSize = 0;
-			LPCSTR szLeads = GetCpInfoLeads(nCP, &MaxCharSize);
-
-			if (szLeads && *szLeads && (MaxCharSize > 1))
+			if (AreCpInfoLeads(nCP, &MaxCharSize) && (MaxCharSize > 1))
 			{
-				_ASSERTE(MaxCharSize==2 || MaxCharSize==4);
-				char szLine[512];
+				_ASSERTE(MaxCharSize==2);
+				WORD Attrs[40];
+				LONG cchMax = countof(Attrs);
+				WORD* pAttrs = (csbi.dwCursorPosition.X <= cchMax) ? Attrs : (WORD*)calloc(csbi.dwCursorPosition.X, sizeof(*pAttrs));
+				if (pAttrs)
+					cchMax = csbi.dwCursorPosition.X;
+				else
+					pAttrs = Attrs; // memory allocation fail? try part of line?
 				COORD crRead = {0, csbi.dwCursorPosition.Y};
-				//120830 - DBCS uses 2 or 4 cells per hieroglyph
-				DWORD nRead = 0, cchMax = min((int)countof(szLine)-1, csbi.dwSize.X/* *cpinfo.MaxCharSize */);
-				if (ReadConsoleOutputCharacterA(ahConOut, szLine, cchMax, crRead, &nRead) && nRead)
+				//120830 - DBCS uses 2 cells per hieroglyph
+				DWORD nRead = 0;
+				if (ReadConsoleOutputAttribute(ahConOut, pAttrs, cchMax, crRead, &nRead) && nRead)
 				{
-					_ASSERTE(nRead<((int)countof(szLine)-1));
-					szLine[nRead] = 0;
-					char* pszEnd = szLine+min((int)nRead,csbi.dwCursorPosition.X);
-					char* psz = szLine;
+					_ASSERTE(nRead==cchMax);
 					int nXShift = 0;
-					while (((psz = strpbrk(psz, szLeads)) != NULL) && (psz < pszEnd))
+					LPWORD p = pAttrs, pEnd = pAttrs+nRead;
+					while (p < pEnd)
 					{
-						nXShift++;
-						psz += MaxCharSize;
+						if ((*p) & COMMON_LVB_LEADING_BYTE)
+						{
+							nXShift++;
+							p++;
+							_ASSERTE((p < pEnd) && ((*p) & COMMON_LVB_TRAILING_BYTE));
+						}
+						p++;
 					}
 					_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
 					apsc->dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
+				}
+				if (pAttrs && (pAttrs != Attrs))
+				{
+					free(pAttrs);
 				}
 			}
 		}

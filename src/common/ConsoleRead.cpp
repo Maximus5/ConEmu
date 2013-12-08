@@ -33,45 +33,32 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define DUMP_TEST_READS
 #undef DUMP_TEST_READS
 
-LPCSTR GetCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize)
+BOOL AreCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize)
 {
-	LPCSTR pszLeads = NULL;
+	BOOL bLeads = FALSE;
 	static CPINFOEX cpinfo = {};
-	static char szLeads[256] = {};
+	static BOOL sbLeads = FALSE;
 
 	if (cpinfo.CodePage != nCP)
 	{
 		if (!GetCPInfoEx(nCP, 0, &cpinfo) || (cpinfo.MaxCharSize <= 1))
 		{
-			ZeroStruct(szLeads);
+			sbLeads = bLeads = FALSE;
 		}
 		else
 		{
-			int c = 0;
-			_ASSERTE(countof(cpinfo.LeadByte)>=10);
-			for (int i = 0; (i < 5) && cpinfo.LeadByte[i*2]; i++)
-			{
-				BYTE c1 = cpinfo.LeadByte[i*2];
-				BYTE c2 = cpinfo.LeadByte[i*2+1];
-				for (BYTE j = c1; (j <= c2) && (c < 254); j++, c++)
-				{
-					szLeads[c] = j;
-				}
-			}
-			_ASSERTE(c && c <= 255);
-			szLeads[c] = 0;
-			pszLeads = szLeads;
+			sbLeads = bLeads = (cpinfo.LeadByte[0] && cpinfo.LeadByte[1]); // At lease one lead-bytes range
 		}
 	}
 	else if (cpinfo.MaxCharSize > 1)
 	{
-		pszLeads = szLeads;
+		bLeads = sbLeads;
 	}
 
 	if (pnMaxCharSize)
 		*pnMaxCharSize = cpinfo.MaxCharSize;
 
-	return pszLeads;
+	return bLeads;
 }
 
 
@@ -91,7 +78,6 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 	}
 
 	bool   bDBCS_CP = bDBCS;
-	LPCSTR szLeads = NULL;
 	UINT   MaxCharSize = 0;
 	DWORD  nCP, nCP1, nMode;
 
@@ -101,8 +87,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 		nCP1 = GetConsoleCP();
 		GetConsoleMode(hOut, &nMode);
 
-		szLeads = GetCpInfoLeads(nCP, &MaxCharSize);
-		if (!szLeads || !*szLeads || MaxCharSize < 2)
+		if (!AreCpInfoLeads(nCP, &MaxCharSize) || MaxCharSize < 2)
 		{
 			bDBCS_CP = false;
 		}
@@ -158,6 +143,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 		CHAR_INFO* pLine = pData;
 		if (!bDBCS_CP)
 		{
+			// Simple processing (no DBCS) - one cell == one wchar_t
 			for (int y = Y1; y <= Y2; y++, rgn.Top++, pLine+=nBufWidth)
 			{
 				nTick3 = GetTickCount();
@@ -182,93 +168,78 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 				nTick4 = GetTickCount();
 			}
 		}
-		else
+		else // Process on DBCS-capable systems
 		{
-			DWORD nAttrsMax = bufSize.X;
-			DWORD nCharsMax = nAttrsMax/* *4 */; // -- максимум там вроде на некоторых CP - 4 байта
-			wchar_t* pszChars = (wchar_t*)malloc(nCharsMax*sizeof(*pszChars));
-			char* pszCharsA = (char*)malloc(nCharsMax*sizeof(*pszCharsA));
-			WORD* pnAttrs = (WORD*)malloc(bufSize.X*sizeof(*pnAttrs));
-			if (pszChars && pszCharsA && pnAttrs)
+			for (int y = Y1; y <= Y2; y++, rgn.Top++, pLine+=nBufWidth)
 			{
-				COORD crRead = {rgn.Left,Y1};
-				DWORD nChars, nAttrs, nCharsA;
-				CHAR_INFO* pLine = pData;
-				for (; crRead.Y <= Y2; crRead.Y++, pLine+=nBufWidth)
+				nTick3 = GetTickCount();
+				rgn.Bottom = rgn.Top;
+
+				#ifdef DUMP_TEST_READS
+				bSbiTmp = GetConsoleScreenBufferInfo(hOut, &sbi_tmp);
+				#endif
+
+				lbRc = ReadConsoleOutputW(hOut, pLine, bufSize, bufCoord, &rgn);
+
+				#ifdef DUMP_TEST_READS
+				UNREFERENCED_PARAMETER(sbi_tmp.dwSize.Y);
+				#endif
+
+				if (!lbRc)
 				{
-					nTick3 = GetTickCount();
-					rgn.Bottom = rgn.Top;
-
-					nChars = nCharsA = nAttrs = 0;
-					BOOL lbRcTxt = ReadConsoleOutputCharacterA(hOut, pszCharsA, nCharsMax, crRead, &nCharsA);
 					dwErrCode = GetLastError();
-					if (!lbRcTxt || !nCharsA)
-					{
-						nCharsA = 0;
-						lbRcTxt = ReadConsoleOutputCharacterW(hOut, pszChars, nCharsMax, crRead, &nChars);
-						dwErrCode = GetLastError();
-					}
-					BOOL lbRcAtr = ReadConsoleOutputAttribute(hOut, pnAttrs, bufSize.X, crRead, &nAttrs);
-					dwErrCode = GetLastError();
-					
-					lbRc = lbRcTxt && lbRcAtr;
-
-					if (!lbRc)
-					{
-						dwErrCode = GetLastError();
-						_ASSERTE(FALSE && "ReadConsoleOutputAttribute failed in MyReadConsoleOutput");
-
-						CHAR_INFO* p = pLine;
-						for (size_t i = 0; i < nAttrsMax; ++i, ++p)
-						{
-							p->Attributes = 4; // red on black
-							p->Char.UnicodeChar = 0xFFFE; // not a character
-						}
-
-						break;
-					}
-					else
-					{
-						if (nCharsA)
-						{
-							nChars = MultiByteToWideChar(nCP, 0, pszCharsA, nCharsA, pszChars, nCharsMax);
-						}
-						CHAR_INFO* p = pLine;
-						wchar_t* psz = pszChars;
-						WORD* pn = pnAttrs;
-						//int i = nAttrsMax;
-						//while ((i--) > 0)
-						//{
-						//	p->Attributes = *(pn++);
-						//	p->Char.UnicodeChar = *(psz++);
-						//	p++;
-						//}
-						size_t x1 = min(nChars,nAttrsMax);
-						size_t x2 = nAttrsMax;
-						for (size_t i = 0; i < x1; ++i, ++p)
-						{
-							WARNING("Переделать!");
-							p->Attributes = *pn & (~(COMMON_LVB_LEADING_BYTE|COMMON_LVB_TRAILING_BYTE));
-							p->Char.UnicodeChar = *psz;
-
-							WARNING("Некорректно! pn может указывать на начало блока DBCS/QBCS");
-							pn++; // += MaxCharSize;
-							psz++;
-						}
-						WORD nLastAttr = pnAttrs[max(0,(int)nAttrs-1)];
-						for (size_t i = x1; i < x2; ++i, ++p)
-						{
-							p->Attributes = nLastAttr;
-							p->Char.UnicodeChar = L' ';
-						}
-					}
-					nTick4 = GetTickCount();
+					_ASSERTE(FALSE && "ReadConsoleOutputW failed in MyReadConsoleOutput");
+					break;
 				}
+
+				// DBCS corrections (we need only glyph per hieroglyph for drawing)
+				const CHAR_INFO* pSrc = pLine;
+				const CHAR_INFO* pEnd = pLine + nBufWidth;
+				CHAR_INFO* pDst = pLine;
+				// Check first, line has hieroglyphs?
+				while (pSrc < pEnd)
+				{
+					if (pSrc->Attributes & COMMON_LVB_LEADING_BYTE)
+						break;
+					*(pDst++) = *(pSrc++);
+				}
+				// If line was not fully processed (LVB was found)
+				if (pSrc < pEnd)
+				{
+					// Yes, Process this line with substitutions
+					while (pSrc < pEnd)
+					{
+						*pDst = *pSrc;
+						wchar_t wc = pSrc->Char.UnicodeChar;
+						if (pSrc->Attributes & COMMON_LVB_LEADING_BYTE)
+						{
+							while (((++pSrc) < pEnd) && !(pSrc->Attributes & COMMON_LVB_TRAILING_BYTE))
+							{
+								// May be 2 or 4 cells
+								if ((pDst->Char.UnicodeChar != wc) && ((pDst+1) < pEnd))
+								{
+									wc = pSrc->Char.UnicodeChar;
+									*(++pDst) = *pSrc;
+								}
+							}
+							pDst->Attributes |= COMMON_LVB_TRAILING_BYTE;
+						}
+						pSrc++; pDst++;
+					}
+					// Clean rest of line
+					WORD nLastAttr = (pEnd-1)->Attributes;
+					while (pDst < pEnd)
+					{
+						pDst->Attributes = nLastAttr;
+						pDst->Char.UnicodeChar = L' ';
+						pDst++;
+					}
+				}
+
+				// Line is done
+				nTick4 = GetTickCount();
 			}
-			SafeFree(pszChars);
-			SafeFree(pszCharsA);
-			SafeFree(pnAttrs);
-		}
+		} // End of DBCS-capable processing
 
 		nTick5 = GetTickCount();
 	}
