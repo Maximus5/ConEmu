@@ -17539,7 +17539,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	#endif
 
 	//Maximus5. Hack - если какая-то зараза задизеблила окно
-	if (!gbDontEnable)
+	if (!DontEnable::isDontEnable())
 	{
 		DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 

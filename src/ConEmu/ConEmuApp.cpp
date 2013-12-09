@@ -102,10 +102,11 @@ Settings  *gpSet = NULL;
 CSettings *gpSetCls = NULL;
 //TCHAR temp[MAX_PATH]; -- низзя, очень велик шанс нарваться при многопоточности
 HICON hClassIcon = NULL, hClassIconSm = NULL;
-BOOL gbDontEnable = FALSE;
 BOOL gbDebugLogStarted = FALSE;
 BOOL gbDebugShowRects = FALSE;
 CEStartupEnv* gpStartEnv = NULL;
+
+LONG DontEnable::gnDontEnable = 0;
 
 
 const TCHAR *const gsClassName = VirtualConsoleClass; // окна отрисовки

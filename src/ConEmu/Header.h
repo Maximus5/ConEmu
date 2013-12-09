@@ -150,9 +150,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_RENAME_TAB_LEN 128
 
-#define MBox(rt) MessageBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION, Title) // {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, Title, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION); gbDontEnable = b; }
-#define MBoxA(rt) MessageBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION, NULL) // {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, _T("ConEmu"), /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION); gbDontEnable = b; }
-#define MBoxError(rt) MessageBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONSTOP, NULL) // {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, _T("ConEmu"), /*MB_SYSTEMMODAL |*/ MB_ICONSTOP); gbDontEnable = b; }
+#define MBox(rt) MessageBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION, Title)
+#define MBoxA(rt) MessageBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION, NULL)
+#define MBoxError(rt) MessageBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONSTOP, NULL)
 
 //#define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; StringCchPrintf(szAMsg, countof(szAMsg), _T("Assertion (%s) at\n%s:%i"), _T(#V), _T(__FILE__), __LINE__); MBoxA(szAMsg); }
 #define MBoxAssert(V) _ASSERTE(V)
