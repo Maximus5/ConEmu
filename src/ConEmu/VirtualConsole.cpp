@@ -265,10 +265,9 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	//mcs_BkImgData = NULL;
 	//mn_BkImgWidth = mn_BkImgHeight = 0;
 	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gpSetCls->mh_Font)+sizeof(mh_FontByIndex[0])));
-	// mh_FontByIndex[MAX_FONT_STYLES] // зарезервировано для 'Unicode CharMap'
 	memmove(mh_FontByIndex, gpSetCls->mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0])); //-V512
 	mh_UCharMapFont = NULL; ms_LastUCharMapFont[0] = 0;
-	mh_FontByIndex[MAX_FONT_STYLES] = NULL; // зарезервировано для 'Unicode CharMap'
+	mh_FontByIndex[fnt_UCharMap] = NULL; // reserved for ‘Unicode CharMap’ Far plugin
 	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
 	isFade = false; isForeground = true;
 	mp_Colors = gpSet->GetColors(-1);
@@ -2389,7 +2388,7 @@ bool CVirtualConsole::LoadConsoleData()
 
 						for(int X = rcGlyph.Left; X <= rcGlyph.Right; X++, pAtr++)
 						{
-							pAtr->nFontIndex = MAX_FONT_STYLES;
+							pAtr->nFontIndex = fnt_UCharMap;
 						}
 					}
 				}
@@ -2782,9 +2781,14 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 void CVirtualConsole::UpdateText()
 {
 	_ASSERTE((HDC)m_DC!=NULL);
-	memmove(mh_FontByIndex, gpSetCls->mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0]));
-	mh_FontByIndex[MAX_FONT_STYLES] = mh_UCharMapFont ? mh_UCharMapFont : mh_FontByIndex[0];
+
+	// Refresh fonts array
+	memmove(mh_FontByIndex, gpSetCls->mh_Font, sizeof(gpSetCls->mh_Font));
+	mh_FontByIndex[fnt_UCharMap] = mh_UCharMapFont ? mh_UCharMapFont : mh_FontByIndex[0];
+	//mh_FontByIndex[fnt_FarBorders] = (gpSetCls->mh_Font2.IsSet() && gpSet->isFixFarBorders) ? gpSetCls->mh_Font2 : mh_FontByIndex[0];
+
 	SelectFont(mh_FontByIndex[0]);
+
 	// pointers
 	wchar_t* ConCharLine = NULL;
 	CharAttr* ConAttrLine = NULL;

@@ -137,7 +137,7 @@ class CVirtualConsole :
 		HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
 		HBRUSH  CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COLORREF *pColors = NULL);
 		CEFONT  hSelectedFont, hOldFont;
-		CEFONT  mh_FontByIndex[MAX_FONT_STYLES+1]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
+		CEFONT  mh_FontByIndex[MAX_FONT_STYLES_EX]; // pointers to Normal/Bold/Italic/Bold&Italic/...Underline
 		HFONT   mh_UCharMapFont; SMALL_RECT mrc_UCharMap;
 		wchar_t ms_LastUCharMapFont[32];
 

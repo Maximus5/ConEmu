@@ -34,8 +34,28 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MIN_ALPHA_VALUE 40
 #define MIN_INACTIVE_ALPHA_VALUE 0
 #define MAX_ALPHA_VALUE 255
-#define MAX_FONT_STYLES 8  //normal/(bold|italic|underline)
-#define MAX_FONT_GROUPS 20 // Main, Borders, Japan, Cyrillic, ...
+
+//TODO: #define MAX_FONT_GROUPS 20 // Main, Borders, Japan, Cyrillic, ...
+// #define MAX_FONT_STYLES 8 //normal/(bold|italic|underline)
+enum CEFontStyles
+{
+	fnt_Normal    = 0,
+	fnt_Bold      = 1,
+	fnt_Italic    = 2,
+	fnt_Underline = 4,
+
+	fnt_StdFontMask = (fnt_Bold|fnt_Italic|fnt_Underline), // 7
+	MAX_FONT_STYLES = (fnt_StdFontMask+1), // 8
+
+	fnt_UCharMap    = (MAX_FONT_STYLES),   // 8
+
+	MAX_FONT_STYLES_EX = (fnt_UCharMap+1), // 9 (used in VirtualConsole arrays)
+
+	#if 0
+	fnt_FarBorders  = (MAX_FONT_STYLES+1), // 9
+	MAX_FONT_STYLES_EX = (fnt_FarBorders+1), // 10 (used in VirtualConsole arrays)
+	#endif
+};
 
 #define CURSORSIZE_MIN 5
 #define CURSORSIZE_MAX 100

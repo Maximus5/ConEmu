@@ -5283,7 +5283,7 @@ void CRealBuffer::PrepareColorTable(bool bExtendFonts, CharAttr (&lcaTableExt)[0
 					if (nFontNormalColor != 0xFF)
 						lca.nBackIdx = nFontNormalColor;
 
-					lca.nFontIndex = 1; //  Bold
+					lca.nFontIndex = fnt_Bold;
 					lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_VCon->mp_Colors[lca.nBackIdx];
 				}
 				else if (nBack == nFontItalicColor)  // nFontItalicColor may be -1, тогда мы сюда не попадаем
@@ -5291,7 +5291,7 @@ void CRealBuffer::PrepareColorTable(bool bExtendFonts, CharAttr (&lcaTableExt)[0
 					if (nFontNormalColor != 0xFF)
 						lca.nBackIdx = nFontNormalColor;
 
-					lca.nFontIndex = 2; // Italic
+					lca.nFontIndex = fnt_Italic;
 					lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_VCon->mp_Colors[lca.nBackIdx];
 				}
 			}
@@ -5642,7 +5642,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 								if (pcolSrc->fg_valid)
 								{
 									hasTrueColor = true;
-									lca.nFontIndex = 0; //bold/italic/underline, выставляется ниже
+									lca.nFontIndex = fnt_Normal; //bold/italic/underline will be set below
 									lca.crForeColor = lbFade ? gpSet->GetFadeColor(pcolSrc->fg_color) : pcolSrc->fg_color;
 
 									if (pcolSrc->bk_valid)
@@ -5651,13 +5651,13 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 								else if (pcolSrc->bk_valid)
 								{
 									hasTrueColor = true;
-									lca.nFontIndex = 0; //bold/italic/underline, выставляется ниже
+									lca.nFontIndex = fnt_Normal; //bold/italic/underline will be set below
 									lca.crBackColor = lbFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;
 								}
 
 								// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic,..., 4 - underline, ...
 								if (pcolSrc->style)
-									lca.nFontIndex = pcolSrc->style & 7;
+									lca.nFontIndex = pcolSrc->style & fnt_StdFontMask;
 							}
 						}
 
@@ -5705,7 +5705,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 						int nTo = min(con.etr.mcr_FileLineEnd.X,(int)cnSrcLineLen);
 						for (nX = nFrom; nX <= nTo; nX++)
 						{
-							pcaDst[nX].nFontIndex |= 4; // Отрисовать его как Underline
+							pcaDst[nX].nFontIndex |= fnt_Underline; // Paint it underlined?
 						}
 					}
 					#endif

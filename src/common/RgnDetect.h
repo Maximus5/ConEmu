@@ -41,7 +41,7 @@ typedef struct tag_CharAttr
 		{
 			// *** Begin of All comparison
 			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
-			unsigned int nFontIndex : 8; // 0=normal, or combination {1=bold,2=italic,4=underline}, or 8=UCharMap
+			unsigned int nFontIndex : 8; // 0=normal, or combination {1=bold,2=italic,4=underline}, or 8=UCharMap, others may be used internally in VCon (alternative font)
 			unsigned int crBackColor : 24; // чтобы в ui64 поместился и Flags
 			#define CharAttr_DialogPanel    1 // Far Manager panels
 			#define CharAttr_DialogRect     2 // Flying dialog (over Panels or Editor/Viewer)
