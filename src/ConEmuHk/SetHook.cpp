@@ -654,7 +654,8 @@ const wchar_t* ExcludedModules[MAX_EXCLUDED_MODULES] =
 	L"crypt32.dll",
 	L"setupapi.dll", // "ConEmu\Bugs\2012\z120711\"
 	L"uxtheme.dll", // подозрение на exception на некоторых Win7 & Far3 (Bugs\2012\120124\Info.txt, пункт 3)
-	WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"),
+	WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"), // Loaded in-process when AlternativeServer is started
+	WIN3264TEST(L"ExtendedConsole.dll",L"ExtendedConsole64.dll"), // Our API for Far Manager TrueColor support
 	/*
 	// test
 	L"twext.dll",

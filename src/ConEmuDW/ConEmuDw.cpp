@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-//  #define SHOW_STARTED_MSGBOX
+  #define SHOW_STARTED_MSGBOX
 #else
 //
 #endif
@@ -105,9 +105,13 @@ DWORD   gnBatchRegPID = 0;
 
 CESERVER_CONSOLE_MAPPING_HDR SrvMapping = {};
 
+HMODULE ghSrvDll = NULL;
+RequestLocalServer_t gfRequestLocalServer = NULL;
+
 AnnotationHeader* gpTrueColor = NULL;
 HANDLE ghTrueColor = NULL;
 HANDLE ghFarCommitUpdateSrv = NULL;
+
 BOOL CheckBuffers(bool abWrite = false);
 void CloseBuffers();
 
@@ -257,52 +261,29 @@ BOOL GetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWo
 
 int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 {
-	HMODULE ghSrvDll = NULL;
-	RequestLocalServer_t gfRequestLocalServer = NULL;
-
 	int iRc = CERR_SRVLOADFAILED;
 	if (!Parm || (Parm->StructSize != sizeof(*Parm)))
 	{
 		iRc = CERR_CARGUMENT;
 		goto wrap;
 	}
-	//RequestLocalServerParm Parm = {(DWORD)sizeof(Parm)};
-
-	//if (Parm->Flags & slsf_AltServerStopped)
-	//{
-	//	_ASSERTE(FALSE);
-	//	iRc = 0;
-	//	// SendStopped посылается из DllStop!
-	//	goto wrap;
-	//}
 
 	if (!ghSrvDll || !gfRequestLocalServer)
 	{
 		LPCWSTR pszSrvName = WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll");
 
+		wchar_t *pszSlash, szFile[MAX_PATH+1] = {};
+
+		GetModuleFileName(ghOurModule, szFile, MAX_PATH);
+		pszSlash = wcsrchr(szFile, L'\\');
+		if (!pszSlash)
+			goto wrap;
+		pszSlash[1] = 0;
+		wcscat_c(szFile, pszSrvName);
+
+		ghSrvDll = LoadLibrary(szFile);
 		if (!ghSrvDll)
-		{
-			gfRequestLocalServer = NULL;
-			ghSrvDll = GetModuleHandle(pszSrvName);
-		}
-
-		if (!ghSrvDll)
-		{
-			_ASSERTE(ghSrvDll!=NULL && "ConEmuCD.dll must be loaded already?");
-
-			wchar_t *pszSlash, szFile[MAX_PATH+1] = {};
-
-			GetModuleFileName(ghOurModule, szFile, MAX_PATH);
-			pszSlash = wcsrchr(szFile, L'\\');
-			if (!pszSlash)
-				goto wrap;
-			pszSlash[1] = 0;
-			wcscat_c(szFile, pszSrvName);
-
-			ghSrvDll = LoadLibrary(szFile);
-			if (!ghSrvDll)
-				goto wrap;
-		}
+			goto wrap;
 
 		gfRequestLocalServer = (RequestLocalServer_t)GetProcAddress(ghSrvDll, "PrivateEntry");
 	}
@@ -312,13 +293,8 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 
 	_ASSERTE(CheckCallbackPtr(ghSrvDll, 1, (FARPROC*)&gfRequestLocalServer, TRUE));
 
-	//iRc = gfRequestLocalServer(&gpAnnotationHeader, &ghCurrentOutBuffer);
 	iRc = gfRequestLocalServer(Parm);
 
-	//if  ((iRc == 0) && (Parm->Flags & slsf_PrevAltServerPID))
-	//{
-	//	gnPrevAltServerPID = Parm->nPrevAltServerPID;
-	//}
 wrap:
 	return iRc;
 }
@@ -339,9 +315,8 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 		}
 	}
 
-	//TODO: Проверить, не изменился ли HWND консоли?
-	//111101 - зовем именно GetConsoleWindow. Если она перехвачена - вернет как раз то окно, которое нам требуется
-	HWND hCon = /*GetConsoleWindow(); */ GetConEmuHWND(0);
+	// Проверить, не изменился ли HWND консоли...
+	HWND hCon = GetConEmuHWND(0);
 	if (!hCon)
 	{
 		CloseBuffers();
@@ -351,9 +326,11 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 	if (hCon != ghConWnd)
 	{
 		#ifdef _DEBUG
-		// Функция GetConsoleWindow должна быть перехвачена в ConEmuHk, проверим
-		ghConWnd = GetConsoleWindow();
-		_ASSERTE(ghConWnd == hCon);
+		// Функция GetConsoleWindow НЕ должна быть перехвачена в ConEmuHk, проверим
+		HWND hApiCon = GetConsoleWindow();
+		HWND hRealCon = GetConEmuHWND(2);
+		HWND hRootWnd = GetConEmuHWND(1);
+		_ASSERTE((hApiCon == hRealCon && hApiCon != hCon) || hRootWnd == NULL);
 		#endif
 
 		ghConWnd = hCon;
@@ -364,30 +341,42 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 		#endif
 		
 		//TODO: Пока работаем "по-старому", через буфер TrueColor. Переделать, он не оптимален
-		wchar_t szMapName[128];
-		wsprintf(szMapName, AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)hCon); //-V205
-		ghTrueColor = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName);
-		if (!ghTrueColor)
+		RequestLocalServerParm prm = {sizeof(prm), slsf_RequestTrueColor|slsf_GetCursorEvent|slsf_GetFarCommitEvent};
+		int iFRc = RequestLocalServer(&prm);
+		if (iFRc == 0)
 		{
-			return FALSE;
+			ghFarCommitUpdateSrv = prm.hFarCommitEvent;
+			gpTrueColor = prm.pAnnotation;
 		}
-		gpTrueColor = (AnnotationHeader*)MapViewOfFile(ghTrueColor, FILE_MAP_ALL_ACCESS,0,0,0);
+
 		if (!gpTrueColor)
 		{
-			CloseHandle(ghTrueColor);
-			ghTrueColor = NULL;
-			return FALSE;
+			wchar_t szMapName[128];
+			wsprintf(szMapName, AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)hCon); //-V205
+			ghTrueColor = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName);
+			if (!ghTrueColor)
+			{
+				return FALSE;
+			}
+			gpTrueColor = (AnnotationHeader*)MapViewOfFile(ghTrueColor, FILE_MAP_ALL_ACCESS,0,0,0);
+			if (!gpTrueColor)
+			{
+				CloseHandle(ghTrueColor);
+				ghTrueColor = NULL;
+				return FALSE;
+			}
 		}
 
 		if (!ghFarCommitUpdateSrv)
 		{
-			RequestLocalServerParm prm = {sizeof(prm)};
-			prm.Flags = slsf_GetFarCommitEvent;
-			int iFRc = RequestLocalServer(&prm);
-			if (iFRc == 0)
-			{
-				ghFarCommitUpdateSrv = prm.hFarCommitEvent;
-			}
+			_ASSERTE(ghFarCommitUpdateSrv!=NULL);
+		//	RequestLocalServerParm prm = {sizeof(prm)};
+		//	prm.Flags = slsf_GetFarCommitEvent;
+		//	int iFRc = RequestLocalServer(&prm);
+		//	if (iFRc == 0)
+		//	{
+		//		ghFarCommitUpdateSrv = prm.hFarCommitEvent;
+		//	}
 		}
 		
 		#ifdef USE_COMMIT_EVENT
@@ -453,16 +442,16 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 
 void CloseBuffers()
 {
-	if (gpTrueColor)
-	{
-		UnmapViewOfFile(gpTrueColor);
-		gpTrueColor = NULL;
-	}
+	// All buffers may be managed through the AltServer
 	if (ghTrueColor)
 	{
+		if (gpTrueColor)
+			UnmapViewOfFile(gpTrueColor);
 		CloseHandle(ghTrueColor);
 		ghTrueColor = NULL;
 	}
+	gpTrueColor = NULL;
+
 	if (ghFarCommitUpdateSrv)
 	{
 		CloseHandle(ghFarCommitUpdateSrv);
@@ -1222,7 +1211,7 @@ BOOL WINAPI WriteText(HANDLE hConsoleOutput, const AnnotationInfo* Attributes, c
 	if (!lpFarBuffer)
 		return FALSE;
 
-	TODO("Обработка символов \t\n\r?");
+	TODO("Обработка символов \\t\\n\\r?");
 
 	FAR_CHAR_INFO* lp = lpFarBuffer;
 	for (DWORD i = 0; i < nNumberOfCharsToWrite; ++i, ++Buffer, ++lp)
@@ -1762,8 +1751,8 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 		Parm.bForeTransparent = Parm.bBackTransparent = FALSE;
 	}
 	
-	//TODO: Заменить на дескриптор окна GUI
-	Parm.hConsole = GetConsoleWindow();
+	// Заменить на дескриптор окна GUI
+	Parm.hConsole = GetConEmuHWND(1);
 	
 	// Найти HWND GUI
 	wchar_t szMapName[128];
