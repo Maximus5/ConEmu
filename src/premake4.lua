@@ -43,6 +43,10 @@ solution ("ConEmu")
 project("ConEmu")
     language("c++")
     kind("WindowedApp")
+    flags("WinMain")
+
+    files("ConEmu.rc")
+
     files({
         "ConEmu/Attach.cpp",
         "ConEmu/Background.cpp",
@@ -90,6 +94,7 @@ project("ConEmu")
         "ConEmu/VConGroup.cpp",
         "ConEmu/VConRelease.cpp",
         "ConEmu/VirtualConsole.cpp"})
+    
     files({
         "common/CmdLine.cpp",
         "common/Common.cpp",
