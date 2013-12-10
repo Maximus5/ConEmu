@@ -3618,7 +3618,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	else // m_Args.bRunAsAdministrator
 	{
 		LPCWSTR pszCmd = psCurCmd;
-		wchar_t szExec[MAX_PATH+1];
+		CmdArg szExec;
 
 		if (NextArg(&pszCmd, szExec) != 0)
 		{
@@ -6069,7 +6069,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	LPCWSTR lpszCmd = NULL;
 	//wchar_t* pszBuffer = NULL;
 	LPCWSTR pszName = NULL;
-	wchar_t szExe[MAX_PATH+1];
+	CmdArg szExe;
 	wchar_t szName[MAX_PATH+1];
 	LPCWSTR pszTemp = NULL;
 	LPCWSTR pszIconFile = (m_Args.pszIconFile && *m_Args.pszIconFile) ? m_Args.pszIconFile : NULL;
@@ -12804,7 +12804,8 @@ BOOL CRealConsole::GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID)
 	LPCWSTR pszCmd = GetCmd();
 	if (pszCmd && *pszCmd && asAppFileName && *asAppFileName)
 	{
-		wchar_t szApp[MAX_PATH+1], szArg[MAX_PATH+1];
+		wchar_t szApp[MAX_PATH+1];
+		CmdArg  szArg;
 		LPCWSTR pszArg = NULL, pszApp = NULL, pszOnly = NULL;
 
 		while (pszCmd[0] == L'"' && pszCmd[1] == L'"')
@@ -12821,7 +12822,7 @@ BOOL CRealConsole::GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID)
 		if (NextArg(&pszCmd, szArg, &pszApp) == 0)
 		{
 			// Что пытаемся запустить в консоли
-			CharUpperBuff(szArg, lstrlen(szArg));
+			CharUpperBuff(szArg.ms_Arg, lstrlen(szArg));
 			pszArg = PointToName(szArg);
 			if (lstrcmp(pszArg, szApp) == 0)
 				return true;
@@ -12835,8 +12836,8 @@ BOOL CRealConsole::GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID)
 		}
 
 		// Может там кавычек нет, а путь с пробелом
-		lstrcpyn(szArg, pszOnly, countof(szArg));
-		CharUpperBuff(szArg, lstrlen(szArg));
+		szArg.Set(pszOnly);
+		CharUpperBuff(szArg.ms_Arg, lstrlen(szArg));
 		if (lstrcmp(szArg, szApp) == 0)
 			return true;
 		if (pszArg && !wcschr(pszArg, L'.') && pszDot)

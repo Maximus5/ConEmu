@@ -507,7 +507,7 @@ struct Settings
 				if (!pszGuiArgs)
 					return;
 				LPCWSTR pszArgs = pszGuiArgs;
-				wchar_t szArg[MAX_PATH+1];
+				CmdArg szArg;
 				while (0 == NextArg(&pszArgs, szArg))
 				{
 					if (lstrcmpi(szArg, L"/dir") == 0)

@@ -1648,7 +1648,7 @@ HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszSt
 		if (!IsBadStringPtrW(pwszCommand, MAX_PATH) && !IsBadStringPtrW(pwszStartDir, MAX_PATH))
 		{
 			// Bad thing, ShellExecuteEx needs File&Parm, but we get both in pwszCommand
-			wchar_t szExe[MAX_PATH+1];
+			CmdArg szExe;
 			LPCWSTR pszFile = pwszCommand;
 			LPCWSTR pszParm = pwszCommand;
 			if (NextArg(&pszParm, szExe) == 0)

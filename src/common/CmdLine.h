@@ -28,8 +28,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar_t** rsArgStart=NULL);
-//int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsArgStart=NULL);
+struct CmdArg
+{
+public:
+	INT_PTR mn_MaxLen;
+	wchar_t *ms_Arg;
+
+	operator LPCWSTR() const { return ms_Arg; };
+
+	wchar_t* GetBuffer(INT_PTR cchMaxLen);
+	void Empty();
+	LPCWSTR Set(LPCWSTR asNewValue, int anChars = -1);
+
+	CmdArg();
+	~CmdArg();
+};
+
+int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart=NULL);
+
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
 LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax);
@@ -37,5 +53,5 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars = NULL);
 bool IsFarExe(LPCWSTR asModuleName);
 BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQuot,
-			   wchar_t (&szExe)[MAX_PATH+1],
+			   CmdArg &szExe,
 			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit);

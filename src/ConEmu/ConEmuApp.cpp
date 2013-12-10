@@ -1071,7 +1071,7 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	Assert(lpApplicationName==NULL);
 
 	LPCWSTR pszCmdArgs = lpCommandLine;
-	wchar_t szExe[MAX_PATH+1];
+	CmdArg szExe;
 	if (0 != NextArg(&pszCmdArgs, szExe))
 	{
 		DisplayLastError(L"Invalid cmd line. Executable not exists", -1);
@@ -2347,7 +2347,8 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
             hr = psl->SetPath(szAppPath);
 
 			// Иконка
-			wchar_t szIcon[MAX_PATH+1], szTmp[MAX_PATH+1]; szIcon[0] = 0; szTmp[0] = 0;
+			CmdArg szTmp;
+			wchar_t szIcon[MAX_PATH+1] = L"";
 			LPCWSTR pszTemp = pszArguments, pszIcon = NULL;
 			wchar_t* pszBatch = NULL;
 			while (NextArg(&pszTemp, szTmp) == 0)
@@ -3916,7 +3917,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Update package was dropped on ConEmu icon?
 	if (cmdNew && *cmdNew && (params == (uint)-1))
 	{
-		wchar_t szPath[MAX_PATH+1];
+		CmdArg szPath;
 		LPCWSTR pszCmdLine = cmdNew;
 		if (0 == NextArg(&pszCmdLine, szPath))
 		{
@@ -4026,7 +4027,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				// на иконку ConEmu, этот наброшенный путь прилепится
 				// к строке запуска фара.
 				pszDefCmd = gpSet->psStartSingleApp;
-				wchar_t szExe[MAX_PATH+1];
+				CmdArg szExe;
 				if (0 != NextArg(&pszDefCmd, szExe))
 				{
 					_ASSERTE(FALSE && "NextArg failed");

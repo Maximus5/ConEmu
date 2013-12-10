@@ -1995,11 +1995,6 @@ struct CESERVER_REQ
 
 //#define MAX_INPUT_QUEUE_EMPTY_WAIT 1000
 
-//int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar_t** rsArgStart=NULL);
-////int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsArgStart=NULL);
-//const wchar_t* SkipNonPrintable(const wchar_t* asParams);
-//bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
-
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64::MsgStr* pMsg);
 BOOL UnpackInputRecord(const MSG64::MsgStr* piMsg, INPUT_RECORD* pRec);
 void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD* rDown, INPUT_RECORD* rUp);

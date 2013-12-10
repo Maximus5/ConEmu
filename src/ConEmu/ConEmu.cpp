@@ -1168,7 +1168,8 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 	{
 		// Проверить битность asCmdLine во избежание лишних запусков серверов для Inject
 		// и корректной битности запускаемого процессора по настройке
-		wchar_t szTemp[MAX_PATH+1], szExpand[MAX_PATH+1];
+		CmdArg szTemp;
+		wchar_t* pszExpand = NULL;
 		if (!FileExists(asCmdLine))
 		{
 			const wchar_t *psz = asCmdLine;
@@ -1182,9 +1183,9 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 
 		if (wcschr(asCmdLine, L'%'))
 		{
-			DWORD nLen = ExpandEnvironmentStrings(asCmdLine, szExpand, countof(szExpand));
-			if (nLen && (nLen < countof(szExpand)))
-				asCmdLine = szExpand;
+			pszExpand = ExpandEnvStr(asCmdLine);
+			if (pszExpand)
+				asCmdLine = pszExpand;
 		}
 
 		// Если путь указан полностью - берем битность из него, иначе - проверяем "на cmd"
@@ -1258,6 +1259,8 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 				}
 			}
 		}
+
+		SafeFree(pszExpand);
 	}
 
 	if (lbCmd)
@@ -11024,7 +11027,8 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 
 		// Считаем, что один файл (*.exe, *.cmd, ...) или ярлык (*.lnk)
 		// это одна запускаемая консоль в ConEmu.
-		wchar_t szPart[MAX_PATH+1], szExe[MAX_PATH+1], szDir[MAX_PATH+1];
+		CmdArg szPart;
+		wchar_t szExe[MAX_PATH+1], szDir[MAX_PATH+1];
 		HRESULT hr = S_OK;
 		IShellLinkW* pShellLink = NULL;
 		IPersistFile* pFile = NULL;

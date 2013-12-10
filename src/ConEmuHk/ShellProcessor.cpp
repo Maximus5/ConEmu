@@ -621,7 +621,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 						if (pszFileOnly)
 						{
 							LPCWSTR pszCopy = pszParam;
-							wchar_t szFirst[MAX_PATH+1];
+							CmdArg  szFirst;
 							if (NextArg(&pszCopy, szFirst) != 0)
 							{
 								_ASSERTE(FALSE && "NextArg failed?");
@@ -653,7 +653,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 											asParam = pszCopy;
 											pszFileOnly = NULL;
 										}
-										else if ((pszExt = wcsrchr(szFirst, L'.')) != NULL)
+										else if (wcsrchr(szFirst, L'.'))
 										{
 											if (lstrcmpi(pszFirstName, szTmpFileOnly) == 0)
 											{
@@ -713,7 +713,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 						asParam = SkipNonPrintable(psz+2); // /C или /K добавл€етс€ к ConEmuC.exe
 						lbNewCmdCheck = FALSE;
 
-						wcscpy_c(ms_ExeTmp, szComspec);
+						ms_ExeTmp.Set(szComspec);
 						DWORD nCheckSybsystem1 = 0, nCheckBits1 = 0, nFileAttrs1 = 0;
 						if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem1, nCheckBits1, nFileAttrs1))
 						{
@@ -784,7 +784,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 			BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
 			BOOL lbNeedCutStartEndQuot = FALSE;
 			DWORD nFileAttrs = (DWORD)-1;
-			ms_ExeTmp[0] = 0;
+			ms_ExeTmp.Empty();
 			IsNeedCmd(false, SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
 			// это может быть команда ком.процессора!
 			// поэтому, наверное, искать и провер€ть битность будем только дл€
@@ -1160,7 +1160,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				// exe-шника в asFile указано Ќ≈ было, значит он в asParam, нужно его вытащить, и сформировать команду DosBox
 				BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
 				BOOL lbNeedCutStartEndQuot = FALSE;
-				ms_ExeTmp[0] = 0;
+				ms_ExeTmp.Empty();
 				IsNeedCmd(false, SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
 
 				if (ms_ExeTmp[0])
@@ -1393,8 +1393,8 @@ int CShellProc::PrepareExecuteParms(
 
 		#ifdef _DEBUG
 		bool bAnsiConFound = false;
-		lstrcpyn(ms_ExeTmp, psz, countof(ms_ExeTmp));
-		CharUpperBuff(ms_ExeTmp, lstrlen(ms_ExeTmp));
+		ms_ExeTmp.Set(psz);
+		CharUpperBuff(ms_ExeTmp.ms_Arg, lstrlen(ms_ExeTmp));
 		if (wcsstr(ms_ExeTmp, L"ANSI-LLW") != NULL
 			|| wcsstr(ms_ExeTmp, L"ANSICON") != NULL)
 		{
@@ -1409,7 +1409,7 @@ int CShellProc::PrepareExecuteParms(
 			continue;
 		}
 
-		CharUpperBuff(ms_ExeTmp, lstrlen(ms_ExeTmp));
+		CharUpperBuff(ms_ExeTmp.ms_Arg, lstrlen(ms_ExeTmp));
 		psz = PointToName(ms_ExeTmp);
 		if ((lstrcmp(psz, L"ANSI-LLW.EXE") == 0) || (lstrcmp(psz, L"ANSI-LLW") == 0)
 			|| (lstrcmp(psz, L"ANSICON.EXE") == 0) || (lstrcmp(psz, L"ANSICON") == 0))
@@ -1435,7 +1435,7 @@ int CShellProc::PrepareExecuteParms(
 		WriteConsoleW(hStdOut, sErrMsg, nLen, &nLen, NULL);
 		return -1;
 	}
-	ms_ExeTmp[0] = 0;
+	ms_ExeTmp.Empty();
 
 
 	BOOL bGoChangeParm = FALSE;
@@ -1566,7 +1566,8 @@ int CShellProc::PrepareExecuteParms(
 #else
 		// —читаем, что один файл (*.exe, *.cmd, ...) или €рлык (*.lnk)
 		// это одна запускаема€ консоль в ConEmu.
-		wchar_t szPart[MAX_PATH+1], szExe[MAX_PATH+1], szArguments[32768], szDir[MAX_PATH+1];
+		CmdArg szPart[MAX_PATH+1]
+		wchar_t szExe[MAX_PATH+1], szArguments[32768], szDir[MAX_PATH+1];
 		HRESULT hr = S_OK;
 		IShellLinkW* pShellLink = NULL;
 		IPersistFile* pFile = NULL;
@@ -1663,16 +1664,16 @@ int CShellProc::PrepareExecuteParms(
 			if (pszEnd)
 			{
 				size_t cchLen = (pszEnd - asFile) - 1;
-				_wcscpyn_c(ms_ExeTmp, countof(ms_ExeTmp), asFile+1, cchLen);
+				ms_ExeTmp.Set(asFile+1, cchLen);
 			}
 			else
 			{
-				_wcscpyn_c(ms_ExeTmp, countof(ms_ExeTmp), asFile+1, countof(ms_ExeTmp));
+				ms_ExeTmp.Set(asFile+1);
 			}
 		}
 		else
 		{
-			_wcscpyn_c(ms_ExeTmp, countof(ms_ExeTmp), asFile, countof(ms_ExeTmp));
+			ms_ExeTmp.Set(asFile);
 		}
 	}
 	else

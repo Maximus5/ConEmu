@@ -147,6 +147,27 @@ void RConStartArgs::RunArgTests()
 			break;
 		}
 	}
+
+	CmdArg s;
+	LPCWSTR pszTestCmd = L"\"This is test\" Next-arg  \"Third Arg +++++++++++++++++++\" ++";
+	s.Set(L"Abcdef", 3);
+	int nDbg = lstrcmp(s, L"Abc");
+	_ASSERTE(nDbg==0);
+	s.Set(L"qwerty");
+	nDbg = lstrcmp(s, L"qwerty");
+	_ASSERTE(nDbg==0);
+
+	NextArg(&pszTestCmd, s);
+	nDbg = lstrcmp(s, L"This is test");
+	_ASSERTE(nDbg==0);
+	NextArg(&pszTestCmd, s);
+	nDbg = lstrcmp(s, L"Next-arg");
+	_ASSERTE(nDbg==0);
+	NextArg(&pszTestCmd, s);
+	nDbg = lstrcmp(s, L"Third Arg +++++++++++++++++++");
+	_ASSERTE(nDbg==0);
+
+	nDbg = -1;
 }
 #endif
 
@@ -577,7 +598,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 	// 120115 - ≈сли первый аргумент - "ConEmu.exe" или "ConEmu64.exe" - не обрабатывать "-cur_console" и "-new_console"
 	{
 		LPCWSTR pszTemp = pszSpecialCmd;
-		wchar_t szExe[MAX_PATH+1];
+		CmdArg szExe;
 		if (0 == NextArg(&pszTemp, szExe))
 		{
 			pszTemp = PointToName(szExe);

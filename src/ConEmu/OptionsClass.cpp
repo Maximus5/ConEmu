@@ -3840,7 +3840,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 										{
 											LPCWSTR psz = pszFull;
 											LPCWSTR pszPrev = pszFull;
-											wchar_t szArg[MAX_PATH+1];
+											CmdArg szArg;
 											while (0 == NextArg(&psz, szArg, &pszPrev))
 											{
 												if (*szArg != L'/')
@@ -10197,7 +10197,7 @@ void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)
 	if (pShl->pszParam && *pShl->pszParam)
 	{
 		LPCWSTR pszNext = pShl->pszParam;
-		wchar_t szArg[MAX_PATH+1];
+		CmdArg szArg;
 		while (0 == NextArg(&pszNext, szArg))
 		{
 			if (!*szArg || (*szArg == L'-') || (*szArg == L'/'))

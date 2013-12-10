@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../common/CmdLine.h"
+
 struct RConStartArgs;
 
 class CShellProc
@@ -53,7 +55,7 @@ private:
 	
 	// Информация о запускаемом процессе
 	DWORD mn_ImageSubsystem, mn_ImageBits;
-	wchar_t ms_ExeTmp[MAX_PATH+1];
+	CmdArg ms_ExeTmp;
 	BOOL mb_WasSuspended; // Если TRUE - значит при вызове CreateProcessXXX уже был флаг CREATE_SUSPENDED
 	BOOL mb_NeedInjects;
 	BOOL mb_DebugWasRequested;
