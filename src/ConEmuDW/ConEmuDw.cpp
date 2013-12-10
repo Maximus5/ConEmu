@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-  #define SHOW_STARTED_MSGBOX
+//  #define SHOW_STARTED_MSGBOX
 #else
 //
 #endif
@@ -166,8 +166,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 				HeapInitialize();
 				
 				#ifdef SHOW_STARTED_MSGBOX
-				char szMsg[128]; wsprintfA(szMsg, "ConEmuDW, FAR Pid=%u", GetCurrentProcessId());
-				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuDW*.dll loaded", szMsg, 0);
+				char szMsg[128]; wsprintfA(szMsg, "ExtendedConsole, FAR Pid=%u", GetCurrentProcessId());
+				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ExtendedConsole*.dll loaded", szMsg, 0);
 				#endif
 
 				bool lbExportsChanged = false;
