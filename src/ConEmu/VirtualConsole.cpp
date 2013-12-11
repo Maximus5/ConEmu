@@ -1145,25 +1145,47 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 
 	BackgroundOp op = (BackgroundOp)gpSet->bgOperation;
 
-	if ((op == eUpRight) || (op == eDownLeft) || (op == eDownRight))
+	if (op == eUpRight)
 	{
-		//HBRUSH hBr = NULL;
-		//#if 0
-		//hBr = PartBrush(L' ', crBack, 0);
-		//#else
-		//if (hBrush0 == NULL)
-		//{
-		//	hBrush0 = CreateSolidBrush(mp_Colors[0]);
-		//	SelectBrush(hBrush0);
-		//}
-		//hBr = hBrush0;
-		//#endif
+		int xShift = max(0,((int)Width - bgBmpSize.X));
+		bgX = inX - xShift; bgY = inY;
 
-		//FillRect((HDC)m_DC, &rcText, hBr);
+		if ((bgBmpSize.X < (int)Width) || (bgBmpSize.Y < (int)Height))
+		{
+			if (inY < bgBmpSize.Y)
+			{
+				rcFill1 = MakeRect(inX, inY, min(inX2,xShift), min(bgBmpSize.Y,inY2));
+				rcFill2 = MakeRect(inX, max(inY,bgBmpSize.Y), min(inX2,xShift), inY2);
+			}
+			else
+			{
+				rcFill1 = MakeRect(inX, inY, inX2, inY2);
+			}
+		}
+	}
+	else if (op == eDownLeft)
+	{
+		int yShift = max(0,((int)Height - bgBmpSize.Y));
+		bgX = inX; bgY = inY - yShift;
 
-		int xShift = ((gpSet->bgOperation == eUpRight) || (gpSet->bgOperation == eDownRight)) ? max(0,((int)Width - bgBmpSize.X)) : 0;
-		int yShift = ((gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight)) ? max(0,((int)Height - bgBmpSize.Y)) : 0;
+		if ((bgBmpSize.X < (int)Width) || (bgBmpSize.Y < (int)Height))
+		{
+			if (inY2 >= yShift)
+			{
+				rcFill1 = MakeRect(inX, inY, inX2, min(yShift,inY2));
+				rcFill2 = MakeRect(bgBmpSize.X, max(inY,yShift), inX2, inY2);
+			}
+			else
+			{
+				rcFill1 = MakeRect(inX, inY, inX2, inY2);
+			}
+		}
 
+	}
+	else if (op == eDownRight)
+	{
+		int xShift = max(0,((int)Width - bgBmpSize.X));
+		int yShift = max(0,((int)Height - bgBmpSize.Y));
 		bgX = inX - xShift; bgY = inY - yShift;
 
 		if ((bgBmpSize.X < (int)Width) || (bgBmpSize.Y < (int)Height))
@@ -1172,17 +1194,11 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 			rcFill2 = MakeRect(inX, max(inY,yShift), min(inX2,xShift), inY2);
 		}
 
-		//if (bgBmpSize.X>(inX-xShift) && bgBmpSize.Y>(inY-yShift))
-		//{
-		//	//BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-		//	BitBlt((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, bgX /*inX-xShift*/, bgY /*inY-yShift*/, SRCCOPY);
-		//}
 	}
 	else if ((op == eFit) || (op == eFill) || (op == eCenter))
 	{
 		int xShift = ((int)Width - bgBmpSize.X)/2;
 		int yShift = ((int)Height - bgBmpSize.Y)/2;
-
 		bgX = inX - xShift; bgY = inY - yShift;
 
 		if (op == eFit)
