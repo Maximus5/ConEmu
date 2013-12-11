@@ -15,8 +15,19 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.12.11
+[+] For life simplification and remove excess 'cmd' from process tree, ConEmu
+    will process 'set' commands internally (ConEmuC) before starting root process.
+    Example: set term=msys & "set PATH=C:\Program Files\GIT\bin;%PATH%" & powershell
+[%] Issue 1387. Garbage in console if UpRight/DownLeft background placement.
+[*] Internal changes. Support variable length in NextArg.
+[*] Internal changes. ExtendedConsole was added to exclusion list of ConEmuHk.
+[*] Internal changes. gbDontEnable -> DontEnable::isDontEnable.
+
+
 2013.12.07
 [%] Issue 1385. Fix wrong coloring of DBCS chars in 936/932 cp.
+
 
 2013.12.05
 [!] Some fixes in pipe processing.
