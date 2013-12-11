@@ -4534,6 +4534,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	{
 		BOOL bAlwaysConfirmExit = gbAlwaysConfirmExit, bAutoDisableConfirmExit = gbAutoDisableConfirmExit;
 
+		if (gnRunMode == RM_SERVER)
+		{
+			// Console may be started as follows:
+			// "set PATH=C:\Program Files;%PATH%" & set abc=def & cmd
+			ProcessSetEnvCmd(lsCmdLine, true);
+		}
+
 		gpszCheck4NeedCmd = lsCmdLine; // Для отладки
 
 		gbRunViaCmdExe = IsNeedCmd((gnRunMode == RM_SERVER), lsCmdLine, &pszArguments4EnvVar, &lbNeedCutStartEndQuot, szExeTest, 

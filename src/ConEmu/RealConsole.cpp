@@ -6106,6 +6106,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	}
 
 	// Parse command line
+	ProcessSetEnvCmd(lpszCmd, false);
 	pszTemp = lpszCmd;
 
 	if (0 == NextArg(&pszTemp, szExe))

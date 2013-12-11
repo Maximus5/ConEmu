@@ -95,7 +95,7 @@ LPCWSTR CmdArg::Set(LPCWSTR asNewValue, int anChars /*= -1*/)
 // ¬озвращает 0, если успешно, иначе - ошибка
 int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
 {
-	if (!asCmdLine)
+	if (!asCmdLine || !*asCmdLine)
 		return CERR_CMDLINEEMPTY;
 
 	LPCWSTR psCmdLine = *asCmdLine, pch = NULL;
@@ -180,7 +180,7 @@ bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask)
 		return true;
 
 	int iCmp = -1;
-	
+
 	wchar_t sz1[MAX_PATH+1], sz2[MAX_PATH+1];
 	lstrcpyn(sz1, asFileName, countof(sz1));
 	size_t nLen1 = lstrlen(sz1);
@@ -281,7 +281,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 		_ASSERTE(asCmdLine && *asCmdLine);
 		return TRUE;
 	}
-		
+
 	//110202 перенес вниз, т.к. это уже может быть cmd.exe, и тогда у него сносит крышу
 	//// ≈сли есть одна из команд перенаправлени€, или сли€ни€ - нужен CMD.EXE
 	//if (wcschr(asCmdLine, L'&') ||
@@ -336,7 +336,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 				#endif
 				return TRUE;
 			}
-			
+
 			if (lstrcmpiW(szExe, L"start") == 0)
 			{
 				//  оманду start обрабатывает только процессор
@@ -431,7 +431,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 			}
 		}
 	}
-	
+
 	if (!*szExe)
 	{
 		_ASSERTE(szExe[0] != 0);
@@ -448,9 +448,9 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 			rbRootIsCmdExe = TRUE; // запуск через "процессор"
 			return TRUE; // добавить "cmd.exe"
 		}
-		
+
 		// если "путь" не указан
-		if (wcschr(szExe, L'\\') == NULL) 
+		if (wcschr(szExe, L'\\') == NULL)
 		{
 			bool bHasExt = (wcschr(szExe, L'.') != NULL);
 			// ѕроверим, может это команда процессора (типа "DIR")?
@@ -467,7 +467,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 						if (*p >= L'a' && *p <= 'z')
 							*p -= 0x20;
 					}
-					
+
 					const wchar_t* pszFind = gsInternalCommands;
 					while (*pszFind)
 					{
@@ -489,7 +489,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 					return TRUE; // добавить "cmd.exe"
 				}
 			}
-			
+
 			// ѕробуем найти "по пут€м" соответствующий exe-шник.
 			DWORD nCchMax = szExe.mn_MaxLen; // выделить пам€ть, длинее чем szExe вернуть не сможем
 			wchar_t* pszSearch = (wchar_t*)malloc(nCchMax*sizeof(wchar_t));
@@ -507,7 +507,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 				}
 				free(pszSearch);
 			}
-		} // end: if (wcschr(szExe, L'\\') == NULL) 
+		} // end: if (wcschr(szExe, L'\\') == NULL)
 	}
 
 	// ≈сли szExe не содержит путь к файлу - запускаем через cmd
@@ -672,4 +672,96 @@ bool IsFarExe(LPCWSTR asModuleName)
 		}
 	}
 	return false;
+}
+
+// Return true if "SetEnvironmentVariable" was processed
+// if (bDoSet==false) - just skip all "set" commands
+bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet)
+{
+	LPCWSTR lsCmdLine = asCmdLine;
+	bool bEnvChanged = false;
+	CmdArg lsSet, lsVal, lsAmp;
+
+	// Example: "set PATH=C:\Program Files;%PATH%" & set abc=def & cmd
+	while (NextArg(&lsCmdLine, lsSet) == 0)
+	{
+		bool bTokenOk = false;
+		wchar_t* lsNameVal = NULL;
+
+		// It may contains only "set" if was not quoted
+		if (lstrcmpi(lsSet, L"set") == 0)
+		{
+			// Now we shell get in lsVal "abc=def" token
+			if ((NextArg(&lsCmdLine, lsVal) == 0) && (wcschr(lsVal, L'=') > lsVal.ms_Arg))
+			{
+				lsNameVal = lsVal.ms_Arg;
+			}
+		}
+		// Or full "set PATH=C:\Program Files;%PATH%" command (without quotes ATM)
+		else if (lstrcmpni(lsSet, L"set ", 4) == 0)
+		{
+			LPCWSTR psz = SkipNonPrintable(lsSet.ms_Arg+4);
+			if (wcschr(psz, L'=') > psz)
+			{
+				lsNameVal = (wchar_t*)psz;
+			}
+		}
+
+		// Well, "set name=val" command detected. What is next?
+		if (lsNameVal)
+		{
+			if (NextArg(&lsCmdLine, lsAmp) != 0)
+			{
+				// End of command? Use may call only "set" without following app? Run simple "cmd" in that case
+				_ASSERTE(lsCmdLine!=NULL && *lsCmdLine==0);
+				bTokenOk = true; // And process SetEnvironmentVariable
+			}
+			else if (lstrcmp(lsAmp, L"&") == 0)
+			{
+				// Only simple conveyer is supported!
+				bTokenOk = true; // And process SetEnvironmentVariable
+			}
+		}
+
+		if (!bTokenOk)
+		{
+			break; // Stop processing command line
+		}
+		else
+		{
+			// Remember processed position
+			asCmdLine = lsCmdLine;
+
+			// And split name/value
+			_ASSERTE(lsNameVal!=NULL);
+
+			wchar_t* pszEq = wcschr(lsNameVal, L'=');
+			if (!pszEq)
+			{
+				_ASSERTE(pszEq!=NULL);
+				break;
+			}
+
+			if (bDoSet)
+			{
+				*(pszEq++) = 0;
+				// Expand value
+				wchar_t* pszExpanded = ExpandEnvStr(pszEq);
+				LPCWSTR pszSet = pszExpanded ? pszExpanded : pszEq;
+				SetEnvironmentVariable(lsNameVal, (pszSet && *pszSet) ? pszSet : NULL);
+				SafeFree(pszExpanded);
+			}
+
+			bEnvChanged = true;
+		}
+	}
+
+	// Fin
+	if (!asCmdLine || !*asCmdLine)
+	{
+		static wchar_t szSimple[] = L"cmd";
+		asCmdLine = szSimple;
+	}
+
+	return bEnvChanged;
 }

@@ -55,3 +55,4 @@ bool IsFarExe(LPCWSTR asModuleName);
 BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQuot,
 			   CmdArg &szExe,
 			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit);
+bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet);
