@@ -1,3 +1,5 @@
+-- Microsoft nmake:
+--    T:\VCProject\Externals\Premake\src\bin\debug\premake4.exe /scripts=T:\VCProject\Externals\Premake\src\src nmake
 
 local to = ".build/"..(_ACTION or "default")
 
