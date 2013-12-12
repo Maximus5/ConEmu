@@ -34,17 +34,33 @@ public:
 	INT_PTR mn_MaxLen;
 	wchar_t *ms_Arg;
 
+	// Point to the end dblquot
+	LPCWSTR mpsz_Dequoted;
+	// if 0 - this is must be first call (first token of command line)
+	// so, we need to test for mpsz_Dequoted
+	int mn_TokenNo;
+
+	#ifdef _DEBUG
+	// Debug, для отлова "не сброшенных" вызовов
+	LPCWSTR ms_LastTokenEnd;
+	wchar_t ms_LastTokenSave[32];
+	#endif
+
+public:
 	operator LPCWSTR() const { return ms_Arg; };
 
 	wchar_t* GetBuffer(INT_PTR cchMaxLen);
 	void Empty();
 	LPCWSTR Set(LPCWSTR asNewValue, int anChars = -1);
 
+	void GetPosFrom(const CmdArg& arg);
+
 	CmdArg();
 	~CmdArg();
 };
 
 int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart=NULL);
+bool IsNeedDequote(LPCWSTR asCmdLine, LPCWSTR* rsEndQuote=NULL);
 
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);

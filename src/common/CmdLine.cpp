@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 CmdArg::CmdArg()
 {
 	mn_MaxLen = 0; ms_Arg = NULL;
+	Empty();
 }
 CmdArg::~CmdArg()
 {
@@ -73,13 +74,26 @@ void CmdArg::Empty()
 {
 	if (ms_Arg)
 		*ms_Arg = 0;
+
+	mn_TokenNo = 0;
+	mpsz_Dequoted = NULL;
+	#ifdef _DEBUG
+	ms_LastTokenEnd = NULL;
+	ms_LastTokenSave[0] = 0;
+	#endif
 }
 LPCWSTR CmdArg::Set(LPCWSTR asNewValue, int anChars /*= -1*/)
 {
 	if (asNewValue)
 	{
 		int nNewLen = (anChars == -1) ? lstrlen(asNewValue) : anChars;
-		if (GetBuffer(nNewLen))
+		if (nNewLen <= 0)
+		{
+			_ASSERTE(FALSE && "Check, if caller really need to set empty string???");
+			if (GetBuffer(1))
+				ms_Arg[0] = 0;
+		}
+		else if (GetBuffer(nNewLen))
 		{
 			_wcscpyn_c(ms_Arg, mn_MaxLen, asNewValue, nNewLen);
 		}
@@ -90,7 +104,60 @@ LPCWSTR CmdArg::Set(LPCWSTR asNewValue, int anChars /*= -1*/)
 	}
 	return ms_Arg;
 }
+void CmdArg::GetPosFrom(const CmdArg& arg)
+{
+	mpsz_Dequoted = arg.mpsz_Dequoted;
+	mn_TokenNo = arg.mn_TokenNo;
+	#ifdef _DEBUG
+	ms_LastTokenEnd = arg.ms_LastTokenEnd;
+	lstrcpyn(ms_LastTokenSave, arg.ms_LastTokenSave, countof(ms_LastTokenSave));
+	#endif
+}
 
+// Function checks, if we need drop first and last quotation marks
+// Example: ""7z.exe" /?"
+// Using cmd.exe rules
+bool IsNeedDequote(LPCWSTR asCmdLine, LPCWSTR* rsEndQuote/*=NULL*/)
+{
+	if (rsEndQuote)
+		*rsEndQuote = NULL;
+
+	if (!asCmdLine || (asCmdLine[0] != L'"') || (asCmdLine[1] != L'"'))
+		return false;
+
+	// Don't dequote?
+	LPCWSTR pszQE = wcsrchr(asCmdLine+2, L'"');
+	if (!pszQE)
+		return false;
+
+#if 0
+	LPCWSTR pszQ1 = wcschr(asCmdLine+2, L'"');
+	if (!pszQ1)
+		return false;
+	LPCWSTR pszQE = wcsrchr(pszQ1, L'"');
+	// Only TWO quotes in asCmdLine?
+	if (pszQE == pszQ1)
+	{
+		// Doesn't contains special symbols?
+		if (!wcspbrk(asCmdLine+1, L"&<>()@^|"))
+		{
+			// Must contains spaces (doubt?)
+			if (wcschr(asCmdLine+1, L' '))
+			{
+				// Cmd also checks this for executable file name. Skip this check?
+				return false;
+			}
+		}
+	}
+#endif
+
+	// Well, we get here
+	_ASSERTE(asCmdLine[0]==L'"' && pszQE && *pszQE==L'"' && !wcschr(pszQE+1,L'"'));
+	// Dequote it!
+	if (rsEndQuote)
+		*rsEndQuote = pszQE;
+	return true;
+}
 
 // Возвращает 0, если успешно, иначе - ошибка
 int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
@@ -98,17 +165,36 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 	if (!asCmdLine || !*asCmdLine)
 		return CERR_CMDLINEEMPTY;
 
-	LPCWSTR psCmdLine = *asCmdLine, pch = NULL;
-	wchar_t ch = *psCmdLine;
+	#ifdef _DEBUG
+	if ((rsArg.mn_TokenNo==0) // first token
+		|| ((rsArg.mn_TokenNo>0) && (rsArg.ms_LastTokenEnd==*asCmdLine)
+			&& (wcsncmp(*asCmdLine,rsArg.ms_LastTokenSave,countof(rsArg.ms_LastTokenSave)-1))==0))
+	{
+		// OK, параметры корректны
+	}
+	else
+	{
+		_ASSERTE(FALSE && "rsArgs was not resetted before new cycle!");
+	}
+	#endif
+
+	LPCWSTR psCmdLine = SkipNonPrintable(*asCmdLine), pch = NULL;
+	if (!*psCmdLine)
+		return CERR_CMDLINEEMPTY;
+
+	// Remote surrounding quotes, in certain cases
+	// Example: ""7z.exe" /?"
+	if (rsArg.mn_TokenNo == 0)
+	{
+		if (IsNeedDequote(psCmdLine, &rsArg.mpsz_Dequoted))
+			psCmdLine++;
+	}
+
 	size_t nArgLen = 0;
 	bool lbQMode = false;
 
-	while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
-
-	if (ch == 0) return CERR_CMDLINEEMPTY;
-
 	// аргумент начинается с "
-	if (ch == L'"')
+	if (*psCmdLine == L'"')
 	{
 		lbQMode = true;
 		psCmdLine++;
@@ -116,7 +202,7 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 
 		if (!pch) return CERR_CMDLINE;
 
-		while (pch[1] == L'"')
+		while (pch[1] == L'"' && (!rsArg.mpsz_Dequoted || ((pch+1) < rsArg.mpsz_Dequoted)))
 		{
 			pch += 2;
 			pch = wcschr(pch, L'"');
@@ -144,16 +230,24 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 	// Вернуть аргумент
 	if (!rsArg.Set(psCmdLine, nArgLen))
 		return CERR_CMDLINE;
+	rsArg.mn_TokenNo++;
 
 	if (rsArgStart) *rsArgStart = psCmdLine;
 
 	psCmdLine = pch;
 	// Finalize
-	ch = *psCmdLine; // может указывать на закрывающую кавычку
+	if ((*psCmdLine == L'"') && (lbQMode || (rsArg.mpsz_Dequoted == psCmdLine)))
+		psCmdLine++; // was pointed to closing quotation mark
 
-	if (lbQMode && ch == L'"') ch = *(++psCmdLine);
+	psCmdLine = SkipNonPrintable(psCmdLine);
+	// When whole line was dequoted
+	if ((*psCmdLine == L'"') && (rsArg.mpsz_Dequoted == psCmdLine))
+		psCmdLine++;
 
-	while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
+	#ifdef _DEBUG
+	rsArg.ms_LastTokenEnd = psCmdLine;
+	lstrcpyn(rsArg.ms_LastTokenSave, psCmdLine, countof(rsArg.ms_LastTokenSave));
+	#endif
 
 	*asCmdLine = psCmdLine;
 	return 0;
@@ -680,7 +774,7 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet)
 {
 	LPCWSTR lsCmdLine = asCmdLine;
 	bool bEnvChanged = false;
-	CmdArg lsSet, lsVal, lsAmp;
+	CmdArg lsSet, lsAmp;
 
 	// Example: "set PATH=C:\Program Files;%PATH%" & set abc=def & cmd
 	while (NextArg(&lsCmdLine, lsSet) == 0)
@@ -691,10 +785,10 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet)
 		// It may contains only "set" if was not quoted
 		if (lstrcmpi(lsSet, L"set") == 0)
 		{
-			// Now we shell get in lsVal "abc=def" token
-			if ((NextArg(&lsCmdLine, lsVal) == 0) && (wcschr(lsVal, L'=') > lsVal.ms_Arg))
+			// Now we shell get in lsSet "abc=def" token
+			if ((NextArg(&lsCmdLine, lsSet) == 0) && (wcschr(lsSet, L'=') > lsSet.ms_Arg))
 			{
-				lsNameVal = lsVal.ms_Arg;
+				lsNameVal = lsSet.ms_Arg;
 			}
 		}
 		// Or full "set PATH=C:\Program Files;%PATH%" command (without quotes ATM)
@@ -716,10 +810,15 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet)
 				_ASSERTE(lsCmdLine!=NULL && *lsCmdLine==0);
 				bTokenOk = true; // And process SetEnvironmentVariable
 			}
-			else if (lstrcmp(lsAmp, L"&") == 0)
+			else
 			{
-				// Only simple conveyer is supported!
-				bTokenOk = true; // And process SetEnvironmentVariable
+				if (lstrcmp(lsAmp, L"&") == 0)
+				{
+					// Only simple conveyer is supported!
+					bTokenOk = true; // And process SetEnvironmentVariable
+				}
+				// Update last pointer (debug and asserts purposes)
+				lsSet.GetPosFrom(lsAmp);
 			}
 		}
 
@@ -754,7 +853,7 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet)
 
 			bEnvChanged = true;
 		}
-	}
+	} // end of "while (NextArg(&lsCmdLine, lsSet) == 0)"
 
 	// Fin
 	if (!asCmdLine || !*asCmdLine)
