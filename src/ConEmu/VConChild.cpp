@@ -387,7 +387,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				HWND hGui = pVCon->GuiWnd();
 				if (hGui)
 				{
-					_ASSERTE((wParam==0) && "Show DC while GuiWnd exists");
+					_ASSERTE(((wParam==0) || pVCon->RCon()->isGuiForceConView()) && "Show DC while GuiWnd exists");
 				}
 				#endif
 				result = DefWindowProc(hWnd, messg, wParam, lParam);

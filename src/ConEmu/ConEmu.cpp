@@ -3300,7 +3300,7 @@ void CConEmuMain::AskChangeBufferHeight()
 	HWND hGuiClient = pRCon->GuiWnd();
 	if (hGuiClient)
 	{
-		pRCon->ShowGuiClientInt(!pRCon->isGuiVisible());
+		pRCon->ShowGuiClientInt(pRCon->isGuiForceConView());
 		return;
 	}
 

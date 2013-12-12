@@ -264,6 +264,7 @@ class CRealConsole
 		static  BOOL CALLBACK FindChildGuiWindowProc(HWND hwnd, LPARAM lParam);
 		DWORD   mn_GuiAttachFlags; // запоминается в SetGuiMode
 		BOOL    mb_GuiExternMode; // FALSE если захотели показать GUI приложение вне вкладки ConEmu (Ctrl-Win-Alt-Space)
+		bool    mb_GuiForceConView; // TRUE если просили спрятать GUI и показать VirtualConsole
 		RECT    rcPreGuiWndRect; // Положение окна ДО аттача
 		BOOL    mb_InGuiAttaching;
 		BOOL    mb_InSetFocus;
@@ -285,6 +286,7 @@ class CRealConsole
 		// Если работаем в Gui-режиме (Notepad, Putty, ...)
 		HWND    GuiWnd();  // HWND Gui приложения
 		DWORD   GuiWndPID();  // HWND Gui приложения
+		bool    isGuiForceConView(); // mb_GuiForceConView
 		void    GuiNotifyChildWindow();
 		void    GuiWndFocusStore();
 		void    GuiWndFocusRestore(bool bForce = false);
@@ -619,6 +621,7 @@ class CRealConsole
 		BOOL StartProcess();
 		private:
 		BOOL StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR& lpszWorkDir, bool bNeedConHostSearch, HWND hSetForeground, DWORD& nCreateBegin, DWORD& nCreateEnd, DWORD& nCreateDuration, BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/, BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/, STARTUPINFO& si, PROCESS_INFORMATION& pi, DWORD& dwLastError);
+		void ResetVarsOnStart();
 		protected:
 		BOOL StartMonitorThread();
 		void SetMonitorThreadEvent();

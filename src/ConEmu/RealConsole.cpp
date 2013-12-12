@@ -284,7 +284,9 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_LastInvalidateTick = 0;
 
 	hConWnd = NULL;
-	hGuiWnd = mh_GuiWndFocusStore = NULL; mb_GuiExternMode = FALSE; //mn_GuiApplicationPID = 0;
+	hGuiWnd = mh_GuiWndFocusStore = NULL;
+	mb_GuiExternMode = FALSE;
+	mb_GuiForceConView = false;
 	mn_GuiAttachInputTID = 0;
 	mn_GuiWndStyle = mn_GuiWndStylEx = 0; mn_GuiAttachFlags = 0;
 	ZeroStruct(mrc_LastGuiWnd);
@@ -3050,6 +3052,25 @@ LPCWSTR CRealConsole::GetStartupDir()
 	return lpszWorkDir;
 }
 
+void CRealConsole::ResetVarsOnStart()
+{
+	mb_InCloseConsole = FALSE;
+	mb_SwitchActiveServer = false;
+	//Drop flag after Restart console
+	mb_InPostCloseMacro = false;
+	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
+	ZeroStruct(m_ServerClosing);
+
+	hConWnd = NULL;
+	hGuiWnd = mh_GuiWndFocusStore = NULL;
+	mb_GuiExternMode = FALSE;
+	mb_GuiForceConView = false;
+	//mn_GuiApplicationPID = 0;
+	setGuiWndPID(0, NULL); // set mn_GuiWndPID to 0
+	mn_GuiWndStyle = mn_GuiWndStylEx = 0;
+	mn_GuiAttachFlags = 0;
+}
+
 BOOL CRealConsole::StartProcess()
 {
 	if (!this)
@@ -3090,13 +3111,14 @@ BOOL CRealConsole::StartProcess()
 
 	//ResetEvent(mh_CreateRootEvent);
 	CloseConfirmReset();
+
+	//Moved to function
+	ResetVarsOnStart();
+
+	//Ready!
 	mb_InCreateRoot = TRUE;
-	mb_InCloseConsole = FALSE;
-	mb_SwitchActiveServer = false;
-	//Drop flag after Restart console
-	mb_InPostCloseMacro = false;
-	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
-	ZeroStruct(m_ServerClosing);
+
+	//=====================================
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 	wchar_t szInitConTitle[255];
@@ -6870,11 +6892,13 @@ void CRealConsole::ShowGuiClientInt(bool bShow)
 {
 	if (bShow && hGuiWnd && IsWindow(hGuiWnd))
 	{
+		mb_GuiForceConView = false;
 		ShowOtherWindow(hGuiWnd, SW_SHOW);
 		ShowWindow(GetView(), SW_HIDE);
 	}
 	else
 	{
+		mb_GuiForceConView = true;
 		ShowWindow(GetView(), SW_SHOW);
 		if (hGuiWnd && IsWindow(hGuiWnd))
 			ShowOtherWindow(hGuiWnd, SW_HIDE);
@@ -7730,12 +7754,9 @@ BOOL CRealConsole::RecreateProcessStart()
 		StopThread(TRUE/*abRecreate*/);
 		ResetEvent(mh_TermEvent);
 		mn_TermEventTick = 0;
-		hConWnd = NULL;
-		hGuiWnd = mh_GuiWndFocusStore = NULL;
-		//mn_GuiApplicationPID = 0;
-		setGuiWndPID(0, NULL); // set mn_GuiWndPID to 0
-		mn_GuiWndStyle = mn_GuiWndStylEx = 0;
-		mn_GuiAttachFlags = 0;
+
+		//Moved to function
+		ResetVarsOnStart();
 
 		ms_VConServer_Pipe[0] = 0;
 		m_RConServer.Stop();
@@ -11220,6 +11241,10 @@ DWORD CRealConsole::GuiWndPID()
 	if (!this || !hGuiWnd)
 		return 0;
 	return mn_GuiWndPID;
+}
+bool CRealConsole::isGuiForceConView()
+{
+	return mb_GuiForceConView;
 }
 
 // ѕри движении окна ConEmu - нужно подергать дочерние окошки
