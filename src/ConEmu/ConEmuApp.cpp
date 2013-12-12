@@ -107,6 +107,29 @@ BOOL gbDebugShowRects = FALSE;
 CEStartupEnv* gpStartEnv = NULL;
 
 LONG DontEnable::gnDontEnable = 0;
+//LONG nPrev;   // Informational!
+//bool bLocked; // Proceed only main thread
+DontEnable::DontEnable()
+{
+	bLocked = gpConEmu->isMainThread();
+	if (bLocked)
+	{
+		_ASSERTE(gnDontEnable>=0);
+		nPrev = InterlockedIncrement(&gnDontEnable) - 1;
+	}
+};
+DontEnable::~DontEnable()
+{
+	if (bLocked)
+	{
+		InterlockedDecrement(&gnDontEnable);
+	}
+	_ASSERTE(gnDontEnable>=0);
+};
+BOOL DontEnable::isDontEnable()
+{
+	return (gnDontEnable > 0);
+};
 
 
 const TCHAR *const gsClassName = VirtualConsoleClass; // окна отрисовки

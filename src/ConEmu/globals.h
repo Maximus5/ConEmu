@@ -68,22 +68,12 @@ class DontEnable
 private:
 	LONG nPrev; // Informational!
 	static LONG gnDontEnable;
+	bool bLocked;
 public:
-	DontEnable()
-	{
-		_ASSERTE(gnDontEnable>=0);
-		nPrev = InterlockedIncrement(&gnDontEnable) - 1;
-	};
-	~DontEnable()
-	{
-		InterlockedDecrement(&gnDontEnable);
-		_ASSERTE(gnDontEnable>=0);
-	};
+	DontEnable();
+	~DontEnable();
 public:
-	static BOOL isDontEnable()
-	{
-		return (gnDontEnable > 0);
-	};
+	static BOOL isDontEnable();
 };
 
 extern OSVERSIONINFO gOSVer;
