@@ -982,9 +982,9 @@
 #define cbProcessNewConArg              2640
 #define cbHighlightMouseRow             2641
 #define cbHighlightMouseCol             2642
-#define cbCopyFmtHtml0                  2643
-#define cbCopyFmtHtml1                  2644
-#define cbCopyFmtHtml2                  2645
+#define rbCopyFmtHtml0                  2643
+#define rbCopyFmtHtml1                  2644
+#define rbCopyFmtHtml2                  2645
 
 // Next default values for new objects
 // 

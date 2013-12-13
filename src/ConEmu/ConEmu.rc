@@ -867,9 +867,9 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,122,308,8
     CONTROL         "copy before reset",cbCTSEndCopyBefore,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,163,136,73,8
     GROUPBOX        "Copying format",IDC_STATIC,4,155,319,29
-    CONTROL         "Copy plain text only",cbCopyFmtHtml0,"Button",BS_AUTORADIOBUTTON,11,168,98,8
-    CONTROL         "Copy HTML format",cbCopyFmtHtml1,"Button",BS_AUTORADIOBUTTON,114,168,98,8
-    CONTROL         "Copy as (RAW) HTML",cbCopyFmtHtml2,"Button",BS_AUTORADIOBUTTON,218,168,98,8
+    CONTROL         "Copy plain text only",rbCopyFmtHtml0,"Button",BS_AUTORADIOBUTTON,11,168,98,8
+    CONTROL         "Copy HTML format",rbCopyFmtHtml1,"Button",BS_AUTORADIOBUTTON,114,168,98,8
+    CONTROL         "Copy as (RAW) HTML",rbCopyFmtHtml2,"Button",BS_AUTORADIOBUTTON,218,168,98,8
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235

@@ -768,7 +768,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_DEFTERM,     1, L"Default term",   thi_DefTerm/*,  OnInitDialog_DefTerm*/},
 		{IDD_SPG_KEYS,        0, L"Keys & Macro",   thi_Keys/*,    OnInitDialog_Keys*/},
 		{IDD_SPG_CONTROL,     1, L"Controls",       thi_KeybMouse/*,OnInitDialog_Control*/},
-		{IDD_SPG_MARKCOPY,    1, L"Mark & Copy",    thi_MarkCopy/*OnInitDialog_MarkCopy*/},
+		{IDD_SPG_MARKCOPY,    1, L"Mark/Copy",      thi_MarkCopy/*OnInitDialog_MarkCopy*/},
 		{IDD_SPG_PASTE,       1, L"Paste",          thi_Paste/*OnInitDialog_Paste*/},
 		{IDD_SPG_HIGHLIGHT,   1, L"Highlight",      thi_Hilight/*OnInitDialog_Hilight*/},
 		{IDD_SPG_FEATURE_FAR, 0, L"Far Manager",    thi_Far/*,     OnInitDialog_Far*/, true/*Collapsed*/},
@@ -2496,12 +2496,8 @@ LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2)
 	checkDlgButton(hWnd2, cbCTSTextSelection, gpSet->isCTSSelectText);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkText);
 	FillListBoxByte(hWnd2, lbCTSTextSelection, SettingsNS::KeysAct, VkMod);
-	checkDlgButton(hWnd2, (gpSet->isCTSActMode==1)?rbCTSActAlways:rbCTSActBufferOnly, BST_CHECKED);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkAct);
 
-	FillListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::KeysAct, VkMod);
-	FillListBoxByte(hWnd2, lbCTSRBtnAction, SettingsNS::ClipAct, gpSet->isCTSRBtnAction);
-	FillListBoxByte(hWnd2, lbCTSMBtnAction, SettingsNS::ClipAct, gpSet->isCTSMBtnAction);
 	DWORD idxBack = (gpSet->isCTSColorIndex & 0xF0) >> 4;
 	DWORD idxFore = (gpSet->isCTSColorIndex & 0xF);
 	FillListBoxItems(GetDlgItem(hWnd2, lbCTSForeIdx), countof(SettingsNS::ColorIdx)-1,
@@ -2516,6 +2512,8 @@ LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2)
 	FillListBoxByte(hWnd2, lbCTSEOL, SettingsNS::CRLF, b);
 
 	checkDlgButton(hWnd2, cbCTSShiftArrowStartSel, gpSet->AppStd.isCTSShiftArrowStart);
+
+	checkRadioButton(hWnd2, rbCopyFmtHtml0, rbCopyFmtHtml2, (rbCopyFmtHtml0+gpSet->isCTSHtmlFormat));
 
 	CheckSelectionModifiers(hWnd2);
 
@@ -3177,6 +3175,11 @@ LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, BOOL abInitial)
 
 	// Ctrl+BS - del left word
 	checkDlgButton(hWnd2, cbCTSDeleteLeftWord, gpSet->AppStd.isCTSDeleteLeftWord);
+
+	checkDlgButton(hWnd2, (gpSet->isCTSActMode==1)?rbCTSActAlways:rbCTSActBufferOnly, BST_CHECKED);
+	FillListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::KeysAct, VkMod);
+	FillListBoxByte(hWnd2, lbCTSRBtnAction, SettingsNS::ClipAct, gpSet->isCTSRBtnAction);
+	FillListBoxByte(hWnd2, lbCTSMBtnAction, SettingsNS::ClipAct, gpSet->isCTSMBtnAction);
 
 	return 0;
 }
@@ -5927,6 +5930,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case rbCTSActAlways: case rbCTSActBufferOnly:
 			gpSet->isCTSActMode = (CB==rbCTSActAlways) ? 1 : 2;
+			break;
+		case rbCopyFmtHtml0: case rbCopyFmtHtml1: case rbCopyFmtHtml2:
+			gpSet->isCTSHtmlFormat = (CB - rbCopyFmtHtml0);
 			break;
 		case cbCTSFreezeBeforeSelect:
 			gpSet->isCTSFreezeBeforeSelect = IsChecked(hWnd2,CB);
