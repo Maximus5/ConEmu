@@ -35,7 +35,7 @@
 #define IDD_SPG_INTEGRATION             164
 #define IDD_SPG_TRANSPARENT             165
 #define IDD_SPG_WNDSIZEPOS              167
-#define IDD_SPG_SELECTION               168
+#define IDD_SPG_MARKCOPY                168
 #define IDD_SPG_TABS                    169
 #define IDD_SPG_VIEWS                   170
 #define IDD_SPG_KEYS                    171
@@ -45,6 +45,8 @@
 #define IDD_SPG_TASKBAR                 175
 #define IDD_SPG_DEFTERM                 176
 #define IDD_SPG_FARMACRO                177
+#define IDD_SPG_HIGHLIGHT               178
+#define IDD_SPG_PASTE                   179
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_ATTACHDLG                   212
@@ -977,8 +979,12 @@
 #define vkCTSCopyHtml2                  2635
 #define vkMaximizeWidth                 2636
 #define vkMaximizeHeight                2637
-#define IDC_CHECK1                      2640
 #define cbProcessNewConArg              2640
+#define cbHighlightMouseRow             2641
+#define cbHighlightMouseCol             2642
+#define cbCopyFmtHtml0                  2643
+#define cbCopyFmtHtml1                  2644
+#define cbCopyFmtHtml2                  2645
 
 // Next default values for new objects
 // 
@@ -986,7 +992,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        224
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2641
+#define _APS_NEXT_CONTROL_VALUE         2646
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

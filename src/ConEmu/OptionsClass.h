@@ -215,7 +215,9 @@ class CSettings
 			thi_DefTerm,      //   "Default terminal"
 			thi_Keys,         // "Keys & Macro"
 			thi_KeybMouse,    //   "Controls"
-			thi_Selection,    //   "Mark & Paste"
+			thi_MarkCopy,     //   "Mark & Copy"
+			thi_Paste,        //   "Paste"
+			thi_Hilight,      //   "Highlight"
 			thi_Far,          // "Far Manager"
 			thi_FarMacro,     //   "Far macros"
 			thi_Views,        //   "Views"
@@ -233,18 +235,6 @@ class CSettings
 		static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		// ¬кладки настроек: IDD_SPG_MAIN, IDD_SPG_FEATURE, и т.д.
 		static INT_PTR CALLBACK pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		////static INT_PTR CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		////static INT_PTR CALLBACK keysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		////static INT_PTR CALLBACK tabsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		////static INT_PTR CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		////static INT_PTR CALLBACK viewsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		////static INT_PTR CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		////static INT_PTR CALLBACK debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		// IDD_MORE_HIDE
-		//static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		////static INT_PTR CALLBACK multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		// IDD_SPG_SELECTION
-		//static INT_PTR CALLBACK selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		//
 		void debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl);
 		void debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile);
@@ -343,7 +333,9 @@ class CSettings
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
 		LRESULT OnInitDialog_Comspec(HWND hWnd2, bool abInitial);
 		//LRESULT OnInitDialog_Output(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Selection(HWND hWnd2);
+		LRESULT OnInitDialog_MarkCopy(HWND hWnd2);
+		LRESULT OnInitDialog_Paste(HWND hWnd2);
+		LRESULT OnInitDialog_Hilight(HWND hWnd2);
 		LRESULT OnInitDialog_Far(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_FarMacro(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Keys(HWND hWnd2, BOOL abInitial);

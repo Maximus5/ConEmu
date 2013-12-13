@@ -855,6 +855,10 @@ struct Settings
 		//BYTE isFarGotoEditorVk; // Клавиша-модификатор для isFarGotoEditor
 		//reg->Load(L"FarGotoEditorPath", sFarGotoEditor);
 		wchar_t* sFarGotoEditor; // Команда запуска редактора
+		//reg->Load(L"HighlightMouseRow", isHighlightMouseRow);
+		bool isHighlightMouseRow;
+		//reg->Load(L"HighlightMouseCol", isHighlightMouseCol);
+		bool isHighlightMouseCol;
 		
 		bool IsModifierPressed(int nDescrID, bool bAllowEmpty);
 		//bool isSelectionModifierPressed();

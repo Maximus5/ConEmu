@@ -354,6 +354,10 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 		Assert(gpConEmu->WndWidth.Value && gpConEmu->WndHeight.Value);
 	}
 
+	m_HighlightInfo.mb_Allowed = false; // true - if VCon visible and enabled in settings
+	m_HighlightInfo.mb_ChangeDetected = false; // true - if Invalidate was called, but UpdateHighlights still not
+	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
+	m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
 
 	DEBUGTEST(mb_DebugDumpDC = false);
 
@@ -1589,7 +1593,7 @@ bool CVirtualConsole::CheckChangedTextAttr()
 	RECT conLocked;
 	int nLocked = IsDcLocked(&conLocked);
 
-	if (isForce && !nLocked)
+	if ((isForce || m_HighlightInfo.mb_ChangeDetected) && !nLocked)
 	{
 		lbChanged = textChanged = attrChanged = true;
 	}
@@ -1850,6 +1854,11 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	//
 	if (lRes && gpConEmu->isVisible(this))
 	{
+		if (gpSet->isHighlightMouseRow || gpSet->isHighlightMouseCol)
+		{
+			UpdateHighlights();
+		}
+
 		if (mpsz_LogScreen && mp_RCon && mp_RCon->GetServerPID())
 		{
 			// Скинуть буферы в лог
@@ -1877,6 +1886,8 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 		}
 	}
 
+	m_HighlightInfo.mb_ChangeDetected = false;
+
 	gpSetCls->Performance(tPerfRender, TRUE);
 	/* ***************************************** */
 	/*       Finalization, release objects       */
@@ -1897,6 +1908,133 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	SelectFont(NULL);
 	HEAPVAL
 	return lRes;
+}
+
+void CVirtualConsole::PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC)
+{
+	BitBlt(hPaintDC, rect.left, rect.top, 1, rect.bottom-rect.top, hFromDC, 0,0,
+			PATINVERT);
+	BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, 1, hFromDC, 0,0,
+			PATINVERT);
+	BitBlt(hPaintDC, rect.right-1, rect.top, 1, rect.bottom-rect.top, hFromDC, 0,0,
+			PATINVERT);
+	BitBlt(hPaintDC, rect.left, rect.bottom-1, rect.right-rect.left, 1, hFromDC, 0,0,
+			PATINVERT);
+}
+
+// This is called from TrackMouse. It must NOT trigger more than one invalidate before next repaint
+bool CVirtualConsole::WasHighlightRowColChanged()
+{
+	// Invalidate already pended?
+	if (m_HighlightInfo.mb_ChangeDetected)
+		return false;
+
+	// If cursor goes out of VCon - leave row/col marks?
+	COORD crPos = {-1,-1};
+	if (!CalcHighlightRowCol(&crPos))
+		return false;
+
+	if ((gpSet->isHighlightMouseRow
+			&& (m_HighlightInfo.m_Last.Y >= 0) && (crPos.Y != m_HighlightInfo.m_Last.Y))
+		|| (gpSet->isHighlightMouseCol
+			&& (m_HighlightInfo.m_Last.X >= 0) && (crPos.X != m_HighlightInfo.m_Last.X)))
+	{
+		m_HighlightInfo.mb_ChangeDetected = true;
+		return true;
+	}
+
+	return false;
+}
+
+bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
+{
+	if (!(gpSet->isHighlightMouseRow || gpSet->isHighlightMouseCol)
+		|| !gpConEmu->isVisible(this))
+	{
+		m_HighlightInfo.mb_Allowed = false;
+		m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
+		return false;
+	}
+
+	// Get SCREEN coordinates
+	POINT ptCursor = {}; GetCursorPos(&ptCursor);
+	RECT  rcDC = {}; GetWindowRect(mh_WndDC, &rcDC);
+	if (!PtInRect(&rcDC, ptCursor))
+	{
+		m_HighlightInfo.mb_Allowed = false;
+		m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
+		return false;
+	}
+
+	// Get COORDs (relative to upper-left visible pos)
+	COORD pos = ClientToConsole(ptCursor.x-rcDC.left, ptCursor.y-rcDC.top);
+	m_HighlightInfo.m_Cur = pos;
+	if (pos.X < 0 || pos.Y < 0)
+	{
+		m_HighlightInfo.mb_Allowed = false;
+		return false;
+	}
+	m_HighlightInfo.mb_Allowed = true;
+	if (pcrPos)
+		*pcrPos = pos;
+	return true;
+}
+
+void CVirtualConsole::UpdateHighlights()
+{
+	_ASSERTE(this && (gpSet->isHighlightMouseRow || gpSet->isHighlightMouseCol));
+	_ASSERTE(gpConEmu->isVisible(this));
+
+	// Get COORDs (relative to upper-left visible pos)
+	COORD pos = {-1,-1};
+	if (!CalcHighlightRowCol(&pos))
+		return;
+
+	int CurChar = pos.Y * TextWidth + pos.X;
+	if (CurChar < 0 || CurChar>=(int)(TextWidth * TextHeight))
+	{
+		m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
+		return; // может быть или глюк - или размер консоли был резко уменьшен и предыдущая позиция курсора пропала с экрана
+	}
+
+	// And MARK! (nFontHeight or cell (nFontWidth))
+
+	COORD pix;
+	pix.X = pos.X * nFontWidth;
+	pix.Y = pos.Y * nFontHeight;
+
+	if (pos.X && ConCharX && ConCharX[CurChar-1])
+		pix.X = ConCharX[CurChar-1];
+
+	HDC hPaintDC = (HDC)m_DC;
+	HBRUSH hBr = CreateSolidBrush(0xC0C0C0);
+	HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
+
+	if (gpSet->isHighlightMouseRow)
+	{
+		RECT rect = {0, pix.Y, Width, pix.Y+nFontHeight};
+		PatInvertRect(hPaintDC, rect, hPaintDC);
+		m_HighlightInfo.m_Last.Y = pos.Y;
+	}
+	else
+	{
+		m_HighlightInfo.m_Last.Y = -1;
+	}
+
+	if (gpSet->isHighlightMouseCol)
+	{
+		// This will be not "precise" on other rows if using proportional font...
+		RECT rect = {pix.X, 0, pix.X+nFontWidth, Height};
+		PatInvertRect(hPaintDC, rect, hPaintDC);
+		m_HighlightInfo.m_Last.X = pos.X;
+	}
+	else
+	{
+		m_HighlightInfo.m_Last.X = -1;
+	}
+
+	SelectObject(hPaintDC, hOld);
+	DeleteObject(hBr);
 }
 
 bool CVirtualConsole::CheckTransparent()
@@ -2787,10 +2925,8 @@ void CVirtualConsole::UpdateText()
 		m_DC.SetBkMode(TRANSPARENT);
 
 	int *nDX = (int*)malloc((TextWidth+1)*sizeof(int));
-	// rows
-	// зачем в isForceMonospace принудительно перерисовывать все?
-	// const bool skipNotChanged = !isForce /*&& !gpSet->isForceMonospace*/;
-	const bool skipNotChanged = !isForce; // && !((gpSetCls->FontItalic() || gpSet->FontClearType()));
+
+	bool skipNotChanged = !isForce;
 	bool bEnhanceGraphics = gpSet->isEnhanceGraphics;
 	bool bProportional = gpSet->isMonospace == 0;
 	bool bForceMonospace = gpSet->isMonospace == 2;
@@ -2801,6 +2937,21 @@ void CVirtualConsole::UpdateText()
 
 	// 120616 - Chinese - off?
 	bool bFixFrameCoord = !gbIsDBCS || mp_RCon->isFar();
+
+	const bool hilighRowCol = (gpSet->isHighlightMouseRow || gpSet->isHighlightMouseCol);
+	COORD hiPos = {-1,-1};
+	// Need to check mouse (here) only if NOT isForce mode (if all lines forced to be drawn - no problem with artefacts)
+	if (skipNotChanged)
+	{
+		CalcHighlightRowCol(NULL);
+
+		// Column highlighting was changed?
+		if ((gpSet->isHighlightMouseCol ? m_HighlightInfo.m_Cur.X : -1) != m_HighlightInfo.m_Last.X)
+		{
+			// Oops, this will affects all rows
+			skipNotChanged = false;
+		}
+	}
 
 	_ASSERTE(((TextWidth * nFontWidth) >= Width));
 #if 0
@@ -2856,9 +3007,17 @@ void CVirtualConsole::UpdateText()
 		// может оказаться КОРОЧЕ предыдущего значения, в результате появятся артефакты
 		if (skipNotChanged)
 		{
-			// Skip not changed head and tail symbols
-			if (!FindChanges(row, j, end, ConCharLine, ConAttrLine, ConCharLine2, ConAttrLine2))
-				continue;
+			// If we highlight row under mouse cursor - we need
+			// to redraw rows where marks was drawn last time...
+			bool highlightChanged = gpSet->isHighlightMouseRow
+				&& (m_HighlightInfo.m_Last.Y >= 0) && (row == m_HighlightInfo.m_Last.Y);
+
+			if (!highlightChanged)
+			{
+				// Skip not changed head and tail symbols
+				if (!FindChanges(row, j, end, ConCharLine, ConAttrLine, ConCharLine2, ConAttrLine2))
+					continue;
+			}
 		} // if (skipNotChanged)
 
 		if (Cursor.isVisiblePrev && row == Cursor.y
@@ -3643,6 +3802,9 @@ void CVirtualConsole::UpdateText()
 
 	free(nDX);
 
+	// Screen updated, reset until next "UpdateHighlights()" call
+	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
+
 	return;
 }
 
@@ -3905,14 +4067,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		else
 		{
 			// просто прямоугольник рисовать
-			BitBlt(hPaintDC, rect.left, rect.top, 1, rect.bottom-rect.top, (HDC)m_DC, 0,0,
-			       PATINVERT);
-			BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, 1, (HDC)m_DC, 0,0,
-			       PATINVERT);
-			BitBlt(hPaintDC, rect.right-1, rect.top, 1, rect.bottom-rect.top, (HDC)m_DC, 0,0,
-			       PATINVERT);
-			BitBlt(hPaintDC, rect.left, rect.bottom-1, rect.right-rect.left, 1, (HDC)m_DC, 0,0,
-			       PATINVERT);
+			PatInvertRect(hPaintDC, rect, (HDC)m_DC);
 		}
 
 		SelectObject(hPaintDC, hOld);
@@ -4848,7 +5003,7 @@ POINT CVirtualConsole::ConsoleToClient(LONG x, LONG y)
 	return pt;
 }
 
-// Функция живет здесь, а не в gpSet, т.к. здесь мы может более точно опеределить знакоместо
+// Only here we can precisely calc exact coords
 COORD CVirtualConsole::ClientToConsole(LONG x, LONG y, bool StrictMonospace/*=false*/)
 {
 	COORD cr = {0,0};

@@ -620,6 +620,8 @@ void Settings::InitSettings()
 	nPasteConfirmLonger = 200;
 	isFarGotoEditor = true; //isFarGotoEditorVk = VK_LCONTROL;
 	sFarGotoEditor = lstrdup(L"far.exe /e%1:%2 \"%3\"");
+	isHighlightMouseRow = false; // Not turned on by default
+	isHighlightMouseCol = false; // Not turned on by default
 
 	isStatusBarShow = true;
 	isStatusBarFlags = csf_HorzDelim;
@@ -2445,6 +2447,9 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"FarGotoEditorPath", &sFarGotoEditor);
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
 
+		reg->Load(L"HighlightMouseRow", isHighlightMouseRow);
+		reg->Load(L"HighlightMouseCol", isHighlightMouseCol);
+
 		if (!reg->Load(L"FixFarBorders", isFixFarBorders))
 			reg->Load(L"Experimental", isFixFarBorders); //очень старое имя настройки
 
@@ -3357,6 +3362,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"FarGotoEditorPath", sFarGotoEditor);
 		//reg->Save(L"FarGotoEditorVk", isFarGotoEditorVk);
 		
+		reg->Save(L"HighlightMouseRow", isHighlightMouseRow);
+		reg->Save(L"HighlightMouseCol", isHighlightMouseCol);
+
 		reg->Save(L"FixFarBorders", isFixFarBorders);
 		{
 		wchar_t* pszCharRanges = CreateCharRanges(mpc_FixFarBorderValues);

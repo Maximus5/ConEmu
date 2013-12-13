@@ -768,7 +768,9 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_DEFTERM,     1, L"Default term",   thi_DefTerm/*,  OnInitDialog_DefTerm*/},
 		{IDD_SPG_KEYS,        0, L"Keys & Macro",   thi_Keys/*,    OnInitDialog_Keys*/},
 		{IDD_SPG_CONTROL,     1, L"Controls",       thi_KeybMouse/*,OnInitDialog_Control*/},
-		{IDD_SPG_SELECTION,   1, L"Mark & Paste",   thi_Selection/*OnInitDialog_Selection*/},
+		{IDD_SPG_MARKCOPY,    1, L"Mark & Copy",    thi_MarkCopy/*OnInitDialog_MarkCopy*/},
+		{IDD_SPG_PASTE,       1, L"Paste",          thi_Paste/*OnInitDialog_Paste*/},
+		{IDD_SPG_HIGHLIGHT,   1, L"Highlight",      thi_Hilight/*OnInitDialog_Hilight*/},
 		{IDD_SPG_FEATURE_FAR, 0, L"Far Manager",    thi_Far/*,     OnInitDialog_Far*/, true/*Collapsed*/},
 		{IDD_SPG_FARMACRO,    1, L"Far macros",     thi_FarMacro/*, OnInitDialog_FarMacro*/},
 		{IDD_SPG_VIEWS,       1, L"Views",          thi_Views/*,   OnInitDialog_Views*/},
@@ -1729,6 +1731,8 @@ LRESULT CSettings::OnInitDialog()
 			}
 		}
 
+		TreeView_SelectItem(GetDlgItem(ghOpWnd, tvSetupCategories), gpSetCls->m_Pages[0].hTI);
+
 		HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
 		//RECT rcClient; GetWindowRect(hPlace, &rcClient);
 		//MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
@@ -2473,7 +2477,7 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
+LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2)
 {
 	checkRadioButton(hWnd2, rbCTSNever, rbCTSBufferOnly,
 		(gpSet->isConsoleTextSelection == 0) ? rbCTSNever :
@@ -2511,15 +2515,38 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 	BYTE b = gpSet->AppStd.isCTSEOL;
 	FillListBoxByte(hWnd2, lbCTSEOL, SettingsNS::CRLF, b);
 
+	checkDlgButton(hWnd2, cbCTSShiftArrowStartSel, gpSet->AppStd.isCTSShiftArrowStart);
+
+	CheckSelectionModifiers(hWnd2);
+
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Paste(HWND hWnd2)
+{
 	checkDlgButton(hWnd2, cbClipShiftIns, gpSet->AppStd.isPasteAllLines);
 	checkDlgButton(hWnd2, cbClipCtrlV, gpSet->AppStd.isPasteFirstLine);
 	checkDlgButton(hWnd2, cbClipConfirmEnter, gpSet->isPasteConfirmEnter);
 	checkDlgButton(hWnd2, cbClipConfirmLimit, (gpSet->nPasteConfirmLonger!=0));
 	SetDlgItemInt(hWnd2, tClipConfirmLimit, gpSet->nPasteConfirmLonger, FALSE);
 
-	checkDlgButton(hWnd2, cbCTSShiftArrowStartSel, gpSet->AppStd.isCTSShiftArrowStart);
+	return 0;
+}
 
-	CheckSelectionModifiers(hWnd2);
+LRESULT CSettings::OnInitDialog_Hilight(HWND hWnd2)
+{
+	// Hyperlinks & compiler errors
+	checkDlgButton(hWnd2, cbFarGotoEditor, gpSet->isFarGotoEditor);
+	DWORD VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
+	FillListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::KeysAct, VkMod);
+	SetDlgItemText(hWnd2, tGotoEditorCmd, gpSet->sFarGotoEditor);
+
+	// Highlight full row/column under mouse cursor
+	checkDlgButton(hWnd2, cbHighlightMouseRow, gpSet->isHighlightMouseRow);
+	checkDlgButton(hWnd2, cbHighlightMouseCol, gpSet->isHighlightMouseCol);
+
+	// This modifier (lbFarGotoEditorVk) is not checked
+	// CheckSelectionModifiers(hWnd2);
 
 	return 0;
 }
@@ -2534,8 +2561,8 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 		int nVkIdx;
 		BYTE Vk;
 	} Keys[] = {
-		{lbCTSBlockSelection, L"Block selection", thi_Selection, gpSet->isCTSSelectBlock, vkCTSVkBlock},
-		{lbCTSTextSelection, L"Text selection", thi_Selection, gpSet->isCTSSelectText, vkCTSVkText},
+		{lbCTSBlockSelection, L"Block selection", thi_MarkCopy, gpSet->isCTSSelectBlock, vkCTSVkBlock},
+		{lbCTSTextSelection, L"Text selection", thi_MarkCopy, gpSet->isCTSSelectText, vkCTSVkText},
 		{lbCTSClickPromptPosition, L"Prompt position", thi_KeybMouse, gpSet->AppStd.isCTSClickPromptPosition, vkCTSVkPromptClk},
 
 		// Don't check it?
@@ -3143,15 +3170,9 @@ LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, BOOL abInitial)
 
 	checkDlgButton(hWnd2, cbSkipFocusEvents, gpSet->isSkipFocusEvents);
 
-	// Hyperlinks & compiler errors
-	checkDlgButton(hWnd2, cbFarGotoEditor, gpSet->isFarGotoEditor);
-	DWORD VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
-	FillListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::KeysAct, VkMod);
-	SetDlgItemText(hWnd2, tGotoEditorCmd, gpSet->sFarGotoEditor);
-
 	// Prompt click
 	checkDlgButton(hWnd2, cbCTSClickPromptPosition, gpSet->AppStd.isCTSClickPromptPosition);
-	VkMod = gpSet->GetHotkeyById(vkCTSVkPromptClk);
+	DWORD VkMod = gpSet->GetHotkeyById(vkCTSVkPromptClk);
 	FillListBoxByte(hWnd2, lbCTSClickPromptPosition, SettingsNS::KeysAct, VkMod);
 
 	// Ctrl+BS - del left word
@@ -5034,7 +5055,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		//	gpSet->isConsoleTextSelection = IsChecked(hWnd2, cbConsoleTextSelection);
 		//	break;
 		//case bCTSSettings:
-		//	DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_SPG_SELECTION), ghOpWnd, selectionOpProc);
+		//	DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_SPG_MARKCOPY), ghOpWnd, selectionOpProc);
 		//	break;
 		case cbFARuseASCIIsort:
 			gpSet->isFARuseASCIIsort = IsChecked(hWnd2, cbFARuseASCIIsort);
@@ -5977,6 +5998,14 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbFarGotoEditor:
 			gpSet->isFarGotoEditor = IsChecked(hWnd2,CB);
+			break;
+		case cbHighlightMouseRow:
+			gpSet->isHighlightMouseRow = IsChecked(hWnd2,CB);
+			gpConEmu->Update(true);
+			break;
+		case cbHighlightMouseCol:
+			gpSet->isHighlightMouseCol = IsChecked(hWnd2,CB);
+			gpConEmu->Update(true);
 			break;
 		/* *** Text selections options *** */
 
@@ -8078,7 +8107,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 			gpConEmu->Update(true);
 		} // else if (hWnd2 == mh_Tabs[thi_Colors])
-		else if (hWnd2 == mh_Tabs[thi_Selection])
+		else if (hWnd2 == mh_Tabs[thi_MarkCopy])
 		{
 			if (HIWORD(wParam) == CBN_SELCHANGE)
 			{
@@ -8872,8 +8901,14 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_COMSPEC:
 			gpSetCls->OnInitDialog_Comspec(hWnd2, true);
 			break;
-		case IDD_SPG_SELECTION:
-			gpSetCls->OnInitDialog_Selection(hWnd2);
+		case IDD_SPG_MARKCOPY:
+			gpSetCls->OnInitDialog_MarkCopy(hWnd2);
+			break;
+		case IDD_SPG_PASTE:
+			gpSetCls->OnInitDialog_Paste(hWnd2);
+			break;
+		case IDD_SPG_HIGHLIGHT:
+			gpSetCls->OnInitDialog_Hilight(hWnd2);
 			break;
 		case IDD_SPG_FEATURE_FAR:
 			gpSetCls->OnInitDialog_Far(hWnd2, TRUE);
@@ -8976,7 +9011,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_COMSPEC:
 			gpSetCls->OnInitDialog_Comspec(hWnd2, false);
 			break;
-		case IDD_SPG_SELECTION: /*gpSetCls->OnInitDialog_Selection(hWnd2);*/    break;
+		case IDD_SPG_MARKCOPY: /*gpSetCls->OnInitDialog_MarkCopy(hWnd2);*/    break;
+		case IDD_SPG_PASTE: /*gpSetCls->OnInitDialog_Paste(hWnd2);*/    break;
+		case IDD_SPG_HIGHLIGHT: /*gpSetCls->OnInitDialog_Hilight(hWnd2);*/    break;
 		case IDD_SPG_FEATURE_FAR:
 			gpSetCls->OnInitDialog_Far(hWnd2, FALSE);
 			break;

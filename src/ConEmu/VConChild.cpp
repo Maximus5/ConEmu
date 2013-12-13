@@ -1395,6 +1395,12 @@ BOOL CConEmuChild::TrackMouse()
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	CVConGuard guard(pVCon);
 
+	if (pVCon->WasHighlightRowColChanged())
+	{
+		_ASSERTE(gpConEmu->isVisible(pVCon));
+		pVCon->Invalidate();
+	}
+
 	#ifdef _DEBUG
 	CRealConsole* pRCon = pVCon->RCon();
 	BOOL lbBufferMode = pRCon->isBufferHeight() && !pRCon->GuiWnd();

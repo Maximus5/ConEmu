@@ -339,7 +339,11 @@ class CVirtualConsole :
 		COORD bgBmpSize; HDC hBgDc; // Это только ссылка, для удобства отрисовки
 		void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
 		bool UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock *pSCON);
-		void UpdateText(); //, bool updateText, bool updateCursor);
+		void UpdateText();
+		void UpdateHighlights();
+		bool CalcHighlightRowCol(COORD* pcrPos);
+		bool WasHighlightRowColChanged();
+		void PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC);
 		WORD CharWidth(wchar_t ch);
 		void CharABC(wchar_t ch, ABC *abc);
 		bool CheckChangedTextAttr();
@@ -380,6 +384,14 @@ class CVirtualConsole :
 			INT   *pAllCounts;
 		} TransparentInfo;
 		//static HMENU mh_PopupMenu, mh_TerminatePopup, mh_DebugPopup, mh_EditPopup;
+		COORD m_LastHighlightInfo;
+		struct _HighlightInfo
+		{
+			COORD m_Last;
+			COORD m_Cur;
+			bool  mb_Allowed;
+			bool  mb_ChangeDetected;
+		} m_HighlightInfo;
 	protected:
 		virtual void OnDestroy();
 };
