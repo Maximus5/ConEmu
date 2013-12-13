@@ -70,6 +70,7 @@ class CDragDrop :
 		HRESULT DropFromStream(IDataObject * pDataObject, BOOL abActive);
 		HRESULT DropLinks(HDROP hDrop, int iQuantity, BOOL abActive);
 		HRESULT DropNames(HDROP hDrop, int iQuantity, BOOL abActive);
+		HRESULT DropFromText(IDataObject * pDataObject);
 		typedef struct _ThInfo
 		{
 			HANDLE hThread;

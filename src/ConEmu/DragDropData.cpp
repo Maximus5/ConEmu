@@ -1395,8 +1395,8 @@ void CDragDropData::RetrieveDragToInfo(POINTL pt)
 	{
 		DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo() -> (!pRCon->isAlive())\n");
 		gpConEmu->DebugStep(_T("DnD: Far is not alive, drop disabled"));
-		_ASSERTE(FALSE && "DnD: Far is not alive, drop disabled");
-		//SetDragToInfo(NULL, 0, pRCon);
+		//Don't show assert (debug) - simple text may be dropped
+		//_ASSERTE(FALSE && "DnD: Far is not alive, drop disabled");
 	}
 	else
 	{

@@ -880,6 +880,33 @@ wrap:
 	return S_OK;
 }
 
+HRESULT CDragDrop::DropFromText(IDataObject * pDataObject)
+{
+	CVConGuard VCon;
+	if ((CVConGroup::GetActiveVCon(&VCon) < 0) || !VCon->RCon())
+		return S_FALSE;
+
+	STGMEDIUM stgMedium = { 0 };
+	FORMATETC fmtetc = { CF_UNICODETEXT, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+	// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
+	HRESULT hr = pDataObject->GetData(&fmtetc, &stgMedium);
+	if (SUCCEEDED(hr) && stgMedium.hGlobal)
+	{
+		LPCWSTR pszText = (LPCWSTR)GlobalLock(stgMedium.hGlobal);
+		if (pszText)
+		{
+			VCon->RCon()->Paste(false, pszText);
+			GlobalUnlock(stgMedium.hGlobal);
+		}
+		ReleaseStgMedium(&stgMedium);
+	}
+	else
+	{
+		hr = E_FAIL;
+	}
+	return hr;
+}
+
 HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 {
 	wchar_t* pszText = NULL;
@@ -1240,6 +1267,11 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	{
 		if (mb_selfdrag || lbDropFileNamesOnly)
 		{
+			if ((hr = DropFromText(pDataObject)) == S_OK)
+			{
+				return S_OK;
+			}
+
 			//MBoxA(_T("Drag object does not contains known formats!"));
 			ReportUnknownData(pDataObject, L"Drag object does not contains real file names!\nCan't drop here from containers like Zip or Outlook!");
 			return S_OK;
