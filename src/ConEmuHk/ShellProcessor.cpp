@@ -136,6 +136,9 @@ CShellProc::CShellProc()
 	mb_TempConEmuWnd = FALSE;
 	mh_PreConEmuWnd = ghConEmuWnd; mh_PreConEmuWndDC = ghConEmuWndDC;
 
+	// Current application is GUI subsystem run in ConEmu tab?
+	CheckIsCurrentGuiClient();
+
 	if (gbPrepareDefaultTerminal)
 	{
 		ZeroStruct(m_GuiMapping);
@@ -531,7 +534,10 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
 	int nCchSize = 0;
 	BOOL lbEndQuote = FALSE;
-	bool lbNewGuiConsole = false, lbNewConsoleFromGui = false;
+	#if 0
+	bool lbNewGuiConsole = false;
+	#endif
+	bool lbNewConsoleFromGui = false;
 	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
 
 	szConEmuC = (wchar_t*)malloc(cchConEmuC*sizeof(*szConEmuC)); // ConEmuC64.exe
@@ -845,24 +851,11 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		int nLen = lstrlen(asParam);
 
 		// Может это запускается Dos-приложение через "cmd /c ..."?
-		for (int i = 0; (i <= 1) && (ImageSubsystem != IMAGE_SUBSYSTEM_DOS_EXECUTABLE); i++)
+		if (ImageSubsystem != IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
 		{
 			LPCWSTR pszCmdLine = asParam;
 
-			if (i == 0)
-			{
-				// Сначала отрезать кавычки, если так
-				// asFile='cmd.exe' asParam='/C "C:\Lan\Turbo.exe File.pas"'
-				// '/C' - уже отброшен при проверке lbComSpec
-				if (nLen > 2 && pszCmdLine[0] == L'"' && pszCmdLine[nLen-1] == L'"')
-					pszCmdLine++;
-				else
-					continue;
-			}
-			else
-			{
-			}
-
+			ms_ExeTmp.Empty();
 			if (NextArg(&pszCmdLine, ms_ExeTmp) == 0)
 			{
 				LPCWSTR pszExt = PointToExt(ms_ExeTmp);
@@ -973,9 +966,13 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		*psFile = NULL;
 	}
 
-	// Если запускается новый GUI как вкладка, или консольное приложения из GUI как вкладки
+	#if 0
+	// Если запускается новый GUI как вкладка?
 	lbNewGuiConsole = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ghAttachGuiClient != NULL);
-	lbNewConsoleFromGui = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) && (gbPrepareDefaultTerminal || (ghAttachGuiClient != NULL));
+	#endif
+
+	// Starting CONSOLE application from GUI tab? This affect "Default terminal" too.
+	lbNewConsoleFromGui = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) && (gbPrepareDefaultTerminal || mb_isCurrentGuiClient);
 
 	#if 0
 	if (lbNewGuiConsole)
@@ -1368,6 +1365,14 @@ wrap:
 	return TRUE;
 }
 
+void CShellProc::CheckIsCurrentGuiClient()
+{
+	// gbAttachGuiClient is TRUE if some application (GUI subsystem) was not created window yet
+	// this is, for example, CommandPromptPortable.exe
+	// ghAttachGuiClient is HWND of already created GUI child client window
+	mb_isCurrentGuiClient = ((gbAttachGuiClient != FALSE) || (ghAttachGuiClient != NULL));
+}
+
 // -1: if need to block execution
 //  0: continue
 //  1: continue, changes was made
@@ -1402,6 +1407,7 @@ int CShellProc::PrepareExecuteParms(
 		}
 		#endif
 
+		ms_ExeTmp.Empty();
 		if (NextArg(&psz, ms_ExeTmp) != 0)
 		{
 			// AnsiCon exists in command line?
@@ -1452,6 +1458,9 @@ int CShellProc::PrepareExecuteParms(
 	else if (aCmd == eCreateProcess)
 		bDetachedOrHidden = (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS)) && anShowCmd && *anShowCmd == 0);
 	BOOL bLongConsoleOutput = gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput && !bDetachedOrHidden;
+
+	// Current application is GUI subsystem run in ConEmu tab?
+	CheckIsCurrentGuiClient();
 	
 	bool bNewConsoleArg = false, bForceNewConsole = false, bCurConsoleArg = false;
 	// Service object
@@ -1799,14 +1808,15 @@ int CShellProc::PrepareExecuteParms(
 		}
 	}
 	// Если GUI приложение работает во вкладке ConEmu - запускать консольные приложение в новой вкладке ConEmu
+	// Use mb_isCurrentGuiClient instead of ghAttachGuiClient, because of 'CommandPromptPortable.exe' for example
 	if (!bNewConsoleArg 
-		&& ghAttachGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+		&& mb_isCurrentGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		&& ((anShowCmd == NULL) || (*anShowCmd != SW_HIDE)))
 	{
 		WARNING("Не забыть, что цеплять во вкладку нужно только если консоль запускается ВИДИМОЙ");
 		bForceNewConsole = true;
 	}
-	if (ghAttachGuiClient && (bNewConsoleArg || bForceNewConsole) && !lbGuiApp)
+	if (mb_isCurrentGuiClient && (bNewConsoleArg || bForceNewConsole) && !lbGuiApp)
 	{
 		lbGuiApp = true;
 	}

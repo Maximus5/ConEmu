@@ -64,7 +64,10 @@ private:
 	bool mb_Opt_DontInject; // ConEmuHooks=OFF
 	bool mb_Opt_SkipNewConsole; // ConEmuHooks=NOARG
 	void CheckHooksDisabled();
-	
+
+	BOOL mb_isCurrentGuiClient;
+	void CheckIsCurrentGuiClient();
+
 	//static int mn_InShellExecuteEx;
 	BOOL mb_InShellExecuteEx;
 
