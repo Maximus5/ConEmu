@@ -340,9 +340,6 @@ class CVirtualConsole :
 		void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
 		bool UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock *pSCON);
 		void UpdateText();
-		void UpdateHighlights();
-		bool CalcHighlightRowCol(COORD* pcrPos);
-		bool WasHighlightRowColChanged();
 		void PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC);
 		WORD CharWidth(wchar_t ch);
 		void CharABC(wchar_t ch, ABC *abc);
@@ -384,14 +381,26 @@ class CVirtualConsole :
 			INT   *pAllCounts;
 		} TransparentInfo;
 		//static HMENU mh_PopupMenu, mh_TerminatePopup, mh_DebugPopup, mh_EditPopup;
-		COORD m_LastHighlightInfo;
+
 		struct _HighlightInfo
 		{
 			COORD m_Last;
 			COORD m_Cur;
+			// true - if VCon visible and enabled in settings
 			bool  mb_Allowed;
+			// true - if Invalidate was called, but UpdateHighlights still not
 			bool  mb_ChangeDetected;
+			bool  mb_SelfSettings;
+			bool  mb_HighlightRow;
+			bool  mb_HighlightCol;
 		} m_HighlightInfo;
+		void UpdateHighlights();
+		bool CalcHighlightRowCol(COORD* pcrPos);
+		bool WasHighlightRowColChanged();
+		bool isHighlightMouseRow();
+		bool isHighlightMouseCol();
+	public:
+		void ChangeHighlightMouse(int nWhat, int nSwitch);
 	protected:
 		virtual void OnDestroy();
 };

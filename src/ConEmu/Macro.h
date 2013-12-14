@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2011 Maximus5
+Copyright (c) 2011-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -112,6 +112,8 @@ class CConEmuMacro
 		static LPWSTR FontSetName(GuiMacro* p, CRealConsole* apRCon);
 		// Изменить размер шрифта. int nRelative, int N
 		static LPWSTR FontSetSize(GuiMacro* p, CRealConsole* apRCon);
+		// Change 'Highlight row/col' under mouse. Locally in current VCon.
+		static LPWSTR HighlightMouse(GuiMacro* p, CRealConsole* apRCon);
 		// Проверка, есть ли ConEmu GUI. Функцию мог бы и сам плагин обработать, но для "общности" возвращаем "Yes" здесь
 		static LPWSTR IsConEmu(GuiMacro* p, CRealConsole* apRCon);
 		// Проверка, активна ли RealConsole

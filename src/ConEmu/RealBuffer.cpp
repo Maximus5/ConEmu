@@ -85,7 +85,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define Alloc calloc
 
 #ifdef _DEBUG
-#define HEAPVAL MCHKHEAP
+#define HEAPVAL //MCHKHEAP
 #else
 #define HEAPVAL
 #endif
@@ -1271,7 +1271,7 @@ BOOL CRealBuffer::isConsoleDataChanged()
 
 BOOL CRealBuffer::PreInit()
 {
-	MCHKHEAP;
+	HEAPVAL;
 	// Инициализировать переменные m_sbi, m_ci, m_sel
 	//RECT rcWnd; Get ClientRect(ghWnd, &rcWnd);
 	
@@ -1281,14 +1281,14 @@ BOOL CRealBuffer::PreInit()
 
 	if (bNeedBufHeight && !isScroll())
 	{
-		MCHKHEAP;
+		HEAPVAL;
 		SetBufferHeightMode(TRUE);
-		MCHKHEAP;
+		HEAPVAL;
 		_ASSERTE(mp_RCon->mn_DefaultBufferHeight>0);
 		BufferHeight(mp_RCon->mn_DefaultBufferHeight);
 	}
 
-	MCHKHEAP;
+	HEAPVAL;
 	RECT rcCon;
 
 	// "!(gpConEmu->isZoomed() || gpConEmu->isFullScreen())" дает не то...
@@ -1349,7 +1349,7 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 	BOOL lbRc = FALSE;
 	int nNewWidth = 0, nNewHeight = 0;
 	DWORD nScroll = 0;
-	MCHKHEAP;
+	HEAPVAL;
 
 	if (!GetConWindowSize(con.m_sbi, &nNewWidth, &nNewHeight, &nScroll))
 		return FALSE;
@@ -1382,7 +1382,7 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 		// Exclusive(!) Lock
 		MSectionLock sc; sc.Lock(&csCON, TRUE);
 
-		MCHKHEAP;
+		HEAPVAL;
 		con.LastStartInitBuffersTick = GetTickCount();
 
 		Assert(con.bInGetConsoleData==FALSE);
@@ -1398,7 +1398,7 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 
 		//if (con.pCmp)
 		//	{ Free(con.pCmp); con.pCmp = NULL; }
-		MCHKHEAP;
+		HEAPVAL;
 		int cchCharMax = nNewWidth * nNewHeight * 2;
 		con.pConChar = (TCHAR*)Alloc(cchCharMax, sizeof(*con.pConChar));
 		con.pConAttr = (WORD*)Alloc(cchCharMax, sizeof(*con.pConAttr));
@@ -1417,12 +1417,12 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 		_ASSERTE(con.pConAttr!=NULL);
 		_ASSERTE(con.pDataCmp!=NULL);
 		//_ASSERTE(con.pCmp!=NULL);
-		MCHKHEAP
+		HEAPVAL
 		lbRc = con.pConChar!=NULL && con.pConAttr!=NULL && con.pDataCmp!=NULL;
 	}
 	else if (con.nTextWidth!=nNewWidth || con.nTextHeight!=nNewHeight)
 	{
-		MCHKHEAP
+		HEAPVAL
 		MSectionLock sc; sc.Lock(&csCON);
 		int cchCharMax = nNewWidth * nNewHeight * 2;
 		memset(con.pConChar, 0, cchCharMax * sizeof(*con.pConChar));
@@ -1432,7 +1432,7 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 		memset(con.pDataCmp, 0, (nNewWidth * nNewHeight) * sizeof(CHAR_INFO));
 		//memset(con.pCmp->Buf, 0, (nNewWidth * nNewHeight) * sizeof(CHAR_INFO));
 		sc.Unlock();
-		MCHKHEAP
+		HEAPVAL
 		lbRc = TRUE;
 	}
 	else
@@ -1440,7 +1440,7 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 		lbRc = TRUE;
 	}
 
-	MCHKHEAP
+	HEAPVAL
 #ifdef _DEBUG
 
 	if (nNewHeight == 158)
@@ -1946,7 +1946,7 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 		return FALSE; // Изменений нет
 	}
 
-	MCHKHEAP;
+	HEAPVAL;
 	BOOL lbScreenChanged = FALSE;
 	wchar_t* lpChar = con.pConChar;
 	WORD* lpAttr = con.pConAttr;
@@ -2001,7 +2001,7 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 		//con.pCopy->crBufSize = con.pCmp->crBufSize;
 		//memmove(con.pCopy->Buf, con.pCmp->Buf, CharCount*sizeof(CHAR_INFO));
 		memmove(con.pDataCmp, pData, CharCount*sizeof(CHAR_INFO));
-		MCHKHEAP;
+		HEAPVAL;
 		CHAR_INFO* lpCur = con.pDataCmp;
 		//// Когда вернется возможность выделения - нужно сразу применять данные в атрибуты
 		//_ASSERTE(!bSelectionPresent); -- не нужно. Все сделает GetConsoleData
@@ -2019,7 +2019,7 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 			*(lpChar++) = (ch < 32) ? gszAnalogues[(WORD)ch] : ch;
 		}
 
-		MCHKHEAP
+		HEAPVAL
 	}
 
 	return lbScreenChanged;
@@ -2214,7 +2214,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 
 		if (dwSbiSize != 0)
 		{
-			MCHKHEAP
+			HEAPVAL
 			_ASSERTE(dwSbiSize == sizeof(con.m_sbi));
 
 			if (memcmp(&con.m_sbi, &pInfo->sbi, sizeof(con.m_sbi))!=0)
@@ -2304,7 +2304,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 				con.nTopVisibleLine = con.m_sbi.srWindow.Top;
 			#endif
 
-			MCHKHEAP
+			HEAPVAL
 		}
 
 		//DWORD dwCharChanged = pInfo->ConInfo.RgnInfo.dwRgnInfoSize;
@@ -2355,7 +2355,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 
 				//MSectionLock sc2; sc2.Lock(&csCON);
 				sc.Lock(&csCON);
-				MCHKHEAP;
+				HEAPVAL;
 
 				if (InitBuffers(OneBufferSize))
 				{
@@ -2366,7 +2366,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 					}
 				}
 
-				MCHKHEAP;
+				HEAPVAL;
 			}
 		}
 
@@ -2414,7 +2414,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		}
 
 		//_ASSERTE(lbDataValid);
-		MCHKHEAP;
+		HEAPVAL;
 #endif
 
 		// Проверка буфера TrueColor
@@ -2430,7 +2430,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		{
 			// По con.m_sbi проверяет, включена ли прокрутка
 			CheckBufferSize();
-			MCHKHEAP;
+			HEAPVAL;
 		}
 
 		sc.Unlock();

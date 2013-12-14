@@ -1011,6 +1011,7 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkCTSCopyHtml1,   chk_User,  InSelection, L"CTS.VkCopyFmt1",    MakeHotKey('C',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Copy(0,1)")},
 		{vkCTSCopyHtml2,   chk_User,  InSelection, L"CTS.VkCopyFmt2",    0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Copy(0,2)")},
 		{vkCTSVkCopyAll,   chk_User,  NULL,    L"CTS.VkCopyAll",         0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Copy(1)")},
+		{vkHighlightMouse, chk_User,  NULL,    L"HighlightMouseSwitch",  MakeHotKey('L',VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"HighlightMouse(1)")},
 		{vkShowTabsList,   chk_User,  NULL,    L"Multi.ShowTabsList",    /*MakeHotKey(VK_F12)*/ 0, CConEmuCtrl::key_ShowTabsList},
 		{vkShowTabsList2,  chk_User,  NULL,    L"Multi.ShowTabsList2",   MakeHotKey(VK_F12,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Tabs(8)")},
 		{vkPasteText,      chk_User,  NULL,    L"ClipboardVkAllLines",   MakeHotKey(VK_INSERT,VK_SHIFT), CConEmuCtrl::key_PasteText},

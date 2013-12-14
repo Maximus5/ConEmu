@@ -550,6 +550,8 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abF
 			pszResult = FontSetSize(p, apRCon);
 		else if (!lstrcmpi(szFunction, L"FontSetName"))
 			pszResult = FontSetName(p, apRCon);
+		else if (!lstrcmpi(szFunction, L"HighlightMouse"))
+			pszResult = HighlightMouse(p, apRCon);
 		else if (!lstrcmpi(szFunction, L"IsRealVisible"))
 			pszResult = IsRealVisible(p, apRCon);
 		else if (!lstrcmpi(szFunction, L"IsConsoleActive"))
@@ -2113,4 +2115,21 @@ LPWSTR CConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon)
 	}
 
 	return pszResult ? lstrdup(pszResult) : lstrdup(L"InvalidArg");
+}
+
+// Change 'Highlight row/col' under mouse. Locally in current VCon.
+LPWSTR CConEmuMacro::HighlightMouse(GuiMacro* p, CRealConsole* apRCon)
+{
+	if (!apRCon)
+		return lstrdup(L"NoActiveCon");
+
+	int nWhat, nSwitch;
+	if (!p->GetIntArg(0, nWhat))
+		return lstrdup(L"InvalidArg");
+
+	if (!p->GetIntArg(1, nSwitch))
+		nSwitch = 2;
+
+	apRCon->VCon()->ChangeHighlightMouse(nWhat, nSwitch);
+	return lstrdup(L"OK");
 }

@@ -115,7 +115,7 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 
 #ifdef _DEBUG
 //#undef HEAPVAL
-#define HEAPVAL HeapValidate(mh_Heap, 0, NULL);
+#define HEAPVAL //HeapValidate(mh_Heap, 0, NULL);
 #define CURSOR_ALWAYS_VISIBLE
 #else
 #define HEAPVAL
@@ -354,8 +354,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 		Assert(gpConEmu->WndWidth.Value && gpConEmu->WndHeight.Value);
 	}
 
-	m_HighlightInfo.mb_Allowed = false; // true - if VCon visible and enabled in settings
-	m_HighlightInfo.mb_ChangeDetected = false; // true - if Invalidate was called, but UpdateHighlights still not
+	ZeroStruct(m_HighlightInfo);
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
 	m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
 
@@ -1854,7 +1853,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	//
 	if (lRes && gpConEmu->isVisible(this))
 	{
-		if (gpSet->isHighlightMouseRow || gpSet->isHighlightMouseCol)
+		if (isHighlightMouseRow() || isHighlightMouseCol())
 		{
 			UpdateHighlights();
 		}
@@ -1922,6 +1921,66 @@ void CVirtualConsole::PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC)
 			PATINVERT);
 }
 
+bool CVirtualConsole::isHighlightMouseRow()
+{
+	return m_HighlightInfo.mb_SelfSettings ? m_HighlightInfo.mb_HighlightRow : gpSet->isHighlightMouseRow;
+}
+
+bool CVirtualConsole::isHighlightMouseCol()
+{
+	return m_HighlightInfo.mb_SelfSettings ? m_HighlightInfo.mb_HighlightCol : gpSet->isHighlightMouseCol;
+}
+
+void CVirtualConsole::ChangeHighlightMouse(int nWhat, int nSwitch)
+{
+	if (!m_HighlightInfo.mb_SelfSettings)
+	{
+		m_HighlightInfo.mb_SelfSettings = true;
+		m_HighlightInfo.mb_HighlightRow = gpSet->isHighlightMouseRow;
+		m_HighlightInfo.mb_HighlightCol = gpSet->isHighlightMouseCol;
+	}
+
+	if (nWhat <= 0)
+	{
+		if (!m_HighlightInfo.mb_HighlightRow && !m_HighlightInfo.mb_HighlightCol)
+		{
+			m_HighlightInfo.mb_HighlightRow = true;
+		}
+		else if (m_HighlightInfo.mb_HighlightRow && !m_HighlightInfo.mb_HighlightCol)
+		{
+			m_HighlightInfo.mb_HighlightRow = false; m_HighlightInfo.mb_HighlightCol = true;
+		}
+		else if (!m_HighlightInfo.mb_HighlightRow && m_HighlightInfo.mb_HighlightCol)
+		{
+			m_HighlightInfo.mb_HighlightRow = m_HighlightInfo.mb_HighlightCol = true;
+		}
+		else
+		{
+			m_HighlightInfo.mb_HighlightRow = m_HighlightInfo.mb_HighlightCol = false;
+		}
+	}
+	else
+	{
+		for (int i = 1; i <= 2; i++)
+		{
+			if (!(nWhat & i))
+				continue;
+			bool& bOpt = (i == 1) ? m_HighlightInfo.mb_HighlightRow : m_HighlightInfo.mb_HighlightCol;
+			switch (nSwitch)
+			{
+			case 0:
+				bOpt = false; break;
+			case 1:
+				bOpt = true;  break;
+			case 2:
+				bOpt = !bOpt; break;
+			}
+		}
+	}
+
+	Update(true);
+}
+
 // This is called from TrackMouse. It must NOT trigger more than one invalidate before next repaint
 bool CVirtualConsole::WasHighlightRowColChanged()
 {
@@ -1934,10 +1993,8 @@ bool CVirtualConsole::WasHighlightRowColChanged()
 	if (!CalcHighlightRowCol(&crPos))
 		return false;
 
-	if ((gpSet->isHighlightMouseRow
-			&& (m_HighlightInfo.m_Last.Y >= 0) && (crPos.Y != m_HighlightInfo.m_Last.Y))
-		|| (gpSet->isHighlightMouseCol
-			&& (m_HighlightInfo.m_Last.X >= 0) && (crPos.X != m_HighlightInfo.m_Last.X)))
+	if ((isHighlightMouseRow() && (crPos.Y != m_HighlightInfo.m_Last.Y))
+		|| (isHighlightMouseCol() && (crPos.X != m_HighlightInfo.m_Last.X)))
 	{
 		m_HighlightInfo.mb_ChangeDetected = true;
 		return true;
@@ -1948,7 +2005,8 @@ bool CVirtualConsole::WasHighlightRowColChanged()
 
 bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 {
-	if (!(gpSet->isHighlightMouseRow || gpSet->isHighlightMouseCol)
+	if (!(isHighlightMouseRow() || isHighlightMouseCol())
+		|| !gpConEmu->isMeForeground()
 		|| !gpConEmu->isVisible(this))
 	{
 		m_HighlightInfo.mb_Allowed = false;
@@ -1982,7 +2040,7 @@ bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 
 void CVirtualConsole::UpdateHighlights()
 {
-	_ASSERTE(this && (gpSet->isHighlightMouseRow || gpSet->isHighlightMouseCol));
+	_ASSERTE(this && (isHighlightMouseRow() || isHighlightMouseCol()));
 	_ASSERTE(gpConEmu->isVisible(this));
 
 	// Get COORDs (relative to upper-left visible pos)
@@ -2010,7 +2068,7 @@ void CVirtualConsole::UpdateHighlights()
 	HBRUSH hBr = CreateSolidBrush(0xC0C0C0);
 	HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
 
-	if (gpSet->isHighlightMouseRow)
+	if (isHighlightMouseRow())
 	{
 		RECT rect = {0, pix.Y, Width, pix.Y+nFontHeight};
 		PatInvertRect(hPaintDC, rect, hPaintDC);
@@ -2021,7 +2079,7 @@ void CVirtualConsole::UpdateHighlights()
 		m_HighlightInfo.m_Last.Y = -1;
 	}
 
-	if (gpSet->isHighlightMouseCol)
+	if (isHighlightMouseCol())
 	{
 		// This will be not "precise" on other rows if using proportional font...
 		RECT rect = {pix.X, 0, pix.X+nFontWidth, Height};
@@ -2926,7 +2984,8 @@ void CVirtualConsole::UpdateText()
 
 	int *nDX = (int*)malloc((TextWidth+1)*sizeof(int));
 
-	bool skipNotChanged = !isForce;
+	// Unfortunately, due to drawing technique, all rows must be redrawn if COLUMN under mouse is highlighted
+	bool skipNotChanged = !isForce && !isHighlightMouseCol();
 	bool bEnhanceGraphics = gpSet->isEnhanceGraphics;
 	bool bProportional = gpSet->isMonospace == 0;
 	bool bForceMonospace = gpSet->isMonospace == 2;
@@ -2938,19 +2997,12 @@ void CVirtualConsole::UpdateText()
 	// 120616 - Chinese - off?
 	bool bFixFrameCoord = !gbIsDBCS || mp_RCon->isFar();
 
-	const bool hilighRowCol = (gpSet->isHighlightMouseRow || gpSet->isHighlightMouseCol);
+	const bool hilighRowCol = (isHighlightMouseRow() || isHighlightMouseCol());
 	COORD hiPos = {-1,-1};
 	// Need to check mouse (here) only if NOT isForce mode (if all lines forced to be drawn - no problem with artefacts)
 	if (skipNotChanged)
 	{
 		CalcHighlightRowCol(NULL);
-
-		// Column highlighting was changed?
-		if ((gpSet->isHighlightMouseCol ? m_HighlightInfo.m_Cur.X : -1) != m_HighlightInfo.m_Last.X)
-		{
-			// Oops, this will affects all rows
-			skipNotChanged = false;
-		}
 	}
 
 	_ASSERTE(((TextWidth * nFontWidth) >= Width));
@@ -3009,7 +3061,7 @@ void CVirtualConsole::UpdateText()
 		{
 			// If we highlight row under mouse cursor - we need
 			// to redraw rows where marks was drawn last time...
-			bool highlightChanged = gpSet->isHighlightMouseRow
+			bool highlightChanged = isHighlightMouseRow()
 				&& (m_HighlightInfo.m_Last.Y >= 0) && (row == m_HighlightInfo.m_Last.Y);
 
 			if (!highlightChanged)
@@ -4470,6 +4522,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 	else
 		Update(mb_RequiredForceUpdate);
 
+	m_HighlightInfo.mb_ChangeDetected = false;
 	mb_InPaintCall = FALSE;
 	//BOOL lbExcept = FALSE;
 	RECT client = rcClient;
