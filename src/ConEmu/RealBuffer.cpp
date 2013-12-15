@@ -4727,7 +4727,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					break;
 				}
 
-				if (nY == 1) lcaTable = lcaTableExt;
+				if (nY == nExtendStartsY) lcaTable = lcaTableExt;
 
 				// Текст
 				memmove(pszDst, pszSrc, cbLineSize);
