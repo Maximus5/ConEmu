@@ -337,10 +337,13 @@ class CVirtualConsole :
 		bool isCursorValid, drawImage, textChanged, attrChanged;
 		DWORD nBgImageColors;
 		COORD bgBmpSize; HDC hBgDc; // Это только ссылка, для удобства отрисовки
+		void PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisible);
+		void PaintVConNormal(HDC hPaintDc, RECT rcClient);
+		void PaintVConDebug(HDC hPaintDc, RECT rcClient);
 		void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
 		bool UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock *pSCON);
 		void UpdateText();
-		void PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC);
+		void PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC, bool bFill);
 		WORD CharWidth(wchar_t ch);
 		void CharABC(wchar_t ch, ABC *abc);
 		bool CheckChangedTextAttr();
@@ -386,6 +389,8 @@ class CVirtualConsole :
 		{
 			COORD m_Last;
 			COORD m_Cur;
+			// store last paint coords
+			RECT  mrc_LastRow, mrc_LastCol;
 			// true - if VCon visible and enabled in settings
 			bool  mb_Allowed;
 			// true - if Invalidate was called, but UpdateHighlights still not
@@ -395,6 +400,7 @@ class CVirtualConsole :
 			bool  mb_HighlightCol;
 		} m_HighlightInfo;
 		void UpdateHighlights();
+		void UndoHighlights();
 		bool CalcHighlightRowCol(COORD* pcrPos);
 		bool WasHighlightRowColChanged();
 		bool isHighlightMouseRow();
