@@ -150,6 +150,8 @@ class CConEmuMacro
 		static LPWSTR Tab(GuiMacro* p, CRealConsole* apRCon);
 		// Task
 		static LPWSTR Task(GuiMacro* p, CRealConsole* apRCon);
+		// Transparency
+		static LPWSTR Transparency(GuiMacro* p, CRealConsole* apRCon);
 		// Fullscreen
 		static LPWSTR WindowFullscreen(GuiMacro* p, CRealConsole* apRCon);
 		// Maximize

@@ -1024,6 +1024,8 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkShowTabBar,     chk_User,  NULL,    L"ShowTabBarKey",         MakeHotKey('T',VK_APPS), CConEmuCtrl::key_ShowTabBar},
 		{vkShowCaption,    chk_User,  NULL,    L"ShowCaptionKey",        MakeHotKey('C',VK_APPS), CConEmuCtrl::key_ShowCaption},
 		{vkAlwaysOnTop,    chk_User,  NULL,    L"AlwaysOnTopKey",        0, CConEmuCtrl::key_AlwaysOnTop},
+		{vkTransparencyInc,chk_User,  NULL,    L"TransparencyInc",       0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Transparency(1,-20)")},
+		{vkTransparencyDec,chk_User,  NULL,    L"TransparencyDec",       0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Transparency(1,+20)")},
 		{vkTabMenu,        chk_User,  NULL,    L"Key.TabMenu",           MakeHotKey(VK_SPACE,VK_APPS), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
 		{vkTabMenu2,       chk_User,  NULL,    L"Key.TabMenu2",          MakeHotKey(VK_RBUTTON,VK_SHIFT), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
 		{vkMaximize,       chk_User,  NULL,    L"Key.Maximize",          MakeHotKey(VK_F9,VK_MENU), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowMaximize()")}, // Maximize window

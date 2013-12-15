@@ -3496,16 +3496,16 @@ LRESULT CSettings::OnInitDialog_Transparent(HWND hWnd2)
 	// +Color key
 	ColorSetEdit(hWnd2, c38);
 
-	checkDlgButton(hWnd2, cbTransparent, (gpSet->nTransparent!=255) ? BST_CHECKED : BST_UNCHECKED);
-	SendDlgItemMessage(hWnd2, slTransparent, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_ALPHA_VALUE, 255));
+	checkDlgButton(hWnd2, cbTransparent, (gpSet->nTransparent!=MAX_ALPHA_VALUE) ? BST_CHECKED : BST_UNCHECKED);
+	SendDlgItemMessage(hWnd2, slTransparent, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_ALPHA_VALUE, MAX_ALPHA_VALUE));
 	SendDlgItemMessage(hWnd2, slTransparent, TBM_SETPOS  , (WPARAM) true, (LPARAM) gpSet->nTransparent);
 	checkDlgButton(hWnd2, cbTransparentSeparate, gpSet->isTransparentSeparate ? BST_CHECKED : BST_UNCHECKED);
 	//EnableWindow(GetDlgItem(hWnd2, cbTransparentInactive), gpSet->isTransparentSeparate);
-	//checkDlgButton(hWnd2, cbTransparentInactive, (gpSet->nTransparentInactive!=255) ? BST_CHECKED : BST_UNCHECKED);
+	//checkDlgButton(hWnd2, cbTransparentInactive, (gpSet->nTransparentInactive!=MAX_ALPHA_VALUE) ? BST_CHECKED : BST_UNCHECKED);
 	EnableWindow(GetDlgItem(hWnd2, slTransparentInactive), gpSet->isTransparentSeparate);
 	EnableWindow(GetDlgItem(hWnd2, stTransparentInactive1), gpSet->isTransparentSeparate);
 	EnableWindow(GetDlgItem(hWnd2, stTransparentInactive2), gpSet->isTransparentSeparate);
-	SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_INACTIVE_ALPHA_VALUE, 255));
+	SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_INACTIVE_ALPHA_VALUE, MAX_ALPHA_VALUE));
 	SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS  , (WPARAM) true, (LPARAM) gpSet->isTransparentSeparate ? gpSet->nTransparentInactive : gpSet->nTransparent);
 	checkDlgButton(hWnd2, cbUserScreenTransparent, gpSet->isUserScreenTransparent ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbColorKeyTransparent, gpSet->isColorKeyTransparent);
@@ -5859,11 +5859,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 				if (IsChecked(hWnd2, cbTransparent))
 				{
-					if (newV == 255) newV = 200;
+					if (newV == MAX_ALPHA_VALUE) newV = 200;
 				}
 				else
 				{
-					newV = 255;
+					newV = MAX_ALPHA_VALUE;
 				}
 
 				if (newV != gpSet->nTransparent)
@@ -5882,7 +5882,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				EnableWindow(GetDlgItem(hWnd2, slTransparentInactive), gpSet->isTransparentSeparate);
 				EnableWindow(GetDlgItem(hWnd2, stTransparentInactive1), gpSet->isTransparentSeparate);
 				EnableWindow(GetDlgItem(hWnd2, stTransparentInactive2), gpSet->isTransparentSeparate);
-				//checkDlgButton(hWnd2, cbTransparentInactive, (gpSet->nTransparentInactive!=255) ? BST_CHECKED : BST_UNCHECKED);
+				//checkDlgButton(hWnd2, cbTransparentInactive, (gpSet->nTransparentInactive!=MAX_ALPHA_VALUE) ? BST_CHECKED : BST_UNCHECKED);
 				SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->isTransparentSeparate ? gpSet->nTransparentInactive : gpSet->nTransparent);
 				gpConEmu->OnTransparent();
 			} break;
@@ -5891,11 +5891,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		//		int newV = gpSet->nTransparentInactive;
 		//		if (IsChecked(hWnd2, cbTransparentInactive))
 		//		{
-		//			if (newV == 255) newV = 200;
+		//			if (newV == MAX_ALPHA_VALUE) newV = 200;
 		//		}
 		//		else
 		//		{
-		//			newV = 255;
+		//			newV = MAX_ALPHA_VALUE;
 		//		}
 		//		if (newV != gpSet->nTransparentInactive)
 		//		{
@@ -9184,7 +9184,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 					if (newV != gpSet->nTransparent)
 					{
-						checkDlgButton(gpSetCls->mh_Tabs[thi_Transparent], cbTransparent, (newV!=255) ? BST_CHECKED : BST_UNCHECKED);
+						checkDlgButton(gpSetCls->mh_Tabs[thi_Transparent], cbTransparent, (newV!=MAX_ALPHA_VALUE) ? BST_CHECKED : BST_UNCHECKED);
 						gpSet->nTransparent = newV;
 						if (!gpSet->isTransparentSeparate)
 							SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->nTransparent);
@@ -9197,7 +9197,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 					if (gpSet->isTransparentSeparate && (newV != gpSet->nTransparentInactive))
 					{
-						//checkDlgButton(gpSetCls->mh_Tabs[thi_Transparent], cbTransparentInactive, (newV!=255) ? BST_CHECKED : BST_UNCHECKED);
+						//checkDlgButton(gpSetCls->mh_Tabs[thi_Transparent], cbTransparentInactive, (newV!=MAX_ALPHA_VALUE) ? BST_CHECKED : BST_UNCHECKED);
 						gpSet->nTransparentInactive = newV;
 						gpConEmu->OnTransparent();
 					}

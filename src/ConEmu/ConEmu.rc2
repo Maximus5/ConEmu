@@ -359,6 +359,8 @@ BEGIN
     vkTerminateApp          "Terminate active process in current console"
 	vkTileToLeft            "Tile ConEmu window to the left edge of monitor"
 	vkTileToRight           "Tile ConEmu window to the right edge of monitor"
+	vkTransparencyInc       "Transparency: more translucent"
+	vkTransparencyDec       "Transparency: more opaque"
     vkWinAltA               "Show «About» dialog"
     vkWinAltK               "Show «Hotkeys»"
     vkWinAltP               "Show «Settings» dialog"
