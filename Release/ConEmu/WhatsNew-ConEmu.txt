@@ -15,6 +15,36 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.12.15
+[+] Issue 1362: Hotkeys for inc/dec transparency
+    * GuiMacro: Transparency(<Cmd>,<Value>)
+      Cmd = 0, Value = 40..255 (255==Opaque)
+      Cmd = 1, Value = <relative inc/dec>
+    * Hotkeys (not assigned by default) for inc/dec transparency by 20 'points'.
+[%] Issue 1391: Extended fonts not applied to first visible line of buffer (by rick.sladkey).
+[+] Highlighting row/col under mouse cursor.
+    * Checkboxes on 'Highlight' settings page.
+    * GuiMacro "HighlightMouse(<What>[,<Act>])". Affect ACTIVE console only.
+      HighlightMouse(0) switch off/row/col/row+col/off/...
+      otherwise
+        What: 1 - row, 2 - col, 3 - row+col
+        Act:  0 - off, 1 - on,  2 - switch (default)
+    * New hotkey Apps+L switch row highlighting: HighlightMouse(1)
+    * Some bugfixes
+[*] Many changes in mark/paste/highlighting setting pages.
+    * Page 'Mark & Paste' renamed to 'Mark/Copy'
+    * New pages 'Paste' and 'Highlight'
+    * Group 'Mouse button actions' moved to 'Controls' page
+    * Group 'Copying format' added to 'Mark/Copy' page
+    * Group 'Pasting text behavior' moved to 'Paste' page
+    * Group 'Hyperlinks and compiler errors' moved to 'Highlight' page
+[+] Issue 1392: Allow drop simple text from other apps (browsers, e.g.)
+[%] Cmd line parsing, quotation issues.
+[!] Internal changes. ConEmuHk, ShellProcessor.
+[*] Internal changes. RealConsole: isGuiForceConView, ResetVarsOnStart
+[*] Internal changes. Allow DontEnable in MainThread only
+
+
 2013.12.11
 [+] For life simplification and remove excess 'cmd' from process tree, ConEmu
     will process 'set' commands internally (ConEmuC) before starting root process.
