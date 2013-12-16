@@ -2041,6 +2041,12 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 								}
 								break;
 
+							case L'4':
+								// the following is suggestion for exact palette colors
+								// bug we are using standard xterm palette or truecolor 24bit palette
+								_ASSERTE(Code.ArgSZ[1] == L';');
+								break;
+
 							case L'9':
 								// ConEmu specific
 								// ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
