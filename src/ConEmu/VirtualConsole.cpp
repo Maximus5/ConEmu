@@ -2146,11 +2146,11 @@ bool CVirtualConsole::CheckTransparent()
 	}
 
 	bool lbChanged = FALSE;
-	static bool lbInCheckTransparent = false;
+	static LONG llInCheckTransparent = false;
 
-	if (lbInCheckTransparent)
+	if (llInCheckTransparent)
 	{
-		_ASSERTE(lbInCheckTransparent==false);
+		_ASSERTE(llInCheckTransparent==0);
 		return FALSE;
 	}
 
@@ -2165,7 +2165,7 @@ bool CVirtualConsole::CheckTransparent()
 			lbHasChildWindows = true;
 	}
 
-	lbInCheckTransparent = true;
+	InterlockedIncrement(&llInCheckTransparent);
 
 	// Проверим условия, в которых вообще не нужно проверять регионы
 	if (gpSet->isUserScreenTransparent)
@@ -2185,8 +2185,7 @@ bool CVirtualConsole::CheckTransparent()
 		gpConEmu->OnTransparent();
 	}
 
-
-	lbInCheckTransparent = false;
+	InterlockedDecrement(&llInCheckTransparent);
 
 	return lbChanged;
 }
