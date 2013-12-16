@@ -1398,12 +1398,15 @@ int CShellProc::PrepareExecuteParms(
 
 		#ifdef _DEBUG
 		bool bAnsiConFound = false;
-		ms_ExeTmp.Set(psz);
-		CharUpperBuff(ms_ExeTmp.ms_Arg, lstrlen(ms_ExeTmp));
-		if (wcsstr(ms_ExeTmp, L"ANSI-LLW") != NULL
-			|| wcsstr(ms_ExeTmp, L"ANSICON") != NULL)
+		LPCWSTR pszDbg = psz;
+		ms_ExeTmp.Empty();
+		if (NextArg(&pszDbg, ms_ExeTmp) == 0)
 		{
-			bAnsiConFound = true;
+			CharUpperBuff(ms_ExeTmp.ms_Arg, lstrlen(ms_ExeTmp));
+			if ((pszDbg = wcsstr(ms_ExeTmp, L"ANSI-LLW")) && (pszDbg[lstrlen(L"ANSI-LLW")] != L'\\'))
+				bAnsiConFound = true;
+			else if ((pszDbg = wcsstr(ms_ExeTmp, L"ANSICON")) && (pszDbg[lstrlen(L"ANSICON")] != L'\\'))
+				bAnsiConFound = true;
 		}
 		#endif
 
