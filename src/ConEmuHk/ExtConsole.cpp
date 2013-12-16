@@ -1378,7 +1378,11 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 	if (SrcLineBottom < SrcLineTop)
 	{
-		_ASSERTEX(SrcLineBottom >= SrcLineTop);
+		// We get here if cmd "cls" is called
+		int nLines = csbi.dwSize.Y - cr0.Y;
+		ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput,
+			Info->FillAttr, Info->FillChar, cr0, csbi.dwSize.X * nLines};
+		ExtFillOutput(&f);
 		return FALSE;
 	}
 
