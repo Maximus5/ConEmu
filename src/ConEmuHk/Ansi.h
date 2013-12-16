@@ -77,6 +77,7 @@ public:
 		if (!p)
 		{
 			p = (CEAnsi*)calloc(1,sizeof(*p));
+			if (p) p->GetDefaultTextAttr(); // Initialize "default attributes"
 			TlsSetValue(AnsiTlsIndex, p);
 		}
 

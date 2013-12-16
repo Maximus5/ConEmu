@@ -291,8 +291,21 @@ static const wchar_t szAnalogues[32] =
 
 /*static*/ SHORT CEAnsi::GetDefaultTextAttr()
 {
-	TODO("Default console colors");
-	return 7;
+	// Default console colors
+	static SHORT clrDefault = 0;
+	if (clrDefault)
+		return clrDefault;
+
+	HANDLE hIn = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	if (!GetConsoleScreenBufferInfo(hIn, &csbi))
+		return (clrDefault = 7);
+
+	static DWORD Con2Ansi[16] = {0,4,2,6,1,5,3,7,8|0,8|4,8|2,8|6,8|1,8|5,8|3,8|7};
+	clrDefault = Con2Ansi[CONFORECOLOR(csbi.wAttributes)]
+		| (Con2Ansi[CONBACKCOLOR(csbi.wAttributes)] << 4);
+
+	return clrDefault;
 }
 
 
