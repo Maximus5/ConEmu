@@ -4,6 +4,8 @@ rem This example helper file may be used for showing
 rem your current git branch and changes count in
 rem the Far Manager prompt
 
+rem Rename this file to 'git.cmd' and place somewhere in %PATH%
+
 
 set TERM=msys
 
