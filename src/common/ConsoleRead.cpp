@@ -27,7 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <windows.h>
-#include "../common/common.hpp"
+#include "common.hpp"
 #include "ConsoleRead.h"
 
 //#define DUMP_TEST_READS
