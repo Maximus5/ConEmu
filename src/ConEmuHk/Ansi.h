@@ -36,6 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern DWORD AnsiTlsIndex;
 //#include "../common/MMap.h"
 
+#include "../common/ConsoleMixAttr.h"
+
 typedef BOOL (WINAPI* OnWriteConsoleW_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 
 #define CEAnsi_MaxPrevPart 160
@@ -115,6 +117,9 @@ public:
 	/* ************************************* */
 	static void StartVimTerm(bool bFromDllStart);
 	static void StopVimTerm();
+
+	static void OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INFO& csbi);
+	static void OnReadConsoleAfter(bool bFinal);
 
 	static bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL);
 	static bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
@@ -230,4 +235,14 @@ protected:
 	INT_PTR gnPrevAnsiPart; // = 0;
 	wchar_t gsPrevAnsiPart2[CEAnsi_MaxPrevPart]; // = {};
 	INT_PTR gnPrevAnsiPart2; // = 0;
+
+	// In "ReadLine" we can't control scrolling
+	// thats why we need to mark some rows for identification
+	struct XtermStoreMarks
+	{
+		// [0] - above CursorPos, but if CursorPos was on FIRST line - it can't be...
+		// [1] - exactly on CursorPos, but if CursorX on the FIRST column - this will be illegal
+		SHORT SaveRow[2];
+		WORD  RowId[2]
+	} m_RowMarks;
 };

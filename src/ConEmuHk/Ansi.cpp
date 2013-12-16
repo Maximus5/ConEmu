@@ -519,6 +519,96 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 #endif
 
 
+// When user type smth in the prompt, screen buffer may be scrolled
+void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INFO& csbi)
+{
+	CEAnsi* pObj = CEAnsi::Object();
+	if (!pObj)
+		return;
+
+	static WORD nLastReadId = 0;
+
+	WORD NewRowId;
+	CEConsoleMark Test = {};
+
+	COORD crPos[] = {{4,csbi.dwCursorPosition.Y-1},csbi.dwCursorPosition};
+	_ASSERTEX(countof(crPos[])==countof(m_RowMarks.SaveRow) && countof(crPos[])==countof(m_RowMarks.RowId));
+
+	for (int = 0; i < 2; i++)
+	{
+		pObj->m_RowMarks.SaveRow[i] = -1;
+		pObj->m_RowMarks.RowId[i] = 0;
+		
+		if (crPos[i].X < 4 || crPos[i].Y < 0)
+			continue;
+
+		if (ReadConsoleRowId(hConOut, crPos[i].Y, &Test))
+		{
+			pObj->SaveRow[i] = crPos[i].Y;
+			pObj->RowId[i] = Test.RowId;
+		}
+		else
+		{
+			NewRowId = InterlockedIncrement16((short*)&nLastReadId);
+			if (!NewRowId) NewRowId = InterlockedIncrement16((short*)&nLastReadId);
+
+			if (WriteConsoleRowId(hConOut, crPos[i].Y, NewRowId))
+			{
+				pObj->SaveRow[i] = crPos[i].Y;
+				pObj->RowId[i] = NewRowId;
+			}
+		}
+	}
+
+	// Succeesfull mark?
+	_ASSERTEX((pObj->RowId[0] || pObj->RowId[1]) && (pObj->RowId[0] != pObj->RowId[1]));
+}
+void CEAnsi::OnReadConsoleAfter(bool bFinal)
+{
+	CEAnsi* pObj = CEAnsi::Object();
+	if (!pObj)
+		return;
+
+	if (pObj->m_RowMarks.SaveRow1 < 0 && pObj->m_RowMarks.SaveRow2 < 0)
+		return;
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	SHORT nMarkedRow = -1;
+	CEConsoleMark Test = {};
+
+	if (!GetConsoleScreenBufferInfo(hConOut, &csbi))
+		goto wrap;
+
+	if (!FindConsoleRowId(hConOut, csbi.dwCursorPosition.Y, &nMarkedRow, &Test))
+		goto wrap;
+
+	for (int i = 1; i >= 0; i--)
+	{
+		if ((pObj->SaveRow[i] >= 0) && (pObj->RowId[i] == Test.RowId))
+		{
+			if (pObj->SaveRow[i] == nMarkedRow)
+			{
+				_ASSERTEX(FALSE && "Nothing was changed? Strage, scrolling was expected");
+				goto wrap;
+			}
+			// Well, we get scroll distance
+			_ASSERTEX(nMarkedRow < pObj->SaveRow[i]); // Upside scroll expected
+			ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConOut, nMarkedRow - pObj->SaveRow[i]};
+			ExtScrollScreen(&scrl);
+			goto wrap;
+		}
+	}
+
+wrap:
+	// Clear it
+	for (int = 0; i < 2; i++)
+	{
+		pObj->m_RowMarks.SaveRow[i] = -1;
+		pObj->m_RowMarks.RowId[i] = 0;
+	}
+}
+
 
 BOOL /*WINAPI*/ CEAnsi::OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
 {

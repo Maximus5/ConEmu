@@ -826,6 +826,7 @@
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
+    <ClInclude Include="..\common\ConsoleMixAttr.h" />
     <ClInclude Include="..\common\DefTermHooker.h" />
     <ClInclude Include="ConEmuHooks.h" />
     <ClInclude Include="Console2.h" />
@@ -855,6 +856,7 @@
     <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
+    <ClCompile Include="..\common\ConsoleMixAttr.cpp" />
     <ClCompile Include="Ansi.cpp" />
     <ClCompile Include="ConEmuHooks.cpp" />
     <ClCompile Include="Entry.cpp" />

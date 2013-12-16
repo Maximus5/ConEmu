@@ -1630,6 +1630,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\ConsoleMixAttr.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuHooks.h"
 				>
 			</File>
@@ -1747,6 +1751,10 @@
 			</File>
 			<File
 				RelativePath="..\common\ConEmuCheck.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\ConsoleMixAttr.cpp"
 				>
 			</File>
 			<File

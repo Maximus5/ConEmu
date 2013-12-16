@@ -3227,18 +3227,22 @@ void OnReadConsoleStart(BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	DWORD nConIn = 0, nConOut = 0;
-	if (GetConsoleScreenBufferInfo(hConOut, &csbi)
-		&& GetConsoleMode(hConsoleInput, &nConIn) && GetConsoleMode(hConOut, &nConOut))
+	if (GetConsoleScreenBufferInfo(hConOut, &csbi))
 	{
-		if ((nConIn & ENABLE_ECHO_INPUT) && (nConIn & ENABLE_LINE_INPUT))
+		if (GetConsoleMode(hConsoleInput, &nConIn) && GetConsoleMode(hConOut, &nConOut))
 		{
-			bCatch = true;
-			gReadConsoleInfo.InReadConsoleTID = GetCurrentThreadId();
-			gReadConsoleInfo.bIsUnicode = bUnicode;
-			gReadConsoleInfo.hConsoleInput = hConsoleInput;
-			gReadConsoleInfo.crStartCursorPos = csbi.dwCursorPosition;
-			gReadConsoleInfo.nConInMode = nConIn;
-			gReadConsoleInfo.nConOutMode = nConOut;
+			if ((nConIn & ENABLE_ECHO_INPUT) && (nConIn & ENABLE_LINE_INPUT))
+			{
+				bCatch = true;
+				gReadConsoleInfo.InReadConsoleTID = GetCurrentThreadId();
+				gReadConsoleInfo.bIsUnicode = bUnicode;
+				gReadConsoleInfo.hConsoleInput = hConsoleInput;
+				gReadConsoleInfo.crStartCursorPos = csbi.dwCursorPosition;
+				gReadConsoleInfo.nConInMode = nConIn;
+				gReadConsoleInfo.nConOutMode = nConOut;
+
+				CEAnsi::OnReadConsoleBefore(hConOut, csbi);
+			}
 		}
 	}
 	
@@ -3268,8 +3272,10 @@ void OnReadConsoleEnd(BOOL bSucceeded, BOOL bUnicode, HANDLE hConsoleInput, LPVO
 		gReadConsoleInfo.LastReadConsoleTID = gReadConsoleInfo.InReadConsoleTID;
 		gReadConsoleInfo.InReadConsoleTID = 0;
 
-		TODO("ќтослать в ConEmu считанную строку!");
+		TODO("ќтослать в ConEmu считанную строку?");
 	}
+
+	CEAnsi::OnReadConsoleAfter();
 
 	// —брос кешированных значений
 	GetConsoleScreenBufferInfoCached(NULL, NULL);
@@ -4074,66 +4080,16 @@ BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 	typedef BOOL (WINAPI* OnReadConsoleW_t)(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, PCONSOLE_READCONSOLE_CONTROL pInputControl);
 	SUPPRESSORIGINALSHOWCALL;
 	ORIGINAL(ReadConsoleW);
-	BOOL lbRc = FALSE, lbProcessed = FALSE;
+	BOOL lbRc = FALSE;
 	DWORD nErr = GetLastError();
 	DWORD nStartTick = GetTickCount(), nEndTick = 0;
 
 	OnReadConsoleStart(TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 
-#if 0
-	// «апускаемс€ только в главном потоке
-	// ѕопытка стартовать в telnet.exe (запущенном без параметров в Win7 x64) привела к зависанию
-	if ((gnAllowClinkUsage == 1) && bMainThread && (nNumberOfCharsToRead > 1))
-	{
-		DWORD nConIn = 0;
-		if (GetConsoleMode(hConsoleInput, &nConIn)
-			&& (nConIn & ENABLE_ECHO_INPUT) && (nConIn & ENABLE_LINE_INPUT))
-		{
-			if (!gbClinkInitialized)
-			{
-				InitializeClink();
-			}
-
-			// Old style (clink 0.1.1)
-			if (gpfnClinkReadLine)
-			{
-				lbProcessed = TRUE;
-				*((wchar_t*)lpBuffer) = 0;
-
-				gpfnClinkReadLine(gpszLastWriteConsole, (wchar_t*)lpBuffer, nNumberOfCharsToRead);
-
-				// Copy from clink_dll.c::hooked_read_console
-				{
-				    // Check for control codes and convert them.
-				    if (((wchar_t*)lpBuffer)[0] == L'\x03')
-				    {
-				        // Fire a Ctrl-C exception. Cmd.exe sets a global variable (CtrlCSeen)
-				        // and ReadConsole() would normally set error code 0x3e3. Sleep() is to
-				        // yield the thread so the global gets set (guess work...).
-				        GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
-				        SetLastError(0x3e3);
-				        Sleep(0);
-
-				        ((wchar_t*)lpBuffer)[0] = '\0';
-				    }
-			    }
-
-				if (lpNumberOfCharsRead)
-					*lpNumberOfCharsRead = lstrlen((wchar_t*)lpBuffer);
-				lbRc = TRUE;
-			}
-		}
-	}
-#endif
-
-	// ≈сли не обработано через clink - то стандартно, через API
-	if (!lbProcessed)
-	{
-		lbRc = F(ReadConsoleW)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
-		nErr = GetLastError();
-		// Debug purposes
-		nEndTick = GetTickCount();
-	}
+	lbRc = F(ReadConsoleW)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+	nErr = GetLastError();
+	// Debug purposes
+	nEndTick = GetTickCount();
 
 	OnReadConsoleEnd(lbRc, TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 

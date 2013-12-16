@@ -12,6 +12,7 @@ SRCS = Entry.cpp \
        ../common/CmdLine.cpp \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp \
+       ../common/ConsoleMixAttr.cpp \
        ../common/Execute.cpp \
        ../common/InQueue.cpp \
        ../common/MAssert.cpp \

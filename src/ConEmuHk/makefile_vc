@@ -58,6 +58,7 @@ $(OBJDIR)\ShellProcessor.obj \
 $(OBJDIR)\WinConsole.obj \
 $(OBJDIR)\WinObjects.obj \
 $(OBJDIR)\ConEmuCheck.obj \
+$(OBJDIR)\ConsoleMixAttr.obj \
 $(OBJDIR)\CmdLine.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\InQueue.obj \
@@ -289,8 +290,6 @@ $(OBJDIR)\ConEmuHooks.obj: ConEmuHooks.cpp
 
 $(OBJDIR)\RegHooks.obj: RegHooks.cpp
 
-$(OBJDIR)\ConEmuSrv.obj: ConEmuSrv.cpp
-
 $(OBJDIR)\Execute.obj: ../common/Execute.cpp ../common/Execute.h
 
 $(OBJDIR)\ExtConsole.obj: ExtConsole.cpp ExtConsole.h
@@ -304,6 +303,8 @@ $(OBJDIR)\WinConsole.obj: ../common/WinConsole.cpp ../common/WinConsole.h
 $(OBJDIR)\WinObjects.obj: ../common/WinObjects.cpp ../common/WinObjects.h
 
 $(OBJDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp ../common/ConEmuCheck.h
+
+$(OBJDIR)\ConsoleMixAttr.obj: ../common/ConsoleMixAttr.cpp ../common/ConsoleMixAttr.h
 
 $(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
 
