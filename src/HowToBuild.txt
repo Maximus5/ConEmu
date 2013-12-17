@@ -1,0 +1,13 @@
+You can choose any method:
+
+1. Use Visual C++ 2008 and solution file CE.sln from this folder
+
+2. Use Visual C++ nmake (2008) and makefile_all_vc.
+   Example: nmake /F makefile_all_vc
+   ! This method requires libCRT.lib (libCRT64.lib),
+   ! placed in 'common' subfolder.
+   ! Theese files must be compiled from FAR 2 sources.
+
+3. Use GnuC (MinGW) and makefile_all_gcc.
+   Example: mingw32-make -f makefile_all_gcc WIDE=1
+   ! This method was tested only for x86 builds.

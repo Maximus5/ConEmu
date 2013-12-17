@@ -1280,7 +1280,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			if (gnRunMode == RM_UNDEFINED)
 			{
 				gnRunMode = RM_COMSPEC;
-				// Поддержка дебильной возможности "cmd /cecho xxx"
+				// Поддержка возможности "cmd /cecho xxx"
 				asCmdLine = pszArgStarts + 2;
 				while (*asCmdLine==L' ' || *asCmdLine==L'\t') asCmdLine++;
 			}
