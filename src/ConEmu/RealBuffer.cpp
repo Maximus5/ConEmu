@@ -3827,7 +3827,7 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	int   nNewLineLen = 2; // max "\r\n"
 
 	int   nCharCount = GetSelectionCharCount(bStreamMode, srSelection_X1, srSelection_Y1, srSelection_X2, srSelection_Y2, &nSelWidth, &nSelHeight, nNewLineLen);
-	_ASSERTE((nSelWidth>0) && (nSelHeight>0) && (nCharCount>0));
+	_ASSERTE((nSelWidth>-(srSelection_X1-srSelection_X2)) && (nSelHeight>0) && (nCharCount>0));
 
 	HGLOBAL hUnicode = NULL;
 	hUnicode = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, (nCharCount+1)*sizeof(wchar_t));
@@ -3836,7 +3836,7 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	{
 		Assert(hUnicode != NULL);
 		return false;
-	}
+	} 
 
 	wchar_t *pch = (wchar_t*)GlobalLock(hUnicode);
 
