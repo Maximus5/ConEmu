@@ -135,7 +135,8 @@ WORD ReadConsoleRowId(HANDLE hConOut, SHORT nRow, CEConsoleMark* pMark/*=NULL*/)
 
 	if (pMark)
 	{
-		pMark->CellAttr = nAttrs;
+		_ASSERTEX(countof(pMark->CellAttr)==countof(nAttrs));
+		memmove(pMark->CellAttr, nAttrs, sizeof(pMark->CellAttr));
 		pMark->RowId = RowId;
 	}
 
@@ -154,9 +155,9 @@ bool WriteConsoleRowId(HANDLE hConOut, SHORT nRow, WORD RowId, CEConsoleMark* pM
 	if (RowId)
 	{
 		WORD RowIdPart = RowId;
-		for (size_t i = 0; i < countof(nAttrs); i++)
+		for (size_t i = 0, j = (countof(nAttrs)-1); i < countof(nAttrs); i++, j--)
 		{
-			nNewAttrs[i] = (nAttrs[i] & ~CHANGED_CONATTR) | AddConAttr[RowIdPart&0xF];
+			nNewAttrs[j] = (nAttrs[i] & ~CHANGED_CONATTR) | AddConAttr[RowIdPart&0xF];
 			RowIdPart = (RowIdPart>>4);
 		}
 	}
@@ -173,7 +174,8 @@ bool WriteConsoleRowId(HANDLE hConOut, SHORT nRow, WORD RowId, CEConsoleMark* pM
 
 	if (pMark)
 	{
-		pMark->CellAttr = nNewAttrs;
+		_ASSERTEX(countof(pMark->CellAttr)==countof(nAttrs));
+		memmove(pMark->CellAttr, nNewAttrs, sizeof(pMark->CellAttr));
 		pMark->RowId = RowId;
 	}
 

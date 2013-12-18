@@ -532,9 +532,11 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 	CEConsoleMark Test = {};
 
 	COORD crPos[] = {{4,csbi.dwCursorPosition.Y-1},csbi.dwCursorPosition};
-	_ASSERTEX(countof(crPos[])==countof(m_RowMarks.SaveRow) && countof(crPos[])==countof(m_RowMarks.RowId));
+	_ASSERTEX(countof(crPos)==countof(pObj->m_RowMarks.SaveRow) && countof(crPos)==countof(pObj->m_RowMarks.RowId));
 
-	for (int = 0; i < 2; i++)
+	pObj->m_RowMarks.csbi = csbi;
+
+	for (int i = 0; i < 2; i++)
 	{
 		pObj->m_RowMarks.SaveRow[i] = -1;
 		pObj->m_RowMarks.RowId[i] = 0;
@@ -544,8 +546,8 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 
 		if (ReadConsoleRowId(hConOut, crPos[i].Y, &Test))
 		{
-			pObj->SaveRow[i] = crPos[i].Y;
-			pObj->RowId[i] = Test.RowId;
+			pObj->m_RowMarks.SaveRow[i] = crPos[i].Y;
+			pObj->m_RowMarks.RowId[i] = Test.RowId;
 		}
 		else
 		{
@@ -554,14 +556,14 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 
 			if (WriteConsoleRowId(hConOut, crPos[i].Y, NewRowId))
 			{
-				pObj->SaveRow[i] = crPos[i].Y;
-				pObj->RowId[i] = NewRowId;
+				pObj->m_RowMarks.SaveRow[i] = crPos[i].Y;
+				pObj->m_RowMarks.RowId[i] = NewRowId;
 			}
 		}
 	}
 
 	// Succeesfull mark?
-	_ASSERTEX((pObj->RowId[0] || pObj->RowId[1]) && (pObj->RowId[0] != pObj->RowId[1]));
+	_ASSERTEX((pObj->m_RowMarks.RowId[0] || pObj->m_RowMarks.RowId[1]) && (pObj->m_RowMarks.RowId[0] != pObj->m_RowMarks.RowId[1]));
 }
 void CEAnsi::OnReadConsoleAfter(bool bFinal)
 {
@@ -569,7 +571,7 @@ void CEAnsi::OnReadConsoleAfter(bool bFinal)
 	if (!pObj)
 		return;
 
-	if (pObj->m_RowMarks.SaveRow1 < 0 && pObj->m_RowMarks.SaveRow2 < 0)
+	if (pObj->m_RowMarks.SaveRow[0] < 0 && pObj->m_RowMarks.SaveRow[1] < 0)
 		return;
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
@@ -585,16 +587,16 @@ void CEAnsi::OnReadConsoleAfter(bool bFinal)
 
 	for (int i = 1; i >= 0; i--)
 	{
-		if ((pObj->SaveRow[i] >= 0) && (pObj->RowId[i] == Test.RowId))
+		if ((pObj->m_RowMarks.SaveRow[i] >= 0) && (pObj->m_RowMarks.RowId[i] == Test.RowId))
 		{
-			if (pObj->SaveRow[i] == nMarkedRow)
+			if (pObj->m_RowMarks.SaveRow[i] == nMarkedRow)
 			{
-				_ASSERTEX(FALSE && "Nothing was changed? Strage, scrolling was expected");
+				_ASSERTEX((pObj->m_RowMarks.csbi.dwCursorPosition.Y < (pObj->m_RowMarks.csbi.dwSize.Y-2)) && "Nothing was changed? Strage, scrolling was expected");
 				goto wrap;
 			}
 			// Well, we get scroll distance
-			_ASSERTEX(nMarkedRow < pObj->SaveRow[i]); // Upside scroll expected
-			ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConOut, nMarkedRow - pObj->SaveRow[i]};
+			_ASSERTEX(nMarkedRow < pObj->m_RowMarks.SaveRow[i]); // Upside scroll expected
+			ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConOut, nMarkedRow - pObj->m_RowMarks.SaveRow[i]};
 			ExtScrollScreen(&scrl);
 			goto wrap;
 		}
@@ -602,7 +604,7 @@ void CEAnsi::OnReadConsoleAfter(bool bFinal)
 
 wrap:
 	// Clear it
-	for (int = 0; i < 2; i++)
+	for (int i = 0; i < 2; i++)
 	{
 		pObj->m_RowMarks.SaveRow[i] = -1;
 		pObj->m_RowMarks.RowId[i] = 0;

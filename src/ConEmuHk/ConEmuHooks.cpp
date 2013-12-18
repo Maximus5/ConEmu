@@ -3275,7 +3275,7 @@ void OnReadConsoleEnd(BOOL bSucceeded, BOOL bUnicode, HANDLE hConsoleInput, LPVO
 		TODO("ќтослать в ConEmu считанную строку?");
 	}
 
-	CEAnsi::OnReadConsoleAfter();
+	CEAnsi::OnReadConsoleAfter(true);
 
 	// —брос кешированных значений
 	GetConsoleScreenBufferInfoCached(NULL, NULL);

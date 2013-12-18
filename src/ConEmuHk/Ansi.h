@@ -243,6 +243,7 @@ protected:
 		// [0] - above CursorPos, but if CursorPos was on FIRST line - it can't be...
 		// [1] - exactly on CursorPos, but if CursorX on the FIRST column - this will be illegal
 		SHORT SaveRow[2];
-		WORD  RowId[2]
+		WORD  RowId[2];
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
 	} m_RowMarks;
 };
