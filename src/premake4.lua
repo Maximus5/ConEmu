@@ -21,13 +21,24 @@ end
 --------------------------------------------------------------------------------
 
 solution ("ConEmu")
-    configurations({"debug", "release"})
-    platforms({"x32", "x64"})
+    platforms({"x32","x64"})
+
+	configuration "vs*"
+		configurations({"Release","Debug","Debug_C","Debug_F3","Debug_R"})
+	    setup_cfg("Release")
+	    setup_cfg("Debug")
+	    setup_cfg("Debug_C")
+	    setup_cfg("Debug_F3")
+	    setup_cfg("Debug_R")
+
+	configuration "gmake"
+		configurations({"release","debug"})
+	    setup_cfg("release")
+	    setup_cfg("debug")
+
 
     location(to)
 
-    setup_cfg("release")
-    setup_cfg("debug")
 
     flags("Symbols")
     flags("StaticRuntime")
@@ -123,6 +134,78 @@ project("ConEmuC")
         "ConEmuC/ConEmuC.rc"})
 
 --------------------------------------------------------------------------------
---project("ConEmuCD")
---    language("c++")
---    kind("SharedLib")
+project("ConEmuCD")
+    language("c++")
+    kind("SharedLib")
+    targetname("ConEmuCD")
+
+    files({
+    	"ConEmuCD/*.cpp","ConEmuCD/*.h"
+    	})
+    files({
+    	"ConEmuCD/ConEmuCD.rc","ConEmu/afxres.h","ConEmu/version.h"
+    	})
+	files({
+		"ConEmuHk/Injects.cpp",
+		"common/CmdLine.cpp",
+		"common/Common.cpp",
+		"common/ConEmuCheck.cpp",
+		"common/ConsoleRead.cpp",
+		"common/ExecPty.cpp",
+		"common/Execute.cpp",
+		"common/InQueue.cpp",
+		"common/MAssert.cpp",
+		"common/Monitors.cpp",
+		"common/MSecurity.cpp",
+		"common/MStrSafe.cpp",
+		"common/Memory.cpp",
+		"common/RConStartArgs.cpp",
+		"common/SetEnvVar.cpp",
+		"common/WinConsole.cpp",
+		"common/WinObjects.cpp"
+		})
+
+    excludes({
+    	"ConEmuCD/CETaskBar.*"
+    	})
+    excludes({
+    	"ConEmuCD/header.h",
+    	"ConEmuCD/RE_*.*",
+    	"ConEmuCD/REG_*.*",
+    	"ConEmuCD/RegEditor_Lang.h",
+    	"ConEmuCD/RegHooks.h"
+    	})
+
+--------------------------------------------------------------------------------
+project("ConEmuHk")
+    language("c++")
+    kind("SharedLib")
+    targetname("ConEmuHk")
+
+    files({
+		"ConEmuHk/Entry.*",
+		"ConEmuHk/Ansi.*",
+		"ConEmuHk/ConEmuHooks.*",
+		"ConEmuHk/ExtConsole.*",
+		"ConEmuHk/Injects.*",
+		"ConEmuHk/RegHooks.*",
+		"ConEmuHk/SetHook.*",
+		"ConEmuHk/ShellProcessor.*",
+		"ConEmuHk/GuiAttach.*",
+		"ConEmuHk/UserImp.*"
+		})
+	files({
+		"common/CmdLine.*",
+		"common/Common.*",
+		"common/ConEmuCheck.*",
+		"common/ConsoleMixAttr.*",
+		"common/Execute.*",
+		"common/InQueue.*",
+		"common/MAssert.*",
+		"common/MSecurity.*",
+		"common/MStrSafe.*",
+		"common/Memory.*",
+		"common/RConStartArgs.*",
+		"common/WinConsole.*",
+		"common/WinObjects.*"
+		})
