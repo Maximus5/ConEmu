@@ -3803,7 +3803,7 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	wchar_t sPreLineBreak[] =
 		{
 			ucBox25,ucBox50,ucBox75,ucBox100,ucUpScroll,ucDnScroll,ucLeftScroll,ucRightScroll,ucArrowUp,ucArrowDown,
-			ucNoBreakSpace,
+			//ucNoBreakSpace, -- this is space, why it was blocked?
 			ucBoxDblVert,ucBoxSinglVert,ucBoxDblDownRight,ucBoxDblDownLeft,ucBoxDblUpRight,ucBoxDblUpLeft,ucBoxSinglDownRight,
 			ucBoxSinglDownLeft,ucBoxSinglUpRight,ucBoxSinglUpLeft,ucBoxSinglDownDblHorz,ucBoxSinglUpDblHorz,ucBoxDblDownDblHorz,
 			ucBoxDblUpDblHorz,ucBoxSinglDownHorz,ucBoxSinglUpHorz,ucBoxDblDownSinglHorz,ucBoxDblUpSinglHorz,ucBoxDblVertRight,
@@ -4016,7 +4016,10 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 			{
 				bool bContinue = false;
 
-				if (bDetectLines && pszNextLine && (*pszNextLine != L' ')
+				if (bDetectLines && pszNextLine
+					// Allow maximum one space on the next line
+					&& ((pszNextLine[0] != L' ') || (pszNextLine[0] == L' ' && pszNextLine[1] != L' '))
+					// If right or left edge of screen is "Frame" - force to line break!
 					&& !wcschr(sPreLineBreak, *(pch - 1))
 					&& !wcschr(sPreLineBreak, *pszNextLine))
 				{
