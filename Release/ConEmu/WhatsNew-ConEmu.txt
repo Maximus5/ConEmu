@@ -15,6 +15,25 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.12.19
+[!] ConEmuHk linked with flags /DYNAMICBASE:NO /FIXED:NO /BASE:0x7E110000.
+[*] GuiMacro Transparent&HighlightMouse described in the About dialog.
+[*] Hide cursor during mouse-selection, show half-horz cursor during keyboard selection.
+[%] Copy, Detect line ends. Allow one space on the next line beginning.
+[*] Some hotkeys descriptions was changed
+    * Highlighting: hyperlinks and compiler errors (FarGotoEditor modifier);
+    * Highlighting: Switch «Highlight row under mouse cursor».
+[%] ANSI & xterm256 improvements:
+    * Try to deal with ReadLine scrolling and xterm256;
+    * Clear extened attributes after cmd's cls.
+    * "ESC [ 0 m" set original colors instead of gray-on-black;
+      «Original» means colors was set in console before first
+      ANSI color change (first write to console actually)
+      in the current application (e.g. cmd.exe).
+[*] Addons\git.cmd -> Addons\git_sample.cmd.
+[*] Some internal and debug changes.
+
+
 2013.12.15
 [+] Issue 1362: Hotkeys for inc/dec transparency
     * GuiMacro: Transparency(<Cmd>,<Value>)
