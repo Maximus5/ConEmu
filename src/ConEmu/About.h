@@ -187,6 +187,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Relative==0: N - required font height in points\r\n" \
 	L"     Relative==1: N (+-1, +-2) - increase/decrease font height\r\n" \
 	L"     returns - \"OK\", or \"InvalidArg\"\r\n" \
+	L"HighlightMouse(<What>[,<Act>])\r\n" \
+	L"  - change highlighting int the ACTIVE console only\r\n" \
+	L"    What==0: switch off/row/col/row+col/off/...\r\n" \
+	L"    What==1: row, What==2 - col, What==3 - row+col\r\n" \
+	L"      Act==0 - off, Act==1 - on, Act==2 - switch (default)\r\n" \
 	L"IsConEmu\r\n" \
 	L"  - Returns \"Yes\" when console was started under !ConEmu\r\n" \
 	L"IsConsoleActive\r\n" \
@@ -253,6 +258,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==10: switches visible split-panes, Parm=(1,-1)\r\n" \
 	L"Task(Index[,\"Dir\"])\r\n" \
 	L"  - start task with 1-based index\r\n" \
+	L"Transparency(<Cmd>,<Value>)\r\n" \
+	L"  - change ConEmu transparency level absolutely or relatively\r\n" \
+	L"    Cmd==0, Value=40..255 (255==Opaque)\r\n" \
+	L"    Cmd==1, Value=<relative inc/dec>\r\n" \
 	L"Task(\"Name\"[,\"Dir\"])\r\n" \
 	L"  - start task with specified name\r\n" \
 	L"WindowFullscreen()\r\n" \
