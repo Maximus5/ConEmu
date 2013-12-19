@@ -526,7 +526,7 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 	if (!pObj)
 		return;
 
-	static WORD nLastReadId = 0;
+	static LONG nLastReadId = 0;
 
 	WORD NewRowId;
 	CEConsoleMark Test = {};
@@ -551,8 +551,8 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 		}
 		else
 		{
-			NewRowId = InterlockedIncrement16((short*)&nLastReadId);
-			if (!NewRowId) NewRowId = InterlockedIncrement16((short*)&nLastReadId);
+			NewRowId = LOWORD(InterlockedIncrement(&nLastReadId));
+			if (!NewRowId) NewRowId = LOWORD(InterlockedIncrement(&nLastReadId));
 
 			if (WriteConsoleRowId(hConOut, crPos[i].Y, NewRowId))
 			{
