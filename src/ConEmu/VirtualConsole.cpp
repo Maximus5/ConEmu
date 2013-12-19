@@ -4031,9 +4031,13 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	// указатель на настройки раздел€емые по приложени€м
 	mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 
+	// Use half-cell horz cursor in keyboard selection
+	bool bInSel = mp_RCon->isSelectionPresent();
+	if (bInSel) dwSize = 50;
+
 	//bool bHollowBlock = false;
-	CECursorStyle curStyle = mp_Set->CursorStyle(bActive);
-	int MinSize = mp_Set->CursorMinSize(bActive);
+	CECursorStyle curStyle = bInSel ? cur_Horz : mp_Set->CursorStyle(bActive);
+	int MinSize = bInSel ? 2 : mp_Set->CursorMinSize(bActive);
 
 	//if ((!bForeground && mp_Set->CursorBlockInactive()) || (mp_Set->CursorType() == 2)) // Hollow-Block
 	if ((curStyle == cur_Block) || (curStyle == cur_Rect))
@@ -4128,8 +4132,8 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	// XOR режим, иначе (тем более при немигающем) курсор закрывает
 	// весь символ и его не видно
 	// 110131 ≈сли курсор мигающий - разрешим нецветной курсор дл€ AltIns в фаре
-	bool bCursorColor = mp_Set->CursorColor(bActive)
-		|| (dwSize >= 40 && !mp_Set->CursorBlink(bActive) && (curStyle != cur_Rect));
+	bool bCursorColor = bInSel ? true
+		: (mp_Set->CursorColor(bActive) || (dwSize >= 40 && !mp_Set->CursorBlink(bActive) && (curStyle != cur_Rect)));
 
 	// “еперь в rect нужно отобразить курсор (XOR'ом попробуем?)
 	if (bCursorColor)
