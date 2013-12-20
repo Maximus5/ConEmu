@@ -591,7 +591,7 @@ void CEAnsi::OnReadConsoleAfter(bool bFinal)
 		{
 			if (pObj->m_RowMarks.SaveRow[i] == nMarkedRow)
 			{
-				_ASSERTEX((pObj->m_RowMarks.csbi.dwCursorPosition.Y < (pObj->m_RowMarks.csbi.dwSize.Y-2)) && "Nothing was changed? Strage, scrolling was expected");
+				_ASSERTEX((pObj->m_RowMarks.csbi.dwCursorPosition.Y < (pObj->m_RowMarks.csbi.dwSize.Y-1)) && "Nothing was changed? Strange, scrolling was expected");
 				goto wrap;
 			}
 			// Well, we get scroll distance
