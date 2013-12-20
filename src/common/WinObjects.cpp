@@ -301,7 +301,7 @@ bool FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax)
 	{
 		bool bFound = false;
 		wchar_t* pszExpand = ExpandEnvStr(rsFilePath);
-		if (pszExpand && FileExists(rsFilePath))
+		if (pszExpand && FileExists(pszExpand))
 		{
 			_ASSERTEX(lstrlen(pszExpand) < (INT_PTR)cchPathMax);
 			lstrcpyn(rsFilePath, pszExpand, (int)cchPathMax);
