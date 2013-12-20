@@ -10936,11 +10936,11 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 			wchar_t szCurDir[MAX_PATH*2]; szCurDir[0] = 0; GetCurrentDirectory(countof(szCurDir), szCurDir);
 			size_t cchMax = _tcslen(asSource)+100+_tcslen(szCurDir);
 			wchar_t* pszErrMsg = (wchar_t*)calloc(cchMax,2);
-			_wcscpy_c(pszErrMsg, cchMax, L"Can't open console batch file:\n\xAB"/*«*/);
+			_wcscpy_c(pszErrMsg, cchMax, L"Can't open console batch file:\n‘");
 			_wcscat_c(pszErrMsg, cchMax, asSource+1);
-			_wcscat_c(pszErrMsg, cchMax, L"\xBB"/*»*/ L"\nCurrent directory:\n\xAB"/*«*/);
+			_wcscat_c(pszErrMsg, cchMax, L"’" L"\nCurrent directory:\n‘");
 			_wcscat_c(pszErrMsg, cchMax, szCurDir);
-			_wcscat_c(pszErrMsg, cchMax, L"\xBB"/*»*/);
+			_wcscat_c(pszErrMsg, cchMax, L"’");
 			DisplayLastError(pszErrMsg, dwErr);
 			free(pszErrMsg);
 			//Destroy(); -- must caller
@@ -10954,7 +10954,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 			DWORD dwErr = GetLastError();
 			CloseHandle(hFile);
 			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(asSource)+100,2);
-			lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n\xAB"/*«*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\xBB"/*»*/);
+			lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n‘"); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"’");
 			DisplayLastError(pszErrMsg, dwErr);
 			free(pszErrMsg);
 			//Destroy(); -- must caller
@@ -10972,7 +10972,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 		{
 			free(pszDataA);
 			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(asSource)+100,2);
-			lstrcpy(pszErrMsg, L"Reading console batch file failed:\n\xAB"/*«*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\xBB"/*»*/);
+			lstrcpy(pszErrMsg, L"Reading console batch file failed:\n‘"); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"’");
 			DisplayLastError(pszErrMsg, dwErr);
 			free(pszErrMsg);
 			//Destroy(); -- must caller
