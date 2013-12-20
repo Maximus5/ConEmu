@@ -1105,6 +1105,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			if (x2 >= WrapAtCol)
 			{
 				ForceDumpX = min(x2, WrapAtCol)-1;
+				x2 = 0; y2++;
 			}
 		}
 
