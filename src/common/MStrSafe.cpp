@@ -164,6 +164,13 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 						nLen = 2;
 						pszSrc += 3;
 					}
+					else if (pszSrc[0] == L'0' && pszSrc[1] == L'2' && pszSrc[2] == L'u')
+					{
+						cBase = 0;
+						szValue[0] = 0;
+						nLen = 2;
+						pszSrc += 3;
+					}
 					else if (pszSrc[0] == L'X' || pszSrc[0] == L'x')
 					{
 						if (pszSrc[0] == L'x')
@@ -179,32 +186,52 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 					
 					nValue = va_arg( argptr, UINT );
 					pszValue = szValue;
-					while (nValue)
+					if (cBase)
 					{
-						WORD n = (WORD)(nValue & 0xF);
-						if (n <= 9)
-							*(pszValue++) = (wchar_t)(L'0' + n);
-						else
-							*(pszValue++) = (wchar_t)(cBase + n - 10);
-						nValue = nValue >> 4;
-					}
-					if (!nLen)
-					{
-						nLen = (int)(pszValue - szValue);
+						// Hexadecimal branch
+						while (nValue)
+						{
+							WORD n = (WORD)(nValue & 0xF);
+							if (n <= 9)
+								*(pszValue++) = (wchar_t)(L'0' + n);
+							else
+								*(pszValue++) = (wchar_t)(cBase + n - 10);
+							nValue = nValue >> 4;
+						}
 						if (!nLen)
 						{
-							*(pszValue++) = L'0';
-							nLen = 1;
+							nLen = (int)(pszValue - szValue);
+							if (!nLen)
+							{
+								*(pszValue++) = L'0';
+								nLen = 1;
+							}
+						}
+						else
+						{
+							pszValue = (szValue+nLen);
+						}
+						// Теперь перекинуть в Dest
+						while (pszValue > szValue)
+						{
+							*(pszDst++) = *(--pszValue);
 						}
 					}
 					else
 					{
-						pszValue = (szValue+nLen);
-					}
-					// Теперь перекинуть в szGuiPipeName
-					while (pszValue > szValue)
-					{
-						*(pszDst++) = *(--pszValue);
+						// Decimal branch
+						int nGetLen = 0;
+						while (nValue)
+						{
+							WORD n = (WORD)(nValue % 10);
+							*(pszValue++) = (wchar_t)(L'0' + n);
+							nValue = (nValue - n) / 10;
+							nGetLen++;
+						}
+						while ((nGetLen++) < nLen)
+							*(pszDst++) = L'0';
+						while ((--pszValue) >= szValue)
+							*(pszDst++) = *pszValue;
 					}
 					continue;
 				}
@@ -372,7 +399,7 @@ LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...)
 					{
 						pszValue = (szValue+nLen);
 					}
-					// Теперь перекинуть в szGuiPipeName
+					// Теперь перекинуть в Dest
 					while (pszValue > szValue)
 					{
 						*(pszDst++) = *(--pszValue);
