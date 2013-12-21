@@ -75,8 +75,12 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 	dwErr = SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, SHGFP_TYPE_CURRENT, dmpfile);
 	if (FAILED(dwErr))
 	{
-		pszError = L"CreateDumpForReport called, get desktop folder failed";
-		goto wrap;
+		memset(dmpfile, 0, sizeof(dmpfile));
+		if (!GetTempPath(MAX_PATH, dmpfile) || !*dmpfile)
+		{
+			pszError = L"CreateDumpForReport called, get desktop or temp folder failed";
+			goto wrap;
+		}
 	}
 	if (*dmpfile && dmpfile[lstrlen(dmpfile)-1] != L'\\')
 		wcscat_c(dmpfile, L"\\");
