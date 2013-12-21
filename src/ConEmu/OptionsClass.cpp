@@ -11688,22 +11688,22 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 				_wsprintf(szFontError+nCurLen, SKIPLEN(countof(szFontError)-nCurLen)
 				          L"Failed to create border font!\nRequested: %s\nCreated: ", LogFont2.lfFaceName);
 
-				// Если запрашивалась Люцида - оставляем (хотя это уже облом, должна быть)
-				if (lstrcmpi(LogFont2.lfFaceName, gsDefGuiFont) == 0)
+				// Lucida may be not installed too
+				// So, try to create Lucida or Courier (we need font with 'frames')
+				bool bCreated = false;
+				LPCWSTR szAltNames[] = {gsDefGuiFont, gsAltGuiFont};
+				for (int a = 0; a < countof(szAltNames); a++)
 				{
-					// только запомним что было реально создано
-					lstrcpyn(LogFont2.lfFaceName, szFontFace, countof(LogFont2.lfFaceName));
-				}
-				else
-				{
-					// Иначе - пробуем создать Люциду (нам нужен шрифт с рамками)
-					wcscpy_c(LogFont2.lfFaceName, gsDefGuiFont);
+					if (!a && lstrcmpi(LogFont2.lfFaceName, gsDefGuiFont) == 0)
+						continue; // It was already failed...
+
+					wcscpy_c(LogFont2.lfFaceName, szAltNames[a]);
 					SelectObject(hDC, hOldF);
 					mh_Font2.Delete();
 
 					mh_Font2 = CEFONT(CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
-					                             0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
-					                             NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName));
+													0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
+													NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName));
 					hOldF = (HFONT)SelectObject(hDC, mh_Font2.hFont);
 					wchar_t szFontFace2[32];
 
@@ -11712,16 +11712,20 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 						szFontFace2[31] = 0;
 
 						// Проверяем что создалось, и ругаемся, если что...
-						if (lstrcmpi(LogFont2.lfFaceName, szFontFace2) != 0)
+						if (lstrcmpi(LogFont2.lfFaceName, szFontFace2) == 0)
 						{
-							wcscat_c(szFontError, szFontFace2);
-						}
-						else
-						{
+							bCreated = true;
 							wcscat_c(szFontError, szFontFace);
-							wcscat_c(szFontError, L"\nUsing: Lucida Console");
+							wcscat_c(szFontError, L"\nUsing: ");
+							wcscat_c(szFontError, LogFont2.lfFaceName);
+							break;
 						}
 					}
+				}
+				// Font not istalled or available?
+				if (!bCreated)
+				{
+					wcscat_c(szFontError, szAltNames[0]);
 				}
 			}
 		}
