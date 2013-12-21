@@ -70,6 +70,7 @@ bool IsPathNeedQuot(LPCWSTR asPath);
 bool IsUserAdmin();
 bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
 bool IsWine();
+bool IsWinPE();
 bool IsDbcs();
 bool IsWindows64();
 bool IsHwFullScreenAvailable();
@@ -125,6 +126,7 @@ struct CEStartupEnv
 	LPCWSTR pszPathEnv;
 	size_t  cchPathLen;
 	BOOL    bIsWine; // Информационно!
+	BOOL    bIsWinPE; // Информационно!
 	BOOL    bIsReactOS;
 	BOOL    bIsDbcs;
 	UINT    nAnsiCP, nOEMCP;

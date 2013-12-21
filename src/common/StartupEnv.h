@@ -168,6 +168,7 @@ CEStartupEnv* LoadStartupEnv()
 
 		pEnv->bIsDbcs = IsDbcs();
 		pEnv->bIsWine = IsWine();
+		pEnv->bIsWinPE = IsWinPE();
 
 		LPCWSTR pszReactCompare = L"ReactOS";
 		int nCmdLen = lstrlen(pszReactCompare);

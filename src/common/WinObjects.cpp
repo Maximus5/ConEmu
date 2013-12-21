@@ -790,6 +790,18 @@ bool IsWine()
 	return bIsWine;
 }
 
+bool IsWinPE()
+{
+	bool bIsWinPE = false;
+	HKEY hk1 = NULL, hk2 = NULL;
+	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\MiniNT", 0, KEY_READ, &hk1)
+		|| !RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\PE Builder", 0, KEY_READ, &hk2))
+		bIsWinPE = true; // В общем случае, на флажок ориентироваться нельзя. Это для информации.
+	if (hk1) RegCloseKey(hk1);
+	if (hk2) RegCloseKey(hk2);
+	return bIsWinPE;
+}
+
 bool IsDbcs()
 {
 	bool bIsDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0);
@@ -2864,7 +2876,7 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\r\n"
 		L"\tOsVer: %u.%u.%u.x%u, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
 		L"\tCSDVersion: %s, ReactOS: %u (%s), Rsrv: %u\r\n"
-		L"\tDBCS: %u, WINE: %u, ACP: %u, OEMCP: %u\r\n"
+		L"\tDBCS: %u, WINE: %u, PE: %u, ACP: %u, OEMCP: %u\r\n"
 		L"\tDesktop: %s\r\n\tTitle: %s\r\n\tSize: {%u,%u},{%u,%u}\r\n"
 		L"\tFlags: 0x%08X, ShowWindow: %u, ConHWnd: 0x%08X\r\n"
 		L"\tHandles: 0x%08X, 0x%08X, 0x%08X"
@@ -2872,7 +2884,7 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 		osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, bWin64 ? 64 : 32,
 		osv.wProductType, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask, GetSystemMetrics(89/*SM_SERVERR2*/),
 		osv.szCSDVersion, apStartEnv->bIsReactOS, pszReactOS, osv.wReserved,
-		apStartEnv->bIsDbcs, apStartEnv->bIsWine,
+		apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->bIsWinPE,
 		apStartEnv->nAnsiCP, apStartEnv->nOEMCP,
 		szDesktop, szTitle,
 		apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
