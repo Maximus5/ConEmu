@@ -14391,7 +14391,7 @@ bool CSettings::CheckConsoleFontRegistry(LPCWSTR asFaceName)
 
 // Вызывается при запуске ConEmu для быстрой проверки шрифта
 // EnumFontFamilies не вызывается, т.к. занимает время
-bool CSettings::CheckConsoleFontFast()
+bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 {
 	// В ReactOS шрифт не меняется и в реестре не регистрируется
 	if (gpStartEnv->bIsReactOS)
@@ -14401,7 +14401,14 @@ bool CSettings::CheckConsoleFontFast()
 
 	//wchar_t szCreatedFaceName[32] = {0};
 	LOGFONT LF = gpSet->ConsoleFont;
+	BOOL bCheckStarted = FALSE;
+	DWORD nCheckResult = -1;
+	DWORD nCheckWait = -1;
+
 	gpSetCls->nConFontError = 0; //ConFontErr_NonSystem|ConFontErr_NonRegistry|ConFontErr_InvalidName;
+	if (asCheckName && *asCheckName)
+		wcscpy_c(LF.lfFaceName, asCheckName);
+
 	HFONT hf = CreateFontIndirect(&LF);
 
 	if (!hf)
@@ -14424,7 +14431,7 @@ bool CSettings::CheckConsoleFontFast()
 			if (pszFamilyName[0] != L'@'
 			        && (gbIsDBCS || IsAlmostMonospace(pszFamilyName, lpOutl->otmTextMetrics.tmMaxCharWidth, lpOutl->otmTextMetrics.tmAveCharWidth, lpOutl->otmTextMetrics.tmHeight))
 			        && lpOutl->otmPanoseNumber.bProportion == PAN_PROP_MONOSPACED
-			        && lstrcmpi(pszFamilyName, gpSet->ConsoleFont.lfFaceName) == 0
+			        && lstrcmpi(pszFamilyName, LF.lfFaceName) == 0
 			  )
 			{
 				BOOL lbNonSystem = FALSE;
@@ -14436,7 +14443,7 @@ bool CSettings::CheckConsoleFontFast()
 					const RegFont* iter = &(m_RegFonts[j]);
 
 					if (!iter->bAlreadyInSystem &&
-					        lstrcmpi(iter->szFontName, gpSet->ConsoleFont.lfFaceName) == 0)
+					        lstrcmpi(iter->szFontName, LF.lfFaceName) == 0)
 						lbNonSystem = TRUE;
 				}
 
@@ -14455,13 +14462,21 @@ bool CSettings::CheckConsoleFontFast()
 	// Если успешно - проверить зарегистрированность в реестре
 	if (gpSetCls->nConFontError == 0)
 	{
-		if (!CheckConsoleFontRegistry(gpSet->ConsoleFont.lfFaceName))
+		if (!CheckConsoleFontRegistry(LF.lfFaceName))
 			gpSetCls->nConFontError |= ConFontErr_NonRegistry;
 	}
 
-	BOOL bCheckStarted = FALSE;
-	DWORD nCheckResult = -1;
-	DWORD nCheckWait = -1;
+	// WinPE may not have "Lucida Console" preinstalled
+	if (gpSetCls->nConFontError && !asCheckName && gpStartEnv && gpStartEnv->bIsWinPE && (lstrcmpi(LF.lfFaceName, gsAltConFont) != 0))
+	{
+		DWORD errSave = gpSetCls->nConFontError;
+		if (CheckConsoleFontFast(gsAltConFont))
+		{
+			// But has "Courier New"
+			wcscpy_c(gpSet->ConsoleFont.lfFaceName, gsAltConFont);
+			goto wrap;
+		}
+	}
 
 	if ((gpSetCls->nConFontError & ConFontErr_NonRegistry)
 		|| (gbIsWine && gpSetCls->nConFontError))
@@ -14512,7 +14527,15 @@ bool CSettings::CheckConsoleFontFast()
 		}
 	}
 
+wrap:
 	bConsoleFontChecked = (gpSetCls->nConFontError == 0);
+	if (isAdvLogging)
+	{
+		wchar_t szInfo[128];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CheckConsoleFontFast(`%s`,`%s`) = %u",
+			asCheckName ? asCheckName : L"NULL", LF.lfFaceName, gpSetCls->nConFontError);
+		LogString(szInfo);
+	}
 	return bConsoleFontChecked;
 }
 

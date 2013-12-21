@@ -295,7 +295,7 @@ class CSettings
 		bool EditConsoleFont(HWND hParent);
 		static INT_PTR CALLBACK EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		static int CALLBACK EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
-		bool CheckConsoleFontFast();
+		bool CheckConsoleFontFast(LPCWSTR asCheckName = NULL);
 		enum
 		{
 			ConFontErr_NonSystem   = 0x01,

@@ -152,6 +152,7 @@ wchar_t gsDefGuiFont[32] = L"Lucida Console"; // gbIsWine ? L"Liberation Mono" :
 wchar_t gsAltGuiFont[32] = L"Courier New"; // "Lucida Console" is not installed?
 // Set this font (default) in real console window to enable unicode support
 wchar_t gsDefConFont[32] = L"Lucida Console"; // DBCS ? L"Liberation Mono" : L"Lucida Console"
+wchar_t gsAltConFont[32] = L"Courier New"; // "Lucida Console" is not installed?
 // Use this (default) in ConEmu interface, where allowed (tabs, status, panel views, ...)
 wchar_t gsDefMUIFont[32] = L"Tahoma";         // WindowsVista ? L"Segoe UI" : L"Tahoma"
 
