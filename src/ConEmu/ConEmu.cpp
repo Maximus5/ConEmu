@@ -11322,7 +11322,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		//SetWindowRgn(ghWnd, CreateWindowRgn(), TRUE);
 
-		if (gpSetCls->szFontError[0])
+		if (gpSetCls->szFontError[0] && !(gpStartEnv && (gpStartEnv->bIsWinPE || gpStartEnv->bIsWine)))
 		{
 			MBoxA(gpSetCls->szFontError);
 			gpSetCls->szFontError[0] = 0;
