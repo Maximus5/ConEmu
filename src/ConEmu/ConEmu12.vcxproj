@@ -274,7 +274,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">
     <OutDir>C:\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
-    <TargetName>conemu</TargetName>
+    <TargetName>ConEmu</TargetName>
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
