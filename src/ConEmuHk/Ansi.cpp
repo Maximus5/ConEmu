@@ -2323,6 +2323,24 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		}
 		break;
 
+	case L'X':
+		// CSI P s X:  Erase P s Character(s) (default = 1) (ECH)
+		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+		{
+			int nCount = (Code.ArgC > 0) ? Code.ArgV[0] : 1;
+			int nScreenLeft = csbi.dwSize.X - csbi.dwCursorPosition.X - 1 + (csbi.dwSize.X * (csbi.dwSize.Y - csbi.dwCursorPosition.Y - 1));
+			int nChars = min(nCount,nScreenLeft);
+			COORD cr0 = csbi.dwCursorPosition;
+
+			if (nChars > 0)
+			{
+				ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
+					hConsoleOutput, {}, L' ', cr0, nChars};
+				ExtFillOutput(&fill);
+			}
+		} // case L'X':
+		break;
+
 	default:
 		DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 	} // switch (Code.Action)
