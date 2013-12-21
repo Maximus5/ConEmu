@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
 	#define SHOW_EXE_MSGBOX_NAME L"vim.exe"
 //	#define SHOW_EXE_TIMINGS
-//	#define SHOW_FIRST_ANSI_CALL
+	#define SHOW_FIRST_ANSI_CALL
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
@@ -368,7 +368,7 @@ void FIRST_ANSI_CALL(const BYTE* lpBuf, DWORD nNumberOfBytes)
 	static bool bTriggered = false;
 	if (!bTriggered)
 	{
-		if (lpBuf && nNumberOfBytes && *lpBuf == 0x1B)
+		if (lpBuf && nNumberOfBytes && (*lpBuf == 0x1B || *lpBuf == CTRL('E') || *lpBuf == DSC))
 		{
 			bTriggered = true;
 			ShowStartedMsgBox(L" First ansi call!");

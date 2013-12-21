@@ -128,13 +128,6 @@ void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
 		*pbSuppressBells = bSuppressBells;
 }
 
-bool CEAnsi::IsSuppressBells()
-{
-	bool bSuppressBells;
-	GetFeatures(NULL, &bSuppressBells);
-	return bSuppressBells;
-}
-
 bool CEAnsi::IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput /*= NULL*/)
 {
 	bool bAnsi = false;
@@ -886,12 +879,13 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuf
 			}
 			else
 			{
+				_ASSERTEX(ESC==27 && BEL==7 && DSC==0x90);
 				const wchar_t* pch = (const wchar_t*)lpBuffer;
 				for (size_t i = nNumberOfCharsToWrite; i--; pch++)
 				{
 					// Åñëè â âûâîäèìîé ñòðîêå âñòðå÷àåòñÿ "Ansi ESC Code" - âûâîäèì ñàìè
 					TODO("Non-CSI codes, like as BEL, BS, CR, LF, FF, TAB, VT, SO, SI");
-					if (*pch == 27)
+					if (*pch == ESC /*|| *pch == BEL*/ /*|| *pch == ENQ*/)
 					{
 						lbRc = pObj->WriteAnsiCodes(F(WriteConsoleW), hConsoleOutput, (const wchar_t*)lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten);
 						goto ansidone;
@@ -1578,9 +1572,10 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 	BOOL lbRc = TRUE, lbApply = FALSE;
 	LPCWSTR lpEnd = (lpBuffer + nNumberOfCharsToWrite);
 	AnsiEscCode Code = {};
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	wchar_t szPreDump[CEAnsi_MaxPrevPart];
 	DWORD cchPrevPart;
+
+	GetFeatures(NULL, &mb_SuppressBells);
 
 	// Store this pointer
 	pfnWriteConsoleW = _WriteConsoleW;
@@ -1658,761 +1653,14 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 					case L'[':
 						{
 							lbApply = TRUE;
-
-							switch (Code.Action) // case sensitive
-							{
-							case L's':
-								// Save cursor position (can not be nested)
-								if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
-									gDisplayCursor.StoredCursorPos = csbi.dwCursorPosition;
-								break;
-
-							case L'u':
-								// Restore cursor position
-								SetConsoleCursorPosition(hConsoleOutput, gDisplayCursor.StoredCursorPos);
-								break;
-
-							case L'H': // Set cursor position (1-based)
-							case L'f': // Same as 'H'
-							case L'A': // Cursor up by N rows
-							case L'B': // Cursor right by N cols
-							case L'C': // Cursor right by N cols
-							case L'D': // Cursor left by N cols
-							case L'E': // Moves cursor to beginning of the line n (default 1) lines down.
-							case L'F': // Moves cursor to beginning of the line n (default 1) lines up.
-							case L'G': // Moves the cursor to column n.
-								// Change cursor position
-								if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
-								{
-									COORD crNewPos = csbi.dwCursorPosition;
-
-									switch (Code.Action)
-									{
-									case L'H':
-									case L'f':
-										// Set cursor position (1-based)
-										crNewPos.Y = (Code.ArgC > 0 && Code.ArgV[0]) ? (Code.ArgV[0] - 1) : 0;
-										crNewPos.X = (Code.ArgC > 1 && Code.ArgV[1]) ? (Code.ArgV[1] - 1) : 0;
-										break;
-									case L'A':
-										// Cursor up by N rows
-										crNewPos.Y -= (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
-										break;
-									case L'B':
-										// Cursor down by N rows
-										crNewPos.Y += (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
-										break;
-									case L'C':
-										// Cursor right by N cols
-										crNewPos.X += (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
-										break;
-									case L'D':
-										// Cursor left by N cols
-										crNewPos.X -= (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
-										break;
-									case L'E':
-										// Moves cursor to beginning of the line n (default 1) lines down.
-										crNewPos.Y += (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
-										crNewPos.X = 0;
-										break;
-									case L'F':
-										// Moves cursor to beginning of the line n (default 1) lines up.
-										crNewPos.Y -= (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
-										crNewPos.X = 0;
-										break;
-									case L'G':
-										// Moves the cursor to column n.
-										crNewPos.X = (Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0;
-										break;
-									#ifdef _DEBUG
-									default:
-										_ASSERTE(FALSE && "Missed (sub)case value!");
-									#endif
-									}
-
-									// ïðîâåðêà Row
-									if (crNewPos.Y < 0)
-										crNewPos.Y = 0;
-									else if (crNewPos.Y >= csbi.dwSize.Y)
-										crNewPos.Y = csbi.dwSize.Y - 1;
-									// ïðîâåðêà Col
-									if (crNewPos.X < 0)
-										crNewPos.X = 0;
-									else if (crNewPos.X >= csbi.dwSize.X)
-										crNewPos.X = csbi.dwSize.X - 1;
-									// Goto
-                                    SetConsoleCursorPosition(hConsoleOutput, crNewPos);
-
-									if (gbIsVimProcess)
-										gbIsVimAnsi = true;
-								} // case L'H': case L'f': case 'A': case L'B': case L'C': case L'D':
-								break;
-
-							case L'J': // Clears part of the screen
-								// Clears the screen and moves the cursor to the home position (line 0, column 0).
-								if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
-								{
-									int nCmd = (Code.ArgC > 0) ? Code.ArgV[0] : 0;
-									COORD cr0 = {};
-									int nChars = 0;
-
-									switch (nCmd)
-									{
-									case 0:
-										// clear from cursor to end of screen
-										cr0 = csbi.dwCursorPosition;
-										nChars = (csbi.dwSize.X - csbi.dwCursorPosition.X)
-											+ csbi.dwSize.X * (csbi.dwSize.Y - csbi.dwCursorPosition.Y - 1);
-										break;
-									case 1:
-										// clear from cursor to beginning of the screen
-										nChars = csbi.dwCursorPosition.X + 1
-											+ csbi.dwSize.X * csbi.dwCursorPosition.Y;
-										break;
-									case 2:
-										// clear entire screen and moves cursor to upper left
-										nChars = csbi.dwSize.X * csbi.dwSize.Y;
-										break;
-									default:
-										DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-									}
-
-									if (lbApply)
-									{
-										// ViM: need to fill whole screen with selected background color, so Apply attributes
-										ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
-										lbApply = FALSE;
-									}
-
-									if (nChars > 0)
-									{
-										ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
-											hConsoleOutput, {}, L' ', cr0, nChars};
-										ExtFillOutput(&fill);
-										//DWORD nWritten = 0;
-										//FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nChars, cr0, &nWritten);
-										//FillConsoleOutputCharacter(hConsoleOutput, L' ', nChars, cr0, &nWritten);
-									}
-
-									if (nCmd == 2)
-									{
-										SetConsoleCursorPosition(hConsoleOutput, cr0);
-									}
-
-									//TODO("Need to clear attributes?");
-									//ReSetDisplayParm(hConsoleOutput, TRUE/*bReset*/, TRUE/*bApply*/);
-								} // case L'J':
-								break;
-
-							case L'K': // Erases part of the line
-								// Clears all characters from the cursor position to the end of the line
-								// (including the character at the cursor position).
-								if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
-								{
-									TODO("Need to clear attributes?");
-									int nChars = 0;
-									int nCmd = (Code.ArgC > 0) ? Code.ArgV[0] : 0;
-									COORD cr0 = csbi.dwCursorPosition;
-
-									switch (nCmd)
-									{
-									case 0: // clear from cursor to the end of the line
-										nChars = csbi.dwSize.X - csbi.dwCursorPosition.X - 1;
-										break;
-									case 1: // clear from cursor to beginning of the line
-										cr0.X = cr0.Y = 0;
-										nChars = csbi.dwCursorPosition.X + 1;
-										break;
-									case 2: // clear entire line
-										cr0.X = cr0.Y = 0;
-										nChars = csbi.dwSize.X;
-										break;
-									default:
-										DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-									}
-
-
-									if (nChars > 0)
-									{
-										ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
-											hConsoleOutput, {}, L' ', cr0, nChars};
-										ExtFillOutput(&fill);
-										//DWORD nWritten = 0;
-										//FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nChars, cr0, &nWritten);
-										//FillConsoleOutputCharacter(hConsoleOutput, L' ', nChars, cr0, &nWritten);
-									}
-								} // case L'K':
-								break;
-
-							case L'r':
-								//\027[Pt;Pbr
-								//
-								//Pt is the number of the top line of the scrolling region;
-								//Pb is the number of the bottom line of the scrolling region
-								// and must be greater than Pt.
-								//(The default for Pt is line 1, the default for Pb is the end
-								// of the screen)
-								//
-								if ((Code.ArgC >= 2) && (Code.ArgV[0] >= 1) && (Code.ArgV[1] >= Code.ArgV[0]))
-								{
-									gDisplayOpt.ScrollRegion = TRUE;
-									// Lines are 1-based
-									gDisplayOpt.ScrollStart = Code.ArgV[0];
-									gDisplayOpt.ScrollEnd = Code.ArgV[1];
-									_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
-								}
-								else
-								{
-									gDisplayOpt.ScrollRegion = FALSE;
-								}
-								break;
-
-							case L'S':
-								// Scroll whole page up by n (default 1) lines. New lines are added at the bottom.
-								ScrollScreen(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? -Code.ArgV[0] : -1);
-								break;
-
-							case L'L':
-								// Insert P s Line(s) (default = 1) (IL).
-								LinesInsert(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1);
-								break;
-							case L'M':
-								// Delete P s Line(s) (default = 1) (DL).
-								_ASSERTEX(FALSE && "'Delete N lines', need to be checked");
-								LinesDelete(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1);
-								break;
-
-							case L'@':
-								// Insert P s (Blank) Character(s) (default = 1) (ICH).
-								DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-								break;
-							case L'P':
-								// Delete P s Character(s) (default = 1) (DCH).
-								DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-								break;
-
-							case L'T':
-								// Scroll whole page down by n (default 1) lines. New lines are added at the top.
-								TODO("Define scrolling region");
-								ScrollScreen(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1);
-								break;
-
-							case L'h':
-							case L'l':
-								// Set/ReSet Mode
-								if (Code.ArgC > 0)
-								{
-									//ESC [ 3 h
-									//       DECCRM (default off): Display control chars.
-
-									//ESC [ 4 h
-									//       DECIM (default off): Set insert mode.
-
-									//ESC [ 20 h
-									//       LF/NL (default off): Automatically follow echo of LF, VT or FF with CR.
-
-									//ESC [ ? 1 h
-									//	  DECCKM (default off): When set, the cursor keys send an ESC O prefix,
-									//	  rather than ESC [.
-
-									//ESC [ ? 3 h
-									//	  DECCOLM (default off = 80 columns): 80/132 col mode switch.  The driver
-									//	  sources note that this alone does not suffice; some user-mode utility
-									//	  such as resizecons(8) has to change the hardware registers on the
-									//	  console video card.
-
-									//ESC [ ? 5 h
-									//	  DECSCNM (default off): Set reverse-video mode.
-
-									//ESC [ ? 6 h
-									//	  DECOM (default off): When set, cursor addressing is relative to the
-									//	  upper left corner of the scrolling region.
-
-
-									//ESC [ ? 8 h
-									//	  DECARM (default on): Set keyboard autorepeat on.
-
-									//ESC [ ? 9 h
-									//	  X10 Mouse Reporting (default off): Set reporting mode to 1 (or reset to
-									//	  0) -- see below.
-
-									//ESC [ ? 25 h
-									//	  DECTECM (default on): Make cursor visible.
-
-									//ESC [ ? 1000 h
-									//	  X11 Mouse Reporting (default off): Set reporting mode to 2 (or reset to
-									//	  0) -- see below.
-
-									switch (Code.ArgV[0])
-									{
-									case 1:
-										_ASSERTEX(Code.PvtLen==1 && Code.Pvt[0]==L'?');
-										gDisplayCursor.CursorKeysApp = (Code.Action == L'h');
-										TODO("What need to send to APP input instead of VK_xxx? (vim.exe)");
-										if (gbIsVimProcess)
-										{
-											TODO("Need to find proper way for activation alternative buffer from ViM?");
-											if (Code.Action == L'h')
-											{
-												StartVimTerm(false);
-											}
-											else
-											{
-												StopVimTerm();
-											}
-										}
-										break;
-									case 7:
-										//ESC [ ? 7 h
-										//	  DECAWM (default off): Set autowrap on.  In this mode, a graphic
-										//	  character emitted after column 80 (or column 132 of DECCOLM is on)
-										//	  forces a wrap to the beginning of the following line first.
-										//ESC [ = 7 h
-										//    Enables line wrapping
-										//ESC [ 7 ; _col_ h
-										//    Our extension. _col_ - wrap at column (1-based), default = 80
-										if ((gDisplayOpt.WrapWasSet = (Code.Action == L'h')))
-										{
-											gDisplayOpt.WrapAt = ((Code.ArgC > 1) && (Code.ArgV[1] > 0)) ? Code.ArgV[1] : 80;
-										}
-										break;
-									case 20:
-										// Ignored for now
-										gDisplayOpt.AutoLfNl = (Code.Action == L'h');
-										break;
-									case 25:
-										{
-											CONSOLE_CURSOR_INFO ci = {};
-											if (GetConsoleCursorInfo(hConsoleOutput, &ci))
-											{
-												ci.bVisible = (Code.Action == L'h');
-												SetConsoleCursorInfo(hConsoleOutput, &ci);
-											}
-										}
-										break;
-									default:
-										DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-									}
-
-									//switch (Code.ArgV[0])
-									//{
-									//case 0: case 1:
-									//	// 40x25
-									//	if ((gDisplayOpt.WrapWasSet = (Code.Action == L'h')))
-									//	{
-									//		gDisplayOpt.WrapAt = 40;
-									//	}
-									//	break;
-									//case 2: case 3:
-									//	// 80x25
-									//	if ((gDisplayOpt.WrapWasSet = (Code.Action == L'h')))
-									//	{
-									//		gDisplayOpt.WrapAt = 80;
-									//	}
-									//	break;
-									//case 7:
-									//	{
-									//		DWORD Mode = 0;
-									//		GetConsoleMode(hConsoleOutput, &Mode);
-									//		if (Code.Action == L'h')
-									//			Mode |= ENABLE_WRAP_AT_EOL_OUTPUT;
-									//		else
-									//			Mode &= ~ENABLE_WRAP_AT_EOL_OUTPUT;
-									//		SetConsoleMode(hConsoleOutput, Mode);
-									//	} // enable/disable line wrapping
-									//	break;
-									//}
-								}
-								else
-								{
-									DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-								}
-								break; // case L'h': case L'l':
-
-							case L'n':
-								if (Code.ArgC > 0)
-								{
-									switch (*Code.ArgV)
-									{
-									case 5:
-										//ESC [ 5 n
-										//      Device status report (DSR): Answer is ESC [ 0 n (Terminal OK).
-										//
-										ReportString(L"\x1B[0n");
-										break;
-									case 6:
-										//ESC [ 6 n
-										//      Cursor position report (CPR): Answer is ESC [ y ; x R, where x,y is the
-										//      cursor location.
-										if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
-										{
-											wchar_t sCurInfo[32];
-											msprintf(sCurInfo, countof(sCurInfo),
-												L"\x1B[%u;%uR",
-												csbi.dwCursorPosition.Y+1, csbi.dwCursorPosition.X+1);
-											ReportString(sCurInfo);
-										}
-										break;
-									default:
-										DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-									}
-								}
-								else
-								{
-									DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-								}
-								break;
-
-							case L'm':
-								// Set display mode (colors, fonts, etc.)
-								if (!Code.ArgC)
-								{
-									ReSetDisplayParm(hConsoleOutput, TRUE, FALSE);
-								}
-								else
-								{
-									for (int i = 0; i < Code.ArgC; i++)
-									{
-										switch (Code.ArgV[i])
-										{
-										case 0:
-											ReSetDisplayParm(hConsoleOutput, TRUE, FALSE);
-											break;
-										case 1:
-											gDisplayParm.BrightOrBold = TRUE;
-											gDisplayParm.WasSet = TRUE;
-											break;
-										case 2:
-											TODO("Check standard");
-											gDisplayParm.BrightOrBold = FALSE;
-											gDisplayParm.WasSet = TRUE;
-											break;
-										case 3:
-											gDisplayParm.ItalicOrInverse = TRUE;
-											gDisplayParm.WasSet = TRUE;
-											break;
-										case 4:
-										case 5:
-											TODO("Check standard");
-											gDisplayParm.BackOrUnderline = TRUE;
-											gDisplayParm.WasSet = TRUE;
-											break;
-										case 7:
-											// Reverse video
-											TODO("Check standard");
-											break;
-										case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
-											gDisplayParm.TextColor = (Code.ArgV[i] - 30);
-											gDisplayParm.Text256 = FALSE;
-											gDisplayParm.WasSet = TRUE;
-											break;
-										case 38:
-											// 256 colors
-											if (((i+2) < Code.ArgC) && (Code.ArgV[i+1] == 5))
-											{
-												gDisplayParm.TextColor = (Code.ArgV[i+2] & 0xFF);
-												gDisplayParm.Text256 = 1;
-												gDisplayParm.WasSet = TRUE;
-												i += 2;
-											}
-											else if (((i+4) < Code.ArgC) && (Code.ArgV[i+1] == 2))
-											{
-												gDisplayParm.TextColor = RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF));
-												gDisplayParm.Text256 = 2;
-												gDisplayParm.WasSet = TRUE;
-												i += 4;
-											}
-											break;
-										case 39:
-											// Reset
-											gDisplayParm.TextColor = GetDefaultTextAttr() & 0xF;
-											gDisplayParm.Text256 = FALSE;
-											gDisplayParm.WasSet = TRUE;
-											break;
-										case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
-											gDisplayParm.BackColor = (Code.ArgV[i] - 40);
-											gDisplayParm.Back256 = FALSE;
-											gDisplayParm.WasSet = TRUE;
-											break;
-										case 48:
-											// 256 colors
-											if (((i+2) < Code.ArgC) && (Code.ArgV[i+1] == 5))
-											{
-												gDisplayParm.BackColor = (Code.ArgV[i+2] & 0xFF);
-												gDisplayParm.Back256 = 1;
-												gDisplayParm.WasSet = TRUE;
-												i += 2;
-											}
-											else if (((i+4) < Code.ArgC) && (Code.ArgV[i+1] == 2))
-											{
-												gDisplayParm.BackColor = RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF));
-												gDisplayParm.Back256 = 2;
-												gDisplayParm.WasSet = TRUE;
-												i += 4;
-											}
-											break;
-										case 49:
-											// Reset
-											gDisplayParm.BackColor = (GetDefaultTextAttr() & 0xF0) >> 4;
-											gDisplayParm.Back256 = FALSE;
-											gDisplayParm.WasSet = TRUE;
-											break;
-										default:
-											DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-										}
-									}
-								}
-								break; // "[...m"
-
-							case L't':
-								if (Code.ArgC > 0 && Code.ArgC <= 3)
-								{
-									wchar_t sCurInfo[32];
-									for (int i = 0; i < Code.ArgC; i++)
-									{
-										switch (Code.ArgV[i])
-										{
-										case 18:
-										case 19:
-											// 1 8 --> Report the size of the text area in characters as CSI 8 ; height ; width t
-											// 1 9 --> Report the size of the screen in characters as CSI 9 ; height ; width t
-											if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
-											{
-												msprintf(sCurInfo, countof(sCurInfo),
-													L"\x1B[8;%u;%ut",
-													csbi.srWindow.Bottom-csbi.srWindow.Top+1, csbi.srWindow.Right-csbi.srWindow.Left+1);
-												ReportString(sCurInfo);
-											}
-											break;
-										case 21:
-											// 2 1 --> Report xterm window’s title as OSC l title ST 
-											ReportConsoleTitle();
-											break;
-										default:
-											TODO("ANSI: xterm window manipulation");
-											//Window manipulation (from dtterm, as well as extensions). These controls may be disabled using the allowWindowOps resource. Valid values for the first (and any additional parameters) are:
-											// 1 --> De-iconify window.
-											// 2 --> Iconify window.
-											// 3 ; x ; y --> Move window to [x, y].
-											// 4 ; height ; width --> Resize the xterm window to height and width in pixels.
-											// 5 --> Raise the xterm window to the front of the stacking order.
-											// 6 --> Lower the xterm window to the bottom of the stacking order.
-											// 7 --> Refresh the xterm window.
-											// 8 ; height ; width --> Resize the text area to [height;width] in characters.
-											// 9 ; 0 --> Restore maximized window.
-											// 9 ; 1 --> Maximize window (i.e., resize to screen size).
-											// 1 1 --> Report xterm window state. If the xterm window is open (non-iconified), it returns CSI 1 t . If the xterm window is iconified, it returns CSI 2 t .
-											// 1 3 --> Report xterm window position as CSI 3 ; x; y t
-											// 1 4 --> Report xterm window in pixels as CSI 4 ; height ; width t
-											// 2 0 --> Report xterm window’s icon label as OSC L label ST
-											// >= 2 4 --> Resize to P s lines (DECSLPP)
-											DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-										}
-									}
-								}
-								else
-								{
-									DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-								}
-								break;
-
-							case L'c':
-								// echo -e "\e[>c"
-								if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'>')
-									&& ((Code.ArgC < 1) || (Code.ArgV[0] == 0)))
-								{
-									// P s = 0 or omitted -> request the terminal’s identification code.
-									wchar_t szVerInfo[64];
-									// this will be "ESC > 67 ; build ; 0 c"
-									// 67 is ASCII code of 'C' (ConEmu, yeah)
-									// Other terminals report examples: MinTTY -> 77, rxvt -> 82, screen -> 83
-									msprintf(szVerInfo, countof(szVerInfo), L"\x1B>%u;%02u%02u%02u;0c", (int)'C', MVV_1,MVV_2,MVV_3);
-									ReportString(szVerInfo);
-								}
-								// echo -e "\e[c"
-								else if ((Code.ArgC < 1) || (Code.ArgV[0] == 0))
-								{
-									// Report "VT100 with Advanced Video Option"
-									ReportString(L"\x1B[?1;2c");
-								}
-								else
-								{
-									DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-								}
-								break;
-
-							default:
-								DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-							} // switch (Code.Action)
-
+							WriteAnsiCode_CSI(_WriteConsoleW, hConsoleOutput, Code, lbApply);
 						} // case L'[':
 						break;
 
 					case L']':
 						{
 							lbApply = TRUE;
-
-							//ESC ] 0 ; txt ST        Set icon name and window title to txt.
-							//ESC ] 1 ; txt ST        Set icon name to txt.
-							//ESC ] 2 ; txt ST        Set window title to txt.
-							//ESC ] 4 ; num; txt ST   Set ANSI color num to txt.
-							//ESC ] 10 ; txt ST       Set dynamic text color to txt.
-							//ESC ] 4 6 ; name ST     Change log file to name (normally disabled
-							//					      by a compile-time option)
-							//ESC ] 5 0 ; fn ST       Set font to fn.
-
-							switch (*Code.ArgSZ)
-							{
-							case L'2':
-								if (Code.ArgSZ[1] == L';' && Code.ArgSZ[2])
-								{
-									wchar_t* pszNewTitle = (wchar_t*)malloc(sizeof(wchar_t)*(Code.cchArgSZ));
-									if (pszNewTitle)
-									{
-										EscCopyCtrlString(pszNewTitle, Code.ArgSZ+2, Code.cchArgSZ-2);
-										SetConsoleTitle(*pszNewTitle ? pszNewTitle : gsInitConTitle);
-										free(pszNewTitle);
-									}
-								}
-								break;
-
-							case L'4':
-								// the following is suggestion for exact palette colors
-								// bug we are using standard xterm palette or truecolor 24bit palette
-								_ASSERTE(Code.ArgSZ[1] == L';');
-								break;
-
-							case L'9':
-								// ConEmu specific
-								// ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
-								// ESC ] 9 ; 2 ; "txt" ST        Show GUI MessageBox ( txt ) for dubug purposes
-								// ESC ] 9 ; 3 ; "txt" ST        Set TAB text
-								// ESC ] 9 ; 4 ; st ; pr ST      When _st_ is 0: remove progress. When _st_ is 1: set progress value to _pr_ (number, 0-100). When _st_ is 2: set error state in progress on Windows 7 taskbar
-								// ESC ] 9 ; 5 ST                Wait for ENTER/SPACE/ESC. Set EnvVar "ConEmuWaitKey" to ENTER/SPACE/ESC on exit.
-								// ESC ] 9 ; 6 ; "txt" ST        Execute GuiMacro. Set EnvVar "ConEmuMacroResult" on exit.
-								// ESC ] 9 ; 7 ; "cmd" ST        Run some process with arguments
-								// ESC ] 9 ; 8 ; "env" ST        Output value of environment variable
-								// -- You may specify timeout _s_ in seconds. - íå ðàáîòàåò
-								if (Code.ArgSZ[1] == L';')
-								{
-									if (Code.ArgSZ[2] == L'1' && Code.ArgSZ[3] == L';')
-									{
-										DoSleep(Code.ArgSZ+4);
-									}
-									else if (Code.ArgSZ[2] == L'2' && Code.ArgSZ[3] == L';')
-									{
-										DoMessage(Code.ArgSZ+4, Code.cchArgSZ - 4);
-									}
-									else if (Code.ArgSZ[2] == L'3' && Code.ArgSZ[3] == L';')
-									{
-										CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETTABTITLE, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t)*(Code.cchArgSZ));
-										if (pIn)
-										{
-											EscCopyCtrlString((wchar_t*)pIn->wData, Code.ArgSZ+4, Code.cchArgSZ-4);
-											CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-											ExecuteFreeResult(pIn);
-											ExecuteFreeResult(pOut);
-										}
-									}
-									else if (Code.ArgSZ[2] == L'4')
-									{
-										WORD st = 0, pr = 0;
-										LPCWSTR pszName = NULL;
-										if (Code.ArgSZ[3] == L';')
-										{
-											switch (Code.ArgSZ[4])
-											{
-											case L'0':
-												break;
-											case L'1': // Normal
-											case L'2': // Error
-												st = Code.ArgSZ[4] - L'0';
-												if (Code.ArgSZ[5] == L';')
-												{
-													LPCWSTR pszValue = Code.ArgSZ + 6;
-													pr = NextNumber(pszValue);
-												}
-												break;
-											case L'3':
-												st = 3; // Indeterminate
-												break;
-											case L'4':
-											case L'5':
-												st = Code.ArgSZ[4] - L'0';
-												pszName = (Code.ArgSZ[5] == L';') ? (Code.ArgSZ + 6) : NULL;
-												break;
-											}
-										}
-										GuiSetProgress(st,pr,pszName);
-									}
-									else if (Code.ArgSZ[2] == L'5')
-									{
-										//int s = 0;
-										//if (Code.ArgSZ[3] == L';')
-										//	s = NextNumber(Code.ArgSZ+4);
-										BOOL bSucceeded = FALSE;
-										DWORD nRead = 0;
-										INPUT_RECORD r = {};
-										HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-										//DWORD nStartTick = GetTickCount();
-										while ((bSucceeded = ReadConsoleInput(hIn, &r, 1, &nRead)) && nRead)
-										{
-											if ((r.EventType == KEY_EVENT) && r.Event.KeyEvent.bKeyDown)
-											{
-												if ((r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
-													|| (r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)
-													|| (r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE))
-												{
-													break;
-												}
-											}
-										}
-										if (bSucceeded && ((r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
-													|| (r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)
-													|| (r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE)))
-										{
-											SetEnvironmentVariable(ENV_CONEMUANSI_WAITKEY,
-												(r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) ? L"RETURN" :
-												(r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)  ? L"SPACE" :
-												(r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE) ? L"ESC" :
-												L"???");
-										}
-										else
-										{
-											SetEnvironmentVariable(ENV_CONEMUANSI_WAITKEY, L"");
-										}
-									}
-									else if (Code.ArgSZ[2] == L'6' && Code.ArgSZ[3] == L';')
-									{
-										CESERVER_REQ* pOut = NULL;
-										CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+sizeof(wchar_t)*(Code.cchArgSZ));
-
-										if (pIn)
-										{
-											EscCopyCtrlString(pIn->GuiMacro.sMacro, Code.ArgSZ+4, Code.cchArgSZ-4);
-											pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-										}
-
-										// EnvVar "ConEmuMacroResult"
-										SetEnvironmentVariable(CEGUIMACRORETENVVAR, pOut && pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : NULL);
-
-										ExecuteFreeResult(pOut);
-										ExecuteFreeResult(pIn);
-									}
-									else if (Code.ArgSZ[2] == L'7' && Code.ArgSZ[3] == L';')
-									{
-										DoProcess(Code.ArgSZ+4, Code.cchArgSZ - 4);
-									}
-									else if (Code.ArgSZ[2] == L'8' && Code.ArgSZ[3] == L';')
-									{
-										DoPrintEnv(Code.ArgSZ+4, Code.cchArgSZ - 4);
-									}
-								}
-								break;
-
-							default:
-								DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-							}
+							WriteAnsiCode_OSC(_WriteConsoleW, hConsoleOutput, Code, lbApply);
 						} // case L']':
 						break;
 
@@ -2420,53 +1668,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 						{
 							// vim-xterm-emulation
 							lbApply = TRUE;
-
-							if (!gbWasXTermOutput)
-							{
-								gbWasXTermOutput = true;
-								CEAnsi::StartXTermMode(true);
-							}
-
-							switch (Code.Action)
-							{
-							case L'm':
-								// Set xterm display modes (colors, fonts, etc.)
-								if (!Code.ArgC)
-								{
-									//ReSetDisplayParm(hConsoleOutput, TRUE, FALSE);
-									DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-								}
-								else
-								{
-									for (int i = 0; i < Code.ArgC; i++)
-									{
-										switch (Code.ArgV[i])
-										{
-										case 7:
-											gDisplayParm.BrightOrBold = FALSE;
-											gDisplayParm.ItalicOrInverse = FALSE;
-											gDisplayParm.BackOrUnderline = FALSE;
-											gDisplayParm.Inverse = FALSE;
-											gDisplayParm.WasSet = TRUE;
-											break;
-										case 15:
-											gDisplayParm.BrightOrBold = TRUE;
-											gDisplayParm.WasSet = TRUE;
-											break;
-										case 112:
-											gDisplayParm.Inverse = TRUE;
-											gDisplayParm.WasSet = TRUE;
-											break;
-										case 143:
-											// What is this?
-											break;
-										default:
-											DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-										}
-									}
-								}
-								break; // "|...m"
-							}
+							WriteAnsiCode_VIM(_WriteConsoleW, hConsoleOutput, Code, lbApply);
 						} // case L'|':
 						break;
 
@@ -2533,6 +1735,817 @@ wrap:
 		lbApply = FALSE;
 	}
 	return lbRc;
+}
+
+void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+
+	switch (Code.Action) // case sensitive
+	{
+	case L's':
+		// Save cursor position (can not be nested)
+		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+			gDisplayCursor.StoredCursorPos = csbi.dwCursorPosition;
+		break;
+
+	case L'u':
+		// Restore cursor position
+		SetConsoleCursorPosition(hConsoleOutput, gDisplayCursor.StoredCursorPos);
+		break;
+
+	case L'H': // Set cursor position (1-based)
+	case L'f': // Same as 'H'
+	case L'A': // Cursor up by N rows
+	case L'B': // Cursor right by N cols
+	case L'C': // Cursor right by N cols
+	case L'D': // Cursor left by N cols
+	case L'E': // Moves cursor to beginning of the line n (default 1) lines down.
+	case L'F': // Moves cursor to beginning of the line n (default 1) lines up.
+	case L'G': // Moves the cursor to column n.
+		// Change cursor position
+		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+		{
+			COORD crNewPos = csbi.dwCursorPosition;
+
+			switch (Code.Action)
+			{
+			case L'H':
+			case L'f':
+				// Set cursor position (1-based)
+				crNewPos.Y = (Code.ArgC > 0 && Code.ArgV[0]) ? (Code.ArgV[0] - 1) : 0;
+				crNewPos.X = (Code.ArgC > 1 && Code.ArgV[1]) ? (Code.ArgV[1] - 1) : 0;
+				break;
+			case L'A':
+				// Cursor up by N rows
+				crNewPos.Y -= (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
+				break;
+			case L'B':
+				// Cursor down by N rows
+				crNewPos.Y += (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
+				break;
+			case L'C':
+				// Cursor right by N cols
+				crNewPos.X += (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
+				break;
+			case L'D':
+				// Cursor left by N cols
+				crNewPos.X -= (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
+				break;
+			case L'E':
+				// Moves cursor to beginning of the line n (default 1) lines down.
+				crNewPos.Y += (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
+				crNewPos.X = 0;
+				break;
+			case L'F':
+				// Moves cursor to beginning of the line n (default 1) lines up.
+				crNewPos.Y -= (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
+				crNewPos.X = 0;
+				break;
+			case L'G':
+				// Moves the cursor to column n.
+				crNewPos.X = (Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0;
+				break;
+			#ifdef _DEBUG
+			default:
+				_ASSERTE(FALSE && "Missed (sub)case value!");
+			#endif
+			}
+
+			// ïðîâåðêà Row
+			if (crNewPos.Y < 0)
+				crNewPos.Y = 0;
+			else if (crNewPos.Y >= csbi.dwSize.Y)
+				crNewPos.Y = csbi.dwSize.Y - 1;
+			// ïðîâåðêà Col
+			if (crNewPos.X < 0)
+				crNewPos.X = 0;
+			else if (crNewPos.X >= csbi.dwSize.X)
+				crNewPos.X = csbi.dwSize.X - 1;
+			// Goto
+            SetConsoleCursorPosition(hConsoleOutput, crNewPos);
+
+			if (gbIsVimProcess)
+				gbIsVimAnsi = true;
+		} // case L'H': case L'f': case 'A': case L'B': case L'C': case L'D':
+		break;
+
+	case L'J': // Clears part of the screen
+		// Clears the screen and moves the cursor to the home position (line 0, column 0).
+		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+		{
+			int nCmd = (Code.ArgC > 0) ? Code.ArgV[0] : 0;
+			COORD cr0 = {};
+			int nChars = 0;
+
+			switch (nCmd)
+			{
+			case 0:
+				// clear from cursor to end of screen
+				cr0 = csbi.dwCursorPosition;
+				nChars = (csbi.dwSize.X - csbi.dwCursorPosition.X)
+					+ csbi.dwSize.X * (csbi.dwSize.Y - csbi.dwCursorPosition.Y - 1);
+				break;
+			case 1:
+				// clear from cursor to beginning of the screen
+				nChars = csbi.dwCursorPosition.X + 1
+					+ csbi.dwSize.X * csbi.dwCursorPosition.Y;
+				break;
+			case 2:
+				// clear entire screen and moves cursor to upper left
+				nChars = csbi.dwSize.X * csbi.dwSize.Y;
+				break;
+			default:
+				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+			}
+
+			if (lbApply)
+			{
+				// ViM: need to fill whole screen with selected background color, so Apply attributes
+				ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+				lbApply = FALSE;
+			}
+
+			if (nChars > 0)
+			{
+				ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
+					hConsoleOutput, {}, L' ', cr0, nChars};
+				ExtFillOutput(&fill);
+				//DWORD nWritten = 0;
+				//FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nChars, cr0, &nWritten);
+				//FillConsoleOutputCharacter(hConsoleOutput, L' ', nChars, cr0, &nWritten);
+			}
+
+			if (nCmd == 2)
+			{
+				SetConsoleCursorPosition(hConsoleOutput, cr0);
+			}
+
+			//TODO("Need to clear attributes?");
+			//ReSetDisplayParm(hConsoleOutput, TRUE/*bReset*/, TRUE/*bApply*/);
+		} // case L'J':
+		break;
+
+	case L'K': // Erases part of the line
+		// Clears all characters from the cursor position to the end of the line
+		// (including the character at the cursor position).
+		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+		{
+			TODO("Need to clear attributes?");
+			int nChars = 0;
+			int nCmd = (Code.ArgC > 0) ? Code.ArgV[0] : 0;
+			COORD cr0 = csbi.dwCursorPosition;
+
+			switch (nCmd)
+			{
+			case 0: // clear from cursor to the end of the line
+				nChars = csbi.dwSize.X - csbi.dwCursorPosition.X - 1;
+				break;
+			case 1: // clear from cursor to beginning of the line
+				cr0.X = cr0.Y = 0;
+				nChars = csbi.dwCursorPosition.X + 1;
+				break;
+			case 2: // clear entire line
+				cr0.X = cr0.Y = 0;
+				nChars = csbi.dwSize.X;
+				break;
+			default:
+				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+			}
+
+
+			if (nChars > 0)
+			{
+				ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
+					hConsoleOutput, {}, L' ', cr0, nChars};
+				ExtFillOutput(&fill);
+				//DWORD nWritten = 0;
+				//FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nChars, cr0, &nWritten);
+				//FillConsoleOutputCharacter(hConsoleOutput, L' ', nChars, cr0, &nWritten);
+			}
+		} // case L'K':
+		break;
+
+	case L'r':
+		//\027[Pt;Pbr
+		//
+		//Pt is the number of the top line of the scrolling region;
+		//Pb is the number of the bottom line of the scrolling region
+		// and must be greater than Pt.
+		//(The default for Pt is line 1, the default for Pb is the end
+		// of the screen)
+		//
+		if ((Code.ArgC >= 2) && (Code.ArgV[0] >= 1) && (Code.ArgV[1] >= Code.ArgV[0]))
+		{
+			gDisplayOpt.ScrollRegion = TRUE;
+			// Lines are 1-based
+			gDisplayOpt.ScrollStart = Code.ArgV[0];
+			gDisplayOpt.ScrollEnd = Code.ArgV[1];
+			_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
+		}
+		else
+		{
+			gDisplayOpt.ScrollRegion = FALSE;
+		}
+		break;
+
+	case L'S':
+		// Scroll whole page up by n (default 1) lines. New lines are added at the bottom.
+		ScrollScreen(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? -Code.ArgV[0] : -1);
+		break;
+
+	case L'L':
+		// Insert P s Line(s) (default = 1) (IL).
+		LinesInsert(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1);
+		break;
+	case L'M':
+		// Delete P s Line(s) (default = 1) (DL).
+		_ASSERTEX(FALSE && "'Delete N lines', need to be checked");
+		LinesDelete(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1);
+		break;
+
+	case L'@':
+		// Insert P s (Blank) Character(s) (default = 1) (ICH).
+		DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		break;
+	case L'P':
+		// Delete P s Character(s) (default = 1) (DCH).
+		DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		break;
+
+	case L'T':
+		// Scroll whole page down by n (default 1) lines. New lines are added at the top.
+		TODO("Define scrolling region");
+		ScrollScreen(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1);
+		break;
+
+	case L'h':
+	case L'l':
+		// Set/ReSet Mode
+		if (Code.ArgC > 0)
+		{
+			//ESC [ 3 h
+			//       DECCRM (default off): Display control chars.
+
+			//ESC [ 4 h
+			//       DECIM (default off): Set insert mode.
+
+			//ESC [ 20 h
+			//       LF/NL (default off): Automatically follow echo of LF, VT or FF with CR.
+
+			//ESC [ ? 1 h
+			//	  DECCKM (default off): When set, the cursor keys send an ESC O prefix,
+			//	  rather than ESC [.
+
+			//ESC [ ? 3 h
+			//	  DECCOLM (default off = 80 columns): 80/132 col mode switch.  The driver
+			//	  sources note that this alone does not suffice; some user-mode utility
+			//	  such as resizecons(8) has to change the hardware registers on the
+			//	  console video card.
+
+			//ESC [ ? 5 h
+			//	  DECSCNM (default off): Set reverse-video mode.
+
+			//ESC [ ? 6 h
+			//	  DECOM (default off): When set, cursor addressing is relative to the
+			//	  upper left corner of the scrolling region.
+
+
+			//ESC [ ? 8 h
+			//	  DECARM (default on): Set keyboard autorepeat on.
+
+			//ESC [ ? 9 h
+			//	  X10 Mouse Reporting (default off): Set reporting mode to 1 (or reset to
+			//	  0) -- see below.
+
+			//ESC [ ? 25 h
+			//	  DECTECM (default on): Make cursor visible.
+
+			//ESC [ ? 1000 h
+			//	  X11 Mouse Reporting (default off): Set reporting mode to 2 (or reset to
+			//	  0) -- see below.
+
+			switch (Code.ArgV[0])
+			{
+			case 1:
+				_ASSERTEX(Code.PvtLen==1 && Code.Pvt[0]==L'?');
+				gDisplayCursor.CursorKeysApp = (Code.Action == L'h');
+				TODO("What need to send to APP input instead of VK_xxx? (vim.exe)");
+				if (gbIsVimProcess)
+				{
+					TODO("Need to find proper way for activation alternative buffer from ViM?");
+					if (Code.Action == L'h')
+					{
+						StartVimTerm(false);
+					}
+					else
+					{
+						StopVimTerm();
+					}
+				}
+				break;
+			case 7:
+				//ESC [ ? 7 h
+				//	  DECAWM (default off): Set autowrap on.  In this mode, a graphic
+				//	  character emitted after column 80 (or column 132 of DECCOLM is on)
+				//	  forces a wrap to the beginning of the following line first.
+				//ESC [ = 7 h
+				//    Enables line wrapping
+				//ESC [ 7 ; _col_ h
+				//    Our extension. _col_ - wrap at column (1-based), default = 80
+				if ((gDisplayOpt.WrapWasSet = (Code.Action == L'h')))
+				{
+					gDisplayOpt.WrapAt = ((Code.ArgC > 1) && (Code.ArgV[1] > 0)) ? Code.ArgV[1] : 80;
+				}
+				break;
+			case 20:
+				// Ignored for now
+				gDisplayOpt.AutoLfNl = (Code.Action == L'h');
+				break;
+			case 25:
+				{
+					CONSOLE_CURSOR_INFO ci = {};
+					if (GetConsoleCursorInfo(hConsoleOutput, &ci))
+					{
+						ci.bVisible = (Code.Action == L'h');
+						SetConsoleCursorInfo(hConsoleOutput, &ci);
+					}
+				}
+				break;
+			default:
+				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+			}
+
+			//switch (Code.ArgV[0])
+			//{
+			//case 0: case 1:
+			//	// 40x25
+			//	if ((gDisplayOpt.WrapWasSet = (Code.Action == L'h')))
+			//	{
+			//		gDisplayOpt.WrapAt = 40;
+			//	}
+			//	break;
+			//case 2: case 3:
+			//	// 80x25
+			//	if ((gDisplayOpt.WrapWasSet = (Code.Action == L'h')))
+			//	{
+			//		gDisplayOpt.WrapAt = 80;
+			//	}
+			//	break;
+			//case 7:
+			//	{
+			//		DWORD Mode = 0;
+			//		GetConsoleMode(hConsoleOutput, &Mode);
+			//		if (Code.Action == L'h')
+			//			Mode |= ENABLE_WRAP_AT_EOL_OUTPUT;
+			//		else
+			//			Mode &= ~ENABLE_WRAP_AT_EOL_OUTPUT;
+			//		SetConsoleMode(hConsoleOutput, Mode);
+			//	} // enable/disable line wrapping
+			//	break;
+			//}
+		}
+		else
+		{
+			DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		}
+		break; // case L'h': case L'l':
+
+	case L'n':
+		if (Code.ArgC > 0)
+		{
+			switch (*Code.ArgV)
+			{
+			case 5:
+				//ESC [ 5 n
+				//      Device status report (DSR): Answer is ESC [ 0 n (Terminal OK).
+				//
+				ReportString(L"\x1B[0n");
+				break;
+			case 6:
+				//ESC [ 6 n
+				//      Cursor position report (CPR): Answer is ESC [ y ; x R, where x,y is the
+				//      cursor location.
+				if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+				{
+					wchar_t sCurInfo[32];
+					msprintf(sCurInfo, countof(sCurInfo),
+						L"\x1B[%u;%uR",
+						csbi.dwCursorPosition.Y+1, csbi.dwCursorPosition.X+1);
+					ReportString(sCurInfo);
+				}
+				break;
+			default:
+				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+			}
+		}
+		else
+		{
+			DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		}
+		break;
+
+	case L'm':
+		// Set display mode (colors, fonts, etc.)
+		if (!Code.ArgC)
+		{
+			ReSetDisplayParm(hConsoleOutput, TRUE, FALSE);
+		}
+		else
+		{
+			for (int i = 0; i < Code.ArgC; i++)
+			{
+				switch (Code.ArgV[i])
+				{
+				case 0:
+					ReSetDisplayParm(hConsoleOutput, TRUE, FALSE);
+					break;
+				case 1:
+					gDisplayParm.BrightOrBold = TRUE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 2:
+					TODO("Check standard");
+					gDisplayParm.BrightOrBold = FALSE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 3:
+					gDisplayParm.ItalicOrInverse = TRUE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 4:
+				case 5:
+					TODO("Check standard");
+					gDisplayParm.BackOrUnderline = TRUE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 7:
+					// Reverse video
+					TODO("Check standard");
+					break;
+				case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
+					gDisplayParm.TextColor = (Code.ArgV[i] - 30);
+					gDisplayParm.Text256 = FALSE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 38:
+					// 256 colors
+					if (((i+2) < Code.ArgC) && (Code.ArgV[i+1] == 5))
+					{
+						gDisplayParm.TextColor = (Code.ArgV[i+2] & 0xFF);
+						gDisplayParm.Text256 = 1;
+						gDisplayParm.WasSet = TRUE;
+						i += 2;
+					}
+					else if (((i+4) < Code.ArgC) && (Code.ArgV[i+1] == 2))
+					{
+						gDisplayParm.TextColor = RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF));
+						gDisplayParm.Text256 = 2;
+						gDisplayParm.WasSet = TRUE;
+						i += 4;
+					}
+					break;
+				case 39:
+					// Reset
+					gDisplayParm.TextColor = GetDefaultTextAttr() & 0xF;
+					gDisplayParm.Text256 = FALSE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
+					gDisplayParm.BackColor = (Code.ArgV[i] - 40);
+					gDisplayParm.Back256 = FALSE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 48:
+					// 256 colors
+					if (((i+2) < Code.ArgC) && (Code.ArgV[i+1] == 5))
+					{
+						gDisplayParm.BackColor = (Code.ArgV[i+2] & 0xFF);
+						gDisplayParm.Back256 = 1;
+						gDisplayParm.WasSet = TRUE;
+						i += 2;
+					}
+					else if (((i+4) < Code.ArgC) && (Code.ArgV[i+1] == 2))
+					{
+						gDisplayParm.BackColor = RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF));
+						gDisplayParm.Back256 = 2;
+						gDisplayParm.WasSet = TRUE;
+						i += 4;
+					}
+					break;
+				case 49:
+					// Reset
+					gDisplayParm.BackColor = (GetDefaultTextAttr() & 0xF0) >> 4;
+					gDisplayParm.Back256 = FALSE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				default:
+					DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+				}
+			}
+		}
+		break; // "[...m"
+
+	case L't':
+		if (Code.ArgC > 0 && Code.ArgC <= 3)
+		{
+			wchar_t sCurInfo[32];
+			for (int i = 0; i < Code.ArgC; i++)
+			{
+				switch (Code.ArgV[i])
+				{
+				case 18:
+				case 19:
+					// 1 8 --> Report the size of the text area in characters as CSI 8 ; height ; width t
+					// 1 9 --> Report the size of the screen in characters as CSI 9 ; height ; width t
+					if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+					{
+						msprintf(sCurInfo, countof(sCurInfo),
+							L"\x1B[8;%u;%ut",
+							csbi.srWindow.Bottom-csbi.srWindow.Top+1, csbi.srWindow.Right-csbi.srWindow.Left+1);
+						ReportString(sCurInfo);
+					}
+					break;
+				case 21:
+					// 2 1 --> Report xterm window’s title as OSC l title ST 
+					ReportConsoleTitle();
+					break;
+				default:
+					TODO("ANSI: xterm window manipulation");
+					//Window manipulation (from dtterm, as well as extensions). These controls may be disabled using the allowWindowOps resource. Valid values for the first (and any additional parameters) are:
+					// 1 --> De-iconify window.
+					// 2 --> Iconify window.
+					// 3 ; x ; y --> Move window to [x, y].
+					// 4 ; height ; width --> Resize the xterm window to height and width in pixels.
+					// 5 --> Raise the xterm window to the front of the stacking order.
+					// 6 --> Lower the xterm window to the bottom of the stacking order.
+					// 7 --> Refresh the xterm window.
+					// 8 ; height ; width --> Resize the text area to [height;width] in characters.
+					// 9 ; 0 --> Restore maximized window.
+					// 9 ; 1 --> Maximize window (i.e., resize to screen size).
+					// 1 1 --> Report xterm window state. If the xterm window is open (non-iconified), it returns CSI 1 t . If the xterm window is iconified, it returns CSI 2 t .
+					// 1 3 --> Report xterm window position as CSI 3 ; x; y t
+					// 1 4 --> Report xterm window in pixels as CSI 4 ; height ; width t
+					// 2 0 --> Report xterm window’s icon label as OSC L label ST
+					// >= 2 4 --> Resize to P s lines (DECSLPP)
+					DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+				}
+			}
+		}
+		else
+		{
+			DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		}
+		break;
+
+	case L'c':
+		// echo -e "\e[>c"
+		if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'>')
+			&& ((Code.ArgC < 1) || (Code.ArgV[0] == 0)))
+		{
+			// P s = 0 or omitted -> request the terminal’s identification code.
+			wchar_t szVerInfo[64];
+			// this will be "ESC > 67 ; build ; 0 c"
+			// 67 is ASCII code of 'C' (ConEmu, yeah)
+			// Other terminals report examples: MinTTY -> 77, rxvt -> 82, screen -> 83
+			msprintf(szVerInfo, countof(szVerInfo), L"\x1B>%u;%u;0c", (int)'C', MVV_1*10000+MVV_2*100+MVV_3);
+			ReportString(szVerInfo);
+		}
+		// echo -e "\e[c"
+		else if ((Code.ArgC < 1) || (Code.ArgV[0] == 0))
+		{
+			// Report "VT100 with Advanced Video Option"
+			ReportString(L"\x1B[?1;2c");
+		}
+		else
+		{
+			DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		}
+		break;
+
+	default:
+		DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+	} // switch (Code.Action)
+}
+
+void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
+{
+	if (!Code.ArgSZ)
+	{
+		DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		return;
+	}
+	//ESC ] 0 ; txt ST        Set icon name and window title to txt.
+	//ESC ] 1 ; txt ST        Set icon name to txt.
+	//ESC ] 2 ; txt ST        Set window title to txt.
+	//ESC ] 4 ; num; txt ST   Set ANSI color num to txt.
+	//ESC ] 10 ; txt ST       Set dynamic text color to txt.
+	//ESC ] 4 6 ; name ST     Change log file to name (normally disabled
+	//					      by a compile-time option)
+	//ESC ] 5 0 ; fn ST       Set font to fn.
+
+	switch (*Code.ArgSZ)
+	{
+	case L'2':
+		if (Code.ArgSZ[1] == L';' && Code.ArgSZ[2])
+		{
+			wchar_t* pszNewTitle = (wchar_t*)malloc(sizeof(wchar_t)*(Code.cchArgSZ));
+			if (pszNewTitle)
+			{
+				EscCopyCtrlString(pszNewTitle, Code.ArgSZ+2, Code.cchArgSZ-2);
+				SetConsoleTitle(*pszNewTitle ? pszNewTitle : gsInitConTitle);
+				free(pszNewTitle);
+			}
+		}
+		break;
+
+	case L'4':
+		// the following is suggestion for exact palette colors
+		// bug we are using standard xterm palette or truecolor 24bit palette
+		_ASSERTE(Code.ArgSZ[1] == L';');
+		break;
+
+	case L'9':
+		// ConEmu specific
+		// ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
+		// ESC ] 9 ; 2 ; "txt" ST        Show GUI MessageBox ( txt ) for dubug purposes
+		// ESC ] 9 ; 3 ; "txt" ST        Set TAB text
+		// ESC ] 9 ; 4 ; st ; pr ST      When _st_ is 0: remove progress. When _st_ is 1: set progress value to _pr_ (number, 0-100). When _st_ is 2: set error state in progress on Windows 7 taskbar
+		// ESC ] 9 ; 5 ST                Wait for ENTER/SPACE/ESC. Set EnvVar "ConEmuWaitKey" to ENTER/SPACE/ESC on exit.
+		// ESC ] 9 ; 6 ; "txt" ST        Execute GuiMacro. Set EnvVar "ConEmuMacroResult" on exit.
+		// ESC ] 9 ; 7 ; "cmd" ST        Run some process with arguments
+		// ESC ] 9 ; 8 ; "env" ST        Output value of environment variable
+		// -- You may specify timeout _s_ in seconds. - íå ðàáîòàåò
+		if (Code.ArgSZ[1] == L';')
+		{
+			if (Code.ArgSZ[2] == L'1' && Code.ArgSZ[3] == L';')
+			{
+				DoSleep(Code.ArgSZ+4);
+			}
+			else if (Code.ArgSZ[2] == L'2' && Code.ArgSZ[3] == L';')
+			{
+				DoMessage(Code.ArgSZ+4, Code.cchArgSZ - 4);
+			}
+			else if (Code.ArgSZ[2] == L'3' && Code.ArgSZ[3] == L';')
+			{
+				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETTABTITLE, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t)*(Code.cchArgSZ));
+				if (pIn)
+				{
+					EscCopyCtrlString((wchar_t*)pIn->wData, Code.ArgSZ+4, Code.cchArgSZ-4);
+					CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+					ExecuteFreeResult(pIn);
+					ExecuteFreeResult(pOut);
+				}
+			}
+			else if (Code.ArgSZ[2] == L'4')
+			{
+				WORD st = 0, pr = 0;
+				LPCWSTR pszName = NULL;
+				if (Code.ArgSZ[3] == L';')
+				{
+					switch (Code.ArgSZ[4])
+					{
+					case L'0':
+						break;
+					case L'1': // Normal
+					case L'2': // Error
+						st = Code.ArgSZ[4] - L'0';
+						if (Code.ArgSZ[5] == L';')
+						{
+							LPCWSTR pszValue = Code.ArgSZ + 6;
+							pr = NextNumber(pszValue);
+						}
+						break;
+					case L'3':
+						st = 3; // Indeterminate
+						break;
+					case L'4':
+					case L'5':
+						st = Code.ArgSZ[4] - L'0';
+						pszName = (Code.ArgSZ[5] == L';') ? (Code.ArgSZ + 6) : NULL;
+						break;
+					}
+				}
+				GuiSetProgress(st,pr,pszName);
+			}
+			else if (Code.ArgSZ[2] == L'5')
+			{
+				//int s = 0;
+				//if (Code.ArgSZ[3] == L';')
+				//	s = NextNumber(Code.ArgSZ+4);
+				BOOL bSucceeded = FALSE;
+				DWORD nRead = 0;
+				INPUT_RECORD r = {};
+				HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+				//DWORD nStartTick = GetTickCount();
+				while ((bSucceeded = ReadConsoleInput(hIn, &r, 1, &nRead)) && nRead)
+				{
+					if ((r.EventType == KEY_EVENT) && r.Event.KeyEvent.bKeyDown)
+					{
+						if ((r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+							|| (r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)
+							|| (r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE))
+						{
+							break;
+						}
+					}
+				}
+				if (bSucceeded && ((r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+							|| (r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)
+							|| (r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE)))
+				{
+					SetEnvironmentVariable(ENV_CONEMUANSI_WAITKEY,
+						(r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) ? L"RETURN" :
+						(r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)  ? L"SPACE" :
+						(r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE) ? L"ESC" :
+						L"???");
+				}
+				else
+				{
+					SetEnvironmentVariable(ENV_CONEMUANSI_WAITKEY, L"");
+				}
+			}
+			else if (Code.ArgSZ[2] == L'6' && Code.ArgSZ[3] == L';')
+			{
+				CESERVER_REQ* pOut = NULL;
+				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+sizeof(wchar_t)*(Code.cchArgSZ));
+
+				if (pIn)
+				{
+					EscCopyCtrlString(pIn->GuiMacro.sMacro, Code.ArgSZ+4, Code.cchArgSZ-4);
+					pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+				}
+
+				// EnvVar "ConEmuMacroResult"
+				SetEnvironmentVariable(CEGUIMACRORETENVVAR, pOut && pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : NULL);
+
+				ExecuteFreeResult(pOut);
+				ExecuteFreeResult(pIn);
+			}
+			else if (Code.ArgSZ[2] == L'7' && Code.ArgSZ[3] == L';')
+			{
+				DoProcess(Code.ArgSZ+4, Code.cchArgSZ - 4);
+			}
+			else if (Code.ArgSZ[2] == L'8' && Code.ArgSZ[3] == L';')
+			{
+				DoPrintEnv(Code.ArgSZ+4, Code.cchArgSZ - 4);
+			}
+		}
+		break;
+
+	default:
+		DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+	}
+}
+
+void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
+{
+	if (!gbWasXTermOutput)
+	{
+		gbWasXTermOutput = true;
+		CEAnsi::StartXTermMode(true);
+	}
+
+	switch (Code.Action)
+	{
+	case L'm':
+		// Set xterm display modes (colors, fonts, etc.)
+		if (!Code.ArgC)
+		{
+			//ReSetDisplayParm(hConsoleOutput, TRUE, FALSE);
+			DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		}
+		else
+		{
+			for (int i = 0; i < Code.ArgC; i++)
+			{
+				switch (Code.ArgV[i])
+				{
+				case 7:
+					gDisplayParm.BrightOrBold = FALSE;
+					gDisplayParm.ItalicOrInverse = FALSE;
+					gDisplayParm.BackOrUnderline = FALSE;
+					gDisplayParm.Inverse = FALSE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 15:
+					gDisplayParm.BrightOrBold = TRUE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 112:
+					gDisplayParm.Inverse = TRUE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 143:
+					// What is this?
+					break;
+				default:
+					DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+				}
+			}
+		}
+		break; // "|...m"
+	}
 }
 
 BOOL /*WINAPI*/ CEAnsi::OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)

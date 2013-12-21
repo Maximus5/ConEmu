@@ -123,7 +123,6 @@ public:
 
 	static bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL);
 	static bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
-	static bool IsSuppressBells();
 
 	static void GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells);
 
@@ -164,8 +163,13 @@ public:
 	/*         Working methods               */
 	/* ************************************* */
 	BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
+protected:
+	void WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
+	void WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
+	void WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
 	BOOL ReportString(LPCWSTR asRet);
 	void ReportConsoleTitle();
+public:
 
 	void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);
 
@@ -237,6 +241,8 @@ protected:
 	INT_PTR gnPrevAnsiPart; // = 0;
 	wchar_t gsPrevAnsiPart2[CEAnsi_MaxPrevPart]; // = {};
 	INT_PTR gnPrevAnsiPart2; // = 0;
+
+	bool mb_SuppressBells;
 
 	// In "ReadLine" we can't control scrolling
 	// thats why we need to mark some rows for identification

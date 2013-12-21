@@ -76,6 +76,13 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define WineConsoleClass L"WineConsoleClass"
 #define isConsoleClass(sClass) (lstrcmp(sClass, RealConsoleClass)==0 || lstrcmp(sClass, WineConsoleClass)==0)
 
+// Some ANSI & Controls
+#define DSC 0x90
+#define ESC 0x1B
+#define ENQ 0x05
+#define BEL 0x07
+#define CTRL(x) ((x)&0x1F)
+
 
 #define CECOPYRIGHTSTRING_A "(c) 2009-2013, ConEmu.Maximus5@gmail.com"
 #define CECOPYRIGHTSTRING_W L"\x00A9 2009-2013 ConEmu.Maximus5@gmail.com"
