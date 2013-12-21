@@ -164,6 +164,8 @@ public:
 	/*         Working methods               */
 	/* ************************************* */
 	BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
+	BOOL ReportString(LPCWSTR asRet);
+	void ReportConsoleTitle();
 
 	void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);
 

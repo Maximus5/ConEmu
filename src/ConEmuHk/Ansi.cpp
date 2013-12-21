@@ -1528,6 +1528,50 @@ void CEAnsi::DoPrintEnv(LPCWSTR asCmd, INT_PTR cchLen)
 	}
 }
 
+BOOL CEAnsi::ReportString(LPCWSTR asRet)
+{
+	if (!asRet || !*asRet)
+		return FALSE;
+	INPUT_RECORD ir[16] = {};
+	int nLen = lstrlen(asRet);
+	INPUT_RECORD* pir = (nLen <= (int)countof(ir)) ? ir : (INPUT_RECORD*)calloc(nLen,sizeof(INPUT_RECORD));
+	if (!pir)
+		return FALSE;
+
+	INPUT_RECORD* p = pir;
+	LPCWSTR pc = asRet;
+	for (int i = 0; i < nLen; i++, p++, pc++)
+	{
+		p->EventType = KEY_EVENT;
+		p->Event.KeyEvent.bKeyDown = TRUE;
+		p->Event.KeyEvent.wRepeatCount = 1;
+		p->Event.KeyEvent.uChar.UnicodeChar = *pc;
+	}
+
+	DWORD nWritten = 0;
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+	BOOL bSuccess = WriteConsoleInput(hIn, pir, nLen, &nWritten) && (nWritten == nLen);
+
+	if (pir != ir)
+		free(pir);
+	return bSuccess;
+}
+
+void CEAnsi::ReportConsoleTitle()
+{
+	wchar_t sTitle[MAX_PATH*2+6] = L"\x1B]l";
+	wchar_t* p = sTitle+3;
+	_ASSERTE(lstrlen(sTitle)==3);
+
+	DWORD nTitle = GetConsoleTitle(sTitle+3, MAX_PATH*2);
+	p = sTitle+3+min(nTitle,MAX_PATH*2);
+	*(p++) = L'\x1B';
+	*(p++) = L'\\';
+	*(p++) = 0;
+
+	ReportString(sTitle);
+}
+
 BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
 {
 	BOOL lbRc = TRUE, lbApply = FALSE;
@@ -1985,23 +2029,36 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 								break; // case L'h': case L'l':
 
 							case L'n':
+								if (Code.ArgC > 0)
 								{
-									switch (*Code.ArgSZ)
+									switch (*Code.ArgV)
 									{
-									case '5':
-									case '6':
-										DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
-										break;
-									default:
-										TODO("ECMA-48 Status Report Commands");
+									case 5:
 										//ESC [ 5 n
 										//      Device status report (DSR): Answer is ESC [ 0 n (Terminal OK).
 										//
+										ReportString(L"\x1B[0n");
+										break;
+									case 6:
 										//ESC [ 6 n
 										//      Cursor position report (CPR): Answer is ESC [ y ; x R, where x,y is the
 										//      cursor location.
+										if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+										{
+											wchar_t sCurInfo[32];
+											msprintf(sCurInfo, countof(sCurInfo),
+												L"\x1B[%u;%uR",
+												csbi.dwCursorPosition.Y+1, csbi.dwCursorPosition.X+1);
+											ReportString(sCurInfo);
+										}
+										break;
+									default:
 										DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 									}
+								}
+								else
+								{
+									DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 								}
 								break;
 
@@ -2105,6 +2162,58 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 									}
 								}
 								break; // "[...m"
+
+							case L't':
+								if (Code.ArgC > 0 && Code.ArgC <= 3)
+								{
+									wchar_t sCurInfo[32];
+									for (int i = 0; i < Code.ArgC; i++)
+									{
+										switch (Code.ArgV[i])
+										{
+										case 18:
+										case 19:
+											// 1 8 --> Report the size of the text area in characters as CSI 8 ; height ; width t
+											// 1 9 --> Report the size of the screen in characters as CSI 9 ; height ; width t
+											if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+											{
+												msprintf(sCurInfo, countof(sCurInfo),
+													L"\x1B[8;%u;%ut",
+													csbi.srWindow.Bottom-csbi.srWindow.Top+1, csbi.srWindow.Right-csbi.srWindow.Left+1);
+												ReportString(sCurInfo);
+											}
+											break;
+										case 21:
+											// 2 1 --> Report xterm window’s title as OSC l title ST 
+											ReportConsoleTitle();
+											break;
+										default:
+											TODO("ANSI: xterm window manipulation");
+											//Window manipulation (from dtterm, as well as extensions). These controls may be disabled using the allowWindowOps resource. Valid values for the first (and any additional parameters) are:
+											// 1 --> De-iconify window.
+											// 2 --> Iconify window.
+											// 3 ; x ; y --> Move window to [x, y].
+											// 4 ; height ; width --> Resize the xterm window to height and width in pixels.
+											// 5 --> Raise the xterm window to the front of the stacking order.
+											// 6 --> Lower the xterm window to the bottom of the stacking order.
+											// 7 --> Refresh the xterm window.
+											// 8 ; height ; width --> Resize the text area to [height;width] in characters.
+											// 9 ; 0 --> Restore maximized window.
+											// 9 ; 1 --> Maximize window (i.e., resize to screen size).
+											// 1 1 --> Report xterm window state. If the xterm window is open (non-iconified), it returns CSI 1 t . If the xterm window is iconified, it returns CSI 2 t .
+											// 1 3 --> Report xterm window position as CSI 3 ; x; y t
+											// 1 4 --> Report xterm window in pixels as CSI 4 ; height ; width t
+											// 2 0 --> Report xterm window’s icon label as OSC L label ST
+											// >= 2 4 --> Resize to P s lines (DECSLPP)
+											DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+										}
+									}
+								}
+								else
+								{
+									DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+								}
+								break;
 
 							case L'c':
 								// P s = 0 or omitted -> request the terminal’s identification code.
