@@ -2947,6 +2947,14 @@ void UnitModuleTest()
 	_ASSERTE(!bTest);
 }
 
+void DebugUnitMprintfTest()
+{
+	wchar_t szTest[80];
+	msprintf(szTest, countof(szTest), L"%u,%02u,%02u,%02u,%02x,%08x", 12345, 1, 23, 4567, 0xFE, 0xABCD1234);
+	int nDbg = lstrcmp(szTest, L"12345,01,23,4567,fe,abcd1234");
+	_ASSERTE(nDbg==0);
+}
+
 void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
@@ -2954,6 +2962,7 @@ void DebugUnitTests()
 	UnitDriveTests();
 	UnitExpandTest();
 	UnitModuleTest();
+	DebugUnitMprintfTest();
 }
 #endif
 
