@@ -526,7 +526,7 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 	if (!pObj)
 		return;
 
-	static LONG nLastReadId = 0;
+	static LONG nLastReadId = GetCurrentProcessId();
 
 	WORD NewRowId;
 	CEConsoleMark Test = {};
