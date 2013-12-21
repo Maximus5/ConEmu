@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "ExtConsole.h"
 #include "../common/WinConsole.h"
+#include "../ConEmu/version.h"
 
 ///* ***************** */
 #include "Ansi.h"
@@ -2216,8 +2217,28 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 								break;
 
 							case L'c':
-								// P s = 0 or omitted -> request the terminal’s identification code.
-								DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+								// echo -e "\e[>c"
+								if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'>')
+									&& ((Code.ArgC < 1) || (Code.ArgV[0] == 0)))
+								{
+									// P s = 0 or omitted -> request the terminal’s identification code.
+									wchar_t szVerInfo[64];
+									// this will be "ESC > 67 ; build ; 0 c"
+									// 67 is ASCII code of 'C' (ConEmu, yeah)
+									// Other terminals report examples: MinTTY -> 77, rxvt -> 82, screen -> 83
+									msprintf(szVerInfo, countof(szVerInfo), L"\x1B>%u;%02u%02u%02u;0c", (int)'C', MVV_1,MVV_2,MVV_3);
+									ReportString(szVerInfo);
+								}
+								// echo -e "\e[c"
+								else if ((Code.ArgC < 1) || (Code.ArgV[0] == 0))
+								{
+									// Report "VT100 with Advanced Video Option"
+									ReportString(L"\x1B[?1;2c");
+								}
+								else
+								{
+									DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+								}
 								break;
 
 							default:
