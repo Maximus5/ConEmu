@@ -3755,7 +3755,7 @@ wchar_t* GetComspec(const ConEmuComspec* pOpt)
 	}
 	else
 	{
-		_ASSERTE(pOpt && "pOpt должен быть передан, по идее");
+		_ASSERTE(pOpt && L"pOpt должен быть передан, по идее");
 	}
 
 	if (!pszComSpec)

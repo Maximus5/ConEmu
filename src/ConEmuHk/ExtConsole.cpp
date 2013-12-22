@@ -1129,7 +1129,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		// При смене строки
 		if (y2 > y)
 		{
-			_ASSERTE(bWrap && "для !Wrap - доделать");
+			_ASSERTE(bWrap && L"для !Wrap - доделать");
 			if (y2 >= ScrollBottom/*csbi.dwSize.Y*/)
 			{
 				// Экран прокрутился на одну строку вверх

@@ -322,11 +322,11 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_FarPID_PluginDetected = 0;
 	memset(&m_FarInfo, 0, sizeof(m_FarInfo));
 	lstrcpy(ms_Editor, L"edit ");
-	MultiByteToWideChar(CP_ACP, 0, "редактирование ", -1, ms_EditorRus, countof(ms_EditorRus));
+	lstrcpy(ms_EditorRus, L"редактирование ");
 	lstrcpy(ms_Viewer, L"view ");
-	MultiByteToWideChar(CP_ACP, 0, "просмотр ", -1, ms_ViewerRus, countof(ms_ViewerRus));
+	lstrcpy(ms_ViewerRus, L"просмотр ");
 	lstrcpy(ms_TempPanel, L"{Temporary panel");
-	MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, countof(ms_TempPanelRus));
+	lstrcpy(ms_TempPanelRus, L"{Временная панель");
 	//lstrcpy(ms_NameTitle, L"Name");
 
 	PreInit(); // просто инициализировать переменные размеров...
