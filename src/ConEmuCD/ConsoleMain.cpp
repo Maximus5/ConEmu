@@ -1497,7 +1497,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	/* ************************ */
 
 	// Чтобы не блокировать папку запуска
-	if (szSelfDir[0])
+	if (gnRunMode != RM_ALTSERVER && szSelfDir[0])
 		SetCurrentDirectory(szSelfDir);
 
 	if (gnRunMode == RM_SERVER)
@@ -1625,7 +1625,7 @@ wait:
 
 	
 	// Чтобы не блокировать папку запуска (на всякий случай, если на метку goto был)
-	if (szSelfDir[0])
+	if (gnRunMode != RM_ALTSERVER && szSelfDir[0])
 		SetCurrentDirectory(szSelfDir);
 
 

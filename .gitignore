@@ -1,0 +1,5 @@
+*.suo
+*.sdf
+*.opensdf
+Release/
+src/_VCBUILD/
