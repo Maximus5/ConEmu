@@ -1,0 +1,11 @@
+00002.0x0409.ico
+00003.0x0409.ico
+Bmp.bmp
+Bmp.PNG
+Bmp.16x16.png
+Bmp_Dialog.xcf
+*.cab
+*.msi
+_FarMakeLog.txt
+/setup_exe
+/obj
