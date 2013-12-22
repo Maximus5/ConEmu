@@ -1,4 +1,4 @@
-
+ï»¿
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -34,7 +34,7 @@ bool GetAliases(wchar_t* asExeName, wchar_t** rsAliases, LPDWORD rnAliasesSize);
 #ifndef _WIN32_WINNT
 PRAGMA_ERROR("_WIN32_WINNT not defined");
 #elif (_WIN32_WINNT<0x0501)
-// Õîòÿ ConsoleAliases äîñòóïíû óæå â Win2k, íî îáúÿâëåíû ïî÷åìó-òî òîëüêî äëÿ WinXP
+// Ð¥Ð¾Ñ‚Ñ ConsoleAliases Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð½Ñ‹ ÑƒÐ¶Ðµ Ð² Win2k, Ð½Ð¾ Ð¾Ð±ÑŠÑÐ²Ð»ÐµÐ½Ñ‹ Ð¿Ð¾Ñ‡ÐµÐ¼Ñƒ-Ñ‚Ð¾ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð´Ð»Ñ WinXP
 PRAGMA_ERROR("_WIN32_WINNT is less then 5.01");
 #endif
 
@@ -73,13 +73,13 @@ PRAGMA_ERROR("AddConsoleAlias was not defined");
 
 int ComspecInit()
 {
-	TODO("Îïðåäåëèòü êîä ðîäèòåëüñêîãî ïðîöåññà, è åñëè ýòî FAR - çàïîìíèòü åãî (äëÿ ïîäêëþ÷åíèÿ ê ïàéïó ïëàãèíà)");
-	TODO("Ðàçìåð ïîëó÷èòü èç GUI, åñëè îíî åñòü, èíà÷å - ïî óìîë÷àíèþ");
-	TODO("GUI ìîæåò ñêîððåêòèðîâàòü ðàçìåð ñ ó÷åòîì ïîëîñû ïðîêðóòêè");
-	WARNING("CreateFile(CONOUT$) ïî èäåå âîçâðàùàåò òåêóùèé ScreenBuffer. Ìîæíî åãî ñàìèì âîçâðàùàòü â ComspecDone");
+	TODO("ÐžÐ¿Ñ€ÐµÐ´ÐµÐ»Ð¸Ñ‚ÑŒ ÐºÐ¾Ð´ Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»ÑŒÑÐºÐ¾Ð³Ð¾ Ð¿Ñ€Ð¾Ñ†ÐµÑÑÐ°, Ð¸ ÐµÑÐ»Ð¸ ÑÑ‚Ð¾ FAR - Ð·Ð°Ð¿Ð¾Ð¼Ð½Ð¸Ñ‚ÑŒ ÐµÐ³Ð¾ (Ð´Ð»Ñ Ð¿Ð¾Ð´ÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ñ Ðº Ð¿Ð°Ð¹Ð¿Ñƒ Ð¿Ð»Ð°Ð³Ð¸Ð½Ð°)");
+	TODO("Ð Ð°Ð·Ð¼ÐµÑ€ Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ Ð¸Ð· GUI, ÐµÑÐ»Ð¸ Ð¾Ð½Ð¾ ÐµÑÑ‚ÑŒ, Ð¸Ð½Ð°Ñ‡Ðµ - Ð¿Ð¾ ÑƒÐ¼Ð¾Ð»Ñ‡Ð°Ð½Ð¸ÑŽ");
+	TODO("GUI Ð¼Ð¾Ð¶ÐµÑ‚ ÑÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ñ€Ð°Ð·Ð¼ÐµÑ€ Ñ ÑƒÑ‡ÐµÑ‚Ð¾Ð¼ Ð¿Ð¾Ð»Ð¾ÑÑ‹ Ð¿Ñ€Ð¾ÐºÑ€ÑƒÑ‚ÐºÐ¸");
+	WARNING("CreateFile(CONOUT$) Ð¿Ð¾ Ð¸Ð´ÐµÐµ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÐµÑ‚ Ñ‚ÐµÐºÑƒÑ‰Ð¸Ð¹ ScreenBuffer. ÐœÐ¾Ð¶Ð½Ð¾ ÐµÐ³Ð¾ ÑÐ°Ð¼Ð¸Ð¼ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°Ñ‚ÑŒ Ð² ComspecDone");
 
-	// Ïðàâäà íóæíî ïðîâåðèòü, ÷òî òàì ïðîèñõîäèò ñ ghConOut.Close(),...
-	// Ðàçìåð äîëæåí ìåíÿòü ñàì GUI, ÷åðåç ñåðâåðíûé ConEmuC!
+	// ÐŸÑ€Ð°Ð²Ð´Ð° Ð½ÑƒÐ¶Ð½Ð¾ Ð¿Ñ€Ð¾Ð²ÐµÑ€Ð¸Ñ‚ÑŒ, Ñ‡Ñ‚Ð¾ Ñ‚Ð°Ð¼ Ð¿Ñ€Ð¾Ð¸ÑÑ…Ð¾Ð´Ð¸Ñ‚ Ñ ghConOut.Close(),...
+	// Ð Ð°Ð·Ð¼ÐµÑ€ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð¼ÐµÐ½ÑÑ‚ÑŒ ÑÐ°Ð¼ GUI, Ñ‡ÐµÑ€ÐµÐ· ÑÐµÑ€Ð²ÐµÑ€Ð½Ñ‹Ð¹ ConEmuC!
 #ifdef SHOW_STARTED_MSGBOX
 	MessageBox(GetConEmuHWND(2), L"ConEmuC (comspec mode) is about to START", L"ConEmuC.ComSpec", 0);
 #endif
@@ -87,20 +87,20 @@ int ComspecInit()
 	//COORD crNewSize = {0,0};
 	//SMALL_RECT rNewWindow = gpSrv->sbi.srWindow;
 	BOOL lbSbiRc = FALSE;
-	gbRootWasFoundInCon = 2; // íå äîáàâëÿòü ê "Press Enter to close console" - "or wait"
-	// â ðåæèìå ComSpec - çàïðåùåíî!
+	gbRootWasFoundInCon = 2; // Ð½Ðµ Ð´Ð¾Ð±Ð°Ð²Ð»ÑÑ‚ÑŒ Ðº "Press Enter to close console" - "or wait"
+	// Ð² Ñ€ÐµÐ¶Ð¸Ð¼Ðµ ComSpec - Ð·Ð°Ð¿Ñ€ÐµÑ‰ÐµÐ½Ð¾!
 	gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
 #ifdef _DEBUG
 	xf_validate();
 	xf_dump_chk();
 #endif
-	// Ýòî íàâåðíîå è íå íóæíî, ïðîñòî äëÿ èíôîðìàöèè...
+	// Ð­Ñ‚Ð¾ Ð½Ð°Ð²ÐµÑ€Ð½Ð¾Ðµ Ð¸ Ð½Ðµ Ð½ÑƒÐ¶Ð½Ð¾, Ð¿Ñ€Ð¾ÑÑ‚Ð¾ Ð´Ð»Ñ Ð¸Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸Ð¸...
 	lbSbiRc = MyGetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &gpSrv->sbi);
 
 #if 0
-	// 111211 - "-new_console" òåïåðü ïåðåäàåòñÿ â GUI è èñïîëíÿåòñÿ â íåì
-	// Ñþäà ìû ïîïàäàåì åñëè áûë êëþ÷èê -new_console
-	// À ýòîì ñëó÷àå íóæíî çàâåðøèòü ÝÒÎÒ ýêçåìïëÿð è çàïóñòèòü â ConEmu íîâóþ âêëàäêó
+	// 111211 - "-new_console" Ñ‚ÐµÐ¿ÐµÑ€ÑŒ Ð¿ÐµÑ€ÐµÐ´Ð°ÐµÑ‚ÑÑ Ð² GUI Ð¸ Ð¸ÑÐ¿Ð¾Ð»Ð½ÑÐµÑ‚ÑÑ Ð² Ð½ÐµÐ¼
+	// Ð¡ÑŽÐ´Ð° Ð¼Ñ‹ Ð¿Ð¾Ð¿Ð°Ð´Ð°ÐµÐ¼ ÐµÑÐ»Ð¸ Ð±Ñ‹Ð» ÐºÐ»ÑŽÑ‡Ð¸Ðº -new_console
+	// Ð ÑÑ‚Ð¾Ð¼ ÑÐ»ÑƒÑ‡Ð°Ðµ Ð½ÑƒÐ¶Ð½Ð¾ Ð·Ð°Ð²ÐµÑ€ÑˆÐ¸Ñ‚ÑŒ Ð­Ð¢ÐžÐ¢ ÑÐºÐ·ÐµÐ¼Ð¿Ð»ÑÑ€ Ð¸ Ð·Ð°Ð¿ÑƒÑÑ‚Ð¸Ñ‚ÑŒ Ð² ConEmu Ð½Ð¾Ð²ÑƒÑŽ Ð²ÐºÐ»Ð°Ð´ÐºÑƒ
 	if (gpSrv->bNewConsole)
 	{
 #ifdef _DEBUG
@@ -118,8 +118,8 @@ int ComspecInit()
 		xf_validate();
 		xf_dump_chk();
 #endif
-		// CREATE_NEW_PROCESS_GROUP - íèçÿ, ïåðåñòàåò ðàáîòàòü Ctrl-C
-		// Çàïóñêàåòñÿ íîâûé ñåðâåð (íîâàÿ êîíñîëü), ñþäà õóêè ñòàâèòü íå íàäî.
+		// CREATE_NEW_PROCESS_GROUP - Ð½Ð¸Ð·Ñ, Ð¿ÐµÑ€ÐµÑÑ‚Ð°ÐµÑ‚ Ñ€Ð°Ð±Ð¾Ñ‚Ð°Ñ‚ÑŒ Ctrl-C
+		// Ð—Ð°Ð¿ÑƒÑÐºÐ°ÐµÑ‚ÑÑ Ð½Ð¾Ð²Ñ‹Ð¹ ÑÐµÑ€Ð²ÐµÑ€ (Ð½Ð¾Ð²Ð°Ñ ÐºÐ¾Ð½ÑÐ¾Ð»ÑŒ), ÑÑŽÐ´Ð° Ñ…ÑƒÐºÐ¸ ÑÑ‚Ð°Ð²Ð¸Ñ‚ÑŒ Ð½Ðµ Ð½Ð°Ð´Ð¾.
 		BOOL lbRc = createProcess(TRUE, NULL, gpszRunCmd, NULL,NULL, TRUE,
 		                           NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE,
 		                           NULL, NULL, &si, &pi);
@@ -140,7 +140,7 @@ int ComspecInit()
 		PRINT_COMSPEC(L"New console created. PID=%i. Exiting...\n", pi.dwProcessId);
 		SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
 		DisableAutoConfirmExit();
-		//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT; // ìåíÿòü nProcessStartTick íå íóæíî. ïðîâåðêà òîëüêî ïî ôëàæêàì
+		//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT; // Ð¼ÐµÐ½ÑÑ‚ÑŒ nProcessStartTick Ð½Ðµ Ð½ÑƒÐ¶Ð½Ð¾. Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÐ° Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð¿Ð¾ Ñ„Ð»Ð°Ð¶ÐºÐ°Ð¼
 #ifdef _DEBUG
 		xf_validate();
 		xf_dump_chk();
@@ -149,17 +149,17 @@ int ComspecInit()
 	}
 #endif
 
-	// Åñëè îïðåäåëåíà ComSpecC - çíà÷èò ConEmuC ïåðåîïðåäåëèë ñòàíäàðòíûé ComSpec
-	// Âåðíåì åãî
+	// Ð•ÑÐ»Ð¸ Ð¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÐµÐ½Ð° ComSpecC - Ð·Ð½Ð°Ñ‡Ð¸Ñ‚ ConEmuC Ð¿ÐµÑ€ÐµÐ¾Ð¿Ñ€ÐµÐ´ÐµÐ»Ð¸Ð» ÑÑ‚Ð°Ð½Ð´Ð°Ñ€Ñ‚Ð½Ñ‹Ð¹ ComSpec
+	// Ð’ÐµÑ€Ð½ÐµÐ¼ ÐµÐ³Ð¾
 	wchar_t szComSpec[MAX_PATH+1];
 	const wchar_t* pszComSpecName;
 
-	//110202 - comspec áîëåå íå ïåðåîïðåäåëÿåòñÿ
+	//110202 - comspec Ð±Ð¾Ð»ÐµÐµ Ð½Ðµ Ð¿ÐµÑ€ÐµÐ¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÑÐµÑ‚ÑÑ
 	//if (GetEnvironmentVariable(L"ComSpecC", szComSpec, MAX_PATH) && szComSpec[0] != 0)
 	WARNING("TCC/ComSpec");
 	if (GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH) && szComSpec[0] != 0)
 	{
-		//// Òîëüêî åñëè ýòî (ñëó÷àéíî) íå conemuc.exe
+		//// Ð¢Ð¾Ð»ÑŒÐºÐ¾ ÐµÑÐ»Ð¸ ÑÑ‚Ð¾ (ÑÐ»ÑƒÑ‡Ð°Ð¹Ð½Ð¾) Ð½Ðµ conemuc.exe
 		//wchar_t* pwszCopy = (wchar_t*)PointToName(szComSpec); //wcsrchr(szComSpec, L'\\');
 		////if (!pwszCopy) pwszCopy = szComSpec;
 
@@ -218,17 +218,17 @@ void ComspecDone(int aiRc)
 	xf_dump_chk();
 	xf_validate(NULL);
 #endif
-	//WARNING("Ïîñëàòü â GUI CONEMUCMDSTOPPED");
+	//WARNING("ÐŸÐ¾ÑÐ»Ð°Ñ‚ÑŒ Ð² GUI CONEMUCMDSTOPPED");
 	LogSize(NULL, "ComspecDone");
 
-	// Ýòî íåîáõîäèìî äåëàòü, ò.ê. ïðè ñìåíå áóôåðà (SetConsoleActiveScreenBuffer) ïðèëîæåíèåì,
-	// äåñêðèïòîð íóæíî çàêðûòü, èíà÷å conhost ìîæåò íå âåðíóòü ïðåäûäóùèé áóôåð
+	// Ð­Ñ‚Ð¾ Ð½ÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼Ð¾ Ð´ÐµÐ»Ð°Ñ‚ÑŒ, Ñ‚.Ðº. Ð¿Ñ€Ð¸ ÑÐ¼ÐµÐ½Ðµ Ð±ÑƒÑ„ÐµÑ€Ð° (SetConsoleActiveScreenBuffer) Ð¿Ñ€Ð¸Ð»Ð¾Ð¶ÐµÐ½Ð¸ÐµÐ¼,
+	// Ð´ÐµÑÐºÑ€Ð¸Ð¿Ñ‚Ð¾Ñ€ Ð½ÑƒÐ¶Ð½Ð¾ Ð·Ð°ÐºÑ€Ñ‹Ñ‚ÑŒ, Ð¸Ð½Ð°Ñ‡Ðµ conhost Ð¼Ð¾Ð¶ÐµÑ‚ Ð½Ðµ Ð²ÐµÑ€Ð½ÑƒÑ‚ÑŒ Ð¿Ñ€ÐµÐ´Ñ‹Ð´ÑƒÑ‰Ð¸Ð¹ Ð±ÑƒÑ„ÐµÑ€
 	//ConOutCloseHandle()
 
-	// Ïîääåðæêà àëèàñîâ
+	// ÐŸÐ¾Ð´Ð´ÐµÑ€Ð¶ÐºÐ° Ð°Ð»Ð¸Ð°ÑÐ¾Ð²
 	if (gpSrv->szComSpecName[0] && gpSrv->szSelfName[0])
 	{
-		// Ñêîïèðîâàòü àëèàñû èç cmd.exe â conemuc.exe
+		// Ð¡ÐºÐ¾Ð¿Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ð°Ð»Ð¸Ð°ÑÑ‹ Ð¸Ð· cmd.exe Ð² conemuc.exe
 		wchar_t *pszPostAliases = NULL;
 		DWORD nPostAliasSize;
 		BOOL lbChanged = (gpSrv->pszPreAliases == NULL);
@@ -305,7 +305,7 @@ void ComspecDone(int aiRc)
 	}
 
 	xf_dump_chk();
-	//TODO("Óâåäîìèòü ïëàãèí ÷åðåç ïàéï (åñëè ðîäèòåëü - FAR) ÷òî ïðîöåññ çàâåðøåí. Ïëàãèí äîëæåí ñ÷èòàòü è çàïîìíèòü ñîäåðæèìîå êîíñîëè è òîëüêî ïîòîì âåðíóòü óïðàâëåíèå â ConEmuC!");
+	//TODO("Ð£Ð²ÐµÐ´Ð¾Ð¼Ð¸Ñ‚ÑŒ Ð¿Ð»Ð°Ð³Ð¸Ð½ Ñ‡ÐµÑ€ÐµÐ· Ð¿Ð°Ð¹Ð¿ (ÐµÑÐ»Ð¸ Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»ÑŒ - FAR) Ñ‡Ñ‚Ð¾ Ð¿Ñ€Ð¾Ñ†ÐµÑÑ Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½. ÐŸÐ»Ð°Ð³Ð¸Ð½ Ð´Ð¾Ð»Ð¶ÐµÐ½ ÑÑ‡Ð¸Ñ‚Ð°Ñ‚ÑŒ Ð¸ Ð·Ð°Ð¿Ð¾Ð¼Ð½Ð¸Ñ‚ÑŒ ÑÐ¾Ð´ÐµÑ€Ð¶Ð¸Ð¼Ð¾Ðµ ÐºÐ¾Ð½ÑÐ¾Ð»Ð¸ Ð¸ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð¿Ð¾Ñ‚Ð¾Ð¼ Ð²ÐµÑ€Ð½ÑƒÑ‚ÑŒ ÑƒÐ¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð² ConEmuC!");
 	DWORD dwErr1 = 0; //, dwErr2 = 0;
 	HANDLE hOut1 = NULL, hOut2 = NULL;
 	BOOL lbRc1 = FALSE, lbRc2 = FALSE;
@@ -315,10 +315,10 @@ void ComspecDone(int aiRc)
 	HWND hWndCon = GetConEmuHWND(2);
 	#endif
 
-	// Òóò íóæíà ðåàëüíàÿ, à íå ñêîððåêòèðîâàííàÿ èíôîðìàöèÿ!
+	// Ð¢ÑƒÑ‚ Ð½ÑƒÐ¶Ð½Ð° Ñ€ÐµÐ°Ð»ÑŒÐ½Ð°Ñ, Ð° Ð½Ðµ ÑÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð½Ð°Ñ Ð¸Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸Ñ!
 	if (!gbNonGuiMode)
 	{
-		// Åñëè GUI íå ñìîæåò ÷åðåç ñåðâåð âåðíóòü âûñîòó áóôåðà - ýòî íóæíî ñäåëàòü íàì!
+		// Ð•ÑÐ»Ð¸ GUI Ð½Ðµ ÑÐ¼Ð¾Ð¶ÐµÑ‚ Ñ‡ÐµÑ€ÐµÐ· ÑÐµÑ€Ð²ÐµÑ€ Ð²ÐµÑ€Ð½ÑƒÑ‚ÑŒ Ð²Ñ‹ÑÐ¾Ñ‚Ñƒ Ð±ÑƒÑ„ÐµÑ€Ð° - ÑÑ‚Ð¾ Ð½ÑƒÐ¶Ð½Ð¾ ÑÐ´ÐµÐ»Ð°Ñ‚ÑŒ Ð½Ð°Ð¼!
 		lbRc1 = GetConsoleScreenBufferInfo(hOut1 = GetStdHandle(STD_OUTPUT_HANDLE), &sbi1);
 
 		if (!lbRc1)
@@ -327,7 +327,7 @@ void ComspecDone(int aiRc)
 		xf_dump_chk();
 	}
 
-	//PRAGMA_ERROR("Ðàçìåð äîëæåí âîçâðàùàòü ñàì GUI, ÷åðåç ñåðâåðíûé ConEmuC!");
+	//PRAGMA_ERROR("Ð Ð°Ð·Ð¼ÐµÑ€ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°Ñ‚ÑŒ ÑÐ°Ð¼ GUI, Ñ‡ÐµÑ€ÐµÐ· ÑÐµÑ€Ð²ÐµÑ€Ð½Ñ‹Ð¹ ConEmuC!");
 	#ifdef SHOW_STARTED_MSGBOX
 	MessageBox(GetConEmuHWND(2), L"ConEmuC (comspec mode) is about to TERMINATE", L"ConEmuC.ComSpec", 0);
 	#endif
@@ -339,7 +339,7 @@ void ComspecDone(int aiRc)
 
 	if (!gbNonGuiMode && (gpSrv->dwParentFarPID != 0))
 	{
-		//// Âåðíóòü ðàçìåð áóôåðà (âûñîòà È øèðèíà)
+		//// Ð’ÐµÑ€Ð½ÑƒÑ‚ÑŒ Ñ€Ð°Ð·Ð¼ÐµÑ€ Ð±ÑƒÑ„ÐµÑ€Ð° (Ð²Ñ‹ÑÐ¾Ñ‚Ð° Ð˜ ÑˆÐ¸Ñ€Ð¸Ð½Ð°)
 		//if (gpSrv->sbi.dwSize.X && gpSrv->sbi.dwSize.Y) {
 		//	SMALL_RECT rc = {0};
 		//	SetConsoleSize(0, gpSrv->sbi.dwSize, rc, "ComspecDone");
@@ -355,7 +355,7 @@ void ComspecDone(int aiRc)
 			if (!pOut->StartStopRet.bWasBufferHeight)
 			{
 				//gpSrv->sbi.dwSize = pIn->StartStop.sbi.dwSize;
-				lbRc1 = FALSE; // Êîíñîëüíîå ïðèëîæåíèå ñàìîñòîÿòåëüíî ñáðîñèëî áóôåðíûé ðåæèì. Íå äåðãàòüñÿ...
+				lbRc1 = FALSE; // ÐšÐ¾Ð½ÑÐ¾Ð»ÑŒÐ½Ð¾Ðµ Ð¿Ñ€Ð¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ðµ ÑÐ°Ð¼Ð¾ÑÑ‚Ð¾ÑÑ‚ÐµÐ»ÑŒÐ½Ð¾ ÑÐ±Ñ€Ð¾ÑÐ¸Ð»Ð¾ Ð±ÑƒÑ„ÐµÑ€Ð½Ñ‹Ð¹ Ñ€ÐµÐ¶Ð¸Ð¼. ÐÐµ Ð´ÐµÑ€Ð³Ð°Ñ‚ÑŒÑÑ...
 			}
 			else
 			{
@@ -379,8 +379,8 @@ void ComspecDone(int aiRc)
 
 			if (lbRc1 && lbRc2 && sbi2.dwSize.Y == sbi1.dwSize.Y)
 			{
-				// GUI íå ñìîã âåðíóòü âûñîòó áóôåðà...
-				// Ýòî ïëîõî, ò.ê. ôàð âûñîòó áóôåðà íå ìåíÿåò è áóäåò ñèëüíî ãëþ÷èòü íà N ñîòíÿõ ñòðîê...
+				// GUI Ð½Ðµ ÑÐ¼Ð¾Ð³ Ð²ÐµÑ€Ð½ÑƒÑ‚ÑŒ Ð²Ñ‹ÑÐ¾Ñ‚Ñƒ Ð±ÑƒÑ„ÐµÑ€Ð°...
+				// Ð­Ñ‚Ð¾ Ð¿Ð»Ð¾Ñ…Ð¾, Ñ‚.Ðº. Ñ„Ð°Ñ€ Ð²Ñ‹ÑÐ¾Ñ‚Ñƒ Ð±ÑƒÑ„ÐµÑ€Ð° Ð½Ðµ Ð¼ÐµÐ½ÑÐµÑ‚ Ð¸ Ð±ÑƒÐ´ÐµÑ‚ ÑÐ¸Ð»ÑŒÐ½Ð¾ Ð³Ð»ÑŽÑ‡Ð¸Ñ‚ÑŒ Ð½Ð° N ÑÐ¾Ñ‚Ð½ÑÑ… ÑÑ‚Ñ€Ð¾Ðº...
 				int nNeedHeight = gpSrv->sbi.dwSize.Y;
 
 				if (nNeedHeight < 10)
@@ -438,7 +438,7 @@ bool GetAliases(wchar_t* asExeName, wchar_t** rsAliases, LPDWORD rnAliasesSize)
 
 			if (nAliasErr == ERROR_NOT_ENOUGH_MEMORY)
 			{
-				// Ïîïðîáîâàòü ANSI ôóíêöèè
+				// ÐŸÐ¾Ð¿Ñ€Ð¾Ð±Ð¾Ð²Ð°Ñ‚ÑŒ ANSI Ñ„ÑƒÐ½ÐºÑ†Ð¸Ð¸
 				UINT nCP = CP_OEMCP;
 				char szExeName[MAX_PATH+1];
 				char *pszAliases = NULL;

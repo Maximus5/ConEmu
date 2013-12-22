@@ -1,4 +1,4 @@
-// KeyEvents.cpp : Defines the entry point for the console application.
+﻿// KeyEvents.cpp : Defines the entry point for the console application.
 //
 
 #ifdef _DEBUG

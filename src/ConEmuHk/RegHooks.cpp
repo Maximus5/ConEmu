@@ -1,4 +1,4 @@
-
+п»ї
 // Road map
 // * RegQueryValue/RegSetValue/RegDeleteKeyValue/RegSetKeyValue/RegGetValue
 // * RegDeleteKeyEx/RegDeleteKeyTransacted/RegDeleteKeyValue/RegDeleteTree
@@ -7,7 +7,7 @@
 // * wow64 support.
 // * RegCreateKeyTransacted/RegOpenKeyTransacted/RegDeleteKeyTransacted
 // * RegQueryInfoKey
-// * ! Почти все функции Reg (по крайней мере в Win7) теперь лежат в kernel32.dll, а не в advapi32.dll
+// * ! РџРѕС‡С‚Рё РІСЃРµ С„СѓРЅРєС†РёРё Reg (РїРѕ РєСЂР°Р№РЅРµР№ РјРµСЂРµ РІ Win7) С‚РµРїРµСЂСЊ Р»РµР¶Р°С‚ РІ kernel32.dll, Р° РЅРµ РІ advapi32.dll
 //
 // !!! Next functions must fail for the virtual registry !!!
 // * RegReplaceKey
@@ -68,7 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WinObjects.h"
 
 #define MAX_HOOKED_PATH 64
-//#define MAX_ADD_ENUMS 8 // пока хватает 3-х!
+//#define MAX_ADD_ENUMS 8 // РїРѕРєР° С…РІР°С‚Р°РµС‚ 3-С…!
 #ifdef _DEBUG
 #define KEYS_IN_BLOCK 255
 #else
@@ -93,24 +93,24 @@ BOOL gbRegHookedNow = FALSE;
 
 struct RegKeyHook
 {
-	// Что перехватываем
+	// Р§С‚Рѕ РїРµСЂРµС…РІР°С‚С‹РІР°РµРј
 	HKEY    hkRoot;
-	wchar_t wsHooked[MAX_HOOKED_PATH];  // для W-функций
-	char    sHooked[MAX_HOOKED_PATH];   // для A-функций
+	wchar_t wsHooked[MAX_HOOKED_PATH];  // РґР»СЏ W-С„СѓРЅРєС†РёР№
+	char    sHooked[MAX_HOOKED_PATH];   // РґР»СЏ A-С„СѓРЅРєС†РёР№
 	int     nHookedLen;
-	//wchar_t wsHookedU[64];  // для сравнения в W-функциях
-	//char    sHookedU[64];   // для сравнения в A-функциях
-	// Что показываем в RegEnumKey, вместо реальных ключей
-	wchar_t wsGhost[MAX_HOOKED_PATH+40];  // для W-функций
-	char    sGhost[MAX_HOOKED_PATH+40];   // для A-функций
+	//wchar_t wsHookedU[64];  // РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ РІ W-С„СѓРЅРєС†РёСЏС…
+	//char    sHookedU[64];   // РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ РІ A-С„СѓРЅРєС†РёСЏС…
+	// Р§С‚Рѕ РїРѕРєР°Р·С‹РІР°РµРј РІ RegEnumKey, РІРјРµСЃС‚Рѕ СЂРµР°Р»СЊРЅС‹С… РєР»СЋС‡РµР№
+	wchar_t wsGhost[MAX_HOOKED_PATH+40];  // РґР»СЏ W-С„СѓРЅРєС†РёР№
+	char    sGhost[MAX_HOOKED_PATH+40];   // РґР»СЏ A-С„СѓРЅРєС†РёР№
 	int     nGhostLen;
-	//wchar_t wsGhostU[128]; // для сравнения в W-функциях
-	//char    sGhostU[128];  // для сравнения в A-функциях
-	// Для упрощения обработки - переопределенные пути
+	//wchar_t wsGhostU[128]; // РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ РІ W-С„СѓРЅРєС†РёСЏС…
+	//char    sGhostU[128];  // РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ РІ A-С„СѓРЅРєС†РёСЏС…
+	// Р”Р»СЏ СѓРїСЂРѕС‰РµРЅРёСЏ РѕР±СЂР°Р±РѕС‚РєРё - РїРµСЂРµРѕРїСЂРµРґРµР»РµРЅРЅС‹Рµ РїСѓС‚Рё
 	//HKEY    hkNewKey;
-	// "HKLM\..." или "HKCU\..."
-	wchar_t wsNewPath[MAX_HOOKED_PATH+8]; // для W-функций
-	char    sNewPath[MAX_HOOKED_PATH+8];  // для A-функций
+	// "HKLM\..." РёР»Рё "HKCU\..."
+	wchar_t wsNewPath[MAX_HOOKED_PATH+8]; // РґР»СЏ W-С„СѓРЅРєС†РёР№
+	char    sNewPath[MAX_HOOKED_PATH+8];  // РґР»СЏ A-С„СѓРЅРєС†РёР№
 };
 
 typedef int RegKeyType;
@@ -131,9 +131,9 @@ struct RegKeyInfo
 	//DWORD WowFlags; // KEY_WOW64_64KEY/KEY_WOW64_32KEY
 	//HKEY hReplace;
 
-	// Для отслеживания RegEnumKey(HK??\Software\...)
+	// Р”Р»СЏ РѕС‚СЃР»РµР¶РёРІР°РЅРёСЏ RegEnumKey(HK??\Software\...)
 	DWORD nIndexInReal;
-	// видимо еще один DWORD нужен, чтобы отслеживать, на чем остановился поиск в RealRegistry
+	// РІРёРґРёРјРѕ РµС‰Рµ РѕРґРёРЅ DWORD РЅСѓР¶РµРЅ, С‡С‚РѕР±С‹ РѕС‚СЃР»РµР¶РёРІР°С‚СЊ, РЅР° С‡РµРј РѕСЃС‚Р°РЅРѕРІРёР»СЃСЏ РїРѕРёСЃРє РІ RealRegistry
 	DWORD nCountInReal;
 };
 
@@ -143,17 +143,17 @@ struct RegKeyBlock
 	struct RegKeyBlock *pNextBlock, *pPrevBlock;
 };
 
-// Класс для хранения списка открытых HKEY (RegKeyInfo) пока хранятся только "Software",
-// для корректной обработки RegEnumKey[Ex]
-// И собственно открытия дочерних ключей без полного пути
+// РљР»Р°СЃСЃ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ СЃРїРёСЃРєР° РѕС‚РєСЂС‹С‚С‹С… HKEY (RegKeyInfo) РїРѕРєР° С…СЂР°РЅСЏС‚СЃСЏ С‚РѕР»СЊРєРѕ "Software",
+// РґР»СЏ РєРѕСЂСЂРµРєС‚РЅРѕР№ РѕР±СЂР°Р±РѕС‚РєРё RegEnumKey[Ex]
+// Р СЃРѕР±СЃС‚РІРµРЅРЅРѕ РѕС‚РєСЂС‹С‚РёСЏ РґРѕС‡РµСЂРЅРёС… РєР»СЋС‡РµР№ Р±РµР· РїРѕР»РЅРѕРіРѕ РїСѓС‚Рё
 struct RegKeyStore
 {
 protected:
 	int mn_StoreMaxCount, mn_StoreCurrent;
-	// С такой структурой блокировка требуется ТОЛЬКО
-	// при добавлении HKEY в список. Проверка наличия
-	// блокировки не требует, т.к. блоки НЕ удаляются
-	// вплоть до завершения программы.
+	// РЎ С‚Р°РєРѕР№ СЃС‚СЂСѓРєС‚СѓСЂРѕР№ Р±Р»РѕРєРёСЂРѕРІРєР° С‚СЂРµР±СѓРµС‚СЃСЏ РўРћР›Р¬РљРћ
+	// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё HKEY РІ СЃРїРёСЃРѕРє. РџСЂРѕРІРµСЂРєР° РЅР°Р»РёС‡РёСЏ
+	// Р±Р»РѕРєРёСЂРѕРІРєРё РЅРµ С‚СЂРµР±СѓРµС‚, С‚.Рє. Р±Р»РѕРєРё РќР• СѓРґР°Р»СЏСЋС‚СЃСЏ
+	// РІРїР»РѕС‚СЊ РґРѕ Р·Р°РІРµСЂС€РµРЅРёСЏ РїСЂРѕРіСЂР°РјРјС‹.
 	RegKeyBlock m_Store, *mp_Last;
 	RegKeyInfo m_HKCU, m_HKLM32, m_HKLM64, m_HKLM; // predefined HKEY_...
 	MSection mc_Lock;
@@ -207,12 +207,12 @@ private:
 			}
 			pFrom = pFrom->pNextBlock;
 		}
-		// Не достаточно ячеек. Добавим
-		_ASSERTE(pFrom != NULL); // интересно, в реальной работе будет ли использовано более одного блока...
-		// Новый блок
+		// РќРµ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ СЏС‡РµРµРє. Р”РѕР±Р°РІРёРј
+		_ASSERTE(pFrom != NULL); // РёРЅС‚РµСЂРµСЃРЅРѕ, РІ СЂРµР°Р»СЊРЅРѕР№ СЂР°Р±РѕС‚Рµ Р±СѓРґРµС‚ Р»Рё РёСЃРїРѕР»СЊР·РѕРІР°РЅРѕ Р±РѕР»РµРµ РѕРґРЅРѕРіРѕ Р±Р»РѕРєР°...
+		// РќРѕРІС‹Р№ Р±Р»РѕРє
 		pFrom = (RegKeyBlock*)calloc(sizeof(RegKeyBlock),1);
 		mp_Last->pNextBlock = pFrom;
-		return pFrom->keys; // новый блок, возвращаем первую ячейку
+		return pFrom->keys; // РЅРѕРІС‹Р№ Р±Р»РѕРє, РІРѕР·РІСЂР°С‰Р°РµРј РїРµСЂРІСѓСЋ СЏС‡РµР№РєСѓ
 	}
 	RegKeyInfo* FindKey(HKEY hKey, DWORD wowOptions=0 /*KEY_WOW64_64KEY/KEY_WOW64_32KEY*/)
 	{
@@ -269,7 +269,7 @@ public:
 		p->rkt = rkt;
 		mp_LastKey = p;
 	};
-	// wowOptions нужен только для HKLM
+	// wowOptions РЅСѓР¶РµРЅ С‚РѕР»СЊРєРѕ РґР»СЏ HKLM
 	RegKeyType IsStored(HKEY hKey, DWORD wowOptions=0 /*KEY_WOW64_64KEY/KEY_WOW64_32KEY*/)
 	{
 		RegKeyInfo* p;
@@ -357,7 +357,7 @@ bool InitHooksReg()
 	{
 		PrepareHookedKeyList();
 		DEBUGSTR(L"ConEmuHk: Registry virtualization prepared\n");
-		// Если advapi32.dll уже загружена - можно сразу дернуть экспорты
+		// Р•СЃР»Рё advapi32.dll СѓР¶Рµ Р·Р°РіСЂСѓР¶РµРЅР° - РјРѕР¶РЅРѕ СЃСЂР°Р·Сѓ РґРµСЂРЅСѓС‚СЊ СЌРєСЃРїРѕСЂС‚С‹
 		if (ghAdvapi32)
 		{
 			RegOpenKeyEx_f = (RegOpenKeyEx_t)GetProcAddress(ghAdvapi32, "RegOpenKeyExW");
@@ -427,15 +427,15 @@ void DoneHooksRegThread()
 }
 
 
-// !!! WARNING !!! В ЭТОЙ функции обращений к реестру (или advapi32) НЕ ДЕЛАТЬ !!!
+// !!! WARNING !!! Р’ Р­РўРћР™ С„СѓРЅРєС†РёРё РѕР±СЂР°С‰РµРЅРёР№ Рє СЂРµРµСЃС‚СЂСѓ (РёР»Рё advapi32) РќР• Р”Р•Р›РђРўР¬ !!!
 void PrepareHookedKeyList()
 {
 	CESERVER_CONSOLE_MAPPING_HDR* pInfo = GetConMap();
 	if (!pInfo || !(pInfo->isHookRegistry&1) || !*pInfo->sHiveFileName)
 		return;
 
-	// Сейчас HookedNow НЕ проверять, т.к. функция вызывается при первоначальной инициализации
-    // Здесь важен сам факт того, что виртуальный реестр может быть включен (в любой момент)!
+	// РЎРµР№С‡Р°СЃ HookedNow РќР• РїСЂРѕРІРµСЂСЏС‚СЊ, С‚.Рє. С„СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
+    // Р—РґРµСЃСЊ РІР°Р¶РµРЅ СЃР°Рј С„Р°РєС‚ С‚РѕРіРѕ, С‡С‚Рѕ РІРёСЂС‚СѓР°Р»СЊРЅС‹Р№ СЂРµРµСЃС‚СЂ РјРѕР¶РµС‚ Р±С‹С‚СЊ РІРєР»СЋС‡РµРЅ (РІ Р»СЋР±РѕР№ РјРѕРјРµРЅС‚)!
     gbRegHookedNow = ((pInfo->isHookRegistry&3) == 3);
 	//BOOL lbHookedNow = ((pInfo->isHookRegistry&3) == 3);
 	//if (gbRegHookedNow != lbHookedNow)
@@ -467,7 +467,7 @@ void PrepareHookedKeyList()
 		{
 			struct { HKEY hKey; LPCWSTR pszKey; } RegKeyHooks[] =
 			{
-				// Поддерживаются только ПОДКЛЮЧИ в "Software\\"
+				// РџРѕРґРґРµСЂР¶РёРІР°СЋС‚СЃСЏ С‚РѕР»СЊРєРѕ РџРћР”РљР›Р®Р§Р РІ "Software\\"
 				{HKEY_LOCAL_MACHINE, L"Far"},
 				{HKEY_CURRENT_USER,  L"Far"},
 				{HKEY_LOCAL_MACHINE, L"Far2"},
@@ -495,21 +495,21 @@ void PrepareHookedKeyList()
 		}
 		
 						
-		// Подготовить структуру gpRegKeyHooks к использованию
+		// РџРѕРґРіРѕС‚РѕРІРёС‚СЊ СЃС‚СЂСѓРєС‚СѓСЂСѓ gpRegKeyHooks Рє РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЋ
 		for (UINT i = 0; gpRegKeyHooks[i].hkRoot; i++)
 		{
-			// Длина перехватываемого ключа
+			// Р”Р»РёРЅР° РїРµСЂРµС…РІР°С‚С‹РІР°РµРјРѕРіРѕ РєР»СЋС‡Р°
 			gpRegKeyHooks[i].nHookedLen = lstrlen(gpRegKeyHooks[i].wsHooked);
 			WideCharToMultiByte(CP_ACP, 0, gpRegKeyHooks[i].wsHooked, gpRegKeyHooks[i].nHookedLen+1,
 				gpRegKeyHooks[i].sHooked, gpRegKeyHooks[i].nHookedLen+1, 0,0);
 
-			// Что показываем в RegEnumKey, вместо реальных ключей
+			// Р§С‚Рѕ РїРѕРєР°Р·С‹РІР°РµРј РІ RegEnumKey, РІРјРµСЃС‚Рѕ СЂРµР°Р»СЊРЅС‹С… РєР»СЋС‡РµР№
 			wcscpy_c(gpRegKeyHooks[i].wsGhost, PointToName(gpRegKeyHooks[i].wsHooked));
 			wcscat_c(gpRegKeyHooks[i].wsGhost, wsGhost);
 			gpRegKeyHooks[i].nGhostLen = lstrlen(gpRegKeyHooks[i].wsGhost);
 			WideCharToMultiByte(CP_ACP, 0, gpRegKeyHooks[i].wsGhost, -1, gpRegKeyHooks[i].sGhost, countof(gpRegKeyHooks[i].sGhost), 0,0);
 
-			// Для упрощения обработки - переопределенные пути
+			// Р”Р»СЏ СѓРїСЂРѕС‰РµРЅРёСЏ РѕР±СЂР°Р±РѕС‚РєРё - РїРµСЂРµРѕРїСЂРµРґРµР»РµРЅРЅС‹Рµ РїСѓС‚Рё
 			msprintf(gpRegKeyHooks[i].wsNewPath, countof(gpRegKeyHooks[i].wsNewPath), L"%s\\Software\\%s",
 				(gpRegKeyHooks[i].hkRoot == HKEY_LOCAL_MACHINE) ? L"HKLM" : L"HKCU", gpRegKeyHooks[i].wsHooked);
 			WideCharToMultiByte(CP_ACP, 0, gpRegKeyHooks[i].wsNewPath, -1, gpRegKeyHooks[i].sNewPath, countof(gpRegKeyHooks[i].sNewPath), 0, 0);
@@ -592,11 +592,11 @@ bool InitRegistryRoot(CESERVER_CONSOLE_MAPPING_HDR* pInfo)
 		}
 		else
 		{
-			// XP Only. т.к. для монтирования хайва требуются права админа
+			// XP Only. С‚.Рє. РґР»СЏ РјРѕРЅС‚РёСЂРѕРІР°РЅРёСЏ С…Р°Р№РІР° С‚СЂРµР±СѓСЋС‚СЃСЏ РїСЂР°РІР° Р°РґРјРёРЅР°
 			HKEY hkRoot = pInfo->hMountRoot;
 			if (hkRoot == HKEY_CURRENT_USER)
 			{
-				// Значит это "HKCU\Software\ConEmu Virtual Registry"
+				// Р—РЅР°С‡РёС‚ СЌС‚Рѕ "HKCU\Software\ConEmu Virtual Registry"
 				if (RegOpenKeyEx_f(HKEY_CURRENT_USER, VIRTUAL_REGISTRY_ROOT, 0, KEY_ALL_ACCESS, &hkRoot))
 				{
 					GuiMessageBox(ghConEmuWnd, L"ConEmuHk: RegOpenKeyEx(" VIRTUAL_REGISTRY_ROOT L") failed!\n", szTitle, MB_OK|MB_ICONSTOP|MB_SYSTEMMODAL);
@@ -636,7 +636,7 @@ bool InitRegistryRoot(CESERVER_CONSOLE_MAPPING_HDR* pInfo)
 				lRc = RegCreateKeyEx_f(ghNewKeyRoot, pszKeyName=L"HKLM\\Software", 0,0,0, KEY_ALL_ACCESS, 0, &ghNewHKLM32Software, 0);
 			if (!lRc && IsWindows64())
 			{
-				// эта ветка не должна выполняться в 32битных ОС
+				// СЌС‚Р° РІРµС‚РєР° РЅРµ РґРѕР»Р¶РЅР° РІС‹РїРѕР»РЅСЏС‚СЊСЃСЏ РІ 32Р±РёС‚РЅС‹С… РћРЎ
 				if (!lRc)
 					lRc = RegCreateKeyEx_f(ghNewKeyRoot, pszKeyName=L"HKLM64", 0,0,0, KEY_ALL_ACCESS, 0, &ghNewHKLM64, 0);
 				if (!lRc)
@@ -645,13 +645,13 @@ bool InitRegistryRoot(CESERVER_CONSOLE_MAPPING_HDR* pInfo)
 			if (lRc != 0)
 			{
 				CloseRootKeys();
-				ghNewKeyRoot = (HKEY)-1; // чтобы не пытаться открыть повторно
+				ghNewKeyRoot = (HKEY)-1; // С‡С‚РѕР±С‹ РЅРµ РїС‹С‚Р°С‚СЊСЃСЏ РѕС‚РєСЂС‹С‚СЊ РїРѕРІС‚РѕСЂРЅРѕ
 				wchar_t szErrInfo[MAX_PATH];
 				msprintf(szErrInfo, countof(szErrInfo), L"ConEmuHk: Virtual subkey (%s) creation failed! ErrCode=0x%08X\n",
 					pszKeyName ? pszKeyName : L"<NULL>", (DWORD)lRc);
 				GuiMessageBox(ghConEmuWnd, szErrInfo, szTitle, MB_OK|MB_ICONSTOP|MB_SYSTEMMODAL);
 			}
-			// Для консистентности
+			// Р”Р»СЏ РєРѕРЅСЃРёСЃС‚РµРЅС‚РЅРѕСЃС‚Рё
 			if (!ghNewHKLM64)
 				ghNewHKLM64 = ghNewHKLM32;
 			if (!ghNewHKLM64Software)
@@ -684,7 +684,7 @@ RegKeyHook* HooksRegistryPtr()
 	if (!gbRegHookedNow)
 		return NULL;
 	
-	// ghNewKeyRoot == ((HKEY)-1), - если был облом подключения виртуального реестра
+	// ghNewKeyRoot == ((HKEY)-1), - РµСЃР»Рё Р±С‹Р» РѕР±Р»РѕРј РїРѕРґРєР»СЋС‡РµРЅРёСЏ РІРёСЂС‚СѓР°Р»СЊРЅРѕРіРѕ СЂРµРµСЃС‚СЂР°
 	if (ghNewKeyRoot == NULL)
 	{
 		if (!InitRegistryRoot(pInfo))
@@ -799,7 +799,7 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 	if (hKey == ghNewKeyRoot || hKey == ghNewHKCU || hKey == ghNewHKLM32 || hKey == ghNewHKLM64
 		|| hKey == ghNewHKCUSoftware || hKey == ghNewHKLM32Software || hKey == ghNewHKLM64Software)
 	{
-		// Это УЖЕ перехваченный ключ, проверять не нужно
+		// Р­С‚Рѕ РЈР–Р• РїРµСЂРµС…РІР°С‡РµРЅРЅС‹Р№ РєР»СЋС‡, РїСЂРѕРІРµСЂСЏС‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 		return true;
 	}
 
@@ -813,12 +813,12 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 
 	if (rkt >= RKT_HKCU && rkt <= RKT_HKLM64)
 	{
-		// копия HKCU или HKLM?
+		// РєРѕРїРёСЏ HKCU РёР»Рё HKLM?
 		if (!lpSubKeyTmp || !*lpSubKeyTmp)
 		{
-			return true; // нужно будет дернуть gpRegKeyStore->Store после успешного открытия
+			return true; // РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ РґРµСЂРЅСѓС‚СЊ gpRegKeyStore->Store РїРѕСЃР»Рµ СѓСЃРїРµС€РЅРѕРіРѕ РѕС‚РєСЂС‹С‚РёСЏ
 		}
-		// Если lpSubKeyTmp НЕ начинается с "Software\\" - игнорируем
+		// Р•СЃР»Рё lpSubKeyTmp РќР• РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ "Software\\" - РёРіРЅРѕСЂРёСЂСѓРµРј
 		if (   (lpSubKeyTmp[0] != 'S' && lpSubKeyTmp[0] != 's')
 			|| (lpSubKeyTmp[1] != 'O' && lpSubKeyTmp[1] != 'o')
 			|| (lpSubKeyTmp[2] != 'F' && lpSubKeyTmp[2] != 'f')
@@ -830,16 +830,16 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 			|| (lpSubKeyTmp[8] != '\\' && lpSubKeyTmp[8] != 0) )
 		{
 			rkt = RKT_None;
-			return true; // продолжить с обычным реестром
+			return true; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ СЃ РѕР±С‹С‡РЅС‹Рј СЂРµРµСЃС‚СЂРѕРј
 		}
 
 		//if (lpSubKeyTmp[8] == '\\' && lpSubKeyTmp[9])
 		//{
-		//	rkt = RKT_None; // подключи "Software\<Name>" сохранять не нужно
+		//	rkt = RKT_None; // РїРѕРґРєР»СЋС‡Рё "Software\<Name>" СЃРѕС…СЂР°РЅСЏС‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 		//}
 		switch (rkt)
 		{
-			// Значит открывается копия ключа "Software", нужно будет его сохранить
+			// Р—РЅР°С‡РёС‚ РѕС‚РєСЂС‹РІР°РµС‚СЃСЏ РєРѕРїРёСЏ РєР»СЋС‡Р° "Software", РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ РµРіРѕ СЃРѕС…СЂР°РЅРёС‚СЊ
 			case RKT_HKCU:
 				hKeyTmp = ghNewHKCUSoftware;
 				rkt = RKT_HKCU_Software;
@@ -857,10 +857,10 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 				rkt = RKT_None;
 		}
 
-		// Если открывается копия ключа "Software"
+		// Р•СЃР»Рё РѕС‚РєСЂС‹РІР°РµС‚СЃСЏ РєРѕРїРёСЏ РєР»СЋС‡Р° "Software"
 		if ((lpSubKeyTmp[8] == 0) || (lpSubKeyTmp[8] == '\\' && lpSubKeyTmp[9] == 0))
 		{
-			// Сразу выйдем!
+			// РЎСЂР°Р·Сѓ РІС‹Р№РґРµРј!
 			_ASSERTE(rkt==RKT_HKCU_Software || rkt==RKT_HKLM32_Software || rkt==RKT_HKLM64_Software);
 			return true;
 		}
@@ -871,17 +871,17 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 	{
 		if ((rkt < RKT_HKCU_Software) || (rkt > RKT_HKLM64_Software))
 		{
-			// Этого быть не должно - все ветки уже обработаны
+			// Р­С‚РѕРіРѕ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ - РІСЃРµ РІРµС‚РєРё СѓР¶Рµ РѕР±СЂР°Р±РѕС‚Р°РЅС‹
 			_ASSERTE(rkt>=RKT_HKCU_Software && rkt<=RKT_HKLM64_Software);
 			rkt = RKT_None;
 			return true;
 		}
 
-		// Раз попали сюда - значит hKey - это "Software"
-		// Если просто открывается его копия - сразу выйдем
+		// Р Р°Р· РїРѕРїР°Р»Рё СЃСЋРґР° - Р·РЅР°С‡РёС‚ hKey - СЌС‚Рѕ "Software"
+		// Р•СЃР»Рё РїСЂРѕСЃС‚Рѕ РѕС‚РєСЂС‹РІР°РµС‚СЃСЏ РµРіРѕ РєРѕРїРёСЏ - СЃСЂР°Р·Сѓ РІС‹Р№РґРµРј
 		if (!lpSubKeyTmp || !*lpSubKeyTmp)
 		{
-			// Сразу выйдем! rkt указан, будет сохранен
+			// РЎСЂР°Р·Сѓ РІС‹Р№РґРµРј! rkt СѓРєР°Р·Р°РЅ, Р±СѓРґРµС‚ СЃРѕС…СЂР°РЅРµРЅ
 			return true;
 		}
 		switch (rkt)
@@ -898,7 +898,7 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 		}
 	}
 
-	// то, что не "Far..." нас не интересует
+	// С‚Рѕ, С‡С‚Рѕ РЅРµ "Far..." РЅР°СЃ РЅРµ РёРЅС‚РµСЂРµСЃСѓРµС‚
 	if (   (lpSubKeyTmp[0] != 'F' && lpSubKeyTmp[0] != 'f')
 		|| (lpSubKeyTmp[1] != 'A' && lpSubKeyTmp[1] != 'a')
 		|| (lpSubKeyTmp[2] != 'R' && lpSubKeyTmp[2] != 'r') )
@@ -907,7 +907,7 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 		return true;
 	}
 
-	// Теперь - проверяем точно
+	// РўРµРїРµСЂСЊ - РїСЂРѕРІРµСЂСЏРµРј С‚РѕС‡РЅРѕ
 	LPCSTR pszDot = NULL;
 	if (   (lpSubKeyTmp[3] == 0 || lpSubKeyTmp[3] == '\\' || *(pszDot = lpSubKeyTmp+3) == '.') // Far1
 		|| (lpSubKeyTmp[3] == '2' && (lpSubKeyTmp[4] == 0 || lpSubKeyTmp[4] == '\\' || *(pszDot = lpSubKeyTmp+4) == '.')) // Far2 //-V112
@@ -924,7 +924,7 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 	{
 		if (pszDot && *pszDot == '.')
 		{
-			//			// lpSubKeyTmp содержит дополнительный путь, нужно выделить память и дописать в конец
+			//			// lpSubKeyTmp СЃРѕРґРµСЂР¶РёС‚ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Р№ РїСѓС‚СЊ, РЅСѓР¶РЅРѕ РІС‹РґРµР»РёС‚СЊ РїР°РјСЏС‚СЊ Рё РґРѕРїРёСЃР°С‚СЊ РІ РєРѕРЅРµС†
 			//			lpTemp = (char*)calloc(MAX_HOOKED_PATH+8+nSrcLen,sizeof(char));
 			//			if (!lpTemp)
 			//			{
@@ -936,24 +936,24 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 			int nGuidLen = 38;
 			// !!! ANSI !!!
 			if (memcmp(pszDot+1, VIRTUAL_REGISTRY_GUID_A, nGuidLen)!=0)
-				return true; // не он
-			// Выбросить из lpSubKey GUID для обращения к реальному реестру
+				return true; // РЅРµ РѕРЅ
+			// Р’С‹Р±СЂРѕСЃРёС‚СЊ РёР· lpSubKey GUID РґР»СЏ РѕР±СЂР°С‰РµРЅРёСЏ Рє СЂРµР°Р»СЊРЅРѕРјСѓ СЂРµРµСЃС‚СЂСѓ
 			int nLen = lstrlenA(lpSubKey);
 			size_t nBeginLen = (pszDot - lpSubKey);
 			lpTemp = (char*)malloc(nLen*sizeof(char));
 			// !!! UNICODE !!!
 			memmove(lpTemp, lpSubKey, nBeginLen*sizeof(char));
 			memmove(lpTemp+nBeginLen, pszDot+nGuidLen+1, (nLen-nGuidLen)*sizeof(char));
-			// hKey не меняем
+			// hKey РЅРµ РјРµРЅСЏРµРј
 			lpSubKey = lpTemp;
 			return true;
 		}
-		// OK, заменяем на виртуальный ключ!
+		// OK, Р·Р°РјРµРЅСЏРµРј РЅР° РІРёСЂС‚СѓР°Р»СЊРЅС‹Р№ РєР»СЋС‡!
 		hKey = hKeyTmp;
 		lpSubKey = lpSubKeyTmp;
 	}
 			
-	// Сохранять не нужно
+	// РЎРѕС…СЂР°РЅСЏС‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 	rkt = RKT_None;
 	return true;
 	
@@ -963,27 +963,27 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 	//{
 	//	if (gpRegKeyHooks[i].hkRoot != hKey)
 	//	{
-	//		WARNING("Проигнорируются ключи, открытые ранее как RegOpenKey(HKCU,'SOFTWARE') и т.п.");
+	//		WARNING("РџСЂРѕРёРіРЅРѕСЂРёСЂСѓСЋС‚СЃСЏ РєР»СЋС‡Рё, РѕС‚РєСЂС‹С‚С‹Рµ СЂР°РЅРµРµ РєР°Рє RegOpenKey(HKCU,'SOFTWARE') Рё С‚.Рї.");
 	//		continue;
 	//	}
 	//	int nLen = gpRegKeyHooks[i].nHookedLen;
 	//	if (nLen > nSrcLen)
-	//		continue; // не перехыватывается
+	//		continue; // РЅРµ РїРµСЂРµС…С‹РІР°С‚С‹РІР°РµС‚СЃСЏ
 	//	if (lpSubKeyTmp[nLen] != 0 && lpSubKeyTmp[nLen] != '\\')
-	//		continue; // точно не этот ключ
+	//		continue; // С‚РѕС‡РЅРѕ РЅРµ СЌС‚РѕС‚ РєР»СЋС‡
 	//	lstrcpynA(sTest, lpSubKeyTmp, nLen+1);
 	//	sTest[nLen] = 0;
 	//	if (lstrcmpiA(sTest, gpRegKeyHooks[i].sHooked) == 0)
 	//	{
 	//		if (lpSubKeyTmp[nLen] == 0)
 	//		{
-	//			// все просто - заменяем
+	//			// РІСЃРµ РїСЂРѕСЃС‚Рѕ - Р·Р°РјРµРЅСЏРµРј
 	//			hKey = ghNewKeyRoot;
 	//			lpSubKey = gpRegKeyHooks[i].sNewPath;
 	//		}
 	//		else
 	//		{
-	//			// lpSubKeyTmp содержит дополнительный путь, нужно выделить память и дописать в конец
+	//			// lpSubKeyTmp СЃРѕРґРµСЂР¶РёС‚ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Р№ РїСѓС‚СЊ, РЅСѓР¶РЅРѕ РІС‹РґРµР»РёС‚СЊ РїР°РјСЏС‚СЊ Рё РґРѕРїРёСЃР°С‚СЊ РІ РєРѕРЅРµС†
 	//			lpTemp = (char*)calloc(MAX_HOOKED_PATH+8+nSrcLen,sizeof(char));
 	//			if (!lpTemp)
 	//			{
@@ -995,11 +995,11 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 	//			hKey = ghNewKeyRoot;
 	//			lpSubKey = lpTemp;
 	//		}
-	//		return true; // закончили поиск
+	//		return true; // Р·Р°РєРѕРЅС‡РёР»Рё РїРѕРёСЃРє
 	//	}
 	//}
 	//
-	//// Разрешаем открыть реестр
+	//// Р Р°Р·СЂРµС€Р°РµРј РѕС‚РєСЂС‹С‚СЊ СЂРµРµСЃС‚СЂ
 	//return true;
 }
 
@@ -1017,7 +1017,7 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 	if (hKey == ghNewKeyRoot || hKey == ghNewHKCU || hKey == ghNewHKLM32 || hKey == ghNewHKLM64
 		|| hKey == ghNewHKCUSoftware || hKey == ghNewHKLM32Software || hKey == ghNewHKLM64Software)
 	{
-		// Это УЖЕ перехваченный ключ, проверять не нужно
+		// Р­С‚Рѕ РЈР–Р• РїРµСЂРµС…РІР°С‡РµРЅРЅС‹Р№ РєР»СЋС‡, РїСЂРѕРІРµСЂСЏС‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 		return true;
 	}
 
@@ -1041,12 +1041,12 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 
 	if (rkt >= RKT_HKCU && rkt <= RKT_HKLM64)
 	{
-		// копия HKCU или HKLM?
+		// РєРѕРїРёСЏ HKCU РёР»Рё HKLM?
 		if (!lpSubKeyTmp || !*lpSubKeyTmp)
 		{
-			return true; // нужно будет дернуть gpRegKeyStore->Store после успешного открытия
+			return true; // РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ РґРµСЂРЅСѓС‚СЊ gpRegKeyStore->Store РїРѕСЃР»Рµ СѓСЃРїРµС€РЅРѕРіРѕ РѕС‚РєСЂС‹С‚РёСЏ
 		}
-		// Если lpSubKeyTmp НЕ начинается с "Software\\" - игнорируем
+		// Р•СЃР»Рё lpSubKeyTmp РќР• РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ "Software\\" - РёРіРЅРѕСЂРёСЂСѓРµРј
 		if (   (lpSubKeyTmp[0] != 'S' && lpSubKeyTmp[0] != 's')
 			|| (lpSubKeyTmp[1] != 'O' && lpSubKeyTmp[1] != 'o')
 			|| (lpSubKeyTmp[2] != 'F' && lpSubKeyTmp[2] != 'f')
@@ -1058,16 +1058,16 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 			|| (lpSubKeyTmp[8] != '\\' && lpSubKeyTmp[8] != 0) )
 		{
 			rkt = RKT_None;
-			return true; // продолжить с обычным реестром
+			return true; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ СЃ РѕР±С‹С‡РЅС‹Рј СЂРµРµСЃС‚СЂРѕРј
 		}
 
 		//if (lpSubKeyTmp[8] == '\\' && lpSubKeyTmp[9])
 		//{
-		//	rkt = RKT_None; // подключи "Software\<Name>" сохранять не нужно
+		//	rkt = RKT_None; // РїРѕРґРєР»СЋС‡Рё "Software\<Name>" СЃРѕС…СЂР°РЅСЏС‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 		//}
 		switch (rkt)
 		{
-			// Значит открывается копия ключа "Software", нужно будет его сохранить
+			// Р—РЅР°С‡РёС‚ РѕС‚РєСЂС‹РІР°РµС‚СЃСЏ РєРѕРїРёСЏ РєР»СЋС‡Р° "Software", РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ РµРіРѕ СЃРѕС…СЂР°РЅРёС‚СЊ
 			case RKT_HKCU:
 				hKeyTmp = ghNewHKCUSoftware;
 				rkt = RKT_HKCU_Software;
@@ -1085,10 +1085,10 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 				rkt = RKT_None;
 		}
 
-		// Если открывается копия ключа "Software"
+		// Р•СЃР»Рё РѕС‚РєСЂС‹РІР°РµС‚СЃСЏ РєРѕРїРёСЏ РєР»СЋС‡Р° "Software"
 		if ((lpSubKeyTmp[8] == 0) || (lpSubKeyTmp[8] == '\\' && lpSubKeyTmp[9] == 0))
 		{
-			// Сразу выйдем!
+			// РЎСЂР°Р·Сѓ РІС‹Р№РґРµРј!
 			_ASSERTE(rkt==RKT_HKCU_Software || rkt==RKT_HKLM32_Software || rkt==RKT_HKLM64_Software);
 			return true;
 		}
@@ -1099,17 +1099,17 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 	{
 		if ((rkt < RKT_HKCU_Software) || (rkt > RKT_HKLM64_Software))
 		{
-			// Этого быть не должно - все ветки уже обработаны
+			// Р­С‚РѕРіРѕ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ - РІСЃРµ РІРµС‚РєРё СѓР¶Рµ РѕР±СЂР°Р±РѕС‚Р°РЅС‹
 			_ASSERTE(rkt>=RKT_HKCU_Software && rkt<=RKT_HKLM64_Software);
 			rkt = RKT_None;
 			return true;
 		}
 
-		// Раз попали сюда - значит hKey - это "Software"
-		// Если просто открывается его копия - сразу выйдем
+		// Р Р°Р· РїРѕРїР°Р»Рё СЃСЋРґР° - Р·РЅР°С‡РёС‚ hKey - СЌС‚Рѕ "Software"
+		// Р•СЃР»Рё РїСЂРѕСЃС‚Рѕ РѕС‚РєСЂС‹РІР°РµС‚СЃСЏ РµРіРѕ РєРѕРїРёСЏ - СЃСЂР°Р·Сѓ РІС‹Р№РґРµРј
 		if (!lpSubKeyTmp || !*lpSubKeyTmp)
 		{
-			// Сразу выйдем! rkt указан, будет сохранен
+			// РЎСЂР°Р·Сѓ РІС‹Р№РґРµРј! rkt СѓРєР°Р·Р°РЅ, Р±СѓРґРµС‚ СЃРѕС…СЂР°РЅРµРЅ
 			return true;
 		}
 		switch (rkt)
@@ -1126,7 +1126,7 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 		}
 	}
 
-	// то, что не "Far..." нас не интересует
+	// С‚Рѕ, С‡С‚Рѕ РЅРµ "Far..." РЅР°СЃ РЅРµ РёРЅС‚РµСЂРµСЃСѓРµС‚
 	if (   (lpSubKeyTmp[0] != 'F' && lpSubKeyTmp[0] != 'f')
 		|| (lpSubKeyTmp[1] != 'A' && lpSubKeyTmp[1] != 'a')
 		|| (lpSubKeyTmp[2] != 'R' && lpSubKeyTmp[2] != 'r') )
@@ -1135,7 +1135,7 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 		return true;
 	}
 
-	// Теперь - проверяем точно
+	// РўРµРїРµСЂСЊ - РїСЂРѕРІРµСЂСЏРµРј С‚РѕС‡РЅРѕ
 	LPCWSTR pszDot = NULL;
 	if (   (lpSubKeyTmp[3] == 0 || lpSubKeyTmp[3] == '\\' || *(pszDot = lpSubKeyTmp+3) == '.') // Far1
 		|| (lpSubKeyTmp[3] == '2' && (lpSubKeyTmp[4] == 0 || lpSubKeyTmp[4] == '\\' || *(pszDot = lpSubKeyTmp+4) == '.')) // Far2 //-V112
@@ -1152,7 +1152,7 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 	{
 		if (pszDot && *pszDot == '.')
 		{
-			//			// lpSubKeyTmp содержит дополнительный путь, нужно выделить память и дописать в конец
+			//			// lpSubKeyTmp СЃРѕРґРµСЂР¶РёС‚ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Р№ РїСѓС‚СЊ, РЅСѓР¶РЅРѕ РІС‹РґРµР»РёС‚СЊ РїР°РјСЏС‚СЊ Рё РґРѕРїРёСЃР°С‚СЊ РІ РєРѕРЅРµС†
 			//			lpTemp = (char*)calloc(MAX_HOOKED_PATH+8+nSrcLen,sizeof(char));
 			//			if (!lpTemp)
 			//			{
@@ -1164,24 +1164,24 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 			int nGuidLen = 38;
 			// !!! UNICODE !!!
 			if (memcmp(pszDot+1, VIRTUAL_REGISTRY_GUID, nGuidLen*2)!=0)
-				return true; // не он
-			// Выбросить из lpSubKey GUID для обращения к реальному реестру
+				return true; // РЅРµ РѕРЅ
+			// Р’С‹Р±СЂРѕСЃРёС‚СЊ РёР· lpSubKey GUID РґР»СЏ РѕР±СЂР°С‰РµРЅРёСЏ Рє СЂРµР°Р»СЊРЅРѕРјСѓ СЂРµРµСЃС‚СЂСѓ
 			int nLen = lstrlen(lpSubKey);
 			size_t nBeginLen = (pszDot - lpSubKey);
 			lpTemp = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 			// !!! UNICODE !!!
 			memmove(lpTemp, lpSubKey, nBeginLen*sizeof(wchar_t));
 			memmove(lpTemp+nBeginLen, pszDot+nGuidLen+1, (nLen-nGuidLen)*sizeof(wchar_t));
-			// hKey не меняем
+			// hKey РЅРµ РјРµРЅСЏРµРј
 			lpSubKey = lpTemp;
 			return true;
 		}
-		// OK, заменяем на виртуальный ключ!
+		// OK, Р·Р°РјРµРЅСЏРµРј РЅР° РІРёСЂС‚СѓР°Р»СЊРЅС‹Р№ РєР»СЋС‡!
 		hKey = hKeyTmp;
 		lpSubKey = lpSubKeyTmp;
 	}
 			
-	// Сохранять не нужно
+	// РЎРѕС…СЂР°РЅСЏС‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 	rkt = RKT_None;
 	return true;
 }

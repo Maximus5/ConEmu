@@ -1,4 +1,4 @@
-
+п»ї
 #pragma once
 
 class CBackupPrivileges
@@ -55,7 +55,7 @@ public:
 			}
 			else
 			{
-				// Если удалось поднять хотя бы одну привилегию
+				// Р•СЃР»Рё СѓРґР°Р»РѕСЃСЊ РїРѕРґРЅСЏС‚СЊ С…РѕС‚СЏ Р±С‹ РѕРґРЅСѓ РїСЂРёРІРёР»РµРіРёСЋ
 				mn_TokenRef = 1;
 				mb_RestoreAquired = abRequireRestore;
 			}

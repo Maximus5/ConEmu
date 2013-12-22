@@ -1,4 +1,4 @@
-
+ï»¿
 /*
 Copyright (c) 2013 Maximus5
 All rights reserved.
@@ -56,7 +56,7 @@ void CEFindDlg::FindTextDialog()
 	CVConGuard VCon;
 	CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 
-	// Ñîçäàåì äèàëîã ïîèñêà òîëüêî äëÿ êîíñîëüíûõ ïðèëîæåíèé
+	// Ð¡Ð¾Ð·Ð´Ð°ÐµÐ¼ Ð´Ð¸Ð°Ð»Ð¾Ð³ Ð¿Ð¾Ð¸ÑÐºÐ° Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð´Ð»Ñ ÐºÐ¾Ð½ÑÐ¾Ð»ÑŒÐ½Ñ‹Ñ… Ð¿Ñ€Ð¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ð¹
 	if (!pRCon || (pRCon->GuiWnd() && !pRCon->isBufferHeight()) || !pRCon->GetView())
 	{
 		//DisplayLastError(L"No RealConsole, nothing to find");
@@ -139,7 +139,7 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 			if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
 				SendDlgItemMessage(hWnd2, tFindText, EM_SETSEL, 0, lstrlen(gpSet->FindOptions.pszText));
 
-			// Çîâåì âñåãäà, ÷òîáû èíèöèàëèçèðîâàòü áóôåð äëÿ ïîèñêà êàê ìèíèìóì
+			// Ð—Ð¾Ð²ÐµÐ¼ Ð²ÑÐµÐ³Ð´Ð°, Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð¸Ð½Ð¸Ñ†Ð¸Ð°Ð»Ð¸Ð·Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ð±ÑƒÑ„ÐµÑ€ Ð´Ð»Ñ Ð¿Ð¾Ð¸ÑÐºÐ° ÐºÐ°Ðº Ð¼Ð¸Ð½Ð¸Ð¼ÑƒÐ¼
 			gpConEmu->DoFindText(0);
 			break;
 		}

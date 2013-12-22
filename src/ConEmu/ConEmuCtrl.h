@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -30,10 +30,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct ConEmuHotKey;
 
-// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
+// РќРµРєРѕС‚РѕСЂС‹Рµ РєРѕРјР±РёРЅР°С†РёРё РЅСѓР¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ "РЅР° РѕС‚РїСѓСЃРєР°РЅРёРµ" РІРѕ РёР·Р±РµР¶Р°РЅРёРµ РіР»СЋРєРѕРІ СЃ РёРЅС‚РµСЂС„РµР№СЃРѕРј
 extern const ConEmuHotKey* ConEmuSkipHotKey; // = ((ConEmuHotKey*)INVALID_HANDLE_VALUE)
 
-// Текущая обрабатываемая клавиша
+// РўРµРєСѓС‰Р°СЏ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјР°СЏ РєР»Р°РІРёС€Р°
 extern const ConEmuHotKey* gpCurrentHotKey;
 
 class CConEmuCtrl
@@ -53,7 +53,7 @@ public:
 
 	static void StatusCommand(ConEmuStatusCommand nStatusCmd, int IntParm = 0, LPCWSTR StrParm = NULL, CRealConsole* pRCon = NULL); // csc_ShowHide, csc_SetStatusText
 
-	static void TabCommand(ConEmuTabCommand nTabCmd); // ctc_ShowHide, ctc_SwitchNext, и т.п.
+	static void TabCommand(ConEmuTabCommand nTabCmd); // ctc_ShowHide, ctc_SwitchNext, Рё С‚.Рї.
 	static size_t GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs);
 
 	static void ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /*= TPM_CENTERALIGN|TPM_VCENTERALIGN*/);
@@ -69,7 +69,7 @@ protected:
 	BOOL mb_InWinTabSwitch;
 	BOOL mb_InCtrlTabSwitch;
 
-	UINT mn_DoubleKeyConsoleNum; // Предыдущий VK
+	UINT mn_DoubleKeyConsoleNum; // РџСЂРµРґС‹РґСѓС‰РёР№ VK
 	void ResetDoubleKeyConsoleNum(CRealConsole* pRCon = NULL);
 
 private:
@@ -89,7 +89,7 @@ private:
 	static LRESULT CALLBACK SkipOneAppsReleaseHook(int code, WPARAM wParam, LPARAM lParam);
 
 public:
-	// true-обработали, false-пропустить в консоль
+	// true-РѕР±СЂР°Р±РѕС‚Р°Р»Рё, false-РїСЂРѕРїСѓСЃС‚РёС‚СЊ РІ РєРѕРЅСЃРѕР»СЊ
 
 	// User (Keys)
 	static bool WINAPI key_MinimizeRestore(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
@@ -162,7 +162,7 @@ public:
 	static bool WINAPI key_RunTask(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 
 public:
-	// Все что ниже - было привязано к "HostKey"
+	// Р’СЃРµ С‡С‚Рѕ РЅРёР¶Рµ - Р±С‹Р»Рѕ РїСЂРёРІСЏР·Р°РЅРѕ Рє "HostKey"
 	static bool WINAPI key_WinWidthDec(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_WinWidthInc(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_WinHeightDec(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);

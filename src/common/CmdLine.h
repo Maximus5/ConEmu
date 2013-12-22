@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2013 Maximus5
 All rights reserved.
@@ -41,7 +41,7 @@ public:
 	int mn_TokenNo;
 
 	#ifdef _DEBUG
-	// Debug, для отлова "не сброшенных" вызовов
+	// Debug, РґР»СЏ РѕС‚Р»РѕРІР° "РЅРµ СЃР±СЂРѕС€РµРЅРЅС‹С…" РІС‹Р·РѕРІРѕРІ
 	LPCWSTR ms_LastTokenEnd;
 	wchar_t ms_LastTokenSave[32];
 	#endif

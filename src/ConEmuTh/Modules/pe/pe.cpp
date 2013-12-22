@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2010-2011 Maximus5
 All rights reserved.
@@ -126,8 +126,8 @@ struct PEData
 	wchar_t szExtension[32];
 	wchar_t *szVersion, szVersionN[32], szVersionF[128], szVersionP[128];
 	wchar_t szProduct[128];
-	wchar_t szCompany[128]; // или company, или copyright?
-	wchar_t szInfo[512]; // полная информация
+	wchar_t szCompany[128]; // РёР»Рё company, РёР»Рё copyright?
+	wchar_t szInfo[512]; // РїРѕР»РЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ
 	//
 	PBYTE pMappedFileBase;
 	ULARGE_INTEGER FileSize;
@@ -585,7 +585,7 @@ void DumpNEResourceTable(PEData *pData, PIMAGE_DOS_HEADER dosHeader, LPBYTE pRes
 	//MPanelItem* pChild = pRoot->AddFolder(_T("Resource Table"));
 	//pChild->AddText(_T("<Resource Table>\n"));
 
-	// минимальный размер
+	// РјРёРЅРёРјР°Р»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ
 	size_t nReqSize = sizeof(OS2RC_TYPEINFO)+12;
 	//if (IsBadReadPtr(pResourceTable, nReqSize)) {
 	if (!ValidateMemory(pData, pResourceTable, nReqSize))
@@ -603,7 +603,7 @@ void DumpNEResourceTable(PEData *pData, PIMAGE_DOS_HEADER dosHeader, LPBYTE pRes
 	UINT nResLength = 0, nResOffset = 0;
 	//LPBYTE pNames;
 
-	// Сначала нужно найти начало имен
+	// РЎРЅР°С‡Р°Р»Р° РЅСѓР¶РЅРѕ РЅР°Р№С‚Рё РЅР°С‡Р°Р»Рѕ РёРјРµРЅ
 	pTypeInfo = (OS2RC_TYPEINFO*)(pResourceTable+2);
 
 	while(pTypeInfo->rtTypeID)
@@ -622,7 +622,7 @@ void DumpNEResourceTable(PEData *pData, PIMAGE_DOS_HEADER dosHeader, LPBYTE pRes
 	}
 	//pNames = ((LPBYTE)pTypeInfo)+2;
 
-	// Теперь, собственно ресурсы
+	// РўРµРїРµСЂСЊ, СЃРѕР±СЃС‚РІРµРЅРЅРѕ СЂРµСЃСѓСЂСЃС‹
 	pTypeInfo = (OS2RC_TYPEINFO*)(pResourceTable+2);
 
 	while(pTypeInfo->rtTypeID)
@@ -882,20 +882,20 @@ void ParseVersionInfoFixed(PEData *pData,  VS_FIXEDFILEINFO* pVer)
 		pData->szVersion = pData->szVersionP;
 	if (pData->szVersion && *pData->szVersion)
 	{
-		// Чтобы сравнить версию с той, что лежит в строковой части VersionInfo
-		// В таком формате, например, формирует ее VisualC
+		// Р§С‚РѕР±С‹ СЃСЂР°РІРЅРёС‚СЊ РІРµСЂСЃРёСЋ СЃ С‚РѕР№, С‡С‚Рѕ Р»РµР¶РёС‚ РІ СЃС‚СЂРѕРєРѕРІРѕР№ С‡Р°СЃС‚Рё VersionInfo
+		// Р’ С‚Р°РєРѕРј С„РѕСЂРјР°С‚Рµ, РЅР°РїСЂРёРјРµСЂ, С„РѕСЂРјРёСЂСѓРµС‚ РµРµ VisualC
 		_wsprintf(szTest, SKIPLEN(countof(szTest)) L"%i, %i, %i, %i", nV1, nV2, nV3, nV4);
 		if (!lstrcmpiW(szTest, pData->szVersion))
 			pData->szVersion = NULL;
-		// А в таком - можно сэкономить место, отрезав замыкающие нули
+		// Рђ РІ С‚Р°РєРѕРј - РјРѕР¶РЅРѕ СЃСЌРєРѕРЅРѕРјРёС‚СЊ РјРµСЃС‚Рѕ, РѕС‚СЂРµР·Р°РІ Р·Р°РјС‹РєР°СЋС‰РёРµ РЅСѓР»Рё
 		_wsprintf(szTest, SKIPLEN(countof(szTest)) L"%i.%i.%i.%i", nV1, nV2, nV3, nV4);
 		if (!lstrcmpiW(szTest, pData->szVersion))
 			pData->szVersion = NULL;
 		
 		if (pData->szVersion != NULL)
 		{
-			// Если в строковой части таки нет информации о версии?
-			// Некоторые дурные rc файлы содержат не строки, а "рожицы" :)
+			// Р•СЃР»Рё РІ СЃС‚СЂРѕРєРѕРІРѕР№ С‡Р°СЃС‚Рё С‚Р°РєРё РЅРµС‚ РёРЅС„РѕСЂРјР°С†РёРё Рѕ РІРµСЂСЃРёРё?
+			// РќРµРєРѕС‚РѕСЂС‹Рµ РґСѓСЂРЅС‹Рµ rc С„Р°Р№Р»С‹ СЃРѕРґРµСЂР¶Р°С‚ РЅРµ СЃС‚СЂРѕРєРё, Р° "СЂРѕР¶РёС†С‹" :)
 			if (!wcschr(pData->szVersion, L'.') && !wcschr(pData->szVersion, L',')
 				&& (nV2 || nV3 || nV4))
 			{
@@ -1039,7 +1039,7 @@ void ParseVersionInfoVariableString(PEData *pData, LPVOID ptrRes, DWORD &resSize
 					//wcscat(psz, L"            VALUE \""); psz += lstrlen(psz);
 					//wcscat(psz, pS->szKey);
 					//wcscat(psz, L"\", "); psz += lstrlen(psz);
-					// Выровнять текст в результирующем .rc
+					// Р’С‹СЂРѕРІРЅСЏС‚СЊ С‚РµРєСЃС‚ РІ СЂРµР·СѓР»СЊС‚РёСЂСѓСЋС‰РµРј .rc
 					//for (int k = lstrlenW(pS->szKey); k < 17; k++) *(psz++) = L' ';
 					//*(psz++) = L'"'; *psz = 0;
 					pToken = (LPWORD)(pS->szKey+lstrlen(pS->szKey)+1);
@@ -1076,7 +1076,7 @@ void ParseVersionInfoVariableString(PEData *pData, LPVOID ptrRes, DWORD &resSize
 					}
 					if (psz) *psz = 0;
 					//if (pToken < pEnd2 && pS->wValueLength) {
-					//	// Вообще-то тут бы провести замены \r\n\t"
+					//	// Р’РѕРѕР±С‰Рµ-С‚Рѕ С‚СѓС‚ Р±С‹ РїСЂРѕРІРµСЃС‚Рё Р·Р°РјРµРЅС‹ \r\n\t"
 					//	wcscat(psz, (LPCWSTR)pToken);
 					//}
 					//wcscat(psz, L"\"\n"); psz += lstrlen(psz);
@@ -1165,7 +1165,7 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 					//wcscat(psz, pS->szKey); ???
 					//psz[MultiByteToWideChar(CP_ACP,0,pS->szKey,-1,psz,32)] = 0;
 					//wcscat(psz, L"\", "); psz += lstrlen(psz);
-					// Выровнять текст в результирующем .rc
+					// Р’С‹СЂРѕРІРЅСЏС‚СЊ С‚РµРєСЃС‚ РІ СЂРµР·СѓР»СЊС‚РёСЂСѓСЋС‰РµРј .rc
 					//for (int k = lstrlenA(pS->szKey); k < 17; k++) *(psz++) = L' ';
 					//*(psz++) = L'"'; *psz = 0;
 					pToken = (char*)(pS->szKey+strlen(pS->szKey)+1);
@@ -1208,7 +1208,7 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 					}
 					if (psz) *psz = 0;
 					//if (pToken < pEnd2 && pS->wValueLength) {
-					//	// Вообще-то тут бы провести замены \r\n\t"
+					//	// Р’РѕРѕР±С‰Рµ-С‚Рѕ С‚СѓС‚ Р±С‹ РїСЂРѕРІРµСЃС‚Рё Р·Р°РјРµРЅС‹ \r\n\t"
 					//	wcscat(psz, (LPCWSTR)pToken);
 					//}
 					//wcscat(psz, L"\"\n"); psz += lstrlen(psz);
@@ -1287,7 +1287,7 @@ void ParseVersionInfoVariableVar(PEData *pData, LPVOID ptrRes, DWORD &resSize, L
 						//StringCchPrintf(psz, countof(psz), L", 0x%X, %u", (DWORD)(pToken[0]), (DWORD)(pToken[1]));
 						pToken += 2;
 					}
-					//	// Вообще-то тут бы провести замены \r\n\t"
+					//	// Р’РѕРѕР±С‰Рµ-С‚Рѕ С‚СѓС‚ Р±С‹ РїСЂРѕРІРµСЃС‚Рё Р·Р°РјРµРЅС‹ \r\n\t"
 					//	wcscat(psz, (LPCWSTR)pToken);
 					//}
 					//wcscat(psz, L"\n"); psz += lstrlen(psz);
@@ -1363,7 +1363,7 @@ void ParseVersionInfo(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 	if (nTestSize == resSize && nTestShift < resSize)
 	{
 		VS_FIXEDFILEINFO* pVer = (VS_FIXEDFILEINFO*)(((LPBYTE)ptrRes)+0x28);
-		// По идее, должно быть здесь, но если нет - ищем сигнатуру
+		// РџРѕ РёРґРµРµ, РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ Р·РґРµСЃСЊ, РЅРѕ РµСЃР»Рё РЅРµС‚ - РёС‰РµРј СЃРёРіРЅР°С‚СѓСЂСѓ
 		if (pVer->dwSignature != 0xfeef04bd)
 		{
 			DWORD nMax = resSize - sizeof(VS_FIXEDFILEINFO);
@@ -1423,14 +1423,14 @@ void ParseVersionInfo(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 				// Done
 				//wcscat(psz, L"END\n");
 				{
-					// сначала добавим "бинарные данные" ресурса (NOT PARSED)
+					// СЃРЅР°С‡Р°Р»Р° РґРѕР±Р°РІРёРј "Р±РёРЅР°СЂРЅС‹Рµ РґР°РЅРЅС‹Рµ" СЂРµСЃСѓСЂСЃР° (NOT PARSED)
 					//pChild = pRoot->AddFile(fileNameBuffer, resSize);
 					//pChild->SetData((LPBYTE)ptrRes, resSize);
 				}
 				//strcat(fileNameBuffer, ".rc");
 				//ptrRes = ptrBuf;
-				// И вернем преобразованные в "*.rc" (PARSED)
-				//resSize = lstrlenW((LPWSTR)ptrBuf)*2; // первый WORD - BOM
+				// Р РІРµСЂРЅРµРј РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРЅС‹Рµ РІ "*.rc" (PARSED)
+				//resSize = lstrlenW((LPWSTR)ptrBuf)*2; // РїРµСЂРІС‹Р№ WORD - BOM
 				//bIsCopy = TRUE;
 			//}
 		}
@@ -1460,14 +1460,14 @@ void ParseVersionInfoA(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 	if (nTestSize >= sizeof(VS_FIXEDFILEINFO) && nTestSize <= resSize /*&& nTestShift < resSize*/)
 	{
 		VS_FIXEDFILEINFO* pVer = (VS_FIXEDFILEINFO*)(((LPBYTE)ptrRes)+0x28);
-		// По идее, должно быть здесь, но если нет - ищем сигнатуру
+		// РџРѕ РёРґРµРµ, РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ Р·РґРµСЃСЊ, РЅРѕ РµСЃР»Рё РЅРµС‚ - РёС‰РµРј СЃРёРіРЅР°С‚СѓСЂСѓ
 		if (pVer->dwSignature != 0xfeef04bd)
 		{
 			DWORD nMax = resSize - sizeof(VS_FIXEDFILEINFO);
 
 			for(UINT i = 4; i < nMax; i++)
 			{
-				//BUGBUG: Проверить, на x64 жить такое будет, или свалится на Alignment?
+				//BUGBUG: РџСЂРѕРІРµСЂРёС‚СЊ, РЅР° x64 Р¶РёС‚СЊ С‚Р°РєРѕРµ Р±СѓРґРµС‚, РёР»Рё СЃРІР°Р»РёС‚СЃСЏ РЅР° Alignment?
 				if (((VS_FIXEDFILEINFO*)(((LPBYTE)ptrRes)+i))->dwSignature == 0xfeef04bd)
 				{
 					pVer = (VS_FIXEDFILEINFO*)(((LPBYTE)ptrRes)+i);
@@ -1477,8 +1477,8 @@ void ParseVersionInfoA(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 		}
 		DWORD nNewSize = resSize*2 + 2048;
 
-		if (pVer->dwSignature == 0xfeef04bd  // Сигнатура найдена
-		        && nNewSize > resSize)          // Размер ресурса (resSize) не превышает DWORD :)
+		if (pVer->dwSignature == 0xfeef04bd  // РЎРёРіРЅР°С‚СѓСЂР° РЅР°Р№РґРµРЅР°
+		        && nNewSize > resSize)          // Р Р°Р·РјРµСЂ СЂРµСЃСѓСЂСЃР° (resSize) РЅРµ РїСЂРµРІС‹С€Р°РµС‚ DWORD :)
 		{
 			/*ptrBuf = (LPBYTE)malloc(nNewSize);
 			if (!ptrBuf) {
@@ -1516,13 +1516,13 @@ void ParseVersionInfoA(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 				// Done
 				//wcscat(psz, L"END\n");
 				//{
-				//	// сначала добавим "бинарные данные" ресурса (NOT PARSED)
+				//	// СЃРЅР°С‡Р°Р»Р° РґРѕР±Р°РІРёРј "Р±РёРЅР°СЂРЅС‹Рµ РґР°РЅРЅС‹Рµ" СЂРµСЃСѓСЂСЃР° (NOT PARSED)
 				//	//pChild = pRoot->AddFile(fileNameBuffer, resSize);
 				//	//pChild->SetData((LPBYTE)ptrRes, resSize);
 				//}
 				//strcat(fileNameBuffer, ".rc");
 				//ptrRes = ptrBuf;
-				//// И вернем преобразованные в "*.rc" (PARSED)
+				//// Р РІРµСЂРЅРµРј РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРЅС‹Рµ РІ "*.rc" (PARSED)
 				//resSize = lstrlenW((LPWSTR)ptrBuf)*2;
 				//bIsCopy = TRUE;
 			//}
@@ -1590,7 +1590,7 @@ void /*MPanelItem* */ CreateResource(PEData *pData, DWORD rootType, LPVOID ptrRe
 				//	((rootType & 0x7FFF)==(WORD)RT_GROUP_ICON) ? _T("GROUP_ICON") : _T("GROUP_CURSOR"),
 				//	nResCount,
 				//	((rootType & 0x7FFF)==(WORD)RT_GROUP_ICON) ? _T("====================") : _T("======================"));
-				//pChild->AddText(szTextInfo, -1, TRUE); // Не добавлять в DUMP.TXT
+				//pChild->AddText(szTextInfo, -1, TRUE); // РќРµ РґРѕР±Р°РІР»СЏС‚СЊ РІ DUMP.TXT
 				LPGRPICONDIRENTRY pEntry = pIcon->idEntries;
 
 				while(nSizeLeft >= sizeof(GRPICONDIRENTRY))
@@ -1609,7 +1609,7 @@ void /*MPanelItem* */ CreateResource(PEData *pData, DWORD rootType, LPVOID ptrRe
 					//	(UINT)pEntry->bWidth, (UINT)pEntry->bHeight,
 					//	(UINT)pEntry->bColorCount, (UINT)pEntry->wPlanes, (UINT)pEntry->wBitCount);
 					//
-					//pChild->AddText(szTextInfo, -1, TRUE); // Не добавлять в DUMP.TXT
+					//pChild->AddText(szTextInfo, -1, TRUE); // РќРµ РґРѕР±Р°РІР»СЏС‚СЊ РІ DUMP.TXT
 					nSizeLeft -= sizeof(GRPICONDIRENTRY);
 					nResCount --;
 					pEntry++;
@@ -1638,7 +1638,7 @@ void /*MPanelItem* */ CreateResource(PEData *pData, DWORD rootType, LPVOID ptrRe
 				//	((BITMAPINFOHEADER*)ptrRes)->biWidth, ((BITMAPINFOHEADER*)ptrRes)->biWidth,
 				//	((BITMAPINFOHEADER*)ptrRes)->biBitCount*((BITMAPINFOHEADER*)ptrRes)->biPlanes);
 
-				//// Делаем копию буфера, но предваряем его заголовком иконки
+				//// Р”РµР»Р°РµРј РєРѕРїРёСЋ Р±СѓС„РµСЂР°, РЅРѕ РїСЂРµРґРІР°СЂСЏРµРј РµРіРѕ Р·Р°РіРѕР»РѕРІРєРѕРј РёРєРѕРЅРєРё
 				//DWORD nNewSize = resSize + sizeof(ICONDIR);
 				//ptrBuf = (LPBYTE)malloc(nNewSize);
 				//if (!ptrBuf) {
@@ -1806,7 +1806,7 @@ void DumpResourceDirectory(PEData *pData, PIMAGE_RESOURCE_DIRECTORY pResDir,
 	//char szType[64];
 	UINT i;
 
-	// Условие останова, когда нам больше ничего не интересно
+	// РЈСЃР»РѕРІРёРµ РѕСЃС‚Р°РЅРѕРІР°, РєРѕРіРґР° РЅР°Рј Р±РѕР»СЊС€Рµ РЅРёС‡РµРіРѕ РЅРµ РёРЅС‚РµСЂРµСЃРЅРѕ
 	if ((pData->nFlags & (PE_VER_EXISTS|PE_ICON_EXISTS)) == (PE_VER_EXISTS|PE_ICON_EXISTS))
 		return;
 
@@ -1832,7 +1832,7 @@ void DumpResourceDirectory(PEData *pData, PIMAGE_RESOURCE_DIRECTORY pResDir,
 	//                           sizeof(szType) );
 	//}
 	//if (level == 1) {
-	//	// заложимся на то, что в 16бит PE в типах ресурсов установлен бит 0x8000
+	//	// Р·Р°Р»РѕР¶РёРјСЃСЏ РЅР° С‚Рѕ, С‡С‚Рѕ РІ 16Р±РёС‚ PE РІ С‚РёРїР°С… СЂРµСЃСѓСЂСЃРѕРІ СѓСЃС‚Р°РЅРѕРІР»РµРЅ Р±РёС‚ 0x8000
 	//	if ((resourceType & 0x7FFF) == (WORD)RT_GROUP_CURSOR)
 	//		pChild = pRoot->AddFolder(_T("CURSOR"), FALSE);
 	//	else if ((resourceType & 0x7FFF) == (WORD)RT_GROUP_ICON)
@@ -1851,7 +1851,7 @@ void DumpResourceDirectory(PEData *pData, PIMAGE_RESOURCE_DIRECTORY pResDir,
 	{
 		DumpResourceEntry(pData, resourceType/*szType*/, resDirEntry, pResourceBase, level+1, rootType, resourceType);
 
-		// Условие останова, когда нам больше ничего не интересно
+		// РЈСЃР»РѕРІРёРµ РѕСЃС‚Р°РЅРѕРІР°, РєРѕРіРґР° РЅР°Рј Р±РѕР»СЊС€Рµ РЅРёС‡РµРіРѕ РЅРµ РёРЅС‚РµСЂРµСЃРЅРѕ
 		if ((pData->nFlags & (PE_VER_EXISTS|PE_ICON_EXISTS)) == (PE_VER_EXISTS|PE_ICON_EXISTS))
 			return;
 	}
@@ -1860,7 +1860,7 @@ void DumpResourceDirectory(PEData *pData, PIMAGE_RESOURCE_DIRECTORY pResDir,
 	{
 		DumpResourceEntry(pData, resourceType/*szType*/, resDirEntry, pResourceBase, level+1, rootType, resourceType);
 
-		// Условие останова, когда нам больше ничего не интересно
+		// РЈСЃР»РѕРІРёРµ РѕСЃС‚Р°РЅРѕРІР°, РєРѕРіРґР° РЅР°Рј Р±РѕР»СЊС€Рµ РЅРёС‡РµРіРѕ РЅРµ РёРЅС‚РµСЂРµСЃРЅРѕ
 		if ((pData->nFlags & (PE_VER_EXISTS|PE_ICON_EXISTS)) == (PE_VER_EXISTS|PE_ICON_EXISTS))
 			return;
 	}
@@ -1973,14 +1973,14 @@ template <class T> void DumpCertificates(PEData *pData, PBYTE pImageBase, T* pNT
 
 	//__int64 dwTotalSize = GetImgDirEntrySize( pNTHeader, IMAGE_DIRECTORY_ENTRY_SECURITY );
 
-	// Скорее всего сертификаты находятся ЗА пределами отображенного в память файла, т.к. они не входят в ImageSize
-	// Поэтому для простоты - считаем что он подписан, без проверки типа подписи
+	// РЎРєРѕСЂРµРµ РІСЃРµРіРѕ СЃРµСЂС‚РёС„РёРєР°С‚С‹ РЅР°С…РѕРґСЏС‚СЃСЏ Р—Рђ РїСЂРµРґРµР»Р°РјРё РѕС‚РѕР±СЂР°Р¶РµРЅРЅРѕРіРѕ РІ РїР°РјСЏС‚СЊ С„Р°Р№Р»Р°, С‚.Рє. РѕРЅРё РЅРµ РІС…РѕРґСЏС‚ РІ ImageSize
+	// РџРѕСЌС‚РѕРјСѓ РґР»СЏ РїСЂРѕСЃС‚РѕС‚С‹ - СЃС‡РёС‚Р°РµРј С‡С‚Рѕ РѕРЅ РїРѕРґРїРёСЃР°РЅ, Р±РµР· РїСЂРѕРІРµСЂРєРё С‚РёРїР° РїРѕРґРїРёСЃРё
 	pData->nFlags |= PE_SIGNED;
 
 
 	//LPWIN_CERTIFICATE pCert = MakePtr( LPWIN_CERTIFICATE, pImageBase, certOffset );
-	//// Скорее всего сертификаты находятся ЗА пределами отображенного в память файла,
-	//// т.к. они не входят в ImageSize
+	//// РЎРєРѕСЂРµРµ РІСЃРµРіРѕ СЃРµСЂС‚РёС„РёРєР°С‚С‹ РЅР°С…РѕРґСЏС‚СЃСЏ Р—Рђ РїСЂРµРґРµР»Р°РјРё РѕС‚РѕР±СЂР°Р¶РµРЅРЅРѕРіРѕ РІ РїР°РјСЏС‚СЊ С„Р°Р№Р»Р°,
+	//// С‚.Рє. РѕРЅРё РЅРµ РІС…РѕРґСЏС‚ РІ ImageSize
 
 	//while ( dwTotalSize > 0 )	// As long as there is unprocessed certificate data...
 	//{
@@ -1994,7 +1994,7 @@ template <class T> void DumpCertificates(PEData *pData, PBYTE pImageBase, T* pNT
 	//	}
 
 	//	if (!pCert->dwLength) {
-	//		break; // кончились
+	//		break; // РєРѕРЅС‡РёР»РёСЃСЊ
 	//	}
 
 	//	size_t nAllLen = pCert->dwLength;
@@ -2004,7 +2004,7 @@ template <class T> void DumpCertificates(PEData *pData, PBYTE pImageBase, T* pNT
 	//	case WIN_CERT_TYPE_X509: //lstrcpy(szCertType, _T("X509")); break;
 	//	case WIN_CERT_TYPE_PKCS_SIGNED_DATA: //lstrcpy(szCertType, _T("PKCS_SIGNED_DATA")); break;
 	//	case WIN_CERT_TYPE_TS_STACK_SIGNED: //lstrcpy(szCertType, _T("TS_STACK_SIGNED")); break;
-	//		// OK, поддерживаемый тип
+	//		// OK, РїРѕРґРґРµСЂР¶РёРІР°РµРјС‹Р№ С‚РёРї
 	//		break;
 	//	default: //StringCchPrintf(szCertType, countof(szCertType), _T("0x%04X"), pCert->wCertificateType);
 	//		continue;
@@ -2111,13 +2111,13 @@ void DumpSectionTable(PEData *pData, PIMAGE_SECTION_HEADER section,
 		if (section->Name[0] == 'U' && section->Name[1] == 'P' && section->Name[2] == 'X')
 		{
 			pData->nFlags |= PE_UPX;
-			break; // пока больше ничего не интересует
+			break; // РїРѕРєР° Р±РѕР»СЊС€Рµ РЅРёС‡РµРіРѕ РЅРµ РёРЅС‚РµСЂРµСЃСѓРµС‚
 			//g_bUPXed = true;
 			//pRoot->Root()->AddFlags(_T("UPX"));
 		}
 
-		//// Как то странно смотрится: IsEXE ? "VirtSize" : "PhysAddr",
-		//// но так было в оригинале PEDUMP
+		//// РљР°Рє С‚Рѕ СЃС‚СЂР°РЅРЅРѕ СЃРјРѕС‚СЂРёС‚СЃСЏ: IsEXE ? "VirtSize" : "PhysAddr",
+		//// РЅРѕ С‚Р°Рє Р±С‹Р»Рѕ РІ РѕСЂРёРіРёРЅР°Р»Рµ PEDUMP
 		//pSect->printf( "  %02X %-8.8s  %s: %08X  VirtAddr:  %08X\n",
 		//	i, section->Name,
 		//	IsEXE ? "VirtSize" : "PhysAddr",
@@ -2191,7 +2191,7 @@ void DumpSectionTable(PEData *pData, PIMAGE_SECTION_HEADER section,
 template <class T> void DumpExportsSection(PEData *pData, PBYTE pImageBase, T * pNTHeader)	// 'T' = PIMAGE_NT_HEADERS
 {
 	_TRACE("DumpExportsSection");
-	// Пока - нас интересуют только экспорты dll-ек (модули фара)
+	// РџРѕРєР° - РЅР°СЃ РёРЅС‚РµСЂРµСЃСѓСЋС‚ С‚РѕР»СЊРєРѕ СЌРєСЃРїРѕСЂС‚С‹ dll-РµРє (РјРѕРґСѓР»Рё С„Р°СЂР°)
 	if (lstrcmpi(pData->szExtension, L".dll"))
 		return;
 
@@ -2347,7 +2347,7 @@ bool DumpExeFilePE(PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADERS
 
 	pNTHeader64 = (PIMAGE_NT_HEADERS64)pNTHeader;
 
-	// Тут пока не важно 64/32 - положение одинаковое
+	// РўСѓС‚ РїРѕРєР° РЅРµ РІР°Р¶РЅРѕ 64/32 - РїРѕР»РѕР¶РµРЅРёРµ РѕРґРёРЅР°РєРѕРІРѕРµ
 	pData->Machine = pNTHeader->FileHeader.Machine;
 	bool bIs64Bit = (pNTHeader->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC);
 	pData->bIs64Bit = bIs64Bit;
@@ -2479,7 +2479,7 @@ bool DumpExeFilePE(PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADERS
 	//    }
 	//}
 	//
-	//// 04.03.2010 Maks - В Exe не инетересно видеть HexDump, да это еще и долго
+	//// 04.03.2010 Maks - Р’ Exe РЅРµ РёРЅРµС‚РµСЂРµСЃРЅРѕ РІРёРґРµС‚СЊ HexDump, РґР° СЌС‚Рѕ РµС‰Рµ Рё РґРѕР»РіРѕ
 	////if ( fShowRawSectionData )
 	////{
 	////	PIMAGE_SECTION_HEADER pSectionHdr;
@@ -2711,7 +2711,7 @@ VOID WINAPI CET_Cancel(LPVOID pContext)
 
 #else // #ifndef verc0_EXPORTS
 
-// для унификации col0host & PanelView
+// РґР»СЏ СѓРЅРёС„РёРєР°С†РёРё col0host & PanelView
 #include "../farplugin.h"
 
 /* FAR */
@@ -2796,14 +2796,14 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 	*CustomData = NULL;
 	int nLen = lstrlenW(FilePath);
 
-	// Путь должен быть, просто имя файла (без пути) - пропускаем
+	// РџСѓС‚СЊ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ, РїСЂРѕСЃС‚Рѕ РёРјСЏ С„Р°Р№Р»Р° (Р±РµР· РїСѓС‚Рё) - РїСЂРѕРїСѓСЃРєР°РµРј
 	LPCWSTR pszSlash, pszDot = NULL;
 	pszSlash = wcsrchr(FilePath, L'\\');
 	if (pszSlash) pszDot = wcsrchr(pszSlash, L'.');
 	if (!pszDot || !pszDot[0]) return FALSE;
 
 	BOOL lbDosCom = FALSE;
-	//TODO: Если появится возможность просмотра нескольких байт - хорошо бы это делать один раз на пачку плагинов?
+	//TODO: Р•СЃР»Рё РїРѕСЏРІРёС‚СЃСЏ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РїСЂРѕСЃРјРѕС‚СЂР° РЅРµСЃРєРѕР»СЊРєРёС… Р±Р°Р№С‚ - С…РѕСЂРѕС€Рѕ Р±С‹ СЌС‚Рѕ РґРµР»Р°С‚СЊ РѕРґРёРЅ СЂР°Р· РЅР° РїР°С‡РєСѓ РїР»Р°РіРёРЅРѕРІ?
 	if (lstrcmpiW(pszDot, L".exe") && lstrcmpiW(pszDot, L".com")
 		&& lstrcmpiW(pszDot, L".dll") && lstrcmpiW(pszDot, L".sys") && lstrcmpiW(pszDot, L".dl_") && lstrcmpiW(pszDot, L".dl")
 		&& lstrcmpiW(pszDot, L".pvd") && lstrcmpiW(pszDot, L".so") && lstrcmpiW(pszDot, L".fmt")
@@ -2869,7 +2869,7 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 			BOOL lbSucceeded = TRUE;
 			LARGE_INTEGER liPos, liTest;
 			IMAGE_DOS_HEADER dosHeader = {0};
-			IMAGE_NT_HEADERS64 NTHeader64 = {0}; // 64-версия больше 32 битной. считываем больший блок данных
+			IMAGE_NT_HEADERS64 NTHeader64 = {0}; // 64-РІРµСЂСЃРёСЏ Р±РѕР»СЊС€Рµ 32 Р±РёС‚РЅРѕР№. СЃС‡РёС‚С‹РІР°РµРј Р±РѕР»СЊС€РёР№ Р±Р»РѕРє РґР°РЅРЅС‹С…
 
 			nFullSize.QuadPart = nSize.QuadPart;
 			dosHeader.e_magic = IMAGE_DOS_SIGNATURE;
@@ -2887,13 +2887,13 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 					&& ReadFile(hFile, &NTHeader64, sizeof(NTHeader64), &nRead, NULL)
 					&& (NTHeader64.Signature == IMAGE_NT_SIGNATURE
 						|| (NTHeader64.Signature & 0xFFFF) == IMAGE_OS2_SIGNATURE);
-					//	|| (NTHeader64.Signature & 0xFFFF) == IMAGE_OS2_SIGNATURE_LE); - SMARTDRV.EXE, это не win
+					//	|| (NTHeader64.Signature & 0xFFFF) == IMAGE_OS2_SIGNATURE_LE); - SMARTDRV.EXE, СЌС‚Рѕ РЅРµ win
 			}
 			
 			if (lbSucceeded)
 			{
 				lbWindows = TRUE;
-				// Теперь нужно скорректировать размер отображаемого в память файла (отбрасываем аппендикс, вроде SFX архивов)
+				// РўРµРїРµСЂСЊ РЅСѓР¶РЅРѕ СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ СЂР°Р·РјРµСЂ РѕС‚РѕР±СЂР°Р¶Р°РµРјРѕРіРѕ РІ РїР°РјСЏС‚СЊ С„Р°Р№Р»Р° (РѕС‚Р±СЂР°СЃС‹РІР°РµРј Р°РїРїРµРЅРґРёРєСЃ, РІСЂРѕРґРµ SFX Р°СЂС…РёРІРѕРІ)
 				if (NTHeader64.Signature == IMAGE_NT_SIGNATURE)
 				{
 					if (NTHeader64.OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
@@ -2910,9 +2910,9 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 				}
 				else
 				{
-					// Это скорее всего 16битная exe/dll, или что-то другое, в формате OS2
+					// Р­С‚Рѕ СЃРєРѕСЂРµРµ РІСЃРµРіРѕ 16Р±РёС‚РЅР°СЏ exe/dll, РёР»Рё С‡С‚Рѕ-С‚Рѕ РґСЂСѓРіРѕРµ, РІ С„РѕСЂРјР°С‚Рµ OS2
 				}
-				if (nSize.QuadPart > (256<<20)) // Грузим не больше 256Mb
+				if (nSize.QuadPart > (256<<20)) // Р“СЂСѓР·РёРј РЅРµ Р±РѕР»СЊС€Рµ 256Mb
 					nSize.QuadPart = (256<<20);
 			}
 
@@ -2928,13 +2928,13 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 				lbSucceeded = (pFileData != NULL);
 			}
 
-			// Можно продолжать?
+			// РњРѕР¶РЅРѕ РїСЂРѕРґРѕР»Р¶Р°С‚СЊ?
 			if (lbSucceeded)
 			{
 				PEData Ver;
 				if (pszDot) lstrcpyn(Ver.szExtension, pszDot, ARRAYSIZE(Ver.szExtension));
 
-				Ver.nFlags |= PE_ICON_EXISTS; // чтобы иконки не пытаться искать. нужна только версия
+				Ver.nFlags |= PE_ICON_EXISTS; // С‡С‚РѕР±С‹ РёРєРѕРЅРєРё РЅРµ РїС‹С‚Р°С‚СЊСЃСЏ РёСЃРєР°С‚СЊ. РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РІРµСЂСЃРёСЏ
 				BOOL lbDump = DumpFile(&Ver, pFileData, nSize.QuadPart, nFullSize.QuadPart);
 
 				if (lbDump && (Ver.szVersion[0] != 0 || Ver.nBits != 0))

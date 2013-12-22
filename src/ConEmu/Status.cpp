@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -60,7 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 const wchar_t gsReady[] = L"Waiting...";
 
-//Информация по колонкам
+//РРЅС„РѕСЂРјР°С†РёСЏ РїРѕ РєРѕР»РѕРЅРєР°Рј
 //{
 //	CEStatusItems nID;
 //	LPCWSTR sSettingName;
@@ -69,10 +69,10 @@ const wchar_t gsReady[] = L"Waiting...";
 //}
 static StatusColInfo gStatusCols[] =
 {
-	// строго первая, НЕ отключаемая
+	// СЃС‚СЂРѕРіРѕ РїРµСЂРІР°СЏ, РќР• РѕС‚РєР»СЋС‡Р°РµРјР°СЏ
 	{csi_Info,  NULL,   L"Show status bar",
 						L"Hide status bar, you may restore it later from 'Settings...'"},
-	// Далее - по настройкам
+	// Р”Р°Р»РµРµ - РїРѕ РЅР°СЃС‚СЂРѕР№РєР°Рј
 	{csi_ConsoleTitle,	L"StatusBar.Hide.Title",
 						L"Console title",
 						L"Active console title"},
@@ -240,7 +240,7 @@ CStatus::CStatus()
 	ZeroStruct(mrc_LastResizeCol);
 	mb_StatusResizing = false;
 
-	//mn_BmpSize; -- не важно
+	//mn_BmpSize; -- РЅРµ РІР°Р¶РЅРѕ
 	mb_OldBmp = mh_Bmp = NULL; mh_MemDC = NULL;
 	ZeroStruct(mn_BmpSize);
 
@@ -263,7 +263,7 @@ CStatus::CStatus()
 	#ifdef _DEBUG
 	for (int j = csi_Info+1; j < csi_Last; j++)
 	{
-		// Проверяем, все csi_xxx элементы должны быть описаны в gStatusCols
+		// РџСЂРѕРІРµСЂСЏРµРј, РІСЃРµ csi_xxx СЌР»РµРјРµРЅС‚С‹ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ РѕРїРёСЃР°РЅС‹ РІ gStatusCols
 		_ASSERTE(m_Values[j].sHelp && m_Values[j].sName && m_Values[j].sSettingName);
 	}
 	#endif
@@ -279,7 +279,7 @@ CStatus::CStatus()
 
 	_ASSERTE(gpConEmu && *gpConEmu->ms_ConEmuBuild);
 	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L" %c %s%s", 
-		0x00AB/* « */, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"[32]",L"[64]"));
+		0x00AB/* В« */, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"[32]",L"[64]"));
 }
 
 CStatus::~CStatus()
@@ -322,13 +322,13 @@ bool CStatus::LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMa
 	else
 	{
 		LPCWSTR pszName = pRCon->GetActiveProcessName();
-		TODO("Показать все дерево запущенных процессов");
+		TODO("РџРѕРєР°Р·Р°С‚СЊ РІСЃРµ РґРµСЂРµРІРѕ Р·Р°РїСѓС‰РµРЅРЅС‹С… РїСЂРѕС†РµСЃСЃРѕРІ");
 		wchar_t* psz = pszText;
 		int nCchLeft = cchMax;
 		lstrcpyn(psz, (pszName && *pszName) ? pszName : L"???", 64);
 		int nCurLen = lstrlen(psz);
 		_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u"), nPID);
-		//_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u « %s%s"), 
+		//_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u В« %s%s"), 
 		//	nPID, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x86",L"x64"));
 		UNREFERENCED_PARAMETER(nCchLeft);
 		lbRc = true;
@@ -357,7 +357,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 		GetStatusBarClientRect(&rcStatus);
 	}
 
-	// Сразу сбросим
+	// РЎСЂР°Р·Сѓ СЃР±СЂРѕСЃРёРј
 	//mb_Invalidated = false;
 
 	#ifdef _DEBUG
@@ -368,9 +368,9 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	int nStatusWidth = rcStatus.right - rcStatus.left + 1;
 	int nStatusHeight = rcStatus.bottom - rcStatus.top + ((gpSet->isStatusBarFlags & csf_NoVerticalPad) ? 0 : 1);
 
-	// Проверить клавиатуру
+	// РџСЂРѕРІРµСЂРёС‚СЊ РєР»Р°РІРёР°С‚СѓСЂСѓ
 	IsKeyboardChanged();
-	// И статусы окна
+	// Р СЃС‚Р°С‚СѓСЃС‹ РѕРєРЅР°
 	IsWindowChanged();
 
 	if (!mh_MemDC || (nStatusWidth != mn_BmpSize.cx) || (nStatusHeight != mn_BmpSize.cy))
@@ -435,7 +435,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	if (pVCon)
 		pRCon = pVCon->RCon();
 
-	// Сформировать элементы
+	// РЎС„РѕСЂРјРёСЂРѕРІР°С‚СЊ СЌР»РµРјРµРЅС‚С‹
 	size_t nDrawCount = 0;
 	//size_t nID = 1;
 	LPCWSTR pszTmp;
@@ -467,18 +467,18 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 		CEStatusItems nID = gStatusCols[ii].nID;
 		_ASSERTE(nID < countof(m_Values));
 
-		// Info - показываем всегда!
+		// Info - РїРѕРєР°Р·С‹РІР°РµРј РІСЃРµРіРґР°!
 		if (nID != csi_Info)
 		{
 			_ASSERTE(nID<countof(gpSet->isStatusColumnHidden));
 			if (gpSet->isStatusColumnHidden[nID])
-				continue; // просили не показывать
+				continue; // РїСЂРѕСЃРёР»Рё РЅРµ РїРѕРєР°Р·С‹РІР°С‚СЊ
 			if (nID == csi_ConsoleTitle)
-				continue; // если выбрано - то показывается как csi_Info
+				continue; // РµСЃР»Рё РІС‹Р±СЂР°РЅРѕ - С‚Рѕ РїРѕРєР°Р·С‹РІР°РµС‚СЃСЏ РєР°Рє csi_Info
 			if ((nID == csi_Transparency) && !gpSet->isTransparentAllowed())
-				continue; // смысла не имеет
+				continue; // СЃРјС‹СЃР»Р° РЅРµ РёРјРµРµС‚
 			if ((nID == csi_SyncInside) && !gpConEmu->mp_Inside)
-				continue; // смысла не имеет
+				continue; // СЃРјС‹СЃР»Р° РЅРµ РёРјРµРµС‚
 		}
 
 		m_Items[nDrawCount].nID = nID;
@@ -498,7 +498,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				{
 					lstrcpyn(m_Items[nDrawCount].sText, pszTmp, countof(m_Items[nDrawCount].sText));
 				}
-				/* -- вроде и так работает через pRCon->GetConStatus()
+				/* -- РІСЂРѕРґРµ Рё С‚Р°Рє СЂР°Р±РѕС‚Р°РµС‚ С‡РµСЂРµР· pRCon->GetConStatus()
 				else if (pRCon && pRCon->isSelectionPresent())
 				{
 					CONSOLE_SELECTION_INFO sel = {};
@@ -536,7 +536,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 
 			case csi_ActiveProcess:
 				if (gpSet->isStatusColumnHidden[csi_ConsoleTitle])
-					m_Items[nDrawCount].sText[0] = 0; // Уже показано в первой колонке
+					m_Items[nDrawCount].sText[0] = 0; // РЈР¶Рµ РїРѕРєР°Р·Р°РЅРѕ РІ РїРµСЂРІРѕР№ РєРѕР»РѕРЅРєРµ
 				else
 					LoadActiveProcess(pRCon, m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText));
 				break;
@@ -564,7 +564,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"SCRL");
 				break;
 			case csi_InputLocale:
-				// чтобы не задавали вопросов, нафига дублируется.
+				// С‡С‚РѕР±С‹ РЅРµ Р·Р°РґР°РІР°Р»Рё РІРѕРїСЂРѕСЃРѕРІ, РЅР°С„РёРіР° РґСѓР±Р»РёСЂСѓРµС‚СЃСЏ.
 				if (LOWORD((DWORD)mhk_Locale) == HIWORD((DWORD)mhk_Locale))
 				{
 					_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%04X", LOWORD((DWORD)mhk_Locale));
@@ -622,15 +622,15 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 		
 		if (nID == csi_Info)
 		{
-			m_Items[nDrawCount].TextSize.cx += szVerSize.cx; // Информация о версии
+			m_Items[nDrawCount].TextSize.cx += szVerSize.cx; // РРЅС„РѕСЂРјР°С†РёСЏ Рѕ РІРµСЂСЃРёРё
 			if (m_Items[nDrawCount].TextSize.cx < nMinInfoWidth)
 				m_Items[nDrawCount].TextSize.cx = nMinInfoWidth;
 		}
 
-		//if (nDrawCount) // перед вторым и далее - добавить разделитель
+		//if (nDrawCount) // РїРµСЂРµРґ РІС‚РѕСЂС‹Рј Рё РґР°Р»РµРµ - РґРѕР±Р°РІРёС‚СЊ СЂР°Р·РґРµР»РёС‚РµР»СЊ
 		//	nTotalWidth += 2*nGapWidth + nDashWidth;
 
-		if (nID == csi_Info) // csi_Info добавим потом
+		if (nID == csi_Info) // csi_Info РґРѕР±Р°РІРёРј РїРѕС‚РѕРј
 			iInfoID = (int)nDrawCount;
 		//else
 		//	nTotalWidth += m_Items[nDrawCount].TextSize.cx;
@@ -649,7 +649,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 
 	//nTotalWidth += nGapWidth;
 
-	// Сброс неиспользуемых ячеек
+	// РЎР±СЂРѕСЃ РЅРµРёСЃРїРѕР»СЊР·СѓРµРјС‹С… СЏС‡РµРµРє
 	for (size_t i = nDrawCount; i < countof(m_Items); i++)
 	{
 		m_Items[i].bShow = FALSE;
@@ -663,7 +663,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	}
 	else
 	{
-		// Подсчет допустимой ширины
+		// РџРѕРґСЃС‡РµС‚ РґРѕРїСѓСЃС‚РёРјРѕР№ С€РёСЂРёРЅС‹
 		nTotalWidth = nMinInfoWidth + 2*nGapWidth + nDashWidth;
 
 		for (size_t i = 1; i < nDrawCount; i++)
@@ -673,18 +673,18 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				if ((nTotalWidth+m_Items[i].TextSize.cx+2*nGapWidth) > nStatusWidth)
 				{
 					m_Items[i].bShow = FALSE;
-					// Но продолжим, может следующая ячейки будет уже и "влезет"
+					// РќРѕ РїСЂРѕРґРѕР»Р¶РёРј, РјРѕР¶РµС‚ СЃР»РµРґСѓСЋС‰Р°СЏ СЏС‡РµР№РєРё Р±СѓРґРµС‚ СѓР¶Рµ Рё "РІР»РµР·РµС‚"
 				}
 				else
 				{
-					// Раз этот элемент показан
+					// Р Р°Р· СЌС‚РѕС‚ СЌР»РµРјРµРЅС‚ РїРѕРєР°Р·Р°РЅ
 					nTotalWidth += (m_Items[i].TextSize.cx + 2*nGapWidth + nDashWidth);
 				}
 			}
 			// -- don't break, may be further columns!
 			//else
 			//{
-			//	break; // дальше смысла нет - ячейки кончились
+			//	break; // РґР°Р»СЊС€Рµ СЃРјС‹СЃР»Р° РЅРµС‚ - СЏС‡РµР№РєРё РєРѕРЅС‡РёР»РёСЃСЊ
 			//}
 		}
 
@@ -717,17 +717,17 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 		RECT rcField = {x, ptUL.y, x+m_Items[i].TextSize.cx+2*nGapWidth, ptUL.y+nStatusHeight};
 		if (rcField.right > nStatusWidth)
 		{
-			_ASSERTE(rcField.right <= nStatusWidth); // должно было отсечься на предыдущем цикле!
+			_ASSERTE(rcField.right <= nStatusWidth); // РґРѕР»Р¶РЅРѕ Р±С‹Р»Рѕ РѕС‚СЃРµС‡СЊСЃСЏ РЅР° РїСЂРµРґС‹РґСѓС‰РµРј С†РёРєР»Рµ!
 			break;
 		}
 		if ((i+1) == nDrawCount)
 			rcField.right = nStatusWidth;
 
 
-		// Запомнить, чтобы клики обрабатывать...
+		// Р—Р°РїРѕРјРЅРёС‚СЊ, С‡С‚РѕР±С‹ РєР»РёРєРё РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ...
 		m_Items[i].rcClient = MakeRect(rcField.left+rcStatus.left, rcStatus.top, rcField.right+rcStatus.left, rcStatus.bottom);
 
-		// "Resize mark" отрисовывается вручную
+		// "Resize mark" РѕС‚СЂРёСЃРѕРІС‹РІР°РµС‚СЃСЏ РІСЂСѓС‡РЅСѓСЋ
 		if (m_Items[i].nID == csi_SizeGrip)
 		{
 			int nW = (rcField.bottom - rcField.top);
@@ -872,7 +872,7 @@ wrap:
 		{
 			#ifdef _DEBUG
 			nErr = GetLastError();
-			// ассерт может возникнуть в RemoteDesktop пока был запрос на UAC
+			// Р°СЃСЃРµСЂС‚ РјРѕР¶РµС‚ РІРѕР·РЅРёРєРЅСѓС‚СЊ РІ RemoteDesktop РїРѕРєР° Р±С‹Р» Р·Р°РїСЂРѕСЃ РЅР° UAC
 			_ASSERTE(bPaintOK || !gpConEmu->session.Connected());
 			bPaintOK = FALSE;
 			#endif
@@ -897,7 +897,7 @@ wrap:
 	mn_LastPaintTick = GetTickCount();
 }
 
-// true = обновлять строго, сменился шрифт, размер, или еще что...
+// true = РѕР±РЅРѕРІР»СЏС‚СЊ СЃС‚СЂРѕРіРѕ, СЃРјРµРЅРёР»СЃСЏ С€СЂРёС„С‚, СЂР°Р·РјРµСЂ, РёР»Рё РµС‰Рµ С‡С‚Рѕ...
 void CStatus::UpdateStatusBar(bool abForce /*= false*/, bool abRepaintNow /*= false*/)
 {
 	if (!gpSet->isStatusBarShow || !ghWnd)
@@ -906,14 +906,14 @@ void CStatus::UpdateStatusBar(bool abForce /*= false*/, bool abRepaintNow /*= fa
 	mb_DataChanged	= mb_DataChanged | abForce;
 
 	//if (mb_Invalidated)
-	//	return; // уже дернули
+	//	return; // СѓР¶Рµ РґРµСЂРЅСѓР»Рё
 
 	if (!abForce)
 	{
-		// Чтобы не было слишком частой отрисовки и нагрузки на систему
+		// Р§С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ СЃР»РёС€РєРѕРј С‡Р°СЃС‚РѕР№ РѕС‚СЂРёСЃРѕРІРєРё Рё РЅР°РіСЂСѓР·РєРё РЅР° СЃРёСЃС‚РµРјСѓ
 		DWORD nDelta = (GetTickCount() - mn_LastPaintTick);
 		if (nDelta < STATUS_PAINT_DELAY)
-			return; // обновится по следующему таймеру
+			return; // РѕР±РЅРѕРІРёС‚СЃСЏ РїРѕ СЃР»РµРґСѓСЋС‰РµРјСѓ С‚Р°Р№РјРµСЂСѓ
 	}
 
 	RECT rcInvalidated = {};
@@ -935,9 +935,9 @@ void CStatus::InvalidateStatusBar(LPRECT rcInvalidated /*= NULL*/)
 	if (!GetStatusBarClientRect(&rcClient))
 		return;
 
-	// Invalidate вызывается не только при изменениях, но
-	// и по таймеру, чтобы гарантировать актуальность данных
-	// (не все данные хранятся в объекте, например CAPS/NUM/SCRL нужно проверять)
+	// Invalidate РІС‹Р·С‹РІР°РµС‚СЃСЏ РЅРµ С‚РѕР»СЊРєРѕ РїСЂРё РёР·РјРµРЅРµРЅРёСЏС…, РЅРѕ
+	// Рё РїРѕ С‚Р°Р№РјРµСЂСѓ, С‡С‚РѕР±С‹ РіР°СЂР°РЅС‚РёСЂРѕРІР°С‚СЊ Р°РєС‚СѓР°Р»СЊРЅРѕСЃС‚СЊ РґР°РЅРЅС‹С…
+	// (РЅРµ РІСЃРµ РґР°РЅРЅС‹Рµ С…СЂР°РЅСЏС‚СЃСЏ РІ РѕР±СЉРµРєС‚Рµ, РЅР°РїСЂРёРјРµСЂ CAPS/NUM/SCRL РЅСѓР¶РЅРѕ РїСЂРѕРІРµСЂСЏС‚СЊ)
 
 	gpConEmu->Invalidate(&rcClient, FALSE);
 
@@ -952,8 +952,8 @@ void CStatus::OnTimer()
 	if (!gpSet->isStatusBarShow)
 		return;
 
-	// Если сейчас нет меню, и был показан hint для колонки - 
-	// проверить позицию мышки
+	// Р•СЃР»Рё СЃРµР№С‡Р°СЃ РЅРµС‚ РјРµРЅСЋ, Рё Р±С‹Р» РїРѕРєР°Р·Р°РЅ hint РґР»СЏ РєРѕР»РѕРЅРєРё - 
+	// РїСЂРѕРІРµСЂРёС‚СЊ РїРѕР·РёС†РёСЋ РјС‹С€РєРё
 	if ((m_ClickedItemDesc != csi_Last) && !mb_InPopupMenu)
 	{
 		if (gpConEmu->isSizing())
@@ -970,10 +970,10 @@ void CStatus::OnTimer()
 	}
 
 	if (/*!mb_Invalidated &&*/ !mb_DataChanged && IsKeyboardChanged())
-		mb_DataChanged = true; // Изменения в клавиатуре
+		mb_DataChanged = true; // РР·РјРµРЅРµРЅРёСЏ РІ РєР»Р°РІРёР°С‚СѓСЂРµ
 
 	if (!mb_DataChanged && IsWindowChanged())
-		mb_DataChanged = true; // измения в стилях или текущем фокусе
+		mb_DataChanged = true; // РёР·РјРµРЅРёСЏ РІ СЃС‚РёР»СЏС… РёР»Рё С‚РµРєСѓС‰РµРј С„РѕРєСѓСЃРµ
 
 	if (mb_DataChanged /*&& !mb_Invalidated*/)
 		UpdateStatusBar(true);
@@ -1030,7 +1030,7 @@ bool CStatus::IsStatusResizing()
 {
 	_ASSERTE(this);
 	if (!gpSet->isStatusBarShow)
-		return false; // Нет статуса - нет ресайза
+		return false; // РќРµС‚ СЃС‚Р°С‚СѓСЃР° - РЅРµС‚ СЂРµСЃР°Р№Р·Р°
 
 	return mb_StatusResizing;
 }
@@ -1038,7 +1038,7 @@ bool CStatus::IsStatusResizing()
 bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, POINT ptCurClient, LRESULT& lResult)
 {
 	if (!gpSet->isStatusBarShow)
-		return false; // Разрешить дальнейшую обработку
+		return false; // Р Р°Р·СЂРµС€РёС‚СЊ РґР°Р»СЊРЅРµР№С€СѓСЋ РѕР±СЂР°Р±РѕС‚РєСѓ
 
 	lResult = 0;
 
@@ -1083,7 +1083,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				DEBUGSTRSIZE(L"Resize from status bar grip finished");
 			}
 			break;
-		case WM_SETCURSOR: // не приходит
+		case WM_SETCURSOR: // РЅРµ РїСЂРёС…РѕРґРёС‚
 			// Stop further processing
 			SetCursor(LoadCursor(NULL, IDC_SIZENWSE));
 			lResult = TRUE;
@@ -1119,11 +1119,11 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				{
 					bFound = true;
 
-					// правый клик был на колонке "Info"
+					// РїСЂР°РІС‹Р№ РєР»РёРє Р±С‹Р» РЅР° РєРѕР»РѕРЅРєРµ "Info"
 					if (i == 0)
 					{
-						// и координата не правее середины колонки
-						// (ну так, на всякий случай, чтобы и статусное меню можно было показать)
+						// Рё РєРѕРѕСЂРґРёРЅР°С‚Р° РЅРµ РїСЂР°РІРµРµ СЃРµСЂРµРґРёРЅС‹ РєРѕР»РѕРЅРєРё
+						// (РЅСѓ С‚Р°Рє, РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, С‡С‚РѕР±С‹ Рё СЃС‚Р°С‚СѓСЃРЅРѕРµ РјРµРЅСЋ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ РїРѕРєР°Р·Р°С‚СЊ)
 						if (ptCurClient.x <= min(80,(m_Items[0].rcClient.right/2)))
 						{
 							_ASSERTE(m_Items[i].nID == csi_Info);
@@ -1251,7 +1251,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 	}
 
-	// Значит курсор над статусом
+	// Р—РЅР°С‡РёС‚ РєСѓСЂСЃРѕСЂ РЅР°Рґ СЃС‚Р°С‚СѓСЃРѕРј
 	return true;
 }
 
@@ -1263,7 +1263,7 @@ void CStatus::ShowStatusSetupMenu()
 
 	int nClickedID = -1;
 
-	// m_Items содержит только видимые элементы, поэтому индексы не совпадают, надо искать
+	// m_Items СЃРѕРґРµСЂР¶РёС‚ С‚РѕР»СЊРєРѕ РІРёРґРёРјС‹Рµ СЌР»РµРјРµРЅС‚С‹, РїРѕСЌС‚РѕРјСѓ РёРЅРґРµРєСЃС‹ РЅРµ СЃРѕРІРїР°РґР°СЋС‚, РЅР°РґРѕ РёСЃРєР°С‚СЊ
 	for (size_t j = 0; j < countof(m_Items); j++)
 	{
 		if (m_Items[j].bShow && PtInRect(&m_Items[j].rcClient, ptClient))
@@ -1273,10 +1273,10 @@ void CStatus::ShowStatusSetupMenu()
 		}
 	}
 
-	// Если правый клик был на колонке "Info"
+	// Р•СЃР»Рё РїСЂР°РІС‹Р№ РєР»РёРє Р±С‹Р» РЅР° РєРѕР»РѕРЅРєРµ "Info"
 	if ((nClickedID == 0)
-		// и координата не правее середины колонки
-		// (ну так, на всякий случай, чтобы и статусное меню можно было показать)
+		// Рё РєРѕРѕСЂРґРёРЅР°С‚Р° РЅРµ РїСЂР°РІРµРµ СЃРµСЂРµРґРёРЅС‹ РєРѕР»РѕРЅРєРё
+		// (РЅСѓ С‚Р°Рє, РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, С‡С‚РѕР±С‹ Рё СЃС‚Р°С‚СѓСЃРЅРѕРµ РјРµРЅСЋ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ РїРѕРєР°Р·Р°С‚СЊ)
 		&& (ptClient.x <= min(80,(m_Items[0].rcClient.right/2))))
 	{
 		gpConEmu->mp_Menu->ShowSysmenu(ptCur.x, ptCur.y, true);
@@ -1312,7 +1312,7 @@ void CStatus::ShowStatusSetupMenu()
 			AppendMenu(hPopup, MF_STRING|nBreakFlag|((gpSet->isStatusColumnHidden[gStatusCols[i-1].nID]) ? MF_UNCHECKED : MF_CHECKED), i, gStatusCols[i-1].sName);
 		}
 
-		// m_Items содержит только видимые элементы, поэтому индексы не совпадают
+		// m_Items СЃРѕРґРµСЂР¶РёС‚ С‚РѕР»СЊРєРѕ РІРёРґРёРјС‹Рµ СЌР»РµРјРµРЅС‚С‹, РїРѕСЌС‚РѕРјСѓ РёРЅРґРµРєСЃС‹ РЅРµ СЃРѕРІРїР°РґР°СЋС‚
 		if (nClickedID == gStatusCols[i-1].nID)
 		{
 			MENUITEMINFO mi = {sizeof(mi), MIIM_STATE|MIIM_ID};
@@ -1390,7 +1390,7 @@ bool CStatus::OnDataChanged(CEStatusItems *ChangedID, size_t Count, bool abForce
 {
 	//if (!mb_Invalidated && IsKeyboardChanged())
 	//{
-	//	// Изменения в клавиатуре - отрисовать сразу
+	//	// РР·РјРµРЅРµРЅРёСЏ РІ РєР»Р°РІРёР°С‚СѓСЂРµ - РѕС‚СЂРёСЃРѕРІР°С‚СЊ СЃСЂР°Р·Сѓ
 	//	UpdateStatusBar(true);
 	//}
 
@@ -1425,9 +1425,9 @@ void CStatus::OnWindowReposition(const RECT *prcNew)
 	else
 	{
 		if (gpConEmu->isIconic())
-			return; // все равно ничего не видно
+			return; // РІСЃРµ СЂР°РІРЅРѕ РЅРёС‡РµРіРѕ РЅРµ РІРёРґРЅРѕ
 
-		//-- GetWindowRect может вернуть еще минимизированные размеры
+		//-- GetWindowRect РјРѕР¶РµС‚ РІРµСЂРЅСѓС‚СЊ РµС‰Рµ РјРёРЅРёРјРёР·РёСЂРѕРІР°РЅРЅС‹Рµ СЂР°Р·РјРµСЂС‹
 		//GetWindowRect(ghWnd, &rcTmp);
 		rcTmp = gpConEmu->CalcRect(CER_MAIN);
 	}
@@ -1460,17 +1460,17 @@ void CStatus::OnWindowReposition(const RECT *prcNew)
 	wcscpy_c(m_Values[csi_WindowWork].szFormat, m_Values[csi_WindowWork].sText/*L"9999x9999"*/);
 
 	CEStatusItems Changed[] = {csi_WindowPos, csi_WindowSize, csi_WindowClient, csi_WindowWork};
-	// -- обновляем сразу, иначе получаются странные эффекты "отставания" статуса от размера окна...
+	// -- РѕР±РЅРѕРІР»СЏРµРј СЃСЂР°Р·Сѓ, РёРЅР°С‡Рµ РїРѕР»СѓС‡Р°СЋС‚СЃСЏ СЃС‚СЂР°РЅРЅС‹Рµ СЌС„С„РµРєС‚С‹ "РѕС‚СЃС‚Р°РІР°РЅРёСЏ" СЃС‚Р°С‚СѓСЃР° РѕС‚ СЂР°Р·РјРµСЂР° РѕРєРЅР°...
 	if (!OnDataChanged(Changed, countof(Changed), true))
 	{
-		// Размер окна изменился - даже если колонки не менялись, все равно нужно отрисоваться
+		// Р Р°Р·РјРµСЂ РѕРєРЅР° РёР·РјРµРЅРёР»СЃСЏ - РґР°Р¶Рµ РµСЃР»Рё РєРѕР»РѕРЅРєРё РЅРµ РјРµРЅСЏР»РёСЃСЊ, РІСЃРµ СЂР°РІРЅРѕ РЅСѓР¶РЅРѕ РѕС‚СЂРёСЃРѕРІР°С‚СЊСЃСЏ
 		InvalidateStatusBar();
 	}
 }
 
-// bForceUpdate надо ставить в true, после изменения размеров консоли! Чтобы при ресайзе
-// актуальные данные показывать. Другие значения (скролл и курсор) можно и с задержкой
-// отображать, чтобы лишнюю нагрузку не создавать.
+// bForceUpdate РЅР°РґРѕ СЃС‚Р°РІРёС‚СЊ РІ true, РїРѕСЃР»Рµ РёР·РјРµРЅРµРЅРёСЏ СЂР°Р·РјРµСЂРѕРІ РєРѕРЅСЃРѕР»Рё! Р§С‚РѕР±С‹ РїСЂРё СЂРµСЃР°Р№Р·Рµ
+// Р°РєС‚СѓР°Р»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ РїРѕРєР°Р·С‹РІР°С‚СЊ. Р”СЂСѓРіРёРµ Р·РЅР°С‡РµРЅРёСЏ (СЃРєСЂРѕР»Р» Рё РєСѓСЂСЃРѕСЂ) РјРѕР¶РЅРѕ Рё СЃ Р·Р°РґРµСЂР¶РєРѕР№
+// РѕС‚РѕР±СЂР°Р¶Р°С‚СЊ, С‡С‚РѕР±С‹ Р»РёС€РЅСЋСЋ РЅР°РіСЂСѓР·РєСѓ РЅРµ СЃРѕР·РґР°РІР°С‚СЊ.
 void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CONSOLE_CURSOR_INFO* pci, bool bForceUpdate)
 {
 	bool bValid = (psbi != NULL);
@@ -1486,7 +1486,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 	else
 	{
 		wcscpy_c(m_Values[csi_ConsolePos].sText, L" ");
-		wcscpy_c(m_Values[csi_ConsolePos].szFormat, L"(0,0)-(199,199)"); // на самом деле может быть до 9999, но для уменьшения ширины - по умолчанию так
+		wcscpy_c(m_Values[csi_ConsolePos].szFormat, L"(0,0)-(199,199)"); // РЅР° СЃР°РјРѕРј РґРµР»Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РґРѕ 9999, РЅРѕ РґР»СЏ СѓРјРµРЅСЊС€РµРЅРёСЏ С€РёСЂРёРЅС‹ - РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ С‚Р°Рє
 	}
 
 	// csi_ConsoleSize:
@@ -1509,7 +1509,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 	else
 	{
 		wcscpy_c(m_Values[csi_BufferSize].sText, L" ");
-		//m_Values[csi_BufferSize].sFormat = L"999x9999"; // на самом деле может быть до 9999, но для уменьшения ширины - по умолчанию так
+		//m_Values[csi_BufferSize].sFormat = L"999x9999"; // РЅР° СЃР°РјРѕРј РґРµР»Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РґРѕ 9999, РЅРѕ РґР»СЏ СѓРјРµРЅСЊС€РµРЅРёСЏ С€РёСЂРёРЅС‹ - РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ С‚Р°Рє
 		wcscpy_c(m_Values[csi_BufferSize].szFormat, m_Values[csi_BufferSize].sText);
 	}
 
@@ -1609,7 +1609,7 @@ void CStatus::OnConsoleBufferChanged(CRealConsole* pRCon)
 	wcscpy_c(m_Values[csi_ActiveBuffer].szFormat, L"DUMP");
 
 	CEStatusItems Changed[] = {csi_ActiveBuffer};
-	// -- обновляем сразу, иначе получаются странные эффекты "отставания" статуса от окна...
+	// -- РѕР±РЅРѕРІР»СЏРµРј СЃСЂР°Р·Сѓ, РёРЅР°С‡Рµ РїРѕР»СѓС‡Р°СЋС‚СЃСЏ СЃС‚СЂР°РЅРЅС‹Рµ СЌС„С„РµРєС‚С‹ "РѕС‚СЃС‚Р°РІР°РЅРёСЏ" СЃС‚Р°С‚СѓСЃР° РѕС‚ РѕРєРЅР°...
 	OnDataChanged(Changed, countof(Changed), true);
 }
 
@@ -1667,7 +1667,7 @@ void CStatus::OnActiveVConChanged(int nIndex/*0-based*/, CRealConsole* pRCon)
 		L"x%08X(%u)", (DWORD)hCon, (DWORD)hCon);
 	wcscpy_c(m_Values[csi_ServerHWND].szFormat, m_Values[csi_ServerHWND].sText);
 
-	// Чтобы уж точно обновилось - как минимум, меняется PID активного процесса
+	// Р§С‚РѕР±С‹ СѓР¶ С‚РѕС‡РЅРѕ РѕР±РЅРѕРІРёР»РѕСЃСЊ - РєР°Рє РјРёРЅРёРјСѓРј, РјРµРЅСЏРµС‚СЃСЏ PID Р°РєС‚РёРІРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР°
 	UpdateStatusBar(true);
 }
 
@@ -1713,7 +1713,7 @@ bool CStatus::IsKeyboardChanged()
 		&& gpSet->isStatusColumnHidden[csi_ScrollLock]
 		&& gpSet->isStatusColumnHidden[csi_InputLocale])
 	{
-		// Если ни одна из клавиатурных "кнопок" не показана - то и делать нечего
+		// Р•СЃР»Рё РЅРё РѕРґРЅР° РёР· РєР»Р°РІРёР°С‚СѓСЂРЅС‹С… "РєРЅРѕРїРѕРє" РЅРµ РїРѕРєР°Р·Р°РЅР° - С‚Рѕ Рё РґРµР»Р°С‚СЊ РЅРµС‡РµРіРѕ
 		return false;
 	}
 
@@ -1754,7 +1754,7 @@ bool CStatus::IsWindowChanged()
 		&& gpSet->isStatusColumnHidden[csi_HwndFore]
 		&& gpSet->isStatusColumnHidden[csi_HwndFocus])
 	{
-		// Если ни одна позиция не показана - то и делать нечего
+		// Р•СЃР»Рё РЅРё РѕРґРЅР° РїРѕР·РёС†РёСЏ РЅРµ РїРѕРєР°Р·Р°РЅР° - С‚Рѕ Рё РґРµР»Р°С‚СЊ РЅРµС‡РµРіРѕ
 		return false;
 	}
 	_ASSERTE(gpConEmu->isMainThread());
@@ -1807,7 +1807,7 @@ void CStatus::OnKeyboardChanged()
 {
 	if (/*!mb_Invalidated &&*/ IsKeyboardChanged())
 	{
-		// Изменения в клавиатуре - отрисовать сразу
+		// РР·РјРµРЅРµРЅРёСЏ РІ РєР»Р°РІРёР°С‚СѓСЂРµ - РѕС‚СЂРёСЃРѕРІР°С‚СЊ СЃСЂР°Р·Сѓ
 		UpdateStatusBar(true);
 	}
 }
@@ -1883,9 +1883,9 @@ bool CStatus::ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly)
 					{
 						case 1:
 							gpSet->isUserScreenTransparent = !gpSet->isUserScreenTransparent;
-							gpConEmu->OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
+							gpConEmu->OnHideCaption(); // РїСЂРё РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚Рё - РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ СЃРєСЂС‹С‚РёРµ Р·Р°РіРѕР»РѕРІРєР° + РєРЅРѕРїРєРё
 							gpConEmu->UpdateWindowRgn();
-							// Отразить изменения в статусе
+							// РћС‚СЂР°Р·РёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ РІ СЃС‚Р°С‚СѓСЃРµ
 							OnTransparency();
 							break;
 						case 2:
@@ -1901,7 +1901,7 @@ bool CStatus::ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly)
 
 	if (bSelected)
 	{
-		// Отразить изменения в статусе
+		// РћС‚СЂР°Р·РёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ РІ СЃС‚Р°С‚СѓСЃРµ
 		OnTransparency();
 	}
 
@@ -1929,7 +1929,7 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 	mb_InPopupMenu = true;
 	HMENU hPopup = CreatePopupMenu();
 
-	// меню было расчитано на min=40
+	// РјРµРЅСЋ Р±С‹Р»Рѕ СЂР°СЃС‡РёС‚Р°РЅРѕ РЅР° min=40
 	_ASSERTE(MIN_ALPHA_VALUE==40);
 
 	int nCurrent = -1;
@@ -1980,7 +1980,7 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 	}
 
 	u8 nPrevAlpha = gpSet->nTransparent;
-	//bool bPrevUserScreen = gpSet->isUserScreenTransparent; -- он идет через WindowRgn, а не Transparency
+	//bool bPrevUserScreen = gpSet->isUserScreenTransparent; -- РѕРЅ РёРґРµС‚ С‡РµСЂРµР· WindowRgn, Р° РЅРµ Transparency
 	bool bPrevColorKey = gpSet->isColorKeyTransparent;
 
 	_ASSERTE(m_ClickedItemDesc == csi_Transparency);
@@ -1998,7 +1998,7 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 
 	if (!bSelected)
 	{
-		// Если поменяли альфу при Hover мышкой...
+		// Р•СЃР»Рё РїРѕРјРµРЅСЏР»Рё Р°Р»СЊС„Сѓ РїСЂРё Hover РјС‹С€РєРѕР№...
 		if ((nPrevAlpha != gpSet->nTransparent)
 			//|| (bPrevUserScreen != gpSet->isUserScreenTransparent)
 			|| (bPrevColorKey != gpSet->isColorKeyTransparent))
@@ -2019,7 +2019,7 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 	DestroyMenu(hPopup);
 	mb_InPopupMenu = false;
 
-	// Отразить изменения в статусе
+	// РћС‚СЂР°Р·РёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ РІ СЃС‚Р°С‚СѓСЃРµ
 	OnTransparency();
 }
 
@@ -2033,7 +2033,7 @@ void CStatus::UpdateStatusFont()
 	gpConEmu->InvalidateGaps();
 }
 
-// Прямоугольник в клиентских координатах ghWnd!
+// РџСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє РІ РєР»РёРµРЅС‚СЃРєРёС… РєРѕРѕСЂРґРёРЅР°С‚Р°С… ghWnd!
 bool CStatus::GetStatusBarClientRect(RECT* rc)
 {
 	if (!gpSet->isStatusBarShow)
@@ -2051,7 +2051,7 @@ bool CStatus::GetStatusBarClientRect(RECT* rc)
 	return true;
 }
 
-// Прямоугольник в клиентских координатах ghWnd!
+// РџСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє РІ РєР»РёРµРЅС‚СЃРєРёС… РєРѕРѕСЂРґРёРЅР°С‚Р°С… ghWnd!
 bool CStatus::GetStatusBarItemRect(CEStatusItems nID, RECT* rc)
 {
 	if (!gpSet->isStatusBarShow)

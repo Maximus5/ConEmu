@@ -1,4 +1,4 @@
-
+п»ї
 #pragma once
 
 //#include <Objbase.h>
@@ -22,7 +22,7 @@ static const ImgLoadType
 	ilt_ShellMask       = (ilt_ShellSmall|ilt_ShellLarge),
 	ilt_Thumbnail       = 4, // Thumbnail/preview
 	ilt_TypeMask        = (ilt_ShellMask|ilt_Thumbnail),
-	ilt_ThumbnailLoaded = 8, // Thumbnail был реально загружен, а не только извлечена информация
+	ilt_ThumbnailLoaded = 8, // Thumbnail Р±С‹Р» СЂРµР°Р»СЊРЅРѕ Р·Р°РіСЂСѓР¶РµРЅ, Р° РЅРµ С‚РѕР»СЊРєРѕ РёР·РІР»РµС‡РµРЅР° РёРЅС„РѕСЂРјР°С†РёСЏ
 	ilt_ThumbnailMask   = (ilt_Thumbnail|ilt_ThumbnailLoaded),
 	ilt_None            = 0
 ;
@@ -44,13 +44,13 @@ struct IMAGE_CACHE_INFO
 	wchar_t *lpwszFileName;
 	BOOL bVirtualItem;
 	DWORD_PTR UserData;
-	ImgLoadType PreviewLoaded;  // пытались ли уже загружать превьюшку, и что удалось загрузить
-	//BOOL bPreviewExists; // и получилось ли ее загрузить реально, или в кеше только ShellIcon?
-	BOOL bIgnoreFileDescription; // ImpEx показывает в описании размер изображения, получается некрасивое дублирование
+	ImgLoadType PreviewLoaded;  // РїС‹С‚Р°Р»РёСЃСЊ Р»Рё СѓР¶Рµ Р·Р°РіСЂСѓР¶Р°С‚СЊ РїСЂРµРІСЊСЋС€РєСѓ, Рё С‡С‚Рѕ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ
+	//BOOL bPreviewExists; // Рё РїРѕР»СѓС‡РёР»РѕСЃСЊ Р»Рё РµРµ Р·Р°РіСЂСѓР·РёС‚СЊ СЂРµР°Р»СЊРЅРѕ, РёР»Рё РІ РєРµС€Рµ С‚РѕР»СЊРєРѕ ShellIcon?
+	BOOL bIgnoreFileDescription; // ImpEx РїРѕРєР°Р·С‹РІР°РµС‚ РІ РѕРїРёСЃР°РЅРёРё СЂР°Р·РјРµСЂ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ, РїРѕР»СѓС‡Р°РµС‚СЃСЏ РЅРµРєСЂР°СЃРёРІРѕРµ РґСѓР±Р»РёСЂРѕРІР°РЅРёРµ
 	//int N,X,Y;
 	struct ImageBits
 	{
-		COORD crSize; // Предпочтительно, должен совпадать с crLoadSize
+		COORD crSize; // РџСЂРµРґРїРѕС‡С‚РёС‚РµР»СЊРЅРѕ, РґРѕР»Р¶РµРЅ СЃРѕРІРїР°РґР°С‚СЊ СЃ crLoadSize
 		DWORD cbStride; // Bytes per line
 		DWORD nBits; // 32 bit required!
 		// [Out] Next fields MUST be LocalAlloc(LPTR)
@@ -77,10 +77,10 @@ class CImgCache
 		//int nXIcon, nYIcon, nXIconSpace, nYIconSpace;
 		COLORREF crBackground;
 		HBRUSH hbrBack;
-		// Теперь - собственно поле кеша
+		// РўРµРїРµСЂСЊ - СЃРѕР±СЃС‚РІРµРЅРЅРѕ РїРѕР»Рµ РєРµС€Р°
 #define FIELD_MAX_COUNT 1000
-		//#define ITEMS_IN_FIELD 10 // количество в "строке"
-		//int nFieldX, nFieldY; // реальное количество в "строке"/"столбце" (не больше ITEMS_IN_FIELD)
+		//#define ITEMS_IN_FIELD 10 // РєРѕР»РёС‡РµСЃС‚РІРѕ РІ "СЃС‚СЂРѕРєРµ"
+		//int nFieldX, nFieldY; // СЂРµР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РІ "СЃС‚СЂРѕРєРµ"/"СЃС‚РѕР»Р±С†Рµ" (РЅРµ Р±РѕР»СЊС€Рµ ITEMS_IN_FIELD)
 		//HDC hField[FIELD_MAX_COUNT]; HBITMAP hFieldBmp[FIELD_MAX_COUNT], hOldBmp[FIELD_MAX_COUNT];
 		IMAGE_CACHE_INFO CacheInfo[FIELD_MAX_COUNT];
 		HDC mh_LoadDC, mh_DrawDC;
@@ -140,10 +140,10 @@ extern CImgCache *gpImgCache;
 class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 {
 	public:
-		// Обработка элемента. Функция должна возвращать:
-		// S_OK    - Элемент успешно обработан, будет установлен статус eItemReady
-		// S_FALSE - ошибка обработки, будет установлен статус eItemFailed
-		// FAILED()- статус eItemFailed И нить обработчика будет ЗАВЕРШЕНА
+		// РћР±СЂР°Р±РѕС‚РєР° СЌР»РµРјРµРЅС‚Р°. Р¤СѓРЅРєС†РёСЏ РґРѕР»Р¶РЅР° РІРѕР·РІСЂР°С‰Р°С‚СЊ:
+		// S_OK    - Р­Р»РµРјРµРЅС‚ СѓСЃРїРµС€РЅРѕ РѕР±СЂР°Р±РѕС‚Р°РЅ, Р±СѓРґРµС‚ СѓСЃС‚Р°РЅРѕРІР»РµРЅ СЃС‚Р°С‚СѓСЃ eItemReady
+		// S_FALSE - РѕС€РёР±РєР° РѕР±СЂР°Р±РѕС‚РєРё, Р±СѓРґРµС‚ СѓСЃС‚Р°РЅРѕРІР»РµРЅ СЃС‚Р°С‚СѓСЃ eItemFailed
+		// FAILED()- СЃС‚Р°С‚СѓСЃ eItemFailed Р РЅРёС‚СЊ РѕР±СЂР°Р±РѕС‚С‡РёРєР° Р±СѓРґРµС‚ Р—РђР’Р•Р РЁР•РќРђ
 		virtual HRESULT ProcessItem(IMAGE_CACHE_INFO*& pItem, LONG_PTR lParam)
 		{
 			if (!gpImgCache)
@@ -167,47 +167,47 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 			return S_FALSE;
 		};
 
-		//// Вызывается при успешном завершении обработки элемента при асинхронной обработке.
-		//// Если элемент обработан успешно (Status == eItemReady), вызывается OnItemReady
+		//// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё СѓСЃРїРµС€РЅРѕРј Р·Р°РІРµСЂС€РµРЅРёРё РѕР±СЂР°Р±РѕС‚РєРё СЌР»РµРјРµРЅС‚Р° РїСЂРё Р°СЃРёРЅС…СЂРѕРЅРЅРѕР№ РѕР±СЂР°Р±РѕС‚РєРµ.
+		//// Р•СЃР»Рё СЌР»РµРјРµРЅС‚ РѕР±СЂР°Р±РѕС‚Р°РЅ СѓСЃРїРµС€РЅРѕ (Status == eItemReady), РІС‹Р·С‹РІР°РµС‚СЃСЏ OnItemReady
 		//virtual void OnItemReady(IMAGE_CACHE_INFO*& pItem, LONG_PTR lParam)
 		//{
 		//	return;
 		//};
-		//// Иначе (Status == eItemFailed) - OnItemFailed
+		//// РРЅР°С‡Рµ (Status == eItemFailed) - OnItemFailed
 		//virtual void OnItemFailed(IMAGE_CACHE_INFO*& pItem, LONG_PTR lParam)
 		//{
 		//	return;
 		//};
-		//// После завершения этих функций ячейка стирается!
+		//// РџРѕСЃР»Рµ Р·Р°РІРµСЂС€РµРЅРёСЏ СЌС‚РёС… С„СѓРЅРєС†РёР№ СЏС‡РµР№РєР° СЃС‚РёСЂР°РµС‚СЃСЏ!
 
-		// Если требуется останов всех запросов и выход из нити обрабочика
+		// Р•СЃР»Рё С‚СЂРµР±СѓРµС‚СЃСЏ РѕСЃС‚Р°РЅРѕРІ РІСЃРµС… Р·Р°РїСЂРѕСЃРѕРІ Рё РІС‹С…РѕРґ РёР· РЅРёС‚Рё РѕР±СЂР°Р±РѕС‡РёРєР°
 		virtual bool IsTerminationRequested()
 		{
-			TODO("Вернуть TRUE при ExitFar");
+			TODO("Р’РµСЂРЅСѓС‚СЊ TRUE РїСЂРё ExitFar");
 			return CQueueProcessor<IMAGE_CACHE_INFO*>::IsTerminationRequested();
 		};
-		// Здесь потомок может выполнить CoInitialize например
+		// Р—РґРµСЃСЊ РїРѕС‚РѕРјРѕРє РјРѕР¶РµС‚ РІС‹РїРѕР»РЅРёС‚СЊ CoInitialize РЅР°РїСЂРёРјРµСЂ
 		virtual HRESULT OnThreadStarted()
 		{
 			CoInitialize(NULL);
 			return S_OK;
 		}
-		// Здесь потомок может выполнить CoUninitialize например
+		// Р—РґРµСЃСЊ РїРѕС‚РѕРјРѕРє РјРѕР¶РµС‚ РІС‹РїРѕР»РЅРёС‚СЊ CoUninitialize РЅР°РїСЂРёРјРµСЂ
 		virtual void OnThreadStopped()
 		{
 			CoUninitialize();
 			return;
 		};
-		// Можно переопределить для изменения логики сравнения (используется при поиске)
+		// РњРѕР¶РЅРѕ РїРµСЂРµРѕРїСЂРµРґРµР»РёС‚СЊ РґР»СЏ РёР·РјРµРЅРµРЅРёСЏ Р»РѕРіРёРєРё СЃСЂР°РІРЅРµРЅРёСЏ (РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РїСЂРё РїРѕРёСЃРєРµ)
 		virtual bool IsEqual(const IMAGE_CACHE_INFO*& pItem1, LONG_PTR lParam1, IMAGE_CACHE_INFO*& pItem2, LONG_PTR lParam2)
 		{
 			return (pItem1 == pItem2) && (lParam1 == lParam2);
 		};
-		// Если элемент потерял актуальность - стал НЕ высокоприоритетным
+		// Р•СЃР»Рё СЌР»РµРјРµРЅС‚ РїРѕС‚РµСЂСЏР» Р°РєС‚СѓР°Р»СЊРЅРѕСЃС‚СЊ - СЃС‚Р°Р» РќР• РІС‹СЃРѕРєРѕРїСЂРёРѕСЂРёС‚РµС‚РЅС‹Рј
 		virtual bool CheckHighPriority(const IMAGE_CACHE_INFO*& pItem)
 		{
-			// Перекрыть в потомке и вернуть false, если, например, был запрос
-			// для текущей картинки, но пользователь уже улистал с нее на другую
+			// РџРµСЂРµРєСЂС‹С‚СЊ РІ РїРѕС‚РѕРјРєРµ Рё РІРµСЂРЅСѓС‚СЊ false, РµСЃР»Рё, РЅР°РїСЂРёРјРµСЂ, Р±С‹Р» Р·Р°РїСЂРѕСЃ
+			// РґР»СЏ С‚РµРєСѓС‰РµР№ РєР°СЂС‚РёРЅРєРё, РЅРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ СѓР¶Рµ СѓР»РёСЃС‚Р°Р» СЃ РЅРµРµ РЅР° РґСЂСѓРіСѓСЋ
 			return true;
 		};
 };

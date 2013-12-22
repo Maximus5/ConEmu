@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -63,19 +63,19 @@ private:
 
 	bool PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG Y, LONG Width, LONG Height);
 
-	// Данные, которые приходят из плагина ("ConEmu Background" и пр.)
+	// Р”Р°РЅРЅС‹Рµ, РєРѕС‚РѕСЂС‹Рµ РїСЂРёС…РѕРґСЏС‚ РёР· РїР»Р°РіРёРЅР° ("ConEmu Background" Рё РїСЂ.)
 	bool mb_BgLastFade;
 	//CBackground* mp_PluginBg;
 	MSection *mcs_BkImgData;
 	size_t mn_BkImgDataMax;
 	CESERVER_REQ_SETBACKGROUND* mp_BkImgData; // followed by image data
-	bool mb_BkImgChanged; // Данные в mp_BkImgData были изменены плагином, требуется отрисовка
+	bool mb_BkImgChanged; // Р”Р°РЅРЅС‹Рµ РІ mp_BkImgData Р±С‹Р»Рё РёР·РјРµРЅРµРЅС‹ РїР»Р°РіРёРЅРѕРј, С‚СЂРµР±СѓРµС‚СЃСЏ РѕС‚СЂРёСЃРѕРІРєР°
 	bool mb_BkImgExist; //, mb_BkImgDelete;
 	LONG mn_BkImgWidth, mn_BkImgHeight;
-	// Поддержка EMF
+	// РџРѕРґРґРµСЂР¶РєР° EMF
 	size_t mn_BkEmfDataMax;
 	CESERVER_REQ_SETBACKGROUND* mp_BkEmfData; // followed by EMF data
-	bool mb_BkEmfChanged; // Данные в mp_BkEmfData были изменены плагином, требуется отрисовка
+	bool mb_BkEmfChanged; // Р”Р°РЅРЅС‹Рµ РІ mp_BkEmfData Р±С‹Р»Рё РёР·РјРµРЅРµРЅС‹ РїР»Р°РіРёРЅРѕРј, С‚СЂРµР±СѓРµС‚СЃСЏ РѕС‚СЂРёСЃРѕРІРєР°
 };
 
 
@@ -94,7 +94,7 @@ protected:
 
 	bool mb_IsBackgroundImageValid;
 
-	BITMAPFILEHEADER* mp_BgImgData; // Результат LoadImageEx
+	BITMAPFILEHEADER* mp_BgImgData; // Р РµР·СѓР»СЊС‚Р°С‚ LoadImageEx
 
 protected:
 	CBackgroundInfo(LPCWSTR inPath);

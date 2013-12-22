@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -159,7 +159,7 @@ bool IsNeedDequote(LPCWSTR asCmdLine, LPCWSTR* rsEndQuote/*=NULL*/)
 	return true;
 }
 
-// Возвращает 0, если успешно, иначе - ошибка
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ 0, РµСЃР»Рё СѓСЃРїРµС€РЅРѕ, РёРЅР°С‡Рµ - РѕС€РёР±РєР°
 int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
 {
 	if (!asCmdLine || !*asCmdLine)
@@ -170,7 +170,7 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 		|| ((rsArg.mn_TokenNo>0) && (rsArg.ms_LastTokenEnd==*asCmdLine)
 			&& (wcsncmp(*asCmdLine,rsArg.ms_LastTokenSave,countof(rsArg.ms_LastTokenSave)-1))==0))
 	{
-		// OK, параметры корректны
+		// OK, РїР°СЂР°РјРµС‚СЂС‹ РєРѕСЂСЂРµРєС‚РЅС‹
 	}
 	else
 	{
@@ -193,7 +193,7 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 	size_t nArgLen = 0;
 	bool lbQMode = false;
 
-	// аргумент начинается с "
+	// Р°СЂРіСѓРјРµРЅС‚ РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ "
 	if (*psCmdLine == L'"')
 	{
 		lbQMode = true;
@@ -210,24 +210,24 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 			if (!pch) return CERR_CMDLINE;
 		}
 
-		// Теперь в pch ссылка на последнюю "
+		// РўРµРїРµСЂСЊ РІ pch СЃСЃС‹Р»РєР° РЅР° РїРѕСЃР»РµРґРЅСЋСЋ "
 	}
 	else
 	{
-		// До конца строки или до первого пробела
+		// Р”Рѕ РєРѕРЅС†Р° СЃС‚СЂРѕРєРё РёР»Рё РґРѕ РїРµСЂРІРѕРіРѕ РїСЂРѕР±РµР»Р°
 		//pch = wcschr(psCmdLine, L' ');
-		// 09.06.2009 Maks - обломался на: cmd /c" echo Y "
+		// 09.06.2009 Maks - РѕР±Р»РѕРјР°Р»СЃСЏ РЅР°: cmd /c" echo Y "
 		pch = psCmdLine;
 
-		// Ищем обычным образом (до пробела/кавычки)
+		// РС‰РµРј РѕР±С‹С‡РЅС‹Рј РѕР±СЂР°Р·РѕРј (РґРѕ РїСЂРѕР±РµР»Р°/РєР°РІС‹С‡РєРё)
 		while (*pch && *pch!=L' ' && *pch!=L'"') pch++;
 
-		//if (!pch) pch = psCmdLine + lstrlenW(psCmdLine); // до конца строки
+		//if (!pch) pch = psCmdLine + lstrlenW(psCmdLine); // РґРѕ РєРѕРЅС†Р° СЃС‚СЂРѕРєРё
 	}
 
 	nArgLen = pch - psCmdLine;
 
-	// Вернуть аргумент
+	// Р’РµСЂРЅСѓС‚СЊ Р°СЂРіСѓРјРµРЅС‚
 	if (!rsArg.Set(psCmdLine, nArgLen))
 		return CERR_CMDLINE;
 	rsArg.mn_TokenNo++;
@@ -339,8 +339,8 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 	return szDrive;
 }
 
-// Команды, которые не нужно пытаться развернуть в exe?
-// кроме того, если команда содержит "?" или "*" - тоже не пытаться.
+// РљРѕРјР°РЅРґС‹, РєРѕС‚РѕСЂС‹Рµ РЅРµ РЅСѓР¶РЅРѕ РїС‹С‚Р°С‚СЊСЃСЏ СЂР°Р·РІРµСЂРЅСѓС‚СЊ РІ exe?
+// РєСЂРѕРјРµ С‚РѕРіРѕ, РµСЃР»Рё РєРѕРјР°РЅРґР° СЃРѕРґРµСЂР¶РёС‚ "?" РёР»Рё "*" - С‚РѕР¶Рµ РЅРµ РїС‹С‚Р°С‚СЊСЃСЏ.
 const wchar_t* gsInternalCommands = L"ACTIVATE\0ALIAS\0ASSOC\0ATTRIB\0BEEP\0BREAK\0CALL\0CDD\0CHCP\0COLOR\0COPY\0DATE\0DEFAULT\0DEL\0DELAY\0DESCRIBE\0DETACH\0DIR\0DIRHISTORY\0DIRS\0DRAWBOX\0DRAWHLINE\0DRAWVLINE\0ECHO\0ECHOERR\0ECHOS\0ECHOSERR\0ENDLOCAL\0ERASE\0ERRORLEVEL\0ESET\0EXCEPT\0EXIST\0EXIT\0FFIND\0FOR\0FREE\0FTYPE\0GLOBAL\0GOTO\0HELP\0HISTORY\0IF\0IFF\0INKEY\0INPUT\0KEYBD\0KEYS\0LABEL\0LIST\0LOG\0MD\0MEMORY\0MKDIR\0MOVE\0MSGBOX\0NOT\0ON\0OPTION\0PATH\0PAUSE\0POPD\0PROMPT\0PUSHD\0RD\0REBOOT\0REN\0RENAME\0RMDIR\0SCREEN\0SCRPUT\0SELECT\0SET\0SETDOS\0SETLOCAL\0SHIFT\0SHRALIAS\0START\0TEE\0TIME\0TIMER\0TITLE\0TOUCH\0TREE\0TRUENAME\0TYPE\0UNALIAS\0UNSET\0VER\0VERIFY\0VOL\0VSCRPUT\0WINDOW\0Y\0\0";
 
 BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQuot,
@@ -351,7 +351,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 	rbRootIsCmdExe = TRUE;
 
 	#ifdef _DEBUG
-	// Это минимальные проверки, собственно к коду - не относятся
+	// Р­С‚Рѕ РјРёРЅРёРјР°Р»СЊРЅС‹Рµ РїСЂРѕРІРµСЂРєРё, СЃРѕР±СЃС‚РІРµРЅРЅРѕ Рє РєРѕРґСѓ - РЅРµ РѕС‚РЅРѕСЃСЏС‚СЃСЏ
 	CmdArg szDbgFirst;
 	bool bIsBatch = false;
 	{
@@ -376,13 +376,13 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 		return TRUE;
 	}
 
-	//110202 перенес вниз, т.к. это уже может быть cmd.exe, и тогда у него сносит крышу
-	//// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
+	//110202 РїРµСЂРµРЅРµСЃ РІРЅРёР·, С‚.Рє. СЌС‚Рѕ СѓР¶Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ cmd.exe, Рё С‚РѕРіРґР° Сѓ РЅРµРіРѕ СЃРЅРѕСЃРёС‚ РєСЂС‹С€Сѓ
+	//// Р•СЃР»Рё РµСЃС‚СЊ РѕРґРЅР° РёР· РєРѕРјР°РЅРґ РїРµСЂРµРЅР°РїСЂР°РІР»РµРЅРёСЏ, РёР»Рё СЃР»РёСЏРЅРёСЏ - РЅСѓР¶РµРЅ CMD.EXE
 	//if (wcschr(asCmdLine, L'&') ||
 	//        wcschr(asCmdLine, L'>') ||
 	//        wcschr(asCmdLine, L'<') ||
 	//        wcschr(asCmdLine, L'|') ||
-	//        wcschr(asCmdLine, L'^') // или экранирования
+	//        wcschr(asCmdLine, L'^') // РёР»Рё СЌРєСЂР°РЅРёСЂРѕРІР°РЅРёСЏ
 	//  )
 	//{
 	//	return TRUE;
@@ -392,7 +392,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 	int iRc = 0;
 	BOOL lbFirstWasGot = FALSE;
 	LPCWSTR pwszCopy = asCmdLine;
-	// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
+	// cmd /c ""c:\program files\arc\7z.exe" -?"   // РґР° РµС‰Рµ Рё РІРЅСѓС‚СЂРё РјРѕРіСѓС‚ Р±С‹С‚СЊ РґРІРѕР№РЅС‹РјРё...
 	// cmd /c "dir c:\"
 	int nLastChar = lstrlenW(pwszCopy) - 1;
 
@@ -400,28 +400,28 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 	{
 		if (pwszCopy[1] == L'"' && pwszCopy[2])
 		{
-			pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
+			pwszCopy ++; // РћС‚Р±СЂРѕСЃРёС‚СЊ РїРµСЂРІСѓСЋ РєР°РІС‹С‡РєСѓ РІ РєРѕРјР°РЅРґР°С… С‚РёРїР°: ""c:\program files\arc\7z.exe" -?"
 
 			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
 		}
 		else
-			// глючила на ""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""
+			// РіР»СЋС‡РёР»Р° РЅР° ""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""
 			//if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
 			//	LPCWSTR pwszTemp = pwszCopy;
-			//	// Получим первую команду (исполняемый файл?)
+			//	// РџРѕР»СѓС‡РёРј РїРµСЂРІСѓСЋ РєРѕРјР°РЅРґСѓ (РёСЃРїРѕР»РЅСЏРµРјС‹Р№ С„Р°Р№Р»?)
 			//	if ((iRc = NextArg(&pwszTemp, szArg)) != 0) {
 			//		//Parsing command line failed
 			//		return TRUE;
 			//	}
-			//	pwszCopy ++; // Отбросить первую кавычку в командах типа: "c:\arc\7z.exe -?"
+			//	pwszCopy ++; // РћС‚Р±СЂРѕСЃРёС‚СЊ РїРµСЂРІСѓСЋ РєР°РІС‹С‡РєСѓ РІ РєРѕРјР°РЅРґР°С… С‚РёРїР°: "c:\arc\7z.exe -?"
 			//	lbFirstWasGot = TRUE;
 			//	if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
 			//} else
 		{
-			// отбросить первую кавычку в: "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
+			// РѕС‚Р±СЂРѕСЃРёС‚СЊ РїРµСЂРІСѓСЋ РєР°РІС‹С‡РєСѓ РІ: "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
 			LPCWSTR pwszTemp = pwszCopy + 1;
 
-			// Получим первую команду (исполняемый файл?)
+			// РџРѕР»СѓС‡РёРј РїРµСЂРІСѓСЋ РєРѕРјР°РЅРґСѓ (РёСЃРїРѕР»РЅСЏРµРјС‹Р№ С„Р°Р№Р»?)
 			if ((iRc = NextArg(&pwszTemp, szExe)) != 0)
 			{
 				//Parsing command line failed
@@ -433,7 +433,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 
 			if (lstrcmpiW(szExe, L"start") == 0)
 			{
-				// Команду start обрабатывает только процессор
+				// РљРѕРјР°РЅРґСѓ start РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ С‚РѕР»СЊРєРѕ РїСЂРѕС†РµСЃСЃРѕСЂ
 				#ifdef WARN_NEED_CMD
 				_ASSERTE(FALSE);
 				#endif
@@ -445,7 +445,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 
 			if (*pwszQ != L'"' && IsExecutable(szExe, &pszExpand))
 			{
-				pwszCopy ++; // отбрасываем
+				pwszCopy ++; // РѕС‚Р±СЂР°СЃС‹РІР°РµРј
 				lbFirstWasGot = TRUE;
 
 				if (pszExpand)
@@ -461,11 +461,11 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 		}
 	}
 
-	// Получим первую команду (исполняемый файл?)
+	// РџРѕР»СѓС‡РёРј РїРµСЂРІСѓСЋ РєРѕРјР°РЅРґСѓ (РёСЃРїРѕР»РЅСЏРµРјС‹Р№ С„Р°Р№Р»?)
 	if (!lbFirstWasGot)
 	{
 		szExe.Empty();
-		// 17.10.2010 - поддержка переданного исполняемого файла без параметров, но с пробелами в пути
+		// 17.10.2010 - РїРѕРґРґРµСЂР¶РєР° РїРµСЂРµРґР°РЅРЅРѕРіРѕ РёСЃРїРѕР»РЅСЏРµРјРѕРіРѕ С„Р°Р№Р»Р° Р±РµР· РїР°СЂР°РјРµС‚СЂРѕРІ, РЅРѕ СЃ РїСЂРѕР±РµР»Р°РјРё РІ РїСѓС‚Рё
 		LPCWSTR pchEnd = pwszCopy + lstrlenW(pwszCopy);
 
 		while (pchEnd > pwszCopy && *(pchEnd-1) == L' ') pchEnd--;
@@ -478,14 +478,14 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 
 			if (lstrcmpiW(szExe, L"start") == 0)
 			{
-				// Команду start обрабатывает только процессор
+				// РљРѕРјР°РЅРґСѓ start РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ С‚РѕР»СЊРєРѕ РїСЂРѕС†РµСЃСЃРѕСЂ
 				#ifdef WARN_NEED_CMD
 				_ASSERTE(FALSE);
 				#endif
 				return TRUE;
 			}
 
-			// Обработка переменных окружения и поиск в PATH
+			// РћР±СЂР°Р±РѕС‚РєР° РїРµСЂРµРјРµРЅРЅС‹С… РѕРєСЂСѓР¶РµРЅРёСЏ Рё РїРѕРёСЃРє РІ PATH
 			if (FileExistsSearch(/*IN|OUT*/szExe.GetBuffer(MAX_PATH), MAX_PATH))
 			{
 				if (rsArguments)
@@ -510,14 +510,14 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 
 			if (lstrcmpiW(szExe, L"start") == 0)
 			{
-				// Команду start обрабатывает только процессор
+				// РљРѕРјР°РЅРґСѓ start РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ С‚РѕР»СЊРєРѕ РїСЂРѕС†РµСЃСЃРѕСЂ
 				#ifdef WARN_NEED_CMD
 				_ASSERTE(FALSE);
 				#endif
 				return TRUE;
 			}
 
-			// Обработка переменных окружения и поиск в PATH
+			// РћР±СЂР°Р±РѕС‚РєР° РїРµСЂРµРјРµРЅРЅС‹С… РѕРєСЂСѓР¶РµРЅРёСЏ Рё РїРѕРёСЃРє РІ PATH
 			if (FileExistsSearch(/*IN|OUT*/szExe.GetBuffer(MAX_PATH), MAX_PATH))
 			{
 				if (rsArguments)
@@ -532,29 +532,29 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 	}
 	else
 	{
-		// Если юзеру нужен редирект - то он должен явно указать ком.процессор
-		// Иначе нереально (или достаточно сложно) определить, является ли символ
-		// редиректом, или это просто один из аргументов команды...
+		// Р•СЃР»Рё СЋР·РµСЂСѓ РЅСѓР¶РµРЅ СЂРµРґРёСЂРµРєС‚ - С‚Рѕ РѕРЅ РґРѕР»Р¶РµРЅ СЏРІРЅРѕ СѓРєР°Р·Р°С‚СЊ РєРѕРј.РїСЂРѕС†РµСЃСЃРѕСЂ
+		// РРЅР°С‡Рµ РЅРµСЂРµР°Р»СЊРЅРѕ (РёР»Рё РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ СЃР»РѕР¶РЅРѕ) РѕРїСЂРµРґРµР»РёС‚СЊ, СЏРІР»СЏРµС‚СЃСЏ Р»Рё СЃРёРјРІРѕР»
+		// СЂРµРґРёСЂРµРєС‚РѕРј, РёР»Рё СЌС‚Рѕ РїСЂРѕСЃС‚Рѕ РѕРґРёРЅ РёР· Р°СЂРіСѓРјРµРЅС‚РѕРІ РєРѕРјР°РЅРґС‹...
 
-		// "Левые" символы в имени файла (а вот в "первом аргументе" все однозначно)
+		// "Р›РµРІС‹Рµ" СЃРёРјРІРѕР»С‹ РІ РёРјРµРЅРё С„Р°Р№Р»Р° (Р° РІРѕС‚ РІ "РїРµСЂРІРѕРј Р°СЂРіСѓРјРµРЅС‚Рµ" РІСЃРµ РѕРґРЅРѕР·РЅР°С‡РЅРѕ)
 		if (wcspbrk(szExe, L"?*<>|"))
 		{
-			rbRootIsCmdExe = TRUE; // запуск через "процессор"
-			return TRUE; // добавить "cmd.exe"
+			rbRootIsCmdExe = TRUE; // Р·Р°РїСѓСЃРє С‡РµСЂРµР· "РїСЂРѕС†РµСЃСЃРѕСЂ"
+			return TRUE; // РґРѕР±Р°РІРёС‚СЊ "cmd.exe"
 		}
 
-		// если "путь" не указан
+		// РµСЃР»Рё "РїСѓС‚СЊ" РЅРµ СѓРєР°Р·Р°РЅ
 		if (wcschr(szExe, L'\\') == NULL)
 		{
 			bool bHasExt = (wcschr(szExe, L'.') != NULL);
-			// Проверим, может это команда процессора (типа "DIR")?
+			// РџСЂРѕРІРµСЂРёРј, РјРѕР¶РµС‚ СЌС‚Рѕ РєРѕРјР°РЅРґР° РїСЂРѕС†РµСЃСЃРѕСЂР° (С‚РёРїР° "DIR")?
 			if (!bHasExt)
 			{
 				bool bIsCommand = false;
 				wchar_t* pszUppr = lstrdup(szExe);
 				if (pszUppr)
 				{
-					// избежать линковки на user32.dll
+					// РёР·Р±РµР¶Р°С‚СЊ Р»РёРЅРєРѕРІРєРё РЅР° user32.dll
 					//CharUpperBuff(pszUppr, lstrlen(pszUppr));
 					for (wchar_t* p = pszUppr; *p; p++)
 					{
@@ -579,24 +579,24 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 					#ifdef WARN_NEED_CMD
 					_ASSERTE(FALSE);
 					#endif
-					rbRootIsCmdExe = TRUE; // запуск через "процессор"
-					return TRUE; // добавить "cmd.exe"
+					rbRootIsCmdExe = TRUE; // Р·Р°РїСѓСЃРє С‡РµСЂРµР· "РїСЂРѕС†РµСЃСЃРѕСЂ"
+					return TRUE; // РґРѕР±Р°РІРёС‚СЊ "cmd.exe"
 				}
 			}
 
-			// Пробуем найти "по путям" соответствующий exe-шник.
-			DWORD nCchMax = szExe.mn_MaxLen; // выделить память, длинее чем szExe вернуть не сможем
+			// РџСЂРѕР±СѓРµРј РЅР°Р№С‚Рё "РїРѕ РїСѓС‚СЏРј" СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ exe-С€РЅРёРє.
+			DWORD nCchMax = szExe.mn_MaxLen; // РІС‹РґРµР»РёС‚СЊ РїР°РјСЏС‚СЊ, РґР»РёРЅРµРµ С‡РµРј szExe РІРµСЂРЅСѓС‚СЊ РЅРµ СЃРјРѕР¶РµРј
 			wchar_t* pszSearch = (wchar_t*)malloc(nCchMax*sizeof(wchar_t));
 			if (pszSearch)
 			{
 				#ifndef CONEMU_MINIMAL
-				MWow64Disable wow; wow.Disable(); // Отключить редиректор!
+				MWow64Disable wow; wow.Disable(); // РћС‚РєР»СЋС‡РёС‚СЊ СЂРµРґРёСЂРµРєС‚РѕСЂ!
 				#endif
 				wchar_t *pszName = NULL;
 				DWORD nRc = SearchPath(NULL, szExe, bHasExt ? NULL : L".exe", nCchMax, pszSearch, &pszName);
 				if (nRc && (nRc < nCchMax))
 				{
-					// Нашли, возвращаем что нашли
+					// РќР°С€Р»Рё, РІРѕР·РІСЂР°С‰Р°РµРј С‡С‚Рѕ РЅР°С€Р»Рё
 					szExe.Set(pszSearch);
 				}
 				free(pszSearch);
@@ -604,15 +604,15 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 		} // end: if (wcschr(szExe, L'\\') == NULL)
 	}
 
-	// Если szExe не содержит путь к файлу - запускаем через cmd
+	// Р•СЃР»Рё szExe РЅРµ СЃРѕРґРµСЂР¶РёС‚ РїСѓС‚СЊ Рє С„Р°Р№Р»Сѓ - Р·Р°РїСѓСЃРєР°РµРј С‡РµСЂРµР· cmd
 	// "start "" C:\Utils\Files\Hiew32\hiew32.exe C:\00\Far.exe"
 	if (!IsFilePath(szExe))
 	{
 		#ifdef WARN_NEED_CMD
 		_ASSERTE(FALSE);
 		#endif
-		rbRootIsCmdExe = TRUE; // запуск через "процессор"
-		return TRUE; // добавить "cmd.exe"
+		rbRootIsCmdExe = TRUE; // Р·Р°РїСѓСЃРє С‡РµСЂРµР· "РїСЂРѕС†РµСЃСЃРѕСЂ"
+		return TRUE; // РґРѕР±Р°РІРёС‚СЊ "cmd.exe"
 	}
 
 	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
@@ -633,24 +633,24 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0
 		|| lstrcmpiW(pwszCopy, L"tcc")==0 || lstrcmpiW(pwszCopy, L"tcc.exe")==0)
 	{
-		rbRootIsCmdExe = TRUE; // уже должен быть выставлен, но проверим
+		rbRootIsCmdExe = TRUE; // СѓР¶Рµ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІС‹СЃС‚Р°РІР»РµРЅ, РЅРѕ РїСЂРѕРІРµСЂРёРј
 		rbAlwaysConfirmExit = TRUE; rbAutoDisableConfirmExit = FALSE;
 		_ASSERTE(!bIsBatch);
-		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
+		return FALSE; // СѓР¶Рµ СѓРєР°Р·Р°РЅ РєРѕРјР°РЅРґРЅС‹Р№ РїСЂРѕС†РµСЃСЃРѕСЂ, cmd.exe РІ РЅР°С‡Р°Р»Рѕ РґРѕР±Р°РІР»СЏС‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 	}
 
 
 	// Issue 1211: Decide not to do weird heuristic.
 	//   If user REALLY needs redirection (root command, huh?)
 	//   - he must call "cmd /c ..." directly
-	// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
+	// Р•СЃР»Рё РµСЃС‚СЊ РѕРґРЅР° РёР· РєРѕРјР°РЅРґ РїРµСЂРµРЅР°РїСЂР°РІР»РµРЅРёСЏ, РёР»Рё СЃР»РёСЏРЅРёСЏ - РЅСѓР¶РµРЅ CMD.EXE
 	if (!bRootCmd)
 	{
 		if (wcschr(asCmdLine, L'&') ||
 			wcschr(asCmdLine, L'>') ||
 			wcschr(asCmdLine, L'<') ||
 			wcschr(asCmdLine, L'|') ||
-			wcschr(asCmdLine, L'^') // или экранирования
+			wcschr(asCmdLine, L'^') // РёР»Рё СЌРєСЂР°РЅРёСЂРѕРІР°РЅРёСЏ
 			)
 		{
 			#ifdef WARN_NEED_CMD
@@ -664,7 +664,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 	if (IsFarExe(pwszCopy))
 	{
 		bool bFound = (wcschr(pwszCopy, L'.') != NULL);
-		// Если указали при запуске просто "far" - это может быть батник, расположенный в %PATH%
+		// Р•СЃР»Рё СѓРєР°Р·Р°Р»Рё РїСЂРё Р·Р°РїСѓСЃРєРµ РїСЂРѕСЃС‚Рѕ "far" - СЌС‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р±Р°С‚РЅРёРє, СЂР°СЃРїРѕР»РѕР¶РµРЅРЅС‹Р№ РІ %PATH%
 		if (!bFound)
 		{
 			wchar_t szSearch[MAX_PATH+1], *pszPart = NULL;
@@ -681,19 +681,19 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 			rbAutoDisableConfirmExit = TRUE;
 			rbRootIsCmdExe = FALSE; // FAR!
 			_ASSERTE(!bIsBatch);
-			return FALSE; // уже указан исполняемый файл, cmd.exe в начало добавлять не нужно
+			return FALSE; // СѓР¶Рµ СѓРєР°Р·Р°РЅ РёСЃРїРѕР»РЅСЏРµРјС‹Р№ С„Р°Р№Р», cmd.exe РІ РЅР°С‡Р°Р»Рѕ РґРѕР±Р°РІР»СЏС‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 		}
 	}
 
 	if (IsExecutable(szExe))
 	{
-		rbRootIsCmdExe = FALSE; // Для других программ - буфер не включаем
+		rbRootIsCmdExe = FALSE; // Р”Р»СЏ РґСЂСѓРіРёС… РїСЂРѕРіСЂР°РјРј - Р±СѓС„РµСЂ РЅРµ РІРєР»СЋС‡Р°РµРј
 		_ASSERTE(!bIsBatch);
-		return FALSE; // Запускается конкретная консольная программа. cmd.exe не требуется
+		return FALSE; // Р—Р°РїСѓСЃРєР°РµС‚СЃСЏ РєРѕРЅРєСЂРµС‚РЅР°СЏ РєРѕРЅСЃРѕР»СЊРЅР°СЏ РїСЂРѕРіСЂР°РјРјР°. cmd.exe РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ
 	}
 
-	//Можно еще Доделать поиски с: SearchPath, GetFullPathName, добавив расширения .exe & .com
-	//хотя фар сам формирует полные пути к командам, так что можно не заморачиваться
+	//РњРѕР¶РЅРѕ РµС‰Рµ Р”РѕРґРµР»Р°С‚СЊ РїРѕРёСЃРєРё СЃ: SearchPath, GetFullPathName, РґРѕР±Р°РІРёРІ СЂР°СЃС€РёСЂРµРЅРёСЏ .exe & .com
+	//С…РѕС‚СЏ С„Р°СЂ СЃР°Рј С„РѕСЂРјРёСЂСѓРµС‚ РїРѕР»РЅС‹Рµ РїСѓС‚Рё Рє РєРѕРјР°РЅРґР°Рј, С‚Р°Рє С‡С‚Рѕ РјРѕР¶РЅРѕ РЅРµ Р·Р°РјРѕСЂР°С‡РёРІР°С‚СЊСЃСЏ
 	#ifdef WARN_NEED_CMD
 	_ASSERTE(FALSE);
 	#endif
@@ -721,7 +721,7 @@ bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars /*= NULL*/)
 	{
 		LPCWSTR pwszDot = PointToExt(aszFilePathName);
 
-		if (pwszDot)  // Если указан .exe или .com файл
+		if (pwszDot)  // Р•СЃР»Рё СѓРєР°Р·Р°РЅ .exe РёР»Рё .com С„Р°Р№Р»
 		{
 			if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0)
 			{

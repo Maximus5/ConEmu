@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -39,18 +39,18 @@ class CVConGuard;
 class CVConGroup : public CRefRelease
 {
 protected:
-	CVirtualConsole* mp_Item;     // консоль, к которой привязан этот "Pane"
+	CVirtualConsole* mp_Item;     // РєРѕРЅСЃРѕР»СЊ, Рє РєРѕС‚РѕСЂРѕР№ РїСЂРёРІСЏР·Р°РЅ СЌС‚РѕС‚ "Pane"
 	RConStartArgs::SplitType m_SplitType; // eSplitNone/eSplitHorz/eSplitVert
 	UINT mn_SplitPercent10; // (0.1% - 99.9%)*10
-	CVConGroup *mp_Grp1, *mp_Grp2; // Ссылки на "дочерние" панели
-	CVConGroup *mp_Parent; // Ссылка на "родительскую" панель
+	CVConGroup *mp_Grp1, *mp_Grp2; // РЎСЃС‹Р»РєРё РЅР° "РґРѕС‡РµСЂРЅРёРµ" РїР°РЅРµР»Рё
+	CVConGroup *mp_Parent; // РЎСЃС‹Р»РєР° РЅР° "СЂРѕРґРёС‚РµР»СЊСЃРєСѓСЋ" РїР°РЅРµР»СЊ
 	long mb_Released;
 	void RemoveGroup();
 	RECT mrc_Full;
 	RECT mrc_Splitter;
-	bool mb_ResizeFlag; // взводится в true для корня, когда в группе что-то меняется
+	bool mb_ResizeFlag; // РІР·РІРѕРґРёС‚СЃСЏ РІ true РґР»СЏ РєРѕСЂРЅСЏ, РєРѕРіРґР° РІ РіСЂСѓРїРїРµ С‡С‚Рѕ-С‚Рѕ РјРµРЅСЏРµС‚СЃСЏ
 	void SetResizeFlags();
-	void* mp_ActiveGroupVConPtr; // указатель (CVirtualConsole*) на последнюю активную консоль в этой группе
+	void* mp_ActiveGroupVConPtr; // СѓРєР°Р·Р°С‚РµР»СЊ (CVirtualConsole*) РЅР° РїРѕСЃР»РµРґРЅСЋСЋ Р°РєС‚РёРІРЅСѓСЋ РєРѕРЅСЃРѕР»СЊ РІ СЌС‚РѕР№ РіСЂСѓРїРїРµ
 
 	CVConGroup* GetRootGroup();
 	static CVConGroup* GetRootOfVCon(CVirtualConsole* apVCon);
@@ -80,7 +80,7 @@ protected:
 	//static bool mb_CreatingActive, mb_SkipSyncSize;
 
 	//static CRITICAL_SECTION mcs_VGroups;
-	//static CVConGroup* mp_VGroups[MAX_CONSOLE_COUNT*2]; // на каждое разбиение добавляется +Parent
+	//static CVConGroup* mp_VGroups[MAX_CONSOLE_COUNT*2]; // РЅР° РєР°Р¶РґРѕРµ СЂР°Р·Р±РёРµРЅРёРµ РґРѕР±Р°РІР»СЏРµС‚СЃСЏ +Parent
 
 	//static CVirtualConsole* mp_GrpVCon[MAX_CONSOLE_COUNT];
 
@@ -193,7 +193,7 @@ public:
 
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, enum ConEmuMargins tTabAction=CEM_TAB);
 	static bool PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom = CER_MAIN, bool bSetRedraw = false);
-	static void SyncWindowToConsole(); // -- функция пустая, игнорируется
+	static void SyncWindowToConsole(); // -- С„СѓРЅРєС†РёСЏ РїСѓСЃС‚Р°СЏ, РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ
 	static void SyncConsoleToWindow(LPRECT prcNewWnd=NULL, bool bSync=false);
 	static void LockSyncConsoleToWindow(bool abLockSync);
 	static void SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN or CER_MAINCLIENT*/, COORD size, bool bSetRedraw /*= false*/);
@@ -214,8 +214,8 @@ public:
 
 	static void ExportEnvVarAll(CESERVER_REQ* pIn, CRealConsole* pExceptRCon);
 
-	//// Это некие сводные размеры, соответствующие тому, как если бы была
-	//// только одна активная консоль, БЕЗ Split-screen
+	//// Р­С‚Рѕ РЅРµРєРёРµ СЃРІРѕРґРЅС‹Рµ СЂР°Р·РјРµСЂС‹, СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРµ С‚РѕРјСѓ, РєР°Рє РµСЃР»Рё Р±С‹ Р±С‹Р»Р°
+	//// С‚РѕР»СЊРєРѕ РѕРґРЅР° Р°РєС‚РёРІРЅР°СЏ РєРѕРЅСЃРѕР»СЊ, Р‘Р•Р— Split-screen
 	//static uint TextWidth();
 	//static uint TextHeight();
 

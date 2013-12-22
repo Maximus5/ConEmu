@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // minimal(?) FAR version 1.71 alpha 4 build 2470
 int WINAPI _export GetMinFarVersion(void)
 {
-	// Однако, FAR2 до сборки 748 не понимал две версии плагина в одном файле
+	// РћРґРЅР°РєРѕ, FAR2 РґРѕ СЃР±РѕСЂРєРё 748 РЅРµ РїРѕРЅРёРјР°Р» РґРІРµ РІРµСЂСЃРёРё РїР»Р°РіРёРЅР° РІ РѕРґРЅРѕРј С„Р°Р№Р»Рµ
 	BOOL bFar2=FALSE;
 
 	if (!LoadFarVersion())
@@ -82,7 +82,7 @@ void ReloadResourcesA()
 
 void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 {
-	//LoadFarVersion - уже вызван в GetStartupInfo
+	//LoadFarVersion - СѓР¶Рµ РІС‹Р·РІР°РЅ РІ GetStartupInfo
 
 	INIT_FAR_PSI(::InfoA, ::FSFA, aInfo);
 
@@ -185,7 +185,7 @@ int ShowMessageA(int aiMsg, int aiButtons)
 	           (LPCSTR)InfoA->GetMsg(InfoA->ModuleNumber,aiMsg), aiButtons);
 }
 
-// Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
+// Warning, РЅР°РїСЂСЏРјСѓСЋ РќР• РІС‹Р·С‹РІР°С‚СЊ. РџРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ "РѕР±С‰РµР№" PostMacro
 void PostMacroA(char* asMacro)
 {
 	if (!InfoA || !InfoA->AdvControl)
@@ -193,7 +193,7 @@ void PostMacroA(char* asMacro)
 
 	ActlKeyMacro mcr;
 	mcr.Command = MCMD_POSTMACROSTRING;
-	mcr.Param.PlainText.Flags = 0; // По умолчанию - вывод на экран разрешен
+	mcr.Param.PlainText.Flags = 0; // РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ СЂР°Р·СЂРµС€РµРЅ
 
 	if (*asMacro == '@' && asMacro[1] && asMacro[1] != ' ')
 	{
@@ -297,7 +297,7 @@ BOOL IsMacroActiveA()
 
 void LoadPanelItemInfoA(CeFullPanelInfo* pi, INT_PTR nItem)
 {
-	// Вся информация считывается целиком по панели!
+	// Р’СЃСЏ РёРЅС„РѕСЂРјР°С†РёСЏ СЃС‡РёС‚С‹РІР°РµС‚СЃСЏ С†РµР»РёРєРѕРј РїРѕ РїР°РЅРµР»Рё!
 	return;
 }
 
@@ -334,14 +334,14 @@ BOOL LoadPanelInfoA(BOOL abActive)
 
 	if (!nRc)
 	{
-		TODO("Показать информацию об ошибке");
+		TODO("РџРѕРєР°Р·Р°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕС€РёР±РєРµ");
 		return FALSE;
 	}
 
-	// Даже если невидима - обновить информацию!
-	//// Проверим, что панель видима. Иначе - сразу выходим.
+	// Р”Р°Р¶Рµ РµСЃР»Рё РЅРµРІРёРґРёРјР° - РѕР±РЅРѕРІРёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ!
+	//// РџСЂРѕРІРµСЂРёРј, С‡С‚Рѕ РїР°РЅРµР»СЊ РІРёРґРёРјР°. РРЅР°С‡Рµ - СЃСЂР°Р·Сѓ РІС‹С…РѕРґРёРј.
 	//if (!pi.Visible) {
-	//	TODO("Показать информацию об ошибке");
+	//	TODO("РџРѕРєР°Р·Р°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕС€РёР±РєРµ");
 	//	return NULL;
 	//}
 
@@ -353,14 +353,14 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	pcefpi->cbSize = sizeof(*pcefpi);
 	//pcefpi->hPanel = hPanel;
 
-	// Если элементов на панели стало больше, чем выделено в (pviLeft/pviRight)
+	// Р•СЃР»Рё СЌР»РµРјРµРЅС‚РѕРІ РЅР° РїР°РЅРµР»Рё СЃС‚Р°Р»Рѕ Р±РѕР»СЊС€Рµ, С‡РµРј РІС‹РґРµР»РµРЅРѕ РІ (pviLeft/pviRight)
 	if (pcefpi->ItemsNumber < pi.ItemsNumber) //-V104
 	{
 		if (!pcefpi->ReallocItems(pi.ItemsNumber))
 			return FALSE;
 	}
 
-	// Копируем что нужно
+	// РљРѕРїРёСЂСѓРµРј С‡С‚Рѕ РЅСѓР¶РЅРѕ
 	pcefpi->bLeftPanel = (pi.Flags & PFLAGS_PANELLEFT) == PFLAGS_PANELLEFT;
 	pcefpi->bPlugin = pi.Plugin;
 	pcefpi->PanelRect = pi.PanelRect;
@@ -373,9 +373,9 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	pcefpi->Flags = pi.Flags; // CEPANELINFOFLAGS
 	pcefpi->PanelMode = pi.ViewMode;
 	pcefpi->IsFilePanel = (pi.PanelType == PTYPE_FILEPANEL);
-	// Настройки интерфейса
+	// РќР°СЃС‚СЂРѕР№РєРё РёРЅС‚РµСЂС„РµР№СЃР°
 	LoadFarSettingsA(&pcefpi->FarInterfaceSettings, &pcefpi->FarPanelSettings);
-	// Цвета фара
+	// Р¦РІРµС‚Р° С„Р°СЂР°
 	BYTE FarConsoleColors[0x100];
 	INT_PTR nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, FarConsoleColors);
 #ifdef _DEBUG
@@ -396,16 +396,16 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	pcefpi->nFarColors[col_KeyBarNum] = FarConsoleColors[COL_KEYBARNUM];
 
 
-	// Текущая папка панели
+	// РўРµРєСѓС‰Р°СЏ РїР°РїРєР° РїР°РЅРµР»Рё
 	int nSize = lstrlenA(pi.CurDir); //-V303
-	pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
+	pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + РІС‹РґРµР»РёРј РЅРµРјРЅРѕР¶РєРѕ Р·Р°СЂР°РЅРµРµ
 	SafeFree(pcefpi->pszPanelDir);
 	pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2); //-V106
 	MultiByteToWideChar(CP_OEMCP, 0, pi.CurDir, nSize+1, pcefpi->pszPanelDir, nSize + MAX_PATH);
-	// Готовим буфер для информации об элементах
+	// Р“РѕС‚РѕРІРёРј Р±СѓС„РµСЂ РґР»СЏ РёРЅС„РѕСЂРјР°С†РёРё РѕР± СЌР»РµРјРµРЅС‚Р°С…
 	pcefpi->ReallocItems(pcefpi->ItemsNumber);
 
-	// Копирование элементов панели в нашу внутреннюю структуру
+	// РљРѕРїРёСЂРѕРІР°РЅРёРµ СЌР»РµРјРµРЅС‚РѕРІ РїР°РЅРµР»Рё РІ РЅР°С€Сѓ РІРЅСѓС‚СЂРµРЅРЅСЋСЋ СЃС‚СЂСѓРєС‚СѓСЂСѓ
 	wchar_t szName[MAX_PATH+1], szDescription[255];
 	LARGE_INTEGER liFileSize;
 	PluginPanelItem *ppi = pi.PanelItems;
@@ -441,7 +441,7 @@ void ReloadPanelsInfoA()
 {
 	if (!InfoA) return;
 
-	// возможно будет подтормаживать?
+	// РІРѕР·РјРѕР¶РЅРѕ Р±СѓРґРµС‚ РїРѕРґС‚РѕСЂРјР°Р¶РёРІР°С‚СЊ?
 	LoadPanelInfoA(TRUE);
 	LoadPanelInfoA(FALSE);
 }
@@ -450,11 +450,11 @@ void SetCurrentPanelItemA(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem
 {
 	if (!InfoA) return;
 
-	// В Far2 можно быстро проверить валидность индексов
+	// Р’ Far2 РјРѕР¶РЅРѕ Р±С‹СЃС‚СЂРѕ РїСЂРѕРІРµСЂРёС‚СЊ РІР°Р»РёРґРЅРѕСЃС‚СЊ РёРЅРґРµРєСЃРѕРІ
 	//HANDLE hPanel = NULL;
 	int nCmd = 0;
 	PanelInfo piActive = {}, piPassive = {}, *pi = NULL;
-	TODO("Проверять текущую видимость панелей?");
+	TODO("РџСЂРѕРІРµСЂСЏС‚СЊ С‚РµРєСѓС‰СѓСЋ РІРёРґРёРјРѕСЃС‚СЊ РїР°РЅРµР»РµР№?");
 	InfoA->Control(INVALID_HANDLE_VALUE,  FCTL_GETPANELSHORTINFO, &piActive);
 
 	if ((piActive.Flags & PFLAGS_PANELLEFT) == (abLeftPanel ? PFLAGS_PANELLEFT : 0))
@@ -467,7 +467,7 @@ void SetCurrentPanelItemA(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem
 		pi = &piPassive; nCmd = FCTL_REDRAWANOTHERPANEL;
 	}
 
-	// Проверяем индексы (может фар в процессе обновления панели, и количество элементов изменено?)
+	// РџСЂРѕРІРµСЂСЏРµРј РёРЅРґРµРєСЃС‹ (РјРѕР¶РµС‚ С„Р°СЂ РІ РїСЂРѕС†РµСЃСЃРµ РѕР±РЅРѕРІР»РµРЅРёСЏ РїР°РЅРµР»Рё, Рё РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РёР·РјРµРЅРµРЅРѕ?)
 	if (pi->ItemsNumber < 1)
 		return;
 
@@ -480,7 +480,7 @@ void SetCurrentPanelItemA(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem
 	if (anCurItem < anTopItem)
 		anCurItem = anTopItem;
 
-	// Обновляем панель
+	// РћР±РЅРѕРІР»СЏРµРј РїР°РЅРµР»СЊ
 	PanelRedrawInfo pri = {(int)anCurItem, (int)anTopItem};
 	InfoA->Control(INVALID_HANDLE_VALUE, nCmd, &pri);
 }
@@ -500,8 +500,8 @@ BOOL CheckPanelSettingsA(BOOL abSilence)
 
 	if (!(gFarPanelSettings.ShowColumnTitles))
 	{
-		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
-		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
+		// Р”Р»СЏ РєРѕСЂСЂРµРєС‚РЅРѕРіРѕ РѕРїСЂРµРґРµР»РµРЅРёСЏ РїРѕР»РѕР¶РµРЅРёСЏ РєРѕР»РѕРЅРѕРє РЅРµРѕР±С…РѕРґРёРј РѕРґРёРЅ РёР· С„Р»Р°Р¶РєРѕРІ РІ РЅР°СЃС‚СЂРѕР№РєРµ РїР°РЅРµР»Рё:
+		// [x] РџРѕРєР°Р·С‹РІР°С‚СЊ Р·Р°РіРѕР»РѕРІРєРё РєРѕР»РѕРЅРѕРє [x] РџРѕРєР°Р·С‹РІР°С‚СЊ СЃСѓРјРјР°СЂРЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ
 		if (!abSilence)
 		{
 			InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING|FMSG_LEFTALIGN, NULL,
@@ -514,7 +514,7 @@ BOOL CheckPanelSettingsA(BOOL abSilence)
 	return TRUE;
 }
 
-// Использовать только ACTL_GETSHORTWINDOWINFO. С ней проблем с синхронизацией быть не должно
+// РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ ACTL_GETSHORTWINDOWINFO. РЎ РЅРµР№ РїСЂРѕР±Р»РµРј СЃ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРµР№ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ
 bool CheckFarPanelsA()
 {
 	if (!InfoA || !InfoA->AdvControl) return false;
@@ -527,7 +527,7 @@ bool CheckFarPanelsA()
 	return lbPanelsActive;
 }
 
-// Возникали проблемы с синхронизацией в FAR2 -> FindFile
+// Р’РѕР·РЅРёРєР°Р»Рё РїСЂРѕР±Р»РµРјС‹ СЃ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРµР№ РІ FAR2 -> FindFile
 //bool CheckWindowsA()
 //{
 //	if (!InfoA || !InfoA->AdvControl) return false;
@@ -540,7 +540,7 @@ bool CheckFarPanelsA()
 //	char szInfo[MAX_PATH*4];
 //
 //	OutputDebugStringW(L"\n\n");
-//	// Pos: Номер окна, о котором нужно узнать информацию. Нумерация идет с 0. Pos = -1 вернет информацию о текущем окне.
+//	// Pos: РќРѕРјРµСЂ РѕРєРЅР°, Рѕ РєРѕС‚РѕСЂРѕРј РЅСѓР¶РЅРѕ СѓР·РЅР°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ. РќСѓРјРµСЂР°С†РёСЏ РёРґРµС‚ СЃ 0. Pos = -1 РІРµСЂРЅРµС‚ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ С‚РµРєСѓС‰РµРј РѕРєРЅРµ.
 //	for (int i=-1; i <= nCount; i++) {
 //		memset(&wi, 0, sizeof(wi));
 //		wi.Pos = i;

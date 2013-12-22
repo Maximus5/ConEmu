@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2011-2013 Maximus5
 All rights reserved.
@@ -87,14 +87,14 @@ void CTaskBar::Taskbar_Init()
 
 	if (!mb_OleInitalized)
 	{
-		hr = OleInitialize(NULL);  // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
+		hr = OleInitialize(NULL);  // РєР°Рє Р±С‹ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РІРєР»СЋС‡Р°С‚СЊ Ole С‚РѕР»СЊРєРѕ РІРѕ РІСЂРµРјСЏ РґСЂР°РіР°. РєР°Р¶РµС‚СЃСЏ С‡С‚Рѕ РёР·-Р·Р° РЅРµРіРѕ РіР»СЋС‡РёС‚ РїРµСЂРµРєР»СЋС‡Р°Р»РєР° СЏР·С‹РєР°
 		mb_OleInitalized = SUCCEEDED(hr);
 	}
 
 	if (!mp_TaskBar1)
 	{
-		// В PostCreate это выполняется дольше всего. По идее мешать не должно,
-		// т.к. серверная нить уже запущена.
+		// Р’ PostCreate СЌС‚Рѕ РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РґРѕР»СЊС€Рµ РІСЃРµРіРѕ. РџРѕ РёРґРµРµ РјРµС€Р°С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ,
+		// С‚.Рє. СЃРµСЂРІРµСЂРЅР°СЏ РЅРёС‚СЊ СѓР¶Рµ Р·Р°РїСѓС‰РµРЅР°.
 		hr = CoCreateInstance(CLSID_TaskbarList,NULL,CLSCTX_INPROC_SERVER,IID_ITaskbarList,(void**)&mp_TaskBar1);
 	
 		if (hr == S_OK && mp_TaskBar1)
@@ -164,7 +164,7 @@ HRESULT CTaskBar::Taskbar_SetActiveTab(HWND hBtn)
 
 	if (mp_TaskBar3)
 	{
-		// 3-й параметр в писании описан как Reserved
+		// 3-Р№ РїР°СЂР°РјРµС‚СЂ РІ РїРёСЃР°РЅРёРё РѕРїРёСЃР°РЅ РєР°Рє Reserved
 		hr = mp_TaskBar3->SetTabActive(hBtn, ghWnd, 0);
 	}
 	else if (mp_TaskBar2)
@@ -259,7 +259,7 @@ HRESULT CTaskBar::Taskbar_DeleteTabXP(HWND hBtn)
 	HRESULT hr;
 
 	// -- SkipShowWindowProc
-	//// 111127 на Vista тоже кнопку "убирать" нужно
+	//// 111127 РЅР° Vista С‚РѕР¶Рµ РєРЅРѕРїРєСѓ "СѓР±РёСЂР°С‚СЊ" РЅСѓР¶РЅРѕ
 	//_ASSERTE(gpConEmu && (gOSVer.dwMajorVersion <= 5 || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)));
 
 	if (mp_TaskBar1)

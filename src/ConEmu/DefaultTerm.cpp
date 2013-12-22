@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012-2013 Maximus5
 All rights reserved.
@@ -72,7 +72,7 @@ void CDefaultTerminal::ClearThreads(bool bForceTerminate)
 			}
 			else
 			{
-				continue; // Эта нить еще не закончила
+				continue; // Р­С‚Р° РЅРёС‚СЊ РµС‰Рµ РЅРµ Р·Р°РєРѕРЅС‡РёР»Р°
 			}
 		}
 		SafeCloseHandle(hProcess);
@@ -173,8 +173,8 @@ void CDefaultTerminal::OnHookedListChanged()
 	ClearProcessed(true);
 	LeaveCriticalSection(&mcs);
 
-	// Если проводника в списке НЕ было, а сейчас появился...
-	// Проверить процесс шелла
+	// Р•СЃР»Рё РїСЂРѕРІРѕРґРЅРёРєР° РІ СЃРїРёСЃРєРµ РќР• Р±С‹Р»Рѕ, Р° СЃРµР№С‡Р°СЃ РїРѕСЏРІРёР»СЃСЏ...
+	// РџСЂРѕРІРµСЂРёС‚СЊ РїСЂРѕС†РµСЃСЃ С€РµР»Р»Р°
 	CheckShellWindow();
 }
 
@@ -225,7 +225,7 @@ void CDefaultTerminal::PostCreated(bool bWaitForReady /*= false*/, bool bShowErr
 
 	mb_ReadyToHook = TRUE;
 
-	// Этот процесс занимает некоторое время, чтобы не блокировать основной поток - запускаем фоновый
+	// Р­С‚РѕС‚ РїСЂРѕС†РµСЃСЃ Р·Р°РЅРёРјР°РµС‚ РЅРµРєРѕС‚РѕСЂРѕРµ РІСЂРµРјСЏ, С‡С‚РѕР±С‹ РЅРµ Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ РѕСЃРЅРѕРІРЅРѕР№ РїРѕС‚РѕРє - Р·Р°РїСѓСЃРєР°РµРј С„РѕРЅРѕРІС‹Р№
 	mb_PostCreatedThread = true;
 	DWORD  nWait = WAIT_FAILED;
 	HANDLE hPostThread = CreateThread(NULL, 0, PostCreatedThread, this, 0, &mn_PostThreadId);
@@ -270,13 +270,13 @@ DWORD CDefaultTerminal::PostCreatedThread(LPVOID lpParameter)
 {
 	CDefaultTerminal *pTerm = (CDefaultTerminal*)lpParameter;
 
-	// Проверит Shell (Taskbar) и активное окно (GetForegroundWindow)
+	// РџСЂРѕРІРµСЂРёС‚ Shell (Taskbar) Рё Р°РєС‚РёРІРЅРѕРµ РѕРєРЅРѕ (GetForegroundWindow)
 	pTerm->CheckShellWindow();
 
 	// Done
 	pTerm->mb_PostCreatedThread = false;
 
-	// Просили выйти после установки хуков?
+	// РџСЂРѕСЃРёР»Рё РІС‹Р№С‚Рё РїРѕСЃР»Рµ СѓСЃС‚Р°РЅРѕРІРєРё С…СѓРєРѕРІ?
 	if (gpSetCls->ibExitAfterDefTermSetup)
 	{
 		//EnterCriticalSection(&pTerm->mcs);
@@ -290,7 +290,7 @@ DWORD CDefaultTerminal::PostCreatedThread(LPVOID lpParameter)
 		//}
 		//LeaveCriticalSection(&pTerm->mcs);
 
-		//// Если уже все захукано - выходим
+		//// Р•СЃР»Рё СѓР¶Рµ РІСЃРµ Р·Р°С…СѓРєР°РЅРѕ - РІС‹С…РѕРґРёРј
 		//if (iWaiting == 0)
 		{
 			gpConEmu->PostScClose();
@@ -300,7 +300,7 @@ DWORD CDefaultTerminal::PostCreatedThread(LPVOID lpParameter)
 	return 0;
 }
 
-// Поставить хук в процесс шелла (explorer.exe)
+// РџРѕСЃС‚Р°РІРёС‚СЊ С…СѓРє РІ РїСЂРѕС†РµСЃСЃ С€РµР»Р»Р° (explorer.exe)
 bool CDefaultTerminal::CheckShellWindow()
 {
 	bool bHooked = false;
@@ -336,8 +336,8 @@ bool CDefaultTerminal::CheckShellWindow()
 		}
 	}
 
-	// Поскольку это выполняется на старте, то ConEmu могли запустить специально
-	// для установки перехвата терминала. Поэтому нужно проверить и ForegroundWindow!
+	// РџРѕСЃРєРѕР»СЊРєСѓ СЌС‚Рѕ РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РЅР° СЃС‚Р°СЂС‚Рµ, С‚Рѕ ConEmu РјРѕРіР»Рё Р·Р°РїСѓСЃС‚РёС‚СЊ СЃРїРµС†РёР°Р»СЊРЅРѕ
+	// РґР»СЏ СѓСЃС‚Р°РЅРѕРІРєРё РїРµСЂРµС…РІР°С‚Р° С‚РµСЂРјРёРЅР°Р»Р°. РџРѕСЌС‚РѕРјСѓ РЅСѓР¶РЅРѕ РїСЂРѕРІРµСЂРёС‚СЊ Рё ForegroundWindow!
 	if (hFore)
 	{
 		if (GetWindowThreadProcessId(hFore, &nForePID)
@@ -350,8 +350,8 @@ bool CDefaultTerminal::CheckShellWindow()
 	return bHooked;
 }
 
-// Чтобы избежать возможного зависания в процессе установки
-// хука в процесс шелла (explorer.exe) при старте ConEmu
+// Р§С‚РѕР±С‹ РёР·Р±РµР¶Р°С‚СЊ РІРѕР·РјРѕР¶РЅРѕРіРѕ Р·Р°РІРёСЃР°РЅРёСЏ РІ РїСЂРѕС†РµСЃСЃРµ СѓСЃС‚Р°РЅРѕРІРєРё
+// С…СѓРєР° РІ РїСЂРѕС†РµСЃСЃ С€РµР»Р»Р° (explorer.exe) РїСЂРё СЃС‚Р°СЂС‚Рµ ConEmu
 DWORD CDefaultTerminal::PostCheckThread(LPVOID lpParameter)
 {
 	bool bRc = false;
@@ -364,7 +364,7 @@ DWORD CDefaultTerminal::PostCheckThread(LPVOID lpParameter)
 	return bRc;
 }
 
-// Проверка окна переднего плана. Если оно принадлежит к хукаемым процесса - вставить хук.
+// РџСЂРѕРІРµСЂРєР° РѕРєРЅР° РїРµСЂРµРґРЅРµРіРѕ РїР»Р°РЅР°. Р•СЃР»Рё РѕРЅРѕ РїСЂРёРЅР°РґР»РµР¶РёС‚ Рє С…СѓРєР°РµРјС‹Рј РїСЂРѕС†РµСЃСЃР° - РІСЃС‚Р°РІРёС‚СЊ С…СѓРє.
 bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread /*= true*/)
 {
 	if (!isDefaultTerminalAllowed())
@@ -387,10 +387,10 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 	DWORD nErrCode = 0;
 	int iHookerRc = -1;
 
-	// Если главное окно еще не создано
+	// Р•СЃР»Рё РіР»Р°РІРЅРѕРµ РѕРєРЅРѕ РµС‰Рµ РЅРµ СЃРѕР·РґР°РЅРѕ
 	if (!mb_ReadyToHook)
 	{
-		// Сразу выходим
+		// РЎСЂР°Р·Сѓ РІС‹С…РѕРґРёРј
 		goto wrap;
 	}
 
@@ -403,14 +403,14 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 
 	if (hFore == mh_LastWnd || hFore == mh_LastIgnoredWnd)
 	{
-		// Это окно уже проверялось
+		// Р­С‚Рѕ РѕРєРЅРѕ СѓР¶Рµ РїСЂРѕРІРµСЂСЏР»РѕСЃСЊ
 		lbRc = (hFore == mh_LastWnd);
 		goto wrap;
 	}
 
 	if (bRunInThread && (hFore == mh_LastCall))
 	{
-		// Просто выйти. Это проверка на частые фоновые вызовы.
+		// РџСЂРѕСЃС‚Рѕ РІС‹Р№С‚Рё. Р­С‚Рѕ РїСЂРѕРІРµСЂРєР° РЅР° С‡Р°СЃС‚С‹Рµ С„РѕРЅРѕРІС‹Рµ РІС‹Р·РѕРІС‹.
 		goto wrap;
 	}
 	mh_LastCall = hFore;
@@ -441,7 +441,7 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 			m_Threads.push_back(hPostThread);
 		}
 
-		lbRc = (hPostThread != NULL); // вернуть OK?
+		lbRc = (hPostThread != NULL); // РІРµСЂРЅСѓС‚СЊ OK?
 		goto wrap;
 	}
 
@@ -591,7 +591,7 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 		mh_LastWnd = hFore;
 		ProcessInfo inf = {};
 		inf.hProcess = hProcess;
-		hProcess = NULL; // его закрывать НЕ нужно, сохранен в массиве
+		hProcess = NULL; // РµРіРѕ Р·Р°РєСЂС‹РІР°С‚СЊ РќР• РЅСѓР¶РЅРѕ, СЃРѕС…СЂР°РЅРµРЅ РІ РјР°СЃСЃРёРІРµ
 		inf.nPID = nForePID;
 		//inf.bHooksSucceeded = (nResult == (UINT)CERR_HOOKS_WAS_ALREADY_SET);
 		inf.nHookTick = GetTickCount();

@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 
 /* Win SDK portion, not exists in GCC */

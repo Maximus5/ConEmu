@@ -1,4 +1,4 @@
-
+п»ї
 
 /*
 Copyright (c) 2009-2012 Maximus5
@@ -189,7 +189,7 @@ private:
 	BOOL LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
 	bool LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, const CHAR_INFO* pData, DWORD cchMaxCellCount);
 
-	// координаты панелей в символах
+	// РєРѕРѕСЂРґРёРЅР°С‚С‹ РїР°РЅРµР»РµР№ РІ СЃРёРјРІРѕР»Р°С…
 	RECT mr_LeftPanel, mr_RightPanel, mr_LeftPanelFull, mr_RightPanelFull; BOOL mb_LeftPanel, mb_RightPanel;
 	
 	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
@@ -210,7 +210,7 @@ protected:
 	CRealConsole* mp_RCon;
 	
 	/* ****************************************** */
-	/* Поиск диалогов и пометка "прозрачных" мест */
+	/* РџРѕРёСЃРє РґРёР°Р»РѕРіРѕРІ Рё РїРѕРјРµС‚РєР° "РїСЂРѕР·СЂР°С‡РЅС‹С…" РјРµСЃС‚ */
 	/* ****************************************** */
 	CRgnDetect m_Rgn; DWORD mn_LastRgnFlags;
 
@@ -225,7 +225,7 @@ protected:
 
 	
 	MSection csCON;
-	// Эти переменные инициализируются в RetrieveConsoleInfo()
+	// Р­С‚Рё РїРµСЂРµРјРµРЅРЅС‹Рµ РёРЅРёС†РёР°Р»РёР·РёСЂСѓСЋС‚СЃСЏ РІ RetrieveConsoleInfo()
 	struct RConInfo
 	{
 		CONSOLE_SELECTION_INFO m_sel;
@@ -233,22 +233,22 @@ protected:
 		CONSOLE_CURSOR_INFO m_ci;
 		DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
 		CONSOLE_SCREEN_BUFFER_INFO m_sbi;
-		COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
-		USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
+		COORD crMaxSize; // РњР°РєСЃРёРјР°Р»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё РЅР° С‚РµРєСѓС‰РµРј С€СЂРёС„С‚Рµ
+		USHORT nTopVisibleLine; // РјРѕР¶РµС‚ РѕС‚Р»РёС‡Р°С‚СЊСЃСЏ РѕС‚ m_sbi.srWindow.Top, РµСЃР»Рё РїСЂРѕРєСЂСѓС‚РєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅР°
 		DWORD LastStartInitBuffersTick, LastEndInitBuffersTick, LastStartReadBufferTick, LastEndReadBufferTick;
 		BOOL bInGetConsoleData;
 		wchar_t *pConChar;
 		WORD  *pConAttr;
-		COORD mcr_FileLineStart, mcr_FileLineEnd; // Подсветка строк ошибок компиляторов
+		COORD mcr_FileLineStart, mcr_FileLineEnd; // РџРѕРґСЃРІРµС‚РєР° СЃС‚СЂРѕРє РѕС€РёР±РѕРє РєРѕРјРїРёР»СЏС‚РѕСЂРѕРІ
 		//CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
 		CHAR_INFO *pDataCmp;
 		int nTextWidth, nTextHeight, nBufferHeight;
 		BOOL bLockChange2Text;
 		int nChange2TextWidth, nChange2TextHeight;
-		BOOL bBufferHeight; // TRUE, если есть прокрутка
+		BOOL bBufferHeight; // TRUE, РµСЃР»Рё РµСЃС‚СЊ РїСЂРѕРєСЂСѓС‚РєР°
 		//DWORD nPacketIdx;
 		DWORD_PTR dwKeybLayout;
-		BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
+		BOOL bRBtnDrag; // РІ РєРѕРЅСЃРѕР»СЊ РїРѕСЃС‹Р»Р°РµС‚СЃСЏ РґСЂР°Рі РїСЂР°РІРѕР№ РєРЅРѕРїРєРѕР№ (РІС‹РґРµР»РµРЅРёРµ РІ FAR)
 		COORD crRBtnDrag;
 		BOOL bInSetSize; HANDLE hInSetSize;
 		int DefaultBufferHeight;
@@ -258,7 +258,7 @@ protected:
 		COORD crRClick4KeyBar;
 		POINT ptRClick4KeyBar;
 		int nRClickVK; // VK_F1..F12
-		// Последний etr...
+		// РџРѕСЃР»РµРґРЅРёР№ etr...
 		ExpandTextRangeType etrLast;
 	} con;
 	

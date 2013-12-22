@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define STRSAFE_NO_DEPRECATE
 
-// В некоторых случаях использовать StringCch и прочие нельзя
+// Р’ РЅРµРєРѕС‚РѕСЂС‹С… СЃР»СѓС‡Р°СЏС… РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ StringCch Рё РїСЂРѕС‡РёРµ РЅРµР»СЊР·СЏ
 #undef  STRSAFE_DISABLE
 #ifdef CONEMU_MINIMAL
 	#define STRSAFE_DISABLE
@@ -199,7 +199,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #if defined(_DEBUG) && !defined(STRSAFE_DISABLE)
-// Только под дебагом, т.к. StringCchVPrintf вызывает vsprintf, который не линкуется в релизе статиком.
+// РўРѕР»СЊРєРѕ РїРѕРґ РґРµР±Р°РіРѕРј, С‚.Рє. StringCchVPrintf РІС‹Р·С‹РІР°РµС‚ vsprintf, РєРѕС‚РѕСЂС‹Р№ РЅРµ Р»РёРЅРєСѓРµС‚СЃСЏ РІ СЂРµР»РёР·Рµ СЃС‚Р°С‚РёРєРѕРј.
 #define SKIPLEN(l) (l),
 int swprintf_c(wchar_t* Buffer, INT_PTR size, const wchar_t *Format, ...);
 int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...);

@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2011 Maximus5
 All rights reserved.
@@ -36,9 +36,9 @@ protected:
 	static ATOM mh_Class;
 	HWND mh_Ghost;
 	struct {
-		POINT VConSize;   // то, что было раньше в самом m_TabSize(cx/cy)
-		POINT BitmapSize; // размер сформированной превьюшки
-		RECT  UsedRect;   // Если VConSize < BitmapSize - то VCon "центрируется", UsedRect - где оно отрисовано
+		POINT VConSize;   // С‚Рѕ, С‡С‚Рѕ Р±С‹Р»Рѕ СЂР°РЅСЊС€Рµ РІ СЃР°РјРѕРј m_TabSize(cx/cy)
+		POINT BitmapSize; // СЂР°Р·РјРµСЂ СЃС„РѕСЂРјРёСЂРѕРІР°РЅРЅРѕР№ РїСЂРµРІСЊСЋС€РєРё
+		RECT  UsedRect;   // Р•СЃР»Рё VConSize < BitmapSize - С‚Рѕ VCon "С†РµРЅС‚СЂРёСЂСѓРµС‚СЃСЏ", UsedRect - РіРґРµ РѕРЅРѕ РѕС‚СЂРёСЃРѕРІР°РЅРѕ
 	} m_TabSize;
 	HBITMAP mh_Snap;
 	BITMAPINFO mbmi_Snap;
@@ -58,7 +58,7 @@ protected:
 	void UpdateGhostSize();
 	void GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, POINT* pPtSize, POINT* pPtViewSize);
 
-	// Обработка сообщений
+	// РћР±СЂР°Р±РѕС‚РєР° СЃРѕРѕР±С‰РµРЅРёР№
 	LRESULT OnClose();
 	LRESULT OnDestroy();
 	LRESULT OnDwmSendIconicLivePreviewBitmap();

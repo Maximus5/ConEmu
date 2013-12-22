@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define GET_Y_LPARAM(inPy) ((int)(short)HIWORD(inPy))
 
 //#define RCLICKAPPSTIMEOUT 600
-//#define RCLICKAPPS_START 100 // начало отрисовки кружка вокруг курсора
+//#define RCLICKAPPS_START 100 // РЅР°С‡Р°Р»Рѕ РѕС‚СЂРёСЃРѕРІРєРё РєСЂСѓР¶РєР° РІРѕРєСЂСѓРі РєСѓСЂСЃРѕСЂР°
 //#define RCLICKAPPSTIMEOUT_MAX 10000
 //#define RCLICKAPPSDELTA 3
 //#define DRAG_DELTA 5
@@ -111,9 +111,9 @@ typedef HIMC (WINAPI* ImmGetContext_t)(HWND hWnd);
 typedef DWORD ConEmuInstallMode;
 const ConEmuInstallMode
 	cm_Normal       = 0x0000,
-	cm_MinGW        = 0x0001, // ConEmu установлен как пакет MinGW
-	cm_PortableApps = 0x0002, // ConEmu установлен как пакет PortableApps.com
-	cm_MSysStartup  = 0x1000  // найден баш из msys: "%ConEmuDir%\..\msys\1.0\bin\sh.exe" (MinGW mode)
+	cm_MinGW        = 0x0001, // ConEmu СѓСЃС‚Р°РЅРѕРІР»РµРЅ РєР°Рє РїР°РєРµС‚ MinGW
+	cm_PortableApps = 0x0002, // ConEmu СѓСЃС‚Р°РЅРѕРІР»РµРЅ РєР°Рє РїР°РєРµС‚ PortableApps.com
+	cm_MSysStartup  = 0x1000  // РЅР°Р№РґРµРЅ Р±Р°С€ РёР· msys: "%ConEmuDir%\..\msys\1.0\bin\sh.exe" (MinGW mode)
 	;
 
 
@@ -127,34 +127,34 @@ class CConEmuMain :
 	public:
 		//HMODULE mh_Psapi;
 		//FGetModuleFileNameEx GetModuleFileNameEx;
-		wchar_t ms_ConEmuDefTitle[32];          // Название с версией, например "ConEmu 110117 (32)"
-		wchar_t ms_ConEmuBuild[16];             // номер сборки, например "110117" или "131129dbg"
-		wchar_t ms_ConEmuExe[MAX_PATH+1];       // полный путь к ConEmu.exe (GUI)
-		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
-		wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
-		wchar_t ms_ConEmuWorkDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
+		wchar_t ms_ConEmuDefTitle[32];          // РќР°Р·РІР°РЅРёРµ СЃ РІРµСЂСЃРёРµР№, РЅР°РїСЂРёРјРµСЂ "ConEmu 110117 (32)"
+		wchar_t ms_ConEmuBuild[16];             // РЅРѕРјРµСЂ СЃР±РѕСЂРєРё, РЅР°РїСЂРёРјРµСЂ "110117" РёР»Рё "131129dbg"
+		wchar_t ms_ConEmuExe[MAX_PATH+1];       // РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє ConEmu.exe (GUI)
+		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // Р‘Р•Р— Р·Р°РІРµСЂС€Р°СЋС‰РµРіРѕ СЃР»РµС€Р°. РџР°РїРєР° СЃРѕРґРµСЂР¶РёС‚ ConEmu.exe
+		wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // Р‘Р•Р— Р·Р°РІРµСЂС€Р°СЋС‰РµРіРѕ СЃР»РµС€Р°. РџР°РїРєР° СЃРѕРґРµСЂР¶РёС‚ ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
+		wchar_t ms_ConEmuWorkDir[MAX_PATH+1];    // Р‘Р•Р— Р·Р°РІРµСЂС€Р°СЋС‰РµРіРѕ СЃР»РµС€Р°. РџР°РїРєР° Р·Р°РїСѓСЃРєР° ConEmu.exe (GetCurrentDirectory)
 		void StoreWorkDir(LPCWSTR asNewCurDir = NULL);
 		LPCWSTR WorkDir(LPCWSTR asOverrideCurDir = NULL);
 		wchar_t ms_ComSpecInitial[MAX_PATH];
 		wchar_t *mps_IconPath;
 		void SetWindowIcon(LPCWSTR asNewIcon);
 		BOOL mb_DosBoxExists;
-		//BOOL mb_MingwMode;   // ConEmu установлен как пакет MinGW
-		//BOOL mb_MSysStartup; // найден баш из msys: "%ConEmuDir%\..\msys\1.0\bin\sh.exe" (MinGW mode)
+		//BOOL mb_MingwMode;   // ConEmu СѓСЃС‚Р°РЅРѕРІР»РµРЅ РєР°Рє РїР°РєРµС‚ MinGW
+		//BOOL mb_MSysStartup; // РЅР°Р№РґРµРЅ Р±Р°С€ РёР· msys: "%ConEmuDir%\..\msys\1.0\bin\sh.exe" (MinGW mode)
 		ConEmuInstallMode m_InstallMode;
 		bool isMingwMode();
 		bool isMSysStartup();
 		bool isUpdateAllowed();
 		// Portable Far Registry
 		BOOL mb_PortableRegExist;
-		wchar_t ms_PortableRegHive[MAX_PATH]; // полный путь к "Portable.S-x-x-..."
-		wchar_t ms_PortableRegHiveOrg[MAX_PATH]; // путь к "Portable.S-x-x-..." (в ConEmu). этот файл мог быть скопирован в ms_PortableRegHive
+		wchar_t ms_PortableRegHive[MAX_PATH]; // РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє "Portable.S-x-x-..."
+		wchar_t ms_PortableRegHiveOrg[MAX_PATH]; // РїСѓС‚СЊ Рє "Portable.S-x-x-..." (РІ ConEmu). СЌС‚РѕС‚ С„Р°Р№Р» РјРѕРі Р±С‹С‚СЊ СЃРєРѕРїРёСЂРѕРІР°РЅ РІ ms_PortableRegHive
 		wchar_t ms_PortableReg[MAX_PATH]; // "Portable.reg"
-		HKEY mh_PortableMountRoot; // Это HKEY_CURRENT_USER или HKEY_USERS
+		HKEY mh_PortableMountRoot; // Р­С‚Рѕ HKEY_CURRENT_USER РёР»Рё HKEY_USERS
 		wchar_t ms_PortableMountKey[MAX_PATH];
 		BOOL mb_PortableKeyMounted;
 		wchar_t ms_PortableTempDir[MAX_PATH];
-		HKEY mh_PortableRoot; // Это открытый ключ
+		HKEY mh_PortableRoot; // Р­С‚Рѕ РѕС‚РєСЂС‹С‚С‹Р№ РєР»СЋС‡
 		bool PreparePortableReg();
 		bool mb_UpdateJumpListOnStartup;
 		bool mb_FindBugMode;
@@ -169,17 +169,17 @@ class CConEmuMain :
 		BOOL CheckDosBoxExists();
 		void CheckPortableReg();
 		void FinalizePortableReg();
-		wchar_t ms_ConEmuXml[MAX_PATH+1];       // полный путь к портабельным настройкам
-		wchar_t ms_ConEmuIni[MAX_PATH+1];       // полный путь к портабельным настройкам
+		wchar_t ms_ConEmuXml[MAX_PATH+1];       // РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє РїРѕСЂС‚Р°Р±РµР»СЊРЅС‹Рј РЅР°СЃС‚СЂРѕР№РєР°Рј
+		wchar_t ms_ConEmuIni[MAX_PATH+1];       // РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє РїРѕСЂС‚Р°Р±РµР»СЊРЅС‹Рј РЅР°СЃС‚СЂРѕР№РєР°Рј
 	public:
 		bool SetConfigFile(LPCWSTR asFilePath, bool abWriteReq = false);
 		LPWSTR ConEmuXml();
 		LPWSTR ConEmuIni();
-		wchar_t ms_ConEmuChm[MAX_PATH+1];       // полный путь к chm-файлу (help)
-		wchar_t ms_ConEmuC32Full[MAX_PATH+12];  // полный путь к серверу (ConEmuC.exe) с длинными именами
-		wchar_t ms_ConEmuC64Full[MAX_PATH+12];  // полный путь к серверу (ConEmuC64.exe) с длинными именами
+		wchar_t ms_ConEmuChm[MAX_PATH+1];       // РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє chm-С„Р°Р№Р»Сѓ (help)
+		wchar_t ms_ConEmuC32Full[MAX_PATH+12];  // РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє СЃРµСЂРІРµСЂСѓ (ConEmuC.exe) СЃ РґР»РёРЅРЅС‹РјРё РёРјРµРЅР°РјРё
+		wchar_t ms_ConEmuC64Full[MAX_PATH+12];  // РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє СЃРµСЂРІРµСЂСѓ (ConEmuC64.exe) СЃ РґР»РёРЅРЅС‹РјРё РёРјРµРЅР°РјРё
 		LPCWSTR ConEmuCExeFull(LPCWSTR asCmdLine=NULL);
-		wchar_t *mpsz_ConEmuArgs;    // Аргументы
+		wchar_t *mpsz_ConEmuArgs;    // РђСЂРіСѓРјРµРЅС‚С‹
 		void GetComSpecCopy(ConEmuComspec& ComSpec);
 		void CreateGuiAttachMapping(DWORD nGuiAppPID);
 		void InitComSpecStr(ConEmuComspec& ComSpec);
@@ -193,11 +193,11 @@ class CConEmuMain :
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
 		void UpdateGuiInfoMappingActive(bool bActive);
-		int mn_QuakePercent; // 0 - отключен, иначе (>0 && <=100) - идет анимация Quake
+		int mn_QuakePercent; // 0 - РѕС‚РєР»СЋС‡РµРЅ, РёРЅР°С‡Рµ (>0 && <=100) - РёРґРµС‚ Р°РЅРёРјР°С†РёСЏ Quake
 		bool mb_InCreateWindow;
 		HMONITOR mh_MinFromMonitor;
-		bool mb_InShowMinimized; // true на время выполнения ShowWindow(SW_SHOWMIN...)
-		bool mb_LastTransparentFocused; // нужно для проверки gpSet->isTransparentSeparate
+		bool mb_InShowMinimized; // true РЅР° РІСЂРµРјСЏ РІС‹РїРѕР»РЅРµРЅРёСЏ ShowWindow(SW_SHOWMIN...)
+		bool mb_LastTransparentFocused; // РЅСѓР¶РЅРѕ РґР»СЏ РїСЂРѕРІРµСЂРєРё gpSet->isTransparentSeparate
 	public:
 		bool InCreateWindow();
 		bool InQuakeAnimation();
@@ -220,7 +220,7 @@ class CConEmuMain :
 		CConEmuInside *mp_Inside;
 		CStatus *mp_Status;
 		CToolTip *mp_Tip;
-		MFileLog *mp_Log; CRITICAL_SECTION mcs_Log; // mcs_Log - для создания
+		MFileLog *mp_Log; CRITICAL_SECTION mcs_Log; // mcs_Log - РґР»СЏ СЃРѕР·РґР°РЅРёСЏ
 		CDefaultTerminal *mp_DefTrm;
 		CEFindDlg *mp_Find;
 		CRunQueue *mp_RunQueue;
@@ -239,24 +239,24 @@ class CConEmuMain :
 		ConEmuWindowMode WindowMode;           // wmNormal/wmMaximized/wmFullScreen
 		ConEmuWindowMode changeFromWindowMode; // wmNotChanging/rmNormal/rmMaximized/rmFullScreen
 		bool isRestoreFromMinimized;
-		bool isWndNotFSMaximized; // ставится в true, если при переходе в FullScreen - был Maximized
-		bool isQuakeMinimized;    // изврат, для случая когда "Quake" всегда показывается на таскбаре
+		bool isWndNotFSMaximized; // СЃС‚Р°РІРёС‚СЃСЏ РІ true, РµСЃР»Рё РїСЂРё РїРµСЂРµС…РѕРґРµ РІ FullScreen - Р±С‹Р» Maximized
+		bool isQuakeMinimized;    // РёР·РІСЂР°С‚, РґР»СЏ СЃР»СѓС‡Р°СЏ РєРѕРіРґР° "Quake" РІСЃРµРіРґР° РїРѕРєР°Р·С‹РІР°РµС‚СЃСЏ РЅР° С‚Р°СЃРєР±Р°СЂРµ
 		HMONITOR GetNearestMonitor(MONITORINFO* pmi = NULL, LPCRECT prcWnd = NULL);
 		HMONITOR GetPrimaryMonitor(MONITORINFO* pmi = NULL);
 		void StorePreMinimizeMonitor();
 
-		CESize WndWidth, WndHeight;  // в символах/пикселях/процентах
-		int    wndX, wndY;           // в пикселях
+		CESize WndWidth, WndHeight;  // РІ СЃРёРјРІРѕР»Р°С…/РїРёРєСЃРµР»СЏС…/РїСЂРѕС†РµРЅС‚Р°С…
+		int    wndX, wndY;           // РІ РїРёРєСЃРµР»СЏС…
 
-		bool  WindowStartMinimized; // ключик "/min" или "Свернуть" в свойствах ярлыка
-		bool  WindowStartTSA;       // ключик "/mintsa"
-		bool  ForceMinimizeToTray;  // ключики "/tsa" или "/tray"
-		bool  DisableAutoUpdate;    // ключик "/noupdate"
-		bool  DisableKeybHooks;     // ключик "/nokeyhook"
-		bool  DisableAllMacro;      // ключик "/nomacro"
-		bool  DisableAllHotkeys;    // ключик "/nohotkey"
-		bool  DisableSetDefTerm;    // ключик "/nodeftrm"
-		bool  DisableRegisterFonts; // ключик "/noregfont"
+		bool  WindowStartMinimized; // РєР»СЋС‡РёРє "/min" РёР»Рё "РЎРІРµСЂРЅСѓС‚СЊ" РІ СЃРІРѕР№СЃС‚РІР°С… СЏСЂР»С‹РєР°
+		bool  WindowStartTSA;       // РєР»СЋС‡РёРє "/mintsa"
+		bool  ForceMinimizeToTray;  // РєР»СЋС‡РёРєРё "/tsa" РёР»Рё "/tray"
+		bool  DisableAutoUpdate;    // РєР»СЋС‡РёРє "/noupdate"
+		bool  DisableKeybHooks;     // РєР»СЋС‡РёРє "/nokeyhook"
+		bool  DisableAllMacro;      // РєР»СЋС‡РёРє "/nomacro"
+		bool  DisableAllHotkeys;    // РєР»СЋС‡РёРє "/nohotkey"
+		bool  DisableSetDefTerm;    // РєР»СЋС‡РёРє "/nodeftrm"
+		bool  DisableRegisterFonts; // РєР»СЋС‡РёРє "/noregfont"
 
 		BOOL  mb_ExternalHidden;
 		
@@ -279,29 +279,29 @@ class CConEmuMain :
 			bool  bCheckNormalRect;
 
 			COORD LClkDC, LClkCon;
-			POINT LDblClkDC; // заполняется в PatchMouseEvent
+			POINT LDblClkDC; // Р·Р°РїРѕР»РЅСЏРµС‚СЃСЏ РІ PatchMouseEvent
 			DWORD LDblClkTick;
 			COORD RClkDC, RClkCon;
 			DWORD RClkTick;
 
-			// Для обработки gpSet->isActivateSplitMouseOver
+			// Р”Р»СЏ РѕР±СЂР°Р±РѕС‚РєРё gpSet->isActivateSplitMouseOver
 			POINT  ptLastSplitOverCheck;
 
-			// Чтобы не слать в консоль бесконечные WM_MOUSEMOVE
+			// Р§С‚РѕР±С‹ РЅРµ СЃР»Р°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ Р±РµСЃРєРѕРЅРµС‡РЅС‹Рµ WM_MOUSEMOVE
 			UINT   lastMsg;
 			WPARAM lastMMW;
 			LPARAM lastMML;
 
-			// Пропустить клик мышкой (окно было неактивно)
+			// РџСЂРѕРїСѓСЃС‚РёС‚СЊ РєР»РёРє РјС‹С€РєРѕР№ (РѕРєРЅРѕ Р±С‹Р»Рѕ РЅРµР°РєС‚РёРІРЅРѕ)
 			UINT nSkipEvents[2]; UINT nReplaceDblClk;
-			// не пропускать следующий клик в консоль!
+			// РЅРµ РїСЂРѕРїСѓСЃРєР°С‚СЊ СЃР»РµРґСѓСЋС‰РёР№ РєР»РёРє РІ РєРѕРЅСЃРѕР»СЊ!
 			BOOL bForceSkipActivation;
 
-			// таскание окошка за клиентскую область
+			// С‚Р°СЃРєР°РЅРёРµ РѕРєРѕС€РєР° Р·Р° РєР»РёРµРЅС‚СЃРєСѓСЋ РѕР±Р»Р°СЃС‚СЊ
 			POINT ptWndDragStart;
 			RECT  rcWndDragStart;
 
-			// настройки скролла мышкой (сколько линий/символов "за клик")
+			// РЅР°СЃС‚СЂРѕР№РєРё СЃРєСЂРѕР»Р»Р° РјС‹С€РєРѕР№ (СЃРєРѕР»СЊРєРѕ Р»РёРЅРёР№/СЃРёРјРІРѕР»РѕРІ "Р·Р° РєР»РёРє")
 			UINT nWheelScrollChars, nWheelScrollLines;
 			void  ReloadWheelScroll()
 			{
@@ -386,7 +386,7 @@ class CConEmuMain :
 		bool isPiewUpdate;
 		bool gbPostUpdateWindowSize;
 		HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick; RECT mrc_WndPosOnPicView;
-		HWND mh_ShellWindow; // Окно Progman для Desktop режима
+		HWND mh_ShellWindow; // РћРєРЅРѕ Progman РґР»СЏ Desktop СЂРµР¶РёРјР°
 		DWORD mn_ShellWindowPID;
 		BOOL mb_FocusOnDesktop;
 		//bool gb_ConsoleSelectMode;
@@ -426,7 +426,7 @@ class CConEmuMain :
 		void SetScClosePending(bool bFlag);
 		bool OnScClose();
 	protected:
-		bool mb_ScClosePending; // Устанавливается в TRUE в CVConGroup::CloseQuery
+		bool mb_ScClosePending; // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РІ TRUE РІ CVConGroup::CloseQuery
 	protected:
 		DWORD mn_LastQuakeShowHide;
 
@@ -436,7 +436,7 @@ class CConEmuMain :
 		CGuiServer m_GuiServer;
 
 		//CProgressBars *ProgressBars;
-		//HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_TerminateVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu
+		//HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_TerminateVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's РґР»СЏ SystemMenu
 		//HMENU mh_InsideSysMenu;
 		TCHAR Title[MAX_TITLE_SIZE+192]; //, TitleCmp[MAX_TITLE_SIZE+192]; //, MultiTitle[MAX_TITLE_SIZE+30];
 		TCHAR TitleTemplate[128];
@@ -461,9 +461,9 @@ class CConEmuMain :
 		BOOL mb_LockWindowRgn;
 		BOOL mb_LockShowWindow;
 		enum {
-			fsf_Hide = 0,     // Рамка и заголовок спрятаны
-			fsf_WaitShow = 1, // Запущен таймер показа рамки
-			fsf_Show = 2,     // Рамка показана
+			fsf_Hide = 0,     // Р Р°РјРєР° Рё Р·Р°РіРѕР»РѕРІРѕРє СЃРїСЂСЏС‚Р°РЅС‹
+			fsf_WaitShow = 1, // Р—Р°РїСѓС‰РµРЅ С‚Р°Р№РјРµСЂ РїРѕРєР°Р·Р° СЂР°РјРєРё
+			fsf_Show = 2,     // Р Р°РјРєР° РїРѕРєР°Р·Р°РЅР°
 		} m_ForceShowFrame;
 		void StartForceShowFrame();
 		void StopForceShowFrame();
@@ -489,8 +489,8 @@ class CConEmuMain :
 		//bool mb_InScMinimize;
 		RECT mrc_StoredNormalRect;
 		void StoreNormalRect(RECT* prcWnd);
-		//BOOL mb_MaximizedHideCaption; // в режиме HideCaption
-		//BOOL mb_InRestore; // во время восстановления из Maximized
+		//BOOL mb_MaximizedHideCaption; // РІ СЂРµР¶РёРјРµ HideCaption
+		//BOOL mb_InRestore; // РІРѕ РІСЂРµРјСЏ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ РёР· Maximized
 		BOOL mb_MouseCaptured;
 		//BYTE m_KeybStates[256];
 		void CheckActiveLayoutName();
@@ -531,7 +531,7 @@ class CConEmuMain :
 		//HMODULE mh_DwmApi;
 		//FDwmIsCompositionEnabled DwmIsCompositionEnabled;
 		HBITMAP mh_RightClickingBmp; HDC mh_RightClickingDC;
-		POINT m_RightClickingSize; // {384 x 16} 24 фрейма, считаем, что четверть отведенного времени прошла до начала показа
+		POINT m_RightClickingSize; // {384 x 16} 24 С„СЂРµР№РјР°, СЃС‡РёС‚Р°РµРј, С‡С‚Рѕ С‡РµС‚РІРµСЂС‚СЊ РѕС‚РІРµРґРµРЅРЅРѕРіРѕ РІСЂРµРјРµРЅРё РїСЂРѕС€Р»Р° РґРѕ РЅР°С‡Р°Р»Р° РїРѕРєР°Р·Р°
 		int m_RightClickingFrames, m_RightClickingCurrent;
 		BOOL mb_RightClickingPaint, mb_RightClickingLSent, mb_RightClickingRegistered;
 		void StartRightClickingPaint();
@@ -581,7 +581,7 @@ class CConEmuMain :
 		UINT mn_MsgOldCmdVer; BOOL mb_InShowOldCmdVersion;
 		UINT mn_MsgTabCommand;
 		UINT mn_MsgTabSwitchFromHook; /*BOOL mb_InWinTabSwitch;*/ // = RegisterWindowMessage(CONEMUMSG_SWITCHCON);
-		//WARNING!!! mb_InWinTabSwitch - перенести в Keys!
+		//WARNING!!! mb_InWinTabSwitch - РїРµСЂРµРЅРµСЃС‚Рё РІ Keys!
 		UINT mn_MsgWinKeyFromHook;
 		//UINT mn_MsgConsoleHookedKey;
 		UINT mn_MsgSheelHook;
@@ -638,7 +638,7 @@ class CConEmuMain :
 		DWORD GetFarPID(BOOL abPluginRequired=FALSE);
 
 	public:
-		LPCWSTR GetDefaultTitle(); // вернуть ms_ConEmuVer
+		LPCWSTR GetDefaultTitle(); // РІРµСЂРЅСѓС‚СЊ ms_ConEmuVer
 		LPCTSTR GetLastTitle(bool abUseDefault=true);
 		LPCTSTR GetVConTitle(int nIdx);
 		void SetTitleTemplate(LPCWSTR asTemplate);
@@ -658,7 +658,7 @@ class CConEmuMain :
 		//CVirtualConsole* ActiveCon();
 		BOOL Activate(CVirtualConsole* apVCon);
 		int ActiveConNum(); // 0-based
-		int GetConCount(); // количество открытых консолей
+		int GetConCount(); // РєРѕР»РёС‡РµСЃС‚РІРѕ РѕС‚РєСЂС‹С‚С‹С… РєРѕРЅСЃРѕР»РµР№
 		static void AddMargins(RECT& rc, const RECT& rcAddShift, BOOL abExpand=FALSE);
 		void AskChangeBufferHeight();
 		void AskChangeAlternative();
@@ -766,7 +766,7 @@ class CConEmuMain :
 		//void PaintCon(HDC hPaintDC);
 		void InvalidateGaps();
 		//void PaintGaps(HDC hDC);
-		void PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
+		void PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*РґР»СЏ nRelative==0 - РІС‹СЃРѕС‚Р°, РґР»СЏ ==1 - +-1, +-2,...*/);
 		void PostDragCopy(BOOL abMove, BOOL abReceived=FALSE);
 		void PostCreate(BOOL abReceived=FALSE);
 		void PostCreateCon(RConStartArgs *pArgs);
@@ -806,8 +806,8 @@ class CConEmuMain :
 	private:
 		struct QuakePrevSize {
 			bool bWasSaved;
-			bool bWaitReposition; // Требуется смена позиции при OnHideCaption
-			CESize wndWidth, wndHeight; // Консоль
+			bool bWaitReposition; // РўСЂРµР±СѓРµС‚СЃСЏ СЃРјРµРЅР° РїРѕР·РёС†РёРё РїСЂРё OnHideCaption
+			CESize wndWidth, wndHeight; // РљРѕРЅСЃРѕР»СЊ
 			int wndX, wndY; // GUI
 			DWORD nFrame; // it's BYTE, DWORD here for alignment
 			ConEmuWindowMode WindowMode;

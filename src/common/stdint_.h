@@ -1,4 +1,4 @@
-/* ISO C9x  7.18  Integer types <stdint.h>
+﻿/* ISO C9x  7.18  Integer types <stdint.h>
  * Based on ISO/IEC SC22/WG14 9899 Committee draft (SC22 N2794)
  *
  *  THIS SOFTWARE IS NOT COPYRIGHTED

@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -81,11 +81,11 @@ const IID IID_IDragSourceHelper2 = {0x83E07D0D, 0x0C5F, 0x4163, {0xBF, 0x1A, 0x6
 
 //#define MSG_STARTDRAG (WM_APP+10)
 
-WARNING("Заменить GlobalFree на ReleaseStgMedium, проверить, что оно реально освобождает hGlobal и кучу не рушит");
+WARNING("Р—Р°РјРµРЅРёС‚СЊ GlobalFree РЅР° ReleaseStgMedium, РїСЂРѕРІРµСЂРёС‚СЊ, С‡С‚Рѕ РѕРЅРѕ СЂРµР°Р»СЊРЅРѕ РѕСЃРІРѕР±РѕР¶РґР°РµС‚ hGlobal Рё РєСѓС‡Сѓ РЅРµ СЂСѓС€РёС‚");
 
-TODO("Попробовать перевести DragImage на нормальный интерфейс API");
-// можно оставить Overlapped для отображения статуса драга
-// однако - были какие-то проблемы. Не всплывало окошко при драге во внешние приложения?
+TODO("РџРѕРїСЂРѕР±РѕРІР°С‚СЊ РїРµСЂРµРІРµСЃС‚Рё DragImage РЅР° РЅРѕСЂРјР°Р»СЊРЅС‹Р№ РёРЅС‚РµСЂС„РµР№СЃ API");
+// РјРѕР¶РЅРѕ РѕСЃС‚Р°РІРёС‚СЊ Overlapped РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ СЃС‚Р°С‚СѓСЃР° РґСЂР°РіР°
+// РѕРґРЅР°РєРѕ - Р±С‹Р»Рё РєР°РєРёРµ-С‚Рѕ РїСЂРѕР±Р»РµРјС‹. РќРµ РІСЃРїР»С‹РІР°Р»Рѕ РѕРєРѕС€РєРѕ РїСЂРё РґСЂР°РіРµ РІРѕ РІРЅРµС€РЅРёРµ РїСЂРёР»РѕР¶РµРЅРёСЏ?
 
 CDragDropData::CDragDropData()
 {
@@ -149,9 +149,9 @@ BOOL CDragDropData::Register()
 	HRESULT hr = S_OK;
 
 #ifdef UNLOCKED_DRAG
-	// Инициалиция для Drag
+	// РРЅРёС†РёР°Р»РёС†РёСЏ РґР»СЏ Drag
 	InitialCreateSource();
-	// Окно создаем сразу, чтобы фокус никуда не уходил в процессе
+	// РћРєРЅРѕ СЃРѕР·РґР°РµРј СЃСЂР°Р·Сѓ, С‡С‚РѕР±С‹ С„РѕРєСѓСЃ РЅРёРєСѓРґР° РЅРµ СѓС…РѕРґРёР» РІ РїСЂРѕС†РµСЃСЃРµ
 	CreateDragImageWindow();
 #endif
 
@@ -175,7 +175,7 @@ BOOL CDragDropData::Register()
 #ifdef USE_DROP_HELPER
 	// Helper (drag image)
 	mb_TargetHelperFailed = false;
-	// Относительно длительная операция, будем выполнять при необходимости
+	// РћС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РґР»РёС‚РµР»СЊРЅР°СЏ РѕРїРµСЂР°С†РёСЏ, Р±СѓРґРµРј РІС‹РїРѕР»РЅСЏС‚СЊ РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё
 	//IUnknown* pHelper = NULL;
 	//hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
 	//if (pHelper)
@@ -200,8 +200,8 @@ bool CDragDropData::IsDragImageOsSupported()
 {
 	if (gnOsVer >= 0x601/*Windows7*/)
 	{
-		// в Windows 7 вроде бы только при включенном Aero (Glass) работают DragImage
-		// или это при включении "Classic Theme"?
+		// РІ Windows 7 РІСЂРѕРґРµ Р±С‹ С‚РѕР»СЊРєРѕ РїСЂРё РІРєР»СЋС‡РµРЅРЅРѕРј Aero (Glass) СЂР°Р±РѕС‚Р°СЋС‚ DragImage
+		// РёР»Рё СЌС‚Рѕ РїСЂРё РІРєР»СЋС‡РµРЅРёРё "Classic Theme"?
 		//if (!gpConEmu->IsDwm())
 		if (!gpConEmu->IsThemed())
 			return false;
@@ -214,7 +214,7 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 {
 	if (mb_TargetHelperFailed)
 	{
-		// Если один раз helper обломался - второй не просить
+		// Р•СЃР»Рё РѕРґРёРЅ СЂР°Р· helper РѕР±Р»РѕРјР°Р»СЃСЏ - РІС‚РѕСЂРѕР№ РЅРµ РїСЂРѕСЃРёС‚СЊ
 		return false;
 	}
 
@@ -260,7 +260,7 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
     return lbCanUseHelper;
 }
 
-// Это ТОЛЬКО при "своем" драге
+// Р­С‚Рѕ РўРћР›Р¬РљРћ РїСЂРё "СЃРІРѕРµРј" РґСЂР°РіРµ
 bool CDragDropData::UseSourceHelper()
 {
 #ifndef USE_DRAG_HELPER
@@ -268,7 +268,7 @@ bool CDragDropData::UseSourceHelper()
 #else
 	if (mb_SourceHelperFailed)
 	{
-		// Если один раз helper обломался - второй не просить
+		// Р•СЃР»Рё РѕРґРёРЅ СЂР°Р· helper РѕР±Р»РѕРјР°Р»СЃСЏ - РІС‚РѕСЂРѕР№ РЅРµ РїСЂРѕСЃРёС‚СЊ
 		return false;
 	}
 
@@ -304,8 +304,8 @@ bool CDragDropData::UseSourceHelper()
 #endif
 }
 
-// -1 - ошибка
-// иначе - размер ASCIIZZ путей файлов в БАЙТАХ
+// -1 - РѕС€РёР±РєР°
+// РёРЅР°С‡Рµ - СЂР°Р·РјРµСЂ ASCIIZZ РїСѓС‚РµР№ С„Р°Р№Р»РѕРІ РІ Р‘РђР™РўРђРҐ
 int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar_t** ppszDraggedPath, UINT* pnFilesCount)
 {
 	DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo()\n");
@@ -343,13 +343,13 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 
 		if (pipe.Execute(CMD_DRAGFROM, &DragArg, sizeof(DragArg)))
 		{
-			//lbNeedLBtnUp = FALSE; // мышка уже обработана в плагине
+			//lbNeedLBtnUp = FALSE; // РјС‹С€РєР° СѓР¶Рµ РѕР±СЂР°Р±РѕС‚Р°РЅР° РІ РїР»Р°РіРёРЅРµ
 			gpConEmu->DebugStep(_T("DnD: Recieving data"));
 			DWORD cbBytesRead=0;
 			int nWholeSize=0;
 			pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead);
 
-			if (nWholeSize==0)    // защита смены формата
+			if (nWholeSize==0)    // Р·Р°С‰РёС‚Р° СЃРјРµРЅС‹ С„РѕСЂРјР°С‚Р°
 			{
 				if (!pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead))
 					nWholeSize = 0;
@@ -414,7 +414,7 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 					free(pBuf);
 				}
 
-				// Сразу закроем
+				// РЎСЂР°Р·Сѓ Р·Р°РєСЂРѕРµРј
 				pipe.Close();
 				size=(curr-szDraggedPath+1)*sizeof(wchar_t);
 			}
@@ -447,10 +447,10 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	IShellFolder *pDesktop = NULL;
 	//if (nFilesCount !=1 )
 	//	goto wrap;
-	// Прикидочно определим, сколько понадобится памяти для хранения всех PIDL
+	// РџСЂРёРєРёРґРѕС‡РЅРѕ РѕРїСЂРµРґРµР»РёРј, СЃРєРѕР»СЊРєРѕ РїРѕРЅР°РґРѕР±РёС‚СЃСЏ РїР°РјСЏС‚Рё РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РІСЃРµС… PIDL
 	nParentSize = ILGetSize(&m_DesktopID); _ASSERTE(nParentSize==2);
 	size_t nMaxSize = cbSize + nFilesCount * 64 + 32; //-V112
-	// в nCurSize сразу резервируем размер памяти под заголовок (CIDA с переменным aoffset)
+	// РІ nCurSize СЃСЂР°Р·Сѓ СЂРµР·РµСЂРІРёСЂСѓРµРј СЂР°Р·РјРµСЂ РїР°РјСЏС‚Рё РїРѕРґ Р·Р°РіРѕР»РѕРІРѕРє (CIDA СЃ РїРµСЂРµРјРµРЅРЅС‹Рј aoffset)
 	size_t nCurSize = sizeof(CIDA)+nFilesCount*sizeof(UINT);
 	file_PIDLs = (CIDA*)GlobalAlloc(GPTR, nMaxSize);
 
@@ -461,14 +461,14 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	}
 
 	// First - root folder PIDL (Desktop)
-	file_PIDLs->cidl = 0; // будем инкрементить, когда понадобится
+	file_PIDLs->cidl = 0; // Р±СѓРґРµРј РёРЅРєСЂРµРјРµРЅС‚РёС‚СЊ, РєРѕРіРґР° РїРѕРЅР°РґРѕР±РёС‚СЃСЏ
 	file_PIDLs->aoffset[0] = nCurSize;
 	memmove((((LPBYTE)file_PIDLs)+nCurSize), &m_DesktopID, nParentSize);
 	nCurSize += nParentSize;
 	
 	SAFETRY //__try
 	{
-		// Сначала нужно получить Interface для Desktop
+		// РЎРЅР°С‡Р°Р»Р° РЅСѓР¶РЅРѕ РїРѕР»СѓС‡РёС‚СЊ Interface РґР»СЏ Desktop
 		SFGAOF tmp;
 		LPITEMIDLIST pItem = NULL;
 		DWORD nItemSize = 0;
@@ -488,7 +488,7 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 			if (!pszSlash)
 				continue;
 
-			// теперь собственно файл/папка...
+			// С‚РµРїРµСЂСЊ СЃРѕР±СЃС‚РІРµРЅРЅРѕ С„Р°Р№Р»/РїР°РїРєР°...
 			ULONG nEaten=0;
 			hr = pDesktop->ParseDisplayName(ghWnd, NULL, pszFile, &nEaten, &pItem, &(tmp=0));
 
@@ -535,7 +535,7 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 
 	if (hr == (HRESULT)-1)
 	{
-		// file_PIDLs освободится после wrap;
+		// file_PIDLs РѕСЃРІРѕР±РѕРґРёС‚СЃСЏ РїРѕСЃР»Рµ wrap;
 		gpConEmu->DebugStep(_T("DnD: Exception in shell"), TRUE);
 		goto wrap;
 	}
@@ -546,7 +546,7 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 		goto wrap;
 	}
 
-	// Добавляем
+	// Р”РѕР±Р°РІР»СЏРµРј
 	mp_DataObject->SetDataInt(CFSTR_SHELLIDLIST, file_PIDLs);
 	lbAdded = TRUE;
 	file_PIDLs = NULL;
@@ -623,9 +623,9 @@ BOOL CDragDropData::AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCou
 			LPCWSTR sClipName;
 			DWORD   nValue;
 		} DragOptions[] = {
-			// TRUE -- вызовет "создание/отрисовку" стандартной иконки винды
+			// TRUE -- РІС‹Р·РѕРІРµС‚ "СЃРѕР·РґР°РЅРёРµ/РѕС‚СЂРёСЃРѕРІРєСѓ" СЃС‚Р°РЅРґР°СЂС‚РЅРѕР№ РёРєРѕРЅРєРё РІРёРЅРґС‹
 			{L"UsingDefaultDragImage", TRUE},
-			// Флаги (Undocumented)
+			// Р¤Р»Р°РіРё (Undocumented)
 			{L"DragSourceHelperFlags", 1},
 			// IsComputingImage
 			{L"IsComputingImage", 0},
@@ -716,7 +716,7 @@ BOOL CDragDropData::AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCou
 
 			if (hr == E_FAIL)
 			{
-				// Юзер мог отключить "Show window contents while dragging"
+				// Р®Р·РµСЂ РјРѕРі РѕС‚РєР»СЋС‡РёС‚СЊ "Show window contents while dragging"
 				Assert(SUCCEEDED(hr) || (DragFullWindows==FALSE));
 			}
 			else
@@ -741,7 +741,7 @@ BOOL CDragDropData::AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCou
 	return SUCCEEDED(hr);
 }
 
-// Загрузить из фара информацию для Drag
+// Р—Р°РіСЂСѓР·РёС‚СЊ РёР· С„Р°СЂР° РёРЅС„РѕСЂРјР°С†РёСЋ РґР»СЏ Drag
 BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAllowedEffects)
 {
 	BOOL lbSucceeded = FALSE;
@@ -759,7 +759,7 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	}
 
 	_ASSERTE(!gpConEmu->isPictureView());
-	//gpConEmu->isDragProcessed=true; // чтобы не сработало два раза на один драг
+	//gpConEmu->isDragProcessed=true; // С‡С‚РѕР±С‹ РЅРµ СЃСЂР°Р±РѕС‚Р°Р»Рѕ РґРІР° СЂР°Р·Р° РЅР° РѕРґРёРЅ РґСЂР°Рі
 	gpConEmu->mouse.state |= (gpConEmu->mouse.state & DRAG_R_ALLOWED) ? DRAG_R_STARTED : DRAG_L_STARTED;
 	MCHKHEAP;
 	size = RetrieveDragFromInfo(abClickNeed, crMouseDC, &szDraggedPath, &nFilesCount);
@@ -773,10 +773,10 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	}
 
 	*pdwAllowedEffects = DROPEFFECT_COPY|DROPEFFECT_MOVE;
-	// Создать IDataObject (пока пустой)
+	// РЎРѕР·РґР°С‚СЊ IDataObject (РїРѕРєР° РїСѓСЃС‚РѕР№)
 	CreateDataObject(NULL, NULL, 0, &mp_DataObject) ;
 
-	// Т.к. у нас появились сплиты - нужно помнить, из какой консоли вытащили файлы
+	// Рў.Рє. Сѓ РЅР°СЃ РїРѕСЏРІРёР»РёСЃСЊ СЃРїР»РёС‚С‹ - РЅСѓР¶РЅРѕ РїРѕРјРЅРёС‚СЊ, РёР· РєР°РєРѕР№ РєРѕРЅСЃРѕР»Рё РІС‹С‚Р°С‰РёР»Рё С„Р°Р№Р»С‹
 	CVConGroup::GetActiveVCon(&VCon);
 	mp_DraggedVCon = VCon.VCon();
 
@@ -786,12 +786,12 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 		goto wrap;
 	}
 
-	// Добавление в mp_DataObject перетаскиваемых форматов
+	// Р”РѕР±Р°РІР»РµРЅРёРµ РІ mp_DataObject РїРµСЂРµС‚Р°СЃРєРёРІР°РµРјС‹С… С„РѕСЂРјР°С‚РѕРІ
 	AddFmt_HDROP(szDraggedPath, nFilesCount, size);
 	AddFmt_PREFERREDDROPEFFECT(szDraggedPath, nFilesCount, size);
 	AddFmt_InShellDragLoop(szDraggedPath, nFilesCount, size);
 
-	// Эти шли последними
+	// Р­С‚Рё С€Р»Рё РїРѕСЃР»РµРґРЅРёРјРё
 	if (AddFmt_SHELLIDLIST(szDraggedPath, nFilesCount, size))
 		*pdwAllowedEffects |= DROPEFFECT_LINK;
 
@@ -800,17 +800,17 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	AddFmt_DragImageBits(szDraggedPath, nFilesCount, size);
 
 	MCHKHEAP
-	//Освободить память, больше не нужно
+	//РћСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ, Р±РѕР»СЊС€Рµ РЅРµ РЅСѓР¶РЅРѕ
 	delete szDraggedPath; szDraggedPath=NULL;
 
 	//CFSTR_PREFERREDDROPEFFECT, FD_LINKUI
 
-	// Информация о панелях уже должна быть получена!
+	// РРЅС„РѕСЂРјР°С†РёСЏ Рѕ РїР°РЅРµР»СЏС… СѓР¶Рµ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РїРѕР»СѓС‡РµРЅР°!
 	_ASSERTE(m_pfpi && m_pfpi->NoFarConsole==FALSE);
-	//// Сразу получим информацию о путях панелей...
-	//if (!m_pfpi)  // если это уже не сделали
+	//// РЎСЂР°Р·Сѓ РїРѕР»СѓС‡РёРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РїСѓС‚СЏС… РїР°РЅРµР»РµР№...
+	//if (!m_pfpi)  // РµСЃР»Рё СЌС‚Рѕ СѓР¶Рµ РЅРµ СЃРґРµР»Р°Р»Рё
 	//{
-	//	// Ошибки пайпа отображаются через MBoxA
+	//	// РћС€РёР±РєРё РїР°Р№РїР° РѕС‚РѕР±СЂР°Р¶Р°СЋС‚СЃСЏ С‡РµСЂРµР· MBoxA
 	//	RetrieveDragToInfo();
 	//}
 
@@ -821,7 +821,7 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	{
 		mb_DragWithinNow = TRUE;
 #ifdef UNLOCKED_DRAG
-		// должно быть создано при запуске ConEmu
+		// РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ СЃРѕР·РґР°РЅРѕ РїСЂРё Р·Р°РїСѓСЃРєРµ ConEmu
 		_ASSERTE(mh_Overlapped);
 #else
 		CreateDragImageWindow();
@@ -895,7 +895,7 @@ template <class T> void PidlDump(
 	}
 }
 
-// Если передан hDumpFile - запись полной информации в текстовый файл
+// Р•СЃР»Рё РїРµСЂРµРґР°РЅ hDumpFile - Р·Р°РїРёСЃСЊ РїРѕР»РЅРѕР№ РёРЅС„РѕСЂРјР°С†РёРё РІ С‚РµРєСЃС‚РѕРІС‹Р№ С„Р°Р№Р»
 void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile /*= NULL*/)
 {
 	//=== codeanalyze: Excessive stack usage
@@ -1018,7 +1018,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 								nDataSize = (memsize[i]+1)*2;
 								pszData[i] = (wchar_t*)calloc(nDataSize,1);
 
-								// тупая проверка на юникод. первый символ - обычно из English char set
+								// С‚СѓРїР°СЏ РїСЂРѕРІРµСЂРєР° РЅР° СЋРЅРёРєРѕРґ. РїРµСЂРІС‹Р№ СЃРёРјРІРѕР» - РѕР±С‹С‡РЅРѕ РёР· English char set
 								if (pasz[0] && pasz[1])
 								{
 									//if (hDumpFile)
@@ -1036,7 +1036,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 									//if (hDumpFile)
 									//{
 									StringCbCopy(pszData[i], nDataSize, pwsz);
-									nDataSize = ((memsize[i]>>1)+1)<<1; // было больше, с учетом возможного MultiByteToWideChar
+									nDataSize = ((memsize[i]>>1)+1)<<1; // Р±С‹Р»Рѕ Р±РѕР»СЊС€Рµ, СЃ СѓС‡РµС‚РѕРј РІРѕР·РјРѕР¶РЅРѕРіРѕ MultiByteToWideChar
 									//} else {
 									//	int nMaxLen = min(200,memsize[i]/2);
 									//	lstrcpyn(szName[i]+_tcslen(szName[i]), pwsz, nMaxLen);
@@ -1126,7 +1126,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 			}
 			else
 			{
-				// Послать в отладчик
+				// РџРѕСЃР»Р°С‚СЊ РІ РѕС‚Р»Р°РґС‡РёРє
 				OutputDebugStringW(szName[i]);
 
 				if (nDataSize && pszData[i])
@@ -1198,7 +1198,7 @@ bool CDragDropData::CheckIsUpdatePackage(IDataObject * pDataObject)
 
 			if (SUCCEEDED(hr) && stgMedium.hGlobal)
 			{
-				// Нас интересует только первый файл (больше одного быть не может)
+				// РќР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ С‚РѕР»СЊРєРѕ РїРµСЂРІС‹Р№ С„Р°Р№Р» (Р±РѕР»СЊС€Рµ РѕРґРЅРѕРіРѕ Р±С‹С‚СЊ РЅРµ РјРѕР¶РµС‚)
 				LPCWSTR pszFileNames = (LPCWSTR)GlobalLock(stgMedium.hGlobal);
 
 				if (pszFileNames && *pszFileNames)
@@ -1310,7 +1310,7 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 		}
 		else
 		{
-			// Если консоли нет - то и бросать некуда
+			// Р•СЃР»Рё РєРѕРЅСЃРѕР»Рё РЅРµС‚ - С‚Рѕ Рё Р±СЂРѕСЃР°С‚СЊ РЅРµРєСѓРґР°
 			m_pfpi->ActiveRect.right = 0;
 			m_pfpi->ActiveRect.bottom = 0;
 		}
@@ -1340,14 +1340,14 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 	memmove(m_pfpi, pInfo, cbInfoSize);
 
 	m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
-	//Slash на конце нам не нужен
+	//Slash РЅР° РєРѕРЅС†Рµ РЅР°Рј РЅРµ РЅСѓР¶РµРЅ
 	int nPathLen = lstrlenW(m_pfpi->pszActivePath);
 
 	if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
 		m_pfpi->pszActivePath[nPathLen-1] = 0;
 
 	m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
-	//Slash на конце нам не нужен
+	//Slash РЅР° РєРѕРЅС†Рµ РЅР°Рј РЅРµ РЅСѓР¶РµРЅ
 	nPathLen = lstrlenW(m_pfpi->pszPassivePath);
 
 	if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
@@ -1360,8 +1360,8 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 	// Done
 }
 
-// Загрузить из фара информацию для Drop
-// Требуется только при Drop из внешних приложений!
+// Р—Р°РіСЂСѓР·РёС‚СЊ РёР· С„Р°СЂР° РёРЅС„РѕСЂРјР°С†РёСЋ РґР»СЏ Drop
+// РўСЂРµР±СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїСЂРё Drop РёР· РІРЅРµС€РЅРёС… РїСЂРёР»РѕР¶РµРЅРёР№!
 void CDragDropData::RetrieveDragToInfo(POINTL pt)
 {
 	DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo()\n");
@@ -1403,7 +1403,7 @@ void CDragDropData::RetrieveDragToInfo(POINTL pt)
 		CConEmuPipe pipe(nFarPID, CONEMUREADYTIMEOUT);
 		gpConEmu->DebugStep(_T("DnD: DragEnter starting"));
 
-		// Ошибки пайпа отображаются через MBoxA
+		// РћС€РёР±РєРё РїР°Р№РїР° РѕС‚РѕР±СЂР°Р¶Р°СЋС‚СЃСЏ С‡РµСЂРµР· MBoxA
 		if (pipe.Init(_T("CDragDropData::DragEnter")))
 		{
 			if (pipe.Execute(CMD_DRAGTO))
@@ -1424,7 +1424,7 @@ void CDragDropData::RetrieveDragToInfo(POINTL pt)
 							pipe.Read(pBuf, cbStructSize, &cbBytesRead);
 						}
 
-						TODO("можно бы получать координаты диалога/полей/редактора, чтобы бросать только в него...");
+						TODO("РјРѕР¶РЅРѕ Р±С‹ РїРѕР»СѓС‡Р°С‚СЊ РєРѕРѕСЂРґРёРЅР°С‚С‹ РґРёР°Р»РѕРіР°/РїРѕР»РµР№/СЂРµРґР°РєС‚РѕСЂР°, С‡С‚РѕР±С‹ Р±СЂРѕСЃР°С‚СЊ С‚РѕР»СЊРєРѕ РІ РЅРµРіРѕ...");
 
 						SetDragToInfo(pBuf, cbBytesRead, pRCon);
 						bInfoSet = true;
@@ -1544,7 +1544,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 	if (hf) hOldF = (HFONT)SelectObject(hDrawDC, hf);
 
 	int nMaxX = 0, nMaxY = 0;
-	// GetTextExtentPoint32 почему-то портит DC, поэтому ширину получим сначала
+	// GetTextExtentPoint32 РїРѕС‡РµРјСѓ-С‚Рѕ РїРѕСЂС‚РёС‚ DC, РїРѕСЌС‚РѕРјСѓ С€РёСЂРёРЅСѓ РїРѕР»СѓС‡РёРј СЃРЅР°С‡Р°Р»Р°
 	wchar_t *psz = pszFiles; int nFilesCol = 0;
 
 	while (*psz)
@@ -1560,12 +1560,12 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 		if (sz.cx > nMaxX)
 			nMaxX = sz.cx;
 
-		psz += _tcslen(psz)+1; // длина полного пути и длина имени файла разные ;)
+		psz += _tcslen(psz)+1; // РґР»РёРЅР° РїРѕР»РЅРѕРіРѕ РїСѓС‚Рё Рё РґР»РёРЅР° РёРјРµРЅРё С„Р°Р№Р»Р° СЂР°Р·РЅС‹Рµ ;)
 		nFilesCol ++;
 	}
 
 	nMaxX = min((OVERLAY_TEXT_SHIFT + nMaxX),nWidth);
-	// Если тащат много файлов/папок - можно попробовать разместить их в несколько колонок
+	// Р•СЃР»Рё С‚Р°С‰Р°С‚ РјРЅРѕРіРѕ С„Р°Р№Р»РѕРІ/РїР°РїРѕРє - РјРѕР¶РЅРѕ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ СЂР°Р·РјРµСЃС‚РёС‚СЊ РёС… РІ РЅРµСЃРєРѕР»СЊРєРѕ РєРѕР»РѕРЅРѕРє
 	int nColCount = 1;
 	// Win8 bug.
 	// It does not cares about difference in struct sizes between 64/32 bit processes.
@@ -1576,24 +1576,24 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 	{
 		if (nFilesCol > 21 && (nMaxX * 3 + 32) <= nWidth) //-V112
 		{
-			nFilesCol = (nFilesCol+3) / (nColCount = 4); // располагаем в 4 колонки //-V112
+			nFilesCol = (nFilesCol+3) / (nColCount = 4); // СЂР°СЃРїРѕР»Р°РіР°РµРј РІ 4 РєРѕР»РѕРЅРєРё //-V112
 		}
 		else if (nFilesCol > 12 && (nMaxX * 2 + 32) <= nWidth) //-V112
 		{
-			nFilesCol = (nFilesCol+2) / (nColCount = 3); // располагаем в 3 колонки
+			nFilesCol = (nFilesCol+2) / (nColCount = 3); // СЂР°СЃРїРѕР»Р°РіР°РµРј РІ 3 РєРѕР»РѕРЅРєРё
 		}
 		else if ((nMaxX + 32) <= nWidth) //-V112
 		{
-			nFilesCol = (nFilesCol+1) / (nColCount = 2); // располагаем в 2 колонки
+			nFilesCol = (nFilesCol+1) / (nColCount = 2); // СЂР°СЃРїРѕР»Р°РіР°РµРј РІ 2 РєРѕР»РѕРЅРєРё
 		}
 	}
 
 	hOldBitmap = (HBITMAP)SelectObject(hDrawDC, hBitmap);
-	SetTextColor(hDrawDC, RGB(0,0,128)); // Темно синий текст
-	//SetTextColor(hDrawDC, RGB(255,255,255)); // Белый текст
-	SetBkColor(hDrawDC, RGB(192,192,192)); // на сером фоне
+	SetTextColor(hDrawDC, RGB(0,0,128)); // РўРµРјРЅРѕ СЃРёРЅРёР№ С‚РµРєСЃС‚
+	//SetTextColor(hDrawDC, RGB(255,255,255)); // Р‘РµР»С‹Р№ С‚РµРєСЃС‚
+	SetBkColor(hDrawDC, RGB(192,192,192)); // РЅР° СЃРµСЂРѕРј С„РѕРЅРµ
 	SetBkMode(hDrawDC, OPAQUE);
-	// DC может быть испорчен (почему?), поэтому лучше почистим его
+	// DC РјРѕР¶РµС‚ Р±С‹С‚СЊ РёСЃРїРѕСЂС‡РµРЅ (РїРѕС‡РµРјСѓ?), РїРѕСЌС‚РѕРјСѓ Р»СѓС‡С€Рµ РїРѕС‡РёСЃС‚РёРј РµРіРѕ
 	RECT rcFill = MakeRect(nWidth,nHeight);
 
 	if (bUseColorKey)
@@ -1615,7 +1615,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 	while (*psz)
 	{
 		if (!DrawImageBits(hDrawDC, psz, &nMaxX, nX, &nColMaxY))
-			break; // вышли за пределы nWidth x nHeight (по высоте)
+			break; // РІС‹С€Р»Рё Р·Р° РїСЂРµРґРµР»С‹ nWidth x nHeight (РїРѕ РІС‹СЃРѕС‚Рµ)
 
 		psz += _tcslen(psz)+1;
 
@@ -1703,8 +1703,8 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 	//				else
 	//					pDst->nXCursor = nFirstColWidth;
 
-	//				pDst->nYCursor = 17; // под первой строкой
-	//				pDst->nRes1 = GetTickCount(); // что-то непонятное. Random?
+	//				pDst->nYCursor = 17; // РїРѕРґ РїРµСЂРІРѕР№ СЃС‚СЂРѕРєРѕР№
+	//				pDst->nRes1 = GetTickCount(); // С‡С‚Рѕ-С‚Рѕ РЅРµРїРѕРЅСЏС‚РЅРѕРµ. Random?
 	//				pDst->nRes2 = (DWORD)-1;
 
 	//				const u32 nCurBlend = OVERLAY_ALPHA, nAllBlend = OVERLAY_ALPHA;
@@ -1788,7 +1788,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 	//				}
 	//				else
 	//				{
-	//					if (pDst) GlobalFree(pDst); pDst = NULL;  // Ошибка
+	//					if (pDst) GlobalFree(pDst); pDst = NULL;  // РћС€РёР±РєР°
 	//				}
 	//			}
 
@@ -1826,7 +1826,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 		else
 			ptCursor->x = nFirstColWidth;
 
-		ptCursor->y = 17; // под первой строкой
+		ptCursor->y = 17; // РїРѕРґ РїРµСЂРІРѕР№ СЃС‚СЂРѕРєРѕР№
 	}
 	return TRUE;
 }
@@ -1880,7 +1880,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 		//if (hf) hOldF = (HFONT)SelectObject(hDrawDC, hf);
 
 		//int nMaxX = 0, nMaxY = 0, nX = 0;
-		//// GetTextExtentPoint32 почему-то портит DC, поэтому ширину получим сначала
+		//// GetTextExtentPoint32 РїРѕС‡РµРјСѓ-С‚Рѕ РїРѕСЂС‚РёС‚ DC, РїРѕСЌС‚РѕРјСѓ С€РёСЂРёРЅСѓ РїРѕР»СѓС‡РёРј СЃРЅР°С‡Р°Р»Р°
 		//wchar_t *psz = pszFiles; int nFilesCol = 0;
 
 		//while (*psz)
@@ -1896,36 +1896,36 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 		//	if (sz.cx > nMaxX)
 		//		nMaxX = sz.cx;
 
-		//	psz += _tcslen(psz)+1; // длина полного пути и длина имени файла разные ;)
+		//	psz += _tcslen(psz)+1; // РґР»РёРЅР° РїРѕР»РЅРѕРіРѕ РїСѓС‚Рё Рё РґР»РёРЅР° РёРјРµРЅРё С„Р°Р№Р»Р° СЂР°Р·РЅС‹Рµ ;)
 		//	nFilesCol ++;
 		//}
 
 		//nMaxX = min((OVERLAY_TEXT_SHIFT + nMaxX),MAX_OVERLAY_WIDTH);
-		//// Если тащат много файлов/папок - можно попробовать разместить их в несколько колонок
+		//// Р•СЃР»Рё С‚Р°С‰Р°С‚ РјРЅРѕРіРѕ С„Р°Р№Р»РѕРІ/РїР°РїРѕРє - РјРѕР¶РЅРѕ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ СЂР°Р·РјРµСЃС‚РёС‚СЊ РёС… РІ РЅРµСЃРєРѕР»СЊРєРѕ РєРѕР»РѕРЅРѕРє
 		//int nColCount = 1;
 
 		//if (nFilesCol > 3)
 		//{
 		//	if (nFilesCol > 21 && (nMaxX * 3 + 32) <= MAX_OVERLAY_WIDTH) //-V112
 		//	{
-		//		nFilesCol = (nFilesCol+3) / (nColCount = 4); // располагаем в 4 колонки //-V112
+		//		nFilesCol = (nFilesCol+3) / (nColCount = 4); // СЂР°СЃРїРѕР»Р°РіР°РµРј РІ 4 РєРѕР»РѕРЅРєРё //-V112
 		//	}
 		//	else if (nFilesCol > 12 && (nMaxX * 2 + 32) <= MAX_OVERLAY_WIDTH) //-V112
 		//	{
-		//		nFilesCol = (nFilesCol+2) / (nColCount = 3); // располагаем в 3 колонки
+		//		nFilesCol = (nFilesCol+2) / (nColCount = 3); // СЂР°СЃРїРѕР»Р°РіР°РµРј РІ 3 РєРѕР»РѕРЅРєРё
 		//	}
 		//	else if ((nMaxX + 32) <= MAX_OVERLAY_WIDTH) //-V112
 		//	{
-		//		nFilesCol = (nFilesCol+1) / (nColCount = 2); // располагаем в 2 колонки
+		//		nFilesCol = (nFilesCol+1) / (nColCount = 2); // СЂР°СЃРїРѕР»Р°РіР°РµРј РІ 2 РєРѕР»РѕРЅРєРё
 		//	}
 		//}
 
 		//HBITMAP hOldBitmap = (HBITMAP)SelectObject(hDrawDC, hBitmap);
-		//SetTextColor(hDrawDC, RGB(0,0,128)); // Темно синий текст
-		////SetTextColor(hDrawDC, RGB(255,255,255)); // Белый текст
-		//SetBkColor(hDrawDC, RGB(192,192,192)); // на сером фоне
+		//SetTextColor(hDrawDC, RGB(0,0,128)); // РўРµРјРЅРѕ СЃРёРЅРёР№ С‚РµРєСЃС‚
+		////SetTextColor(hDrawDC, RGB(255,255,255)); // Р‘РµР»С‹Р№ С‚РµРєСЃС‚
+		//SetBkColor(hDrawDC, RGB(192,192,192)); // РЅР° СЃРµСЂРѕРј С„РѕРЅРµ
 		//SetBkMode(hDrawDC, OPAQUE);
-		//// DC может быть испорчен (почему?), поэтому лучше почистим его
+		//// DC РјРѕР¶РµС‚ Р±С‹С‚СЊ РёСЃРїРѕСЂС‡РµРЅ (РїРѕС‡РµРјСѓ?), РїРѕСЌС‚РѕРјСѓ Р»СѓС‡С€Рµ РїРѕС‡РёСЃС‚РёРј РµРіРѕ
 		//RECT rcFill = MakeRect(MAX_OVERLAY_WIDTH,MAX_OVERLAY_HEIGHT);
 
 		//#if !defined(USE_ALPHA_OVL)
@@ -1944,7 +1944,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 		//while (*psz)
 		//{
 		//	if (!DrawImageBits(hDrawDC, psz, &nMaxX, nX, &nColMaxY))
-		//		break; // вышли за пределы MAX_OVERLAY_WIDTH x MAX_OVERLAY_HEIGHT (по высоте)
+		//		break; // РІС‹С€Р»Рё Р·Р° РїСЂРµРґРµР»С‹ MAX_OVERLAY_WIDTH x MAX_OVERLAY_HEIGHT (РїРѕ РІС‹СЃРѕС‚Рµ)
 
 		//	psz += _tcslen(psz)+1;
 
@@ -2028,9 +2028,9 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 						pDst->nHeight = nMaxY;
 
 						pDst->nXCursor = ptCursor.x;
-						pDst->nYCursor = ptCursor.y; // под первой строкой
+						pDst->nYCursor = ptCursor.y; // РїРѕРґ РїРµСЂРІРѕР№ СЃС‚СЂРѕРєРѕР№
 
-						pDst->nRes1 = GetTickCount(); // что-то непонятное. Random?
+						pDst->nRes1 = GetTickCount(); // С‡С‚Рѕ-С‚Рѕ РЅРµРїРѕРЅСЏС‚РЅРѕРµ. Random?
 						pDst->nRes2 = (DWORD)-1;
 
 						const u32 nCurBlend = OVERLAY_ALPHA, nAllBlend = OVERLAY_ALPHA;
@@ -2114,7 +2114,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 						}
 						else
 						{
-							if (pDst) GlobalFree(pDst); pDst = NULL;  // Ошибка
+							if (pDst) GlobalFree(pDst); pDst = NULL;  // РћС€РёР±РєР°
 						}
 					}
 
@@ -2182,7 +2182,7 @@ BOOL CDragDropData::DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int
 	if (sz.cx > *nMaxX)
 		*nMaxX = sz.cx;
 
-	// Иконка, если просили
+	// РРєРѕРЅРєР°, РµСЃР»Рё РїСЂРѕСЃРёР»Рё
 	if (gpSet->isDragShowIcons)
 	{
 		UINT cbSize = sizeof(sfi);
@@ -2195,11 +2195,11 @@ BOOL CDragDropData::DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int
 		}
 		else
 		{
-			// Нарисовать стандартную иконку?
+			// РќР°СЂРёСЃРѕРІР°С‚СЊ СЃС‚Р°РЅРґР°СЂС‚РЅСѓСЋ РёРєРѕРЅРєСѓ?
 		}
 	}
 
-	// А теперь - имя файла/папки
+	// Рђ С‚РµРїРµСЂСЊ - РёРјСЏ С„Р°Р№Р»Р°/РїР°РїРєРё
 	RECT rcText = {nX+OVERLAY_TEXT_SHIFT, *nMaxY+1, 0, (*nMaxY + 16)};
 	rcText.right = min(MAX_OVERLAY_WIDTH, (rcText.left + *nMaxX));
 	wchar_t szText[MAX_PATH+1]; lstrcpyn(szText, pszText, MAX_PATH); szText[MAX_PATH] = 0;
@@ -2226,10 +2226,10 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 
 #ifdef PERSIST_OVL
 	if (mh_Overlapped && mp_Bits)
-		return FALSE; // уже
+		return FALSE; // СѓР¶Рµ
 #else
 	if (/*mb_selfdrag ||*/ mh_Overlapped)
-		return FALSE; // уже
+		return FALSE; // СѓР¶Рµ
 #endif
 
 	DestroyDragImageBits();
@@ -2245,11 +2245,11 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 
 	STGMEDIUM stgMedium = { 0 };
 	FORMATETC fmtetc = { 0, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-	// Это пока что-то не работает
+	// Р­С‚Рѕ РїРѕРєР° С‡С‚Рѕ-С‚Рѕ РЅРµ СЂР°Р±РѕС‚Р°РµС‚
 	//if (gpSet->isDragOverlay == 1) {
 	//	wchar_t* pszFiles = NULL;
 	//	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILENAMEW/*L"FileNameW"*/);
-	//	TODO("А освобождать полученное надо?");
+	//	TODO("Рђ РѕСЃРІРѕР±РѕР¶РґР°С‚СЊ РїРѕР»СѓС‡РµРЅРЅРѕРµ РЅР°РґРѕ?");
 	//	if (S_OK == pDataObject->QueryGetData(&fmtetc)) {
 	//		if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == NULL) {
 	//			pszFiles = (wchar_t*)GlobalLock(stgMedium.hGlobal);
@@ -2263,13 +2263,13 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 
 	if (S_OK != pDataObject->QueryGetData(&fmtetc))
 	{
-		return FALSE; // Формат отсутствует
+		return FALSE; // Р¤РѕСЂРјР°С‚ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
 	}
 
 	// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
 	if (S_OK != pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == NULL)
 	{
-		return FALSE; // Формат отсутствует
+		return FALSE; // Р¤РѕСЂРјР°С‚ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
 	}
 
 	SIZE_T nInfoSize = GlobalSize(stgMedium.hGlobal);
@@ -2278,7 +2278,7 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 	{
 		//GlobalFree(stgMedium.hGlobal);
 		ReleaseStgMedium(&stgMedium);
-		return FALSE; // пусто
+		return FALSE; // РїСѓСЃС‚Рѕ
 	}
 
 	if (nInfoSize <= sizeof(DragImageBits))
@@ -2294,13 +2294,13 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 	{
 		//GlobalFree(stgMedium.hGlobal);
 		ReleaseStgMedium(&stgMedium);
-		return FALSE; // Не удалось получить данные
+		return FALSE; // РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ РґР°РЅРЅС‹Рµ
 	}
 
 	_ASSERTE(pInfo->nWidth>0 && pInfo->nWidth<=400);
 	_ASSERTE(pInfo->nHeight>0 && pInfo->nHeight<=400);
 	SIZE_T nReqSize = (sizeof(DragImageBits)+(pInfo->nWidth * pInfo->nHeight - 1)*sizeof(RGBQUAD));
-	// На Win7x64 + 2*DWORD
+	// РќР° Win7x64 + 2*DWORD
 	SIZE_T nReqSize2 = (sizeof(DragImageBits)+(pInfo->nWidth * pInfo->nHeight - 1)*sizeof(RGBQUAD))+2*sizeof(DWORD);
 	int nShift = 0;
 
@@ -2309,7 +2309,7 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 		#ifdef _DEBUG
 		if (!IsDebuggerPresent())
 		{
-			_ASSERT(nInfoSize == nReqSize); // Неизвестный формат?
+			_ASSERT(nInfoSize == nReqSize); // РќРµРёР·РІРµСЃС‚РЅС‹Р№ С„РѕСЂРјР°С‚?
 			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"DragImageBits unknown format? (nInfoSize=%u) != (nReqSize=%u)", (DWORD)nInfoSize, (DWORD)nReqSize);
 			gpConEmu->DebugStep(szDbg, TRUE);
 		}
@@ -2392,7 +2392,7 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 		if (hdc) ::ReleaseDC(ghWnd, hdc);
 	}
 
-	// Освободим данные
+	// РћСЃРІРѕР±РѕРґРёРј РґР°РЅРЅС‹Рµ
 	GlobalUnlock(stgMedium.hGlobal);
 	//GlobalFree(stgMedium.hGlobal);
 	ReleaseStgMedium(&stgMedium);
@@ -2457,11 +2457,11 @@ BOOL CDragDropData::CreateDragImageWindow()
 #ifdef _DEBUG
 			dwLastError = GetLastError();
 #endif
-			// Ругаться не будем, чтобы драг не испортить
+			// Р СѓРіР°С‚СЊСЃСЏ РЅРµ Р±СѓРґРµРј, С‡С‚РѕР±С‹ РґСЂР°Рі РЅРµ РёСЃРїРѕСЂС‚РёС‚СЊ
 			return FALSE;
 		}
 
-		bClassRegistered = TRUE; // регистрировать класс один раз
+		bClassRegistered = TRUE; // СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊ РєР»Р°СЃСЃ РѕРґРёРЅ СЂР°Р·
 	}
 
 	//int nCount = mp_Bits->nWidth * mp_Bits->nHeight;
@@ -2478,7 +2478,7 @@ BOOL CDragDropData::CreateDragImageWindow()
 	//#define DRAGBITSTITLE gpConEmu->ms_ConEmuExe
 	//#endif
 	
-	// |WS_BORDER|WS_SYSMENU - создает проводник. попробуем?
+	// |WS_BORDER|WS_SYSMENU - СЃРѕР·РґР°РµС‚ РїСЂРѕРІРѕРґРЅРёРє. РїРѕРїСЂРѕР±СѓРµРј?
 	//2009-08-20 [+] WS_EX_NOACTIVATE
 #if defined(USE_CHILD_OVL)
 	if (!ghWnd)
@@ -2508,7 +2508,7 @@ BOOL CDragDropData::CreateDragImageWindow()
 	{
 		_ASSERTE(mh_Overlapped!=NULL);
 #ifdef PERSIST_OVL
-		//DestroyDragImageBits(); -- смысла уже нет, т.к. создается только при старте
+		//DestroyDragImageBits(); -- СЃРјС‹СЃР»Р° СѓР¶Рµ РЅРµС‚, С‚.Рє. СЃРѕР·РґР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїСЂРё СЃС‚Р°СЂС‚Рµ
 #else
 		DestroyDragImageBits();
 #endif
@@ -2623,7 +2623,7 @@ void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 	                        &bf, ULW_ALPHA /*ULW_OPAQUE*/);
 	UNREFERENCED_PARAMETER(bRet);
 	//_ASSERTE(bRet);
-	//apiSetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
+	//apiSetForegroundWindow(ghWnd); // РїРѕСЃР»Рµ СЃРѕР·РґР°РЅРёСЏ РѕРєРЅР° С„РѕРєСѓСЃ СѓС…РѕРґРёС‚ РёР· GUI
 #endif
 }
 #endif
@@ -2653,9 +2653,9 @@ LRESULT CDragDropData::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPA
 
 		if (pDrag && pDrag->mb_DragWithinNow)
 		{
-			TODO("Если создавать окно сразу - не понадобится с фокусом играться");
+			TODO("Р•СЃР»Рё СЃРѕР·РґР°РІР°С‚СЊ РѕРєРЅРѕ СЃСЂР°Р·Сѓ - РЅРµ РїРѕРЅР°РґРѕР±РёС‚СЃСЏ СЃ С„РѕРєСѓСЃРѕРј РёРіСЂР°С‚СЊСЃСЏ");
 			DEBUGSTROVL(L"CDragDrop::DragBitsWndProc --> apiSetForegroundWindow");
-			apiSetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
+			apiSetForegroundWindow(ghWnd); // РїРѕСЃР»Рµ СЃРѕР·РґР°РЅРёСЏ РѕРєРЅР° С„РѕРєСѓСЃ СѓС…РѕРґРёС‚ РёР· GUI
 		}
 
 		return 0;
@@ -2689,7 +2689,7 @@ LRESULT CDragDropData::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPA
 				}
 				else
 				{
-					//_ASSERTE(pDrag->mp_Bits!=NULL); -- вполне допустимо, WM_PAINT приходит сразу после создания окна
+					//_ASSERTE(pDrag->mp_Bits!=NULL); -- РІРїРѕР»РЅРµ РґРѕРїСѓСЃС‚РёРјРѕ, WM_PAINT РїСЂРёС…РѕРґРёС‚ СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ СЃРѕР·РґР°РЅРёСЏ РѕРєРЅР°
 				}
 
 				if (nWidth<MAX_OVERLAY_WIDTH || nHeight<MAX_OVERLAY_HEIGHT)
@@ -2725,10 +2725,10 @@ LRESULT CDragDropData::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPA
 BOOL CDragDropData::InDragDrop()
 {
 #ifdef UNLOCKED_DRAG
-	PRAGMA_ERROR("Проверить все нити драга, а не только последний mp_DataObject");
+	PRAGMA_ERROR("РџСЂРѕРІРµСЂРёС‚СЊ РІСЃРµ РЅРёС‚Рё РґСЂР°РіР°, Р° РЅРµ С‚РѕР»СЊРєРѕ РїРѕСЃР»РµРґРЅРёР№ mp_DataObject");
 #endif
 
-	//!!! mh_Overlapped теперь всегда создается!
+	//!!! mh_Overlapped С‚РµРїРµСЂСЊ РІСЃРµРіРґР° СЃРѕР·РґР°РµС‚СЃСЏ!
 	if (mp_DataObject /*|| mh_Overlapped*/ || mb_DragWithinNow)
 		return TRUE;
 
@@ -2743,7 +2743,7 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 	DEBUGSTRBACK(szDbg);
 #endif
 
-	// Drop или отмена драга, когда источник - ConEmu
+	// Drop РёР»Рё РѕС‚РјРµРЅР° РґСЂР°РіР°, РєРѕРіРґР° РёСЃС‚РѕС‡РЅРёРє - ConEmu
 	if (dwEffect == DROPEFFECT_STOP_INTERNAL)
 	{
 		#ifdef USE_DROP_HELPER
@@ -2818,7 +2818,7 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 			//if (!mh_Overlapped && mp_Bits)
 			//{
 			//	#ifdef PERSIST_OVL
-			//	//CreateDragImageWindow(); -- должно быть создано при запуске ConEmu
+			//	//CreateDragImageWindow(); -- РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ СЃРѕР·РґР°РЅРѕ РїСЂРё Р·Р°РїСѓСЃРєРµ ConEmu
 			//	_ASSERTE(mh_Overlapped!=NULL);
 			//	#else
 			//	CreateDragImageWindow();
@@ -2945,7 +2945,7 @@ LRESULT CDragDropData::DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			DWORD dwAllowedEffects = wParam; //-V103
 			IDropSource *pDropSource = (IDropSource*)lParam;
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
-			// Чтобы движения мышки "могли" обработаться
+			// Р§С‚РѕР±С‹ РґРІРёР¶РµРЅРёСЏ РјС‹С€РєРё "РјРѕРіР»Рё" РѕР±СЂР°Р±РѕС‚Р°С‚СЊСЃСЏ
 			MoveWindow(hWnd, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
 			pds->bInDrag = TRUE;
 			pds->pDrag->mb_DragStarting = TRUE;
@@ -2969,7 +2969,7 @@ LRESULT CDragDropData::DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			pDropSource->Release();
 			pds->pDrag->mb_DragStarting = FALSE;
 			pds->bInDrag = FALSE;
-			// может другая нить есть?
+			// РјРѕР¶РµС‚ РґСЂСѓРіР°СЏ РЅРёС‚СЊ РµСЃС‚СЊ?
 			pds->pDrag->mb_DragStarting = pds->pDrag->IsDragStarting();
 			lRc = 0;
 		}
@@ -2997,8 +2997,8 @@ DWORD CDragDropData::DragThread(LPVOID lpParameter)
 		return 100;
 	}
 
-	TODO("Может RegisterDragDrop не нужен?");
-	// Инициализация окна для Drop
+	TODO("РњРѕР¶РµС‚ RegisterDragDrop РЅРµ РЅСѓР¶РµРЅ?");
+	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РѕРєРЅР° РґР»СЏ Drop
 	//HRESULT hr = RegisterDragDrop(pds->hWnd, pds->pDrag);
 	//if (hr != S_OK) {
 	//	DisplayLastError(L"Can't register Drop target (thread)", hr);
@@ -3009,8 +3009,8 @@ DWORD CDragDropData::DragThread(LPVOID lpParameter)
 	MSG msg;
 	SetEvent(pds->hReady);
 
-	// Чтобы драг жил - запускаем обработку сообщений
-	// Сама обработка (Оконная процедура) происходит в DragProc (ниже)
+	// Р§С‚РѕР±С‹ РґСЂР°Рі Р¶РёР» - Р·Р°РїСѓСЃРєР°РµРј РѕР±СЂР°Р±РѕС‚РєСѓ СЃРѕРѕР±С‰РµРЅРёР№
+	// РЎР°РјР° РѕР±СЂР°Р±РѕС‚РєР° (РћРєРѕРЅРЅР°СЏ РїСЂРѕС†РµРґСѓСЂР°) РїСЂРѕРёСЃС…РѕРґРёС‚ РІ DragProc (РЅРёР¶Рµ)
 	while (GetMessage(&msg, 0,0,0))
 	{
 		ConEmuMsgLogger::Log(msg, ConEmuMsgLogger::msgCommon);
@@ -3070,7 +3070,7 @@ CDragDropData::CEDragSource* CDragDropData::GetFreeSource()
 		//pds = *iter;
 		pds = m_Sources[j];
 
-		if (!pds->hThread || pds->bInDrag) continue;  // ищем готовый поток
+		if (!pds->hThread || pds->bInDrag) continue;  // РёС‰РµРј РіРѕС‚РѕРІС‹Р№ РїРѕС‚РѕРє
 
 		if (WaitForSingleObject(pds->hThread,0)!=WAIT_OBJECT_0)
 		{
@@ -3103,7 +3103,7 @@ void CDragDropData::TerminateDrag()
 	//std::vector<CEDragSource*>::iterator iter;
 	CEDragSource* pds = NULL;
 
-	// Сначала во все нити послать QUIT
+	// РЎРЅР°С‡Р°Р»Р° РІРѕ РІСЃРµ РЅРёС‚Рё РїРѕСЃР»Р°С‚СЊ QUIT
 	//for (iter = m_Sources.begin(); iter != m_Sources.end(); ++iter)
 	for (INT_PTR j = 0; j < m_Sources.size(); j++)
 	{
@@ -3116,7 +3116,7 @@ void CDragDropData::TerminateDrag()
 			PostThreadMessage(pds->nTID, WM_QUIT, 0, 0);
 	}
 
-	// После этого попробовать немного подождать, и Terminate...
+	// РџРѕСЃР»Рµ СЌС‚РѕРіРѕ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РЅРµРјРЅРѕРіРѕ РїРѕРґРѕР¶РґР°С‚СЊ, Рё Terminate...
 	//for (INT_PTR iter = m_Sources.begin(); iter != m_Sources.end(); iter = m_Sources.erase(iter))
 	while (!m_Sources.empty())
 	{

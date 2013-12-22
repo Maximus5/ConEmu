@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -229,7 +229,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		ptLastNcClick = MakePoint(LOWORD(lParam),HIWORD(lParam));
 
 		if ((uMsg == WM_NCMOUSEMOVE) || (uMsg == WM_NCLBUTTONUP))
-			gpConEmu->isSizing(uMsg); // могло не сброситься, проверим
+			gpConEmu->isSizing(uMsg); // РјРѕРіР»Рѕ РЅРµ СЃР±СЂРѕСЃРёС‚СЊСЃСЏ, РїСЂРѕРІРµСЂРёРј
 
 		if (gpSet->isTabsInCaption)
 		{
@@ -239,7 +239,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		}
 		else
 		{
-			// Табов чисто в заголовке - нет
+			// РўР°Р±РѕРІ С‡РёСЃС‚Рѕ РІ Р·Р°РіРѕР»РѕРІРєРµ - РЅРµС‚
 			lbRc = false;
 		}
 
@@ -275,7 +275,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 	//case WM_LBUTTONDBLCLK:
 	//	{
-	//		// Глюк? DblClick по иконке приводит к WM_LBUTTONDBLCLK вместо WM_NCLBUTTONDBLCLK
+	//		// Р“Р»СЋРє? DblClick РїРѕ РёРєРѕРЅРєРµ РїСЂРёРІРѕРґРёС‚ Рє WM_LBUTTONDBLCLK РІРјРµСЃС‚Рѕ WM_NCLBUTTONDBLCLK
 	//		POINT pt = MakePoint(LOWORD(lParam),HIWORD(lParam));
 	//		if (gpConEmu->PtDiffTest(pt, ptLastNcClick.x, ptLastNcClick.y, 4))
 	//		{
@@ -288,7 +288,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		
 	case WM_MOUSEMOVE:
 		DBGFUNCTION(L"WM_MOUSEMOVE \n");
-		// Табов чисто в заголовке - нет
+		// РўР°Р±РѕРІ С‡РёСЃС‚Рѕ РІ Р·Р°РіРѕР»РѕРІРєРµ - РЅРµС‚
 		#if 0
 		RedrawLock();
 		if (gpConEmu->mp_TabBar->GetHoverTab() != -1)
@@ -296,7 +296,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			gpConEmu->mp_TabBar->HoverTab(-1);
 		}
 		#if defined(USE_CONEMU_TOOLBAR)
-		// Ну и с кнопок убрать подсветку, если была
+		// РќСѓ Рё СЃ РєРЅРѕРїРѕРє СѓР±СЂР°С‚СЊ РїРѕРґСЃРІРµС‚РєСѓ, РµСЃР»Рё Р±С‹Р»Р°
 		gpConEmu->mp_TabBar->Toolbar_UnHover();
 		#endif
 		RedrawUnlock();
@@ -312,13 +312,13 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		if (wParam == HT_CONEMUTAB)
 		{
 			_ASSERTE(gpSet->isTabsInCaption && "There is not tabs in 'Caption'");
-			//RedrawLock(); -- чтобы отрисовать "клик" по кнопке
+			//RedrawLock(); -- С‡С‚РѕР±С‹ РѕС‚СЂРёСЃРѕРІР°С‚СЊ "РєР»РёРє" РїРѕ РєРЅРѕРїРєРµ
 			lbRc = gpConEmu->mp_TabBar->ProcessNcTabMouseEvent(hWnd, uMsg, wParam, lParam, lResult);
 			//RedrawUnlock();
 		}
 		else if (gpConEmu->OnMouse_NCBtnDblClk(hWnd, uMsg, wParam, lParam))
 		{
-			lResult = 0; // DblClick на рамке - ресайз по ширине/высоте рабочей области экрана
+			lResult = 0; // DblClick РЅР° СЂР°РјРєРµ - СЂРµСЃР°Р№Р· РїРѕ С€РёСЂРёРЅРµ/РІС‹СЃРѕС‚Рµ СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё СЌРєСЂР°РЅР°
 		}
 		else
 		{
@@ -373,12 +373,12 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		return true;
 		
 	case WM_GETTEXT:
-		//TODO: Во время анимации Maximize/Restore/Minimize заголовок отрисовывается 
-		//TODO: системой, в итоге мелькает текст и срезаются табы                    
-		//TODO: Сделаем, пока, чтобы текст хотя бы не мелькал...                     
+		//TODO: Р’Рѕ РІСЂРµРјСЏ Р°РЅРёРјР°С†РёРё Maximize/Restore/Minimize Р·Р°РіРѕР»РѕРІРѕРє РѕС‚СЂРёСЃРѕРІС‹РІР°РµС‚СЃСЏ 
+		//TODO: СЃРёСЃС‚РµРјРѕР№, РІ РёС‚РѕРіРµ РјРµР»СЊРєР°РµС‚ С‚РµРєСЃС‚ Рё СЃСЂРµР·Р°СЋС‚СЃСЏ С‚Р°Р±С‹                    
+		//TODO: РЎРґРµР»Р°РµРј, РїРѕРєР°, С‡С‚РѕР±С‹ С‚РµРєСЃС‚ С…РѕС‚СЏ Р±С‹ РЅРµ РјРµР»СЊРєР°Р»...                     
 		if (mb_NcAnimate && gpSet->isTabsInCaption)
 		{
-			_ASSERTE(!IsWindows7); // Проверить на XP и ниже
+			_ASSERTE(!IsWindows7); // РџСЂРѕРІРµСЂРёС‚СЊ РЅР° XP Рё РЅРёР¶Рµ
 			if (wParam && lParam)
 			{
 				*(wchar_t*)lParam = 0;
@@ -405,11 +405,11 @@ LRESULT CFrameHolder::OnDwmMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		{
 		case 0x31E: // WM_DWMCOMPOSITIONCHANGED:
 			gpConEmu->CheckGlassAttribute();
-			return 0; // ??? позвать DefWindowProc?
+			return 0; // ??? РїРѕР·РІР°С‚СЊ DefWindowProc?
 
-			//0xAE посылается при необходимости перерисовки заголовка окна, например
-			//после вызова SetWindowText(ghWnd, ...).
-			//Как минимум, вызывается при включенных темах (WinXP).
+			//0xAE РїРѕСЃС‹Р»Р°РµС‚СЃСЏ РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РїРµСЂРµСЂРёСЃРѕРІРєРё Р·Р°РіРѕР»РѕРІРєР° РѕРєРЅР°, РЅР°РїСЂРёРјРµСЂ
+			//РїРѕСЃР»Рµ РІС‹Р·РѕРІР° SetWindowText(ghWnd, ...).
+			//РљР°Рє РјРёРЅРёРјСѓРј, РІС‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё РІРєР»СЋС‡РµРЅРЅС‹С… С‚РµРјР°С… (WinXP).
 		case 0xAE: // WM_NCUAHDRAWCAPTION:
 		case 0xAF: // WM_NCUAHDRAWFRAME:
 			return (dt==fdt_Aero || dt==fdt_Win8) ? DefWindowProc(hWnd, uMsg, wParam, lParam) : 0;
@@ -426,7 +426,7 @@ void CFrameHolder::NC_Redraw()
 {
 	mb_RedrawRequested = false;
 	
-	//TODO: При потере фокуса (клик мышкой по другому окну) лезут глюки отрисовки этого нового окна
+	//TODO: РџСЂРё РїРѕС‚РµСЂРµ С„РѕРєСѓСЃР° (РєР»РёРє РјС‹С€РєРѕР№ РїРѕ РґСЂСѓРіРѕРјСѓ РѕРєРЅСѓ) Р»РµР·СѓС‚ РіР»СЋРєРё РѕС‚СЂРёСЃРѕРІРєРё СЌС‚РѕРіРѕ РЅРѕРІРѕРіРѕ РѕРєРЅР°
 	SetWindowPos(ghWnd, 0, 0, 0, 0, 0,
 		SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_DRAWFRAME);
 	
@@ -435,7 +435,7 @@ void CFrameHolder::NC_Redraw()
 	//RedrawWindow(ghWnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 	//RedrawWindow(ghWnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_FRAME);
 
-	// В Aero отрисовка идет как бы на клиентской части
+	// Р’ Aero РѕС‚СЂРёСЃРѕРІРєР° РёРґРµС‚ РєР°Рє Р±С‹ РЅР° РєР»РёРµРЅС‚СЃРєРѕР№ С‡Р°СЃС‚Рё
 	if (gpConEmu->DrawType() == fdt_Aero)
 	{
 		gpConEmu->Invalidate(NULL, FALSE);
@@ -458,7 +458,7 @@ void CFrameHolder::RedrawUnlock()
 
 void CFrameHolder::RedrawFrame()
 {
-	//TODO: табы/кнопки могут быть в клиентской области!
+	//TODO: С‚Р°Р±С‹/РєРЅРѕРїРєРё РјРѕРіСѓС‚ Р±С‹С‚СЊ РІ РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё!
 	if (mn_RedrawLockCount > 0)
 	{
 		mb_RedrawRequested = true;
@@ -523,7 +523,7 @@ void CFrameHolder::PaintFrame2k(HWND hWnd, HDC hdc, RECT &cr)
 	//GetWindowRect(hWnd, &cr);
 	//OffsetRect(&cr, -cr.left, -cr.top);
 	
-	//TODO: Обработка XP
+	//TODO: РћР±СЂР°Р±РѕС‚РєР° XP
 	HPEN hOldPen = (HPEN)SelectObject(hdc, (HPEN)GetStockObject(BLACK_PEN));
 	HBRUSH hOldBr = (HBRUSH)SelectObject(hdc, (HBRUSH)GetStockObject(BLACK_BRUSH));
 	
@@ -532,9 +532,9 @@ void CFrameHolder::PaintFrame2k(HWND hWnd, HDC hdc, RECT &cr)
 	HPEN hPenShadow = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
 	HPEN hPenDkShadow = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DDKSHADOW));
 	HPEN hPenFace = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DFACE));
-	//TODO: разобраться с шириной рамки, активной/неактивной
+	//TODO: СЂР°Р·РѕР±СЂР°С‚СЊСЃСЏ СЃ С€РёСЂРёРЅРѕР№ СЂР°РјРєРё, Р°РєС‚РёРІРЅРѕР№/РЅРµР°РєС‚РёРІРЅРѕР№
 	HPEN hPenBorder = CreatePen(PS_SOLID, 1, GetSysColor(mb_NcActive ? COLOR_ACTIVEBORDER : COLOR_INACTIVEBORDER));
-	//TODO: градиент
+	//TODO: РіСЂР°РґРёРµРЅС‚
 	HBRUSH hBrCaption = GetSysColorBrush(mb_NcActive ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION);
 	//
 	int nCaptionY = GetSystemMetrics(SM_CYCAPTION);
@@ -547,14 +547,14 @@ void CFrameHolder::PaintFrame2k(HWND hWnd, HDC hdc, RECT &cr)
 	MoveToEx(hdc, cr.left, cr.bottom-1, NULL); LineTo(hdc, cr.right-1, cr.bottom-1); LineTo(hdc, cr.right-1, -1);
 	SelectObject(hdc, hPenShadow);
 	MoveToEx(hdc, cr.left+1, cr.bottom-2, NULL); LineTo(hdc, cr.right-2, cr.bottom-2); LineTo(hdc, cr.right-2, 0);
-	// рамка. обычно это 1 пиксел цвета кнопки
-	SelectObject(hdc, hPenBorder); //TODO: но может быть и более одного пиксела
+	// СЂР°РјРєР°. РѕР±С‹С‡РЅРѕ СЌС‚Рѕ 1 РїРёРєСЃРµР» С†РІРµС‚Р° РєРЅРѕРїРєРё
+	SelectObject(hdc, hPenBorder); //TODO: РЅРѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ Рё Р±РѕР»РµРµ РѕРґРЅРѕРіРѕ РїРёРєСЃРµР»Р°
 	Rectangle(hdc, cr.left+2, cr.top+2, cr.right-2, cr.bottom-2);
 	
-	//TODO: Заливка заголовка через GradientFill
+	//TODO: Р—Р°Р»РёРІРєР° Р·Р°РіРѕР»РѕРІРєР° С‡РµСЂРµР· GradientFill
 	SelectObject(hdc, hPenFace); SelectObject(hdc, hBrCaption);
 	Rectangle(hdc, cr.left+3, cr.top+3, cr.right-3, cr.top+nCaptionY+4);
-	//что осталось
+	//С‡С‚Рѕ РѕСЃС‚Р°Р»РѕСЃСЊ
 	SelectObject(hdc, hPenFace);
 	//Rectangle(hdc, cr.left+3, cr.top+3+nCaptionY, cr.right-3, cr.bottom-3);
 	MoveToEx(hdc, cr.left+3, cr.top+3+nCaptionY, 0);
@@ -595,7 +595,7 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 		return lRc;
 	}
 
-	// Если "завис" PostUpdate
+	// Р•СЃР»Рё "Р·Р°РІРёСЃ" PostUpdate
 	if (gpConEmu->mp_TabBar->NeedPostUpdate())
 		gpConEmu->mp_TabBar->Update();
 
@@ -665,9 +665,9 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 		_ASSERTE(gpSet->isTabsInCaption);
 
 		int nOffset = gpConEmu->GetDwmClientRectTopOffset();
-		// "Рамка" расширена на клиентскую область, поэтому
-		// нужно зарисовать заголовок черной кистью, иначе идет
-		// искажение цвета для кнопок Min/Max/Close
+		// "Р Р°РјРєР°" СЂР°СЃС€РёСЂРµРЅР° РЅР° РєР»РёРµРЅС‚СЃРєСѓСЋ РѕР±Р»Р°СЃС‚СЊ, РїРѕСЌС‚РѕРјСѓ
+		// РЅСѓР¶РЅРѕ Р·Р°СЂРёСЃРѕРІР°С‚СЊ Р·Р°РіРѕР»РѕРІРѕРє С‡РµСЂРЅРѕР№ РєРёСЃС‚СЊСЋ, РёРЅР°С‡Рµ РёРґРµС‚
+		// РёСЃРєР°Р¶РµРЅРёРµ С†РІРµС‚Р° РґР»СЏ РєРЅРѕРїРѕРє Min/Max/Close
 
 		if (gpSet->isTabs)
 		{
@@ -696,15 +696,15 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 	int nHeight = (cr.bottom-cr.top);
 	#endif
 
-	WARNING("Пока табы рисуем не сами и ExtendDWM отсутствует - дополнительные изыски с временным DC не нужны");
+	WARNING("РџРѕРєР° С‚Р°Р±С‹ СЂРёСЃСѓРµРј РЅРµ СЃР°РјРё Рё ExtendDWM РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ - РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РёР·С‹СЃРєРё СЃ РІСЂРµРјРµРЅРЅС‹Рј DC РЅРµ РЅСѓР¶РЅС‹");
 #if 0
 	if (!gpSet->isTabsInCaption)
 	{
 		//OnPaintClient(hdc/*, nWidth, nHeight*/);
 	}
 	else
-	// Создадим временный DC, для удобства отрисовки в Glass-режиме и для фикса глюка DWM(?) см.ниже
-	// В принципе, для режима Win2k/XP временный DC можно не создавать, если это будет тормозить
+	// РЎРѕР·РґР°РґРёРј РІСЂРµРјРµРЅРЅС‹Р№ DC, РґР»СЏ СѓРґРѕР±СЃС‚РІР° РѕС‚СЂРёСЃРѕРІРєРё РІ Glass-СЂРµР¶РёРјРµ Рё РґР»СЏ С„РёРєСЃР° РіР»СЋРєР° DWM(?) СЃРј.РЅРёР¶Рµ
+	// Р’ РїСЂРёРЅС†РёРїРµ, РґР»СЏ СЂРµР¶РёРјР° Win2k/XP РІСЂРµРјРµРЅРЅС‹Р№ DC РјРѕР¶РЅРѕ РЅРµ СЃРѕР·РґР°РІР°С‚СЊ, РµСЃР»Рё СЌС‚Рѕ Р±СѓРґРµС‚ С‚РѕСЂРјРѕР·РёС‚СЊ
 	{
 		//_ASSERTE(FALSE && "Need to be rewritten");
 
@@ -721,9 +721,9 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 		else
 		{
 			//mb_WasGlassDraw = FALSE;
-			// Какой-то странный глюк DWM. При отключении Glass несколько верхних строк
-			// клиентской области оказываются "разрушенными" - у них остается атрибут "прозрачности"
-			// хотя прозрачность (Glass) уже отключена. В результате эти строки - белесые
+			// РљР°РєРѕР№-С‚Рѕ СЃС‚СЂР°РЅРЅС‹Р№ РіР»СЋРє DWM. РџСЂРё РѕС‚РєР»СЋС‡РµРЅРёРё Glass РЅРµСЃРєРѕР»СЊРєРѕ РІРµСЂС…РЅРёС… СЃС‚СЂРѕРє
+			// РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё РѕРєР°Р·С‹РІР°СЋС‚СЃСЏ "СЂР°Р·СЂСѓС€РµРЅРЅС‹РјРё" - Сѓ РЅРёС… РѕСЃС‚Р°РµС‚СЃСЏ Р°С‚СЂРёР±СѓС‚ "РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚Рё"
+			// С…РѕС‚СЏ РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ (Glass) СѓР¶Рµ РѕС‚РєР»СЋС‡РµРЅР°. Р’ СЂРµР·СѓР»СЊС‚Р°С‚Рµ СЌС‚Рё СЃС‚СЂРѕРєРё - Р±РµР»РµСЃС‹Рµ
 
 			BITMAPINFOHEADER bi = {sizeof(BITMAPINFOHEADER)};
 			bi.biWidth = cr.right-cr.left+1;
@@ -780,14 +780,14 @@ void CFrameHolder::CalculateCaptionPosition(const RECT &rcWindow, RECT* rcCaptio
 
 	if (dt == fdt_Aero || dt == fdt_Win8)
 	{
-		// Почему тут не SM_CXFRAME не помню
+		// РџРѕС‡РµРјСѓ С‚СѓС‚ РЅРµ SM_CXFRAME РЅРµ РїРѕРјРЅСЋ
 		rcCaption->left = 0; //2; //GetSystemMetrics(SM_CXFRAME);
 		rcCaption->right = (rcWindow.right - rcWindow.left); // - 4; //GetSystemMetrics(SM_CXFRAME);
 		rcCaption->top = GetFrameHeight(); //6; //GetSystemMetrics(SM_CYFRAME);
 		if (gpSet->isTabsInCaption)
-			rcCaption->bottom = rcCaption->top + GetCaptionHeight()/*это наш*/; // (gpSet->isTabs ? (GetCaptionDragHeight()+GetTabsHeight()) : GetWinCaptionHeight()); //gpConEmu->GetDwmClientRectTopOffset() - 1;
+			rcCaption->bottom = rcCaption->top + GetCaptionHeight()/*СЌС‚Рѕ РЅР°С€*/; // (gpSet->isTabs ? (GetCaptionDragHeight()+GetTabsHeight()) : GetWinCaptionHeight()); //gpConEmu->GetDwmClientRectTopOffset() - 1;
 		else
-			rcCaption->bottom = rcCaption->top + GetCaptionHeight()/*это наш*/; // (gpSet->isTabs ? (GetCaptionDragHeight()+GetTabsHeight()) : GetWinCaptionHeight()); //gpConEmu->GetDwmClientRectTopOffset() - 1;
+			rcCaption->bottom = rcCaption->top + GetCaptionHeight()/*СЌС‚Рѕ РЅР°С€*/; // (gpSet->isTabs ? (GetCaptionDragHeight()+GetTabsHeight()) : GetWinCaptionHeight()); //gpConEmu->GetDwmClientRectTopOffset() - 1;
 	}
 	else if (dt == fdt_Themed)
 	{
@@ -795,7 +795,7 @@ void CFrameHolder::CalculateCaptionPosition(const RECT &rcWindow, RECT* rcCaptio
 		rcCaption->right = (rcWindow.right - rcWindow.left) - GetFrameWidth() - 1;
 		rcCaption->top = GetFrameHeight();
 		//rcCaption->bottom = rcCaption->top + GetSystemMetrics(SM_CYCAPTION) + (gSet.isTabs ? (GetSystemMetrics(SM_CYCAPTION)/2) : 0);
-		rcCaption->bottom = rcCaption->top + GetCaptionHeight()/*это наш*/; // (gpSet->isTabs ? (GetCaptionDragHeight()+GetTabsHeight()) : GetWinCaptionHeight());
+		rcCaption->bottom = rcCaption->top + GetCaptionHeight()/*СЌС‚Рѕ РЅР°С€*/; // (gpSet->isTabs ? (GetCaptionDragHeight()+GetTabsHeight()) : GetWinCaptionHeight());
 	}
 	else
 	{
@@ -803,7 +803,7 @@ void CFrameHolder::CalculateCaptionPosition(const RECT &rcWindow, RECT* rcCaptio
 		rcCaption->right = (rcWindow.right - rcWindow.left) - GetFrameWidth() - 1;
 		rcCaption->top = GetFrameHeight();
 		//rcCaption->bottom = rcCaption->top + GetSystemMetrics(SM_CYCAPTION) - 1 + (gpSet->isTabs ? (GetSystemMetrics(SM_CYCAPTION)/2) : 0);
-		rcCaption->bottom = rcCaption->top + GetCaptionHeight()/*это наш*/; // (gpSet->isTabs ? (GetCaptionDragHeight()+GetTabsHeight()) : GetWinCaptionHeight());
+		rcCaption->bottom = rcCaption->top + GetCaptionHeight()/*СЌС‚Рѕ РЅР°С€*/; // (gpSet->isTabs ? (GetCaptionDragHeight()+GetTabsHeight()) : GetWinCaptionHeight());
 	}
 }
 
@@ -841,7 +841,7 @@ void CFrameHolder::CalculateTabPosition(const RECT &rcWindow, const RECT &rcCapt
 	{
 		rcTabs->right = rcCaption.right - 1;
 	}
-	// TODO: определить ширину кнопок + Shift из настроек юзера
+	// TODO: РѕРїСЂРµРґРµР»РёС‚СЊ С€РёСЂРёРЅСѓ РєРЅРѕРїРѕРє + Shift РёР· РЅР°СЃС‚СЂРѕРµРє СЋР·РµСЂР°
 	else if (gpConEmu->DrawType() == fdt_Aero)
 	{
 		RECT rcButtons = {0};
@@ -854,7 +854,7 @@ void CFrameHolder::CalculateTabPosition(const RECT &rcWindow, const RECT &rcCapt
 	}
 	else if (gpConEmu->DrawType() == fdt_Themed)
 	{
-		// -- Не работает :(
+		// -- РќРµ СЂР°Р±РѕС‚Р°РµС‚ :(
 		//HTHEME hTheme = gpConEmu->OpenThemeData(NULL, L"WINDOW");
 		//RECT rcBtns, wr; GetWindowRect(ghWnd, &wr); OffsetRect(&wr, -wr.left, -wr.top);
 		//HRESULT hr = gpConEmu->GetThemeBackgroundContentRect(hTheme, NULL, 15/*WP_MINBUTTON*/, 1/*MINBS_NORMAL*/, &wr, &rcBtns);
@@ -883,7 +883,7 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	if (fdt == fdt_Aero || fdt == fdt_Win8)
 	{
 		LRESULT lRc = DefWindowProc(hWnd, uMsg, wParam, lParam);
-		//TODO: Может быть на "стекле" сразу рисовать, а не в WM_PAINT?
+		//TODO: РњРѕР¶РµС‚ Р±С‹С‚СЊ РЅР° "СЃС‚РµРєР»Рµ" СЃСЂР°Р·Сѓ СЂРёСЃРѕРІР°С‚СЊ, Р° РЅРµ РІ WM_PAINT?
 		return lRc;
 	}
 		
@@ -902,9 +902,9 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	CalculateCaptionPosition(wr, &cr);
 	CalculateTabPosition(wr, cr, &tr);
 
-	// --- Регион формируем всегда сами, иначе в некоторых случаях (XP+ Theming) 
-	// --- при выезжании окна из-за пределов экрана (обратно в видимую область)
-	// --- сильно мелькает текст в заголовке
+	// --- Р РµРіРёРѕРЅ С„РѕСЂРјРёСЂСѓРµРј РІСЃРµРіРґР° СЃР°РјРё, РёРЅР°С‡Рµ РІ РЅРµРєРѕС‚РѕСЂС‹С… СЃР»СѓС‡Р°СЏС… (XP+ Theming) 
+	// --- РїСЂРё РІС‹РµР·Р¶Р°РЅРёРё РѕРєРЅР° РёР·-Р·Р° РїСЂРµРґРµР»РѕРІ СЌРєСЂР°РЅР° (РѕР±СЂР°С‚РЅРѕ РІ РІРёРґРёРјСѓСЋ РѕР±Р»Р°СЃС‚СЊ)
+	// --- СЃРёР»СЊРЅРѕ РјРµР»СЊРєР°РµС‚ С‚РµРєСЃС‚ РІ Р·Р°РіРѕР»РѕРІРєРµ
 	//Create a region which covers the whole window. This
 	//must be in screen coordinates
 	//if(TRUE || hrgn == (HRGN)1 || hrgn == NULL)
@@ -973,7 +973,7 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 //	Sleep(150);
 //#endif
 
-	// Собственно отрисовка табов
+	// РЎРѕР±СЃС‚РІРµРЅРЅРѕ РѕС‚СЂРёСЃРѕРІРєР° С‚Р°Р±РѕРІ
 	hdc = GetWindowDC(hWnd);
 
 	//HRGN hdcrgn = CreateRectRgn(cr.left, cr.top, cr.right, tr.bottom);
@@ -989,9 +989,9 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	//if (mb_WasGlassDraw && gpConEmu->isZoomed())
 	//{
 	//	//mb_WasGlassDraw = FALSE;
-	//	// Какой-то странный глюк DWM. При отключении Glass несколько верхних строк
-	//	// клиентской области оказываются "разрушенными" - у них остается атрибут "прозрачности"
-	//	// хотя прозрачность (Glass) уже отключена. В результате эти строки - белесые
+	//	// РљР°РєРѕР№-С‚Рѕ СЃС‚СЂР°РЅРЅС‹Р№ РіР»СЋРє DWM. РџСЂРё РѕС‚РєР»СЋС‡РµРЅРёРё Glass РЅРµСЃРєРѕР»СЊРєРѕ РІРµСЂС…РЅРёС… СЃС‚СЂРѕРє
+	//	// РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё РѕРєР°Р·С‹РІР°СЋС‚СЃСЏ "СЂР°Р·СЂСѓС€РµРЅРЅС‹РјРё" - Сѓ РЅРёС… РѕСЃС‚Р°РµС‚СЃСЏ Р°С‚СЂРёР±СѓС‚ "РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚Рё"
+	//	// С…РѕС‚СЏ РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ (Glass) СѓР¶Рµ РѕС‚РєР»СЋС‡РµРЅР°. Р’ СЂРµР·СѓР»СЊС‚Р°С‚Рµ СЌС‚Рё СЃС‚СЂРѕРєРё - Р±РµР»РµСЃС‹Рµ
 
 	//	BITMAPINFOHEADER bi = {sizeof(BITMAPINFOHEADER)};
 	//	bi.biWidth = cr.right-cr.left+1;
@@ -1058,7 +1058,7 @@ LRESULT CFrameHolder::OnNcActivate(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	LRESULT lRc;
 	//if (!mb_NcActive)
 	//{
-	//	// При потере фокуса (клик мышкой по другому окну) лезут глюки отрисовки этого нового окна
+	//	// РџСЂРё РїРѕС‚РµСЂРµ С„РѕРєСѓСЃР° (РєР»РёРє РјС‹С€РєРѕР№ РїРѕ РґСЂСѓРіРѕРјСѓ РѕРєРЅСѓ) Р»РµР·СѓС‚ РіР»СЋРєРё РѕС‚СЂРёСЃРѕРІРєРё СЌС‚РѕРіРѕ РЅРѕРІРѕРіРѕ РѕРєРЅР°
 	//	lRc = DefWindowProc(hWnd, uMsg, wParam, lParam);
 	//}
 	//else
@@ -1091,18 +1091,18 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 	LRESULT lRc = 0, lRcDef = 0;
 
-	// В Aero (Glass) важно, чтобы клиенская область начиналась с верхнего края окна,
-	// иначе не получится "рисовать по стеклу"
+	// Р’ Aero (Glass) РІР°Р¶РЅРѕ, С‡С‚РѕР±С‹ РєР»РёРµРЅСЃРєР°СЏ РѕР±Р»Р°СЃС‚СЊ РЅР°С‡РёРЅР°Р»Р°СЃСЊ СЃ РІРµСЂС…РЅРµРіРѕ РєСЂР°СЏ РѕРєРЅР°,
+	// РёРЅР°С‡Рµ РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ "СЂРёСЃРѕРІР°С‚СЊ РїРѕ СЃС‚РµРєР»Сѓ"
 	FrameDrawStyle fdt = gpConEmu->DrawType();
 
-	// Если nCaption == 0, то при fdt_Aero текст в заголовке окна не отрисовывается
+	// Р•СЃР»Рё nCaption == 0, С‚Рѕ РїСЂРё fdt_Aero С‚РµРєСЃС‚ РІ Р·Р°РіРѕР»РѕРІРєРµ РѕРєРЅР° РЅРµ РѕС‚СЂРёСЃРѕРІС‹РІР°РµС‚СЃСЏ
 	DEBUGTEST(int nCaption = GetCaptionHeight());
 
 	bool bCallDefProc = true;
 
 	#if defined(CONEMU_TABBAR_EX)
-	// В режиме Aero/Glass (хоть он и почти выпилен в Win8)
-	// мы расширяем клиентскую область на заголовок
+	// Р’ СЂРµР¶РёРјРµ Aero/Glass (С…РѕС‚СЊ РѕРЅ Рё РїРѕС‡С‚Рё РІС‹РїРёР»РµРЅ РІ Win8)
+	// РјС‹ СЂР°СЃС€РёСЂСЏРµРј РєР»РёРµРЅС‚СЃРєСѓСЋ РѕР±Р»Р°СЃС‚СЊ РЅР° Р·Р°РіРѕР»РѕРІРѕРє
 	if (gpSet->isTabsInCaption && (fdt == fdt_Aero || fdt == fdt_Win8))
 	{
 		nCaption = 0;
@@ -1176,8 +1176,8 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		{
 			lRc = WVR_VALIDRECTS;
 		}
-		// При смене режимов (особенно при смене HideCaption/NotHideCaption)
-		// требовать полную перерисовку клиентской области
+		// РџСЂРё СЃРјРµРЅРµ СЂРµР¶РёРјРѕРІ (РѕСЃРѕР±РµРЅРЅРѕ РїСЂРё СЃРјРµРЅРµ HideCaption/NotHideCaption)
+		// С‚СЂРµР±РѕРІР°С‚СЊ РїРѕР»РЅСѓСЋ РїРµСЂРµСЂРёСЃРѕРІРєСѓ РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё
 		else if (mb_DontPreserveClient || (gpConEmu->changeFromWindowMode != wmNotChanging))
 		{
 			lRc = WVR_REDRAW;
@@ -1245,16 +1245,16 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	//			
 	//		if (fdt == fdt_Aero)
 	//		{
-	//			// В Aero (Glass) важно, чтобы клиенская область начиналась с верхнего края окна,
-	//			// иначе не получится "рисовать по стеклу"
-	//			nccr->top = r->top; // нада !!!
+	//			// Р’ Aero (Glass) РІР°Р¶РЅРѕ, С‡С‚РѕР±С‹ РєР»РёРµРЅСЃРєР°СЏ РѕР±Р»Р°СЃС‚СЊ РЅР°С‡РёРЅР°Р»Р°СЃСЊ СЃ РІРµСЂС…РЅРµРіРѕ РєСЂР°СЏ РѕРєРЅР°,
+	//			// РёРЅР°С‡Рµ РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ "СЂРёСЃРѕРІР°С‚СЊ РїРѕ СЃС‚РµРєР»Сѓ"
+	//			nccr->top = r->top; // РЅР°РґР° !!!
 	//			nccr->left = r->left + GetFrameWidth();
 	//			nccr->right = r->right - GetFrameWidth();
 	//			nccr->bottom = r->bottom - GetFrameHeight();
 	//		}
 	//		else
 	//		{
-	//			//TODO: Темы!!! В XP ширина/высота рамки может быть больше
+	//			//TODO: РўРµРјС‹!!! Р’ XP С€РёСЂРёРЅР°/РІС‹СЃРѕС‚Р° СЂР°РјРєРё РјРѕР¶РµС‚ Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ
 	//			nccr->top = r->top + GetFrameHeight() + GetCaptionHeight();
 	//			nccr->left = r->left + GetFrameWidth();
 	//			nccr->right = r->right - GetFrameWidth();
@@ -1262,8 +1262,8 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	//		}
 	//	}
 
-	//	// Наверное имеет смысл сбрасывать всегда, чтобы Win не пыталась
-	//	// отрисовать невалидное содержимое консоли (она же размер меняет)
+	//	// РќР°РІРµСЂРЅРѕРµ РёРјРµРµС‚ СЃРјС‹СЃР» СЃР±СЂР°СЃС‹РІР°С‚СЊ РІСЃРµРіРґР°, С‡С‚РѕР±С‹ Win РЅРµ РїС‹С‚Р°Р»Р°СЃСЊ
+	//	// РѕС‚СЂРёСЃРѕРІР°С‚СЊ РЅРµРІР°Р»РёРґРЅРѕРµ СЃРѕРґРµСЂР¶РёРјРѕРµ РєРѕРЅСЃРѕР»Рё (РѕРЅР° Р¶Рµ СЂР°Р·РјРµСЂ РјРµРЅСЏРµС‚)
 	//	if (wParam)
 	//	{
 	//		//pParm->rgrc[1] = *nccr;
@@ -1281,10 +1281,10 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 {
 	LRESULT l_result;
 
-	// Обработает клики на кнопках Min/Max/Close
+	// РћР±СЂР°Р±РѕС‚Р°РµС‚ РєР»РёРєРё РЅР° РєРЅРѕРїРєР°С… Min/Max/Close
 	if (gpConEmu->DrawType() >= fdt_Aero)
 	{
-		//TODO: Проверить, чтобы за табы окошко НЕ таскалось!
+		//TODO: РџСЂРѕРІРµСЂРёС‚СЊ, С‡С‚РѕР±С‹ Р·Р° С‚Р°Р±С‹ РѕРєРѕС€РєРѕ РќР• С‚Р°СЃРєР°Р»РѕСЃСЊ!
 		if (gpConEmu->DwmDefWindowProc(hWnd, WM_NCHITTEST, 0, lParam, &l_result))
 			return l_result;
 	}
@@ -1298,10 +1298,10 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	point.y = (int)(short)HIWORD(lParam) - wr.top;
 	//MapWindowPoints(NULL, hWnd, &point, 1);
 
-	// При скрытии окна заголовка убирается стиль WS_CAPTION,
-	// но чтобы можно было оставить возможность ресайза за рамку -
-	// ставится стиль WS_DLGFRAME а не WS_THICKFRAME
-	// Ресайз "сам" не заработает, коррекция l_result в Win8 не помогает
+	// РџСЂРё СЃРєСЂС‹С‚РёРё РѕРєРЅР° Р·Р°РіРѕР»РѕРІРєР° СѓР±РёСЂР°РµС‚СЃСЏ СЃС‚РёР»СЊ WS_CAPTION,
+	// РЅРѕ С‡С‚РѕР±С‹ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ РѕСЃС‚Р°РІРёС‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ СЂРµСЃР°Р№Р·Р° Р·Р° СЂР°РјРєСѓ -
+	// СЃС‚Р°РІРёС‚СЃСЏ СЃС‚РёР»СЊ WS_DLGFRAME Р° РЅРµ WS_THICKFRAME
+	// Р РµСЃР°Р№Р· "СЃР°Рј" РЅРµ Р·Р°СЂР°Р±РѕС‚Р°РµС‚, РєРѕСЂСЂРµРєС†РёСЏ l_result РІ Win8 РЅРµ РїРѕРјРѕРіР°РµС‚
 	#if 0
 	if (l_result == HTBORDER)
 	{
@@ -1359,7 +1359,7 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		}
 	}
 
-	// Чтобы окно нельзя было "таскать" за табы
+	// Р§С‚РѕР±С‹ РѕРєРЅРѕ РЅРµР»СЊР·СЏ Р±С‹Р»Рѕ "С‚Р°СЃРєР°С‚СЊ" Р·Р° С‚Р°Р±С‹
 	if (l_result == HTCAPTION && gpSet->isTabs)
 	{
 		if (gpConEmu->mp_TabBar->TabFromCursor(point) >= 0 || gpConEmu->mp_TabBar->TabBtnFromCursor(point) >= 0)
@@ -1414,7 +1414,7 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 void CFrameHolder::RecalculateFrameSizes()
 {
-	_ASSERTE(mb_Initialized==TRUE); // CConEmuMain должен позвать из своего конструктора InitFrameHolder()
+	_ASSERTE(mb_Initialized==TRUE); // CConEmuMain РґРѕР»Р¶РµРЅ РїРѕР·РІР°С‚СЊ РёР· СЃРІРѕРµРіРѕ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂР° InitFrameHolder()
 
 	//mn_WinCaptionHeight, mn_FrameWidth, mn_FrameHeight, mn_OurCaptionHeight, mn_TabsHeight;
 	mn_WinCaptionHeight = GetSystemMetrics(SM_CYCAPTION);
@@ -1448,8 +1448,8 @@ void CFrameHolder::RecalculateFrameSizes()
 	{
 		if ((GetCaptionDragHeight() == 0) && (mn_TabsHeight > mn_WinCaptionHeight))
 		{
-			// Если дополнительную высоту в заголовке не просили - 
-			// нужно строго уместиться в стандартную высоту заголовка
+			// Р•СЃР»Рё РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅСѓСЋ РІС‹СЃРѕС‚Сѓ РІ Р·Р°РіРѕР»РѕРІРєРµ РЅРµ РїСЂРѕСЃРёР»Рё - 
+			// РЅСѓР¶РЅРѕ СЃС‚СЂРѕРіРѕ СѓРјРµСЃС‚РёС‚СЊСЃСЏ РІ СЃС‚Р°РЅРґР°СЂС‚РЅСѓСЋ РІС‹СЃРѕС‚Сѓ Р·Р°РіРѕР»РѕРІРєР°
 			mn_TabsHeight = mn_WinCaptionHeight;
 		}
 		int nCHeight = mn_TabsHeight + GetCaptionDragHeight();
@@ -1485,28 +1485,28 @@ void CFrameHolder::RecalculateFrameSizes()
 	//}
 }
 
-// ширина рамки окна
+// С€РёСЂРёРЅР° СЂР°РјРєРё РѕРєРЅР°
 int CFrameHolder::GetFrameWidth()
 {
 	_ASSERTE(mb_Initialized && mn_FrameWidth > 0);
 	return mn_FrameWidth;
 }
 
-// высота рамки окна
+// РІС‹СЃРѕС‚Р° СЂР°РјРєРё РѕРєРЅР°
 int CFrameHolder::GetFrameHeight()
 {
 	_ASSERTE(mb_Initialized && mn_FrameHeight > 0);
 	return mn_FrameHeight;
 }
 
-// высота НАШЕГО заголовка (с учетом табов)
+// РІС‹СЃРѕС‚Р° РќРђРЁР•Р“Рћ Р·Р°РіРѕР»РѕРІРєР° (СЃ СѓС‡РµС‚РѕРј С‚Р°Р±РѕРІ)
 int CFrameHolder::GetCaptionHeight()
 {
 	_ASSERTE(mb_Initialized && ((mn_OurCaptionHeight > 0) || gpSet->isCaptionHidden()));
 	return mn_OurCaptionHeight;
 }
 
-// высота табов
+// РІС‹СЃРѕС‚Р° С‚Р°Р±РѕРІ
 int CFrameHolder::GetTabsHeight()
 {
 	mn_TabsHeight = (gpSet->isTabs!=0) ? gpConEmu->mp_TabBar->GetTabbarHeight() : 0;
@@ -1520,11 +1520,11 @@ int CFrameHolder::GetTabsHeight()
 	//#endif
 }
 
-// высота части заголовка, который оставляем для "таскания" окна
+// РІС‹СЃРѕС‚Р° С‡Р°СЃС‚Рё Р·Р°РіРѕР»РѕРІРєР°, РєРѕС‚РѕСЂС‹Р№ РѕСЃС‚Р°РІР»СЏРµРј РґР»СЏ "С‚Р°СЃРєР°РЅРёСЏ" РѕРєРЅР°
 int CFrameHolder::GetCaptionDragHeight()
 {
 	_ASSERTE(mb_Initialized && (mn_CaptionDragHeight >= 0));
-	////TODO: Хорошо бы учитывать текущее выставленное dpi для монитора?
+	////TODO: РҐРѕСЂРѕС€Рѕ Р±С‹ СѓС‡РёС‚С‹РІР°С‚СЊ С‚РµРєСѓС‰РµРµ РІС‹СЃС‚Р°РІР»РµРЅРЅРѕРµ dpi РґР»СЏ РјРѕРЅРёС‚РѕСЂР°?
 	//if (gpSet->ilDragHeight < 0)
 	//{
 	//	_ASSERTE(gpSet->ilDragHeight>=0);
@@ -1534,7 +1534,7 @@ int CFrameHolder::GetCaptionDragHeight()
 	return mn_CaptionDragHeight;
 }
 
-// высота заголовка в окнах Windows по умолчанию (без учета табов)
+// РІС‹СЃРѕС‚Р° Р·Р°РіРѕР»РѕРІРєР° РІ РѕРєРЅР°С… Windows РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ (Р±РµР· СѓС‡РµС‚Р° С‚Р°Р±РѕРІ)
 int CFrameHolder::GetWinCaptionHeight()
 {
 	_ASSERTE(mb_Initialized);

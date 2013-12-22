@@ -1,15 +1,15 @@
-
+п»ї
 #pragma once
 
 #ifdef _DEBUG
-// Выполнять или нет InitHooksLibrary()
+// Р’С‹РїРѕР»РЅСЏС‚СЊ РёР»Рё РЅРµС‚ InitHooksLibrary()
 //#define HOOKS_SKIP_LIBRARY
 #undef  HOOKS_SKIP_LIBRARY
 
 //#define HOOKS_SKIP_GETPROCADDRESS
 #undef HOOKS_SKIP_GETPROCADDRESS
 
-// Выполнять или нет InitHooksCommon()
+// Р’С‹РїРѕР»РЅСЏС‚СЊ РёР»Рё РЅРµС‚ InitHooksCommon()
 //#define HOOKS_SKIP_COMMON
 #undef  HOOKS_SKIP_COMMON
 
@@ -21,8 +21,8 @@
 #undef HOOKS_VIRTUAL_ALLOC
 #endif
 
-// !! если включить - не ставятся хуки?
-// Попробовать выполнять инициализацию хуков в отдельной нити
+// !! РµСЃР»Рё РІРєР»СЋС‡РёС‚СЊ - РЅРµ СЃС‚Р°РІСЏС‚СЃСЏ С…СѓРєРё?
+// РџРѕРїСЂРѕР±РѕРІР°С‚СЊ РІС‹РїРѕР»РЅСЏС‚СЊ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЋ С…СѓРєРѕРІ РІ РѕС‚РґРµР»СЊРЅРѕР№ РЅРёС‚Рё
 //#define HOOK_USE_DLLTHREAD
 #undef HOOK_USE_DLLTHREAD
 

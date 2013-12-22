@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -37,11 +37,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifdef _DEBUG
-// Раскомментировать для вывода в консоль информации режима Comspec
+// Р Р°СЃРєРѕРјРјРµРЅС‚РёСЂРѕРІР°С‚СЊ РґР»СЏ РІС‹РІРѕРґР° РІ РєРѕРЅСЃРѕР»СЊ РёРЅС„РѕСЂРјР°С†РёРё СЂРµР¶РёРјР° Comspec
 #define PRINT_COMSPEC(f,a) //wprintf(f,a)
 //#define DEBUGSTR(s) OutputDebugString(s)
 #elif defined(__GNUC__)
-//  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
+//  Р Р°СЃРєРѕРјРјРµРЅС‚РёСЂРѕРІР°С‚СЊ, С‡С‚РѕР±С‹ СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ Р·Р°РїСѓСЃРєР° РїСЂРѕС†РµСЃСЃР° (conemuc.exe) РїРѕРєР°Р·Р°С‚СЊ MessageBox, С‡С‚РѕР±С‹ РїСЂРёС†РµРїРёС‚СЊСЃСЏ РґРµР±Р°РіРіРµСЂРѕРј
 //  #define SHOW_STARTED_MSGBOX
 #define PRINT_COMSPEC(f,a) //wprintf(f,a)
 //#define DEBUGSTR(s)
@@ -110,21 +110,21 @@ extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern HWND    ghConEmuWndBack; // ConEmu Back window
 void SetConEmuWindows(HWND hDcWnd, HWND hBackWnd);
-extern DWORD   gnMainServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
-extern DWORD   gnAltServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
+extern DWORD   gnMainServerPID; // PID СЃРµСЂРІРµСЂР° (РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚СЃСЏ РЅР° СЃС‚Р°СЂС‚Рµ, РїСЂРё Р·Р°РіСЂСѓР·РєРµ Dll)
+extern DWORD   gnAltServerPID; // PID СЃРµСЂРІРµСЂР° (РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚СЃСЏ РЅР° СЃС‚Р°СЂС‚Рµ, РїСЂРё Р·Р°РіСЂСѓР·РєРµ Dll)
 extern BOOL    gbLogProcess; // (pInfo->nLoggingType == glt_Processes)
 extern BOOL    gbWasBufferHeight;
 extern BOOL    gbNonGuiMode;
-extern HANDLE  ghExitQueryEvent; // выставляется когда в консоли не остается процессов
+extern HANDLE  ghExitQueryEvent; // РІС‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РєРѕРіРґР° РІ РєРѕРЅСЃРѕР»Рё РЅРµ РѕСЃС‚Р°РµС‚СЃСЏ РїСЂРѕС†РµСЃСЃРѕРІ
 extern int nExitQueryPlace, nExitPlaceStep, nExitPlaceThread;
-extern HANDLE  ghQuitEvent;      // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
-extern bool    gbQuit;           // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
+extern HANDLE  ghQuitEvent;      // РєРѕРіРґР° РјС‹ РІ РїСЂРѕС†РµСЃСЃРµ Р·Р°РєСЂС‹С‚РёСЏ (СЋР·РµСЂ СѓР¶Рµ РЅР°Р¶Р°Р» РєРЅРѕРїРєСѓ "Press to close console")
+extern bool    gbQuit;           // РєРѕРіРґР° РјС‹ РІ РїСЂРѕС†РµСЃСЃРµ Р·Р°РєСЂС‹С‚РёСЏ (СЋР·РµСЂ СѓР¶Рµ РЅР°Р¶Р°Р» РєРЅРѕРїРєСѓ "Press to close console")
 extern int     gnConfirmExitParm;
 extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
 extern int     gbRootWasFoundInCon;
 enum AttachModeEnum { am_None = 0, am_Simple, am_Auto };
-extern AttachModeEnum gbAttachMode; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console)
-extern BOOL    gbAlienMode;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
+extern AttachModeEnum gbAttachMode; // СЃРµСЂРІРµСЂ Р·Р°РїСѓС‰РµРЅ РќР• РёР· conemu.exe (Р° РёР· РїР»Р°РіРёРЅР°, РёР· CmdAutoAttach, РёР»Рё -new_console)
+extern BOOL    gbAlienMode;  // СЃРµСЂРІРµСЂ РќР• СЏРІР»СЏРµС‚СЃСЏ РІР»Р°РґРµР»СЊС†РµРј РєРѕРЅСЃРѕР»Рё (РєРѕСЂРЅРµРІС‹Рј РїСЂРѕС†РµСЃСЃРѕРј СЌС‚РѕРіРѕ РєРѕРЅСЃРѕР»СЊРЅРѕРіРѕ РѕРєРЅР°)
 extern BOOL    gbForceHideConWnd;
 extern DWORD   gdwMainThreadId;
 //int       gnBufferHeight = 0;
@@ -153,7 +153,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CHECK_ANTIVIRUS_TIMEOUT 6*1000
 #define CHECK_ROOTSTART_TIMEOUT 10*1000
 #ifdef _DEBUG
-	#define CHECK_ROOTOK_TIMEOUT (IsDebuggerPresent() ? ((DWORD)-1) : (10*1000)) // под отладчиком - ждать всегда
+	#define CHECK_ROOTOK_TIMEOUT (IsDebuggerPresent() ? ((DWORD)-1) : (10*1000)) // РїРѕРґ РѕС‚Р»Р°РґС‡РёРєРѕРј - Р¶РґР°С‚СЊ РІСЃРµРіРґР°
 #else
 	#define CHECK_ROOTOK_TIMEOUT 10*1000
 #endif
@@ -181,11 +181,11 @@ extern wchar_t gszDbgModLabel[6];
 
 
 //#ifndef _DEBUG
-// Релизный режим
+// Р РµР»РёР·РЅС‹Р№ СЂРµР¶РёРј
 #define FORCE_REDRAW_FIX
 #define RELATIVE_TRANSMIT_DISABLE
 //#else
-//// Отладочный режим
+//// РћС‚Р»Р°РґРѕС‡РЅС‹Р№ СЂРµР¶РёРј
 ////#define FORCE_REDRAW_FIX
 //#endif
 
@@ -228,8 +228,8 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out);
 void CheckCursorPos();
 BOOL ReloadFullConsoleInfo(BOOL abForceSend);
 bool CheckWasFullScreen();
-DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
-int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/); // Создать необходимые события и нити
+DWORD WINAPI RefreshThread(LPVOID lpvParam); // РќРёС‚СЊ, РїРµСЂРµС‡РёС‚С‹РІР°СЋС‰Р°СЏ СЃРѕРґРµСЂР¶РёРјРѕРµ РєРѕРЅСЃРѕР»Рё
+int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/); // РЎРѕР·РґР°С‚СЊ РЅРµРѕР±С…РѕРґРёРјС‹Рµ СЃРѕР±С‹С‚РёСЏ Рё РЅРёС‚Рё
 void ServerDone(int aiRc, bool abReportShutdown = false);
 BOOL ServerInitConsoleMode();
 void SetupCreateDumpOnException();
@@ -256,7 +256,7 @@ extern "C" {
 int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount);
 SHORT CorrectTopVisible(int nY);
 BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi);
-WARNING("Вместо GetConsoleScreenBufferInfo нужно использовать MyGetConsoleScreenBufferInfo!");
+WARNING("Р’РјРµСЃС‚Рѕ GetConsoleScreenBufferInfo РЅСѓР¶РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ MyGetConsoleScreenBufferInfo!");
 BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc);
 void CmdOutputStore(bool abCreateOnly = false);
 void CmdOutputRestore(bool abSimpleMode);
@@ -296,7 +296,7 @@ HWND Attach2Gui(DWORD nTimeout);
 int InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false);
 int InfiltrateDll(HANDLE hProcess, LPCWSTR dll);
 
-int ParseCommandLine(LPCWSTR asCmdLine /*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/); // Разбор параметров командной строки
+int ParseCommandLine(LPCWSTR asCmdLine /*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/); // Р Р°Р·Р±РѕСЂ РїР°СЂР°РјРµС‚СЂРѕРІ РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРё
 wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle = false);
 void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bExpandVars);
 BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle);
@@ -384,7 +384,7 @@ extern BOOL  gbVisibleOnStartup;
 
 struct AltServerInfo
 {
-	DWORD  nPID; // Для информации
+	DWORD  nPID; // Р”Р»СЏ РёРЅС„РѕСЂРјР°С†РёРё
 	HANDLE hPrev;
 	DWORD  nPrevPID;
 };
@@ -414,15 +414,15 @@ struct SrvInfo
 	HANDLE hInWaitForSetConBufThread;  // signal that RefreshThread is ready to wait for hWaitForSetConBufThread
 	HANDLE hOutWaitForSetConBufThread; // signal that RefreshThread may continue
 
-	HWND   hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
+	HWND   hRootProcessGui; // Р•СЃР»Рё СЂР°Р±РѕС‚Р°РµРј РІ Gui-СЂРµР¶РёРјРµ (Notepad, Putty, ...), ((HWND)-1) РїРѕРєР° С„Р°РєС‚РёС‡РµРєРё РѕРєРЅРѕ РµС‰Рµ РЅРµ СЃРѕР·РґР°РЅРѕ, РЅРѕ exe-С€РЅРёРє СѓР¶Рµ РµСЃС‚СЊ
 	DebuggerInfo DbgInfo;
-	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
+	DWORD  dwGuiPID; // GUI PID (РР” РїСЂРѕС†РµСЃСЃР° РіСЂР°С„РёС‡РµСЃРєРѕР№ С‡Р°СЃС‚Рё ConEmu)
 	DWORD  dwGuiAID; // ConEmu internal ID of started CRealConsole
-	HWND   hGuiWnd; // передается через аргумент "/GHWND=%08X", чтобы окно не искать
+	HWND   hGuiWnd; // РїРµСЂРµРґР°РµС‚СЃСЏ С‡РµСЂРµР· Р°СЂРіСѓРјРµРЅС‚ "/GHWND=%08X", С‡С‚РѕР±С‹ РѕРєРЅРѕ РЅРµ РёСЃРєР°С‚СЊ
 	BOOL   bRequestNewGuiWnd;
-	DWORD  nActiveFarPID; // PID последнего активного Far
-	BOOL   bWasDetached; // Выставляется в TRUE при получении CECMD_DETACHCON
-	BOOL   bWasReattached; // Если TRUE - то при следующем цикле нужно передернуть ReloadFullConsoleInfo(true)
+	DWORD  nActiveFarPID; // PID РїРѕСЃР»РµРґРЅРµРіРѕ Р°РєС‚РёРІРЅРѕРіРѕ Far
+	BOOL   bWasDetached; // Р’С‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РІ TRUE РїСЂРё РїРѕР»СѓС‡РµРЅРёРё CECMD_DETACHCON
+	BOOL   bWasReattached; // Р•СЃР»Рё TRUE - С‚Рѕ РїСЂРё СЃР»РµРґСѓСЋС‰РµРј С†РёРєР»Рµ РЅСѓР¶РЅРѕ РїРµСЂРµРґРµСЂРЅСѓС‚СЊ ReloadFullConsoleInfo(true)
 	//
 	PipeServer<CESERVER_REQ> CmdServer;
 	HANDLE hRefreshThread;  DWORD dwRefreshThread;  BOOL bRefreshTermination;
@@ -435,8 +435,8 @@ struct SrvInfo
 	//
 	MSection *csProc;
 	MSection *csAltSrv;
-	// Список процессов нам нужен, чтобы определить, когда консоль уже не нужна.
-	// Например, запустили FAR, он запустил Update, FAR перезапущен...
+	// РЎРїРёСЃРѕРє РїСЂРѕС†РµСЃСЃРѕРІ РЅР°Рј РЅСѓР¶РµРЅ, С‡С‚РѕР±С‹ РѕРїСЂРµРґРµР»РёС‚СЊ, РєРѕРіРґР° РєРѕРЅСЃРѕР»СЊ СѓР¶Рµ РЅРµ РЅСѓР¶РЅР°.
+	// РќР°РїСЂРёРјРµСЂ, Р·Р°РїСѓСЃС‚РёР»Рё FAR, РѕРЅ Р·Р°РїСѓСЃС‚РёР» Update, FAR РїРµСЂРµР·Р°РїСѓС‰РµРЅ...
 	UINT nProcessCount, nMaxProcesses;
 	UINT nConhostPID; // Windows 7 and higher: "conhost.exe"
 	DWORD *pnProcesses, *pnProcessesGet, *pnProcessesCopy, nProcessStartTick;
@@ -464,8 +464,8 @@ struct SrvInfo
 	// Input
 	HANDLE hInputThread;
 	DWORD dwInputThread; BOOL bInputTermination;
-	HANDLE hInputEvent;   // Выставляется в InputThread, флаг появления новых событий в очереди
-	HANDLE hInputWasRead; // Выставляется в InputThread после чтения InputQueue.ReadInputQueue
+	HANDLE hInputEvent;   // Р’С‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РІ InputThread, С„Р»Р°Рі РїРѕСЏРІР»РµРЅРёСЏ РЅРѕРІС‹С… СЃРѕР±С‹С‚РёР№ РІ РѕС‡РµСЂРµРґРё
+	HANDLE hInputWasRead; // Р’С‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РІ InputThread РїРѕСЃР»Рµ С‡С‚РµРЅРёСЏ InputQueue.ReadInputQueue
 	//int nInputQueue, nMaxInputQueue;
 	//INPUT_RECORD* pInputQueue;
 	//INPUT_RECORD* pInputQueueEnd;
@@ -475,8 +475,8 @@ struct SrvInfo
 	// TrueColorer buffer
 	//HANDLE hColorerMapping;
 	CRITICAL_SECTION csColorerMappingCreate;
-	MFileMapping<const AnnotationHeader>* pColorerMapping; // поддержка Colorer TrueMod
-	AnnotationHeader ColorerHdr; // для сравнения индексов
+	MFileMapping<const AnnotationHeader>* pColorerMapping; // РїРѕРґРґРµСЂР¶РєР° Colorer TrueMod
+	AnnotationHeader ColorerHdr; // РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ РёРЅРґРµРєСЃРѕРІ
 	//
 	HANDLE hConEmuGuiAttached;
 	HWINEVENTHOOK /*hWinHook,*/ hWinHookStartEnd; //BOOL bWinHookAllow; int nWinHookMode;
@@ -485,23 +485,23 @@ struct SrvInfo
 	DWORD dwSbiRc; CONSOLE_SCREEN_BUFFER_INFO sbi; // MyGetConsoleScreenBufferInfo
 	DWORD dwDisplayMode;
 	BOOL  bAltBufferEnabled;
-	//USHORT nUsedHeight; // Высота, используемая в GUI - вместо него используем gcrBufferSize.Y
-	SHORT nTopVisibleLine; // Прокрутка в GUI может быть заблокирована. Если -1 - без блокировки, используем текущее значение
-	SHORT nVisibleHeight;  // По идее, должен быть равен (gcrBufferSize.Y). Это гарантированное количество строк psChars & pnAttrs
+	//USHORT nUsedHeight; // Р’С‹СЃРѕС‚Р°, РёСЃРїРѕР»СЊР·СѓРµРјР°СЏ РІ GUI - РІРјРµСЃС‚Рѕ РЅРµРіРѕ РёСЃРїРѕР»СЊР·СѓРµРј gcrBufferSize.Y
+	SHORT nTopVisibleLine; // РџСЂРѕРєСЂСѓС‚РєР° РІ GUI РјРѕР¶РµС‚ Р±С‹С‚СЊ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅР°. Р•СЃР»Рё -1 - Р±РµР· Р±Р»РѕРєРёСЂРѕРІРєРё, РёСЃРїРѕР»СЊР·СѓРµРј С‚РµРєСѓС‰РµРµ Р·РЅР°С‡РµРЅРёРµ
+	SHORT nVisibleHeight;  // РџРѕ РёРґРµРµ, РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СЂР°РІРµРЅ (gcrBufferSize.Y). Р­С‚Рѕ РіР°СЂР°РЅС‚РёСЂРѕРІР°РЅРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂРѕРє psChars & pnAttrs
 	DWORD nMainTimerElapse;
-	HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
-	HANDLE hRefreshDoneEvent; // ServerMode, выставляется после hRefreshEvent
-	HANDLE hDataReadyEvent; // Флаг, что в сервере есть изменения (GUI должен перечитать данные)
-	HANDLE hFarCommitEvent; // ServerMode, перечитать консоль, т.к. Far вызвал Commit в ExtConsole, - отослать в GUI
-	HANDLE hCursorChangeEvent; // ServerMode, перечитать консоль (облегченный режим), т.к. был изменен курсор, - отослать в GUI
-	BOOL   bFarCommitRegistered; // Загружен (в этом! процессе) ExtendedConsole.dll
-	BOOL   bCursorChangeRegistered; // Загружен (в этом! процессе) ExtendedConsole.dll
+	HANDLE hRefreshEvent; // ServerMode, РїРµСЂРµС‡РёС‚Р°С‚СЊ РєРѕРЅСЃРѕР»СЊ, Рё РµСЃР»Рё РµСЃС‚СЊ РёР·РјРµРЅРµРЅРёСЏ - РѕС‚РѕСЃР»Р°С‚СЊ РІ GUI
+	HANDLE hRefreshDoneEvent; // ServerMode, РІС‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РїРѕСЃР»Рµ hRefreshEvent
+	HANDLE hDataReadyEvent; // Р¤Р»Р°Рі, С‡С‚Рѕ РІ СЃРµСЂРІРµСЂРµ РµСЃС‚СЊ РёР·РјРµРЅРµРЅРёСЏ (GUI РґРѕР»Р¶РµРЅ РїРµСЂРµС‡РёС‚Р°С‚СЊ РґР°РЅРЅС‹Рµ)
+	HANDLE hFarCommitEvent; // ServerMode, РїРµСЂРµС‡РёС‚Р°С‚СЊ РєРѕРЅСЃРѕР»СЊ, С‚.Рє. Far РІС‹Р·РІР°Р» Commit РІ ExtConsole, - РѕС‚РѕСЃР»Р°С‚СЊ РІ GUI
+	HANDLE hCursorChangeEvent; // ServerMode, РїРµСЂРµС‡РёС‚Р°С‚СЊ РєРѕРЅСЃРѕР»СЊ (РѕР±Р»РµРіС‡РµРЅРЅС‹Р№ СЂРµР¶РёРј), С‚.Рє. Р±С‹Р» РёР·РјРµРЅРµРЅ РєСѓСЂСЃРѕСЂ, - РѕС‚РѕСЃР»Р°С‚СЊ РІ GUI
+	BOOL   bFarCommitRegistered; // Р—Р°РіСЂСѓР¶РµРЅ (РІ СЌС‚РѕРј! РїСЂРѕС†РµСЃСЃРµ) ExtendedConsole.dll
+	BOOL   bCursorChangeRegistered; // Р—Р°РіСЂСѓР¶РµРЅ (РІ СЌС‚РѕРј! РїСЂРѕС†РµСЃСЃРµ) ExtendedConsole.dll
 	#ifdef USE_COMMIT_EVENT
-	HANDLE hExtConsoleCommit; // Event для синхронизации (выставляется по Commit);
+	HANDLE hExtConsoleCommit; // Event РґР»СЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё (РІС‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РїРѕ Commit);
 	DWORD  nExtConsolePID;
 	#endif
-	BOOL bForceConsoleRead; // Пнуть нить опроса консоли RefreshThread чтобы она без задержек перечитала содержимое
-	// Смена размера консоли через RefreshThread
+	BOOL bForceConsoleRead; // РџРЅСѓС‚СЊ РЅРёС‚СЊ РѕРїСЂРѕСЃР° РєРѕРЅСЃРѕР»Рё RefreshThread С‡С‚РѕР±С‹ РѕРЅР° Р±РµР· Р·Р°РґРµСЂР¶РµРє РїРµСЂРµС‡РёС‚Р°Р»Р° СЃРѕРґРµСЂР¶РёРјРѕРµ
+	// РЎРјРµРЅР° СЂР°Р·РјРµСЂР° РєРѕРЅСЃРѕР»Рё С‡РµСЂРµР· RefreshThread
 	int nRequestChangeSize;
 	BOOL bRequestChangeSizeResult;
 	USHORT nReqSizeBufferHeight;
@@ -513,20 +513,20 @@ struct SrvInfo
 	//
 	HANDLE hAllowInputEvent; BOOL bInSyncResize;
 	//
-	DWORD nLastPacketID; // ИД пакета для отправки в GUI
+	DWORD nLastPacketID; // РР” РїР°РєРµС‚Р° РґР»СЏ РѕС‚РїСЂР°РІРєРё РІ GUI
 
 	// Keyboard layout name
 	wchar_t szKeybLayout[KL_NAMELENGTH+1];
 
 	// Optional console font (may be specified in registry)
 	wchar_t szConsoleFont[LF_FACESIZE];
-	//wchar_t szConsoleFontFile[MAX_PATH]; -- не помогает
+	//wchar_t szConsoleFontFile[MAX_PATH]; -- РЅРµ РїРѕРјРѕРіР°РµС‚
 	SHORT nConFontWidth, nConFontHeight;
 
-	// Когда была последняя пользовательская активность
+	// РљРѕРіРґР° Р±С‹Р»Р° РїРѕСЃР»РµРґРЅСЏСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєР°СЏ Р°РєС‚РёРІРЅРѕСЃС‚СЊ
 	DWORD dwLastUserTick;
 
-	// Если нужно заблокировать нить RefreshThread
+	// Р•СЃР»Рё РЅСѓР¶РЅРѕ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ РЅРёС‚СЊ RefreshThread
 	//HANDLE hLockRefreshBegin, hLockRefreshReady;
 
 	// Console Aliases
@@ -580,7 +580,7 @@ void PrintVersion();
 //	DWORD dwFarPID;
 //	//DWORD dwSrvPID;
 //	BOOL  bK;
-//	//BOOL  bNonGuiMode; // Если запущен НЕ в консоли, привязанной к GUI. Может быть из-за того, что работает как COMSPEC
+//	//BOOL  bNonGuiMode; // Р•СЃР»Рё Р·Р°РїСѓС‰РµРЅ РќР• РІ РєРѕРЅСЃРѕР»Рё, РїСЂРёРІСЏР·Р°РЅРЅРѕР№ Рє GUI. РњРѕР¶РµС‚ Р±С‹С‚СЊ РёР·-Р·Р° С‚РѕРіРѕ, С‡С‚Рѕ СЂР°Р±РѕС‚Р°РµС‚ РєР°Рє COMSPEC
 //	CONSOLE_SCREEN_BUFFER_INFO sbi;
 //	BOOL  bNewConsole;
 //	//DWORD nExitCode;
@@ -588,7 +588,7 @@ void PrintVersion();
 //	wchar_t szSelfName[32];
 //	wchar_t *pszPreAliases;
 //	DWORD nPreAliasSize;
-//	// По завершении ComSpec не отключать буфер
+//	// РџРѕ Р·Р°РІРµСЂС€РµРЅРёРё ComSpec РЅРµ РѕС‚РєР»СЋС‡Р°С‚СЊ Р±СѓС„РµСЂ
 //	//BOOL  bWasBufferHeight;
 //} CmdInfo;
 //

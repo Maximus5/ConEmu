@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2013 Maximus5
 All rights reserved.
@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct ConEmuHotKey;
 class CHotKeyDialog;
 
-// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
+// РќРµРєРѕС‚РѕСЂС‹Рµ РєРѕРјР±РёРЅР°С†РёРё РЅСѓР¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ "РЅР° РѕС‚РїСѓСЃРєР°РЅРёРµ" РІРѕ РёР·Р±РµР¶Р°РЅРёРµ РіР»СЋРєРѕРІ СЃ РёРЅС‚РµСЂС„РµР№СЃРѕРј
 extern const struct ConEmuHotKey* ConEmuSkipHotKey; // = ((ConEmuHotKey*)INVALID_HANDLE_VALUE)
 
 #define CEHOTKEY_MODMASK    0xFFFFFF00
@@ -43,12 +43,12 @@ extern const struct ConEmuHotKey* ConEmuSkipHotKey; // = ((ConEmuHotKey*)INVALID
 
 enum ConEmuHotKeyType
 {
-	chk_User = 0,  // обычный настраиваемый hotkey
-	chk_Modifier,  // для драга, например
-	chk_Modifier2, // для драга, например (когда нужно задать более одного модификатора)
-	chk_NumHost,   // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
-	chk_ArrHost,   // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
-	chk_System,    // predefined hotkeys, ненастраиваемые (пока?)
+	chk_User = 0,  // РѕР±С‹С‡РЅС‹Р№ РЅР°СЃС‚СЂР°РёРІР°РµРјС‹Р№ hotkey
+	chk_Modifier,  // РґР»СЏ РґСЂР°РіР°, РЅР°РїСЂРёРјРµСЂ
+	chk_Modifier2, // РґР»СЏ РґСЂР°РіР°, РЅР°РїСЂРёРјРµСЂ (РєРѕРіРґР° РЅСѓР¶РЅРѕ Р·Р°РґР°С‚СЊ Р±РѕР»РµРµ РѕРґРЅРѕРіРѕ РјРѕРґРёС„РёРєР°С‚РѕСЂР°)
+	chk_NumHost,   // system hotkey (<HostKey>-Number, Рё Р‘Р«Р› Р РђРќР¬РЁР• <HostKey>-Arrows)
+	chk_ArrHost,   // system hotkey (<HostKey>-Number, Рё Р‘Р«Р› Р РђРќР¬РЁР• <HostKey>-Arrows)
+	chk_System,    // predefined hotkeys, РЅРµРЅР°СЃС‚СЂР°РёРІР°РµРјС‹Рµ (РїРѕРєР°?)
 	chk_Global,    // globally registered hotkey
 	chk_Local,     // locally registered hotkey
 	chk_Macro,     // GUI Macro
@@ -62,7 +62,7 @@ struct ConEmuHotKey
 	// <0 TaskIdx, 1-based
 	int DescrLangID;
 	
-	// 0 - hotkey, 1 - modifier (для драга, например), 2 - system hotkey (настройка nMultiHotkeyModifier)
+	// 0 - hotkey, 1 - modifier (РґР»СЏ РґСЂР°РіР°, РЅР°РїСЂРёРјРµСЂ), 2 - system hotkey (РЅР°СЃС‚СЂРѕР№РєР° nMultiHotkeyModifier)
 	ConEmuHotKeyType HkType;
 
 	// May be NULL
@@ -72,8 +72,8 @@ struct ConEmuHotKey
 	
 	DWORD VkMod;
 
-    bool (WINAPI *fkey)(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-обработали, false-пропустить в консоль
-	bool OnKeyUp; // Некоторые комбинации нужно обрабатывать "на отпускание" (показ диалогов, меню, ...)
+    bool (WINAPI *fkey)(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-РѕР±СЂР°Р±РѕС‚Р°Р»Рё, false-РїСЂРѕРїСѓСЃС‚РёС‚СЊ РІ РєРѕРЅСЃРѕР»СЊ
+	bool OnKeyUp; // РќРµРєРѕС‚РѕСЂС‹Рµ РєРѕРјР±РёРЅР°С†РёРё РЅСѓР¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ "РЅР° РѕС‚РїСѓСЃРєР°РЅРёРµ" (РїРѕРєР°Р· РґРёР°Р»РѕРіРѕРІ, РјРµРЅСЋ, ...)
 
 	wchar_t* GuiMacro;
 
@@ -94,26 +94,26 @@ struct ConEmuHotKey
 	void Free();
 
 	// *** Service functions ***
-	// Вернуть имя модификатора (типа "Apps+Space")
+	// Р’РµСЂРЅСѓС‚СЊ РёРјСЏ РјРѕРґРёС„РёРєР°С‚РѕСЂР° (С‚РёРїР° "Apps+Space")
 	LPCWSTR GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone = true) const;
 	static LPCWSTR GetHotkeyName(DWORD aVkMod, wchar_t (&szFull)[128], bool bShowNone = true);
 
-	// nHostMod в младших 3-х байтах может содержать VK (модификаторы).
-	// Функция проверяет, чтобы они не дублировались
+	// nHostMod РІ РјР»Р°РґС€РёС… 3-С… Р±Р°Р№С‚Р°С… РјРѕР¶РµС‚ СЃРѕРґРµСЂР¶Р°С‚СЊ VK (РјРѕРґРёС„РёРєР°С‚РѕСЂС‹).
+	// Р¤СѓРЅРєС†РёСЏ РїСЂРѕРІРµСЂСЏРµС‚, С‡С‚РѕР±С‹ РѕРЅРё РЅРµ РґСѓР±Р»РёСЂРѕРІР°Р»РёСЃСЊ
 	static void TestHostkeyModifiers(DWORD& nHostMod);
-	// набор флагов MOD_xxx для RegisterHotKey
+	// РЅР°Р±РѕСЂ С„Р»Р°РіРѕРІ MOD_xxx РґР»СЏ RegisterHotKey
 	static DWORD GetHotKeyMod(DWORD VkMod);
-	// Сервисная функция для инициализации. Формирует готовый VkMod
+	// РЎРµСЂРІРёСЃРЅР°СЏ С„СѓРЅРєС†РёСЏ РґР»СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё. Р¤РѕСЂРјРёСЂСѓРµС‚ РіРѕС‚РѕРІС‹Р№ VkMod
 	static DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
-	// Извлечь сам VK
+	// РР·РІР»РµС‡СЊ СЃР°Рј VK
 	static DWORD GetHotkey(DWORD VkMod);
-	// Вернуть имя клавишы (Apps, Win, Pause, ...)
+	// Р’РµСЂРЅСѓС‚СЊ РёРјСЏ РєР»Р°РІРёС€С‹ (Apps, Win, Pause, ...)
 	static void GetVkKeyName(BYTE vk, wchar_t (&szName)[32]);
-	// Есть ли в этом (VkMod) хоткее - модификатор Mod (VK)
+	// Р•СЃС‚СЊ Р»Рё РІ СЌС‚РѕРј (VkMod) С…РѕС‚РєРµРµ - РјРѕРґРёС„РёРєР°С‚РѕСЂ Mod (VK)
 	static bool HasModifier(DWORD VkMod, BYTE Mod/*VK*/);
-	// Задать или сбросить модификатор в VkMod
+	// Р—Р°РґР°С‚СЊ РёР»Рё СЃР±СЂРѕСЃРёС‚СЊ РјРѕРґРёС„РёРєР°С‚РѕСЂ РІ VkMod
 	static DWORD SetModifier(DWORD VkMod, BYTE Mod/*VK*/, bool Xor=true);
-	// Вернуть назначенные модификаторы (idx = 1..3). Возвращает 0 (нету) или VK
+	// Р’РµСЂРЅСѓС‚СЊ РЅР°Р·РЅР°С‡РµРЅРЅС‹Рµ РјРѕРґРёС„РёРєР°С‚РѕСЂС‹ (idx = 1..3). Р’РѕР·РІСЂР°С‰Р°РµС‚ 0 (РЅРµС‚Сѓ) РёР»Рё VK
 	static DWORD GetModifier(DWORD VkMod, int idx/*1..3*/);
 
 	static bool UseWinNumber();

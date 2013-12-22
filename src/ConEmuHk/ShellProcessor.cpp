@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2011-2013 Maximus5
 All rights reserved.
@@ -202,10 +202,10 @@ HWND CShellProc::FindCheckConEmuWindow()
 	{
 		if (user->isWindow(ghConEmuWnd))
 		{
-			return ghConEmuWnd; // OK, живое
+			return ghConEmuWnd; // OK, Р¶РёРІРѕРµ
 		}
 
-		// Сброс, ищем заново
+		// РЎР±СЂРѕСЃ, РёС‰РµРј Р·Р°РЅРѕРІРѕ
 		ghConEmuWnd = ghConEmuWndDC = NULL;
 		mb_TempConEmuWnd = TRUE;
 	}
@@ -215,7 +215,7 @@ HWND CShellProc::FindCheckConEmuWindow()
 	{
 		ghConEmuWnd = h;
 		HWND hWork = user->findWindowEx(h, NULL, VirtualConsoleClassWork, NULL);
-		_ASSERTEX(hWork!=NULL && "Workspace must be inside ConEmu"); // код расчитан на это
+		_ASSERTEX(hWork!=NULL && "Workspace must be inside ConEmu"); // РєРѕРґ СЂР°СЃС‡РёС‚Р°РЅ РЅР° СЌС‚Рѕ
 		ghConEmuWndDC = user->findWindowEx(h, NULL, VirtualConsoleClass, NULL);
 		if (!ghConEmuWndDC)
 		{
@@ -297,7 +297,7 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 				return FALSE;
 			}
 
-			// Разрешить запуск с запомненными параметрами
+			// Р Р°Р·СЂРµС€РёС‚СЊ Р·Р°РїСѓСЃРє СЃ Р·Р°РїРѕРјРЅРµРЅРЅС‹РјРё РїР°СЂР°РјРµС‚СЂР°РјРё
 			_ASSERTEX(gpDefaultTermParm);
 			m_GuiMapping = *gpDefaultTermParm;
 		}
@@ -336,9 +336,9 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 		m_SrvMapping.hConEmuRoot = ghConEmuWnd;
 		m_SrvMapping.hConEmuWndDc = NULL/*ghConEmuWndDC*/; // ???
 		m_SrvMapping.hConEmuWndBack = NULL;
-		//m_SrvMapping.bDosBox = m_GuiMapping.bDosBox;       // DosBox установлен, можно пользоваться
+		//m_SrvMapping.bDosBox = m_GuiMapping.bDosBox;       // DosBox СѓСЃС‚Р°РЅРѕРІР»РµРЅ, РјРѕР¶РЅРѕ РїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ
 		m_SrvMapping.Flags = m_GuiMapping.Flags;
-		m_SrvMapping.bUseInjects = 1;   // 0-off, 1-on, 3-exe only. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
+		m_SrvMapping.bUseInjects = 1;   // 0-off, 1-on, 3-exe only. Р”Р°Р»РµРµ РјРѕРіСѓС‚ Р±С‹С‚СЊ РґРѕРї.С„Р»Р°РіРё (Р±РёС‚РјР°СЃРє)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 
 		_ASSERTE(m_SrvMapping.ComSpec.ConEmuExeDir[0] && m_SrvMapping.ComSpec.ConEmuBaseDir[0]);
 
@@ -357,7 +357,7 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 
 	return TRUE;
 
-	//// Проверим, а можно ли?
+	//// РџСЂРѕРІРµСЂРёРј, Р° РјРѕР¶РЅРѕ Р»Рё?
 	//DWORD dwGuiProcessId = 0;
 	//if (!ghConEmuWnd || !GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId))
 	//	return FALSE;
@@ -392,7 +392,7 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 {
 	//szBaseDir[0] = 0;
 
-	// Проверим, а надо ли?
+	// РџСЂРѕРІРµСЂРёРј, Р° РЅР°РґРѕ Р»Рё?
 	if (!LoadSrvMapping())
 		return NULL;
 
@@ -531,14 +531,14 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	BOOL lbUseDosBox = FALSE;
 	size_t cchDosBoxExe = MAX_PATH+16, cchDosBoxCfg = MAX_PATH+16;
 	wchar_t *szDosBoxExe = NULL, *szDosBoxCfg = NULL;
-	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
+	BOOL lbComSpec = FALSE; // TRUE - РµСЃР»Рё %COMSPEC% РѕС‚Р±СЂР°СЃС‹РІР°РµС‚СЃСЏ
 	int nCchSize = 0;
 	BOOL lbEndQuote = FALSE;
 	#if 0
 	bool lbNewGuiConsole = false;
 	#endif
 	bool lbNewConsoleFromGui = false;
-	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
+	BOOL lbComSpecK = FALSE; // TRUE - РµСЃР»Рё РЅСѓР¶РЅРѕ Р·Р°РїСѓСЃС‚РёС‚СЊ /K, Р° РЅРµ /C
 
 	szConEmuC = (wchar_t*)malloc(cchConEmuC*sizeof(*szConEmuC)); // ConEmuC64.exe
 	if (!szConEmuC)
@@ -557,7 +557,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		{
 			_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.sConEmuExe);
 		}
-		// Для "runas" для "Default terminal" будем работать через /AUTOATTACH
+		// Р”Р»СЏ "runas" РґР»СЏ "Default terminal" Р±СѓРґРµРј СЂР°Р±РѕС‚Р°С‚СЊ С‡РµСЂРµР· /AUTOATTACH
 	}
 
 	if (!*szConEmuC)
@@ -574,7 +574,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		if (asFile && !*asFile)
 			asFile = NULL;
 
-		// Кто-то может додуматься окавычить asFile
+		// РљС‚Рѕ-С‚Рѕ РјРѕР¶РµС‚ РґРѕРґСѓРјР°С‚СЊСЃСЏ РѕРєР°РІС‹С‡РёС‚СЊ asFile
 		wchar_t* pszFileUnquote = NULL;
 		if (asFile && (*asFile == L'"'))
 		{
@@ -585,7 +585,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				*pszFileUnquote = 0;
 		}
 
-		// Для простоты - сразу откинем asFile если он совпадает с первым аргументом в asParam
+		// Р”Р»СЏ РїСЂРѕСЃС‚РѕС‚С‹ - СЃСЂР°Р·Сѓ РѕС‚РєРёРЅРµРј asFile РµСЃР»Рё РѕРЅ СЃРѕРІРїР°РґР°РµС‚ СЃ РїРµСЂРІС‹Рј Р°СЂРіСѓРјРµРЅС‚РѕРј РІ asParam
 		if (asFile && *asFile && asParam && *asParam)
 		{
 			LPCWSTR pszParam = SkipNonPrintable(asParam);
@@ -603,23 +603,23 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				_ASSERTE(pszTest);
 				if (pszTest)
 				{
-					// Сначала пробуем на полное соответствие
+					// РЎРЅР°С‡Р°Р»Р° РїСЂРѕР±СѓРµРј РЅР° РїРѕР»РЅРѕРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ
 					if (asFile)
 					{
 						_wcscpyn_c(pszTest, nLen, (*pszParam == L'"') ? (pszParam+1) : pszParam, nLen); //-V501
 						pszTest[nLen-1] = 0;
-						// Сравнить asFile с первым аргументом в asParam
+						// РЎСЂР°РІРЅРёС‚СЊ asFile СЃ РїРµСЂРІС‹Рј Р°СЂРіСѓРјРµРЅС‚РѕРј РІ asParam
 						if (lstrcmpi(pszTest, asFile) == 0)
 						{
-							// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
+							// exe-С€РЅРёРє СѓР¶Рµ СѓРєР°Р·Р°РЅ РІ asParam, РґРѕР±Р°РІР»СЏС‚СЊ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕ РќР• РЅСѓР¶РЅРѕ
 							asFile = NULL;
 						}
 					}
-					// Если не сошлось - в asParam может быть только имя или часть пути запускаемого файла
-					// например CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"mingw32-make.exe makefile",...)
-					// или      CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"mingw32-make makefile",...)
-					// или      CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"\\GCC\\mingw32-make.exe makefile",...)
-					// Эту часть нужно выкинуть из asParam
+					// Р•СЃР»Рё РЅРµ СЃРѕС€Р»РѕСЃСЊ - РІ asParam РјРѕР¶РµС‚ Р±С‹С‚СЊ С‚РѕР»СЊРєРѕ РёРјСЏ РёР»Рё С‡Р°СЃС‚СЊ РїСѓС‚Рё Р·Р°РїСѓСЃРєР°РµРјРѕРіРѕ С„Р°Р№Р»Р°
+					// РЅР°РїСЂРёРјРµСЂ CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"mingw32-make.exe makefile",...)
+					// РёР»Рё      CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"mingw32-make makefile",...)
+					// РёР»Рё      CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"\\GCC\\mingw32-make.exe makefile",...)
+					// Р­С‚Сѓ С‡Р°СЃС‚СЊ РЅСѓР¶РЅРѕ РІС‹РєРёРЅСѓС‚СЊ РёР· asParam
 					if (asFile)
 					{
 						LPCWSTR pszFileOnly = PointToName(asFile);
@@ -635,17 +635,17 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 							else
 							{
 								LPCWSTR pszFirstName = PointToName(szFirst);
-								// Сравнить asFile с первым аргументом в asParam
+								// РЎСЂР°РІРЅРёС‚СЊ asFile СЃ РїРµСЂРІС‹Рј Р°СЂРіСѓРјРµРЅС‚РѕРј РІ asParam
 								if (lstrcmpi(pszFirstName, pszFileOnly) == 0)
 								{
-									// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
-									// -- asFile = NULL; -- трогать нельзя, только он содержит полный путь!
+									// exe-С€РЅРёРє СѓР¶Рµ СѓРєР°Р·Р°РЅ РІ asParam, РґРѕР±Р°РІР»СЏС‚СЊ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕ РќР• РЅСѓР¶РЅРѕ
+									// -- asFile = NULL; -- С‚СЂРѕРіР°С‚СЊ РЅРµР»СЊР·СЏ, С‚РѕР»СЊРєРѕ РѕРЅ СЃРѕРґРµСЂР¶РёС‚ РїРѕР»РЅС‹Р№ РїСѓС‚СЊ!
 									asParam = pszCopy;
 									pszFileOnly = NULL;
 								}
 								else
 								{
-									// Пробуем asFile без расширения
+									// РџСЂРѕР±СѓРµРј asFile Р±РµР· СЂР°СЃС€РёСЂРµРЅРёСЏ
 									wchar_t szTmpFileOnly[MAX_PATH+1]; szTmpFileOnly[0] = 0;
 									_wcscpyn_c(szTmpFileOnly, countof(szTmpFileOnly), pszFileOnly, countof(szTmpFileOnly)); //-V501
 									wchar_t* pszExt = wcsrchr(szTmpFileOnly, L'.');
@@ -654,8 +654,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 										*pszExt = 0;
 										if (lstrcmpi(pszFirstName, szTmpFileOnly) == 0)
 										{
-											// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
-											// -- asFile = NULL; -- трогать нельзя, только он содержит полный путь!
+											// exe-С€РЅРёРє СѓР¶Рµ СѓРєР°Р·Р°РЅ РІ asParam, РґРѕР±Р°РІР»СЏС‚СЊ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕ РќР• РЅСѓР¶РЅРѕ
+											// -- asFile = NULL; -- С‚СЂРѕРіР°С‚СЊ РЅРµР»СЊР·СЏ, С‚РѕР»СЊРєРѕ РѕРЅ СЃРѕРґРµСЂР¶РёС‚ РїРѕР»РЅС‹Р№ РїСѓС‚СЊ!
 											asParam = pszCopy;
 											pszFileOnly = NULL;
 										}
@@ -663,8 +663,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 										{
 											if (lstrcmpi(pszFirstName, szTmpFileOnly) == 0)
 											{
-												// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
-												// -- asFile = NULL; -- трогать нельзя, только он содержит полный путь!
+												// exe-С€РЅРёРє СѓР¶Рµ СѓРєР°Р·Р°РЅ РІ asParam, РґРѕР±Р°РІР»СЏС‚СЊ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕ РќР• РЅСѓР¶РЅРѕ
+												// -- asFile = NULL; -- С‚СЂРѕРіР°С‚СЊ РЅРµР»СЊР·СЏ, С‚РѕР»СЊРєРѕ РѕРЅ СЃРѕРґРµСЂР¶РёС‚ РїРѕР»РЅС‹Р№ РїСѓС‚СЊ!
 												asParam = pszCopy;
 												pszFileOnly = NULL;
 											}
@@ -691,32 +691,32 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		goto wrap;
 	}
 
-	// Если удалось определить "ComSpec"
-	// Не менять ком.строку, если запускается "Default Terminal"
+	// Р•СЃР»Рё СѓРґР°Р»РѕСЃСЊ РѕРїСЂРµРґРµР»РёС‚СЊ "ComSpec"
+	// РќРµ РјРµРЅСЏС‚СЊ РєРѕРј.СЃС‚СЂРѕРєСѓ, РµСЃР»Рё Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ "Default Terminal"
 	if (!gbPrepareDefaultTerminal && asParam)
 	{
 		BOOL lbNewCmdCheck = FALSE;
 		const wchar_t* psz = SkipNonPrintable(asParam);
 
-		// Если запускают cmd.exe без параметров - не отбрасывать его!
+		// Р•СЃР»Рё Р·Р°РїСѓСЃРєР°СЋС‚ cmd.exe Р±РµР· РїР°СЂР°РјРµС‚СЂРѕРІ - РЅРµ РѕС‚Р±СЂР°СЃС‹РІР°С‚СЊ РµРіРѕ!
 		if (psz && *psz && szComspec[0])
 		{
-			// asFile может быть и для ShellExecute и для CreateProcess, проверим в одном месте
+			// asFile РјРѕР¶РµС‚ Р±С‹С‚СЊ Рё РґР»СЏ ShellExecute Рё РґР»СЏ CreateProcess, РїСЂРѕРІРµСЂРёРј РІ РѕРґРЅРѕРј РјРµСЃС‚Рµ
 			if (asFile && (lstrcmpi(szComspec, asFile) == 0))
 			{
 				if (psz[0] == L'/' && wcschr(L"CcKk", psz[1]))
 				{
 					if (abNewConsole)
 					{
-						// 111211 - "-new_console" передается в GUI
+						// 111211 - "-new_console" РїРµСЂРµРґР°РµС‚СЃСЏ РІ GUI
 						lbComSpecK = FALSE;
 					}
 					else
 					{
-						// не добавлять в измененную команду asFile (это отбрасываемый cmd.exe)
+						// РЅРµ РґРѕР±Р°РІР»СЏС‚СЊ РІ РёР·РјРµРЅРµРЅРЅСѓСЋ РєРѕРјР°РЅРґСѓ asFile (СЌС‚Рѕ РѕС‚Р±СЂР°СЃС‹РІР°РµРјС‹Р№ cmd.exe)
 						lbComSpecK = (psz[1] == L'K' || psz[1] == L'k');
 						asFile = NULL;
-						asParam = SkipNonPrintable(psz+2); // /C или /K добавляется к ConEmuC.exe
+						asParam = SkipNonPrintable(psz+2); // /C РёР»Рё /K РґРѕР±Р°РІР»СЏРµС‚СЃСЏ Рє ConEmuC.exe
 						lbNewCmdCheck = FALSE;
 
 						ms_ExeTmp.Set(szComspec);
@@ -738,12 +738,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 			}
 			else if ((aCmd == eCreateProcess) && !asFile)
 			{
-				// Теперь обработка для CreateProcess.
-				// asFile уже сброшен в NULL, если он совпадает с первым аргументом в asParam
-				// Возможны два варианта asParam (как минимум)
+				// РўРµРїРµСЂСЊ РѕР±СЂР°Р±РѕС‚РєР° РґР»СЏ CreateProcess.
+				// asFile СѓР¶Рµ СЃР±СЂРѕС€РµРЅ РІ NULL, РµСЃР»Рё РѕРЅ СЃРѕРІРїР°РґР°РµС‚ СЃ РїРµСЂРІС‹Рј Р°СЂРіСѓРјРµРЅС‚РѕРј РІ asParam
+				// Р’РѕР·РјРѕР¶РЅС‹ РґРІР° РІР°СЂРёР°РЅС‚Р° asParam (РєР°Рє РјРёРЅРёРјСѓРј)
 				// "c:\windows\system32\cmd.exe" /c dir
 				// "c:\windows\system32\cmd.exe /c dir"
-				// Второй - пока проигнорируем, как маловероятный
+				// Р’С‚РѕСЂРѕР№ - РїРѕРєР° РїСЂРѕРёРіРЅРѕСЂРёСЂСѓРµРј, РєР°Рє РјР°Р»РѕРІРµСЂРѕСЏС‚РЅС‹Р№
 				INT_PTR nLen = lstrlen(szComspec)+1;
 				wchar_t* pszTest = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 				_ASSERTE(pszTest);
@@ -751,7 +751,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				{
 					_wcscpyn_c(pszTest, nLen, (*psz == L'"') ? (psz+1) : psz, nLen); //-V501
 					pszTest[nLen-1] = 0;
-					// Сравнить первый аргумент в asParam с %COMSPEC%
+					// РЎСЂР°РІРЅРёС‚СЊ РїРµСЂРІС‹Р№ Р°СЂРіСѓРјРµРЅС‚ РІ asParam СЃ %COMSPEC%
 					const wchar_t* pszCmdLeft = NULL;
 					if (lstrcmpi(pszTest, szComspec) == 0)
 					{
@@ -767,14 +767,14 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 							pszCmdLeft = psz+nLen-1;
 						}
 
-						// Теперь нужно проверить, что там в хвосте команды (если команды нет - оставить cmd.exe)
+						// РўРµРїРµСЂСЊ РЅСѓР¶РЅРѕ РїСЂРѕРІРµСЂРёС‚СЊ, С‡С‚Рѕ С‚Р°Рј РІ С…РІРѕСЃС‚Рµ РєРѕРјР°РЅРґС‹ (РµСЃР»Рё РєРѕРјР°РЅРґС‹ РЅРµС‚ - РѕСЃС‚Р°РІРёС‚СЊ cmd.exe)
 						pszCmdLeft = SkipNonPrintable(pszCmdLeft);
 						if (pszCmdLeft && pszCmdLeft[0] == L'/' && wcschr(L"CcKk", pszCmdLeft[1]))
 						{
-							// не добавлять в измененную команду asFile (это отбрасываемый cmd.exe)
+							// РЅРµ РґРѕР±Р°РІР»СЏС‚СЊ РІ РёР·РјРµРЅРµРЅРЅСѓСЋ РєРѕРјР°РЅРґСѓ asFile (СЌС‚Рѕ РѕС‚Р±СЂР°СЃС‹РІР°РµРјС‹Р№ cmd.exe)
 							lbComSpecK = (psz[1] == L'K' || psz[1] == L'k');
-							_ASSERTE(asFile == NULL); // уже должен быть NULL
-							asParam = pszCmdLeft+2; // /C или /K добавляется к ConEmuC.exe
+							_ASSERTE(asFile == NULL); // СѓР¶Рµ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ NULL
+							asParam = pszCmdLeft+2; // /C РёР»Рё /K РґРѕР±Р°РІР»СЏРµС‚СЃСЏ Рє ConEmuC.exe
 							lbNewCmdCheck = TRUE;
 
 							lbComSpec = TRUE;
@@ -792,17 +792,17 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 			DWORD nFileAttrs = (DWORD)-1;
 			ms_ExeTmp.Empty();
 			IsNeedCmd(false, SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
-			// это может быть команда ком.процессора!
-			// поэтому, наверное, искать и проверять битность будем только для
-			// файлов с указанным расширением.
-			// cmd.exe /c echo -> НЕ искать
-			// cmd.exe /c echo.exe -> можно и поискать
+			// СЌС‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РєРѕРјР°РЅРґР° РєРѕРј.РїСЂРѕС†РµСЃСЃРѕСЂР°!
+			// РїРѕСЌС‚РѕРјСѓ, РЅР°РІРµСЂРЅРѕРµ, РёСЃРєР°С‚СЊ Рё РїСЂРѕРІРµСЂСЏС‚СЊ Р±РёС‚РЅРѕСЃС‚СЊ Р±СѓРґРµРј С‚РѕР»СЊРєРѕ РґР»СЏ
+			// С„Р°Р№Р»РѕРІ СЃ СѓРєР°Р·Р°РЅРЅС‹Рј СЂР°СЃС€РёСЂРµРЅРёРµРј.
+			// cmd.exe /c echo -> РќР• РёСЃРєР°С‚СЊ
+			// cmd.exe /c echo.exe -> РјРѕР¶РЅРѕ Рё РїРѕРёСЃРєР°С‚СЊ
 			if (ms_ExeTmp[0] && (wcschr(ms_ExeTmp, L'.') || wcschr(ms_ExeTmp, L'\\')))
 			{
 				bool bSkip = false;
 				LPCWSTR pszExeName = PointToName(ms_ExeTmp);
-				// По хорошему, нужно с полным путем проверять,
-				// но если кто-то положил гуевый cmd.exe - ССЗБ
+				// РџРѕ С…РѕСЂРѕС€РµРјСѓ, РЅСѓР¶РЅРѕ СЃ РїРѕР»РЅС‹Рј РїСѓС‚РµРј РїСЂРѕРІРµСЂСЏС‚СЊ,
+				// РЅРѕ РµСЃР»Рё РєС‚Рѕ-С‚Рѕ РїРѕР»РѕР¶РёР» РіСѓРµРІС‹Р№ cmd.exe - РЎРЎР—Р‘
 				if (lstrcmpi(pszExeName, L"cmd.exe") == 0)
 				{
 					ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
@@ -850,7 +850,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	{
 		int nLen = lstrlen(asParam);
 
-		// Может это запускается Dos-приложение через "cmd /c ..."?
+		// РњРѕР¶РµС‚ СЌС‚Рѕ Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ Dos-РїСЂРёР»РѕР¶РµРЅРёРµ С‡РµСЂРµР· "cmd /c ..."?
 		if (ImageSubsystem != IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
 		{
 			LPCWSTR pszCmdLine = asParam;
@@ -904,7 +904,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 			if (!FileExists(szDosBoxExe) || !FileExists(szDosBoxCfg))
 			{
-				// DoxBox не установлен!
+				// DoxBox РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ!
 				lbRc = FALSE;
 				//return FALSE;
 				goto wrap;
@@ -915,8 +915,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		}
 		else
 		{
-			// в любом разе нужно запускать через ConEmuC.exe, чтобы GUI мог точно знать, когда 16бит приложение завершится
-			// Но вот в 64битных OS - ntvdm отсутствует, так что (если DosBox-а нет), дергаться не нужно
+			// РІ Р»СЋР±РѕРј СЂР°Р·Рµ РЅСѓР¶РЅРѕ Р·Р°РїСѓСЃРєР°С‚СЊ С‡РµСЂРµР· ConEmuC.exe, С‡С‚РѕР±С‹ GUI РјРѕРі С‚РѕС‡РЅРѕ Р·РЅР°С‚СЊ, РєРѕРіРґР° 16Р±РёС‚ РїСЂРёР»РѕР¶РµРЅРёРµ Р·Р°РІРµСЂС€РёС‚СЃСЏ
+			// РќРѕ РІРѕС‚ РІ 64Р±РёС‚РЅС‹С… OS - ntvdm РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚, С‚Р°Рє С‡С‚Рѕ (РµСЃР»Рё DosBox-Р° РЅРµС‚), РґРµСЂРіР°С‚СЊСЃСЏ РЅРµ РЅСѓР¶РЅРѕ
 			if (IsWindows64())
 			{
 				lbRc = FALSE;
@@ -931,7 +931,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	}
 	else
 	{
-		// Если не смогли определить что это и как запускается - лучше не трогать
+		// Р•СЃР»Рё РЅРµ СЃРјРѕРіР»Рё РѕРїСЂРµРґРµР»РёС‚СЊ С‡С‚Рѕ СЌС‚Рѕ Рё РєР°Рє Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ - Р»СѓС‡С€Рµ РЅРµ С‚СЂРѕРіР°С‚СЊ
 		_ASSERTE(ImageBits==16||ImageBits==32||ImageBits==64);
 		//wcscat_c(szConEmuC, L"ConEmuC.exe");
 		lbRc = FALSE;
@@ -942,9 +942,9 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	nCchSize = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 64;
 	if (lbUseDosBox)
 	{
-		// Может быть нужно экранирование кавычек или еще чего, зарезервируем буфер
-		// ну и сами параметры для DosBox
-		nCchSize = (nCchSize*2) + lstrlen(szDosBoxExe) + lstrlen(szDosBoxCfg) + 128 + MAX_PATH*2/*на cd и прочую фигню*/;
+		// РњРѕР¶РµС‚ Р±С‹С‚СЊ РЅСѓР¶РЅРѕ СЌРєСЂР°РЅРёСЂРѕРІР°РЅРёРµ РєР°РІС‹С‡РµРє РёР»Рё РµС‰Рµ С‡РµРіРѕ, Р·Р°СЂРµР·РµСЂРІРёСЂСѓРµРј Р±СѓС„РµСЂ
+		// РЅСѓ Рё СЃР°РјРё РїР°СЂР°РјРµС‚СЂС‹ РґР»СЏ DosBox
+		nCchSize = (nCchSize*2) + lstrlen(szDosBoxExe) + lstrlen(szDosBoxCfg) + 128 + MAX_PATH*2/*РЅР° cd Рё РїСЂРѕС‡СѓСЋ С„РёРіРЅСЋ*/;
 	}
 
 	if (!FileExists(szConEmuC))
@@ -967,7 +967,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	}
 
 	#if 0
-	// Если запускается новый GUI как вкладка?
+	// Р•СЃР»Рё Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ РЅРѕРІС‹Р№ GUI РєР°Рє РІРєР»Р°РґРєР°?
 	lbNewGuiConsole = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ghAttachGuiClient != NULL);
 	#endif
 
@@ -977,24 +977,24 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	#if 0
 	if (lbNewGuiConsole)
 	{
-		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
+		// РќСѓР¶РЅРѕ РµС‰Рµ РґРѕР±Р°РІРёС‚СЊ /ATTACH /GID=%i,  Рё С‚.Рї.
 		nCchSize += 128;
 	}
 	#endif
 	if (lbNewConsoleFromGui)
 	{
-		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
+		// РќСѓР¶РЅРѕ РµС‰Рµ РґРѕР±Р°РІРёС‚СЊ /ATTACH /GID=%i,  Рё С‚.Рї.
 		nCchSize += 128;
 	}
 	if (args.bInjectsDisable)
 	{
-		// добавить " /NOINJECT"
+		// РґРѕР±Р°РІРёС‚СЊ " /NOINJECT"
 		nCchSize += 12;
 	}
 
 	if (gFarMode.cbSize && gFarMode.bFarHookMode)
 	{
-		// Добавить /PARENTFARPID=%u
+		// Р”РѕР±Р°РІРёС‚СЊ /PARENTFARPID=%u
 		nCchSize += 32;
 	}
 
@@ -1004,8 +1004,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		nCchSize += lstrlen(m_GuiMapping.sDefaultTermArg)+16;
 	}
 	
-	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
-	// /C или /K в обоих случаях нужно пихать в psParam
+	// Р’ ShellExecute РЅРµРѕР±С…РѕРґРёРјРѕ "ConEmuC.exe" РІРµСЂРЅСѓС‚СЊ РІ psFile, Р° РґР»СЏ CreatePocess - РІ psParam
+	// /C РёР»Рё /K РІ РѕР±РѕРёС… СЃР»СѓС‡Р°СЏС… РЅСѓР¶РЅРѕ РїРёС…Р°С‚СЊ РІ psParam
 	lbEndQuote = FALSE;
 	*psParam = (wchar_t*)malloc(nCchSize*sizeof(wchar_t));
 	(*psParam)[0] = 0;
@@ -1020,12 +1020,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	if (aCmd == eShellExecute)
 	{
 		// C:\Windows\system32\cmd.exe /C ""F:\Batches\!!Save&SetNewCFG.cmd" "
-		lbEndQuote = (asFile && *asFile); // иначе некоторые имена обрабатываются некорректно
+		lbEndQuote = (asFile && *asFile); // РёРЅР°С‡Рµ РЅРµРєРѕС‚РѕСЂС‹Рµ РёРјРµРЅР° РѕР±СЂР°Р±Р°С‚С‹РІР°СЋС‚СЃСЏ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕ
 	}
 	else if (aCmd == eCreateProcess)
 	{
 		// as_Param: "C:\test.cmd" "c:\my documents\test.txt"
-		// Если это не окавычить - cmd.exe отрежет первую и последнюю, и обломается
+		// Р•СЃР»Рё СЌС‚Рѕ РЅРµ РѕРєР°РІС‹С‡РёС‚СЊ - cmd.exe РѕС‚СЂРµР¶РµС‚ РїРµСЂРІСѓСЋ Рё РїРѕСЃР»РµРґРЅСЋСЋ, Рё РѕР±Р»РѕРјР°РµС‚СЃСЏ
 		lbEndQuote = (asFile && *asFile == L'"') || (!asFile && asParam && *asParam == L'"');
 	}
 
@@ -1035,7 +1035,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	if (gFarMode.cbSize && gFarMode.bFarHookMode)
 	{
 		_ASSERTEX(!gbPrepareDefaultTerminal);
-		// Добавить /PARENTFAR=%u
+		// Р”РѕР±Р°РІРёС‚СЊ /PARENTFAR=%u
 		wchar_t szParentFar[64];
 		msprintf(szParentFar, countof(szParentFar), L" /PARENTFARPID=%u", GetCurrentProcessId());
 		_wcscat_c((*psParam), nCchSize, szParentFar);
@@ -1044,7 +1044,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	// Don't add when gbPrepareDefaultTerminal - we are calling "ConEmu.exe", not "ConEmuC.exe"
 	if (args.bInjectsDisable && !gbPrepareDefaultTerminal)
 	{
-		// добавить " /NOINJECT"
+		// РґРѕР±Р°РІРёС‚СЊ " /NOINJECT"
 		_wcscat_c((*psParam), nCchSize, L" /NOINJECT");
 	}
 
@@ -1054,7 +1054,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 		if (m_GuiMapping.sDefaultTermArg[0] == L'/')
 		{
-			// "/config", параметры для "confirm" и "no-injects"
+			// "/config", РїР°СЂР°РјРµС‚СЂС‹ РґР»СЏ "confirm" Рё "no-injects"
 			_wcscat_c((*psParam), nCchSize, L" ");
 			pszNewCon = wcsstr(m_GuiMapping.sDefaultTermArg, L"-new_console");
 			if (!pszNewCon)
@@ -1092,14 +1092,14 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				_wcscat_c((*psParam), nCchSize, L" ");
 		}
 	}
-	// 111211 - "-new_console" передается в GUI
+	// 111211 - "-new_console" РїРµСЂРµРґР°РµС‚СЃСЏ РІ GUI
 	else if (lbNewConsoleFromGui)
 	{
-		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
+		// РќСѓР¶РЅРѕ РµС‰Рµ РґРѕР±Р°РІРёС‚СЊ /ATTACH /GID=%i,  Рё С‚.Рї.
 		int nCurLen = lstrlen(*psParam);
 		msprintf((*psParam) + nCurLen, nCchSize - nCurLen, L" /ATTACH /GID=%u /GHWND=%08X /ROOT ",
 			m_SrvMapping.nGuiPID, (DWORD)m_SrvMapping.hConEmuRoot);
-		TODO("Наверное, хорошо бы обработать /K|/C? Если консольное запускается из GUI");
+		TODO("РќР°РІРµСЂРЅРѕРµ, С…РѕСЂРѕС€Рѕ Р±С‹ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ /K|/C? Р•СЃР»Рё РєРѕРЅСЃРѕР»СЊРЅРѕРµ Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ РёР· GUI");
 	}
 	else
 	{
@@ -1108,7 +1108,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	if (asParam && *asParam == L' ')
 		asParam++;
 
-	WARNING("###: Перенести обработку параметров DosBox в ConEmuC!");
+	WARNING("###: РџРµСЂРµРЅРµСЃС‚Рё РѕР±СЂР°Р±РѕС‚РєСѓ РїР°СЂР°РјРµС‚СЂРѕРІ DosBox РІ ConEmuC!");
 	if (lbUseDosBox)
 	{
 		_ASSERTEX(!gbPrepareDefaultTerminal);
@@ -1121,7 +1121,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		_wcscat_c((*psParam), nCchSize, L"\" ");
 		_wcscat_c((*psParam), nCchSize, L" -c \"");
 		//_wcscat_c((*psParam), nCchSize, L" \"");
-		// исполняемый файл (если есть, может быть только в asParam)
+		// РёСЃРїРѕР»РЅСЏРµРјС‹Р№ С„Р°Р№Р» (РµСЃР»Рё РµСЃС‚СЊ, РјРѕР¶РµС‚ Р±С‹С‚СЊ С‚РѕР»СЊРєРѕ РІ asParam)
 		if (asFile && *asFile)
 		{
 			LPCWSTR pszRunFile = asFile;
@@ -1148,13 +1148,13 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 			if (asParam && *asParam)
 				_wcscat_c((*psParam), nCchSize, L" ");
 		}
-		// параметры, кавычки нужно экранировать!
+		// РїР°СЂР°РјРµС‚СЂС‹, РєР°РІС‹С‡РєРё РЅСѓР¶РЅРѕ СЌРєСЂР°РЅРёСЂРѕРІР°С‚СЊ!
 		if (asParam && *asParam)
 		{
 			LPWSTR pszParam = NULL;
 			if (!asFile || !*asFile)
 			{
-				// exe-шника в asFile указано НЕ было, значит он в asParam, нужно его вытащить, и сформировать команду DosBox
+				// exe-С€РЅРёРєР° РІ asFile СѓРєР°Р·Р°РЅРѕ РќР• Р±С‹Р»Рѕ, Р·РЅР°С‡РёС‚ РѕРЅ РІ asParam, РЅСѓР¶РЅРѕ РµРіРѕ РІС‹С‚Р°С‰РёС‚СЊ, Рё СЃС„РѕСЂРјРёСЂРѕРІР°С‚СЊ РєРѕРјР°РЅРґСѓ DosBox
 				BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
 				BOOL lbNeedCutStartEndQuot = FALSE;
 				ms_ExeTmp.Empty();
@@ -1249,7 +1249,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 		if (asParam && *asParam)
 		{
-			// 111211 - "-new_console" передается в GUI
+			// 111211 - "-new_console" РїРµСЂРµРґР°РµС‚СЃСЏ РІ GUI
 			#if 0
 			const wchar_t* sNewConsole = L"-new_console";
 			int nNewConsoleLen = lstrlen(sNewConsole);
@@ -1262,7 +1262,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 			if ((lbNewGuiConsole) && pszNewPtr)
 			{
-				// Откусить "-new_console" из аргументов
+				// РћС‚РєСѓСЃРёС‚СЊ "-new_console" РёР· Р°СЂРіСѓРјРµРЅС‚РѕРІ
 				int nCurLen = lstrlen((*psParam));
 				wchar_t* pszDst = (*psParam)+nCurLen;
 				INT_PTR nCchLeft = nCchSize - nCurLen;
@@ -1335,7 +1335,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	//	if (lbUseDosBox)
 	//		_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
 	//	_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
-	//	// Это CreateProcess. Исполняемый файл может быть уже указан в asParam
+	//	// Р­С‚Рѕ CreateProcess. РСЃРїРѕР»РЅСЏРµРјС‹Р№ С„Р°Р№Р» РјРѕР¶РµС‚ Р±С‹С‚СЊ СѓР¶Рµ СѓРєР°Р·Р°РЅ РІ asParam
 	//	if (asFile && *asFile)
 	//	{
 	//		_wcscat_c((*psParam), nCchSize, L"\"");
@@ -1383,11 +1383,11 @@ int CShellProc::PrepareExecuteParms(
 			HANDLE* lphStdIn, HANDLE* lphStdOut, HANDLE* lphStdErr,
 			LPWSTR* psFile, LPWSTR* psParam, LPWSTR* psStartDir)
 {
-	// !!! anFlags может быть NULL;
-	// !!! asAction может быть NULL;
+	// !!! anFlags РјРѕР¶РµС‚ Р±С‹С‚СЊ NULL;
+	// !!! asAction РјРѕР¶РµС‚ Р±С‹С‚СЊ NULL;
 	_ASSERTE(*psFile==NULL && *psParam==NULL);
 	if (!ghConEmuWndDC && !isDefaultTerminalEnabled())
-		return 0; // Перехватывать только под ConEmu
+		return 0; // РџРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕРґ ConEmu
 
 	bool bAnsiCon = false;
 	for (int i = 0; (i <= 1); i++)
@@ -1449,12 +1449,12 @@ int CShellProc::PrepareExecuteParms(
 
 	BOOL bGoChangeParm = FALSE;
 
-	// Для логирования - запомним сразу
+	// Р”Р»СЏ Р»РѕРіРёСЂРѕРІР°РЅРёСЏ - Р·Р°РїРѕРјРЅРёРј СЃСЂР°Р·Сѓ
 	HANDLE hIn  = lphStdIn  ? *lphStdIn  : NULL;
 	HANDLE hOut = lphStdOut ? *lphStdOut : NULL;
 	HANDLE hErr = lphStdErr ? *lphStdErr : NULL;
-	// В некоторых случаях - LongConsoleOutput бессмысленен
-	// ShellExecute(SW_HIDE) или CreateProcess(CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS,SW_HIDE)
+	// Р’ РЅРµРєРѕС‚РѕСЂС‹С… СЃР»СѓС‡Р°СЏС… - LongConsoleOutput Р±РµСЃСЃРјС‹СЃР»РµРЅРµРЅ
+	// ShellExecute(SW_HIDE) РёР»Рё CreateProcess(CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS,SW_HIDE)
 	BOOL bDetachedOrHidden = FALSE;
 	if (aCmd == eShellExecute)
 		bDetachedOrHidden = (!anShellFlags && anShowCmd && *anShowCmd == 0);
@@ -1473,9 +1473,9 @@ int CShellProc::PrepareExecuteParms(
 	mb_DebugWasRequested = FALSE;
 	mb_PostInjectWasRequested = FALSE;
 		
-	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить
-	//            левый хэндл (hStdOutput = 0x00010001), иногда получается 0x00060265
-	//            и недокументированный флаг 0x400 в lpStartupInfo->dwFlags
+	// Issue 351: РџРѕСЃР»Рµ РїРµСЂРµС…РѕРґР° РёСЃРїРѕР»РЅСЏС‚РµР»СЏ С„Р°СЂР° РЅР° ShellExecuteEx РїРѕС‡РµРјСѓ-С‚Рѕ СЃСЋРґР° СЃС‚Р°Р» РїСЂРёС…РѕРґРёС‚СЊ
+	//            Р»РµРІС‹Р№ С…СЌРЅРґР» (hStdOutput = 0x00010001), РёРЅРѕРіРґР° РїРѕР»СѓС‡Р°РµС‚СЃСЏ 0x00060265
+	//            Рё РЅРµРґРѕРєСѓРјРµРЅС‚РёСЂРѕРІР°РЅРЅС‹Р№ С„Р»Р°Рі 0x400 РІ lpStartupInfo->dwFlags
 	if ((aCmd == eCreateProcess) && (gnInShellExecuteEx > 0)
 		&& lphStdOut && lphStdErr && anStartFlags && (*anStartFlags) == 0x401)
 	{
@@ -1483,7 +1483,7 @@ int CShellProc::PrepareExecuteParms(
 
 		if (GetVersionEx(&osv))
 		{
-			// Добавил Win2k, Minor можно не проверять
+			// Р”РѕР±Р°РІРёР» Win2k, Minor РјРѕР¶РЅРѕ РЅРµ РїСЂРѕРІРµСЂСЏС‚СЊ
 			if (osv.dwMajorVersion == 5) // && (osv.dwMinorVersion == 1/*WinXP*/ || osv.dwMinorVersion == 2/*Win2k3*/))
 			{
 				if (//(*lphStdOut == (HANDLE)0x00010001)
@@ -1497,11 +1497,11 @@ int CShellProc::PrepareExecuteParms(
 		}
 	}
 	
-	// Проверяем настройку ConEmuGuiMapping.bUseInjects
+	// РџСЂРѕРІРµСЂСЏРµРј РЅР°СЃС‚СЂРѕР№РєСѓ ConEmuGuiMapping.bUseInjects
 	if (!LoadSrvMapping() || !(m_SrvMapping.cbSize && ((m_SrvMapping.bUseInjects & 1) || gbPrepareDefaultTerminal)))
 	{
-		// -- зависимо только от флажка "Use Injects", иначе нельзя управлять добавлением "ConEmuC.exe" из ConEmu --
-		// Настройка в ConEmu ConEmuGuiMapping.bUseInjects, или gFarMode.bFarHookMode. Иначе - сразу выходим
+		// -- Р·Р°РІРёСЃРёРјРѕ С‚РѕР»СЊРєРѕ РѕС‚ С„Р»Р°Р¶РєР° "Use Injects", РёРЅР°С‡Рµ РЅРµР»СЊР·СЏ СѓРїСЂР°РІР»СЏС‚СЊ РґРѕР±Р°РІР»РµРЅРёРµРј "ConEmuC.exe" РёР· ConEmu --
+		// РќР°СЃС‚СЂРѕР№РєР° РІ ConEmu ConEmuGuiMapping.bUseInjects, РёР»Рё gFarMode.bFarHookMode. РРЅР°С‡Рµ - СЃСЂР°Р·Сѓ РІС‹С…РѕРґРёРј
 		if (!bLongConsoleOutput)
 		{
 			return 0;
@@ -1516,7 +1516,7 @@ int CShellProc::PrepareExecuteParms(
 	// Some additional checks for "Default terminal" mode
 	if (gbPrepareDefaultTerminal)
 	{
-		_ASSERTEX(aCmd == eCreateProcess || (asAction && lstrcmpi(asAction,L"runas")==0)); // Пока расчитано только на него
+		_ASSERTEX(aCmd == eCreateProcess || (asAction && lstrcmpi(asAction,L"runas")==0)); // РџРѕРєР° СЂР°СЃС‡РёС‚Р°РЅРѕ С‚РѕР»СЊРєРѕ РЅР° РЅРµРіРѕ
 
 		if (aCmd == eCreateProcess)
 		{
@@ -1557,7 +1557,7 @@ int CShellProc::PrepareExecuteParms(
 		//    http://msdn.microsoft.com/en-us/library/ms185330.aspx
 		if (anCreateFlags && ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS|CREATE_SUSPENDED)))
 		{
-			// Для поиска трапов в дереве запускаемых процессов
+			// Р”Р»СЏ РїРѕРёСЃРєР° С‚СЂР°РїРѕРІ РІ РґРµСЂРµРІРµ Р·Р°РїСѓСЃРєР°РµРјС‹С… РїСЂРѕС†РµСЃСЃРѕРІ
 			if (m_SrvMapping.Flags & CECF_BlockChildDbg)
 			{
 				(*anCreateFlags) &= ~(DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS);
@@ -1566,18 +1566,18 @@ int CShellProc::PrepareExecuteParms(
 			{
 				bDebugWasRequested = TRUE;
 			}
-			// Пока продолжим, нам нужно определить, а консольное ли это приложение?
+			// РџРѕРєР° РїСЂРѕРґРѕР»Р¶РёРј, РЅР°Рј РЅСѓР¶РЅРѕ РѕРїСЂРµРґРµР»РёС‚СЊ, Р° РєРѕРЅСЃРѕР»СЊРЅРѕРµ Р»Рё СЌС‚Рѕ РїСЂРёР»РѕР¶РµРЅРёРµ?
 		}
 	}
 
-	// Может быть указан *.lnk а не физический файл...
+	// РњРѕР¶РµС‚ Р±С‹С‚СЊ СѓРєР°Р·Р°РЅ *.lnk Р° РЅРµ С„РёР·РёС‡РµСЃРєРёР№ С„Р°Р№Р»...
 	if (aCmd == eShellExecute)
 	{
 #if 1
 		bool bDbg = 1;
 #else
-		// Считаем, что один файл (*.exe, *.cmd, ...) или ярлык (*.lnk)
-		// это одна запускаемая консоль в ConEmu.
+		// РЎС‡РёС‚Р°РµРј, С‡С‚Рѕ РѕРґРёРЅ С„Р°Р№Р» (*.exe, *.cmd, ...) РёР»Рё СЏСЂР»С‹Рє (*.lnk)
+		// СЌС‚Рѕ РѕРґРЅР° Р·Р°РїСѓСЃРєР°РµРјР°СЏ РєРѕРЅСЃРѕР»СЊ РІ ConEmu.
 		CmdArg szPart[MAX_PATH+1]
 		wchar_t szExe[MAX_PATH+1], szArguments[32768], szDir[MAX_PATH+1];
 		HRESULT hr = S_OK;
@@ -1600,14 +1600,14 @@ int CShellProc::PrepareExecuteParms(
 			}
 		}
 		
-		// Поехали
+		// РџРѕРµС…Р°Р»Рё
 		LPWSTR pszConsoles[MAX_CONSOLE_COUNT] = {};
 		size_t cchLen, cchAllLen = 0, iCount = 0;
 		while ((iCount < MAX_CONSOLE_COUNT) && (0 == NextArg(&asSource, szPart)))
 		{
 			if (lstrcmpi(PointToExt(szPart), L".lnk") == 0)
 			{
-				// Ярлык
+				// РЇСЂР»С‹Рє
 				hr = pFile->Load(szPart, STGM_READ);
 				if (SUCCEEDED(hr))
 				{
@@ -1697,7 +1697,7 @@ int CShellProc::PrepareExecuteParms(
 	if (ms_ExeTmp[0])
 	{
 		int nLen = lstrlen(ms_ExeTmp);
-		// Длина больше 0 и не заканчивается слешом
+		// Р”Р»РёРЅР° Р±РѕР»СЊС€Рµ 0 Рё РЅРµ Р·Р°РєР°РЅС‡РёРІР°РµС‚СЃСЏ СЃР»РµС€РѕРј
 		BOOL lbMayBeFile = (nLen > 0) && (ms_ExeTmp[nLen-1] != L'\\') && (ms_ExeTmp[nLen-1] != L'/');
 
 		BOOL lbSubsystemOk = FALSE;
@@ -1792,7 +1792,7 @@ int CShellProc::PrepareExecuteParms(
 			}
 			else
 			{
-				// А вот "-cur_console" нужно обрабатывать _здесь_
+				// Рђ РІРѕС‚ "-cur_console" РЅСѓР¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ _Р·РґРµСЃСЊ_
 				bCurConsoleArg = true;
 
 				if (args.bForceDosBox && m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
@@ -1810,13 +1810,13 @@ int CShellProc::PrepareExecuteParms(
 			}
 		}
 	}
-	// Если GUI приложение работает во вкладке ConEmu - запускать консольные приложение в новой вкладке ConEmu
+	// Р•СЃР»Рё GUI РїСЂРёР»РѕР¶РµРЅРёРµ СЂР°Р±РѕС‚Р°РµС‚ РІРѕ РІРєР»Р°РґРєРµ ConEmu - Р·Р°РїСѓСЃРєР°С‚СЊ РєРѕРЅСЃРѕР»СЊРЅС‹Рµ РїСЂРёР»РѕР¶РµРЅРёРµ РІ РЅРѕРІРѕР№ РІРєР»Р°РґРєРµ ConEmu
 	// Use mb_isCurrentGuiClient instead of ghAttachGuiClient, because of 'CommandPromptPortable.exe' for example
 	if (!bNewConsoleArg 
 		&& mb_isCurrentGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		&& ((anShowCmd == NULL) || (*anShowCmd != SW_HIDE)))
 	{
-		WARNING("Не забыть, что цеплять во вкладку нужно только если консоль запускается ВИДИМОЙ");
+		WARNING("РќРµ Р·Р°Р±С‹С‚СЊ, С‡С‚Рѕ С†РµРїР»СЏС‚СЊ РІРѕ РІРєР»Р°РґРєСѓ РЅСѓР¶РЅРѕ С‚РѕР»СЊРєРѕ РµСЃР»Рё РєРѕРЅСЃРѕР»СЊ Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ Р’РР”РРњРћР™");
 		bForceNewConsole = true;
 	}
 	if (mb_isCurrentGuiClient && (bNewConsoleArg || bForceNewConsole) && !lbGuiApp)
@@ -1826,27 +1826,27 @@ int CShellProc::PrepareExecuteParms(
 	
 	if (aCmd == eShellExecute)
 	{
-		WARNING("Уточнить условие для флагов ShellExecute!");
-		// !!! anFlags может быть NULL;
+		WARNING("РЈС‚РѕС‡РЅРёС‚СЊ СѓСЃР»РѕРІРёРµ РґР»СЏ С„Р»Р°РіРѕРІ ShellExecute!");
+		// !!! anFlags РјРѕР¶РµС‚ Р±С‹С‚СЊ NULL;
 		DWORD nFlagsMask = (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NO_CONSOLE);
 		DWORD nFlags = (anShellFlags ? *anShellFlags : 0) & nFlagsMask;
 		if (gbPrepareDefaultTerminal)
 		{
 			if (!asAction || (lstrcmpiW(asAction, L"runas") != 0))
 			{
-				goto wrap; // хватаем только runas
+				goto wrap; // С…РІР°С‚Р°РµРј С‚РѕР»СЊРєРѕ runas
 			}
 		}
 		else
 		{
-			// Если bNewConsoleArg - то однозначно стартовать в новой вкладке ConEmu (GUI теперь тоже цеплять умеем)
+			// Р•СЃР»Рё bNewConsoleArg - С‚Рѕ РѕРґРЅРѕР·РЅР°С‡РЅРѕ СЃС‚Р°СЂС‚РѕРІР°С‚СЊ РІ РЅРѕРІРѕР№ РІРєР»Р°РґРєРµ ConEmu (GUI С‚РµРїРµСЂСЊ С‚РѕР¶Рµ С†РµРїР»СЏС‚СЊ СѓРјРµРµРј)
 			if (bNewConsoleArg || bForceNewConsole)
 			{
 				if (anShellFlags)
 				{
-					// 111211 - "-new_console" выполняется в GUI
-					// Будет переопределение на ConEmuC, и его нужно запустить в ЭТОЙ консоли
-					//--WARNING("Хотя, наверное нужно не так, чтобы он не гадил в консоль, фар ведь ждать не будет, он думает что запустил ГУЙ");
+					// 111211 - "-new_console" РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РІ GUI
+					// Р‘СѓРґРµС‚ РїРµСЂРµРѕРїСЂРµРґРµР»РµРЅРёРµ РЅР° ConEmuC, Рё РµРіРѕ РЅСѓР¶РЅРѕ Р·Р°РїСѓСЃС‚РёС‚СЊ РІ Р­РўРћР™ РєРѕРЅСЃРѕР»Рё
+					//--WARNING("РҐРѕС‚СЏ, РЅР°РІРµСЂРЅРѕРµ РЅСѓР¶РЅРѕ РЅРµ С‚Р°Рє, С‡С‚РѕР±С‹ РѕРЅ РЅРµ РіР°РґРёР» РІ РєРѕРЅСЃРѕР»СЊ, С„Р°СЂ РІРµРґСЊ Р¶РґР°С‚СЊ РЅРµ Р±СѓРґРµС‚, РѕРЅ РґСѓРјР°РµС‚ С‡С‚Рѕ Р·Р°РїСѓСЃС‚РёР» Р“РЈР™");
 					//--*anShellFlags = (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS);
 					if (anShowCmd && !(*anShellFlags & SEE_MASK_NO_CONSOLE))
 					{
@@ -1860,22 +1860,22 @@ int CShellProc::PrepareExecuteParms(
 			}
 			else if (nFlags != nFlagsMask)
 			{
-				goto wrap; // пока так - это фар выполняет консольную команду
+				goto wrap; // РїРѕРєР° С‚Р°Рє - СЌС‚Рѕ С„Р°СЂ РІС‹РїРѕР»РЅСЏРµС‚ РєРѕРЅСЃРѕР»СЊРЅСѓСЋ РєРѕРјР°РЅРґСѓ
 			}
 			if (asAction && (lstrcmpiW(asAction, L"open") != 0))
 			{
-				goto wrap; // runas, print, и прочая нас не интересует
+				goto wrap; // runas, print, Рё РїСЂРѕС‡Р°СЏ РЅР°СЃ РЅРµ РёРЅС‚РµСЂРµСЃСѓРµС‚
 			}
 		}
 	}
 	else
 	{
-		// Посмотреть, какие еще условия нужно отсеять для CreateProcess?
+		// РџРѕСЃРјРѕС‚СЂРµС‚СЊ, РєР°РєРёРµ РµС‰Рµ СѓСЃР»РѕРІРёСЏ РЅСѓР¶РЅРѕ РѕС‚СЃРµСЏС‚СЊ РґР»СЏ CreateProcess?
 		DWORD nFlags = anCreateFlags ? *anCreateFlags : 0;
 		if ((nFlags & (CREATE_NO_WINDOW|DETACHED_PROCESS)) != 0)
-			goto wrap; // запускается по тихому (без консольного окна), пропускаем
+			goto wrap; // Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ РїРѕ С‚РёС…РѕРјСѓ (Р±РµР· РєРѕРЅСЃРѕР»СЊРЅРѕРіРѕ РѕРєРЅР°), РїСЂРѕРїСѓСЃРєР°РµРј
 
-		// Это УЖЕ может быть ConEmuC.exe
+		// Р­С‚Рѕ РЈР–Р• РјРѕР¶РµС‚ Р±С‹С‚СЊ ConEmuC.exe
 		const wchar_t* pszExeName = PointToName(ms_ExeTmp);
 		if (pszExeName && (!lstrcmpi(pszExeName, L"ConEmuC.exe") || !lstrcmpi(pszExeName, L"ConEmuC64.exe")))
 		{
@@ -1891,22 +1891,22 @@ int CShellProc::PrepareExecuteParms(
 	if (ms_ExeTmp[0] == 0)
 	{
 		_ASSERTE(ms_ExeTmp[0] != 0);
-		goto wrap; // ошибка?
+		goto wrap; // РѕС€РёР±РєР°?
 	}
 	//if (GetImageSubsystem(pszExecFile,ImageSubsystem,ImageBits))
 	//lbGuiApp = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
 
 	if (lbGuiApp && !(bNewConsoleArg || bForceNewConsole || bVsNetHostRequested))
-		goto wrap; // гуй - не перехватывать (если только не указан "-new_console")
+		goto wrap; // РіСѓР№ - РЅРµ РїРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ (РµСЃР»Рё С‚РѕР»СЊРєРѕ РЅРµ СѓРєР°Р·Р°РЅ "-new_console")
 
-	// Подставлять ConEmuC.exe нужно только для того, чтобы 
-	//	1. в фаре включить длинный буфер и запомнить длинный результат в консоли (ну и ConsoleAlias обработать)
-	//	2. при вызовах ShellExecute/ShellExecuteEx, т.к. не факт,
-	//     что этот ShellExecute вызовет CreateProcess из kernel32 (который перехвачен).
-	//     В Win7 это может быть вызов других системных модулей (App-.....dll)
+	// РџРѕРґСЃС‚Р°РІР»СЏС‚СЊ ConEmuC.exe РЅСѓР¶РЅРѕ С‚РѕР»СЊРєРѕ РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ 
+	//	1. РІ С„Р°СЂРµ РІРєР»СЋС‡РёС‚СЊ РґР»РёРЅРЅС‹Р№ Р±СѓС„РµСЂ Рё Р·Р°РїРѕРјРЅРёС‚СЊ РґР»РёРЅРЅС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚ РІ РєРѕРЅСЃРѕР»Рё (РЅСѓ Рё ConsoleAlias РѕР±СЂР°Р±РѕС‚Р°С‚СЊ)
+	//	2. РїСЂРё РІС‹Р·РѕРІР°С… ShellExecute/ShellExecuteEx, С‚.Рє. РЅРµ С„Р°РєС‚,
+	//     С‡С‚Рѕ СЌС‚РѕС‚ ShellExecute РІС‹Р·РѕРІРµС‚ CreateProcess РёР· kernel32 (РєРѕС‚РѕСЂС‹Р№ РїРµСЂРµС…РІР°С‡РµРЅ).
+	//     Р’ Win7 СЌС‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹Р·РѕРІ РґСЂСѓРіРёС… СЃРёСЃС‚РµРјРЅС‹С… РјРѕРґСѓР»РµР№ (App-.....dll)
 
 	#ifdef _DEBUG
-	// Для принудительной вставки ConEmuC.exe - поставить true. Только для отладки!
+	// Р”Р»СЏ РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕР№ РІСЃС‚Р°РІРєРё ConEmuC.exe - РїРѕСЃС‚Р°РІРёС‚СЊ true. РўРѕР»СЊРєРѕ РґР»СЏ РѕС‚Р»Р°РґРєРё!
 	bool lbAlwaysAddConEmuC = false;
 	#endif
 
@@ -1916,22 +1916,22 @@ int CShellProc::PrepareExecuteParms(
 		#endif
 		)
 	{
-		// Это может быть запускаемый документ, например .doc, или .sln файл
+		// Р­С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р·Р°РїСѓСЃРєР°РµРјС‹Р№ РґРѕРєСѓРјРµРЅС‚, РЅР°РїСЂРёРјРµСЂ .doc, РёР»Рё .sln С„Р°Р№Р»
 		goto wrap;
 	}
 
 	if (bLongConsoleOutput)
 	{
-		// MultiArc issue. При поиске нефиг включать длинный буфер. Как отсечь?
-		// Пока по запуску не из главного потока.
+		// MultiArc issue. РџСЂРё РїРѕРёСЃРєРµ РЅРµС„РёРі РІРєР»СЋС‡Р°С‚СЊ РґР»РёРЅРЅС‹Р№ Р±СѓС„РµСЂ. РљР°Рє РѕС‚СЃРµС‡СЊ?
+		// РџРѕРєР° РїРѕ Р·Р°РїСѓСЃРєСѓ РЅРµ РёР· РіР»Р°РІРЅРѕРіРѕ РїРѕС‚РѕРєР°.
 		if (GetCurrentThreadId() != gnHookMainThreadId)
 			bLongConsoleOutput = FALSE;
 	}
 
 	_ASSERTE(mn_ImageBits!=0);
 
-	// Если это Фар - однозначно вставляем ConEmuC.exe
-	// -- bFarHookMode заменен на bLongConsoleOutput --
+	// Р•СЃР»Рё СЌС‚Рѕ Р¤Р°СЂ - РѕРґРЅРѕР·РЅР°С‡РЅРѕ РІСЃС‚Р°РІР»СЏРµРј ConEmuC.exe
+	// -- bFarHookMode Р·Р°РјРµРЅРµРЅ РЅР° bLongConsoleOutput --
 	if (gbPrepareDefaultTerminal)
 	{
 		// set up default terminal
@@ -1940,8 +1940,8 @@ int CShellProc::PrepareExecuteParms(
 	else
 	{
 		bGoChangeParm = ((bLongConsoleOutput)
-			|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хотят GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
-			// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
+			|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // С…РѕС‚СЏС‚ GUI РїСЂРёС†РµРїРёС‚СЊ Рє РЅРѕРІРѕР№ РІРєР»Р°РґРєРµ РІ ConEmu, РёР»Рё РЅРѕРІСѓСЋ РєРѕРЅСЃРѕР»СЊ РёР· GUI
+			// eCreateProcess РїРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ (СЃР°РјРё СЃРґРµР»Р°РµРј InjectHooks РїРѕСЃР»Рµ CreateProcess)
 			|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
 				&& (bNewConsoleArg
 					|| (bLongConsoleOutput && (aCmd == eShellExecute))
@@ -1950,7 +1950,7 @@ int CShellProc::PrepareExecuteParms(
 					|| lbAlwaysAddConEmuC
 					#endif
 					))
-			// если это Дос-приложение - то если включен DosBox, вставляем ConEmuC.exe /DOSBOX
+			// РµСЃР»Рё СЌС‚Рѕ Р”РѕСЃ-РїСЂРёР»РѕР¶РµРЅРёРµ - С‚Рѕ РµСЃР»Рё РІРєР»СЋС‡РµРЅ DosBox, РІСЃС‚Р°РІР»СЏРµРј ConEmuC.exe /DOSBOX
 			|| ((mn_ImageBits == 16) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
 				&& m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox)));
 	}
@@ -1965,10 +1965,10 @@ int CShellProc::PrepareExecuteParms(
 				mb_PostInjectWasRequested = TRUE;
 			else
 				mb_DebugWasRequested = TRUE;
-			// Пока что не будем убирать "мелькание" окошка.
-			// На факт "видимости" консольного окна ориентируется ConEmuC
-			// при аттаче. Если окошко НЕ видимое - считаем, что оно было
-			// запущено процессом для служебных целей, и не трогаем его...
+			// РџРѕРєР° С‡С‚Рѕ РЅРµ Р±СѓРґРµРј СѓР±РёСЂР°С‚СЊ "РјРµР»СЊРєР°РЅРёРµ" РѕРєРѕС€РєР°.
+			// РќР° С„Р°РєС‚ "РІРёРґРёРјРѕСЃС‚Рё" РєРѕРЅСЃРѕР»СЊРЅРѕРіРѕ РѕРєРЅР° РѕСЂРёРµРЅС‚РёСЂСѓРµС‚СЃСЏ ConEmuC
+			// РїСЂРё Р°С‚С‚Р°С‡Рµ. Р•СЃР»Рё РѕРєРѕС€РєРѕ РќР• РІРёРґРёРјРѕРµ - СЃС‡РёС‚Р°РµРј, С‡С‚Рѕ РѕРЅРѕ Р±С‹Р»Рѕ
+			// Р·Р°РїСѓС‰РµРЅРѕ РїСЂРѕС†РµСЃСЃРѕРј РґР»СЏ СЃР»СѓР¶РµР±РЅС‹С… С†РµР»РµР№, Рё РЅРµ С‚СЂРѕРіР°РµРј РµРіРѕ...
 			// -> ConsoleMain.cpp: ParseCommandLine: "if (!ghConWnd || !(lbIsWindowVisible = IsWindowVisible(ghConWnd)) || isTerminalMode())"
 			#if 0
 			// Remove flickering?
@@ -1990,13 +1990,13 @@ int CShellProc::PrepareExecuteParms(
 
 		if (!lbChanged)
 		{
-			// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
-			// И если просили не ставить хуки (-new_console:i) - тоже
+			// РҐСѓРєРё РЅРµР»СЊР·СЏ СЃС‚Р°РІРёС‚СЊ РІ 16Р±РёС‚РЅС‹Рµ РїСЂРёР»РѕР¶РµРЅРёРµ - Р±СѓРґРµС‚ РѕР±Р»РѕРј, ntvdm.exe РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ!
+			// Р РµСЃР»Рё РїСЂРѕСЃРёР»Рё РЅРµ СЃС‚Р°РІРёС‚СЊ С…СѓРєРё (-new_console:i) - С‚РѕР¶Рµ
 			mb_NeedInjects = (mn_ImageBits != 16) && !args.bInjectsDisable;
 		}
 		else
 		{
-			// Замена на "ConEmuC.exe ...", все "-new_console" / "-cur_console" будут обработаны в нем
+			// Р—Р°РјРµРЅР° РЅР° "ConEmuC.exe ...", РІСЃРµ "-new_console" / "-cur_console" Р±СѓРґСѓС‚ РѕР±СЂР°Р±РѕС‚Р°РЅС‹ РІ РЅРµРј
 			bCurConsoleArg = false;
 
 			HWND hConWnd = GetConsoleWindow();
@@ -2012,7 +2012,7 @@ int CShellProc::PrepareExecuteParms(
 				}
 
 				#if 0
-				// нужно запускаться ВНЕ текущей консоли!
+				// РЅСѓР¶РЅРѕ Р·Р°РїСѓСЃРєР°С‚СЊСЃСЏ Р’РќР• С‚РµРєСѓС‰РµР№ РєРѕРЅСЃРѕР»Рё!
 				if (aCmd == eCreateProcess)
 				{
 					if (anCreateFlags)
@@ -2047,18 +2047,18 @@ int CShellProc::PrepareExecuteParms(
 	{
 		//lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, pszBaseDir, 
 		//				ms_ExeTmp, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
-		// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
-		// И если просили не ставить хуки (-new_console:i) - тоже
+		// РҐСѓРєРё РЅРµР»СЊР·СЏ СЃС‚Р°РІРёС‚СЊ РІ 16Р±РёС‚РЅС‹Рµ РїСЂРёР»РѕР¶РµРЅРёРµ - Р±СѓРґРµС‚ РѕР±Р»РѕРј, ntvdm.exe РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ!
+		// Р РµСЃР»Рё РїСЂРѕСЃРёР»Рё РЅРµ СЃС‚Р°РІРёС‚СЊ С…СѓРєРё (-new_console:i) - С‚РѕР¶Рµ
 		mb_NeedInjects = (aCmd == eCreateProcess) && (mn_ImageBits != 16)
 			&& !args.bInjectsDisable && !gbPrepareDefaultTerminal
 			&& !bDetachedOrHidden;
 
-		// Параметр -cur_console / -new_console нужно вырезать
+		// РџР°СЂР°РјРµС‚СЂ -cur_console / -new_console РЅСѓР¶РЅРѕ РІС‹СЂРµР·Р°С‚СЊ
 		if (bNewConsoleArg || bCurConsoleArg)
 		{
 			_ASSERTEX(args.pszSpecialCmd!=NULL && "Must be replaced already!");
 
-			// явно выставим в TRUE, т.к. это мог быть -new_console
+			// СЏРІРЅРѕ РІС‹СЃС‚Р°РІРёРј РІ TRUE, С‚.Рє. СЌС‚Рѕ РјРѕРі Р±С‹С‚СЊ -new_console
 			bCurConsoleArg = TRUE;
 		}
 	}
@@ -2072,18 +2072,18 @@ wrap:
 		}
 		else
 		{
-			// Указание рабочей папки
+			// РЈРєР°Р·Р°РЅРёРµ СЂР°Р±РѕС‡РµР№ РїР°РїРєРё
 			if (args.pszStartupDir)
 			{
 				*psStartDir = args.pszStartupDir;
 				args.pszStartupDir = NULL;
 			}
 
-			// Подмена параметров (вырезаны -cur_console, -new_console)
+			// РџРѕРґРјРµРЅР° РїР°СЂР°РјРµС‚СЂРѕРІ (РІС‹СЂРµР·Р°РЅС‹ -cur_console, -new_console)
 			*psParam = args.pszSpecialCmd;
 			args.pszSpecialCmd = NULL;
 
-			// Высота буфера!
+			// Р’С‹СЃРѕС‚Р° Р±СѓС„РµСЂР°!
 			if (args.bBufHeight && gnServerPID)
 			{
 				//CESERVER_REQ *pIn = ;
@@ -2097,7 +2097,7 @@ wrap:
 					BOOL bBufChanged = FALSE;
 					if (args.nBufHeight)
 					{
-						WARNING("Хорошо бы на команду сервера это перевести");
+						WARNING("РҐРѕСЂРѕС€Рѕ Р±С‹ РЅР° РєРѕРјР°РЅРґСѓ СЃРµСЂРІРµСЂР° СЌС‚Рѕ РїРµСЂРµРІРµСЃС‚Рё");
 						//SHORT nNewHeight = max((csbi.srWindow.Bottom - csbi.srWindow.Top + 1),(SHORT)args.nBufHeight);
 						//if (nNewHeight != csbi.dwSize.Y)
 						//{
@@ -2128,7 +2128,7 @@ wrap:
 BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asParam, LPCSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
-		return TRUE; // Перехватывать только под ConEmu
+		return TRUE; // РџРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕРґ ConEmu
 		
 	mb_InShellExecuteEx = TRUE;
 	gnInShellExecuteEx ++;
@@ -2145,7 +2145,7 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 					NULL, NULL, NULL, // *StdHandles
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
 	if (liRc == -1)
-		return FALSE; // Запретить выполнение файла
+		return FALSE; // Р—Р°РїСЂРµС‚РёС‚СЊ РІС‹РїРѕР»РЅРµРЅРёРµ С„Р°Р№Р»Р°
 
 	BOOL lbRc = (liRc != 0);
 
@@ -2181,7 +2181,7 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asParam, LPCWSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
-		return TRUE; // Перехватывать только под ConEmu
+		return TRUE; // РџРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕРґ ConEmu
 	
 	mb_InShellExecuteEx = TRUE;
 	gnInShellExecuteEx ++;
@@ -2196,7 +2196,7 @@ BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* as
 					NULL, NULL, NULL, // *StdHandles
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
 	if (liRc == -1)
-		return FALSE; // Запретить выполнение файла
+		return FALSE; // Р—Р°РїСЂРµС‚РёС‚СЊ РІС‹РїРѕР»РЅРµРЅРёРµ С„Р°Р№Р»Р°
 
 	BOOL lbRc = (liRc != 0);
 
@@ -2222,7 +2222,7 @@ BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phW
 {
 	BOOL lbRc = FALSE;
 
-	// Включить флажок, чтобы Shell не задавал глупого вопроса "Хотите ли вы запустить этот файл"...
+	// Р’РєР»СЋС‡РёС‚СЊ С„Р»Р°Р¶РѕРє, С‡С‚РѕР±С‹ Shell РЅРµ Р·Р°РґР°РІР°Р» РіР»СѓРїРѕРіРѕ РІРѕРїСЂРѕСЃР° "РҐРѕС‚РёС‚Рµ Р»Рё РІС‹ Р·Р°РїСѓСЃС‚РёС‚СЊ СЌС‚РѕС‚ С„Р°Р№Р»"...
 	if (!(afMask & SEE_MASK_NOZONECHECKS) && gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
 	{
 		OSVERSIONINFOEX osv = {sizeof(OSVERSIONINFOEX)};
@@ -2239,7 +2239,7 @@ BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phW
 		}
 	}
 
-	// Чтобы запросы UAC или еще какие GUI диалоги всплывали там где надо, а не ПОД ConEmu
+	// Р§С‚РѕР±С‹ Р·Р°РїСЂРѕСЃС‹ UAC РёР»Рё РµС‰Рµ РєР°РєРёРµ GUI РґРёР°Р»РѕРіРё РІСЃРїР»С‹РІР°Р»Рё С‚Р°Рј РіРґРµ РЅР°РґРѕ, Р° РЅРµ РџРћР” ConEmu
 	if ((!ahWnd || (ahWnd == ghConWnd)) && ghConEmuWnd)
 	{
 		*phWnd = ghConEmuWnd;
@@ -2253,7 +2253,7 @@ BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phW
 BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC) || !lpExecInfo)
-		return TRUE; // Перехватывать только под ConEmu
+		return TRUE; // РџРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕРґ ConEmu
 
 	mlp_SaveExecInfoA = *lpExecInfo;
 	mlp_ExecInfoA = (LPSHELLEXECUTEINFOA)malloc((*lpExecInfo)->cbSize);
@@ -2278,7 +2278,7 @@ BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC) || !lpExecInfo)
-		return TRUE; // Перехватывать только под ConEmu
+		return TRUE; // РџРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕРґ ConEmu
 
 	mlp_SaveExecInfoW = *lpExecInfo;
 	mlp_ExecInfoW = (LPSHELLEXECUTEINFOW)malloc((*lpExecInfo)->cbSize);
@@ -2303,7 +2303,7 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOA lpSI)
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
-		return TRUE; // Перехватывать только под ConEmu
+		return TRUE; // РџРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕРґ ConEmu
 
 	mpwsz_TempFile = str2wcs(asFile ? *asFile : NULL, mn_CP);
 	mpwsz_TempParam = str2wcs(asCmdLine ? *asCmdLine : NULL, mn_CP);
@@ -2318,12 +2318,12 @@ BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
 	if (liRc == -1)
-		return FALSE; // Запретить выполнение файла
+		return FALSE; // Р—Р°РїСЂРµС‚РёС‚СЊ РІС‹РїРѕР»РЅРµРЅРёРµ С„Р°Р№Р»Р°
 
 	BOOL lbRc = (liRc != 0);
 
-	// возвращает TRUE только если были изменены СТРОКИ,
-	// а если выставлен mb_NeedInjects - строго включить _Suspended
+	// РІРѕР·РІСЂР°С‰Р°РµС‚ TRUE С‚РѕР»СЊРєРѕ РµСЃР»Рё Р±С‹Р»Рё РёР·РјРµРЅРµРЅС‹ РЎРўР РћРљР,
+	// Р° РµСЃР»Рё РІС‹СЃС‚Р°РІР»РµРЅ mb_NeedInjects - СЃС‚СЂРѕРіРѕ РІРєР»СЋС‡РёС‚СЊ _Suspended
 	if (mb_NeedInjects)
 		(*anCreationFlags) |= CREATE_SUSPENDED;
 	if (lbRc)
@@ -2372,7 +2372,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 		}
 		else
 		{
-			return TRUE; // Перехватывать только под ConEmu
+			return TRUE; // РџРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕРґ ConEmu
 		}
 	}
 		
@@ -2389,12 +2389,12 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
 	if (liRc == -1)
-		return FALSE; // Запретить выполнение файла
+		return FALSE; // Р—Р°РїСЂРµС‚РёС‚СЊ РІС‹РїРѕР»РЅРµРЅРёРµ С„Р°Р№Р»Р°
 
 	BOOL lbRc = (liRc != 0);
 
-	// возвращает TRUE только если были изменены СТРОКИ,
-	// а если выставлен mb_NeedInjects - строго включить _Suspended
+	// РІРѕР·РІСЂР°С‰Р°РµС‚ TRUE С‚РѕР»СЊРєРѕ РµСЃР»Рё Р±С‹Р»Рё РёР·РјРµРЅРµРЅС‹ РЎРўР РћРљР,
+	// Р° РµСЃР»Рё РІС‹СЃС‚Р°РІР»РµРЅ mb_NeedInjects - СЃС‚СЂРѕРіРѕ РІРєР»СЋС‡РёС‚СЊ _Suspended
 	if (mb_NeedInjects)
 	{
 		if (gbPrepareDefaultTerminal)
@@ -2590,8 +2590,8 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			if (iHookRc != 0)
 			{
 				DWORD nErrCode = GetLastError();
-				// Хуки не получится установить для некоторых системных процессов типа ntvdm.exe,
-				// но при запуске dos приложений мы сюда дойти не должны
+				// РҐСѓРєРё РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РґР»СЏ РЅРµРєРѕС‚РѕСЂС‹С… СЃРёСЃС‚РµРјРЅС‹С… РїСЂРѕС†РµСЃСЃРѕРІ С‚РёРїР° ntvdm.exe,
+				// РЅРѕ РїСЂРё Р·Р°РїСѓСЃРєРµ dos РїСЂРёР»РѕР¶РµРЅРёР№ РјС‹ СЃСЋРґР° РґРѕР№С‚Рё РЅРµ РґРѕР»Р¶РЅС‹
 				_ASSERTE(iHookRc == 0);
 				wchar_t szTitle[128];
 				msprintf(szTitle, countof(szTitle), L"ConEmuC, PID=%u", GetCurrentProcessId());
@@ -2600,7 +2600,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				GuiMessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 			}
 
-			// Отпустить процесс
+			// РћС‚РїСѓСЃС‚РёС‚СЊ РїСЂРѕС†РµСЃСЃ
 			if (!mb_WasSuspended)
 				ResumeThread(lpPI->hThread);
 		}
@@ -2615,7 +2615,7 @@ void CShellProc::OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE a
 		dwProcessID = gfGetProcessId(ahProcess);
 	}
 
-	// InjectHooks & ResumeThread тут делать не нужно, просто вернуть параметры, если было переопределение
+	// InjectHooks & ResumeThread С‚СѓС‚ РґРµР»Р°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ, РїСЂРѕСЃС‚Рѕ РІРµСЂРЅСѓС‚СЊ РїР°СЂР°РјРµС‚СЂС‹, РµСЃР»Рё Р±С‹Р»Рѕ РїРµСЂРµРѕРїСЂРµРґРµР»РµРЅРёРµ
 	if (mlp_SaveExecInfoW)
 	{
 		mlp_SaveExecInfoW->hInstApp = ahInstApp;

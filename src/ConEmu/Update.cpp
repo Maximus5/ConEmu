@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -118,7 +118,7 @@ static bool CalcCRC(const BYTE *pData, size_t cchSize, DWORD& crc)
 	return true;
 }
 
-// Избежать статической линковки к WinInet.dll
+// РР·Р±РµР¶Р°С‚СЊ СЃС‚Р°С‚РёС‡РµСЃРєРѕР№ Р»РёРЅРєРѕРІРєРё Рє WinInet.dll
 class CWinInet
 {
 public:
@@ -290,17 +290,17 @@ CConEmuUpdate::~CConEmuUpdate()
 	{
 		WaitAllInstances();
 
-		wchar_t *pszCmd = lstrdup(L"cmd.exe"); // Мало ли что в ComSpec пользователь засунул...
+		wchar_t *pszCmd = lstrdup(L"cmd.exe"); // РњР°Р»Рѕ Р»Рё С‡С‚Рѕ РІ ComSpec РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р·Р°СЃСѓРЅСѓР»...
 		size_t cchParmMax = lstrlen(mpsz_PendingBatchFile)+16;
 		wchar_t *pszParm = (wchar_t*)calloc(cchParmMax,sizeof(*pszParm));
-		// Обязательно двойное окавычивание. cmd.exe отбрасывает кавычки,
-		// и при наличии разделителей (пробелы, скобки,...) получаем проблемы
+		// РћР±СЏР·Р°С‚РµР»СЊРЅРѕ РґРІРѕР№РЅРѕРµ РѕРєР°РІС‹С‡РёРІР°РЅРёРµ. cmd.exe РѕС‚Р±СЂР°СЃС‹РІР°РµС‚ РєР°РІС‹С‡РєРё,
+		// Рё РїСЂРё РЅР°Р»РёС‡РёРё СЂР°Р·РґРµР»РёС‚РµР»РµР№ (РїСЂРѕР±РµР»С‹, СЃРєРѕР±РєРё,...) РїРѕР»СѓС‡Р°РµРј РїСЂРѕР±Р»РµРјС‹
 		_wsprintf(pszParm, SKIPLEN(cchParmMax) L"/c \"\"%s\"\"", mpsz_PendingBatchFile);
 
-		// Наверное на Elevated процесс это не распространится, но для четкости - взведем флажок
+		// РќР°РІРµСЂРЅРѕРµ РЅР° Elevated РїСЂРѕС†РµСЃСЃ СЌС‚Рѕ РЅРµ СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅРёС‚СЃСЏ, РЅРѕ РґР»СЏ С‡РµС‚РєРѕСЃС‚Рё - РІР·РІРµРґРµРј С„Р»Р°Р¶РѕРє
 		SetEnvironmentVariable(ENV_CONEMU_INUPDATE, ENV_CONEMU_INUPDATE_YES);
 
-		// ghWnd уже закрыт
+		// ghWnd СѓР¶Рµ Р·Р°РєСЂС‹С‚
 		INT_PTR nShellRc = (INT_PTR)ShellExecute(NULL, bNeedRunElevation ? L"runas" : L"open", pszCmd, pszParm, NULL, SW_SHOWMINIMIZED);
 		if (nShellRc <= 32)
 		{
@@ -337,7 +337,7 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 		{
 			if (gpConEmu)
 			{
-				// Повторно?
+				// РџРѕРІС‚РѕСЂРЅРѕ?
 				gpConEmu->RequestExitUpdate();
 			}
 		}
@@ -350,7 +350,7 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 
 	gpSet->UpdSet.dwLastUpdateCheck = GetTickCount();
 
-	// Сразу проверим, как нужно будет запускаться
+	// РЎСЂР°Р·Сѓ РїСЂРѕРІРµСЂРёРј, РєР°Рє РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ Р·Р°РїСѓСЃРєР°С‚СЊСЃСЏ
 	bNeedRunElevation = NeedRunElevation();
 	
 	mb_RequestTerminate = FALSE;
@@ -358,7 +358,7 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 	//	mh_StopThread = CreateEvent(NULL, TRUE/*manual*/, FALSE, NULL);
 	//ResetEvent(mh_StopThread);
 	
-	// Запомнить текущие параметры обновления
+	// Р—Р°РїРѕРјРЅРёС‚СЊ С‚РµРєСѓС‰РёРµ РїР°СЂР°РјРµС‚СЂС‹ РѕР±РЅРѕРІР»РµРЅРёСЏ
 	if (!mp_Set)
 		mp_Set = new ConEmuUpdateSettings;
 	mp_Set->LoadFrom(&gpSet->UpdSet);
@@ -529,15 +529,15 @@ bool CConEmuUpdate::CanUpdateInstallation()
 {
 	if (UpdateDownloadSetup() == 1)
 	{
-		// Если через Setupper - то msi сам разберется и ругнется когда надо
+		// Р•СЃР»Рё С‡РµСЂРµР· Setupper - С‚Рѕ msi СЃР°Рј СЂР°Р·Р±РµСЂРµС‚СЃСЏ Рё СЂСѓРіРЅРµС‚СЃСЏ РєРѕРіРґР° РЅР°РґРѕ
 		return true;
 	}
 
-	// Раз дошли сюда - значит ConEmu был просто "распакован"
+	// Р Р°Р· РґРѕС€Р»Рё СЃСЋРґР° - Р·РЅР°С‡РёС‚ ConEmu Р±С‹Р» РїСЂРѕСЃС‚Рѕ "СЂР°СЃРїР°РєРѕРІР°РЅ"
 
 	if (IsUserAdmin())
 	{
-		// ConEmu запущен "Под администратором", проверки не нужны
+		// ConEmu Р·Р°РїСѓС‰РµРЅ "РџРѕРґ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂРѕРј", РїСЂРѕРІРµСЂРєРё РЅРµ РЅСѓР¶РЅС‹
 		return true;
 	}
 
@@ -648,7 +648,7 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 		goto wrap;
 	}
 	
-	// Запомнить текущие параметры обновления
+	// Р—Р°РїРѕРјРЅРёС‚СЊ С‚РµРєСѓС‰РёРµ РїР°СЂР°РјРµС‚СЂС‹ РѕР±РЅРѕРІР»РµРЅРёСЏ
 	if (!mp_Set)
 		mp_Set = new ConEmuUpdateSettings;
 	mp_Set->LoadFrom(&gpSet->UpdSet);
@@ -687,7 +687,7 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 
 		//if (!CanUpdateInstallation())
 		//{
-		//	// Значит 7zip обломается при попытке распаковки
+		//	// Р—РЅР°С‡РёС‚ 7zip РѕР±Р»РѕРјР°РµС‚СЃСЏ РїСЂРё РїРѕРїС‹С‚РєРµ СЂР°СЃРїР°РєРѕРІРєРё
 		//	goto wrap;
 		//}
 
@@ -719,13 +719,13 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 	}
 
 
-	// Сразу проверим, как нужно будет запускаться
+	// РЎСЂР°Р·Сѓ РїСЂРѕРІРµСЂРёРј, РєР°Рє РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ Р·Р°РїСѓСЃРєР°С‚СЊСЃСЏ
 	bNeedRunElevation = NeedRunElevation();
 
 	_wsprintf(ms_CurVersion, SKIPLEN(countof(ms_CurVersion)) L"%02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
 	//ms_NewVersion
 
-	// StartLocalUpdate - запуск обновления из локального пакета
+	// StartLocalUpdate - Р·Р°РїСѓСЃРє РѕР±РЅРѕРІР»РµРЅРёСЏ РёР· Р»РѕРєР°Р»СЊРЅРѕРіРѕ РїР°РєРµС‚Р°
 
 	mb_InetMode = false;
 	mb_DroppedMode = true;
@@ -814,7 +814,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	//INT_PTR nShellRc = 0;
 
 #ifdef _DEBUG
-	// Чтобы успел сервер проинититься и не ругался под отладчиком...
+	// Р§С‚РѕР±С‹ СѓСЃРїРµР» СЃРµСЂРІРµСЂ РїСЂРѕРёРЅРёС‚РёС‚СЊСЃСЏ Рё РЅРµ СЂСѓРіР°Р»СЃСЏ РїРѕРґ РѕС‚Р»Р°РґС‡РёРєРѕРј...
 	if (!mb_ManualCallMode)
 		Sleep(2500);
 #endif
@@ -825,7 +825,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	DeleteBadTempFiles();
 	CloseInternet(true);
 
-	//120315 - OK, положим в архив и 64битный гуй
+	//120315 - OK, РїРѕР»РѕР¶РёРј РІ Р°СЂС…РёРІ Рё 64Р±РёС‚РЅС‹Р№ РіСѓР№
 	//#ifdef _WIN64
 	//if (mp_Set->UpdateDownloadSetup() == 2)
 	//{
@@ -850,7 +850,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	
 	_wsprintf(ms_CurVersion, SKIPLEN(countof(ms_CurVersion)) L"%02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
 	
-	// Загрузить информацию о файлах обновления
+	// Р—Р°РіСЂСѓР·РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ С„Р°Р№Р»Р°С… РѕР±РЅРѕРІР»РµРЅРёСЏ
 	if (IsLocalFile(pszUpdateVerLocationSet))
 	{
 		pszUpdateVerLocation = (wchar_t*)pszUpdateVerLocationSet;
@@ -880,7 +880,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 		}
 	}
 	
-	// Проверить версии
+	// РџСЂРѕРІРµСЂРёС‚СЊ РІРµСЂСЃРёРё
 	_wcscpy_c(szSection, countof(szSection),
 		(mp_Set->isUpdateUseBuilds==1) ? L"ConEmu_Stable" :
 		(mp_Set->isUpdateUseBuilds==3) ? L"ConEmu_Preview" : L"ConEmu_Devel");
@@ -899,13 +899,13 @@ DWORD CConEmuUpdate::CheckProcInt()
 	}
 	
 	if ((lstrcmpi(ms_NewVersion, ms_CurVersion) <= 0)
-		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
+		// Р•СЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РѕС‚РєР°Р·Р°Р»СЃСЏ РѕС‚ РѕР±РЅРѕРІР»РµРЅРёСЏ РІ СЌС‚РѕРј СЃРµР°РЅСЃРµ - РЅРµ РїСЂРµРґР»Р°РіР°С‚СЊ С‚Сѓ Р¶Рµ РІРµСЂСЃРёСЋ РїСЂРё РµР¶РµС‡Р°СЃРЅС‹С… РїСЂРѕРІРµСЂРєР°С…
 		|| (!mb_ManualCallMode && (lstrcmp(ms_NewVersion, ms_SkipVersion) == 0)))
 	{
-		// Новых версий нет
+		// РќРѕРІС‹С… РІРµСЂСЃРёР№ РЅРµС‚
 		if (mb_ManualCallMode)
 		{
-			wchar_t szInfo[100], szTest[64]; // Дописать stable/preview/alpha
+			wchar_t szInfo[100], szTest[64]; // Р”РѕРїРёСЃР°С‚СЊ stable/preview/alpha
 
 			wcscpy_c(szInfo, ms_CurVersion);
 	
@@ -960,7 +960,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 	if (!QueryConfirmation(us_ConfirmDownload, pszSource))
 	{
-		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
+		// Р•СЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РѕС‚РєР°Р·Р°Р»СЃСЏ РѕС‚ РѕР±РЅРѕРІР»РµРЅРёСЏ РІ СЌС‚РѕРј СЃРµР°РЅСЃРµ - РЅРµ РїСЂРµРґР»Р°РіР°С‚СЊ С‚Сѓ Р¶Рµ РІРµСЂСЃРёСЋ РїСЂРё РµР¶РµС‡Р°СЃРЅС‹С… РїСЂРѕРІРµСЂРєР°С…
 		wcscpy_c(ms_SkipVersion, ms_NewVersion);
 		goto wrap;
 	}
@@ -981,8 +981,8 @@ DWORD CConEmuUpdate::CheckProcInt()
 	}
 	else
 	{
-		// Загрузить пакет обновления
-		pszFileName++; // пропустить слеш
+		// Р—Р°РіСЂСѓР·РёС‚СЊ РїР°РєРµС‚ РѕР±РЅРѕРІР»РµРЅРёСЏ
+		pszFileName++; // РїСЂРѕРїСѓСЃС‚РёС‚СЊ СЃР»РµС€
 		
 		HANDLE hTarget = NULL;
 		
@@ -1038,7 +1038,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	*/
 	if (!QueryConfirmation(us_ConfirmUpdate))
 	{
-		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
+		// Р•СЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РѕС‚РєР°Р·Р°Р»СЃСЏ РѕС‚ РѕР±РЅРѕРІР»РµРЅРёСЏ РІ СЌС‚РѕРј СЃРµР°РЅСЃРµ - РЅРµ РїСЂРµРґР»Р°РіР°С‚СЊ С‚Сѓ Р¶Рµ РІРµСЂСЃРёСЋ РїСЂРё РµР¶РµС‡Р°СЃРЅС‹С… РїСЂРѕРІРµСЂРєР°С…
 		wcscpy_c(ms_SkipVersion, ms_NewVersion);
 		goto wrap;
 	}
@@ -1113,7 +1113,7 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 
 	wchar_t szPID[16]; _wsprintf(szPID, SKIPLEN(countof(szPID)) L"%u", GetCurrentProcessId());
 	wchar_t szCPU[4]; wcscpy_c(szCPU, WIN3264TEST(L"x86",L"x64"));
-	WARNING("Битность установщика? Если ставим в ProgramFiles64 на Win64");
+	WARNING("Р‘РёС‚РЅРѕСЃС‚СЊ СѓСЃС‚Р°РЅРѕРІС‰РёРєР°? Р•СЃР»Рё СЃС‚Р°РІРёРј РІ ProgramFiles64 РЅР° Win64");
 
 	if (!gpConEmu)
 	{
@@ -1143,13 +1143,13 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	WRITE_BATCH_W(gpConEmu->ms_ConEmuExeDir);
 	WRITE_BATCH_A("\\\"\r\necho Current folder\r\ncd\r\necho .\r\n\r\necho Starting update...\r\n");
 	
-	// Формат.
+	// Р¤РѕСЂРјР°С‚.
 	pszFormat = (mp_Set->UpdateDownloadSetup()==1) ? mp_Set->UpdateExeCmdLine() : mp_Set->UpdateArcCmdLine();
 	
-	// Замена %1 и т.п.
+	// Р—Р°РјРµРЅР° %1 Рё С‚.Рї.
 	for (int s = 0; s < 2; s++)
 	{
-		// На первом шаге - считаем требуемый размер под pszCommand, на втором - формируем команду
+		// РќР° РїРµСЂРІРѕРј С€Р°РіРµ - СЃС‡РёС‚Р°РµРј С‚СЂРµР±СѓРµРјС‹Р№ СЂР°Р·РјРµСЂ РїРѕРґ pszCommand, РЅР° РІС‚РѕСЂРѕРј - С„РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ
 		if (s)
 		{
 			if (!cchCmdMax)
@@ -1186,7 +1186,7 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 					pszMacro = szPID;
 					break;
 				default:
-					// Недопустимый управляющий символ, это может быть переменная окружения
+					// РќРµРґРѕРїСѓСЃС‚РёРјС‹Р№ СѓРїСЂР°РІР»СЏСЋС‰РёР№ СЃРёРјРІРѕР», СЌС‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїРµСЂРµРјРµРЅРЅР°СЏ РѕРєСЂСѓР¶РµРЅРёСЏ
 					pszMacro = NULL;
 					pSrc--;
 					if (s)
@@ -1220,14 +1220,14 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 			*pDst = 0;
 	}
 	
-	// Выполнить команду обновления
+	// Р’С‹РїРѕР»РЅРёС‚СЊ РєРѕРјР°РЅРґСѓ РѕР±РЅРѕРІР»РµРЅРёСЏ
 	WRITE_BATCH_A("echo ");
 	WRITE_BATCH_W(pszCommand);
 	WRITE_BATCH_A("\r\ncall ");
 	WRITE_BATCH_W(pszCommand);
 	WRITE_BATCH_A("\r\nif errorlevel 1 goto err\r\n");
 
-	// Если юзер просил что-то выполнить после распаковки установки	
+	// Р•СЃР»Рё СЋР·РµСЂ РїСЂРѕСЃРёР» С‡С‚Рѕ-С‚Рѕ РІС‹РїРѕР»РЅРёС‚СЊ РїРѕСЃР»Рµ СЂР°СЃРїР°РєРѕРІРєРё СѓСЃС‚Р°РЅРѕРІРєРё	
 	if (mp_Set->szUpdatePostUpdateCmd && *mp_Set->szUpdatePostUpdateCmd)
 	{
 		WRITE_BATCH_A("\r\n");
@@ -1235,10 +1235,10 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 		WRITE_BATCH_A("\r\n");
 	}
 
-	// Сброс переменной окружения: "set ConEmuInUpdate="
+	// РЎР±СЂРѕСЃ РїРµСЂРµРјРµРЅРЅРѕР№ РѕРєСЂСѓР¶РµРЅРёСЏ: "set ConEmuInUpdate="
 	WRITE_BATCH_W(L"\r\nset " ENV_CONEMU_INUPDATE L"=\r\n");
 
-	// Перезапуск ConEmu
+	// РџРµСЂРµР·Р°РїСѓСЃРє ConEmu
 	WRITE_BATCH_A("\r\necho Starting ConEmu...\r\nstart \"ConEmu\" \"");
 	WRITE_BATCH_W(gpConEmu->ms_ConEmuExe);
 	WRITE_BATCH_A("\" ");
@@ -1255,12 +1255,12 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	// Fin
 	WRITE_BATCH_A("\r\ngoto fin\r\n");
 	
-	// Сообщение об ошибке?
+	// РЎРѕРѕР±С‰РµРЅРёРµ РѕР± РѕС€РёР±РєРµ?
 	WRITE_BATCH_A("\r\n:err\r\n");
 	WRITE_BATCH_A((mp_Set->UpdateDownloadSetup()==1) ? "echo \7Installation failed\7" : "echo \7Extraction failed\7\r\n");
 	WRITE_BATCH_A("\r\npause\r\n:fin\r\n");
 
-	// Грохнуть пакет обновления
+	// Р“СЂРѕС…РЅСѓС‚СЊ РїР°РєРµС‚ РѕР±РЅРѕРІР»РµРЅРёСЏ
 	if (!mp_Set->isUpdateLeavePackages)
 	{
 		WRITE_BATCH_A("del \"");
@@ -1268,11 +1268,11 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 		WRITE_BATCH_A("\"\r\n");
 	}
 
-	// Грохнуть сам батч и позвать "exit" чтобы в консоли
-	// не появлялось "Batch not found" при попытке выполнить следующую строку файла
+	// Р“СЂРѕС…РЅСѓС‚СЊ СЃР°Рј Р±Р°С‚С‡ Рё РїРѕР·РІР°С‚СЊ "exit" С‡С‚РѕР±С‹ РІ РєРѕРЅСЃРѕР»Рё
+	// РЅРµ РїРѕСЏРІР»СЏР»РѕСЃСЊ "Batch not found" РїСЂРё РїРѕРїС‹С‚РєРµ РІС‹РїРѕР»РЅРёС‚СЊ СЃР»РµРґСѓСЋС‰СѓСЋ СЃС‚СЂРѕРєСѓ С„Р°Р№Р»Р°
 	WRITE_BATCH_A("del \"%~0\" & exit\r\n");
 
-	//// Для отладки
+	//// Р”Р»СЏ РѕС‚Р»Р°РґРєРё
 	//WRITE_BATCH_A("\r\npause\r\n");
 	
 	// Succeeded
@@ -1314,7 +1314,7 @@ CConEmuUpdate::UpdateStep CConEmuUpdate::InUpdate()
 			m_UpdateStep = us_NotStarted;
 		break;
 	case us_ExitAndUpdate:
-		// Тут у нас нить уже имеет право завершиться
+		// РўСѓС‚ Сѓ РЅР°СЃ РЅРёС‚СЊ СѓР¶Рµ РёРјРµРµС‚ РїСЂР°РІРѕ Р·Р°РІРµСЂС€РёС‚СЊСЃСЏ
 		break;
 	default:
 		;
@@ -1323,7 +1323,7 @@ CConEmuUpdate::UpdateStep CConEmuUpdate::InUpdate()
 	return m_UpdateStep;
 }
 
-// В asDir могут быть переменные окружения.
+// Р’ asDir РјРѕРіСѓС‚ Р±С‹С‚СЊ РїРµСЂРµРјРµРЅРЅС‹Рµ РѕРєСЂСѓР¶РµРЅРёСЏ.
 wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, HANDLE& hFile)
 {
 	wchar_t szFile[MAX_PATH*2+2];
@@ -1409,7 +1409,7 @@ wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, H
 		if (!hFile || (hFile == INVALID_HANDLE_VALUE))
 		{
 			dwErr = GetLastError();
-			// на первом обломе - попытаться создать директорию, может ее просто нет?
+			// РЅР° РїРµСЂРІРѕРј РѕР±Р»РѕРјРµ - РїРѕРїС‹С‚Р°С‚СЊСЃСЏ СЃРѕР·РґР°С‚СЊ РґРёСЂРµРєС‚РѕСЂРёСЋ, РјРѕР¶РµС‚ РµРµ РїСЂРѕСЃС‚Рѕ РЅРµС‚?
 			if ((dwErr == ERROR_PATH_NOT_FOUND) && (i == 0))
 			{
 				if (!MyCreateDirectory(pszDirectory))
@@ -1565,7 +1565,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 		if (mb_RequestTerminate)
 			goto wrap;
 
-		// Открыть WinInet
+		// РћС‚РєСЂС‹С‚СЊ WinInet
 		if (mh_Internet == NULL)
 		{
 			mh_Internet = wi->_InternetOpenW(TEXT("Mozilla/5.0 (compatible; ConEmu Update)"), ProxyType, ProxyName, NULL, 0);
@@ -1582,7 +1582,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			// Proxy User/Password
 			if (ProxyName)
 			{
-				// Похоже, что установка логина/пароля для mh_Internet смысла не имеет
+				// РџРѕС…РѕР¶Рµ, С‡С‚Рѕ СѓСЃС‚Р°РЅРѕРІРєР° Р»РѕРіРёРЅР°/РїР°СЂРѕР»СЏ РґР»СЏ mh_Internet СЃРјС‹СЃР»Р° РЅРµ РёРјРµРµС‚
 				if (mp_Set->szUpdateProxyUser && *mp_Set->szUpdateProxyUser)
 				{
 					if (!wi->_InternetSetOptionW(mh_Internet, INTERNET_OPTION_PROXY_USERNAME, (LPVOID)mp_Set->szUpdateProxyUser, lstrlen(mp_Set->szUpdateProxyUser)))
@@ -1643,7 +1643,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 		// 
 		_ASSERTE(mh_Connect == NULL);
 		
-		//TODO после включения ноута вылезла ошибка ERROR_INTERNET_NAME_NOT_RESOLVED==12007
+		//TODO РїРѕСЃР»Рµ РІРєР»СЋС‡РµРЅРёСЏ РЅРѕСѓС‚Р° РІС‹Р»РµР·Р»Р° РѕС€РёР±РєР° ERROR_INTERNET_NAME_NOT_RESOLVED==12007
 
 		// Server:Port
 		if ((pszColon = wcsrchr(szServer, L':')) != NULL)
@@ -1664,8 +1664,8 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 
 		if (ProxyName)
 		{
-			// Похоже, что установка логина/пароля для mh_Internet смысла не имеет
-			// Поэтому повторяем здесь для хэндла mh_Connect
+			// РџРѕС…РѕР¶Рµ, С‡С‚Рѕ СѓСЃС‚Р°РЅРѕРІРєР° Р»РѕРіРёРЅР°/РїР°СЂРѕР»СЏ РґР»СЏ mh_Internet СЃРјС‹СЃР»Р° РЅРµ РёРјРµРµС‚
+			// РџРѕСЌС‚РѕРјСѓ РїРѕРІС‚РѕСЂСЏРµРј Р·РґРµСЃСЊ РґР»СЏ С…СЌРЅРґР»Р° mh_Connect
 			if (mp_Set->szUpdateProxyUser && *mp_Set->szUpdateProxyUser)
 			{
 				if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_PROXY_USERNAME, (LPVOID)mp_Set->szUpdateProxyUser, lstrlen(mp_Set->szUpdateProxyUser)))
@@ -1684,7 +1684,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			}
 		}
 
-		// Повторим для mh_Connect, на всякий случай
+		// РџРѕРІС‚РѕСЂРёРј РґР»СЏ mh_Connect, РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№
 		if (!wi->_InternetSetOptionW(mh_Connect, INTERNET_OPTION_HTTP_VERSION, &httpver, sizeof(httpver)))
 		{
 			ReportError(L"HttpVersion failed, code=%u", GetLastError());
@@ -1713,7 +1713,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			goto wrap;
 
 		_ASSERTE(mh_SrcFile==NULL);
-		// Отправить запрос на файл
+		// РћС‚РїСЂР°РІРёС‚СЊ Р·Р°РїСЂРѕСЃ РЅР° С„Р°Р№Р»
 		mh_SrcFile = wi->_HttpOpenRequestW(mh_Connect, L"GET", szSrvPath, L"HTTP/1.1", NULL, 0,
 			INTERNET_FLAG_KEEP_CONNECTION|INTERNET_FLAG_NO_CACHE_WRITE|INTERNET_FLAG_PRAGMA_NOCACHE|INTERNET_FLAG_RELOAD, ++mn_Context);
 		if (!mh_SrcFile || (mh_SrcFile == INVALID_HANDLE_VALUE))
@@ -1748,7 +1748,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			{
 				mn_InternetContentLen = 0;
 				//DWORD dwErr = GetLastError();
-				//// были ошибки: ERROR_HTTP_HEADER_NOT_FOUND
+				//// Р±С‹Р»Рё РѕС€РёР±РєРё: ERROR_HTTP_HEADER_NOT_FOUND
 				//if (mb_ManualCallMode || abPackage)
 				//	ReportError(L"QueryContentLen failed\nURL=%s\ncode=%u", asSource, dwErr);
 				//goto wrap;
@@ -1819,7 +1819,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			LPCSTR psz = (LPCSTR)ptrData;
 			while (*psz == L' ' || *psz == L'\r' || *psz == L'\n' || *psz == L'\t')
 				psz++;
-			// Определить ошибку 404?
+			// РћРїСЂРµРґРµР»РёС‚СЊ РѕС€РёР±РєСѓ 404?
 			if (*psz == L'<')
 			{
 				if (mb_ManualCallMode)
@@ -1945,7 +1945,7 @@ BOOL CConEmuUpdate::WriteTarget(LPCWSTR asTarget, HANDLE hTarget, const BYTE* pD
 void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 {
 	if (mb_InShowLastError)
-		return; // Две ошибки сразу не показываем, а то зациклимся
+		return; // Р”РІРµ РѕС€РёР±РєРё СЃСЂР°Р·Сѓ РЅРµ РїРѕРєР°Р·С‹РІР°РµРј, Р° С‚Рѕ Р·Р°С†РёРєР»РёРјСЃСЏ
 
 	MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
 	SafeFree(ms_LastErrorInfo);
@@ -2003,9 +2003,9 @@ bool CConEmuUpdate::NeedRunElevation()
 	if (!gpConEmu)
 		return false;
 
-	//TODO: В каких случаях нужен "runas"
-	//TODO: Vista+: (если сейчас НЕ "Admin") && (установка в %ProgramFiles%)
-	//TODO: WinXP-: (установка в %ProgramFiles%) && (нет доступа в %ProgramFiles%)
+	//TODO: Р’ РєР°РєРёС… СЃР»СѓС‡Р°СЏС… РЅСѓР¶РµРЅ "runas"
+	//TODO: Vista+: (РµСЃР»Рё СЃРµР№С‡Р°СЃ РќР• "Admin") && (СѓСЃС‚Р°РЅРѕРІРєР° РІ %ProgramFiles%)
+	//TODO: WinXP-: (СѓСЃС‚Р°РЅРѕРІРєР° РІ %ProgramFiles%) && (РЅРµС‚ РґРѕСЃС‚СѓРїР° РІ %ProgramFiles%)
 
 	DWORD dwErr = 0;
 	wchar_t szTestFile[MAX_PATH+20];
@@ -2015,8 +2015,8 @@ bool CConEmuUpdate::NeedRunElevation()
 	if (gOSVer.dwMajorVersion >= 6)
 	{
 		if (IsUserAdmin())
-			return false; // Уже под админом (Vista+)
-		// куда мы установлены? Если НЕ в %ProgramFiles%, то для распаковки совсем не нужно Elevation требовать
+			return false; // РЈР¶Рµ РїРѕРґ Р°РґРјРёРЅРѕРј (Vista+)
+		// РєСѓРґР° РјС‹ СѓСЃС‚Р°РЅРѕРІР»РµРЅС‹? Р•СЃР»Рё РќР• РІ %ProgramFiles%, С‚Рѕ РґР»СЏ СЂР°СЃРїР°РєРѕРІРєРё СЃРѕРІСЃРµРј РЅРµ РЅСѓР¶РЅРѕ Elevation С‚СЂРµР±РѕРІР°С‚СЊ
 		int nFolderIdl[] = {
 			CSIDL_PROGRAM_FILES,
 			CSIDL_PROGRAM_FILES_COMMON,
@@ -2038,18 +2038,18 @@ bool CConEmuUpdate::NeedRunElevation()
 					{
 						szSystem[nLen++] = L'\\'; szSystem[nLen] = 0;
 					}
-					// наш внутренний lstrcmpni не прокатит - он для коротких строк
+					// РЅР°С€ РІРЅСѓС‚СЂРµРЅРЅРёР№ lstrcmpni РЅРµ РїСЂРѕРєР°С‚РёС‚ - РѕРЅ РґР»СЏ РєРѕСЂРѕС‚РєРёС… СЃС‚СЂРѕРє
 					if (_wcsnicmp(szTestFile, szSystem, nLen) == 0)
-						return true; // Установлены в ProgramFiles
+						return true; // РЈСЃС‚Р°РЅРѕРІР»РµРЅС‹ РІ ProgramFiles
 				}
 			}
 		}
-		// Issue 651: Проверим возможность создания/изменения файлов в любом случае
-		//// Скорее всего не надо
+		// Issue 651: РџСЂРѕРІРµСЂРёРј РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ СЃРѕР·РґР°РЅРёСЏ/РёР·РјРµРЅРµРЅРёСЏ С„Р°Р№Р»РѕРІ РІ Р»СЋР±РѕРј СЃР»СѓС‡Р°Рµ
+		//// РЎРєРѕСЂРµРµ РІСЃРµРіРѕ РЅРµ РЅР°РґРѕ
 		//return false;
 	}
 
-	// XP и ниже
+	// XP Рё РЅРёР¶Рµ
 	wcscat_c(szTestFile, L"ConEmuUpdate.flag");
 	HANDLE hFile = CreateFile(szTestFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
@@ -2060,7 +2060,7 @@ bool CConEmuUpdate::NeedRunElevation()
 	CloseHandle(hFile);
 	DeleteFile(szTestFile);
 
-	// RunAs не нужен
+	// RunAs РЅРµ РЅСѓР¶РµРЅ
 	return false;
 }
 
@@ -2086,7 +2086,7 @@ void CConEmuUpdate::DeleteBadTempFiles()
 bool CConEmuUpdate::Check7zipInstalled()
 {
 	if (mp_Set->UpdateDownloadSetup() == 1)
-		return true; // Инсталлер, архиватор не требуется!
+		return true; // РРЅСЃС‚Р°Р»Р»РµСЂ, Р°СЂС…РёРІР°С‚РѕСЂ РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ!
 
 	LPCWSTR pszCmd = mp_Set->UpdateArcCmdLine();
 	CmdArg sz7zip; sz7zip.GetBuffer(MAX_PATH);
@@ -2181,7 +2181,7 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 bool CConEmuUpdate::QueryConfirmationInt(LPCWSTR asConfirmInfo)
 {
 	if (mb_InShowLastError || !gpConEmu)
-		return false; // Если отображается ошибк - не звать
+		return false; // Р•СЃР»Рё РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ РѕС€РёР±Рє - РЅРµ Р·РІР°С‚СЊ
 
 	bool lbConfirm;
 
@@ -2260,14 +2260,14 @@ void CConEmuUpdate::WaitAllInstances()
 
 		if (!bStillExists)
 		{
-			TODO("Можно бы проехаться по всем модулям запущенных процессов на предмет блокировки файлов в папках ConEmu");
+			TODO("РњРѕР¶РЅРѕ Р±С‹ РїСЂРѕРµС…Р°С‚СЊСЃСЏ РїРѕ РІСЃРµРј РјРѕРґСѓР»СЏРј Р·Р°РїСѓС‰РµРЅРЅС‹С… РїСЂРѕС†РµСЃСЃРѕРІ РЅР° РїСЂРµРґРјРµС‚ Р±Р»РѕРєРёСЂРѕРІРєРё С„Р°Р№Р»РѕРІ РІ РїР°РїРєР°С… ConEmu");
 		}
 
-		// Если никого запущенного не нашли - выходим из цикла
+		// Р•СЃР»Рё РЅРёРєРѕРіРѕ Р·Р°РїСѓС‰РµРЅРЅРѕРіРѕ РЅРµ РЅР°С€Р»Рё - РІС‹С…РѕРґРёРј РёР· С†РёРєР»Р°
 		if (!bStillExists)
 			return;
 
-		// Ругнуться
+		// Р СѓРіРЅСѓС‚СЊСЃСЏ
 		int nBtn = MessageBox(NULL, szMessage, ms_DefaultTitle, MB_ICONEXCLAMATION|MB_OKCANCEL);
 		if (nBtn == IDCANCEL)
 			return; // "Cancel" - means stop checking

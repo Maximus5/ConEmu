@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -39,7 +39,7 @@ int WINAPI MountVirtualHive(LPCWSTR asHive, PHKEY phKey, LPCWSTR asXPMountName, 
 	int lRc = -1;
 	
 	if (pszErrInfo && cchErrInfoMax)
-		*pszErrInfo = 0; // если передали буфер для ошибки - сразу его почистить
+		*pszErrInfo = 0; // РµСЃР»Рё РїРµСЂРµРґР°Р»Рё Р±СѓС„РµСЂ РґР»СЏ РѕС€РёР±РєРё - СЃСЂР°Р·Сѓ РµРіРѕ РїРѕС‡РёСЃС‚РёС‚СЊ
 
 	*pbKeyMounted = FALSE;
 
@@ -116,21 +116,21 @@ int WINAPI MountVirtualHive(LPCWSTR asHive, PHKEY phKey, LPCWSTR asXPMountName, 
 		}
 		
 		//_wcscpy_c(rsXPMountName, cchXPMountMax, VIRTUAL_REGISTRY_GUID);
-		//WARNING("###: Докинуть в конец что-нть уникальное, например CRC пути к hive");
+		//WARNING("###: Р”РѕРєРёРЅСѓС‚СЊ РІ РєРѕРЅРµС† С‡С‚Рѕ-РЅС‚СЊ СѓРЅРёРєР°Р»СЊРЅРѕРµ, РЅР°РїСЂРёРјРµСЂ CRC РїСѓС‚Рё Рє hive");
 		
-		// Hive уже мог быть подключен другой копией ConEmu.
-		TODO("При выходе - может возникнуть конфликт? Кто первый сделает RegUnloadKey...");
+		// Hive СѓР¶Рµ РјРѕРі Р±С‹С‚СЊ РїРѕРґРєР»СЋС‡РµРЅ РґСЂСѓРіРѕР№ РєРѕРїРёРµР№ ConEmu.
+		TODO("РџСЂРё РІС‹С…РѕРґРµ - РјРѕР¶РµС‚ РІРѕР·РЅРёРєРЅСѓС‚СЊ РєРѕРЅС„Р»РёРєС‚? РљС‚Рѕ РїРµСЂРІС‹Р№ СЃРґРµР»Р°РµС‚ RegUnloadKey...");
 		
 		if ((lRc = RegOpenKeyEx(HKEY_USERS, asXPMountName, 0, KEY_ALL_ACCESS, phKey)) == 0)
 		{
-			goto wrap; // успешно - hive уже подключен
+			goto wrap; // СѓСЃРїРµС€РЅРѕ - hive СѓР¶Рµ РїРѕРґРєР»СЋС‡РµРЅ
 		}
 		else if ((lRc = RegOpenKeyEx(HKEY_USERS, asXPMountName, 0, KEY_READ, phKey)) == 0)
 		{
-			goto wrap; // успешно - hive уже подключен (ReadOnly)
+			goto wrap; // СѓСЃРїРµС€РЅРѕ - hive СѓР¶Рµ РїРѕРґРєР»СЋС‡РµРЅ (ReadOnly)
 		}
 		
-		// Hive еще не был подключен
+		// Hive РµС‰Рµ РЅРµ Р±С‹Р» РїРѕРґРєР»СЋС‡РµРЅ
 		if ((lRc = RegLoadKey(HKEY_USERS, asXPMountName, asHive)) != 0)
 		{
 			if (pszErrInfo && cchErrInfoMax)
@@ -139,20 +139,20 @@ int WINAPI MountVirtualHive(LPCWSTR asHive, PHKEY phKey, LPCWSTR asXPMountName, 
 			lRc = -6;
 			goto wrap;
 		}
-		// Ключ смонтирован, нужно его будет демонтировать при выходе
+		// РљР»СЋС‡ СЃРјРѕРЅС‚РёСЂРѕРІР°РЅ, РЅСѓР¶РЅРѕ РµРіРѕ Р±СѓРґРµС‚ РґРµРјРѕРЅС‚РёСЂРѕРІР°С‚СЊ РїСЂРё РІС‹С…РѕРґРµ
 		*pbKeyMounted = TRUE;
 
 		if ((lRc = RegOpenKeyEx(HKEY_USERS, asXPMountName, 0, KEY_ALL_ACCESS, phKey)) == 0)
 		{
-			goto wrap; // успешно - hive уже подключен
+			goto wrap; // СѓСЃРїРµС€РЅРѕ - hive СѓР¶Рµ РїРѕРґРєР»СЋС‡РµРЅ
 		}
 		else if ((lRc = RegOpenKeyEx(HKEY_USERS, asXPMountName, 0, KEY_READ, phKey)) == 0)
 		{
-			goto wrap; // успешно - hive уже подключен (ReadOnly)
+			goto wrap; // СѓСЃРїРµС€РЅРѕ - hive СѓР¶Рµ РїРѕРґРєР»СЋС‡РµРЅ (ReadOnly)
 		}
 	}
 	
-	// Нужно проверить, можно ли создать/открыть необходимые ключи
+	// РќСѓР¶РЅРѕ РїСЂРѕРІРµСЂРёС‚СЊ, РјРѕР¶РЅРѕ Р»Рё СЃРѕР·РґР°С‚СЊ/РѕС‚РєСЂС‹С‚СЊ РЅРµРѕР±С…РѕРґРёРјС‹Рµ РєР»СЋС‡Рё
 	for (UINT i = 0; i < nRootKeys; i++)
 	{
 		HKEY hTest = NULL;

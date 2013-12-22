@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2010-2011 Maximus5
 All rights reserved.
@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "ConEmuBg_Lang.h"
 
-// X - меньшая, Y - большая
+// X - РјРµРЅСЊС€Р°СЏ, Y - Р±РѕР»СЊС€Р°СЏ
 #define FAR_X_VER 995
 #define FAR_Y1_VER 1900
 #define FAR_Y2_VER 2800
@@ -54,7 +54,7 @@ extern const wchar_t* szDefaultXmlName;
 bool CheckXmlFile(bool abUpdateName = false);
 bool WasXmlLoaded();
 //extern COLORREF gcrLinesColor;
-//extern int giHilightType; // 0 - линии, 1 - полосы
+//extern int giHilightType; // 0 - Р»РёРЅРёРё, 1 - РїРѕР»РѕСЃС‹
 //extern BOOL gbHilightPlugins;
 //extern COLORREF gcrHilightPlugBack;
 struct ConEmuBgSettings

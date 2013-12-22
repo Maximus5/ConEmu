@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -27,7 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #ifdef _DEBUG
-// Отладка отрисовки. Небольшие задержки, заливка серым перед отрисовкой, ...
+// РћС‚Р»Р°РґРєР° РѕС‚СЂРёСЃРѕРІРєРё. РќРµР±РѕР»СЊС€РёРµ Р·Р°РґРµСЂР¶РєРё, Р·Р°Р»РёРІРєР° СЃРµСЂС‹Рј РїРµСЂРµРґ РѕС‚СЂРёСЃРѕРІРєРѕР№, ...
 //#define DEBUG_PAINT
 #endif
 #ifdef DEBUG_PAINT
@@ -157,7 +157,7 @@ HWND CeFullPanelInfo::CreateView()
 			CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 		}
 
-		// Сначала нужно запустить нить (ее еще не создавали)
+		// РЎРЅР°С‡Р°Р»Р° РЅСѓР¶РЅРѕ Р·Р°РїСѓСЃС‚РёС‚СЊ РЅРёС‚СЊ (РµРµ РµС‰Рµ РЅРµ СЃРѕР·РґР°РІР°Р»Рё)
 		HANDLE hReady = CreateEvent(NULL,FALSE,FALSE,NULL);
 		ghDisplayThread = CreateThread(NULL,0,DisplayThread,(LPVOID)hReady,0,&gnDisplayThreadId); //-V513
 
@@ -168,7 +168,7 @@ HWND CeFullPanelInfo::CreateView()
 			return NULL;
 		}
 
-		// Дождаться, пока нить оживет
+		// Р”РѕР¶РґР°С‚СЊСЃСЏ, РїРѕРєР° РЅРёС‚СЊ РѕР¶РёРІРµС‚
 		DWORD nTimeout = CREATE_WND_TIMEOUT;
 #ifdef _DEBUG
 
@@ -187,7 +187,7 @@ HWND CeFullPanelInfo::CreateView()
 			return NULL;
 		}
 
-		// И еще чуть подождать, а то возникает "Invalid thread identifier"
+		// Р РµС‰Рµ С‡СѓС‚СЊ РїРѕРґРѕР¶РґР°С‚СЊ, Р° С‚Рѕ РІРѕР·РЅРёРєР°РµС‚ "Invalid thread identifier"
 		Sleep(50);
 	}
 
@@ -217,7 +217,7 @@ HWND CeFullPanelInfo::CreateView()
 
 			if (dwWait == (WAIT_OBJECT_0))
 			{
-				// Нить завершилась
+				// РќРёС‚СЊ Р·Р°РІРµСЂС€РёР»Р°СЃСЊ
 				gnCreateViewError = CEDisplayThreadTerminated;
 				GetExitCodeThread(ghDisplayThread, &gnWin32Error);
 			}
@@ -235,8 +235,8 @@ HWND CeFullPanelInfo::CreateView()
 		WNDCLASS wc = {0};
 		wc.style = CS_OWNDC|CS_DBLCLKS|CS_HREDRAW|CS_VREDRAW;
 		wc.lpfnWndProc = DisplayWndProc;
-		// 16 + <Disabled> + 3 зарезервировано
-		// <Disabled> - это когда поверх панели расположен диалог (то есть не перехватывать клавиатуру)
+		// 16 + <Disabled> + 3 Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅРѕ
+		// <Disabled> - СЌС‚Рѕ РєРѕРіРґР° РїРѕРІРµСЂС… РїР°РЅРµР»Рё СЂР°СЃРїРѕР»РѕР¶РµРЅ РґРёР°Р»РѕРі (С‚Рѕ РµСЃС‚СЊ РЅРµ РїРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ РєР»Р°РІРёР°С‚СѓСЂСѓ)
 		wc.cbWndExtra = 20*sizeof(DWORD);
 		wc.hInstance = (HINSTANCE)ghPluginModule;
 		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
@@ -289,7 +289,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
 			SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pi); //-V107
-			TODO("Вроде WINDOW_LONG_FADE не используется нигде?");
+			TODO("Р’СЂРѕРґРµ WINDOW_LONG_FADE РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РЅРёРіРґРµ?");
 			SetWindowLong(hwnd, WINDOW_LONG_FADE, 1); // Fade == false
 			return 0; //continue creation
 		}
@@ -393,13 +393,13 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 					//	ExecuteInMainThread(pCmd);
 					//}
 
-					//// RClick пропустить дальше
+					//// RClick РїСЂРѕРїСѓСЃС‚РёС‚СЊ РґР°Р»СЊС€Рµ
 					//if (uMsg != WM_RBUTTONDOWN)
 					//{
 					//	return 0;
 					//}
 
-					// LClick пропускать в консоль нельзя, чтобы не возникало глюков с позиционированием по клику...
+					// LClick РїСЂРѕРїСѓСЃРєР°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ РЅРµР»СЊР·СЏ, С‡С‚РѕР±С‹ РЅРµ РІРѕР·РЅРёРєР°Р»Рѕ РіР»СЋРєРѕРІ СЃ РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°РЅРёРµРј РїРѕ РєР»РёРєСѓ...
 					/*if (uMsg == WM_LBUTTONDOWN)
 					{
 						_ASSERTE(gnConEmuLBtnDown!=0);
@@ -468,7 +468,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 
 			if (uMsg == gnConEmuFadeMsg)
 			{
-				TODO("Вроде WINDOW_LONG_FADE не используется нигде?");
+				TODO("Р’СЂРѕРґРµ WINDOW_LONG_FADE РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РЅРёРіРґРµ?");
 				SetWindowLong(hwnd, WINDOW_LONG_FADE, (DWORD)lParam);
 
 				if (gbFadeColors != (lParam == 2))
@@ -476,7 +476,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 					gbFadeColors = (lParam == 2);
 					//gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
 					gcrCurColors = gbFadeColors ? gThSet.crFadePalette : gThSet.crPalette;
-					//Inva lidateRect(hwnd, NULL, FALSE); -- не требуется
+					//Inva lidateRect(hwnd, NULL, FALSE); -- РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ
 				}
 				return 0;
 			}
@@ -503,7 +503,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 				{
 					gpImgCache->Reset();
 
-					// и обновить
+					// Рё РѕР±РЅРѕРІРёС‚СЊ
 					if (pviLeft.hView)
 						pviLeft.OnSettingsChanged(TRUE);
 
@@ -558,7 +558,7 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 	gnMapCoordMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWMAPCOORD);
 	//gnConEmuLBtnDown = RegisterWindowMessage(CONEMUMSG_PNLVIEWLBTNDOWN);
 
-	// Выставляем событие, что нить готова
+	// Р’С‹СЃС‚Р°РІР»СЏРµРј СЃРѕР±С‹С‚РёРµ, С‡С‚Рѕ РЅРёС‚СЊ РіРѕС‚РѕРІР°
 	if (hReady)
 	{
 		SetEvent(hReady);
@@ -602,11 +602,11 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 
 	//CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 	gnDisplayThreadId = 0;
-	// 26.04.2010 Maks - delete нельзя! не будем выгружать gdiplus.dll до выхода из фара. валится...
+	// 26.04.2010 Maks - delete РЅРµР»СЊР·СЏ! РЅРµ Р±СѓРґРµРј РІС‹РіСЂСѓР¶Р°С‚СЊ gdiplus.dll РґРѕ РІС‹С…РѕРґР° РёР· С„Р°СЂР°. РІР°Р»РёС‚СЃСЏ...
 	//delete gpImgCache;
 	//gpImgCache = NULL;
-	gpImgCache->Reset(); // только Reset.
-	// Освободить память
+	gpImgCache->Reset(); // С‚РѕР»СЊРєРѕ Reset.
+	// РћСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ
 	pviLeft.FinalRelease();
 	pviRight.FinalRelease();
 	UpdateEnvVar(FALSE);
@@ -614,8 +614,8 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 	return 0;
 }
 
-// abCurrentItem  - может быть TRUE только в активной панели
-// abSelectedItem - реально выделенный элемент
+// abCurrentItem  - РјРѕР¶РµС‚ Р±С‹С‚СЊ TRUE С‚РѕР»СЊРєРѕ РІ Р°РєС‚РёРІРЅРѕР№ РїР°РЅРµР»Рё
+// abSelectedItem - СЂРµР°Р»СЊРЅРѕ РІС‹РґРµР»РµРЅРЅС‹Р№ СЌР»РµРјРµРЅС‚
 BOOL CeFullPanelInfo::PaintItem(
     HDC hdc, INT_PTR nIndex, int x, int y,
     CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor,
@@ -650,7 +650,7 @@ BOOL CeFullPanelInfo::PaintItem(
 
 	if (gThSet.nPreviewFrame == 1)
 	{
-		// Залить фон ПРЕВЬЮШКИ. Он может отличаться от фона панели
+		// Р—Р°Р»РёС‚СЊ С„РѕРЅ РџР Р•Р’Р¬Р®РЁРљР. РћРЅ РјРѕР¶РµС‚ РѕС‚Р»РёС‡Р°С‚СЊСЃСЏ РѕС‚ С„РѕРЅР° РїР°РЅРµР»Рё
 		HBRUSH hOldBr = (HBRUSH)SelectObject(hdc, hBackBrush);
 		Rectangle(hdc,
 		          x+Spaces.nSpaceX1, y+Spaces.nSpaceY1,
@@ -671,7 +671,7 @@ BOOL CeFullPanelInfo::PaintItem(
 		RECT rcTmp = {x+gThSet.nHPadding, y+gThSet.nVPadding,
 			x+gThSet.nHPadding+gThSet.nWidth, y+gThSet.nVPadding+gThSet.nHeight};
 		*/
-		// Залить фон ПРЕВЬЮШКИ. Он может отличаться от фона панели
+		// Р—Р°Р»РёС‚СЊ С„РѕРЅ РџР Р•Р’Р¬Р®РЁРљР. РћРЅ РјРѕР¶РµС‚ РѕС‚Р»РёС‡Р°С‚СЊСЃСЏ РѕС‚ С„РѕРЅР° РїР°РЅРµР»Рё
 		FillRect(hdc, &rcTmp, hBackBrush);
 	}
 	else
@@ -721,7 +721,7 @@ BOOL CeFullPanelInfo::PaintItem(
 	//	crFore = 0xFFFFFF;
 	HBRUSH hTextBrush = GetItemColors(nIndex, pItem, pItemColor, abCurrentItem, crFore, crBack);
 	RECT rcFrame = rcClip;
-	// Если в режиме Tiles текст будет необходимо сделать выше - DrawItemText сама перезальет прямоугольник
+	// Р•СЃР»Рё РІ СЂРµР¶РёРјРµ Tiles С‚РµРєСЃС‚ Р±СѓРґРµС‚ РЅРµРѕР±С…РѕРґРёРјРѕ СЃРґРµР»Р°С‚СЊ РІС‹С€Рµ - DrawItemText СЃР°РјР° РїРµСЂРµР·Р°Р»СЊРµС‚ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє
 	FillRect(hdc, &rcClip, hTextBrush); //hBack[nIdx]);
 	SetTextColor(hdc, crFore);
 	SetBkColor(hdc, crBack);
@@ -756,7 +756,7 @@ BOOL CeFullPanelInfo::PaintItem(
 		int nX = x, nY = y;
 		int nW = 0, nH = 0;
 
-		// Высокий текст мог раздвинуть прямоугольник
+		// Р’С‹СЃРѕРєРёР№ С‚РµРєСЃС‚ РјРѕРі СЂР°Р·РґРІРёРЅСѓС‚СЊ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє
 		if (PVM == pvm_Tiles)
 		{
 			rcFrame.top = rcClip.top; rcFrame.bottom = rcClip.bottom;
@@ -821,12 +821,12 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 	{
 		const wchar_t* pszExt = NULL;
 
-		// только для файлов, для папок "расширение" не ровняем, ибо это не расширение.
+		// С‚РѕР»СЊРєРѕ РґР»СЏ С„Р°Р№Р»РѕРІ, РґР»СЏ РїР°РїРѕРє "СЂР°СЃС€РёСЂРµРЅРёРµ" РЅРµ СЂРѕРІРЅСЏРµРј, РёР±Рѕ СЌС‚Рѕ РЅРµ СЂР°СЃС€РёСЂРµРЅРёРµ.
 		if ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
 		{
 			pszExt = wcsrchr(pszName, L'.');
 
-			if (pszExt == pszName) pszExt = NULL;  // если точка одна, и имя начинается с нее
+			if (pszExt == pszName) pszExt = NULL;  // РµСЃР»Рё С‚РѕС‡РєР° РѕРґРЅР°, Рё РёРјСЏ РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ РЅРµРµ
 		}
 
 		BOOL  lbCorrected = FALSE;
@@ -841,13 +841,13 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 			int iRc1 = DrawText(hdc, pszExt, nExtLen, &rcExt, DT_CALCRECT|DT_NOPREFIX|DT_SINGLELINE|DT_TOP|DT_LEFT);
 			int iRc2 = DrawText(hdc, pszName, nNameLen, &rcName, DT_CALCRECT|DT_NOPREFIX|DT_SINGLELINE|DT_TOP|DT_LEFT);
 
-			// Рисуем расширение отдельно только если длина расширения в пикселах меньше половины от выделенного prcText
+			// Р РёСЃСѓРµРј СЂР°СЃС€РёСЂРµРЅРёРµ РѕС‚РґРµР»СЊРЅРѕ С‚РѕР»СЊРєРѕ РµСЃР»Рё РґР»РёРЅР° СЂР°СЃС€РёСЂРµРЅРёСЏ РІ РїРёРєСЃРµР»Р°С… РјРµРЅСЊС€Рµ РїРѕР»РѕРІРёРЅС‹ РѕС‚ РІС‹РґРµР»РµРЅРЅРѕРіРѕ prcText
 			if (iRc1 && iRc2)
 			{
 				if ((gThSet.nPreviewFrame == 0)
 				        && ((rcExt.right-rcExt.left)+(rcName.right-rcName.left)) <= (rcClip.right-rcClip.left))
 				{
-					lbCorrected = FALSE; // ниже - выронять по центру
+					lbCorrected = FALSE; // РЅРёР¶Рµ - РІС‹СЂРѕРЅСЏС‚СЊ РїРѕ С†РµРЅС‚СЂСѓ
 				}
 				else if ((rcExt.right-rcExt.left) <= ((rcClip.right-rcClip.left)/2 /*-(rcName.right-rcName.left)*/))
 				{
@@ -856,7 +856,7 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 					iRc = DrawText(hdc, pszExt, nExtLen, &rcExt, DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
 					nLen = nNameLen;
 					rcClip.right = rcExt.left;
-					lbCorrected = TRUE; //  чтобы ниже по центру не выровнялось
+					lbCorrected = TRUE; //  С‡С‚РѕР±С‹ РЅРёР¶Рµ РїРѕ С†РµРЅС‚СЂСѓ РЅРµ РІС‹СЂРѕРІРЅСЏР»РѕСЃСЊ
 				}
 			}
 		}
@@ -866,22 +866,22 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 			int iRc1 = DrawText(hdc, pszName, nLen, &rcName, DT_CALCRECT|DT_NOPREFIX|DT_SINGLELINE|DT_TOP|DT_LEFT);
 
 			if (iRc1 && ((rcName.right-rcName.left) >= (rcClip.right-rcClip.left)))
-				lbCorrected = TRUE; //  чтобы ниже по центру не выровнялось
+				lbCorrected = TRUE; //  С‡С‚РѕР±С‹ РЅРёР¶Рµ РїРѕ С†РµРЅС‚СЂСѓ РЅРµ РІС‹СЂРѕРІРЅСЏР»РѕСЃСЊ
 		}
 
 		if (!lbCorrected && gThSet.nPreviewFrame == 0)
 		{
-			nDrawFlags |= DT_CENTER; // для красоты, при отсутствии рамки, ровняем по центру.
+			nDrawFlags |= DT_CENTER; // РґР»СЏ РєСЂР°СЃРѕС‚С‹, РїСЂРё РѕС‚СЃСѓС‚СЃС‚РІРёРё СЂР°РјРєРё, СЂРѕРІРЅСЏРµРј РїРѕ С†РµРЅС‚СЂСѓ.
 		}
 
 		iRc = DrawText(hdc, pszName, nLen, &rcClip, nDrawFlags);
 	}
 	else
 	{
-		TODO("Обработка pItem->pszInfo");
+		TODO("РћР±СЂР°Р±РѕС‚РєР° pItem->pszInfo");
 		wchar_t szFullInfo[MAX_PATH*4];
 		wchar_t* psz = szFullInfo;
-		// формируем
+		// С„РѕСЂРјРёСЂСѓРµРј
 		StringCchCopyN(psz, MAX_PATH, pszName, MAX_PATH); psz[MAX_PATH] = 0;
 		psz += lstrlen(psz);
 
@@ -959,7 +959,7 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 		nLen = lstrlen(szFullInfo);
 		DWORD nFlags = DT_WORD_ELLIPSIS|DT_NOPREFIX|DT_TOP|DT_LEFT;
 		RECT rcText = rcClip; rcText.bottom = nFontHeight;
-		// если все строки не помещаются - нужно прижать к верхнему краю
+		// РµСЃР»Рё РІСЃРµ СЃС‚СЂРѕРєРё РЅРµ РїРѕРјРµС‰Р°СЋС‚СЃСЏ - РЅСѓР¶РЅРѕ РїСЂРёР¶Р°С‚СЊ Рє РІРµСЂС…РЅРµРјСѓ РєСЂР°СЋ
 		iRc = DrawText(hdc, szFullInfo, nLen, &rcText, DT_CALCRECT|nFlags);
 		int nCellHeight = (rcClip.bottom-rcClip.top);
 		int nTextHeight = (rcText.bottom-rcText.top);
@@ -990,10 +990,10 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 			}
 		}
 
-		// теперь - рисуем
+		// С‚РµРїРµСЂСЊ - СЂРёСЃСѓРµРј
 		iRc = DrawText(hdc, szFullInfo, nLen, &rcClip, nFlags); //-V519
 
-		// Вернуть расширенный прямоугольник
+		// Р’РµСЂРЅСѓС‚СЊ СЂР°СЃС€РёСЂРµРЅРЅС‹Р№ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє
 		if (rcClip.top < prcText->top) prcText->top = rcClip.top;
 
 		if (rcClip.bottom > prcText->bottom) prcText->bottom = rcClip.bottom;
@@ -1024,7 +1024,7 @@ BOOL CeFullPanelInfo::GetIndexFromWndCoord(int x, int y, INT_PTR &rnIndex)
 	else
 	{
 		_ASSERTE(PVM == pvm_Thumbnails || PVM == pvm_Tiles);
-		return FALSE; // не поддерживается
+		return FALSE; // РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ
 	}
 
 	if (rnIndex < 0 || rnIndex >= ItemsNumber)
@@ -1041,9 +1041,9 @@ BOOL CeFullPanelInfo::GetConCoordFromIndex(INT_PTR nIndex, COORD& rCoord)
 	{
 		if (ppItems[nIndex]->BisInfo.Loaded && (ppItems[nIndex]->BisInfo.PosX > 0) && (ppItems[nIndex]->BisInfo.PosY > 0))
 		{
-			WARNING("Что должно быть при 'Far /w' ?");
+			WARNING("Р§С‚Рѕ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїСЂРё 'Far /w' ?");
 			_ASSERTE(WorkRect.top<10);
-			TODO("Проверить координаты");
+			TODO("РџСЂРѕРІРµСЂРёС‚СЊ РєРѕРѕСЂРґРёРЅР°С‚С‹");
 			rCoord.X = ppItems[nIndex]->BisInfo.PosX-1; rCoord.Y = ppItems[nIndex]->BisInfo.PosY-1;
 			lbRc = TRUE;
 		}
@@ -1065,14 +1065,14 @@ BOOL CeFullPanelInfo::GetConCoordFromIndex(INT_PTR nIndex, COORD& rCoord)
 
 void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, BOOL abStrictConsole)
 {
-	// Только если активны "Панели". Над элементом может висеть диалог, и цвет будет "левым".
+	// РўРѕР»СЊРєРѕ РµСЃР»Рё Р°РєС‚РёРІРЅС‹ "РџР°РЅРµР»Рё". РќР°Рґ СЌР»РµРјРµРЅС‚РѕРј РјРѕР¶РµС‚ РІРёСЃРµС‚СЊ РґРёР°Р»РѕРі, Рё С†РІРµС‚ Р±СѓРґРµС‚ "Р»РµРІС‹Рј".
 	if (gbFarPanelsReady)
 	{
 		COORD crItem;
 
 		if (pItem->BisInfo.Loaded)
 		{
-			TODO("Для TrueColor сделать Fade!");
+			TODO("Р”Р»СЏ TrueColor СЃРґРµР»Р°С‚СЊ Fade!");
 
 			if (pItem->BisInfo.Flags & FCF_BG_4BIT)
 				pItemColor->crBack = gcrCurColors[pItem->BisInfo.BackgroundColor & 0xF];
@@ -1091,10 +1091,10 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 		{
 			wchar_t c; CharAttr a;
 			//if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
-			WARNING("Если в этой позиции - диалог, то получение цвета будет некорректным!");
+			WARNING("Р•СЃР»Рё РІ СЌС‚РѕР№ РїРѕР·РёС†РёРё - РґРёР°Р»РѕРі, С‚Рѕ РїРѕР»СѓС‡РµРЅРёРµ С†РІРµС‚Р° Р±СѓРґРµС‚ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Рј!");
 
-			// Перым может идти "Optional marking character", его цвет нас не интересует
-			// Если перым идет символ пометки (NM в настройках панелей) - это не страшно
+			// РџРµСЂС‹Рј РјРѕР¶РµС‚ РёРґС‚Рё "Optional marking character", РµРіРѕ С†РІРµС‚ РЅР°СЃ РЅРµ РёРЅС‚РµСЂРµСЃСѓРµС‚
+			// Р•СЃР»Рё РїРµСЂС‹Рј РёРґРµС‚ СЃРёРјРІРѕР» РїРѕРјРµС‚РєРё (NM РІ РЅР°СЃС‚СЂРѕР№РєР°С… РїР°РЅРµР»РµР№) - СЌС‚Рѕ РЅРµ СЃС‚СЂР°С€РЅРѕ
 			if (gpRgnDetect->GetCharAttr(crItem.X+1, crItem.Y, c, a))
 			{
 				pItemColor->crBack = gcrCurColors[a.nBackIdx];
@@ -1105,11 +1105,11 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 		}
 	}
 
-	// Цвет этого элемента уже мог быть получен, а элемент просто "уехал" из-за прокрутки.
+	// Р¦РІРµС‚ СЌС‚РѕРіРѕ СЌР»РµРјРµРЅС‚Р° СѓР¶Рµ РјРѕРі Р±С‹С‚СЊ РїРѕР»СѓС‡РµРЅ, Р° СЌР»РµРјРµРЅС‚ РїСЂРѕСЃС‚Рѕ "СѓРµС…Р°Р»" РёР·-Р·Р° РїСЂРѕРєСЂСѓС‚РєРё.
 	if (!pItemColor->bItemColorLoaded)
 	{
-		// Некоторые элементы могут быть невидимы в консоли, но видимы в PanelView.
-		// Попробовать получить их из аналогичных, по атрибутам
+		// РќРµРєРѕС‚РѕСЂС‹Рµ СЌР»РµРјРµРЅС‚С‹ РјРѕРіСѓС‚ Р±С‹С‚СЊ РЅРµРІРёРґРёРјС‹ РІ РєРѕРЅСЃРѕР»Рё, РЅРѕ РІРёРґРёРјС‹ РІ PanelView.
+		// РџРѕРїСЂРѕР±РѕРІР°С‚СЊ РїРѕР»СѓС‡РёС‚СЊ РёС… РёР· Р°РЅР°Р»РѕРіРёС‡РЅС‹С…, РїРѕ Р°С‚СЂРёР±СѓС‚Р°Рј
 		bool bFound = false;
 		DWORD nMasks[] =
 		{
@@ -1131,7 +1131,7 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 				if (!pCmp)
 				{
 					_ASSERTE(this->ppItems[j]!=NULL);
-					continue; // Ошибка?
+					continue; // РћС€РёР±РєР°?
 				}
 
 				if (pCmp == pItem || !pCmpColor->bItemColorLoaded)
@@ -1144,7 +1144,7 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 				{
 					pItemColor->crBack = pCmpColor->crBack;
 					pItemColor->crFore = pCmpColor->crFore;
-					bFound = true; // нашли подходящий
+					bFound = true; // РЅР°С€Р»Рё РїРѕРґС…РѕРґСЏС‰РёР№
 					break;
 				}
 			}
@@ -1152,7 +1152,7 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 
 		if (!bFound)
 		{
-			// Если не удалось - берем по умолчанию (без расцетки групп)
+			// Р•СЃР»Рё РЅРµ СѓРґР°Р»РѕСЃСЊ - Р±РµСЂРµРј РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ (Р±РµР· СЂР°СЃС†РµС‚РєРё РіСЂСѓРїРї)
 			int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ?
 			            ((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelSelectedCursor : col_PanelSelectedText) :
 				            ((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelCursor : col_PanelText));
@@ -1160,7 +1160,7 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 			pItemColor->crFore = gcrCurColors[(nFarColors[nIdx] & 0xF)];
 		}
 
-		//// Для папок - ставим белый шрифт
+		//// Р”Р»СЏ РїР°РїРѕРє - СЃС‚Р°РІРёРј Р±РµР»С‹Р№ С€СЂРёС„С‚
 		//if (pItem->crBack != 0xFFFFFF
 		//	&& (pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		//	&& ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) == 0))
@@ -1188,12 +1188,12 @@ HBRUSH CeFullPanelInfo::GetItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, 
 	//}
 	//
 	//if (pItem->bItemColorLoaded) {
-	//	// Цвет этого элемента уже мог быть получен, а элемент просто "уехал" из-за прокрутки.
+	//	// Р¦РІРµС‚ СЌС‚РѕРіРѕ СЌР»РµРјРµРЅС‚Р° СѓР¶Рµ РјРѕРі Р±С‹С‚СЊ РїРѕР»СѓС‡РµРЅ, Р° СЌР»РµРјРµРЅС‚ РїСЂРѕСЃС‚Рѕ "СѓРµС…Р°Р»" РёР·-Р·Р° РїСЂРѕРєСЂСѓС‚РєРё.
 	crBack = pItemColor->crBack;
 	crFore = pItemColor->crFore;
 
 	//} else {
-	//	// Если не удалось - берем по умолчанию (без расцетки групп)
+	//	// Р•СЃР»Рё РЅРµ СѓРґР°Р»РѕСЃСЊ - Р±РµСЂРµРј РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ (Р±РµР· СЂР°СЃС†РµС‚РєРё РіСЂСѓРїРї)
 	//	int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ?
 	//		((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelSelectedCursor : col_PanelSelectedText) :
 	//		((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelCursor : col_PanelText));
@@ -1201,7 +1201,7 @@ HBRUSH CeFullPanelInfo::GetItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, 
 	//	crBack = gcrCurColors[((nFarColors[nIdx] & 0xF0)>>4)];
 	//	crFore = gcrCurColors[(nFarColors[nIdx] & 0xF)];
 	//
-	//	// Для папок - ставим белый шрифт
+	//	// Р”Р»СЏ РїР°РїРѕРє - СЃС‚Р°РІРёРј Р±РµР»С‹Р№ С€СЂРёС„С‚
 	//	if (crBack != 0xFFFFFF
 	//		&& (pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 	//		&& ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) == 0))
@@ -1231,7 +1231,7 @@ INT_PTR CeFullPanelInfo::CalcTopPanelItem(INT_PTR anCurrentItem, INT_PTR anTopIt
 
 	if ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem)
 	{
-		TODO("Выравнивание на границу nXCount");
+		TODO("Р’С‹СЂР°РІРЅРёРІР°РЅРёРµ РЅР° РіСЂР°РЅРёС†Сѓ nXCount");
 		nTopItem = nCurrentItem - (nXCountFull*(nYCountFull)) + 1;
 
 		//
@@ -1378,7 +1378,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	HBRUSH hBackBrush = CreateSolidBrush(crBack);
 	HFONT hFont = CreateFont(nFontHeight,0,0,0,400,0,0,0,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
 	                         gThSet.nFontQuality,DEFAULT_PITCH,sFontName);
-	// Передернуть класс на предмет смены/инициализации настроек
+	// РџРµСЂРµРґРµСЂРЅСѓС‚СЊ РєР»Р°СЃСЃ РЅР° РїСЂРµРґРјРµС‚ СЃРјРµРЅС‹/РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РЅР°СЃС‚СЂРѕРµРє
 	gpImgCache->Init(crBack);
 
 	if (PVM == pvm_Thumbnails)
@@ -1398,18 +1398,18 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 		return;
 	}
 
-	nXCountFull = (rc.right/*+Spaces.nSpaceX2*/) / nWholeW; // тут четко, кусок иконки не допускается
-	nYCountFull = (rc.bottom/*+Spaces.nSpaceY2*/) / nWholeH; // тут четко, кусок иконки не допускается
+	nXCountFull = (rc.right/*+Spaces.nSpaceX2*/) / nWholeW; // С‚СѓС‚ С‡РµС‚РєРѕ, РєСѓСЃРѕРє РёРєРѕРЅРєРё РЅРµ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ
+	nYCountFull = (rc.bottom/*+Spaces.nSpaceY2*/) / nWholeH; // С‚СѓС‚ С‡РµС‚РєРѕ, РєСѓСЃРѕРє РёРєРѕРЅРєРё РЅРµ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ
 
 	if (PVM == pvm_Thumbnails)
 	{
-		nXCount = nXCountFull; // часть справа не допускается.
-		nYCount = (rc.bottom+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+Spaces.nSpaceY2) / nWholeH; // а тут допускается отображение верхней части иконки
+		nXCount = nXCountFull; // С‡Р°СЃС‚СЊ СЃРїСЂР°РІР° РЅРµ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ.
+		nYCount = (rc.bottom+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+Spaces.nSpaceY2) / nWholeH; // Р° С‚СѓС‚ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ РІРµСЂС…РЅРµР№ С‡Р°СЃС‚Рё РёРєРѕРЅРєРё
 	}
 	else
 	{
-		nXCount = (rc.right+Spaces.nSpaceX2) / nWholeW; // а тут допускается отображение левой части иконки
-		nYCount = nYCountFull; // Во всех остальных режимах - часть по низу не допускается.
+		nXCount = (rc.right+Spaces.nSpaceX2) / nWholeW; // Р° С‚СѓС‚ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ Р»РµРІРѕР№ С‡Р°СЃС‚Рё РёРєРѕРЅРєРё
+		nYCount = nYCountFull; // Р’Рѕ РІСЃРµС… РѕСЃС‚Р°Р»СЊРЅС‹С… СЂРµР¶РёРјР°С… - С‡Р°СЃС‚СЊ РїРѕ РЅРёР·Сѓ РЅРµ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ.
 	}
 
 	if (nXCount < 1) nXCount = 1;
@@ -1425,13 +1425,13 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	INT_PTR nItemCount = this->ItemsNumber;
 	INT_PTR nCurrentItem = this->CurrentItem;
 	INT_PTR nTopItem = this->TopPanelItem;
-	// Issue 321: некорректный скроллинг при выделении элементов панели, поэтому пытаемся фиксировать "наш" Top всегда
+	// Issue 321: РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ СЃРєСЂРѕР»Р»РёРЅРі РїСЂРё РІС‹РґРµР»РµРЅРёРё СЌР»РµРјРµРЅС‚РѕРІ РїР°РЅРµР»Рё, РїРѕСЌС‚РѕРјСѓ РїС‹С‚Р°РµРјСЃСЏ С„РёРєСЃРёСЂРѕРІР°С‚СЊ "РЅР°С€" Top РІСЃРµРіРґР°
 	//if (nCurrentItem == this->ReqCurrentItem && nTopItem < this->ReqTopPanelItem)
 	nTopItem = this->ReqTopPanelItem;
 	nTopItem = CalcTopPanelItem(nCurrentItem, nTopItem);
 	this->OurTopPanelItem = nTopItem;
 
-	// Если сейчас не идет запрос на новое положение курсора - обновим наше запомненное
+	// Р•СЃР»Рё СЃРµР№С‡Р°СЃ РЅРµ РёРґРµС‚ Р·Р°РїСЂРѕСЃ РЅР° РЅРѕРІРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РєСѓСЂСЃРѕСЂР° - РѕР±РЅРѕРІРёРј РЅР°С€Рµ Р·Р°РїРѕРјРЅРµРЅРЅРѕРµ
 	if (!bRequestItemSet && ReqTopPanelItem != OurTopPanelItem)
 	{
 		ReqTopPanelItem = OurTopPanelItem;
@@ -1487,17 +1487,17 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 
 	if (Visible && CS.Lock(pSection, FALSE, 1000))
 	{
-		// Пока - рисуем в три шага
-		// 0. Подготовка элементов (получить цвет текста элемента из консоли)
-		// 1. отрисовка просто иконок (что вернет SHGetFileInfo), на этом шаге
-		//    формируется очередь запроса превьюшек.
-		// -- 2. отрисовка превьюшек (для тех элементов, у которых их удалось получить)
+		// РџРѕРєР° - СЂРёСЃСѓРµРј РІ С‚СЂРё С€Р°РіР°
+		// 0. РџРѕРґРіРѕС‚РѕРІРєР° СЌР»РµРјРµРЅС‚РѕРІ (РїРѕР»СѓС‡РёС‚СЊ С†РІРµС‚ С‚РµРєСЃС‚Р° СЌР»РµРјРµРЅС‚Р° РёР· РєРѕРЅСЃРѕР»Рё)
+		// 1. РѕС‚СЂРёСЃРѕРІРєР° РїСЂРѕСЃС‚Рѕ РёРєРѕРЅРѕРє (С‡С‚Рѕ РІРµСЂРЅРµС‚ SHGetFileInfo), РЅР° СЌС‚РѕРј С€Р°РіРµ
+		//    С„РѕСЂРјРёСЂСѓРµС‚СЃСЏ РѕС‡РµСЂРµРґСЊ Р·Р°РїСЂРѕСЃР° РїСЂРµРІСЊСЋС€РµРє.
+		// -- 2. РѕС‚СЂРёСЃРѕРІРєР° РїСЂРµРІСЊСЋС€РµРє (РґР»СЏ С‚РµС… СЌР»РµРјРµРЅС‚РѕРІ, Сѓ РєРѕС‚РѕСЂС‹С… РёС… СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ)
 		for (int nStep = 0; !gbCancelAll && nStep <= 1; nStep++)
 		{
 			//if (nStep == 2)
 			//{
 			//	if ((gThSet.bLoadPreviews & PVM) == 0)
-			//		continue; // для этого режима превьюшки не просили
+			//		continue; // РґР»СЏ СЌС‚РѕРіРѕ СЂРµР¶РёРјР° РїСЂРµРІСЊСЋС€РєРё РЅРµ РїСЂРѕСЃРёР»Рё
 			//}
 			_ASSERTE(nTopItem>=0 && (nTopItem<nItemCount || (nTopItem==0 && nItemCount==0)) && nItemCount>=0);
 			INT_PTR nItem = nTopItem;
@@ -1542,36 +1542,36 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 					if (!pItem || !pItemColor)
 					{
 						_ASSERTE(this->ppItems[nItem]!=NULL);
-						continue; // Ошибка?
+						continue; // РћС€РёР±РєР°?
 					}
 
-					// подготовить временный указатель на полный путь к файлу
+					// РїРѕРґРіРѕС‚РѕРІРёС‚СЊ РІСЂРµРјРµРЅРЅС‹Р№ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє С„Р°Р№Р»Сѓ
 					const wchar_t* pszName = pItem->FindData.lpwszFileName;
 
 					if (wcschr(pszName, L'\\'))
 					{
-						// Это уже может быть полный путь (TempPanel?)
+						// Р­С‚Рѕ СѓР¶Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїРѕР»РЅС‹Р№ РїСѓС‚СЊ (TempPanel?)
 						pItem->pszFullName = pszName;
 					}
 					else
 					{
-						// Полный путь нужно сформировать
+						// РџРѕР»РЅС‹Р№ РїСѓС‚СЊ РЅСѓР¶РЅРѕ СЃС„РѕСЂРјРёСЂРѕРІР°С‚СЊ
 						lstrcpyn(pszNamePtr, pszName, MAX_PATH+1);
 						pItem->pszFullName = pszFull;
 					}
 
 					if (nStep == 0 || (!pItemColor->bItemColorLoaded && nStep == 1))
 					{
-						// Только извлечение цвета из консоли
+						// РўРѕР»СЊРєРѕ РёР·РІР»РµС‡РµРЅРёРµ С†РІРµС‚Р° РёР· РєРѕРЅСЃРѕР»Рё
 						LoadItemColors(nItem, pItem, pItemColor, (Focus && nItem==nCurrentItem), (nStep == 0));
 					}
 
-					// Постановка в очередь декодера
+					// РџРѕСЃС‚Р°РЅРѕРІРєР° РІ РѕС‡РµСЂРµРґСЊ РґРµРєРѕРґРµСЂР°
 					if (nStep == 0)
 					{
-						// На шаге 0 - запросим ShellIcon, на шаге 1 - Thumbnails
-						// чтобы очередь выполнения сначала попыталась загрузить ShellIcon
-						// Отрисовка пойдет с шага 1
+						// РќР° С€Р°РіРµ 0 - Р·Р°РїСЂРѕСЃРёРј ShellIcon, РЅР° С€Р°РіРµ 1 - Thumbnails
+						// С‡С‚РѕР±С‹ РѕС‡РµСЂРµРґСЊ РІС‹РїРѕР»РЅРµРЅРёСЏ СЃРЅР°С‡Р°Р»Р° РїРѕРїС‹С‚Р°Р»Р°СЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ ShellIcon
+						// РћС‚СЂРёСЃРѕРІРєР° РїРѕР№РґРµС‚ СЃ С€Р°РіР° 1
 						//#ifdef _DEBUG
 						//wchar_t szDbg[MAX_PATH+32];
 						//lstrcpy(szDbg, L"Req: ");
@@ -1624,12 +1624,12 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 #endif
 				} // for (int j = 0; !gbCancelAll && j < jCount && nItem < nItemCount; j++, nItem++)
 
-				// заливка незанятых частей
+				// Р·Р°Р»РёРІРєР° РЅРµР·Р°РЅСЏС‚С‹С… С‡Р°СЃС‚РµР№
 				if (nStep == 1)
 				{
 					if (PVM == pvm_Thumbnails)
 					{
-						// На шаге 1 - залить незанятые части цветом фона
+						// РќР° С€Р°РіРµ 1 - Р·Р°Р»РёС‚СЊ РЅРµР·Р°РЅСЏС‚С‹Рµ С‡Р°СЃС‚Рё С†РІРµС‚РѕРј С„РѕРЅР°
 						if (nStep == 1 && nXCoord < rc.right)
 						{
 							RECT rcComp = {nXCoord,nYCoord,rc.right,nYCoord+nWholeH};
@@ -1649,7 +1649,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 					}
 					else
 					{
-						// На шаге 1 - залить незанятые части цветом фона
+						// РќР° С€Р°РіРµ 1 - Р·Р°Р»РёС‚СЊ РЅРµР·Р°РЅСЏС‚С‹Рµ С‡Р°СЃС‚Рё С†РІРµС‚РѕРј С„РѕРЅР°
 						if (nStep == 1 && nYCoord < rc.bottom)
 						{
 							RECT rcComp = {nXCoord,nYCoord,rc.right,rc.bottom};
@@ -1679,20 +1679,20 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 				}
 			} // for (int i = 0; !gbCancelAll && i < iCount && nItem < nItemCount; i++)
 
-			//// на шаге 0 - только получение цвета
+			//// РЅР° С€Р°РіРµ 0 - С‚РѕР»СЊРєРѕ РїРѕР»СѓС‡РµРЅРёРµ С†РІРµС‚Р°
 			//if (nStep == 0)
 			//{
-			//	// Некоторые элементы могут быть невидимы в консоли, но видимы в PanelView.
-			//	// Попробовать получить их из аналогичных, по атрибутам
+			//	// РќРµРєРѕС‚РѕСЂС‹Рµ СЌР»РµРјРµРЅС‚С‹ РјРѕРіСѓС‚ Р±С‹С‚СЊ РЅРµРІРёРґРёРјС‹ РІ РєРѕРЅСЃРѕР»Рё, РЅРѕ РІРёРґРёРјС‹ РІ PanelView.
+			//	// РџРѕРїСЂРѕР±РѕРІР°С‚СЊ РїРѕР»СѓС‡РёС‚СЊ РёС… РёР· Р°РЅР°Р»РѕРіРёС‡РЅС‹С…, РїРѕ Р°С‚СЂРёР±СѓС‚Р°Рј
 			//	_ASSERTE(nItem <= nItemCount);
 			//	for (int i = nTopItem; i < nItem; i++) {
 			//		CePluginPanelItem* pItem = this->ppItems[i];
 			//		if (!pItem) {
 			//			_ASSERTE(this->ppItems[i]!=NULL);
-			//			continue; // Ошибка?
+			//			continue; // РћС€РёР±РєР°?
 			//		}
 			//		if (pItem->bItemColorLoaded)
-			//			continue; // С этим элементом все ок, он видим в консоли
+			//			continue; // РЎ СЌС‚РёРј СЌР»РµРјРµРЅС‚РѕРј РІСЃРµ РѕРє, РѕРЅ РІРёРґРёРј РІ РєРѕРЅСЃРѕР»Рё
 
 			//		bool bFound = false;
 			//		DWORD nMasks[] = {
@@ -1708,7 +1708,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 			//				CePluginPanelItem* pCmp = this->ppItems[j];
 			//				if (!pCmp) {
 			//					_ASSERTE(this->ppItems[j]!=NULL);
-			//					continue; // Ошибка?
+			//					continue; // РћС€РёР±РєР°?
 			//				}
 			//				if (!pCmp->bItemColorLoaded)
 			//					continue;
@@ -1720,7 +1720,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 			//				{
 			//					pItem->crBack = pCmp->crBack;
 			//					pItem->crFore = pCmp->crFore;
-			//					bFound = true; // нашли подходящий
+			//					bFound = true; // РЅР°С€Р»Рё РїРѕРґС…РѕРґСЏС‰РёР№
 			//					break;
 			//				}
 			//			}
@@ -1728,7 +1728,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 			//	}
 			//}
 			//else
-			if (nStep == 1)  // На шаге 1 - залить незанятые части цветом фона
+			if (nStep == 1)  // РќР° С€Р°РіРµ 1 - Р·Р°Р»РёС‚СЊ РЅРµР·Р°РЅСЏС‚С‹Рµ С‡Р°СЃС‚Рё С†РІРµС‚РѕРј С„РѕРЅР°
 			{
 				if (PVM == pvm_Thumbnails)
 				{
@@ -1755,7 +1755,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 						FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
 					}
 				}
-			} // if (nStep == 1) // На шаге 1 - залить незанятые части цветом фона
+			} // if (nStep == 1) // РќР° С€Р°РіРµ 1 - Р·Р°Р»РёС‚СЊ РЅРµР·Р°РЅСЏС‚С‹Рµ С‡Р°СЃС‚Рё С†РІРµС‚РѕРј С„РѕРЅР°
 
 #ifdef DEBUG_PAINT
 			GdiFlush();
@@ -1782,15 +1782,15 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 }
 
 
-// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
+// Р­С‚Р° "РґРёСЃРїР»РµР№РЅР°СЏ" С„СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· РѕСЃРЅРѕРІРЅРѕР№ РЅРёС‚Рё, С‚Р°Рј РјРѕР¶РЅРѕ РґРµСЂРіР°С‚СЊ FAR Api
 void CeFullPanelInfo::DisplayReloadPanel()
 {
 	_ASSERTE(GetCurrentThreadId()==gnMainThreadId);
-	TODO("Определить повторно какие элементы видимы, и перечитать только их");
+	TODO("РћРїСЂРµРґРµР»РёС‚СЊ РїРѕРІС‚РѕСЂРЅРѕ РєР°РєРёРµ СЌР»РµРјРµРЅС‚С‹ РІРёРґРёРјС‹, Рё РїРµСЂРµС‡РёС‚Р°С‚СЊ С‚РѕР»СЊРєРѕ РёС…");
 
 	for(INT_PTR nItem = 0; nItem < this->ItemsNumber; nItem++)
 	{
-		// Обновить информацию об элементе (имя, веделенность, и т.п.)
+		// РћР±РЅРѕРІРёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± СЌР»РµРјРµРЅС‚Рµ (РёРјСЏ, РІРµРґРµР»РµРЅРЅРѕСЃС‚СЊ, Рё С‚.Рї.)
 		LoadPanelItemInfo(this, nItem);
 	}
 }
@@ -1798,19 +1798,19 @@ void CeFullPanelInfo::DisplayReloadPanel()
 
 
 
-// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
+// Р­С‚Р° "РґРёСЃРїР»РµР№РЅР°СЏ" С„СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· РѕСЃРЅРѕРІРЅРѕР№ РЅРёС‚Рё, С‚Р°Рј РјРѕР¶РЅРѕ РґРµСЂРіР°С‚СЊ FAR Api
 int CeFullPanelInfo::RegisterPanelView()
 {
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 
-	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
+	// РЎС‚СЂР°С…РѕРІРєР° РѕС‚ С‚РѕРіРѕ, С‡С‚Рѕ conemu.dll РјРѕРіР»Рё РІС‹РіСЂСѓР·РёС‚СЊ (unload:...)
 	if (!CheckConEmu() || !gfRegisterPanelView)
 		return -1;
 
 	//CeFullPanelInfo* pi = abLeft ? &pviLeft : &pviRight;
 	PanelViewInit pvi = {sizeof(PanelViewInit)};
 	pvi.bLeftPanel = this->bLeftPanel;
-	pvi.bVisible = this->Visible; //было TRUE
+	pvi.bVisible = this->Visible; //Р±С‹Р»Рѕ TRUE
 	pvi.nCoverFlags = PVI_COVER_NORMAL;
 	pvi.tColumnTitle.bConAttr = this->nFarColors[col_PanelColumnTitle];
 	pvi.tColumnTitle.nFlags = PVI_TEXT_CENTER|PVI_TEXT_SKIPSORTMODE;
@@ -1823,7 +1823,7 @@ int CeFullPanelInfo::RegisterPanelView()
 	pvi.pfnReadPreCall.f = OnPreReadConsole;
 	pvi.pfnReadPostCall.f = OnPostReadConsole;
 	pvi.pfnWriteCall.f = OnPreWriteConsoleOutput;
-	// Зарегистрироваться (или обновить положение)
+	// Р—Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊСЃСЏ (РёР»Рё РѕР±РЅРѕРІРёС‚СЊ РїРѕР»РѕР¶РµРЅРёРµ)
 	pvi.bRegister = TRUE;
 	pvi.hWnd = this->hView;
 	BOOL lbRc = FALSE;
@@ -1831,11 +1831,11 @@ int CeFullPanelInfo::RegisterPanelView()
 	int nRc = gfRegisterPanelView(&pvi);
 	gnCreateViewError = 0;
 
-	// Если пока все ОК
+	// Р•СЃР»Рё РїРѕРєР° РІСЃРµ РћРљ
 	if (nRc == 0)
 	{
 		LoadThSet();
-		// Настройки отображения уже должны быть загружены!
+		// РќР°СЃС‚СЂРѕР№РєРё РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ СѓР¶Рµ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ Р·Р°РіСЂСѓР¶РµРЅС‹!
 		_ASSERTE(gThSet.crPalette[0]!=0 || gThSet.crPalette[1]!=0);
 		//memset(&gThSet, 0, sizeof(gThSet));
 		//if (!pvi.ThSet.cbSize || !pvi.ThSet.Thumbs.nImgSize || !pvi.ThSet.Tiles.nImgSize) {
@@ -1844,19 +1844,19 @@ int CeFullPanelInfo::RegisterPanelView()
 		//} else {
 		//_ASSERTE(pvi.ThSet.cbSize == sizeof(gThSet));
 		//memmove(&gThSet, &pvi.ThSet, min(pvi.ThSet.cbSize,sizeof(gThSet)));
-		//// Цвета "консоли"
+		//// Р¦РІРµС‚Р° "РєРѕРЅСЃРѕР»Рё"
 		//for (int i=0; i<16; i++) {
 		//	gcrActiveColors[i] = pvi.crPalette[i];
 		//	gcrFadeColors[i] = pvi.crFadePalette[i];
 		//}
 		this->WorkRect = pvi.WorkRect;
-		// Мы активны? По идее должны, при активации плагина-то
+		// РњС‹ Р°РєС‚РёРІРЅС‹? РџРѕ РёРґРµРµ РґРѕР»Р¶РЅС‹, РїСЂРё Р°РєС‚РёРІР°С†РёРё РїР»Р°РіРёРЅР°-С‚Рѕ
 		gbFadeColors = (pvi.bFadeColors!=FALSE);
 		//gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
 		gcrCurColors = gbFadeColors ? gThSet.crFadePalette : gThSet.crPalette;
-		TODO("Вроде WINDOW_LONG_FADE не используется нигде?");
+		TODO("Р’СЂРѕРґРµ WINDOW_LONG_FADE РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РЅРёРіРґРµ?");
 		SetWindowLong(this->hView, WINDOW_LONG_FADE, gbFadeColors ? 2 : 1);
-		// Подготовить детектор диалогов
+		// РџРѕРґРіРѕС‚РѕРІРёС‚СЊ РґРµС‚РµРєС‚РѕСЂ РґРёР°Р»РѕРіРѕРІ
 		_ASSERTE(gpRgnDetect!=NULL);
 		SMALL_RECT rcFarRect; GetFarRect(&rcFarRect);
 		gpRgnDetect->SetFarRect(&rcFarRect);
@@ -1866,7 +1866,7 @@ int CeFullPanelInfo::RegisterPanelView()
 			gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
 		}
 
-		// Сразу скопировать параметры соответствующего режима к себе
+		// РЎСЂР°Р·Сѓ СЃРєРѕРїРёСЂРѕРІР°С‚СЊ РїР°СЂР°РјРµС‚СЂС‹ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРіРѕ СЂРµР¶РёРјР° Рє СЃРµР±Рµ
 		if (!OnSettingsChanged(FALSE))
 			nRc = -1000;
 
@@ -1886,7 +1886,7 @@ int CeFullPanelInfo::RegisterPanelView()
 		//}
 	}
 
-	// Если можно продолжать - продолжаем
+	// Р•СЃР»Рё РјРѕР¶РЅРѕ РїСЂРѕРґРѕР»Р¶Р°С‚СЊ - РїСЂРѕРґРѕР»Р¶Р°РµРј
 	if (nRc == 0)
 	{
 		gnRgnDetectFlags = gpRgnDetect->GetFlags();
@@ -1911,13 +1911,13 @@ int CeFullPanelInfo::RegisterPanelView()
 		//RedrawWindow(this->hView, NULL, NULL, RDW_INTERNALPAINT|RDW_UPDATENOW);
 	}
 
-	// Если GUI отказался от панели (или уже здесь произошла ошибка) - нужно ее закрыть
+	// Р•СЃР»Рё GUI РѕС‚РєР°Р·Р°Р»СЃСЏ РѕС‚ РїР°РЅРµР»Рё (РёР»Рё СѓР¶Рµ Р·РґРµСЃСЊ РїСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°) - РЅСѓР¶РЅРѕ РµРµ Р·Р°РєСЂС‹С‚СЊ
 	if (nRc != 0)
 	{
-		// Закрыть окно (по WM_CLOSE окно само должно послать WM_QUIT если оно единственное)
+		// Р—Р°РєСЂС‹С‚СЊ РѕРєРЅРѕ (РїРѕ WM_CLOSE РѕРєРЅРѕ СЃР°РјРѕ РґРѕР»Р¶РЅРѕ РїРѕСЃР»Р°С‚СЊ WM_QUIT РµСЃР»Рё РѕРЅРѕ РµРґРёРЅСЃС‚РІРµРЅРЅРѕРµ)
 		_ASSERTE(nRc == 0);
 
-		// Если эта панель единственная - сразу сбрасываем переменные
+		// Р•СЃР»Рё СЌС‚Р° РїР°РЅРµР»СЊ РµРґРёРЅСЃС‚РІРµРЅРЅР°СЏ - СЃСЂР°Р·Сѓ СЃР±СЂР°СЃС‹РІР°РµРј РїРµСЂРµРјРµРЅРЅС‹Рµ
 		if (!pviLeft.hView || !pviRight.hView)
 		{
 			ResetUngetBuffer();
@@ -1926,7 +1926,7 @@ int CeFullPanelInfo::RegisterPanelView()
 
 		PostMessage(this->hView, WM_CLOSE, 0, 0);
 
-		if (gnCreateViewError == 0)  // если ошибку еще не установили - жалуемся на GUI
+		if (gnCreateViewError == 0)  // РµСЃР»Рё РѕС€РёР±РєСѓ РµС‰Рµ РЅРµ СѓСЃС‚Р°РЅРѕРІРёР»Рё - Р¶Р°Р»СѓРµРјСЃСЏ РЅР° GUI
 			gnCreateViewError = CEGuiDontAcceptPanel;
 
 		gnWin32Error = nRc;
@@ -1942,11 +1942,11 @@ int CeFullPanelInfo::RegisterPanelView()
 
 void CeFullPanelInfo::Close()
 {
-	// Отрегистрироваться
+	// РћС‚СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊСЃСЏ
 	UnregisterPanelView();
 	_ASSERTE(hView == NULL);
 	hView = NULL;
-	// Запомнить состояние
+	// Р—Р°РїРѕРјРЅРёС‚СЊ СЃРѕСЃС‚РѕСЏРЅРёРµ
 	DWORD dwMode = pvm_None;
 	HKEY hk = NULL;
 
@@ -1959,21 +1959,21 @@ void CeFullPanelInfo::Close()
 	//}
 }
 
-// может вызываться из любой нити
-// --- // Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
+// РјРѕР¶РµС‚ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РёР· Р»СЋР±РѕР№ РЅРёС‚Рё
+// --- // Р­С‚Р° "РґРёСЃРїР»РµР№РЅР°СЏ" С„СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· РѕСЃРЅРѕРІРЅРѕР№ РЅРёС‚Рё, С‚Р°Рј РјРѕР¶РЅРѕ РґРµСЂРіР°С‚СЊ FAR Api
 int CeFullPanelInfo::UnregisterPanelView(bool abHideOnly/*=false*/)
 {
-	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
+	// РЎС‚СЂР°С…РѕРІРєР° РѕС‚ С‚РѕРіРѕ, С‡С‚Рѕ conemu.dll РјРѕРіР»Рё РІС‹РіСЂСѓР·РёС‚СЊ (unload:...)
 	if (!CheckConEmu() || !gfRegisterPanelView)
 	{
-		// Закрыть окно (по WM_CLOSE окно само должно послать WM_QUIT если оно единственное)
+		// Р—Р°РєСЂС‹С‚СЊ РѕРєРЅРѕ (РїРѕ WM_CLOSE РѕРєРЅРѕ СЃР°РјРѕ РґРѕР»Р¶РЅРѕ РїРѕСЃР»Р°С‚СЊ WM_QUIT РµСЃР»Рё РѕРЅРѕ РµРґРёРЅСЃС‚РІРµРЅРЅРѕРµ)
 		if (this->hView)
 			PostMessage(this->hView, WM_CLOSE, 0, 0);
 
 		return -1;
 	}
 
-	// Если эта панель единственная - сразу сбрасываем переменные
+	// Р•СЃР»Рё СЌС‚Р° РїР°РЅРµР»СЊ РµРґРёРЅСЃС‚РІРµРЅРЅР°СЏ - СЃСЂР°Р·Сѓ СЃР±СЂР°СЃС‹РІР°РµРј РїРµСЂРµРјРµРЅРЅС‹Рµ
 	if (!pviLeft.hView || !pviRight.hView)
 	{
 		ResetUngetBuffer();
@@ -1986,7 +1986,7 @@ int CeFullPanelInfo::UnregisterPanelView(bool abHideOnly/*=false*/)
 	pvi.FarInterfaceSettings.Raw = this->FarInterfaceSettings.Raw;
 	pvi.FarPanelSettings.Raw = this->FarPanelSettings.Raw;
 	pvi.PanelRect = this->PanelRect;
-	// Отрегистрироваться
+	// РћС‚СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊСЃСЏ
 	pvi.bRegister = FALSE;
 	pvi.hWnd = this->hView;
 	int nRc = gfRegisterPanelView(&pvi);
@@ -1997,7 +1997,7 @@ int CeFullPanelInfo::UnregisterPanelView(bool abHideOnly/*=false*/)
 	}
 	else
 	{
-		// Закрыть окно (по WM_CLOSE окно само должно послать WM_QUIT если оно единственное)
+		// Р—Р°РєСЂС‹С‚СЊ РѕРєРЅРѕ (РїРѕ WM_CLOSE РѕРєРЅРѕ СЃР°РјРѕ РґРѕР»Р¶РЅРѕ РїРѕСЃР»Р°С‚СЊ WM_QUIT РµСЃР»Рё РѕРЅРѕ РµРґРёРЅСЃС‚РІРµРЅРЅРѕРµ)
 		PostMessage(this->hView, WM_CLOSE, 0, 0);
 	}
 
@@ -2008,7 +2008,7 @@ BOOL CeFullPanelInfo::OnSettingsChanged(BOOL bInvalidate)
 {
 	BOOL lbRc = TRUE;
 
-	// Сразу скопировать параметры соответствующего режима к себе
+	// РЎСЂР°Р·Сѓ СЃРєРѕРїРёСЂРѕРІР°С‚СЊ РїР°СЂР°РјРµС‚СЂС‹ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРіРѕ СЂРµР¶РёРјР° Рє СЃРµР±Рµ
 	if (PVM == pvm_Thumbnails)
 	{
 		Spaces = gThSet.Thumbs;
@@ -2045,7 +2045,7 @@ void CeFullPanelInfo::RequestSetPos(INT_PTR anCurrentItem, INT_PTR anTopItem, BO
 
 	if (anCurrentItem != -1 && anTopItem != -1)
 	{
-		// Вызвать обновление панели с новой позицией
+		// Р’С‹Р·РІР°С‚СЊ РѕР±РЅРѕРІР»РµРЅРёРµ РїР°РЅРµР»Рё СЃ РЅРѕРІРѕР№ РїРѕР·РёС†РёРµР№
 		this->ReqCurrentItem = anCurrentItem; this->ReqTopPanelItem = anTopItem;
 		this->bRequestItemSet = true;
 
@@ -2157,7 +2157,7 @@ BOOL CeFullPanelInfo::ReallocItems(INT_PTR anCount)
 		if (!CS.Lock(pSection, TRUE, 5000))
 			return FALSE;
 
-		INT_PTR nNewMax = anCount+255; // + немножно про запас
+		INT_PTR nNewMax = anCount+255; // + РЅРµРјРЅРѕР¶РЅРѕ РїСЂРѕ Р·Р°РїР°СЃ
 		ppNew = (CePluginPanelItem**)calloc(nNewMax, sizeof(LPVOID));
 		pNewColors = (CePluginPanelItemColor*)calloc(nNewMax, sizeof(CePluginPanelItemColor));
 
@@ -2215,7 +2215,7 @@ BOOL CeFullPanelInfo::FarItem2CeItem(INT_PTR anIndex,
                                      DWORD            anNumberOfLinks)
 {
 	_ASSERTE(pItemColors && ppItems);
-	// Необходимый размер буфера для хранения элемента
+	// РќРµРѕР±С…РѕРґРёРјС‹Р№ СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РґР»СЏ С…СЂР°РЅРµРЅРёСЏ СЌР»РµРјРµРЅС‚Р°
 	size_t nSize = sizeof(CePluginPanelItem)
 	               +(lstrlen(asName)+1)*2
 	               +((asDesc ? lstrlen(asDesc) : 0)+1)*2;
@@ -2230,7 +2230,7 @@ BOOL CeFullPanelInfo::FarItem2CeItem(INT_PTR anIndex,
 		ppItems[anIndex]->FreeUserData();
 	}
 
-	// Уже может быть выделено достаточно памяти под этот элемент
+	// РЈР¶Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹РґРµР»РµРЅРѕ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РїРѕРґ СЌС‚РѕС‚ СЌР»РµРјРµРЅС‚
 	if ((ppItems[anIndex] == NULL) || (ppItems[anIndex]->cbSize < (DWORD_PTR)nSize))
 	{
 		if (ppItems[anIndex])
@@ -2250,7 +2250,7 @@ BOOL CeFullPanelInfo::FarItem2CeItem(INT_PTR anIndex,
 		ppItems[anIndex]->cbSize = (int)nSize;
 	}
 
-	// Указатель на буфер для имени файла (он идет сразу за структурой, память выделена)
+	// РЈРєР°Р·Р°С‚РµР»СЊ РЅР° Р±СѓС„РµСЂ РґР»СЏ РёРјРµРЅРё С„Р°Р№Р»Р° (РѕРЅ РёРґРµС‚ СЃСЂР°Р·Сѓ Р·Р° СЃС‚СЂСѓРєС‚СѓСЂРѕР№, РїР°РјСЏС‚СЊ РІС‹РґРµР»РµРЅР°)
 	wchar_t* psz = (wchar_t*)(ppItems[anIndex]+1);
 
 	if (ppItems[anIndex]->bIsCurrent != (CurrentItem == anIndex) ||
@@ -2266,13 +2266,13 @@ BOOL CeFullPanelInfo::FarItem2CeItem(INT_PTR anIndex,
 	        ppItems[anIndex]->FindData.nFileSize != anFileSize ||
 	        lstrcmp(psz, asName))
 	{
-		// Лучше сбросить, чтобы мусор не оставался, да и поля в стуктуру могут добавляться, чтобы не забылось...
+		// Р›СѓС‡С€Рµ СЃР±СЂРѕСЃРёС‚СЊ, С‡С‚РѕР±С‹ РјСѓСЃРѕСЂ РЅРµ РѕСЃС‚Р°РІР°Р»СЃСЏ, РґР° Рё РїРѕР»СЏ РІ СЃС‚СѓРєС‚СѓСЂСѓ РјРѕРіСѓС‚ РґРѕР±Р°РІР»СЏС‚СЊСЃСЏ, С‡С‚РѕР±С‹ РЅРµ Р·Р°Р±С‹Р»РѕСЃСЊ...
 		memset(((LPBYTE)ppItems[anIndex])+sizeof(ppItems[anIndex]->cbSize), 0, ppItems[anIndex]->cbSize-sizeof(ppItems[anIndex]->cbSize));
-		// Сброс флага "установленности" цвета
+		// РЎР±СЂРѕСЃ С„Р»Р°РіР° "СѓСЃС‚Р°РЅРѕРІР»РµРЅРЅРѕСЃС‚Рё" С†РІРµС‚Р°
 		pItemColors[anIndex].bItemColorLoaded = FALSE;
 	}
 
-	// Копируем
+	// РљРѕРїРёСЂСѓРµРј
 	ppItems[anIndex]->bIsCurrent = (CurrentItem == anIndex);
 	ppItems[anIndex]->bVirtualItem = abVirtualItem;
 	ppItems[anIndex]->hPlugin = ahPlugin;

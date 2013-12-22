@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2013 Maximus5
 All rights reserved.
@@ -61,7 +61,7 @@ void GenerateTreeDebugBreak(DWORD nExcludePID);
 void PrintDebugInfo()
 {
 	_printf("Debugger successfully attached to PID=%u\n", gpSrv->dwRootProcess);
-	TODO("Вывести информацию о загруженных модулях, потоках, и стеке потоков");
+	TODO("Р’С‹РІРµСЃС‚Рё РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ Р·Р°РіСЂСѓР¶РµРЅРЅС‹С… РјРѕРґСѓР»СЏС…, РїРѕС‚РѕРєР°С…, Рё СЃС‚РµРєРµ РїРѕС‚РѕРєРѕРІ");
 }
 
 void UpdateDebuggerTitle()
@@ -85,7 +85,7 @@ int RunDebugger()
 
 	UpdateDebuggerTitle();
 
-	// Если это новая консоль - увеличить ее размер, для удобства
+	// Р•СЃР»Рё СЌС‚Рѕ РЅРѕРІР°СЏ РєРѕРЅСЃРѕР»СЊ - СѓРІРµР»РёС‡РёС‚СЊ РµРµ СЂР°Р·РјРµСЂ, РґР»СЏ СѓРґРѕР±СЃС‚РІР°
 	if (IsWindowVisible(ghConWnd))
 	{
 		HANDLE hCon = ghConOut;
@@ -112,7 +112,7 @@ int RunDebugger()
 		//}
 	}
 
-	// Вывести в консоль информацию о версии.
+	// Р’С‹РІРµСЃС‚Рё РІ РєРѕРЅСЃРѕР»СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РІРµСЂСЃРёРё.
 	PrintVersion();
 	#ifdef SHOW_DEBUG_STARTED_MSGBOX
 	wchar_t szInfo[128];
@@ -127,8 +127,8 @@ int RunDebugger()
 	//	_printf("Can't start debugger! ErrCode=0x%08X\n", dwErr);
 	//	return CERR_CANTSTARTDEBUGGER;
 	//}
-	//// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
-	//// к закрытию "отлаживаемой" программы
+	//// Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ, С‡С‚РѕР±С‹ Р·Р°РєСЂС‹С‚РёРµ РґРµР±Р°РіРµСЂР° (РЅР°С€ РїСЂРѕС†РµСЃСЃ) РЅРµ РїСЂРёРІРµР»Рѕ
+	//// Рє Р·Р°РєСЂС‹С‚РёСЋ "РѕС‚Р»Р°Р¶РёРІР°РµРјРѕР№" РїСЂРѕРіСЂР°РјРјС‹
 	//pfnDebugActiveProcessStop = (FDebugActiveProcessStop)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugActiveProcessStop");
 	//pfnDebugSetProcessKillOnExit = (FDebugSetProcessKillOnExit)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugSetProcessKillOnExit");
 	//if (pfnDebugSetProcessKillOnExit)
@@ -150,7 +150,7 @@ int RunDebugger()
 	_ASSERTE(((gpSrv->hRootProcess!=NULL) || (gpSrv->DbgInfo.pszDebuggingCmdLine!=NULL)) && "Process handle must be opened");
 
 	gpSrv->DbgInfo.hDebugReady = CreateEvent(NULL, FALSE, FALSE, NULL);
-	// Перенес обработку отладочных событий в отдельную нить, чтобы случайно не заблокироваться с главной
+	// РџРµСЂРµРЅРµСЃ РѕР±СЂР°Р±РѕС‚РєСѓ РѕС‚Р»Р°РґРѕС‡РЅС‹С… СЃРѕР±С‹С‚РёР№ РІ РѕС‚РґРµР»СЊРЅСѓСЋ РЅРёС‚СЊ, С‡С‚РѕР±С‹ СЃР»СѓС‡Р°Р№РЅРѕ РЅРµ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°С‚СЊСЃСЏ СЃ РіР»Р°РІРЅРѕР№
 	gpSrv->DbgInfo.hDebugThread = CreateThread(NULL, 0, DebugThread, NULL, 0, &gpSrv->DbgInfo.dwDebugThreadId);
 	HANDLE hEvents[2] = {gpSrv->DbgInfo.hDebugReady, gpSrv->DbgInfo.hDebugThread};
 	DWORD nReady = WaitForMultipleObjects(countof(hEvents), hEvents, FALSE, INFINITE);
@@ -192,12 +192,12 @@ HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
 
 		if (gpSrv->DbgInfo.pDebugTreeProcesses->Get(nPID, &pi) && pi.hProcess)
 		{
-			// Уже
+			// РЈР¶Рµ
 			hProcess = pi.hProcess;
 		}
 		else
 		{
-			// Нужно открыть дескриптор процесса, это запущенный дочерний второго уровня
+			// РќСѓР¶РЅРѕ РѕС‚РєСЂС‹С‚СЊ РґРµСЃРєСЂРёРїС‚РѕСЂ РїСЂРѕС†РµСЃСЃР°, СЌС‚Рѕ Р·Р°РїСѓС‰РµРЅРЅС‹Р№ РґРѕС‡РµСЂРЅРёР№ РІС‚РѕСЂРѕРіРѕ СѓСЂРѕРІРЅСЏ
 
 			DWORD dwFlags = PROCESS_QUERY_INFORMATION|SYNCHRONIZE;
 
@@ -207,7 +207,7 @@ HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
 			CAdjustProcessToken token;
 			token.Enable(1, SE_DEBUG_NAME);
 
-			// Сначала - пробуем "все права"
+			// РЎРЅР°С‡Р°Р»Р° - РїСЂРѕР±СѓРµРј "РІСЃРµ РїСЂР°РІР°"
 			// PROCESS_ALL_ACCESS (defined in new SDK) may fails on WinXP!
 			hProcess = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, nPID);
 			if (!hProcess)
@@ -226,8 +226,8 @@ HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
 
 			if (nPID != gpSrv->dwRootProcess)
 			{
-				// Запомнить дескриптор
-				_ASSERTE(pi.nPID == nPID); // уже должен быть
+				// Р—Р°РїРѕРјРЅРёС‚СЊ РґРµСЃРєСЂРёРїС‚РѕСЂ
+				_ASSERTE(pi.nPID == nPID); // СѓР¶Рµ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ
 				pi.nPID = nPID;
 				pi.hProcess = hProcess;
 				gpSrv->DbgInfo.pDebugTreeProcesses->Set(nPID, pi);
@@ -241,7 +241,7 @@ HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
 	return hProcess;
 }
 
-// Используется и в обычном, и в "отладочном" режиме
+// РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ Рё РІ РѕР±С‹С‡РЅРѕРј, Рё РІ "РѕС‚Р»Р°РґРѕС‡РЅРѕРј" СЂРµР¶РёРјРµ
 int AttachRootProcessHandle()
 {
 	if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
@@ -251,7 +251,7 @@ int AttachRootProcessHandle()
 	}
 
 	DWORD dwErr = 0;
-	// Нужно открыть HANDLE корневого процесса
+	// РќСѓР¶РЅРѕ РѕС‚РєСЂС‹С‚СЊ HANDLE РєРѕСЂРЅРµРІРѕРіРѕ РїСЂРѕС†РµСЃСЃР°
 	_ASSERTE(gpSrv->hRootProcess==NULL || gpSrv->hRootProcess==GetCurrentProcess());
 	if (gpSrv->dwRootProcess == GetCurrentProcessId())
 	{
@@ -319,7 +319,7 @@ void AttachConHost(DWORD nConHostPID)
 
 	if (!nErrCode)
 	{
-		//TODO: Запустить ConEmuC (требуемой битности) под админом
+		//TODO: Р—Р°РїСѓСЃС‚РёС‚СЊ ConEmuC (С‚СЂРµР±СѓРµРјРѕР№ Р±РёС‚РЅРѕСЃС‚Рё) РїРѕРґ Р°РґРјРёРЅРѕРј
 	}
 }
 
@@ -381,7 +381,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		}
 		else
 		{
-			// Взять из pDebugAttachProcesses
+			// Р’Р·СЏС‚СЊ РёР· pDebugAttachProcesses
 			if (!gpSrv->DbgInfo.pDebugAttachProcesses)
 				break;
 			if (!gpSrv->DbgInfo.pDebugAttachProcesses->pop_back(nDbgProcessID))
@@ -398,7 +398,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		_ASSERTE(hDbgProcess!=NULL && "Process handle must be opened");
 
 
-		// Битность отладчика должна соответствовать битности приложения!
+		// Р‘РёС‚РЅРѕСЃС‚СЊ РѕС‚Р»Р°РґС‡РёРєР° РґРѕР»Р¶РЅР° СЃРѕРѕС‚РІРµС‚СЃС‚РІРѕРІР°С‚СЊ Р±РёС‚РЅРѕСЃС‚Рё РїСЂРёР»РѕР¶РµРЅРёСЏ!
 		if (IsWindows64())
 		{
 			int nBits = GetProcessBits(nDbgProcessID, hDbgProcess);
@@ -429,7 +429,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 					PROCESS_INFORMATION pi = {};
 					if (CreateProcess(NULL, szCmdLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
 					{
-						// Ждать НЕ будем, сразу на выход
+						// Р–РґР°С‚СЊ РќР• Р±СѓРґРµРј, СЃСЂР°Р·Сѓ РЅР° РІС‹С…РѕРґ
 
 						//HANDLE hEvents[2] = {pi.hProcess, ghExitQueryEvent};
 						//nWait = WaitForMultipleObjects(countof(hEvents), hEvents, FALSE, INFINITE);
@@ -447,7 +447,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 						//	goto done;
 						//}
 
-						// Может там еще процессы в списке на дамп?
+						// РњРѕР¶РµС‚ С‚Р°Рј РµС‰Рµ РїСЂРѕС†РµСЃСЃС‹ РІ СЃРїРёСЃРєРµ РЅР° РґР°РјРї?
 						continue;
 					}
 					else
@@ -506,8 +506,8 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	}
 	/* **************** */
 
-	// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
-	// к закрытию "отлаживаемой" программы
+	// Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ, С‡С‚РѕР±С‹ Р·Р°РєСЂС‹С‚РёРµ РґРµР±Р°РіРµСЂР° (РЅР°С€ РїСЂРѕС†РµСЃСЃ) РЅРµ РїСЂРёРІРµР»Рѕ
+	// Рє Р·Р°РєСЂС‹С‚РёСЋ "РѕС‚Р»Р°Р¶РёРІР°РµРјРѕР№" РїСЂРѕРіСЂР°РјРјС‹
 	pfnDebugActiveProcessStop = (FDebugActiveProcessStop)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugActiveProcessStop");
 	pfnDebugSetProcessKillOnExit = (FDebugSetProcessKillOnExit)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugSetProcessKillOnExit");
 
@@ -637,7 +637,7 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 		return;
 	}
 
-	// Т.к. в режиме "ProcessTree" мы пишем пачку дампов - спрашивать тип дампа будем один раз.
+	// Рў.Рє. РІ СЂРµР¶РёРјРµ "ProcessTree" РјС‹ РїРёС€РµРј РїР°С‡РєСѓ РґР°РјРїРѕРІ - СЃРїСЂР°С€РёРІР°С‚СЊ С‚РёРї РґР°РјРїР° Р±СѓРґРµРј РѕРґРёРЅ СЂР°Р·.
 	if (gpSrv->DbgInfo.bDebugProcessTree && (gpSrv->DbgInfo.nDebugDumpProcess <= 1))
 	{
 		gpSrv->DbgInfo.nDebugDumpProcess = (nBtn == IDNO) ? 3 : 2;
@@ -677,7 +677,7 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 			if (MessageBoxW(NULL, szErrInfo, szTitle, MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
 				break;
 
-			continue; // еще раз выбрать
+			continue; // РµС‰Рµ СЂР°Р· РІС‹Р±СЂР°С‚СЊ
 		}
 
 		if (!gpSrv->DbgInfo.hDbghelp)
@@ -692,7 +692,7 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 				if (MessageBoxW(NULL, szErrInfo, szTitle, MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
 					break;
 
-				continue; // еще раз выбрать
+				continue; // РµС‰Рµ СЂР°Р· РІС‹Р±СЂР°С‚СЊ
 			}
 		}
 
@@ -719,10 +719,10 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 		{
 			MINIDUMP_EXCEPTION_INFORMATION mei = {dwThreadId};
 			EXCEPTION_POINTERS ep = {pExceptionRecord};
-			ep.ContextRecord = NULL; // Непонятно, откуда его можно взять
+			ep.ContextRecord = NULL; // РќРµРїРѕРЅСЏС‚РЅРѕ, РѕС‚РєСѓРґР° РµРіРѕ РјРѕР¶РЅРѕ РІР·СЏС‚СЊ
 			mei.ExceptionPointers = &ep;
 			mei.ClientPointers = FALSE;
-			PMINIDUMP_EXCEPTION_INFORMATION pmei = NULL; // пока
+			PMINIDUMP_EXCEPTION_INFORMATION pmei = NULL; // РїРѕРєР°
 			_printf("Creating minidump: ");
 			_wprintf(dmpfile);
 			_printf("...");
@@ -769,10 +769,10 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 	//	FreeLibrary(hCOMDLG32);
 	//}
 
-	// В Win2k еще не было функции "отцепиться от процесса"
+	// Р’ Win2k РµС‰Рµ РЅРµ Р±С‹Р»Рѕ С„СѓРЅРєС†РёРё "РѕС‚С†РµРїРёС‚СЊСЃСЏ РѕС‚ РїСЂРѕС†РµСЃСЃР°"
 	if (bDumpSucceeded && gpSrv->DbgInfo.nDebugDumpProcess && !gpSrv->DbgInfo.bDebugProcessTree && (gnOsVer >= 0x0501))
 	{
-		// Дело сделали, закрываемся
+		// Р”РµР»Рѕ СЃРґРµР»Р°Р»Рё, Р·Р°РєСЂС‹РІР°РµРјСЃСЏ
 		SetTerminateEvent(ste_WriteMiniDump);
 
 		//if (pfnGetConsoleProcessList)
@@ -781,7 +781,7 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 		//	DWORD nConsolePids[128] = {};
 		//	nCurCount = pfnGetConsoleProcessList(nConsolePids, countof(nConsolePids));
 
-		//	// Но только если в консоли кроме нас никого нет
+		//	// РќРѕ С‚РѕР»СЊРєРѕ РµСЃР»Рё РІ РєРѕРЅСЃРѕР»Рё РєСЂРѕРјРµ РЅР°СЃ РЅРёРєРѕРіРѕ РЅРµС‚
 		//	if (nCurCount == 0)
 		//	{
 		//		PostMessage(ghConWnd, WM_CLOSE, 0, 0);
@@ -804,7 +804,7 @@ void ProcessDebugEvent()
 	#ifdef _DEBUG
 	DWORD dwErr = GetLastError();
 	#endif
-	static bool bFirstExitThreadEvent = false; // Чтобы вывести на экран подсказку по возможностям "дебаггера"
+	static bool bFirstExitThreadEvent = false; // Р§С‚РѕР±С‹ РІС‹РІРµСЃС‚Рё РЅР° СЌРєСЂР°РЅ РїРѕРґСЃРєР°Р·РєСѓ РїРѕ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЏРј "РґРµР±Р°РіРіРµСЂР°"
 	//HMODULE hCOMDLG32 = NULL;
 	//typedef BOOL (WINAPI* GetSaveFileName_t)(LPOPENFILENAMEW lpofn);
 	//GetSaveFileName_t _GetSaveFileName = NULL;
@@ -845,7 +845,7 @@ void ProcessDebugEvent()
 					}
 					else
 					{
-						// Сразу сделать дамп и выйти
+						// РЎСЂР°Р·Сѓ СЃРґРµР»Р°С‚СЊ РґР°РјРї Рё РІС‹Р№С‚Рё
 						HandlerRoutine(CTRL_BREAK_EVENT);
 					}
 				}
@@ -1053,7 +1053,7 @@ void ProcessDebugEvent()
 				if (gpSrv->DbgInfo.bDebugProcessTree
 					&& (!lbNonContinuable && (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT)))
 				{
-					// Когда отладчик цепляется к процессу в первый раз - возникает EXCEPTION_BREAKPOINT
+					// РљРѕРіРґР° РѕС‚Р»Р°РґС‡РёРє С†РµРїР»СЏРµС‚СЃСЏ Рє РїСЂРѕС†РµСЃСЃСѓ РІ РїРµСЂРІС‹Р№ СЂР°Р· - РІРѕР·РЅРёРєР°РµС‚ EXCEPTION_BREAKPOINT
 					CEDebugProcessInfo pi = {};
 					if (gpSrv->DbgInfo.pDebugTreeProcesses
 						&& gpSrv->DbgInfo.pDebugTreeProcesses->Get(evt.dwProcessId, &pi))
@@ -1092,7 +1092,7 @@ void ProcessDebugEvent()
 						}
 					}
 
-					gpSrv->DbgInfo.bDebuggerRequestDump = FALSE; // один раз
+					gpSrv->DbgInfo.bDebuggerRequestDump = FALSE; // РѕРґРёРЅ СЂР°Р·
 
 					char szConfirm[2048];
 
@@ -1197,7 +1197,7 @@ void ProcessDebugEvent()
 			break;
 		}
 
-		// Продолжить отлаживаемый процесс
+		// РџСЂРѕРґРѕР»Р¶РёС‚СЊ РѕС‚Р»Р°Р¶РёРІР°РµРјС‹Р№ РїСЂРѕС†РµСЃСЃ
 		ContinueDebugEvent(evt.dwProcessId, evt.dwThreadId, dwContinueStatus);
 	}
 	

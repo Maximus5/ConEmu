@@ -1,12 +1,12 @@
-
+п»ї
 #pragma once
 
-extern RECT    grcConEmuClient;   // Для аттача гуевых окон
-extern BOOL    gbAttachGuiClient; // Для аттача гуевых окон
-extern BOOL    gbGuiClientAttached; // Для аттача гуевых окон (успешно подключились)
-extern BOOL    gbGuiClientExternMode; // Если нужно показать Gui-приложение вне вкладки ConEmu
-extern struct GuiStylesAndShifts gGuiClientStyles; // Запомнить сдвиги окна внутри ConEmu
-extern HWND    ghAttachGuiClient; // Чтобы ShowWindow перехватить
+extern RECT    grcConEmuClient;   // Р”Р»СЏ Р°С‚С‚Р°С‡Р° РіСѓРµРІС‹С… РѕРєРѕРЅ
+extern BOOL    gbAttachGuiClient; // Р”Р»СЏ Р°С‚С‚Р°С‡Р° РіСѓРµРІС‹С… РѕРєРѕРЅ
+extern BOOL    gbGuiClientAttached; // Р”Р»СЏ Р°С‚С‚Р°С‡Р° РіСѓРµРІС‹С… РѕРєРѕРЅ (СѓСЃРїРµС€РЅРѕ РїРѕРґРєР»СЋС‡РёР»РёСЃСЊ)
+extern BOOL    gbGuiClientExternMode; // Р•СЃР»Рё РЅСѓР¶РЅРѕ РїРѕРєР°Р·Р°С‚СЊ Gui-РїСЂРёР»РѕР¶РµРЅРёРµ РІРЅРµ РІРєР»Р°РґРєРё ConEmu
+extern struct GuiStylesAndShifts gGuiClientStyles; // Р—Р°РїРѕРјРЅРёС‚СЊ СЃРґРІРёРіРё РѕРєРЅР° РІРЅСѓС‚СЂРё ConEmu
+extern HWND    ghAttachGuiClient; // Р§С‚РѕР±С‹ ShowWindow РїРµСЂРµС…РІР°С‚РёС‚СЊ
 extern DWORD   gnAttachGuiClientFlags; // enum ATTACHGUIAPP_FLAGS
 extern DWORD   gnAttachGuiClientStyle, gnAttachGuiClientStyleEx;
 

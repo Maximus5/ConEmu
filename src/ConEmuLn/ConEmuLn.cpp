@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2010-2011 Maximus5
 All rights reserved.
@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifdef _DEBUG
-//  Раскомментировать, чтобы сразу после загрузки плагина показать MessageBox, чтобы прицепиться дебаггером
+//  Р Р°СЃРєРѕРјРјРµРЅС‚РёСЂРѕРІР°С‚СЊ, С‡С‚РѕР±С‹ СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ Р·Р°РіСЂСѓР·РєРё РїР»Р°РіРёРЅР° РїРѕРєР°Р·Р°С‚СЊ MessageBox, С‡С‚РѕР±С‹ РїСЂРёС†РµРїРёС‚СЊСЃСЏ РґРµР±Р°РіРіРµСЂРѕРј
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_WRITING_RECTS
 #endif
@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif
-#include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
+#include "../common/pluginW1761.hpp" // РћС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ 995 РЅР°Р»РёС‡РёРµРј SynchoApi
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif
@@ -59,7 +59,7 @@ extern "C" {
 };
 #endif
 
-HMODULE ghPluginModule = NULL; // ConEmuLn.dll - сам плагин
+HMODULE ghPluginModule = NULL; // ConEmuLn.dll - СЃР°Рј РїР»Р°РіРёРЅ
 //wchar_t* gszRootKey = NULL;
 FarVersion gFarVersion = {};
 static RegisterBackground_t gfRegisterBackground = NULL;
@@ -75,10 +75,10 @@ ConEmuLnSettings gSettings[] = {
 };
 
 BOOL gbBackgroundEnabled = FALSE;
-COLORREF gcrLinesColor = RGB(0,0,0xA8); // чуть светлее синего
-int giHilightType = 0; // 0 - линии, 1 - полосы
+COLORREF gcrLinesColor = RGB(0,0,0xA8); // С‡СѓС‚СЊ СЃРІРµС‚Р»РµРµ СЃРёРЅРµРіРѕ
+int giHilightType = 0; // 0 - Р»РёРЅРёРё, 1 - РїРѕР»РѕСЃС‹
 BOOL gbHilightPlugins = FALSE;
-COLORREF gcrHilightPlugBack = RGB(0xA8,0,0); // чуть светлее красного
+COLORREF gcrHilightPlugBack = RGB(0xA8,0,0); // С‡СѓС‚СЊ СЃРІРµС‚Р»РµРµ РєСЂР°СЃРЅРѕРіРѕ
 
 
 
@@ -288,7 +288,7 @@ void WINAPI OnConEmuLoaded(struct ConEmuLoadedArg* pConEmuInfo)
 
 	if (gfRegisterBackground && gbBackgroundEnabled)
 	{
-		StartPlugin(FALSE/*считать параметры из реестра*/);
+		StartPlugin(FALSE/*СЃС‡РёС‚Р°С‚СЊ РїР°СЂР°РјРµС‚СЂС‹ РёР· СЂРµРµСЃС‚СЂР°*/);
 	}
 }
 
@@ -405,7 +405,7 @@ void StartPlugin(BOOL bConfigure)
 {
 	if (gbInStartPlugin)
 	{
-		// Вложенных вызовов быть не должно
+		// Р’Р»РѕР¶РµРЅРЅС‹С… РІС‹Р·РѕРІРѕРІ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ
 		_ASSERTE(gbInStartPlugin==false);
 		return;
 	}
@@ -450,7 +450,7 @@ void StartPlugin(BOOL bConfigure)
 		bWasRegistered = false;
 	}
 
-	// Вернуть флаг обратно
+	// Р’РµСЂРЅСѓС‚СЊ С„Р»Р°Рі РѕР±СЂР°С‚РЅРѕ
 	gbInStartPlugin = false;
 }
 

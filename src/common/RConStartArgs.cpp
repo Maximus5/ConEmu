@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -228,8 +228,8 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 			return false;
 	}
 
-	// Директория запуска. В большинстве случаев совпадает с CurDir в conemu.exe,
-	// но может быть задана из консоли, если запуск идет через "-new_console"
+	// Р”РёСЂРµРєС‚РѕСЂРёСЏ Р·Р°РїСѓСЃРєР°. Р’ Р±РѕР»СЊС€РёРЅСЃС‚РІРµ СЃР»СѓС‡Р°РµРІ СЃРѕРІРїР°РґР°РµС‚ СЃ CurDir РІ conemu.exe,
+	// РЅРѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р·Р°РґР°РЅР° РёР· РєРѕРЅСЃРѕР»Рё, РµСЃР»Рё Р·Р°РїСѓСЃРє РёРґРµС‚ С‡РµСЂРµР· "-new_console"
 	_ASSERTE(this->pszStartupDir==NULL);
 
 	struct CopyValues { wchar_t** ppDst; LPCWSTR pSrc; } values[] =
@@ -299,8 +299,8 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 
 RConStartArgs::~RConStartArgs()
 {
-	SafeFree(pszSpecialCmd); // именно SafeFree
-	SafeFree(pszStartupDir); // именно SafeFree
+	SafeFree(pszSpecialCmd); // РёРјРµРЅРЅРѕ SafeFree
+	SafeFree(pszStartupDir); // РёРјРµРЅРЅРѕ SafeFree
 	SafeFree(pszRenameTab);
 	SafeFree(pszIconFile);
 	SafeFree(pszPalette);
@@ -319,7 +319,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 {
 	wchar_t* pszFull = NULL;
 	size_t cchMaxLen =
-				 (pszSpecialCmd ? (lstrlen(pszSpecialCmd) + 3) : 0); // только команда
+				 (pszSpecialCmd ? (lstrlen(pszSpecialCmd) + 3) : 0); // С‚РѕР»СЊРєРѕ РєРѕРјР°РЅРґР°
 	cchMaxLen += (pszStartupDir ? (lstrlen(pszStartupDir) + 20) : 0); // "-new_console:d:..."
 	cchMaxLen += (pszRenameTab  ? (lstrlen(pszRenameTab)*2 + 20) : 0); // "-new_console:t:..."
 	cchMaxLen += (pszIconFile   ? (lstrlen(pszIconFile) + 20) : 0); // "-new_console:C:..."
@@ -357,10 +357,10 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 		else
 			*pszFull = 0;						
 
-		// Не окавычиваем. Этим должен озаботиться пользователь
+		// РќРµ РѕРєР°РІС‹С‡РёРІР°РµРј. Р­С‚РёРј РґРѕР»Р¶РµРЅ РѕР·Р°Р±РѕС‚РёС‚СЊСЃСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ
 		_wcscat_c(pszFull, cchMaxLen, pszSpecialCmd);
 
-		//131008 - лишние пробелы не нужны
+		//131008 - Р»РёС€РЅРёРµ РїСЂРѕР±РµР»С‹ РЅРµ РЅСѓР¶РЅС‹
 		wchar_t* pS = pszFull + lstrlen(pszFull);
 		while ((pS > pszFull) && wcschr(L" \t\r\n", *(pS - 1)))
 			*(--pS) = 0;
@@ -604,8 +604,8 @@ HANDLE RConStartArgs::CheckUserToken()
 // Returns ">0" - when changes was made
 //  0 - no changes
 // -1 - error
-// bForceCurConsole==true, если разбор параметров идет 
-//   при запуске Tasks из GUI
+// bForceCurConsole==true, РµСЃР»Рё СЂР°Р·Р±РѕСЂ РїР°СЂР°РјРµС‚СЂРѕРІ РёРґРµС‚ 
+//   РїСЂРё Р·Р°РїСѓСЃРєРµ Tasks РёР· GUI
 int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 {
 	bNewConsole = FALSE;
@@ -618,7 +618,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 	int nChanges = 0;
 	
-	// 120115 - Если первый аргумент - "ConEmu.exe" или "ConEmu64.exe" - не обрабатывать "-cur_console" и "-new_console"
+	// 120115 - Р•СЃР»Рё РїРµСЂРІС‹Р№ Р°СЂРіСѓРјРµРЅС‚ - "ConEmu.exe" РёР»Рё "ConEmu64.exe" - РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ "-cur_console" Рё "-new_console"
 	{
 		LPCWSTR pszTemp = pszSpecialCmd;
 		CmdArg szExe;
@@ -636,9 +636,9 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 	}
 	
 
-	// 111211 - здесь может быть передан "-new_console:..."
+	// 111211 - Р·РґРµСЃСЊ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїРµСЂРµРґР°РЅ "-new_console:..."
 	LPCWSTR pszNewCon = L"-new_console";
-	// 120108 - или "-cur_console:..." для уточнения параметров запуска команд (из фара например)
+	// 120108 - РёР»Рё "-cur_console:..." РґР»СЏ СѓС‚РѕС‡РЅРµРЅРёСЏ РїР°СЂР°РјРµС‚СЂРѕРІ Р·Р°РїСѓСЃРєР° РєРѕРјР°РЅРґ (РёР· С„Р°СЂР° РЅР°РїСЂРёРјРµСЂ)
 	LPCWSTR pszCurCon = L"-cur_console";
 	int nNewConLen = lstrlen(pszNewCon);
 	_ASSERTE(lstrlen(pszCurCon)==nNewConLen);
@@ -655,19 +655,19 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 		else if (!pszFind)
 			break;
 
-		// Проверка валидности
+		// РџСЂРѕРІРµСЂРєР° РІР°Р»РёРґРЅРѕСЃС‚Рё
 		_ASSERTE(pszFind >= pszSpecialCmd);
-		if (!(((pszFind == pszFrom) || (*(pszFind-1) == L'"') || (*(pszFind-1) == L' ')) // начало аргумента
+		if (!(((pszFind == pszFrom) || (*(pszFind-1) == L'"') || (*(pszFind-1) == L' ')) // РЅР°С‡Р°Р»Рѕ Р°СЂРіСѓРјРµРЅС‚Р°
 			&& (pszFind[nNewConLen] == L' ' || pszFind[nNewConLen] == L':' 
 				|| pszFind[nNewConLen] == L'"' || pszFind[nNewConLen] == 0)))
 		{
-			// НЕ наш аргумент
+			// РќР• РЅР°С€ Р°СЂРіСѓРјРµРЅС‚
 			pszFrom = pszFind+nNewConLen;
 		}
 		else
 		{
-			// -- не будем пока, мешает. например, при запуске задач
-			//// По умолчанию, принудительно включить "Press Enter or Esc to close console"
+			// -- РЅРµ Р±СѓРґРµРј РїРѕРєР°, РјРµС€Р°РµС‚. РЅР°РїСЂРёРјРµСЂ, РїСЂРё Р·Р°РїСѓСЃРєРµ Р·Р°РґР°С‡
+			//// РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ, РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ РІРєР»СЋС‡РёС‚СЊ "Press Enter or Esc to close console"
 			//if (!bForceCurConsole)
 			//	eConfirmation = eConfAlways;
 		
@@ -683,7 +683,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			}
 			else if (*pszEnd != L':')
 			{
-				// Конец
+				// РљРѕРЅРµС†
 				_ASSERTE(*pszEnd == L' ' || *pszEnd == 0);
 			}
 			else
@@ -697,7 +697,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					_ASSERTE(*pszEnd == L':');
 				}
 
-				// Найти конец аргумента
+				// РќР°Р№С‚Рё РєРѕРЅРµС† Р°СЂРіСѓРјРµРЅС‚Р°
 				const wchar_t* pszArgEnd = pszEnd;
 				while (*pszArgEnd)
 				{
@@ -724,7 +724,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 				}
 				EndFound:
 
-				// Обработка доп.параметров -new_console:xxx
+				// РћР±СЂР°Р±РѕС‚РєР° РґРѕРї.РїР°СЂР°РјРµС‚СЂРѕРІ -new_console:xxx
 				bool lbReady = false;
 				while (!lbReady && *pszEnd)
 				{
@@ -732,7 +732,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					switch (cOpt)
 					{
 					//case L'-':
-					//	bStop = true; // следующие "-new_console" - не трогать!
+					//	bStop = true; // СЃР»РµРґСѓСЋС‰РёРµ "-new_console" - РЅРµ С‚СЂРѕРіР°С‚СЊ!
 					//	break;
 					case L'"':
 					case L' ':
@@ -741,11 +741,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						break;
 						
 					case L'b':
-						// b - background, не активировать таб
+						// b - background, РЅРµ Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ С‚Р°Р±
 						bBackgroundTab = TRUE; bForegroungTab = FALSE;
 						break;
 					case L'f':
-						// f - foreground, активировать таб (аналог ">" в Tasks)
+						// f - foreground, Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ С‚Р°Р± (Р°РЅР°Р»РѕРі ">" РІ Tasks)
 						bForegroungTab = TRUE; bBackgroundTab = FALSE;
 						break;
 
@@ -804,7 +804,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						break;
 
 					case L'h':
-						// "h0" - отключить буфер, "h9999" - включить буфер в 9999 строк
+						// "h0" - РѕС‚РєР»СЋС‡РёС‚СЊ Р±СѓС„РµСЂ, "h9999" - РІРєР»СЋС‡РёС‚СЊ Р±СѓС„РµСЂ РІ 9999 СЃС‚СЂРѕРє
 						{
 							bBufHeight = TRUE;
 							if (isDigit(*pszEnd))
@@ -822,12 +822,12 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						break;
 						
 					case L'n':
-						// n - отключить "Press Enter or Esc to close console"
+						// n - РѕС‚РєР»СЋС‡РёС‚СЊ "Press Enter or Esc to close console"
 						eConfirmation = eConfNever;
 						break;
 						
 					case L'c':
-						// c - принудительно включить "Press Enter or Esc to close console"
+						// c - РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ РІРєР»СЋС‡РёС‚СЊ "Press Enter or Esc to close console"
 						eConfirmation = eConfAlways;
 						break;
 						
@@ -845,9 +845,9 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 					case L's':
 						// s[<SplitTab>T][<Percents>](H|V)
-						// Пример: "s3T30H" - разбить 3-ий таб. будет создан новый Pane справа, шириной 30% от 3-го таба.
+						// РџСЂРёРјРµСЂ: "s3T30H" - СЂР°Р·Р±РёС‚СЊ 3-РёР№ С‚Р°Р±. Р±СѓРґРµС‚ СЃРѕР·РґР°РЅ РЅРѕРІС‹Р№ Pane СЃРїСЂР°РІР°, С€РёСЂРёРЅРѕР№ 30% РѕС‚ 3-РіРѕ С‚Р°Р±Р°.
 						{
-							UINT nTab = 0 /*active*/, nValue = /*пополам*/DefaultSplitValue/10;
+							UINT nTab = 0 /*active*/, nValue = /*РїРѕРїРѕР»Р°Рј*/DefaultSplitValue/10;
 							bool bDisableSplit = false;
 							while (*pszEnd)
 							{
@@ -904,8 +904,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							{
 								if (!eSplit)
 									eSplit = eSplitHorz;
-								// Для удобства, пользователь задает размер НОВОЙ части
-								nSplitValue = 1000-max(1,min(nValue*10,999)); // проценты
+								// Р”Р»СЏ СѓРґРѕР±СЃС‚РІР°, РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р·Р°РґР°РµС‚ СЂР°Р·РјРµСЂ РќРћР’РћР™ С‡Р°СЃС‚Рё
+								nSplitValue = 1000-max(1,min(nValue*10,999)); // РїСЂРѕС†РµРЅС‚С‹
 								_ASSERTE(nSplitValue>=1 && nSplitValue<1000);
 								nSplitPane = nTab;
 							}
@@ -999,8 +999,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 								switch (cOpt)
 								{
 								case L'd':
-									// Например, "%USERPROFILE%"
-									// TODO("А надо ли разворачивать их тут? Наверное при запуске под другим юзером некорректно? Хотя... все равно до переменных не доберемся");
+									// РќР°РїСЂРёРјРµСЂ, "%USERPROFILE%"
+									// TODO("Рђ РЅР°РґРѕ Р»Рё СЂР°Р·РІРѕСЂР°С‡РёРІР°С‚СЊ РёС… С‚СѓС‚? РќР°РІРµСЂРЅРѕРµ РїСЂРё Р·Р°РїСѓСЃРєРµ РїРѕРґ РґСЂСѓРіРёРј СЋР·РµСЂРѕРј РЅРµРєРѕСЂСЂРµРєС‚РЅРѕ? РҐРѕС‚СЏ... РІСЃРµ СЂР°РІРЅРѕ РґРѕ РїРµСЂРµРјРµРЅРЅС‹С… РЅРµ РґРѕР±РµСЂРµРјСЃСЏ");
 									if (wcschr(pszStartupDir, L'%'))
 									{
 										wchar_t* pszExpand = NULL;
@@ -1057,8 +1057,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 			if (pszEnd > pszFind)
 			{
-				// pszEnd должен указывать на конец -new_console[:...] / -cur_console[:...]
-				// и включать обрамляющую кавычку, если он окавычен
+				// pszEnd РґРѕР»Р¶РµРЅ СѓРєР°Р·С‹РІР°С‚СЊ РЅР° РєРѕРЅРµС† -new_console[:...] / -cur_console[:...]
+				// Рё РІРєР»СЋС‡Р°С‚СЊ РѕР±СЂР°РјР»СЏСЋС‰СѓСЋ РєР°РІС‹С‡РєСѓ, РµСЃР»Рё РѕРЅ РѕРєР°РІС‹С‡РµРЅ
 				if (lbQuot)
 				{
 					if (*pszEnd == L'"' && *(pszEnd-1) != L'"')
@@ -1070,7 +1070,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						pszEnd--;
 				}
 
-				// Откусить лишние пробелы, которые стоят ПЕРЕД -new_console[:...] / -cur_console[:...]
+				// РћС‚РєСѓСЃРёС‚СЊ Р»РёС€РЅРёРµ РїСЂРѕР±РµР»С‹, РєРѕС‚РѕСЂС‹Рµ СЃС‚РѕСЏС‚ РџР•Р Р•Р” -new_console[:...] / -cur_console[:...]
 				while (((pszFind - 1) > pszSpecialCmd)
 					&& (*(pszFind-1) == L' ')
 					&& ((*(pszFind-2) == L' ') || (/**pszEnd == L'"' ||*/ *pszEnd == 0 || *pszEnd == L' ')))

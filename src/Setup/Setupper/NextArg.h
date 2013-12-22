@@ -1,7 +1,7 @@
-
+п»ї
 #pragma once
 
-// Возвращает 0, если успешно, иначе - ошибка
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ 0, РµСЃР»Рё СѓСЃРїРµС€РЅРѕ, РёРЅР°С‡Рµ - РѕС€РёР±РєР°
 int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar_t** rsArgStart=NULL)
 {
 	LPCWSTR psCmdLine = *asCmdLine, pch = NULL;
@@ -13,7 +13,7 @@ int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar
 
 	if (ch == 0) return -1;
 
-	// аргумент начинается с "
+	// Р°СЂРіСѓРјРµРЅС‚ РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ "
 	if (ch == L'"')
 	{
 		lbQMode = true;
@@ -30,26 +30,26 @@ int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar
 			if (!pch) return -2;
 		}
 
-		// Теперь в pch ссылка на последнюю "
+		// РўРµРїРµСЂСЊ РІ pch СЃСЃС‹Р»РєР° РЅР° РїРѕСЃР»РµРґРЅСЋСЋ "
 	}
 	else
 	{
-		// До конца строки или до первого пробела
+		// Р”Рѕ РєРѕРЅС†Р° СЃС‚СЂРѕРєРё РёР»Рё РґРѕ РїРµСЂРІРѕРіРѕ РїСЂРѕР±РµР»Р°
 		//pch = wcschr(psCmdLine, L' ');
-		// 09.06.2009 Maks - обломался на: cmd /c" echo Y "
+		// 09.06.2009 Maks - РѕР±Р»РѕРјР°Р»СЃСЏ РЅР°: cmd /c" echo Y "
 		pch = psCmdLine;
 
-		// Ищем обычным образом (до пробела/кавычки)
+		// РС‰РµРј РѕР±С‹С‡РЅС‹Рј РѕР±СЂР°Р·РѕРј (РґРѕ РїСЂРѕР±РµР»Р°/РєР°РІС‹С‡РєРё)
 		while (*pch && *pch!=L' ' && *pch!=L'"') pch++;
 
-		//if (!pch) pch = psCmdLine + lstrlenW(psCmdLine); // до конца строки
+		//if (!pch) pch = psCmdLine + lstrlenW(psCmdLine); // РґРѕ РєРѕРЅС†Р° СЃС‚СЂРѕРєРё
 	}
 
 	nArgLen = pch - psCmdLine;
 
 	if (nArgLen > MAX_PATH) return -2;
 
-	// Вернуть аргумент
+	// Р’РµСЂРЅСѓС‚СЊ Р°СЂРіСѓРјРµРЅС‚
 	memcpy(rsArg, psCmdLine, nArgLen*sizeof(*rsArg));
 
 	if (rsArgStart) *rsArgStart = psCmdLine;
@@ -57,7 +57,7 @@ int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar
 	rsArg[nArgLen] = 0;
 	psCmdLine = pch;
 	// Finalize
-	ch = *psCmdLine; // может указывать на закрывающую кавычку
+	ch = *psCmdLine; // РјРѕР¶РµС‚ СѓРєР°Р·С‹РІР°С‚СЊ РЅР° Р·Р°РєСЂС‹РІР°СЋС‰СѓСЋ РєР°РІС‹С‡РєСѓ
 
 	if (lbQMode && ch == L'"') ch = *(++psCmdLine);
 

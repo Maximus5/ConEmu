@@ -1,4 +1,4 @@
-
+п»ї
 #pragma once
 
 class CPluginBackground
@@ -31,11 +31,11 @@ class CPluginBackground
 		BOOL LoadThSet(BOOL abFromMainThread);
 		void SetDcPanelRect(RECT *rcDc, PaintBackgroundArg::BkPanelInfo *Panel, PaintBackgroundArg *Arg);
 
-		/* Вызывается только в thread-safe (Synchro) - begin */
+		/* Р’С‹Р·С‹РІР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РІ thread-safe (Synchro) - begin */
 		void CheckPanelFolders(int anForceSetPlace = 0);
 		void UpdateBackground();
 		static void UpdateBackground_Exec(struct RegisterBackgroundArg *pPlugin, struct PaintBackgroundArg *pArg);
-		/* end- Вызывается только в thread-safe (Synchro)*/
+		/* end- Р’С‹Р·С‹РІР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РІ thread-safe (Synchro)*/
 
 	public:
 		CPluginBackground();
@@ -45,16 +45,16 @@ class CPluginBackground
 		void SetForceUpdate(bool bFlagsOnly = false);
 		void SetForceThLoad();
 
-		// Может вызываться в произвольном потоке
+		// РњРѕР¶РµС‚ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РІ РїСЂРѕРёР·РІРѕР»СЊРЅРѕРј РїРѕС‚РѕРєРµ
 		int RegisterSubplugin(RegisterBackgroundArg *pbk);
 
-		// Вызывается только в thread-safe (Synchro)
+		// Р’С‹Р·С‹РІР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РІ thread-safe (Synchro)
 		void OnMainThreadActivated(int anEditorEvent = -1, int anViewerEvent = -1);
 
-		// Вызывается из фонового потока
+		// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РёР· С„РѕРЅРѕРІРѕРіРѕ РїРѕС‚РѕРєР°
 		void MonitorBackground();
 };
 
-extern BOOL gbBgPluginsAllowed; // TRUE после ExitFar
-extern BOOL gbNeedBgActivate; // требуется активация модуля в главной нити
+extern BOOL gbBgPluginsAllowed; // TRUE РїРѕСЃР»Рµ ExitFar
+extern BOOL gbNeedBgActivate; // С‚СЂРµР±СѓРµС‚СЃСЏ Р°РєС‚РёРІР°С†РёСЏ РјРѕРґСѓР»СЏ РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё
 extern CPluginBackground *gpBgPlugin;

@@ -1,4 +1,4 @@
-
+п»ї
 #pragma once
 
 #define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
@@ -15,7 +15,7 @@ struct IMAGE_HEADERS
 	};
 };
 
-// Если GetImageSubsystem вернет true - то имеет смысл проверять следующие значения
+// Р•СЃР»Рё GetImageSubsystem РІРµСЂРЅРµС‚ true - С‚Рѕ РёРјРµРµС‚ СЃРјС‹СЃР» РїСЂРѕРІРµСЂСЏС‚СЊ СЃР»РµРґСѓСЋС‰РёРµ Р·РЅР°С‡РµРЅРёСЏ
 // IMAGE_SUBSYSTEM_WINDOWS_CUI    -- Win Console (32/64)
 // IMAGE_SUBSYSTEM_DOS_EXECUTABLE -- DOS Executable (ImageBits == 16)
 bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/,DWORD& FileAttrs);
@@ -23,5 +23,5 @@ bool GetImageSubsystem(DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/);
 bool GetImageSubsystem(PROCESS_INFORMATION pi,DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/);
 bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& ImageSubsystem, DWORD& ImageBits, DWORD& FileAttrs);
 
-//// Определить адрес процедуры LoadLibraryW для запущенного процесса
+//// РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ РїСЂРѕС†РµРґСѓСЂС‹ LoadLibraryW РґР»СЏ Р·Р°РїСѓС‰РµРЅРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР°
 //int FindKernelAddress(HANDLE ahProcess, DWORD anPID, DWORD* pLoadLibrary);

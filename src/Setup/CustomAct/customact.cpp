@@ -1,4 +1,4 @@
-#include <windows.h>
+﻿#include <windows.h>
 #include <shlobj.h>
 #include <msiquery.h>
 #include <rpc.h>

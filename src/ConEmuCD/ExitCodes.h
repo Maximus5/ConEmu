@@ -1,14 +1,14 @@
-
+Ôªø
 #pragma once
 
 #define CERR_FIRSTEXITCODE 100
 
 typedef int CERR_EXIT_CODES;
 const CERR_EXIT_CODES
-	// ƒÎˇ ÔÓ‚ÂÍË ÍÎ˛˜ÂÈ "/IsConEmu", "/IsTerm", "/IsAnsi" ‚ ConEmuC.exe
+	// –î–ª—è –ø—Ä–æ–≤–µ—Ä–∫–∏ –∫–ª—é—á–µ–π "/IsConEmu", "/IsTerm", "/IsAnsi" –≤ ConEmuC.exe
     CERR_CHKSTATE_ON   = 1,
-	CERR_CHKSTATE_OFF  = 2, // "OFF" > "ON", ˜ÚÓ·˚ ÔË Î˛·˚ı Ó¯Ë·Í‡ı .cmd ÌÂ ÔÓ‰ÛÏ‡Î, ˜ÚÓ ‚ÒÂ ıÓÓ¯Ó.
-	// ƒ‡ÎÂÂ - ÍÓ‰˚ "Ó¯Ë·ÓÍ"
+	CERR_CHKSTATE_OFF  = 2, // "OFF" > "ON", —á—Ç–æ–±—ã –ø—Ä–∏ –ª—é–±—ã—Ö –æ—à–∏–±–∫–∞—Ö .cmd –Ω–µ –ø–æ–¥—É–º–∞–ª, —á—Ç–æ –≤—Å–µ —Ö–æ—Ä–æ—à–æ.
+	// –î–∞–ª–µ–µ - –∫–æ–¥—ã "–æ—à–∏–±–æ–∫"
 	CERR_GETCOMMANDLINE = CERR_FIRSTEXITCODE+0,
 	CERR_CARGUMENT = CERR_FIRSTEXITCODE+1,
 	CERR_CMDEXENOTFOUND = CERR_FIRSTEXITCODE+2,

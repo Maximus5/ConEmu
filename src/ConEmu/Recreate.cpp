@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -66,7 +66,7 @@ HWND CRecreateDlg::GetHWND()
 	return mh_Dlg;
 }
 
-// Открыть диалог с подтверждением параметров создания/закрытия/пересоздания консоли
+// РћС‚РєСЂС‹С‚СЊ РґРёР°Р»РѕРі СЃ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµРј РїР°СЂР°РјРµС‚СЂРѕРІ СЃРѕР·РґР°РЅРёСЏ/Р·Р°РєСЂС‹С‚РёСЏ/РїРµСЂРµСЃРѕР·РґР°РЅРёСЏ РєРѕРЅСЃРѕР»Рё
 int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 {
 	if (!this)
@@ -218,7 +218,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				EnableWindow(GetDlgItem(hDlg, stRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
 			}
 
-			// Спрятать флажок "New window"
+			// РЎРїСЂСЏС‚Р°С‚СЊ С„Р»Р°Р¶РѕРє "New window"
 			bool bRunInNewWindow_Hidden = (pArgs->aRecreate == cra_EditTab || pArgs->aRecreate == cra_RecreateTab);
 			ShowWindow(GetDlgItem(hDlg, cbRunInNewWindow), bRunInNewWindow_Hidden ? SW_HIDE : SW_SHOWNORMAL);
 
@@ -260,16 +260,16 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 					{
 						if (wcschr(pszDomain, L'.'))
 						{
-							// Если в имени домена есть точка - используем нотацию user@domain
-							// По идее, мы сюда не попадаем, т.к. при вводе имени в таком формате
-							// pszDomain не заполняется, и "UPN format" остается в pszUser
+							// Р•СЃР»Рё РІ РёРјРµРЅРё РґРѕРјРµРЅР° РµСЃС‚СЊ С‚РѕС‡РєР° - РёСЃРїРѕР»СЊР·СѓРµРј РЅРѕС‚Р°С†РёСЋ user@domain
+							// РџРѕ РёРґРµРµ, РјС‹ СЃСЋРґР° РЅРµ РїРѕРїР°РґР°РµРј, С‚.Рє. РїСЂРё РІРІРѕРґРµ РёРјРµРЅРё РІ С‚Р°РєРѕРј С„РѕСЂРјР°С‚Рµ
+							// pszDomain РЅРµ Р·Р°РїРѕР»РЅСЏРµС‚СЃСЏ, Рё "UPN format" РѕСЃС‚Р°РµС‚СЃСЏ РІ pszUser
 							lstrcpyn(szOtherUser, pszUser, MAX_PATH);
 							wcscat_c(szOtherUser, L"@");
 							lstrcpyn(szOtherUser+_tcslen(szOtherUser), pszDomain, MAX_PATH);
 						}
 						else
 						{
-							// "Старая" нотация domain\user
+							// "РЎС‚Р°СЂР°СЏ" РЅРѕС‚Р°С†РёСЏ domain\user
 							lstrcpyn(szOtherUser, pszDomain, MAX_PATH);
 							wcscat_c(szOtherUser, L"\\");
 							lstrcpyn(szOtherUser+_tcslen(szOtherUser), pszUser, MAX_PATH);
@@ -290,10 +290,10 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			if (gOSVer.dwMajorVersion < 6)
 			{
-				// В XP и ниже это просто RunAs - с возможностью ввода имени пользователя и пароля
+				// Р’ XP Рё РЅРёР¶Рµ СЌС‚Рѕ РїСЂРѕСЃС‚Рѕ RunAs - СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ РІРІРѕРґР° РёРјРµРЅРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Рё РїР°СЂРѕР»СЏ
 				//apiShowWindow(GetDlgItem(hDlg, cbRunAsAdmin), SW_HIDE);
-				SetDlgItemTextA(hDlg, cbRunAsAdmin, "&Run as..."); //GCC hack. иначе не собирается
-				// И уменьшить длину
+				SetDlgItemTextA(hDlg, cbRunAsAdmin, "&Run as..."); //GCC hack. РёРЅР°С‡Рµ РЅРµ СЃРѕР±РёСЂР°РµС‚СЃСЏ
+				// Р СѓРјРµРЅСЊС€РёС‚СЊ РґР»РёРЅСѓ
 				RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
 				SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, 0, 0, (rcBox.right-rcBox.left)/2, rcBox.bottom-rcBox.top,
 				             SWP_NOMOVE|SWP_NOZORDER);
@@ -302,7 +302,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			{
 				CheckDlgButton(hDlg, cbRunAsAdmin, BST_CHECKED);
 
-				if (gpConEmu->mb_IsUacAdmin)  // Только в Vista+ если GUI уже запущен под админом
+				if (gpConEmu->mb_IsUacAdmin)  // РўРѕР»СЊРєРѕ РІ Vista+ РµСЃР»Рё GUI СѓР¶Рµ Р·Р°РїСѓС‰РµРЅ РїРѕРґ Р°РґРјРёРЅРѕРј
 				{
 					EnableWindow(GetDlgItem(hDlg, cbRunAsAdmin), FALSE);
 				}
@@ -318,19 +318,19 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			RECT rcBtnBox = {0};
 			if (pArgs->aRecreate == cra_RecreateTab)
 			{
-				//GCC hack. иначе не собирается
+				//GCC hack. РёРЅР°С‡Рµ РЅРµ СЃРѕР±РёСЂР°РµС‚СЃСЏ
 				SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "About to restart console");
 				SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
-				// Выровнять флажок по кнопке
+				// Р’С‹СЂРѕРІРЅСЏС‚СЊ С„Р»Р°Р¶РѕРє РїРѕ РєРЅРѕРїРєРµ
 				GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
 				lbRc = TRUE;
 			}
 			else
 			{
-				//GCC hack. иначе не собирается
+				//GCC hack. РёРЅР°С‡Рµ РЅРµ СЃРѕР±РёСЂР°РµС‚СЃСЏ
 				SetDlgItemTextA(hDlg, IDC_RESTART_MSG,  "Create new console");
 
-				// Если ВЫКЛЮЧЕН "Multi consoles in one window"
+				// Р•СЃР»Рё Р’Р«РљР›Р®Р§Р•Рќ "Multi consoles in one window"
 				// - Check & Disable "New window" checkbox
 				CheckDlgButton(hDlg, cbRunInNewWindow, (pArgs->aRecreate == cra_CreateWindow || !gpSetCls->IsMulti()) ? BST_CHECKED : BST_UNCHECKED);
 				EnableWindow(GetDlgItem(hDlg, cbRunInNewWindow), gpSetCls->IsMulti());
@@ -343,13 +343,13 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetWindowPos(GetDlgItem(hDlg, IDC_START), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 				SetDlgItemText(hDlg, IDC_START, (pArgs->aRecreate == cra_EditTab) ? L"&Save" : L"&Start");
 				DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
-				// Выровнять флажок по кнопке
+				// Р’С‹СЂРѕРІРЅСЏС‚СЊ С„Р»Р°Р¶РѕРє РїРѕ РєРЅРѕРїРєРµ
 				GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
 			}
 
 			if (rcBtnBox.left)
 			{
-				// Выровнять флажок по кнопке
+				// Р’С‹СЂРѕРІРЅСЏС‚СЊ С„Р»Р°Р¶РѕРє РїРѕ РєРЅРѕРїРєРµ
 				MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtnBox, 2);
 				RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
 				POINT pt;
@@ -376,7 +376,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			           rect.right - rect.left, rect.bottom - rect.top, false);
 
 
-			// Была отключена обработка CConEmuMain::OnFocus (лишние телодвижения)
+			// Р‘С‹Р»Р° РѕС‚РєР»СЋС‡РµРЅР° РѕР±СЂР°Р±РѕС‚РєР° CConEmuMain::OnFocus (Р»РёС€РЅРёРµ С‚РµР»РѕРґРІРёР¶РµРЅРёСЏ)
 			PostMessage(hDlg, (WM_APP+1), 0,0);
 
 
@@ -391,7 +391,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			return lbRc;
 		}
 		case (WM_APP+1):
-			//TODO: Не совсем корректно, не учитывается предыдущее значение флажка
+			//TODO: РќРµ СЃРѕРІСЃРµРј РєРѕСЂСЂРµРєС‚РЅРѕ, РЅРµ СѓС‡РёС‚С‹РІР°РµС‚СЃСЏ РїСЂРµРґС‹РґСѓС‰РµРµ Р·РЅР°С‡РµРЅРёРµ С„Р»Р°Р¶РєР°
 			gpConEmu->SetSkipOnFocus(false);
 			return FALSE;
 		case WM_CTLCOLORSTATIC:
@@ -430,7 +430,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			pDlg->AddCommandList(pDlg->mpsz_CurCmd);
 			pDlg->AddCommandList(pDlg->mpsz_DefCmd);
 
-			// Может быть позван после очистки истории из меню, тогда нет смысла и дергаться
+			// РњРѕР¶РµС‚ Р±С‹С‚СЊ РїРѕР·РІР°РЅ РїРѕСЃР»Рµ РѕС‡РёСЃС‚РєРё РёСЃС‚РѕСЂРёРё РёР· РјРµРЅСЋ, С‚РѕРіРґР° РЅРµС‚ СЃРјС‹СЃР»Р° Рё РґРµСЂРіР°С‚СЊСЃСЏ
 			if (wParam)
 			{
 				LPCWSTR pszHistory = gpSet->HistoryGet();
@@ -514,7 +514,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 					}
 					else
 					{
-						// Добавить хотя бы текущего
+						// Р”РѕР±Р°РІРёС‚СЊ С…РѕС‚СЏ Р±С‹ С‚РµРєСѓС‰РµРіРѕ
 						SendDlgItemMessage(hDlg, tRunAsUser, CB_ADDSTRING, 0, (LPARAM)pDlg->ms_CurUser);
 					}
 				}
@@ -533,7 +533,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			switch (LOWORD(wParam))
 			{
 			case ID_RESETCMDHISTORY:
-				// Подтверждение спросит ResetCmdHistory
+				// РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ СЃРїСЂРѕСЃРёС‚ ResetCmdHistory
 				if (gpSetCls->ResetCmdHistory(hDlg))
 				{
                 	wchar_t* pszCmd = GetDlgItemText(hDlg, IDC_RESTART_CMD);
@@ -649,7 +649,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 							if (pArgs->pszUserName)
 							{
 								//pArgs->pszUserPassword = GetDlgItemText(hDlg, tRunAsPassword);
-								// Попытаться проверить правильность введенного пароля и возможность запуска
+								// РџРѕРїС‹С‚Р°С‚СЊСЃСЏ РїСЂРѕРІРµСЂРёС‚СЊ РїСЂР°РІРёР»СЊРЅРѕСЃС‚СЊ РІРІРµРґРµРЅРЅРѕРіРѕ РїР°СЂРѕР»СЏ Рё РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ Р·Р°РїСѓСЃРєР°
 								if (!pArgs->CheckUserToken(GetDlgItem(hDlg, tRunAsPassword)))
 								{
 									DWORD nErr = GetLastError();
@@ -664,16 +664,16 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						}
 
 						// Command
-						// pszSpecialCmd мог быть передан аргументом - умолчание для строки ввода
+						// pszSpecialCmd РјРѕРі Р±С‹С‚СЊ РїРµСЂРµРґР°РЅ Р°СЂРіСѓРјРµРЅС‚РѕРј - СѓРјРѕР»С‡Р°РЅРёРµ РґР»СЏ СЃС‚СЂРѕРєРё РІРІРѕРґР°
 						SafeFree(pArgs->pszSpecialCmd);
 
-						// GetDlgItemText выделяет память через calloc
+						// GetDlgItemText РІС‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ С‡РµСЂРµР· calloc
 						pArgs->pszSpecialCmd = GetDlgItemText(hDlg, IDC_RESTART_CMD);
 
 						if (pArgs->pszSpecialCmd)
 							gpSet->HistoryAdd(pArgs->pszSpecialCmd);
 
-						// StartupDir (может быть передан аргументом)
+						// StartupDir (РјРѕР¶РµС‚ Р±С‹С‚СЊ РїРµСЂРµРґР°РЅ Р°СЂРіСѓРјРµРЅС‚РѕРј)
 						SafeFree(pArgs->pszStartupDir);
 						wchar_t* pszDir = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
 						wchar_t* pszExpand = (pszDir && wcschr(pszDir, L'%')) ? ExpandEnvStr(pszDir) : NULL;
@@ -700,7 +700,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 							{
 								pArgs->nSplitValue = (100-nPercent) * 10;
 							}						
-							//pArgs->nSplitPane = 0; Сбрасывать не будем?
+							//pArgs->nSplitPane = 0; РЎР±СЂР°СЃС‹РІР°С‚СЊ РЅРµ Р±СѓРґРµРј?
 						}
 						pDlg->mn_DlgRc = IDC_START;
 						EndDialog(hDlg, IDC_START);
@@ -756,20 +756,20 @@ void CRecreateDlg::InitVars()
 		FreeVars();
 	}
 
-	// Если уже передана команда через параметры - из текущей консоли не извлекать
+	// Р•СЃР»Рё СѓР¶Рµ РїРµСЂРµРґР°РЅР° РєРѕРјР°РЅРґР° С‡РµСЂРµР· РїР°СЂР°РјРµС‚СЂС‹ - РёР· С‚РµРєСѓС‰РµР№ РєРѕРЅСЃРѕР»Рё РЅРµ РёР·РІР»РµРєР°С‚СЊ
 	if (!mp_Args || mp_Args->pszSpecialCmd)
 	{
 		_ASSERTE(mp_Args!=NULL);
 		return;
 	}
 
-	// AutoStartTaskName - не возвращаем никогда.
-	//   Если он выбран при старте - то либо текущая консоль, либо первая команда из AutoStartTaskName, либо команда по умолчанию
-	// Диалог может быть вызван в следующих случаях
+	// AutoStartTaskName - РЅРµ РІРѕР·РІСЂР°С‰Р°РµРј РЅРёРєРѕРіРґР°.
+	//   Р•СЃР»Рё РѕРЅ РІС‹Р±СЂР°РЅ РїСЂРё СЃС‚Р°СЂС‚Рµ - С‚Рѕ Р»РёР±Рѕ С‚РµРєСѓС‰Р°СЏ РєРѕРЅСЃРѕР»СЊ, Р»РёР±Рѕ РїРµСЂРІР°СЏ РєРѕРјР°РЅРґР° РёР· AutoStartTaskName, Р»РёР±Рѕ РєРѕРјР°РЅРґР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+	// Р”РёР°Р»РѕРі РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹Р·РІР°РЅ РІ СЃР»РµРґСѓСЋС‰РёС… СЃР»СѓС‡Р°СЏС…
 	// * Recreate
-	// * Свободный выбор = cra_EditTab (добавление новой команды в task или выбор шелла при обломе на старте)
-	// * Ни одной консоли нет (предложить то что запускается при старте - Task, команда)
-	// * Консоли есть (пусть наверное будет то что запускается при старте - Task, команда)
+	// * РЎРІРѕР±РѕРґРЅС‹Р№ РІС‹Р±РѕСЂ = cra_EditTab (РґРѕР±Р°РІР»РµРЅРёРµ РЅРѕРІРѕР№ РєРѕРјР°РЅРґС‹ РІ task РёР»Рё РІС‹Р±РѕСЂ С€РµР»Р»Р° РїСЂРё РѕР±Р»РѕРјРµ РЅР° СЃС‚Р°СЂС‚Рµ)
+	// * РќРё РѕРґРЅРѕР№ РєРѕРЅСЃРѕР»Рё РЅРµС‚ (РїСЂРµРґР»РѕР¶РёС‚СЊ С‚Рѕ С‡С‚Рѕ Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ РїСЂРё СЃС‚Р°СЂС‚Рµ - Task, РєРѕРјР°РЅРґР°)
+	// * РљРѕРЅСЃРѕР»Рё РµСЃС‚СЊ (РїСѓСЃС‚СЊ РЅР°РІРµСЂРЅРѕРµ Р±СѓРґРµС‚ С‚Рѕ С‡С‚Рѕ Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ РїСЂРё СЃС‚Р°СЂС‚Рµ - Task, РєРѕРјР°РЅРґР°)
 
 	CVConGuard VCon;
 	CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
@@ -797,10 +797,10 @@ void CRecreateDlg::InitVars()
 	}
 	else
 	{
-		// В диалоге запуска новой консоли - нечего делать автостартующему таску?
+		// Р’ РґРёР°Р»РѕРіРµ Р·Р°РїСѓСЃРєР° РЅРѕРІРѕР№ РєРѕРЅСЃРѕР»Рё - РЅРµС‡РµРіРѕ РґРµР»Р°С‚СЊ Р°РІС‚РѕСЃС‚Р°СЂС‚СѓСЋС‰РµРјСѓ С‚Р°СЃРєСѓ?
 		if (lstrcmpi(pszSystem, AutoStartTaskName) == 0)
 		{
-			// Раз активной консоли нет - попробовать взять первую команду из AutoStartTaskName
+			// Р Р°Р· Р°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё РЅРµС‚ - РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РІР·СЏС‚СЊ РїРµСЂРІСѓСЋ РєРѕРјР°РЅРґСѓ РёР· AutoStartTaskName
 			if (!pszCmd)
 			{
 				pszBuf = gpConEmu->LoadConsoleBatch(AutoStartTaskName);

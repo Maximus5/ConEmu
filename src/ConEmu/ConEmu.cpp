@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -131,7 +131,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HOTKEY_GLOBAL_START       0x1001 // this is wParam for WM_HOTKEY
 
 #define RCLICKAPPSTIMEOUT 600
-#define RCLICKAPPS_START 200 // начало отрисовки кружка вокруг курсора
+#define RCLICKAPPS_START 200 // РЅР°С‡Р°Р»Рѕ РѕС‚СЂРёСЃРѕРІРєРё РєСЂСѓР¶РєР° РІРѕРєСЂСѓРі РєСѓСЂСЃРѕСЂР°
 #define RCLICKAPPSTIMEOUT_MAX 10000
 #define RCLICKAPPSDELTA 3
 
@@ -154,8 +154,8 @@ const wchar_t* gsWhatsNew    = CEWHATSNEW;    //L"http://code.google.com/p/conem
 static struct RegisteredHotKeys
 {
 	int DescrID;
-	int RegisteredID; // wParam для WM_HOTKEY
-	UINT VK, MOD;     // чтобы на изменение реагировать
+	int RegisteredID; // wParam РґР»СЏ WM_HOTKEY
+	UINT VK, MOD;     // С‡С‚РѕР±С‹ РЅР° РёР·РјРµРЅРµРЅРёРµ СЂРµР°РіРёСЂРѕРІР°С‚СЊ
 	BOOL IsRegistered;
 }
 gRegisteredHotKeys[] = {
@@ -186,7 +186,7 @@ namespace ConEmuMsgLogger
 		Event& e = g_pos[i & (BUFFER_POS_SIZE - 1)]; // Wrap to buffer size
 
 		e.hwnd = msg.hwnd;
-		e.time = GetTickCount(); // msg.time == 0 скорее всего
+		e.time = GetTickCount(); // msg.time == 0 СЃРєРѕСЂРµРµ РІСЃРµРіРѕ
 
 		switch (msg.message)
 		{
@@ -262,7 +262,7 @@ const wchar_t gsFocusQuakeCheckTimer[] = L"TIMER_QUAKE_AUTOHIDE_ID";
 
 CConEmuMain::CConEmuMain()
 {
-	gpConEmu = this; // сразу!
+	gpConEmu = this; // СЃСЂР°Р·Сѓ!
 	mb_FindBugMode = false;
 
 	DEBUGTEST(mb_DestroySkippedInAssert=false);
@@ -285,7 +285,7 @@ CConEmuMain::CConEmuMain()
 	mcr_BackBrush = 0;
 	mh_BackBrush = NULL;
 
-	//HeapInitialize(); - уже
+	//HeapInitialize(); - СѓР¶Рµ
 	//#define D(N) (1##N-100)
 
 	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L"%02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,RELEASEDEBUGTEST(_T(MVV_4a),_T("dbg")));
@@ -324,7 +324,7 @@ CConEmuMain::CConEmuMain()
 	wndX = gpSet->_wndX; wndY = gpSet->_wndY;
 	WndWidth = gpSet->wndWidth; WndHeight = gpSet->wndHeight;
 	
-	mn_QuakePercent = 0; // 0 - отключен
+	mn_QuakePercent = 0; // 0 - РѕС‚РєР»СЋС‡РµРЅ
 	DisableAutoUpdate = false;
 	DisableKeybHooks = false;
 	DisableAllMacro = false;
@@ -389,7 +389,7 @@ CConEmuMain::CConEmuMain()
 	mh_CursorIBeam = LoadCursor(NULL, IDC_IBEAM);
 	mh_DragCursor = NULL;
 	mh_CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
-	// g_hInstance еще не инициализирован
+	// g_hInstance РµС‰Рµ РЅРµ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅ
 	mh_SplitV = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITV));
 	mh_SplitH = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITH));
 	//ms_LogCreateProcess[0] = 0; mb_CreateProcessLogged = false;
@@ -430,10 +430,10 @@ CConEmuMain::CConEmuMain()
 	#endif
 	
 	HMODULE hUser32 = GetModuleHandle(L"user32.dll");
-	// GetLayeredWindowAttributes появился только в XP
+	// GetLayeredWindowAttributes РїРѕСЏРІРёР»СЃСЏ С‚РѕР»СЊРєРѕ РІ XP
 	_GetLayeredWindowAttributes = (GetLayeredWindowAttributes_t)(hUser32 ? GetProcAddress(hUser32, "GetLayeredWindowAttributes") : NULL);
 	#ifdef __GNUC__
-	// SetLayeredWindowAttributes есть в Win2k, только про него не знает GCC
+	// SetLayeredWindowAttributes РµСЃС‚СЊ РІ Win2k, С‚РѕР»СЊРєРѕ РїСЂРѕ РЅРµРіРѕ РЅРµ Р·РЅР°РµС‚ GCC
 	SetLayeredWindowAttributes = (SetLayeredWindowAttributes_t)(hUser32 ? GetProcAddress(hUser32, "SetLayeredWindowAttributes") : NULL);
 	#endif
 
@@ -463,7 +463,7 @@ CConEmuMain::CConEmuMain()
 	}
 
 
-	// Попробуем "родное" из реестра?
+	// РџРѕРїСЂРѕР±СѓРµРј "СЂРѕРґРЅРѕРµ" РёР· СЂРµРµСЃС‚СЂР°?
 	HKEY hk;
 	ms_ComSpecInitial[0] = 0;
 	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", 0, KEY_READ, &hk))
@@ -494,22 +494,22 @@ CConEmuMain::CConEmuMain()
 		return;
 	}
 
-	// Запомнить текущую папку (на момент запуска)
+	// Р—Р°РїРѕРјРЅРёС‚СЊ С‚РµРєСѓС‰СѓСЋ РїР°РїРєСѓ (РЅР° РјРѕРјРµРЅС‚ Р·Р°РїСѓСЃРєР°)
 	StoreWorkDir();
 
 	//LoadVersionInfo(ms_ConEmuExe);
-	// Папка программы
+	// РџР°РїРєР° РїСЂРѕРіСЂР°РјРјС‹
 	wcscpy_c(ms_ConEmuExeDir, ms_ConEmuExe);
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 	*pszSlash = 0;
 
-	// Чтобы не блокировать папку запуска - CD
+	// Р§С‚РѕР±С‹ РЅРµ Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ РїР°РїРєСѓ Р·Р°РїСѓСЃРєР° - CD
 	SetCurrentDirectory(ms_ConEmuExeDir);
 
 	bool lbBaseFound = false;
 
 	// Mingw/msys installation?
-	m_InstallMode = cm_Normal; // проверка ниже
+	m_InstallMode = cm_Normal; // РїСЂРѕРІРµСЂРєР° РЅРёР¶Рµ
 	wchar_t szFindFile[MAX_PATH+64];
 	wcscpy_c(szFindFile, ms_ConEmuExeDir);
 	pszSlash = wcsrchr(szFindFile, L'\\');
@@ -529,7 +529,7 @@ CConEmuMain::CConEmuMain()
 			m_InstallMode |= cm_MSysStartup;
 	}
 
-	// Сначала проверяем подпапку
+	// РЎРЅР°С‡Р°Р»Р° РїСЂРѕРІРµСЂСЏРµРј РїРѕРґРїР°РїРєСѓ
 	wcscpy_c(ms_ConEmuBaseDir, ms_ConEmuExeDir);
 	wcscat_c(ms_ConEmuBaseDir, L"\\ConEmu");
 	lbBaseFound = CheckBaseDir();
@@ -537,14 +537,14 @@ CConEmuMain::CConEmuMain()
 
 	if (!lbBaseFound)
 	{
-		// Если не нашли - то в той же папке, что и GUI
+		// Р•СЃР»Рё РЅРµ РЅР°С€Р»Рё - С‚Рѕ РІ С‚РѕР№ Р¶Рµ РїР°РїРєРµ, С‡С‚Рѕ Рё GUI
 		wcscpy_c(ms_ConEmuBaseDir, ms_ConEmuExeDir);
 		lbBaseFound = CheckBaseDir();
 	}
 
 	if (!lbBaseFound)
 	{
-		// Если все-равно не нашли - промерить, может это mingw?
+		// Р•СЃР»Рё РІСЃРµ-СЂР°РІРЅРѕ РЅРµ РЅР°С€Р»Рё - РїСЂРѕРјРµСЂРёС‚СЊ, РјРѕР¶РµС‚ СЌС‚Рѕ mingw?
 		pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 		if (pszSlash && (lstrcmpi(pszSlash, L"\\bin") == 0))
 		{
@@ -587,7 +587,7 @@ CConEmuMain::CConEmuMain()
 				goto NonPortable;
 		}
 		
-		// Ищем где должен лежать файл настроек в структуре PortableApps
+		// РС‰РµРј РіРґРµ РґРѕР»Р¶РµРЅ Р»РµР¶Р°С‚СЊ С„Р°Р№Р» РЅР°СЃС‚СЂРѕРµРє РІ СЃС‚СЂСѓРєС‚СѓСЂРµ PortableApps
 		wcscpy_c(ms_ConEmuXml, ms_ConEmuExeDir);
 		wchar_t* pszCut = wcsrchr(ms_ConEmuXml, L'\\');
 		if (pszCut)
@@ -606,7 +606,7 @@ CConEmuMain::CConEmuMain()
 				wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
 				if (!FileExists(ms_ConEmuXml))
 				{
-					// Нужно скопировать дефолтный файл настроек?
+					// РќСѓР¶РЅРѕ СЃРєРѕРїРёСЂРѕРІР°С‚СЊ РґРµС„РѕР»С‚РЅС‹Р№ С„Р°Р№Р» РЅР°СЃС‚СЂРѕРµРє?
 					CopyFile(szFindFile, ms_ConEmuXml, FALSE);
 				}
 				// Turn it on
@@ -633,26 +633,26 @@ CConEmuMain::CConEmuMain()
 			m_DbgInfo.bBlockChildrenDebuggers = (lstrcmp(szDebuggers, ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES) == 0);
 		}
 	}
-	// И сразу сбросить ее, чтобы не было мусора
+	// Р СЃСЂР°Р·Сѓ СЃР±СЂРѕСЃРёС‚СЊ РµРµ, С‡С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ РјСѓСЃРѕСЂР°
 	SetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS, NULL);
 
 
-	// Добавить в окружение переменную с папкой к ConEmu.exe
+	// Р”РѕР±Р°РІРёС‚СЊ РІ РѕРєСЂСѓР¶РµРЅРёРµ РїРµСЂРµРјРµРЅРЅСѓСЋ СЃ РїР°РїРєРѕР№ Рє ConEmu.exe
 	SetEnvironmentVariable(ENV_CONEMUDIR_VAR_W, ms_ConEmuExeDir);
 	SetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, ms_ConEmuBaseDir);
 	SetEnvironmentVariable(ENV_CONEMUANSI_BUILD_W, ms_ConEmuBuild);
 	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, L"");
-	// переменная "ConEmuArgs" заполняется в ConEmuApp.cpp:PrepareCommandLine
+	// РїРµСЂРµРјРµРЅРЅР°СЏ "ConEmuArgs" Р·Р°РїРѕР»РЅСЏРµС‚СЃСЏ РІ ConEmuApp.cpp:PrepareCommandLine
 
 	wchar_t szDrive[MAX_PATH];
 	SetEnvironmentVariable(ENV_CONEMUDRIVE_VAR_W, GetDrive(ms_ConEmuExeDir, szDrive, countof(szDrive)));
 	
 
-	// Ищем файл портабельных настроек. Сначала пробуем в BaseDir
+	// РС‰РµРј С„Р°Р№Р» РїРѕСЂС‚Р°Р±РµР»СЊРЅС‹С… РЅР°СЃС‚СЂРѕРµРє. РЎРЅР°С‡Р°Р»Р° РїСЂРѕР±СѓРµРј РІ BaseDir
 	ConEmuXml();
 	ConEmuIni();
 
-	// Help-файл. Сначала попробуем в BaseDir
+	// Help-С„Р°Р№Р». РЎРЅР°С‡Р°Р»Р° РїРѕРїСЂРѕР±СѓРµРј РІ BaseDir
 	wcscpy_c(ms_ConEmuChm, ms_ConEmuBaseDir); lstrcat(ms_ConEmuChm, L"\\ConEmu.chm");
 
 	if (!FileExists(ms_ConEmuChm))
@@ -676,7 +676,7 @@ CConEmuMain::CConEmuMain()
 	{
 		wcscpy_c(ms_ConEmuC64Full, ms_ConEmuBaseDir);
 		wcscat_c(ms_ConEmuC64Full, L"\\ConEmuC64.exe");
-		// Проверяем наличие
+		// РџСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ
 		if (!FileExists(ms_ConEmuC64Full))
 			wcscpy_c(ms_ConEmuC64Full, ms_ConEmuC32Full);
 		else if (!FileExists(ms_ConEmuC32Full))
@@ -692,10 +692,10 @@ CConEmuMain::CConEmuMain()
 
 
 	
-	// DosBox (единственный способ запуска Dos-приложений в 64-битных OS)
+	// DosBox (РµРґРёРЅСЃС‚РІРµРЅРЅС‹Р№ СЃРїРѕСЃРѕР± Р·Р°РїСѓСЃРєР° Dos-РїСЂРёР»РѕР¶РµРЅРёР№ РІ 64-Р±РёС‚РЅС‹С… OS)
 	mb_DosBoxExists = CheckDosBoxExists();
 	
-	// Портабельный реестр для фара?
+	// РџРѕСЂС‚Р°Р±РµР»СЊРЅС‹Р№ СЂРµРµСЃС‚СЂ РґР»СЏ С„Р°СЂР°?
 	mb_PortableRegExist = FALSE;
 	ms_PortableReg[0] = ms_PortableRegHive[0] = ms_PortableRegHiveOrg[0] = ms_PortableMountKey[0] = 0;
 	mb_PortableKeyMounted = FALSE;
@@ -706,7 +706,7 @@ CConEmuMain::CConEmuMain()
 
 	if (gOSVer.dwMajorVersion >= 6)
 	{
-		mb_IsUacAdmin = IsUserAdmin(); // Чтобы знать, может мы уже запущены под UAC админом?
+		mb_IsUacAdmin = IsUserAdmin(); // Р§С‚РѕР±С‹ Р·РЅР°С‚СЊ, РјРѕР¶РµС‚ РјС‹ СѓР¶Рµ Р·Р°РїСѓС‰РµРЅС‹ РїРѕРґ UAC Р°РґРјРёРЅРѕРј?
 	}
 	else
 	{
@@ -816,7 +816,7 @@ void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)
 {
 	if (asNewCurDir && (asNewCurDir[0] == L':'))
 	{
-		asNewCurDir = NULL; // Пути а-ля библиотеки - не поддерживаются при выполнении команд и приложений
+		asNewCurDir = NULL; // РџСѓС‚Рё Р°-Р»СЏ Р±РёР±Р»РёРѕС‚РµРєРё - РЅРµ РїРѕРґРґРµСЂР¶РёРІР°СЋС‚СЃСЏ РїСЂРё РІС‹РїРѕР»РЅРµРЅРёРё РєРѕРјР°РЅРґ Рё РїСЂРёР»РѕР¶РµРЅРёР№
 	}
 
 	if (asNewCurDir)
@@ -828,7 +828,7 @@ void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)
 	}
 	else
 	{
-		// Запомнить текущую папку (на момент запуска)
+		// Р—Р°РїРѕРјРЅРёС‚СЊ С‚РµРєСѓС‰СѓСЋ РїР°РїРєСѓ (РЅР° РјРѕРјРµРЅС‚ Р·Р°РїСѓСЃРєР°)
 		DWORD nDirLen = GetCurrentDirectory(MAX_PATH, ms_ConEmuWorkDir);
 
 		if (!nDirLen || nDirLen>MAX_PATH)
@@ -838,7 +838,7 @@ void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)
 		}
 		else if (ms_ConEmuWorkDir[nDirLen-1] == L'\\')
 		{
-			ms_ConEmuWorkDir[nDirLen-1] = 0; // пусть будет БЕЗ слеша, для однообразия с ms_ConEmuExeDir
+			ms_ConEmuWorkDir[nDirLen-1] = 0; // РїСѓСЃС‚СЊ Р±СѓРґРµС‚ Р‘Р•Р— СЃР»РµС€Р°, РґР»СЏ РѕРґРЅРѕРѕР±СЂР°Р·РёСЏ СЃ ms_ConEmuExeDir
 		}
 	}
 
@@ -860,7 +860,7 @@ LPCWSTR CConEmuMain::WorkDir(LPCWSTR asOverrideCurDir /*= NULL*/)
 	}
 
 	if (pszWorkDir && (pszWorkDir[0] == L':'))
-		pszWorkDir = L""; // Пути а-ля библиотеки - не поддерживаются при выполнении команд и приложений
+		pszWorkDir = L""; // РџСѓС‚Рё Р°-Р»СЏ Р±РёР±Р»РёРѕС‚РµРєРё - РЅРµ РїРѕРґРґРµСЂР¶РёРІР°СЋС‚СЃСЏ РїСЂРё РІС‹РїРѕР»РЅРµРЅРёРё РєРѕРјР°РЅРґ Рё РїСЂРёР»РѕР¶РµРЅРёР№
 	return pszWorkDir;
 }
 
@@ -894,7 +894,7 @@ bool CConEmuMain::CheckRequiredFiles()
 		if (Files[i].Bits == 64)
 		{
 			if (!isWin64)
-				continue; // 64битные файлы в 32битных ОС не нужны
+				continue; // 64Р±РёС‚РЅС‹Рµ С„Р°Р№Р»С‹ РІ 32Р±РёС‚РЅС‹С… РћРЎ РЅРµ РЅСѓР¶РЅС‹
 		}
 
 		_wcscpy_c(pszSlash, 32, Files[i].File);
@@ -942,7 +942,7 @@ bool CConEmuMain::CheckRequiredFiles()
 
 	if (*szRequired)
 		return false;
-	return true; // Можно продолжать
+	return true; // РњРѕР¶РЅРѕ РїСЂРѕРґРѕР»Р¶Р°С‚СЊ
 }
 
 bool CConEmuMain::CheckBaseDir()
@@ -1023,14 +1023,14 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/)
 	}
 
 
-	// Папки может не быть
+	// РџР°РїРєРё РјРѕР¶РµС‚ РЅРµ Р±С‹С‚СЊ
 	*pszDirEnd = 0;
-	// Создадим, если нету
+	// РЎРѕР·РґР°РґРёРј, РµСЃР»Рё РЅРµС‚Сѓ
 	MyCreateDirectory(szPath);
 	*pszDirEnd = L'\\';
 
-	// Нужно создать файл, если его нету.
-	// Если просили доступ на запись - то однозначно CreateFile
+	// РќСѓР¶РЅРѕ СЃРѕР·РґР°С‚СЊ С„Р°Р№Р», РµСЃР»Рё РµРіРѕ РЅРµС‚Сѓ.
+	// Р•СЃР»Рё РїСЂРѕСЃРёР»Рё РґРѕСЃС‚СѓРї РЅР° Р·Р°РїРёСЃСЊ - С‚Рѕ РѕРґРЅРѕР·РЅР°С‡РЅРѕ CreateFile
 	if (abWriteReq || !FileExists(szPath))
 	{
 		HANDLE hFile = CreateFile(szPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -1068,9 +1068,9 @@ LPWSTR CConEmuMain::ConEmuXml()
 			return ms_ConEmuXml;
 	}
 
-	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
+	TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РµС‰Рµ РґР°С‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РґРІР° С„Р°Р№Р»Р° - СЃРёСЃС‚РµРјРЅС‹Р№ (РїСЂРµРґСѓСЃС‚Р°РЅРѕРІРєРё) Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёР№ (РЅР°СЃС‚СЂРѕР№РєРё)");
 
-	// Ищем файл портабельных настроек (возвращаем первый найденный, приоритет...)
+	// РС‰РµРј С„Р°Р№Р» РїРѕСЂС‚Р°Р±РµР»СЊРЅС‹С… РЅР°СЃС‚СЂРѕРµРє (РІРѕР·РІСЂР°С‰Р°РµРј РїРµСЂРІС‹Р№ РЅР°Р№РґРµРЅРЅС‹Р№, РїСЂРёРѕСЂРёС‚РµС‚...)
 	LPWSTR pszSearchXml[] = {
 		ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"),
 		ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"),
@@ -1087,7 +1087,7 @@ LPWSTR CConEmuMain::ConEmuXml()
 		}
 	}
 
-	// Но если _создавать_ новый, то в BaseDir! Чтобы в корне не мусорить
+	// РќРѕ РµСЃР»Рё _СЃРѕР·РґР°РІР°С‚СЊ_ РЅРѕРІС‹Р№, С‚Рѕ РІ BaseDir! Р§С‚РѕР±С‹ РІ РєРѕСЂРЅРµ РЅРµ РјСѓСЃРѕСЂРёС‚СЊ
 	wcscpy_c(ms_ConEmuXml, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
 
 fin:
@@ -1106,9 +1106,9 @@ LPWSTR CConEmuMain::ConEmuIni()
 			return ms_ConEmuIni;
 	}
 
-	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
+	TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РµС‰Рµ РґР°С‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РґРІР° С„Р°Р№Р»Р° - СЃРёСЃС‚РµРјРЅС‹Р№ (РїСЂРµРґСѓСЃС‚Р°РЅРѕРІРєРё) Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёР№ (РЅР°СЃС‚СЂРѕР№РєРё)");
 
-	// Ищем файл портабельных настроек (возвращаем первый найденный, приоритет...)
+	// РС‰РµРј С„Р°Р№Р» РїРѕСЂС‚Р°Р±РµР»СЊРЅС‹С… РЅР°СЃС‚СЂРѕРµРє (РІРѕР·РІСЂР°С‰Р°РµРј РїРµСЂРІС‹Р№ РЅР°Р№РґРµРЅРЅС‹Р№, РїСЂРёРѕСЂРёС‚РµС‚...)
 	LPWSTR pszSearchIni[] = {
 		ExpandEnvStr(L"%ConEmuDir%\\ConEmu.ini"),
 		ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.ini"),
@@ -1125,7 +1125,7 @@ LPWSTR CConEmuMain::ConEmuIni()
 		}
 	}
 
-	// Но если _создавать_ новый, то в BaseDir! Чтобы в корне не мусорить
+	// РќРѕ РµСЃР»Рё _СЃРѕР·РґР°РІР°С‚СЊ_ РЅРѕРІС‹Р№, С‚Рѕ РІ BaseDir! Р§С‚РѕР±С‹ РІ РєРѕСЂРЅРµ РЅРµ РјСѓСЃРѕСЂРёС‚СЊ
 	wcscpy_c(ms_ConEmuIni, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuIni, L"\\ConEmu.ini");
 
 fin:
@@ -1138,10 +1138,10 @@ fin:
 
 LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 {
-	// Если OS - 32битная или в папке ConEmu был найден только один из "серверов"
+	// Р•СЃР»Рё OS - 32Р±РёС‚РЅР°СЏ РёР»Рё РІ РїР°РїРєРµ ConEmu Р±С‹Р» РЅР°Р№РґРµРЅ С‚РѕР»СЊРєРѕ РѕРґРёРЅ РёР· "СЃРµСЂРІРµСЂРѕРІ"
 	if (!IsWindows64() || !lstrcmp(ms_ConEmuC32Full, ms_ConEmuC64Full))
 	{
-		// Сразу вернуть
+		// РЎСЂР°Р·Сѓ РІРµСЂРЅСѓС‚СЊ
 		return ms_ConEmuC32Full;
 	}
 
@@ -1151,13 +1151,13 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 
 	if (!asCmdLine || !*asCmdLine)
 	{
-		// Если строка запуска не указана - считаем, что запускается ComSpec
+		// Р•СЃР»Рё СЃС‚СЂРѕРєР° Р·Р°РїСѓСЃРєР° РЅРµ СѓРєР°Р·Р°РЅР° - СЃС‡РёС‚Р°РµРј, С‡С‚Рѕ Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ ComSpec
 		lbCmd = true;
 	}
 	else
 	{
-		// Проверить битность asCmdLine во избежание лишних запусков серверов для Inject
-		// и корректной битности запускаемого процессора по настройке
+		// РџСЂРѕРІРµСЂРёС‚СЊ Р±РёС‚РЅРѕСЃС‚СЊ asCmdLine РІРѕ РёР·Р±РµР¶Р°РЅРёРµ Р»РёС€РЅРёС… Р·Р°РїСѓСЃРєРѕРІ СЃРµСЂРІРµСЂРѕРІ РґР»СЏ Inject
+		// Рё РєРѕСЂСЂРµРєС‚РЅРѕР№ Р±РёС‚РЅРѕСЃС‚Рё Р·Р°РїСѓСЃРєР°РµРјРѕРіРѕ РїСЂРѕС†РµСЃСЃРѕСЂР° РїРѕ РЅР°СЃС‚СЂРѕР№РєРµ
 		CmdArg szTemp;
 		wchar_t* pszExpand = NULL;
 		if (!FileExists(asCmdLine))
@@ -1178,7 +1178,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 				asCmdLine = pszExpand;
 		}
 
-		// Если путь указан полностью - берем битность из него, иначе - проверяем "на cmd"
+		// Р•СЃР»Рё РїСѓС‚СЊ СѓРєР°Р·Р°РЅ РїРѕР»РЅРѕСЃС‚СЊСЋ - Р±РµСЂРµРј Р±РёС‚РЅРѕСЃС‚СЊ РёР· РЅРµРіРѕ, РёРЅР°С‡Рµ - РїСЂРѕРІРµСЂСЏРµРј "РЅР° cmd"
 		if ((lstrcmpi(asCmdLine, L"cmd") == 0) || (lstrcmpi(asCmdLine, L"cmd.exe") == 0))
 		{
 			lbCmd = true;
@@ -1188,7 +1188,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 			LPCWSTR pszExt = PointToExt(asCmdLine);
 			if (pszExt && (lstrcmpi(pszExt, L".exe") != 0) && (lstrcmpi(pszExt, L".com") != 0))
 			{
-				// Если указано расширение, и это не .exe и не .com - считаем, что запуск через ComProcessor
+				// Р•СЃР»Рё СѓРєР°Р·Р°РЅРѕ СЂР°СЃС€РёСЂРµРЅРёРµ, Рё СЌС‚Рѕ РЅРµ .exe Рё РЅРµ .com - СЃС‡РёС‚Р°РµРј, С‡С‚Рѕ Р·Р°РїСѓСЃРє С‡РµСЂРµР· ComProcessor
 				lbCmd = true;
 			}
 			else
@@ -1196,11 +1196,11 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 				wchar_t szFind[MAX_PATH+1];
 				wcscpy_c(szFind, asCmdLine);
 				CharUpperBuff(szFind, lstrlen(szFind));
-				// По хорошему, нужно бы проверить еще и начало на соответствие в "%WinDir%". Но это не критично.
+				// РџРѕ С…РѕСЂРѕС€РµРјСѓ, РЅСѓР¶РЅРѕ Р±С‹ РїСЂРѕРІРµСЂРёС‚СЊ РµС‰Рµ Рё РЅР°С‡Р°Р»Рѕ РЅР° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ РІ "%WinDir%". РќРѕ СЌС‚Рѕ РЅРµ РєСЂРёС‚РёС‡РЅРѕ.
 				if (wcsstr(szFind, L"\\SYSNATIVE\\") || wcsstr(szFind, L"\\SYSWOW64\\"))
 				{
-					// Если "SysNative" - считаем что 32-bit, иначе, 64-битный сервер просто "не увидит" эту папку
-					// С "SysWow64" все понятно, там только 32-битное
+					// Р•СЃР»Рё "SysNative" - СЃС‡РёС‚Р°РµРј С‡С‚Рѕ 32-bit, РёРЅР°С‡Рµ, 64-Р±РёС‚РЅС‹Р№ СЃРµСЂРІРµСЂ РїСЂРѕСЃС‚Рѕ "РЅРµ СѓРІРёРґРёС‚" СЌС‚Сѓ РїР°РїРєСѓ
+					// РЎ "SysWow64" РІСЃРµ РїРѕРЅСЏС‚РЅРѕ, С‚Р°Рј С‚РѕР»СЊРєРѕ 32-Р±РёС‚РЅРѕРµ
 					Bits = 32;
 				}
 				else
@@ -1208,8 +1208,8 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 					MWow64Disable wow; wow.Disable();
 					DWORD ImageSubsystem = 0, ImageBits = 0, FileAttrs = 0;
 					lbFound = GetImageSubsystem(asCmdLine, ImageSubsystem, ImageBits, FileAttrs);
-					// Если не нашли и путь не был указан
-					// Даже если указан путь - это может быть путь к файлу без расширения. Его нужно "добавить".
+					// Р•СЃР»Рё РЅРµ РЅР°С€Р»Рё Рё РїСѓС‚СЊ РЅРµ Р±С‹Р» СѓРєР°Р·Р°РЅ
+					// Р”Р°Р¶Рµ РµСЃР»Рё СѓРєР°Р·Р°РЅ РїСѓС‚СЊ - СЌС‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓС‚СЊ Рє С„Р°Р№Р»Сѓ Р±РµР· СЂР°СЃС€РёСЂРµРЅРёСЏ. Р•РіРѕ РЅСѓР¶РЅРѕ "РґРѕР±Р°РІРёС‚СЊ".
 					if (!lbFound /*&& !wcschr(asCmdLine, L'\\')*/)
 					{
 						LPCWSTR pszSearchFile = asCmdLine;
@@ -1224,7 +1224,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 							}
 						}
 
-						// попытаемся найти
+						// РїРѕРїС‹С‚Р°РµРјСЃСЏ РЅР°Р№С‚Рё
 						wchar_t *pszFilePart;
 						DWORD nLen = SearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
 						if (!nLen && !pszSearchPath)
@@ -1281,8 +1281,8 @@ BOOL CConEmuMain::Init()
 {
 	_ASSERTE(mp_TabBar == NULL);
 
-	// Только по настройке, а то дочерние процессы с тем же Affinity запускаются...
-	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-за глюков в железе могут быть ошибки подсчета производительности, если этого не сделать
+	// РўРѕР»СЊРєРѕ РїРѕ РЅР°СЃС‚СЂРѕР№РєРµ, Р° С‚Рѕ РґРѕС‡РµСЂРЅРёРµ РїСЂРѕС†РµСЃСЃС‹ СЃ С‚РµРј Р¶Рµ Affinity Р·Р°РїСѓСЃРєР°СЋС‚СЃСЏ...
+	// РќР° С‚РѕСЂРјРѕР·Р° - РЅРµ РІР»РёСЏРµС‚. РќРѕ РІСЂРѕРґРµ Р±С‹ РЅР° РјРЅРѕРіРѕРїСЂРѕС†РµСЃСЃРѕСЂРЅС‹С… РёР·-Р·Р° РіР»СЋРєРѕРІ РІ Р¶РµР»РµР·Рµ РјРѕРіСѓС‚ Р±С‹С‚СЊ РѕС€РёР±РєРё РїРѕРґСЃС‡РµС‚Р° РїСЂРѕРёР·РІРѕРґРёС‚РµР»СЊРЅРѕСЃС‚Рё, РµСЃР»Рё СЌС‚РѕРіРѕ РЅРµ СЃРґРµР»Р°С‚СЊ
 	if (gpSet->nAffinity)
 		SetProcessAffinityMask(GetCurrentProcess(), gpSet->nAffinity);
 
@@ -1303,14 +1303,14 @@ BOOL CConEmuMain::Init()
 	//m_Back = new CConEmuBack();
 	//m_Macro = new CConEmuMacro();
 	//#pragma message("Win2k: EVENT_CONSOLE_START_APPLICATION, EVENT_CONSOLE_END_APPLICATION")
-	//Нас интересуют только START и END. Все остальные события приходят от ConEmuC через серверный пайп
+	//РќР°СЃ РёРЅС‚РµСЂРµСЃСѓСЋС‚ С‚РѕР»СЊРєРѕ START Рё END. Р’СЃРµ РѕСЃС‚Р°Р»СЊРЅС‹Рµ СЃРѕР±С‹С‚РёСЏ РїСЂРёС…РѕРґСЏС‚ РѕС‚ ConEmuC С‡РµСЂРµР· СЃРµСЂРІРµСЂРЅС‹Р№ РїР°Р№Рї
 	//#if defined(__GNUC__)
 	//HMODULE hUser32 = GetModuleHandle(L"user32.dll");
 	//FSetWinEventHook SetWinEventHook = (FSetWinEventHook)GetProcAddress(hUser32, "SetWinEventHook");
 	//#endif
 #ifndef _WIN64
-	// Интересует только запуск/останов 16битных приложений
-	// NTVDM нету в 64битных версиях Windows
+	// РРЅС‚РµСЂРµСЃСѓРµС‚ С‚РѕР»СЊРєРѕ Р·Р°РїСѓСЃРє/РѕСЃС‚Р°РЅРѕРІ 16Р±РёС‚РЅС‹С… РїСЂРёР»РѕР¶РµРЅРёР№
+	// NTVDM РЅРµС‚Сѓ РІ 64Р±РёС‚РЅС‹С… РІРµСЂСЃРёСЏС… Windows
 	if (!IsWindows64())
 	{
 		mh_WinHook = SetWinEventHook(EVENT_CONSOLE_START_APPLICATION/*EVENT_CONSOLE_CARET*/,EVENT_CONSOLE_END_APPLICATION,
@@ -1364,27 +1364,27 @@ void CConEmuMain::OnUseDwm(bool abEnableDwm)
 	//CheckMenuItem(GetSysMenu(false), ID_ISDWM, MF_BYCOMMAND | (abEnableDwm ? MF_CHECKED : MF_UNCHECKED));
 }
 
-// Например при вызове из диалога "Settings..." и нажатия кнопки "Apply" (Size & Pos)
+// РќР°РїСЂРёРјРµСЂ РїСЂРё РІС‹Р·РѕРІРµ РёР· РґРёР°Р»РѕРіР° "Settings..." Рё РЅР°Р¶Р°С‚РёСЏ РєРЅРѕРїРєРё "Apply" (Size & Pos)
 bool CConEmuMain::SizeWindow(const CESize sizeW, const CESize sizeH)
 {
 	if (mp_Inside)
 	{
-		// В Inside - размер окна не меняется. Оно всегда подгоняется под родителя.
+		// Р’ Inside - СЂР°Р·РјРµСЂ РѕРєРЅР° РЅРµ РјРµРЅСЏРµС‚СЃСЏ. РћРЅРѕ РІСЃРµРіРґР° РїРѕРґРіРѕРЅСЏРµС‚СЃСЏ РїРѕРґ СЂРѕРґРёС‚РµР»СЏ.
 		return false;
 	}
 
 	ConEmuWindowMode wndMode = GetWindowMode();
 	if (wndMode == wmMaximized || wndMode == wmFullScreen)
 	{
-		// Если окно развернуто - его размер таким образом (по консоли например) менять запрещается
+		// Р•СЃР»Рё РѕРєРЅРѕ СЂР°Р·РІРµСЂРЅСѓС‚Рѕ - РµРіРѕ СЂР°Р·РјРµСЂ С‚Р°РєРёРј РѕР±СЂР°Р·РѕРј (РїРѕ РєРѕРЅСЃРѕР»Рё РЅР°РїСЂРёРјРµСЂ) РјРµРЅСЏС‚СЊ Р·Р°РїСЂРµС‰Р°РµС‚СЃСЏ
 
-		// Quake??? Разрешить?
+		// Quake??? Р Р°Р·СЂРµС€РёС‚СЊ?
 
 		_ASSERTE(wndMode != wmMaximized && wndMode != wmFullScreen);
 		return false;
 	}
 
-	// Установить размер окна по расчетным значениям
+	// РЈСЃС‚Р°РЅРѕРІРёС‚СЊ СЂР°Р·РјРµСЂ РѕРєРЅР° РїРѕ СЂР°СЃС‡РµС‚РЅС‹Рј Р·РЅР°С‡РµРЅРёСЏРј
 
 	RECT rcMargins = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD|CEM_TAB);
 	SIZE szPixelSize = GetDefaultSize(false, &sizeW, &sizeH);
@@ -1407,9 +1407,9 @@ bool CConEmuMain::SizeWindow(const CESize sizeW, const CESize sizeH)
 	return bSizeOK;
 }
 
-// bCells==true - вернуть расчетный консольный размер, bCells==false - размер в пикселях (только консоль, без рамок-отступов-табов-прочая)
-// pSizeW и pSizeH указываются если нужно установить конкретные размеры
-// hMon может быть указан при переносе окна между мониторами например
+// bCells==true - РІРµСЂРЅСѓС‚СЊ СЂР°СЃС‡РµС‚РЅС‹Р№ РєРѕРЅСЃРѕР»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ, bCells==false - СЂР°Р·РјРµСЂ РІ РїРёРєСЃРµР»СЏС… (С‚РѕР»СЊРєРѕ РєРѕРЅСЃРѕР»СЊ, Р±РµР· СЂР°РјРѕРє-РѕС‚СЃС‚СѓРїРѕРІ-С‚Р°Р±РѕРІ-РїСЂРѕС‡Р°СЏ)
+// pSizeW Рё pSizeH СѓРєР°Р·С‹РІР°СЋС‚СЃСЏ РµСЃР»Рё РЅСѓР¶РЅРѕ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РєРѕРЅРєСЂРµС‚РЅС‹Рµ СЂР°Р·РјРµСЂС‹
+// hMon РјРѕР¶РµС‚ Р±С‹С‚СЊ СѓРєР°Р·Р°РЅ РїСЂРё РїРµСЂРµРЅРѕСЃРµ РѕРєРЅР° РјРµР¶РґСѓ РјРѕРЅРёС‚РѕСЂР°РјРё РЅР°РїСЂРёРјРµСЂ
 SIZE CConEmuMain::GetDefaultSize(bool bCells, const CESize* pSizeW/*=NULL*/, const CESize* pSizeH/*=NULL*/, HMONITOR hMon/*=NULL*/)
 {
 	//WARNING! Function must NOT call CalcRect to avoid cycling!
@@ -1425,7 +1425,7 @@ SIZE CConEmuMain::GetDefaultSize(bool bCells, const CESize* pSizeW/*=NULL*/, con
 	if (pSizeH && pSizeH->Value)
 		sizeH.Set(false, pSizeH->Style, pSizeH->Value);
 
-	// Шрифт
+	// РЁСЂРёС„С‚
 	int nFontWidth = gpSetCls->FontWidth();
 	int nFontHeight = gpSetCls->FontHeight();
 	if ((nFontWidth <= 0) || (nFontHeight <= 0))
@@ -1443,14 +1443,14 @@ SIZE CConEmuMain::GetDefaultSize(bool bCells, const CESize* pSizeW/*=NULL*/, con
 
 	COORD conSize = {80, 25};
 
-	// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
+	// Р•СЃР»Рё С‚Р°Р±С‹ РїРѕРєР°Р·С‹РІР°СЋС‚СЃСЏ РІСЃРµРіРґР° - СЃСЂР°Р·Сѓ РґРѕР±Р°РІРёРј РёС… СЂР°Р·РјРµСЂ, С‡С‚РѕР±С‹ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё Р±С‹Р» Р·Р°РєР°Р·Р°РЅРЅС‹Рј
 	bool bTabs = this->isTabsShown();
 	int nShiftX = nFrameX + (bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0);
 	int nShiftY = nFrameY + (bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
 
 	ConEmuWindowMode wmCurMode = GetWindowMode();
 
-	// Информация по монитору нам нужна только если размеры заданы в процентах
+	// РРЅС„РѕСЂРјР°С†РёСЏ РїРѕ РјРѕРЅРёС‚РѕСЂСѓ РЅР°Рј РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё СЂР°Р·РјРµСЂС‹ Р·Р°РґР°РЅС‹ РІ РїСЂРѕС†РµРЅС‚Р°С…
 	MONITORINFO mi = {sizeof(mi)};
 	if ((sizeW.Style == ss_Percents || sizeH.Style == ss_Percents)
 		|| gpSet->isQuakeStyle
@@ -1460,7 +1460,7 @@ SIZE CConEmuMain::GetDefaultSize(bool bCells, const CESize* pSizeW/*=NULL*/, con
 		{
 			GetMonitorInfoSafe(hMon, mi);
 		}
-		// по ghWnd - монитор не ищем (окно может быть свернуто), только по координатам
+		// РїРѕ ghWnd - РјРѕРЅРёС‚РѕСЂ РЅРµ РёС‰РµРј (РѕРєРЅРѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ СЃРІРµСЂРЅСѓС‚Рѕ), С‚РѕР»СЊРєРѕ РїРѕ РєРѕРѕСЂРґРёРЅР°С‚Р°Рј
 		else
 		{
 			RECT rc = {this->wndX, this->wndY, this->wndX, this->wndY};
@@ -1512,7 +1512,7 @@ SIZE CConEmuMain::GetDefaultSize(bool bCells, const CESize* pSizeW/*=NULL*/, con
 		nPixelHeight = conSize.Y * nFontHeight;
 
 
-	// Для Quake & FS/Maximized нужно убедиться, что размеры НЕ превышают размеры монитора/рабочей области
+	// Р”Р»СЏ Quake & FS/Maximized РЅСѓР¶РЅРѕ СѓР±РµРґРёС‚СЊСЃСЏ, С‡С‚Рѕ СЂР°Р·РјРµСЂС‹ РќР• РїСЂРµРІС‹С€Р°СЋС‚ СЂР°Р·РјРµСЂС‹ РјРѕРЅРёС‚РѕСЂР°/СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё
 	if (gpSet->isQuakeStyle || (wmCurMode == wmMaximized || wmCurMode == wmFullScreen))
 	{
 		if (mi.cbSize)
@@ -1564,7 +1564,7 @@ bool CConEmuMain::isTabsShown()
 	return false;
 }
 
-// Вызывается при старте программы, для вычисления mrc_Ideal - размера окна по умолчанию
+// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё СЃС‚Р°СЂС‚Рµ РїСЂРѕРіСЂР°РјРјС‹, РґР»СЏ РІС‹С‡РёСЃР»РµРЅРёСЏ mrc_Ideal - СЂР°Р·РјРµСЂР° РѕРєРЅР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 RECT CConEmuMain::GetDefaultRect()
 {
 	RECT rcWnd = {};
@@ -1596,12 +1596,12 @@ RECT CConEmuMain::GetDefaultRect()
 	int nFrameY = rcFrameMargin.top + rcFrameMargin.bottom;
 	RECT rcTabMargins = mp_TabBar->GetMargins();
 
-	// Если табы показываются всегда (или сейчас) - сразу добавим их размер, чтобы размер консоли был заказанным
+	// Р•СЃР»Рё С‚Р°Р±С‹ РїРѕРєР°Р·С‹РІР°СЋС‚СЃСЏ РІСЃРµРіРґР° (РёР»Рё СЃРµР№С‡Р°СЃ) - СЃСЂР°Р·Сѓ РґРѕР±Р°РІРёРј РёС… СЂР°Р·РјРµСЂ, С‡С‚РѕР±С‹ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё Р±С‹Р» Р·Р°РєР°Р·Р°РЅРЅС‹Рј
 	bool bTabs = this->isTabsShown();
 	int nShiftX = nFrameX + (bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0);
 	int nShiftY = nFrameY + (bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
 
-	// Расчет размеров
+	// Р Р°СЃС‡РµС‚ СЂР°Р·РјРµСЂРѕРІ
 	SIZE szConPixels = GetDefaultSize(false);
 
 	// >> rcWnd
@@ -1629,7 +1629,7 @@ RECT CConEmuMain::GetDefaultRect()
 
 		bool bChange = false;
 
-		// Если успешно - подгоняем по экрану
+		// Р•СЃР»Рё СѓСЃРїРµС€РЅРѕ - РїРѕРґРіРѕРЅСЏРµРј РїРѕ СЌРєСЂР°РЅСѓ
 		if (mi.rcWork.right > mi.rcWork.left)
 		{
 			int nWidth = rcWnd.right - rcWnd.left;
@@ -1663,7 +1663,7 @@ RECT CConEmuMain::GetDefaultRect()
 
 				case wmNormal:
 				{
-					// Если выбран режим "Fixed" - разрешим задавать левую координату
+					// Р•СЃР»Рё РІС‹Р±СЂР°РЅ СЂРµР¶РёРј "Fixed" - СЂР°Р·СЂРµС€РёРј Р·Р°РґР°РІР°С‚СЊ Р»РµРІСѓСЋ РєРѕРѕСЂРґРёРЅР°С‚Сѓ
 					if (!gpSet->wndCascade)
 						rcWnd.left = max(mi.rcWork.left,min(gpConEmu->wndX,(mi.rcWork.right - nWidth)));
 					else
@@ -1691,7 +1691,7 @@ RECT CConEmuMain::GetDefaultRect()
 			this->wndY = rcWnd.top;
 		}
 	}
-	// При старте, если указан "Cascade" (то есть только при создании окна)
+	// РџСЂРё СЃС‚Р°СЂС‚Рµ, РµСЃР»Рё СѓРєР°Р·Р°РЅ "Cascade" (С‚Рѕ РµСЃС‚СЊ С‚РѕР»СЊРєРѕ РїСЂРё СЃРѕР·РґР°РЅРёРё РѕРєРЅР°)
 	else if (gpSet->wndCascade && !ghWnd)
 	{
 		RECT rcScreen = MakeRect(800,600);
@@ -1699,12 +1699,12 @@ RECT CConEmuMain::GetDefaultRect()
 
 		if (nMonitors > 1)
 		{
-			// Размер виртуального экрана по всем мониторам
+			// Р Р°Р·РјРµСЂ РІРёСЂС‚СѓР°Р»СЊРЅРѕРіРѕ СЌРєСЂР°РЅР° РїРѕ РІСЃРµРј РјРѕРЅРёС‚РѕСЂР°Рј
 			rcScreen.left = GetSystemMetrics(SM_XVIRTUALSCREEN); // may be <0
 			rcScreen.top  = GetSystemMetrics(SM_YVIRTUALSCREEN);
 			rcScreen.right = rcScreen.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
 			rcScreen.bottom = rcScreen.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
-			TODO("Хорошо бы исключить из рассмотрения Taskbar...");
+			TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РёСЃРєР»СЋС‡РёС‚СЊ РёР· СЂР°СЃСЃРјРѕС‚СЂРµРЅРёСЏ Taskbar...");
 		}
 		else
 		{
@@ -1717,7 +1717,7 @@ RECT CConEmuMain::GetDefaultRect()
 		int nX = rcFrame.left, nY = rcFrame.top;
 		int nWidth = rcWnd.right - rcWnd.left;
 		int nHeight = rcWnd.bottom - rcWnd.top;
-		// Теперь, если новый размер выходит за пределы экрана - сдвинуть в левый верхний угол
+		// РўРµРїРµСЂСЊ, РµСЃР»Рё РЅРѕРІС‹Р№ СЂР°Р·РјРµСЂ РІС‹С…РѕРґРёС‚ Р·Р° РїСЂРµРґРµР»С‹ СЌРєСЂР°РЅР° - СЃРґРІРёРЅСѓС‚СЊ РІ Р»РµРІС‹Р№ РІРµСЂС…РЅРёР№ СѓРіРѕР»
 		BOOL lbX = ((rcWnd.left+nWidth)>(rcScreen.right+nX));
 		BOOL lbY = ((rcWnd.top+nHeight)>(rcScreen.bottom+nY));
 
@@ -1758,7 +1758,7 @@ RECT CConEmuMain::GetDefaultRect()
 			rcWnd.bottom = rcWnd.top + nHeight;
 		}
 
-		// Скорректировать X/Y при каскаде
+		// РЎРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ X/Y РїСЂРё РєР°СЃРєР°РґРµ
 		this->wndX = rcWnd.left;
 		this->wndY = rcWnd.top;
 	}
@@ -1783,13 +1783,13 @@ RECT CConEmuMain::GetVirtualScreenRect(BOOL abFullScreen)
 
 	if (nMonitors > 1)
 	{
-		// Размер виртуального экрана по всем мониторам
+		// Р Р°Р·РјРµСЂ РІРёСЂС‚СѓР°Р»СЊРЅРѕРіРѕ СЌРєСЂР°РЅР° РїРѕ РІСЃРµРј РјРѕРЅРёС‚РѕСЂР°Рј
 		rcScreen.left = GetSystemMetrics(SM_XVIRTUALSCREEN); // may be <0
 		rcScreen.top  = GetSystemMetrics(SM_YVIRTUALSCREEN);
 		rcScreen.right = rcScreen.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
 		rcScreen.bottom = rcScreen.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-		// Хорошо бы исключить из рассмотрения Taskbar и прочие панели
+		// РҐРѕСЂРѕС€Рѕ Р±С‹ РёСЃРєР»СЋС‡РёС‚СЊ РёР· СЂР°СЃСЃРјРѕС‚СЂРµРЅРёСЏ Taskbar Рё РїСЂРѕС‡РёРµ РїР°РЅРµР»Рё
 		if (!abFullScreen)
 		{
 			RECT rcPrimaryWork;
@@ -1842,7 +1842,7 @@ void CConEmuMain::SetWindowStyle(HWND ahWnd, DWORD anStyle)
 	UNREFERENCED_PARAMETER(lRc);
 }
 
-// Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE
+// Р­С‚Р° С„СѓРЅРєС†РёСЏ СЂР°СЃС‡РёС‚С‹РІР°РµС‚ РЅРµРѕР±С…РѕРґРёРјС‹Рµ СЃС‚РёР»Рё РїРѕ С‚РµРєСѓС‰РёРј РЅР°СЃС‚СЂРѕР№РєР°Рј, Р° РЅРµ РІРѕР·РІСЂР°С‰Р°РµС‚ GWL_STYLE
 DWORD CConEmuMain::GetWindowStyle()
 {
 	DWORD style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
@@ -1894,8 +1894,8 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 	}
 	else if (gpSet->isCaptionHidden(wmNewMode))
 	{
-		//Win& & Quake - не работает "Slide up/down" если есть ThickFrame
-		//if ((gpSet->isQuakeStyle == 0) // не для Quake. Для него нужна рамка, чтобы ресайзить
+		//Win& & Quake - РЅРµ СЂР°Р±РѕС‚Р°РµС‚ "Slide up/down" РµСЃР»Рё РµСЃС‚СЊ ThickFrame
+		//if ((gpSet->isQuakeStyle == 0) // РЅРµ РґР»СЏ Quake. Р”Р»СЏ РЅРµРіРѕ РЅСѓР¶РЅР° СЂР°РјРєР°, С‡С‚РѕР±С‹ СЂРµСЃР°Р№Р·РёС‚СЊ
 		if ((wmNewMode == wmFullScreen) || (wmNewMode == wmMaximized))
 		{
 			dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
@@ -1940,14 +1940,14 @@ void CConEmuMain::SetWindowStyleEx(HWND ahWnd, DWORD anStyleEx)
 	UNREFERENCED_PARAMETER(lRc);
 }
 
-// Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE_EX
+// Р­С‚Р° С„СѓРЅРєС†РёСЏ СЂР°СЃС‡РёС‚С‹РІР°РµС‚ РЅРµРѕР±С…РѕРґРёРјС‹Рµ СЃС‚РёР»Рё РїРѕ С‚РµРєСѓС‰РёРј РЅР°СЃС‚СЂРѕР№РєР°Рј, Р° РЅРµ РІРѕР·РІСЂР°С‰Р°РµС‚ GWL_STYLE_EX
 DWORD CConEmuMain::GetWindowStyleEx()
 {
 	DWORD styleEx = 0;
 
 	if (mp_Inside)
 	{
-		// ничего вроде не надо
+		// РЅРёС‡РµРіРѕ РІСЂРѕРґРµ РЅРµ РЅР°РґРѕ
 	}
 	else
 	{
@@ -1969,14 +1969,14 @@ DWORD CConEmuMain::GetWindowStyleEx()
 	return styleEx;
 }
 
-// Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE
+// Р­С‚Р° С„СѓРЅРєС†РёСЏ СЂР°СЃС‡РёС‚С‹РІР°РµС‚ РЅРµРѕР±С…РѕРґРёРјС‹Рµ СЃС‚РёР»Рё РїРѕ С‚РµРєСѓС‰РёРј РЅР°СЃС‚СЂРѕР№РєР°Рј, Р° РЅРµ РІРѕР·РІСЂР°С‰Р°РµС‚ GWL_STYLE
 DWORD CConEmuMain::GetWorkWindowStyle()
 {
 	DWORD style = WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
 	return style;
 }
 
-// Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE_EX
+// Р­С‚Р° С„СѓРЅРєС†РёСЏ СЂР°СЃС‡РёС‚С‹РІР°РµС‚ РЅРµРѕР±С…РѕРґРёРјС‹Рµ СЃС‚РёР»Рё РїРѕ С‚РµРєСѓС‰РёРј РЅР°СЃС‚СЂРѕР№РєР°Рј, Р° РЅРµ РІРѕР·РІСЂР°С‰Р°РµС‚ GWL_STYLE_EX
 DWORD CConEmuMain::GetWorkWindowStyleEx()
 {
 	DWORD styleEx = 0;
@@ -1990,7 +1990,7 @@ bool CConEmuMain::CreateLog()
 	if (mp_Log!=NULL)
 	{
 		_ASSERTE(mp_Log==NULL);
-		return true; // создан уже
+		return true; // СЃРѕР·РґР°РЅ СѓР¶Рµ
 	}
 
 	bool bRc = false;
@@ -2005,7 +2005,7 @@ bool CConEmuMain::CreateLog()
 		_wsprintf(szError, SKIPLEN(countof(szError)) L"Create log file failed! ErrCode=0x%08X\n%s\n", (DWORD)hr, mp_Log->GetLogFileName());
 		MBoxA(szError);
 		SafeDelete(mp_Log);
-		// Сброс!
+		// РЎР±СЂРѕСЃ!
 		gpSetCls->isAdvLogging = 0;
 	}
 	else
@@ -2037,8 +2037,8 @@ void CConEmuMain::LogString(LPCSTR asInfo, bool abWriteTime /*= true*/, bool abW
 
 BOOL CConEmuMain::CreateMainWindow()
 {
-	//if (!Init()) -- вызывается из WinMain
-	//	return FALSE; // Ошибка уже показана
+	//if (!Init()) -- РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· WinMain
+	//	return FALSE; // РћС€РёР±РєР° СѓР¶Рµ РїРѕРєР°Р·Р°РЅР°
 
 	if (_tcscmp(VirtualConsoleClass,VirtualConsoleClassMain)) //-V549
 	{
@@ -2052,8 +2052,8 @@ BOOL CConEmuMain::CreateMainWindow()
 	mh_BackBrush = CreateSolidBrush(255);
 	#endif
 
-	// 2009-06-11 Возможно, что CS_SAVEBITS приводит к глюкам отрисовки
-	// банально непрорисовываются некоторые части экрана (драйвер видюхи глючит?)
+	// 2009-06-11 Р’РѕР·РјРѕР¶РЅРѕ, С‡С‚Рѕ CS_SAVEBITS РїСЂРёРІРѕРґРёС‚ Рє РіР»СЋРєР°Рј РѕС‚СЂРёСЃРѕРІРєРё
+	// Р±Р°РЅР°Р»СЊРЅРѕ РЅРµРїСЂРѕСЂРёСЃРѕРІС‹РІР°СЋС‚СЃСЏ РЅРµРєРѕС‚РѕСЂС‹Рµ С‡Р°СЃС‚Рё СЌРєСЂР°РЅР° (РґСЂР°Р№РІРµСЂ РІРёРґСЋС…Рё РіР»СЋС‡РёС‚?)
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC/*|CS_SAVEBITS*/, CConEmuMain::MainWndProc, 0, 16,
 	                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
 	                 mh_BackBrush ? mh_BackBrush : hBlackBrush,
@@ -2111,7 +2111,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	//	styleEx |= WS_EX_LAYERED;
 	//if (gpSet->isAlwaysOnTop)
 	//	styleEx |= WS_EX_TOPMOST;
-	////if (gpSet->isHideCaptionAlways) // сразу создать так почему-то не получается
+	////if (gpSet->isHideCaptionAlways) // СЃСЂР°Р·Сѓ СЃРѕР·РґР°С‚СЊ С‚Р°Рє РїРѕС‡РµРјСѓ-С‚Рѕ РЅРµ РїРѕР»СѓС‡Р°РµС‚СЃСЏ
 	////	style &= ~(WS_CAPTION);
 	int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
 
@@ -2119,7 +2119,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	//// In principle, this MUST be wmNormal on startup, even if started in Maximized/FullScreen/Iconic
 	//_ASSERTE(WindowMode==wmNormal);
 
-	// Расчет размеров окна в Normal режиме
+	// Р Р°СЃС‡РµС‚ СЂР°Р·РјРµСЂРѕРІ РѕРєРЅР° РІ Normal СЂРµР¶РёРјРµ
 	if ((this->WndWidth.Value && this->WndHeight.Value) || mp_Inside)
 	{
 		MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
@@ -2129,7 +2129,7 @@ BOOL CConEmuMain::CreateMainWindow()
 		//RECT rcFrameMargin = CalcMargins(CEM_FRAME);
 		//int nShiftX = rcFrameMargin.left + rcFrameMargin.right;
 		//int nShiftY = rcFrameMargin.top + rcFrameMargin.bottom;
-		//// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
+		//// Р•СЃР»Рё С‚Р°Р±С‹ РїРѕРєР°Р·С‹РІР°СЋС‚СЃСЏ РІСЃРµРіРґР° - СЃСЂР°Р·Сѓ РґРѕР±Р°РІРёРј РёС… СЂР°Р·РјРµСЂ, С‡С‚РѕР±С‹ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё Р±С‹Р» Р·Р°РєР°Р·Р°РЅРЅС‹Рј
 		//nWidth  = conSize.X * gpSetCls->FontWidth() + nShiftX
 		//	+ (this->isTabsShown() ? (gpSet->rcTabMargins.left+gpSet->rcTabMargins.right) : 0);
 		//nHeight = conSize.Y * gpSetCls->FontHeight() + nShiftY
@@ -2162,8 +2162,8 @@ BOOL CConEmuMain::CreateMainWindow()
 
 	//if (this->WindowMode == wmMaximized) style |= WS_MAXIMIZE;
 	//style |= WS_VISIBLE;
-	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
-	WARNING("На ноуте вылезает за пределы рабочей области");
+	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- РІСЃРµ СЂР°РІРЅРѕ СЌС‚Рѕ Р±С‹Р»Рѕ РЅРµ РїСЂР°РІРёР»СЊРЅРѕ
+	WARNING("РќР° РЅРѕСѓС‚Рµ РІС‹Р»РµР·Р°РµС‚ Р·Р° РїСЂРµРґРµР»С‹ СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё");
 	ghWnd = CreateWindowEx(styleEx, gsClassNameParent, gpSetCls->GetCmd(), style,
 	                       gpConEmu->wndX, gpConEmu->wndY, nWidth, nHeight, hParent, NULL, (HINSTANCE)g_hInstance, NULL);
 
@@ -2224,7 +2224,7 @@ bool CConEmuMain::SetParent(HWND hNewParent)
 
 void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 {
-	// Параметры основного шрифта ConEmu
+	// РџР°СЂР°РјРµС‚СЂС‹ РѕСЃРЅРѕРІРЅРѕРіРѕ С€СЂРёС„С‚Р° ConEmu
 	lstrcpy(pFont->sFontName, gpSetCls->FontFaceName());
 	pFont->nFontHeight = gpSetCls->FontHeight();
 	pFont->nFontWidth = gpSetCls->FontWidth();
@@ -2266,7 +2266,7 @@ void CConEmuMain::CheckPortableReg()
 	if (_tcslen(szPath) >= countof(ms_PortableReg))
 	{
 		MBoxAssert(_tcslen(szPath) < countof(ms_PortableReg))
-		return; // превышение длины
+		return; // РїСЂРµРІС‹С€РµРЅРёРµ РґР»РёРЅС‹
 	}
 	if (FileExists(szPath))
 	{
@@ -2275,7 +2275,7 @@ void CConEmuMain::CheckPortableReg()
 	}
 	else
 	{
-		// Раз "Portable.reg" отсутствует - то и hive создавать/проверять не нужно
+		// Р Р°Р· "Portable.reg" РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ - С‚Рѕ Рё hive СЃРѕР·РґР°РІР°С‚СЊ/РїСЂРѕРІРµСЂСЏС‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 		return;
 	}
 	
@@ -2316,7 +2316,7 @@ void CConEmuMain::CheckPortableReg()
 		lbNeedTemp = TRUE;
 	BOOL lbHiveExist = FileExists(szPath);
 	
-	// С сетевых и removable дисков монтировать не будем
+	// РЎ СЃРµС‚РµРІС‹С… Рё removable РґРёСЃРєРѕРІ РјРѕРЅС‚РёСЂРѕРІР°С‚СЊ РЅРµ Р±СѓРґРµРј
 	if (szPath[0] == L'\\' && szPath[1] == L'\\')
 	{
 		lbNeedTemp = TRUE;
@@ -2338,7 +2338,7 @@ void CConEmuMain::CheckPortableReg()
 		}
 	}
 
-	// Если к файлу нельзя получить доступ на запись - тоже temp
+	// Р•СЃР»Рё Рє С„Р°Р№Р»Сѓ РЅРµР»СЊР·СЏ РїРѕР»СѓС‡РёС‚СЊ РґРѕСЃС‚СѓРї РЅР° Р·Р°РїРёСЃСЊ - С‚РѕР¶Рµ temp
 	if (!lbNeedTemp)
 	{
 		HANDLE hFile = CreateFile(szPath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
@@ -2419,7 +2419,7 @@ bool CConEmuMain::PreparePortableReg()
 	if (!mb_PortableRegExist)
 		return false;
 	if (mh_PortableRoot)
-		return true; // уже
+		return true; // СѓР¶Рµ
 	
 	bool lbRc = false;
 	wchar_t szFullInfo[512];
@@ -2478,12 +2478,12 @@ bool CConEmuMain::PreparePortableReg()
 		mb_PortableRegExist = FALSE;
 	}
 
-	// Обновить мэппинг
+	// РћР±РЅРѕРІРёС‚СЊ РјСЌРїРїРёРЅРі
 	OnGlobalSettingsChanged();
 		
 	if (!lbRc)
 	{
-		mb_PortableRegExist = FALSE; // сразу сбросим, раз не доступно
+		mb_PortableRegExist = FALSE; // СЃСЂР°Р·Сѓ СЃР±СЂРѕСЃРёРј, СЂР°Р· РЅРµ РґРѕСЃС‚СѓРїРЅРѕ
 
 		wchar_t szFullMsg[1024];
 		wcscpy_c(szFullMsg, szFullInfo);
@@ -2504,10 +2504,10 @@ bool CConEmuMain::PreparePortableReg()
 void CConEmuMain::FinalizePortableReg()
 {
 #ifdef USEPORTABLEREGISTRY
-	TODO("Скопировать измененный куст - в папку Portable");
-	// Portable.reg не трогаем - это как бы "шаблон" для куста
+	TODO("РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РёР·РјРµРЅРµРЅРЅС‹Р№ РєСѓСЃС‚ - РІ РїР°РїРєСѓ Portable");
+	// Portable.reg РЅРµ С‚СЂРѕРіР°РµРј - СЌС‚Рѕ РєР°Рє Р±С‹ "С€Р°Р±Р»РѕРЅ" РґР»СЏ РєСѓСЃС‚Р°
 
-	// Сначала - закрыть хэндл, а то не получится демонтировать
+	// РЎРЅР°С‡Р°Р»Р° - Р·Р°РєСЂС‹С‚СЊ С…СЌРЅРґР», Р° С‚Рѕ РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ РґРµРјРѕРЅС‚РёСЂРѕРІР°С‚СЊ
 	if (mh_PortableRoot)
 	{
 		RegCloseKey(mh_PortableRoot);
@@ -2560,13 +2560,13 @@ void CConEmuMain::FinalizePortableReg()
 					_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo))
 						L"Can't release portable key: 'HKU\\%s'\n\n%s\nRc=%i",
 						ms_PortableMountKey, szErrInfo, lRc);
-					ms_PortableMountKey[0] = 0; // не пытаться повторно
+					ms_PortableMountKey[0] = 0; // РЅРµ РїС‹С‚Р°С‚СЊСЃСЏ РїРѕРІС‚РѕСЂРЅРѕ
 					MessageBox(NULL, szFullInfo, GetDefaultTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
 				}
 			}
 		}
 	}
-	ms_PortableMountKey[0] = 0; mb_PortableKeyMounted = FALSE; // или успешно, или не пытаться повторно
+	ms_PortableMountKey[0] = 0; mb_PortableKeyMounted = FALSE; // РёР»Рё СѓСЃРїРµС€РЅРѕ, РёР»Рё РЅРµ РїС‹С‚Р°С‚СЊСЃСЏ РїРѕРІС‚РѕСЂРЅРѕ
 
 	if (ms_PortableTempDir[0])
 	{
@@ -2591,7 +2591,7 @@ void CConEmuMain::FinalizePortableReg()
 		}
 		*pszSlash = 0;
 		RemoveDirectory(szTemp);
-		ms_PortableTempDir[0] = 0; // один раз
+		ms_PortableTempDir[0] = 0; // РѕРґРёРЅ СЂР°Р·
 	}
 #endif
 }
@@ -2603,8 +2603,8 @@ void CConEmuMain::GetComSpecCopy(ConEmuComspec& ComSpec)
 	ComSpec = m_GuiInfo.ComSpec;
 }
 
-// Перед аттачем GUI приложения нужно создать мэппинг,
-// чтобы оно могло легко узнать, куда нужно подцепляться
+// РџРµСЂРµРґ Р°С‚С‚Р°С‡РµРј GUI РїСЂРёР»РѕР¶РµРЅРёСЏ РЅСѓР¶РЅРѕ СЃРѕР·РґР°С‚СЊ РјСЌРїРїРёРЅРі,
+// С‡С‚РѕР±С‹ РѕРЅРѕ РјРѕРіР»Рѕ Р»РµРіРєРѕ СѓР·РЅР°С‚СЊ, РєСѓРґР° РЅСѓР¶РЅРѕ РїРѕРґС†РµРїР»СЏС‚СЊСЃСЏ
 void CConEmuMain::CreateGuiAttachMapping(DWORD nGuiAppPID)
 {
 	m_GuiAttachMapping.CloseMap();
@@ -2616,7 +2616,7 @@ void CConEmuMain::CreateGuiAttachMapping(DWORD nGuiAppPID)
 	}
 }
 
-// Установить пути в структуре
+// РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РїСѓС‚Рё РІ СЃС‚СЂСѓРєС‚СѓСЂРµ
 void CConEmuMain::InitComSpecStr(ConEmuComspec& ComSpec)
 {
 	wcscpy_c(ComSpec.ConEmuExeDir, ms_ConEmuExeDir);
@@ -2640,7 +2640,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_SuppressBells,(gpSet->isSuppressBells ? CECF_SuppressBells : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ConExcHandler,(gpSet->isConsoleExceptionHandler ? CECF_ConExcHandler : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessNewCon,(gpSet->isProcessNewConArg ? CECF_ProcessNewCon : 0));
-	// использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
+	// РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЂР°СЃС€РёСЂРµРЅРёРµ РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРё (ReadConsole). 0 - РЅРµС‚, 1 - СЃС‚Р°СЂР°СЏ РІРµСЂСЃРёСЏ (0.1.1), 2 - РЅРѕРІР°СЏ РІРµСЂСЃРёСЏ
 	switch (gpSet->isUseClink())
 	{
 	case 1:
@@ -2673,7 +2673,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	wcscpy_c(m_GuiInfo.sMountKey, ms_PortableMountKey);
 	
 	wcscpy_c(m_GuiInfo.sConEmuExe, ms_ConEmuExe);
-	//-- переехали в m_GuiInfo.ComSpec
+	//-- РїРµСЂРµРµС…Р°Р»Рё РІ m_GuiInfo.ComSpec
 	//wcscpy_c(m_GuiInfo.sConEmuDir, ms_ConEmuExeDir);
 	//wcscpy_c(m_GuiInfo.sConEmuBaseDir, ms_ConEmuBaseDir);
 	_wcscpyn_c(m_GuiInfo.sConEmuArgs, countof(m_GuiInfo.sConEmuArgs), mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(m_GuiInfo.sConEmuArgs));
@@ -2709,20 +2709,20 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	// *** ComSpec begin ***
 	// *********************
 	{
-		// Сначала - обработать что что поменяли (найти tcc и т.п.)
-		SetEnvVarExpanded(L"ComSpec", ms_ComSpecInitial); // т.к. функции могут ориентироваться на окружение
+		// РЎРЅР°С‡Р°Р»Р° - РѕР±СЂР°Р±РѕС‚Р°С‚СЊ С‡С‚Рѕ С‡С‚Рѕ РїРѕРјРµРЅСЏР»Рё (РЅР°Р№С‚Рё tcc Рё С‚.Рї.)
+		SetEnvVarExpanded(L"ComSpec", ms_ComSpecInitial); // С‚.Рє. С„СѓРЅРєС†РёРё РјРѕРіСѓС‚ РѕСЂРёРµРЅС‚РёСЂРѕРІР°С‚СЊСЃСЏ РЅР° РѕРєСЂСѓР¶РµРЅРёРµ
 		FindComspec(&gpSet->ComSpec);
 		//wcscpy_c(gpSet->ComSpec.ConEmuDir, gpConEmu->ms_ConEmuDir);
 		InitComSpecStr(gpSet->ComSpec);
-		// установит переменную окружения ComSpec, если просили (isAddConEmu2Path)
-		UpdateComspec(&gpSet->ComSpec, true/*но не трогать %PATH%*/);
+		// СѓСЃС‚Р°РЅРѕРІРёС‚ РїРµСЂРµРјРµРЅРЅСѓСЋ РѕРєСЂСѓР¶РµРЅРёСЏ ComSpec, РµСЃР»Рё РїСЂРѕСЃРёР»Рё (isAddConEmu2Path)
+		UpdateComspec(&gpSet->ComSpec, true/*РЅРѕ РЅРµ С‚СЂРѕРіР°С‚СЊ %PATH%*/);
 
-		// Скопируем всю структуру сначала, потом будет "править" то что нужно
+		// РЎРєРѕРїРёСЂСѓРµРј РІСЃСЋ СЃС‚СЂСѓРєС‚СѓСЂСѓ СЃРЅР°С‡Р°Р»Р°, РїРѕС‚РѕРј Р±СѓРґРµС‚ "РїСЂР°РІРёС‚СЊ" С‚Рѕ С‡С‚Рѕ РЅСѓР¶РЅРѕ
 		m_GuiInfo.ComSpec = gpSet->ComSpec;
 
-		// Теперь перенести в мэппинг, для информирования других процессов
+		// РўРµРїРµСЂСЊ РїРµСЂРµРЅРµСЃС‚Рё РІ РјСЌРїРїРёРЅРі, РґР»СЏ РёРЅС„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РґСЂСѓРіРёС… РїСЂРѕС†РµСЃСЃРѕРІ
 		ComSpecType csType = gpSet->ComSpec.csType;
-		// Если мы в режиме "отладки дерева процессов" - предпочитать ComSpec битности приложения!
+		// Р•СЃР»Рё РјС‹ РІ СЂРµР¶РёРјРµ "РѕС‚Р»Р°РґРєРё РґРµСЂРµРІР° РїСЂРѕС†РµСЃСЃРѕРІ" - РїСЂРµРґРїРѕС‡РёС‚Р°С‚СЊ ComSpec Р±РёС‚РЅРѕСЃС‚Рё РїСЂРёР»РѕР¶РµРЅРёСЏ!
 		ComSpecBits csBits = m_DbgInfo.bBlockChildrenDebuggers ? csb_SameApp : gpSet->ComSpec.csBits;
 		//m_GuiInfo.ComSpec.csType = gpSet->ComSpec.csType;
 		//m_GuiInfo.ComSpec.csBits = gpSet->ComSpec.csBits;
@@ -2773,7 +2773,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 		}
 		else
 		{
-			m_GuiInfo.ComSpec.ComspecExplicit[0] = 0; // избавимся от возможного мусора
+			m_GuiInfo.ComSpec.ComspecExplicit[0] = 0; // РёР·Р±Р°РІРёРјСЃСЏ РѕС‚ РІРѕР·РјРѕР¶РЅРѕРіРѕ РјСѓСЃРѕСЂР°
 		}
 
 		//
@@ -2804,13 +2804,13 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	FillConEmuMainFont(&m_GuiInfo.MainFont);
 	
 	TODO("DosBox");
-	//BOOL     bDosBox; // наличие DosBox
-	//wchar_t  sDosBoxExe[MAX_PATH+1]; // полный путь к DosBox.exe
-	//wchar_t  sDosBoxEnv[8192]; // команды загрузки (mount, и пр.)
+	//BOOL     bDosBox; // РЅР°Р»РёС‡РёРµ DosBox
+	//wchar_t  sDosBoxExe[MAX_PATH+1]; // РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє DosBox.exe
+	//wchar_t  sDosBoxEnv[8192]; // РєРѕРјР°РЅРґС‹ Р·Р°РіСЂСѓР·РєРё (mount, Рё РїСЂ.)
 
 	//if (mb_CreateProcessLogged)
 	//	lstrcpy(m_GuiInfo.sLogCreateProcess, ms_LogCreateProcess);
-	// sConEmuArgs уже заполнен в PrepareCommandLine
+	// sConEmuArgs СѓР¶Рµ Р·Р°РїРѕР»РЅРµРЅ РІ PrepareCommandLine
 	
 	BOOL lbMapIsValid = m_GuiInfoMapping.IsValid();
 	
@@ -2865,7 +2865,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 {
 	HRGN hRgn = NULL, hExclusion = NULL;
 
-	TODO("DoubleView: Если видимы несколько консолей - нужно совместить регионы, или вообще отрубить, для простоты");
+	TODO("DoubleView: Р•СЃР»Рё РІРёРґРёРјС‹ РЅРµСЃРєРѕР»СЊРєРѕ РєРѕРЅСЃРѕР»РµР№ - РЅСѓР¶РЅРѕ СЃРѕРІРјРµСЃС‚РёС‚СЊ СЂРµРіРёРѕРЅС‹, РёР»Рё РІРѕРѕР±С‰Рµ РѕС‚СЂСѓР±РёС‚СЊ, РґР»СЏ РїСЂРѕСЃС‚РѕС‚С‹");
 
 	hExclusion = CVConGroup::GetExclusionRgn(abTestOnly);
 
@@ -2875,11 +2875,11 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 		return (HRGN)1;
 	}
 
-	WARNING("Установка любого НЕ NULL региона сбивает темы при отрисовке кнопок в заголовке");
+	WARNING("РЈСЃС‚Р°РЅРѕРІРєР° Р»СЋР±РѕРіРѕ РќР• NULL СЂРµРіРёРѕРЅР° СЃР±РёРІР°РµС‚ С‚РµРјС‹ РїСЂРё РѕС‚СЂРёСЃРѕРІРєРµ РєРЅРѕРїРѕРє РІ Р·Р°РіРѕР»РѕРІРєРµ");
 
 	if (!gpSet->isQuakeStyle
 		&& ((WindowMode == wmFullScreen)
-			// Условие именно такое (для isZoomed) - здесь регион ставится на весь монитор
+			// РЈСЃР»РѕРІРёРµ РёРјРµРЅРЅРѕ С‚Р°РєРѕРµ (РґР»СЏ isZoomed) - Р·РґРµСЃСЊ СЂРµРіРёРѕРЅ СЃС‚Р°РІРёС‚СЃСЏ РЅР° РІРµСЃСЊ РјРѕРЅРёС‚РѕСЂ
 			|| ((WindowMode == wmMaximized) && (gpSet->isHideCaption || gpSet->isHideCaptionAlways()))))
 	{
 		if (abTestOnly)
@@ -2897,7 +2897,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 		else
 			rcScreen = CalcRect(tFrom, MakeRect(0,0), tFrom);
 
-		// rcFrame, т.к. регион ставится относительно верхнего левого угла ОКНА
+		// rcFrame, С‚.Рє. СЂРµРіРёРѕРЅ СЃС‚Р°РІРёС‚СЃСЏ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РІРµСЂС…РЅРµРіРѕ Р»РµРІРѕРіРѕ СѓРіР»Р° РћРљРќРђ
 		hRgn = CreateWindowRgn(abTestOnly, false, rcFrame.left, rcFrame.top, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
 	}
 	else if (!gpSet->isQuakeStyle
@@ -2905,12 +2905,12 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 	{
 		if (!hExclusion)
 		{
-			// Если прозрачных участков в консоли нет - ничего не делаем
+			// Р•СЃР»Рё РїСЂРѕР·СЂР°С‡РЅС‹С… СѓС‡Р°СЃС‚РєРѕРІ РІ РєРѕРЅСЃРѕР»Рё РЅРµС‚ - РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµРј
 		}
 		else
 		{
-			// с FullScreen не совпадает. Нужно с учетом заголовка
-			// сюда мы попадаем только когда заголовок НЕ скрывается
+			// СЃ FullScreen РЅРµ СЃРѕРІРїР°РґР°РµС‚. РќСѓР¶РЅРѕ СЃ СѓС‡РµС‚РѕРј Р·Р°РіРѕР»РѕРІРєР°
+			// СЃСЋРґР° РјС‹ РїРѕРїР°РґР°РµРј С‚РѕР»СЊРєРѕ РєРѕРіРґР° Р·Р°РіРѕР»РѕРІРѕРє РќР• СЃРєСЂС‹РІР°РµС‚СЃСЏ
 			RECT rcScreen = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
 			int nCX = GetSystemMetrics(SM_CXSIZEFRAME);
 			int nCY = GetSystemMetrics(SM_CYSIZEFRAME);
@@ -2926,7 +2926,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				|| !isMouseOverFrame()
 				|| (gpSet->isQuakeStyle && (gpSet->HideCaptionAlwaysFrame() != 0)))
 			{
-				// Рамка невидима (мышка не над рамкой или заголовком)
+				// Р Р°РјРєР° РЅРµРІРёРґРёРјР° (РјС‹С€РєР° РЅРµ РЅР°Рґ СЂР°РјРєРѕР№ РёР»Рё Р·Р°РіРѕР»РѕРІРєРѕРј)
 				RECT rcClient = GetGuiClientRect();
 				RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
 				//_ASSERTE(!rcClient.left && !rcClient.top);
@@ -2941,7 +2941,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 						int nQuakeHeight = (rcClient.bottom - rcClient.top + 1) * nPercent / 100;
 						if (nQuakeHeight < 1)
 						{
-							nQuakeHeight = 1; // иначе регион не применится
+							nQuakeHeight = 1; // РёРЅР°С‡Рµ СЂРµРіРёРѕРЅ РЅРµ РїСЂРёРјРµРЅРёС‚СЃСЏ
 							rcClient.right = rcClient.left + 1;
 						}
 						rcClient.bottom = min(rcClient.bottom, (rcClient.top+nQuakeHeight));
@@ -2949,7 +2949,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 					}
 					else
 					{
-						// Видимо все, но нужно "отрезать" верхнюю часть рамки
+						// Р’РёРґРёРјРѕ РІСЃРµ, РЅРѕ РЅСѓР¶РЅРѕ "РѕС‚СЂРµР·Р°С‚СЊ" РІРµСЂС…РЅСЋСЋ С‡Р°СЃС‚СЊ СЂР°РјРєРё
 					}
 				}
 
@@ -3021,7 +3021,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 
 		if (!hRgn && hExclusion)
 		{
-			// Таки нужно создать...
+			// РўР°РєРё РЅСѓР¶РЅРѕ СЃРѕР·РґР°С‚СЊ...
 			bool bTheming = gpSetCls->CheckTheming();
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 			hRgn = CreateWindowRgn(abTestOnly, bTheming,
@@ -3036,12 +3036,12 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 {
 	HRGN hRgn = NULL, hExclusion = NULL, hCombine = NULL;
 
-	TODO("DoubleView: Если видимы несколько консолей - нужно совместить регионы, или вообще отрубить, для простоты");
+	TODO("DoubleView: Р•СЃР»Рё РІРёРґРёРјС‹ РЅРµСЃРєРѕР»СЊРєРѕ РєРѕРЅСЃРѕР»РµР№ - РЅСѓР¶РЅРѕ СЃРѕРІРјРµСЃС‚РёС‚СЊ СЂРµРіРёРѕРЅС‹, РёР»Рё РІРѕРѕР±С‰Рµ РѕС‚СЂСѓР±РёС‚СЊ, РґР»СЏ РїСЂРѕСЃС‚РѕС‚С‹");
 
 	CVConGuard VCon;
 
-	// Консоли может реально не быть на старте
-	// или если GUI не закрывается при закрытии последнего таба
+	// РљРѕРЅСЃРѕР»Рё РјРѕР¶РµС‚ СЂРµР°Р»СЊРЅРѕ РЅРµ Р±С‹С‚СЊ РЅР° СЃС‚Р°СЂС‚Рµ
+	// РёР»Рё РµСЃР»Рё GUI РЅРµ Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ РїСЂРё Р·Р°РєСЂС‹С‚РёРё РїРѕСЃР»РµРґРЅРµРіРѕ С‚Р°Р±Р°
 	if (CVConGroup::GetActiveVCon(&VCon) >= 0)
 	{
 		hExclusion = CVConGroup::GetExclusionRgn(abTestOnly);
@@ -3078,7 +3078,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 	if (abTestOnly && (hRgn || hExclusion))
 		return (HRGN)1;
 
-	// Смотреть CombineRgn, OffsetRgn (для перемещения региона отрисовки в пространство окна)
+	// РЎРјРѕС‚СЂРµС‚СЊ CombineRgn, OffsetRgn (РґР»СЏ РїРµСЂРµРјРµС‰РµРЅРёСЏ СЂРµРіРёРѕРЅР° РѕС‚СЂРёСЃРѕРІРєРё РІ РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІРѕ РѕРєРЅР°)
 	if (hExclusion)
 	{
 		if (hRgn)
@@ -3092,12 +3092,12 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 			RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
 
 			#ifdef _DEBUG
-			// CEM_TAB не учитывает центрирование клиентской части в развернутых режимах
+			// CEM_TAB РЅРµ СѓС‡РёС‚С‹РІР°РµС‚ С†РµРЅС‚СЂРёСЂРѕРІР°РЅРёРµ РєР»РёРµРЅС‚СЃРєРѕР№ С‡Р°СЃС‚Рё РІ СЂР°Р·РІРµСЂРЅСѓС‚С‹С… СЂРµР¶РёРјР°С…
 			RECT rcTab = CalcMargins(CEM_TAB);
 			#endif
 
 			POINT ptClient = {0,0};
-			TODO("Будет глючить на SplitScreen?");
+			TODO("Р‘СѓРґРµС‚ РіР»СЋС‡РёС‚СЊ РЅР° SplitScreen?");
 			MapWindowPoints(VCon->GetView(), ghWnd, &ptClient, 1);
 
 			HRGN hOffset = CreateRectRgn(0,0,0,0);
@@ -3122,7 +3122,7 @@ void CConEmuMain::Destroy()
 	if (gbInDisplayLastError)
 	{
 		LogString(L"-- Destroy skipped due to gbInDisplayLastError");
-		return; // Чтобы не схлопывались окна с сообщениями об ошибках
+		return; // Р§С‚РѕР±С‹ РЅРµ СЃС…Р»РѕРїС‹РІР°Р»РёСЃСЊ РѕРєРЅР° СЃ СЃРѕРѕР±С‰РµРЅРёСЏРјРё РѕР± РѕС€РёР±РєР°С…
 	}
 
 	#ifdef _DEBUG
@@ -3138,7 +3138,7 @@ void CConEmuMain::Destroy()
 	{
 		//HWND hWnd = ghWnd;
 		//ghWnd = NULL;
-		//DestroyWindow(hWnd); -- может быть вызывано из другой нити
+		//DestroyWindow(hWnd); -- РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹Р·С‹РІР°РЅРѕ РёР· РґСЂСѓРіРѕР№ РЅРёС‚Рё
 		PostMessage(ghWnd, mn_MsgMyDestroy, GetCurrentThreadId(), 0);
 	}
 	else
@@ -3224,7 +3224,7 @@ CConEmuMain::~CConEmuMain()
 
 	//DeleteCriticalSection(&mcs_ShellExecuteEx);
 	
-	// По идее, уже должен был быть вызван в OnDestroy
+	// РџРѕ РёРґРµРµ, СѓР¶Рµ РґРѕР»Р¶РµРЅ Р±С‹Р» Р±С‹С‚СЊ РІС‹Р·РІР°РЅ РІ OnDestroy
 	FinalizePortableReg();
 
 	LoadImageFinalize();
@@ -3258,7 +3258,7 @@ void CConEmuMain::AddMargins(RECT& rc, const RECT& rcAddShift, BOOL abExpand/*=F
 {
 	if (!abExpand)
 	{
-		// подвинуть все грани на rcAddShift (left сдвигается на left, и т.п.)
+		// РїРѕРґРІРёРЅСѓС‚СЊ РІСЃРµ РіСЂР°РЅРё РЅР° rcAddShift (left СЃРґРІРёРіР°РµС‚СЃСЏ РЅР° left, Рё С‚.Рї.)
 		if (rcAddShift.left)
 			rc.left += rcAddShift.left;
 
@@ -3273,7 +3273,7 @@ void CConEmuMain::AddMargins(RECT& rc, const RECT& rcAddShift, BOOL abExpand/*=F
 	}
 	else
 	{
-		// поправить только правую и нижнюю грань
+		// РїРѕРїСЂР°РІРёС‚СЊ С‚РѕР»СЊРєРѕ РїСЂР°РІСѓСЋ Рё РЅРёР¶РЅСЋСЋ РіСЂР°РЅСЊ
 		if (rcAddShift.right || rcAddShift.left)
 			rc.right += rcAddShift.right + rcAddShift.left;
 
@@ -3300,7 +3300,7 @@ void CConEmuMain::AskChangeBufferHeight()
 	}
 
 
-	// Win7 BUGBUG: Issue 192: падение Conhost при turn bufferheight ON
+	// Win7 BUGBUG: Issue 192: РїР°РґРµРЅРёРµ Conhost РїСЂРё turn bufferheight ON
 	// http://code.google.com/p/conemu-maximus5/issues/detail?id=192
 	if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1)
 		return;
@@ -3329,11 +3329,11 @@ void CConEmuMain::AskChangeBufferHeight()
 
 		if (dwFarPID)
 		{
-			// Это событие дергается в отладочной (мной поправленной) версии фара
+			// Р­С‚Рѕ СЃРѕР±С‹С‚РёРµ РґРµСЂРіР°РµС‚СЃСЏ РІ РѕС‚Р»Р°РґРѕС‡РЅРѕР№ (РјРЅРѕР№ РїРѕРїСЂР°РІР»РµРЅРЅРѕР№) РІРµСЂСЃРёРё С„Р°СЂР°
 			wchar_t szEvtName[64]; _wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) L"FARconEXEC:%08X", (DWORD)pRCon->ConWnd());
 			hFarInExecuteEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, szEvtName);
 
-			if (hFarInExecuteEvent)  // Иначе ConEmuC вызовет _ASSERTE в отладочном режиме
+			if (hFarInExecuteEvent)  // РРЅР°С‡Рµ ConEmuC РІС‹Р·РѕРІРµС‚ _ASSERTE РІ РѕС‚Р»Р°РґРѕС‡РЅРѕРј СЂРµР¶РёРјРµ
 				SetEvent(hFarInExecuteEvent);
 		}
 	}
@@ -3348,7 +3348,7 @@ void CConEmuMain::AskChangeBufferHeight()
 		ResetEvent(hFarInExecuteEvent);
 	#endif
 
-	// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
+	// РћР±РЅРѕРІРёС‚СЊ РЅР° С‚СѓР»Р±Р°СЂРµ СЃС‚Р°С‚СѓСЃС‹ Scrolling(BufferHeight) & Alternative
 	pRCon->OnBufferHeight();
 }
 
@@ -3370,7 +3370,7 @@ void CConEmuMain::AskChangeAlternative()
 	}
 
 
-	// Переключиться на альтернативный/основной буфер
+	// РџРµСЂРµРєР»СЋС‡РёС‚СЊСЃСЏ РЅР° Р°Р»СЊС‚РµСЂРЅР°С‚РёРІРЅС‹Р№/РѕСЃРЅРѕРІРЅРѕР№ Р±СѓС„РµСЂ
 	RealBufferType CurBuffer = pRCon->GetActiveBufferType();
 	if (CurBuffer == rbt_Primary)
 	{
@@ -3381,24 +3381,24 @@ void CConEmuMain::AskChangeAlternative()
 		pRCon->SetActiveBuffer(rbt_Primary);
 	}
 
-	// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
+	// РћР±РЅРѕРІРёС‚СЊ РЅР° С‚СѓР»Р±Р°СЂРµ СЃС‚Р°С‚СѓСЃС‹ Scrolling(BufferHeight) & Alternative
 	pRCon->OnBufferHeight();
 }
 
 /*!!!static!!*/
-// Функция расчитывает смещения (относительные)
-// mg содержит битмаск, например (CEM_FRAMECAPTION|CEM_TAB|CEM_CLIENT)
+// Р¤СѓРЅРєС†РёСЏ СЂР°СЃС‡РёС‚С‹РІР°РµС‚ СЃРјРµС‰РµРЅРёСЏ (РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅС‹Рµ)
+// mg СЃРѕРґРµСЂР¶РёС‚ Р±РёС‚РјР°СЃРє, РЅР°РїСЂРёРјРµСЂ (CEM_FRAMECAPTION|CEM_TAB|CEM_CLIENT)
 RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 {
 	_ASSERTE(this!=NULL);
 
-	// -- функция должна работать только с главным окном
-	// -- VCon тут влиять не должны
+	// -- С„СѓРЅРєС†РёСЏ РґРѕР»Р¶РЅР° СЂР°Р±РѕС‚Р°С‚СЊ С‚РѕР»СЊРєРѕ СЃ РіР»Р°РІРЅС‹Рј РѕРєРЅРѕРј
+	// -- VCon С‚СѓС‚ РІР»РёСЏС‚СЊ РЅРµ РґРѕР»Р¶РЅС‹
 	//if (!apVCon)
 	//	apVCon = gpConEmu->mp_ VActive;
 
-	WARNING("CEM_SCROLL вообще удалить?");
-	WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
+	WARNING("CEM_SCROLL РІРѕРѕР±С‰Рµ СѓРґР°Р»РёС‚СЊ?");
+	WARNING("РџСЂРѕРІРµСЂРёС‚СЊ, С‡С‚РѕР±С‹ DC РЅРѕСЂРјР°Р»СЊРЅРѕ С†РµРЅС‚СЂРёСЂРѕРІР°Р»РѕСЃСЊ РїРѕСЃР»Рµ СѓРґР°Р»РµРЅРёСЏ CEM_BACK");
 
 	RECT rc = {};
 
@@ -3422,13 +3422,13 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 		#endif
 	}
 
-	// Разница между размером всего окна и клиентской области окна (рамка + заголовок)
+	// Р Р°Р·РЅРёС†Р° РјРµР¶РґСѓ СЂР°Р·РјРµСЂРѕРј РІСЃРµРіРѕ РѕРєРЅР° Рё РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё РѕРєРЅР° (СЂР°РјРєР° + Р·Р°РіРѕР»РѕРІРѕРє)
 	if ((mg & ((DWORD)CEM_FRAMECAPTION)) && (mp_Inside == NULL))
 	{
-		// Только CEM_CAPTION считать нельзя
+		// РўРѕР»СЊРєРѕ CEM_CAPTION СЃС‡РёС‚Р°С‚СЊ РЅРµР»СЊР·СЏ
 		_ASSERTE((mg & ((DWORD)CEM_FRAMECAPTION)) != CEM_CAPTION);
 
-		// т.к. это первая обработка - можно ставить rc простым приравниванием
+		// С‚.Рє. СЌС‚Рѕ РїРµСЂРІР°СЏ РѕР±СЂР°Р±РѕС‚РєР° - РјРѕР¶РЅРѕ СЃС‚Р°РІРёС‚СЊ rc РїСЂРѕСЃС‚С‹Рј РїСЂРёСЂР°РІРЅРёРІР°РЅРёРµРј
 		_ASSERTE(rc.left==0 && rc.top==0 && rc.right==0 && rc.bottom==0);
 		DWORD dwStyle = GetWindowStyle();
 		if (wmNewMode != wmCurrent)
@@ -3438,7 +3438,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 		//static RECT rcLastRect;
 		//if (dwLastStyle == dwStyle && dwLastStyleEx == dwStyleEx)
 		//{
-		//	rc = rcLastRect; // чтобы не дергать лишние расчеты
+		//	rc = rcLastRect; // С‡С‚РѕР±С‹ РЅРµ РґРµСЂРіР°С‚СЊ Р»РёС€РЅРёРµ СЂР°СЃС‡РµС‚С‹
 		//}
 		//else
 		//{
@@ -3447,10 +3447,10 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 
 		bool bHideCaption = gpSet->isCaptionHidden(wmNewMode);
 
-		// AdjustWindowRectEx НЕ должно вызываться в FullScreen. Глючит. А рамки с заголовком нет, расширять нечего.
+		// AdjustWindowRectEx РќР• РґРѕР»Р¶РЅРѕ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РІ FullScreen. Р“Р»СЋС‡РёС‚. Рђ СЂР°РјРєРё СЃ Р·Р°РіРѕР»РѕРІРєРѕРј РЅРµС‚, СЂР°СЃС€РёСЂСЏС‚СЊ РЅРµС‡РµРіРѕ.
 		if (wm == wmFullScreen)
 		{
-			// Для FullScreen полностью убираются рамки и заголовок
+			// Р”Р»СЏ FullScreen РїРѕР»РЅРѕСЃС‚СЊСЋ СѓР±РёСЂР°СЋС‚СЃСЏ СЂР°РјРєРё Рё Р·Р°РіРѕР»РѕРІРѕРє
 			_ASSERTE(rc.left==0 && rc.top==0 && rc.right==0 && rc.bottom==0);
 		}
 		//#if defined(CONEMU_TABBAR_EX)
@@ -3492,9 +3492,9 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 			_ASSERTE(FALSE);
 			rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
 			rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
-			rc.top = rc.bottom; // рамка
+			rc.top = rc.bottom; // СЂР°РјРєР°
 
-			if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption) // если есть заголовок - добавим и его
+			if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption) // РµСЃР»Рё РµСЃС‚СЊ Р·Р°РіРѕР»РѕРІРѕРє - РґРѕР±Р°РІРёРј Рё РµРіРѕ
 			{
 				#if defined(CONEMU_TABBAR_EX)
 				if ((fdt >= fdt_Aero) && gpSet->isTabsInCaption)
@@ -3512,7 +3512,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 		}
 	}
 
-	// Сколько занимают табы (по идее меняется только rc.top)
+	// РЎРєРѕР»СЊРєРѕ Р·Р°РЅРёРјР°СЋС‚ С‚Р°Р±С‹ (РїРѕ РёРґРµРµ РјРµРЅСЏРµС‚СЃСЏ С‚РѕР»СЊРєРѕ rc.top)
 	if (mg & ((DWORD)CEM_TAB))
 	{
 		if (ghWnd)
@@ -3520,34 +3520,34 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 			bool lbTabActive = ((mg & CEM_TAB_MASK) == CEM_TAB) ? gpConEmu->mp_TabBar->IsTabsActive()
 			                   : ((mg & ((DWORD)CEM_TABACTIVATE)) == ((DWORD)CEM_TABACTIVATE));
 
-			// Главное окно уже создано, наличие таба определено
+			// Р“Р»Р°РІРЅРѕРµ РѕРєРЅРѕ СѓР¶Рµ СЃРѕР·РґР°РЅРѕ, РЅР°Р»РёС‡РёРµ С‚Р°Р±Р° РѕРїСЂРµРґРµР»РµРЅРѕ
 			if (lbTabActive)  //TODO: + IsAllowed()?
 			{
 				RECT rcTab = gpConEmu->mp_TabBar->GetMargins();
-				// !!! AddMargins использовать нельзя! он расчитан на вычитание
+				// !!! AddMargins РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РЅРµР»СЊР·СЏ! РѕРЅ СЂР°СЃС‡РёС‚Р°РЅ РЅР° РІС‹С‡РёС‚Р°РЅРёРµ
 				//AddMargins(rc, rcTab, FALSE);
 				_ASSERTE(rcTab.top==0 || rcTab.bottom==0);
 				rc.top += rcTab.top;
 				rc.bottom += rcTab.bottom;
-			}// else { -- раз таба нет - значит дополнительные отступы не нужны
+			}// else { -- СЂР°Р· С‚Р°Р±Р° РЅРµС‚ - Р·РЅР°С‡РёС‚ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РѕС‚СЃС‚СѓРїС‹ РЅРµ РЅСѓР¶РЅС‹
 
-			//    rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
+			//    rc = MakeRect(0,0); // СЂР°Р· С‚Р°Р±Р° РЅРµС‚ - Р·РЅР°С‡РёС‚ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РѕС‚СЃС‚СѓРїС‹ РЅРµ РЅСѓР¶РЅС‹
 			//}
 		}
 		else
 		{
-			// Иначе нужно смотреть по настройкам
+			// РРЅР°С‡Рµ РЅСѓР¶РЅРѕ СЃРјРѕС‚СЂРµС‚СЊ РїРѕ РЅР°СЃС‚СЂРѕР№РєР°Рј
 			if (gpSet->isTabs == 1)
 			{
-				//RECT rcTab = gpSet->rcTabMargins; // умолчательные отступы таба
+				//RECT rcTab = gpSet->rcTabMargins; // СѓРјРѕР»С‡Р°С‚РµР»СЊРЅС‹Рµ РѕС‚СЃС‚СѓРїС‹ С‚Р°Р±Р°
 				RECT rcTab = mp_TabBar->GetMargins();
-				// Сразу оба - быть не должны. Либо сверху, либо снизу.
+				// РЎСЂР°Р·Сѓ РѕР±Р° - Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅС‹. Р›РёР±Рѕ СЃРІРµСЂС…Сѓ, Р»РёР±Рѕ СЃРЅРёР·Сѓ.
 				_ASSERTE(rcTab.top==0 || rcTab.bottom==0);
 
 				//if (!gpSet->isTabFrame)
 				//{
 
-				// От таба остается только заголовок (закладки)
+				// РћС‚ С‚Р°Р±Р° РѕСЃС‚Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ Р·Р°РіРѕР»РѕРІРѕРє (Р·Р°РєР»Р°РґРєРё)
 				//rc.left=0; rc.right=0; rc.bottom=0;
 				if (gpSet->nTabsLocation == 1)
 				{
@@ -3562,14 +3562,14 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 				//else
 				//{
 				//	_ASSERTE(FALSE && "For deletion!");
-				//	// !!! AddMargins использовать нельзя! он расчитан на вычитание
+				//	// !!! AddMargins РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РЅРµР»СЊР·СЏ! РѕРЅ СЂР°СЃС‡РёС‚Р°РЅ РЅР° РІС‹С‡РёС‚Р°РЅРёРµ
 				//	//AddMargins(rc, rcTab, FALSE);
 				//	rc.top += rcTab.top;
 				//	rc.bottom += rcTab.bottom;
 				//}
-			}// else { -- раз таба нет - значит дополнительные отступы не нужны
+			}// else { -- СЂР°Р· С‚Р°Р±Р° РЅРµС‚ - Р·РЅР°С‡РёС‚ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РѕС‚СЃС‚СѓРїС‹ РЅРµ РЅСѓР¶РЅС‹
 
-			//    rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
+			//    rc = MakeRect(0,0); // СЂР°Р· С‚Р°Р±Р° РЅРµС‚ - Р·РЅР°С‡РёС‚ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РѕС‚СЃС‚СѓРїС‹ РЅРµ РЅСѓР¶РЅС‹
 			//}
 		}
 
@@ -3583,12 +3583,12 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 		#endif
 	}
 
-	//    //case CEM_BACK:  // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
+	//    //case CEM_BACK:  // РћС‚СЃС‚СѓРїС‹ РѕС‚ РєСЂР°РµРІ РѕРєРЅР° С„РѕРЅР° (СЃ РїСЂРѕРєСЂСѓС‚РєРѕР№) РґРѕ РѕРєРЅР° СЃ РѕС‚СЂРёСЃРѕРІРєРѕР№ (DC)
 	//    //{
-	//    //    if (apVCon && apVCon->RCon()->isBufferHeight()) { //TODO: а показывается ли сейчас прокрутка?
+	//    //    if (apVCon && apVCon->RCon()->isBufferHeight()) { //TODO: Р° РїРѕРєР°Р·С‹РІР°РµС‚СЃСЏ Р»Рё СЃРµР№С‡Р°СЃ РїСЂРѕРєСЂСѓС‚РєР°?
 	//    //        rc = MakeRect(0,0,GetSystemMetrics(SM_CXVSCROLL),0);
 	//    //    } else {
-	//    //        rc = MakeRect(0,0); // раз прокрутки нет - значит дополнительные отступы не нужны
+	//    //        rc = MakeRect(0,0); // СЂР°Р· РїСЂРѕРєСЂСѓС‚РєРё РЅРµС‚ - Р·РЅР°С‡РёС‚ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РѕС‚СЃС‚СѓРїС‹ РЅРµ РЅСѓР¶РЅС‹
 	//    //    }
 	//    //}   break;
 	//default:
@@ -3597,11 +3597,11 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 
 	//if (mg & ((DWORD)CEM_CLIENT))
 	//{
-	//	TODO("Переделать на ручной расчет, необходимо для DoubleView. Должен зависеть от apVCon");
+	//	TODO("РџРµСЂРµРґРµР»Р°С‚СЊ РЅР° СЂСѓС‡РЅРѕР№ СЂР°СЃС‡РµС‚, РЅРµРѕР±С…РѕРґРёРјРѕ РґР»СЏ DoubleView. Р”РѕР»Р¶РµРЅ Р·Р°РІРёСЃРµС‚СЊ РѕС‚ apVCon");
 	//	RECT rcDC; GetWindowRect(ghWnd DC, &rcDC);
 	//	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 	//	RECT rcFrameTab = CalcMargins(CEM_FRAMETAB);
-	//	// ставим результат
+	//	// СЃС‚Р°РІРёРј СЂРµР·СѓР»СЊС‚Р°С‚
 	//	rc.left += (rcDC.left - rcWnd.left - rcFrameTab.left);
 	//	rc.top += (rcDC.top - rcWnd.top - rcFrameTab.top);
 	//	rc.right -= (rcDC.right - rcWnd.right - rcFrameTab.right);
@@ -3623,7 +3623,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 
 	if ((mg & ((DWORD)CEM_STATUS)) && gpSet->isStatusBarShow)
 	{
-		TODO("Завистмость от темы/шрифта");
+		TODO("Р—Р°РІРёСЃС‚РјРѕСЃС‚СЊ РѕС‚ С‚РµРјС‹/С€СЂРёС„С‚Р°");
 		rc.bottom += gpSet->StatusBarHeight();
 	}
 
@@ -3642,7 +3642,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 	{
 		if (InMinimizing())
 		{
-			//_ASSERTE(!InMinimizing() || InQuakeAnimation()); -- вызывается при обновлении статусной строки, ну его...
+			//_ASSERTE(!InMinimizing() || InQuakeAnimation()); -- РІС‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё СЃС‚Р°С‚СѓСЃРЅРѕР№ СЃС‚СЂРѕРєРё, РЅСѓ РµРіРѕ...
 			bNeedCalc = true;
 		}
 	}
@@ -3700,7 +3700,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 				}
 			}
 
-			// Если окно было свернуто из Maximized/FullScreen состояния
+			// Р•СЃР»Рё РѕРєРЅРѕ Р±С‹Р»Рѕ СЃРІРµСЂРЅСѓС‚Рѕ РёР· Maximized/FullScreen СЃРѕСЃС‚РѕСЏРЅРёСЏ
 			if ((WindowMode == wmMaximized) || (WindowMode == wmFullScreen))
 			{
 				ConEmuRect t = (WindowMode == wmMaximized) ? CER_MAXIMIZED : CER_FULLSCREEN;
@@ -3847,22 +3847,22 @@ bool CConEmuMain::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	return bChanged;
 }
 
-// Для приблизительного расчета размеров - нужен только (размер главного окна)|(размер консоли)
-// Для точного расчета размеров - требуется (размер главного окна) и (размер окна отрисовки) для корректировки
-// на x64 возникают какие-то глюки с ",RECT rFrom,". Отладчик показывает мусор в rFrom,
-// но тем не менее, после "RECT rc = rFrom;", rc получает правильные значения >:|
+// Р”Р»СЏ РїСЂРёР±Р»РёР·РёС‚РµР»СЊРЅРѕРіРѕ СЂР°СЃС‡РµС‚Р° СЂР°Р·РјРµСЂРѕРІ - РЅСѓР¶РµРЅ С‚РѕР»СЊРєРѕ (СЂР°Р·РјРµСЂ РіР»Р°РІРЅРѕРіРѕ РѕРєРЅР°)|(СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё)
+// Р”Р»СЏ С‚РѕС‡РЅРѕРіРѕ СЂР°СЃС‡РµС‚Р° СЂР°Р·РјРµСЂРѕРІ - С‚СЂРµР±СѓРµС‚СЃСЏ (СЂР°Р·РјРµСЂ РіР»Р°РІРЅРѕРіРѕ РѕРєРЅР°) Рё (СЂР°Р·РјРµСЂ РѕРєРЅР° РѕС‚СЂРёСЃРѕРІРєРё) РґР»СЏ РєРѕСЂСЂРµРєС‚РёСЂРѕРІРєРё
+// РЅР° x64 РІРѕР·РЅРёРєР°СЋС‚ РєР°РєРёРµ-С‚Рѕ РіР»СЋРєРё СЃ ",RECT rFrom,". РћС‚Р»Р°РґС‡РёРє РїРѕРєР°Р·С‹РІР°РµС‚ РјСѓСЃРѕСЂ РІ rFrom,
+// РЅРѕ С‚РµРј РЅРµ РјРµРЅРµРµ, РїРѕСЃР»Рµ "RECT rc = rFrom;", rc РїРѕР»СѓС‡Р°РµС‚ РїСЂР°РІРёР»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ >:|
 RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
 {
 	_ASSERTE(this!=NULL);
-	RECT rc = rFrom; // инициализация, если уж не получится...
+	RECT rc = rFrom; // РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ, РµСЃР»Рё СѓР¶ РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ...
 	RECT rcShift = MakeRect(0,0);
 	enum ConEmuRect tFromNow = tFrom;
 
-	// tTabAction обязан включать и флаг CEM_TAB
+	// tTabAction РѕР±СЏР·Р°РЅ РІРєР»СЋС‡Р°С‚СЊ Рё С„Р»Р°Рі CEM_TAB
 	_ASSERTE((tTabAction & CEM_TAB)==CEM_TAB);
 
-	WARNING("CEM_SCROLL вообще удалить?");
-	WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
+	WARNING("CEM_SCROLL РІРѕРѕР±С‰Рµ СѓРґР°Р»РёС‚СЊ?");
+	WARNING("РџСЂРѕРІРµСЂРёС‚СЊ, С‡С‚РѕР±С‹ DC РЅРѕСЂРјР°Р»СЊРЅРѕ С†РµРЅС‚СЂРёСЂРѕРІР°Р»РѕСЃСЊ РїРѕСЃР»Рµ СѓРґР°Р»РµРЅРёСЏ CEM_BACK");
 
 	//if (!pVCon)
 	//	pVCon = gpConEmu->mp_ VActive;
@@ -3875,24 +3875,24 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		}
 		else
 		{
-			// Это реально может произойти на втором мониторе.
-			// Т.к. сюда передается Rect монитора,
-			// полученный из CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
+			// Р­С‚Рѕ СЂРµР°Р»СЊРЅРѕ РјРѕР¶РµС‚ РїСЂРѕРёР·РѕР№С‚Рё РЅР° РІС‚РѕСЂРѕРј РјРѕРЅРёС‚РѕСЂРµ.
+			// Рў.Рє. СЃСЋРґР° РїРµСЂРµРґР°РµС‚СЃСЏ Rect РјРѕРЅРёС‚РѕСЂР°,
+			// РїРѕР»СѓС‡РµРЅРЅС‹Р№ РёР· CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
 		}
 	}
 
 	switch (tFrom)
 	{
 		case CER_MAIN: // switch (tFrom)
-			// Нужно отнять отступы рамки и заголовка!
+			// РќСѓР¶РЅРѕ РѕС‚РЅСЏС‚СЊ РѕС‚СЃС‚СѓРїС‹ СЂР°РјРєРё Рё Р·Р°РіРѕР»РѕРІРєР°!
 		{
-			// Это может быть, если сделали GetWindowRect для ghWnd, когда он isIconic!
+			// Р­С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ, РµСЃР»Рё СЃРґРµР»Р°Р»Рё GetWindowRect РґР»СЏ ghWnd, РєРѕРіРґР° РѕРЅ isIconic!
 			_ASSERTE((rc.left!=-32000 && rc.right!=-32000) && "Use CalcRect(CER_MAIN) instead of GetWindowRect() while IsIconic!");
 			rcShift = CalcMargins(CEM_FRAMECAPTION);
 			int nWidth = (rc.right-rc.left) - (rcShift.left+rcShift.right);
 			int nHeight = (rc.bottom-rc.top) - (rcShift.top+rcShift.bottom);
 			rc.left = 0;
-			rc.top = 0; // Получили клиентскую область
+			rc.top = 0; // РџРѕР»СѓС‡РёР»Рё РєР»РёРµРЅС‚СЃРєСѓСЋ РѕР±Р»Р°СЃС‚СЊ
 			#if defined(CONEMU_TABBAR_EX)
 			if (gpSet->isTabsInCaption)
 			{
@@ -3911,7 +3911,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		break;
 		case CER_DC: // switch (tFrom)
 		{
-			// Размер окна отрисовки в пикселах!
+			// Р Р°Р·РјРµСЂ РѕРєРЅР° РѕС‚СЂРёСЃРѕРІРєРё РІ РїРёРєСЃРµР»Р°С…!
 			//MBoxAssert(!(rFrom.left || rFrom.top));
 			TODO("DoubleView");
 
@@ -3925,7 +3925,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					AddMargins(rc, rcShift, TRUE/*abExpand*/);
 					//rcShift = CalcMargins(CEM_FRAME);
 					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
-					WARNING("Неправильно получается при DoubleView");
+					WARNING("РќРµРїСЂР°РІРёР»СЊРЅРѕ РїРѕР»СѓС‡Р°РµС‚СЃСЏ РїСЂРё DoubleView");
 					tFromNow = CER_MAINCLIENT;
 				} break;
 				case CER_MAINCLIENT:
@@ -3934,22 +3934,22 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
 					rcShift = CalcMargins(tTabAction);
 					AddMargins(rc, rcShift, TRUE/*abExpand*/);
-					WARNING("Неправильно получается при DoubleView");
+					WARNING("РќРµРїСЂР°РІРёР»СЊРЅРѕ РїРѕР»СѓС‡Р°РµС‚СЃСЏ РїСЂРё DoubleView");
 					tFromNow = CER_MAINCLIENT;
 				} break;
 				case CER_TAB:
 				{
 					//rcShift = CalcMargins(CEM_BACK);
 					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
-					_ASSERTE(tWhat!=CER_TAB); // вроде этого быть не должно?
+					_ASSERTE(tWhat!=CER_TAB); // РІСЂРѕРґРµ СЌС‚РѕРіРѕ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ?
 					rcShift = CalcMargins(tTabAction);
 					AddMargins(rc, rcShift, TRUE/*abExpand*/);
-					WARNING("Неправильно получается при DoubleView");
+					WARNING("РќРµРїСЂР°РІРёР»СЊРЅРѕ РїРѕР»СѓС‡Р°РµС‚СЃСЏ РїСЂРё DoubleView");
 					tFromNow = CER_MAINCLIENT;
 				} break;
 				case CER_WORKSPACE:
 				{
-					WARNING("Это tFrom. CER_WORKSPACE - не поддерживается (пока?)");
+					WARNING("Р­С‚Рѕ tFrom. CER_WORKSPACE - РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ (РїРѕРєР°?)");
 					_ASSERTE(tWhat!=CER_WORKSPACE);
 				} break;
 				case CER_BACK:
@@ -3960,7 +3960,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
 					rc.top += rcShift.top; rc.bottom += rcShift.top;
 					_ASSERTE(rcShift.left == 0 && rcShift.right == 0 && rcShift.bottom == 0);
-					WARNING("Неправильно получается при DoubleView");
+					WARNING("РќРµРїСЂР°РІРёР»СЊРЅРѕ РїРѕР»СѓС‡Р°РµС‚СЃСЏ РїСЂРё DoubleView");
 					tFromNow = CER_MAINCLIENT;
 				} break;
 				default:
@@ -3974,17 +3974,17 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		case CER_CONSOLE_ALL: // switch (tFrom)
 		case CER_CONSOLE_CUR: // switch (tFrom)
 		{
-			// Тут считаем БЕЗОТНОСИТЕЛЬНО SplitScreen.
-			// Т.к. вызов, например, может идти из интерфейса диалога "Settings" и CVConGroup::SetAllConsoleWindowsSize
+			// РўСѓС‚ СЃС‡РёС‚Р°РµРј Р‘Р•Р—РћРўРќРћРЎРРўР•Р›Р¬РќРћ SplitScreen.
+			// Рў.Рє. РІС‹Р·РѕРІ, РЅР°РїСЂРёРјРµСЂ, РјРѕР¶РµС‚ РёРґС‚Рё РёР· РёРЅС‚РµСЂС„РµР№СЃР° РґРёР°Р»РѕРіР° "Settings" Рё CVConGroup::SetAllConsoleWindowsSize
 
-			// Размер консоли в символах!
+			// Р Р°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё РІ СЃРёРјРІРѕР»Р°С…!
 			//MBoxAssert(!(rFrom.left || rFrom.top));
 			_ASSERTE(tWhat!=CER_CONSOLE_ALL && tWhat!=CER_CONSOLE_CUR);
 			//if (gpSetCls->FontWidth()==0) {
 			//    MBoxAssert(pVCon!=NULL);
-			//    pVCon->InitDC(false, true); // инициализировать ширину шрифта по умолчанию
+			//    pVCon->InitDC(false, true); // РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°С‚СЊ С€РёСЂРёРЅСѓ С€СЂРёС„С‚Р° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 			//}
-			// ЭТО размер окна отрисовки DC
+			// Р­РўРћ СЂР°Р·РјРµСЂ РѕРєРЅР° РѕС‚СЂРёСЃРѕРІРєРё DC
 			rc = MakeRect((rFrom.right-rFrom.left) * gpSetCls->FontWidth(),
 			              (rFrom.bottom-rFrom.top) * gpSetCls->FontHeight());
 
@@ -3994,7 +3994,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			if (tWhat != CER_DC)
 				rc = CalcRect(tWhat, rc, CER_DC);
 
-			// -- tFromNow = CER_BACK; -- менять не требуется, т.к. мы сразу на выход
+			// -- tFromNow = CER_BACK; -- РјРµРЅСЏС‚СЊ РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ, С‚.Рє. РјС‹ СЃСЂР°Р·Сѓ РЅР° РІС‹С…РѕРґ
 		}
 		_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
 		return rc;
@@ -4003,21 +4003,21 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		case CER_MAXIMIZED: // switch (tFrom)
 		case CER_RESTORE: // switch (tFrom)
 		case CER_MONITOR: // switch (tFrom)
-			// Например, таким способом можно получить размер развернутого окна на текущем мониторе
+			// РќР°РїСЂРёРјРµСЂ, С‚Р°РєРёРј СЃРїРѕСЃРѕР±РѕРј РјРѕР¶РЅРѕ РїРѕР»СѓС‡РёС‚СЊ СЂР°Р·РјРµСЂ СЂР°Р·РІРµСЂРЅСѓС‚РѕРіРѕ РѕРєРЅР° РЅР° С‚РµРєСѓС‰РµРј РјРѕРЅРёС‚РѕСЂРµ
 			// RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
 			_ASSERTE((tFrom!=CER_FULLSCREEN && tFrom!=CER_MAXIMIZED && tFrom!=CER_RESTORE) || (tFrom==tWhat));
 			break;
 		case CER_BACK: // switch (tFrom)
 			break;
 		default:
-			_ASSERTE(tFrom==CER_MAINCLIENT); // для отладки, сюда вроде попадать не должны
+			_ASSERTE(tFrom==CER_MAINCLIENT); // РґР»СЏ РѕС‚Р»Р°РґРєРё, СЃСЋРґР° РІСЂРѕРґРµ РїРѕРїР°РґР°С‚СЊ РЅРµ РґРѕР»Р¶РЅС‹
 			break;
 	};
 
-	//// Теперь rc должен соответствовать CER_MAINCLIENT
+	//// РўРµРїРµСЂСЊ rc РґРѕР»Р¶РµРЅ СЃРѕРѕС‚РІРµС‚СЃС‚РІРѕРІР°С‚СЊ CER_MAINCLIENT
 	//RECT rcAddShift = MakeRect(0,0);
 
-	// если мы дошли сюда - значит tFrom==CER_MAINCLIENT
+	// РµСЃР»Рё РјС‹ РґРѕС€Р»Рё СЃСЋРґР° - Р·РЅР°С‡РёС‚ tFrom==CER_MAINCLIENT
 
 	switch (tWhat)
 	{
@@ -4068,7 +4068,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			DEBUGTEST(HMONITOR hMonitor =) GetNearestMonitor(&mi, (tFrom==CER_MAIN) ? &rFrom : NULL);
 
 			{
-				//switch (tFrom) // --было
+				//switch (tFrom) // --Р±С‹Р»Рѕ
 				switch (tWhat)
 				{
 					case CER_MONITOR:
@@ -4085,7 +4085,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					{
 						rc = mi.rcWork;
 						RECT rcFrame = CalcMargins(CEM_FRAMEONLY);
-						// Скорректируем размер окна до видимого на мониторе (рамка при максимизации уезжает за пределы экрана)
+						// РЎРєРѕСЂСЂРµРєС‚РёСЂСѓРµРј СЂР°Р·РјРµСЂ РѕРєРЅР° РґРѕ РІРёРґРёРјРѕРіРѕ РЅР° РјРѕРЅРёС‚РѕСЂРµ (СЂР°РјРєР° РїСЂРё РјР°РєСЃРёРјРёР·Р°С†РёРё СѓРµР·Р¶Р°РµС‚ Р·Р° РїСЂРµРґРµР»С‹ СЌРєСЂР°РЅР°)
 						rc.left -= rcFrame.left;
 						rc.right += rcFrame.right;
 						rc.top -= rcFrame.top;
@@ -4133,8 +4133,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 						{
 							rc = rcNormal;
 
-							// Если после последней максимизации была изменена 
-							// конфигурация мониторов - нужно поправить видимую область
+							// Р•СЃР»Рё РїРѕСЃР»Рµ РїРѕСЃР»РµРґРЅРµР№ РјР°РєСЃРёРјРёР·Р°С†РёРё Р±С‹Р»Р° РёР·РјРµРЅРµРЅР° 
+							// РєРѕРЅС„РёРіСѓСЂР°С†РёСЏ РјРѕРЅРёС‚РѕСЂРѕРІ - РЅСѓР¶РЅРѕ РїРѕРїСЂР°РІРёС‚СЊ РІРёРґРёРјСѓСЋ РѕР±Р»Р°СЃС‚СЊ
 							if (((rc.right + 30) <= mi.rcWork.left)
 								|| ((rc.left + 30) >= mi.rcWork.right))
 							{
@@ -4191,8 +4191,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			//			{
 			//				rc = rcNormal;
 
-			//				// Если после последней максимизации была изменена 
-			//				// конфигурация мониторов - нужно поправить видимую область
+			//				// Р•СЃР»Рё РїРѕСЃР»Рµ РїРѕСЃР»РµРґРЅРµР№ РјР°РєСЃРёРјРёР·Р°С†РёРё Р±С‹Р»Р° РёР·РјРµРЅРµРЅР° 
+			//				// РєРѕРЅС„РёРіСѓСЂР°С†РёСЏ РјРѕРЅРёС‚РѕСЂРѕРІ - РЅСѓР¶РЅРѕ РїРѕРїСЂР°РІРёС‚СЊ РІРёРґРёРјСѓСЋ РѕР±Р»Р°СЃС‚СЊ
 			//				if (((rc.right + 30) <= work.left)
 			//					|| ((rc.left + 30) >= work.right))
 			//				{
@@ -4242,8 +4242,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			//        }
 			//        bFirstCall = false;
 			//    }
-			//	//2010-02-14 На многомониторных конфигурациях эти проверки нарушают
-			//	//           требуемое положение (когда окно на обоих мониторах).
+			//	//2010-02-14 РќР° РјРЅРѕРіРѕРјРѕРЅРёС‚РѕСЂРЅС‹С… РєРѕРЅС„РёРіСѓСЂР°С†РёСЏС… СЌС‚Рё РїСЂРѕРІРµСЂРєРё РЅР°СЂСѓС€Р°СЋС‚
+			//	//           С‚СЂРµР±СѓРµРјРѕРµ РїРѕР»РѕР¶РµРЅРёРµ (РєРѕРіРґР° РѕРєРЅРѕ РЅР° РѕР±РѕРёС… РјРѕРЅРёС‚РѕСЂР°С…).
 			//	//if (rc.left<(rcMon.left-nX)) {
 			//	//	rc.left=rcMon.left-nX; rc.right=rc.left+nWidth;
 			//	//}
@@ -4270,12 +4270,12 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 
 	//AddMargins(rc, rcAddShift);
 	_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
-	return rc; // Посчитали, возвращаем
+	return rc; // РџРѕСЃС‡РёС‚Р°Р»Рё, РІРѕР·РІСЂР°С‰Р°РµРј
 }
 
 #if 0
 /*!!!static!!*/
-// Получить размер (правый нижний угол) окна по его клиентской области и наоборот
+// РџРѕР»СѓС‡РёС‚СЊ СЂР°Р·РјРµСЂ (РїСЂР°РІС‹Р№ РЅРёР¶РЅРёР№ СѓРіРѕР») РѕРєРЅР° РїРѕ РµРіРѕ РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё Рё РЅР°РѕР±РѕСЂРѕС‚
 RECT CConEmuMain::MapRect(RECT rFrom, BOOL bFrame2Client)
 {
 	_ASSERTE(this!=NULL);
@@ -4327,7 +4327,7 @@ void CConEmuMain::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
 	if (!gpSet->isFontAutoSize)
 		return;
 
-	// В 16бит режиме - не заморачиваться пока
+	// Р’ 16Р±РёС‚ СЂРµР¶РёРјРµ - РЅРµ Р·Р°РјРѕСЂР°С‡РёРІР°С‚СЊСЃСЏ РїРѕРєР°
 	if (isNtvdm())
 		return;
 
@@ -4339,7 +4339,7 @@ void CConEmuMain::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
 
 	if ((WndWidth.Style != ss_Standard) || (WndHeight.Style != ss_Standard))
 	{
-		//TODO: Ниже WndWidth&WndHeight используется для расчета размера шрифта...
+		//TODO: РќРёР¶Рµ WndWidth&WndHeight РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ СЂР°СЃС‡РµС‚Р° СЂР°Р·РјРµСЂР° С€СЂРёС„С‚Р°...
 		Assert(WndWidth.Value!=0 && WndHeight.Value!=0);
 		return;
 	}
@@ -4362,7 +4362,7 @@ void CConEmuMain::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
 		return;
 	}
 
-	// !!! Для CER_DC размер в rc.right
+	// !!! Р”Р»СЏ CER_DC СЂР°Р·РјРµСЂ РІ rc.right
 	int nFontW = (rc.right - rc.left) / WndWidth.Value;
 
 	if (nFontW < 5) nFontW = 5;
@@ -4393,9 +4393,9 @@ RECT CConEmuMain::GetIdealRect()
 	return rcIdeal;
 }
 
-// Если табов не было, создается новая консоль, появляются табы
-// Размер окна ConEmu пытаемся НЕ менять, но размер КОНСОЛИ меняется
-// Нужно ее запомнить, иначе при Minimize/Restore установится некорректная высота!
+// Р•СЃР»Рё С‚Р°Р±РѕРІ РЅРµ Р±С‹Р»Рѕ, СЃРѕР·РґР°РµС‚СЃСЏ РЅРѕРІР°СЏ РєРѕРЅСЃРѕР»СЊ, РїРѕСЏРІР»СЏСЋС‚СЃСЏ С‚Р°Р±С‹
+// Р Р°Р·РјРµСЂ РѕРєРЅР° ConEmu РїС‹С‚Р°РµРјСЃСЏ РќР• РјРµРЅСЏС‚СЊ, РЅРѕ СЂР°Р·РјРµСЂ РљРћРќРЎРћР›Р РјРµРЅСЏРµС‚СЃСЏ
+// РќСѓР¶РЅРѕ РµРµ Р·Р°РїРѕРјРЅРёС‚СЊ, РёРЅР°С‡Рµ РїСЂРё Minimize/Restore СѓСЃС‚Р°РЅРѕРІРёС‚СЃСЏ РЅРµРєРѕСЂСЂРµРєС‚РЅР°СЏ РІС‹СЃРѕС‚Р°!
 void CConEmuMain::OnTabbarActivated(bool bTabbarVisible)
 {
 	CVConGroup::SyncConsoleToWindow();
@@ -4406,8 +4406,8 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 {
 	mouse.bCheckNormalRect = false;
 
-	// Обновить коордианты в gpSet, если требуется
-	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
+	// РћР±РЅРѕРІРёС‚СЊ РєРѕРѕСЂРґРёР°РЅС‚С‹ РІ gpSet, РµСЃР»Рё С‚СЂРµР±СѓРµС‚СЃСЏ
+	// Р•СЃР»Рё СЃРµР№С‡Р°СЃ РѕРєРЅРѕ РІ СЃРјРµРЅРµ СЂР°Р·РјРµСЂР° - РёРіРЅРѕСЂРёСЂСѓРµРј, СЂР°Р·РјРµСЂ Р·Р°РїРѕРјРЅРёС‚ SetWindowMode
 	if ((WindowMode == wmNormal) && !mp_Inside && !isIconic())
 	{
 		if (prcWnd == NULL)
@@ -4432,21 +4432,21 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 
 		gpSetCls->UpdatePos(rcNormal.left, rcNormal.top);
 
-		// 120720 - если окно сейчас тянут мышкой, то пока не обновлять mrc_StoredNormalRect,
-		// иначе, если произошло Maximize при дотягивании до верхнего края экрана - то при
-		// восстановлении окна получаем глюк позиционирования - оно прыгает заголовком за пределы.
+		// 120720 - РµСЃР»Рё РѕРєРЅРѕ СЃРµР№С‡Р°СЃ С‚СЏРЅСѓС‚ РјС‹С€РєРѕР№, С‚Рѕ РїРѕРєР° РЅРµ РѕР±РЅРѕРІР»СЏС‚СЊ mrc_StoredNormalRect,
+		// РёРЅР°С‡Рµ, РµСЃР»Рё РїСЂРѕРёР·РѕС€Р»Рѕ Maximize РїСЂРё РґРѕС‚СЏРіРёРІР°РЅРёРё РґРѕ РІРµСЂС…РЅРµРіРѕ РєСЂР°СЏ СЌРєСЂР°РЅР° - С‚Рѕ РїСЂРё
+		// РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРё РѕРєРЅР° РїРѕР»СѓС‡Р°РµРј РіР»СЋРє РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°РЅРёСЏ - РѕРЅРѕ РїСЂС‹РіР°РµС‚ Р·Р°РіРѕР»РѕРІРєРѕРј Р·Р° РїСЂРµРґРµР»С‹.
 		if (!isSizing())
 			mrc_StoredNormalRect = rcNormal;
 
 		if (CVConGroup::isVConExists(0))
 		{
-			// При ресайзе через окно настройки - mp_ VActive еще не перерисовался
-			// так что и TextWidth/TextHeight не обновился
+			// РџСЂРё СЂРµСЃР°Р№Р·Рµ С‡РµСЂРµР· РѕРєРЅРѕ РЅР°СЃС‚СЂРѕР№РєРё - mp_ VActive РµС‰Рµ РЅРµ РїРµСЂРµСЂРёСЃРѕРІР°Р»СЃСЏ
+			// С‚Р°Рє С‡С‚Рѕ Рё TextWidth/TextHeight РЅРµ РѕР±РЅРѕРІРёР»СЃСЏ
 			//-- gpSetCls->UpdateSize(mp_ VActive->TextWidth, mp_ VActive->TextHeight);
 			CESize w = {this->WndWidth.Raw};
 			CESize h = {this->WndHeight.Raw};
 			
-			// Если хранятся размеры в ячейках - нужно позвать CVConGroup::AllTextRect()
+			// Р•СЃР»Рё С…СЂР°РЅСЏС‚СЃСЏ СЂР°Р·РјРµСЂС‹ РІ СЏС‡РµР№РєР°С… - РЅСѓР¶РЅРѕ РїРѕР·РІР°С‚СЊ CVConGroup::AllTextRect()
 			if ((w.Style == ss_Standard) || (h.Style == ss_Standard))
 			{
 				RECT rcAll = CVConGroup::AllTextRect();
@@ -4456,7 +4456,7 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 					h.Set(false, ss_Standard, rcAll.bottom);
 			}
 
-			// Размеры в процентах от монитора?
+			// Р Р°Р·РјРµСЂС‹ РІ РїСЂРѕС†РµРЅС‚Р°С… РѕС‚ РјРѕРЅРёС‚РѕСЂР°?
 			if ((w.Style == ss_Percents) || (h.Style == ss_Percents))
 			{
 				MONITORINFO mi;
@@ -4513,17 +4513,17 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 		// Well, Caption is hidden, Windows does not animates our window.
 		if (anCmdShow == SW_HIDE)
 		{
-			bUseApi = false; // можно AnimateWindow
+			bUseApi = false; // РјРѕР¶РЅРѕ AnimateWindow
 		}
 		else if (anCmdShow == SW_SHOWMAXIMIZED)
 		{
-			if (::IsZoomed(ghWnd)) // тут нужно "RAW" значение zoomed
-				bUseApi = false; // можно AnimateWindow
+			if (::IsZoomed(ghWnd)) // С‚СѓС‚ РЅСѓР¶РЅРѕ "RAW" Р·РЅР°С‡РµРЅРёРµ zoomed
+				bUseApi = false; // РјРѕР¶РЅРѕ AnimateWindow
 		}
 		else if (anCmdShow == SW_SHOWNORMAL)
 		{
-			if (!::IsZoomed(ghWnd) && !::IsIconic(ghWnd)) // тут нужно "RAW" значение zoomed
-				bUseApi = false; // можно AnimateWindow
+			if (!::IsZoomed(ghWnd) && !::IsIconic(ghWnd)) // С‚СѓС‚ РЅСѓР¶РЅРѕ "RAW" Р·РЅР°С‡РµРЅРёРµ zoomed
+				bUseApi = false; // РјРѕР¶РЅРѕ AnimateWindow
 		}
 	}
 
@@ -4535,12 +4535,12 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 		bool b, bAllowPreserve = false;
 		if (anCmdShow == SW_SHOWMAXIMIZED)
 		{
-			if (::IsZoomed(ghWnd)) // тут нужно "RAW" значение zoomed
+			if (::IsZoomed(ghWnd)) // С‚СѓС‚ РЅСѓР¶РЅРѕ "RAW" Р·РЅР°С‡РµРЅРёРµ zoomed
 				bAllowPreserve = true;
 		}
 		else if (anCmdShow == SW_SHOWNORMAL)
 		{
-			if (!::IsZoomed(ghWnd) && !::IsIconic(ghWnd)) // тут нужно "RAW" значение zoomed
+			if (!::IsZoomed(ghWnd) && !::IsIconic(ghWnd)) // С‚СѓС‚ РЅСѓР¶РЅРѕ "RAW" Р·РЅР°С‡РµРЅРёРµ zoomed
 				bAllowPreserve = true;
 		}
 		// Allowed?
@@ -4628,7 +4628,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpSet->SetMinToTray(true);
 	}
 
-	HWND hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Show] : NULL; // Страничка с настройками
+	HWND hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Show] : NULL; // РЎС‚СЂР°РЅРёС‡РєР° СЃ РЅР°СЃС‚СЂРѕР№РєР°РјРё
 	if (hWnd2)
 	{
 		EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
@@ -4643,7 +4643,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpSetCls->checkDlgButton(hWnd2, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
 	}
 
-	hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_SizePos] : NULL; // Страничка с настройками
+	hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_SizePos] : NULL; // РЎС‚СЂР°РЅРёС‡РєР° СЃ РЅР°СЃС‚СЂРѕР№РєР°РјРё
 	if (hWnd2)
 	{
 		gpSetCls->checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
@@ -4668,7 +4668,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	}
 
 
-	HWND hTabsPg = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Show] : NULL; // Страничка с настройками
+	HWND hTabsPg = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Show] : NULL; // РЎС‚СЂР°РЅРёС‡РєР° СЃ РЅР°СЃС‚СЂРѕР№РєР°РјРё
 	if (hTabsPg)
 	{
 		gpSetCls->checkDlgButton(hTabsPg, cbHideCaptionAlways, gpSet->isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
@@ -4679,8 +4679,8 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	RECT rcWnd = gpConEmu->GetDefaultRect();
 	UNREFERENCED_PARAMETER(rcWnd);
 
-	// При отключении Quake режима - сразу "подвинуть" окошко на "старое место"
-	// Иначе оно уедет за границы экрана при вызове OnHideCaption
+	// РџСЂРё РѕС‚РєР»СЋС‡РµРЅРёРё Quake СЂРµР¶РёРјР° - СЃСЂР°Р·Сѓ "РїРѕРґРІРёРЅСѓС‚СЊ" РѕРєРѕС€РєРѕ РЅР° "СЃС‚Р°СЂРѕРµ РјРµСЃС‚Рѕ"
+	// РРЅР°С‡Рµ РѕРЅРѕ СѓРµРґРµС‚ Р·Р° РіСЂР°РЅРёС†С‹ СЌРєСЂР°РЅР° РїСЂРё РІС‹Р·РѕРІРµ OnHideCaption
 	if (!gpSet->isQuakeStyle && bPrevStyle)
 	{
 		//SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOZORDER);
@@ -4814,7 +4814,7 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 
 		if (Tile == cwc_Current)
 		{
-			// Вернуться из Tile-режима в нормальный
+			// Р’РµСЂРЅСѓС‚СЊСЃСЏ РёР· Tile-СЂРµР¶РёРјР° РІ РЅРѕСЂРјР°Р»СЊРЅС‹Р№
 			rcNewWnd = GetDefaultRect();
 			//bChange = true;
 		}
@@ -4837,11 +4837,11 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 
 		if (bChange)
 		{
-			// Выйти из FullScreen/Maximized режима
+			// Р’С‹Р№С‚Рё РёР· FullScreen/Maximized СЂРµР¶РёРјР°
 			if (GetWindowMode() != wmNormal)
 				SetWindowMode(wmNormal);
 
-			// Сразу меняем, чтобы DefaultRect не слетел...
+			// РЎСЂР°Р·Сѓ РјРµРЅСЏРµРј, С‡С‚РѕР±С‹ DefaultRect РЅРµ СЃР»РµС‚РµР»...
 			m_TileMode = Tile;
 			changeFromWindowMode = wmNormal;
 
@@ -4909,7 +4909,7 @@ ConEmuWindowCommand CConEmuMain::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 
 		if (m_TileMode != CurTile)
 		{
-			// Сменился!
+			// РЎРјРµРЅРёР»СЃСЏ!
 			wchar_t szTile[100], szNewTile[32], szOldTile[32];
 			_wsprintf(szTile, SKIPLEN(countof(szTile)) L"Tile mode was changed externally: Our=%s, New=%s",
 				FormatTileMode(m_TileMode,szOldTile,countof(szOldTile)), FormatTileMode(CurTile,szNewTile,countof(szNewTile)));
@@ -4922,36 +4922,36 @@ ConEmuWindowCommand CConEmuMain::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 	return m_TileMode;
 }
 
-// В некоторых режимах менять положение/размер окна произвольно - нельзя,
-// для Quake например окно должно быть прилеплено к верхней границе экрана
-// в режиме Inside - размер окна вообще заблокирован и зависит от свободной области
+// Р’ РЅРµРєРѕС‚РѕСЂС‹С… СЂРµР¶РёРјР°С… РјРµРЅСЏС‚СЊ РїРѕР»РѕР¶РµРЅРёРµ/СЂР°Р·РјРµСЂ РѕРєРЅР° РїСЂРѕРёР·РІРѕР»СЊРЅРѕ - РЅРµР»СЊР·СЏ,
+// РґР»СЏ Quake РЅР°РїСЂРёРјРµСЂ РѕРєРЅРѕ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїСЂРёР»РµРїР»РµРЅРѕ Рє РІРµСЂС…РЅРµР№ РіСЂР°РЅРёС†Рµ СЌРєСЂР°РЅР°
+// РІ СЂРµР¶РёРјРµ Inside - СЂР°Р·РјРµСЂ РѕРєРЅР° РІРѕРѕР±С‰Рµ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ Рё Р·Р°РІРёСЃРёС‚ РѕС‚ СЃРІРѕР±РѕРґРЅРѕР№ РѕР±Р»Р°СЃС‚Рё
 bool CConEmuMain::IsSizeFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
 {
-	// В некоторых режимах - нельзя
+	// Р’ РЅРµРєРѕС‚РѕСЂС‹С… СЂРµР¶РёРјР°С… - РЅРµР»СЊР·СЏ
 	if (mp_Inside)
 		return false;
 
-	// В режиме "Desktop" переходить в FullScreen - нельзя
+	// Р’ СЂРµР¶РёРјРµ "Desktop" РїРµСЂРµС…РѕРґРёС‚СЊ РІ FullScreen - РЅРµР»СЊР·СЏ
 	if (gpSet->isDesktopMode && (CheckMode == wmFullScreen))
 		return false;
 
-	// Размер И положение можно менять произвольно
+	// Р Р°Р·РјРµСЂ Р РїРѕР»РѕР¶РµРЅРёРµ РјРѕР¶РЅРѕ РјРµРЅСЏС‚СЊ РїСЂРѕРёР·РІРѕР»СЊРЅРѕ
 	return true;
 }
 bool CConEmuMain::IsSizePosFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
 {
-	// В некоторых режимах - нельзя
+	// Р’ РЅРµРєРѕС‚РѕСЂС‹С… СЂРµР¶РёРјР°С… - РЅРµР»СЊР·СЏ
 	if (gpSet->isQuakeStyle || mp_Inside)
 		return false;
 
-	// В режиме "Desktop" переходить в FullScreen - нельзя
+	// Р’ СЂРµР¶РёРјРµ "Desktop" РїРµСЂРµС…РѕРґРёС‚СЊ РІ FullScreen - РЅРµР»СЊР·СЏ
 	if (gpSet->isDesktopMode && (CheckMode == wmFullScreen))
 		return false;
 
-	// Размер И положение можно менять произвольно
+	// Р Р°Р·РјРµСЂ Р РїРѕР»РѕР¶РµРЅРёРµ РјРѕР¶РЅРѕ РјРµРЅСЏС‚СЊ РїСЂРѕРёР·РІРѕР»СЊРЅРѕ
 	return true;
 }
-// В некоторых режимах - не должен выходить за пределы экрана
+// Р’ РЅРµРєРѕС‚РѕСЂС‹С… СЂРµР¶РёРјР°С… - РЅРµ РґРѕР»Р¶РµРЅ РІС‹С…РѕРґРёС‚СЊ Р·Р° РїСЂРµРґРµР»С‹ СЌРєСЂР°РЅР°
 bool CConEmuMain::IsCantExceedMonitor()
 {
 	_ASSERTE(!mp_Inside);
@@ -4961,11 +4961,11 @@ bool CConEmuMain::IsCantExceedMonitor()
 }
 bool CConEmuMain::IsPosLocked()
 {
-	// В некоторых режимах - двигать окно юзеру вообще нельзя
+	// Р’ РЅРµРєРѕС‚РѕСЂС‹С… СЂРµР¶РёРјР°С… - РґРІРёРіР°С‚СЊ РѕРєРЅРѕ СЋР·РµСЂСѓ РІРѕРѕР±С‰Рµ РЅРµР»СЊР·СЏ
 	if (mp_Inside)
 		return true;
 
-	// Положение - строго не ограничивается
+	// РџРѕР»РѕР¶РµРЅРёРµ - СЃС‚СЂРѕРіРѕ РЅРµ РѕРіСЂР°РЅРёС‡РёРІР°РµС‚СЃСЏ
 	return false;
 }
 
@@ -5074,14 +5074,14 @@ bool CConEmuMain::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		RECT rcNextMon = bFullScreen ? mi.rcMonitor : mi.rcWork;
 		#endif
 
-		// Если мониторы различаются по разрешению или рабочей области - коррекция позиционирования
+		// Р•СЃР»Рё РјРѕРЅРёС‚РѕСЂС‹ СЂР°Р·Р»РёС‡Р°СЋС‚СЃСЏ РїРѕ СЂР°Р·СЂРµС€РµРЅРёСЋ РёР»Рё СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё - РєРѕСЂСЂРµРєС†РёСЏ РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°РЅРёСЏ
 		int ShiftX = rcMain.left - miCur.rcWork.left;
 		int ShiftY = rcMain.top - miCur.rcWork.top;
 
 		int Width = (rcMain.right - rcMain.left);
 		int Height = (rcMain.bottom - rcMain.top);
 
-		// Если ширина или высота были заданы в процентах (от монитора)
+		// Р•СЃР»Рё С€РёСЂРёРЅР° РёР»Рё РІС‹СЃРѕС‚Р° Р±С‹Р»Рё Р·Р°РґР°РЅС‹ РІ РїСЂРѕС†РµРЅС‚Р°С… (РѕС‚ РјРѕРЅРёС‚РѕСЂР°)
 		if ((WndWidth.Style == ss_Percents) || (WndHeight.Style == ss_Percents))
 		{
 			_ASSERTE(!gpSet->isQuakeStyle); // Quake?
@@ -5138,11 +5138,11 @@ bool CConEmuMain::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	}
 
 	
-	// Поскольку кнопки мы перехватываем - нужно предусмотреть
-	// прыжки и для других окон, например окна настроек
+	// РџРѕСЃРєРѕР»СЊРєСѓ РєРЅРѕРїРєРё РјС‹ РїРµСЂРµС…РІР°С‚С‹РІР°РµРј - РЅСѓР¶РЅРѕ РїСЂРµРґСѓСЃРјРѕС‚СЂРµС‚СЊ
+	// РїСЂС‹Р¶РєРё Рё РґР»СЏ РґСЂСѓРіРёС… РѕРєРѕРЅ, РЅР°РїСЂРёРјРµСЂ РѕРєРЅР° РЅР°СЃС‚СЂРѕРµРє
 	if (hJumpWnd == ghWnd)
 	{
-		// Коррекция (заранее)
+		// РљРѕСЂСЂРµРєС†РёСЏ (Р·Р°СЂР°РЅРµРµ)
 		OnMoving(&rcNewMain);
 
 		m_JumpMonitor.rcNewPos = rcNewMain;
@@ -5153,17 +5153,17 @@ bool CConEmuMain::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		GetWindowLong(ghWnd, GWL_STYLE);
 		if (bFullScreen)
 		{
-			// Win8. Не хочет прыгать обратно
+			// Win8. РќРµ С…РѕС‡РµС‚ РїСЂС‹РіР°С‚СЊ РѕР±СЂР°С‚РЅРѕ
 			SetWindowStyle(ghWnd, nStyles & ~WS_MAXIMIZE);
 		}
 
 		AutoSizeFont(rcNewMain, CER_MAIN);
-		// Расчитать размер консоли по оптимальному WindowRect
+		// Р Р°СЃС‡РёС‚Р°С‚СЊ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё РїРѕ РѕРїС‚РёРјР°Р»СЊРЅРѕРјСѓ WindowRect
 		CVConGroup::PreReSize(WindowMode, rcNewMain);
 	}
 
 
-	// И перемещение
+	// Р РїРµСЂРµРјРµС‰РµРЅРёРµ
 	SetWindowPos(hJumpWnd, NULL, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER/*|SWP_DRAWFRAME*/|SWP_NOCOPYBITS);
 	//MoveWindow(hJumpWnd, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, FALSE);
 
@@ -5172,7 +5172,7 @@ bool CConEmuMain::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	{
 		if (bFullScreen)
 		{
-			// вернуть
+			// РІРµСЂРЅСѓС‚СЊ
 			SetWindowStyle(ghWnd, nStyles);
 			// Check it
 			_ASSERTE(WindowMode == wmFullScreen);
@@ -5188,7 +5188,7 @@ bool CConEmuMain::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*/, BOOL abFirstShow /*= FALSE*/)
 {
 	if (inMode != wmNormal && inMode != wmMaximized && inMode != wmFullScreen)
-		inMode = wmNormal; // ошибка загрузки настроек?
+		inMode = wmNormal; // РѕС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё РЅР°СЃС‚СЂРѕРµРє?
 
 	if (!isMainThread()) 
 	{
@@ -5204,7 +5204,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	if (gpSet->isDesktopMode)
 	{
 		if (inMode == wmFullScreen)
-			inMode = (WindowMode != wmNormal) ? wmNormal : wmMaximized; // FullScreen на Desktop-е невозможен
+			inMode = (WindowMode != wmNormal) ? wmNormal : wmMaximized; // FullScreen РЅР° Desktop-Рµ РЅРµРІРѕР·РјРѕР¶РµРЅ
 	}
 
 	if (gpSetCls->isAdvLogging)
@@ -5216,7 +5216,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 	if ((inMode != wmFullScreen) && (WindowMode == wmFullScreen))
 	{
-		// Отмена vkForceFullScreen
+		// РћС‚РјРµРЅР° vkForceFullScreen
 		DoForcedFullScreen(false);
 	}
 
@@ -5227,7 +5227,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	if (isPictureView())
 	{
 		#ifndef _DEBUG
-		//2009-04-22 Если открыт PictureView - лучше не дергаться...
+		//2009-04-22 Р•СЃР»Рё РѕС‚РєСЂС‹С‚ PictureView - Р»СѓС‡С€Рµ РЅРµ РґРµСЂРіР°С‚СЊСЃСЏ...
 		return false;
 		#else
 		_ASSERTE(FALSE && "Change WindowMode will be skipped in Release: isPictureView()");
@@ -5237,13 +5237,13 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	SetCursor(LoadCursor(NULL,IDC_WAIT));
 	mp_Menu->SetPassSysCommand(true);
 
-	//WindowPlacement -- использовать нельзя, т.к. он работает в координатах Workspace, а не Screen!
+	//WindowPlacement -- РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РЅРµР»СЊР·СЏ, С‚.Рє. РѕРЅ СЂР°Р±РѕС‚Р°РµС‚ РІ РєРѕРѕСЂРґРёРЅР°С‚Р°С… Workspace, Р° РЅРµ Screen!
 	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 
 	//bool canEditWindowSizes = false;
 	bool lbRc = false;
 	static bool bWasSetFullscreen = false;
-	// Сброс флагов ресайза мышкой
+	// РЎР±СЂРѕСЃ С„Р»Р°РіРѕРІ СЂРµСЃР°Р№Р·Р° РјС‹С€РєРѕР№
 	ResetSizingFlags(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 
 	bool bNewFullScreen = (inMode == wmFullScreen) || (gpSet->isQuakeStyle && (gpSet->_WindowMode == wmFullScreen));
@@ -5266,10 +5266,10 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	if ((inMode != wmNormal) && isWindowNormal() && !bIconic)
 		StoreNormalRect(&rcWnd);
 
-	// Коррекция для Quake/Inside/Desktop
+	// РљРѕСЂСЂРµРєС†РёСЏ РґР»СЏ Quake/Inside/Desktop
 	ConEmuWindowMode NewMode = IsSizePosFree(inMode) ? inMode : wmNormal;
 
-	// И сразу запоминаем _новый_ режим
+	// Р СЃСЂР°Р·Сѓ Р·Р°РїРѕРјРёРЅР°РµРј _РЅРѕРІС‹Р№_ СЂРµР¶РёРј
 	changeFromWindowMode = WindowMode;
 	mp_Menu->SetRestoreFromMinimized(bIconic);
 	if (gpSet->isQuakeStyle)
@@ -5292,7 +5292,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 		                           (inMode==wmFullScreen) ? "SetWindowMode(wmFullScreen)" : "SetWindowMode(INVALID)",
 		                           TRUE);
 
-	OnHideCaption(); // inMode из параметров убрал, т.к. WindowMode уже изменен
+	OnHideCaption(); // inMode РёР· РїР°СЂР°РјРµС‚СЂРѕРІ СѓР±СЂР°Р», С‚.Рє. WindowMode СѓР¶Рµ РёР·РјРµРЅРµРЅ
 
 	DEBUGTEST(BOOL bIsVisible = IsWindowVisible(ghWnd););
 
@@ -5306,7 +5306,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 			RECT rcIdeal = (gpSet->isQuakeStyle) ? GetDefaultRect() : GetIdealRect();
 			AutoSizeFont(rcIdeal, CER_MAIN);
-			// Расчитать размер по оптимальному WindowRect
+			// Р Р°СЃС‡РёС‚Р°С‚СЊ СЂР°Р·РјРµСЂ РїРѕ РѕРїС‚РёРјР°Р»СЊРЅРѕРјСѓ WindowRect
 			if (!CVConGroup::PreReSize(inMode, rcIdeal))
 			{
 				mp_Menu->SetPassSysCommand(false);
@@ -5315,10 +5315,10 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 			//consoleSize = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
 
-			// Тут именно "::IsZoomed(ghWnd)"
+			// РўСѓС‚ РёРјРµРЅРЅРѕ "::IsZoomed(ghWnd)"
 			if (isIconic() || ::IsZoomed(ghWnd))
 			{
-				//apiShow Window(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
+				//apiShow Window(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РЅРµ С…РѕС‡РµС‚СЃСЏ...
 				mb_IgnoreSizeChange = true;
 
 				if (gpSet->isDesktopMode)
@@ -5336,7 +5336,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				{
 					if (gpSetCls->isAdvLogging) LogString("WM_SYSCOMMAND(SC_RESTORE)");
 
-					DefWindowProc(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0); //2009-04-22 Было SendMessage
+					DefWindowProc(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0); //2009-04-22 Р‘С‹Р»Рѕ SendMessage
 				}
 				else
 				{
@@ -5348,23 +5348,23 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				//RePaint();
 				mb_IgnoreSizeChange = false;
 
-				//// Сбросить (заранее), вдруг оно isIconic?
+				//// РЎР±СЂРѕСЃРёС‚СЊ (Р·Р°СЂР°РЅРµРµ), РІРґСЂСѓРі РѕРЅРѕ isIconic?
 				//if (mb_MaximizedHideCaption)
 				//	mb_MaximizedHideCaption = FALSE;
 
 				if (gpSetCls->isAdvLogging) LogString("OnSize(false).1");
 
-				//OnSize(false); // подровнять ТОЛЬКО дочерние окошки
+				//OnSize(false); // РїРѕРґСЂРѕРІРЅСЏС‚СЊ РўРћР›Р¬РљРћ РґРѕС‡РµСЂРЅРёРµ РѕРєРѕС€РєРё
 			}
 
-			//// Сбросить (однозначно)
+			//// РЎР±СЂРѕСЃРёС‚СЊ (РѕРґРЅРѕР·РЅР°С‡РЅРѕ)
 			//if (mb_MaximizedHideCaption)
 			//	mb_MaximizedHideCaption = FALSE;
 
 			RECT rcNew = GetDefaultRect();
 			if (mp_Inside == NULL)
 			{
-				//130508 - интересует только ширина-высота
+				//130508 - РёРЅС‚РµСЂРµСЃСѓРµС‚ С‚РѕР»СЊРєРѕ С€РёСЂРёРЅР°-РІС‹СЃРѕС‚Р°
 				//rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE_ALL);
 				rcNew.right -= rcNew.left; rcNew.bottom -= rcNew.top;
 				rcNew.top = rcNew.left = 0;
@@ -5409,12 +5409,12 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			GetWindowPlacement(ghWnd, &wpl);
 			#endif
 
-			// Если это во время загрузки - то до первого ShowWindow - isIconic возвращает FALSE
-			// Нужен реальный IsZoomed (FullScreen теперь тоже Zoomed)
+			// Р•СЃР»Рё СЌС‚Рѕ РІРѕ РІСЂРµРјСЏ Р·Р°РіСЂСѓР·РєРё - С‚Рѕ РґРѕ РїРµСЂРІРѕРіРѕ ShowWindow - isIconic РІРѕР·РІСЂР°С‰Р°РµС‚ FALSE
+			// РќСѓР¶РµРЅ СЂРµР°Р»СЊРЅС‹Р№ IsZoomed (FullScreen С‚РµРїРµСЂСЊ С‚РѕР¶Рµ Zoomed)
 			if (!(abFirstShow && WindowStartMinimized) && (isIconic() || ::IsZoomed(ghWnd)))
 			{
-				ShowWindow(SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
-				// что-то после AltF9, AltF9 уголки остаются не срезанными...
+				ShowWindow(SW_SHOWNORMAL); // WM_SYSCOMMAND РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РЅРµ С…РѕС‡РµС‚СЃСЏ...
+				// С‡С‚Рѕ-С‚Рѕ РїРѕСЃР»Рµ AltF9, AltF9 СѓРіРѕР»РєРё РѕСЃС‚Р°СЋС‚СЃСЏ РЅРµ СЃСЂРµР·Р°РЅРЅС‹РјРё...
 				//hRgn = CreateWindowRgn();
 				//SetWindowRgn(ghWnd, hRgn, TRUE);
 			}
@@ -5423,7 +5423,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			mp_Menu->SetRestoreFromMinimized(false);
 
 			UpdateWindowRgn();
-			OnSize(false); // подровнять ТОЛЬКО дочерние окошки
+			OnSize(false); // РїРѕРґСЂРѕРІРЅСЏС‚СЊ РўРћР›Р¬РљРћ РґРѕС‡РµСЂРЅРёРµ РѕРєРѕС€РєРё
 
 			//#ifdef _DEBUG
 			//GetWindowPlacement(ghWnd, &wpl);
@@ -5441,13 +5441,13 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			_ASSERTE((rcShift.left==0 && rcShift.right==0 && rcShift.bottom==0 && rcShift.top==0) || !gpSet->isCaptionHidden());
 			#endif
 
-			#ifdef _DEBUG // было
+			#ifdef _DEBUG // Р±С‹Р»Рѕ
 			CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
 			#endif
 			RECT rcMax = CalcRect(CER_MAXIMIZED);
 
-			WARNING("Может обломаться из-за максимального размера консоли");
-			// в этом случае хорошо бы установить максимально возможный и отцентрировать ее в ConEmu
+			WARNING("РњРѕР¶РµС‚ РѕР±Р»РѕРјР°С‚СЊСЃСЏ РёР·-Р·Р° РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ СЂР°Р·РјРµСЂР° РєРѕРЅСЃРѕР»Рё");
+			// РІ СЌС‚РѕРј СЃР»СѓС‡Р°Рµ С…РѕСЂРѕС€Рѕ Р±С‹ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РјР°РєСЃРёРјР°Р»СЊРЅРѕ РІРѕР·РјРѕР¶РЅС‹Р№ Рё РѕС‚С†РµРЅС‚СЂРёСЂРѕРІР°С‚СЊ РµРµ РІ ConEmu
 			if (!CVConGroup::PreReSize(inMode, rcMax))
 			{
 				mp_Menu->SetPassSysCommand(false);
@@ -5497,7 +5497,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 				if (gpSetCls->isAdvLogging) LogString("OnSize(false).2");
 
-				//OnSize(false); // консоль уже изменила свой размер
+				//OnSize(false); // РєРѕРЅСЃРѕР»СЊ СѓР¶Рµ РёР·РјРµРЅРёР»Р° СЃРІРѕР№ СЂР°Р·РјРµСЂ
 
 				gpSetCls->UpdateWindowMode(wmMaximized);
 			} // if (!gpSet->isHideCaption)
@@ -5514,7 +5514,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			// Already resored, need to clear the flag to avoid incorrect sizing
 			mp_Menu->SetRestoreFromMinimized(false);
 
-			OnSize(false); // консоль уже изменила свой размер
+			OnSize(false); // РєРѕРЅСЃРѕР»СЊ СѓР¶Рµ РёР·РјРµРЅРёР»Р° СЃРІРѕР№ СЂР°Р·РјРµСЂ
 
 			UpdateWindowRgn();
 
@@ -5527,8 +5527,8 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 			RECT rcMax = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
 
-			WARNING("Может обломаться из-за максимального размера консоли");
-			// в этом случае хорошо бы установить максимально возможный и отцентрировать ее в ConEmu
+			WARNING("РњРѕР¶РµС‚ РѕР±Р»РѕРјР°С‚СЊСЃСЏ РёР·-Р·Р° РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ СЂР°Р·РјРµСЂР° РєРѕРЅСЃРѕР»Рё");
+			// РІ СЌС‚РѕРј СЃР»СѓС‡Р°Рµ С…РѕСЂРѕС€Рѕ Р±С‹ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РјР°РєСЃРёРјР°Р»СЊРЅРѕ РІРѕР·РјРѕР¶РЅС‹Р№ Рё РѕС‚С†РµРЅС‚СЂРёСЂРѕРІР°С‚СЊ РµРµ РІ ConEmu
 			if (!CVConGroup::PreReSize(inMode, rcMax))
 			{
 				mp_Menu->SetPassSysCommand(false);
@@ -5536,19 +5536,19 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			}
 
 			//mb_isFullScreen = true;
-			//WindowMode = inMode; // Запомним!
+			//WindowMode = inMode; // Р—Р°РїРѕРјРЅРёРј!
 
-			//120820 - т.к. FullScreen теперь SW_SHOWMAXIMIZED, то здесь нужно смотреть на WindowMode
+			//120820 - С‚.Рє. FullScreen С‚РµРїРµСЂСЊ SW_SHOWMAXIMIZED, С‚Рѕ Р·РґРµСЃСЊ РЅСѓР¶РЅРѕ СЃРјРѕС‚СЂРµС‚СЊ РЅР° WindowMode
 			isWndNotFSMaximized = (changeFromWindowMode == wmMaximized);
 			
 			RECT rcShift = CalcMargins(CEM_FRAMEONLY);
 			_ASSERTE(rcShift.left==0 && rcShift.right==0 && rcShift.top==0 && rcShift.bottom==0);
 
-			//GetCWShift(ghWnd, &rcShift); // Обновить, на всякий случай
-			// Умолчания
+			//GetCWShift(ghWnd, &rcShift); // РћР±РЅРѕРІРёС‚СЊ, РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№
+			// РЈРјРѕР»С‡Р°РЅРёСЏ
 			ptFullScreenSize.x = GetSystemMetrics(SM_CXSCREEN)+rcShift.left+rcShift.right;
 			ptFullScreenSize.y = GetSystemMetrics(SM_CYSCREEN)+rcShift.top+rcShift.bottom;
-			// которые нужно уточнить для текущего монитора!
+			// РєРѕС‚РѕСЂС‹Рµ РЅСѓР¶РЅРѕ СѓС‚РѕС‡РЅРёС‚СЊ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ РјРѕРЅРёС‚РѕСЂР°!
 			MONITORINFO mi = {};
 			HMONITOR hMon = GetNearestMonitor(&mi);
 
@@ -5558,19 +5558,19 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				ptFullScreenSize.y = (mi.rcMonitor.bottom-mi.rcMonitor.top)+rcShift.top+rcShift.bottom;
 			}
 
-			//120820 - Тут нужно проверять реальный IsZoomed
+			//120820 - РўСѓС‚ РЅСѓР¶РЅРѕ РїСЂРѕРІРµСЂСЏС‚СЊ СЂРµР°Р»СЊРЅС‹Р№ IsZoomed
 			if (isIconic() || !::IsZoomed(ghWnd))
 			{
 	 				mb_IgnoreSizeChange = true;
-				//120820 для четкости, в FullScreen тоже ставим Maximized, а не Normal
+				//120820 РґР»СЏ С‡РµС‚РєРѕСЃС‚Рё, РІ FullScreen С‚РѕР¶Рµ СЃС‚Р°РІРёРј Maximized, Р° РЅРµ Normal
 				ShowWindow((abFirstShow && WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED);
 
-				//// Сбросить
+				//// РЎР±СЂРѕСЃРёС‚СЊ
 				//if (mb_MaximizedHideCaption)
 				//	mb_MaximizedHideCaption = FALSE;
 
 				mb_IgnoreSizeChange = false;
-				//120820 - лишняя перерисовка?
+				//120820 - Р»РёС€РЅСЏСЏ РїРµСЂРµСЂРёСЃРѕРІРєР°?
 				//-- RePaint();
 			}
 
@@ -5593,10 +5593,10 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			// Already resored, need to clear the flag to avoid incorrect sizing
 			mp_Menu->SetRestoreFromMinimized(false);
 
-			OnSize(false); // подровнять ТОЛЬКО дочерние окошки
+			OnSize(false); // РїРѕРґСЂРѕРІРЅСЏС‚СЊ РўРћР›Р¬РљРћ РґРѕС‡РµСЂРЅРёРµ РѕРєРѕС€РєРё
 
 			RECT rcFrame = CalcMargins(CEM_FRAMEONLY);
-			// ptFullScreenSize содержит "скорректированный" размер (он больше монитора)
+			// ptFullScreenSize СЃРѕРґРµСЂР¶РёС‚ "СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°РЅРЅС‹Р№" СЂР°Р·РјРµСЂ (РѕРЅ Р±РѕР»СЊС€Рµ РјРѕРЅРёС‚РѕСЂР°)
 			UpdateWindowRgn(rcFrame.left, rcFrame.top,
 				            mi.rcMonitor.right-mi.rcMonitor.left, mi.rcMonitor.bottom-mi.rcMonitor.top);
 			setWindowPos(NULL,
@@ -5611,11 +5611,11 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 				mb_IgnoreSizeChange = true;
 				ShowWindow((abFirstShow && WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL);
 				mb_IgnoreSizeChange = false;
-				//WindowMode = inMode; // Запомним!
+				//WindowMode = inMode; // Р—Р°РїРѕРјРЅРёРј!
 
 				if (gpSetCls->isAdvLogging) LogString("OnSize(false).5");
 
-				OnSize(false); // подровнять ТОЛЬКО дочерние окошки
+				OnSize(false); // РїРѕРґСЂРѕРІРЅСЏС‚СЊ РўРћР›Р¬РљРћ РґРѕС‡РµСЂРЅРёРµ РѕРєРѕС€РєРё
 			}
 
 			#ifdef _DEBUG
@@ -5631,7 +5631,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 	if (gpSetCls->isAdvLogging) LogString("SetWindowMode done");
 
-	//WindowMode = inMode; // Запомним!
+	//WindowMode = inMode; // Р—Р°РїРѕРјРЅРёРј!
 
 	//if (VCon.VCon())
 	//{
@@ -5653,7 +5653,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 		LogWindowPos(szInfo);
 	}
 
-	//Sync ConsoleToWindow(); 2009-09-10 А это вроде вообще не нужно - ресайз консоли уже сделан
+	//Sync ConsoleToWindow(); 2009-09-10 Рђ СЌС‚Рѕ РІСЂРѕРґРµ РІРѕРѕР±С‰Рµ РЅРµ РЅСѓР¶РЅРѕ - СЂРµСЃР°Р№Р· РєРѕРЅСЃРѕР»Рё СѓР¶Рµ СЃРґРµР»Р°РЅ
 	mp_Menu->SetPassSysCommand(false);
 	lbRc = true;
 wrap:
@@ -5669,8 +5669,8 @@ wrap:
 	changeFromWindowMode = wmNotChanging;
 	mp_Menu->SetRestoreFromMinimized(false);
 
-	// В случае облома изменения размера консоли - может слететь признак
-	// полноэкранности у панели задач. Вернем его...
+	// Р’ СЃР»СѓС‡Р°Рµ РѕР±Р»РѕРјР° РёР·РјРµРЅРµРЅРёСЏ СЂР°Р·РјРµСЂР° РєРѕРЅСЃРѕР»Рё - РјРѕР¶РµС‚ СЃР»РµС‚РµС‚СЊ РїСЂРёР·РЅР°Рє
+	// РїРѕР»РЅРѕСЌРєСЂР°РЅРЅРѕСЃС‚Рё Сѓ РїР°РЅРµР»Рё Р·Р°РґР°С‡. Р’РµСЂРЅРµРј РµРіРѕ...
 	if (mp_TaskBar2)
 	{
 		bNewFullScreen = (WindowMode == wmFullScreen) || (gpSet->isQuakeStyle && (gpSet->_WindowMode == wmFullScreen));
@@ -5692,7 +5692,7 @@ wrap:
 	// Transparency styles may was changed occasionally, check them
 	OnTransparent();
 
-	TODO("Что-то курсор иногда остается APPSTARTING...");
+	TODO("Р§С‚Рѕ-С‚Рѕ РєСѓСЂСЃРѕСЂ РёРЅРѕРіРґР° РѕСЃС‚Р°РµС‚СЃСЏ APPSTARTING...");
 	SetCursor(LoadCursor(NULL,IDC_ARROW));
 	//PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
 	return lbRc;
@@ -5702,7 +5702,7 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 {
 	//if (!mp_ VActive)
 	//  return;
-	//2009-05-20 Раз это Force - значит на возможность получить табы из фара забиваем! Для консоли показывается "Console"
+	//2009-05-20 Р Р°Р· СЌС‚Рѕ Force - Р·РЅР°С‡РёС‚ РЅР° РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РїРѕР»СѓС‡РёС‚СЊ С‚Р°Р±С‹ РёР· С„Р°СЂР° Р·Р°Р±РёРІР°РµРј! Р”Р»СЏ РєРѕРЅСЃРѕР»Рё РїРѕРєР°Р·С‹РІР°РµС‚СЃСЏ "Console"
 	BOOL lbTabsAllowed = abShow /*&& gpConEmu->mp_TabBar->IsAllowed()*/;
 
 	if (abShow && !gpConEmu->mp_TabBar->IsTabsShown() && gpSet->isTabs && lbTabsAllowed)
@@ -5715,21 +5715,21 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 		//gpConEmu->mp_TabBar->Update(&tab, 1);
 		//mp_ VActive->RCon()->SetTabs(&tab, 1);
 		gpConEmu->mp_TabBar->Update();
-		//gbPostUpdateWindowSize = true; // 2009-07-04 Resize выполняет сам TabBar
+		//gbPostUpdateWindowSize = true; // 2009-07-04 Resize РІС‹РїРѕР»РЅСЏРµС‚ СЃР°Рј TabBar
 	}
 	else if (!abShow)
 	{
 		gpConEmu->mp_TabBar->Deactivate(TRUE);
-		//gbPostUpdateWindowSize = true; // 2009-07-04 Resize выполняет сам TabBar
+		//gbPostUpdateWindowSize = true; // 2009-07-04 Resize РІС‹РїРѕР»РЅСЏРµС‚ СЃР°Рј TabBar
 	}
 
-	// Иначе Gaps не отрисуются
+	// РРЅР°С‡Рµ Gaps РЅРµ РѕС‚СЂРёСЃСѓСЋС‚СЃСЏ
 	gpConEmu->InvalidateAll();
 	UpdateWindowRgn();
-	// При отключенных табах нужно показать "[n/n] " а при выключенных - спрятать
-	UpdateTitle(); // сам перечитает
-	// 2009-07-04 Resize выполняет сам TabBar
-	//if (gbPostUpdateWindowSize) { // значит мы что-то поменяли
+	// РџСЂРё РѕС‚РєР»СЋС‡РµРЅРЅС‹С… С‚Р°Р±Р°С… РЅСѓР¶РЅРѕ РїРѕРєР°Р·Р°С‚СЊ "[n/n] " Р° РїСЂРё РІС‹РєР»СЋС‡РµРЅРЅС‹С… - СЃРїСЂСЏС‚Р°С‚СЊ
+	UpdateTitle(); // СЃР°Рј РїРµСЂРµС‡РёС‚Р°РµС‚
+	// 2009-07-04 Resize РІС‹РїРѕР»РЅСЏРµС‚ СЃР°Рј TabBar
+	//if (gbPostUpdateWindowSize) { // Р·РЅР°С‡РёС‚ РјС‹ С‡С‚Рѕ-С‚Рѕ РїРѕРјРµРЅСЏР»Рё
 	//    ReSize();
 	//    /*RECT rcNewCon; Get ClientRect(ghWnd, &rcNewCon);
 	//    DCClientRect(&rcNewCon);
@@ -5814,9 +5814,9 @@ bool CConEmuMain::isFullScreen()
 	return true;
 }
 
-// abCorrect2Ideal==TRUE приходит из TabBarClass::UpdatePosition(),
-// это происходит при отображении/скрытии "автотабов"
-// или при смене шрифта
+// abCorrect2Ideal==TRUE РїСЂРёС…РѕРґРёС‚ РёР· TabBarClass::UpdatePosition(),
+// СЌС‚Рѕ РїСЂРѕРёСЃС…РѕРґРёС‚ РїСЂРё РѕС‚РѕР±СЂР°Р¶РµРЅРёРё/СЃРєСЂС‹С‚РёРё "Р°РІС‚РѕС‚Р°Р±РѕРІ"
+// РёР»Рё РїСЂРё СЃРјРµРЅРµ С€СЂРёС„С‚Р°
 void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 {
 	if (isIconic())
@@ -5832,16 +5832,16 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 	{
 		if (isWindowNormal())
 		{
-			// Вобщем-то интересует только X,Y
+			// Р’РѕР±С‰РµРј-С‚Рѕ РёРЅС‚РµСЂРµСЃСѓРµС‚ С‚РѕР»СЊРєРѕ X,Y
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 
-			// Пользователи жалуются на смену размера консоли
+			// РџРѕР»СЊР·РѕРІР°С‚РµР»Рё Р¶Р°Р»СѓСЋС‚СЃСЏ РЅР° СЃРјРµРЅСѓ СЂР°Р·РјРµСЂР° РєРѕРЅСЃРѕР»Рё
 
 			#if 0
-			// -- не годится. при запуске новой консоли и автопоказе табов
-			// -- размер "CVConGroup::AllTextRect()" --> {0x0}
+			// -- РЅРµ РіРѕРґРёС‚СЃСЏ. РїСЂРё Р·Р°РїСѓСЃРєРµ РЅРѕРІРѕР№ РєРѕРЅСЃРѕР»Рё Рё Р°РІС‚РѕРїРѕРєР°Р·Рµ С‚Р°Р±РѕРІ
+			// -- СЂР°Р·РјРµСЂ "CVConGroup::AllTextRect()" --> {0x0}
 			RECT rcConsole = {}, rcCompWnd = {};
-			TODO("DoubleView: нужно с учетом видимых консолией");
+			TODO("DoubleView: РЅСѓР¶РЅРѕ СЃ СѓС‡РµС‚РѕРј РІРёРґРёРјС‹С… РєРѕРЅСЃРѕР»РёРµР№");
 			if (isVConExists(0))
 			{
 				rcConsole = CVConGroup::AllTextRect();
@@ -5850,22 +5850,22 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			}
 			else
 			{
-				rcCompWnd = rcWnd; // не менять?
+				rcCompWnd = rcWnd; // РЅРµ РјРµРЅСЏС‚СЊ?
 			}
 			#endif
 
 			#if 1
-			// Выполняем всегда, даже если размер уже соответсвует...
-			// Без учета DoubleView/SplitScreen
+			// Р’С‹РїРѕР»РЅСЏРµРј РІСЃРµРіРґР°, РґР°Р¶Рµ РµСЃР»Рё СЂР°Р·РјРµСЂ СѓР¶Рµ СЃРѕРѕС‚РІРµС‚СЃРІСѓРµС‚...
+			// Р‘РµР· СѓС‡РµС‚Р° DoubleView/SplitScreen
 			RECT rcIdeal = GetIdealRect();
 			AutoSizeFont(rcIdeal, CER_MAIN);
 			RECT rcConsole = CalcRect(CER_CONSOLE_ALL, rcIdeal, CER_MAIN);
 			RECT rcCompWnd = CalcRect(CER_MAIN, rcConsole, CER_CONSOLE_ALL);
 			#endif
 
-			// При показе/скрытии табов высота консоли может "прыгать"
-			// Ее нужно скорректировать. Поскольку идет реальный ресайз
-			// главного окна - OnSize вызовается автоматически
+			// РџСЂРё РїРѕРєР°Р·Рµ/СЃРєСЂС‹С‚РёРё С‚Р°Р±РѕРІ РІС‹СЃРѕС‚Р° РєРѕРЅСЃРѕР»Рё РјРѕР¶РµС‚ "РїСЂС‹РіР°С‚СЊ"
+			// Р•Рµ РЅСѓР¶РЅРѕ СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ. РџРѕСЃРєРѕР»СЊРєСѓ РёРґРµС‚ СЂРµР°Р»СЊРЅС‹Р№ СЂРµСЃР°Р№Р·
+			// РіР»Р°РІРЅРѕРіРѕ РѕРєРЅР° - OnSize РІС‹Р·РѕРІР°РµС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё
 			_ASSERTE(isMainThread());
 
 			CVConGroup::PreReSize(WindowMode, rcCompWnd, CER_MAIN, true);
@@ -5883,7 +5883,7 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			CVConGroup::PreReSize(WindowMode, client, CER_MAINCLIENT, true);
 		}
 
-		// Поправить! Может изменилось!
+		// РџРѕРїСЂР°РІРёС‚СЊ! РњРѕР¶РµС‚ РёР·РјРµРЅРёР»РѕСЃСЊ!
 		client = GetGuiClientRect();
 	}
 
@@ -5904,7 +5904,7 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 //	_ASSERTE(isMainThread());
 //	if (!pVCon)
 //	{
-//		// По идее, не должно вызываться, если консолей вообще нет
+//		// РџРѕ РёРґРµРµ, РЅРµ РґРѕР»Р¶РЅРѕ РІС‹Р·С‹РІР°С‚СЊСЃСЏ, РµСЃР»Рё РєРѕРЅСЃРѕР»РµР№ РІРѕРѕР±С‰Рµ РЅРµС‚
 //		_ASSERTE(pVCon!=NULL);
 //		return;
 //	}
@@ -5931,12 +5931,12 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 //				pVCon->RCon()->LogString(szDbg);
 //			#endif
 //
-//			return; // ничего не менялось
+//			return; // РЅРёС‡РµРіРѕ РЅРµ РјРµРЅСЏР»РѕСЃСЊ
 //		}
 //	}
 //
 //	rcClientLast = rcClient;
-//	//memmove(&mrc_LastClient, &rcClient, sizeof(RECT)); // сразу запомним
+//	//memmove(&mrc_LastClient, &rcClient, sizeof(RECT)); // СЃСЂР°Р·Сѓ Р·Р°РїРѕРјРЅРёРј
 //	bTabsShownLast = bTabsShown;
 //	bAlwaysScrollLast = (gpSet->isAlwaysShowScrollbar == 1);
 //	//RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
@@ -5950,8 +5950,8 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 //		pVCon->RCon()->LogString(szDbg);
 //	#endif
 //
-//	// Это скрытое окно отрисовки. Оно должно соответствовать
-//	// размеру виртуальной консоли. На это окно ориентируются плагины!
+//	// Р­С‚Рѕ СЃРєСЂС‹С‚РѕРµ РѕРєРЅРѕ РѕС‚СЂРёСЃРѕРІРєРё. РћРЅРѕ РґРѕР»Р¶РЅРѕ СЃРѕРѕС‚РІРµС‚СЃС‚РІРѕРІР°С‚СЊ
+//	// СЂР°Р·РјРµСЂСѓ РІРёСЂС‚СѓР°Р»СЊРЅРѕР№ РєРѕРЅСЃРѕР»Рё. РќР° СЌС‚Рѕ РѕРєРЅРѕ РѕСЂРёРµРЅС‚РёСЂСѓСЋС‚СЃСЏ РїР»Р°РіРёРЅС‹!
 //	WARNING("DoubleView");
 //	rc = gpConEmu->CalcRect(CER_SCROLL, rcClient, CER_MAINCLIENT);
 //
@@ -5964,12 +5964,12 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 //	#endif
 //}
 
-// Должна вернуть TRUE, если события мыши не нужно пропускать в консоль
+// Р”РѕР»Р¶РЅР° РІРµСЂРЅСѓС‚СЊ TRUE, РµСЃР»Рё СЃРѕР±С‹С‚РёСЏ РјС‹С€Рё РЅРµ РЅСѓР¶РЅРѕ РїСЂРѕРїСѓСЃРєР°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ
 BOOL CConEmuMain::TrackMouse()
 {
-	BOOL lbCapture = FALSE; // По умолчанию - мышь не перехватывать
+	BOOL lbCapture = FALSE; // РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - РјС‹С€СЊ РЅРµ РїРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ
 
-	TODO("DoubleView: переделать на обработку в видимых консолях");
+	TODO("DoubleView: РїРµСЂРµРґРµР»Р°С‚СЊ РЅР° РѕР±СЂР°Р±РѕС‚РєСѓ РІ РІРёРґРёРјС‹С… РєРѕРЅСЃРѕР»СЏС…");
 	CVConGuard VCon;
 	if (GetActiveVCon(&VCon) >= 0)
 	{
@@ -5987,9 +5987,9 @@ void CConEmuMain::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 
 void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 {
-	TODO("На удаление. ConEmu не должен дергаться при смене размера ИЗ КОНСОЛИ");
+	TODO("РќР° СѓРґР°Р»РµРЅРёРµ. ConEmu РЅРµ РґРѕР»Р¶РµРЅ РґРµСЂРіР°С‚СЊСЃСЏ РїСЂРё СЃРјРµРЅРµ СЂР°Р·РјРµСЂР° РР— РљРћРќРЎРћР›Р");
 	//MSetter lInConsoleResize(&mb_InConsoleResize);
-	// Выполняться должно в нити окна, иначе можем повиснуть
+	// Р’С‹РїРѕР»РЅСЏС‚СЊСЃСЏ РґРѕР»Р¶РЅРѕ РІ РЅРёС‚Рё РѕРєРЅР°, РёРЅР°С‡Рµ РјРѕР¶РµРј РїРѕРІРёСЃРЅСѓС‚СЊ
 	static bool lbPosted = false;
 	abPosted = (mn_MainThreadId == GetCurrentThreadId());
 
@@ -6000,7 +6000,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 
 		if (!lbPosted)
 		{
-			lbPosted = true; // чтобы post не накапливались
+			lbPosted = true; // С‡С‚РѕР±С‹ post РЅРµ РЅР°РєР°РїР»РёРІР°Р»РёСЃСЊ
 			//#ifdef _DEBUG
 			//int nCurConWidth = (int)CVConGroup::TextWidth();
 			//int nCurConHeight = (int)CVConGroup::TextHeight();
@@ -6018,17 +6018,17 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 		if (gpSetCls->isAdvLogging)
 			LogString("OnConsoleResize ignored, because of iconic");
 
-		return; // если минимизировано - ничего не делать
+		return; // РµСЃР»Рё РјРёРЅРёРјРёР·РёСЂРѕРІР°РЅРѕ - РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°С‚СЊ
 	}
 
-	// Было ли реальное изменение размеров?
+	// Р‘С‹Р»Рѕ Р»Рё СЂРµР°Р»СЊРЅРѕРµ РёР·РјРµРЅРµРЅРёРµ СЂР°Р·РјРµСЂРѕРІ?
 	BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
 	bool lbIsSizing = isSizing();
 	bool lbLBtnPressed = isPressed(VK_LBUTTON);
 
 	if (lbIsSizing && !lbLBtnPressed)
 	{
-		// Сборс всех флагов ресайза мышкой
+		// РЎР±РѕСЂСЃ РІСЃРµС… С„Р»Р°РіРѕРІ СЂРµСЃР°Р№Р·Р° РјС‹С€РєРѕР№
 		ResetSizingFlags(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 	}
 
@@ -6060,7 +6060,7 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 
 	if (mb_IgnoreSizeChange)
 	{
-		// на время обработки WM_SYSCOMMAND
+		// РЅР° РІСЂРµРјСЏ РѕР±СЂР°Р±РѕС‚РєРё WM_SYSCOMMAND
 		return 0;
 	}
 
@@ -6099,10 +6099,10 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 	//RECT mainClient = MakeRect(0, nClientTop, newClientWidth, newClientHeight+nClientTop);
 	RECT mainClient = CalcRect(CER_MAINCLIENT);
 	RECT work = CalcRect(CER_WORKSPACE, mainClient, CER_MAINCLIENT);
-	_ASSERTE(ghWndWork && GetParent(ghWndWork)==ghWnd); // пока расчитано на дочерний режим
+	_ASSERTE(ghWndWork && GetParent(ghWndWork)==ghWnd); // РїРѕРєР° СЂР°СЃС‡РёС‚Р°РЅРѕ РЅР° РґРѕС‡РµСЂРЅРёР№ СЂРµР¶РёРј
 	MoveWindow(ghWndWork, work.left, work.top, work.right-work.left, work.bottom-work.top, TRUE);
 
-	// Запомнить "идеальный" размер окна, выбранный пользователем
+	// Р—Р°РїРѕРјРЅРёС‚СЊ "РёРґРµР°Р»СЊРЅС‹Р№" СЂР°Р·РјРµСЂ РѕРєРЅР°, РІС‹Р±СЂР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј
 	if (isSizing() && isWindowNormal())
 	{
 		//GetWindowRect(ghWnd, &mrc_Ideal);
@@ -6113,8 +6113,8 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 	if (gpConEmu->mp_TabBar->IsTabsActive())
 		gpConEmu->mp_TabBar->Reposition();
 
-	// Background - должен занять все клиентское место под тулбаром
-	// Там же ресайзится ScrollBar
+	// Background - РґРѕР»Р¶РµРЅ Р·Р°РЅСЏС‚СЊ РІСЃРµ РєР»РёРµРЅС‚СЃРєРѕРµ РјРµСЃС‚Рѕ РїРѕРґ С‚СѓР»Р±Р°СЂРѕРј
+	// РўР°Рј Р¶Рµ СЂРµСЃР°Р№Р·РёС‚СЃСЏ ScrollBar
 	//ResizeChildren();
 
 	BOOL lbIsPicView = isPictureView();		UNREFERENCED_PARAMETER(lbIsPicView);
@@ -6158,7 +6158,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 
 	if (isPictureView())
 	{
-		RECT *pRect = (RECT*)lParam; // с рамкой
+		RECT *pRect = (RECT*)lParam; // СЃ СЂР°РјРєРѕР№
 		*pRect = mrc_WndPosOnPicView;
 		//pRect->right = pRect->left + (mrc_WndPosOnPicView.right-mrc_WndPosOnPicView.left);
 		//pRect->bottom = pRect->top + (mrc_WndPosOnPicView.bottom-mrc_WndPosOnPicView.top);
@@ -6167,17 +6167,17 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 #endif
 		if (mb_IgnoreSizeChange)
 		{
-			// на время обработки WM_SYSCOMMAND
+			// РЅР° РІСЂРµРјСЏ РѕР±СЂР°Р±РѕС‚РєРё WM_SYSCOMMAND
 		}
 		else if (isNtvdm())
 		{
-			// не менять для 16бит приложений
+			// РЅРµ РјРµРЅСЏС‚СЊ РґР»СЏ 16Р±РёС‚ РїСЂРёР»РѕР¶РµРЅРёР№
 		}
 		else if (isWindowNormal())
 		{
 			RECT srctWindow;
 			RECT wndSizeRect, restrictRect, calcRect;
-			RECT *pRect = (RECT*)lParam; // с рамкой
+			RECT *pRect = (RECT*)lParam; // СЃ СЂР°РјРєРѕР№
 			RECT rcCurrent; GetWindowRect(ghWnd, &rcCurrent);
 
 			if ((mouse.state & (MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))==MOUSE_SIZING_BEGIN
@@ -6187,7 +6187,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 			}
 
 			wndSizeRect = *pRect;
-			// Для красивости рамки под мышкой
+			// Р”Р»СЏ РєСЂР°СЃРёРІРѕСЃС‚Рё СЂР°РјРєРё РїРѕРґ РјС‹С€РєРѕР№
 			LONG nWidth = gpSetCls->FontWidth(), nHeight = gpSetCls->FontHeight();
 
 			if (nWidth && nHeight)
@@ -6198,12 +6198,12 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 
 			bool bNeedFixSize = gpSet->isIntegralSize();
 
-			// Рассчитать желаемый размер консоли
+			// Р Р°СЃСЃС‡РёС‚Р°С‚СЊ Р¶РµР»Р°РµРјС‹Р№ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё
 			//srctWindow = ConsoleSizeFromWindow(&wndSizeRect, true /* frameIncluded */);
 			AutoSizeFont(wndSizeRect, CER_MAIN);
 			srctWindow = CalcRect(CER_CONSOLE_ALL, wndSizeRect, CER_MAIN);
 
-			// Минимально допустимые размеры консоли
+			// РњРёРЅРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Рµ СЂР°Р·РјРµСЂС‹ РєРѕРЅСЃРѕР»Рё
 			if (srctWindow.right < MIN_CON_WIDTH)
 			{
 				srctWindow.right = MIN_CON_WIDTH;
@@ -6254,11 +6254,11 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 				}
 			}
 
-			// При смене размера (пока ничего не делаем)
+			// РџСЂРё СЃРјРµРЅРµ СЂР°Р·РјРµСЂР° (РїРѕРєР° РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµРј)
 			if ((pRect->right - pRect->left) != (rcCurrent.right - rcCurrent.left)
 			        || (pRect->bottom - pRect->top) != (rcCurrent.bottom - rcCurrent.top))
 			{
-				// Сразу подресайзить консоль, чтобы при WM_PAINT можно было отрисовать уже готовые данные
+				// РЎСЂР°Р·Сѓ РїРѕРґСЂРµСЃР°Р№Р·РёС‚СЊ РєРѕРЅСЃРѕР»СЊ, С‡С‚РѕР±С‹ РїСЂРё WM_PAINT РјРѕР¶РЅРѕ Р±С‹Р»Рѕ РѕС‚СЂРёСЃРѕРІР°С‚СЊ СѓР¶Рµ РіРѕС‚РѕРІС‹Рµ РґР°РЅРЅС‹Рµ
 				TODO("DoubleView");
 				//ActiveCon()->RCon()->SyncConsole2Window(FALSE, pRect);
 				#ifdef _DEBUG
@@ -6287,7 +6287,7 @@ LRESULT CConEmuMain::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 	HMONITOR hMon;
 	if (bWmMove && isPressed(VK_LBUTTON))
 	{
-		// Если двигаем мышкой - то дать возможность прыгнуть на монитор под мышкой
+		// Р•СЃР»Рё РґРІРёРіР°РµРј РјС‹С€РєРѕР№ - С‚Рѕ РґР°С‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РїСЂС‹РіРЅСѓС‚СЊ РЅР° РјРѕРЅРёС‚РѕСЂ РїРѕРґ РјС‹С€РєРѕР№
 		POINT ptCur = {}; GetCursorPos(&ptCur);
 		hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONEAREST);
 	}
@@ -6384,12 +6384,12 @@ void CConEmuMain::CheckTopMostState()
 	bInCheck = false;
 }
 
-// Про IntegralSize - смотреть CConEmuMain::OnSizing
+// РџСЂРѕ IntegralSize - СЃРјРѕС‚СЂРµС‚СЊ CConEmuMain::OnSizing
 LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	LRESULT result = 0; // DefWindowProc зовется в середине функции
+	LRESULT result = 0; // DefWindowProc Р·РѕРІРµС‚СЃСЏ РІ СЃРµСЂРµРґРёРЅРµ С„СѓРЅРєС†РёРё
 
-	// Если нужно поправить параметры DWM
+	// Р•СЃР»Рё РЅСѓР¶РЅРѕ РїРѕРїСЂР°РІРёС‚СЊ РїР°СЂР°РјРµС‚СЂС‹ DWM
 	gpConEmu->ExtendWindowFrame();
 
 	//static int WindowPosStackCount = 0;
@@ -6419,7 +6419,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		cx = p->cx; cy = p->cy;
 	}
 
-	// Отлов неожиданной установки "AlwaysOnTop"
+	// РћС‚Р»РѕРІ РЅРµРѕР¶РёРґР°РЅРЅРѕР№ СѓСЃС‚Р°РЅРѕРІРєРё "AlwaysOnTop"
 	//static bool bWasTopMost = false;
 	//_ASSERTE(((p->flags & SWP_NOZORDER) || (p->hwndInsertAfter!=HWND_TOPMOST)) && "OnWindowPosChanged");
 	//_ASSERTE(((dwStyleEx & WS_EX_TOPMOST) == 0) && "OnWindowPosChanged");
@@ -6453,14 +6453,14 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 	DEBUGTEST(WINDOWPOS ps1 = *p);
 
-	// Иначе могут не вызваться события WM_SIZE/WM_MOVE
+	// РРЅР°С‡Рµ РјРѕРіСѓС‚ РЅРµ РІС‹Р·РІР°С‚СЊСЃСЏ СЃРѕР±С‹С‚РёСЏ WM_SIZE/WM_MOVE
 	result = DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 	DEBUGTEST(WINDOWPOS ps2 = *p);
 
 	//WindowPosStackCount--;
 
-	if (hWnd == ghWnd /*&& ghOpWnd*/)  //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
+	if (hWnd == ghWnd /*&& ghOpWnd*/)  //2009-05-08 Р·Р°РїРѕРјРёРЅР°С‚СЊ wndX/wndY РІСЃРµРіРґР°, Р° РЅРµ С‚РѕР»СЊРєРѕ РµСЃР»Рё РѕРєРЅРѕ РЅР°СЃС‚СЂРѕРµРє РѕС‚РєСЂС‹С‚Рѕ
 	{
 		if (!gpConEmu->mb_IgnoreSizeChange && !gpConEmu->isIconic())
 		{
@@ -6487,7 +6487,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 			//else
 			//{
-			//	TODO("Доработать, когда будет ресайз PicView на лету");
+			//	TODO("Р”РѕСЂР°Р±РѕС‚Р°С‚СЊ, РєРѕРіРґР° Р±СѓРґРµС‚ СЂРµСЃР°Р№Р· PicView РЅР° Р»РµС‚Сѓ");
 			//	if (!(p->flags & SWP_NOSIZE))
 			//	{
 			//		RECT rcWnd = {0,0,p->cx,p->cy};
@@ -6505,7 +6505,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		GetWindowRect(ghWnd, &gpConEmu->mrc_WndPosOnPicView);
 	}
 
-	// Если окошко сворачивалось кнопками Win+Down (Win7) то SC_MINIMIZE не приходит
+	// Р•СЃР»Рё РѕРєРѕС€РєРѕ СЃРІРѕСЂР°С‡РёРІР°Р»РѕСЃСЊ РєРЅРѕРїРєР°РјРё Win+Down (Win7) С‚Рѕ SC_MINIMIZE РЅРµ РїСЂРёС…РѕРґРёС‚
 	if (gpSet->isMinToTray() && isIconic(true) && IsWindowVisible(ghWnd))
 	{
 		Icon.HideWindowToTray();
@@ -6517,7 +6517,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		CVConGroup::NotifyChildrenWindows();
 	}
 
-	//Логирование, что получилось
+	//Р›РѕРіРёСЂРѕРІР°РЅРёРµ, С‡С‚Рѕ РїРѕР»СѓС‡РёР»РѕСЃСЊ
 	if (gpSetCls->isAdvLogging)
 	{
 		LogWindowPos(L"WM_WINDOWPOSCHANGED.end");
@@ -6526,7 +6526,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	return result;
 }
 
-// Про IntegralSize - смотреть CConEmuMain::OnSizing
+// РџСЂРѕ IntegralSize - СЃРјРѕС‚СЂРµС‚СЊ CConEmuMain::OnSizing
 LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
@@ -6553,13 +6553,13 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	_ASSERTE(iconic == ((dwStyle & WS_MINIMIZE) == WS_MINIMIZE));
 	#endif
 
-	// В процессе раскрытия/сворачивания могут меняться стили и вызвается ...Changing
+	// Р’ РїСЂРѕС†РµСЃСЃРµ СЂР°СЃРєСЂС‹С‚РёСЏ/СЃРІРѕСЂР°С‡РёРІР°РЅРёСЏ РјРѕРіСѓС‚ РјРµРЅСЏС‚СЊСЃСЏ СЃС‚РёР»Рё Рё РІС‹Р·РІР°РµС‚СЃСЏ ...Changing
 	if (!gpSet->isQuakeStyle && (changeFromWindowMode != wmNotChanging))
 	{
 		if (!zoomed && ((WindowMode == wmMaximized) || (WindowMode == wmFullScreen)))
 		{
 			zoomed = true;
-			// Это может быть, например, в случае смены стилей окна в процессе раскрытия (HideCaption)
+			// Р­С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ, РЅР°РїСЂРёРјРµСЂ, РІ СЃР»СѓС‡Р°Рµ СЃРјРµРЅС‹ СЃС‚РёР»РµР№ РѕРєРЅР° РІ РїСЂРѕС†РµСЃСЃРµ СЂР°СЃРєСЂС‹С‚РёСЏ (HideCaption)
 			_ASSERTE(changeFromWindowMode==wmNormal || mb_InCreateWindow || iconic);
 		}
 		else if (zoomed && (WindowMode == wmNormal))
@@ -6597,7 +6597,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		}
 
 			#ifdef CATCH_TOPMOST_SET
-			// Отлов неожиданной установки "AlwaysOnTop"
+			// РћС‚Р»РѕРІ РЅРµРѕР¶РёРґР°РЅРЅРѕР№ СѓСЃС‚Р°РЅРѕРІРєРё "AlwaysOnTop"
 			static bool bWasTopMost = false;
 			_ASSERTE(((p->flags & SWP_NOZORDER) || (p->hwndInsertAfter!=HWND_TOPMOST)) && "OnWindowPosChanging");
 			_ASSERTE(((dwStyleEx & WS_EX_TOPMOST) == 0) && "OnWindowPosChanging");
@@ -6625,31 +6625,31 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		m_FixPosAfterStyle = 0;
 	}
 
-	//120821 - Размер мог быть изменен извне (Win+Up например)
-	//120830 - только если не "Minimized"
+	//120821 - Р Р°Р·РјРµСЂ РјРѕРі Р±С‹С‚СЊ РёР·РјРµРЅРµРЅ РёР·РІРЅРµ (Win+Up РЅР°РїСЂРёРјРµСЂ)
+	//120830 - С‚РѕР»СЊРєРѕ РµСЃР»Рё РЅРµ "Minimized"
 	if (!iconic
 		&& !mb_InCaptionChange && !(p->flags & (SWP_NOSIZE|SWP_NOMOVE))
 		&& (changeFromWindowMode == wmNotChanging) && !gpSet->isQuakeStyle)
 	{
-		// В этом случае нужно проверить, может быть требуется коррекция стилей окна?
+		// Р’ СЌС‚РѕРј СЃР»СѓС‡Р°Рµ РЅСѓР¶РЅРѕ РїСЂРѕРІРµСЂРёС‚СЊ, РјРѕР¶РµС‚ Р±С‹С‚СЊ С‚СЂРµР±СѓРµС‚СЃСЏ РєРѕСЂСЂРµРєС†РёСЏ СЃС‚РёР»РµР№ РѕРєРЅР°?
 		if (zoomed != (WindowMode == wmMaximized || WindowMode == wmFullScreen))
 		{
-			// В режимах Maximized/FullScreen должен быть WS_MAXIMIZED
+			// Р’ СЂРµР¶РёРјР°С… Maximized/FullScreen РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ WS_MAXIMIZED
 			WindowMode = zoomed ? wmMaximized : wmNormal;
-			// Установив WindowMode мы вызываем все необходимые действия
-			// по смене стилей, обновлении регионов, и т.п.
+			// РЈСЃС‚Р°РЅРѕРІРёРІ WindowMode РјС‹ РІС‹Р·С‹РІР°РµРј РІСЃРµ РЅРµРѕР±С…РѕРґРёРјС‹Рµ РґРµР№СЃС‚РІРёСЏ
+			// РїРѕ СЃРјРµРЅРµ СЃС‚РёР»РµР№, РѕР±РЅРѕРІР»РµРЅРёРё СЂРµРіРёРѕРЅРѕРІ, Рё С‚.Рї.
 			OnHideCaption();
 		}
 	}
 	
-	// -- // Если у нас режим скрытия заголовка (при максимизации/фулскрине)
-	// При любой смене. Т.к. мы меняем WM_GETMINMAXINFO - нужно корректировать и размеры :(
-	// Иначе возможны глюки
+	// -- // Р•СЃР»Рё Сѓ РЅР°СЃ СЂРµР¶РёРј СЃРєСЂС‹С‚РёСЏ Р·Р°РіРѕР»РѕРІРєР° (РїСЂРё РјР°РєСЃРёРјРёР·Р°С†РёРё/С„СѓР»СЃРєСЂРёРЅРµ)
+	// РџСЂРё Р»СЋР±РѕР№ СЃРјРµРЅРµ. Рў.Рє. РјС‹ РјРµРЅСЏРµРј WM_GETMINMAXINFO - РЅСѓР¶РЅРѕ РєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ Рё СЂР°Р·РјРµСЂС‹ :(
+	// РРЅР°С‡Рµ РІРѕР·РјРѕР¶РЅС‹ РіР»СЋРєРё
 	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && !InMinimizing())
 	{
 		if (gpSet->isQuakeStyle)
 		{
-			// Разрешить менять и ширину окна Quake
+			// Р Р°Р·СЂРµС€РёС‚СЊ РјРµРЅСЏС‚СЊ Рё С€РёСЂРёРЅСѓ РѕРєРЅР° Quake
 			//CESize SaveWidth = {WndWidth.Raw};
 			//bool tempChanged = false;
 
@@ -6657,17 +6657,17 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			
 			p->y = rc.top;
 
-			TODO("разрешить изменение ширины в Quake!");
+			TODO("СЂР°Р·СЂРµС€РёС‚СЊ РёР·РјРµРЅРµРЅРёРµ С€РёСЂРёРЅС‹ РІ Quake!");
 #if 0
 			ConEmuWindowMode wmCurQuake = GetWindowMode();
 
 			if (isSizing() && p->cx && (wmCurQuake == wmNormal))
 			{
-				// Поскольку оно центрируется (wndCascade)... изменение ширину нужно множить на 2
+				// РџРѕСЃРєРѕР»СЊРєСѓ РѕРЅРѕ С†РµРЅС‚СЂРёСЂСѓРµС‚СЃСЏ (wndCascade)... РёР·РјРµРЅРµРЅРёРµ С€РёСЂРёРЅСѓ РЅСѓР¶РЅРѕ РјРЅРѕР¶РёС‚СЊ РЅР° 2
 				RECT rcQNow = {}; GetWindowRect(hWnd, &rcQNow);
 				int width = rcQNow.right - rcQNow.left;
 				int shift = p->cx - width;
-				// TODO: разрешить изменение ширины в Quake!
+				// TODO: СЂР°Р·СЂРµС€РёС‚СЊ РёР·РјРµРЅРµРЅРёРµ С€РёСЂРёРЅС‹ РІ Quake!
 				if (shift)
 				{
 					//_ASSERTE(shift==0);
@@ -6678,7 +6678,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 				//WndWidth.Set(true, ss_Pixels, width + 2*shift);
 				if (gpSet->wndCascade)
 				{
-					// Скорректировать координату!
+					// РЎРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ РєРѕРѕСЂРґРёРЅР°С‚Сѓ!
 					wndX = rc.left - shift;
 					
 					p->x -= shift;
@@ -6697,7 +6697,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			}
 
 
-			//// Вернуть WndWidth, т.к. это было временно
+			//// Р’РµСЂРЅСѓС‚СЊ WndWidth, С‚.Рє. СЌС‚Рѕ Р±С‹Р»Рѕ РІСЂРµРјРµРЅРЅРѕ
 			//if (tempChanged)
 			//{
 			//	WndWidth.Set(true, SaveWidth.Style, SaveWidth.Value);
@@ -6705,7 +6705,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		}
 		else if (zoomed)
 		{
-			// Здесь может быть попытка перемещения на другой монитор. Нужно обрабатывать x/y/cx/cy!
+			// Р—РґРµСЃСЊ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїРѕРїС‹С‚РєР° РїРµСЂРµРјРµС‰РµРЅРёСЏ РЅР° РґСЂСѓРіРѕР№ РјРѕРЅРёС‚РѕСЂ. РќСѓР¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ x/y/cx/cy!
 			RECT rcNewMain = {p->x, p->y, p->x + p->cx, p->y + p->cy};
 			RECT rc = CalcRect((WindowMode == wmFullScreen) ? CER_FULLSCREEN : CER_MAXIMIZED, rcNewMain, CER_MAIN);
 			p->x = rc.left;
@@ -6733,18 +6733,18 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			RECT rcNew = {}; GetWindowRect(ghWnd, &rcNew);
 			if (!(p->flags & SWP_NOSIZE) && !(p->flags & SWP_NOMOVE))
 			{
-				// Меняются и размер и положение
+				// РњРµРЅСЏСЋС‚СЃСЏ Рё СЂР°Р·РјРµСЂ Рё РїРѕР»РѕР¶РµРЅРёРµ
 				rcNew = MakeRect(p->x, p->y, p->x+p->cx, p->y+p->cy);
 			}
 			else if (!(p->flags & SWP_NOSIZE))
 			{
-				// Меняется только размер
+				// РњРµРЅСЏРµС‚СЃСЏ С‚РѕР»СЊРєРѕ СЂР°Р·РјРµСЂ
 				rcNew.right = rcNew.left + p->cx;
 				rcNew.bottom = rcNew.top + p->cy;
 			}
 			else
 			{
-				// Меняется только положение
+				// РњРµРЅСЏРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїРѕР»РѕР¶РµРЅРёРµ
 				rcNew = MakeRect(p->x, p->y, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top);
 			}
 
@@ -6772,9 +6772,9 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 				_ASSERTE(FALSE && "GetMonitorInfo failed");
 			}
 
-			//// Нужно скорректировать размеры, а то при смене разрешения монитора (в частности при повороте экрана) глюки лезут
+			//// РќСѓР¶РЅРѕ СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ СЂР°Р·РјРµСЂС‹, Р° С‚Рѕ РїСЂРё СЃРјРµРЅРµ СЂР°Р·СЂРµС€РµРЅРёСЏ РјРѕРЅРёС‚РѕСЂР° (РІ С‡Р°СЃС‚РЅРѕСЃС‚Рё РїСЂРё РїРѕРІРѕСЂРѕС‚Рµ СЌРєСЂР°РЅР°) РіР»СЋРєРё Р»РµР·СѓС‚
 			//p->flags |= (SWP_NOSIZE|SWP_NOMOVE);
-			//// И обновить размер насильно
+			//// Р РѕР±РЅРѕРІРёС‚СЊ СЂР°Р·РјРµСЂ РЅР°СЃРёР»СЊРЅРѕ
 			//SetWindowMode(wmMaximized, TRUE);
 		}
 	#endif
@@ -6803,7 +6803,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	{
 		if (!hPictureView)
 		{
-			TODO("Доработать, когда будет ресайз PicView на лету");
+			TODO("Р”РѕСЂР°Р±РѕС‚Р°С‚СЊ, РєРѕРіРґР° Р±СѓРґРµС‚ СЂРµСЃР°Р№Р· PicView РЅР° Р»РµС‚Сѓ");
 			RECT rcWnd = {0,0,p->cx,p->cy};
 			CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN, true);
 			//CVConGuard VCon;
@@ -6830,7 +6830,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	DwmExtendFrameIntoClientArea(hwnd, &dwmm);
 	-- DWM, Glass --
 	*/
-	// Иначе не вызвутся события WM_SIZE/WM_MOVE
+	// РРЅР°С‡Рµ РЅРµ РІС‹Р·РІСѓС‚СЃСЏ СЃРѕР±С‹С‚РёСЏ WM_SIZE/WM_MOVE
 	result = DefWindowProc(hWnd, uMsg, wParam, lParam);
 	p = (WINDOWPOS*)lParam;
 
@@ -6858,18 +6858,18 @@ void CConEmuMain::OnSizePanels(COORD cr)
 	if (!pRCon)
 	{
 		mouse.state &= ~MOUSE_DRAGPANEL_ALL;
-		return; // Некорректно, консоли нет
+		return; // РќРµРєРѕСЂСЂРµРєС‚РЅРѕ, РєРѕРЅСЃРѕР»Рё РЅРµС‚
 	}
 
 	int nConWidth = pRCon->TextWidth();
-	// Поскольку реакция на CtrlLeft/Right... появляется с задержкой - то
-	// получение rcPanel - просто для проверки ее наличия!
+	// РџРѕСЃРєРѕР»СЊРєСѓ СЂРµР°РєС†РёСЏ РЅР° CtrlLeft/Right... РїРѕСЏРІР»СЏРµС‚СЃСЏ СЃ Р·Р°РґРµСЂР¶РєРѕР№ - С‚Рѕ
+	// РїРѕР»СѓС‡РµРЅРёРµ rcPanel - РїСЂРѕСЃС‚Рѕ РґР»СЏ РїСЂРѕРІРµСЂРєРё РµРµ РЅР°Р»РёС‡РёСЏ!
 	{
 		RECT rcPanel;
 
 		if (!pRCon->GetPanelRect((mouse.state & (MOUSE_DRAGPANEL_RIGHT|MOUSE_DRAGPANEL_SPLIT)), &rcPanel, TRUE))
 		{
-			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
+			// Р’Рѕ РІСЂРµРјСЏ РёР·РјРµРЅРµРЅРёСЏ СЂР°Р·РјРµСЂР° РїР°РЅРµР»РµР№ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ Rect РјРѕР¶РµС‚ Р±С‹С‚СЊ СЃР±СЂРѕС€РµРЅ?
 #ifdef _DEBUG
 			if (mouse.state & MOUSE_DRAGPANEL_SPLIT)
 			{
@@ -6885,20 +6885,20 @@ void CConEmuMain::OnSizePanels(COORD cr)
 		}
 	}
 	r.EventType = KEY_EVENT;
-	r.Event.KeyEvent.dwControlKeyState = 0x128; // Потом добавить SHIFT_PRESSED, если нужно...
+	r.Event.KeyEvent.dwControlKeyState = 0x128; // РџРѕС‚РѕРј РґРѕР±Р°РІРёС‚СЊ SHIFT_PRESSED, РµСЃР»Рё РЅСѓР¶РЅРѕ...
 	r.Event.KeyEvent.wVirtualKeyCode = 0;
 
-	// Сразу запомним изменение положения, чтобы не "колбасило" туда-сюда,
-	// пока фар не отработает изменение положения
+	// РЎСЂР°Р·Сѓ Р·Р°РїРѕРјРЅРёРј РёР·РјРµРЅРµРЅРёРµ РїРѕР»РѕР¶РµРЅРёСЏ, С‡С‚РѕР±С‹ РЅРµ "РєРѕР»Р±Р°СЃРёР»Рѕ" С‚СѓРґР°-СЃСЋРґР°,
+	// РїРѕРєР° С„Р°СЂ РЅРµ РѕС‚СЂР°Р±РѕС‚Р°РµС‚ РёР·РјРµРЅРµРЅРёРµ РїРѕР»РѕР¶РµРЅРёСЏ
 
 	if (mouse.state & MOUSE_DRAGPANEL_SPLIT)
 	{
-		//FAR BUGBUG: При наличии часов в заголовке консоли и нечетной ширине окна
-		// слетает заголовок правой панели, если она уже 11 символов. Поставим минимум 12
+		//FAR BUGBUG: РџСЂРё РЅР°Р»РёС‡РёРё С‡Р°СЃРѕРІ РІ Р·Р°РіРѕР»РѕРІРєРµ РєРѕРЅСЃРѕР»Рё Рё РЅРµС‡РµС‚РЅРѕР№ С€РёСЂРёРЅРµ РѕРєРЅР°
+		// СЃР»РµС‚Р°РµС‚ Р·Р°РіРѕР»РѕРІРѕРє РїСЂР°РІРѕР№ РїР°РЅРµР»Рё, РµСЃР»Рё РѕРЅР° СѓР¶Рµ 11 СЃРёРјРІРѕР»РѕРІ. РџРѕСЃС‚Р°РІРёРј РјРёРЅРёРјСѓРј 12
 		if (cr.X >= (nConWidth-13))
 			cr.X = max((nConWidth-12),mouse.LClkCon.X);
 
-		//rcPanel.left = mouse.LClkCon.X; -- делал для макро
+		//rcPanel.left = mouse.LClkCon.X; -- РґРµР»Р°Р» РґР»СЏ РјР°РєСЂРѕ
 		mouse.LClkCon.Y = cr.Y;
 
 		if (cr.X < mouse.LClkCon.X)
@@ -6918,7 +6918,7 @@ void CConEmuMain::OnSizePanels(COORD cr)
 	}
 	else
 	{
-		//rcPanel.bottom = mouse.LClkCon.Y; -- делал для макро
+		//rcPanel.bottom = mouse.LClkCon.Y; -- РґРµР»Р°Р» РґР»СЏ РјР°РєСЂРѕ
 		mouse.LClkCon.X = cr.X;
 
 		if (cr.Y < mouse.LClkCon.Y)
@@ -6938,15 +6938,15 @@ void CConEmuMain::OnSizePanels(COORD cr)
 
 		if (bShifted)
 		{
-			// Тогда разделение на левую и правую панели
-			TODO("Активировать нужную, иначе будет меняться размер активной панели, а хотели другую...");
+			// РўРѕРіРґР° СЂР°Р·РґРµР»РµРЅРёРµ РЅР° Р»РµРІСѓСЋ Рё РїСЂР°РІСѓСЋ РїР°РЅРµР»Рё
+			TODO("РђРєС‚РёРІРёСЂРѕРІР°С‚СЊ РЅСѓР¶РЅСѓСЋ, РёРЅР°С‡Рµ Р±СѓРґРµС‚ РјРµРЅСЏС‚СЊСЃСЏ СЂР°Р·РјРµСЂ Р°РєС‚РёРІРЅРѕР№ РїР°РЅРµР»Рё, Р° С…РѕС‚РµР»Рё РґСЂСѓРіСѓСЋ...");
 			r.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
 		}
 	}
 
 	if (r.Event.KeyEvent.wVirtualKeyCode)
 	{
-		// Макрос вызывается после отпускания кнопки мышки
+		// РњР°РєСЂРѕСЃ РІС‹Р·С‹РІР°РµС‚СЃСЏ РїРѕСЃР»Рµ РѕС‚РїСѓСЃРєР°РЅРёСЏ РєРЅРѕРїРєРё РјС‹С€РєРё
 		if (gpSet->isDragPanel == 2)
 		{
 			if (pRCon->isFar(TRUE))
@@ -6979,17 +6979,17 @@ void CConEmuMain::OnSizePanels(COORD cr)
 			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"PanelDrag: Sending '%s'\n", szKey);
 			DEBUGSTRPANEL(szDbg);
 #endif
-			// Макросом не будем - велика вероятность второго вызова, когда еще не закончилась обработка первого макро
-			// Поехали
+			// РњР°РєСЂРѕСЃРѕРј РЅРµ Р±СѓРґРµРј - РІРµР»РёРєР° РІРµСЂРѕСЏС‚РЅРѕСЃС‚СЊ РІС‚РѕСЂРѕРіРѕ РІС‹Р·РѕРІР°, РєРѕРіРґР° РµС‰Рµ РЅРµ Р·Р°РєРѕРЅС‡РёР»Р°СЃСЊ РѕР±СЂР°Р±РѕС‚РєР° РїРµСЂРІРѕРіРѕ РјР°РєСЂРѕ
+			// РџРѕРµС…Р°Р»Рё
 			r.Event.KeyEvent.wVirtualScanCode = MapVirtualKey(r.Event.KeyEvent.wVirtualKeyCode, 0/*MAPVK_VK_TO_VSC*/);
-			r.Event.KeyEvent.wRepeatCount = nRepeat; //-- repeat - что-то глючит...
+			r.Event.KeyEvent.wRepeatCount = nRepeat; //-- repeat - С‡С‚Рѕ-С‚Рѕ РіР»СЋС‡РёС‚...
 			//while (nRepeat-- > 0)
 			{
 				r.Event.KeyEvent.bKeyDown = TRUE;
 				pRCon->PostConsoleEvent(&r);
 				r.Event.KeyEvent.bKeyDown = FALSE;
 				r.Event.KeyEvent.wRepeatCount = 1;
-				r.Event.KeyEvent.dwControlKeyState = 0x120; // "Отожмем Ctrl|Shift"
+				r.Event.KeyEvent.dwControlKeyState = 0x120; // "РћС‚РѕР¶РјРµРј Ctrl|Shift"
 				pRCon->PostConsoleEvent(&r);
 			}
 		}
@@ -7021,13 +7021,13 @@ void CConEmuMain::OnSizePanels(COORD cr)
 
 void CConEmuMain::OnActiveConWndStore(HWND hConWnd)
 {
-	// Для удобства внешних программ, плагинов и прочая
-	// Запоминаем в UserData дескриптор "активного" окна консоли
+	// Р”Р»СЏ СѓРґРѕР±СЃС‚РІР° РІРЅРµС€РЅРёС… РїСЂРѕРіСЂР°РјРј, РїР»Р°РіРёРЅРѕРІ Рё РїСЂРѕС‡Р°СЏ
+	// Р—Р°РїРѕРјРёРЅР°РµРј РІ UserData РґРµСЃРєСЂРёРїС‚РѕСЂ "Р°РєС‚РёРІРЅРѕРіРѕ" РѕРєРЅР° РєРѕРЅСЃРѕР»Рё
 	SetWindowLongPtr(ghWnd, GWLP_USERDATA, (LONG_PTR)hConWnd);
 
-	// ghWndWork - планируется как Holder для виртуальных консолей,
-	// причем он может быть как дочерним для ghWnd, так и отдельно
-	// висящим, и делающим вид, что оно дочернее для ghWnd.
+	// ghWndWork - РїР»Р°РЅРёСЂСѓРµС‚СЃСЏ РєР°Рє Holder РґР»СЏ РІРёСЂС‚СѓР°Р»СЊРЅС‹С… РєРѕРЅСЃРѕР»РµР№,
+	// РїСЂРёС‡РµРј РѕРЅ РјРѕР¶РµС‚ Р±С‹С‚СЊ РєР°Рє РґРѕС‡РµСЂРЅРёРј РґР»СЏ ghWnd, С‚Р°Рє Рё РѕС‚РґРµР»СЊРЅРѕ
+	// РІРёСЃСЏС‰РёРј, Рё РґРµР»Р°СЋС‰РёРј РІРёРґ, С‡С‚Рѕ РѕРЅРѕ РґРѕС‡РµСЂРЅРµРµ РґР»СЏ ghWnd.
 	if (ghWndWork && (ghWndWork != ghWnd))
 	{	
 		SetWindowLongPtr(ghWndWork, GWLP_USERDATA, (LONG_PTR)hConWnd);
@@ -7048,7 +7048,7 @@ void CConEmuMain::MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward)
 
 //CVirtualConsole* CConEmuMain::ActiveCon()
 //{
-//	WARNING("На удаление");
+//	WARNING("РќР° СѓРґР°Р»РµРЅРёРµ");
 //	CVConGuard VCon;
 //	if (CVConGroup::GetActiveVCon(&VCon) < 0)
 //		return NULL;
@@ -7110,7 +7110,7 @@ CRealConsole* CConEmuMain::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anApp
 	return pRCon;
 }
 
-// Вернуть общее количество процессов по всем консолям
+// Р’РµСЂРЅСѓС‚СЊ РѕР±С‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїСЂРѕС†РµСЃСЃРѕРІ РїРѕ РІСЃРµРј РєРѕРЅСЃРѕР»СЏРј
 DWORD CConEmuMain::CheckProcesses()
 {
 	return CVConGroup::CheckProcesses();
@@ -7127,8 +7127,8 @@ bool CConEmuMain::ConActivate(int nCon)
 	return CVConGroup::ConActivate(nCon);
 }
 
-// args должен быть выделен через "new"
-// по завершении - на него будет вызван "delete"
+// args РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІС‹РґРµР»РµРЅ С‡РµСЂРµР· "new"
+// РїРѕ Р·Р°РІРµСЂС€РµРЅРёРё - РЅР° РЅРµРіРѕ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ "delete"
 void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
 {
 	_ASSERTE((pArgs->pszStartupDir == NULL) || (*pArgs->pszStartupDir != 0));
@@ -7153,7 +7153,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 	size_t cchMaxLen = _tcslen(ms_ConEmuExe)
 		+ _tcslen(args->pszSpecialCmd)
 		+ (pszConfig ? (_tcslen(pszConfig) + 32) : 0)
-		+ 128; // на всякие флажки и -new_console
+		+ 128; // РЅР° РІСЃСЏРєРёРµ С„Р»Р°Р¶РєРё Рё -new_console
 	if ((pszCmdLine = (wchar_t*)malloc(cchMaxLen*sizeof(*pszCmdLine))) == NULL)
 	{
 		_ASSERTE(pszCmdLine);
@@ -7217,7 +7217,7 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, bool abAllowScripts
 	_ASSERTE(args!=NULL);
 	if (!gpConEmu->isMainThread())
 	{
-		// Создание VCon в фоновых потоках не допускается, т.к. здесь создаются HWND
+		// РЎРѕР·РґР°РЅРёРµ VCon РІ С„РѕРЅРѕРІС‹С… РїРѕС‚РѕРєР°С… РЅРµ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ, С‚.Рє. Р·РґРµСЃСЊ СЃРѕР·РґР°СЋС‚СЃСЏ HWND
 		MBoxAssert(gpConEmu->isMainThread());
 		return NULL;
 	}
@@ -7270,12 +7270,12 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, 
 	return apszLine;
 }
 
-// Возвращает указатель на АКТИВНУЮ консоль (при создании группы)
-// apszScript содержит строки команд, разделенные \r\n
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РђРљРўРР’РќРЈР® РєРѕРЅСЃРѕР»СЊ (РїСЂРё СЃРѕР·РґР°РЅРёРё РіСЂСѓРїРїС‹)
+// apszScript СЃРѕРґРµСЂР¶РёС‚ СЃС‚СЂРѕРєРё РєРѕРјР°РЅРґ, СЂР°Р·РґРµР»РµРЅРЅС‹Рµ \r\n
 CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsAdmin /*= false*/, LPCWSTR asStartupDir /*= NULL*/, const RConStartArgs *apDefArgs /*= NULL*/)
 {
 	CVirtualConsole* pVConResult = NULL;
-	// Поехали
+	// РџРѕРµС…Р°Р»Рё
 	wchar_t *pszDataW = lstrdup(apszScript);
 	wchar_t *pszLine = pszDataW;
 	wchar_t *pszNewLine = wcschr(pszLine, L'\n');
@@ -7319,7 +7319,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 					if (pszEnd) pszLine = pszEnd;
 				}
 
-				TODO("Когда появится ключ /mouse - добавить сюда обработку");
+				TODO("РљРѕРіРґР° РїРѕСЏРІРёС‚СЃСЏ РєР»СЋС‡ /mouse - РґРѕР±Р°РІРёС‚СЊ СЃСЋРґР° РѕР±СЂР°Р±РѕС‚РєСѓ");
 
 				if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
 				                               pszLine, 5, L"/cmd ", 5))
@@ -7356,7 +7356,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 
 					if (!lbOneCreated)
 					{
-						//Destroy(); -- должна вызывающая функция
+						//Destroy(); -- РґРѕР»Р¶РЅР° РІС‹Р·С‹РІР°СЋС‰Р°СЏ С„СѓРЅРєС†РёСЏ
 						goto wrap;
 					}
 				}
@@ -7373,12 +7373,12 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 						pSetActive = pVCon;
 
 					if (GetVCon((int)MAX_CONSOLE_COUNT-1))
-						break; // Больше создать не получится
+						break; // Р‘РѕР»СЊС€Рµ СЃРѕР·РґР°С‚СЊ РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ
 				}
 			}
 
-			// При создании группы консолей требуется обрабатывать сообщения,
-			// иначе может возникнуть блокировка запускаемого сервера
+			// РџСЂРё СЃРѕР·РґР°РЅРёРё РіСЂСѓРїРїС‹ РєРѕРЅСЃРѕР»РµР№ С‚СЂРµР±СѓРµС‚СЃСЏ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ СЃРѕРѕР±С‰РµРЅРёСЏ,
+			// РёРЅР°С‡Рµ РјРѕР¶РµС‚ РІРѕР·РЅРёРєРЅСѓС‚СЊ Р±Р»РѕРєРёСЂРѕРІРєР° Р·Р°РїСѓСЃРєР°РµРјРѕРіРѕ СЃРµСЂРІРµСЂР°
 			MSG Msg;
 			while (PeekMessage(&Msg,0,0,0,PM_REMOVE))
 			{
@@ -7406,7 +7406,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 		if (!*pszLine) break;
 
 		while ((*pszLine == L'\r') || (*pszLine == L'\n'))
-			pszLine++; // пропустить все переводы строк
+			pszLine++; // РїСЂРѕРїСѓСЃС‚РёС‚СЊ РІСЃРµ РїРµСЂРµРІРѕРґС‹ СЃС‚СЂРѕРє
 
 		pszNewLine = wcschr(pszLine, L'\n');
 	}
@@ -7433,7 +7433,7 @@ void CConEmuMain::UpdateActiveGhost(CVirtualConsole* apVCon)
 	_ASSERTE(isActive(apVCon));
 	if (mh_LLKeyHookDll && mph_HookedGhostWnd)
 	{
-		// Win7 и выше!
+		// Win7 Рё РІС‹С€Рµ!
 		if (IsWindows7 || !gpSet->isTabsOnTaskBar())
 			*mph_HookedGhostWnd = NULL; //ghWndApp ? ghWndApp : ghWnd;
 		else
@@ -7441,8 +7441,8 @@ void CConEmuMain::UpdateActiveGhost(CVirtualConsole* apVCon)
 	}
 }
 
-// Послать во все активные фары CMD_FARSETCHANGED
-// Обновляются настройки: gpSet->isFARuseASCIIsort, gpSet->isShellNoZoneCheck;
+// РџРѕСЃР»Р°С‚СЊ РІРѕ РІСЃРµ Р°РєС‚РёРІРЅС‹Рµ С„Р°СЂС‹ CMD_FARSETCHANGED
+// РћР±РЅРѕРІР»СЏСЋС‚СЃСЏ РЅР°СЃС‚СЂРѕР№РєРё: gpSet->isFARuseASCIIsort, gpSet->isShellNoZoneCheck;
 void CConEmuMain::UpdateFarSettings()
 {
 	CVConGroup::OnUpdateFarSettings();
@@ -7450,7 +7450,7 @@ void CConEmuMain::UpdateFarSettings()
 
 //void CConEmuMain::UpdateIdealRect(BOOL abAllowUseConSize/*=FALSE*/)
 //{
-//	// Запомнить "идеальный" размер окна, выбранный пользователем
+//	// Р—Р°РїРѕРјРЅРёС‚СЊ "РёРґРµР°Р»СЊРЅС‹Р№" СЂР°Р·РјРµСЂ РѕРєРЅР°, РІС‹Р±СЂР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј
 //	if (isWindowNormal())
 //	{
 //		RECT rcWnd = {};
@@ -7476,7 +7476,7 @@ void CConEmuMain::UpdateInsideRect(RECT rcNewPos)
 
 	gpConEmu->UpdateIdealRect(rcWnd);
 	
-	// Подвинуть
+	// РџРѕРґРІРёРЅСѓС‚СЊ
 	SetWindowPos(ghWnd, HWND_TOP, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
 }
 
@@ -7501,7 +7501,7 @@ void CConEmuMain::DebugStep(LPCWSTR asMsg, BOOL abErrorSeverity/*=FALSE*/)
 {
 	if (asMsg && *asMsg)
 	{
-		// Если ведется ЛОГ - выбросить в него
+		// Р•СЃР»Рё РІРµРґРµС‚СЃСЏ Р›РћР“ - РІС‹Р±СЂРѕСЃРёС‚СЊ РІ РЅРµРіРѕ
 		LogString(asMsg);
 	}
 
@@ -7522,9 +7522,9 @@ void CConEmuMain::DebugStep(LPCWSTR asMsg, BOOL abErrorSeverity/*=FALSE*/)
 		}
 		else
 		{
-			// Обновит заголовок в соответствии с возможными процентами в неактивной консоли
-			// и выполнит это в главной нити, если необходимо
-			// abErrorSeverity проверяем, чтобы можно было насильно "повторить" текущий заголовок
+			// РћР±РЅРѕРІРёС‚ Р·Р°РіРѕР»РѕРІРѕРє РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІРѕР·РјРѕР¶РЅС‹РјРё РїСЂРѕС†РµРЅС‚Р°РјРё РІ РЅРµР°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё
+			// Рё РІС‹РїРѕР»РЅРёС‚ СЌС‚Рѕ РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё, РµСЃР»Рё РЅРµРѕР±С…РѕРґРёРјРѕ
+			// abErrorSeverity РїСЂРѕРІРµСЂСЏРµРј, С‡С‚РѕР±С‹ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ РЅР°СЃРёР»СЊРЅРѕ "РїРѕРІС‚РѕСЂРёС‚СЊ" С‚РµРєСѓС‰РёР№ Р·Р°РіРѕР»РѕРІРѕРє
 			if (bWasDbgStep || abErrorSeverity)
 			{
 				bWasDbgStep = false;
@@ -7550,7 +7550,7 @@ DWORD_PTR CConEmuMain::GetActiveKeyboardLayout()
 
 //LPTSTR CConEmuMain::GetTitleStart()
 //{
-//	//mn_ActiveStatus &= ~CES_CONALTERNATIVE; // сброс флага альтернативной консоли
+//	//mn_ActiveStatus &= ~CES_CONALTERNATIVE; // СЃР±СЂРѕСЃ С„Р»Р°РіР° Р°Р»СЊС‚РµСЂРЅР°С‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё
 //	return Title;
 //}
 
@@ -7602,11 +7602,11 @@ void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
 //{
 //	if (mb_InShellExecuteQueue)
 //	{
-//		// Очередь уже обрабатывается!
+//		// РћС‡РµСЂРµРґСЊ СѓР¶Рµ РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚СЃСЏ!
 //		return;
 //	}
 //
-//	_ASSERTE(isMainThread()); // Должно выполняться в основном потоке!
+//	_ASSERTE(isMainThread()); // Р”РѕР»Р¶РЅРѕ РІС‹РїРѕР»РЅСЏС‚СЊСЃСЏ РІ РѕСЃРЅРѕРІРЅРѕРј РїРѕС‚РѕРєРµ!
 //
 //	mb_InShellExecuteQueue = true;
 //
@@ -7619,7 +7619,7 @@ void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
 //		{
 //			if (m_ShellExecuteQueue[i]->bInProcess)
 //			{
-//				_ASSERTE(m_ShellExecuteQueue[i]->bInProcess == FALSE); // TRUE - должен быть убран из очереди!
+//				_ASSERTE(m_ShellExecuteQueue[i]->bInProcess == FALSE); // TRUE - РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СѓР±СЂР°РЅ РёР· РѕС‡РµСЂРµРґРё!
 //			}
 //			else
 //			{
@@ -7633,7 +7633,7 @@ void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
 //
 //		if (!pArg)
 //		{
-//			break; // очередь обработана?
+//			break; // РѕС‡РµСЂРµРґСЊ РѕР±СЂР°Р±РѕС‚Р°РЅР°?
 //		}
 //
 //		SHELLEXECUTEINFO seiPre = *pArg->lpShellExecute;
@@ -7650,14 +7650,14 @@ void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
 //		{
 //			if (pArg->lpShellExecute->fMask & SEE_MASK_NOCLOSEPROCESS)
 //			{
-//				// OK, но нам нужен хэндл запущенного процесса
+//				// OK, РЅРѕ РЅР°Рј РЅСѓР¶РµРЅ С…СЌРЅРґР» Р·Р°РїСѓС‰РµРЅРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР°
 //				_ASSERTE(seiPst.hProcess != NULL);
 //				_ASSERTE(pArg->lpShellExecute->hProcess != NULL);
 //			}
 //		}
-//		else // Ошибка
+//		else // РћС€РёР±РєР°
 //		{
-//			//120429 - если мы были в Recreate - то наверное не закрывать, пусть болванка висит?
+//			//120429 - РµСЃР»Рё РјС‹ Р±С‹Р»Рё РІ Recreate - С‚Рѕ РЅР°РІРµСЂРЅРѕРµ РЅРµ Р·Р°РєСЂС‹РІР°С‚СЊ, РїСѓСЃС‚СЊ Р±РѕР»РІР°РЅРєР° РІРёСЃРёС‚?
 //			if ((isValid(pArg->pVCon) && !pArg->pVCon->RCon()->InRecreate()))
 //			{
 //				pArg->pVCon->RCon()->CloseConsole(false, false);
@@ -7718,11 +7718,11 @@ void CConEmuMain::SetWindowIcon(LPCWSTR asNewIcon)
 	}
 }
 
-// Нужно вызывать после загрузки настроек!
+// РќСѓР¶РЅРѕ РІС‹Р·С‹РІР°С‚СЊ РїРѕСЃР»Рµ Р·Р°РіСЂСѓР·РєРё РЅР°СЃС‚СЂРѕРµРє!
 void CConEmuMain::LoadIcons()
 {
 	if (hClassIcon)
-		return; // Уже загружены
+		return; // РЈР¶Рµ Р·Р°РіСЂСѓР¶РµРЅС‹
 
 	wchar_t *lpszExt = NULL;
 	wchar_t szIconPath[MAX_PATH] = {};
@@ -7889,7 +7889,7 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
 	//}
 }
 
-void CConEmuMain::PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/)
+void CConEmuMain::PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*РґР»СЏ nRelative==0 - РІС‹СЃРѕС‚Р°, РґР»СЏ ==1 - +-1, +-2,...*/)
 {
 	PostMessage(ghWnd, mn_MsgAutoSizeFont, (WPARAM)nRelative, (LPARAM)nValue);
 }
@@ -7958,7 +7958,7 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 			DWORD VkMod = gpSet->GetHotkeyById(gRegisteredHotKeys[i].DescrID, &pHk);
 			UINT vk = ConEmuHotKey::GetHotkey(VkMod);
 			if (!vk)
-				continue;  // не просили
+				continue;  // РЅРµ РїСЂРѕСЃРёР»Рё
 			UINT nMOD = ConEmuHotKey::GetHotKeyMod(VkMod);
 
 			if (gRegisteredHotKeys[i].RegisteredID
@@ -8000,9 +8000,9 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 				{
 					if (isFirstInstance(true))
 					{
-						// -- При одновременном запуске двух копий - велики шансы, что они подерутся
-						// -- наверное вообще не будем показывать ошибку
-						// -- кроме того, isFirstInstance() не работает, если копия ConEmu.exe запущена под другим юзером
+						// -- РџСЂРё РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕРј Р·Р°РїСѓСЃРєРµ РґРІСѓС… РєРѕРїРёР№ - РІРµР»РёРєРё С€Р°РЅСЃС‹, С‡С‚Рѕ РѕРЅРё РїРѕРґРµСЂСѓС‚СЃСЏ
+						// -- РЅР°РІРµСЂРЅРѕРµ РІРѕРѕР±С‰Рµ РЅРµ Р±СѓРґРµРј РїРѕРєР°Р·С‹РІР°С‚СЊ РѕС€РёР±РєСѓ
+						// -- РєСЂРѕРјРµ С‚РѕРіРѕ, isFirstInstance() РЅРµ СЂР°Р±РѕС‚Р°РµС‚, РµСЃР»Рё РєРѕРїРёСЏ ConEmu.exe Р·Р°РїСѓС‰РµРЅР° РїРѕРґ РґСЂСѓРіРёРј СЋР·РµСЂРѕРј
 						wchar_t szName[128];
 
 						if (!LoadString(g_hInstance, gRegisteredHotKeys[i].DescrID, szName, countof(szName)))
@@ -8049,8 +8049,8 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 static struct RegisteredHotKeys
 //{
 //	int DescrID;
-//	int RegisteredID; // wParam для WM_HOTKEY
-//	UINT VK, MOD;     // чтобы на изменение реагировать
+//	int RegisteredID; // wParam РґР»СЏ WM_HOTKEY
+//	UINT VK, MOD;     // С‡С‚РѕР±С‹ РЅР° РёР·РјРµРЅРµРЅРёРµ СЂРµР°РіРёСЂРѕРІР°С‚СЊ
 //}
 gActiveOnlyHotKeys[] = {
 	{0, HOTKEY_CTRLWINALTSPACE_ID, VK_SPACE, MOD_CONTROL|MOD_WIN|MOD_ALT},
@@ -8077,7 +8077,7 @@ void CConEmuMain::GlobalHotKeyChanged()
 void CConEmuMain::RegisterGlobalHotKeys(bool bRegister)
 {
 	if (bRegister == mb_HotKeyRegistered)
-		return; // уже
+		return; // СѓР¶Рµ
 
 	if (bRegister)
 	{
@@ -8085,7 +8085,7 @@ void CConEmuMain::RegisterGlobalHotKeys(bool bRegister)
 		{
 			DWORD id, vk, mod;
 
-			// например, HOTKEY_CTRLWINALTSPACE_ID
+			// РЅР°РїСЂРёРјРµСЂ, HOTKEY_CTRLWINALTSPACE_ID
 			id = gActiveOnlyHotKeys[i].RegisteredID;
 
 			if (gActiveOnlyHotKeys[i].DescrID == 0)
@@ -8101,7 +8101,7 @@ void CConEmuMain::RegisterGlobalHotKeys(bool bRegister)
 				DWORD VkMod = gpSet->GetHotkeyById(gActiveOnlyHotKeys[i].DescrID, &pHk);
 				vk = ConEmuHotKey::GetHotkey(VkMod);
 				if (!vk)
-					continue;  // не просили
+					continue;  // РЅРµ РїСЂРѕСЃРёР»Рё
 				mod = ConEmuHotKey::GetHotKeyMod(VkMod);
 			}
 
@@ -8126,7 +8126,7 @@ void CConEmuMain::RegisterGlobalHotKeys(bool bRegister)
 	{
 		for (size_t i = 0; i < countof(gActiveOnlyHotKeys); i++)
 		{
-			// например, HOTKEY_CTRLWINALTSPACE_ID
+			// РЅР°РїСЂРёРјРµСЂ, HOTKEY_CTRLWINALTSPACE_ID
 			DWORD id = gActiveOnlyHotKeys[i].RegisteredID;
 
 			UnregisterHotKey(ghWnd, id);
@@ -8203,15 +8203,15 @@ void CConEmuMain::UpdateWinHookSettings()
 void CConEmuMain::RegisterHooks()
 {
 //	#ifndef _DEBUG
-	// -- для GUI режима таки нужно
-	//// Для WinXP это не было нужно
+	// -- РґР»СЏ GUI СЂРµР¶РёРјР° С‚Р°РєРё РЅСѓР¶РЅРѕ
+	//// Р”Р»СЏ WinXP СЌС‚Рѕ РЅРµ Р±С‹Р»Рѕ РЅСѓР¶РЅРѕ
 	//if (gOSVer.dwMajorVersion < 6)
 	//{
 	//	return;
 	//}
 //	#endif
 
-	// Если Host-клавиша НЕ Win, или юзер не хочет переключаться Win+Number - хук не нужен
+	// Р•СЃР»Рё Host-РєР»Р°РІРёС€Р° РќР• Win, РёР»Рё СЋР·РµСЂ РЅРµ С…РѕС‡РµС‚ РїРµСЂРµРєР»СЋС‡Р°С‚СЊСЃСЏ Win+Number - С…СѓРє РЅРµ РЅСѓР¶РµРЅ
 	//if (!gpSet->isUseWinNumber || !gpSet->IsHostkeySingle(VK_LWIN))
 	if (!gpSetCls->HasSingleWinHotkey())
 	{
@@ -8229,7 +8229,7 @@ void CConEmuMain::RegisterHooks()
 
 	if (!mh_LLKeyHook)
 	{
-		// Проверяет, разрешил ли пользователь установку хуков.
+		// РџСЂРѕРІРµСЂСЏРµС‚, СЂР°Р·СЂРµС€РёР» Р»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ СѓСЃС‚Р°РЅРѕРІРєСѓ С…СѓРєРѕРІ.
 		if (!gpSet->isKeyboardHooks())
 		{
 			if (gpSetCls->isAdvLogging)
@@ -8256,7 +8256,7 @@ void CConEmuMain::RegisterHooks()
 			//	CloseHandle(hSkipEvent);
 			//}
 			
-			_ASSERTE(mh_LLKeyHook==NULL); // Из другого потока регистрация прошла?
+			_ASSERTE(mh_LLKeyHook==NULL); // РР· РґСЂСѓРіРѕРіРѕ РїРѕС‚РѕРєР° СЂРµРіРёСЃС‚СЂР°С†РёСЏ РїСЂРѕС€Р»Р°?
 
 			if (!mh_LLKeyHook && mh_LLKeyHookDll)
 			{
@@ -8276,7 +8276,7 @@ void CConEmuMain::RegisterHooks()
 
 				if (pfnLLHK)
 				{
-					// WH_KEYBOARD_LL - может быть только глобальной
+					// WH_KEYBOARD_LL - РјРѕР¶РµС‚ Р±С‹С‚СЊ С‚РѕР»СЊРєРѕ РіР»РѕР±Р°Р»СЊРЅРѕР№
 					mh_LLKeyHook = SetWindowsHookEx(WH_KEYBOARD_LL, pfnLLHK, mh_LLKeyHookDll, 0);
 
 					if (!mh_LLKeyHook)
@@ -8329,7 +8329,7 @@ void CConEmuMain::RegisterHooks()
 //	if (!gpSet->isUseWinNumber || !gpSet->IsHostkeyPressed())
 //		return FALSE;
 //
-//	// Теперь собственно обработка
+//	// РўРµРїРµСЂСЊ СЃРѕР±СЃС‚РІРµРЅРЅРѕ РѕР±СЂР°Р±РѕС‚РєР°
 //	if (nVkKeyCode >= '0' && nVkKeyCode <= '9')
 //	{
 //		if (nMsg == WM_KEYDOWN)
@@ -8377,7 +8377,7 @@ void CConEmuMain::UnRegisterHooks(BOOL abFinal/*=FALSE*/)
 	}
 }
 
-// Обработка WM_HOTKEY
+// РћР±СЂР°Р±РѕС‚РєР° WM_HOTKEY
 void CConEmuMain::OnWmHotkey(WPARAM wParam)
 {
 	// Ctrl+Win+Alt+Space
@@ -8456,24 +8456,24 @@ void CConEmuMain::DeleteVConMainThread(CVirtualConsole* apVCon)
 	//}
 }
 
-// abRecreate: TRUE - пересоздать текущую, FALSE - создать новую
-// abConfirm:  TRUE - показать диалог подтверждения
-// abRunAs:    TRUE - под админом
+// abRecreate: TRUE - РїРµСЂРµСЃРѕР·РґР°С‚СЊ С‚РµРєСѓС‰СѓСЋ, FALSE - СЃРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ
+// abConfirm:  TRUE - РїРѕРєР°Р·Р°С‚СЊ РґРёР°Р»РѕРі РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ
+// abRunAs:    TRUE - РїРѕРґ Р°РґРјРёРЅРѕРј
 void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, BOOL abRunAs)
 {
 	FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
-	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
+	FlashWindowEx(&fl); // РџСЂРё РјРЅРѕРіРѕРєСЂР°С‚РЅС‹С… СЃРѕР·РґР°РЅРёСЏС… РјРёРіР°С‚СЊ РЅР°С‡РёРЅР°РµС‚...
 	RConStartArgs args;
 	args.aRecreate = aRecreate;
 	args.bRunAsAdministrator = abRunAs;
 
-	WARNING("При переходе на новую обработку кнопок больше не нужно");
+	WARNING("РџСЂРё РїРµСЂРµС…РѕРґРµ РЅР° РЅРѕРІСѓСЋ РѕР±СЂР°Р±РѕС‚РєСѓ РєРЅРѕРїРѕРє Р±РѕР»СЊС€Рµ РЅРµ РЅСѓР¶РЅРѕ");
 	//if (!abConfirm && isPressed(VK_SHIFT))
 	//	abConfirm = TRUE;
 
 	if ((args.aRecreate == cra_CreateTab) || (args.aRecreate == cra_CreateWindow))
 	{
-		// Создать новую консоль
+		// РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ РєРѕРЅСЃРѕР»СЊ
 		BOOL lbSlotFound = (args.aRecreate == cra_CreateWindow);
 
 		if (args.aRecreate == cra_CreateWindow && gpSetCls->IsMulti())
@@ -8485,7 +8485,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 			//{
 			//	if (!mp_VCon[i]) { lbSlotFound = TRUE; break; }
 			//}
-			// Проверяем по последней, т.к. "дырок" у нас быть не может
+			// РџСЂРѕРІРµСЂСЏРµРј РїРѕ РїРѕСЃР»РµРґРЅРµР№, С‚.Рє. "РґС‹СЂРѕРє" Сѓ РЅР°СЃ Р±С‹С‚СЊ РЅРµ РјРѕР¶РµС‚
 			if (!isVConExists(MAX_CONSOLE_COUNT-1))
 				lbSlotFound = TRUE;
 		}
@@ -8497,12 +8497,12 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 			if (!bBoxShowed)
 			{
 				bBoxShowed = true;
-				FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
+				FlashWindowEx(&fl); // РџСЂРё РјРЅРѕРіРѕРєСЂР°С‚РЅС‹С… СЃРѕР·РґР°РЅРёСЏС… РјРёРіР°С‚СЊ РЅР°С‡РёРЅР°РµС‚...
 				MBoxA(L"Maximum number of consoles was reached.");
 				bBoxShowed = false;
 			}
 
-			FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
+			FlashWindowEx(&fl); // РџСЂРё РјРЅРѕРіРѕРєСЂР°С‚РЅС‹С… СЃРѕР·РґР°РЅРёСЏС… РјРёРіР°С‚СЊ РЅР°С‡РёРЅР°РµС‚...
 			return;
 		}
 
@@ -8519,7 +8519,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 
 		if (args.aRecreate == cra_CreateTab)
 		{
-			//Собственно, запуск
+			//РЎРѕР±СЃС‚РІРµРЅРЅРѕ, Р·Р°РїСѓСЃРє
 			CreateCon(&args, true);
 		}
 		else
@@ -8567,7 +8567,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 			if (VCon.VCon())
 			{
 				VCon->Redraw();
-				// Собственно, Recreate
+				// РЎРѕР±СЃС‚РІРµРЅРЅРѕ, Recreate
 				VCon->RCon()->RecreateProcess(&args);
 			}
 		}
@@ -8609,7 +8609,7 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 			}
 			else
 			{
-				// Сразу найдем список окон
+				// РЎСЂР°Р·Сѓ РЅР°Р№РґРµРј СЃРїРёСЃРѕРє РѕРєРѕРЅ
 				while (ConEmuHwnd)
 				{
 					hConEmuS.push_back(ConEmuHwnd);
@@ -8673,7 +8673,7 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 			if (lbAccepted)
 				break;
 
-			// Попытаться со следующим окном (может быть запущено несколько экземпляров из разных путей
+			// РџРѕРїС‹С‚Р°С‚СЊСЃСЏ СЃРѕ СЃР»РµРґСѓСЋС‰РёРј РѕРєРЅРѕРј (РјРѕР¶РµС‚ Р±С‹С‚СЊ Р·Р°РїСѓС‰РµРЅРѕ РЅРµСЃРєРѕР»СЊРєРѕ СЌРєР·РµРјРїР»СЏСЂРѕРІ РёР· СЂР°Р·РЅС‹С… РїСѓС‚РµР№
 		}
 	}
 
@@ -8685,7 +8685,7 @@ void CConEmuMain::ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServe
 	if (!isMainThread())
 	{
 		if (mb_InShowOldCmdVersion)
-			return; // уже послано
+			return; // СѓР¶Рµ РїРѕСЃР»Р°РЅРѕ
 		mb_InShowOldCmdVersion = TRUE;
 		
 		static CESERVER_REQ_HDR info = {};
@@ -8700,11 +8700,11 @@ void CConEmuMain::ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServe
 		return;
 	}
 
-	// Один раз за сессию?
+	// РћРґРёРЅ СЂР°Р· Р·Р° СЃРµСЃСЃРёСЋ?
 	static bool lbErrorShowed = false;
 	if (lbErrorShowed) return;
 	
-	// Попытаемся получить информацию по процессу и модулю
+	// РџРѕРїС‹С‚Р°РµРјСЃСЏ РїРѕР»СѓС‡РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РїРѕ РїСЂРѕС†РµСЃСЃСѓ Рё РјРѕРґСѓР»СЋ
 	HANDLE h = NULL;
 	PROCESSENTRY32 pi = {sizeof(pi)};
 	MODULEENTRY32  mi = {sizeof(mi)};
@@ -8799,14 +8799,14 @@ void CConEmuMain::ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServe
 		);
 	MBox(pszMsg);
 	free(pszMsg);
-	mb_InShowOldCmdVersion = FALSE; // теперь можно показать еще одно...
+	mb_InShowOldCmdVersion = FALSE; // С‚РµРїРµСЂСЊ РјРѕР¶РЅРѕ РїРѕРєР°Р·Р°С‚СЊ РµС‰Рµ РѕРґРЅРѕ...
 }
 
-// Запуск отладки текущего GUI
+// Р—Р°РїСѓСЃРє РѕС‚Р»Р°РґРєРё С‚РµРєСѓС‰РµРіРѕ GUI
 bool CConEmuMain::StartDebugLogConsole()
 {
 	if (IsDebuggerPresent())
-		return false; // УЖЕ!
+		return false; // РЈР–Р•!
 
 	// Create process, with flag /Attach GetCurrentProcessId()
 	// Sleep for sometimes, try InitHWND(hConWnd); several times
@@ -8816,7 +8816,7 @@ bool CConEmuMain::StartDebugLogConsole()
 	PROCESS_INFORMATION pi = {NULL};
 	STARTUPINFO si = {sizeof(si)};
 	DWORD dwSelfPID = GetCurrentProcessId();
-	// "/ATTACH" - низя, а то заблокируемся при попытке подключения к "отлаживаемому" GUI
+	// "/ATTACH" - РЅРёР·СЏ, Р° С‚Рѕ Р·Р°Р±Р»РѕРєРёСЂСѓРµРјСЃСЏ РїСЂРё РїРѕРїС‹С‚РєРµ РїРѕРґРєР»СЋС‡РµРЅРёСЏ Рє "РѕС‚Р»Р°Р¶РёРІР°РµРјРѕРјСѓ" GUI
 	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%u /BW=80 /BH=25 /BZ=%u",
 	          WIN3264TEST(ms_ConEmuC32Full,ms_ConEmuC64Full), dwSelfPID, LONGOUTPUTHEIGHT_MAX);
 
@@ -8828,7 +8828,7 @@ bool CConEmuMain::StartDebugLogConsole()
 	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL,
 	                  NULL, &si, &pi))
 	{
-		// Хорошо бы ошибку показать?
+		// РҐРѕСЂРѕС€Рѕ Р±С‹ РѕС€РёР±РєСѓ РїРѕРєР°Р·Р°С‚СЊ?
 		DWORD dwErr = GetLastError();
 		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create debugger console! ErrCode=0x%08X", dwErr);
 		MBoxA(szErr);
@@ -8861,7 +8861,7 @@ bool CConEmuMain::StartDebugActiveProcess()
 	//DWORD nLen = 0;
 	PROCESS_INFORMATION pi = {NULL};
 	STARTUPINFO si = {sizeof(si)};
-	WARNING("Наверное лучше переделать на CreateCon...");
+	WARNING("РќР°РІРµСЂРЅРѕРµ Р»СѓС‡С€Рµ РїРµСЂРµРґРµР»Р°С‚СЊ РЅР° CreateCon...");
 	si.dwFlags |= STARTF_USESHOWWINDOW;
 	si.wShowWindow = SW_HIDE;
 	DWORD dwSelfPID = GetCurrentProcessId();
@@ -8880,7 +8880,7 @@ bool CConEmuMain::StartDebugActiveProcess()
 	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL,
 		NULL, &si, &pi))
 	{
-		// Хорошо бы ошибку показать?
+		// РҐРѕСЂРѕС€Рѕ Р±С‹ РѕС€РёР±РєСѓ РїРѕРєР°Р·Р°С‚СЊ?
 		DWORD dwErr = GetLastError();
 		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create debugger console! ErrCode=0x%08X", dwErr);
 		MBoxA(szErr);
@@ -8927,7 +8927,7 @@ bool CConEmuMain::MemoryDumpActiveProcess()
 	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL,
 		NULL, &si, &pi))
 	{
-		// Хорошо бы ошибку показать?
+		// РҐРѕСЂРѕС€Рѕ Р±С‹ РѕС€РёР±РєСѓ РїРѕРєР°Р·Р°С‚СЊ?
 		DWORD dwErr = GetLastError();
 		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create debugger console! ErrCode=0x%08X", dwErr);
 		MBoxA(szErr);
@@ -8981,7 +8981,7 @@ bool CConEmuMain::MemoryDumpActiveProcess()
 //		DWORD nFarPID = mp_VCon[i]->RCon()->GetFarPID(TRUE);
 //		if (nFarPID)
 //		{
-//			// Выполнить в плагине
+//			// Р’С‹РїРѕР»РЅРёС‚СЊ РІ РїР»Р°РіРёРЅРµ
 //			CConEmuPipe pipe(nFarPID, 300);
 //			if (pipe.Init(L"LogShell", TRUE))
 //    			pipe.Execute(CMD_LOG_SHELL);
@@ -9078,7 +9078,7 @@ void CConEmuMain::UpdateSizes()
 
 	if (!ghOpWnd || !hInfo)
 	{
-		// Может курсор-сплиттер нужно убрать или поставить
+		// РњРѕР¶РµС‚ РєСѓСЂСЃРѕСЂ-СЃРїР»РёС‚С‚РµСЂ РЅСѓР¶РЅРѕ СѓР±СЂР°С‚СЊ РёР»Рё РїРѕСЃС‚Р°РІРёС‚СЊ
 		if (hPoint && ((hPoint == ghWnd) || (GetParent(hPoint) == ghWnd)))
 		{
 			PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
@@ -9092,7 +9092,7 @@ void CConEmuMain::UpdateSizes()
 		return;
 	}
 
-	// Может курсор-сплиттер нужно убрать или поставить
+	// РњРѕР¶РµС‚ РєСѓСЂСЃРѕСЂ-СЃРїР»РёС‚С‚РµСЂ РЅСѓР¶РЅРѕ СѓР±СЂР°С‚СЊ РёР»Рё РїРѕСЃС‚Р°РІРёС‚СЊ
 	if (hPoint && ((hPoint == ghWnd) || (GetParent(hPoint) == ghWnd)))
 	{
 		SendMessage(ghWnd, WM_SETCURSOR, -1, -1);
@@ -9135,17 +9135,17 @@ void CConEmuMain::CheckNeedUpdateTitle(LPCWSTR asRConTitle)
 	if (TitleTemplate[0] != 0)
 		return;
 
-	// Если в консоли заголовок не менялся, но он отличается от заголовка в ConEmu
+	// Р•СЃР»Рё РІ РєРѕРЅСЃРѕР»Рё Р·Р°РіРѕР»РѕРІРѕРє РЅРµ РјРµРЅСЏР»СЃСЏ, РЅРѕ РѕРЅ РѕС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ Р·Р°РіРѕР»РѕРІРєР° РІ ConEmu
 	if (wcscmp(asRConTitle, GetLastTitle(false)))
 		UpdateTitle();
 }
 
-// !!!Warning!!! Никаких return. в конце функции вызывается необходимый CheckProcesses
+// !!!Warning!!! РќРёРєР°РєРёС… return. РІ РєРѕРЅС†Рµ С„СѓРЅРєС†РёРё РІС‹Р·С‹РІР°РµС‚СЃСЏ РЅРµРѕР±С…РѕРґРёРјС‹Р№ CheckProcesses
 void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
 {
 	if (GetCurrentThreadId() != mn_MainThreadId)
 	{
-		/*if (TitleCmp != asNewTitle) -- можем наколоться на многопоточности. Лучше получим повторно
+		/*if (TitleCmp != asNewTitle) -- РјРѕР¶РµРј РЅР°РєРѕР»РѕС‚СЊСЃСЏ РЅР° РјРЅРѕРіРѕРїРѕС‚РѕС‡РЅРѕСЃС‚Рё. Р›СѓС‡С€Рµ РїРѕР»СѓС‡РёРј РїРѕРІС‚РѕСЂРЅРѕ
 		    wcscpy(TitleCmp, asNewTitle);*/
 		PostMessage(ghWnd, mn_MsgUpdateTitle, 0, 0);
 		return;
@@ -9181,16 +9181,16 @@ void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
 		lstrcpyn(Title, pszNewTitle, countof(Title));
 
 
-	// SetWindowText(ghWnd, psTitle) вызывается здесь
-	// Там же обновится L"[%i/%i] " если несколько консолей а табы отключены
+	// SetWindowText(ghWnd, psTitle) РІС‹Р·С‹РІР°РµС‚СЃСЏ Р·РґРµСЃСЊ
+	// РўР°Рј Р¶Рµ РѕР±РЅРѕРІРёС‚СЃСЏ L"[%i/%i] " РµСЃР»Рё РЅРµСЃРєРѕР»СЊРєРѕ РєРѕРЅСЃРѕР»РµР№ Р° С‚Р°Р±С‹ РѕС‚РєР»СЋС‡РµРЅС‹
 	UpdateProgress(/*TRUE*/);
 	Icon.UpdateTitle();
-	// Под конец - проверить список процессов консоли
+	// РџРѕРґ РєРѕРЅРµС† - РїСЂРѕРІРµСЂРёС‚СЊ СЃРїРёСЃРѕРє РїСЂРѕС†РµСЃСЃРѕРІ РєРѕРЅСЃРѕР»Рё
 	CheckProcesses();
 }
 
-// Если в текущей консоли есть проценты - отображаются они
-// Иначе - отображается максимальное значение процентов из всех консолей
+// Р•СЃР»Рё РІ С‚РµРєСѓС‰РµР№ РєРѕРЅСЃРѕР»Рё РµСЃС‚СЊ РїСЂРѕС†РµРЅС‚С‹ - РѕС‚РѕР±СЂР°Р¶Р°СЋС‚СЃСЏ РѕРЅРё
+// РРЅР°С‡Рµ - РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РїСЂРѕС†РµРЅС‚РѕРІ РёР· РІСЃРµС… РєРѕРЅСЃРѕР»РµР№
 void CConEmuMain::UpdateProgress()
 {
 	if (!this || (ghWnd == NULL))
@@ -9201,7 +9201,7 @@ void CConEmuMain::UpdateProgress()
 
 	if (GetCurrentThreadId() != mn_MainThreadId)
 	{
-		/*чтобы не наколоться на многопоточности */
+		/*С‡С‚РѕР±С‹ РЅРµ РЅР°РєРѕР»РѕС‚СЊСЃСЏ РЅР° РјРЅРѕРіРѕРїРѕС‚РѕС‡РЅРѕСЃС‚Рё */
 		PostMessage(ghWnd, mn_MsgUpdateTitle, 0, 0);
 		return;
 	}
@@ -9249,7 +9249,7 @@ void CConEmuMain::UpdateProgress()
 		}
 		//}
 
-		// Запомнить последнее
+		// Р—Р°РїРѕРјРЅРёС‚СЊ РїРѕСЃР»РµРґРЅРµРµ
 		nLastProgress = mn_Progress;
 		bLastProgressError = bWasError;
 		bLastProgressIndeterminate = bWasIndeterminate;
@@ -9286,7 +9286,7 @@ void CConEmuMain::UpdateProgress()
 
 	SetWindowText(ghWnd, psTitle);
 
-	// Задел на будущее
+	// Р—Р°РґРµР» РЅР° Р±СѓРґСѓС‰РµРµ
 	if (ghWndApp)
 		SetWindowText(ghWndApp, psTitle);
 }
@@ -9322,7 +9322,7 @@ void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 	//}
 
 	if (m_ForceShowFrame == fsf_Show)
-		hRgn = NULL; // Иначе при ресайзе получаются некрасивые (без XP Theme) кнопки в заголовке
+		hRgn = NULL; // РРЅР°С‡Рµ РїСЂРё СЂРµСЃР°Р№Р·Рµ РїРѕР»СѓС‡Р°СЋС‚СЃСЏ РЅРµРєСЂР°СЃРёРІС‹Рµ (Р±РµР· XP Theme) РєРЅРѕРїРєРё РІ Р·Р°РіРѕР»РѕРІРєРµ
 	else if (anWndWidth != -1 && anWndHeight != -1)
 		hRgn = CreateWindowRgn(false, false, anX, anY, anWndWidth, anWndHeight);
 	else
@@ -9338,7 +9338,7 @@ void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 		mb_LastRgnWasNull = TRUE;
 
 		if (lbPrev)
-			return; // менять не нужно
+			return; // РјРµРЅСЏС‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 	}
 
 	if (gpSetCls->isAdvLogging)
@@ -9352,8 +9352,8 @@ void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 		LogString(szInfo);
 	}
 
-	// Облом получается при двукратном SetWindowRgn(ghWnd, NULL, TRUE);
-	// Причем после следующего ресайза - рамка приходит в норму
+	// РћР±Р»РѕРј РїРѕР»СѓС‡Р°РµС‚СЃСЏ РїСЂРё РґРІСѓРєСЂР°С‚РЅРѕРј SetWindowRgn(ghWnd, NULL, TRUE);
+	// РџСЂРёС‡РµРј РїРѕСЃР»Рµ СЃР»РµРґСѓСЋС‰РµРіРѕ СЂРµСЃР°Р№Р·Р° - СЂР°РјРєР° РїСЂРёС…РѕРґРёС‚ РІ РЅРѕСЂРјСѓ
 	bool b = SetDontPreserveClient(true);
 	BOOL bRc = SetWindowRgn(ghWnd, hRgn, TRUE);
 	DWORD dwErr = bRc ? 0 : GetLastError();
@@ -9429,7 +9429,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 		{
 			//A single character has changed.
 			//The idObject parameter is a COORD structure that specifies the character that has changed.
-			//Warning! В писании от  микрософта тут ошибка (после репорта была исправлена)
+			//Warning! Р’ РїРёСЃР°РЅРёРё РѕС‚  РјРёРєСЂРѕСЃРѕС„С‚Р° С‚СѓС‚ РѕС€РёР±РєР° (РїРѕСЃР»Рµ СЂРµРїРѕСЂС‚Р° Р±С‹Р»Р° РёСЃРїСЂР°РІР»РµРЅР°)
 			//The idChild parameter specifies the character in the low word and the character attributes in the high word.
 			#ifdef _DEBUG
 			COORD crWhere; memmove(&crWhere, &idObject, sizeof(idObject));
@@ -9440,8 +9440,8 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 		} break;
 		case EVENT_CONSOLE_CARET: //0x4001
 		{
-			//Warning! WinXPSP3. Это событие проходит ТОЛЬКО если консоль в фокусе.
-			//         А с ConEmu она НИКОГДА не в фокусе, так что курсор не обновляется.
+			//Warning! WinXPSP3. Р­С‚Рѕ СЃРѕР±С‹С‚РёРµ РїСЂРѕС…РѕРґРёС‚ РўРћР›Р¬РљРћ РµСЃР»Рё РєРѕРЅСЃРѕР»СЊ РІ С„РѕРєСѓСЃРµ.
+			//         Рђ СЃ ConEmu РѕРЅР° РќРРљРћР“Р”Рђ РЅРµ РІ С„РѕРєСѓСЃРµ, С‚Р°Рє С‡С‚Рѕ РєСѓСЂСЃРѕСЂ РЅРµ РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ.
 			//The console caret has moved.
 			//The idObject parameter is one or more of the following values:
 			//      CONSOLE_CARET_SELECTION or CONSOLE_CARET_VISIBLE.
@@ -9462,7 +9462,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 	}
 	#endif
 
-	// Интересуют только 16битные приложения.
+	// РРЅС‚РµСЂРµСЃСѓСЋС‚ С‚РѕР»СЊРєРѕ 16Р±РёС‚РЅС‹Рµ РїСЂРёР»РѕР¶РµРЅРёСЏ.
 	if (!(((anEvent == EVENT_CONSOLE_START_APPLICATION) || (anEvent == EVENT_CONSOLE_END_APPLICATION))
 			&& (idChild == CONSOLE_APPLICATION_16BIT)))
 		return;
@@ -9588,19 +9588,19 @@ void CConEmuMain::UpdateWindowChild(CVirtualConsole* apVCon)
 //				// Force paint our non-client area otherwise Windows will paint its own.
 //				if (lbUseCaption)
 //				{
-//					// Тут все переделать нужно, когда табы новые будут
+//					// РўСѓС‚ РІСЃРµ РїРµСЂРµРґРµР»Р°С‚СЊ РЅСѓР¶РЅРѕ, РєРѕРіРґР° С‚Р°Р±С‹ РЅРѕРІС‹Рµ Р±СѓРґСѓС‚
 //					_ASSERTE(lbUseCaption==FALSE);
 //					RedrawWindow(hWnd, NULL, NULL, RDW_UPDATENOW);
 //				}
 //				else
 //				{
-//					// При потере фокуса
+//					// РџСЂРё РїРѕС‚РµСЂРµ С„РѕРєСѓСЃР°
 //					if (!wParam)
 //					{
 //						CVirtualConsole* pVCon = ActiveCon();
 //						CRealConsole* pRCon;
-//						// Нужно схалтурить, чтобы при переходе фокуса в дочернее GUI приложение
-//						// рамка окна самого ConEmu не стала неактивной (серой)
+//						// РќСѓР¶РЅРѕ СЃС…Р°Р»С‚СѓСЂРёС‚СЊ, С‡С‚РѕР±С‹ РїСЂРё РїРµСЂРµС…РѕРґРµ С„РѕРєСѓСЃР° РІ РґРѕС‡РµСЂРЅРµРµ GUI РїСЂРёР»РѕР¶РµРЅРёРµ
+//						// СЂР°РјРєР° РѕРєРЅР° СЃР°РјРѕРіРѕ ConEmu РЅРµ СЃС‚Р°Р»Р° РЅРµР°РєС‚РёРІРЅРѕР№ (СЃРµСЂРѕР№)
 //						if (pVCon && ((pRCon = ActiveCon()->RCon()) != NULL) && pRCon->GuiWnd() && !pRCon->isBufferHeight())
 //							wParam = TRUE;
 //					}
@@ -9646,7 +9646,7 @@ void CConEmuMain::UpdateWindowChild(CVirtualConsole* apVCon)
 //			}
 //			default:
 //				if (messg == WM_NCLBUTTONDOWN && wParam == HTSYSMENU)
-//					GetSysMenu(); // Проверить корректность системного меню
+//					GetSysMenu(); // РџСЂРѕРІРµСЂРёС‚СЊ РєРѕСЂСЂРµРєС‚РЅРѕСЃС‚СЊ СЃРёСЃС‚РµРјРЅРѕРіРѕ РјРµРЅСЋ
 //				lRc = DefWindowProc(hWnd, messg, wParam, lParam);
 //		}
 //	}
@@ -9709,7 +9709,7 @@ void CConEmuMain::UpdateWindowChild(CVirtualConsole* apVCon)
 //	//}
 //	//else
 //	{
-//		// Рисуем
+//		// Р РёСЃСѓРµРј
 //		HDC hdc = NULL;
 //		//hdc = GetDCEx(ghWnd, hRect, DCX_WINDOW|DCX_INTERSECTRGN);
 //		//hRect = NULL; // system maintains this region
@@ -9736,7 +9736,7 @@ bool CConEmuMain::isRightClickingPaint()
 
 void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 {
-	//TODO: Если меняется PanelView - то "под кружочком" останется старый кусок
+	//TODO: Р•СЃР»Рё РјРµРЅСЏРµС‚СЃСЏ PanelView - С‚Рѕ "РїРѕРґ РєСЂСѓР¶РѕС‡РєРѕРј" РѕСЃС‚Р°РЅРµС‚СЃСЏ СЃС‚Р°СЂС‹Р№ РєСѓСЃРѕРє
 	if (hdcIntVCon == (HDC)INVALID_HANDLE_VALUE)
 	{
 		//if (mh_RightClickingWnd)
@@ -9753,7 +9753,7 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 		{
 			apVCon = VCon.VCon();
 		}
-		// По идее, кружок может появиться только в активной консоли
+		// РџРѕ РёРґРµРµ, РєСЂСѓР¶РѕРє РјРѕР¶РµС‚ РїРѕСЏРІРёС‚СЊСЃСЏ С‚РѕР»СЊРєРѕ РІ Р°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё
 		_ASSERTE(apVCon == VCon.VCon());
 	}
 
@@ -9768,7 +9768,7 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 	{
 		if (gpSet->isRClickTouchInvert())
 		{
-			// Длинный клик в режиме инверсии?
+			// Р”Р»РёРЅРЅС‹Р№ РєР»РёРє РІ СЂРµР¶РёРјРµ РёРЅРІРµСЂСЃРёРё?
 			lbSucceeded = FALSE;
 
 			DEBUGSTRRCLICK(L"RightClickingPaint: gpSet->isRClickTouchInvert()\n");
@@ -9776,14 +9776,14 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 			//if (!mb_RightClickingLSent && apVCon)
 			//{
 			//	mb_RightClickingLSent = TRUE;
-			//	// Чтобы установить курсор в панелях точно под кликом
-			//	// иначе получается некрасиво, что курсор прыгает только перед
-			//	// появлением EMenu, а до этого (пока крутится "кружок") курсор не двигается.
+			//	// Р§С‚РѕР±С‹ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РєСѓСЂСЃРѕСЂ РІ РїР°РЅРµР»СЏС… С‚РѕС‡РЅРѕ РїРѕРґ РєР»РёРєРѕРј
+			//	// РёРЅР°С‡Рµ РїРѕР»СѓС‡Р°РµС‚СЃСЏ РЅРµРєСЂР°СЃРёРІРѕ, С‡С‚Рѕ РєСѓСЂСЃРѕСЂ РїСЂС‹РіР°РµС‚ С‚РѕР»СЊРєРѕ РїРµСЂРµРґ
+			//	// РїРѕСЏРІР»РµРЅРёРµРј EMenu, Р° РґРѕ СЌС‚РѕРіРѕ (РїРѕРєР° РєСЂСѓС‚РёС‚СЃСЏ "РєСЂСѓР¶РѕРє") РєСѓСЂСЃРѕСЂ РЅРµ РґРІРёРіР°РµС‚СЃСЏ.
 			//	apVCon->RCon()->PostLeftClickSync(mouse.RClkDC);
 			//	//apVCon->RCon()->OnMouse(WM_MOUSEMOVE, 0, mouse.RClkDC.X, mouse.RClkDC.Y, true);
-			//	//WARNING("По хорошему, нужно дождаться пока мышь обработается");
+			//	//WARNING("РџРѕ С…РѕСЂРѕС€РµРјСѓ, РЅСѓР¶РЅРѕ РґРѕР¶РґР°С‚СЊСЃСЏ РїРѕРєР° РјС‹С€СЊ РѕР±СЂР°Р±РѕС‚Р°РµС‚СЃСЏ");
 			//	//apVCon->RCon()->PostMacro(L"MsLClick");
-			//	//WARNING("!!! Заменить на CMD_LEFTCLKSYNC?");
+			//	//WARNING("!!! Р—Р°РјРµРЅРёС‚СЊ РЅР° CMD_LEFTCLKSYNC?");
 			//}
 		}
 		else if ((gpSet->isRClickSendKey > 1) && (mouse.state & MOUSE_R_LOCKED)
@@ -9801,11 +9801,11 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 
 				if (dwDelta < RCLICKAPPS_START)
 				{
-					// Пока рисовать не начали
+					// РџРѕРєР° СЂРёСЃРѕРІР°С‚СЊ РЅРµ РЅР°С‡Р°Р»Рё
 					lbSucceeded = TRUE;
 				}
-				// Если держали дольше 10сек - все назад
-				else if (dwDelta > RCLICKAPPSTIMEOUT_MAX/*10сек*/)
+				// Р•СЃР»Рё РґРµСЂР¶Р°Р»Рё РґРѕР»СЊС€Рµ 10СЃРµРє - РІСЃРµ РЅР°Р·Р°Рґ
+				else if (dwDelta > RCLICKAPPSTIMEOUT_MAX/*10СЃРµРє*/)
 				{
 					lbSucceeded = FALSE;
 				}
@@ -9816,23 +9816,23 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 					if (!mb_RightClickingLSent && apVCon)
 					{
 						mb_RightClickingLSent = TRUE;
-						// Чтобы установить курсор в панелях точно под кликом
-						// иначе получается некрасиво, что курсор прыгает только перед
-						// появлением EMenu, а до этого (пока крутится "кружок") курсор не двигается.
+						// Р§С‚РѕР±С‹ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РєСѓСЂСЃРѕСЂ РІ РїР°РЅРµР»СЏС… С‚РѕС‡РЅРѕ РїРѕРґ РєР»РёРєРѕРј
+						// РёРЅР°С‡Рµ РїРѕР»СѓС‡Р°РµС‚СЃСЏ РЅРµРєСЂР°СЃРёРІРѕ, С‡С‚Рѕ РєСѓСЂСЃРѕСЂ РїСЂС‹РіР°РµС‚ С‚РѕР»СЊРєРѕ РїРµСЂРµРґ
+						// РїРѕСЏРІР»РµРЅРёРµРј EMenu, Р° РґРѕ СЌС‚РѕРіРѕ (РїРѕРєР° РєСЂСѓС‚РёС‚СЃСЏ "РєСЂСѓР¶РѕРє") РєСѓСЂСЃРѕСЂ РЅРµ РґРІРёРіР°РµС‚СЃСЏ.
 						apVCon->RCon()->PostLeftClickSync(mouse.RClkDC);
 						//apVCon->RCon()->OnMouse(WM_MOUSEMOVE, 0, mouse.RClkDC.X, mouse.RClkDC.Y, true);
-						//WARNING("По хорошему, нужно дождаться пока мышь обработается");
+						//WARNING("РџРѕ С…РѕСЂРѕС€РµРјСѓ, РЅСѓР¶РЅРѕ РґРѕР¶РґР°С‚СЊСЃСЏ РїРѕРєР° РјС‹С€СЊ РѕР±СЂР°Р±РѕС‚Р°РµС‚СЃСЏ");
 						//apVCon->RCon()->PostMacro(L"MsLClick");
-						//WARNING("!!! Заменить на CMD_LEFTCLKSYNC?");
+						//WARNING("!!! Р—Р°РјРµРЅРёС‚СЊ РЅР° CMD_LEFTCLKSYNC?");
 					}
 
-					// Прикинуть индекс фрейма
+					// РџСЂРёРєРёРЅСѓС‚СЊ РёРЅРґРµРєСЃ С„СЂРµР№РјР°
 					int nIndex = (dwDelta - RCLICKAPPS_START) * m_RightClickingFrames / (RCLICKAPPSTIMEOUT - RCLICKAPPS_START);
 
 					if (nIndex >= m_RightClickingFrames)
 					{
-						nIndex = (m_RightClickingFrames-1); // рисуем последний фрейм, мышку можно отпускать
-						//-- SetKillTimer(false, TIMER_RCLICKPAINT, 0); // таймер понадобится для "скрытия" кружочка после RCLICKAPPSTIMEOUT_MAX
+						nIndex = (m_RightClickingFrames-1); // СЂРёСЃСѓРµРј РїРѕСЃР»РµРґРЅРёР№ С„СЂРµР№Рј, РјС‹С€РєСѓ РјРѕР¶РЅРѕ РѕС‚РїСѓСЃРєР°С‚СЊ
+						//-- SetKillTimer(false, TIMER_RCLICKPAINT, 0); // С‚Р°Р№РјРµСЂ РїРѕРЅР°РґРѕР±РёС‚СЃСЏ РґР»СЏ "СЃРєСЂС‹С‚РёСЏ" РєСЂСѓР¶РѕС‡РєР° РїРѕСЃР»Рµ RCLICKAPPSTIMEOUT_MAX
 					}
 
 					#ifdef _DEBUG
@@ -9843,7 +9843,7 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 
 					//if (hdcIntVCon || (m_RightClickingCurrent != nIndex))
 					{
-						// Рисуем
+						// Р РёСЃСѓРµРј
 						HDC hdcSelf = NULL;
 						const wchar_t szRightClickingClass[] = L"ConEmu_RightClicking";
 						//BOOL lbSelfDC = FALSE;
@@ -9892,7 +9892,7 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 
 							if (hdcIntVCon)
 							{
-								// Если меняется содержимое консоли - его нужно "обновить" и в нашем "окошке" с кружочком
+								// Р•СЃР»Рё РјРµРЅСЏРµС‚СЃСЏ СЃРѕРґРµСЂР¶РёРјРѕРµ РєРѕРЅСЃРѕР»Рё - РµРіРѕ РЅСѓР¶РЅРѕ "РѕР±РЅРѕРІРёС‚СЊ" Рё РІ РЅР°С€РµРј "РѕРєРѕС€РєРµ" СЃ РєСЂСѓР¶РѕС‡РєРѕРј
 								BitBlt(hdcSelf, 0, 0, m_RightClickingSize.y, m_RightClickingSize.y,
 									hdcIntVCon, Rcursor.x-nHalf, Rcursor.y-nHalf, SRCCOPY);
 							}
@@ -9908,7 +9908,7 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 						}
 					}
 
-					// Запомним фрейм, что рисовали в последний раз
+					// Р—Р°РїРѕРјРЅРёРј С„СЂРµР№Рј, С‡С‚Рѕ СЂРёСЃРѕРІР°Р»Рё РІ РїРѕСЃР»РµРґРЅРёР№ СЂР°Р·
 					m_RightClickingCurrent = nIndex;
 				}
 			}
@@ -9959,7 +9959,7 @@ void CConEmuMain::StopRightClickingPaint()
 	}
 }
 
-// Смысл этого окошка в том, чтобы отрисоваться поверх возможного PanelView
+// РЎРјС‹СЃР» СЌС‚РѕРіРѕ РѕРєРѕС€РєР° РІ С‚РѕРј, С‡С‚РѕР±С‹ РѕС‚СЂРёСЃРѕРІР°С‚СЊСЃСЏ РїРѕРІРµСЂС… РІРѕР·РјРѕР¶РЅРѕРіРѕ PanelView
 LRESULT CConEmuMain::RightClickingProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	switch (messg)
@@ -9968,7 +9968,7 @@ LRESULT CConEmuMain::RightClickingProc(HWND hWnd, UINT messg, WPARAM wParam, LPA
 		return 0; // allow
 	case WM_PAINT:
 		{
-			// Если этого не сделать - в очереди "зависнет" WM_PAINT
+			// Р•СЃР»Рё СЌС‚РѕРіРѕ РЅРµ СЃРґРµР»Р°С‚СЊ - РІ РѕС‡РµСЂРµРґРё "Р·Р°РІРёСЃРЅРµС‚" WM_PAINT
 			PAINTSTRUCT ps = {};
 			BeginPaint(hWnd, &ps);
 			//RECT rcClient; GetClientRect(hWnd, &rcClient);
@@ -9985,7 +9985,7 @@ LRESULT CConEmuMain::RightClickingProc(HWND hWnd, UINT messg, WPARAM wParam, LPA
 
 //void CConEmuMain::OnPaintClient(HDC hdc/*, int width, int height*/)
 //{
-//	// Если "завис" PostUpdate
+//	// Р•СЃР»Рё "Р·Р°РІРёСЃ" PostUpdate
 //	if (mp_TabBar->NeedPostUpdate())
 //		mp_TabBar->Update();
 //
@@ -10023,7 +10023,7 @@ void CConEmuMain::InvalidateGaps()
 //	//if (ProgressBars)
 //	//    ProgressBars->OnTimer();
 //
-//	// Если "завис" PostUpdate
+//	// Р•СЃР»Рё "Р·Р°РІРёСЃ" PostUpdate
 //	if (mp_TabBar->NeedPostUpdate())
 //		mp_TabBar->Update();
 //
@@ -10035,7 +10035,7 @@ void CConEmuMain::InvalidateGaps()
 //		MapWindowPoints('ghWnd DC', ghWnd, (LPPOINT)&rcClient, 2);
 //	}
 //
-//	// если mp_ VActive==NULL - будет просто выполнена заливка фоном.
+//	// РµСЃР»Рё mp_ VActive==NULL - Р±СѓРґРµС‚ РїСЂРѕСЃС‚Рѕ РІС‹РїРѕР»РЅРµРЅР° Р·Р°Р»РёРІРєР° С„РѕРЅРѕРј.
 //	mp_ VActive->PaintVCon(hPaintDC, rcClient);
 //
 //#ifdef _DEBUG
@@ -10055,7 +10055,7 @@ void CConEmuMain::InvalidateGaps()
 //	gpConEmu->mp_TabBar->RePaint();
 //	//m_Back->RePaint();
 //	HDC hDc = GetDC(ghWnd);
-//	//mp_ VActive->PaintVCon(hDc); // если mp_ VActive==NULL - будет просто выполнена заливка фоном.
+//	//mp_ VActive->PaintVCon(hDc); // РµСЃР»Рё mp_ VActive==NULL - Р±СѓРґРµС‚ РїСЂРѕСЃС‚Рѕ РІС‹РїРѕР»РЅРµРЅР° Р·Р°Р»РёРІРєР° С„РѕРЅРѕРј.
 //	PaintGaps(hDc);
 //	//PaintCon(hDc);
 //	ReleaseDC(ghWnd, hDc);
@@ -10117,7 +10117,7 @@ LPCTSTR CConEmuMain::GetVConTitle(int nIdx)
 	return pszTitle;
 }
 
-// Возвращает индекс (0-based) активной консоли
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ РёРЅРґРµРєСЃ (0-based) Р°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё
 int CConEmuMain::GetActiveVCon(CVConGuard* pVCon /*= NULL*/, int* pAllCount /*= NULL*/)
 {
 	return CVConGroup::GetActiveVCon(pVCon, pAllCount);
@@ -10132,7 +10132,7 @@ bool CConEmuMain::IsActiveConAdmin()
 	return bAdmin;
 }
 
-// bFromCycle = true, для перебора в циклах (например, в CSettings::UpdateWinHookSettings), чтобы не вылезали ассерты
+// bFromCycle = true, РґР»СЏ РїРµСЂРµР±РѕСЂР° РІ С†РёРєР»Р°С… (РЅР°РїСЂРёРјРµСЂ, РІ CSettings::UpdateWinHookSettings), С‡С‚РѕР±С‹ РЅРµ РІС‹Р»РµР·Р°Р»Рё Р°СЃСЃРµСЂС‚С‹
 CVirtualConsole* CConEmuMain::GetVCon(int nIdx, bool bFromCycle /*= false*/)
 {
 	CVConGuard VCon;
@@ -10145,8 +10145,8 @@ CVirtualConsole* CConEmuMain::GetVCon(int nIdx, bool bFromCycle /*= false*/)
 	return VCon.VCon();
 }
 
-// 0 - такой консоли нет
-// 1..MAX_CONSOLE_COUNT - "номер" консоли (1 based!)
+// 0 - С‚Р°РєРѕР№ РєРѕРЅСЃРѕР»Рё РЅРµС‚
+// 1..MAX_CONSOLE_COUNT - "РЅРѕРјРµСЂ" РєРѕРЅСЃРѕР»Рё (1 based!)
 int CConEmuMain::isVConValid(CVirtualConsole* apVCon)
 {
 	int nIdx = CVConGroup::GetVConIndex(apVCon);
@@ -10174,7 +10174,7 @@ bool CConEmuMain::isConSelectMode()
 	return CVConGroup::isConSelectMode();
 }
 
-// Возвращает true если начат ShellDrag
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ true РµСЃР»Рё РЅР°С‡Р°С‚ ShellDrag
 bool CConEmuMain::isDragging()
 {
 	if ((mouse.state & (DRAG_L_STARTED | DRAG_R_STARTED)) == 0)
@@ -10193,7 +10193,7 @@ bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 {
 	if (!mb_AliveInitialized)
 	{
-		//создадим событие, чтобы не было проблем с ключем /SINGLE
+		//СЃРѕР·РґР°РґРёРј СЃРѕР±С‹С‚РёРµ, С‡С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ РїСЂРѕР±Р»РµРј СЃ РєР»СЋС‡РµРј /SINGLE
 		mb_AliveInitialized = TRUE;
 
 		wchar_t* pszSlash;
@@ -10236,7 +10236,7 @@ bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 
 		//Events by default are created in "Local\\" kernel namespace.
 		//GetUserName(ms_ConEmuAliveEvent+_tcslen(ms_ConEmuAliveEvent), &nSize);
-		//WARNING("Event не работает, если conemu.exe запущен под другим пользователем");
+		//WARNING("Event РЅРµ СЂР°Р±РѕС‚Р°РµС‚, РµСЃР»Рё conemu.exe Р·Р°РїСѓС‰РµРЅ РїРѕРґ РґСЂСѓРіРёРј РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј");
 		
 		// Create event distinct by program folder and config name
 		SetLastError(0);
@@ -10248,7 +10248,7 @@ bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 
 		mb_ConEmuAliveOwned = (mh_ConEmuAliveEvent != NULL) && (mn_ConEmuAliveEventErr != ERROR_ALREADY_EXISTS);
 
-		// Теперь - глобальное
+		// РўРµРїРµСЂСЊ - РіР»РѕР±Р°Р»СЊРЅРѕРµ
 		SetLastError(0);
 		mh_ConEmuAliveEventNoDir = CreateEvent(NULL, TRUE, TRUE, CEGUI_ALIVE_EVENT);
 		mn_ConEmuAliveEventErrNoDir = GetLastError();
@@ -10257,7 +10257,7 @@ bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 	}
 
 
-	// Попытка регистрации - по локальному событию. Ошибку показывать - только по глобальному.
+	// РџРѕРїС‹С‚РєР° СЂРµРіРёСЃС‚СЂР°С†РёРё - РїРѕ Р»РѕРєР°Р»СЊРЅРѕРјСѓ СЃРѕР±С‹С‚РёСЋ. РћС€РёР±РєСѓ РїРѕРєР°Р·С‹РІР°С‚СЊ - С‚РѕР»СЊРєРѕ РїРѕ РіР»РѕР±Р°Р»СЊРЅРѕРјСѓ.
 	if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
 	{
 		if (WaitForSingleObject(mh_ConEmuAliveEvent,0) == WAIT_TIMEOUT)
@@ -10265,7 +10265,7 @@ bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 			SetEvent(mh_ConEmuAliveEvent);
 			mb_ConEmuAliveOwned = true;
 
-			// Этот экземпляр становится "Основным" (другой, ранее бывший основным, был закрыт)
+			// Р­С‚РѕС‚ СЌРєР·РµРјРїР»СЏСЂ СЃС‚Р°РЅРѕРІРёС‚СЃСЏ "РћСЃРЅРѕРІРЅС‹Рј" (РґСЂСѓРіРѕР№, СЂР°РЅРµРµ Р±С‹РІС€РёР№ РѕСЃРЅРѕРІРЅС‹Рј, Р±С‹Р» Р·Р°РєСЂС‹С‚)
 			RegisterMinRestore(true);
 		}
 	}
@@ -10281,7 +10281,7 @@ bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 
 	// 
 
-	// Смотря что просили
+	// РЎРјРѕС‚СЂСЏ С‡С‚Рѕ РїСЂРѕСЃРёР»Рё
 	return bFolderIgnore ? mb_ConEmuAliveOwnedNoDir : mb_ConEmuAliveOwned;
 }
 
@@ -10345,11 +10345,11 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 
 bool CConEmuMain::isMouseOverFrame(bool abReal)
 {
-	// Если ресайзят за хвостик статус-бара - нефиг с рамкой играться
+	// Р•СЃР»Рё СЂРµСЃР°Р№Р·СЏС‚ Р·Р° С…РІРѕСЃС‚РёРє СЃС‚Р°С‚СѓСЃ-Р±Р°СЂР° - РЅРµС„РёРі СЃ СЂР°РјРєРѕР№ РёРіСЂР°С‚СЊСЃСЏ
 	if (mp_Status->IsStatusResizing())
 	{
-		_ASSERTE(m_ForceShowFrame == fsf_Hide); // не должно быть
-		_ASSERTE(isSizing()); // флаг "ресайза" должен был быть выставлен
+		_ASSERTE(m_ForceShowFrame == fsf_Hide); // РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ
+		_ASSERTE(isSizing()); // С„Р»Р°Рі "СЂРµСЃР°Р№Р·Р°" РґРѕР»Р¶РµРЅ Р±С‹Р» Р±С‹С‚СЊ РІС‹СЃС‚Р°РІР»РµРЅ
 		return false;
 	}
 
@@ -10375,7 +10375,7 @@ bool CConEmuMain::isMouseOverFrame(bool abReal)
 		const int nAdd = 2;
 		const int nSub = 1;
 
-		// чтобы область активации рамки была чуть побольше, увеличим регион
+		// С‡С‚РѕР±С‹ РѕР±Р»Р°СЃС‚СЊ Р°РєС‚РёРІР°С†РёРё СЂР°РјРєРё Р±С‹Р»Р° С‡СѓС‚СЊ РїРѕР±РѕР»СЊС€Рµ, СѓРІРµР»РёС‡РёРј СЂРµРіРёРѕРЅ
 		rcWnd.left -= nAdd; rcWnd.right += nAdd; rcWnd.bottom += nAdd;
 		if (gpSet->isQuakeStyle)
 			rcWnd.top += nSub; // Don't activate on the TOP edge in Quake mode
@@ -10386,7 +10386,7 @@ bool CConEmuMain::isMouseOverFrame(bool abReal)
 		{
 			RECT rcClient = GetGuiClientRect();
 
-			// чтобы область активации рамки была чуть побольше, уменьшим регион
+			// С‡С‚РѕР±С‹ РѕР±Р»Р°СЃС‚СЊ Р°РєС‚РёРІР°С†РёРё СЂР°РјРєРё Р±С‹Р»Р° С‡СѓС‚СЊ РїРѕР±РѕР»СЊС€Рµ, СѓРјРµРЅСЊС€РёРј СЂРµРіРёРѕРЅ
 			rcClient.left += nSub; rcClient.right -= nSub; rcClient.bottom -= nSub;
 			if (gpSet->isQuakeStyle)
 				rcWnd.top -= nAdd;
@@ -10452,8 +10452,8 @@ bool CConEmuMain::isVisible(CVirtualConsole* apVCon)
 //	return CVConGroup::isChildWindowVisible();
 //}
 
-// Заголовок окна для PictureView вообще может пользователем настраиваться, так что
-// рассчитывать на него при определения "Просмотра" - нельзя
+// Р—Р°РіРѕР»РѕРІРѕРє РѕРєРЅР° РґР»СЏ PictureView РІРѕРѕР±С‰Рµ РјРѕР¶РµС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј РЅР°СЃС‚СЂР°РёРІР°С‚СЊСЃСЏ, С‚Р°Рє С‡С‚Рѕ
+// СЂР°СЃСЃС‡РёС‚С‹РІР°С‚СЊ РЅР° РЅРµРіРѕ РїСЂРё РѕРїСЂРµРґРµР»РµРЅРёСЏ "РџСЂРѕСЃРјРѕС‚СЂР°" - РЅРµР»СЊР·СЏ
 bool CConEmuMain::isPictureView()
 {
 	return CVConGroup::isPictureView();
@@ -10466,11 +10466,11 @@ bool CConEmuMain::isProcessCreated()
 
 bool CConEmuMain::isSizing(UINT nMouseMsg/*=0*/)
 {
-	// Юзер тащит мышкой рамку окна
+	// Р®Р·РµСЂ С‚Р°С‰РёС‚ РјС‹С€РєРѕР№ СЂР°РјРєСѓ РѕРєРЅР°
 	if ((mouse.state & MOUSE_SIZING_BEGIN) != MOUSE_SIZING_BEGIN)
 		return false;
 
-	// могло не сброситься, проверим
+	// РјРѕРіР»Рѕ РЅРµ СЃР±СЂРѕСЃРёС‚СЊСЃСЏ, РїСЂРѕРІРµСЂРёРј
 	if ((nMouseMsg==WM_NCLBUTTONUP) || !isPressed(VK_LBUTTON))
 	{
 		EndSizing(nMouseMsg);
@@ -10482,7 +10482,7 @@ bool CConEmuMain::isSizing(UINT nMouseMsg/*=0*/)
 
 void CConEmuMain::BeginSizing(bool bFromStatusBar)
 {
-	// Перенес снизу, а то ассерты вылезают
+	// РџРµСЂРµРЅРµСЃ СЃРЅРёР·Сѓ, Р° С‚Рѕ Р°СЃСЃРµСЂС‚С‹ РІС‹Р»РµР·Р°СЋС‚
 	SetSizingFlags(MOUSE_SIZING_BEGIN);
 
 	// When resizing by dragging status-bar corner
@@ -10501,7 +10501,7 @@ void CConEmuMain::BeginSizing(bool bFromStatusBar)
 	{
 		SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
 		SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
-		// -- если уж пришел WM_NCLBUTTONDOWN - значит рамка уже показана?
+		// -- РµСЃР»Рё СѓР¶ РїСЂРёС€РµР» WM_NCLBUTTONDOWN - Р·РЅР°С‡РёС‚ СЂР°РјРєР° СѓР¶Рµ РїРѕРєР°Р·Р°РЅР°?
 		//gpConEmu->OnTimer(TIMER_CAPTION_APPEAR_ID,0);
 		//UpdateWindowRgn();
 	}
@@ -10509,7 +10509,7 @@ void CConEmuMain::BeginSizing(bool bFromStatusBar)
 
 void CConEmuMain::SetSizingFlags(DWORD nSetFlags /*= MOUSE_SIZING_BEGIN*/)
 {
-	_ASSERTE((nSetFlags & (~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))) == 0); // Допустимые флаги
+	_ASSERTE((nSetFlags & (~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))) == 0); // Р”РѕРїСѓСЃС‚РёРјС‹Рµ С„Р»Р°РіРё
 
 	#ifdef _DEBUG
 	if (!(gpConEmu->mouse.state & nSetFlags)) // For debug purposes (breakpoints)
@@ -10519,7 +10519,7 @@ void CConEmuMain::SetSizingFlags(DWORD nSetFlags /*= MOUSE_SIZING_BEGIN*/)
 
 void CConEmuMain::ResetSizingFlags(DWORD nDropFlags /*= MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO*/)
 {
-	_ASSERTE((nDropFlags & (~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))) == 0); // Допустимые флаги
+	_ASSERTE((nDropFlags & (~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))) == 0); // Р”РѕРїСѓСЃС‚РёРјС‹Рµ С„Р»Р°РіРё
 
 	#ifdef _DEBUG
 	if ((gpConEmu->mouse.state & nDropFlags)) // For debug purposes (breakpoints)
@@ -10533,7 +10533,7 @@ void CConEmuMain::EndSizing(UINT nMouseMsg/*=0*/)
 
 	if (mouse.state & MOUSE_SIZING_TODO)
 	{
-		// Если тянули мышкой - изменение размера консоли могло быть "отложено" до ее отпускания
+		// Р•СЃР»Рё С‚СЏРЅСѓР»Рё РјС‹С€РєРѕР№ - РёР·РјРµРЅРµРЅРёРµ СЂР°Р·РјРµСЂР° РєРѕРЅСЃРѕР»Рё РјРѕРіР»Рѕ Р±С‹С‚СЊ "РѕС‚Р»РѕР¶РµРЅРѕ" РґРѕ РµРµ РѕС‚РїСѓСЃРєР°РЅРёСЏ
 		bApplyResize = true;
 	}
 
@@ -10556,10 +10556,10 @@ void CConEmuMain::EndSizing(UINT nMouseMsg/*=0*/)
 			m_TileMode = cwc_Current;
 		}
 
-		// Сама разберется, что надо/не надо
+		// РЎР°РјР° СЂР°Р·Р±РµСЂРµС‚СЃСЏ, С‡С‚Рѕ РЅР°РґРѕ/РЅРµ РЅР°РґРѕ
 		StoreNormalRect(NULL);
-		// Теоретически, в некоторых случаях размер окна может (?) измениться с задержкой,
-		// в следующем цикле таймера - проверить размер
+		// РўРµРѕСЂРµС‚РёС‡РµСЃРєРё, РІ РЅРµРєРѕС‚РѕСЂС‹С… СЃР»СѓС‡Р°СЏС… СЂР°Р·РјРµСЂ РѕРєРЅР° РјРѕР¶РµС‚ (?) РёР·РјРµРЅРёС‚СЊСЃСЏ СЃ Р·Р°РґРµСЂР¶РєРѕР№,
+		// РІ СЃР»РµРґСѓСЋС‰РµРј С†РёРєР»Рµ С‚Р°Р№РјРµСЂР° - РїСЂРѕРІРµСЂРёС‚СЊ СЂР°Р·РјРµСЂ
 		mouse.bCheckNormalRect = true;
 	}
 
@@ -10569,7 +10569,7 @@ void CConEmuMain::EndSizing(UINT nMouseMsg/*=0*/)
 	}
 }
 
-// Сюда может придти только LOWORD от HKL
+// РЎСЋРґР° РјРѕР¶РµС‚ РїСЂРёРґС‚Рё С‚РѕР»СЊРєРѕ LOWORD РѕС‚ HKL
 void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 {
 	if ((gpSet->isMonitorConsoleLang & 1) == 0)
@@ -10597,7 +10597,7 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 			lbFound = TRUE;
 	}
 
-	WARNING("Похоже с другими раскладками будет глючить. US Dvorak?");
+	WARNING("РџРѕС…РѕР¶Рµ СЃ РґСЂСѓРіРёРјРё СЂР°СЃРєР»Р°РґРєР°РјРё Р±СѓРґРµС‚ РіР»СЋС‡РёС‚СЊ. US Dvorak?");
 
 	for (i = 0; !lbFound && i < nCount; i++)
 	{
@@ -10607,11 +10607,11 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 		}
 	}
 
-	// Если не задана раскладка (только язык?) формируем по умолчанию
+	// Р•СЃР»Рё РЅРµ Р·Р°РґР°РЅР° СЂР°СЃРєР»Р°РґРєР° (С‚РѕР»СЊРєРѕ СЏР·С‹Рє?) С„РѕСЂРјРёСЂСѓРµРј РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 	if (!lbFound && (dwNewKeybLayout == (dwNewKeybLayout & 0xFFFF)))
 		dwNewKeybLayout |= (dwNewKeybLayout << 16);
 
-	// Может она сейчас и активна?
+	// РњРѕР¶РµС‚ РѕРЅР° СЃРµР№С‡Р°СЃ Рё Р°РєС‚РёРІРЅР°?
 	if (dwNewKeybLayout != GetActiveKeyboardLayout())
 	{
 #ifdef _DEBUG
@@ -10627,7 +10627,7 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 			LogString(szInfo);
 		}
 
-		// Теперь переключаем раскладку
+		// РўРµРїРµСЂСЊ РїРµСЂРµРєР»СЋС‡Р°РµРј СЂР°СЃРєР»Р°РґРєСѓ
 		PostMessage(ghWnd, WM_INPUTLANGCHANGEREQUEST, 0, (LPARAM)dwNewKeybLayout);
 		PostMessage(ghWnd, WM_INPUTLANGCHANGE, 0, (LPARAM)dwNewKeybLayout);
 	}
@@ -10659,7 +10659,7 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 }
 #endif
 
-// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
+// РћР±РЅРѕРІРёС‚СЊ РЅР° С‚СѓР»Р±Р°СЂРµ СЃС‚Р°С‚СѓСЃС‹ Scrolling(BufferHeight) & Alternative
 void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 {
 	if (!isMainThread())
@@ -10685,7 +10685,7 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 		lbAlternative = pVCon->RCon()->isAlternative();
 	}
 
-	TrackMouse(); // спрятать или показать прокрутку, если над ней мышка
+	TrackMouse(); // СЃРїСЂСЏС‚Р°С‚СЊ РёР»Рё РїРѕРєР°Р·Р°С‚СЊ РїСЂРѕРєСЂСѓС‚РєСѓ, РµСЃР»Рё РЅР°Рґ РЅРµР№ РјС‹С€РєР°
 
 	mp_TabBar->OnBufferHeight(lbBufferHeight);
 	mp_TabBar->OnAlternative(lbAlternative);
@@ -10706,9 +10706,9 @@ bool CConEmuMain::OnScClose()
 
 	bool lbMsgConfirmed = false;
 
-	// lbMsgConfirmed - был ли показан диалог подтверждения, или юзер не включил эту опцию
+	// lbMsgConfirmed - Р±С‹Р» Р»Рё РїРѕРєР°Р·Р°РЅ РґРёР°Р»РѕРі РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ, РёР»Рё СЋР·РµСЂ РЅРµ РІРєР»СЋС‡РёР» СЌС‚Сѓ РѕРїС†РёСЋ
 	if (!CVConGroup::OnCloseQuery(&lbMsgConfirmed))
-		return false; // не закрывать
+		return false; // РЅРµ Р·Р°РєСЂС‹РІР°С‚СЊ
 
 	return CVConGroup::DoCloseAllVCon(lbMsgConfirmed);
 }
@@ -10757,8 +10757,8 @@ BOOL CConEmuMain::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int c
 
 LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 {
-	_ASSERTE(ghWnd == hWnd); // Уже должно было быть выставлено (CConEmuMain::MainWndProc)
-	ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
+	_ASSERTE(ghWnd == hWnd); // РЈР¶Рµ РґРѕР»Р¶РЅРѕ Р±С‹Р»Рѕ Р±С‹С‚СЊ РІС‹СЃС‚Р°РІР»РµРЅРѕ (CConEmuMain::MainWndProc)
+	ghWnd = hWnd; // СЃС‚Р°РІРёРј СЃСЂР°Р·Сѓ, С‡С‚РѕР±С‹ С„СѓРЅРєС†РёРё РјРѕРіР»Рё РїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ
 
 	if (gpSetCls->isAdvLogging)
 	{
@@ -10781,7 +10781,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//	}
 	//}
 
-	// lpCreate->cx/cy может содержать CW_USEDEFAULT
+	// lpCreate->cx/cy РјРѕР¶РµС‚ СЃРѕРґРµСЂР¶Р°С‚СЊ CW_USEDEFAULT
 	//RECT rcWnd = CalcRect(CER_MAIN);
 	//GetWindowRect(ghWnd, &rcWnd);
 
@@ -10792,20 +10792,20 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	// Used for restoring from Maximized/Fullscreen/Iconic. Remember current Pos/Size.
 	StoreNormalRect(NULL);
 
-	// Win глючит? Просил создать БЕЗ WS_CAPTION, а создается С WS_CAPTION
+	// Win РіР»СЋС‡РёС‚? РџСЂРѕСЃРёР» СЃРѕР·РґР°С‚СЊ Р‘Р•Р— WS_CAPTION, Р° СЃРѕР·РґР°РµС‚СЃСЏ РЎ WS_CAPTION
 	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD dwNewStyle = FixWindowStyle(dwStyle, WindowMode);
 	DEBUGTEST(WINDOWPLACEMENT wpl1 = {sizeof(wpl1)}; GetWindowPlacement(ghWnd, &wpl1););
 	if (dwStyle != dwNewStyle)
 	{
-		//TODO: Проверить, чтобы в этот момент окошко не пыталось куда-то уехать
+		//TODO: РџСЂРѕРІРµСЂРёС‚СЊ, С‡С‚РѕР±С‹ РІ СЌС‚РѕС‚ РјРѕРјРµРЅС‚ РѕРєРѕС€РєРѕ РЅРµ РїС‹С‚Р°Р»РѕСЃСЊ РєСѓРґР°-С‚Рѕ СѓРµС…Р°С‚СЊ
 		SetWindowStyle(dwNewStyle);
 	}
 	DEBUGTEST(WINDOWPLACEMENT wpl2 = {sizeof(wpl2)}; GetWindowPlacement(ghWnd, &wpl2););
 
 
 	Icon.LoadIcon(hWnd, gpSet->nIconID/*IDI_ICON1*/);
-	// Позволяет реагировать на запросы FlashWindow из фара и запуск приложений
+	// РџРѕР·РІРѕР»СЏРµС‚ СЂРµР°РіРёСЂРѕРІР°С‚СЊ РЅР° Р·Р°РїСЂРѕСЃС‹ FlashWindow РёР· С„Р°СЂР° Рё Р·Р°РїСѓСЃРє РїСЂРёР»РѕР¶РµРЅРёР№
 	HMODULE hUser32 = GetModuleHandle(L"user32.dll");
 	FRegisterShellHookWindow fnRegisterShellHookWindow = NULL;
 
@@ -10813,9 +10813,9 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 
 	if (fnRegisterShellHookWindow) fnRegisterShellHookWindow(hWnd);
 
-	_ASSERTE(ghConWnd==NULL && "ConWnd must not be created yet"); // оно еще не должно быть создано
-	// Чтобы можно было найти хэндл окна по хэндлу консоли
-	OnActiveConWndStore(NULL); // 31.03.2009 Maximus - только нихрена оно еще не создано!
+	_ASSERTE(ghConWnd==NULL && "ConWnd must not be created yet"); // РѕРЅРѕ РµС‰Рµ РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ СЃРѕР·РґР°РЅРѕ
+	// Р§С‚РѕР±С‹ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ РЅР°Р№С‚Рё С…СЌРЅРґР» РѕРєРЅР° РїРѕ С…СЌРЅРґР»Сѓ РєРѕРЅСЃРѕР»Рё
+	OnActiveConWndStore(NULL); // 31.03.2009 Maximus - С‚РѕР»СЊРєРѕ РЅРёС…СЂРµРЅР° РѕРЅРѕ РµС‰Рµ РЅРµ СЃРѕР·РґР°РЅРѕ!
 	//m_Back->Create();
 
 	//if (!m_Child->Create())
@@ -10825,17 +10825,17 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//if (gpSet->isGUIpb && !ProgressBars) {
 	//	ProgressBars = new CProgressBars(ghWnd, g_hInstance);
 	//}
-	//// Установить переменную среды с дескриптором окна
+	//// РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ СЃСЂРµРґС‹ СЃ РґРµСЃРєСЂРёРїС‚РѕСЂРѕРј РѕРєРЅР°
 	//SetConEmuEnvVar('ghWnd DC');
 
-	// Сформировать или обновить системное меню
+	// РЎС„РѕСЂРјРёСЂРѕРІР°С‚СЊ РёР»Рё РѕР±РЅРѕРІРёС‚СЊ СЃРёСЃС‚РµРјРЅРѕРµ РјРµРЅСЋ
 	mp_Menu->GetSysMenu(TRUE);
 
 	// Holder
-	_ASSERTE(ghWndWork==NULL); // еще не должен был быть создан
+	_ASSERTE(ghWndWork==NULL); // РµС‰Рµ РЅРµ РґРѕР»Р¶РµРЅ Р±С‹Р» Р±С‹С‚СЊ СЃРѕР·РґР°РЅ
 	if (!ghWndWork && !CreateWorkWindow())
 	{
-		// Ошибка уже показана
+		// РћС€РёР±РєР° СѓР¶Рµ РїРѕРєР°Р·Р°РЅР°
 		return -1;
 	}
 
@@ -10845,7 +10845,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About / Help"));
 
-	//if (ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
+	//if (ms_ConEmuChm[0])  //РџРѕРєР°Р·С‹РІР°С‚СЊ РїСѓРЅРєС‚ С‚РѕР»СЊРєРѕ РµСЃР»Рё РµСЃС‚СЊ conemu.chm
 	//	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
 
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
@@ -10866,11 +10866,11 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 
 	_ASSERTE(InCreateWindow() == true);
 
-	if (gpSet->isTabs==1)  // "Табы всегда"
+	if (gpSet->isTabs==1)  // "РўР°Р±С‹ РІСЃРµРіРґР°"
 	{
-		ForceShowTabs(TRUE); // Показать табы
+		ForceShowTabs(TRUE); // РџРѕРєР°Р·Р°С‚СЊ С‚Р°Р±С‹
 
-		// Расчет высоты таббара был выполнен "примерно"
+		// Р Р°СЃС‡РµС‚ РІС‹СЃРѕС‚С‹ С‚Р°Р±Р±Р°СЂР° Р±С‹Р» РІС‹РїРѕР»РЅРµРЅ "РїСЂРёРјРµСЂРЅРѕ"
 		if ((WindowMode == wmNormal) && !mp_Inside)
 		{
 			RECT rcWnd = GetDefaultRect();
@@ -10879,15 +10879,15 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		}
 	}
 
-	// Причесать размеры напоследок
+	// РџСЂРёС‡РµСЃР°С‚СЊ СЂР°Р·РјРµСЂС‹ РЅР°РїРѕСЃР»РµРґРѕРє
 	gpConEmu->ReSize(TRUE);
 
 	//CreateCon();
-	// Запустить серверную нить
-	// 120122 - теперь через PipeServer
+	// Р—Р°РїСѓСЃС‚РёС‚СЊ СЃРµСЂРІРµСЂРЅСѓСЋ РЅРёС‚СЊ
+	// 120122 - С‚РµРїРµСЂСЊ С‡РµСЂРµР· PipeServer
 	if (!m_GuiServer.Start())
 	{
-		// Ошибка уже показана
+		// РћС€РёР±РєР° СѓР¶Рµ РїРѕРєР°Р·Р°РЅР°
 		return -1;
 	}
 
@@ -10900,18 +10900,18 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDi
 
 	if (*asSource == CmdFilePrefix)
 	{
-		// В качестве "команды" указан "пакетный файл" одновременного запуска нескольких консолей
+		// Р’ РєР°С‡РµСЃС‚РІРµ "РєРѕРјР°РЅРґС‹" СѓРєР°Р·Р°РЅ "РїР°РєРµС‚РЅС‹Р№ С„Р°Р№Р»" РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕРіРѕ Р·Р°РїСѓСЃРєР° РЅРµСЃРєРѕР»СЊРєРёС… РєРѕРЅСЃРѕР»РµР№
 		pszDataW = LoadConsoleBatch_File(asSource);
 	}
 	else if ((*asSource == TaskBracketLeft) || (lstrcmp(asSource, AutoStartTaskName) == 0))
 	{
-		// Имя задачи
+		// РРјСЏ Р·Р°РґР°С‡Рё
 		pszDataW = LoadConsoleBatch_Task(asSource, ppszStartupDir);
 	}
 	else if (*asSource == DropLnkPrefix)
 	{
-		// Сюда мы попадаем, если на ConEmu (или его ярлык)
-		// набрасывают (в проводнике?) один или несколько других файлов/программ
+		// РЎСЋРґР° РјС‹ РїРѕРїР°РґР°РµРј, РµСЃР»Рё РЅР° ConEmu (РёР»Рё РµРіРѕ СЏСЂР»С‹Рє)
+		// РЅР°Р±СЂР°СЃС‹РІР°СЋС‚ (РІ РїСЂРѕРІРѕРґРЅРёРєРµ?) РѕРґРёРЅ РёР»Рё РЅРµСЃРєРѕР»СЊРєРѕ РґСЂСѓРіРёС… С„Р°Р№Р»РѕРІ/РїСЂРѕРіСЂР°РјРј
 		pszDataW = LoadConsoleBatch_Drops(asSource);
 	}
 	else
@@ -10928,7 +10928,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 
 	if (asSource && (*asSource == CmdFilePrefix))
 	{
-		// В качестве "команды" указан "пакетный файл" одновременного запуска нескольких консолей
+		// Р’ РєР°С‡РµСЃС‚РІРµ "РєРѕРјР°РЅРґС‹" СѓРєР°Р·Р°РЅ "РїР°РєРµС‚РЅС‹Р№ С„Р°Р№Р»" РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕРіРѕ Р·Р°РїСѓСЃРєР° РЅРµСЃРєРѕР»СЊРєРёС… РєРѕРЅСЃРѕР»РµР№
 		HANDLE hFile = CreateFile(asSource+1, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
 
 		if (!hFile || hFile == INVALID_HANDLE_VALUE)
@@ -10937,11 +10937,11 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 			wchar_t szCurDir[MAX_PATH*2]; szCurDir[0] = 0; GetCurrentDirectory(countof(szCurDir), szCurDir);
 			size_t cchMax = _tcslen(asSource)+100+_tcslen(szCurDir);
 			wchar_t* pszErrMsg = (wchar_t*)calloc(cchMax,2);
-			_wcscpy_c(pszErrMsg, cchMax, L"Can't open console batch file:\n" L"\x2018"/*‘*/);
+			_wcscpy_c(pszErrMsg, cchMax, L"Can't open console batch file:\n" L"\x2018"/*вЂ*/);
 			_wcscat_c(pszErrMsg, cchMax, asSource+1);
-			_wcscat_c(pszErrMsg, cchMax, L"\x2019"/*’*/ L"\nCurrent directory:\n" L"\x2018"/*‘*/);
+			_wcscat_c(pszErrMsg, cchMax, L"\x2019"/*вЂ™*/ L"\nCurrent directory:\n" L"\x2018"/*вЂ*/);
 			_wcscat_c(pszErrMsg, cchMax, szCurDir);
-			_wcscat_c(pszErrMsg, cchMax, L"\x2019"/*’*/);
+			_wcscat_c(pszErrMsg, cchMax, L"\x2019"/*вЂ™*/);
 			DisplayLastError(pszErrMsg, dwErr);
 			free(pszErrMsg);
 			//Destroy(); -- must caller
@@ -10955,7 +10955,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 			DWORD dwErr = GetLastError();
 			CloseHandle(hFile);
 			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(asSource)+100,2);
-			lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n" L"\x2018"/*‘*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\x2019"/*’*/);
+			lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n" L"\x2018"/*вЂ*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\x2019"/*вЂ™*/);
 			DisplayLastError(pszErrMsg, dwErr);
 			free(pszErrMsg);
 			//Destroy(); -- must caller
@@ -10973,14 +10973,14 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 		{
 			free(pszDataA);
 			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(asSource)+100,2);
-			lstrcpy(pszErrMsg, L"Reading console batch file failed:\n" L"\x2018"/*‘*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\x2019"/*’*/);
+			lstrcpy(pszErrMsg, L"Reading console batch file failed:\n" L"\x2018"/*вЂ*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\x2019"/*вЂ™*/);
 			DisplayLastError(pszErrMsg, dwErr);
 			free(pszErrMsg);
 			//Destroy(); -- must caller
 			return NULL;
 		}
 
-		// Опредлить код.страницу файла
+		// РћРїСЂРµРґР»РёС‚СЊ РєРѕРґ.СЃС‚СЂР°РЅРёС†Сѓ С„Р°Р№Р»Р°
 		if (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF')
 		{
 			// UTF-8 BOM
@@ -11017,8 +11017,8 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 
 	if (asSource && (*asSource == DropLnkPrefix))
 	{
-		// Сюда мы попадаем, если на ConEmu (или его ярлык)
-		// набрасывают (в проводнике?) один или несколько других файлов/программ
+		// РЎСЋРґР° РјС‹ РїРѕРїР°РґР°РµРј, РµСЃР»Рё РЅР° ConEmu (РёР»Рё РµРіРѕ СЏСЂР»С‹Рє)
+		// РЅР°Р±СЂР°СЃС‹РІР°СЋС‚ (РІ РїСЂРѕРІРѕРґРЅРёРєРµ?) РѕРґРёРЅ РёР»Рё РЅРµСЃРєРѕР»СЊРєРѕ РґСЂСѓРіРёС… С„Р°Р№Р»РѕРІ/РїСЂРѕРіСЂР°РјРј
 		asSource++;
 		if (!*asSource)
 		{
@@ -11026,8 +11026,8 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 			return NULL;
 		}
 
-		// Считаем, что один файл (*.exe, *.cmd, ...) или ярлык (*.lnk)
-		// это одна запускаемая консоль в ConEmu.
+		// РЎС‡РёС‚Р°РµРј, С‡С‚Рѕ РѕРґРёРЅ С„Р°Р№Р» (*.exe, *.cmd, ...) РёР»Рё СЏСЂР»С‹Рє (*.lnk)
+		// СЌС‚Рѕ РѕРґРЅР° Р·Р°РїСѓСЃРєР°РµРјР°СЏ РєРѕРЅСЃРѕР»СЊ РІ ConEmu.
 		CmdArg szPart;
 		wchar_t szExe[MAX_PATH+1], szDir[MAX_PATH+1];
 		HRESULT hr = S_OK;
@@ -11059,14 +11059,14 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 			return NULL;
 		}
 		
-		// Поехали
+		// РџРѕРµС…Р°Р»Рё
 		LPWSTR pszConsoles[MAX_CONSOLE_COUNT] = {};
 		size_t cchLen, cchAllLen = 0, iCount = 0;
 		while ((iCount < MAX_CONSOLE_COUNT) && (0 == NextArg(&asSource, szPart)))
 		{
 			if (lstrcmpi(PointToExt(szPart), L".lnk") == 0)
 			{
-				// Ярлык
+				// РЇСЂР»С‹Рє
 				hr = pFile->Load(szPart, STGM_READ);
 				if (SUCCEEDED(hr))
 				{
@@ -11122,7 +11122,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 		if (iCount == 1)
 			return pszConsoles[0];
 
-		// Теперь - собрать pszDataW
+		// РўРµРїРµСЂСЊ - СЃРѕР±СЂР°С‚СЊ pszDataW
 		pszDataW = (wchar_t*)malloc(cchAllLen*sizeof(*pszDataW));
 		*pszDataW = 0;
 		for (size_t i = 0; i < iCount; i++)
@@ -11300,7 +11300,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				_ASSERTE(m_RightClickingSize.y>0);
 				m_RightClickingFrames = m_RightClickingSize.x / m_RightClickingSize.y;
-				// по идее, должно быть ровно
+				// РїРѕ РёРґРµРµ, РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ СЂРѕРІРЅРѕ
 				_ASSERTE(m_RightClickingSize.x == m_RightClickingFrames * m_RightClickingSize.y);
 			}
 		}
@@ -11309,20 +11309,20 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 	{
 		HWND hCurForeground = GetForegroundWindow();
 
-		//-- Перенесено в Taskbar_Init();
+		//-- РџРµСЂРµРЅРµСЃРµРЅРѕ РІ Taskbar_Init();
 		//HRESULT hr = S_OK;
-		//hr = OleInitialize(NULL);  // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
+		//hr = OleInitialize(NULL);  // РєР°Рє Р±С‹ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РІРєР»СЋС‡Р°С‚СЊ Ole С‚РѕР»СЊРєРѕ РІРѕ РІСЂРµРјСЏ РґСЂР°РіР°. РєР°Р¶РµС‚СЃСЏ С‡С‚Рѕ РёР·-Р·Р° РЅРµРіРѕ РіР»СЋС‡РёС‚ РїРµСЂРµРєР»СЋС‡Р°Р»РєР° СЏР·С‹РєР°
 		//CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
-		// Может быть уже вызван в SkipOneShowWindow, а может и нет
+		// РњРѕР¶РµС‚ Р±С‹С‚СЊ СѓР¶Рµ РІС‹Р·РІР°РЅ РІ SkipOneShowWindow, Р° РјРѕР¶РµС‚ Рё РЅРµС‚
 		Taskbar_Init();
 
 		RegisterMinRestore(true);
 
 		RegisterHotKeys();
 
-		// Если вдруг оказалось, что хоткей (из ярлыка) назначился для
-		// окна отличного от главного
+		// Р•СЃР»Рё РІРґСЂСѓРі РѕРєР°Р·Р°Р»РѕСЃСЊ, С‡С‚Рѕ С…РѕС‚РєРµР№ (РёР· СЏСЂР»С‹РєР°) РЅР°Р·РЅР°С‡РёР»СЃСЏ РґР»СЏ
+		// РѕРєРЅР° РѕС‚Р»РёС‡РЅРѕРіРѕ РѕС‚ РіР»Р°РІРЅРѕРіРѕ
 		if (!gnWndSetHotkeyOk && gnWndSetHotkey)
 		{
 			if (ghWndApp)
@@ -11332,9 +11332,9 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			SendMessage(ghWnd, WM_SETHOTKEY, gnWndSetHotkey, 0);
 		}
 
-		//TODO: Возможно, стоит отложить запуск секунд на 5, чтобы не мешать инициализации?
+		//TODO: Р’РѕР·РјРѕР¶РЅРѕ, СЃС‚РѕРёС‚ РѕС‚Р»РѕР¶РёС‚СЊ Р·Р°РїСѓСЃРє СЃРµРєСѓРЅРґ РЅР° 5, С‡С‚РѕР±С‹ РЅРµ РјРµС€Р°С‚СЊ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё?
 		if (gpSet->UpdSet.isUpdateCheckOnStartup && !DisableAutoUpdate)
-			CheckUpdates(FALSE); // Не показывать сообщение "You are using latest available version"
+			CheckUpdates(FALSE); // РќРµ РїРѕРєР°Р·С‹РІР°С‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ "You are using latest available version"
 
 		//SetWindowRgn(ghWnd, CreateWindowRgn(), TRUE);
 
@@ -11350,9 +11350,9 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			gpSetCls->EditConsoleFont(ghWnd);
 		}
 		
-		// Если в ключе [HKEY_CURRENT_USER\Console] будут левые значения - то в Win7 могут
-		// начаться страшные глюки :-) 
-		// например, консольное окно будет "дырявое" - рамка есть, а содержимого - нет :-P
+		// Р•СЃР»Рё РІ РєР»СЋС‡Рµ [HKEY_CURRENT_USER\Console] Р±СѓРґСѓС‚ Р»РµРІС‹Рµ Р·РЅР°С‡РµРЅРёСЏ - С‚Рѕ РІ Win7 РјРѕРіСѓС‚
+		// РЅР°С‡Р°С‚СЊСЃСЏ СЃС‚СЂР°С€РЅС‹Рµ РіР»СЋРєРё :-) 
+		// РЅР°РїСЂРёРјРµСЂ, РєРѕРЅСЃРѕР»СЊРЅРѕРµ РѕРєРЅРѕ Р±СѓРґРµС‚ "РґС‹СЂСЏРІРѕРµ" - СЂР°РјРєР° РµСЃС‚СЊ, Р° СЃРѕРґРµСЂР¶РёРјРѕРіРѕ - РЅРµС‚ :-P
 		gpSet->CheckConsoleSettings();
 
 		if (gpSet->isShowBgImage)
@@ -11360,12 +11360,12 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			gpSetCls->LoadBackgroundFile(gpSet->sBgImage);
 		}
 
-		// Перенес перед созданием консоли, чтобы не блокировать SendMessage
-		// (mp_DragDrop->Register() может быть относительно длительной операцией)
+		// РџРµСЂРµРЅРµСЃ РїРµСЂРµРґ СЃРѕР·РґР°РЅРёРµРј РєРѕРЅСЃРѕР»Рё, С‡С‚РѕР±С‹ РЅРµ Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ SendMessage
+		// (mp_DragDrop->Register() РјРѕР¶РµС‚ Р±С‹С‚СЊ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РґР»РёС‚РµР»СЊРЅРѕР№ РѕРїРµСЂР°С†РёРµР№)
 		if (!mp_DragDrop)
 		{
-			// было 'ghWnd DC'. Попробуем на главное окно, было бы удобно
-			// "бросать" на таб (с автоматической активацией консоли)
+			// Р±С‹Р»Рѕ 'ghWnd DC'. РџРѕРїСЂРѕР±СѓРµРј РЅР° РіР»Р°РІРЅРѕРµ РѕРєРЅРѕ, Р±С‹Р»Рѕ Р±С‹ СѓРґРѕР±РЅРѕ
+			// "Р±СЂРѕСЃР°С‚СЊ" РЅР° С‚Р°Р± (СЃ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРѕР№ Р°РєС‚РёРІР°С†РёРµР№ РєРѕРЅСЃРѕР»Рё)
 			mp_DragDrop = new CDragDrop();
 
 			if (!mp_DragDrop->Register())
@@ -11375,19 +11375,19 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			}
 		}
 
-		// Может быть в настройке указано - всегда показывать иконку в TSA
+		// РњРѕР¶РµС‚ Р±С‹С‚СЊ РІ РЅР°СЃС‚СЂРѕР№РєРµ СѓРєР°Р·Р°РЅРѕ - РІСЃРµРіРґР° РїРѕРєР°Р·С‹РІР°С‚СЊ РёРєРѕРЅРєСѓ РІ TSA
 		Icon.SettingsChanged();
 
-		// Проверка уникальности хоткеев
+		// РџСЂРѕРІРµСЂРєР° СѓРЅРёРєР°Р»СЊРЅРѕСЃС‚Рё С…РѕС‚РєРµРµРІ
 		gpSet->CheckHotkeyUnique();
 
 
-		if (!isVConExists(0) || !gpConEmu->mb_StartDetached)  // Консоль уже может быть создана, если пришел Attach из ConEmuC
+		if (!isVConExists(0) || !gpConEmu->mb_StartDetached)  // РљРѕРЅСЃРѕР»СЊ СѓР¶Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ СЃРѕР·РґР°РЅР°, РµСЃР»Рё РїСЂРёС€РµР» Attach РёР· ConEmuC
 		{
-			// Если надо - подготовить портабельный реестр
+			// Р•СЃР»Рё РЅР°РґРѕ - РїРѕРґРіРѕС‚РѕРІРёС‚СЊ РїРѕСЂС‚Р°Р±РµР»СЊРЅС‹Р№ СЂРµРµСЃС‚СЂ
 			if (mb_PortableRegExist)
 			{
-				// Если реестр обломался, или юзер сказал "не продолжать"
+				// Р•СЃР»Рё СЂРµРµСЃС‚СЂ РѕР±Р»РѕРјР°Р»СЃСЏ, РёР»Рё СЋР·РµСЂ СЃРєР°Р·Р°Р» "РЅРµ РїСЂРѕРґРѕР»Р¶Р°С‚СЊ"
 				if (!gpConEmu->PreparePortableReg())
 				{
 					Destroy();
@@ -11405,9 +11405,9 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			{
 				wchar_t* pszDataW = lstrdup(pszCmd);
 
-				// Если передали "скрипт" (как бы содержимое Task вытянутое в строку)
-				// Обработать - заменить "|||" на " \r\n"
-				// Раньше здесь было '|' но заменил на "|||" во избежание неоднозначностей
+				// Р•СЃР»Рё РїРµСЂРµРґР°Р»Рё "СЃРєСЂРёРїС‚" (РєР°Рє Р±С‹ СЃРѕРґРµСЂР¶РёРјРѕРµ Task РІС‹С‚СЏРЅСѓС‚РѕРµ РІ СЃС‚СЂРѕРєСѓ)
+				// РћР±СЂР°Р±РѕС‚Р°С‚СЊ - Р·Р°РјРµРЅРёС‚СЊ "|||" РЅР° " \r\n"
+				// Р Р°РЅСЊС€Рµ Р·РґРµСЃСЊ Р±С‹Р»Рѕ '|' РЅРѕ Р·Р°РјРµРЅРёР» РЅР° "|||" РІРѕ РёР·Р±РµР¶Р°РЅРёРµ РЅРµРѕРґРЅРѕР·РЅР°С‡РЅРѕСЃС‚РµР№
 				wchar_t* pszNext = pszDataW;
 				while ((pszNext = wcsstr(pszNext, L"|||")) != NULL)
 				{
@@ -11425,7 +11425,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				SafeFree(pszDataW);
 
-				// сбросить команду, которая пришла из "/cmdlist" - загрузить настройку
+				// СЃР±СЂРѕСЃРёС‚СЊ РєРѕРјР°РЅРґСѓ, РєРѕС‚РѕСЂР°СЏ РїСЂРёС€Р»Р° РёР· "/cmdlist" - Р·Р°РіСЂСѓР·РёС‚СЊ РЅР°СЃС‚СЂРѕР№РєСѓ
 				gpSetCls->ResetCmdArg();
 
 				lbCreated = TRUE;
@@ -11433,7 +11433,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && !gpConEmu->mb_StartDetached)
 			{
 				wchar_t* pszStartupDir = NULL;
-				// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
+				// Р’ РєР°С‡РµСЃС‚РІРµ "РєРѕРјР°РЅРґС‹" СѓРєР°Р·Р°РЅ "РїР°РєРµС‚РЅС‹Р№ С„Р°Р№Р»" РёР»Рё "РіСЂСѓРїРїР° РєРѕРјР°РЅРґ" РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕРіРѕ Р·Р°РїСѓСЃРєР° РЅРµСЃРєРѕР»СЊРєРёС… РєРѕРЅСЃРѕР»РµР№
 				wchar_t* pszDataW = LoadConsoleBatch(pszCmd, &pszStartupDir);
 				if (!pszDataW)
 				{
@@ -11451,8 +11451,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				SafeFree(pszDataW);
 				SafeFree(pszStartupDir);
 
-				//// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
-				//// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
+				//// Р•СЃР»Рё ConEmu Р±С‹Р» Р·Р°РїСѓС‰РµРЅ СЃ РєР»СЋС‡РѕРј "/single /cmd xxx" С‚Рѕ РїРѕСЃР»Рµ РѕРєРѕРЅС‡Р°РЅРёСЏ
+				//// Р·Р°РіСЂСѓР·РєРё - СЃР±СЂРѕСЃРёС‚СЊ РєРѕРјР°РЅРґСѓ, РєРѕС‚РѕСЂР°СЏ РїСЂРёС€Р»Р° РёР· "/cmd" - Р·Р°РіСЂСѓР·РёС‚СЊ РЅР°СЃС‚СЂРѕР№РєСѓ
 				//if (gpSetCls->SingleInstanceArg)
 				//{
 				//	gpSetCls->ResetCmdArg();
@@ -11481,15 +11481,15 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		}
 
 		if (gpConEmu->mb_StartDetached)
-			gpConEmu->mb_StartDetached = FALSE;  // действует только на первую консоль
+			gpConEmu->mb_StartDetached = FALSE;  // РґРµР№СЃС‚РІСѓРµС‚ С‚РѕР»СЊРєРѕ РЅР° РїРµСЂРІСѓСЋ РєРѕРЅСЃРѕР»СЊ
 
-		//// Может быть в настройке указано - всегда показывать иконку в TSA
+		//// РњРѕР¶РµС‚ Р±С‹С‚СЊ РІ РЅР°СЃС‚СЂРѕР№РєРµ СѓРєР°Р·Р°РЅРѕ - РІСЃРµРіРґР° РїРѕРєР°Р·С‹РІР°С‚СЊ РёРєРѕРЅРєСѓ РІ TSA
 		//Icon.SettingsChanged();
 
 		//if (!mp_TaskBar2)
 		//{
-		//	// В PostCreate это выполняется дольше всего. По идее мешать не должно,
-		//	// т.к. серверная нить уже запущена.
+		//	// Р’ PostCreate СЌС‚Рѕ РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РґРѕР»СЊС€Рµ РІСЃРµРіРѕ. РџРѕ РёРґРµРµ РјРµС€Р°С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ,
+		//	// С‚.Рє. СЃРµСЂРІРµСЂРЅР°СЏ РЅРёС‚СЊ СѓР¶Рµ Р·Р°РїСѓС‰РµРЅР°.
 		//	hr = CoCreateInstance(CLSID_TaskbarList,NULL,CLSCTX_INPROC_SERVER,IID_ITaskbarList2,(void**)&mp_TaskBar2);
 		//
 		//	if (hr == S_OK && mp_TaskBar2)
@@ -11512,8 +11512,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		//if (!mp_DragDrop)
 		//{
-		//	// было 'ghWnd DC'. Попробуем на главное окно, было бы удобно
-		//	// "бросать" на таб (с автоматической активацией консоли)
+		//	// Р±С‹Р»Рѕ 'ghWnd DC'. РџРѕРїСЂРѕР±СѓРµРј РЅР° РіР»Р°РІРЅРѕРµ РѕРєРЅРѕ, Р±С‹Р»Рѕ Р±С‹ СѓРґРѕР±РЅРѕ
+		//	// "Р±СЂРѕСЃР°С‚СЊ" РЅР° С‚Р°Р± (СЃ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРѕР№ Р°РєС‚РёРІР°С†РёРµР№ РєРѕРЅСЃРѕР»Рё)
 		//	mp_DragDrop = new CDragDrop();
 
 		//	if (!mp_DragDrop->Register())
@@ -11524,10 +11524,10 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		//}
 
 		//TODO terst
-		WARNING("Если консоль не создана - handler не установится!")
+		WARNING("Р•СЃР»Рё РєРѕРЅСЃРѕР»СЊ РЅРµ СЃРѕР·РґР°РЅР° - handler РЅРµ СѓСЃС‚Р°РЅРѕРІРёС‚СЃСЏ!")
 		//SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
 		
-		// Если фокус был у нас - вернуть его (на всякий случай, вдруг RealConsole какая забрала
+		// Р•СЃР»Рё С„РѕРєСѓСЃ Р±С‹Р» Сѓ РЅР°СЃ - РІРµСЂРЅСѓС‚СЊ РµРіРѕ (РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, РІРґСЂСѓРі RealConsole РєР°РєР°СЏ Р·Р°Р±СЂР°Р»Р°
 		if (mp_Inside)
 		{
 			if ((hCurForeground == ghWnd) || (hCurForeground != mp_Inside->mh_InsideParentRoot))
@@ -11592,7 +11592,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 	}
 }
 
-// Это не Post, а Send. Синхронное создание окна в главной нити
+// Р­С‚Рѕ РЅРµ Post, Р° Send. РЎРёРЅС…СЂРѕРЅРЅРѕРµ СЃРѕР·РґР°РЅРёРµ РѕРєРЅР° РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё
 HWND CConEmuMain::PostCreateView(CConEmuChild* pChild)
 {
 	HWND hChild = NULL;
@@ -11613,7 +11613,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 
 	session.SetSessionNotification(false);
 
-	// Нужно проверить, вдруг окно закрылось без нашего ведома (InsideIntegration)
+	// РќСѓР¶РЅРѕ РїСЂРѕРІРµСЂРёС‚СЊ, РІРґСЂСѓРі РѕРєРЅРѕ Р·Р°РєСЂС‹Р»РѕСЃСЊ Р±РµР· РЅР°С€РµРіРѕ РІРµРґРѕРјР° (InsideIntegration)
 	CVConGroup::OnDestroyConEmu();
 
 
@@ -11626,18 +11626,18 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 		mp_RecreateDlg->Close();
 	}
 	
-	// Выполняется однократно (само проверит)
+	// Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РѕРґРЅРѕРєСЂР°С‚РЅРѕ (СЃР°РјРѕ РїСЂРѕРІРµСЂРёС‚)
 	gpSet->SaveSettingsOnExit();
 
-	// Делать обязательно перед ResetEvent(mh_ConEmuAliveEvent), чтобы у другого
-	// экземпляра не возникло проблем с регистрацией hotkey
+	// Р”РµР»Р°С‚СЊ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РїРµСЂРµРґ ResetEvent(mh_ConEmuAliveEvent), С‡С‚РѕР±С‹ Сѓ РґСЂСѓРіРѕРіРѕ
+	// СЌРєР·РµРјРїР»СЏСЂР° РЅРµ РІРѕР·РЅРёРєР»Рѕ РїСЂРѕР±Р»РµРј СЃ СЂРµРіРёСЃС‚СЂР°С†РёРµР№ hotkey
 	RegisterMinRestore(false);
 	
 	FinalizePortableReg();
 
 	if (mb_ConEmuAliveOwned && mh_ConEmuAliveEvent)
 	{
-		ResetEvent(mh_ConEmuAliveEvent); // Дадим другим процессам "завладеть" первенством
+		ResetEvent(mh_ConEmuAliveEvent); // Р”Р°РґРёРј РґСЂСѓРіРёРј РїСЂРѕС†РµСЃСЃР°Рј "Р·Р°РІР»Р°РґРµС‚СЊ" РїРµСЂРІРµРЅСЃС‚РІРѕРј
 		SafeCloseHandle(mh_ConEmuAliveEvent);
 		mb_ConEmuAliveOwned = FALSE;
 	}
@@ -11648,7 +11648,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 		mb_MouseCaptured = FALSE;
 	}
 
-	//120122 - Теперь через PipeServer
+	//120122 - РўРµРїРµСЂСЊ С‡РµСЂРµР· PipeServer
 	m_GuiServer.Stop(true);
 
 
@@ -11732,7 +11732,7 @@ void CConEmuMain::setFocus()
 	CVConGuard VCon;
 	HWND hGuiWnd = (GetActiveVCon(&VCon) >= 0) ? VCon->GuiWnd() : NULL;
 
-	// -- ассерт убрал, может возникать при переключении на консоль (табы)
+	// -- Р°СЃСЃРµСЂС‚ СѓР±СЂР°Р», РјРѕР¶РµС‚ РІРѕР·РЅРёРєР°С‚СЊ РїСЂРё РїРµСЂРµРєР»СЋС‡РµРЅРёРё РЅР° РєРѕРЅСЃРѕР»СЊ (С‚Р°Р±С‹)
 	//_ASSERTE(hGuiWnd==NULL || !IsWindowVisible(hGuiWnd));
 #endif
 
@@ -11782,19 +11782,19 @@ void CConEmuMain::CheckAllowAutoChildFocus(DWORD nDeactivatedTID)
 		{
 			bAllowAutoChildFocus = true;
 		}
-		// просто так фокус в дочернее окно ставить нельзя
-		// если переключать фокус в дочернее приложение по любому чиху
-		// вообще не получается активировать окно ConEmu, открыть системное меню,
-		// клацнуть по крестику в заголовке и т.п.
+		// РїСЂРѕСЃС‚Рѕ С‚Р°Рє С„РѕРєСѓСЃ РІ РґРѕС‡РµСЂРЅРµРµ РѕРєРЅРѕ СЃС‚Р°РІРёС‚СЊ РЅРµР»СЊР·СЏ
+		// РµСЃР»Рё РїРµСЂРµРєР»СЋС‡Р°С‚СЊ С„РѕРєСѓСЃ РІ РґРѕС‡РµСЂРЅРµРµ РїСЂРёР»РѕР¶РµРЅРёРµ РїРѕ Р»СЋР±РѕРјСѓ С‡РёС…Сѓ
+		// РІРѕРѕР±С‰Рµ РЅРµ РїРѕР»СѓС‡Р°РµС‚СЃСЏ Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РѕРєРЅРѕ ConEmu, РѕС‚РєСЂС‹С‚СЊ СЃРёСЃС‚РµРјРЅРѕРµ РјРµРЅСЋ,
+		// РєР»Р°С†РЅСѓС‚СЊ РїРѕ РєСЂРµСЃС‚РёРєСѓ РІ Р·Р°РіРѕР»РѕРІРєРµ Рё С‚.Рї.
 		else if (nDeactivatedTID)
 		{
 			DWORD nChildTID = GetWindowThreadProcessId(hChild, NULL);
 			DWORD nConEmuTID = GetWindowThreadProcessId(ghWnd, NULL);
 
 			if ((nDeactivatedTID != nChildTID)
-				&& (nDeactivatedTID != nConEmuTID)) // это на всякий случай...
+				&& (nDeactivatedTID != nConEmuTID)) // СЌС‚Рѕ РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№...
 			{
-				// gpConEmu->isMeForeground(true, true) -- уже дает неправильный результат, ConEmu считается активным
+				// gpConEmu->isMeForeground(true, true) -- СѓР¶Рµ РґР°РµС‚ РЅРµРїСЂР°РІРёР»СЊРЅС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚, ConEmu СЃС‡РёС‚Р°РµС‚СЃСЏ Р°РєС‚РёРІРЅС‹Рј
 				bAllowAutoChildFocus = true;
 			}
 		}
@@ -11805,7 +11805,7 @@ void CConEmuMain::CheckAllowAutoChildFocus(DWORD nDeactivatedTID)
 
 LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom /*= NULL*/, BOOL abForceChild /*= FALSE*/)
 {
-	// Чтобы избежать лишних вызовов по CtrlWinAltSpace при работе с GUI приложением
+	// Р§С‚РѕР±С‹ РёР·Р±РµР¶Р°С‚СЊ Р»РёС€РЅРёС… РІС‹Р·РѕРІРѕРІ РїРѕ CtrlWinAltSpace РїСЂРё СЂР°Р±РѕС‚Рµ СЃ GUI РїСЂРёР»РѕР¶РµРЅРёРµРј
 	if (mb_SkipOnFocus)
 	{
 		return 0;
@@ -11839,10 +11839,10 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			hNewFocus = lParam ? (HWND)lParam : hForeground;
 			if (CVConGroup::isOurWindow(hNewFocus))
 			{
-				lbSetFocus = true; // Считать, что фокус мы не теряем!
+				lbSetFocus = true; // РЎС‡РёС‚Р°С‚СЊ, С‡С‚Рѕ С„РѕРєСѓСЃ РјС‹ РЅРµ С‚РµСЂСЏРµРј!
 
-				// Клик мышкой в области дочернего GUI-приложения, запущенного в ConEmu
-				// isPressed - не подходит
+				// РљР»РёРє РјС‹С€РєРѕР№ РІ РѕР±Р»Р°СЃС‚Рё РґРѕС‡РµСЂРЅРµРіРѕ GUI-РїСЂРёР»РѕР¶РµРЅРёСЏ, Р·Р°РїСѓС‰РµРЅРЅРѕРіРѕ РІ ConEmu
+				// isPressed - РЅРµ РїРѕРґС…РѕРґРёС‚
 				if (!CVConGroup::InCreateGroup())
 				{
 					POINT ptCur = {}; GetCursorPos(&ptCur);
@@ -11865,7 +11865,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (hNewFocus)
 			{
-				// Запускается новая консоль в режиме "администратора"?
+				// Р—Р°РїСѓСЃРєР°РµС‚СЃСЏ РЅРѕРІР°СЏ РєРѕРЅСЃРѕР»СЊ РІ СЂРµР¶РёРјРµ "Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°"?
 				if (CVConGroup::isInCreateRoot())
 				{
 					wchar_t szClass[MAX_PATH];
@@ -11881,20 +11881,20 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 			if (isPressed(VK_LBUTTON) || isPressed(VK_RBUTTON))
 			{
-				// При активации _Десктопа_ мышкой - запомнить, что ставить фокус в себя не нужно
+				// РџСЂРё Р°РєС‚РёРІР°С†РёРё _Р”РµСЃРєС‚РѕРїР°_ РјС‹С€РєРѕР№ - Р·Р°РїРѕРјРЅРёС‚СЊ, С‡С‚Рѕ СЃС‚Р°РІРёС‚СЊ С„РѕРєСѓСЃ РІ СЃРµР±СЏ РЅРµ РЅСѓР¶РЅРѕ
 				POINT ptCur; GetCursorPos(&ptCur);
 				HWND hFromPoint = WindowFromPoint(ptCur);
 
-				//if (hFromPoint == mh_ShellWindow) TODO: если сразу совпало - сразу выходим
+				//if (hFromPoint == mh_ShellWindow) TODO: РµСЃР»Рё СЃСЂР°Р·Сѓ СЃРѕРІРїР°Р»Рѕ - СЃСЂР°Р·Сѓ РІС‹С…РѕРґРёРј
 
-				// mh_ShellWindow чисто для информации. Хоть родитель ConEmu и меняется на mh_ShellWindow
-				// но проводник может перекинуть наше окно в другое (WorkerW или Progman)
+				// mh_ShellWindow С‡РёСЃС‚Рѕ РґР»СЏ РёРЅС„РѕСЂРјР°С†РёРё. РҐРѕС‚СЊ СЂРѕРґРёС‚РµР»СЊ ConEmu Рё РјРµРЅСЏРµС‚СЃСЏ РЅР° mh_ShellWindow
+				// РЅРѕ РїСЂРѕРІРѕРґРЅРёРє РјРѕР¶РµС‚ РїРµСЂРµРєРёРЅСѓС‚СЊ РЅР°С€Рµ РѕРєРЅРѕ РІ РґСЂСѓРіРѕРµ (WorkerW РёР»Рё Progman)
 				if (hFromPoint)
 				{
 					bool lbDesktopActive = false;
 					wchar_t szClass[128];
 
-					// Нужно учесть, что еще могут быть всякие бары, панели, и прочее, лежащие на десктопе
+					// РќСѓР¶РЅРѕ СѓС‡РµСЃС‚СЊ, С‡С‚Рѕ РµС‰Рµ РјРѕРіСѓС‚ Р±С‹С‚СЊ РІСЃСЏРєРёРµ Р±Р°СЂС‹, РїР°РЅРµР»Рё, Рё РїСЂРѕС‡РµРµ, Р»РµР¶Р°С‰РёРµ РЅР° РґРµСЃРєС‚РѕРїРµ
 					while (hFromPoint)
 					{
 						if (GetClassName(hFromPoint, szClass, 127))
@@ -11908,7 +11908,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 							}
 						}
 
-						// может таки что-то дочернее попалось?
+						// РјРѕР¶РµС‚ С‚Р°РєРё С‡С‚Рѕ-С‚Рѕ РґРѕС‡РµСЂРЅРµРµ РїРѕРїР°Р»РѕСЃСЊ?
 						hFromPoint = GetParent(hFromPoint);
 					}
 
@@ -11922,22 +11922,22 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			bool lbSkipQuakeActivation = false;
 			if ((LOWORD(wParam) == WA_ACTIVE) && (HIWORD(wParam) != 0))
 			{
-				// Сюда мы попадаем если "активируется" кнопка на таскбаре, но без разворачивания окна
-				// Пример. Наше окно единственное, жмем кнопку минимизации в тулбаре,
-				// Quake сворачивается, но т.к. других окон нет - фокус "остается" в нашем
-				// окне (в кнопке на таскбаре) и приходит WM_ACTIVATE.
-				// Здесь его нужно игнорировать, иначе Quake нифига не "свернется"
+				// РЎСЋРґР° РјС‹ РїРѕРїР°РґР°РµРј РµСЃР»Рё "Р°РєС‚РёРІРёСЂСѓРµС‚СЃСЏ" РєРЅРѕРїРєР° РЅР° С‚Р°СЃРєР±Р°СЂРµ, РЅРѕ Р±РµР· СЂР°Р·РІРѕСЂР°С‡РёРІР°РЅРёСЏ РѕРєРЅР°
+				// РџСЂРёРјРµСЂ. РќР°С€Рµ РѕРєРЅРѕ РµРґРёРЅСЃС‚РІРµРЅРЅРѕРµ, Р¶РјРµРј РєРЅРѕРїРєСѓ РјРёРЅРёРјРёР·Р°С†РёРё РІ С‚СѓР»Р±Р°СЂРµ,
+				// Quake СЃРІРѕСЂР°С‡РёРІР°РµС‚СЃСЏ, РЅРѕ С‚.Рє. РґСЂСѓРіРёС… РѕРєРѕРЅ РЅРµС‚ - С„РѕРєСѓСЃ "РѕСЃС‚Р°РµС‚СЃСЏ" РІ РЅР°С€РµРј
+				// РѕРєРЅРµ (РІ РєРЅРѕРїРєРµ РЅР° С‚Р°СЃРєР±Р°СЂРµ) Рё РїСЂРёС…РѕРґРёС‚ WM_ACTIVATE.
+				// Р—РґРµСЃСЊ РµРіРѕ РЅСѓР¶РЅРѕ РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ, РёРЅР°С‡Рµ Quake РЅРёС„РёРіР° РЅРµ "СЃРІРµСЂРЅРµС‚СЃСЏ"
 				lbSkipQuakeActivation = true;
 			}
 			else if (mb_IgnoreQuakeActivation)
 			{
-				// Правый клик на иконке в TSA, тоже НЕ выезжать
+				// РџСЂР°РІС‹Р№ РєР»РёРє РЅР° РёРєРѕРЅРєРµ РІ TSA, С‚РѕР¶Рµ РќР• РІС‹РµР·Р¶Р°С‚СЊ
 				lbSkipQuakeActivation = true;
 			}
 
 			if (!lbSkipQuakeActivation)
 			{
-				// Обработать клик по кнопке на таскбаре
+				// РћР±СЂР°Р±РѕС‚Р°С‚СЊ РєР»РёРє РїРѕ РєРЅРѕРїРєРµ РЅР° С‚Р°СЃРєР±Р°СЂРµ
 				DoMinimizeRestore(sih_ShowMinimize);
 			}
 		}
@@ -11968,7 +11968,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 			if (CVConGroup::isOurWindow(hNewFocus))
 			{
-				lbSetFocus = true; // Считать, что фокус мы не теряем!
+				lbSetFocus = true; // РЎС‡РёС‚Р°С‚СЊ, С‡С‚Рѕ С„РѕРєСѓСЃ РјС‹ РЅРµ С‚РµСЂСЏРµРј!
 			}
 		}
 		else if (gpSet->isQuakeStyle)
@@ -11989,7 +11989,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		if (CVConGroup::isOurWindow(hNewFocus))
 		{
-			lbSetFocus = true; // Считать, что фокус мы не теряем!
+			lbSetFocus = true; // РЎС‡РёС‚Р°С‚СЊ, С‡С‚Рѕ С„РѕРєСѓСЃ РјС‹ РЅРµ С‚РµСЂСЏРµРј!
 		}
 
 		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_KILLFOCUS(To=0x%08X) OurFocus=%i", (DWORD)wParam, lbSetFocus);
@@ -12009,7 +12009,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		if (gpSet->isDesktopMode || mp_Inside)
 		{
-			// В этих режимах игнорировать
+			// Р’ СЌС‚РёС… СЂРµР¶РёРјР°С… РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ
 			return 0;
 		}
 
@@ -12027,7 +12027,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			//&& ((GetTickCount() - mn_ForceTimerCheckLoseFocus) >= QUAKE_FOCUS_CHECK_TIMER_DELAY)
 			)
 		{
-			// сброс, однократная проверка для "Hide on focus lose"
+			// СЃР±СЂРѕСЃ, РѕРґРЅРѕРєСЂР°С‚РЅР°СЏ РїСЂРѕРІРµСЂРєР° РґР»СЏ "Hide on focus lose"
 			mn_ForceTimerCheckLoseFocus = 0;
 		}
 		else if (!lbSetFocus || mb_LastConEmuFocusState)
@@ -12042,12 +12042,12 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				LogFocusInfo(szInfo, 2);
 			}
 
-			// Не дергаться
+			// РќРµ РґРµСЂРіР°С‚СЊСЃСЏ
 			return 0;
 		}
 
-		// Сюда мы доходим, если произошла какая-то ошибка, и ConEmu не получил
-		// информации о том, что его окно было активировано. Нужно уведомить сервер.
+		// РЎСЋРґР° РјС‹ РґРѕС…РѕРґРёРј, РµСЃР»Рё РїСЂРѕРёР·РѕС€Р»Р° РєР°РєР°СЏ-С‚Рѕ РѕС€РёР±РєР°, Рё ConEmu РЅРµ РїРѕР»СѓС‡РёР»
+		// РёРЅС„РѕСЂРјР°С†РёРё Рѕ С‚РѕРј, С‡С‚Рѕ РµРіРѕ РѕРєРЅРѕ Р±С‹Р»Рѕ Р°РєС‚РёРІРёСЂРѕРІР°РЅРѕ. РќСѓР¶РЅРѕ СѓРІРµРґРѕРјРёС‚СЊ СЃРµСЂРІРµСЂ.
 		_ASSERTE(lbSetFocus || lnForceTimerCheckLoseFocus);
 	}
 
@@ -12059,9 +12059,9 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (GetActiveVCon(&VCon) >= 0)
 		pVCon = VCon.VCon();
 		
-	HWND hGuiWnd = pVCon ? pVCon->RCon()->GuiWnd() : NULL; // GUI режим (дочернее окно)
+	HWND hGuiWnd = pVCon ? pVCon->RCon()->GuiWnd() : NULL; // GUI СЂРµР¶РёРј (РґРѕС‡РµСЂРЅРµРµ РѕРєРЅРѕ)
 
-	// Если фокус "забрало" какое-либо дочернее окно в ConEmu (VideoRenderer - 'ActiveMovie Window')
+	// Р•СЃР»Рё С„РѕРєСѓСЃ "Р·Р°Р±СЂР°Р»Рѕ" РєР°РєРѕРµ-Р»РёР±Рѕ РґРѕС‡РµСЂРЅРµРµ РѕРєРЅРѕ РІ ConEmu (VideoRenderer - 'ActiveMovie Window')
 	if (hNewFocus && hNewFocus != ghWnd && hNewFocus != hGuiWnd)
 	{
 		HWND hParent = hNewFocus;
@@ -12075,7 +12075,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				DWORD dwStyle = GetWindowLong(hNewFocus, GWL_STYLE);
 
 				if ((dwStyle & (WS_POPUP|WS_OVERLAPPEDWINDOW|WS_DLGFRAME)) != 0)
-					break; // Это диалог, не трогаем
+					break; // Р­С‚Рѕ РґРёР°Р»РѕРі, РЅРµ С‚СЂРѕРіР°РµРј
 
 				setFocus();
 				hNewFocus = GetFocus();
@@ -12099,7 +12099,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	if (!lbSetFocus && !hNewFocus && (isPressed(VK_LBUTTON) || isPressed(VK_RBUTTON)))
 	{
-		// Клик по таскбару, или еще кому...
+		// РљР»РёРє РїРѕ С‚Р°СЃРєР±Р°СЂСѓ, РёР»Рё РµС‰Рµ РєРѕРјСѓ...
 		POINT ptCur = {}; GetCursorPos(&ptCur);
 		HWND hUnderMouse = WindowFromPoint(ptCur);
 		DWORD nPID = 0;
@@ -12145,7 +12145,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	LogFocusInfo(lbSetFocus ? L"mb_LastConEmuFocusState set to TRUE" : L"mb_LastConEmuFocusState set to FALSE");
 
 
-	// Если для активного и НЕактивного окна назначены разные значения
+	// Р•СЃР»Рё РґР»СЏ Р°РєС‚РёРІРЅРѕРіРѕ Рё РќР•Р°РєС‚РёРІРЅРѕРіРѕ РѕРєРЅР° РЅР°Р·РЅР°С‡РµРЅС‹ СЂР°Р·РЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ
 	OnTransparentSeparate(lbSetFocus);
 
 	//
@@ -12163,13 +12163,13 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	if (pVCon && pVCon->RCon())
 	{
-		// Здесь будет вызван CRealConsole::UpdateServerActive
+		// Р—РґРµСЃСЊ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ CRealConsole::UpdateServerActive
 
-		// -- просто так abForceChild=TRUE здесь ставить нельзя
-		// -- если переключать фокус в дочернее приложение по любому чиху
-		// -- вообще не получается активировать окно ConEmu, открыть системное меню,
-		// -- клацнуть по крестику в заголовке и т.п.
-		// -- Поэтому abForceChild передается из вызывающей функции, которая "знает"
+		// -- РїСЂРѕСЃС‚Рѕ С‚Р°Рє abForceChild=TRUE Р·РґРµСЃСЊ СЃС‚Р°РІРёС‚СЊ РЅРµР»СЊР·СЏ
+		// -- РµСЃР»Рё РїРµСЂРµРєР»СЋС‡Р°С‚СЊ С„РѕРєСѓСЃ РІ РґРѕС‡РµСЂРЅРµРµ РїСЂРёР»РѕР¶РµРЅРёРµ РїРѕ Р»СЋР±РѕРјСѓ С‡РёС…Сѓ
+		// -- РІРѕРѕР±С‰Рµ РЅРµ РїРѕР»СѓС‡Р°РµС‚СЃСЏ Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РѕРєРЅРѕ ConEmu, РѕС‚РєСЂС‹С‚СЊ СЃРёСЃС‚РµРјРЅРѕРµ РјРµРЅСЋ,
+		// -- РєР»Р°С†РЅСѓС‚СЊ РїРѕ РєСЂРµСЃС‚РёРєСѓ РІ Р·Р°РіРѕР»РѕРІРєРµ Рё С‚.Рї.
+		// -- РџРѕСЌС‚РѕРјСѓ abForceChild РїРµСЂРµРґР°РµС‚СЃСЏ РёР· РІС‹Р·С‹РІР°СЋС‰РµР№ С„СѓРЅРєС†РёРё, РєРѕС‚РѕСЂР°СЏ "Р·РЅР°РµС‚"
 
 		pVCon->RCon()->OnGuiFocused(lbSetFocus, abForceChild);
 	}
@@ -12208,8 +12208,8 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			LogFocusInfo(szInfo);
 		}
 
-		// Если активируется TaskBar - не дергаться.
-		// Иначе получается бред при клике на иконку в TSA.
+		// Р•СЃР»Рё Р°РєС‚РёРІРёСЂСѓРµС‚СЃСЏ TaskBar - РЅРµ РґРµСЂРіР°С‚СЊСЃСЏ.
+		// РРЅР°С‡Рµ РїРѕР»СѓС‡Р°РµС‚СЃСЏ Р±СЂРµРґ РїСЂРё РєР»РёРєРµ РЅР° РёРєРѕРЅРєСѓ РІ TSA.
 		if (!bIsTaskbar)
 		{
 			if (!mb_IgnoreQuakeActivation)
@@ -12244,7 +12244,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		mp_Status->UpdateStatusBar(true);
 	}
 
-	// Может настройки ControlPanel изменились?
+	// РњРѕР¶РµС‚ РЅР°СЃС‚СЂРѕР№РєРё ControlPanel РёР·РјРµРЅРёР»РёСЃСЊ?
 	mouse.ReloadWheelScroll();
 
 	if (lbSetFocus && pVCon && gpSet->isTabsOnTaskBar())
@@ -12292,7 +12292,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 void CConEmuMain::StorePreMinimizeMonitor()
 {
-	// Запомним, на каком мониторе мы были до минимзации
+	// Р—Р°РїРѕРјРЅРёРј, РЅР° РєР°РєРѕРј РјРѕРЅРёС‚РѕСЂРµ РјС‹ Р±С‹Р»Рё РґРѕ РјРёРЅРёРјР·Р°С†РёРё
 	if (!isIconic())
 	{
 		mh_MinFromMonitor = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
@@ -12320,9 +12320,9 @@ HMONITOR CConEmuMain::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prc
 	}
 	else
 	{
-		_ASSERTE(!mp_Inside); // По идее, для "Inside" вызываться не должен
+		_ASSERTE(!mp_Inside); // РџРѕ РёРґРµРµ, РґР»СЏ "Inside" РІС‹Р·С‹РІР°С‚СЊСЃСЏ РЅРµ РґРѕР»Р¶РµРЅ
 
-		//-- CalcRect использовать нельзя, он может ссылаться на GetNearestMonitor
+		//-- CalcRect РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РЅРµР»СЊР·СЏ, РѕРЅ РјРѕР¶РµС‚ СЃСЃС‹Р»Р°С‚СЊСЃСЏ РЅР° GetNearestMonitor
 		//RECT rcDefault = CalcRect(CER_MAIN);
 		WINDOWPLACEMENT wpl = {sizeof(wpl)};
 		GetWindowPlacement(ghWnd, &wpl);
@@ -12394,7 +12394,7 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 		GetPrimaryMonitor(&prm);
 		
 
-	// *** Минимально допустимые размеры консоли
+	// *** РњРёРЅРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Рµ СЂР°Р·РјРµСЂС‹ РєРѕРЅСЃРѕР»Рё
 	RECT rcMin = MakeRect(MIN_CON_WIDTH,MIN_CON_HEIGHT);
 	if (isVConExists(0))
 		rcMin = CVConGroup::AllTextRect(true);
@@ -12424,8 +12424,8 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	}
 	else if (gpSet->isQuakeStyle)
 	{
-		_ASSERTE(::IsZoomed(ghWnd) == FALSE); // Стиль WS_MAXIMIZE для Quake выставляться НЕ ДОЛЖЕН!
-		// Поэтому здесь нас интересует только "Normal"
+		_ASSERTE(::IsZoomed(ghWnd) == FALSE); // РЎС‚РёР»СЊ WS_MAXIMIZE РґР»СЏ Quake РІС‹СЃС‚Р°РІР»СЏС‚СЊСЃСЏ РќР• Р”РћР›Р–Р•Рќ!
+		// РџРѕСЌС‚РѕРјСѓ Р·РґРµСЃСЊ РЅР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ С‚РѕР»СЊРєРѕ "Normal"
 
 		RECT rcWork;
 		if (gpSet->_WindowMode == wmFullScreen)
@@ -12467,7 +12467,7 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	}
 
 
-	// Что получилось...
+	// Р§С‚Рѕ РїРѕР»СѓС‡РёР»РѕСЃСЊ...
 	if (bLog)
 	{
 		_wsprintf(szMinMax, SKIPLEN(countof(szMinMax)) L"OnGetMinMaxInfo[after]  MaxSize={%i,%i}, MaxPos={%i,%i}, MinTrack={%i,%i}, MaxTrack={%i,%i}, Cur={%i,%i}-{%i,%i}\n",
@@ -12522,10 +12522,10 @@ void CConEmuMain::OnHideCaption()
 		RECT rcClient = {}, rcBefore = {}, rcAfter = {};
 		if (bNeedCorrect)
 		{
-			// AdjustWindowRectEx НЕ должно вызываться в FullScreen. Глючит. А рамки с заголовком нет, расширять нечего.
+			// AdjustWindowRectEx РќР• РґРѕР»Р¶РЅРѕ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РІ FullScreen. Р“Р»СЋС‡РёС‚. Рђ СЂР°РјРєРё СЃ Р·Р°РіРѕР»РѕРІРєРѕРј РЅРµС‚, СЂР°СЃС€РёСЂСЏС‚СЊ РЅРµС‡РµРіРѕ.
 			_ASSERTE(!isFullScreen() || (WindowMode==wmNormal || WindowMode==wmMaximized));
 
-			// Тут нужен "натуральный" ClientRect
+			// РўСѓС‚ РЅСѓР¶РµРЅ "РЅР°С‚СѓСЂР°Р»СЊРЅС‹Р№" ClientRect
 			::GetClientRect(ghWnd, &rcClient);
 			rcBefore = rcClient;
 			MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcBefore, 2);
@@ -12596,7 +12596,7 @@ void CConEmuMain::OnHideCaption()
 
 		//if (changeFromWindowMode == wmNotChanging)
 		//{
-		//	//TODO: Поменять на FALSE
+		//	//TODO: РџРѕРјРµРЅСЏС‚СЊ РЅР° FALSE
 		//	ReSize(TRUE);
 		//}
 	}
@@ -12622,35 +12622,35 @@ void CConEmuMain::OnGlobalSettingsChanged()
 {
 	gpConEmu->UpdateGuiInfoMapping();
 
-	// и отослать в серверы
+	// Рё РѕС‚РѕСЃР»Р°С‚СЊ РІ СЃРµСЂРІРµСЂС‹
 	CVConGroup::OnUpdateGuiInfoMapping(&m_GuiInfo);
 	
-	// И фары тоже уведомить
+	// Р С„Р°СЂС‹ С‚РѕР¶Рµ СѓРІРµРґРѕРјРёС‚СЊ
 	gpConEmu->UpdateFarSettings();
 }
 
 void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 {
-	// UpdateGuiInfoMapping будет вызван после завершения создания окна
+	// UpdateGuiInfoMapping Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ РїРѕСЃР»Рµ Р·Р°РІРµСЂС€РµРЅРёСЏ СЃРѕР·РґР°РЅРёСЏ РѕРєРЅР°
 	if (!InCreateWindow())
 	{
 		UpdateGuiInfoMapping();
 	}
 	
-	// Заполнить цвета gpSet->ThSet.crPalette[16], gpSet->ThSet.crFadePalette[16]
+	// Р—Р°РїРѕР»РЅРёС‚СЊ С†РІРµС‚Р° gpSet->ThSet.crPalette[16], gpSet->ThSet.crFadePalette[16]
 	COLORREF *pcrNormal = gpSet->GetColors(-1, FALSE);
 	COLORREF *pcrFade = gpSet->GetColors(-1, TRUE);
 
 	for(int i=0; i<16; i++)
 	{
-		// через FOR чтобы с BitMask не наколоться
+		// С‡РµСЂРµР· FOR С‡С‚РѕР±С‹ СЃ BitMask РЅРµ РЅР°РєРѕР»РѕС‚СЊСЃСЏ
 		gpSet->ThSet.crPalette[i] = (pcrNormal[i]) & 0xFFFFFF;
 		gpSet->ThSet.crFadePalette[i] = (pcrFade[i]) & 0xFFFFFF;
 	}
 
 	gpSet->ThSet.nFontQuality = gpSetCls->FontQuality();
 	
-	// Параметры основного шрифта ConEmu
+	// РџР°СЂР°РјРµС‚СЂС‹ РѕСЃРЅРѕРІРЅРѕРіРѕ С€СЂРёС„С‚Р° ConEmu
 	FillConEmuMainFont(&gpSet->ThSet.MainFont);
 	//lstrcpy(gpSet->ThSet.MainFont.sFontName, gpSet->FontFaceName());
 	//gpSet->ThSet.MainFont.nFontHeight = gpSetCls->FontHeight();
@@ -12663,12 +12663,12 @@ void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 	//lstrcpy(gpSet->ThSet.MainFont.sBorderFontName, gpSet->BorderFontFaceName());
 	//gpSet->ThSet.MainFont.nBorderFontWidth = gpSet->BorderFontWidth();
 	
-	// Применить в мэппинг (используется в "Panel View" и "Background"-плагинах
+	// РџСЂРёРјРµРЅРёС‚СЊ РІ РјСЌРїРїРёРЅРі (РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ "Panel View" Рё "Background"-РїР»Р°РіРёРЅР°С…
 	bool lbChanged = gpSetCls->m_ThSetMap.SetFrom(&gpSet->ThSet);
 
 	if (abSendChanges && lbChanged)
 	{
-		// и отослать заинтересованным
+		// Рё РѕС‚РѕСЃР»Р°С‚СЊ Р·Р°РёРЅС‚РµСЂРµСЃРѕРІР°РЅРЅС‹Рј
 		CVConGroup::OnPanelViewSettingsChanged();
 	}
 }
@@ -12677,11 +12677,11 @@ void CConEmuMain::OnTaskbarCreated()
 {
 	Icon.OnTaskbarCreated();
 
-	// Т.к. создан TaskBar - нужно (пере)создать интерфейсы
+	// Рў.Рє. СЃРѕР·РґР°РЅ TaskBar - РЅСѓР¶РЅРѕ (РїРµСЂРµ)СЃРѕР·РґР°С‚СЊ РёРЅС‚РµСЂС„РµР№СЃС‹
 	Taskbar_Release();
 	Taskbar_Init();
 
-	// И передернуть все TaskBarGhost
+	// Р РїРµСЂРµРґРµСЂРЅСѓС‚СЊ РІСЃРµ TaskBarGhost
 	CVConGroup::OnTaskbarCreated();
 
 	// Dummy
@@ -12702,7 +12702,7 @@ void CConEmuMain::OnTaskbarButtonCreated()
 			SetWindowStyleEx(styleEx);
 		}
 
-		// Если оно вдруг таки показано на таскбаре
+		// Р•СЃР»Рё РѕРЅРѕ РІРґСЂСѓРі С‚Р°РєРё РїРѕРєР°Р·Р°РЅРѕ РЅР° С‚Р°СЃРєР±Р°СЂРµ
 		Taskbar_DeleteTabXP(ghWnd);
 	}
 	else
@@ -12737,7 +12737,7 @@ void CConEmuMain::OnTaskbarSettingsChanged()
 		{
 			styleEx &= ~WS_EX_APPWINDOW;
 			SetWindowStyleEx(styleEx);
-			// Если оно вдруг таки показано на таскбаре
+			// Р•СЃР»Рё РѕРЅРѕ РІРґСЂСѓРі С‚Р°РєРё РїРѕРєР°Р·Р°РЅРѕ РЅР° С‚Р°СЃРєР±Р°СЂРµ
 			Taskbar_DeleteTabXP(ghWnd);
 		}
 	}
@@ -12747,7 +12747,7 @@ void CConEmuMain::OnTaskbarSettingsChanged()
 		{
 			styleEx |= WS_EX_APPWINDOW;
 			SetWindowStyleEx(styleEx);
-			// Показать на таскбаре
+			// РџРѕРєР°Р·Р°С‚СЊ РЅР° С‚Р°СЃРєР±Р°СЂРµ
 			Taskbar_AddTabXP(ghWnd);
 		}
 	}
@@ -12782,7 +12782,7 @@ bool CConEmuMain::DoMaximizeWidthHeight(bool bWidth, bool bHeight)
 
 	if (bWidth)
 	{
-		// найти новую левую границу
+		// РЅР°Р№С‚Рё РЅРѕРІСѓСЋ Р»РµРІСѓСЋ РіСЂР°РЅРёС†Сѓ
 		POINT pt = {rcWnd.left,((rcWnd.top+rcWnd.bottom)>>2)};
 		HMONITOR hMonLeft = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
 
@@ -12790,7 +12790,7 @@ bool CConEmuMain::DoMaximizeWidthHeight(bool bWidth, bool bHeight)
 			return false;
 
 		rcNewWnd.left = mon.rcWork.left;
-		// найти новую правую границу
+		// РЅР°Р№С‚Рё РЅРѕРІСѓСЋ РїСЂР°РІСѓСЋ РіСЂР°РЅРёС†Сѓ
 		pt.x = rcWnd.right;
 		HMONITOR hMonRight = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
 
@@ -12800,7 +12800,7 @@ bool CConEmuMain::DoMaximizeWidthHeight(bool bWidth, bool bHeight)
 
 		rcNewWnd.right = mon.rcWork.right;
 
-		//// Скорректировать границы на ширину рамки
+		//// РЎРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ РіСЂР°РЅРёС†С‹ РЅР° С€РёСЂРёРЅСѓ СЂР°РјРєРё
 		//RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
 		//rcNewWnd.left -= rcFrame.left;
 		//rcNewWnd.right += rcFrame.right;
@@ -12808,7 +12808,7 @@ bool CConEmuMain::DoMaximizeWidthHeight(bool bWidth, bool bHeight)
 	
 	if (bHeight)
 	{
-		// найти новую верхнюю границу
+		// РЅР°Р№С‚Рё РЅРѕРІСѓСЋ РІРµСЂС…РЅСЋСЋ РіСЂР°РЅРёС†Сѓ
 		POINT pt = {((rcWnd.left+rcWnd.right)>>2),rcWnd.top};
 		HMONITOR hMonTop = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
 
@@ -12816,7 +12816,7 @@ bool CConEmuMain::DoMaximizeWidthHeight(bool bWidth, bool bHeight)
 			return false;
 
 		rcNewWnd.top = mon.rcWork.top;
-		// найти новую нижнюю границу
+		// РЅР°Р№С‚Рё РЅРѕРІСѓСЋ РЅРёР¶РЅСЋСЋ РіСЂР°РЅРёС†Сѓ
 		pt.y = rcWnd.bottom;
 		HMONITOR hMonBottom = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
 
@@ -12826,13 +12826,13 @@ bool CConEmuMain::DoMaximizeWidthHeight(bool bWidth, bool bHeight)
 
 		rcNewWnd.bottom = mon.rcWork.bottom;
 
-		//// Скорректировать границы на ширину рамки
+		//// РЎРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ РіСЂР°РЅРёС†С‹ РЅР° С€РёСЂРёРЅСѓ СЂР°РјРєРё
 		//RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
-		//rcNewWnd.top -= rcFrame.bottom; // т.к. в top учтена высота заголовка
+		//rcNewWnd.top -= rcFrame.bottom; // С‚.Рє. РІ top СѓС‡С‚РµРЅР° РІС‹СЃРѕС‚Р° Р·Р°РіРѕР»РѕРІРєР°
 		//rcNewWnd.bottom += rcFrame.bottom;
 	}
 
-	// Двигаем окошко
+	// Р”РІРёРіР°РµРј РѕРєРѕС€РєРѕ
 	if (rcNewWnd.left != rcWnd.left || rcNewWnd.right != rcWnd.right || rcNewWnd.top != rcWnd.top || rcNewWnd.bottom != rcWnd.bottom)
 		MOVEWINDOW(ghWnd, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, 1);
 
@@ -12850,7 +12850,7 @@ void CConEmuMain::DoMaximizeRestore()
 	}
 
 	// -- this will be done in SetWindowMode
-	//StoreNormalRect(NULL); // Сама разберется, надо/не надо
+	//StoreNormalRect(NULL); // РЎР°РјР° СЂР°Р·Р±РµСЂРµС‚СЃСЏ, РЅР°РґРѕ/РЅРµ РЅР°РґРѕ
 
 	ConEmuWindowMode wm = GetWindowMode();
 
@@ -12871,19 +12871,19 @@ BOOL CConEmuMain::EnumWindowsOverQuake(HWND hWnd, LPARAM lpData)
 {
 	DWORD nStyle = GetWindowLong(hWnd, GWL_STYLE);
 	if (!(nStyle & WS_VISIBLE))
-		return TRUE; // Не видимые окна не интересуют
+		return TRUE; // РќРµ РІРёРґРёРјС‹Рµ РѕРєРЅР° РЅРµ РёРЅС‚РµСЂРµСЃСѓСЋС‚
 	if (nStyle & WS_CHILD)
-		return TRUE; // Внезапно "дочерние" - тоже
+		return TRUE; // Р’РЅРµР·Р°РїРЅРѕ "РґРѕС‡РµСЂРЅРёРµ" - С‚РѕР¶Рµ
 	DWORD nStyleEx = GetWindowLong(hWnd, GWL_EXSTYLE);
 	if ((nStyleEx & WS_EX_TOOLWINDOW) != 0)
-		return TRUE; // Палитры/тулбары - пропускаем
+		return TRUE; // РџР°Р»РёС‚СЂС‹/С‚СѓР»Р±Р°СЂС‹ - РїСЂРѕРїСѓСЃРєР°РµРј
 
 	DWORD nPID;
 	GetWindowThreadProcessId(hWnd, &nPID);
 	if (nPID == GetCurrentProcessId())
 	{
-		// Все, раз дошли до нашего окна - значит всех кто сверху уже перебрали
-		// Но hWnd может быть нашим диалогом, так что прекращаем только на ghWnd
+		// Р’СЃРµ, СЂР°Р· РґРѕС€Р»Рё РґРѕ РЅР°С€РµРіРѕ РѕРєРЅР° - Р·РЅР°С‡РёС‚ РІСЃРµС… РєС‚Рѕ СЃРІРµСЂС…Сѓ СѓР¶Рµ РїРµСЂРµР±СЂР°Р»Рё
+		// РќРѕ hWnd РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅР°С€РёРј РґРёР°Р»РѕРіРѕРј, С‚Р°Рє С‡С‚Рѕ РїСЂРµРєСЂР°С‰Р°РµРј С‚РѕР»СЊРєРѕ РЅР° ghWnd
 		return (hWnd != ghWnd);
 	}
 
@@ -12894,14 +12894,14 @@ BOOL CConEmuMain::EnumWindowsOverQuake(HWND hWnd, LPARAM lpData)
 	{
 		if (IntersectRect(&rcOver, &pOur->rcWnd, &rcWnd))
 		{
-			// Окно лежит поверх нашего
+			// РћРєРЅРѕ Р»РµР¶РёС‚ РїРѕРІРµСЂС… РЅР°С€РµРіРѕ
 			if (memcmp(&rcOver, pOur, sizeof(rcOver)) == 0)
 			{
 				pOur->iRc = NULLREGION;
-				return FALSE; // Окно полностью скрыто
+				return FALSE; // РћРєРЅРѕ РїРѕР»РЅРѕСЃС‚СЊСЋ СЃРєСЂС‹С‚Рѕ
 			}
 
-			// Начинаются расчеты
+			// РќР°С‡РёРЅР°СЋС‚СЃСЏ СЂР°СЃС‡РµС‚С‹
 			HRGN hWndRgn = CreateRectRgn(rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
 			pOur->iRc = CombineRgn(pOur->hRgn, pOur->hRgn, hWndRgn, RGN_DIFF);
 			DeleteObject(hWndRgn);
@@ -12909,7 +12909,7 @@ BOOL CConEmuMain::EnumWindowsOverQuake(HWND hWnd, LPARAM lpData)
 			_ASSERTE(pOur->iRc != ERROR);
 			if (pOur->iRc == NULLREGION)
 			{
-				// Окно полностью скрыто
+				// РћРєРЅРѕ РїРѕР»РЅРѕСЃС‚СЊСЋ СЃРєСЂС‹С‚Рѕ
 				return FALSE;
 			}
 		}
@@ -12943,9 +12943,9 @@ UINT CConEmuMain::IsQuakeVisible()
 	rcFree.hRgn = CreateRectRgn(rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
 	EnumWindows(EnumWindowsOverQuake, (LPARAM)&rcFree);
 
-	UINT  nVisiblePart = 100; // в процентах
+	UINT  nVisiblePart = 100; // РІ РїСЂРѕС†РµРЅС‚Р°С…
 	
-	// Если "Видимая область" окна стала менее VisibleLimit(%) - считаем что окно стало "не видимым"
+	// Р•СЃР»Рё "Р’РёРґРёРјР°СЏ РѕР±Р»Р°СЃС‚СЊ" РѕРєРЅР° СЃС‚Р°Р»Р° РјРµРЅРµРµ VisibleLimit(%) - СЃС‡РёС‚Р°РµРј С‡С‚Рѕ РѕРєРЅРѕ СЃС‚Р°Р»Рѕ "РЅРµ РІРёРґРёРјС‹Рј"
 	if (rcFree.iRc == NULLREGION)
 	{
 		nVisiblePart = 0;
@@ -12973,7 +12973,7 @@ UINT CConEmuMain::IsQuakeVisible()
 			}
 			free(lpRgnData);
 
-			// Видимость в процентах
+			// Р’РёРґРёРјРѕСЃС‚СЊ РІ РїСЂРѕС†РµРЅС‚Р°С…
 			nVisiblePart = (nLeftSq * 100 / nFullSq);
 			if (nVisiblePart > 100)
 			{
@@ -13044,7 +13044,7 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		}
 		else
 		{
-			ShowHideType = sih_AutoHide; // дальше разберемся
+			ShowHideType = sih_AutoHide; // РґР°Р»СЊС€Рµ СЂР°Р·Р±РµСЂРµРјСЃСЏ
 		}
 	}
 
@@ -13078,18 +13078,18 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 	bInFunction = true;
 
-	// 1. Функция вызывается при нажатии глобально регистрируемого хоткея
+	// 1. Р¤СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё РЅР°Р¶Р°С‚РёРё РіР»РѕР±Р°Р»СЊРЅРѕ СЂРµРіРёСЃС‚СЂРёСЂСѓРµРјРѕРіРѕ С…РѕС‚РєРµСЏ
 	//    Win+C  -->  ShowHideType = sih_None
-	// 2. При вызове из другого приложения 
-	//    аргумент /single  --> ShowHideType = sih_Show
-	// 3. При вызове из дрегого приложения
-	//    аргумент /showhide     --> ShowHideType = sih_ShowMinimize
-	//    аргумент /showhideTSA  --> ShowHideType = sih_ShowHideTSA
+	// 2. РџСЂРё РІС‹Р·РѕРІРµ РёР· РґСЂСѓРіРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ 
+	//    Р°СЂРіСѓРјРµРЅС‚ /single  --> ShowHideType = sih_Show
+	// 3. РџСЂРё РІС‹Р·РѕРІРµ РёР· РґСЂРµРіРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ
+	//    Р°СЂРіСѓРјРµРЅС‚ /showhide     --> ShowHideType = sih_ShowMinimize
+	//    Р°СЂРіСѓРјРµРЅС‚ /showhideTSA  --> ShowHideType = sih_ShowHideTSA
 	SingleInstanceShowHideType cmd = sih_None;
 
 	if (ShowHideType == sih_None)
 	{
-		// По настройкам
+		// РџРѕ РЅР°СЃС‚СЂРѕР№РєР°Рј
 		ShowHideType = gpSet->isMinToTray() ? sih_ShowHideTSA : sih_ShowMinimize;
 	}
 
@@ -13106,26 +13106,26 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		if ((bVis && (bIsForeground || gpSet->isAlwaysOnTop) && !bIsIconic)
 			|| (ShowHideType == sih_HideTSA) || (ShowHideType == sih_Minimize))
 		{
-			// если видимо - спрятать
+			// РµСЃР»Рё РІРёРґРёРјРѕ - СЃРїСЂСЏС‚Р°С‚СЊ
 			cmd = (ShowHideType == sih_HideTSA) ? sih_ShowHideTSA : ShowHideType;
 		}
 		else
 		{
-			// Иначе - показать
+			// РРЅР°С‡Рµ - РїРѕРєР°Р·Р°С‚СЊ
 			cmd = sih_Show;
 		}
 	}
 	else
 	{
 		_ASSERTE(ShowHideType == sih_SetForeground);
-		// Иначе - показываем (в зависимости от текущей видимости)
-		if (IsWindowVisible(ghWnd) && (bIsForeground || !bIsIconic)) // (!bIsIconic) - окошко развернуто, надо свернуть
+		// РРЅР°С‡Рµ - РїРѕРєР°Р·С‹РІР°РµРј (РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ С‚РµРєСѓС‰РµР№ РІРёРґРёРјРѕСЃС‚Рё)
+		if (IsWindowVisible(ghWnd) && (bIsForeground || !bIsIconic)) // (!bIsIconic) - РѕРєРѕС€РєРѕ СЂР°Р·РІРµСЂРЅСѓС‚Рѕ, РЅР°РґРѕ СЃРІРµСЂРЅСѓС‚СЊ
 			cmd = sih_SetForeground;
 		else
 			cmd = sih_Show;
 	}
 
-	// Поехали
+	// РџРѕРµС…Р°Р»Рё
 	int nQuakeMin = 1;
 	int nQuakeShift = 10;
 	//int nQuakeDelay = gpSet->nQuakeAnimation / nQuakeShift; // 20;
@@ -13133,7 +13133,7 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	bool bMinToTray = gpSet->isMinToTray();
 	if (gpSet->isQuakeStyle != 0)
 	{
-		// Если есть дочерние GUI окна - в них могут быть глюки с отрисовкой
+		// Р•СЃР»Рё РµСЃС‚СЊ РґРѕС‡РµСЂРЅРёРµ GUI РѕРєРЅР° - РІ РЅРёС… РјРѕРіСѓС‚ Р±С‹С‚СЊ РіР»СЋРєРё СЃ РѕС‚СЂРёСЃРѕРІРєРѕР№
 		if ((gpSet->nQuakeAnimation > 0) && !CVConGroup::isChildWindowVisible())
 		{
 			bUseQuakeAnimation = true;
@@ -13178,8 +13178,8 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	{
 		HWND hWndFore = hCurForeground;
 		DEBUGTEST(DWORD nHideShowDelay = GetTickCount() - nLastQuakeHide);
-		// Если активация идет кликом по кнопке на таскбаре (Quake без скрытия) то на WinXP
-		// может быть глюк - двойная отрисовка раскрытия (WM_ACTIVATE, WM_SYSCOMMAND)
+		// Р•СЃР»Рё Р°РєС‚РёРІР°С†РёСЏ РёРґРµС‚ РєР»РёРєРѕРј РїРѕ РєРЅРѕРїРєРµ РЅР° С‚Р°СЃРєР±Р°СЂРµ (Quake Р±РµР· СЃРєСЂС‹С‚РёСЏ) С‚Рѕ РЅР° WinXP
+		// РјРѕР¶РµС‚ Р±С‹С‚СЊ РіР»СЋРє - РґРІРѕР№РЅР°СЏ РѕС‚СЂРёСЃРѕРІРєР° СЂР°СЃРєСЂС‹С‚РёСЏ (WM_ACTIVATE, WM_SYSCOMMAND)
 		bool bNoQuakeAnimation = false;
 
 		bool bPrevInRestore = false;
@@ -13193,7 +13193,7 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			CVConGuard VCon;
 			if (GetActiveVCon(&VCon) >= 0)
 			{
-				// Чтобы при "Fade inactive" все сразу красиво отрисовалось
+				// Р§С‚РѕР±С‹ РїСЂРё "Fade inactive" РІСЃРµ СЃСЂР°Р·Сѓ РєСЂР°СЃРёРІРѕ РѕС‚СЂРёСЃРѕРІР°Р»РѕСЃСЊ
 				int iCur = mn_QuakePercent; mn_QuakePercent = 100;
 				VCon->Update();
 				mn_QuakePercent = iCur;
@@ -13204,7 +13204,7 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
 		{
-			// Для Quake-style необходимо СНАЧАЛА сделать окно "невидимым" перед его разворачиваем или активацией
+			// Р”Р»СЏ Quake-style РЅРµРѕР±С…РѕРґРёРјРѕ РЎРќРђР§РђР›Рђ СЃРґРµР»Р°С‚СЊ РѕРєРЅРѕ "РЅРµРІРёРґРёРјС‹Рј" РїРµСЂРµРґ РµРіРѕ СЂР°Р·РІРѕСЂР°С‡РёРІР°РµРј РёР»Рё Р°РєС‚РёРІР°С†РёРµР№
 			if ((hWndFore == ghWnd) && !bIsIconic && bVis)
 			{
 				bNoQuakeAnimation = true;
@@ -13231,7 +13231,7 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			//bNeedHideTaskIcon = bUseQuakeAnimation;
 		}
 		
-		// Здесь - интересует реальный IsIconic. Для isQuakeStyle может быть фейк
+		// Р—РґРµСЃСЊ - РёРЅС‚РµСЂРµСЃСѓРµС‚ СЂРµР°Р»СЊРЅС‹Р№ IsIconic. Р”Р»СЏ isQuakeStyle РјРѕР¶РµС‚ Р±С‹С‚СЊ С„РµР№Рє
 		if (::IsIconic(ghWnd))
 		{
 			DEBUGTEST(WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl););
@@ -13240,14 +13240,14 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			mp_Menu->SetPassSysCommand(b);
 		}
 
-		// Страховка, коррекция позиции для Quake
+		// РЎС‚СЂР°С…РѕРІРєР°, РєРѕСЂСЂРµРєС†РёСЏ РїРѕР·РёС†РёРё РґР»СЏ Quake
 		if (gpSet->isQuakeStyle)
 		{
 			RECT rcWnd = GetDefaultRect();
 			SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, 0,0, SWP_NOZORDER|SWP_NOSIZE);
 		}
 
-		isQuakeMinimized = false; // теперь можно сбросить
+		isQuakeMinimized = false; // С‚РµРїРµСЂСЊ РјРѕР¶РЅРѕ СЃР±СЂРѕСЃРёС‚СЊ
 
 		apiSetForegroundWindow(ghWnd);
 
@@ -13318,7 +13318,7 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				UpdateWindowRgn();
 			}
 		}
-		mn_QuakePercent = 0; // 0 - отключен
+		mn_QuakePercent = 0; // 0 - РѕС‚РєР»СЋС‡РµРЅ
 
 		CVConGuard VCon;
 		if (GetActiveVCon(&VCon) >= 0)
@@ -13332,10 +13332,10 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	}
 	else
 	{
-		// Минимизация
+		// РњРёРЅРёРјРёР·Р°С†РёСЏ
 		_ASSERTE(((cmd == sih_ShowHideTSA) || (cmd == sih_ShowMinimize) || (cmd == sih_Minimize)) && "cmd must be determined!");
 
-		isQuakeMinimized = true; // сразу включим, чтобы не забыть. Используется только при gpSet->isQuakeStyle
+		isQuakeMinimized = true; // СЃСЂР°Р·Сѓ РІРєР»СЋС‡РёРј, С‡С‚РѕР±С‹ РЅРµ Р·Р°Р±С‹С‚СЊ. РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїСЂРё gpSet->isQuakeStyle
 
 		if (bVis && !bIsIconic)
 		{
@@ -13345,15 +13345,15 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 		if ((ghLastForegroundWindow != ghWnd) && (ghLastForegroundWindow != ghOpWnd))
 		{
-			// Фокус не там где надо - например, в дочернем GUI приложении
+			// Р¤РѕРєСѓСЃ РЅРµ С‚Р°Рј РіРґРµ РЅР°РґРѕ - РЅР°РїСЂРёРјРµСЂ, РІ РґРѕС‡РµСЂРЅРµРј GUI РїСЂРёР»РѕР¶РµРЅРёРё
 			if (CVConGroup::isOurWindow(ghLastForegroundWindow))
 			{
 				setFocus();
 				apiSetForegroundWindow(ghWnd);
 			}
-			//TODO: Тут наверное нужно выйти и позвать Post для DoMinimizeRestore(cmd)
-			//TODO: иначе при сворачивании не активируется "следующее" окно, фокус ввода
-			//TODO: остается в дочернем Notepad (ввод текста идет в него)
+			//TODO: РўСѓС‚ РЅР°РІРµСЂРЅРѕРµ РЅСѓР¶РЅРѕ РІС‹Р№С‚Рё Рё РїРѕР·РІР°С‚СЊ Post РґР»СЏ DoMinimizeRestore(cmd)
+			//TODO: РёРЅР°С‡Рµ РїСЂРё СЃРІРѕСЂР°С‡РёРІР°РЅРёРё РЅРµ Р°РєС‚РёРІРёСЂСѓРµС‚СЃСЏ "СЃР»РµРґСѓСЋС‰РµРµ" РѕРєРЅРѕ, С„РѕРєСѓСЃ РІРІРѕРґР°
+			//TODO: РѕСЃС‚Р°РµС‚СЃСЏ РІ РґРѕС‡РµСЂРЅРµРј Notepad (РІРІРѕРґ С‚РµРєСЃС‚Р° РёРґРµС‚ РІ РЅРµРіРѕ)
 		}
 
 		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
@@ -13376,14 +13376,14 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 				if (!bMinToTray && (cmd != sih_ShowHideTSA))
 				{
-					// Если в трей не скрываем - то окошко нужно "вернуть на таскбар"
+					// Р•СЃР»Рё РІ С‚СЂРµР№ РЅРµ СЃРєСЂС‹РІР°РµРј - С‚Рѕ РѕРєРѕС€РєРѕ РЅСѓР¶РЅРѕ "РІРµСЂРЅСѓС‚СЊ РЅР° С‚Р°СЃРєР±Р°СЂ"
 					StopForceShowFrame();
 					mn_QuakePercent = 1;
 					UpdateWindowRgn();
 					apiShowWindow(ghWnd, SW_SHOWNOACTIVATE);
 				}
-				// Если на таскбаре отображаются "табы",
-				// то после AnimateWindow(AW_HIDE) в Win8 иконка с таскбара не убирается
+				// Р•СЃР»Рё РЅР° С‚Р°СЃРєР±Р°СЂРµ РѕС‚РѕР±СЂР°Р¶Р°СЋС‚СЃСЏ "С‚Р°Р±С‹",
+				// С‚Рѕ РїРѕСЃР»Рµ AnimateWindow(AW_HIDE) РІ Win8 РёРєРѕРЅРєР° СЃ С‚Р°СЃРєР±Р°СЂР° РЅРµ СѓР±РёСЂР°РµС‚СЃСЏ
 				else if (gpSet->isTabsOnTaskBar())
 				{
 					if (gpSet->isWindowOnTaskBar())
@@ -13430,13 +13430,13 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				}
 			}
 		}
-		mn_QuakePercent = 0; // 0 - отключен
+		mn_QuakePercent = 0; // 0 - РѕС‚РєР»СЋС‡РµРЅ
 
 
 		if (cmd == sih_ShowHideTSA)
 		{
 			mb_LockWindowRgn = TRUE;
-			// Явно попросили в TSA спрятать
+			// РЇРІРЅРѕ РїРѕРїСЂРѕСЃРёР»Рё РІ TSA СЃРїСЂСЏС‚Р°С‚СЊ
 			Icon.HideWindowToTray();
 			mb_LockWindowRgn = FALSE;
 		}
@@ -13444,13 +13444,13 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		{
 			if (gpSet->isQuakeStyle)
 			{
-				// Раз попали сюда - значит скрывать иконку с таскбара не хотят. Нужен изврат...
+				// Р Р°Р· РїРѕРїР°Р»Рё СЃСЋРґР° - Р·РЅР°С‡РёС‚ СЃРєСЂС‹РІР°С‚СЊ РёРєРѕРЅРєСѓ СЃ С‚Р°СЃРєР±Р°СЂР° РЅРµ С…РѕС‚СЏС‚. РќСѓР¶РµРЅ РёР·РІСЂР°С‚...
 
-				// Найти окно "под" нами
+				// РќР°Р№С‚Рё РѕРєРЅРѕ "РїРѕРґ" РЅР°РјРё
 				HWND hNext = NULL;
 				if (hCurForeground && !bIsForeground)
 				{
-					// Вернуть фокус туда где он был до наших ексерсизов
+					// Р’РµСЂРЅСѓС‚СЊ С„РѕРєСѓСЃ С‚СѓРґР° РіРґРµ РѕРЅ Р±С‹Р» РґРѕ РЅР°С€РёС… РµРєСЃРµСЂСЃРёР·РѕРІ
 					hNext = hCurForeground;
 				}
 				else
@@ -13459,7 +13459,7 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 					{
 						if (::IsWindowVisible(hNext))
 						{
-							// Доп условия, аналог Alt-Tab?
+							// Р”РѕРї СѓСЃР»РѕРІРёСЏ, Р°РЅР°Р»РѕРі Alt-Tab?
 							DWORD nStylesEx = GetWindowLong(hNext, GWL_EXSTYLE);
 							DEBUGTEST(DWORD nStyles = GetWindowLong(hNext, GWL_STYLE));
 							if (!(nStylesEx & WS_EX_TOOLWINDOW))
@@ -13469,13 +13469,13 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 						}
 					}
 				}
-				// И задвинуть в зад
+				// Р Р·Р°РґРІРёРЅСѓС‚СЊ РІ Р·Р°Рґ
 				SetWindowPos(ghWnd, NULL, -32000, -32000, 0,0, SWP_NOZORDER|SWP_NOSIZE|SWP_NOACTIVATE);
 				apiSetForegroundWindow(hNext ? hNext : GetDesktopWindow());
 			}
 			else
 			{
-				// SC_MINIMIZE сам обработает (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
+				// SC_MINIMIZE СЃР°Рј РѕР±СЂР°Р±РѕС‚Р°РµС‚ (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
 				SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 			}
 		}
@@ -13493,10 +13493,10 @@ void CConEmuMain::DoForcedFullScreen(bool bSet /*= true*/)
 {
 	static bool bWasSetTopMost = false;
 
-	// определить возможность перейти в текстовый FullScreen
+	// РѕРїСЂРµРґРµР»РёС‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РїРµСЂРµР№С‚Рё РІ С‚РµРєСЃС‚РѕРІС‹Р№ FullScreen
 	if (!bSet)
 	{
-		// Снять флаг "OnTop", вернуть нормальные приоритеты процессам
+		// РЎРЅСЏС‚СЊ С„Р»Р°Рі "OnTop", РІРµСЂРЅСѓС‚СЊ РЅРѕСЂРјР°Р»СЊРЅС‹Рµ РїСЂРёРѕСЂРёС‚РµС‚С‹ РїСЂРѕС†РµСЃСЃР°Рј
 		if (bWasSetTopMost)
 		{
 			gpSet->isAlwaysOnTop = false;
@@ -13533,9 +13533,9 @@ void CConEmuMain::DoForcedFullScreen(bool bSet /*= true*/)
 		return;
 	}
 
-	TODO("Поднять приоритет процессов");
+	TODO("РџРѕРґРЅСЏС‚СЊ РїСЂРёРѕСЂРёС‚РµС‚ РїСЂРѕС†РµСЃСЃРѕРІ");
 	
-	// Установить AlwaysOnTop
+	// РЈСЃС‚Р°РЅРѕРІРёС‚СЊ AlwaysOnTop
 	if (!gpSet->isAlwaysOnTop)
 	{
 		gpSet->isAlwaysOnTop = true;
@@ -13593,20 +13593,20 @@ void CConEmuMain::OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp)
 
 			if (nFocusPID == GetCurrentProcessId())
 			{
-				// Вернуть фокус в дочернее приложение
+				// Р’РµСЂРЅСѓС‚СЊ С„РѕРєСѓСЃ РІ РґРѕС‡РµСЂРЅРµРµ РїСЂРёР»РѕР¶РµРЅРёРµ
 				bSetChild = true;
 			}
 		}
 
 		if (bSetChild)
 		{
-			// Вернуть фокус в дочернее приложение
+			// Р’РµСЂРЅСѓС‚СЊ С„РѕРєСѓСЃ РІ РґРѕС‡РµСЂРЅРµРµ РїСЂРёР»РѕР¶РµРЅРёРµ
 			VCon->RCon()->GuiWndFocusRestore();
 			return;
 		}
 	}
 
-	// Поставить фокус в ConEmu
+	// РџРѕСЃС‚Р°РІРёС‚СЊ С„РѕРєСѓСЃ РІ ConEmu
 	setFocus();
 }
 
@@ -13668,7 +13668,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	}
 
 	WORD bVK = (WORD)(wParam & 0xFF);
-	//-- некорректно. сработало на LCtrl+LAlt
+	//-- РЅРµРєРѕСЂСЂРµРєС‚РЅРѕ. СЃСЂР°Р±РѕС‚Р°Р»Рѕ РЅР° LCtrl+LAlt
 	//bool bAltGr = (messg == WM_KEYDOWN && bVK == VK_MENU);
 	//_ASSERTE(!bAltGr);
 
@@ -13708,35 +13708,35 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		LPARAM lKey1ScanCode = (lParam & 0x00FF0000);
 		DEBUGTEST(LPARAM lKey2ScanCode = 0);
 
-		// 120722 - Spanish (for example) layout. Есть несколько клавиш для ввода
-		// символов с разными Grave/Acute/Circumflex/Tilde/Diaeresis/Ring Above
-		// Например, при вводе "~" и "a" система продуцирует следующую последовательность
-		// WM_KEYDOWN, WM_DEADCHAR (~), WM_KEYUP, WM_KEYDOWN, WM_CHAR ("a" с "~"), WM_KEYUP
-		// Причем только в том случае, если нет задержек в обработке этих сообщений.
-		// При наличии задержки в обработке - получаем просто "a" без тильды.
+		// 120722 - Spanish (for example) layout. Р•СЃС‚СЊ РЅРµСЃРєРѕР»СЊРєРѕ РєР»Р°РІРёС€ РґР»СЏ РІРІРѕРґР°
+		// СЃРёРјРІРѕР»РѕРІ СЃ СЂР°Р·РЅС‹РјРё Grave/Acute/Circumflex/Tilde/Diaeresis/Ring Above
+		// РќР°РїСЂРёРјРµСЂ, РїСЂРё РІРІРѕРґРµ "~" Рё "a" СЃРёСЃС‚РµРјР° РїСЂРѕРґСѓС†РёСЂСѓРµС‚ СЃР»РµРґСѓСЋС‰СѓСЋ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ
+		// WM_KEYDOWN, WM_DEADCHAR (~), WM_KEYUP, WM_KEYDOWN, WM_CHAR ("a" СЃ "~"), WM_KEYUP
+		// РџСЂРёС‡РµРј С‚РѕР»СЊРєРѕ РІ С‚РѕРј СЃР»СѓС‡Р°Рµ, РµСЃР»Рё РЅРµС‚ Р·Р°РґРµСЂР¶РµРє РІ РѕР±СЂР°Р±РѕС‚РєРµ СЌС‚РёС… СЃРѕРѕР±С‰РµРЅРёР№.
+		// РџСЂРё РЅР°Р»РёС‡РёРё Р·Р°РґРµСЂР¶РєРё РІ РѕР±СЂР°Р±РѕС‚РєРµ - РїРѕР»СѓС‡Р°РµРј РїСЂРѕСЃС‚Рѕ "a" Р±РµР· С‚РёР»СЊРґС‹.
 
-		TODO("Проверить немецкую раскладку с '^'");
+		TODO("РџСЂРѕРІРµСЂРёС‚СЊ РЅРµРјРµС†РєСѓСЋ СЂР°СЃРєР»Р°РґРєСѓ СЃ '^'");
 
-		while (nTranslatedChars < 15  // извлечь из буфера все последующие WM_CHAR & WM_SYSCHAR
+		while (nTranslatedChars < 15  // РёР·РІР»РµС‡СЊ РёР· Р±СѓС„РµСЂР° РІСЃРµ РїРѕСЃР»РµРґСѓСЋС‰РёРµ WM_CHAR & WM_SYSCHAR
 		        && PeekMessage(&msg, 0,0,0, PM_NOREMOVE)
 		      )
 		{
 			if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
 					|| msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR
-					|| (iProcessDeadChars == 1 // был WM_DEADCHAR/WM_SYSDEADCHAR, ожидаем WM_KEYUP и WM_KEYDOWN
+					|| (iProcessDeadChars == 1 // Р±С‹Р» WM_DEADCHAR/WM_SYSDEADCHAR, РѕР¶РёРґР°РµРј WM_KEYUP Рё WM_KEYDOWN
 						&& ((msg.message == WM_KEYUP && (msg.lParam & 0x00FF0000) == lKey1ScanCode)
-							|| (msg.message == WM_KEYDOWN /* следующая за DeadChar собственно буква */))
+							|| (msg.message == WM_KEYDOWN /* СЃР»РµРґСѓСЋС‰Р°СЏ Р·Р° DeadChar СЃРѕР±СЃС‚РІРµРЅРЅРѕ Р±СѓРєРІР° */))
 						)
-					|| (iProcessDeadChars == 2 // был WM_DEADCHAR/WM_SYSDEADCHAR, теперь ожидаем WM_CHAR
+					|| (iProcessDeadChars == 2 // Р±С‹Р» WM_DEADCHAR/WM_SYSDEADCHAR, С‚РµРїРµСЂСЊ РѕР¶РёРґР°РµРј WM_CHAR
 						&& (msg.message == WM_CHAR || msg.message == WM_SYSCHAR)
 						)
 					))
-				//|| (msg.lParam & 0xFF0000) != lKey1ScanCode /* совпадение скан-кода */) // 120722 - убрал
+				//|| (msg.lParam & 0xFF0000) != lKey1ScanCode /* СЃРѕРІРїР°РґРµРЅРёРµ СЃРєР°РЅ-РєРѕРґР° */) // 120722 - СѓР±СЂР°Р»
 			{
 				break;
 			}
 
-			if (GetMessage(&msg1, 0,0,0))  // убрать из буфера
+			if (GetMessage(&msg1, 0,0,0))  // СѓР±СЂР°С‚СЊ РёР· Р±СѓС„РµСЂР°
 			{
 				ConEmuMsgLogger::Log(msg1, ConEmuMsgLogger::msgCommon);
 				_ASSERTEL(msg1.message == msg.message && msg1.wParam == msg.wParam && msg1.lParam == msg.lParam);
@@ -13752,7 +13752,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 					szTranslatedChars[nTranslatedChars ++] = (wchar_t)msg1.wParam;
 					if (iProcessDeadChars == 1)
 					{
-						_ASSERTEL(iProcessDeadChars == 2); // уже должно было быть выставлено в WM_KEYDOWN
+						_ASSERTEL(iProcessDeadChars == 2); // СѓР¶Рµ РґРѕР»Р¶РЅРѕ Р±С‹Р»Рѕ Р±С‹С‚СЊ РІС‹СЃС‚Р°РІР»РµРЅРѕ РІ WM_KEYDOWN
 						iProcessDeadChars = 2;
 					}
 				}
@@ -13773,8 +13773,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 					}
 				}
 
-				// 120722 - Было DispatchMessage вместо TranslateMessage.
-				// Требуется обработать сообщение
+				// 120722 - Р‘С‹Р»Рѕ DispatchMessage РІРјРµСЃС‚Рѕ TranslateMessage.
+				// РўСЂРµР±СѓРµС‚СЃСЏ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ
 				TranslateMessage(&msg1);
 				//DispatchMessage(&msg1);
 			}
@@ -13864,7 +13864,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		HKL hkl = (HKL)GetActiveKeyboardLayout();
 		UINT nVK = wParam & 0xFFFF;
 		UINT nSC = ((DWORD)lParam & 0xFF0000) >> 16;
-		WARNING("BUGBUG: похоже глючит в x64 на US-Dvorak");
+		WARNING("BUGBUG: РїРѕС…РѕР¶Рµ РіР»СЋС‡РёС‚ РІ x64 РЅР° US-Dvorak");
 		nTranslatedChars = ToUnicodeEx(nVK, nSC, m_KeybStates, szTranslatedChars, 10, 0, hkl);
 		if (nTranslatedChars>0) szTranslatedChars[min(10,nTranslatedChars)] = 0; else szTranslatedChars[0] = 0;
 	}
@@ -13904,7 +13904,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		HKL hkl = (HKL)m_ActiveKeybLayout; //GetActiveKeyboardLayout();
 		UINT nVK = wParam & 0xFFFF;
 		UINT nSC = ((DWORD)lParam & 0xFF0000) >> 16;
-		WARNING("BUGBUG: похоже глючит в x64 на US-Dvorak");
+		WARNING("BUGBUG: РїРѕС…РѕР¶Рµ РіР»СЋС‡РёС‚ РІ x64 РЅР° US-Dvorak");
 		int nTranslatedChars = ToUnicodeEx(nVK, nSC, m_KeybStates, szTranslatedChars, 15, 0, hkl);
 
 		if (nTranslatedChars >= 0)
@@ -13940,11 +13940,11 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 #endif
 
 	if (messg == WM_KEYDOWN && !mb_HotKeyRegistered)
-		RegisterHotKeys(); // Win и прочее
+		RegisterHotKeys(); // Win Рё РїСЂРѕС‡РµРµ
 
 	_ASSERTEL(messg != WM_CHAR && messg != WM_SYSCHAR);
 
-	// Теперь обработаем некоторые "общие" хоткеи
+	// РўРµРїРµСЂСЊ РѕР±СЂР°Р±РѕС‚Р°РµРј РЅРµРєРѕС‚РѕСЂС‹Рµ "РѕР±С‰РёРµ" С…РѕС‚РєРµРё
 	if (wParam == VK_ESCAPE)
 	{
 		if (mp_DragDrop->InDragDrop())
@@ -13963,7 +13963,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	if ((wParam == VK_CAPITAL) || (wParam == VK_NUMLOCK) || (wParam == VK_SCROLL))
 		mp_Status->OnKeyboardChanged();
 
-	// Теперь - можно переслать в консоль
+	// РўРµРїРµСЂСЊ - РјРѕР¶РЅРѕ РїРµСЂРµСЃР»Р°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ
 	CVConGuard VCon;
 	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
 	{
@@ -13972,18 +13972,18 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	}
 	else if (((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST))
 	{
-		// Такие коды с клавиатуры приходить не должны, а то для "мышки" ничего не останется
+		// РўР°РєРёРµ РєРѕРґС‹ СЃ РєР»Р°РІРёР°С‚СѓСЂС‹ РїСЂРёС…РѕРґРёС‚СЊ РЅРµ РґРѕР»Р¶РЅС‹, Р° С‚Рѕ РґР»СЏ "РјС‹С€РєРё" РЅРёС‡РµРіРѕ РЅРµ РѕСЃС‚Р°РЅРµС‚СЃСЏ
 		_ASSERTEL(!(((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST)));
 	}
 	else
 	{
-		// Если вдруг активной консоли нету (вообще?) но клавиши обработать все-равно нада
-		// true - хоткей обработан
+		// Р•СЃР»Рё РІРґСЂСѓРі Р°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё РЅРµС‚Сѓ (РІРѕРѕР±С‰Рµ?) РЅРѕ РєР»Р°РІРёС€Рё РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РІСЃРµ-СЂР°РІРЅРѕ РЅР°РґР°
+		// true - С…РѕС‚РєРµР№ РѕР±СЂР°Р±РѕС‚Р°РЅ
 		if (!ProcessHotKeyMsg(messg, wParam, lParam, szTranslatedChars, NULL))
 		{
 			; // Keypress was not processed
 
-			//// И напоследок
+			//// Р РЅР°РїРѕСЃР»РµРґРѕРє
 			//if (wParam == VK_ESCAPE)
 			//{
 			//	if (messg == WM_KEYUP)
@@ -14009,7 +14009,7 @@ LRESULT CConEmuMain::OnKeyboardHook(DWORD VkMod)
 
 	if (pHotKey == ConEmuSkipHotKey)
 	{
-		// Если функция срабатывает на отпускание
+		// Р•СЃР»Рё С„СѓРЅРєС†РёСЏ СЃСЂР°Р±Р°С‚С‹РІР°РµС‚ РЅР° РѕС‚РїСѓСЃРєР°РЅРёРµ
 		pHotKey = ProcessHotKey(VkMod, false/*bKeyDown*/, NULL, pRCon);
 	}
 
@@ -14018,7 +14018,7 @@ LRESULT CConEmuMain::OnKeyboardHook(DWORD VkMod)
 
 void CConEmuMain::OnConsoleKey(WORD vk, LPARAM Mods)
 {
-	// Некоторые комбинации обрабатываются в самом ConEmu и сюда приходить по идее не должны
+	// РќРµРєРѕС‚РѕСЂС‹Рµ РєРѕРјР±РёРЅР°С†РёРё РѕР±СЂР°Р±Р°С‚С‹РІР°СЋС‚СЃСЏ РІ СЃР°РјРѕРј ConEmu Рё СЃСЋРґР° РїСЂРёС…РѕРґРёС‚СЊ РїРѕ РёРґРµРµ РЅРµ РґРѕР»Р¶РЅС‹
 #if 0
 	if (vk == VK_SPACE && (Mods == (Mods & (MOD_ALT|MOD_LALT|MOD_RALT))))
 	{
@@ -14040,17 +14040,17 @@ void CConEmuMain::OnConsoleKey(WORD vk, LPARAM Mods)
 	}
 #endif
 
-	// Все остальное - обычным образом
+	// Р’СЃРµ РѕСЃС‚Р°Р»СЊРЅРѕРµ - РѕР±С‹С‡РЅС‹Рј РѕР±СЂР°Р·РѕРј
 	CVConGuard VCon;
 	CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 	if (pRCon)
 	{
 		INPUT_RECORD r = {KEY_EVENT};
-		// Alt и прочих слать не нужно - он уже послан
+		// Alt Рё РїСЂРѕС‡РёС… СЃР»Р°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ - РѕРЅ СѓР¶Рµ РїРѕСЃР»Р°РЅ
 		r.Event.KeyEvent.bKeyDown = TRUE;
 		r.Event.KeyEvent.wRepeatCount = 1;
 		r.Event.KeyEvent.wVirtualKeyCode = vk;
-		r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(vk, 0/*MAPVK_VK_TO_VSC*/);
+		r.Event.KeyEvent.wVirtualScanCode = /*28 РЅР° РјРѕРµР№ РєР»Р°РІРёР°С‚СѓСЂРµ*/MapVirtualKey(vk, 0/*MAPVK_VK_TO_VSC*/);
 		if (Mods & MOD_LALT)
 			r.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
 		if (Mods & MOD_RALT)
@@ -14114,7 +14114,7 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 	{
 		case WM_IME_CHAR:
 			{
-				// Посылается в RealConsole (это ввод из окошка IME)
+				// РџРѕСЃС‹Р»Р°РµС‚СЃСЏ РІ RealConsole (СЌС‚Рѕ РІРІРѕРґ РёР· РѕРєРѕС€РєР° IME)
 				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_CHAR: char=%c, wParam=%u, lParam=0x%08X\n", (wchar_t)wParam, (DWORD)wParam, (DWORD)lParam);
 				DEBUGSTRIME(szDbgMsg);
 				CVConGuard VCon;
@@ -14164,7 +14164,7 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		case WM_IME_ENDCOMPOSITION:
 			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_ENDCOMPOSITION: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
-			// IME закончен. Обычные нажатия опять можно посылать в консоль
+			// IME Р·Р°РєРѕРЅС‡РµРЅ. РћР±С‹С‡РЅС‹Рµ РЅР°Р¶Р°С‚РёСЏ РѕРїСЏС‚СЊ РјРѕР¶РЅРѕ РїРѕСЃС‹Р»Р°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ
 			mb_InImeComposition = false;
 			break;
 		case WM_IME_KEYDOWN:
@@ -14181,8 +14181,8 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			switch (wParam)
 			{
 				case IMN_SETOPENSTATUS:
-					// Как-то странно, нажатие Alt` (в японской раскладке) посылает в консоль артефактный символ
-					// (пересылает нажатие в консоль)
+					// РљР°Рє-С‚Рѕ СЃС‚СЂР°РЅРЅРѕ, РЅР°Р¶Р°С‚РёРµ Alt` (РІ СЏРїРѕРЅСЃРєРѕР№ СЂР°СЃРєР»Р°РґРєРµ) РїРѕСЃС‹Р»Р°РµС‚ РІ РєРѕРЅСЃРѕР»СЊ Р°СЂС‚РµС„Р°РєС‚РЅС‹Р№ СЃРёРјРІРѕР»
+					// (РїРµСЂРµСЃС‹Р»Р°РµС‚ РЅР°Р¶Р°С‚РёРµ РІ РєРѕРЅСЃРѕР»СЊ)
 					mb_ImeMethodChanged = (wParam == IMN_SETOPENSTATUS) && isPressed(VK_MENU);
 					break;
 				//case 0xF:
@@ -14229,7 +14229,7 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_STARTCOMPOSITION: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			UpdateImeComposition();
-			// Начало IME. Теперь нужно игнорировать обычные нажатия (не посылать в консоль)
+			// РќР°С‡Р°Р»Рѕ IME. РўРµРїРµСЂСЊ РЅСѓР¶РЅРѕ РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ РѕР±С‹С‡РЅС‹Рµ РЅР°Р¶Р°С‚РёСЏ (РЅРµ РїРѕСЃС‹Р»Р°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ)
 			mb_InImeComposition = true;
 			break;
 		default:
@@ -14315,8 +14315,8 @@ void CConEmuMain::CheckActiveLayoutName()
 
 	if (iUnused >= 0)
 	{
-		// Старшие слова совпадать не будут (если совпадают, то случайно)
-		// А вот младшие - должны бы, или хотя бы "Primary Language ID". Но...
+		// РЎС‚Р°СЂС€РёРµ СЃР»РѕРІР° СЃРѕРІРїР°РґР°С‚СЊ РЅРµ Р±СѓРґСѓС‚ (РµСЃР»Рё СЃРѕРІРїР°РґР°СЋС‚, С‚Рѕ СЃР»СѓС‡Р°Р№РЅРѕ)
+		// Рђ РІРѕС‚ РјР»Р°РґС€РёРµ - РґРѕР»Р¶РЅС‹ Р±С‹, РёР»Рё С…РѕС‚СЏ Р±С‹ "Primary Language ID". РќРѕ...
 		// Issue 1050 #10: Layout=00020405, HKL=0xFFFFFFFFF00A0409. Weird...
 		if ((LOWORD(hkl) & 0xFF) != (LOWORD(dwLayout) & 0xFF))
 		{
@@ -14366,9 +14366,9 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	/*
 	**********
-	Вызовы идут в следующем порядке (WinXP SP3)
+	Р’С‹Р·РѕРІС‹ РёРґСѓС‚ РІ СЃР»РµРґСѓСЋС‰РµРј РїРѕСЂСЏРґРєРµ (WinXP SP3)
 	**********
-	En -> Ru : --> Слетает после этого!
+	En -> Ru : --> РЎР»РµС‚Р°РµС‚ РїРѕСЃР»Рµ СЌС‚РѕРіРѕ!
 	**********
 	19:17:15.043(gui.4720) ConEmu: WM_INPUTLANGCHANGEREQUEST(CP:1, HKL:0x04190419)
 	19:17:17.043(gui.4720) ConEmu: WM_INPUTLANGCHANGE(CP:204, HKL:0x04190419)
@@ -14379,14 +14379,14 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	19:17:27.044(gui.3072) GUI recieved CECMD_LANGCHANGE
 	19:17:29.044(gui.4720) ConEmu: GetKeyboardLayout(0) in OnLangChangeConsole after GetKeyboardLayout(0) = 0x04190419
 	19:17:31.044(gui.4720) ConEmu: GetKeyboardLayout(0) in OnLangChangeConsole after GetKeyboardLayout(0) = 0x04190419
-	--> Слетает после этого!
+	--> РЎР»РµС‚Р°РµС‚ РїРѕСЃР»Рµ СЌС‚РѕРіРѕ!
 	'ConEmu.exe': Loaded 'C:\WINDOWS\system32\kbdru.dll'
 	'ConEmu.exe': Unloaded 'C:\WINDOWS\system32\kbdru.dll'
 	19:17:33.075(gui.4720) ConEmu: Calling GetKeyboardLayout(0)
 	19:17:35.075(gui.4720) ConEmu: GetKeyboardLayout(0) after LoadKeyboardLayout = 0x04190419
 	19:17:37.075(gui.4720) ConEmu: GetKeyboardLayout(0) after SwitchKeyboardLayout = 0x04190419
 	**********
-	Ru -> En : --> Слетает после этого!
+	Ru -> En : --> РЎР»РµС‚Р°РµС‚ РїРѕСЃР»Рµ СЌС‚РѕРіРѕ!
 	**********
 	17:23:36.013(gui.3152) ConEmu: WM_INPUTLANGCHANGEREQUEST(CP:1, HKL:0x04090409)
 	17:23:36.013(gui.3152) ConEmu: WM_INPUTLANGCHANGE(CP:0, HKL:0x04090409)
@@ -14399,7 +14399,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	ConEmuC: InputLayoutChanged (GetConsoleKeyboardLayoutName returns) '00000409'
 	17:23:38.013(gui.4460) GUI recieved CECMD_LANGCHANGE
 	17:23:40.028(gui.4460) ConEmu: GetKeyboardLayout(0) on CECMD_LANGCHANGE after GetKeyboardLayout(0) = 0x04090409
-	--> Слетает после этого!
+	--> РЎР»РµС‚Р°РµС‚ РїРѕСЃР»Рµ СЌС‚РѕРіРѕ!
 	'ConEmu.exe': Loaded 'C:\WINDOWS\system32\kbdus.dll'
 	'ConEmu.exe': Unloaded 'C:\WINDOWS\system32\kbdus.dll'
 	17:23:42.044(gui.4460) ConEmu: Calling GetKeyboardLayout(0)
@@ -14436,15 +14436,15 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 #ifdef _DEBUG
 	wchar_t szBeforeChange[KL_NAMELENGTH] = {0}; GetKeyboardLayoutName(szBeforeChange);
 #endif
-	// Собственно смена
+	// РЎРѕР±СЃС‚РІРµРЅРЅРѕ СЃРјРµРЅР°
 	result = DefWindowProc(ghWnd, messg, wParam, lParam);
-	// Проверяем, что получилось
+	// РџСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ РїРѕР»СѓС‡РёР»РѕСЃСЊ
 	wchar_t szAfterChange[KL_NAMELENGTH] = {0}; GetKeyboardLayoutName(szAfterChange);
-	//if (wcscmp(szAfterChange, szBeforeChange)) -- практика показывает, что уже совпадают.
+	//if (wcscmp(szAfterChange, szBeforeChange)) -- РїСЂР°РєС‚РёРєР° РїРѕРєР°Р·С‹РІР°РµС‚, С‡С‚Рѕ СѓР¶Рµ СЃРѕРІРїР°РґР°СЋС‚.
 	//{
 	wchar_t *pszEnd = szAfterChange+8;
 	DWORD dwLayoutAfterChange = wcstoul(szAfterChange, &pszEnd, 16);
-	// Запомнить, что получилось в m_LayoutNames
+	// Р—Р°РїРѕРјРЅРёС‚СЊ, С‡С‚Рѕ РїРѕР»СѓС‡РёР»РѕСЃСЊ РІ m_LayoutNames
 	int i, iUnused = -1;
 
 	for (i = 0; i < (int)countof(m_LayoutNames); i++)
@@ -14476,7 +14476,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	DEBUGSTRLANG(szMsg);
 #endif
 
-	// в Win7x64 WM_INPUTLANGCHANGEREQUEST вообще не приходит, по крайней мере при переключении мышкой
+	// РІ Win7x64 WM_INPUTLANGCHANGEREQUEST РІРѕРѕР±С‰Рµ РЅРµ РїСЂРёС…РѕРґРёС‚, РїРѕ РєСЂР°Р№РЅРµР№ РјРµСЂРµ РїСЂРё РїРµСЂРµРєР»СЋС‡РµРЅРёРё РјС‹С€РєРѕР№
 	if (messg == WM_INPUTLANGCHANGEREQUEST || messg == WM_INPUTLANGCHANGE)
 	{
 		static UINT   nLastMsg;
@@ -14495,7 +14495,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 		nLastMsg = messg;
 		lLastPrm = lParam;
 
-		// -- Эффекта не имеет
+		// -- Р­С„С„РµРєС‚Р° РЅРµ РёРјРµРµС‚
 		//if (pRCon)
 		//{
 		//	HWND hGuiWnd = pRCon->GuiWnd();
@@ -14522,7 +14522,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	//  if (pipe.Execute(CMD_LANGCHANGE, &lParam, sizeof(LPARAM)))
 	//  {
 	//      //gpConEmu->DebugStep(_T("ConEmu: Switching language (1 sec)"));
-	//      // Подождем немножко, проверим что плагин живой
+	//      // РџРѕРґРѕР¶РґРµРј РЅРµРјРЅРѕР¶РєРѕ, РїСЂРѕРІРµСЂРёРј С‡С‚Рѕ РїР»Р°РіРёРЅ Р¶РёРІРѕР№
 	//      /*DWORD dwWait = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
 	//      if (dwWait == WAIT_OBJECT_0)*/
 	//          return result;
@@ -14548,7 +14548,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
-// dwLayoutName содержит не HKL, а "имя" (i.e. "00030409") сконвертированное в DWORD
+// dwLayoutName СЃРѕРґРµСЂР¶РёС‚ РЅРµ HKL, Р° "РёРјСЏ" (i.e. "00030409") СЃРєРѕРЅРІРµСЂС‚РёСЂРѕРІР°РЅРЅРѕРµ РІ DWORD
 LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD adwLayoutName)
 {
 	if ((gpSet->isMonitorConsoleLang & 1) != 1)
@@ -14572,7 +14572,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 
 	if (!isMainThread())
 	{
-		// --> не "нравится" руслату обращение к раскладкам из фоновых потоков. Поэтому выполяется в основном потоке
+		// --> РЅРµ "РЅСЂР°РІРёС‚СЃСЏ" СЂСѓСЃР»Р°С‚Сѓ РѕР±СЂР°С‰РµРЅРёРµ Рє СЂР°СЃРєР»Р°РґРєР°Рј РёР· С„РѕРЅРѕРІС‹С… РїРѕС‚РѕРєРѕРІ. РџРѕСЌС‚РѕРјСѓ РІС‹РїРѕР»СЏРµС‚СЃСЏ РІ РѕСЃРЅРѕРІРЅРѕРј РїРѕС‚РѕРєРµ
 		if (gpSetCls->isAdvLogging > 1)
 		{
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole (0x%08X), Posting to main thread", dwLayoutName);
@@ -14647,7 +14647,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 		{
 			lbFound = TRUE;
 			dwNewKeybLayout = m_LayoutNames[i].hkl;
-			iUnused = -1; // запоминать не потребуется
+			iUnused = -1; // Р·Р°РїРѕРјРёРЅР°С‚СЊ РЅРµ РїРѕС‚СЂРµР±СѓРµС‚СЃСЏ
 			break;
 		}
 	}
@@ -14659,7 +14659,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 	{
 		for (i = 0; (i < nCount); i++)
 		{
-			// "классическая" раскладка, в которой ид раскладки совпадает с языком?
+			// "РєР»Р°СЃСЃРёС‡РµСЃРєР°СЏ" СЂР°СЃРєР»Р°РґРєР°, РІ РєРѕС‚РѕСЂРѕР№ РёРґ СЂР°СЃРєР»Р°РґРєРё СЃРѕРІРїР°РґР°РµС‚ СЃ СЏР·С‹РєРѕРј?
 			if ((s == 0) && ((dwLayoutName & 0xFFFF) != dwLayoutName))
 				continue;
 
@@ -14681,21 +14681,21 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 			switch (s)
 			{
 			case 0:
-				// это "классическая" раскладка, в которой ид раскладки совпадает с языком?
+				// СЌС‚Рѕ "РєР»Р°СЃСЃРёС‡РµСЃРєР°СЏ" СЂР°СЃРєР»Р°РґРєР°, РІ РєРѕС‚РѕСЂРѕР№ РёРґ СЂР°СЃРєР»Р°РґРєРё СЃРѕРІРїР°РґР°РµС‚ СЃ СЏР·С‹РєРѕРј?
 				lbFound = (((DWORD_PTR)hKeyb[i]) == (dwNewKeybLayout | (dwNewKeybLayout << 16)));
 				break;
 			case 1:
 				// Issue 1035: dwLayoutName=0x00020409; hKeyb={0xfffffffff0010414,0xfffffffff0010409}
-				// Любая (свободная/необработанная) раскладка для требуемого языка?
+				// Р›СЋР±Р°СЏ (СЃРІРѕР±РѕРґРЅР°СЏ/РЅРµРѕР±СЂР°Р±РѕС‚Р°РЅРЅР°СЏ) СЂР°СЃРєР»Р°РґРєР° РґР»СЏ С‚СЂРµР±СѓРµРјРѕРіРѕ СЏР·С‹РєР°?
 				lbFound = (HIWORD(hKeyb[i]) != LOWORD(hKeyb[i])) && (LOWORD(hKeyb[i]) == LOWORD(dwNewKeybLayout));
 				//lbFound = ((((DWORD_PTR)hKeyb[i]) & 0xFFFFFFF) == dwNewKeybLayout);
 				break;
 			case 2:
-				// По младшему слову
+				// РџРѕ РјР»Р°РґС€РµРјСѓ СЃР»РѕРІСѓ
 				lbFound = (LOWORD((DWORD_PTR)hKeyb[i]) == LOWORD(dwNewKeybLayout));
 				break;
 			case 3:
-				// Если опять не нашли - то сравниваем старшее (HIWORD) слово раскладки
+				// Р•СЃР»Рё РѕРїСЏС‚СЊ РЅРµ РЅР°С€Р»Рё - С‚Рѕ СЃСЂР°РІРЅРёРІР°РµРј СЃС‚Р°СЂС€РµРµ (HIWORD) СЃР»РѕРІРѕ СЂР°СЃРєР»Р°РґРєРё
 				lbFound = (HIWORD((DWORD_PTR)hKeyb[i]) == LOWORD(dwNewKeybLayout));
 				break;
 			case 4:
@@ -14745,7 +14745,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 		}
 	}
 
-	//// Если не нашли, и это "классическая" раскладка, в которой ид раскладки совпадает с языком
+	//// Р•СЃР»Рё РЅРµ РЅР°С€Р»Рё, Рё СЌС‚Рѕ "РєР»Р°СЃСЃРёС‡РµСЃРєР°СЏ" СЂР°СЃРєР»Р°РґРєР°, РІ РєРѕС‚РѕСЂРѕР№ РёРґ СЂР°СЃРєР»Р°РґРєРё СЃРѕРІРїР°РґР°РµС‚ СЃ СЏР·С‹РєРѕРј
 	//if (!lbFound && ((dwLayoutName & 0xFFFF) == dwLayoutName))
 	//{
 	//	DWORD_PTR dwTest = dwNewKeybLayout | (dwNewKeybLayout << 16);
@@ -14760,7 +14760,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 	//		}
 	//	}
 
-	//	// Если опять не нашли - то сравниваем старшее (HIWORD) слово раскладки
+	//	// Р•СЃР»Рё РѕРїСЏС‚СЊ РЅРµ РЅР°С€Р»Рё - С‚Рѕ СЃСЂР°РІРЅРёРІР°РµРј СЃС‚Р°СЂС€РµРµ (HIWORD) СЃР»РѕРІРѕ СЂР°СЃРєР»Р°РґРєРё
 	//	if (!lbFound)
 	//	{
 	//		WORD wTest = LOWORD(dwNewKeybLayout);
@@ -14820,7 +14820,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"dwLayoutName not found: Count=%u,Left=%i,Err=%u,%08X\r\n", nCount, iUnknownLeft, nErr, dwLayoutName);
 		AppendHKL(szInfo, countof(szInfo), hKeyb, nCount);
 
-		// Загружать НОВЫЕ раскладки - некорректно (Issue 944)
+		// Р—Р°РіСЂСѓР¶Р°С‚СЊ РќРћР’Р«Р• СЂР°СЃРєР»Р°РґРєРё - РЅРµРєРѕСЂСЂРµРєС‚РЅРѕ (Issue 944)
 		AssertMsg(szInfo);
 
 		//wchar_t szLayoutName[9] = {0};
@@ -14858,7 +14858,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 	//	if (hKeyb[i] == (HKL)dwNewKeybLayout)
 	//		lbFound = TRUE;
 	//}
-	//WARNING("Похоже с другими раскладками будет глючить. US Dvorak?");
+	//WARNING("РџРѕС…РѕР¶Рµ СЃ РґСЂСѓРіРёРјРё СЂР°СЃРєР»Р°РґРєР°РјРё Р±СѓРґРµС‚ РіР»СЋС‡РёС‚СЊ. US Dvorak?");
 	//for (i = 0; !lbFound && i < nCount; i++)
 	//{
 	//	if ((((DWORD_PTR)hKeyb[i]) & 0xFFFF) == (dwNewKeybLayout & 0xFFFF))
@@ -14866,7 +14866,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 	//		lbFound = TRUE; dwNewKeybLayout = (DWORD_PTR)hKeyb[i];
 	//	}
 	//}
-	//// Если не задана раскладка (только язык?) формируем по умолчанию
+	//// Р•СЃР»Рё РЅРµ Р·Р°РґР°РЅР° СЂР°СЃРєР»Р°РґРєР° (С‚РѕР»СЊРєРѕ СЏР·С‹Рє?) С„РѕСЂРјРёСЂСѓРµРј РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 	//if (!lbFound && (dwNewKeybLayout == (dwNewKeybLayout & 0xFFFF)))
 	//{
 	//	dwNewKeybLayout |= (dwNewKeybLayout << 16);
@@ -14900,10 +14900,10 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 {
 	isPrivate = false;
 
-	// Для этих сообщений, lParam - relative to the upper-left corner of the screen.
+	// Р”Р»СЏ СЌС‚РёС… СЃРѕРѕР±С‰РµРЅРёР№, lParam - relative to the upper-left corner of the screen.
 	if (messg == WM_MOUSEWHEEL || messg == WM_MOUSEHWHEEL)
 		ScreenToClient(ghWnd, &ptCurClient);
-	else // Для остальных lParam содержит клиентские координаты
+	else // Р”Р»СЏ РѕСЃС‚Р°Р»СЊРЅС‹С… lParam СЃРѕРґРµСЂР¶РёС‚ РєР»РёРµРЅС‚СЃРєРёРµ РєРѕРѕСЂРґРёРЅР°С‚С‹
 		ClientToScreen(ghWnd, &ptCurScreen);
 
 	if (mb_MouseCaptured
@@ -14913,7 +14913,7 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 		HWND hChild = ::ChildWindowFromPointEx(ghWnd, ptCurClient, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
 
 		CVConGuard VCon;
-		if (isVConHWND(hChild, &VCon)/*(hChild != ghWnd)*/) // Это должна быть VCon
+		if (isVConHWND(hChild, &VCon)/*(hChild != ghWnd)*/) // Р­С‚Рѕ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ VCon
 		{
 			#ifdef _DEBUG
 			wchar_t szClass[128]; GetClassName(hChild, szClass, countof(szClass));
@@ -14922,10 +14922,10 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 
 			//bool bSkipThisEvent = false;
 
-			// WARNING! Тут строго, без учета активности группы!
+			// WARNING! РўСѓС‚ СЃС‚СЂРѕРіРѕ, Р±РµР· СѓС‡РµС‚Р° Р°РєС‚РёРІРЅРѕСЃС‚Рё РіСЂСѓРїРїС‹!
 			if (VCon.VCon() && isVisible(VCon.VCon()) && !isActive(VCon.VCon(), false))
 			{
-				// по клику - активировать кликнутый сплит
+				// РїРѕ РєР»РёРєСѓ - Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РєР»РёРєРЅСѓС‚С‹Р№ СЃРїР»РёС‚
 				if ((messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN) || (messg == WM_MBUTTONDOWN))
 				{
 					Activate(VCon.VCon());
@@ -14952,13 +14952,13 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 			}
 
 
-			// Если активны PanelView - они могут транслировать координаты
+			// Р•СЃР»Рё Р°РєС‚РёРІРЅС‹ PanelView - РѕРЅРё РјРѕРіСѓС‚ С‚СЂР°РЅСЃР»РёСЂРѕРІР°С‚СЊ РєРѕРѕСЂРґРёРЅР°С‚С‹
 			POINT ptVConCoord = ptCurClient;
 			::MapWindowPoints(ghWnd, hChild, &ptVConCoord, 1);
 			HWND hPanelView = ::ChildWindowFromPointEx(hChild, ptVConCoord, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
 			if (hPanelView && (hPanelView != hChild))
 			{
-				// LClick пропускать в консоль нельзя, чтобы не возникало глюков с позиционированием по клику...
+				// LClick РїСЂРѕРїСѓСЃРєР°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ РЅРµР»СЊР·СЏ, С‡С‚РѕР±С‹ РЅРµ РІРѕР·РЅРёРєР°Р»Рѕ РіР»СЋРєРѕРІ СЃ РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°РЅРёРµРј РїРѕ РєР»РёРєСѓ...
 				isPrivate = (messg == WM_LBUTTONDOWN);
 
 				if (mb_MouseCaptured)
@@ -14990,8 +14990,8 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 	}
 	else if ((mouse.lastMsg == WM_LBUTTONDBLCLK) && ((messg == WM_MOUSEMOVE) || (messg == WM_LBUTTONUP)))
 	{
-		// Тачпады и тачскрины.
-		// При двойном тапе может получаться следующая фигня:
+		// РўР°С‡РїР°РґС‹ Рё С‚Р°С‡СЃРєСЂРёРЅС‹.
+		// РџСЂРё РґРІРѕР№РЅРѕРј С‚Р°РїРµ РјРѕР¶РµС‚ РїРѕР»СѓС‡Р°С‚СЊСЃСЏ СЃР»РµРґСѓСЋС‰Р°СЏ С„РёРіРЅСЏ:
 		//17:40:25.787(gui.4460) GUI::Mouse WM_ MOUSEMOVE at screen {603x239} x00000000
 		//17:40:25.787(gui.4460) GUI::Mouse WM_ LBUTTONDOWN at screen {603x239} x00000001
 		//17:40:25.787(gui.4460) GUI::Mouse WM_ LBUTTONUP at screen {603x239} x00000000
@@ -15000,10 +15000,10 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 		//17:40:25.880(gui.4460) GUI::Mouse WM_ MOUSEMOVE at screen {598x249} x00000001
 		//17:40:25.927(gui.4460) GUI::Mouse WM_ LBUTTONUP at screen {598x249} x00000000
 		//17:40:25.927(gui.4460) GUI::Mouse WM_ MOUSEMOVE at screen {598x249} x00000000
-		// Т.е. место второго тапа немного смещено (95% случаев)
-		// В итоге, винда присылает MOUSEMOVE & LBUTTONUP для этого смещения, что нежелательно,
-		// т.к. Far, например, после двойного тапа по папке выполняет позиционирование
-		// на файл в этой папке. Как если бы после DblClick был еще один лишний Click.
+		// Рў.Рµ. РјРµСЃС‚Рѕ РІС‚РѕСЂРѕРіРѕ С‚Р°РїР° РЅРµРјРЅРѕРіРѕ СЃРјРµС‰РµРЅРѕ (95% СЃР»СѓС‡Р°РµРІ)
+		// Р’ РёС‚РѕРіРµ, РІРёРЅРґР° РїСЂРёСЃС‹Р»Р°РµС‚ MOUSEMOVE & LBUTTONUP РґР»СЏ СЌС‚РѕРіРѕ СЃРјРµС‰РµРЅРёСЏ, С‡С‚Рѕ РЅРµР¶РµР»Р°С‚РµР»СЊРЅРѕ,
+		// С‚.Рє. Far, РЅР°РїСЂРёРјРµСЂ, РїРѕСЃР»Рµ РґРІРѕР№РЅРѕРіРѕ С‚Р°РїР° РїРѕ РїР°РїРєРµ РІС‹РїРѕР»РЅСЏРµС‚ РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°РЅРёРµ
+		// РЅР° С„Р°Р№Р» РІ СЌС‚РѕР№ РїР°РїРєРµ. РљР°Рє РµСЃР»Рё Р±С‹ РїРѕСЃР»Рµ DblClick Р±С‹Р» РµС‰Рµ РѕРґРёРЅ Р»РёС€РЅРёР№ Click.
 		DWORD dwDelta = TimeGetTime() - mouse.LDblClkTick;
 		if (dwDelta <= TOUCH_DBLCLICK_DELTA)
 		{
@@ -15011,13 +15011,13 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 			{
 				if ((wParam & (MK_LBUTTON|MK_RBUTTON|MK_MBUTTON)) == MK_LBUTTON)
 				{
-					return false; // Не пропускать это событие в консоль
+					return false; // РќРµ РїСЂРѕРїСѓСЃРєР°С‚СЊ СЌС‚Рѕ СЃРѕР±С‹С‚РёРµ РІ РєРѕРЅСЃРѕР»СЊ
 				}
 			}
 			else
 			{
 				_ASSERTE(messg==WM_LBUTTONUP);
-				// А тут мы скорректируем позицию, чтобы консоль думала, что "курсор не двигался"
+				// Рђ С‚СѓС‚ РјС‹ СЃРєРѕСЂСЂРµРєС‚РёСЂСѓРµРј РїРѕР·РёС†РёСЋ, С‡С‚РѕР±С‹ РєРѕРЅСЃРѕР»СЊ РґСѓРјР°Р»Р°, С‡С‚Рѕ "РєСѓСЂСЃРѕСЂ РЅРµ РґРІРёРіР°Р»СЃСЏ"
 				ptCurClient = mouse.LDblClkDC;
 				ptCurScreen = ptCurClient;
 				//MapWindowPoints(
@@ -15031,7 +15031,7 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 
 LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	// кто его знает, в каких координатах оно пришло...
+	// РєС‚Рѕ РµРіРѕ Р·РЅР°РµС‚, РІ РєР°РєРёС… РєРѕРѕСЂРґРёРЅР°С‚Р°С… РѕРЅРѕ РїСЂРёС€Р»Рѕ...
 	//short winX = GET_X_LPARAM(lParam);
 	//short winY = GET_Y_LPARAM(lParam);
 
@@ -15059,13 +15059,13 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	#endif
 
 
-	//2010-05-20 все-таки будем ориентироваться на lParam, потому что
-	//  только так ConEmuTh может передать корректные координаты
+	//2010-05-20 РІСЃРµ-С‚Р°РєРё Р±СѓРґРµРј РѕСЂРёРµРЅС‚РёСЂРѕРІР°С‚СЊСЃСЏ РЅР° lParam, РїРѕС‚РѕРјСѓ С‡С‚Рѕ
+	//  С‚РѕР»СЊРєРѕ С‚Р°Рє ConEmuTh РјРѕР¶РµС‚ РїРµСЂРµРґР°С‚СЊ РєРѕСЂСЂРµРєС‚РЅС‹Рµ РєРѕРѕСЂРґРёРЅР°С‚С‹
 	//POINT ptCur = {-1, -1}; GetCursorPos(&ptCur);
 	POINT ptCurClient = {(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)};
 	POINT ptCurScreen = ptCurClient;
 
-	// Коррекция координат или пропуск сообщений
+	// РљРѕСЂСЂРµРєС†РёСЏ РєРѕРѕСЂРґРёРЅР°С‚ РёР»Рё РїСЂРѕРїСѓСЃРє СЃРѕРѕР±С‰РµРЅРёР№
 	bool isPrivate = false;
 	bool bContinue = PatchMouseEvent(messg, ptCurClient, ptCurScreen, wParam, isPrivate);
 
@@ -15095,7 +15095,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	//gpSet->IsModifierPressed(vkWndDragKey, false))
 	if ((messg == WM_LBUTTONDOWN)
-		// 120820 - двигать можно только в "Normal"
+		// 120820 - РґРІРёРіР°С‚СЊ РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РІ "Normal"
 		&& !(isZoomed() || isFullScreen() || gpSet->isQuakeStyle)
 		&& ProcessHotKeyMsg(WM_KEYDOWN, VK_LBUTTON, 0, NULL, NULL))
 	{
@@ -15134,7 +15134,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 
-	// Обработать клики на StatusBar
+	// РћР±СЂР°Р±РѕС‚Р°С‚СЊ РєР»РёРєРё РЅР° StatusBar
 	if (mp_Status->ProcessStatusMessage(hWnd, messg, wParam, lParam, ptCurClient, lRc))
 		return lRc;
 
@@ -15152,7 +15152,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 
-	TODO("DoubleView. Хорошо бы колесико мышки перенаправлять в консоль под мышиным курором, а не в активную");
+	TODO("DoubleView. РҐРѕСЂРѕС€Рѕ Р±С‹ РєРѕР»РµСЃРёРєРѕ РјС‹С€РєРё РїРµСЂРµРЅР°РїСЂР°РІР»СЏС‚СЊ РІ РєРѕРЅСЃРѕР»СЊ РїРѕРґ РјС‹С€РёРЅС‹Рј РєСѓСЂРѕСЂРѕРј, Р° РЅРµ РІ Р°РєС‚РёРІРЅСѓСЋ");
 	RECT /*conRect = {0},*/ dcRect = {0};
 	//GetWindowRect('ghWnd DC', &dcRect);
 	CVirtualConsole* pVCon = NULL;
@@ -15180,12 +15180,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		if (messg == WM_MOUSEWHEEL)
 			vk =  (((short)(WORD)HIWORD(wParam)) > 0) ? VK_WHEEL_UP : VK_WHEEL_DOWN;
 		else if (messg == 0x020E/*WM_MOUSEHWHEEL*/)
-			vk =  (((short)(WORD)HIWORD(wParam)) > 0) ? VK_WHEEL_RIGHT : VK_WHEEL_LEFT; // Если MSDN не врет - проверить не на чем
+			vk =  (((short)(WORD)HIWORD(wParam)) > 0) ? VK_WHEEL_RIGHT : VK_WHEEL_LEFT; // Р•СЃР»Рё MSDN РЅРµ РІСЂРµС‚ - РїСЂРѕРІРµСЂРёС‚СЊ РЅРµ РЅР° С‡РµРј
 
-		// Зовем "виртуальное" кнопочное нажатие (если назначено)
+		// Р—РѕРІРµРј "РІРёСЂС‚СѓР°Р»СЊРЅРѕРµ" РєРЅРѕРїРѕС‡РЅРѕРµ РЅР°Р¶Р°С‚РёРµ (РµСЃР»Рё РЅР°Р·РЅР°С‡РµРЅРѕ)
 		if (vk && ProcessHotKeyMsg(WM_KEYDOWN, vk, 0, NULL, pRCon))
 		{
-			// назначено, в консоль не пропускаем
+			// РЅР°Р·РЅР°С‡РµРЅРѕ, РІ РєРѕРЅСЃРѕР»СЊ РЅРµ РїСЂРѕРїСѓСЃРєР°РµРј
 			return 0;
 		}
 	}
@@ -15210,11 +15210,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 			if ((pHotKey != ConEmuSkipHotKey) && (bDn || bUp))
 			{
-				// Зовем "виртуальное" кнопочное нажатие
+				// Р—РѕРІРµРј "РІРёСЂС‚СѓР°Р»СЊРЅРѕРµ" РєРЅРѕРїРѕС‡РЅРѕРµ РЅР°Р¶Р°С‚РёРµ
 				ProcessHotKeyMsg(bDn ? WM_KEYDOWN : WM_KEYUP, vk, 0, NULL, pRCon);
 			}
 
-			// назначено, в консоль не пропускаем
+			// РЅР°Р·РЅР°С‡РµРЅРѕ, РІ РєРѕРЅСЃРѕР»СЊ РЅРµ РїСЂРѕРїСѓСЃРєР°РµРј
 			return 0;
 		}
 	}
@@ -15222,23 +15222,23 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	//BOOL lbMouseWasCaptured = mb_MouseCaptured;
 	if (!mb_MouseCaptured)
 	{
-		// Если клик
+		// Р•СЃР»Рё РєР»РёРє
 		if ((hView && hChild == hView) &&
 			(messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_MBUTTONDOWN
 			|| (isPressed(VK_LBUTTON) || isPressed(VK_RBUTTON) || isPressed(VK_MBUTTON))))
 		{
-			// В клиентской области (области отрисовки)
+			// Р’ РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё (РѕР±Р»Р°СЃС‚Рё РѕС‚СЂРёСЃРѕРІРєРё)
 			//if (hView /*PtInRect(&dcRect, ptCurClient)*/)
 			//{
 			mb_MouseCaptured = TRUE;
-			//TODO("После скрытия ViewPort наверное SetCapture нужно будет делать на ghWnd");
-			SetCapture(ghWnd); // 100208 было 'ghWnd DC'
+			//TODO("РџРѕСЃР»Рµ СЃРєСЂС‹С‚РёСЏ ViewPort РЅР°РІРµСЂРЅРѕРµ SetCapture РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ РґРµР»Р°С‚СЊ РЅР° ghWnd");
+			SetCapture(ghWnd); // 100208 Р±С‹Р»Рѕ 'ghWnd DC'
 			//}
 		}
 	}
 	else
 	{
-		// Все кнопки мышки отпущены - release
+		// Р’СЃРµ РєРЅРѕРїРєРё РјС‹С€РєРё РѕС‚РїСѓС‰РµРЅС‹ - release
 		if (!isPressed(VK_LBUTTON) && !isPressed(VK_RBUTTON) && !isPressed(VK_MBUTTON))
 		{
 			ReleaseCapture();
@@ -15270,11 +15270,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		if (messg==WM_LBUTTONUP)
 			gpConEmu->mouse.state &= ~MOUSE_SIZING_DBLCKL;
 
-		return 0; //2009-04-22 После DblCkl по заголовку в консоль мог проваливаться LBUTTONUP
+		return 0; //2009-04-22 РџРѕСЃР»Рµ DblCkl РїРѕ Р·Р°РіРѕР»РѕРІРєСѓ РІ РєРѕРЅСЃРѕР»СЊ РјРѕРі РїСЂРѕРІР°Р»РёРІР°С‚СЊСЃСЏ LBUTTONUP
 	}
 
-	//-- Вообще, если курсор над полосой прокрутки - любые события мышки в консоль не нужно слать...
-	//-- Но если мышка над скроллом - то обработкой Wheel занимается RealConsole и слать таки нужно...
+	//-- Р’РѕРѕР±С‰Рµ, РµСЃР»Рё РєСѓСЂСЃРѕСЂ РЅР°Рґ РїРѕР»РѕСЃРѕР№ РїСЂРѕРєСЂСѓС‚РєРё - Р»СЋР±С‹Рµ СЃРѕР±С‹С‚РёСЏ РјС‹С€РєРё РІ РєРѕРЅСЃРѕР»СЊ РЅРµ РЅСѓР¶РЅРѕ СЃР»Р°С‚СЊ...
+	//-- РќРѕ РµСЃР»Рё РјС‹С€РєР° РЅР°Рґ СЃРєСЂРѕР»Р»РѕРј - С‚Рѕ РѕР±СЂР°Р±РѕС‚РєРѕР№ Wheel Р·Р°РЅРёРјР°РµС‚СЃСЏ RealConsole Рё СЃР»Р°С‚СЊ С‚Р°РєРё РЅСѓР¶РЅРѕ...
 	//if (messg == WM_MOUSEMOVE)
 	if ((messg != WM_MOUSEWHEEL) && (messg != WM_MOUSEHWHEEL))
 	{
@@ -15284,7 +15284,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	if (pRCon && pRCon->GuiWnd() && !pRCon->isBufferHeight())
 	{
-		// Эти сообщения нужно посылать специально, иначе не доходят
+		// Р­С‚Рё СЃРѕРѕР±С‰РµРЅРёСЏ РЅСѓР¶РЅРѕ РїРѕСЃС‹Р»Р°С‚СЊ СЃРїРµС†РёР°Р»СЊРЅРѕ, РёРЅР°С‡Рµ РЅРµ РґРѕС…РѕРґСЏС‚
 		if ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL))
 		{
 			pRCon->PostConsoleMessage(pRCon->GuiWnd(), messg, wParam, lParam);
@@ -15300,8 +15300,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		return 0;
 	}
 
-	// Иначе в консоль проваливаются щелчки по незанятому полю таба...
-	// все, что кроме - считаем кликами и они должны попадать в dcRect
+	// РРЅР°С‡Рµ РІ РєРѕРЅСЃРѕР»СЊ РїСЂРѕРІР°Р»РёРІР°СЋС‚СЃСЏ С‰РµР»С‡РєРё РїРѕ РЅРµР·Р°РЅСЏС‚РѕРјСѓ РїРѕР»СЋ С‚Р°Р±Р°...
+	// РІСЃРµ, С‡С‚Рѕ РєСЂРѕРјРµ - СЃС‡РёС‚Р°РµРј РєР»РёРєР°РјРё Рё РѕРЅРё РґРѕР»Р¶РЅС‹ РїРѕРїР°РґР°С‚СЊ РІ dcRect
 	if (messg != WM_MOUSEMOVE && messg != WM_MOUSEWHEEL && messg != WM_MOUSEHWHEEL)
 	{
 		if (gpConEmu->mouse.state & MOUSE_SIZING_DBLCKL)
@@ -15314,9 +15314,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 	}
 
-	// Переводим в клиентские (относительно hView) координаты
+	// РџРµСЂРµРІРѕРґРёРј РІ РєР»РёРµРЅС‚СЃРєРёРµ (РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ hView) РєРѕРѕСЂРґРёРЅР°С‚С‹
 	ptCurClient.x -= dcRect.left; ptCurClient.y -= dcRect.top;
-	//WARNING("Избавляться от ghConWnd. Должно быть обращение через классы");
+	//WARNING("РР·Р±Р°РІР»СЏС‚СЊСЃСЏ РѕС‚ ghConWnd. Р”РѕР»Р¶РЅРѕ Р±С‹С‚СЊ РѕР±СЂР°С‰РµРЅРёРµ С‡РµСЂРµР· РєР»Р°СЃСЃС‹");
 	//::GetClientRect(ghConWnd, &conRect);
 	COORD cr = pVCon->ClientToConsole(ptCurClient.x,ptCurClient.y);
 	short conX = cr.X; //winX/gpSet->Log Font.lfWidth;
@@ -15329,8 +15329,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 	//* ****************************
-	//* Если окно ConEmu не в фокусе - не слать к консоль движение мышки,
-	//* иначе получается неприятная реакция пунктов меню и т.п.
+	//* Р•СЃР»Рё РѕРєРЅРѕ ConEmu РЅРµ РІ С„РѕРєСѓСЃРµ - РЅРµ СЃР»Р°С‚СЊ Рє РєРѕРЅСЃРѕР»СЊ РґРІРёР¶РµРЅРёРµ РјС‹С€РєРё,
+	//* РёРЅР°С‡Рµ РїРѕР»СѓС‡Р°РµС‚СЃСЏ РЅРµРїСЂРёСЏС‚РЅР°СЏ СЂРµР°РєС†РёСЏ РїСѓРЅРєС‚РѕРІ РјРµРЅСЋ Рё С‚.Рї.
 	//* ****************************
 	if (gpSet->isMouseSkipMoving && !isMeForeground(false,false))
 	{
@@ -15339,9 +15339,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 	//* ****************************
-	//* После получения WM_MOUSEACTIVATE опционально можно не пропускать
-	//* клик в консоль, чтобы при активации ConEmu случайно не задеть
-	//* (закрыть или отменить) висящий в FAR диалог
+	//* РџРѕСЃР»Рµ РїРѕР»СѓС‡РµРЅРёСЏ WM_MOUSEACTIVATE РѕРїС†РёРѕРЅР°Р»СЊРЅРѕ РјРѕР¶РЅРѕ РЅРµ РїСЂРѕРїСѓСЃРєР°С‚СЊ
+	//* РєР»РёРє РІ РєРѕРЅСЃРѕР»СЊ, С‡С‚РѕР±С‹ РїСЂРё Р°РєС‚РёРІР°С†РёРё ConEmu СЃР»СѓС‡Р°Р№РЅРѕ РЅРµ Р·Р°РґРµС‚СЊ
+	//* (Р·Р°РєСЂС‹С‚СЊ РёР»Рё РѕС‚РјРµРЅРёС‚СЊ) РІРёСЃСЏС‰РёР№ РІ FAR РґРёР°Р»РѕРі
 	//* ****************************
 	if ((gpConEmu->mouse.nSkipEvents[0] && gpConEmu->mouse.nSkipEvents[0] == messg)
 	        || (gpConEmu->mouse.nSkipEvents[1]
@@ -15370,9 +15370,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 	//* ****************************
-	//* После получения WM_MOUSEACTIVATE и включенном gpSet->isMouseSkipActivation
-	//* двойной клик переслать в консоль как одинарный, иначе после активации
-	//* мышкой быстрый клик в том же месте будет обработан неправильно
+	//* РџРѕСЃР»Рµ РїРѕР»СѓС‡РµРЅРёСЏ WM_MOUSEACTIVATE Рё РІРєР»СЋС‡РµРЅРЅРѕРј gpSet->isMouseSkipActivation
+	//* РґРІРѕР№РЅРѕР№ РєР»РёРє РїРµСЂРµСЃР»Р°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ РєР°Рє РѕРґРёРЅР°СЂРЅС‹Р№, РёРЅР°С‡Рµ РїРѕСЃР»Рµ Р°РєС‚РёРІР°С†РёРё
+	//* РјС‹С€РєРѕР№ Р±С‹СЃС‚СЂС‹Р№ РєР»РёРє РІ С‚РѕРј Р¶Рµ РјРµСЃС‚Рµ Р±СѓРґРµС‚ РѕР±СЂР°Р±РѕС‚Р°РЅ РЅРµРїСЂР°РІРёР»СЊРЅРѕ
 	//* ****************************
 	if (mouse.nReplaceDblClk)
 	{
@@ -15414,17 +15414,17 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 	}
 
-	// Forwarding сообщений в нить драга
+	// Forwarding СЃРѕРѕР±С‰РµРЅРёР№ РІ РЅРёС‚СЊ РґСЂР°РіР°
 	if (mp_DragDrop && mp_DragDrop->IsDragStarting())
 	{
 		if (mp_DragDrop->ForwardMessage(messg, wParam, lParam))
 			return 0;
 	}
 
-	// -- поскольку выделялка у нас теперь своя - этого похоже не требуется. лишние движения окна
-	// -- вызывают side-effects на некоторых системах. Issue 274: Окно реальной консоли позиционируется в неудобном месте
-	/////*&& isPressed(VK_LBUTTON)*/) && // Если этого не делать - при выделении мышкой консоль может самопроизвольно прокрутиться
-	//// Только при скрытой консоли. Иначе мы ConEmu видеть вообще не будем
+	// -- РїРѕСЃРєРѕР»СЊРєСѓ РІС‹РґРµР»СЏР»РєР° Сѓ РЅР°СЃ С‚РµРїРµСЂСЊ СЃРІРѕСЏ - СЌС‚РѕРіРѕ РїРѕС…РѕР¶Рµ РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ. Р»РёС€РЅРёРµ РґРІРёР¶РµРЅРёСЏ РѕРєРЅР°
+	// -- РІС‹Р·С‹РІР°СЋС‚ side-effects РЅР° РЅРµРєРѕС‚РѕСЂС‹С… СЃРёСЃС‚РµРјР°С…. Issue 274: РћРєРЅРѕ СЂРµР°Р»СЊРЅРѕР№ РєРѕРЅСЃРѕР»Рё РїРѕР·РёС†РёРѕРЅРёСЂСѓРµС‚СЃСЏ РІ РЅРµСѓРґРѕР±РЅРѕРј РјРµСЃС‚Рµ
+	/////*&& isPressed(VK_LBUTTON)*/) && // Р•СЃР»Рё СЌС‚РѕРіРѕ РЅРµ РґРµР»Р°С‚СЊ - РїСЂРё РІС‹РґРµР»РµРЅРёРё РјС‹С€РєРѕР№ РєРѕРЅСЃРѕР»СЊ РјРѕР¶РµС‚ СЃР°РјРѕРїСЂРѕРёР·РІРѕР»СЊРЅРѕ РїСЂРѕРєСЂСѓС‚РёС‚СЊСЃСЏ
+	//// РўРѕР»СЊРєРѕ РїСЂРё СЃРєСЂС‹С‚РѕР№ РєРѕРЅСЃРѕР»Рё. РРЅР°С‡Рµ РјС‹ ConEmu РІРёРґРµС‚СЊ РІРѕРѕР±С‰Рµ РЅРµ Р±СѓРґРµРј
 	//if (pRCon && (/*pRCon->isBufferHeight() ||*/ !pRCon->isWindowVisible())
 	//    && (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK
 	//        || (messg == WM_MOUSEMOVE && isPressed(VK_LBUTTON)))
@@ -15448,19 +15448,19 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		goto fin;
 	}
 
-	// Для этих сообщений, lParam - relative to the upper-left corner of the screen.
+	// Р”Р»СЏ СЌС‚РёС… СЃРѕРѕР±С‰РµРЅРёР№, lParam - relative to the upper-left corner of the screen.
 	if (messg == WM_MOUSEWHEEL || messg == WM_MOUSEHWHEEL)
 		lParam = MAKELONG((short)ptCurScreen.x, (short)ptCurScreen.y);
 	else
 		lParam = MAKELONG((short)ptCurClient.x, (short)ptCurClient.y);
 
-	// Запомним последнее мышиное событие (для PatchMouseEvent)
+	// Р—Р°РїРѕРјРЅРёРј РїРѕСЃР»РµРґРЅРµРµ РјС‹С€РёРЅРѕРµ СЃРѕР±С‹С‚РёРµ (РґР»СЏ PatchMouseEvent)
 	mouse.lastMsg = messg;
 
-	// Теперь можно обрабатывать мышку, и если нужно - слать ее в консоль
+	// РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ РјС‹С€РєСѓ, Рё РµСЃР»Рё РЅСѓР¶РЅРѕ - СЃР»Р°С‚СЊ РµРµ РІ РєРѕРЅСЃРѕР»СЊ
 	if (messg == WM_MOUSEMOVE)
 	{
-		// ptCurClient уже преобразован в клиентские (относительно hView) координаты
+		// ptCurClient СѓР¶Рµ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅ РІ РєР»РёРµРЅС‚СЃРєРёРµ (РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ hView) РєРѕРѕСЂРґРёРЅР°С‚С‹
 		if (!OnMouse_Move(pVCon, hWnd, WM_MOUSEMOVE, wParam, lParam, ptCurClient, cr))
 			return 0;
 	}
@@ -15470,40 +15470,40 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		if (messg == WM_LBUTTONDBLCLK)
 		{
-			// ptCurClient уже преобразован в клиентские (относительно hView) координаты
+			// ptCurClient СѓР¶Рµ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅ РІ РєР»РёРµРЅС‚СЃРєРёРµ (РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ hView) РєРѕРѕСЂРґРёРЅР°С‚С‹
 			if (!OnMouse_LBtnDblClk(pVCon, hWnd, messg, wParam, lParam, ptCurClient, cr))
 				return 0;
-		} // !!! Без else, т.к. теоретически функция может заменить клик на одинарный
+		} // !!! Р‘РµР· else, С‚.Рє. С‚РµРѕСЂРµС‚РёС‡РµСЃРєРё С„СѓРЅРєС†РёСЏ РјРѕР¶РµС‚ Р·Р°РјРµРЅРёС‚СЊ РєР»РёРє РЅР° РѕРґРёРЅР°СЂРЅС‹Р№
 
 		if (messg == WM_RBUTTONDBLCLK)
 		{
-			// ptCurClient уже преобразован в клиентские (относительно hView) координаты
+			// ptCurClient СѓР¶Рµ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅ РІ РєР»РёРµРЅС‚СЃРєРёРµ (РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ hView) РєРѕРѕСЂРґРёРЅР°С‚С‹
 			if (!OnMouse_RBtnDblClk(pVCon, hWnd, messg, wParam, lParam, ptCurClient, cr))
 				return 0;
-		} // !!! Без else, т.к. функция может заменить клик на одинарный
+		} // !!! Р‘РµР· else, С‚.Рє. С„СѓРЅРєС†РёСЏ РјРѕР¶РµС‚ Р·Р°РјРµРЅРёС‚СЊ РєР»РёРє РЅР° РѕРґРёРЅР°СЂРЅС‹Р№
 
-		// Теперь обрабатываем что осталось
+		// РўРµРїРµСЂСЊ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј С‡С‚Рѕ РѕСЃС‚Р°Р»РѕСЃСЊ
 		if (messg == WM_LBUTTONDOWN)
 		{
-			// ptCurClient уже преобразован в клиентские (относительно hView) координаты
+			// ptCurClient СѓР¶Рµ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅ РІ РєР»РёРµРЅС‚СЃРєРёРµ (РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ hView) РєРѕРѕСЂРґРёРЅР°С‚С‹
 			if (!OnMouse_LBtnDown(pVCon, hWnd, WM_LBUTTONDOWN, wParam, lParam, ptCurClient, cr))
 				return 0;
 		}
 		else if (messg == WM_LBUTTONUP)
 		{
-			// ptCurClient уже преобразован в клиентские (относительно hView) координаты
+			// ptCurClient СѓР¶Рµ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅ РІ РєР»РёРµРЅС‚СЃРєРёРµ (РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ hView) РєРѕРѕСЂРґРёРЅР°С‚С‹
 			if (!OnMouse_LBtnUp(pVCon, hWnd, WM_LBUTTONUP, wParam, lParam, ptCurClient, cr))
 				return 0;
 		}
 		else if (messg == WM_RBUTTONDOWN)
 		{
-			// ptCurClient уже преобразован в клиентские (относительно hView) координаты
+			// ptCurClient СѓР¶Рµ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅ РІ РєР»РёРµРЅС‚СЃРєРёРµ (РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ hView) РєРѕРѕСЂРґРёРЅР°С‚С‹
 			if (!OnMouse_RBtnDown(pVCon, hWnd, WM_RBUTTONDOWN, wParam, lParam, ptCurClient, cr))
 				return 0;
 		}
 		else if (messg == WM_RBUTTONUP)
 		{
-			// ptCurClient уже преобразован в клиентские (относительно hView) координаты
+			// ptCurClient СѓР¶Рµ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅ РІ РєР»РёРµРЅС‚СЃРєРёРµ (РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ hView) РєРѕРѕСЂРґРёРЅР°С‚С‹
 			if (!OnMouse_RBtnUp(pVCon, hWnd, WM_RBUTTONUP, wParam, lParam, ptCurClient, cr))
 				return 0;
 		}
@@ -15516,15 +15516,15 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 #endif
 fin:
-	// Сюда мы попадаем если ни одна из функций (OnMouse_xxx) не запретила пересылку в консоль
-	// иначе после (например) RBtnDown в консоль может СРАЗУ провалиться MOUSEMOVE
-	// ptCurClient уже преобразован в клиентские (относительно hView) координаты
+	// РЎСЋРґР° РјС‹ РїРѕРїР°РґР°РµРј РµСЃР»Рё РЅРё РѕРґРЅР° РёР· С„СѓРЅРєС†РёР№ (OnMouse_xxx) РЅРµ Р·Р°РїСЂРµС‚РёР»Р° РїРµСЂРµСЃС‹Р»РєСѓ РІ РєРѕРЅСЃРѕР»СЊ
+	// РёРЅР°С‡Рµ РїРѕСЃР»Рµ (РЅР°РїСЂРёРјРµСЂ) RBtnDown РІ РєРѕРЅСЃРѕР»СЊ РјРѕР¶РµС‚ РЎР РђР—РЈ РїСЂРѕРІР°Р»РёС‚СЊСЃСЏ MOUSEMOVE
+	// ptCurClient СѓР¶Рµ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅ РІ РєР»РёРµРЅС‚СЃРєРёРµ (РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ hView) РєРѕРѕСЂРґРёРЅР°С‚С‹
 	mouse.lastMMW=wParam; mouse.lastMML=MAKELPARAM(ptCurClient.x, ptCurClient.y);
 	
-	// LClick из PanelViews пропускать в консоль нельзя, чтобы не возникало глюков с позиционированием по клику...
+	// LClick РёР· PanelViews РїСЂРѕРїСѓСЃРєР°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ РЅРµР»СЊР·СЏ, С‡С‚РѕР±С‹ РЅРµ РІРѕР·РЅРёРєР°Р»Рѕ РіР»СЋРєРѕРІ СЃ РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°РЅРёРµРј РїРѕ РєР»РёРєСѓ...
 	if (!isPrivate)
 	{
-		// Теперь осталось послать событие в консоль
+		// РўРµРїРµСЂСЊ РѕСЃС‚Р°Р»РѕСЃСЊ РїРѕСЃР»Р°С‚СЊ СЃРѕР±С‹С‚РёРµ РІ РєРѕРЅСЃРѕР»СЊ
 		if (pRCon)
 			pRCon->OnMouse(messg, wParam, ptCurClient.x, ptCurClient.y);
 	}
@@ -15534,7 +15534,7 @@ fin:
 
 LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
 {
-	// WM_MOUSEMOVE вроде бы слишком часто вызывается даже при условии что курсор не двигается...
+	// WM_MOUSEMOVE РІСЂРѕРґРµ Р±С‹ СЃР»РёС€РєРѕРј С‡Р°СЃС‚Рѕ РІС‹Р·С‹РІР°РµС‚СЃСЏ РґР°Р¶Рµ РїСЂРё СѓСЃР»РѕРІРёРё С‡С‚Рѕ РєСѓСЂСЃРѕСЂ РЅРµ РґРІРёРіР°РµС‚СЃСЏ...
 	if (wParam==mouse.lastMMW && lParam==mouse.lastMML
 	        && (mouse.state & MOUSE_DRAGPANEL_ALL) == 0)
 	{
@@ -15546,20 +15546,20 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 
 	mp_Find->UpdateFindDlgAlpha();
 
-	// мог не сброситься, проверим
+	// РјРѕРі РЅРµ СЃР±СЂРѕСЃРёС‚СЊСЃСЏ, РїСЂРѕРІРµСЂРёРј
 	isSizing();
 
-	// 18.03.2009 Maks - Если уже тащим - мышь не слать
+	// 18.03.2009 Maks - Р•СЃР»Рё СѓР¶Рµ С‚Р°С‰РёРј - РјС‹С€СЊ РЅРµ СЃР»Р°С‚СЊ
 	if (isDragging())
 	{
-		// может флажок случайно остался?
+		// РјРѕР¶РµС‚ С„Р»Р°Р¶РѕРє СЃР»СѓС‡Р°Р№РЅРѕ РѕСЃС‚Р°Р»СЃСЏ?
 		if ((mouse.state & DRAG_L_STARTED) && ((wParam & MK_LBUTTON)==0))
 			mouse.state &= ~(DRAG_L_STARTED | DRAG_L_ALLOWED);
 
 		if ((mouse.state & DRAG_R_STARTED) && ((wParam & MK_RBUTTON)==0))
 			mouse.state &= ~(DRAG_R_STARTED | DRAG_R_ALLOWED);
 
-		// Случайно остался?
+		// РЎР»СѓС‡Р°Р№РЅРѕ РѕСЃС‚Р°Р»СЃСЏ?
 		mouse.state &= ~MOUSE_DRAGPANEL_ALL;
 
 		if (mouse.state & (DRAG_L_STARTED | DRAG_R_STARTED))
@@ -15601,13 +15601,13 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 			if (gpSet->isDragPanel == 1)
 				OnSizePanels(cr);
 
-			// Мышь не слать...
+			// РњС‹С€СЊ РЅРµ СЃР»Р°С‚СЊ...
 			return 0;
 		}
 	}
 
-	//TODO: вроде бы иногда isSizing() не сбрасывается?
-	//? может так: if (gpSet->isDragEnabled & mouse.state)
+	//TODO: РІСЂРѕРґРµ Р±С‹ РёРЅРѕРіРґР° isSizing() РЅРµ СЃР±СЂР°СЃС‹РІР°РµС‚СЃСЏ?
+	//? РјРѕР¶РµС‚ С‚Р°Рє: if (gpSet->isDragEnabled & mouse.state)
 	if (gpSet->isDragEnabled & ((mouse.state & (DRAG_L_ALLOWED|DRAG_R_ALLOWED))!=0)
 	        && !isPictureView())
 	{
@@ -15618,14 +15618,14 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 		else
 		{
 			mouse.bIgnoreMouseMove = true;
-			BOOL lbDiffTest = PTDIFFTEST(cursor,DRAG_DELTA); // TRUE - если курсор НЕ двигался (далеко)
+			BOOL lbDiffTest = PTDIFFTEST(cursor,DRAG_DELTA); // TRUE - РµСЃР»Рё РєСѓСЂСЃРѕСЂ РќР• РґРІРёРіР°Р»СЃСЏ (РґР°Р»РµРєРѕ)
 
 			if (!lbDiffTest && !isDragging() && !isSizing())
 			{
-				// 2009-06-19 Выполнялось сразу после "if (gpSet->isDragEnabled & (mouse.state & (DRAG_L_ALLOWED|DRAG_R_ALLOWED)))"
+				// 2009-06-19 Р’С‹РїРѕР»РЅСЏР»РѕСЃСЊ СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ "if (gpSet->isDragEnabled & (mouse.state & (DRAG_L_ALLOWED|DRAG_R_ALLOWED)))"
 				if (mouse.state & MOUSE_R_LOCKED)
 				{
-					// чтобы при RightUp не ушел APPS
+					// С‡С‚РѕР±С‹ РїСЂРё RightUp РЅРµ СѓС€РµР» APPS
 					mouse.state &= ~MOUSE_R_LOCKED;
 					//PtDiffTest(C, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), D)
 					char szLog[255];
@@ -15639,7 +15639,7 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 
 				BOOL lbLeftDrag = (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
 				LogString(lbLeftDrag ? "Left drag about to start" : "Right drag about to start");
-				// Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
+				// Р•СЃР»Рё СЃРЅР°С‡Р°Р»Р° С„РѕРєСѓСЃ Р±С‹Р» РЅР° С„Р°Р№Р»РѕРІРѕР№ РїР°РЅРµР»Рё, РЅРѕ РїРѕСЃР»Рµ LClick РѕРЅ РїРѕРїР°Р» РЅР° РќР• С„Р°Р№Р»РѕРІСѓСЋ - РѕС‚РјРµРЅРёС‚СЊ ShellDrag
 				bool bFilePanel = CVConGroup::isFilePanel();
 
 				if (!bFilePanel)
@@ -15648,32 +15648,32 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 					//isLBDown = false;
 					mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_ALLOWED | DRAG_R_STARTED);
 					mouse.bIgnoreMouseMove = false;
-					//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+					//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //РїРѕСЃС‹Р»Р°РµРј РєРѕРЅСЃРѕР»Рё РѕС‚РїСѓСЃРєР°РЅРёРµ
 					pVCon->RCon()->OnMouse(WM_LBUTTONUP, wParam, ptCur.x, ptCur.x);
 					//ReleaseCapture(); --2009-03-14
 					return 0;
 				}
 
-				// Чтобы сам фар не дергался на MouseMove...
+				// Р§С‚РѕР±С‹ СЃР°Рј С„Р°СЂ РЅРµ РґРµСЂРіР°Р»СЃСЏ РЅР° MouseMove...
 				//isLBDown = false;
-				mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_STARTED); // флажок поставит сам CDragDrop::Drag() по наличию DRAG_R_ALLOWED
-				// вроде валится, если перед Drag
-				//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+				mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_STARTED); // С„Р»Р°Р¶РѕРє РїРѕСЃС‚Р°РІРёС‚ СЃР°Рј CDragDrop::Drag() РїРѕ РЅР°Р»РёС‡РёСЋ DRAG_R_ALLOWED
+				// РІСЂРѕРґРµ РІР°Р»РёС‚СЃСЏ, РµСЃР»Рё РїРµСЂРµРґ Drag
+				//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //РїРѕСЃС‹Р»Р°РµРј РєРѕРЅСЃРѕР»Рё РѕС‚РїСѓСЃРєР°РЅРёРµ
 
-				//TODO("Тут бы не посылать мышь в очередь, а передавать через аргумент команды GetDragInfo в плагин");
-				//if (lbLeftDrag) { // сразу "отпустить" клавишу
-				//	//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.LClkCon.X, mouse.LClkCon.Y ), TRUE);     //посылаем консоли отпускание
+				//TODO("РўСѓС‚ Р±С‹ РЅРµ РїРѕСЃС‹Р»Р°С‚СЊ РјС‹С€СЊ РІ РѕС‡РµСЂРµРґСЊ, Р° РїРµСЂРµРґР°РІР°С‚СЊ С‡РµСЂРµР· Р°СЂРіСѓРјРµРЅС‚ РєРѕРјР°РЅРґС‹ GetDragInfo РІ РїР»Р°РіРёРЅ");
+				//if (lbLeftDrag) { // СЃСЂР°Р·Сѓ "РѕС‚РїСѓСЃС‚РёС‚СЊ" РєР»Р°РІРёС€Сѓ
+				//	//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.LClkCon.X, mouse.LClkCon.Y ), TRUE);     //РїРѕСЃС‹Р»Р°РµРј РєРѕРЅСЃРѕР»Рё РѕС‚РїСѓСЃРєР°РЅРёРµ
 				//	pVCon->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.LClkDC.X, mouse.LClkDC.Y);
 				//} else {
-				//	//POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
+				//	//POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //РїРѕСЃС‹Р»Р°РµРј РєРѕРЅСЃРѕР»Рё РѕС‚РїСѓСЃРєР°РЅРёРµ
 				//	pVCon->RCon()->OnMouse(WM_LBUTTONDOWN, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
-				//	//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
+				//	//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //РїРѕСЃС‹Р»Р°РµРј РєРѕРЅСЃРѕР»Рё РѕС‚РїСѓСЃРєР°РЅРёРµ
 				//	pVCon->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
 				//}
 				//pVCon->RCon()->FlushInputQueue();
 
-				// Иначе иногда срабатывает FAR'овский D'n'D
-				//SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
+				// РРЅР°С‡Рµ РёРЅРѕРіРґР° СЃСЂР°Р±Р°С‚С‹РІР°РµС‚ FAR'РѕРІСЃРєРёР№ D'n'D
+				//SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //РїРѕСЃС‹Р»Р°РµРј РєРѕРЅСЃРѕР»Рё РѕС‚РїСѓСЃРєР°РЅРёРµ
 				if (mp_DragDrop)
 				{
 					//COORD crMouse = pVCon->ClientToConsole(
@@ -15681,11 +15681,11 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 					//	lbLeftDrag ? mouse.LClkDC.Y : mouse.RClkDC.Y);
 					DebugStep(_T("DnD: Drag-n-Drop starting"));
 					mp_DragDrop->Drag(!lbLeftDrag, lbLeftDrag ? mouse.LClkDC : mouse.RClkDC);
-					DebugStep(Title); // вернуть заголовок
+					DebugStep(Title); // РІРµСЂРЅСѓС‚СЊ Р·Р°РіРѕР»РѕРІРѕРє
 				}
 				else
 				{
-					_ASSERTE(mp_DragDrop); // должно быть обработано выше
+					_ASSERTE(mp_DragDrop); // РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РѕР±СЂР°Р±РѕС‚Р°РЅРѕ РІС‹С€Рµ
 					DebugStep(_T("DnD: Drag-n-Drop is null"));
 				}
 
@@ -15697,16 +15697,16 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 				//newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
 				//#endif
 				//if (lbLeftDrag)
-				//  POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
-				//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
+				//  POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //РїРѕСЃС‹Р»Р°РµРј РєРѕРЅСЃРѕР»Рё РѕС‚РїСѓСЃРєР°РЅРёРµ
+				//isDragProcessed=false; -- СѓР±СЂР°Р», РёРЅР°С‡Рµ РїСЂРё Р±СЂРѕСЃР°РЅРёРё РІ РїР°СЃСЃРёРІРЅСѓСЋ РїР°РЅРµР»СЊ Р±РѕР»СЊС€РёС… С„Р°Р№Р»РѕРІ РґСЂРѕРї РјРѕР¶РµС‚ РІС‹Р·РІР°С‚СЊСЃСЏ РµС‰Рµ СЂР°Р·???
 				return 0;
 			}
 		}
 	}
 	else if (!gpSet->isDisableMouse && gpSet->isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
 	{
-		//Если двинули мышкой, а была включена опция RClick - не вызывать
-		//контекстное меню - просто послать правый клик
+		//Р•СЃР»Рё РґРІРёРЅСѓР»Рё РјС‹С€РєРѕР№, Р° Р±С‹Р»Р° РІРєР»СЋС‡РµРЅР° РѕРїС†РёСЏ RClick - РЅРµ РІС‹Р·С‹РІР°С‚СЊ
+		//РєРѕРЅС‚РµРєСЃС‚РЅРѕРµ РјРµРЅСЋ - РїСЂРѕСЃС‚Рѕ РїРѕСЃР»Р°С‚СЊ РїСЂР°РІС‹Р№ РєР»РёРє
 		if (!PTDIFFTEST(Rcursor, RCLICKAPPSDELTA))
 		{
 			//isRBDown=false;
@@ -15714,7 +15714,7 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 
 			if (mb_RightClickingPaint)
 			{
-				// Если начали рисовать Waiting вокруг курсора
+				// Р•СЃР»Рё РЅР°С‡Р°Р»Рё СЂРёСЃРѕРІР°С‚СЊ Waiting РІРѕРєСЂСѓРі РєСѓСЂСЃРѕСЂР°
 				StopRightClickingPaint();
 				_ASSERTE(mb_RightClickingPaint==FALSE);
 			}
@@ -15733,8 +15733,8 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 	}
 
 	/*if (!isRBDown && (wParam==MK_RBUTTON)) {
-	// Чтобы при выделении правой кнопкой файлы не пропускались
-	if ((newY-RBDownNewY)>5) {// пока попробуем для режима сверху вниз
+	// Р§С‚РѕР±С‹ РїСЂРё РІС‹РґРµР»РµРЅРёРё РїСЂР°РІРѕР№ РєРЅРѕРїРєРѕР№ С„Р°Р№Р»С‹ РЅРµ РїСЂРѕРїСѓСЃРєР°Р»РёСЃСЊ
+	if ((newY-RBDownNewY)>5) {// РїРѕРєР° РїРѕРїСЂРѕР±СѓРµРј РґР»СЏ СЂРµР¶РёРјР° СЃРІРµСЂС…Сѓ РІРЅРёР·
 	for (short y=RBDownNewY;y<newY;y+=5)
 	POSTMESSAGE(ghConWnd, WM_MOUSEMOVE, wParam, MAKELPARAM( RBDownNewX, y ), TRUE);
 	}
@@ -15744,13 +15744,13 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 	if (mouse.bIgnoreMouseMove)
 		return 0;
 
-	return TRUE; // переслать в консоль
+	return TRUE; // РїРµСЂРµСЃР»Р°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ
 }
 
 LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
 {
 	enum DragPanelBorder dpb = DPB_NONE;
-	//if (isLBDown()) ReleaseCapture(); // Вдруг сглючило? --2009-03-14
+	//if (isLBDown()) ReleaseCapture(); // Р’РґСЂСѓРі СЃРіР»СЋС‡РёР»Рѕ? --2009-03-14
 	//isLBDown = false;
 	mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | MOUSE_DRAGPANEL_ALL);
 	mouse.bIgnoreMouseMove = false;
@@ -15758,7 +15758,7 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 	mouse.LClkDC = MakeCoord(ptCur.x,ptCur.y);
 	CRealConsole *pRCon = pVCon->RCon();
 
-	if (!pRCon)  // если консоли нет - то и слать некуда
+	if (!pRCon)  // РµСЃР»Рё РєРѕРЅСЃРѕР»Рё РЅРµС‚ - С‚Рѕ Рё СЃР»Р°С‚СЊ РЅРµРєСѓРґР°
 		return 0;
 
 	dpb = CConEmuMain::CheckPanelDrag(cr);
@@ -15772,7 +15772,7 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 		else if (dpb == DPB_RIGHT)
 			mouse.state |= MOUSE_DRAGPANEL_RIGHT;
 
-		// Если зажат шифт - в FAR2 меняется высота активной панели
+		// Р•СЃР»Рё Р·Р°Р¶Р°С‚ С€РёС„С‚ - РІ FAR2 РјРµРЅСЏРµС‚СЃСЏ РІС‹СЃРѕС‚Р° Р°РєС‚РёРІРЅРѕР№ РїР°РЅРµР»Рё
 		if (isPressed(VK_SHIFT))
 		{
 			mouse.state |= MOUSE_DRAGPANEL_SHIFT;
@@ -15787,8 +15787,8 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 			}
 		}
 
-		// LBtnDown в консоль не посылаем, но попробуем послать MouseMove?
-		// (иначе начинается драка с PanelTabs - он перехватывает и буферизирует всю клавиатуру)
+		// LBtnDown РІ РєРѕРЅСЃРѕР»СЊ РЅРµ РїРѕСЃС‹Р»Р°РµРј, РЅРѕ РїРѕРїСЂРѕР±СѓРµРј РїРѕСЃР»Р°С‚СЊ MouseMove?
+		// (РёРЅР°С‡Рµ РЅР°С‡РёРЅР°РµС‚СЃСЏ РґСЂР°РєР° СЃ PanelTabs - РѕРЅ РїРµСЂРµС…РІР°С‚С‹РІР°РµС‚ Рё Р±СѓС„РµСЂРёР·РёСЂСѓРµС‚ РІСЃСЋ РєР»Р°РІРёР°С‚СѓСЂСѓ)
 		INPUT_RECORD r = {MOUSE_EVENT};
 		r.Event.MouseEvent.dwMousePosition = mouse.LClkCon;
 		r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
@@ -15807,27 +15807,27 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 		CONSOLE_CURSOR_INFO ci;
 		pVCon->RCon()->GetConsoleCursorInfo(&ci);
 
-		if ((ci.bVisible && ci.dwSize>0)  // курсор должен быть видим, иначе это чье-то меню
+		if ((ci.bVisible && ci.dwSize>0)  // РєСѓСЂСЃРѕСЂ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІРёРґРёРј, РёРЅР°С‡Рµ СЌС‚Рѕ С‡СЊРµ-С‚Рѕ РјРµРЅСЋ
 		        && gpSet->isDragEnabled & DRAG_L_ALLOWED)
 		{
 			//if (!gpSet->nLDragKey || isPressed(gpSet->nLDragKey))
-			// функция проверит нажат ли nLDragKey (допускает nLDragKey==0), а другие - не нажаты
-			// то есть нажат SHIFT(==nLDragKey), а CTRL & ALT - НЕ нажаты
+			// С„СѓРЅРєС†РёСЏ РїСЂРѕРІРµСЂРёС‚ РЅР°Р¶Р°С‚ Р»Рё nLDragKey (РґРѕРїСѓСЃРєР°РµС‚ nLDragKey==0), Р° РґСЂСѓРіРёРµ - РЅРµ РЅР°Р¶Р°С‚С‹
+			// С‚Рѕ РµСЃС‚СЊ РЅР°Р¶Р°С‚ SHIFT(==nLDragKey), Р° CTRL & ALT - РќР• РЅР°Р¶Р°С‚С‹
 			if (gpSet->IsModifierPressed(vkLDragKey, true))
 			{
 				mouse.state = DRAG_L_ALLOWED;
 			}
 		}
 
-		// иначе после LBtnDown в консоль может СРАЗУ провалиться MOUSEMOVE
+		// РёРЅР°С‡Рµ РїРѕСЃР»Рµ LBtnDown РІ РєРѕРЅСЃРѕР»СЊ РјРѕР¶РµС‚ РЎР РђР—РЈ РїСЂРѕРІР°Р»РёС‚СЊСЃСЏ MOUSEMOVE
 		mouse.lastMMW=wParam; mouse.lastMML=lParam;
 		//if (gpSet->is DnD) mouse.bIgnoreMouseMove = true;
-		//POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
+		//POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // Р±С‹Р»Рѕ SEND
 		pVCon->RCon()->OnMouse(messg, wParam, ptCur.x, ptCur.y);
 		return 0;
 	}
 
-	return TRUE; // переслать в консоль
+	return TRUE; // РїРµСЂРµСЃР»Р°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ
 }
 LRESULT CConEmuMain::OnMouse_LBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
 {
@@ -15841,14 +15841,14 @@ LRESULT CConEmuMain::OnMouse_LBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 		}
 
 		mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | MOUSE_DRAGPANEL_ALL);
-		// Мышь не слать...
+		// РњС‹С€СЊ РЅРµ СЃР»Р°С‚СЊ...
 		return 0;
 	}
 
 	mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | MOUSE_DRAGPANEL_ALL);
 
 	if (lbLDrag)
-		return 0; // кнопка уже "отпущена"
+		return 0; // РєРЅРѕРїРєР° СѓР¶Рµ "РѕС‚РїСѓС‰РµРЅР°"
 
 	if (mouse.bIgnoreMouseMove)
 	{
@@ -15864,13 +15864,13 @@ LRESULT CConEmuMain::OnMouse_LBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 		return 0;
 	}
 
-	return TRUE; // переслать в консоль
+	return TRUE; // РїРµСЂРµСЃР»Р°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ
 }
 LRESULT CConEmuMain::OnMouse_LBtnDblClk(CVirtualConsole* pVCon, HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
 {
 	CRealConsole *pRCon = pVCon->RCon();
 
-	if (!pRCon)  // Если консоли нет - то слать некуда
+	if (!pRCon)  // Р•СЃР»Рё РєРѕРЅСЃРѕР»Рё РЅРµС‚ - С‚Рѕ СЃР»Р°С‚СЊ РЅРµРєСѓРґР°
 		return 0;
 
 	enum DragPanelBorder dpb = CConEmuMain::CheckPanelDrag(cr);
@@ -15919,7 +15919,7 @@ LRESULT CConEmuMain::OnMouse_LBtnDblClk(CVirtualConsole* pVCon, HWND hWnd, UINT&
 		return 0;
 	}
 
-	return TRUE; // переслать в консоль
+	return TRUE; // РїРµСЂРµСЃР»Р°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ
 }
 LRESULT CConEmuMain::OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
 {
@@ -15948,8 +15948,8 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 		if (gpSet->isDragEnabled & DRAG_R_ALLOWED)
 		{
 			//if (!gpSet->nRDragKey || isPressed(gpSet->nRDragKey)) {
-			// функция проверит нажат ли nRDragKey (допускает nRDragKey==0), а другие - не нажаты
-			// то есть нажат SHIFT(==nRDragKey), а CTRL & ALT - НЕ нажаты
+			// С„СѓРЅРєС†РёСЏ РїСЂРѕРІРµСЂРёС‚ РЅР°Р¶Р°С‚ Р»Рё nRDragKey (РґРѕРїСѓСЃРєР°РµС‚ nRDragKey==0), Р° РґСЂСѓРіРёРµ - РЅРµ РЅР°Р¶Р°С‚С‹
+			// С‚Рѕ РµСЃС‚СЊ РЅР°Р¶Р°С‚ SHIFT(==nRDragKey), Р° CTRL & ALT - РќР• РЅР°Р¶Р°С‚С‹
 			if (gpSet->IsModifierPressed(vkRDragKey, true))
 			{
 				mouse.state = DRAG_R_ALLOWED;
@@ -15960,11 +15960,11 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 			}
 		}
 
-		// Если ничего лишнего не нажато!
+		// Р•СЃР»Рё РЅРёС‡РµРіРѕ Р»РёС€РЅРµРіРѕ РЅРµ РЅР°Р¶Р°С‚Рѕ!
 		if (!gpSet->isDisableMouse && gpSet->isRClickSendKey && !(wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)))
 		{
-			//заведем таймер на .3
-			//если больше - пошлем apps
+			//Р·Р°РІРµРґРµРј С‚Р°Р№РјРµСЂ РЅР° .3
+			//РµСЃР»Рё Р±РѕР»СЊС€Рµ - РїРѕС€Р»РµРј apps
 			mouse.state |= MOUSE_R_LOCKED; mouse.bSkipRDblClk = false;
 			char szLog[100];
 			wsprintfA(szLog, "MOUSE_R_LOCKED was set: Rcursor={%i-%i}", (int)Rcursor.x, (int)Rcursor.y);
@@ -15995,48 +15995,48 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 			);
 	}
 
-	return TRUE; // переслать в консоль
+	return TRUE; // РїРµСЂРµСЃР»Р°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ
 }
 LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
 {
-	// Сразу сбросить, если выставлялся
+	// РЎСЂР°Р·Сѓ СЃР±СЂРѕСЃРёС‚СЊ, РµСЃР»Рё РІС‹СЃС‚Р°РІР»СЏР»СЃСЏ
 	StopRightClickingPaint();
 
 	if (!gpSet->isDisableMouse && gpSet->isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
 	{
-		//isRBDown=false; // сразу сбросим!
+		//isRBDown=false; // СЃСЂР°Р·Сѓ СЃР±СЂРѕСЃРёРј!
 		mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
 
 		if (PTDIFFTEST(Rcursor,RCLICKAPPSDELTA))
 		{
-			//держали зажатой <.3
-			//убьем таймер, кликнием правой кнопкой
-			//KillTimer(hWnd, 1); -- Maximus5, таймер более не используется
+			//РґРµСЂР¶Р°Р»Рё Р·Р°Р¶Р°С‚РѕР№ <.3
+			//СѓР±СЊРµРј С‚Р°Р№РјРµСЂ, РєР»РёРєРЅРёРµРј РїСЂР°РІРѕР№ РєРЅРѕРїРєРѕР№
+			//KillTimer(hWnd, 1); -- Maximus5, С‚Р°Р№РјРµСЂ Р±РѕР»РµРµ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
 			DWORD dwCurTick = TimeGetTime(); //GetTickCount();
 			DWORD dwDelta=dwCurTick-mouse.RClkTick;
 
-			// Если держали дольше .3с, но не слишком долго :)
+			// Р•СЃР»Рё РґРµСЂР¶Р°Р»Рё РґРѕР»СЊС€Рµ .3СЃ, РЅРѕ РЅРµ СЃР»РёС€РєРѕРј РґРѕР»РіРѕ :)
 			if ((gpSet->isRClickSendKey==1)
-				|| (dwDelta>RCLICKAPPSTIMEOUT/*.3сек*/ && dwDelta<RCLICKAPPSTIMEOUT_MAX/*10000*/)
-				// Или в режиме тачскрина - длинный _тап_
+				|| (dwDelta>RCLICKAPPSTIMEOUT/*.3СЃРµРє*/ && dwDelta<RCLICKAPPSTIMEOUT_MAX/*10000*/)
+				// РР»Рё РІ СЂРµР¶РёРјРµ С‚Р°С‡СЃРєСЂРёРЅР° - РґР»РёРЅРЅС‹Р№ _С‚Р°Рї_
 				|| (gpSet->isRClickTouchInvert() && (dwDelta<RCLICKAPPSTIMEOUT))
 				)
 			{
 				if (!mb_RightClickingLSent && pVCon)
 				{
 					mb_RightClickingLSent = TRUE;
-					// Чтобы установить курсор в панелях точно под кликом
-					// иначе получается некрасиво, что курсор прыгает только перед
-					// появлением EMenu, а до этого (пока крутится "кружок") курсор не двигается.
+					// Р§С‚РѕР±С‹ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РєСѓСЂСЃРѕСЂ РІ РїР°РЅРµР»СЏС… С‚РѕС‡РЅРѕ РїРѕРґ РєР»РёРєРѕРј
+					// РёРЅР°С‡Рµ РїРѕР»СѓС‡Р°РµС‚СЃСЏ РЅРµРєСЂР°СЃРёРІРѕ, С‡С‚Рѕ РєСѓСЂСЃРѕСЂ РїСЂС‹РіР°РµС‚ С‚РѕР»СЊРєРѕ РїРµСЂРµРґ
+					// РїРѕСЏРІР»РµРЅРёРµРј EMenu, Р° РґРѕ СЌС‚РѕРіРѕ (РїРѕРєР° РєСЂСѓС‚РёС‚СЃСЏ "РєСЂСѓР¶РѕРє") РєСѓСЂСЃРѕСЂ РЅРµ РґРІРёРіР°РµС‚СЃСЏ.
 					pVCon->RCon()->PostLeftClickSync(mouse.RClkDC);
 					//apVCon->RCon()->OnMouse(WM_MOUSEMOVE, 0, mouse.RClkDC.X, mouse.RClkDC.Y, true);
-					//WARNING("По хорошему, нужно дождаться пока мышь обработается");
+					//WARNING("РџРѕ С…РѕСЂРѕС€РµРјСѓ, РЅСѓР¶РЅРѕ РґРѕР¶РґР°С‚СЊСЃСЏ РїРѕРєР° РјС‹С€СЊ РѕР±СЂР°Р±РѕС‚Р°РµС‚СЃСЏ");
 					//apVCon->RCon()->PostMacro(L"MsLClick");
-					//WARNING("!!! Заменить на CMD_LEFTCLKSYNC?");
+					//WARNING("!!! Р—Р°РјРµРЅРёС‚СЊ РЅР° CMD_LEFTCLKSYNC?");
 				}
 
-				// А теперь можно и Apps нажать
-				mouse.bSkipRDblClk=true; // чтобы пока FAR думает в консоль не проскочило мышиное сообщение
+				// Рђ С‚РµРїРµСЂСЊ РјРѕР¶РЅРѕ Рё Apps РЅР°Р¶Р°С‚СЊ
+				mouse.bSkipRDblClk=true; // С‡С‚РѕР±С‹ РїРѕРєР° FAR РґСѓРјР°РµС‚ РІ РєРѕРЅСЃРѕР»СЊ РЅРµ РїСЂРѕСЃРєРѕС‡РёР»Рѕ РјС‹С€РёРЅРѕРµ СЃРѕРѕР±С‰РµРЅРёРµ
 				//POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
 				DWORD dwFarPID = pVCon->RCon()->GetFarPID();
 
@@ -16059,7 +16059,7 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 						{
 							nLen = _tcslen(gpSet->sRClickMacro);
 							nSize += nLen*2;
-							// -- заменено на перехват функции ScreenToClient
+							// -- Р·Р°РјРµРЅРµРЅРѕ РЅР° РїРµСЂРµС…РІР°С‚ С„СѓРЅРєС†РёРё ScreenToClient
 							//pVCon->RCon()->RemoveFromCursor();
 						}
 
@@ -16109,7 +16109,7 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 					////pVCon->RCon()->On Keyboard(ghConWnd, WM_KEYUP, VK_APPS, (VK_APPS << 16) | (1 << 24));
 					//r.Event.KeyEvent.bKeyDown = TRUE;
 					//r.Event.KeyEvent.wVirtualKeyCode = VK_APPS;
-					//r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_APPS, 0/*MAPVK_VK_TO_VSC*/);
+					//r.Event.KeyEvent.wVirtualScanCode = /*28 РЅР° РјРѕРµР№ РєР»Р°РІРёР°С‚СѓСЂРµ*/MapVirtualKey(VK_APPS, 0/*MAPVK_VK_TO_VSC*/);
 					//r.Event.KeyEvent.dwControlKeyState = 0x120;
 					//pVCon->RCon()->PostConsoleEvent(&r);
 					////On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
@@ -16162,9 +16162,9 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 			LogString(szLog);
 		}
 
-		// иначе после RBtnDown в консоль может СРАЗУ провалиться MOUSEMOVE
-		mouse.lastMMW=MK_RBUTTON|wParam; mouse.lastMML=lParam; // добавляем, т.к. мы в RButtonUp
-		// Иначе нужно сначала послать WM_RBUTTONDOWN
+		// РёРЅР°С‡Рµ РїРѕСЃР»Рµ RBtnDown РІ РєРѕРЅСЃРѕР»СЊ РјРѕР¶РµС‚ РЎР РђР—РЈ РїСЂРѕРІР°Р»РёС‚СЊСЃСЏ MOUSEMOVE
+		mouse.lastMMW=MK_RBUTTON|wParam; mouse.lastMML=lParam; // РґРѕР±Р°РІР»СЏРµРј, С‚.Рє. РјС‹ РІ RButtonUp
+		// РРЅР°С‡Рµ РЅСѓР¶РЅРѕ СЃРЅР°С‡Р°Р»Р° РїРѕСЃР»Р°С‚СЊ WM_RBUTTONDOWN
 		//POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
 		pVCon->RCon()->OnMouse(WM_RBUTTONDOWN, wParam, ptCur.x, ptCur.y);
 	}
@@ -16200,35 +16200,35 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 		LogString(szLog);
 	}
 
-	//isRBDown=false; // чтобы не осталось случайно
+	//isRBDown=false; // С‡С‚РѕР±С‹ РЅРµ РѕСЃС‚Р°Р»РѕСЃСЊ СЃР»СѓС‡Р°Р№РЅРѕ
 	mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
-	return TRUE; // переслать в консоль
+	return TRUE; // РїРµСЂРµСЃР»Р°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ
 }
 LRESULT CConEmuMain::OnMouse_RBtnDblClk(CVirtualConsole* pVCon, HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
 {
 	if (mouse.bSkipRDblClk)
 	{
 		mouse.bSkipRDblClk = false;
-		return 0; // не обрабатывать, сейчас висит контекстное меню
+		return 0; // РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ, СЃРµР№С‡Р°СЃ РІРёСЃРёС‚ РєРѕРЅС‚РµРєСЃС‚РЅРѕРµ РјРµРЅСЋ
 	}
 
 	//if (gpSet->isRClickSendKey) {
-	//	// Заменить на одинарный клик, иначе может не подняться контекстное меню
+	//	// Р—Р°РјРµРЅРёС‚СЊ РЅР° РѕРґРёРЅР°СЂРЅС‹Р№ РєР»РёРє, РёРЅР°С‡Рµ РјРѕР¶РµС‚ РЅРµ РїРѕРґРЅСЏС‚СЊСЃСЏ РєРѕРЅС‚РµРєСЃС‚РЅРѕРµ РјРµРЅСЋ
 	//	messg = WM_RBUTTONDOWN;
-	//} -- хотя, раньше это всегда и делалось в любом случае...
+	//} -- С…РѕС‚СЏ, СЂР°РЅСЊС€Рµ СЌС‚Рѕ РІСЃРµРіРґР° Рё РґРµР»Р°Р»РѕСЃСЊ РІ Р»СЋР±РѕРј СЃР»СѓС‡Р°Рµ...
 	messg = WM_RBUTTONDOWN;
-	return TRUE; // переслать в консоль
+	return TRUE; // РїРµСЂРµСЃР»Р°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ
 }
 
 BOOL CConEmuMain::OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam)
 {
-	// По DblClick на рамке - развернуть окно по горизонтали (вертикали) на весь монитор
+	// РџРѕ DblClick РЅР° СЂР°РјРєРµ - СЂР°Р·РІРµСЂРЅСѓС‚СЊ РѕРєРЅРѕ РїРѕ РіРѕСЂРёР·РѕРЅС‚Р°Р»Рё (РІРµСЂС‚РёРєР°Р»Рё) РЅР° РІРµСЃСЊ РјРѕРЅРёС‚РѕСЂ
 	if (wParam == HTLEFT || wParam == HTRIGHT || wParam == HTTOP || wParam == HTBOTTOM)
 	{
 		if (WindowMode != wmNormal)
 		{
-			// Так быть не должно - рамка не должна быть видна в этих режимах
-			// Для Quake - игнорировать
+			// РўР°Рє Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ - СЂР°РјРєР° РЅРµ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РІРёРґРЅР° РІ СЌС‚РёС… СЂРµР¶РёРјР°С…
+			// Р”Р»СЏ Quake - РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ
 			_ASSERTE((WindowMode == wmNormal) || gpSet->isQuakeStyle);
 			return FALSE;
 		}
@@ -16296,7 +16296,7 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 		else
 		{
 			dwTID = GetWindowThreadProcessId(hCurForeground, &dwPID);
-			// Получить информацию об активном треде
+			// РџРѕР»СѓС‡РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± Р°РєС‚РёРІРЅРѕРј С‚СЂРµРґРµ
 			GUITHREADINFO gti = {sizeof(GUITHREADINFO)};
 			GetGUIThreadInfo(0/*dwTID*/, &gti);
 
@@ -16304,17 +16304,17 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Foreground changed (%s). NewFore=0x%08X, Active=0x%08X, Focus=0x%08X, Class=%s, LBtn=%i\n", asFrom, (DWORD)hCurForeground, (DWORD)gti.hwndActive, (DWORD)gti.hwndFocus, szClass, lbLDown);
 			#endif
 
-			// mh_ShellWindow чисто для информации. Хоть родитель ConEmu и меняется на mh_ShellWindow
-			// но проводник может перекинуть наше окно в другое (WorkerW или Progman)
+			// mh_ShellWindow С‡РёСЃС‚Рѕ РґР»СЏ РёРЅС„РѕСЂРјР°С†РёРё. РҐРѕС‚СЊ СЂРѕРґРёС‚РµР»СЊ ConEmu Рё РјРµРЅСЏРµС‚СЃСЏ РЅР° mh_ShellWindow
+			// РЅРѕ РїСЂРѕРІРѕРґРЅРёРє РјРѕР¶РµС‚ РїРµСЂРµРєРёРЅСѓС‚СЊ РЅР°С€Рµ РѕРєРЅРѕ РІ РґСЂСѓРіРѕРµ (WorkerW РёР»Рё Progman)
 			if (gpSet->isDesktopMode && mh_ShellWindow)
 			{
 				//HWND hShell = GetShellWindow(); // Progman
 				bool lbDesktopActive = false;
 
-				if (dwPID == mn_ShellWindowPID)  // дальше только для процесса Explorer.exe (который держит Desktop)
+				if (dwPID == mn_ShellWindowPID)  // РґР°Р»СЊС€Рµ С‚РѕР»СЊРєРѕ РґР»СЏ РїСЂРѕС†РµСЃСЃР° Explorer.exe (РєРѕС‚РѕСЂС‹Р№ РґРµСЂР¶РёС‚ Desktop)
 				{
-					// При WinD активируется (Foreground) не Progman, а WorkerW
-					// Тем не менее, фокус - передается в дочернее окно Progman
+					// РџСЂРё WinD Р°РєС‚РёРІРёСЂСѓРµС‚СЃСЏ (Foreground) РЅРµ Progman, Р° WorkerW
+					// РўРµРј РЅРµ РјРµРЅРµРµ, С„РѕРєСѓСЃ - РїРµСЂРµРґР°РµС‚СЃСЏ РІ РґРѕС‡РµСЂРЅРµРµ РѕРєРЅРѕ Progman
 					if (hCurForeground == mh_ShellWindow)
 					{
 						lbDesktopActive = true;
@@ -16348,14 +16348,14 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 
 					if (lbLDown)
 					{
-						// Кликнули мышкой для активации рабочего стола с иконками
-						mb_FocusOnDesktop = FALSE; // запомним, что ConEmu активировать не нужно
+						// РљР»РёРєРЅСѓР»Рё РјС‹С€РєРѕР№ РґР»СЏ Р°РєС‚РёРІР°С†РёРё СЂР°Р±РѕС‡РµРіРѕ СЃС‚РѕР»Р° СЃ РёРєРѕРЅРєР°РјРё
+						mb_FocusOnDesktop = FALSE; // Р·Р°РїРѕРјРЅРёРј, С‡С‚Рѕ ConEmu Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 					}
 					else if (mb_FocusOnDesktop && (GetActiveVCon(&VCon) >= 0))
 					{
-						// Чтобы пользователю не приходилось вручную активировать ConEmu после WinD / WinM
-						//apiSetForegroundWindow(ghWnd); // это скорее всего не сработает, т.к. фокус сейчас у другого процесса!
-						// так что "активируем" мышкой
+						// Р§С‚РѕР±С‹ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РЅРµ РїСЂРёС…РѕРґРёР»РѕСЃСЊ РІСЂСѓС‡РЅСѓСЋ Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ ConEmu РїРѕСЃР»Рµ WinD / WinM
+						//apiSetForegroundWindow(ghWnd); // СЌС‚Рѕ СЃРєРѕСЂРµРµ РІСЃРµРіРѕ РЅРµ СЃСЂР°Р±РѕС‚Р°РµС‚, С‚.Рє. С„РѕРєСѓСЃ СЃРµР№С‡Р°СЃ Сѓ РґСЂСѓРіРѕРіРѕ РїСЂРѕС†РµСЃСЃР°!
+						// С‚Р°Рє С‡С‚Рѕ "Р°РєС‚РёРІРёСЂСѓРµРј" РјС‹С€РєРѕР№
 						COORD crOpaque = VCon->FindOpaqueCell();
 
 						if (crOpaque.X<0 || crOpaque.Y<0)
@@ -16383,17 +16383,17 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 							else
 							{
 								DEBUGSTRFOREGROUND(L"Activating ConEmu on desktop by mouse click\n");
-								mouse.bForceSkipActivation = TRUE; // не пропускать этот клик в консоль!
-								// Запомнить, где курсор сейчас. Вернуть надо будет
+								mouse.bForceSkipActivation = TRUE; // РЅРµ РїСЂРѕРїСѓСЃРєР°С‚СЊ СЌС‚РѕС‚ РєР»РёРє РІ РєРѕРЅСЃРѕР»СЊ!
+								// Р—Р°РїРѕРјРЅРёС‚СЊ, РіРґРµ РєСѓСЂСЃРѕСЂ СЃРµР№С‡Р°СЃ. Р’РµСЂРЅСѓС‚СЊ РЅР°РґРѕ Р±СѓРґРµС‚
 								POINT ptCur; GetCursorPos(&ptCur);
-								SetCursorPos(pt.x,pt.y); // мышку обязательно "подвинуть", иначе mouse_event не сработает
-								// "кликаем"
+								SetCursorPos(pt.x,pt.y); // РјС‹С€РєСѓ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ "РїРѕРґРІРёРЅСѓС‚СЊ", РёРЅР°С‡Рµ mouse_event РЅРµ СЃСЂР°Р±РѕС‚Р°РµС‚
+								// "РєР»РёРєР°РµРј"
 								mouse_event(MOUSEEVENTF_ABSOLUTE+MOUSEEVENTF_LEFTDOWN, pt.x,pt.y, 0,0);
 								mouse_event(MOUSEEVENTF_ABSOLUTE+MOUSEEVENTF_LEFTUP, pt.x,pt.y, 0,0);
-								// Вернуть курсор
+								// Р’РµСЂРЅСѓС‚СЊ РєСѓСЂСЃРѕСЂ
 								SetCursorPos(ptCur.x,ptCur.y);
 								//
-								//#ifdef _DEBUG -- очередь еще не обработана системой...
+								//#ifdef _DEBUG -- РѕС‡РµСЂРµРґСЊ РµС‰Рµ РЅРµ РѕР±СЂР°Р±РѕС‚Р°РЅР° СЃРёСЃС‚РµРјРѕР№...
 								//HWND hPost = GetForegroundWindow();
 								//DEBUGSTRFOREGROUND((hPost==ghWnd) ? L"ConEmu on desktop activation Succeeded\n" : L"ConEmu on desktop activation FAILED\n");
 								//#endif
@@ -16504,28 +16504,28 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 	if (!pRCon)
 		return DPB_NONE;
 
-	// Должен быть "Фар", "Панели", "Активен" (нет смысла пытаться дергать панели, если фар "висит")
+	// Р”РѕР»Р¶РµРЅ Р±С‹С‚СЊ "Р¤Р°СЂ", "РџР°РЅРµР»Рё", "РђРєС‚РёРІРµРЅ" (РЅРµС‚ СЃРјС‹СЃР»Р° РїС‹С‚Р°С‚СЊСЃСЏ РґРµСЂРіР°С‚СЊ РїР°РЅРµР»Рё, РµСЃР»Рё С„Р°СЂ "РІРёСЃРёС‚")
 	if (!pRCon->isFar() || !pRCon->isFilePanel(true) || !pRCon->isAlive())
 		return DPB_NONE;
 
-	// Если активен наш или ФАРовский граббер
+	// Р•СЃР»Рё Р°РєС‚РёРІРµРЅ РЅР°С€ РёР»Рё Р¤РђР РѕРІСЃРєРёР№ РіСЂР°Р±Р±РµСЂ
 	if (pRCon->isConSelectMode())
 		return DPB_NONE;
 
-	// Если удерживается модификатор запуска граббера
+	// Р•СЃР»Рё СѓРґРµСЂР¶РёРІР°РµС‚СЃСЏ РјРѕРґРёС„РёРєР°С‚РѕСЂ Р·Р°РїСѓСЃРєР° РіСЂР°Р±Р±РµСЂР°
 	if ((gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, false))
 	        || (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, false)))
 		return DPB_NONE;
 
 	//CONSOLE_CURSOR_INFO ci;
 	//mp_ VActive->RCon()->GetConsoleCursorInfo(&ci);
-	//   if (!ci.bVisible || ci.dwSize>40) // Курсор должен быть видим, и не в режиме граба
+	//   if (!ci.bVisible || ci.dwSize>40) // РљСѓСЂСЃРѕСЂ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІРёРґРёРј, Рё РЅРµ РІ СЂРµР¶РёРјРµ РіСЂР°Р±Р°
 	//   	return DPB_NONE;
-	// Теперь - можно проверить
+	// РўРµРїРµСЂСЊ - РјРѕР¶РЅРѕ РїСЂРѕРІРµСЂРёС‚СЊ
 	enum DragPanelBorder dpb = DPB_NONE;
 	RECT rcPanel;
 	
-	//TODO("Сделаем все-таки драг влево-вправо хватанием за «промежуток» между рамками");
+	//TODO("РЎРґРµР»Р°РµРј РІСЃРµ-С‚Р°РєРё РґСЂР°Рі РІР»РµРІРѕ-РІРїСЂР°РІРѕ С…РІР°С‚Р°РЅРёРµРј Р·Р° В«РїСЂРѕРјРµР¶СѓС‚РѕРєВ» РјРµР¶РґСѓ СЂР°РјРєР°РјРё");
 	//int nSplitWidth = gpSetCls->BorderFontWidth()/5;
 	//if (nSplitWidth < 1) nSplitWidth = 1;
 	
@@ -16560,13 +16560,13 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 #endif
 
 	POINT ptCur; GetCursorPos(&ptCur);
-	// Если сейчас идет trackPopupMenu - то на выход
+	// Р•СЃР»Рё СЃРµР№С‡Р°СЃ РёРґРµС‚ trackPopupMenu - С‚Рѕ РЅР° РІС‹С…РѕРґ
 	CVirtualConsole* pVCon = (mp_Menu->GetTrackMenuPlace() == tmp_None) ? GetVConFromPoint(ptCur) : NULL;
 	if (pVCon && !isActive(pVCon, false))
 		pVCon = NULL;
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
 
-	// Курсор НЕ над консолью?
+	// РљСѓСЂСЃРѕСЂ РќР• РЅР°Рґ РєРѕРЅСЃРѕР»СЊСЋ?
 	if (!pRCon)
 	{
 		// Status bar "Resize mark"?
@@ -16584,12 +16584,12 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 			}
 		}
 
-		// Если курсор НЕ над консолью - то курсор по умолчанию
+		// Р•СЃР»Рё РєСѓСЂСЃРѕСЂ РќР• РЅР°Рґ РєРѕРЅСЃРѕР»СЊСЋ - С‚Рѕ РєСѓСЂСЃРѕСЂ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 		DEBUGSTRSETCURSOR(L" ---> skipped, not over VCon\n");
 		return FALSE;
 	}
 
-	// В GUI режиме - не ломать курсор, заданный дочерним приложением
+	// Р’ GUI СЂРµР¶РёРјРµ - РЅРµ Р»РѕРјР°С‚СЊ РєСѓСЂСЃРѕСЂ, Р·Р°РґР°РЅРЅС‹Р№ РґРѕС‡РµСЂРЅРёРј РїСЂРёР»РѕР¶РµРЅРёРµРј
 	HWND hGuiClient = pRCon->GuiWnd();
 	if (pRCon && hGuiClient && pRCon->isGuiVisible())
 	{
@@ -16613,7 +16613,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 		}
 		else
 		{
-			//CVirtualConsole* pVCon = GetVConFromPoint(ptCur); -- уже
+			//CVirtualConsole* pVCon = GetVConFromPoint(ptCur); -- СѓР¶Рµ
 			if (pVCon)
 				lParam = HTCLIENT;
 			else
@@ -16653,7 +16653,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 		{
 			hCur = LoadCursor(NULL, IDC_SIZEALL);
 		}
-		// Если начат ShellDrag
+		// Р•СЃР»Рё РЅР°С‡Р°С‚ ShellDrag
 		else if (mh_DragCursor && isDragging())
 		{
 			hCur = mh_DragCursor;
@@ -16687,7 +16687,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 			if (lbMeFore)
 			{
 				HWND hWndDC = pVCon ? pVCon->GetView() : NULL;
-				if (pRCon && pRCon->isFar(FALSE) && hWndDC)  // Плагин не нужен, ФАР сам...
+				if (pRCon && pRCon->isFar(FALSE) && hWndDC)  // РџР»Р°РіРёРЅ РЅРµ РЅСѓР¶РµРЅ, Р¤РђР  СЃР°Рј...
 				{
 					MapWindowPoints(NULL, hWndDC, &ptCur, 1);
 					COORD crCon = pVCon->ClientToConsole(ptCur.x,ptCur.y);
@@ -16750,7 +16750,7 @@ DefaultCursor:
 	return TRUE;
 }
 
-// true - если nPID запущен в одной из консолей
+// true - РµСЃР»Рё nPID Р·Р°РїСѓС‰РµРЅ РІ РѕРґРЅРѕР№ РёР· РєРѕРЅСЃРѕР»РµР№
 bool CConEmuMain::isConsolePID(DWORD nPID)
 {
 	return CVConGroup::isConsolePID(nPID);
@@ -16785,15 +16785,15 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 			//    if (mp_VCon[i]->RCon()->ConWnd() == hCon) {
 			//        FLASHWINFO fl = {sizeof(FLASHWINFO)};
 			//        if (isMeForeground()) {
-			//        	if (mp_VCon[i] != mp_ VActive) { // Только для неактивной консоли
+			//        	if (mp_VCon[i] != mp_ VActive) { // РўРѕР»СЊРєРѕ РґР»СЏ РЅРµР°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё
 			//                fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
-			//                FlashWindowEx(&fl); // Чтобы мигание не накапливалось
+			//                FlashWindowEx(&fl); // Р§С‚РѕР±С‹ РјРёРіР°РЅРёРµ РЅРµ РЅР°РєР°РїР»РёРІР°Р»РѕСЃСЊ
 			//        		fl.uCount = 4; fl.dwFlags = FLASHW_ALL; fl.hwnd = ghWnd;
 			//        		FlashWindowEx(&fl);
 			//        	}
 			//        } else {
 			//        	fl.dwFlags = FLASHW_ALL|FLASHW_TIMERNOFG; fl.hwnd = ghWnd;
-			//        	FlashWindowEx(&fl); // Помигать в GUI
+			//        	FlashWindowEx(&fl); // РџРѕРјРёРіР°С‚СЊ РІ GUI
 			//        }
 			//
 			//        fl.dwFlags = FLASHW_STOP; fl.hwnd = hCon;
@@ -16819,15 +16819,15 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 				{
 					AllowSetForegroundWindow(dwPID);
 
-					WARNING("Проверить, успевает ли диалог показаться, или потом для него ShowWindow зовется?");
-					if (IsWindowVisible(hWnd))  // ? оно успело ?
+					WARNING("РџСЂРѕРІРµСЂРёС‚СЊ, СѓСЃРїРµРІР°РµС‚ Р»Рё РґРёР°Р»РѕРі РїРѕРєР°Р·Р°С‚СЊСЃСЏ, РёР»Рё РїРѕС‚РѕРј РґР»СЏ РЅРµРіРѕ ShowWindow Р·РѕРІРµС‚СЃСЏ?");
+					if (IsWindowVisible(hWnd))  // ? РѕРЅРѕ СѓСЃРїРµР»Рѕ ?
 					{
 						bool lbConPID = isConsolePID(dwPID);
 
 						PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
 						if (!lbConPID)
 						{
-							// Получить PID родительского процесса этого окошка
+							// РџРѕР»СѓС‡РёС‚СЊ PID СЂРѕРґРёС‚РµР»СЊСЃРєРѕРіРѕ РїСЂРѕС†РµСЃСЃР° СЌС‚РѕРіРѕ РѕРєРѕС€РєР°
 							if (GetProcessInfo(dwPID, &prc))
 							{
 								dwParentPID = prc.th32ParentProcessID;
@@ -16856,7 +16856,7 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 		#ifdef _DEBUG
 		case HSHELL_ACTIVATESHELLWINDOW:
 		{
-			// Не вызывается
+			// РќРµ РІС‹Р·С‹РІР°РµС‚СЃСЏ
 			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"HSHELL_ACTIVATESHELLWINDOW(lParam=0x%08X)\n", (DWORD)lParam);
 			DEBUGSTRFOREGROUND(szDbg);
 		}
@@ -16865,9 +16865,9 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 
 		case HSHELL_WINDOWACTIVATED:
 		{
-			// Приходит позже чем WM_ACTIVATE(WA_INACTIVE), но пригодится, если CE был НЕ в фокусе
+			// РџСЂРёС…РѕРґРёС‚ РїРѕР·Р¶Рµ С‡РµРј WM_ACTIVATE(WA_INACTIVE), РЅРѕ РїСЂРёРіРѕРґРёС‚СЃСЏ, РµСЃР»Рё CE Р±С‹Р» РќР• РІ С„РѕРєСѓСЃРµ
 			#ifdef _DEBUG
-			// Когда активируется Desktop - lParam == 0
+			// РљРѕРіРґР° Р°РєС‚РёРІРёСЂСѓРµС‚СЃСЏ Desktop - lParam == 0
 
 			wchar_t szDbg[128], szClass[64];
 			if (!lParam || !GetClassName((HWND)lParam, szClass, 63))
@@ -16934,7 +16934,7 @@ void CConEmuMain::OnDesktopMode()
 	{
 		SetWindowStyle(dwStyle);
 		SetWindowStyleEx(dwStyleEx);
-		SyncWindowToConsole(); // -- функция пустая, игнорируется
+		SyncWindowToConsole(); // -- С„СѓРЅРєС†РёСЏ РїСѓСЃС‚Р°СЏ, РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ
 		UpdateWindowRgn();
 	}
 
@@ -16959,16 +16959,16 @@ void CConEmuMain::OnDesktopMode()
 		// But in Win7 it is not a real desktop holder :(
 		if (gOSVer.dwMajorVersion >= 6)  // Vista too?
 		{
-			// В каких-то случаях (на каких-то темах?) иконки создаются в "Progman", а в одном из "WorkerW" классов
-			// Все эти окна принадлежат одному процессу explorer.exe
+			// Р’ РєР°РєРёС…-С‚Рѕ СЃР»СѓС‡Р°СЏС… (РЅР° РєР°РєРёС…-С‚Рѕ С‚РµРјР°С…?) РёРєРѕРЅРєРё СЃРѕР·РґР°СЋС‚СЃСЏ РІ "Progman", Р° РІ РѕРґРЅРѕРј РёР· "WorkerW" РєР»Р°СЃСЃРѕРІ
+			// Р’СЃРµ СЌС‚Рё РѕРєРЅР° РїСЂРёРЅР°РґР»РµР¶Р°С‚ РѕРґРЅРѕРјСѓ РїСЂРѕС†РµСЃСЃСѓ explorer.exe
 			HWND hShell = FindWindowEx(hDesktop, NULL, L"WorkerW", NULL);
 
 			while(hShell)
 			{
-				// У него должны быть дочерние окна
+				// РЈ РЅРµРіРѕ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ РґРѕС‡РµСЂРЅРёРµ РѕРєРЅР°
 				if (IsWindowVisible(hShell) && FindWindowEx(hShell, NULL, NULL, NULL))
 				{
-					// Теоретически, эти окна должны принадлежать одному процессу (Explorer.exe)
+					// РўРµРѕСЂРµС‚РёС‡РµСЃРєРё, СЌС‚Рё РѕРєРЅР° РґРѕР»Р¶РЅС‹ РїСЂРёРЅР°РґР»РµР¶Р°С‚СЊ РѕРґРЅРѕРјСѓ РїСЂРѕС†РµСЃСЃСѓ (Explorer.exe)
 					if (dwShellPID)
 					{
 						DWORD dwTestPID;
@@ -16991,12 +16991,12 @@ void CConEmuMain::OnDesktopMode()
 				hShellWnd = hShell;
 		}
 
-		if (gpSet->isQuakeStyle)  // этот режим с Desktop несовместим
+		if (gpSet->isQuakeStyle)  // СЌС‚РѕС‚ СЂРµР¶РёРј СЃ Desktop РЅРµСЃРѕРІРјРµСЃС‚РёРј
 		{
 			SetQuakeMode(0, (WindowMode == wmFullScreen) ? wmMaximized : wmNormal);
 		}
 
-		if (WindowMode == wmFullScreen)  // этот режим с Desktop несовместим
+		if (WindowMode == wmFullScreen)  // СЌС‚РѕС‚ СЂРµР¶РёРј СЃ Desktop РЅРµСЃРѕРІРјРµСЃС‚РёРј
 		{
 			SetWindowMode(wmMaximized);
 		}
@@ -17241,7 +17241,7 @@ void CConEmuMain::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 	{
 		DontEnable de;
 		HWND hParent = (ghOpWnd && IsWindowVisible(ghOpWnd)) ? ghOpWnd : ghWnd;
-		// Модальный?
+		// РњРѕРґР°Р»СЊРЅС‹Р№?
 		INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), hParent, aboutProc, (LPARAM)asPageName);
 		bOk = (iRc != 0 && iRc != -1);
 	}
@@ -17321,8 +17321,8 @@ void CConEmuMain::OnInfo_Help()
 			// lstrcat(szHelpFile, L::/Intro.htm");
 			#define HH_HELP_CONTEXT 0x000F
 			#define HH_DISPLAY_TOC  0x0001
-			//fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_HELP_CONTEXT, contextID);
-			fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_DISPLAY_TOC, 0);
+			//fHTMLHelpW(NULL /*С‡С‚РѕР±С‹ РѕРєРЅРѕ РЅРµ Р±Р»РѕРєРёСЂРѕРІР°Р»РѕСЃСЊ*/, szHelpFile, HH_HELP_CONTEXT, contextID);
+			fHTMLHelpW(NULL /*С‡С‚РѕР±С‹ РѕРєРЅРѕ РЅРµ Р±Р»РѕРєРёСЂРѕРІР°Р»РѕСЃСЊ*/, szHelpFile, HH_DISPLAY_TOC, 0);
 		}
 	}
 }
@@ -17421,7 +17421,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	DEBUGSTRTIMER(szDbg);
 #endif
 
-	//if (mb_InTimer) return 0; // чтобы ненароком два раза в одно событие не вошел (хотя не должен)
+	//if (mb_InTimer) return 0; // С‡С‚РѕР±С‹ РЅРµРЅР°СЂРѕРєРѕРј РґРІР° СЂР°Р·Р° РІ РѕРґРЅРѕ СЃРѕР±С‹С‚РёРµ РЅРµ РІРѕС€РµР» (С…РѕС‚СЏ РЅРµ РґРѕР»Р¶РµРЅ)
 	mb_InTimer = TRUE;
 	//result = gpConEmu->OnTimer(wParam, lParam);
 
@@ -17462,11 +17462,11 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 	switch (wParam)
 	{
-		case TIMER_MAIN_ID: // Период: 500 мс
+		case TIMER_MAIN_ID: // РџРµСЂРёРѕРґ: 500 РјСЃ
 			OnTimer_Main(pVCon);
 			break; // case 0:
 
-		case TIMER_CONREDRAW_ID: // Период: CON_REDRAW_TIMOUT*2
+		case TIMER_CONREDRAW_ID: // РџРµСЂРёРѕРґ: CON_REDRAW_TIMOUT*2
 			OnTimer_ConRedraw(pVCon);
 			break; // case 1:
 
@@ -17538,7 +17538,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	}
 	#endif
 
-	//Maximus5. Hack - если какая-то зараза задизеблила окно
+	//Maximus5. Hack - РµСЃР»Рё РєР°РєР°СЏ-С‚Рѕ Р·Р°СЂР°Р·Р° Р·Р°РґРёР·РµР±Р»РёР»Р° РѕРєРЅРѕ
 	if (!DontEnable::isDontEnable())
 	{
 		DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
@@ -17565,9 +17565,9 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 			mouse.ptLastSplitOverCheck = ptCur;
 			if (!isIconic() && (hForeWnd == ghWnd || CVConGroup::isOurGuiChildWindow(hForeWnd)))
 			{
-				// Курсор над ConEmu?
+				// РљСѓСЂСЃРѕСЂ РЅР°Рґ ConEmu?
 				RECT rcClient = CalcRect(CER_MAIN);
-				// Проверяем, в какой из VCon попадает курсор?
+				// РџСЂРѕРІРµСЂСЏРµРј, РІ РєР°РєРѕР№ РёР· VCon РїРѕРїР°РґР°РµС‚ РєСѓСЂСЃРѕСЂ?
 				if (PtInRect(&rcClient, ptCur))
 				{
 					if (CVConGroup::GetVConFromPoint(ptCur, &VConFromPoint))
@@ -17575,7 +17575,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 						bool bActive = isActive(VConFromPoint.VCon(), false);
 						if (!bActive)
 						{
-							// Если был активирован GUI CHILD - то фокус нужно сначала поставить в ConEmu
+							// Р•СЃР»Рё Р±С‹Р» Р°РєС‚РёРІРёСЂРѕРІР°РЅ GUI CHILD - С‚Рѕ С„РѕРєСѓСЃ РЅСѓР¶РЅРѕ СЃРЅР°С‡Р°Р»Р° РїРѕСЃС‚Р°РІРёС‚СЊ РІ ConEmu
 							if (!bForeground && pVCon && pVCon->RCon()->GuiWnd())
 							{
 								apiSetForegroundWindow(ghWnd);
@@ -17586,7 +17586,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 								pVCon = VConFromPoint.VCon();
 							}
 
-							// Если был активен GUI CHILD - то ConEmu может НЕ активироваться
+							// Р•СЃР»Рё Р±С‹Р» Р°РєС‚РёРІРµРЅ GUI CHILD - С‚Рѕ ConEmu РјРѕР¶РµС‚ РќР• Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊСЃСЏ
 							if (!bForeground && !VConFromPoint.VCon()->RCon()->GuiWnd())
 							{
 								apiSetForegroundWindow(ghWnd);
@@ -17612,11 +17612,11 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	mp_Status->OnTimer();
 
 	CheckProcesses();
-	TODO("Теперь это условие не работает. 1 - раньше это был сам ConEmu.exe");
+	TODO("РўРµРїРµСЂСЊ СЌС‚Рѕ СѓСЃР»РѕРІРёРµ РЅРµ СЂР°Р±РѕС‚Р°РµС‚. 1 - СЂР°РЅСЊС€Рµ СЌС‚Рѕ Р±С‹Р» СЃР°Рј ConEmu.exe");
 
 	if (m_ProcCount == 0)
 	{
-		// При ошибках запуска консольного приложения хотя бы можно будет увидеть, что оно написало...
+		// РџСЂРё РѕС€РёР±РєР°С… Р·Р°РїСѓСЃРєР° РєРѕРЅСЃРѕР»СЊРЅРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ С…РѕС‚СЏ Р±С‹ РјРѕР¶РЅРѕ Р±СѓРґРµС‚ СѓРІРёРґРµС‚СЊ, С‡С‚Рѕ РѕРЅРѕ РЅР°РїРёСЃР°Р»Рѕ...
 		if (mb_ProcessCreated)
 		{
 			OnAllVConClosed();
@@ -17637,10 +17637,10 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 			mb_WorkspaceErasedOnClose = false;
 	}
 
-	// Чтобы не возникало "зависаний/блокировок" в потоке чтения консоли - проверяем "живость" сервера
+	// Р§С‚РѕР±С‹ РЅРµ РІРѕР·РЅРёРєР°Р»Рѕ "Р·Р°РІРёСЃР°РЅРёР№/Р±Р»РѕРєРёСЂРѕРІРѕРє" РІ РїРѕС‚РѕРєРµ С‡С‚РµРЅРёСЏ РєРѕРЅСЃРѕР»Рё - РїСЂРѕРІРµСЂСЏРµРј "Р¶РёРІРѕСЃС‚СЊ" СЃРµСЂРІРµСЂР°
 	CVConGroup::OnRConTimerCheck();
 
-	// TODO: поддержку SlideShow повесить на отдельный таймер
+	// TODO: РїРѕРґРґРµСЂР¶РєСѓ SlideShow РїРѕРІРµСЃРёС‚СЊ РЅР° РѕС‚РґРµР»СЊРЅС‹Р№ С‚Р°Р№РјРµСЂ
 	BOOL lbIsPicView = isPictureView();
 
 	if (bPicViewSlideShow)
@@ -17656,7 +17656,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 				bPicViewSlideShow = false;
 				SendMessage(pVCon->RCon()->ConWnd(), WM_KEYDOWN, VK_NEXT, 0x01510001);
 				SendMessage(pVCon->RCon()->ConWnd(), WM_KEYUP, VK_NEXT, 0xc1510001);
-				// Окно могло измениться?
+				// РћРєРЅРѕ РјРѕРіР»Рѕ РёР·РјРµРЅРёС‚СЊСЃСЏ?
 				isPictureView();
 				dwLastSlideShowTick = GetTickCount();
 				bPicViewSlideShow = true;
@@ -17674,16 +17674,16 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		mp_Inside->InsideParentMonitor();
 	}
 
-	//2009-04-22 - вроде не требуется
+	//2009-04-22 - РІСЂРѕРґРµ РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ
 	/*if (lbIsPicView && !isPiewUpdate)
 	{
-	    // чтобы принудительно обновиться после закрытия PicView
+	    // С‡С‚РѕР±С‹ РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ РѕР±РЅРѕРІРёС‚СЊСЃСЏ РїРѕСЃР»Рµ Р·Р°РєСЂС‹С‚РёСЏ PicView
 	    isPiewUpdate = true;
 	}*/
 
 	if (!lbIsPicView && isPiewUpdate)
 	{
-		// После скрытия/закрытия PictureView нужно передернуть консоль - ее размер мог измениться
+		// РџРѕСЃР»Рµ СЃРєСЂС‹С‚РёСЏ/Р·Р°РєСЂС‹С‚РёСЏ PictureView РЅСѓР¶РЅРѕ РїРµСЂРµРґРµСЂРЅСѓС‚СЊ РєРѕРЅСЃРѕР»СЊ - РµРµ СЂР°Р·РјРµСЂ РјРѕРі РёР·РјРµРЅРёС‚СЊСЃСЏ
 		isPiewUpdate = false;
 		CVConGroup::SyncConsoleToWindow();
 		InvalidateAll();
@@ -17691,24 +17691,24 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 
 	if (!isIconic())
 	{
-		// Был сдвиг окна? Проверка после отпускания кнопки мышки
+		// Р‘С‹Р» СЃРґРІРёРі РѕРєРЅР°? РџСЂРѕРІРµСЂРєР° РїРѕСЃР»Рµ РѕС‚РїСѓСЃРєР°РЅРёСЏ РєРЅРѕРїРєРё РјС‹С€РєРё
 		if ((mouse.state & MOUSE_SIZING_BEGIN) || mouse.bCheckNormalRect)
 		{
 			bool bIsSizing = isSizing();
 			if (!bIsSizing)
 			{
-				StoreNormalRect(NULL); // Сама разберется, надо/не надо
+				StoreNormalRect(NULL); // РЎР°РјР° СЂР°Р·Р±РµСЂРµС‚СЃСЏ, РЅР°РґРѕ/РЅРµ РЅР°РґРѕ
 			}
 		}
-		//// Было ли реальное изменение размеров?
+		//// Р‘С‹Р»Рѕ Р»Рё СЂРµР°Р»СЊРЅРѕРµ РёР·РјРµРЅРµРЅРёРµ СЂР°Р·РјРµСЂРѕРІ?
 		//BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
 
 		//if (isSizing() && !isPressed(VK_LBUTTON)) {
-		//    // Сборс всех флагов ресайза мышкой
+		//    // РЎР±РѕСЂСЃ РІСЃРµС… С„Р»Р°РіРѕРІ СЂРµСЃР°Р№Р·Р° РјС‹С€РєРѕР№
 		//    ResetSizingFlags(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 		//}
 
-		//TODO("возможно весь ресайз (кроме SyncNtvdm?) нужно перенести в нить консоли")
+		//TODO("РІРѕР·РјРѕР¶РЅРѕ РІРµСЃСЊ СЂРµСЃР°Р№Р· (РєСЂРѕРјРµ SyncNtvdm?) РЅСѓР¶РЅРѕ РїРµСЂРµРЅРµСЃС‚Рё РІ РЅРёС‚СЊ РєРѕРЅСЃРѕР»Рё")
 		//OnConsoleResize();
 
 		// update scrollbar
@@ -17720,7 +17720,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 			mouse.bCheckNormalRect = false;
 	}
 
-	// режим полного скрытия заголовка
+	// СЂРµР¶РёРј РїРѕР»РЅРѕРіРѕ СЃРєСЂС‹С‚РёСЏ Р·Р°РіРѕР»РѕРІРєР°
 	if (gpSet->isCaptionHidden())
 	{
 		if (!bForeground)
@@ -17732,11 +17732,11 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		}
 		else
 		{
-			// в Normal режиме при помещении мышки над местом, где должен быть
-			// заголовок или рамка - показать их
+			// РІ Normal СЂРµР¶РёРјРµ РїСЂРё РїРѕРјРµС‰РµРЅРёРё РјС‹С€РєРё РЅР°Рґ РјРµСЃС‚РѕРј, РіРґРµ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ
+			// Р·Р°РіРѕР»РѕРІРѕРє РёР»Рё СЂР°РјРєР° - РїРѕРєР°Р·Р°С‚СЊ РёС…
 			if (!isIconic() && (WindowMode == wmNormal))
 			{
-				TODO("Не наколоться бы с предыдущим статусом при ресайзе?");
+				TODO("РќРµ РЅР°РєРѕР»РѕС‚СЊСЃСЏ Р±С‹ СЃ РїСЂРµРґС‹РґСѓС‰РёРј СЃС‚Р°С‚СѓСЃРѕРј РїСЂРё СЂРµСЃР°Р№Р·Рµ?");
 				//static bool bPrevForceShow = false;
 				bool bCurForceShow = isMouseOverFrame(true);
 
@@ -17748,7 +17748,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 					WORD nID = bCurForceShow ? TIMER_CAPTION_APPEAR_ID : TIMER_CAPTION_DISAPPEAR_ID;
 					DWORD nDelay = bCurForceShow ? gpSet->nHideCaptionAlwaysDelay : gpSet->nHideCaptionAlwaysDisappear;
 
-					// Если просили показывать с задержкой - то по таймеру
+					// Р•СЃР»Рё РїСЂРѕСЃРёР»Рё РїРѕРєР°Р·С‹РІР°С‚СЊ СЃ Р·Р°РґРµСЂР¶РєРѕР№ - С‚Рѕ РїРѕ С‚Р°Р№РјРµСЂСѓ
 					if (nDelay)
 						SetKillTimer(true, nID, nDelay);
 					else if (bCurForceShow)
@@ -17765,8 +17765,8 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		bool bLastFade = pVCon->mb_LastFadeFlag;
 		bool bNewFade = (gpSet->isFadeInactive && !bForeground && !lbIsPicView);
 
-		// Это условие скорее всего никогда не выполнится, т.к.
-		// смена Fade обрабатывается в WM_ACTIVATE/WM_SETFOCUS/WM_KILLFOCUS
+		// Р­С‚Рѕ СѓСЃР»РѕРІРёРµ СЃРєРѕСЂРµРµ РІСЃРµРіРѕ РЅРёРєРѕРіРґР° РЅРµ РІС‹РїРѕР»РЅРёС‚СЃСЏ, С‚.Рє.
+		// СЃРјРµРЅР° Fade РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚СЃСЏ РІ WM_ACTIVATE/WM_SETFOCUS/WM_KILLFOCUS
 		if (bLastFade != bNewFade)
 		{
 			pVCon->mb_LastFadeFlag = bNewFade;
@@ -17775,10 +17775,10 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	}
 
 	if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
-		isFirstInstance(); // Заодно и проверит...
+		isFirstInstance(); // Р—Р°РѕРґРЅРѕ Рё РїСЂРѕРІРµСЂРёС‚...
 
 	#ifndef APPDISTINCTBACKGROUND
-	// Если был изменен файл background
+	// Р•СЃР»Рё Р±С‹Р» РёР·РјРµРЅРµРЅ С„Р°Р№Р» background
 	if (gpSetCls->PollBackgroundFile())
 	{
 		gpConEmu->Update(true);
@@ -17809,9 +17809,9 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		}
 	}
 
-	// -- Замена на OnFocus
+	// -- Р—Р°РјРµРЅР° РЅР° OnFocus
 	//CheckFocus(L"TIMER_MAIN_ID");
-	// Проверить, может ConEmu был активирован, а сервер нет?
+	// РџСЂРѕРІРµСЂРёС‚СЊ, РјРѕР¶РµС‚ ConEmu Р±С‹Р» Р°РєС‚РёРІРёСЂРѕРІР°РЅ, Р° СЃРµСЂРІРµСЂ РЅРµС‚?
 	OnFocus(NULL, 0, 0, 0, gsFocusCheckTimer);
 
 	if (!lbIsPicView && gpSet->UpdSet.isUpdateCheckHourly)
@@ -17886,7 +17886,7 @@ void CConEmuMain::OnTransparentSeparate(bool bSetFocus)
 		&& (gpSet->nTransparent != gpSet->nTransparentInactive)
 		&& gpSet->isTransparentAllowed())
 	{
-		// То нужно обновить "прозрачность"
+		// РўРѕ РЅСѓР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ "РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ"
 		OnTransparent(true, bSetFocus);
 	}
 }
@@ -17932,7 +17932,7 @@ void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*=
 	// return true - when state was changes
 	if (SetTransparent(ghWnd, nAlpha, bColorKey, gpSet->nColorKeyValue, bForceLayered))
 	{
-		// Запомнить
+		// Р—Р°РїРѕРјРЅРёС‚СЊ
 		mb_LastTransparentFocused = bActive;
 
 		if (mp_Menu->GetTrackMenuPlace() == tmp_None)
@@ -17954,8 +17954,8 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 	#endif
 
  	BOOL bNeedRedrawOp = FALSE;
-	// Тут бы ветвиться по Active/Inactive, но это будет избыточно.
-	// Проверка уже сделана в OnTransparent
+	// РўСѓС‚ Р±С‹ РІРµС‚РІРёС‚СЊСЃСЏ РїРѕ Active/Inactive, РЅРѕ СЌС‚Рѕ Р±СѓРґРµС‚ РёР·Р±С‹С‚РѕС‡РЅРѕ.
+	// РџСЂРѕРІРµСЂРєР° СѓР¶Рµ СЃРґРµР»Р°РЅР° РІ OnTransparent
 	UINT nTransparent = max(MIN_INACTIVE_ALPHA_VALUE,min(anAlpha,255));
 	DWORD dwExStyle = GetWindowLongPtr(ahWnd, GWL_EXSTYLE);
 	bool lbChanged = false;
@@ -17965,7 +17965,7 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 
 	if ((nTransparent >= 255) && !abColorKey && !abForceLayered)
 	{
-		// Прозрачность отключается (полностью непрозрачный)
+		// РџСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ РѕС‚РєР»СЋС‡Р°РµС‚СЃСЏ (РїРѕР»РЅРѕСЃС‚СЊСЋ РЅРµРїСЂРѕР·СЂР°С‡РЅС‹Р№)
 		//SetLayeredWindowAttributes(ahWnd, 0, 255, LWA_ALPHA);
 		if ((dwExStyle & WS_EX_LAYERED) == WS_EX_LAYERED)
 		{
@@ -18025,8 +18025,8 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 			LogString(L"Transparency: Attributes were not changed");
 		}
 
-		// После смены стиля (не было альфа - появилась альфа) измененное окно "выносится наверх"
-		// и принудительно перерисовывается. Если в этот момент видим диалог настроек - он затирается.
+		// РџРѕСЃР»Рµ СЃРјРµРЅС‹ СЃС‚РёР»СЏ (РЅРµ Р±С‹Р»Рѕ Р°Р»СЊС„Р° - РїРѕСЏРІРёР»Р°СЃСЊ Р°Р»СЊС„Р°) РёР·РјРµРЅРµРЅРЅРѕРµ РѕРєРЅРѕ "РІС‹РЅРѕСЃРёС‚СЃСЏ РЅР°РІРµСЂС…"
+		// Рё РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ РїРµСЂРµСЂРёСЃРѕРІС‹РІР°РµС‚СЃСЏ. Р•СЃР»Рё РІ СЌС‚РѕС‚ РјРѕРјРµРЅС‚ РІРёРґРёРј РґРёР°Р»РѕРі РЅР°СЃС‚СЂРѕРµРє - РѕРЅ Р·Р°С‚РёСЂР°РµС‚СЃСЏ.
 		if (bNeedRedrawOp)
 		{
 			HWND hWindows[] = {ghOpWnd, (mp_AttachDlg ? mp_AttachDlg->GetHWND() : NULL), mp_Find->mh_FindDlg};
@@ -18044,7 +18044,7 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 	return lbChanged;
 }
 
-// Вызовем UpdateScrollPos для АКТИВНОЙ консоли
+// Р’С‹Р·РѕРІРµРј UpdateScrollPos РґР»СЏ РђРљРўРР’РќРћР™ РєРѕРЅСЃРѕР»Рё
 LRESULT CConEmuMain::OnUpdateScrollInfo(BOOL abPosted/* = FALSE*/)
 {
 	if (!abPosted)
@@ -18058,18 +18058,18 @@ LRESULT CConEmuMain::OnUpdateScrollInfo(BOOL abPosted/* = FALSE*/)
 	return 0;
 }
 
-// Чтобы при создании ПЕРВОЙ консоли на экране сразу можно было что-то нарисовать
+// Р§С‚РѕР±С‹ РїСЂРё СЃРѕР·РґР°РЅРёРё РџР•Р Р’РћР™ РєРѕРЅСЃРѕР»Рё РЅР° СЌРєСЂР°РЅРµ СЃСЂР°Р·Сѓ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ С‡С‚Рѕ-С‚Рѕ РЅР°СЂРёСЃРѕРІР°С‚СЊ
 void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args)
 {
-	SetScClosePending(false); // сброс
+	SetScClosePending(false); // СЃР±СЂРѕСЃ
 
-	// Если ConEmu не был закрыт после закрытия всех табов, и запущен новый таб...
+	// Р•СЃР»Рё ConEmu РЅРµ Р±С‹Р» Р·Р°РєСЂС‹С‚ РїРѕСЃР»Рµ Р·Р°РєСЂС‹С‚РёСЏ РІСЃРµС… С‚Р°Р±РѕРІ, Рё Р·Р°РїСѓС‰РµРЅ РЅРѕРІС‹Р№ С‚Р°Р±...
 	gpSet->ResetSavedOnExit();
 
 	CVConGroup::OnVConCreated(apVCon, args);
 }
 
-// Зависит от настроек и того, как закрывали
+// Р—Р°РІРёСЃРёС‚ РѕС‚ РЅР°СЃС‚СЂРѕРµРє Рё С‚РѕРіРѕ, РєР°Рє Р·Р°РєСЂС‹РІР°Р»Рё
 bool CConEmuMain::isDestroyOnClose(bool ScCloseOnEmpty /*= false*/)
 {
 	CConEmuUpdate::UpdateStep step = gpUpd ? gpUpd->InUpdate() : CConEmuUpdate::us_NotStarted;
@@ -18078,7 +18078,7 @@ bool CConEmuMain::isDestroyOnClose(bool ScCloseOnEmpty /*= false*/)
 
 	if (step == CConEmuUpdate::us_ExitAndUpdate)
 	{
-		bNeedDestroy = true; // Иначе облом при обновлении
+		bNeedDestroy = true; // РРЅР°С‡Рµ РѕР±Р»РѕРј РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё
 	}
 	else if (!gpSet->isMultiLeaveOnClose)
 	{
@@ -18090,11 +18090,11 @@ bool CConEmuMain::isDestroyOnClose(bool ScCloseOnEmpty /*= false*/)
 	}
 	else
 	{
-		// Сюда мы попадаем, если просили оставлять ConEmu только если
-		// закрыта была вкладка, а не нажат "крестик" в заголовке
+		// РЎСЋРґР° РјС‹ РїРѕРїР°РґР°РµРј, РµСЃР»Рё РїСЂРѕСЃРёР»Рё РѕСЃС‚Р°РІР»СЏС‚СЊ ConEmu С‚РѕР»СЊРєРѕ РµСЃР»Рё
+		// Р·Р°РєСЂС‹С‚Р° Р±С‹Р»Р° РІРєР»Р°РґРєР°, Р° РЅРµ РЅР°Р¶Р°С‚ "РєСЂРµСЃС‚РёРє" РІ Р·Р°РіРѕР»РѕРІРєРµ
 		_ASSERTE(gpSet->isMultiLeaveOnClose == 2);
-		// mb_ScClosePending выставляется в true при закрытии крестиком
-		// То есть, если нажали "крестик" - вызываем закрытие окна ConEmu
+		// mb_ScClosePending РІС‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РІ true РїСЂРё Р·Р°РєСЂС‹С‚РёРё РєСЂРµСЃС‚РёРєРѕРј
+		// РўРѕ РµСЃС‚СЊ, РµСЃР»Рё РЅР°Р¶Р°Р»Рё "РєСЂРµСЃС‚РёРє" - РІС‹Р·С‹РІР°РµРј Р·Р°РєСЂС‹С‚РёРµ РѕРєРЅР° ConEmu
 		bNeedDestroy = (mb_ScClosePending || ScCloseOnEmpty);
 	}
 
@@ -18150,9 +18150,9 @@ void CConEmuMain::OnAllVConClosed()
 
 void CConEmuMain::OnGhostCreated(CVirtualConsole* apVCon, HWND ahGhost)
 {
-	// При появлении на таскбаре первой кнопки с консолью (WinXP и ниже)
-	// нужно убрать с него кнопку самого приложения
-	// 111127 на Vista тоже кнопку "убирать" нужно
+	// РџСЂРё РїРѕСЏРІР»РµРЅРёРё РЅР° С‚Р°СЃРєР±Р°СЂРµ РїРµСЂРІРѕР№ РєРЅРѕРїРєРё СЃ РєРѕРЅСЃРѕР»СЊСЋ (WinXP Рё РЅРёР¶Рµ)
+	// РЅСѓР¶РЅРѕ СѓР±СЂР°С‚СЊ СЃ РЅРµРіРѕ РєРЅРѕРїРєСѓ СЃР°РјРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ
+	// 111127 РЅР° Vista С‚РѕР¶Рµ РєРЅРѕРїРєСѓ "СѓР±РёСЂР°С‚СЊ" РЅСѓР¶РЅРѕ
 	if (gpSet->isTabsOnTaskBar() && !IsWindows7)
 	{
 		DWORD curStyle = GetWindowLong(ghWnd, GWL_STYLE);
@@ -18193,7 +18193,7 @@ void CConEmuMain::OnRConStartedSuccess(CRealConsole* apRCon)
 
 	if (apRCon != NULL)
 	{
-		SetScClosePending(false); // сброс
+		SetScClosePending(false); // СЃР±СЂРѕСЃ
 	}
 }
 
@@ -18288,9 +18288,9 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	//if (messg == WM_CREATE)
 	//{
 	if (ghWnd == NULL)
-		ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
+		ghWnd = hWnd; // СЃС‚Р°РІРёРј СЃСЂР°Р·Сѓ, С‡С‚РѕР±С‹ С„СѓРЅРєС†РёРё РјРѕРіР»Рё РїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ
 	//else if ('ghWnd DC' == NULL)
-	//	'ghWnd DC' = hWnd; // ставим сразу, чтобы функции могли пользоваться
+	//	'ghWnd DC' = hWnd; // СЃС‚Р°РІРёРј СЃСЂР°Р·Сѓ, С‡С‚РѕР±С‹ С„СѓРЅРєС†РёРё РјРѕРіР»Рё РїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ
 	//}
 
 	if (hWnd == ghWnd)
@@ -18354,7 +18354,7 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 	case WM_PAINT:
 		{
-			// По идее, видимых частей ghWndWork быть не должно, но если таки есть - зальем
+			// РџРѕ РёРґРµРµ, РІРёРґРёРјС‹С… С‡Р°СЃС‚РµР№ ghWndWork Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ, РЅРѕ РµСЃР»Рё С‚Р°РєРё РµСЃС‚СЊ - Р·Р°Р»СЊРµРј
 			PAINTSTRUCT ps = {};
 			BeginPaint(hWnd, &ps);
 			_ASSERTE(ghWndWork == hWnd);
@@ -18463,7 +18463,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 	#endif
 
-	if (messg == WM_SYSCHAR)  // Для пересылки в консоль не используется, но чтобы не пищало - необходимо
+	if (messg == WM_SYSCHAR)  // Р”Р»СЏ РїРµСЂРµСЃС‹Р»РєРё РІ РєРѕРЅСЃРѕР»СЊ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ, РЅРѕ С‡С‚РѕР±С‹ РЅРµ РїРёС‰Р°Р»Рѕ - РЅРµРѕР±С…РѕРґРёРјРѕ
 		return TRUE;
 
 	if (this->ProcessNcMessage(hWnd, messg, wParam, lParam, result))
@@ -18582,7 +18582,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				this->mb_ExternalHidden = FALSE;
 			}
 
-			//Логирование, что получилось
+			//Р›РѕРіРёСЂРѕРІР°РЅРёРµ, С‡С‚Рѕ РїРѕР»СѓС‡РёР»РѕСЃСЊ
 			if (gpSetCls->isAdvLogging)
 			{
 				LogWindowPos(L"WM_SHOWWINDOW.end");
@@ -18640,7 +18640,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_KEYUP:
 		case WM_SYSKEYDOWN:
 		case WM_SYSKEYUP:
-			//case WM_CHAR: -- убрал. Теперь пользуем ToUnicodeEx.
+			//case WM_CHAR: -- СѓР±СЂР°Р». РўРµРїРµСЂСЊ РїРѕР»СЊР·СѓРµРј ToUnicodeEx.
 			//case WM_SYSCHAR:
 			result = this->OnKeyboard(hWnd, messg, wParam, lParam);
 
@@ -18673,25 +18673,25 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				HWND hFore = getForegroundWindow();
 				CVConGuard VCon;
-				// Если это наш диалог - пропустить возврат фокуса!
+				// Р•СЃР»Рё СЌС‚Рѕ РЅР°С€ РґРёР°Р»РѕРі - РїСЂРѕРїСѓСЃС‚РёС‚СЊ РІРѕР·РІСЂР°С‚ С„РѕРєСѓСЃР°!
 				if (hFore && (hFore != ghWnd) && isMeForeground(false, true))
 				{
-					this->mb_AllowAutoChildFocus = false; // для отладчика
+					this->mb_AllowAutoChildFocus = false; // РґР»СЏ РѕС‚Р»Р°РґС‡РёРєР°
 				}
 				else if (this->CanSetChildFocus() && (this->GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
 				{
 					VCon->PostRestoreChildFocus();
 				}
-				this->mb_AllowAutoChildFocus = false; // однократно
+				this->mb_AllowAutoChildFocus = false; // РѕРґРЅРѕРєСЂР°С‚РЅРѕ
 			}
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;
 		case WM_ACTIVATEAPP:
 			LogString(wParam ? L"Application activating" : L"Application deactivating");
-			// просто так фокус в дочернее окно ставить нельзя
-			// если переключать фокус в дочернее приложение по любому чиху
-			// вообще не получается активировать окно ConEmu, открыть системное меню,
-			// клацнуть по крестику в заголовке и т.п.
+			// РїСЂРѕСЃС‚Рѕ С‚Р°Рє С„РѕРєСѓСЃ РІ РґРѕС‡РµСЂРЅРµРµ РѕРєРЅРѕ СЃС‚Р°РІРёС‚СЊ РЅРµР»СЊР·СЏ
+			// РµСЃР»Рё РїРµСЂРµРєР»СЋС‡Р°С‚СЊ С„РѕРєСѓСЃ РІ РґРѕС‡РµСЂРЅРµРµ РїСЂРёР»РѕР¶РµРЅРёРµ РїРѕ Р»СЋР±РѕРјСѓ С‡РёС…Сѓ
+			// РІРѕРѕР±С‰Рµ РЅРµ РїРѕР»СѓС‡Р°РµС‚СЃСЏ Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РѕРєРЅРѕ ConEmu, РѕС‚РєСЂС‹С‚СЊ СЃРёСЃС‚РµРјРЅРѕРµ РјРµРЅСЋ,
+			// РєР»Р°С†РЅСѓС‚СЊ РїРѕ РєСЂРµСЃС‚РёРєСѓ РІ Р·Р°РіРѕР»РѕРІРєРµ Рё С‚.Рї.
 			if (wParam && lParam && gpSet->isFocusInChildWindows)
 			{
 				CheckAllowAutoChildFocus((DWORD)lParam);
@@ -18709,24 +18709,24 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			break;
 		case WM_MOUSEACTIVATE:
 			LogString(L"Activation by mouse");
-			// просто так фокус в дочернее окно ставить нельзя
-			// если переключать фокус в дочернее приложение по любому чиху
-			// вообще не получается активировать окно ConEmu, открыть системное меню,
-			// клацнуть по крестику в заголовке и т.п.
+			// РїСЂРѕСЃС‚Рѕ С‚Р°Рє С„РѕРєСѓСЃ РІ РґРѕС‡РµСЂРЅРµРµ РѕРєРЅРѕ СЃС‚Р°РІРёС‚СЊ РЅРµР»СЊР·СЏ
+			// РµСЃР»Рё РїРµСЂРµРєР»СЋС‡Р°С‚СЊ С„РѕРєСѓСЃ РІ РґРѕС‡РµСЂРЅРµРµ РїСЂРёР»РѕР¶РµРЅРёРµ РїРѕ Р»СЋР±РѕРјСѓ С‡РёС…Сѓ
+			// РІРѕРѕР±С‰Рµ РЅРµ РїРѕР»СѓС‡Р°РµС‚СЃСЏ Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РѕРєРЅРѕ ConEmu, РѕС‚РєСЂС‹С‚СЊ СЃРёСЃС‚РµРјРЅРѕРµ РјРµРЅСЋ,
+			// РєР»Р°С†РЅСѓС‚СЊ РїРѕ РєСЂРµСЃС‚РёРєСѓ РІ Р·Р°РіРѕР»РѕРІРєРµ Рё С‚.Рї.
 			if (wParam && lParam && gpSet->isFocusInChildWindows)
 			{
 				CheckAllowAutoChildFocus((DWORD)lParam);
 			}
 
-			//return MA_ACTIVATEANDEAT; -- ест все подряд, а LBUTTONUP пропускает :(
+			//return MA_ACTIVATEANDEAT; -- РµСЃС‚ РІСЃРµ РїРѕРґСЂСЏРґ, Р° LBUTTONUP РїСЂРѕРїСѓСЃРєР°РµС‚ :(
 			this->mouse.nSkipEvents[0] = 0;
 			this->mouse.nSkipEvents[1] = 0;
 
-			if (this->mouse.bForceSkipActivation  // принудительная активация окна, лежащего на Desktop
+			if (this->mouse.bForceSkipActivation  // РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅР°СЏ Р°РєС‚РёРІР°С†РёСЏ РѕРєРЅР°, Р»РµР¶Р°С‰РµРіРѕ РЅР° Desktop
 			        || (gpSet->isMouseSkipActivation && LOWORD(lParam) == HTCLIENT
 					&& !isMeForeground(false,false)))
 			{
-				this->mouse.bForceSkipActivation = FALSE; // Однократно
+				this->mouse.bForceSkipActivation = FALSE; // РћРґРЅРѕРєСЂР°С‚РЅРѕ
 				POINT ptMouse = {0}; GetCursorPos(&ptMouse);
 				//RECT  rcDC = {0}; GetWindowRect('ghWnd DC', &rcDC);
 				//if (PtInRect(&rcDC, ptMouse))
@@ -18787,9 +18787,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = this->mp_Menu->OnSysCommand(hWnd, wParam, lParam);
 			break;
 		case WM_NCLBUTTONDOWN:
-			// Note: При ресайзе WM_NCLBUTTONUP к сожалению не приходит
-			// поэтому нужно запомнить, что был начат ресайз и при завершении
-			// возможно выполнить дополнительные действия
+			// Note: РџСЂРё СЂРµСЃР°Р№Р·Рµ WM_NCLBUTTONUP Рє СЃРѕР¶Р°Р»РµРЅРёСЋ РЅРµ РїСЂРёС…РѕРґРёС‚
+			// РїРѕСЌС‚РѕРјСѓ РЅСѓР¶РЅРѕ Р·Р°РїРѕРјРЅРёС‚СЊ, С‡С‚Рѕ Р±С‹Р» РЅР°С‡Р°С‚ СЂРµСЃР°Р№Р· Рё РїСЂРё Р·Р°РІРµСЂС€РµРЅРёРё
+			// РІРѕР·РјРѕР¶РЅРѕ РІС‹РїРѕР»РЅРёС‚СЊ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РґРµР№СЃС‚РІРёСЏ
 
 			BeginSizing(false);
 
@@ -18797,7 +18797,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_NCLBUTTONDBLCLK:
-			this->mouse.state |= MOUSE_SIZING_DBLCKL; // чтобы в консоль не провалился LBtnUp если окошко развернется
+			this->mouse.state |= MOUSE_SIZING_DBLCKL; // С‡С‚РѕР±С‹ РІ РєРѕРЅСЃРѕР»СЊ РЅРµ РїСЂРѕРІР°Р»РёР»СЃСЏ LBtnUp РµСЃР»Рё РѕРєРѕС€РєРѕ СЂР°Р·РІРµСЂРЅРµС‚СЃСЏ
 
 			if (this->OnMouse_NCBtnDblClk(hWnd, messg, wParam, lParam))
 				result = 0;
@@ -18819,7 +18819,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 			if (!result && (lParam != -1))
 			{
-				// Установка resize-курсоров на рамке, и т.п.
+				// РЈСЃС‚Р°РЅРѕРІРєР° resize-РєСѓСЂСЃРѕСЂРѕРІ РЅР° СЂР°РјРєРµ, Рё С‚.Рї.
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 			}
 
@@ -18861,7 +18861,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			//				RECT rcWnd; GetWindowRect(hTabBar, &rcWnd);
 			//				TCHITTESTINFO tch = {{(int)(short)LOWORD(lParam),(int)(short)HIWORD(lParam)}};
 			//				if (PtInRect(&rcWnd, tch.pt)) {
-			//					// Преобразовать в относительные координаты
+			//					// РџСЂРµРѕР±СЂР°Р·РѕРІР°С‚СЊ РІ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅС‹Рµ РєРѕРѕСЂРґРёРЅР°С‚С‹
 			//					tch.pt.x -= rcWnd.left; tch.pt.y -= rcWnd.top;
 			//					LRESULT nTest = SendMessage(hTabBar, TCM_HITTEST, 0, (LPARAM)&tch);
 			//					if (nTest == -1) {
@@ -18924,7 +18924,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				MsgSrvStartedArg *pArg = (MsgSrvStartedArg*)lParam;
 				HWND hWndDC = NULL, hWndBack = NULL;
-				//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
+				//111002 - РІРµСЂРЅСѓС‚СЊ РґРѕР»Р¶РµРЅ HWND РѕРєРЅР° РѕС‚СЂРёСЃРѕРІРєРё (РґРѕС‡РµСЂРЅРµРµ РѕРєРЅРѕ ConEmu)
 
 				DWORD nServerPID = pArg->nSrcPID;
 				HWND  hWndCon = pArg->hConWnd;
@@ -19000,7 +19000,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgWinKeyFromHook)
 			{
-				// Тут должно передавать ВСЕ модификаторы!
+				// РўСѓС‚ РґРѕР»Р¶РЅРѕ РїРµСЂРµРґР°РІР°С‚СЊ Р’РЎР• РјРѕРґРёС„РёРєР°С‚РѕСЂС‹!
 				DWORD VkMod = (DWORD)wParam;
 				this->OnKeyboardHook(VkMod);
 				//BOOL lbShift = (lParam!=0);
@@ -19170,7 +19170,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgDeleteVConMainThread)
 			{
-				// Танцы с бубном, если последний Release() пришелся в фоновом потоке
+				// РўР°РЅС†С‹ СЃ Р±СѓР±РЅРѕРј, РµСЃР»Рё РїРѕСЃР»РµРґРЅРёР№ Release() РїСЂРёС€РµР»СЃСЏ РІ С„РѕРЅРѕРІРѕРј РїРѕС‚РѕРєРµ
 				LRESULT lDelRc = 0;
 				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
 				if (CVConGroup::isValid(pVCon))

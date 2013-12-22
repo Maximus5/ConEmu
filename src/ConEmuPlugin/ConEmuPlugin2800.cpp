@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -103,7 +103,7 @@ static wchar_t* GetPanelDir(HANDLE hPanel)
 			free(pDir);
 		}
 	}
-	// допустимо во время закрытия фара, если это был редактор
+	// РґРѕРїСѓСЃС‚РёРјРѕ РІРѕ РІСЂРµРјСЏ Р·Р°РєСЂС‹С‚РёСЏ С„Р°СЂР°, РµСЃР»Рё СЌС‚Рѕ Р±С‹Р» СЂРµРґР°РєС‚РѕСЂ
 	//_ASSERTE(nSize>0 || (pi.Flags & PFLAGS_PLUGIN));
 
 	return pszDir;
@@ -124,8 +124,8 @@ void GetPluginInfoW2800(void *piv)
 	//szMenu[0]=szMenu1; //lstrcpyW(szMenu[0], L"[&\x2560] ConEmu"); -> 0x2584
 	//szMenu[0][1] = L'&';
 	//szMenu[0][2] = 0x2560;
-	// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
-	//IsKeyChanged(TRUE); -- в FAR2 устарело, используем Synchro
+	// РџСЂРѕРІРµСЂРёС‚СЊ, РЅРµ РёР·РјРµРЅРёР»Р°СЃСЊ Р»Рё РіРѕСЂСЏС‡Р°СЏ РєР»Р°РІРёС€Р° РїР»Р°РіРёРЅР°, Рё РµСЃР»Рё РґР° - РїРµСЂРµСЃРѕР·РґР°С‚СЊ РјР°РєСЂРѕСЃС‹
+	//IsKeyChanged(TRUE); -- РІ FAR2 СѓСЃС‚Р°СЂРµР»Рѕ, РёСЃРїРѕР»СЊР·СѓРµРј Synchro
 	//if (gcPlugKey) szMenu1[0]=0; else lstrcpyW(szMenu1, L"[&\x2584] ");
 	//lstrcpynW(szMenu1+lstrlenW(szMenu1), GetMsgW(2), 240);
 	//lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
@@ -175,7 +175,7 @@ void ProcessDragFromW2800()
 			_ASSERTE(szCurDir!=NULL);
 			int ItemsCount=0;
 			OutDataWrite(&ItemsCount, sizeof(int));
-			OutDataWrite(&ItemsCount, sizeof(int)); // смена формата
+			OutDataWrite(&ItemsCount, sizeof(int)); // СЃРјРµРЅР° С„РѕСЂРјР°С‚Р°
 			return;
 		}
 		int nDirLen=0, nDirNoSlash=0;
@@ -189,16 +189,16 @@ void ProcessDragFromW2800()
 					nDirNoSlash=1;
 		}
 
-		// Это только предполагаемый размер, при необходимости он будет увеличен
+		// Р­С‚Рѕ С‚РѕР»СЊРєРѕ РїСЂРµРґРїРѕР»Р°РіР°РµРјС‹Р№ СЂР°Р·РјРµСЂ, РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РѕРЅ Р±СѓРґРµС‚ СѓРІРµР»РёС‡РµРЅ
 		OutDataAlloc(sizeof(int)+PInfo.SelectedItemsNumber*((MAX_PATH+2)+sizeof(int)));
-		//Maximus5 - новый формат передачи
+		//Maximus5 - РЅРѕРІС‹Р№ С„РѕСЂРјР°С‚ РїРµСЂРµРґР°С‡Рё
 		int nNull=0; // ItemsCount
 		//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
 		OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
 
 		if (PInfo.SelectedItemsNumber<=0)
 		{
-			// Проверка того, что мы стоим на ".."
+			// РџСЂРѕРІРµСЂРєР° С‚РѕРіРѕ, С‡С‚Рѕ РјС‹ СЃС‚РѕРёРј РЅР° ".."
 			if (PInfo.CurrentItem == 0 && PInfo.ItemsNumber > 0)
 			{
 				if (!nDirNoSlash)
@@ -222,7 +222,7 @@ void ProcessDragFromW2800()
 			INT_PTR ItemsCount=PInfo.SelectedItemsNumber, i;
 			int nMaxLen=MAX_PATH+1, nWholeLen=1;
 
-			// сначала посчитать максимальную длину буфера
+			// СЃРЅР°С‡Р°Р»Р° РїРѕСЃС‡РёС‚Р°С‚СЊ РјР°РєСЃРёРјР°Р»СЊРЅСѓСЋ РґР»РёРЅСѓ Р±СѓС„РµСЂР°
 			for(i=0; i<ItemsCount; i++)
 			{
 				size_t sz = InfoW2800->PanelControl(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, NULL);
@@ -230,7 +230,7 @@ void ProcessDragFromW2800()
 				if (!sz)
 					continue;
 
-				pi[i] = (PluginPanelItem*)calloc(sz, 1); // размер возвращается в байтах
+				pi[i] = (PluginPanelItem*)calloc(sz, 1); // СЂР°Р·РјРµСЂ РІРѕР·РІСЂР°С‰Р°РµС‚СЃСЏ РІ Р±Р°Р№С‚Р°С…
 
 				FarGetPluginPanelItem gppi = {sizeof(gppi), sz, pi[i]};
 				if (!InfoW2800->PanelControl(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, &gppi))
@@ -258,7 +258,7 @@ void ProcessDragFromW2800()
 
 				if ((pi[i]->FileName[0] == L'\\' && pi[i]->FileName[1] == L'\\') ||
 				        (ISALPHA(pi[i]->FileName[0]) && pi[i]->FileName[1] == L':' && pi[i]->FileName[2] == L'\\'))
-					{ nLen = 0; bIsFull[i] = TRUE; } // это уже полный путь!
+					{ nLen = 0; bIsFull[i] = TRUE; } // СЌС‚Рѕ СѓР¶Рµ РїРѕР»РЅС‹Р№ РїСѓС‚СЊ!
 
 				nLen += lstrlenW(pi[i]->FileName);
 
@@ -278,11 +278,11 @@ void ProcessDragFromW2800()
 			{
 				//WCHAR Path[MAX_PATH+1];
 				//ZeroMemory(Path, MAX_PATH+1);
-				//Maximus5 - засада с корнем диска и возможностью overflow
+				//Maximus5 - Р·Р°СЃР°РґР° СЃ РєРѕСЂРЅРµРј РґРёСЃРєР° Рё РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ overflow
 				//StringCchPrintf(Path, countof(Path), L"%s\\%s", szCurDir, PInfo.SelectedItems[i]->FileName);
 				Path[0]=0;
 
-				if (!pi[i] || !pi[i]->FileName) continue;  //этот элемент получить не удалось
+				if (!pi[i] || !pi[i]->FileName) continue;  //СЌС‚РѕС‚ СЌР»РµРјРµРЅС‚ РїРѕР»СѓС‡РёС‚СЊ РЅРµ СѓРґР°Р»РѕСЃСЊ
 
 				int nLen=0;
 
@@ -316,7 +316,7 @@ void ProcessDragFromW2800()
 			free(pi); pi = NULL;
 			free(bIsFull);
 			delete [] Path; Path=NULL;
-			// Конец списка
+			// РљРѕРЅРµС† СЃРїРёСЃРєР°
 			//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
 			OutDataWrite(&nNull, sizeof(int));
 		}
@@ -327,7 +327,7 @@ void ProcessDragFromW2800()
 	{
 		int ItemsCount=0;
 		OutDataWrite(&ItemsCount, sizeof(int));
-		OutDataWrite(&ItemsCount, sizeof(int)); // смена формата
+		OutDataWrite(&ItemsCount, sizeof(int)); // СЃРјРµРЅР° С„РѕСЂРјР°С‚Р°
 	}
 
 	//free(szCurDir);
@@ -340,7 +340,7 @@ void ProcessDragToW2800()
 
 	WindowInfo WInfo = {sizeof(WindowInfo)};
 	//WInfo.Pos = 0;
-	WInfo.Pos = -1; // попробуем работать в диалогах и редакторе
+	WInfo.Pos = -1; // РїРѕРїСЂРѕР±СѓРµРј СЂР°Р±РѕС‚Р°С‚СЊ РІ РґРёР°Р»РѕРіР°С… Рё СЂРµРґР°РєС‚РѕСЂРµ
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 	InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
 
@@ -358,7 +358,7 @@ void ProcessDragToW2800()
 
 	if ((WInfo.Type == WTYPE_DIALOG) || (WInfo.Type == WTYPE_EDITOR))
 	{
-		// разрешить дроп в виде текста
+		// СЂР°Р·СЂРµС€РёС‚СЊ РґСЂРѕРї РІ РІРёРґРµ С‚РµРєСЃС‚Р°
 		ForwardedPanelInfo DlgInfo = {};
 		DlgInfo.NoFarConsole = TRUE;
 		nStructSize = sizeof(DlgInfo);
@@ -370,7 +370,7 @@ void ProcessDragToW2800()
 	}
 	else if (WInfo.Type != WTYPE_PANELS)
 	{
-		// Иначе - дроп не разрешен
+		// РРЅР°С‡Рµ - РґСЂРѕРї РЅРµ СЂР°Р·СЂРµС€РµРЅ
 		int ItemsCount=0;
 		if (gpCmdRet==NULL)
 			OutDataAlloc(sizeof(ItemsCount));
@@ -378,7 +378,7 @@ void ProcessDragToW2800()
 		return;
 	}
 
-	nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
+	nStructSize = sizeof(ForwardedPanelInfo)+4; // РїРѕС‚РѕРј СѓРІРµР»РёС‡РёРј РЅР° РґР»РёРЅСѓ СЃС‚СЂРѕРє
 
 	//InfoW2800->AdvControl(&guid_ConEmu, ACTL_FREEWINDOWINFO, 0, &WInfo);
 	PanelInfo PAInfo = {sizeof(PAInfo)}, PPInfo = {sizeof(PPInfo)};
@@ -398,7 +398,7 @@ void ProcessDragToW2800()
 	      (szPDir = GetPanelDir(PANEL_PASSIVE));
 
 	if (lbPOK && szPDir)
-		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
+		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // РРјРµРЅРЅРѕ WCHAR! РЅРµ TCHAR
 
 	pfpi = (ForwardedPanelInfo*)calloc(nStructSize,1);
 
@@ -418,7 +418,7 @@ void ProcessDragToW2800()
 
 	pfpi->ActivePathShift = sizeof(ForwardedPanelInfo);
 	pfpi->pszActivePath = (WCHAR*)(((char*)pfpi)+pfpi->ActivePathShift);
-	pfpi->PassivePathShift = pfpi->ActivePathShift+2; // если ActivePath заполнится - увеличим
+	pfpi->PassivePathShift = pfpi->ActivePathShift+2; // РµСЃР»Рё ActivePath Р·Р°РїРѕР»РЅРёС‚СЃСЏ - СѓРІРµР»РёС‡РёРј
 
 	if (lbAOK)
 	{
@@ -451,7 +451,7 @@ void ProcessDragToW2800()
 		}
 	}
 
-	// Собственно, пересылка информации
+	// РЎРѕР±СЃС‚РІРµРЅРЅРѕ, РїРµСЂРµСЃС‹Р»РєР° РёРЅС„РѕСЂРјР°С†РёРё
 	//WriteFile(hPipe, &nStructSize, sizeof(nStructSize), &cout, NULL);
 	//WriteFile(hPipe, pfpi, nStructSize, &cout, NULL);
 	if (gpCmdRet==NULL)
@@ -486,7 +486,7 @@ void SetStartupInfoW2800(void *aInfo)
 		}
 	}
 
-	// Коды должны совпадать с Far2, а то menu_ShowTabsList надо будет переписывать
+	// РљРѕРґС‹ РґРѕР»Р¶РЅС‹ СЃРѕРІРїР°РґР°С‚СЊ СЃ Far2, Р° С‚Рѕ menu_ShowTabsList РЅР°РґРѕ Р±СѓРґРµС‚ РїРµСЂРµРїРёСЃС‹РІР°С‚СЊ
 	_ASSERTE(MACROAREA_SHELL==1 && MACROAREA_SEARCH==5 && MACROAREA_INFOPANEL==10 && MACROAREA_QVIEWPANEL==11);
 	_ASSERTE(MACROAREA_TREEPANEL==12 && OPEN_FILEPANEL==7 && MACROAREA_EDITOR==3 && MACROAREA_VIEWER==2);
 }
@@ -500,7 +500,7 @@ DWORD GetEditorModifiedStateW2800()
 	wsprintfA(szDbg, "Editor:State=%i\n", ei.CurState);
 	OutputDebugStringA(szDbg);
 #endif
-	// Если он сохранен, то уже НЕ модифицирован
+	// Р•СЃР»Рё РѕРЅ СЃРѕС…СЂР°РЅРµРЅ, С‚Рѕ СѓР¶Рµ РќР• РјРѕРґРёС„РёС†РёСЂРѕРІР°РЅ
 	DWORD currentModifiedState = ((ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED) ? 1 : 0;
 	return currentModifiedState;
 }
@@ -617,12 +617,12 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 	WindowInfo WActive = {sizeof(WActive)};
 	WActive.Pos = -1;
 	bool bActiveInfo = InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WActive)!=0;
-	// Если фар запущен с ключом "/e" (как standalone редактор) - будет ассерт при первой попытке 
-	// считать информацию об окне (редактор еще не создан?, а панелей вообще нет)
+	// Р•СЃР»Рё С„Р°СЂ Р·Р°РїСѓС‰РµРЅ СЃ РєР»СЋС‡РѕРј "/e" (РєР°Рє standalone СЂРµРґР°РєС‚РѕСЂ) - Р±СѓРґРµС‚ Р°СЃСЃРµСЂС‚ РїСЂРё РїРµСЂРІРѕР№ РїРѕРїС‹С‚РєРµ 
+	// СЃС‡РёС‚Р°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕРєРЅРµ (СЂРµРґР°РєС‚РѕСЂ РµС‰Рµ РЅРµ СЃРѕР·РґР°РЅ?, Р° РїР°РЅРµР»РµР№ РІРѕРѕР±С‰Рµ РЅРµС‚)
 	_ASSERTE(bActiveInfo && (WActive.Flags & WIF_CURRENT));
 	static WindowInfo WLastActive;
 
-	// Проверить, есть ли активный редактор/вьювер/панель
+	// РџСЂРѕРІРµСЂРёС‚СЊ, РµСЃС‚СЊ Р»Рё Р°РєС‚РёРІРЅС‹Р№ СЂРµРґР°РєС‚РѕСЂ/РІСЊСЋРІРµСЂ/РїР°РЅРµР»СЊ
 	if (bActiveInfo && (WActive.Type == WTYPE_EDITOR || WActive.Type == WTYPE_VIEWER || WActive.Type == WTYPE_PANELS))
 	{
 		if (!(WActive.Flags & WIF_MODAL))
@@ -633,8 +633,8 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 		int nTabs = 0, nModalTabs = 0;
 		bool bFound = false;
 		WindowInfo WModal, WFirst;
-		// Поскольку в табах диалоги не отображаются - надо подменить "активное" окно
-		// т.е. предпочитаем тот таб, который был активен ранее
+		// РџРѕСЃРєРѕР»СЊРєСѓ РІ С‚Р°Р±Р°С… РґРёР°Р»РѕРіРё РЅРµ РѕС‚РѕР±СЂР°Р¶Р°СЋС‚СЃСЏ - РЅР°РґРѕ РїРѕРґРјРµРЅРёС‚СЊ "Р°РєС‚РёРІРЅРѕРµ" РѕРєРЅРѕ
+		// С‚.Рµ. РїСЂРµРґРїРѕС‡РёС‚Р°РµРј С‚РѕС‚ С‚Р°Р±, РєРѕС‚РѕСЂС‹Р№ Р±С‹Р» Р°РєС‚РёРІРµРЅ СЂР°РЅРµРµ
 		for (int i = 0; i < windowCount; i++)
 		{
 			WInfo.Pos = i;
@@ -684,9 +684,9 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 			WInfo.Name = szWNameBuffer;
 			WInfo.NameSize = CONEMUTABMAX;
 			InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
-			WARNING("Для получения имени нужно пользовать ECTL_GETFILENAME");
+			WARNING("Р”Р»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РёРјРµРЅРё РЅСѓР¶РЅРѕ РїРѕР»СЊР·РѕРІР°С‚СЊ ECTL_GETFILENAME");
 
-			//// Проверить, чего там...
+			//// РџСЂРѕРІРµСЂРёС‚СЊ, С‡РµРіРѕ С‚Р°Рј...
 			//_ASSERTE((WInfo.Flags & WIF_MODAL) == 0);
 
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
@@ -699,7 +699,7 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 					lbActiveFound = TRUE;
 				}
 
-				TODO("Определение ИД редактора/вьювера");
+				TODO("РћРїСЂРµРґРµР»РµРЅРёРµ РР” СЂРµРґР°РєС‚РѕСЂР°/РІСЊСЋРІРµСЂР°");
 				lbCh |= AddTab(tabCount, losingFocus, editorSave,
 				               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
 				               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), (WInfo.Flags & WIF_MODAL),
@@ -712,7 +712,7 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 		}
 	}
 
-	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
+	// Viewer РІ FAR 2 build 9xx РЅРµ РїРѕРїР°РґР°РµС‚ РІ СЃРїРёСЃРѕРє РѕРєРѕРЅ РїСЂРё СЃРѕР±С‹С‚РёРё VE_GOTFOCUS
 	_ASSERTE(VE_GOTFOCUS==6);
 	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == (200+VE_GOTFOCUS))
 	{
@@ -735,7 +735,7 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 		}
 	}
 
-	// Скорее всего это модальный редактор (или вьювер?)
+	// РЎРєРѕСЂРµРµ РІСЃРµРіРѕ СЌС‚Рѕ РјРѕРґР°Р»СЊРЅС‹Р№ СЂРµРґР°РєС‚РѕСЂ (РёР»Рё РІСЊСЋРІРµСЂ?)
 	if (!lbActiveFound && !losingFocus)
 	{
 		_ASSERTE("Active window must be detected already!" && 0);
@@ -744,7 +744,7 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 		if (InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo))
 		{
-			// Проверить, чего там...
+			// РџСЂРѕРІРµСЂРёС‚СЊ, С‡РµРіРѕ С‚Р°Рј...
 			_ASSERTE((WInfo.Flags & WIF_MODAL) == 0);
 
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
@@ -757,7 +757,7 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 				if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
 				{
 					tabCount = 0;
-					TODO("Определение ИД Редактора/вьювера");
+					TODO("РћРїСЂРµРґРµР»РµРЅРёРµ РР” Р РµРґР°РєС‚РѕСЂР°/РІСЊСЋРІРµСЂР°");
 					lbCh |= AddTab(tabCount, losingFocus, editorSave,
 					               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
 					               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), 1/*Modal*/,
@@ -787,7 +787,7 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 		//	}
 		//}
 		//if (bEditor && bViewer) {
-		//	// Попробуем получить информацию об активном окне, но это может привести к блокировке некоторых диалогов ФАР2?
+		//	// РџРѕРїСЂРѕР±СѓРµРј РїРѕР»СѓС‡РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± Р°РєС‚РёРІРЅРѕРј РѕРєРЅРµ, РЅРѕ СЌС‚Рѕ РјРѕР¶РµС‚ РїСЂРёРІРµСЃС‚Рё Рє Р±Р»РѕРєРёСЂРѕРІРєРµ РЅРµРєРѕС‚РѕСЂС‹С… РґРёР°Р»РѕРіРѕРІ Р¤РђР 2?
 		//	WInfo.Pos = -1;
 		//	InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, (void*)&WInfo);
 		//}
@@ -805,7 +805,7 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 		//if (pszEditorFileName) free(pszEditorFileName);
 	}
 
-	// 101224 - сразу запомнить количество!
+	// 101224 - СЃСЂР°Р·Сѓ Р·Р°РїРѕРјРЅРёС‚СЊ РєРѕР»РёС‡РµСЃС‚РІРѕ!
 	gpTabs->Tabs.nTabCount = tabCount;
 	//// 2009-08-17
 	//if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
@@ -903,14 +903,14 @@ DWORD WINAPI BackgroundMacroError(LPVOID lpParameter)
 	return 0;
 }
 
-// Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
+// Warning, РЅР°РїСЂСЏРјСѓСЋ РќР• РІС‹Р·С‹РІР°С‚СЊ. РџРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ "РѕР±С‰РµР№" PostMacro
 void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl)
 		return;
 
 	MacroSendMacroText mcr = {sizeof(MacroSendMacroText)};
-	//mcr.Flags = 0; // По умолчанию - вывод на экран разрешен
+	//mcr.Flags = 0; // РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ СЂР°Р·СЂРµС€РµРЅ
 
 	if (*asMacro == L'@' && asMacro[1] && asMacro[1] != L' ')
 	{
@@ -923,12 +923,12 @@ void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 
 	wchar_t* pszMacroCopy = NULL;
 
-	//Far3 build 2576: удален $Text
-	//т.к. макросы у нас фаро-независимые - нужны танцы с бубном
+	//Far3 build 2576: СѓРґР°Р»РµРЅ $Text
+	//С‚.Рє. РјР°РєСЂРѕСЃС‹ Сѓ РЅР°СЃ С„Р°СЂРѕ-РЅРµР·Р°РІРёСЃРёРјС‹Рµ - РЅСѓР¶РЅС‹ С‚Р°РЅС†С‹ СЃ Р±СѓР±РЅРѕРј
 	pszMacroCopy = lstrdup(asMacro);
 	CharUpperBuff(pszMacroCopy, lstrlen(pszMacroCopy));
-	// Вообще говоря, если тут попадается макрос в старом формате - то мы уже ничего не сделаем...
-	// Начиная с Far 3 build 2851 - все макросы переведены на Lua
+	// Р’РѕРѕР±С‰Рµ РіРѕРІРѕСЂСЏ, РµСЃР»Рё С‚СѓС‚ РїРѕРїР°РґР°РµС‚СЃСЏ РјР°РєСЂРѕСЃ РІ СЃС‚Р°СЂРѕРј С„РѕСЂРјР°С‚Рµ - С‚Рѕ РјС‹ СѓР¶Рµ РЅРёС‡РµРіРѕ РЅРµ СЃРґРµР»Р°РµРј...
+	// РќР°С‡РёРЅР°СЏ СЃ Far 3 build 2851 - РІСЃРµ РјР°РєСЂРѕСЃС‹ РїРµСЂРµРІРµРґРµРЅС‹ РЅР° Lua
 	#if 0
 	if (wcsstr(pszMacroCopy, L"$TEXT") && !InfoW2800->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, MSSC_CHECK, &mcr))
 	{
@@ -945,11 +945,11 @@ void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 			{
 				lstrcpy(psz, L"print("); psz += 6;
 
-				// Пропустить spasing-symbols
+				// РџСЂРѕРїСѓСЃС‚РёС‚СЊ spasing-symbols
 				asMacro += 5;
 				while (*asMacro == L' ' || *asMacro == L'\t' || *asMacro == L'\r' || *asMacro == L'\n')
 					asMacro++;
-				// Копировать строку или переменную
+				// РљРѕРїРёСЂРѕРІР°С‚СЊ СЃС‚СЂРѕРєСѓ РёР»Рё РїРµСЂРµРјРµРЅРЅСѓСЋ
 				if (*asMacro == L'@' && *(asMacro+1) == L'"')
 				{
 					*(psz++) = *(asMacro++); *(psz++) = *(asMacro++);
@@ -993,9 +993,9 @@ void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 				else
 				{
 					SafeFree(pszMacroCopy);
-					break; // ошибка
+					break; // РѕС€РёР±РєР°
 				}
-				// закрыть скобку
+				// Р·Р°РєСЂС‹С‚СЊ СЃРєРѕР±РєСѓ
 				*(psz++) = L')';
 			}
 			else
@@ -1004,7 +1004,7 @@ void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 			}
 		}
 
-		// Если успешно пропатчили макрос
+		// Р•СЃР»Рё СѓСЃРїРµС€РЅРѕ РїСЂРѕРїР°С‚С‡РёР»Рё РјР°РєСЂРѕСЃ
 		if (pszMacroCopy)
 			asMacro = pszMacroCopy;
 	}
@@ -1060,11 +1060,11 @@ void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 		//gFarVersion.dwBuild
 		InfoW2800->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, 0, &mcr);
 
-		//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
-		//  Это чаще всего проявляется при вызове меню по RClick
-		//  Если курсор на другой панели, то RClick сразу по пассивной
-		//  не вызывает отрисовку :(
-		// Перенесено в "общую" PostMacro
+		//FAR BUGBUG: РњР°РєСЂРѕСЃ РЅРµ Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ РЅР° РёСЃРїРѕР»РЅРµРЅРёРµ, РїРѕРєР° РјС‹С€РєРѕР№ РЅРµ РґРµСЂРЅРµРј :(
+		//  Р­С‚Рѕ С‡Р°С‰Рµ РІСЃРµРіРѕ РїСЂРѕСЏРІР»СЏРµС‚СЃСЏ РїСЂРё РІС‹Р·РѕРІРµ РјРµРЅСЋ РїРѕ RClick
+		//  Р•СЃР»Рё РєСѓСЂСЃРѕСЂ РЅР° РґСЂСѓРіРѕР№ РїР°РЅРµР»Рё, С‚Рѕ RClick СЃСЂР°Р·Сѓ РїРѕ РїР°СЃСЃРёРІРЅРѕР№
+		//  РЅРµ РІС‹Р·С‹РІР°РµС‚ РѕС‚СЂРёСЃРѕРІРєСѓ :(
+		// РџРµСЂРµРЅРµСЃРµРЅРѕ РІ "РѕР±С‰СѓСЋ" PostMacro
 		////if (!mcr.Param.PlainText.Flags) {
 		//INPUT_RECORD ir[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
 		//if (isPressed(VK_CAPITAL))
@@ -1079,7 +1079,7 @@ void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 		//ir[1].Event.MouseEvent.dwMousePosition.X = 1;
 		//ir[1].Event.MouseEvent.dwMousePosition.Y = 1;
 		//
-		////2010-01-29 попробуем STD_OUTPUT
+		////2010-01-29 РїРѕРїСЂРѕР±СѓРµРј STD_OUTPUT
 		////if (!ghConIn) {
 		////	ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 		////		0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
@@ -1202,7 +1202,7 @@ BOOL ExecuteSynchroW2800()
 			return FALSE;
 		}
 
-		// получается более 2-х, если фар в данный момент чем-то занят (сканирует каталог?)
+		// РїРѕР»СѓС‡Р°РµС‚СЃСЏ Р±РѕР»РµРµ 2-С…, РµСЃР»Рё С„Р°СЂ РІ РґР°РЅРЅС‹Р№ РјРѕРјРµРЅС‚ С‡РµРј-С‚Рѕ Р·Р°РЅСЏС‚ (СЃРєР°РЅРёСЂСѓРµС‚ РєР°С‚Р°Р»РѕРі?)
 		//_ASSERTE(gnSynchroCount<=3);
 		gnSynchroCount++;
 		InfoW2800->AdvControl(&guid_ConEmu, ACTL_SYNCHRO, 0, NULL);
@@ -1216,7 +1216,7 @@ static HANDLE ghSyncDlg = NULL;
 
 void WaitEndSynchroW2800()
 {
-	// Считаем, что в Far 3 починили
+	// РЎС‡РёС‚Р°РµРј, С‡С‚Рѕ РІ Far 3 РїРѕС‡РёРЅРёР»Рё
 #if 0
 	if ((gnSynchroCount == 0) || !(IS_SYNCHRO_ALLOWED))
 		return;
@@ -1240,9 +1240,9 @@ void WaitEndSynchroW2800()
 
 	if (ghSyncDlg == INVALID_HANDLE_VALUE)
 	{
-		// Видимо, Фар в состоянии выхода (финальная выгрузка всех плагинов)
-		// В этом случае, по идее, Synchro вызываться более не должно
-		gnSynchroCount = 0; // так что просто сбросим счетчик
+		// Р’РёРґРёРјРѕ, Р¤Р°СЂ РІ СЃРѕСЃС‚РѕСЏРЅРёРё РІС‹С…РѕРґР° (С„РёРЅР°Р»СЊРЅР°СЏ РІС‹РіСЂСѓР·РєР° РІСЃРµС… РїР»Р°РіРёРЅРѕРІ)
+		// Р’ СЌС‚РѕРј СЃР»СѓС‡Р°Рµ, РїРѕ РёРґРµРµ, Synchro РІС‹Р·С‹РІР°С‚СЊСЃСЏ Р±РѕР»РµРµ РЅРµ РґРѕР»Р¶РЅРѕ
+		gnSynchroCount = 0; // С‚Р°Рє С‡С‚Рѕ РїСЂРѕСЃС‚Рѕ СЃР±СЂРѕСЃРёРј СЃС‡РµС‚С‡РёРє
 	}
 	else
 	{
@@ -1263,14 +1263,14 @@ void StopWaitEndSynchroW2800()
 }
 
 
-// Param должен быть выделен в куче. Память освобождается в ProcessSynchroEventW.
+// Param РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІС‹РґРµР»РµРЅ РІ РєСѓС‡Рµ. РџР°РјСЏС‚СЊ РѕСЃРІРѕР±РѕР¶РґР°РµС‚СЃСЏ РІ ProcessSynchroEventW.
 //BOOL CallSynchroW2800(SynchroArg *Param, DWORD nTimeout /*= 10000*/)
 //{
 //	if (!InfoW2800 || !Param)
 //		return FALSE;
 //
 //	if (gFarVersion.dwVerMajor>1 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006)) {
-//		// Функция всегда возвращает 0
+//		// Р¤СѓРЅРєС†РёСЏ РІСЃРµРіРґР° РІРѕР·РІСЂР°С‰Р°РµС‚ 0
 //		if (Param->hEvent)
 //			ResetEvent(Param->hEvent);
 //
@@ -1287,7 +1287,7 @@ void StopWaitEndSynchroW2800()
 //		if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1)) {
 //			_ASSERTE(nWait==WAIT_OBJECT_0);
 //			if (nWait == (WAIT_OBJECT_0+1)) {
-//				// Таймаут, эту команду плагин должен пропустить, когда фар таки соберется ее выполнить
+//				// РўР°Р№РјР°СѓС‚, СЌС‚Сѓ РєРѕРјР°РЅРґСѓ РїР»Р°РіРёРЅ РґРѕР»Р¶РµРЅ РїСЂРѕРїСѓСЃС‚РёС‚СЊ, РєРѕРіРґР° С„Р°СЂ С‚Р°РєРё СЃРѕР±РµСЂРµС‚СЃСЏ РµРµ РІС‹РїРѕР»РЅРёС‚СЊ
 //				Param->Obsolete = TRUE;
 //			}
 //		}
@@ -1435,7 +1435,7 @@ void LoadFarColorsW2800(BYTE (&nFarColors)[col_LastIndex])
 	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
 	if (pColors)
 		nColorSize = InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, (int)nColorSize, pColors);
-	WARNING("Поддержка более 4бит цветов");
+	WARNING("РџРѕРґРґРµСЂР¶РєР° Р±РѕР»РµРµ 4Р±РёС‚ С†РІРµС‚РѕРІ");
 	if (pColors && nColorSize > 0)
 	{
 #ifdef _DEBUG
@@ -1515,8 +1515,8 @@ BOOL ReloadFarInfoW2800(/*BOOL abFull*/)
 		return FALSE;
 	}
 
-	// Заполнить gpFarInfo->
-	//BYTE nFarColors[0x100]; // Массив цветов фара
+	// Р—Р°РїРѕР»РЅРёС‚СЊ gpFarInfo->
+	//BYTE nFarColors[0x100]; // РњР°СЃСЃРёРІ С†РІРµС‚РѕРІ С„Р°СЂР°
 	//DWORD nFarInterfaceSettings;
 	//DWORD nFarPanelSettings;
 	//DWORD nFarConfirmationSettings;
@@ -1586,7 +1586,7 @@ BOOL ReloadFarInfoW2800(/*BOOL abFull*/)
 	gpFarInfo->bFarPanelInfoFilled = FALSE;
 	gpFarInfo->bFarLeftPanel = FALSE;
 	gpFarInfo->bFarRightPanel = FALSE;
-	// -- пока, во избежание глюков в FAR при неожиданных запросах информации о панелях
+	// -- РїРѕРєР°, РІРѕ РёР·Р±РµР¶Р°РЅРёРµ РіР»СЋРєРѕРІ РІ FAR РїСЂРё РЅРµРѕР¶РёРґР°РЅРЅС‹С… Р·Р°РїСЂРѕСЃР°С… РёРЅС„РѕСЂРјР°С†РёРё Рѕ РїР°РЅРµР»СЏС…
 	//if (FALSE == (gpFarInfo->bFarPanelAllowed)) {
 	//	gpConMapInfo->bFarLeftPanel = FALSE;
 	//	gpConMapInfo->bFarRightPanel = FALSE;
@@ -1634,8 +1634,8 @@ BOOL CheckBufferEnabledW2800()
 
 	static int siEnabled = 0;
 
-	// Чтобы проверку выполнять только один раз.
-	// Т.к. буфер может быть реально сброшен, а фар его все-еще умеет.
+	// Р§С‚РѕР±С‹ РїСЂРѕРІРµСЂРєСѓ РІС‹РїРѕР»РЅСЏС‚СЊ С‚РѕР»СЊРєРѕ РѕРґРёРЅ СЂР°Р·.
+	// Рў.Рє. Р±СѓС„РµСЂ РјРѕР¶РµС‚ Р±С‹С‚СЊ СЂРµР°Р»СЊРЅРѕ СЃР±СЂРѕС€РµРЅ, Р° С„Р°СЂ РµРіРѕ РІСЃРµ-РµС‰Рµ СѓРјРµРµС‚.
 	if (siEnabled)
 	{
 		return (siEnabled == 1);
@@ -1746,7 +1746,7 @@ int GetActiveWindowTypeW2800()
 	if (!InfoW2800 || !InfoW2800->AdvControl)
 		return -1;
 
-	//_ASSERTE(GetCurrentThreadId() == gnMainThreadId); -- это - ThreadSafe
+	//_ASSERTE(GetCurrentThreadId() == gnMainThreadId); -- СЌС‚Рѕ - ThreadSafe
 
 	INT_PTR nArea = InfoW2800->MacroControl(&guid_ConEmu, MCTL_GETAREA, 0, 0);
 
@@ -1778,7 +1778,7 @@ int GetActiveWindowTypeW2800()
 			return -1;
 	}
 
-	// Сюда мы попасть не должны, все макрообласти должны быть учтены в switch
+	// РЎСЋРґР° РјС‹ РїРѕРїР°СЃС‚СЊ РЅРµ РґРѕР»Р¶РЅС‹, РІСЃРµ РјР°РєСЂРѕРѕР±Р»Р°СЃС‚Рё РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СѓС‡С‚РµРЅС‹ РІ switch
 	_ASSERTE(nArea==MACROAREA_SHELL);
 	return -1;
 }
@@ -1827,7 +1827,7 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	else
 		Info->MinFarVersion = MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR, FARMANAGERVERSION_REVISION, 2578, FARMANAGERVERSION_STAGE);
 
-	// Build: YYMMDDX (YY - две цифры года, MM - месяц, DD - день, X - 0 и выше-номер подсборки)
+	// Build: YYMMDDX (YY - РґРІРµ С†РёС„СЂС‹ РіРѕРґР°, MM - РјРµСЃСЏС†, DD - РґРµРЅСЊ, X - 0 Рё РІС‹С€Рµ-РЅРѕРјРµСЂ РїРѕРґСЃР±РѕСЂРєРё)
 	Info->Version = MAKEFARVERSION(MVV_1,MVV_2,MVV_3,((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10),VS_RELEASE);
 	
 	Info->Guid = guid_ConEmu;
@@ -1848,7 +1848,7 @@ HANDLE WINAPI OpenW2800(const void* apInfo)
 
 	if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_FROMMACRO)
 	{
-		Item = 0; // Сразу сброс
+		Item = 0; // РЎСЂР°Р·Сѓ СЃР±СЂРѕСЃ
 		OpenMacroInfo* p = (OpenMacroInfo*)Info->Data;
 		if (p->StructSize >= sizeof(*p))
 		{
@@ -1901,8 +1901,8 @@ INT_PTR WINAPI ProcessConsoleInputW2800(void* apInfo)
 	struct ProcessConsoleInputInfo *Info = (struct ProcessConsoleInputInfo*)apInfo;
 
 #if 0
-	// Чтобы можно было "нормально" работать в Far3 и без хуков
-	BOOL bMainThread = TRUE; // раз вызов через API - значит MainThread
+	// Р§С‚РѕР±С‹ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ "РЅРѕСЂРјР°Р»СЊРЅРѕ" СЂР°Р±РѕС‚Р°С‚СЊ РІ Far3 Рё Р±РµР· С…СѓРєРѕРІ
+	BOOL bMainThread = TRUE; // СЂР°Р· РІС‹Р·РѕРІ С‡РµСЂРµР· API - Р·РЅР°С‡РёС‚ MainThread
 	BOOL lbRc = FALSE;
 	HANDLE hConsoleInput = GetStdHandle(STD_INPUT_HANDLE);
 	const INPUT_RECORD* lpBuffer = Info->Rec;

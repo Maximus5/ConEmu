@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -61,9 +61,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/ConEmuCheck.h"
 
-TODO("При завершении нити отрисовки - нужно дернуть все зарегистрированные PaintConEmuBackground(pbp_Finalize)");
+TODO("РџСЂРё Р·Р°РІРµСЂС€РµРЅРёРё РЅРёС‚Рё РѕС‚СЂРёСЃРѕРІРєРё - РЅСѓР¶РЅРѕ РґРµСЂРЅСѓС‚СЊ РІСЃРµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅРЅС‹Рµ PaintConEmuBackground(pbp_Finalize)");
 
-BOOL gbNeedBgActivate = FALSE; // требуется активация модуля в главной нити
+BOOL gbNeedBgActivate = FALSE; // С‚СЂРµР±СѓРµС‚СЃСЏ Р°РєС‚РёРІР°С†РёСЏ РјРѕРґСѓР»СЏ РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё
 BOOL gbBgPluginsAllowed = FALSE;
 CPluginBackground *gpBgPlugin = NULL;
 
@@ -75,9 +75,9 @@ CPluginBackground::CPluginBackground()
 	mn_BgPluginsMax = 16;
 	mp_BgPlugins = (struct RegisterBackgroundArg*)calloc(mn_BgPluginsMax,sizeof(struct RegisterBackgroundArg));
 	mn_ReqActions = 0;
-	// Инициализируем в TRUE, потому что иначе при запуске второго фара (far/e)
-	// как внешний редактор, в ConEmu останется фон от предыдущей копии фара.
-	// Пусть запущенная копия всегда очищает при старте, если плагинов нет.
+	// РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РІ TRUE, РїРѕС‚РѕРјСѓ С‡С‚Рѕ РёРЅР°С‡Рµ РїСЂРё Р·Р°РїСѓСЃРєРµ РІС‚РѕСЂРѕРіРѕ С„Р°СЂР° (far/e)
+	// РєР°Рє РІРЅРµС€РЅРёР№ СЂРµРґР°РєС‚РѕСЂ, РІ ConEmu РѕСЃС‚Р°РЅРµС‚СЃСЏ С„РѕРЅ РѕС‚ РїСЂРµРґС‹РґСѓС‰РµР№ РєРѕРїРёРё С„Р°СЂР°.
+	// РџСѓСЃС‚СЊ Р·Р°РїСѓС‰РµРЅРЅР°СЏ РєРѕРїРёСЏ РІСЃРµРіРґР° РѕС‡РёС‰Р°РµС‚ РїСЂРё СЃС‚Р°СЂС‚Рµ, РµСЃР»Рё РїР»Р°РіРёРЅРѕРІ РЅРµС‚.
 	mb_BgWasSent = TRUE;
 	mb_BgErrorShown = FALSE;
 	csBgPlugins = new MSection();
@@ -168,7 +168,7 @@ int CPluginBackground::RegisterSubplugin(RegisterBackgroundArg *pbk)
 
 	MSectionLock SC; SC.Lock(csBgPlugins, TRUE);
 
-	// Выделение памяти под плагины
+	// Р’С‹РґРµР»РµРЅРёРµ РїР°РјСЏС‚Рё РїРѕРґ РїР»Р°РіРёРЅС‹
 	if (mp_BgPlugins == NULL || (mn_BgPluginsCount == mn_BgPluginsMax))
 		ReallocItems(16);
 
@@ -177,7 +177,7 @@ int CPluginBackground::RegisterSubplugin(RegisterBackgroundArg *pbk)
 
 	if (pbk->Cmd == rbc_Register)
 	{
-		// Память уже выделена
+		// РџР°РјСЏС‚СЊ СѓР¶Рµ РІС‹РґРµР»РµРЅР°
 		int nFound = -1, nFirstEmpty = -1;
 
 		for(int i = 0; i < mn_BgPluginsCount; i++)
@@ -221,26 +221,26 @@ int CPluginBackground::RegisterSubplugin(RegisterBackgroundArg *pbk)
 			}
 		}
 
-		WARNING("Если количество зарегистрированных плагинов уменьшилось до 0");
-		// Послать в GUI CECMD_SETBACKGROUND{bEnabled = FALSE}
-		// Проверить, чтобы не было противного мелькания при закрытии FAR
+		WARNING("Р•СЃР»Рё РєРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅРЅС‹С… РїР»Р°РіРёРЅРѕРІ СѓРјРµРЅСЊС€РёР»РѕСЃСЊ РґРѕ 0");
+		// РџРѕСЃР»Р°С‚СЊ РІ GUI CECMD_SETBACKGROUND{bEnabled = FALSE}
+		// РџСЂРѕРІРµСЂРёС‚СЊ, С‡С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ РїСЂРѕС‚РёРІРЅРѕРіРѕ РјРµР»СЊРєР°РЅРёСЏ РїСЂРё Р·Р°РєСЂС‹С‚РёРё FAR
 	}
 	else if (pbk->Cmd == rbc_Redraw)
 	{
-		// просто выставить gbNeedBgActivate
+		// РїСЂРѕСЃС‚Рѕ РІС‹СЃС‚Р°РІРёС‚СЊ gbNeedBgActivate
 	}
 
-	////TODO: Сортировка
+	////TODO: РЎРѕСЂС‚РёСЂРѕРІРєР°
 	//if (lbNeedResort)
 	//{
-	//	WARNING("Сортировка зарегистрированных плагинов - CPluginBackground::RegisterBackground");
+	//	WARNING("РЎРѕСЂС‚РёСЂРѕРІРєР° Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅРЅС‹С… РїР»Р°РіРёРЅРѕРІ - CPluginBackground::RegisterBackground");
 	//}
 	SC.Unlock();
-	// Когда активируется MainThread - обновить background
+	// РљРѕРіРґР° Р°РєС‚РёРІРёСЂСѓРµС‚СЃСЏ MainThread - РѕР±РЅРѕРІРёС‚СЊ background
 	mn_ReqActions |= ra_UpdateBackground;
 	gbNeedBgActivate = TRUE;
 
-	// В фар2 сразу дернем Synchro
+	// Р’ С„Р°СЂ2 СЃСЂР°Р·Сѓ РґРµСЂРЅРµРј Synchro
 	if (IS_SYNCHRO_ALLOWED)
 	{
 		ExecuteSynchro();
@@ -277,8 +277,8 @@ void CPluginBackground::OnMainThreadActivated(int anEditorEvent /*= -1*/, int an
 	if (anEditorEvent != -1 || anViewerEvent != -1)
 	{
 		mn_ReqActions |= ra_CheckPanelFolders;
-		// При закрытии QView нельзя перечитывать параметры панелей,
-		// т.к. панель на месте QView еще НЕ видима, будет глюк отрисовки
+		// РџСЂРё Р·Р°РєСЂС‹С‚РёРё QView РЅРµР»СЊР·СЏ РїРµСЂРµС‡РёС‚С‹РІР°С‚СЊ РїР°СЂР°РјРµС‚СЂС‹ РїР°РЅРµР»РµР№,
+		// С‚.Рє. РїР°РЅРµР»СЊ РЅР° РјРµСЃС‚Рµ QView РµС‰Рµ РќР• РІРёРґРёРјР°, Р±СѓРґРµС‚ РіР»СЋРє РѕС‚СЂРёСЃРѕРІРєРё
 		if (anViewerEvent == VE_CLOSE)
 		{
 			SetForceCheck();
@@ -395,7 +395,7 @@ void CPluginBackground::CheckPanelFolders(int anForceSetPlace /*= 0*/)
 	else
 		FUNC_X(FillUpdateBackgroundW)(&m_Default);
 
-	// Заполнить текущее "место"
+	// Р—Р°РїРѕР»РЅРёС‚СЊ С‚РµРєСѓС‰РµРµ "РјРµСЃС‚Рѕ"
 	if (anForceSetPlace != 0)
 		m_Default.Place = (PaintBackgroundPlaces)anForceSetPlace;
 	else if (!gpTabs)
@@ -415,11 +415,11 @@ void CPluginBackground::CheckPanelFolders(int anForceSetPlace /*= 0*/)
 		mn_ReqActions |= ra_UpdateBackground;
 	}
 
-	WARNING("Нужно бы перечитать его, при изменении данных в ConEmu!");
+	WARNING("РќСѓР¶РЅРѕ Р±С‹ РїРµСЂРµС‡РёС‚Р°С‚СЊ РµРіРѕ, РїСЂРё РёР·РјРµРЅРµРЅРёРё РґР°РЅРЅС‹С… РІ ConEmu!");
 
 	if (mb_ThNeedLoad && ConEmuHwnd)
 	{
-		LoadThSet(TRUE/*мы уже в главной нити*/);
+		LoadThSet(TRUE/*РјС‹ СѓР¶Рµ РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё*/);
 	}
 }
 
@@ -485,7 +485,7 @@ void CPluginBackground::UpdateBackground_Exec(struct RegisterBackgroundArg *pPlu
 	//#endif
 }
 
-// Вызывается ТОЛЬКО в главной нити!
+// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РўРћР›Р¬РљРћ РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё!
 void CPluginBackground::UpdateBackground()
 {
 	if (!mn_BgPluginsCount)
@@ -496,7 +496,7 @@ void CPluginBackground::UpdateBackground()
 
 	if (mb_ThNeedLoad)
 	{
-		LoadThSet(TRUE/*Мы уже в главной нити*/);
+		LoadThSet(TRUE/*РњС‹ СѓР¶Рµ РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё*/);
 	}
 
 	//RECT rcClient; GetClientRect(ConEmuHwnd, &rcClient);
@@ -507,7 +507,7 @@ void CPluginBackground::UpdateBackground()
 	m_Default.dcSizeX = Arg.dcSizeX = (m_Default.rcConWorkspace.right-m_Default.rcConWorkspace.left+1)*m_Default.MainFont.nFontCellWidth;
 	m_Default.dcSizeY = Arg.dcSizeY = (m_Default.rcConWorkspace.bottom-m_Default.rcConWorkspace.top+1)*m_Default.MainFont.nFontHeight;
 	// **********************************************************************************
-	// запомнить данные из m_Default в m_Last, но т.к. там есть указатели - move не катит
+	// Р·Р°РїРѕРјРЅРёС‚СЊ РґР°РЅРЅС‹Рµ РёР· m_Default РІ m_Last, РЅРѕ С‚.Рє. С‚Р°Рј РµСЃС‚СЊ СѓРєР°Р·Р°С‚РµР»Рё - move РЅРµ РєР°С‚РёС‚
 	// **********************************************************************************
 	//memmove(&m_Last, &m_Default, sizeof(m_Last));
 	m_Last.MainFont = m_Default.MainFont;
@@ -531,7 +531,7 @@ void CPluginBackground::UpdateBackground()
 	m_Last.RightPanel.bFocused = m_Default.RightPanel.bFocused;
 	m_Last.RightPanel.bPlugin = m_Default.RightPanel.bPlugin;
 	m_Last.RightPanel.rcPanelRect = m_Default.RightPanel.rcPanelRect;
-	// строки
+	// СЃС‚СЂРѕРєРё
 	lstrcpyW(m_Last.LeftPanel.szCurDir, m_Default.LeftPanel.szCurDir);
 	lstrcpyW(m_Last.LeftPanel.szFormat, m_Default.LeftPanel.szFormat);
 	lstrcpyW(m_Last.LeftPanel.szHostFile, m_Default.LeftPanel.szHostFile);
@@ -549,7 +549,7 @@ void CPluginBackground::UpdateBackground()
 	SetDcPanelRect(&Arg.rcDcLeft, &Arg.LeftPanel, &Arg);
 	SetDcPanelRect(&Arg.rcDcRight, &Arg.RightPanel, &Arg);
 
-	// gpTabs отстает от реальности.
+	// gpTabs РѕС‚СЃС‚Р°РµС‚ РѕС‚ СЂРµР°Р»СЊРЅРѕСЃС‚Рё.
 	Arg.Place = m_Default.Place;
 	//if (!gpTabs)
 	//	Arg.Place = pbp_Panels;
@@ -652,7 +652,7 @@ void CPluginBackground::UpdateBackground()
 
 		hOld = (HBITMAP)SelectObject(hdc, hDib);
 	
-		// Залить черным - по умолчанию
+		// Р—Р°Р»РёС‚СЊ С‡РµСЂРЅС‹Рј - РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 		#ifdef _DEBUG
 			memset(pBits, 128, bi.biWidth*bi.biHeight*4); //-V112
 		#else
@@ -676,38 +676,38 @@ void CPluginBackground::UpdateBackground()
 			if (p->Cmd != rbc_Register ||
 			        !(p->dwPlaces & Arg.Place) ||
 			        !(p->PaintConEmuBackground))
-				continue; // пустая, неактивная в данном контексте, или некорректная ячейка
+				continue; // РїСѓСЃС‚Р°СЏ, РЅРµР°РєС‚РёРІРЅР°СЏ РІ РґР°РЅРЅРѕРј РєРѕРЅС‚РµРєСЃС‚Рµ, РёР»Рё РЅРµРєРѕСЂСЂРµРєС‚РЅР°СЏ СЏС‡РµР№РєР°
 
-			// Слои
+			// РЎР»РѕРё
 			nSuggested = p->dwSuggestedLevel;
 
 			if (nSuggested < nFromLevel)
 			{
-				continue; // Этот слой уже обработан
+				continue; // Р­С‚РѕС‚ СЃР»РѕР№ СѓР¶Рµ РѕР±СЂР°Р±РѕС‚Р°РЅ
 			}
 			else if (nSuggested > nFromLevel)
 			{
-				// Этот слой нужно будет обработать в следующий раз
+				// Р­С‚РѕС‚ СЃР»РѕР№ РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РІ СЃР»РµРґСѓСЋС‰РёР№ СЂР°Р·
 				if ((nNextLevel == nFromLevel) || (nSuggested < nNextLevel))
 					nNextLevel = nSuggested;
 
 				continue;
 			}
 
-			// На уровне 0 (заливающий фон) должен быть только один плагин
+			// РќР° СѓСЂРѕРІРЅРµ 0 (Р·Р°Р»РёРІР°СЋС‰РёР№ С„РѕРЅ) РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ С‚РѕР»СЊРєРѕ РѕРґРёРЅ РїР»Р°РіРёРЅ
 			Arg.dwLevel = (nProcessed == 0) ? 0 : (nFromLevel == 0 && nProcessed) ? 1 : nFromLevel;
 			Arg.lParam = mp_BgPlugins[i].lParam;
 			Arg.dwDrawnPlaces = 0;
 			//mp_BgPlugins[i].PaintConEmuBackground(&Arg);
 			UpdateBackground_Exec(mp_BgPlugins+i, &Arg);
-			// Что плагин покрасил (панели/редактор/вьювер считаются покрашенными по умолчанию)
+			// Р§С‚Рѕ РїР»Р°РіРёРЅ РїРѕРєСЂР°СЃРёР» (РїР°РЅРµР»Рё/СЂРµРґР°РєС‚РѕСЂ/РІСЊСЋРІРµСЂ СЃС‡РёС‚Р°СЋС‚СЃСЏ РїРѕРєСЂР°С€РµРЅРЅС‹РјРё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ)
 			dwDrawnPlaces |= Arg.dwDrawnPlaces;
 			//
 			nProcessed++;
 		}
 
 		if (nNextLevel == nFromLevel)
-			break; // больше слоев нет
+			break; // Р±РѕР»СЊС€Рµ СЃР»РѕРµРІ РЅРµС‚
 
 		nFromLevel = nNextLevel;
 	}
@@ -717,7 +717,7 @@ void CPluginBackground::UpdateBackground()
 
 	if (nProcessed < 1)
 	{
-		// Ситуация возникает при старте ConEmu, когда панелей "еще нет"
+		// РЎРёС‚СѓР°С†РёСЏ РІРѕР·РЅРёРєР°РµС‚ РїСЂРё СЃС‚Р°СЂС‚Рµ ConEmu, РєРѕРіРґР° РїР°РЅРµР»РµР№ "РµС‰Рµ РЅРµС‚"
 		//_ASSERTE(nProcessed >= 1);
 		if (mb_BgWasSent)
 		{
@@ -738,7 +738,7 @@ void CPluginBackground::UpdateBackground()
 			}
 		}
 	}
-	else // есть "отработавшие" плагины, обновить Background!
+	else // РµСЃС‚СЊ "РѕС‚СЂР°Р±РѕС‚Р°РІС€РёРµ" РїР»Р°РіРёРЅС‹, РѕР±РЅРѕРІРёС‚СЊ Background!
 	{
 		GdiFlush();
 		DWORD nBitSize = 0, nBitsError = 0;
@@ -755,7 +755,7 @@ void CPluginBackground::UpdateBackground()
 				_ASSERTE(nBitSize!=0);
 				if (hEmf)
 				{
-					// В случае ошибки - сразу удаляем
+					// Р’ СЃР»СѓС‡Р°Рµ РѕС€РёР±РєРё - СЃСЂР°Р·Сѓ СѓРґР°Р»СЏРµРј
 					DeleteEnhMetaFile(hEmf);
 					hEmf = NULL;
 				}
@@ -793,7 +793,7 @@ void CPluginBackground::UpdateBackground()
 				if (!nBitsRc)
 				{
 					_ASSERTE(nBitsRc!=NULL);
-					// Отключить нафиг
+					// РћС‚РєР»СЋС‡РёС‚СЊ РЅР°С„РёРі
 					ExecutePrepareCmd(&pIn->hdr, CECMD_SETBACKGROUND, nWholeSize-nBitSize);
 					pIn->Background.nType = 1;
 					pIn->Background.bEnabled = FALSE;
@@ -806,17 +806,17 @@ void CPluginBackground::UpdateBackground()
 			}
 			CESERVER_REQ *pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 
-			// Вызывается ТОЛЬКО в главной нити
+			// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РўРћР›Р¬РљРћ РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё
 			_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 			if (pOut)
 			{
 				mb_BgWasSent = TRUE;
-				// Сбросим флажок "Ошибка уже была показана"
+				// РЎР±СЂРѕСЃРёРј С„Р»Р°Р¶РѕРє "РћС€РёР±РєР° СѓР¶Рµ Р±С‹Р»Р° РїРѕРєР°Р·Р°РЅР°"
 				if (pOut->BackgroundRet.nResult == esbr_OK)
 				{
 					mb_BgErrorShown = FALSE;
 				}
-				// Показать ошибку, если есть
+				// РџРѕРєР°Р·Р°С‚СЊ РѕС€РёР±РєСѓ, РµСЃР»Рё РµСЃС‚СЊ
 				else if ((pOut->BackgroundRet.nResult > esbr_OK) && (pOut->BackgroundRet.nResult <= esbr_LastErrorNo)
 					&& (pOut->BackgroundRet.nResult != esbr_ConEmuInShutdown)
 					&& !mb_BgErrorShown)
@@ -884,12 +884,12 @@ BOOL CPluginBackground::LoadThSet(BOOL abFromMainThread)
 
 		if (!lbRc)
 		{
-			mb_ThNeedLoad = TRUE; // попробовать перечитать в следующий раз?
+			mb_ThNeedLoad = TRUE; // РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РїРµСЂРµС‡РёС‚Р°С‚СЊ РІ СЃР»РµРґСѓСЋС‰РёР№ СЂР°Р·?
 		}
 		else
 		{
 			//BOOL lbNeedActivate;
-			// Если изменились визуальные параметры CE - перерисоваться
+			// Р•СЃР»Рё РёР·РјРµРЅРёР»РёСЃСЊ РІРёР·СѓР°Р»СЊРЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹ CE - РїРµСЂРµСЂРёСЃРѕРІР°С‚СЊСЃСЏ
 			if (memcmp(&m_Default.MainFont, &m_ThSet.MainFont, sizeof(m_ThSet.MainFont)))
 			{
 				mn_ReqActions |= ra_UpdateBackground;
@@ -922,11 +922,11 @@ void CPluginBackground::MonitorBackground()
 	if (nDelta > nTimeout)
 	{
 		m_LastThSetCheck = GetTickCount();
-		//BYTE nFarColors[col_LastIndex]; // Массив цветов фара
+		//BYTE nFarColors[col_LastIndex]; // РњР°СЃСЃРёРІ С†РІРµС‚РѕРІ С„Р°СЂР°
 
 		//if (LoadThSet())
 		//{
-		//	// Если изменились визуальные параметры CE - перерисоваться
+		//	// Р•СЃР»Рё РёР·РјРµРЅРёР»РёСЃСЊ РІРёР·СѓР°Р»СЊРЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹ CE - РїРµСЂРµСЂРёСЃРѕРІР°С‚СЊСЃСЏ
 		//	if (memcmp(&m_Default.MainFont, &m_ThSet.MainFont, sizeof(m_ThSet.MainFont)))
 		//	{
 		//		lbUpdateRequired = TRUE;
@@ -941,7 +941,7 @@ void CPluginBackground::MonitorBackground()
 
 		//if (!lbUpdateRequired)
 		//{
-		//	// Проверим, а не изменился ли размер окна?
+		//	// РџСЂРѕРІРµСЂРёРј, Р° РЅРµ РёР·РјРµРЅРёР»СЃСЏ Р»Рё СЂР°Р·РјРµСЂ РѕРєРЅР°?
 		//	if (IsConsoleActive())
 		//	{
 		//		RECT rcClient; GetClientRect(ConEmuHwnd, &rcClient);
@@ -953,17 +953,17 @@ void CPluginBackground::MonitorBackground()
 		//	}
 		//	if (!lbUpdateRequired)
 		//	{
-		//		TODO("Проверить, не изменился ли размер консольного окна?");
+		//		TODO("РџСЂРѕРІРµСЂРёС‚СЊ, РЅРµ РёР·РјРµРЅРёР»СЃСЏ Р»Рё СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»СЊРЅРѕРіРѕ РѕРєРЅР°?");
 		//	}
 		//}
 
 		if (lbUpdateRequired)
 		{
-			// Когда активируется MainThread - обновить background
+			// РљРѕРіРґР° Р°РєС‚РёРІРёСЂСѓРµС‚СЃСЏ MainThread - РѕР±РЅРѕРІРёС‚СЊ background
 			mn_ReqActions |= ra_UpdateBackground;
 		}
 
-		// Но проверить все параметры фара тоже нужно
+		// РќРѕ РїСЂРѕРІРµСЂРёС‚СЊ РІСЃРµ РїР°СЂР°РјРµС‚СЂС‹ С„Р°СЂР° С‚РѕР¶Рµ РЅСѓР¶РЅРѕ
 		mn_ReqActions |= ra_CheckPanelFolders;
 		gbNeedBgActivate = TRUE;
 	}

@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -27,10 +27,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #ifdef _DEBUG
-//  Раскомментировать, чтобы сразу после загрузки модуля показать MessageBox, чтобы прицепиться дебаггером
+//  Р Р°СЃРєРѕРјРјРµРЅС‚РёСЂРѕРІР°С‚СЊ, С‡С‚РѕР±С‹ СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ Р·Р°РіСЂСѓР·РєРё РјРѕРґСѓР»СЏ РїРѕРєР°Р·Р°С‚СЊ MessageBox, С‡С‚РѕР±С‹ РїСЂРёС†РµРїРёС‚СЊСЃСЏ РґРµР±Р°РіРіРµСЂРѕРј
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
-	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
+	#define SHOW_EXE_MSGBOX // РїРѕРєР°Р·Р°С‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ РїСЂРё Р·Р°РіСЂСѓР·РєРµ РІ РѕРїСЂРµРґРµР»РµРЅРЅС‹Р№ exe-С€РЅРёРє (SHOW_EXE_MSGBOX_NAME)
 	#define SHOW_EXE_MSGBOX_NAME L"vim.exe"
 //	#define SHOW_EXE_TIMINGS
 //	#define SHOW_FIRST_ANSI_CALL
@@ -128,7 +128,7 @@ extern "C" {
 //HWND  ghKeyHookConEmuRoot = NULL;
 
 extern HMODULE ghOurModule;
-//HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
+//HMODULE ghOurModule = NULL; // ConEmu.dll - СЃР°Рј РїР»Р°РіРёРЅ
 //UINT gnMsgActivateCon = 0; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 //SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
@@ -200,7 +200,7 @@ HMODULE ghSrvDll = NULL;
 RequestLocalServer_t gfRequestLocalServer = NULL;
 TODO("AnnotationHeader* gpAnnotationHeader");
 AnnotationHeader* gpAnnotationHeader = NULL;
-HANDLE ghCurrentOutBuffer = NULL; // Устанавливается при SetConsoleActiveScreenBuffer
+HANDLE ghCurrentOutBuffer = NULL; // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РїСЂРё SetConsoleActiveScreenBuffer
 
 
 #ifdef USEPIPELOG
@@ -323,7 +323,7 @@ void ShowStartedMsgBox(LPCWSTR asLabel, LPCWSTR pszName = NULL)
 	STARTUPINFO si = {sizeof(si)};
 	GetStartupInfo(&si);
 	LPCWSTR pszCmd = GetCommandLineW();
-	// GuiMessageBox еще не прокатит, ничего не инициализировано
+	// GuiMessageBox РµС‰Рµ РЅРµ РїСЂРѕРєР°С‚РёС‚, РЅРёС‡РµРіРѕ РЅРµ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅРѕ
 	HMODULE hUser = LoadLibrary(user32);
 	typedef int (WINAPI* MessageBoxW_t)(HWND hWnd,LPCTSTR lpText,LPCTSTR lpCaption,UINT uType);
 	if (hUser)
@@ -423,8 +423,8 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 			
 			SetConEmuHkWindows(gpConInfo->hConEmuWndDc, gpConInfo->hConEmuWndBack);
 			
-			// Проверка. Но если в GUI аттачится существующая консоль - ConEmuHk может загрузиться раньше,
-			// чем создадутся HWND, т.е. GuiPID известен, но HWND еще вообще нету.
+			// РџСЂРѕРІРµСЂРєР°. РќРѕ РµСЃР»Рё РІ GUI Р°С‚С‚Р°С‡РёС‚СЃСЏ СЃСѓС‰РµСЃС‚РІСѓСЋС‰Р°СЏ РєРѕРЅСЃРѕР»СЊ - ConEmuHk РјРѕР¶РµС‚ Р·Р°РіСЂСѓР·РёС‚СЊСЃСЏ СЂР°РЅСЊС€Рµ,
+			// С‡РµРј СЃРѕР·РґР°РґСѓС‚СЃСЏ HWND, С‚.Рµ. GuiPID РёР·РІРµСЃС‚РµРЅ, РЅРѕ HWND РµС‰Рµ РІРѕРѕР±С‰Рµ РЅРµС‚Сѓ.
 			_ASSERTE(!ghConEmuWnd || ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 			_ASSERTE(!ghConEmuWnd || ghConEmuWndBack && user->isWindow(ghConEmuWndBack));
 
@@ -449,10 +449,10 @@ wrap:
 	bAnsi = ((gpConInfo != NULL) && ((gpConInfo->Flags & CECF_ProcessAnsi) != 0));
 	if (abForceRecreate || (bLastAnsi != bAnsi))
 	{
-		// Это может случиться при запуске нового "чистого" cmd - "start cmd" из ConEmu\cmd
+		// Р­С‚Рѕ РјРѕР¶РµС‚ СЃР»СѓС‡РёС‚СЊСЃСЏ РїСЂРё Р·Р°РїСѓСЃРєРµ РЅРѕРІРѕРіРѕ "С‡РёСЃС‚РѕРіРѕ" cmd - "start cmd" РёР· ConEmu\cmd
 		#ifdef _DEBUG
 		wchar_t szCurAnsiVar[32] = L""; GetEnvironmentVariableW(ENV_CONEMUANSI_VAR_W, szCurAnsiVar, countof(szCurAnsiVar));
-		// Или при аттаче свободно-запущенной-ранее консоли в ConEmu
+		// РР»Рё РїСЂРё Р°С‚С‚Р°С‡Рµ СЃРІРѕР±РѕРґРЅРѕ-Р·Р°РїСѓС‰РµРЅРЅРѕР№-СЂР°РЅРµРµ РєРѕРЅСЃРѕР»Рё РІ ConEmu
 		_ASSERTEX((bAnsi || (!*szCurAnsiVar || lstrcmp(szCurAnsiVar,L"OFF")==0) || !gpConMap) && "ANSI was disabled?");
 		#endif
 		bLastAnsi = bAnsi;
@@ -650,7 +650,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			}
 			else
 			{
-				WARNING("Получить Popup атрибуты из мэппинга");
+				WARNING("РџРѕР»СѓС‡РёС‚СЊ Popup Р°С‚СЂРёР±СѓС‚С‹ РёР· РјСЌРїРїРёРЅРіР°");
 				//gnConsolePopupColors = ...;
 				gnConsolePopupColors = 0;
 			}
@@ -704,7 +704,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		gbIsVStudio = true;
 	}
 
-	// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
+	// РџРѕСЃРєРѕР»СЊРєСѓ РїСЂРѕС†РµРґСѓСЂР° РІ РїСЂРёРЅС†РёРїРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РєРµРј-С‚Рѕ РїРµСЂРµС…РІР°С‡РµРЅР°, СЃСЂР°Р·Сѓ РЅР°Р№РґРµРј Р°РґСЂРµСЃ
 	// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
 	//HMODULE hKernel = ::GetModuleHandle(L"kernel32.dll");
 	//if (hKernel)
@@ -723,9 +723,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 	
 	ghUser32 = GetModuleHandle(user32);
-	if (ghUser32) ghUser32 = LoadLibrary(user32); // если подлинкован - увеличить счетчик
+	if (ghUser32) ghUser32 = LoadLibrary(user32); // РµСЃР»Рё РїРѕРґР»РёРЅРєРѕРІР°РЅ - СѓРІРµР»РёС‡РёС‚СЊ СЃС‡РµС‚С‡РёРє
 
-	WARNING("Попробовать не создавать LocalSecurity при старте");
+	WARNING("РџРѕРїСЂРѕР±РѕРІР°С‚СЊ РЅРµ СЃРѕР·РґР°РІР°С‚СЊ LocalSecurity РїСЂРё СЃС‚Р°СЂС‚Рµ");
 	
 	//#ifndef TESTLINK
 	gpLocalSecurity = LocalSecurity();
@@ -746,8 +746,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//	gbSkipInjects = FALSE;
 	//}
 
-	WARNING("Попробовать не ломиться в мэппинг, а взять все из переменной ConEmuData");
-	// Открыть мэппинг консоли и попытаться получить HWND GUI, PID сервера, и пр...
+	WARNING("РџРѕРїСЂРѕР±РѕРІР°С‚СЊ РЅРµ Р»РѕРјРёС‚СЊСЃСЏ РІ РјСЌРїРїРёРЅРі, Р° РІР·СЏС‚СЊ РІСЃРµ РёР· РїРµСЂРµРјРµРЅРЅРѕР№ ConEmuData");
+	// РћС‚РєСЂС‹С‚СЊ РјСЌРїРїРёРЅРі РєРѕРЅСЃРѕР»Рё Рё РїРѕРїС‹С‚Р°С‚СЊСЃСЏ РїРѕР»СѓС‡РёС‚СЊ HWND GUI, PID СЃРµСЂРІРµСЂР°, Рё РїСЂ...
 	if (ghConWnd)
 	{
 		print_timings(L"OnConWndChanged");
@@ -777,17 +777,17 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	print_timings(L"GetImageSubsystem");
 
 	
-	// Необходимо определить битность и тип (CUI/GUI) процесса, в который нас загрузили
+	// РќРµРѕР±С…РѕРґРёРјРѕ РѕРїСЂРµРґРµР»РёС‚СЊ Р±РёС‚РЅРѕСЃС‚СЊ Рё С‚РёРї (CUI/GUI) РїСЂРѕС†РµСЃСЃР°, РІ РєРѕС‚РѕСЂС‹Р№ РЅР°СЃ Р·Р°РіСЂСѓР·РёР»Рё
 	gnImageBits = WIN3264TEST(32,64);
 	gnImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-	// Определим тип (CUI/GUI)
+	// РћРїСЂРµРґРµР»РёРј С‚РёРї (CUI/GUI)
 	GetImageSubsystem(gnImageSubsystem, gnImageBits);
-	// Проверка чего получилось
+	// РџСЂРѕРІРµСЂРєР° С‡РµРіРѕ РїРѕР»СѓС‡РёР»РѕСЃСЊ
 	_ASSERTE(gnImageBits==WIN3264TEST(32,64));
 	_ASSERTE(gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_GUI || gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI);
 	
 	
-	//BOOL lbGuiWindowAttach = FALSE; // Прицепить к ConEmu гуевую программу (notepad, putty, ...)
+	//BOOL lbGuiWindowAttach = FALSE; // РџСЂРёС†РµРїРёС‚СЊ Рє ConEmu РіСѓРµРІСѓСЋ РїСЂРѕРіСЂР°РјРјСѓ (notepad, putty, ...)
 
 	
 #ifdef USE_PIPE_SERVER
@@ -809,7 +809,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			
 			if (!gpHookServer->StartPipeServer(szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady))
 			{
-				_ASSERTEX(FALSE); // Ошибка запуска Pipes?
+				_ASSERTEX(FALSE); // РћС€РёР±РєР° Р·Р°РїСѓСЃРєР° Pipes?
 				gpHookServer->StopPipeServer(true);
 				free(gpHookServer);
 				gpHookServer = NULL;
@@ -826,12 +826,12 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	// gbPrepareDefaultTerminal turned on in DllMain
 	if (gbPrepareDefaultTerminal)
 	{
-		TODO("Дополнительная инициализация, если нужно, для установки перехватов под DefaultTerminal");
+		TODO("Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ, РµСЃР»Рё РЅСѓР¶РЅРѕ, РґР»СЏ СѓСЃС‚Р°РЅРѕРІРєРё РїРµСЂРµС…РІР°С‚РѕРІ РїРѕРґ DefaultTerminal");
 		gbSelfIsRootConsoleProcess = true;
 	}
 	else if (ghConWnd)
 	{
-		WARNING("Попробовать не ломиться в мэппинг, а взять все из переменной ConEmuData");
+		WARNING("РџРѕРїСЂРѕР±РѕРІР°С‚СЊ РЅРµ Р»РѕРјРёС‚СЊСЃСЏ РІ РјСЌРїРїРёРЅРі, Р° РІР·СЏС‚СЊ РІСЃРµ РёР· РїРµСЂРµРјРµРЅРЅРѕР№ ConEmuData");
 		print_timings(L"CShellProc");
 		CShellProc* sp = new CShellProc;
 		if (sp)
@@ -845,7 +845,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 				if (sp->GetUseInjects() == 2)
 				{
-					// Можно ли использовать облегченную версию хуков (только для exe-шника)?
+					// РњРѕР¶РЅРѕ Р»Рё РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РѕР±Р»РµРіС‡РµРЅРЅСѓСЋ РІРµСЂСЃРёСЋ С…СѓРєРѕРІ (С‚РѕР»СЊРєРѕ РґР»СЏ exe-С€РЅРёРєР°)?
 					if (!gbSelfIsRootConsoleProcess && !IsFarExe(szExeName))
 					{
 						gbHookExecutableOnly = true;
@@ -876,7 +876,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		BOOL  bAttachExistingWindow = FALSE;
 		wchar_t szVar[64], *psz;
 		ConEmuGuiMapping* GuiMapping = (ConEmuGuiMapping*)calloc(1,sizeof(*GuiMapping));
-		// Он создается по PID GUI процесса? Может быть при аттаче ранее запущенного GUI приложения разве что.
+		// РћРЅ СЃРѕР·РґР°РµС‚СЃСЏ РїРѕ PID GUI РїСЂРѕС†РµСЃСЃР°? РњРѕР¶РµС‚ Р±С‹С‚СЊ РїСЂРё Р°С‚С‚Р°С‡Рµ СЂР°РЅРµРµ Р·Р°РїСѓС‰РµРЅРЅРѕРіРѕ GUI РїСЂРёР»РѕР¶РµРЅРёСЏ СЂР°Р·РІРµ С‡С‚Рѕ.
 		if (GuiMapping && LoadGuiMapping(gnSelfPID, *GuiMapping))
 		{
 			gnGuiPID = GuiMapping->nGuiPID;
@@ -890,7 +890,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		}
 		SafeFree(GuiMapping);
 
-		// Если аттачим существующее окно - таб в ConEmu еще не готов
+		// Р•СЃР»Рё Р°С‚С‚Р°С‡РёРј СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРµ РѕРєРЅРѕ - С‚Р°Р± РІ ConEmu РµС‰Рµ РЅРµ РіРѕС‚РѕРІ
 		if (!bAttachExistingWindow)
 		{
 			if (!dwConEmuHwnd && GetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, szVar, countof(szVar)))
@@ -909,8 +909,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			
 			if (dwConEmuHwnd)
 			{
-				// Предварительное уведомление ConEmu GUI, что запущено GUI приложение
-				// и оно может "захотеть во вкладку ConEmu".
+				// РџСЂРµРґРІР°СЂРёС‚РµР»СЊРЅРѕРµ СѓРІРµРґРѕРјР»РµРЅРёРµ ConEmu GUI, С‡С‚Рѕ Р·Р°РїСѓС‰РµРЅРѕ GUI РїСЂРёР»РѕР¶РµРЅРёРµ
+				// Рё РѕРЅРѕ РјРѕР¶РµС‚ "Р·Р°С…РѕС‚РµС‚СЊ РІРѕ РІРєР»Р°РґРєСѓ ConEmu".
 				DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
 				CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(nSize);
 				ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
@@ -1000,7 +1000,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		//}
 		#endif
 
-		// Если NULL - значит это "Detached" консольный процесс, посылать "Started" в сервер смысла нет
+		// Р•СЃР»Рё NULL - Р·РЅР°С‡РёС‚ СЌС‚Рѕ "Detached" РєРѕРЅСЃРѕР»СЊРЅС‹Р№ РїСЂРѕС†РµСЃСЃ, РїРѕСЃС‹Р»Р°С‚СЊ "Started" РІ СЃРµСЂРІРµСЂ СЃРјС‹СЃР»Р° РЅРµС‚
 		if (ghConWnd != NULL)
 		{
 			if (gbSelfIsRootConsoleProcess)
@@ -1013,11 +1013,11 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			}
 
 			//#ifdef _DEBUG
-			//// Здесь это приводит к обвалу _chkstk,
-			//// похоже из-за того, что dll-ка загружена НЕ из известных модулей,
-			//// а из специально сформированного блока памяти
-			// -- в одной из функций, под локальные переменные выделялось слишком много памяти
-			// -- переделал в malloc/free, все заработало
+			//// Р—РґРµСЃСЊ СЌС‚Рѕ РїСЂРёРІРѕРґРёС‚ Рє РѕР±РІР°Р»Сѓ _chkstk,
+			//// РїРѕС…РѕР¶Рµ РёР·-Р·Р° С‚РѕРіРѕ, С‡С‚Рѕ dll-РєР° Р·Р°РіСЂСѓР¶РµРЅР° РќР• РёР· РёР·РІРµСЃС‚РЅС‹С… РјРѕРґСѓР»РµР№,
+			//// Р° РёР· СЃРїРµС†РёР°Р»СЊРЅРѕ СЃС„РѕСЂРјРёСЂРѕРІР°РЅРЅРѕРіРѕ Р±Р»РѕРєР° РїР°РјСЏС‚Рё
+			// -- РІ РѕРґРЅРѕР№ РёР· С„СѓРЅРєС†РёР№, РїРѕРґ Р»РѕРєР°Р»СЊРЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ РІС‹РґРµР»СЏР»РѕСЃСЊ СЃР»РёС€РєРѕРј РјРЅРѕРіРѕ РїР°РјСЏС‚Рё
+			// -- РїРµСЂРµРґРµР»Р°Р» РІ malloc/free, РІСЃРµ Р·Р°СЂР°Р±РѕС‚Р°Р»Рѕ
 			//TestShellProcessor();
 			//#endif
 		}
@@ -1046,7 +1046,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//if (hStartedEvent)
 	//	SetEvent(hStartedEvent);
 
-	// -- Не требуется, ConEmuC ждет успеха
+	// -- РќРµ С‚СЂРµР±СѓРµС‚СЃСЏ, ConEmuC Р¶РґРµС‚ СѓСЃРїРµС…Р°
 	//if (gbPrepareDefaultTerminal)
 	//{
 	//	if (!gpDefaultTermParm || !gpDefaultTermParm->hGuiWnd)
@@ -1055,7 +1055,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//	}
 	//	else
 	//	{
-	//		// Уведомить GUI, что инициализация хуков для Default Terminal была завершена
+	//		// РЈРІРµРґРѕРјРёС‚СЊ GUI, С‡С‚Рѕ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ С…СѓРєРѕРІ РґР»СЏ Default Terminal Р±С‹Р»Р° Р·Р°РІРµСЂС€РµРЅР°
 	//		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DEFTERMSTARTED, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
 	//		if (pIn)
 	//		{
@@ -1082,7 +1082,7 @@ void DllThreadClose()
 		DWORD nWait = WaitForSingleObject(ghStartThread, 5000);
 		if (nWait == WAIT_TIMEOUT)
 		{
-			// Нехорошо, но хуже, если заблокируется консольное приложение
+			// РќРµС…РѕСЂРѕС€Рѕ, РЅРѕ С…СѓР¶Рµ, РµСЃР»Рё Р·Р°Р±Р»РѕРєРёСЂСѓРµС‚СЃСЏ РєРѕРЅСЃРѕР»СЊРЅРѕРµ РїСЂРёР»РѕР¶РµРЅРёРµ
 			TerminateThread(ghStartThread, 100);
 		}
 		CloseHandle(ghStartThread);
@@ -1119,12 +1119,12 @@ void FlushMouseEvents()
 					}
 				}
 
-				// Если были мышиные события - сбросить их
+				// Р•СЃР»Рё Р±С‹Р»Рё РјС‹С€РёРЅС‹Рµ СЃРѕР±С‹С‚РёСЏ - СЃР±СЂРѕСЃРёС‚СЊ РёС…
 				if (bHasMouse)
 				{
 					if (FlushConsoleInputBuffer(h))
 					{
-						// Но если были НЕ мышиные - вернуть их в буфер
+						// РќРѕ РµСЃР»Рё Р±С‹Р»Рё РќР• РјС‹С€РёРЅС‹Рµ - РІРµСЂРЅСѓС‚СЊ РёС… РІ Р±СѓС„РµСЂ
 						if (j > 0)
 						{
 							WriteConsoleInput(h, pr, j, &nTotal);
@@ -1156,7 +1156,7 @@ void DllStop()
 	#endif
 
 	print_timings(L"DllStop");
-	//gbDllStopCalled = TRUE; -- в конце
+	//gbDllStopCalled = TRUE; -- РІ РєРѕРЅС†Рµ
 
 
 	// Issue 689: Progress stuck at 100%
@@ -1183,9 +1183,9 @@ void DllStop()
 	free(szModule);
 	#endif
 
-	// 120528 - Очистить буфер от мышиных событий, иначе получаются казусы.
-	// Если во время выполнения команды (например "dir c: /s")
-	// успеть дернуть мышкой - то при возврате в ФАР сразу пойдет фаровский драг
+	// 120528 - РћС‡РёСЃС‚РёС‚СЊ Р±СѓС„РµСЂ РѕС‚ РјС‹С€РёРЅС‹С… СЃРѕР±С‹С‚РёР№, РёРЅР°С‡Рµ РїРѕР»СѓС‡Р°СЋС‚СЃСЏ РєР°Р·СѓСЃС‹.
+	// Р•СЃР»Рё РІРѕ РІСЂРµРјСЏ РІС‹РїРѕР»РЅРµРЅРёСЏ РєРѕРјР°РЅРґС‹ (РЅР°РїСЂРёРјРµСЂ "dir c: /s")
+	// СѓСЃРїРµС‚СЊ РґРµСЂРЅСѓС‚СЊ РјС‹С€РєРѕР№ - С‚Рѕ РїСЂРё РІРѕР·РІСЂР°С‚Рµ РІ Р¤РђР  СЃСЂР°Р·Сѓ РїРѕР№РґРµС‚ С„Р°СЂРѕРІСЃРєРёР№ РґСЂР°Рі
 	if (ghConWnd)
 	{
 		DLOG0("FlushMouseEvents",0);
@@ -1222,9 +1222,9 @@ void DllStop()
 		DLOG0("ShutdownHooks",0);
 		print_timings(L"ShutdownHooks");
 		gbHooksWasSet = FALSE;
-		// Завершить работу с реестром
+		// Р—Р°РІРµСЂС€РёС‚СЊ СЂР°Р±РѕС‚Сѓ СЃ СЂРµРµСЃС‚СЂРѕРј
 		DoneHooksReg();
-		// "Закрыть" хуки
+		// "Р—Р°РєСЂС‹С‚СЊ" С…СѓРєРё
 		ShutdownHooks();
 		DLOGEND();
 	}
@@ -1274,7 +1274,7 @@ void DllStop()
 	#ifdef _DEBUG
 		#ifdef UseDebugExceptionFilter
 			// ?gfnPrevFilter?
-			// Вернуть. A value of NULL for this parameter specifies default handling within UnhandledExceptionFilter.
+			// Р’РµСЂРЅСѓС‚СЊ. A value of NULL for this parameter specifies default handling within UnhandledExceptionFilter.
 			SetUnhandledExceptionFilter(NULL);
 		#endif
 	#endif
@@ -1375,7 +1375,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 					gEvtDefTerm.nErrCode = GetLastError();
 					gbPrepareDefaultTerminal = (gEvtDefTerm.nWait == WAIT_OBJECT_0);
 					//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
-					// Если ждут, что мы отметимся...
+					// Р•СЃР»Рё Р¶РґСѓС‚, С‡С‚Рѕ РјС‹ РѕС‚РјРµС‚РёРјСЃСЏ...
 					if (gbPrepareDefaultTerminal)
 					{
 						msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOKOK, gnSelfPID);
@@ -1394,7 +1394,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 
 
 			DLOG1_("DllMain.MainThreadId",ul_reason_for_call);
-			GetMainThreadId(bCurrentThreadIsMain); // Инициализировать gnHookMainThreadId
+			GetMainThreadId(bCurrentThreadIsMain); // РРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°С‚СЊ gnHookMainThreadId
 			DLOGEND1();
 
 			DLOG1_("DllMain.InQueue",ul_reason_for_call);
@@ -1495,7 +1495,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 
 			if (gbHooksWasSet)
 				DoneHooksRegThread();
-			// DLL_PROCESS_DETACH зовется как выяснилось не всегда
+			// DLL_PROCESS_DETACH Р·РѕРІРµС‚СЃСЏ РєР°Рє РІС‹СЏСЃРЅРёР»РѕСЃСЊ РЅРµ РІСЃРµРіРґР°
 			if (gnHookMainThreadId && (GetCurrentThreadId() == gnHookMainThreadId) && !gbDllDeinitialized)
 			{
 				gbDllDeinitialized = true;
@@ -1518,8 +1518,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ShutdownStep(L"DLL_PROCESS_DETACH");
 			gnDllState = ds_DllProcessDetach;
 			if (gbHooksWasSet)
-				lbAllow = FALSE; // Иначе свалимся, т.к. FreeLibrary перехвачена
-			// Уже могли дернуть в DLL_THREAD_DETACH
+				lbAllow = FALSE; // РРЅР°С‡Рµ СЃРІР°Р»РёРјСЃСЏ, С‚.Рє. FreeLibrary РїРµСЂРµС…РІР°С‡РµРЅР°
+			// РЈР¶Рµ РјРѕРіР»Рё РґРµСЂРЅСѓС‚СЊ РІ DLL_THREAD_DETACH
 			if (!gbDllDeinitialized)
 			{
 				gbDllDeinitialized = true;
@@ -1528,7 +1528,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 				DllStop();
 				DLOGEND1();
 			}
-			// -- free не нужен, т.к. уже вызван HeapDeinitialize()
+			// -- free РЅРµ РЅСѓР¶РµРЅ, С‚.Рє. СѓР¶Рµ РІС‹Р·РІР°РЅ HeapDeinitialize()
 			//free(user);
 			ShutdownStep(L"DLL_PROCESS_DETACH done");
 
@@ -1556,7 +1556,7 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 }
 #endif
 
-///* Используются как extern в ConEmuCheck.cpp */
+///* РСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ РєР°Рє extern РІ ConEmuCheck.cpp */
 //LPVOID _calloc(size_t nCount,size_t nSize) {
 //	return calloc(nCount,nSize);
 //}
@@ -1608,11 +1608,11 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 //					PostMessage(ghKeyHookConEmuRoot, gnMsgActivateCon, nConNumber, 0);
 //					gnSkipVkModCode = lbLeftWin ? VK_LWIN : VK_RWIN;
 //					gnSkipVkKeyCode = pKB->vkCode;
-//					// запрет обработки системой
-//					return 1; // Нужно возвращать 1, чтобы нажатие не ушло в Win7 Taskbar
+//					// Р·Р°РїСЂРµС‚ РѕР±СЂР°Р±РѕС‚РєРё СЃРёСЃС‚РµРјРѕР№
+//					return 1; // РќСѓР¶РЅРѕ РІРѕР·РІСЂР°С‰Р°С‚СЊ 1, С‡С‚РѕР±С‹ РЅР°Р¶Р°С‚РёРµ РЅРµ СѓС€Р»Рѕ РІ Win7 Taskbar
 //					////gnWinPressTick = pKB->time;
 //					//HWND hConEmu = GetForegroundWindow();
-//					//// По идее, должен быть ConEmu, но необходимо проверить (может хук не снялся?)
+//					//// РџРѕ РёРґРµРµ, РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ ConEmu, РЅРѕ РЅРµРѕР±С…РѕРґРёРјРѕ РїСЂРѕРІРµСЂРёС‚СЊ (РјРѕР¶РµС‚ С…СѓРє РЅРµ СЃРЅСЏР»СЃСЏ?)
 //					//if (hConEmu)
 //					//{
 //					//	wchar_t szClass[64];
@@ -1625,22 +1625,22 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 //					//		{
 //					//			gnSkipVkModCode = lbLeftWin ? VK_LWIN : VK_RWIN;
 //					//			gnSkipVkKeyCode = pKB->vkCode;
-//					//			// запрет обработки системой
-//					//			return 1; // Нужно возвращать 1, чтобы нажатие не ушло в Win7 Taskbar
+//					//			// Р·Р°РїСЂРµС‚ РѕР±СЂР°Р±РѕС‚РєРё СЃРёСЃС‚РµРјРѕР№
+//					//			return 1; // РќСѓР¶РЅРѕ РІРѕР·РІСЂР°С‰Р°С‚СЊ 1, С‡С‚РѕР±С‹ РЅР°Р¶Р°С‚РёРµ РЅРµ СѓС€Р»Рѕ РІ Win7 Taskbar
 //					//		}
 //					//	}
 //					//}
 //				}
 //			}
 //
-//			// на первое нажатие не приходит - только при удержании
+//			// РЅР° РїРµСЂРІРѕРµ РЅР°Р¶Р°С‚РёРµ РЅРµ РїСЂРёС…РѕРґРёС‚ - С‚РѕР»СЊРєРѕ РїСЂРё СѓРґРµСЂР¶Р°РЅРёРё
 //			//if (pKB->vkCode == VK_LWIN || pKB->vkCode == VK_RWIN) {
 //			//	gnWinPressTick = pKB->time;
 //			//}
 //
 //			if (gnSkipVkKeyCode && !gnOtherWin)
 //			{
-//				// Страховка от залипаний
+//				// РЎС‚СЂР°С…РѕРІРєР° РѕС‚ Р·Р°Р»РёРїР°РЅРёР№
 //				gnSkipVkModCode = 0;
 //				gnSkipVkKeyCode = 0;
 //			}
@@ -1654,7 +1654,7 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 //#ifdef _DEBUG
 //					OutputDebugString(L"*** Win released before key ***\n");
 //#endif
-//					// При быстром нажатии Win+<кнопка> часто получается что сам Win отпускается раньше <кнопки>.
+//					// РџСЂРё Р±С‹СЃС‚СЂРѕРј РЅР°Р¶Р°С‚РёРё Win+<РєРЅРѕРїРєР°> С‡Р°СЃС‚Рѕ РїРѕР»СѓС‡Р°РµС‚СЃСЏ С‡С‚Рѕ СЃР°Рј Win РѕС‚РїСѓСЃРєР°РµС‚СЃСЏ СЂР°РЅСЊС€Рµ <РєРЅРѕРїРєРё>.
 //					gnOtherWin = (BYTE)gnVkWinFix;
 //					keybd_event(gnOtherWin, gnOtherWin, 0, 0);
 //				}
@@ -1664,7 +1664,7 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 //				}
 //
 //				gnSkipVkModCode = 0;
-//				return 0; // разрешить обработку системой, но не передавать в другие хуки
+//				return 0; // СЂР°Р·СЂРµС€РёС‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ СЃРёСЃС‚РµРјРѕР№, РЅРѕ РЅРµ РїРµСЂРµРґР°РІР°С‚СЊ РІ РґСЂСѓРіРёРµ С…СѓРєРё
 //			}
 //
 //			if (gnSkipVkKeyCode && pKB->vkCode == gnSkipVkKeyCode)
@@ -1677,7 +1677,7 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 //					gnOtherWin = 0;
 //				}
 //
-//				return 0; // разрешить обработку системой, но не передавать в другие хуки
+//				return 0; // СЂР°Р·СЂРµС€РёС‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ СЃРёСЃС‚РµРјРѕР№, РЅРѕ РЅРµ РїРµСЂРµРґР°РІР°С‚СЊ РІ РґСЂСѓРіРёРµ С…СѓРєРё
 //			}
 //		}
 //	}
@@ -1687,14 +1687,14 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 
 
 
-WARNING("Попробовать SendStarted пыполнять не из DllMain, а запустить фоновую нить");
+WARNING("РџРѕРїСЂРѕР±РѕРІР°С‚СЊ SendStarted РїС‹РїРѕР»РЅСЏС‚СЊ РЅРµ РёР· DllMain, Р° Р·Р°РїСѓСЃС‚РёС‚СЊ С„РѕРЅРѕРІСѓСЋ РЅРёС‚СЊ");
 
 void SendStarted()
 {
 	if (gnServerPID == 0)
 	{
-		gbNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
-		return; // Режим ComSpec, но сервера нет, соответственно, в GUI ничего посылать не нужно
+		gbNonGuiMode = TRUE; // РќРµ РїРѕСЃС‹Р»Р°С‚СЊ ExecuteGuiCmd РїСЂРё РІС‹С…РѕРґРµ. Р­С‚Рѕ РЅРµ РЅР°С€Р° РєРѕРЅСЃРѕР»СЊ
+		return; // Р РµР¶РёРј ComSpec, РЅРѕ СЃРµСЂРІРµСЂР° РЅРµС‚, СЃРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ, РІ GUI РЅРёС‡РµРіРѕ РїРѕСЃС‹Р»Р°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 	}
 
 	// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
@@ -1721,7 +1721,7 @@ void SendStarted()
 
 		pIn->StartStop.nSubSystem = gnImageSubsystem;
 		//pIn->StartStop.bRootIsCmdExe = gbRootIsCmdExe; //2009-09-14
-		// НЕ MyGet..., а то можем заблокироваться...
+		// РќР• MyGet..., Р° С‚Рѕ РјРѕР¶РµРј Р·Р°Р±Р»РѕРєРёСЂРѕРІР°С‚СЊСЃСЏ...
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
 		GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
@@ -1755,7 +1755,7 @@ void SendStarted()
 		}
 		else
 		{
-			gbNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
+			gbNonGuiMode = TRUE; // РќРµ РїРѕСЃС‹Р»Р°С‚СЊ ExecuteGuiCmd РїСЂРё РІС‹С…РѕРґРµ. Р­С‚Рѕ РЅРµ РЅР°С€Р° РєРѕРЅСЃРѕР»СЊ
 		}
 
 		ExecuteFreeResult(pIn); pIn = NULL;
@@ -1792,8 +1792,8 @@ void SendStopped()
 
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-		// НЕ MyGet..., а то можем заблокироваться...
-		// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
+		// РќР• MyGet..., Р° С‚Рѕ РјРѕР¶РµРј Р·Р°Р±Р»РѕРєРёСЂРѕРІР°С‚СЊСЃСЏ...
+		// ghConOut РјРѕР¶РµС‚ Р±С‹С‚СЊ NULL, РµСЃР»Рё РѕС€РёР±РєР° РїСЂРѕРёР·РѕС€Р»Р° РІРѕ РІСЂРµРјСЏ СЂР°Р·Р±РѕСЂР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 		GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
 
 		pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
@@ -1929,7 +1929,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	// go
 	STARTUPINFO si = {sizeof(si)};
 	PROCESS_INFORMATION pi = {};
-	size_t cchCmdLine = 300 + lstrlen(GuiMapping->ComSpec.ConEmuBaseDir) + (lstrlen(pszCmdLine) + 128/*опции сервера*/);
+	size_t cchCmdLine = 300 + lstrlen(GuiMapping->ComSpec.ConEmuBaseDir) + (lstrlen(pszCmdLine) + 128/*РѕРїС†РёРё СЃРµСЂРІРµСЂР°*/);
 	wchar_t *pszCmd, *pszName;
 	BOOL bSrvFound;
 
@@ -2001,8 +2001,8 @@ wrap:
 	return iRc;
 }
 
-// GetConsoleWindow хукается, поэтому, для получения реального консольного окна
-// можно дергать эту экспортируемую функцию
+// GetConsoleWindow С…СѓРєР°РµС‚СЃСЏ, РїРѕСЌС‚РѕРјСѓ, РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ СЂРµР°Р»СЊРЅРѕРіРѕ РєРѕРЅСЃРѕР»СЊРЅРѕРіРѕ РѕРєРЅР°
+// РјРѕР¶РЅРѕ РґРµСЂРіР°С‚СЊ СЌС‚Сѓ СЌРєСЃРїРѕСЂС‚РёСЂСѓРµРјСѓСЋ С„СѓРЅРєС†РёСЋ
 HWND WINAPI GetRealConsoleWindow()
 {
 	_ASSERTE(gfGetRealConsoleWindow);
@@ -2015,10 +2015,10 @@ HWND WINAPI GetRealConsoleWindow()
 }
 
 
-// Для облегчения жизни - сервер кеширует данные, калбэк может использовать ту же память (*pcbMaxReplySize)
+// Р”Р»СЏ РѕР±Р»РµРіС‡РµРЅРёСЏ Р¶РёР·РЅРё - СЃРµСЂРІРµСЂ РєРµС€РёСЂСѓРµС‚ РґР°РЅРЅС‹Рµ, РєР°Р»Р±СЌРє РјРѕР¶РµС‚ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‚Сѓ Р¶Рµ РїР°РјСЏС‚СЊ (*pcbMaxReplySize)
 BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
-	WARNING("Собственно, выполнение команд!");
+	WARNING("РЎРѕР±СЃС‚РІРµРЅРЅРѕ, РІС‹РїРѕР»РЅРµРЅРёРµ РєРѕРјР°РЅРґ!");
 	
 	BOOL lbRc = FALSE, lbFRc;
 	
@@ -2026,13 +2026,13 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 	{
 	case CECMD_ATTACHGUIAPP:
 		{
-			// При 'внешнем' аттаче инициированном юзером из ConEmu
+			// РџСЂРё 'РІРЅРµС€РЅРµРј' Р°С‚С‚Р°С‡Рµ РёРЅРёС†РёРёСЂРѕРІР°РЅРЅРѕРј СЋР·РµСЂРѕРј РёР· ConEmu
 			_ASSERTEX(pCmd->AttachGuiApp.hConEmuWnd && ghConEmuWnd==pCmd->AttachGuiApp.hConEmuWnd);
 			//gbGuiClientHideCaption = pCmd->AttachGuiApp.bHideCaption;
 			gGuiClientStyles = pCmd->AttachGuiApp.Styles;
-			//ghConEmuWndDC -- еще нету
+			//ghConEmuWndDC -- РµС‰Рµ РЅРµС‚Сѓ
 			AttachGuiWindow(pCmd->AttachGuiApp.hAppWindow);
-			// Результат
+			// Р РµР·СѓР»СЊС‚Р°С‚
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
 			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize);
 			if (lbRc)
@@ -2140,7 +2140,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 
 			if (GetModuleFileName(ghOurModule, szSelf, MAX_PATH) && ((pszNamePtr = (wchar_t*)PointToName(szSelf)) != NULL))
 			{
-				// Запускаем сервер той же битности, что и текущий процесс
+				// Р—Р°РїСѓСЃРєР°РµРј СЃРµСЂРІРµСЂ С‚РѕР№ Р¶Рµ Р±РёС‚РЅРѕСЃС‚Рё, С‡С‚Рѕ Рё С‚РµРєСѓС‰РёР№ РїСЂРѕС†РµСЃСЃ
 				_wcscpy_c(pszNamePtr, 16, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
 				if (gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_GUI)
 				{
@@ -2174,7 +2174,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				}
 			}
 
-			lbRc = true; // Вернуть результат однозначно
+			lbRc = true; // Р’РµСЂРЅСѓС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚ РѕРґРЅРѕР·РЅР°С‡РЅРѕ
 
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_START);
 			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
@@ -2188,7 +2188,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 		{
 			ApplyExportEnvVar((LPCWSTR)pCmd->wData);
 
-			lbRc = true; // Вернуть результат однозначно
+			lbRc = true; // Р’РµСЂРЅСѓС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚ РѕРґРЅРѕР·РЅР°С‡РЅРѕ
 
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
 			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
@@ -2201,7 +2201,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 		{
 			int nFRc = DuplicateRoot(&pCmd->Duplicate);
 
-			lbRc = true; // вернуть результат
+			lbRc = true; // РІРµСЂРЅСѓС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
 			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
 			{
@@ -2211,17 +2211,17 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 		break;
 	}
 	
-	// Если (lbRc == FALSE) - в пайп будет отдана "пустышка" ((DWORD)0)
+	// Р•СЃР»Рё (lbRc == FALSE) - РІ РїР°Р№Рї Р±СѓРґРµС‚ РѕС‚РґР°РЅР° "РїСѓСЃС‚С‹С€РєР°" ((DWORD)0)
 	return lbRc;
 }
 
-// Вызывается после того, как создан Pipe Instance
+// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїРѕСЃР»Рµ С‚РѕРіРѕ, РєР°Рє СЃРѕР·РґР°РЅ Pipe Instance
 BOOL WINAPI HookServerReady(LPVOID pInst, LPARAM lParam)
 {
 	return TRUE;
 }
 
-// освободить память, отведенную под результат
+// РѕСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ, РѕС‚РІРµРґРµРЅРЅСѓСЋ РїРѕРґ СЂРµР·СѓР»СЊС‚Р°С‚
 void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam)
 {
 	ExecuteFreeResult(pReply);
@@ -2274,7 +2274,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	if (Parm->Flags & slsf_AltServerStopped)
 	{
 		iRc = 0;
-		// SendStopped посылается из DllStop!
+		// SendStopped РїРѕСЃС‹Р»Р°РµС‚СЃСЏ РёР· DllStop!
 		goto wrap;
 	}
 

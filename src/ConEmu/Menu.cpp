@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012-2013 Maximus5
 All rights reserved.
@@ -72,9 +72,9 @@ CConEmuMenu::CConEmuMenu()
 	mn_TrackMenuPlace = tmp_None;
 
 	HMENU* hMenu[] = {
-		&mh_SysDebugPopup, &mh_SysEditPopup, &mh_ActiveVConPopup, &mh_TerminateVConPopup, &mh_VConListPopup, &mh_HelpPopup, // Popup's для SystemMenu
+		&mh_SysDebugPopup, &mh_SysEditPopup, &mh_ActiveVConPopup, &mh_TerminateVConPopup, &mh_VConListPopup, &mh_HelpPopup, // Popup's РґР»СЏ SystemMenu
 		&mh_InsideSysMenu,
-		&mh_PopupMenu, &mh_TerminatePopup, &mh_VConDebugPopup, &mh_VConEditPopup, // А это из VirtualConsole
+		&mh_PopupMenu, &mh_TerminatePopup, &mh_VConDebugPopup, &mh_VConEditPopup, // Рђ СЌС‚Рѕ РёР· VirtualConsole
 		NULL // end
 	};
 	mn_MenusCount = countof(hMenu);
@@ -175,13 +175,13 @@ void CConEmuMenu::CmdTaskPopupItem::SetMenuName(wchar_t* pszDisplay, INT_PTR cch
 	const wchar_t *pszSrc = asName;
 	wchar_t *pszDst = pszDisplay+nCurLen;
 	wchar_t *pszEnd = pszDisplay+cchDisplayMax-1;
-	_ASSERTE((pszDst+min(8,2*nLen)) <= pszEnd); // Должно быть место
+	_ASSERTE((pszDst+min(8,2*nLen)) <= pszEnd); // Р”РѕР»Р¶РЅРѕ Р±С‹С‚СЊ РјРµСЃС‚Рѕ
 
 	if (!bTrailingPeriod)
 	{
 		if (nLen >= cchDisplayMax)
 		{
-			*(pszDst++) = /*…*/L'\x2026';
+			*(pszDst++) = /*вЂ¦*/L'\x2026';
 			pszSrc = asName+nLen-cchDisplayMax+nCurLen+2;
 			_ASSERTE((pszSrc >= asName) && (pszSrc < (asName+nLen)));
 		}
@@ -204,10 +204,10 @@ void CConEmuMenu::CmdTaskPopupItem::SetMenuName(wchar_t* pszDisplay, INT_PTR cch
 		if ((pszDst + 1) >= pszEnd)
 			pszDst = pszDisplay+cchDisplayMax-2;
 			
-		*(pszDst++) = /*…*/L'\x2026';
+		*(pszDst++) = /*вЂ¦*/L'\x2026';
 	}
 
-	// Для тасков, показать "»" когда они (сейчас) не разворачиваются в SubMenu
+	// Р”Р»СЏ С‚Р°СЃРєРѕРІ, РїРѕРєР°Р·Р°С‚СЊ "В»" РєРѕРіРґР° РѕРЅРё (СЃРµР№С‡Р°СЃ) РЅРµ СЂР°Р·РІРѕСЂР°С‡РёРІР°СЋС‚СЃСЏ РІ SubMenu
 	wchar_t szRight[36] = L"";
 	if (bRightQuote)
 	{
@@ -289,7 +289,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 	InsertMenu(hPopup, nInsertPos, MF_BYPOSITION|MF_ENABLED|MF_STRING, itm.nCmd, itm.szShort);
 	m_CmdTaskPopup.push_back(itm);
 
-	// Команда активной консоли
+	// РљРѕРјР°РЅРґР° Р°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё
 	if (pszCurCmd && *pszCurCmd)
 	{
 		itm.Reset(CmdTaskPopupItem::eCmd, ++mn_CmdLastID, pszCurCmd);
@@ -304,7 +304,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 		InsertMenu(hPopup, nInsertPos, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
 
 		// -- don't. let show current instance tasks only
-		//// Обновить группы команд
+		//// РћР±РЅРѕРІРёС‚СЊ РіСЂСѓРїРїС‹ РєРѕРјР°РЅРґ
 		//gpSet->LoadCmdTasks(NULL);
 
 		int nGroup = 0, nCurGroupCount = 0;
@@ -318,7 +318,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			if ((nCurGroupCount++) >= MAX_CMD_GROUP_SHOW)
 			{
 				itm.Reset(CmdTaskPopupItem::eMore, -1);
-				wcscpy_c(itm.szShort, L"&More tasks"); // отдельной функцией, т.к. "Reset" - экранирует "&"
+				wcscpy_c(itm.szShort, L"&More tasks"); // РѕС‚РґРµР»СЊРЅРѕР№ С„СѓРЅРєС†РёРµР№, С‚.Рє. "Reset" - СЌРєСЂР°РЅРёСЂСѓРµС‚ "&"
 				itm.hPopup = CreatePopupMenu();
 				if (!InsertMenu(hCurPopup, nInsertPos, MF_BYPOSITION|MF_POPUP|MF_STRING|MF_ENABLED, (UINT_PTR)itm.hPopup, itm.szShort))
 					break;
@@ -377,7 +377,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 		int nCount = 0;
 		while (*pszHistory && ((nCount++) < MAX_CMD_HISTORY_SHOW))
 		{
-			// Текущий - будет первым
+			// РўРµРєСѓС‰РёР№ - Р±СѓРґРµС‚ РїРµСЂРІС‹Рј
 			if (!pszCurCmd || lstrcmp(pszCurCmd, pszHistory))
 			{
 				itm.Reset(CmdTaskPopupItem::eCmd, ++mn_CmdLastID, pszHistory);
@@ -516,7 +516,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 				gpSet->HistoryAdd(con.pszSpecialCmd);
 			}
 
-			//Собственно, запуск
+			//РЎРѕР±СЃС‚РІРµРЅРЅРѕ, Р·Р°РїСѓСЃРє
 			if (gpSetCls->IsMulti())
 				gpConEmu->CreateCon(&con, true);
 			else
@@ -567,11 +567,11 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 			break;
 		}
 	}
-	// Проверяем, по чему щелкнули
+	// РџСЂРѕРІРµСЂСЏРµРј, РїРѕ С‡РµРјСѓ С‰РµР»РєРЅСѓР»Рё
 	if (!itm || itm->ItemType != CmdTaskPopupItem::eTaskPopup)
 		return;
 
-	// Если таски созданы были как SubMenu?
+	// Р•СЃР»Рё С‚Р°СЃРєРё СЃРѕР·РґР°РЅС‹ Р±С‹Р»Рё РєР°Рє SubMenu?
 	if (mb_CmdShowTaskItems)
 	{
 		// Need to close parentmenu
@@ -580,7 +580,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 			HWND hParent = GetParent(hMenuWnd);
 			wchar_t szClass[100];
 			GetClassName(hParent, szClass, countof(szClass));
-			// Если таски были открыты через "More tasks" - нужно закрыть и родительские субменю
+			// Р•СЃР»Рё С‚Р°СЃРєРё Р±С‹Р»Рё РѕС‚РєСЂС‹С‚С‹ С‡РµСЂРµР· "More tasks" - РЅСѓР¶РЅРѕ Р·Р°РєСЂС‹С‚СЊ Рё СЂРѕРґРёС‚РµР»СЊСЃРєРёРµ СЃСѓР±РјРµРЅСЋ
 			_ASSERTE(hParent == ghWnd);
 
 			mp_CmdRClickForce = itm;
@@ -593,7 +593,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 		if (!pGrp || !pGrp->pszCommands || !*pGrp->pszCommands)
 			return;
 
-		// Поехали
+		// РџРѕРµС…Р°Р»Рё
 		HMENU hPopup = CreatePopupMenu();
 		int nLastID = FillTaskPopup(hPopup, itm);
 
@@ -668,7 +668,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 				//	gpSet->HistoryAdd(con.pszSpecialCmd);
 				//}
 
-				//Собственно, запуск
+				//РЎРѕР±СЃС‚РІРµРЅРЅРѕ, Р·Р°РїСѓСЃРє
 				if (gpSetCls->IsMulti())
 					gpConEmu->CreateCon(&con, true);
 				else
@@ -785,8 +785,8 @@ void CConEmuMenu::OnMenuRClick(HMENU hMenu, UINT nItemPos)
 	}
 }
 
-// Показать контекстное меню для ТЕКУЩЕЙ закладки консоли
-// ptCur - экранные координаты
+// РџРѕРєР°Р·Р°С‚СЊ РєРѕРЅС‚РµРєСЃС‚РЅРѕРµ РјРµРЅСЋ РґР»СЏ РўР•РљРЈР©Р•Р™ Р·Р°РєР»Р°РґРєРё РєРѕРЅСЃРѕР»Рё
+// ptCur - СЌРєСЂР°РЅРЅС‹Рµ РєРѕРѕСЂРґРёРЅР°С‚С‹
 void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Align /* = TPM_LEFTALIGN */)
 {
 	CVConGuard guard(apVCon);
@@ -795,7 +795,7 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 	if (!Align)
 		Align = TPM_LEFTALIGN;
 
-	// Создать или обновить enable/disable
+	// РЎРѕР·РґР°С‚СЊ РёР»Рё РѕР±РЅРѕРІРёС‚СЊ enable/disable
 	mh_PopupMenu = CreateVConPopupMenu(apVCon, mh_PopupMenu, TRUE, mh_TerminatePopup);
 	if (!mh_PopupMenu)
 	{
@@ -815,15 +815,15 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 	}
 	else
 	{
-		// обновить enable/disable пунктов меню
+		// РѕР±РЅРѕРІРёС‚СЊ enable/disable РїСѓРЅРєС‚РѕРІ РјРµРЅСЋ
 		CreateEditMenuPopup(apVCon, mh_VConEditPopup);
 	}
 
-	// Некузяво. Может вслыть тултип под меню
-	//ptCur.x++; ptCur.y++; // чтобы меню можно было сразу закрыть левым кликом.
+	// РќРµРєСѓР·СЏРІРѕ. РњРѕР¶РµС‚ РІСЃР»С‹С‚СЊ С‚СѓР»С‚РёРї РїРѕРґ РјРµРЅСЋ
+	//ptCur.x++; ptCur.y++; // С‡С‚РѕР±С‹ РјРµРЅСЋ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ СЃСЂР°Р·Сѓ Р·Р°РєСЂС‹С‚СЊ Р»РµРІС‹Рј РєР»РёРєРѕРј.
 	
 	
-	// -- перенесено в CreateVConPopupMenu
+	// -- РїРµСЂРµРЅРµСЃРµРЅРѕ РІ CreateVConPopupMenu
 	//bool lbIsFar = mp_RCon->isFar(TRUE/* abPluginRequired */)!=FALSE;
 	//bool lbIsPanels = lbIsFar && mp_RCon->isFilePanel(false/* abPluginAllowed */)!=FALSE;
 	//bool lbIsEditorModified = lbIsFar && mp_RCon->isEditorModified()!=FALSE;
@@ -846,7 +846,7 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 	                          ptCur.x, ptCur.y, ghWnd);
 
 	if (!nCmd)
-		return; // отмена
+		return; // РѕС‚РјРµРЅР°
 
 	ExecPopupMenuCmd(apVCon, nCmd);
 }
@@ -930,7 +930,7 @@ void CConEmuMenu::ExecPopupMenuCmd(CVirtualConsole* apVCon, int nCmd)
 		default:
 			if (nCmd >= 0xAB00)
 			{
-				// "Системные" команды, обрабатываемые в CConEmu
+				// "РЎРёСЃС‚РµРјРЅС‹Рµ" РєРѕРјР°РЅРґС‹, РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјС‹Рµ РІ CConEmu
 				OnSysCommand(ghWnd, nCmd, 0);
 			}
 	}
@@ -959,7 +959,7 @@ HMENU CConEmuMenu::GetSysMenu(BOOL abInitial /*= FALSE*/)
 	{
 		hwndMain = ::GetSystemMenu(ghWnd, FALSE);
 
-		//// "Alt+F4" для пункта "Close" смысла не имеет
+		//// "Alt+F4" РґР»СЏ РїСѓРЅРєС‚Р° "Close" СЃРјС‹СЃР»Р° РЅРµ РёРјРµРµС‚
 		//mi.fMask = MIIM_STRING; mi.dwTypeData = szText; mi.cch = countof(szText);
 		//if (GetMenuItemInfo(hwndMain, SC_CLOSE, FALSE, &mi))
 		//{
@@ -982,7 +982,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 	MENUITEMINFO mi = {sizeof(mi)};
 	wchar_t szText[255];
 
-	// "Alt+F4" для пункта "Close" смысла не имеет
+	// "Alt+F4" РґР»СЏ РїСѓРЅРєС‚Р° "Close" СЃРјС‹СЃР»Р° РЅРµ РёРјРµРµС‚
 	mi.fMask = MIIM_STRING; mi.dwTypeData = szText; mi.cch = countof(szText);
 	if (GetMenuItemInfo(hSysMenu, SC_CLOSE, FALSE, &mi))
 	{
@@ -999,7 +999,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		}
 	}
 
-	// В результате работы некоторых недобросовествных программ может сбиваться настроенное системное меню
+	// Р’ СЂРµР·СѓР»СЊС‚Р°С‚Рµ СЂР°Р±РѕС‚С‹ РЅРµРєРѕС‚РѕСЂС‹С… РЅРµРґРѕР±СЂРѕСЃРѕРІРµСЃС‚РІРЅС‹С… РїСЂРѕРіСЂР°РјРј РјРѕР¶РµС‚ СЃР±РёРІР°С‚СЊСЃСЏ РЅР°СЃС‚СЂРѕРµРЅРЅРѕРµ СЃРёСЃС‚РµРјРЅРѕРµ РјРµРЅСЋ
 	mi.fMask = MIIM_STRING; mi.dwTypeData = szText; mi.cch = countof(szText);
 	if (!GetMenuItemInfo(hSysMenu, ID_NEWCONSOLE, FALSE, &mi))
 	{
@@ -1015,7 +1015,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		if (mh_HelpPopup) DestroyMenu(mh_HelpPopup);
 		mh_HelpPopup = CreateHelpMenuPopup();
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_HelpPopup, _T("Hel&p"));
-		//if (ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
+		//if (ms_ConEmuChm[0])  //РџРѕРєР°Р·С‹РІР°С‚СЊ РїСѓРЅРєС‚ С‚РѕР»СЊРєРѕ РµСЃР»Рё РµСЃС‚СЊ conemu.chm
 		//	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
 
 		// --------------------
@@ -1135,7 +1135,7 @@ int CConEmuMenu::FillTaskPopup(HMENU hMenu, CmdTaskPopupItem* pParent)
 				else
 					itm.szShort[0] = 0;
 
-				// Обработать возможные "&" в строке запуска, чтобы они в меню видны были
+				// РћР±СЂР°Р±РѕС‚Р°С‚СЊ РІРѕР·РјРѕР¶РЅС‹Рµ "&" РІ СЃС‚СЂРѕРєРµ Р·Р°РїСѓСЃРєР°, С‡С‚РѕР±С‹ РѕРЅРё РІ РјРµРЅСЋ РІРёРґРЅС‹ Р±С‹Р»Рё
 				//itm.pszTaskBuf = lstrmerge(itm.szShort, pszLine);
 				INT_PTR cchItemMax = _tcslen(itm.szShort) + 2*_tcslen(pszLine) + 1;
 				itm.pszTaskBuf = (wchar_t*)malloc(cchItemMax*sizeof(*itm.pszTaskBuf));
@@ -1155,7 +1155,7 @@ int CConEmuMenu::FillTaskPopup(HMENU hMenu, CmdTaskPopupItem* pParent)
 			if (!*pszLine) break;
 
 			while ((*pszLine == L'\r') || (*pszLine == L'\n'))
-				pszLine++; // пропустить все переводы строк
+				pszLine++; // РїСЂРѕРїСѓСЃС‚РёС‚СЊ РІСЃРµ РїРµСЂРµРІРѕРґС‹ СЃС‚СЂРѕРє
 
 			pszNewLine = wcschr(pszLine, L'\n');
 		}
@@ -1166,7 +1166,7 @@ int CConEmuMenu::FillTaskPopup(HMENU hMenu, CmdTaskPopupItem* pParent)
 
 LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 {
-	// Уже должен быть выставлен тип меню, иначе не будут всплывать подсказки для пунктов меню
+	// РЈР¶Рµ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІС‹СЃС‚Р°РІР»РµРЅ С‚РёРї РјРµРЅСЋ, РёРЅР°С‡Рµ РЅРµ Р±СѓРґСѓС‚ РІСЃРїР»С‹РІР°С‚СЊ РїРѕРґСЃРєР°Р·РєРё РґР»СЏ РїСѓРЅРєС‚РѕРІ РјРµРЅСЋ
 	_ASSERTE(mn_TrackMenuPlace != tmp_None);
 	if (!hMenu)
 	{
@@ -1190,7 +1190,7 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 			return 0;
 		}
 
-		// при всплытии "Help/Debug/..." submenu сюда мы тоже попадаем
+		// РїСЂРё РІСЃРїР»С‹С‚РёРё "Help/Debug/..." submenu СЃСЋРґР° РјС‹ С‚РѕР¶Рµ РїРѕРїР°РґР°РµРј
 
 		if (bIsSysMenu)
 		{
@@ -1206,7 +1206,7 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 			//EnableMenuItem(hMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
 			if (mh_SysEditPopup)
 			{
-				TODO("Проверить, сработает ли, если mh_EditPopup уже был вставлен в SystemMenu?");
+				TODO("РџСЂРѕРІРµСЂРёС‚СЊ, СЃСЂР°Р±РѕС‚Р°РµС‚ Р»Рё, РµСЃР»Рё mh_EditPopup СѓР¶Рµ Р±С‹Р» РІСЃС‚Р°РІР»РµРЅ РІ SystemMenu?");
 				CreateEditMenuPopup(pVCon, mh_SysEditPopup);
 			}
 			else
@@ -1313,7 +1313,7 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 				//		else
 				//			itm.szShort[0] = 0;
 
-				//		// Обработать возможные "&" в строке запуска, чтобы они в меню видны были
+				//		// РћР±СЂР°Р±РѕС‚Р°С‚СЊ РІРѕР·РјРѕР¶РЅС‹Рµ "&" РІ СЃС‚СЂРѕРєРµ Р·Р°РїСѓСЃРєР°, С‡С‚РѕР±С‹ РѕРЅРё РІ РјРµРЅСЋ РІРёРґРЅС‹ Р±С‹Р»Рё
 				//		//itm.pszTaskBuf = lstrmerge(itm.szShort, pszLine);
 				//		INT_PTR cchItemMax = _tcslen(itm.szShort) + 2*_tcslen(pszLine) + 1;
 				//		itm.pszTaskBuf = (wchar_t*)malloc(cchItemMax*sizeof(*itm.pszTaskBuf));
@@ -1333,7 +1333,7 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 				//	if (!*pszLine) break;
 
 				//	while ((*pszLine == L'\r') || (*pszLine == L'\n'))
-				//		pszLine++; // пропустить все переводы строк
+				//		pszLine++; // РїСЂРѕРїСѓСЃС‚РёС‚СЊ РІСЃРµ РїРµСЂРµРІРѕРґС‹ СЃС‚СЂРѕРє
 
 				//	pszNewLine = wcschr(pszLine, L'\n');
 				//}
@@ -1448,7 +1448,7 @@ void CConEmuMenu::OnNcIconLClick()
 	}
 	else if (mn_SysMenuCloseTick && (nCloseDelay < (nDoubleTime/2)))
 	{
-		// Пропустить - кликом закрыли меню
+		// РџСЂРѕРїСѓСЃС‚РёС‚СЊ - РєР»РёРєРѕРј Р·Р°РєСЂС‹Р»Рё РјРµРЅСЋ
 		#ifdef _DEBUG
 		int nDbg = 0;
 		#endif
@@ -1465,7 +1465,7 @@ void CConEmuMenu::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
 	//if (!Wnd)
 	//	Wnd = ghWnd;
 
-	WARNING("SysMenu: Обработать DblClick по иконке!");
+	WARNING("SysMenu: РћР±СЂР°Р±РѕС‚Р°С‚СЊ DblClick РїРѕ РёРєРѕРЅРєРµ!");
 
 	if ((x == -32000) || (y == -32000))
 	{
@@ -1512,7 +1512,7 @@ void CConEmuMenu::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
 	SendMessage(ghWnd, WM_INITMENU, (WPARAM)systemMenu, 0);
 	SendMessage(ghWnd, WM_INITMENUPOPUP, (WPARAM)systemMenu, MAKELPARAM(0, true));
 
-	// Переехало в OnMenuPopup
+	// РџРµСЂРµРµС…Р°Р»Рѕ РІ OnMenuPopup
 	//BOOL bSelectionExist = ActiveCon()->RCon()->isSelectionPresent();
 	//EnableMenuItem(systemMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
 	SetActiveWindow(ghWnd);
@@ -1752,7 +1752,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 			AppendMenu(hMenu, MF_STRING | MF_ENABLED, IDM_ATTACHTO,  MenuAccel(vkMultiNewAttach,L"Attach to..."));
 		}
 		#if 0
-		// Смысл выносить избранный макро заточенный только под редактор Far?
+		// РЎРјС‹СЃР» РІС‹РЅРѕСЃРёС‚СЊ РёР·Р±СЂР°РЅРЅС‹Р№ РјР°РєСЂРѕ Р·Р°С‚РѕС‡РµРЅРЅС‹Р№ С‚РѕР»СЊРєРѕ РїРѕРґ СЂРµРґР°РєС‚РѕСЂ Far?
 		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_SAVE,      L"&Save");
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_SAVEALL,   L"Save &all");
@@ -1831,8 +1831,8 @@ HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 	if (apVCon && apVCon->RCon())
 	{
 		if (apVCon->RCon()->GuiWnd() && !apVCon->RCon()->isBufferHeight())
-			lbEnabled = FALSE; // Если видимо дочернее графическое окно - выделение смысла не имеет
-		// Нужно ли серить пункт "Copy"
+			lbEnabled = FALSE; // Р•СЃР»Рё РІРёРґРёРјРѕ РґРѕС‡РµСЂРЅРµРµ РіСЂР°С„РёС‡РµСЃРєРѕРµ РѕРєРЅРѕ - РІС‹РґРµР»РµРЅРёРµ СЃРјС‹СЃР»Р° РЅРµ РёРјРµРµС‚
+		// РќСѓР¶РЅРѕ Р»Рё СЃРµСЂРёС‚СЊ РїСѓРЅРєС‚ "Copy"
 		lbSelectionExist = lbEnabled && apVCon->RCon()->isSelectionPresent();
 	}
 
@@ -1893,7 +1893,7 @@ HMENU CConEmuMenu::CreateHelpMenuPopup()
 
 	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_REPORTBUG, _T("&Report a bug..."));
 	
-	if (gpConEmu->ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
+	if (gpConEmu->ms_ConEmuChm[0])  //РџРѕРєР°Р·С‹РІР°С‚СЊ РїСѓРЅРєС‚ С‚РѕР»СЊРєРѕ РµСЃР»Рё РµСЃС‚СЊ conemu.chm
 		AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
 
 	AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);
@@ -1950,7 +1950,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		CVirtualConsole* pVCon = gpConEmu->GetVCon(nNewV);
 		if (pVCon)
 		{
-			// -- в SysMenu показываются только консоли (редакторов/вьюверов там нет)
+			// -- РІ SysMenu РїРѕРєР°Р·С‹РІР°СЋС‚СЃСЏ С‚РѕР»СЊРєРѕ РєРѕРЅСЃРѕР»Рё (СЂРµРґР°РєС‚РѕСЂРѕРІ/РІСЊСЋРІРµСЂРѕРІ С‚Р°Рј РЅРµС‚)
 			//CRealConsole* pRCon = pVCon->RCon();
 			//if (pRCon)
 			//{
@@ -1969,7 +1969,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	switch (wParam)
 	{
 		case ID_NEWCONSOLE:
-			// Создать новую консоль
+			// РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ РєРѕРЅСЃРѕР»СЊ
 			gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			return 0;
 			
@@ -2214,7 +2214,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			{
 				#ifdef MSGLOGGER
 				{
-					// Для отладки, посмотреть, какие пункты меню есть в RealConsole
+					// Р”Р»СЏ РѕС‚Р»Р°РґРєРё, РїРѕСЃРјРѕС‚СЂРµС‚СЊ, РєР°РєРёРµ РїСѓРЅРєС‚С‹ РјРµРЅСЋ РµСЃС‚СЊ РІ RealConsole
 					HMENU hMenu = ::GetSystemMenu(VCon->RCon()->ConWnd(), FALSE);
 					MENUITEMINFO mii; TCHAR szText[255];
 
@@ -2313,7 +2313,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 				if (gpConEmu->SetWindowMode(gpConEmu->isIconic() ? gpConEmu->WindowMode : wmNormal))
 				{
-					// abForceChild=TRUE, если в табе запущено GUI приложение - можно передать в него фокус
+					// abForceChild=TRUE, РµСЃР»Рё РІ С‚Р°Р±Рµ Р·Р°РїСѓС‰РµРЅРѕ GUI РїСЂРёР»РѕР¶РµРЅРёРµ - РјРѕР¶РЅРѕ РїРµСЂРµРґР°С‚СЊ РІ РЅРµРіРѕ С„РѕРєСѓСЃ
 					gpConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"After SC_RESTORE", TRUE);
 					break;
 				}
@@ -2329,7 +2329,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 				SetRestoreFromMinimized(bPrev);
 
-				// abForceChild=TRUE, если в табе запущено GUI приложение - можно передать в него фокус
+				// abForceChild=TRUE, РµСЃР»Рё РІ С‚Р°Р±Рµ Р·Р°РїСѓС‰РµРЅРѕ GUI РїСЂРёР»РѕР¶РµРЅРёРµ - РјРѕР¶РЅРѕ РїРµСЂРµРґР°С‚СЊ РІ РЅРµРіРѕ С„РѕРєСѓСЃ
 				gpConEmu->OnFocus(hWnd, WM_ACTIVATEAPP, TRUE, 0, L"From SC_RESTORE", TRUE);
 			}
 
@@ -2346,10 +2346,10 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			{
 				mb_InScMinimize = true;
 
-				// Запомним, на каком мониторе мы были до минимзации
+				// Р—Р°РїРѕРјРЅРёРј, РЅР° РєР°РєРѕРј РјРѕРЅРёС‚РѕСЂРµ РјС‹ Р±С‹Р»Рё РґРѕ РјРёРЅРёРјР·Р°С†РёРё
 				gpConEmu->StorePreMinimizeMonitor();
 
-				// Если "фокус" в дочернем Gui приложении - нужно перед скрытием ConEmu "поднять" его
+				// Р•СЃР»Рё "С„РѕРєСѓСЃ" РІ РґРѕС‡РµСЂРЅРµРј Gui РїСЂРёР»РѕР¶РµРЅРёРё - РЅСѓР¶РЅРѕ РїРµСЂРµРґ СЃРєСЂС‹С‚РёРµРј ConEmu "РїРѕРґРЅСЏС‚СЊ" РµРіРѕ
 				CVConGuard VCon;
 				if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
 				{
@@ -2367,7 +2367,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 				if (bMin2TSA)
 				{
-					// Окошко уже "спрятано", минимизировать не нужно
+					// РћРєРѕС€РєРѕ СѓР¶Рµ "СЃРїСЂСЏС‚Р°РЅРѕ", РјРёРЅРёРјРёР·РёСЂРѕРІР°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 					mb_InScMinimize = false;
 					break;
 				}
@@ -2400,10 +2400,10 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				DEBUGSTRSYS(szDbg);
 				#endif
 
-				// Зачем вообще SysCommand, полученный в ConEmu, перенаправлять в RealConsole?
+				// Р—Р°С‡РµРј РІРѕРѕР±С‰Рµ SysCommand, РїРѕР»СѓС‡РµРЅРЅС‹Р№ РІ ConEmu, РїРµСЂРµРЅР°РїСЂР°РІР»СЏС‚СЊ РІ RealConsole?
 				#if 0
-				// иначе это приводит к потере фокуса и активации невидимой консоли,
-				// перехвате стрелок клавиатуры, и прочей фигни...
+				// РёРЅР°С‡Рµ СЌС‚Рѕ РїСЂРёРІРѕРґРёС‚ Рє РїРѕС‚РµСЂРµ С„РѕРєСѓСЃР° Рё Р°РєС‚РёРІР°С†РёРё РЅРµРІРёРґРёРјРѕР№ РєРѕРЅСЃРѕР»Рё,
+				// РїРµСЂРµС…РІР°С‚Рµ СЃС‚СЂРµР»РѕРє РєР»Р°РІРёР°С‚СѓСЂС‹, Рё РїСЂРѕС‡РµР№ С„РёРіРЅРё...
 				if (wParam<0xF000)
 				{
 					POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, wParam, lParam, FALSE);

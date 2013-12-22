@@ -1,4 +1,4 @@
-
+ï»¿
 /*
 Copyright (c) 2010-2011 Maximus5
 All rights reserved.
@@ -298,8 +298,8 @@ struct GDIPlusDecoder
 		return result;
 	};
 
-	// Ïðè èñïîëüçîâàíèè â ôàðå GdiPlus èíîãäà ìîæåò çàâèñàòü íà FreeLibrary.
-	// Ïðè÷èíû ïîêà íå âûÿñíåíû
+	// ÐŸÑ€Ð¸ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ð½Ð¸Ð¸ Ð² Ñ„Ð°Ñ€Ðµ GdiPlus Ð¸Ð½Ð¾Ð³Ð´Ð° Ð¼Ð¾Ð¶ÐµÑ‚ Ð·Ð°Ð²Ð¸ÑÐ°Ñ‚ÑŒ Ð½Ð° FreeLibrary.
+	// ÐŸÑ€Ð¸Ñ‡Ð¸Ð½Ñ‹ Ð¿Ð¾ÐºÐ° Ð½Ðµ Ð²Ñ‹ÑÑÐ½ÐµÐ½Ñ‹
 	static DWORD WINAPI FreeThreadProc(LPVOID lpParameter)
 	{
 		struct GDIPlusDecoder* p = (struct GDIPlusDecoder*)lpParameter;
@@ -414,7 +414,7 @@ struct GDIPlusImage
 	//	Gdiplus::Status lRc = Gdiplus::Ok;
 	//	Gdiplus::GpBitmap *img = NULL;
 
-	//	// IStream èñïîëüçóåòñÿ â ïðîöåññå äåêîäèðîâàíèÿ, ïîýòîìó åãî íóæíî äåðæàòü ñîçäàííûì
+	//	// IStream Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐµÑ‚ÑÑ Ð² Ð¿Ñ€Ð¾Ñ†ÐµÑÑÐµ Ð´ÐµÐºÐ¾Ð´Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ñ, Ð¿Ð¾ÑÑ‚Ð¾Ð¼Ñƒ ÐµÐ³Ð¾ Ð½ÑƒÐ¶Ð½Ð¾ Ð´ÐµÑ€Ð¶Ð°Ñ‚ÑŒ ÑÐ¾Ð·Ð´Ð°Ð½Ð½Ñ‹Ð¼
 	//	strm = new MStream();
 	//	if (strm) {
 	//		nLastError = strm->Write(pBuffer, (ULONG)lFileSize, NULL);
@@ -473,7 +473,7 @@ struct GDIPlusImage
 
 					if (hFile == INVALID_HANDLE_VALUE)
 					{
-						szTempFile[0] = 0; // íå ñîçäàëè, çíà÷èò è óäàëÿòü áóäåò íå÷åãî
+						szTempFile[0] = 0; // Ð½Ðµ ÑÐ¾Ð·Ð´Ð°Ð»Ð¸, Ð·Ð½Ð°Ñ‡Ð¸Ñ‚ Ð¸ ÑƒÐ´Ð°Ð»ÑÑ‚ÑŒ Ð±ÑƒÐ´ÐµÑ‚ Ð½ÐµÑ‡ÐµÐ³Ð¾
 					}
 					else
 					{
@@ -503,12 +503,12 @@ struct GDIPlusImage
 
 		//if (!bVirtual)
 		img = OpenBitmapFromFile(pFileName, crLoadSize);
-		//else // ëó÷øå áû åãî âîîáùå íå èñïîëüçîâàòü, GDI+ êàê-òî íå î÷åíü ñ ïîòîêàìè ðàáîòàåò...
+		//else // Ð»ÑƒÑ‡ÑˆÐµ Ð±Ñ‹ ÐµÐ³Ð¾ Ð²Ð¾Ð¾Ð±Ñ‰Ðµ Ð½Ðµ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÑŒ, GDI+ ÐºÐ°Ðº-Ñ‚Ð¾ Ð½Ðµ Ð¾Ñ‡ÐµÐ½ÑŒ Ñ Ð¿Ð¾Ñ‚Ð¾ÐºÐ°Ð¼Ð¸ Ñ€Ð°Ð±Ð¾Ñ‚Ð°ÐµÑ‚...
 		//	img = OpenBitmapFromStream(pBuffer, lFileSize);
 
 		if (!img)
 		{
-			//nErrNumber = gdi->nErrNumber; -- îøèáêà ÓÆÅ â nErrNumber
+			//nErrNumber = gdi->nErrNumber; -- Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð£Ð–Ð• Ð² nErrNumber
 		}
 		else
 		{
@@ -720,7 +720,7 @@ struct GDIPlusImage
 			//&& (lWidth > (UINT)nCanvasWidth*5) && (lHeight > (UINT)nCanvasHeight*5);
 			int nShowWidth, nShowHeight;
 			CalculateShowSize(nCanvasWidth, nCanvasHeight, nShowWidth, nShowHeight, lbAllowThumb);
-			// Ïîëó÷èì èç EXIF îðèåíòàöèþ
+			// ÐŸÐ¾Ð»ÑƒÑ‡Ð¸Ð¼ Ð¸Ð· EXIF Ð¾Ñ€Ð¸ÐµÐ½Ñ‚Ð°Ñ†Ð¸ÑŽ
 			int nOrient;
 
 			if (!GetExifTagValueAsInt(PropertyTagOrientation, nOrient)) nOrient = 0;
@@ -728,7 +728,7 @@ struct GDIPlusImage
 			if (lbAllowThumb && nOrient)
 			{
 				Gdiplus::GpImage *thmb = NULL;
-				// Ñðàçó ïûòàåìñÿ èçâëå÷ü â ðåæèìå ïðåâüþøêè (ïîëíàÿ êàðòèíêà íàì íå íóæíà)
+				// Ð¡Ñ€Ð°Ð·Ñƒ Ð¿Ñ‹Ñ‚Ð°ÐµÐ¼ÑÑ Ð¸Ð·Ð²Ð»ÐµÑ‡ÑŒ Ð² Ñ€ÐµÐ¶Ð¸Ð¼Ðµ Ð¿Ñ€ÐµÐ²ÑŒÑŽÑˆÐºÐ¸ (Ð¿Ð¾Ð»Ð½Ð°Ñ ÐºÐ°Ñ€Ñ‚Ð¸Ð½ÐºÐ° Ð½Ð°Ð¼ Ð½Ðµ Ð½ÑƒÐ¶Ð½Ð°)
 				Gdiplus::Status lRc = gdi->GdipGetImageThumbnail(img, nShowWidth, nShowHeight, &thmb,
 				                      (Gdiplus::GetThumbnailImageAbort)DrawImageAbortCallback, gdi);
 
@@ -740,7 +740,7 @@ struct GDIPlusImage
 					lRc = gdi->GdipGetImageHeight(img, &lHeight);
 				}
 
-				// Òåïåðü - êðóòèì
+				// Ð¢ÐµÐ¿ÐµÑ€ÑŒ - ÐºÑ€ÑƒÑ‚Ð¸Ð¼
 				Gdiplus::RotateFlipType rft = Gdiplus::RotateNoneFlipNone;
 
 				switch(nOrient)
@@ -882,7 +882,7 @@ BOOL WINAPI CET_Init(struct CET_Init* pInit)
 		return FALSE;
 	}
 
-	_ASSERTE(pInit->pContext == (LPVOID)pDecoder); // Óæå âåðíóë pDecoder->Init
+	_ASSERTE(pInit->pContext == (LPVOID)pDecoder); // Ð£Ð¶Ðµ Ð²ÐµÑ€Ð½ÑƒÐ» pDecoder->Init
 	return TRUE;
 }
 
@@ -946,9 +946,9 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 		const WORD  *pw  = (const WORD*)pLoadPreview->pFileData;
 		const DWORD *pdw = (const DWORD*)pLoadPreview->pFileData;
 
-		//TODO("ICO - óáðàòü. ïóñòü ñïåöèàëèçèðîâàííûé çàíèìàåòñÿ")
+		//TODO("ICO - ÑƒÐ±Ñ€Ð°Ñ‚ÑŒ. Ð¿ÑƒÑÑ‚ÑŒ ÑÐ¿ÐµÑ†Ð¸Ð°Ð»Ð¸Ð·Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð½Ñ‹Ð¹ Ð·Ð°Ð½Ð¸Ð¼Ð°ÐµÑ‚ÑÑ")
 
-		if (*pdw==0x474E5089 /* ‰PNG */)
+		if (*pdw==0x474E5089 /* â€°PNG */)
 			lbKnown = TRUE;
 		else if (*pw==0x4D42 /* BM */)
 			lbKnown = TRUE;
@@ -1057,7 +1057,7 @@ VOID WINAPI CET_Free(struct CET_LoadInfo* pLoadPreview)
 	{
 		case eGdiStr_Image:
 		{
-			// Ñþäà ìû ïîïàäåì åñëè áûë exception â CET_Load
+			// Ð¡ÑŽÐ´Ð° Ð¼Ñ‹ Ð¿Ð¾Ð¿Ð°Ð´ÐµÐ¼ ÐµÑÐ»Ð¸ Ð±Ñ‹Ð» exception Ð² CET_Load
 			GDIPlusImage *pImg = (GDIPlusImage*)pLoadPreview->pFileContext;
 			pImg->Close();
 		} break;

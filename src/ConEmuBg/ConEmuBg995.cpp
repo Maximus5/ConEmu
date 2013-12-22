@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2010-2011 Maximus5
 All rights reserved.
@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #pragma warning( disable : 4995 )
-#include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
+#include "../common/pluginW1761.hpp" // РћС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ 995 РЅР°Р»РёС‡РёРµРј SynchoApi
 #pragma warning( default : 4995 )
 #include "../common/plugin_helper.h"
 #include "ConEmuBg.h"

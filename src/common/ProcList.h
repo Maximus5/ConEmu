@@ -1,4 +1,4 @@
-// This is extraction of Far Process List plugin.
+п»ї// This is extraction of Far Process List plugin.
 
 class CProcessData
 {
@@ -281,7 +281,7 @@ protected:
 
 protected:
 	wchar_t szSubKey[1024];
-	PPERF_DATA_BLOCK mp_ProcPerfData; // Для поиска имени процесса
+	PPERF_DATA_BLOCK mp_ProcPerfData; // Р”Р»СЏ РїРѕРёСЃРєР° РёРјРµРЅРё РїСЂРѕС†РµСЃСЃР°
 	DWORD  mn_ProcPerfDataSize;
 	DWORD  dwProcessIdTitle;
 

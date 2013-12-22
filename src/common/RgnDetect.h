@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -33,20 +33,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pshpack1.h>
 typedef struct tag_CharAttr
 {
-	TODO("OPTIMIZE: Заменить бы битовые поля на один DWORD, в котором хранить некий общий ИД стиля, заполняемый при формировании буфера");
+	TODO("OPTIMIZE: Р—Р°РјРµРЅРёС‚СЊ Р±С‹ Р±РёС‚РѕРІС‹Рµ РїРѕР»СЏ РЅР° РѕРґРёРЅ DWORD, РІ РєРѕС‚РѕСЂРѕРј С…СЂР°РЅРёС‚СЊ РЅРµРєРёР№ РѕР±С‰РёР№ РР” СЃС‚РёР»СЏ, Р·Р°РїРѕР»РЅСЏРµРјС‹Р№ РїСЂРё С„РѕСЂРјРёСЂРѕРІР°РЅРёРё Р±СѓС„РµСЂР°");
 	union
 	{
-		// Собственно цвета/шрифты
+		// РЎРѕР±СЃС‚РІРµРЅРЅРѕ С†РІРµС‚Р°/С€СЂРёС„С‚С‹
 		struct
 		{
-			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
+			unsigned int crForeColor : 24; // С‡С‚РѕР±С‹ РІ ui64 РїРѕРјРµСЃС‚РёР»СЃСЏ Рё nFontIndex
 			unsigned int nFontIndex : 8; // 0=normal, or combination {1=bold,2=italic,4=underline}, or 8=UCharMap
-			unsigned int crBackColor : 32; // Старший байт зарезервируем, вдруг для прозрачности понадобится
+			unsigned int crBackColor : 32; // РЎС‚Р°СЂС€РёР№ Р±Р°Р№С‚ Р·Р°СЂРµР·РµСЂРІРёСЂСѓРµРј, РІРґСЂСѓРі РґР»СЏ РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚Рё РїРѕРЅР°РґРѕР±РёС‚СЃСЏ
 			unsigned int nForeIdx : 8;
-			unsigned int nBackIdx : 8; // может понадобиться для ExtendColors
+			unsigned int nBackIdx : 8; // РјРѕР¶РµС‚ РїРѕРЅР°РґРѕР±РёС‚СЊСЃСЏ РґР»СЏ ExtendColors
 			unsigned int crOrigForeColor : 32;
-			unsigned int crOrigBackColor : 32; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
-			// вспомогательные флаги
+			unsigned int crOrigBackColor : 32; // Р РµР°Р»СЊРЅС‹Рµ С†РІРµС‚Р° РІ РєРѕРЅСЃРѕР»Рё, crForeColor Рё crBackColor РјРѕРіСѓС‚ Р±С‹С‚СЊ РёР·РјРµРЅРµРЅС‹ РєРѕР»РѕСЂРµСЂРѕРј
+			// РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Рµ С„Р»Р°РіРё
 			DWORD Flags;
 			#define CharAttr_Dialog         1
 			#define CharAttr_DialogVBorder  2
@@ -64,13 +64,13 @@ typedef struct tag_CharAttr
 			//unsigned int bSomeFilled : 1;
 			//unsigned int bTransparent : 1; // UserScreen
 		};
-		// А это для сравнения (поиск изменений)
+		// Рђ СЌС‚Рѕ РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ (РїРѕРёСЃРє РёР·РјРµРЅРµРЅРёР№)
 		unsigned __int64 All;
-		// для сравнения, когда фон не важен
+		// РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ, РєРѕРіРґР° С„РѕРЅ РЅРµ РІР°Р¶РµРЅ
 		unsigned int ForeFont;
 	};
 	//
-	//DWORD dwAttrubutes; // может когда понадобятся дополнительные флаги...
+	//DWORD dwAttrubutes; // РјРѕР¶РµС‚ РєРѕРіРґР° РїРѕРЅР°РґРѕР±СЏС‚СЃСЏ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ С„Р»Р°РіРё...
 	//
 	///**
 	// * Used exclusively by ConsoleView to append annotations to each character
@@ -89,26 +89,26 @@ inline bool operator==(const CharAttr& s1, const CharAttr& s2)
 #define FR_COMMONDLG_MASK 0x000000FF
 #define FR_FREEDLG_MASK   0x0000FF00
 #define FR_ALLDLG_MASK    (FR_COMMONDLG_MASK|FR_FREEDLG_MASK)
-// Предопределенные ИД "регионов"
-#define FR_LEFTPANEL      0x00000001 // Левая панель
-#define FR_RIGHTPANEL     0x00000002 // Правая панель
-#define FR_FULLPANEL      0x00000004 // Одна из панелей растянутая на весь экран
-#define FR_MENUBAR        0x00000008 // Строка меню (верхнее)
-#define FR_ACTIVEMENUBAR  (0x0000010|FR_MENUBAR) // Если MenuBar виден не всегда, или он активирован (т.е. панели недоступны)
-#define FR_PANELTABS      0x00000020 // Строка под панелями (плагин PanelTabs)
-#define FR_QSEARCH        0x00000040 // QSearch в панелях
-#define FR_VIEWEREDITOR   0x00000080 // Редактор или просмотрщик
-// ИД для свободных диалогов/меню/и пр.
+// РџСЂРµРґРѕРїСЂРµРґРµР»РµРЅРЅС‹Рµ РР” "СЂРµРіРёРѕРЅРѕРІ"
+#define FR_LEFTPANEL      0x00000001 // Р›РµРІР°СЏ РїР°РЅРµР»СЊ
+#define FR_RIGHTPANEL     0x00000002 // РџСЂР°РІР°СЏ РїР°РЅРµР»СЊ
+#define FR_FULLPANEL      0x00000004 // РћРґРЅР° РёР· РїР°РЅРµР»РµР№ СЂР°СЃС‚СЏРЅСѓС‚Р°СЏ РЅР° РІРµСЃСЊ СЌРєСЂР°РЅ
+#define FR_MENUBAR        0x00000008 // РЎС‚СЂРѕРєР° РјРµРЅСЋ (РІРµСЂС…РЅРµРµ)
+#define FR_ACTIVEMENUBAR  (0x0000010|FR_MENUBAR) // Р•СЃР»Рё MenuBar РІРёРґРµРЅ РЅРµ РІСЃРµРіРґР°, РёР»Рё РѕРЅ Р°РєС‚РёРІРёСЂРѕРІР°РЅ (С‚.Рµ. РїР°РЅРµР»Рё РЅРµРґРѕСЃС‚СѓРїРЅС‹)
+#define FR_PANELTABS      0x00000020 // РЎС‚СЂРѕРєР° РїРѕРґ РїР°РЅРµР»СЏРјРё (РїР»Р°РіРёРЅ PanelTabs)
+#define FR_QSEARCH        0x00000040 // QSearch РІ РїР°РЅРµР»СЏС…
+#define FR_VIEWEREDITOR   0x00000080 // Р РµРґР°РєС‚РѕСЂ РёР»Рё РїСЂРѕСЃРјРѕС‚СЂС‰РёРє
+// РР” РґР»СЏ СЃРІРѕР±РѕРґРЅС‹С… РґРёР°Р»РѕРіРѕРІ/РјРµРЅСЋ/Рё РїСЂ.
 #define FR_FIRSTDLGID     0x00000100
 #define FR_LASTDLGID      0x0000FF00
-// Дополнительные флаги
-#define FR_ERRORCOLOR     0x00010000 // "Красненькие" диалоги
-#define FR_MACRORECORDING 0x00020000 // Красная "R" или "MACRO" в левом верхнем углу
-#define FR_HASBORDER      0x00040000 // Этот прямоугольник (регион) имеет рамку
-#define FR_HASEXTENSION   0x00080000 // Вокруг прямоугольника диалога есть еще окантовка
-// Идентификация некоторых дополнительных регионов
-#define FR_UCHARMAP       0x01000000 // Содержимое диалога "Unicode CharMap"
-#define FR_UCHARMAPGLYPH  0x02000000 // Блок символов в "Unicode CharMap"
+// Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ С„Р»Р°РіРё
+#define FR_ERRORCOLOR     0x00010000 // "РљСЂР°СЃРЅРµРЅСЊРєРёРµ" РґРёР°Р»РѕРіРё
+#define FR_MACRORECORDING 0x00020000 // РљСЂР°СЃРЅР°СЏ "R" РёР»Рё "MACRO" РІ Р»РµРІРѕРј РІРµСЂС…РЅРµРј СѓРіР»Сѓ
+#define FR_HASBORDER      0x00040000 // Р­С‚РѕС‚ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє (СЂРµРіРёРѕРЅ) РёРјРµРµС‚ СЂР°РјРєСѓ
+#define FR_HASEXTENSION   0x00080000 // Р’РѕРєСЂСѓРі РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєР° РґРёР°Р»РѕРіР° РµСЃС‚СЊ РµС‰Рµ РѕРєР°РЅС‚РѕРІРєР°
+// РРґРµРЅС‚РёС„РёРєР°С†РёСЏ РЅРµРєРѕС‚РѕСЂС‹С… РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… СЂРµРіРёРѕРЅРѕРІ
+#define FR_UCHARMAP       0x01000000 // РЎРѕРґРµСЂР¶РёРјРѕРµ РґРёР°Р»РѕРіР° "Unicode CharMap"
+#define FR_UCHARMAPGLYPH  0x02000000 // Р‘Р»РѕРє СЃРёРјРІРѕР»РѕРІ РІ "Unicode CharMap"
 
 
 typedef struct tag_DetectedDialog
@@ -169,9 +169,9 @@ class CRgnDetect
 		bool FindFrameRight_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight);
 		bool FindFrameLeft_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
 		bool FindFrameLeft_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
-		// Последний шанс
+		// РџРѕСЃР»РµРґРЅРёР№ С€Р°РЅСЃ
 		bool FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
-		// Сервисная
+		// РЎРµСЂРІРёСЃРЅР°СЏ
 		bool ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom);
 		int  MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder = false, bool bFindExterior = true, DWORD nFlags = -1);
 		bool ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr);
@@ -198,10 +198,10 @@ class CRgnDetect
 		//	DWORD DlgFlags[MAX_DETECTED_DIALOGS];
 		//}
 		DetectedDialogs m_DetectedDialogs;
-		DWORD mn_AllFlagsSaved; // чтобы не драться с другими нитями во время детекта
+		DWORD mn_AllFlagsSaved; // С‡С‚РѕР±С‹ РЅРµ РґСЂР°С‚СЊСЃСЏ СЃ РґСЂСѓРіРёРјРё РЅРёС‚СЏРјРё РІРѕ РІСЂРµРјСЏ РґРµС‚РµРєС‚Р°
 
 	protected:
-		// Используется для собственноручного формирования буферов
+		// РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ СЃРѕР±СЃС‚РІРµРЅРЅРѕСЂСѓС‡РЅРѕРіРѕ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ Р±СѓС„РµСЂРѕРІ
 		wchar_t   *mpsz_Chars;
 		CharAttr  *mp_Attrs;
 		CharAttr  *mp_AttrsWork;
@@ -213,7 +213,7 @@ class CRgnDetect
 		//void GetConsoleData(const CHAR_INFO *pCharInfo, const COLORREF *apColors, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 
 	protected:
-		// Доп.переменные
+		// Р”РѕРї.РїРµСЂРµРјРµРЅРЅС‹Рµ
 		int nUserBackIdx;
 		COLORREF crUserBack;
 		int nMenuBackIdx;
@@ -222,19 +222,19 @@ class CRgnDetect
 		COLORREF crPanelsNumberBack, crPanelsNumberFore;
 		int nDlgBorderBackIdx, nDlgBorderForeIdx;
 		int nErrBorderBackIdx, nErrBorderForeIdx;
-		// Для детекта наличия PanelTabs (цвет кнопки [+])
+		// Р”Р»СЏ РґРµС‚РµРєС‚Р° РЅР°Р»РёС‡РёСЏ PanelTabs (С†РІРµС‚ РєРЅРѕРїРєРё [+])
 		int nPanelTabsBackIdx;
 		int nPanelTabsForeIdx;
 		BOOL bPanelTabsSeparate;
-		// При bUseColorKey Если панель погашена (или панели) то
-		// 1. UserScreen под ним заменяется на crColorKey
-		// 2. а текст - на пробелы
-		// Проверять наличие KeyBar по настройкам (Keybar + CmdLine)
+		// РџСЂРё bUseColorKey Р•СЃР»Рё РїР°РЅРµР»СЊ РїРѕРіР°С€РµРЅР° (РёР»Рё РїР°РЅРµР»Рё) С‚Рѕ
+		// 1. UserScreen РїРѕРґ РЅРёРј Р·Р°РјРµРЅСЏРµС‚СЃСЏ РЅР° crColorKey
+		// 2. Р° С‚РµРєСЃС‚ - РЅР° РїСЂРѕР±РµР»С‹
+		// РџСЂРѕРІРµСЂСЏС‚СЊ РЅР°Р»РёС‡РёРµ KeyBar РїРѕ РЅР°СЃС‚СЂРѕР№РєР°Рј (Keybar + CmdLine)
 		bool bShowKeyBar;
 		int nBottomLines;
-		// Проверять наличие MenuBar по настройкам
-		// Или может быть меню сейчас показано?
-		// 1 - при видимом сейчас или постоянно меню
+		// РџСЂРѕРІРµСЂСЏС‚СЊ РЅР°Р»РёС‡РёРµ MenuBar РїРѕ РЅР°СЃС‚СЂРѕР№РєР°Рј
+		// РР»Рё РјРѕР¶РµС‚ Р±С‹С‚СЊ РјРµРЅСЋ СЃРµР№С‡Р°СЃ РїРѕРєР°Р·Р°РЅРѕ?
+		// 1 - РїСЂРё РІРёРґРёРјРѕРј СЃРµР№С‡Р°СЃ РёР»Рё РїРѕСЃС‚РѕСЏРЅРЅРѕ РјРµРЅСЋ
 		bool bAlwaysShowMenuBar;
 		int nTopLines;
 };
@@ -245,7 +245,7 @@ class CRgnRects
 	public:
 		int nRectCount;
 #define MAX_RGN_RECTS MAX_DETECTED_DIALOGS // 20.
-		RECT  rcRect[MAX_RGN_RECTS]; // rcRect[0] - основной, rcRect[1...] - то что вычитается из rcRect[0]
+		RECT  rcRect[MAX_RGN_RECTS]; // rcRect[0] - РѕСЃРЅРѕРІРЅРѕР№, rcRect[1...] - С‚Рѕ С‡С‚Рѕ РІС‹С‡РёС‚Р°РµС‚СЃСЏ РёР· rcRect[0]
 		DWORD nRectOper[MAX_RGN_RECTS]; // RGN_AND or RGN_DIFF
 		/*	Current region state:
 			#define ERROR               0
@@ -258,14 +258,14 @@ class CRgnRects
 		CRgnRects();
 		~CRgnRects();
 
-		// Сброс всего в NULLREGION
+		// РЎР±СЂРѕСЃ РІСЃРµРіРѕ РІ NULLREGION
 		void Reset();
-		// Сбросить все прямоугольники и установить rcRect[0]
+		// РЎР±СЂРѕСЃРёС‚СЊ РІСЃРµ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРё Рё СѓСЃС‚Р°РЅРѕРІРёС‚СЊ rcRect[0]
 		void Init(LPRECT prcInit);
 		// Combines the parts of rcRect[..] that are not part of prcAddDiff.
 		int Diff(LPRECT prcAddDiff); // RGN_AND or RGN_DIFF
 		int DiffSmall(SMALL_RECT *prcAddDiff); // RGN_AND or RGN_DIFF
-		// Скопировать ИЗ pRgn, вернуть true - если были отличия
+		// РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РР— pRgn, РІРµСЂРЅСѓС‚СЊ true - РµСЃР»Рё Р±С‹Р»Рё РѕС‚Р»РёС‡РёСЏ
 		bool LoadFrom(CRgnRects* pRgn);
 
 		/*	Service variables for nRgnState tesgins */

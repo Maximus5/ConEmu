@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifdef _DEBUG
-//  Раскомментировать, чтобы сразу после загрузки плагина показать MessageBox, чтобы прицепиться дебаггером
+//  Р Р°СЃРєРѕРјРјРµРЅС‚РёСЂРѕРІР°С‚СЊ, С‡С‚РѕР±С‹ СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ Р·Р°РіСЂСѓР·РєРё РїР»Р°РіРёРЅР° РїРѕРєР°Р·Р°С‚СЊ MessageBox, С‡С‚РѕР±С‹ РїСЂРёС†РµРїРёС‚СЊСЃСЏ РґРµР±Р°РіРіРµСЂРѕРј
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_WRITING_RECTS
 #endif
@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <tchar.h>
 #include "../common/common.hpp"
 #pragma warning( disable : 4995 )
-#include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
+#include "../common/pluginW1761.hpp" // РћС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ 995 РЅР°Р»РёС‡РёРµРј SynchoApi
 #pragma warning( default : 4995 )
 #include "../common/RgnDetect.h"
 #include "../common/TerminalMode.h"
@@ -71,9 +71,9 @@ extern "C" {
 
 BOOL gbPreloadByDefault = TRUE;
 DWORD gdwModes[2] = {0,0}; // pvm_XXX
-PanelViewSetMapping gThSet = {0}; // параметры получаются из мэппинга при открытии плага или при перерегистрации
+PanelViewSetMapping gThSet = {0}; // РїР°СЂР°РјРµС‚СЂС‹ РїРѕР»СѓС‡Р°СЋС‚СЃСЏ РёР· РјСЌРїРїРёРЅРіР° РїСЂРё РѕС‚РєСЂС‹С‚РёРё РїР»Р°РіР° РёР»Рё РїСЂРё РїРµСЂРµСЂРµРіРёСЃС‚СЂР°С†РёРё
 HWND ghConEmuRoot = NULL, ghConEmuWnd = NULL;
-HMODULE ghPluginModule = NULL; // ConEmuTh.dll - сам плагин
+HMODULE ghPluginModule = NULL; // ConEmuTh.dll - СЃР°Рј РїР»Р°РіРёРЅ
 BOOL TerminalMode = FALSE;
 DWORD gnSelfPID = 0;
 DWORD gnMainThreadId = 0, gnMainThreadIdInitial = 0;
@@ -131,7 +131,7 @@ MFileMapping<DetectedDialogs> *gpDbgDlg = NULL;
 int WINAPI _export GetMinFarVersionW(void)
 {
 	// ACTL_SYNCHRO required
-	// build 1765: Новая команда в FARMACROCOMMAND - MCMD_GETAREA
+	// build 1765: РќРѕРІР°СЏ РєРѕРјР°РЅРґР° РІ FARMACROCOMMAND - MCMD_GETAREA
 	return MAKEFARVERSION(2,0,1765);
 }
 
@@ -172,9 +172,9 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 	}
 
 	//gThSet.Load();
-	// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
+	// РџСЂРё РѕС‚РєСЂС‹С‚РёРё РїР»Р°РіРёРЅР° - Р·Р°РіСЂСѓР·РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕР±РµРёС… РїР°РЅРµР»СЏС…. РќСѓР¶РЅРѕ РґР»СЏ РѕРїСЂРµРґРµР»РµРЅРёСЏ СЂРµРіРёРѕРЅРѕРІ!
 	ReloadPanelsInfo();
-	// Получить активную
+	// РџРѕР»СѓС‡РёС‚СЊ Р°РєС‚РёРІРЅСѓСЋ
 	CeFullPanelInfo* pi = GetActivePanel();
 
 	if (!pi)
@@ -187,7 +187,7 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 	BOOL lbWasVisible = pi->Visible;
 	PanelViewMode PVM = pvm_None;
 
-	// В Far2 плагин можно позвать через callplugin(...)
+	// Р’ Far2 РїР»Р°РіРёРЅ РјРѕР¶РЅРѕ РїРѕР·РІР°С‚СЊ С‡РµСЂРµР· callplugin(...)
 	if (gFarVersion.dwVerMajor >= 2)
 	{
 		//if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
@@ -198,7 +198,7 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 		}
 	}
 
-	// Вызов плагина из меню - нужно выбрать режим
+	// Р’С‹Р·РѕРІ РїР»Р°РіРёРЅР° РёР· РјРµРЅСЋ - РЅСѓР¶РЅРѕ РІС‹Р±СЂР°С‚СЊ СЂРµР¶РёРј
 	if (PVM == pvm_None)
 	{
 		switch (ShowPluginMenu())
@@ -213,7 +213,7 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 				PVM = pvm_Icons;
 				break;
 			default:
-				// Отмена
+				// РћС‚РјРµРЅР°
 				return;
 		}
 	}
@@ -225,18 +225,18 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 			ShowMessage(CEBisReqForIcons, 1);
 			return;
 		}
-		TODO("CENoPlaceForIcons: Проверить чтобы было место для отображения иконок - 'M' mark в колонке 'N'");
+		TODO("CENoPlaceForIcons: РџСЂРѕРІРµСЂРёС‚СЊ С‡С‚РѕР±С‹ Р±С‹Р»Рѕ РјРµСЃС‚Рѕ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ РёРєРѕРЅРѕРє - 'M' mark РІ РєРѕР»РѕРЅРєРµ 'N'");
 	}
 
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
 	DWORD dwMode = pvm_None; //PanelViewMode
 
-	// Если View не создан, или смена режима
+	// Р•СЃР»Рё View РЅРµ СЃРѕР·РґР°РЅ, РёР»Рё СЃРјРµРЅР° СЂРµР¶РёРјР°
 	if ((lhView == NULL) || (!lbWasVisible && pi->Visible) || (PVM != pi->PVM))
 	{
-		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
-		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
+		// Р”Р»СЏ РєРѕСЂСЂРµРєС‚РЅРѕРіРѕ РѕРїСЂРµРґРµР»РµРЅРёСЏ РїРѕР»РѕР¶РµРЅРёСЏ РєРѕР»РѕРЅРѕРє РЅРµРѕР±С…РѕРґРёРј РѕРґРёРЅ РёР· С„Р»Р°Р¶РєРѕРІ РІ РЅР°СЃС‚СЂРѕР№РєРµ РїР°РЅРµР»Рё:
+		// [x] РџРѕРєР°Р·С‹РІР°С‚СЊ Р·Р°РіРѕР»РѕРІРєРё РєРѕР»РѕРЅРѕРє [x] РџРѕРєР°Р·С‹РІР°С‚СЊ СЃСѓРјРјР°СЂРЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ
 		if (!CheckPanelSettings(FALSE))
 		{
 			return;
@@ -247,18 +247,18 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 
 		if (lhView == NULL)
 		{
-			// Нужно создать View
+			// РќСѓР¶РЅРѕ СЃРѕР·РґР°С‚СЊ View
 			lhView = pi->CreateView();
 		}
 
 		if (lhView == NULL)
 		{
-			// Показать ошибку
+			// РџРѕРєР°Р·Р°С‚СЊ РѕС€РёР±РєСѓ
 			ShowLastError();
 		}
 		else
 		{
-			// Зарегистрироваться
+			// Р—Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊСЃСЏ
 			_ASSERTE(pi->PVM==PVM);
 			pi->RegisterPanelView();
 			_ASSERTE(pi->PVM==PVM);
@@ -269,7 +269,7 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 	}
 	else
 	{
-		// Отрегистрироваться
+		// РћС‚СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊСЃСЏ
 		pi->UnregisterPanelView();
 		dwMode = pvm_None;
 	}
@@ -288,8 +288,8 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 	return;
 }
 
-// Плагин может быть вызван в первый раз из фоновой нити.
-// Поэтому простой "gnMainThreadId = GetCurrentThreadId();" не прокатит. Нужно искать первую нить процесса!
+// РџР»Р°РіРёРЅ РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹Р·РІР°РЅ РІ РїРµСЂРІС‹Р№ СЂР°Р· РёР· С„РѕРЅРѕРІРѕР№ РЅРёС‚Рё.
+// РџРѕСЌС‚РѕРјСѓ РїСЂРѕСЃС‚РѕР№ "gnMainThreadId = GetCurrentThreadId();" РЅРµ РїСЂРѕРєР°С‚РёС‚. РќСѓР¶РЅРѕ РёСЃРєР°С‚СЊ РїРµСЂРІСѓСЋ РЅРёС‚СЊ РїСЂРѕС†РµСЃСЃР°!
 DWORD GetMainThreadId()
 {
 	DWORD nThreadID = 0;
@@ -304,7 +304,7 @@ DWORD GetMainThreadId()
 		{
 			do
 			{
-				// Нужно найти ПЕРВУЮ нить процесса
+				// РќСѓР¶РЅРѕ РЅР°Р№С‚Рё РџР•Р Р’РЈР® РЅРёС‚СЊ РїСЂРѕС†РµСЃСЃР°
 				if (ti.th32OwnerProcessID == nProcID)
 				{
 					nThreadID = ti.th32ThreadID;
@@ -317,7 +317,7 @@ DWORD GetMainThreadId()
 		CloseHandle(h);
 	}
 
-	// Нехорошо. Должна быть найдена. Вернем хоть что-то (текущую нить)
+	// РќРµС…РѕСЂРѕС€Рѕ. Р”РѕР»Р¶РЅР° Р±С‹С‚СЊ РЅР°Р№РґРµРЅР°. Р’РµСЂРЅРµРј С…РѕС‚СЊ С‡С‚Рѕ-С‚Рѕ (С‚РµРєСѓС‰СѓСЋ РЅРёС‚СЊ)
 	if (!nThreadID)
 	{
 		_ASSERTE(nThreadID!=0);
@@ -424,10 +424,10 @@ BOOL LoadFarVersion()
 //static DWORD nLastCheckConEmu = 0;
 BOOL CheckConEmu(BOOL abSilence/*=FALSE*/)
 {
-	// Функция проверяет доступность плагина conemu.dll и GUI
-	// делать это нужно при каждом вызове, т.к. плагин могли и выгрузить...
+	// Р¤СѓРЅРєС†РёСЏ РїСЂРѕРІРµСЂСЏРµС‚ РґРѕСЃС‚СѓРїРЅРѕСЃС‚СЊ РїР»Р°РіРёРЅР° conemu.dll Рё GUI
+	// РґРµР»Р°С‚СЊ СЌС‚Рѕ РЅСѓР¶РЅРѕ РїСЂРё РєР°Р¶РґРѕРј РІС‹Р·РѕРІРµ, С‚.Рє. РїР»Р°РіРёРЅ РјРѕРіР»Рё Рё РІС‹РіСЂСѓР·РёС‚СЊ...
 
-	//// Страховка от того, что conemu.dll могли выгрузить (unload:...)
+	//// РЎС‚СЂР°С…РѕРІРєР° РѕС‚ С‚РѕРіРѕ, С‡С‚Рѕ conemu.dll РјРѕРіР»Рё РІС‹РіСЂСѓР·РёС‚СЊ (unload:...)
 	//if (!abForceCheck) {
 	//	if ((GetTickCount() - nLastCheckConEmu) > CONEMUCHECKDELTA) {
 	//		if (!ghConEmuWnd)
@@ -585,7 +585,7 @@ HANDLE WINAPI _export OpenW(const struct OpenInfo *Info)
 
 void StartPlugin(BOOL abManual)
 {
-	// Это делаем всегда, потому как это общая точка входа в плагин
+	// Р­С‚Рѕ РґРµР»Р°РµРј РІСЃРµРіРґР°, РїРѕС‚РѕРјСѓ РєР°Рє СЌС‚Рѕ РѕР±С‰Р°СЏ С‚РѕС‡РєР° РІС…РѕРґР° РІ РїР»Р°РіРёРЅ
 	if (!gpImgCache)
 	{
 		gpImgCache = new CImgCache(ghPluginModule);
@@ -619,14 +619,14 @@ void StartPlugin(BOOL abManual)
 		{
 			if (gThSet.bRestoreOnStartup)
 			{
-				// Для корректного определения положения колонок необходим один из флажков в настройке панели:
-				// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
+				// Р”Р»СЏ РєРѕСЂСЂРµРєС‚РЅРѕРіРѕ РѕРїСЂРµРґРµР»РµРЅРёСЏ РїРѕР»РѕР¶РµРЅРёСЏ РєРѕР»РѕРЅРѕРє РЅРµРѕР±С…РѕРґРёРј РѕРґРёРЅ РёР· С„Р»Р°Р¶РєРѕРІ РІ РЅР°СЃС‚СЂРѕР№РєРµ РїР°РЅРµР»Рё:
+				// [x] РџРѕРєР°Р·С‹РІР°С‚СЊ Р·Р°РіРѕР»РѕРІРєРё РєРѕР»РѕРЅРѕРє [x] РџРѕРєР°Р·С‹РІР°С‚СЊ СЃСѓРјРјР°СЂРЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ
 				if (!CheckPanelSettings(!abManual))
 				{
 					return;
 				}
 
-				// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
+				// РџСЂРё РѕС‚РєСЂС‹С‚РёРё РїР»Р°РіРёРЅР° - Р·Р°РіСЂСѓР·РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕР±РµРёС… РїР°РЅРµР»СЏС…. РќСѓР¶РЅРѕ РґР»СЏ РѕРїСЂРµРґРµР»РµРЅРёСЏ СЂРµРіРёРѕРЅРѕРІ!
 				ReloadPanelsInfo();
 				CeFullPanelInfo* pi[2] = {&pviLeft, &pviRight};
 
@@ -639,13 +639,13 @@ void StartPlugin(BOOL abManual)
 
 						if (pi[i]->hView == NULL)
 						{
-							// Нужно создать View
+							// РќСѓР¶РЅРѕ СЃРѕР·РґР°С‚СЊ View
 							pi[i]->hView = pi[i]->CreateView();
 						}
 
 						if (pi[i]->hView == NULL)
 						{
-							// Показать ошибку
+							// РџРѕРєР°Р·Р°С‚СЊ РѕС€РёР±РєСѓ
 							ShowLastError();
 						}
 						else
@@ -686,7 +686,7 @@ void ExitPlugin(void)
 
 	gnDisplayThreadId = 0;
 
-	// Освободить память
+	// РћСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ
 	if (gpRgnDetect)
 	{
 		delete gpRgnDetect;
@@ -699,7 +699,7 @@ void ExitPlugin(void)
 		gpImgCache = NULL;
 	}
 
-	// Сброс переменных, окон, и т.п.
+	// РЎР±СЂРѕСЃ РїРµСЂРµРјРµРЅРЅС‹С…, РѕРєРѕРЅ, Рё С‚.Рї.
 	pviLeft.FinalRelease();
 	pviRight.FinalRelease();
 
@@ -804,10 +804,10 @@ void PostMacro(wchar_t* asMacro)
 		FUNC_X(PostMacroW)(asMacro);
 	}
 
-	//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
-	//  Это чаще всего проявляется при вызове меню по RClick
-	//  Если курсор на другой панели, то RClick сразу по пассивной
-	//  не вызывает отрисовку :(
+	//FAR BUGBUG: РњР°РєСЂРѕСЃ РЅРµ Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ РЅР° РёСЃРїРѕР»РЅРµРЅРёРµ, РїРѕРєР° РјС‹С€РєРѕР№ РЅРµ РґРµСЂРЅРµРј :(
+	//  Р­С‚Рѕ С‡Р°С‰Рµ РІСЃРµРіРѕ РїСЂРѕСЏРІР»СЏРµС‚СЃСЏ РїСЂРё РІС‹Р·РѕРІРµ РјРµРЅСЋ РїРѕ RClick
+	//  Р•СЃР»Рё РєСѓСЂСЃРѕСЂ РЅР° РґСЂСѓРіРѕР№ РїР°РЅРµР»Рё, С‚Рѕ RClick СЃСЂР°Р·Сѓ РїРѕ РїР°СЃСЃРёРІРЅРѕР№
+	//  РЅРµ РІС‹Р·С‹РІР°РµС‚ РѕС‚СЂРёСЃРѕРІРєСѓ :(
 	//if (!mcr.Param.PlainText.Flags) {
 	INPUT_RECORD ir[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
 
@@ -825,7 +825,7 @@ void PostMacro(wchar_t* asMacro)
 	ir[1].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
 	ir[1].Event.MouseEvent.dwMousePosition.X = 1;
 	ir[1].Event.MouseEvent.dwMousePosition.Y = 1;
-	//2010-01-29 попробуем STD_OUTPUT
+	//2010-01-29 РїРѕРїСЂРѕР±СѓРµРј STD_OUTPUT
 	//if (!ghConIn) {
 	//	ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 	//		0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
@@ -900,7 +900,7 @@ int ShowPluginMenu()
 	//#endif
 	//switch (nItem) {
 	//	case 0: case 1:
-	//	{ // Открыть в редакторе вывод последней консольной программы
+	//	{ // РћС‚РєСЂС‹С‚СЊ РІ СЂРµРґР°РєС‚РѕСЂРµ РІС‹РІРѕРґ РїРѕСЃР»РµРґРЅРµР№ РєРѕРЅСЃРѕР»СЊРЅРѕР№ РїСЂРѕРіСЂР°РјРјС‹
 	//		CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(sizeof(CESERVER_REQ_HDR)+4,1);
 	//		if (!pIn) return;
 	//		CESERVER_REQ* pOut = NULL;
@@ -924,7 +924,7 @@ int ShowPluginMenu()
 	//		}
 	//		free(pIn);
 	//	} break;
-	//	case 3: // Показать/спрятать табы
+	//	case 3: // РџРѕРєР°Р·Р°С‚СЊ/СЃРїСЂСЏС‚Р°С‚СЊ С‚Р°Р±С‹
 	//	case 4: case 5: case 6:
 	//	{
 	//		CESERVER_REQ in, *pOut = NULL;
@@ -933,15 +933,15 @@ int ShowPluginMenu()
 	//		pOut = ExecuteGuiCmd(FarHwnd, &in, FarHwnd);
 	//		if (pOut) ExecuteFreeResult(pOut);
 	//	} break;
-	//	case 8: // Attach to GUI (если FAR был CtrlAltTab)
+	//	case 8: // Attach to GUI (РµСЃР»Рё FAR Р±С‹Р» CtrlAltTab)
 	//	{
-	//		if (TerminalMode) break; // низзя
-	//		if (ConEmuHwnd && IsWindow(ConEmuHwnd)) break; // Мы и так подключены?
+	//		if (TerminalMode) break; // РЅРёР·Р·СЏ
+	//		if (ConEmuHwnd && IsWindow(ConEmuHwnd)) break; // РњС‹ Рё С‚Р°Рє РїРѕРґРєР»СЋС‡РµРЅС‹?
 	//		Attach2Gui();
 	//	} break;
 	//	case 10: // Start "ConEmuC.exe /DEBUGPID="
 	//	{
-	//		if (TerminalMode) break; // низзя
+	//		if (TerminalMode) break; // РЅРёР·Р·СЏ
 	//		StartDebugger();
 	//	}
 	//}
@@ -973,7 +973,7 @@ int GetMacroArea()
 	if (gFarVersion.dwVerMajor==1)
 	{
 		_ASSERTE(gFarVersion.dwVerMajor>1);
-		nMacroArea = 1; // в Far 1.7x не поддерживается
+		nMacroArea = 1; // РІ Far 1.7x РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ
 	}
 	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
 		nMacroArea = FUNC_Y2(GetMacroAreaW)();
@@ -1014,7 +1014,7 @@ void LoadPanelItemInfo(CeFullPanelInfo* pi, INT_PTR nItem)
 }
 
 
-// Возвращает (для удобства) ссылку на одну из глобальных переменных (pviLeft/pviRight)
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ (РґР»СЏ СѓРґРѕР±СЃС‚РІР°) СЃСЃС‹Р»РєСѓ РЅР° РѕРґРЅСѓ РёР· РіР»РѕР±Р°Р»СЊРЅС‹С… РїРµСЂРµРјРµРЅРЅС‹С… (pviLeft/pviRight)
 CeFullPanelInfo* GetActivePanel()
 {
 	if (pviLeft.Visible && pviLeft.Focus && pviLeft.IsFilePanel)
@@ -1027,7 +1027,7 @@ CeFullPanelInfo* GetActivePanel()
 }
 //CeFullPanelInfo* LoadPanelInfo(BOOL abActive)
 //{
-//	TODO("Добавить вызов ACTL_GETWINDOW что-ли?");
+//	TODO("Р”РѕР±Р°РІРёС‚СЊ РІС‹Р·РѕРІ ACTL_GETWINDOW С‡С‚Рѕ-Р»Рё?");
 //
 //	CheckVarsInitialized();
 //
@@ -1055,10 +1055,10 @@ CeFullPanelInfo* GetActivePanel()
 
 void ReloadPanelsInfo()
 {
-	TODO("Добавить вызов ACTL_GETWINDOW что-ли?");
-	// Хотя уже и должен быть создан
+	TODO("Р”РѕР±Р°РІРёС‚СЊ РІС‹Р·РѕРІ ACTL_GETWINDOW С‡С‚Рѕ-Р»Рё?");
+	// РҐРѕС‚СЏ СѓР¶Рµ Рё РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СЃРѕР·РґР°РЅ
 	CheckVarsInitialized();
-	// Если меняется прямоугольник панели - нужно повторно зарегистрироваться в GUI
+	// Р•СЃР»Рё РјРµРЅСЏРµС‚СЃСЏ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє РїР°РЅРµР»Рё - РЅСѓР¶РЅРѕ РїРѕРІС‚РѕСЂРЅРѕ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊСЃСЏ РІ GUI
 	RECT rcLeft = pviLeft.PanelRect;
 	BOOL bLeftVisible = pviLeft.Visible;
 	RECT rcRight = pviRight.PanelRect;
@@ -1073,7 +1073,7 @@ void ReloadPanelsInfo()
 	else
 		FUNC_X(ReloadPanelsInfoW)();
 
-	// Обновить gFarInfo (используется в RgnDetect)
+	// РћР±РЅРѕРІРёС‚СЊ gFarInfo (РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ RgnDetect)
 	CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
 	_ASSERTE(countof(p->nFarColors)==countof(gFarInfo.nFarColors) && sizeof(*p->nFarColors) == sizeof(*gFarInfo.nFarColors));
 	memmove(gFarInfo.nFarColors, p->nFarColors, sizeof(gFarInfo.nFarColors));
@@ -1081,7 +1081,7 @@ void ReloadPanelsInfo()
 	gFarInfo.FarInterfaceSettings.Raw = p->FarInterfaceSettings.Raw;
 	gFarInfo.FarPanelSettings.Raw = p->FarPanelSettings.Raw;
 	gFarInfo.bFarPanelAllowed = TRUE;
-	// Положения панелей
+	// РџРѕР»РѕР¶РµРЅРёСЏ РїР°РЅРµР»РµР№
 	gFarInfo.bFarLeftPanel = pviLeft.Visible;
 	gFarInfo.FarLeftPanel.PanelRect = pviLeft.PanelRect;
 	gFarInfo.bFarRightPanel = pviRight.Visible;
@@ -1127,7 +1127,7 @@ void ReloadPanelsInfo()
 //		*lpDst = girUnget[0];
 //		BOOL lbNeedPop = FALSE;
 //		if (girUnget[0].EventType == EVENT_TYPE_REDRAW)
-//			abRemove = TRUE; // Это - сразу удаляем из буфера
+//			abRemove = TRUE; // Р­С‚Рѕ - СЃСЂР°Р·Сѓ СѓРґР°Р»СЏРµРј РёР· Р±СѓС„РµСЂР°
 //
 //		if (girUnget[0].EventType == KEY_EVENT) {
 //			_ASSERTE(((short)girUnget[0].Event.KeyEvent.wRepeatCount) > 0);
@@ -1147,7 +1147,7 @@ void ReloadPanelsInfo()
 //			gnUngetCount --;
 //			_ASSERTE(gnUngetCount >= 0);
 //			if (gnUngetCount > 0) {
-//				// Подвинуть в буфере то что осталось к началу
+//				// РџРѕРґРІРёРЅСѓС‚СЊ РІ Р±СѓС„РµСЂРµ С‚Рѕ С‡С‚Рѕ РѕСЃС‚Р°Р»РѕСЃСЊ Рє РЅР°С‡Р°Р»Сѓ
 //				memmove(girUnget, girUnget+1, sizeof(girUnget[0])*gnUngetCount);
 //			}
 //			girUnget[gnUngetCount].EventType = 0;
@@ -1180,7 +1180,7 @@ void ReloadPanelsInfo()
 //	while (nBufSize && gnUngetCount)
 //	{
 //		if ((wType = PopUngetBuffer(abRemove, p)) == 0)
-//			break; // буфер кончился
+//			break; // Р±СѓС„РµСЂ РєРѕРЅС‡РёР»СЃСЏ
 //		if (wType == EVENT_TYPE_REDRAW)
 //		{
 //			lbRedraw = TRUE;
@@ -1192,11 +1192,11 @@ void ReloadPanelsInfo()
 //				lbSetEnvVar = TRUE;
 //			}
 //			nBufSize--; p++;
-//			if (!abRemove) break; // В режиме Peek - возвращаем не более одного нажатияs
+//			if (!abRemove) break; // Р’ СЂРµР¶РёРјРµ Peek - РІРѕР·РІСЂР°С‰Р°РµРј РЅРµ Р±РѕР»РµРµ РѕРґРЅРѕРіРѕ РЅР°Р¶Р°С‚РёСЏs
 //		}
 //	}
 //
-//	//// Если натыкаемся на событие EVENT_TYPE_REDRAW - сбрасывать переменную EnvVar
+//	//// Р•СЃР»Рё РЅР°С‚С‹РєР°РµРјСЃСЏ РЅР° СЃРѕР±С‹С‚РёРµ EVENT_TYPE_REDRAW - СЃР±СЂР°СЃС‹РІР°С‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ EnvVar
 //	//// SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_ACTIVE);
 //	//if (girUnget[0].EventType == EVENT_TYPE_REDRAW)
 //	//{
@@ -1204,7 +1204,7 @@ void ReloadPanelsInfo()
 //	//	gnUngetCount --;
 //	//	_ASSERTE(gnUngetCount >= 0);
 //	//	if (gnUngetCount > 0) {
-//	//		// Подвинуть в буфере то что осталось к началу
+//	//		// РџРѕРґРІРёРЅСѓС‚СЊ РІ Р±СѓС„РµСЂРµ С‚Рѕ С‡С‚Рѕ РѕСЃС‚Р°Р»РѕСЃСЊ Рє РЅР°С‡Р°Р»Сѓ
 //	//		memmove(girUnget, girUnget+1, sizeof(girUnget[0])*gnUngetCount);
 //	//	}
 //	//	girUnget[gnUngetCount].EventType = 0;
@@ -1232,7 +1232,7 @@ void ReloadPanelsInfo()
 //	//	gnUngetCount -= j;
 //	//	_ASSERTE(gnUngetCount >= 0);
 //	//	if (gnUngetCount > 0) {
-//	//		// Подвинуть в буфере то что осталось к началу
+//	//		// РџРѕРґРІРёРЅСѓС‚СЊ РІ Р±СѓС„РµСЂРµ С‚Рѕ С‡С‚Рѕ РѕСЃС‚Р°Р»РѕСЃСЊ Рє РЅР°С‡Р°Р»Сѓ
 //	//		memmove(girUnget, girUnget+nMax, sizeof(girUnget[0])*gnUngetCount);
 //	//		girUnget[gnUngetCount].EventType = 0;
 //	//	}
@@ -1286,7 +1286,7 @@ void ResetUngetBuffer()
 	//gbWaitForKeySequenceEnd = false;
 }
 
-// Должен активироваться или через Synchro или через PeekConsoleInput в FAR1
+// Р”РѕР»Р¶РµРЅ Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊСЃСЏ РёР»Рё С‡РµСЂРµР· Synchro РёР»Рё С‡РµСЂРµР· PeekConsoleInput РІ FAR1
 void OnReadyForPanelsReload()
 {
 	if (!gnConsoleChanges)
@@ -1294,8 +1294,8 @@ void OnReadyForPanelsReload()
 
 	gbConsoleChangesSyncho = false;
 	DWORD nCurChanges = gnConsoleChanges; gnConsoleChanges = 0;
-	// Сбросим, чтобы RgnDetect попытался сам найти панели и диалоги.
-	// Это нужно чтобы избежать возможных блокировок фара
+	// РЎР±СЂРѕСЃРёРј, С‡С‚РѕР±С‹ RgnDetect РїРѕРїС‹С‚Р°Р»СЃСЏ СЃР°Рј РЅР°Р№С‚Рё РїР°РЅРµР»Рё Рё РґРёР°Р»РѕРіРё.
+	// Р­С‚Рѕ РЅСѓР¶РЅРѕ С‡С‚РѕР±С‹ РёР·Р±РµР¶Р°С‚СЊ РІРѕР·РјРѕР¶РЅС‹С… Р±Р»РѕРєРёСЂРѕРІРѕРє С„Р°СЂР°
 	gFarInfo.bFarPanelInfoFilled = gFarInfo.bFarLeftPanel = gFarInfo.bFarRightPanel = FALSE;
 	gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
 	gnRgnDetectFlags = gpRgnDetect->GetFlags();
@@ -1311,17 +1311,17 @@ void OnReadyForPanelsReload()
 	gpDbgDlg->SetFrom(gpRgnDetect->GetDetectedDialogsPtr());
 	//#endif
 
-	WARNING("Если панели скрыты (активен редактор/вьювер) - не пытаться считывать панели");
+	WARNING("Р•СЃР»Рё РїР°РЅРµР»Рё СЃРєСЂС‹С‚С‹ (Р°РєС‚РёРІРµРЅ СЂРµРґР°РєС‚РѕСЂ/РІСЊСЋРІРµСЂ) - РЅРµ РїС‹С‚Р°С‚СЊСЃСЏ СЃС‡РёС‚С‹РІР°С‚СЊ РїР°РЅРµР»Рё");
 
 	if (!CheckWindows())
 	{
-		// Спрятать/разрегистрировать?
+		// РЎРїСЂСЏС‚Р°С‚СЊ/СЂР°Р·СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊ?
 	}
 	else
 	{
 		//if (pviLeft.hView || pviRight.hView) {
 		//	ReloadPanelsInfo();
-		//	/* После реального получения панелей - можно повторно "обнаружить диалоги"? */
+		//	/* РџРѕСЃР»Рµ СЂРµР°Р»СЊРЅРѕРіРѕ РїРѕР»СѓС‡РµРЅРёСЏ РїР°РЅРµР»РµР№ - РјРѕР¶РЅРѕ РїРѕРІС‚РѕСЂРЅРѕ "РѕР±РЅР°СЂСѓР¶РёС‚СЊ РґРёР°Р»РѕРіРё"? */
 		//	CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
 		//	gFarInfo.bFarPanelInfoFilled = TRUE;
 		//	gFarInfo.bFarLeftPanel = (pviLeft.Visible!=0);
@@ -1354,23 +1354,23 @@ void OnReadyForPanelsReload()
 		}
 	}
 
-	//WARNING("Проверить список окон FAR и если активное НЕ панели - сразу выйти (и спрятать разрегистрировать)");
-	//WARNING("Проверить и сравнить, если изменился регион панели - обновить PanelView");
-	//!. Сначала проверить на какой панели находится фокус!
-	//   Это требуется для того, чтобы НЕактивная панель не перехватывала стрелки
-	//Далее
-	//1. Панель видима -> считать информацию о прямоугольнике, элементах панели, и выполнить отрисовку
-	//   информацию о прямоугольнике (если он изменился) передать в GUI
-	//   Если окошко панели невидимо - выполнить повторную регистрацию в GUI - оно само сделает apiShowWindow
-	//2. Панель невидима -> спрятать окошко панели и разрегистрироваться в GUI
+	//WARNING("РџСЂРѕРІРµСЂРёС‚СЊ СЃРїРёСЃРѕРє РѕРєРѕРЅ FAR Рё РµСЃР»Рё Р°РєС‚РёРІРЅРѕРµ РќР• РїР°РЅРµР»Рё - СЃСЂР°Р·Сѓ РІС‹Р№С‚Рё (Рё СЃРїСЂСЏС‚Р°С‚СЊ СЂР°Р·СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊ)");
+	//WARNING("РџСЂРѕРІРµСЂРёС‚СЊ Рё СЃСЂР°РІРЅРёС‚СЊ, РµСЃР»Рё РёР·РјРµРЅРёР»СЃСЏ СЂРµРіРёРѕРЅ РїР°РЅРµР»Рё - РѕР±РЅРѕРІРёС‚СЊ PanelView");
+	//!. РЎРЅР°С‡Р°Р»Р° РїСЂРѕРІРµСЂРёС‚СЊ РЅР° РєР°РєРѕР№ РїР°РЅРµР»Рё РЅР°С…РѕРґРёС‚СЃСЏ С„РѕРєСѓСЃ!
+	//   Р­С‚Рѕ С‚СЂРµР±СѓРµС‚СЃСЏ РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ РќР•Р°РєС‚РёРІРЅР°СЏ РїР°РЅРµР»СЊ РЅРµ РїРµСЂРµС…РІР°С‚С‹РІР°Р»Р° СЃС‚СЂРµР»РєРё
+	//Р”Р°Р»РµРµ
+	//1. РџР°РЅРµР»СЊ РІРёРґРёРјР° -> СЃС‡РёС‚Р°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРµ, СЌР»РµРјРµРЅС‚Р°С… РїР°РЅРµР»Рё, Рё РІС‹РїРѕР»РЅРёС‚СЊ РѕС‚СЂРёСЃРѕРІРєСѓ
+	//   РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРµ (РµСЃР»Рё РѕРЅ РёР·РјРµРЅРёР»СЃСЏ) РїРµСЂРµРґР°С‚СЊ РІ GUI
+	//   Р•СЃР»Рё РѕРєРѕС€РєРѕ РїР°РЅРµР»Рё РЅРµРІРёРґРёРјРѕ - РІС‹РїРѕР»РЅРёС‚СЊ РїРѕРІС‚РѕСЂРЅСѓСЋ СЂРµРіРёСЃС‚СЂР°С†РёСЋ РІ GUI - РѕРЅРѕ СЃР°РјРѕ СЃРґРµР»Р°РµС‚ apiShowWindow
+	//2. РџР°РЅРµР»СЊ РЅРµРІРёРґРёРјР° -> СЃРїСЂСЏС‚Р°С‚СЊ РѕРєРѕС€РєРѕ РїР°РЅРµР»Рё Рё СЂР°Р·СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊСЃСЏ РІ GUI
 }
 
 BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
-	// Только для FAR1, в FAR2 - через Synchro!
+	// РўРѕР»СЊРєРѕ РґР»СЏ FAR1, РІ FAR2 - С‡РµСЂРµР· Synchro!
 	if (gFarVersion.dwVerMajor == 1)
 	{
-		// Выполняем только если фар считывает единственное событие (аналог Synchro в Far2)
+		// Р’С‹РїРѕР»РЅСЏРµРј С‚РѕР»СЊРєРѕ РµСЃР»Рё С„Р°СЂ СЃС‡РёС‚С‹РІР°РµС‚ РµРґРёРЅСЃС‚РІРµРЅРЅРѕРµ СЃРѕР±С‹С‚РёРµ (Р°РЅР°Р»РѕРі Synchro РІ Far2)
 		if (nBufSize == 1)
 		{
 			if (gbSynchoRedrawPanelRequested)
@@ -1386,7 +1386,7 @@ BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 				OnReadyForPanelsReload();
 			}
 
-			// Отдельно стоящая - выполнение макроса
+			// РћС‚РґРµР»СЊРЅРѕ СЃС‚РѕСЏС‰Р°СЏ - РІС‹РїРѕР»РЅРµРЅРёРµ РјР°РєСЂРѕСЃР°
 			if (gpLastSynchroArg)
 			{
 				ProcessSynchroEventW(SE_COMMONSYNCHRO, gpLastSynchroArg);
@@ -1405,18 +1405,18 @@ BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 	if (!lpBuffer || !lpNumberOfEventsRead)
 	{
 		*pbResult = FALSE;
-		return FALSE; // ошибка в параметрах
+		return FALSE; // РѕС€РёР±РєР° РІ РїР°СЂР°РјРµС‚СЂР°С…
 	}
 
-	//// если в girUnget что-то есть вернуть из него и FALSE (тогда OnPostPeekConsole не будет вызван)");
+	//// РµСЃР»Рё РІ girUnget С‡С‚Рѕ-С‚Рѕ РµСЃС‚СЊ РІРµСЂРЅСѓС‚СЊ РёР· РЅРµРіРѕ Рё FALSE (С‚РѕРіРґР° OnPostPeekConsole РЅРµ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ)");
 	//if (gnUngetCount)
 	//{
 	//	if (GetBufferInput(FALSE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
-	//		return FALSE; // PeekConsoleInput & OnPostPeekConsole не будет вызван
+	//		return FALSE; // PeekConsoleInput & OnPostPeekConsole РЅРµ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ
 	//}
-	//// Для FAR1 - эмуляция ACTL_SYNCHRO
-	//if ((gpLastSynchroArg || gbSynchoRedrawPanelRequested) // ожидает команда
-	//	&& nBufSize == 1  // только когда размер буфера == 1 - считается что ФАР готов
+	//// Р”Р»СЏ FAR1 - СЌРјСѓР»СЏС†РёСЏ ACTL_SYNCHRO
+	//if ((gpLastSynchroArg || gbSynchoRedrawPanelRequested) // РѕР¶РёРґР°РµС‚ РєРѕРјР°РЅРґР°
+	//	&& nBufSize == 1  // С‚РѕР»СЊРєРѕ РєРѕРіРґР° СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° == 1 - СЃС‡РёС‚Р°РµС‚СЃСЏ С‡С‚Рѕ Р¤РђР  РіРѕС‚РѕРІ
 	//	&& gFarVersion.dwVerMajor==1) // FAR1
 	//{
 	//	if (gbSynchoRedrawPanelRequested)
@@ -1424,7 +1424,7 @@ BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 	//	if (gpLastSynchroArg)
 	//		ProcessSynchroEventW(SE_COMMONSYNCHRO, gpLastSynchroArg);
 	//}
-	return TRUE; // продолжить без изменений
+	return TRUE; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ Р±РµР· РёР·РјРµРЅРµРЅРёР№
 }
 
 BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
@@ -1432,10 +1432,10 @@ BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufS
 	if (!lpBuffer || !lpNumberOfEventsRead)
 	{
 		*pbResult = FALSE;
-		return FALSE; // ошибка в параметрах
+		return FALSE; // РѕС€РёР±РєР° РІ РїР°СЂР°РјРµС‚СЂР°С…
 	}
 
-	// заменить обработку стрелок, но girUnget не трогать
+	// Р·Р°РјРµРЅРёС‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ СЃС‚СЂРµР»РѕРє, РЅРѕ girUnget РЅРµ С‚СЂРѕРіР°С‚СЊ
 	if (*lpNumberOfEventsRead)
 	{
 		if (ProcessConsoleInput(FALSE/*abReadMode*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
@@ -1445,11 +1445,11 @@ BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufS
 				*pbResult = FALSE;
 			}
 
-			return FALSE; // вернуться в вызывающую функцию
+			return FALSE; // РІРµСЂРЅСѓС‚СЊСЃСЏ РІ РІС‹Р·С‹РІР°СЋС‰СѓСЋ С„СѓРЅРєС†РёСЋ
 		}
 	}
 
-	return TRUE; // продолжить без изменений
+	return TRUE; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ Р±РµР· РёР·РјРµРЅРµРЅРёР№
 }
 
 BOOL WINAPI OnPreReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
@@ -1457,16 +1457,16 @@ BOOL WINAPI OnPreReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 	if (!lpBuffer || !lpNumberOfEventsRead)
 	{
 		*pbResult = FALSE;
-		return FALSE; // ошибка в параметрах
+		return FALSE; // РѕС€РёР±РєР° РІ РїР°СЂР°РјРµС‚СЂР°С…
 	}
 
-	//// если в girUnget что-то есть вернуть из него и FALSE (тогда OnPostPeekConsole не будет вызван)");
+	//// РµСЃР»Рё РІ girUnget С‡С‚Рѕ-С‚Рѕ РµСЃС‚СЊ РІРµСЂРЅСѓС‚СЊ РёР· РЅРµРіРѕ Рё FALSE (С‚РѕРіРґР° OnPostPeekConsole РЅРµ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ)");
 	//if (gnUngetCount)
 	//{
 	//	if (GetBufferInput(TRUE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
-	//		return FALSE; // ReadConsoleInput & OnPostReadConsole не будет вызван
+	//		return FALSE; // ReadConsoleInput & OnPostReadConsole РЅРµ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ
 	//}
-	return TRUE; // продолжить без изменений
+	return TRUE; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ Р±РµР· РёР·РјРµРЅРµРЅРёР№
 }
 
 BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
@@ -1474,10 +1474,10 @@ BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufS
 	if (!lpBuffer || !lpNumberOfEventsRead)
 	{
 		*pbResult = FALSE;
-		return FALSE; // ошибка в параметрах
+		return FALSE; // РѕС€РёР±РєР° РІ РїР°СЂР°РјРµС‚СЂР°С…
 	}
 
-	// заменить обработку стрелок, если надо - поместить серию нажатий в girUnget
+	// Р·Р°РјРµРЅРёС‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ СЃС‚СЂРµР»РѕРє, РµСЃР»Рё РЅР°РґРѕ - РїРѕРјРµСЃС‚РёС‚СЊ СЃРµСЂРёСЋ РЅР°Р¶Р°С‚РёР№ РІ girUnget
 	if (*lpNumberOfEventsRead)
 	{
 		if (ProcessConsoleInput(TRUE/*abReadMode*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
@@ -1487,11 +1487,11 @@ BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufS
 				*pbResult = FALSE;
 			}
 
-			return FALSE; // вернуться в вызывающую функцию
+			return FALSE; // РІРµСЂРЅСѓС‚СЊСЃСЏ РІ РІС‹Р·С‹РІР°СЋС‰СѓСЋ С„СѓРЅРєС†РёСЋ
 		}
 	}
 
-	return TRUE; // продолжить без изменений
+	return TRUE; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ Р±РµР· РёР·РјРµРЅРµРЅРёР№
 }
 
 
@@ -1516,7 +1516,7 @@ BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufS
 //On output, the structure members specify the actual rectangle that was used.
 BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
 {
-	WARNING("После повторного отображения view - хорошо бы сначала полностью считать gpRgnDetect из консоли");
+	WARNING("РџРѕСЃР»Рµ РїРѕРІС‚РѕСЂРЅРѕРіРѕ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ view - С…РѕСЂРѕС€Рѕ Р±С‹ СЃРЅР°С‡Р°Р»Р° РїРѕР»РЅРѕСЃС‚СЊСЋ СЃС‡РёС‚Р°С‚СЊ gpRgnDetect РёР· РєРѕРЅСЃРѕР»Рё");
 
 	if (gpRgnDetect && lpBuffer && lpWriteRegion)
 	{
@@ -1533,7 +1533,7 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 		SMALL_RECT rcFarRect; GetFarRect(&rcFarRect);
 		gpRgnDetect->SetFarRect(&rcFarRect);
 		gpRgnDetect->OnWriteConsoleOutput(lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion, gcrCurColors);
-		WARNING("Перед установкой флагов измененности - сначала хорошо бы проверить, а менялась ли сама панель?");
+		WARNING("РџРµСЂРµРґ СѓСЃС‚Р°РЅРѕРІРєРѕР№ С„Р»Р°РіРѕРІ РёР·РјРµРЅРµРЅРЅРѕСЃС‚Рё - СЃРЅР°С‡Р°Р»Р° С…РѕСЂРѕС€Рѕ Р±С‹ РїСЂРѕРІРµСЂРёС‚СЊ, Р° РјРµРЅСЏР»Р°СЃСЊ Р»Рё СЃР°РјР° РїР°РЅРµР»СЊ?");
 		DWORD nChanges = 0;
 		RECT rcTest = {0};
 		RECT rcWrite =
@@ -1544,9 +1544,9 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 
 		if (pviLeft.hView)
 		{
-			WARNING("Проверить в far/w");
+			WARNING("РџСЂРѕРІРµСЂРёС‚СЊ РІ far/w");
 
-			WARNING("IntersectRect не работает, если низ совпадает?");
+			WARNING("IntersectRect РЅРµ СЂР°Р±РѕС‚Р°РµС‚, РµСЃР»Рё РЅРёР· СЃРѕРІРїР°РґР°РµС‚?");
 			RECT rcPanel = pviLeft.WorkRect;
 			rcPanel.bottom++;
 			if (IntersectRect(&rcTest, &rcPanel, &rcWrite))
@@ -1557,9 +1557,9 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 
 		if (pviRight.hView)
 		{
-			WARNING("Проверить в far/w");
+			WARNING("РџСЂРѕРІРµСЂРёС‚СЊ РІ far/w");
 
-			WARNING("IntersectRect не работает, если низ совпадает?");
+			WARNING("IntersectRect РЅРµ СЂР°Р±РѕС‚Р°РµС‚, РµСЃР»Рё РЅРёР· СЃРѕРІРїР°РґР°РµС‚?");
 			RECT rcPanel = pviRight.WorkRect;
 			rcPanel.bottom++;
 			if (IntersectRect(&rcTest, &rcPanel, &rcWrite))
@@ -1572,7 +1572,7 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 		if (nChanges)
 		{
 			//bool lbNeedSynchro = (gn ConsoleChanges == 0 && gFarVersion.dwVerMajor >= 2);
-			// 1-left, 2-right. Но пока - ставим все, т.к. еще не проверяется что собственно изменилось!
+			// 1-left, 2-right. РќРѕ РїРѕРєР° - СЃС‚Р°РІРёРј РІСЃРµ, С‚.Рє. РµС‰Рµ РЅРµ РїСЂРѕРІРµСЂСЏРµС‚СЃСЏ С‡С‚Рѕ СЃРѕР±СЃС‚РІРµРЅРЅРѕ РёР·РјРµРЅРёР»РѕСЃСЊ!
 			//gnConsoleChanges |= 3;
 			gnConsoleChanges |= nChanges;
 			//if (lbNeedSynchro)
@@ -1582,16 +1582,16 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 		}
 	}
 
-	return TRUE; // Продолжить без изменений
+	return TRUE; // РџСЂРѕРґРѕР»Р¶РёС‚СЊ Р±РµР· РёР·РјРµРЅРµРЅРёР№
 }
 
 
-//// Вернуть TRUE, если был Unget
+//// Р’РµСЂРЅСѓС‚СЊ TRUE, РµСЃР»Рё Р±С‹Р» Unget
 //BOOL ProcessKeyPress(CeFullPanelInfo* pi, BOOL abReadMode, PINPUT_RECORD lpBuffer)
 //{
 //	_ASSERTE(lpBuffer->EventType == KEY_EVENT);
 //
-//	// Перехватываемые клавиши
+//	// РџРµСЂРµС…РІР°С‚С‹РІР°РµРјС‹Рµ РєР»Р°РІРёС€Рё
 //	WORD vk = lpBuffer->Event.KeyEvent.wVirtualKeyCode;
 //	BOOL lbWasUnget = FALSE;
 //
@@ -1604,7 +1604,7 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 //			}
 //
 //		} else {
-//			// Переработать
+//			// РџРµСЂРµСЂР°Р±РѕС‚Р°С‚СЊ
 //			int n = 0;
 //			switch (vk) {
 //				case VK_UP: {
@@ -1630,32 +1630,32 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 //	return lbWasUnget;
 //}
 
-// Выполнить замену клавиш и при необходимости запросить SYNCHRO_REDRAW_PANEL
-// Перехватываются ВСЕ VK_LEFT/RIGHT/UP/DOWN/PgUp/PgDn/WHEEL_UP/WHEEL_DOWN
-// иначе, если их обработает сам Фар - то собъется TopPanelItem!
-// Вернуть TRUE, если замены были произведены
+// Р’С‹РїРѕР»РЅРёС‚СЊ Р·Р°РјРµРЅСѓ РєР»Р°РІРёС€ Рё РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё Р·Р°РїСЂРѕСЃРёС‚СЊ SYNCHRO_REDRAW_PANEL
+// РџРµСЂРµС…РІР°С‚С‹РІР°СЋС‚СЃСЏ Р’РЎР• VK_LEFT/RIGHT/UP/DOWN/PgUp/PgDn/WHEEL_UP/WHEEL_DOWN
+// РёРЅР°С‡Рµ, РµСЃР»Рё РёС… РѕР±СЂР°Р±РѕС‚Р°РµС‚ СЃР°Рј Р¤Р°СЂ - С‚Рѕ СЃРѕР±СЉРµС‚СЃСЏ TopPanelItem!
+// Р’РµСЂРЅСѓС‚СЊ TRUE, РµСЃР»Рё Р·Р°РјРµРЅС‹ Р±С‹Р»Рё РїСЂРѕРёР·РІРµРґРµРЅС‹
 BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead)
 {
 	static bool sbInClearing = false;
 
 	if (sbInClearing)
 	{
-		// Если это наше считывание буфера, чтобы убрать из него обработанные нажатия
+		// Р•СЃР»Рё СЌС‚Рѕ РЅР°С€Рµ СЃС‡РёС‚С‹РІР°РЅРёРµ Р±СѓС„РµСЂР°, С‡С‚РѕР±С‹ СѓР±СЂР°С‚СЊ РёР· РЅРµРіРѕ РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹Рµ РЅР°Р¶Р°С‚РёСЏ
 		return FALSE;
 	}
 
-	// Обрабатываем только одиночные нажатия (фар дергает по одному событию из буфера ввода!)
+	// РћР±СЂР°Р±Р°С‚С‹РІР°РµРј С‚РѕР»СЊРєРѕ РѕРґРёРЅРѕС‡РЅС‹Рµ РЅР°Р¶Р°С‚РёСЏ (С„Р°СЂ РґРµСЂРіР°РµС‚ РїРѕ РѕРґРЅРѕРјСѓ СЃРѕР±С‹С‚РёСЋ РёР· Р±СѓС„РµСЂР° РІРІРѕРґР°!)
 	if (nBufSize != 1 || !lpNumberOfEventsRead || *lpNumberOfEventsRead != 1)
 	{
 		return FALSE;
 	}
 
-	// Перехват управления курсором
+	// РџРµСЂРµС…РІР°С‚ СѓРїСЂР°РІР»РµРЅРёСЏ РєСѓСЂСЃРѕСЂРѕРј
 	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE/*abFocusRequired*/);
 
 	if (!pi)
 	{
-		return FALSE; // панель создана, но она не активна или скрыта диалогом или погашена фаровская панель
+		return FALSE; // РїР°РЅРµР»СЊ СЃРѕР·РґР°РЅР°, РЅРѕ РѕРЅР° РЅРµ Р°РєС‚РёРІРЅР° РёР»Рё СЃРєСЂС‹С‚Р° РґРёР°Р»РѕРіРѕРј РёР»Рё РїРѕРіР°С€РµРЅР° С„Р°СЂРѕРІСЃРєР°СЏ РїР°РЅРµР»СЊ
 	}
 
 	if (!wScanCodeUp)
@@ -1670,9 +1670,9 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 #endif
 	}
 
-	WARNING("Проверять один из DWORD-ов окна на предмет наличия диалогов");
-	WARNING("Ставить его должен GUI");
-	WARNING("Если есть хотя бы один диалог - значит перехватывать нельзя");
+	WARNING("РџСЂРѕРІРµСЂСЏС‚СЊ РѕРґРёРЅ РёР· DWORD-РѕРІ РѕРєРЅР° РЅР° РїСЂРµРґРјРµС‚ РЅР°Р»РёС‡РёСЏ РґРёР°Р»РѕРіРѕРІ");
+	WARNING("РЎС‚Р°РІРёС‚СЊ РµРіРѕ РґРѕР»Р¶РµРЅ GUI");
+	WARNING("Р•СЃР»Рё РµСЃС‚СЊ С…РѕС‚СЏ Р±С‹ РѕРґРёРЅ РґРёР°Р»РѕРі - Р·РЅР°С‡РёС‚ РїРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ РЅРµР»СЊР·СЏ");
 	PanelViewMode PVM = pi->PVM;
 	BOOL lbWasChanges = FALSE;
 	INT_PTR iCurItem, iTopItem, iShift = 0;
@@ -1686,7 +1686,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		iCurItem = pi->CurrentItem; iTopItem = max(pi->TopPanelItem,pi->ReqTopPanelItem);
 	}
 
-	// Пойдем в два прохода. В первом - обработка замен, и помещение в буфер Unget.
+	// РџРѕР№РґРµРј РІ РґРІР° РїСЂРѕС…РѕРґР°. Р’ РїРµСЂРІРѕРј - РѕР±СЂР°Р±РѕС‚РєР° Р·Р°РјРµРЅ, Рё РїРѕРјРµС‰РµРЅРёРµ РІ Р±СѓС„РµСЂ Unget.
 	PINPUT_RECORD p = lpBuffer;
 	//PINPUT_RECORD pEnd = lpBuffer+*lpNumberOfEventsRead;
 	//PINPUT_RECORD pReplace = lpBuffer;
@@ -1697,7 +1697,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		if (p->EventType == KEY_EVENT)
 		{
 			INT_PTR iCurKeyShift = 0;
-			// Перехватываемые клавиши
+			// РџРµСЂРµС…РІР°С‚С‹РІР°РµРјС‹Рµ РєР»Р°РІРёС€Рё
 			WORD vk = p->Event.KeyEvent.wVirtualKeyCode;
 
 			if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT
@@ -1706,7 +1706,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 				if (!(p->Event.KeyEvent.dwControlKeyState
 				        & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)))
 				{
-					// Переработать
+					// РџРµСЂРµСЂР°Р±РѕС‚Р°С‚СЊ
 					int n = 1;
 
 					switch(vk)
@@ -1772,7 +1772,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 								int nCorrection = (PVM == pvm_Thumbnails) //-V103
 								                  ? (iCurItem % nRowCol) //-V104
 								                  : 0;
-								// Если PgUp нажат когда текущий элемент НЕ на верхней строке
+								// Р•СЃР»Рё PgUp РЅР°Р¶Р°С‚ РєРѕРіРґР° С‚РµРєСѓС‰РёР№ СЌР»РµРјРµРЅС‚ РќР• РЅР° РІРµСЂС…РЅРµР№ СЃС‚СЂРѕРєРµ
 								iCurKeyShift = (iTopItem - iCurItem);
 							}
 							else
@@ -1791,7 +1791,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 
 							if (iCurItem >= iTopItem && iCurItem < (iTopItem + nFull - nRowCol)) //-V104
 							{
-								// Если PgDn нажат когда текущий элемент НЕ на последней строке
+								// Р•СЃР»Рё PgDn РЅР°Р¶Р°С‚ РєРѕРіРґР° С‚РµРєСѓС‰РёР№ СЌР»РµРјРµРЅС‚ РќР• РЅР° РїРѕСЃР»РµРґРЅРµР№ СЃС‚СЂРѕРєРµ
 								INT_PTR nCorrection = (PVM == pvm_Thumbnails) //-V105
 								                  ? (iCurItem % nRowCol) //-V104 //-V105
 								                  : (nRowCol - 1);
@@ -1804,13 +1804,13 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 						} break;
 					}
 
-					// Если это нажатие - то дополнительные нужно поместить в Unget буфер
+					// Р•СЃР»Рё СЌС‚Рѕ РЅР°Р¶Р°С‚РёРµ - С‚Рѕ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РЅСѓР¶РЅРѕ РїРѕРјРµСЃС‚РёС‚СЊ РІ Unget Р±СѓС„РµСЂ
 					if (iCurKeyShift)
 					{
-						// Это событие из буфера нужно убрать
+						// Р­С‚Рѕ СЃРѕР±С‹С‚РёРµ РёР· Р±СѓС„РµСЂР° РЅСѓР¶РЅРѕ СѓР±СЂР°С‚СЊ
 						bEraseEvent = true;
 
-						// Плюсовать к общему сдвигу
+						// РџР»СЋСЃРѕРІР°С‚СЊ Рє РѕР±С‰РµРјСѓ СЃРґРІРёРіСѓ
 						if (p->Event.KeyEvent.bKeyDown)
 						{
 							iShift += iCurKeyShift;
@@ -1827,20 +1827,20 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 
 			//end: if (p->EventType == KEY_EVENT)
 		}
-		// Колесо мышки тоже перехватывать нужно
+		// РљРѕР»РµСЃРѕ РјС‹С€РєРё С‚РѕР¶Рµ РїРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ РЅСѓР¶РЅРѕ
 		else if (p->EventType == MOUSE_EVENT)
 		{
-			WARNING("Перехвать Wheel, чтобы не сбился TopPanelItem");
+			WARNING("РџРµСЂРµС…РІР°С‚СЊ Wheel, С‡С‚РѕР±С‹ РЅРµ СЃР±РёР»СЃСЏ TopPanelItem");
 		}
-		// При смене размера окна - нужно передернуть детектор
+		// РџСЂРё СЃРјРµРЅРµ СЂР°Р·РјРµСЂР° РѕРєРЅР° - РЅСѓР¶РЅРѕ РїРµСЂРµРґРµСЂРЅСѓС‚СЊ РґРµС‚РµРєС‚РѕСЂ
 		else if (p->EventType == WINDOW_BUFFER_SIZE_EVENT)
 		{
 			if (gpRgnDetect)
 				gpRgnDetect->OnWindowSizeChanged();
 		}
 
-		//// Если были помещены события в буфер Unget - требуется поместить в буфер и все что идут за ним,
-		//// т.к. между ними будет "виртуальная" вставка событий
+		//// Р•СЃР»Рё Р±С‹Р»Рё РїРѕРјРµС‰РµРЅС‹ СЃРѕР±С‹С‚РёСЏ РІ Р±СѓС„РµСЂ Unget - С‚СЂРµР±СѓРµС‚СЃСЏ РїРѕРјРµСЃС‚РёС‚СЊ РІ Р±СѓС„РµСЂ Рё РІСЃРµ С‡С‚Рѕ РёРґСѓС‚ Р·Р° РЅРёРј,
+		//// С‚.Рє. РјРµР¶РґСѓ РЅРёРјРё Р±СѓРґРµС‚ "РІРёСЂС‚СѓР°Р»СЊРЅР°СЏ" РІСЃС‚Р°РІРєР° СЃРѕР±С‹С‚РёР№
 		//if (pFirstReplace && abReadMode)
 		//{
 		//	UngetBufferInput(1,p);
@@ -1850,13 +1850,13 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		if (bEraseEvent)
 		{
 			lbWasChanges = TRUE;
-			// Если в буфере больше одного события - сдвинуть хвост
+			// Р•СЃР»Рё РІ Р±СѓС„РµСЂРµ Р±РѕР»СЊС€Рµ РѕРґРЅРѕРіРѕ СЃРѕР±С‹С‚РёСЏ - СЃРґРІРёРЅСѓС‚СЊ С…РІРѕСЃС‚
 			//if (p < pEnd)
 			//{
 			//	memmove(pReplace, p, pEnd-p);
 			//	pReplace++;
 			//}
-			// Нужно убрать это событие из буфера
+			// РќСѓР¶РЅРѕ СѓР±СЂР°С‚СЊ СЌС‚Рѕ СЃРѕР±С‹С‚РёРµ РёР· Р±СѓС„РµСЂР°
 			DWORD nRead = 0;
 			INPUT_RECORD rr[2];
 
@@ -1877,7 +1877,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 			bEraseEvent = false;
 		}
 	}
-	//// Скорректировать количество "считанных" событий
+	//// РЎРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ РєРѕР»РёС‡РµСЃС‚РІРѕ "СЃС‡РёС‚Р°РЅРЅС‹С…" СЃРѕР±С‹С‚РёР№
 	//if (pFirstReplace && abReadMode)
 	//{
 	//	DWORD nReady = (int)(pFirstReplace - lpBuffer);
@@ -1889,19 +1889,19 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 	//	}
 	//}
 
-	// Если в буфере есть "отложенные" события - возможно потребуется установка переменной окружения
+	// Р•СЃР»Рё РІ Р±СѓС„РµСЂРµ РµСЃС‚СЊ "РѕС‚Р»РѕР¶РµРЅРЅС‹Рµ" СЃРѕР±С‹С‚РёСЏ - РІРѕР·РјРѕР¶РЅРѕ РїРѕС‚СЂРµР±СѓРµС‚СЃСЏ СѓСЃС‚Р°РЅРѕРІРєР° РїРµСЂРµРјРµРЅРЅРѕР№ РѕРєСЂСѓР¶РµРЅРёСЏ
 	//if (pFirstReplace && abReadMode && gnUngetCount)
 	if (iShift != 0)
 	{
 		_ASSERTE(lbWasChanges); lbWasChanges = TRUE;
-		// Посчитать новые CurItem & TopItem оптимально для PanelViews
+		// РџРѕСЃС‡РёС‚Р°С‚СЊ РЅРѕРІС‹Рµ CurItem & TopItem РѕРїС‚РёРјР°Р»СЊРЅРѕ РґР»СЏ PanelViews
 		iCurItem += iShift;
 
 		if (iCurItem >= pi->ItemsNumber) iCurItem = pi->ItemsNumber-1;
 
 		if (iCurItem < 0) iCurItem = 0;
 
-		// Прикинуть идеальный TopItem для текущего направления движения курсора
+		// РџСЂРёРєРёРЅСѓС‚СЊ РёРґРµР°Р»СЊРЅС‹Р№ TopItem РґР»СЏ С‚РµРєСѓС‰РµРіРѕ РЅР°РїСЂР°РІР»РµРЅРёСЏ РґРІРёР¶РµРЅРёСЏ РєСѓСЂСЃРѕСЂР°
 		iTopItem = pi->CalcTopPanelItem(iCurItem, iTopItem);
 #ifdef _DEBUG
 		wchar_t szDbg[512];
@@ -1914,7 +1914,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		          pi->bRequestItemSet ? L"YES" : L"No", (int)pi->ReqCurrentItem, (int)pi->ReqTopPanelItem);
 		DEBUGSTRCTRL(szDbg);
 #endif
-		// Вызвать обновление панели с новой позицией
+		// Р’С‹Р·РІР°С‚СЊ РѕР±РЅРѕРІР»РµРЅРёРµ РїР°РЅРµР»Рё СЃ РЅРѕРІРѕР№ РїРѕР·РёС†РёРµР№
 		pi->RequestSetPos(iCurItem, iTopItem);
 		//pi->ReqCurrentItem = iCurItem; pi->ReqTopPanelItem = iTopItem;
 		//pi->bRequestItemSet = true;
@@ -1934,7 +1934,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		//UpdateEnvVar(FALSE);
 	}
 
-	//// Второй проход - если буфер достаточно большой - добавить в него события из Unget буфера
+	//// Р’С‚РѕСЂРѕР№ РїСЂРѕС…РѕРґ - РµСЃР»Рё Р±СѓС„РµСЂ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ Р±РѕР»СЊС€РѕР№ - РґРѕР±Р°РІРёС‚СЊ РІ РЅРµРіРѕ СЃРѕР±С‹С‚РёСЏ РёР· Unget Р±СѓС„РµСЂР°
 	//if (gnUngetCount && nBufSize > *lpNumberOfEventsRead)
 	//{
 	//	DWORD nAdd = 0;
@@ -1969,7 +1969,7 @@ int ShowLastError()
 
 void UpdateEnvVar(BOOL abForceRedraw)
 {
-	//WARNING("сбрасывать скролл нужно ПЕРЕД возвратом последней клавиши ДО REDRAW");
+	//WARNING("СЃР±СЂР°СЃС‹РІР°С‚СЊ СЃРєСЂРѕР»Р» РЅСѓР¶РЅРѕ РџР•Р Р•Р” РІРѕР·РІСЂР°С‚РѕРј РїРѕСЃР»РµРґРЅРµР№ РєР»Р°РІРёС€Рё Р”Рћ REDRAW");
 	//if (gbWaitForKeySequenceEnd)
 	//{
 	//	SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_SCROLL);
@@ -2009,10 +2009,10 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 		DWORD dwFlags = gpRgnDetect->GetFlags();
 
 		if ((dwFlags & FR_ACTIVEMENUBAR) == FR_ACTIVEMENUBAR)
-			return NULL; // активно меню
+			return NULL; // Р°РєС‚РёРІРЅРѕ РјРµРЅСЋ
 
 		if ((dwFlags & FR_FREEDLG_MASK) != 0)
-			return NULL; // есть какой-то диалог
+			return NULL; // РµСЃС‚СЊ РєР°РєРѕР№-С‚Рѕ РґРёР°Р»РѕРі
 	}
 
 	if (abFocusRequired)
@@ -2022,12 +2022,12 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 		else if (pviRight.hView && pviRight.Focus && pviRight.Visible)
 			pi = &pviRight;
 
-		// Видим?
+		// Р’РёРґРёРј?
 		if (pi)
 		{
 			if (!pi->hView || !IsWindowVisible(pi->hView))
 			{
-				return NULL; // панель полностью скрыта диалогом или погашена фаровская панель
+				return NULL; // РїР°РЅРµР»СЊ РїРѕР»РЅРѕСЃС‚СЊСЋ СЃРєСЂС‹С‚Р° РґРёР°Р»РѕРіРѕРј РёР»Рё РїРѕРіР°С€РµРЅР° С„Р°СЂРѕРІСЃРєР°СЏ РїР°РЅРµР»СЊ
 			}
 		}
 	}
@@ -2039,7 +2039,7 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 			pi = &pviRight;
 	}
 
-	// Может быть PicView/MMView...
+	// РњРѕР¶РµС‚ Р±С‹С‚СЊ PicView/MMView...
 	if (pi)
 	{
 		RECT rc;
@@ -2048,13 +2048,13 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 		MapWindowPoints(pi->hView, ghConEmuWnd, &pt, 1);
 		HWND hChild[2];
 		hChild[0] = ChildWindowFromPointEx(ghConEmuWnd, pt, CWP_SKIPINVISIBLE|CWP_SKIPTRANSPARENT);
-		// Теперь проверим полноэкранные окна
+		// РўРµРїРµСЂСЊ РїСЂРѕРІРµСЂРёРј РїРѕР»РЅРѕСЌРєСЂР°РЅРЅС‹Рµ РѕРєРЅР°
 		MapWindowPoints(ghConEmuWnd, NULL, &pt, 1);
 		hChild[1] = WindowFromPoint(pt);
 
 		for(int i = 0; i <= 1; i++)
 		{
-			// В принципе, может быть и NULL, если координата попала в "прозрачную" часть hView
+			// Р’ РїСЂРёРЅС†РёРїРµ, РјРѕР¶РµС‚ Р±С‹С‚СЊ Рё NULL, РµСЃР»Рё РєРѕРѕСЂРґРёРЅР°С‚Р° РїРѕРїР°Р»Р° РІ "РїСЂРѕР·СЂР°С‡РЅСѓСЋ" С‡Р°СЃС‚СЊ hView
 			if (hChild[i] && hChild[i] != pi->hView)
 			{
 				wchar_t szClass[128];
@@ -2062,10 +2062,10 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 				if (GetClassName(hChild[i], szClass, 128))
 				{
 					if (lstrcmpi(szClass, L"FarPictureViewControlClass") == 0)
-						return NULL; // активен PicView!
+						return NULL; // Р°РєС‚РёРІРµРЅ PicView!
 
 					if (lstrcmpi(szClass, L"FarMultiViewControlClass") == 0)
-						return NULL; // активен MMView!
+						return NULL; // Р°РєС‚РёРІРµРЅ MMView!
 				}
 			}
 		}
@@ -2074,11 +2074,11 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 	return pi;
 }
 
-// Должен вернуть true, если активны только панели (нет диалогов или еще каких меню)
+// Р”РѕР»Р¶РµРЅ РІРµСЂРЅСѓС‚СЊ true, РµСЃР»Рё Р°РєС‚РёРІРЅС‹ С‚РѕР»СЊРєРѕ РїР°РЅРµР»Рё (РЅРµС‚ РґРёР°Р»РѕРіРѕРІ РёР»Рё РµС‰Рµ РєР°РєРёС… РјРµРЅСЋ)
 bool CheckWindows()
 {
 	bool lbRc = false;
-	// Попробуем частично вернуть проверку окон через Far, но только ACTL_GETSHORTWINDOWINFO
+	// РџРѕРїСЂРѕР±СѓРµРј С‡Р°СЃС‚РёС‡РЅРѕ РІРµСЂРЅСѓС‚СЊ РїСЂРѕРІРµСЂРєСѓ РѕРєРѕРЅ С‡РµСЂРµР· Far, РЅРѕ С‚РѕР»СЊРєРѕ ACTL_GETSHORTWINDOWINFO
 	bool lbFarPanels = false;
 
 	//if (gFarVersion.dwVerMajor==1)
@@ -2097,24 +2097,24 @@ bool CheckWindows()
 	else
 		lbFarPanels = FUNC_X(CheckFarPanelsW)();
 
-	// Запомнить активность панелей.
+	// Р—Р°РїРѕРјРЅРёС‚СЊ Р°РєС‚РёРІРЅРѕСЃС‚СЊ РїР°РЅРµР»РµР№.
 	if (gbFarPanelsReady != lbFarPanels)
 		gbFarPanelsReady = lbFarPanels;
 
-	// Теперь, если API сказало, что панели есть и активны
+	// РўРµРїРµСЂСЊ, РµСЃР»Рё API СЃРєР°Р·Р°Р»Рѕ, С‡С‚Рѕ РїР°РЅРµР»Рё РµСЃС‚СЊ Рё Р°РєС‚РёРІРЅС‹
 	if (lbFarPanels && gpRgnDetect)
 	{
-		//WARNING: Диалоги уже должны быть "обнаружены"
-		// используем gnRgnDetectFlags, т.к. gpRgnDetect может оказаться в процессе распознавания
+		//WARNING: Р”РёР°Р»РѕРіРё СѓР¶Рµ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ "РѕР±РЅР°СЂСѓР¶РµРЅС‹"
+		// РёСЃРїРѕР»СЊР·СѓРµРј gnRgnDetectFlags, С‚.Рє. gpRgnDetect РјРѕР¶РµС‚ РѕРєР°Р·Р°С‚СЊСЃСЏ РІ РїСЂРѕС†РµСЃСЃРµ СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ
 		DWORD dwFlags = gnRgnDetectFlags; // gpRgnDetect->GetFlags();
 
-		// вдруг панелей вообще не обнаружено?
+		// РІРґСЂСѓРі РїР°РЅРµР»РµР№ РІРѕРѕР±С‰Рµ РЅРµ РѕР±РЅР°СЂСѓР¶РµРЅРѕ?
 		if ((dwFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)) != 0)
 		{
-			// нет диалогов
+			// РЅРµС‚ РґРёР°Р»РѕРіРѕРІ
 			if ((dwFlags & FR_FREEDLG_MASK) == 0)
 			{
-				// и нет активированного меню
+				// Рё РЅРµС‚ Р°РєС‚РёРІРёСЂРѕРІР°РЅРЅРѕРіРѕ РјРµРЅСЋ
 				if ((dwFlags & FR_ACTIVEMENUBAR) != FR_ACTIVEMENUBAR)
 				{
 					lbRc = true;
@@ -2134,7 +2134,7 @@ void CheckVarsInitialized()
 		gpRgnDetect = new CRgnDetect();
 	}
 
-	// Должно инититься в SetStartupInfo
+	// Р”РѕР»Р¶РЅРѕ РёРЅРёС‚РёС‚СЊСЃСЏ РІ SetStartupInfo
 	_ASSERTE(gpImgCache!=NULL);
 	//if (!gpImgCache) {
 	//	gpImgCache = new CImgCache(ghPluginModule);
@@ -2150,10 +2150,10 @@ void CheckVarsInitialized()
 		gFarInfo.nFarTID = GetCurrentThreadId();
 		gFarInfo.bFarPanelAllowed = TRUE;
 
-		// Загрузить из реестра настройки PanelTabs
+		// Р—Р°РіСЂСѓР·РёС‚СЊ РёР· СЂРµРµСЃС‚СЂР° РЅР°СЃС‚СЂРѕР№РєРё PanelTabs
 		// -- gFarInfo.PanelTabs.SeparateTabs = gFarInfo.PanelTabs.ButtonColor = -1;
-		// Перезагрузить настройки PanelTabs
-		gFarInfo.PanelTabs.SeparateTabs = 1; gFarInfo.PanelTabs.ButtonColor = 0x1B; // умолчания...
+		// РџРµСЂРµР·Р°РіСЂСѓР·РёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё PanelTabs
+		gFarInfo.PanelTabs.SeparateTabs = 1; gFarInfo.PanelTabs.ButtonColor = 0x1B; // СѓРјРѕР»С‡Р°РЅРёСЏ...
 		if (gFarVersion.dwVerMajor == 1)
 			SettingsLoadOtherA();
 		else if (gFarVersion.dwBuild>=FAR_Y2_VER)
@@ -2227,7 +2227,7 @@ void ExecuteInMainThread(ConEmuThSynchroArg* pCmd)
 
 	if (gFarVersion.dwVerMajor == 1)
 	{
-		// в 1.75 такой функции нет, придется хаком
+		// РІ 1.75 С‚Р°РєРѕР№ С„СѓРЅРєС†РёРё РЅРµС‚, РїСЂРёРґРµС‚СЃСЏ С…Р°РєРѕРј
 	}
 	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
 	{
@@ -2247,10 +2247,10 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 {
 	if (Event != SE_COMMONSYNCHRO) return 0;
 
-	// Некоторые плагины (NetBox) блокируют главный поток, и открывают
-	// в своем потоке диалог. Это ThreadSafe. Некорректные открытия
-	// отследить не удастся. Поэтому, считаем, если Far дернул наш
-	// ProcessSynchroEventW, то это (временно) стала главная нить
+	// РќРµРєРѕС‚РѕСЂС‹Рµ РїР»Р°РіРёРЅС‹ (NetBox) Р±Р»РѕРєРёСЂСѓСЋС‚ РіР»Р°РІРЅС‹Р№ РїРѕС‚РѕРє, Рё РѕС‚РєСЂС‹РІР°СЋС‚
+	// РІ СЃРІРѕРµРј РїРѕС‚РѕРєРµ РґРёР°Р»РѕРі. Р­С‚Рѕ ThreadSafe. РќРµРєРѕСЂСЂРµРєС‚РЅС‹Рµ РѕС‚РєСЂС‹С‚РёСЏ
+	// РѕС‚СЃР»РµРґРёС‚СЊ РЅРµ СѓРґР°СЃС‚СЃСЏ. РџРѕСЌС‚РѕРјСѓ, СЃС‡РёС‚Р°РµРј, РµСЃР»Рё Far РґРµСЂРЅСѓР» РЅР°С€
+	// ProcessSynchroEventW, С‚Рѕ СЌС‚Рѕ (РІСЂРµРјРµРЅРЅРѕ) СЃС‚Р°Р»Р° РіР»Р°РІРЅР°СЏ РЅРёС‚СЊ
 	DWORD nPrevID = gnMainThreadId;
 	gnMainThreadId = GetCurrentThreadId();
 
@@ -2265,10 +2265,10 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 
 			if (pp->hView && pp->Visible && pp->bRequestItemSet)
 			{
-				// СРАЗУ сбросить флаг, чтобы потом не накалываться
+				// РЎР РђР—РЈ СЃР±СЂРѕСЃРёС‚СЊ С„Р»Р°Рі, С‡С‚РѕР±С‹ РїРѕС‚РѕРј РЅРµ РЅР°РєР°Р»С‹РІР°С‚СЊСЃСЏ
 				pp->bRequestItemSet = false;
 
-				// а теперь - собственно курсор
+				// Р° С‚РµРїРµСЂСЊ - СЃРѕР±СЃС‚РІРµРЅРЅРѕ РєСѓСЂСЃРѕСЂ
 				if (gFarVersion.dwVerMajor==1)
 					SetCurrentPanelItemA((i==0), pp->ReqTopPanelItem, pp->ReqCurrentItem);
 				else if (gFarVersion.dwBuild>=FAR_Y2_VER)
@@ -2280,7 +2280,7 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 			}
 		}
 
-		// Если отрисовка была отложена до окончания обработки клавиатуры - передернуть
+		// Р•СЃР»Рё РѕС‚СЂРёСЃРѕРІРєР° Р±С‹Р»Р° РѕС‚Р»РѕР¶РµРЅР° РґРѕ РѕРєРѕРЅС‡Р°РЅРёСЏ РѕР±СЂР°Р±РѕС‚РєРё РєР»Р°РІРёР°С‚СѓСЂС‹ - РїРµСЂРµРґРµСЂРЅСѓС‚СЊ
 		if (/*gbWaitForKeySequenceEnd &&*/ !gbConsoleChangesSyncho)
 		{
 			//gbWaitForKeySequenceEnd = false;
@@ -2353,8 +2353,8 @@ BOOL LoadThSet(DWORD anGuiPid/* =-1 */)
 	return lbRc;
 }
 
-//sx, sy - смещение правого верхнего угла панелей от правого верхнего угла консоли
-//cx, cy - если не 0 - то определяет ширину и высоту панелей
+//sx, sy - СЃРјРµС‰РµРЅРёРµ РїСЂР°РІРѕРіРѕ РІРµСЂС…РЅРµРіРѕ СѓРіР»Р° РїР°РЅРµР»РµР№ РѕС‚ РїСЂР°РІРѕРіРѕ РІРµСЂС…РЅРµРіРѕ СѓРіР»Р° РєРѕРЅСЃРѕР»Рё
+//cx, cy - РµСЃР»Рё РЅРµ 0 - С‚Рѕ РѕРїСЂРµРґРµР»СЏРµС‚ С€РёСЂРёРЅСѓ Рё РІС‹СЃРѕС‚Сѓ РїР°РЅРµР»РµР№
 BOOL GetFarRect(SMALL_RECT* prcFarRect)
 {
 	BOOL lbFarBuffer = FALSE;
@@ -2434,12 +2434,12 @@ void SavePanelViewState(BOOL bLeftPanel, DWORD dwMode)
 
 bool isPreloadByDefault()
 {
-	// Только когда плагин запущен из-под ConEmu можно получить настройки "PanelViews"
-	// (они задаются через графический интерфейс)
+	// РўРѕР»СЊРєРѕ РєРѕРіРґР° РїР»Р°РіРёРЅ Р·Р°РїСѓС‰РµРЅ РёР·-РїРѕРґ ConEmu РјРѕР¶РЅРѕ РїРѕР»СѓС‡РёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё "PanelViews"
+	// (РѕРЅРё Р·Р°РґР°СЋС‚СЃСЏ С‡РµСЂРµР· РіСЂР°С„РёС‡РµСЃРєРёР№ РёРЅС‚РµСЂС„РµР№СЃ)
 	if (!ghConEmuWnd)
 		return true;
 	
-	// Теперь можно настройки смотреть
+	// РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ РЅР°СЃС‚СЂРѕР№РєРё СЃРјРѕС‚СЂРµС‚СЊ
 	if ((gdwModes[0] || gdwModes[1]) && gThSet.bRestoreOnStartup)
 		return true;
 	return false;
@@ -2457,7 +2457,7 @@ void SettingsLoadOther(LPCWSTR pszRegKey)
 		pszTabsKey[nLen-1] = 0;
 		wchar_t* pszSlash = wcsrchr(pszTabsKey, L'\\');
 
-		WARNING("Переделать на Far3 api, когда соответствующие плагины будут переписаны");
+		WARNING("РџРµСЂРµРґРµР»Р°С‚СЊ РЅР° Far3 api, РєРѕРіРґР° СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРµ РїР»Р°РіРёРЅС‹ Р±СѓРґСѓС‚ РїРµСЂРµРїРёСЃР°РЅС‹");
 
 		if (pszSlash)
 		{

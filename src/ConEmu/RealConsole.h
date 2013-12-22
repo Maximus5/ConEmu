@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -50,7 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define CES_PROGRAMS2 0xFF
 
 #define CES_FILEPANEL      0x0001
-#define CES_FARPANELS      0x000F // на будущее, должен содержать все возможные флаги возможных панелей
+#define CES_FARPANELS      0x000F // РЅР° Р±СѓРґСѓС‰РµРµ, РґРѕР»Р¶РµРЅ СЃРѕРґРµСЂР¶Р°С‚СЊ РІСЃРµ РІРѕР·РјРѕР¶РЅС‹Рµ С„Р»Р°РіРё РІРѕР·РјРѕР¶РЅС‹С… РїР°РЅРµР»РµР№
 //#define CES_TEMPPANEL      0x0002
 //#define CES_PLUGINPANEL    0x0004
 #define CES_EDITOR         0x0010
@@ -83,15 +83,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define CONSOLE_BLOCK_SELECTION 0x0100 // selecting text (standard mode)
 #define CONSOLE_TEXT_SELECTION 0x0200 // selecting text (stream mode)
-#define CONSOLE_DBLCLICK_SELECTION 0x0400 // двойным кликом выделено слово, пропустить WM_LBUTTONUP
-#define CONSOLE_KEYMOD_MASK 0xFF000000 // Здесь хранится модификатор, которым начали выделение мышкой
+#define CONSOLE_DBLCLICK_SELECTION 0x0400 // РґРІРѕР№РЅС‹Рј РєР»РёРєРѕРј РІС‹РґРµР»РµРЅРѕ СЃР»РѕРІРѕ, РїСЂРѕРїСѓСЃС‚РёС‚СЊ WM_LBUTTONUP
+#define CONSOLE_KEYMOD_MASK 0xFF000000 // Р—РґРµСЃСЊ С…СЂР°РЅРёС‚СЃСЏ РјРѕРґРёС„РёРєР°С‚РѕСЂ, РєРѕС‚РѕСЂС‹Рј РЅР°С‡Р°Р»Рё РІС‹РґРµР»РµРЅРёРµ РјС‹С€РєРѕР№
 
 #define PROCESS_WAIT_START_TIME RELEASEDEBUGTEST(1000,1000)
 
 #define SETSYNCSIZEAPPLYTIMEOUT 500
 #define SETSYNCSIZEMAPPINGTIMEOUT 300
 #define CONSOLEPROGRESSTIMEOUT 1500
-#define CONSOLEPROGRESSWARNTIMEOUT 2000 // поставил 2с, т.к. при минимизации консоль обновляется раз в секунду
+#define CONSOLEPROGRESSWARNTIMEOUT 2000 // РїРѕСЃС‚Р°РІРёР» 2СЃ, С‚.Рє. РїСЂРё РјРёРЅРёРјРёР·Р°С†РёРё РєРѕРЅСЃРѕР»СЊ РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ СЂР°Р· РІ СЃРµРєСѓРЅРґСѓ
 #define CONSOLEINACTIVERGNTIMEOUT 500
 #define SERVERCLOSETIMEOUT 2000
 #define UPDATESERVERACTIVETIMEOUT 2500
@@ -142,44 +142,44 @@ struct ConProcess
 {
 	DWORD ProcessID, ParentPID; //, InputTID;
 	bool  IsMainSrv; // Root ConEmuC
-	bool  IsConHost; // conhost.exe (Win7 и выше)
+	bool  IsConHost; // conhost.exe (Win7 Рё РІС‹С€Рµ)
 	bool  IsFar, IsFarPlugin;
-	bool  IsTelnet;  // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
-	bool  IsNtvdm;   // 16bit приложения
-	bool  IsCmd;     // значит фар выполняет команду
+	bool  IsTelnet;  // РјРѕР¶РµС‚ Р±С‹С‚СЊ РІРєР»СЋС‡РµРЅ Р’РњР•РЎРўР• СЃ IsFar, РµСЃР»Рё СѓРґР°Р»РѕСЃСЊ РїРѕРґС†РµРїРёС‚СЃСЏ Рє С„Р°СЂСѓ С‡РµСЂРµР· СЃРµС‚РµРІРѕР№ РїР°Р№Рї
+	bool  IsNtvdm;   // 16bit РїСЂРёР»РѕР¶РµРЅРёСЏ
+	bool  IsCmd;     // Р·РЅР°С‡РёС‚ С„Р°СЂ РІС‹РїРѕР»РЅСЏРµС‚ РєРѕРјР°РЅРґСѓ
 	bool  NameChecked, RetryName;
 	bool  Alive, inConsole;
-	wchar_t Name[64]; // чтобы полная инфа об ошибке влезала
+	wchar_t Name[64]; // С‡С‚РѕР±С‹ РїРѕР»РЅР°СЏ РёРЅС„Р° РѕР± РѕС€РёР±РєРµ РІР»РµР·Р°Р»Р°
 };
 
 //#include <pshpack1.h>
 //typedef struct tag_CharAttr
 //{
-//	TODO("OPTIMIZE: Заменить бы битовые поля на один DWORD, в котором хранить некий общий ИД стиля, заполняемый при формировании буфера");
+//	TODO("OPTIMIZE: Р—Р°РјРµРЅРёС‚СЊ Р±С‹ Р±РёС‚РѕРІС‹Рµ РїРѕР»СЏ РЅР° РѕРґРёРЅ DWORD, РІ РєРѕС‚РѕСЂРѕРј С…СЂР°РЅРёС‚СЊ РЅРµРєРёР№ РѕР±С‰РёР№ РР” СЃС‚РёР»СЏ, Р·Р°РїРѕР»РЅСЏРµРјС‹Р№ РїСЂРё С„РѕСЂРјРёСЂРѕРІР°РЅРёРё Р±СѓС„РµСЂР°");
 //	union {
-//		// Собственно цвета/шрифты
+//		// РЎРѕР±СЃС‚РІРµРЅРЅРѕ С†РІРµС‚Р°/С€СЂРёС„С‚С‹
 //		struct {
-//			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
+//			unsigned int crForeColor : 24; // С‡С‚РѕР±С‹ РІ ui64 РїРѕРјРµСЃС‚РёР»СЃСЏ Рё nFontIndex
 //			unsigned int nFontIndex : 8; // 0 - normal, 1 - bold, 2 - italic
-//			unsigned int crBackColor : 32; // Старший байт зарезервируем, вдруг для прозрачности понадобится
+//			unsigned int crBackColor : 32; // РЎС‚Р°СЂС€РёР№ Р±Р°Р№С‚ Р·Р°СЂРµР·РµСЂРІРёСЂСѓРµРј, РІРґСЂСѓРі РґР»СЏ РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚Рё РїРѕРЅР°РґРѕР±РёС‚СЃСЏ
 //			unsigned int nForeIdx : 8;
-//			unsigned int nBackIdx : 8; // может понадобиться для ExtendColors
+//			unsigned int nBackIdx : 8; // РјРѕР¶РµС‚ РїРѕРЅР°РґРѕР±РёС‚СЊСЃСЏ РґР»СЏ ExtendColors
 //			unsigned int crOrigForeColor : 32;
-//			unsigned int crOrigBackColor : 32; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
-//			// вспомогательные флаги
+//			unsigned int crOrigBackColor : 32; // Р РµР°Р»СЊРЅС‹Рµ С†РІРµС‚Р° РІ РєРѕРЅСЃРѕР»Рё, crForeColor Рё crBackColor РјРѕРіСѓС‚ Р±С‹С‚СЊ РёР·РјРµРЅРµРЅС‹ РєРѕР»РѕСЂРµСЂРѕРј
+//			// РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Рµ С„Р»Р°РіРё
 //			unsigned int bDialog : 1;
 //			unsigned int bDialogVBorder : 1;
 //			unsigned int bDialogCorner : 1;
 //			unsigned int bSomeFilled : 1;
 //			unsigned int bTransparent : 1; // UserScreen
 //		};
-//		// А это для сравнения (поиск изменений)
+//		// Рђ СЌС‚Рѕ РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ (РїРѕРёСЃРє РёР·РјРµРЅРµРЅРёР№)
 //		unsigned __int64 All;
-//		// для сравнения, когда фон не важен
+//		// РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ, РєРѕРіРґР° С„РѕРЅ РЅРµ РІР°Р¶РµРЅ
 //		unsigned int ForeFont;
 //	};
 //	//
-//	//DWORD dwAttrubutes; // может когда понадобятся дополнительные флаги...
+//	//DWORD dwAttrubutes; // РјРѕР¶РµС‚ РєРѕРіРґР° РїРѕРЅР°РґРѕР±СЏС‚СЃСЏ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ С„Р»Р°РіРё...
 //	//
 //    ///**
 //    // * Used exclusively by ConsoleView to append annotations to each character
@@ -231,10 +231,10 @@ enum RealBufferType
 
 enum LoadAltMode
 {
-	lam_Default = 0,    // режим выбирается автоматически
-	lam_LastOutput = 1, // имеет смысл только для фара и "Long console output"
-	lam_FullBuffer = 2, // снимок экрана - полный буфер с прокруткой
-	lam_Primary = 3,    // TODO: для быстрого начала выделения - копия буфера rbt_Primary
+	lam_Default = 0,    // СЂРµР¶РёРј РІС‹Р±РёСЂР°РµС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё
+	lam_LastOutput = 1, // РёРјРµРµС‚ СЃРјС‹СЃР» С‚РѕР»СЊРєРѕ РґР»СЏ С„Р°СЂР° Рё "Long console output"
+	lam_FullBuffer = 2, // СЃРЅРёРјРѕРє СЌРєСЂР°РЅР° - РїРѕР»РЅС‹Р№ Р±СѓС„РµСЂ СЃ РїСЂРѕРєСЂСѓС‚РєРѕР№
+	lam_Primary = 3,    // TODO: РґР»СЏ Р±С‹СЃС‚СЂРѕРіРѕ РЅР°С‡Р°Р»Р° РІС‹РґРµР»РµРЅРёСЏ - РєРѕРїРёСЏ Р±СѓС„РµСЂР° rbt_Primary
 };
 
 enum ExpandTextRangeType;
@@ -257,18 +257,18 @@ class CRealConsole
 
 	private:
 		HWND    hConWnd;
-		HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
+		HWND    hGuiWnd; // Р•СЃР»Рё СЂР°Р±РѕС‚Р°РµРј РІ Gui-СЂРµР¶РёРјРµ (Notepad, Putty, ...)
 		RECT    mrc_LastGuiWnd; // Screen coordinates!
 		HWND    mh_GuiWndFocusStore;
 		DWORD   mn_GuiAttachInputTID;
 		static  BOOL CALLBACK FindChildGuiWindowProc(HWND hwnd, LPARAM lParam);
-		DWORD   mn_GuiAttachFlags; // запоминается в SetGuiMode
-		BOOL    mb_GuiExternMode; // FALSE если захотели показать GUI приложение вне вкладки ConEmu (Ctrl-Win-Alt-Space)
-		bool    mb_GuiForceConView; // TRUE если просили спрятать GUI и показать VirtualConsole
-		RECT    rcPreGuiWndRect; // Положение окна ДО аттача
+		DWORD   mn_GuiAttachFlags; // Р·Р°РїРѕРјРёРЅР°РµС‚СЃСЏ РІ SetGuiMode
+		BOOL    mb_GuiExternMode; // FALSE РµСЃР»Рё Р·Р°С…РѕС‚РµР»Рё РїРѕРєР°Р·Р°С‚СЊ GUI РїСЂРёР»РѕР¶РµРЅРёРµ РІРЅРµ РІРєР»Р°РґРєРё ConEmu (Ctrl-Win-Alt-Space)
+		bool    mb_GuiForceConView; // TRUE РµСЃР»Рё РїСЂРѕСЃРёР»Рё СЃРїСЂСЏС‚Р°С‚СЊ GUI Рё РїРѕРєР°Р·Р°С‚СЊ VirtualConsole
+		RECT    rcPreGuiWndRect; // РџРѕР»РѕР¶РµРЅРёРµ РѕРєРЅР° Р”Рћ Р°С‚С‚Р°С‡Р°
 		BOOL    mb_InGuiAttaching;
 		BOOL    mb_InSetFocus;
-		DWORD   mn_GuiWndStyle, mn_GuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
+		DWORD   mn_GuiWndStyle, mn_GuiWndStylEx; // РСЃС…РѕРґРЅС‹Рµ СЃС‚РёР»Рё РѕРєРЅР° Р”Рћ РїРѕРґС†РµРїР»РµРЅРёСЏ РІ ConEmu
 		DWORD   mn_GuiWndPID;
 		wchar_t ms_GuiWndProcess[MAX_PATH];
 		BYTE    m_ConsoleKeyShortcuts;
@@ -281,11 +281,11 @@ class CRealConsole
 
 	public:
 		HWND    ConWnd();  // HWND RealConsole
-		HWND    GetView(); // HWND отрисовки
+		HWND    GetView(); // HWND РѕС‚СЂРёСЃРѕРІРєРё
 
-		// Если работаем в Gui-режиме (Notepad, Putty, ...)
-		HWND    GuiWnd();  // HWND Gui приложения
-		DWORD   GuiWndPID();  // HWND Gui приложения
+		// Р•СЃР»Рё СЂР°Р±РѕС‚Р°РµРј РІ Gui-СЂРµР¶РёРјРµ (Notepad, Putty, ...)
+		HWND    GuiWnd();  // HWND Gui РїСЂРёР»РѕР¶РµРЅРёСЏ
+		DWORD   GuiWndPID();  // HWND Gui РїСЂРёР»РѕР¶РµРЅРёСЏ
 		bool    isGuiForceConView(); // mb_GuiForceConView
 		void    GuiNotifyChildWindow();
 		void    GuiWndFocusStore();
@@ -432,7 +432,7 @@ class CRealConsole
 		bool isSelectionAllowed();
 		bool isSelectionPresent();
 		bool isMouseSelectionPresent();
-		void AutoCopyTimer(); // Чтобы разрулить "Auto Copy" & "Double click - select word"
+		void AutoCopyTimer(); // Р§С‚РѕР±С‹ СЂР°Р·СЂСѓР»РёС‚СЊ "Auto Copy" & "Double click - select word"
 		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
 		void ExpandSelection(SHORT anX, SHORT anY);
 		bool DoSelectionCopy(bool bCopyAll = false, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */);
@@ -527,13 +527,13 @@ class CRealConsole
 		BOOL isMouseButtonDown();
 		void OnConsoleLangChange(DWORD_PTR dwNewKeybLayout);
 		DWORD GetConsoleStates();
-		void ChangeBufferHeightMode(BOOL abBufferHeight); // Вызывается из TabBar->ConEmu
-		//void RemoveFromCursor(); // -- заменено на перехват функции ScreenToClient
+		void ChangeBufferHeightMode(BOOL abBufferHeight); // Р’С‹Р·С‹РІР°РµС‚СЃСЏ РёР· TabBar->ConEmu
+		//void RemoveFromCursor(); // -- Р·Р°РјРµРЅРµРЅРѕ РЅР° РїРµСЂРµС…РІР°С‚ С„СѓРЅРєС†РёРё ScreenToClient
 		bool isAlive();
 		bool GetMaxConSize(COORD* pcrMaxConSize);
 		int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf);
 		const CRgnDetect* GetDetector();
-		// Логирование Shell вызовов
+		// Р›РѕРіРёСЂРѕРІР°РЅРёРµ Shell РІС‹Р·РѕРІРѕРІ
 		//void LogShellStartStop();
 		bool IsLogShellStarted();
 		wchar_t ms_LogShellActivity[MAX_PATH]; bool mb_ShellActivityLogged;
@@ -550,7 +550,7 @@ class CRealConsole
 		bool isNeedCursorDraw();
 		void Detach(bool bPosted = false, bool bSendCloseConsole = false);
 		void AdminDuplicate();
-		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
+		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer Рё РїСЂРѕС‡РµРµ
 		bool InCreateRoot();
 		bool InRecreate(); 
 		BOOL GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID);
@@ -569,11 +569,11 @@ class CRealConsole
 		bool mb_MonitorAssertTrap;
 
 	protected:
-		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
+		CVirtualConsole* mp_VCon; // СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰Р°СЏ РІРёСЂС‚СѓР°Р»СЊРЅР°СЏ РєРѕРЅСЃРѕР»СЊ
 
 		void SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv);
 		void SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/);
-		// Сервер и альтернативный сервер
+		// РЎРµСЂРІРµСЂ Рё Р°Р»СЊС‚РµСЂРЅР°С‚РёРІРЅС‹Р№ СЃРµСЂРІРµСЂ
 		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
 		DWORD mn_CheckFreqLock;
 		DWORD mn_ConHost_PID;
@@ -581,7 +581,7 @@ class CRealConsole
 		void ConHostSearchPrepare();
 		DWORD ConHostSearch(bool bFinal);
 		void ConHostSetPID(DWORD nConHostPID);
-		bool  mb_MainSrv_Ready; // Сервер готов принимать команды?
+		bool  mb_MainSrv_Ready; // РЎРµСЂРІРµСЂ РіРѕС‚РѕРІ РїСЂРёРЅРёРјР°С‚СЊ РєРѕРјР°РЅРґС‹?
 		DWORD mn_ActiveLayout;
 		DWORD mn_AltSrv_PID;  //HANDLE mh_AltSrv;
 		HANDLE mh_SwitchActiveServer, mh_ActiveServerSwitched;
@@ -589,7 +589,7 @@ class CRealConsole
 		bool InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/);
 		bool ReopenServerPipes();
 
-		// Пайп консольного ввода
+		// РџР°Р№Рї РєРѕРЅСЃРѕР»СЊРЅРѕРіРѕ РІРІРѕРґР°
 		wchar_t ms_ConEmuCInput_Pipe[MAX_PATH];
 		HANDLE mh_ConInputPipe; // wsprintf(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID)
 		
@@ -598,25 +598,25 @@ class CRealConsole
 		TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_MainSrv_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
 		//TCHAR ms_ConEmuC_DataReady[64]; HANDLE mh_ConEmuC_DataReady;
 		void InitNames();
-		// Текущий заголовок консоли и его значение для сравнения (для определения изменений)
+		// РўРµРєСѓС‰РёР№ Р·Р°РіРѕР»РѕРІРѕРє РєРѕРЅСЃРѕР»Рё Рё РµРіРѕ Р·РЅР°С‡РµРЅРёРµ РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ (РґР»СЏ РѕРїСЂРµРґРµР»РµРЅРёСЏ РёР·РјРµРЅРµРЅРёР№)
 		WCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
-		// А здесь содержится то, что отображается в ConEmu (может быть добавлено " (Admin)")
+		// Рђ Р·РґРµСЃСЊ СЃРѕРґРµСЂР¶РёС‚СЃСЏ С‚Рѕ, С‡С‚Рѕ РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ РІ ConEmu (РјРѕР¶РµС‚ Р±С‹С‚СЊ РґРѕР±Р°РІР»РµРЅРѕ " (Admin)")
 		WCHAR TitleFull[MAX_TITLE_SIZE+96], TitleAdmin[MAX_TITLE_SIZE+192];
-		// Принудительно дернуть OnTitleChanged, например, при изменении процентов в консоли
+		// РџСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ РґРµСЂРЅСѓС‚СЊ OnTitleChanged, РЅР°РїСЂРёРјРµСЂ, РїСЂРё РёР·РјРµРЅРµРЅРёРё РїСЂРѕС†РµРЅС‚РѕРІ РІ РєРѕРЅСЃРѕР»Рё
 		BOOL mb_ForceTitleChanged;
-		// Здесь сохраняется заголовок окна (с панелями), когда FAR фокус с панелей уходит (переходит в редактор...).
+		// Р—РґРµСЃСЊ СЃРѕС…СЂР°РЅСЏРµС‚СЃСЏ Р·Р°РіРѕР»РѕРІРѕРє РѕРєРЅР° (СЃ РїР°РЅРµР»СЏРјРё), РєРѕРіРґР° FAR С„РѕРєСѓСЃ СЃ РїР°РЅРµР»РµР№ СѓС…РѕРґРёС‚ (РїРµСЂРµС…РѕРґРёС‚ РІ СЂРµРґР°РєС‚РѕСЂ...).
 		WCHAR ms_PanelTitle[CONEMUTABMAX];
-		// Процентики
+		// РџСЂРѕС†РµРЅС‚РёРєРё
 		short mn_Progress, mn_LastShownProgress;
 		short mn_PreWarningProgress; DWORD mn_LastWarnCheckTick;
 		short mn_ConsoleProgress, mn_LastConsoleProgress; DWORD mn_LastConProgrTick;
-		short mn_AppProgressState, mn_AppProgress; // Может быть задан из консоли (Ansi codes, Macro)
+		short mn_AppProgressState, mn_AppProgress; // РњРѕР¶РµС‚ Р±С‹С‚СЊ Р·Р°РґР°РЅ РёР· РєРѕРЅСЃРѕР»Рё (Ansi codes, Macro)
 		short CheckProgressInTitle();
 		//short CheckProgressInConsole(const wchar_t* pszCurLine);
-		//void SetProgress(short anProgress); // установить переменную mn_Progress и mn_LastProgressTick
+		//void SetProgress(short anProgress); // СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ mn_Progress Рё mn_LastProgressTick
 
 #if 0
-		BOOL AttachPID(DWORD dwPID); //120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
+		BOOL AttachPID(DWORD dwPID); //120714 - Р°РЅР°Р»РѕРіРёС‡РЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹ СЂР°Р±РѕС‚Р°СЋС‚ РІ ConEmuC.exe, Р° РІ GUI РѕРЅРё Рё РЅРµ СЂР°Р±РѕС‚Р°Р»Рё. СѓР±СЂР°Р» РїРѕРєР°
 #endif
 		BOOL StartProcess();
 		private:
@@ -627,7 +627,7 @@ class CRealConsole
 		void SetMonitorThreadEvent();
 		BOOL mb_NeedStartProcess;
 
-		// Нить наблюдения за консолью
+		// РќРёС‚СЊ РЅР°Р±Р»СЋРґРµРЅРёСЏ Р·Р° РєРѕРЅСЃРѕР»СЊСЋ
 		static DWORD WINAPI MonitorThread(LPVOID lpParameter);
 		DWORD MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCreated);
 		static int WorkerExFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep, LPCTSTR szFile, UINT nLine);
@@ -637,7 +637,7 @@ class CRealConsole
 		DWORD mn_ServerActiveTick1, mn_ServerActiveTick2;
 		//BOOL mb_UpdateServerActive;
 		DWORD mn_LastUpdateServerActive;
-		// Для пересылки событий ввода в консоль
+		// Р”Р»СЏ РїРµСЂРµСЃС‹Р»РєРё СЃРѕР±С‹С‚РёР№ РІРІРѕРґР° РІ РєРѕРЅСЃРѕР»СЊ
 		//static DWORD WINAPI InputThread(LPVOID lpParameter);
 		//HANDLE mh_InputThread; DWORD mn_InputThreadID;
 
@@ -664,19 +664,19 @@ class CRealConsole
 		BOOL LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
 	private:
 		friend class CRealBuffer;
-		CRealBuffer* mp_RBuf; // Реальный буфер консоли
-		CRealBuffer* mp_EBuf; // Сохранение данных после выполненной команды в Far
-		CRealBuffer* mp_SBuf; // Временный буфер (полный) для блокирования содержимого (выделение/прокрутка/поиск)
-		CRealBuffer* mp_ABuf; // Активный буфер консоли -- ссылка на один из mp_RBuf/mp_EBuf/mp_SBuf
-		bool mb_ABufChaged; // Сменился активный буфер, обновить консоль
+		CRealBuffer* mp_RBuf; // Р РµР°Р»СЊРЅС‹Р№ Р±СѓС„РµСЂ РєРѕРЅСЃРѕР»Рё
+		CRealBuffer* mp_EBuf; // РЎРѕС…СЂР°РЅРµРЅРёРµ РґР°РЅРЅС‹С… РїРѕСЃР»Рµ РІС‹РїРѕР»РЅРµРЅРЅРѕР№ РєРѕРјР°РЅРґС‹ РІ Far
+		CRealBuffer* mp_SBuf; // Р’СЂРµРјРµРЅРЅС‹Р№ Р±СѓС„РµСЂ (РїРѕР»РЅС‹Р№) РґР»СЏ Р±Р»РѕРєРёСЂРѕРІР°РЅРёСЏ СЃРѕРґРµСЂР¶РёРјРѕРіРѕ (РІС‹РґРµР»РµРЅРёРµ/РїСЂРѕРєСЂСѓС‚РєР°/РїРѕРёСЃРє)
+		CRealBuffer* mp_ABuf; // РђРєС‚РёРІРЅС‹Р№ Р±СѓС„РµСЂ РєРѕРЅСЃРѕР»Рё -- СЃСЃС‹Р»РєР° РЅР° РѕРґРёРЅ РёР· mp_RBuf/mp_EBuf/mp_SBuf
+		bool mb_ABufChaged; // РЎРјРµРЅРёР»СЃСЏ Р°РєС‚РёРІРЅС‹Р№ Р±СѓС„РµСЂ, РѕР±РЅРѕРІРёС‚СЊ РєРѕРЅСЃРѕР»СЊ
 		
 		int mn_DefaultBufferHeight;
 		DWORD mn_LastInactiveRgnCheck;
 		#ifdef _DEBUG
-		BOOL mb_DebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
+		BOOL mb_DebugLocked; // РґР»СЏ РѕС‚Р»Р°РґРєРё - Р·Р°РјРѕСЂРѕР·РёС‚СЊ РІСЃРµ РЅРёС‚Рё, С‡С‚РѕР±С‹ РЅРµ РјРµС€Р°Р»Рё РѕС‚Р»Р°РґС‡РёРєСѓ, СЃС‚Р°РІРёС‚СЃСЏ РїРѕ РєРѕРЅС‚РµРєС‚РЅРѕРјСѓ РјРµРЅСЋ
 		#endif
 		
-		//// Эти переменные инициализируются в RetrieveConsoleInfo()
+		//// Р­С‚Рё РїРµСЂРµРјРµРЅРЅС‹Рµ РёРЅРёС†РёР°Р»РёР·РёСЂСѓСЋС‚СЃСЏ РІ RetrieveConsoleInfo()
 		//MSection csCON; //DWORD ncsT;
 		//struct RConInfo
 		//{
@@ -684,36 +684,36 @@ class CRealConsole
 		//	CONSOLE_CURSOR_INFO m_ci;
 		//	DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
 		//	CONSOLE_SCREEN_BUFFER_INFO m_sbi;
-		//	COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
-		//	USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
+		//	COORD crMaxSize; // РњР°РєСЃРёРјР°Р»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё РЅР° С‚РµРєСѓС‰РµРј С€СЂРёС„С‚Рµ
+		//	USHORT nTopVisibleLine; // РјРѕР¶РµС‚ РѕС‚Р»РёС‡Р°С‚СЊСЃСЏ РѕС‚ m_sbi.srWindow.Top, РµСЃР»Рё РїСЂРѕРєСЂСѓС‚РєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅР°
 		//	wchar_t *pConChar;
 		//	WORD  *pConAttr;
-		//	COORD mcr_FileLineStart, mcr_FileLineEnd; // Подсветка строк ошибок компиляторов
+		//	COORD mcr_FileLineStart, mcr_FileLineEnd; // РџРѕРґСЃРІРµС‚РєР° СЃС‚СЂРѕРє РѕС€РёР±РѕРє РєРѕРјРїРёР»СЏС‚РѕСЂРѕРІ
 		//	//CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
 		//	CHAR_INFO *pDataCmp;
 		//	int nTextWidth, nTextHeight, nBufferHeight;
 		//	BOOL bLockChange2Text;
 		//	int nChange2TextWidth, nChange2TextHeight;
-		//	BOOL bBufferHeight; // TRUE, если есть прокрутка
+		//	BOOL bBufferHeight; // TRUE, РµСЃР»Рё РµСЃС‚СЊ РїСЂРѕРєСЂСѓС‚РєР°
 		//	//DWORD nPacketIdx;
 		//	DWORD_PTR dwKeybLayout;
-		//	BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
+		//	BOOL bRBtnDrag; // РІ РєРѕРЅСЃРѕР»СЊ РїРѕСЃС‹Р»Р°РµС‚СЃСЏ РґСЂР°Рі РїСЂР°РІРѕР№ РєРЅРѕРїРєРѕР№ (РІС‹РґРµР»РµРЅРёРµ РІ FAR)
 		//	COORD crRBtnDrag;
 		//	BOOL bInSetSize; HANDLE hInSetSize;
 		//	int DefaultBufferHeight;
 		//	BOOL bConsoleDataChanged;
 		//	DWORD nLastInactiveRgnCheck;
 		//	#ifdef _DEBUG
-		//	BOOL bDebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
+		//	BOOL bDebugLocked; // РґР»СЏ РѕС‚Р»Р°РґРєРё - Р·Р°РјРѕСЂРѕР·РёС‚СЊ РІСЃРµ РЅРёС‚Рё, С‡С‚РѕР±С‹ РЅРµ РјРµС€Р°Р»Рё РѕС‚Р»Р°РґС‡РёРєСѓ, СЃС‚Р°РІРёС‚СЃСЏ РїРѕ РєРѕРЅС‚РµРєС‚РЅРѕРјСѓ РјРµРЅСЋ
 		//	#endif
 		//} con;
 		
 		//BOOL mb_ThawRefreshThread;
 		struct ServerClosing
 		{
-			DWORD  nServerPID;     // PID закрывающегося сервера
-			DWORD  nRecieveTick;   // Tick, когда получено сообщение о закрытии
-			HANDLE hServerProcess; // Handle процесса сервера
+			DWORD  nServerPID;     // PID Р·Р°РєСЂС‹РІР°СЋС‰РµРіРѕСЃСЏ СЃРµСЂРІРµСЂР°
+			DWORD  nRecieveTick;   // Tick, РєРѕРіРґР° РїРѕР»СѓС‡РµРЅРѕ СЃРѕРѕР±С‰РµРЅРёРµ Рѕ Р·Р°РєСЂС‹С‚РёРё
+			HANDLE hServerProcess; // Handle РїСЂРѕС†РµСЃСЃР° СЃРµСЂРІРµСЂР°
 		} m_ServerClosing;
 		//
 		MSection csPRC; //DWORD ncsTPRC;
@@ -727,7 +727,7 @@ class CRealConsole
 		DWORD mn_FarPID;
 		DWORD mn_ActivePID;
 		void SetActivePID(DWORD anNewPID);
-		DWORD mn_LastSetForegroundPID; // PID процесса, которому в последний раз было разрешено AllowSetForegroundWindow
+		DWORD mn_LastSetForegroundPID; // PID РїСЂРѕС†РµСЃСЃР°, РєРѕС‚РѕСЂРѕРјСѓ РІ РїРѕСЃР»РµРґРЅРёР№ СЂР°Р· Р±С‹Р»Рѕ СЂР°Р·СЂРµС€РµРЅРѕ AllowSetForegroundWindow
 		DWORD mn_LastProcessNamePID;
 		wchar_t ms_LastProcessName[MAX_PATH];
 		int mn_LastAppSettingsId;
@@ -746,12 +746,12 @@ class CRealConsole
 		void ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFileName);
 		DWORD mn_ProgramStatus, mn_FarStatus;
 		DWORD mn_Comspec4Ntvdm;
-		BOOL mb_IgnoreCmdStop; // При запуске 16bit приложения не возвращать размер консоли! Это сделает OnWinEvent
+		BOOL mb_IgnoreCmdStop; // РџСЂРё Р·Р°РїСѓСЃРєРµ 16bit РїСЂРёР»РѕР¶РµРЅРёСЏ РЅРµ РІРѕР·РІСЂР°С‰Р°С‚СЊ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё! Р­С‚Рѕ СЃРґРµР»Р°РµС‚ OnWinEvent
 		BOOL isShowConsole;
-		//BOOL mb_FarGrabberActive; // бывший mb_ConsoleSelectMode
-		WORD mn_SelectModeSkipVk; // пропустить "отпускание" клавиши Esc/Enter при выделении текста
+		//BOOL mb_FarGrabberActive; // Р±С‹РІС€РёР№ mb_ConsoleSelectMode
+		WORD mn_SelectModeSkipVk; // РїСЂРѕРїСѓСЃС‚РёС‚СЊ "РѕС‚РїСѓСЃРєР°РЅРёРµ" РєР»Р°РІРёС€Рё Esc/Enter РїСЂРё РІС‹РґРµР»РµРЅРёРё С‚РµРєСЃС‚Р°
 		//bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
-		//void UpdateSelection(); // обновить на экране
+		//void UpdateSelection(); // РѕР±РЅРѕРІРёС‚СЊ РЅР° СЌРєСЂР°РЅРµ
 
 		friend class CRealServer;
 		CRealServer m_RConServer;
@@ -760,14 +760,14 @@ class CRealConsole
 		void SetHwnd(HWND ahConWnd, BOOL abForceApprove = FALSE);
 		WORD mn_LastVKeyPressed;
 		BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight, BOOL* pbBufferHeight=NULL);
-		int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
-		DWORD mn_InRecreate; // Tick, когда начали пересоздание
+		int mn_Focused; //-1 РїРѕСЃР»Рµ Р·Р°РїСѓСЃРєР°, 1 - РІ С„РѕРєСѓСЃРµ, 0 - РЅРµ РІ С„РѕРєСѓСЃРµ
+		DWORD mn_InRecreate; // Tick, РєРѕРіРґР° РЅР°С‡Р°Р»Рё РїРµСЂРµСЃРѕР·РґР°РЅРёРµ
 		BOOL mb_ProcessRestarted;
 		BOOL mb_InCloseConsole;
 		DWORD mn_CloseConfirmedTick;
 		bool mb_CloseFarMacroPosted;
 		bool mb_WasSendClickToReadCon;
-		// Логи
+		// Р›РѕРіРё
 		BYTE m_UseLogs;
 		//HANDLE mh_LogInput; wchar_t *mpsz_LogInputFile/*, *mpsz_LogPackets*/; //UINT mn_LogPackets;
 		MFileLog *mp_Log;
@@ -776,7 +776,7 @@ class CRealConsole
 		void LogInput(INPUT_RECORD* pRec);
 		//void LogPacket(CESERVER_REQ* pInfo);
 		BOOL RecreateProcessStart();
-		// Прием и обработка пакетов
+		// РџСЂРёРµРј Рё РѕР±СЂР°Р±РѕС‚РєР° РїР°РєРµС‚РѕРІ
 		//MSection csPKT; //DWORD ncsTPKT;
 		//DWORD mn_LastProcessedPkt; //HANDLE mh_PacketArrived;
 		//std::vector<CESERVER_REQ*> m_Packets;
@@ -794,8 +794,8 @@ class CRealConsole
 		//const CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> m_ConsoleMap;
 		//const CEFAR_INFO_MAPPING *mp_FarInfo;
-		CEFAR_INFO_MAPPING m_FarInfo; // FarVer и прочее
-		MFileMapping<const CEFAR_INFO_MAPPING> m__FarInfo; // в коде напрямую не использовать, только через секцию!
+		CEFAR_INFO_MAPPING m_FarInfo; // FarVer Рё РїСЂРѕС‡РµРµ
+		MFileMapping<const CEFAR_INFO_MAPPING> m__FarInfo; // РІ РєРѕРґРµ РЅР°РїСЂСЏРјСѓСЋ РЅРµ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ, С‚РѕР»СЊРєРѕ С‡РµСЂРµР· СЃРµРєС†РёСЋ!
 		MSection ms_FarInfoCS;
 		// Colorer Mapping
 		//HANDLE mh_ColorMapping;
@@ -804,8 +804,8 @@ class CRealConsole
 		AnnotationHeader m_TrueColorerHeader;
 		const AnnotationInfo *mp_TrueColorerData;
 		DWORD mn_LastColorFarID;
-		void CreateColorMapping(); // Открыть мэппинг колорера (по HWND)
-		//void CheckColorMapping(DWORD dwPID); // Проверить валидность буфера - todo
+		void CreateColorMapping(); // РћС‚РєСЂС‹С‚СЊ РјСЌРїРїРёРЅРі РєРѕР»РѕСЂРµСЂР° (РїРѕ HWND)
+		//void CheckColorMapping(DWORD dwPID); // РџСЂРѕРІРµСЂРёС‚СЊ РІР°Р»РёРґРЅРѕСЃС‚СЊ Р±СѓС„РµСЂР° - todo
 		void CloseColorMapping();
 		//
 		DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx; //, mn_LastFarReadIdx;
@@ -824,15 +824,15 @@ class CRealConsole
 		//
 		struct TermEmulation
 		{
-			DWORD nCallTermPID; // PID процесса запросившего эмуляцию терминала
+			DWORD nCallTermPID; // PID РїСЂРѕС†РµСЃСЃР° Р·Р°РїСЂРѕСЃРёРІС€РµРіРѕ СЌРјСѓР»СЏС†РёСЋ С‚РµСЂРјРёРЅР°Р»Р°
 			TermEmulationType Term;
 		} m_Term;
 		//
 		BOOL PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName);
 		HANDLE PrepareOutputFileCreate(wchar_t* pszFilePathName);
-		// фикс для dblclick в редакторе
+		// С„РёРєСЃ РґР»СЏ dblclick РІ СЂРµРґР°РєС‚РѕСЂРµ
 		MOUSE_EVENT_RECORD m_LastMouse;
-		POINT m_LastMouseGuiPos; // в пикселах пикселах
+		POINT m_LastMouseGuiPos; // РІ РїРёРєСЃРµР»Р°С… РїРёРєСЃРµР»Р°С…
 		BOOL mb_BtnClicked; COORD mrc_BtnClickPos;
 		//
 		wchar_t ms_Editor[32], ms_EditorRus[32], ms_Viewer[32], ms_ViewerRus[32];
@@ -849,7 +849,7 @@ class CRealConsole
 		//
 		BOOL mb_MouseButtonDown;
 		COORD mcr_LastMouseEventPos;
-		// для Far Manager: облегчить "попадание" тапами
+		// РґР»СЏ Far Manager: РѕР±Р»РµРіС‡РёС‚СЊ "РїРѕРїР°РґР°РЅРёРµ" С‚Р°РїР°РјРё
 		BOOL mb_MouseTapChanged;
 		COORD mcr_MouseTapReal, mcr_MouseTapChanged;
 		//
@@ -865,7 +865,7 @@ class CRealConsole
 		bool isCharBorderHorizontal(WCHAR inChar);
 		bool ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr);
 		/* ****************************************** */
-		/* Поиск диалогов и пометка "прозрачных" мест */
+		/* РџРѕРёСЃРє РґРёР°Р»РѕРіРѕРІ Рё РїРѕРјРµС‚РєР° "РїСЂРѕР·СЂР°С‡РЅС‹С…" РјРµСЃС‚ */
 		/* ****************************************** */
 		//CRgnDetect* mp_Rgn; DWORD mn_LastRgnFlags;
 		//int mn_DetectCallCount;
@@ -886,9 +886,9 @@ class CRealConsole
 		//bool FindFrameRight_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight);
 		//bool FindFrameLeft_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
 		//bool FindFrameLeft_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
-		//// Последний шанс
+		//// РџРѕСЃР»РµРґРЅРёР№ С€Р°РЅСЃ
 		//bool FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
-		//// Сервисная
+		//// РЎРµСЂРІРёСЃРЅР°СЏ
 		//bool ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom);
 		//void MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, BOOL bMarkBorder = FALSE, BOOL bFindExterior = TRUE);
 		//#define MAX_DETECTED_DIALOGS 20

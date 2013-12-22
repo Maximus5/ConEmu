@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -146,7 +146,7 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 
 		if ((pKB->vkCode >= VK_WHEEL_FIRST) && (pKB->vkCode <= VK_WHEEL_LAST))
 		{
-			// Такие коды с клавиатуры приходить не должны, а то для "мышки" ничего не останется
+			// РўР°РєРёРµ РєРѕРґС‹ СЃ РєР»Р°РІРёР°С‚СѓСЂС‹ РїСЂРёС…РѕРґРёС‚СЊ РЅРµ РґРѕР»Р¶РЅС‹, Р° С‚Рѕ РґР»СЏ "РјС‹С€РєРё" РЅРёС‡РµРіРѕ РЅРµ РѕСЃС‚Р°РЅРµС‚СЃСЏ
 			_ASSERTE(!((pKB->vkCode >= VK_WHEEL_FIRST) && (pKB->vkCode <= VK_WHEEL_LAST)));
 		}
 		else if (((wParam == WM_KEYDOWN) || (wParam == WM_SYSKEYDOWN)) && ghKeyHookConEmuRoot)
@@ -164,7 +164,7 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 				{
 					for (size_t i = 0; i < countof(gnHookedKeys); i++)
 					{
-						// gnHookedKeys теперь содержит VkMod, а не просто VK
+						// gnHookedKeys С‚РµРїРµСЂСЊ СЃРѕРґРµСЂР¶РёС‚ VkMod, Р° РЅРµ РїСЂРѕСЃС‚Рѕ VK
 						if ((gnHookedKeys[i] & 0xFF) == pKB->vkCode)
 						{
 							if (!bModsLoaded)
@@ -219,9 +219,9 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 				#endif
 			}
 
-			// Win2k & WinXP: при размножении на таскбаре кнопок под каждую консоль
-			// возникает неприятный эффект при AltTab
-			// lbHooked - AltTab может вообще игнорироваться по настройке в ConEmu
+			// Win2k & WinXP: РїСЂРё СЂР°Р·РјРЅРѕР¶РµРЅРёРё РЅР° С‚Р°СЃРєР±Р°СЂРµ РєРЅРѕРїРѕРє РїРѕРґ РєР°Р¶РґСѓСЋ РєРѕРЅСЃРѕР»СЊ
+			// РІРѕР·РЅРёРєР°РµС‚ РЅРµРїСЂРёСЏС‚РЅС‹Р№ СЌС„С„РµРєС‚ РїСЂРё AltTab
+			// lbHooked - AltTab РјРѕР¶РµС‚ РІРѕРѕР±С‰Рµ РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊСЃСЏ РїРѕ РЅР°СЃС‚СЂРѕР№РєРµ РІ ConEmu
 			if (!lbHooked && ghActiveGhost && wParam == WM_SYSKEYDOWN)
 			{
 				if (pKB->vkCode == VK_TAB && IsWindow(ghActiveGhost))
@@ -261,7 +261,7 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 						_wsprintf(szKH, SKIPLEN(countof(szKH)) L"[hook] vk=%i (press) blocked\n", pKB->vkCode);
 						DEBUGSTRHOOK(szKH);
 						#endif
-						return 1; // Нужно возвращать 1, чтобы нажатие не ушло в Win7 Taskbar
+						return 1; // РќСѓР¶РЅРѕ РІРѕР·РІСЂР°С‰Р°С‚СЊ 1, С‡С‚РѕР±С‹ РЅР°Р¶Р°С‚РёРµ РЅРµ СѓС€Р»Рѕ РІ Win7 Taskbar
 					}
 					else if (lbLeftWin || lbRightWin)
 					{
@@ -281,15 +281,15 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 						}
 						gnSkipVkModCode = lbLeftWin ? VK_LWIN : lbRightWin ? VK_RWIN : 0;
 						gnSkipVkKeyCode = pKB->vkCode;
-						// запрет обработки системой
+						// Р·Р°РїСЂРµС‚ РѕР±СЂР°Р±РѕС‚РєРё СЃРёСЃС‚РµРјРѕР№
 						#ifdef _DEBUG
 						_wsprintf(szKH, SKIPLEN(countof(szKH)) L"[hook] vk=%i (press) blocked\n", pKB->vkCode);
 						DEBUGSTRHOOK(szKH);
 						#endif
-						return 1; // Нужно возвращать 1, чтобы нажатие не ушло в Win7 Taskbar
+						return 1; // РќСѓР¶РЅРѕ РІРѕР·РІСЂР°С‰Р°С‚СЊ 1, С‡С‚РѕР±С‹ РЅР°Р¶Р°С‚РёРµ РЅРµ СѓС€Р»Рѕ РІ Win7 Taskbar
 						////gnWinPressTick = pKB->time;
 						//HWND hConEmu = GetForegroundWindow();
-						//// По идее, должен быть ConEmu, но необходимо проверить (может хук не снялся?)
+						//// РџРѕ РёРґРµРµ, РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ ConEmu, РЅРѕ РЅРµРѕР±С…РѕРґРёРјРѕ РїСЂРѕРІРµСЂРёС‚СЊ (РјРѕР¶РµС‚ С…СѓРє РЅРµ СЃРЅСЏР»СЃСЏ?)
 						//if (hConEmu)
 						//{
 						//	wchar_t szClass[64];
@@ -302,8 +302,8 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 						//		{
 						//			gnSkipVkModCode = lbLeftWin ? VK_LWIN : VK_RWIN;
 						//			gnSkipVkKeyCode = pKB->vkCode;
-						//			// запрет обработки системой
-						//			return 1; // Нужно возвращать 1, чтобы нажатие не ушло в Win7 Taskbar
+						//			// Р·Р°РїСЂРµС‚ РѕР±СЂР°Р±РѕС‚РєРё СЃРёСЃС‚РµРјРѕР№
+						//			return 1; // РќСѓР¶РЅРѕ РІРѕР·РІСЂР°С‰Р°С‚СЊ 1, С‡С‚РѕР±С‹ РЅР°Р¶Р°С‚РёРµ РЅРµ СѓС€Р»Рѕ РІ Win7 Taskbar
 						//		}
 						//	}
 						//}
@@ -311,14 +311,14 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 				}
 			}
 
-			// на первое нажатие не приходит - только при удержании
+			// РЅР° РїРµСЂРІРѕРµ РЅР°Р¶Р°С‚РёРµ РЅРµ РїСЂРёС…РѕРґРёС‚ - С‚РѕР»СЊРєРѕ РїСЂРё СѓРґРµСЂР¶Р°РЅРёРё
 			//if (pKB->vkCode == VK_LWIN || pKB->vkCode == VK_RWIN) {
 			//	gnWinPressTick = pKB->time;
 			//}
 
 			if (gnSkipVkKeyCode && !gnOtherWin)
 			{
-				// Страховка от залипаний
+				// РЎС‚СЂР°С…РѕРІРєР° РѕС‚ Р·Р°Р»РёРїР°РЅРёР№
 				gnSkipVkModCode = 0;
 				gnSkipVkKeyCode = 0;
 				gnSkipVkMessage = 0;
@@ -334,7 +334,7 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 					DEBUGSTRHOOK(L"*** Win released before key ***\n");
 					#endif
 
-					// При быстром нажатии Win+<кнопка> часто получается что сам Win отпускается раньше <кнопки>.
+					// РџСЂРё Р±С‹СЃС‚СЂРѕРј РЅР°Р¶Р°С‚РёРё Win+<РєРЅРѕРїРєР°> С‡Р°СЃС‚Рѕ РїРѕР»СѓС‡Р°РµС‚СЃСЏ С‡С‚Рѕ СЃР°Рј Win РѕС‚РїСѓСЃРєР°РµС‚СЃСЏ СЂР°РЅСЊС€Рµ <РєРЅРѕРїРєРё>.
 					gnOtherWin = (BYTE)gnVkWinFix;
 					keybd_event(gnOtherWin, gnOtherWin, 0, 0);
 				}
@@ -344,7 +344,7 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 				}
 
 				gnSkipVkModCode = 0;
-				return 0; // разрешить обработку системой, но не передавать в другие хуки
+				return 0; // СЂР°Р·СЂРµС€РёС‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ СЃРёСЃС‚РµРјРѕР№, РЅРѕ РЅРµ РїРµСЂРµРґР°РІР°С‚СЊ РІ РґСЂСѓРіРёРµ С…СѓРєРё
 			}
 
 			if (gnSkipVkKeyCode && pKB->vkCode == gnSkipVkKeyCode)
@@ -370,7 +370,7 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 				_wsprintf(szKH, SKIPLEN(countof(szKH)) L"[hook] vk=%i processed\n", pKB->vkCode);
 				DEBUGSTRHOOK(szKH);
 				#endif
-				return 0; // разрешить обработку системой, но не передавать в другие хуки
+				return 0; // СЂР°Р·СЂРµС€РёС‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ СЃРёСЃС‚РµРјРѕР№, РЅРѕ РЅРµ РїРµСЂРµРґР°РІР°С‚СЊ РІ РґСЂСѓРіРёРµ С…СѓРєРё
 			}
 		}
 	}

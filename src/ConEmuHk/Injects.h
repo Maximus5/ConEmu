@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 
 extern UINT_PTR gfnLoadLibrary;

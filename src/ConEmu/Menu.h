@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -82,9 +82,9 @@ private:
 
 	void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
 
-	// В режиме "правый клик по keybar в FarManager" - при выделении
-	// пункта (например Alt+Shift+F9) "нажать" в консоли Alt+Shift
-	// чтобы Far перерисовал панель кнопок (показал подсказку для Alt+Shift+...)
+	// Р’ СЂРµР¶РёРјРµ "РїСЂР°РІС‹Р№ РєР»РёРє РїРѕ keybar РІ FarManager" - РїСЂРё РІС‹РґРµР»РµРЅРёРё
+	// РїСѓРЅРєС‚Р° (РЅР°РїСЂРёРјРµСЂ Alt+Shift+F9) "РЅР°Р¶Р°С‚СЊ" РІ РєРѕРЅСЃРѕР»Рё Alt+Shift
+	// С‡С‚РѕР±С‹ Far РїРµСЂРµСЂРёСЃРѕРІР°Р» РїР°РЅРµР»СЊ РєРЅРѕРїРѕРє (РїРѕРєР°Р·Р°Р» РїРѕРґСЃРєР°Р·РєСѓ РґР»СЏ Alt+Shift+...)
 	void ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags);
 
 	LPCWSTR MenuAccel(int DescrID, LPCWSTR asText);
@@ -104,7 +104,7 @@ private:
 	//	int nCmd;
 	//	LPCWSTR pszCmd;
 	//	wchar_t szShort[32];
-	//} m_CmdPopupMenu[MAX_CMD_HISTORY+1]; // структура для меню выбора команды новой консоли
+	//} m_CmdPopupMenu[MAX_CMD_HISTORY+1]; // СЃС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ РјРµРЅСЋ РІС‹Р±РѕСЂР° РєРѕРјР°РЅРґС‹ РЅРѕРІРѕР№ РєРѕРЅСЃРѕР»Рё
 
 	struct CmdTaskPopupItem
 	{
@@ -127,10 +127,10 @@ private:
 	CmdTaskPopupItem* mp_CmdRClickForce;
 	int FillTaskPopup(HMENU hMenu, CmdTaskPopupItem* pParent);
 
-	// Эти из CConEmuMain
-	HMENU mh_SysDebugPopup, mh_SysEditPopup, mh_ActiveVConPopup, mh_TerminateVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu
+	// Р­С‚Рё РёР· CConEmuMain
+	HMENU mh_SysDebugPopup, mh_SysEditPopup, mh_ActiveVConPopup, mh_TerminateVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's РґР»СЏ SystemMenu
 	HMENU mh_InsideSysMenu;
-	// А это из VirtualConsole
+	// Рђ СЌС‚Рѕ РёР· VirtualConsole
 	HMENU mh_PopupMenu, mh_TerminatePopup, mh_VConDebugPopup, mh_VConEditPopup;
 	// Array
 	size_t mn_MenusCount; HMENU** mph_Menus;

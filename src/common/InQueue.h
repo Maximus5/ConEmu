@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct InQueue
 {
-	HANDLE hInputEvent; // <<-- gpSrv->hInputEvent. Выставляется в InputThread, флаг появления новых событий в очереди
+	HANDLE hInputEvent; // <<-- gpSrv->hInputEvent. Р’С‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РІ InputThread, С„Р»Р°Рі РїРѕСЏРІР»РµРЅРёСЏ РЅРѕРІС‹С… СЃРѕР±С‹С‚РёР№ РІ РѕС‡РµСЂРµРґРё
 	int nInputQueue, nMaxInputQueue;
 	INPUT_RECORD* pInputQueue;
 	INPUT_RECORD* pInputQueueEnd;

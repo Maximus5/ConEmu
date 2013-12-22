@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -106,7 +106,7 @@ struct ExtWriteTextParm
 	DWORD NumberOfCharsToWrite;
 	DWORD NumberOfCharsWritten;
 	SHORT WrapAtCol; // 1-based. Used only when ewtf_WrapAt specified
-	SHORT ScrolledRowsUp; // При достижении нижней границы экрана происходит скролл
+	SHORT ScrolledRowsUp; // РџСЂРё РґРѕСЃС‚РёР¶РµРЅРёРё РЅРёР¶РЅРµР№ РіСЂР°РЅРёС†С‹ СЌРєСЂР°РЅР° РїСЂРѕРёСЃС…РѕРґРёС‚ СЃРєСЂРѕР»Р»
 	void* Private;   // ConEmu private usage !!! Must be NULL !!!
 	RECT  Region;    // ewtf_Region, take into account when "\r\n"
 };

@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -63,7 +63,7 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	_ASSERTE(Info->StructSize >= sizeof(GlobalInfo));
 	Info->MinFarVersion = FARMANAGERVERSION;
 
-	// Build: YYMMDDX (YY - две цифры года, MM - месяц, DD - день, X - 0 и выше-номер подсборки)
+	// Build: YYMMDDX (YY - РґРІРµ С†РёС„СЂС‹ РіРѕРґР°, MM - РјРµСЃСЏС†, DD - РґРµРЅСЊ, X - 0 Рё РІС‹С€Рµ-РЅРѕРјРµСЂ РїРѕРґСЃР±РѕСЂРєРё)
 	Info->Version = MAKEFARVERSION(MVV_1,MVV_2,MVV_3,((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10),VS_RELEASE);
 
 	Info->Guid = guid_ConEmuTh;
@@ -134,7 +134,7 @@ HANDLE OpenW1900(const void* aInfo)
 	INT_PTR Item = Info->Data;
 	if (Info->OpenFrom == OPEN_FROMMACRO)
 	{
-		Item = 0; // Сразу сброс
+		Item = 0; // РЎСЂР°Р·Сѓ СЃР±СЂРѕСЃ
 		OpenMacroInfo* p = (OpenMacroInfo*)Info->Data;
 		if (p->StructSize >= sizeof(*p))
 		{
@@ -234,7 +234,7 @@ LPCWSTR GetMsgW1900(int aiMsg)
 	return InfoW1900->GetMsg(&guid_ConEmuTh,aiMsg);
 }
 
-// Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
+// Warning, РЅР°РїСЂСЏРјСѓСЋ РќР• РІС‹Р·С‹РІР°С‚СЊ. РџРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ "РѕР±С‰РµР№" PostMacro
 void PostMacroW1900(wchar_t* asMacro)
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)
@@ -243,7 +243,7 @@ void PostMacroW1900(wchar_t* asMacro)
 	//ActlKeyMacro mcr;
 	MacroSendMacroText mcr = {sizeof(MacroSendMacroText)};
 	//mcr.Command = MCMD_POSTMACROSTRING;
-	//mcr.Param.PlainText.Flags = 0; // По умолчанию - вывод на экран разрешен
+	//mcr.Param.PlainText.Flags = 0; // РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ СЂР°Р·СЂРµС€РµРЅ
 
 	if (*asMacro == L'@' && asMacro[1] && asMacro[1] != L' ')
 	{
@@ -344,7 +344,7 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, INT_PTR nItem)
 	{
 		if (pi->pFarTmpBuf) free(pi->pFarTmpBuf);
 
-		pi->nFarTmpBuf = nSize+MAX_PATH; // + про запас немножко //-V101
+		pi->nFarTmpBuf = nSize+MAX_PATH; // + РїСЂРѕ Р·Р°РїР°СЃ РЅРµРјРЅРѕР¶РєРѕ //-V101
 		pi->pFarTmpBuf = malloc(pi->nFarTmpBuf);
 	}
 
@@ -360,9 +360,9 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, INT_PTR nItem)
 		return;
 	}
 
-	if (!nSize)  // ошибка?
+	if (!nSize)  // РѕС€РёР±РєР°?
 	{
-		// FAR не смог заполнить ppi данными, поэтому накидаем туда нулей, чтобы мусор не рисовать
+		// FAR РЅРµ СЃРјРѕРі Р·Р°РїРѕР»РЅРёС‚СЊ ppi РґР°РЅРЅС‹РјРё, РїРѕСЌС‚РѕРјСѓ РЅР°РєРёРґР°РµРј С‚СѓРґР° РЅСѓР»РµР№, С‡С‚РѕР±С‹ РјСѓСЃРѕСЂ РЅРµ СЂРёСЃРѕРІР°С‚СЊ
 		ppi->FileName = L"???";
 		ppi->Flags = 0;
 		ppi->NumberOfLinks = 0;
@@ -371,7 +371,7 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, INT_PTR nItem)
 		ppi->FileSize = 0;
 	}
 
-	// Скопировать данные в наш буфер (функция сама выделит память)
+	// РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РґР°РЅРЅС‹Рµ РІ РЅР°С€ Р±СѓС„РµСЂ (С„СѓРЅРєС†РёСЏ СЃР°РјР° РІС‹РґРµР»РёС‚ РїР°РјСЏС‚СЊ)
 	const wchar_t* pszName = ppi->FileName;
 
 	if ((!pszName || !*pszName) && ppi->AlternateFileName && *ppi->AlternateFileName)
@@ -391,7 +391,7 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, INT_PTR nItem)
 	                   NULL,
 	                   ppi->Flags,
 	                   ppi->NumberOfLinks);
-	// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
+	// ppi РЅРµ РѕСЃРІРѕР±РѕР¶РґР°РµРј - СЌС‚Рѕ СЃСЃС‹Р»РєР° РЅР° pi->pFarTmpBuf
 
 	if (gFarVersion.Bis)
 	{
@@ -403,12 +403,12 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, INT_PTR nItem)
 		}
 	}
 
-	//// Необходимый размер буфера для хранения элемента
+	//// РќРµРѕР±С…РѕРґРёРјС‹Р№ СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РґР»СЏ С…СЂР°РЅРµРЅРёСЏ СЌР»РµРјРµРЅС‚Р°
 	//nSize = sizeof(CePluginPanelItem)
 	//	+(lstrlen(ppi->FileName)+1)*2
 	//	+((ppi->Description ? lstrlen(ppi->Description) : 0)+1)*2;
 	//
-	//// Уже может быть выделено достаточно памяти под этот элемент
+	//// РЈР¶Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹РґРµР»РµРЅРѕ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РїРѕРґ СЌС‚РѕС‚ СЌР»РµРјРµРЅС‚
 	//if ((pi->ppItems[nItem] == NULL) || (pi->ppItems[nItem]->cbSize < (DWORD_PTR)nSize)) {
 	//	if (pi->ppItems[nItem]) free(pi->ppItems[nItem]);
 	//	nSize += 32;
@@ -416,12 +416,12 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, INT_PTR nItem)
 	//	pi->ppItems[nItem]->cbSize = (int)nSize;
 	//}
 	//
-	//// Лучше сбросить, чтобы мусор не оставался, да и поля в стуктуру могут добавляться, чтобы не забылось...
-	//Если содержимое полей не менялось (атрибуты размеры и пр.), то не обнулять структуру!
-	//// Иначе сбрасываются цвета элементов...
+	//// Р›СѓС‡С€Рµ СЃР±СЂРѕСЃРёС‚СЊ, С‡С‚РѕР±С‹ РјСѓСЃРѕСЂ РЅРµ РѕСЃС‚Р°РІР°Р»СЃСЏ, РґР° Рё РїРѕР»СЏ РІ СЃС‚СѓРєС‚СѓСЂСѓ РјРѕРіСѓС‚ РґРѕР±Р°РІР»СЏС‚СЊСЃСЏ, С‡С‚РѕР±С‹ РЅРµ Р·Р°Р±С‹Р»РѕСЃСЊ...
+	//Р•СЃР»Рё СЃРѕРґРµСЂР¶РёРјРѕРµ РїРѕР»РµР№ РЅРµ РјРµРЅСЏР»РѕСЃСЊ (Р°С‚СЂРёР±СѓС‚С‹ СЂР°Р·РјРµСЂС‹ Рё РїСЂ.), С‚Рѕ РЅРµ РѕР±РЅСѓР»СЏС‚СЊ СЃС‚СЂСѓРєС‚СѓСЂСѓ!
+	//// РРЅР°С‡Рµ СЃР±СЂР°СЃС‹РІР°СЋС‚СЃСЏ С†РІРµС‚Р° СЌР»РµРјРµРЅС‚РѕРІ...
 	//memset(((LPBYTE)pi->ppItems[nItem])+sizeof(pi->ppItems[nItem]->cbSize), 0, pi->ppItems[nItem]->cbSize-sizeof(pi->ppItems[nItem]->cbSize));
 	//
-	//// Копируем
+	//// РљРѕРїРёСЂСѓРµРј
 	//if (pi->bPlugin && (pi->Flags & CEPFLAGS_REALNAMES) == 0) {
 	//	pi->ppItems[nItem]->bVirtualItem = TRUE;
 	//} else {
@@ -448,7 +448,7 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, INT_PTR nItem)
 	//	psz[0] = 0;
 	//pi->ppItems[nItem]->pszDescription = psz;
 	//
-	//// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
+	//// ppi РЅРµ РѕСЃРІРѕР±РѕР¶РґР°РµРј - СЌС‚Рѕ СЃСЃС‹Р»РєР° РЅР° pi->pFarTmpBuf
 }
 
 static int GetFarSetting(HANDLE h, size_t Root, LPCWSTR Name)
@@ -504,14 +504,14 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 
 	if (!nRc)
 	{
-		TODO("Показать информацию об ошибке");
+		TODO("РџРѕРєР°Р·Р°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕС€РёР±РєРµ");
 		return FALSE;
 	}
 
-	// Даже если невидима - обновить информацию!
-	//// Проверим, что панель видима. Иначе - сразу выходим.
+	// Р”Р°Р¶Рµ РµСЃР»Рё РЅРµРІРёРґРёРјР° - РѕР±РЅРѕРІРёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ!
+	//// РџСЂРѕРІРµСЂРёРј, С‡С‚Рѕ РїР°РЅРµР»СЊ РІРёРґРёРјР°. РРЅР°С‡Рµ - СЃСЂР°Р·Сѓ РІС‹С…РѕРґРёРј.
 	//if (!pi.Visible) {
-	//	TODO("Показать информацию об ошибке");
+	//	TODO("РџРѕРєР°Р·Р°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕС€РёР±РєРµ");
 	//	return NULL;
 	//}
 
@@ -523,14 +523,14 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	pcefpi->cbSize = sizeof(*pcefpi);
 	//pcefpi->hPanel = hPanel;
 
-	// Если элементов на панели стало больше, чем выделено в (pviLeft/pviRight)
+	// Р•СЃР»Рё СЌР»РµРјРµРЅС‚РѕРІ РЅР° РїР°РЅРµР»Рё СЃС‚Р°Р»Рѕ Р±РѕР»СЊС€Рµ, С‡РµРј РІС‹РґРµР»РµРЅРѕ РІ (pviLeft/pviRight)
 	if (pcefpi->ItemsNumber < (INT_PTR)pi.ItemsNumber)
 	{
 		if (!pcefpi->ReallocItems(pi.ItemsNumber))
 			return FALSE;
 	}
 
-	// Копируем что нужно
+	// РљРѕРїРёСЂСѓРµРј С‡С‚Рѕ РЅСѓР¶РЅРѕ
 	pcefpi->bLeftPanel = (pi.Flags & PFLAGS_PANELLEFT) == PFLAGS_PANELLEFT;
 	pcefpi->bPlugin = (pi.Flags & PFLAGS_PLUGIN) == PFLAGS_PLUGIN;
 	pcefpi->PanelRect = pi.PanelRect;
@@ -543,10 +543,10 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	pcefpi->Flags = pi.Flags; // CEPANELINFOFLAGS
 	pcefpi->PanelMode = pi.ViewMode;
 	pcefpi->IsFilePanel = (pi.PanelType == PTYPE_FILEPANEL);
-	// Настройки интерфейса
+	// РќР°СЃС‚СЂРѕР№РєРё РёРЅС‚РµСЂС„РµР№СЃР°
 	LoadFarSettingsW1900(&pcefpi->FarInterfaceSettings, &pcefpi->FarPanelSettings);
 
-	// Цвета фара
+	// Р¦РІРµС‚Р° С„Р°СЂР°
 	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, NULL);
 #ifdef _DEBUG
 	INT_PTR nDefColorSize = COL_LASTPALETTECOLOR;
@@ -555,7 +555,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
 	if (pColors)
 		nColorSize = InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, (int)nColorSize, pColors);
-	WARNING("Поддержка более 4бит цветов");
+	WARNING("РџРѕРґРґРµСЂР¶РєР° Р±РѕР»РµРµ 4Р±РёС‚ С†РІРµС‚РѕРІ");
 	if (pColors && nColorSize > 0)
 	{
 		pcefpi->nFarColors[col_PanelText] = FarColor_3_2(pColors[COL_PANELTEXT]);
@@ -590,7 +590,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	//if (pColors)
 	//	nColorSize = InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, nColorSize, pColors);
 	//
-	//WARNING("Поддержка более 4бит цветов");
+	//WARNING("РџРѕРґРґРµСЂР¶РєР° Р±РѕР»РµРµ 4Р±РёС‚ С†РІРµС‚РѕРІ");
 	//if (pColors && nColorSize > 0)
 	//{
 	//	for (int i = 0; i < nColorSize; i++)
@@ -602,14 +602,14 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	//}
 	//SafeFree(pColors);
 	
-	// Текущая папка панели
+	// РўРµРєСѓС‰Р°СЏ РїР°РїРєР° РїР°РЅРµР»Рё
 	size_t nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, 0, 0);
 
 	if (nSize)
 	{
 		if ((pcefpi->pFarPanelDirectory == NULL) || (nSize > pcefpi->nMaxPanelGetDir))
 		{
-			pcefpi->nMaxPanelGetDir = nSize + 1024; // + выделим немножко заранее
+			pcefpi->nMaxPanelGetDir = nSize + 1024; // + РІС‹РґРµР»РёРј РЅРµРјРЅРѕР¶РєРѕ Р·Р°СЂР°РЅРµРµ
 			pcefpi->pFarPanelDirectory = calloc(pcefpi->nMaxPanelGetDir,1);
 		}
 		((FarPanelDirectory*)pcefpi->pFarPanelDirectory)->StructSize = sizeof(FarPanelDirectory);
@@ -617,7 +617,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 
 		if ((pcefpi->pszPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir))
 		{
-			pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
+			pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + РІС‹РґРµР»РёРј РЅРµРјРЅРѕР¶РєРѕ Р·Р°СЂР°РЅРµРµ
 			SafeFree(pcefpi->pszPanelDir);
 			pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
 		}
@@ -634,15 +634,15 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 		SafeFree(pcefpi->pszPanelDir);
 	}
 
-	// Готовим буфер для информации об элементах
+	// Р“РѕС‚РѕРІРёРј Р±СѓС„РµСЂ РґР»СЏ РёРЅС„РѕСЂРјР°С†РёРё РѕР± СЌР»РµРјРµРЅС‚Р°С…
 	pcefpi->ReallocItems(pcefpi->ItemsNumber);
 	//if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < pcefpi->ItemsNumber))
 	//{
 	//	if (pcefpi->ppItems) free(pcefpi->ppItems);
-	//	pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + немножно про запас
+	//	pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + РЅРµРјРЅРѕР¶РЅРѕ РїСЂРѕ Р·Р°РїР°СЃ
 	//	pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->nMaxItemsNumber, sizeof(LPVOID));
 	//}
-	// и буфер для загрузки элемента из FAR
+	// Рё Р±СѓС„РµСЂ РґР»СЏ Р·Р°РіСЂСѓР·РєРё СЌР»РµРјРµРЅС‚Р° РёР· FAR
 	nSize = sizeof(PluginPanelItem)+6*MAX_PATH;
 
 	if ((pcefpi->pFarTmpBuf == NULL) || (pcefpi->nFarTmpBuf < nSize))
@@ -660,7 +660,7 @@ void ReloadPanelsInfoW1900()
 {
 	if (!InfoW1900) return;
 
-	// в FAR3 все просто
+	// РІ FAR3 РІСЃРµ РїСЂРѕСЃС‚Рѕ
 	LoadPanelInfoW1900(TRUE);
 	LoadPanelInfoW1900(FALSE);
 }
@@ -669,10 +669,10 @@ void SetCurrentPanelItemW1900(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCur
 {
 	if (!InfoW1900) return;
 
-	// В Far2 можно быстро проверить валидность индексов
+	// Р’ Far2 РјРѕР¶РЅРѕ Р±С‹СЃС‚СЂРѕ РїСЂРѕРІРµСЂРёС‚СЊ РІР°Р»РёРґРЅРѕСЃС‚СЊ РёРЅРґРµРєСЃРѕРІ
 	HANDLE hPanel = NULL;
 	PanelInfo piActive = {sizeof(piActive)}, piPassive = {sizeof(piActive)}, *pi = NULL;
-	TODO("Проверять текущую видимость панелей?");
+	TODO("РџСЂРѕРІРµСЂСЏС‚СЊ С‚РµРєСѓС‰СѓСЋ РІРёРґРёРјРѕСЃС‚СЊ РїР°РЅРµР»РµР№?");
 	InfoW1900->PanelControl(PANEL_ACTIVE,  FCTL_GETPANELINFO, 0, &piActive);
 
 	if ((piActive.Flags & PFLAGS_PANELLEFT) == (abLeftPanel ? PFLAGS_PANELLEFT : 0))
@@ -685,7 +685,7 @@ void SetCurrentPanelItemW1900(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCur
 		pi = &piPassive; hPanel = PANEL_PASSIVE;
 	}
 
-	// Проверяем индексы (может фар в процессе обновления панели, и количество элементов изменено?)
+	// РџСЂРѕРІРµСЂСЏРµРј РёРЅРґРµРєСЃС‹ (РјРѕР¶РµС‚ С„Р°СЂ РІ РїСЂРѕС†РµСЃСЃРµ РѕР±РЅРѕРІР»РµРЅРёСЏ РїР°РЅРµР»Рё, Рё РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РёР·РјРµРЅРµРЅРѕ?)
 	if (pi->ItemsNumber < 1)
 		return;
 
@@ -698,7 +698,7 @@ void SetCurrentPanelItemW1900(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCur
 	if (anCurItem < anTopItem)
 		anCurItem = anTopItem;
 
-	// Обновляем панель
+	// РћР±РЅРѕРІР»СЏРµРј РїР°РЅРµР»СЊ
 	#pragma warning(disable: 4244)
 	PanelRedrawInfo pri = {anCurItem, anTopItem};
 	#pragma warning(default: 4244)
@@ -720,8 +720,8 @@ BOOL CheckPanelSettingsW1900(BOOL abSilence)
 
 	if (!(gFarPanelSettings.ShowColumnTitles))
 	{
-		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
-		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
+		// Р”Р»СЏ РєРѕСЂСЂРµРєС‚РЅРѕРіРѕ РѕРїСЂРµРґРµР»РµРЅРёСЏ РїРѕР»РѕР¶РµРЅРёСЏ РєРѕР»РѕРЅРѕРє РЅРµРѕР±С…РѕРґРёРј РѕРґРёРЅ РёР· С„Р»Р°Р¶РєРѕРІ РІ РЅР°СЃС‚СЂРѕР№РєРµ РїР°РЅРµР»Рё:
+		// [x] РџРѕРєР°Р·С‹РІР°С‚СЊ Р·Р°РіРѕР»РѕРІРєРё РєРѕР»РѕРЅРѕРє [x] РџРѕРєР°Р·С‹РІР°С‚СЊ СЃСѓРјРјР°СЂРЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ
 		if (!abSilence)
 		{
 			GUID lguid_PanelErr = { /* ba9380d3-af0b-4d9f-ad12-d8d548bf7519 */
@@ -758,7 +758,7 @@ void GetFarRectW1900(SMALL_RECT* prcFarRect)
 	}
 }
 
-// Использовать только ACTL_GETSHORTWINDOWINFO. С ней проблем с синхронизацией быть не должно
+// РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ ACTL_GETSHORTWINDOWINFO. РЎ РЅРµР№ РїСЂРѕР±Р»РµРј СЃ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРµР№ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ
 bool CheckFarPanelsW1900()
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl) return false;
@@ -771,7 +771,7 @@ bool CheckFarPanelsW1900()
 	return lbPanelsActive;
 }
 
-// Возникали проблемы с синхронизацией в FAR2 -> FindFile
+// Р’РѕР·РЅРёРєР°Р»Рё РїСЂРѕР±Р»РµРјС‹ СЃ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРµР№ РІ FAR2 -> FindFile
 //bool CheckWindowsW1900()
 //{
 //	if (!InfoW1900 || !InfoW1900->AdvControl) return false;
@@ -791,7 +791,7 @@ bool CheckFarPanelsW1900()
 //	//wchar_t szInfo[MAX_PATH*4];
 //	//
 //	//OutputDebugStringW(L"\n\n");
-//	//// Pos: Номер окна, о котором нужно узнать информацию. Нумерация идет с 0. Pos = -1 вернет информацию о текущем окне.
+//	//// Pos: РќРѕРјРµСЂ РѕРєРЅР°, Рѕ РєРѕС‚РѕСЂРѕРј РЅСѓР¶РЅРѕ СѓР·РЅР°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ. РќСѓРјРµСЂР°С†РёСЏ РёРґРµС‚ СЃ 0. Pos = -1 РІРµСЂРЅРµС‚ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ С‚РµРєСѓС‰РµРј РѕРєРЅРµ.
 //	//for (int i=-1; i <= nCount; i++) {
 //	//	memset(&wi, 0, sizeof(wi));
 //	//	wi.Pos = i;
@@ -861,5 +861,5 @@ void SettingsSaveW1900(LPCWSTR pszName, DWORD* pValue)
 
 void SettingsLoadOtherW1900(void)
 {
-	WARNING("Как появится PanelTabs для Far3 - переделать чтение его настроек в GUID");
+	WARNING("РљР°Рє РїРѕСЏРІРёС‚СЃСЏ PanelTabs РґР»СЏ Far3 - РїРµСЂРµРґРµР»Р°С‚СЊ С‡С‚РµРЅРёРµ РµРіРѕ РЅР°СЃС‚СЂРѕРµРє РІ GUID");
 }

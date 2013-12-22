@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -57,7 +57,7 @@ static DWORD WINAPI InfiltrateProc(LPVOID _pInjDat)
 	((struct InfiltrateArg*)_pInjDat)->_SetLastError(0);
 	((struct InfiltrateArg*)_pInjDat)->hInst = ((struct InfiltrateArg*)_pInjDat)->_LoadLibraryW(((struct InfiltrateArg*)_pInjDat)->szConEmuHk);
 	((struct InfiltrateArg*)_pInjDat)->ErrCode = ((struct InfiltrateArg*)_pInjDat)->_GetLastError();
-	//ErrCode - DWORD_PTR просто для выравнивания на x64
+	//ErrCode - DWORD_PTR РїСЂРѕСЃС‚Рѕ РґР»СЏ РІС‹СЂР°РІРЅРёРІР°РЅРёСЏ РЅР° x64
 	return (DWORD)((struct InfiltrateArg*)_pInjDat)->ErrCode;
 }
 static void InfiltrateEnd() {} // Mark the end

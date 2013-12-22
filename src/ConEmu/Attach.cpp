@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -101,7 +101,7 @@ HWND CAttachDlg::GetHWND()
 	return mh_Dlg;
 }
 
-// Открыть диалог со списком окон/процессов, к которым мы можем подцепиться
+// РћС‚РєСЂС‹С‚СЊ РґРёР°Р»РѕРі СЃРѕ СЃРїРёСЃРєРѕРј РѕРєРѕРЅ/РїСЂРѕС†РµСЃСЃРѕРІ, Рє РєРѕС‚РѕСЂС‹Рј РјС‹ РјРѕР¶РµРј РїРѕРґС†РµРїРёС‚СЊСЃСЏ
 void CAttachDlg::AttachDlg()
 {
 	if (!this)
@@ -131,9 +131,9 @@ void CAttachDlg::AttachDlg()
 	//case IDOK:
 	//	// [0] Type: 1 - console, 2 - GUI
 	//	// [1] PID
-	//	// [2] HWND (для GUI)
+	//	// [2] HWND (РґР»СЏ GUI)
 	//	_ASSERTE((nAttachParm[0] == 1 || nAttachParm[0] == 2) && (nAttachParm[1]) && (nAttachParm[2] || nAttachParm[0] == 1));
-	//	TODO("Ну и сам аттач, собственно");
+	//	TODO("РќСѓ Рё СЃР°Рј Р°С‚С‚Р°С‡, СЃРѕР±СЃС‚РІРµРЅРЅРѕ");
 	//	break;
 	//}
 }
@@ -160,7 +160,7 @@ void CAttachDlg::Close()
 bool CAttachDlg::OnStartAttach()
 {
 	bool lbRc = false;
-	// Тут нужно получить инфу из списка и дернуть собственно аттач
+	// РўСѓС‚ РЅСѓР¶РЅРѕ РїРѕР»СѓС‡РёС‚СЊ РёРЅС„Сѓ РёР· СЃРїРёСЃРєР° Рё РґРµСЂРЅСѓС‚СЊ СЃРѕР±СЃС‚РІРµРЅРЅРѕ Р°С‚С‚Р°С‡
 	wchar_t szItem[128] = {};
 	//DWORD nPID = 0, nBits = WIN3264TEST(32,64);
 	//AttachProcessType nType = apt_Unknown;
@@ -220,17 +220,17 @@ bool CAttachDlg::OnStartAttach()
 		Parms.push_back(N);
 	}
 
-	//// Чтобы клик от мышки в консоль не провалился
-	//WARNING("Клик от мышки в консоль проваливается");
+	//// Р§С‚РѕР±С‹ РєР»РёРє РѕС‚ РјС‹С€РєРё РІ РєРѕРЅСЃРѕР»СЊ РЅРµ РїСЂРѕРІР°Р»РёР»СЃСЏ
+	//WARNING("РљР»РёРє РѕС‚ РјС‹С€РєРё РІ РєРѕРЅСЃРѕР»СЊ РїСЂРѕРІР°Р»РёРІР°РµС‚СЃСЏ");
 	//gpConEmu->mouse.nSkipEvents[0] = WM_LBUTTONUP;
 	//gpConEmu->mouse.nSkipEvents[1] = 0;
 	//gpConEmu->mouse.nReplaceDblClk = 0;
 
-	// Все, диалог закрываем, чтобы не мешался
+	// Р’СЃРµ, РґРёР°Р»РѕРі Р·Р°РєСЂС‹РІР°РµРј, С‡С‚РѕР±С‹ РЅРµ РјРµС€Р°Р»СЃСЏ
 	Close();
 
-	// Работу делаем в фоновом потоке, чтобы не блокировать главный
-	// (к окну ConEmu должна подцепиться новая вкладка)
+	// Р Р°Р±РѕС‚Сѓ РґРµР»Р°РµРј РІ С„РѕРЅРѕРІРѕРј РїРѕС‚РѕРєРµ, С‡С‚РѕР±С‹ РЅРµ Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ РіР»Р°РІРЅС‹Р№
+	// (Рє РѕРєРЅСѓ ConEmu РґРѕР»Р¶РЅР° РїРѕРґС†РµРїРёС‚СЊСЃСЏ РЅРѕРІР°СЏ РІРєР»Р°РґРєР°)
 	pParm = Parms.detach();
 	if (!pParm)
 	{
@@ -264,7 +264,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 	{
 		CAttachDlg* pDlg = (CAttachDlg*)lParam;
 
-		// Условия?
+		// РЈСЃР»РѕРІРёСЏ?
 		DWORD_PTR nStyle = GetWindowLongPtr(hFind, GWL_STYLE);
 		DWORD_PTR nStyleEx = GetWindowLongPtr(hFind, GWL_EXSTYLE);
 		DWORD nPID;
@@ -274,7 +274,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 		bool lbCan = ((nStyle & (WS_VISIBLE/*|WS_CAPTION|WS_MAXIMIZEBOX*/)) == (WS_VISIBLE/*|WS_CAPTION|WS_MAXIMIZEBOX*/));
 		if (lbCan)
 		{
-			// Более тщательно стили проверить
+			// Р‘РѕР»РµРµ С‚С‰Р°С‚РµР»СЊРЅРѕ СЃС‚РёР»Рё РїСЂРѕРІРµСЂРёС‚СЊ
 			lbCan = ((nStyle & WS_MAXIMIZEBOX) == WS_MAXIMIZEBOX) || ((nStyle & WS_THICKFRAME) == WS_THICKFRAME);
 		}
 		if (lbCan && nPID == GetCurrentProcessId())
@@ -330,7 +330,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			int nImageBits = 32;
 
 			#if 0
-			// Так можно получить только имя файла процесса, а интересен еще и путь
+			// РўР°Рє РјРѕР¶РЅРѕ РїРѕР»СѓС‡РёС‚СЊ С‚РѕР»СЊРєРѕ РёРјСЏ С„Р°Р№Р»Р° РїСЂРѕС†РµСЃСЃР°, Р° РёРЅС‚РµСЂРµСЃРµРЅ РµС‰Рµ Рё РїСѓС‚СЊ
 			PROCESSENTRY32 pi = {sizeof(pi)};
 			h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 			if (h && h != INVALID_HANDLE_VALUE)
@@ -413,7 +413,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			lvi.state = 0;
 			lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
 			lvi.pszText = szPid;
-			lvi.iItem = ListView_GetItemCount(hList); // в конец
+			lvi.iItem = ListView_GetItemCount(hList); // РІ РєРѕРЅРµС†
 			int nItem = ListView_InsertItem(hList, &lvi);
 			ListView_SetItemState(hList, nItem, 0, LVIS_SELECTED|LVIS_FOCUSED);
 
@@ -429,7 +429,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			ListView_SetItemText(hList, nItem, alc_Type, szType);
 		}
 	}
-	return TRUE; // Продолжить
+	return TRUE; // РџСЂРѕРґРѕР»Р¶РёС‚СЊ
 }
 
 //RECT CAttachDlg::CenterInParent(RECT rcDlg, HWND hParent)
@@ -492,7 +492,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		{
 			gpConEmu->OnOurDialogOpened();
 
-			// Если ConEmu - AlwaysOnTop, то и диалогу нужно выставит этот флаг
+			// Р•СЃР»Рё ConEmu - AlwaysOnTop, С‚Рѕ Рё РґРёР°Р»РѕРіСѓ РЅСѓР¶РЅРѕ РІС‹СЃС‚Р°РІРёС‚ СЌС‚РѕС‚ С„Р»Р°Рі
 			if (GetWindowLongPtr(ghWnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
 				SetWindowPos(hDlg, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
@@ -500,7 +500,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
 			SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
 			
-			// В Windows 2000 отсуствует процедура AttachConsole необходимая для этого режима
+			// Р’ Windows 2000 РѕС‚СЃСѓСЃС‚РІСѓРµС‚ РїСЂРѕС†РµРґСѓСЂР° AttachConsole РЅРµРѕР±С…РѕРґРёРјР°СЏ РґР»СЏ СЌС‚РѕРіРѕ СЂРµР¶РёРјР°
 			EnableWindow(GetDlgItem(hDlg, IDC_ATTACH_ALT), (gnOsVer >= 0x501));
 
 			HWND hList = GetDlgItem(hDlg, IDC_ATTACHLIST);
@@ -605,14 +605,14 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		case WM_NOTIFY:
 		{
 			LPNMITEMACTIVATE lpnmitem = (LPNMITEMACTIVATE)lParam;
-			// По LMouseDblClick - выполнить аттач
+			// РџРѕ LMouseDblClick - РІС‹РїРѕР»РЅРёС‚СЊ Р°С‚С‚Р°С‡
 			if (lpnmitem && (lpnmitem->hdr.idFrom == IDC_ATTACHLIST))
 			{
 				if (lpnmitem->hdr.code == (UINT)NM_DBLCLK)
 				{
 					PostMessage(hDlg, WM_COMMAND, IDOK, 0);
 
-					// Если мышка над консолью - то клик (LBtnUp) может в нее провалиться, а не должен
+					// Р•СЃР»Рё РјС‹С€РєР° РЅР°Рґ РєРѕРЅСЃРѕР»СЊСЋ - С‚Рѕ РєР»РёРє (LBtnUp) РјРѕР¶РµС‚ РІ РЅРµРµ РїСЂРѕРІР°Р»РёС‚СЊСЃСЏ, Р° РЅРµ РґРѕР»Р¶РµРЅ
 					POINT ptCur; GetCursorPos(&ptCur);
 					RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 					if (PtInRect(&rcWnd, ptCur))
@@ -625,7 +625,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		}
 
 		//case WM_TIMER:
-		//	// Автообновление?
+		//	// РђРІС‚РѕРѕР±РЅРѕРІР»РµРЅРёРµ?
 		//	break;
 
 		case WM_CLOSE:
@@ -640,21 +640,21 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 				switch (LOWORD(wParam))
 				{
 					case IDOK:
-						// Тут нужно получить инфу из списка и дернуть собственно аттач
+						// РўСѓС‚ РЅСѓР¶РЅРѕ РїРѕР»СѓС‡РёС‚СЊ РёРЅС„Сѓ РёР· СЃРїРёСЃРєР° Рё РґРµСЂРЅСѓС‚СЊ СЃРѕР±СЃС‚РІРµРЅРЅРѕ Р°С‚С‚Р°С‡
 						pDlg->OnStartAttach();
 						return 1;
 					case IDCANCEL:
 					case IDCLOSE:
-						// Просто закрыть
+						// РџСЂРѕСЃС‚Рѕ Р·Р°РєСЂС‹С‚СЊ
 						pDlg->Close();
 						return 1;
 					case IDC_NEWCONSOLE:
-						// Запрос на создание новой консоли
+						// Р—Р°РїСЂРѕСЃ РЅР° СЃРѕР·РґР°РЅРёРµ РЅРѕРІРѕР№ РєРѕРЅСЃРѕР»Рё
 						PostMessage(ghWnd, WM_SYSCOMMAND, ID_NEWCONSOLE, 0);
 						pDlg->Close();
 						return 1;
 					case IDC_REFRESH:
-						// Перечитать список доступных окон/процессов
+						// РџРµСЂРµС‡РёС‚Р°С‚СЊ СЃРїРёСЃРѕРє РґРѕСЃС‚СѓРїРЅС‹С… РѕРєРѕРЅ/РїСЂРѕС†РµСЃСЃРѕРІ
 						{
 							ListView_DeleteAllItems(pDlg->mh_List);
 							pDlg->mp_ProcessData = new CProcessData;
@@ -677,7 +677,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType, BOOL abAltMode)
 {
 	bool lbRc = false;
-	// Тут нужно получить инфу из списка и дернуть собственно аттач
+	// РўСѓС‚ РЅСѓР¶РЅРѕ РїРѕР»СѓС‡РёС‚СЊ РёРЅС„Сѓ РёР· СЃРїРёСЃРєР° Рё РґРµСЂРЅСѓС‚СЊ СЃРѕР±СЃС‚РІРµРЅРЅРѕ Р°С‚С‚Р°С‡
 	wchar_t szPipe[MAX_PATH];
 	PROCESS_INFORMATION pi = {};
 	STARTUPINFO si = {sizeof(si)};
@@ -711,7 +711,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 		pOut = ExecuteSrvCmd(srv.nServerPID, pIn, ghWnd);
 		if (pOut && (pOut->hdr.cbSize >= (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD))) && (pOut->dwData[0] != 0))
 		{
-			lbRc = true; // Успешно подцепились
+			lbRc = true; // РЈСЃРїРµС€РЅРѕ РїРѕРґС†РµРїРёР»РёСЃСЊ
 			goto wrap;
 		}
 		ExecuteFreeResult(pIn);
@@ -719,7 +719,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	}
 
 
-	// Может быть в процессе уже есть ConEmuHk.dll? Или этот процесс вообще уже во вкладке другого ConEmu?
+	// РњРѕР¶РµС‚ Р±С‹С‚СЊ РІ РїСЂРѕС†РµСЃСЃРµ СѓР¶Рµ РµСЃС‚СЊ ConEmuHk.dll? РР»Рё СЌС‚РѕС‚ РїСЂРѕС†РµСЃСЃ РІРѕРѕР±С‰Рµ СѓР¶Рµ РІРѕ РІРєР»Р°РґРєРµ РґСЂСѓРіРѕРіРѕ ConEmu?
 	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEHOOKSPIPENAME, L".", anPID);
 	hPipeTest = CreateFile(szPipe, GENERIC_READ|GENERIC_WRITE, 0, LocalSecurity(), OPEN_EXISTING, 0, NULL);
 	if (hPipeTest && hPipeTest != INVALID_HANDLE_VALUE)
@@ -743,7 +743,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 		abAltMode = FALSE;
 	}
 
-	TODO("Определить, может он уже под админом? Тогда и ConEmuC.exe под админом запускать нужно");
+	TODO("РћРїСЂРµРґРµР»РёС‚СЊ, РјРѕР¶РµС‚ РѕРЅ СѓР¶Рµ РїРѕРґ Р°РґРјРёРЅРѕРј? РўРѕРіРґР° Рё ConEmuC.exe РїРѕРґ Р°РґРјРёРЅРѕРј Р·Р°РїСѓСЃРєР°С‚СЊ РЅСѓР¶РЅРѕ");
 	si.dwFlags = STARTF_USESHOWWINDOW;
 	si.wShowWindow = SW_HIDE;
 
@@ -791,7 +791,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 
 	if (abAltMode)
 	{
-		TODO("Подождать бы завершения процесса, или пока он подцепится к GUI");
+		TODO("РџРѕРґРѕР¶РґР°С‚СЊ Р±С‹ Р·Р°РІРµСЂС€РµРЅРёСЏ РїСЂРѕС†РµСЃСЃР°, РёР»Рё РїРѕРєР° РѕРЅ РїРѕРґС†РµРїРёС‚СЃСЏ Рє GUI");
 		lbRc = true;
 		goto wrap;
 	}
@@ -808,7 +808,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 
 
 DoExecute:
-	// Теперь можно дернуть созданный в удаленном процессе пайп для запуска в той консоли сервера.
+	// РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ РґРµСЂРЅСѓС‚СЊ СЃРѕР·РґР°РЅРЅС‹Р№ РІ СѓРґР°Р»РµРЅРЅРѕРј РїСЂРѕС†РµСЃСЃРµ РїР°Р№Рї РґР»СЏ Р·Р°РїСѓСЃРєР° РІ С‚РѕР№ РєРѕРЅСЃРѕР»Рё СЃРµСЂРІРµСЂР°.
 	pIn = ExecuteNewCmd(CECMD_STARTSERVER, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_START));
 	pIn->NewServer.nGuiPID = GetCurrentProcessId();
 	pIn->NewServer.hGuiWnd = ghWnd;
@@ -841,8 +841,8 @@ wrap:
 	return lbRc;
 }
 
-// Работу делаем в фоновом потоке, чтобы не блокировать главный
-// (к окну ConEmu должна подцепиться новая вкладка)
+// Р Р°Р±РѕС‚Сѓ РґРµР»Р°РµРј РІ С„РѕРЅРѕРІРѕРј РїРѕС‚РѕРєРµ, С‡С‚РѕР±С‹ РЅРµ Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ РіР»Р°РІРЅС‹Р№
+// (Рє РѕРєРЅСѓ ConEmu РґРѕР»Р¶РЅР° РїРѕРґС†РµРїРёС‚СЊСЃСЏ РЅРѕРІР°СЏ РІРєР»Р°РґРєР°)
 DWORD CAttachDlg::StartAttachThread(AttachParm* lpParam)
 {
 	if (!lpParam)

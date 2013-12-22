@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2010-2011 Maximus5
 All rights reserved.
@@ -60,7 +60,7 @@ public:
 			if (riid==IID_IStream || riid==IID_ISequentialStream || riid==IID_IUnknown)
 			{
 				*ppvObject = this;
-				AddRef(); // 2009-10-03 не было
+				AddRef(); // 2009-10-03 РЅРµ Р±С‹Р»Рѕ
 				return S_OK;
 			}
 			return E_NOINTERFACE;
@@ -128,16 +128,16 @@ public:
 		{
 			if ((mn_DataPos+cb)>mn_DataSize)
 			{
-				// Нужно увеличить буфер, но сохранить текущий размер
+				// РќСѓР¶РЅРѕ СѓРІРµР»РёС‡РёС‚СЊ Р±СѓС„РµСЂ, РЅРѕ СЃРѕС…СЂР°РЅРёС‚СЊ С‚РµРєСѓС‰РёР№ СЂР°Р·РјРµСЂ
 				DWORD lLastLen = mn_DataLen;
 				ULARGE_INTEGER lNewSize; lNewSize.QuadPart = mn_DataSize + max((cb+1024), 256*1024);
 				if (lNewSize.HighPart!=0)
 					return S_FALSE;
 				if (FAILED(SetSize(lNewSize)))
 					return S_FALSE;
-				mn_DataLen = lLastLen; // Вернули текущий размер
+				mn_DataLen = lLastLen; // Р’РµСЂРЅСѓР»Рё С‚РµРєСѓС‰РёР№ СЂР°Р·РјРµСЂ
 			}
-			// Теперь можно писать в буфер
+			// РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ РїРёСЃР°С‚СЊ РІ Р±СѓС„РµСЂ
 			memmove(mp_Data+mn_DataPos, pv, cb);
 			dwWritten = cb;
 			mn_DataPos += cb;
@@ -228,7 +228,7 @@ public:
 				mp_Data = pNew;
 			}
 			mn_DataLen = libNewSize.LowPart;
-			if (mn_DataPos>mn_DataLen) // Если размер уменьшили - проверить позицию
+			if (mn_DataPos>mn_DataLen) // Р•СЃР»Рё СЂР°Р·РјРµСЂ СѓРјРµРЅСЊС€РёР»Рё - РїСЂРѕРІРµСЂРёС‚СЊ РїРѕР·РёС†РёСЋ
 				mn_DataPos = mn_DataLen;
 			hr = S_OK;
 

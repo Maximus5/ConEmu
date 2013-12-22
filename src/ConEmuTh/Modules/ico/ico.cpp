@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2010-2011 Maximus5
 All rights reserved.
@@ -39,14 +39,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma comment(lib, "gdiplus.lib")
 
-// Некритичные ошибки ( < 0x7FFFFFFF )
-// При подборе декодера в PicView нужно возвращать именно их ( < 0x7FFFFFFF )
-// для тех файлов (форматов), которые неизвестны данному декодеру.
-// PicView не будет отображать эти ошибки пользователю.
+// РќРµРєСЂРёС‚РёС‡РЅС‹Рµ РѕС€РёР±РєРё ( < 0x7FFFFFFF )
+// РџСЂРё РїРѕРґР±РѕСЂРµ РґРµРєРѕРґРµСЂР° РІ PicView РЅСѓР¶РЅРѕ РІРѕР·РІСЂР°С‰Р°С‚СЊ РёРјРµРЅРЅРѕ РёС… ( < 0x7FFFFFFF )
+// РґР»СЏ С‚РµС… С„Р°Р№Р»РѕРІ (С„РѕСЂРјР°С‚РѕРІ), РєРѕС‚РѕСЂС‹Рµ РЅРµРёР·РІРµСЃС‚РЅС‹ РґР°РЅРЅРѕРјСѓ РґРµРєРѕРґРµСЂСѓ.
+// PicView РЅРµ Р±СѓРґРµС‚ РѕС‚РѕР±СЂР°Р¶Р°С‚СЊ СЌС‚Рё РѕС€РёР±РєРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ.
 #define PIE_NOT_ICO_FILE             0x1001
 
-// Далее идут критичные ошибки. Информация об ошибке будет показана
-// пользователю, если PicView не сможет открыть файл никаким декодером
+// Р”Р°Р»РµРµ РёРґСѓС‚ РєСЂРёС‚РёС‡РЅС‹Рµ РѕС€РёР±РєРё. РРЅС„РѕСЂРјР°С†РёСЏ РѕР± РѕС€РёР±РєРµ Р±СѓРґРµС‚ РїРѕРєР°Р·Р°РЅР°
+// РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ, РµСЃР»Рё PicView РЅРµ СЃРјРѕР¶РµС‚ РѕС‚РєСЂС‹С‚СЊ С„Р°Р№Р» РЅРёРєР°РєРёРј РґРµРєРѕРґРµСЂРѕРј
 #define PIE_NO_IMAGES                0x80000001
 #define PIE_BUFFER_EMPTY             0x80000002
 #define PIE_WIN32_ERROR              0x80000003
@@ -177,10 +177,10 @@ lpIconImage = LockResource( hGlobal );
 //	_ASSERTE(pImageInfo->cbSize >= sizeof(pvdInfoImage2));
 //	_ASSERTE(pBuf && lBuf);
 //
-//	// При открытии ресурсов - pBuf это BITMAPINFOHEADER
-//	// Соответственно, при просмотре ресурса - один файл это строго одна иконка,
-//	// информацию нужно грузить строго из BITMAPINFOHEADER
-//	// Тут может быть и PNG, но это нас уже не интересует. PNG может быть открыт любым декодером...
+//	// РџСЂРё РѕС‚РєСЂС‹С‚РёРё СЂРµСЃСѓСЂСЃРѕРІ - pBuf СЌС‚Рѕ BITMAPINFOHEADER
+//	// РЎРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ, РїСЂРё РїСЂРѕСЃРјРѕС‚СЂРµ СЂРµСЃСѓСЂСЃР° - РѕРґРёРЅ С„Р°Р№Р» СЌС‚Рѕ СЃС‚СЂРѕРіРѕ РѕРґРЅР° РёРєРѕРЅРєР°,
+//	// РёРЅС„РѕСЂРјР°С†РёСЋ РЅСѓР¶РЅРѕ РіСЂСѓР·РёС‚СЊ СЃС‚СЂРѕРіРѕ РёР· BITMAPINFOHEADER
+//	// РўСѓС‚ РјРѕР¶РµС‚ Р±С‹С‚СЊ Рё PNG, РЅРѕ СЌС‚Рѕ РЅР°СЃ СѓР¶Рµ РЅРµ РёРЅС‚РµСЂРµСЃСѓРµС‚. PNG РјРѕР¶РµС‚ Р±С‹С‚СЊ РѕС‚РєСЂС‹С‚ Р»СЋР±С‹Рј РґРµРєРѕРґРµСЂРѕРј...
 //
 //	LPICONCONTEXT pIcon = NULL;
 //	LPICONDIR pTest = (LPICONDIR)pBuf;
@@ -201,7 +201,7 @@ lpIconImage = LockResource( hGlobal );
 //			return FALSE;
 //		}
 //
-//		// Делаем копию буфера
+//		// Р”РµР»Р°РµРј РєРѕРїРёСЋ Р±СѓС„РµСЂР°
 //		pIcon = (LPICONCONTEXT)CALLOC(lBuf+sizeof(DWORD));
 //		if (!pIcon) {
 //			nErrNumber = PIE_NOT_ENOUGH_MEMORY;
@@ -216,7 +216,7 @@ lpIconImage = LockResource( hGlobal );
 //			&& (pBmp->biWidth && pBmp->biWidth < 256)
 //			&& (pBmp->biHeight == (pBmp->biWidth * 2)))
 //		{
-//			// Делаем копию буфера, но предваряем его заголовком иконки
+//			// Р”РµР»Р°РµРј РєРѕРїРёСЋ Р±СѓС„РµСЂР°, РЅРѕ РїСЂРµРґРІР°СЂСЏРµРј РµРіРѕ Р·Р°РіРѕР»РѕРІРєРѕРј РёРєРѕРЅРєРё
 //			DWORD nSize = lBuf + sizeof(ICONDIR);
 //			pIcon = (LPICONCONTEXT)CALLOC(nSize+sizeof(DWORD));
 //			if (!pIcon) {
@@ -244,8 +244,8 @@ lpIconImage = LockResource( hGlobal );
 //	}
 //
 //
-//	WARNING("Хорошо бы возвращать умолчательный индекс отображаемой иконки, если первая НЕ содержит изображения вообще");
-//	// file_view_hc.ico - первый фрейм вообще пустой (полностью прозрачный), а второй содержит картинку
+//	WARNING("РҐРѕСЂРѕС€Рѕ Р±С‹ РІРѕР·РІСЂР°С‰Р°С‚СЊ СѓРјРѕР»С‡Р°С‚РµР»СЊРЅС‹Р№ РёРЅРґРµРєСЃ РѕС‚РѕР±СЂР°Р¶Р°РµРјРѕР№ РёРєРѕРЅРєРё, РµСЃР»Рё РїРµСЂРІР°СЏ РќР• СЃРѕРґРµСЂР¶РёС‚ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ РІРѕРѕР±С‰Рµ");
+//	// file_view_hc.ico - РїРµСЂРІС‹Р№ С„СЂРµР№Рј РІРѕРѕР±С‰Рµ РїСѓСЃС‚РѕР№ (РїРѕР»РЅРѕСЃС‚СЊСЋ РїСЂРѕР·СЂР°С‡РЅС‹Р№), Р° РІС‚РѕСЂРѕР№ СЃРѕРґРµСЂР¶РёС‚ РєР°СЂС‚РёРЅРєСѓ
 //
 //
 //	if (pIcon->nDataSize < (sizeof(ICONDIR) + (pIcon->Icon.idCount-1)*sizeof(ICONDIRENTRY))) {
@@ -368,9 +368,9 @@ LPBYTE Decode1BPP(UINT nWidth, UINT nHeight, RGBQUAD* pPAL, LPBYTE pXOR, LPBYTE 
 	UINT lXorStride = (((nWidth>>3)+3)>>2)<<2; // ((nWidth + 7) >> 3);
 	UINT lAndStride = lXorStride; //((nWidth + 3) >> 2) << 1;
 	lDstStride = ((nWidth + 3) >> 2) << 4;
-	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Делаем 32битное изображение
+	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Р”РµР»Р°РµРј 32Р±РёС‚РЅРѕРµ РёР·РѕР±СЂР°Р¶РµРЅРёРµ
 	//UINT nPoints = nWidth * nHeight;
-	//UINT nStride = nWidth << 2; // Это приемник - 32бит на точку
+	//UINT nStride = nWidth << 2; // Р­С‚Рѕ РїСЂРёРµРјРЅРёРє - 32Р±РёС‚ РЅР° С‚РѕС‡РєСѓ
 	//LPBYTE pXorSrc, pAndSrc, pDst = pData + nStride * (nHeight - 1);
 	////for (UINT i = nPoints; i--;) {
 	//UINT i = nPoints - 1, n;
@@ -413,9 +413,9 @@ LPBYTE Decode4BPP(UINT nWidth, UINT nHeight, RGBQUAD* pPAL, LPBYTE pXOR, LPBYTE 
 	UINT lXorStride = (((nWidth>>3)+3)>>2)<<2; // ((nWidth + 7) >> 3);
 	UINT lAndStride = (((nWidth>>1)+3)>>2)<<2; //((nWidth + 3) >> 2) << 1;
 	lDstStride = ((nWidth + 3) >> 2) << 4;
-	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Делаем 32битное изображение
+	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Р”РµР»Р°РµРј 32Р±РёС‚РЅРѕРµ РёР·РѕР±СЂР°Р¶РµРЅРёРµ
 	//UINT nPoints = nWidth * nHeight;
-	//UINT nStride = nWidth << 2; // Это приемник - 32бит на точку
+	//UINT nStride = nWidth << 2; // Р­С‚Рѕ РїСЂРёРµРјРЅРёРє - 32Р±РёС‚ РЅР° С‚РѕС‡РєСѓ
 	//LPBYTE pXorSrc, pAndSrc, pDst = pData + nStride * (nHeight - 1);
 	////for (UINT i = nPoints; i--;) {
 	//UINT i = nPoints - 1, n;
@@ -457,7 +457,7 @@ LPBYTE Decode8BPP(UINT& nWidth, UINT nHeight, RGBQUAD* pPAL, LPBYTE pXOR, LPBYTE
 	UINT lXorStride = ((nWidth+31)>>5)<<2;
 	UINT lAndStride = (((nWidth<<3)+31)>>5)<<2;
 	lDstStride = (((nWidth<<5)+31)>>5)<<2;
-	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Делаем 32битное изображение
+	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Р”РµР»Р°РµРј 32Р±РёС‚РЅРѕРµ РёР·РѕР±СЂР°Р¶РµРЅРёРµ
 	LPBYTE pXorSrc = pXOR; LPBYTE pAndSrc = pAND; LPBYTE pDst = pData + (nHeight - 1) * lDstStride;
 
 	for(UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
@@ -488,7 +488,7 @@ LPBYTE Decode24BPP(UINT& nWidth, UINT nHeight, LPBYTE pXOR, LPBYTE pAND, DWORD& 
 	UINT lXorStride = ((nWidth+31)>>5)<<2;
 	UINT lAndStride = (((nWidth*24)+31)>>5)<<2;
 	lDstStride = (((nWidth<<5)+31)>>5)<<2;
-	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Делаем 32битное изображение
+	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Р”РµР»Р°РµРј 32Р±РёС‚РЅРѕРµ РёР·РѕР±СЂР°Р¶РµРЅРёРµ
 	LPBYTE pXorSrc = pXOR; LPBYTE pAndSrc = pAND; LPBYTE pDst = pData + (nHeight - 1) * lDstStride;
 
 	for(UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
@@ -566,7 +566,7 @@ LPBYTE Decode32BPP(UINT& nWidth, UINT nHeight, LPBYTE pXOR, LPBYTE pAND, DWORD& 
 	UINT lXorStride = ((nWidth+31)>>5)<<2;
 	UINT lAndStride = (((nWidth<<5)+31)>>5)<<2;
 	lDstStride = lAndStride;
-	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Делаем 32битное изображение
+	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Р”РµР»Р°РµРј 32Р±РёС‚РЅРѕРµ РёР·РѕР±СЂР°Р¶РµРЅРёРµ
 	LPBYTE pXorSrc = pXOR; LPBYTE pAndSrc = pAND; LPBYTE pDst = pData + (nHeight - 1) * lDstStride;
 
 	for(UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
@@ -596,7 +596,7 @@ LPBYTE Decode32BPP(UINT& nWidth, UINT nHeight, LPBYTE pXOR, LPBYTE pAND, DWORD& 
 LPBYTE DecodeDummy(UINT nWidth, UINT nHeight, DWORD& nBPP)
 {
 	DWORD nSize = nWidth*nHeight*4;
-	LPBYTE pData = (LPBYTE)CALLOC(nSize); // Делаем 32битное изображение
+	LPBYTE pData = (LPBYTE)CALLOC(nSize); // Р”РµР»Р°РµРј 32Р±РёС‚РЅРѕРµ РёР·РѕР±СЂР°Р¶РµРЅРёРµ
 	nBPP = 32;
 	memset(pData, 0xFF, nSize);
 	return pData;
@@ -618,7 +618,7 @@ LPBYTE DecodeDummy(UINT nWidth, UINT nHeight, DWORD& nBPP)
 //		pDecodeInfo->lWidth, pDecodeInfo->lHeight, nColors, NULL)) != NO_ERROR)
 //		return FALSE;
 //
-//	pDecodeInfo->Flags = 0; // PVD_IDF_READONLY не нужен, т.к память под pImage выделяется специально
+//	pDecodeInfo->Flags = 0; // PVD_IDF_READONLY РЅРµ РЅСѓР¶РµРЅ, С‚.Рє РїР°РјСЏС‚СЊ РїРѕРґ pImage РІС‹РґРµР»СЏРµС‚СЃСЏ СЃРїРµС†РёР°Р»СЊРЅРѕ
 //	pDecodeInfo->nBPP = 32;
 //	pDecodeInfo->ColorModel = PVD_CM_BGRA;
 //
@@ -627,7 +627,7 @@ LPBYTE DecodeDummy(UINT nWidth, UINT nHeight, DWORD& nBPP)
 //	LPBYTE pImageStart = (pDataStart + pImage->dwImageOffset);
 //	if (*((DWORD*)pImageStart) == 0x474e5089) {
 //		//PNG Mark
-//		TODO("Хорошо бы в заголовке показать PNG");
+//		TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РІ Р·Р°РіРѕР»РѕРІРєРµ РїРѕРєР°Р·Р°С‚СЊ PNG");
 //		BOOL lbPngLoaded = FALSE;
 //		#ifndef _NO_EXEPTION_
 //		try {
@@ -672,7 +672,7 @@ LPBYTE DecodeDummy(UINT nWidth, UINT nHeight, DWORD& nBPP)
 //		}
 //		#endif
 //
-//		if (!lbPngLoaded) // пустой белый квадрат
+//		if (!lbPngLoaded) // РїСѓСЃС‚РѕР№ Р±РµР»С‹Р№ РєРІР°РґСЂР°С‚
 //			pDecodeInfo->pImage = DecodeDummy ( pDecodeInfo->lWidth,pDecodeInfo->lHeight,pDecodeInfo->nBPP );
 //
 //	} else if (*((DWORD*)pImageStart) == sizeof(BITMAPINFOHEADER)) {
@@ -693,19 +693,19 @@ LPBYTE DecodeDummy(UINT nWidth, UINT nHeight, DWORD& nBPP)
 //			pDecodeInfo->pImage = Decode1BPP ( pDecodeInfo->lWidth,pDecodeInfo->lHeight,pPAL,pXOR,pAND,pDecodeInfo->lImagePitch );
 //			pDecodeInfo->nBPP = 32;
 //			pDecodeInfo->Flags |= PVD_IDF_ALPHA;
-//			TODO("Хорошо бы в заголовке показать RLE");
+//			TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РІ Р·Р°РіРѕР»РѕРІРєРµ РїРѕРєР°Р·Р°С‚СЊ RLE");
 //
 //		} else if (nIconBPP == 4) {
 //			pDecodeInfo->pImage = Decode4BPP ( pDecodeInfo->lWidth,pDecodeInfo->lHeight,pPAL,pXOR,pAND,pDecodeInfo->lImagePitch );
 //			pDecodeInfo->nBPP = 32;
 //			pDecodeInfo->Flags |= PVD_IDF_ALPHA;
-//			TODO("Хорошо бы в заголовке показать RLE");
+//			TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РІ Р·Р°РіРѕР»РѕРІРєРµ РїРѕРєР°Р·Р°С‚СЊ RLE");
 //
 //		} else if (nIconBPP == 8) {
 //			pDecodeInfo->pImage = Decode8BPP ( pDecodeInfo->lWidth,pDecodeInfo->lHeight,pPAL,pXOR,pAND,pDecodeInfo->lImagePitch );
 //			pDecodeInfo->nBPP = 32;
 //			pDecodeInfo->Flags |= PVD_IDF_ALPHA;
-//			TODO("Хорошо бы в заголовке показать RLE");
+//			TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РІ Р·Р°РіРѕР»РѕРІРєРµ РїРѕРєР°Р·Р°С‚СЊ RLE");
 //
 //		} else if (nIconBPP == 24) {
 //			pDecodeInfo->pImage = Decode24BPP(pDecodeInfo->lWidth,pDecodeInfo->lHeight,pXOR,pAND,pDecodeInfo->lImagePitch);
@@ -839,10 +839,10 @@ struct ICOImage
 		_ASSERTE(pIcon == NULL);
 		_ASSERTE(decoder != NULL);
 		_ASSERTE(pBuf && lBuf);
-		// При открытии ресурсов - pBuf это BITMAPINFOHEADER
-		// Соответственно, при просмотре ресурса - один файл это строго одна иконка,
-		// информацию нужно грузить строго из BITMAPINFOHEADER
-		// Тут может быть и PNG, но это нас уже не интересует. PNG может быть открыт любым декодером...
+		// РџСЂРё РѕС‚РєСЂС‹С‚РёРё СЂРµСЃСѓСЂСЃРѕРІ - pBuf СЌС‚Рѕ BITMAPINFOHEADER
+		// РЎРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ, РїСЂРё РїСЂРѕСЃРјРѕС‚СЂРµ СЂРµСЃСѓСЂСЃР° - РѕРґРёРЅ С„Р°Р№Р» СЌС‚Рѕ СЃС‚СЂРѕРіРѕ РѕРґРЅР° РёРєРѕРЅРєР°,
+		// РёРЅС„РѕСЂРјР°С†РёСЋ РЅСѓР¶РЅРѕ РіСЂСѓР·РёС‚СЊ СЃС‚СЂРѕРіРѕ РёР· BITMAPINFOHEADER
+		// РўСѓС‚ РјРѕР¶РµС‚ Р±С‹С‚СЊ Рё PNG, РЅРѕ СЌС‚Рѕ РЅР°СЃ СѓР¶Рµ РЅРµ РёРЅС‚РµСЂРµСЃСѓРµС‚. PNG РјРѕР¶РµС‚ Р±С‹С‚СЊ РѕС‚РєСЂС‹С‚ Р»СЋР±С‹Рј РґРµРєРѕРґРµСЂРѕРј...
 		LPICONDIR pTest = (LPICONDIR)pBuf;
 		LPBITMAPINFOHEADER pBmp = (LPBITMAPINFOHEADER)pBuf;
 
@@ -866,7 +866,7 @@ struct ICOImage
 				return FALSE;
 			}
 
-			// Делаем копию буфера
+			// Р”РµР»Р°РµРј РєРѕРїРёСЋ Р±СѓС„РµСЂР°
 			pIcon = (LPICONCONTEXT)CALLOC((DWORD)lBuf+sizeof(DWORD));
 
 			if (!pIcon)
@@ -885,7 +885,7 @@ struct ICOImage
 			        && (pBmp->biWidth && pBmp->biWidth < 256)
 			        && (pBmp->biHeight == (pBmp->biWidth * 2)))
 			{
-				// Делаем копию буфера, но предваряем его заголовком иконки
+				// Р”РµР»Р°РµРј РєРѕРїРёСЋ Р±СѓС„РµСЂР°, РЅРѕ РїСЂРµРґРІР°СЂСЏРµРј РµРіРѕ Р·Р°РіРѕР»РѕРІРєРѕРј РёРєРѕРЅРєРё
 				DWORD nSize = lBuf + sizeof(ICONDIR);
 				pIcon = (LPICONCONTEXT)CALLOC(nSize+sizeof(DWORD));
 
@@ -900,7 +900,7 @@ struct ICOImage
 				pIcon->Icon.idType = 1;
 				pIcon->Icon.idCount = 1;
 				pIcon->Icon.idEntries[0].bWidth = (BYTE)pBmp->biWidth;
-				pIcon->Icon.idEntries[0].bHeight = (BYTE)pBmp->biWidth; //-V537 //помним, что (pBmp->biHeight == (pBmp->biWidth * 2))
+				pIcon->Icon.idEntries[0].bHeight = (BYTE)pBmp->biWidth; //-V537 //РїРѕРјРЅРёРј, С‡С‚Рѕ (pBmp->biHeight == (pBmp->biWidth * 2))
 				pIcon->Icon.idEntries[0].bColorCount = (pBmp->biBitCount >= 8) ? 0 : (1 << pBmp->biBitCount);
 				pIcon->Icon.idEntries[0].bReserved = 0;
 				pIcon->Icon.idEntries[0].wPlanes = pBmp->biPlanes;
@@ -917,7 +917,7 @@ struct ICOImage
 		}
 
 		WARNING("Horosho by vozvraschatj umolchatel'nyj indeks otobrazhaemoj ikonki, esli pervaja NE soderzhit izobrazhenija voobsche");
-		// file_view_hc.ico - первый фрейм вообще пустой (полностью прозрачный), а второй содержит картинку
+		// file_view_hc.ico - РїРµСЂРІС‹Р№ С„СЂРµР№Рј РІРѕРѕР±С‰Рµ РїСѓСЃС‚РѕР№ (РїРѕР»РЅРѕСЃС‚СЊСЋ РїСЂРѕР·СЂР°С‡РЅС‹Р№), Р° РІС‚РѕСЂРѕР№ СЃРѕРґРµСЂР¶РёС‚ РєР°СЂС‚РёРЅРєСѓ
 
 		if (pIcon->nDataSize < (sizeof(ICONDIR) + (pIcon->Icon.idCount-1)*sizeof(ICONDIRENTRY)))
 		{
@@ -938,7 +938,7 @@ struct ICOImage
 
 	BOOL PageDecode(struct CET_LoadInfo* pLoadPreview)
 	{
-		//pDecodeInfo->Flags = 0; // PVD_IDF_READONLY не нужен, т.к память под pImage выделяется специально
+		//pDecodeInfo->Flags = 0; // PVD_IDF_READONLY РЅРµ РЅСѓР¶РµРЅ, С‚.Рє РїР°РјСЏС‚СЊ РїРѕРґ pImage РІС‹РґРµР»СЏРµС‚СЃСЏ СЃРїРµС†РёР°Р»СЊРЅРѕ
 		pLoadPreview->nBits = 32;
 		//pDecodeInfo->ColorModel = PVD_CM_BGRA;
 		pLoadPreview->cbStride = (lWidth * pLoadPreview->nBits) >> 3;
@@ -1003,7 +1003,7 @@ struct ICOImage
 				}
 			}
 
-			if (!lbPngLoaded)  // пустой белый квадрат
+			if (!lbPngLoaded)  // РїСѓСЃС‚РѕР№ Р±РµР»С‹Р№ РєРІР°РґСЂР°С‚
 				pImageData = DecodeDummy(lWidth,lHeight,pLoadPreview->nBits);
 		}
 		else if (*((DWORD*)pImageStart) == sizeof(BITMAPINFOHEADER))
@@ -1027,21 +1027,21 @@ struct ICOImage
 				pImageData = Decode1BPP(lWidth,lHeight,pPAL,pXOR,pAND,pLoadPreview->cbStride);
 				pLoadPreview->nBits = 32;
 				//pDecodeInfo->Flags |= PVD_IDF_ALPHA;
-				//TODO("Хорошо бы в заголовке показать RLE");
+				//TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РІ Р·Р°РіРѕР»РѕРІРєРµ РїРѕРєР°Р·Р°С‚СЊ RLE");
 			}
 			else if (nIconBPP == 4) //-V112
 			{
 				pImageData = Decode4BPP(lWidth,lHeight,pPAL,pXOR,pAND,pLoadPreview->cbStride);
 				pLoadPreview->nBits = 32;
 				//pDecodeInfo->Flags |= PVD_IDF_ALPHA;
-				//TODO("Хорошо бы в заголовке показать RLE");
+				//TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РІ Р·Р°РіРѕР»РѕРІРєРµ РїРѕРєР°Р·Р°С‚СЊ RLE");
 			}
 			else if (nIconBPP == 8)
 			{
 				pImageData = Decode8BPP(lWidth,lHeight,pPAL,pXOR,pAND,pLoadPreview->cbStride);
 				pLoadPreview->nBits = 32;
 				//pDecodeInfo->Flags |= PVD_IDF_ALPHA;
-				//TODO("Хорошо бы в заголовке показать RLE");
+				//TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РІ Р·Р°РіРѕР»РѕРІРєРµ РїРѕРєР°Р·Р°С‚СЊ RLE");
 			}
 			else if (nIconBPP == 24)
 			{
@@ -1088,14 +1088,14 @@ struct ICOImage
 		UINT32 nBPP, nW, nH, nC;
 		iPage = -1;
 
-		// Подобрать фрейм наиболее подходящий к запросу
+		// РџРѕРґРѕР±СЂР°С‚СЊ С„СЂРµР№Рј РЅР°РёР±РѕР»РµРµ РїРѕРґС…РѕРґСЏС‰РёР№ Рє Р·Р°РїСЂРѕСЃСѓ
 		for(int s = 1; s <= 3; s++)
 		{
 			for(int i = 0; i < pIcon->Icon.idCount; i++)
 			{
 				if ((nErrNumber = LoadPageInfo(pIcon, i, nBPP, nW, nH, nC, NULL)) == NO_ERROR)
 				{
-					// Сначала пытаемся по максимуму
+					// РЎРЅР°С‡Р°Р»Р° РїС‹С‚Р°РµРјСЃСЏ РїРѕ РјР°РєСЃРёРјСѓРјСѓ
 					if (s == 1)
 					{
 						if (pIcon->Icon.idCount > 1 && (pLoadPreview->crLoadSize.X != nW || pLoadPreview->crLoadSize.Y != nH))
@@ -1108,7 +1108,7 @@ struct ICOImage
 					}
 					else if (s == 2)
 					{
-						// если не удалось - то не более
+						// РµСЃР»Рё РЅРµ СѓРґР°Р»РѕСЃСЊ - С‚Рѕ РЅРµ Р±РѕР»РµРµ
 						if ((int)pLoadPreview->crLoadSize.X < (int)nW || (int)pLoadPreview->crLoadSize.Y < (int)nH)
 							continue;
 
@@ -1119,7 +1119,7 @@ struct ICOImage
 					}
 					else
 					{
-						// не удалось - любой размер
+						// РЅРµ СѓРґР°Р»РѕСЃСЊ - Р»СЋР±РѕР№ СЂР°Р·РјРµСЂ
 						if (nBPP >= nIconBPP && nW >= lWidth && nH >= lHeight)
 						{
 							iPage = i; nIconBPP = nBPP; lWidth = nW; lHeight = nH; nColors = nC;
@@ -1187,7 +1187,7 @@ BOOL WINAPI CET_Init(struct CET_Init* pInit)
 		return FALSE;
 	}
 
-	_ASSERTE(pInit->pContext == (LPVOID)pDecoder); // Уже вернул pDecoder->Init
+	_ASSERTE(pInit->pContext == (LPVOID)pDecoder); // РЈР¶Рµ РІРµСЂРЅСѓР» pDecoder->Init
 	return TRUE;
 }
 
@@ -1318,7 +1318,7 @@ VOID WINAPI CET_Free(struct CET_LoadInfo* pLoadPreview)
 	{
 		case eIcoStr_Image:
 		{
-			// Сюда мы попадем если был exception в CET_Load
+			// РЎСЋРґР° РјС‹ РїРѕРїР°РґРµРј РµСЃР»Рё Р±С‹Р» exception РІ CET_Load
 			ICOImage *pImg = (ICOImage*)pLoadPreview->pFileContext;
 			pImg->Close();
 		} break;

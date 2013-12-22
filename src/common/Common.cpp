@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -131,7 +131,7 @@ BOOL UnpackInputRecord(const MSG64::MsgStr* piMsg, INPUT_RECORD* pRec)
 		pRec->Event.KeyEvent.uChar.UnicodeChar = (WCHAR)(piMsg->lParam & 0xFFFF);
 		pRec->Event.KeyEvent.wVirtualKeyCode   = (((DWORD)piMsg->lParam) & 0xFF0000) >> 16;
 		pRec->Event.KeyEvent.wVirtualScanCode  = (((DWORD)piMsg->lParam) & 0xFF000000) >> 24;
-		// wParam. Пока что тут может быть max(ENHANCED_KEY==0x0100)
+		// wParam. РџРѕРєР° С‡С‚Рѕ С‚СѓС‚ РјРѕР¶РµС‚ Р±С‹С‚СЊ max(ENHANCED_KEY==0x0100)
 		pRec->Event.KeyEvent.dwControlKeyState = ((DWORD)piMsg->wParam & 0xFFFF);
 		pRec->Event.KeyEvent.wRepeatCount = ((DWORD)piMsg->wParam & 0xFF0000) >> 16;
 	}
@@ -188,8 +188,8 @@ BOOL UnpackInputRecord(const MSG64::MsgStr* piMsg, INPUT_RECORD* pRec)
 
 void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD* rDown, INPUT_RECORD* rUp)
 {
-	// Может приходить запрос на отсылку даже если текущий буфер НЕ rbt_Primary,
-	// например, при начале выделения и автоматическом переключении на альтернативный буфер
+	// РњРѕР¶РµС‚ РїСЂРёС…РѕРґРёС‚СЊ Р·Р°РїСЂРѕСЃ РЅР° РѕС‚СЃС‹Р»РєСѓ РґР°Р¶Рµ РµСЃР»Рё С‚РµРєСѓС‰РёР№ Р±СѓС„РµСЂ РќР• rbt_Primary,
+	// РЅР°РїСЂРёРјРµСЂ, РїСЂРё РЅР°С‡Р°Р»Рµ РІС‹РґРµР»РµРЅРёСЏ Рё Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРѕРј РїРµСЂРµРєР»СЋС‡РµРЅРёРё РЅР° Р°Р»СЊС‚РµСЂРЅР°С‚РёРІРЅС‹Р№ Р±СѓС„РµСЂ
 
 	if (!vkKey && !dwControlState && wch)
 	{
@@ -230,7 +230,7 @@ void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCo
 	r.Event.KeyEvent.dwControlKeyState = dwControlState;
 	*rDown = r;
 
-	TODO("Может нужно в dwControlKeyState применять модификатор, если он и есть vkKey?");
+	TODO("РњРѕР¶РµС‚ РЅСѓР¶РЅРѕ РІ dwControlKeyState РїСЂРёРјРµРЅСЏС‚СЊ РјРѕРґРёС„РёРєР°С‚РѕСЂ, РµСЃР»Рё РѕРЅ Рё РµСЃС‚СЊ vkKey?");
 
 	r.Event.KeyEvent.bKeyDown = FALSE;
 	r.Event.KeyEvent.dwControlKeyState = dwControlState;

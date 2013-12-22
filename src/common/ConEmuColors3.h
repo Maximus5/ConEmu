@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -182,7 +182,7 @@ __inline BYTE FarColor_3_2(const FarColor& Color3)
 	if (Color3.Flags & FCF_BG_4BIT)
 	{
 		WORD bk = (WORD)(Color3.BackgroundColor & 0xF);
-		// Коррекция яркости, если подобранные индексы совпали
+		// РљРѕСЂСЂРµРєС†РёСЏ СЏСЂРєРѕСЃС‚Рё, РµСЃР»Рё РїРѕРґРѕР±СЂР°РЅРЅС‹Рµ РёРЅРґРµРєСЃС‹ СЃРѕРІРїР°Р»Рё
 		if (Color2 == bk)
 		{
 			if (Color2 & 8)

@@ -1,4 +1,4 @@
-
+ï»¿
 /*
 Copyright (c) 2010-2011 Maximus5
 All rights reserved.
@@ -88,7 +88,7 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	else
 		Info->MinFarVersion = MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR, FARMANAGERVERSION_REVISION, 2578, FARMANAGERVERSION_STAGE);
 
-	// Build: YYMMDDX (YY - äâå öèôðû ãîäà, MM - ìåñÿö, DD - äåíü, X - 0 è âûøå-íîìåð ïîäñáîðêè)
+	// Build: YYMMDDX (YY - Ð´Ð²Ðµ Ñ†Ð¸Ñ„Ñ€Ñ‹ Ð³Ð¾Ð´Ð°, MM - Ð¼ÐµÑÑÑ†, DD - Ð´ÐµÐ½ÑŒ, X - 0 Ð¸ Ð²Ñ‹ÑˆÐµ-Ð½Ð¾Ð¼ÐµÑ€ Ð¿Ð¾Ð´ÑÐ±Ð¾Ñ€ÐºÐ¸)
 	Info->Version = MAKEFARVERSION(MVV_1,MVV_2,MVV_3,((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10),VS_RELEASE);
 	
 	Info->Guid = guid_ConEmuLn;

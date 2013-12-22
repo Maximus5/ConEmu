@@ -1,4 +1,4 @@
-
+ï»¿
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -35,9 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WinObjects.h"
 
 static bool bCheckHooks, bCheckUpdate, bCheckIme;
-// Åñëè ôàéë êîíôèãóðàöèè ïóñò, òî ïîñëå âûçîâà CheckOptionsFast
-// âñå ðàâíî áóäåò SaveSettings(TRUE/*abSilent*/);
-// Ïîýòîìó âûáðàííûå íàñòðîéêè çäåñü ìîæíî íå ñîõðàíÿòü (êðîìå StopWarningConIme)
+// Ð•ÑÐ»Ð¸ Ñ„Ð°Ð¹Ð» ÐºÐ¾Ð½Ñ„Ð¸Ð³ÑƒÑ€Ð°Ñ†Ð¸Ð¸ Ð¿ÑƒÑÑ‚, Ñ‚Ð¾ Ð¿Ð¾ÑÐ»Ðµ Ð²Ñ‹Ð·Ð¾Ð²Ð° CheckOptionsFast
+// Ð²ÑÐµ Ñ€Ð°Ð²Ð½Ð¾ Ð±ÑƒÐ´ÐµÑ‚ SaveSettings(TRUE/*abSilent*/);
+// ÐŸÐ¾ÑÑ‚Ð¾Ð¼Ñƒ Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð½Ñ‹Ðµ Ð½Ð°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ¸ Ð·Ð´ÐµÑÑŒ Ð¼Ð¾Ð¶Ð½Ð¾ Ð½Ðµ ÑÐ¾Ñ…Ñ€Ð°Ð½ÑÑ‚ÑŒ (ÐºÑ€Ð¾Ð¼Ðµ StopWarningConIme)
 static bool bVanilla;
 
 
@@ -78,21 +78,21 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 			int iAllowed = 0;
 			if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_XML) == 0)
 			{
-				iAllowed = 1; // Ðååñòð óæå íèçÿ
+				iAllowed = 1; // Ð ÐµÐµÑÑ‚Ñ€ ÑƒÐ¶Ðµ Ð½Ð¸Ð·Ñ
 				if (Storage.pszFile)
 				{
 					if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[1]) == 0)
-						iAllowed = 1; // OK, ïåðåáèòü ìîæåò ëþáîé äðóãîé xml
+						iAllowed = 1; // OK, Ð¿ÐµÑ€ÐµÐ±Ð¸Ñ‚ÑŒ Ð¼Ð¾Ð¶ÐµÑ‚ Ð»ÑŽÐ±Ð¾Ð¹ Ð´Ñ€ÑƒÐ³Ð¾Ð¹ xml
 					else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[2]) == 0)
-						iAllowed = 2; // "Ïåðåáèòü" ìîæåò òîëüêî %APPDATA%
+						iAllowed = 2; // "ÐŸÐµÑ€ÐµÐ±Ð¸Ñ‚ÑŒ" Ð¼Ð¾Ð¶ÐµÑ‚ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ %APPDATA%
 					else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[3]) == 0)
-						iAllowed = 3; // Ïðèîðèòåòíåå íàñòðîåê íåò
+						iAllowed = 3; // ÐŸÑ€Ð¸Ð¾Ñ€Ð¸Ñ‚ÐµÑ‚Ð½ÐµÐµ Ð½Ð°ÑÑ‚Ñ€Ð¾ÐµÐº Ð½ÐµÑ‚
 					else
 					{
-						// Ýòîò xml ìîã áûòü óêàçàí â "/LoadCfgFile ..."
+						// Ð­Ñ‚Ð¾Ñ‚ xml Ð¼Ð¾Ð³ Ð±Ñ‹Ñ‚ÑŒ ÑƒÐºÐ°Ð·Ð°Ð½ Ð² "/LoadCfgFile ..."
 						SafeFree(pszSettingsPlaces[3]);
 						pszSettingsPlaces[3] = lstrdup(Storage.pszFile);
-						iAllowed = 3; // Ïðèîðèòåòíåå íàñòðîåê íåò
+						iAllowed = 3; // ÐŸÑ€Ð¸Ð¾Ñ€Ð¸Ñ‚ÐµÑ‚Ð½ÐµÐµ Ð½Ð°ÑÑ‚Ñ€Ð¾ÐµÐº Ð½ÐµÑ‚
 					}
 				}
 			}
@@ -221,11 +221,11 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 					LRESULT lSelStorage = SendDlgItemMessage(hDlg, lbStorageLocation, CB_GETCURSEL, 0, 0);
 					if (lSelStorage > 0)
 					{
-						// Çíà÷èò þçåð âûáðàë "ñîçäàòü íàñòðîéêè" â äðóãîì ìåñòå
+						// Ð—Ð½Ð°Ñ‡Ð¸Ñ‚ ÑŽÐ·ÐµÑ€ Ð²Ñ‹Ð±Ñ€Ð°Ð» "ÑÐ¾Ð·Ð´Ð°Ñ‚ÑŒ Ð½Ð°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ¸" Ð² Ð´Ñ€ÑƒÐ³Ð¾Ð¼ Ð¼ÐµÑÑ‚Ðµ
 						wchar_t* pszNewPlace = GetDlgItemText(hDlg, lbStorageLocation);
 						if (!gpConEmu->SetConfigFile(pszNewPlace, true))
 						{
-							// Îøèáêà óæå ïîêàçàíà
+							// ÐžÑˆÐ¸Ð±ÐºÐ° ÑƒÐ¶Ðµ Ð¿Ð¾ÐºÐ°Ð·Ð°Ð½Ð°
 							return 1;
 						}
 					}
@@ -243,7 +243,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 					/* Auto Update settings */
 					gpSet->UpdSet.isUpdateCheckOnStartup = (IsDlgButtonChecked(hDlg, cbEnableAutoUpdateFast) == BST_CHECKED);
 					if (bCheckUpdate)
-					{	// Ïðè ïåðâîì çàïóñêå - óìîë÷àíèÿ ïàðàìåòðîâ
+					{	// ÐŸÑ€Ð¸ Ð¿ÐµÑ€Ð²Ð¾Ð¼ Ð·Ð°Ð¿ÑƒÑÐºÐµ - ÑƒÐ¼Ð¾Ð»Ñ‡Ð°Ð½Ð¸Ñ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ð¾Ð²
 						gpSet->UpdSet.isUpdateCheckHourly = false;
 						gpSet->UpdSet.isUpdateConfirmDownload = true; // true-Show MessageBox, false-notify via TSA only
 					}
@@ -303,7 +303,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 						if ((reg = gpSet->CreateSettings(NULL)) != NULL)
 						{
-							// ÁÅÇ èìåíè êîíôèãóðàöèè!
+							// Ð‘Ð•Ð— Ð¸Ð¼ÐµÐ½Ð¸ ÐºÐ¾Ð½Ñ„Ð¸Ð³ÑƒÑ€Ð°Ñ†Ð¸Ð¸!
 							if (reg->OpenKey(CONEMU_ROOT_KEY, KEY_WRITE))
 							{
 								long  lbStopWarning = TRUE;
@@ -359,18 +359,18 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 	bCheckIme = false;
 	if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)
 	{
-		//;; Q. Â Windows Vista çàâèñàþò äðóãèå êîíñîëüíûå ïðîöåññû.
-		//	;; A. "Âèíîâàò" ïðîöåññ ConIme.exe. Âðîäå áû îí ñëóæèò äëÿ ââîäà èåðîãëèôîâ
-		//	;;    (êèòàé è ò.ï.). Çà÷åì îí íóæåí, åñëè ââîä òåïåðü èäåò â ãðàôè÷åñêîì îêíå?
-		//	;;    Íóæíî çàïðåòèòü åãî àâòîçàïóñê èëè âîîáùå ïåðåèìåíîâàòü ýòîò ôàéë, íàïðèìåð
-		//	;;    â 'ConIme.ex1' (âèäèìî ýòî âîçìîæíî òîëüêî â áåçîïàñíîì ðåæèìå).
-		//	;;    Çàïðåòèòü àâòîçàïóñê: Âíåñèòå â ðååñòð è ïåðåçàãðóçèòåñü
+		//;; Q. Ð’ Windows Vista Ð·Ð°Ð²Ð¸ÑÐ°ÑŽÑ‚ Ð´Ñ€ÑƒÐ³Ð¸Ðµ ÐºÐ¾Ð½ÑÐ¾Ð»ÑŒÐ½Ñ‹Ðµ Ð¿Ñ€Ð¾Ñ†ÐµÑÑÑ‹.
+		//	;; A. "Ð’Ð¸Ð½Ð¾Ð²Ð°Ñ‚" Ð¿Ñ€Ð¾Ñ†ÐµÑÑ ConIme.exe. Ð’Ñ€Ð¾Ð´Ðµ Ð±Ñ‹ Ð¾Ð½ ÑÐ»ÑƒÐ¶Ð¸Ñ‚ Ð´Ð»Ñ Ð²Ð²Ð¾Ð´Ð° Ð¸ÐµÑ€Ð¾Ð³Ð»Ð¸Ñ„Ð¾Ð²
+		//	;;    (ÐºÐ¸Ñ‚Ð°Ð¹ Ð¸ Ñ‚.Ð¿.). Ð—Ð°Ñ‡ÐµÐ¼ Ð¾Ð½ Ð½ÑƒÐ¶ÐµÐ½, ÐµÑÐ»Ð¸ Ð²Ð²Ð¾Ð´ Ñ‚ÐµÐ¿ÐµÑ€ÑŒ Ð¸Ð´ÐµÑ‚ Ð² Ð³Ñ€Ð°Ñ„Ð¸Ñ‡ÐµÑÐºÐ¾Ð¼ Ð¾ÐºÐ½Ðµ?
+		//	;;    ÐÑƒÐ¶Ð½Ð¾ Ð·Ð°Ð¿Ñ€ÐµÑ‚Ð¸Ñ‚ÑŒ ÐµÐ³Ð¾ Ð°Ð²Ñ‚Ð¾Ð·Ð°Ð¿ÑƒÑÐº Ð¸Ð»Ð¸ Ð²Ð¾Ð¾Ð±Ñ‰Ðµ Ð¿ÐµÑ€ÐµÐ¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ñ‚ÑŒ ÑÑ‚Ð¾Ñ‚ Ñ„Ð°Ð¹Ð», Ð½Ð°Ð¿Ñ€Ð¸Ð¼ÐµÑ€
+		//	;;    Ð² 'ConIme.ex1' (Ð²Ð¸Ð´Ð¸Ð¼Ð¾ ÑÑ‚Ð¾ Ð²Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð¾ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð² Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð¾Ð¼ Ñ€ÐµÐ¶Ð¸Ð¼Ðµ).
+		//	;;    Ð—Ð°Ð¿Ñ€ÐµÑ‚Ð¸Ñ‚ÑŒ Ð°Ð²Ñ‚Ð¾Ð·Ð°Ð¿ÑƒÑÐº: Ð’Ð½ÐµÑÐ¸Ñ‚Ðµ Ð² Ñ€ÐµÐµÑÑ‚Ñ€ Ð¸ Ð¿ÐµÑ€ÐµÐ·Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÐµÑÑŒ
 		long  lbStopWarning = FALSE;
 		
 		SettingsBase* reg = gpSet->CreateSettings(NULL);
 		if (reg)
 		{
-			// ÁÅÇ èìåíè êîíôèãóðàöèè!
+			// Ð‘Ð•Ð— Ð¸Ð¼ÐµÐ½Ð¸ ÐºÐ¾Ð½Ñ„Ð¸Ð³ÑƒÑ€Ð°Ñ†Ð¸Ð¸!
 			if (reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ))
 			{
 				if (!reg->Load(_T("StopWarningConIme"), lbStopWarning))

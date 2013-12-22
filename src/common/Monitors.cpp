@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2013 Maximus5
 All rights reserved.
@@ -121,7 +121,7 @@ HMONITOR GetPrimaryMonitorInfo(MONITORINFO* pmi /*= NULL*/)
 	if (!m.hMon)
 	{
 		_ASSERTE(FALSE && "FindPrimaryMonitor fails");
-		// Если облом с мониторами - берем данные по умолчанию
+		// Р•СЃР»Рё РѕР±Р»РѕРј СЃ РјРѕРЅРёС‚РѕСЂР°РјРё - Р±РµСЂРµРј РґР°РЅРЅС‹Рµ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 		m.mi.cbSize = 0;
 		SystemParametersInfo(SPI_GETWORKAREA, 0, &m.mi.rcWork, 0);
 		m.mi.rcMonitor.left = m.mi.rcMonitor.top = 0;
@@ -232,12 +232,12 @@ HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)
 
 	HMONITOR hFound = NULL;
 
-	_ASSERTE(prcWnd!=NULL); // Иначе будем искать от Primary
+	_ASSERTE(prcWnd!=NULL); // РРЅР°С‡Рµ Р±СѓРґРµРј РёСЃРєР°С‚СЊ РѕС‚ Primary
 
 	HMONITOR hNearest = prcWnd ? MonitorFromRect(prcWnd, MONITOR_DEFAULTTONEAREST) : GetPrimaryMonitorInfo(NULL);
 	MONITORINFO mi; GetMonitorInfoSafe(hNearest, mi);
 
-	TODO("Доработать упорядочивание мониторов?");
+	TODO("Р”РѕСЂР°Р±РѕС‚Р°С‚СЊ СѓРїРѕСЂСЏРґРѕС‡РёРІР°РЅРёРµ РјРѕРЅРёС‚РѕСЂРѕРІ?");
 	Monitors.MonArray.sort(MonitorSortCallback);
 
 	for (INT_PTR i = iMonCount; (i--) > 0;)
@@ -250,7 +250,7 @@ HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)
 			//	Item.ptCenter.y};
 			//hFound = MonitorFromPoint(ptNext, MONITOR_DEFAULTTONEAREST);
 			//if (hFound != hNearest)
-			//	break; // нашли что-то подходящее
+			//	break; // РЅР°С€Р»Рё С‡С‚Рѕ-С‚Рѕ РїРѕРґС…РѕРґСЏС‰РµРµ
 
 
 			INT_PTR j;

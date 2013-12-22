@@ -1,4 +1,4 @@
-
+ï»¿
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -56,7 +56,7 @@ static bool LoadFarVersion(FarVersion& gFarVersion, wchar_t (&ErrText)[512])
 					{
 						gFarVersion.dwVer = lvs->dwFileVersionMS;
 
-						// Íà÷èíàÿ ñ XXX ñáîðêè - Build ïåðååõàë â ñòàðøåå ñëîâî
+						// ÐÐ°Ñ‡Ð¸Ð½Ð°Ñ Ñ XXX ÑÐ±Ð¾Ñ€ÐºÐ¸ - Build Ð¿ÐµÑ€ÐµÐµÑ…Ð°Ð» Ð² ÑÑ‚Ð°Ñ€ÑˆÐµÐµ ÑÐ»Ð¾Ð²Ð¾
 						if (HIWORD(lvs->dwFileVersionLS) == 0)
 							gFarVersion.dwBuild = lvs->dwFileVersionLS;
 						else

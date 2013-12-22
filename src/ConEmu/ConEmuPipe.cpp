@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "OptionsClass.h"
 
-WARNING("!!! Обязательно нужно сделать возможность отваливаться по таймауту!");
+WARNING("!!! РћР±СЏР·Р°С‚РµР»СЊРЅРѕ РЅСѓР¶РЅРѕ СЃРґРµР»Р°С‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РѕС‚РІР°Р»РёРІР°С‚СЊСЃСЏ РїРѕ С‚Р°Р№РјР°СѓС‚Сѓ!");
 
 CConEmuPipe::CConEmuPipe(DWORD anFarPID, DWORD anTimeout/*=-1*/)
 {
@@ -133,10 +133,10 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 	//return TRUE;
 }
 
-// Не интересуется результатом команды!
+// РќРµ РёРЅС‚РµСЂРµСЃСѓРµС‚СЃСЏ СЂРµР·СѓР»СЊС‚Р°С‚РѕРј РєРѕРјР°РЅРґС‹!
 BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 {
-	WARNING("Если указан mdw_Timeout - создать нить и выполнять команду в ней. Ожидать нить не более и прибить ее, если пришел Timeout");
+	WARNING("Р•СЃР»Рё СѓРєР°Р·Р°РЅ mdw_Timeout - СЃРѕР·РґР°С‚СЊ РЅРёС‚СЊ Рё РІС‹РїРѕР»РЅСЏС‚СЊ РєРѕРјР°РЅРґСѓ РІ РЅРµР№. РћР¶РёРґР°С‚СЊ РЅРёС‚СЊ РЅРµ Р±РѕР»РµРµ Рё РїСЂРёР±РёС‚СЊ РµРµ, РµСЃР»Рё РїСЂРёС€РµР» Timeout");
 	MCHKHEAP
 
 	if (nCmd<(int)CMD_FIRST_FAR_CMD || nCmd>(int)CMD_LAST_FAR_CMD)
@@ -189,7 +189,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 
 	if (!fSuccess && dwErr == ERROR_BROKEN_PIPE)
 	{
-		// Плагин не вернул данных, но обработал команду
+		// РџР»Р°РіРёРЅ РЅРµ РІРµСЂРЅСѓР» РґР°РЅРЅС‹С…, РЅРѕ РѕР±СЂР°Р±РѕС‚Р°Р» РєРѕРјР°РЅРґСѓ
 		Close();
 		return TRUE;
 	}
@@ -212,7 +212,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 
 	pOut = (CESERVER_REQ*)cbReadBuf;
 	
-	// Проверка размера
+	// РџСЂРѕРІРµСЂРєР° СЂР°Р·РјРµСЂР°
 	if (pOut->hdr.cbSize <= sizeof(pOut->hdr))
 	{
 		_ASSERTE(pOut->hdr.cbSize == 0);
@@ -271,7 +271,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 		nAllSize -= cbRead;
 	}
 
-	TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
+	TODO("РњРѕР¶РµС‚ РІРѕР·РЅРёРєРЅСѓС‚СЊ ASSERT, РµСЃР»Рё РєРѕРЅСЃРѕР»СЊ Р±С‹Р»Р° Р·Р°РєСЂС‹С‚Р° РІ РїСЂРѕС†РµСЃСЃРµ С‡С‚РµРЅРёСЏ");
 	_ASSERTE(nAllSize==0);
 	SafeCloseHandle(mh_Pipe);
 	SafeFree(pIn);
@@ -297,7 +297,7 @@ BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 {
 	MCHKHEAP
 
-	if (nRead) *nRead = 0;  // пока сбросим
+	if (nRead) *nRead = 0;  // РїРѕРєР° СЃР±СЂРѕСЃРёРј
 
 	if (lpCursor == NULL)
 	{

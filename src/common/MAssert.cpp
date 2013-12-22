@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -51,7 +51,7 @@ DWORD WINAPI MyAssertThread(LPVOID p)
 {
 	if (gbInMyAssertTrap)
 	{
-		// Если уже в трапе - то повторно не вызывать, иначе может вывалиться серия окон, что затруднит отладку
+		// Р•СЃР»Рё СѓР¶Рµ РІ С‚СЂР°РїРµ - С‚Рѕ РїРѕРІС‚РѕСЂРЅРѕ РЅРµ РІС‹Р·С‹РІР°С‚СЊ, РёРЅР°С‡Рµ РјРѕР¶РµС‚ РІС‹РІР°Р»РёС‚СЊСЃСЏ СЃРµСЂРёСЏ РѕРєРѕРЅ, С‡С‚Рѕ Р·Р°С‚СЂСѓРґРЅРёС‚ РѕС‚Р»Р°РґРєСѓ
 		return IDCANCEL;
 	}
 
@@ -129,7 +129,7 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 		HWND hConWnd = GetConEmuHWND(2);
 		HWND hGuiWnd = ghConEmuWnd;
 
-		// -- искать - нельзя. Если мы НЕ в ConEmu - нельзя стучаться в другие копии!!!
+		// -- РёСЃРєР°С‚СЊ - РЅРµР»СЊР·СЏ. Р•СЃР»Рё РјС‹ РќР• РІ ConEmu - РЅРµР»СЊР·СЏ СЃС‚СѓС‡Р°С‚СЊСЃСЏ РІ РґСЂСѓРіРёРµ РєРѕРїРёРё!!!
 		//#ifndef CONEMU_MINIMAL
 		//if (hGuiWnd == NULL)
 		//{
@@ -160,7 +160,7 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 #endif
 #endif
 
-	// В консольных приложениях попытка запустить CreateThread(MyAssertThread) может зависать
+	// Р’ РєРѕРЅСЃРѕР»СЊРЅС‹С… РїСЂРёР»РѕР¶РµРЅРёСЏС… РїРѕРїС‹С‚РєР° Р·Р°РїСѓСЃС‚РёС‚СЊ CreateThread(MyAssertThread) РјРѕР¶РµС‚ Р·Р°РІРёСЃР°С‚СЊ
 	dwCode = MyAssertThread(pa);
 
 wrap:

@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 // Only for input_bug search purposes in Debug builds
 const LONG gn_LogWrittenCharsMax = 4096; // must be power of 2
-wchar_t gs_LogWrittenChars[gn_LogWrittenCharsMax*2+1] = L""; // "+1" для ASCIIZ
+wchar_t gs_LogWrittenChars[gn_LogWrittenCharsMax*2+1] = L""; // "+1" РґР»СЏ ASCIIZ
 LONG gn_LogWrittenChars = -1;
 #endif
 
@@ -54,7 +54,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 	}
 	else
 	{
-		TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
+		TODO("РЎРґРµР»Р°С‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ РїР°С‡РєРё СЃРѕРѕР±С‰РµРЅРёР№, РІРґСЂСѓРі РѕРЅРё РЅР°РєРѕРїРёР»РёСЃСЊ РІ РѕС‡РµСЂРµРґРё?");
 		//#ifdef _DEBUG
 		//if (r.EventType == KEY_EVENT && (r.Event.KeyEvent.wVirtualKeyCode == 'C' || r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL))
 		//{
@@ -66,7 +66,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 
 		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
 		        (r.Event.KeyEvent.wVirtualKeyCode == 'C' || r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
-		        && (      // Удерживается ТОЛЬКО Ctrl
+		        && (      // РЈРґРµСЂР¶РёРІР°РµС‚СЃСЏ РўРћР›Р¬РљРћ Ctrl
 		            (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
 		            ((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
 		             == (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
@@ -93,7 +93,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 				//&& (gpSrv->dwConsoleMode & ENABLE_PROCESSED_INPUT)
 
 				#if 1
-				// Issue 590: GenerateConsoleCtrlEvent нифига не прерывает функцию ReadConsoleW
+				// Issue 590: GenerateConsoleCtrlEvent РЅРёС„РёРіР° РЅРµ РїСЂРµСЂС‹РІР°РµС‚ С„СѓРЅРєС†РёСЋ ReadConsoleW
 				SendMessage(ghConWnd, WM_KEYDOWN, r.Event.KeyEvent.wVirtualKeyCode, 0);
 				//lbRc = TRUE;
 				#endif
@@ -102,17 +102,17 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 				//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer,
 				//so CTRL+C is reported as keyboard input rather than as a signal.
 				// CTRL+BREAK is always treated as a signal
-				if (  // Удерживается ТОЛЬКО Ctrl
+				if (  // РЈРґРµСЂР¶РёРІР°РµС‚СЃСЏ РўРћР›Р¬РљРћ Ctrl
 				    (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
 				    ((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
 				     == (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
 				)
 				{
-					// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
-					// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
-					// на Ctrl-Break, но напрочь игнорирует Ctrl-C
+					// Р’СЂРѕРґРµ СЂР°Р±РѕС‚Р°РµС‚, Р“Р»Р°РІРЅРѕРµ РЅРµ Р·Р°РїСѓСЃРєР°С‚СЊ РїСЂРѕС†РµСЃСЃ СЃ С„Р»Р°РіРѕРј CREATE_NEW_PROCESS_GROUP
+					// РёРЅР°С‡Рµ Сѓ РјРёРєСЂРѕСЃРѕС„С‚РѕРІСЃРєРѕР№ РєРѕРЅСЃРѕР»Рё (WinXP SP3) СЃРЅРѕСЃРёС‚ РєСЂС‹С€Сѓ, Рё РѕРЅР° СЂРµР°РіРёСЂСѓРµС‚
+					// РЅР° Ctrl-Break, РЅРѕ РЅР°РїСЂРѕС‡СЊ РёРіРЅРѕСЂРёСЂСѓРµС‚ Ctrl-C
 					lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
-					// Это событие (Ctrl+C) в буфер помещается(!) иначе до фара не дойдет собственно клавиша C с нажатым Ctrl
+					// Р­С‚Рѕ СЃРѕР±С‹С‚РёРµ (Ctrl+C) РІ Р±СѓС„РµСЂ РїРѕРјРµС‰Р°РµС‚СЃСЏ(!) РёРЅР°С‡Рµ РґРѕ С„Р°СЂР° РЅРµ РґРѕР№РґРµС‚ СЃРѕР±СЃС‚РІРµРЅРЅРѕ РєР»Р°РІРёС€Р° C СЃ РЅР°Р¶Р°С‚С‹Рј Ctrl
 				}
 				#endif
 			}
@@ -120,12 +120,12 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 			if (lbIngoreKey)
 				return FALSE;
 
-			// CtrlBreak отсылаем СРАЗУ, мимо очереди, иначе макросы FAR нельзя стопнуть
+			// CtrlBreak РѕС‚СЃС‹Р»Р°РµРј РЎР РђР—РЈ, РјРёРјРѕ РѕС‡РµСЂРµРґРё, РёРЅР°С‡Рµ РјР°РєСЂРѕСЃС‹ FAR РЅРµР»СЊР·СЏ СЃС‚РѕРїРЅСѓС‚СЊ
 			if (r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
 			{
-				// При получении CtrlBreak в реальной консоли - буфер ввода очищается
-				// иначе фар, при попытке считать ввод получит старые,
-				// еще не обработанные нажатия, и CtrlBreak проигнорирует
+				// РџСЂРё РїРѕР»СѓС‡РµРЅРёРё CtrlBreak РІ СЂРµР°Р»СЊРЅРѕР№ РєРѕРЅСЃРѕР»Рё - Р±СѓС„РµСЂ РІРІРѕРґР° РѕС‡РёС‰Р°РµС‚СЃСЏ
+				// РёРЅР°С‡Рµ С„Р°СЂ, РїСЂРё РїРѕРїС‹С‚РєРµ СЃС‡РёС‚Р°С‚СЊ РІРІРѕРґ РїРѕР»СѓС‡РёС‚ СЃС‚Р°СЂС‹Рµ,
+				// РµС‰Рµ РЅРµ РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹Рµ РЅР°Р¶Р°С‚РёСЏ, Рё CtrlBreak РїСЂРѕРёРіРЅРѕСЂРёСЂСѓРµС‚
 				FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
 				SendConsoleEvent(&r, 1);
 				return FALSE;
@@ -160,7 +160,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 
 #endif
 
-		// Запомнить, когда была последняя активность пользователя
+		// Р—Р°РїРѕРјРЅРёС‚СЊ, РєРѕРіРґР° Р±С‹Р»Р° РїРѕСЃР»РµРґРЅСЏСЏ Р°РєС‚РёРІРЅРѕСЃС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
 		if (r.EventType == KEY_EVENT
 		        || (r.EventType == MOUSE_EVENT
 		            && (r.Event.MouseEvent.dwButtonState || r.Event.MouseEvent.dwEventFlags
@@ -207,7 +207,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 //		//
 //		//} else {
 //
-//		// обработка пачки сообщений, вдруг они накопились в очереди?
+//		// РѕР±СЂР°Р±РѕС‚РєР° РїР°С‡РєРё СЃРѕРѕР±С‰РµРЅРёР№, РІРґСЂСѓРі РѕРЅРё РЅР°РєРѕРїРёР»РёСЃСЊ РІ РѕС‡РµСЂРµРґРё?
 //		UINT nCount = 0;
 //		while (nCount < MAX_EVENTS_PACK)
 //		{
@@ -235,7 +235,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 //// gpSrv->nMaxInputQueue = CE_MAX_INPUT_QUEUE_BUFFER;
 //BOOL WriteInputQueue(const INPUT_RECORD *pr, BOOL bSetEvent /*= TRUE*/)
 //{
-//	// Передернуть буфер (записать в консоль то, что накопилось)
+//	// РџРµСЂРµРґРµСЂРЅСѓС‚СЊ Р±СѓС„РµСЂ (Р·Р°РїРёСЃР°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ С‚Рѕ, С‡С‚Рѕ РЅР°РєРѕРїРёР»РѕСЃСЊ)
 //	if (pr == NULL)
 //	{
 //		if (bSetEvent)
@@ -249,7 +249,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 //
 //	INPUT_RECORD* pNext = gpSrv->pInputQueueWrite;
 //
-//	// Проверяем, есть ли свободное место в буфере
+//	// РџСЂРѕРІРµСЂСЏРµРј, РµСЃС‚СЊ Р»Рё СЃРІРѕР±РѕРґРЅРѕРµ РјРµСЃС‚Рѕ РІ Р±СѓС„РµСЂРµ
 //	if (gpSrv->pInputQueueRead != gpSrv->pInputQueueEnd)
 //	{
 //		if (gpSrv->pInputQueueRead < gpSrv->pInputQueueEnd
@@ -266,14 +266,14 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 //	if (gpSrv->pInputQueueWrite >= gpSrv->pInputQueueEnd)
 //		gpSrv->pInputQueueWrite = gpSrv->pInputQueue;
 //
-//	// Могут писать "пачку", тогда подождать ее окончания
+//	// РњРѕРіСѓС‚ РїРёСЃР°С‚СЊ "РїР°С‡РєСѓ", С‚РѕРіРґР° РїРѕРґРѕР¶РґР°С‚СЊ РµРµ РѕРєРѕРЅС‡Р°РЅРёСЏ
 //	if (bSetEvent)
 //	{
 //		DEBUGSTRINPUTEVENT(L"SetEvent(gpSrv->hInputEvent)\n");
 //		SetEvent(gpSrv->hInputEvent);
 //	}
 //
-//	// Подвинуть указатель чтения, если до этого буфер был пуст
+//	// РџРѕРґРІРёРЅСѓС‚СЊ СѓРєР°Р·Р°С‚РµР»СЊ С‡С‚РµРЅРёСЏ, РµСЃР»Рё РґРѕ СЌС‚РѕРіРѕ Р±СѓС„РµСЂ Р±С‹Р» РїСѓСЃС‚
 //	if (gpSrv->pInputQueueRead == gpSrv->pInputQueueEnd)
 //		gpSrv->pInputQueueRead = pNext;
 //
@@ -303,11 +303,11 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 //		while(n && pSrc < pEnd)
 //		{
 //			*pDst = *pSrc; nCount++; pSrc++;
-//			//// Для приведения поведения к стандартному RealConsole&Far
+//			//// Р”Р»СЏ РїСЂРёРІРµРґРµРЅРёСЏ РїРѕРІРµРґРµРЅРёСЏ Рє СЃС‚Р°РЅРґР°СЂС‚РЅРѕРјСѓ RealConsole&Far
 //			//if (pDst->EventType == KEY_EVENT
-//			//	// Для нажатия НЕ символьных клавиш
+//			//	// Р”Р»СЏ РЅР°Р¶Р°С‚РёСЏ РќР• СЃРёРјРІРѕР»СЊРЅС‹С… РєР»Р°РІРёС€
 //			//	&& pDst->Event.KeyEvent.bKeyDown && pDst->Event.KeyEvent.uChar.UnicodeChar < 32
-//			//	&& pSrc < (pEnd = (gpSrv->pInputQueueRead < gpSrv->pInputQueueWrite) ? gpSrv->pInputQueueWrite : gpSrv->pInputQueueEnd)) // и пока в буфере еще что-то есть
+//			//	&& pSrc < (pEnd = (gpSrv->pInputQueueRead < gpSrv->pInputQueueWrite) ? gpSrv->pInputQueueWrite : gpSrv->pInputQueueEnd)) // Рё РїРѕРєР° РІ Р±СѓС„РµСЂРµ РµС‰Рµ С‡С‚Рѕ-С‚Рѕ РµСЃС‚СЊ
 //			//{
 //			//	while (pSrc < (pEnd = (gpSrv->pInputQueueRead < gpSrv->pInputQueueWrite) ? gpSrv->pInputQueueWrite : gpSrv->pInputQueueEnd)
 //			//		&& pSrc->EventType == KEY_EVENT
@@ -326,7 +326,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 //		if (pSrc == gpSrv->pInputQueueEnd)
 //			pSrc = gpSrv->pInputQueue;
 //
-//		TODO("Доделать чтение начала буфера, если считали его конец");
+//		TODO("Р”РѕРґРµР»Р°С‚СЊ С‡С‚РµРЅРёРµ РЅР°С‡Р°Р»Р° Р±СѓС„РµСЂР°, РµСЃР»Рё СЃС‡РёС‚Р°Р»Рё РµРіРѕ РєРѕРЅРµС†");
 //		//
 //		gpSrv->pInputQueueRead = pSrc;
 //	}
@@ -366,15 +366,15 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 //}
 //#endif
 
-// Дождаться, пока консольный буфер готов принять события ввода
-// Возвращает FALSE, если сервер закрывается!
+// Р”РѕР¶РґР°С‚СЊСЃСЏ, РїРѕРєР° РєРѕРЅСЃРѕР»СЊРЅС‹Р№ Р±СѓС„РµСЂ РіРѕС‚РѕРІ РїСЂРёРЅСЏС‚СЊ СЃРѕР±С‹С‚РёСЏ РІРІРѕРґР°
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ FALSE, РµСЃР»Рё СЃРµСЂРІРµСЂ Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ!
 BOOL WaitConsoleReady(BOOL abReqEmpty)
 {
-	// Если сейчас идет ресайз - нежелательно помещение в буфер событий
+	// Р•СЃР»Рё СЃРµР№С‡Р°СЃ РёРґРµС‚ СЂРµСЃР°Р№Р· - РЅРµР¶РµР»Р°С‚РµР»СЊРЅРѕ РїРѕРјРµС‰РµРЅРёРµ РІ Р±СѓС„РµСЂ СЃРѕР±С‹С‚РёР№
 	if (gpSrv->bInSyncResize)
 		WaitForSingleObject(gpSrv->hAllowInputEvent, MAX_SYNCSETSIZE_WAIT);
 
-	// если убить ожидание очистки очереди - перестает действовать 'Right selection fix'!
+	// РµСЃР»Рё СѓР±РёС‚СЊ РѕР¶РёРґР°РЅРёРµ РѕС‡РёСЃС‚РєРё РѕС‡РµСЂРµРґРё - РїРµСЂРµСЃС‚Р°РµС‚ РґРµР№СЃС‚РІРѕРІР°С‚СЊ 'Right selection fix'!
 
 	DWORD nQuitWait = WaitForSingleObject(ghQuitEvent, 0);
 
@@ -384,16 +384,16 @@ BOOL WaitConsoleReady(BOOL abReqEmpty)
 	if (abReqEmpty)
 	{
 		//#ifdef USE_INPUT_SEMAPHORE
-		//// Нет смысла использовать вместе с семафором ввода
+		//// РќРµС‚ СЃРјС‹СЃР»Р° РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РІРјРµСЃС‚Рµ СЃ СЃРµРјР°С„РѕСЂРѕРј РІРІРѕРґР°
 		//_ASSERTE(FALSE);
 		//#endif
 
 		DWORD nCurInputCount = 0; //, cbWritten = 0;
 		//INPUT_RECORD irDummy[2] = {{0},{0}};
-		HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
+		HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // С‚СѓС‚ Р±С‹Р» ghConIn
 
 		// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
-		// 19.02.2010 Maks - замена на GetNumberOfConsoleInputEvents
+		// 19.02.2010 Maks - Р·Р°РјРµРЅР° РЅР° GetNumberOfConsoleInputEvents
 		//if (PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
 		if (GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)) && nCurInputCount > 0)
 		{
@@ -421,7 +421,7 @@ BOOL WaitConsoleReady(BOOL abReqEmpty)
 	}
 
 	//return (nCurInputCount == 0);
-	return TRUE; // Если готов - всегда TRUE
+	return TRUE; // Р•СЃР»Рё РіРѕС‚РѕРІ - РІСЃРµРіРґР° TRUE
 }
 
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
@@ -433,15 +433,15 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	}
 
 	BOOL fSuccess = FALSE;
-	//// Если сейчас идет ресайз - нежелательно помещение в буфер событий
+	//// Р•СЃР»Рё СЃРµР№С‡Р°СЃ РёРґРµС‚ СЂРµСЃР°Р№Р· - РЅРµР¶РµР»Р°С‚РµР»СЊРЅРѕ РїРѕРјРµС‰РµРЅРёРµ РІ Р±СѓС„РµСЂ СЃРѕР±С‹С‚РёР№
 	//if (gpSrv->bInSyncResize)
 	//	WaitForSingleObject(gpSrv->hAllowInputEvent, MAX_SYNCSETSIZE_WAIT);
 	//DWORD nCurInputCount = 0, cbWritten = 0;
 	//INPUT_RECORD irDummy[2] = {{0},{0}};
-	//HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
-	// 02.04.2010 Maks - перенесено в WaitConsoleReady
+	//HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // С‚СѓС‚ Р±С‹Р» ghConIn
+	// 02.04.2010 Maks - РїРµСЂРµРЅРµСЃРµРЅРѕ РІ WaitConsoleReady
 	//// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
-	//// 19.02.2010 Maks - замена на GetNumberOfConsoleInputEvents
+	//// 19.02.2010 Maks - Р·Р°РјРµРЅР° РЅР° GetNumberOfConsoleInputEvents
 	////if (PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
 	//if (GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)) && nCurInputCount > 0) {
 	//	DWORD dwStartTick = GetTickCount();
@@ -464,11 +464,11 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 			nAllCount++;
 			if (!lbReqEmpty && (pr[n].EventType == MOUSE_EVENT))
 			{
-				// По всей видимости дурит консоль Windows.
-				// Если в буфере сейчас еще есть мышиные события, то запись
-				// в буфер возвращает ОК, но считывающее приложение получает 0-событий.
-				// В итоге, получаем пропуск некоторых событий, что очень неприятно 
-				// при выделении кучи файлов правой кнопкой мыши (проводкой с зажатой кнопкой)
+				// РџРѕ РІСЃРµР№ РІРёРґРёРјРѕСЃС‚Рё РґСѓСЂРёС‚ РєРѕРЅСЃРѕР»СЊ Windows.
+				// Р•СЃР»Рё РІ Р±СѓС„РµСЂРµ СЃРµР№С‡Р°СЃ РµС‰Рµ РµСЃС‚СЊ РјС‹С€РёРЅС‹Рµ СЃРѕР±С‹С‚РёСЏ, С‚Рѕ Р·Р°РїРёСЃСЊ
+				// РІ Р±СѓС„РµСЂ РІРѕР·РІСЂР°С‰Р°РµС‚ РћРљ, РЅРѕ СЃС‡РёС‚С‹РІР°СЋС‰РµРµ РїСЂРёР»РѕР¶РµРЅРёРµ РїРѕР»СѓС‡Р°РµС‚ 0-СЃРѕР±С‹С‚РёР№.
+				// Р’ РёС‚РѕРіРµ, РїРѕР»СѓС‡Р°РµРј РїСЂРѕРїСѓСЃРє РЅРµРєРѕС‚РѕСЂС‹С… СЃРѕР±С‹С‚РёР№, С‡С‚Рѕ РѕС‡РµРЅСЊ РЅРµРїСЂРёСЏС‚РЅРѕ 
+				// РїСЂРё РІС‹РґРµР»РµРЅРёРё РєСѓС‡Рё С„Р°Р№Р»РѕРІ РїСЂР°РІРѕР№ РєРЅРѕРїРєРѕР№ РјС‹С€Рё (РїСЂРѕРІРѕРґРєРѕР№ СЃ Р·Р°Р¶Р°С‚РѕР№ РєРЅРѕРїРєРѕР№)
 				if (pr[n].Event.MouseEvent.dwButtonState /*== RIGHTMOST_BUTTON_PRESSED*/)
 					lbReqEmpty = TRUE;
 			}
@@ -515,11 +515,11 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 				}
 				else if (!lbReqEmpty && (pr[n].EventType == MOUSE_EVENT))
 				{
-					// По всей видимости дурит консоль Windows.
-					// Если в буфере сейчас еще есть мышиные события, то запись
-					// в буфер возвращает ОК, но считывающее приложение получает 0-событий.
-					// В итоге, получаем пропуск некоторых событий, что очень неприятно 
-					// при выделении кучи файлов правой кнопкой мыши (проводкой с зажатой кнопкой)
+					// РџРѕ РІСЃРµР№ РІРёРґРёРјРѕСЃС‚Рё РґСѓСЂРёС‚ РєРѕРЅСЃРѕР»СЊ Windows.
+					// Р•СЃР»Рё РІ Р±СѓС„РµСЂРµ СЃРµР№С‡Р°СЃ РµС‰Рµ РµСЃС‚СЊ РјС‹С€РёРЅС‹Рµ СЃРѕР±С‹С‚РёСЏ, С‚Рѕ Р·Р°РїРёСЃСЊ
+					// РІ Р±СѓС„РµСЂ РІРѕР·РІСЂР°С‰Р°РµС‚ РћРљ, РЅРѕ СЃС‡РёС‚С‹РІР°СЋС‰РµРµ РїСЂРёР»РѕР¶РµРЅРёРµ РїРѕР»СѓС‡Р°РµС‚ 0-СЃРѕР±С‹С‚РёР№.
+					// Р’ РёС‚РѕРіРµ, РїРѕР»СѓС‡Р°РµРј РїСЂРѕРїСѓСЃРє РЅРµРєРѕС‚РѕСЂС‹С… СЃРѕР±С‹С‚РёР№, С‡С‚Рѕ РѕС‡РµРЅСЊ РЅРµРїСЂРёСЏС‚РЅРѕ 
+					// РїСЂРё РІС‹РґРµР»РµРЅРёРё РєСѓС‡Рё С„Р°Р№Р»РѕРІ РїСЂР°РІРѕР№ РєРЅРѕРїРєРѕР№ РјС‹С€Рё (РїСЂРѕРІРѕРґРєРѕР№ СЃ Р·Р°Р¶Р°С‚РѕР№ РєРЅРѕРїРєРѕР№)
 					if (pr[n].Event.MouseEvent.dwButtonState == RIGHTMOST_BUTTON_PRESSED)
 						lbReqEmpty = TRUE;
 				}
@@ -531,7 +531,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 		}
 	}
 
-	// Если не готов - все равно запишем
+	// Р•СЃР»Рё РЅРµ РіРѕС‚РѕРІ - РІСЃРµ СЂР°РІРЅРѕ Р·Р°РїРёС€РµРј
 	DEBUGTEST(BOOL bConReady = )
 	WaitConsoleReady(lbReqEmpty);
 
@@ -603,7 +603,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 #endif
 
 
-	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // С‚СѓС‚ Р±С‹Р» ghConIn
 	fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
 
 	// Error ERROR_INVALID_HANDLE may occurs when ConEmu was Attached to some external console with redirected input.
@@ -639,12 +639,12 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 		if (gpSrv->InputQueue.IsInputQueueEmpty())
 			continue;
 
-		// -- перенесено в SendConsoleEvent
-		//// Если не готов - все равно запишем
+		// -- РїРµСЂРµРЅРµСЃРµРЅРѕ РІ SendConsoleEvent
+		//// Р•СЃР»Рё РЅРµ РіРѕС‚РѕРІ - РІСЃРµ СЂР°РІРЅРѕ Р·Р°РїРёС€РµРј
 		//if (!WaitConsoleReady())
 		//	break;
 
-		// Читаем и пишем
+		// Р§РёС‚Р°РµРј Рё РїРёС€РµРј
 		DWORD nInputCount = sizeof(ir)/sizeof(ir[0]);
 
 		//#ifdef USE_INPUT_SEMAPHORE
@@ -658,7 +658,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 		{
 			_ASSERTE(nInputCount>0);
 
-			// Выставить флаг, что прошло очередное чтение
+			// Р’С‹СЃС‚Р°РІРёС‚СЊ С„Р»Р°Рі, С‡С‚Рѕ РїСЂРѕС€Р»Рѕ РѕС‡РµСЂРµРґРЅРѕРµ С‡С‚РµРЅРёРµ
 			InputLogger::Log(InputLogger::Event::evt_SetEvent, nInputCount);
 			SetEvent(gpSrv->hInputWasRead);
 
@@ -667,7 +667,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 			{
 				if (ir[j].EventType == KEY_EVENT
 					&& (ir[j].Event.KeyEvent.wVirtualKeyCode == 'C' || ir[j].Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
-					&& (      // Удерживается ТОЛЬКО Ctrl
+					&& (      // РЈРґРµСЂР¶РёРІР°РµС‚СЃСЏ РўРћР›Р¬РљРћ Ctrl
 					(ir[j].Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
 					((ir[j].Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
 					== (ir[j].Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS)))
@@ -693,7 +693,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 		//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
 		//#endif
 
-		// Если во время записи в консоль в буфере еще что-то появилось - передернем
+		// Р•СЃР»Рё РІРѕ РІСЂРµРјСЏ Р·Р°РїРёСЃРё РІ РєРѕРЅСЃРѕР»СЊ РІ Р±СѓС„РµСЂРµ РµС‰Рµ С‡С‚Рѕ-С‚Рѕ РїРѕСЏРІРёР»РѕСЃСЊ - РїРµСЂРµРґРµСЂРЅРµРј
 		if (!gpSrv->InputQueue.IsInputQueueEmpty())
 			SetEvent(gpSrv->hInputEvent);
 	}
@@ -759,7 +759,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 //				&cbBytesRead, // number of bytes read
 //				NULL)) != FALSE)        // not overlapped I/O
 //			{
-//				// предусмотреть возможность завершения нити
+//				// РїСЂРµРґСѓСЃРјРѕС‚СЂРµС‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ Р·Р°РІРµСЂС€РµРЅРёСЏ РЅРёС‚Рё
 //				if (gbQuit)
 //					break;
 //
@@ -779,15 +779,15 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 //#endif
 //					INPUT_RECORD r;
 //
-//					// Некорректные события - отсеиваются,
-//					// некоторые события (CtrlC/CtrlBreak) не пишутся в буферном режиме
+//					// РќРµРєРѕСЂСЂРµРєС‚РЅС‹Рµ СЃРѕР±С‹С‚РёСЏ - РѕС‚СЃРµРёРІР°СЋС‚СЃСЏ,
+//					// РЅРµРєРѕС‚РѕСЂС‹Рµ СЃРѕР±С‹С‚РёСЏ (CtrlC/CtrlBreak) РЅРµ РїРёС€СѓС‚СЃСЏ РІ Р±СѓС„РµСЂРЅРѕРј СЂРµР¶РёРјРµ
 //					if (ProcessInputMessage(imsg, r))
 //					{
 //						//SendConsoleEvent(&r, 1);
 //						if (!WriteInputQueue(&r))
 //						{
 //							_ASSERTE(FALSE);
-//							WARNING("Если буфер переполнен - ждать? Хотя если будем ждать здесь - может повиснуть GUI на записи в pipe...");
+//							WARNING("Р•СЃР»Рё Р±СѓС„РµСЂ РїРµСЂРµРїРѕР»РЅРµРЅ - Р¶РґР°С‚СЊ? РҐРѕС‚СЏ РµСЃР»Рё Р±СѓРґРµРј Р¶РґР°С‚СЊ Р·РґРµСЃСЊ - РјРѕР¶РµС‚ РїРѕРІРёСЃРЅСѓС‚СЊ GUI РЅР° Р·Р°РїРёСЃРё РІ pipe...");
 //						}
 //					}
 //

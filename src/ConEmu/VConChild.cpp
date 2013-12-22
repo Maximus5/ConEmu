@@ -1,4 +1,4 @@
-
+ï»¿
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -182,7 +182,7 @@ void CConEmuChild::ProcessVConClosed(CVirtualConsole* apVCon, BOOL abPosted /*= 
 
 	CVConGroup::OnVConClosed(apVCon);
 
-	// Ïåðåäåðíóòü ãëàâíûé òàéìåð, à òî GUI äîëãî äóìàåò, åñëè íè îäíîé êîíñîëè óæå íå îñòàëîñü
+	// ÐŸÐµÑ€ÐµÐ´ÐµÑ€Ð½ÑƒÑ‚ÑŒ Ð³Ð»Ð°Ð²Ð½Ñ‹Ð¹ Ñ‚Ð°Ð¹Ð¼ÐµÑ€, Ð° Ñ‚Ð¾ GUI Ð´Ð¾Ð»Ð³Ð¾ Ð´ÑƒÐ¼Ð°ÐµÑ‚, ÐµÑÐ»Ð¸ Ð½Ð¸ Ð¾Ð´Ð½Ð¾Ð¹ ÐºÐ¾Ð½ÑÐ¾Ð»Ð¸ ÑƒÐ¶Ðµ Ð½Ðµ Ð¾ÑÑ‚Ð°Ð»Ð¾ÑÑŒ
 	//if (mp_VCon[0] == NULL)
 	if (!gpConEmu->GetVCon(0))
 		gpConEmu->OnTimer(TIMER_MAIN_ID, 0);
@@ -205,7 +205,7 @@ HWND CConEmuChild::CreateView()
 
 	if (!gpConEmu->isMainThread())
 	{
-		// Îêíî äîëæíî ñîçäàâàòüñÿ â ãëàâíîé íèòè!
+		// ÐžÐºÐ½Ð¾ Ð´Ð¾Ð»Ð¶Ð½Ð¾ ÑÐ¾Ð·Ð´Ð°Ð²Ð°Ñ‚ÑŒÑÑ Ð² Ð³Ð»Ð°Ð²Ð½Ð¾Ð¹ Ð½Ð¸Ñ‚Ð¸!
 		HWND hCreate = gpConEmu->PostCreateView(this); UNREFERENCED_PARAMETER(hCreate);
 		_ASSERTE(hCreate && (hCreate == mh_WndDC));
 		return mh_WndDC;
@@ -213,12 +213,12 @@ HWND CConEmuChild::CreateView()
 
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	_ASSERTE(pVCon!=NULL);
-	//-- òóò êîíñîëü òîëüêî ñîçäàåòñÿ, guard íå íóæåí
+	//-- Ñ‚ÑƒÑ‚ ÐºÐ¾Ð½ÑÐ¾Ð»ÑŒ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ ÑÐ¾Ð·Ð´Ð°ÐµÑ‚ÑÑ, guard Ð½Ðµ Ð½ÑƒÐ¶ÐµÐ½
 	//CVConGuard guard(pVCon);
 
-	TODO("Çàìåíèòü ghWnd íà ghWndWork");
+	TODO("Ð—Ð°Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ ghWnd Ð½Ð° ghWndWork");
 	HWND hParent = ghWnd;
-	// Èìÿ êëàññà - òî æå ñàìîå, ÷òî è ó ãëàâíîãî îêíà
+	// Ð˜Ð¼Ñ ÐºÐ»Ð°ÑÑÐ° - Ñ‚Ð¾ Ð¶Ðµ ÑÐ°Ð¼Ð¾Ðµ, Ñ‡Ñ‚Ð¾ Ð¸ Ñƒ Ð³Ð»Ð°Ð²Ð½Ð¾Ð³Ð¾ Ð¾ÐºÐ½Ð°
 	DWORD style = /*WS_VISIBLE |*/ WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 	DWORD styleEx = 0;
 
@@ -241,7 +241,7 @@ HWND CConEmuChild::CreateView()
 
 	SetWindowPos(mh_WndDC, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
-	// Óñòàíîâèòü ïåðåìåííóþ ñðåäû ñ äåñêðèïòîðîì îêíà
+	// Ð£ÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ Ð¿ÐµÑ€ÐµÐ¼ÐµÐ½Ð½ÑƒÑŽ ÑÑ€ÐµÐ´Ñ‹ Ñ Ð´ÐµÑÐºÑ€Ð¸Ð¿Ñ‚Ð¾Ñ€Ð¾Ð¼ Ð¾ÐºÐ½Ð°
 	SetConEmuEnvVar(mh_WndDC);
 
 	return mh_WndDC;
@@ -276,7 +276,7 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 	DWORD nTID = 0, nPID = 0;
 	wchar_t sInfo[200];
 
-	// Äîëæíî áûòü ñîçäàíî â ãëàâíîé íèòè!
+	// Ð”Ð¾Ð»Ð¶Ð½Ð¾ Ð±Ñ‹Ñ‚ÑŒ ÑÐ¾Ð·Ð´Ð°Ð½Ð¾ Ð² Ð³Ð»Ð°Ð²Ð½Ð¾Ð¹ Ð½Ð¸Ñ‚Ð¸!
 	nTID = GetWindowThreadProcessId(mh_WndDC, &nPID);
 
 	#ifdef _DEBUG
@@ -284,7 +284,7 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 	_ASSERTE(nTID==nMainThreadID);
 	#endif
 
-	// Åñëè ýòî "GUI" ðåæèì - ìîãóò âîçíèêàòü áëîêèðîâêè èç-çà äî÷åðíåãî îêíà
+	// Ð•ÑÐ»Ð¸ ÑÑ‚Ð¾ "GUI" Ñ€ÐµÐ¶Ð¸Ð¼ - Ð¼Ð¾Ð³ÑƒÑ‚ Ð²Ð¾Ð·Ð½Ð¸ÐºÐ°Ñ‚ÑŒ Ð±Ð»Ð¾ÐºÐ¸Ñ€Ð¾Ð²ÐºÐ¸ Ð¸Ð·-Ð·Ð° Ð´Ð¾Ñ‡ÐµÑ€Ð½ÐµÐ³Ð¾ Ð¾ÐºÐ½Ð°
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	_ASSERTE(pVCon!=NULL);
 	CVConGuard guard(pVCon);
@@ -366,8 +366,8 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 
 	if (messg == WM_SYSCHAR)
 	{
-		_ASSERTE(FALSE); // ïî èäåå, ôîêóñà òóò áûòü íå äîëæíî
-		// ×òîáû íå ïèùàëî
+		_ASSERTE(FALSE); // Ð¿Ð¾ Ð¸Ð´ÐµÐµ, Ñ„Ð¾ÐºÑƒÑÐ° Ñ‚ÑƒÑ‚ Ð±Ñ‹Ñ‚ÑŒ Ð½Ðµ Ð´Ð¾Ð»Ð¶Ð½Ð¾
+		// Ð§Ñ‚Ð¾Ð±Ñ‹ Ð½Ðµ Ð¿Ð¸Ñ‰Ð°Ð»Ð¾
 		result = TRUE;
 		goto wrap;
 	}
@@ -394,9 +394,9 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				break;
 			}
 		case WM_SETFOCUS:
-			// Åñëè â êîíñîëè ðàáîòàåò "GUI" îêíî (GUI ðåæèì), òî ôîêóñ íóæíî îòäàòü òóäà.
+			// Ð•ÑÐ»Ð¸ Ð² ÐºÐ¾Ð½ÑÐ¾Ð»Ð¸ Ñ€Ð°Ð±Ð¾Ñ‚Ð°ÐµÑ‚ "GUI" Ð¾ÐºÐ½Ð¾ (GUI Ñ€ÐµÐ¶Ð¸Ð¼), Ñ‚Ð¾ Ñ„Ð¾ÐºÑƒÑ Ð½ÑƒÐ¶Ð½Ð¾ Ð¾Ñ‚Ð´Ð°Ñ‚ÑŒ Ñ‚ÑƒÐ´Ð°.
 			{
-				// Ôîêóñ äîëæåí áûòü â ãëàâíîì îêíå! Çà èñêëþ÷åíèåì ñëó÷àÿ ðàáîòû â GUI ðåæèìå.
+				// Ð¤Ð¾ÐºÑƒÑ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð±Ñ‹Ñ‚ÑŒ Ð² Ð³Ð»Ð°Ð²Ð½Ð¾Ð¼ Ð¾ÐºÐ½Ðµ! Ð—Ð° Ð¸ÑÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸ÐµÐ¼ ÑÐ»ÑƒÑ‡Ð°Ñ Ñ€Ð°Ð±Ð¾Ñ‚Ñ‹ Ð² GUI Ñ€ÐµÐ¶Ð¸Ð¼Ðµ.
 				pVCon->setFocus();
 			}
 			return 0;
@@ -451,7 +451,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		case WM_XBUTTONUP:
 		case WM_XBUTTONDBLCLK:
 		case WM_VSCROLL:
-			// Âñÿ îáðàáîòêà â ðîäèòåëå
+			// Ð’ÑÑ Ð¾Ð±Ñ€Ð°Ð±Ð¾Ñ‚ÐºÐ° Ð² Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»Ðµ
 			{
 				switch (messg)
 				{
@@ -474,7 +474,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 						break;
 				}
 
-				TODO("Îáðàáîòêà ghWndWork");
+				TODO("ÐžÐ±Ñ€Ð°Ð±Ð¾Ñ‚ÐºÐ° ghWndWork");
 				HWND hParent = ghWnd;
 				static bool bInFixStyle = false;
 				if (!bInFixStyle)
@@ -482,7 +482,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 					hParent = GetParent(hWnd);
 					if (hParent != ghWnd)
 					{
-						// Íåïðàâîìåðíûå äåéñòâèÿ ïëàãèíîâ ôàðà?
+						// ÐÐµÐ¿Ñ€Ð°Ð²Ð¾Ð¼ÐµÑ€Ð½Ñ‹Ðµ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð¿Ð»Ð°Ð³Ð¸Ð½Ð¾Ð² Ñ„Ð°Ñ€Ð°?
 						bInFixStyle = true;
 						_ASSERTE(GetParent(hWnd)==ghWnd);
 						SetParent(hWnd, ghWnd);
@@ -555,16 +555,16 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			break;
 
 		case WM_SYSCOMMAND:
-			// -- ëèøíèå îãðàíè÷åíèÿ, ïîõîæå
+			// -- Ð»Ð¸ÑˆÐ½Ð¸Ðµ Ð¾Ð³Ñ€Ð°Ð½Ð¸Ñ‡ÐµÐ½Ð¸Ñ, Ð¿Ð¾Ñ…Ð¾Ð¶Ðµ
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			//if (wParam >= SC_SIZE && wParam <= SC_CONTEXTHELP/*0xF180*/)
 			//{
-			//	// Èçìåíåíèå ðàçìåðîâ/ìàêñèìèçàöèÿ/è ò.ï. îêíà êîíñîëè - çàïðåùåíà
+			//	// Ð˜Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ Ñ€Ð°Ð·Ð¼ÐµÑ€Ð¾Ð²/Ð¼Ð°ÐºÑÐ¸Ð¼Ð¸Ð·Ð°Ñ†Ð¸Ñ/Ð¸ Ñ‚.Ð¿. Ð¾ÐºÐ½Ð° ÐºÐ¾Ð½ÑÐ¾Ð»Ð¸ - Ð·Ð°Ð¿Ñ€ÐµÑ‰ÐµÐ½Ð°
 			//	_ASSERTE(!(wParam >= SC_SIZE && wParam <= SC_CONTEXTHELP));
 			//}
 			//else
 			//{
-			//	// Ïî èäåå, ñþäà íè÷åãî ïðèõîäèòü áîëüøå íå äîëæíî
+			//	// ÐŸÐ¾ Ð¸Ð´ÐµÐµ, ÑÑŽÐ´Ð° Ð½Ð¸Ñ‡ÐµÐ³Ð¾ Ð¿Ñ€Ð¸Ñ…Ð¾Ð´Ð¸Ñ‚ÑŒ Ð±Ð¾Ð»ÑŒÑˆÐµ Ð½Ðµ Ð´Ð¾Ð»Ð¶Ð½Ð¾
 			//	_ASSERTE(FALSE);
 			//}
 			break;
@@ -573,7 +573,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			{
 				switch(wParam)
 				{
-				#ifndef SKIP_HIDE_TIMER // Íå áóäåì ïðÿòàòü ïî òàéìåðó - òîëüêî ïî äâèæåíèþ ìûøêè
+				#ifndef SKIP_HIDE_TIMER // ÐÐµ Ð±ÑƒÐ´ÐµÐ¼ Ð¿Ñ€ÑÑ‚Ð°Ñ‚ÑŒ Ð¿Ð¾ Ñ‚Ð°Ð¹Ð¼ÐµÑ€Ñƒ - Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð¿Ð¾ Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸ÑŽ Ð¼Ñ‹ÑˆÐºÐ¸
 				case TIMER_SCROLL_CHECK:
 
 					if (pVCon->mb_Scroll2Visible)
@@ -631,20 +631,20 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 
 		default:
 
-			// Ñîîáùåíèå ïðèõîäèò èç ConEmuPlugin
+			// Ð¡Ð¾Ð¾Ð±Ñ‰ÐµÐ½Ð¸Ðµ Ð¿Ñ€Ð¸Ñ…Ð¾Ð´Ð¸Ñ‚ Ð¸Ð· ConEmuPlugin
 			if (messg == pVCon->mn_MsgTabChanged)
 			{
 				if (gpSet->isTabs)
 				{
-					//èçìåíèëèñü òàáû, èõ íóæíî ïåðå÷èòàòü
+					//Ð¸Ð·Ð¼ÐµÐ½Ð¸Ð»Ð¸ÑÑŒ Ñ‚Ð°Ð±Ñ‹, Ð¸Ñ… Ð½ÑƒÐ¶Ð½Ð¾ Ð¿ÐµÑ€ÐµÑ‡Ð¸Ñ‚Ð°Ñ‚ÑŒ
 #ifdef MSGLOGGER
 					WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Tabs:Notified(%i)\n", (DWORD)wParam);
 					DEBUGSTRTABS(szDbg);
 #endif
-					TODO("çäåñü õîðîøî áû âìåñòî OnTimer ðåàëüíî îáíîâèòü mn_TopProcessID")
-					// èíà÷å âî âðåìÿ çàïóñêà PID ôàðà åùå ìîæåò áûòü íå èçâåñòåí...
-					//gpConEmu->OnTimer(0,0); íå ïîëó÷èëîñü. èíäåêñ êîíìàíà íå ìåíÿëñÿ, èç-çà ýòîãî èíäåêñ àêòèâíîãî ôàðà òàê è îñòàëñÿ 0
-					WARNING("gpConEmu->mp_TabBar->Retrieve() íè÷åãî óæå íå äåëàåò âîîáùå");
+					TODO("Ð·Ð´ÐµÑÑŒ Ñ…Ð¾Ñ€Ð¾ÑˆÐ¾ Ð±Ñ‹ Ð²Ð¼ÐµÑÑ‚Ð¾ OnTimer Ñ€ÐµÐ°Ð»ÑŒÐ½Ð¾ Ð¾Ð±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ mn_TopProcessID")
+					// Ð¸Ð½Ð°Ñ‡Ðµ Ð²Ð¾ Ð²Ñ€ÐµÐ¼Ñ Ð·Ð°Ð¿ÑƒÑÐºÐ° PID Ñ„Ð°Ñ€Ð° ÐµÑ‰Ðµ Ð¼Ð¾Ð¶ÐµÑ‚ Ð±Ñ‹Ñ‚ÑŒ Ð½Ðµ Ð¸Ð·Ð²ÐµÑÑ‚ÐµÐ½...
+					//gpConEmu->OnTimer(0,0); Ð½Ðµ Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ð»Ð¾ÑÑŒ. Ð¸Ð½Ð´ÐµÐºÑ ÐºÐ¾Ð½Ð¼Ð°Ð½Ð° Ð½Ðµ Ð¼ÐµÐ½ÑÐ»ÑÑ, Ð¸Ð·-Ð·Ð° ÑÑ‚Ð¾Ð³Ð¾ Ð¸Ð½Ð´ÐµÐºÑ Ð°ÐºÑ‚Ð¸Ð²Ð½Ð¾Ð³Ð¾ Ñ„Ð°Ñ€Ð° Ñ‚Ð°Ðº Ð¸ Ð¾ÑÑ‚Ð°Ð»ÑÑ 0
+					WARNING("gpConEmu->mp_TabBar->Retrieve() Ð½Ð¸Ñ‡ÐµÐ³Ð¾ ÑƒÐ¶Ðµ Ð½Ðµ Ð´ÐµÐ»Ð°ÐµÑ‚ Ð²Ð¾Ð¾Ð±Ñ‰Ðµ");
 					_ASSERTE(FALSE);
 					gpConEmu->mp_TabBar->Retrieve();
 				}
@@ -676,7 +676,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 					{
 						ConEmuTab tab = {0};
 						pVCon->RCon()->GetTab(0, &tab);
-						tab.Name[128] = 0; // ÷òîáû íå âûëåçëî èç szDbg
+						tab.Name[128] = 0; // Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð½Ðµ Ð²Ñ‹Ð»ÐµÐ·Ð»Ð¾ Ð¸Ð· szDbg
 						wsprintf(szDbg+_tcslen(szDbg), L": #%i: %s", i, tab.Name);
 					}
 
@@ -747,8 +747,8 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 	if (messg == WM_SYSCHAR)
 	{
-		_ASSERTE(FALSE); // ïî èäåå, ôîêóñà òóò áûòü íå äîëæíî
-		// ×òîáû íå ïèùàëî
+		_ASSERTE(FALSE); // Ð¿Ð¾ Ð¸Ð´ÐµÐµ, Ñ„Ð¾ÐºÑƒÑÐ° Ñ‚ÑƒÑ‚ Ð±Ñ‹Ñ‚ÑŒ Ð½Ðµ Ð´Ð¾Ð»Ð¶Ð½Ð¾
+		// Ð§Ñ‚Ð¾Ð±Ñ‹ Ð½Ðµ Ð¿Ð¸Ñ‰Ð°Ð»Ð¾
 		result = TRUE;
 		goto wrap;
 	}
@@ -771,9 +771,9 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			}
 			break; // DefaultProc
 		case WM_SETFOCUS:
-			// Åñëè â êîíñîëè ðàáîòàåò "GUI" îêíî (GUI ðåæèì), òî ôîêóñ íóæíî îòäàòü òóäà.
+			// Ð•ÑÐ»Ð¸ Ð² ÐºÐ¾Ð½ÑÐ¾Ð»Ð¸ Ñ€Ð°Ð±Ð¾Ñ‚Ð°ÐµÑ‚ "GUI" Ð¾ÐºÐ½Ð¾ (GUI Ñ€ÐµÐ¶Ð¸Ð¼), Ñ‚Ð¾ Ñ„Ð¾ÐºÑƒÑ Ð½ÑƒÐ¶Ð½Ð¾ Ð¾Ñ‚Ð´Ð°Ñ‚ÑŒ Ñ‚ÑƒÐ´Ð°.
 			{
-				// Ôîêóñ äîëæåí áûòü â ãëàâíîì îêíå! Çà èñêëþ÷åíèåì ñëó÷àÿ ðàáîòû â GUI ðåæèìå.
+				// Ð¤Ð¾ÐºÑƒÑ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð±Ñ‹Ñ‚ÑŒ Ð² Ð³Ð»Ð°Ð²Ð½Ð¾Ð¼ Ð¾ÐºÐ½Ðµ! Ð—Ð° Ð¸ÑÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸ÐµÐ¼ ÑÐ»ÑƒÑ‡Ð°Ñ Ñ€Ð°Ð±Ð¾Ñ‚Ñ‹ Ð² GUI Ñ€ÐµÐ¶Ð¸Ð¼Ðµ.
 				pVCon->setFocus();
 			}
 			return 0;
@@ -808,7 +808,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 		case WM_XBUTTONUP:
 		case WM_XBUTTONDBLCLK:
 		case WM_VSCROLL:
-			// Âñÿ îáðàáîòêà â ðîäèòåëå
+			// Ð’ÑÑ Ð¾Ð±Ñ€Ð°Ð±Ð¾Ñ‚ÐºÐ° Ð² Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»Ðµ
 			{
 				switch (messg)
 				{
@@ -831,7 +831,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 						break;
 				}
 
-				TODO("Îáðàáîòêà ghWndWork");
+				TODO("ÐžÐ±Ñ€Ð°Ð±Ð¾Ñ‚ÐºÐ° ghWndWork");
 				HWND hParent = ghWnd;
 				_ASSERTE(GetParent(hWnd)==ghWnd);
 
@@ -888,16 +888,16 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			break;
 
 		case WM_SYSCOMMAND:
-			// -- ëèøíèå îãðàíè÷åíèÿ, ïîõîæå
+			// -- Ð»Ð¸ÑˆÐ½Ð¸Ðµ Ð¾Ð³Ñ€Ð°Ð½Ð¸Ñ‡ÐµÐ½Ð¸Ñ, Ð¿Ð¾Ñ…Ð¾Ð¶Ðµ
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			//if (wParam >= SC_SIZE && wParam <= SC_CONTEXTHELP/*0xF180*/)
 			//{
-			//	// Èçìåíåíèå ðàçìåðîâ/ìàêñèìèçàöèÿ/è ò.ï. îêíà êîíñîëè - çàïðåùåíà
+			//	// Ð˜Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ Ñ€Ð°Ð·Ð¼ÐµÑ€Ð¾Ð²/Ð¼Ð°ÐºÑÐ¸Ð¼Ð¸Ð·Ð°Ñ†Ð¸Ñ/Ð¸ Ñ‚.Ð¿. Ð¾ÐºÐ½Ð° ÐºÐ¾Ð½ÑÐ¾Ð»Ð¸ - Ð·Ð°Ð¿Ñ€ÐµÑ‰ÐµÐ½Ð°
 			//	_ASSERTE(!(wParam >= SC_SIZE && wParam <= SC_CONTEXTHELP));
 			//}
 			//else
 			//{
-			//	// Ïî èäåå, ñþäà íè÷åãî ïðèõîäèòü áîëüøå íå äîëæíî
+			//	// ÐŸÐ¾ Ð¸Ð´ÐµÐµ, ÑÑŽÐ´Ð° Ð½Ð¸Ñ‡ÐµÐ³Ð¾ Ð¿Ñ€Ð¸Ñ…Ð¾Ð´Ð¸Ñ‚ÑŒ Ð±Ð¾Ð»ÑŒÑˆÐµ Ð½Ðµ Ð´Ð¾Ð»Ð¶Ð½Ð¾
 			//	_ASSERTE(FALSE);
 			//}
 			break;
@@ -915,7 +915,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			{
 				if (!gpConEmu->CanSetChildFocus())
 				{
-					// Êëèê ïî èêîíêå îòêðûâàåò ñèñòåìíîå ìåíþ
+					// ÐšÐ»Ð¸Ðº Ð¿Ð¾ Ð¸ÐºÐ¾Ð½ÐºÐµ Ð¾Ñ‚ÐºÑ€Ñ‹Ð²Ð°ÐµÑ‚ ÑÐ¸ÑÑ‚ÐµÐ¼Ð½Ð¾Ðµ Ð¼ÐµÐ½ÑŽ
 					//_ASSERTE(FALSE && "Must not get here?");
 				}
 				else
@@ -1023,7 +1023,7 @@ LRESULT CConEmuChild::OnPaint()
 	//    break;
 	//_ASSERTE(FALSE);
 
-	//2009-09-28 ìîæåò òàê (autotabs)
+	//2009-09-28 Ð¼Ð¾Ð¶ÐµÑ‚ Ñ‚Ð°Ðº (autotabs)
 	if (mb_DisableRedraw)
 		return 0;
 
@@ -1038,16 +1038,16 @@ LRESULT CConEmuChild::OnPaint()
 
 	if (gpConEmu->isPictureView())
 	{
-		// åñëè PictureView ðàñïàõíóòî íå íà âñå îêíî - îòðèñîâàòü âèäèìóþ ÷àñòü êîíñîëè!
+		// ÐµÑÐ»Ð¸ PictureView Ñ€Ð°ÑÐ¿Ð°Ñ…Ð½ÑƒÑ‚Ð¾ Ð½Ðµ Ð½Ð° Ð²ÑÐµ Ð¾ÐºÐ½Ð¾ - Ð¾Ñ‚Ñ€Ð¸ÑÐ¾Ð²Ð°Ñ‚ÑŒ Ð²Ð¸Ð´Ð¸Ð¼ÑƒÑŽ Ñ‡Ð°ÑÑ‚ÑŒ ÐºÐ¾Ð½ÑÐ¾Ð»Ð¸!
 		RECT rcPic, rcVRect, rcCommon;
 		GetWindowRect(gpConEmu->hPictureView, &rcPic);
-		GetWindowRect(mh_WndDC, &rcVRect); // Íàì íóæåí ÏÎËÍÛÉ ðàçìåð íî ÏÎÄ òóëáàðîì.
+		GetWindowRect(mh_WndDC, &rcVRect); // ÐÐ°Ð¼ Ð½ÑƒÐ¶ÐµÐ½ ÐŸÐžÐ›ÐÐ«Ð™ Ñ€Ð°Ð·Ð¼ÐµÑ€ Ð½Ð¾ ÐŸÐžÐ” Ñ‚ÑƒÐ»Ð±Ð°Ñ€Ð¾Ð¼.
 		//MapWindowPoints(mh_WndDC, NULL, (LPPOINT)&rcClient, 2);
 
 		BOOL lbIntersect = IntersectRect(&rcCommon, &rcVRect, &rcPic);
 		UNREFERENCED_PARAMETER(lbIntersect);
 
-		// Óáðàòü èç îòðèñîâêè ïðÿìîóãîëüíèê PictureView
+		// Ð£Ð±Ñ€Ð°Ñ‚ÑŒ Ð¸Ð· Ð¾Ñ‚Ñ€Ð¸ÑÐ¾Ð²ÐºÐ¸ Ð¿Ñ€ÑÐ¼Ð¾ÑƒÐ³Ð¾Ð»ÑŒÐ½Ð¸Ðº PictureView
 		MapWindowPoints(NULL, mh_WndDC, (LPPOINT)&rcPic, 2);
 		ValidateRect(mh_WndDC, &rcPic);
 
@@ -1056,7 +1056,7 @@ LRESULT CConEmuChild::OnPaint()
 		//Get ClientRect(gpConEmu->hPictureView, &rcPic);
 		//Get ClientRect(mh_WndDC, &rcClient);
 
-		// Åñëè PicView çàíèìàåò âñþ (ïî÷òè? 95%) ïëîùàäü îêíà
+		// Ð•ÑÐ»Ð¸ PicView Ð·Ð°Ð½Ð¸Ð¼Ð°ÐµÑ‚ Ð²ÑÑŽ (Ð¿Ð¾Ñ‡Ñ‚Ð¸? 95%) Ð¿Ð»Ð¾Ñ‰Ð°Ð´ÑŒ Ð¾ÐºÐ½Ð°
 		//if (rcPic.right>=rcClient.right)
 		if ((rcPic.right * rcPic.bottom) >= (rcVRect.right * rcVRect.bottom * 95 / 100))
 		{
@@ -1065,7 +1065,7 @@ LRESULT CConEmuChild::OnPaint()
 
 			VCon->CheckTransparent();
 
-			// Òèïà "çàëüåò öâåòîì ôîíà îêíà"?
+			// Ð¢Ð¸Ð¿Ð° "Ð·Ð°Ð»ÑŒÐµÑ‚ Ñ†Ð²ÐµÑ‚Ð¾Ð¼ Ñ„Ð¾Ð½Ð° Ð¾ÐºÐ½Ð°"?
 			result = DefWindowProc(mh_WndDC, WM_PAINT, 0, 0);
 		}
 	}
@@ -1088,7 +1088,7 @@ LRESULT CConEmuChild::OnPaint()
 		bool bRightClickingPaint = gpConEmu->isRightClickingPaint() && gpConEmu->isActive(VCon.VCon());
 		if (bRightClickingPaint)
 		{
-			// Ñêðûòü îêîøêî ñ "êðóæî÷êîì"
+			// Ð¡ÐºÑ€Ñ‹Ñ‚ÑŒ Ð¾ÐºÐ¾ÑˆÐºÐ¾ Ñ "ÐºÑ€ÑƒÐ¶Ð¾Ñ‡ÐºÐ¾Ð¼"
 			gpConEmu->RightClickingPaint((HDC)INVALID_HANDLE_VALUE, VCon.VCon());
 		}
 
@@ -1101,7 +1101,7 @@ LRESULT CConEmuChild::OnPaint()
 
 		if (bRightClickingPaint)
 		{
-			// Íàðèñóåò êðóæî÷åê, èëè ñáðîñèò òàéìåð, åñëè êíîïêó îòïóñòèëè
+			// ÐÐ°Ñ€Ð¸ÑÑƒÐµÑ‚ ÐºÑ€ÑƒÐ¶Ð¾Ñ‡ÐµÐº, Ð¸Ð»Ð¸ ÑÐ±Ñ€Ð¾ÑÐ¸Ñ‚ Ñ‚Ð°Ð¹Ð¼ÐµÑ€, ÐµÑÐ»Ð¸ ÐºÐ½Ð¾Ð¿ÐºÑƒ Ð¾Ñ‚Ð¿ÑƒÑÑ‚Ð¸Ð»Ð¸
 			gpConEmu->RightClickingPaint(VCon->GetIntDC()/*ps.hdc*/, VCon.VCon());
 		}
 
@@ -1110,7 +1110,7 @@ LRESULT CConEmuChild::OnPaint()
 
 	//Validate();
 	gpSetCls->Performance(tPerfBlt, TRUE);
-	// Åñëè îòêðûòî îêíî íàñòðîåê - îáíîâèòü ñèñòåìíóþ èíôîðìàöèþ î ðàçìåðàõ
+	// Ð•ÑÐ»Ð¸ Ð¾Ñ‚ÐºÑ€Ñ‹Ñ‚Ð¾ Ð¾ÐºÐ½Ð¾ Ð½Ð°ÑÑ‚Ñ€Ð¾ÐµÐº - Ð¾Ð±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ ÑÐ¸ÑÑ‚ÐµÐ¼Ð½ÑƒÑŽ Ð¸Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸ÑŽ Ð¾ Ñ€Ð°Ð·Ð¼ÐµÑ€Ð°Ñ…
 	gpConEmu->UpdateSizes();
 
 	_ASSERTE(CVConGroup::isValid(VCon.VCon()));
@@ -1140,19 +1140,19 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 		gpConEmu->LogString(szInfo);
 	}
 
-	// Âðîäå ýòî è íå íóæíî. Íè äëÿ Ansi íè äëÿ Unicode âåðñèè ïëàãèíà
-	// Âñå ðàâíî â ConEmu çàïðåùåí ðåñàéç âî âðåìÿ âèäèìîñòè îêîøêà PictureView
+	// Ð’Ñ€Ð¾Ð´Ðµ ÑÑ‚Ð¾ Ð¸ Ð½Ðµ Ð½ÑƒÐ¶Ð½Ð¾. ÐÐ¸ Ð´Ð»Ñ Ansi Ð½Ð¸ Ð´Ð»Ñ Unicode Ð²ÐµÑ€ÑÐ¸Ð¸ Ð¿Ð»Ð°Ð³Ð¸Ð½Ð°
+	// Ð’ÑÐµ Ñ€Ð°Ð²Ð½Ð¾ Ð² ConEmu Ð·Ð°Ð¿Ñ€ÐµÑ‰ÐµÐ½ Ñ€ÐµÑÐ°Ð¹Ð· Ð²Ð¾ Ð²Ñ€ÐµÐ¼Ñ Ð²Ð¸Ð´Ð¸Ð¼Ð¾ÑÑ‚Ð¸ Ð¾ÐºÐ¾ÑˆÐºÐ° PictureView
 	//if (gpConEmu->isPictureView())
 	//{
 	//    if (gpConEmu->hPictureView) {
 	//        lbIsPicView = TRUE;
 	//        gpConEmu->isPiewUpdate = true;
 	//        RECT rcClient; Get ClientRect('ghWnd DC', &rcClient);
-	//        //TODO: à âåäü PictureView ìîæåò è â QuickView àêòèâèðîâàòüñÿ...
+	//        //TODO: Ð° Ð²ÐµÐ´ÑŒ PictureView Ð¼Ð¾Ð¶ÐµÑ‚ Ð¸ Ð² QuickView Ð°ÐºÑ‚Ð¸Ð²Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒÑÑ...
 	//        MoveWindow(gpConEmu->hPictureView, 0,0,rcClient.right,rcClient.bottom, 1);
 	//        //INVALIDATE(); //InvalidateRect(hWnd, NULL, FALSE);
 	//		Invalidate();
-	//        //SetFocus(hPictureView); -- âñå ðàâíî íà äðóãîé ïðîöåññ ôîêóñ ïåðåäàòü íåëüçÿ...
+	//        //SetFocus(hPictureView); -- Ð²ÑÐµ Ñ€Ð°Ð²Ð½Ð¾ Ð½Ð° Ð´Ñ€ÑƒÐ³Ð¾Ð¹ Ð¿Ñ€Ð¾Ñ†ÐµÑÑ Ñ„Ð¾ÐºÑƒÑ Ð¿ÐµÑ€ÐµÐ´Ð°Ñ‚ÑŒ Ð½ÐµÐ»ÑŒÐ·Ñ...
 	//    }
 	//}
 	return result;
@@ -1190,7 +1190,7 @@ void CConEmuChild::CheckPostRedraw()
 		_ASSERTE(this!=NULL);
 		return;
 	}
-	// Åñëè áûë "Îòìåíåííûé" Redraw, íî
+	// Ð•ÑÐ»Ð¸ Ð±Ñ‹Ð» "ÐžÑ‚Ð¼ÐµÐ½ÐµÐ½Ð½Ñ‹Ð¹" Redraw, Ð½Ð¾
 	if (mb_IsPendingRedraw && mn_LastPostRedrawTick && ((GetTickCount() - mn_LastPostRedrawTick) >= CON_REDRAW_TIMOUT))
 	{
 		mb_IsPendingRedraw = FALSE;
@@ -1218,7 +1218,7 @@ void CConEmuChild::Redraw()
 		        (mn_LastPostRedrawTick && ((GetTickCount() - mn_LastPostRedrawTick) < CON_REDRAW_TIMOUT)))
 		{
 			mb_IsPendingRedraw = TRUE;
-			return; // Áëîêèðóåì ÑËÈØÊÎÌ ÷àñòûå îáíîâëåíèÿ
+			return; // Ð‘Ð»Ð¾ÐºÐ¸Ñ€ÑƒÐµÐ¼ Ð¡Ð›Ð˜Ð¨ÐšÐžÐœ Ñ‡Ð°ÑÑ‚Ñ‹Ðµ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ
 		}
 		else
 		{
@@ -1226,7 +1226,7 @@ void CConEmuChild::Redraw()
 			mb_IsPendingRedraw = FALSE;
 		}
 
-		mb_RedrawPosted = TRUE; // ÷òîáû íå áûëî êóìóëÿòèâíîãî ýôôåêòà
+		mb_RedrawPosted = TRUE; // Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð½Ðµ Ð±Ñ‹Ð»Ð¾ ÐºÑƒÐ¼ÑƒÐ»ÑÑ‚Ð¸Ð²Ð½Ð¾Ð³Ð¾ ÑÑ„Ñ„ÐµÐºÑ‚Ð°
 		PostMessage(mh_WndDC, mn_MsgPostFullPaint, 0, 0);
 		return;
 	}
@@ -1235,22 +1235,22 @@ void CConEmuChild::Redraw()
 	//RECT rcClient; Get ClientRect(mh_WndDC, &rcClient);
 	//MapWindowPoints(mh_WndDC, ghWnd, (LPPOINT)&rcClient, 2);
 	InvalidateRect(mh_WndDC, NULL, FALSE);
-	// Èç-çà ýòîãî - âîçíèêàåò äâîéíàÿ ïåðåðèñîâêà
+	// Ð˜Ð·-Ð·Ð° ÑÑ‚Ð¾Ð³Ð¾ - Ð²Ð¾Ð·Ð½Ð¸ÐºÐ°ÐµÑ‚ Ð´Ð²Ð¾Ð¹Ð½Ð°Ñ Ð¿ÐµÑ€ÐµÑ€Ð¸ÑÐ¾Ð²ÐºÐ°
 	//gpConEmu->OnPaint(0,0);
 	//#ifdef _DEBUG
 	//BOOL lbRc =
 	//#endif
 	//RedrawWindow(ghWnd, NULL, NULL,
 	//	RDW_INTERNALPAINT|RDW_NOERASE|RDW_UPDATENOW);
-	mb_RedrawPosted = FALSE; // ×òîáû äðóãèå íèòè ìîãëè ñäåëàòü åùå ïîñò
+	mb_RedrawPosted = FALSE; // Ð§Ñ‚Ð¾Ð±Ñ‹ Ð´Ñ€ÑƒÐ³Ð¸Ðµ Ð½Ð¸Ñ‚Ð¸ Ð¼Ð¾Ð³Ð»Ð¸ ÑÐ´ÐµÐ»Ð°Ñ‚ÑŒ ÐµÑ‰Ðµ Ð¿Ð¾ÑÑ‚
 }
 
-// Âûçûâàåòñÿ èç VConGroup::RepositionVCon
+// Ð’Ñ‹Ð·Ñ‹Ð²Ð°ÐµÑ‚ÑÑ Ð¸Ð· VConGroup::RepositionVCon
 void CConEmuChild::SetVConSizePos(RECT arcBack, bool abReSize /*= true*/)
 {
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	RECT rcBack = arcBack;
-	TODO("Îïòèìèçèðîâàòü");
+	TODO("ÐžÐ¿Ñ‚Ð¸Ð¼Ð¸Ð·Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ");
 	//RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, arcBack, CER_BACK, pVCon);
 	//RECT rcTmp = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE_CUR, pVCon);
 	RECT rcDC = gpConEmu->CalcRect(CER_DC, arcBack, CER_BACK, pVCon/*, &rcTmp*/);
@@ -1259,7 +1259,7 @@ void CConEmuChild::SetVConSizePos(RECT arcBack, bool abReSize /*= true*/)
 	{
 		_ASSERTE((rcBack.right > rcBack.left) && (rcBack.bottom > rcBack.top));
 		_ASSERTE((rcDC.right > rcDC.left) && (rcDC.bottom > rcDC.top));
-		// Äâèãàåì/ðåñàéçèì îêîøêî DC
+		// Ð”Ð²Ð¸Ð³Ð°ÐµÐ¼/Ñ€ÐµÑÐ°Ð¹Ð·Ð¸Ð¼ Ð¾ÐºÐ¾ÑˆÐºÐ¾ DC
 		DEBUGTEST(RECT rc1; GetClientRect(mh_WndDC, &rc1););
 		SetWindowPos(mh_WndDC, HWND_TOP, rcDC.left, rcDC.top, rcDC.right - rcDC.left, rcDC.bottom - rcDC.top, 0);
 		DEBUGTEST(RECT rc2; GetClientRect(mh_WndDC, &rc2););
@@ -1268,12 +1268,12 @@ void CConEmuChild::SetVConSizePos(RECT arcBack, bool abReSize /*= true*/)
 	}
 	else
 	{
-		// Äâèãàåì îêîøêî DC
+		// Ð”Ð²Ð¸Ð³Ð°ÐµÐ¼ Ð¾ÐºÐ¾ÑˆÐºÐ¾ DC
 		SetWindowPos(mh_WndDC, HWND_TOP, rcDC.left, rcDC.top, 0,0, SWP_NOSIZE);
 		SetWindowPos(mh_WndBack, mh_WndDC, rcBack.left, rcBack.top, 0,0, SWP_NOSIZE);
 	}
 
-	// Îáíîâèòü ðåãèîí ñêðîëëà, åñëè îí åñòü
+	// ÐžÐ±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ Ñ€ÐµÐ³Ð¸Ð¾Ð½ ÑÐºÑ€Ð¾Ð»Ð»Ð°, ÐµÑÐ»Ð¸ Ð¾Ð½ ÐµÑÑ‚ÑŒ
 	UpdateScrollRgn(true);
 }
 
@@ -1295,7 +1295,7 @@ void CConEmuChild::Invalidate()
 		return;
 	}
 	if (mb_DisableRedraw)
-		return; // Èíà÷å, ïðè àâòîòàáàõ íà÷èíàþòñÿ ãëþêè
+		return; // Ð˜Ð½Ð°Ñ‡Ðµ, Ð¿Ñ€Ð¸ Ð°Ð²Ñ‚Ð¾Ñ‚Ð°Ð±Ð°Ñ… Ð½Ð°Ñ‡Ð¸Ð½Ð°ÑŽÑ‚ÑÑ Ð³Ð»ÑŽÐºÐ¸
 
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 
@@ -1303,11 +1303,11 @@ void CConEmuChild::Invalidate()
 	//	gpConEmu->mp_Status->UpdateStatusBar();
 
 
-	// Çäåñü íóæíî invalidate'èòü è GAPS !!!
-	// Èíà÷å ïðè çàïóñêå "conemu.exe /max" - gaps îñòàþòñÿ çåëåíûìè, ÷òî îçíà÷àåò ïîòåíöèàëüíóþ ïðîáëåìó
+	// Ð—Ð´ÐµÑÑŒ Ð½ÑƒÐ¶Ð½Ð¾ invalidate'Ð¸Ñ‚ÑŒ Ð¸ GAPS !!!
+	// Ð˜Ð½Ð°Ñ‡Ðµ Ð¿Ñ€Ð¸ Ð·Ð°Ð¿ÑƒÑÐºÐµ "conemu.exe /max" - gaps Ð¾ÑÑ‚Ð°ÑŽÑ‚ÑÑ Ð·ÐµÐ»ÐµÐ½Ñ‹Ð¼Ð¸, Ñ‡Ñ‚Ð¾ Ð¾Ð·Ð½Ð°Ñ‡Ð°ÐµÑ‚ Ð¿Ð¾Ñ‚ÐµÐ½Ñ†Ð¸Ð°Ð»ÑŒÐ½ÑƒÑŽ Ð¿Ñ€Ð¾Ð±Ð»ÐµÐ¼Ñƒ
 
-	//2009-06-22 Îïÿòü ïîïåðëà íåïðîðèñîâêà. Ïðè÷åì åñëè ïî ýêðàíó îêîøêî ïîâîçèòü - èçîáðàæåíèå íîðìàëüíîå
-	// Òàê ÷òî ïîêà ëó÷øå äâà ðàçà íàðèñóåì...
+	//2009-06-22 ÐžÐ¿ÑÑ‚ÑŒ Ð¿Ð¾Ð¿ÐµÑ€Ð»Ð° Ð½ÐµÐ¿Ñ€Ð¾Ñ€Ð¸ÑÐ¾Ð²ÐºÐ°. ÐŸÑ€Ð¸Ñ‡ÐµÐ¼ ÐµÑÐ»Ð¸ Ð¿Ð¾ ÑÐºÑ€Ð°Ð½Ñƒ Ð¾ÐºÐ¾ÑˆÐºÐ¾ Ð¿Ð¾Ð²Ð¾Ð·Ð¸Ñ‚ÑŒ - Ð¸Ð·Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð¸Ðµ Ð½Ð¾Ñ€Ð¼Ð°Ð»ÑŒÐ½Ð¾Ðµ
+	// Ð¢Ð°Ðº Ñ‡Ñ‚Ð¾ Ð¿Ð¾ÐºÐ° Ð»ÑƒÑ‡ÑˆÐµ Ð´Ð²Ð° Ñ€Ð°Ð·Ð° Ð½Ð°Ñ€Ð¸ÑÑƒÐµÐ¼...
 	//if (mb_Invalidated) {
 	//	DEBUGSTRDRAW(L" ### Warning! Invalidate on DC window will be duplicated\n");
 	////	return;
@@ -1379,18 +1379,18 @@ void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 			if (gpConEmu->WindowMode != wmNormal)
 				pVCon->RCon()->SyncConsole2Window();
 			else
-				CVConGroup::SyncWindowToConsole(); // -- ôóíêöèÿ ïóñòàÿ, èãíîðèðóåòñÿ
+				CVConGroup::SyncWindowToConsole(); // -- Ñ„ÑƒÐ½ÐºÑ†Ð¸Ñ Ð¿ÑƒÑÑ‚Ð°Ñ, Ð¸Ð³Ð½Ð¾Ñ€Ð¸Ñ€ÑƒÐµÑ‚ÑÑ
 		}
 
 		m_LastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
 	}
 }
 
-// Äîëæíà âåðíóòü TRUE, åñëè ñîáûòèÿ ìûøè íå íóæíî ïðîïóñêàòü â êîíñîëü
+// Ð”Ð¾Ð»Ð¶Ð½Ð° Ð²ÐµÑ€Ð½ÑƒÑ‚ÑŒ TRUE, ÐµÑÐ»Ð¸ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ñ Ð¼Ñ‹ÑˆÐ¸ Ð½Ðµ Ð½ÑƒÐ¶Ð½Ð¾ Ð¿Ñ€Ð¾Ð¿ÑƒÑÐºÐ°Ñ‚ÑŒ Ð² ÐºÐ¾Ð½ÑÐ¾Ð»ÑŒ
 BOOL CConEmuChild::TrackMouse()
 {
 	_ASSERTE(this);
-	BOOL lbCapture = FALSE; // Ïî óìîë÷àíèþ - ìûøü íå ïåðåõâàòûâàòü
+	BOOL lbCapture = FALSE; // ÐŸÐ¾ ÑƒÐ¼Ð¾Ð»Ñ‡Ð°Ð½Ð¸ÑŽ - Ð¼Ñ‹ÑˆÑŒ Ð½Ðµ Ð¿ÐµÑ€ÐµÑ…Ð²Ð°Ñ‚Ñ‹Ð²Ð°Ñ‚ÑŒ
 
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	CVConGuard guard(pVCon);
@@ -1410,7 +1410,7 @@ BOOL CConEmuChild::TrackMouse()
 
 	if (gpSet->isAlwaysShowScrollbar == 1)
 	{
-		// Åñëè ïîëîñà ïðîêðóòêè ïîêàçûâàåòñÿ âñåãäà - òî îíà è íå ïðÿ÷åòñÿ
+		// Ð•ÑÐ»Ð¸ Ð¿Ð¾Ð»Ð¾ÑÐ° Ð¿Ñ€Ð¾ÐºÑ€ÑƒÑ‚ÐºÐ¸ Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÑ‚ÑÑ Ð²ÑÐµÐ³Ð´Ð° - Ñ‚Ð¾ Ð¾Ð½Ð° Ð¸ Ð½Ðµ Ð¿Ñ€ÑÑ‡ÐµÑ‚ÑÑ
 		if (!mb_ScrollVisible)
 			ShowScroll(TRUE);
 	}
@@ -1419,7 +1419,7 @@ BOOL CConEmuChild::TrackMouse()
 		if (!mb_Scroll2Visible)
 		{
 			mb_Scroll2Visible = TRUE;
-			ShowScroll(FALSE/*abImmediate*/); // Åñëè gpSet->isAlwaysShowScrollbar==1 - ñàìà ðàçáåðåòñÿ
+			ShowScroll(FALSE/*abImmediate*/); // Ð•ÑÐ»Ð¸ gpSet->isAlwaysShowScrollbar==1 - ÑÐ°Ð¼Ð° Ñ€Ð°Ð·Ð±ÐµÑ€ÐµÑ‚ÑÑ
 		}
 		#ifndef SKIP_HIDE_TIMER
 		else if (mb_ScrollVisible && (gpSet->isAlwaysShowScrollbar != 1) && !m_TScrollCheck.IsStarted())
@@ -1432,7 +1432,7 @@ BOOL CConEmuChild::TrackMouse()
 	{
 		_ASSERTE(gpSet->isAlwaysShowScrollbar != 1);
 		mb_Scroll2Visible = FALSE;
-		// Çàïóñòèòü òàéìåð ñêðûòèÿ
+		// Ð—Ð°Ð¿ÑƒÑÑ‚Ð¸Ñ‚ÑŒ Ñ‚Ð°Ð¹Ð¼ÐµÑ€ ÑÐºÑ€Ñ‹Ñ‚Ð¸Ñ
 		HideScroll(FALSE/*abImmediate*/);
 	}
 
@@ -1446,12 +1446,12 @@ bool CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 	{
 		if (gpSet->isAlwaysShowScrollbar == 0)
 		{
-			return false; // íå ïîêàçûâàåòñÿ âîîáùå
+			return false; // Ð½Ðµ Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÑ‚ÑÑ Ð²Ð¾Ð¾Ð±Ñ‰Ðµ
 		}
-		else if ((gpSet->isAlwaysShowScrollbar != 1) // 1 -- ïîêàçûâàòü âñåãäà
+		else if ((gpSet->isAlwaysShowScrollbar != 1) // 1 -- Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°Ñ‚ÑŒ Ð²ÑÐµÐ³Ð´Ð°
 			&& !mb_ScrollVisible)
 		{
-			return false; // íå ïîêàçûâàåòñÿ ñåé÷àñ
+			return false; // Ð½Ðµ Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÑ‚ÑÑ ÑÐµÐ¹Ñ‡Ð°Ñ
 		}
 	}
 
@@ -1460,7 +1460,7 @@ bool CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	CVConGuard guard(pVCon);
 
-	// Âðîäå áû â àêòèâíîé? Èëè â this?
+	// Ð’Ñ€Ð¾Ð´Ðµ Ð±Ñ‹ Ð² Ð°ÐºÑ‚Ð¸Ð²Ð½Ð¾Ð¹? Ð˜Ð»Ð¸ Ð² this?
 	CVConGuard VCon;
 	CRealConsole* pRCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 
@@ -1470,19 +1470,19 @@ bool CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 
 		if (lbBufferMode)
 		{
-			// Åñëè ïðîêðóòêó òàùèëè ìûøêîé è îòïóñòèëè
+			// Ð•ÑÐ»Ð¸ Ð¿Ñ€Ð¾ÐºÑ€ÑƒÑ‚ÐºÑƒ Ñ‚Ð°Ñ‰Ð¸Ð»Ð¸ Ð¼Ñ‹ÑˆÐºÐ¾Ð¹ Ð¸ Ð¾Ñ‚Ð¿ÑƒÑÑ‚Ð¸Ð»Ð¸
 			if (mb_VTracking && !isPressed(VK_LBUTTON))
 			{
-				// Ñáðîñèì ôëàæîê
+				// Ð¡Ð±Ñ€Ð¾ÑÐ¸Ð¼ Ñ„Ð»Ð°Ð¶Ð¾Ðº
 				mb_VTracking = FALSE;
 			}
 
-			// ÷òîáû ïîëîñà íå ñêðûëàñü, êîãäà åå òàùàò ìûøêîé
+			// Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð¿Ð¾Ð»Ð¾ÑÐ° Ð½Ðµ ÑÐºÑ€Ñ‹Ð»Ð°ÑÑŒ, ÐºÐ¾Ð³Ð´Ð° ÐµÐµ Ñ‚Ð°Ñ‰Ð°Ñ‚ Ð¼Ñ‹ÑˆÐºÐ¾Ð¹
 			if (mb_VTracking)
 			{
 				lbOverVScroll = true;
 			}
-			else // Òåïåðü ïðîâåðèì, åñëè ìûøü â íàä ñêðîëëáàðîì - ïîêàçàòü åãî
+			else // Ð¢ÐµÐ¿ÐµÑ€ÑŒ Ð¿Ñ€Ð¾Ð²ÐµÑ€Ð¸Ð¼, ÐµÑÐ»Ð¸ Ð¼Ñ‹ÑˆÑŒ Ð² Ð½Ð°Ð´ ÑÐºÑ€Ð¾Ð»Ð»Ð±Ð°Ñ€Ð¾Ð¼ - Ð¿Ð¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ ÐµÐ³Ð¾
 			{
 				POINT ptCur; RECT rcScroll, rcClient;
 				GetCursorPos(&ptCur);
@@ -1493,10 +1493,10 @@ bool CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 
 				if (PtInRect(&rcScroll, ptCur))
 				{
-					// Åñëè ïðîêðóòêà ÓÆÅ âèäíà - òî ìûøêó â êîíñîëü íå ïóñêàòü! Îíà äëÿ ïðîêðóòêè!
+					// Ð•ÑÐ»Ð¸ Ð¿Ñ€Ð¾ÐºÑ€ÑƒÑ‚ÐºÐ° Ð£Ð–Ð• Ð²Ð¸Ð´Ð½Ð° - Ñ‚Ð¾ Ð¼Ñ‹ÑˆÐºÑƒ Ð² ÐºÐ¾Ð½ÑÐ¾Ð»ÑŒ Ð½Ðµ Ð¿ÑƒÑÐºÐ°Ñ‚ÑŒ! ÐžÐ½Ð° Ð´Ð»Ñ Ð¿Ñ€Ð¾ÐºÑ€ÑƒÑ‚ÐºÐ¸!
 					if (mb_ScrollVisible)
 						lbOverVScroll = true;
-					// Åñëè íå ïðîâåðÿòü - íå ïîëó÷èòñÿ íà÷àòü âûäåëåíèå ñ ïðàâîãî êðàÿ îêíà
+					// Ð•ÑÐ»Ð¸ Ð½Ðµ Ð¿Ñ€Ð¾Ð²ÐµÑ€ÑÑ‚ÑŒ - Ð½Ðµ Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑÑ Ð½Ð°Ñ‡Ð°Ñ‚ÑŒ Ð²Ñ‹Ð´ÐµÐ»ÐµÐ½Ð¸Ðµ Ñ Ð¿Ñ€Ð°Ð²Ð¾Ð³Ð¾ ÐºÑ€Ð°Ñ Ð¾ÐºÐ½Ð°
 					//if (!gpSet->isSelectionModifierPressed())
 					else if (!(isPressed(VK_SHIFT) || isPressed(VK_CONTROL) || isPressed(VK_MENU) || isPressed(VK_LBUTTON)))
 						lbOverVScroll = true;
@@ -1548,13 +1548,13 @@ void CConEmuChild::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHei
 		m_si.nMax = anHeight;
 	}
 
-	//// Åñëè ðåæèì "BufferHeight" âêëþ÷åí - ïîëó÷èòü èç êîíñîëüíîãî îêíà òåêóùåå ñîñòîÿíèå ïîëîñû ïðîêðóòêè
+	//// Ð•ÑÐ»Ð¸ Ñ€ÐµÐ¶Ð¸Ð¼ "BufferHeight" Ð²ÐºÐ»ÑŽÑ‡ÐµÐ½ - Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ Ð¸Ð· ÐºÐ¾Ð½ÑÐ¾Ð»ÑŒÐ½Ð¾Ð³Ð¾ Ð¾ÐºÐ½Ð° Ñ‚ÐµÐºÑƒÑ‰ÐµÐµ ÑÐ¾ÑÑ‚Ð¾ÑÐ½Ð¸Ðµ Ð¿Ð¾Ð»Ð¾ÑÑ‹ Ð¿Ñ€Ð¾ÐºÑ€ÑƒÑ‚ÐºÐ¸
 	//if (con.bBufferHeight) {
 	//    lbScrollRc = GetScrollInfo(hConWnd, SB_VERT, &si);
 	//} else {
-	//    // Ñáðîñûâàåì ïàðàìåòðû òàê, ÷òîáû ïîëîñà íå îòîáðàæàëàñü (âñå íà 0)
+	//    // Ð¡Ð±Ñ€Ð¾ÑÑ‹Ð²Ð°ÐµÐ¼ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ñ‹ Ñ‚Ð°Ðº, Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð¿Ð¾Ð»Ð¾ÑÐ° Ð½Ðµ Ð¾Ñ‚Ð¾Ð±Ñ€Ð°Ð¶Ð°Ð»Ð°ÑÑŒ (Ð²ÑÐµ Ð½Ð° 0)
 	//}
-	//TODO("Íóæíî ïðè íåîáõîäèìîñòè 'âñïëûòü' ïîëîñó ïðîêðóòêè");
+	//TODO("ÐÑƒÐ¶Ð½Ð¾ Ð¿Ñ€Ð¸ Ð½ÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼Ð¾ÑÑ‚Ð¸ 'Ð²ÑÐ¿Ð»Ñ‹Ñ‚ÑŒ' Ð¿Ð¾Ð»Ð¾ÑÑƒ Ð¿Ñ€Ð¾ÐºÑ€ÑƒÑ‚ÐºÐ¸");
 	//nCurPos = SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, true);
 
 	if (!abEnabled)
@@ -1580,7 +1580,7 @@ void CConEmuChild::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHei
 		}
 		else
 		{
-			HideScroll(TRUE/*ñðàçó!*/);
+			HideScroll(TRUE/*ÑÑ€Ð°Ð·Ñƒ!*/);
 		}
 	}
 	else
@@ -1591,7 +1591,7 @@ void CConEmuChild::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHei
 		//	EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
 		//}
 
-		// Ïîêàçàòü ïðîêðóòêó, åñëè íàïðèìåð áóôåð ñêðîëëèòñÿ ñ êëàâèàòóðû
+		// ÐŸÐ¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ Ð¿Ñ€Ð¾ÐºÑ€ÑƒÑ‚ÐºÑƒ, ÐµÑÐ»Ð¸ Ð½Ð°Ð¿Ñ€Ð¸Ð¼ÐµÑ€ Ð±ÑƒÑ„ÐµÑ€ ÑÐºÑ€Ð¾Ð»Ð»Ð¸Ñ‚ÑÑ Ñ ÐºÐ»Ð°Ð²Ð¸Ð°Ñ‚ÑƒÑ€Ñ‹
 		if ((m_si.nPos > 0) && (m_si.nPos < (m_si.nMax - (int)m_si.nPage - 1)) && gpSet->isAlwaysShowScrollbar)
 		{
 			mb_ScrollAutoPopup = (gpSet->isAlwaysShowScrollbar == 2);
@@ -1626,7 +1626,7 @@ void CConEmuChild::MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue)
 	if (/*!mb_ScrollVisible &&*/ !m_si.nMax && (gpSet->isAlwaysShowScrollbar == 1))
 	{
 		ShowScrollBar(mh_WndBack, SB_VERT, TRUE);
-		// Ïðîêðóòêà âñåãäà ïîêàçûâàåòñÿ! Ñêðûâàòü íåëüçÿ!
+		// ÐŸÑ€Ð¾ÐºÑ€ÑƒÑ‚ÐºÐ° Ð²ÑÐµÐ³Ð´Ð° Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÑ‚ÑÑ! Ð¡ÐºÑ€Ñ‹Ð²Ð°Ñ‚ÑŒ Ð½ÐµÐ»ÑŒÐ·Ñ!
 		si.nPage = 1;
 		si.nMax = 100;
 	}
@@ -1690,7 +1690,7 @@ void CConEmuChild::ShowScroll(BOOL abImmediate)
 	{
 		if (!mb_ScrollVisible && !m_si.nMax)
 		{
-			// Ïðîêðóòêà âñåãäà ïîêàçûâàåòñÿ! Ñêðûâàòü íåëüçÿ!
+			// ÐŸÑ€Ð¾ÐºÑ€ÑƒÑ‚ÐºÐ° Ð²ÑÐµÐ³Ð´Ð° Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÑ‚ÑÑ! Ð¡ÐºÑ€Ñ‹Ð²Ð°Ñ‚ÑŒ Ð½ÐµÐ»ÑŒÐ·Ñ!
 			//m_si.nMax = (gpSet->isAlwaysShowScrollbar == 1) ? 1 : 0;
 			SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1};
 			SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);
@@ -1782,7 +1782,7 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 
 	if (gpSet->isAlwaysShowScrollbar == 1)
 	{
-		// Ïðîêðóòêà âñåãäà ïîêàçûâàåòñÿ! Ñêðûâàòü íåëüçÿ!
+		// ÐŸÑ€Ð¾ÐºÑ€ÑƒÑ‚ÐºÐ° Ð²ÑÐµÐ³Ð´Ð° Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÑ‚ÑÑ! Ð¡ÐºÑ€Ñ‹Ð²Ð°Ñ‚ÑŒ Ð½ÐµÐ»ÑŒÐ·Ñ!
 		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1};
 		SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);
 		if (!mb_ScrollDisabled)
@@ -1812,7 +1812,7 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 		//if (IsWindowVisible(mh_WndScroll))
 		//	apiShowWindow(mh_WndScroll, SW_HIDE);
 		//RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
-		//// âüþïîðò íåâèäèìûé, ïåðåäåðíóòü íóæíî îñíîâíîå îêíî
+		//// Ð²ÑŒÑŽÐ¿Ð¾Ñ€Ñ‚ Ð½ÐµÐ²Ð¸Ð´Ð¸Ð¼Ñ‹Ð¹, Ð¿ÐµÑ€ÐµÐ´ÐµÑ€Ð½ÑƒÑ‚ÑŒ Ð½ÑƒÐ¶Ð½Ð¾ Ð¾ÑÐ½Ð¾Ð²Ð½Ð¾Ðµ Ð¾ÐºÐ½Ð¾
 		//MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcScroll, 2);
 		//InvalidateRect(ghWnd, &rcScroll, FALSE);
 	}
@@ -1841,9 +1841,9 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 		m_TScrollHide.Stop();
 }
 
-// 0 - áëîêèðîâîê íåò
-// 1 - çàáëîêèðîâàíî, èãíîðèðîâàòü çàïîëíåíèå êîíñîëè ïðîáåëàìè (òàéìàóò îáíîâëåíèÿ áóôåðîâ)
-// 2 - çàáëîêèðîâàíî, ïðè ëþáîì ÷èõå â ýòîò ïðÿìîóãîëüíèê - ñíèìàòü áëîêèðîâêó
+// 0 - Ð±Ð»Ð¾ÐºÐ¸Ñ€Ð¾Ð²Ð¾Ðº Ð½ÐµÑ‚
+// 1 - Ð·Ð°Ð±Ð»Ð¾ÐºÐ¸Ñ€Ð¾Ð²Ð°Ð½Ð¾, Ð¸Ð³Ð½Ð¾Ñ€Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ð·Ð°Ð¿Ð¾Ð»Ð½ÐµÐ½Ð¸Ðµ ÐºÐ¾Ð½ÑÐ¾Ð»Ð¸ Ð¿Ñ€Ð¾Ð±ÐµÐ»Ð°Ð¼Ð¸ (Ñ‚Ð°Ð¹Ð¼Ð°ÑƒÑ‚ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ Ð±ÑƒÑ„ÐµÑ€Ð¾Ð²)
+// 2 - Ð·Ð°Ð±Ð»Ð¾ÐºÐ¸Ñ€Ð¾Ð²Ð°Ð½Ð¾, Ð¿Ñ€Ð¸ Ð»ÑŽÐ±Ð¾Ð¼ Ñ‡Ð¸Ñ…Ðµ Ð² ÑÑ‚Ð¾Ñ‚ Ð¿Ñ€ÑÐ¼Ð¾ÑƒÐ³Ð¾Ð»ÑŒÐ½Ð¸Ðº - ÑÐ½Ð¸Ð¼Ð°Ñ‚ÑŒ Ð±Ð»Ð¾ÐºÐ¸Ñ€Ð¾Ð²ÐºÑƒ
 int CConEmuChild::IsDcLocked(RECT* CurrentConLockedRect)
 {
 	if (!m_LockDc.bLocked)
@@ -1879,7 +1879,7 @@ void CConEmuChild::LockDcRect(bool bLock, RECT* Rect)
 		CVirtualConsole* pVCon = (CVirtualConsole*)this;
 		CVConGuard guard(pVCon);
 
-		TODO("Õîðîøî áû çäåñü çàïîìíèòü â CompatibleBitmap òî, ÷òî íàðèñîâàëè. Ýòî íóæíî äåëàòü â MainThread!!");
+		TODO("Ð¥Ð¾Ñ€Ð¾ÑˆÐ¾ Ð±Ñ‹ Ð·Ð´ÐµÑÑŒ Ð·Ð°Ð¿Ð¾Ð¼Ð½Ð¸Ñ‚ÑŒ Ð² CompatibleBitmap Ñ‚Ð¾, Ñ‡Ñ‚Ð¾ Ð½Ð°Ñ€Ð¸ÑÐ¾Ð²Ð°Ð»Ð¸. Ð­Ñ‚Ð¾ Ð½ÑƒÐ¶Ð½Ð¾ Ð´ÐµÐ»Ð°Ñ‚ÑŒ Ð² MainThread!!");
 
 		m_LockDc.rcScreen = *Rect;
 		COORD cr = pVCon->ClientToConsole(m_LockDc.rcScreen.left+1, m_LockDc.rcScreen.top+1, true);

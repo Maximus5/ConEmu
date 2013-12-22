@@ -1,4 +1,4 @@
-
+п»ї
 #include <windows.h>
 // C RunTime Header Files
 #include <stdlib.h>
@@ -91,7 +91,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 			WaitForSingleObject(sei.hProcess, INFINITE);
 			DWORD nCode = 0;
 			SetLastError(0);
-			//1602 - это похоже "Отмена" пользователем
+			//1602 - СЌС‚Рѕ РїРѕС…РѕР¶Рµ "РћС‚РјРµРЅР°" РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј
 			if (!GetExitCodeProcess(sei.hProcess, &nCode) || (nCode != 0 && nCode != 1602))
 			{
 				wchar_t szFormat[128]; wsprintf(szFormat, L"Installer failed\n%%s\nExitCode=%u", nCode);

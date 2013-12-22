@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2013 Maximus5
 All rights reserved.
@@ -34,8 +34,8 @@ void GenerateMiniDumpFromCtrlBreak();
 
 struct CEDebugProcessInfo
 {
-	DWORD  nPID; // дублирование ключа
-	BOOL   bWasBreak; // TRUE после первого EXCEPTION_BREAKPOINT
+	DWORD  nPID; // РґСѓР±Р»РёСЂРѕРІР°РЅРёРµ РєР»СЋС‡Р°
+	BOOL   bWasBreak; // TRUE РїРѕСЃР»Рµ РїРµСЂРІРѕРіРѕ EXCEPTION_BREAKPOINT
 	HANDLE hProcess;
 };
 

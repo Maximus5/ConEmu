@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -116,11 +116,11 @@ bool CBackground::CreateField(int anWidth, int anHeight)
 	}
 	else
 	{
-		return true; // уже создано
+		return true; // СѓР¶Рµ СЃРѕР·РґР°РЅРѕ
 	}
 
 	bool lbRc = false;
-	// Создать MemoryDC
+	// РЎРѕР·РґР°С‚СЊ MemoryDC
 	const HDC hScreenDC = GetDC(ghWnd);
 	hBgDc = CreateCompatibleDC(hScreenDC);
 
@@ -132,12 +132,12 @@ bool CBackground::CreateField(int anWidth, int anHeight)
 
 		if (hBgBitmap)
 		{
-			// Выбрать в MemoryDC созданный Bitmap для установки его размера
+			// Р’С‹Р±СЂР°С‚СЊ РІ MemoryDC СЃРѕР·РґР°РЅРЅС‹Р№ Bitmap РґР»СЏ СѓСЃС‚Р°РЅРѕРІРєРё РµРіРѕ СЂР°Р·РјРµСЂР°
 			hOldBitmap = (HBITMAP)SelectObject(hBgDc, hBgBitmap);
-			// И залить черным фоном
+			// Р Р·Р°Р»РёС‚СЊ С‡РµСЂРЅС‹Рј С„РѕРЅРѕРј
 			RECT rcFull = MakeRect(bgSize.X, bgSize.Y);
 			FillRect(hBgDc, &rcFull, (HBRUSH)GetStockObject(BLACK_BRUSH));
-			// теперь - OK
+			// С‚РµРїРµСЂСЊ - OK
 			lbRc = true;
 		}
 	}
@@ -147,15 +147,15 @@ bool CBackground::CreateField(int anWidth, int anHeight)
 }
 
 bool CBackground::FillBackground(
-    const BITMAPFILEHEADER* apBkImgData, // Содержимое *.bmp файла
-    LONG X, LONG Y, LONG Width, LONG Height, // Куда нужно положить картинку
+    const BITMAPFILEHEADER* apBkImgData, // РЎРѕРґРµСЂР¶РёРјРѕРµ *.bmp С„Р°Р№Р»Р°
+    LONG X, LONG Y, LONG Width, LONG Height, // РљСѓРґР° РЅСѓР¶РЅРѕ РїРѕР»РѕР¶РёС‚СЊ РєР°СЂС‚РёРЅРєСѓ
     BackgroundOp Operation,              // {eUpLeft = 0, eStretch = 1, eTile = 2, eUpRight = 4, ...}
-    bool abFade)                         // затемнение картинки, когда ConEmu НЕ в фокусе
+    bool abFade)                         // Р·Р°С‚РµРјРЅРµРЅРёРµ РєР°СЂС‚РёРЅРєРё, РєРѕРіРґР° ConEmu РќР• РІ С„РѕРєСѓСЃРµ
 {
 	if (!hBgDc)
 		return false;
 
-	// Залить черным фоном
+	// Р—Р°Р»РёС‚СЊ С‡РµСЂРЅС‹Рј С„РѕРЅРѕРј
 	RECT rcFull = MakeRect(X,Y,Width,Height);
 	FillRect(hBgDc, &rcFull, (HBRUSH)GetStockObject(BLACK_BRUSH));
 
@@ -189,7 +189,7 @@ bool CBackground::FillBackground(
 	if (!gpSet->isFadeInactive)
 		abFade = false;
 
-	// Создать MemoryDC
+	// РЎРѕР·РґР°С‚СЊ MemoryDC
 	const HDC hScreenDC = GetDC(ghWnd);
 
 	if (hScreenDC)
@@ -203,36 +203,36 @@ bool CBackground::FillBackground(
 
 			if (hLoadBmp && pDstBits)
 			{
-				// Поместить биты из apBkImgData в hLoadDC
+				// РџРѕРјРµСЃС‚РёС‚СЊ Р±РёС‚С‹ РёР· apBkImgData РІ hLoadDC
 				HBITMAP hOldLoadBmp = (HBITMAP)SelectObject(hLoadDC, hLoadBmp);
 				memmove(pDstBits, pBits, nBitSize);
-				GdiFlush(); // Гарантировать commit битов
-				// Теперь - скопировать биты из hLoadDC в hBgDc с учетом положения и Operation
+				GdiFlush(); // Р“Р°СЂР°РЅС‚РёСЂРѕРІР°С‚СЊ commit Р±РёС‚РѕРІ
+				// РўРµРїРµСЂСЊ - СЃРєРѕРїРёСЂРѕРІР°С‚СЊ Р±РёС‚С‹ РёР· hLoadDC РІ hBgDc СЃ СѓС‡РµС‚РѕРј РїРѕР»РѕР¶РµРЅРёСЏ Рё Operation
 				BLENDFUNCTION bf = {AC_SRC_OVER, 0, gpSet->bgImageDarker, 0};
 
 				if (abFade)
 				{
-					// GetFadeColor возвращает ColorRef, поэтому при вызове для (0..255)
-					// он должен вернуть "коэффициент" затемнения или осветления
+					// GetFadeColor РІРѕР·РІСЂР°С‰Р°РµС‚ ColorRef, РїРѕСЌС‚РѕРјСѓ РїСЂРё РІС‹Р·РѕРІРµ РґР»СЏ (0..255)
+					// РѕРЅ РґРѕР»Р¶РµРЅ РІРµСЂРЅСѓС‚СЊ "РєРѕСЌС„С„РёС†РёРµРЅС‚" Р·Р°С‚РµРјРЅРµРЅРёСЏ РёР»Рё РѕСЃРІРµС‚Р»РµРЅРёСЏ
 					DWORD nHigh = (gpSet->GetFadeColor(255) & 0xFF);
 
 					if (nHigh < 255)
 					{
-						// Затемнение фона
+						// Р—Р°С‚РµРјРЅРµРЅРёРµ С„РѕРЅР°
 						bf.SourceConstantAlpha = nHigh * bf.SourceConstantAlpha / 255;
 					}
 
-					//// "коэффициент" вернется в виде RGB (R==G==B)
+					//// "РєРѕСЌС„С„РёС†РёРµРЅС‚" РІРµСЂРЅРµС‚СЃСЏ РІ РІРёРґРµ RGB (R==G==B)
 					//DWORD nLow = gpSet->GetFadeColor(0);
 					//if (nLow > 0 && ((nLow & 0xFF) < nHigh))
 					//{
-					//	// Осветление фона
+					//	// РћСЃРІРµС‚Р»РµРЅРёРµ С„РѕРЅР°
 					//	RECT r = {X,Y,X+Width,Y+Height};
 					//	HBRUSH h = CreateSolidBrush(nLow);
 					//	FillRect(hBgDc, &r, h);
 					//	DeleteObject(h);
-					//	// еще нужно убедиться, что сама картинка будет немного прозрачной,
-					//	// чтобы это осветление было заметно
+					//	// РµС‰Рµ РЅСѓР¶РЅРѕ СѓР±РµРґРёС‚СЊСЃСЏ, С‡С‚Рѕ СЃР°РјР° РєР°СЂС‚РёРЅРєР° Р±СѓРґРµС‚ РЅРµРјРЅРѕРіРѕ РїСЂРѕР·СЂР°С‡РЅРѕР№,
+					//	// С‡С‚РѕР±С‹ СЌС‚Рѕ РѕСЃРІРµС‚Р»РµРЅРёРµ Р±С‹Р»Рѕ Р·Р°РјРµС‚РЅРѕ
 					//	if ((nLow & 0xFF) < 200)
 					//		bf.SourceConstantAlpha = klMin((int)bf.SourceConstantAlpha, (int)(255 - (nLow & 0xFF)));
 					//	else if (bf.SourceConstantAlpha >= 240)
@@ -286,17 +286,17 @@ bool CBackground::FillBackground(
 					}
 				}
 
-				TODO("Осветление картинки в Fade, когда gpSet->mn_FadeLow>0");
+				TODO("РћСЃРІРµС‚Р»РµРЅРёРµ РєР°СЂС‚РёРЅРєРё РІ Fade, РєРѕРіРґР° gpSet->mn_FadeLow>0");
 				//if (abFade)
 				//{
-				//	// "коэффициент" вернется в виде RGB (R==G==B)
+				//	// "РєРѕСЌС„С„РёС†РёРµРЅС‚" РІРµСЂРЅРµС‚СЃСЏ РІ РІРёРґРµ RGB (R==G==B)
 				//	DWORD nLow = gpSet->GetFadeColor(0);
 				//	if (nLow)
 				//	{
-				//		// Осветление фона
+				//		// РћСЃРІРµС‚Р»РµРЅРёРµ С„РѕРЅР°
 				//		RECT r = {X,Y,X+Width,Y+Height};
 				//		HBRUSH h = CreateSolidBrush(nLow);
-				//		// Осветлить картинку
+				//		// РћСЃРІРµС‚Р»РёС‚СЊ РєР°СЂС‚РёРЅРєСѓ
 				//		//FillRect(hBgDc, &r, h);
 				//		DeleteObject(h);
 				//	}
@@ -319,9 +319,9 @@ bool CBackground::FillBackground(
 }
 
 
-// вызывается из SetBackgroundImageData
-//   при получении нового Background (CECMD_SETBACKGROUND) из плагина
-//   при очистке (закрытие/рестарт) консоли
+// РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· SetBackgroundImageData
+//   РїСЂРё РїРѕР»СѓС‡РµРЅРёРё РЅРѕРІРѕРіРѕ Background (CECMD_SETBACKGROUND) РёР· РїР»Р°РіРёРЅР°
+//   РїСЂРё РѕС‡РёСЃС‚РєРµ (Р·Р°РєСЂС‹С‚РёРµ/СЂРµСЃС‚Р°СЂС‚) РєРѕРЅСЃРѕР»Рё
 UINT CBackground::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, bool* rpIsEmf)
 {
 	if (rpIsEmf)
@@ -366,7 +366,7 @@ UINT CBackground::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData,
 		}
 		#endif
 		
-		// Это EMF, но передан как BITMAPINFOHEADER
+		// Р­С‚Рѕ EMF, РЅРѕ РїРµСЂРµРґР°РЅ РєР°Рє BITMAPINFOHEADER
 		if (rpIsEmf)
 			*rpIsEmf = true;
 		
@@ -382,8 +382,8 @@ UINT CBackground::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData,
 	return 0;
 }
 
-// вызывается при получении нового Background (CECMD_SETBACKGROUND) из плагина
-// и для очистки при закрытии (рестарте) консоли
+// РІС‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё РїРѕР»СѓС‡РµРЅРёРё РЅРѕРІРѕРіРѕ Background (CECMD_SETBACKGROUND) РёР· РїР»Р°РіРёРЅР°
+// Рё РґР»СЏ РѕС‡РёСЃС‚РєРё РїСЂРё Р·Р°РєСЂС‹С‚РёРё (СЂРµСЃС‚Р°СЂС‚Рµ) РєРѕРЅСЃРѕР»Рё
 SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData, bool&/*OUT*/ bUpdate)
 {
 	if (!this) return esbr_Unexpected;
@@ -391,7 +391,7 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 	//if (!gpConEmu->isMainThread())
 	//{
 
-	//// При вызове из серверной нити (только что пришло из плагина)
+	//// РџСЂРё РІС‹Р·РѕРІРµ РёР· СЃРµСЂРІРµСЂРЅРѕР№ РЅРёС‚Рё (С‚РѕР»СЊРєРѕ С‡С‚Рѕ РїСЂРёС€Р»Рѕ РёР· РїР»Р°РіРёРЅР°)
 	//if (mp_RCon->isConsoleClosing())
 	//	return esbr_ConEmuInShutdown;
 
@@ -439,34 +439,34 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 
 #endif
 
-	//	// Поскольку вызов асинхронный (сразу возвращаем в плагин), то нужно сделать копию данных
+	//	// РџРѕСЃРєРѕР»СЊРєСѓ РІС‹Р·РѕРІ Р°СЃРёРЅС…СЂРѕРЅРЅС‹Р№ (СЃСЂР°Р·Сѓ РІРѕР·РІСЂР°С‰Р°РµРј РІ РїР»Р°РіРёРЅ), С‚Рѕ РЅСѓР¶РЅРѕ СЃРґРµР»Р°С‚СЊ РєРѕРїРёСЋ РґР°РЅРЅС‹С…
 	//	CESERVER_REQ_SETBACKGROUND* pCopy = (CESERVER_REQ_SETBACKGROUND*)malloc(nSize);
 	//	if (!pCopy)
 	//		return esbr_Unexpected;
 	//	memmove(pCopy, apImgData, nSize);
-	//	// Запомнить последний актуальный, и послать в главную нить
+	//	// Р—Р°РїРѕРјРЅРёС‚СЊ РїРѕСЃР»РµРґРЅРёР№ Р°РєС‚СѓР°Р»СЊРЅС‹Р№, Рё РїРѕСЃР»Р°С‚СЊ РІ РіР»Р°РІРЅСѓСЋ РЅРёС‚СЊ
 	//	mp_LastImgData = pCopy;
 	//	mb_BkImgDelete = FALSE;
 	//	gpConEmu->PostSetBackground(this, pCopy);
 	//	return gpSet->isBgPluginAllowed ? esbr_OK : esbr_PluginForbidden;
 	//}
 
-	//// Если вызов пришел во время закрытия консоли - игнорировать
+	//// Р•СЃР»Рё РІС‹Р·РѕРІ РїСЂРёС€РµР» РІРѕ РІСЂРµРјСЏ Р·Р°РєСЂС‹С‚РёСЏ РєРѕРЅСЃРѕР»Рё - РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ
 	//if (mp_RCon->isConsoleClosing())
-	////// Этот apImgData уже не актуален. Во время обработки сообщения пришел новый Background.
+	////// Р­С‚РѕС‚ apImgData СѓР¶Рµ РЅРµ Р°РєС‚СѓР°Р»РµРЅ. Р’Рѕ РІСЂРµРјСЏ РѕР±СЂР°Р±РѕС‚РєРё СЃРѕРѕР±С‰РµРЅРёСЏ РїСЂРёС€РµР» РЅРѕРІС‹Р№ Background.
 	////	|| (mp_LastImgData && mp_LastImgData != apImgData))
 	//{
 	//	free(apImgData);
 	//	return esbr_Unexpected;
 	//}
 
-	// Ссылку на актуальный - не сбрасываем. Она просто информационная, и есть возможность наколоться с многопоточностью
+	// РЎСЃС‹Р»РєСѓ РЅР° Р°РєС‚СѓР°Р»СЊРЅС‹Р№ - РЅРµ СЃР±СЂР°СЃС‹РІР°РµРј. РћРЅР° РїСЂРѕСЃС‚Рѕ РёРЅС„РѕСЂРјР°С†РёРѕРЅРЅР°СЏ, Рё РµСЃС‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РЅР°РєРѕР»РѕС‚СЊСЃСЏ СЃ РјРЅРѕРіРѕРїРѕС‚РѕС‡РЅРѕСЃС‚СЊСЋ
 	//mp_LastImgData = NULL;
 
 	//UINT nSize = IsBackgroundValid(apImgData);
 	//if (!nSize)
 	//{
-	//	// Не допустимый apImgData. Вроде такого быть не должно - все уже проверено
+	//	// РќРµ РґРѕРїСѓСЃС‚РёРјС‹Р№ apImgData. Р’СЂРѕРґРµ С‚Р°РєРѕРіРѕ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ - РІСЃРµ СѓР¶Рµ РїСЂРѕРІРµСЂРµРЅРѕ
 	//	_ASSERTE(IsBackgroundValid(apImgData) != 0);
 	//	//free(apImgData);
 	//	return esbr_InvalidArg;
@@ -534,7 +534,7 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 		mn_BkImgHeight = pBmp->biHeight;
 		NeedBackgroundUpdate();
 
-		//// Это была копия данных - нужно освободить
+		//// Р­С‚Рѕ Р±С‹Р»Р° РєРѕРїРёСЏ РґР°РЅРЅС‹С… - РЅСѓР¶РЅРѕ РѕСЃРІРѕР±РѕРґРёС‚СЊ
 		//free(apImgData); apImgData = NULL;
 
 		if (/*gpConEmu->isVisible(this) &&*/ gpSet->isBgPluginAllowed)
@@ -560,14 +560,14 @@ void CBackground::NeedBackgroundUpdate()
 	mb_NeedBgUpdate = true;
 }
 
-// Создает (или возвращает уже созданный) HDC (CompatibleDC) для mp_BkImgData
+// РЎРѕР·РґР°РµС‚ (РёР»Рё РІРѕР·РІСЂР°С‰Р°РµС‚ СѓР¶Рµ СЃРѕР·РґР°РЅРЅС‹Р№) HDC (CompatibleDC) РґР»СЏ mp_BkImgData
 bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG Y, LONG Width, LONG Height)
 {
 	if (!this) return NULL;
 
 	_ASSERTE(gpConEmu->isMainThread());
 
-	// Сразу
+	// РЎСЂР°Р·Сѓ
 	mb_BkImgChanged = FALSE;
 
 	/*if (mb_BkImgDelete && mp_BkImgData)
@@ -584,7 +584,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 
 	if (mb_BkEmfChanged)
 	{
-		// Сразу сброс
+		// РЎСЂР°Р·Сѓ СЃР±СЂРѕСЃ
 		mb_BkEmfChanged = FALSE;
 		
 		if (!mp_BkEmfData)
@@ -593,7 +593,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 			return false;
 		}
 		
-		// Нужно перекинуть EMF в mp_BkImgData
+		// РќСѓР¶РЅРѕ РїРµСЂРµРєРёРЅСѓС‚СЊ EMF РІ mp_BkImgData
 		BITMAPINFOHEADER bi = mp_BkEmfData->bi;
 		size_t nBitSize = bi.biWidth*bi.biHeight*sizeof(COLORREF);
 		size_t nWholeSize = sizeof(CESERVER_REQ_SETBACKGROUND)+nBitSize; //-V103 //-V119
@@ -613,7 +613,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 		mp_BkImgData->bmp.bfType = 0x4D42/*BM*/;
 		mp_BkImgData->bmp.bfSize = nBitSize+sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER); //-V119
 		
-		// Теперь нужно сформировать DIB и нарисовать в нем EMF
+		// РўРµРїРµСЂСЊ РЅСѓР¶РЅРѕ СЃС„РѕСЂРјРёСЂРѕРІР°С‚СЊ DIB Рё РЅР°СЂРёСЃРѕРІР°С‚СЊ РІ РЅРµРј EMF
 		HDC hScreen = GetDC(NULL);
 		//RECT rcMeta = {0,0, mn_BkImgWidth, mn_BkImgHeight}; // (in pixels)
 		//RECT rcMetaMM = {0,0, mn_BkImgWidth*10, mn_BkImgHeight*10}; // (in .01-millimeter units)
@@ -643,7 +643,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 		HBITMAP hOld = (HBITMAP)SelectObject(hdcDib, hDib);
 	
 		size_t nBitsSize = bi.biWidth*bi.biHeight*sizeof(COLORREF);
-		// Залить черным - по умолчанию
+		// Р—Р°Р»РёС‚СЊ С‡РµСЂРЅС‹Рј - РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 		#ifdef _DEBUG
 			memset(pBits, 128, nBitSize);
 		#else
@@ -712,7 +712,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 
 	if (!mp_BkImgData)
 	{
-		// Нужен ли тут? Или допустимая ситуация?
+		// РќСѓР¶РµРЅ Р»Рё С‚СѓС‚? РР»Рё РґРѕРїСѓСЃС‚РёРјР°СЏ СЃРёС‚СѓР°С†РёСЏ?
 		_ASSERTE(mp_BkImgData!=NULL);
 		return false;
 	}
@@ -728,7 +728,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 	return lbRc;
 }
 
-// Должна вернуть true, если данные изменились (то есть будет isForce при полной перерисовке)
+// Р”РѕР»Р¶РЅР° РІРµСЂРЅСѓС‚СЊ true, РµСЃР»Рё РґР°РЅРЅС‹Рµ РёР·РјРµРЅРёР»РёСЃСЊ (С‚Рѕ РµСЃС‚СЊ Р±СѓРґРµС‚ isForce РїСЂРё РїРѕР»РЅРѕР№ РїРµСЂРµСЂРёСЃРѕРІРєРµ)
 bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, COORD&/*OUT*/ pbgBmpSize)
 {
 	if (!this)
@@ -757,7 +757,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 	bool bIsForeground = gpConEmu->isMeForeground(false);
 
 
-	// Если плагин свой фон не подсунул
+	// Р•СЃР»Рё РїР»Р°РіРёРЅ СЃРІРѕР№ С„РѕРЅ РЅРµ РїРѕРґСЃСѓРЅСѓР»
 	if (!lbVConImage)
 	{
 		//if (mp_PluginBg)
@@ -767,7 +767,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 		//}
 
 		#ifndef APPDISTINCTBACKGROUND
-		// То работаем на общих основаниях, через настройки (или AppDistinct)
+		// РўРѕ СЂР°Р±РѕС‚Р°РµРј РЅР° РѕР±С‰РёС… РѕСЃРЅРѕРІР°РЅРёСЏС…, С‡РµСЂРµР· РЅР°СЃС‚СЂРѕР№РєРё (РёР»Рё AppDistinct)
 		return gpSetCls->PrepareBackground(pVCon, &phBgDc, &pbgBmpSize);
 		#else
 
@@ -792,20 +792,20 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 
 		RECT rcWork = {0,0,(int)pVCon->Width,(int)pVCon->Height};
 
-		// необходимо проверить размер требуемой картинки
-		// -- здесь - всегда только файловая подложка
+		// РЅРµРѕР±С…РѕРґРёРјРѕ РїСЂРѕРІРµСЂРёС‚СЊ СЂР°Р·РјРµСЂ С‚СЂРµР±СѓРµРјРѕР№ РєР°СЂС‚РёРЅРєРё
+		// -- Р·РґРµСЃСЊ - РІСЃРµРіРґР° С‚РѕР»СЊРєРѕ С„Р°Р№Р»РѕРІР°СЏ РїРѕРґР»РѕР¶РєР°
 		if ((gpSet->bgOperation == eUpLeft) || (gpSet->bgOperation == eUpRight)
 			|| (gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight)
 			|| (gpSet->bgOperation == eCenter))
 		{
-			// MemoryDC создается всегда по размеру картинки, т.е. изменение размера окна - игнорируется
+			// MemoryDC СЃРѕР·РґР°РµС‚СЃСЏ РІСЃРµРіРґР° РїРѕ СЂР°Р·РјРµСЂСѓ РєР°СЂС‚РёРЅРєРё, С‚.Рµ. РёР·РјРµРЅРµРЅРёРµ СЂР°Р·РјРµСЂР° РѕРєРЅР° - РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ
 		}
 		else
 		{
-			// Смотрим дальше
+			// РЎРјРѕС‚СЂРёРј РґР°Р»СЊС€Рµ
 			if (gpSet->bgOperation == eStretch)
 			{
-				// Строго по размеру клиентской (точнее Workspace) области окна
+				// РЎС‚СЂРѕРіРѕ РїРѕ СЂР°Р·РјРµСЂСѓ РєР»РёРµРЅС‚СЃРєРѕР№ (С‚РѕС‡РЅРµРµ Workspace) РѕР±Р»Р°СЃС‚Рё РѕРєРЅР°
 				lMaxBgWidth = rcWork.right - rcWork.left;
 				lMaxBgHeight = rcWork.bottom - rcWork.top;
 			}
@@ -839,8 +839,8 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 			}
 			else if (gpSet->bgOperation == eTile)
 			{
-				// Max между клиентской (точнее Workspace) областью окна и размером текущего монитора
-				// Окно может быть растянуто на несколько мониторов, т.е. размер клиентской области может быть больше
+				// Max РјРµР¶РґСѓ РєР»РёРµРЅС‚СЃРєРѕР№ (С‚РѕС‡РЅРµРµ Workspace) РѕР±Р»Р°СЃС‚СЊСЋ РѕРєРЅР° Рё СЂР°Р·РјРµСЂРѕРј С‚РµРєСѓС‰РµРіРѕ РјРѕРЅРёС‚РѕСЂР°
+				// РћРєРЅРѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ СЂР°СЃС‚СЏРЅСѓС‚Рѕ РЅР° РЅРµСЃРєРѕР»СЊРєРѕ РјРѕРЅРёС‚РѕСЂРѕРІ, С‚.Рµ. СЂР°Р·РјРµСЂ РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё РјРѕР¶РµС‚ Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ
 				HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
 				MONITORINFO mon = {sizeof(MONITORINFO)};
 				GetMonitorInfo(hMon, &mon);
@@ -883,8 +883,8 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 			if (lbImageExist)
 			{
 				mb_BgLastFade = (!bIsForeground && gpSet->isFadeInactive);
-				TODO("Переделать, ориентироваться только на размер картинки - неправильно");
-				TODO("DoubleView - скорректировать X,Y");
+				TODO("РџРµСЂРµРґРµР»Р°С‚СЊ, РѕСЂРёРµРЅС‚РёСЂРѕРІР°С‚СЊСЃСЏ С‚РѕР»СЊРєРѕ РЅР° СЂР°Р·РјРµСЂ РєР°СЂС‚РёРЅРєРё - РЅРµРїСЂР°РІРёР»СЊРЅРѕ");
+				TODO("DoubleView - СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ X,Y");
 
 				//if (lbVConImage)
 				//{
@@ -907,7 +907,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 
 					if (!lMaxBgWidth || !lMaxBgHeight)
 					{
-						// Сюда мы можем попасть только в случае eUpLeft/eUpRight/eDownLeft/eDownRight
+						// РЎСЋРґР° РјС‹ РјРѕР¶РµРј РїРѕРїР°СЃС‚СЊ С‚РѕР»СЊРєРѕ РІ СЃР»СѓС‡Р°Рµ eUpLeft/eUpRight/eDownLeft/eDownRight
 						lMaxBgWidth = pBmp->biWidth;
 						lMaxBgHeight = pBmp->biHeight;
 					}
@@ -977,8 +977,8 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 			//	mp_PluginBg = new CBackground;
 
 			mb_BgLastFade = (!bIsForeground && gpSet->isFadeInactive);
-			TODO("Переделать, ориентироваться только на размер картинки - неправильно");
-			TODO("DoubleView - скорректировать X,Y");
+			TODO("РџРµСЂРµРґРµР»Р°С‚СЊ, РѕСЂРёРµРЅС‚РёСЂРѕРІР°С‚СЊСЃСЏ С‚РѕР»СЊРєРѕ РЅР° СЂР°Р·РјРµСЂ РєР°СЂС‚РёРЅРєРё - РЅРµРїСЂР°РІРёР»СЊРЅРѕ");
+			TODO("DoubleView - СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ X,Y");
 
 			if (lMaxBgWidth && lMaxBgHeight)
 			{
@@ -1018,7 +1018,7 @@ bool CBackground::HasPluginBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)
 
 	if (!mb_BkImgExist || !(mp_BkImgData || (mp_BkEmfData && mb_BkEmfChanged))) return false;
 
-	// Возвращаем mn_BkImgXXX чтобы не беспокоиться об указателе mp_BkImgData
+	// Р’РѕР·РІСЂР°С‰Р°РµРј mn_BkImgXXX С‡С‚РѕР±С‹ РЅРµ Р±РµСЃРїРѕРєРѕРёС‚СЊСЃСЏ РѕР± СѓРєР°Р·Р°С‚РµР»Рµ mp_BkImgData
 
 	if (pnBgWidth)
 		*pnBgWidth = mn_BkImgWidth;
@@ -1063,7 +1063,7 @@ CBackgroundInfo* CBackgroundInfo::CreateBackgroundObject(LPCWSTR inPath, bool ab
 		return NULL;
 	}
 
-	// Допускается и пустой путь!
+	// Р”РѕРїСѓСЃРєР°РµС‚СЃСЏ Рё РїСѓСЃС‚РѕР№ РїСѓС‚СЊ!
 	inPath = SkipNonPrintable(inPath);
 	if (!inPath)
 		inPath = L"";
@@ -1169,7 +1169,7 @@ bool CBackgroundInfo::PollBackgroundFile()
 	bool lbChanged = false;
 
 	if (gpSet->isShowBgImage && ms_BgImage[0] && ((GetTickCount() - nBgModifiedTick) > BACKGROUND_FILE_POLL)
-		&& wcspbrk(ms_BgImage, L"%\\.")) // только для файлов!
+		&& wcspbrk(ms_BgImage, L"%\\.")) // С‚РѕР»СЊРєРѕ РґР»СЏ С„Р°Р№Р»РѕРІ!
 	{
 		WIN32_FIND_DATA fnd = {0};
 		HANDLE hFind = FindFirstFile(gpSet->sBgImage, &fnd);
@@ -1179,7 +1179,7 @@ bool CBackgroundInfo::PollBackgroundFile()
 			if (fnd.ftLastWriteTime.dwHighDateTime != ftBgModified.dwHighDateTime
 			        || fnd.ftLastWriteTime.dwLowDateTime != ftBgModified.dwLowDateTime)
 			{
-				//NeedBackgroundUpdate(); -- поставит LoadBackgroundFile, если у него получится файл открыть
+				//NeedBackgroundUpdate(); -- РїРѕСЃС‚Р°РІРёС‚ LoadBackgroundFile, РµСЃР»Рё Сѓ РЅРµРіРѕ РїРѕР»СѓС‡РёС‚СЃСЏ С„Р°Р№Р» РѕС‚РєСЂС‹С‚СЊ
 				lbChanged = LoadBackgroundFile(false);
 				nBgModifiedTick = GetTickCount();
 			}
@@ -1193,7 +1193,7 @@ bool CBackgroundInfo::PollBackgroundFile()
 
 bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 {
-	// Пустой путь - значит БЕЗ обоев
+	// РџСѓСЃС‚РѕР№ РїСѓС‚СЊ - Р·РЅР°С‡РёС‚ Р‘Р•Р— РѕР±РѕРµРІ
 	if (!*ms_BgImage)
 	{
 		return true;

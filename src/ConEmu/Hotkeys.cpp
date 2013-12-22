@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2013 Maximus5
 All rights reserved.
@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bool CHotKeyDialog::EditHotKey(HWND hParent, DWORD& VkMod)
 {
 	CHotKeyDialog Dlg(hParent, VkMod);
-	// Модальный
+	// РњРѕРґР°Р»СЊРЅС‹Р№
 	INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_HOTKEY), hParent, hkDlgProc, (LPARAM)&Dlg);
 	bool bOk = (iRc == IDOK);
 	if (bOk)
@@ -124,7 +124,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			BYTE vk = ConEmuHotKey::GetHotkey(pDlg->m_HK.VkMod);
 			CSettings::SetHotkeyField(hHk, vk);
 
-			// Warning! Если nVK не указан в SettingsNS::nKeysHot - nVK будет обнулен
+			// Warning! Р•СЃР»Рё nVK РЅРµ СѓРєР°Р·Р°РЅ РІ SettingsNS::nKeysHot - nVK Р±СѓРґРµС‚ РѕР±РЅСѓР»РµРЅ
 			CSettings::FillListBoxHotKeys(GetDlgItem(hDlg, lbHotKeyList), CSettings::eHkKeysHot, vk);
 
 			for (int n = 0; n < 3; n++)
@@ -182,7 +182,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 							DWORD nMod = (CEHOTKEY_MODMASK & pDlg->m_HK.VkMod);
 							if (nMod == 0)
 							{
-								// Если модификатора вообще не было - ставим Win
+								// Р•СЃР»Рё РјРѕРґРёС„РёРєР°С‚РѕСЂР° РІРѕРѕР±С‰Рµ РЅРµ Р±С‹Р»Рѕ - СЃС‚Р°РІРёРј Win
 								BYTE b = VK_LWIN;
 								CSettings::FillListBoxHotKeys(GetDlgItem(hDlg, lbHotKeyMod1), CSettings::eHkModifiers, b);
 								nMod = (VK_LWIN << 8);
@@ -206,7 +206,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 									nModifers = ConEmuHotKey::SetModifier(nModifers, vk, false);
 							}
 
-							_ASSERTE((nModifers & 0xFF) == 0); // Модификаторы должны быть строго в старших 3-х байтах
+							_ASSERTE((nModifers & 0xFF) == 0); // РњРѕРґРёС„РёРєР°С‚РѕСЂС‹ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃС‚СЂРѕРіРѕ РІ СЃС‚Р°СЂС€РёС… 3-С… Р±Р°Р№С‚Р°С…
 
 							if (!nModifers)
 								nModifers = CEHOTKEY_NOMOD;
@@ -240,13 +240,13 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 /* *********** Hotkey list processing *********** */
 
 
-// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
+// РќРµРєРѕС‚РѕСЂС‹Рµ РєРѕРјР±РёРЅР°С†РёРё РЅСѓР¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ "РЅР° РѕС‚РїСѓСЃРєР°РЅРёРµ" РІРѕ РёР·Р±РµР¶Р°РЅРёРµ РіР»СЋРєРѕРІ СЃ РёРЅС‚РµСЂС„РµР№СЃРѕРј
 const struct ConEmuHotKey* ConEmuSkipHotKey = ((ConEmuHotKey*)INVALID_HANDLE_VALUE);
 
 
 bool ConEmuHotKey::CanChangeVK() const
 {
-	//chk_System - пока не настраивается
+	//chk_System - РїРѕРєР° РЅРµ РЅР°СЃС‚СЂР°РёРІР°РµС‚СЃСЏ
 	return (HkType==chk_User || HkType==chk_Global || HkType==chk_Local || HkType==chk_Macro || HkType==chk_Task);
 }
 
@@ -353,8 +353,8 @@ void ConEmuHotKey::Free()
 	SafeFree(GuiMacro);
 }
 
-// nHostMod в младших 3-х байтах может содержать VK (модификаторы).
-// Функция проверяет, чтобы они не дублировались
+// nHostMod РІ РјР»Р°РґС€РёС… 3-С… Р±Р°Р№С‚Р°С… РјРѕР¶РµС‚ СЃРѕРґРµСЂР¶Р°С‚СЊ VK (РјРѕРґРёС„РёРєР°С‚РѕСЂС‹).
+// Р¤СѓРЅРєС†РёСЏ РїСЂРѕРІРµСЂСЏРµС‚, С‡С‚РѕР±С‹ РѕРЅРё РЅРµ РґСѓР±Р»РёСЂРѕРІР°Р»РёСЃСЊ
 void ConEmuHotKey::TestHostkeyModifiers(DWORD& nHostMod)
 {
 	//memset(mn_HostModOk, 0, sizeof(mn_HostModOk));
@@ -440,7 +440,7 @@ void ConEmuHotKey::TestHostkeyModifiers(DWORD& nHostMod)
 	}
 }
 
-// набор флагов MOD_xxx для RegisterHotKey
+// РЅР°Р±РѕСЂ С„Р»Р°РіРѕРІ MOD_xxx РґР»СЏ RegisterHotKey
 DWORD ConEmuHotKey::GetHotKeyMod(DWORD VkMod)
 {
 	DWORD nMOD = 0;
@@ -476,7 +476,7 @@ DWORD ConEmuHotKey::GetHotKeyMod(DWORD VkMod)
 	return nMOD;
 }
 
-// Сервисная функция для инициализации. Формирует готовый VkMod
+// РЎРµСЂРІРёСЃРЅР°СЏ С„СѓРЅРєС†РёСЏ РґР»СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё. Р¤РѕСЂРјРёСЂСѓРµС‚ РіРѕС‚РѕРІС‹Р№ VkMod
 DWORD ConEmuHotKey::MakeHotKey(BYTE Vk, BYTE vkMod1/*=0*/, BYTE vkMod2/*=0*/, BYTE vkMod3/*=0*/)
 {
 	DWORD vkHotKey = Vk;
@@ -506,13 +506,13 @@ DWORD ConEmuHotKey::MakeHotKey(BYTE Vk, BYTE vkMod1/*=0*/, BYTE vkMod2/*=0*/, BY
 	return vkHotKey;
 }
 
-// Задать или сбросить модификатор в VkMod
+// Р—Р°РґР°С‚СЊ РёР»Рё СЃР±СЂРѕСЃРёС‚СЊ РјРѕРґРёС„РёРєР°С‚РѕСЂ РІ VkMod
 DWORD ConEmuHotKey::SetModifier(DWORD VkMod, BYTE Mod, bool Xor/*=true*/)
 {
 	DWORD AllMod = VkMod & CEHOTKEY_MODMASK;
 	if ((VkMod == CEHOTKEY_NUMHOSTKEY) || (VkMod == CEHOTKEY_ARRHOSTKEY))
 	{
-		// Низя
+		// РќРёР·СЏ
 		_ASSERTE(!((VkMod == CEHOTKEY_NUMHOSTKEY) || (VkMod == CEHOTKEY_ARRHOSTKEY)));
 		return VkMod;
 	}
@@ -522,7 +522,7 @@ DWORD ConEmuHotKey::SetModifier(DWORD VkMod, BYTE Mod, bool Xor/*=true*/)
 
 	bool Processed = false;
 
-	// Младший байт - VK. Старшие три - модификаторы. Их и трогаем
+	// РњР»Р°РґС€РёР№ Р±Р°Р№С‚ - VK. РЎС‚Р°СЂС€РёРµ С‚СЂРё - РјРѕРґРёС„РёРєР°С‚РѕСЂС‹. РС… Рё С‚СЂРѕРіР°РµРј
 	for (int i = 1; i <= 3; i++)
 	{
 		DWORD vkExist = GetModifier(VkMod, i);
@@ -547,7 +547,7 @@ DWORD ConEmuHotKey::SetModifier(DWORD VkMod, BYTE Mod, bool Xor/*=true*/)
 			}
 			else if (vkExist != Mod)
 			{
-				// Например, заменить LShift на Shift
+				// РќР°РїСЂРёРјРµСЂ, Р·Р°РјРµРЅРёС‚СЊ LShift РЅР° Shift
 				switch (i)
 				{
 				case 1:
@@ -593,7 +593,7 @@ DWORD ConEmuHotKey::SetModifier(DWORD VkMod, BYTE Mod, bool Xor/*=true*/)
 			AddMod = (((DWORD)Mod) << 24);
 		else
 		{
-			// Иначе - некуда модификатор пихать, а так уже три
+			// РРЅР°С‡Рµ - РЅРµРєСѓРґР° РјРѕРґРёС„РёРєР°С‚РѕСЂ РїРёС…Р°С‚СЊ, Р° С‚Р°Рє СѓР¶Рµ С‚СЂРё
 			_ASSERTE(GetModifier(VkMod, 3) == 0);
 		}
 
@@ -601,7 +601,7 @@ DWORD ConEmuHotKey::SetModifier(DWORD VkMod, BYTE Mod, bool Xor/*=true*/)
 			AllMod |= AddMod;
 	}
 
-	// Нельзя сбрасывать единственный модификатор
+	// РќРµР»СЊР·СЏ СЃР±СЂР°СЃС‹РІР°С‚СЊ РµРґРёРЅСЃС‚РІРµРЅРЅС‹Р№ РјРѕРґРёС„РёРєР°С‚РѕСЂ
 	if (!AllMod)
 	{
 		_ASSERTE(AllMod!=0);
@@ -614,7 +614,7 @@ DWORD ConEmuHotKey::SetModifier(DWORD VkMod, BYTE Mod, bool Xor/*=true*/)
 	return VkMod;
 }
 
-// // Вернуть назначенные модификаторы (idx = 1..3). Возвращает 0 (нету) или VK
+// // Р’РµСЂРЅСѓС‚СЊ РЅР°Р·РЅР°С‡РµРЅРЅС‹Рµ РјРѕРґРёС„РёРєР°С‚РѕСЂС‹ (idx = 1..3). Р’РѕР·РІСЂР°С‰Р°РµС‚ 0 (РЅРµС‚Сѓ) РёР»Рё VK
 DWORD ConEmuHotKey::GetModifier(DWORD VkMod, int idx)
 {
 	DWORD Mod = VkMod & CEHOTKEY_MODMASK;
@@ -626,14 +626,14 @@ DWORD ConEmuHotKey::GetModifier(DWORD VkMod, int idx)
 	}
 	else if (Mod == CEHOTKEY_NUMHOSTKEY)
 	{
-		// Только для цифирок!
-		WARNING("CConEmuCtrl:: Убрать пережиток F11/F12");
+		// РўРѕР»СЊРєРѕ РґР»СЏ С†РёС„РёСЂРѕРє!
+		WARNING("CConEmuCtrl:: РЈР±СЂР°С‚СЊ РїРµСЂРµР¶РёС‚РѕРє F11/F12");
 		_ASSERTE((((VkMod & 0xFF)>='0' && ((VkMod & 0xFF)<='9'))) /*((VkMod & 0xFF)==VK_F11 || (VkMod & 0xFF)==VK_F12)*/);
 		Mod = (gpSet->HostkeyNumberModifier() << 8);
 	}
 	else if (Mod == CEHOTKEY_ARRHOSTKEY)
 	{
-		// Только для стрелок!
+		// РўРѕР»СЊРєРѕ РґР»СЏ СЃС‚СЂРµР»РѕРє!
 		_ASSERTE(((VkMod & 0xFF)==VK_LEFT) || ((VkMod & 0xFF)==VK_RIGHT) || ((VkMod & 0xFF)==VK_UP) || ((VkMod & 0xFF)==VK_DOWN));
 		Mod = (gpSet->HostkeyArrowModifier() << 8);
 	}
@@ -656,14 +656,14 @@ DWORD ConEmuHotKey::GetModifier(DWORD VkMod, int idx)
 
 	if (Mod == VK_RWIN)
 	{
-		_ASSERTE(Mod != VK_RWIN); // Храниться должен LWIN
+		_ASSERTE(Mod != VK_RWIN); // РҐСЂР°РЅРёС‚СЊСЃСЏ РґРѕР»Р¶РµРЅ LWIN
 		Mod = VK_LWIN;
 	}
 
 	return Mod;
 }
 
-// Есть ли в этом (VkMod) хоткее - модификатор Mod (VK)
+// Р•СЃС‚СЊ Р»Рё РІ СЌС‚РѕРј (VkMod) С…РѕС‚РєРµРµ - РјРѕРґРёС„РёРєР°С‚РѕСЂ Mod (VK)
 bool ConEmuHotKey::HasModifier(DWORD VkMod, BYTE Mod/*VK*/)
 {
 	if (Mod && ((GetModifier(VkMod, 1) == Mod) || (GetModifier(VkMod, 2) == Mod) || (GetModifier(VkMod, 3) == Mod)))
@@ -671,7 +671,7 @@ bool ConEmuHotKey::HasModifier(DWORD VkMod, BYTE Mod/*VK*/)
 	return false;
 }
 
-// Вернуть имя модификатора (типа "Apps+Space")
+// Р’РµСЂРЅСѓС‚СЊ РёРјСЏ РјРѕРґРёС„РёРєР°С‚РѕСЂР° (С‚РёРїР° "Apps+Space")
 LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= true*/) const
 {
 	_ASSERTE(this && this!=ConEmuSkipHotKey);
@@ -708,14 +708,14 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 		lVkMod = VkMod;
 		break;
 	default:
-		// Неизвестный тип!
+		// РќРµРёР·РІРµСЃС‚РЅС‹Р№ С‚РёРї!
 		_ASSERTE(FALSE && "Unknown HkType");
 		lVkMod = 0;
 	}
 
 	if (GetHotkey(lVkMod) == 0)
 	{
-		szFull[0] = 0; // Поле "Кнопка" оставляем пустым
+		szFull[0] = 0; // РџРѕР»Рµ "РљРЅРѕРїРєР°" РѕСЃС‚Р°РІР»СЏРµРј РїСѓСЃС‚С‹Рј
 	}
 	else if (HkType != chk_Modifier)
 	{
@@ -862,15 +862,15 @@ void ConEmuHotKey::GetVkKeyName(BYTE vk, wchar_t (&szName)[32])
 			szName[0] = MapVirtualKey(vk, MAPVK_VK_TO_CHAR);
 			szName[1] = 0;
 			//BYTE States[256] = {};
-			//// Скорее всго не сработает
+			//// РЎРєРѕСЂРµРµ РІСЃРіРѕ РЅРµ СЃСЂР°Р±РѕС‚Р°РµС‚
 			//if (!ToUnicode(vk, 0, States, szName, countof(szName), 0))
 			//	_wsprintf(szName, SKIPLEN(countof(szName)) L"<%u>", (DWORD)vk);
-			// есть еще if (!GetKeyNameText((LONG)(DWORD)*m_HotKeys[i].VkPtr, szName, countof(szName)))
+			// РµСЃС‚СЊ РµС‰Рµ if (!GetKeyNameText((LONG)(DWORD)*m_HotKeys[i].VkPtr, szName, countof(szName)))
 		}
 	}
 }
 
-// Извлечь сам VK
+// РР·РІР»РµС‡СЊ СЃР°Рј VK
 DWORD ConEmuHotKey::GetHotkey(DWORD VkMod)
 {
 	return (VkMod & 0xFF);
@@ -943,24 +943,24 @@ bool ConEmuHotKey::DontHookJumps(const ConEmuHotKey* pHK)
 /* ************************************* */
 int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 {
-	// Горячие клавиши
+	// Р“РѕСЂСЏС‡РёРµ РєР»Р°РІРёС€Рё
 
-	TODO("Дополнить системные комбинации");
-	WARNING("У nLDragKey,nRDragKey был тип DWORD");
+	TODO("Р”РѕРїРѕР»РЅРёС‚СЊ СЃРёСЃС‚РµРјРЅС‹Рµ РєРѕРјР±РёРЅР°С†РёРё");
+	WARNING("РЈ nLDragKey,nRDragKey Р±С‹Р» С‚РёРї DWORD");
 
-	WARNING("ConEmuHotKey: Убрать нафиг все ссылки на переменные, обработка будет прозрачная, а нажатость chk_Modifier можно по DescrLangID определять");
+	WARNING("ConEmuHotKey: РЈР±СЂР°С‚СЊ РЅР°С„РёРі РІСЃРµ СЃСЃС‹Р»РєРё РЅР° РїРµСЂРµРјРµРЅРЅС‹Рµ, РѕР±СЂР°Р±РѕС‚РєР° Р±СѓРґРµС‚ РїСЂРѕР·СЂР°С‡РЅР°СЏ, Р° РЅР°Р¶Р°С‚РѕСЃС‚СЊ chk_Modifier РјРѕР¶РЅРѕ РїРѕ DescrLangID РѕРїСЂРµРґРµР»СЏС‚СЊ");
 
 	//static const wchar_t szGuiMacroIncreaseFont[] = L"FontSetSize(1,2)";
 	//static const wchar_t szGuiMacroDecreaseFont[] = L"FontSetSize(1,-2)";
 
 	ConEmuHotKey HotKeys[] =
 	{
-		// User (Keys, Global) -- Добавить chk_Global недостаточно, нужно еще и gRegisteredHotKeys обработать
+		// User (Keys, Global) -- Р”РѕР±Р°РІРёС‚СЊ chk_Global РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ, РЅСѓР¶РЅРѕ РµС‰Рµ Рё gRegisteredHotKeys РѕР±СЂР°Р±РѕС‚Р°С‚СЊ
 		{vkMinimizeRestore,chk_Global, NULL,   L"MinimizeRestore",       MakeHotKey(VK_OEM_3/*~*/,VK_CONTROL), CConEmuCtrl::key_MinimizeRestore},
 		{vkMinimizeRestor2,chk_Global, NULL,   L"MinimizeRestore2",      0, CConEmuCtrl::key_MinimizeRestore},
 		{vkGlobalRestore,  chk_Global, NULL,   L"GlobalRestore",         0, CConEmuCtrl::key_GlobalRestore},
 		{vkForceFullScreen,chk_Global, NULL,   L"ForcedFullScreen",      MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL,VK_MENU), CConEmuCtrl::key_ForcedFullScreen},
-		// -- Добавить chk_Local недостаточно, нужно еще и gActiveOnlyHotKeys обработать
+		// -- Р”РѕР±Р°РІРёС‚СЊ chk_Local РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ, РЅСѓР¶РЅРѕ РµС‰Рµ Рё gActiveOnlyHotKeys РѕР±СЂР°Р±РѕС‚Р°С‚СЊ
 		{vkSetFocusSwitch, chk_Local,  NULL,   L"SwitchGuiFocus",        0/*MakeHotKey(VK_ESCAPE,VK_LWIN)*/, CConEmuCtrl::key_SwitchGuiFocus},
 		{vkSetFocusGui,    chk_Local,  NULL,   L"SetFocusGui",           0/*MakeHotKey(VK_ESCAPE,VK_LWIN)*/, CConEmuCtrl::key_SwitchGuiFocus},
 		{vkSetFocusChild,  chk_Local,  NULL,   L"SetFocusChild",         0/*MakeHotKey(VK_ESCAPE,VK_LWIN)*/, CConEmuCtrl::key_SwitchGuiFocus},
@@ -988,7 +988,7 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkMultiNewAttach, chk_User,  NULL,    L"Multi.NewAttach",       MakeHotKey('G',VK_LWIN), CConEmuCtrl::key_MultiNewAttach, true/*OnKeyUp*/},
 		{vkMultiNext,      chk_User,  NULL,    L"Multi.Next",            /*&vmMultiNext,*/ MakeHotKey('Q',VK_LWIN), CConEmuCtrl::key_MultiNext},
 		{vkMultiNextShift, chk_User,  NULL,    L"Multi.NextShift",       /*&vmMultiNextShift,*/ MakeHotKey('Q',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNextShift},
-		{vkMultiRecreate,  chk_User,  NULL,    L"Multi.Recreate",        /*&vmMultiRecreate,*/ MakeHotKey(192/*VK_тильда*/,VK_LWIN), CConEmuCtrl::key_MultiRecreate},
+		{vkMultiRecreate,  chk_User,  NULL,    L"Multi.Recreate",        /*&vmMultiRecreate,*/ MakeHotKey(192/*VK_С‚РёР»СЊРґР°*/,VK_LWIN), CConEmuCtrl::key_MultiRecreate},
 		{vkMultiAltCon,    chk_User,  NULL,    L"Multi.AltCon",          /*&vmMultiBuffer,*/ MakeHotKey('A',VK_LWIN), CConEmuCtrl::key_AlternativeBuffer},
 		{vkMultiBuffer,    chk_User,  NULL,    L"Multi.Scroll",          MakeHotKey('S',VK_LWIN), CConEmuCtrl::key_MultiBuffer},
 		{vkMultiClose,     chk_User,  NULL,    L"Multi.Close",           MakeHotKey(VK_DELETE,VK_LWIN), CConEmuCtrl::key_MultiClose},
@@ -1005,8 +1005,8 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkMoveTabLeft,    chk_User,  NULL,    L"Multi.MoveLeft",        MakeHotKey(VK_LEFT,VK_LWIN,VK_MENU), CConEmuCtrl::key_MoveTabLeft},
 		{vkMoveTabRight,   chk_User,  NULL,    L"Multi.MoveRight",       MakeHotKey(VK_RIGHT,VK_LWIN,VK_MENU), CConEmuCtrl::key_MoveTabRight},
 		{vkMultiCmd,       chk_User,  NULL,    L"Multi.CmdKey",          /*&vmMultiCmd,*/ MakeHotKey('X',VK_LWIN), CConEmuCtrl::key_MultiCmd},
-		{vkCTSVkBlockStart,chk_User,  NULL,    L"CTS.VkBlockStart",      /*&vmCTSVkBlockStart,*/ 0, CConEmuCtrl::key_CTSVkBlockStart}, // запуск выделения блока
-		{vkCTSVkTextStart, chk_User,  NULL,    L"CTS.VkTextStart",       /*&vmCTSVkTextStart,*/ 0, CConEmuCtrl::key_CTSVkTextStart},   // запуск выделения текста
+		{vkCTSVkBlockStart,chk_User,  NULL,    L"CTS.VkBlockStart",      /*&vmCTSVkBlockStart,*/ 0, CConEmuCtrl::key_CTSVkBlockStart}, // Р·Р°РїСѓСЃРє РІС‹РґРµР»РµРЅРёСЏ Р±Р»РѕРєР°
+		{vkCTSVkTextStart, chk_User,  NULL,    L"CTS.VkTextStart",       /*&vmCTSVkTextStart,*/ 0, CConEmuCtrl::key_CTSVkTextStart},   // Р·Р°РїСѓСЃРє РІС‹РґРµР»РµРЅРёСЏ С‚РµРєСЃС‚Р°
 		{vkCTSCopyHtml0,   chk_User,  InSelection, L"CTS.VkCopyFmt0",    MakeHotKey('C',VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Copy(0,0)")},
 		{vkCTSCopyHtml1,   chk_User,  InSelection, L"CTS.VkCopyFmt1",    MakeHotKey('C',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Copy(0,1)")},
 		{vkCTSCopyHtml2,   chk_User,  InSelection, L"CTS.VkCopyFmt2",    0, CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Copy(0,2)")},
@@ -1084,14 +1084,14 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkGuMacro31,      chk_Macro, NULL,    L"KeyMacro31", 0, CConEmuCtrl::key_GuiMacro},
 		{vkGuMacro32,      chk_Macro, NULL,    L"KeyMacro32", 0, CConEmuCtrl::key_GuiMacro},
 		// User (Modifiers)
-		{vkCTSVkBlock,     chk_Modifier, NULL, L"CTS.VkBlock",     /*(DWORD*)&isCTSVkBlock,*/ VK_LMENU},      // модификатор запуска выделения мышкой
-		{vkCTSVkText,      chk_Modifier, NULL, L"CTS.VkText",      /*(DWORD*)&isCTSVkText,*/ VK_LSHIFT},       // модификатор запуска выделения мышкой
-		{vkCTSVkAct,       chk_Modifier, NULL, L"CTS.VkAct",       /*(DWORD*)&isCTSVkAct,*/ 0},        // модификатор разрешения действий правой и средней кнопки мышки
-		{vkCTSVkPromptClk, chk_Modifier, NULL, L"CTS.VkPrompt",    0}, // Модификатор позиционирования курсора мышки кликом (cmd.exe prompt)
-		{vkFarGotoEditorVk,chk_Modifier, NULL, L"FarGotoEditorVk", /*(DWORD*)&isFarGotoEditorVk,*/ VK_LCONTROL}, // модификатор для isFarGotoEditor
-		{vkLDragKey,       chk_Modifier, NULL, L"DndLKey",         /*(DWORD*)&nLDragKey,*/ 0},         // модификатор драга левой кнопкой
-		{vkRDragKey,       chk_Modifier, NULL, L"DndRKey",         /*(DWORD*)&nRDragKey,*/ VK_LCONTROL},         // модификатор драга правой кнопкой
-		{vkWndDragKey,     chk_Modifier2,NULL, L"WndDragKey",      MakeHotKey(VK_LBUTTON,VK_CONTROL,VK_MENU), CConEmuCtrl::key_WinDragStart}, // модификатор таскания окна мышкой за любое место
+		{vkCTSVkBlock,     chk_Modifier, NULL, L"CTS.VkBlock",     /*(DWORD*)&isCTSVkBlock,*/ VK_LMENU},      // РјРѕРґРёС„РёРєР°С‚РѕСЂ Р·Р°РїСѓСЃРєР° РІС‹РґРµР»РµРЅРёСЏ РјС‹С€РєРѕР№
+		{vkCTSVkText,      chk_Modifier, NULL, L"CTS.VkText",      /*(DWORD*)&isCTSVkText,*/ VK_LSHIFT},       // РјРѕРґРёС„РёРєР°С‚РѕСЂ Р·Р°РїСѓСЃРєР° РІС‹РґРµР»РµРЅРёСЏ РјС‹С€РєРѕР№
+		{vkCTSVkAct,       chk_Modifier, NULL, L"CTS.VkAct",       /*(DWORD*)&isCTSVkAct,*/ 0},        // РјРѕРґРёС„РёРєР°С‚РѕСЂ СЂР°Р·СЂРµС€РµРЅРёСЏ РґРµР№СЃС‚РІРёР№ РїСЂР°РІРѕР№ Рё СЃСЂРµРґРЅРµР№ РєРЅРѕРїРєРё РјС‹С€РєРё
+		{vkCTSVkPromptClk, chk_Modifier, NULL, L"CTS.VkPrompt",    0}, // РњРѕРґРёС„РёРєР°С‚РѕСЂ РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°РЅРёСЏ РєСѓСЂСЃРѕСЂР° РјС‹С€РєРё РєР»РёРєРѕРј (cmd.exe prompt)
+		{vkFarGotoEditorVk,chk_Modifier, NULL, L"FarGotoEditorVk", /*(DWORD*)&isFarGotoEditorVk,*/ VK_LCONTROL}, // РјРѕРґРёС„РёРєР°С‚РѕСЂ РґР»СЏ isFarGotoEditor
+		{vkLDragKey,       chk_Modifier, NULL, L"DndLKey",         /*(DWORD*)&nLDragKey,*/ 0},         // РјРѕРґРёС„РёРєР°С‚РѕСЂ РґСЂР°РіР° Р»РµРІРѕР№ РєРЅРѕРїРєРѕР№
+		{vkRDragKey,       chk_Modifier, NULL, L"DndRKey",         /*(DWORD*)&nRDragKey,*/ VK_LCONTROL},         // РјРѕРґРёС„РёРєР°С‚РѕСЂ РґСЂР°РіР° РїСЂР°РІРѕР№ РєРЅРѕРїРєРѕР№
+		{vkWndDragKey,     chk_Modifier2,NULL, L"WndDragKey",      MakeHotKey(VK_LBUTTON,VK_CONTROL,VK_MENU), CConEmuCtrl::key_WinDragStart}, // РјРѕРґРёС„РёРєР°С‚РѕСЂ С‚Р°СЃРєР°РЅРёСЏ РѕРєРЅР° РјС‹С€РєРѕР№ Р·Р° Р»СЋР±РѕРµ РјРµСЃС‚Рѕ
 		// System (predefined, fixed)
 		{vkWinAltA,        chk_System, NULL, L"", MakeHotKey('A',VK_LWIN,VK_MENU), CConEmuCtrl::key_About, true/*OnKeyUp*/}, // Settings
 		{vkWinAltK,        chk_System, NULL, L"", MakeHotKey('K',VK_LWIN,VK_MENU), CConEmuCtrl::key_Hotkeys, true/*OnKeyUp*/}, // Settings
@@ -1112,8 +1112,8 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkCTSShiftEnd,    chk_System, UseCTSShiftArrow, L"", MakeHotKey(VK_END,VK_SHIFT),   CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Select(0,1,0,1)")},
 		{vkCTSShiftUp,     chk_System, UseCTSShiftArrow, L"", MakeHotKey(VK_UP,VK_SHIFT),    CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Select(1,0,-1)")},
 		{vkCTSShiftDown,   chk_System, UseCTSShiftArrow, L"", MakeHotKey(VK_DOWN,VK_SHIFT),  CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Select(1,0,1)")},
-		// Все что ниже - было привязано к "HostKey"
-		// Надо бы дать настроить модификатор, а сами кнопки - не трогать
+		// Р’СЃРµ С‡С‚Рѕ РЅРёР¶Рµ - Р±С‹Р»Рѕ РїСЂРёРІСЏР·Р°РЅРѕ Рє "HostKey"
+		// РќР°РґРѕ Р±С‹ РґР°С‚СЊ РЅР°СЃС‚СЂРѕРёС‚СЊ РјРѕРґРёС„РёРєР°С‚РѕСЂ, Р° СЃР°РјРё РєРЅРѕРїРєРё - РЅРµ С‚СЂРѕРіР°С‚СЊ
 		{vkWinLeft,    chk_ArrHost, UseWinArrows, L"", VK_LEFT|CEHOTKEY_ARRHOSTKEY,  CConEmuCtrl::key_WinWidthDec},  // Decrease window width
 		{vkWinRight,   chk_ArrHost, UseWinArrows, L"", VK_RIGHT|CEHOTKEY_ARRHOSTKEY, CConEmuCtrl::key_WinWidthInc},  // Increase window width
 		{vkWinUp,      chk_ArrHost, UseWinArrows, L"", VK_UP|CEHOTKEY_ARRHOSTKEY,    CConEmuCtrl::key_WinHeightDec}, // Decrease window height
@@ -1129,12 +1129,12 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkConsole_8,  chk_NumHost, UseWinNumber, L"", '8'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
 		{vkConsole_9,  chk_NumHost, UseWinNumber, L"", '9'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
 		{vkConsole_10, chk_NumHost, UseWinNumber, L"", '0'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
-		//{vkConsole_11, chk_NumHost, &isUseWinNumber, L"", VK_F11|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // Для WinF11 & WinF12 приходят только WM_KEYUP || WM_SYSKEYUP)
-		//{vkConsole_12, chk_NumHost, &isUseWinNumber, L"", VK_F12|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // Для WinF11 & WinF12 приходят только WM_KEYUP || WM_SYSKEYUP)
+		//{vkConsole_11, chk_NumHost, &isUseWinNumber, L"", VK_F11|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // Р”Р»СЏ WinF11 & WinF12 РїСЂРёС…РѕРґСЏС‚ С‚РѕР»СЊРєРѕ WM_KEYUP || WM_SYSKEYUP)
+		//{vkConsole_12, chk_NumHost, &isUseWinNumber, L"", VK_F12|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // Р”Р»СЏ WinF11 & WinF12 РїСЂРёС…РѕРґСЏС‚ С‚РѕР»СЊРєРѕ WM_KEYUP || WM_SYSKEYUP)
 		// End
 	};
 
-	// Чтобы не возникло проблем с инициализацией хуков (для обработки Win+<key>)
+	// Р§С‚РѕР±С‹ РЅРµ РІРѕР·РЅРёРєР»Рѕ РїСЂРѕР±Р»РµРј СЃ РёРЅРёС†РёР°Р»РёР·Р°С†РёРµР№ С…СѓРєРѕРІ (РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё Win+<key>)
 	int nHotKeyCount = countof(HotKeys);
 	_ASSERTE(countof(HotKeys)<(HookedKeysMaxCount-1));
 

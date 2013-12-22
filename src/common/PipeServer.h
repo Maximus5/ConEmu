@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2011 Maximus5
 All rights reserved.
@@ -130,9 +130,9 @@ enum PipeState
 #endif
 
 
-// struct - для того, чтобы выделять память простым calloc. "new" не прокатывает, т.к. Crt может быть не инициализирован (ConEmuHk).
+// struct - РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ РІС‹РґРµР»СЏС‚СЊ РїР°РјСЏС‚СЊ РїСЂРѕСЃС‚С‹Рј calloc. "new" РЅРµ РїСЂРѕРєР°С‚С‹РІР°РµС‚, С‚.Рє. Crt РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅРµ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅ (ConEmuHk).
 
-// Класс предполагает, что первый DWORD в (T*) это размер передаваемого блока в байтах!
+// РљР»Р°СЃСЃ РїСЂРµРґРїРѕР»Р°РіР°РµС‚, С‡С‚Рѕ РїРµСЂРІС‹Р№ DWORD РІ (T*) СЌС‚Рѕ СЂР°Р·РјРµСЂ РїРµСЂРµРґР°РІР°РµРјРѕРіРѕ Р±Р»РѕРєР° РІ Р±Р°Р№С‚Р°С…!
 template <class T>
 struct PipeServer
 {
@@ -194,7 +194,7 @@ struct PipeServer
 			};
 			// Answer (to client)
 			DWORD cbReplySize, cbMaxReplySize;
-			T* ptrReply; // !!! Память выделяется в mfn_PipeServerCommand
+			T* ptrReply; // !!! РџР°РјСЏС‚СЊ РІС‹РґРµР»СЏРµС‚СЃСЏ РІ mfn_PipeServerCommand
 			//T* AllocReplyBuf(DWORD anSize)
 			//{
 			//	if (ptrReply && (cbMaxReplySize >= anSize))
@@ -236,27 +236,27 @@ struct PipeServer
 		
 		// *** Callback function and it's LParam ***
 		
-		// Сервером получена команда. Выполнить, вернуть результат.
-		// Для облегчения жизни - сервер кеширует данные, калбэк может использовать ту же память (*pcbMaxReplySize)
+		// РЎРµСЂРІРµСЂРѕРј РїРѕР»СѓС‡РµРЅР° РєРѕРјР°РЅРґР°. Р’С‹РїРѕР»РЅРёС‚СЊ, РІРµСЂРЅСѓС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚.
+		// Р”Р»СЏ РѕР±Р»РµРіС‡РµРЅРёСЏ Р¶РёР·РЅРё - СЃРµСЂРІРµСЂ РєРµС€РёСЂСѓРµС‚ РґР°РЅРЅС‹Рµ, РєР°Р»Р±СЌРє РјРѕР¶РµС‚ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‚Сѓ Р¶Рµ РїР°РјСЏС‚СЊ (*pcbMaxReplySize)
 		PipeServerCommand_t mfn_PipeServerCommand;
 		
-		// Вызывается после подключения клиента к серверному пайпу, но перед PipeServerRead и PipeServerCommand_t
-		// (которых может быть много на одном подключении)
+		// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїРѕСЃР»Рµ РїРѕРґРєР»СЋС‡РµРЅРёСЏ РєР»РёРµРЅС‚Р° Рє СЃРµСЂРІРµСЂРЅРѕРјСѓ РїР°Р№РїСѓ, РЅРѕ РїРµСЂРµРґ PipeServerRead Рё PipeServerCommand_t
+		// (РєРѕС‚РѕСЂС‹С… РјРѕР¶РµС‚ Р±С‹С‚СЊ РјРЅРѕРіРѕ РЅР° РѕРґРЅРѕРј РїРѕРґРєР»СЋС‡РµРЅРёРё)
 		PipeServerConnected_t mfn_PipeServerConnected;
-		// Уведомление, что клиент отвалился (или его отавалили). Вызывается только если был mfn_PipeServerConnected
+		// РЈРІРµРґРѕРјР»РµРЅРёРµ, С‡С‚Рѕ РєР»РёРµРЅС‚ РѕС‚РІР°Р»РёР»СЃСЏ (РёР»Рё РµРіРѕ РѕС‚Р°РІР°Р»РёР»Рё). Р’С‹Р·С‹РІР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РµСЃР»Рё Р±С‹Р» mfn_PipeServerConnected
 		PipeServerConnected_t mfn_PipeServerDisconnected;
 		
-		// Вызывается после того, как создан Pipe Instance (CreateNamedPipeW)
+		// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїРѕСЃР»Рµ С‚РѕРіРѕ, РєР°Рє СЃРѕР·РґР°РЅ Pipe Instance (CreateNamedPipeW)
 		typedef BOOL (WINAPI* PipeServerReady_t)(LPVOID pInst, LPARAM lParam);
 		PipeServerReady_t mfn_PipeServerReady;
 		
-		// освободить память, отведенную под результат
+		// РѕСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ, РѕС‚РІРµРґРµРЅРЅСѓСЋ РїРѕРґ СЂРµР·СѓР»СЊС‚Р°С‚
 		typedef void (WINAPI* PipeServerFree_t)(T* pReply, LPARAM lParam);
 		PipeServerFree_t mfn_PipeServerFree;
 		
 		// Params
 		BOOL mb_ReadyCalled;
-		LPARAM m_lParam; // указан при StartPipeServer, передается в калбэки
+		LPARAM m_lParam; // СѓРєР°Р·Р°РЅ РїСЂРё StartPipeServer, РїРµСЂРµРґР°РµС‚СЃСЏ РІ РєР°Р»Р±СЌРєРё
 	protected:
 		// Event descriptors
 		HANDLE mh_TermEvent;
@@ -345,14 +345,14 @@ struct PipeServer
 				{
 					_ASSERTEX(mb_Terminate==true);
 					DWORD t1 = _GetTime();
-					TODO("Подозрение на длительную обработку");
+					TODO("РџРѕРґРѕР·СЂРµРЅРёРµ РЅР° РґР»РёС‚РµР»СЊРЅСѓСЋ РѕР±СЂР°Р±РѕС‚РєСѓ");
 					PLOG("WaitOverlapped.Disconnect");
 					_Disconnect(pPipe, true, false);
 					PLOG("WaitOverlapped.Disconnect done");
 					DWORD t2 = _GetTime();
 					pPipe->nTerminateDelay1 = (t2 - t1);
 					pPipe->nTerminateDelay += pPipe->nTerminateDelay1;
-					return 0; // Завершение сервера
+					return 0; // Р—Р°РІРµСЂС€РµРЅРёРµ СЃРµСЂРІРµСЂР°
 				}
 				else if (nWait == (WAIT_OBJECT_0+1))
 				{
@@ -362,13 +362,13 @@ struct PipeServer
 					PLOG("WaitOverlapped.Overlapped done");
 
 					if (fSuccess || dwErr == ERROR_MORE_DATA)
-						return 1; // OK, клиент подключился
+						return 1; // OK, РєР»РёРµРЅС‚ РїРѕРґРєР»СЋС‡РёР»СЃСЏ
 
 					#ifdef _DEBUG
-					_ASSERTEX(dwErr==ERROR_BROKEN_PIPE); // Канал был закрыт?
+					_ASSERTEX(dwErr==ERROR_BROKEN_PIPE); // РљР°РЅР°Р» Р±С‹Р» Р·Р°РєСЂС‹С‚?
 					SetLastError(dwErr);
 					#endif
-					return 2; // Требуется переподключение
+					return 2; // РўСЂРµР±СѓРµС‚СЃСЏ РїРµСЂРµРїРѕРґРєР»СЋС‡РµРЅРёРµ
 				}
 				else if (nWait == WAIT_TIMEOUT)
 				{
@@ -378,7 +378,7 @@ struct PipeServer
 					PLOG("WaitOverlapped.Overlapped2 done");
 
 					if (fSuccess || dwErrT == ERROR_MORE_DATA)
-						return 1; // OK, клиент подключился
+						return 1; // OK, РєР»РёРµРЅС‚ РїРѕРґРєР»СЋС‡РёР»СЃСЏ
 
 					if ((pPipe->dwState == READING_STATE) && (nDuration > 1000))
 					{
@@ -389,21 +389,21 @@ struct PipeServer
 					{
 						if ((pPipe->dwState == CONNECTING_STATE) && (nDuration > nMaxConnectDuration))
 						{
-							// 120603. В принципе, это штатная ситуация, если ни одного запроса на
-							// подключение не было. Но было зафиксировано странное зависание клиента
-							// при попытке подключения к пайпу с MaxCount=1. Пайп вроде был живой
-							// и свободный, но тем не менее, на клиенте все время возвращалась
-							// ошибка ERROR_PIPE_BUSY.
+							// 120603. Р’ РїСЂРёРЅС†РёРїРµ, СЌС‚Рѕ С€С‚Р°С‚РЅР°СЏ СЃРёС‚СѓР°С†РёСЏ, РµСЃР»Рё РЅРё РѕРґРЅРѕРіРѕ Р·Р°РїСЂРѕСЃР° РЅР°
+							// РїРѕРґРєР»СЋС‡РµРЅРёРµ РЅРµ Р±С‹Р»Рѕ. РќРѕ Р±С‹Р»Рѕ Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅРѕ СЃС‚СЂР°РЅРЅРѕРµ Р·Р°РІРёСЃР°РЅРёРµ РєР»РёРµРЅС‚Р°
+							// РїСЂРё РїРѕРїС‹С‚РєРµ РїРѕРґРєР»СЋС‡РµРЅРёСЏ Рє РїР°Р№РїСѓ СЃ MaxCount=1. РџР°Р№Рї РІСЂРѕРґРµ Р±С‹Р» Р¶РёРІРѕР№
+							// Рё СЃРІРѕР±РѕРґРЅС‹Р№, РЅРѕ С‚РµРј РЅРµ РјРµРЅРµРµ, РЅР° РєР»РёРµРЅС‚Рµ РІСЃРµ РІСЂРµРјСЏ РІРѕР·РІСЂР°С‰Р°Р»Р°СЃСЊ
+							// РѕС€РёР±РєР° ERROR_PIPE_BUSY.
 							//
 							//_ASSERTEX((nDuration <= nMaxConnectDuration) && "Unknown problem, waiting for connection");
 						}
 						#if 0
-						// некоторые серверы работают в постоянном чтении, и время ожидания (ввода с клавиатуры например)
-						// может вызывать ASSERT
+						// РЅРµРєРѕС‚РѕСЂС‹Рµ СЃРµСЂРІРµСЂС‹ СЂР°Р±РѕС‚Р°СЋС‚ РІ РїРѕСЃС‚РѕСЏРЅРЅРѕРј С‡С‚РµРЅРёРё, Рё РІСЂРµРјСЏ РѕР¶РёРґР°РЅРёСЏ (РІРІРѕРґР° СЃ РєР»Р°РІРёР°С‚СѓСЂС‹ РЅР°РїСЂРёРјРµСЂ)
+						// РјРѕР¶РµС‚ РІС‹Р·С‹РІР°С‚СЊ ASSERT
 						else if ((pPipe->dwState == READING_STATE) && (nDuration > nMaxConnectDuration))
 						{
-							// В очень редких случаях - наблюдается "зависание" сервера-клиента.
-							// То есть при запуске фара (AltServer) в GUI отображается только черный экран
+							// Р’ РѕС‡РµРЅСЊ СЂРµРґРєРёС… СЃР»СѓС‡Р°СЏС… - РЅР°Р±Р»СЋРґР°РµС‚СЃСЏ "Р·Р°РІРёСЃР°РЅРёРµ" СЃРµСЂРІРµСЂР°-РєР»РёРµРЅС‚Р°.
+							// РўРѕ РµСЃС‚СЊ РїСЂРё Р·Р°РїСѓСЃРєРµ С„Р°СЂР° (AltServer) РІ GUI РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ С‡РµСЂРЅС‹Р№ СЌРєСЂР°РЅ
 							_ASSERTEX(FALSE && "Server was hunged at READING_STATE");
 						}
 						#endif
@@ -415,7 +415,7 @@ struct PipeServer
 
 					if (dwErrT == ERROR_IO_INCOMPLETE)
 					{
-						// просто пересоздать пайп?
+						// РїСЂРѕСЃС‚Рѕ РїРµСЂРµСЃРѕР·РґР°С‚СЊ РїР°Р№Рї?
 					}
 					else
 					{
@@ -433,7 +433,7 @@ struct PipeServer
 				PLOG("WaitOverlapped.Disconnect2");
 				_Disconnect(pPipe, true, true);
 				PLOG("WaitOverlapped.Disconnect2 done");
-				return 2; // ошибка, пробуем еще раз
+				return 2; // РѕС€РёР±РєР°, РїСЂРѕР±СѓРµРј РµС‰Рµ СЂР°Р·
 			}
 
 			return 2; // Terminate!
@@ -497,7 +497,7 @@ struct PipeServer
 			
 			if ((!fSuccess && (dwErr != ERROR_MORE_DATA)) || (cbRead < sizeof(DWORD)) || mb_Terminate)
 			{
-				// Сервер закрывается?
+				// РЎРµСЂРІРµСЂ Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ?
 				//DEBUGSTRPROC(L"!!! ReadFile(pipe) failed - console in close?\n");
 				PLOG("PipeServerRead.FALSE1");
 				return FALSE;
@@ -594,7 +594,7 @@ struct PipeServer
 				{
 					_ASSERTEX(nAllSize==0);
 					PLOG("PipeServerRead.FALSE2");
-					return FALSE; // удалось считать не все данные
+					return FALSE; // СѓРґР°Р»РѕСЃСЊ СЃС‡РёС‚Р°С‚СЊ РЅРµ РІСЃРµ РґР°РЅРЅС‹Рµ
 				}
 
 				pPipe->cbReadSize = (DWORD)(ptrData - ((LPBYTE)pIn));
@@ -677,20 +677,20 @@ struct PipeServer
 			DWORD  cbOver = 0;
 			HANDLE hWait[2] = {mh_TermEvent,mh_ServerSemaphore};
 
-			// Цикл ожидания подключения
+			// Р¦РёРєР» РѕР¶РёРґР°РЅРёСЏ РїРѕРґРєР»СЋС‡РµРЅРёСЏ
 			while (!mb_Terminate)
 			{
 				PLOG("WaitForClient.WaitMulti");
-				// !!! Переносить проверку семафора ПОСЛЕ CreateNamedPipe нельзя, т.к. в этом случае
-				//     нити дерутся и клиент не может подцепиться к серверу
-				// Дождаться разрешения семафора, или завершения сервера
+				// !!! РџРµСЂРµРЅРѕСЃРёС‚СЊ РїСЂРѕРІРµСЂРєСѓ СЃРµРјР°С„РѕСЂР° РџРћРЎР›Р• CreateNamedPipe РЅРµР»СЊР·СЏ, С‚.Рє. РІ СЌС‚РѕРј СЃР»СѓС‡Р°Рµ
+				//     РЅРёС‚Рё РґРµСЂСѓС‚СЃСЏ Рё РєР»РёРµРЅС‚ РЅРµ РјРѕР¶РµС‚ РїРѕРґС†РµРїРёС‚СЊСЃСЏ Рє СЃРµСЂРІРµСЂСѓ
+				// Р”РѕР¶РґР°С‚СЊСЃСЏ СЂР°Р·СЂРµС€РµРЅРёСЏ СЃРµРјР°С„РѕСЂР°, РёР»Рё Р·Р°РІРµСЂС€РµРЅРёСЏ СЃРµСЂРІРµСЂР°
 				pPipe->dwConnWait = WaitForMultipleObjects(2, hWait, FALSE, INFINITE);
 				PLOG2("WaitForClient.WaitMulti done",pPipe->dwConnWait);
 
 				if (pPipe->dwConnWait == WAIT_OBJECT_0)
 				{
 					_ASSERTEX(mb_Terminate==true);
-					break; // Сервер закрывается
+					break; // РЎРµСЂРІРµСЂ Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ
 				}
 
 				if (mb_Overlapped)
@@ -701,10 +701,10 @@ struct PipeServer
 				_ASSERTEX(pPipe->dwConnWait == (WAIT_OBJECT_0+1));
 				mp_ActivePipe = pPipe;
 
-				// Пайп уже может быть создан
+				// РџР°Р№Рї СѓР¶Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ СЃРѕР·РґР°РЅ
 				if ((pPipe->hPipeInst == NULL) || (pPipe->hPipeInst == INVALID_HANDLE_VALUE))
 				{
-					// На WinXP наблюдался странный глючок при MaxCount==1, возможно из-за того, что не вызывался DisconnectNamedPipe
+					// РќР° WinXP РЅР°Р±Р»СЋРґР°Р»СЃСЏ СЃС‚СЂР°РЅРЅС‹Р№ РіР»СЋС‡РѕРє РїСЂРё MaxCount==1, РІРѕР·РјРѕР¶РЅРѕ РёР·-Р·Р° С‚РѕРіРѕ, С‡С‚Рѕ РЅРµ РІС‹Р·С‹РІР°Р»СЃСЏ DisconnectNamedPipe
 					int InstanceCount = RELEASEDEBUGTEST(PIPE_UNLIMITED_INSTANCES,mn_MaxCount);
 					DWORD nOutSize = PIPEBUFSIZE;
 					DWORD nInSize = PIPEBUFSIZE;
@@ -725,7 +725,7 @@ struct PipeServer
 					pPipe->dwState = PIPECREATED_STATE;
 					PLOG("WaitForClient.Create done");
 
-					// Сервер закрывается?
+					// РЎРµСЂРІРµСЂ Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ?
 					if (mb_Terminate)
 					{
 						if (mb_Overlapped)
@@ -747,7 +747,7 @@ struct PipeServer
 						pPipe->hPipeInst = NULL;
 						// Wait a little
 						Sleep(10);
-						// Разрешить этой или другой нити создать серверный пайп
+						// Р Р°Р·СЂРµС€РёС‚СЊ СЌС‚РѕР№ РёР»Рё РґСЂСѓРіРѕР№ РЅРёС‚Рё СЃРѕР·РґР°С‚СЊ СЃРµСЂРІРµСЂРЅС‹Р№ РїР°Р№Рї
 						PLOG("WaitForClient.ReleaseOnError");
 						ReleaseSemaphore(hWait[1], 1, NULL);
 						// Try again
@@ -757,7 +757,7 @@ struct PipeServer
 					DEBUGTEST(pPipe->nCreateCount++);
 				}
 
-				// Чтобы ConEmuC знал, что серверный пайп готов
+				// Р§С‚РѕР±С‹ ConEmuC Р·РЅР°Р», С‡С‚Рѕ СЃРµСЂРІРµСЂРЅС‹Р№ РїР°Р№Рї РіРѕС‚РѕРІ
 				if (!mb_ReadyCalled && mfn_PipeServerReady)
 				{
 					mb_ReadyCalled = TRUE;
@@ -775,7 +775,7 @@ struct PipeServer
 				pPipe->dwConnErr = GetLastError();
 				PLOG("WaitForClient.Connect done");
 				//? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED);
-				// сразу разрешить другой нити принять вызов
+				// СЃСЂР°Р·Сѓ СЂР°Р·СЂРµС€РёС‚СЊ РґСЂСѓРіРѕР№ РЅРёС‚Рё РїСЂРёРЅСЏС‚СЊ РІС‹Р·РѕРІ
 				if (!mb_Overlapped)
 				{
 					PLOG("WaitForClient.ReleaseOnConnect1");
@@ -804,7 +804,7 @@ struct PipeServer
 					bNeedReply = fConnected;
 				}
 
-				// Сервер закрывается?
+				// РЎРµСЂРІРµСЂ Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ?
 				if (mb_Terminate)
 				{
 					if (mb_Overlapped)
@@ -815,7 +815,7 @@ struct PipeServer
 					break;
 				}
 
-				// Обработка подключения
+				// РћР±СЂР°Р±РѕС‚РєР° РїРѕРґРєР»СЋС‡РµРЅРёСЏ
 				if (mb_Overlapped)
 				{
 					// Wait for overlapped connection
@@ -832,11 +832,11 @@ struct PipeServer
 						_ASSERTEX(mb_Terminate==true);
 						pPipe->nTerminateDelay2 = (t2 - t1);
 						pPipe->nTerminateDelay += pPipe->nTerminateDelay2;
-						break; // Завершение сервера
+						break; // Р—Р°РІРµСЂС€РµРЅРёРµ СЃРµСЂРІРµСЂР°
 					}
 					else if (nOverRc == 1)
 					{
-						// OK, клиент подключился
+						// OK, РєР»РёРµРЅС‚ РїРѕРґРєР»СЋС‡РёР»СЃСЏ
 						lbRc = true;
 						pPipe->dwState = CONNECTED_STATE;
 						bNeedReply = TRUE;
@@ -844,30 +844,30 @@ struct PipeServer
 					}
 					else
 					{
-						// Проверить, какие коды ошибок? Может быть нужно CloseHandle дернуть?
-						// 120603 - см. комментарий на ERROR_IO_INCOMPLETE
+						// РџСЂРѕРІРµСЂРёС‚СЊ, РєР°РєРёРµ РєРѕРґС‹ РѕС€РёР±РѕРє? РњРѕР¶РµС‚ Р±С‹С‚СЊ РЅСѓР¶РЅРѕ CloseHandle РґРµСЂРЅСѓС‚СЊ?
+						// 120603 - СЃРј. РєРѕРјРјРµРЅС‚Р°СЂРёР№ РЅР° ERROR_IO_INCOMPLETE
 						_ASSERTEX(nOverRc==1 || (nOverRc==2 && pPipe->hPipeInst==NULL && pPipe->dwConnErr==ERROR_IO_PENDING && pPipe->dwState==CLOSED_STATE));
-						continue; // ошибка, пробуем еще раз
+						continue; // РѕС€РёР±РєР°, РїСЂРѕР±СѓРµРј РµС‰Рµ СЂР°Р·
 					}
 				} // end - mb_Overlapped
 				else
 				{
 					if (fConnected)
 					{
-						// OK, Выйти из цикла ожидания подключения, перейти к чтению
+						// OK, Р’С‹Р№С‚Рё РёР· С†РёРєР»Р° РѕР¶РёРґР°РЅРёСЏ РїРѕРґРєР»СЋС‡РµРЅРёСЏ, РїРµСЂРµР№С‚Рё Рє С‡С‚РµРЅРёСЋ
 						lbRc = true;
 						pPipe->dwState = CONNECTED_STATE;
 						break;
 					}
 					else
 					{
-						// В каких случаях это может возникнуть? Нужно ли закрывать хэндл, или можно переподключиться?
+						// Р’ РєР°РєРёС… СЃР»СѓС‡Р°СЏС… СЌС‚Рѕ РјРѕР¶РµС‚ РІРѕР·РЅРёРєРЅСѓС‚СЊ? РќСѓР¶РЅРѕ Р»Рё Р·Р°РєСЂС‹РІР°С‚СЊ С…СЌРЅРґР», РёР»Рё РјРѕР¶РЅРѕ РїРµСЂРµРїРѕРґРєР»СЋС‡РёС‚СЊСЃСЏ?
 						_ASSERTEX(fConnected!=FALSE);
 
 						_Disconnect(pPipe, true, true);
 					}
 				} // end - !mb_Overlapped
-			} // Цикл ожидания подключения while (!mb_Terminate)
+			} // Р¦РёРєР» РѕР¶РёРґР°РЅРёСЏ РїРѕРґРєР»СЋС‡РµРЅРёСЏ while (!mb_Terminate)
 
 			return lbRc;
 		}
@@ -902,7 +902,7 @@ struct PipeServer
 			// connects, a thread is created to handle communications
 			// with that client, and the loop is repeated.
 
-			//HANDLE hWait[2]; // без Overlapped - используется только при ожидании свободного сервера
+			//HANDLE hWait[2]; // Р±РµР· Overlapped - РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїСЂРё РѕР¶РёРґР°РЅРёРё СЃРІРѕР±РѕРґРЅРѕРіРѕ СЃРµСЂРІРµСЂР°
 			//hWait[0] = mh_TermEvent;
 			//hWait[1] = mh_ServerSemaphore;
 
@@ -913,14 +913,14 @@ struct PipeServer
 			_ASSERTEX(!mb_Overlapped || pPipe->hEvent != NULL);
 			_ASSERTEX(pPipe->hPipeInst == NULL);
 
-			// Пока не затребовано завершение сервера
+			// РџРѕРєР° РЅРµ Р·Р°С‚СЂРµР±РѕРІР°РЅРѕ Р·Р°РІРµСЂС€РµРЅРёРµ СЃРµСЂРІРµСЂР°
 			while (!mb_Terminate)
 			{
 				int   fWriteSuccess = 0;
 				BOOL  bNeedReply = FALSE;
 				DWORD cbWritten = 0;
 
-				// Цикл ожидания подключения
+				// Р¦РёРєР» РѕР¶РёРґР°РЅРёСЏ РїРѕРґРєР»СЋС‡РµРЅРёСЏ
 				if (!WaitForClient(pPipe, fConnected, bNeedReply))
 				{
 					_ASSERTEX(mb_Terminate==true);
@@ -930,11 +930,11 @@ struct PipeServer
 					DEBUGTEST(pPipe->nConnectCount++);
 				}
 				
-				// Сервер закрывается?
+				// РЎРµСЂРІРµСЂ Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ?
 				if (mb_Terminate)
 				{
 					DWORD t1 = _GetTime();
-					// Всегда чего-нибудь ответить в пайп, а то ошибка (Pipe was closed) у клиента возникает
+					// Р’СЃРµРіРґР° С‡РµРіРѕ-РЅРёР±СѓРґСЊ РѕС‚РІРµС‚РёС‚СЊ РІ РїР°Р№Рї, Р° С‚Рѕ РѕС€РёР±РєР° (Pipe was closed) Сѓ РєР»РёРµРЅС‚Р° РІРѕР·РЅРёРєР°РµС‚
 					if (pPipe->hPipeInst)
 					{
 						if (bNeedReply)
@@ -953,7 +953,7 @@ struct PipeServer
 					return 0;
 				}
 				
-				// Если еще не все пайпы открыты/потоки запущены
+				// Р•СЃР»Рё РµС‰Рµ РЅРµ РІСЃРµ РїР°Р№РїС‹ РѕС‚РєСЂС‹С‚С‹/РїРѕС‚РѕРєРё Р·Р°РїСѓС‰РµРЅС‹
 				if (fNewCheckStart && (mn_PipesToCreate > 0))
 				{
 					mn_PipesToCreate--;
@@ -962,7 +962,7 @@ struct PipeServer
 					{
 						if (m_Pipes[j].hThread == NULL)
 						{
-							// Стартуем новый instance
+							// РЎС‚Р°СЂС‚СѓРµРј РЅРѕРІС‹Р№ instance
 							bool bStartNewInstance = StartPipeInstance(&(m_Pipes[j]));
 							_ASSERTEX(bStartNewInstance==true);
 							UNREFERENCED_PARAMETER(bStartNewInstance);
@@ -978,15 +978,15 @@ struct PipeServer
 				{
 					if (!mfn_PipeServerConnected(pPipe, m_lParam))
 					{
-						lbAllowClient = FALSE; // запрет подключения от этого клиента
+						lbAllowClient = FALSE; // Р·Р°РїСЂРµС‚ РїРѕРґРєР»СЋС‡РµРЅРёСЏ РѕС‚ СЌС‚РѕРіРѕ РєР»РёРµРЅС‚Р°
 					}
 				}
 				
 
 				if (lbAllowClient)
 				{
-					// *** Основной рабочий цикл ***
-					// Чтение данных запроса из пайпа и запись результата
+					// *** РћСЃРЅРѕРІРЅРѕР№ СЂР°Р±РѕС‡РёР№ С†РёРєР» ***
+					// Р§С‚РµРЅРёРµ РґР°РЅРЅС‹С… Р·Р°РїСЂРѕСЃР° РёР· РїР°Р№РїР° Рё Р·Р°РїРёСЃСЊ СЂРµР·СѓР»СЊС‚Р°С‚Р°
 					while (PipeServerRead(pPipe))
 					{
 						#ifdef _DEBUG
@@ -1015,17 +1015,17 @@ struct PipeServer
 								}
 							}
 							#endif
-							// Если данные вернули (могли сами в пайп ответить)
+							// Р•СЃР»Рё РґР°РЅРЅС‹Рµ РІРµСЂРЅСѓР»Рё (РјРѕРіР»Рё СЃР°РјРё РІ РїР°Р№Рї РѕС‚РІРµС‚РёС‚СЊ)
 							if (!mb_InputOnly && pPipe->ptrReply && pPipe->cbReplySize)
 							{
-								// Если успешно - запись в пайп результата
+								// Р•СЃР»Рё СѓСЃРїРµС€РЅРѕ - Р·Р°РїРёСЃСЊ РІ РїР°Р№Рї СЂРµР·СѓР»СЊС‚Р°С‚Р°
 								_ASSERTEX(pPipe->cbReplySize>=(DWORD)mn_DummyAnswerSize);
 								fWriteSuccess = PipeServerWrite(pPipe, pPipe->ptrReply, pPipe->cbReplySize, &cbWritten);
 							}
 						}
 						else if (!mb_InputOnly)
 						{
-							// Всегда чего-нибудь ответить в пайп, а то ошибка (Pipe was closed) у клиента возникает
+							// Р’СЃРµРіРґР° С‡РµРіРѕ-РЅРёР±СѓРґСЊ РѕС‚РІРµС‚РёС‚СЊ РІ РїР°Р№Рї, Р° С‚Рѕ РѕС€РёР±РєР° (Pipe was closed) Сѓ РєР»РёРµРЅС‚Р° РІРѕР·РЅРёРєР°РµС‚
 							fWriteSuccess = WriteDummyAnswer(pPipe);
 						}
 
@@ -1036,7 +1036,7 @@ struct PipeServer
 						#endif
 
 						if (pPipe->bBreakConnection)
-							break; // Переоткрыть пайп (ошибка протокола)
+							break; // РџРµСЂРµРѕС‚РєСЂС‹С‚СЊ РїР°Р№Рї (РѕС€РёР±РєР° РїСЂРѕС‚РѕРєРѕР»Р°)
 					
 						if (mb_Terminate || !mb_LoopCommands)
 							break;
@@ -1049,7 +1049,7 @@ struct PipeServer
 					// Fin
 					if (lbFirstRead)
 					{
-						// Всегда чего-нибудь ответить в пайп, а то ошибка (Pipe was closed) у клиента возникает
+						// Р’СЃРµРіРґР° С‡РµРіРѕ-РЅРёР±СѓРґСЊ РѕС‚РІРµС‚РёС‚СЊ РІ РїР°Р№Рї, Р° С‚Рѕ РѕС€РёР±РєР° (Pipe was closed) Сѓ РєР»РёРµРЅС‚Р° РІРѕР·РЅРёРєР°РµС‚
 						fWriteSuccess = WriteDummyAnswer(pPipe);
 					}
 					
@@ -1067,18 +1067,18 @@ struct PipeServer
 				
 				if (!mb_Terminate)
 				{
-					// FlushFileBuffers уже вызван, т.е. клиент данные не потеряет
-					// А вот вызов CloseHandle перед DisconnectNamedPipe может привести к ошибке 231
-					// (All pipe instances are busy) при следующей попытке CreateNamedPipe
+					// FlushFileBuffers СѓР¶Рµ РІС‹Р·РІР°РЅ, С‚.Рµ. РєР»РёРµРЅС‚ РґР°РЅРЅС‹Рµ РЅРµ РїРѕС‚РµСЂСЏРµС‚
+					// Рђ РІРѕС‚ РІС‹Р·РѕРІ CloseHandle РїРµСЂРµРґ DisconnectNamedPipe РјРѕР¶РµС‚ РїСЂРёРІРµСЃС‚Рё Рє РѕС€РёР±РєРµ 231
+					// (All pipe instances are busy) РїСЂРё СЃР»РµРґСѓСЋС‰РµР№ РїРѕРїС‹С‚РєРµ CreateNamedPipe
 					_Disconnect(pPipe, true, false);
 				}
 
 				TODO("Vozmogno, v kakih-to sluchajah nujno zakryt' pipe handle");
 
-				// Перейти к открытию нового instance пайпа
+				// РџРµСЂРµР№С‚Рё Рє РѕС‚РєСЂС‹С‚РёСЋ РЅРѕРІРѕРіРѕ instance РїР°Р№РїР°
 
 				UNREFERENCED_PARAMETER(fWriteSuccess);
-			} // Пока не затребовано завершение сервера while (!mb_Terminate)
+			} // РџРѕРєР° РЅРµ Р·Р°С‚СЂРµР±РѕРІР°РЅРѕ Р·Р°РІРµСЂС€РµРЅРёРµ СЃРµСЂРІРµСЂР° while (!mb_Terminate)
 
 			if (pPipe->hPipeInst && (pPipe->hPipeInst != INVALID_HANDLE_VALUE))
 			{
@@ -1127,7 +1127,7 @@ struct PipeServer
 			{
 				//_ASSERTEX(m_Pipes[i].hThread!=NULL);
 				DumpError(pPipe, L"StartPipeInstance:CreateThread failed, code=0x%08X");
-				return false; // Не удалось создать серверные потоки
+				return false; // РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ СЃРµСЂРІРµСЂРЅС‹Рµ РїРѕС‚РѕРєРё
 			}
 			if (mn_Priority)
 				::SetThreadPriority(pPipe->hThread, mn_Priority);
@@ -1196,41 +1196,41 @@ struct PipeServer
 	public:
 		void SetPriority(int nPriority)
 		{
-			// Звать ПЕРЕД StartPipeServer
+			// Р—РІР°С‚СЊ РџР•Р Р•Р” StartPipeServer
 			_ASSERTEX(mb_Initialized==FALSE);
 			mn_Priority = nPriority;
 		};
 
 		void SetInputOnly(bool bInputOnly)
 		{
-			// Звать ПЕРЕД StartPipeServer
+			// Р—РІР°С‚СЊ РџР•Р Р•Р” StartPipeServer
 			_ASSERTEX(mb_Initialized==FALSE);
 			mb_InputOnly = bInputOnly;
 		};
 
 		void SetOverlapped(bool bOverlapped)
 		{
-			// Звать ПЕРЕД StartPipeServer
+			// Р—РІР°С‚СЊ РџР•Р Р•Р” StartPipeServer
 			_ASSERTEX(mb_Initialized==FALSE);
 			mb_Overlapped = bOverlapped;
 		};
 
 		void SetLoopCommands(bool bLoopCommands)
 		{
-			// Звать ПЕРЕД StartPipeServer
+			// Р—РІР°С‚СЊ РџР•Р Р•Р” StartPipeServer
 			_ASSERTEX(mb_Initialized==FALSE);
 			mb_LoopCommands = bLoopCommands;
 		};
 
 		void SetDummyAnswerSize(int anDummyAnswerSize)
 		{
-			// Звать ПЕРЕД StartPipeServer
+			// Р—РІР°С‚СЊ РџР•Р Р•Р” StartPipeServer
 			mn_DummyAnswerSize = anDummyAnswerSize;
 		};
 
 		void SetMaxCount(int nMaxCount)
 		{
-			// Звать ПЕРЕД StartPipeServer
+			// Р—РІР°С‚СЊ РџР•Р Р•Р” StartPipeServer
 			if (mb_Initialized || m_Pipes || mn_MaxCount > 0)
 			{
 				_ASSERTEX(mb_Initialized==FALSE && !m_Pipes && mn_MaxCount==0);
@@ -1276,7 +1276,7 @@ struct PipeServer
 			mp_ActivePipe = NULL;
 
 			mb_ReadyCalled = FALSE;
-			mh_TermEvent = CreateEvent(NULL,TRUE/*MANUAL - используется в нескольких нитях!*/,FALSE,NULL); ResetEvent(mh_TermEvent);
+			mh_TermEvent = CreateEvent(NULL,TRUE/*MANUAL - РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ РЅРµСЃРєРѕР»СЊРєРёС… РЅРёС‚СЏС…!*/,FALSE,NULL); ResetEvent(mh_TermEvent);
 			mb_Terminate = false;
 			mh_ServerSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
 			
@@ -1291,7 +1291,7 @@ struct PipeServer
 			mfn_PipeServerFree = apfnPipeServerFree;
 			_ASSERTEX(mb_ReadyCalled==FALSE);
 			
-			// Необходимо указать как минимум эту функцию
+			// РќРµРѕР±С…РѕРґРёРјРѕ СѓРєР°Р·Р°С‚СЊ РєР°Рє РјРёРЅРёРјСѓРј СЌС‚Сѓ С„СѓРЅРєС†РёСЋ
 			if (!apfnPipeServerCommand)
 			{
 				//_ASSERTEX(apfnPipeServerCommand!=NULL);
@@ -1301,7 +1301,7 @@ struct PipeServer
 
 			if (!StartPipeInstance(&(m_Pipes[0])))
 			{
-				// DumpError уже позвали
+				// DumpError СѓР¶Рµ РїРѕР·РІР°Р»Рё
 				return false;
 			}
 			mn_PipesToCreate = (mn_MaxCount > 1) ? (mn_MaxCount - 1) : 0;
@@ -1309,8 +1309,8 @@ struct PipeServer
 			mb_Initialized = TRUE;
 			
 			//#if 0
-			//// Overlapped, доделать
-			//// Созаем Instances
+			//// Overlapped, РґРѕРґРµР»Р°С‚СЊ
+			//// РЎРѕР·Р°РµРј Instances
 			//int iRc = InitPipes();
 			//return (iRc == 0);
 			//#endif

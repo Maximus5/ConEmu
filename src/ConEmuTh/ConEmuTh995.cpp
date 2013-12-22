@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #pragma warning( disable : 4995 )
-#include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
+#include "../common/pluginW1761.hpp" // РћС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ 995 РЅР°Р»РёС‡РёРµРј SynchoApi
 #pragma warning( default : 4995 )
 #include "../common/plugin_helper.h"
 #include "ConEmuTh.h"
@@ -155,7 +155,7 @@ LPCWSTR GetMsgW995(int aiMsg)
 	return InfoW995->GetMsg(InfoW995->ModuleNumber,aiMsg);
 }
 
-// Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
+// Warning, РЅР°РїСЂСЏРјСѓСЋ РќР• РІС‹Р·С‹РІР°С‚СЊ. РџРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ "РѕР±С‰РµР№" PostMacro
 void PostMacroW995(wchar_t* asMacro)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
@@ -163,7 +163,7 @@ void PostMacroW995(wchar_t* asMacro)
 
 	ActlKeyMacro mcr;
 	mcr.Command = MCMD_POSTMACROSTRING;
-	mcr.Param.PlainText.Flags = 0; // По умолчанию - вывод на экран разрешен
+	mcr.Param.PlainText.Flags = 0; // РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ СЂР°Р·СЂРµС€РµРЅ
 
 	if (*asMacro == L'@' && asMacro[1] && asMacro[1] != L' ')
 	{
@@ -260,7 +260,7 @@ void LoadPanelItemInfoW995(CeFullPanelInfo* pi, INT_PTR nItem)
 	{
 		if (pi->pFarTmpBuf) free(pi->pFarTmpBuf);
 
-		pi->nFarTmpBuf = nSize+MAX_PATH; // + про запас немножко
+		pi->nFarTmpBuf = nSize+MAX_PATH; // + РїСЂРѕ Р·Р°РїР°СЃ РЅРµРјРЅРѕР¶РєРѕ
 		pi->pFarTmpBuf = malloc(pi->nFarTmpBuf);
 	}
 
@@ -275,9 +275,9 @@ void LoadPanelItemInfoW995(CeFullPanelInfo* pi, INT_PTR nItem)
 		return;
 	}
 
-	if (!nSize)  // ошибка?
+	if (!nSize)  // РѕС€РёР±РєР°?
 	{
-		// FAR не смог заполнить ppi данными, поэтому накидаем туда нулей, чтобы мусор не рисовать
+		// FAR РЅРµ СЃРјРѕРі Р·Р°РїРѕР»РЅРёС‚СЊ ppi РґР°РЅРЅС‹РјРё, РїРѕСЌС‚РѕРјСѓ РЅР°РєРёРґР°РµРј С‚СѓРґР° РЅСѓР»РµР№, С‡С‚РѕР±С‹ РјСѓСЃРѕСЂ РЅРµ СЂРёСЃРѕРІР°С‚СЊ
 		ppi->FindData.lpwszFileName = L"???";
 		ppi->Flags = 0;
 		ppi->NumberOfLinks = 0;
@@ -286,7 +286,7 @@ void LoadPanelItemInfoW995(CeFullPanelInfo* pi, INT_PTR nItem)
 		ppi->FindData.nFileSize = 0;
 	}
 
-	// Скопировать данные в наш буфер (функция сама выделит память)
+	// РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РґР°РЅРЅС‹Рµ РІ РЅР°С€ Р±СѓС„РµСЂ (С„СѓРЅРєС†РёСЏ СЃР°РјР° РІС‹РґРµР»РёС‚ РїР°РјСЏС‚СЊ)
 	const wchar_t* pszName = ppi->FindData.lpwszFileName;
 
 	if ((!pszName || !*pszName) && ppi->FindData.lpwszAlternateFileName && *ppi->FindData.lpwszAlternateFileName)
@@ -341,14 +341,14 @@ BOOL LoadPanelInfo995(BOOL abActive)
 
 	if (!nRc)
 	{
-		TODO("Показать информацию об ошибке");
+		TODO("РџРѕРєР°Р·Р°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕС€РёР±РєРµ");
 		return FALSE;
 	}
 
-	// Даже если невидима - обновить информацию!
-	//// Проверим, что панель видима. Иначе - сразу выходим.
+	// Р”Р°Р¶Рµ РµСЃР»Рё РЅРµРІРёРґРёРјР° - РѕР±РЅРѕРІРёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ!
+	//// РџСЂРѕРІРµСЂРёРј, С‡С‚Рѕ РїР°РЅРµР»СЊ РІРёРґРёРјР°. РРЅР°С‡Рµ - СЃСЂР°Р·Сѓ РІС‹С…РѕРґРёРј.
 	//if (!pi.Visible) {
-	//	TODO("Показать информацию об ошибке");
+	//	TODO("РџРѕРєР°Р·Р°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕС€РёР±РєРµ");
 	//	return NULL;
 	//}
 
@@ -360,14 +360,14 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	pcefpi->cbSize = sizeof(*pcefpi);
 	//pcefpi->hPanel = hPanel;
 
-	// Если элементов на панели стало больше, чем выделено в (pviLeft/pviRight)
+	// Р•СЃР»Рё СЌР»РµРјРµРЅС‚РѕРІ РЅР° РїР°РЅРµР»Рё СЃС‚Р°Р»Рѕ Р±РѕР»СЊС€Рµ, С‡РµРј РІС‹РґРµР»РµРЅРѕ РІ (pviLeft/pviRight)
 	if (pcefpi->ItemsNumber < pi.ItemsNumber)
 	{
 		if (!pcefpi->ReallocItems(pi.ItemsNumber))
 			return FALSE;
 	}
 
-	// Копируем что нужно
+	// РљРѕРїРёСЂСѓРµРј С‡С‚Рѕ РЅСѓР¶РЅРѕ
 	pcefpi->bLeftPanel = (pi.Flags & PFLAGS_PANELLEFT) == PFLAGS_PANELLEFT;
 	pcefpi->bPlugin = pi.Plugin;
 	pcefpi->PanelRect = pi.PanelRect;
@@ -380,9 +380,9 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	pcefpi->Flags = pi.Flags; // CEPANELINFOFLAGS
 	pcefpi->PanelMode = pi.ViewMode;
 	pcefpi->IsFilePanel = (pi.PanelType == PTYPE_FILEPANEL);
-	// Настройки интерфейса
+	// РќР°СЃС‚СЂРѕР№РєРё РёРЅС‚РµСЂС„РµР№СЃР°
 	LoadFarSettingsW995(&pcefpi->FarInterfaceSettings, &pcefpi->FarPanelSettings);
-	// Цвета фара
+	// Р¦РІРµС‚Р° С„Р°СЂР°
 	BYTE FarConsoleColors[0x100];
 	INT_PTR nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, FarConsoleColors);
 #ifdef _DEBUG
@@ -410,14 +410,14 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	//}
 	//nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
 	
-	// Текущая папка панели
+	// РўРµРєСѓС‰Р°СЏ РїР°РїРєР° РїР°РЅРµР»Рё
 	size_t nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
 
 	if (nSize)
 	{
 		if ((pcefpi->pszPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir))
 		{
-			pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
+			pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + РІС‹РґРµР»РёРј РЅРµРјРЅРѕР¶РєРѕ Р·Р°СЂР°РЅРµРµ
 			SafeFree(pcefpi->pszPanelDir);
 			pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
 		}
@@ -435,10 +435,10 @@ BOOL LoadPanelInfo995(BOOL abActive)
 		if (pcefpi->pszPanelDir) { free(pcefpi->pszPanelDir); pcefpi->pszPanelDir = NULL; }
 	}
 
-	// Готовим буфер для информации об элементах
+	// Р“РѕС‚РѕРІРёРј Р±СѓС„РµСЂ РґР»СЏ РёРЅС„РѕСЂРјР°С†РёРё РѕР± СЌР»РµРјРµРЅС‚Р°С…
 	pcefpi->ReallocItems(pcefpi->ItemsNumber);
 
-	// и буфер для загрузки элемента из FAR
+	// Рё Р±СѓС„РµСЂ РґР»СЏ Р·Р°РіСЂСѓР·РєРё СЌР»РµРјРµРЅС‚Р° РёР· FAR
 	nSize = sizeof(PluginPanelItem)+6*MAX_PATH;
 
 	if ((pcefpi->pFarTmpBuf == NULL) || (pcefpi->nFarTmpBuf < nSize))
@@ -456,7 +456,7 @@ void ReloadPanelsInfoW995()
 {
 	if (!InfoW995) return;
 
-	// в FAR2 все просто
+	// РІ FAR2 РІСЃРµ РїСЂРѕСЃС‚Рѕ
 	LoadPanelInfo995(TRUE);
 	LoadPanelInfo995(FALSE);
 }
@@ -465,10 +465,10 @@ void SetCurrentPanelItemW995(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurI
 {
 	if (!InfoW995) return;
 
-	// В Far2 можно быстро проверить валидность индексов
+	// Р’ Far2 РјРѕР¶РЅРѕ Р±С‹СЃС‚СЂРѕ РїСЂРѕРІРµСЂРёС‚СЊ РІР°Р»РёРґРЅРѕСЃС‚СЊ РёРЅРґРµРєСЃРѕРІ
 	HANDLE hPanel = NULL;
 	PanelInfo piActive = {}, piPassive = {}, *pi = NULL;
-	TODO("Проверять текущую видимость панелей?");
+	TODO("РџСЂРѕРІРµСЂСЏС‚СЊ С‚РµРєСѓС‰СѓСЋ РІРёРґРёРјРѕСЃС‚СЊ РїР°РЅРµР»РµР№?");
 	InfoW995->Control(PANEL_ACTIVE,  FCTL_GETPANELINFO, 0, (LONG_PTR)&piActive);
 
 	if ((piActive.Flags & PFLAGS_PANELLEFT) == (abLeftPanel ? PFLAGS_PANELLEFT : 0))
@@ -481,7 +481,7 @@ void SetCurrentPanelItemW995(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurI
 		pi = &piPassive; hPanel = PANEL_PASSIVE;
 	}
 
-	// Проверяем индексы (может фар в процессе обновления панели, и количество элементов изменено?)
+	// РџСЂРѕРІРµСЂСЏРµРј РёРЅРґРµРєСЃС‹ (РјРѕР¶РµС‚ С„Р°СЂ РІ РїСЂРѕС†РµСЃСЃРµ РѕР±РЅРѕРІР»РµРЅРёСЏ РїР°РЅРµР»Рё, Рё РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РёР·РјРµРЅРµРЅРѕ?)
 	if (pi->ItemsNumber < 1)
 		return;
 
@@ -494,7 +494,7 @@ void SetCurrentPanelItemW995(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurI
 	if (anCurItem < anTopItem)
 		anCurItem = anTopItem;
 
-	// Обновляем панель
+	// РћР±РЅРѕРІР»СЏРµРј РїР°РЅРµР»СЊ
 	PanelRedrawInfo pri = {(int)anCurItem, (int)anTopItem};
 	InfoW995->Control(hPanel, FCTL_REDRAWPANEL, 0, (LONG_PTR)&pri);
 }
@@ -514,8 +514,8 @@ BOOL CheckPanelSettingsW995(BOOL abSilence)
 
 	if (!(gFarPanelSettings.ShowColumnTitles))
 	{
-		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
-		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
+		// Р”Р»СЏ РєРѕСЂСЂРµРєС‚РЅРѕРіРѕ РѕРїСЂРµРґРµР»РµРЅРёСЏ РїРѕР»РѕР¶РµРЅРёСЏ РєРѕР»РѕРЅРѕРє РЅРµРѕР±С…РѕРґРёРј РѕРґРёРЅ РёР· С„Р»Р°Р¶РєРѕРІ РІ РЅР°СЃС‚СЂРѕР№РєРµ РїР°РЅРµР»Рё:
+		// [x] РџРѕРєР°Р·С‹РІР°С‚СЊ Р·Р°РіРѕР»РѕРІРєРё РєРѕР»РѕРЅРѕРє [x] РџРѕРєР°Р·С‹РІР°С‚СЊ СЃСѓРјРјР°СЂРЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ
 		if (!abSilence)
 		{
 			InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE995|FMSG_MB_OK|FMSG_WARNING|FMSG_LEFTALIGN995, NULL,
@@ -591,7 +591,7 @@ bool CheckFarPanelsW995()
 	return lbPanelsActive;
 }
 
-// Возникали проблемы с синхронизацией в FAR2 -> FindFile
+// Р’РѕР·РЅРёРєР°Р»Рё РїСЂРѕР±Р»РµРјС‹ СЃ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРµР№ РІ FAR2 -> FindFile
 //bool CheckWindows995()
 //{
 //	if (!InfoW995 || !InfoW995->AdvControl) return false;
@@ -611,7 +611,7 @@ bool CheckFarPanelsW995()
 //	//wchar_t szInfo[MAX_PATH*4];
 //	//
 //	//OutputDebugStringW(L"\n\n");
-//	//// Pos: Номер окна, о котором нужно узнать информацию. Нумерация идет с 0. Pos = -1 вернет информацию о текущем окне.
+//	//// Pos: РќРѕРјРµСЂ РѕРєРЅР°, Рѕ РєРѕС‚РѕСЂРѕРј РЅСѓР¶РЅРѕ СѓР·РЅР°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ. РќСѓРјРµСЂР°С†РёСЏ РёРґРµС‚ СЃ 0. Pos = -1 РІРµСЂРЅРµС‚ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ С‚РµРєСѓС‰РµРј РѕРєРЅРµ.
 //	//for (int i=-1; i <= nCount; i++) {
 //	//	memset(&wi, 0, sizeof(wi));
 //	//	wi.Pos = i;

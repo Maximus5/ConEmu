@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -73,14 +73,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SIZE szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
 const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed raster font size. Select 'Terminal' instead of '[Raster Fonts ...]'";
 
-// Тут можно бы оставить "LF.lfHeight". При выборе другого шрифта - может меняться высота?
-// Хотя, наверное все же лучше не включать "AI", а дать пользователю задать то, что хочется ему.
+// РўСѓС‚ РјРѕР¶РЅРѕ Р±С‹ РѕСЃС‚Р°РІРёС‚СЊ "LF.lfHeight". РџСЂРё РІС‹Р±РѕСЂРµ РґСЂСѓРіРѕРіРѕ С€СЂРёС„С‚Р° - РјРѕР¶РµС‚ РјРµРЅСЏС‚СЊСЃСЏ РІС‹СЃРѕС‚Р°?
+// РҐРѕС‚СЏ, РЅР°РІРµСЂРЅРѕРµ РІСЃРµ Р¶Рµ Р»СѓС‡С€Рµ РЅРµ РІРєР»СЋС‡Р°С‚СЊ "AI", Р° РґР°С‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ Р·Р°РґР°С‚СЊ С‚Рѕ, С‡С‚Рѕ С…РѕС‡РµС‚СЃСЏ РµРјСѓ.
 #define CurFontSizeY gpSet->FontSizeY/*LF.lfHeight*/ 		
 #undef UPDATE_FONTSIZE_RECREATE
 
 
 #define TEST_FONT_WIDTH_STRING_EN L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define TEST_FONT_WIDTH_STRING_RU L"АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
+#define TEST_FONT_WIDTH_STRING_RU L"РђР‘Р’Р“Р”Р•Р–Р—РР™РљР›РњРќРћРџР РЎРўРЈР¤РҐР¦Р§РЁР©РЄР«Р¬Р­Р®РЇ"
 
 #define BALLOON_MSG_TIMERID 101
 #define FAILED_FONT_TIMEOUT 3000
@@ -211,7 +211,7 @@ namespace SettingsNS
 		Value = dwVal; }
 #define FillListBoxCharSet(hDlg,nDlgID,Value) \
 	{ \
-		u8 num = 4; /*индекс DEFAULT_CHARSET*/ \
+		u8 num = 4; /*РёРЅРґРµРєСЃ DEFAULT_CHARSET*/ \
 		for (size_t i = 0; i < countof(SettingsNS::CharSets); i++) \
 		{ \
 			SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, (LPARAM)SettingsNS::CharSets[i].sValue); \
@@ -283,18 +283,18 @@ CSettings::CSettings()
 	ibDisableSaveSettingsOnExit = false;
 	isAdvLogging = 0;
 	m_ActivityLoggingType = glt_None; mn_ActivityCmdStartTick = 0;
-	bForceBufferHeight = false; nForceBufferHeight = 1000; /* устанавливается в true, из ком.строки /BufferHeight */
+	bForceBufferHeight = false; nForceBufferHeight = 1000; /* СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РІ true, РёР· РєРѕРј.СЃС‚СЂРѕРєРё /BufferHeight */
 
 	#ifdef SHOW_AUTOSCROLL
 	AutoScroll = true;
 	#endif
 	
-	// Шрифты
+	// РЁСЂРёС„С‚С‹
 	//memset(m_Fonts, 0, sizeof(m_Fonts));
-	//TODO: OLD - на переделку
+	//TODO: OLD - РЅР° РїРµСЂРµРґРµР»РєСѓ
 	memset(&LogFont, 0, sizeof(LogFont));
 	memset(&LogFont2, 0, sizeof(LogFont2));
-	mn_FontWidth = mn_BorderFontWidth = 0; mn_FontHeight = 16; // сброшено будет в SettingsLoaded
+	mn_FontWidth = mn_BorderFontWidth = 0; mn_FontHeight = 16; // СЃР±СЂРѕС€РµРЅРѕ Р±СѓРґРµС‚ РІ SettingsLoaded
 	//gpSet->isFontAutoSize = false;
 	mb_Name1Ok = mb_Name2Ok = false;
 	mn_AutoFontWidth = mn_AutoFontHeight = -1;
@@ -306,8 +306,8 @@ CSettings::CSettings()
 
 	szSelectionModError[0] = 0;
 	
-	// Некоторые вещи нужно делать вне InitSettings, т.к. она может быть
-	// вызвана потом из интерфейса диалога настроек
+	// РќРµРєРѕС‚РѕСЂС‹Рµ РІРµС‰Рё РЅСѓР¶РЅРѕ РґРµР»Р°С‚СЊ РІРЅРµ InitSettings, С‚.Рє. РѕРЅР° РјРѕР¶РµС‚ Р±С‹С‚СЊ
+	// РІС‹Р·РІР°РЅР° РїРѕС‚РѕРј РёР· РёРЅС‚РµСЂС„РµР№СЃР° РґРёР°Р»РѕРіР° РЅР°СЃС‚СЂРѕРµРє
 	wcscpy_c(ConfigPath, CONEMU_ROOT_KEY L"\\.Vanilla");
 	ConfigName[0] = 0;
 
@@ -321,13 +321,13 @@ CSettings::CSettings()
 	}
 	else
 	{
-		// Применить в Mapping (там заодно и палитра копируется)
+		// РџСЂРёРјРµРЅРёС‚СЊ РІ Mapping (С‚Р°Рј Р·Р°РѕРґРЅРѕ Рё РїР°Р»РёС‚СЂР° РєРѕРїРёСЂСѓРµС‚СЃСЏ)
 		//m_ThSetMap.Set(&gpSet->ThSet);
-		//!! Это нужно делать после создания основного шрифта
+		//!! Р­С‚Рѕ РЅСѓР¶РЅРѕ РґРµР»Р°С‚СЊ РїРѕСЃР»Рµ СЃРѕР·РґР°РЅРёСЏ РѕСЃРЅРѕРІРЅРѕРіРѕ С€СЂРёС„С‚Р°
 		//gpConEmu->OnPanelViewSettingsChanged(FALSE);
 	}
 
-	// Теперь установим умолчания настроек	
+	// РўРµРїРµСЂСЊ СѓСЃС‚Р°РЅРѕРІРёРј СѓРјРѕР»С‡Р°РЅРёСЏ РЅР°СЃС‚СЂРѕРµРє	
 	gpSet->InitSettings();
 	
 	SingleInstanceArg = sgl_Default;
@@ -373,7 +373,7 @@ CSettings::CSettings()
 	ZeroStruct(m_otm);
 	ResetFontWidth();
 #if 0
-	//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
+	//120714 - Р°РЅР°Р»РѕРіРёС‡РЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹ СЂР°Р±РѕС‚Р°СЋС‚ РІ ConEmuC.exe, Р° РІ GUI РѕРЅРё Рё РЅРµ СЂР°Р±РѕС‚Р°Р»Рё. СѓР±СЂР°Р» РїРѕРєР°
 	nAttachPID = 0; hAttachConWnd = NULL;
 #endif
 	memset(&ourSI, 0, sizeof(ourSI));
@@ -420,12 +420,12 @@ CSettings::CSettings()
 	mn_HotKeys = 0;
 	mp_ActiveHotKey = NULL;
 
-	// Горячие клавиши
+	// Р“РѕСЂСЏС‡РёРµ РєР»Р°РІРёС€Рё
 	InitVars_Hotkeys();
 
 	m_Pages = NULL;
 
-	// Вкладки-диалоги
+	// Р’РєР»Р°РґРєРё-РґРёР°Р»РѕРіРё
 	InitVars_Pages();
 }
 
@@ -462,7 +462,7 @@ void CSettings::InitVars_Hotkeys()
 {	
 	ReleaseHotkeys();
 
-	// Горячие клавиши (умолчания)
+	// Р“РѕСЂСЏС‡РёРµ РєР»Р°РІРёС€Рё (СѓРјРѕР»С‡Р°РЅРёСЏ)
 	mn_HotKeys = ConEmuHotKey::AllocateHotkeys(&mp_HotKeys);
 
 	mp_ActiveHotKey = NULL;
@@ -515,7 +515,7 @@ const ConEmuHotKey* CSettings::GetHotKeyPtr(int idx)
 const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealConsole* pRCon)
 {
 	DWORD vk = ConEmuHotKey::GetHotkey(VkMod);
-	// На сами модификаторы - действий не вешается
+	// РќР° СЃР°РјРё РјРѕРґРёС„РёРєР°С‚РѕСЂС‹ - РґРµР№СЃС‚РІРёР№ РЅРµ РІРµС€Р°РµС‚СЃСЏ
 	if (vk == VK_LWIN || vk == VK_RWIN /*|| vk == VK_APPS*/
 		|| vk == VK_SHIFT || vk == VK_LSHIFT || vk == VK_RSHIFT
 		|| vk == VK_CONTROL || vk == VK_LCONTROL || vk == VK_RCONTROL
@@ -528,7 +528,7 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 
 	DWORD nState = (VkMod & cvk_ALLMASK);
 
-	// Теперь бежим по mp_HotKeys и сравниваем требуемые модификаторы
+	// РўРµРїРµСЂСЊ Р±РµР¶РёРј РїРѕ mp_HotKeys Рё СЃСЂР°РІРЅРёРІР°РµРј С‚СЂРµР±СѓРµРјС‹Рµ РјРѕРґРёС„РёРєР°С‚РѕСЂС‹
 	for (int i = 0;; i++)
 	{
 		const ConEmuHotKey* pi = GetHotKeyPtr(i);
@@ -540,7 +540,7 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 
 		DWORD TestVkMod = pi->VkMod;
 		if (ConEmuHotKey::GetHotkey(TestVkMod) != vk)
-			continue; // Не совпадает сама кнопка
+			continue; // РќРµ СЃРѕРІРїР°РґР°РµС‚ СЃР°РјР° РєРЅРѕРїРєР°
 
 		DWORD TestMask = cvk_DISTINCT;
 		DWORD TestValue = 0;
@@ -550,8 +550,8 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 			switch (ConEmuHotKey::GetModifier(TestVkMod, k))
 			{
 			case 0:
-				break; // нету
-			case VK_LWIN: case VK_RWIN: // RWin быть не должно по идее
+				break; // РЅРµС‚Сѓ
+			case VK_LWIN: case VK_RWIN: // RWin Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ РїРѕ РёРґРµРµ
 				TestValue |= cvk_Win; break;
 			case VK_APPS:
 				TestValue |= cvk_Apps; break;
@@ -591,7 +591,7 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 
 			#ifdef _DEBUG
 			default:
-				// Неизвестный!
+				// РќРµРёР·РІРµСЃС‚РЅС‹Р№!
 				_ASSERTE(ConEmuHotKey::GetModifier(TestVkMod, k)==0);
 			#endif
 			}
@@ -602,24 +602,24 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 
 		if (pi->fkey)
 		{
-			// Допускается ли этот хоткей в текущем контексте?
+			// Р”РѕРїСѓСЃРєР°РµС‚СЃСЏ Р»Рё СЌС‚РѕС‚ С…РѕС‚РєРµР№ РІ С‚РµРєСѓС‰РµРј РєРѕРЅС‚РµРєСЃС‚Рµ?
 			if (pi->fkey(VkMod, true, pi, pRCon))
 			{
 				p = pi;
-				break; // Нашли
+				break; // РќР°С€Р»Рё
 			}
 		}
 		else
 		{
-			// Хоткей должен знать, что он "делает"
+			// РҐРѕС‚РєРµР№ РґРѕР»Р¶РµРЅ Р·РЅР°С‚СЊ, С‡С‚Рѕ РѕРЅ "РґРµР»Р°РµС‚"
 			_ASSERTE(pi->fkey!=NULL);
 		}
 	}
 
-	// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
+	// РќРµРєРѕС‚РѕСЂС‹Рµ РєРѕРјР±РёРЅР°С†РёРё РЅСѓР¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ "РЅР° РѕС‚РїСѓСЃРєР°РЅРёРµ" РІРѕ РёР·Р±РµР¶Р°РЅРёРµ РіР»СЋРєРѕРІ СЃ РёРЅС‚РµСЂС„РµР№СЃРѕРј
     if (p)
     {
-    	// Поэтому проверяем, совпадает ли требование "нажатости"
+    	// РџРѕСЌС‚РѕРјСѓ РїСЂРѕРІРµСЂСЏРµРј, СЃРѕРІРїР°РґР°РµС‚ Р»Рё С‚СЂРµР±РѕРІР°РЅРёРµ "РЅР°Р¶Р°С‚РѕСЃС‚Рё"
     	if (p->OnKeyUp == bKeyDown)
     		p = ConEmuSkipHotKey;
     }
@@ -639,9 +639,9 @@ bool CSettings::HasSingleWinHotkey()
 		DWORD VkMod = pHK->VkMod;
 		if (ConEmuHotKey::GetModifier(VkMod, 1) == VK_LWIN)
 		{
-			// Win+<другой модификатор> вроде винда в приложение таки присылает?
+			// Win+<РґСЂСѓРіРѕР№ РјРѕРґРёС„РёРєР°С‚РѕСЂ> РІСЂРѕРґРµ РІРёРЅРґР° РІ РїСЂРёР»РѕР¶РµРЅРёРµ С‚Р°РєРё РїСЂРёСЃС‹Р»Р°РµС‚?
         	if (ConEmuHotKey::GetModifier(VkMod, 2) == 0)
-        		return true; // А вот если больше модификаторов нет...
+        		return true; // Рђ РІРѕС‚ РµСЃР»Рё Р±РѕР»СЊС€Рµ РјРѕРґРёС„РёРєР°С‚РѕСЂРѕРІ РЅРµС‚...
 		}
 	}
 	return false;
@@ -683,7 +683,7 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 	{
 		DWORD *pn = pnHookedKeys;
 
-		//WARNING("CConEmuCtrl:: Тут вообще наверное нужно по всем HotKeys проехаться, а не только по «избранным»");
+		//WARNING("CConEmuCtrl:: РўСѓС‚ РІРѕРѕР±С‰Рµ РЅР°РІРµСЂРЅРѕРµ РЅСѓР¶РЅРѕ РїРѕ РІСЃРµРј HotKeys РїСЂРѕРµС…Р°С‚СЊСЃСЏ, Р° РЅРµ С‚РѕР»СЊРєРѕ РїРѕ В«РёР·Р±СЂР°РЅРЅС‹РјВ»");
 		for (int i = 0;; i++)
 		{
 			const ConEmuHotKey* pHK = GetHotKeyPtr(i);
@@ -748,7 +748,7 @@ void CSettings::InitVars_Pages()
 {
 	ConEmuSetupPages Pages[] = 
 	{
-		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
+		// РџСЂРё РґРѕР±Р°РІР»РµРЅРёРё РІРєР»Р°РґРєРё РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ OnInitDialog_XXX РІ pageOpProc
 		{IDD_SPG_MAIN,        0, L"Main",           thi_Main/*,    OnInitDialog_Main*/},
 		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos/*, OnInitDialog_WndPosSize*/},
 		{IDD_SPG_SHOW,        1, L"Appearance",     thi_Show/*, OnInitDialog_Show*/},
@@ -781,7 +781,7 @@ void CSettings::InitVars_Pages()
 	};
 	#ifdef _DEBUG
 	WARNING("LogFont.lfFaceName && LogFont2.lfFaceName, LogFont.lfHeight - subject to change");
-	// !!! Main_Items пока вообще не используется !!!
+	// !!! Main_Items РїРѕРєР° РІРѕРѕР±С‰Рµ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ !!!
 	ConEmuSetupItem Main_Items[] =
 	{
 		{tFontFace, sit_FontsAndRaster, LogFont.lfFaceName, countof(LogFont.lfFaceName)},
@@ -829,7 +829,7 @@ CSettings::~CSettings()
 		if (m_otm[i]) {free(m_otm[i]); m_otm[i] = NULL;}
 	}
 	
-	TODO("Очистить m_Fonts[Idx].hFonts");
+	TODO("РћС‡РёСЃС‚РёС‚СЊ m_Fonts[Idx].hFonts");
 
 	mh_Font2.Delete();
 	
@@ -890,10 +890,10 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 
 void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine /*= NULL*/)
 {
-	// Обработать 32/64 (найти tcc.exe и т.п.)
+	// РћР±СЂР°Р±РѕС‚Р°С‚СЊ 32/64 (РЅР°Р№С‚Рё tcc.exe Рё С‚.Рї.)
 	FindComspec(&gpSet->ComSpec);
 
-	// Зовем "FastConfiguration" (перед созданием новой/чистой конфигурации)
+	// Р—РѕРІРµРј "FastConfiguration" (РїРµСЂРµРґ СЃРѕР·РґР°РЅРёРµРј РЅРѕРІРѕР№/С‡РёСЃС‚РѕР№ РєРѕРЅС„РёРіСѓСЂР°С†РёРё)
 	if (slfFlags & slf_AllowFastConfig)
 	{
 		LPCWSTR pszDef = gpConEmu->GetDefaultTitle();
@@ -916,7 +916,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		{
 			if ((pszCmdLine && *pszCmdLine) || gpConEmu->mb_StartDetached)
 			{
-				// Должен быть "sih_None" иначе существующая копия не запустит команду
+				// Р”РѕР»Р¶РµРЅ Р±С‹С‚СЊ "sih_None" РёРЅР°С‡Рµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰Р°СЏ РєРѕРїРёСЏ РЅРµ Р·Р°РїСѓСЃС‚РёС‚ РєРѕРјР°РЅРґСѓ
 				_ASSERTE(SingleInstanceShowHide == sih_None);
 			}
 			else
@@ -947,23 +947,23 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		UnregisterShellInvalids();
 	}
 
-	// Передернуть палитру затенения
+	// РџРµСЂРµРґРµСЂРЅСѓС‚СЊ РїР°Р»РёС‚СЂСѓ Р·Р°С‚РµРЅРµРЅРёСЏ
 	gpSet->ResetFadeColors();
 	gpSet->GetColors(-1, TRUE);
 	
 	
 
-	// Проверить необходимость установки хуков
+	// РџСЂРѕРІРµСЂРёС‚СЊ РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ СѓСЃС‚Р°РЅРѕРІРєРё С…СѓРєРѕРІ
 	//-- isKeyboardHooks();
-	// При первом запуске - проверить, хотят ли включить автообновление?
+	// РџСЂРё РїРµСЂРІРѕРј Р·Р°РїСѓСЃРєРµ - РїСЂРѕРІРµСЂРёС‚СЊ, С…РѕС‚СЏС‚ Р»Рё РІРєР»СЋС‡РёС‚СЊ Р°РІС‚РѕРѕР±РЅРѕРІР»РµРЅРёРµ?
 	//-- CheckUpdatesWanted();
 
 
 
-	// Стили окна
+	// РЎС‚РёР»Рё РѕРєРЅР°
 	if ((gpSet->_WindowMode!=rNormal) && (gpSet->_WindowMode!=rMaximized) && (gpSet->_WindowMode!=rFullScreen))
 	{
-		// Иначе окно вообще не отображается
+		// РРЅР°С‡Рµ РѕРєРЅРѕ РІРѕРѕР±С‰Рµ РЅРµ РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ
 		_ASSERTE(gpSet->_WindowMode!=0);
 		gpSet->_WindowMode = rNormal;
 	}
@@ -996,10 +996,10 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 	//wcscpy_c(gpSet->ComSpec.ConEmuDir, gpConEmu->ms_ConEmuDir);
 	gpConEmu->InitComSpecStr(gpSet->ComSpec);
-	// -- должно вообще вызываться в UpdateGuiInfoMapping
+	// -- РґРѕР»Р¶РЅРѕ РІРѕРѕР±С‰Рµ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РІ UpdateGuiInfoMapping
 	//UpdateComspec(&gpSet->ComSpec);
 	
-	// Инициализация кастомной палитры для диалога выбора цвета
+	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РєР°СЃС‚РѕРјРЅРѕР№ РїР°Р»РёС‚СЂС‹ РґР»СЏ РґРёР°Р»РѕРіР° РІС‹Р±РѕСЂР° С†РІРµС‚Р°
 	memmove(acrCustClr, gpSet->Colors, sizeof(COLORREF)*16);
 
 	LogFont.lfHeight = mn_FontHeight = gpSet->FontSizeY;
@@ -1011,11 +1011,11 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	LogFont.lfCharSet = (BYTE)gpSet->mn_LoadFontCharSet;
 	LogFont.lfItalic = gpSet->isItalic;
 	
-	isMonospaceSelected = gpSet->isMonospace ? gpSet->isMonospace : 1; // запомнить, чтобы выбирать то что нужно при смене шрифта
+	isMonospaceSelected = gpSet->isMonospace ? gpSet->isMonospace : 1; // Р·Р°РїРѕРјРЅРёС‚СЊ, С‡С‚РѕР±С‹ РІС‹Р±РёСЂР°С‚СЊ С‚Рѕ С‡С‚Рѕ РЅСѓР¶РЅРѕ РїСЂРё СЃРјРµРЅРµ С€СЂРёС„С‚Р°
 
 	if (slfFlags & slf_OnResetReload)
 	{
-		// Шрифт пере-создать сразу, его характеристики используются при ресайзе окна
+		// РЁСЂРёС„С‚ РїРµСЂРµ-СЃРѕР·РґР°С‚СЊ СЃСЂР°Р·Сѓ, РµРіРѕ С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРєРё РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ РїСЂРё СЂРµСЃР°Р№Р·Рµ РѕРєРЅР°
 		RecreateFont((WORD)-1);
 	}
 	else
@@ -1023,8 +1023,8 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		_ASSERTE(ghWnd==NULL);
 	}
 
-	// Стили окна
-	// Т.к. вызывается из Settings::LoadSettings() то проверка на валидность уже не нужно, оставим только ассерт
+	// РЎС‚РёР»Рё РѕРєРЅР°
+	// Рў.Рє. РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· Settings::LoadSettings() С‚Рѕ РїСЂРѕРІРµСЂРєР° РЅР° РІР°Р»РёРґРЅРѕСЃС‚СЊ СѓР¶Рµ РЅРµ РЅСѓР¶РЅРѕ, РѕСЃС‚Р°РІРёРј С‚РѕР»СЊРєРѕ Р°СЃСЃРµСЂС‚
 	_ASSERTE(gpSet->_WindowMode == rNormal || gpSet->_WindowMode == rMaximized || gpSet->_WindowMode == rFullScreen);
 
 	if ((ghWnd == NULL) || slfFlags & slf_OnResetReload)
@@ -1046,20 +1046,20 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 	if (gpSet->wndCascade && (ghWnd == NULL))
 	{
-		// Сдвиг при каскаде
+		// РЎРґРІРёРі РїСЂРё РєР°СЃРєР°РґРµ
 		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
-		// Координаты и размер виртуальной рабочей области
+		// РљРѕРѕСЂРґРёРЅР°С‚С‹ Рё СЂР°Р·РјРµСЂ РІРёСЂС‚СѓР°Р»СЊРЅРѕР№ СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё
 		RECT rcScreen = MakeRect(800,600);
 		int nMonitors = GetSystemMetrics(SM_CMONITORS);
 
 		if (nMonitors > 1)
 		{
-			// Размер виртуального экрана по всем мониторам
+			// Р Р°Р·РјРµСЂ РІРёСЂС‚СѓР°Р»СЊРЅРѕРіРѕ СЌРєСЂР°РЅР° РїРѕ РІСЃРµРј РјРѕРЅРёС‚РѕСЂР°Рј
 			rcScreen.left = GetSystemMetrics(SM_XVIRTUALSCREEN); // may be <0
 			rcScreen.top  = GetSystemMetrics(SM_YVIRTUALSCREEN);
 			rcScreen.right = rcScreen.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
 			rcScreen.bottom = rcScreen.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
-			TODO("Хорошо бы исключить из рассмотрения Taskbar...");
+			TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РёСЃРєР»СЋС‡РёС‚СЊ РёР· СЂР°СЃСЃРјРѕС‚СЂРµРЅРёСЏ Taskbar...");
 		}
 		else
 		{
@@ -1086,7 +1086,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 			if (wpl.showCmd == SW_HIDE || !IsWindowVisible(hPrev)
 			        || wpl.showCmd == SW_SHOWMINIMIZED || wpl.showCmd == SW_SHOWMAXIMIZED
-			        /* Max в режиме скрытия заголовка */
+			        /* Max РІ СЂРµР¶РёРјРµ СЃРєСЂС‹С‚РёСЏ Р·Р°РіРѕР»РѕРІРєР° */
 			        || (wpl.rcNormalPosition.left<rcScreen.left || wpl.rcNormalPosition.top<rcScreen.top))
 			{
 				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
@@ -1095,7 +1095,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 			gpConEmu->wndX = rcWnd.left + nShift;
 			gpConEmu->wndY = rcWnd.top + nShift;
-			break; // нашли, сдвинулись, выходим
+			break; // РЅР°С€Р»Рё, СЃРґРІРёРЅСѓР»РёСЃСЊ, РІС‹С…РѕРґРёРј
 		}
 	}
 
@@ -1119,7 +1119,7 @@ void CSettings::SettingsPreSave()
 	gpSet->isBold = (LogFont.lfWeight >= FW_BOLD);
 	gpSet->isItalic = (LogFont.lfItalic != 0);
 
-	// Макросы, совпадающие с "умолчательными" - не пишем
+	// РњР°РєСЂРѕСЃС‹, СЃРѕРІРїР°РґР°СЋС‰РёРµ СЃ "СѓРјРѕР»С‡Р°С‚РµР»СЊРЅС‹РјРё" - РЅРµ РїРёС€РµРј
 	if (gpSet->sRClickMacro && (lstrcmp(gpSet->sRClickMacro, gpSet->RClickMacroDefault(fmv_Default)) == 0 || lstrcmp(gpSet->sRClickMacro, gpSet->RClickMacroDefault(fmv_Lua)) == 0))
 		SafeFree(gpSet->sRClickMacro);
 	if (gpSet->sSafeFarCloseMacro && (lstrcmp(gpSet->sSafeFarCloseMacro, gpSet->SafeFarCloseMacroDefault(fmv_Default)) == 0 || lstrcmp(gpSet->sSafeFarCloseMacro, gpSet->SafeFarCloseMacroDefault(fmv_Lua)) == 0))
@@ -1139,7 +1139,7 @@ void CSettings::SettingsPreSave()
 //		//GetString(mh_Tabs[thi_Startup], tCmdLine, &gpSet->psStartSingleApp);
 //		ResetCmdArg();
 //
-//		//TODO: пендюрки всякие, типа "Auto save/restore open tabs", "Far editor/viewer also"
+//		//TODO: РїРµРЅРґСЋСЂРєРё РІСЃСЏРєРёРµ, С‚РёРїР° "Auto save/restore open tabs", "Far editor/viewer also"
 //	}
 //}
 
@@ -1230,10 +1230,10 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 	}
 
 	mh_Font[0] = CreateFontIndirectMy(&LogFont);
-	//2009-06-07 Реальный размер созданного шрифта мог измениться
+	//2009-06-07 Р РµР°Р»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ СЃРѕР·РґР°РЅРЅРѕРіРѕ С€СЂРёС„С‚Р° РјРѕРі РёР·РјРµРЅРёС‚СЊСЃСЏ
 	SaveFontSizes(&LogFont, (mn_AutoFontWidth == -1), false);
-	// Перенесено в SaveFontSizes
-	//// Применить в Mapping (там заодно и палитра копируется)
+	// РџРµСЂРµРЅРµСЃРµРЅРѕ РІ SaveFontSizes
+	//// РџСЂРёРјРµРЅРёС‚СЊ РІ Mapping (С‚Р°Рј Р·Р°РѕРґРЅРѕ Рё РїР°Р»РёС‚СЂР° РєРѕРїРёСЂСѓРµС‚СЃСЏ)
 	//gpConEmu->OnPanelViewSettingsChanged(FALSE);
 	MCHKHEAP
 }
@@ -1241,7 +1241,7 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 bool CSettings::ShowColorDialog(HWND HWndOwner, COLORREF *inColor)
 {
 	CHOOSECOLOR cc;                 // common dialog box structure
-	// Вернул. IMHO - бред. Добавили Custom Color, а меняется ФОН окна!
+	// Р’РµСЂРЅСѓР». IMHO - Р±СЂРµРґ. Р”РѕР±Р°РІРёР»Рё Custom Color, Р° РјРµРЅСЏРµС‚СЃСЏ Р¤РћРќ РѕРєРЅР°!
 	// Initialize CHOOSECOLOR
 	ZeroMemory(&cc, sizeof(cc));
 	cc.lStructSize = sizeof(cc);
@@ -1313,7 +1313,7 @@ int CSettings::EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme
 	LONG nHeight = lpelfe->elfLogFont.lfHeight;
 
 	if (nHeight < 8)
-		return TRUE; // такие мелкие - не интересуют
+		return TRUE; // С‚Р°РєРёРµ РјРµР»РєРёРµ - РЅРµ РёРЅС‚РµСЂРµСЃСѓСЋС‚
 
 	LONG nWidth  = lpelfe->elfLogFont.lfWidth;
 	UINT nMaxCount = countof(szRasterSizes);
@@ -1321,13 +1321,13 @@ int CSettings::EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme
 	while(sz<nMaxCount && szRasterSizes[sz].cy)
 	{
 		if (szRasterSizes[sz].cx == nWidth && szRasterSizes[sz].cy == nHeight)
-			return TRUE; // Этот размер уже добавили
+			return TRUE; // Р­С‚РѕС‚ СЂР°Р·РјРµСЂ СѓР¶Рµ РґРѕР±Р°РІРёР»Рё
 
 		sz++;
 	}
 
 	if (sz >= nMaxCount)
-		return FALSE; // место кончилось
+		return FALSE; // РјРµСЃС‚Рѕ РєРѕРЅС‡РёР»РѕСЃСЊ
 
 	szRasterSizes[sz].cx = nWidth; szRasterSizes[sz].cy = nHeight;
 	return TRUE;
@@ -1342,9 +1342,9 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 	HDC hdc = GetDC(NULL);
 	int aFontCount[] = { 0, 0, 0 };
 	wchar_t szName[MAX_PATH];
-	// Сначала загрузить имена шрифтов, установленных в систему (или зарегистрированных нами)
+	// РЎРЅР°С‡Р°Р»Р° Р·Р°РіСЂСѓР·РёС‚СЊ РёРјРµРЅР° С€СЂРёС„С‚РѕРІ, СѓСЃС‚Р°РЅРѕРІР»РµРЅРЅС‹С… РІ СЃРёСЃС‚РµРјСѓ (РёР»Рё Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅРЅС‹С… РЅР°РјРё)
 	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
-	// Теперь - загрузить размеры установленных терминальных шрифтов (aka Raster fonts)
+	// РўРµРїРµСЂСЊ - Р·Р°РіСЂСѓР·РёС‚СЊ СЂР°Р·РјРµСЂС‹ СѓСЃС‚Р°РЅРѕРІР»РµРЅРЅС‹С… С‚РµСЂРјРёРЅР°Р»СЊРЅС‹С… С€СЂРёС„С‚РѕРІ (aka Raster fonts)
 	LOGFONT term = {0}; term.lfCharSet = OEM_CHARSET; wcscpy_c(term.lfFaceName, L"Terminal");
 	//szRasterSizes[0].cx = szRasterSizes[0].cy = 0;
 	memset(szRasterSizes, 0, sizeof(szRasterSizes));
@@ -1388,8 +1388,8 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 	SafeCloseHandle(gpSetCls->mh_EnumThread);
 	_ASSERTE(gpSetCls->mh_EnumThread == NULL);
 
-	// Если шустрый юзер успел переключиться на вкладку "Views" до оконачания
-	// загрузки шрифтов - послать в диалог сообщение "Считать список из mh_Tabs[thi_Main]"
+	// Р•СЃР»Рё С€СѓСЃС‚СЂС‹Р№ СЋР·РµСЂ СѓСЃРїРµР» РїРµСЂРµРєР»СЋС‡РёС‚СЊСЃСЏ РЅР° РІРєР»Р°РґРєСѓ "Views" РґРѕ РѕРєРѕРЅР°С‡Р°РЅРёСЏ
+	// Р·Р°РіСЂСѓР·РєРё С€СЂРёС„С‚РѕРІ - РїРѕСЃР»Р°С‚СЊ РІ РґРёР°Р»РѕРі СЃРѕРѕР±С‰РµРЅРёРµ "РЎС‡РёС‚Р°С‚СЊ СЃРїРёСЃРѕРє РёР· mh_Tabs[thi_Main]"
 	if (ghOpWnd)
 	{
 		if (gpSetCls->mh_Tabs[thi_Views])
@@ -1511,7 +1511,7 @@ void CSettings::SearchForControls()
 					}
 
 					if (lFind >= 0)
-						break; // Нашли
+						break; // РќР°С€Р»Рё
 
 					continue;
 				}
@@ -1526,7 +1526,7 @@ void CSettings::SearchForControls()
 				if (!GetWindowText(hCtrl, szText, countof(szText)) || !*szText)
 					continue;
 
-				// В контроле может быть акселератор (&) мешающий поиску
+				// Р’ РєРѕРЅС‚СЂРѕР»Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р°РєСЃРµР»РµСЂР°С‚РѕСЂ (&) РјРµС€Р°СЋС‰РёР№ РїРѕРёСЃРєСѓ
 				wchar_t* p = wcschr(szText, L'&');
 				while (p)
 				{
@@ -1548,7 +1548,7 @@ void CSettings::SearchForControls()
 
 	if (hCtrl != NULL)
 	{
-		// Активировать нужный таб
+		// РђРєС‚РёРІРёСЂРѕРІР°С‚СЊ РЅСѓР¶РЅС‹Р№ С‚Р°Р±
 		if (hSelTab != hCurTab)
 		{
 			SelectTreeItem(GetDlgItem(ghOpWnd, tvSetupCategories), gpSetCls->m_Pages[iCurTab].hTI, true);
@@ -1557,7 +1557,7 @@ void CSettings::SearchForControls()
 			//ShowWindow(hSelTab, SW_HIDE);
 		}
 
-		// Показать хинт?
+		// РџРѕРєР°Р·Р°С‚СЊ С…РёРЅС‚?
 		static wchar_t szHint[2000];
 
 		LONG wID = GetWindowLong(hCtrl, GWL_ID);
@@ -1601,7 +1601,7 @@ void CSettings::SearchForControls()
 	}
 	
 wrap:
-	// Запомнить
+	// Р—Р°РїРѕРјРЅРёС‚СЊ
 	hLastTab = hCurTab;
 	hLastCtrl = hCtrl;
 
@@ -1670,7 +1670,7 @@ LRESULT CSettings::OnInitDialog()
 	gpSet->GetSettingsType(Storage, ReadOnly);
 	if (ReadOnly || isResetBasicSettings)
 	{
-		EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
+		EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // РЎРѕС…СЂР°РЅРµРЅРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ
 		if (isResetBasicSettings)
 		{
 			SetDlgItemText(ghOpWnd, bSaveSettings, L"Basic settings");
@@ -1816,7 +1816,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	SetDlgItemText(hWnd2, tFontFace, LogFont.lfFaceName);
 	SetDlgItemText(hWnd2, tFontFace2, LogFont2.lfFaceName);
 
-	// Добавить шрифты рисованные ConEmu
+	// Р”РѕР±Р°РІРёС‚СЊ С€СЂРёС„С‚С‹ СЂРёСЃРѕРІР°РЅРЅС‹Рµ ConEmu
 	//for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
 	for (INT_PTR j = 0; j < m_RegFonts.size(); ++j)
 	{
@@ -1835,7 +1835,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	}
 
 	DWORD dwThId;
-	mh_EnumThread = CreateThread(0,0,EnumFontsThread,0,0,&dwThId); // хэндл закроет сама нить
+	mh_EnumThread = CreateThread(0,0,EnumFontsThread,0,0,&dwThId); // С…СЌРЅРґР» Р·Р°РєСЂРѕРµС‚ СЃР°РјР° РЅРёС‚СЊ
 	{
 		wchar_t temp[MAX_PATH];
 
@@ -1992,7 +1992,7 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	EnableWindow(GetDlgItem(hWnd2, tQuakeAnimation), gpSet->isQuakeStyle);
 
 
-	// Скрытие рамки
+	// РЎРєСЂС‹С‚РёРµ СЂР°РјРєРё
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
@@ -2113,7 +2113,7 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 
 
 	checkDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
-	TODO("Надо бы увеличить, но нужно сервер допиливать");
+	TODO("РќР°РґРѕ Р±С‹ СѓРІРµР»РёС‡РёС‚СЊ, РЅРѕ РЅСѓР¶РЅРѕ СЃРµСЂРІРµСЂ РґРѕРїРёР»РёРІР°С‚СЊ");
 	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 4, 0);
 	SetDlgItemInt(hWnd2, tLongOutputHeight, gpSet->DefaultBufferHeight, FALSE);
 	//EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
@@ -2143,7 +2143,7 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 	//checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
 	//checkDlgButton(hWnd2, cbQuakeAutoHide, (gpSet->isQuakeStyle == 2) ? BST_CHECKED : BST_UNCHECKED);
 	////EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
-	//// копия на вкладке "Show"
+	//// РєРѕРїРёСЏ РЅР° РІРєР»Р°РґРєРµ "Show"
 	//SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 	////EnableWindow(GetDlgItem(hWnd2, tHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
 	////EnableWindow(GetDlgItem(hWnd2, stHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
@@ -2213,7 +2213,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 
 			SetDlgItemText(hWnd2, tCmdLine, gpSet->psStartSingleApp ? gpSet->psStartSingleApp : L"");
 
-			// Признак "командного файла" - лидирующая @, в диалоге - не показываем
+			// РџСЂРёР·РЅР°Рє "РєРѕРјР°РЅРґРЅРѕРіРѕ С„Р°Р№Р»Р°" - Р»РёРґРёСЂСѓСЋС‰Р°СЏ @, РІ РґРёР°Р»РѕРіРµ - РЅРµ РїРѕРєР°Р·С‹РІР°РµРј
 			SetDlgItemText(hWnd2, tStartTasksFile, gpSet->psStartTasksFile ? (*gpSet->psStartTasksFile == CmdFilePrefix ? (gpSet->psStartTasksFile+1) : gpSet->psStartTasksFile) : L"");
 
 			int nGroup = 0;
@@ -2227,7 +2227,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 				if (gpSet->nStartType == (rbStartNamedTask - rbStartSingleApp))
 				{
 					// 0 -- csNoTask
-					// Задачи с таким именем больше нет - прыгаем на "Командную строку"
+					// Р—Р°РґР°С‡Рё СЃ С‚Р°РєРёРј РёРјРµРЅРµРј Р±РѕР»СЊС€Рµ РЅРµС‚ - РїСЂС‹РіР°РµРј РЅР° "РљРѕРјР°РЅРґРЅСѓСЋ СЃС‚СЂРѕРєСѓ"
 					gpSet->nStartType = 0;
 					checkRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp);
 				}
@@ -2258,7 +2258,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 						EnableWindow(GetDlgItem(hWnd2, cbStartTasksFile), (CB == rbStartTasksFile));
 						//
 						EnableWindow(GetDlgItem(hWnd2, lbStartNamedTask), (CB == rbStartNamedTask));
-						// -- пока не поддерживается
+						// -- РїРѕРєР° РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ
 						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreFolders), FALSE/*(CB == rbStartLastTabs)*/);
 						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreEditors), FALSE/*(CB == rbStartLastTabs)*/);
 						// 
@@ -2347,13 +2347,13 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 							else
 							{
 								SafeFree(pszName);
-								// Задачи с таким именем больше нет - прыгаем на "Командную строку"
+								// Р—Р°РґР°С‡Рё СЃ С‚Р°РєРёРј РёРјРµРЅРµРј Р±РѕР»СЊС€Рµ РЅРµС‚ - РїСЂС‹РіР°РµРј РЅР° "РљРѕРјР°РЅРґРЅСѓСЋ СЃС‚СЂРѕРєСѓ"
 								gpSet->nStartType = 0;
 								checkRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp);
 								pageOpProc_Start(hWnd2, WM_COMMAND, rbStartSingleApp+gpSet->nStartType, 0);
 							}
 
-							// Показать содержимое задачи
+							// РџРѕРєР°Р·Р°С‚СЊ СЃРѕРґРµСЂР¶РёРјРѕРµ Р·Р°РґР°С‡Рё
 							pageOpProc_Start(hWnd2, MSG_SHOWTASKCONTENTS, gpSet->nStartType+rbStartSingleApp, 0);
 						}
 						break;
@@ -2420,10 +2420,10 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	checkDlgButton(hWnd2, cbUseClink, gpSet->isUseClink() ? BST_CHECKED : BST_UNCHECKED);
 
 	checkDlgButton(hWnd2, cbDosBox, gpConEmu->mb_DosBoxExists);
-	// изменение пока запрещено
-	// или чтобы ругнуться, если DosBox не установлен
+	// РёР·РјРµРЅРµРЅРёРµ РїРѕРєР° Р·Р°РїСЂРµС‰РµРЅРѕ
+	// РёР»Рё С‡С‚РѕР±С‹ СЂСѓРіРЅСѓС‚СЊСЃСЏ, РµСЃР»Рё DosBox РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ
 	EnableWindow(GetDlgItem(hWnd2, cbDosBox), !gpConEmu->mb_DosBoxExists);
-	//EnableWindow(GetDlgItem(hWnd2, bDosBoxSettings), FALSE); // изменение пока запрещено
+	//EnableWindow(GetDlgItem(hWnd2, bDosBoxSettings), FALSE); // РёР·РјРµРЅРµРЅРёРµ РїРѕРєР° Р·Р°РїСЂРµС‰РµРЅРѕ
 	ShowWindow(GetDlgItem(hWnd2, bDosBoxSettings), SW_HIDE);
 
 	checkDlgButton(hWnd2, cbShowWasHiddenMsg, gpSet->isDownShowHiddenMessage ? BST_UNCHECKED : BST_CHECKED);
@@ -2436,13 +2436,13 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	if (gpConEmu->mb_PortableRegExist)
 	{
 		checkDlgButton(hWnd2, cbPortableRegistry, gpSet->isPortableReg);
-		EnableWindow(GetDlgItem(hWnd2, bPortableRegistrySettings), FALSE); // изменение пока запрещено
+		EnableWindow(GetDlgItem(hWnd2, bPortableRegistrySettings), FALSE); // РёР·РјРµРЅРµРЅРёРµ РїРѕРєР° Р·Р°РїСЂРµС‰РµРЅРѕ
 	}
 	else
 	#endif
 	{
-		EnableWindow(GetDlgItem(hWnd2, cbPortableRegistry), FALSE); // изменение пока запрещено
-		EnableWindow(GetDlgItem(hWnd2, bPortableRegistrySettings), FALSE); // изменение пока запрещено
+		EnableWindow(GetDlgItem(hWnd2, cbPortableRegistry), FALSE); // РёР·РјРµРЅРµРЅРёРµ РїРѕРєР° Р·Р°РїСЂРµС‰РµРЅРѕ
+		EnableWindow(GetDlgItem(hWnd2, bPortableRegistrySettings), FALSE); // РёР·РјРµРЅРµРЅРёРµ РїРѕРєР° Р·Р°РїСЂРµС‰РµРЅРѕ
 	}
 	
 	return 0;
@@ -2622,9 +2622,9 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 {
-	// Сначала - то что обновляется при активации вкладки
+	// РЎРЅР°С‡Р°Р»Р° - С‚Рѕ С‡С‚Рѕ РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ РїСЂРё Р°РєС‚РёРІР°С†РёРё РІРєР»Р°РґРєРё
 
-	// Списки
+	// РЎРїРёСЃРєРё
 	DWORD VkMod = gpSet->GetHotkeyById(vkLDragKey);
 	FillListBoxByte(hWnd2, lbLDragKey, SettingsNS::Keys, VkMod);
 	VkMod = gpSet->GetHotkeyById(vkRDragKey);
@@ -2739,7 +2739,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 	static bool bLastHideEmpties = false;
 	bool bHideEmpties = (IsChecked(hWnd2, cbHotkeysAssignedOnly) == BST_CHECKED);
 
-	// Населить список всеми хоткеями
+	// РќР°СЃРµР»РёС‚СЊ СЃРїРёСЃРѕРє РІСЃРµРјРё С…РѕС‚РєРµСЏРјРё
 	HWND hList = GetDlgItem(hWnd2, lbConEmuHotKeys);
 	if (abInitial || (nLastShowType != nShowType) || (bLastHideEmpties != bHideEmpties))
 	{
@@ -2758,11 +2758,11 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 	lvi.pszText = szName;
 	const ConEmuHotKey *ppHK = NULL;
 	int ItemsCount = (int)ListView_GetItemCount(hList);
-	int nItem = -1; // если -1 то будет добавлен новый
+	int nItem = -1; // РµСЃР»Рё -1 С‚Рѕ Р±СѓРґРµС‚ РґРѕР±Р°РІР»РµРЅ РЅРѕРІС‹Р№
 
-	// Если выбран режим "Показать только макросы"
-	// то сначала отобразить пользовательские "Macro 00"
-	// а после них все системные, которые используют Macro (для справки)
+	// Р•СЃР»Рё РІС‹Р±СЂР°РЅ СЂРµР¶РёРј "РџРѕРєР°Р·Р°С‚СЊ С‚РѕР»СЊРєРѕ РјР°РєСЂРѕСЃС‹"
+	// С‚Рѕ СЃРЅР°С‡Р°Р»Р° РѕС‚РѕР±СЂР°Р·РёС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ "Macro 00"
+	// Р° РїРѕСЃР»Рµ РЅРёС… РІСЃРµ СЃРёСЃС‚РµРјРЅС‹Рµ, РєРѕС‚РѕСЂС‹Рµ РёСЃРїРѕР»СЊР·СѓСЋС‚ Macro (РґР»СЏ СЃРїСЂР°РІРєРё)
 	size_t stepMax = (nShowType == rbHotkeysMacros) ? 1 : 0;
 	for (size_t step = 0; step <= stepMax; step++)
 	{
@@ -2774,8 +2774,8 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 			{
 				ppHK = GetHotKeyPtr(iHkIdx++);
 				if (!ppHK)
-					break; // кончились
-				nItem = -1; // если -1 то будет добавлен новый
+					break; // РєРѕРЅС‡РёР»РёСЃСЊ
+				nItem = -1; // РµСЃР»Рё -1 С‚Рѕ Р±СѓРґРµС‚ РґРѕР±Р°РІР»РµРЅ РЅРѕРІС‹Р№
 
 				switch (nShowType)
 				{
@@ -2806,9 +2806,9 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 			}
 			else
 			{
-				nItem++; // на старте было "-1"
+				nItem++; // РЅР° СЃС‚Р°СЂС‚Рµ Р±С‹Р»Рѕ "-1"
 				if (nItem >= ItemsCount)
-					break; // кончились
+					break; // РєРѕРЅС‡РёР»РёСЃСЊ
 				LVITEM lvf = {LVIF_PARAM, nItem};
 				if (!ListView_GetItem(hList, &lvf))
 				{
@@ -2844,7 +2844,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 			case chk_Task:
 				wcscpy_c(szName, L"Task"); break;
 			default:
-				// Неизвестный тип!
+				// РќРµРёР·РІРµСЃС‚РЅС‹Р№ С‚РёРї!
 				_ASSERTE(FALSE && "Unknown ppHK->HkType");
 				//wcscpy_c(szName, L"???");
 				continue;
@@ -2852,7 +2852,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 			
 			if (nItem == -1)
 			{
-				lvi.iItem = ItemsCount + 1; // в конец
+				lvi.iItem = ItemsCount + 1; // РІ РєРѕРЅРµС†
 				lvi.lParam = (LPARAM)ppHK;
 				nItem = ListView_InsertItem(hList, &lvi);
 				//_ASSERTE(nItem==ItemsCount && nItem>=0);
@@ -2996,7 +2996,7 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					//	||vk==VK_PRIOR||vk==VK_NEXT||vk==VK_HOME||vk==VK_END
 					//	||vk==VK_INSERT) ? (HOTKEYF_EXT<<8) : 0), 0);
 
-					// Warning! Если nVK не указан в SettingsNS::nKeysHot - nVK будет обнулен
+					// Warning! Р•СЃР»Рё nVK РЅРµ СѓРєР°Р·Р°РЅ РІ SettingsNS::nKeysHot - nVK Р±СѓРґРµС‚ РѕР±РЅСѓР»РµРЅ
 					//FillListBoxByte(hWnd2, lbHotKeyList, SettingsNS::KeysHot, vk);
 					FillListBoxHotKeys(GetDlgItem(hWnd2, lbHotKeyList), eHkKeysHot, vk);
 				}
@@ -3210,11 +3210,11 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 	HWND hTip = ListView_GetToolTips(hList);
 	SetWindowPos(hTip, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 
-	// Убедиться, что поле клавиши идет поверх выпадающего списка
+	// РЈР±РµРґРёС‚СЊСЃСЏ, С‡С‚Рѕ РїРѕР»Рµ РєР»Р°РІРёС€Рё РёРґРµС‚ РїРѕРІРµСЂС… РІС‹РїР°РґР°СЋС‰РµРіРѕ СЃРїРёСЃРєР°
 	//HWND hHk = GetDlgItem(hWnd2, hkHotKeySelect);
 	SendDlgItemMessage(hWnd2, hkHotKeySelect, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
 
-	// Создать колонки
+	// РЎРѕР·РґР°С‚СЊ РєРѕР»РѕРЅРєРё
 	{
 		LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
 		wchar_t szTitle[64]; col.pszText = szTitle;
@@ -3272,8 +3272,8 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 
 	SetDlgItemText(hWnd2, tTabFontFace, gpSet->sTabFontFace);
 
-	if (gpSetCls->mh_EnumThread == NULL)  // Если шрифты уже считаны
-		OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0); // можно скопировать список с вкладки mh_Tabs[thi_Main]
+	if (gpSetCls->mh_EnumThread == NULL)  // Р•СЃР»Рё С€СЂРёС„С‚С‹ СѓР¶Рµ СЃС‡РёС‚Р°РЅС‹
+		OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0); // РјРѕР¶РЅРѕ СЃРєРѕРїРёСЂРѕРІР°С‚СЊ СЃРїРёСЃРѕРє СЃ РІРєР»Р°РґРєРё mh_Tabs[thi_Main]
 
 	DWORD nVal = gpSet->nTabFontHeight;
 	FillListBoxInt(hWnd2, tTabFontHeight, SettingsNS::FSizesSmall, nVal);
@@ -3319,8 +3319,8 @@ LRESULT CSettings::OnInitDialog_Status(HWND hWnd2, bool abInitial)
 {
 	SetDlgItemText(hWnd2, tStatusFontFace, gpSet->sStatusFontFace);
 
-	if (gpSetCls->mh_EnumThread == NULL)  // Если шрифты уже считаны
-		OnInitDialog_CopyFonts(hWnd2, tStatusFontFace, 0); // можно скопировать список с вкладки mh_Tabs[thi_Main]
+	if (gpSetCls->mh_EnumThread == NULL)  // Р•СЃР»Рё С€СЂРёС„С‚С‹ СѓР¶Рµ СЃС‡РёС‚Р°РЅС‹
+		OnInitDialog_CopyFonts(hWnd2, tStatusFontFace, 0); // РјРѕР¶РЅРѕ СЃРєРѕРїРёСЂРѕРІР°С‚СЊ СЃРїРёСЃРѕРє СЃ РІРєР»Р°РґРєРё mh_Tabs[thi_Main]
 
 	DWORD nVal = gpSet->nStatusFontHeight;
 	FillListBoxInt(hWnd2, tStatusFontHeight, SettingsNS::FSizesSmall, nVal);
@@ -3394,10 +3394,10 @@ void CSettings::OnInitDialog_StatusItems(HWND hWnd2)
 
 void CSettings::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)
 {
-	// Обновить палитры
+	// РћР±РЅРѕРІРёС‚СЊ РїР°Р»РёС‚СЂС‹
 	gpSet->PaletteSetStdIndexes();
 
-	// Обновить консоли
+	// РћР±РЅРѕРІРёС‚СЊ РєРѕРЅСЃРѕР»Рё
 	gpConEmu->UpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr);
 }
 
@@ -3427,7 +3427,7 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 	nVal = gpSet->AppStd.nPopBackColorIdx;
 	FillListBox(hWnd2, lbConClrPopBack, SettingsNS::ColorIdxTh, nVal);
 
-	//WARNING("Отладка...");
+	//WARNING("РћС‚Р»Р°РґРєР°...");
 	//if (gpSet->AppStd.nPopTextColorIdx <= 15 || gpSet->AppStd.nPopBackColorIdx <= 15
 	//	|| RELEASEDEBUGTEST(FALSE,TRUE))
 	//{
@@ -3476,7 +3476,7 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 	{
 		SendDlgItemMessage(hWnd2, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
 
-		if (/*(iCurPalette == 0) -- покажем последнюю, чтобы приоритет пользовательским отдать
+		if (/*(iCurPalette == 0) -- РїРѕРєР°Р¶РµРј РїРѕСЃР»РµРґРЅСЋСЋ, С‡С‚РѕР±С‹ РїСЂРёРѕСЂРёС‚РµС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРј РѕС‚РґР°С‚СЊ
 			&&*/ (memcmp(gLastColors.Colors, pPal->Colors, sizeof(pPal->Colors)) == 0)
 			&& (gLastColors.isExtendColors == pPal->isExtendColors)
 			&& (gLastColors.nExtendColorIdx == pPal->nExtendColorIdx))
@@ -3532,12 +3532,12 @@ LRESULT CSettings::OnInitDialog_Tasks(HWND hWnd2, bool abForceReload)
 			SetWindowLongPtr(GetDlgItem(hWnd2, lbCmdTasks), GWL_STYLE, nStyles|LBS_NOTIFY);
 	}
 
-	// Сброс ранее загруженного списка (ListBox: lbCmdTasks)
+	// РЎР±СЂРѕСЃ СЂР°РЅРµРµ Р·Р°РіСЂСѓР¶РµРЅРЅРѕРіРѕ СЃРїРёСЃРєР° (ListBox: lbCmdTasks)
 	SendDlgItemMessage(hWnd2, lbCmdTasks, LB_RESETCONTENT, 0,0);
 
 	//if (abForceReload)
 	//{
-	//	// Обновить группы команд
+	//	// РћР±РЅРѕРІРёС‚СЊ РіСЂСѓРїРїС‹ РєРѕРјР°РЅРґ
 	//	gpSet->LoadCmdTasks(NULL, true);
 	//}
 
@@ -3634,7 +3634,7 @@ static wchar_t* LoadAutorunValue(HKEY hkCmd, bool bClear)
 
 		if (bClear && *pszCmd)
 		{
-			// Просили почистить от "... Cmd_Autorun.cmd ..."
+			// РџСЂРѕСЃРёР»Рё РїРѕС‡РёСЃС‚РёС‚СЊ РѕС‚ "... Cmd_Autorun.cmd ..."
 			wchar_t* pszFind = StrStrI(pszCmd, L"\\ConEmu\\Cmd_Autorun.cmd");
 			if (pszFind)
 			{
@@ -3735,7 +3735,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			//-- moved to "ComSpec" page
 			//pageOpProc_Integr(hWnd2, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
 
-			// Возвращает NULL, если строка пустая
+			// Р’РѕР·РІСЂР°С‰Р°РµС‚ NULL, РµСЃР»Рё СЃС‚СЂРѕРєР° РїСѓСЃС‚Р°СЏ
 			wchar_t* pszCurInside = GetDlgItemText(hWnd2, cbInsideName);
 			_ASSERTE((pszCurInside==NULL) || (*pszCurInside!=0));
 			wchar_t* pszCurHere   = GetDlgItemText(hWnd2, cbHereName);
@@ -3946,7 +3946,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			if (!pszCmd)
 				break;
 
-			// Возвращает NULL, если строка пустая
+			// Р’РѕР·РІСЂР°С‰Р°РµС‚ NULL, РµСЃР»Рё СЃС‚СЂРѕРєР° РїСѓСЃС‚Р°СЏ
 			wchar_t* pszCurInside = GetDlgItemText(hWnd2, cbInsideName);
 			_ASSERTE((pszCurInside==NULL) || (*pszCurInside!=0));
 			wchar_t* pszCurHere   = GetDlgItemText(hWnd2, cbHereName);
@@ -4015,7 +4015,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 		break; // UM_RELOAD_HERE_LIST
 
 	case UM_RELOAD_AUTORUN:
-		if (wParam == UM_RELOAD_AUTORUN) // страховка
+		if (wParam == UM_RELOAD_AUTORUN) // СЃС‚СЂР°С…РѕРІРєР°
 		{
 			wchar_t *pszCmd = NULL;
 
@@ -4154,13 +4154,13 @@ void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, L
 			HKEY hkConEmu;
 			if (0 == RegCreateKeyEx(hkRoot, asName, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConEmu, NULL))
 			{
-				// Если задана "иконка"
+				// Р•СЃР»Рё Р·Р°РґР°РЅР° "РёРєРѕРЅРєР°"
 				if (asIcon)
 					RegSetValueEx(hkConEmu, L"Icon", 0, REG_SZ, (LPBYTE)asIcon, (lstrlen(asIcon)+1)*sizeof(*asIcon));
 				else
 					RegDeleteValue(hkConEmu, L"Icon");
 
-				// Команда
+				// РљРѕРјР°РЅРґР°
 				HKEY hkCmd;
 				if (0 == RegCreateKeyEx(hkConEmu, L"command", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkCmd, NULL))
 				{
@@ -4413,14 +4413,14 @@ LRESULT CSettings::OnInitDialog_Views(HWND hWnd2)
 {
 	CVConGuard VCon;
 	CVConGroup::GetActiveVCon(&VCon);
-	// пока выключим
+	// РїРѕРєР° РІС‹РєР»СЋС‡РёРј
 	EnableWindow(GetDlgItem(hWnd2, bApplyViewSettings), VCon.VCon() ? VCon->IsPanelViews() : FALSE);
 
 	SetDlgItemText(hWnd2, tThumbsFontName, gpSet->ThSet.Thumbs.sFontName);
 	SetDlgItemText(hWnd2, tTilesFontName, gpSet->ThSet.Tiles.sFontName);
 
-	if (gpSetCls->mh_EnumThread == NULL)  // Если шрифты уже считаны
-		OnInitDialog_CopyFonts(hWnd2, tThumbsFontName, tTilesFontName, 0); // можно скопировать список с вкладки mh_Tabs[thi_Main]
+	if (gpSetCls->mh_EnumThread == NULL)  // Р•СЃР»Рё С€СЂРёС„С‚С‹ СѓР¶Рµ СЃС‡РёС‚Р°РЅС‹
+		OnInitDialog_CopyFonts(hWnd2, tThumbsFontName, tTilesFontName, 0); // РјРѕР¶РЅРѕ СЃРєРѕРїРёСЂРѕРІР°С‚СЊ СЃРїРёСЃРѕРє СЃ РІРєР»Р°РґРєРё mh_Tabs[thi_Main]
 
 	DWORD nVal;
 
@@ -4497,7 +4497,7 @@ void CSettings::OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...)
 {
 	DWORD bAlmostMonospace;
 	int nIdx, nCount, i;
-	wchar_t szFontName[128]; // не должно быть более 32
+	wchar_t szFontName[128]; // РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ Р±РѕР»РµРµ 32
 	nCount = SendDlgItemMessage(gpSetCls->mh_Tabs[thi_Main], tFontFace, CB_GETCOUNT, 0, 0);
 
 #ifdef _DEBUG
@@ -4518,20 +4518,20 @@ void CSettings::OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...)
 
 	for (i = 0; i < nCount; i++)
 	{
-		// Взять список шрифтов с главной страницы
+		// Р’Р·СЏС‚СЊ СЃРїРёСЃРѕРє С€СЂРёС„С‚РѕРІ СЃ РіР»Р°РІРЅРѕР№ СЃС‚СЂР°РЅРёС†С‹
 		if (SendDlgItemMessage(gpSetCls->mh_Tabs[thi_Main], tFontFace, CB_GETLBTEXT, i, (LPARAM) szFontName) > 0)
 		{
-			// Показывать [Raster Fonts WxH] смысла нет
+			// РџРѕРєР°Р·С‹РІР°С‚СЊ [Raster Fonts WxH] СЃРјС‹СЃР»Р° РЅРµС‚
 			if (szFontName[0] == L'[' && !wcsncmp(szFontName+1, RASTER_FONTS_NAME, _tcslen(RASTER_FONTS_NAME)))
 				continue;
-			// В Thumbs & Tiles [bdf] пока не поддерживается
+			// Р’ Thumbs & Tiles [bdf] РїРѕРєР° РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ
 			int iLen = lstrlen(szFontName);
 			if ((iLen > CE_BDF_SUFFIX_LEN) && !wcscmp(szFontName+iLen-CE_BDF_SUFFIX_LEN, CE_BDF_SUFFIX))
 				continue;
 
 			bAlmostMonospace = (DWORD)SendDlgItemMessage(gpSetCls->mh_Tabs[thi_Main], tFontFace, CB_GETITEMDATA, i, 0);
 
-			// Теперь создаем новые строки
+			// РўРµРїРµСЂСЊ СЃРѕР·РґР°РµРј РЅРѕРІС‹Рµ СЃС‚СЂРѕРєРё
 			for (int j = 0; j < nCtrls; j++)
 			{
 				nIdx = SendDlgItemMessage(hWnd2, nCtrlIds[j], CB_ADDSTRING, 0, (LPARAM) szFontName);
@@ -4604,7 +4604,7 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2)
 {
 	ConEmuUpdateSettings* p = &gpSet->UpdSet;
 	
-	// Через интерфейс - не редактируется
+	// Р§РµСЂРµР· РёРЅС‚РµСЂС„РµР№СЃ - РЅРµ СЂРµРґР°РєС‚РёСЂСѓРµС‚СЃСЏ
 	SetDlgItemText(hWnd2, tUpdateVerLocation, p->UpdateVerLocation());
 	
 	checkDlgButton(hWnd2, cbUpdateCheckOnStartup, p->isUpdateCheckOnStartup);
@@ -4663,7 +4663,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case IDOK:
 		case IDCANCEL:
 		case IDCLOSE:
-			// -- обрабатываются в wndOpProc
+			// -- РѕР±СЂР°Р±Р°С‚С‹РІР°СЋС‚СЃСЏ РІ wndOpProc
 			break;
 		case rNoneAA:
 		case rStandardAA:
@@ -4720,7 +4720,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					if (gpSet->isQuakeStyle)
 					{
 						SetFocus(GetDlgItem(hWnd2, tWndWidth));
-						// Чтобы GetDefaultRect сработал правильно - сразу обновим значения
+						// Р§С‚РѕР±С‹ GetDefaultRect СЃСЂР°Р±РѕС‚Р°Р» РїСЂР°РІРёР»СЊРЅРѕ - СЃСЂР°Р·Сѓ РѕР±РЅРѕРІРёРј Р·РЅР°С‡РµРЅРёСЏ
 						if (!gpSet->wndCascade)
 							gpConEmu->wndX = newX;
 						gpConEmu->WndWidth.Set(true, newW.Style, newW.Value);
@@ -4738,7 +4738,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 						SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 
-						// Установить размер
+						// РЈСЃС‚Р°РЅРѕРІРёС‚СЊ СЂР°Р·РјРµСЂ
 						gpConEmu->SizeWindow(newW, newH);
 
 						SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
@@ -4759,7 +4759,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpConEmu->SetWindowMode(wmFullScreen);
 				}
 
-				// Запомнить "идеальный" размер окна, выбранный пользователем
+				// Р—Р°РїРѕРјРЅРёС‚СЊ "РёРґРµР°Р»СЊРЅС‹Р№" СЂР°Р·РјРµСЂ РѕРєРЅР°, РІС‹Р±СЂР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј
 				gpConEmu->StoreIdealRect();
 				//gpConEmu->UpdateIdealRect(TRUE);
 
@@ -4818,7 +4818,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		//	break;
 		//case cbCursorBlink:
 		//	gpSet->AppStd.isCursorBlink = IsChecked(hWnd2,cbCursorBlink);
-		//	if (!gpSet->AppStd.isCursorBlink) // если мигание отключается - то курсор может "замереть" в погашенном состоянии.
+		//	if (!gpSet->AppStd.isCursorBlink) // РµСЃР»Рё РјРёРіР°РЅРёРµ РѕС‚РєР»СЋС‡Р°РµС‚СЃСЏ - С‚Рѕ РєСѓСЂСЃРѕСЂ РјРѕР¶РµС‚ "Р·Р°РјРµСЂРµС‚СЊ" РІ РїРѕРіР°С€РµРЅРЅРѕРј СЃРѕСЃС‚РѕСЏРЅРёРё.
 		//		CVConGroup::InvalidateAll();
 		//	break;
 		case cbSingleInstance:
@@ -5027,7 +5027,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				//	IsChecked(hWnd2, rFullScreen) ? wmFullScreen : 
 				//	wmNormal;
 
-				// здесь меняются gpSet->isQuakeStyle, gpSet->isTryToCenter, gpSet->SetMinToTray
+				// Р·РґРµСЃСЊ РјРµРЅСЏСЋС‚СЃСЏ gpSet->isQuakeStyle, gpSet->isTryToCenter, gpSet->SetMinToTray
 				gpConEmu->SetQuakeMode(NewQuakeMode, (ConEmuWindowMode)gpSet->_WindowMode, true);
 			}
 			break;
@@ -5045,7 +5045,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			if (gpSet->isHideCaptionAlways())
 			{
 				checkDlgButton(hWnd2, cbHideCaptionAlways, BST_CHECKED);
-				//TODO("показать тултип, что скрытие обязательно при прозрачности");
+				//TODO("РїРѕРєР°Р·Р°С‚СЊ С‚СѓР»С‚РёРї, С‡С‚Рѕ СЃРєСЂС‹С‚РёРµ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РїСЂРё РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚Рё");
 			}
 			EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 
@@ -5086,8 +5086,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbTryToCenter:
 			gpSet->isTryToCenter = IsChecked(hWnd2, cbTryToCenter);
-			// ресайзим консоль, иначе после включения/отключения PAD-size
-			// размер консоли не изменится и она отрисуется с некорректным размером
+			// СЂРµСЃР°Р№Р·РёРј РєРѕРЅСЃРѕР»СЊ, РёРЅР°С‡Рµ РїРѕСЃР»Рµ РІРєР»СЋС‡РµРЅРёСЏ/РѕС‚РєР»СЋС‡РµРЅРёСЏ PAD-size
+			// СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё РЅРµ РёР·РјРµРЅРёС‚СЃСЏ Рё РѕРЅР° РѕС‚СЂРёСЃСѓРµС‚СЃСЏ СЃ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Рј СЂР°Р·РјРµСЂРѕРј
 			gpConEmu->OnSize(true);
 			gpConEmu->InvalidateAll();
 			break;
@@ -5187,8 +5187,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			//		gpSet->isTabs = 2; break;
 			//}
 
-			//TODO("Хорошо бы сразу видимость табов менять");
-			////gpConEmu->mp_TabBar->Update(TRUE); -- это как-то неправильно работает.
+			//TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ СЃСЂР°Р·Сѓ РІРёРґРёРјРѕСЃС‚СЊ С‚Р°Р±РѕРІ РјРµРЅСЏС‚СЊ");
+			////gpConEmu->mp_TabBar->Update(TRUE); -- СЌС‚Рѕ РєР°Рє-С‚Рѕ РЅРµРїСЂР°РІРёР»СЊРЅРѕ СЂР°Р±РѕС‚Р°РµС‚.
 			break;
 		case cbTabsLocationBottom:
 			gpSet->nTabsLocation = IsChecked(hWnd2, cbTabsLocationBottom);
@@ -5341,14 +5341,14 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 			if (gpSet->isConVisible)
 			{
-				// Если показывать - то только текущую (иначе на экране мешанина консолей будет
+				// Р•СЃР»Рё РїРѕРєР°Р·С‹РІР°С‚СЊ - С‚Рѕ С‚РѕР»СЊРєРѕ С‚РµРєСѓС‰СѓСЋ (РёРЅР°С‡Рµ РЅР° СЌРєСЂР°РЅРµ РјРµС€Р°РЅРёРЅР° РєРѕРЅСЃРѕР»РµР№ Р±СѓРґРµС‚
 				CVConGuard VCon;
 				if (CVConGroup::GetActiveVCon(&VCon) >= 0)
 					VCon->RCon()->ShowConsole(gpSet->isConVisible);
 			}
 			else
 			{
-				// А если скрывать - то все сразу
+				// Рђ РµСЃР»Рё СЃРєСЂС‹РІР°С‚СЊ - С‚Рѕ РІСЃРµ СЃСЂР°Р·Сѓ
 				for (int i=0; i<MAX_CONSOLE_COUNT; i++)
 				{
 					CVirtualConsole *pCon = gpConEmu->GetVCon(i);
@@ -5403,7 +5403,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbPortableRegistry:
 			#ifdef USEPORTABLEREGISTRY
 			gpSet->isPortableReg = IsChecked(hWnd2, cbPortableRegistry);
-			// Проверить, готов ли к использованию
+			// РџСЂРѕРІРµСЂРёС‚СЊ, РіРѕС‚РѕРІ Р»Рё Рє РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЋ
 			if (!gpConEmu->PreparePortableReg())
 			{
 				gpSet->isPortableReg = false;
@@ -5597,11 +5597,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbInstallKeybHooks:
 			switch (IsChecked(hWnd2,cbInstallKeybHooks))
 			{
-					// Разрешено
+					// Р Р°Р·СЂРµС€РµРЅРѕ
 				case BST_CHECKED: gpSet->m_isKeyboardHooks = 1; gpConEmu->RegisterHooks(); break;
-					// Запрещено
+					// Р—Р°РїСЂРµС‰РµРЅРѕ
 				case BST_UNCHECKED: gpSet->m_isKeyboardHooks = 2; gpConEmu->UnRegisterHooks(); break;
-					// Запрос при старте
+					// Р—Р°РїСЂРѕСЃ РїСЂРё СЃС‚Р°СЂС‚Рµ
 				case BST_INDETERMINATE: gpSet->m_isKeyboardHooks = 0; break;
 			}
 
@@ -5610,7 +5610,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			if (gpConEmu->mb_DosBoxExists)
 			{
 				checkDlgButton(hWnd2, cbDosBox, BST_CHECKED);
-				EnableWindow(GetDlgItem(hWnd2, cbDosBox), FALSE); // изменение пока запрещено
+				EnableWindow(GetDlgItem(hWnd2, cbDosBox), FALSE); // РёР·РјРµРЅРµРЅРёРµ РїРѕРєР° Р·Р°РїСЂРµС‰РµРЅРѕ
 			}
 			else
 			{
@@ -5841,11 +5841,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					else
 						gpSet->PaletteDelete(pszName);
 				}
-				// Поставить фокус в список, а то кнопки могут "задизэблиться"
+				// РџРѕСЃС‚Р°РІРёС‚СЊ С„РѕРєСѓСЃ РІ СЃРїРёСЃРѕРє, Р° С‚Рѕ РєРЅРѕРїРєРё РјРѕРіСѓС‚ "Р·Р°РґРёР·СЌР±Р»РёС‚СЊСЃСЏ"
 				SetFocus(hList);
 				HWND hCB = GetDlgItem(hWnd2, CB);
 				SetWindowLongPtr(hCB, GWL_STYLE, GetWindowLongPtr(hCB, GWL_STYLE) & ~BS_DEFPUSHBUTTON);
-				// Перетряхнуть
+				// РџРµСЂРµС‚СЂСЏС…РЅСѓС‚СЊ
 				OnInitDialog_Color(hWnd2);
 			} // cbColorSchemeSave, cbColorSchemeDelete
 			break;
@@ -5906,7 +5906,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		//		{
 		//			gpSet->nTransparentInactive = newV;
 		//			SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM)gpSet->nTransparentInactive);
-		//			//gpConEmu->OnTransparent(); -- смысла нет, ConEmu сейчас "активен"
+		//			//gpConEmu->OnTransparent(); -- СЃРјС‹СЃР»Р° РЅРµС‚, ConEmu СЃРµР№С‡Р°СЃ "Р°РєС‚РёРІРµРЅ"
 		//		}
 		//	} break;
 		case cbUserScreenTransparent:
@@ -5916,7 +5916,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				if (hWnd2) checkDlgButton(hWnd2, cbHideCaptionAlways, gpSet->isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
 				EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 
-				gpConEmu->OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
+				gpConEmu->OnHideCaption(); // РїСЂРё РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚Рё - РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ СЃРєСЂС‹С‚РёРµ Р·Р°РіРѕР»РѕРІРєР° + РєРЅРѕРїРєРё
 				gpConEmu->UpdateWindowRgn();
 			} break;
 		case cbColorKeyTransparent:
@@ -6201,7 +6201,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					SetCursor(LoadCursor(NULL,IDC_WAIT));
 					// Redraw checkboxes to avoid lags in painting while installing hooks
 					RedrawWindow(hWnd2, NULL, NULL, RDW_UPDATENOW|RDW_ALLCHILDREN);
-					// Инициировать эксплорер, если он еще не был обработан
+					// РРЅРёС†РёРёСЂРѕРІР°С‚СЊ СЌРєСЃРїР»РѕСЂРµСЂ, РµСЃР»Рё РѕРЅ РµС‰Рµ РЅРµ Р±С‹Р» РѕР±СЂР°Р±РѕС‚Р°РЅ
 					gpConEmu->mp_DefTrm->PostCreated(true, true);
 				}
 			}
@@ -6576,7 +6576,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 
 	case cbCmdGroupApp:
 		{
-			// Добавить команду в группу
+			// Р”РѕР±Р°РІРёС‚СЊ РєРѕРјР°РЅРґСѓ РІ РіСЂСѓРїРїСѓ
 			RConStartArgs args;
 			args.aRecreate = cra_EditTab;
 			int nDlgRc = gpConEmu->RecreateDlg(&args);
@@ -6645,7 +6645,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 
 	case cbCmdTasksParm:
 		{
-			// Добавить файл
+			// Р”РѕР±Р°РІРёС‚СЊ С„Р°Р№Р»
 			wchar_t temp[MAX_PATH+10] = {};
 			OPENFILENAME ofn = {sizeof(ofn)};
 			ofn.hwndOwner = ghOpWnd;
@@ -6679,11 +6679,11 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 
 	case cbCmdTasksDir:
 		{
-			TODO("Извлечь текущий каталог запуска");
+			TODO("РР·РІР»РµС‡СЊ С‚РµРєСѓС‰РёР№ РєР°С‚Р°Р»РѕРі Р·Р°РїСѓСЃРєР°");
 
 			BROWSEINFO bi = {ghOpWnd};
 			wchar_t szFolder[MAX_PATH+1] = {0};
-			TODO("Извлечь текущий каталог запуска");
+			TODO("РР·РІР»РµС‡СЊ С‚РµРєСѓС‰РёР№ РєР°С‚Р°Р»РѕРі Р·Р°РїСѓСЃРєР°");
 			bi.pszDisplayName = szFolder;
 			wchar_t szTitle[100];
 			bi.lpszTitle = wcscpy(szTitle, L"Choose tab startup directory");
@@ -6713,7 +6713,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 
 	case cbCmdTasksActive:
 		{
-			wchar_t* pszTasks = CVConGroup::GetTasks(NULL); // вернуть все открытые таски
+			wchar_t* pszTasks = CVConGroup::GetTasks(NULL); // РІРµСЂРЅСѓС‚СЊ РІСЃРµ РѕС‚РєСЂС‹С‚С‹Рµ С‚Р°СЃРєРё
 			if (pszTasks)
 			{
 				SendDlgItemMessage(hWnd2, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszTasks);
@@ -6728,10 +6728,10 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 					gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION) != IDYES)
 				break;
 
-			// Добавить таски В КОНЕЦ
+			// Р”РѕР±Р°РІРёС‚СЊ С‚Р°СЃРєРё Р’ РљРћРќР•Р¦
 			CreateDefaultTasks(true);
 
-			// Обновить список на экране
+			// РћР±РЅРѕРІРёС‚СЊ СЃРїРёСЃРѕРє РЅР° СЌРєСЂР°РЅРµ
 			OnInitDialog_Tasks(hWnd2, true);
 		} // case cbAddDefaults:
 		break;
@@ -6742,26 +6742,26 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 					gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION) != IDYES)
 				break;
 
-			// Обновить группы команд
+			// РћР±РЅРѕРІРёС‚СЊ РіСЂСѓРїРїС‹ РєРѕРјР°РЅРґ
 			gpSet->LoadCmdTasks(NULL, true);
 
-			// Обновить список на экране
+			// РћР±РЅРѕРІРёС‚СЊ СЃРїРёСЃРѕРє РЅР° СЌРєСЂР°РЅРµ
 			OnInitDialog_Tasks(hWnd2, true);
 		} // cbCmdTasksReload
 		break;
 
-	case cbCmdTaskbarTasks: // Находится в IDD_SPG_TASKBAR!
+	case cbCmdTaskbarTasks: // РќР°С…РѕРґРёС‚СЃСЏ РІ IDD_SPG_TASKBAR!
 		gpSet->isStoreTaskbarkTasks = IsChecked(hWnd2, CB);
 		break;
-	case cbCmdTaskbarCommands: // Находится в IDD_SPG_TASKBAR!
+	case cbCmdTaskbarCommands: // РќР°С…РѕРґРёС‚СЃСЏ РІ IDD_SPG_TASKBAR!
 		gpSet->isStoreTaskbarCommands = IsChecked(hWnd2, CB);
 		break;
-	case cbCmdTaskbarUpdate: // Находится в IDD_SPG_TASKBAR!
+	case cbCmdTaskbarUpdate: // РќР°С…РѕРґРёС‚СЃСЏ РІ IDD_SPG_TASKBAR!
 		if (!gpSet->SaveCmdTasks(NULL))
 		{
 			LPCWSTR pszMsg = L"Can't save task list to settings!\r\nJump list may be not working!\r\nUpdate Windows 7 task list now?";
 			if (MessageBox(ghOpWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
-				break; // Обновлять таскбар не будем
+				break; // РћР±РЅРѕРІР»СЏС‚СЊ С‚Р°СЃРєР±Р°СЂ РЅРµ Р±СѓРґРµРј
 		}
 		UpdateWin7TaskList(true);
 		break;
@@ -6770,7 +6770,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 	return 0;
 }
 
-// Возвращает TRUE, если значение распознано и отличается от старого
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ TRUE, РµСЃР»Рё Р·РЅР°С‡РµРЅРёРµ СЂР°СЃРїРѕР·РЅР°РЅРѕ Рё РѕС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ СЃС‚Р°СЂРѕРіРѕ
 bool CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 {
 	//bool result = false;
@@ -6797,12 +6797,12 @@ bool CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 //	if ((pszText[0] == L'#') || (pszText[0] == L'x' || pszText[0] == L'X') || (pszText[0] == L'0' && (pszText[1] == L'x' || pszText[1] == L'X')))
 //	{
 //		pch = (pszText[0] == L'0') ? (pszText+2) : (pszText+1);
-//		// Считаем значение 16-ричным rgb кодом
+//		// РЎС‡РёС‚Р°РµРј Р·РЅР°С‡РµРЅРёРµ 16-СЂРёС‡РЅС‹Рј rgb РєРѕРґРѕРј
 //		pchEnd = NULL;
 //		COLORREF clr = wcstoul(pch, &pchEnd, 16);
 //		if (clr && (pszText[0] == L'#'))
 //		{
-//			// "#rrggbb", обменять местами rr и gg, нам нужен COLORREF (bbggrr)
+//			// "#rrggbb", РѕР±РјРµРЅСЏС‚СЊ РјРµСЃС‚Р°РјРё rr Рё gg, РЅР°Рј РЅСѓР¶РµРЅ COLORREF (bbggrr)
 //			clr = ((clr & 0xFF)<<16) | ((clr & 0xFF00)) | ((clr & 0xFF0000)>>16);
 //		}
 //		// Done
@@ -6838,7 +6838,7 @@ bool CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 //				r &= 0xFF;
 //			}
 //
-//			// Достаточно ввода одной компоненты
+//			// Р”РѕСЃС‚Р°С‚РѕС‡РЅРѕ РІРІРѕРґР° РѕРґРЅРѕР№ РєРѕРјРїРѕРЅРµРЅС‚С‹
 //			if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && *pCR != RGB(r, g, b))
 //			{
 //				*pCR = RGB(r, g, b);
@@ -6896,7 +6896,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				if (isDigit(pc[1]))
 				{
 					pc++;
-					// Получить индекс цвета (0..15)
+					// РџРѕР»СѓС‡РёС‚СЊ РёРЅРґРµРєСЃ С†РІРµС‚Р° (0..15)
 					int nIdx = *pc - L'0';
 
 					if (nIdx == 1 && isDigit(pc[1]))
@@ -6913,7 +6913,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			}
 		}
 
-		// Если таки изменлся - обновим
+		// Р•СЃР»Рё С‚Р°РєРё РёР·РјРµРЅР»СЃСЏ - РѕР±РЅРѕРІРёРј
 		if (newBgColors && gpSet->nBgImageColors != newBgColors)
 		{
 			gpSet->nBgImageColors = newBgColors;
@@ -6955,7 +6955,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->nCenterConsolePad = nNewPad;
 		else if (nNewPad > CENTERCONSOLEPAD_MAX)
 			SetDlgItemInt(hWnd2, tPadSize, CENTERCONSOLEPAD_MAX, FALSE);
-		// Если юзер ставит "бордюр" то нужно сразу включить опцию, чтобы он работал
+		// Р•СЃР»Рё СЋР·РµСЂ СЃС‚Р°РІРёС‚ "Р±РѕСЂРґСЋСЂ" С‚Рѕ РЅСѓР¶РЅРѕ СЃСЂР°Р·Сѓ РІРєР»СЋС‡РёС‚СЊ РѕРїС†РёСЋ, С‡С‚РѕР±С‹ РѕРЅ СЂР°Р±РѕС‚Р°Р»
 		if (gpSet->nCenterConsolePad && !IsChecked(hWnd2, cbTryToCenter))
 		{
 			gpSet->isTryToCenter = true;
@@ -6981,7 +6981,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			//gpSet->bgImageDarker = newV;
 			//SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
 
-			//// Картинку может установить и плагин
+			//// РљР°СЂС‚РёРЅРєСѓ РјРѕР¶РµС‚ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ Рё РїР»Р°РіРёРЅ
 			//if (gpSet->isShowBgImage && gpSet->sBgImage[0])
 			//	LoadBackgroundFile(gpSet->sBgImage);
 			//else
@@ -7081,9 +7081,9 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 		if (GetDlgItemText(hWnd2, TB, temp, countof(temp)) && temp[0])
 		{
-			temp[31] = 0; // страховка
+			temp[31] = 0; // СЃС‚СЂР°С…РѕРІРєР°
 
-			//03.04.2013, via gmail, просили не добавлять автоматом %s
+			//03.04.2013, via gmail, РїСЂРѕСЃРёР»Рё РЅРµ РґРѕР±Р°РІР»СЏС‚СЊ Р°РІС‚РѕРјР°С‚РѕРј %s
 			//if (wcsstr(temp, L"%s") || wcsstr(temp, L"%n"))
 			{
 				if (TB == tTabConsole)
@@ -7633,7 +7633,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				DWORD nMod = (CEHOTKEY_MODMASK & mp_ActiveHotKey->VkMod);
 				if (nMod == 0)
 				{
-					// Если модификатора вообще не было - ставим Win
+					// Р•СЃР»Рё РјРѕРґРёС„РёРєР°С‚РѕСЂР° РІРѕРѕР±С‰Рµ РЅРµ Р±С‹Р»Рѕ - СЃС‚Р°РІРёРј Win
 					BYTE b = VK_LWIN;
 					//FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::Modifiers, b);
 					FillListBoxHotKeys(GetDlgItem(hWnd2, lbHotKeyMod1), eHkModifiers, b);
@@ -7667,7 +7667,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			GetListBoxHotKey(GetDlgItem(hWnd2,lbHotKeyMod1+i),eHkModifiers,vk);
 			BYTE vkChange = vk;
 
-			// Некоторые модификаторы НЕ допустимы при регистрации глобальных хоткеев (ограничения WinAPI)
+			// РќРµРєРѕС‚РѕСЂС‹Рµ РјРѕРґРёС„РёРєР°С‚РѕСЂС‹ РќР• РґРѕРїСѓСЃС‚РёРјС‹ РїСЂРё СЂРµРіРёСЃС‚СЂР°С†РёРё РіР»РѕР±Р°Р»СЊРЅС‹С… С…РѕС‚РєРµРµРІ (РѕРіСЂР°РЅРёС‡РµРЅРёСЏ WinAPI)
 			if (mp_ActiveHotKey && (mp_ActiveHotKey->HkType == chk_Global || mp_ActiveHotKey->HkType == chk_Local))
 			{
 				switch (vk)
@@ -7694,7 +7694,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				nModifers = ConEmuHotKey::SetModifier(nModifers, vk, false);
 		}
 
-		_ASSERTE((nModifers & 0xFF) == 0); // Модификаторы должны быть строго в старших 3-х байтах
+		_ASSERTE((nModifers & 0xFF) == 0); // РњРѕРґРёС„РёРєР°С‚РѕСЂС‹ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃС‚СЂРѕРіРѕ РІ СЃС‚Р°СЂС€РёС… 3-С… Р±Р°Р№С‚Р°С…
 
 		if (mp_ActiveHotKey && (mp_ActiveHotKey->HkType != chk_Modifier) && (mp_ActiveHotKey->HkType != chk_System))
 		{
@@ -7707,17 +7707,17 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				if (!nModifers)
 					nModifers = (VK_LWIN << 8);
-				// Для этой группы - модификаторы назначаются "чохом"
-				_ASSERTE((nModifers & 0xFF) == 0); // тут данные в старших трех байтах
-				gpSet->nHostkeyNumberModifier = (nModifers >> 8); // а тут в младших трех
+				// Р”Р»СЏ СЌС‚РѕР№ РіСЂСѓРїРїС‹ - РјРѕРґРёС„РёРєР°С‚РѕСЂС‹ РЅР°Р·РЅР°С‡Р°СЋС‚СЃСЏ "С‡РѕС…РѕРј"
+				_ASSERTE((nModifers & 0xFF) == 0); // С‚СѓС‚ РґР°РЅРЅС‹Рµ РІ СЃС‚Р°СЂС€РёС… С‚СЂРµС… Р±Р°Р№С‚Р°С…
+				gpSet->nHostkeyNumberModifier = (nModifers >> 8); // Р° С‚СѓС‚ РІ РјР»Р°РґС€РёС… С‚СЂРµС…
 			}
 			else if (mp_ActiveHotKey->HkType == chk_ArrHost)
 			{
 				if (!nModifers)
 					nModifers = (VK_LWIN << 8);
-				// Для этой группы - модификаторы назначаются "чохом"
-				_ASSERTE((nModifers & 0xFF) == 0); // тут данные в старших трех байтах
-				gpSet->nHostkeyArrowModifier = (nModifers >> 8); // а тут в младших трех
+				// Р”Р»СЏ СЌС‚РѕР№ РіСЂСѓРїРїС‹ - РјРѕРґРёС„РёРєР°С‚РѕСЂС‹ РЅР°Р·РЅР°С‡Р°СЋС‚СЃСЏ "С‡РѕС…РѕРј"
+				_ASSERTE((nModifers & 0xFF) == 0); // С‚СѓС‚ РґР°РЅРЅС‹Рµ РІ СЃС‚Р°СЂС€РёС… С‚СЂРµС… Р±Р°Р№С‚Р°С…
+				gpSet->nHostkeyArrowModifier = (nModifers >> 8); // Р° С‚СѓС‚ РІ РјР»Р°РґС€РёС… С‚СЂРµС…
 			}
 			else //if (mp_ActiveHotKey->VkMod)
 			{
@@ -7729,11 +7729,11 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 		//if (mp_ActiveHotKey->HkType == chk_Hostkey)
 		//{
-		//	gpSet->nHostkeyModifier = (nModifers >> 8); // а тут они хранятся в младших (так сложилось)
+		//	gpSet->nHostkeyModifier = (nModifers >> 8); // Р° С‚СѓС‚ РѕРЅРё С…СЂР°РЅСЏС‚СЃСЏ РІ РјР»Р°РґС€РёС… (С‚Р°Рє СЃР»РѕР¶РёР»РѕСЃСЊ)
 		//}
 		//else if (mp_ActiveHotKey->HkType == chk_Hostkey)
 		//{
-		//	gpSet->nHostkeyModifier = (nModifers >> 8); // а тут они хранятся в младших (так сложилось)
+		//	gpSet->nHostkeyModifier = (nModifers >> 8); // Р° С‚СѓС‚ РѕРЅРё С…СЂР°РЅСЏС‚СЃСЏ РІ РјР»Р°РґС€РёС… (С‚Р°Рє СЃР»РѕР¶РёР»РѕСЃСЊ)
 		//}
 
 		FillHotKeysList(hWnd2, FALSE);
@@ -8037,7 +8037,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						if (pszText)
 							GetWindowText(hList, pszText, nLen+1);
 					}
-					else if ((HIWORD(wParam) == CBN_SELCHANGE) && nIdx > 0) // 0 -- current color scheme. ее удалять/сохранять "нельзя"
+					else if ((HIWORD(wParam) == CBN_SELCHANGE) && nIdx > 0) // 0 -- current color scheme. РµРµ СѓРґР°Р»СЏС‚СЊ/СЃРѕС…СЂР°РЅСЏС‚СЊ "РЅРµР»СЊР·СЏ"
 					{
 						INT_PTR nLen = SendMessage(hList, CB_GETLBTEXTLEN, nIdx, 0);
 						pszText = (nLen > 0) ? (wchar_t*)malloc((nLen+1)*sizeof(wchar_t)) : NULL;
@@ -8055,8 +8055,8 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					EnableWindow(GetDlgItem(hWnd2, cbColorSchemeDelete), bEnabled);
 				}
 
-				// Юзер выбрал в списке другую палитру
-				if ((HIWORD(wParam) == CBN_SELCHANGE) && gbLastColorsOk)  // только если инициализация палитр завершилась
+				// Р®Р·РµСЂ РІС‹Р±СЂР°Р» РІ СЃРїРёСЃРєРµ РґСЂСѓРіСѓСЋ РїР°Р»РёС‚СЂСѓ
+				if ((HIWORD(wParam) == CBN_SELCHANGE) && gbLastColorsOk)  // С‚РѕР»СЊРєРѕ РµСЃР»Рё РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїР°Р»РёС‚СЂ Р·Р°РІРµСЂС€РёР»Р°СЃСЊ
 				{
 					//const DWORD* pdwDefData = NULL;
 					const Settings::ColorPalette* pPal = NULL;
@@ -8068,7 +8068,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					//	pdwDefData = DefColors[nIdx-1].dwDefColors;
 					//else
 					else if ((pPal = gpSet->PaletteGet(nIdx-1)) == NULL)
-						return 0; // неизвестный набор
+						return 0; // РЅРµРёР·РІРµСЃС‚РЅС‹Р№ РЅР°Р±РѕСЂ
 
 					uint nCount = countof(pPal->Colors);
 
@@ -8250,7 +8250,7 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 
 	if ((LONG_PTR)phdr == 0x101)
 	{
-		// Переключиться на следующий таб
+		// РџРµСЂРµРєР»СЋС‡РёС‚СЊСЃСЏ РЅР° СЃР»РµРґСѓСЋС‰РёР№ С‚Р°Р±
 		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
 		NMTREEVIEW nm = {{hTree, tvSetupCategories, TVN_SELCHANGED}};
 		nm.itemOld.hItem = TreeView_GetSelection(hTree);
@@ -8339,10 +8339,10 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 	{
 		SetCursor(LoadCursor(NULL,IDC_WAIT));
 
-		// Сначала обновить DC, чтобы некрасивостей не было
+		// РЎРЅР°С‡Р°Р»Р° РѕР±РЅРѕРІРёС‚СЊ DC, С‡С‚РѕР±С‹ РЅРµРєСЂР°СЃРёРІРѕСЃС‚РµР№ РЅРµ Р±С‹Р»Рѕ
 		gpConEmu->UpdateWindowChild(NULL);
 
-		//2009-05-03. DialogBox создает МОДАЛЬНЫЙ диалог, а нам нужен НЕмодальный
+		//2009-05-03. DialogBox СЃРѕР·РґР°РµС‚ РњРћР”РђР›Р¬РќР«Р™ РґРёР°Р»РѕРі, Р° РЅР°Рј РЅСѓР¶РµРЅ РќР•РјРѕРґР°Р»СЊРЅС‹Р№
 		HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, wndOpProc);
 
 		if (!hOpt)
@@ -8426,13 +8426,13 @@ void CSettings::OnResetOrReload(BOOL abResetOnly)
 	}
 	_ASSERTE(ghOpWnd == NULL);
 	
-	// Сброс настроек на умолчания
+	// РЎР±СЂРѕСЃ РЅР°СЃС‚СЂРѕРµРє РЅР° СѓРјРѕР»С‡Р°РЅРёСЏ
 	gpSet->InitSettings();
 
-	// Почистить макросы и сбросить на умолчания
+	// РџРѕС‡РёСЃС‚РёС‚СЊ РјР°РєСЂРѕСЃС‹ Рё СЃР±СЂРѕСЃРёС‚СЊ РЅР° СѓРјРѕР»С‡Р°РЅРёСЏ
 	InitVars_Hotkeys();
 
-	// Если надо - загрузить из реестра/xml
+	// Р•СЃР»Рё РЅР°РґРѕ - Р·Р°РіСЂСѓР·РёС‚СЊ РёР· СЂРµРµСЃС‚СЂР°/xml
 	if (!abResetOnly)
 	{
 		bool bNeedCreateVanilla = false;
@@ -8498,7 +8498,7 @@ INT_PTR CSettings::ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 	return 0;
 }
 
-// DlgProc для окна настроек (IDD_SETTINGS)
+// DlgProc РґР»СЏ РѕРєРЅР° РЅР°СЃС‚СЂРѕРµРє (IDD_SETTINGS)
 INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	switch (messg)
@@ -8587,12 +8587,12 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 							if (wFocusID == tOptionSearch)
 							{
-								// По Enter - искать следующий контрол, раз фокус в поле ввода
+								// РџРѕ Enter - РёСЃРєР°С‚СЊ СЃР»РµРґСѓСЋС‰РёР№ РєРѕРЅС‚СЂРѕР», СЂР°Р· С„РѕРєСѓСЃ РІ РїРѕР»Рµ РІРІРѕРґР°
 								gpSetCls->SearchForControls();
 							}
 							else
 							{
-								// были изменения в полях размера/положения?
+								// Р±С‹Р»Рё РёР·РјРµРЅРµРЅРёСЏ РІ РїРѕР»СЏС… СЂР°Р·РјРµСЂР°/РїРѕР»РѕР¶РµРЅРёСЏ?
 								if (gpSetCls->mh_Tabs[thi_SizePos]
 									&& IsWindowEnabled(GetDlgItem(gpSetCls->mh_Tabs[thi_SizePos], cbApplyPos)))
 								{
@@ -8620,7 +8620,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 					case IDOK:
 					case IDCANCEL:
 					case IDCLOSE:
-						// -- перенесено в WM_CLOSE
+						// -- РїРµСЂРµРЅРµСЃРµРЅРѕ РІ WM_CLOSE
 						//if (gpSet->isTabs==1) gpConEmu->ForceShowTabs(TRUE); else
 						//if (gpSet->isTabs==0) gpConEmu->ForceShowTabs(FALSE); else
 						//	gpConEmu->mp_TabBar->Update();
@@ -8754,12 +8754,12 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 			if (wParam == 0x101)
 			{
-				// Переключиться на следующий таб
+				// РџРµСЂРµРєР»СЋС‡РёС‚СЊСЃСЏ РЅР° СЃР»РµРґСѓСЋС‰РёР№ С‚Р°Р±
 				gpSetCls->OnPage((LPNMHDR)wParam);
 			}
 			else if (wParam == 0x102)
 			{
-				// Переключиться на предыдущий таб
+				// РџРµСЂРµРєР»СЋС‡РёС‚СЊСЃСЏ РЅР° РїСЂРµРґС‹РґСѓС‰РёР№ С‚Р°Р±
 				gpSetCls->OnPage((LPNMHDR)wParam);
 			}
 
@@ -8777,7 +8777,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		case WM_HELP:
 			if ((wParam == 0) && (lParam != 0))
 			{
-				// Показать хинт?
+				// РџРѕРєР°Р·Р°С‚СЊ С…РёРЅС‚?
 				HELPINFO* hi = (HELPINFO*)lParam;
 				if (hi->cbSize >= sizeof(HELPINFO))
 				{
@@ -8859,7 +8859,7 @@ INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 	return TRUE;
 }
 
-// Общая DlgProc на _все_ вкладки
+// РћР±С‰Р°СЏ DlgProc РЅР° _РІСЃРµ_ РІРєР»Р°РґРєРё
 INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	static bool bSkipSelChange = false;
@@ -8983,7 +8983,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			break;
 
 		default:
-			// Чтобы не забыть добавить вызов инициализации
+			// Р§С‚РѕР±С‹ РЅРµ Р·Р°Р±С‹С‚СЊ РґРѕР±Р°РІРёС‚СЊ РІС‹Р·РѕРІ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
 			_ASSERTE(((ConEmuSetupPages*)lParam)->PageID==IDD_SPG_MAIN);
 		}
 
@@ -8995,7 +8995,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		//_ASSERTE(((ConEmuSetupPages*)lParam)->hPage!=NULL && *((ConEmuSetupPages*)lParam)->hPage==hWnd2 && ((ConEmuSetupPages*)lParam)->PageID!=0);
 		_ASSERTE(p->PageIndex>=0 && p->PageIndex<countof(gpSetCls->mh_Tabs) && gpSetCls->mh_Tabs[p->PageIndex]!=NULL && gpSetCls->mh_Tabs[p->PageIndex]==hWnd2);
 
-		// Здесь можно обновить контролы страничек при активации вкладки
+		// Р—РґРµСЃСЊ РјРѕР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ РєРѕРЅС‚СЂРѕР»С‹ СЃС‚СЂР°РЅРёС‡РµРє РїСЂРё Р°РєС‚РёРІР°С†РёРё РІРєР»Р°РґРєРё
 		switch (p->PageID)
 		{
 		case IDD_SPG_MAIN:    /*gpSetCls->OnInitDialog_Main(hWnd2);*/   break;
@@ -9071,7 +9071,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_INFO:    /*gpSetCls->OnInitDialog_Info(hWnd2);*/   break;
 
 		default:
-			// Чтобы не забыть добавить вызов инициализации
+			// Р§С‚РѕР±С‹ РЅРµ Р·Р°Р±С‹С‚СЊ РґРѕР±Р°РІРёС‚СЊ РІС‹Р·РѕРІ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
 			_ASSERTE(((ConEmuSetupPages*)lParam)->PageID==IDD_SPG_MAIN);
 		}
 	}
@@ -9082,8 +9082,8 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 	}
 	else if (gpSetCls->mh_Tabs[thi_Apps] && (hWnd2 == gpSetCls->mh_Tabs[thi_Apps]))
 	{
-		// Страничка "App distinct" в некотором смысле особенная.
-		// У многих контролов ИД дублируются с другими вкладками.
+		// РЎС‚СЂР°РЅРёС‡РєР° "App distinct" РІ РЅРµРєРѕС‚РѕСЂРѕРј СЃРјС‹СЃР»Рµ РѕСЃРѕР±РµРЅРЅР°СЏ.
+		// РЈ РјРЅРѕРіРёС… РєРѕРЅС‚СЂРѕР»РѕРІ РР” РґСѓР±Р»РёСЂСѓСЋС‚СЃСЏ СЃ РґСЂСѓРіРёРјРё РІРєР»Р°РґРєР°РјРё.
 		return gpSetCls->pageOpProc_Apps(hWnd2, NULL, messg, wParam, lParam);
 	}
 	else if (gpSetCls->mh_Tabs[thi_Integr] && (hWnd2 == gpSetCls->mh_Tabs[thi_Integr]))
@@ -9100,7 +9100,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 	{
 		#ifdef _DEBUG
 		case WM_INITDIALOG:
-			// Должно быть обработано выше
+			// Р”РѕР»Р¶РЅРѕ Р±С‹С‚СЊ РѕР±СЂР°Р±РѕС‚Р°РЅРѕ РІС‹С€Рµ
 			_ASSERTE(messg!=WM_INITDIALOG);
 			break;
 		#endif
@@ -9174,7 +9174,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 						//_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%i", gpSet->bgImageDarker);
 						//SetDlgItemText(hWnd2, tDarker, tmp);
 
-						//// Картинку может установить и плагин
+						//// РљР°СЂС‚РёРЅРєСѓ РјРѕР¶РµС‚ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ Рё РїР»Р°РіРёРЅ
 						//if (gpSet->isShowBgImage && gpSet->sBgImage[0])
 						//	gpSetCls->LoadBackgroundFile(gpSet->sBgImage);
 						//else
@@ -9340,7 +9340,7 @@ INT_PTR CSettings::pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, L
 			else
 			{
 				nPos = si.nPos;
-				int nDelta = 16; // Высота CheckBox'a
+				int nDelta = 16; // Р’С‹СЃРѕС‚Р° CheckBox'a
 				RECT rcChild = {};
 				if (GetWindowRect(GetDlgItem(hWnd2, cbExtendFontsOverride), &rcChild))
 					nDelta = rcChild.bottom - rcChild.top;
@@ -9500,12 +9500,12 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			}
 		}
 
-		// Сброс ранее загруженного списка (ListBox: lbAppDistinct)
+		// РЎР±СЂРѕСЃ СЂР°РЅРµРµ Р·Р°РіСЂСѓР¶РµРЅРЅРѕРіРѕ СЃРїРёСЃРєР° (ListBox: lbAppDistinct)
 		SendDlgItemMessage(hWnd2, lbAppDistinct, LB_RESETCONTENT, 0,0);
 
 		//if (abForceReload)
 		//{
-		//	// Обновить группы команд
+		//	// РћР±РЅРѕРІРёС‚СЊ РіСЂСѓРїРїС‹ РєРѕРјР°РЅРґ
 		//	gpSet->LoadCmdTasks(NULL, true);
 		//}
 
@@ -9666,10 +9666,10 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 								gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION) != IDYES)
 							break;
 
-						// Перезагрузить App distinct
+						// РџРµСЂРµР·Р°РіСЂСѓР·РёС‚СЊ App distinct
 						gpSet->LoadAppSettings(NULL, true);
 
-						// Обновить список на экране
+						// РћР±РЅРѕРІРёС‚СЊ СЃРїРёСЃРѕРє РЅР° СЌРєСЂР°РЅРµ
 						OnInitDialog_Apps(hWnd2, true);
 					} // cbAppDistinctReload
 					break;
@@ -9828,7 +9828,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 				//	if (pApp)
 				//	{
 				//		pApp->isCursorBlink = IsChecked(hChild, CB);
-				//		//if (!gpSet->AppStd.isCursorBlink) // если мигание отключается - то курсор может "замереть" в погашенном состоянии.
+				//		//if (!gpSet->AppStd.isCursorBlink) // РµСЃР»Рё РјРёРіР°РЅРёРµ РѕС‚РєР»СЋС‡Р°РµС‚СЃСЏ - С‚Рѕ РєСѓСЂСЃРѕСЂ РјРѕР¶РµС‚ "Р·Р°РјРµСЂРµС‚СЊ" РІ РїРѕРіР°С€РµРЅРЅРѕРј СЃРѕСЃС‚РѕСЏРЅРёРё.
 				//		//	gpConEmu->ActiveCon()->Invalidate();
 				//		bRedraw = true;
 				//	}
@@ -10181,7 +10181,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 	} // switch (messg)
 
 	if (bRedraw)
-		gpConEmu->Update(true); // в принципе, обновлять нужно если только настройки видимой консоли поменялись, но...
+		gpConEmu->Update(true); // РІ РїСЂРёРЅС†РёРїРµ, РѕР±РЅРѕРІР»СЏС‚СЊ РЅСѓР¶РЅРѕ РµСЃР»Рё С‚РѕР»СЊРєРѕ РЅР°СЃС‚СЂРѕР№РєРё РІРёРґРёРјРѕР№ РєРѕРЅСЃРѕР»Рё РїРѕРјРµРЅСЏР»РёСЃСЊ, РЅРѕ...
 
 	if (bRefill)
 	{
@@ -10251,7 +10251,7 @@ void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)
 			if (!*szArg || (*szArg == L'-') || (*szArg == L'/'))
 				continue;
 			LPCWSTR pszExt = PointToExt(szArg);
-			TODO("наверное еще и *.tmp файлы подхватить, вроде они при компиляции ресурсов в VC гоняются");
+			TODO("РЅР°РІРµСЂРЅРѕРµ РµС‰Рµ Рё *.tmp С„Р°Р№Р»С‹ РїРѕРґС…РІР°С‚РёС‚СЊ, РІСЂРѕРґРµ РѕРЅРё РїСЂРё РєРѕРјРїРёР»СЏС†РёРё СЂРµСЃСѓСЂСЃРѕРІ РІ VC РіРѕРЅСЏСЋС‚СЃСЏ");
 			if (pszExt && (!lstrcmpi(pszExt, L".bat") || !lstrcmpi(pszExt, L".cmd") /*|| !lstrcmpi(pszExt, L".tmp")*/)
 				&& (!pszAppFile || (lstrcmpi(szArg, pszAppFile) != 0)))
 			{
@@ -10330,15 +10330,15 @@ void CSettings::debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile)
 		size_t nAll = 0;
 		wchar_t* pszNew = NULL;
 
-		// Для расширений помимо ".bat" и ".cmd" - проверить содержимое
+		// Р”Р»СЏ СЂР°СЃС€РёСЂРµРЅРёР№ РїРѕРјРёРјРѕ ".bat" Рё ".cmd" - РїСЂРѕРІРµСЂРёС‚СЊ СЃРѕРґРµСЂР¶РёРјРѕРµ
 		if (lstrcmpi(pszExt, L".bat")!=0 && lstrcmpi(pszExt, L".cmd")!=0)
 		{
-			// например, ".tmp" файлы
+			// РЅР°РїСЂРёРјРµСЂ, ".tmp" С„Р°Р№Р»С‹
 			for (UINT i = 0; i < nRead; i++)
 			{
 				if (szBuf[i] == 0)
 				{
-					TODO("Может файл просто юникодный?");
+					TODO("РњРѕР¶РµС‚ С„Р°Р№Р» РїСЂРѕСЃС‚Рѕ СЋРЅРёРєРѕРґРЅС‹Р№?");
 					goto wrap;
 				}
 			}
@@ -10390,18 +10390,18 @@ void CSettings::debugLogInfo(HWND hWnd2, CESERVER_REQ_PEEKREADINFO* pInfo)
 		{
 			LastLogEventDup1 ++;
 			_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", LastLogEventDup1);
-			ListView_SetItemText(hList, 0, lic_Dup, szTime); // верхний
+			ListView_SetItemText(hList, 0, lic_Dup, szTime); // РІРµСЂС…РЅРёР№
 			//free(pr);
-			continue; // дубли - не показывать? только если прошло время?
+			continue; // РґСѓР±Р»Рё - РЅРµ РїРѕРєР°Р·С‹РІР°С‚СЊ? С‚РѕР»СЊРєРѕ РµСЃР»Рё РїСЂРѕС€Р»Рѕ РІСЂРµРјСЏ?
 		}
 		if (LastLogEventType2 == pInfo->cPeekRead &&
 			memcmp(&LastLogEvent2, pr, sizeof(LastLogEvent2)) == 0)
 		{
 			LastLogEventDup2 ++;
 			_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", LastLogEventDup2);
-			ListView_SetItemText(hList, 1, lic_Dup, szTime); // верхний
+			ListView_SetItemText(hList, 1, lic_Dup, szTime); // РІРµСЂС…РЅРёР№
 			//free(pr);
-			continue; // дубли - не показывать? только если прошло время?
+			continue; // РґСѓР±Р»Рё - РЅРµ РїРѕРєР°Р·С‹РІР°С‚СЊ? С‚РѕР»СЊРєРѕ РµСЃР»Рё РїСЂРѕС€Р»Рѕ РІСЂРµРјСЏ?
 		}
 		int nItem = ListView_InsertItem(hList, &lvi);
 		if (LastLogEventType1 && LastLogEventType1 != pInfo->cPeekRead)
@@ -10566,7 +10566,7 @@ void CSettings::debugLogCommand(HWND hWnd2, LogCommandsData* apData)
 	lvi.pszText = szText;
 	int nItem = ListView_InsertItem(hList, &lvi);
 	
-	TODO("Проверить округления в CPP");
+	TODO("РџСЂРѕРІРµСЂРёС‚СЊ РѕРєСЂСѓРіР»РµРЅРёСЏ РІ CPP");
 	int nMin = apData->nTick / 60000; apData->nTick -= nMin*60000;
 	int nSec = apData->nTick / 1000;
 	int nMS = apData->nTick % 1000;
@@ -10786,7 +10786,7 @@ void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 void CSettings::UpdateSize(const CESize w, const CESize h)
 {
 	bool bUserCurSize = gpSet->isUseCurrentSizePos;
-	//Issue ???: Сохранять размер Quake?
+	//Issue ???: РЎРѕС…СЂР°РЅСЏС‚СЊ СЂР°Р·РјРµСЂ Quake?
 	bool bIgnoreWidth = (gpSet->isQuakeStyle != 0) && (gpSet->_WindowMode != wmNormal);
 
 	if (w.IsValid(true) && h.IsValid(false))
@@ -10812,7 +10812,7 @@ void CSettings::UpdateSize(const CESize w, const CESize h)
 		SetDlgItemText(mh_Tabs[thi_SizePos], tWndHeight, bUserCurSize ? gpConEmu->WndHeight.AsString() : gpSet->wndHeight.AsString());
 		mb_IgnoreEditChanged = FALSE;
 
-		// Во избежание недоразумений - запретим элементы размера для Max/Fullscreen
+		// Р’Рѕ РёР·Р±РµР¶Р°РЅРёРµ РЅРµРґРѕСЂР°Р·СѓРјРµРЅРёР№ - Р·Р°РїСЂРµС‚РёРј СЌР»РµРјРµРЅС‚С‹ СЂР°Р·РјРµСЂР° РґР»СЏ Max/Fullscreen
 		BOOL bNormalChecked = IsChecked(mh_Tabs[thi_SizePos], rNormal);
 		//for (size_t i = 0; i < countof(SettingsNS::nSizeCtrlId); i++)
 		//{
@@ -10831,8 +10831,8 @@ void CSettings::UpdateSize(const CESize w, const CESize h)
 	}
 }
 
-// Пожалуй, не будем автоматически менять флажок "Monospace"
-// Был вроде Issue, да и не всегда моноширность правильно определяется (DejaVu Sans Mono)
+// РџРѕР¶Р°Р»СѓР№, РЅРµ Р±СѓРґРµРј Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РјРµРЅСЏС‚СЊ С„Р»Р°Р¶РѕРє "Monospace"
+// Р‘С‹Р» РІСЂРѕРґРµ Issue, РґР° Рё РЅРµ РІСЃРµРіРґР° РјРѕРЅРѕС€РёСЂРЅРѕСЃС‚СЊ РїСЂР°РІРёР»СЊРЅРѕ РѕРїСЂРµРґРµР»СЏРµС‚СЃСЏ (DejaVu Sans Mono)
 void CSettings::UpdateTTF(BOOL bNewTTF)
 {
 	if (mb_IgnoreTtfChange)
@@ -10915,7 +10915,7 @@ void CSettings::PostUpdateCounters(bool bPosted)
 				v = (10000*(__int64)mn_CounterMax[nID-tPerfFPS])/mn_Freq;
 			}
 
-			// WinApi не умеет float/double
+			// WinApi РЅРµ СѓРјРµРµС‚ float/double
 			_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"%u.%u", (int)(v/10), (int)(v%10));
 
 			switch (nID)
@@ -10952,11 +10952,11 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 		{
 			// Performance
 			wchar_t sTemp[128];
-			//Нихрена это не мегагерцы. Например на "AMD Athlon 64 X2 1999 MHz" здесь отображается "0.004 GHz"
+			//РќРёС…СЂРµРЅР° СЌС‚Рѕ РЅРµ РјРµРіР°РіРµСЂС†С‹. РќР°РїСЂРёРјРµСЂ РЅР° "AMD Athlon 64 X2 1999 MHz" Р·РґРµСЃСЊ РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ "0.004 GHz"
 			//swprintf(sTemp, L"Performance counters (%.3f GHz)", ((double)(mn_Freq/1000)/1000000));
 			_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"Performance counters (%I64i)", ((i64)(mn_Freq/1000)));
 			SetDlgItemText(mh_Tabs[thi_Info], nID, sTemp);
-			// Обновить сразу (значений еще нет)
+			// РћР±РЅРѕРІРёС‚СЊ СЃСЂР°Р·Сѓ (Р·РЅР°С‡РµРЅРёР№ РµС‰Рµ РЅРµС‚)
 			PostUpdateCounters(true);
 		}
 
@@ -11024,7 +11024,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 DWORD CSettings::BalloonStyle()
 {
-	//грр, Issue 886, и подсказки нифига не видны
+	//РіСЂСЂ, Issue 886, Рё РїРѕРґСЃРєР°Р·РєРё РЅРёС„РёРіР° РЅРµ РІРёРґРЅС‹
 	//[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced]
 	//"EnableBalloonTips"=0
 
@@ -11060,7 +11060,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			SetWindowPos(hwndConFontBalloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 			// Set up tool information.
 			// In this case, the "tool" is the entire parent window.
-			tiConFontBalloon.cbSize = 44; // был sizeof(TOOLINFO);
+			tiConFontBalloon.cbSize = 44; // Р±С‹Р» sizeof(TOOLINFO);
 			tiConFontBalloon.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
 			tiConFontBalloon.hwnd = hChildDlg;
 			tiConFontBalloon.hinst = g_hInstance;
@@ -11087,7 +11087,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			SetWindowPos(hwndBalloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 			// Set up tool information.
 			// In this case, the "tool" is the entire parent window.
-			tiBalloon.cbSize = 44; // был sizeof(TOOLINFO);
+			tiBalloon.cbSize = 44; // Р±С‹Р» sizeof(TOOLINFO);
 			tiBalloon.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
 			tiBalloon.hwnd = mh_Tabs[thi_Main];
 			tiBalloon.hinst = g_hInstance;
@@ -11114,7 +11114,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000);
 		}
 
-		if (!hwndTip) return;  // не смогли создать
+		if (!hwndTip) return;  // РЅРµ СЃРјРѕРіР»Рё СЃРѕР·РґР°С‚СЊ
 
 		//if (!gpSet->isShowHelpTooltips)
 		//	return;
@@ -11202,7 +11202,7 @@ void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WOR
 
 	if (hf.IsSet())
 	{
-		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
+		// SaveFontSizes РІС‹РїРѕР»РЅРёРј РїРѕСЃР»Рµ РѕР±РЅРѕРІР»РµРЅРёСЏ LogFont, С‚.Рє. С‚Р°Рј Р·РѕРІРµС‚СЃСЏ gpConEmu->OnPanelViewSettingsChanged
 		CEFONT hOldF = mh_Font[0];
 		LogFont = LF;
 		mh_Font[0] = hf;
@@ -11211,7 +11211,7 @@ void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WOR
 		gpConEmu->Update(true);
 
 		if (gpConEmu->WindowMode == wmNormal)
-			CVConGroup::SyncWindowToConsole(); // -- функция пустая, игнорируется
+			CVConGroup::SyncWindowToConsole(); // -- С„СѓРЅРєС†РёСЏ РїСѓСЃС‚Р°СЏ, РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ
 		else
 			CVConGroup::SyncConsoleToWindow();
 
@@ -11230,7 +11230,7 @@ void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WOR
 	gpConEmu->OnPanelViewSettingsChanged(TRUE);
 }
 
-// Вызывается из диалога настроек
+// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РёР· РґРёР°Р»РѕРіР° РЅР°СЃС‚СЂРѕРµРє
 void CSettings::RecreateFont(WORD wFromID)
 {
 	if (wFromID == tFontFace
@@ -11298,7 +11298,7 @@ void CSettings::RecreateFont(WORD wFromID)
 
 	if (hf.IsSet())
 	{
-		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
+		// SaveFontSizes РІС‹РїРѕР»РЅРёРј РїРѕСЃР»Рµ РѕР±РЅРѕРІР»РµРЅРёСЏ LogFont, С‚.Рє. С‚Р°Рј Р·РѕРІРµС‚СЃСЏ gpConEmu->OnPanelViewSettingsChanged
 		CEFONT hOldF = mh_Font[0];
 		LogFont = LF;
 		mh_Font[0] = hf;
@@ -11313,7 +11313,7 @@ void CSettings::RecreateFont(WORD wFromID)
 			gpConEmu->Update(true);
 
 			if (gpConEmu->WindowMode == wmNormal)
-				CVConGroup::SyncWindowToConsole(); // -- функция пустая, игнорируется
+				CVConGroup::SyncWindowToConsole(); // -- С„СѓРЅРєС†РёСЏ РїСѓСЃС‚Р°СЏ, РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ
 			else
 				CVConGroup::SyncConsoleToWindow();
 
@@ -11360,11 +11360,11 @@ void CSettings::SaveFontSizes(LOGFONT *pCreated, bool bAuto, bool bSendChanges)
 		mn_AutoFontHeight = pCreated->lfHeight;
 	}
 
-	// Применить в Mapping (там заодно и палитра копируется)
+	// РџСЂРёРјРµРЅРёС‚СЊ РІ Mapping (С‚Р°Рј Р·Р°РѕРґРЅРѕ Рё РїР°Р»РёС‚СЂР° РєРѕРїРёСЂСѓРµС‚СЃСЏ)
 	gpConEmu->OnPanelViewSettingsChanged(bSendChanges);
 }
 
-// Вызов из GUI-макросов - увеличить/уменьшить шрифт, без изменения размера (в пикселях) окна
+// Р’С‹Р·РѕРІ РёР· GUI-РјР°РєСЂРѕСЃРѕРІ - СѓРІРµР»РёС‡РёС‚СЊ/СѓРјРµРЅСЊС€РёС‚СЊ С€СЂРёС„С‚, Р±РµР· РёР·РјРµРЅРµРЅРёСЏ СЂР°Р·РјРµСЂР° (РІ РїРёРєСЃРµР»СЏС…) РѕРєРЅР°
 bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 {
 	wchar_t szLog[128];
@@ -11374,12 +11374,12 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 		gpConEmu->LogString(szLog);
 	}
 
-	// Пытаемся создать новый шрифт
+	// РџС‹С‚Р°РµРјСЃСЏ СЃРѕР·РґР°С‚СЊ РЅРѕРІС‹Р№ С€СЂРёС„С‚
 	LOGFONT LF = LogFont;
 
 	if (nRelative == 0)
 	{
-		// По абсолютному значению (высота шрифта)
+		// РџРѕ Р°Р±СЃРѕР»СЋС‚РЅРѕРјСѓ Р·РЅР°С‡РµРЅРёСЋ (РІС‹СЃРѕС‚Р° С€СЂРёС„С‚Р°)
 		if (nValue < 5)
 		{
 			gpConEmu->LogString(L"-- Skipped! Absolute value less than 5");
@@ -11390,7 +11390,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 	}
 	//else if (nRelative == -1)
 	//{
-	//	// уменьшить шрифт
+	//	// СѓРјРµРЅСЊС€РёС‚СЊ С€СЂРёС„С‚
 	//	LF.lfHeight -= nValue;
 	//}
 	else if (nRelative == 1)
@@ -11401,18 +11401,18 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 			return false;
 		}
 
-		// уменьшить/увеличить шрифт
+		// СѓРјРµРЅСЊС€РёС‚СЊ/СѓРІРµР»РёС‡РёС‚СЊ С€СЂРёС„С‚
 		LF.lfHeight += nValue;
 	}
 
-	// Не должен стать менее 5 пунктов
+	// РќРµ РґРѕР»Р¶РµРЅ СЃС‚Р°С‚СЊ РјРµРЅРµРµ 5 РїСѓРЅРєС‚РѕРІ
 	if (LF.lfHeight < 5)
 	{
 		gpConEmu->LogString(L"-- Warning! New absolute value can't be less than 5");
 		LF.lfHeight = 5;
 	}
 
-	// Если задана ширина - подкорректировать
+	// Р•СЃР»Рё Р·Р°РґР°РЅР° С€РёСЂРёРЅР° - РїРѕРґРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ
 	if (gpSet->FontSizeX && gpSet->FontSizeY)
 		LF.lfWidth = LogFont.lfWidth * gpSet->FontSizeY / gpSet->FontSizeX;
 	else
@@ -11431,19 +11431,19 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 	{
 		CEFONT hf = CreateFontIndirectMy(&LF);
 
-		// Успешно, только если шрифт изменился, или хотели поставить абсолютный размер
+		// РЈСЃРїРµС€РЅРѕ, С‚РѕР»СЊРєРѕ РµСЃР»Рё С€СЂРёС„С‚ РёР·РјРµРЅРёР»СЃСЏ, РёР»Рё С…РѕС‚РµР»Рё РїРѕСЃС‚Р°РІРёС‚СЊ Р°Р±СЃРѕР»СЋС‚РЅС‹Р№ СЂР°Р·РјРµСЂ
 		if (hf.IsSet() && ((nRelative == 0) || (LF.lfHeight != LogFont.lfHeight)))
 		{
-			// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
+			// SaveFontSizes РІС‹РїРѕР»РЅРёРј РїРѕСЃР»Рµ РѕР±РЅРѕРІР»РµРЅРёСЏ LogFont, С‚.Рє. С‚Р°Рј Р·РѕРІРµС‚СЃСЏ gpConEmu->OnPanelViewSettingsChanged
 			CEFONT hOldF = mh_Font[0];
 			LogFont = LF;
 			mh_Font[0] = hf;
 			hOldF.Delete();
-			// Запомнить размер шрифта (AutoFontWidth/Height - может быть другим, он запоминается выше)
+			// Р—Р°РїРѕРјРЅРёС‚СЊ СЂР°Р·РјРµСЂ С€СЂРёС„С‚Р° (AutoFontWidth/Height - РјРѕР¶РµС‚ Р±С‹С‚СЊ РґСЂСѓРіРёРј, РѕРЅ Р·Р°РїРѕРјРёРЅР°РµС‚СЃСЏ РІС‹С€Рµ)
 			SaveFontSizes(&LF, false, true);
-			// Передернуть размер консоли
+			// РџРµСЂРµРґРµСЂРЅСѓС‚СЊ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё
 			gpConEmu->OnSize();
-			// Передернуть флажки, что шрифт поменялся
+			// РџРµСЂРµРґРµСЂРЅСѓС‚СЊ С„Р»Р°Р¶РєРё, С‡С‚Рѕ С€СЂРёС„С‚ РїРѕРјРµРЅСЏР»СЃСЏ
 			gpConEmu->Update(true);
 
 			if (ghOpWnd)
@@ -11474,13 +11474,13 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 			return false;
 		}
 
-		// Если пытаются изменить относительный размер, а шрифт не создался - попробовать следующий размер
+		// Р•СЃР»Рё РїС‹С‚Р°СЋС‚СЃСЏ РёР·РјРµРЅРёС‚СЊ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ, Р° С€СЂРёС„С‚ РЅРµ СЃРѕР·РґР°Р»СЃСЏ - РїРѕРїСЂРѕР±РѕРІР°С‚СЊ СЃР»РµРґСѓСЋС‰РёР№ СЂР°Р·РјРµСЂ
 		//if (nRelative == -1)
-		//	LF.lfHeight -= nValue; // уменьшить шрифт
+		//	LF.lfHeight -= nValue; // СѓРјРµРЅСЊС€РёС‚СЊ С€СЂРёС„С‚
 		//else
 		if (nRelative == 1)
 		{
-			nNewHeight += nValue; // уменьшить/увеличить шрифт
+			nNewHeight += nValue; // СѓРјРµРЅСЊС€РёС‚СЊ/СѓРІРµР»РёС‡РёС‚СЊ С€СЂРёС„С‚
 			LF.lfHeight = nNewHeight;
 		}
 		else
@@ -11489,14 +11489,14 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 			return false;
 		}
 
-		// Не должен стать менее 5 пунктов
+		// РќРµ РґРѕР»Р¶РµРЅ СЃС‚Р°С‚СЊ РјРµРЅРµРµ 5 РїСѓРЅРєС‚РѕРІ
 		if (LF.lfHeight < 5)
 		{
 			gpConEmu->LogString(L"-- Failed! Created font height less than 5");
 			return false;
 		}
 
-		// Если задана ширина - подкорректировать
+		// Р•СЃР»Рё Р·Р°РґР°РЅР° С€РёСЂРёРЅР° - РїРѕРґРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ
 		if (LogFont.lfWidth && LogFont.lfHeight)
 			LF.lfWidth = LogFont.lfWidth * LF.lfHeight / LogFont.lfHeight;
 	}
@@ -11507,12 +11507,12 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 	return false;
 }
 
-// Вызывается при включенном gpSet->isFontAutoSize: подгонка размера шрифта
-// под размер окна, без изменения размера в символах
+// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё РІРєР»СЋС‡РµРЅРЅРѕРј gpSet->isFontAutoSize: РїРѕРґРіРѕРЅРєР° СЂР°Р·РјРµСЂР° С€СЂРёС„С‚Р°
+// РїРѕРґ СЂР°Р·РјРµСЂ РѕРєРЅР°, Р±РµР· РёР·РјРµРЅРµРЅРёСЏ СЂР°Р·РјРµСЂР° РІ СЃРёРјРІРѕР»Р°С…
 bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 {
 	if (mn_AutoFontWidth == nFontW && mn_AutoFontHeight == nFontH)
-		return false; // ничего не делали
+		return false; // РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°Р»Рё
 
 	if (isAdvLogging)
 	{
@@ -11520,9 +11520,9 @@ bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 		CVConGroup::LogString(szInfo);
 	}
 
-	// Сразу запомним, какой размер просили в последний раз
+	// РЎСЂР°Р·Сѓ Р·Р°РїРѕРјРЅРёРј, РєР°РєРѕР№ СЂР°Р·РјРµСЂ РїСЂРѕСЃРёР»Рё РІ РїРѕСЃР»РµРґРЅРёР№ СЂР°Р·
 	mn_AutoFontWidth = nFontW; mn_AutoFontHeight = nFontH;
-	// Пытаемся создать новый шрифт
+	// РџС‹С‚Р°РµРјСЃСЏ СЃРѕР·РґР°С‚СЊ РЅРѕРІС‹Р№ С€СЂРёС„С‚
 	LOGFONT LF = LogFont;
 	LF.lfWidth = nFontW;
 	LF.lfHeight = nFontH;
@@ -11530,14 +11530,14 @@ bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 
 	if (hf.IsSet())
 	{
-		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
+		// SaveFontSizes РІС‹РїРѕР»РЅРёРј РїРѕСЃР»Рµ РѕР±РЅРѕРІР»РµРЅРёСЏ LogFont, С‚.Рє. С‚Р°Рј Р·РѕРІРµС‚СЃСЏ gpConEmu->OnPanelViewSettingsChanged
 		CEFONT hOldF = mh_Font[0];
 		LogFont = LF;
 		mh_Font[0] = hf;
 		hOldF.Delete();
-		// Запомнить размер шрифта (AutoFontWidth/Height - может быть другим, он запоминается выше)
+		// Р—Р°РїРѕРјРЅРёС‚СЊ СЂР°Р·РјРµСЂ С€СЂРёС„С‚Р° (AutoFontWidth/Height - РјРѕР¶РµС‚ Р±С‹С‚СЊ РґСЂСѓРіРёРј, РѕРЅ Р·Р°РїРѕРјРёРЅР°РµС‚СЃСЏ РІС‹С€Рµ)
 		SaveFontSizes(&LF, false, true);
-		// Передернуть флажки, что шрифт поменялся
+		// РџРµСЂРµРґРµСЂРЅСѓС‚СЊ С„Р»Р°Р¶РєРё, С‡С‚Рѕ С€СЂРёС„С‚ РїРѕРјРµРЅСЏР»СЃСЏ
 		gpConEmu->Update(true);
 		return true;
 	}
@@ -11547,27 +11547,27 @@ bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 
 bool CSettings::IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight)
 {
-	// Некоторые шрифты (Consolas) достаточно странные. Заявлены как моноширные (PAN_PROP_MONOSPACED),
-	// похожи на моноширные, но tmMaxCharWidth у них очень широкий (иероглифы что-ли?)
+	// РќРµРєРѕС‚РѕСЂС‹Рµ С€СЂРёС„С‚С‹ (Consolas) РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ СЃС‚СЂР°РЅРЅС‹Рµ. Р—Р°СЏРІР»РµРЅС‹ РєР°Рє РјРѕРЅРѕС€РёСЂРЅС‹Рµ (PAN_PROP_MONOSPACED),
+	// РїРѕС…РѕР¶Рё РЅР° РјРѕРЅРѕС€РёСЂРЅС‹Рµ, РЅРѕ tmMaxCharWidth Сѓ РЅРёС… РѕС‡РµРЅСЊ С€РёСЂРѕРєРёР№ (РёРµСЂРѕРіР»РёС„С‹ С‡С‚Рѕ-Р»Рё?)
 	if (lstrcmp(asFaceName, L"Consolas") == 0)
 		return true;
 
-	// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
+	// Сѓ Arial'Р° РЅР°РїСЂРёРјРµСЂ MaxWidth СЃР»РёС€РєРѕРј Р±РѕР»СЊС€РѕР№ (РІ РґРІР° Рё Р±РѕР»РµРµ СЂР°Р· Р±РѕР»СЊС€Рµ Р’Р«РЎРћРўР« С€СЂРёС„С‚Р°)
 	bool bAlmostMonospace = false;
 
 	if (tmMaxCharWidth && tmAveCharWidth && tmHeight)
 	{
 		int nRelativeDelta = (tmMaxCharWidth - tmAveCharWidth) * 100 / tmHeight;
 
-		// Если расхождение менее 16% высоты - считаем шрифт моноширным
-		// Увеличил до 16%. Win7, Courier New, 6x4
+		// Р•СЃР»Рё СЂР°СЃС…РѕР¶РґРµРЅРёРµ РјРµРЅРµРµ 16% РІС‹СЃРѕС‚С‹ - СЃС‡РёС‚Р°РµРј С€СЂРёС„С‚ РјРѕРЅРѕС€РёСЂРЅС‹Рј
+		// РЈРІРµР»РёС‡РёР» РґРѕ 16%. Win7, Courier New, 6x4
 		if (nRelativeDelta <= 16)
 			bAlmostMonospace = true;
 
 		//if (abs(m_tm->tmMaxCharWidth - m_tm->tmAveCharWidth)<=2)
-		//{ -- это была попытка прикинуть среднюю ширину по английским буквам
-		//  -- не нужно, т.к. затевалось из-за проблем с ClearType на больших размерах
-		//  -- шрифтов, а это лечится аргументом pDX в TextOut
+		//{ -- СЌС‚Рѕ Р±С‹Р»Р° РїРѕРїС‹С‚РєР° РїСЂРёРєРёРЅСѓС‚СЊ СЃСЂРµРґРЅСЋСЋ С€РёСЂРёРЅСѓ РїРѕ Р°РЅРіР»РёР№СЃРєРёРј Р±СѓРєРІР°Рј
+		//  -- РЅРµ РЅСѓР¶РЅРѕ, С‚.Рє. Р·Р°С‚РµРІР°Р»РѕСЃСЊ РёР·-Р·Р° РїСЂРѕР±Р»РµРј СЃ ClearType РЅР° Р±РѕР»СЊС€РёС… СЂР°Р·РјРµСЂР°С…
+		//  -- С€СЂРёС„С‚РѕРІ, Р° СЌС‚Рѕ Р»РµС‡РёС‚СЃСЏ Р°СЂРіСѓРјРµРЅС‚РѕРј pDX РІ TextOut
 		//	int nTestLen = _tcslen(TEST_FONT_WIDTH_STRING_EN);
 		//	SIZE szTest = {0,0};
 		//	if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, &szTest)) {
@@ -11587,7 +11587,7 @@ bool CSettings::IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tm
 	return bAlmostMonospace;
 }
 
-// Создать шрифт для отображения символов в диалоге плагина UCharMap
+// РЎРѕР·РґР°С‚СЊ С€СЂРёС„С‚ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ СЃРёРјРІРѕР»РѕРІ РІ РґРёР°Р»РѕРіРµ РїР»Р°РіРёРЅР° UCharMap
 HFONT CSettings::CreateOtherFont(const wchar_t* asFontName)
 {
 	LOGFONT otherLF = {LogFont.lfHeight};
@@ -11604,7 +11604,7 @@ bool CSettings::FindCustomFont(LPCWSTR lfFaceName, int iSize, BOOL bBold, BOOL b
 	*ppFont = NULL;
 	*ppCustom = NULL;
 
-	// Поиск по шрифтам рисованным ConEmu (bdf)
+	// РџРѕРёСЃРє РїРѕ С€СЂРёС„С‚Р°Рј СЂРёСЃРѕРІР°РЅРЅС‹Рј ConEmu (bdf)
 	//for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
 	for (INT_PTR j = 0; j < m_RegFonts.size(); ++j)
 	{
@@ -11620,18 +11620,18 @@ bool CSettings::FindCustomFont(LPCWSTR lfFaceName, int iSize, BOOL bBold, BOOL b
 				MBoxAssert(*ppFont != NULL);
 			}
 
-			return true; // [bdf] шрифт. ошибка опрделяется по (*ppFont==NULL)
+			return true; // [bdf] С€СЂРёС„С‚. РѕС€РёР±РєР° РѕРїСЂРґРµР»СЏРµС‚СЃСЏ РїРѕ (*ppFont==NULL)
 		}
 	}
 
-	return false; // НЕ [bdf] шрифт
+	return false; // РќР• [bdf] С€СЂРёС„С‚
 }
 
 void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 {
 	mh_Font2.Delete();
 
-	// если ширина шрифта стала больше ширины FixFarBorders - сбросить ширину FixFarBorders в 0
+	// РµСЃР»Рё С€РёСЂРёРЅР° С€СЂРёС„С‚Р° СЃС‚Р°Р»Р° Р±РѕР»СЊС€Рµ С€РёСЂРёРЅС‹ FixFarBorders - СЃР±СЂРѕСЃРёС‚СЊ С€РёСЂРёРЅСѓ FixFarBorders РІ 0
 	if (gpSet->FontSizeX2 && (LONG)gpSet->FontSizeX2 < inFont->lfWidth)
 	{
 		gpSet->FontSizeX2 = 0;
@@ -11640,7 +11640,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 			SelectStringExact(mh_Tabs[thi_Main], tFontSizeX2, L"0");
 	}
 
-	// Поиск по шрифтам рисованным ConEmu (bdf)
+	// РџРѕРёСЃРє РїРѕ С€СЂРёС„С‚Р°Рј СЂРёСЃРѕРІР°РЅРЅС‹Рј ConEmu (bdf)
 	CustomFont* pFont = NULL;
 	CustomFontFamily* pCustom = NULL;
 	if (FindCustomFont(LogFont2.lfFaceName, inFont->lfHeight,
@@ -11660,7 +11660,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 	}
 
 	wchar_t szFontFace[32];
-	// лучше для ghWnd, может разные мониторы имеют разные параметры...
+	// Р»СѓС‡С€Рµ РґР»СЏ ghWnd, РјРѕР¶РµС‚ СЂР°Р·РЅС‹Рµ РјРѕРЅРёС‚РѕСЂС‹ РёРјРµСЋС‚ СЂР°Р·РЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹...
 	HDC hScreenDC = GetDC(ghWnd); // GetDC(0);
 	HDC hDC = CreateCompatibleDC(hScreenDC);
 	ReleaseDC(ghWnd, hScreenDC);
@@ -11671,7 +11671,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 	//int width = gpSet->FontSizeX2 ? gpSet->FontSizeX2 : inFont->lfWidth;
 	LogFont2.lfWidth = mn_BorderFontWidth = gpSet->FontSizeX2 ? gpSet->FontSizeX2 : inFont->lfWidth;
 	LogFont2.lfHeight = abs(inFont->lfHeight);
-	// Иначе рамки прерывистыми получаются... поставил NONANTIALIASED_QUALITY
+	// РРЅР°С‡Рµ СЂР°РјРєРё РїСЂРµСЂС‹РІРёСЃС‚С‹РјРё РїРѕР»СѓС‡Р°СЋС‚СЃСЏ... РїРѕСЃС‚Р°РІРёР» NONANTIALIASED_QUALITY
 	mh_Font2 = CEFONT(CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
 	                             0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
 	                             NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName));
@@ -11682,9 +11682,9 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 
 		if (GetTextFace(hDC, countof(szFontFace), szFontFace))
 		{
-			szFontFace[countof(szFontFace)-1] = 0; // гарантировано ASCII-Z
+			szFontFace[countof(szFontFace)-1] = 0; // РіР°СЂР°РЅС‚РёСЂРѕРІР°РЅРѕ ASCII-Z
 
-			// Проверяем, совпадает ли имя созданного шрифта с запрошенным?
+			// РџСЂРѕРІРµСЂСЏРµРј, СЃРѕРІРїР°РґР°РµС‚ Р»Рё РёРјСЏ СЃРѕР·РґР°РЅРЅРѕРіРѕ С€СЂРёС„С‚Р° СЃ Р·Р°РїСЂРѕС€РµРЅРЅС‹Рј?
 			if (lstrcmpi(LogFont2.lfFaceName, szFontFace))
 			{
 				if (szFontError[0]) wcscat_c(szFontError, L"\n");
@@ -11716,7 +11716,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 					{
 						szFontFace2[31] = 0;
 
-						// Проверяем что создалось, и ругаемся, если что...
+						// РџСЂРѕРІРµСЂСЏРµРј С‡С‚Рѕ СЃРѕР·РґР°Р»РѕСЃСЊ, Рё СЂСѓРіР°РµРјСЃСЏ, РµСЃР»Рё С‡С‚Рѕ...
 						if (lstrcmpi(LogFont2.lfFaceName, szFontFace2) == 0)
 						{
 							bCreated = true;
@@ -11745,24 +11745,24 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 	DeleteDC(hDC);
 }
 
-// Вызывается из
-// -- первичная инициализация
+// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РёР·
+// -- РїРµСЂРІРёС‡РЅР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ
 // void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
-// -- смена шрифта из фара (через Gui Macro "FontSetName")
+// -- СЃРјРµРЅР° С€СЂРёС„С‚Р° РёР· С„Р°СЂР° (С‡РµСЂРµР· Gui Macro "FontSetName")
 // void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/) 
-// -- смена _размера_ шрифта из фара (через Gui Macro "FontSetSize")
+// -- СЃРјРµРЅР° _СЂР°Р·РјРµСЂР°_ С€СЂРёС„С‚Р° РёР· С„Р°СЂР° (С‡РµСЂРµР· Gui Macro "FontSetSize")
 // bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
-// -- пересоздание шрифта по изменению контрола окна настроек
+// -- РїРµСЂРµСЃРѕР·РґР°РЅРёРµ С€СЂРёС„С‚Р° РїРѕ РёР·РјРµРЅРµРЅРёСЋ РєРѕРЅС‚СЂРѕР»Р° РѕРєРЅР° РЅР°СЃС‚СЂРѕРµРє
 // void CSettings::RecreateFont(WORD wFromID)
-// -- подгонка шрифта под размер окна GUI (если включен флажок "Auto")
+// -- РїРѕРґРіРѕРЅРєР° С€СЂРёС„С‚Р° РїРѕРґ СЂР°Р·РјРµСЂ РѕРєРЅР° GUI (РµСЃР»Рё РІРєР»СЋС‡РµРЅ С„Р»Р°Р¶РѕРє "Auto")
 // bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 {
-	//ResetFontWidth(); -- перенесено вниз, после того, как убедимся в валидности шрифта
+	//ResetFontWidth(); -- РїРµСЂРµРЅРµСЃРµРЅРѕ РІРЅРёР·, РїРѕСЃР»Рµ С‚РѕРіРѕ, РєР°Рє СѓР±РµРґРёРјСЃСЏ РІ РІР°Р»РёРґРЅРѕСЃС‚Рё С€СЂРёС„С‚Р°
 	//lfOutPrecision = OUT_RASTER_PRECIS,
 	szFontError[0] = 0;
 
-	// Поиск по шрифтам рисованным ConEmu
+	// РџРѕРёСЃРє РїРѕ С€СЂРёС„С‚Р°Рј СЂРёСЃРѕРІР°РЅРЅС‹Рј ConEmu
 	CustomFont* pFont = NULL;
 	CustomFontFamily* pCustom = NULL;
 	if (FindCustomFont(inFont->lfFaceName, inFont->lfHeight,
@@ -11774,7 +11774,7 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			MBoxAssert(pFont != NULL);
 			return (HFONT)NULL;
 		}
-		// Получить реальные размеры шрифта (обновить inFont)
+		// РџРѕР»СѓС‡РёС‚СЊ СЂРµР°Р»СЊРЅС‹Рµ СЂР°Р·РјРµСЂС‹ С€СЂРёС„С‚Р° (РѕР±РЅРѕРІРёС‚СЊ inFont)
 		pFont->GetBoundingBox(&inFont->lfWidth, &inFont->lfHeight);
 		ResetFontWidth();
 		if (ghOpWnd)
@@ -11863,7 +11863,7 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 	
 	
 	wchar_t szFontFace[32];
-	// лучше для ghWnd, может разные мониторы имеют разные параметры...
+	// Р»СѓС‡С€Рµ РґР»СЏ ghWnd, РјРѕР¶РµС‚ СЂР°Р·РЅС‹Рµ РјРѕРЅРёС‚РѕСЂС‹ РёРјРµСЋС‚ СЂР°Р·РЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹...
 	HDC hScreenDC = GetDC(ghWnd); // GetDC(0);
 	HDC hDC = CreateCompatibleDC(hScreenDC);
 	ReleaseDC(ghWnd, hScreenDC);
@@ -11876,13 +11876,13 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		SetLastError(0);
 		HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
 		dwFontErr = GetLastError();
-		// Для пропорциональных шрифтов имеет смысл сохранять в реестре оптимальный lfWidth (это gpSet->FontSizeX3)
+		// Р”Р»СЏ РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅС‹С… С€СЂРёС„С‚РѕРІ РёРјРµРµС‚ СЃРјС‹СЃР» СЃРѕС…СЂР°РЅСЏС‚СЊ РІ СЂРµРµСЃС‚СЂРµ РѕРїС‚РёРјР°Р»СЊРЅС‹Р№ lfWidth (СЌС‚Рѕ gpSet->FontSizeX3)
 		ZeroStruct(m_tm);
 		BOOL lbTM = GetTextMetrics(hDC, m_tm);
 
 		if (!lbTM && !bRasterFont)
 		{
-			// Считаем, что шрифт НЕ валиден!!!
+			// РЎС‡РёС‚Р°РµРј, С‡С‚Рѕ С€СЂРёС„С‚ РќР• РІР°Р»РёРґРµРЅ!!!
 			dwFontErr = GetLastError();
 			SelectObject(hDC, hOldF);
 			DeleteDC(hDC);
@@ -11900,7 +11900,7 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			return NULL;
 		}
 
-		// Теперь - можно и reset сделать
+		// РўРµРїРµСЂСЊ - РјРѕР¶РЅРѕ Рё reset СЃРґРµР»Р°С‚СЊ
 		ResetFontWidth();
 
 		for(int i=0; i<MAX_FONT_STYLES; i++)
@@ -11919,7 +11919,7 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			m_tm->tmAveCharWidth = m_tm->tmMaxCharWidth = nRastWidth;
 		}
 
-		lpOutl = LoadOutline(hDC, NULL/*hFont*/); // шрифт УЖЕ выбран в DC
+		lpOutl = LoadOutline(hDC, NULL/*hFont*/); // С€СЂРёС„С‚ РЈР–Р• РІС‹Р±СЂР°РЅ РІ DC
 
 		if (lpOutl)
 		{
@@ -11947,19 +11947,19 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			}
 		}
 
-		// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
+		// Сѓ Arial'Р° РЅР°РїСЂРёРјРµСЂ MaxWidth СЃР»РёС€РєРѕРј Р±РѕР»СЊС€РѕР№ (РІ РґРІР° Рё Р±РѕР»РµРµ СЂР°Р· Р±РѕР»СЊС€Рµ Р’Р«РЎРћРўР« С€СЂРёС„С‚Р°)
 		bool bAlmostMonospace = IsAlmostMonospace(inFont->lfFaceName, m_tm->tmMaxCharWidth, m_tm->tmAveCharWidth, m_tm->tmHeight);
 		//if (m_tm->tmMaxCharWidth && m_tm->tmAveCharWidth && m_tm->tmHeight)
 		//{
 		//	int nRelativeDelta = (m_tm->tmMaxCharWidth - m_tm->tmAveCharWidth) * 100 / m_tm->tmHeight;
-		//	// Если расхождение менее 15% высоты - считаем шрифт моноширным
+		//	// Р•СЃР»Рё СЂР°СЃС…РѕР¶РґРµРЅРёРµ РјРµРЅРµРµ 15% РІС‹СЃРѕС‚С‹ - СЃС‡РёС‚Р°РµРј С€СЂРёС„С‚ РјРѕРЅРѕС€РёСЂРЅС‹Рј
 		//	if (nRelativeDelta < 15)
 		//		bAlmostMonospace = true;
 
 		//	//if (abs(m_tm->tmMaxCharWidth - m_tm->tmAveCharWidth)<=2)
-		//	//{ -- это была попытка прикинуть среднюю ширину по английским буквам
-		//	//  -- не нужно, т.к. затевалось из-за проблем с ClearType на больших размерах
-		//	//  -- шрифтов, а это лечится аргументом pDX в TextOut
+		//	//{ -- СЌС‚Рѕ Р±С‹Р»Р° РїРѕРїС‹С‚РєР° РїСЂРёРєРёРЅСѓС‚СЊ СЃСЂРµРґРЅСЋСЋ С€РёСЂРёРЅСѓ РїРѕ Р°РЅРіР»РёР№СЃРєРёРј Р±СѓРєРІР°Рј
+		//	//  -- РЅРµ РЅСѓР¶РЅРѕ, С‚.Рє. Р·Р°С‚РµРІР°Р»РѕСЃСЊ РёР·-Р·Р° РїСЂРѕР±Р»РµРј СЃ ClearType РЅР° Р±РѕР»СЊС€РёС… СЂР°Р·РјРµСЂР°С…
+		//	//  -- С€СЂРёС„С‚РѕРІ, Р° СЌС‚Рѕ Р»РµС‡РёС‚СЃСЏ Р°СЂРіСѓРјРµРЅС‚РѕРј pDX РІ TextOut
 		//	//	int nTestLen = _tcslen(TEST_FONT_WIDTH_STRING_EN);
 		//	//	SIZE szTest = {0,0};
 		//	//	if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, &szTest)) {
@@ -11975,15 +11975,15 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		//}
 
 		//if (isForceMonospace) {
-		//Maximus - у Arial'а например MaxWidth слишком большой
+		//Maximus - Сѓ Arial'Р° РЅР°РїСЂРёРјРµСЂ MaxWidth СЃР»РёС€РєРѕРј Р±РѕР»СЊС€РѕР№
 		if (m_tm->tmMaxCharWidth > (m_tm->tmHeight * 15 / 10))
-			m_tm->tmMaxCharWidth = m_tm->tmHeight; // иначе зашкалит - текст очень сильно разъедется
+			m_tm->tmMaxCharWidth = m_tm->tmHeight; // РёРЅР°С‡Рµ Р·Р°С€РєР°Р»РёС‚ - С‚РµРєСЃС‚ РѕС‡РµРЅСЊ СЃРёР»СЊРЅРѕ СЂР°Р·СЉРµРґРµС‚СЃСЏ
 
-		// Лучше поставим AveCharWidth. MaxCharWidth для "условно моноширного" Consolas почти равен высоте.
+		// Р›СѓС‡С€Рµ РїРѕСЃС‚Р°РІРёРј AveCharWidth. MaxCharWidth РґР»СЏ "СѓСЃР»РѕРІРЅРѕ РјРѕРЅРѕС€РёСЂРЅРѕРіРѕ" Consolas РїРѕС‡С‚Рё СЂР°РІРµРЅ РІС‹СЃРѕС‚Рµ.
 		inFont->lfWidth = gpSet->FontSizeX3 ? gpSet->FontSizeX3 : m_tm->tmAveCharWidth;
-		// Обновлять реальный размер шрифта в диалоге настройки не будем, были случаи, когда
-		// tmHeight был меньше, чем запрашивалось, однако, если пытаться создать шрифт с этим "обновленным"
-		// размером - в реале создавался совсем другой шрифт...
+		// РћР±РЅРѕРІР»СЏС‚СЊ СЂРµР°Р»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ С€СЂРёС„С‚Р° РІ РґРёР°Р»РѕРіРµ РЅР°СЃС‚СЂРѕР№РєРё РЅРµ Р±СѓРґРµРј, Р±С‹Р»Рё СЃР»СѓС‡Р°Рё, РєРѕРіРґР°
+		// tmHeight Р±С‹Р» РјРµРЅСЊС€Рµ, С‡РµРј Р·Р°РїСЂР°С€РёРІР°Р»РѕСЃСЊ, РѕРґРЅР°РєРѕ, РµСЃР»Рё РїС‹С‚Р°С‚СЊСЃСЏ СЃРѕР·РґР°С‚СЊ С€СЂРёС„С‚ СЃ СЌС‚РёРј "РѕР±РЅРѕРІР»РµРЅРЅС‹Рј"
+		// СЂР°Р·РјРµСЂРѕРј - РІ СЂРµР°Р»Рµ СЃРѕР·РґР°РІР°Р»СЃСЏ СЃРѕРІСЃРµРј РґСЂСѓРіРѕР№ С€СЂРёС„С‚...
 		inFont->lfHeight = m_tm->tmHeight;
 
 		if (lbTM && m_tm->tmCharSet != DEFAULT_CHARSET)
@@ -12002,9 +12002,9 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
 		if (ghOpWnd)
 		{
-			// устанавливать только при листании шрифта в настройке
-			TODO("Или через GuiMacro?");
-			// при кликах по самому флажку "Monospace" шрифт не пересоздается (CreateFont... не вызывается)
+			// СѓСЃС‚Р°РЅР°РІР»РёРІР°С‚СЊ С‚РѕР»СЊРєРѕ РїСЂРё Р»РёСЃС‚Р°РЅРёРё С€СЂРёС„С‚Р° РІ РЅР°СЃС‚СЂРѕР№РєРµ
+			TODO("РР»Рё С‡РµСЂРµР· GuiMacro?");
+			// РїСЂРё РєР»РёРєР°С… РїРѕ СЃР°РјРѕРјСѓ С„Р»Р°Р¶РєСѓ "Monospace" С€СЂРёС„С‚ РЅРµ РїРµСЂРµСЃРѕР·РґР°РµС‚СЃСЏ (CreateFont... РЅРµ РІС‹Р·С‹РІР°РµС‚СЃСЏ)
 			UpdateTTF(!bAlmostMonospace);    //(m_tm->tmMaxCharWidth - m_tm->tmAveCharWidth)>2
 		}
 
@@ -12114,7 +12114,7 @@ void CSettings::DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINET
 	}
 	else
 	{
-		SelectObject(hDC, hFont); // вернуть шрифт должна вызывающая функция!
+		SelectObject(hDC, hFont); // РІРµСЂРЅСѓС‚СЊ С€СЂРёС„С‚ РґРѕР»Р¶РЅР° РІС‹Р·С‹РІР°СЋС‰Р°СЏ С„СѓРЅРєС†РёСЏ!
 		GetTextMetrics(hDC, &ltm);
 		GetTextFace(hDC, countof(szFontFace), szFontFace);
 		_wsprintf(szFontDump, SKIPLEN(countof(szFontDump)) L"*** gpSet->%s: '%s', Height=%i, Ave=%i, Max=%i, Over=%i, Angle*10=%i\n",
@@ -12148,7 +12148,7 @@ int CSettings::checkDlgButton(HWND hParent, WORD nCtrlId, UINT uCheck)
 		}
 	}
 #endif
-	// Аналог CheckDlgButton
+	// РђРЅР°Р»РѕРі CheckDlgButton
 	BOOL bRc = CheckDlgButton(hParent, nCtrlId, uCheck);
 	return bRc;
 }
@@ -12169,13 +12169,13 @@ int CSettings::checkRadioButton(HWND hParent, int nIDFirstButton, int nIDLastBut
 		MessageBox(ghOpWnd, szErr, L"ConEmu settings", MB_SYSTEMMODAL|MB_ICONSTOP);
 	}
 #endif
-	// Аналог CheckRadioButton
+	// РђРЅР°Р»РѕРі CheckRadioButton
 	BOOL bRc = CheckRadioButton(hParent, nIDFirstButton, nIDLastButton, nIDCheckButton);
 	return bRc;
 }
 
-// FALSE - выключена
-// TRUE (BST_CHECKED) - включена
+// FALSE - РІС‹РєР»СЋС‡РµРЅР°
+// TRUE (BST_CHECKED) - РІРєР»СЋС‡РµРЅР°
 // BST_INDETERMINATE (2) - 3-d state
 int CSettings::IsChecked(HWND hParent, WORD nCtrlId)
 {
@@ -12191,7 +12191,7 @@ int CSettings::IsChecked(HWND hParent, WORD nCtrlId)
 		MessageBox(ghOpWnd, szErr, L"ConEmu settings", MB_SYSTEMMODAL|MB_ICONSTOP);
 	}
 #endif
-	// Аналог IsDlgButtonChecked
+	// РђРЅР°Р»РѕРі IsDlgButtonChecked
 	int nChecked = SendDlgItemMessage(hParent, nCtrlId, BM_GETCHECK, 0, 0);
 	_ASSERTE(nChecked==0 || nChecked==1 || nChecked==2);
 
@@ -12239,7 +12239,7 @@ int CSettings::GetNumber(HWND hParent, WORD nCtrlId)
 	if (GetDlgItemText(hParent, nCtrlId, szNumber, countof(szNumber)))
 	{
 		if (!wcscmp(szNumber, L"None"))
-			nValue = 255; // 0xFF для gpSet->AppStd.nFontNormalColor, gpSet->AppStd.nFontBoldColor, gpSet->AppStd.nFontItalicColor;
+			nValue = 255; // 0xFF РґР»СЏ gpSet->AppStd.nFontNormalColor, gpSet->AppStd.nFontBoldColor, gpSet->AppStd.nFontItalicColor;
 		else
 			nValue = klatoi((szNumber[0]==L' ') ? (szNumber+1) : szNumber);
 	}
@@ -12287,11 +12287,11 @@ INT_PTR CSettings::GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCW
 			if (lstrcmp(*ppszStr, pszNew) == 0)
 			{
 				free(pszNew);
-				return nLen; // Изменений не было
+				return nLen; // РР·РјРµРЅРµРЅРёР№ РЅРµ Р±С‹Р»Рѕ
 			}
 		}
 
-		// Значение "по умолчанию" не запоминаем
+		// Р—РЅР°С‡РµРЅРёРµ "РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ" РЅРµ Р·Р°РїРѕРјРёРЅР°РµРј
 		if (asNoDefault && lstrcmp(pszNew, asNoDefault) == 0)
 		{
 			SafeFree(*ppszStr);
@@ -12343,7 +12343,7 @@ INT_PTR CSettings::GetSelectedString(HWND hParent, WORD nListCtrlId, wchar_t** p
 				if (lstrcmp(*ppszStr, pszNew) == 0)
 				{
 					free(pszNew);
-					return nLen; // Изменений не было
+					return nLen; // РР·РјРµРЅРµРЅРёР№ РЅРµ Р±С‹Р»Рѕ
 				}
 			}
 
@@ -12365,22 +12365,22 @@ INT_PTR CSettings::GetSelectedString(HWND hParent, WORD nListCtrlId, wchar_t** p
 
 int CSettings::SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 {
-	if (!hParent)  // был ghOpWnd. теперь может быть вызван и для других диалогов!
+	if (!hParent)  // Р±С‹Р» ghOpWnd. С‚РµРїРµСЂСЊ РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹Р·РІР°РЅ Рё РґР»СЏ РґСЂСѓРіРёС… РґРёР°Р»РѕРіРѕРІ!
 		return -1;
 
 #ifdef _DEBUG
 	HWND hChild = GetDlgItem(hParent, nCtrlId);
 	_ASSERTE(hChild!=NULL);
 #endif
-	// Осуществляет поиск по _началу_ (!) строки
+	// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ РїРѕРёСЃРє РїРѕ _РЅР°С‡Р°Р»Сѓ_ (!) СЃС‚СЂРѕРєРё
 	int nIdx = (int)SendDlgItemMessage(hParent, nCtrlId, CB_SELECTSTRING, -1, (LPARAM)asText);
 	return nIdx;
 }
 
-// Если nCtrlId==0 - hParent==hList
+// Р•СЃР»Рё nCtrlId==0 - hParent==hList
 int CSettings::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 {
-	if (!hParent)  // был ghOpWnd. теперь может быть вызван и для других диалогов!
+	if (!hParent)  // Р±С‹Р» ghOpWnd. С‚РµРїРµСЂСЊ РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹Р·РІР°РЅ Рё РґР»СЏ РґСЂСѓРіРёС… РґРёР°Р»РѕРіРѕРІ!
 		return -1;
 
 	HWND hList = nCtrlId ? GetDlgItem(hParent, nCtrlId) : hParent;
@@ -12424,9 +12424,9 @@ int CSettings::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 	return nIdx;
 }
 
-// "Умолчательная" высота буфера.
-// + ConEmu стартует в буферном режиме
-// + команда по умолчанию (если не задана в реестре или ком.строке) будет "cmd", а не "far"
+// "РЈРјРѕР»С‡Р°С‚РµР»СЊРЅР°СЏ" РІС‹СЃРѕС‚Р° Р±СѓС„РµСЂР°.
+// + ConEmu СЃС‚Р°СЂС‚СѓРµС‚ РІ Р±СѓС„РµСЂРЅРѕРј СЂРµР¶РёРјРµ
+// + РєРѕРјР°РЅРґР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ (РµСЃР»Рё РЅРµ Р·Р°РґР°РЅР° РІ СЂРµРµСЃС‚СЂРµ РёР»Рё РєРѕРј.СЃС‚СЂРѕРєРµ) Р±СѓРґРµС‚ "cmd", Р° РЅРµ "far"
 void CSettings::SetArgBufferHeight(int anBufferHeight)
 {
 	_ASSERTE(anBufferHeight>=0);
@@ -12547,21 +12547,21 @@ LPCTSTR CSettings::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 
 	wchar_t* pszNewCmd = NULL;
 
-	// Хорошо бы более корректно определить версию фара, но это не всегда просто
-	// Например x64 файл сложно обработать в x86 ConEmu.
+	// РҐРѕСЂРѕС€Рѕ Р±С‹ Р±РѕР»РµРµ РєРѕСЂСЂРµРєС‚РЅРѕ РѕРїСЂРµРґРµР»РёС‚СЊ РІРµСЂСЃРёСЋ С„Р°СЂР°, РЅРѕ СЌС‚Рѕ РЅРµ РІСЃРµРіРґР° РїСЂРѕСЃС‚Рѕ
+	// РќР°РїСЂРёРјРµСЂ x64 С„Р°Р№Р» СЃР»РѕР¶РЅРѕ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РІ x86 ConEmu.
 	DWORD nFarSize = 0;
 
 	if (lstrcmpi(gpSetCls->GetDefaultCmd(), L"far") == 0)
 	{
-		// Ищем фар. (1) В папке ConEmu, (2) в текущей директории, (2) на уровень вверх от папки ConEmu
+		// РС‰РµРј С„Р°СЂ. (1) Р’ РїР°РїРєРµ ConEmu, (2) РІ С‚РµРєСѓС‰РµР№ РґРёСЂРµРєС‚РѕСЂРёРё, (2) РЅР° СѓСЂРѕРІРµРЅСЊ РІРІРµСЂС… РѕС‚ РїР°РїРєРё ConEmu
 		wchar_t szFar[MAX_PATH*2], *pszSlash;
 		szFar[0] = L'"';
-		wcscpy_add(1, szFar, gpConEmu->ms_ConEmuExeDir); // Теперь szFar содержит путь запуска программы
+		wcscpy_add(1, szFar, gpConEmu->ms_ConEmuExeDir); // РўРµРїРµСЂСЊ szFar СЃРѕРґРµСЂР¶РёС‚ РїСѓС‚СЊ Р·Р°РїСѓСЃРєР° РїСЂРѕРіСЂР°РјРјС‹
 		pszSlash = szFar + _tcslen(szFar);
 		_ASSERTE(pszSlash > szFar);
 		BOOL lbFound = FALSE;
 
-		// (1) В папке ConEmu
+		// (1) Р’ РїР°РїРєРµ ConEmu
 		if (!lbFound)
 		{
 			wcscpy_add(pszSlash, szFar, L"\\Far.exe");
@@ -12570,7 +12570,7 @@ LPCTSTR CSettings::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 				lbFound = TRUE;
 		}
 
-		// (2) в текущей директории
+		// (2) РІ С‚РµРєСѓС‰РµР№ РґРёСЂРµРєС‚РѕСЂРёРё
 		if (!lbFound && lstrcmpi(gpConEmu->WorkDir(), gpConEmu->ms_ConEmuExeDir))
 		{
 			szFar[0] = L'"';
@@ -12581,7 +12581,7 @@ LPCTSTR CSettings::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 				lbFound = TRUE;
 		}
 
-		// (3) на уровень вверх
+		// (3) РЅР° СѓСЂРѕРІРµРЅСЊ РІРІРµСЂС…
 		if (!lbFound)
 		{
 			szFar[0] = L'"';
@@ -12601,9 +12601,9 @@ LPCTSTR CSettings::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 
 		if (lbFound)
 		{
-			// 110124 - нафиг, если пользователю надо - сам или параметр настроит, или реестр
-			//// far чаще всего будет установлен в "Program Files", поэтому для избежания проблем - окавычиваем
-			//// Пока тупо - если far.exe > 1200K - считаем, что это Far2
+			// 110124 - РЅР°С„РёРі, РµСЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РЅР°РґРѕ - СЃР°Рј РёР»Рё РїР°СЂР°РјРµС‚СЂ РЅР°СЃС‚СЂРѕРёС‚, РёР»Рё СЂРµРµСЃС‚СЂ
+			//// far С‡Р°С‰Рµ РІСЃРµРіРѕ Р±СѓРґРµС‚ СѓСЃС‚Р°РЅРѕРІР»РµРЅ РІ "Program Files", РїРѕСЌС‚РѕРјСѓ РґР»СЏ РёР·Р±РµР¶Р°РЅРёСЏ РїСЂРѕР±Р»РµРј - РѕРєР°РІС‹С‡РёРІР°РµРј
+			//// РџРѕРєР° С‚СѓРїРѕ - РµСЃР»Рё far.exe > 1200K - СЃС‡РёС‚Р°РµРј, С‡С‚Рѕ СЌС‚Рѕ Far2
 			//wcscat_c(szFar, (nFarSize>1228800) ? L"\" /w" : L"\"");
 			wcscat_c(szFar, L"\"");
 
@@ -12612,7 +12612,7 @@ LPCTSTR CSettings::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 		}
 		else
 		{
-			// Если Far.exe не найден рядом с ConEmu - запустить cmd.exe
+			// Р•СЃР»Рё Far.exe РЅРµ РЅР°Р№РґРµРЅ СЂСЏРґРѕРј СЃ ConEmu - Р·Р°РїСѓСЃС‚РёС‚СЊ cmd.exe
 			pszNewCmd = GetComspec(&gpSet->ComSpec);
 			//wcscpy_c(szFar, L"cmd");
 		}
@@ -12663,12 +12663,12 @@ bool CSettings::IsSingleInstanceArg()
 	return false;
 }
 
-// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
-// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
+// Р•СЃР»Рё ConEmu Р±С‹Р» Р·Р°РїСѓС‰РµРЅ СЃ РєР»СЋС‡РѕРј "/single /cmd xxx" С‚Рѕ РїРѕСЃР»Рµ РѕРєРѕРЅС‡Р°РЅРёСЏ
+// Р·Р°РіСЂСѓР·РєРё - СЃР±СЂРѕСЃРёС‚СЊ РєРѕРјР°РЅРґСѓ, РєРѕС‚РѕСЂР°СЏ РїСЂРёС€Р»Р° РёР· "/cmd" - Р·Р°РіСЂСѓР·РёС‚СЊ РЅР°СЃС‚СЂРѕР№РєСѓ
 void CSettings::ResetCmdArg()
 {
 	//SingleInstanceArg = sgl_Default;
-	//// Сбросить нужно только gpSet->psCurCmd, gpSet->psCmd не меняется - загружается только из настройки
+	//// РЎР±СЂРѕСЃРёС‚СЊ РЅСѓР¶РЅРѕ С‚РѕР»СЊРєРѕ gpSet->psCurCmd, gpSet->psCmd РЅРµ РјРµРЅСЏРµС‚СЃСЏ - Р·Р°РіСЂСѓР¶Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РёР· РЅР°СЃС‚СЂРѕР№РєРё
 	//SafeFree(gpSet->psCurCmd);
 	//gpSet->isCurCmdList = false;
 
@@ -12693,7 +12693,7 @@ void CSettings::SetSaveCmdHistory(bool bSaveHistory)
 {
 	gpSet->isSaveCmdHistory = bSaveHistory;
 
-	// И сразу сохранить в настройках
+	// Р СЃСЂР°Р·Сѓ СЃРѕС…СЂР°РЅРёС‚СЊ РІ РЅР°СЃС‚СЂРѕР№РєР°С…
 	SettingsBase* reg = gpSet->CreateSettings(NULL);
 	if (!reg)
 	{
@@ -12821,10 +12821,10 @@ void CSettings::UnregisterTabs()
 	mb_TabHotKeyRegistered = FALSE;
 }
 
-// Если asFontFile НЕ NULL - значит его пользователь указал через /fontfile
+// Р•СЃР»Рё asFontFile РќР• NULL - Р·РЅР°С‡РёС‚ РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ СѓРєР°Р·Р°Р» С‡РµСЂРµР· /fontfile
 BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 {
-	// Обработка параметра /fontfile
+	// РћР±СЂР°Р±РѕС‚РєР° РїР°СЂР°РјРµС‚СЂР° /fontfile
 	_ASSERTE(asFontFile && *asFontFile);
 
 	if (mb_StopRegisterFonts) return FALSE;
@@ -12836,7 +12836,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 
 		if (StrCmpI(iter->szFontFile, asFontFile) == 0)
 		{
-			// Уже добавлено
+			// РЈР¶Рµ РґРѕР±Р°РІР»РµРЅРѕ
 			if (abDefault && iter->bDefault == FALSE)
 				iter->bDefault = TRUE;
 
@@ -12864,14 +12864,14 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 			return FALSE;
 		}
 
-		return TRUE; // продолжить со следующим файлом
+		return TRUE; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ СЃРѕ СЃР»РµРґСѓСЋС‰РёРј С„Р°Р№Р»РѕРј
 	}
 	else if (rf.szFontName[0] == 1 && rf.szFontName[1] == 0)
 	{
 		return TRUE;
 	}
 
-	// Проверить, может такой шрифт уже зарегистрирован в системе
+	// РџСЂРѕРІРµСЂРёС‚СЊ, РјРѕР¶РµС‚ С‚Р°РєРѕР№ С€СЂРёС„С‚ СѓР¶Рµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅ РІ СЃРёСЃС‚РµРјРµ
 	BOOL lbRegistered = FALSE, lbOneOfFam = FALSE; int iFamIndex = -1;
 
 	//for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
@@ -12879,7 +12879,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 	{
 		const RegFont* iter = &(m_RegFonts[j]);
 
-		// Это может быть другой тип шрифта (Liberation Mono Bold, Liberation Mono Regular, ...)
+		// Р­С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РґСЂСѓРіРѕР№ С‚РёРї С€СЂРёС„С‚Р° (Liberation Mono Bold, Liberation Mono Regular, ...)
 		if (lstrcmpi(iter->szFontName, rf.szFontName) == 0
 			|| lstrcmpi(iter->szFontName, szFullFontName) == 0)
 		{
@@ -12893,7 +12893,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 
 	if (!lbOneOfFam)
 	{
-		// Проверяем, может в системе уже зарегистрирован такой шрифт?
+		// РџСЂРѕРІРµСЂСЏРµРј, РјРѕР¶РµС‚ РІ СЃРёСЃС‚РµРјРµ СѓР¶Рµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅ С‚Р°РєРѕР№ С€СЂРёС„С‚?
 		LOGFONT LF = {0};
 		LF.lfOutPrecision = OUT_TT_PRECIS; LF.lfClipPrecision = CLIP_DEFAULT_PRECIS; LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
 		wcscpy_c(LF.lfFaceName, rf.szFontName); LF.lfHeight = 10; LF.lfWeight = FW_NORMAL;
@@ -12927,7 +12927,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 			{
 				if (lstrcmpi((wchar_t*)lpOutl->otmpFamilyName, rf.szFontName) == 0)
 				{
-					// Таки создавать нужно по полному имени
+					// РўР°РєРё СЃРѕР·РґР°РІР°С‚СЊ РЅСѓР¶РЅРѕ РїРѕ РїРѕР»РЅРѕРјСѓ РёРјРµРЅРё
 					wcscpy_c(rf.szFontName, szFullFontName);
 					lbRegistered = TRUE;
 				}
@@ -12939,14 +12939,14 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		}
 	}
 
-	// Запомним, что такое имя шрифта в системе уже есть, но зарегистрируем. Может в этом файле какие-то модификации...
+	// Р—Р°РїРѕРјРЅРёРј, С‡С‚Рѕ С‚Р°РєРѕРµ РёРјСЏ С€СЂРёС„С‚Р° РІ СЃРёСЃС‚РµРјРµ СѓР¶Рµ РµСЃС‚СЊ, РЅРѕ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂСѓРµРј. РњРѕР¶РµС‚ РІ СЌС‚РѕРј С„Р°Р№Р»Рµ РєР°РєРёРµ-С‚Рѕ РјРѕРґРёС„РёРєР°С†РёРё...
 	rf.bAlreadyInSystem = lbRegistered;
 	wcscpy_c(rf.szFontFile, asFontFile);
 
 	LPCTSTR pszDot = _tcsrchr(asFontFile, _T('.'));
 	if (pszDot && lstrcmpi(pszDot, _T(".bdf"))==0)
 	{
-		WARNING("Не загружать шрифт полностью - только имена/заголовок, а то слишком накладно по времени. Загружать при первом вызове.");
+		WARNING("РќРµ Р·Р°РіСЂСѓР¶Р°С‚СЊ С€СЂРёС„С‚ РїРѕР»РЅРѕСЃС‚СЊСЋ - С‚РѕР»СЊРєРѕ РёРјРµРЅР°/Р·Р°РіРѕР»РѕРІРѕРє, Р° С‚Рѕ СЃР»РёС€РєРѕРј РЅР°РєР»Р°РґРЅРѕ РїРѕ РІСЂРµРјРµРЅРё. Р—Р°РіСЂСѓР¶Р°С‚СЊ РїСЂРё РїРµСЂРІРѕРј РІС‹Р·РѕРІРµ.");
 		CustomFont* pFont = BDF_Load(asFontFile);
 		if (!pFont)
 		{
@@ -12964,12 +12964,12 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 				return FALSE;
 			}
 
-			return TRUE; // продолжить со следующим файлом
+			return TRUE; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ СЃРѕ СЃР»РµРґСѓСЋС‰РёРј С„Р°Р№Р»РѕРј
 		}
 
 		if (lbOneOfFam)
 		{
-			// Добавим в существующее семейство
+			// Р”РѕР±Р°РІРёРј РІ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРµ СЃРµРјРµР№СЃС‚РІРѕ
 			_ASSERTE(iFamIndex >= 0);
 			m_RegFonts[iFamIndex].pCustom->AddFont(pFont);
 			return TRUE;
@@ -12980,7 +12980,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		rf.bUnicode = pFont->HasUnicode();
 		rf.bHasBorders = pFont->HasBorders();
 
-		// Запомнить шрифт
+		// Р—Р°РїРѕРјРЅРёС‚СЊ С€СЂРёС„С‚
 		m_RegFonts.push_back(rf);
 		return TRUE;
 	}
@@ -13001,12 +13001,12 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 			return FALSE;
 		}
 
-		return TRUE; // продолжить со следующим файлом
+		return TRUE; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ СЃРѕ СЃР»РµРґСѓСЋС‰РёРј С„Р°Р№Р»РѕРј
 	}
 
-	// Теперь его нужно добавить в вектор независимо от успешности определения рамок
-	// будет нужен RemoveFontResourceEx(asFontFile, FR_PRIVATE, NULL);
-	// Определить наличие рамок и "юникодности" шрифта
+	// РўРµРїРµСЂСЊ РµРіРѕ РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РІ РІРµРєС‚РѕСЂ РЅРµР·Р°РІРёСЃРёРјРѕ РѕС‚ СѓСЃРїРµС€РЅРѕСЃС‚Рё РѕРїСЂРµРґРµР»РµРЅРёСЏ СЂР°РјРѕРє
+	// Р±СѓРґРµС‚ РЅСѓР¶РµРЅ RemoveFontResourceEx(asFontFile, FR_PRIVATE, NULL);
+	// РћРїСЂРµРґРµР»РёС‚СЊ РЅР°Р»РёС‡РёРµ СЂР°РјРѕРє Рё "СЋРЅРёРєРѕРґРЅРѕСЃС‚Рё" С€СЂРёС„С‚Р°
 	HDC hdc = CreateCompatibleDC(0);
 
 	if (hdc)
@@ -13035,7 +13035,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 			}
 		}
 
-		// Попробовать по полному имени?
+		// РџРѕРїСЂРѕР±РѕРІР°С‚СЊ РїРѕ РїРѕР»РЅРѕРјСѓ РёРјРµРЅРё?
 		if ((!hf || lbFail) && (lstrcmp(rf.szFontName, szFullFontName) != 0))
 		{
 			if (hf)
@@ -13050,7 +13050,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 			{
 				if (lstrcmpi((wchar_t*)lpOutl->otmpFamilyName, szFullFontName) == 0)
 				{
-					// Таки создавать нужно по полному имени
+					// РўР°РєРё СЃРѕР·РґР°РІР°С‚СЊ РЅСѓР¶РЅРѕ РїРѕ РїРѕР»РЅРѕРјСѓ РёРјРµРЅРё
 					wcscpy_c(rf.szFontName, szFullFontName);
 					lbFail = FALSE;
 				}
@@ -13059,7 +13059,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 			}
 		}
 
-		// При обломе шрифт таки зарегистрируем, но как умолчание чего-либо брать не будем
+		// РџСЂРё РѕР±Р»РѕРјРµ С€СЂРёС„С‚ С‚Р°РєРё Р·Р°СЂРµРіРёСЃС‚СЂРёСЂСѓРµРј, РЅРѕ РєР°Рє СѓРјРѕР»С‡Р°РЅРёРµ С‡РµРіРѕ-Р»РёР±Рѕ Р±СЂР°С‚СЊ РЅРµ Р±СѓРґРµРј
 		if (hf && lbFail)
 		{
 			DeleteObject(hf);
@@ -13067,7 +13067,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		}
 		if (lbFail && *szDbg)
 		{
-			// Показать в отладчике что стряслось
+			// РџРѕРєР°Р·Р°С‚СЊ РІ РѕС‚Р»Р°РґС‡РёРєРµ С‡С‚Рѕ СЃС‚СЂСЏСЃР»РѕСЃСЊ
 			OutputDebugString(szDbg);
 		}
 
@@ -13089,7 +13089,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 					{
 						rf.bUnicode = (pSets->flAccel != 1/*GS_8BIT_INDICES*/);
 
-						// Поиск рамок
+						// РџРѕРёСЃРє СЂР°РјРѕРє
 						if (rf.bUnicode)
 						{
 							for(DWORD r = 0; r < pSets->cRanges; r++)
@@ -13118,7 +13118,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		DeleteDC(hdc);
 	}
 
-	// Запомнить шрифт
+	// Р—Р°РїРѕРјРЅРёС‚СЊ С€СЂРёС„С‚
 	m_RegFonts.push_back(rf);
 	return TRUE;
 }
@@ -13126,16 +13126,16 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 void CSettings::RegisterFonts()
 {
 	if (!gpSet->isAutoRegisterFonts || gpConEmu->DisableRegisterFonts)
-		return; // Если поиск шрифтов не требуется
+		return; // Р•СЃР»Рё РїРѕРёСЃРє С€СЂРёС„С‚РѕРІ РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ
 
-	// Сначала - регистрация шрифтов в папке программы
+	// РЎРЅР°С‡Р°Р»Р° - СЂРµРіРёСЃС‚СЂР°С†РёСЏ С€СЂРёС„С‚РѕРІ РІ РїР°РїРєРµ РїСЂРѕРіСЂР°РјРјС‹
 	RegisterFontsInt(gpConEmu->ms_ConEmuExeDir);
 
-	// Если папка запуска отличается от папки программы
+	// Р•СЃР»Рё РїР°РїРєР° Р·Р°РїСѓСЃРєР° РѕС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ РїР°РїРєРё РїСЂРѕРіСЂР°РјРјС‹
 	if (lstrcmpW(gpConEmu->ms_ConEmuExeDir, gpConEmu->ms_ConEmuBaseDir))
-		RegisterFontsInt(gpConEmu->ms_ConEmuBaseDir); // зарегистрировать шрифты и из базовой папки
+		RegisterFontsInt(gpConEmu->ms_ConEmuBaseDir); // Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊ С€СЂРёС„С‚С‹ Рё РёР· Р±Р°Р·РѕРІРѕР№ РїР°РїРєРё
 
-	// Если папка запуска отличается от папки программы
+	// Р•СЃР»Рё РїР°РїРєР° Р·Р°РїСѓСЃРєР° РѕС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ РїР°РїРєРё РїСЂРѕРіСЂР°РјРјС‹
 	if (lstrcmpiW(gpConEmu->ms_ConEmuExeDir, gpConEmu->WorkDir()))
 	{
 		BOOL lbSkipCurDir = FALSE;
@@ -13143,26 +13143,26 @@ void CSettings::RegisterFonts()
 
 		if (SHGetSpecialFolderPath(ghWnd, szFontsDir, CSIDL_FONTS, FALSE))
 		{
-			// Oops, папка запуска совпала с системной папкой шрифтов?
+			// Oops, РїР°РїРєР° Р·Р°РїСѓСЃРєР° СЃРѕРІРїР°Р»Р° СЃ СЃРёСЃС‚РµРјРЅРѕР№ РїР°РїРєРѕР№ С€СЂРёС„С‚РѕРІ?
 			lbSkipCurDir = (lstrcmpiW(szFontsDir, gpConEmu->WorkDir()) == 0);
 		}
 
 		if (!lbSkipCurDir)
 		{
-			// зарегистрировать шрифты и из папки запуска
+			// Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊ С€СЂРёС„С‚С‹ Рё РёР· РїР°РїРєРё Р·Р°РїСѓСЃРєР°
 			RegisterFontsInt(gpConEmu->WorkDir());
 		}
 	}
 
-	// Теперь можно смотреть, зарегистрились ли какие-то шрифты... И выбрать из них подходящие
-	// Это делается в InitFont
+	// РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ СЃРјРѕС‚СЂРµС‚СЊ, Р·Р°СЂРµРіРёСЃС‚СЂРёР»РёСЃСЊ Р»Рё РєР°РєРёРµ-С‚Рѕ С€СЂРёС„С‚С‹... Р РІС‹Р±СЂР°С‚СЊ РёР· РЅРёС… РїРѕРґС…РѕРґСЏС‰РёРµ
+	// Р­С‚Рѕ РґРµР»Р°РµС‚СЃСЏ РІ InitFont
 }
 
 void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
 {
-	// Регистрация шрифтов в папке ConEmu
+	// Р РµРіРёСЃС‚СЂР°С†РёСЏ С€СЂРёС„С‚РѕРІ РІ РїР°РїРєРµ ConEmu
 	WIN32_FIND_DATA fnd;
-	wchar_t szFind[MAX_PATH*2]; wcscpy_c(szFind, asFromDir); // БЕЗ завершающего слеша!
+	wchar_t szFind[MAX_PATH*2]; wcscpy_c(szFind, asFromDir); // Р‘Р•Р— Р·Р°РІРµСЂС€Р°СЋС‰РµРіРѕ СЃР»РµС€Р°!
 	wchar_t* pszSlash = szFind + lstrlenW(szFind);
 	wcscpy_add(pszSlash, szFind, L"\\*.*");
 	HANDLE hFind = FindFirstFile(szFind, &fnd);
@@ -13176,8 +13176,8 @@ void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
 				pszSlash[1] = 0;
 
 				TCHAR* pszDot = _tcsrchr(fnd.cFileName, _T('.'));
-				// Неизвестные расширения - пропускаем
-				TODO("Register *.fon font files"); // Формат шрифта разобран в ImpEx
+				// РќРµРёР·РІРµСЃС‚РЅС‹Рµ СЂР°СЃС€РёСЂРµРЅРёСЏ - РїСЂРѕРїСѓСЃРєР°РµРј
+				TODO("Register *.fon font files"); // Р¤РѕСЂРјР°С‚ С€СЂРёС„С‚Р° СЂР°Р·РѕР±СЂР°РЅ РІ ImpEx
 				if (!pszDot || (lstrcmpi(pszDot, _T(".ttf")) && lstrcmpi(pszDot, _T(".otf")) /*&& lstrcmpi(pszDot, _T(".fon"))*/ && lstrcmpi(pszDot, _T(".bdf")) ))
 					continue;
 
@@ -13197,7 +13197,7 @@ void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
 
 				wcscat_c(szFind, fnd.cFileName);
 
-				// Возвращает FALSE если произошла ошибка и юзер сказал "Не продолжать"
+				// Р’РѕР·РІСЂР°С‰Р°РµС‚ FALSE РµСЃР»Рё РїСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР° Рё СЋР·РµСЂ СЃРєР°Р·Р°Р» "РќРµ РїСЂРѕРґРѕР»Р¶Р°С‚СЊ"
 				if (!RegisterFont(szFind, FALSE))
 					break;
 			}
@@ -13229,7 +13229,7 @@ void CSettings::UnregisterFonts()
 BOOL CSettings::GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE])
 {
 	LPCTSTR pszDot = _tcsrchr(lpszFilePath, _T('.'));
-	// Неизвестные расширения - пропускаем
+	// РќРµРёР·РІРµСЃС‚РЅС‹Рµ СЂР°СЃС€РёСЂРµРЅРёСЏ - РїСЂРѕРїСѓСЃРєР°РµРј
 	if (!pszDot)
 		return FALSE;
 
@@ -13412,7 +13412,7 @@ BOOL CSettings::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 {
 	struct OTF_ROOT
 	{
-		char  szTag[4]; // 0x00010000 или 'OTTO'
+		char  szTag[4]; // 0x00010000 РёР»Рё 'OTTO'
 		WORD  NumTables;
 		WORD  SearchRange;
 		WORD  EntrySelector;
@@ -13420,28 +13420,28 @@ BOOL CSettings::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 	};
 	struct OTF_TABLE
 	{
-		char  szTag[4]; // нас интересует только 'name'
+		char  szTag[4]; // РЅР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ С‚РѕР»СЊРєРѕ 'name'
 		DWORD CheckSum;
-		DWORD Offset; // <== начало таблицы, от начала файла
+		DWORD Offset; // <== РЅР°С‡Р°Р»Рѕ С‚Р°Р±Р»РёС†С‹, РѕС‚ РЅР°С‡Р°Р»Р° С„Р°Р№Р»Р°
 		DWORD Length;
 	};
 	struct OTF_NAME_TABLE
 	{
 		WORD  Format; // = 0
 		WORD  Count;
-		WORD  StringOffset; // <== начало строк, в байтах, от начала таблицы
+		WORD  StringOffset; // <== РЅР°С‡Р°Р»Рѕ СЃС‚СЂРѕРє, РІ Р±Р°Р№С‚Р°С…, РѕС‚ РЅР°С‡Р°Р»Р° С‚Р°Р±Р»РёС†С‹
 	};
 	struct OTF_NAME_RECORD
 	{
 		WORD  PlatformID;
 		WORD  EncodingID;
 		WORD  LanguageID;
-		WORD  NameID; // нас интересует 4=Full font name, или (1+' '+2)=(Font Family name + Font Subfamily name)
+		WORD  NameID; // РЅР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ 4=Full font name, РёР»Рё (1+' '+2)=(Font Family name + Font Subfamily name)
 		WORD  Length; // in BYTES
 		WORD  Offset; // in BYTES from start of storage area
 	};
 	
-	//-- можно вернуть так, чтобы "по тихому" пропустить этот файл
+	//-- РјРѕР¶РЅРѕ РІРµСЂРЅСѓС‚СЊ С‚Р°Рє, С‡С‚РѕР±С‹ "РїРѕ С‚РёС…РѕРјСѓ" РїСЂРѕРїСѓСЃС‚РёС‚СЊ СЌС‚РѕС‚ С„Р°Р№Р»
 	//rsFontName[0] = 1;
 	//rsFontName[1] = 0;
 	
@@ -13469,7 +13469,7 @@ BOOL CSettings::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 	root.NumTables = SWAPWORD(root.NumTables);
 	
 	if (strnicmp(root.szTag, "OTTO", 4) != 0) //-V112
-		goto wrap; // Не поддерживается
+		goto wrap; // РќРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ
 
 
 	for (WORD i = 0; i < root.NumTables; i++)
@@ -13497,7 +13497,7 @@ BOOL CSettings::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 				nam.Count = SWAPWORD(nam.Count);
 				nam.StringOffset = SWAPWORD(nam.StringOffset);
 				if (nam.Format != 0 || !nam.Count)
-					goto wrap; // Неизвестный формат
+					goto wrap; // РќРµРёР·РІРµСЃС‚РЅС‹Р№ С„РѕСЂРјР°С‚
 				
 				bFound = FALSE;
 
@@ -13585,7 +13585,7 @@ BOOL CSettings::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 	{
 		if (!*szFullName)
 		{
-			// Если полное имя в файле не указано - сформируем сами
+			// Р•СЃР»Рё РїРѕР»РЅРѕРµ РёРјСЏ РІ С„Р°Р№Р»Рµ РЅРµ СѓРєР°Р·Р°РЅРѕ - СЃС„РѕСЂРјРёСЂСѓРµРј СЃР°РјРё
 			wcscpy_c(szFullName, szName);
 			if (*szSubName)
 			{
@@ -13629,7 +13629,7 @@ BOOL CSettings::GetFontNameFromFile_BDF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 	return TRUE;
 }
 
-// Показать в "Инфо" текущий режим консоли
+// РџРѕРєР°Р·Р°С‚СЊ РІ "РРЅС„Рѕ" С‚РµРєСѓС‰РёР№ СЂРµР¶РёРј РєРѕРЅСЃРѕР»Рё
 void CSettings::UpdateConsoleMode(DWORD nMode)
 {
 	if (mh_Tabs[thi_Info] && IsWindow(mh_Tabs[thi_Info]))
@@ -13640,10 +13640,10 @@ void CSettings::UpdateConsoleMode(DWORD nMode)
 	}
 }
 
-//// например, L"2013-25C3,25C4"
-//// Возвращает 0 - в случае успеха,
-//// при ошибке - индекс (1-based) ошибочного символа в asRanges
-//// -1 - ошибка выделения памяти
+//// РЅР°РїСЂРёРјРµСЂ, L"2013-25C3,25C4"
+//// Р’РѕР·РІСЂР°С‰Р°РµС‚ 0 - РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС…Р°,
+//// РїСЂРё РѕС€РёР±РєРµ - РёРЅРґРµРєСЃ (1-based) РѕС€РёР±РѕС‡РЅРѕРіРѕ СЃРёРјРІРѕР»Р° РІ asRanges
+//// -1 - РѕС€РёР±РєР° РІС‹РґРµР»РµРЅРёСЏ РїР°РјСЏС‚Рё
 //int CSettings::ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue /*= TRUE*/)
 //{
 //	if (!asRanges)
@@ -13731,7 +13731,7 @@ void CSettings::UpdateConsoleMode(DWORD nMode)
 //		{
 //			if ((psz + 10) >= pszEnd)
 //			{
-//				// Слишком длинный блок
+//				// РЎР»РёС€РєРѕРј РґР»РёРЅРЅС‹Р№ Р±Р»РѕРє
 //				_ASSERTE((psz + 10) < pszEnd);
 //				break;
 //			}
@@ -14056,7 +14056,7 @@ void CSettings::FillListBoxItems(HWND hList, uint nItems, ListBoxItem* Items /*c
 	else
 	{
 		if (!num)
-			nValue = 0;  // если код неизвестен?
+			nValue = 0;  // РµСЃР»Рё РєРѕРґ РЅРµРёР·РІРµСЃС‚РµРЅ?
 		SendMessage(hList, CB_SETCURSEL, num, 0);
 	}
 }
@@ -14085,7 +14085,7 @@ void CSettings::FillListBoxItems(HWND hList, uint nItems, const DWORD* pnValues,
 	else
 	{
 		if (!num)
-			nValue = 0;  // если код неизвестен?
+			nValue = 0;  // РµСЃР»Рё РєРѕРґ РЅРµРёР·РІРµСЃС‚РµРЅ?
 		SendMessage(hList, CB_SETCURSEL, num, 0);
 	}
 }
@@ -14150,7 +14150,7 @@ void CSettings::OnPanelViewAppeared(BOOL abAppear)
 
 bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 {
-	// Если плагин фара установил свой фон
+	// Р•СЃР»Рё РїР»Р°РіРёРЅ С„Р°СЂР° СѓСЃС‚Р°РЅРѕРІРёР» СЃРІРѕР№ С„РѕРЅ
 	if (gpSet->isBgPluginAllowed && apVCon && apVCon->HasBackgroundImage(NULL,NULL))
 	{
 		if (apVCon->isEditor || apVCon->isViewer)
@@ -14159,7 +14159,7 @@ bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 		return true;
 	}
 
-	// Иначе - по настрокам ConEmu
+	// РРЅР°С‡Рµ - РїРѕ РЅР°СЃС‚СЂРѕРєР°Рј ConEmu
 	#ifndef APPDISTINCTBACKGROUND
 	if (!isBackgroundImageValid)
 		return false;
@@ -14198,7 +14198,7 @@ void CSettings::SetBgImageDarker(u8 newValue, bool bUpdate)
 
 		if (bUpdate)
 		{
-			// Картинку может установить и плагин
+			// РљР°СЂС‚РёРЅРєСѓ РјРѕР¶РµС‚ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ Рё РїР»Р°РіРёРЅ
 			if (gpSet->isShowBgImage && gpSet->sBgImage[0])
 				LoadBackgroundFile(gpSet->sBgImage);
 
@@ -14299,7 +14299,7 @@ void CSettings::NeedBackgroundUpdate()
 	#endif
 }
 
-// общая функция
+// РѕР±С‰Р°СЏ С„СѓРЅРєС†РёСЏ
 void CSettings::ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh)
 {
 	if (!asInfo)
@@ -14332,7 +14332,7 @@ void CSettings::ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* ps
 
 
 /* ********************************************** */
-/*         обработка шрифта в RealConsole         */
+/*         РѕР±СЂР°Р±РѕС‚РєР° С€СЂРёС„С‚Р° РІ RealConsole         */
 /* ********************************************** */
 
 bool CSettings::EditConsoleFont(HWND hParent)
@@ -14394,11 +14394,11 @@ bool CSettings::CheckConsoleFontRegistry(LPCWSTR asFaceName)
 	return lbFound;
 }
 
-// Вызывается при запуске ConEmu для быстрой проверки шрифта
-// EnumFontFamilies не вызывается, т.к. занимает время
+// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё Р·Р°РїСѓСЃРєРµ ConEmu РґР»СЏ Р±С‹СЃС‚СЂРѕР№ РїСЂРѕРІРµСЂРєРё С€СЂРёС„С‚Р°
+// EnumFontFamilies РЅРµ РІС‹Р·С‹РІР°РµС‚СЃСЏ, С‚.Рє. Р·Р°РЅРёРјР°РµС‚ РІСЂРµРјСЏ
 bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 {
-	// В ReactOS шрифт не меняется и в реестре не регистрируется
+	// Р’ ReactOS С€СЂРёС„С‚ РЅРµ РјРµРЅСЏРµС‚СЃСЏ Рё РІ СЂРµРµСЃС‚СЂРµ РЅРµ СЂРµРіРёСЃС‚СЂРёСЂСѓРµС‚СЃСЏ
 	if (gpStartEnv->bIsReactOS)
 	{
 		return true;
@@ -14432,7 +14432,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 		{
 			LPCWSTR pszFamilyName = (LPCWSTR)lpOutl->otmpFamilyName;
 
-			// Интересуют только TrueType (вроде только для TTF доступен lpOutl - проверить
+			// РРЅС‚РµСЂРµСЃСѓСЋС‚ С‚РѕР»СЊРєРѕ TrueType (РІСЂРѕРґРµ С‚РѕР»СЊРєРѕ РґР»СЏ TTF РґРѕСЃС‚СѓРїРµРЅ lpOutl - РїСЂРѕРІРµСЂРёС‚СЊ
 			if (pszFamilyName[0] != L'@'
 			        && (gbIsDBCS || IsAlmostMonospace(pszFamilyName, lpOutl->otmTextMetrics.tmMaxCharWidth, lpOutl->otmTextMetrics.tmAveCharWidth, lpOutl->otmTextMetrics.tmHeight))
 			        && lpOutl->otmPanoseNumber.bProportion == PAN_PROP_MONOSPACED
@@ -14441,7 +14441,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 			{
 				BOOL lbNonSystem = FALSE;
 
-				// Нельзя использовать шрифты, которые зарегистрированы нами (для ConEmu). Они должны быть системными
+				// РќРµР»СЊР·СЏ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С€СЂРёС„С‚С‹, РєРѕС‚РѕСЂС‹Рµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅС‹ РЅР°РјРё (РґР»СЏ ConEmu). РћРЅРё РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃРёСЃС‚РµРјРЅС‹РјРё
 				//for (std::vector<RegFont>::iterator iter = gpSetCls->m_RegFonts.begin(); !lbNonSystem && iter != gpSetCls->m_RegFonts.end(); ++iter)
 				for (INT_PTR j = 0; j < m_RegFonts.size(); ++j)
 				{
@@ -14464,7 +14464,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 		}
 	}
 
-	// Если успешно - проверить зарегистрированность в реестре
+	// Р•СЃР»Рё СѓСЃРїРµС€РЅРѕ - РїСЂРѕРІРµСЂРёС‚СЊ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅРЅРѕСЃС‚СЊ РІ СЂРµРµСЃС‚СЂРµ
 	if (gpSetCls->nConFontError == 0)
 	{
 		if (!CheckConsoleFontRegistry(LF.lfFaceName))
@@ -14549,10 +14549,10 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 {
 	if (gbIsDBCS)
 	{
-		// В DBCS IsAlmostMonospace работает неправильно
+		// Р’ DBCS IsAlmostMonospace СЂР°Р±РѕС‚Р°РµС‚ РЅРµРїСЂР°РІРёР»СЊРЅРѕ
 		gpSetCls->CheckConsoleFontFast();
 
-		// Заполнить список шрифтами из реестра
+		// Р—Р°РїРѕР»РЅРёС‚СЊ СЃРїРёСЃРѕРє С€СЂРёС„С‚Р°РјРё РёР· СЂРµРµСЃС‚СЂР°
 		HKEY hk;
 		DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
 
@@ -14613,18 +14613,18 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 
 		if (!bLoaded)
 		{
-			// Сначала загрузить имена шрифтов, установленных в систему
+			// РЎРЅР°С‡Р°Р»Р° Р·Р°РіСЂСѓР·РёС‚СЊ РёРјРµРЅР° С€СЂРёС„С‚РѕРІ, СѓСЃС‚Р°РЅРѕРІР»РµРЅРЅС‹С… РІ СЃРёСЃС‚РµРјСѓ
 			HDC hdc = GetDC(NULL);
 			EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumConFamCallBack, (LPARAM) ahDlg);
 			DeleteDC(hdc);
 		}
 
-		// Проверить реестр
+		// РџСЂРѕРІРµСЂРёС‚СЊ СЂРµРµСЃС‚СЂ
 		if (CheckConsoleFontRegistry(gpSet->ConsoleFont.lfFaceName))
 			gpSetCls->nConFontError &= ~(DWORD)ConFontErr_NonRegistry;
 	}
 
-	// Показать текущий шрифт
+	// РџРѕРєР°Р·Р°С‚СЊ С‚РµРєСѓС‰РёР№ С€СЂРёС„С‚
 	if (ahDlg)
 	{
 		if (SelectString(ahDlg, tConsoleFontFace, gpSet->ConsoleFont.lfFaceName)<0)
@@ -14654,7 +14654,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hWnd2, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
 
-			gpSetCls->hConFontDlg = NULL; // пока не выставим - на смену в контролах не реагировать
+			gpSetCls->hConFontDlg = NULL; // РїРѕРєР° РЅРµ РІС‹СЃС‚Р°РІРёРј - РЅР° СЃРјРµРЅСѓ РІ РєРѕРЅС‚СЂРѕР»Р°С… РЅРµ СЂРµР°РіРёСЂРѕРІР°С‚СЊ
 			wchar_t temp[10];
 
 			for (uint i = 0; i < countof(SettingsNS::FSizesSmall); i++)
@@ -14665,7 +14665,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 				SendDlgItemMessage(hWnd2, tConsoleFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
 
 				if ((LONG)SettingsNS::FSizesSmall[i] >= gpSetCls->LogFont.lfHeight)
-					break; // не допускаются шрифты больше, чем выбрано для основного шрифта!
+					break; // РЅРµ РґРѕРїСѓСЃРєР°СЋС‚СЃСЏ С€СЂРёС„С‚С‹ Р±РѕР»СЊС€Рµ, С‡РµРј РІС‹Р±СЂР°РЅРѕ РґР»СЏ РѕСЃРЅРѕРІРЅРѕРіРѕ С€СЂРёС„С‚Р°!
 			}
 
 			_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->ConsoleFont.lfHeight);
@@ -14673,7 +14673,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->ConsoleFont.lfWidth);
 			SelectStringExact(hWnd2, tConsoleFontSizeX, temp);
 
-			// Показать текущий шрифт и проверить его
+			// РџРѕРєР°Р·Р°С‚СЊ С‚РµРєСѓС‰РёР№ С€СЂРёС„С‚ Рё РїСЂРѕРІРµСЂРёС‚СЊ РµРіРѕ
 			if (CheckConsoleFont(hWnd2))
 			{
 				EnableWindow(GetDlgItem(hWnd2, bConFontOK), TRUE);
@@ -14689,7 +14689,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			if (gOSVer.dwMajorVersion >= 6)
 				SendDlgItemMessage(hWnd2, bConFontAdd2HKLM, 5644/*BCM_SETSHIELD*/, 0, TRUE);
 
-			// запускаем user-mode
+			// Р·Р°РїСѓСЃРєР°РµРј user-mode
 			gpSetCls->hConFontDlg = hWnd2;
 			gpSetCls->RegisterTipsFor(hWnd2);
 			CenterMoreDlg(hWnd2);
@@ -14697,7 +14697,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			if (gpConEmu->isVConExists(0))
 				EnableWindow(GetDlgItem(hWnd2, tConsoleFontConsoleNote), TRUE);
 
-			// Если есть ошибка - показать
+			// Р•СЃР»Рё РµСЃС‚СЊ РѕС€РёР±РєР° - РїРѕРєР°Р·Р°С‚СЊ
 			gpSetCls->bShowConFontError = (gpSetCls->nConFontError != 0);
 		}
 		break;
@@ -14740,12 +14740,12 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					return 0;
 				else if (TB == bConFontOK)
 				{
-					// На всякий случай, повторно считаем поля диалога
+					// РќР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, РїРѕРІС‚РѕСЂРЅРѕ СЃС‡РёС‚Р°РµРј РїРѕР»СЏ РґРёР°Р»РѕРіР°
 					GetDlgItemText(hWnd2, tConsoleFontFace, gpSet->ConsoleFont.lfFaceName, countof(gpSet->ConsoleFont.lfFaceName));
 					gpSet->ConsoleFont.lfHeight = GetNumber(hWnd2, tConsoleFontSizeY);
 					gpSet->ConsoleFont.lfWidth = GetNumber(hWnd2, tConsoleFontSizeX);
 
-					// Проверка валидности
+					// РџСЂРѕРІРµСЂРєР° РІР°Р»РёРґРЅРѕСЃС‚Рё
 					if (gpSetCls->nConFontError == ConFontErr_NonRegistry && gpSetCls->CheckConsoleFontRegistry(gpSet->ConsoleFont.lfFaceName))
 					{
 						gpSetCls->nConFontError &= ~(DWORD)ConFontErr_NonRegistry;
@@ -14758,7 +14758,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 						return 0;
 					}
 
-					gpSet->SaveConsoleFont(); // Сохранить шрифт в настройке
+					gpSet->SaveConsoleFont(); // РЎРѕС…СЂР°РЅРёС‚СЊ С€СЂРёС„С‚ РІ РЅР°СЃС‚СЂРѕР№РєРµ
 					EndDialog(hWnd2, IDOK);
 				}
 				else if (TB == IDCANCEL || TB == bConFontCancel)
@@ -14773,7 +14773,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 				}
 				else if (TB == bConFontAdd2HKLM)
 				{
-					// Добавить шрифт в HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
+					// Р”РѕР±Р°РІРёС‚СЊ С€СЂРёС„С‚ РІ HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
 					gpSetCls->ShowConFontErrorTip(NULL);
 					EnableWindow(GetDlgItem(hWnd2, tConsoleFontHklmNote), TRUE);
 					wchar_t szFaceName[32] = {0};
@@ -14796,7 +14796,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 							{
 								if (!RegSetValueExW(hk, szId, 0, REG_SZ, (LPBYTE)szFaceName, (_tcslen(szFaceName)+1)*2))
 								{
-									lbFontJustRegistered = lbFound = true; // OK, добавили
+									lbFontJustRegistered = lbFound = true; // OK, РґРѕР±Р°РІРёР»Рё
 								}
 
 								break;
@@ -14804,14 +14804,14 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 
 							if (lstrcmpi(szFont, szFaceName) == 0)
 							{
-								lbFound = true; break; // он уже добавлен
+								lbFound = true; break; // РѕРЅ СѓР¶Рµ РґРѕР±Р°РІР»РµРЅ
 							}
 						}
 
 						RegCloseKey(hk);
 					}
 
-					// Если не удалось (нет прав) то попробовать запустить ConEmuC.exe под админом (Vista+)
+					// Р•СЃР»Рё РЅРµ СѓРґР°Р»РѕСЃСЊ (РЅРµС‚ РїСЂР°РІ) С‚Рѕ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ Р·Р°РїСѓСЃС‚РёС‚СЊ ConEmuC.exe РїРѕРґ Р°РґРјРёРЅРѕРј (Vista+)
 					if (!lbFound && gOSVer.dwMajorVersion >= 6)
 					{
 						wchar_t szCommandLine[MAX_PATH];
@@ -14846,7 +14846,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 
 							if (gpSetCls->CheckConsoleFontRegistry(gpSet->ConsoleFont.lfFaceName))
 							{
-								lbFontJustRegistered = lbFound = true; // OK, добавили
+								lbFontJustRegistered = lbFound = true; // OK, РґРѕР±Р°РІРёР»Рё
 							}
 						}
 					}
@@ -14859,7 +14859,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 
 						if (lbFontJustRegistered)
 						{
-							// Если шрифт только что зарегистрировали - его нельзя использовать до перезагрузки компьютера
+							// Р•СЃР»Рё С€СЂРёС„С‚ С‚РѕР»СЊРєРѕ С‡С‚Рѕ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°Р»Рё - РµРіРѕ РЅРµР»СЊР·СЏ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РґРѕ РїРµСЂРµР·Р°РіСЂСѓР·РєРё РєРѕРјРїСЊСЋС‚РµСЂР°
 							if (lbFontJustRegistered && gpSetCls->sDefaultConFontName[0])
 							{
 								wcscpy_c(gpSet->ConsoleFont.lfFaceName, gpSetCls->sDefaultConFontName);
@@ -14926,7 +14926,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 
 						if (!lpOutl)
 						{
-							// Ошибка
+							// РћС€РёР±РєР°
 							gpSetCls->nConFontError = ConFontErr_InvalidName;
 						}
 						else
@@ -14958,7 +14958,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 
 				if (gpSetCls->nConFontError == 0)
 				{
-					// Осталось проверить регистрацию в реестре
+					// РћСЃС‚Р°Р»РѕСЃСЊ РїСЂРѕРІРµСЂРёС‚СЊ СЂРµРіРёСЃС‚СЂР°С†РёСЋ РІ СЂРµРµСЃС‚СЂРµ
 					wcscpy_c(gpSet->ConsoleFont.lfFaceName, LF.lfFaceName);
 					gpSet->ConsoleFont.lfHeight = LF.lfHeight;
 					gpSet->ConsoleFont.lfWidth = LF.lfWidth;
@@ -15058,14 +15058,14 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 	MCHKHEAP
 	HWND hWnd2 = (HWND)aFontCount;
 
-	// Интересуют только TrueType
+	// РРЅС‚РµСЂРµСЃСѓСЋС‚ С‚РѕР»СЊРєРѕ TrueType
 	if ((FontType & TRUETYPE_FONTTYPE) == 0)
 		return TRUE;
 
 	if (lplf->lfFaceName[0] == L'@')
 		return TRUE; // Alias?
 
-	// Нельзя использовать шрифты, которые зарегистрированы нами (для ConEmu). Они должны быть системными
+	// РќРµР»СЊР·СЏ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С€СЂРёС„С‚С‹, РєРѕС‚РѕСЂС‹Рµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅС‹ РЅР°РјРё (РґР»СЏ ConEmu). РћРЅРё РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃРёСЃС‚РµРјРЅС‹РјРё
 	//for (std::vector<RegFont>::iterator iter = gpSetCls->m_RegFonts.begin(); iter != gpSetCls->m_RegFonts.end(); ++iter)
 	for (INT_PTR j = 0; j < gpSetCls->m_RegFonts.size(); ++j)
 	{
@@ -15078,15 +15078,15 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 		}
 	}
 
-	// PAN_PROP_MONOSPACED - не дает правильного результата. Например 'MS Mincho' заявлен как моноширный,
-	// но совсем таковым не является. Кириллица у него дофига какая...
-	// И только моноширные!
+	// PAN_PROP_MONOSPACED - РЅРµ РґР°РµС‚ РїСЂР°РІРёР»СЊРЅРѕРіРѕ СЂРµР·СѓР»СЊС‚Р°С‚Р°. РќР°РїСЂРёРјРµСЂ 'MS Mincho' Р·Р°СЏРІР»РµРЅ РєР°Рє РјРѕРЅРѕС€РёСЂРЅС‹Р№,
+	// РЅРѕ СЃРѕРІСЃРµРј С‚Р°РєРѕРІС‹Рј РЅРµ СЏРІР»СЏРµС‚СЃСЏ. РљРёСЂРёР»Р»РёС†Р° Сѓ РЅРµРіРѕ РґРѕС„РёРіР° РєР°РєР°СЏ...
+	// Р С‚РѕР»СЊРєРѕ РјРѕРЅРѕС€РёСЂРЅС‹Рµ!
 	DWORD bAlmostMonospace = IsAlmostMonospace(lplf->lfFaceName, lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight) ? 1 : 0;
 
 	if (!bAlmostMonospace)
 		return TRUE;
 
-	// Проверяем, реальное ли это имя. Или просто алиас?
+	// РџСЂРѕРІРµСЂСЏРµРј, СЂРµР°Р»СЊРЅРѕРµ Р»Рё СЌС‚Рѕ РёРјСЏ. РР»Рё РїСЂРѕСЃС‚Рѕ Р°Р»РёР°СЃ?
 	LOGFONT LF = {0};
 	LF.lfHeight = 10; LF.lfWidth = 0; LF.lfWeight = 0; LF.lfItalic = 0;
 	LF.lfOutPrecision = OUT_TT_PRECIS;
@@ -15095,22 +15095,22 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 	wcscpy_c(LF.lfFaceName, lplf->lfFaceName);
 	HFONT hf = CreateFontIndirect(&LF);
 
-	if (!hf) return TRUE;  // не получилось создать
+	if (!hf) return TRUE;  // РЅРµ РїРѕР»СѓС‡РёР»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ
 
 	LPOUTLINETEXTMETRICW lpOutl = gpSetCls->LoadOutline(NULL, hf);
 
-	if (!lpOutl) return TRUE;  // Ошибка получения параметров шрифта
+	if (!lpOutl) return TRUE;  // РћС€РёР±РєР° РїРѕР»СѓС‡РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂРѕРІ С€СЂРёС„С‚Р°
 
-	if (lpOutl->otmPanoseNumber.bProportion != PAN_PROP_MONOSPACED  // шрифт не заявлен как моноширный
-	        || lstrcmpi((wchar_t*)lpOutl->otmpFamilyName, LF.lfFaceName)) // или алиас
+	if (lpOutl->otmPanoseNumber.bProportion != PAN_PROP_MONOSPACED  // С€СЂРёС„С‚ РЅРµ Р·Р°СЏРІР»РµРЅ РєР°Рє РјРѕРЅРѕС€РёСЂРЅС‹Р№
+	        || lstrcmpi((wchar_t*)lpOutl->otmpFamilyName, LF.lfFaceName)) // РёР»Рё Р°Р»РёР°СЃ
 	{
 		free(lpOutl);
-		return TRUE; // следущий шрифт
+		return TRUE; // СЃР»РµРґСѓС‰РёР№ С€СЂРёС„С‚
 	}
 
 	free(lpOutl); lpOutl = NULL;
 
-	// Сравниваем с текущим, выбранным в настройке
+	// РЎСЂР°РІРЅРёРІР°РµРј СЃ С‚РµРєСѓС‰РёРј, РІС‹Р±СЂР°РЅРЅС‹Рј РІ РЅР°СЃС‚СЂРѕР№РєРµ
 	if (lstrcmpi(LF.lfFaceName, gpSet->ConsoleFont.lfFaceName) == 0)
 		gpSetCls->nConFontError &= ~(DWORD)ConFontErr_NonSystem;
 

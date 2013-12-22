@@ -1,9 +1,9 @@
-
+п»ї
 #pragma once
 
 enum FarColorExtras
 {
-	/* -- пока нужны только эти цвета палитры -- */
+	/* -- РїРѕРєР° РЅСѓР¶РЅС‹ С‚РѕР»СЊРєРѕ СЌС‚Рё С†РІРµС‚Р° РїР°Р»РёС‚СЂС‹ -- */
 	col_PanelText = 0,
 	col_PanelSelectedCursor = 1,
 	col_PanelSelectedText = 2,

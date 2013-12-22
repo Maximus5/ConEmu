@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -92,7 +92,7 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 	{
 		wchar_t szClass[256], szTitle[512];
 		
-		// Избежать статической линковки для user32.dll
+		// РР·Р±РµР¶Р°С‚СЊ СЃС‚Р°С‚РёС‡РµСЃРєРѕР№ Р»РёРЅРєРѕРІРєРё РґР»СЏ user32.dll
 		typedef int (WINAPI* GetClassName_t)(HWND hWnd,LPWSTR lpClassName,int nMaxCount);
 		static GetClassName_t GetClassName_f = NULL;
 		typedef int (WINAPI* GetWindowText_t)(HWND hWnd, LPWSTR lpString, int nMaxCount);
@@ -103,8 +103,8 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 			HMODULE hUser32 = GetModuleHandle(L"user32.dll");
 			if (!hUser32)
 			{
-				// Скорее всего, user32 уже должен быть загружен, но если вдруг - сильно
-				// плохо, если LoadLibrary будет вызываться из DllMain
+				// РЎРєРѕСЂРµРµ РІСЃРµРіРѕ, user32 СѓР¶Рµ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ Р·Р°РіСЂСѓР¶РµРЅ, РЅРѕ РµСЃР»Рё РІРґСЂСѓРі - СЃРёР»СЊРЅРѕ
+				// РїР»РѕС…Рѕ, РµСЃР»Рё LoadLibrary Р±СѓРґРµС‚ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РёР· DllMain
 				_ASSERTE(hUser32!=NULL);
 			}
 			else
@@ -224,7 +224,7 @@ wrap:
 	return bMatch;
 }
 
-// pnSize заполняется только в том случае, если файл найден
+// pnSize Р·Р°РїРѕР»РЅСЏРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РІ С‚РѕРј СЃР»СѓС‡Р°Рµ, РµСЃР»Рё С„Р°Р№Р» РЅР°Р№РґРµРЅ
 bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 {
 	if (!asFilePath || !*asFilePath)
@@ -239,7 +239,7 @@ bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 	{
 		bool lbFileFound = false;
 
-		// FindFirstFile может обломаться из-за симлинков
+		// FindFirstFile РјРѕР¶РµС‚ РѕР±Р»РѕРјР°С‚СЊСЃСЏ РёР·-Р·Р° СЃРёРјР»РёРЅРєРѕРІ
 		if (GetLastError() == ERROR_ACCESS_DENIED)
 		{
 			hFind = CreateFile(asFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
@@ -296,7 +296,7 @@ bool FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax)
 		return true;
 	}
 
-	// Переменные окружения
+	// РџРµСЂРµРјРµРЅРЅС‹Рµ РѕРєСЂСѓР¶РµРЅРёСЏ
 	if (wcschr(rsFilePath, L'%'))
 	{
 		bool bFound = false;
@@ -331,7 +331,7 @@ bool FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax)
 		}
 	}
 
-	// попытаемся найти
+	// РїРѕРїС‹С‚Р°РµРјСЃСЏ РЅР°Р№С‚Рё
 	wchar_t *pszFilePart;
 	wchar_t szFind[MAX_PATH+1];
 	LPCWSTR pszExt = PointToExt(rsFilePath);
@@ -436,10 +436,10 @@ bool MyCreateDirectory(wchar_t* asPath)
 	return (bOk != FALSE);
 }
 
-// Первичная проверка, может ли asFilePath быть путем
+// РџРµСЂРІРёС‡РЅР°СЏ РїСЂРѕРІРµСЂРєР°, РјРѕР¶РµС‚ Р»Рё asFilePath Р±С‹С‚СЊ РїСѓС‚РµРј
 bool IsFilePath(LPCWSTR asFilePath)
 {
-	// Если в пути встречаются недопустимые символы
+	// Р•СЃР»Рё РІ РїСѓС‚Рё РІСЃС‚СЂРµС‡Р°СЋС‚СЃСЏ РЅРµРґРѕРїСѓСЃС‚РёРјС‹Рµ СЃРёРјРІРѕР»С‹
 	if (wcschr(asFilePath, L'"') ||
 	        wcschr(asFilePath, L'>') ||
 	        wcschr(asFilePath, L'<') ||
@@ -447,16 +447,16 @@ bool IsFilePath(LPCWSTR asFilePath)
 	  )
 		return false;
 
-	// Пропуск UNC "\\?\"
+	// РџСЂРѕРїСѓСЃРє UNC "\\?\"
 	if (asFilePath[0] == L'\\' && asFilePath[1] == L'\\' && asFilePath[2] == L'?' && asFilePath[3] == L'\\')
 		asFilePath += 4; //-V112
 
-	// Если asFilePath содержит два (и более) ":\"
+	// Р•СЃР»Рё asFilePath СЃРѕРґРµСЂР¶РёС‚ РґРІР° (Рё Р±РѕР»РµРµ) ":\"
 	LPCWSTR pszColon = wcschr(asFilePath, L':');
 
 	if (pszColon)
 	{
-		// Если есть ":", то это должен быть путь вида "X:\xxx", т.е. ":" - второй символ
+		// Р•СЃР»Рё РµСЃС‚СЊ ":", С‚Рѕ СЌС‚Рѕ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РїСѓС‚СЊ РІРёРґР° "X:\xxx", С‚.Рµ. ":" - РІС‚РѕСЂРѕР№ СЃРёРјРІРѕР»
 		if (pszColon != (asFilePath+1))
 			return false;
 
@@ -477,7 +477,7 @@ bool IsPathNeedQuot(LPCWSTR asPath)
 
 BOOL GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortName/*[MAX_PATH+1]-name only*/, BOOL abFavorLength=FALSE)
 {
-	WARNING("FindFirstFile использовать нельзя из-за симлинков");
+	WARNING("FindFirstFile РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РЅРµР»СЊР·СЏ РёР·-Р·Р° СЃРёРјР»РёРЅРєРѕРІ");
 	WIN32_FIND_DATAW fnd; memset(&fnd, 0, sizeof(fnd));
 	HANDLE hFind = FindFirstFile(asFullPath, &fnd);
 
@@ -516,7 +516,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 	int nSrcLen = lstrlenW(asLong); //-V303
 	wchar_t* pszLong = lstrdup(asLong);
 	
-	int nMaxLen = nSrcLen + MAX_PATH; // "короткое" имя может более MAX_PATH
+	int nMaxLen = nSrcLen + MAX_PATH; // "РєРѕСЂРѕС‚РєРѕРµ" РёРјСЏ РјРѕР¶РµС‚ Р±РѕР»РµРµ MAX_PATH
 	wchar_t* pszShort = (wchar_t*)calloc(nMaxLen, sizeof(wchar_t)); //-V106
 	
 	wchar_t* pszResult = NULL;
@@ -527,12 +527,12 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 	bool     lbNetwork = false;
 	int      nLen, nCurLen = 0;
 	
-	// Если путь сетевой (или UNC?) пропустить префиксы/серверы
+	// Р•СЃР»Рё РїСѓС‚СЊ СЃРµС‚РµРІРѕР№ (РёР»Рё UNC?) РїСЂРѕРїСѓСЃС‚РёС‚СЊ РїСЂРµС„РёРєСЃС‹/СЃРµСЂРІРµСЂС‹
 	if (pszSrc[0] == L'\\' && pszSrc[1] == '\\')
 	{
-		// пропуск первых двух слешей
+		// РїСЂРѕРїСѓСЃРє РїРµСЂРІС‹С… РґРІСѓС… СЃР»РµС€РµР№
 		pszSrc += 2;
-		// формат "диска" не поддерживаем \\.\Drive\...
+		// С„РѕСЂРјР°С‚ "РґРёСЃРєР°" РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµРј \\.\Drive\...
 		if (pszSrc[0] == L'.' && pszSrc[1] == L'\\')
 			goto wrap;
 		// UNC
@@ -545,7 +545,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 				pszSrc += 4; //-V112
 				lbNetwork = true;
 			}
-			// иначе - ожидается диск
+			// РёРЅР°С‡Рµ - РѕР¶РёРґР°РµС‚СЃСЏ РґРёСЃРє
 		}
 		// Network (\\Server\\Share\...)
 		else
@@ -566,7 +566,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 		if (!pszSlash)
 			goto wrap;
 		pszShort[0] = L'\\'; pszShort[1] = L'\\'; pszShort[2] = 0;
-		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // память выделяется calloc! //-V303 //-V104
+		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // РїР°РјСЏС‚СЊ РІС‹РґРµР»СЏРµС‚СЃСЏ calloc! //-V303 //-V104
 	}
 	else
 	{
@@ -576,7 +576,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 		if (pszSrc[2] != L'\\' && pszSrc[2] != 0)
 			goto wrap;
 		pszSlash = pszSrc + 2;
-		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // память выделяется calloc!
+		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // РїР°РјСЏС‚СЊ РІС‹РґРµР»СЏРµС‚СЃСЏ calloc!
 	}
 	
 	nCurLen = lstrlenW(pszShort);
@@ -600,7 +600,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 		if (pszSlash)
 		{
 			*pszSlash = L'\\';
-			pszShort[nCurLen++] = L'\\'; // память выделяется calloc!
+			pszShort[nCurLen++] = L'\\'; // РїР°РјСЏС‚СЊ РІС‹РґРµР»СЏРµС‚СЃСЏ calloc!
 		}
 	}
 	
@@ -628,11 +628,11 @@ wrap:
 
 //wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=FALSE)
 //{
-//	TODO("хорошо бы и сетевые диски обрабатывать");
+//	TODO("С…РѕСЂРѕС€Рѕ Р±С‹ Рё СЃРµС‚РµРІС‹Рµ РґРёСЃРєРё РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ");
 //
 //	if (!asLong) return NULL;
 //
-//	int nMaxLen = lstrlenW(asLong) + MAX_PATH; // "короткое" имя может оказаться длиннее "длинного"
+//	int nMaxLen = lstrlenW(asLong) + MAX_PATH; // "РєРѕСЂРѕС‚РєРѕРµ" РёРјСЏ РјРѕР¶РµС‚ РѕРєР°Р·Р°С‚СЊСЃСЏ РґР»РёРЅРЅРµРµ "РґР»РёРЅРЅРѕРіРѕ"
 //	wchar_t* pszShort = /*lstrdup(asLong);*/(wchar_t*)malloc(nMaxLen*2);
 //	_wcscpy_c(pszShort, nMaxLen, asLong);
 //	wchar_t* pszCur = wcschr(pszShort+3, L'\\');
@@ -678,7 +678,7 @@ bool IsUserAdmin()
 	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
 	GetVersionEx(&osv);
 
-	// Проверять нужно только для висты, чтобы на XP лишний "Щит" не отображался
+	// РџСЂРѕРІРµСЂСЏС‚СЊ РЅСѓР¶РЅРѕ С‚РѕР»СЊРєРѕ РґР»СЏ РІРёСЃС‚С‹, С‡С‚РѕР±С‹ РЅР° XP Р»РёС€РЅРёР№ "Р©РёС‚" РЅРµ РѕС‚РѕР±СЂР°Р¶Р°Р»СЃСЏ
 	if (osv.dwMajorVersion < 6)
 		return false;
 
@@ -784,7 +784,7 @@ bool IsWine()
 	HKEY hk1 = NULL, hk2 = NULL;
 	if (!RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Wine", 0, KEY_READ, &hk1)
 		&& !RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Wine", 0, KEY_READ, &hk2))
-		bIsWine = true; // В общем случае, на флажок ориентироваться нельзя. Это для информации.
+		bIsWine = true; // Р’ РѕР±С‰РµРј СЃР»СѓС‡Р°Рµ, РЅР° С„Р»Р°Р¶РѕРє РѕСЂРёРµРЅС‚РёСЂРѕРІР°С‚СЊСЃСЏ РЅРµР»СЊР·СЏ. Р­С‚Рѕ РґР»СЏ РёРЅС„РѕСЂРјР°С†РёРё.
 	if (hk1) RegCloseKey(hk1);
 	if (hk2) RegCloseKey(hk2);
 	return bIsWine;
@@ -796,7 +796,7 @@ bool IsWinPE()
 	HKEY hk1 = NULL, hk2 = NULL;
 	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\MiniNT", 0, KEY_READ, &hk1)
 		|| !RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\PE Builder", 0, KEY_READ, &hk2))
-		bIsWinPE = true; // В общем случае, на флажок ориентироваться нельзя. Это для информации.
+		bIsWinPE = true; // пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
 	if (hk1) RegCloseKey(hk1);
 	if (hk2) RegCloseKey(hk2);
 	return bIsWinPE;
@@ -810,7 +810,7 @@ bool IsDbcs()
 
 typedef BOOL (WINAPI* IsWow64Process_t)(HANDLE hProcess, PBOOL Wow64Process);
 
-// Проверить битность OS
+// РџСЂРѕРІРµСЂРёС‚СЊ Р±РёС‚РЅРѕСЃС‚СЊ OS
 bool IsWindows64()
 {
 	static bool is64bitOs = false, isOsChecked = false;
@@ -822,7 +822,7 @@ bool IsWindows64()
 #ifdef WIN64
 	is64bitOs = true; isWow64process = true;
 #else
-	// Проверяем, где мы запущены
+	// РџСЂРѕРІРµСЂСЏРµРј, РіРґРµ РјС‹ Р·Р°РїСѓС‰РµРЅС‹
 	isWow64process = FALSE;
 	HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
 
@@ -946,8 +946,8 @@ bool isTerminalMode()
 
 	if (!TerminalChecked)
 	{
-		// -- переменная "TERM" может быть задана пользователем
-		// -- для каких-то специальных целей, полагаться на нее нельзя
+		// -- РїРµСЂРµРјРµРЅРЅР°СЏ "TERM" РјРѕР¶РµС‚ Р±С‹С‚СЊ Р·Р°РґР°РЅР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј
+		// -- РґР»СЏ РєР°РєРёС…-С‚Рѕ СЃРїРµС†РёР°Р»СЊРЅС‹С… С†РµР»РµР№, РїРѕР»Р°РіР°С‚СЊСЃСЏ РЅР° РЅРµРµ РЅРµР»СЊР·СЏ
 		//TCHAR szVarValue[64];
 		//szVarValue[0] = 0;
 		//if (GetEnvironmentVariable(_T("TERM"), szVarValue, 63) && szVarValue[0])
@@ -960,7 +960,7 @@ bool isTerminalMode()
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 		if (hSnap == INVALID_HANDLE_VALUE)
 		{
-			// будем считать, что не в telnet :)
+			// Р±СѓРґРµРј СЃС‡РёС‚Р°С‚СЊ, С‡С‚Рѕ РЅРµ РІ telnet :)
 		}
 		else if (Process32First(hSnap, &P))
 		{
@@ -968,7 +968,7 @@ bool isTerminalMode()
 			PROCESSENTRY32 *pProcesses = (PROCESSENTRY32*)calloc(nProcMax, sizeof(PROCESSENTRY32));
 			DWORD nCurPID = GetCurrentProcessId();
 			DWORD nParentPID = nCurPID;
-			// Сначала загрузить список всех процессов, чтобы потом по нему выйти не корневой
+			// РЎРЅР°С‡Р°Р»Р° Р·Р°РіСЂСѓР·РёС‚СЊ СЃРїРёСЃРѕРє РІСЃРµС… РїСЂРѕС†РµСЃСЃРѕРІ, С‡С‚РѕР±С‹ РїРѕС‚РѕРј РїРѕ РЅРµРјСѓ РІС‹Р№С‚Рё РЅРµ РєРѕСЂРЅРµРІРѕР№
 			do
 			{
 				if (nProcCount == nProcMax)
@@ -995,10 +995,10 @@ bool isTerminalMode()
 				}
 				nProcCount++;
 			} while (Process32Next(hSnap, &P));
-			// Snapshoot больше не нужен
+			// Snapshoot Р±РѕР»СЊС€Рµ РЅРµ РЅСѓР¶РµРЅ
 			CloseHandle(hSnap);
 
-			int nSteps = 128; // защита от зацикливания
+			int nSteps = 128; // Р·Р°С‰РёС‚Р° РѕС‚ Р·Р°С†РёРєР»РёРІР°РЅРёСЏ
 			while (!TerminalMode && (--nSteps) > 0)
 			{
 				for (int i = 0; i < nProcCount; i++)
@@ -1023,12 +1023,12 @@ bool isTerminalMode()
 		}
 	}
 
-	// В повторых проверках смысла нет
+	// Р’ РїРѕРІС‚РѕСЂС‹С… РїСЂРѕРІРµСЂРєР°С… СЃРјС‹СЃР»Р° РЅРµС‚
 	TerminalChecked = true;
 	return TerminalMode;
 }
 
-// Проверить, валиден ли модуль?
+// РџСЂРѕРІРµСЂРёС‚СЊ, РІР°Р»РёРґРµРЅ Р»Рё РјРѕРґСѓР»СЊ?
 bool IsModuleValid(HMODULE module, BOOL abTestVirtual /*= TRUE*/)
 {
 	if ((module == NULL) || (module == INVALID_HANDLE_VALUE))
@@ -1149,7 +1149,7 @@ bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 		nModuleSize2 = (4<<20);
 	}
 
-	// Если разрешили - попробовать определить размер модуля, чтобы CallBack не выпал из его тела
+	// Р•СЃР»Рё СЂР°Р·СЂРµС€РёР»Рё - РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РѕРїСЂРµРґРµР»РёС‚СЊ СЂР°Р·РјРµСЂ РјРѕРґСѓР»СЏ, С‡С‚РѕР±С‹ CallBack РЅРµ РІС‹РїР°Р» РёР· РµРіРѕ С‚РµР»Р°
 	if (abCheckModuleInfo)
 	{
 		if (!IsModuleValid(hModule, abTestVirtual))
@@ -1160,7 +1160,7 @@ bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 
 		IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)hModule + ((IMAGE_DOS_HEADER*)hModule)->e_lfanew);
 
-		// Получить размер модуля из OptionalHeader
+		// РџРѕР»СѓС‡РёС‚СЊ СЂР°Р·РјРµСЂ РјРѕРґСѓР»СЏ РёР· OptionalHeader
 		nModuleSize = nt_header->OptionalHeader.SizeOfImage;
 
 		if (nModulePtr2)
@@ -1200,8 +1200,8 @@ bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 void RemoveOldComSpecC()
 {
 	wchar_t szComSpec[MAX_PATH], szComSpecC[MAX_PATH], szRealComSpec[MAX_PATH];
-	//110202 - comspec более не переопределяется, поэтому вернем "cmd", 
-	// если был переопреден и унаследован от старой версии conemu
+	//110202 - comspec Р±РѕР»РµРµ РЅРµ РїРµСЂРµРѕРїСЂРµРґРµР»СЏРµС‚СЃСЏ, РїРѕСЌС‚РѕРјСѓ РІРµСЂРЅРµРј "cmd", 
+	// РµСЃР»Рё Р±С‹Р» РїРµСЂРµРѕРїСЂРµРґРµРЅ Рё СѓРЅР°СЃР»РµРґРѕРІР°РЅ РѕС‚ СЃС‚Р°СЂРѕР№ РІРµСЂСЃРёРё conemu
 	if (GetEnvironmentVariable(L"ComSpecC", szComSpecC, countof(szComSpecC)) && szComSpecC[0] != 0)
 	{
 		szRealComSpec[0] = 0;
@@ -1237,7 +1237,7 @@ void RemoveOldComSpecC()
 		SetEnvironmentVariable(L"ComSpec", szRealComSpec);
 		SetEnvironmentVariable(L"ComSpecC", NULL);
 	}
-		//// Только если это (случайно) не conemuc.exe
+		//// РўРѕР»СЊРєРѕ РµСЃР»Рё СЌС‚Рѕ (СЃР»СѓС‡Р°Р№РЅРѕ) РЅРµ conemuc.exe
 		//wchar_t* pwszCopy = (wchar_t*)PointToName(szComSpec); //wcsrchr(szComSpec, L'\\');
 		////if (!pwszCopy) pwszCopy = szComSpec;
 
@@ -1282,17 +1282,17 @@ const char* PointToName(const char* asFileOrPath)
 	return asFileOrPath;
 }
 
-// Возвращает ".ext" или NULL в случае ошибки
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ ".ext" РёР»Рё NULL РІ СЃР»СѓС‡Р°Рµ РѕС€РёР±РєРё
 const wchar_t* PointToExt(const wchar_t* asFullPath)
 {
 	const wchar_t* pszName = PointToName(asFullPath);
 	if (!pszName)
-		return NULL; // _ASSERTE уже был
+		return NULL; // _ASSERTE СѓР¶Рµ Р±С‹Р»
 	const wchar_t* pszExt = wcsrchr(pszName, L'.');
 	return pszExt;
 }
 
-// !!! Меняет asParm !!!
+// !!! РњРµРЅСЏРµС‚ asParm !!!
 // Cut leading and trailing quotas
 const wchar_t* Unquote(wchar_t* asParm, bool abFirstQuote /*= false*/)
 {
@@ -1315,10 +1315,10 @@ wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCou
 	wchar_t* pszCommand = NULL;
 	size_t cchCmdMax = 0;
 
-	// Замена %1 и т.п.
+	// Р—Р°РјРµРЅР° %1 Рё С‚.Рї.
 	for (int s = 0; s < 2; s++)
 	{
-		// На первом шаге - считаем требуемый размер под pszCommand, на втором - формируем команду
+		// РќР° РїРµСЂРІРѕРј С€Р°РіРµ - СЃС‡РёС‚Р°РµРј С‚СЂРµР±СѓРµРјС‹Р№ СЂР°Р·РјРµСЂ РїРѕРґ pszCommand, РЅР° РІС‚РѕСЂРѕРј - С„РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ
 		if (s)
 		{
 			if (!cchCmdMax)
@@ -1354,7 +1354,7 @@ wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCou
 				}
 				else
 				{
-					// Недопустимый управляющий символ, это может быть переменная окружения
+					// РќРµРґРѕРїСѓСЃС‚РёРјС‹Р№ СѓРїСЂР°РІР»СЏСЋС‰РёР№ СЃРёРјРІРѕР», СЌС‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїРµСЂРµРјРµРЅРЅР°СЏ РѕРєСЂСѓР¶РµРЅРёСЏ
 					pszMacro = NULL;
 					pSrc--;
 					if (s)
@@ -1463,7 +1463,7 @@ wchar_t* GetFullPathNameEx(LPCWSTR asPath)
 
 
 #ifndef CONEMU_MINIMAL
-WARNING("После перехода на альтернативный сервер - должен работать строго в 'стандартном' режиме (mn_StdMode=STD_OUTPUT_HANDLE/STD_INPUT_HANLDE)");
+WARNING("РџРѕСЃР»Рµ РїРµСЂРµС…РѕРґР° РЅР° Р°Р»СЊС‚РµСЂРЅР°С‚РёРІРЅС‹Р№ СЃРµСЂРІРµСЂ - РґРѕР»Р¶РµРЅ СЂР°Р±РѕС‚Р°С‚СЊ СЃС‚СЂРѕРіРѕ РІ 'СЃС‚Р°РЅРґР°СЂС‚РЅРѕРј' СЂРµР¶РёРјРµ (mn_StdMode=STD_OUTPUT_HANDLE/STD_INPUT_HANLDE)");
 MConHandle::MConHandle(LPCWSTR asName)
 {
 	mn_StdMode = 0;
@@ -1473,12 +1473,12 @@ MConHandle::MConHandle(LPCWSTR asName)
 	lstrcpynW(ms_Name, asName, 9);
 	m_logidx = -1;
 	/*
-	FAR2 последний
-	Conemu последний
+	FAR2 РїРѕСЃР»РµРґРЅРёР№
+	Conemu РїРѕСЃР»РµРґРЅРёР№
 
-	без плагов каких либо
+	Р±РµР· РїР»Р°РіРѕРІ РєР°РєРёС… Р»РёР±Рѕ
 
-	пропиши одну ассоциацию
+	РїСЂРѕРїРёС€Рё РѕРґРЅСѓ Р°СЃСЃРѕС†РёР°С†РёСЋ
 
 	[HKEY_CURRENT_USER\Software\Far2\Associations\Type0]
 	"Mask"="*.ini"
@@ -1491,7 +1491,7 @@ MConHandle::MConHandle(LPCWSTR asName)
 	"AltEdit"=""
 	"State"=dword:0000003f
 
-	ФАР валится по двойному щелчку на INI файле. По Enter - не валится.
+	Р¤РђР  РІР°Р»РёС‚СЃСЏ РїРѕ РґРІРѕР№РЅРѕРјСѓ С‰РµР»С‡РєСѓ РЅР° INI С„Р°Р№Р»Рµ. РџРѕ Enter - РЅРµ РІР°Р»РёС‚СЃСЏ.
 
 
 	1:31:11.647 Mouse: {10x15} Btns:{L} KeyState: 0x00000000 |DOUBLE_CLICK
@@ -1610,10 +1610,10 @@ MConHandle::operator const HANDLE()
 		}
 		else
 		{
-			// Чтобы случайно не открыть хэндл несколько раз в разных потоках
+			// Р§С‚РѕР±С‹ СЃР»СѓС‡Р°Р№РЅРѕ РЅРµ РѕС‚РєСЂС‹С‚СЊ С…СЌРЅРґР» РЅРµСЃРєРѕР»СЊРєРѕ СЂР°Р· РІ СЂР°Р·РЅС‹С… РїРѕС‚РѕРєР°С…
 			MSectionLock CS; CS.Lock(&mcs_Handle, TRUE);
 
-			// Во время ожидания хэндл мог быт открыт в другом потоке
+			// Р’Рѕ РІСЂРµРјСЏ РѕР¶РёРґР°РЅРёСЏ С…СЌРЅРґР» РјРѕРі Р±С‹С‚ РѕС‚РєСЂС‹С‚ РІ РґСЂСѓРіРѕРј РїРѕС‚РѕРєРµ
 			if (mh_Handle == INVALID_HANDLE_VALUE)
 			{
 				mh_Handle = CreateFileW(ms_Name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -1629,7 +1629,7 @@ MConHandle::operator const HANDLE()
 
 					if (!mb_OpenFailed)
 					{
-						mb_OpenFailed = TRUE; // чтобы ошибка вываливалась только один раз!
+						mb_OpenFailed = TRUE; // С‡С‚РѕР±С‹ РѕС€РёР±РєР° РІС‹РІР°Р»РёРІР°Р»Р°СЃСЊ С‚РѕР»СЊРєРѕ РѕРґРёРЅ СЂР°Р·!
 						char szErrMsg[512], szNameA[10], szSelfFull[MAX_PATH];
 						const char *pszSelf;
 						char *pszDot;
@@ -1671,7 +1671,7 @@ MConHandle::operator const HANDLE()
 
 void MConHandle::Close()
 {
-	// Если установлен указатель на хэндл буфера - закрывать не будем
+	// Р•СЃР»Рё СѓСЃС‚Р°РЅРѕРІР»РµРЅ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° С…СЌРЅРґР» Р±СѓС„РµСЂР° - Р·Р°РєСЂС‹РІР°С‚СЊ РЅРµ Р±СѓРґРµРј
 	if (mpp_OutBuffer && *mpp_OutBuffer && (*mpp_OutBuffer != INVALID_HANDLE_VALUE))
 	{
 		return;
@@ -1735,7 +1735,7 @@ void MEvent::InitName(const wchar_t *aszTemplate, DWORD Parm1)
 
 HANDLE MEvent::Open()
 {
-	if (mh_Event)  // Если уже открыто - сразу вернуть!
+	if (mh_Event)  // Р•СЃР»Рё СѓР¶Рµ РѕС‚РєСЂС‹С‚Рѕ - СЃСЂР°Р·Сѓ РІРµСЂРЅСѓС‚СЊ!
 		return mh_Event;
 
 	if (ms_EventName[0] == 0)
@@ -1906,10 +1906,10 @@ void MSection::AddRef(DWORD dwTID)
 	}
 	#endif
 
-	mn_Locked ++; // увеличиваем счетчик nonexclusive locks
+	mn_Locked ++; // СѓРІРµР»РёС‡РёРІР°РµРј СЃС‡РµС‚С‡РёРє nonexclusive locks
 	_ASSERTEX(mn_Locked>0);
-	ResetEvent(mh_ReleaseEvent); // На всякий случай сбросим Event
-	INT_PTR j = -1; // будет -2, если ++ на существующий, иначе - +1 на пустой
+	ResetEvent(mh_ReleaseEvent); // РќР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№ СЃР±СЂРѕСЃРёРј Event
+	INT_PTR j = -1; // Р±СѓРґРµС‚ -2, РµСЃР»Рё ++ РЅР° СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёР№, РёРЅР°С‡Рµ - +1 РЅР° РїСѓСЃС‚РѕР№
 
 	for (size_t i = 1; i < countof(mn_LockedTID); i++)
 	{
@@ -1937,7 +1937,7 @@ void MSection::AddRef(DWORD dwTID)
 		}
 	}
 
-	if (j == -1)  // Этого быть не должно
+	if (j == -1)  // Р­С‚РѕРіРѕ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ
 	{
 		_ASSERTEX(j != -1);
 	}
@@ -1956,7 +1956,7 @@ int MSection::ReleaseRef(DWORD dwTID)
 
 	if (mn_Locked == 0)
 	{
-		SetEvent(mh_ReleaseEvent); // Больше nonexclusive locks не осталось
+		SetEvent(mh_ReleaseEvent); // Р‘РѕР»СЊС€Рµ nonexclusive locks РЅРµ РѕСЃС‚Р°Р»РѕСЃСЊ
 	}
 
 	for (size_t i = 1; i < countof(mn_LockedTID); i++)
@@ -1973,7 +1973,7 @@ int MSection::ReleaseRef(DWORD dwTID)
 			}
 
 			if ((nInThreadLeft = mn_LockedCount[i]) == 0)
-				mn_LockedTID[i] = 0; // Иначе при динамически создаваемых нитях - 10 будут в момент использованы
+				mn_LockedTID[i] = 0; // РРЅР°С‡Рµ РїСЂРё РґРёРЅР°РјРёС‡РµСЃРєРё СЃРѕР·РґР°РІР°РµРјС‹С… РЅРёС‚СЏС… - 10 Р±СѓРґСѓС‚ РІ РјРѕРјРµРЅС‚ РёСЃРїРѕР»СЊР·РѕРІР°РЅС‹
 
 			break;
 		}
@@ -2050,8 +2050,8 @@ bool MSection::MyEnterCriticalSection(DWORD anTimeout)
 {
 	DWORD nCurTID = GetCurrentThreadId(), nExclWait = -1;
 	//EnterCriticalSection(&m_cs);
-	// дождаться пока секцию отпустят
-	// НАДА. Т.к. может быть задан nTimeout (для DC)
+	// РґРѕР¶РґР°С‚СЊСЃСЏ РїРѕРєР° СЃРµРєС†РёСЋ РѕС‚РїСѓСЃС‚СЏС‚
+	// РќРђР”Рђ. Рў.Рє. РјРѕР¶РµС‚ Р±С‹С‚СЊ Р·Р°РґР°РЅ nTimeout (РґР»СЏ DC)
 	DWORD dwTryLockSectionStart = GetTickCount(), dwCurrentTick;
 
 	if (!TryEnterCriticalSection(&m_cs))
@@ -2070,13 +2070,13 @@ bool MSection::MyEnterCriticalSection(DWORD anTimeout)
 					nExclWait = WaitForSingleObject(h, 0);
 					if (nExclWait != WAIT_TIMEOUT)
 					{
-						// Все, m_cs протух. Его нужно пересоздать
+						// Р’СЃРµ, m_cs РїСЂРѕС‚СѓС…. Р•РіРѕ РЅСѓР¶РЅРѕ РїРµСЂРµСЃРѕР·РґР°С‚СЊ
 
 						Process_Lock();
 
-						// Первым выполнить Process_Lock мог другой поток.
-						// Нужно проверить хэндл на соответствие, если он другой
-						// то на этом шаге уже не дергаться
+						// РџРµСЂРІС‹Рј РІС‹РїРѕР»РЅРёС‚СЊ Process_Lock РјРѕРі РґСЂСѓРіРѕР№ РїРѕС‚РѕРє.
+						// РќСѓР¶РЅРѕ РїСЂРѕРІРµСЂРёС‚СЊ С…СЌРЅРґР» РЅР° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ, РµСЃР»Рё РѕРЅ РґСЂСѓРіРѕР№
+						// С‚Рѕ РЅР° СЌС‚РѕРј С€Р°РіРµ СѓР¶Рµ РЅРµ РґРµСЂРіР°С‚СЊСЃСЏ
 						if (h == mh_ExclusiveThread)
 						{
 							_ASSERTEX(FALSE && "Exclusively locked thread was abnormally terminated?");
@@ -2093,7 +2093,7 @@ bool MSection::MyEnterCriticalSection(DWORD anTimeout)
 							mn_LockedTID[0] = 0;
 							if (mn_LockedCount[0] > 0)
 							{
-								mn_LockedCount[0] --; // на [0] mn_Locked не распространяется
+								mn_LockedCount[0] --; // РЅР° [0] mn_Locked РЅРµ СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅСЏРµС‚СЃСЏ
 							}
 
 							mn_TID = nCurTID;
@@ -2142,31 +2142,31 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 {
 	DWORD dwTID = GetCurrentThreadId();
 
-	// Может эта нить уже полностью заблокирована?
+	// РњРѕР¶РµС‚ СЌС‚Р° РЅРёС‚СЊ СѓР¶Рµ РїРѕР»РЅРѕСЃС‚СЊСЋ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅР°?
 	if (mb_Exclusive && dwTID == mn_TID)
 	{
-		//111126 возвращался FALSE
+		//111126 РІРѕР·РІСЂР°С‰Р°Р»СЃСЏ FALSE
 		_ASSERTEX(!mb_Exclusive || dwTID != mn_TID);
-		return TRUE; // Уже, но Unlock делать не нужно!
+		return TRUE; // РЈР¶Рµ, РЅРѕ Unlock РґРµР»Р°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ!
 	}
 
 	if (!abExclusive)
 	{
 		if (!mb_Exclusive)
 		{
-			// Быстрая блокировка, не запрещающая чтение другим нитям.
-			// Запрещено только изменение (пересоздание буфера например)
+			// Р‘С‹СЃС‚СЂР°СЏ Р±Р»РѕРєРёСЂРѕРІРєР°, РЅРµ Р·Р°РїСЂРµС‰Р°СЋС‰Р°СЏ С‡С‚РµРЅРёРµ РґСЂСѓРіРёРј РЅРёС‚СЏРј.
+			// Р—Р°РїСЂРµС‰РµРЅРѕ С‚РѕР»СЊРєРѕ РёР·РјРµРЅРµРЅРёРµ (РїРµСЂРµСЃРѕР·РґР°РЅРёРµ Р±СѓС„РµСЂР° РЅР°РїСЂРёРјРµСЂ)
 			AddRef(dwTID);
 		}
-		// Если другая нить уже захватила exclusive
+		// Р•СЃР»Рё РґСЂСѓРіР°СЏ РЅРёС‚СЊ СѓР¶Рµ Р·Р°С…РІР°С‚РёР»Р° exclusive
 		else //if (mb_Exclusive)
 		{
 			_ASSERTEX(mb_Exclusive);
-			//int nLeft = ReleaseRef(dwTID); // Иначе можем попасть на взаимную блокировку
+			//int nLeft = ReleaseRef(dwTID); // РРЅР°С‡Рµ РјРѕР¶РµРј РїРѕРїР°СЃС‚СЊ РЅР° РІР·Р°РёРјРЅСѓСЋ Р±Р»РѕРєРёСЂРѕРІРєСѓ
 			//if (nLeft > 0)
 			//{
-			//	// Нужно избегать этого. Значит выше по стеку в этой нити
-			//	// более одного раза был выполнен non exclusive lock
+			//	// РќСѓР¶РЅРѕ РёР·Р±РµРіР°С‚СЊ СЌС‚РѕРіРѕ. Р—РЅР°С‡РёС‚ РІС‹С€Рµ РїРѕ СЃС‚РµРєСѓ РІ СЌС‚РѕР№ РЅРёС‚Рё
+			//	// Р±РѕР»РµРµ РѕРґРЅРѕРіРѕ СЂР°Р·Р° Р±С‹Р» РІС‹РїРѕР»РЅРµРЅ non exclusive lock
 			//	_ASSERTEX(nLeft == 0);
 			//}
 			#ifdef _DEBUG
@@ -2182,79 +2182,79 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 			}
 			if (nInThreadLeft > 0)
 			{
-				// Нужно избегать этого. Значит выше по стеку в этой нити
-				// более одного раза был выполнен non exclusive lock
+				// РќСѓР¶РЅРѕ РёР·Р±РµРіР°С‚СЊ СЌС‚РѕРіРѕ. Р—РЅР°С‡РёС‚ РІС‹С€Рµ РїРѕ СЃС‚РµРєСѓ РІ СЌС‚РѕР№ РЅРёС‚Рё
+				// Р±РѕР»РµРµ РѕРґРЅРѕРіРѕ СЂР°Р·Р° Р±С‹Р» РІС‹РїРѕР»РЅРµРЅ non exclusive lock
 				_ASSERTEX(nInThreadLeft == 0);
 			}
 			#endif
 
 
 			DEBUGSTR(L"!!! Failed non exclusive lock, trying to use CriticalSection\n");
-			bool lbEntered = MyEnterCriticalSection(anTimeout); // дождаться пока секцию отпустят
-			// mb_Exclusive может быть выставлен, если сейчас другая нить пытается выполнить exclusive lock
-			_ASSERTEX(!mb_Exclusive); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
-			AddRef(dwTID); // накрутить счетчик
+			bool lbEntered = MyEnterCriticalSection(anTimeout); // РґРѕР¶РґР°С‚СЊСЃСЏ РїРѕРєР° СЃРµРєС†РёСЋ РѕС‚РїСѓСЃС‚СЏС‚
+			// mb_Exclusive РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹СЃС‚Р°РІР»РµРЅ, РµСЃР»Рё СЃРµР№С‡Р°СЃ РґСЂСѓРіР°СЏ РЅРёС‚СЊ РїС‹С‚Р°РµС‚СЃСЏ РІС‹РїРѕР»РЅРёС‚СЊ exclusive lock
+			_ASSERTEX(!mb_Exclusive); // РџРѕСЃР»Рµ LeaveCriticalSection mb_Exclusive РЈР–Р• РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СЃР±СЂРѕС€РµРЅ
+			AddRef(dwTID); // РЅР°РєСЂСѓС‚РёС‚СЊ СЃС‡РµС‚С‡РёРє
 
-			// Но поскольку нам нужен только nonexclusive lock
+			// РќРѕ РїРѕСЃРєРѕР»СЊРєСѓ РЅР°Рј РЅСѓР¶РµРЅ С‚РѕР»СЊРєРѕ nonexclusive lock
 			if (lbEntered)
 				LeaveCriticalSection(&m_cs);
 		}
 	}
 	else // abExclusive
 	{
-		// Требуется Exclusive Lock
+		// РўСЂРµР±СѓРµС‚СЃСЏ Exclusive Lock
 		#ifdef _DEBUG
 		if (mb_Exclusive)
 		{
-			// Этого надо стараться избегать
+			// Р­С‚РѕРіРѕ РЅР°РґРѕ СЃС‚Р°СЂР°С‚СЊСЃСЏ РёР·Р±РµРіР°С‚СЊ
 			DEBUGSTR(L"!!! Exclusive lock found in other thread\n");
 		}
         #endif
 
-		// Если есть ExclusiveLock (в другой нити) - дождется сама EnterCriticalSection
+		// Р•СЃР»Рё РµСЃС‚СЊ ExclusiveLock (РІ РґСЂСѓРіРѕР№ РЅРёС‚Рё) - РґРѕР¶РґРµС‚СЃСЏ СЃР°РјР° EnterCriticalSection
 		#ifdef _DEBUG
 		BOOL lbPrev = mb_Exclusive;
 		DWORD nPrevTID = mn_TID;
 		#endif
 
-		// Сразу установим mb_Exclusive, чтобы в других нитях случайно не прошел nonexclusive lock
-		// иначе может получиться, что nonexclusive lock мешает выполнить exclusive lock (ждут друг друга)
+		// РЎСЂР°Р·Сѓ СѓСЃС‚Р°РЅРѕРІРёРј mb_Exclusive, С‡С‚РѕР±С‹ РІ РґСЂСѓРіРёС… РЅРёС‚СЏС… СЃР»СѓС‡Р°Р№РЅРѕ РЅРµ РїСЂРѕС€РµР» nonexclusive lock
+		// РёРЅР°С‡Рµ РјРѕР¶РµС‚ РїРѕР»СѓС‡РёС‚СЊСЃСЏ, С‡С‚Рѕ nonexclusive lock РјРµС€Р°РµС‚ РІС‹РїРѕР»РЅРёС‚СЊ exclusive lock (Р¶РґСѓС‚ РґСЂСѓРі РґСЂСѓРіР°)
 		mb_Exclusive = TRUE;
 		TODO("Need to check, if MyEnterCriticalSection failed on timeout!\n");
 
 		if (!MyEnterCriticalSection(anTimeout))
 		{
-			// Пока поставил _ASSERTE, чтобы посмотреть, возникают ли Timeout-ы при блокировке
+			// РџРѕРєР° РїРѕСЃС‚Р°РІРёР» _ASSERTE, С‡С‚РѕР±С‹ РїРѕСЃРјРѕС‚СЂРµС‚СЊ, РІРѕР·РЅРёРєР°СЋС‚ Р»Рё Timeout-С‹ РїСЂРё Р±Р»РѕРєРёСЂРѕРІРєРµ
 			_ASSERTEX(FALSE);
 
-			if (mn_TID == 0)  // поскольку заблокировать не удалось - сбросим флажок
+			if (mn_TID == 0)  // РїРѕСЃРєРѕР»СЊРєСѓ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ РЅРµ СѓРґР°Р»РѕСЃСЊ - СЃР±СЂРѕСЃРёРј С„Р»Р°Р¶РѕРє
 				mb_Exclusive = FALSE;
 
 			return FALSE;
 		}
 
-		// 120710 - добавил "|| (mn_TID==dwTID)". Это в том случае, если предыдущая ExclusiveThread была прибита.
-		_ASSERTEX(!(lbPrev && mb_Exclusive) || (mn_TID==dwTID)); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
-		mn_TID = dwTID; // И запомним, в какой нити это произошло
+		// 120710 - РґРѕР±Р°РІРёР» "|| (mn_TID==dwTID)". Р­С‚Рѕ РІ С‚РѕРј СЃР»СѓС‡Р°Рµ, РµСЃР»Рё РїСЂРµРґС‹РґСѓС‰Р°СЏ ExclusiveThread Р±С‹Р»Р° РїСЂРёР±РёС‚Р°.
+		_ASSERTEX(!(lbPrev && mb_Exclusive) || (mn_TID==dwTID)); // РџРѕСЃР»Рµ LeaveCriticalSection mb_Exclusive РЈР–Р• РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СЃР±СЂРѕС€РµРЅ
+		mn_TID = dwTID; // Р Р·Р°РїРѕРјРЅРёРј, РІ РєР°РєРѕР№ РЅРёС‚Рё СЌС‚Рѕ РїСЂРѕРёР·РѕС€Р»Рѕ
 
 		HANDLE h = mh_ExclusiveThread;
 		mh_ExclusiveThread = OpenThread(SYNCHRONIZE, FALSE, dwTID);
 		SafeCloseHandle(h);
 
-		mb_Exclusive = TRUE; // Флаг могла сбросить другая нить, выполнившая Leave
+		mb_Exclusive = TRUE; // Р¤Р»Р°Рі РјРѕРіР»Р° СЃР±СЂРѕСЃРёС‚СЊ РґСЂСѓРіР°СЏ РЅРёС‚СЊ, РІС‹РїРѕР»РЅРёРІС€Р°СЏ Leave
 		_ASSERTEX(mn_LockedTID[0] == 0 && mn_LockedCount[0] == 0);
 		mn_LockedTID[0] = dwTID;
-		mn_LockedCount[0] ++; // на [0] mn_Locked не распространяется
+		mn_LockedCount[0] ++; // РЅР° [0] mn_Locked РЅРµ СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅСЏРµС‚СЃСЏ
 
 		/*if (abRelockExclusive) {
-			ReleaseRef(dwTID); // Если до этого был nonexclusive lock
+			ReleaseRef(dwTID); // Р•СЃР»Рё РґРѕ СЌС‚РѕРіРѕ Р±С‹Р» nonexclusive lock
 		}*/
 
-		// B если есть nonexclusive locks - дождаться их завершения
+		// B РµСЃР»Рё РµСЃС‚СЊ nonexclusive locks - РґРѕР¶РґР°С‚СЊСЃСЏ РёС… Р·Р°РІРµСЂС€РµРЅРёСЏ
 		if (mn_Locked)
 		{
-			//WARNING: Тут есть шанс наколоться, если сначала был NonExclusive, а потом в этой же нити - Exclusive
-			// В таких случаях нужно вызывать с параметром abRelockExclusive
+			//WARNING: РўСѓС‚ РµСЃС‚СЊ С€Р°РЅСЃ РЅР°РєРѕР»РѕС‚СЊСЃСЏ, РµСЃР»Рё СЃРЅР°С‡Р°Р»Р° Р±С‹Р» NonExclusive, Р° РїРѕС‚РѕРј РІ СЌС‚РѕР№ Р¶Рµ РЅРёС‚Рё - Exclusive
+			// Р’ С‚Р°РєРёС… СЃР»СѓС‡Р°СЏС… РЅСѓР¶РЅРѕ РІС‹Р·С‹РІР°С‚СЊ СЃ РїР°СЂР°РјРµС‚СЂРѕРј abRelockExclusive
 			WaitUnlocked(dwTID, anTimeout);
 		}
 	}
@@ -2278,7 +2278,7 @@ void MSection::Unlock(BOOL abExclusive)
 		mn_LockedTID[0] = 0;
 		if (mn_LockedCount[0] > 0)
 		{
-			mn_LockedCount[0] --; // на [0] mn_Locked не распространяется
+			mn_LockedCount[0] --; // РЅР° [0] mn_Locked РЅРµ СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅСЏРµС‚СЃСЏ
 		}
 		else
 		{
@@ -2345,7 +2345,7 @@ BOOL MSectionLock::Lock(MSection* apS, BOOL abExclusive/*=FALSE*/, DWORD anTimeo
 	if (!apS)
 		return FALSE;
 	if (mb_Locked && apS == mp_S && (abExclusive == mb_Exclusive || mb_Exclusive))
-		return TRUE; // уже заблокирован //111126 - возвращался FALSE
+		return TRUE; // СѓР¶Рµ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ //111126 - РІРѕР·РІСЂР°С‰Р°Р»СЃСЏ FALSE
 
 	_ASSERTEX(!mb_Locked);
 	mb_Exclusive = (abExclusive!=FALSE);
@@ -2361,9 +2361,9 @@ BOOL MSectionLock::RelockExclusive(DWORD anTimeout/*=-1*/)
 		return FALSE;
 	}
 	if (mb_Locked && mb_Exclusive)
-		return TRUE;  // уже
+		return TRUE;  // СѓР¶Рµ
 
-	// Чистый ReLock делать нельзя. Виснут другие нити, которые тоже запросили ReLock
+	// Р§РёСЃС‚С‹Р№ ReLock РґРµР»Р°С‚СЊ РЅРµР»СЊР·СЏ. Р’РёСЃРЅСѓС‚ РґСЂСѓРіРёРµ РЅРёС‚Рё, РєРѕС‚РѕСЂС‹Рµ С‚РѕР¶Рµ Р·Р°РїСЂРѕСЃРёР»Рё ReLock
 	Unlock();
 	mb_Exclusive = TRUE;
 	mb_Locked = mp_S->Lock(mb_Exclusive, anTimeout);
@@ -2566,7 +2566,7 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 	if (!this)
 		return -1;
 
-	// ms_FileName мог быть проинициализирован в конструкторе, поэтому CloseLogFile не зовем
+	// ms_FileName РјРѕРі Р±С‹С‚СЊ РїСЂРѕРёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅ РІ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂРµ, РїРѕСЌС‚РѕРјСѓ CloseLogFile РЅРµ Р·РѕРІРµРј
 	if (mh_LogFile && mh_LogFile != INVALID_HANDLE_VALUE)
 	{
 		SafeCloseHandle(mh_LogFile);
@@ -2574,7 +2574,7 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 
 	if (asName)
 	{
-		// А вот если указали новое имя - нужно все передернуть
+		// Рђ РІРѕС‚ РµСЃР»Рё СѓРєР°Р·Р°Р»Рё РЅРѕРІРѕРµ РёРјСЏ - РЅСѓР¶РЅРѕ РІСЃРµ РїРµСЂРµРґРµСЂРЅСѓС‚СЊ
 		CloseLogFile();
 
 		HRESULT hr = InitFileName(asName, anPID);
@@ -2597,7 +2597,7 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 
 	if (!ms_FilePathName)
 	{
-		// Первое открытие. нужно сформировать путь к лог-файлу
+		// РџРµСЂРІРѕРµ РѕС‚РєСЂС‹С‚РёРµ. РЅСѓР¶РЅРѕ СЃС„РѕСЂРјРёСЂРѕРІР°С‚СЊ РїСѓС‚СЊ Рє Р»РѕРі-С„Р°Р№Р»Сѓ
 		mh_LogFile = NULL;
 
 		size_t cchMax, cchNamLen = lstrlen(ms_FileName);
@@ -2618,7 +2618,7 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 
 
     		mh_LogFile = CreateFileW(ms_FilePathName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    		// Нет прав на запись в текущую папку?
+    		// РќРµС‚ РїСЂР°РІ РЅР° Р·Р°РїРёСЃСЊ РІ С‚РµРєСѓС‰СѓСЋ РїР°РїРєСѓ?
 			if (mh_LogFile == INVALID_HANDLE_VALUE)
 			{
 				dwErr = GetLastError();
@@ -2647,7 +2647,7 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 	    		_wcscat_c(ms_FilePathName, cchMax, ms_FileName);
 
 	    		mh_LogFile = CreateFileW(ms_FilePathName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	    		// Нет прав на запись в текущую папку?
+	    		// РќРµС‚ РїСЂР°РІ РЅР° Р·Р°РїРёСЃСЊ РІ С‚РµРєСѓС‰СѓСЋ РїР°РїРєСѓ?
 				if (mh_LogFile == INVALID_HANDLE_VALUE)
 				{
 					dwErr = GetLastError();
@@ -2860,7 +2860,7 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 		return;
 	}
 
-	// Пишем инфу
+	// РџРёС€РµРј РёРЅС„Сѓ
 	wchar_t szSI[MAX_PATH*4], szDesktop[128] = L"", szTitle[128] = L"";
 	lstrcpyn(szDesktop, apStartEnv->si.lpDesktop ? apStartEnv->si.lpDesktop : L"", countof(szDesktop));
 	lstrcpyn(szTitle, apStartEnv->si.lpTitle ? apStartEnv->si.lpTitle : L"", countof(szTitle));
@@ -2914,12 +2914,12 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 		LogString(szSI, false);
 	}
 
-	// Текущий HKL (он может отличаться от GetConsoleKeyboardLayoutNameW
+	// РўРµРєСѓС‰РёР№ HKL (РѕРЅ РјРѕР¶РµС‚ РѕС‚Р»РёС‡Р°С‚СЊСЃСЏ РѕС‚ GetConsoleKeyboardLayoutNameW
 	HKL hkl[32] = {NULL};
 	hkl[0] = GetKeyboardLayout(0);
 	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Active HKL: " WIN3264TEST(L"0x%08X",L"0x%08X%08X"), WIN3264WSPRINT((DWORD_PTR)hkl[0]));
 	LogString(szSI, false);
-	// Установленные в системе HKL
+	// РЈСЃС‚Р°РЅРѕРІР»РµРЅРЅС‹Рµ РІ СЃРёСЃС‚РµРјРµ HKL
 	UINT nHkl = GetKeyboardLayoutList(countof(hkl), hkl);
 	if (!nHkl || (nHkl > countof(hkl)))
 	{
@@ -2951,7 +2951,7 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 	LogString("ConFont: ", false, NULL, false);
 	LogString(apStartEnv->pszRegConFonts ? apStartEnv->pszRegConFonts : L"<NULL>", false, NULL, true);
 
-	// szSI уже не используется, можно
+	// szSI СѓР¶Рµ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ, РјРѕР¶РЅРѕ
 
 	HWND hFore = GetForegroundWindow();
 	RECT rcFore = {0}; if (hFore) GetWindowRect(hFore, &rcFore);
@@ -3067,7 +3067,7 @@ void CToolTip::ShowTip(HWND ahOwner, HWND ahControl, LPCWSTR asText, BOOL abBall
 			SetWindowPos(mh_Ball, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 			// Set up tool information.
 			// In this case, the "tool" is the entire parent window.
-			pti->cbSize = 44; // был sizeof(TOOLINFO);
+			pti->cbSize = 44; // Р±С‹Р» sizeof(TOOLINFO);
 			pti->uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
 			pti->hwnd = ahControl;
 			pti->hinst = hInstance;
@@ -3130,7 +3130,7 @@ void CToolTip::HideTip()
 
 
 #ifndef CONEMU_MINIMAL
-// Обертка для таймера
+// РћР±РµСЂС‚РєР° РґР»СЏ С‚Р°Р№РјРµСЂР°
 CTimer::CTimer()
 {
 	mh_Wnd = NULL;
@@ -3190,7 +3190,7 @@ void CTimer::Init(HWND ahWnd, UINT_PTR anTimerID, UINT anElapse)
 
 COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
-	// В Wine не работает
+	// Р’ Wine РЅРµ СЂР°Р±РѕС‚Р°РµС‚
 	COORD crMax = GetLargestConsoleWindowSize(hConsoleOutput);
 	DWORD dwErr = (crMax.X && crMax.Y) ? 0 : GetLastError();
 	UNREFERENCED_PARAMETER(dwErr);
@@ -3229,7 +3229,7 @@ HANDLE DuplicateProcessHandle(DWORD anTargetPID)
 
 
 #ifndef CONEMU_MINIMAL
-// используется в GUI при загрузке настроек
+// РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ GUI РїСЂРё Р·Р°РіСЂСѓР·РєРµ РЅР°СЃС‚СЂРѕРµРє
 void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 {
 	if (!pOpt)
@@ -3238,14 +3238,14 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 	pOpt->Comspec32[0] = 0;
 	pOpt->Comspec64[0] = 0;
 
-	// Ищем tcc.exe
+	// РС‰РµРј tcc.exe
 	if (pOpt->csType == cst_AutoTccCmd)
 	{
 		HKEY hk;
 		BOOL bWin64 = IsWindows64();
 		wchar_t szPath[MAX_PATH+1];
 
-		// Если tcc.exe положили в папку с ConEmuC.exe берем его?
+		// Р•СЃР»Рё tcc.exe РїРѕР»РѕР¶РёР»Рё РІ РїР°РїРєСѓ СЃ ConEmuC.exe Р±РµСЂРµРј РµРіРѕ?
 		DWORD nExpand = ExpandEnvironmentStrings(L"%ConEmuBaseDir%\\tcc.exe", szPath, countof(szPath));
 		if (nExpand && (nExpand < countof(szPath)))
 		{
@@ -3302,12 +3302,12 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 							} // for (size_t n = 0; n < countof(rsNames); n++)
 							RegCloseKey(hk2);
 						}
-					} //  for, подключи
+					} //  for, РїРѕРґРєР»СЋС‡Рё
 					RegCloseKey(hk);
 				} // L"SOFTWARE\\JP Software"
 			} // for (int b = 0; b <= 1; b++)
 
-			// Если установлен TCMD - предпочтительно использовать именно его, независимо от битности
+			// Р•СЃР»Рё СѓСЃС‚Р°РЅРѕРІР»РµРЅ TCMD - РїСЂРµРґРїРѕС‡С‚РёС‚РµР»СЊРЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РёРјРµРЅРЅРѕ РµРіРѕ, РЅРµР·Р°РІРёСЃРёРјРѕ РѕС‚ Р±РёС‚РЅРѕСЃС‚Рё
 			if (*pOpt->Comspec32 && !*pOpt->Comspec64)
 				wcscpy_c(pOpt->Comspec64, pOpt->Comspec32);
 			else if (*pOpt->Comspec64 && !*pOpt->Comspec32)
@@ -3321,9 +3321,9 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 			// "DisplayVersion"="13.04.60"
 			// "Publisher"="JP Software"
 			// "DisplayName"="Take Command 13.0"
-			// или
+			// РёР»Рё
 			// "DisplayName"="TCC/LE 13.0"
-			// и наконец
+			// Рё РЅР°РєРѕРЅРµС†
 			// "InstallLocation"="C:\\Program Files\\JPSoft\\TCMD13\\"
 			for (int b = 0; b <= 1; b++)
 			{
@@ -3331,7 +3331,7 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 				if (b && !bWin64)
 					continue;
 				if (((b == 0) ? *pOpt->Comspec32 : *pOpt->Comspec64))
-					continue; // этот уже нашелся в TCMD
+					continue; // СЌС‚РѕС‚ СѓР¶Рµ РЅР°С€РµР»СЃСЏ РІ TCMD
 
 				bool bFound = false;
 				DWORD nOpt = (b == 0) ? (bWin64 ? KEY_WOW64_32KEY : 0) : (bWin64 ? KEY_WOW64_64KEY : 0);
@@ -3384,13 +3384,13 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 							}
 							RegCloseKey(hk2);
 						}
-					} // for, подключи
+					} // for, РїРѕРґРєР»СЋС‡Рё
 					RegCloseKey(hk);
 				} // L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
 			} // for (int b = 0; b <= 1; b++)
 		}
 
-		// Попытаться "в лоб" из "Program Files"
+		// РџРѕРїС‹С‚Р°С‚СЊСЃСЏ "РІ Р»РѕР±" РёР· "Program Files"
 		if (!*pOpt->Comspec32 && !*pOpt->Comspec64)
 		{
 			
@@ -3408,8 +3408,8 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 			wcscpy_c(pOpt->Comspec32, pOpt->Comspec64);
 	} // if (pOpt->csType == cst_AutoTccCmd)
 
-	// С поиском tcc закончили. Теперь, если pOpt->Comspec32/pOpt->Comspec64 остались не заполнены
-	// нужно сначала попытаться обработать переменную окружения ComSpec, а потом - просто "cmd.exe"
+	// РЎ РїРѕРёСЃРєРѕРј tcc Р·Р°РєРѕРЅС‡РёР»Рё. РўРµРїРµСЂСЊ, РµСЃР»Рё pOpt->Comspec32/pOpt->Comspec64 РѕСЃС‚Р°Р»РёСЃСЊ РЅРµ Р·Р°РїРѕР»РЅРµРЅС‹
+	// РЅСѓР¶РЅРѕ СЃРЅР°С‡Р°Р»Р° РїРѕРїС‹С‚Р°С‚СЊСЃСЏ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ РѕРєСЂСѓР¶РµРЅРёСЏ ComSpec, Р° РїРѕС‚РѕРј - РїСЂРѕСЃС‚Рѕ "cmd.exe"
 	if (!*pOpt->Comspec32)
 		GetComspecFromEnvVar(pOpt->Comspec32, countof(pOpt->Comspec32), csb_x32);
 	if (!*pOpt->Comspec64)
@@ -3561,7 +3561,7 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 						if (!(pOpt->AddConEmu2Path & CEAP_AddConEmuBaseDir))
 							continue;
 						if (lstrcmp(pOpt->ConEmuExeDir, pOpt->ConEmuBaseDir) == 0)
-							continue; // второй раз ту же директорию не добавляем
+							continue; // РІС‚РѕСЂРѕР№ СЂР°Р· С‚Сѓ Р¶Рµ РґРёСЂРµРєС‚РѕСЂРёСЋ РЅРµ РґРѕР±Р°РІР»СЏРµРј
 						pszAdd = pOpt->ConEmuBaseDir;
 						break;
 					}
@@ -3667,27 +3667,27 @@ LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits
 	{
 		if (GetEnvironmentVariable(L"ComSpec", pszComspec, cchMax))
 		{
-			// Не должен быть (даже случайно) ConEmuC.exe
+			// РќРµ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ (РґР°Р¶Рµ СЃР»СѓС‡Р°Р№РЅРѕ) ConEmuC.exe
 			const wchar_t* pszName = PointToName(pszComspec);
 			if (!pszName || !lstrcmpi(pszName, L"ConEmuC.exe") || !lstrcmpi(pszName, L"ConEmuC64.exe")
-				|| !FileExists(pszComspec)) // ну и существовать должен
+				|| !FileExists(pszComspec)) // РЅСѓ Рё СЃСѓС‰РµСЃС‚РІРѕРІР°С‚СЊ РґРѕР»Р¶РµРЅ
 			{
 				pszComspec[0] = 0;
 			}
 		}
 	}
 
-	// Если не удалось определить через переменную окружения - пробуем обычный "cmd.exe" из System32
+	// Р•СЃР»Рё РЅРµ СѓРґР°Р»РѕСЃСЊ РѕРїСЂРµРґРµР»РёС‚СЊ С‡РµСЂРµР· РїРµСЂРµРјРµРЅРЅСѓСЋ РѕРєСЂСѓР¶РµРЅРёСЏ - РїСЂРѕР±СѓРµРј РѕР±С‹С‡РЅС‹Р№ "cmd.exe" РёР· System32
 	if (pszComspec[0] == 0)
 	{
 		int n = GetWindowsDirectory(pszComspec, cchMax - 20);
 		if (n > 0 && (((DWORD)n) < (cchMax - 20)))
 		{
-			// Добавить \System32\cmd.exe
+			// Р”РѕР±Р°РІРёС‚СЊ \System32\cmd.exe
 
-			// Warning! 'c:\Windows\SysNative\cmd.exe' не прокатит, т.к. доступен
-			// только для 32битных приложений. А нам нужно в общем виде.
-			// Если из 32битного нужно запустить 64битный cmd.exe - нужно выключать редиректор.
+			// Warning! 'c:\Windows\SysNative\cmd.exe' РЅРµ РїСЂРѕРєР°С‚РёС‚, С‚.Рє. РґРѕСЃС‚СѓРїРµРЅ
+			// С‚РѕР»СЊРєРѕ РґР»СЏ 32Р±РёС‚РЅС‹С… РїСЂРёР»РѕР¶РµРЅРёР№. Рђ РЅР°Рј РЅСѓР¶РЅРѕ РІ РѕР±С‰РµРј РІРёРґРµ.
+			// Р•СЃР»Рё РёР· 32Р±РёС‚РЅРѕРіРѕ РЅСѓР¶РЅРѕ Р·Р°РїСѓСЃС‚РёС‚СЊ 64Р±РёС‚РЅС‹Р№ cmd.exe - РЅСѓР¶РЅРѕ РІС‹РєР»СЋС‡Р°С‚СЊ СЂРµРґРёСЂРµРєС‚РѕСЂ.
 
 			if (!bWin64 || (Bits != csb_x32))
 			{
@@ -3709,7 +3709,7 @@ LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits
 	// Last chance
 	if (pszComspec[0] == 0)
 	{
-		_ASSERTE(pszComspec[0] != 0); // Уже должен был быть определен
+		_ASSERTE(pszComspec[0] != 0); // РЈР¶Рµ РґРѕР»Р¶РµРЅ Р±С‹Р» Р±С‹С‚СЊ РѕРїСЂРµРґРµР»РµРЅ
 		//lstrcpyn(pszComspec, L"cmd.exe", cchMax);
 		wchar_t *psFilePart;
 		DWORD n = SearchPathW(NULL, L"cmd.exe", NULL, cchMax, pszComspec, &psFilePart);
@@ -3720,7 +3720,7 @@ LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits
 	return pszComspec;
 }
 
-// Найти "ComSpec" и вернуть lstrdup на него
+// РќР°Р№С‚Рё "ComSpec" Рё РІРµСЂРЅСѓС‚СЊ lstrdup РЅР° РЅРµРіРѕ
 wchar_t* GetComspec(const ConEmuComspec* pOpt)
 {
 	wchar_t* pszComSpec = NULL;
@@ -3755,7 +3755,7 @@ wchar_t* GetComspec(const ConEmuComspec* pOpt)
 	}
 	else
 	{
-		_ASSERTE(pOpt && "pOpt должен быть передан, по идее");
+		_ASSERTE(pOpt && "pOpt РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РїРµСЂРµРґР°РЅ, РїРѕ РёРґРµРµ");
 	}
 
 	if (!pszComSpec)
@@ -3764,7 +3764,7 @@ wchar_t* GetComspec(const ConEmuComspec* pOpt)
 		pszComSpec = lstrdup(GetComspecFromEnvVar(szComSpec, countof(szComSpec)));
 	}
 
-	// Уже должно быть хоть что-то
+	// РЈР¶Рµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С…РѕС‚СЊ С‡С‚Рѕ-С‚Рѕ
 	_ASSERTE(pszComSpec && *pszComSpec);
 	return pszComSpec;
 }
@@ -3775,11 +3775,11 @@ bool IsExportEnvVarAllowed(LPCWSTR szName)
 	if (!szName || !*szName)
 		return false;
 
-	// Хотя некоторые внутренние переменные менять можно
+	// РҐРѕС‚СЏ РЅРµРєРѕС‚РѕСЂС‹Рµ РІРЅСѓС‚СЂРµРЅРЅРёРµ РїРµСЂРµРјРµРЅРЅС‹Рµ РјРµРЅСЏС‚СЊ РјРѕР¶РЅРѕ
 	if (lstrcmpi(szName, ENV_CONEMU_SLEEP_INDICATE) == 0)
 		return true;
 
-	// Но большинство внутренних переменных ConEmu запрещено менять (экспортировать)
+	// РќРѕ Р±РѕР»СЊС€РёРЅСЃС‚РІРѕ РІРЅСѓС‚СЂРµРЅРЅРёС… РїРµСЂРµРјРµРЅРЅС‹С… ConEmu Р·Р°РїСЂРµС‰РµРЅРѕ РјРµРЅСЏС‚СЊ (СЌРєСЃРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ)
 	wchar_t szTemp[8];
 	lstrcpyn(szTemp, szName, 7); szTemp[7] = 0;
 	if (lstrcmpi(szTemp, L"ConEmu") == 0)

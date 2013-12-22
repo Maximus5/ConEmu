@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2013 Maximus5
 All rights reserved.
@@ -70,7 +70,7 @@ public:
 		_ASSERTE(mn_RefCount>=0);
 		if (mn_RefCount <= 0)
 		{
-			mn_RefCount = REF_FINALIZE; // принудительно, чтобы не было повторных срабатываний delete при вызове деструкторов
+			mn_RefCount = REF_FINALIZE; // РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ, С‡С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ РїРѕРІС‚РѕСЂРЅС‹С… СЃСЂР°Р±Р°С‚С‹РІР°РЅРёР№ delete РїСЂРё РІС‹Р·РѕРІРµ РґРµСЃС‚СЂСѓРєС‚РѕСЂРѕРІ
 			FinalRelease();
 			//CVirtualConsole* pVCon = (CVirtualConsole*)this;
 			//delete pVCon;

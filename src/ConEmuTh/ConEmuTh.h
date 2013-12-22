@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -55,7 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 //#define countof(array) (sizeof(array)/sizeof(*array))
 
-// X - меньшая, Y - большая
+// X - РјРµРЅСЊС€Р°СЏ, Y - Р±РѕР»СЊС€Р°СЏ
 #define FAR_X_VER 995
 #define FAR_Y1_VER 1900
 #define FAR_Y2_VER 2800
@@ -114,12 +114,12 @@ struct CePluginPanelItem
 	HANDLE           hPlugin;
 	DWORD_PTR        UserData;
 	FARPROC          FreeUserDataCallback;
-	ImgLoadType      PreviewLoaded; // пытались ли уже загружать превьюшку, и что удалось загрузить
-	const wchar_t*   pszFullName; // Для упрощения отрисовки - ссылка на временный буфер
-	const wchar_t*   pszDescription; // ссылка на данные в этом CePluginPanelItem
+	ImgLoadType      PreviewLoaded; // РїС‹С‚Р°Р»РёСЃСЊ Р»Рё СѓР¶Рµ Р·Р°РіСЂСѓР¶Р°С‚СЊ РїСЂРµРІСЊСЋС€РєСѓ, Рё С‡С‚Рѕ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ
+	const wchar_t*   pszFullName; // Р”Р»СЏ СѓРїСЂРѕС‰РµРЅРёСЏ РѕС‚СЂРёСЃРѕРІРєРё - СЃСЃС‹Р»РєР° РЅР° РІСЂРµРјРµРЅРЅС‹Р№ Р±СѓС„РµСЂ
+	const wchar_t*   pszDescription; // СЃСЃС‹Р»РєР° РЅР° РґР°РЅРЅС‹Рµ РІ СЌС‚РѕРј CePluginPanelItem
 	unsigned __int64 Flags;
 	DWORD            NumberOfLinks;
-	BOOL             bIsCurrent; // ТОЛЬКО ИНФОРМАЦИОННО, ориентироваться на это поле нельзя, оно может быть неактуально
+	BOOL             bIsCurrent; // РўРћР›Р¬РљРћ РРќР¤РћР РњРђР¦РРћРќРќРћ, РѕСЂРёРµРЅС‚РёСЂРѕРІР°С‚СЊСЃСЏ РЅР° СЌС‚Рѕ РїРѕР»Рµ РЅРµР»СЊР·СЏ, РѕРЅРѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅРµР°РєС‚СѓР°Р»СЊРЅРѕ
 	//BOOL           bItemColorLoaded;
 	//COLORREF       crFore, crBack;
 	struct
@@ -161,21 +161,21 @@ enum CEPANELINFOFLAGS
 //struct ThumbnailSettings
 //{
 //	TODO("nWidth & nHeight - deprecated");
-//	// Наверное заменить на WholeWidth() & WholeHeight()
+//	// РќР°РІРµСЂРЅРѕРµ Р·Р°РјРµРЅРёС‚СЊ РЅР° WholeWidth() & WholeHeight()
 //	int nWidth, nHeight; // 98x98
 //
 //	int nThumbSize; // 96
 //	int nIconSize; // 48
-//	DWORD crBackground; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
+//	DWORD crBackground; // 0xFFFFFF (RGB) РёР»Рё 0xFF000000 (Index)
 //
-//	int nThumbFrame; // 1 (серая рамка вокруг превьюшки
-//	DWORD crThumbFrame; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
-//	int nSelectFrame; // 1 (рамка вокруг текущего элемента)
-//	DWORD crSelectFrame; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
-//	int nHSpacing, nVSpacing; // 5, 25 - промежуток между двумя рамками
+//	int nThumbFrame; // 1 (СЃРµСЂР°СЏ СЂР°РјРєР° РІРѕРєСЂСѓРі РїСЂРµРІСЊСЋС€РєРё
+//	DWORD crThumbFrame; // 0xFFFFFF (RGB) РёР»Рё 0xFF000000 (Index)
+//	int nSelectFrame; // 1 (СЂР°РјРєР° РІРѕРєСЂСѓРі С‚РµРєСѓС‰РµРіРѕ СЌР»РµРјРµРЅС‚Р°)
+//	DWORD crSelectFrame; // 0xFFFFFF (RGB) РёР»Рё 0xFF000000 (Index)
+//	int nHSpacing, nVSpacing; // 5, 25 - РїСЂРѕРјРµР¶СѓС‚РѕРє РјРµР¶РґСѓ РґРІСѓРјСЏ СЂР°РјРєР°РјРё
 //
-//	TODO("Вроде не нужно - оставить только nSelectFrame? Или пусть будет?");
-//	int nHPadding, nVPadding; // 1, 1 - зарезевированный отступ
+//	TODO("Р’СЂРѕРґРµ РЅРµ РЅСѓР¶РЅРѕ - РѕСЃС‚Р°РІРёС‚СЊ С‚РѕР»СЊРєРѕ nSelectFrame? РР»Рё РїСѓСЃС‚СЊ Р±СѓРґРµС‚?");
+//	int nHPadding, nVPadding; // 1, 1 - Р·Р°СЂРµР·РµРІРёСЂРѕРІР°РЅРЅС‹Р№ РѕС‚СЃС‚СѓРї
 //
 //	int nFontHeight; // 14
 //	wchar_t sFontName[32]; // Tahoma
@@ -192,7 +192,7 @@ enum CEPANELINFOFLAGS
 //		TODO("nWidth & nHeight - deprecated");
 //		nWidth = nHeight = 98;
 //
-//		nThumbSize = 96; // пусть реально будет 96. Чтобы можно было 500% на 16х16 поставить
+//		nThumbSize = 96; // РїСѓСЃС‚СЊ СЂРµР°Р»СЊРЅРѕ Р±СѓРґРµС‚ 96. Р§С‚РѕР±С‹ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ 500% РЅР° 16С…16 РїРѕСЃС‚Р°РІРёС‚СЊ
 //		nIconSize = 32;
 //
 //		nThumbFrame = 1;
@@ -207,7 +207,7 @@ enum CEPANELINFOFLAGS
 //		bLoadPreviews = TRUE;
 //		bLoadFolders = TRUE;
 //		nLoadTimeout = 15;
-//		nMaxZoom = 500; // но не больше размера превьюшки :)
+//		nMaxZoom = 500; // РЅРѕ РЅРµ Р±РѕР»СЊС€Рµ СЂР°Р·РјРµСЂР° РїСЂРµРІСЊСЋС€РєРё :)
 //		bUsePicView2 = TRUE;
 //        sCacheFolder[0] = 0;
 //	};
@@ -220,7 +220,7 @@ extern BOOL gbCancelAll;
 
 extern HWND ghConEmuRoot;
 extern HWND ghConEmuWnd;
-extern HMODULE ghPluginModule; // ConEmuTh.dll - сам плагин
+extern HMODULE ghPluginModule; // ConEmuTh.dll - СЃР°Рј РїР»Р°РіРёРЅ
 extern DWORD gnSelfPID, gnMainThreadId;
 //extern int lastModifiedStateW;
 //extern bool gbHandleOneRedraw; //, gbHandleOneRedrawCh;
@@ -237,7 +237,7 @@ extern FarVersion gFarVersion;
 ////extern HANDLE hEventCmd[MAXCMDCOUNT];
 //extern HANDLE hThread;
 ////extern WCHAR gcPlugKey;
-////WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
+////WARNING("РЈР±СЂР°С‚СЊ, Р·Р°РјРµРЅРёС‚СЊ ghConIn РЅР° GetStdHandle()"); // РРЅР°С‡Рµ РІ Win7 Р±СѓРґРµС‚ Р±СѓС„РµСЂ СЂР°Р·СЂСѓС€Р°С‚СЊСЃСЏ
 ////extern HANDLE ghConIn;
 //extern BOOL gbNeedPostTabSend;
 //extern HANDLE ghServerTerminateEvent;
@@ -382,7 +382,7 @@ bool FUNC_X(CheckFarPanelsW)();
 bool FUNC_Y1(CheckFarPanelsW)();
 bool FUNC_Y2(CheckFarPanelsW)();
 
-// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
+// Р­С‚Р° "РґРёСЃРїР»РµР№РЅР°СЏ" С„СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· РѕСЃРЅРѕРІРЅРѕР№ РЅРёС‚Рё, С‚Р°Рј РјРѕР¶РЅРѕ РґРµСЂРіР°С‚СЊ FAR Api
 //void DisplayReloadPanel(CeFullPanelInfo* pi);
 
 extern int gnCreateViewError;
@@ -404,7 +404,7 @@ void FUNC_Y2(GetFarRectW)(SMALL_RECT* prcFarRect);
 typedef struct
 {
 	int bValid; // Must be ==1
-	int bExpired; // Must be ==0, if !=0 - просто освободить память
+	int bExpired; // Must be ==0, if !=0 - РїСЂРѕСЃС‚Рѕ РѕСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ
 	enum
 	{
 		eExecuteMacro = 0,
@@ -446,10 +446,10 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 struct ImpExPanelItem
 {
 	DWORD nMagic;			// IMPEX_MAGIC
-	DWORD cbSizeOfStruct;	// 1196 в этой версии
-	DWORD nBinarySize;		// размер
-	LPBYTE pBinaryData;		// и собственно бинарные данные
-	// Остальные поля не интересуют
+	DWORD cbSizeOfStruct;	// 1196 РІ СЌС‚РѕР№ РІРµСЂСЃРёРё
+	DWORD nBinarySize;		// СЂР°Р·РјРµСЂ
+	LPBYTE pBinaryData;		// Рё СЃРѕР±СЃС‚РІРµРЅРЅРѕ Р±РёРЅР°СЂРЅС‹Рµ РґР°РЅРЅС‹Рµ
+	// РћСЃС‚Р°Р»СЊРЅС‹Рµ РїРѕР»СЏ РЅРµ РёРЅС‚РµСЂРµСЃСѓСЋС‚
 };
 #define PBFAR_MAGIC 0x50624672 // 'PbFr'
 struct PbFarPanelItem

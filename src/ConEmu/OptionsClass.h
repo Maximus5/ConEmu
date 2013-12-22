@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -68,14 +68,14 @@ class CSettings
 		LPCWSTR GetConfigName();
 		void SetConfigName(LPCWSTR asConfigName);
 
-		// === Аргументы из командной строки ===
+		// === РђСЂРіСѓРјРµРЅС‚С‹ РёР· РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРё ===
 		// Default terminal installation
 		bool ibExitAfterDefTermSetup;
-		// Для отладочных целей.
+		// Р”Р»СЏ РѕС‚Р»Р°РґРѕС‡РЅС‹С… С†РµР»РµР№.
 		bool isResetBasicSettings;
 		bool isFastSetupDisabled;
 		bool isDontCascade;
-		// === Запрет сохранения опций при выходе ===
+		// === Р—Р°РїСЂРµС‚ СЃРѕС…СЂР°РЅРµРЅРёСЏ РѕРїС†РёР№ РїСЂРё РІС‹С…РѕРґРµ ===
 		bool ibDisableSaveSettingsOnExit;
 
 		wchar_t szFontError[512];
@@ -83,9 +83,9 @@ class CSettings
 		bool IsMulti();
 		RecreateActionParm GetDefaultCreateAction();
 
-		SingleInstanceArgEnum SingleInstanceArg; // по умолчанию = sgl_Default, но для Quake переключается на = sgl_Enabled
+		SingleInstanceArgEnum SingleInstanceArg; // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ = sgl_Default, РЅРѕ РґР»СЏ Quake РїРµСЂРµРєР»СЋС‡Р°РµС‚СЃСЏ РЅР° = sgl_Enabled
 		bool IsSingleInstanceArg();
-		SingleInstanceShowHideType SingleInstanceShowHide; // по умолчанию = sih_None
+		SingleInstanceShowHideType SingleInstanceShowHide; // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ = sih_None
 		void ResetCmdArg();
 		bool ResetCmdHistory(HWND hParent = NULL);
 		void SetSaveCmdHistory(bool bSaveHistory);
@@ -116,9 +116,9 @@ class CSettings
 		void GetMainLogFont(LOGFONT& lf);
 	private:
 		LOGFONT LogFont, LogFont2;
-		LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
-		LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth; // реальные размеры шрифтов
-		//BYTE mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр)
+		LONG mn_AutoFontWidth, mn_AutoFontHeight; // СЂР°Р·РјРµСЂС‹ С€СЂРёС„С‚РѕРІ, РєРѕС‚РѕСЂС‹Рµ Р±С‹Р»Рё Р·Р°РїСЂРѕС€РµРЅС‹ РїСЂРё Р°РІС‚РѕСЂРµСЃР°Р№Р·Рµ С€СЂРёС„С‚Р°
+		LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth; // СЂРµР°Р»СЊРЅС‹Рµ СЂР°Р·РјРµСЂС‹ С€СЂРёС„С‚РѕРІ
+		//BYTE mn_LoadFontCharSet; // РўРѕ С‡С‚Рѕ Р·Р°РіСЂСѓР¶РµРЅРѕ РёР·РЅР°С‡Р°Р»СЊРЅРѕ (РёР»Рё СѓР¶Рµ СЃРѕС…СЂР°РЅРµРЅРѕ РІ СЂРµРµСЃС‚СЂ)
 		TEXTMETRIC m_tm[MAX_FONT_STYLES];
 		LPOUTLINETEXTMETRIC m_otm[MAX_FONT_STYLES];
 		BOOL mb_Name1Ok, mb_Name2Ok;
@@ -132,7 +132,7 @@ class CSettings
 		wchar_t  szDefCmd[MAX_PATH+32];
 		/* Current command line, specified with "/cmd" or "/cmdlist" switches */
 		wchar_t* pszCurCmd;
-		bool isCurCmdList; // а это если был указан /cmdlist
+		bool isCurCmdList; // Р° СЌС‚Рѕ РµСЃР»Рё Р±С‹Р» СѓРєР°Р·Р°РЅ /cmdlist
 
 	public:
 		/* Store/retrieve command line, specified with "/cmd" or "/cmdlist" switches */
@@ -180,7 +180,7 @@ class CSettings
 		void SetBgImageDarker(u8 newValue, bool bUpdate);
 		#ifndef APPDISTINCTBACKGROUND
 		bool PrepareBackground(CVirtualConsole* apVCon, HDC* phBgDc, COORD* pbgBmpSize);
-		bool PollBackgroundFile(); // true, если файл изменен
+		bool PollBackgroundFile(); // true, РµСЃР»Рё С„Р°Р№Р» РёР·РјРµРЅРµРЅ
 		#else
 		CBackgroundInfo* GetBackgroundObject();
 		#endif
@@ -190,7 +190,7 @@ class CSettings
 		//CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);
 	public:
 		CEFONT  mh_Font[MAX_FONT_STYLES], mh_Font2;
-		TODO("По хорошему, CharWidth & CharABC нужно разделять по шрифтам - у Bold ширина может быть больше");
+		TODO("РџРѕ С…РѕСЂРѕС€РµРјСѓ, CharWidth & CharABC РЅСѓР¶РЅРѕ СЂР°Р·РґРµР»СЏС‚СЊ РїРѕ С€СЂРёС„С‚Р°Рј - Сѓ Bold С€РёСЂРёРЅР° РјРѕР¶РµС‚ Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ");
 		WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 		ABC     CharABC[0x10000];
 
@@ -233,7 +233,7 @@ class CSettings
 		DWORD BalloonStyle();
 		// IDD_SETTINGS
 		static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		// Вкладки настроек: IDD_SPG_MAIN, IDD_SPG_FEATURE, и т.д.
+		// Р’РєР»Р°РґРєРё РЅР°СЃС‚СЂРѕРµРє: IDD_SPG_MAIN, IDD_SPG_FEATURE, Рё С‚.Рґ.
 		static INT_PTR CALLBACK pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		//
 		void debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl);
@@ -305,9 +305,9 @@ class CSettings
 	protected:
 		BOOL bShowConFontError, bConsoleFontChecked;
 		wchar_t sConFontError[512];
-		wchar_t sDefaultConFontName[32]; // "последний шанс", если юзер отказался выбрать нормальный шрифт
+		wchar_t sDefaultConFontName[32]; // "РїРѕСЃР»РµРґРЅРёР№ С€Р°РЅСЃ", РµСЃР»Рё СЋР·РµСЂ РѕС‚РєР°Р·Р°Р»СЃСЏ РІС‹Р±СЂР°С‚СЊ РЅРѕСЂРјР°Р»СЊРЅС‹Р№ С€СЂРёС„С‚
 		HWND hConFontDlg;
-		DWORD nConFontError; // 0x01 - шрифт не зарегистрирован в системе, 0x02 - не указан в реестре для консоли
+		DWORD nConFontError; // 0x01 - С€СЂРёС„С‚ РЅРµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅ РІ СЃРёСЃС‚РµРјРµ, 0x02 - РЅРµ СѓРєР°Р·Р°РЅ РІ СЂРµРµСЃС‚СЂРµ РґР»СЏ РєРѕРЅСЃРѕР»Рё
 		HWND hwndConFontBalloon;
 		static bool CheckConsoleFontRegistry(LPCWSTR asFaceName);
 		static bool CheckConsoleFont(HWND ahDlg);
@@ -324,7 +324,7 @@ class CSettings
 		static void InvalidateCtrl(HWND hCtrl, BOOL bErase);
 		// IDD_SETTINGS
 		LRESULT OnInitDialog();
-		// OnInitDialogPage_t: IDD_SPG_MAIN, и т.д.
+		// OnInitDialogPage_t: IDD_SPG_MAIN, Рё С‚.Рґ.
 		LRESULT OnInitDialog_Main(HWND hWnd2);
 		LRESULT OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Show(HWND hWnd2, bool abInitial);
@@ -351,7 +351,7 @@ class CSettings
 		LRESULT OnInitDialog_Integr(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_DefTerm(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Views(HWND hWnd2);
-		void OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...); // скопировать список шрифтов с вкладки hMain
+		void OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...); // СЃРєРѕРїРёСЂРѕРІР°С‚СЊ СЃРїРёСЃРѕРє С€СЂРёС„С‚РѕРІ СЃ РІРєР»Р°РґРєРё hMain
 		LRESULT OnInitDialog_Debug(HWND hWnd2);
 		LRESULT OnInitDialog_Update(HWND hWnd2);
 		LRESULT OnInitDialog_Info(HWND hWnd2);
@@ -395,7 +395,7 @@ class CSettings
 		void FillBgImageColors();
 		HBRUSH mh_CtlColorBrush;
 		INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
-		COLORREF acrCustClr[16]; // array of custom colors, используется в ChooseColor(...)
+		COLORREF acrCustClr[16]; // array of custom colors, РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ ChooseColor(...)
 		BOOL mb_IgnoreEditChanged;
 		BOOL mb_IgnoreTtfChange;
 		//BOOL mb_CharSetWasSet;
@@ -443,16 +443,16 @@ class CSettings
 		static DWORD CALLBACK EnumFontsThread(LPVOID apArg);
 		HANDLE mh_EnumThread;
 		WORD mn_LastChangingFontCtrlId;
-		// Временно регистрируемые шрифты
+		// Р’СЂРµРјРµРЅРЅРѕ СЂРµРіРёСЃС‚СЂРёСЂСѓРµРјС‹Рµ С€СЂРёС„С‚С‹
 		typedef struct tag_RegFont
 		{
-			BOOL    bDefault;             // Этот шрифт пользователь указал через /fontfile
-			CustomFontFamily* pCustom;    // Для шрифтов, рисованных нами
-			wchar_t szFontFile[MAX_PATH]; // полный путь
+			BOOL    bDefault;             // Р­С‚РѕС‚ С€СЂРёС„С‚ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ СѓРєР°Р·Р°Р» С‡РµСЂРµР· /fontfile
+			CustomFontFamily* pCustom;    // Р”Р»СЏ С€СЂРёС„С‚РѕРІ, СЂРёСЃРѕРІР°РЅРЅС‹С… РЅР°РјРё
+			wchar_t szFontFile[MAX_PATH]; // РїРѕР»РЅС‹Р№ РїСѓС‚СЊ
 			wchar_t szFontName[32];       // Font Family
-			BOOL    bUnicode;             // Юникодный?
-			BOOL    bHasBorders;          // Имеет ли данный шрифт символы рамок
-			BOOL    bAlreadyInSystem;     // Шрифт с таким именем уже был зарегистрирован в системе
+			BOOL    bUnicode;             // Р®РЅРёРєРѕРґРЅС‹Р№?
+			BOOL    bHasBorders;          // РРјРµРµС‚ Р»Рё РґР°РЅРЅС‹Р№ С€СЂРёС„С‚ СЃРёРјРІРѕР»С‹ СЂР°РјРѕРє
+			BOOL    bAlreadyInSystem;     // РЁСЂРёС„С‚ СЃ С‚Р°РєРёРј РёРјРµРЅРµРј СѓР¶Рµ Р±С‹Р» Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅ РІ СЃРёСЃС‚РµРјРµ
 		} RegFont;
 		MArray<RegFont> m_RegFonts;
 		BOOL mb_StopRegisterFonts;
@@ -499,7 +499,7 @@ class CSettings
 		//#define MAKEMODIFIER2(vk1,vk2) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)
 		//#define MAKEMODIFIER3(vk1,vk2,vk3) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)|(((DWORD)vk3&0xFF)<<16)
 		ConEmuHotKey *mp_HotKeys;
-		int mn_HotKeys; // Число "явных" хоткеев, после которых виртуально идут хоткеи тасков
+		int mn_HotKeys; // Р§РёСЃР»Рѕ "СЏРІРЅС‹С…" С…РѕС‚РєРµРµРІ, РїРѕСЃР»Рµ РєРѕС‚РѕСЂС‹С… РІРёСЂС‚СѓР°Р»СЊРЅРѕ РёРґСѓС‚ С…РѕС‚РєРµРё С‚Р°СЃРєРѕРІ
 		ConEmuHotKey *mp_ActiveHotKey;
 		void SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod);
 		friend struct Settings;
@@ -585,22 +585,22 @@ class CSettings
 		};
 		struct ConEmuSetupItem
 		{
-			//DWORD nDlgID; // ID диалога
-			DWORD nItemID; // ID контрола в диалоге, 0 - последний элемент в списке
-			ConEmuSetupItemType nDataType; // Тип данных
+			//DWORD nDlgID; // ID РґРёР°Р»РѕРіР°
+			DWORD nItemID; // ID РєРѕРЅС‚СЂРѕР»Р° РІ РґРёР°Р»РѕРіРµ, 0 - РїРѕСЃР»РµРґРЅРёР№ СЌР»РµРјРµРЅС‚ РІ СЃРїРёСЃРєРµ
+			ConEmuSetupItemType nDataType; // РўРёРї РґР°РЅРЅС‹С…
 
-			void* pData; // Ссылка на элемент в gpSet
-			size_t nDataSize; // Размер или maxlen, если pData фиксированный
+			void* pData; // РЎСЃС‹Р»РєР° РЅР° СЌР»РµРјРµРЅС‚ РІ gpSet
+			size_t nDataSize; // Р Р°Р·РјРµСЂ РёР»Рё maxlen, РµСЃР»Рё pData С„РёРєСЃРёСЂРѕРІР°РЅРЅС‹Р№
 
-			ConEmuSetupItemType nListType; // Тип данных в pListData
-			const void* pListData; // Для DDLB - можно задать список
-			size_t nListItems; // количество элементов в списке
+			ConEmuSetupItemType nListType; // РўРёРї РґР°РЅРЅС‹С… РІ pListData
+			const void* pListData; // Р”Р»СЏ DDLB - РјРѕР¶РЅРѕ Р·Р°РґР°С‚СЊ СЃРїРёСЃРѕРє
+			size_t nListItems; // РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РІ СЃРїРёСЃРєРµ
 			
 			#ifdef _DEBUG
-			BOOL bFound; // для отладки корректности настройки
+			BOOL bFound; // РґР»СЏ РѕС‚Р»Р°РґРєРё РєРѕСЂСЂРµРєС‚РЅРѕСЃС‚Рё РЅР°СЃС‚СЂРѕР№РєРё
 			#endif
 
-			//wchar_t sItemName[32]; // Имя элемента в настройке (reg/xml)
+			//wchar_t sItemName[32]; // РРјСЏ СЌР»РµРјРµРЅС‚Р° РІ РЅР°СЃС‚СЂРѕР№РєРµ (reg/xml)
 		};
 		struct ConEmuSetupPages
 		{

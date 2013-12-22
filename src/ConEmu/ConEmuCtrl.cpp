@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -46,7 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRAPPS(s) DEBUGSTR(s)
 
 
-// Текущая обрабатываемая клавиша
+// РўРµРєСѓС‰Р°СЏ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјР°СЏ РєР»Р°РІРёС€Р°
 const ConEmuHotKey* gpCurrentHotKey = NULL;
 
 bool CConEmuCtrl::mb_SkipOneAppsRelease = false;
@@ -114,14 +114,14 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, con
 
 		if (pHotKey)
 		{
-			// Чтобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
+			// Р§С‚РѕР±С‹ Сѓ РєРѕРЅСЃРѕР»Рё РЅРµ СЃРЅРѕСЃРёР»Рѕ РєСЂС‹С€Сѓ (FAR РјРѕР¶РµС‚ РІС‹РїРѕР»РЅРёС‚СЊ РјР°РєСЂРѕСЃ РЅР° Alt)
 			if (((VkState & cvk_ALLMASK) == cvk_LAlt) || ((VkState & cvk_ALLMASK) == cvk_RAlt))
 			{
 				if (pRCon && gpSet->isFixAltOnAltTab)
 					pRCon->PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
 			}
 
-			// Теперь собственно действие
+			// РўРµРїРµСЂСЊ СЃРѕР±СЃС‚РІРµРЅРЅРѕ РґРµР№СЃС‚РІРёРµ
 			if (pHotKey->fkey)
 			{
 				bool bApps = (VkState & cvk_Apps) == cvk_Apps;
@@ -191,22 +191,22 @@ void CConEmuCtrl::UpdateControlKeyState()
 	dwControlKeyState = ControlKeyState;
 }
 
-// lParam - из сообщений WM_KEYDOWN/WM_SYSKEYDOWN/...
+// lParam - РёР· СЃРѕРѕР±С‰РµРЅРёР№ WM_KEYDOWN/WM_SYSKEYDOWN/...
 DWORD CConEmuCtrl::GetControlKeyState(LPARAM lParam)
 {
 	return dwControlKeyState | ((((DWORD)lParam & (DWORD)(1 << 24)) != 0) ? ENHANCED_KEY : 0);
 }
 
-// true - запретить передачу в консоль, сами обработали
+// true - Р·Р°РїСЂРµС‚РёС‚СЊ РїРµСЂРµРґР°С‡Сѓ РІ РєРѕРЅСЃРѕР»СЊ, СЃР°РјРё РѕР±СЂР°Р±РѕС‚Р°Р»Рё
 // pRCon may be NULL, pszChars may be NULL
 bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, CRealConsole* pRCon)
 {
 	_ASSERTE((messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN) || (messg == WM_KEYUP || messg == WM_SYSKEYUP));
 
-	WARNING("CConEmuCtrl:: Наверное нужно еще какие-то пляски с бубном при отпускании хоткеев");
-	WARNING("CConEmuCtrl:: Ибо в CConEmuMain::OnKeyboard была запутанная логика с sm_SkipSingleHostkey, sw_SkipSingleHostkey, sl_SkipSingleHostkey");
+	WARNING("CConEmuCtrl:: РќР°РІРµСЂРЅРѕРµ РЅСѓР¶РЅРѕ РµС‰Рµ РєР°РєРёРµ-С‚Рѕ РїР»СЏСЃРєРё СЃ Р±СѓР±РЅРѕРј РїСЂРё РѕС‚РїСѓСЃРєР°РЅРёРё С…РѕС‚РєРµРµРІ");
+	WARNING("CConEmuCtrl:: РР±Рѕ РІ CConEmuMain::OnKeyboard Р±С‹Р»Р° Р·Р°РїСѓС‚Р°РЅРЅР°СЏ Р»РѕРіРёРєР° СЃ sm_SkipSingleHostkey, sw_SkipSingleHostkey, sl_SkipSingleHostkey");
 
-	// Обновить и подготовить "r.Event.KeyEvent.dwControlKeyState"
+	// РћР±РЅРѕРІРёС‚СЊ Рё РїРѕРґРіРѕС‚РѕРІРёС‚СЊ "r.Event.KeyEvent.dwControlKeyState"
 	UpdateControlKeyState();
 
 	DWORD vk = (DWORD)(wParam & 0xFF);
@@ -219,7 +219,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 		//	ResetDoubleKeyConsoleNum();
 
 		int nNewIdx = -1;
-		// попытка активации одной кнопкой
+		// РїРѕРїС‹С‚РєР° Р°РєС‚РёРІР°С†РёРё РѕРґРЅРѕР№ РєРЅРѕРїРєРѕР№
 		if (mn_DoubleKeyConsoleNum>='1' && mn_DoubleKeyConsoleNum<='9')
 			nNewIdx = mn_DoubleKeyConsoleNum - '1';
 		else if (mn_DoubleKeyConsoleNum=='0')
@@ -238,11 +238,11 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 		{
 			mb_InWinTabSwitch = mb_InCtrlTabSwitch = FALSE;
 			gpConEmu->TabCommand(ctc_SwitchCommit);
-			WARNING("CConEmuCtrl:: В фар отпускание кнопки таки пропустим?");
+			WARNING("CConEmuCtrl:: Р’ С„Р°СЂ РѕС‚РїСѓСЃРєР°РЅРёРµ РєРЅРѕРїРєРё С‚Р°РєРё РїСЂРѕРїСѓСЃС‚РёРј?");
 		}
 	}
 
-	// На сами модификаторы - действий не вешается
+	// РќР° СЃР°РјРё РјРѕРґРёС„РёРєР°С‚РѕСЂС‹ - РґРµР№СЃС‚РІРёР№ РЅРµ РІРµС€Р°РµС‚СЃСЏ
 	if (vk == VK_LWIN || vk == VK_RWIN /*|| vk == VK_APPS*/
 		|| vk == VK_SHIFT || vk == VK_LSHIFT || vk == VK_RSHIFT
 		|| vk == VK_CONTROL || vk == VK_LCONTROL || vk == VK_RCONTROL
@@ -250,8 +250,8 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 	{
 		if (pRCon)
 		{
-			// Однако, если это был одиночный обработанный модификатор - его нужно "пофиксить",
-			// чтобы на его отпускание не выполнился Far-макрос например
+			// РћРґРЅР°РєРѕ, РµСЃР»Рё СЌС‚Рѕ Р±С‹Р» РѕРґРёРЅРѕС‡РЅС‹Р№ РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹Р№ РјРѕРґРёС„РёРєР°С‚РѕСЂ - РµРіРѕ РЅСѓР¶РЅРѕ "РїРѕС„РёРєСЃРёС‚СЊ",
+			// С‡С‚РѕР±С‹ РЅР° РµРіРѕ РѕС‚РїСѓСЃРєР°РЅРёРµ РЅРµ РІС‹РїРѕР»РЅРёР»СЃСЏ Far-РјР°РєСЂРѕСЃ РЅР°РїСЂРёРјРµСЂ
 			if (bKeyUp)
 			{
 				FixSingleModifier(vk, pRCon);
@@ -276,7 +276,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 
 					if (!mn_LastSingleModifier)
 					{
-						// Win и прочие модификаторы здесь не интересуют
+						// Win Рё РїСЂРѕС‡РёРµ РјРѕРґРёС„РёРєР°С‚РѕСЂС‹ Р·РґРµСЃСЊ РЅРµ РёРЅС‚РµСЂРµСЃСѓСЋС‚
 					}
 					else
 					{
@@ -300,7 +300,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 				}
 				else if (ModCount > 1)
 				{
-					// Больше не нужно
+					// Р‘РѕР»СЊС€Рµ РЅРµ РЅСѓР¶РЅРѕ
 					mb_LastSingleModifier = FALSE;
 					mn_LastSingleModifier = mn_SingleModifierFixKey = mn_SingleModifierFixState = 0;
 				}
@@ -316,7 +316,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 
 	const ConEmuHotKey* pHotKey = ProcessHotKey(VkMod, bKeyDown, pszChars, pRCon);
 
-	// Для "одиночных"
+	// Р”Р»СЏ "РѕРґРёРЅРѕС‡РЅС‹С…"
 	if (pHotKey && mn_LastSingleModifier)
 	{
 		if (pHotKey != ConEmuSkipHotKey)
@@ -328,19 +328,19 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 	{
 		if (bKeyDown)
 		{
-			// Раз мы попали сюда - значит сам Apps у нас не хоткей, но может быть модификатором?
+			// Р Р°Р· РјС‹ РїРѕРїР°Р»Рё СЃСЋРґР° - Р·РЅР°С‡РёС‚ СЃР°Рј Apps Сѓ РЅР°СЃ РЅРµ С…РѕС‚РєРµР№, РЅРѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РјРѕРґРёС„РёРєР°С‚РѕСЂРѕРј?
 			if ((vk == VK_APPS) && gpSet->isModifierExist(vk))
 			{
 				m_SkippedMsg = messg; m_SkippedMsgWParam = wParam; m_SkippedMsgLParam = lParam;
-				// Откладываем либо до
-				// *) нажатия другой кнопки, не перхватываемой нами (например Apps+U)
-				// *) отпускания самого Apps
+				// РћС‚РєР»Р°РґС‹РІР°РµРј Р»РёР±Рѕ РґРѕ
+				// *) РЅР°Р¶Р°С‚РёСЏ РґСЂСѓРіРѕР№ РєРЅРѕРїРєРё, РЅРµ РїРµСЂС…РІР°С‚С‹РІР°РµРјРѕР№ РЅР°РјРё (РЅР°РїСЂРёРјРµСЂ Apps+U)
+				// *) РѕС‚РїСѓСЃРєР°РЅРёСЏ СЃР°РјРѕРіРѕ Apps
 				return ConEmuSkipHotKey;
 			}
 		}
 		else if ((vk == VK_APPS) && m_SkippedMsg && pRCon)
 		{
-			// Отпускается Apps. Сначала нужно "дослать" в консоль ее нажатие
+			// РћС‚РїСѓСЃРєР°РµС‚СЃСЏ Apps. РЎРЅР°С‡Р°Р»Р° РЅСѓР¶РЅРѕ "РґРѕСЃР»Р°С‚СЊ" РІ РєРѕРЅСЃРѕР»СЊ РµРµ РЅР°Р¶Р°С‚РёРµ
 			pRCon->ProcessKeyboard(m_SkippedMsg, m_SkippedMsgWParam, m_SkippedMsgLParam, NULL);
 		}
 	}
@@ -348,12 +348,12 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 	if (((VkMod & cvk_ALLMASK) == cvk_Win)
 		&& (vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT))
 	{
-		//120821 - в режиме HideCaption почему-то не выходит из Maximized по Win+Down
+		//120821 - РІ СЂРµР¶РёРјРµ HideCaption РїРѕС‡РµРјСѓ-С‚Рѕ РЅРµ РІС‹С…РѕРґРёС‚ РёР· Maximized РїРѕ Win+Down
 		if (gpSet->isCaptionHidden())
 		{
 			if (vk == VK_DOWN)
 			{
-				if (::IsZoomed(ghWnd)/*тут нужен реальный Zoomed*/)
+				if (::IsZoomed(ghWnd)/*С‚СѓС‚ РЅСѓР¶РµРЅ СЂРµР°Р»СЊРЅС‹Р№ Zoomed*/)
 				{
 					gpConEmu->SetWindowMode(wmNormal);
 				}
@@ -404,7 +404,7 @@ void CConEmuCtrl::FixSingleModifier(DWORD Vk, CRealConsole* pRCon)
 		if (mn_LastSingleModifier && ((Vk == 0) || (mb_LastSingleModifier && (Vk == mn_LastSingleModifier))))
 			pRCon->PostKeyPress(mn_SingleModifierFixKey, mn_SingleModifierFixState, 0);
 	}
-	// Больше не нужно
+	// Р‘РѕР»СЊС€Рµ РЅРµ РЅСѓР¶РЅРѕ
 	mb_LastSingleModifier = FALSE;
 	mn_LastSingleModifier = mn_SingleModifierFixKey = mn_SingleModifierFixState = 0;
 }
@@ -415,7 +415,7 @@ bool CConEmuCtrl::key_MinimizeRestore(DWORD VkMod, bool TestOnly, const ConEmuHo
 {
 	if (TestOnly)
 		return true;
-	// Должно обрабатываться через WM_HOTKEY
+	// Р”РѕР»Р¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊСЃСЏ С‡РµСЂРµР· WM_HOTKEY
 	_ASSERTE(FALSE && "CConEmuCtrl::key_MinimizeRestore");
 	gpConEmu->DoMinimizeRestore();
 	return true;
@@ -445,7 +445,7 @@ bool CConEmuCtrl::key_GlobalRestore(DWORD VkMod, bool TestOnly, const ConEmuHotK
 {
 	if (TestOnly)
 		return true;
-	// Должно обрабатываться через WM_HOTKEY
+	// Р”РѕР»Р¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊСЃСЏ С‡РµСЂРµР· WM_HOTKEY
 	_ASSERTE(FALSE && "CConEmuCtrl::key_GlobalRestore");
 	gpConEmu->DoMinimizeRestore(sih_Show);
 	return true;
@@ -456,7 +456,7 @@ bool CConEmuCtrl::key_MultiNew(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 {
 	if (TestOnly)
 		return true;
-	// Создать новую консоль
+	// РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ РєРѕРЅСЃРѕР»СЊ
 	gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), gpSet->isMultiNewConfirm);
 	return true;
 }
@@ -466,7 +466,7 @@ bool CConEmuCtrl::key_MultiNewShift(DWORD VkMod, bool TestOnly, const ConEmuHotK
 {
 	if (TestOnly)
 		return true;
-	// Создать новую консоль
+	// РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ РєРѕРЅСЃРѕР»СЊ
 	gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, TRUE/*Confirm*/);
 	return true;
 }
@@ -476,7 +476,7 @@ bool CConEmuCtrl::key_MultiNewPopupMenu(DWORD VkMod, bool TestOnly, const ConEmu
 {
 	if (TestOnly)
 		return true;
-	// Создать новую консоль
+	// РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ РєРѕРЅСЃРѕР»СЊ
 	gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, false);
 	return true;
 }
@@ -484,7 +484,7 @@ bool CConEmuCtrl::key_MultiNewPopupMenu2(DWORD VkMod, bool TestOnly, const ConEm
 {
 	if (TestOnly)
 		return true;
-	// Создать новую консоль
+	// РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ РєРѕРЅСЃРѕР»СЊ
 	gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, true);
 	return true;
 }
@@ -494,7 +494,7 @@ bool CConEmuCtrl::key_MultiNewWindow(DWORD VkMod, bool TestOnly, const ConEmuHot
 {
 	if (TestOnly)
 		return true;
-	// Создать новую консоль
+	// РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ РєРѕРЅСЃРѕР»СЊ
 	gpConEmu->RecreateAction(cra_CreateWindow, TRUE/*Confirm*/);
 	return true;
 }
@@ -504,7 +504,7 @@ bool CConEmuCtrl::key_MultiNewAttach(DWORD VkMod, bool TestOnly, const ConEmuHot
 {
 	if (TestOnly)
 		return true;
-	// Создать новую консоль
+	// РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ РєРѕРЅСЃРѕР»СЊ
 	gpConEmu->mp_Menu->OnSysCommand(ghWnd, IDM_ATTACHTO, 0);
 	return true;
 }
@@ -532,7 +532,7 @@ bool CConEmuCtrl::key_MultiRecreate(DWORD VkMod, bool TestOnly, const ConEmuHotK
 {
 	if (TestOnly)
 		return true;
-	// Подтверждение на закрытие/пересоздание консоли
+	// РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ РЅР° Р·Р°РєСЂС‹С‚РёРµ/РїРµСЂРµСЃРѕР·РґР°РЅРёРµ РєРѕРЅСЃРѕР»Рё
 	gpConEmu->RecreateAction(cra_RecreateTab/*TRUE*/, TRUE);
 	return true;
 }
@@ -647,7 +647,7 @@ bool CConEmuCtrl::key_CTSVkBlockStart(DWORD VkMod, bool TestOnly, const ConEmuHo
 	if (TestOnly)
 		return true;
 
-	// Начать текстовое или блоковое выделение
+	// РќР°С‡Р°С‚СЊ С‚РµРєСЃС‚РѕРІРѕРµ РёР»Рё Р±Р»РѕРєРѕРІРѕРµ РІС‹РґРµР»РµРЅРёРµ
 	pRCon->StartSelection(FALSE/*abTextMode*/);
 	return true;
 }
@@ -660,7 +660,7 @@ bool CConEmuCtrl::key_CTSVkTextStart(DWORD VkMod, bool TestOnly, const ConEmuHot
 	if (TestOnly)
 		return true;
 
-	// Начать текстовое или блоковое выделение
+	// РќР°С‡Р°С‚СЊ С‚РµРєСЃС‚РѕРІРѕРµ РёР»Рё Р±Р»РѕРєРѕРІРѕРµ РІС‹РґРµР»РµРЅРёРµ
 	pRCon->StartSelection(TRUE/*abTextMode*/);
 	return true;
 }
@@ -752,7 +752,7 @@ bool CConEmuCtrl::key_ShowRealConsole(DWORD VkMod, bool TestOnly, const ConEmuHo
 		return false;
 	if (TestOnly)
 		return true;
-	// Должно обрабатываться через WM_HOTKEY?
+	// Р”РѕР»Р¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊСЃСЏ С‡РµСЂРµР· WM_HOTKEY?
 	pRCon->CtrlWinAltSpace();
 	return true;
 }
@@ -763,7 +763,7 @@ bool CConEmuCtrl::key_ForcedFullScreen(DWORD VkMod, bool TestOnly, const ConEmuH
 	if (TestOnly)
 		return true;
 
-	// Должно обрабатываться через WM_HOTKEY
+	// Р”РѕР»Р¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊСЃСЏ С‡РµСЂРµР· WM_HOTKEY
 	gpConEmu->DoForcedFullScreen();
 	return true;
 }
@@ -773,7 +773,7 @@ bool CConEmuCtrl::key_SwitchGuiFocus(DWORD VkMod, bool TestOnly, const ConEmuHot
 	if (TestOnly)
 		return true;
 
-	// Должно обрабатываться через WM_HOTKEY, но позовем
+	// Р”РѕР»Р¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊСЃСЏ С‡РµСЂРµР· WM_HOTKEY, РЅРѕ РїРѕР·РѕРІРµРј
 
 	SwitchGuiFocusOp FocusOp;
 	switch (hk->DescrLangID)
@@ -797,7 +797,7 @@ bool CConEmuCtrl::key_ChildSystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHo
 	if (TestOnly)
 		return true;
 
-	// Должно обрабатываться через WM_HOTKEY
+	// Р”РѕР»Р¶РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊСЃСЏ С‡РµСЂРµР· WM_HOTKEY
 	CVConGuard VCon;
 	if (gpConEmu->GetActiveVCon(&VCon) >= 0)
 	{
@@ -806,7 +806,7 @@ bool CConEmuCtrl::key_ChildSystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHo
 	return true;
 }
 
-// Общая для key_BufferScrollUp/key_BufferScrollDown/key_BufferScrollPgUp/key_BufferScrollPgDn
+// РћР±С‰Р°СЏ РґР»СЏ key_BufferScrollUp/key_BufferScrollDown/key_BufferScrollPgUp/key_BufferScrollPgDn
 // pRCon may be NULL
 bool CConEmuCtrl::key_BufferScroll(bool TestOnly, BYTE vk, CRealConsole* pRCon)
 {
@@ -881,8 +881,8 @@ bool CConEmuCtrl::key_CtrlTab(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 		return true;
 
 	//WARNING! Must be System Unchanged HOTKEY
-	//WARNING! Функция зовет isPressed(VK_SHIFT)
-	WARNING("CConEmuCtrl:: Переделать на явный вызов SwitchNext, учесть, что он может быть альтернативным!");
+	//WARNING! Р¤СѓРЅРєС†РёСЏ Р·РѕРІРµС‚ isPressed(VK_SHIFT)
+	WARNING("CConEmuCtrl:: РџРµСЂРµРґРµР»Р°С‚СЊ РЅР° СЏРІРЅС‹Р№ РІС‹Р·РѕРІ SwitchNext, СѓС‡РµСЃС‚СЊ, С‡С‚Рѕ РѕРЅ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р°Р»СЊС‚РµСЂРЅР°С‚РёРІРЅС‹Рј!");
 	gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, VK_TAB, 0);
 	if (gpSet->isTabLazy)
 		gpConEmu->mb_InCtrlTabSwitch = TRUE;
@@ -899,8 +899,8 @@ bool CConEmuCtrl::key_CtrlShiftTab(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 		return true;
 
 	//WARNING! Must be System Unchanged HOTKEY
-	//WARNING! Функция зовет isPressed(VK_SHIFT)
-	WARNING("CConEmuCtrl:: Переделать на явный вызов SwitchPrev, учесть, что он может быть альтернативным!");
+	//WARNING! Р¤СѓРЅРєС†РёСЏ Р·РѕРІРµС‚ isPressed(VK_SHIFT)
+	WARNING("CConEmuCtrl:: РџРµСЂРµРґРµР»Р°С‚СЊ РЅР° СЏРІРЅС‹Р№ РІС‹Р·РѕРІ SwitchPrev, СѓС‡РµСЃС‚СЊ, С‡С‚Рѕ РѕРЅ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р°Р»СЊС‚РµСЂРЅР°С‚РёРІРЅС‹Рј!");
 	gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, VK_TAB, 0);
 	if (gpSet->isTabLazy)
 		gpConEmu->mb_InCtrlTabSwitch = TRUE;
@@ -917,8 +917,8 @@ bool CConEmuCtrl::key_CtrlTab_Prev(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 		return true;
 
 	//WARNING! Must be System Unchanged HOTKEY
-	//WARNING! Функция зовет isPressed(VK_SHIFT)
-	WARNING("CConEmuCtrl:: Переделать на явный вызов Switch, учесть, что он может быть альтернативным!");
+	//WARNING! Р¤СѓРЅРєС†РёСЏ Р·РѕРІРµС‚ isPressed(VK_SHIFT)
+	WARNING("CConEmuCtrl:: РџРµСЂРµРґРµР»Р°С‚СЊ РЅР° СЏРІРЅС‹Р№ РІС‹Р·РѕРІ Switch, СѓС‡РµСЃС‚СЊ, С‡С‚Рѕ РѕРЅ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р°Р»СЊС‚РµСЂРЅР°С‚РёРІРЅС‹Рј!");
 	if (!gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, (VkMod & 0xFF), 0))
 		return false;
 	return true;
@@ -934,20 +934,20 @@ bool CConEmuCtrl::key_CtrlTab_Next(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 		return true;
 
 	//WARNING! Must be System Unchanged HOTKEY
-	//WARNING! Функция зовет isPressed(VK_SHIFT)
-	WARNING("CConEmuCtrl:: Переделать на явный вызов Switch, учесть, что он может быть альтернативным!");
+	//WARNING! Р¤СѓРЅРєС†РёСЏ Р·РѕРІРµС‚ isPressed(VK_SHIFT)
+	WARNING("CConEmuCtrl:: РџРµСЂРµРґРµР»Р°С‚СЊ РЅР° СЏРІРЅС‹Р№ РІС‹Р·РѕРІ Switch, СѓС‡РµСЃС‚СЊ, С‡С‚Рѕ РѕРЅ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р°Р»СЊС‚РµСЂРЅР°С‚РёРІРЅС‹Рј!");
 	if (!gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, (VkMod & 0xFF), 0))
 		return false;
 	return true;
 }
 
-// Общая для key_WinWidthDec/key_WinWidthInc/key_WinHeightDec/key_WinHeightInc
+// РћР±С‰Р°СЏ РґР»СЏ key_WinWidthDec/key_WinWidthInc/key_WinHeightDec/key_WinHeightInc
 // pRCon may be NULL
 bool CConEmuCtrl::key_WinSize(BYTE vk)
 {
 	if (gpConEmu->isFullScreen() || gpConEmu->isZoomed() || gpConEmu->isIconic())
 	{
-		// ничего не делать
+		// РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°С‚СЊ
 	}
 	else
 	{
@@ -994,14 +994,14 @@ bool CConEmuCtrl::key_WinSize(BYTE vk)
 		//	//}
 		//	//else
 		//	//{
-		//	//	// Ресайз в ГУИ режиме
+		//	//	// Р РµСЃР°Р№Р· РІ Р“РЈР СЂРµР¶РёРјРµ
 		//	//}
 		//}
 	}
 	return true;
 }
 
-// Все что ниже - было привязано к "HostKey"
+// Р’СЃРµ С‡С‚Рѕ РЅРёР¶Рµ - Р±С‹Р»Рѕ РїСЂРёРІСЏР·Р°РЅРѕ Рє "HostKey"
 // pRCon may be NULL
 bool CConEmuCtrl::key_WinWidthDec(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
@@ -1059,7 +1059,7 @@ bool CConEmuCtrl::key_ConsoleNum(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 
 	if (gpConEmu->GetVCon(10))
 	{
-		// цифровая двухкнопочная активация, если уже больше 9-и консолей открыто
+		// С†РёС„СЂРѕРІР°СЏ РґРІСѓС…РєРЅРѕРїРѕС‡РЅР°СЏ Р°РєС‚РёРІР°С†РёСЏ, РµСЃР»Рё СѓР¶Рµ Р±РѕР»СЊС€Рµ 9-Рё РєРѕРЅСЃРѕР»РµР№ РѕС‚РєСЂС‹С‚Рѕ
 		if (gpConEmu->mn_DoubleKeyConsoleNum)
 		{
 			if ((VkMod & 0xFF)>='0' && (VkMod & 0xFF)<='9')
@@ -1071,7 +1071,7 @@ bool CConEmuCtrl::key_ConsoleNum(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 		}
 		else
 		{
-			// Запомнить первую цифру
+			// Р—Р°РїРѕРјРЅРёС‚СЊ РїРµСЂРІСѓСЋ С†РёС„СЂСѓ
 			if ((VkMod & 0xFF)>='0' && (VkMod & 0xFF)<='9')
 			{
 				gpConEmu->mn_DoubleKeyConsoleNum = (VkMod & 0xFF);
@@ -1104,18 +1104,18 @@ bool CConEmuCtrl::key_PicViewSlideshow(DWORD VkMod, bool TestOnly, const ConEmuH
 {
 	if (!pRCon)
 		return false;
-	//if (TestOnly) -- ниже, доп.проверки
+	//if (TestOnly) -- РЅРёР¶Рµ, РґРѕРї.РїСЂРѕРІРµСЂРєРё
 	//	return true;
 
 	if ((VkMod & cvk_VK_MASK) == VK_PAUSE)
 	{
-		// SlideShow в PicView2 подзадержался
+		// SlideShow РІ PicView2 РїРѕРґР·Р°РґРµСЂР¶Р°Р»СЃСЏ
 		if (gpConEmu->isPictureView() /*&& !IsWindowUnicode(hPictureView)*/)
 		{
 			bool lbAllowed = true;
 			if (IsWindowUnicode(gpConEmu->hPictureView))
 			{
-				// На будущее, если будет "встроенный" SlideShow - вернуть на это сообщение TRUE
+				// РќР° Р±СѓРґСѓС‰РµРµ, РµСЃР»Рё Р±СѓРґРµС‚ "РІСЃС‚СЂРѕРµРЅРЅС‹Р№" SlideShow - РІРµСЂРЅСѓС‚СЊ РЅР° СЌС‚Рѕ СЃРѕРѕР±С‰РµРЅРёРµ TRUE
 				UINT nMsg = RegisterWindowMessage(L"PicView:HasSlideShow");
 				DWORD_PTR nRc = 0;
 				LRESULT lRc = SendMessageTimeout(gpConEmu->hPictureView, nMsg, 0,0, SMTO_NORMAL, 1000, &nRc);
@@ -1163,7 +1163,7 @@ bool CConEmuCtrl::key_PicViewSlideshow(DWORD VkMod, bool TestOnly, const ConEmuH
 		}
 		//else
 		//{
-		//	//bPicViewSlideShow = false; // отмена слайдшоу
+		//	//bPicViewSlideShow = false; // РѕС‚РјРµРЅР° СЃР»Р°Р№РґС€РѕСѓ
 		//	return false;
 		//}
 	}
@@ -1175,10 +1175,10 @@ bool CConEmuCtrl::key_GuiMacro(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 {
 	if (TestOnly)
 		return true;
-	// Выполнить макрос
+	// Р’С‹РїРѕР»РЅРёС‚СЊ РјР°РєСЂРѕСЃ
 	if (hk->GuiMacro && *hk->GuiMacro)
 	{
-		// Т.к. ExecuteMacro издевается над строкой
+		// Рў.Рє. ExecuteMacro РёР·РґРµРІР°РµС‚СЃСЏ РЅР°Рґ СЃС‚СЂРѕРєРѕР№
 		wchar_t* pszCopy = lstrdup(hk->GuiMacro);
 		if (!pszCopy)
 		{
@@ -1187,7 +1187,7 @@ bool CConEmuCtrl::key_GuiMacro(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 		else
 		{
 			wchar_t* pszResult = CConEmuMacro::ExecuteMacro(pszCopy, pRCon);
-			TODO("Когда появится StatusLine - хорошо бы в ней результат показать");
+			TODO("РљРѕРіРґР° РїРѕСЏРІРёС‚СЃСЏ StatusLine - С…РѕСЂРѕС€Рѕ Р±С‹ РІ РЅРµР№ СЂРµР·СѓР»СЊС‚Р°С‚ РїРѕРєР°Р·Р°С‚СЊ");
 			SafeFree(pszResult);
 			free(pszCopy);
 		}
@@ -1226,14 +1226,14 @@ void CConEmuCtrl::ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /
 	DestroyMenu(hPopup);
 }
 
-// Все параметры могут быть NULL - вызов из GuiMacro
+// Р’СЃРµ РїР°СЂР°РјРµС‚СЂС‹ РјРѕРіСѓС‚ Р±С‹С‚СЊ NULL - РІС‹Р·РѕРІ РёР· GuiMacro
 bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
-	// 120820 - не будем требовать наличия плагина для F12 в Far
+	// 120820 - РЅРµ Р±СѓРґРµРј С‚СЂРµР±РѕРІР°С‚СЊ РЅР°Р»РёС‡РёСЏ РїР»Р°РіРёРЅР° РґР»СЏ F12 РІ Far
 	if (pRCon && pRCon->GetFarPID(false))
 	{
-		// Для Far Manager - не обрабатывать.
-		// Если юзеру нужно ConEmu-шное меню для списка табов - есть vkShowTabsList2 и GuiMacro "Tabs(8)"
+		// Р”Р»СЏ Far Manager - РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ.
+		// Р•СЃР»Рё СЋР·РµСЂСѓ РЅСѓР¶РЅРѕ ConEmu-С€РЅРѕРµ РјРµРЅСЋ РґР»СЏ СЃРїРёСЃРєР° С‚Р°Р±РѕРІ - РµСЃС‚СЊ vkShowTabsList2 Рё GuiMacro "Tabs(8)"
 		return false;
 	}
 	else
@@ -1286,7 +1286,7 @@ bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 		//	return false;
 		//}
 
-		//WARNING("должна быть подобная функция для DropDown у тулбара");
+		//WARNING("РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РїРѕРґРѕР±РЅР°СЏ С„СѓРЅРєС†РёСЏ РґР»СЏ DropDown Сѓ С‚СѓР»Р±Р°СЂР°");
 		//HMENU hPopup = CreatePopupMenu();
 
 		//int nLastConsole = 0;
@@ -1409,7 +1409,7 @@ bool CConEmuCtrl::key_PasteText(DWORD VkMod, bool TestOnly, const ConEmuHotKey* 
 
 bool CConEmuCtrl::key_PasteTextAllApp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
-	// Если это GUI App in Tab - пусть само
+	// Р•СЃР»Рё СЌС‚Рѕ GUI App in Tab - РїСѓСЃС‚СЊ СЃР°РјРѕ
 	if (!pRCon || pRCon->GuiWnd())
 		return false;
 
@@ -1434,7 +1434,7 @@ bool CConEmuCtrl::key_PasteFirstLine(DWORD VkMod, bool TestOnly, const ConEmuHot
 
 bool CConEmuCtrl::key_PasteFirstLineAllApp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
-	// Если это GUI App in Tab - пусть само
+	// Р•СЃР»Рё СЌС‚Рѕ GUI App in Tab - РїСѓСЃС‚СЊ СЃР°РјРѕ
 	if (!pRCon || pRCon->GuiWnd())
 		return false;
 
@@ -1641,7 +1641,7 @@ bool CConEmuCtrl::key_RunTask(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 
 bool CConEmuCtrl::key_FindTextDlg(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
-	// Если это GUI App in Tab - само
+	// Р•СЃР»Рё СЌС‚Рѕ GUI App in Tab - СЃР°РјРѕ
 	if (!pRCon || (pRCon->GuiWnd() && !pRCon->isBufferHeight()))
 		return false;
 	if (TestOnly)
@@ -1683,7 +1683,7 @@ void CConEmuCtrl::SkipOneAppsRelease(bool abSkip)
 	{
 		if (isPressed(VK_APPS))
 		{
-			// Игнорировать одно следующее VK_APPS
+			// РРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ РѕРґРЅРѕ СЃР»РµРґСѓСЋС‰РµРµ VK_APPS
 			mb_SkipOneAppsRelease = true;
 			if (!mh_SkipOneAppsRelease)
 				mh_SkipOneAppsRelease = SetWindowsHookEx(WH_GETMESSAGE, SkipOneAppsReleaseHook, NULL, GetCurrentThreadId());
@@ -1808,7 +1808,7 @@ void CConEmuCtrl::MakeScreenshot(bool abFullscreen /*= false*/)
 			}
 		}
 
-		// Отрезать края при Zoomed/Fullscreen
+		// РћС‚СЂРµР·Р°С‚СЊ РєСЂР°СЏ РїСЂРё Zoomed/Fullscreen
 		RECT rcVisible = {};
 		if (!IntersectRect(&rcVisible, &rcWnd, gpConEmu->isFullScreen() ? &mi.rcMonitor : &mi.rcWork))
 		{

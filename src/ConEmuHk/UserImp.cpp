@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2011 Maximus5
 All rights reserved.
@@ -33,10 +33,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 UserImp* user = NULL;
 
-// Вызывать LoadLibrary из DllMain (откуда стартует UserImp::loadExports) нельзя
-// Поэтому - только GetModuleHandle, и если он уже загружен в process space - грузим экспорты.
-// Однако, чтобы при динамической линковке не обломаться, впоследствии нужно
-// подтвердить (накрутить счетчик) использование user32 через LoadLibrary.
+// Р’С‹Р·С‹РІР°С‚СЊ LoadLibrary РёР· DllMain (РѕС‚РєСѓРґР° СЃС‚Р°СЂС‚СѓРµС‚ UserImp::loadExports) РЅРµР»СЊР·СЏ
+// РџРѕСЌС‚РѕРјСѓ - С‚РѕР»СЊРєРѕ GetModuleHandle, Рё РµСЃР»Рё РѕРЅ СѓР¶Рµ Р·Р°РіСЂСѓР¶РµРЅ РІ process space - РіСЂСѓР·РёРј СЌРєСЃРїРѕСЂС‚С‹.
+// РћРґРЅР°РєРѕ, С‡С‚РѕР±С‹ РїСЂРё РґРёРЅР°РјРёС‡РµСЃРєРѕР№ Р»РёРЅРєРѕРІРєРµ РЅРµ РѕР±Р»РѕРјР°С‚СЊСЃСЏ, РІРїРѕСЃР»РµРґСЃС‚РІРёРё РЅСѓР¶РЅРѕ
+// РїРѕРґС‚РІРµСЂРґРёС‚СЊ (РЅР°РєСЂСѓС‚РёС‚СЊ СЃС‡РµС‚С‡РёРє) РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ user32 С‡РµСЂРµР· LoadLibrary.
 BOOL UserImp::loadExports(BOOL abAllowLoadLibrary)
 {
 	if (!hUser32)
@@ -67,8 +67,8 @@ BOOL UserImp::loadExports(BOOL abAllowLoadLibrary)
 
 BOOL UserImp::loadExportsFrom(HMODULE hModule)
 {
-	// bUserLoaded - то что LoadLibrary(L"user32.dll") дернули
-	// а вот функции - еще могли и не загружать
+	// bUserLoaded - С‚Рѕ С‡С‚Рѕ LoadLibrary(L"user32.dll") РґРµСЂРЅСѓР»Рё
+	// Р° РІРѕС‚ С„СѓРЅРєС†РёРё - РµС‰Рµ РјРѕРіР»Рё Рё РЅРµ Р·Р°РіСЂСѓР¶Р°С‚СЊ
 	if (bUserLoaded && isWindow_f)
 		return TRUE;
 
@@ -626,8 +626,8 @@ BOOL UserImp::isWindow(HWND hWnd)
 	if (!bUserLoaded && !loadExports(bAllowLoadLibrary))
 	{
 		_ASSERTEX(hUser32!=NULL);
-		// Поскольку функция может использоваться при старте (проверка валидности дескриптора ConEmu)
-		// нужно вернуть TRUE, если User32.dll еще не загружен в process space
+		// РџРѕСЃРєРѕР»СЊРєСѓ С„СѓРЅРєС†РёСЏ РјРѕР¶РµС‚ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ РїСЂРё СЃС‚Р°СЂС‚Рµ (РїСЂРѕРІРµСЂРєР° РІР°Р»РёРґРЅРѕСЃС‚Рё РґРµСЃРєСЂРёРїС‚РѕСЂР° ConEmu)
+		// РЅСѓР¶РЅРѕ РІРµСЂРЅСѓС‚СЊ TRUE, РµСЃР»Рё User32.dll РµС‰Рµ РЅРµ Р·Р°РіСЂСѓР¶РµРЅ РІ process space
 		return TRUE;
 	}
 	

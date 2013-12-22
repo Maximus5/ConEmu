@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -162,10 +162,10 @@ public:
 	{
 		if (!mp_Items || !mn_MaxCount)
 		{
-			// Ругнемся, для четкости
+			// Р СѓРіРЅРµРјСЃСЏ, РґР»СЏ С‡РµС‚РєРѕСЃС‚Рё
 			_ASSERTE(mp_Items && mn_MaxCount && "MMap::Set - Storage must be allocated first");
 
-			// Но разрешим автоинит
+			// РќРѕ СЂР°Р·СЂРµС€РёРј Р°РІС‚РѕРёРЅРёС‚
 			if (!Init())
 			{
 				return false;
@@ -225,7 +225,7 @@ public:
 	{
 		if (!mp_Items || !mn_MaxCount)
 		{
-			// -- если еще пустой - не важно
+			// -- РµСЃР»Рё РµС‰Рµ РїСѓСЃС‚РѕР№ - РЅРµ РІР°Р¶РЅРѕ
 			//_ASSERTE(mp_Items && mn_MaxCount && "MMap::Set - Storage must be allocated first");
 			return;
 		}

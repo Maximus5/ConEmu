@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -192,7 +192,7 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int 
 
 
 	#ifdef PNGDUMP
-	// Если передали готовый hBitmap - сохранить сразу
+	// Р•СЃР»Рё РїРµСЂРµРґР°Р»Рё РіРѕС‚РѕРІС‹Р№ hBitmap - СЃРѕС…СЂР°РЅРёС‚СЊ СЃСЂР°Р·Сѓ
 	if (pszDot)
 		lstrcpyW(pszDot, L".png");
 
@@ -203,7 +203,7 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int 
 	#endif
 
 
-	// иначе - снять копию с hScreen
+	// РёРЅР°С‡Рµ - СЃРЅСЏС‚СЊ РєРѕРїРёСЋ СЃ hScreen
 	if (!LoadScreen(hScreen, anX, anY, anWidth, anHeight, &pScreen, &cbOut, PreserveTransparency))
 		return FALSE;
 
@@ -236,7 +236,7 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int 
 		        | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
 		if (!GetSaveFileName(&ofn) || ((pszDot = (wchar_t*)PointToExt(szFile)) == NULL))
 		{
-			lbRc = TRUE; // чтобы не ругалось...
+			lbRc = TRUE; // С‡С‚РѕР±С‹ РЅРµ СЂСѓРіР°Р»РѕСЃСЊ...
 		    goto wrap;
 	    }
 		//wcscpy_c(szFile, szLastDumpFile);

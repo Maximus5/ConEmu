@@ -1,4 +1,4 @@
-
+ï»¿
 /*
 Copyright (c) 2010-2011 Maximus5
 All rights reserved.
@@ -114,8 +114,8 @@ static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			else if (Param1 == cfgHilight)
 				gbHilightPlugins = (int)Param2; //-V205
 
-			// Îáíîâèòü èëè îòêëþ÷èòü
-			StartPlugin(TRUE /*ÍÅ ñ÷èòûâàòü ïàðàìåòðû èç ðååñòðà*/);
+			// ÐžÐ±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ Ð¸Ð»Ð¸ Ð¾Ñ‚ÐºÐ»ÑŽÑ‡Ð¸Ñ‚ÑŒ
+			StartPlugin(TRUE /*ÐÐ• ÑÑ‡Ð¸Ñ‚Ñ‹Ð²Ð°Ñ‚ÑŒ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ñ‹ Ð¸Ð· Ñ€ÐµÐµÑÑ‚Ñ€Ð°*/);
 		}
 	}
 	else if (Msg == DN_EDITCHANGE)
@@ -140,8 +140,8 @@ static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			else if (Param1 == cfgPlugBack)
 				gcrHilightPlugBack = clr;
 
-			// Îáíîâèòü èëè îòêëþ÷èòü
-			StartPlugin(TRUE /*ÍÅ ñ÷èòûâàòü ïàðàìåòðû èç ðååñòðà*/);
+			// ÐžÐ±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ Ð¸Ð»Ð¸ Ð¾Ñ‚ÐºÐ»ÑŽÑ‡Ð¸Ñ‚ÑŒ
+			StartPlugin(TRUE /*ÐÐ• ÑÑ‡Ð¸Ñ‚Ñ‹Ð²Ð°Ñ‚ÑŒ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ñ‹ Ð¸Ð· Ñ€ÐµÐµÑÑ‚Ñ€Ð°*/);
 		}
 	}
 
@@ -216,7 +216,7 @@ static int ConfigureProc(int ItemNumber)
 	SETTEXT(items[cfgOk], GetMsgT(CEBtnOK));
 	SETTEXT(items[cfgCancel], GetMsgT(CEBtnCancel));
 	FAR_INT dialog_res = 0;
-	// Çàïîìíèòü òåêóùèå çíà÷åíèÿ, ÷òîáû âîññòàíîâèòü èõ åñëè Esc íàæàò
+	// Ð—Ð°Ð¿Ð¾Ð¼Ð½Ð¸Ñ‚ÑŒ Ñ‚ÐµÐºÑƒÑ‰Ð¸Ðµ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ñ, Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð²Ð¾ÑÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ Ð¸Ñ… ÐµÑÐ»Ð¸ Esc Ð½Ð°Ð¶Ð°Ñ‚
 	BOOL bCurBackgroundEnabled = gbBackgroundEnabled;
 	COLORREF crCurLinesColor = gcrLinesColor;
 	BOOL bCurHilightPlugins = gbHilightPlugins;
@@ -280,8 +280,8 @@ static int ConfigureProc(int ItemNumber)
 		gcrHilightPlugBack = crCurHilightPlugBack;
 	}
 
-	// Îáíîâèòü èëè îòêëþ÷èòü
-	StartPlugin(TRUE /*ÍÅ ñ÷èòûâàòü ïàðàìåòðû èç ðååñòðà*/);
+	// ÐžÐ±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ Ð¸Ð»Ð¸ Ð¾Ñ‚ÐºÐ»ÑŽÑ‡Ð¸Ñ‚ÑŒ
+	StartPlugin(TRUE /*ÐÐ• ÑÑ‡Ð¸Ñ‚Ñ‹Ð²Ð°Ñ‚ÑŒ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ñ‹ Ð¸Ð· Ñ€ÐµÐµÑÑ‚Ñ€Ð°*/);
 #ifdef FAR_UNICODE
 	InfoT->DialogFree(hDlg);
 #endif

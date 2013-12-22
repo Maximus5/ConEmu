@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -49,11 +49,11 @@ class CAttachDlg
 {
 protected:
 	HWND  mh_Dlg, mh_List;
-	// Параметры аттача
+	// РџР°СЂР°РјРµС‚СЂС‹ Р°С‚С‚Р°С‡Р°
 	int   mn_AttachType; // 1 - console, 2 - GUI
-	DWORD mn_AttachPID;  // PID процесса, к которому цепляемся
-	HWND  mh_AttachHWND; // HWND при GUI аттаче
-	// Данные о запущенных процессах в системе
+	DWORD mn_AttachPID;  // PID РїСЂРѕС†РµСЃСЃР°, Рє РєРѕС‚РѕСЂРѕРјСѓ С†РµРїР»СЏРµРјСЃСЏ
+	HWND  mh_AttachHWND; // HWND РїСЂРё GUI Р°С‚С‚Р°С‡Рµ
+	// Р”Р°РЅРЅС‹Рµ Рѕ Р·Р°РїСѓС‰РµРЅРЅС‹С… РїСЂРѕС†РµСЃСЃР°С… РІ СЃРёСЃС‚РµРјРµ
 	CProcessData *mp_ProcessData;
 	BOOL  mb_IsWin64;
 	DWORD mn_ExplorerPID;

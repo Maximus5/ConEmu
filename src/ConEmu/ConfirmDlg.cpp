@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -334,7 +334,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		}
 	}
 
-	// Иначе - через стандартный MessageBox
+	// РРЅР°С‡Рµ - С‡РµСЂРµР· СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ MessageBox
 	wchar_t szText[512], *pszText;
 
 	if (Parm.asSingleConsole)
@@ -382,7 +382,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 
 	if (nBtn == IDOK)
 	{
-		nBtn = IDYES; // для однозначности
+		nBtn = IDYES; // РґР»СЏ РѕРґРЅРѕР·РЅР°С‡РЅРѕСЃС‚Рё
 	}
 
 	return nBtn;

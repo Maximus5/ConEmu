@@ -1,4 +1,4 @@
-
+п»ї
 #pragma once
 
 #include <pshpack1.h>
@@ -52,7 +52,7 @@ struct CET_LoadInfo
 	LPARAM iArgument; // May be used internally
 	// [Out]
 	DWORD nErrNumber;
-	COORD crSize; // Предпочтительно, должен совпадать с crLoadSize
+	COORD crSize; // РџСЂРµРґРїРѕС‡С‚РёС‚РµР»СЊРЅРѕ, РґРѕР»Р¶РµРЅ СЃРѕРІРїР°РґР°С‚СЊ СЃ crLoadSize
 	DWORD cbStride; // Bytes per line
 	DWORD nBits; // 32 bit required!
 	// [Out]

@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -40,7 +40,7 @@ BOOL LoadGuiMapping(HWND hConEmuWnd, ConEmuGuiMapping& GuiMapping)
 	//if (m_GuiMapping.cbSize)
 	//	return TRUE;
 
-	// Проверим, а можно ли?
+	// РџСЂРѕРІРµСЂРёРј, Р° РјРѕР¶РЅРѕ Р»Рё?
 	DWORD dwGuiProcessId = 0;
 	if (!hConEmuWnd || !GetWindowThreadProcessId(hConEmuWnd, &dwGuiProcessId))
 		return FALSE;
@@ -48,7 +48,7 @@ BOOL LoadGuiMapping(HWND hConEmuWnd, ConEmuGuiMapping& GuiMapping)
 	return LoadGuiMapping(dwGuiProcessId, GuiMapping);
 }
 
-// Вернуть путь к папке, содержащей ConEmuC.exe
+// Р’РµСЂРЅСѓС‚СЊ РїСѓС‚СЊ Рє РїР°РїРєРµ, СЃРѕРґРµСЂР¶Р°С‰РµР№ ConEmuC.exe
 BOOL IsConEmuExeExist(LPCWSTR szExePath, wchar_t (&rsConEmuExe)[MAX_PATH+1])
 {
 	BOOL lbExeFound = FALSE;
@@ -73,21 +73,21 @@ BOOL IsConEmuExeExist(LPCWSTR szExePath, wchar_t (&rsConEmuExe)[MAX_PATH+1])
 
 BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1], HMODULE hPluginDll /*= NULL*/)
 {
-	// Сначала пробуем Mapping консоли (вдруг есть?)
+	// РЎРЅР°С‡Р°Р»Р° РїСЂРѕР±СѓРµРј Mapping РєРѕРЅСЃРѕР»Рё (РІРґСЂСѓРі РµСЃС‚СЊ?)
 	{
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
 		ConMap.InitName(CECONMAPNAME, (DWORD)myGetConsoleWindow()); //-V205
 		CESERVER_CONSOLE_MAPPING_HDR* p = ConMap.Open();
 		if (p && p->ComSpec.ConEmuBaseDir[0])
 		{
-			// Успешно
+			// РЈСЃРїРµС€РЅРѕ
 			wcscpy_c(rsConEmuBaseDir, p->ComSpec.ConEmuBaseDir);
 			wcscpy_c(rsConEmuExe, p->sConEmuExe);
 			return TRUE;
 		}
 	}
 
-	// Теперь - пробуем найти существующее окно ConEmu
+	// РўРµРїРµСЂСЊ - РїСЂРѕР±СѓРµРј РЅР°Р№С‚Рё СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРµ РѕРєРЅРѕ ConEmu
 	HWND hConEmu = FindWindow(VirtualConsoleClassMain, NULL);
 	DWORD dwGuiPID = 0;
 	if (hConEmu)
@@ -127,7 +127,7 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 
 		if (i == 0)
 		{
-			// Запущенного ConEmu.exe нет, можно поискать в каталоге текущего приложения
+			// Р—Р°РїСѓС‰РµРЅРЅРѕРіРѕ ConEmu.exe РЅРµС‚, РјРѕР¶РЅРѕ РїРѕРёСЃРєР°С‚СЊ РІ РєР°С‚Р°Р»РѕРіРµ С‚РµРєСѓС‰РµРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ
 
 			if (!GetModuleFileName(NULL, szExePath, countof(szExePath)-20))
 				continue;
@@ -136,11 +136,11 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 				continue;
 			*(pszName+1) = 0;
 
-			// Проверяем наличие файлов
+			// РџСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ С„Р°Р№Р»РѕРІ
 			// LPCWSTR szGuiExe[2] = {L"ConEmu64.exe", L"ConEmu.exe"};
 			if (!IsConEmuExeExist(szExePath, rsConEmuExe) && hPluginDll)
 			{
-				// Попробовать найти наш exe-шник от пути плагина?
+				// РџРѕРїСЂРѕР±РѕРІР°С‚СЊ РЅР°Р№С‚Рё РЅР°С€ exe-С€РЅРёРє РѕС‚ РїСѓС‚Рё РїР»Р°РіРёРЅР°?
 				if (!GetModuleFileName(hPluginDll, szExePath, countof(szExePath)-1))
 					continue;
 				wchar_t* pszName = wcsrchr(szExePath, L'\\');
@@ -161,7 +161,7 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 		}
 		else
 		{
-			// Остался последний шанс - если ConEmu установлен через MSI, то путь указан в реестре
+			// РћСЃС‚Р°Р»СЃСЏ РїРѕСЃР»РµРґРЅРёР№ С€Р°РЅСЃ - РµСЃР»Рё ConEmu СѓСЃС‚Р°РЅРѕРІР»РµРЅ С‡РµСЂРµР· MSI, С‚Рѕ РїСѓС‚СЊ СѓРєР°Р·Р°РЅ РІ СЂРµРµСЃС‚СЂРµ
 			// [HKEY_LOCAL_MACHINE\SOFTWARE\ConEmu]
 			// "InstallDir"="C:\\Utils\\Far180\\"
 
@@ -186,14 +186,14 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 
 		if (szExePath[0])
 		{
-			// Хоть и задано в реестре - файлов может не быть. Проверяем
+			// РҐРѕС‚СЊ Рё Р·Р°РґР°РЅРѕ РІ СЂРµРµСЃС‚СЂРµ - С„Р°Р№Р»РѕРІ РјРѕР¶РµС‚ РЅРµ Р±С‹С‚СЊ. РџСЂРѕРІРµСЂСЏРµРј
 			if (szExePath[lstrlen(szExePath)-1] != L'\\')
 				wcscat_c(szExePath, L"\\");
-			// Проверяем наличие файлов
+			// РџСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ С„Р°Р№Р»РѕРІ
 			// LPCWSTR szGuiExe[2] = {L"ConEmu64.exe", L"ConEmu.exe"};
 			BOOL lbExeFound = IsConEmuExeExist(szExePath, rsConEmuExe);
 
-			// Если GUI-exe найден - ищем "base"
+			// Р•СЃР»Рё GUI-exe РЅР°Р№РґРµРЅ - РёС‰РµРј "base"
 			if (lbExeFound)
 			{
 				wchar_t* pszName = szExePath+lstrlen(szExePath);
@@ -207,7 +207,7 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 						pszName = wcsrchr(szExePath, L'\\');
 						if (pszName)
 						{
-							*pszName = 0; // БЕЗ слеша на конце!
+							*pszName = 0; // Р‘Р•Р— СЃР»РµС€Р° РЅР° РєРѕРЅС†Рµ!
 							wcscpy_c(rsConEmuBaseDir, szExePath);
 							return TRUE;
 						}
@@ -217,6 +217,6 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 		}
 	}
 
-	// Не удалось
+	// РќРµ СѓРґР°Р»РѕСЃСЊ
 	return FALSE;
 }

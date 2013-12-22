@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2011-2013 Maximus5
 All rights reserved.
@@ -53,8 +53,8 @@ wchar_t* GuiMacro::AsString()
 		return lstrdup(L"");
 	}
 
-	// Можно использовать EscapeChar, только нужно учесть,
-	// что кавычки ВНУТРИ Arg.Str нужно эскейпить...
+	// РњРѕР¶РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ EscapeChar, С‚РѕР»СЊРєРѕ РЅСѓР¶РЅРѕ СѓС‡РµСЃС‚СЊ,
+	// С‡С‚Рѕ РєР°РІС‹С‡РєРё Р’РќРЈРўР Р Arg.Str РЅСѓР¶РЅРѕ СЌСЃРєРµР№РїРёС‚СЊ...
 
 	size_t cchTotal = _tcslen(szFunc) + 5;
 
@@ -366,10 +366,10 @@ GuiMacro* CConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t**
 			*rsErrMsg = lstrdup(L"Too long function name");
 	}
 
-	// Подготовить аргументы (отрезать закрывающую скобку)
+	// РџРѕРґРіРѕС‚РѕРІРёС‚СЊ Р°СЂРіСѓРјРµРЅС‚С‹ (РѕС‚СЂРµР·Р°С‚СЊ Р·Р°РєСЂС‹РІР°СЋС‰СѓСЋ СЃРєРѕР±РєСѓ)
 	bool bEndBracket = (chTerm == L'(');
 
-	// Аргументы
+	// РђСЂРіСѓРјРµРЅС‚С‹
 	MArray<GuiMacroArg> Args;
 	size_t cbAddSize = 0;
 	wchar_t szArgErr[32] = {};
@@ -378,7 +378,7 @@ GuiMacro* CConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t**
 	{
 		GuiMacroArg a = {};
 
-		// Пропустить white-space
+		// РџСЂРѕРїСѓСЃС‚РёС‚СЊ white-space
 		SkipWhiteSpaces(asString);
 
 		// Last arg?
@@ -411,7 +411,7 @@ GuiMacro* CConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t**
 
 			if (abConvert && (asString[0] == L'"'))
 			{
-				// Старые макросы хранились как "Verbatim" но без префикса
+				// РЎС‚Р°СЂС‹Рµ РјР°РєСЂРѕСЃС‹ С…СЂР°РЅРёР»РёСЃСЊ РєР°Рє "Verbatim" РЅРѕ Р±РµР· РїСЂРµС„РёРєСЃР°
 				*(--asString) = L'@';
 				lbCvtVbt = true;
 				a.Type = gmt_VStr;
@@ -428,10 +428,10 @@ GuiMacro* CConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t**
 			if (lbCvtVbt)
 			{
 				_ASSERTE(a.Type == gmt_VStr);
-				// Если строка содержит из спец-символов ТОЛЬКО "\" (пути)
-				// то ее удобнее показывать как "Verbatim", иначе - C-String
-				// Однозначно показывать как C-String нужно те строки, которые
-				// содержат переводы строк, Esc, табуляции и пр.
+				// Р•СЃР»Рё СЃС‚СЂРѕРєР° СЃРѕРґРµСЂР¶РёС‚ РёР· СЃРїРµС†-СЃРёРјРІРѕР»РѕРІ РўРћР›Р¬РљРћ "\" (РїСѓС‚Рё)
+				// С‚Рѕ РµРµ СѓРґРѕР±РЅРµРµ РїРѕРєР°Р·С‹РІР°С‚СЊ РєР°Рє "Verbatim", РёРЅР°С‡Рµ - C-String
+				// РћРґРЅРѕР·РЅР°С‡РЅРѕ РїРѕРєР°Р·С‹РІР°С‚СЊ РєР°Рє C-String РЅСѓР¶РЅРѕ С‚Рµ СЃС‚СЂРѕРєРё, РєРѕС‚РѕСЂС‹Рµ
+				// СЃРѕРґРµСЂР¶Р°С‚ РїРµСЂРµРІРѕРґС‹ СЃС‚СЂРѕРє, Esc, С‚Р°Р±СѓР»СЏС†РёРё Рё РїСЂ.
 				_ASSERTE(gsEscaped[0] == L'\\');
 				bool bSlash = (wcschr(a.Str, L'\\') != NULL);
 				bool bEsc = (wcspbrk(a.Str, gsEscaped+1) != NULL) || (wcschr(a.Str, L'"') != NULL);
@@ -445,7 +445,7 @@ GuiMacro* CConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t**
 		Args.push_back(a);
 	}
 
-	// Создать GuiMacro*
+	// РЎРѕР·РґР°С‚СЊ GuiMacro*
 	size_t cbAllSize = sizeof(GuiMacro)
 		+ (_tcslen(szFunction)+1) * sizeof(*szFunction)
 		+ Args.size() * sizeof(GuiMacroArg)
@@ -480,7 +480,7 @@ GuiMacro* CConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t**
 		pMacro->argv[i] = Args[i];
 		if (pMacro->argv[i].Type == gmt_Int || pMacro->argv[i].Type == gmt_Hex)
 		{
-			// Дополнительная память не выделяется
+			// Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅР°СЏ РїР°РјСЏС‚СЊ РЅРµ РІС‹РґРµР»СЏРµС‚СЃСЏ
 		}
 		else if (pMacro->argv[i].Type == gmt_Str || pMacro->argv[i].Type == gmt_VStr)
 		{
@@ -506,7 +506,7 @@ GuiMacro* CConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t**
 }
 
 
-// Общая функция, для обработки любого известного макроса
+// РћР±С‰Р°СЏ С„СѓРЅРєС†РёСЏ, РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё Р»СЋР±РѕРіРѕ РёР·РІРµСЃС‚РЅРѕРіРѕ РјР°РєСЂРѕСЃР°
 LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
 {
 	wchar_t* pszErr = NULL;
@@ -523,7 +523,7 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abF
 		LPWSTR pszResult = NULL;
 		LPCWSTR szFunction = p->szFunc;
 
-		// Поехали
+		// РџРѕРµС…Р°Р»Рё
 		if (!lstrcmpi(szFunction, L"IsConEmu"))
 			pszResult = IsConEmu(p, apRCon);
 		else if (!lstrcmpi(szFunction, L"Close"))
@@ -583,7 +583,7 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abF
 		else if (!lstrcmpi(szFunction, L"Splitter") || !lstrcmpi(szFunction, L"Split"))
 			pszResult = Split(p, apRCon);
 		else
-			pszResult = lstrdup(L"UnknownMacro"); // Неизвестная функция
+			pszResult = lstrdup(L"UnknownMacro"); // РќРµРёР·РІРµСЃС‚РЅР°СЏ С„СѓРЅРєС†РёСЏ
 
 		if (pszResult == NULL)
 		{
@@ -597,7 +597,7 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abF
 		}
 		else
 		{
-			// Добавить результат через разделитель ';'
+			// Р”РѕР±Р°РІРёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚ С‡РµСЂРµР· СЂР°Р·РґРµР»РёС‚РµР»СЊ ';'
 			wchar_t* pszAll = lstrmerge(pszAllResult, L";", pszResult);
 			if (!pszAll)
 			{
@@ -630,22 +630,22 @@ void CConEmuMacro::SkipWhiteSpaces(LPWSTR& rsString)
 		rsString++;
 }
 
-/* ***  Функции для парсера параметров  *** */
+/* ***  Р¤СѓРЅРєС†РёРё РґР»СЏ РїР°СЂСЃРµСЂР° РїР°СЂР°РјРµС‚СЂРѕРІ  *** */
 
-// Получить следующий параметр (до следующей ',')
+// РџРѕР»СѓС‡РёС‚СЊ СЃР»РµРґСѓСЋС‰РёР№ РїР°СЂР°РјРµС‚СЂ (РґРѕ СЃР»РµРґСѓСЋС‰РµР№ ',')
 LPWSTR CConEmuMacro::GetNextArg(LPWSTR& rsArguments, LPWSTR& rsArg)
 {
-	rsArg = NULL; // Сброс
+	rsArg = NULL; // РЎР±СЂРѕСЃ
 
 	if (!rsArguments || !*rsArguments)
 		return NULL;
 
-	// Пропустить white-space
+	// РџСЂРѕРїСѓСЃС‚РёС‚СЊ white-space
 	SkipWhiteSpaces(rsArguments);
 
-	// Результат
+	// Р РµР·СѓР»СЊС‚Р°С‚
 	rsArg = rsArguments;
-	// Пропустить все, что до следующей запятой
+	// РџСЂРѕРїСѓСЃС‚РёС‚СЊ РІСЃРµ, С‡С‚Рѕ РґРѕ СЃР»РµРґСѓСЋС‰РµР№ Р·Р°РїСЏС‚РѕР№
 	bool lbNextFound = false;
 
 	while (*rsArguments && !lbNextFound)
@@ -653,25 +653,25 @@ LPWSTR CConEmuMacro::GetNextArg(LPWSTR& rsArguments, LPWSTR& rsArg)
 		lbNextFound = (*rsArguments == L',');
 
 		if (lbNextFound)
-			*rsArguments = 0; // Саму строку нужно "закрыть"
+			*rsArguments = 0; // РЎР°РјСѓ СЃС‚СЂРѕРєСѓ РЅСѓР¶РЅРѕ "Р·Р°РєСЂС‹С‚СЊ"
 
 		rsArguments++;
 	}
 
 	return (*rsArg) ? rsArg : NULL;
 }
-// Получить следующий числовой параметр
+// РџРѕР»СѓС‡РёС‚СЊ СЃР»РµРґСѓСЋС‰РёР№ С‡РёСЃР»РѕРІРѕР№ РїР°СЂР°РјРµС‚СЂ
 LPWSTR CConEmuMacro::GetNextInt(LPWSTR& rsArguments, int& rnValue)
 {
 	LPWSTR pszArg = NULL;
-	rnValue = 0; // сброс
+	rnValue = 0; // СЃР±СЂРѕСЃ
 
 	if (!GetNextArg(rsArguments, pszArg))
 		return NULL;
 
 	LPWSTR pszEnd = NULL;
 
-	// Допустим hex значения
+	// Р”РѕРїСѓСЃС‚РёРј hex Р·РЅР°С‡РµРЅРёСЏ
 	if (pszArg[0] == L'0' && (pszArg[1] == L'x' || pszArg[1] == L'X'))
 		rnValue = wcstol(pszArg+2, &pszEnd, 16);
 	else
@@ -679,10 +679,10 @@ LPWSTR CConEmuMacro::GetNextInt(LPWSTR& rsArguments, int& rnValue)
 
 	return pszArg;
 }
-// Получить следующий строковый параметр
+// РџРѕР»СѓС‡РёС‚СЊ СЃР»РµРґСѓСЋС‰РёР№ СЃС‚СЂРѕРєРѕРІС‹Р№ РїР°СЂР°РјРµС‚СЂ
 LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim /*= false*/)
 {
-	rsString = NULL; // Сброс
+	rsString = NULL; // РЎР±СЂРѕСЃ
 
 	if (!rsArguments || !*rsArguments)
 		return NULL;
@@ -692,12 +692,12 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool b
 	LPWSTR pszArgEnd = rsArguments+_tcslen(rsArguments);
 	#endif
 
-	// Пропустить white-space
+	// РџСЂРѕРїСѓСЃС‚РёС‚СЊ white-space
 	SkipWhiteSpaces(rsArguments);
 
 	LPCWSTR pszSrc = NULL;
 
-	// C-style строки
+	// C-style СЃС‚СЂРѕРєРё
 	if (rsArguments[0] == L'"')
 	{
 		rsString = rsArguments+1;
@@ -752,7 +752,7 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool b
 	{
 		_ASSERTE(rsArguments>=pszArgStart && rsArguments<pszArgEnd);
 
-		// Пропустить все, что до следующей запятой
+		// РџСЂРѕРїСѓСЃС‚РёС‚СЊ РІСЃРµ, С‡С‚Рѕ РґРѕ СЃР»РµРґСѓСЋС‰РµР№ Р·Р°РїСЏС‚РѕР№
 		SkipWhiteSpaces(rsArguments);
 		if (*rsArguments == L',')
 			rsArguments++;
@@ -761,21 +761,21 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool b
 	}
 
 wrap:
-	// Тут уже NULL-а не будет, допускаются пустые строки ("")
+	// РўСѓС‚ СѓР¶Рµ NULL-Р° РЅРµ Р±СѓРґРµС‚, РґРѕРїСѓСЃРєР°СЋС‚СЃСЏ РїСѓСЃС‚С‹Рµ СЃС‚СЂРѕРєРё ("")
 	_ASSERTE(rsString!=NULL);
 	return rsString;
 }
-/* ***  Теперь - собственно макросы  *** */
+/* ***  РўРµРїРµСЂСЊ - СЃРѕР±СЃС‚РІРµРЅРЅРѕ РјР°РєСЂРѕСЃС‹  *** */
 
-// Проверка, есть ли ConEmu GUI. Функцию мог бы плагин и сам обработать,
-// но для "общности" возвращаем "Yes" здесь
+// РџСЂРѕРІРµСЂРєР°, РµСЃС‚СЊ Р»Рё ConEmu GUI. Р¤СѓРЅРєС†РёСЋ РјРѕРі Р±С‹ РїР»Р°РіРёРЅ Рё СЃР°Рј РѕР±СЂР°Р±РѕС‚Р°С‚СЊ,
+// РЅРѕ РґР»СЏ "РѕР±С‰РЅРѕСЃС‚Рё" РІРѕР·РІСЂР°С‰Р°РµРј "Yes" Р·РґРµСЃСЊ
 LPWSTR CConEmuMacro::IsConEmu(GuiMacro* p, CRealConsole* apRCon)
 {
 	LPWSTR pszResult = lstrdup(L"Yes");
 	return pszResult;
 }
 
-// Проверка, видима ли RealConsole
+// РџСЂРѕРІРµСЂРєР°, РІРёРґРёРјР° Р»Рё RealConsole
 LPWSTR CConEmuMacro::IsRealVisible(GuiMacro* p, CRealConsole* apRCon)
 {
 	LPWSTR pszResult = NULL;
@@ -788,7 +788,7 @@ LPWSTR CConEmuMacro::IsRealVisible(GuiMacro* p, CRealConsole* apRCon)
 	return pszResult;
 }
 
-// Проверка, активна ли RealConsole
+// РџСЂРѕРІРµСЂРєР°, Р°РєС‚РёРІРЅР° Р»Рё RealConsole
 LPWSTR CConEmuMacro::IsConsoleActive(GuiMacro* p, CRealConsole* apRCon)
 {
 	LPWSTR pszResult = NULL;
@@ -869,7 +869,7 @@ LPWSTR CConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon)
 	return pszResult ? pszResult : lstrdup(L"Failed");
 }
 
-// Найти окно и активировать его. // LPWSTR asName
+// РќР°Р№С‚Рё РѕРєРЅРѕ Рё Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РµРіРѕ. // LPWSTR asName
 LPWSTR CConEmuMacro::FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
 {
 	LPWSTR pszName = NULL;
@@ -877,13 +877,13 @@ LPWSTR CConEmuMacro::FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPl
 	if (!p->GetStrArg(0, pszName))
 		return lstrdup(L"");
 
-	// Пустые строки не допускаются
+	// РџСѓСЃС‚С‹Рµ СЃС‚СЂРѕРєРё РЅРµ РґРѕРїСѓСЃРєР°СЋС‚СЃСЏ
 	if (!pszName || !*pszName)
 		return lstrdup(L"");
 
 	return FindFarWindowHelper(3/*WTYPE_EDITOR*/, pszName, apRCon, abFromPlugin);
 }
-// Найти окно и активировать его. // LPWSTR asName
+// РќР°Р№С‚Рё РѕРєРЅРѕ Рё Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РµРіРѕ. // LPWSTR asName
 LPWSTR CConEmuMacro::FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
 {
 	LPWSTR pszName = NULL;
@@ -891,13 +891,13 @@ LPWSTR CConEmuMacro::FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPl
 	if (!p->GetStrArg(0, pszName))
 		return lstrdup(L"");
 
-	// Пустые строки не допускаются
+	// РџСѓСЃС‚С‹Рµ СЃС‚СЂРѕРєРё РЅРµ РґРѕРїСѓСЃРєР°СЋС‚СЃСЏ
 	if (!pszName || !*pszName)
 		return lstrdup(L"");
 
 	return FindFarWindowHelper(2/*WTYPE_VIEWER*/, pszName, apRCon, abFromPlugin);
 }
-// Найти окно и активировать его. // int nWindowType, LPWSTR asName
+// РќР°Р№С‚Рё РѕРєРЅРѕ Рё Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РµРіРѕ. // int nWindowType, LPWSTR asName
 LPWSTR CConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
 {
 	int nWindowType = 0;
@@ -906,7 +906,7 @@ LPWSTR CConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFro
 	if (!p->GetStrArg(0, pszName))
 		return lstrdup(L"");
 
-	// Пустые строки не допускаются
+	// РџСѓСЃС‚С‹Рµ СЃС‚СЂРѕРєРё РЅРµ РґРѕРїСѓСЃРєР°СЋС‚СЃСЏ
 	if (!pszName || !*pszName)
 		return lstrdup(L"");
 
@@ -925,7 +925,7 @@ LPWSTR CConEmuMacro::FindFarWindowHelper(
 	int iFoundWnd = CVConGroup::isFarExist(anWindowType|fwt_FarFullPathReq|(abFromPlugin?fwt_ActivateOther:fwt_ActivateFound), asName, &VCon);
 
 	if ((iFoundWnd <= 0) && VCon.VCon())
-		iFoundCon = -1; // редактор есть, но заблокирован модальным диалогом/другим редактором
+		iFoundCon = -1; // СЂРµРґР°РєС‚РѕСЂ РµСЃС‚СЊ, РЅРѕ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ РјРѕРґР°Р»СЊРЅС‹Рј РґРёР°Р»РѕРіРѕРј/РґСЂСѓРіРёРј СЂРµРґР°РєС‚РѕСЂРѕРј
 	else if (iFoundWnd)
 		iFoundCon = gpConEmu->isVConValid(VCon.VCon()); //1-based
 
@@ -977,7 +977,7 @@ LPWSTR CConEmuMacro::WindowMaximize(GuiMacro* p, CRealConsole* apRCon)
 	return pszRc;
 }
 
-// Минимизировать окно (можно насильно в трей) // [int nForceToTray=0/1]
+// РњРёРЅРёРјРёР·РёСЂРѕРІР°С‚СЊ РѕРєРЅРѕ (РјРѕР¶РЅРѕ РЅР°СЃРёР»СЊРЅРѕ РІ С‚СЂРµР№) // [int nForceToTray=0/1]
 LPWSTR CConEmuMacro::WindowMinimize(GuiMacro* p, CRealConsole* apRCon)
 {
 	LPWSTR pszRc = WindowMode(NULL, NULL);
@@ -993,8 +993,8 @@ LPWSTR CConEmuMacro::WindowMinimize(GuiMacro* p, CRealConsole* apRCon)
 	return pszRc;
 }
 
-// Опционально установить новый статус
-// Вернуть текущий/новый статус: NOR/MAX/FS/MIN/TSA/TLEFT/TRIGHT/THEIGHT
+// РћРїС†РёРѕРЅР°Р»СЊРЅРѕ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РЅРѕРІС‹Р№ СЃС‚Р°С‚СѓСЃ
+// Р’РµСЂРЅСѓС‚СЊ С‚РµРєСѓС‰РёР№/РЅРѕРІС‹Р№ СЃС‚Р°С‚СѓСЃ: NOR/MAX/FS/MIN/TSA/TLEFT/TRIGHT/THEIGHT
 LPWSTR CConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon)
 {
 	LPCWSTR pszRc = NULL;
@@ -1013,7 +1013,7 @@ LPWSTR CConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon)
 
 	ConEmuWindowCommand Cmd = cwc_Current;
 
-	// без аргументов - ничего не менять, вернуть текущее состояние
+	// Р±РµР· Р°СЂРіСѓРјРµРЅС‚РѕРІ - РЅРёС‡РµРіРѕ РЅРµ РјРµРЅСЏС‚СЊ, РІРµСЂРЅСѓС‚СЊ С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
 	if (p && p->argc)
 	{
 		if (p->IsIntArg(0))
@@ -1121,14 +1121,14 @@ LPWSTR CConEmuMacro::Menu(GuiMacro* p, CRealConsole* apRCon)
 	switch (nType)
 	{
 	case 0:
-		WARNING("учитывать gpCurrentHotKey, если оно по клику мышки - показывать в позиции курсора");
+		WARNING("СѓС‡РёС‚С‹РІР°С‚СЊ gpCurrentHotKey, РµСЃР»Рё РѕРЅРѕ РїРѕ РєР»РёРєСѓ РјС‹С€РєРё - РїРѕРєР°Р·С‹РІР°С‚СЊ РІ РїРѕР·РёС†РёРё РєСѓСЂСЃРѕСЂР°");
 		gpConEmu->mp_Menu->ShowSysmenu(ptCur.x, ptCur.y);
 		return lstrdup(L"OK");
 
 	case 1:
 		if (apRCon)
 		{
-			WARNING("учитывать gpCurrentHotKey, если оно по клику мышки - показывать в позиции курсора");
+			WARNING("СѓС‡РёС‚С‹РІР°С‚СЊ gpCurrentHotKey, РµСЃР»Рё РѕРЅРѕ РїРѕ РєР»РёРєСѓ РјС‹С€РєРё - РїРѕРєР°Р·С‹РІР°С‚СЊ РІ РїРѕР·РёС†РёРё РєСѓСЂСЃРѕСЂР°");
 			if (ptCur.x == -32000)
 				ptCur = gpConEmu->mp_Menu->CalcTabMenuPos(apRCon->VCon());
 			gpConEmu->mp_Menu->ShowPopupMenu(apRCon->VCon(), ptCur);
@@ -1173,11 +1173,11 @@ LPWSTR CConEmuMacro::MsgBox(GuiMacro* p, CRealConsole* apRCon)
 	return NULL;
 }
 
-// Изменить размер шрифта.
-// int nRelative, int N ("+1" - увеличить на N пунктов, "-1" - уменьшить, "0" - N- указан размер), int N
-// для nRelative==0: N - высота
-// для nRelative==1: N - +-1, +-2
-// Возвращает - OK или InvalidArg
+// РР·РјРµРЅРёС‚СЊ СЂР°Р·РјРµСЂ С€СЂРёС„С‚Р°.
+// int nRelative, int N ("+1" - СѓРІРµР»РёС‡РёС‚СЊ РЅР° N РїСѓРЅРєС‚РѕРІ, "-1" - СѓРјРµРЅСЊС€РёС‚СЊ, "0" - N- СѓРєР°Р·Р°РЅ СЂР°Р·РјРµСЂ), int N
+// РґР»СЏ nRelative==0: N - РІС‹СЃРѕС‚Р°
+// РґР»СЏ nRelative==1: N - +-1, +-2
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ - OK РёР»Рё InvalidArg
 LPWSTR CConEmuMacro::FontSetSize(GuiMacro* p, CRealConsole* apRCon)
 {
 	//bool lbSetFont = false;
@@ -1198,7 +1198,7 @@ LPWSTR CConEmuMacro::FontSetSize(GuiMacro* p, CRealConsole* apRCon)
 	return lstrdup(L"InvalidArg");
 }
 
-// Изменить имя основного шрифта. string. Как бонус - можно сразу поменять и размер
+// РР·РјРµРЅРёС‚СЊ РёРјСЏ РѕСЃРЅРѕРІРЅРѕРіРѕ С€СЂРёС„С‚Р°. string. РљР°Рє Р±РѕРЅСѓСЃ - РјРѕР¶РЅРѕ СЃСЂР°Р·Сѓ РїРѕРјРµРЅСЏС‚СЊ Рё СЂР°Р·РјРµСЂ
 // <FontName>[,<Height>[,<Width>]]
 LPWSTR CConEmuMacro::FontSetName(GuiMacro* p, CRealConsole* apRCon)
 {
@@ -1273,7 +1273,7 @@ LPWSTR CConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon)
 
 		if (p->GetStrArg(1, pszText))
 		{
-			// Пустая строка допускается только при выборе файла/папки для вставки
+			// РџСѓСЃС‚Р°СЏ СЃС‚СЂРѕРєР° РґРѕРїСѓСЃРєР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїСЂРё РІС‹Р±РѕСЂРµ С„Р°Р№Р»Р°/РїР°РїРєРё РґР»СЏ РІСЃС‚Р°РІРєРё
 			if (!*pszText && !((nCommand >= 4) && (nCommand <= 7)))
 				return lstrdup(L"InvalidArg");
 		}
@@ -1336,11 +1336,11 @@ LPWSTR CConEmuMacro::Print(GuiMacro* p, CRealConsole* apRCon)
 // Keys("<Combo1>"[,"<Combo2>"[...]])
 LPWSTR CConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon)
 {
-	// Наверное имеет смысл поддержать синтаксис AHK (допускаю, что многие им пользуются)
-	// Но по хорошему, проще всего разрешить что-то типа
+	// РќР°РІРµСЂРЅРѕРµ РёРјРµРµС‚ СЃРјС‹СЃР» РїРѕРґРґРµСЂР¶Р°С‚СЊ СЃРёРЅС‚Р°РєСЃРёСЃ AHK (РґРѕРїСѓСЃРєР°СЋ, С‡С‚Рѕ РјРЅРѕРіРёРµ РёРј РїРѕР»СЊР·СѓСЋС‚СЃСЏ)
+	// РќРѕ РїРѕ С…РѕСЂРѕС€РµРјСѓ, РїСЂРѕС‰Рµ РІСЃРµРіРѕ СЂР°Р·СЂРµС€РёС‚СЊ С‡С‚Рѕ-С‚Рѕ С‚РёРїР°
 	// Keys("CtrlC","ControlV","ShiftIns")
 
-	// Префиксы:
+	// РџСЂРµС„РёРєСЃС‹:
 	//	# - Win
 	//	! - Alt
 	//	^ - Control
@@ -1738,7 +1738,7 @@ LPWSTR CConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon)
 				}
 			}
 			
-			// 120830 - пусть shell("","cmd") запускает новую вкладку в ConEmu
+			// 120830 - РїСѓСЃС‚СЊ shell("","cmd") Р·Р°РїСѓСЃРєР°РµС‚ РЅРѕРІСѓСЋ РІРєР»Р°РґРєСѓ РІ ConEmu
 			bool bNewOper = bNewTaskGroup || !pszOper || !*pszOper || (wmemcmp(pszOper, L"new_console", 11) == 0);
 
 			if (bNewOper || (pszParm && wcsstr(pszParm, L"-new_console")))
@@ -1790,7 +1790,7 @@ LPWSTR CConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon)
 						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, pszParm);
 					}
 					
-					// Параметры запуска консоли могли передать в первом аргуементе (например "new_console:b")
+					// РџР°СЂР°РјРµС‚СЂС‹ Р·Р°РїСѓСЃРєР° РєРѕРЅСЃРѕР»Рё РјРѕРіР»Рё РїРµСЂРµРґР°С‚СЊ РІ РїРµСЂРІРѕРј Р°СЂРіСѓРµРјРµРЅС‚Рµ (РЅР°РїСЂРёРјРµСЂ "new_console:b")
 					if (bNewOper)
 					{
 						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" \"-");
@@ -1866,10 +1866,10 @@ LPWSTR CConEmuMacro::Split(GuiMacro* p, CRealConsole* apRCon)
 
 		if (nCmd == 0)
 		{
-			// Аналог 
-			// Duplicate active «shell» split to right: Shell("new_console:sHn")
-			// или
-			// Duplicate active «shell» split to bottom: Shell("new_console:sVn")
+			// РђРЅР°Р»РѕРі 
+			// Duplicate active В«shellВ» split to right: Shell("new_console:sHn")
+			// РёР»Рё
+			// Duplicate active В«shellВ» split to bottom: Shell("new_console:sVn")
 			wchar_t szMacro[32] = L"";
 			if (nHorz > 0 && nHorz < 100 && nVert == 0)
 				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"Shell(\"new_console:s%iHn\")", nHorz);
@@ -1992,7 +1992,7 @@ LPWSTR CConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon)
 				int nActive = gpConEmu->ActiveConNum(); // 0-based
 				if (nParm == 1)
 				{
-					// Прокрутка вперед (циклически)
+					// РџСЂРѕРєСЂСѓС‚РєР° РІРїРµСЂРµРґ (С†РёРєР»РёС‡РµСЃРєРё)
 					if (gpConEmu->GetVCon(nActive+1))
 					{
 						gpConEmu->ConActivate(nActive+1);
@@ -2006,7 +2006,7 @@ LPWSTR CConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon)
 				}
 				else if (nParm == -1)
 				{
-					// Прокрутка назад (циклически)
+					// РџСЂРѕРєСЂСѓС‚РєР° РЅР°Р·Р°Рґ (С†РёРєР»РёС‡РµСЃРєРё)
 					if (nActive > 0)
 					{
 						gpConEmu->ConActivate(nActive-1);
@@ -2032,7 +2032,7 @@ LPWSTR CConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon)
 			}
 			break;
 		case ctc_ShowTabsList: // 
-			CConEmuCtrl::key_ShowTabsList(0, false, NULL, NULL/*чтобы не зависимо от фара показала меню*/);
+			CConEmuCtrl::key_ShowTabsList(0, false, NULL, NULL/*С‡С‚РѕР±С‹ РЅРµ Р·Р°РІРёСЃРёРјРѕ РѕС‚ С„Р°СЂР° РїРѕРєР°Р·Р°Р»Р° РјРµРЅСЋ*/);
 			break;
 		case ctc_CloseTab:
 			if (apRCon)

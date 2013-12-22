@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RGN_ERROR 0
 #endif
 
-WARNING("Заменить *mp_FarInfo на instance копию m_FarInfo");
+WARNING("Р—Р°РјРµРЅРёС‚СЊ *mp_FarInfo РЅР° instance РєРѕРїРёСЋ m_FarInfo");
 
 
 static bool gbInTransparentAssert = false;
@@ -55,11 +55,11 @@ CRgnDetect::CRgnDetect()
 	mn_DetectCallCount = 0;
 	memset(&m_DetectedDialogs, 0, sizeof(m_DetectedDialogs));
 	mp_FarInfo = NULL;
-	// Флаги
+	// Р¤Р»Р°РіРё
 	mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
 	memset(&mrc_LeftPanel,0,sizeof(mrc_LeftPanel));
 	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
-	memset(&mrc_FarRect, 0, sizeof(mrc_FarRect)); // по умолчанию - не используется
+	memset(&mrc_FarRect, 0, sizeof(mrc_FarRect)); // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
 	//
 	mpsz_Chars = NULL;
 	mp_Attrs = mp_AttrsWork = NULL;
@@ -171,14 +171,14 @@ DWORD CRgnDetect::GetDialog(DWORD nDlgID, SMALL_RECT* rc) const
 		}
 	}
 
-	// Такого нету
+	// РўР°РєРѕРіРѕ РЅРµС‚Сѓ
 	return 0;
 }
 
 DWORD CRgnDetect::GetFlags() const
 {
-	// чтобы не драться с другими нитями во время детекта возвращаем сохраненную mn_AllFlagsSaved
-	// а не то что лежит в m_DetectedDialogs.AllFlags (оно может сейчас меняться)
+	// С‡С‚РѕР±С‹ РЅРµ РґСЂР°С‚СЊСЃСЏ СЃ РґСЂСѓРіРёРјРё РЅРёС‚СЏРјРё РІРѕ РІСЂРµРјСЏ РґРµС‚РµРєС‚Р° РІРѕР·РІСЂР°С‰Р°РµРј СЃРѕС…СЂР°РЅРµРЅРЅСѓСЋ mn_AllFlagsSaved
+	// Р° РЅРµ С‚Рѕ С‡С‚Рѕ Р»РµР¶РёС‚ РІ m_DetectedDialogs.AllFlags (РѕРЅРѕ РјРѕР¶РµС‚ СЃРµР№С‡Р°СЃ РјРµРЅСЏС‚СЊСЃСЏ)
 	//return m_DetectedDialogs.AllFlags;
 	return mn_AllFlagsSaved;
 }
@@ -190,11 +190,11 @@ DWORD CRgnDetect::GetFlags() const
 
 
 /* ****************************************** */
-/* Поиск диалогов и пометка "прозрачных" мест */
+/* РџРѕРёСЃРє РґРёР°Р»РѕРіРѕРІ Рё РїРѕРјРµС‚РєР° "РїСЂРѕР·СЂР°С‡РЅС‹С…" РјРµСЃС‚ */
 /* ****************************************** */
 
 
-// Найти правую границу
+// РќР°Р№С‚Рё РїСЂР°РІСѓСЋ РіСЂР°РЅРёС†Сѓ
 bool CRgnDetect::FindFrameRight_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight)
 {
 	wchar_t wcMostRight = 0;
@@ -205,18 +205,18 @@ bool CRgnDetect::FindFrameRight_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidt
 
 	if (wc != ucBoxSinglDownRight && wc != ucBoxDblDownRight)
 	{
-		// нетривиальная ситуация - возможно диалог на экране неполный
+		// РЅРµС‚СЂРёРІРёР°Р»СЊРЅР°СЏ СЃРёС‚СѓР°С†РёСЏ - РІРѕР·РјРѕР¶РЅРѕ РґРёР°Р»РѕРі РЅР° СЌРєСЂР°РЅРµ РЅРµРїРѕР»РЅС‹Р№
 		int nMostTop = nFromY;
 
 		if (FindFrameTop_ByLeft(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostTop))
-			nFromY = nMostTop; // этот диалог продолжается сверху
+			nFromY = nMostTop; // СЌС‚РѕС‚ РґРёР°Р»РѕРі РїСЂРѕРґРѕР»Р¶Р°РµС‚СЃСЏ СЃРІРµСЂС…Сѓ
 	}
 
 	if (wc != ucBoxSinglDownRight && wc != ucBoxDblDownRight)
 	{
 		wchar_t c;
 
-		// Придется попробовать идти просто до границы
+		// РџСЂРёРґРµС‚СЃСЏ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РёРґС‚Рё РїСЂРѕСЃС‚Рѕ РґРѕ РіСЂР°РЅРёС†С‹
 		if (wc == ucBoxSinglVert || wc == ucBoxSinglVertRight)
 		{
 			while(++nMostRight < nWidth)
@@ -253,17 +253,17 @@ bool CRgnDetect::FindFrameRight_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidt
 			wcMostRight = ucBoxDblDownLeft;
 		}
 
-		// Найти правую границу
+		// РќР°Р№С‚Рё РїСЂР°РІСѓСЋ РіСЂР°РЅРёС†Сѓ
 		while(++nMostRight < nWidth)
 		{
 			n = nShift+nMostRight;
 
 			//if (pAttr[n].crBackColor != nBackColor)
-			//	break; // конец цвета фона диалога
+			//	break; // РєРѕРЅРµС† С†РІРµС‚Р° С„РѕРЅР° РґРёР°Р»РѕРіР°
 			if (pChar[n] == wcMostRight)
 			{
 				nMostRight++;
-				break; // закрывающая угловая рамка
+				break; // Р·Р°РєСЂС‹РІР°СЋС‰Р°СЏ СѓРіР»РѕРІР°СЏ СЂР°РјРєР°
 			}
 		}
 	}
@@ -273,7 +273,7 @@ bool CRgnDetect::FindFrameRight_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	return (nMostRight > nFromX);
 }
 
-// Найти левуу границу
+// РќР°Р№С‚Рё Р»РµРІСѓСѓ РіСЂР°РЅРёС†Сѓ
 bool CRgnDetect::FindFrameLeft_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft)
 {
 	wchar_t wcMostLeft;
@@ -284,18 +284,18 @@ bool CRgnDetect::FindFrameLeft_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth
 
 	if (wc != ucBoxSinglDownLeft && wc != ucBoxDblDownLeft)
 	{
-		// нетривиальная ситуация - возможно диалог на экране неполный
+		// РЅРµС‚СЂРёРІРёР°Р»СЊРЅР°СЏ СЃРёС‚СѓР°С†РёСЏ - РІРѕР·РјРѕР¶РЅРѕ РґРёР°Р»РѕРі РЅР° СЌРєСЂР°РЅРµ РЅРµРїРѕР»РЅС‹Р№
 		int nMostTop = nFromY;
 
 		if (FindFrameTop_ByRight(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostTop))
-			nFromY = nMostTop; // этот диалог продолжается сверху
+			nFromY = nMostTop; // СЌС‚РѕС‚ РґРёР°Р»РѕРі РїСЂРѕРґРѕР»Р¶Р°РµС‚СЃСЏ СЃРІРµСЂС…Сѓ
 	}
 
 	if (wc != ucBoxSinglDownLeft && wc != ucBoxDblDownLeft)
 	{
 		wchar_t c;
 
-		// Придется попробовать идти просто до границы
+		// РџСЂРёРґРµС‚СЃСЏ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РёРґС‚Рё РїСЂРѕСЃС‚Рѕ РґРѕ РіСЂР°РЅРёС†С‹
 		if (wc == ucBoxSinglVert || wc == ucBoxSinglVertLeft)
 		{
 			while(--nMostLeft >= 0)
@@ -337,17 +337,17 @@ bool CRgnDetect::FindFrameLeft_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth
 			return false;
 		}
 
-		// Найти левую границу
+		// РќР°Р№С‚Рё Р»РµРІСѓСЋ РіСЂР°РЅРёС†Сѓ
 		while(--nMostLeft >= 0)
 		{
 			n = nShift+nMostLeft;
 
 			//if (pAttr[n].crBackColor != nBackColor)
-			//	break; // конец цвета фона диалога
+			//	break; // РєРѕРЅРµС† С†РІРµС‚Р° С„РѕРЅР° РґРёР°Р»РѕРіР°
 			if (pChar[n] == wcMostLeft)
 			{
 				nMostLeft--;
-				break; // закрывающая угловая рамка
+				break; // Р·Р°РєСЂС‹РІР°СЋС‰Р°СЏ СѓРіР»РѕРІР°СЏ СЂР°РјРєР°
 			}
 		}
 	}
@@ -375,20 +375,20 @@ bool CRgnDetect::FindFrameRight_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nW
 	}
 	else
 	{
-		return false; // найти правый нижний угол мы не сможем
+		return false; // РЅР°Р№С‚Рё РїСЂР°РІС‹Р№ РЅРёР¶РЅРёР№ СѓРіРѕР» РјС‹ РЅРµ СЃРјРѕР¶РµРј
 	}
 
-	// Найти правую границу
+	// РќР°Р№С‚Рё РїСЂР°РІСѓСЋ РіСЂР°РЅРёС†Сѓ
 	while(++nMostRight < nWidth)
 	{
 		n = nShift+nMostRight;
 
 		//if (pAttr[n].crBackColor != nBackColor)
-		//	break; // конец цвета фона диалога
+		//	break; // РєРѕРЅРµС† С†РІРµС‚Р° С„РѕРЅР° РґРёР°Р»РѕРіР°
 		if (pChar[n] == wcMostRight)
 		{
 			nMostRight++;
-			break; // закрывающая угловая рамка
+			break; // Р·Р°РєСЂС‹РІР°СЋС‰Р°СЏ СѓРіР»РѕРІР°СЏ СЂР°РјРєР°
 		}
 	}
 
@@ -415,20 +415,20 @@ bool CRgnDetect::FindFrameLeft_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWi
 	}
 	else
 	{
-		return false; // найти левый нижний угол мы не сможем
+		return false; // РЅР°Р№С‚Рё Р»РµРІС‹Р№ РЅРёР¶РЅРёР№ СѓРіРѕР» РјС‹ РЅРµ СЃРјРѕР¶РµРј
 	}
 
-	// Найти левую границу
+	// РќР°Р№С‚Рё Р»РµРІСѓСЋ РіСЂР°РЅРёС†Сѓ
 	while(--nMostLeft >= 0)
 	{
 		n = nShift+nMostLeft;
 
 		//if (pAttr[n].crBackColor != nBackColor)
-		//	break; // конец цвета фона диалога
+		//	break; // РєРѕРЅРµС† С†РІРµС‚Р° С„РѕРЅР° РґРёР°Р»РѕРіР°
 		if (pChar[n] == wcMostLeft)
 		{
 			nMostLeft--;
-			break; // закрывающая угловая рамка
+			break; // Р·Р°РєСЂС‹РІР°СЋС‰Р°СЏ СѓРіР»РѕРІР°СЏ СЂР°РјРєР°
 		}
 	}
 
@@ -437,7 +437,7 @@ bool CRgnDetect::FindFrameLeft_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWi
 	return (nMostLeft < nFromX);
 }
 
-// Диалог без окантовки. Все просто - идем по рамке
+// Р”РёР°Р»РѕРі Р±РµР· РѕРєР°РЅС‚РѕРІРєРё. Р’СЃРµ РїСЂРѕСЃС‚Рѕ - РёРґРµРј РїРѕ СЂР°РјРєРµ
 bool CRgnDetect::FindDialog_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder)
 {
 	bMarkBorder = TRUE;
@@ -445,22 +445,22 @@ bool CRgnDetect::FindDialog_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth,
 	int nShift = nWidth*nFromY;
 	#endif
 	int nMostRightBottom;
-	// Найти правую границу по верху
+	// РќР°Р№С‚Рё РїСЂР°РІСѓСЋ РіСЂР°РЅРёС†Сѓ РїРѕ РІРµСЂС…Сѓ
 	nMostRight = nFromX;
 	FindFrameRight_ByTop(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight);
 	_ASSERTE(nMostRight<nWidth);
-	// Найти нижнюю границу
+	// РќР°Р№С‚Рё РЅРёР¶РЅСЋСЋ РіСЂР°РЅРёС†Сѓ
 	nMostBottom = nFromY;
 	FindFrameBottom_ByLeft(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostBottom);
 	_ASSERTE(nMostBottom<nHeight);
-	// Найти нижнюю границу по правой стороне
+	// РќР°Р№С‚Рё РЅРёР¶РЅСЋСЋ РіСЂР°РЅРёС†Сѓ РїРѕ РїСЂР°РІРѕР№ СЃС‚РѕСЂРѕРЅРµ
 	nMostRightBottom = nFromY;
 
 	if (FindFrameBottom_ByRight(pChar, pAttr, nWidth, nHeight, nMostRight, nFromY, nMostRightBottom))
 	{
 		_ASSERTE(nMostRightBottom<nHeight);
 
-		// Результатом считаем - наиБОЛЬШУЮ высоту
+		// Р РµР·СѓР»СЊС‚Р°С‚РѕРј СЃС‡РёС‚Р°РµРј - РЅР°РёР‘РћР›Р¬РЁРЈР® РІС‹СЃРѕС‚Сѓ
 		if (nMostRightBottom > nMostBottom)
 			nMostBottom = nMostRightBottom;
 	}
@@ -468,7 +468,7 @@ bool CRgnDetect::FindDialog_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth,
 	return true;
 }
 
-// Диалог без окантовки. Все просто - идем по рамке
+// Р”РёР°Р»РѕРі Р±РµР· РѕРєР°РЅС‚РѕРІРєРё. Р’СЃРµ РїСЂРѕСЃС‚Рѕ - РёРґРµРј РїРѕ СЂР°РјРєРµ
 bool CRgnDetect::FindDialog_TopRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder)
 {
 	bMarkBorder = TRUE;
@@ -479,19 +479,19 @@ bool CRgnDetect::FindDialog_TopRight(wchar_t* pChar, CharAttr* pAttr, int nWidth
 	nMostRight = nFromX;
 	nMostBottom = nFromY;
 
-	// Найти левую границу по верху
+	// РќР°Р№С‚Рё Р»РµРІСѓСЋ РіСЂР°РЅРёС†Сѓ РїРѕ РІРµСЂС…Сѓ
 	if (FindFrameLeft_ByTop(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nX))
 	{
 		_ASSERTE(nX>=0);
 		nFromX = nX;
 	}
 
-	// Найти нижнюю границу
+	// РќР°Р№С‚Рё РЅРёР¶РЅСЋСЋ РіСЂР°РЅРёС†Сѓ
 	nMostBottom = nFromY;
 	FindFrameBottom_ByRight(pChar, pAttr, nWidth, nHeight, nMostRight, nFromY, nMostBottom);
 	_ASSERTE(nMostBottom<nHeight);
 
-	// найти левую границу по низу
+	// РЅР°Р№С‚Рё Р»РµРІСѓСЋ РіСЂР°РЅРёС†Сѓ РїРѕ РЅРёР·Сѓ
 	if (FindFrameLeft_ByBottom(pChar, pAttr, nWidth, nHeight, nMostRight, nMostBottom, nX))
 	{
 		_ASSERTE(nX>=0);
@@ -502,13 +502,13 @@ bool CRgnDetect::FindDialog_TopRight(wchar_t* pChar, CharAttr* pAttr, int nWidth
 	return true;
 }
 
-// Это может быть нижний кусок диалога
-// левая граница рамки
-// Диалог без окантовки, но начинается не с угла
+// Р­С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅРёР¶РЅРёР№ РєСѓСЃРѕРє РґРёР°Р»РѕРіР°
+// Р»РµРІР°СЏ РіСЂР°РЅРёС†Р° СЂР°РјРєРё
+// Р”РёР°Р»РѕРі Р±РµР· РѕРєР°РЅС‚РѕРІРєРё, РЅРѕ РЅР°С‡РёРЅР°РµС‚СЃСЏ РЅРµ СЃ СѓРіР»Р°
 bool CRgnDetect::FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder)
 {
 	bMarkBorder = TRUE;
-	//nBackColor = pAttr[nFromX+nWidth*nFromY].crBackColor; // но на всякий случай сохраним цвет фона для сравнения
+	//nBackColor = pAttr[nFromX+nWidth*nFromY].crBackColor; // РЅРѕ РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№ СЃРѕС…СЂР°РЅРёРј С†РІРµС‚ С„РѕРЅР° РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ
 	wchar_t wcMostRight, wcMostBottom, wcMostRightBottom, wcMostTop, wcNotMostBottom1;
 	int nShift = nWidth*nFromY;
 	int nMostTop, nY, nX;
@@ -518,7 +518,7 @@ bool CRgnDetect::FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	{
 		wcMostRight = ucBoxSinglUpLeft; wcMostBottom = ucBoxSinglUpRight; wcMostRightBottom = ucBoxSinglUpLeft; wcMostTop = ucBoxSinglDownLeft;
 
-		// наткнулись на вертикальную линию на панели
+		// РЅР°С‚РєРЅСѓР»РёСЃСЊ РЅР° РІРµСЂС‚РёРєР°Р»СЊРЅСѓСЋ Р»РёРЅРёСЋ РЅР° РїР°РЅРµР»Рё
 		if (wc == ucBoxSinglVert)
 		{
 			wcNotMostBottom1 = ucBoxSinglUpHorz; //wcNotMostBottom2 = ucBoxSinglUpDblHorz;
@@ -538,18 +538,18 @@ bool CRgnDetect::FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 		wcMostRight = ucBoxDblUpLeft; wcMostBottom = ucBoxDblUpRight; wcMostRightBottom = ucBoxDblUpLeft; wcMostTop = ucBoxDblDownLeft;
 	}
 
-	// попытаться подняться вверх, может угол все-таки есть?
+	// РїРѕРїС‹С‚Р°С‚СЊСЃСЏ РїРѕРґРЅСЏС‚СЊСЃСЏ РІРІРµСЂС…, РјРѕР¶РµС‚ СѓРіРѕР» РІСЃРµ-С‚Р°РєРё РµСЃС‚СЊ?
 	if (FindFrameTop_ByLeft(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nY))
 	{
 		_ASSERTE(nY >= 0);
 		nFromY = nY;
 	}
 
-	// Найти нижнюю границу
+	// РќР°Р№С‚Рё РЅРёР¶РЅСЋСЋ РіСЂР°РЅРёС†Сѓ
 	nMostBottom = nFromY;
 	FindFrameBottom_ByLeft(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostBottom);
 	_ASSERTE(nMostBottom<nHeight);
-	// Найти правую границу по верху
+	// РќР°Р№С‚Рё РїСЂР°РІСѓСЋ РіСЂР°РЅРёС†Сѓ РїРѕ РІРµСЂС…Сѓ
 	nMostRight = nFromX;
 
 	if (FindFrameRight_ByTop(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nX))
@@ -558,7 +558,7 @@ bool CRgnDetect::FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 		nMostRight = nX;
 	}
 
-	// попробовать найти правую границу по низу
+	// РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РЅР°Р№С‚Рё РїСЂР°РІСѓСЋ РіСЂР°РЅРёС†Сѓ РїРѕ РЅРёР·Сѓ
 	if (FindFrameRight_ByBottom(pChar, pAttr, nWidth, nHeight, nFromX, nMostBottom, nX))
 	{
 		_ASSERTE(nX<nWidth);
@@ -568,7 +568,7 @@ bool CRgnDetect::FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 	_ASSERTE(nMostRight>=0);
 
-	// Попытаться подняться вверх по правой границе?
+	// РџРѕРїС‹С‚Р°С‚СЊСЃСЏ РїРѕРґРЅСЏС‚СЊСЃСЏ РІРІРµСЂС… РїРѕ РїСЂР°РІРѕР№ РіСЂР°РЅРёС†Рµ?
 	if (FindFrameTop_ByRight(pChar, pAttr, nWidth, nHeight, nMostRight, nFromY, nMostTop))
 	{
 		_ASSERTE(nMostTop>=0);
@@ -581,22 +581,22 @@ bool CRgnDetect::FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 bool CRgnDetect::FindFrameTop_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostTop)
 {
 	wchar_t c;
-	// Попытаемся подняться вверх вдоль правой рамки до угла
+	// РџРѕРїС‹С‚Р°РµРјСЃСЏ РїРѕРґРЅСЏС‚СЊСЃСЏ РІРІРµСЂС… РІРґРѕР»СЊ РїСЂР°РІРѕР№ СЂР°РјРєРё РґРѕ СѓРіР»Р°
 	int nY = nFromY;
 
 	while(nY > 0)
 	{
 		c = pChar[(nY-1)*nWidth+nFromX];
 
-		if (c == ucBoxDblDownRight || c == ucBoxSinglDownRight  // двойной и одинарный угол (левый верхний)
+		if (c == ucBoxDblDownRight || c == ucBoxSinglDownRight  // РґРІРѕР№РЅРѕР№ Рё РѕРґРёРЅР°СЂРЅС‹Р№ СѓРіРѕР» (Р»РµРІС‹Р№ РІРµСЂС…РЅРёР№)
 		        || c == ucBoxDblVertRight || c == ucBoxDblVertSinglRight || c == ucBoxSinglVertRight
 		        || c == ucBoxDblVert || c == ucBoxSinglVert
-		  ) // пересечение (правая граница)
+		  ) // РїРµСЂРµСЃРµС‡РµРЅРёРµ (РїСЂР°РІР°СЏ РіСЂР°РЅРёС†Р°)
 		{
 			nY--; continue;
 		}
 
-		// Другие символы недопустимы
+		// Р”СЂСѓРіРёРµ СЃРёРјРІРѕР»С‹ РЅРµРґРѕРїСѓСЃС‚РёРјС‹
 		break;
 	}
 
@@ -608,23 +608,23 @@ bool CRgnDetect::FindFrameTop_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth
 bool CRgnDetect::FindFrameTop_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostTop)
 {
 	wchar_t c;
-	// Попытаемся подняться вверх вдоль правой рамки до угла
+	// РџРѕРїС‹С‚Р°РµРјСЃСЏ РїРѕРґРЅСЏС‚СЊСЃСЏ РІРІРµСЂС… РІРґРѕР»СЊ РїСЂР°РІРѕР№ СЂР°РјРєРё РґРѕ СѓРіР»Р°
 	int nY = nFromY;
 
 	while(nY > 0)
 	{
 		c = pChar[(nY-1)*nWidth+nFromX];
 
-		if (c == ucBoxDblDownLeft || c == ucBoxSinglDownLeft  // двойной и одинарный угол (правый верхний)
-		        || c == ucBoxDblVertLeft || c == ucBoxDblVertSinglLeft || c == ucBoxSinglVertLeft // пересечение (правая граница)
+		if (c == ucBoxDblDownLeft || c == ucBoxSinglDownLeft  // РґРІРѕР№РЅРѕР№ Рё РѕРґРёРЅР°СЂРЅС‹Р№ СѓРіРѕР» (РїСЂР°РІС‹Р№ РІРµСЂС…РЅРёР№)
+		        || c == ucBoxDblVertLeft || c == ucBoxDblVertSinglLeft || c == ucBoxSinglVertLeft // РїРµСЂРµСЃРµС‡РµРЅРёРµ (РїСЂР°РІР°СЏ РіСЂР°РЅРёС†Р°)
 		        || c == ucBoxDblVert || c == ucBoxSinglVert
-		        || c == L'}' // На правой границе панели могут быть признаки обрезанности имени файла
-		        || (c >= ucBox25 && c <= ucBox75) || c == ucUpScroll || c == ucDnScroll) // полоса прокрутки может быть только справа
+		        || c == L'}' // РќР° РїСЂР°РІРѕР№ РіСЂР°РЅРёС†Рµ РїР°РЅРµР»Рё РјРѕРіСѓС‚ Р±С‹С‚СЊ РїСЂРёР·РЅР°РєРё РѕР±СЂРµР·Р°РЅРЅРѕСЃС‚Рё РёРјРµРЅРё С„Р°Р№Р»Р°
+		        || (c >= ucBox25 && c <= ucBox75) || c == ucUpScroll || c == ucDnScroll) // РїРѕР»РѕСЃР° РїСЂРѕРєСЂСѓС‚РєРё РјРѕР¶РµС‚ Р±С‹С‚СЊ С‚РѕР»СЊРєРѕ СЃРїСЂР°РІР°
 		{
 			nY--; continue;
 		}
 
-		// Другие символы недопустимы
+		// Р”СЂСѓРіРёРµ СЃРёРјРІРѕР»С‹ РЅРµРґРѕРїСѓСЃС‚РёРјС‹
 		break;
 	}
 
@@ -635,13 +635,13 @@ bool CRgnDetect::FindFrameTop_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidt
 
 bool CRgnDetect::FindFrameBottom_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom)
 {
-	// Попытаемся спуститься вдоль правой рамки до угла
+	// РџРѕРїС‹С‚Р°РµРјСЃСЏ СЃРїСѓСЃС‚РёС‚СЊСЃСЏ РІРґРѕР»СЊ РїСЂР°РІРѕР№ СЂР°РјРєРё РґРѕ СѓРіР»Р°
 	int nY = nFromY;
 	int nEnd = nHeight - 1;
 	wchar_t c; //, cd = ucBoxDblVert;
 
-	//// В случае с правой панелью в правом верхнем углу могут быть часы, а не собственно угол
-	//// "<=1" т.к. надо учесть возможность постоянного меню
+	//// Р’ СЃР»СѓС‡Р°Рµ СЃ РїСЂР°РІРѕР№ РїР°РЅРµР»СЊСЋ РІ РїСЂР°РІРѕРј РІРµСЂС…РЅРµРј СѓРіР»Сѓ РјРѕРіСѓС‚ Р±С‹С‚СЊ С‡Р°СЃС‹, Р° РЅРµ СЃРѕР±СЃС‚РІРµРЅРЅРѕ СѓРіРѕР»
+	//// "<=1" С‚.Рє. РЅР°РґРѕ СѓС‡РµСЃС‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РїРѕСЃС‚РѕСЏРЅРЅРѕРіРѕ РјРµРЅСЋ
 	//c = pChar[nY*nWidth+nFromX];
 	//if (nFromY <= 1 && nFromX == (nWidth-1)) {
 	//	if (isDigit(c)) {
@@ -652,16 +652,16 @@ bool CRgnDetect::FindFrameBottom_ByRight(wchar_t* pChar, CharAttr* pAttr, int nW
 	{
 		c = pChar[(nY+1)*nWidth+nFromX];
 
-		if (c == ucBoxDblUpLeft || c == ucBoxSinglUpLeft  // двойной и одинарный угол (правый нижний)
-		        //|| c == cd // учесть часы на правой панели
-		        || c == ucBoxDblVertLeft || c == ucBoxDblVertSinglLeft || c == ucBoxSinglVertLeft // пересечение (правая граница)
+		if (c == ucBoxDblUpLeft || c == ucBoxSinglUpLeft  // РґРІРѕР№РЅРѕР№ Рё РѕРґРёРЅР°СЂРЅС‹Р№ СѓРіРѕР» (РїСЂР°РІС‹Р№ РЅРёР¶РЅРёР№)
+		        //|| c == cd // СѓС‡РµСЃС‚СЊ С‡Р°СЃС‹ РЅР° РїСЂР°РІРѕР№ РїР°РЅРµР»Рё
+		        || c == ucBoxDblVertLeft || c == ucBoxDblVertSinglLeft || c == ucBoxSinglVertLeft // РїРµСЂРµСЃРµС‡РµРЅРёРµ (РїСЂР°РІР°СЏ РіСЂР°РЅРёС†Р°)
 		        || c == ucBoxDblVert || c == ucBoxSinglVert
-		        || (c >= ucBox25 && c <= ucBox75) || c == ucUpScroll || c == ucDnScroll) // полоса прокрутки может быть только справа
+		        || (c >= ucBox25 && c <= ucBox75) || c == ucUpScroll || c == ucDnScroll) // РїРѕР»РѕСЃР° РїСЂРѕРєСЂСѓС‚РєРё РјРѕР¶РµС‚ Р±С‹С‚СЊ С‚РѕР»СЊРєРѕ СЃРїСЂР°РІР°
 		{
 			nY++; continue;
 		}
 
-		// Другие символы недопустимы
+		// Р”СЂСѓРіРёРµ СЃРёРјРІРѕР»С‹ РЅРµРґРѕРїСѓСЃС‚РёРјС‹
 		break;
 	}
 
@@ -672,7 +672,7 @@ bool CRgnDetect::FindFrameBottom_ByRight(wchar_t* pChar, CharAttr* pAttr, int nW
 
 bool CRgnDetect::FindFrameBottom_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom)
 {
-	// Попытаемся спуститься вдоль левой рамки до угла
+	// РџРѕРїС‹С‚Р°РµРјСЃСЏ СЃРїСѓСЃС‚РёС‚СЊСЃСЏ РІРґРѕР»СЊ Р»РµРІРѕР№ СЂР°РјРєРё РґРѕ СѓРіР»Р°
 	int nY = nFromY;
 	int nEnd = nHeight - 1;
 	wchar_t c;
@@ -681,15 +681,15 @@ bool CRgnDetect::FindFrameBottom_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWi
 	{
 		c = pChar[(nY+1)*nWidth+nFromX];
 
-		if (c == ucBoxDblUpRight || c == ucBoxSinglUpRight  // двойной и одинарный угол (левый нижний)
+		if (c == ucBoxDblUpRight || c == ucBoxSinglUpRight  // РґРІРѕР№РЅРѕР№ Рё РѕРґРёРЅР°СЂРЅС‹Р№ СѓРіРѕР» (Р»РµРІС‹Р№ РЅРёР¶РЅРёР№)
 		        || c == ucBoxDblVertRight || c == ucBoxDblVertSinglRight || c == ucBoxSinglVertRight
 		        || c == ucBoxDblVert || c == ucBoxSinglVert
-		  ) // пересечение (правая граница)
+		  ) // РїРµСЂРµСЃРµС‡РµРЅРёРµ (РїСЂР°РІР°СЏ РіСЂР°РЅРёС†Р°)
 		{
 			nY++; continue;
 		}
 
-		// Другие символы недопустимы
+		// Р”СЂСѓРіРёРµ СЃРёРјРІРѕР»С‹ РЅРµРґРѕРїСѓСЃС‚РёРјС‹
 		break;
 	}
 
@@ -698,30 +698,30 @@ bool CRgnDetect::FindFrameBottom_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWi
 	return (nMostBottom > nFromY);
 }
 
-// Мы на правой границе рамки. Найти диалог слева
+// РњС‹ РЅР° РїСЂР°РІРѕР№ РіСЂР°РЅРёС†Рµ СЂР°РјРєРё. РќР°Р№С‚Рё РґРёР°Р»РѕРі СЃР»РµРІР°
 bool CRgnDetect::FindDialog_Right(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder)
 {
 	bMarkBorder = TRUE;
 	int nY = nFromY;
 	int nX = nFromX;
 	nMostRight = nFromX;
-	nMostBottom = nFromY; // сразу запомним
+	nMostBottom = nFromY; // СЃСЂР°Р·Сѓ Р·Р°РїРѕРјРЅРёРј
 
-	// Попытаемся подняться вверх вдоль правой рамки до угла
+	// РџРѕРїС‹С‚Р°РµРјСЃСЏ РїРѕРґРЅСЏС‚СЊСЃСЏ РІРІРµСЂС… РІРґРѕР»СЊ РїСЂР°РІРѕР№ СЂР°РјРєРё РґРѕ СѓРіР»Р°
 	if (FindFrameTop_ByRight(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nY))
 		nFromY = nY;
 
-	// Попытаемся спуститься вдоль правой рамки до угла
+	// РџРѕРїС‹С‚Р°РµРјСЃСЏ СЃРїСѓСЃС‚РёС‚СЊСЃСЏ РІРґРѕР»СЊ РїСЂР°РІРѕР№ СЂР°РјРєРё РґРѕ СѓРіР»Р°
 	if (FindFrameBottom_ByRight(pChar, pAttr, nWidth, nHeight, nFromX, nMostBottom, nY))
 		nMostBottom = nY;
 
-	// Теперь можно искать диалог
+	// РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ РёСЃРєР°С‚СЊ РґРёР°Р»РѕРі
 
-	// по верху
+	// РїРѕ РІРµСЂС…Сѓ
 	if (FindFrameLeft_ByTop(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nX))
 		nFromX = nX;
 
-	// по низу
+	// РїРѕ РЅРёР·Сѓ
 	if (FindFrameLeft_ByBottom(pChar, pAttr, nWidth, nHeight, nFromX, nMostBottom, nX))
 		if (nX < nFromX) nFromX = nX;
 
@@ -729,13 +729,13 @@ bool CRgnDetect::FindDialog_Right(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 	return true;
 }
 
-// Диалог может быть как слева, так и справа от вертикальной линии
+// Р”РёР°Р»РѕРі РјРѕР¶РµС‚ Р±С‹С‚СЊ РєР°Рє СЃР»РµРІР°, С‚Р°Рє Рё СЃРїСЂР°РІР° РѕС‚ РІРµСЂС‚РёРєР°Р»СЊРЅРѕР№ Р»РёРЅРёРё
 bool CRgnDetect::FindDialog_Any(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder)
 {
 	wchar_t c;
 	wchar_t wc = pChar[nFromY*nWidth+nFromX];
 
-	// Так что сначала нужно подняться (или опуститься) по рамке до угла
+	// РўР°Рє С‡С‚Рѕ СЃРЅР°С‡Р°Р»Р° РЅСѓР¶РЅРѕ РїРѕРґРЅСЏС‚СЊСЃСЏ (РёР»Рё РѕРїСѓСЃС‚РёС‚СЊСЃСЏ) РїРѕ СЂР°РјРєРµ РґРѕ СѓРіР»Р°
 	for(int ii = 0; ii <= 1; ii++)
 	{
 		int nY = nFromY;
@@ -746,17 +746,17 @@ bool CRgnDetect::FindDialog_Any(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 		wchar_t wcCorn3 = (!ii) ? ucBoxDblDownRight : ucBoxDblUpRight;
 		wchar_t wcCorn4 = (!ii) ? ucBoxSinglDownRight : ucBoxSinglUpRight;
 
-		// TODO: если можно - определим какой угол мы ищем (двойной/одинарный)
+		// TODO: РµСЃР»Рё РјРѕР¶РЅРѕ - РѕРїСЂРµРґРµР»РёРј РєР°РєРѕР№ СѓРіРѕР» РјС‹ РёС‰РµРј (РґРІРѕР№РЅРѕР№/РѕРґРёРЅР°СЂРЅС‹Р№)
 
-		// поехали
+		// РїРѕРµС…Р°Р»Рё
 		while(nY != nYEnd)
 		{
 			c = pChar[nY*nWidth+nFromX];
 
-			if (c == wcCorn1 || c == wcCorn2  // двойной и одинарный угол (правый верхний/нижний)
-			        || c == ucBoxDblVertLeft || c == ucBoxDblVertSinglLeft || c == ucBoxSinglVertLeft // пересечение (правая граница)
-			        || c == L'}' // На правой границе панели могут быть признаки обрезанности имени файла
-			        || (c >= ucBox25 && c <= ucBox75) || c == ucUpScroll || c == ucDnScroll) // полоса прокрутки может быть только справа
+			if (c == wcCorn1 || c == wcCorn2  // РґРІРѕР№РЅРѕР№ Рё РѕРґРёРЅР°СЂРЅС‹Р№ СѓРіРѕР» (РїСЂР°РІС‹Р№ РІРµСЂС…РЅРёР№/РЅРёР¶РЅРёР№)
+			        || c == ucBoxDblVertLeft || c == ucBoxDblVertSinglLeft || c == ucBoxSinglVertLeft // РїРµСЂРµСЃРµС‡РµРЅРёРµ (РїСЂР°РІР°СЏ РіСЂР°РЅРёС†Р°)
+			        || c == L'}' // РќР° РїСЂР°РІРѕР№ РіСЂР°РЅРёС†Рµ РїР°РЅРµР»Рё РјРѕРіСѓС‚ Р±С‹С‚СЊ РїСЂРёР·РЅР°РєРё РѕР±СЂРµР·Р°РЅРЅРѕСЃС‚Рё РёРјРµРЅРё С„Р°Р№Р»Р°
+			        || (c >= ucBox25 && c <= ucBox75) || c == ucUpScroll || c == ucDnScroll) // РїРѕР»РѕСЃР° РїСЂРѕРєСЂСѓС‚РєРё РјРѕР¶РµС‚ Р±С‹С‚СЊ С‚РѕР»СЊРєРѕ СЃРїСЂР°РІР°
 			{
 				if (FindDialog_Right(pChar, pAttr, nWidth, nHeight, nFromX, nY, nMostRight, nMostBottom, bMarkBorder))
 				{
@@ -764,11 +764,11 @@ bool CRgnDetect::FindDialog_Any(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 					return true;
 				}
 
-				return false; // непонятно что...
+				return false; // РЅРµРїРѕРЅСЏС‚РЅРѕ С‡С‚Рѕ...
 			}
 
-			if (c == wcCorn3 || c == wcCorn4  // двойной и одинарный угол (левый верхний/нижний)
-			        || c == ucBoxDblVertRight || c == ucBoxDblVertSinglRight || c == ucBoxSinglVertRight) // пересечение (правая граница)
+			if (c == wcCorn3 || c == wcCorn4  // РґРІРѕР№РЅРѕР№ Рё РѕРґРёРЅР°СЂРЅС‹Р№ СѓРіРѕР» (Р»РµРІС‹Р№ РІРµСЂС…РЅРёР№/РЅРёР¶РЅРёР№)
+			        || c == ucBoxDblVertRight || c == ucBoxDblVertSinglRight || c == ucBoxSinglVertRight) // РїРµСЂРµСЃРµС‡РµРЅРёРµ (РїСЂР°РІР°СЏ РіСЂР°РЅРёС†Р°)
 			{
 				if (FindDialog_Left(pChar, pAttr, nWidth, nHeight, nFromX, nY, nMostRight, nMostBottom, bMarkBorder))
 				{
@@ -776,16 +776,16 @@ bool CRgnDetect::FindDialog_Any(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 					return true;
 				}
 
-				return false; // непонятно что...
+				return false; // РЅРµРїРѕРЅСЏС‚РЅРѕ С‡С‚Рѕ...
 			}
 
 			if (c != wc)
 			{
-				// Другие символы недопустимы
+				// Р”СЂСѓРіРёРµ СЃРёРјРІРѕР»С‹ РЅРµРґРѕРїСѓСЃС‚РёРјС‹
 				break;
 			}
 
-			// Сдвигаемся (вверх или вниз)
+			// РЎРґРІРёРіР°РµРјСЃСЏ (РІРІРµСЂС… РёР»Рё РІРЅРёР·)
 			nY += nYStep;
 		}
 	}
@@ -795,7 +795,7 @@ bool CRgnDetect::FindDialog_Any(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 
 bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY)
 {
-	// наткнулись на вертикальную линию на панели
+	// РЅР°С‚РєРЅСѓР»РёСЃСЊ РЅР° РІРµСЂС‚РёРєР°Р»СЊРЅСѓСЋ Р»РёРЅРёСЋ РЅР° РїР°РЅРµР»Рё
 	int nShift = nWidth*nFromY;
 	wchar_t wc = pChar[nShift+nFromX];
 
@@ -805,7 +805,7 @@ bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		return false;
 	}
 
-	// Поверх панели может быть диалог... хорошо бы это учитывать
+	// РџРѕРІРµСЂС… РїР°РЅРµР»Рё РјРѕР¶РµС‚ Р±С‹С‚СЊ РґРёР°Р»РѕРі... С…РѕСЂРѕС€Рѕ Р±С‹ СЌС‚Рѕ СѓС‡РёС‚С‹РІР°С‚СЊ
 	int nY = nFromY;
 
 	while(++nY < nHeight)
@@ -814,27 +814,27 @@ bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 
 		switch(wc)
 		{
-				// на панелях вертикальная линия может прерываться '}' (когда имя файла в колонку не влезает)
+				// РЅР° РїР°РЅРµР»СЏС… РІРµСЂС‚РёРєР°Р»СЊРЅР°СЏ Р»РёРЅРёСЏ РјРѕР¶РµС‚ РїСЂРµСЂС‹РІР°С‚СЊСЃСЏ '}' (РєРѕРіРґР° РёРјСЏ С„Р°Р№Р»Р° РІ РєРѕР»РѕРЅРєСѓ РЅРµ РІР»РµР·Р°РµС‚)
 			case ucBoxSinglVert:
 			case L'}':
 				continue;
-				// Если мы натыкаемся на угловой рамочный символ - значит это часть диалога. выходим
+				// Р•СЃР»Рё РјС‹ РЅР°С‚С‹РєР°РµРјСЃСЏ РЅР° СѓРіР»РѕРІРѕР№ СЂР°РјРѕС‡РЅС‹Р№ СЃРёРјРІРѕР» - Р·РЅР°С‡РёС‚ СЌС‚Рѕ С‡Р°СЃС‚СЊ РґРёР°Р»РѕРіР°. РІС‹С…РѕРґРёРј
 			case ucBoxSinglUpRight:
 			case ucBoxSinglUpLeft:
 			case ucBoxSinglVertRight:
 			case ucBoxSinglVertLeft:
 				return false;
-				// достигли низа панели
+				// РґРѕСЃС‚РёРіР»Рё РЅРёР·Р° РїР°РЅРµР»Рё
 			case ucBoxSinglUpHorz:
 			case ucBoxDblUpSinglHorz:
 			case ucBoxSinglUpDblHorz:
 			case ucBoxDblUpDblHorz:
-				nY++; // пометить все сверху (включая)
-				// иначе - прервать поиск и пометить все сверху (не включая)
+				nY++; // РїРѕРјРµС‚РёС‚СЊ РІСЃРµ СЃРІРµСЂС…Сѓ (РІРєР»СЋС‡Р°СЏ)
+				// РёРЅР°С‡Рµ - РїСЂРµСЂРІР°С‚СЊ РїРѕРёСЃРє Рё РїРѕРјРµС‚РёС‚СЊ РІСЃРµ СЃРІРµСЂС…Сѓ (РЅРµ РІРєР»СЋС‡Р°СЏ)
 			default:
 				nY--;
 				{
-					// Пометить всю линию до верха (содержащую допустимые символы) как часть рамки
+					// РџРѕРјРµС‚РёС‚СЊ РІСЃСЋ Р»РёРЅРёСЋ РґРѕ РІРµСЂС…Р° (СЃРѕРґРµСЂР¶Р°С‰СѓСЋ РґРѕРїСѓСЃС‚РёРјС‹Рµ СЃРёРјРІРѕР»С‹) РєР°Рє С‡Р°СЃС‚СЊ СЂР°РјРєРё
 					CharAttr* p = pAttr+(nWidth*nY+nFromX);
 
 					while(nY-- >= nFromY)
@@ -849,7 +849,7 @@ bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 						p -= nWidth;
 					}
 
-					// мы могли начать не с верха панели
+					// РјС‹ РјРѕРіР»Рё РЅР°С‡Р°С‚СЊ РЅРµ СЃ РІРµСЂС…Р° РїР°РЅРµР»Рё
 					while(nY >= 0)
 					{
 						wc = pChar[nFromX+nY*nWidth];
@@ -878,17 +878,17 @@ bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 	return false;
 }
 
-// Попытаемся найти рамку?
+// РџРѕРїС‹С‚Р°РµРјСЃСЏ РЅР°Р№С‚Рё СЂР°РјРєСѓ?
 bool CRgnDetect::FindFrame_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nFrameX, int &nFrameY)
 {
-	// Попытаемся найти рамку?
+	// РџРѕРїС‹С‚Р°РµРјСЃСЏ РЅР°Р№С‚Рё СЂР°РјРєСѓ?
 	nFrameX = -1; nFrameY = -1;
 	int nShift = nWidth*nFromY;
 	int nFindFrom = nShift+nFromX;
 	int nMaxAdd = min(5,(nWidth - nFromX - 1));
 	wchar_t wc;
 
-	// в этой же строке
+	// РІ СЌС‚РѕР№ Р¶Рµ СЃС‚СЂРѕРєРµ
 	for(int n = 1; n <= nMaxAdd; n++)
 	{
 		wc = pChar[nFindFrom+n];
@@ -902,7 +902,7 @@ bool CRgnDetect::FindFrame_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 
 	if (nFrameY == -1)
 	{
-		// строкой ниже
+		// СЃС‚СЂРѕРєРѕР№ РЅРёР¶Рµ
 		nFindFrom = nShift+nWidth+nFromX;
 
 		for(int n = 0; n <= nMaxAdd; n++)
@@ -928,7 +928,7 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 	int nStartRight = nMostRight;
 	int nStartBottom = nMostBottom;
 	#endif
-	// Теперь расширить nMostRight & nMostBottom на окантовку
+	// РўРµРїРµСЂСЊ СЂР°СЃС€РёСЂРёС‚СЊ nMostRight & nMostBottom РЅР° РѕРєР°РЅС‚РѕРІРєСѓ
 	int n, n2, nShift = nWidth*nFromY;
 	wchar_t wc = pChar[nShift+nFromX];
 	DWORD nColor = pAttr[nShift+nFromX].crBackColor;
@@ -938,8 +938,8 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 		if (wc != ucBoxDblDownRight && wc != ucBoxSinglDownRight)
 			return false;
 
-		//Сначала нужно пройти вверх и влево
-		if (nFromY)    // Пробуем вверх
+		//РЎРЅР°С‡Р°Р»Р° РЅСѓР¶РЅРѕ РїСЂРѕР№С‚Рё РІРІРµСЂС… Рё РІР»РµРІРѕ
+		if (nFromY)    // РџСЂРѕР±СѓРµРј РІРІРµСЂС…
 		{
 			n = (nFromY-1)*nWidth+nFromX;
 			n2 = (nFromY-1)*nWidth+nMostRight;
@@ -951,7 +951,7 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 			}
 		}
 
-		if (nFromX)    // Пробуем влево
+		if (nFromX)    // РџСЂРѕР±СѓРµРј РІР»РµРІРѕ
 		{
 
 			int nMinMargin = nFromX-3; if (nMinMargin<0) nMinMargin = 0;
@@ -963,13 +963,13 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 			{
 				n--; n2--;
 
-				// Проверяем цвет и символ
+				// РџСЂРѕРІРµСЂСЏРµРј С†РІРµС‚ Рё СЃРёРјРІРѕР»
 				if ((((pAttr[n].crBackColor == nColor) && ((pChar[n] == L' ') || (pChar[n] == ucNoBreakSpace)))
-						// "\\" - пометка что диалог в Far двигается с клавиатуры (Ctrl+F5)
+						// "\\" - РїРѕРјРµС‚РєР° С‡С‚Рѕ РґРёР°Р»РѕРі РІ Far РґРІРёРіР°РµС‚СЃСЏ СЃ РєР»Р°РІРёР°С‚СѓСЂС‹ (Ctrl+F5)
 						|| (pChar[n] == L'\\'))
-					// Строка n2 соответствует не самой нижней строке диалога,
-					// а предпоследней строке на которой рисуется рамка.
-					// Поэтому тут проверяем только на " "
+					// РЎС‚СЂРѕРєР° n2 СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚ РЅРµ СЃР°РјРѕР№ РЅРёР¶РЅРµР№ СЃС‚СЂРѕРєРµ РґРёР°Р»РѕРіР°,
+					// Р° РїСЂРµРґРїРѕСЃР»РµРґРЅРµР№ СЃС‚СЂРѕРєРµ РЅР° РєРѕС‚РѕСЂРѕР№ СЂРёСЃСѓРµС‚СЃСЏ СЂР°РјРєР°.
+					// РџРѕСЌС‚РѕРјСѓ С‚СѓС‚ РїСЂРѕРІРµСЂСЏРµРј С‚РѕР»СЊРєРѕ РЅР° " "
 					&& ((pAttr[n2].crBackColor == nColor) && ((pChar[n2] == L' ') || (pChar[n2] == ucNoBreakSpace))))
 				{
 					nFromX--;
@@ -1021,9 +1021,9 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 	// nMostBottom
 	if (nFrameY > nFromY && nMostBottom < (nHeight-1))
 	{
-		// Если в фаре диалог двигается с клавиатуры (Ctrl+F5)
-		// то по углам диалога ставятся красные метки "\/"
-		// Поэтому проверяем не по углу диалога, а "под углом рамки"
+		// Р•СЃР»Рё РІ С„Р°СЂРµ РґРёР°Р»РѕРі РґРІРёРіР°РµС‚СЃСЏ СЃ РєР»Р°РІРёР°С‚СѓСЂС‹ (Ctrl+F5)
+		// С‚Рѕ РїРѕ СѓРіР»Р°Рј РґРёР°Р»РѕРіР° СЃС‚Р°РІСЏС‚СЃСЏ РєСЂР°СЃРЅС‹Рµ РјРµС‚РєРё "\/"
+		// РџРѕСЌС‚РѕРјСѓ РїСЂРѕРІРµСЂСЏРµРј РЅРµ РїРѕ СѓРіР»Сѓ РґРёР°Р»РѕРіР°, Р° "РїРѕРґ СѓРіР»РѕРј СЂР°РјРєРё"
 		n = (nMostBottom+1)*nWidth+nFrameX;
 
 		if (pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace))
@@ -1036,16 +1036,16 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 	return bExpanded;
 }
 
-// В идеале - сюда попадать не должны. Это может быть или кусок диалога
-// другая часть которого или скрыта, или вытащена за границы экрана
+// Р’ РёРґРµР°Р»Рµ - СЃСЋРґР° РїРѕРїР°РґР°С‚СЊ РЅРµ РґРѕР»Р¶РЅС‹. Р­С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РёР»Рё РєСѓСЃРѕРє РґРёР°Р»РѕРіР°
+// РґСЂСѓРіР°СЏ С‡Р°СЃС‚СЊ РєРѕС‚РѕСЂРѕРіРѕ РёР»Рё СЃРєСЂС‹С‚Р°, РёР»Рё РІС‹С‚Р°С‰РµРЅР° Р·Р° РіСЂР°РЅРёС†С‹ СЌРєСЂР°РЅР°
 bool CRgnDetect::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder)
 {
-	// Придется идти просто по цвету фона
-	// Это может быть диалог, рамка которого закрыта другим диалогом,
-	// или вообще кусок диалога, у которого видна только часть рамки
+	// РџСЂРёРґРµС‚СЃСЏ РёРґС‚Рё РїСЂРѕСЃС‚Рѕ РїРѕ С†РІРµС‚Сѓ С„РѕРЅР°
+	// Р­С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РґРёР°Р»РѕРі, СЂР°РјРєР° РєРѕС‚РѕСЂРѕРіРѕ Р·Р°РєСЂС‹С‚Р° РґСЂСѓРіРёРј РґРёР°Р»РѕРіРѕРј,
+	// РёР»Рё РІРѕРѕР±С‰Рµ РєСѓСЃРѕРє РґРёР°Р»РѕРіР°, Сѓ РєРѕС‚РѕСЂРѕРіРѕ РІРёРґРЅР° С‚РѕР»СЊРєРѕ С‡Р°СЃС‚СЊ СЂР°РјРєРё
 	DWORD nBackColor = pAttr[nFromX+nWidth*nFromY].crBackColor;
 	int n, nMostRightBottom, nShift = nWidth*nFromY;
-	// Найти правую границу
+	// РќР°Р№С‚Рё РїСЂР°РІСѓСЋ РіСЂР°РЅРёС†Сѓ
 	nMostRight = nFromX;
 
 	while(++nMostRight < nWidth)
@@ -1053,12 +1053,12 @@ bool CRgnDetect::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		n = nShift+nMostRight;
 
 		if (pAttr[n].crBackColor != nBackColor)
-			break; // конец цвета фона диалога
+			break; // РєРѕРЅРµС† С†РІРµС‚Р° С„РѕРЅР° РґРёР°Р»РѕРіР°
 	}
 
 	nMostRight--;
 	_ASSERTE(nMostRight<nWidth);
-	//2010-06-27 все-таки лишнее. Если уж пошли "по фону" то не нужно на рамки ориентироваться, иначе зациклимся
+	//2010-06-27 РІСЃРµ-С‚Р°РєРё Р»РёС€РЅРµРµ. Р•СЃР»Рё СѓР¶ РїРѕС€Р»Рё "РїРѕ С„РѕРЅСѓ" С‚Рѕ РЅРµ РЅСѓР¶РЅРѕ РЅР° СЂР°РјРєРё РѕСЂРёРµРЅС‚РёСЂРѕРІР°С‚СЊСЃСЏ, РёРЅР°С‡Рµ Р·Р°С†РёРєР»РёРјСЃСЏ
 #if 0
 	wchar_t wc = pChar[nFromY*nWidth+nMostRight];
 
@@ -1075,7 +1075,7 @@ bool CRgnDetect::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 				DetectDialog(pChar, pAttr, nWidth, nHeight, nMostRight, nFromY);
 
 				if (pAttr[nShift+nFromX].bDialog)
-					return false; // все уже обработано
+					return false; // РІСЃРµ СѓР¶Рµ РѕР±СЂР°Р±РѕС‚Р°РЅРѕ
 			}
 		}
 	}
@@ -1091,7 +1091,7 @@ bool CRgnDetect::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 	}
 
 #endif
-	// Найти нижнюю границу
+	// РќР°Р№С‚Рё РЅРёР¶РЅСЋСЋ РіСЂР°РЅРёС†Сѓ
 	nMostBottom = nFromY;
 
 	while(++nMostBottom < nHeight)
@@ -1099,12 +1099,12 @@ bool CRgnDetect::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		n = nFromX+nMostBottom*nWidth;
 
 		if (pAttr[n].crBackColor != nBackColor)
-			break; // конец цвета фона диалога
+			break; // РєРѕРЅРµС† С†РІРµС‚Р° С„РѕРЅР° РґРёР°Р»РѕРіР°
 	}
 
 	nMostBottom--;
 	_ASSERTE(nMostBottom<nHeight);
-	// Найти нижнюю границу по правой стороне
+	// РќР°Р№С‚Рё РЅРёР¶РЅСЋСЋ РіСЂР°РЅРёС†Сѓ РїРѕ РїСЂР°РІРѕР№ СЃС‚РѕСЂРѕРЅРµ
 	nMostRightBottom = nFromY;
 
 	while(++nMostRightBottom < nHeight)
@@ -1112,13 +1112,13 @@ bool CRgnDetect::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		n = nMostRight+nMostRightBottom*nWidth;
 
 		if (pAttr[n].crBackColor != nBackColor)
-			break; // конец цвета фона диалога
+			break; // РєРѕРЅРµС† С†РІРµС‚Р° С„РѕРЅР° РґРёР°Р»РѕРіР°
 	}
 
 	nMostRightBottom--;
 	_ASSERTE(nMostRightBottom<nHeight);
 
-	// Результатом считаем - наибольшую высоту
+	// Р РµР·СѓР»СЊС‚Р°С‚РѕРј СЃС‡РёС‚Р°РµРј - РЅР°РёР±РѕР»СЊС€СѓСЋ РІС‹СЃРѕС‚Сѓ
 	if (nMostRightBottom > nMostBottom)
 		nMostBottom = nMostRightBottom;
 
@@ -1143,7 +1143,7 @@ bool CRgnDetect::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int n
 
 #endif
 
-	// защита от переполнения стека (быть не должно)
+	// Р·Р°С‰РёС‚Р° РѕС‚ РїРµСЂРµРїРѕР»РЅРµРЅРёСЏ СЃС‚РµРєР° (Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ)
 	if (mn_DetectCallCount >= 3)
 	{
 		_ASSERTE(mn_DetectCallCount<3);
@@ -1151,7 +1151,7 @@ bool CRgnDetect::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int n
 	}
 
 	/* *********************************************** */
-	/* После этой строки 'return' использовать нельзя! */
+	/* РџРѕСЃР»Рµ СЌС‚РѕР№ СЃС‚СЂРѕРєРё 'return' РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РЅРµР»СЊР·СЏ! */
 	/* *********************************************** */
 	bool lbDlgFound = false;
 	mn_DetectCallCount++;
@@ -1159,55 +1159,55 @@ bool CRgnDetect::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int n
 	int nMostRight, nMostBottom; //, nMostRightBottom, nMostTop, nShift, n;
 	//DWORD nBackColor;
 	bool bMarkBorder = false;
-	// Самое противное - детект диалога, который частично перекрыт другим диалогом
+	// РЎР°РјРѕРµ РїСЂРѕС‚РёРІРЅРѕРµ - РґРµС‚РµРєС‚ РґРёР°Р»РѕРіР°, РєРѕС‚РѕСЂС‹Р№ С‡Р°СЃС‚РёС‡РЅРѕ РїРµСЂРµРєСЂС‹С‚ РґСЂСѓРіРёРј РґРёР°Р»РѕРіРѕРј
 	int nShift = nWidth*nFromY;
 	wc = pChar[nShift+nFromX];
-	WARNING("Доделать detect");
+	WARNING("Р”РѕРґРµР»Р°С‚СЊ detect");
 	/*
-	Если нижний-левый угол диалога не нашли - он может быть закрыт другим диалогом?
-	попытаться найти правый-нижний угол?
+	Р•СЃР»Рё РЅРёР¶РЅРёР№-Р»РµРІС‹Р№ СѓРіРѕР» РґРёР°Р»РѕРіР° РЅРµ РЅР°С€Р»Рё - РѕРЅ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р·Р°РєСЂС‹С‚ РґСЂСѓРіРёРј РґРёР°Р»РѕРіРѕРј?
+	РїРѕРїС‹С‚Р°С‚СЊСЃСЏ РЅР°Р№С‚Рё РїСЂР°РІС‹Р№-РЅРёР¶РЅРёР№ СѓРіРѕР»?
 	*/
 
 	/*
-	Если у панелей закрыта середина нижней линии (меню плагинов) то ошибочно считается,
-	что это один большой диалог. А ведь можно по верху определить.
+	Р•СЃР»Рё Сѓ РїР°РЅРµР»РµР№ Р·Р°РєСЂС‹С‚Р° СЃРµСЂРµРґРёРЅР° РЅРёР¶РЅРµР№ Р»РёРЅРёРё (РјРµРЅСЋ РїР»Р°РіРёРЅРѕРІ) С‚Рѕ РѕС€РёР±РѕС‡РЅРѕ СЃС‡РёС‚Р°РµС‚СЃСЏ,
+	С‡С‚Рѕ СЌС‚Рѕ РѕРґРёРЅ Р±РѕР»СЊС€РѕР№ РґРёР°Р»РѕРі. Рђ РІРµРґСЊ РјРѕР¶РЅРѕ РїРѕ РІРµСЂС…Сѓ РѕРїСЂРµРґРµР»РёС‚СЊ.
 	*/
 
 	if (wc >= ucBoxSinglHorz && wc <= ucBoxDblVertHorz)
 	{
 		switch(wc)
 		{
-				// Верхний левый угол?
+				// Р’РµСЂС…РЅРёР№ Р»РµРІС‹Р№ СѓРіРѕР»?
 			case ucBoxSinglDownRight: case ucBoxDblDownRight:
 			{
-				// Диалог без окантовки. Все просто - идем по рамке
+				// Р”РёР°Р»РѕРі Р±РµР· РѕРєР°РЅС‚РѕРІРєРё. Р’СЃРµ РїСЂРѕСЃС‚Рѕ - РёРґРµРј РїРѕ СЂР°РјРєРµ
 				if (!FindDialog_TopLeft(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
 					goto fin;
 
 				goto done;
 			}
-			// Нижний левый угол?
+			// РќРёР¶РЅРёР№ Р»РµРІС‹Р№ СѓРіРѕР»?
 			case ucBoxSinglUpRight: case ucBoxDblUpRight:
 			{
-				// Сначала нужно будет подняться по рамке вверх
+				// РЎРЅР°С‡Р°Р»Р° РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ РїРѕРґРЅСЏС‚СЊСЃСЏ РїРѕ СЂР°РјРєРµ РІРІРµСЂС…
 				if (!FindDialog_TopLeft(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
 					goto fin;
 
 				goto done;
 			}
-			// Верхний правый угол?
+			// Р’РµСЂС…РЅРёР№ РїСЂР°РІС‹Р№ СѓРіРѕР»?
 			case ucBoxSinglDownLeft: case ucBoxDblDownLeft:
 			{
-				// Диалог без окантовки. Все просто - идем по рамке
+				// Р”РёР°Р»РѕРі Р±РµР· РѕРєР°РЅС‚РѕРІРєРё. Р’СЃРµ РїСЂРѕСЃС‚Рѕ - РёРґРµРј РїРѕ СЂР°РјРєРµ
 				if (!FindDialog_TopRight(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
 					goto fin;
 
 				goto done;
 			}
-			// Нижний правый угол?
+			// РќРёР¶РЅРёР№ РїСЂР°РІС‹Р№ СѓРіРѕР»?
 			case ucBoxSinglUpLeft: case ucBoxDblUpLeft:
 			{
-				// Сначала нужно будет подняться по рамке вверх
+				// РЎРЅР°С‡Р°Р»Р° РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ РїРѕРґРЅСЏС‚СЊСЃСЏ РїРѕ СЂР°РјРєРµ РІРІРµСЂС…
 				if (!FindDialog_Right(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
 					goto fin;
 
@@ -1215,14 +1215,14 @@ bool CRgnDetect::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int n
 			}
 			case ucBoxDblVert: case ucBoxSinglVert:
 			{
-				// наткнулись на вертикальную линию на панели
+				// РЅР°С‚РєРЅСѓР»РёСЃСЊ РЅР° РІРµСЂС‚РёРєР°Р»СЊРЅСѓСЋ Р»РёРЅРёСЋ РЅР° РїР°РЅРµР»Рё
 				if (wc == ucBoxSinglVert)
 				{
 					if (FindDialog_Inner(pChar, pAttr, nWidth, nHeight, nFromX, nFromY))
 						goto fin;
 				}
 
-				// Диалог может быть как слева, так и справа от вертикальной линии
+				// Р”РёР°Р»РѕРі РјРѕР¶РµС‚ Р±С‹С‚СЊ РєР°Рє СЃР»РµРІР°, С‚Р°Рє Рё СЃРїСЂР°РІР° РѕС‚ РІРµСЂС‚РёРєР°Р»СЊРЅРѕР№ Р»РёРЅРёРё
 				if (FindDialog_Any(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
 					goto done;
 			}
@@ -1231,29 +1231,29 @@ bool CRgnDetect::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int n
 
 	if (wc == ucSpace || wc == ucNoBreakSpace)
 	{
-		// Попытаемся найти рамку?
+		// РџРѕРїС‹С‚Р°РµРјСЃСЏ РЅР°Р№С‚Рё СЂР°РјРєСѓ?
 		int nFrameX = -1, nFrameY = -1;
 
 		if (FindFrame_TopLeft(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nFrameX, nFrameY))
 		{
-			// Если угол нашли - ищем рамку по рамке :)
+			// Р•СЃР»Рё СѓРіРѕР» РЅР°С€Р»Рё - РёС‰РµРј СЂР°РјРєСѓ РїРѕ СЂР°РјРєРµ :)
 			DetectDialog(pChar, pAttr, nWidth, nHeight, nFrameX, nFrameY, &nMostRight, &nMostBottom);
-			//// Теперь расширить nMostRight & nMostBottom на окантовку
+			//// РўРµРїРµСЂСЊ СЂР°СЃС€РёСЂРёС‚СЊ nMostRight & nMostBottom РЅР° РѕРєР°РЅС‚РѕРІРєСѓ
 			//ExpandDialogFrame(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nFrameX, nFrameY, nMostRight, nMostBottom);
 			//
 			goto done;
 		}
 	}
 
-	// Придется идти просто по цвету фона
-	// Это может быть диалог, рамка которого закрыта другим диалогом,
-	// или вообще кусок диалога, у которого видна только часть рамки
-	// 100627 - но только если это не вьювер/редактор. там слишком много мусора будет
+	// РџСЂРёРґРµС‚СЃСЏ РёРґС‚Рё РїСЂРѕСЃС‚Рѕ РїРѕ С†РІРµС‚Сѓ С„РѕРЅР°
+	// Р­С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РґРёР°Р»РѕРі, СЂР°РјРєР° РєРѕС‚РѕСЂРѕРіРѕ Р·Р°РєСЂС‹С‚Р° РґСЂСѓРіРёРј РґРёР°Р»РѕРіРѕРј,
+	// РёР»Рё РІРѕРѕР±С‰Рµ РєСѓСЃРѕРє РґРёР°Р»РѕРіР°, Сѓ РєРѕС‚РѕСЂРѕРіРѕ РІРёРґРЅР° С‚РѕР»СЊРєРѕ С‡Р°СЃС‚СЊ СЂР°РјРєРё
+	// 100627 - РЅРѕ С‚РѕР»СЊРєРѕ РµСЃР»Рё СЌС‚Рѕ РЅРµ РІСЊСЋРІРµСЂ/СЂРµРґР°РєС‚РѕСЂ. С‚Р°Рј СЃР»РёС€РєРѕРј РјРЅРѕРіРѕ РјСѓСЃРѕСЂР° Р±СѓРґРµС‚
 	if ((m_DetectedDialogs.AllFlags & FR_VIEWEREDITOR))
 		goto fin;
 
 	if (!FindByBackground(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
-		goto fin; // значит уже все пометили, или диалога нет
+		goto fin; // Р·РЅР°С‡РёС‚ СѓР¶Рµ РІСЃРµ РїРѕРјРµС‚РёР»Рё, РёР»Рё РґРёР°Р»РѕРіР° РЅРµС‚
 
 done:
 #ifdef _DEBUG
@@ -1262,17 +1262,17 @@ done:
 	        || nFromY<0 || nFromY>=nHeight || nMostBottom<nFromY || nMostBottom>=nHeight)
 	{
 		//_ASSERT(FALSE);
-		// Это происходит, если обновление внутренних буферов произошло ДО
-		// завершения обработки диалогов (быстрый драг панелей, диалогов, и т.п.)
+		// Р­С‚Рѕ РїСЂРѕРёСЃС…РѕРґРёС‚, РµСЃР»Рё РѕР±РЅРѕРІР»РµРЅРёРµ РІРЅСѓС‚СЂРµРЅРЅРёС… Р±СѓС„РµСЂРѕРІ РїСЂРѕРёР·РѕС€Р»Рѕ Р”Рћ
+		// Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СЂР°Р±РѕС‚РєРё РґРёР°Р»РѕРіРѕРІ (Р±С‹СЃС‚СЂС‹Р№ РґСЂР°Рі РїР°РЅРµР»РµР№, РґРёР°Р»РѕРіРѕРІ, Рё С‚.Рї.)
 		goto fin;
 	}
 
 #endif
-	// Забить атрибуты
+	// Р—Р°Р±РёС‚СЊ Р°С‚СЂРёР±СѓС‚С‹
 	MarkDialog(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder);
 	lbDlgFound = true;
 
-	// Вернуть размеры, если просили
+	// Р’РµСЂРЅСѓС‚СЊ СЂР°Р·РјРµСЂС‹, РµСЃР»Рё РїСЂРѕСЃРёР»Рё
 	if (pnMostRight) *pnMostRight = nMostRight;
 
 	if (pnMostBottom) *pnMostBottom = nMostBottom;
@@ -1312,7 +1312,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		else
 		{
 			DlgFlags |= FR_MENUBAR;
-			// Попытаться подхватить флаг FR_ACTIVEMENUBAR даже когда меню всегда видно
+			// РџРѕРїС‹С‚Р°С‚СЊСЃСЏ РїРѕРґС…РІР°С‚РёС‚СЊ С„Р»Р°Рі FR_ACTIVEMENUBAR РґР°Р¶Рµ РєРѕРіРґР° РјРµРЅСЋ РІСЃРµРіРґР° РІРёРґРЅРѕ
 			BYTE btMenuInactiveFore = (mp_FarInfo->nFarColors[col_HMenuText] & 0xF);
 			BYTE btMenuInactiveBack = (mp_FarInfo->nFarColors[col_HMenuText] & 0xF0) >> 4;
 			int nShift = nY1 * nWidth + nX1;
@@ -1328,13 +1328,13 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			}
 		}
 	}
-	else if (bMarkBorder && bFindExterior && mb_NeedPanelDetect) // должно быть так при пометке панелей
-		//&& !(m_DetectedDialogs.AllFlags & FR_FULLPANEL) // если еще не нашли полноэкранную панель
-		//&& ((m_DetectedDialogs.AllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL)) != (FR_LEFTPANEL|FR_RIGHTPANEL)) // и не нашли или правую или левую панель
+	else if (bMarkBorder && bFindExterior && mb_NeedPanelDetect) // РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С‚Р°Рє РїСЂРё РїРѕРјРµС‚РєРµ РїР°РЅРµР»РµР№
+		//&& !(m_DetectedDialogs.AllFlags & FR_FULLPANEL) // РµСЃР»Рё РµС‰Рµ РЅРµ РЅР°С€Р»Рё РїРѕР»РЅРѕСЌРєСЂР°РЅРЅСѓСЋ РїР°РЅРµР»СЊ
+		//&& ((m_DetectedDialogs.AllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL)) != (FR_LEFTPANEL|FR_RIGHTPANEL)) // Рё РЅРµ РЅР°С€Р»Рё РёР»Рё РїСЂР°РІСѓСЋ РёР»Рё Р»РµРІСѓСЋ РїР°РЅРµР»СЊ
 		//)
 	{
-		if ((!nY1 || ((m_DetectedDialogs.AllFlags & FR_MENUBAR) && (nY1 == 1)))  // условие для верхней границы панелей
-		        && (nY2 >= (nY1 + 3))) // и минимальная высота панелей
+		if ((!nY1 || ((m_DetectedDialogs.AllFlags & FR_MENUBAR) && (nY1 == 1)))  // СѓСЃР»РѕРІРёРµ РґР»СЏ РІРµСЂС…РЅРµР№ РіСЂР°РЅРёС†С‹ РїР°РЅРµР»РµР№
+		        && (nY2 >= (nY1 + 3))) // Рё РјРёРЅРёРјР°Р»СЊРЅР°СЏ РІС‹СЃРѕС‚Р° РїР°РЅРµР»РµР№
 		{
 			SMALL_RECT sr = {nX1,nY1,nX2,nY2};
 			DWORD nPossible = 0;
@@ -1360,8 +1360,8 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 
 			if (nPossible)
 			{
-				// Нужно чтобы хотя бы в одном углу этого прямоугольника были цвета рамки панелей!
-				// Иначе - считаем что вся панель перекрыта диалогами и не видима
+				// РќСѓР¶РЅРѕ С‡С‚РѕР±С‹ С…РѕС‚СЏ Р±С‹ РІ РѕРґРЅРѕРј СѓРіР»Сѓ СЌС‚РѕРіРѕ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєР° Р±С‹Р»Рё С†РІРµС‚Р° СЂР°РјРєРё РїР°РЅРµР»РµР№!
+				// РРЅР°С‡Рµ - СЃС‡РёС‚Р°РµРј С‡С‚Рѕ РІСЃСЏ РїР°РЅРµР»СЊ РїРµСЂРµРєСЂС‹С‚Р° РґРёР°Р»РѕРіР°РјРё Рё РЅРµ РІРёРґРёРјР°
 				BYTE btPanelFore = (mp_FarInfo->nFarColors[col_PanelBox] & 0xF);
 				BYTE btPanelBack = (mp_FarInfo->nFarColors[col_PanelBox] & 0xF0) >> 4;
 				int nShift = 0;
@@ -1376,18 +1376,18 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 						case 3: nShift = nY2 * nWidth + nX2; break;
 					}
 
-					// Если цвет угла совпал с рамкой панели - то считаем, что это она
+					// Р•СЃР»Рё С†РІРµС‚ СѓРіР»Р° СЃРѕРІРїР°Р» СЃ СЂР°РјРєРѕР№ РїР°РЅРµР»Рё - С‚Рѕ СЃС‡РёС‚Р°РµРј, С‡С‚Рѕ СЌС‚Рѕ РѕРЅР°
 					if (pAttr[nShift].nForeIdx == btPanelFore && pAttr[nShift].nBackIdx == btPanelBack)
 					{
 						if ((nPossible & FR_RIGHTPANEL))
-							mrc_RightPanel = sr; // только правая
+							mrc_RightPanel = sr; // С‚РѕР»СЊРєРѕ РїСЂР°РІР°СЏ
 						else
-							mrc_LeftPanel = sr;  // левая или полноэкранная
+							mrc_LeftPanel = sr;  // Р»РµРІР°СЏ РёР»Рё РїРѕР»РЅРѕСЌРєСЂР°РЅРЅР°СЏ
 
 						DlgFlags |= nPossible;
 						bFindExterior = false;
 
-						// Может все панели уже нашли?
+						// РњРѕР¶РµС‚ РІСЃРµ РїР°РЅРµР»Рё СѓР¶Рµ РЅР°С€Р»Рё?
 						if ((nPossible & FR_FULLPANEL))
 							mb_NeedPanelDetect = FALSE;
 						else if ((m_DetectedDialogs.AllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL)) == (FR_LEFTPANEL|FR_RIGHTPANEL))
@@ -1400,11 +1400,11 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		}
 	}
 
-	// Может быть это QSearch?
+	// РњРѕР¶РµС‚ Р±С‹С‚СЊ СЌС‚Рѕ QSearch?
 	if (!(DlgFlags & FR_COMMONDLG_MASK) && bMarkBorder && bFindExterior)
 	{
-		// QSearch начинается строго на нижней рамке панели, за исключением того случая,
-		// когда KeyBar отключен и панель занимает (nHeight-1) строку
+		// QSearch РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃС‚СЂРѕРіРѕ РЅР° РЅРёР¶РЅРµР№ СЂР°РјРєРµ РїР°РЅРµР»Рё, Р·Р° РёСЃРєР»СЋС‡РµРЅРёРµРј С‚РѕРіРѕ СЃР»СѓС‡Р°СЏ,
+		// РєРѕРіРґР° KeyBar РѕС‚РєР»СЋС‡РµРЅ Рё РїР°РЅРµР»СЊ Р·Р°РЅРёРјР°РµС‚ (nHeight-1) СЃС‚СЂРѕРєСѓ
 		SMALL_RECT *prc = NULL;
 
 		if ((m_DetectedDialogs.AllFlags & FR_FULLPANEL))
@@ -1420,7 +1420,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			prc = &mrc_RightPanel;
 		}
 
-		// проверяем
+		// РїСЂРѕРІРµСЂСЏРµРј
 		if (prc)
 		{
 			if ((nY1+2) == nY2 && prc->Left < nX1 && prc->Right > nX2
@@ -1432,8 +1432,8 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 
 		if (!(DlgFlags & FR_QSEARCH))
 		{
-			// Ширина диалога:
-			// г========== Unicode CharMap =======[¦]=¬  .
+			// РЁРёСЂРёРЅР° РґРёР°Р»РѕРіР°:
+			// Рі========== Unicode CharMap =======[В¦]=В¬  .
 			if ((nX1+39) == nX2 && nY2 >= (nY1 + 23))
 			{
 				wchar_t* pchTitle = pChar + (nY1 * nWidth + nX1 + 12);
@@ -1457,7 +1457,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 	{
 		mn_NextDlgId++;
 		DlgFlags |= mn_NextDlgId<<8;
-		// "Красненький" диалог?
+		// "РљСЂР°СЃРЅРµРЅСЊРєРёР№" РґРёР°Р»РѕРі?
 		BYTE btWarnBack = (mp_FarInfo->nFarColors[col_WarnDialogBox] & 0xF0) >> 4;
 
 		if (pAttr[nY1 * nWidth + nX1].nBackIdx == btWarnBack)
@@ -1469,7 +1469,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		}
 	}
 
-	// Занести координаты в новый массив прямоугольников, обнаруженных в консоли
+	// Р—Р°РЅРµСЃС‚Рё РєРѕРѕСЂРґРёРЅР°С‚С‹ РІ РЅРѕРІС‹Р№ РјР°СЃСЃРёРІ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРѕРІ, РѕР±РЅР°СЂСѓР¶РµРЅРЅС‹С… РІ РєРѕРЅСЃРѕР»Рё
 	if (m_DetectedDialogs.Count < MAX_DETECTED_DIALOGS)
 	{
 		nDlgIdx = m_DetectedDialogs.Count++;
@@ -1549,7 +1549,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		//	pAttr[nShift].bDialogVBorder = TRUE;
 	}
 
-	// Если помечается диалог по рамке - попытаться определить окантовку
+	// Р•СЃР»Рё РїРѕРјРµС‡Р°РµС‚СЃСЏ РґРёР°Р»РѕРі РїРѕ СЂР°РјРєРµ - РїРѕРїС‹С‚Р°С‚СЊСЃСЏ РѕРїСЂРµРґРµР»РёС‚СЊ РѕРєР°РЅС‚РѕРІРєСѓ
 	if (bFindExterior && bMarkBorder)
 	{
 		int nMostRight = nX2, nMostBottom = nY2;
@@ -1565,12 +1565,12 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			if (nDlgIdx >= 0)
 				m_DetectedDialogs.DlgFlags[nDlgIdx] = DlgFlags;
 
-			//Optimize: помечать можно только окантовку - сам диалог уже помечен
+			//Optimize: РїРѕРјРµС‡Р°С‚СЊ РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РѕРєР°РЅС‚РѕРІРєСѓ - СЃР°Рј РґРёР°Р»РѕРі СѓР¶Рµ РїРѕРјРµС‡РµРЅ
 			MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1, nNewY1, nMostRight, nMostBottom, true, false);
-			// Еще нужно "пометить" тень под диалогом
+			// Р•С‰Рµ РЅСѓР¶РЅРѕ "РїРѕРјРµС‚РёС‚СЊ" С‚РµРЅСЊ РїРѕРґ РґРёР°Р»РѕРіРѕРј
 			if (((nMostBottom+1) < nHeight) && ((nNewX1+2) < nWidth))
 				MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1+2, nMostBottom+1, min(nMostRight+2,nWidth-1), nMostBottom+1, true, false);
-			// И справа от диалога
+			// Р СЃРїСЂР°РІР° РѕС‚ РґРёР°Р»РѕРіР°
 			if (((nMostRight+1) < nWidth) && ((nNewY1+1) < nHeight))
 				MarkDialog(pChar, pAttr, nWidth, nHeight, nMostRight+1, nNewY1+1, min(nMostRight+2,nWidth-1), nMostBottom, true, false);
 		}
@@ -1578,12 +1578,12 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 
 	if ((DlgFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)) != 0)
 	{
-		// Для детекта наличия PanelTabs
+		// Р”Р»СЏ РґРµС‚РµРєС‚Р° РЅР°Р»РёС‡РёСЏ PanelTabs
 		bool bSeparateTabs = false;
 		RECT r = {nX1,nY1,nX2,nY2};
 		int nBottom = r.bottom;
 		int nLeft = r.left;
-		// SeparateTabs может быть не проинициализирован
+		// SeparateTabs РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅРµ РїСЂРѕРёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅ
 		if (r.left /*&& mp_FarInfo->PanelTabs.SeparateTabs == 0*/
 		        && (m_DetectedDialogs.AllFlags & FR_LEFTPANEL))
 		{
@@ -1599,7 +1599,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			}
 		}
 
-		// SeparateTabs может быть не проинициализирован
+		// SeparateTabs РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅРµ РїСЂРѕРёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅ
 		int nIdxLeft, nIdxRight;
 		if (DlgFlags & FR_LEFTPANEL)
 		{
@@ -1613,7 +1613,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		}
 		if ((pChar[nIdxRight-1] == 9616 && pChar[nIdxRight] == L'+' && pChar[nIdxRight+1] == 9616)
 			&& !(pChar[nIdxLeft-1] == 9616 && pChar[nIdxLeft] == L'+' && pChar[nIdxLeft+1] == 9616))
-			bSeparateTabs = false; // Есть только одна строка табов (одна на обе панели)
+			bSeparateTabs = false; // Р•СЃС‚СЊ С‚РѕР»СЊРєРѕ РѕРґРЅР° СЃС‚СЂРѕРєР° С‚Р°Р±РѕРІ (РѕРґРЅР° РЅР° РѕР±Рµ РїР°РЅРµР»Рё)
 		else
 			bSeparateTabs = true;
 
@@ -1628,7 +1628,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			int nIdx = nWidth*(r.bottom+1)+r.right-1;
 
 			if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
-				/* -- может быть НЕ проинициализировано
+				/* -- РјРѕР¶РµС‚ Р±С‹С‚СЊ РќР• РїСЂРѕРёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅРѕ
 			        && pAttr[nIdx].nBackIdx == nPanelTabsBackIdx
 			        && pAttr[nIdx].nForeIdx == nPanelTabsForeIdx
 				*/
@@ -1658,7 +1658,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 
 void CRgnDetect::OnWindowSizeChanged()
 {
-	mb_SBI_Loaded = false; // данные должны быть перечитаны
+	mb_SBI_Loaded = false; // РґР°РЅРЅС‹Рµ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ РїРµСЂРµС‡РёС‚Р°РЅС‹
 }
 
 //lpBuffer
@@ -1689,13 +1689,13 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 	}
 
 	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork)
-		return; // буфер еще не был выделен
+		return; // Р±СѓС„РµСЂ РµС‰Рµ РЅРµ Р±С‹Р» РІС‹РґРµР»РµРЅ
 
 	if ((dwBufferCoord.X >= dwBufferSize.X) || (dwBufferCoord.Y >= dwBufferSize.Y))
 	{
 		_ASSERTE(dwBufferCoord.X < dwBufferSize.X);
 		_ASSERTE(dwBufferCoord.Y < dwBufferSize.Y);
-		return; // Ошибка в параметрах
+		return; // РћС€РёР±РєР° РІ РїР°СЂР°РјРµС‚СЂР°С…
 	}
 
 	_ASSERTE(mb_TableCreated);
@@ -1705,7 +1705,7 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 	rcRegion.Top = lpWriteRegion->Top - m_sbi.srWindow.Top;
 	rcRegion.Bottom = lpWriteRegion->Bottom - m_sbi.srWindow.Top;
 
-	// На некорректных координатах - сразу выйдем
+	// РќР° РЅРµРєРѕСЂСЂРµРєС‚РЅС‹С… РєРѕРѕСЂРґРёРЅР°С‚Р°С… - СЃСЂР°Р·Сѓ РІС‹Р№РґРµРј
 	if (rcRegion.Left >= mn_CurWidth || rcRegion.Top >= mn_CurHeight
 	        || rcRegion.Left > rcRegion.Right || rcRegion.Top > rcRegion.Bottom
 	        || rcRegion.Left < 0 || rcRegion.Top < 0)
@@ -1716,7 +1716,7 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 		return;
 	}
 
-	// Расфуговка буфера CHAR_INFO на текст и атрибуты
+	// Р Р°СЃС„СѓРіРѕРІРєР° Р±СѓС„РµСЂР° CHAR_INFO РЅР° С‚РµРєСЃС‚ Рё Р°С‚СЂРёР±СѓС‚С‹
 	int nX1 = max(0,rcRegion.Left);
 	int nX2 = min(rcRegion.Right,(mn_CurWidth-1));
 	int nY1 = max(0,rcRegion.Top);
@@ -1754,10 +1754,10 @@ void CRgnDetect::SetFarRect(SMALL_RECT *prcFarRect)
 	{
 		mrc_FarRect = *prcFarRect;
 
-		// Скопировать в m_sbi.srWindow
+		// РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РІ m_sbi.srWindow
 		if (mrc_FarRect.Bottom)
 		{
-			// Сначала подправим вертикаль
+			// РЎРЅР°С‡Р°Р»Р° РїРѕРґРїСЂР°РІРёРј РІРµСЂС‚РёРєР°Р»СЊ
 			if (mrc_FarRect.Bottom == m_sbi.srWindow.Bottom)
 			{
 				if (mrc_FarRect.Top != m_sbi.srWindow.Top)
@@ -1769,7 +1769,7 @@ void CRgnDetect::SetFarRect(SMALL_RECT *prcFarRect)
 					m_sbi.srWindow.Bottom = mrc_FarRect.Bottom;
 			}
 
-			// Теперь - горизонталь
+			// РўРµРїРµСЂСЊ - РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊ
 			if (mrc_FarRect.Left == m_sbi.srWindow.Left)
 			{
 				if (mrc_FarRect.Right != m_sbi.srWindow.Right)
@@ -1781,7 +1781,7 @@ void CRgnDetect::SetFarRect(SMALL_RECT *prcFarRect)
 					m_sbi.srWindow.Left = mrc_FarRect.Left;
 			}
 
-			// Иначе - считаем что фар выбился из окна, и панели будут скрыты
+			// РРЅР°С‡Рµ - СЃС‡РёС‚Р°РµРј С‡С‚Рѕ С„Р°СЂ РІС‹Р±РёР»СЃСЏ РёР· РѕРєРЅР°, Рё РїР°РЅРµР»Рё Р±СѓРґСѓС‚ СЃРєСЂС‹С‚С‹
 		}
 	}
 	else
@@ -1792,14 +1792,14 @@ void CRgnDetect::SetFarRect(SMALL_RECT *prcFarRect)
 
 BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 {
-	//if (mb_SBI_Loaded) - всегда. Если вызвали - значит нужно все перечитать
+	//if (mb_SBI_Loaded) - РІСЃРµРіРґР°. Р•СЃР»Рё РІС‹Р·РІР°Р»Рё - Р·РЅР°С‡РёС‚ РЅСѓР¶РЅРѕ РІСЃРµ РїРµСЂРµС‡РёС‚Р°С‚СЊ
 	//	return TRUE;
 	m_DetectedDialogs.AllFlags = 0;
 	mp_Colors = apColors;
-	//if (!mb_TableCreated) - тоже всегда. цвета могли измениться
+	//if (!mb_TableCreated) - С‚РѕР¶Рµ РІСЃРµРіРґР°. С†РІРµС‚Р° РјРѕРіР»Рё РёР·РјРµРЅРёС‚СЊСЃСЏ
 	{
 		mb_TableCreated = true;
-		// формирование умолчательных цветов, по атрибутам консоли
+		// С„РѕСЂРјРёСЂРѕРІР°РЅРёРµ СѓРјРѕР»С‡Р°С‚РµР»СЊРЅС‹С… С†РІРµС‚РѕРІ, РїРѕ Р°С‚СЂРёР±СѓС‚Р°Рј РєРѕРЅСЃРѕР»Рё
 		int  nColorIndex = 0;
 		CharAttr lca;
 
@@ -1824,12 +1824,12 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 
 	if (mrc_FarRect.Right && mrc_FarRect.Bottom)
 	{
-		// FAR2 /w - рисует в видимой части буфера
-		TODO("Возможно, нужно в srWindow копировать mrc_FarRect?");
+		// FAR2 /w - СЂРёСЃСѓРµС‚ РІ РІРёРґРёРјРѕР№ С‡Р°СЃС‚Рё Р±СѓС„РµСЂР°
+		TODO("Р’РѕР·РјРѕР¶РЅРѕ, РЅСѓР¶РЅРѕ РІ srWindow РєРѕРїРёСЂРѕРІР°С‚СЊ mrc_FarRect?");
 	}
 	else
 	{
-		// Нужно скорректировать srWindow, т.к. ФАР в любом случае забивает на видимый регион и рисует на весь буфер.
+		// РќСѓР¶РЅРѕ СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ srWindow, С‚.Рє. Р¤РђР  РІ Р»СЋР±РѕРј СЃР»СѓС‡Р°Рµ Р·Р°Р±РёРІР°РµС‚ РЅР° РІРёРґРёРјС‹Р№ СЂРµРіРёРѕРЅ Рё СЂРёСЃСѓРµС‚ РЅР° РІРµСЃСЊ Р±СѓС„РµСЂ.
 		if (m_sbi.srWindow.Left)
 			m_sbi.srWindow.Left = 0;
 
@@ -1846,13 +1846,13 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 	int nTextWidth = TextWidth();
 	int nTextHeight = TextHeight();
 
-	// Выделить память, при необходимости увеличить
+	// Р’С‹РґРµР»РёС‚СЊ РїР°РјСЏС‚СЊ, РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё СѓРІРµР»РёС‡РёС‚СЊ
 	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork || (nTextWidth * nTextHeight) > mn_MaxCells)
 	{
 		if (mpsz_Chars) free(mpsz_Chars);
 
 		mn_MaxCells = (nTextWidth * nTextHeight);
-		// Чтобы безопасно использовать строковые функции - гарантированно делаем ASCIIZ. Хотя mpsz_Chars может и \0 содержать?
+		// Р§С‚РѕР±С‹ Р±РµР·РѕРїР°СЃРЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЃС‚СЂРѕРєРѕРІС‹Рµ С„СѓРЅРєС†РёРё - РіР°СЂР°РЅС‚РёСЂРѕРІР°РЅРЅРѕ РґРµР»Р°РµРј ASCIIZ. РҐРѕС‚СЏ mpsz_Chars РјРѕР¶РµС‚ Рё \0 СЃРѕРґРµСЂР¶Р°С‚СЊ?
 		mpsz_Chars = (wchar_t*)calloc(mn_MaxCells+1, sizeof(wchar_t));
 		mp_Attrs = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
 		mp_AttrsWork = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
@@ -1888,7 +1888,7 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 	COORD bufSize, bufCoord;
 	SMALL_RECT rgn;
 
-	// Если весь буфер больше 30К - и пытаться не будем
+	// Р•СЃР»Рё РІРµСЃСЊ Р±СѓС„РµСЂ Р±РѕР»СЊС€Рµ 30Рљ - Рё РїС‹С‚Р°С‚СЊСЃСЏ РЅРµ Р±СѓРґРµРј
 	if ((mn_MaxCells*sizeof(CHAR_INFO)) < 30000)
 	{
 		bufSize.X = nTextWidth; bufSize.Y = nTextHeight;
@@ -1901,7 +1901,7 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 
 	if (!bReadOk)
 	{
-		// Придется читать построчно
+		// РџСЂРёРґРµС‚СЃСЏ С‡РёС‚Р°С‚СЊ РїРѕСЃС‚СЂРѕС‡РЅРѕ
 		bufSize.X = nTextWidth; bufSize.Y = 1;
 		bufCoord.X = 0; bufCoord.Y = 0;
 		CONSOLE_SCREEN_BUFFER_INFO sbi = m_sbi;
@@ -1922,11 +1922,11 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 		}
 	}
 
-	// Теперь нужно перекинуть данные в mpsz_Chars & mp_Attrs
+	// РўРµРїРµСЂСЊ РЅСѓР¶РЅРѕ РїРµСЂРµРєРёРЅСѓС‚СЊ РґР°РЅРЅС‹Рµ РІ mpsz_Chars & mp_Attrs
 	COORD crNul = {0,0};
 	COORD crSize = {nTextWidth,nTextHeight};
 	OnWriteConsoleOutput(pCharInfo, crSize, crNul, &m_sbi.srWindow, mp_Colors);
-	// Буфер CHAR_INFO больше не нужен
+	// Р‘СѓС„РµСЂ CHAR_INFO Р±РѕР»СЊС€Рµ РЅРµ РЅСѓР¶РµРЅ
 	free(pCharInfo);
 	return TRUE;
 }
@@ -1937,7 +1937,7 @@ int CRgnDetect::TextWidth()
 
 	if (mrc_FarRect.Right && mrc_FarRect.Bottom)
 	{
-		// FAR2 /w - рисует в видимой части буфера
+		// FAR2 /w - СЂРёСЃСѓРµС‚ РІ РІРёРґРёРјРѕР№ С‡Р°СЃС‚Рё Р±СѓС„РµСЂР°
 		nWidth = m_sbi.srWindow.Right - m_sbi.srWindow.Left + 1;
 	}
 	else
@@ -1954,7 +1954,7 @@ int CRgnDetect::TextHeight()
 
 	if (mrc_FarRect.Right && mrc_FarRect.Bottom)
 	{
-		// FAR2 /w - рисует в видимой части буфера
+		// FAR2 /w - СЂРёСЃСѓРµС‚ РІ РІРёРґРёРјРѕР№ С‡Р°СЃС‚Рё Р±СѓС„РµСЂР°
 		nHeight = m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 1;
 	}
 	else
@@ -1979,7 +1979,7 @@ BOOL CRgnDetect::GetCharAttr(int x, int y, wchar_t& rc, CharAttr& ra)
 }
 
 
-// Эта функция вызывается из плагинов (ConEmuTh)
+// Р­С‚Р° С„СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· РїР»Р°РіРёРЅРѕРІ (ConEmuTh)
 void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const COLORREF *apColors)
 {
 	if (gbInTransparentAssert)
@@ -1987,7 +1987,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 
 	mp_FarInfo = apFarInfo;
 	mp_Colors = apColors;
-	// Сброс флагов и прямоугольников панелей
+	// РЎР±СЂРѕСЃ С„Р»Р°РіРѕРІ Рё РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРѕРІ РїР°РЅРµР»РµР№
 	m_DetectedDialogs.AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
 	memset(&mrc_LeftPanel,0,sizeof(mrc_LeftPanel));
 	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
@@ -2002,7 +2002,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	PrepareTransparent(apFarInfo, apColors, &m_sbi, mpsz_Chars, mp_AttrsWork, mn_CurWidth, mn_CurHeight);
 }
 
-// Эта функция вызывается из GUI
+// Р­С‚Р° С„СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· GUI
 void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const COLORREF *apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi,
                                     wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
 {
@@ -2010,7 +2010,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	mp_FarInfo = apFarInfo;
 	mp_Colors = apColors;
 	_ASSERTE(mp_Colors && (mp_Colors[1] || mp_Colors[2]));
-	_ASSERTE(pChar[nWidth*nHeight] == 0); // Должен быть ASCIIZ
+	_ASSERTE(pChar[nWidth*nHeight] == 0); // Р”РѕР»Р¶РµРЅ Р±С‹С‚СЊ ASCIIZ
 
 	if (apSbi != &m_sbi)
 		m_sbi = *apSbi;
@@ -2020,25 +2020,25 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	if (gbInTransparentAssert)
 		return;
 
-	// Сброс флагов и прямоугольников панелей
+	// РЎР±СЂРѕСЃ С„Р»Р°РіРѕРІ Рё РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРѕРІ РїР°РЅРµР»РµР№
 	m_DetectedDialogs.AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
 	memset(&mrc_LeftPanel,0,sizeof(mrc_LeftPanel));
 	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
-	// !!! После "m_DetectedDialogs.AllFlags = 0" - никаких return !!!
+	// !!! РџРѕСЃР»Рµ "m_DetectedDialogs.AllFlags = 0" - РЅРёРєР°РєРёС… return !!!
 	m_DetectedDialogs.Count = 0;
 	//if (!mp_ConsoleInfo || !gSet.NeedDialogDetect())
 	//	goto wrap;
-	// !!! в буферном режиме - никакой прозрачности, но диалоги - детектим, пригодится при отрисовке
-	// В редакторах-вьюверах тоже нужен детект
+	// !!! РІ Р±СѓС„РµСЂРЅРѕРј СЂРµР¶РёРјРµ - РЅРёРєР°РєРѕР№ РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚Рё, РЅРѕ РґРёР°Р»РѕРіРё - РґРµС‚РµРєС‚РёРј, РїСЂРёРіРѕРґРёС‚СЃСЏ РїСЂРё РѕС‚СЂРёСЃРѕРІРєРµ
+	// Р’ СЂРµРґР°РєС‚РѕСЂР°С…-РІСЊСЋРІРµСЂР°С… С‚РѕР¶Рµ РЅСѓР¶РµРЅ РґРµС‚РµРєС‚
 	//if (!mp_FarInfo->bFarPanelAllowed)
 	//	goto wrap;
 	//if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
 	//if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
 	//	goto wrap;
-	WARNING("Если информация в FarInfo не заполнена - брать умолчания!");
-	WARNING("Учитывать возможность наличия номеров окон, символа записи 'R', и по хорошему, ч/б режима");
+	WARNING("Р•СЃР»Рё РёРЅС„РѕСЂРјР°С†РёСЏ РІ FarInfo РЅРµ Р·Р°РїРѕР»РЅРµРЅР° - Р±СЂР°С‚СЊ СѓРјРѕР»С‡Р°РЅРёСЏ!");
+	WARNING("РЈС‡РёС‚С‹РІР°С‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РЅР°Р»РёС‡РёСЏ РЅРѕРјРµСЂРѕРІ РѕРєРѕРЅ, СЃРёРјРІРѕР»Р° Р·Р°РїРёСЃРё 'R', Рё РїРѕ С…РѕСЂРѕС€РµРјСѓ, С‡/Р± СЂРµР¶РёРјР°");
 	//COLORREF crColorKey = gSet.ColorKey;
-	// реальный цвет, заданный в фаре
+	// СЂРµР°Р»СЊРЅС‹Р№ С†РІРµС‚, Р·Р°РґР°РЅРЅС‹Р№ РІ С„Р°СЂРµ
 	nUserBackIdx = (mp_FarInfo->nFarColors[col_CommandLineUserScreen] & 0xF0) >> 4;
 	crUserBack = mp_Colors[nUserBackIdx];
 	nMenuBackIdx = (mp_FarInfo->nFarColors[col_HMenuText] & 0xF0) >> 4;
@@ -2053,12 +2053,12 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	crPanelsNumberBack = mp_Colors[nPanelNum];
 	nPanelNum = (mp_FarInfo->nFarColors[col_PanelScreensNumber] & 0xF);
 	crPanelsNumberFore = mp_Colors[nPanelNum];
-	// Цвета диалогов
+	// Р¦РІРµС‚Р° РґРёР°Р»РѕРіРѕРІ
 	nDlgBorderBackIdx = (mp_FarInfo->nFarColors[col_DialogBox] & 0xF0) >> 4;
 	nDlgBorderForeIdx = (mp_FarInfo->nFarColors[col_DialogBox] & 0xF);
 	nErrBorderBackIdx = (mp_FarInfo->nFarColors[col_WarnDialogBox] & 0xF0) >> 4;
 	nErrBorderForeIdx = (mp_FarInfo->nFarColors[col_WarnDialogBox] & 0xF);
-	// Для детекта наличия PanelTabs
+	// Р”Р»СЏ РґРµС‚РµРєС‚Р° РЅР°Р»РёС‡РёСЏ PanelTabs
 	bPanelTabsSeparate = (mp_FarInfo->PanelTabs.SeparateTabs != 0);
 
 	if (mp_FarInfo->PanelTabs.ButtonColor != -1)
@@ -2072,45 +2072,45 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 		nPanelTabsForeIdx = mp_FarInfo->nFarColors[col_PanelText] & 0xF;
 	}
 
-	// При bUseColorKey Если панель погашена (или панели) то
-	// 1. UserScreen под ним заменяется на crColorKey
-	// 2. а текст - на пробелы
-	// Проверять наличие KeyBar по настройкам (Keybar + CmdLine)
+	// РџСЂРё bUseColorKey Р•СЃР»Рё РїР°РЅРµР»СЊ РїРѕРіР°С€РµРЅР° (РёР»Рё РїР°РЅРµР»Рё) С‚Рѕ
+	// 1. UserScreen РїРѕРґ РЅРёРј Р·Р°РјРµРЅСЏРµС‚СЃСЏ РЅР° crColorKey
+	// 2. Р° С‚РµРєСЃС‚ - РЅР° РїСЂРѕР±РµР»С‹
+	// РџСЂРѕРІРµСЂСЏС‚СЊ РЅР°Р»РёС‡РёРµ KeyBar РїРѕ РЅР°СЃС‚СЂРѕР№РєР°Рј (Keybar + CmdLine)
 	bShowKeyBar = (mp_FarInfo->FarInterfaceSettings.ShowKeyBar) != 0;
 	nBottomLines = bShowKeyBar ? 2 : 1;
-	// Проверять наличие MenuBar по настройкам
-	// Или может быть меню сейчас показано?
-	// 1 - при видимом сейчас или постоянно меню
+	// РџСЂРѕРІРµСЂСЏС‚СЊ РЅР°Р»РёС‡РёРµ MenuBar РїРѕ РЅР°СЃС‚СЂРѕР№РєР°Рј
+	// РР»Рё РјРѕР¶РµС‚ Р±С‹С‚СЊ РјРµРЅСЋ СЃРµР№С‡Р°СЃ РїРѕРєР°Р·Р°РЅРѕ?
+	// 1 - РїСЂРё РІРёРґРёРјРѕРј СЃРµР№С‡Р°СЃ РёР»Рё РїРѕСЃС‚РѕСЏРЅРЅРѕ РјРµРЅСЋ
 	bAlwaysShowMenuBar = (mp_FarInfo->FarInterfaceSettings.AlwaysShowMenuBar) != 0;
 
 	if (bAlwaysShowMenuBar)
-		m_DetectedDialogs.AllFlags |= FR_MENUBAR; // ставим сразу, чтобы детектор панелей не запутался
+		m_DetectedDialogs.AllFlags |= FR_MENUBAR; // СЃС‚Р°РІРёРј СЃСЂР°Р·Сѓ, С‡С‚РѕР±С‹ РґРµС‚РµРєС‚РѕСЂ РїР°РЅРµР»РµР№ РЅРµ Р·Р°РїСѓС‚Р°Р»СЃСЏ
 
 	nTopLines = bAlwaysShowMenuBar ? 1 : 0;
-	// Проверка теперь в другом месте (по плагину), да и левый нижний угол могут закрыть диалогом...
-	//// Проверим, что фар загрузился
+	// РџСЂРѕРІРµСЂРєР° С‚РµРїРµСЂСЊ РІ РґСЂСѓРіРѕРј РјРµСЃС‚Рµ (РїРѕ РїР»Р°РіРёРЅСѓ), РґР° Рё Р»РµРІС‹Р№ РЅРёР¶РЅРёР№ СѓРіРѕР» РјРѕРіСѓС‚ Р·Р°РєСЂС‹С‚СЊ РґРёР°Р»РѕРіРѕРј...
+	//// РџСЂРѕРІРµСЂРёРј, С‡С‚Рѕ С„Р°СЂ Р·Р°РіСЂСѓР·РёР»СЃСЏ
 	//if (bShowKeyBar) {
-	//	// в левом-нижнем углу должна быть цифра 1
+	//	// РІ Р»РµРІРѕРј-РЅРёР¶РЅРµРј СѓРіР»Сѓ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ С†РёС„СЂР° 1
 	//	if (pChar[nWidth*(nHeight-1)] != L'1')
 	//		goto wrap;
-	//	// соответствующего цвета
+	//	// СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРіРѕ С†РІРµС‚Р°
 	//	BYTE KeyBarNoColor = mp_FarInfo->nFarColors[col_KeyBarNum];
 	//	if (pAttr[nWidth*(nHeight-1)].nBackIdx != ((KeyBarNoColor & 0xF0)>>4))
 	//		goto wrap;
 	//	if (pAttr[nWidth*(nHeight-1)].nForeIdx != (KeyBarNoColor & 0xF))
 	//		goto wrap;
 	//}
-	// Теперь информация о панелях хронически обновляется плагином
+	// РўРµРїРµСЂСЊ РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ РїР°РЅРµР»СЏС… С…СЂРѕРЅРёС‡РµСЃРєРё РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ РїР»Р°РіРёРЅРѕРј
 	//if (mb_LeftPanel)
 	//	MarkDialog(pAttr, nWidth, nHeight, mr_LeftPanelFull.left, mr_LeftPanelFull.top, mr_LeftPanelFull.right, mr_LeftPanelFull.bottom);
 	//if (mb_RightPanel)
 	//	MarkDialog(pAttr, nWidth, nHeight, mr_RightPanelFull.left, mr_RightPanelFull.top, mr_RightPanelFull.right, mr_RightPanelFull.bottom);
-	// Пометить непрозрачными панели
+	// РџРѕРјРµС‚РёС‚СЊ РЅРµРїСЂРѕР·СЂР°С‡РЅС‹РјРё РїР°РЅРµР»Рё
 	RECT r;
 	bool lbLeftVisible = false, lbRightVisible = false, lbFullPanel = false;
 
-	// Хотя информация о панелях хронически обновляется плагином, но это могут и отключить,
-	// да и отрисовка на экране может несколько задержаться
+	// РҐРѕС‚СЏ РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ РїР°РЅРµР»СЏС… С…СЂРѕРЅРёС‡РµСЃРєРё РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ РїР»Р°РіРёРЅРѕРј, РЅРѕ СЌС‚Рѕ РјРѕРіСѓС‚ Рё РѕС‚РєР»СЋС‡РёС‚СЊ,
+	// РґР° Рё РѕС‚СЂРёСЃРѕРІРєР° РЅР° СЌРєСЂР°РЅРµ РјРѕР¶РµС‚ РЅРµСЃРєРѕР»СЊРєРѕ Р·Р°РґРµСЂР¶Р°С‚СЊСЃСЏ
 
 	//if (mb_LeftPanel) {
 	if (mp_FarInfo->bFarLeftPanel)
@@ -2119,14 +2119,14 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 		//r = mr_LeftPanelFull;
 		r = mp_FarInfo->FarLeftPanel.PanelRect;
 	}
-	// -- Ветка никогда не активировалась
+	// -- Р’РµС‚РєР° РЅРёРєРѕРіРґР° РЅРµ Р°РєС‚РёРІРёСЂРѕРІР°Р»Р°СЃСЊ
 	_ASSERTE(mp_FarInfo->bFarLeftPanel || !mp_FarInfo->FarLeftPanel.Visible);
 	//else
 	//{
-	//	// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
+	//	// РќРѕ РµСЃР»Рё С‡Р°СЃС‚СЊ РїР°РЅРµР»Рё СЃРєСЂС‹С‚Р° РґРёР°Р»РѕРіР°РјРё - РЅР°С€ РґРµС‚РµРєС‚ РїР°РЅРµР»Рё РјРѕРі РЅРµ СЃСЂР°Р±РѕС‚Р°С‚СЊ
 	//	if (mp_FarInfo->bFarLeftPanel && mp_FarInfo->FarLeftPanel.Visible)
 	//	{
-	//		// В "буферном" режиме размер панелей намного больше экрана
+	//		// Р’ "Р±СѓС„РµСЂРЅРѕРј" СЂРµР¶РёРјРµ СЂР°Р·РјРµСЂ РїР°РЅРµР»РµР№ РЅР°РјРЅРѕРіРѕ Р±РѕР»СЊС€Рµ СЌРєСЂР°РЅР°
 	//		lbLeftVisible = ConsoleRect2ScreenRect(mp_FarInfo->FarLeftPanel.PanelRect, &r);
 	//	}
 	//}
@@ -2136,7 +2136,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	if (lbLeftVisible)
 	{
 		if (r.right == (nWidth-1))
-			lbFullPanel = true; // значит правой быть не может
+			lbFullPanel = true; // Р·РЅР°С‡РёС‚ РїСЂР°РІРѕР№ Р±С‹С‚СЊ РЅРµ РјРѕР¶РµС‚
 
 		if (r.right >= nWidth || r.bottom >= nHeight)
 		{
@@ -2146,7 +2146,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 		}
 
 		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, true);
-		//// Для детекта наличия PanelTabs
+		//// Р”Р»СЏ РґРµС‚РµРєС‚Р° РЅР°Р»РёС‡РёСЏ PanelTabs
 		//if (nHeight > (nBottomLines+r.bottom+1)) {
 		//	int nIdx = nWidth*(r.bottom+1)+r.right-1;
 		//	if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
@@ -2166,12 +2166,12 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 			lbRightVisible = true;
 			r = mp_FarInfo->FarRightPanel.PanelRect; // mr_RightPanelFull;
 		}
-		// -- Ветка никогда не активировалась
+		// -- Р’РµС‚РєР° РЅРёРєРѕРіРґР° РЅРµ Р°РєС‚РёРІРёСЂРѕРІР°Р»Р°СЃСЊ
 		_ASSERTE(mp_FarInfo->bFarRightPanel || !mp_FarInfo->FarRightPanel.Visible);
-		//// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
+		//// РќРѕ РµСЃР»Рё С‡Р°СЃС‚СЊ РїР°РЅРµР»Рё СЃРєСЂС‹С‚Р° РґРёР°Р»РѕРіР°РјРё - РЅР°С€ РґРµС‚РµРєС‚ РїР°РЅРµР»Рё РјРѕРі РЅРµ СЃСЂР°Р±РѕС‚Р°С‚СЊ
 		//else if (mp_FarInfo->bFarRightPanel && mp_FarInfo->FarRightPanel.Visible)
 		//{
-		//	// В "буферном" режиме размер панелей намного больше экрана
+		//	// Р’ "Р±СѓС„РµСЂРЅРѕРј" СЂРµР¶РёРјРµ СЂР°Р·РјРµСЂ РїР°РЅРµР»РµР№ РЅР°РјРЅРѕРіРѕ Р±РѕР»СЊС€Рµ СЌРєСЂР°РЅР°
 		//	lbRightVisible = ConsoleRect2ScreenRect(mp_FarInfo->FarRightPanel.PanelRect, &r);
 		//}
 
@@ -2185,7 +2185,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 			}
 
 			MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, true);
-			//// Для детекта наличия PanelTabs
+			//// Р”Р»СЏ РґРµС‚РµРєС‚Р° РЅР°Р»РёС‡РёСЏ PanelTabs
 			//if (nHeight > (nBottomLines+r.bottom+1)) {
 			//	int nIdx = nWidth*(r.bottom+1)+r.right-1;
 			//	if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
@@ -2200,8 +2200,8 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 
 	mb_NeedPanelDetect = TRUE;
 
-	// Может быть первая строка - меню? постоянное или текущее
-	if (bAlwaysShowMenuBar  // всегда
+	// РњРѕР¶РµС‚ Р±С‹С‚СЊ РїРµСЂРІР°СЏ СЃС‚СЂРѕРєР° - РјРµРЅСЋ? РїРѕСЃС‚РѕСЏРЅРЅРѕРµ РёР»Рё С‚РµРєСѓС‰РµРµ
+	if (bAlwaysShowMenuBar  // РІСЃРµРіРґР°
 	        || (pAttr->crBackColor == crMenuTitleBack
 	            && (pChar[0] == L' ' && pChar[1] == L' ' && pChar[2] == L' ' && pChar[3] == L' ' && pChar[4] != L' '))
 	  )
@@ -2209,11 +2209,11 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 		MarkDialog(pChar, pAttr, nWidth, nHeight, 0, 0, nWidth-1, 0, false, false, FR_MENUBAR);
 	}
 
-	// Редактор/вьювер
+	// Р РµРґР°РєС‚РѕСЂ/РІСЊСЋРІРµСЂ
 	if (mp_FarInfo->bViewerOrEditor
 	        && 0 == (m_DetectedDialogs.AllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)))
 	{
-		// Покроем полностью, включая меню и кейбар
+		// РџРѕРєСЂРѕРµРј РїРѕР»РЅРѕСЃС‚СЊСЋ, РІРєР»СЋС‡Р°СЏ РјРµРЅСЋ Рё РєРµР№Р±Р°СЂ
 		MarkDialog(pChar, pAttr, nWidth, nHeight, 0, 0, nWidth-1, nHeight-1, false, false, FR_VIEWEREDITOR);
 	}
 
@@ -2235,25 +2235,25 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	{
 		if (nY >= nTopLines && nY < (nHeight-nBottomLines))
 		{
-			// ! первый cell - резервируем для скрытия/показа панелей
+			// ! РїРµСЂРІС‹Р№ cell - СЂРµР·РµСЂРІРёСЂСѓРµРј РґР»СЏ СЃРєСЂС‹С‚РёСЏ/РїРѕРєР°Р·Р° РїР°РЅРµР»РµР№
 			int nX1 = 0;
-			int nX2 = nWidth-1; // по умолчанию - на всю ширину
+			int nX2 = nWidth-1; // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - РЅР° РІСЃСЋ С€РёСЂРёРЅСѓ
 
 			//if (!mb_LeftPanel && mb_RightPanel) {
 			if (!mp_FarInfo->bFarLeftPanel && mp_FarInfo->bFarRightPanel)
 			{
-				// Погашена только левая панель
+				// РџРѕРіР°С€РµРЅР° С‚РѕР»СЊРєРѕ Р»РµРІР°СЏ РїР°РЅРµР»СЊ
 				nX2 = /*mr_RightPanelFull*/ mp_FarInfo->FarRightPanel.PanelRect.left-1;
 				//} else if (mb_LeftPanel && !mb_RightPanel) {
 			}
 			else if (mp_FarInfo->bFarLeftPanel && !mp_FarInfo->bFarRightPanel)
 			{
-				// Погашена только правая панель
+				// РџРѕРіР°С€РµРЅР° С‚РѕР»СЊРєРѕ РїСЂР°РІР°СЏ РїР°РЅРµР»СЊ
 				nX1 = /*mr_LeftPanelFull*/ mp_FarInfo->FarLeftPanel.PanelRect.right+1;
 			}
 			else
 			{
-				//Внимание! Панели могут быть, но они могут быть перекрыты PlugMenu!
+				//Р’РЅРёРјР°РЅРёРµ! РџР°РЅРµР»Рё РјРѕРіСѓС‚ Р±С‹С‚СЊ, РЅРѕ РѕРЅРё РјРѕРіСѓС‚ Р±С‹С‚СЊ РїРµСЂРµРєСЂС‹С‚С‹ PlugMenu!
 			}
 
 #ifdef _DEBUG
@@ -2278,7 +2278,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 		        && (pszDst[nWidth] == ucBoxDblVert && pnDst[nWidth].crBackColor == crPanelsBorderBack && pnDst[nWidth].crForeColor == crPanelsBorderFore)
 			  )
 			{
-				// Принудительно сдетектить, как панель
+				// РџСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ СЃРґРµС‚РµРєС‚РёС‚СЊ, РєР°Рє РїР°РЅРµР»СЊ
 				DetectDialog(pChar, pAttr, nWidth, nHeight, 0/*nX*/, nY+1);
 			}
 
@@ -2295,7 +2295,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 				wchar_t cSave = pszDst[nWidth];
 				pszDst[nWidth] = 0;
 				wchar_t* pszCorner = wcspbrk(pszFrom, szCornerChars);
-				// Если не нашли - может в консоли '\0' есть?
+				// Р•СЃР»Рё РЅРµ РЅР°С€Р»Рё - РјРѕР¶РµС‚ РІ РєРѕРЅСЃРѕР»Рё '\0' РµСЃС‚СЊ?
 				while (!pszCorner)
 				{
 					pszFrom += lstrlen(pszFrom)+1;
@@ -2309,7 +2309,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 				
 				if (!pszCorner)
 					break;
-				pszFrom = pszCorner + 1; // сразу накрутим, чтобы не забыть
+				pszFrom = pszCorner + 1; // СЃСЂР°Р·Сѓ РЅР°РєСЂСѓС‚РёРј, С‡С‚РѕР±С‹ РЅРµ Р·Р°Р±С‹С‚СЊ
 				int nX = (int)(pszCorner - pszDst);
 
 				if (
@@ -2331,9 +2331,9 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 						case ucBoxDblUpRight:
 						case ucBoxDblUpLeft:
 
-							// Это правый кусок диалога, который не полностью влез на экран
-							// Пометить "рамкой" до его низа
-							// 100627 - во вьювере(?) будем обрабатывать только цвета диалога, во избежание замусоривания
+							// Р­С‚Рѕ РїСЂР°РІС‹Р№ РєСѓСЃРѕРє РґРёР°Р»РѕРіР°, РєРѕС‚РѕСЂС‹Р№ РЅРµ РїРѕР»РЅРѕСЃС‚СЊСЋ РІР»РµР· РЅР° СЌРєСЂР°РЅ
+							// РџРѕРјРµС‚РёС‚СЊ "СЂР°РјРєРѕР№" РґРѕ РµРіРѕ РЅРёР·Р°
+							// 100627 - РІРѕ РІСЊСЋРІРµСЂРµ(?) Р±СѓРґРµРј РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ С†РІРµС‚Р° РґРёР°Р»РѕРіР°, РІРѕ РёР·Р±РµР¶Р°РЅРёРµ Р·Р°РјСѓСЃРѕСЂРёРІР°РЅРёСЏ
 							if (!(m_DetectedDialogs.AllFlags & FR_VIEWEREDITOR) ||
 							        (pnDst[nX].nBackIdx == nDlgBorderBackIdx && pnDst[nX].nForeIdx == nDlgBorderForeIdx) ||
 							        (pnDst[nX].nBackIdx == nErrBorderBackIdx && pnDst[nX].nForeIdx == nErrBorderForeIdx)
@@ -2360,44 +2360,44 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 		_ASSERT(mn_DetectCallCount == 0);
 	}
 
-	if (mb_BufferHeight)  // при "far /w" mb_BufferHeight==false
-		goto wrap; // в буферном режиме - никакой прозрачности
+	if (mb_BufferHeight)  // РїСЂРё "far /w" mb_BufferHeight==false
+		goto wrap; // РІ Р±СѓС„РµСЂРЅРѕРј СЂРµР¶РёРјРµ - РЅРёРєР°РєРѕР№ РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚Рё
 
 	if (!lbLeftVisible && !lbRightVisible)
 	{
 		if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
-			goto wrap; // По CtrlAltShift - показать UserScreen (не делать его прозрачным)
+			goto wrap; // РџРѕ CtrlAltShift - РїРѕРєР°Р·Р°С‚СЊ UserScreen (РЅРµ РґРµР»Р°С‚СЊ РµРіРѕ РїСЂРѕР·СЂР°С‡РЅС‹Рј)
 	}
 
-	// 0x0 должен быть непрозрачным
+	// 0x0 РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РЅРµРїСЂРѕР·СЂР°С‡РЅС‹Рј
 	//pAttr[0].bDialog = TRUE;
 	pszDst = pChar;
 	pnDst = pAttr;
 
-	// Только если это реально нужно, т.к. занимает значительное время.
-	// Возможно, стоит необходимые проверки уже при отрисовке проводить
+	// РўРѕР»СЊРєРѕ РµСЃР»Рё СЌС‚Рѕ СЂРµР°Р»СЊРЅРѕ РЅСѓР¶РЅРѕ, С‚.Рє. Р·Р°РЅРёРјР°РµС‚ Р·РЅР°С‡РёС‚РµР»СЊРЅРѕРµ РІСЂРµРјСЏ.
+	// Р’РѕР·РјРѕР¶РЅРѕ, СЃС‚РѕРёС‚ РЅРµРѕР±С…РѕРґРёРјС‹Рµ РїСЂРѕРІРµСЂРєРё СѓР¶Рµ РїСЂРё РѕС‚СЂРёСЃРѕРІРєРµ РїСЂРѕРІРѕРґРёС‚СЊ
 	if (mb_NeedTransparency)
 	{
 		for(int nY = 0; nY < nHeight; nY++)
 		{
 			if (nY >= nTopLines && nY < (nHeight-nBottomLines))
 			{
-				// ! первый cell - резервируем для скрытия/показа панелей
+				// ! РїРµСЂРІС‹Р№ cell - СЂРµР·РµСЂРІРёСЂСѓРµРј РґР»СЏ СЃРєСЂС‹С‚РёСЏ/РїРѕРєР°Р·Р° РїР°РЅРµР»РµР№
 				int nX1 = 0;
-				int nX2 = nWidth-1; // по умолчанию - на всю ширину
-				// Все-таки, если панели приподняты - делаем UserScreen прозрачным
-				// Ведь остается возможность посмотреть его по CtrlAltShift
+				int nX2 = nWidth-1; // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - РЅР° РІСЃСЋ С€РёСЂРёРЅСѓ
+				// Р’СЃРµ-С‚Р°РєРё, РµСЃР»Рё РїР°РЅРµР»Рё РїСЂРёРїРѕРґРЅСЏС‚С‹ - РґРµР»Р°РµРј UserScreen РїСЂРѕР·СЂР°С‡РЅС‹Рј
+				// Р’РµРґСЊ РѕСЃС‚Р°РµС‚СЃСЏ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РїРѕСЃРјРѕС‚СЂРµС‚СЊ РµРіРѕ РїРѕ CtrlAltShift
 				//if (!mb_LeftPanel && mb_RightPanel) {
-				//	// Погашена только левая панель
+				//	// РџРѕРіР°С€РµРЅР° С‚РѕР»СЊРєРѕ Р»РµРІР°СЏ РїР°РЅРµР»СЊ
 				//	nX2 = mr_RightPanelFull.left-1;
 				//} else if (mb_LeftPanel && !mb_RightPanel) {
-				//	// Погашена только правая панель
+				//	// РџРѕРіР°С€РµРЅР° С‚РѕР»СЊРєРѕ РїСЂР°РІР°СЏ РїР°РЅРµР»СЊ
 				//	nX1 = mr_LeftPanelFull.right+1;
 				//} else {
-				//	//Внимание! Панели могут быть, но они могут быть перекрыты PlugMenu!
+				//	//Р’РЅРёРјР°РЅРёРµ! РџР°РЅРµР»Рё РјРѕРіСѓС‚ Р±С‹С‚СЊ, РЅРѕ РѕРЅРё РјРѕРіСѓС‚ Р±С‹С‚СЊ РїРµСЂРµРєСЂС‹С‚С‹ PlugMenu!
 				//}
 				
-				WARNING("Во время запуска неприятно мелькает - пока не появятся панели - становится прозрачным");
+				WARNING("Р’Рѕ РІСЂРµРјСЏ Р·Р°РїСѓСЃРєР° РЅРµРїСЂРёСЏС‚РЅРѕ РјРµР»СЊРєР°РµС‚ - РїРѕРєР° РЅРµ РїРѕСЏРІСЏС‚СЃСЏ РїР°РЅРµР»Рё - СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РїСЂРѕР·СЂР°С‡РЅС‹Рј");
 				#if 0
 				int nShift = nY*nWidth+nX1;
 				int nX = nX1;
@@ -2412,7 +2412,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 				while (pnDstShift < pnDstEnd)
 				#endif
 				{
-					// Если еще не определен как поле диалога
+					// Р•СЃР»Рё РµС‰Рµ РЅРµ РѕРїСЂРµРґРµР»РµРЅ РєР°Рє РїРѕР»Рµ РґРёР°Р»РѕРіР°
 					#if 0
 					if (!pnDst[nX].bDialog)
 					#else
@@ -2425,7 +2425,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 						if (pnDstShift->crBackColor == crUserBack)
 						#endif
 						{
-							// помечаем прозрачным
+							// РїРѕРјРµС‡Р°РµРј РїСЂРѕР·СЂР°С‡РЅС‹Рј
 							#if 0
 							pnDst[nX].bTransparent = TRUE;
 							//pnDst[nX].crBackColor = crColorKey;
@@ -2450,22 +2450,22 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 		}
 	}
 
-	// Некрасиво...
-	//// 0x0 должен быть непрозрачным
+	// РќРµРєСЂР°СЃРёРІРѕ...
+	//// 0x0 РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РЅРµРїСЂРѕР·СЂР°С‡РЅС‹Рј
 	//pAttr[0].bTransparent = FALSE;
 wrap:
 	mn_AllFlagsSaved = m_DetectedDialogs.AllFlags;
 }
 
-// Преобразовать абсолютные координаты консоли в координаты нашего буфера
-// (вычесть номер верхней видимой строки и скорректировать видимую высоту)
+// РџСЂРµРѕР±СЂР°Р·РѕРІР°С‚СЊ Р°Р±СЃРѕР»СЋС‚РЅС‹Рµ РєРѕРѕСЂРґРёРЅР°С‚С‹ РєРѕРЅСЃРѕР»Рё РІ РєРѕРѕСЂРґРёРЅР°С‚С‹ РЅР°С€РµРіРѕ Р±СѓС„РµСЂР°
+// (РІС‹С‡РµСЃС‚СЊ РЅРѕРјРµСЂ РІРµСЂС…РЅРµР№ РІРёРґРёРјРѕР№ СЃС‚СЂРѕРєРё Рё СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ РІРёРґРёРјСѓСЋ РІС‹СЃРѕС‚Сѓ)
 bool CRgnDetect::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 {
 	if (!this) return false;
 
 	*prcScr = rcCon;
 	int nTopVisibleLine = m_sbi.srWindow.Top;
-	_ASSERTE(m_sbi.srWindow.Left==0); // при работе в ConEmu - пока всегда прижато к левому краю
+	_ASSERTE(m_sbi.srWindow.Left==0); // РїСЂРё СЂР°Р±РѕС‚Рµ РІ ConEmu - РїРѕРєР° РІСЃРµРіРґР° РїСЂРёР¶Р°С‚Рѕ Рє Р»РµРІРѕРјСѓ РєСЂР°СЋ
 	int nTextWidth = (m_sbi.srWindow.Right - m_sbi.srWindow.Left + 1);
 	int nTextHeight = (m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 1);
 
@@ -2491,15 +2491,15 @@ bool CRgnDetect::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 
 	if (prcScr->bottom < 0)
 	{
-		lbRectOK = false; // полностью уехал за границу вверх
+		lbRectOK = false; // РїРѕР»РЅРѕСЃС‚СЊСЋ СѓРµС…Р°Р» Р·Р° РіСЂР°РЅРёС†Сѓ РІРІРµСЂС…
 	}
 	else if (prcScr->top >= nTextHeight)
 	{
-		lbRectOK = false; // полностью уехал за границу вниз
+		lbRectOK = false; // РїРѕР»РЅРѕСЃС‚СЊСЋ СѓРµС…Р°Р» Р·Р° РіСЂР°РЅРёС†Сѓ РІРЅРёР·
 	}
 	else
 	{
-		// Скорректировать по видимому прямоугольнику
+		// РЎРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ РїРѕ РІРёРґРёРјРѕРјСѓ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєСѓ
 		if (prcScr->top < 0)
 			prcScr->top = 0;
 
@@ -2523,7 +2523,7 @@ bool CRgnDetect::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 //
 //    if (!mb_TableCreated) {
 //    	mb_TableCreated = true;
-//        // формирование умолчательных цветов, по атрибутам консоли
+//        // С„РѕСЂРјРёСЂРѕРІР°РЅРёРµ СѓРјРѕР»С‡Р°С‚РµР»СЊРЅС‹С… С†РІРµС‚РѕРІ, РїРѕ Р°С‚СЂРёР±СѓС‚Р°Рј РєРѕРЅСЃРѕР»Рё
 //	    int  nColorIndex = 0;
 //	    CharAttr lca;
 //
@@ -2540,7 +2540,7 @@ bool CRgnDetect::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 //    }
 //
 //
-//	// Расфуговка буфера CHAR_INFO на текст и атрибуты
+//	// Р Р°СЃС„СѓРіРѕРІРєР° Р±СѓС„РµСЂР° CHAR_INFO РЅР° С‚РµРєСЃС‚ Рё Р°С‚СЂРёР±СѓС‚С‹
 //	for (DWORD n = 0; n < CharCount; n++, pCharInfo++) {
 //		TODO("OPTIMIZE: *(lpAttr++) = lpCur->Attributes;");
 //		*(pAttr++) = mca_Table[pCharInfo->Attributes & 0xFF];
@@ -2566,21 +2566,21 @@ CRgnRects::~CRgnRects()
 	if (pFieldCells) free(pFieldCells);
 }
 
-// Сброс всего в NULLREGION
+// РЎР±СЂРѕСЃ РІСЃРµРіРѕ РІ NULLREGION
 void CRgnRects::Reset()
 {
 	nRectCount = 0;
 	nRgnState = NULLREGION;
 }
 
-// Сбросить все прямоугольники и установить rcRect[0]
+// РЎР±СЂРѕСЃРёС‚СЊ РІСЃРµ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРё Рё СѓСЃС‚Р°РЅРѕРІРёС‚СЊ rcRect[0]
 void CRgnRects::Init(LPRECT prcInit)
 {
-	// Установим начальный прямоугольник
+	// РЈСЃС‚Р°РЅРѕРІРёРј РЅР°С‡Р°Р»СЊРЅС‹Р№ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє
 	nRectCount = 1;
 	rcRect[0] = *prcInit;
 	nRgnState = SIMPLEREGION;
-	// готовим поле для проверки
+	// РіРѕС‚РѕРІРёРј РїРѕР»Рµ РґР»СЏ РїСЂРѕРІРµСЂРєРё
 	nFieldWidth = prcInit->right - prcInit->left + 1;
 	nFieldHeight = prcInit->bottom - prcInit->top + 1;
 
@@ -2615,19 +2615,19 @@ void CRgnRects::Init(LPRECT prcInit)
 int CRgnRects::Diff(LPRECT prcAddDiff)
 {
 	if (!pFieldCells || nRectCount>=MAX_RGN_RECTS || nRgnState <= NULLREGION)
-		return nRgnState; // регион уже пустой, ничего делать не нужно
+		return nRgnState; // СЂРµРіРёРѕРЅ СѓР¶Рµ РїСѓСЃС‚РѕР№, РЅРёС‡РµРіРѕ РґРµР»Р°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ
 
 	if (prcAddDiff->left > prcAddDiff->right || prcAddDiff->top > prcAddDiff->bottom)
 	{
 		_ASSERTE(prcAddDiff->left <= prcAddDiff->right && prcAddDiff->top <= prcAddDiff->bottom);
-		return nRgnState; // не валидный prcAddDiff
+		return nRgnState; // РЅРµ РІР°Р»РёРґРЅС‹Р№ prcAddDiff
 	}
 
-	// поехали
+	// РїРѕРµС…Р°Р»Рё
 	int X1 = rcRect[0].left, X2 = rcRect[0].right;
 
 	if (prcAddDiff->left > X2 || prcAddDiff->right < X1)
-		return nRgnState; // prcAddDiff не пересекается с rcRect[0]
+		return nRgnState; // prcAddDiff РЅРµ РїРµСЂРµСЃРµРєР°РµС‚СЃСЏ СЃ rcRect[0]
 
 	int iX1 = max(prcAddDiff->left,X1);
 	int iX2 = min(prcAddDiff->right,X2);
@@ -2635,17 +2635,17 @@ int CRgnRects::Diff(LPRECT prcAddDiff)
 	if (iX2 < iX1)
 	{
 		_ASSERTE(iX2 >= iX1);
-		return nRgnState; // пустая область?
+		return nRgnState; // РїСѓСЃС‚Р°СЏ РѕР±Р»Р°СЃС‚СЊ?
 	}
 
 	int Y1 = rcRect[0].top,  Y2 = rcRect[0].bottom;
 
 	if (prcAddDiff->top > Y2 || prcAddDiff->bottom < Y1)
-		return nRgnState; // prcAddDiff не пересекается с rcRect[0]
+		return nRgnState; // prcAddDiff РЅРµ РїРµСЂРµСЃРµРєР°РµС‚СЃСЏ СЃ rcRect[0]
 
 	int iY1 = max(prcAddDiff->top,Y1);
 	int iY2 = min(prcAddDiff->bottom,Y2);
-	// Ладно, добавим этот прямоугольник в список вычитаемых
+	// Р›Р°РґРЅРѕ, РґРѕР±Р°РІРёРј СЌС‚РѕС‚ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє РІ СЃРїРёСЃРѕРє РІС‹С‡РёС‚Р°РµРјС‹С…
 	rcRect[nRectCount++] = *prcAddDiff;
 	int Y, iy = iY1 - rcRect[0].top;
 	int nSubWidth = iX2 - iX1 + 1;
@@ -2664,7 +2664,7 @@ int CRgnRects::Diff(LPRECT prcAddDiff)
 		//}
 	}
 
-	// Теперь проверить, а осталось ли еще что-то?
+	// РўРµРїРµСЂСЊ РїСЂРѕРІРµСЂРёС‚СЊ, Р° РѕСЃС‚Р°Р»РѕСЃСЊ Р»Рё РµС‰Рµ С‡С‚Рѕ-С‚Рѕ?
 	Y2 = nFieldWidth * nFieldHeight;
 	void* ptrCellLeft = memchr(pFieldCells, 0, Y2);
 	//bool lbAreCellLeft = (ptrCellLeft != NULL);
@@ -2696,16 +2696,16 @@ int CRgnRects::DiffSmall(SMALL_RECT *prcAddDiff)
 	return Diff(&rc);
 }
 
-// Скопировать ИЗ pRgn, вернуть true - если были отличия
+// РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РР— pRgn, РІРµСЂРЅСѓС‚СЊ true - РµСЃР»Рё Р±С‹Р»Рё РѕС‚Р»РёС‡РёСЏ
 bool CRgnRects::LoadFrom(CRgnRects* pRgn)
 {
 	bool lbChanges = false;
 
 	if (!pRgn)
 	{
-		// Если до этого был НЕ пустой регион
+		// Р•СЃР»Рё РґРѕ СЌС‚РѕРіРѕ Р±С‹Р» РќР• РїСѓСЃС‚РѕР№ СЂРµРіРёРѕРЅ
 		lbChanges = (nRgnState >= SIMPLEREGION);
-		// сброс
+		// СЃР±СЂРѕСЃ
 		Reset();
 	}
 	else
@@ -2729,7 +2729,7 @@ bool CRgnRects::LoadFrom(CRgnRects* pRgn)
 		}
 	}
 
-	// Нас интересуют только прямоугольники
+	// РќР°СЃ РёРЅС‚РµСЂРµСЃСѓСЋС‚ С‚РѕР»СЊРєРѕ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРё
 	if (pFieldCells)
 	{
 		free(pFieldCells); pFieldCells = NULL;

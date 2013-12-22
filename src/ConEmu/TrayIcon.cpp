@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -71,7 +71,7 @@ void TrayIcon::SettingsChanged()
 {
 	if (gpSet->isAlwaysShowTrayIcon)
 	{
-		AddTrayIcon(); // добавит или обновит tooltip
+		AddTrayIcon(); // РґРѕР±Р°РІРёС‚ РёР»Рё РѕР±РЅРѕРІРёС‚ tooltip
 	}
 	else
 	{
@@ -122,12 +122,12 @@ void TrayIcon::RemoveTrayIcon(bool bForceRemove /*= false*/)
 
 void TrayIcon::UpdateTitle()
 {
-	// Добавил tsa_Source_None. Если висит Balloon с сообщением,
-	// то нет смысла обновлять тултип, он все-равно не виден...
+	// Р”РѕР±Р°РІРёР» tsa_Source_None. Р•СЃР»Рё РІРёСЃРёС‚ Balloon СЃ СЃРѕРѕР±С‰РµРЅРёРµРј,
+	// С‚Рѕ РЅРµС‚ СЃРјС‹СЃР»Р° РѕР±РЅРѕРІР»СЏС‚СЊ С‚СѓР»С‚РёРї, РѕРЅ РІСЃРµ-СЂР°РІРЅРѕ РЅРµ РІРёРґРµРЅ...
 	if (!mb_WindowInTray || !IconData.hIcon || (m_MsgSource != tsa_Source_None))
 		return;
 
-	// это тултип, который появляется при наведении курсора мышки
+	// СЌС‚Рѕ С‚СѓР»С‚РёРї, РєРѕС‚РѕСЂС‹Р№ РїРѕСЏРІР»СЏРµС‚СЃСЏ РїСЂРё РЅР°РІРµРґРµРЅРёРё РєСѓСЂСЃРѕСЂР° РјС‹С€РєРё
 	wchar_t szTitle[128] = {};
 	GetWindowText(ghWnd, szTitle, countof(szTitle));
 	if (*IconData.szInfo || *IconData.szInfoTitle || lstrcmp(szTitle, IconData.szTip))
@@ -144,7 +144,7 @@ void TrayIcon::ShowTrayIcon(LPCTSTR asInfoTip /*= NULL*/, TrayIconMsgSource aMsg
 	m_MsgSource = aMsgSource;
 	if (asInfoTip && *asInfoTip)
 	{
-		// Сообщение, которое сейчас всплывет
+		// РЎРѕРѕР±С‰РµРЅРёРµ, РєРѕС‚РѕСЂРѕРµ СЃРµР№С‡Р°СЃ РІСЃРїР»С‹РІРµС‚
 		IconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_INFO | NIF_TIP;
 		lstrcpyn(IconData.szInfoTitle, gpConEmu->GetDefaultTitle(), countof(IconData.szInfoTitle));
 		lstrcpyn(IconData.szInfo, asInfoTip, countof(IconData.szInfo));
@@ -155,7 +155,7 @@ void TrayIcon::ShowTrayIcon(LPCTSTR asInfoTip /*= NULL*/, TrayIconMsgSource aMsg
 		IconData.szInfo[0] = 0;
 		IconData.szInfoTitle[0] = 0;
 	}
-	AddTrayIcon(); // добавит или обновит tooltip
+	AddTrayIcon(); // РґРѕР±Р°РІРёС‚ РёР»Рё РѕР±РЅРѕРІРёС‚ tooltip
 }
 
 void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
@@ -238,7 +238,7 @@ void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
 
 //void TrayIcon::Delete()
 //{
-//	// Не посылать в Shell сообщения, если иконки нет
+//	// РќРµ РїРѕСЃС‹Р»Р°С‚СЊ РІ Shell СЃРѕРѕР±С‰РµРЅРёСЏ, РµСЃР»Рё РёРєРѕРЅРєРё РЅРµС‚
 //	if (mb_WindowInTray)
 //	{
 //	    Shell_NotifyIcon(NIM_DELETE, &IconData);
@@ -281,8 +281,8 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 						}
 						else
 						{
-							// Если поверх ConEmu есть какое-то окно, то ConEmu нужно поднять?
-							// Не "выезжать" а просто "вынести наверх", если видимая область достаточно большая
+							// Р•СЃР»Рё РїРѕРІРµСЂС… ConEmu РµСЃС‚СЊ РєР°РєРѕРµ-С‚Рѕ РѕРєРЅРѕ, С‚Рѕ ConEmu РЅСѓР¶РЅРѕ РїРѕРґРЅСЏС‚СЊ?
+							// РќРµ "РІС‹РµР·Р¶Р°С‚СЊ" Р° РїСЂРѕСЃС‚Рѕ "РІС‹РЅРµСЃС‚Рё РЅР°РІРµСЂС…", РµСЃР»Рё РІРёРґРёРјР°СЏ РѕР±Р»Р°СЃС‚СЊ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ Р±РѕР»СЊС€Р°СЏ
 							bJustActivate = (nVisiblePart >= QUAKEVISIBLETRASH) && !gpConEmu->isIconic();
 						}
 					}

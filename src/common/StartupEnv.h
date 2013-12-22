@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -207,7 +207,7 @@ CEStartupEnv* LoadStartupEnv()
 		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 		if (hKernel)
 		{
-			// Функция есть только в Vista+
+			// Р¤СѓРЅРєС†РёСЏ РµСЃС‚СЊ С‚РѕР»СЊРєРѕ РІ Vista+
 			GetConsoleHistoryInfo_t _GetConsoleHistoryInfo = (GetConsoleHistoryInfo_t)GetProcAddress(hKernel, "GetConsoleHistoryInfo");
 			if (_GetConsoleHistoryInfo)
 			{

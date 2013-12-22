@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -42,9 +42,9 @@ struct RConStartArgs
 	BOOL     bNewConsole; // TRUE==-new_console, FALSE==-cur_console
 	BOOL     bBackgroundTab;      // -new_console:b
 	BOOL     bForegroungTab;      // -new_console:f
-	BOOL     bNoDefaultTerm;      // -new_console:z - не использовать фичу "Default terminal". Не пишется в CreateCommandLine()
+	BOOL     bNoDefaultTerm;      // -new_console:z - РЅРµ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С„РёС‡Сѓ "Default terminal". РќРµ РїРёС€РµС‚СЃСЏ РІ CreateCommandLine()
 
-	wchar_t* pszSpecialCmd; // собственно, command line
+	wchar_t* pszSpecialCmd; // СЃРѕР±СЃС‚РІРµРЅРЅРѕ, command line
 	wchar_t* pszStartupDir; // "-new_console:d:<dir>"
 
 	wchar_t* pszRenameTab;  // "-new_console:t:<name>"
@@ -56,7 +56,7 @@ struct RConStartArgs
 	BOOL     bRunAsAdministrator; // -new_console:a
 	BOOL     bRunAsRestricted;    // -new_console:r
 	wchar_t* pszUserName, *pszDomain, szUserPassword[MAX_PATH]; // "-new_console:u:<user>:<pwd>"
-	BOOL     bUseEmptyPassword;   // для GUI
+	BOOL     bUseEmptyPassword;   // РґР»СЏ GUI
 	BOOL     bForceUserDialog;    // -new_console:u
 	//wchar_t* pszUserProfile;    // %USERPROFILE%
 
@@ -85,10 +85,10 @@ struct RConStartArgs
 		eSplitHorz = 1,
 		eSplitVert = 2,
 	} eSplit;
-	UINT nSplitValue; // 1..999 (0.1 - 99.9%)0, по умолчанию - "50"
-    UINT nSplitPane;  // по умолчанию - "0", иначе - 1-based индекс консоли, которую нужно разбить
+	UINT nSplitValue; // 1..999 (0.1 - 99.9%)0, РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - "50"
+    UINT nSplitPane;  // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - "0", РёРЅР°С‡Рµ - 1-based РёРЅРґРµРєСЃ РєРѕРЅСЃРѕР»Рё, РєРѕС‚РѕСЂСѓСЋ РЅСѓР¶РЅРѕ СЂР°Р·Р±РёС‚СЊ
 	
-	RecreateActionParm aRecreate; // Информационно и для CRecreateDlg
+	RecreateActionParm aRecreate; // РРЅС„РѕСЂРјР°С†РёРѕРЅРЅРѕ Рё РґР»СЏ CRecreateDlg
 
 	RConStartArgs();
 	~RConStartArgs();

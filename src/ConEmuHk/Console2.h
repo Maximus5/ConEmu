@@ -1,4 +1,4 @@
-
+п»ї
 #pragma once
 
 // This portion of code inherited from Console2
@@ -85,7 +85,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 		}
 	}
 
-	// Адрес пути к ConEmuHk64 нужно выровнять на 8 байт!
+	// РђРґСЂРµСЃ РїСѓС‚Рё Рє ConEmuHk64 РЅСѓР¶РЅРѕ РІС‹СЂРѕРІРЅСЏС‚СЊ РЅР° 8 Р±Р°Р№С‚!
 	codeSize = 136;
 #else
 
@@ -125,7 +125,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	#ifdef _WIN64
 	pStr->Pad = 0;
 	#endif
-	pStr->Buffer = (PWSTR)(((LPBYTE)pStr)+16); // адрес будет обновлен после VirtualAlloc
+	pStr->Buffer = (PWSTR)(((LPBYTE)pStr)+16); // Р°РґСЂРµСЃ Р±СѓРґРµС‚ РѕР±РЅРѕРІР»РµРЅ РїРѕСЃР»Рµ VirtualAlloc
 	memmove(pStr->Buffer, L"kernel32.dll", pStr->MaximumLength);
 
 	memLen = codeSize + memLen + pstrLen;
@@ -150,7 +150,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	}
 
 	#ifdef _DEBUG
-	// strHookDllPath уже скопирован, поэтому его можно заюзать для DebugString
+	// strHookDllPath СѓР¶Рµ СЃРєРѕРїРёСЂРѕРІР°РЅ, РїРѕСЌС‚РѕРјСѓ РµРіРѕ РјРѕР¶РЅРѕ Р·Р°СЋР·Р°С‚СЊ РґР»СЏ DebugString
 	#ifdef _WIN64
 	msprintf(strHookDllPath, countof(strHookDllPath),
 		L"GetThreadContext(x64) for PID=%u: ContextFlags=0x%08X, Rip=0x%08X%08X\n",
@@ -167,13 +167,13 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 
 	//mem = ::VirtualAllocEx(pi.hProcess, NULL, memLen, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	//#ifdef _WIN64
-	//if (!mem) -- не работает, нужен NULL
+	//if (!mem) -- РЅРµ СЂР°Р±РѕС‚Р°РµС‚, РЅСѓР¶РµРЅ NULL
 	//	mem = ::VirtualAllocEx(pi.hProcess, (LPVOID)0x6FFFFF0000000000, memLen, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	//#endif
-	//if (!mem) -- не работает, нужен NULL
+	//if (!mem) -- РЅРµ СЂР°Р±РѕС‚Р°РµС‚, РЅСѓР¶РµРЅ NULL
 	//	mem = ::VirtualAllocEx(pi.hProcess, (LPVOID)0x6FFFFF00, memLen, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	//if (!mem)
-	// MEM_TOP_DOWN - память выделяется в верхних адресах, разницы в работе не заметил
+	// MEM_TOP_DOWN - РїР°РјСЏС‚СЊ РІС‹РґРµР»СЏРµС‚СЃСЏ РІ РІРµСЂС…РЅРёС… Р°РґСЂРµСЃР°С…, СЂР°Р·РЅРёС†С‹ РІ СЂР°Р±РѕС‚Рµ РЅРµ Р·Р°РјРµС‚РёР»
 	mem = ::VirtualAllocEx(pi.hProcess, NULL, memLen, 
 			MEM_COMMIT|MEM_RESERVE/*|MEM_TOP_DOWN*/, PAGE_EXECUTE_READWRITE|PAGE_NOCACHE);
 
@@ -187,7 +187,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	pStr->Buffer = (PWSTR)(((LPBYTE)mem) + (((LPBYTE)pStr->Buffer) - code));
 
 	#ifdef _DEBUG
-	// strHookDllPath уже скопирован, поэтому его можно заюзать для DebugString
+	// strHookDllPath СѓР¶Рµ СЃРєРѕРїРёСЂРѕРІР°РЅ, РїРѕСЌС‚РѕРјСѓ РµРіРѕ РјРѕР¶РЅРѕ Р·Р°СЋР·Р°С‚СЊ РґР»СЏ DebugString
 	#ifdef _WIN64
 	msprintf(strHookDllPath, countof(strHookDllPath),
 		L"VirtualAllocEx(x64) for PID=%u: 0x%08X%08X\n",
@@ -212,8 +212,8 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	} ip;
 	ip.pB = code;
 #ifdef _WIN64
-	*ip.pL++ = context.Rip;          // адрес возврата
-	*ip.pL++ = pfn->fnLdrGetDllHandleByName ? pfn->fnLdrGetDllHandleByName : pfn->fnLoadLibrary;        // адрес вызываемой процедуры
+	*ip.pL++ = context.Rip;          // Р°РґСЂРµСЃ РІРѕР·РІСЂР°С‚Р°
+	*ip.pL++ = pfn->fnLdrGetDllHandleByName ? pfn->fnLdrGetDllHandleByName : pfn->fnLoadLibrary;        // Р°РґСЂРµСЃ РІС‹Р·С‹РІР°РµРјРѕР№ РїСЂРѕС†РµРґСѓСЂС‹
 	*ip.pB++ = 0x9C;					// pushfq
 	*ip.pB++ = 0x50;					// push  rax
 	*ip.pB++ = 0x51;					// push  rcx
@@ -242,7 +242,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	*ip.pB++ = 0x4C;					// lea	       r8,&ptrProc
 	*ip.pB++ = 0x8D;
 	*ip.pB++ = 0x05;
-	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- указатель на адрес процедуры (code+8) [OUT]
+	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- СѓРєР°Р·Р°С‚РµР»СЊ РЅР° Р°РґСЂРµСЃ РїСЂРѕС†РµРґСѓСЂС‹ (code+8) [OUT]
 	*ip.pB++ = 0x33;                    // xor         rdx,rdx 
 	*ip.pB++ = 0xD2;
 	*ip.pB++ = 0x48;                    // lea         rcx,&UNICODE_STRING
@@ -251,28 +251,28 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	*ip.pI++ = (int)(((LPBYTE)pStr) - ip.pB - 4); // &UNICODE_STRING
 	*ip.pB++ = 0xFF;					// call  LdrGetDllHandleByName
 	*ip.pB++ = 0x15;
-	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- указатель на адрес процедуры (code+8)
+	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- СѓРєР°Р·Р°С‚РµР»СЊ РЅР° Р°РґСЂРµСЃ РїСЂРѕС†РµРґСѓСЂС‹ (code+8)
 	//
 	*ip.pB++ = 0x48;                    // mov         rax,&ProcAddress
 	*ip.pB++ = 0x8B;
 	*ip.pB++ = 0x05;
-	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- указатель на адрес процедуры (code+8)
+	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- СѓРєР°Р·Р°С‚РµР»СЊ РЅР° Р°РґСЂРµСЃ РїСЂРѕС†РµРґСѓСЂС‹ (code+8)
 	*ip.pB++ = 0x48;                    // add         rax,nProcShift
 	*ip.pB++ = 0x05;
 	*ip.pI++ = (DWORD)nLoadLibraryProcShift;
 	*ip.pB++ = 0x48;                    // mov         &ProcAddress,rax
 	*ip.pB++ = 0x89;
 	*ip.pB++ = 0x05;
-	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- указатель на адрес процедуры (code+8)
+	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- СѓРєР°Р·Р°С‚РµР»СЊ РЅР° Р°РґСЂРµСЃ РїСЂРѕС†РµРґСѓСЂС‹ (code+8)
 	}
 
 	*ip.pB++ = 0x48;					// lea	 rcx, "path\to\our.dll"
 	*ip.pB++ = 0x8D;
 	*ip.pB++ = 0x0D;
-	*ip.pI++ = (int)(codeSize + code - ip.pB - 4); // 45; -- указатель на "path\to\our.dll"
+	*ip.pI++ = (int)(codeSize + code - ip.pB - 4); // 45; -- СѓРєР°Р·Р°С‚РµР»СЊ РЅР° "path\to\our.dll"
 	*ip.pB++ = 0xFF;					// call  LoadLibraryW
 	*ip.pB++ = 0x15;
-	*ip.pI++ = -(int)(ip.pB - code + 4 - 8); // -49; -- указатель на адрес процедуры (code+8)
+	*ip.pI++ = -(int)(ip.pB - code + 4 - 8); // -49; -- СѓРєР°Р·Р°С‚РµР»СЊ РЅР° Р°РґСЂРµСЃ РїСЂРѕС†РµРґСѓСЂС‹ (code+8)
 	*ip.pB++ = 0x48;					// add   rsp, 40
 	*ip.pB++ = 0x83;
 	*ip.pB++ = 0xC4;
@@ -298,7 +298,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	*ip.pI++ = -(int)(ip.pB - code + 4); // -91;
 	/* 0x5B */
 
-	context.Rip = (UINT_PTR)mem + 16;	// начало (иструкция pushfq)
+	context.Rip = (UINT_PTR)mem + 16;	// РЅР°С‡Р°Р»Рѕ (РёСЃС‚СЂСѓРєС†РёСЏ pushfq)
 #else
 	*ip.pB++ = 0x68;			// push  eip
 	*ip.pI++ = context.Eip;
@@ -358,7 +358,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	ghSkipSetThreadContextForThread = pi.hThread;
 
 	#ifdef _DEBUG
-	// strHookDllPath уже скопирован, поэтому его можно заюзать для DebugString
+	// strHookDllPath СѓР¶Рµ СЃРєРѕРїРёСЂРѕРІР°РЅ, РїРѕСЌС‚РѕРјСѓ РµРіРѕ РјРѕР¶РЅРѕ Р·Р°СЋР·Р°С‚СЊ РґР»СЏ DebugString
 	#ifdef _WIN64
 	msprintf(strHookDllPath, countof(strHookDllPath),
 		L"SetThreadContext(x64) for PID=%u: ContextFlags=0x%08X, Rip=0x%08X%08X\n",
@@ -387,8 +387,8 @@ wrap:
 #ifdef _DEBUG
 	if (iRc != 0)
 	{
-		// Хуки не получится установить для некоторых системных процессов типа ntvdm.exe,
-		// но при запуске dos приложений мы сюда дойти не должны
+		// РҐСѓРєРё РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РґР»СЏ РЅРµРєРѕС‚РѕСЂС‹С… СЃРёСЃС‚РµРјРЅС‹С… РїСЂРѕС†РµСЃСЃРѕРІ С‚РёРїР° ntvdm.exe,
+		// РЅРѕ РїСЂРё Р·Р°РїСѓСЃРєРµ dos РїСЂРёР»РѕР¶РµРЅРёР№ РјС‹ СЃСЋРґР° РґРѕР№С‚Рё РЅРµ РґРѕР»Р¶РЅС‹
 		_ASSERTE(iRc == 0);
 	}
 #endif

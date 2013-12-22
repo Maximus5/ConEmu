@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -38,14 +38,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MSG_TITLE "ConEmu writer"
 #define MSG_INVALID_CONEMU_VER "Unsupported ConEmu version detected!\nRequired version: " CONEMUVERS "\nConsole writer'll works in 4bit mode"
-#define MSG_TRUEMOD_DISABLED   "«Colorer TrueMod support» is not checked in the ConEmu settings\nConsole writer'll works in 4bit mode"
+#define MSG_TRUEMOD_DISABLED   "В«Colorer TrueMod supportВ» is not checked in the ConEmu settings\nConsole writer'll works in 4bit mode"
 #define MSG_NO_TRUEMOD_BUFFER  "TrueMod support not enabled in the ConEmu settings\nConsole writer'll works in 4bit mode"
 
-TODO("Отвязаться от координат видимой области");
+TODO("РћС‚РІСЏР·Р°С‚СЊСЃСЏ РѕС‚ РєРѕРѕСЂРґРёРЅР°С‚ РІРёРґРёРјРѕР№ РѕР±Р»Р°СЃС‚Рё");
 
 extern HMODULE ghOurModule; // Must be defined and initialized in DllMain
 
-HWND ghExtConEmuWndDC = NULL; // VirtualCon. инициализируется в ExtCheckBuffers()
+HWND ghExtConEmuWndDC = NULL; // VirtualCon. РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚СЃСЏ РІ ExtCheckBuffers()
 
 extern HWND ghConWnd;      // Console window
 extern HWND ghConEmuWnd;   // Root! window
@@ -61,7 +61,7 @@ HANDLE ghTrueColor = NULL;
 
 bool gbInitialized = false;
 DWORD gnInitializeErrCode = 0;
-//bool gbFarBufferMode = false; // true, если Far запущен с ключом "/w"
+//bool gbFarBufferMode = false; // true, РµСЃР»Рё Far Р·Р°РїСѓС‰РµРЅ СЃ РєР»СЋС‡РѕРј "/w"
 
 WORD defConForeIdx = 7;
 WORD defConBackIdx = 0;
@@ -85,7 +85,7 @@ struct ExtCurrentAttr
 #if 0
 static bool isCharSpace(wchar_t inChar)
 {
-	// Сюда пихаем все символы, которые можно отрисовать пустым фоном (как обычный пробел)
+	// РЎСЋРґР° РїРёС…Р°РµРј РІСЃРµ СЃРёРјРІРѕР»С‹, РєРѕС‚РѕСЂС‹Рµ РјРѕР¶РЅРѕ РѕС‚СЂРёСЃРѕРІР°С‚СЊ РїСѓСЃС‚С‹Рј С„РѕРЅРѕРј (РєР°Рє РѕР±С‹С‡РЅС‹Р№ РїСЂРѕР±РµР»)
 	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0 
 		/*|| (inChar>=0x2000 && inChar<=0x200F)
 		|| inChar == 0x2060 || inChar == 0x3000 || inChar == 0xFEFF*/);
@@ -109,7 +109,7 @@ static BOOL ExtGetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_
 	
 	//if (gbFarBufferMode)
 	{
-		// Фар занимает нижнюю часть консоли. Прилеплен к левому краю
+		// Р¤Р°СЂ Р·Р°РЅРёРјР°РµС‚ РЅРёР¶РЅСЋСЋ С‡Р°СЃС‚СЊ РєРѕРЅСЃРѕР»Рё. РџСЂРёР»РµРїР»РµРЅ Рє Р»РµРІРѕРјСѓ РєСЂР°СЋ
 		SHORT nWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
 		SHORT nHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 		srWork.Left = 0;
@@ -119,7 +119,7 @@ static BOOL ExtGetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_
 	}
 	/*else
 	{
-		// Фар занимает все поле консоли
+		// Р¤Р°СЂ Р·Р°РЅРёРјР°РµС‚ РІСЃРµ РїРѕР»Рµ РєРѕРЅСЃРѕР»Рё
 		srWork.Left = srWork.Top = 0;
 		srWork.Right = csbi.dwSize.X - 1;
 		srWork.Bottom = csbi.dwSize.Y - 1;
@@ -173,7 +173,7 @@ static BOOL ExtCheckBuffers(HANDLE h)
 		ghExtConEmuWndDC = ghConEmuWndDC;
 		ExtCloseBuffers();
 
-		//TODO: Пока работаем "по-старому", через буфер TrueColor. Переделать, он не оптимален
+		//TODO: РџРѕРєР° СЂР°Р±РѕС‚Р°РµРј "РїРѕ-СЃС‚Р°СЂРѕРјСѓ", С‡РµСЂРµР· Р±СѓС„РµСЂ TrueColor. РџРµСЂРµРґРµР»Р°С‚СЊ, РѕРЅ РЅРµ РѕРїС‚РёРјР°Р»РµРЅ
 		wchar_t szMapName[128];
 		wsprintf(szMapName, AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)ghExtConEmuWndDC); //-V205
 		ghTrueColor = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName);
@@ -214,11 +214,11 @@ void ExtCloseBuffers()
 	}
 }
 
-// Это это "цвет по умолчанию".
-// То, что соответствует "Screen Text" и "Screen Background" в свойствах консоли.
-// То, что задаётся командой color в cmd.exe.
-// То, что будет использовано если в консоль просто писать 
-// по printf/std::cout/WriteConsole, без явного указания цвета.
+// Р­С‚Рѕ СЌС‚Рѕ "С†РІРµС‚ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ".
+// РўРѕ, С‡С‚Рѕ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚ "Screen Text" Рё "Screen Background" РІ СЃРІРѕР№СЃС‚РІР°С… РєРѕРЅСЃРѕР»Рё.
+// РўРѕ, С‡С‚Рѕ Р·Р°РґР°С‘С‚СЃСЏ РєРѕРјР°РЅРґРѕР№ color РІ cmd.exe.
+// РўРѕ, С‡С‚Рѕ Р±СѓРґРµС‚ РёСЃРїРѕР»СЊР·РѕРІР°РЅРѕ РµСЃР»Рё РІ РєРѕРЅСЃРѕР»СЊ РїСЂРѕСЃС‚Рѕ РїРёСЃР°С‚СЊ 
+// РїРѕ printf/std::cout/WriteConsole, Р±РµР· СЏРІРЅРѕРіРѕ СѓРєР°Р·Р°РЅРёСЏ С†РІРµС‚Р°.
 BOOL ExtGetAttributes(ExtAttributesParm* Info)
 {
 	if (!Info)
@@ -245,10 +245,10 @@ BOOL ExtGetAttributes(ExtAttributesParm* Info)
 		return FALSE;
 	}
 
-	// Что-то в некоторых случаях сбивается цвет вывода для printf
+	// Р§С‚Рѕ-С‚Рѕ РІ РЅРµРєРѕС‚РѕСЂС‹С… СЃР»СѓС‡Р°СЏС… СЃР±РёРІР°РµС‚СЃСЏ С†РІРµС‚ РІС‹РІРѕРґР° РґР»СЏ printf
 	//_ASSERTE("GetTextAttributes" && ((csbi.wAttributes & 0xFF) == 0x07));
 
-	TODO("По хорошему, gExtCurrentAttr нада ветвить по разным h");
+	TODO("РџРѕ С…РѕСЂРѕС€РµРјСѓ, gExtCurrentAttr РЅР°РґР° РІРµС‚РІРёС‚СЊ РїРѕ СЂР°Р·РЅС‹Рј h");
 	if (gExtCurrentAttr.WasSet && (csbi.wAttributes == gExtCurrentAttr.CONColor))
 	{
 		Info->Attributes = gExtCurrentAttr.CEColor;
@@ -313,16 +313,16 @@ static void ExtPrepareColor(const ConEmuColor& Attributes, AnnotationInfo& t, WO
 	}
 }
 
-// Это это "цвет по умолчанию".
-// То, что соответствует "Screen Text" и "Screen Background" в свойствах консоли.
-// То, что задаётся командой color в cmd.exe.
-// То, что будет использовано если в консоль просто писать 
-// по printf/std::cout/WriteConsole, без явного указания цвета.
+// Р­С‚Рѕ СЌС‚Рѕ "С†РІРµС‚ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ".
+// РўРѕ, С‡С‚Рѕ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚ "Screen Text" Рё "Screen Background" РІ СЃРІРѕР№СЃС‚РІР°С… РєРѕРЅСЃРѕР»Рё.
+// РўРѕ, С‡С‚Рѕ Р·Р°РґР°С‘С‚СЃСЏ РєРѕРјР°РЅРґРѕР№ color РІ cmd.exe.
+// РўРѕ, С‡С‚Рѕ Р±СѓРґРµС‚ РёСЃРїРѕР»СЊР·РѕРІР°РЅРѕ РµСЃР»Рё РІ РєРѕРЅСЃРѕР»СЊ РїСЂРѕСЃС‚Рѕ РїРёСЃР°С‚СЊ 
+// РїРѕ printf/std::cout/WriteConsole, Р±РµР· СЏРІРЅРѕРіРѕ СѓРєР°Р·Р°РЅРёСЏ С†РІРµС‚Р°.
 BOOL ExtSetAttributes(const ExtAttributesParm* Info)
 {
 	if (!Info)
 	{
-		// ConEmu internals: сбросить запомненный "атрибут"
+		// ConEmu internals: СЃР±СЂРѕСЃРёС‚СЊ Р·Р°РїРѕРјРЅРµРЅРЅС‹Р№ "Р°С‚СЂРёР±СѓС‚"
 		gExtCurrentAttr.WasSet = false;
 		return TRUE;
 	}
@@ -338,15 +338,15 @@ BOOL ExtSetAttributes(const ExtAttributesParm* Info)
 	
 	BOOL lbRc = TRUE;
 	
-	// <G|S>etTextAttributes должны ожидать указатель на ОДИН ConEmuColor.
+	// <G|S>etTextAttributes РґРѕР»Р¶РЅС‹ РѕР¶РёРґР°С‚СЊ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РћР”РРќ ConEmuColor.
 	AnnotationInfo t = {};
 	WORD n = 0;
 	ExtPrepareColor(Info->Attributes, t, n);
 	
 	SetConsoleTextAttribute(h, n);
 	
-	TODO("По хорошему, gExtCurrentAttr нада ветвить по разным h");
-	// запомнить, что WriteConsole должен писать атрибутом "t"
+	TODO("РџРѕ С…РѕСЂРѕС€РµРјСѓ, gExtCurrentAttr РЅР°РґР° РІРµС‚РІРёС‚СЊ РїРѕ СЂР°Р·РЅС‹Рј h");
+	// Р·Р°РїРѕРјРЅРёС‚СЊ, С‡С‚Рѕ WriteConsole РґРѕР»Р¶РµРЅ РїРёСЃР°С‚СЊ Р°С‚СЂРёР±СѓС‚РѕРј "t"
 	gExtCurrentAttr.WasSet = true;
 	gExtCurrentAttr.CONColor = n;
 	gExtCurrentAttr.CONForeIdx = CONFORECOLOR(n);
@@ -418,7 +418,7 @@ BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL;
-	PRAGMA _ERROR("Заменить на INT_PTR nLinePosition");
+	PRAGMA _ERROR("Р—Р°РјРµРЅРёС‚СЊ РЅР° INT_PTR nLinePosition");
 	//AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (Info->Region.Top /*- srWork.Top*/)) : NULL);
 
 	int nBufferType = (int)(Info->Flags & ewtf_Mask);
@@ -453,7 +453,7 @@ BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
 	{
 		_ASSERTE((Y2 >= 0) && (Y2 < csbi.dwSize.Y));
 		Y2 = csbi.dwSize.Y - 1;
-		lbRc = FALSE; // но продолжим, запишем, сколько сможем
+		lbRc = FALSE; // РЅРѕ РїСЂРѕРґРѕР»Р¶РёРј, Р·Р°РїРёС€РµРј, СЃРєРѕР»СЊРєРѕ СЃРјРѕР¶РµРј
 	}
 
 	if ((Y1 < 0) || (Y1 >= csbi.dwSize.Y))
@@ -488,7 +488,7 @@ BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
 			if (pTrueColor && pTrueColor >= pTrueColorEnd)
 			{
 				_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd);
-				pTrueColor = NULL; // Выделенный буфер оказался недостаточным
+				pTrueColor = NULL; // Р’С‹РґРµР»РµРЅРЅС‹Р№ Р±СѓС„РµСЂ РѕРєР°Р·Р°Р»СЃСЏ РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅС‹Рј
 			}
 
 			switch (nBufferType)
@@ -639,7 +639,7 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
-	PRAGMA _ERROR("Заменить на INT_PTR nLinePosition");
+	PRAGMA _ERROR("Р—Р°РјРµРЅРёС‚СЊ РЅР° INT_PTR nLinePosition");
 	//AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (Info->Region.Top /*- srWork.Top*/)) : NULL); //-V104
 
 	int nBufferType = (int)(Info->Flags & ewtf_Mask);
@@ -656,7 +656,7 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 	{
 		_ASSERTE((Y2 >= 0) && (Y2 < csbi.dwSize.Y));
 		Y2 = csbi.dwSize.Y - 1;
-		lbRc = FALSE; // но продолжим, запишем, сколько сможем
+		lbRc = FALSE; // РЅРѕ РїСЂРѕРґРѕР»Р¶РёРј, Р·Р°РїРёС€РµРј, СЃРєРѕР»СЊРєРѕ СЃРјРѕР¶РµРј
 	}
 
 	if ((Y1 < 0) || (Y1 >= csbi.dwSize.Y))
@@ -692,7 +692,7 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 					_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd && "Allocated buffer was not enough");
 				}
 				#endif
-				pTrueColor = NULL; // Выделенный буфер оказался недостаточным
+				pTrueColor = NULL; // Р’С‹РґРµР»РµРЅРЅС‹Р№ Р±СѓС„РµСЂ РѕРєР°Р·Р°Р»СЃСЏ РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅС‹Рј
 			}
 
 			bool Bold = false, Italic = false, Underline = false;
@@ -798,7 +798,7 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 				nBackColor = -1;
 				_ASSERTE(BackgroundColor<=INDEXMASK);
 				WORD bk = (WORD)BackgroundColor;
-				// Коррекция яркости, если подобранные индексы совпали
+				// РљРѕСЂСЂРµРєС†РёСЏ СЏСЂРєРѕСЃС‚Рё, РµСЃР»Рё РїРѕРґРѕР±СЂР°РЅРЅС‹Рµ РёРЅРґРµРєСЃС‹ СЃРѕРІРїР°Р»Рё
 				if (n == bk && Fore24bit && !isCharSpace(BufPtr.FARBuffer->Char))
 				{
 					if (n & 8)
@@ -841,9 +841,9 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 			pTrueColorLine += nWindowWidth; //-V102
 	}
 
-	PRAGMA _ERROR("Не забыть накрутить индекс в AnnotationInfo");
+	PRAGMA _ERROR("РќРµ Р·Р°Р±С‹С‚СЊ РЅР°РєСЂСѓС‚РёС‚СЊ РёРЅРґРµРєСЃ РІ AnnotationInfo");
 
-	// Commit по флагу
+	// Commit РїРѕ С„Р»Р°РіСѓ
 	if (Info->Flags & ewtf_Commit)
 	{
 		ExtCommitParm c = {sizeof(c), Info->ConsoleOutput};
@@ -909,7 +909,7 @@ static BOOL IntWriteText(HANDLE h, SHORT x, SHORT ForceDumpX,
 						 const AnnotationInfo& AIColor,
 						 WriteConsoleW_t lpfn = NULL)
 {
-	// Вывод расширенных атрибутов (если нужно и можно)
+	// Р’С‹РІРѕРґ СЂР°СЃС€РёСЂРµРЅРЅС‹С… Р°С‚СЂРёР±СѓС‚РѕРІ (РµСЃР»Рё РЅСѓР¶РЅРѕ Рё РјРѕР¶РЅРѕ)
 	if (pTrueColorLine)
 	{
 		AnnotationInfo* pTrueColor = pTrueColorLine + x;
@@ -926,7 +926,7 @@ static BOOL IntWriteText(HANDLE h, SHORT x, SHORT ForceDumpX,
 					_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd && "Allocated buffer was not enough");
 				}
 				#endif
-				pTrueColor = NULL; // Выделенный буфер оказался недостаточным
+				pTrueColor = NULL; // Р’С‹РґРµР»РµРЅРЅС‹Р№ Р±СѓС„РµСЂ РѕРєР°Р·Р°Р»СЃСЏ РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅС‹Рј
 				break;
 			}
 			
@@ -934,7 +934,7 @@ static BOOL IntWriteText(HANDLE h, SHORT x, SHORT ForceDumpX,
 		}
 	}
 
-	// Вывод в консоль "текста"
+	// Р’С‹РІРѕРґ РІ РєРѕРЅСЃРѕР»СЊ "С‚РµРєСЃС‚Р°"
 	DWORD nWritten = 0;
 	BOOL lbRc = apiWriteConsoleW(h, pFrom, cchWrite, &nWritten, NULL, lpfn);
 
@@ -954,12 +954,12 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 #ifdef _DEBUG
 	static HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-	// в x64 получилось, что Info->Private указывает на собственно функцию,
-	// а WriteConsoleW - на заглушку/трамплин
+	// РІ x64 РїРѕР»СѓС‡РёР»РѕСЃСЊ, С‡С‚Рѕ Info->Private СѓРєР°Р·С‹РІР°РµС‚ РЅР° СЃРѕР±СЃС‚РІРµРЅРЅРѕ С„СѓРЅРєС†РёСЋ,
+	// Р° WriteConsoleW - РЅР° Р·Р°РіР»СѓС€РєСѓ/С‚СЂР°РјРїР»РёРЅ
 	_ASSERTE((Info->Private==NULL) || (Info->Private==(void*)WriteConsoleW || CheckCallbackPtr(hKernel, 1, (FARPROC*)&Info->Private, TRUE)));
 #endif
 
-	// Проверка аргументов
+	// РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if (!Info->ConsoleOutput || !Info->Buffer || !Info->NumberOfCharsToWrite)
 	{
 		_ASSERTE(Info->ConsoleOutput && Info->Buffer && Info->NumberOfCharsToWrite);
@@ -1012,7 +1012,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	}
 
 	_ASSERTE(srWork.Bottom == (csbi.dwSize.Y - 1));
-	// Размер TrueColor буфера
+	// Р Р°Р·РјРµСЂ TrueColor Р±СѓС„РµСЂР°
 	SHORT nWindowWidth  = srWork.Right - srWork.Left + 1;
 	DEBUGTEST(SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1);
 	SHORT YShift = csbi.dwCursorPosition.Y - srWork.Top;
@@ -1025,7 +1025,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	//AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * YShift) : NULL); //-V104
 	INT_PTR nLinePosition = nWindowWidth * YShift;
 
-	// пока только "текущим" выбранным цветом
+	// РїРѕРєР° С‚РѕР»СЊРєРѕ "С‚РµРєСѓС‰РёРј" РІС‹Р±СЂР°РЅРЅС‹Рј С†РІРµС‚РѕРј
 	_ASSERTE((Info->Flags & ewtf_Current) == ewtf_Current);
 
 	// Current attributes
@@ -1046,18 +1046,18 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 	Info->ScrolledRowsUp = 0;
 
-	TODO("Тут может быть засада - если другие приложения в это же время выводят в консоль - будет драка...");
+	TODO("РўСѓС‚ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р·Р°СЃР°РґР° - РµСЃР»Рё РґСЂСѓРіРёРµ РїСЂРёР»РѕР¶РµРЅРёСЏ РІ СЌС‚Рѕ Р¶Рµ РІСЂРµРјСЏ РІС‹РІРѕРґСЏС‚ РІ РєРѕРЅСЃРѕР»СЊ - Р±СѓРґРµС‚ РґСЂР°РєР°...");
 	for (; pCur < pEnd; pCur++)
 	{
-		// Учитывать
-		// bWrap - при выводе в последнюю колонку консоли - переводить курсор, если последняя строка - делать скролл
+		// РЈС‡РёС‚С‹РІР°С‚СЊ
+		// bWrap - РїСЂРё РІС‹РІРѕРґРµ РІ РїРѕСЃР»РµРґРЅСЋСЋ РєРѕР»РѕРЅРєСѓ РєРѕРЅСЃРѕР»Рё - РїРµСЂРµРІРѕРґРёС‚СЊ РєСѓСЂСЃРѕСЂ, РµСЃР»Рё РїРѕСЃР»РµРґРЅСЏСЏ СЃС‚СЂРѕРєР° - РґРµР»Р°С‚СЊ СЃРєСЂРѕР»Р»
 
 		/*
 		if (csbi.dwCursorPosition.X > nMaxCursorPos)
 		{
-			// т.к. тут текущую позицию курсора затирать не нужно (наверное?)
-			// это может быть только в том случае, если курсор попал "за правую границу"
-			// например, сначала вывели длинную строку, а потом ограничили правый край
+			// С‚.Рє. С‚СѓС‚ С‚РµРєСѓС‰СѓСЋ РїРѕР·РёС†РёСЋ РєСѓСЂСЃРѕСЂР° Р·Р°С‚РёСЂР°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ (РЅР°РІРµСЂРЅРѕРµ?)
+			// СЌС‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ С‚РѕР»СЊРєРѕ РІ С‚РѕРј СЃР»СѓС‡Р°Рµ, РµСЃР»Рё РєСѓСЂСЃРѕСЂ РїРѕРїР°Р» "Р·Р° РїСЂР°РІСѓСЋ РіСЂР°РЅРёС†Сѓ"
+			// РЅР°РїСЂРёРјРµСЂ, СЃРЅР°С‡Р°Р»Р° РІС‹РІРµР»Рё РґР»РёРЅРЅСѓСЋ СЃС‚СЂРѕРєСѓ, Р° РїРѕС‚РѕРј РѕРіСЂР°РЅРёС‡РёР»Рё РїСЂР°РІС‹Р№ РєСЂР°Р№
 			csbi.dwCursorPosition.X++;
 			PadAndScroll(hConsoleOutput, csbi);
 		}
@@ -1066,7 +1066,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		SHORT ForceDumpX = 0;
 		bool BS = false;
 
-		// Обработка символов, которые двигают курсор
+		// РћР±СЂР°Р±РѕС‚РєР° СЃРёРјРІРѕР»РѕРІ, РєРѕС‚РѕСЂС‹Рµ РґРІРёРіР°СЋС‚ РєСѓСЂСЃРѕСЂ
 		switch (*pCur)
 		{
 		case L'\t':
@@ -1098,8 +1098,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			BS = true;
 			break;
 		default:
-			// Просто буква.
-			// В real-консоли вроде бы не может быть non-spacing символов, кроме выше-обработанных
+			// РџСЂРѕСЃС‚Рѕ Р±СѓРєРІР°.
+			// Р’ real-РєРѕРЅСЃРѕР»Рё РІСЂРѕРґРµ Р±С‹ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ non-spacing СЃРёРјРІРѕР»РѕРІ, РєСЂРѕРјРµ РІС‹С€Рµ-РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹С…
 			x2++;
 			// like '\t'
 			if (x2 >= WrapAtCol)
@@ -1112,8 +1112,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		
 		if (ForceDumpX)
 		{
-			// Вывод расширенных атрибутов (если нужно и можно) и собственно текста
-			// Включая символ pCur
+			// Р’С‹РІРѕРґ СЂР°СЃС€РёСЂРµРЅРЅС‹С… Р°С‚СЂРёР±СѓС‚РѕРІ (РµСЃР»Рё РЅСѓР¶РЅРѕ Рё РјРѕР¶РЅРѕ) Рё СЃРѕР±СЃС‚РІРµРЅРЅРѕ С‚РµРєСЃС‚Р°
+			// Р’РєР»СЋС‡Р°СЏ СЃРёРјРІРѕР» pCur
 			lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom + 1),
 						(pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
 						(pTrueColorEnd), AIColor, (WriteConsoleW_t)Info->Private);
@@ -1122,20 +1122,20 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			pFrom = pCur + 1;
 		}
 
-		// После BS - сменить "начальную" координату
+		// РџРѕСЃР»Рµ BS - СЃРјРµРЅРёС‚СЊ "РЅР°С‡Р°Р»СЊРЅСѓСЋ" РєРѕРѕСЂРґРёРЅР°С‚Сѓ
 		if (BS)
 			x = x2;
 
-		// При смене строки
+		// РџСЂРё СЃРјРµРЅРµ СЃС‚СЂРѕРєРё
 		if (y2 > y)
 		{
-			_ASSERTE(bWrap && "для !Wrap - доделать");
+			_ASSERTE(bWrap && "РґР»СЏ !Wrap - РґРѕРґРµР»Р°С‚СЊ");
 			if (y2 >= ScrollBottom/*csbi.dwSize.Y*/)
 			{
-				// Экран прокрутился на одну строку вверх
+				// Р­РєСЂР°РЅ РїСЂРѕРєСЂСѓС‚РёР»СЃСЏ РЅР° РѕРґРЅСѓ СЃС‚СЂРѕРєСѓ РІРІРµСЂС…
 				
-				// расширенный буфер - прокрутить
-				_ASSERTE((y-y2) == -1); // Должен быть сдвиг на одну строку
+				// СЂР°СЃС€РёСЂРµРЅРЅС‹Р№ Р±СѓС„РµСЂ - РїСЂРѕРєСЂСѓС‚РёС‚СЊ
+				_ASSERTE((y-y2) == -1); // Р”РѕР»Р¶РµРЅ Р±С‹С‚СЊ СЃРґРІРёРі РЅР° РѕРґРЅСѓ СЃС‚СЂРѕРєСѓ
 				ExtScrollScreenParm Shift = {sizeof(Shift), essf_None, h, y-y2, DefClr.Attributes, L' '};
 				if (ScrollRegion)
 				{
@@ -1153,7 +1153,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 				Info->ScrolledRowsUp++;
 
-				// координату - "отмотать" (она как бы не изменилась)
+				// РєРѕРѕСЂРґРёРЅР°С‚Сѓ - "РѕС‚РјРѕС‚Р°С‚СЊ" (РѕРЅР° РєР°Рє Р±С‹ РЅРµ РёР·РјРµРЅРёР»Р°СЃСЊ)
 				if (ScrollRegion && (ScrollBottom < csbi.dwSize.Y))
 				{
 					y2 = ScrollBottom - 1;
@@ -1171,7 +1171,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			}
 			else //if (pTrueColorLine)
 			{
-				// Перейти на следующую строку в расширенном буфере
+				// РџРµСЂРµР№С‚Рё РЅР° СЃР»РµРґСѓСЋС‰СѓСЋ СЃС‚СЂРѕРєСѓ РІ СЂР°СЃС€РёСЂРµРЅРЅРѕРј Р±СѓС„РµСЂРµ
 				nLinePosition += nWindowWidth;
 				//pTrueColorLine += nWindowWidth; //-V102
 			}
@@ -1181,7 +1181,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 	if (pCur > pFrom)
 	{
-		// НЕ включая символ pCur
+		// РќР• РІРєР»СЋС‡Р°СЏ СЃРёРјРІРѕР» pCur
 		SHORT ForceDumpX = (x2 > x) ? (min(x2, WrapAtCol)-1) : -1;
 		lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom),
 					 (pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
@@ -1189,13 +1189,13 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	}
 
 
-	// накрутить индекс в AnnotationInfo
+	// РЅР°РєСЂСѓС‚РёС‚СЊ РёРЅРґРµРєСЃ РІ AnnotationInfo
 	if (gpTrueColor)
 	{
 		gpTrueColor->flushCounter++;
 	}
 
-	// Commit по флагу
+	// Commit РїРѕ С„Р»Р°РіСѓ
 	if (Info->Flags & ewtf_Commit)
 	{
 		ExtCommitParm c = {sizeof(c), Info->ConsoleOutput};
@@ -1229,7 +1229,7 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 		return FALSE;
 
 	_ASSERTE(srWork.Bottom == (csbi.dwSize.Y - 1));
-	// Размер TrueColor буфера
+	// Р Р°Р·РјРµСЂ TrueColor Р±СѓС„РµСЂР°
 	SHORT nWindowWidth  = srWork.Right - srWork.Left + 1;
 	SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1; UNREFERENCED_PARAMETER(nWindowHeight);
 	//SHORT YShift = csbi.dwCursorPosition.Y - srWork.Top;
@@ -1251,8 +1251,8 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 		else if (Info->Flags & efof_ResetExt)
 		{
 			Info->FillAttr.Flags = CECF_NONE;
-			// Цвет - без разницы. Будут сброшены только расширенные атрибуты,
-			// реальный цвет в консоли оставляем без изменений
+			// Р¦РІРµС‚ - Р±РµР· СЂР°Р·РЅРёС†С‹. Р‘СѓРґСѓС‚ СЃР±СЂРѕС€РµРЅС‹ С‚РѕР»СЊРєРѕ СЂР°СЃС€РёСЂРµРЅРЅС‹Рµ Р°С‚СЂРёР±СѓС‚С‹,
+			// СЂРµР°Р»СЊРЅС‹Р№ С†РІРµС‚ РІ РєРѕРЅСЃРѕР»Рё РѕСЃС‚Р°РІР»СЏРµРј Р±РµР· РёР·РјРµРЅРµРЅРёР№
 			Info->FillAttr.ForegroundColor = 7;
 			Info->FillAttr.BackgroundColor = 0;
 		}
@@ -1267,7 +1267,7 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 			DWORD nEndCell = Info->Coord.X + (Info->Coord.Y * csbi.dwSize.X) + Info->Count;
 			SHORT Y2 = (SHORT)(nEndCell / csbi.dwSize.X);
 			SHORT X2 = (SHORT)(nEndCell % csbi.dwSize.X);
-			TODO("Проверить конец буфера");
+			TODO("РџСЂРѕРІРµСЂРёС‚СЊ РєРѕРЅРµС† Р±СѓС„РµСЂР°");
 			DWORD nMaxLines = gpTrueColor->bufferSize / nWindowWidth;
 			if (Y2 >= (int)(srWork.Top + nMaxLines))
 			{
@@ -1279,7 +1279,7 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 			{
 				SHORT xMax = (y == Y2) ? X2 : nWindowWidth;
 				SHORT xMin = (y == Y1) ? Info->Coord.X : 0;
-				TODO("Адресация полной консоли, а не только видимой части...");
+				TODO("РђРґСЂРµСЃР°С†РёСЏ РїРѕР»РЅРѕР№ РєРѕРЅСЃРѕР»Рё, Р° РЅРµ С‚РѕР»СЊРєРѕ РІРёРґРёРјРѕР№ С‡Р°СЃС‚Рё...");
 				INT_PTR nShift = nWindowWidth * (y - srWork.Top) + xMin;
 				if (nShift < 0)
 				{
@@ -1308,7 +1308,7 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 		lbRc &= b;
 	}
 
-	// Commit по флагу
+	// Commit РїРѕ С„Р»Р°РіСѓ
 	if (Info->Flags & ewtf_Commit)
 	{
 		ExtCommitParm c = {sizeof(c), h};
@@ -1388,7 +1388,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 	}
 
 
-	// Размер TrueColor буфера
+	// Р Р°Р·РјРµСЂ TrueColor Р±СѓС„РµСЂР°
 	SHORT nWindowWidth  = srWork.Right - srWork.Left + 1;
 	SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1;
 
@@ -1407,7 +1407,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 		_ASSERTE(Info->Dir == -1);
 		nDir = -1;
 
-		// Пробелами добивать? Хотя вроде и не нужно. Это при "виртуальном" врапе на заданную границу зовется.
+		// РџСЂРѕР±РµР»Р°РјРё РґРѕР±РёРІР°С‚СЊ? РҐРѕС‚СЏ РІСЂРѕРґРµ Рё РЅРµ РЅСѓР¶РЅРѕ. Р­С‚Рѕ РїСЂРё "РІРёСЂС‚СѓР°Р»СЊРЅРѕРј" РІСЂР°РїРµ РЅР° Р·Р°РґР°РЅРЅСѓСЋ РіСЂР°РЅРёС†Сѓ Р·РѕРІРµС‚СЃСЏ.
 
 		/*
 		COORD crFrom = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y};
@@ -1444,13 +1444,13 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 					_ASSERTEX((pTrueColorStart+(-nDir*nWindowWidth)+(nRows*nWindowWidth))<pTrueColorEnd);
 				}
 
-				WARNING("OPTIMIZE: Не нужно двигать заполненную нулями память. Нет атрибутов в строке - и не дергаться.");
+				WARNING("OPTIMIZE: РќРµ РЅСѓР¶РЅРѕ РґРІРёРіР°С‚СЊ Р·Р°РїРѕР»РЅРµРЅРЅСѓСЋ РЅСѓР»СЏРјРё РїР°РјСЏС‚СЊ. РќРµС‚ Р°С‚СЂРёР±СѓС‚РѕРІ РІ СЃС‚СЂРѕРєРµ - Рё РЅРµ РґРµСЂРіР°С‚СЊСЃСЏ.");
 				memmove(pTrueColorStart, pTrueColorStart+(-nDir*nWindowWidth),
 					(nRows * nWindowWidth * sizeof(*pTrueColorStart)));
 
 				if (Info->Flags & essf_ExtOnly)
 				{
-					TODO("Чем заливать");
+					TODO("Р§РµРј Р·Р°Р»РёРІР°С‚СЊ");
 					AnnotationInfo AIInfo = {};
 					for (int i = (nWindowHeight+nDir)*nWindowWidth; i < nMaxCell; i++)
 					{
@@ -1517,13 +1517,13 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 					_ASSERTEX((pTrueColorStart+(nDir*nWindowWidth)+(nRows*nWindowWidth))<pTrueColorEnd);
 				}
 
-				WARNING("OPTIMIZE: Не нужно двигать заполненную нулями память. Нет атрибутов в строке - и не дергаться.");
+				WARNING("OPTIMIZE: РќРµ РЅСѓР¶РЅРѕ РґРІРёРіР°С‚СЊ Р·Р°РїРѕР»РЅРµРЅРЅСѓСЋ РЅСѓР»СЏРјРё РїР°РјСЏС‚СЊ. РќРµС‚ Р°С‚СЂРёР±СѓС‚РѕРІ РІ СЃС‚СЂРѕРєРµ - Рё РЅРµ РґРµСЂРіР°С‚СЊСЃСЏ.");
 				memmove(pTrueColorStart+(nDir*nWindowWidth), pTrueColorStart,
 					(nRows * nWindowWidth * sizeof(*pTrueColorStart)));
 			
 				if (Info->Flags & essf_ExtOnly)
 				{
-					TODO("Чем заливать");
+					TODO("Р§РµРј Р·Р°Р»РёРІР°С‚СЊ");
 					AnnotationInfo AIInfo = {};
 					for (int i = (nDir*nWindowWidth)-1; i > 0; i--)
 					{
@@ -1566,13 +1566,13 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 		}
 	}
 
-	// накрутить индекс в AnnotationInfo
+	// РЅР°РєСЂСѓС‚РёС‚СЊ РёРЅРґРµРєСЃ РІ AnnotationInfo
 	if (gpTrueColor)
 	{
 		gpTrueColor->flushCounter++;
 	}
 
-	// Commit по флагу
+	// Commit РїРѕ С„Р»Р°РіСѓ
 	if (Info->Flags & essf_Commit)
 	{
 		ExtCommitParm c = {sizeof(c), Info->ConsoleOutput};
@@ -1598,7 +1598,7 @@ BOOL ExtCommit(ExtCommitParm* Info)
 
 	TODO("ExtCommit: Info->ConsoleOutput");
 
-	// Если буфер не был создан - то и передергивать нечего
+	// Р•СЃР»Рё Р±СѓС„РµСЂ РЅРµ Р±С‹Р» СЃРѕР·РґР°РЅ - С‚Рѕ Рё РїРµСЂРµРґРµСЂРіРёРІР°С‚СЊ РЅРµС‡РµРіРѕ
 	if (gpTrueColor != NULL)
 	{
 		if (gpTrueColor->locked)

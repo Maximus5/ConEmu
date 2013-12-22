@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -88,9 +88,9 @@ bool CRealServer::Start()
 		wchar_t szEvent[64];
 		
 		_wsprintf(szEvent, SKIPLEN(countof(szEvent)) CEGUIRCONSTARTED, nConWndID);
-		//// Скорее всего событие в сервере еще не создано
+		//// РЎРєРѕСЂРµРµ РІСЃРµРіРѕ СЃРѕР±С‹С‚РёРµ РІ СЃРµСЂРІРµСЂРµ РµС‰Рµ РЅРµ СЃРѕР·РґР°РЅРѕ
 		//mh_GuiAttached = OpenEvent(EVENT_MODIFY_STATE, FALSE, mp_RCon->ms_VConServer_Pipe);
-		//// Вроде, когда используется run as administrator - event открыть не получается?
+		//// Р’СЂРѕРґРµ, РєРѕРіРґР° РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ run as administrator - event РѕС‚РєСЂС‹С‚СЊ РЅРµ РїРѕР»СѓС‡Р°РµС‚СЃСЏ?
 		//if (!mh_GuiAttached) {
 		mh_GuiAttached = CreateEvent(gpLocalSecurity, TRUE, FALSE, szEvent);
 		_ASSERTE(mh_GuiAttached!=NULL);
@@ -101,7 +101,7 @@ bool CRealServer::Start()
 	mp_RConServer->SetLoopCommands(false);
 	mp_RConServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 	
-	// ConEmuC ожидает готовый пайп после возврата из CECMD_SRVSTARTSTOP
+	// ConEmuC РѕР¶РёРґР°РµС‚ РіРѕС‚РѕРІС‹Р№ РїР°Р№Рї РїРѕСЃР»Рµ РІРѕР·РІСЂР°С‚Р° РёР· CECMD_SRVSTARTSTOP
 	if (!mp_RConServer->StartPipeServer(mp_RCon->ms_VConServer_Pipe, (LPARAM)this, LocalSecurity(),
 			ServerCommand, ServerCommandFree, NULL, NULL, ServerThreadReady))
 	{
@@ -120,7 +120,7 @@ bool CRealServer::Start()
 	//	_ASSERTE(mh_RConServerThreads[i]!=NULL);
 	//}
 
-	// чтобы ConEmuC знал, что мы готовы
+	// С‡С‚РѕР±С‹ ConEmuC Р·РЅР°Р», С‡С‚Рѕ РјС‹ РіРѕС‚РѕРІС‹
 	//     if (mh_GuiAttached) {
 	//     	SetEvent(mh_GuiAttached);
 	//Sleep(10);
@@ -205,12 +205,12 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
 	//pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
 
-	// Если процесс отваливается (кроме корневого сервера) - добавить его в mp_RCon->m_TerminatedPIDs
-	TODO("Проверить, нужно ли добавлять отваливающийся sst_App16Stop? По идее, все равно после него должен sst_ComspecStop прийти?");
+	// Р•СЃР»Рё РїСЂРѕС†РµСЃСЃ РѕС‚РІР°Р»РёРІР°РµС‚СЃСЏ (РєСЂРѕРјРµ РєРѕСЂРЅРµРІРѕРіРѕ СЃРµСЂРІРµСЂР°) - РґРѕР±Р°РІРёС‚СЊ РµРіРѕ РІ mp_RCon->m_TerminatedPIDs
+	TODO("РџСЂРѕРІРµСЂРёС‚СЊ, РЅСѓР¶РЅРѕ Р»Рё РґРѕР±Р°РІР»СЏС‚СЊ РѕС‚РІР°Р»РёРІР°СЋС‰РёР№СЃСЏ sst_App16Stop? РџРѕ РёРґРµРµ, РІСЃРµ СЂР°РІРЅРѕ РїРѕСЃР»Рµ РЅРµРіРѕ РґРѕР»Р¶РµРЅ sst_ComspecStop РїСЂРёР№С‚Рё?");
 	if (nStarted == sst_ComspecStop || nStarted == sst_AppStop /*|| nStarted == sst_App16Stop*/)
 	{
 		bool lbPushed = false;
-		// Может он уже добавлен в mp_RCon->m_TerminatedPIDs (хотя не должен по идее)
+		// РњРѕР¶РµС‚ РѕРЅ СѓР¶Рµ РґРѕР±Р°РІР»РµРЅ РІ mp_RCon->m_TerminatedPIDs (С…РѕС‚СЏ РЅРµ РґРѕР»Р¶РµРЅ РїРѕ РёРґРµРµ)
 		for (size_t i = 0; i < countof(mp_RCon->m_TerminatedPIDs); i++)
 		{
 			if (mp_RCon->m_TerminatedPIDs[i] == nPID)
@@ -219,12 +219,12 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 				break;
 			}
 		}
-		// Найти первую пустую и добавить
+		// РќР°Р№С‚Рё РїРµСЂРІСѓСЋ РїСѓСЃС‚СѓСЋ Рё РґРѕР±Р°РІРёС‚СЊ
 		for (UINT k = 0; !lbPushed && k <= 1; k++)
 		{
 			UINT iStart = !k ? mp_RCon->mn_TerminatedIdx : 0;
 			UINT iEnd = !k ? countof(mp_RCon->m_TerminatedPIDs) : min(mp_RCon->mn_TerminatedIdx,countof(mp_RCon->m_TerminatedPIDs));
-			// циклический буфер
+			// С†РёРєР»РёС‡РµСЃРєРёР№ Р±СѓС„РµСЂ
 			for (UINT i = iStart; i < iEnd; i++)
 			{
 				if (!mp_RCon->m_TerminatedPIDs[i])
@@ -241,16 +241,16 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 
 	if ((nStarted == sst_AltServerStart) || (nStarted == sst_AltServerStop))
 	{
-		// Перейти в режим AltServer, переоткрыть m_GetDataPipe
-		// -- команда старта альп.сервера должна приходить из главного сервера
+		// РџРµСЂРµР№С‚Рё РІ СЂРµР¶РёРј AltServer, РїРµСЂРµРѕС‚РєСЂС‹С‚СЊ m_GetDataPipe
+		// -- РєРѕРјР°РЅРґР° СЃС‚Р°СЂС‚Р° Р°Р»СЊРї.СЃРµСЂРІРµСЂР° РґРѕР»Р¶РЅР° РїСЂРёС…РѕРґРёС‚СЊ РёР· РіР»Р°РІРЅРѕРіРѕ СЃРµСЂРІРµСЂР°
 		_ASSERTE(pIn->StartStop.dwPID == nPID && nPID != pIn->hdr.nSrcPID && pIn->hdr.nSrcPID == mp_RCon->mn_MainSrv_PID);
 
-		// При закрытия альт.сервера может также (сразу) закрываться и главный сервер
-		// в этом случае, переоткрывать пайпы смысла не имеет!
+		// РџСЂРё Р·Р°РєСЂС‹С‚РёСЏ Р°Р»СЊС‚.СЃРµСЂРІРµСЂР° РјРѕР¶РµС‚ С‚Р°РєР¶Рµ (СЃСЂР°Р·Сѓ) Р·Р°РєСЂС‹РІР°С‚СЊСЃСЏ Рё РіР»Р°РІРЅС‹Р№ СЃРµСЂРІРµСЂ
+		// РІ СЌС‚РѕРј СЃР»СѓС‡Р°Рµ, РїРµСЂРµРѕС‚РєСЂС‹РІР°С‚СЊ РїР°Р№РїС‹ СЃРјС‹СЃР»Р° РЅРµ РёРјРµРµС‚!
 		if ((nStarted == sst_AltServerStop)
 			&& pIn->StartStop.bMainServerClosing)
 		{
-			if (pIn->hdr.nSrcPID == mp_RCon->mn_MainSrv_PID) // должно приходить из главного сервера
+			if (pIn->hdr.nSrcPID == mp_RCon->mn_MainSrv_PID) // РґРѕР»Р¶РЅРѕ РїСЂРёС…РѕРґРёС‚СЊ РёР· РіР»Р°РІРЅРѕРіРѕ СЃРµСЂРІРµСЂР°
 			{
 				mp_RCon->OnServerClosing(mp_RCon->mn_MainSrv_PID);
 			}
@@ -264,10 +264,10 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			_ASSERTE((nStarted == sst_AltServerStop) || !pIn->StartStop.bMainServerClosing);
 		}
 
-		// Если процесс запущен под другим логином - передать хэндл (hServerProcessHandle) не получится
+		// Р•СЃР»Рё РїСЂРѕС†РµСЃСЃ Р·Р°РїСѓС‰РµРЅ РїРѕРґ РґСЂСѓРіРёРј Р»РѕРіРёРЅРѕРј - РїРµСЂРµРґР°С‚СЊ С…СЌРЅРґР» (hServerProcessHandle) РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ
 		mp_RCon->InitAltServer((nStarted == sst_AltServerStart) ? nPID : 0);
 
-		// В принципе, альт. сервер уже все знает, но вернем...
+		// Р’ РїСЂРёРЅС†РёРїРµ, Р°Р»СЊС‚. СЃРµСЂРІРµСЂ СѓР¶Рµ РІСЃРµ Р·РЅР°РµС‚, РЅРѕ РІРµСЂРЅРµРј...
 		pOut->StartStopRet.hWnd = ghWnd;
 		pOut->StartStopRet.hWndDc = mp_RCon->mp_VCon->GetView();
 		pOut->StartStopRet.hWndBack = mp_RCon->mp_VCon->GetBack();
@@ -275,7 +275,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		if (lbWasBuffer != mp_RCon->isBufferHeight())
 		{
 			mp_RCon->mp_RBuf->BuferModeChangeLock();
-			mp_RCon->mp_RBuf->SetBufferHeightMode(lbWasBuffer, TRUE); // Сразу меняем, иначе команда неправильно сформируется
+			mp_RCon->mp_RBuf->SetBufferHeightMode(lbWasBuffer, TRUE); // РЎСЂР°Р·Сѓ РјРµРЅСЏРµРј, РёРЅР°С‡Рµ РєРѕРјР°РЅРґР° РЅРµРїСЂР°РІРёР»СЊРЅРѕ СЃС„РѕСЂРјРёСЂСѓРµС‚СЃСЏ
 			//mp_RCon->mp_RBuf->SetConsoleSize(mp_RCon->mp_RBuf->GetTextWidth()/*con.m_sbi.dwSize.X*/, mp_RCon->mp_RBuf->TextHeight(), pOut->StartStopRet.nBufferHeight, CECMD_CMDSTARTED);
 			mp_RCon->mp_RBuf->BuferModeChangeUnlock();
 		}
@@ -291,13 +291,13 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		{
 			mp_RCon->SetConStatus(L"Console server started...", true);
 
-			// Активным должен быть реальный буфер
+			// РђРєС‚РёРІРЅС‹Рј РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СЂРµР°Р»СЊРЅС‹Р№ Р±СѓС„РµСЂ
 			_ASSERTE(mp_RCon->mp_ABuf==mp_RCon->mp_RBuf);
 			mp_RCon->mp_RBuf->InitMaxSize(pIn->StartStop.crMaxSize);
 		}
 
-		// Сразу заполним результат
-		pOut->StartStopRet.bWasBufferHeight = mp_RCon->isBufferHeight(); // чтобы comspec знал, что буфер нужно будет отключить
+		// РЎСЂР°Р·Сѓ Р·Р°РїРѕР»РЅРёРј СЂРµР·СѓР»СЊС‚Р°С‚
+		pOut->StartStopRet.bWasBufferHeight = mp_RCon->isBufferHeight(); // С‡С‚РѕР±С‹ comspec Р·РЅР°Р», С‡С‚Рѕ Р±СѓС„РµСЂ РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ РѕС‚РєР»СЋС‡РёС‚СЊ
 		//DWORD nParentPID = 0;
 		//if (nStarted == 2)
 		//{
@@ -327,7 +327,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		//		free(pPrc);
 		//	}
 		//}
-		//pOut->StartStopRet.bWasBufferHeight = FALSE;// (nStarted == 2) && (nParentPID == 0); // comspec должен уведомить о завершении
+		//pOut->StartStopRet.bWasBufferHeight = FALSE;// (nStarted == 2) && (nParentPID == 0); // comspec РґРѕР»Р¶РµРЅ СѓРІРµРґРѕРјРёС‚СЊ Рѕ Р·Р°РІРµСЂС€РµРЅРёРё
 		pOut->StartStopRet.hWnd = ghWnd;
 		pOut->StartStopRet.hWndDc = mp_RCon->mp_VCon->GetView();
 		pOut->StartStopRet.hWndBack = mp_RCon->mp_VCon->GetBack();
@@ -357,21 +357,21 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 				mp_RCon->m_Args.bRunAsAdministrator = TRUE;
 
 			if (mp_RCon->mn_InRecreate>=1)
-				mp_RCon->mn_InRecreate = 0; // корневой процесс успешно пересоздался
+				mp_RCon->mn_InRecreate = 0; // РєРѕСЂРЅРµРІРѕР№ РїСЂРѕС†РµСЃСЃ СѓСЃРїРµС€РЅРѕ РїРµСЂРµСЃРѕР·РґР°Р»СЃСЏ
 
-			// Если один Layout на все консоли
+			// Р•СЃР»Рё РѕРґРёРЅ Layout РЅР° РІСЃРµ РєРѕРЅСЃРѕР»Рё
 			if ((gpSet->isMonitorConsoleLang & 2) == 2)
 			{
-				// Команду - низя, нити еще не функционируют
+				// РљРѕРјР°РЅРґСѓ - РЅРёР·СЏ, РЅРёС‚Рё РµС‰Рµ РЅРµ С„СѓРЅРєС†РёРѕРЅРёСЂСѓСЋС‚
 				//	SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gpConEmu->GetActiveKeyboardLayout());
 				pOut->StartStopRet.bNeedLangChange = TRUE;
-				TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
+				TODO("РџСЂРѕРІРµСЂРёС‚СЊ РЅР° x64, РЅРµ Р±СѓРґРµС‚ Р»Рё РїСЂРѕР±Р»РµРј СЃ 0xFFFFFFFFFFFFFFFFFFFFF");
 				pOut->StartStopRet.NewConsoleLang = gpConEmu->GetActiveKeyboardLayout();
 			}
 
-			// Теперь мы гарантированно знаем дескриптор окна консоли
+			// РўРµРїРµСЂСЊ РјС‹ РіР°СЂР°РЅС‚РёСЂРѕРІР°РЅРЅРѕ Р·РЅР°РµРј РґРµСЃРєСЂРёРїС‚РѕСЂ РѕРєРЅР° РєРѕРЅСЃРѕР»Рё
 			mp_RCon->SetHwnd(hWnd, TRUE);
-			// Открыть мэппинги, выставить KeyboardLayout, и т.п.
+			// РћС‚РєСЂС‹С‚СЊ РјСЌРїРїРёРЅРіРё, РІС‹СЃС‚Р°РІРёС‚СЊ KeyboardLayout, Рё С‚.Рї.
 			mp_RCon->OnServerStarted(pIn->StartStop.dwPID, hServerProcessHandle, pIn->StartStop.dwKeybLayout);
 		}
 
@@ -387,17 +387,17 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		// ComSpec started
 		if (nStarted == sst_ComspecStart)
 		{
-			// Устанавливается в TRUE если будет запущено 16битное приложение
+			// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РІ TRUE РµСЃР»Рё Р±СѓРґРµС‚ Р·Р°РїСѓС‰РµРЅРѕ 16Р±РёС‚РЅРѕРµ РїСЂРёР»РѕР¶РµРЅРёРµ
 			if (nSubSystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE/*255*/)
 			{
 				DEBUGSTRCMD(L"16 bit application STARTED, aquired from CECMD_CMDSTARTSTOP\n");
 
 				//if (!(mp_RCon->mn_ProgramStatus & CES_NTVDM))
-				//	mp_RCon->mn_ProgramStatus |= CES_NTVDM; -- в mp_RCon->OnDosAppStartStop
+				//	mp_RCon->mn_ProgramStatus |= CES_NTVDM; -- РІ mp_RCon->OnDosAppStartStop
 
 				mp_RCon->mn_Comspec4Ntvdm = nPID;
 				mp_RCon->OnDosAppStartStop(sst_App16Start, nPID);
-				//mp_RCon->mb_IgnoreCmdStop = TRUE; -- уже, в mp_RCon->OnDosAppStartStop
+				//mp_RCon->mb_IgnoreCmdStop = TRUE; -- СѓР¶Рµ, РІ mp_RCon->OnDosAppStartStop
 
 				mp_RCon->mp_RBuf->SetConsoleSize(cr16bit.X, cr16bit.Y, 0, CECMD_CMDSTARTED);
 				pOut->StartStopRet.nBufferHeight = 0;
@@ -410,35 +410,35 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 				if (pIn->StartStop.bForceBufferHeight)
 					bAllowBufferHeight = (pIn->StartStop.nForceBufferHeight != 0);
 				
-				// но пока его нужно сбросить
+				// РЅРѕ РїРѕРєР° РµРіРѕ РЅСѓР¶РЅРѕ СЃР±СЂРѕСЃРёС‚СЊ
 				mp_RCon->mb_IgnoreCmdStop = FALSE;
-				// Если пользователь указал требуемое к строке запуска приложения
+				// Р•СЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ СѓРєР°Р·Р°Р» С‚СЂРµР±СѓРµРјРѕРµ Рє СЃС‚СЂРѕРєРµ Р·Р°РїСѓСЃРєР° РїСЂРёР»РѕР¶РµРЅРёСЏ
 				if (pIn->StartStop.bForceBufferHeight)
 				{
 					pOut->StartStopRet.nBufferHeight = pIn->StartStop.nForceBufferHeight;
 				}
 				else
 				{
-					// в ComSpec передаем именно то, что сейчас в gpSet
+					// РІ ComSpec РїРµСЂРµРґР°РµРј РёРјРµРЅРЅРѕ С‚Рѕ, С‡С‚Рѕ СЃРµР№С‡Р°СЃ РІ gpSet
 					pOut->StartStopRet.nBufferHeight = bAllowBufferHeight ? gpSet->DefaultBufferHeight : 0;
 				}
-				// 111125 было "con.m_sbi.dwSize.X" и "con.m_sbi.dwSize.X"
+				// 111125 Р±С‹Р»Рѕ "con.m_sbi.dwSize.X" Рё "con.m_sbi.dwSize.X"
 				pOut->StartStopRet.nWidth = mp_RCon->mp_RBuf->GetBufferWidth()/*con.m_sbi.dwSize.X*/;
 				pOut->StartStopRet.nHeight = mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/;
 
 				if ((pOut->StartStopRet.nBufferHeight == 0) != (mp_RCon->isBufferHeight() == FALSE))
 				{
-					WARNING("Тут наверное нужно бы заблокировать прием команды смена размера из сервера ConEmuC");
-					//con.m_sbi.dwSize.Y = gpSet->DefaultBufferHeight; -- не будем менять сразу, а то SetConsoleSize просто skip
+					WARNING("РўСѓС‚ РЅР°РІРµСЂРЅРѕРµ РЅСѓР¶РЅРѕ Р±С‹ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ РїСЂРёРµРј РєРѕРјР°РЅРґС‹ СЃРјРµРЅР° СЂР°Р·РјРµСЂР° РёР· СЃРµСЂРІРµСЂР° ConEmuC");
+					//con.m_sbi.dwSize.Y = gpSet->DefaultBufferHeight; -- РЅРµ Р±СѓРґРµРј РјРµРЅСЏС‚СЊ СЃСЂР°Р·Сѓ, Р° С‚Рѕ SetConsoleSize РїСЂРѕСЃС‚Рѕ skip
 					mp_RCon->mp_RBuf->BuferModeChangeLock();
-					mp_RCon->mp_RBuf->SetBufferHeightMode((pOut->StartStopRet.nBufferHeight != 0), TRUE); // Сразу меняем, иначе команда неправильно сформируется
+					mp_RCon->mp_RBuf->SetBufferHeightMode((pOut->StartStopRet.nBufferHeight != 0), TRUE); // РЎСЂР°Р·Сѓ РјРµРЅСЏРµРј, РёРЅР°С‡Рµ РєРѕРјР°РЅРґР° РЅРµРїСЂР°РІРёР»СЊРЅРѕ СЃС„РѕСЂРјРёСЂСѓРµС‚СЃСЏ
 					mp_RCon->mp_RBuf->SetConsoleSize(mp_RCon->mp_RBuf->GetTextWidth()/*con.m_sbi.dwSize.X*/, mp_RCon->mp_RBuf->TextHeight(), pOut->StartStopRet.nBufferHeight, CECMD_CMDSTARTED);
-					WARNING("Переделать! Размер нужно просто вернуть в сервер, а он сам разберется");
+					WARNING("РџРµСЂРµРґРµР»Р°С‚СЊ! Р Р°Р·РјРµСЂ РЅСѓР¶РЅРѕ РїСЂРѕСЃС‚Рѕ РІРµСЂРЅСѓС‚СЊ РІ СЃРµСЂРІРµСЂ, Р° РѕРЅ СЃР°Рј СЂР°Р·Р±РµСЂРµС‚СЃСЏ");
 					mp_RCon->mp_RBuf->BuferModeChangeUnlock();
 				}
 			}
 
-			// Раз стартован ComSpec (cmd.exe/ConEmuC.exe/...)
+			// Р Р°Р· СЃС‚Р°СЂС‚РѕРІР°РЅ ComSpec (cmd.exe/ConEmuC.exe/...)
 			mp_RCon->SetFarPID(0);
 		}
 		else if (nStarted == sst_ServerStart)
@@ -456,21 +456,21 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			{
 				pOut->StartStopRet.nWidth = mp_RCon->mp_RBuf->GetBufferWidth()/*con.m_sbi.dwSize.X*/;
 
-				//0x101 - запуск отладчика
-				if (nSubSystem != 0x100   // 0x100 - Аттач из фар-плагина
+				//0x101 - Р·Р°РїСѓСЃРє РѕС‚Р»Р°РґС‡РёРєР°
+				if (nSubSystem != 0x100   // 0x100 - РђС‚С‚Р°С‡ РёР· С„Р°СЂ-РїР»Р°РіРёРЅР°
 				        && (mp_RCon->mp_RBuf->isScroll()
 				            || (mp_RCon->mn_DefaultBufferHeight && bRunViaCmdExe)))
 				{
-					// Смысл ассерта в том, что консоль запускаемая ИЗ ConEmu должна стартовать
-					// с корректным размером (заранее заданные через параметры для ConEmuC)
-					// А вот если идет аттач внешних консолей - то размер будет отличаться (и это нормально)
+					// РЎРјС‹СЃР» Р°СЃСЃРµСЂС‚Р° РІ С‚РѕРј, С‡С‚Рѕ РєРѕРЅСЃРѕР»СЊ Р·Р°РїСѓСЃРєР°РµРјР°СЏ РР— ConEmu РґРѕР»Р¶РЅР° СЃС‚Р°СЂС‚РѕРІР°С‚СЊ
+					// СЃ РєРѕСЂСЂРµРєС‚РЅС‹Рј СЂР°Р·РјРµСЂРѕРј (Р·Р°СЂР°РЅРµРµ Р·Р°РґР°РЅРЅС‹Рµ С‡РµСЂРµР· РїР°СЂР°РјРµС‚СЂС‹ РґР»СЏ ConEmuC)
+					// Рђ РІРѕС‚ РµСЃР»Рё РёРґРµС‚ Р°С‚С‚Р°С‡ РІРЅРµС€РЅРёС… РєРѕРЅСЃРѕР»РµР№ - С‚Рѕ СЂР°Р·РјРµСЂ Р±СѓРґРµС‚ РѕС‚Р»РёС‡Р°С‚СЊСЃСЏ (Рё СЌС‚Рѕ РЅРѕСЂРјР°Р»СЊРЅРѕ)
 					_ASSERTE(mp_RCon->mb_WasStartDetached || mp_RCon->mn_DefaultBufferHeight == mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/ || mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/ == mp_RCon->TextHeight());
 
 					pOut->StartStopRet.nBufferHeight = max(mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/,mp_RCon->mn_DefaultBufferHeight);
 					_ASSERTE(mp_RCon->mp_RBuf->TextHeight()/*con.nTextHeight*/ >= 1);
 					pOut->StartStopRet.nHeight = mp_RCon->mp_RBuf->TextHeight()/*con.nTextHeight*/;
-					//111126 - убрал. выше буфер блокируется
-					//con.m_sbi.dwSize.Y = pOut->StartStopRet.nBufferHeight; // Сразу обновить, иначе буфер может сброситься самопроизвольно
+					//111126 - СѓР±СЂР°Р». РІС‹С€Рµ Р±СѓС„РµСЂ Р±Р»РѕРєРёСЂСѓРµС‚СЃСЏ
+					//con.m_sbi.dwSize.Y = pOut->StartStopRet.nBufferHeight; // РЎСЂР°Р·Сѓ РѕР±РЅРѕРІРёС‚СЊ, РёРЅР°С‡Рµ Р±СѓС„РµСЂ РјРѕР¶РµС‚ СЃР±СЂРѕСЃРёС‚СЊСЃСЏ СЃР°РјРѕРїСЂРѕРёР·РІРѕР»СЊРЅРѕ
 				}
 				else
 				{
@@ -487,34 +487,34 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			if (b) mp_RCon->mp_RBuf->BuferModeChangeUnlock();
 		}
 
-		// 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
+		// 23.06.2009 Maks - СѓР±РµСЂРµРј РїРѕРєР°. Р”РѕР»Р¶РЅРѕ СЂР°Р±РѕС‚Р°С‚СЊ РІ ApplyConsoleInfo
 		//Process Add(nPID);
 
 	} // (nStarted == sst_ServerStart || nStarted == sst_ComspecStart)
 	else if (nStarted == sst_ServerStop || nStarted == sst_ComspecStop)
 	{
-		// ServerStop вроде не приходит - посылается CECMD_SRVSTARTSTOP в ConEmuWnd
-		// Может быть для AltServer???
+		// ServerStop РІСЂРѕРґРµ РЅРµ РїСЂРёС…РѕРґРёС‚ - РїРѕСЃС‹Р»Р°РµС‚СЃСЏ CECMD_SRVSTARTSTOP РІ ConEmuWnd
+		// РњРѕР¶РµС‚ Р±С‹С‚СЊ РґР»СЏ AltServer???
 		_ASSERTE(nStarted != sst_ServerStop);
 
-		// 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
+		// 23.06.2009 Maks - СѓР±РµСЂРµРј РїРѕРєР°. Р”РѕР»Р¶РЅРѕ СЂР°Р±РѕС‚Р°С‚СЊ РІ ApplyConsoleInfo
 		//Process Delete(nPID);
 
 		// ComSpec stopped
 		if ((nStarted == sst_ComspecStop) && (nParentFarPid == 0))
 		{
-			// из cmd.exe была запущена команда с "-new_console"
-			// Сервер она не интересует
+			// РёР· cmd.exe Р±С‹Р»Р° Р·Р°РїСѓС‰РµРЅР° РєРѕРјР°РЅРґР° СЃ "-new_console"
+			// РЎРµСЂРІРµСЂ РѕРЅР° РЅРµ РёРЅС‚РµСЂРµСЃСѓРµС‚
 			_ASSERTE(!mp_RCon->isNtvdm() && "Need resize console after NTVDM?");
 		}
 		else if (nStarted == sst_ComspecStop)
 		{
 			BOOL lbNeedResizeWnd = FALSE;
 			BOOL lbNeedResizeGui = FALSE;
-			// {mp_RCon->TextWidth(),mp_RCon->TextHeight()} использовать нельзя,
-			// т.к. при если из фара выполняется "cmd -new_console:s" то при завершении
-			// RM_COMSPEC выполняется "возврат" размера буфера и это обламывает синхронизацию
-			// размера под измененную конфигурацию сплитов...
+			// {mp_RCon->TextWidth(),mp_RCon->TextHeight()} РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РЅРµР»СЊР·СЏ,
+			// С‚.Рє. РїСЂРё РµСЃР»Рё РёР· С„Р°СЂР° РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ "cmd -new_console:s" С‚Рѕ РїСЂРё Р·Р°РІРµСЂС€РµРЅРёРё
+			// RM_COMSPEC РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ "РІРѕР·РІСЂР°С‚" СЂР°Р·РјРµСЂР° Р±СѓС„РµСЂР° Рё СЌС‚Рѕ РѕР±Р»Р°РјС‹РІР°РµС‚ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЋ
+			// СЂР°Р·РјРµСЂР° РїРѕРґ РёР·РјРµРЅРµРЅРЅСѓСЋ РєРѕРЅС„РёРіСѓСЂР°С†РёСЋ СЃРїР»РёС‚РѕРІ...
 			RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, mp_RCon->mp_VCon);
 			//COORD crNewSize = {mp_RCon->TextWidth(),mp_RCon->TextHeight()};
 			COORD crNewSize = {(SHORT)rcCon.right, (SHORT)rcCon.bottom};
@@ -525,33 +525,33 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			{
 				pOut->StartStopRet.bWasBufferHeight = FALSE;
 
-				// В некоторых случаях (comspec без консоли?) GetConsoleScreenBufferInfo обламывается
+				// Р’ РЅРµРєРѕС‚РѕСЂС‹С… СЃР»СѓС‡Р°СЏС… (comspec Р±РµР· РєРѕРЅСЃРѕР»Рё?) GetConsoleScreenBufferInfo РѕР±Р»Р°РјС‹РІР°РµС‚СЃСЏ
 				if (pOut->StartStop.sbi.dwSize.X && pOut->StartStop.sbi.dwSize.Y)
 				{
 					DWORD nScroll = 0;
 					
-					// Интересуют реальные размеры консоли, определенные при текущему SBI
-					// 111125 - bBufferHeight заменен на nScroll (который учитывает и наличие горизонтальной прокрутки)
+					// РРЅС‚РµСЂРµСЃСѓСЋС‚ СЂРµР°Р»СЊРЅС‹Рµ СЂР°Р·РјРµСЂС‹ РєРѕРЅСЃРѕР»Рё, РѕРїСЂРµРґРµР»РµРЅРЅС‹Рµ РїСЂРё С‚РµРєСѓС‰РµРјСѓ SBI
+					// 111125 - bBufferHeight Р·Р°РјРµРЅРµРЅ РЅР° nScroll (РєРѕС‚РѕСЂС‹Р№ СѓС‡РёС‚С‹РІР°РµС‚ Рё РЅР°Р»РёС‡РёРµ РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕР№ РїСЂРѕРєСЂСѓС‚РєРё)
 					if (mp_RCon->mp_RBuf->GetConWindowSize(pOut->StartStop.sbi, &nNewWidth, &nNewHeight, &nScroll))
 					{
 						lbNeedResizeGui = (crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight);
 
-						WARNING("ConResize: Сомнительно, что тут нужно ресайзить GUI");
+						WARNING("ConResize: РЎРѕРјРЅРёС‚РµР»СЊРЅРѕ, С‡С‚Рѕ С‚СѓС‚ РЅСѓР¶РЅРѕ СЂРµСЃР°Р№Р·РёС‚СЊ GUI");
 						if (nScroll || crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight)
 						{
-							// Это к вопросу о том, может ли консольное приложение менять размер окна,
-							// или это может делать только юзер, меняя размер окна ConEmu
-							// Буфер менять можно (он и не проверяется), а вот размер видимой области...
-							// Хотя, может быть, например, команда "mode con lines=25 cols=80"
+							// Р­С‚Рѕ Рє РІРѕРїСЂРѕСЃСѓ Рѕ С‚РѕРј, РјРѕР¶РµС‚ Р»Рё РєРѕРЅСЃРѕР»СЊРЅРѕРµ РїСЂРёР»РѕР¶РµРЅРёРµ РјРµРЅСЏС‚СЊ СЂР°Р·РјРµСЂ РѕРєРЅР°,
+							// РёР»Рё СЌС‚Рѕ РјРѕР¶РµС‚ РґРµР»Р°С‚СЊ С‚РѕР»СЊРєРѕ СЋР·РµСЂ, РјРµРЅСЏСЏ СЂР°Р·РјРµСЂ РѕРєРЅР° ConEmu
+							// Р‘СѓС„РµСЂ РјРµРЅСЏС‚СЊ РјРѕР¶РЅРѕ (РѕРЅ Рё РЅРµ РїСЂРѕРІРµСЂСЏРµС‚СЃСЏ), Р° РІРѕС‚ СЂР°Р·РјРµСЂ РІРёРґРёРјРѕР№ РѕР±Р»Р°СЃС‚Рё...
+							// РҐРѕС‚СЏ, РјРѕР¶РµС‚ Р±С‹С‚СЊ, РЅР°РїСЂРёРјРµСЂ, РєРѕРјР°РЅРґР° "mode con lines=25 cols=80"
 							_ASSERTE(crNewSize.X == nNewWidth && crNewSize.Y == nNewHeight);
 							
-							//CVConGroup::SyncWindowToConsole(); - его использовать нельзя. во первых это не главная нить, во вторых - размер pVCon может быть еще не изменен
+							//CVConGroup::SyncWindowToConsole(); - РµРіРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РЅРµР»СЊР·СЏ. РІРѕ РїРµСЂРІС‹С… СЌС‚Рѕ РЅРµ РіР»Р°РІРЅР°СЏ РЅРёС‚СЊ, РІРѕ РІС‚РѕСЂС‹С… - СЂР°Р·РјРµСЂ pVCon РјРѕР¶РµС‚ Р±С‹С‚СЊ РµС‰Рµ РЅРµ РёР·РјРµРЅРµРЅ
 							lbNeedResizeWnd = TRUE;
 							
 							crNewSize.X = nNewWidth;
 							crNewSize.Y = nNewHeight;
 							
-							//pOut->StartStopRet.bWasBufferHeight = TRUE; -- 111124 всегда ставилось pOut->StartStopRet.bWasBufferHeight=TRUE;
+							//pOut->StartStopRet.bWasBufferHeight = TRUE; -- 111124 РІСЃРµРіРґР° СЃС‚Р°РІРёР»РѕСЃСЊ pOut->StartStopRet.bWasBufferHeight=TRUE;
 							_ASSERTE(nScroll!=0);
 							pOut->StartStopRet.bWasBufferHeight = (nScroll!=0);
 						}
@@ -561,22 +561,22 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 
 			if (mp_RCon->mb_IgnoreCmdStop || (mp_RCon->mn_ProgramStatus & CES_NTVDM) == CES_NTVDM)
 			{
-				// Ветка активируется только в WinXP и выше
-				// Было запущено 16битное приложение, сейчас запомненный размер консоли скорее всего 80x25
-				// что не соответствует желаемому размеру при выходе из 16бит. Консоль нужно подресайзить
-				// поз размер окна. Это сделает OnWinEvent.
+				// Р’РµС‚РєР° Р°РєС‚РёРІРёСЂСѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РІ WinXP Рё РІС‹С€Рµ
+				// Р‘С‹Р»Рѕ Р·Р°РїСѓС‰РµРЅРѕ 16Р±РёС‚РЅРѕРµ РїСЂРёР»РѕР¶РµРЅРёРµ, СЃРµР№С‡Р°СЃ Р·Р°РїРѕРјРЅРµРЅРЅС‹Р№ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё СЃРєРѕСЂРµРµ РІСЃРµРіРѕ 80x25
+				// С‡С‚Рѕ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚ Р¶РµР»Р°РµРјРѕРјСѓ СЂР°Р·РјРµСЂСѓ РїСЂРё РІС‹С…РѕРґРµ РёР· 16Р±РёС‚. РљРѕРЅСЃРѕР»СЊ РЅСѓР¶РЅРѕ РїРѕРґСЂРµСЃР°Р№Р·РёС‚СЊ
+				// РїРѕР· СЂР°Р·РјРµСЂ РѕРєРЅР°. Р­С‚Рѕ СЃРґРµР»Р°РµС‚ OnWinEvent.
 				//SetBufferHeightMode(FALSE, TRUE);
-				//WARNING("Если не вызвать CECMD_CMDFINISHED не включатся WinEvents");
-				mp_RCon->mb_IgnoreCmdStop = FALSE; // наверное сразу сбросим, две подряд прийти не могут
+				//WARNING("Р•СЃР»Рё РЅРµ РІС‹Р·РІР°С‚СЊ CECMD_CMDFINISHED РЅРµ РІРєР»СЋС‡Р°С‚СЃСЏ WinEvents");
+				mp_RCon->mb_IgnoreCmdStop = FALSE; // РЅР°РІРµСЂРЅРѕРµ СЃСЂР°Р·Сѓ СЃР±СЂРѕСЃРёРј, РґРІРµ РїРѕРґСЂСЏРґ РїСЂРёР№С‚Рё РЅРµ РјРѕРіСѓС‚
 				DEBUGSTRCMD(L"16 bit application TERMINATED (aquired from CECMD_CMDFINISHED)\n");
 
-				//mp_RCon->mn_ProgramStatus &= ~CES_NTVDM; -- сбросим после синхронизации размера консоли, чтобы не слетел
+				//mp_RCon->mn_ProgramStatus &= ~CES_NTVDM; -- СЃР±СЂРѕСЃРёРј РїРѕСЃР»Рµ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё СЂР°Р·РјРµСЂР° РєРѕРЅСЃРѕР»Рё, С‡С‚РѕР±С‹ РЅРµ СЃР»РµС‚РµР»
 				if (lbWasBuffer)
 				{
-					mp_RCon->mp_RBuf->SetBufferHeightMode(TRUE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
+					mp_RCon->mp_RBuf->SetBufferHeightMode(TRUE, TRUE); // РЎСЂР°Р·Сѓ РІС‹РєР»СЋС‡Р°РµРј, РёРЅР°С‡Рµ РєРѕРјР°РЅРґР° РЅРµРїСЂР°РІРёР»СЊРЅРѕ СЃС„РѕСЂРјРёСЂСѓРµС‚СЃСЏ
 				}
 
-				mp_RCon->SyncConsole2Window(TRUE); // После выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
+				mp_RCon->SyncConsole2Window(TRUE); // РџРѕСЃР»Рµ РІС‹С…РѕРґР° РёР· 16bit СЂРµР¶РёРјР° С…РѕСЂРѕС€Рѕ Р±С‹ РѕС‚СЂРµСЃР°Р№Р·РёС‚СЊ РєРѕРЅСЃРѕР»СЊ РїРѕ СЂР°Р·РјРµСЂСѓ GUI
 
 				if (mp_RCon->mn_Comspec4Ntvdm)
 				{
@@ -603,15 +603,15 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 				crNewSize.Y = mp_RCon->TextHeight();
 			} //else {
 
-			// Восстановить размер через серверный ConEmuC
+			// Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ СЂР°Р·РјРµСЂ С‡РµСЂРµР· СЃРµСЂРІРµСЂРЅС‹Р№ ConEmuC
 			mp_RCon->mp_RBuf->BuferModeChangeLock();
 			
-			//111126 - убрал, ниже зовется SetConsoleSize
+			//111126 - СѓР±СЂР°Р», РЅРёР¶Рµ Р·РѕРІРµС‚СЃСЏ SetConsoleSize
 			//con.m_sbi.dwSize.Y = crNewSize.Y;
 
 			if (!lbWasBuffer)
 			{
-				mp_RCon->mp_RBuf->SetBufferHeightMode(FALSE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
+				mp_RCon->mp_RBuf->SetBufferHeightMode(FALSE, TRUE); // РЎСЂР°Р·Сѓ РІС‹РєР»СЋС‡Р°РµРј, РёРЅР°С‡Рµ РєРѕРјР°РЅРґР° РЅРµРїСЂР°РІРёР»СЊРЅРѕ СЃС„РѕСЂРјРёСЂСѓРµС‚СЃСЏ
 			}
 
 			#ifdef _DEBUG
@@ -619,7 +619,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			DEBUGSTRCMD(szDbg);
 			#endif
 			
-			// Обязательно. Иначе сервер не узнает, что команда завершена
+			// РћР±СЏР·Р°С‚РµР»СЊРЅРѕ. РРЅР°С‡Рµ СЃРµСЂРІРµСЂ РЅРµ СѓР·РЅР°РµС‚, С‡С‚Рѕ РєРѕРјР°РЅРґР° Р·Р°РІРµСЂС€РµРЅР°
 			mp_RCon->mp_RBuf->SetConsoleSize(crNewSize.X, crNewSize.Y, 0, CECMD_CMDFINISHED);
 			
 			#ifdef _DEBUG
@@ -629,10 +629,10 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			
 			#ifdef _DEBUG
 			#ifdef WIN64
-			//				WARNING("Есть подозрение, что после этого на Win7 x64 приходит старый пакет с буферной высотой и возникает уже некорректная синхронизация размера!");
+			//				WARNING("Р•СЃС‚СЊ РїРѕРґРѕР·СЂРµРЅРёРµ, С‡С‚Рѕ РїРѕСЃР»Рµ СЌС‚РѕРіРѕ РЅР° Win7 x64 РїСЂРёС…РѕРґРёС‚ СЃС‚Р°СЂС‹Р№ РїР°РєРµС‚ СЃ Р±СѓС„РµСЂРЅРѕР№ РІС‹СЃРѕС‚РѕР№ Рё РІРѕР·РЅРёРєР°РµС‚ СѓР¶Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅР°СЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ СЂР°Р·РјРµСЂР°!");
 			#endif
 			#endif
-			// может nChange2TextWidth, nChange2TextHeight нужно использовать?
+			// РјРѕР¶РµС‚ nChange2TextWidth, nChange2TextHeight РЅСѓР¶РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ?
 
 			if (lbNeedResizeGui)
 			{
@@ -658,7 +658,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		}
 		else
 		{
-			// сюда мы попадать не должны!
+			// СЃСЋРґР° РјС‹ РїРѕРїР°РґР°С‚СЊ РЅРµ РґРѕР»Р¶РЅС‹!
 			_ASSERTE(FALSE);
 		}
 	} // (nStarted == sst_ServerStop || nStarted == sst_ComspecStop)
@@ -667,7 +667,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		mp_RCon->OnDosAppStartStop((enum StartStopType)nStarted, nPID);
 	}
 	
-	// Готовим результат к отправке
+	// Р“РѕС‚РѕРІРёРј СЂРµР·СѓР»СЊС‚Р°С‚ Рє РѕС‚РїСЂР°РІРєРµ
 
 	//pOut = ExecuteNewCmd(pIn->hdr.nCmd, pIn->hdr.cbSize);
 	//if (pIn->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
@@ -698,12 +698,12 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 
 	if (nDataSize == 0)
 	{
-		// ФАР закрывается
+		// Р¤РђР  Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ
 		if (pIn->hdr.nSrcPID == mp_RCon->mn_FarPID)
 		{
 			mp_RCon->mn_ProgramStatus &= ~CES_FARACTIVE;
 
-			for (UINT i = 0; i < mp_RCon->mn_FarPlugPIDsCount; i++)  // сбросить ИД списка плагинов
+			for (UINT i = 0; i < mp_RCon->mn_FarPlugPIDsCount; i++)  // СЃР±СЂРѕСЃРёС‚СЊ РР” СЃРїРёСЃРєР° РїР»Р°РіРёРЅРѕРІ
 			{
 				if (mp_RCon->m_FarPlugPIDs[i] == mp_RCon->mn_FarPID)
 					mp_RCon->m_FarPlugPIDs[i] = 0;
@@ -713,7 +713,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 			mp_RCon->SetFarPluginPID(0);
 			mp_RCon->CloseFarMapData();
 
-			if (mp_RCon->isActive()) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
+			if (mp_RCon->isActive()) gpConEmu->UpdateProcessDisplay(FALSE);  // РѕР±РЅРѕРІРёС‚СЊ PID РІ РѕРєРЅРµ РЅР°СЃС‚СЂРѕР№РєРё
 		}
 
 		mp_RCon->SetTabs(NULL, 1);
@@ -724,19 +724,19 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 		_ASSERTE(((pIn->Tabs.nTabCount-1)*sizeof(ConEmuTab))==(nDataSize-sizeof(CESERVER_REQ_CONEMUTAB)));
 		BOOL lbCanUpdate = TRUE;
 
-		// Если выполняется макрос - изменение размеров окна FAR при авто-табах нежелательно
+		// Р•СЃР»Рё РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РјР°РєСЂРѕСЃ - РёР·РјРµРЅРµРЅРёРµ СЂР°Р·РјРµСЂРѕРІ РѕРєРЅР° FAR РїСЂРё Р°РІС‚Рѕ-С‚Р°Р±Р°С… РЅРµР¶РµР»Р°С‚РµР»СЊРЅРѕ
 		if (pIn->Tabs.bMacroActive)
 		{
 			if (gpSet->isTabs == 2)
 			{
 				lbCanUpdate = FALSE;
-				// Нужно вернуть в плагин информацию, что нужно отложенное обновление
+				// РќСѓР¶РЅРѕ РІРµСЂРЅСѓС‚СЊ РІ РїР»Р°РіРёРЅ РёРЅС„РѕСЂРјР°С†РёСЋ, С‡С‚Рѕ РЅСѓР¶РЅРѕ РѕС‚Р»РѕР¶РµРЅРЅРѕРµ РѕР±РЅРѕРІР»РµРЅРёРµ
 				CESERVER_REQ *pRet = ExecuteNewCmd(CECMD_TABSCHANGED, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB_RET));
 
 				if (pRet)
 				{
 					pRet->TabsRet.bNeedPostTabSend = TRUE;
-					// Отправляем (сразу, чтобы клиент не ждал, пока ГУЙ закончит свои процессы)
+					// РћС‚РїСЂР°РІР»СЏРµРј (СЃСЂР°Р·Сѓ, С‡С‚РѕР±С‹ РєР»РёРµРЅС‚ РЅРµ Р¶РґР°Р», РїРѕРєР° Р“РЈР™ Р·Р°РєРѕРЅС‡РёС‚ СЃРІРѕРё РїСЂРѕС†РµСЃСЃС‹)
 					fSuccess = mp_RConServer->DelayedWrite(pInst, pRet, pRet->hdr.cbSize);
 					//fSuccess = WriteFile(
 					//               hPipe,        // handle to pipe
@@ -746,21 +746,21 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 					//               NULL);        // not overlapped I/O
 					ExecuteFreeResult(pRet);
 					
-					// Чтобы в конце метода не дергаться
+					// Р§С‚РѕР±С‹ РІ РєРѕРЅС†Рµ РјРµС‚РѕРґР° РЅРµ РґРµСЂРіР°С‚СЊСЃСЏ
 					pOut = (CESERVER_REQ*)INVALID_HANDLE_VALUE;
 				}
 			}
 		}
 
-		// Если включены автотабы - попытаться изменить размер консоли СРАЗУ (в самом FAR)
-		// Но только если вызов SendTabs был сделан из основной нити фара (чтобы небыло потребности в Synchro)
+		// Р•СЃР»Рё РІРєР»СЋС‡РµРЅС‹ Р°РІС‚РѕС‚Р°Р±С‹ - РїРѕРїС‹С‚Р°С‚СЊСЃСЏ РёР·РјРµРЅРёС‚СЊ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё РЎР РђР—РЈ (РІ СЃР°РјРѕРј FAR)
+		// РќРѕ С‚РѕР»СЊРєРѕ РµСЃР»Рё РІС‹Р·РѕРІ SendTabs Р±С‹Р» СЃРґРµР»Р°РЅ РёР· РѕСЃРЅРѕРІРЅРѕР№ РЅРёС‚Рё С„Р°СЂР° (С‡С‚РѕР±С‹ РЅРµР±С‹Р»Рѕ РїРѕС‚СЂРµР±РЅРѕСЃС‚Рё РІ Synchro)
 		if (pIn->Tabs.bMainThread && lbCanUpdate && (gpSet->isTabs == 2 && gpSet->bShowFarWindows))
 		{
-			TODO("расчитать новый размер, если сменилась видимость табов");
+			TODO("СЂР°СЃС‡РёС‚Р°С‚СЊ РЅРѕРІС‹Р№ СЂР°Р·РјРµСЂ, РµСЃР»Рё СЃРјРµРЅРёР»Р°СЃСЊ РІРёРґРёРјРѕСЃС‚СЊ С‚Р°Р±РѕРІ");
 			bool lbCurrentActive = gpConEmu->mp_TabBar->IsTabsActive();
 			bool lbNewActive = lbCurrentActive;
 
-			// Если консолей более одной - видимость табов не изменится
+			// Р•СЃР»Рё РєРѕРЅСЃРѕР»РµР№ Р±РѕР»РµРµ РѕРґРЅРѕР№ - РІРёРґРёРјРѕСЃС‚СЊ С‚Р°Р±РѕРІ РЅРµ РёР·РјРµРЅРёС‚СЃСЏ
 			if (gpConEmu->GetVCon(1) == NULL)
 			{
 				lbNewActive = (pIn->Tabs.nTabCount > 1);
@@ -775,13 +775,13 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 				
 				mp_RCon->mp_RBuf->SetChange2Size(rcConsole.right, rcConsole.bottom);
 
-				TODO("DoubleView: все видимые");
+				TODO("DoubleView: РІСЃРµ РІРёРґРёРјС‹Рµ");
 				//gpConEmu->ActiveCon()->SetRedraw(FALSE);
 				CVConGroup::SetRedraw(FALSE);
 
 				gpConEmu->mp_TabBar->SetRedraw(FALSE);
 				fSuccess = FALSE;
-				// Нужно вернуть в плагин информацию, что нужно размер консоли
+				// РќСѓР¶РЅРѕ РІРµСЂРЅСѓС‚СЊ РІ РїР»Р°РіРёРЅ РёРЅС„РѕСЂРјР°С†РёСЋ, С‡С‚Рѕ РЅСѓР¶РЅРѕ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё
 				CESERVER_REQ *pTmp = ExecuteNewCmd(CECMD_TABSCHANGED, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB_RET));
 
 				if (pTmp)
@@ -789,7 +789,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 					pTmp->TabsRet.bNeedResize = TRUE;
 					pTmp->TabsRet.crNewSize.X = rcConsole.right;
 					pTmp->TabsRet.crNewSize.Y = rcConsole.bottom;
-					// Отправляем (сразу, чтобы клиент не ждал, пока ГУЙ закончит свои процессы)
+					// РћС‚РїСЂР°РІР»СЏРµРј (СЃСЂР°Р·Сѓ, С‡С‚РѕР±С‹ РєР»РёРµРЅС‚ РЅРµ Р¶РґР°Р», РїРѕРєР° Р“РЈР™ Р·Р°РєРѕРЅС‡РёС‚ СЃРІРѕРё РїСЂРѕС†РµСЃСЃС‹)
 					fSuccess = mp_RConServer->DelayedWrite(pInst, pTmp, pTmp->hdr.cbSize);
 					//fSuccess = WriteFile(
 					//               hPipe,        // handle to pipe
@@ -799,16 +799,16 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 					//               NULL);        // not overlapped I/O
 					ExecuteFreeResult(pTmp);
 					
-					// Чтобы в конце метода не дергаться
+					// Р§С‚РѕР±С‹ РІ РєРѕРЅС†Рµ РјРµС‚РѕРґР° РЅРµ РґРµСЂРіР°С‚СЊСЃСЏ
 					pOut = (CESERVER_REQ*)INVALID_HANDLE_VALUE;
 				}
 
-				if (fSuccess)    // Дождаться, пока из сервера придут изменения консоли
+				if (fSuccess)    // Р”РѕР¶РґР°С‚СЊСЃСЏ, РїРѕРєР° РёР· СЃРµСЂРІРµСЂР° РїСЂРёРґСѓС‚ РёР·РјРµРЅРµРЅРёСЏ РєРѕРЅСЃРѕР»Рё
 				{
 					mp_RCon->WaitConsoleSize(rcConsole.bottom, 500);
 				}
 
-				TODO("DoubleView: все видимые");
+				TODO("DoubleView: РІСЃРµ РІРёРґРёРјС‹Рµ");
 				//gpConEmu->ActiveCon()->SetRedraw(TRUE);
 				CVConGroup::SetRedraw(TRUE);
 			}
@@ -816,7 +816,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 
 		if (lbCanUpdate)
 		{
-			TODO("DoubleView: все видимые");
+			TODO("DoubleView: РІСЃРµ РІРёРґРёРјС‹Рµ");
 			//gpConEmu->ActiveCon()->Invalidate();
 			CVConGroup::InvalidateAll();
 			mp_RCon->SetTabs(pIn->Tabs.tabs, pIn->Tabs.nTabCount);
@@ -826,7 +826,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 		}
 	}
 
-	// Если еще не ответили плагину
+	// Р•СЃР»Рё РµС‰Рµ РЅРµ РѕС‚РІРµС‚РёР»Рё РїР»Р°РіРёРЅСѓ
 	if (pOut == NULL)
 		pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
 
@@ -842,7 +842,7 @@ CESERVER_REQ* CRealServer::cmdGetOutputFile(LPVOID pInst, CESERVER_REQ* pIn, UIN
 	BOOL lbUnicode = pIn->OutputFile.bUnicode;
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_OUTPUTFILE));
 	pOut->OutputFile.bUnicode = lbUnicode;
-	pOut->OutputFile.szFilePathName[0] = 0; // Сформирует mp_RCon->PrepareOutputFile
+	pOut->OutputFile.szFilePathName[0] = 0; // РЎС„РѕСЂРјРёСЂСѓРµС‚ mp_RCon->PrepareOutputFile
 
 	if (!mp_RCon->PrepareOutputFile(lbUnicode, pOut->OutputFile.szFilePathName))
 	{
@@ -885,8 +885,8 @@ CESERVER_REQ* CRealServer::cmdLangChange(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	DEBUGSTRLANG(L"GUI recieved CECMD_LANGCHANGE\n");
 	_ASSERTE(nDataSize>=4); //-V112
 	// LayoutName: "00000409", "00010409", ...
-	// А HKL от него отличается, так что передаем DWORD
-	// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
+	// Рђ HKL РѕС‚ РЅРµРіРѕ РѕС‚Р»РёС‡Р°РµС‚СЃСЏ, С‚Р°Рє С‡С‚Рѕ РїРµСЂРµРґР°РµРј DWORD
+	// HKL РІ x64 РІС‹РіР»СЏРґРёС‚ РєР°Рє: "0x0000000000020409", "0xFFFFFFFFF0010409"
 	DWORD dwName = pIn->dwData[0];
 
 	mp_RCon->OnConsoleKeyboardLayout(dwName);
@@ -896,7 +896,7 @@ CESERVER_REQ* CRealServer::cmdLangChange(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	//#ifdef _DEBUG
 	////Sleep(2000);
 	//WCHAR szMsg[255];
-	//// --> Видимо именно это не "нравится" руслату. Нужно переправить Post'ом в основную нить
+	//// --> Р’РёРґРёРјРѕ РёРјРµРЅРЅРѕ СЌС‚Рѕ РЅРµ "РЅСЂР°РІРёС‚СЃСЏ" СЂСѓСЃР»Р°С‚Сѓ. РќСѓР¶РЅРѕ РїРµСЂРµРїСЂР°РІРёС‚СЊ Post'РѕРј РІ РѕСЃРЅРѕРІРЅСѓСЋ РЅРёС‚СЊ
 	//HKL hkl = GetKeyboardLayout(0);
 	//swprintf_c(szMsg, L"ConEmu: GetKeyboardLayout(0) on CECMD_LANGCHANGE after GetKeyboardLayout(0) = 0x%08I64X\n",
 	//	(unsigned __int64)(DWORD_PTR)hkl);
@@ -940,7 +940,7 @@ CESERVER_REQ* CRealServer::cmdTabsCmd(LPVOID pInst, CESERVER_REQ* pIn, UINT nDat
 {
 	CESERVER_REQ* pOut = NULL;
 	
-	// 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
+	// 0: СЃРїСЂСЏС‚Р°С‚СЊ/РїРѕРєР°Р·Р°С‚СЊ С‚Р°Р±С‹, 1: РїРµСЂРµР№С‚Рё РЅР° СЃР»РµРґСѓСЋС‰СѓСЋ, 2: РїРµСЂРµР№С‚Рё РЅР° РїСЂРµРґС‹РґСѓС‰СѓСЋ, 3: commit switch
 	DEBUGSTRCMD(L"GUI recieved CECMD_TABSCMD\n");
 	_ASSERTE(nDataSize>=1);
 	DWORD nTabCmd = pIn->Data[0];
@@ -956,10 +956,10 @@ CESERVER_REQ* CRealServer::cmdResources(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	
 	DEBUGSTRCMD(L"GUI recieved CECMD_RESOURCES\n");
 	_ASSERTE(nDataSize>=6);
-	//mb_PluginDetected = TRUE; // Запомним, что в фаре есть плагин (хотя фар может быть закрыт)
-	DWORD nPID = pIn->dwData[0]; // Запомним, что в фаре есть плагин
+	//mb_PluginDetected = TRUE; // Р—Р°РїРѕРјРЅРёРј, С‡С‚Рѕ РІ С„Р°СЂРµ РµСЃС‚СЊ РїР»Р°РіРёРЅ (С…РѕС‚СЏ С„Р°СЂ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р·Р°РєСЂС‹С‚)
+	DWORD nPID = pIn->dwData[0]; // Р—Р°РїРѕРјРЅРёРј, С‡С‚Рѕ РІ С„Р°СЂРµ РµСЃС‚СЊ РїР»Р°РіРёРЅ
 	mp_RCon->mb_SkipFarPidChange = TRUE;
-	// Запомнить этот PID в списке фаров
+	// Р—Р°РїРѕРјРЅРёС‚СЊ СЌС‚РѕС‚ PID РІ СЃРїРёСЃРєРµ С„Р°СЂРѕРІ
 	bool bAlreadyExist = false;
 	int j = -1;
 
@@ -977,7 +977,7 @@ CESERVER_REQ* CRealServer::cmdResources(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 
 	if (!bAlreadyExist)
 	{
-		// Если с списке фаров этого PIDа еще нет - по возможности запомнить
+		// Р•СЃР»Рё СЃ СЃРїРёСЃРєРµ С„Р°СЂРѕРІ СЌС‚РѕРіРѕ PIDР° РµС‰Рµ РЅРµС‚ - РїРѕ РІРѕР·РјРѕР¶РЅРѕСЃС‚Рё Р·Р°РїРѕРјРЅРёС‚СЊ
 		if ((j == -1) && (mp_RCon->mn_FarPlugPIDsCount < countof(mp_RCon->m_FarPlugPIDs)))
 			j = mp_RCon->mn_FarPlugPIDsCount++;
 
@@ -985,18 +985,18 @@ CESERVER_REQ* CRealServer::cmdResources(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			mp_RCon->m_FarPlugPIDs[j] = nPID;
 	}
 
-	// Запомним, что в фаре есть плагин
+	// Р—Р°РїРѕРјРЅРёРј, С‡С‚Рѕ РІ С„Р°СЂРµ РµСЃС‚СЊ РїР»Р°РіРёРЅ
 	mp_RCon->SetFarPluginPID(nPID);
-	mp_RCon->OpenFarMapData(); // переоткроет мэппинг с информацией о фаре
-	// Разрешить мониторинг PID фара в MonitorThread (оно будет переоткрывать mp_RCon->OpenFarMapData)
+	mp_RCon->OpenFarMapData(); // РїРµСЂРµРѕС‚РєСЂРѕРµС‚ РјСЌРїРїРёРЅРі СЃ РёРЅС„РѕСЂРјР°С†РёРµР№ Рѕ С„Р°СЂРµ
+	// Р Р°Р·СЂРµС€РёС‚СЊ РјРѕРЅРёС‚РѕСЂРёРЅРі PID С„Р°СЂР° РІ MonitorThread (РѕРЅРѕ Р±СѓРґРµС‚ РїРµСЂРµРѕС‚РєСЂС‹РІР°С‚СЊ mp_RCon->OpenFarMapData)
 	mp_RCon->mb_SkipFarPidChange = FALSE;
 
-	if (mp_RCon->isActive()) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
+	if (mp_RCon->isActive()) gpConEmu->UpdateProcessDisplay(FALSE);  // РѕР±РЅРѕРІРёС‚СЊ PID РІ РѕРєРЅРµ РЅР°СЃС‚СЂРѕР№РєРё
 
 	//mn_Far_PluginInputThreadId      = pIn->dwData[1];
 	//CheckColorMapping(mp_RCon->mn_FarPID_PluginDetected);
-	// 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
-	//Process Add(mp_RCon->mn_FarPID_PluginDetected); // На всякий случай, вдруг он еще не в нашем списке?
+	// 23.06.2009 Maks - СѓР±РµСЂРµРј РїРѕРєР°. Р”РѕР»Р¶РЅРѕ СЂР°Р±РѕС‚Р°С‚СЊ РІ ApplyConsoleInfo
+	//Process Add(mp_RCon->mn_FarPID_PluginDetected); // РќР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, РІРґСЂСѓРі РѕРЅ РµС‰Рµ РЅРµ РІ РЅР°С€РµРј СЃРїРёСЃРєРµ?
 	wchar_t* pszRes = (wchar_t*)(&(pIn->dwData[1])), *pszNext;
 
 	if (*pszRes)
@@ -1059,7 +1059,7 @@ CESERVER_REQ* CRealServer::cmdSetForeground(LPVOID pInst, CESERVER_REQ* pIn, UIN
 	DWORD nWndPID = 0; GetWindowThreadProcessId(hWnd, &nWndPID);
 	if (nWndPID == GetCurrentProcessId())
 	{
-		// Если это один из hWndDC - поднимаем главное окно
+		// Р•СЃР»Рё СЌС‚Рѕ РѕРґРёРЅ РёР· hWndDC - РїРѕРґРЅРёРјР°РµРј РіР»Р°РІРЅРѕРµ РѕРєРЅРѕ
 		if (hWnd != ghWnd && GetParent(hWnd) == ghWnd)
 			hWnd = ghWnd;
 	}
@@ -1105,11 +1105,11 @@ CESERVER_REQ* CRealServer::cmdRegPanelView(LPVOID pInst, CESERVER_REQ* pIn, UINT
 
 	if (pOut->PVI.cbSize != sizeof(pOut->PVI))
 	{
-		pOut->PVI.cbSize = 0; // ошибка версии?
+		pOut->PVI.cbSize = 0; // РѕС€РёР±РєР° РІРµСЂСЃРёРё?
 	}
 	else if (!mp_RCon->mp_VCon->RegisterPanelView(&(pOut->PVI)))
 	{
-		pOut->PVI.cbSize = 0; // ошибка
+		pOut->PVI.cbSize = 0; // РѕС€РёР±РєР°
 	}
 
 	return pOut;
@@ -1202,7 +1202,7 @@ CESERVER_REQ* CRealServer::cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT
 	if (pIn->OnCreateProc.nImageBits > 0)
 	{
 		TODO("!!! DosBox allowed?");
-		_ASSERTE(lbDos==FALSE || gpConEmu->mb_DosBoxExists); //WARNING("Зачем (lbDos && FALSE)?");
+		_ASSERTE(lbDos==FALSE || gpConEmu->mb_DosBoxExists); //WARNING("Р—Р°С‡РµРј (lbDos && FALSE)?");
 		
 		if (gpSet->AutoBufferHeight // LongConsoleOutput
 			|| (lbDos && FALSE)) // DosBox!!!
@@ -1214,7 +1214,7 @@ CESERVER_REQ* CRealServer::cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT
 			TODO("!!! DosBox allowed?");
 			pOut->OnCreateProcRet.bAllowDosbox = FALSE;
 			//pOut->OnCreateProcRet.nFileLen = pIn->OnCreateProc.nFileLen;
-			//pOut->OnCreateProcRet.nBaseLen = _tcslen(gpConEmu->ms_ConEmuBaseDir)+2; // +слеш+\0
+			//pOut->OnCreateProcRet.nBaseLen = _tcslen(gpConEmu->ms_ConEmuBaseDir)+2; // +СЃР»РµС€+\0
 			
 			////_wcscpy_c(pOut->OnCreateProcRet.wsValue, MAX_PATH+1, pszFile);
 			//_wcscpy_c(pOut->OnCreateProcRet.wsValue, MAX_PATH+1, gpConEmu->ms_ConEmuBaseDir);
@@ -1391,7 +1391,7 @@ CESERVER_REQ* CRealServer::cmdExportEnvVarAll(LPVOID pInst, CESERVER_REQ* pIn, U
 	DWORD nCmd = pIn->hdr.nCmd;
 	DEBUGSTRCMD((nCmd==CECMD_EXPORTVARSALL) ? L"GUI recieved CECMD_EXPORTVARSALL\n" : L"GUI recieved CECMD_EXPORTVARS\n");
 
-	// В свой процесс тоже засосать переменные, чтобы для новых табов применялись
+	// Р’ СЃРІРѕР№ РїСЂРѕС†РµСЃСЃ С‚РѕР¶Рµ Р·Р°СЃРѕСЃР°С‚СЊ РїРµСЂРµРјРµРЅРЅС‹Рµ, С‡С‚РѕР±С‹ РґР»СЏ РЅРѕРІС‹С… С‚Р°Р±РѕРІ РїСЂРёРјРµРЅСЏР»РёСЃСЊ
 	LPCWSTR pszSrc = (LPCWSTR)pIn->wData;
 	while (*pszSrc)
 	{
@@ -1406,10 +1406,10 @@ CESERVER_REQ* CRealServer::cmdExportEnvVarAll(LPVOID pInst, CESERVER_REQ* pIn, U
 		pszSrc = pszNext;
 	}
 
-	// Применить переменные во всех открытых табах (кроме mp_RCon)
+	// РџСЂРёРјРµРЅРёС‚СЊ РїРµСЂРµРјРµРЅРЅС‹Рµ РІРѕ РІСЃРµС… РѕС‚РєСЂС‹С‚С‹С… С‚Р°Р±Р°С… (РєСЂРѕРјРµ mp_RCon)
 	CVConGroup::ExportEnvVarAll(pIn, mp_RCon);
 
-	// pIn->hdr.nCmd перебивается на CECMD_EXPORTVARS, поэтому возвращаем сохраненный ID
+	// pIn->hdr.nCmd РїРµСЂРµР±РёРІР°РµС‚СЃСЏ РЅР° CECMD_EXPORTVARS, РїРѕСЌС‚РѕРјСѓ РІРѕР·РІСЂР°С‰Р°РµРј СЃРѕС…СЂР°РЅРµРЅРЅС‹Р№ ID
 	CESERVER_REQ* pOut = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
 	if (pOut)
 		pOut->dwData[0] = TRUE;
@@ -1421,17 +1421,17 @@ CESERVER_REQ* CRealServer::cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	DWORD nCmd = pIn->hdr.nCmd;
 	DEBUGSTRCMD(L"GUI recieved CECMD_STARTXTERM\n");
 
-	// В свой процесс тоже засосать переменные, чтобы для новых табов применялись
+	// Р’ СЃРІРѕР№ РїСЂРѕС†РµСЃСЃ С‚РѕР¶Рµ Р·Р°СЃРѕСЃР°С‚СЊ РїРµСЂРµРјРµРЅРЅС‹Рµ, С‡С‚РѕР±С‹ РґР»СЏ РЅРѕРІС‹С… С‚Р°Р±РѕРІ РїСЂРёРјРµРЅСЏР»РёСЃСЊ
 	mp_RCon->StartStopXTerm(pIn->hdr.nSrcPID, (pIn->dwData[0] != 0));
 
-	// pIn->hdr.nCmd перебивается на CECMD_EXPORTVARS, поэтому возвращаем сохраненный ID
+	// pIn->hdr.nCmd РїРµСЂРµР±РёРІР°РµС‚СЃСЏ РЅР° CECMD_EXPORTVARS, РїРѕСЌС‚РѕРјСѓ РІРѕР·РІСЂР°С‰Р°РµРј СЃРѕС…СЂР°РЅРµРЅРЅС‹Р№ ID
 	CESERVER_REQ* pOut = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
 	if (pOut)
 		pOut->dwData[0] = TRUE;
 	return pOut;
 }
 
-// Эта функция пайп не закрывает!
+// Р­С‚Р° С„СѓРЅРєС†РёСЏ РїР°Р№Рї РЅРµ Р·Р°РєСЂС‹РІР°РµС‚!
 //void CRealServer::ServerThreadCommand(HANDLE hPipe)
 BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
@@ -1460,7 +1460,7 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 
 	int nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
 
-	// Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
+	// Р’СЃРµ РґР°РЅРЅС‹Рµ РёР· РїР°Р№РїР° РїРѕР»СѓС‡РµРЅС‹, РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РєРѕРјР°РЅРґСѓ Рё РІРѕР·РІСЂР°С‰Р°РµРј (РµСЃР»Рё РЅСѓР¶РЅРѕ) СЂРµР·СѓР»СЊС‚Р°С‚
 
 	switch (pIn->hdr.nCmd)
 	{
@@ -1542,11 +1542,11 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(pInst, pIn, nDataSize);
 	default:
-		// Неизвестная команда
+		// РќРµРёР·РІРµСЃС‚РЅР°СЏ РєРѕРјР°РЅРґР°
 		_ASSERTE(FALSE && "Unsupported command pIn->hdr.nCmd");
 
-		// Хотя бы "пустую" команду в ответ кинуть, а то ошибка (Pipe was closed) у клиента возникает
-		// 0 - чтобы assert-ами ловить необработанные команды
+		// РҐРѕС‚СЏ Р±С‹ "РїСѓСЃС‚СѓСЋ" РєРѕРјР°РЅРґСѓ РІ РѕС‚РІРµС‚ РєРёРЅСѓС‚СЊ, Р° С‚Рѕ РѕС€РёР±РєР° (Pipe was closed) Сѓ РєР»РёРµРЅС‚Р° РІРѕР·РЅРёРєР°РµС‚
+		// 0 - С‡С‚РѕР±С‹ assert-Р°РјРё Р»РѕРІРёС‚СЊ РЅРµРѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹Рµ РєРѕРјР°РЅРґС‹
 		pOut = ExecuteNewCmd(0/*pIn->hdr.nCmd*/, sizeof(CESERVER_REQ_HDR));
 	}
 
@@ -1556,9 +1556,9 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 	{
 		if (pOut == NULL)
 		{
-			// Для четкости, методы должны сами возвращать реальный результат
+			// Р”Р»СЏ С‡РµС‚РєРѕСЃС‚Рё, РјРµС‚РѕРґС‹ РґРѕР»Р¶РЅС‹ СЃР°РјРё РІРѕР·РІСЂР°С‰Р°С‚СЊ СЂРµР°Р»СЊРЅС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚
 			_ASSERTE(pOut!=NULL);
-			// Хотя бы "пустую" команду в ответ кинуть, а то ошибка (Pipe was closed) у клиента возникает
+			// РҐРѕС‚СЏ Р±С‹ "РїСѓСЃС‚СѓСЋ" РєРѕРјР°РЅРґСѓ РІ РѕС‚РІРµС‚ РєРёРЅСѓС‚СЊ, Р° С‚Рѕ РѕС€РёР±РєР° (Pipe was closed) Сѓ РєР»РёРµРЅС‚Р° РІРѕР·РЅРёРєР°РµС‚
 			pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
 		}
 
@@ -1572,7 +1572,7 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 			lbRc = TRUE;
 		}
 		
-		//// Всегда чего-нибудь ответить в пайп, а то ошибка (Pipe was closed) у клиента возникает
+		//// Р’СЃРµРіРґР° С‡РµРіРѕ-РЅРёР±СѓРґСЊ РѕС‚РІРµС‚РёС‚СЊ РІ РїР°Р№Рї, Р° С‚Рѕ РѕС€РёР±РєР° (Pipe was closed) Сѓ РєР»РёРµРЅС‚Р° РІРѕР·РЅРёРєР°РµС‚
 		//fSuccess = WriteFile(hPipe, pOut, pOut->hdr.cbSize, &cbWritten, NULL);
 		//ExecuteFreeResult(pOut);
 	}
@@ -1588,7 +1588,7 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 	}
 	
 
-	//// Освободить память
+	//// РћСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ
 	//if (pIn && (LPVOID)pIn != (LPVOID)&in)
 	//{
 	//	free(pIn); pIn = NULL;
@@ -1603,7 +1603,7 @@ BOOL CRealServer::ServerThreadReady(LPVOID pInst, LPARAM lParam)
 {
 	CRealServer* pRSrv = (CRealServer*)lParam;
 
-	// Чтобы ConEmuC знал, что серверный пайп готов
+	// Р§С‚РѕР±С‹ ConEmuC Р·РЅР°Р», С‡С‚Рѕ СЃРµСЂРІРµСЂРЅС‹Р№ РїР°Р№Рї РіРѕС‚РѕРІ
 	if (pRSrv && pRSrv->mh_GuiAttached)
 	{
 		SetEvent(pRSrv->mh_GuiAttached);

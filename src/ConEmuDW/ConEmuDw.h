@@ -1,8 +1,8 @@
-
+п»ї
 #pragma once
 
 #ifdef DEFINE_CONSOLE_EXPORTS
-	// для ConEmuDW\Test\Test.cpp
+	// РґР»СЏ ConEmuDW\Test\Test.cpp
 
 	typedef int (WINAPI* GetColorDialog_t)(FarColor* Color, BOOL Centered, BOOL AddTransparent);
 	typedef BOOL (WINAPI* GetTextAttributes_t)(FarColor* Attributes);

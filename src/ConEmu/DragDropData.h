@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -57,11 +57,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef struct tag_DragImageBits
 {
 	DWORD nWidth, nHeight; // XP max 301x301
-	DWORD nXCursor, nYCursor; // Позиция курсора захвата, относительно драгнутой картинки
+	DWORD nXCursor, nYCursor; // РџРѕР·РёС†РёСЏ РєСѓСЂСЃРѕСЂР° Р·Р°С…РІР°С‚Р°, РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РґСЂР°РіРЅСѓС‚РѕР№ РєР°СЂС‚РёРЅРєРё
 	DWORD nRes1; // HBITMAP hbmpDragImage;
-	DWORD nRes2; // COLORREF crColorKey; всегда 0xffffffff
+	DWORD nRes2; // COLORREF crColorKey; РІСЃРµРіРґР° 0xffffffff
 #ifdef WIN64
-	DWORD nPad1, nPad2; // выравнивание на границу QWORD
+	DWORD nPad1, nPad2; // РІС‹СЂР°РІРЅРёРІР°РЅРёРµ РЅР° РіСЂР°РЅРёС†Сѓ QWORD
 #endif
 	RGBQUAD pix[1];
 } DragImageBits;
@@ -79,19 +79,19 @@ class CDragDropData
 	public:
 		CDragDropData();
 		virtual ~CDragDropData();
-		// Регистрация окна ConEmu, как поддерживающего D&D
+		// Р РµРіРёСЃС‚СЂР°С†РёСЏ РѕРєРЅР° ConEmu, РєР°Рє РїРѕРґРґРµСЂР¶РёРІР°СЋС‰РµРіРѕ D&D
 		BOOL Register();
-		// Загрузить из фара информацию для Drag
+		// Р—Р°РіСЂСѓР·РёС‚СЊ РёР· С„Р°СЂР° РёРЅС„РѕСЂРјР°С†РёСЋ РґР»СЏ Drag
 		BOOL PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAllowedEffects);
-		// Загрузить из фара информацию для Drop
+		// Р—Р°РіСЂСѓР·РёС‚СЊ РёР· С„Р°СЂР° РёРЅС„РѕСЂРјР°С†РёСЋ РґР»СЏ Drop
 		void RetrieveDragToInfo(POINTL pt);
-		// Запомнить занные о Destination
+		// Р—Р°РїРѕРјРЅРёС‚СЊ Р·Р°РЅРЅС‹Рµ Рѕ Destination
 		void SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfoSize, CRealConsole* pRCon);
-		// Может быть требуется обновить данные о назначении?
+		// РњРѕР¶РµС‚ Р±С‹С‚СЊ С‚СЂРµР±СѓРµС‚СЃСЏ РѕР±РЅРѕРІРёС‚СЊ РґР°РЅРЅС‹Рµ Рѕ РЅР°Р·РЅР°С‡РµРЅРёРё?
 		bool NeedRefreshToInfo(POINTL ptScreen);
 		// Callback
 		void DragFeedBack(DWORD dwEffect);
-		// Начат Drag, или создано окно mh_Overlapped
+		// РќР°С‡Р°С‚ Drag, РёР»Рё СЃРѕР·РґР°РЅРѕ РѕРєРЅРѕ mh_Overlapped
 		BOOL InDragDrop();
 		// Support for background D&D
 		BOOL IsDragStarting();
@@ -102,7 +102,7 @@ class CDragDropData
 	private:
 		//wchar_t *mpsz_DraggedPath; // ASCIIZZ
 		int RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar_t** ppszDraggedPath, UINT* pnFilesCount);
-		// Добавление в mp_DataObject перетаскиваемых форматов
+		// Р”РѕР±Р°РІР»РµРЅРёРµ РІ mp_DataObject РїРµСЂРµС‚Р°СЃРєРёРІР°РµРјС‹С… С„РѕСЂРјР°С‚РѕРІ
 		BOOL AddFmt_FileNameW(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
 		BOOL AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
 		BOOL AddFmt_PREFERREDDROPEFFECT(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);

@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -78,35 +78,35 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 
 
 #ifdef _DEBUG
-#define DEBUGDRAW_RCONPOS VK_SCROLL // -- при включенном ScrollLock отрисовать прямоугольник, соответствующий положению окна RealConsole
-#define DEBUGDRAW_DIALOGS VK_CAPITAL // -- при включенном Caps отрисовать прямоугольники, соответствующие найденным диалогам
-#define DEBUGDRAW_VERTICALS VK_SCROLL // -- при включенном ScrollLock отрисовать прямоугольники, соответсвующие граням диалогов (которые строго выравниваются по ячейкам)
+#define DEBUGDRAW_RCONPOS VK_SCROLL // -- РїСЂРё РІРєР»СЋС‡РµРЅРЅРѕРј ScrollLock РѕС‚СЂРёСЃРѕРІР°С‚СЊ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє, СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ РїРѕР»РѕР¶РµРЅРёСЋ РѕРєРЅР° RealConsole
+#define DEBUGDRAW_DIALOGS VK_CAPITAL // -- РїСЂРё РІРєР»СЋС‡РµРЅРЅРѕРј Caps РѕС‚СЂРёСЃРѕРІР°С‚СЊ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРё, СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРµ РЅР°Р№РґРµРЅРЅС‹Рј РґРёР°Р»РѕРіР°Рј
+#define DEBUGDRAW_VERTICALS VK_SCROLL // -- РїСЂРё РІРєР»СЋС‡РµРЅРЅРѕРј ScrollLock РѕС‚СЂРёСЃРѕРІР°С‚СЊ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРё, СЃРѕРѕС‚РІРµС‚СЃРІСѓСЋС‰РёРµ РіСЂР°РЅСЏРј РґРёР°Р»РѕРіРѕРІ (РєРѕС‚РѕСЂС‹Рµ СЃС‚СЂРѕРіРѕ РІС‹СЂР°РІРЅРёРІР°СЋС‚СЃСЏ РїРѕ СЏС‡РµР№РєР°Рј)
 #endif
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRCOORD(s) //DEBUGSTR(s)
 #define DEBUGSTRFAIL(s) DEBUGSTR(s)
 
-// WARNING("не появляются табы во второй консоли");
-WARNING("На предыдущей строке символы под курсором прыгают влево");
-WARNING("При быстром наборе текста курсор часто 'замерзает' на одной из букв, но продолжает двигаться дальше");
+// WARNING("РЅРµ РїРѕСЏРІР»СЏСЋС‚СЃСЏ С‚Р°Р±С‹ РІРѕ РІС‚РѕСЂРѕР№ РєРѕРЅСЃРѕР»Рё");
+WARNING("РќР° РїСЂРµРґС‹РґСѓС‰РµР№ СЃС‚СЂРѕРєРµ СЃРёРјРІРѕР»С‹ РїРѕРґ РєСѓСЂСЃРѕСЂРѕРј РїСЂС‹РіР°СЋС‚ РІР»РµРІРѕ");
+WARNING("РџСЂРё Р±С‹СЃС‚СЂРѕРј РЅР°Р±РѕСЂРµ С‚РµРєСЃС‚Р° РєСѓСЂСЃРѕСЂ С‡Р°СЃС‚Рѕ 'Р·Р°РјРµСЂР·Р°РµС‚' РЅР° РѕРґРЅРѕР№ РёР· Р±СѓРєРІ, РЅРѕ РїСЂРѕРґРѕР»Р¶Р°РµС‚ РґРІРёРіР°С‚СЊСЃСЏ РґР°Р»СЊС€Рµ");
 
-WARNING("Глюк с частичной отрисовкой экрана часто появляется при Alt-F7, Enter. Особенно, если файла нет");
-// Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
-// Иногда диалог отрисовался, но часть до текста "..." отсутствует
+WARNING("Р“Р»СЋРє СЃ С‡Р°СЃС‚РёС‡РЅРѕР№ РѕС‚СЂРёСЃРѕРІРєРѕР№ СЌРєСЂР°РЅР° С‡Р°СЃС‚Рѕ РїРѕСЏРІР»СЏРµС‚СЃСЏ РїСЂРё Alt-F7, Enter. РћСЃРѕР±РµРЅРЅРѕ, РµСЃР»Рё С„Р°Р№Р»Р° РЅРµС‚");
+// РРЅРѕРіРґР° РЅРµ РѕС‚СЂРёСЃРѕРІС‹РІР°РµС‚СЃСЏ РґРёР°Р»РѕРі РїРѕРёСЃРєР° РїРѕР»РЅРѕСЃС‚СЊСЋ - С‚РѕР»СЊРєРѕ Р±РµР¶РёС‚ С‚РµРєСѓС‰Р°СЏ СЃРєР°РЅРёСЂСѓРµРјР°СЏ РґРёСЂРµРєС‚РѕСЂРёСЏ.
+// РРЅРѕРіРґР° РґРёР°Р»РѕРі РѕС‚СЂРёСЃРѕРІР°Р»СЃСЏ, РЅРѕ С‡Р°СЃС‚СЊ РґРѕ С‚РµРєСЃС‚Р° "..." РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
 
-WARNING("В каждой VCon создать буфер BYTE[256] для хранения распознанных клавиш (Ctrl,...,Up,PgDn,Add,и пр.");
-WARNING("Нераспознанные можно помещать в буфер {VKEY,wchar_t=0}, в котором заполнять последний wchar_t по WM_CHAR/WM_SYSCHAR");
-WARNING("При WM_(SYS)CHAR помещать wchar_t в начало, в первый незанятый VKEY");
-WARNING("При нераспознном WM_KEYUP - брать(и убрать) wchar_t из этого буфера, послав в консоль UP");
-TODO("А периодически - проводить процерку isKeyDown, и чистить буфер");
-WARNING("при переключении на другую консоль (да наверное и в процессе просто нажатий - модификатор может быть изменен в самой программе) требуется проверка caps, scroll, num");
-WARNING("а перед пересылкой символа/клавиши проверять нажат ли на клавиатуре Ctrl/Shift/Alt");
+WARNING("Р’ РєР°Р¶РґРѕР№ VCon СЃРѕР·РґР°С‚СЊ Р±СѓС„РµСЂ BYTE[256] РґР»СЏ С…СЂР°РЅРµРЅРёСЏ СЂР°СЃРїРѕР·РЅР°РЅРЅС‹С… РєР»Р°РІРёС€ (Ctrl,...,Up,PgDn,Add,Рё РїСЂ.");
+WARNING("РќРµСЂР°СЃРїРѕР·РЅР°РЅРЅС‹Рµ РјРѕР¶РЅРѕ РїРѕРјРµС‰Р°С‚СЊ РІ Р±СѓС„РµСЂ {VKEY,wchar_t=0}, РІ РєРѕС‚РѕСЂРѕРј Р·Р°РїРѕР»РЅСЏС‚СЊ РїРѕСЃР»РµРґРЅРёР№ wchar_t РїРѕ WM_CHAR/WM_SYSCHAR");
+WARNING("РџСЂРё WM_(SYS)CHAR РїРѕРјРµС‰Р°С‚СЊ wchar_t РІ РЅР°С‡Р°Р»Рѕ, РІ РїРµСЂРІС‹Р№ РЅРµР·Р°РЅСЏС‚С‹Р№ VKEY");
+WARNING("РџСЂРё РЅРµСЂР°СЃРїРѕР·РЅРЅРѕРј WM_KEYUP - Р±СЂР°С‚СЊ(Рё СѓР±СЂР°С‚СЊ) wchar_t РёР· СЌС‚РѕРіРѕ Р±СѓС„РµСЂР°, РїРѕСЃР»Р°РІ РІ РєРѕРЅСЃРѕР»СЊ UP");
+TODO("Рђ РїРµСЂРёРѕРґРёС‡РµСЃРєРё - РїСЂРѕРІРѕРґРёС‚СЊ РїСЂРѕС†РµСЂРєСѓ isKeyDown, Рё С‡РёСЃС‚РёС‚СЊ Р±СѓС„РµСЂ");
+WARNING("РїСЂРё РїРµСЂРµРєР»СЋС‡РµРЅРёРё РЅР° РґСЂСѓРіСѓСЋ РєРѕРЅСЃРѕР»СЊ (РґР° РЅР°РІРµСЂРЅРѕРµ Рё РІ РїСЂРѕС†РµСЃСЃРµ РїСЂРѕСЃС‚Рѕ РЅР°Р¶Р°С‚РёР№ - РјРѕРґРёС„РёРєР°С‚РѕСЂ РјРѕР¶РµС‚ Р±С‹С‚СЊ РёР·РјРµРЅРµРЅ РІ СЃР°РјРѕР№ РїСЂРѕРіСЂР°РјРјРµ) С‚СЂРµР±СѓРµС‚СЃСЏ РїСЂРѕРІРµСЂРєР° caps, scroll, num");
+WARNING("Р° РїРµСЂРµРґ РїРµСЂРµСЃС‹Р»РєРѕР№ СЃРёРјРІРѕР»Р°/РєР»Р°РІРёС€Рё РїСЂРѕРІРµСЂСЏС‚СЊ РЅР°Р¶Р°С‚ Р»Рё РЅР° РєР»Р°РІРёР°С‚СѓСЂРµ Ctrl/Shift/Alt");
 
-WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), но обновленное содержимое консоли не приходит в GUI - там остется обрезанная верхняя и нижняя строка");
+WARNING("Р§Р°СЃС‚Рѕ РїРѕСЃР»Рµ СЂР°Р·Р±Р»РѕРєРёСЂРѕРІР°РЅРёСЏ РєРѕРјРїСЊСЋС‚РµСЂР° СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё РёР·РјРµРЅСЏРµС‚СЃСЏ (OK), РЅРѕ РѕР±РЅРѕРІР»РµРЅРЅРѕРµ СЃРѕРґРµСЂР¶РёРјРѕРµ РєРѕРЅСЃРѕР»Рё РЅРµ РїСЂРёС…РѕРґРёС‚ РІ GUI - С‚Р°Рј РѕСЃС‚РµС‚СЃСЏ РѕР±СЂРµР·Р°РЅРЅР°СЏ РІРµСЂС…РЅСЏСЏ Рё РЅРёР¶РЅСЏСЏ СЃС‚СЂРѕРєР°");
 
 
-//Курсор, его положение, размер консоли, измененный текст, и пр...
+//РљСѓСЂСЃРѕСЂ, РµРіРѕ РїРѕР»РѕР¶РµРЅРёРµ, СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё, РёР·РјРµРЅРµРЅРЅС‹Р№ С‚РµРєСЃС‚, Рё РїСЂ...
 
 //#define VCURSORWIDTH  /*2*/ mp_Set->CursorMinSize()
 //#define HCURSORHEIGHT /*2*/ mp_Set->CursorMinSize()
@@ -137,7 +137,7 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #endif
 
 //#define isCharSpace(c) (c == ucSpace || c == ucNoBreakSpace || c == 0 || (c>=0x2000 && c<=0x200F) || c == 0x2060 || c == 0x3000 || c == 0xFEFF)
-//TODO("Всякие там acute и прочие композиты");
+//TODO("Р’СЃСЏРєРёРµ С‚Р°Рј acute Рё РїСЂРѕС‡РёРµ РєРѕРјРїРѕР·РёС‚С‹");
 //#define isCharNonSpacing(c) (c == 0xFEFF || (c>=0x2000 && c<=0x200F) || c == 0x2060 || c == 0x3000)
 //bool __inline isCharSpace(wchar_t c)
 //{
@@ -177,7 +177,7 @@ namespace VConCreateLogger
 
 		e.pVCon = pVCon;
 		e.Event = Event;
-		e.Tick = GetTickCount(); // msg.time == 0 скорее всего
+		e.Tick = GetTickCount(); // msg.time == 0 СЃРєРѕСЂРµРµ РІСЃРµРіРѕ
 	}
 }
 
@@ -247,7 +247,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	//mp_Ghost = NULL;
 	//mp_Group = NULL;
 
-	mp_Set = NULL; // указатель на настройки разделяемые по приложениям
+	mp_Set = NULL; // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РЅР°СЃС‚СЂРѕР№РєРё СЂР°Р·РґРµР»СЏРµРјС‹Рµ РїРѕ РїСЂРёР»РѕР¶РµРЅРёСЏРј
 
 	#ifdef __GNUC__
 	HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
@@ -256,7 +256,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 
 	gpConEmu->OnVConCreated(this, args);
 
-	WARNING("скорректировать размер кучи");
+	WARNING("СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ СЂР°Р·РјРµСЂ РєСѓС‡Рё");
 	SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
 	mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
 	cinf.dwSize = 15; cinf.bVisible = TRUE;
@@ -275,17 +275,17 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	//mcs_BkImgData = NULL;
 	//mn_BkImgWidth = mn_BkImgHeight = 0;
 	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gpSetCls->mh_Font)+sizeof(mh_FontByIndex[0])));
-	// mh_FontByIndex[MAX_FONT_STYLES] // зарезервировано для 'Unicode CharMap'
+	// mh_FontByIndex[MAX_FONT_STYLES] // Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅРѕ РґР»СЏ 'Unicode CharMap'
 	memmove(mh_FontByIndex, gpSetCls->mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0])); //-V512
 	mh_UCharMapFont = NULL; ms_LastUCharMapFont[0] = 0;
-	mh_FontByIndex[MAX_FONT_STYLES] = NULL; // зарезервировано для 'Unicode CharMap'
+	mh_FontByIndex[MAX_FONT_STYLES] = NULL; // Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅРѕ РґР»СЏ 'Unicode CharMap'
 	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
 	isFade = false; isForeground = true;
 	mp_Colors = gpSet->GetColors(-1);
 	memset(&m_LeftPanelView, 0, sizeof(m_LeftPanelView));
 	memset(&m_RightPanelView, 0, sizeof(m_RightPanelView));
 	mn_ConEmuFadeMsg = /*mn_ConEmuSettingsMsg =*/ 0;
-	// Эти переменные устанавливаются в TRUE, если при следующем Redraw нужно обновить размер панелей
+	// Р­С‚Рё РїРµСЂРµРјРµРЅРЅС‹Рµ СѓСЃС‚Р°РЅР°РІР»РёРІР°СЋС‚СЃСЏ РІ TRUE, РµСЃР»Рё РїСЂРё СЃР»РµРґСѓСЋС‰РµРј Redraw РЅСѓР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ СЂР°Р·РјРµСЂ РїР°РЅРµР»РµР№
 	mb_LeftPanelRedraw = mb_RightPanelRedraw = FALSE;
 	mn_LastDialogsCount = 0;
 	memset(mrc_LastDialogs, 0, sizeof(mrc_LastDialogs));
@@ -380,7 +380,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 		if ((pszDot = wcsrchr(szFile, L'\\')) == NULL)
 		{
 			DisplayLastError(L"wcsrchr failed!");
-			return false; // ошибка
+			return false; // РѕС€РёР±РєР°
 		}
 
 		*pszDot = 0;
@@ -399,7 +399,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	//	mp_Ghost = CTaskBarGhost::Create(this);
 	//}
 
-	// InitDC звать бессмысленно - консоль еще не создана
+	// InitDC Р·РІР°С‚СЊ Р±РµСЃСЃРјС‹СЃР»РµРЅРЅРѕ - РєРѕРЅСЃРѕР»СЊ РµС‰Рµ РЅРµ СЃРѕР·РґР°РЅР°
 }
 
 CVirtualConsole::~CVirtualConsole()
@@ -423,7 +423,7 @@ CVirtualConsole::~CVirtualConsole()
 
 	PointersFree();
 
-	// Куча больше не нужна
+	// РљСѓС‡Р° Р±РѕР»СЊС€Рµ РЅРµ РЅСѓР¶РЅР°
 	if (mh_Heap)
 	{
 		HeapDestroy(mh_Heap);
@@ -451,7 +451,7 @@ CVirtualConsole::~CVirtualConsole()
 
 	CVConGroup::OnVConDestroyed(this);
 
-	//if (mh_PopupMenu) { -- static на все экземпляры
+	//if (mh_PopupMenu) { -- static РЅР° РІСЃРµ СЌРєР·РµРјРїР»СЏСЂС‹
 	//	DestroyMenu(mh_PopupMenu); mh_PopupMenu = NULL;
 	//}
 
@@ -505,8 +505,8 @@ void CVirtualConsole::InitGhost()
 		}
 		else
 		{
-			// Ghost-окна нужно создавать в главной нити
-			// сюда мы попадаем при внешнем аттаче (например, при "-new_console")
+			// Ghost-РѕРєРЅР° РЅСѓР¶РЅРѕ СЃРѕР·РґР°РІР°С‚СЊ РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё
+			// СЃСЋРґР° РјС‹ РїРѕРїР°РґР°РµРј РїСЂРё РІРЅРµС€РЅРµРј Р°С‚С‚Р°С‡Рµ (РЅР°РїСЂРёРјРµСЂ, РїСЂРё "-new_console")
 			gpConEmu->CreateGhostVCon(this);
 		}
 	}
@@ -539,8 +539,8 @@ HWND CVirtualConsole::GuiWnd()
 	return NULL;
 }
 
-// Вызывается из WM_SETFOCUS в Child & Back
-// т.к. фокус должен быть или в главном окне ConEmu или в ChildGUI
+// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РёР· WM_SETFOCUS РІ Child & Back
+// С‚.Рє. С„РѕРєСѓСЃ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РёР»Рё РІ РіР»Р°РІРЅРѕРј РѕРєРЅРµ ConEmu РёР»Рё РІ ChildGUI
 void CVirtualConsole::setFocus()
 {
 	if (!this)
@@ -609,7 +609,7 @@ bool CVirtualConsole::GetTab(int tabIdx, /*OUT*/ CTab* pTab)
 	if (!GetTab(tabIdx, &tab))
 		return false;
 
-	CTabID* id = new CTabID(this, *tab.Name ? tab.Name : gpConEmu->GetDefaultTitle(), tab.Type & fwt_TypeMask/*убить*/, 0/*anPID*/, tab.Pos/*anFarWindowID*/, tab.EditViewId, tab.Type);
+	CTabID* id = new CTabID(this, *tab.Name ? tab.Name : gpConEmu->GetDefaultTitle(), tab.Type & fwt_TypeMask/*СѓР±РёС‚СЊ*/, 0/*anPID*/, tab.Pos/*anFarWindowID*/, tab.EditViewId, tab.Type);
 	pTab->Init(id);
 	//id->Release(); -- ???
 	return true;
@@ -684,7 +684,7 @@ bool CVirtualConsole::PointersAlloc()
 	AllocArray(mpn_ConAttrEx, CharAttr, nWidthHeight);
 	AllocArray(mpn_ConAttrExSave, CharAttr, nWidthHeight);
 	AllocArray(ConCharX, DWORD, nWidthHeight);
-	AllocArray(ConCharDX, DWORD, nMaxTextWidth); // задел для TEXTPARTS
+	AllocArray(ConCharDX, DWORD, nMaxTextWidth); // Р·Р°РґРµР» РґР»СЏ TEXTPARTS
 	AllocArray(tmpOem, char, nMaxTextWidth);
 	AllocArray(TextParts, TEXTPARTS, (nMaxTextWidth + 1));
 	AllocArray(BgParts, BGPARTS, nMaxTextWidth);
@@ -701,7 +701,7 @@ bool CVirtualConsole::PointersAlloc()
 void CVirtualConsole::PointersZero()
 {
 	uint nWidthHeight = (nMaxTextWidth * nMaxTextHeight);
-	//100607: Сбрасывать ВСЕ не будем. Эти массивы могут использоваться и в других нитях!
+	//100607: РЎР±СЂР°СЃС‹РІР°С‚СЊ Р’РЎР• РЅРµ Р±СѓРґРµРј. Р­С‚Рё РјР°СЃСЃРёРІС‹ РјРѕРіСѓС‚ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ Рё РІ РґСЂСѓРіРёС… РЅРёС‚СЏС…!
 	HEAPVAL;
 	//ZeroMemory(mpsz_ConChar, nWidthHeight*sizeof(*mpsz_ConChar));
 	ZeroMemory(mpsz_ConCharSave, (nWidthHeight+1)*sizeof(*mpsz_ConChar)); // ASCIIZ
@@ -710,7 +710,7 @@ void CVirtualConsole::PointersZero()
 	ZeroMemory(mpn_ConAttrExSave, nWidthHeight*sizeof(*mpn_ConAttrExSave));
 	HEAPVAL;
 	//ZeroMemory(ConCharX, nWidthHeight*sizeof(*ConCharX));
-	ZeroMemory(ConCharDX, nMaxTextWidth*sizeof(*ConCharDX)); // задел для TEXTPARTS
+	ZeroMemory(ConCharDX, nMaxTextWidth*sizeof(*ConCharDX)); // Р·Р°РґРµР» РґР»СЏ TEXTPARTS
 	HEAPVAL;
 	ZeroMemory(tmpOem, nMaxTextWidth*sizeof(*tmpOem));
 	HEAPVAL;
@@ -725,7 +725,7 @@ void CVirtualConsole::PointersZero()
 }
 
 
-// InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap
+// InitDC РІС‹Р·С‹РІР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїСЂРё РєСЂРёС‚РёС‡РµСЃРєРёС… РёР·РјРµРЅРµРЅРёСЏС… (СЂР°Р·РјРµСЂС‹, С€СЂРёС„С‚, Рё С‚.Рї.) РєРѕРіРґР° РЅСѓР¶РЅРѕ РїРµСЂРµСЃРѕР·РґР°С‚СЊ DC Рё Bitmap
 bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC, MSectionLock *pSCON)
 {
 	if (!this || !mp_RCon)
@@ -744,13 +744,13 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 
 	if (!rTextWidth || !rTextHeight)
 	{
-		WARNING("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
+		WARNING("Р•СЃР»Рё С‚СѓС‚ РѕС€РёР±РєР° - Р±СѓРґРµС‚ РїСЂРѕСЃС‚Рѕ DC Initialization failed, С‡С‚Рѕ РЅРµ РїРѕРЅСЏС‚РЅРѕ...");
 		Assert(mp_RCon->TextWidth() && mp_RCon->TextHeight());
 		return false;
 	}
 
 #ifdef _DEBUG
-	// Теперь - выполняется в главной нити
+	// РўРµРїРµСЂСЊ - РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё
 	//if (mp_RCon->IsConsoleThread())
 	//{
 	//    //_ASSERTE(!mp_RCon->IsConsoleThread());
@@ -760,10 +760,10 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 	_ASSERT(TextHeight >= MIN_CON_HEIGHT);
 #endif
 
-	// Буфер пересоздаем только если требуется его увеличение
+	// Р‘СѓС„РµСЂ РїРµСЂРµСЃРѕР·РґР°РµРј С‚РѕР»СЊРєРѕ РµСЃР»Рё С‚СЂРµР±СѓРµС‚СЃСЏ РµРіРѕ СѓРІРµР»РёС‡РµРЅРёРµ
 	if (!mb_PointersAllocated ||
 	        (nMaxTextWidth * nMaxTextHeight) < (rTextWidth * rTextHeight) ||
-	        (nMaxTextWidth < rTextWidth) // а это нужно для TextParts & tmpOem
+	        (nMaxTextWidth < rTextWidth) // Р° СЌС‚Рѕ РЅСѓР¶РЅРѕ РґР»СЏ TextParts & tmpOem
 	  )
 		lbNeedCreateBuffers = TRUE;
 
@@ -775,14 +775,14 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 		PointersFree();
 	}
 
-	// InitDC вызывается только при первой инициализации или смене размера
-	mb_IsForceUpdate = true; // поэтому выставляем флажок Force
+	// InitDC РІС‹Р·С‹РІР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїСЂРё РїРµСЂРІРѕР№ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РёР»Рё СЃРјРµРЅРµ СЂР°Р·РјРµСЂР°
+	mb_IsForceUpdate = true; // РїРѕСЌС‚РѕРјСѓ РІС‹СЃС‚Р°РІР»СЏРµРј С„Р»Р°Р¶РѕРє Force
 	TextWidth = rTextWidth;
 	TextHeight = rTextHeight;
 
 	if (lbNeedCreateBuffers)
 	{
-		// Если увеличиваем размер - то с запасом, чтобы "два раза не ходить"...
+		// Р•СЃР»Рё СѓРІРµР»РёС‡РёРІР°РµРј СЂР°Р·РјРµСЂ - С‚Рѕ СЃ Р·Р°РїР°СЃРѕРј, С‡С‚РѕР±С‹ "РґРІР° СЂР°Р·Р° РЅРµ С…РѕРґРёС‚СЊ"...
 		if (nMaxTextWidth < TextWidth)
 			nMaxTextWidth = TextWidth+80;
 
@@ -795,7 +795,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 
 		if (!PointersAlloc())
 		{
-			WARNING("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
+			WARNING("Р•СЃР»Рё С‚СѓС‚ РѕС€РёР±РєР° - Р±СѓРґРµС‚ РїСЂРѕСЃС‚Рѕ DC Initialization failed, С‡С‚Рѕ РЅРµ РїРѕРЅСЏС‚РЅРѕ...");
 			return false;
 		}
 	}
@@ -811,13 +811,13 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 
 	bool lbRc = false;
 
-	// Это может быть, если отключена буферизация (debug) и вывод идет сразу на экран
+	// Р­С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ, РµСЃР»Рё РѕС‚РєР»СЋС‡РµРЅР° Р±СѓС„РµСЂРёР·Р°С†РёСЏ (debug) Рё РІС‹РІРѕРґ РёРґРµС‚ СЃСЂР°Р·Сѓ РЅР° СЌРєСЂР°РЅ
 	if (!abNoDc)
 	{
 		DEBUGSTRDRAW(L"*** Recreate DC\n");
 		//MSectionLock _SDC;
-		//// Если в этой нити уже заблокирован - секция не дергается
-		//(pSDC ? pSDC : &_SDC)->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
+		//// Р•СЃР»Рё РІ СЌС‚РѕР№ РЅРёС‚Рё СѓР¶Рµ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ - СЃРµРєС†РёСЏ РЅРµ РґРµСЂРіР°РµС‚СЃСЏ
+		//(pSDC ? pSDC : &_SDC)->Lock(&csDC, TRUE, 200); // РЅРѕ РїРѕ С‚Р°Р№РјР°СѓС‚Сѓ, С‡С‚РѕР±С‹ РЅРµ РїРѕРІРёСЃР»Рё РЅРµРЅР°СЂРѕРєРѕРј
 
 		m_DC.DeleteDC();
 
@@ -830,7 +830,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 
 		DEBUGTEST(BOOL lbWasInitialized = TextWidth && TextHeight);
 
-		// Посчитать новый размер в пикселях
+		// РџРѕСЃС‡РёС‚Р°С‚СЊ РЅРѕРІС‹Р№ СЂР°Р·РјРµСЂ РІ РїРёРєСЃРµР»СЏС…
 		Width = TextWidth * nFontWidth;
 		Height = TextHeight * nFontHeight;
 
@@ -848,7 +848,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 
 		if (m_DC.CreateDC(Width+Pad, Height+Pad))
 		{
-			// Запомнить кое-что
+			// Р—Р°РїРѕРјРЅРёС‚СЊ РєРѕРµ-С‡С‚Рѕ
 			LastPadSize = gpSet->nCenterConsolePad;
 			// OK
 			lbRc = true;
@@ -859,7 +859,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 
 	lbRc = true;
 wrap:
-	// сбросим, уже не требуется
+	// СЃР±СЂРѕСЃРёРј, СѓР¶Рµ РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ
 	isFontSizeChanged = false;
 
 	return lbRc;
@@ -893,7 +893,7 @@ bool CVirtualConsole::Dump(LPCWSTR asFile)
 	if (!this || !mp_RCon)
 		return FALSE;
 	
-	// Она сделает снимок нашего буфера (hDC) в png файл
+	// РћРЅР° СЃРґРµР»Р°РµС‚ СЃРЅРёРјРѕРє РЅР°С€РµРіРѕ Р±СѓС„РµСЂР° (hDC) РІ png С„Р°Р№Р»
 	DumpImage((HDC)m_DC, NULL, m_DC.iWidth, m_DC.iHeight, asFile);
 
 	HANDLE hFile = CreateFile(asFile, GENERIC_WRITE, FILE_SHARE_READ,
@@ -953,11 +953,11 @@ bool CVirtualConsole::LoadDumpConsole()
 	return true;
 }
 
-// Это символы рамок и др. спец. символы
+// Р­С‚Рѕ СЃРёРјРІРѕР»С‹ СЂР°РјРѕРє Рё РґСЂ. СЃРїРµС†. СЃРёРјРІРѕР»С‹
 //#define isCharBorder(inChar) (inChar>=0x2013 && inChar<=0x266B)
 bool CVirtualConsole::isCharBorder(wchar_t inChar)
 {
-	// Низя - нужно учитывать gpSet->isFixFarBorders там где это требуется, иначе пролетает gpSet->isEnhanceGraphics
+	// РќРёР·СЏ - РЅСѓР¶РЅРѕ СѓС‡РёС‚С‹РІР°С‚СЊ gpSet->isFixFarBorders С‚Р°Рј РіРґРµ СЌС‚Рѕ С‚СЂРµР±СѓРµС‚СЃСЏ, РёРЅР°С‡Рµ РїСЂРѕР»РµС‚Р°РµС‚ gpSet->isEnhanceGraphics
 	//if (!gpSet->isFixFarBorders)
 	//	return false;
 	return gpSet->isCharBorder(inChar);
@@ -993,15 +993,15 @@ bool CVirtualConsole::isCharBorder(wchar_t inChar)
 	//}
 }
 
-// А это только "рамочные" символы, в которых есть любая (хотя бы частичная) вертикальная черта + стрелки/штриховки
+// Рђ СЌС‚Рѕ С‚РѕР»СЊРєРѕ "СЂР°РјРѕС‡РЅС‹Рµ" СЃРёРјРІРѕР»С‹, РІ РєРѕС‚РѕСЂС‹С… РµСЃС‚СЊ Р»СЋР±Р°СЏ (С…РѕС‚СЏ Р±С‹ С‡Р°СЃС‚РёС‡РЅР°СЏ) РІРµСЂС‚РёРєР°Р»СЊРЅР°СЏ С‡РµСЂС‚Р° + СЃС‚СЂРµР»РєРё/С€С‚СЂРёС…РѕРІРєРё
 bool CVirtualConsole::isCharBorderVertical(wchar_t inChar)
 {
 	//if (inChar>=0x2502 && inChar<=0x25C4 && inChar!=0x2550)
-	//2009-07-12 Для упрощения - зададим диапазон рамок за исключением горизонтальной линии
+	//2009-07-12 Р”Р»СЏ СѓРїСЂРѕС‰РµРЅРёСЏ - Р·Р°РґР°РґРёРј РґРёР°РїР°Р·РѕРЅ СЂР°РјРѕРє Р·Р° РёСЃРєР»СЋС‡РµРЅРёРµРј РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕР№ Р»РёРЅРёРё
 	//if (inChar==ucBoxSinglVert || inChar==0x2503 || inChar==0x2506 || inChar==0x2507
 	//    || (inChar>=0x250A && inChar<=0x254B) || inChar==0x254E || inChar==0x254F
-	//    || (inChar>=0x2551 && inChar<=0x25C5)) // По набору символов Arial Unicode MS
-	TODO("ucBoxSinglHorz отсекать не нужно?");
+	//    || (inChar>=0x2551 && inChar<=0x25C5)) // РџРѕ РЅР°Р±РѕСЂСѓ СЃРёРјРІРѕР»РѕРІ Arial Unicode MS
+	TODO("ucBoxSinglHorz РѕС‚СЃРµРєР°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ?");
 
 	if ((inChar != ucBoxDblHorz && (inChar >= ucBoxSinglVert && inChar <= ucBoxDblVertHorz))
 		|| (inChar == ucArrowUp || inChar == ucArrowDown))
@@ -1025,11 +1025,11 @@ bool CVirtualConsole::isCharScroll(wchar_t inChar)
 
 bool CVirtualConsole::isCharNonSpacing(wchar_t inChar)
 {
-	// Здесь возвращаем те символы, которые нельзя рисовать вместе с обычными буквами.
-	// Например, 0xFEFF на некоторых шрифтах вообще переключает GDI на какой-то левый шрифт O_O
-	// Да и то, что они "не занимают места" в консоли некорректно. Даже если апостроф, по идее,
-	// должен располагаться НАД буквой, рисовать его надо бы СЛЕВА от нее, т.к. он занимает
-	// знакоместо в консоли!
+	// Р—РґРµСЃСЊ РІРѕР·РІСЂР°С‰Р°РµРј С‚Рµ СЃРёРјРІРѕР»С‹, РєРѕС‚РѕСЂС‹Рµ РЅРµР»СЊР·СЏ СЂРёСЃРѕРІР°С‚СЊ РІРјРµСЃС‚Рµ СЃ РѕР±С‹С‡РЅС‹РјРё Р±СѓРєРІР°РјРё.
+	// РќР°РїСЂРёРјРµСЂ, 0xFEFF РЅР° РЅРµРєРѕС‚РѕСЂС‹С… С€СЂРёС„С‚Р°С… РІРѕРѕР±С‰Рµ РїРµСЂРµРєР»СЋС‡Р°РµС‚ GDI РЅР° РєР°РєРѕР№-С‚Рѕ Р»РµРІС‹Р№ С€СЂРёС„С‚ O_O
+	// Р”Р° Рё С‚Рѕ, С‡С‚Рѕ РѕРЅРё "РЅРµ Р·Р°РЅРёРјР°СЋС‚ РјРµСЃС‚Р°" РІ РєРѕРЅСЃРѕР»Рё РЅРµРєРѕСЂСЂРµРєС‚РЅРѕ. Р”Р°Р¶Рµ РµСЃР»Рё Р°РїРѕСЃС‚СЂРѕС„, РїРѕ РёРґРµРµ,
+	// РґРѕР»Р¶РµРЅ СЂР°СЃРїРѕР»Р°РіР°С‚СЊСЃСЏ РќРђР” Р±СѓРєРІРѕР№, СЂРёСЃРѕРІР°С‚СЊ РµРіРѕ РЅР°РґРѕ Р±С‹ РЎР›Р•Р’Рђ РѕС‚ РЅРµРµ, С‚.Рє. РѕРЅ Р·Р°РЅРёРјР°РµС‚
+	// Р·РЅР°РєРѕРјРµСЃС‚Рѕ РІ РєРѕРЅСЃРѕР»Рё!
 	switch (inChar)
 	{
 		case 0x135F:
@@ -1084,7 +1084,7 @@ bool CVirtualConsole::isCharNonSpacing(wchar_t inChar)
 bool CVirtualConsole::isCharSpace(wchar_t inChar)
 {
 	TODO("0x0020,0x00A0,0x1680,0x180E,0x2000,0x2001,0x2002,0x2003,0x2004,0x2005,0x2006,0x2007,0x2008,0x2009,0x200A,0x200b,0x200c,0x200d,0x205F,0x2060,0x3000,0xFEFF,0x00B7,0x237D,0x2420,0x2422,0x2423");
-	// Сюда пихаем все символы, которые можно отрисовать пустым фоном (как обычный пробел)
+	// РЎСЋРґР° РїРёС…Р°РµРј РІСЃРµ СЃРёРјРІРѕР»С‹, РєРѕС‚РѕСЂС‹Рµ РјРѕР¶РЅРѕ РѕС‚СЂРёСЃРѕРІР°С‚СЊ РїСѓСЃС‚С‹Рј С„РѕРЅРѕРј (РєР°Рє РѕР±С‹С‡РЅС‹Р№ РїСЂРѕР±РµР»)
 	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0 
 		/*|| (inChar>=0x2000 && inChar<=0x200F)
 		|| inChar == 0x2060 || inChar == 0x3000 || inChar == 0xFEFF*/);
@@ -1129,7 +1129,7 @@ bool CVirtualConsole::isCharRTL(wchar_t inChar)
 
 void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF crBack)
 {
-	WARNING("CVirtualConsole::PaintBackgroundImage - crBack игнорируется");
+	WARNING("CVirtualConsole::PaintBackgroundImage - crBack РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ");
 
 	const int inX = rcText.left;
 	const int inY = rcText.top;
@@ -1278,7 +1278,7 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 		//	BitBlt((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, inX, inY, SRCCOPY);
 		//}
 
-		// Заливка цветом (там где нет картинки)
+		// Р—Р°Р»РёРІРєР° С†РІРµС‚РѕРј (С‚Р°Рј РіРґРµ РЅРµС‚ РєР°СЂС‚РёРЅРєРё)
 		if ((bgBmpSize.X < (inX+inWidth)) || (bgBmpSize.Y < (inY+inHeight)))
 		{
 			//if (hBrush0 == NULL)
@@ -1415,7 +1415,7 @@ void CVirtualConsole::SelectBrush(HBRUSH hNew)
 
 bool CVirtualConsole::CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col)
 {
-	TODO("Выделение пока не живет");
+	TODO("Р’С‹РґРµР»РµРЅРёРµ РїРѕРєР° РЅРµ Р¶РёРІРµС‚");
 	return false;
 	//if ((select.dwFlags & CONSOLE_SELECTION_NOT_EMPTY) == 0)
 	//    return false;
@@ -1456,25 +1456,25 @@ class DcDebug
 };
 #endif
 
-// Преобразовать консольный цветовой атрибут (фон+текст) в цвета фона и текста
-// (!) Количество цветов текста могут быть расширено за счет одного цвета фона
-// atr принудительно в BYTE, т.к. верхние флаги нас не интересуют
+// РџСЂРµРѕР±СЂР°Р·РѕРІР°С‚СЊ РєРѕРЅСЃРѕР»СЊРЅС‹Р№ С†РІРµС‚РѕРІРѕР№ Р°С‚СЂРёР±СѓС‚ (С„РѕРЅ+С‚РµРєСЃС‚) РІ С†РІРµС‚Р° С„РѕРЅР° Рё С‚РµРєСЃС‚Р°
+// (!) РљРѕР»РёС‡РµСЃС‚РІРѕ С†РІРµС‚РѕРІ С‚РµРєСЃС‚Р° РјРѕРіСѓС‚ Р±С‹С‚СЊ СЂР°СЃС€РёСЂРµРЅРѕ Р·Р° СЃС‡РµС‚ РѕРґРЅРѕРіРѕ С†РІРµС‚Р° С„РѕРЅР°
+// atr РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ РІ BYTE, С‚.Рє. РІРµСЂС…РЅРёРµ С„Р»Р°РіРё РЅР°СЃ РЅРµ РёРЅС‚РµСЂРµСЃСѓСЋС‚
 //void CVirtualConsole::GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont)
 //{
-//	// Нас интересует только нижний байт
+//	// РќР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ С‚РѕР»СЊРєРѕ РЅРёР¶РЅРёР№ Р±Р°Р№С‚
 //    atr &= 0xFF;
 //
-//    // быстрее будет создать заранее массив с цветами, и получять нужное по индексу
+//    // Р±С‹СЃС‚СЂРµРµ Р±СѓРґРµС‚ СЃРѕР·РґР°С‚СЊ Р·Р°СЂР°РЅРµРµ РјР°СЃСЃРёРІ СЃ С†РІРµС‚Р°РјРё, Рё РїРѕР»СѓС‡СЏС‚СЊ РЅСѓР¶РЅРѕРµ РїРѕ РёРЅРґРµРєСЃСѓ
 //    foreColorNum = m_ForegroundColors[atr];
 //    backColorNum = m_BackgroundColors[atr];
 //    if (pFont) *pFont = mh_FontByIndex[atr];
 //
 //    if (bExtendColors) {
 //        if (backColorNum == nExtendColor) {
-//            backColorNum = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
+//            backColorNum = attrBackLast; // С„РѕРЅ РЅСѓР¶РЅРѕ Р·Р°РјРµРЅРёС‚СЊ РЅР° РѕР±С‹С‡РЅС‹Р№ С†РІРµС‚ РёР· СЃРѕСЃРµРґРЅРµР№ СЏС‡РµР№РєРё
 //            foreColorNum += 0x10;
 //        } else {
-//            attrBackLast = backColorNum; // запомним обычный цвет соседней ячейки
+//            attrBackLast = backColorNum; // Р·Р°РїРѕРјРЅРёРј РѕР±С‹С‡РЅС‹Р№ С†РІРµС‚ СЃРѕСЃРµРґРЅРµР№ СЏС‡РµР№РєРё
 //        }
 //    }
 //}
@@ -1483,13 +1483,13 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 {
 	BOOL lbCharABCOk;
 
-	WARNING("Не работает с *.bdf?");
+	WARNING("РќРµ СЂР°Р±РѕС‚Р°РµС‚ СЃ *.bdf?");
 
 	if (!gpSetCls->CharABC[ch].abcB)
 	{
 		if (isCharRTL(ch))
 		{
-			WARNING("Поскольку с RTL все достаточно сложно, пока считаем шрифт моноширным");
+			WARNING("РџРѕСЃРєРѕР»СЊРєСѓ СЃ RTL РІСЃРµ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ СЃР»РѕР¶РЅРѕ, РїРѕРєР° СЃС‡РёС‚Р°РµРј С€СЂРёС„С‚ РјРѕРЅРѕС€РёСЂРЅС‹Рј");
 			gpSetCls->CharABC[ch].abcA = gpSetCls->CharABC[ch].abcC = 0;
 			gpSetCls->CharABC[ch].abcB = nFontWidth;
 		}
@@ -1501,7 +1501,7 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 			}
 			else
 			{
-				TODO("Тут надо бы деление по стилям сделать");
+				TODO("РўСѓС‚ РЅР°РґРѕ Р±С‹ РґРµР»РµРЅРёРµ РїРѕ СЃС‚РёР»СЏРј СЃРґРµР»Р°С‚СЊ");
 				SelectFont(gpSetCls->mh_Font[0]);
 			}
 
@@ -1510,7 +1510,7 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 
 			if (!lbCharABCOk)
 			{
-				// Значит шрифт не TTF/OTF
+				// Р—РЅР°С‡РёС‚ С€СЂРёС„С‚ РЅРµ TTF/OTF
 				gpSetCls->CharABC[ch].abcB = CharWidth(ch);
 				_ASSERTE(gpSetCls->CharABC[ch].abcB);
 
@@ -1524,10 +1524,10 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 	*abc = gpSetCls->CharABC[ch];
 }
 
-// Возвращает ширину символа, учитывает FixBorders
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ С€РёСЂРёРЅСѓ СЃРёРјРІРѕР»Р°, СѓС‡РёС‚С‹РІР°РµС‚ FixBorders
 WORD CVirtualConsole::CharWidth(wchar_t ch)
 {
-	// Проверяем сразу, чтобы по условиям не бегать
+	// РџСЂРѕРІРµСЂСЏРµРј СЃСЂР°Р·Сѓ, С‡С‚РѕР±С‹ РїРѕ СѓСЃР»РѕРІРёСЏРј РЅРµ Р±РµРіР°С‚СЊ
 	WORD nWidth = gpSetCls->CharWidth[ch];
 
 	if (nWidth)
@@ -1538,7 +1538,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch)
 	        || (gpSet->isEnhanceGraphics && isCharProgress(ch))
 	  )
 	{
-		//2009-09-09 Это некорректно. Ширина шрифта рамки может быть больше знакоместа
+		//2009-09-09 Р­С‚Рѕ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕ. РЁРёСЂРёРЅР° С€СЂРёС„С‚Р° СЂР°РјРєРё РјРѕР¶РµС‚ Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ Р·РЅР°РєРѕРјРµСЃС‚Р°
 		//return gpSet->BorderFontWidth();
 		gpSetCls->CharWidth[ch] = nFontWidth;
 		return nFontWidth;
@@ -1547,14 +1547,14 @@ WORD CVirtualConsole::CharWidth(wchar_t ch)
 	//nWidth = nFontWidth;
 	//bool isBorder = false; //, isVBorder = false;
 
-	// Наверное все же нужно считать именно в том шрифте, которым будет идти отображение
+	// РќР°РІРµСЂРЅРѕРµ РІСЃРµ Р¶Рµ РЅСѓР¶РЅРѕ СЃС‡РёС‚Р°С‚СЊ РёРјРµРЅРЅРѕ РІ С‚РѕРј С€СЂРёС„С‚Рµ, РєРѕС‚РѕСЂС‹Рј Р±СѓРґРµС‚ РёРґС‚Рё РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ
 	if (gpSetCls->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharBorder(ch))
 	{
 		SelectFont(gpSetCls->mh_Font2);
 	}
 	else
 	{
-		TODO("Тут надо бы деление по стилям сделать");
+		TODO("РўСѓС‚ РЅР°РґРѕ Р±С‹ РґРµР»РµРЅРёРµ РїРѕ СЃС‚РёР»СЏРј СЃРґРµР»Р°С‚СЊ");
 		SelectFont(gpSetCls->mh_Font[0]);
 	}
 
@@ -1572,7 +1572,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch)
 		nWidth = nFontWidth;
 
 	if (!nWidth)
-		nWidth = 1; // на всякий случай, чтобы деления на 0 не возникло
+		nWidth = 1; // РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, С‡С‚РѕР±С‹ РґРµР»РµРЅРёСЏ РЅР° 0 РЅРµ РІРѕР·РЅРёРєР»Рѕ
 
 	gpSetCls->CharWidth[ch] = nWidth;
 	return nWidth;
@@ -1608,10 +1608,10 @@ bool CVirtualConsole::CheckChangedTextAttr()
 		{
 			if (nLocked)
 			{
-				// Нужно проверить, были ли изменения в conLocked
+				// РќСѓР¶РЅРѕ РїСЂРѕРІРµСЂРёС‚СЊ, Р±С‹Р»Рё Р»Рё РёР·РјРµРЅРµРЅРёСЏ РІ conLocked
 				if ((UINT)conLocked.right >= TextWidth || (UINT)conLocked.bottom >= TextHeight)
 				{
-					// Хм, по идее, уже должен был быть сброшен при ресайзе консоли
+					// РҐРј, РїРѕ РёРґРµРµ, СѓР¶Рµ РґРѕР»Р¶РµРЅ Р±С‹Р» Р±С‹С‚СЊ СЃР±СЂРѕС€РµРЅ РїСЂРё СЂРµСЃР°Р№Р·Рµ РєРѕРЅСЃРѕР»Рё
 					_ASSERTE((UINT)conLocked.right < TextWidth && (UINT)conLocked.bottom < TextHeight);
 					LockDcRect(false);
 				}
@@ -1636,16 +1636,16 @@ bool CVirtualConsole::CheckChangedTextAttr()
 						{
 							if (nLocked == 1)
 							{
-								// Игнорировать заполнение пробелами
+								// РРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ Р·Р°РїРѕР»РЅРµРЅРёРµ РїСЂРѕР±РµР»Р°РјРё
 								if (0==memcmp(mpsz_ConChar+nShift, pSpaces, nChars * sizeof(*mpsz_ConChar)))
 									continue;
 							}
-							// При любых изменениях - сброс
+							// РџСЂРё Р»СЋР±С‹С… РёР·РјРµРЅРµРЅРёСЏС… - СЃР±СЂРѕСЃ
 							LockDcRect(false);
 							break;
 						}
 
-						TODO("Можно бы еще и атрибуты проверять, но это практически всегда избыточно");
+						TODO("РњРѕР¶РЅРѕ Р±С‹ РµС‰Рµ Рё Р°С‚СЂРёР±СѓС‚С‹ РїСЂРѕРІРµСЂСЏС‚СЊ, РЅРѕ СЌС‚Рѕ РїСЂР°РєС‚РёС‡РµСЃРєРё РІСЃРµРіРґР° РёР·Р±С‹С‚РѕС‡РЅРѕ");
 					}
 
 					if (pSpaces)
@@ -1693,7 +1693,7 @@ void CVirtualConsole::UpdateThumbnail(bool abNoSnapshoot /*= FALSE*/)
 	if (!mp_Ghost || !gpConEmu->Taskbar_GhostSnapshootRequired())
 		return;
 
-	// Скорее всего мы не в главной нити, но оно само разберется
+	// РЎРєРѕСЂРµРµ РІСЃРµРіРѕ РјС‹ РЅРµ РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё, РЅРѕ РѕРЅРѕ СЃР°РјРѕ СЂР°Р·Р±РµСЂРµС‚СЃСЏ
 	mp_Ghost->UpdateTabSnapshoot(FALSE, abNoSnapshoot);
 }
 
@@ -1726,12 +1726,12 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 		return false;
 	}
 
-	/* -- 2009-06-20 переделал. графика теперь крутится ТОЛЬКО в MainThread
+	/* -- 2009-06-20 РїРµСЂРµРґРµР»Р°Р». РіСЂР°С„РёРєР° С‚РµРїРµСЂСЊ РєСЂСѓС‚РёС‚СЃСЏ РўРћР›Р¬РљРћ РІ MainThread
 	if (!mp_RCon->IsConsoleThread()) {
 	    if (!ahDc) {
 	        mp_RCon->SetForceRead();
 	        mp_RCon->WaitEndUpdate(1000);
-	        //gpConEmu->InvalidateAll(); -- зачем на All??? Update и так Invalidate зовет
+	        //gpConEmu->InvalidateAll(); -- Р·Р°С‡РµРј РЅР° All??? Update Рё С‚Р°Рє Invalidate Р·РѕРІРµС‚
 	        return false;
 	    }
 	}
@@ -1739,7 +1739,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 
 	if (mb_InUpdate)
 	{
-		// Не должен вызываться по рекурсии
+		// РќРµ РґРѕР»Р¶РµРЅ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РїРѕ СЂРµРєСѓСЂСЃРёРё
 		if (!mb_InConsoleResize)
 		{
 			_ASSERTE(!mb_InUpdate);
@@ -1749,10 +1749,10 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	}
 
 	MSetter inUpdate(&mb_InUpdate);
-	// Рисуем актуальную информацию из CRealConsole. ЗДЕСЬ запросы в консоль не делаются.
+	// Р РёСЃСѓРµРј Р°РєС‚СѓР°Р»СЊРЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ РёР· CRealConsole. Р—Р”Р•РЎР¬ Р·Р°РїСЂРѕСЃС‹ РІ РєРѕРЅСЃРѕР»СЊ РЅРµ РґРµР»Р°СЋС‚СЃСЏ.
 	//RetrieveConsoleInfo();
 	#if defined(_DEBUG) && defined(MSGLOGGER)
-	DcDebug dbg(&m_DC.hDC, ahDc); // для отладки - рисуем сразу на канвасе окна
+	DcDebug dbg(&m_DC.hDC, ahDc); // РґР»СЏ РѕС‚Р»Р°РґРєРё - СЂРёСЃСѓРµРј СЃСЂР°Р·Сѓ РЅР° РєР°РЅРІР°СЃРµ РѕРєРЅР°
 	#endif
 
 	HEAPVAL
@@ -1761,9 +1761,9 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	//MSectionLock SDC; //&csDC, &ncsTDC);
 	_ASSERTE(gpConEmu->isMainThread());
 
-	//if (mb_PaintRequested) -- не должно быть. Эта функция работает ТОЛЬКО в консольной нити
-	//if (mb_PaintLocked)  // Значит идет асинхронный PaintVCon (BitBlt) - это может быть во время ресайза, или над окошком что-то протащили
-	//	SDC.Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
+	//if (mb_PaintRequested) -- РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ. Р­С‚Р° С„СѓРЅРєС†РёСЏ СЂР°Р±РѕС‚Р°РµС‚ РўРћР›Р¬РљРћ РІ РєРѕРЅСЃРѕР»СЊРЅРѕР№ РЅРёС‚Рё
+	//if (mb_PaintLocked)  // Р—РЅР°С‡РёС‚ РёРґРµС‚ Р°СЃРёРЅС…СЂРѕРЅРЅС‹Р№ PaintVCon (BitBlt) - СЌС‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ РІРѕ РІСЂРµРјСЏ СЂРµСЃР°Р№Р·Р°, РёР»Рё РЅР°Рґ РѕРєРѕС€РєРѕРј С‡С‚Рѕ-С‚Рѕ РїСЂРѕС‚Р°С‰РёР»Рё
+	//	SDC.Lock(&csDC, TRUE, 200); // РЅРѕ РїРѕ С‚Р°Р№РјР°СѓС‚Сѓ, С‡С‚РѕР±С‹ РЅРµ РїРѕРІРёСЃР»Рё РЅРµРЅР°СЂРѕРєРѕРј
 
 	mp_RCon->GetConsoleScreenBufferInfo(&csbi);
 	// start timer before "Read Console Output*" calls, they do take time
@@ -1803,15 +1803,15 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	// Also, don't check foreground window here for the same reasons.
 	// If position is the same then check the cursor becomes hidden.
 	else if (Cursor.x != csbi.dwCursorPosition.X || Cursor.y != csbi.dwCursorPosition.Y)
-		// сменилась позиция. обновляем если курсор видим
+		// СЃРјРµРЅРёР»Р°СЃСЊ РїРѕР·РёС†РёСЏ. РѕР±РЅРѕРІР»СЏРµРј РµСЃР»Рё РєСѓСЂСЃРѕСЂ РІРёРґРёРј
 		updateCursor = cinf.bVisible || Cursor.isVisible || Cursor.isVisiblePrevFromInfo;
 	else
 		updateCursor = Cursor.isVisiblePrevFromInfo && !cinf.bVisible;
 
 	mb_DialogsChanged = CheckDialogsChanged();
-	// Если на панелях открыт ConEmuTh - причесать заголовки и
-	// строку разделителя инф.части (там не должно оставаться уголовых элементов)
-	// И обновить видимые регионы (скрыть части, которые находятся "под" диалогами)
+	// Р•СЃР»Рё РЅР° РїР°РЅРµР»СЏС… РѕС‚РєСЂС‹С‚ ConEmuTh - РїСЂРёС‡РµСЃР°С‚СЊ Р·Р°РіРѕР»РѕРІРєРё Рё
+	// СЃС‚СЂРѕРєСѓ СЂР°Р·РґРµР»РёС‚РµР»СЏ РёРЅС„.С‡Р°СЃС‚Рё (С‚Р°Рј РЅРµ РґРѕР»Р¶РЅРѕ РѕСЃС‚Р°РІР°С‚СЊСЃСЏ СѓРіРѕР»РѕРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ)
+	// Р РѕР±РЅРѕРІРёС‚СЊ РІРёРґРёРјС‹Рµ СЂРµРіРёРѕРЅС‹ (СЃРєСЂС‹С‚СЊ С‡Р°СЃС‚Рё, РєРѕС‚РѕСЂС‹Рµ РЅР°С…РѕРґСЏС‚СЃСЏ "РїРѕРґ" РґРёР°Р»РѕРіР°РјРё)
 	PolishPanelViews();
 
 	//gpSetCls->Performance(tPerfRender, FALSE);
@@ -1840,9 +1840,9 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 		memcpy(mpn_ConAttrExSave, mpn_ConAttrEx, TextLen * sizeof(*mpn_ConAttrEx));
 	}
 
-	//-- перенесено в PaintVCon
-	//// Если зарегистрированы панели (ConEmuTh) - обновить видимые регионы
-	//// Делать это нужно после UpdateText, потому что иначе ConCharX может быть обнулен
+	//-- РїРµСЂРµРЅРµСЃРµРЅРѕ РІ PaintVCon
+	//// Р•СЃР»Рё Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅС‹ РїР°РЅРµР»Рё (ConEmuTh) - РѕР±РЅРѕРІРёС‚СЊ РІРёРґРёРјС‹Рµ СЂРµРіРёРѕРЅС‹
+	//// Р”РµР»Р°С‚СЊ СЌС‚Рѕ РЅСѓР¶РЅРѕ РїРѕСЃР»Рµ UpdateText, РїРѕС‚РѕРјСѓ С‡С‚Рѕ РёРЅР°С‡Рµ ConCharX РјРѕР¶РµС‚ Р±С‹С‚СЊ РѕР±РЅСѓР»РµРЅ
 	//if (m_LeftPanelView.bRegister || m_RightPanelView.bRegister) {
 	//	if (mb_DialogsChanged) {
 	//		UpdatePanelRgn(TRUE);
@@ -1866,30 +1866,30 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 		UpdateHighlights();
 	}
 
-	// После успешного обновления внутренних буферов (символы/атрибуты)
+	// РџРѕСЃР»Рµ СѓСЃРїРµС€РЅРѕРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ РІРЅСѓС‚СЂРµРЅРЅРёС… Р±СѓС„РµСЂРѕРІ (СЃРёРјРІРѕР»С‹/Р°С‚СЂРёР±СѓС‚С‹)
 	//
 	if (lRes && bVisible)
 	{
 		if (mpsz_LogScreen && mp_RCon && mp_RCon->GetServerPID())
 		{
-			// Скинуть буферы в лог
+			// РЎРєРёРЅСѓС‚СЊ Р±СѓС„РµСЂС‹ РІ Р»РѕРі
 			mn_LogScreenIdx++;
 			wchar_t szLogPath[MAX_PATH]; _wsprintf(szLogPath, SKIPLEN(countof(szLogPath)) mpsz_LogScreen, mp_RCon->GetServerPID(), mn_LogScreenIdx);
 			Dump(szLogPath);
 		}
 
-		// Если допустимо - передернуть обновление viewport'а
+		// Р•СЃР»Рё РґРѕРїСѓСЃС‚РёРјРѕ - РїРµСЂРµРґРµСЂРЅСѓС‚СЊ РѕР±РЅРѕРІР»РµРЅРёРµ viewport'Р°
 		if (!mb_InPaintCall)
 		{
-			// должен вызываться в основной нити
+			// РґРѕР»Р¶РµРЅ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РІ РѕСЃРЅРѕРІРЅРѕР№ РЅРёС‚Рё
 			_ASSERTE(gpConEmu->isMainThread());
 			//mb_PaintRequested = TRUE;
 			Invalidate();
 
 			if (gpSetCls->isAdvLogging>=3) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
 
-			//09.06.13 а если так? быстрее изменения на экране не появятся?
-			//UpdateWindow('ghWnd DC'); // оно посылает сообщение в окно, и ждет окончания отрисовки
+			//09.06.13 Р° РµСЃР»Рё С‚Р°Рє? Р±С‹СЃС‚СЂРµРµ РёР·РјРµРЅРµРЅРёСЏ РЅР° СЌРєСЂР°РЅРµ РЅРµ РїРѕСЏРІСЏС‚СЃСЏ?
+			//UpdateWindow('ghWnd DC'); // РѕРЅРѕ РїРѕСЃС‹Р»Р°РµС‚ СЃРѕРѕР±С‰РµРЅРёРµ РІ РѕРєРЅРѕ, Рё Р¶РґРµС‚ РѕРєРѕРЅС‡Р°РЅРёСЏ РѕС‚СЂРёСЃРѕРІРєРё
 			#ifdef _DEBUG
 			//_ASSERTE(!gpConEmu->m_Child->mb_Invalidated);
 			#endif
@@ -1905,7 +1905,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	/* ***************************************** */
 	SelectBrush(NULL);
 
-	if (hBrush0)    // создается в BlitPictureTo
+	if (hBrush0)    // СЃРѕР·РґР°РµС‚СЃСЏ РІ BlitPictureTo
 	{
 		DeleteObject(hBrush0); hBrush0 = NULL;
 	}
@@ -2075,7 +2075,7 @@ void CVirtualConsole::UpdateHighlights()
 	int CurChar = pos.Y * TextWidth + pos.X;
 	if (CurChar < 0 || CurChar>=(int)(TextWidth * TextHeight))
 	{
-		return; // может быть или глюк - или размер консоли был резко уменьшен и предыдущая позиция курсора пропала с экрана
+		return; // РјРѕР¶РµС‚ Р±С‹С‚СЊ РёР»Рё РіР»СЋРє - РёР»Рё СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё Р±С‹Р» СЂРµР·РєРѕ СѓРјРµРЅСЊС€РµРЅ Рё РїСЂРµРґС‹РґСѓС‰Р°СЏ РїРѕР·РёС†РёСЏ РєСѓСЂСЃРѕСЂР° РїСЂРѕРїР°Р»Р° СЃ СЌРєСЂР°РЅР°
 	}
 
 	// And MARK! (nFontHeight or cell (nFontWidth))
@@ -2157,31 +2157,31 @@ bool CVirtualConsole::CheckTransparent()
 	bool lbHasChildWindows = false;
 	if (mp_RCon)
 	{
-		// Если работа идет в GUI режиме (notepad во вкладке ConEmu)
+		// Р•СЃР»Рё СЂР°Р±РѕС‚Р° РёРґРµС‚ РІ GUI СЂРµР¶РёРјРµ (notepad РІРѕ РІРєР»Р°РґРєРµ ConEmu)
 		if (mp_RCon->GuiWnd() != NULL)
 			lbHasChildWindows = true;
-		// Или включен просмотр картинок/видефайлов
+		// РР»Рё РІРєР»СЋС‡РµРЅ РїСЂРѕСЃРјРѕС‚СЂ РєР°СЂС‚РёРЅРѕРє/РІРёРґРµС„Р°Р№Р»РѕРІ
 		if (mp_RCon->isPictureView())
 			lbHasChildWindows = true;
 	}
 
 	InterlockedIncrement(&llInCheckTransparent);
 
-	// Проверим условия, в которых вообще не нужно проверять регионы
+	// РџСЂРѕРІРµСЂРёРј СѓСЃР»РѕРІРёСЏ, РІ РєРѕС‚РѕСЂС‹С… РІРѕРѕР±С‰Рµ РЅРµ РЅСѓР¶РЅРѕ РїСЂРѕРІРµСЂСЏС‚СЊ СЂРµРіРёРѕРЅС‹
 	if (gpSet->isUserScreenTransparent)
 	{
-		// Если была смена стиля: был дырявый регион, не стало дырявого региона
+		// Р•СЃР»Рё Р±С‹Р»Р° СЃРјРµРЅР° СЃС‚РёР»СЏ: Р±С‹Р» РґС‹СЂСЏРІС‹Р№ СЂРµРіРёРѕРЅ, РЅРµ СЃС‚Р°Р»Рѕ РґС‹СЂСЏРІРѕРіРѕ СЂРµРіРёРѕРЅР°
 		if (CheckTransparentRgn(lbHasChildWindows))
 		{
 			lbChanged = TRUE;
 		}
 	}
 
-	// Если сменился статус наличия внедренного PicView
+	// Р•СЃР»Рё СЃРјРµРЅРёР»СЃСЏ СЃС‚Р°С‚СѓСЃ РЅР°Р»РёС‡РёСЏ РІРЅРµРґСЂРµРЅРЅРѕРіРѕ PicView
 	if (mb_ChildWindowWasFound != lbHasChildWindows)
 	{
 		mb_ChildWindowWasFound = lbHasChildWindows;
-		// нужно передернуть общую альфа-прозрачность окна
+		// РЅСѓР¶РЅРѕ РїРµСЂРµРґРµСЂРЅСѓС‚СЊ РѕР±С‰СѓСЋ Р°Р»СЊС„Р°-РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ РѕРєРЅР°
 		gpConEmu->OnTransparent();
 	}
 
@@ -2196,12 +2196,12 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 	bool lbTransparentChanged = false;
 
 
-	// Если изменены данные, или была прозрачность и появились дочерние окна (или наоборот)
+	// Р•СЃР»Рё РёР·РјРµРЅРµРЅС‹ РґР°РЅРЅС‹Рµ, РёР»Рё Р±С‹Р»Р° РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ Рё РїРѕСЏРІРёР»РёСЃСЊ РґРѕС‡РµСЂРЅРёРµ РѕРєРЅР° (РёР»Рё РЅР°РѕР±РѕСЂРѕС‚)
 	if (mb_ConDataChanged || !((mh_TransparentRgn != NULL) ^ abHasChildWindows))
 	{
 		mb_ConDataChanged = false;
 
-		// (пере)Создать регион
+		// (РїРµСЂРµ)РЎРѕР·РґР°С‚СЊ СЂРµРіРёРѕРЅ
 		if (mpsz_ConChar && mpn_ConAttrEx && TextWidth && TextHeight)
 		{
 			MSectionLock SCON; SCON.Lock(&csCON);
@@ -2211,7 +2211,7 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 			//#ifdef _DEBUG
 			//nMaxRects = 5;
 			//#endif
-			POINT *lpAllPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT)); // 4 угла
+			POINT *lpAllPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT)); // 4 СѓРіР»Р°
 			//INT   *lpAllCounts = (INT*)Alloc(nMaxRects,sizeof(INT));
 			HEAPVAL;
 			int    nRectCount = 0;
@@ -2230,13 +2230,13 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 
 						while (nX < TextWidth)
 						{
-							// Найти первый прозрачный cell
+							// РќР°Р№С‚Рё РїРµСЂРІС‹Р№ РїСЂРѕР·СЂР°С‡РЅС‹Р№ cell
 							#if 0
 							while (nX < TextWidth && !pnAttr[nX].bTransparent)
 								nX++;
 							#else
 							WARNING("CharAttr_Transparent");
-							// хорошо бы требуемые проверки прозрачности делать здесь, а не в RgnDetect
+							// С…РѕСЂРѕС€Рѕ Р±С‹ С‚СЂРµР±СѓРµРјС‹Рµ РїСЂРѕРІРµСЂРєРё РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚Рё РґРµР»Р°С‚СЊ Р·РґРµСЃСЊ, Р° РЅРµ РІ RgnDetect
 							while (nX < TextWidth && !(pnAttr[nX].Flags & CharAttr_Transparent))
 								nX++;
 							#endif
@@ -2244,7 +2244,7 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 							if (nX >= TextWidth)
 								break;
 
-							// Найти конец прозрачного блока
+							// РќР°Р№С‚Рё РєРѕРЅРµС† РїСЂРѕР·СЂР°С‡РЅРѕРіРѕ Р±Р»РѕРєР°
 							uint nTranStart = nX;
 
 							#if 0
@@ -2252,12 +2252,12 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 								;
 							#else
 							WARNING("CharAttr_Transparent");
-							// хорошо бы требуемые проверки прозрачности делать здесь, а не в RgnDetect
+							// С…РѕСЂРѕС€Рѕ Р±С‹ С‚СЂРµР±СѓРµРјС‹Рµ РїСЂРѕРІРµСЂРєРё РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚Рё РґРµР»Р°С‚СЊ Р·РґРµСЃСЊ, Р° РЅРµ РІ RgnDetect
 							while (++nX < TextWidth && (pnAttr[nX].Flags & CharAttr_Transparent))
 								;
 							#endif
 
-							// Сформировать соответствующий Rect
+							// РЎС„РѕСЂРјРёСЂРѕРІР°С‚СЊ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ Rect
 							//int nXPix = 0;
 
 							if (nRectCount>=nMaxRects)
@@ -2266,7 +2266,7 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 								_ASSERTE(nNewMaxRects > nRectCount);
 
 								HEAPVAL;
-								POINT *lpTmpPoints = (POINT*)Alloc(nNewMaxRects*4,sizeof(POINT)); // 4 угла
+								POINT *lpTmpPoints = (POINT*)Alloc(nNewMaxRects*4,sizeof(POINT)); // 4 СѓРіР»Р°
 								HEAPVAL;
 
 								if (!lpTmpPoints)
@@ -2382,15 +2382,15 @@ bool CVirtualConsole::LoadConsoleData()
 		return false;
 	}
 
-	WARNING("Поскольку тут мы с буфером работаем, хорошо бы выполнять только в главном потоке");
+	WARNING("РџРѕСЃРєРѕР»СЊРєСѓ С‚СѓС‚ РјС‹ СЃ Р±СѓС„РµСЂРѕРј СЂР°Р±РѕС‚Р°РµРј, С…РѕСЂРѕС€Рѕ Р±С‹ РІС‹РїРѕР»РЅСЏС‚СЊ С‚РѕР»СЊРєРѕ РІ РіР»Р°РІРЅРѕРј РїРѕС‚РѕРєРµ");
 
-	// Может быть, если консоль неактивна, т.к. CVirtualConsole::Update не вызывается и диалоги не детектятся. А это требуется.
+	// РњРѕР¶РµС‚ Р±С‹С‚СЊ, РµСЃР»Рё РєРѕРЅСЃРѕР»СЊ РЅРµР°РєС‚РёРІРЅР°, С‚.Рє. CVirtualConsole::Update РЅРµ РІС‹Р·С‹РІР°РµС‚СЃСЏ Рё РґРёР°Р»РѕРіРё РЅРµ РґРµС‚РµРєС‚СЏС‚СЃСЏ. Рђ СЌС‚Рѕ С‚СЂРµР±СѓРµС‚СЃСЏ.
 	if (!mpsz_ConChar || !mpn_ConAttrEx)
 	{
-		// Если при старте ConEmu создано несколько консолей через '@'
-		// то все кроме активной - не инициализированы (InitDC не вызывался),
-		// что нужно делать в главной нити,
-		// PostMessage(ghWnd, mn_MsgInitInactiveDC, 0, apVCon) об этом позаботится
+		// Р•СЃР»Рё РїСЂРё СЃС‚Р°СЂС‚Рµ ConEmu СЃРѕР·РґР°РЅРѕ РЅРµСЃРєРѕР»СЊРєРѕ РєРѕРЅСЃРѕР»РµР№ С‡РµСЂРµР· '@'
+		// С‚Рѕ РІСЃРµ РєСЂРѕРјРµ Р°РєС‚РёРІРЅРѕР№ - РЅРµ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅС‹ (InitDC РЅРµ РІС‹Р·С‹РІР°Р»СЃСЏ),
+		// С‡С‚Рѕ РЅСѓР¶РЅРѕ РґРµР»Р°С‚СЊ РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё,
+		// PostMessage(ghWnd, mn_MsgInitInactiveDC, 0, apVCon) РѕР± СЌС‚РѕРј РїРѕР·Р°Р±РѕС‚РёС‚СЃСЏ
 		gpConEmu->InitInactiveDC(this);
 		return false;
 	}
@@ -2450,7 +2450,7 @@ bool CVirtualConsole::LoadConsoleData()
 					}
 				}
 
-				// Шрифт создали, теперь - пометить соответсвующий регион для использования этого шрифта
+				// РЁСЂРёС„С‚ СЃРѕР·РґР°Р»Рё, С‚РµРїРµСЂСЊ - РїРѕРјРµС‚РёС‚СЊ СЃРѕРѕС‚РІРµС‚СЃРІСѓСЋС‰РёР№ СЂРµРіРёРѕРЅ РґР»СЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ СЌС‚РѕРіРѕ С€СЂРёС„С‚Р°
 				if (mh_UCharMapFont)
 				{
 					for(int Y = rcGlyph.Top; Y <= rcGlyph.Bottom; Y++)
@@ -2505,7 +2505,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	nFontWidth = gpSetCls->FontWidth();
 	nFontCharSet = gpSetCls->FontCharSet();
 	winSize = MakeCoord(mp_RCon->TextWidth(),mp_RCon->TextHeight());
-	//csbi.dwCursorPosition.X -= csbi.srWindow.Left; -- горизонтальная прокрутка игнорируется!
+	//csbi.dwCursorPosition.X -= csbi.srWindow.Left; -- РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅР°СЏ РїСЂРѕРєСЂСѓС‚РєР° РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ!
 	csbi.dwCursorPosition.Y -= csbi.srWindow.Top;
 	isCursorValid =
 	    csbi.dwCursorPosition.X >= 0 && csbi.dwCursorPosition.Y >= 0 &&
@@ -2517,10 +2517,10 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		mb_RequiredForceUpdate = false;
 	}
 
-	// Первая инициализация, или смена размера
+	// РџРµСЂРІР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ, РёР»Рё СЃРјРµРЅР° СЂР°Р·РјРµСЂР°
 	BOOL lbSizeChanged = ((HDC)m_DC == NULL) || (TextWidth != (uint)winSize.X || TextHeight != (uint)winSize.Y)
 		|| (LastPadSize != gpSet->nCenterConsolePad)
-		|| isFontSizeChanged; // или смена шрифта ('Auto' на 'Main')
+		|| isFontSizeChanged; // РёР»Рё СЃРјРµРЅР° С€СЂРёС„С‚Р° ('Auto' РЅР° 'Main')
 
 	#ifdef _DEBUG
 	COORD dbgWinSize = winSize;
@@ -2529,14 +2529,14 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 
 	_ASSERTE(gpConEmu->isMainThread());
 
-	// 120108 - пересоздавать DC на каждый чих не нужно (isForce выставляется, например, при смене Fade)
+	// 120108 - РїРµСЂРµСЃРѕР·РґР°РІР°С‚СЊ DC РЅР° РєР°Р¶РґС‹Р№ С‡РёС… РЅРµ РЅСѓР¶РЅРѕ (isForce РІС‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ, РЅР°РїСЂРёРјРµСЂ, РїСЂРё СЃРјРµРЅРµ Fade)
 	if (/*isForce ||*/ !mb_PointersAllocated || lbSizeChanged)
 	{
-		// 100627 перенес после InitDC, т.к. циклилось
+		// 100627 РїРµСЂРµРЅРµСЃ РїРѕСЃР»Рµ InitDC, С‚.Рє. С†РёРєР»РёР»РѕСЃСЊ
 		//if (lbSizeChanged)
 		//	gpConEmu->OnConsole Resize(TRUE);
-		//if (pSDC && !pSDC->isLocked())  // Если секция еще не заблокирована (отпускает - вызывающая функция)
-		//	pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
+		//if (pSDC && !pSDC->isLocked())  // Р•СЃР»Рё СЃРµРєС†РёСЏ РµС‰Рµ РЅРµ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅР° (РѕС‚РїСѓСЃРєР°РµС‚ - РІС‹Р·С‹РІР°СЋС‰Р°СЏ С„СѓРЅРєС†РёСЏ)
+		//	pSDC->Lock(&csDC, TRUE, 200); // РЅРѕ РїРѕ С‚Р°Р№РјР°СѓС‚Сѓ, С‡С‚РѕР±С‹ РЅРµ РїРѕРІРёСЃР»Рё РЅРµРЅР°СЂРѕРєРѕРј
 
 		if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/ , false/*abNoWndResize*/, pSDC, pSCON))
 		{
@@ -2550,7 +2550,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		}
 
 
-		isForce = true; // После сброса буферов и DC - необходим полный refresh...
+		isForce = true; // РџРѕСЃР»Рµ СЃР±СЂРѕСЃР° Р±СѓС„РµСЂРѕРІ Рё DC - РЅРµРѕР±С…РѕРґРёРј РїРѕР»РЅС‹Р№ refresh...
 
 
 		#ifdef _DEBUG
@@ -2560,18 +2560,18 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		}
 		#endif
 
-		//if (lbSizeChanged) -- попробуем вверх перенести
+		//if (lbSizeChanged) -- РїРѕРїСЂРѕР±СѓРµРј РІРІРµСЂС… РїРµСЂРµРЅРµСЃС‚Рё
 		//	gpConEmu->OnConsole Resize();
 	}
 
-	// Требуется полная перерисовка!
+	// РўСЂРµР±СѓРµС‚СЃСЏ РїРѕР»РЅР°СЏ РїРµСЂРµСЂРёСЃРѕРІРєР°!
 	if (mb_IsForceUpdate)
 	{
 		isForce = true;
 		mb_IsForceUpdate = false;
 	}
 
-	// Отладочный режим. Двойная буферизация отключена, отрисовка идет сразу на ahDc
+	// РћС‚Р»Р°РґРѕС‡РЅС‹Р№ СЂРµР¶РёРј. Р”РІРѕР№РЅР°СЏ Р±СѓС„РµСЂРёР·Р°С†РёСЏ РѕС‚РєР»СЋС‡РµРЅР°, РѕС‚СЂРёСЃРѕРІРєР° РёРґРµС‚ СЃСЂР°Р·Сѓ РЅР° ahDc
 	if (ahDc)
 		isForce = true;
 
@@ -2584,22 +2584,22 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	DWORD nIndexes = gpSet->nBgImageColors;
 	if (nIndexes == (DWORD)-1 && mp_RCon)
 	{
-		// Получить из фара
+		// РџРѕР»СѓС‡РёС‚СЊ РёР· С„Р°СЂР°
 		const CEFAR_INFO_MAPPING* pFar = mp_RCon->GetFarInfo();
 		if (pFar)
 		{
-			// Цвет фона панелей
+			// Р¦РІРµС‚ С„РѕРЅР° РїР°РЅРµР»РµР№
 			BYTE bgIndex = (pFar->nFarColors[col_PanelText] & 0xF0) >> 4;
 			nIndexes = 1 << (DWORD)bgIndex;
 		}
 	}
 	if (nIndexes == (DWORD)-1)
-		nIndexes = BgImageColorsDefaults; // Умолчания
+		nIndexes = BgImageColorsDefaults; // РЈРјРѕР»С‡Р°РЅРёСЏ
 	nBgImageColors = nIndexes;
 
 	if (drawImage)
 	{
-		// Она заодно проверит, не изменился ли файл?
+		// РћРЅР° Р·Р°РѕРґРЅРѕ РїСЂРѕРІРµСЂРёС‚, РЅРµ РёР·РјРµРЅРёР»СЃСЏ Р»Рё С„Р°Р№Р»?
 		if (mp_Bg->PrepareBackground(this, hBgDc, bgBmpSize))
 		{
 			isForce = true;
@@ -2610,18 +2610,18 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		}
 	}
 
-	// скопировать данные из состояния консоли В mpn_ConAttrEx/mpsz_ConChar
+	// СЃРєРѕРїРёСЂРѕРІР°С‚СЊ РґР°РЅРЅС‹Рµ РёР· СЃРѕСЃС‚РѕСЏРЅРёСЏ РєРѕРЅСЃРѕР»Рё Р’ mpn_ConAttrEx/mpsz_ConChar
 	BOOL bConDataChanged = isForce || mp_RCon->IsConsoleDataChanged();
 
 	if (bConDataChanged)
 	{
-		mb_ConDataChanged = true; // В false - НЕ сбрасывать
-		// Вынес в функцию, т.к. только так RealConsole может вызвать обновление детектора диалогов
+		mb_ConDataChanged = true; // Р’ false - РќР• СЃР±СЂР°СЃС‹РІР°С‚СЊ
+		// Р’С‹РЅРµСЃ РІ С„СѓРЅРєС†РёСЋ, С‚.Рє. С‚РѕР»СЊРєРѕ С‚Р°Рє RealConsole РјРѕР¶РµС‚ РІС‹Р·РІР°С‚СЊ РѕР±РЅРѕРІР»РµРЅРёРµ РґРµС‚РµРєС‚РѕСЂР° РґРёР°Р»РѕРіРѕРІ
 		LoadConsoleData();
 	}
 
 	HEAPVAL
-	// Определить координаты панелей (Переехало в CRealConsole)
+	// РћРїСЂРµРґРµР»РёС‚СЊ РєРѕРѕСЂРґРёРЅР°С‚С‹ РїР°РЅРµР»РµР№ (РџРµСЂРµРµС…Р°Р»Рѕ РІ CRealConsole)
 	// get cursor info
 	mp_RCon->GetConsoleCursorInfo(/*hConOut(),*/ &cinf);
 	HEAPVAL
@@ -2660,7 +2660,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 //    enum _PartType cType1, cType2;
 //    UINT i1=0, i2=0;
 //
-//    pEnd->partType = pNull; // сразу ограничим строку
+//    pEnd->partType = pNull; // СЃСЂР°Р·Сѓ РѕРіСЂР°РЅРёС‡РёРј СЃС‚СЂРѕРєСѓ
 //
 //    wchar_t ch1, ch2;
 //    BYTE af1, ab1, af2, ab2;
@@ -2679,16 +2679,16 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 //        pixels = CharWidth(ch1);
 //
 //        i2 = i1+1;
-//        // в режиме Force Monospace отрисовка идет по одному символу
+//        // РІ СЂРµР¶РёРјРµ Force Monospace РѕС‚СЂРёСЃРѕРІРєР° РёРґРµС‚ РїРѕ РѕРґРЅРѕРјСѓ СЃРёРјРІРѕР»Сѓ
 //        if (!gpSet->isForceMonospace && i2 < TextWidth &&
 //            (cType1 != pVBorder && cType1 != pRBracket))
 //        {
 //            //GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
 //			ch2 = ConCharLine[i2];
 //			GetCharAttr(ConAttrLine[i2], af2, ab2, NULL);
-//            // Получить блок символов с аналогичными цветами
+//            // РџРѕР»СѓС‡РёС‚СЊ Р±Р»РѕРє СЃРёРјРІРѕР»РѕРІ СЃ Р°РЅР°Р»РѕРіРёС‡РЅС‹РјРё С†РІРµС‚Р°РјРё
 //            while (i2 < TextWidth && af2 == af1 && ab2 == ab1) {
-//                // если символ отличается от первого
+//                // РµСЃР»Рё СЃРёРјРІРѕР» РѕС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ РїРµСЂРІРѕРіРѕ
 //
 //                cType2 = GetCharType(ch2);
 //                if ((ch2 = ConCharLine[i2]) != ch1) {
@@ -2698,12 +2698,12 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 //                            cType2 = pText;
 //                    }
 //
-//                    // и он вообще из другой группы
+//                    // Рё РѕРЅ РІРѕРѕР±С‰Рµ РёР· РґСЂСѓРіРѕР№ РіСЂСѓРїРїС‹
 //                    if (cType2 != cType1)
-//                        break; // то завершаем поиск
+//                        break; // С‚Рѕ Р·Р°РІРµСЂС€Р°РµРј РїРѕРёСЃРє
 //                }
-//                pixels += CharWidth(ch2); // добавить ширину символа в пикселях
-//                i2++; // следующий символ
+//                pixels += CharWidth(ch2); // РґРѕР±Р°РІРёС‚СЊ С€РёСЂРёРЅСѓ СЃРёРјРІРѕР»Р° РІ РїРёРєСЃРµР»СЏС…
+//                i2++; // СЃР»РµРґСѓСЋС‰РёР№ СЃРёРјРІРѕР»
 //                //GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
 //				ch2 = ConCharLine[i2];
 //				GetCharAttr(ConAttrLine[i2], af2, ab2, NULL);
@@ -2715,7 +2715,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 //            }
 //        }
 //
-//        // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
+//        // РїСЂРё СЂР°Р·Р±РѕСЂРµ СЃС‚СЂРѕРєРё Р±СѓРґРµРј СЃРјРѕС‚СЂРµС‚СЊ, РµСЃР»Рё РЅР°С€Р»Рё pText,pSpace,pText С‚Рѕ pSpace,pText РґРѕР±Р°РІРёС‚СЊ РІ РїРµСЂРІС‹Р№ pText
 //        if (cType1 == pText && (pEnd - pStart) >= 2) {
 //            if (pEnd[-1].partType == pSpace && pEnd[-2].partType == pText &&
 //                pEnd[-1].attrBack == ab1 && pEnd[-1].attrFore == af1 &&
@@ -2731,7 +2731,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 //                continue;
 //            }
 //        }
-//        pEnd->i1 = i1; pEnd->i2 = i2 - 1; // конец "включая"
+//        pEnd->i1 = i1; pEnd->i2 = i2 - 1; // РєРѕРЅРµС† "РІРєР»СЋС‡Р°СЏ"
 //        pEnd->partType = cType1;
 //        pEnd->attrBack = ab1; pEnd->attrFore = af1;
 //        pEnd->iwidth = i2 - i1;
@@ -2744,17 +2744,17 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 //            pEnd->x1 = -1;
 //        }
 //
-//        pEnd ++; // блоков не может быть больше количества символов в строке, так что с размерностью все ОК
+//        pEnd ++; // Р±Р»РѕРєРѕРІ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ РєРѕР»РёС‡РµСЃС‚РІР° СЃРёРјРІРѕР»РѕРІ РІ СЃС‚СЂРѕРєРµ, С‚Р°Рє С‡С‚Рѕ СЃ СЂР°Р·РјРµСЂРЅРѕСЃС‚СЊСЋ РІСЃРµ РћРљ
 //        i1 = i2;
 //    }
-//    // пока поставим конец блоков, потом, если ширины не хватит - добавим pDummy
+//    // РїРѕРєР° РїРѕСЃС‚Р°РІРёРј РєРѕРЅРµС† Р±Р»РѕРєРѕРІ, РїРѕС‚РѕРј, РµСЃР»Рё С€РёСЂРёРЅС‹ РЅРµ С…РІР°С‚РёС‚ - РґРѕР±Р°РІРёРј pDummy
 //    pEnd->partType = pNull;
 //}
 
 void CVirtualConsole::Update_CheckAndFill()
 {
 #if 0
-	WARNING("Пока не используется!");
+	WARNING("РџРѕРєР° РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ!");
 	// pointers
 	wchar_t* ConCharLine = mpsz_ConChar;
 	CharAttr* ConAttrLine = mpn_ConAttrEx;
@@ -2769,7 +2769,7 @@ void CVirtualConsole::Update_CheckAndFill()
 	bool bRowChanged;
 
 	// rows
-	//BUGBUG: хорошо бы отрисовывать последнюю строку, даже если она чуть не влазит
+	//BUGBUG: С…РѕСЂРѕС€Рѕ Р±С‹ РѕС‚СЂРёСЃРѕРІС‹РІР°С‚СЊ РїРѕСЃР»РµРґРЅСЋСЋ СЃС‚СЂРѕРєСѓ, РґР°Р¶Рµ РµСЃР»Рё РѕРЅР° С‡СѓС‚СЊ РЅРµ РІР»Р°Р·РёС‚
 	for(; pos <= nMaxPos;
 	        ConCharLine += TextWidth, ConAttrLine += TextWidth,
 	        ConCharLine2 += TextWidth, ConAttrLine2 += TextWidth,
@@ -2787,9 +2787,9 @@ void CVirtualConsole::Update_CheckAndFill()
 		              || (memcmp(ConAttrLine, ConAttrLine2, TextWidth*sizeof(*ConAttrLine)) != 0);
 		//// skip not changed symbols except the old cursor or selection
 		//int j = 0, end = TextWidth;
-		//// В режиме пропорциональных шрифтов или isForce==true - отрисовываем линию ЦЕЛИКОМ
-		//// Для пропорциональных это обусловлено тем, что при перерисовке измененная часть
-		//// может оказаться КОРОЧЕ предыдущего значения, в результате появятся артефакты
+		//// Р’ СЂРµР¶РёРјРµ РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅС‹С… С€СЂРёС„С‚РѕРІ РёР»Рё isForce==true - РѕС‚СЂРёСЃРѕРІС‹РІР°РµРј Р»РёРЅРёСЋ Р¦Р•Р›РРљРћРњ
+		//// Р”Р»СЏ РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅС‹С… СЌС‚Рѕ РѕР±СѓСЃР»РѕРІР»РµРЅРѕ С‚РµРј, С‡С‚Рѕ РїСЂРё РїРµСЂРµСЂРёСЃРѕРІРєРµ РёР·РјРµРЅРµРЅРЅР°СЏ С‡Р°СЃС‚СЊ
+		//// РјРѕР¶РµС‚ РѕРєР°Р·Р°С‚СЊСЃСЏ РљРћР РћР§Р• РїСЂРµРґС‹РґСѓС‰РµРіРѕ Р·РЅР°С‡РµРЅРёСЏ, РІ СЂРµР·СѓР»СЊС‚Р°С‚Рµ РїРѕСЏРІСЏС‚СЃСЏ Р°СЂС‚РµС„Р°РєС‚С‹
 		//if (skipNotChanged)
 		//{
 		//    // Skip not changed head and tail symbols
@@ -2810,7 +2810,7 @@ void CVirtualConsole::Update_CheckAndFill()
 				*pbBackIsPic = false;
 				COLORREF cr = ConAttrLine->crBackColor;
 				*pnBackRGB = cr;
-				// Именно пробельный, чтобы не заморачиваться с хвостовыми пробелами отрезков
+				// РРјРµРЅРЅРѕ РїСЂРѕР±РµР»СЊРЅС‹Р№, С‡С‚РѕР±С‹ РЅРµ Р·Р°РјРѕСЂР°С‡РёРІР°С‚СЊСЃСЏ СЃ С…РІРѕСЃС‚РѕРІС‹РјРё РїСЂРѕР±РµР»Р°РјРё РѕС‚СЂРµР·РєРѕРІ
 				HBRUSH hbr = PartBrush(L' ', cr, 0);
 				RECT rect = MakeRect(0, pos, Width, pos + nFontHeight);
 				FillRect((HDC)m_DC, &rect, hbr);
@@ -2820,8 +2820,8 @@ void CVirtualConsole::Update_CheckAndFill()
 #endif
 }
 
-// Разбор строки на составляющие (возвращает true, если есть ячейки с НЕ основным фоном)
-// Функция также производит распределение (заполнение координат и DX)
+// Р Р°Р·Р±РѕСЂ СЃС‚СЂРѕРєРё РЅР° СЃРѕСЃС‚Р°РІР»СЏСЋС‰РёРµ (РІРѕР·РІСЂР°С‰Р°РµС‚ true, РµСЃР»Рё РµСЃС‚СЊ СЏС‡РµР№РєРё СЃ РќР• РѕСЃРЅРѕРІРЅС‹Рј С„РѕРЅРѕРј)
+// Р¤СѓРЅРєС†РёСЏ С‚Р°РєР¶Рµ РїСЂРѕРёР·РІРѕРґРёС‚ СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ (Р·Р°РїРѕР»РЅРµРЅРёРµ РєРѕРѕСЂРґРёРЅР°С‚ Рё DX)
 bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine, const CharAttr* ConAttrLine)
 {
 #if 1
@@ -2836,7 +2836,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 	wchar_t c = 0;
 	bool isUnicode = false, isProgress = false, isSpace = false, isUnicodeOrProgress = false;
 	uint nPrevForeFont = 0, nForeFont;
-	// Сначала - разбор фона
+	// РЎРЅР°С‡Р°Р»Р° - СЂР°Р·Р±РѕСЂ С„РѕРЅР°
 	BGPARTS *pBG = BgParts;
 	uint nColorIdx = 0;
 	uint nPrevColorIdx = ConAttrLine[0].nBackIdx;
@@ -2864,8 +2864,8 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 		j0 = j;
 	}
 
-	// *** Теперь - Foreground (text) ***
-	// чтобы лишний раз не проверять - ветвимся
+	// *** РўРµРїРµСЂСЊ - Foreground (text) ***
+	// С‡С‚РѕР±С‹ Р»РёС€РЅРёР№ СЂР°Р· РЅРµ РїСЂРѕРІРµСЂСЏС‚СЊ - РІРµС‚РІРёРјСЃСЏ
 	j = 0;
 	nPrevForeFont = ConAttrLine[0].ForeFont;
 
@@ -2875,7 +2875,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 		const CharAttr* attr = ConAttrLine+j;
 		nForeFont = attr->ForeFont;
 		c = ConCharLine[j];
-		TODO("Учесть gpSet->isFixFarBorders && gpSet->isEnhanceGraphics");
+		TODO("РЈС‡РµСЃС‚СЊ gpSet->isFixFarBorders && gpSet->isEnhanceGraphics");
 		isUnicode = isCharBorder(c);
 		bool isProgress = false, isSpace = false, isUnicodeOrProgress = false;
 
@@ -2887,14 +2887,14 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 		if (!isUnicodeOrProgress)
 			isSpace = isCharSpace(c);
 
-		TODO("Учет 'вертикалей'");
+		TODO("РЈС‡РµС‚ 'РІРµСЂС‚РёРєР°Р»РµР№'");
 
 		if (isProgress)
 		{
 			while (++j < (int)TextWidth)
 			{
 				if (ConCharLine[j] != c || attr->All != ConAttrLine[j].All)
-					break; // до первой смены символа или цвета фона-текста
+					break; // РґРѕ РїРµСЂРІРѕР№ СЃРјРµРЅС‹ СЃРёРјРІРѕР»Р° РёР»Рё С†РІРµС‚Р° С„РѕРЅР°-С‚РµРєСЃС‚Р°
 			}
 		}
 		else if (isSpace)
@@ -2902,7 +2902,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 			while (++j < (int)TextWidth)
 			{
 				if (!isCharSpace(ConCharLine[j]))
-					break; // до первого непробельного символа
+					break; // РґРѕ РїРµСЂРІРѕРіРѕ РЅРµРїСЂРѕР±РµР»СЊРЅРѕРіРѕ СЃРёРјРІРѕР»Р°
 			}
 		}
 		else if (isUnicode)
@@ -2912,19 +2912,19 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 			while (++j < (int)TextWidth)
 			{
 				if (!isCharBorder(ConCharLine[j]) || crFore != ConAttrLine[j].crForeColor)
-					break; // до первого нерамочного символа или смены цвета текста
+					break; // РґРѕ РїРµСЂРІРѕРіРѕ РЅРµСЂР°РјРѕС‡РЅРѕРіРѕ СЃРёРјРІРѕР»Р° РёР»Рё СЃРјРµРЅС‹ С†РІРµС‚Р° С‚РµРєСЃС‚Р°
 			}
 		}
 		else
 		{
-			TODO("доделать ветку");
+			TODO("РґРѕРґРµР»Р°С‚СЊ РІРµС‚РєСѓ");
 			while (++j < (int)TextWidth)
 			{
 				attr = ConAttrLine+j;
 				nForeFont = attr->ForeFont;
 				c = ConCharLine[j];
 
-				// Если смена цвета фона или шрифта
+				// Р•СЃР»Рё СЃРјРµРЅР° С†РІРµС‚Р° С„РѕРЅР° РёР»Рё С€СЂРёС„С‚Р°
 				if (nForeFont != nPrevForeFont)
 					break;
 
@@ -2943,19 +2943,19 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 			}
 		}
 
-		TODO("создать блок j0..j");
+		TODO("СЃРѕР·РґР°С‚СЊ Р±Р»РѕРє j0..j");
 	}
 
 	return bHasAlternateBg;
 #endif
 }
 
-// Заливка ячеек с НЕ основным фоном, отрисовка прогрессов и рамок
+// Р—Р°Р»РёРІРєР° СЏС‡РµРµРє СЃ РќР• РѕСЃРЅРѕРІРЅС‹Рј С„РѕРЅРѕРј, РѕС‚СЂРёСЃРѕРІРєР° РїСЂРѕРіСЂРµСЃСЃРѕРІ Рё СЂР°РјРѕРє
 void CVirtualConsole::Update_FillAlternate(uint row, uint nY)
 {
 }
 
-// Вывод собственно текста (при необходимости Clipped)
+// Р’С‹РІРѕРґ СЃРѕР±СЃС‚РІРµРЅРЅРѕ С‚РµРєСЃС‚Р° (РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё Clipped)
 void CVirtualConsole::Update_DrawText(uint row, uint nY)
 {
 }
@@ -2972,15 +2972,15 @@ void CVirtualConsole::UpdateText()
 		//_ASSERTE(!mp_RCon->IsConsoleThread());
 	}
 
-	//// Данные уже должны быть заполнены, и там не должно быть лажы
+	//// Р”Р°РЅРЅС‹Рµ СѓР¶Рµ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ Р·Р°РїРѕР»РЅРµРЅС‹, Рё С‚Р°Рј РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ Р»Р°Р¶С‹
 	//BOOL lbDataValid = TRUE; uint n = 0;
 	//while (n<TextLen) {
 	//    if (mpsz_ConChar[n] == 0) {
 	//        lbDataValid = FALSE; //break;
-	//        mpsz_ConChar[n] = L'¤';
+	//        mpsz_ConChar[n] = L'В¤';
 	//        mpn_ConAttr[n] = 12;
 	//    } else if (mpsz_ConChar[n] != L' ') {
-	//        // 0 - может быть только для пробела. Иначе символ будет скрытым, чего по идее, быть не должно
+	//        // 0 - РјРѕР¶РµС‚ Р±С‹С‚СЊ С‚РѕР»СЊРєРѕ РґР»СЏ РїСЂРѕР±РµР»Р°. РРЅР°С‡Рµ СЃРёРјРІРѕР» Р±СѓРґРµС‚ СЃРєСЂС‹С‚С‹Рј, С‡РµРіРѕ РїРѕ РёРґРµРµ, Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ
 	//        if (mpn_ConAttr[n] == 0) {
 	//            lbDataValid = FALSE; //break;
 	//            mpn_ConAttr[n] = 12;
@@ -3061,7 +3061,7 @@ void CVirtualConsole::UpdateText()
 	}
 #endif
 
-	//BUGBUG: хорошо бы отрисовывать последнюю строку, даже если она чуть не влазит
+	//BUGBUG: С…РѕСЂРѕС€Рѕ Р±С‹ РѕС‚СЂРёСЃРѕРІС‹РІР°С‚СЊ РїРѕСЃР»РµРґРЅСЋСЋ СЃС‚СЂРѕРєСѓ, РґР°Р¶Рµ РµСЃР»Рё РѕРЅР° С‡СѓС‚СЊ РЅРµ РІР»Р°Р·РёС‚
 	for (; pos <= nMaxPos;
 	       ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
 	       pos += nFontHeight, row++)
@@ -3072,8 +3072,8 @@ void CVirtualConsole::UpdateText()
 			DEBUGSTRFAIL(L"############ _ASSERTE(row < (int)TextHeight) #############\n");
 			break;
 		}
-		//2009-09-25. Некоторые (старые?) программы умудряются засунуть в консоль символы (ASC<32)
-		//            их нужно заменить на юникодные аналоги
+		//2009-09-25. РќРµРєРѕС‚РѕСЂС‹Рµ (СЃС‚Р°СЂС‹Рµ?) РїСЂРѕРіСЂР°РјРјС‹ СѓРјСѓРґСЂСЏСЋС‚СЃСЏ Р·Р°СЃСѓРЅСѓС‚СЊ РІ РєРѕРЅСЃРѕР»СЊ СЃРёРјРІРѕР»С‹ (ASC<32)
+		//            РёС… РЅСѓР¶РЅРѕ Р·Р°РјРµРЅРёС‚СЊ РЅР° СЋРЅРёРєРѕРґРЅС‹Рµ Р°РЅР°Р»РѕРіРё
 		//{
 		//	wchar_t* pszEnd = ConCharLine + TextWidth;
 		//	for (wchar_t* pch = ConCharLine; pch < pszEnd; pch++) {
@@ -3086,9 +3086,9 @@ void CVirtualConsole::UpdateText()
 		// skip not changed symbols except the old cursor or selection
 		int j = 0, end = TextWidth;
 
-		// В режиме пропорциональных шрифтов или isForce==true - отрисовываем линию ЦЕЛИКОМ
-		// Для пропорциональных это обусловлено тем, что при перерисовке измененная часть
-		// может оказаться КОРОЧЕ предыдущего значения, в результате появятся артефакты
+		// Р’ СЂРµР¶РёРјРµ РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅС‹С… С€СЂРёС„С‚РѕРІ РёР»Рё isForce==true - РѕС‚СЂРёСЃРѕРІС‹РІР°РµРј Р»РёРЅРёСЋ Р¦Р•Р›РРљРћРњ
+		// Р”Р»СЏ РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅС‹С… СЌС‚Рѕ РѕР±СѓСЃР»РѕРІР»РµРЅРѕ С‚РµРј, С‡С‚Рѕ РїСЂРё РїРµСЂРµСЂРёСЃРѕРІРєРµ РёР·РјРµРЅРµРЅРЅР°СЏ С‡Р°СЃС‚СЊ
+		// РјРѕР¶РµС‚ РѕРєР°Р·Р°С‚СЊСЃСЏ РљРћР РћР§Р• РїСЂРµРґС‹РґСѓС‰РµРіРѕ Р·РЅР°С‡РµРЅРёСЏ, РІ СЂРµР·СѓР»СЊС‚Р°С‚Рµ РїРѕСЏРІСЏС‚СЃСЏ Р°СЂС‚РµС„Р°РєС‚С‹
 		if (skipNotChanged)
 		{
 			// Skip not changed head and tail symbols
@@ -3117,7 +3117,7 @@ void CVirtualConsole::UpdateText()
 				NextDialogX = CurDialogX2 = TextWidth;
 				CurDialogI = -1; CurDialogFlags = 0;
 				int nMax = TextWidth-1;
-				// Идем "снизу вверх", чтобы верхние (по Z-order) диалоги обработались первыми
+				// РРґРµРј "СЃРЅРёР·Сѓ РІРІРµСЂС…", С‡С‚РѕР±С‹ РІРµСЂС…РЅРёРµ (РїРѕ Z-order) РґРёР°Р»РѕРіРё РѕР±СЂР°Р±РѕС‚Р°Р»РёСЃСЊ РїРµСЂРІС‹РјРё
 				for (int i = mn_DialogsCount-1; i >= 0; i--)
 				{
 					if (mrc_Dialogs[i].Top <= row && row <= mrc_Dialogs[i].Bottom)
@@ -3125,14 +3125,14 @@ void CVirtualConsole::UpdateText()
 						int border1 = mrc_Dialogs[i].Left;
 						int border2 = mrc_Dialogs[i].Right;
 
-						// Ищем грань диалога, лежащую на этой строке, ближайший к текущей X-координате.
+						// РС‰РµРј РіСЂР°РЅСЊ РґРёР°Р»РѕРіР°, Р»РµР¶Р°С‰СѓСЋ РЅР° СЌС‚РѕР№ СЃС‚СЂРѕРєРµ, Р±Р»РёР¶Р°Р№С€РёР№ Рє С‚РµРєСѓС‰РµР№ X-РєРѕРѕСЂРґРёРЅР°С‚Рµ.
 						if (border1 && j <= border1 && border1 < NextDialogX)
 							NextDialogX = border1;
 						else if (border2 < nMax && j <= border2 && border2 < NextDialogX)
 							NextDialogX = border2;
 
-						// Ищем диалог (не панели), лежащий на этой строке, содержащий текущую X-координату.
-						TODO("Разделители колонок тоже хорошо бы обработать, но как бы не пересечься");
+						// РС‰РµРј РґРёР°Р»РѕРі (РЅРµ РїР°РЅРµР»Рё), Р»РµР¶Р°С‰РёР№ РЅР° СЌС‚РѕР№ СЃС‚СЂРѕРєРµ, СЃРѕРґРµСЂР¶Р°С‰РёР№ С‚РµРєСѓС‰СѓСЋ X-РєРѕРѕСЂРґРёРЅР°С‚Сѓ.
+						TODO("Р Р°Р·РґРµР»РёС‚РµР»Рё РєРѕР»РѕРЅРѕРє С‚РѕР¶Рµ С…РѕСЂРѕС€Рѕ Р±С‹ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ, РЅРѕ РєР°Рє Р±С‹ РЅРµ РїРµСЂРµСЃРµС‡СЊСЃСЏ");
 						if (!(mn_DialogFlags[i] & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL|FR_VIEWEREDITOR)))
 						{
 							if ((border1 <= j && j <= border2)
@@ -3149,8 +3149,8 @@ void CVirtualConsole::UpdateText()
 				}
 			}
 
-			TODO("OPTIMIZE: вынести переменные из цикла");
-			TODO("OPTIMIZE: если символ/атрибут совпадает с предыдущим (j>0 !) то не звать повторно CharWidth, isChar..., isUnicode, ...");
+			TODO("OPTIMIZE: РІС‹РЅРµСЃС‚Рё РїРµСЂРµРјРµРЅРЅС‹Рµ РёР· С†РёРєР»Р°");
+			TODO("OPTIMIZE: РµСЃР»Рё СЃРёРјРІРѕР»/Р°С‚СЂРёР±СѓС‚ СЃРѕРІРїР°РґР°РµС‚ СЃ РїСЂРµРґС‹РґСѓС‰РёРј (j>0 !) С‚Рѕ РЅРµ Р·РІР°С‚СЊ РїРѕРІС‚РѕСЂРЅРѕ CharWidth, isChar..., isUnicode, ...");
 			const CharAttr attr = ConAttrLine[j];
 			wchar_t c = ConCharLine[j];
 			//BYTE attrForeIdx, attrBackIdx;
@@ -3159,12 +3159,12 @@ void CVirtualConsole::UpdateText()
 			if (j == NextDialogX)
 			{
 				NextDialog = true;
-				// Проверяем что это, видимая грань, или поверх координаты другой диалог лежит?
+				// РџСЂРѕРІРµСЂСЏРµРј С‡С‚Рѕ СЌС‚Рѕ, РІРёРґРёРјР°СЏ РіСЂР°РЅСЊ, РёР»Рё РїРѕРІРµСЂС… РєРѕРѕСЂРґРёРЅР°С‚С‹ РґСЂСѓРіРѕР№ РґРёР°Р»РѕРі Р»РµР¶РёС‚?
 				if (CurDialogFlags)
 				{
-					// Координата попала в поле диалога. same as below (1)
+					// РљРѕРѕСЂРґРёРЅР°С‚Р° РїРѕРїР°Р»Р° РІ РїРѕР»Рµ РґРёР°Р»РѕРіР°. same as below (1)
 					isUnicode = (gpSet->isFixFarBorders && isCharBorder(c/*ConCharLine[j]*/));
-					isDlgBorder = (j == CurDialogX1 || j == CurDialogX2); // чтобы правая грань пошла как рамка;
+					isDlgBorder = (j == CurDialogX1 || j == CurDialogX2); // С‡С‚РѕР±С‹ РїСЂР°РІР°СЏ РіСЂР°РЅСЊ РїРѕС€Р»Р° РєР°Рє СЂР°РјРєР°;
 				}
 				else
 				{
@@ -3196,11 +3196,11 @@ void CVirtualConsole::UpdateText()
 				isSpace = isCharSpace(c);
 			}
 
-			TODO("При позиционировании (наверное в DistrubuteSpaces) пытаться ориентироваться по координатам предыдущей строки");
-			// Иначе окантовка диалогов съезжает на пропорциональных шрифтах
+			TODO("РџСЂРё РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°РЅРёРё (РЅР°РІРµСЂРЅРѕРµ РІ DistrubuteSpaces) РїС‹С‚Р°С‚СЊСЃСЏ РѕСЂРёРµРЅС‚РёСЂРѕРІР°С‚СЊСЃСЏ РїРѕ РєРѕРѕСЂРґРёРЅР°С‚Р°Рј РїСЂРµРґС‹РґСѓС‰РµР№ СЃС‚СЂРѕРєРё");
+			// РРЅР°С‡Рµ РѕРєР°РЅС‚РѕРІРєР° РґРёР°Р»РѕРіРѕРІ СЃСЉРµР·Р¶Р°РµС‚ РЅР° РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅС‹С… С€СЂРёС„С‚Р°С…
 			HEAPVAL
 
-			// корректировка лидирующих пробелов и рамок
+			// РєРѕСЂСЂРµРєС‚РёСЂРѕРІРєР° Р»РёРґРёСЂСѓСЋС‰РёС… РїСЂРѕР±РµР»РѕРІ Рё СЂР°РјРѕРє
 			// 120616 - Chinese - off
 			if (bProportional && bFixFrameCoord && (c==ucBoxDblHorz || c==ucBoxSinglHorz))
 			{
@@ -3209,12 +3209,12 @@ void CVirtualConsole::UpdateText()
 				while ((nS12 < end) && (ConCharLine[nS12+1] == c))
 					nS12 ++;
 
-				// Посчитать сколько этих же символов ПОСЛЕ текста
+				// РџРѕСЃС‡РёС‚Р°С‚СЊ СЃРєРѕР»СЊРєРѕ СЌС‚РёС… Р¶Рµ СЃРёРјРІРѕР»РѕРІ РџРћРЎР›Р• С‚РµРєСЃС‚Р°
 				if (nS12<end)
 				{
-					nS21 = nS12+1; // Это должен быть НЕ c
+					nS21 = nS12+1; // Р­С‚Рѕ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РќР• c
 
-					// ищем первый "рамочный" символ
+					// РёС‰РµРј РїРµСЂРІС‹Р№ "СЂР°РјРѕС‡РЅС‹Р№" СЃРёРјРІРѕР»
 					while ((nS21<end) && (ConCharLine[nS21] != c) && !isCharBorder(ConCharLine[nS21]))
 						nS21 ++;
 
@@ -3228,7 +3228,7 @@ void CVirtualConsole::UpdateText()
 				}
 			} HEAPVAL
 
-			// а вот для пробелов - когда их более одного
+			// Р° РІРѕС‚ РґР»СЏ РїСЂРѕР±РµР»РѕРІ - РєРѕРіРґР° РёС… Р±РѕР»РµРµ РѕРґРЅРѕРіРѕ
 			/*else if (c==L' ' && j<end && ConCharLine[j+1]==L' ')
 			{
 			    lbS1 = true; nS11 = nS12 = j;
@@ -3238,28 +3238,28 @@ void CVirtualConsole::UpdateText()
 			//(HDC)m_DC.SetTextColor(pColors[attrFore]);
 			m_DC.SetTextColor(attr.crForeColor);
 
-			// корректировка положения вертикальной рамки (Coord.X>0)
+			// РєРѕСЂСЂРµРєС‚РёСЂРѕРІРєР° РїРѕР»РѕР¶РµРЅРёСЏ РІРµСЂС‚РёРєР°Р»СЊРЅРѕР№ СЂР°РјРєРё (Coord.X>0)
 			if (bProportional && j && bFixFrameCoord)
 			{
 				HEAPVAL;
 				DWORD nPrevX = ConCharXLine[j-1];
-				// Рамки (их вертикальные части) и полосы прокрутки;
-				// Символом } фар помечает имена файлов вылезшие за пределы колонки...
-				// Если сверху или снизу на той же позиции рамки (или тот же '}')
-				// корректируем позицию
+				// Р Р°РјРєРё (РёС… РІРµСЂС‚РёРєР°Р»СЊРЅС‹Рµ С‡Р°СЃС‚Рё) Рё РїРѕР»РѕСЃС‹ РїСЂРѕРєСЂСѓС‚РєРё;
+				// РЎРёРјРІРѕР»РѕРј } С„Р°СЂ РїРѕРјРµС‡Р°РµС‚ РёРјРµРЅР° С„Р°Р№Р»РѕРІ РІС‹Р»РµР·С€РёРµ Р·Р° РїСЂРµРґРµР»С‹ РєРѕР»РѕРЅРєРё...
+				// Р•СЃР»Рё СЃРІРµСЂС…Сѓ РёР»Рё СЃРЅРёР·Сѓ РЅР° С‚РѕР№ Р¶Рµ РїРѕР·РёС†РёРё СЂР°РјРєРё (РёР»Рё С‚РѕС‚ Р¶Рµ '}')
+				// РєРѕСЂСЂРµРєС‚РёСЂСѓРµРј РїРѕР·РёС†РёСЋ
 				//bool bBord = isDlgBorder || isCharBorderVertical(c);
-				//TODO("Пока не будет учтено, что поверх рамок может быть другой диалог!");
+				//TODO("РџРѕРєР° РЅРµ Р±СѓРґРµС‚ СѓС‡С‚РµРЅРѕ, С‡С‚Рѕ РїРѕРІРµСЂС… СЂР°РјРѕРє РјРѕР¶РµС‚ Р±С‹С‚СЊ РґСЂСѓРіРѕР№ РґРёР°Р»РѕРі!");
 				//bool bFrame = false; // mpn_ConAttrEx[row*TextWidth+j].bDialogVBorder;
 
 				if (isDlgBorder || isCharBorderVertical(c) || isCharScroll(c) || (isFilePanel && c==L'}'))
 				{
-					//2009-04-21 было (j-1) * nFontWidth;
+					//2009-04-21 Р±С‹Р»Рѕ (j-1) * nFontWidth;
 					//ConCharXLine[j-1] = j * nFontWidth;
 					bool bMayBeFrame = true;
 
-					// Пройти вверх и вниз от текущей строки, проверив,
-					// есть ли в этой же X-координате вертикальная рамка (или угол)
-					TODO("Хорошо бы для панелей определять границы колонок более корректно, лучше всего - через API?");
+					// РџСЂРѕР№С‚Рё РІРІРµСЂС… Рё РІРЅРёР· РѕС‚ С‚РµРєСѓС‰РµР№ СЃС‚СЂРѕРєРё, РїСЂРѕРІРµСЂРёРІ,
+					// РµСЃС‚СЊ Р»Рё РІ СЌС‚РѕР№ Р¶Рµ X-РєРѕРѕСЂРґРёРЅР°С‚Рµ РІРµСЂС‚РёРєР°Р»СЊРЅР°СЏ СЂР°РјРєР° (РёР»Рё СѓРіРѕР»)
+					TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РґР»СЏ РїР°РЅРµР»РµР№ РѕРїСЂРµРґРµР»СЏС‚СЊ РіСЂР°РЅРёС†С‹ РєРѕР»РѕРЅРѕРє Р±РѕР»РµРµ РєРѕСЂСЂРµРєС‚РЅРѕ, Р»СѓС‡С€Рµ РІСЃРµРіРѕ - С‡РµСЂРµР· API?");
 					//if (!bBord && !bFrame)
 					if (!isDlgBorder)
 					{
@@ -3282,7 +3282,7 @@ void CVirtualConsole::UpdateText()
 						}
 					}
 
-					// Это разделитель колонок панели, полоса прокрутки или явно найденная граница диалога
+					// Р­С‚Рѕ СЂР°Р·РґРµР»РёС‚РµР»СЊ РєРѕР»РѕРЅРѕРє РїР°РЅРµР»Рё, РїРѕР»РѕСЃР° РїСЂРѕРєСЂСѓС‚РєРё РёР»Рё СЏРІРЅРѕ РЅР°Р№РґРµРЅРЅР°СЏ РіСЂР°РЅРёС†Р° РґРёР°Р»РѕРіР°
 					if (bMayBeFrame)
 						ConCharXLine[j-1] = j * nFontWidth;
 				}
@@ -3290,7 +3290,7 @@ void CVirtualConsole::UpdateText()
 				//else if (isFilePanel && c==L'}') {
 				//    if ((row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+j]))
 				//        && (((UINT)row)<=(TextHeight-4)))
-				//        //2009-04-21 было (j-1) * nFontWidth;
+				//        //2009-04-21 Р±С‹Р»Рѕ (j-1) * nFontWidth;
 				//        ConCharXLine[j-1] = j * nFontWidth;
 				//    //row = TextHeight - 1;
 				//}
@@ -3298,7 +3298,7 @@ void CVirtualConsole::UpdateText()
 
 				if (nPrevX < ConCharXLine[j-1])
 				{
-					// Требуется зарисовать пропущенную область. пробелами что-ли?
+					// РўСЂРµР±СѓРµС‚СЃСЏ Р·Р°СЂРёСЃРѕРІР°С‚СЊ РїСЂРѕРїСѓС‰РµРЅРЅСѓСЋ РѕР±Р»Р°СЃС‚СЊ. РїСЂРѕР±РµР»Р°РјРё С‡С‚Рѕ-Р»Рё?
 					RECT rect;
 					rect.left = nPrevX;
 					rect.top = pos;
@@ -3309,7 +3309,7 @@ void CVirtualConsole::UpdateText()
 
 					const CharAttr PrevAttr = ConAttrLine[j-1];
 
-					// Если не отрисовка фона картинкой
+					// Р•СЃР»Рё РЅРµ РѕС‚СЂРёСЃРѕРІРєР° С„РѕРЅР° РєР°СЂС‚РёРЅРєРѕР№
 					if (!(drawImage && ISBGIMGCOLOR(attr.nBackIdx)))
 					{
 						//BYTE PrevAttrFore = attrFore, PrevAttrBack = attrBack;
@@ -3320,8 +3320,8 @@ void CVirtualConsole::UpdateText()
 						//if (GetCharAttr(PrevC, PrevAttr, PrevC, PrevAttrFore, PrevAttrBack))
 						//	isUnicode = true;
 
-						// Если текущий символ - вертикальная рамка, а предыдущий символ - рамка
-						// нужно продлить рамку до текущего символа
+						// Р•СЃР»Рё С‚РµРєСѓС‰РёР№ СЃРёРјРІРѕР» - РІРµСЂС‚РёРєР°Р»СЊРЅР°СЏ СЂР°РјРєР°, Р° РїСЂРµРґС‹РґСѓС‰РёР№ СЃРёРјРІРѕР» - СЂР°РјРєР°
+						// РЅСѓР¶РЅРѕ РїСЂРѕРґР»РёС‚СЊ СЂР°РјРєСѓ РґРѕ С‚РµРєСѓС‰РµРіРѕ СЃРёРјРІРѕР»Р°
 						if (isCharBorderVertical(c) && isCharBorder(PrevC))
 						{
 							//m_DC.SetBkColor(pColors[attrBack]);
@@ -3353,7 +3353,7 @@ void CVirtualConsole::UpdateText()
 
 							m_DC.SetTextColor(PrevAttr.crForeColor);
 							m_DC.ExtTextOut(rect.left, rect.top, nFlags, &rect, pchBorder, nCnt, 0);
-							m_DC.SetTextColor(attr.crForeColor); // Вернуть
+							m_DC.SetTextColor(attr.crForeColor); // Р’РµСЂРЅСѓС‚СЊ
 						}
 						else
 						{
@@ -3363,7 +3363,7 @@ void CVirtualConsole::UpdateText()
 					}
 					else if (drawImage)
 					{
-						// Заливка пропущенной области
+						// Р—Р°Р»РёРІРєР° РїСЂРѕРїСѓС‰РµРЅРЅРѕР№ РѕР±Р»Р°СЃС‚Рё
 						RECT rcFill = {rect.left, rect.top, rect.right, rect.bottom};
 						PaintBackgroundImage(rcFill, PrevAttr.crBackColor);
 					} HEAPVAL
@@ -3399,12 +3399,12 @@ void CVirtualConsole::UpdateText()
 				if (!isSpace && !isUnicodeOrProgress)
 				{
 					ABC abc;
-					//Для НЕ TrueType вызывается wrapper (CharWidth)
+					//Р”Р»СЏ РќР• TrueType РІС‹Р·С‹РІР°РµС‚СЃСЏ wrapper (CharWidth)
 					CharABC(c, &abc);
 
 					if (abc.abcA<0)
 					{
-						// иначе символ наверное налезет на предыдущий?
+						// РёРЅР°С‡Рµ СЃРёРјРІРѕР» РЅР°РІРµСЂРЅРѕРµ РЅР°Р»РµР·РµС‚ РЅР° РїСЂРµРґС‹РґСѓС‰РёР№?
 						nShift = -abc.abcA;
 					}
 					else if (abc.abcB < (UINT)nFontWidth)
@@ -3413,7 +3413,7 @@ void CVirtualConsole::UpdateText()
 
 						if (abc.abcA < nEdge)
 						{
-							// символ I, i, и др. очень тонкие - рисуем посередине
+							// СЃРёРјРІРѕР» I, i, Рё РґСЂ. РѕС‡РµРЅСЊ С‚РѕРЅРєРёРµ - СЂРёСЃСѓРµРј РїРѕСЃРµСЂРµРґРёРЅРµ
 							nShift = nEdge - abc.abcA;
 						}
 					}
@@ -3427,8 +3427,8 @@ void CVirtualConsole::UpdateText()
 					//m_DC.SetBkColor(pColors[attrBack]);
 					m_DC.SetBkColor(attr.crBackColor);
 
-					// В режиме ForceMonospace символы пытаемся рисовать по центру (если они уже знакоместа)
-					// чтобы не оставалось мусора от предыдущей отрисовки - нужно залить знакоместо фоном
+					// Р’ СЂРµР¶РёРјРµ ForceMonospace СЃРёРјРІРѕР»С‹ РїС‹С‚Р°РµРјСЃСЏ СЂРёСЃРѕРІР°С‚СЊ РїРѕ С†РµРЅС‚СЂСѓ (РµСЃР»Рё РѕРЅРё СѓР¶Рµ Р·РЅР°РєРѕРјРµСЃС‚Р°)
+					// С‡С‚РѕР±С‹ РЅРµ РѕСЃС‚Р°РІР°Р»РѕСЃСЊ РјСѓСЃРѕСЂР° РѕС‚ РїСЂРµРґС‹РґСѓС‰РµР№ РѕС‚СЂРёСЃРѕРІРєРё - РЅСѓР¶РЅРѕ Р·Р°Р»РёС‚СЊ Р·РЅР°РєРѕРјРµСЃС‚Рѕ С„РѕРЅРѕРј
 					if (nShift>0 && !isSpace && !isProgress)
 					{
 						HBRUSH hbr = PartBrush(L' ', attr.crBackColor, attr.crForeColor);
@@ -3444,7 +3444,7 @@ void CVirtualConsole::UpdateText()
 				if (nShift>0)
 				{
 					rect.left += nShift;
-					// если сделать так - фон вылезает за правую границу (nShift > 0)
+					// РµСЃР»Рё СЃРґРµР»Р°С‚СЊ С‚Р°Рє - С„РѕРЅ РІС‹Р»РµР·Р°РµС‚ Р·Р° РїСЂР°РІСѓСЋ РіСЂР°РЅРёС†Сѓ (nShift > 0)
 					//rect.right += nShift;
 				}
 
@@ -3459,7 +3459,7 @@ void CVirtualConsole::UpdateText()
 				{
 					//int nCnt = ((rect.right - rect.left) / CharWidth(L' '))+1;
 					//Ext Text Out(m_DC, rect.left, rect.top, nFlags, &rect, Spaces, nCnt, 0);
-					TODO("Проверить, что будет если картинка МЕНЬШЕ по ширине чем область отрисовки");
+					TODO("РџСЂРѕРІРµСЂРёС‚СЊ, С‡С‚Рѕ Р±СѓРґРµС‚ РµСЃР»Рё РєР°СЂС‚РёРЅРєР° РњР•РќР¬РЁР• РїРѕ С€РёСЂРёРЅРµ С‡РµРј РѕР±Р»Р°СЃС‚СЊ РѕС‚СЂРёСЃРѕРІРєРё");
 
 					if (!lbImgDrawn)
 					{
@@ -3469,7 +3469,7 @@ void CVirtualConsole::UpdateText()
 				}
 				else
 				{
-					// Это режим Force monospace
+					// Р­С‚Рѕ СЂРµР¶РёРј Force monospace
 					if (nFontCharSet == OEM_CHARSET && !isUnicode)
 					{
 						char cOem = Uni2Oem(c);
@@ -3521,37 +3521,37 @@ void CVirtualConsole::UpdateText()
 				{
 					j2 = j + 1; HEAPVAL
 
-					// Если этого не делать - в пропорциональных шрифтах буквы будут наезжать одна на другую
+					// Р•СЃР»Рё СЌС‚РѕРіРѕ РЅРµ РґРµР»Р°С‚СЊ - РІ РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅС‹С… С€СЂРёС„С‚Р°С… Р±СѓРєРІС‹ Р±СѓРґСѓС‚ РЅР°РµР·Р¶Р°С‚СЊ РѕРґРЅР° РЅР° РґСЂСѓРіСѓСЋ
 					wchar_t ch;
 					//int nLastNonSpace = -1;
-					WARNING("*** сомнение в следующей строчке: (!gpSet->isProportional || !isFilePanel || (ch != L'}' && ch!=L' '))");
-					TODO("при поиске по строке - обновлять nLastNonSpace");
+					WARNING("*** СЃРѕРјРЅРµРЅРёРµ РІ СЃР»РµРґСѓСЋС‰РµР№ СЃС‚СЂРѕС‡РєРµ: (!gpSet->isProportional || !isFilePanel || (ch != L'}' && ch!=L' '))");
+					TODO("РїСЂРё РїРѕРёСЃРєРµ РїРѕ СЃС‚СЂРѕРєРµ - РѕР±РЅРѕРІР»СЏС‚СЊ nLastNonSpace");
 
 					while (j2 < end && ConAttrLine[j2] == attr
 							&& (ch = ConCharLine[j2], bFixFarBorders ? !isCharBorder(ch) : (!bEnhanceGraphics || !isCharProgress(ch)))
 							&& !isCharNonSpacing(ch)
-							&& (!bProportional || !isFilePanel || (ch != L'}' && ch!=L' '))) // корректировка имен в колонках
+							&& (!bProportional || !isFilePanel || (ch != L'}' && ch!=L' '))) // РєРѕСЂСЂРµРєС‚РёСЂРѕРІРєР° РёРјРµРЅ РІ РєРѕР»РѕРЅРєР°С…
 					{
 						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
 						j2++;
 					}
 
-					TODO("От хвоста - отбросить пробелы (если если есть nLastNonSpace)");
+					TODO("РћС‚ С…РІРѕСЃС‚Р° - РѕС‚Р±СЂРѕСЃРёС‚СЊ РїСЂРѕР±РµР»С‹ (РµСЃР»Рё РµСЃР»Рё РµСЃС‚СЊ nLastNonSpace)");
 					SelectFont(hFont);
 					HEAPVAL
 				}
 				else
 				{
-					// Сюда мы попадаем для символов, которые отрисовываются "рамочным" шрифтом
-					// Однако, это могут быть не только рамки, но и много чего еще, что попросил
-					// пользователь (настройка диапазонов -> gpSet->icFixFarBorderRanges)
+					// РЎСЋРґР° РјС‹ РїРѕРїР°РґР°РµРј РґР»СЏ СЃРёРјРІРѕР»РѕРІ, РєРѕС‚РѕСЂС‹Рµ РѕС‚СЂРёСЃРѕРІС‹РІР°СЋС‚СЃСЏ "СЂР°РјРѕС‡РЅС‹Рј" С€СЂРёС„С‚РѕРј
+					// РћРґРЅР°РєРѕ, СЌС‚Рѕ РјРѕРіСѓС‚ Р±С‹С‚СЊ РЅРµ С‚РѕР»СЊРєРѕ СЂР°РјРєРё, РЅРѕ Рё РјРЅРѕРіРѕ С‡РµРіРѕ РµС‰Рµ, С‡С‚Рѕ РїРѕРїСЂРѕСЃРёР»
+					// РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ (РЅР°СЃС‚СЂРѕР№РєР° РґРёР°РїР°Р·РѕРЅРѕРІ -> gpSet->icFixFarBorderRanges)
 					j2 = j + 1; HEAPVAL
 
-					// блоки 25%, 50%, 75%, 100%
+					// Р±Р»РѕРєРё 25%, 50%, 75%, 100%
 					if (bEnhanceGraphics && isProgress)
 					{
 						wchar_t ch;
-						ch = c; // Графическая отрисовка прокрутки и прогресса
+						ch = c; // Р“СЂР°С„РёС‡РµСЃРєР°СЏ РѕС‚СЂРёСЃРѕРІРєР° РїСЂРѕРєСЂСѓС‚РєРё Рё РїСЂРѕРіСЂРµСЃСЃР°
 
 						while (j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2+1])
 						{
@@ -3561,10 +3561,10 @@ void CVirtualConsole::UpdateText()
 					}
 					else if (!bFixFarBorders)
 					{
-						// Сюда попадаем, если это символ рамки, но 'Fix Far borders' отключен.
-						// Смысл в том, чтобы отрисовать рамку точно по знакоместу консоли.
-						// -- Сюда вроде попадать не должны - тогда isUnicodeOrProgress должен быть false
-						// -- т.к. в настройке отключено gpSet->isFixFarBorders
+						// РЎСЋРґР° РїРѕРїР°РґР°РµРј, РµСЃР»Рё СЌС‚Рѕ СЃРёРјРІРѕР» СЂР°РјРєРё, РЅРѕ 'Fix Far borders' РѕС‚РєР»СЋС‡РµРЅ.
+						// РЎРјС‹СЃР» РІ С‚РѕРј, С‡С‚РѕР±С‹ РѕС‚СЂРёСЃРѕРІР°С‚СЊ СЂР°РјРєСѓ С‚РѕС‡РЅРѕ РїРѕ Р·РЅР°РєРѕРјРµСЃС‚Сѓ РєРѕРЅСЃРѕР»Рё.
+						// -- РЎСЋРґР° РІСЂРѕРґРµ РїРѕРїР°РґР°С‚СЊ РЅРµ РґРѕР»Р¶РЅС‹ - С‚РѕРіРґР° isUnicodeOrProgress РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ false
+						// -- С‚.Рє. РІ РЅР°СЃС‚СЂРѕР№РєРµ РѕС‚РєР»СЋС‡РµРЅРѕ gpSet->isFixFarBorders
 						// -- _ASSERTE(bFixFarBorders);
 						// -- _ASSERTE(!isUnicodeOrProgress);
 						wchar_t ch;
@@ -3578,8 +3578,8 @@ void CVirtualConsole::UpdateText()
 					else
 					{
 						//wchar_t ch;
-						//WARNING("Тут обламывается на ucBoxDblVert в первой позиции. Ее ширину ставит в ...");
-						// Для отрисовки рамок (ucBoxDblHorz) за один проход
+						//WARNING("РўСѓС‚ РѕР±Р»Р°РјС‹РІР°РµС‚СЃСЏ РЅР° ucBoxDblVert РІ РїРµСЂРІРѕР№ РїРѕР·РёС†РёРё. Р•Рµ С€РёСЂРёРЅСѓ СЃС‚Р°РІРёС‚ РІ ...");
+						// Р”Р»СЏ РѕС‚СЂРёСЃРѕРІРєРё СЂР°РјРѕРє (ucBoxDblHorz) Р·Р° РѕРґРёРЅ РїСЂРѕС…РѕРґ
 						bool bIsHorzBorder = (c == ucBoxDblHorz || c == ucBoxSinglHorz);
 
 						if (bIsHorzBorder)
@@ -3636,7 +3636,7 @@ void CVirtualConsole::UpdateText()
 				}
 
 				//if (!gpSet->isProportional) {
-				//	TODO("Что-то как-то... ведь положения уже вроде расчитали?");
+				//	TODO("Р§С‚Рѕ-С‚Рѕ РєР°Рє-С‚Рѕ... РІРµРґСЊ РїРѕР»РѕР¶РµРЅРёСЏ СѓР¶Рµ РІСЂРѕРґРµ СЂР°СЃС‡РёС‚Р°Р»Рё?");
 				//  rect = MakeRect(j * nFontWidth, pos, j2 * nFontWidth, pos + nFontHeight);
 				//} else {
 				rect.left = j ? ConCharXLine[j-1] : 0;
@@ -3654,13 +3654,13 @@ void CVirtualConsole::UpdateText()
 				}
 				else if (drawImage)
 				{
-					// Подготовка фона (BgImage) для отрисовки текста на нем
+					// РџРѕРґРіРѕС‚РѕРІРєР° С„РѕРЅР° (BgImage) РґР»СЏ РѕС‚СЂРёСЃРѕРІРєРё С‚РµРєСЃС‚Р° РЅР° РЅРµРј
 					RECT rcFill = {rect.left, rect.top, rect.right, rect.bottom};
 					PaintBackgroundImage(rcFill, attr.crBackColor);
 					lbImgDrawn = TRUE;
 				}
 
-				WARNING("ETO_CLIPPED вроде вообще не нарисует символ, если его часть не влезает?");
+				WARNING("ETO_CLIPPED РІСЂРѕРґРµ РІРѕРѕР±С‰Рµ РЅРµ РЅР°СЂРёСЃСѓРµС‚ СЃРёРјРІРѕР», РµСЃР»Рё РµРіРѕ С‡Р°СЃС‚СЊ РЅРµ РІР»РµР·Р°РµС‚?");
 				UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attr.nBackIdx)) ? 0 : ETO_OPAQUE);
 				HEAPVAL
 
@@ -3675,7 +3675,7 @@ void CVirtualConsole::UpdateText()
 				{
 					//int nCnt = ((rect.right - rect.left) / CharWidth(L' '))+1;
 					//Ext Text Out(m_DC, rect.left, rect.top, nFlags, &rect, Spaces, nCnt, 0);
-					TODO("Проверить, что будет если картинка МЕНЬШЕ по ширине чем область отрисовки");
+					TODO("РџСЂРѕРІРµСЂРёС‚СЊ, С‡С‚Рѕ Р±СѓРґРµС‚ РµСЃР»Рё РєР°СЂС‚РёРЅРєР° РњР•РќР¬РЁР• РїРѕ С€РёСЂРёРЅРµ С‡РµРј РѕР±Р»Р°СЃС‚СЊ РѕС‚СЂРёСЃРѕРІРєРё");
 
 					if (!lbImgDrawn)
 					{
@@ -3685,22 +3685,22 @@ void CVirtualConsole::UpdateText()
 				}
 				else
 				{
-					// В целях оптимизации вынесем проверку bProportional за пределы цикла
+					// Р’ С†РµР»СЏС… РѕРїС‚РёРјРёР·Р°С†РёРё РІС‹РЅРµСЃРµРј РїСЂРѕРІРµСЂРєСѓ bProportional Р·Р° РїСЂРµРґРµР»С‹ С†РёРєР»Р°
 					/*if (bProportional) {
 
 						if (!isSpace && !isUnicodeOrProgress) {
 							ABC abc;
-							//Для НЕ TrueType вызывается wrapper (CharWidth)
+							//Р”Р»СЏ РќР• TrueType РІС‹Р·С‹РІР°РµС‚СЃСЏ wrapper (CharWidth)
 							CharABC(c, &abc);
 
 							if (abc.abcA<0) {
-								// иначе символ наверное налезет на предыдущий?
+								// РёРЅР°С‡Рµ СЃРёРјРІРѕР» РЅР°РІРµСЂРЅРѕРµ РЅР°Р»РµР·РµС‚ РЅР° РїСЂРµРґС‹РґСѓС‰РёР№?
 								nShift = -abc.abcA;
 
 							} else if (abc.abcB < (UINT)nFontWidth)  {
 								int nEdge = (nFontWidth - abc.abcB - 1) >> 1;
 								if (abc.abcA < nEdge) {
-									// символ I, i, и др. очень тонкие - рисуем посередине
+									// СЃРёРјРІРѕР» I, i, Рё РґСЂ. РѕС‡РµРЅСЊ С‚РѕРЅРєРёРµ - СЂРёСЃСѓРµРј РїРѕСЃРµСЂРµРґРёРЅРµ
 									nShift = nEdge - abc.abcA;
 								}
 							}
@@ -3722,7 +3722,7 @@ void CVirtualConsole::UpdateText()
 						{
 							for(int idx = 0; idx < nDrawLen; idx++)
 							{
-								WARNING("BUGBUG: что именно нужно передавать для получения ширины OEM символа?");
+								WARNING("BUGBUG: С‡С‚Рѕ РёРјРµРЅРЅРѕ РЅСѓР¶РЅРѕ РїРµСЂРµРґР°РІР°С‚СЊ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ С€РёСЂРёРЅС‹ OEM СЃРёРјРІРѕР»Р°?");
 								nDX[idx] = CharWidth(tmpOem[idx]);
 							}
 						}
@@ -3735,26 +3735,26 @@ void CVirtualConsole::UpdateText()
 						int nShift0 = 0, nPrevEdge = 0;
 						ABC abc;
 
-						// Для пропорциональных шрифтов - где рисовать каждый символ разбирается GDI
+						// Р”Р»СЏ РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅС‹С… С€СЂРёС„С‚РѕРІ - РіРґРµ СЂРёСЃРѕРІР°С‚СЊ РєР°Р¶РґС‹Р№ СЃРёРјРІРѕР» СЂР°Р·Р±РёСЂР°РµС‚СЃСЏ GDI
 						if (!bProportional)
 						{
 							if (!bForceMonospace)
 							{
-								// В этом режиме символ отрисовывается в начале своей ячейки
+								// Р’ СЌС‚РѕРј СЂРµР¶РёРјРµ СЃРёРјРІРѕР» РѕС‚СЂРёСЃРѕРІС‹РІР°РµС‚СЃСЏ РІ РЅР°С‡Р°Р»Рµ СЃРІРѕРµР№ СЏС‡РµР№РєРё
 								for (int idx = 0, n = nDrawLen; n; idx++, n--)
 								{
-									// Информация для GDI. Ширина отрисовки, т.е. сдвиг между текущим и следующим символом.
-									nDX[idx] = nFontWidth; //CharWidth(pszDraw[idx]); -- лишний вызов функции
+									// РРЅС„РѕСЂРјР°С†РёСЏ РґР»СЏ GDI. РЁРёСЂРёРЅР° РѕС‚СЂРёСЃРѕРІРєРё, С‚.Рµ. СЃРґРІРёРі РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј Рё СЃР»РµРґСѓСЋС‰РёРј СЃРёРјРІРѕР»РѕРј.
+									nDX[idx] = nFontWidth; //CharWidth(pszDraw[idx]); -- Р»РёС€РЅРёР№ РІС‹Р·РѕРІ С„СѓРЅРєС†РёРё
 								}
 							}
 							else
 							{
 								for (int idx = 0, n = nDrawLen; n; idx++, n--)
 								{
-									WARNING("Для RTL нужно переделать");
-									// GDI учитывает nDX не по порядку следования символов в памяти,
-									// а по порядку отрисовки (что логично), то есть нужно смотреть на строку,
-									// брать кусок RTL и считать nDX для pszDraw в обратном порядке
+									WARNING("Р”Р»СЏ RTL РЅСѓР¶РЅРѕ РїРµСЂРµРґРµР»Р°С‚СЊ");
+									// GDI СѓС‡РёС‚С‹РІР°РµС‚ nDX РЅРµ РїРѕ РїРѕСЂСЏРґРєСѓ СЃР»РµРґРѕРІР°РЅРёСЏ СЃРёРјРІРѕР»РѕРІ РІ РїР°РјСЏС‚Рё,
+									// Р° РїРѕ РїРѕСЂСЏРґРєСѓ РѕС‚СЂРёСЃРѕРІРєРё (С‡С‚Рѕ Р»РѕРіРёС‡РЅРѕ), С‚Рѕ РµСЃС‚СЊ РЅСѓР¶РЅРѕ СЃРјРѕС‚СЂРµС‚СЊ РЅР° СЃС‚СЂРѕРєСѓ,
+									// Р±СЂР°С‚СЊ РєСѓСЃРѕРє RTL Рё СЃС‡РёС‚Р°С‚СЊ nDX РґР»СЏ pszDraw РІ РѕР±СЂР°С‚РЅРѕРј РїРѕСЂСЏРґРєРµ
 
 
 									wchar_t ch = pszDraw[idx];
@@ -3765,7 +3765,7 @@ void CVirtualConsole::UpdateText()
 									}
 									else
 									{
-										//Для НЕ TrueType вызывается wrapper (CharWidth)
+										//Р”Р»СЏ РќР• TrueType РІС‹Р·С‹РІР°РµС‚СЃСЏ wrapper (CharWidth)
 										CharABC(ch, &abc);
 									}
 
@@ -3781,14 +3781,14 @@ void CVirtualConsole::UpdateText()
 									}
 									if (abc.abcC!=0)
 									{
-										// Для японских иероглифов - "1"
+										// Р”Р»СЏ СЏРїРѕРЅСЃРєРёС… РёРµСЂРѕРіР»РёС„РѕРІ - "1"
 										int nDbgC = 0;
 									}
 									#endif
 
 									//if (abc.abcA<0)
 									//{
-									//	// иначе символ наверное налезет на предыдущий?
+									//	// РёРЅР°С‡Рµ СЃРёРјРІРѕР» РЅР°РІРµСЂРЅРѕРµ РЅР°Р»РµР·РµС‚ РЅР° РїСЂРµРґС‹РґСѓС‰РёР№?
 									//	//nShift = -abc.abcA;
 									//	nDX[idx] = abc.abcA + abc.abcB + abc.abcC;
 									//}
@@ -3813,15 +3813,15 @@ void CVirtualConsole::UpdateText()
 
 										//if (abc.abcA < nEdge)
 										//{
-										//	// символ I, i, и др. очень тонкие - рисуем посередине
+										//	// СЃРёРјРІРѕР» I, i, Рё РґСЂ. РѕС‡РµРЅСЊ С‚РѕРЅРєРёРµ - СЂРёСЃСѓРµРј РїРѕСЃРµСЂРµРґРёРЅРµ
 										//	nShift = nEdge - abc.abcA;
 										//}
 									}
 									else
 									{
-										// Ширина отрисовываемой части больше чем знакоместо,
-										// но т.к. юзер хотел режим Monospace - принудительно
-										// выставляем ширину ячейки
+										// РЁРёСЂРёРЅР° РѕС‚СЂРёСЃРѕРІС‹РІР°РµРјРѕР№ С‡Р°СЃС‚Рё Р±РѕР»СЊС€Рµ С‡РµРј Р·РЅР°РєРѕРјРµСЃС‚Рѕ,
+										// РЅРѕ С‚.Рє. СЋР·РµСЂ С…РѕС‚РµР» СЂРµР¶РёРј Monospace - РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ
+										// РІС‹СЃС‚Р°РІР»СЏРµРј С€РёСЂРёРЅСѓ СЏС‡РµР№РєРё
 										nDX[idx] = nFontWidth; // abc.abcA + abc.abcB /*+ abc.abcC*/;
 										if (nPrevEdge)
 										{
@@ -3835,7 +3835,7 @@ void CVirtualConsole::UpdateText()
 							}
 						}
 
-						// nDX это сдвиги до начала следующего символа, с начала предыдущего
+						// nDX СЌС‚Рѕ СЃРґРІРёРіРё РґРѕ РЅР°С‡Р°Р»Р° СЃР»РµРґСѓСЋС‰РµРіРѕ СЃРёРјРІРѕР»Р°, СЃ РЅР°С‡Р°Р»Р° РїСЂРµРґС‹РґСѓС‰РµРіРѕ
 						m_DC.ExtTextOut(rect.left+nShift0, rect.top, nFlags, &rect,
 						           pszDraw, nDrawLen, bProportional ? 0 : nDX);
 					}
@@ -3847,8 +3847,8 @@ void CVirtualConsole::UpdateText()
 			}
 
 			DUMPDC(L"F:\\vcon.png");
-			//-- во избежание проблем с пропорциональными шрифтами и ClearType
-			//-- рисуем измененные строки целиком
+			//-- РІРѕ РёР·Р±РµР¶Р°РЅРёРµ РїСЂРѕР±Р»РµРј СЃ РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅС‹РјРё С€СЂРёС„С‚Р°РјРё Рё ClearType
+			//-- СЂРёСЃСѓРµРј РёР·РјРµРЅРµРЅРЅС‹Рµ СЃС‚СЂРѕРєРё С†РµР»РёРєРѕРј
 			//// skip next not changed symbols again
 			//if (skipNotChanged)
 			//{
@@ -3924,7 +3924,7 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeC
 	////#define   PART_75(f,b) (b + 0.80*(f-b))
 	////#define   PART_50(f,b) (b + 0.75*(f-b))
 	////#define   PART_25(f,b) (b + 0.50*(f-b))
-	// (gpSet->isPartBrushXX >> 8) дает как бы дробь (0 .. 1), например, 0.80
+	// (gpSet->isPartBrushXX >> 8) РґР°РµС‚ РєР°Рє Р±С‹ РґСЂРѕР±СЊ (0 .. 1), РЅР°РїСЂРёРјРµСЂ, 0.80
 #define PART_XX(f,b,p) ((f==b) ? f : ( (b + ((p*(f-b))>>8))))
 #define PART_75(f,b) ((f>b) ? PART_XX(f,b,gpSet->isPartBrush75) : PART_XX(b,f,gpSet->isPartBrush25))
 #define PART_50(f,b) ((f>b) ? PART_XX(f,b,gpSet->isPartBrush50) : PART_XX(b,f,gpSet->isPartBrush50))
@@ -3932,7 +3932,7 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeC
 
 	if (ch == ucBox75 || ch == ucBox50 || ch == ucBox25)
 	{
-		// Для темных мониторов. Бокс 25% нифига не отличается от заполненного 100% (видится черным)
+		// Р”Р»СЏ С‚РµРјРЅС‹С… РјРѕРЅРёС‚РѕСЂРѕРІ. Р‘РѕРєСЃ 25% РЅРёС„РёРіР° РЅРµ РѕС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ Р·Р°РїРѕР»РЅРµРЅРЅРѕРіРѕ 100% (РІРёРґРёС‚СЃСЏ С‡РµСЂРЅС‹Рј)
 		if (clrBack.color == 0)
 		{
 			if (gpSet->isPartBrushBlack
@@ -3995,7 +3995,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		return;
 	//if (mp_RCon && mp_RCon->GuiWnd())
 	//{
-	//	// В GUI режиме VirtualConsole скрыта под GUI окном и видна только при "включении" BufferHeight
+	//	// Р’ GUI СЂРµР¶РёРјРµ VirtualConsole СЃРєСЂС‹С‚Р° РїРѕРґ GUI РѕРєРЅРѕРј Рё РІРёРґРЅР° С‚РѕР»СЊРєРѕ РїСЂРё "РІРєР»СЋС‡РµРЅРёРё" BufferHeight
 	//	if (!mp_RCon->isBufferHeight())
 	//	{
 	//		return;
@@ -4008,12 +4008,12 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 	if (CurChar < 0 || CurChar>=(int)(TextWidth * TextHeight))
 	{
-		return; // может быть или глюк - или размер консоли был резко уменьшен и предыдущая позиция курсора пропала с экрана
+		return; // РјРѕР¶РµС‚ Р±С‹С‚СЊ РёР»Рё РіР»СЋРє - РёР»Рё СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё Р±С‹Р» СЂРµР·РєРѕ СѓРјРµРЅСЊС€РµРЅ Рё РїСЂРµРґС‹РґСѓС‰Р°СЏ РїРѕР·РёС†РёСЏ РєСѓСЂСЃРѕСЂР° РїСЂРѕРїР°Р»Р° СЃ СЌРєСЂР°РЅР°
 	}
 
 	if (!ConCharX)
 	{
-		return; // защита
+		return; // Р·Р°С‰РёС‚Р°
 	}
 
 	COORD pix;
@@ -4024,11 +4024,11 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		pix.X = ConCharX[CurChar-1];
 
 	RECT rect;
-	TODO("DoubleView: обработка группировки ввода");
+	TODO("DoubleView: РѕР±СЂР°Р±РѕС‚РєР° РіСЂСѓРїРїРёСЂРѕРІРєРё РІРІРѕРґР°");
 	bool bActive = gpConEmu->isMeForeground()
 		&& CVConGroup::isActive(this, false);
 
-	// указатель на настройки разделяемые по приложениям
+	// СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РЅР°СЃС‚СЂРѕР№РєРё СЂР°Р·РґРµР»СЏРµРјС‹Рµ РїРѕ РїСЂРёР»РѕР¶РµРЅРёСЏРј
 	mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 
 	// Use half-cell horz cursor in keyboard selection
@@ -4045,7 +4045,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		//bHollowBlock = true;
 		dwSize = 100; // percents
 		rect.left = pix.X; /*Cursor.x * nFontWidth;*/
-		rect.right = pix.X + nFontWidth; /*(Cursor.x+1) * nFontWidth;*/ //TODO: а ведь позиция следующего символа известна!
+		rect.right = pix.X + nFontWidth; /*(Cursor.x+1) * nFontWidth;*/ //TODO: Р° РІРµРґСЊ РїРѕР·РёС†РёСЏ СЃР»РµРґСѓСЋС‰РµРіРѕ СЃРёРјРІРѕР»Р° РёР·РІРµСЃС‚РЅР°!
 		rect.bottom = (pos.Y+1) * nFontHeight;
 		rect.top = (pos.Y * nFontHeight) /*+ 1*/;
 	}
@@ -4054,7 +4054,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		if (!gpSet->isMonospace)
 		{
 			rect.left = pix.X; /*Cursor.x * nFontWidth;*/
-			rect.right = pix.X + nFontWidth; /*(Cursor.x+1) * nFontWidth;*/ //TODO: а ведь позиция следующего символа известна!
+			rect.right = pix.X + nFontWidth; /*(Cursor.x+1) * nFontWidth;*/ //TODO: Р° РІРµРґСЊ РїРѕР·РёС†РёСЏ СЃР»РµРґСѓСЋС‰РµРіРѕ СЃРёРјРІРѕР»Р° РёР·РІРµСЃС‚РЅР°!
 		}
 		else
 		{
@@ -4086,7 +4086,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		if (!gpSet->isMonospace)
 		{
 			rect.left = pix.X; /*Cursor.x * nFontWidth;*/
-			//rect.right = rect.left/*Cursor.x * nFontWidth*/ //TODO: а ведь позиция следующего символа известна!
+			//rect.right = rect.left/*Cursor.x * nFontWidth*/ //TODO: Р° РІРµРґСЊ РїРѕР·РёС†РёСЏ СЃР»РµРґСѓСЋС‰РµРіРѕ СЃРёРјРІРѕР»Р° РёР·РІРµСЃС‚РЅР°!
 			//  + klMax(1, MulDiv(nFontWidth, cinf.dwSize, 100)
 			//  + (cinf.dwSize > 10 ? 1 : 0));
 		}
@@ -4099,7 +4099,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		}
 
 		rect.top = pos.Y * nFontHeight;
-		int nR = (!gpSet->isMonospace && ConCharX[CurChar]) // правая граница
+		int nR = (!gpSet->isMonospace && ConCharX[CurChar]) // РїСЂР°РІР°СЏ РіСЂР°РЅРёС†Р°
 		         ? ConCharX[CurChar] : ((pos.X+1) * nFontWidth);
 		//if (cinf.dwSize>=50)
 		//  rect.right = nR;
@@ -4118,7 +4118,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		}
 
 		rect.right = min(nR, (rect.left+nWidth));
-		//rect.right = rect.left/*Cursor.x * nFontWidth*/ //TODO: а ведь позиция следующего символа известна!
+		//rect.right = rect.left/*Cursor.x * nFontWidth*/ //TODO: Р° РІРµРґСЊ РїРѕР·РёС†РёСЏ СЃР»РµРґСѓСЋС‰РµРіРѕ СЃРёРјРІРѕР»Р° РёР·РІРµСЃС‚РЅР°!
 		//      + klMax(1, MulDiv(nFontWidth, cinf.dwSize, 100)
 		//      + (cinf.dwSize > 10 ? 1 : 0));
 		rect.bottom = (pos.Y+1) * nFontHeight;
@@ -4128,14 +4128,14 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	rect.right += rcClient.left;
 	rect.top += rcClient.top;
 	rect.bottom += rcClient.top;
-	// Если курсор занимает более 40% площади - принудительно включим
-	// XOR режим, иначе (тем более при немигающем) курсор закрывает
-	// весь символ и его не видно
-	// 110131 Если курсор мигающий - разрешим нецветной курсор для AltIns в фаре
+	// Р•СЃР»Рё РєСѓСЂСЃРѕСЂ Р·Р°РЅРёРјР°РµС‚ Р±РѕР»РµРµ 40% РїР»РѕС‰Р°РґРё - РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ РІРєР»СЋС‡РёРј
+	// XOR СЂРµР¶РёРј, РёРЅР°С‡Рµ (С‚РµРј Р±РѕР»РµРµ РїСЂРё РЅРµРјРёРіР°СЋС‰РµРј) РєСѓСЂСЃРѕСЂ Р·Р°РєСЂС‹РІР°РµС‚
+	// РІРµСЃСЊ СЃРёРјРІРѕР» Рё РµРіРѕ РЅРµ РІРёРґРЅРѕ
+	// 110131 Р•СЃР»Рё РєСѓСЂСЃРѕСЂ РјРёРіР°СЋС‰РёР№ - СЂР°Р·СЂРµС€РёРј РЅРµС†РІРµС‚РЅРѕР№ РєСѓСЂСЃРѕСЂ РґР»СЏ AltIns РІ С„Р°СЂРµ
 	bool bCursorColor = bInSel ? true
 		: (mp_Set->CursorColor(bActive) || (dwSize >= 40 && !mp_Set->CursorBlink(bActive) && (curStyle != cur_Rect)));
 
-	// Теперь в rect нужно отобразить курсор (XOR'ом попробуем?)
+	// РўРµРїРµСЂСЊ РІ rect РЅСѓР¶РЅРѕ РѕС‚РѕР±СЂР°Р·РёС‚СЊ РєСѓСЂСЃРѕСЂ (XOR'РѕРј РїРѕРїСЂРѕР±СѓРµРј?)
 	if (bCursorColor)
 	{
 		HBRUSH hBr = CreateSolidBrush(CURSOR_PAT_COLOR);
@@ -4148,7 +4148,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		return;
 	}
 
-	//lbDark = Cursor.foreColorNum < 5; // Было раньше
+	//lbDark = Cursor.foreColorNum < 5; // Р‘С‹Р»Рѕ СЂР°РЅСЊС€Рµ
 	//BOOL lbIsProgr = isCharProgress(Cursor.ch[0]);
 	BOOL lbDark = FALSE;
 	DWORD clr = (Cursor.ch != ucBox100 && Cursor.ch != ucBox75) ? Cursor.bgColor : Cursor.foreColor;
@@ -4180,7 +4180,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 {
 	if (mp_RCon && mp_RCon->GuiWnd())
 	{
-		// В GUI режиме VirtualConsole скрыта под GUI окном и видна только при "включении" BufferHeight
+		// Р’ GUI СЂРµР¶РёРјРµ VirtualConsole СЃРєСЂС‹С‚Р° РїРѕРґ GUI РѕРєРЅРѕРј Рё РІРёРґРЅР° С‚РѕР»СЊРєРѕ РїСЂРё "РІРєР»СЋС‡РµРЅРёРё" BufferHeight
 		if (!mp_RCon->isBufferHeight())
 		{
 			lRes = false;
@@ -4188,7 +4188,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 		}
 	}
 
-	// указатель на настройки разделяемые по приложениям
+	// СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РЅР°СЃС‚СЂРѕР№РєРё СЂР°Р·РґРµР»СЏРµРјС‹Рµ РїРѕ РїСЂРёР»РѕР¶РµРЅРёСЏРј
 	mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 
 	//------------------------------------------------------------------------
@@ -4197,20 +4197,20 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	Cursor.isVisiblePrevFromInfo = cinf.bVisible;
 	BOOL lbUpdateTick = FALSE;
 	bool bForeground = gpConEmu->isMeForeground();
-	TODO("DoubleView: группировка ввода");
-	bool bConActive = CVConGroup::isActive(this, false); // а тут именно Active, т.к. курсор должен мигать в активной консоли
+	TODO("DoubleView: РіСЂСѓРїРїРёСЂРѕРІРєР° РІРІРѕРґР°");
+	bool bConActive = CVConGroup::isActive(this, false); // Р° С‚СѓС‚ РёРјРµРЅРЅРѕ Active, С‚.Рє. РєСѓСЂСЃРѕСЂ РґРѕР»Р¶РµРЅ РјРёРіР°С‚СЊ РІ Р°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё
 	bool bConVisible = bConActive || gpConEmu->isVisible(this);
-	bool bIsAlive = mp_RCon ? (mp_RCon->isAlive() || !mp_RCon->isFar(TRUE)) : false; // не мигать, если фар "думает"
+	bool bIsAlive = mp_RCon ? (mp_RCon->isAlive() || !mp_RCon->isFar(TRUE)) : false; // РЅРµ РјРёРіР°С‚СЊ, РµСЃР»Рё С„Р°СЂ "РґСѓРјР°РµС‚"
 	//if (bConActive) {
 	//	bForeground = gpConEmu->isMeForeground();
 	//}
 
-	// Если курсор (в консоли) видим, и находится в видимой области (при прокрутке)
+	// Р•СЃР»Рё РєСѓСЂСЃРѕСЂ (РІ РєРѕРЅСЃРѕР»Рё) РІРёРґРёРј, Рё РЅР°С…РѕРґРёС‚СЃСЏ РІ РІРёРґРёРјРѕР№ РѕР±Р»Р°СЃС‚Рё (РїСЂРё РїСЂРѕРєСЂСѓС‚РєРµ)
 	if (cinf.bVisible && isCursorValid)
 	{
 		if (!mp_Set->CursorBlink(bConActive && bForeground) /*|| !bForeground || !bConActive*/)
 		{
-			Cursor.isVisible = true; // Видим всегда (даже в неактивной консоли), не мигает
+			Cursor.isVisible = true; // Р’РёРґРёРј РІСЃРµРіРґР° (РґР°Р¶Рµ РІ РЅРµР°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё), РЅРµ РјРёРіР°РµС‚
 
 			if (Cursor.isPrevBackground == bForeground)
 			{
@@ -4219,7 +4219,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 		}
 		else
 		{
-			// Смена позиции курсора - его нужно обновить, если окно активно
+			// РЎРјРµРЅР° РїРѕР·РёС†РёРё РєСѓСЂСЃРѕСЂР° - РµРіРѕ РЅСѓР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ, РµСЃР»Рё РѕРєРЅРѕ Р°РєС‚РёРІРЅРѕ
 			if ((Cursor.x != csbi.dwCursorPosition.X) || (Cursor.y != csbi.dwCursorPosition.Y))
 			{
 				Cursor.isVisible = bConVisible;
@@ -4230,23 +4230,23 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 			}
 			else
 			{
-				// Настало время мигания
+				// РќР°СЃС‚Р°Р»Рѕ РІСЂРµРјСЏ РјРёРіР°РЅРёСЏ
 				if ((GetTickCount() - Cursor.nLastBlink) > Cursor.nBlinkTime)
 				{
 					if (gpConEmu->isRightClickingPaint())
 					{
-						// Зажата правая кнопка мышки, начата отрисовка кружочка
+						// Р—Р°Р¶Р°С‚Р° РїСЂР°РІР°СЏ РєРЅРѕРїРєР° РјС‹С€РєРё, РЅР°С‡Р°С‚Р° РѕС‚СЂРёСЃРѕРІРєР° РєСЂСѓР¶РѕС‡РєР°
 						Cursor.isVisible = false;
 					}
 					else if (Cursor.isPrevBackground && bForeground)
 					{
-						// после "неактивного" курсора - сразу рисовать активный, только потом - мигать
+						// РїРѕСЃР»Рµ "РЅРµР°РєС‚РёРІРЅРѕРіРѕ" РєСѓСЂСЃРѕСЂР° - СЃСЂР°Р·Сѓ СЂРёСЃРѕРІР°С‚СЊ Р°РєС‚РёРІРЅС‹Р№, С‚РѕР»СЊРєРѕ РїРѕС‚РѕРј - РјРёРіР°С‚СЊ
 						Cursor.isVisible = true;
 						lRes = true;
 					}
 					else
 					{
-						WARNING("DoubleView: в неактивной но видимой консоли тоже отрисовать, но блоком");
+						WARNING("DoubleView: РІ РЅРµР°РєС‚РёРІРЅРѕР№ РЅРѕ РІРёРґРёРјРѕР№ РєРѕРЅСЃРѕР»Рё С‚РѕР¶Рµ РѕС‚СЂРёСЃРѕРІР°С‚СЊ, РЅРѕ Р±Р»РѕРєРѕРј");
 						Cursor.isVisible = bConVisible && (!Cursor.isVisible || !bIsAlive);
 					}
 
@@ -4257,11 +4257,11 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	}
 	else
 	{
-		// Иначе - его нужно спрятать (курсор скрыт в консоли, или ушел за границы экрана)
+		// РРЅР°С‡Рµ - РµРіРѕ РЅСѓР¶РЅРѕ СЃРїСЂСЏС‚Р°С‚СЊ (РєСѓСЂСЃРѕСЂ СЃРєСЂС‹С‚ РІ РєРѕРЅСЃРѕР»Рё, РёР»Рё СѓС€РµР» Р·Р° РіСЂР°РЅРёС†С‹ СЌРєСЂР°РЅР°)
 		Cursor.isVisible = false;
 	}
 
-	// Смена видимости палки в ConEmu
+	// РЎРјРµРЅР° РІРёРґРёРјРѕСЃС‚Рё РїР°Р»РєРё РІ ConEmu
 	if (Cursor.isVisible != Cursor.isVisiblePrev && !gpConEmu->isRightClickingPaint())
 	{
 		lRes = true;
@@ -4271,7 +4271,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	if (Cursor.isVisible)
 		Cursor.isPrevBackground = !bForeground;
 
-	// Сохраним новое положение
+	// РЎРѕС…СЂР°РЅРёРј РЅРѕРІРѕРµ РїРѕР»РѕР¶РµРЅРёРµ
 	//Cursor.x = csbi.dwCursorPosition.X;
 	//Cursor.y = csbi.dwCursorPosition.Y;
 	Cursor.isVisiblePrev = Cursor.isVisible;
@@ -4351,7 +4351,7 @@ HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COL
 			pColors = gpSet->GetColors(mp_RCon->GetActiveAppSettingsId());
 		}
 
-		// Залить цветом 0
+		// Р—Р°Р»РёС‚СЊ С†РІРµС‚РѕРј 0
 		int nBackColorIdx = mp_RCon->GetDefaultBackColorIdx(); // Black
 		//#ifdef _DEBUG
 		//nBackColorIdx = 2; // Green
@@ -4414,11 +4414,11 @@ bool CVirtualConsole::PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT
 	return (lbBltRc != 0);
 }
 
-// hPaintDc - это DC ViewWnd!!!
-// rcClient - это место, куда нужно "положить" битмап. может быть произвольным!
+// hPaintDc - СЌС‚Рѕ DC ViewWnd!!!
+// rcClient - СЌС‚Рѕ РјРµСЃС‚Рѕ, РєСѓРґР° РЅСѓР¶РЅРѕ "РїРѕР»РѕР¶РёС‚СЊ" Р±РёС‚РјР°Рї. РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСЂРѕРёР·РІРѕР»СЊРЅС‹Рј!
 void CVirtualConsole::PaintVCon(HDC hPaintDc)
 {
-	// Если "завис" PostUpdate
+	// Р•СЃР»Рё "Р·Р°РІРёСЃ" PostUpdate
 	if (gpConEmu->mp_TabBar->NeedPostUpdate())
 		gpConEmu->mp_TabBar->Update();
 
@@ -4495,7 +4495,7 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 		return;
 	}
 
-	// Сброс блокировки, если была
+	// РЎР±СЂРѕСЃ Р±Р»РѕРєРёСЂРѕРІРєРё, РµСЃР»Рё Р±С‹Р»Р°
 	LockDcRect(false);
 
 	COLORREF *pColors = GetColors();
@@ -4507,14 +4507,14 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 	FillRect(hPaintDc, &rcClient, hBr);
 	//#endif
 		
-	TODO("Переделать на StatusBar, если gpSet->isStatusBarShow");
+	TODO("РџРµСЂРµРґРµР»Р°С‚СЊ РЅР° StatusBar, РµСЃР»Рё gpSet->isStatusBarShow");
 	if (!bGuiVisible)
 	{
 		CEDC cePaintDc(hPaintDc);
 		CEFONT hOldF = cePaintDc.SelectObject(gpSetCls->mh_Font[0]);
 		LPCWSTR pszStarting = L"Initializing ConEmu.";
 			
-		// 120721 - если показана статусная строка - не будем писать в саму консоль?
+		// 120721 - РµСЃР»Рё РїРѕРєР°Р·Р°РЅР° СЃС‚Р°С‚СѓСЃРЅР°СЏ СЃС‚СЂРѕРєР° - РЅРµ Р±СѓРґРµРј РїРёСЃР°С‚СЊ РІ СЃР°РјСѓ РєРѕРЅСЃРѕР»СЊ?
 		if (gpSet->isStatusBarShow)
 			pszStarting = NULL;
 		else if (gpConEmu->isProcessCreated())
@@ -4545,9 +4545,9 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 {
 	if (gpConEmu->isActive(this))
-		gpSetCls->Performance(tPerfFPS, TRUE); // считается по своему
+		gpSetCls->Performance(tPerfFPS, TRUE); // СЃС‡РёС‚Р°РµС‚СЃСЏ РїРѕ СЃРІРѕРµРјСѓ
 
-	// Проверить, не сменилась ли битность с последнего раза
+	// РџСЂРѕРІРµСЂРёС‚СЊ, РЅРµ СЃРјРµРЅРёР»Р°СЃСЊ Р»Рё Р±РёС‚РЅРѕСЃС‚СЊ СЃ РїРѕСЃР»РµРґРЅРµРіРѕ СЂР°Р·Р°
 	DWORD nBits = GetDeviceCaps(hPaintDc, BITSPIXEL);
 
 	if (mn_LastBitsPixel != nBits)
@@ -4571,17 +4571,17 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 
 	//Get ClientRect('ghWnd DC', &client);
 
-	//120807 - уберем излишние вызовы ресайзов
+	//120807 - СѓР±РµСЂРµРј РёР·Р»РёС€РЅРёРµ РІС‹Р·РѕРІС‹ СЂРµСЃР°Р№Р·РѕРІ
 #if 0
 	if (!gpConEmu->isNtvdm())
 	{
-		// rcClient не учитывает возможную полосу прокрутки
+		// rcClient РЅРµ СѓС‡РёС‚С‹РІР°РµС‚ РІРѕР·РјРѕР¶РЅСѓСЋ РїРѕР»РѕСЃСѓ РїСЂРѕРєСЂСѓС‚РєРё
 		RECT rcFull; GetWindowRect(mh_WndDC, &rcFull);
-		// после глюков с ресайзом могут быть проблемы с размером окна DC
+		// РїРѕСЃР»Рµ РіР»СЋРєРѕРІ СЃ СЂРµСЃР°Р№Р·РѕРј РјРѕРіСѓС‚ Р±С‹С‚СЊ РїСЂРѕР±Р»РµРјС‹ СЃ СЂР°Р·РјРµСЂРѕРј РѕРєРЅР° DC
 		if ((rcFull.right - rcFull.left) < (LONG)Width || (rcFull.bottom - client.top) < (LONG)Height)
 		{
-			WARNING("Зацикливается. Вызывает PaintVCon, который вызывает OnSize. В итоге - 100% загрузки проц.");
-			gpConEmu->OnSize(false); // Только ресайз дочерних окон
+			WARNING("Р—Р°С†РёРєР»РёРІР°РµС‚СЃСЏ. Р’С‹Р·С‹РІР°РµС‚ PaintVCon, РєРѕС‚РѕСЂС‹Р№ РІС‹Р·С‹РІР°РµС‚ OnSize. Р’ РёС‚РѕРіРµ - 100% Р·Р°РіСЂСѓР·РєРё РїСЂРѕС†.");
+			gpConEmu->OnSize(false); // РўРѕР»СЊРєРѕ СЂРµСЃР°Р№Р· РґРѕС‡РµСЂРЅРёС… РѕРєРѕРЅ
 		}
 	}
 #endif
@@ -4593,7 +4593,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 	//  hPaintDc = BeginPaint('ghWnd DC', &ps);
 	//else
 	//	hPaintDc = GetDC('ghWnd DC');
-	// Если окно больше готового DC - залить края (справа/снизу) фоновым цветом
+	// Р•СЃР»Рё РѕРєРЅРѕ Р±РѕР»СЊС€Рµ РіРѕС‚РѕРІРѕРіРѕ DC - Р·Р°Р»РёС‚СЊ РєСЂР°СЏ (СЃРїСЂР°РІР°/СЃРЅРёР·Сѓ) С„РѕРЅРѕРІС‹Рј С†РІРµС‚РѕРј
 	HBRUSH hBr = NULL;
 
 	if (((ULONG)(client.right-client.left)) > Width)
@@ -4622,9 +4622,9 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 
 	//BOOL lbPaintLocked = FALSE;
 
-	//if (!mb_PaintRequested)    // Если PaintVCon вызыван НЕ из Update (а например ресайз, или над нашим окошком что-то протащили).
+	//if (!mb_PaintRequested)    // Р•СЃР»Рё PaintVCon РІС‹Р·С‹РІР°РЅ РќР• РёР· Update (Р° РЅР°РїСЂРёРјРµСЂ СЂРµСЃР°Р№Р·, РёР»Рё РЅР°Рґ РЅР°С€РёРј РѕРєРѕС€РєРѕРј С‡С‚Рѕ-С‚Рѕ РїСЂРѕС‚Р°С‰РёР»Рё).
 	//{
-	//	//if (S.Lock(&csDC, 200))  // но по таймауту, чтобы не повисли ненароком
+	//	//if (S.Lock(&csDC, 200))  // РЅРѕ РїРѕ С‚Р°Р№РјР°СѓС‚Сѓ, С‡С‚РѕР±С‹ РЅРµ РїРѕРІРёСЃР»Рё РЅРµРЅР°СЂРѕРєРѕРј
 	//	//	mb_PaintLocked = lbPaintLocked = TRUE;
 	//}
 
@@ -4675,10 +4675,10 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 		UpdatePanelRgn(FALSE, FALSE, FALSE);
 	}
 
-	// Собственно, копирование готового bitmap
+	// РЎРѕР±СЃС‚РІРµРЅРЅРѕ, РєРѕРїРёСЂРѕРІР°РЅРёРµ РіРѕС‚РѕРІРѕРіРѕ bitmap
 	if (!gbNoDblBuffer)
 	{
-		// Обычный режим
+		// РћР±С‹С‡РЅС‹Р№ СЂРµР¶РёРј
 		if (gpSetCls->isAdvLogging>=3) mp_RCon->LogString("Blitting to Display");
 
 		BOOL lbBltRc;
@@ -4713,7 +4713,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 					(HDC)m_DC, 0, rc.bottom-client.top,
 					SRCCOPY);
 
-			TODO("Можно бы еще восстановить то, что нарисовала на нашем DC консольная программа");
+			TODO("РњРѕР¶РЅРѕ Р±С‹ РµС‰Рµ РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ С‚Рѕ, С‡С‚Рѕ РЅР°СЂРёСЃРѕРІР°Р»Р° РЅР° РЅР°С€РµРј DC РєРѕРЅСЃРѕР»СЊРЅР°СЏ РїСЂРѕРіСЂР°РјРјР°");
 		}
 		UNREFERENCED_PARAMETER(lbBltRc);
 
@@ -4727,18 +4727,18 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 	}
 	else
 	{
-		GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
+		GdiSetBatchLimit(1); // РѕС‚РєР»СЋС‡РёС‚СЊ Р±СѓС„РµСЂРёР·Р°С†РёСЋ РІС‹РІРѕРґР° РґР»СЏ С‚РµРєСѓС‰РµР№ РЅРёС‚Рё
 		GdiFlush();
-		// Рисуем сразу на канвасе, без буферизации
-		// Это для отладки отрисовки, поэтому недопустимы табы и прочее
+		// Р РёСЃСѓРµРј СЃСЂР°Р·Сѓ РЅР° РєР°РЅРІР°СЃРµ, Р±РµР· Р±СѓС„РµСЂРёР·Р°С†РёРё
+		// Р­С‚Рѕ РґР»СЏ РѕС‚Р»Р°РґРєРё РѕС‚СЂРёСЃРѕРІРєРё, РїРѕСЌС‚РѕРјСѓ РЅРµРґРѕРїСѓСЃС‚РёРјС‹ С‚Р°Р±С‹ Рё РїСЂРѕС‡РµРµ
 		_ASSERTE(gpSet->isTabs == 0);
 		Update(true, &hPaintDc);
 	}
 
-	// Запомнить последнюю битность дисплея
+	// Р—Р°РїРѕРјРЅРёС‚СЊ РїРѕСЃР»РµРґРЅСЋСЋ Р±РёС‚РЅРѕСЃС‚СЊ РґРёСЃРїР»РµСЏ
 	mn_LastBitsPixel = nBits;
 
-	if (gbNoDblBuffer) GdiSetBatchLimit(0);  // вернуть стандартный режим
+	if (gbNoDblBuffer) GdiSetBatchLimit(0);  // РІРµСЂРЅСѓС‚СЊ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ СЂРµР¶РёРј
 
 	if (Cursor.isVisible && cinf.bVisible && isCursorValid)
 	{
@@ -4769,7 +4769,7 @@ void CVirtualConsole::PaintVConDebug(HDC hPaintDc, RECT rcClient)
 		#ifdef DEBUGDRAW_RCONPOS
 		if (GetKeyState(DEBUGDRAW_RCONPOS) & 1)
 		{
-			// Прямоугольник, соответвующий положения окна RealConsole
+			// РџСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє, СЃРѕРѕС‚РІРµС‚РІСѓСЋС‰РёР№ РїРѕР»РѕР¶РµРЅРёСЏ РѕРєРЅР° RealConsole
 			HWND hConWnd = mp_RCon->hConWnd;
 			RECT rcCon; GetWindowRect(hConWnd, &rcCon);
 			MapWindowPoints(NULL, GetView(), (LPPOINT)&rcCon, 2);
@@ -4785,11 +4785,11 @@ void CVirtualConsole::PaintVConDebug(HDC hPaintDc, RECT rcClient)
 				#endif
 		  )
 		{
-			// Прямоугольники найденных диалогов
+			// РџСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРё РЅР°Р№РґРµРЅРЅС‹С… РґРёР°Р»РѕРіРѕРІ
 			//SMALL_RECT rcFound[MAX_DETECTED_DIALOGS]; DWORD nDlgFlags[MAX_DETECTED_DIALOGS];
 			//int nFound = mp_RCon->GetDetectedDialogs(MAX_DETECTED_DIALOGS, rcFound, nDlgFlags);
 			const DetectedDialogs* pDlg = NULL;
-			// Если включены PanelView - попробовать взять диалоги у него
+			// Р•СЃР»Рё РІРєР»СЋС‡РµРЅС‹ PanelView - РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РІР·СЏС‚СЊ РґРёР°Р»РѕРіРё Сѓ РЅРµРіРѕ
 			//#ifdef _DEBUG
 			MFileMapping<DetectedDialogs> pvMap;
 
@@ -4802,7 +4802,7 @@ void CVirtualConsole::PaintVConDebug(HDC hPaintDc, RECT rcClient)
 
 			if (!pDlg) pDlg = mp_RCon->GetDetector()->GetDetectedDialogsPtr();
 
-			// Поехали
+			// РџРѕРµС…Р°Р»Рё
 			HPEN hFrame = CreatePen(PS_SOLID, 1, RGB(255,0,255));
 			HPEN hPanel = CreatePen(PS_SOLID, 2, RGB(255,255,0));
 			HPEN hQSearch = CreatePen(PS_SOLID, 1, RGB(255,255,0));
@@ -4875,8 +4875,8 @@ void CVirtualConsole::PaintVConDebug(HDC hPaintDc, RECT rcClient)
 	//else
 	//	ReleaseDC('ghWnd DC', hPaintDc);
 	//  }
-	//gpSetCls->Performance(tPerfFPS, FALSE); // Обратный
-	mb_DialogsChanged = FALSE; // сбросим, флажок больше не нужен
+	//gpSetCls->Performance(tPerfFPS, FALSE); // РћР±СЂР°С‚РЅС‹Р№
+	mb_DialogsChanged = FALSE; // СЃР±СЂРѕСЃРёРј, С„Р»Р°Р¶РѕРє Р±РѕР»СЊС€Рµ РЅРµ РЅСѓР¶РµРЅ
 
 	#ifdef _DEBUG
 	if ((GetKeyState(VK_SCROLL) & 1) && (GetKeyState(VK_CAPITAL) & 1))
@@ -4946,7 +4946,7 @@ RECT CVirtualConsole::GetRect()
 {
 	RECT rc;
 
-	if (Width == 0 || Height == 0)    // если консоль еще не загрузилась - прикидываем по размеру GUI окна
+	if (Width == 0 || Height == 0)    // РµСЃР»Рё РєРѕРЅСЃРѕР»СЊ РµС‰Рµ РЅРµ Р·Р°РіСЂСѓР·РёР»Р°СЃСЊ - РїСЂРёРєРёРґС‹РІР°РµРј РїРѕ СЂР°Р·РјРµСЂСѓ GUI РѕРєРЅР°
 	{
 		//rc = MakeRect(winSize.X, winSize.Y);
 		//RECT rcWnd; Get ClientRect(ghWnd, &rcWnd);
@@ -4968,14 +4968,14 @@ RECT CVirtualConsole::GetDcClientRect()
 	RECT rcClient = {};
 	if (gpSet->isAlwaysShowScrollbar == 1)
 	{
-		// Режим "Полоса прокрутки видна всегда"
+		// Р РµР¶РёРј "РџРѕР»РѕСЃР° РїСЂРѕРєСЂСѓС‚РєРё РІРёРґРЅР° РІСЃРµРіРґР°"
 		lbRc = ::GetClientRect(mh_WndDC, &rcClient);
 	}
 	else
 	{
-		// Полоса прокрутки может перекрывать часть рабочей области, поэтому
+		// РџРѕР»РѕСЃР° РїСЂРѕРєСЂСѓС‚РєРё РјРѕР¶РµС‚ РїРµСЂРµРєСЂС‹РІР°С‚СЊ С‡Р°СЃС‚СЊ СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё, РїРѕСЌС‚РѕРјСѓ
 		lbRc = ::GetWindowRect(mh_WndDC, &rcClient);
-		// И приводим к клиентским координатам
+		// Р РїСЂРёРІРѕРґРёРј Рє РєР»РёРµРЅС‚СЃРєРёРј РєРѕРѕСЂРґРёРЅР°С‚Р°Рј
 		rcClient.right -= rcClient.left;
 		rcClient.bottom -= rcClient.top;
 		rcClient.left = rcClient.top = 0;
@@ -4994,18 +4994,18 @@ void CVirtualConsole::OnFontChanged()
 
 void CVirtualConsole::OnConsoleSizeChanged()
 {
-	// По идее эта функция вызывается при ресайзе окна GUI ConEmu
+	// РџРѕ РёРґРµРµ СЌС‚Р° С„СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё СЂРµСЃР°Р№Р·Рµ РѕРєРЅР° GUI ConEmu
 	BOOL lbLast = mb_InPaintCall;
-	mb_InPaintCall = TRUE; // чтобы Invalidate лишний раз не дергался
+	mb_InPaintCall = TRUE; // С‡С‚РѕР±С‹ Invalidate Р»РёС€РЅРёР№ СЂР°Р· РЅРµ РґРµСЂРіР°Р»СЃСЏ
 	Update(mb_RequiredForceUpdate);
 	mb_InPaintCall = lbLast;
 }
 
 void CVirtualConsole::OnConsoleSizeReset(USHORT sizeX, USHORT sizeY)
 {
-	// Это должно быть только на этапе создания новой консоли (например, появилась панель табов)
+	// Р­С‚Рѕ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С‚РѕР»СЊРєРѕ РЅР° СЌС‚Р°РїРµ СЃРѕР·РґР°РЅРёСЏ РЅРѕРІРѕР№ РєРѕРЅСЃРѕР»Рё (РЅР°РїСЂРёРјРµСЂ, РїРѕСЏРІРёР»Р°СЃСЊ РїР°РЅРµР»СЊ С‚Р°Р±РѕРІ)
 	_ASSERTE(mp_RCon && ((mp_RCon->ConWnd()==NULL) || mp_RCon->mb_InCloseConsole));
-	// И по идее, DC еще создан быть не должен был
+	// Р РїРѕ РёРґРµРµ, DC РµС‰Рµ СЃРѕР·РґР°РЅ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РµРЅ Р±С‹Р»
 	if (Width==0 && Height==0)
 	{
 		TextWidth = sizeX;
@@ -5038,14 +5038,14 @@ POINT CVirtualConsole::ConsoleToClient(LONG x, LONG y)
 
 			if (x && !pt.x)
 			{
-				TODO("При вызове не из основной нити - ConCharX может быть обнулен");
+				TODO("РџСЂРё РІС‹Р·РѕРІРµ РЅРµ РёР· РѕСЃРЅРѕРІРЅРѕР№ РЅРёС‚Рё - ConCharX РјРѕР¶РµС‚ Р±С‹С‚СЊ РѕР±РЅСѓР»РµРЅ");
 				//2010-06-07
 				// 	CRealConsole::RConServerThread -->
 				//  CRealConsole::ServerThreadCommand -->
 				//  CVirtualConsole::RegisterPanelView -->
 				//  CVirtualConsole::UpdatePanelView(int abLeftPanel=1, int abOnRegister=1) -->
 				//  CVirtualConsole::UpdatePanelRgn(int abLeftPanel=1, int abTestOnly=0, int abOnRegister=1) -->
-				//  и вот тут она обломалась. ConCharX оказался обнулен?
+				//  Рё РІРѕС‚ С‚СѓС‚ РѕРЅР° РѕР±Р»РѕРјР°Р»Р°СЃСЊ. ConCharX РѕРєР°Р·Р°Р»СЃСЏ РѕР±РЅСѓР»РµРЅ?
 				Sleep(1);
 				pt.x = ConCharX[y*TextWidth + x-1];
 				_ASSERTE(pt.x || x==0);
@@ -5074,7 +5074,7 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y, bool StrictMonospace/*=fa
 
 	_ASSERTE(nFontWidth!=0 && nFontHeight!=0);
 
-	// Сначала приблизительный пересчет по размерам шрифта
+	// РЎРЅР°С‡Р°Р»Р° РїСЂРёР±Р»РёР·РёС‚РµР»СЊРЅС‹Р№ РїРµСЂРµСЃС‡РµС‚ РїРѕ СЂР°Р·РјРµСЂР°Рј С€СЂРёС„С‚Р°
 	if (nFontHeight)
 		cr.Y = y/nFontHeight;
 
@@ -5083,10 +5083,10 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y, bool StrictMonospace/*=fa
 
 	if (!StrictMonospace)
 	{
-		// А теперь, если возможно, уточним X координату
+		// Рђ С‚РµРїРµСЂСЊ, РµСЃР»Рё РІРѕР·РјРѕР¶РЅРѕ, СѓС‚РѕС‡РЅРёРј X РєРѕРѕСЂРґРёРЅР°С‚Сѓ
 		if (x > 0)
 		{
-			x++; // иначе сбивается на один пиксел влево
+			x++; // РёРЅР°С‡Рµ СЃР±РёРІР°РµС‚СЃСЏ РЅР° РѕРґРёРЅ РїРёРєСЃРµР» РІР»РµРІРѕ
 
 			if (ConCharX && cr.Y >= 0 && cr.Y < (int)TextHeight)
 			{
@@ -5117,7 +5117,7 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y, bool StrictMonospace/*=fa
 	return cr;
 }
 
-// На самом деле не только пробелы, но и ucBoxSinglHorz/ucBoxDblVertHorz
+// РќР° СЃР°РјРѕРј РґРµР»Рµ РЅРµ С‚РѕР»СЊРєРѕ РїСЂРѕР±РµР»С‹, РЅРѕ Рё ucBoxSinglHorz/ucBoxDblVertHorz
 void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end)
 {
 	//WORD attr = ConAttrLine[j];
@@ -5126,7 +5126,7 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 	//if ((c=ConCharLine[j]) == ucSpace || c == ucNoBreakSpace || c == 0)
 	//{
 	//	while (j2 < end && ConAttrLine[j2] == attr
-	//		// также и для &nbsp; и 0x00
+	//		// С‚Р°РєР¶Рµ Рё РґР»СЏ &nbsp; Рё 0x00
 	//		&& ((ch=ConCharLine[j2]) == ucSpace || ch == ucNoBreakSpace || ch == 0))
 	//		j2++;
 	//} else
@@ -5143,34 +5143,34 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 	//}
 	_ASSERTE(j2 > j && j >= 0);
 
-	// Ширину каждого "пробела" (или символа рамки) будем считать пропорционально занимаемому ИМИ месту
+	// РЁРёСЂРёРЅСѓ РєР°Р¶РґРѕРіРѕ "РїСЂРѕР±РµР»Р°" (РёР»Рё СЃРёРјРІРѕР»Р° СЂР°РјРєРё) Р±СѓРґРµРј СЃС‡РёС‚Р°С‚СЊ РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅРѕ Р·Р°РЅРёРјР°РµРјРѕРјСѓ РРњР РјРµСЃС‚Сѓ
 
-	if (j2>=(int)TextWidth)    // конец строки
+	if (j2>=(int)TextWidth)    // РєРѕРЅРµС† СЃС‚СЂРѕРєРё
 	{
 		ConCharXLine[j2-1] = Width;
 	}
 	else
 	{
-		//2009-09-09 Это некорректно. Ширина шрифта рамки может быть больше знакоместа
+		//2009-09-09 Р­С‚Рѕ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕ. РЁРёСЂРёРЅР° С€СЂРёС„С‚Р° СЂР°РјРєРё РјРѕР¶РµС‚ Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ Р·РЅР°РєРѕРјРµСЃС‚Р°
 		//int nBordWidth = gpSet->BorderFontWidth(); if (!nBordWidth) nBordWidth = nFontWidth;
 		int nBordWidth = nFontWidth;
 
-		// Определить координату конца последовательности
+		// РћРїСЂРµРґРµР»РёС‚СЊ РєРѕРѕСЂРґРёРЅР°С‚Сѓ РєРѕРЅС†Р° РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё
 		if (isCharBorderVertical(ConCharLine[j2]))
 		{
-			//2009-09-09 а это соответственно не нужно (пока nFontWidth == nBordWidth)
-			//ConCharXLine[j2-1] = (j2-1) * nFontWidth + nBordWidth; // или тут [j] должен быть?
+			//2009-09-09 Р° СЌС‚Рѕ СЃРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ РЅРµ РЅСѓР¶РЅРѕ (РїРѕРєР° nFontWidth == nBordWidth)
+			//ConCharXLine[j2-1] = (j2-1) * nFontWidth + nBordWidth; // РёР»Рё С‚СѓС‚ [j] РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ?
 			ConCharXLine[j2-1] = j2 * nBordWidth;
 		}
 		else
 		{
-			TODO("Для пропорциональных шрифтов надо делать как-то по другому!");
+			TODO("Р”Р»СЏ РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅС‹С… С€СЂРёС„С‚РѕРІ РЅР°РґРѕ РґРµР»Р°С‚СЊ РєР°Рє-С‚Рѕ РїРѕ РґСЂСѓРіРѕРјСѓ!");
 
-			//2009-09-09 а это соответственно не нужно (пока nFontWidth == nBordWidth)
-			//ConCharXLine[j2-1] = (j2-1) * nFontWidth + nBordWidth; // или тут [j] должен быть?
+			//2009-09-09 Р° СЌС‚Рѕ СЃРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ РЅРµ РЅСѓР¶РЅРѕ (РїРѕРєР° nFontWidth == nBordWidth)
+			//ConCharXLine[j2-1] = (j2-1) * nFontWidth + nBordWidth; // РёР»Рё С‚СѓС‚ [j] РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ?
 			if (!gpSet->isMonospace && j > 1)
 			{
-				//2009-12-31 нужно плясать от предыдущего символа!
+				//2009-12-31 РЅСѓР¶РЅРѕ РїР»СЏСЃР°С‚СЊ РѕС‚ РїСЂРµРґС‹РґСѓС‰РµРіРѕ СЃРёРјРІРѕР»Р°!
 				ConCharXLine[j2-1] = ConCharXLine[j-1] + (j2 - j) * nBordWidth;
 			}
 			else
@@ -5183,10 +5183,10 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 	if (j2 > (j + 1))
 	{
 		HEAPVAL
-		DWORD n1 = (j ? ConCharXLine[j-1] : 0); // j? если j==0 то тут у нас 10 (правая граница 0го символа в строке)
-		DWORD n3 = j2-j; // кол-во символов
+		DWORD n1 = (j ? ConCharXLine[j-1] : 0); // j? РµСЃР»Рё j==0 С‚Рѕ С‚СѓС‚ Сѓ РЅР°СЃ 10 (РїСЂР°РІР°СЏ РіСЂР°РЅРёС†Р° 0РіРѕ СЃРёРјРІРѕР»Р° РІ СЃС‚СЂРѕРєРµ)
+		DWORD n3 = j2-j; // РєРѕР»-РІРѕ СЃРёРјРІРѕР»РѕРІ
 		_ASSERTE(n3>0);
-		DWORD n2 = ConCharXLine[j2-1] - n1; // выделенная на пробелы ширина
+		DWORD n2 = ConCharXLine[j2-1] - n1; // РІС‹РґРµР»РµРЅРЅР°СЏ РЅР° РїСЂРѕР±РµР»С‹ С€РёСЂРёРЅР°
 		HEAPVAL
 
 		for(int k=j, l=1; k<(j2-1); k++, l++)
@@ -5207,36 +5207,36 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 
 bool CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2)
 {
-	// UCharMap - перерисовать полностью, там может шрифт измениться
+	// UCharMap - РїРµСЂРµСЂРёСЃРѕРІР°С‚СЊ РїРѕР»РЅРѕСЃС‚СЊСЋ, С‚Р°Рј РјРѕР¶РµС‚ С€СЂРёС„С‚ РёР·РјРµРЅРёС‚СЊСЃСЏ
 	if (gpSet->isExtendUCharMap && mrc_UCharMap.Right > mrc_UCharMap.Left)
 	{
 		if (row >= mrc_UCharMap.Top && row <= mrc_UCharMap.Bottom)
-			return TRUE; // пока строку целиком будем рисовать
+			return TRUE; // РїРѕРєР° СЃС‚СЂРѕРєСѓ С†РµР»РёРєРѕРј Р±СѓРґРµРј СЂРёСЃРѕРІР°С‚СЊ
 	}
 
-	// Если изменений в строке вообще нет
+	// Р•СЃР»Рё РёР·РјРµРЅРµРЅРёР№ РІ СЃС‚СЂРѕРєРµ РІРѕРѕР±С‰Рµ РЅРµС‚
 	if (wmemcmp(ConCharLine, ConCharLine2, end) == 0
 	        && memcmp(ConAttrLine, ConAttrLine2, end*sizeof(*ConAttrLine)) == 0)
 		return FALSE;
 
 	// Default: j = 0, end = TextWidth;
-	return TRUE; // пока строку целиком будем рисовать
-	// Если основной шрифт в консоли курсивный, то
-	// во избежение обрезания правой части буквы нужно рисовать строку целиком
-	TODO("Возможно при включенном ClearType не нужно будет рисовать строку целиком, если переделаю на Transparent отрисовку текста");
+	return TRUE; // РїРѕРєР° СЃС‚СЂРѕРєСѓ С†РµР»РёРєРѕРј Р±СѓРґРµРј СЂРёСЃРѕРІР°С‚СЊ
+	// Р•СЃР»Рё РѕСЃРЅРѕРІРЅРѕР№ С€СЂРёС„С‚ РІ РєРѕРЅСЃРѕР»Рё РєСѓСЂСЃРёРІРЅС‹Р№, С‚Рѕ
+	// РІРѕ РёР·Р±РµР¶РµРЅРёРµ РѕР±СЂРµР·Р°РЅРёСЏ РїСЂР°РІРѕР№ С‡Р°СЃС‚Рё Р±СѓРєРІС‹ РЅСѓР¶РЅРѕ СЂРёСЃРѕРІР°С‚СЊ СЃС‚СЂРѕРєСѓ С†РµР»РёРєРѕРј
+	TODO("Р’РѕР·РјРѕР¶РЅРѕ РїСЂРё РІРєР»СЋС‡РµРЅРЅРѕРј ClearType РЅРµ РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ СЂРёСЃРѕРІР°С‚СЊ СЃС‚СЂРѕРєСѓ С†РµР»РёРєРѕРј, РµСЃР»Рё РїРµСЂРµРґРµР»Р°СЋ РЅР° Transparent РѕС‚СЂРёСЃРѕРІРєСѓ С‚РµРєСЃС‚Р°");
 
 	if (gpSetCls->FontItalic() || gpSetCls->FontClearType())
 		return TRUE;
 
-	// *) Skip not changed tail symbols. но только если шрифт моноширный
+	// *) Skip not changed tail symbols. РЅРѕ С‚РѕР»СЊРєРѕ РµСЃР»Рё С€СЂРёС„С‚ РјРѕРЅРѕС€РёСЂРЅС‹Р№
 	if (gpSet->isMonospace)
 	{
 		TODO("OPTIMIZE:");
 
 		while (--end >= 0 && ConCharLine[end] == ConCharLine2[end] && ConAttrLine[end] == ConAttrLine2[end])
 		{
-			// Если есть стили шрифта (курсив/жирный), то
-			// во избежение обрезания правой части буквы нужно рисовать строку целиком
+			// Р•СЃР»Рё РµСЃС‚СЊ СЃС‚РёР»Рё С€СЂРёС„С‚Р° (РєСѓСЂСЃРёРІ/Р¶РёСЂРЅС‹Р№), С‚Рѕ
+			// РІРѕ РёР·Р±РµР¶РµРЅРёРµ РѕР±СЂРµР·Р°РЅРёСЏ РїСЂР°РІРѕР№ С‡Р°СЃС‚Рё Р±СѓРєРІС‹ РЅСѓР¶РЅРѕ СЂРёСЃРѕРІР°С‚СЊ СЃС‚СЂРѕРєСѓ С†РµР»РёРєРѕРј
 			if (ConAttrLine[end].nFontIndex)
 			{
 				end = TextWidth;
@@ -5244,10 +5244,10 @@ bool CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConC
 			}
 		}
 
-		// [%] ClearType, TTF fonts (isProportional может быть и отключен)
-		if (end >= 0   // Если есть хоть какие-то изменения
-		        && end < (int)(TextWidth - 1) // до конца строки
-		        && (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])) // будем отрисовывать все проблеы
+		// [%] ClearType, TTF fonts (isProportional РјРѕР¶РµС‚ Р±С‹С‚СЊ Рё РѕС‚РєР»СЋС‡РµРЅ)
+		if (end >= 0   // Р•СЃР»Рё РµСЃС‚СЊ С…РѕС‚СЊ РєР°РєРёРµ-С‚Рѕ РёР·РјРµРЅРµРЅРёСЏ
+		        && end < (int)(TextWidth - 1) // РґРѕ РєРѕРЅС†Р° СЃС‚СЂРѕРєРё
+		        && (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])) // Р±СѓРґРµРј РѕС‚СЂРёСЃРѕРІС‹РІР°С‚СЊ РІСЃРµ РїСЂРѕР±Р»РµС‹
 		  )
 		{
 			int n = TextWidth - 1;
@@ -5266,8 +5266,8 @@ bool CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConC
 	// *) Skip not changed head symbols.
 	while (j < end && ConCharLine[j] == ConCharLine2[j] && ConAttrLine[j] == ConAttrLine2[j])
 	{
-		// Если есть стили шрифта (курсив/жирный) то
-		// во избежение обрезания правой части буквы нужно рисовать строку целиком
+		// Р•СЃР»Рё РµСЃС‚СЊ СЃС‚РёР»Рё С€СЂРёС„С‚Р° (РєСѓСЂСЃРёРІ/Р¶РёСЂРЅС‹Р№) С‚Рѕ
+		// РІРѕ РёР·Р±РµР¶РµРЅРёРµ РѕР±СЂРµР·Р°РЅРёСЏ РїСЂР°РІРѕР№ С‡Р°СЃС‚Рё Р±СѓРєРІС‹ РЅСѓР¶РЅРѕ СЂРёСЃРѕРІР°С‚СЊ СЃС‚СЂРѕРєСѓ С†РµР»РёРєРѕРј
 		if (ConAttrLine[j].nFontIndex)
 		{
 			j = 0;
@@ -5279,14 +5279,14 @@ bool CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConC
 	}
 
 	// [%] ClearType, proportional fonts
-	if (j > 0  // если с начала строки
-	        && (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1]) // есть пробелы
-	            || (gpSetCls->FontItalic() || ConAttrLine[j-1].nFontIndex))  // Или сейчас курсив/жирный?
+	if (j > 0  // РµСЃР»Рё СЃ РЅР°С‡Р°Р»Р° СЃС‚СЂРѕРєРё
+	        && (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1]) // РµСЃС‚СЊ РїСЂРѕР±РµР»С‹
+	            || (gpSetCls->FontItalic() || ConAttrLine[j-1].nFontIndex))  // РР»Рё СЃРµР№С‡Р°СЃ РєСѓСЂСЃРёРІ/Р¶РёСЂРЅС‹Р№?
 	  )
 	{
 		if (gpSetCls->FontItalic() || ConAttrLine[j-1].nFontIndex)
 		{
-			j = 0; // с частичной отрисовкой заморачиваться не будем, а то еще ClearType вылезет...
+			j = 0; // СЃ С‡Р°СЃС‚РёС‡РЅРѕР№ РѕС‚СЂРёСЃРѕРІРєРѕР№ Р·Р°РјРѕСЂР°С‡РёРІР°С‚СЊСЃСЏ РЅРµ Р±СѓРґРµРј, Р° С‚Рѕ РµС‰Рµ ClearType РІС‹Р»РµР·РµС‚...
 		}
 		else
 		{
@@ -5300,8 +5300,8 @@ bool CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConC
 
 	if (j >= end)
 	{
-		// Для пропорциональных шрифтов сравнение выполняется только с начала строки,
-		// поэтому сюда мы вполне можем попасть - значит строка не менялась
+		// Р”Р»СЏ РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅС‹С… С€СЂРёС„С‚РѕРІ СЃСЂР°РІРЅРµРЅРёРµ РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ С‚РѕР»СЊРєРѕ СЃ РЅР°С‡Р°Р»Р° СЃС‚СЂРѕРєРё,
+		// РїРѕСЌС‚РѕРјСѓ СЃСЋРґР° РјС‹ РІРїРѕР»РЅРµ РјРѕР¶РµРј РїРѕРїР°СЃС‚СЊ - Р·РЅР°С‡РёС‚ СЃС‚СЂРѕРєР° РЅРµ РјРµРЅСЏР»Р°СЃСЊ
 		return FALSE;
 	}
 
@@ -5316,9 +5316,9 @@ HRGN CVirtualConsole::GetExclusionRgn(bool abTestOnly/*=false*/)
 	if (mp_RCon->GetFarPID(TRUE) == 0)
 		return NULL;
 
-	// Возвращает mh_TransparentRgn
-	// Сам mh_TransparentRgn формируется в CheckTransparentRgn,
-	// который должен вызываться в CVirtualConsole::PaintVCon
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ mh_TransparentRgn
+	// РЎР°Рј mh_TransparentRgn С„РѕСЂРјРёСЂСѓРµС‚СЃСЏ РІ CheckTransparentRgn,
+	// РєРѕС‚РѕСЂС‹Р№ РґРѕР»Р¶РµРЅ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РІ CVirtualConsole::PaintVCon
 	if (abTestOnly && mh_TransparentRgn)
 		return (HRGN)1;
 
@@ -5331,7 +5331,7 @@ COORD CVirtualConsole::FindOpaqueCell()
 
 	if (this)
 	{
-		// По умолчанию - сбросим
+		// РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - СЃР±СЂРѕСЃРёРј
 		cr.X = cr.Y = -1;
 
 		if (mpsz_ConChar && mpn_ConAttrEx && TextWidth && TextHeight)
@@ -5339,7 +5339,7 @@ COORD CVirtualConsole::FindOpaqueCell()
 			MSectionLock SCON; SCON.Lock(&csCON);
 			CharAttr* pnAttr = mpn_ConAttrEx;
 
-			// Поиск первого непрозрачного
+			// РџРѕРёСЃРє РїРµСЂРІРѕРіРѕ РЅРµРїСЂРѕР·СЂР°С‡РЅРѕРіРѕ
 			for (uint y = 0; y < TextHeight; y++)
 			{
 				for (uint x = 0; x < TextWidth; x++, pnAttr++)
@@ -5391,7 +5391,7 @@ void CVirtualConsole::OnPanelViewSettingsChanged()
 	//DWORD nPID = GetCurrentProcessId();
 	//if (m_LeftPanelView.hWnd && IsWindow(m_LeftPanelView.hWnd))
 	//{
-	//	WARNING("Нифига не будет пересылаться, если консоль запущена под админом");
+	//	WARNING("РќРёС„РёРіР° РЅРµ Р±СѓРґРµС‚ РїРµСЂРµСЃС‹Р»Р°С‚СЊСЃСЏ, РµСЃР»Рё РєРѕРЅСЃРѕР»СЊ Р·Р°РїСѓС‰РµРЅР° РїРѕРґ Р°РґРјРёРЅРѕРј");
 	//	PostMessage(m_LeftPanelView.hWnd, mn_ConEmuSettingsMsg, nPID, 0);
 	//}
 	//if (m_RightPanelView.hWnd && IsWindow(m_RightPanelView.hWnd))
@@ -5420,12 +5420,12 @@ bool CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 	PanelViewInit* pp = (ppvi->bLeftPanel) ? &m_LeftPanelView : &m_RightPanelView;
 	BOOL lbPrevRegistered = pp->bRegister;
 	*pp = *ppvi;
-	// Вернуть текущую палитру GUI
+	// Р’РµСЂРЅСѓС‚СЊ С‚РµРєСѓС‰СѓСЋ РїР°Р»РёС‚СЂСѓ GUI
 	gpConEmu->OnPanelViewSettingsChanged(FALSE/*abSendChanges*/);
 	//COLORREF *pcrNormal = gpSet->GetColors(FALSE);
 	//COLORREF *pcrFade = gpSet->GetColors(TRUE);
 	//for (int i=0; i<16; i++) {
-	//	// через FOR чтобы с BitMask не наколоться
+	//	// С‡РµСЂРµР· FOR С‡С‚РѕР±С‹ СЃ BitMask РЅРµ РЅР°РєРѕР»РѕС‚СЊСЃСЏ
 	//	ppvi->crPalette[i] = (pcrNormal[i]) & 0xFFFFFF;
 	//	ppvi->crFadePalette[i] = (pcrFade[i]) & 0xFFFFFF;
 	//}
@@ -5435,21 +5435,21 @@ bool CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 
 	if (ppvi->bRegister)
 	{
-		//_ASSERTE(ppvi->bVisible); -- допустимо. Временное скрытие, например, при Ctrl+L
+		//_ASSERTE(ppvi->bVisible); -- РґРѕРїСѓСЃС‚РёРјРѕ. Р’СЂРµРјРµРЅРЅРѕРµ СЃРєСЂС‹С‚РёРµ, РЅР°РїСЂРёРјРµСЂ, РїСЂРё Ctrl+L
 
-		// При повторной регистрации - не дергаться
+		// РџСЂРё РїРѕРІС‚РѕСЂРЅРѕР№ СЂРµРіРёСЃС‚СЂР°С†РёРё - РЅРµ РґРµСЂРіР°С‚СЊСЃСЏ
 		if (!lbPrevRegistered)
 		{
-			//for (int i=0; i<20; i++) // на всякий случай - сначала все сбросим
+			//for (int i=0; i<20; i++) // РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№ - СЃРЅР°С‡Р°Р»Р° РІСЃРµ СЃР±СЂРѕСЃРёРј
 			//	SetWindowLong(pp->hWnd, i*4, 0);
 			HWND hViewParent = GetParent(ppvi->hWnd);
 
 			if (hViewParent != GetView())
 			{
 				MBoxAssert(GetView()==ghWnd);
-				// -- смысла пытаться менять родителя - немного, в Win7 это и не получится
-				// -- если консольный процесс запущен "Run as administrator"
-				// --- но все-таки попробуем?
+				// -- СЃРјС‹СЃР»Р° РїС‹С‚Р°С‚СЊСЃСЏ РјРµРЅСЏС‚СЊ СЂРѕРґРёС‚РµР»СЏ - РЅРµРјРЅРѕРіРѕ, РІ Win7 СЌС‚Рѕ Рё РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ
+				// -- РµСЃР»Рё РєРѕРЅСЃРѕР»СЊРЅС‹Р№ РїСЂРѕС†РµСЃСЃ Р·Р°РїСѓС‰РµРЅ "Run as administrator"
+				// --- РЅРѕ РІСЃРµ-С‚Р°РєРё РїРѕРїСЂРѕР±СѓРµРј?
 				//DWORD dwSetParentErr = 0;
 				HWND hRc = mp_RCon->SetOtherWindowParent((HWND)ppvi->hWnd, GetView());
 				UNREFERENCED_PARAMETER(hRc);
@@ -5472,17 +5472,17 @@ bool CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 
 		if (lbRc)
 		{
-			// Положение и регионы (по текущему состоянию окна)
+			// РџРѕР»РѕР¶РµРЅРёРµ Рё СЂРµРіРёРѕРЅС‹ (РїРѕ С‚РµРєСѓС‰РµРјСѓ СЃРѕСЃС‚РѕСЏРЅРёСЋ РѕРєРЅР°)
 			lbRc = UpdatePanelView(ppvi->bLeftPanel, TRUE);
-			// Обновить флаг видимости
+			// РћР±РЅРѕРІРёС‚СЊ С„Р»Р°Рі РІРёРґРёРјРѕСЃС‚Рё
 			ppvi->bVisible = pp->bVisible;
 			ppvi->WorkRect = pp->WorkRect;
-			// pp->WorkRect для удобства расчитывается "на +1".
+			// pp->WorkRect РґР»СЏ СѓРґРѕР±СЃС‚РІР° СЂР°СЃС‡РёС‚С‹РІР°РµС‚СЃСЏ "РЅР° +1".
 			ppvi->WorkRect.bottom--; ppvi->WorkRect.right--;
-			// На панелях нужно "затереть" лишние части рамок
+			// РќР° РїР°РЅРµР»СЏС… РЅСѓР¶РЅРѕ "Р·Р°С‚РµСЂРµС‚СЊ" Р»РёС€РЅРёРµ С‡Р°СЃС‚Рё СЂР°РјРѕРє
 			Update(true);
 
-			// Если открыто окно настроек - включить в нем кнопку "Apply"
+			// Р•СЃР»Рё РѕС‚РєСЂС‹С‚Рѕ РѕРєРЅРѕ РЅР°СЃС‚СЂРѕРµРє - РІРєР»СЋС‡РёС‚СЊ РІ РЅРµРј РєРЅРѕРїРєСѓ "Apply"
 			if (ghOpWnd) gpSetCls->OnPanelViewAppeared(TRUE);
 		}
 	}
@@ -5498,7 +5498,7 @@ bool CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 //{
 //	POINT pt[2];
 //	if (abTestOnly) {
-//		// Интересует принципиальное пересечение прямоугольников, так что координаты не важны
+//		// РРЅС‚РµСЂРµСЃСѓРµС‚ РїСЂРёРЅС†РёРїРёР°Р»СЊРЅРѕРµ РїРµСЂРµСЃРµС‡РµРЅРёРµ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРѕРІ, С‚Р°Рє С‡С‚Рѕ РєРѕРѕСЂРґРёРЅР°С‚С‹ РЅРµ РІР°Р¶РЅС‹
 //		pt[0].x = x1 << 3; pt[0].y = y1 << 3;
 //		pt[1].x = x2 << 3; pt[1].y = y2 << 3;
 //	} else {
@@ -5555,7 +5555,7 @@ const PanelViewInit* CVirtualConsole::GetPanelView(bool abLeftPanel)
 	return pp;
 }
 
-// Возвращает TRUE, если панель (или хотя бы часть ее ВИДИМА)
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ TRUE, РµСЃР»Рё РїР°РЅРµР»СЊ (РёР»Рё С…РѕС‚СЏ Р±С‹ С‡Р°СЃС‚СЊ РµРµ Р’РР”РРњРђ)
 bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abOnRegister)
 {
 	PanelViewInit* pp = abLeftPanel ? &m_LeftPanelView : &m_RightPanelView;
@@ -5613,12 +5613,12 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 		else
 		{
 			lbPanelVisible = TRUE;
-			TODO("Тут хорошо бы обновить WorkRect? или он правильный всегда будет за счет вызовов RegisterPanel из плагина?");
+			TODO("РўСѓС‚ С…РѕСЂРѕС€Рѕ Р±С‹ РѕР±РЅРѕРІРёС‚СЊ WorkRect? РёР»Рё РѕРЅ РїСЂР°РІРёР»СЊРЅС‹Р№ РІСЃРµРіРґР° Р±СѓРґРµС‚ Р·Р° СЃС‡РµС‚ РІС‹Р·РѕРІРѕРІ RegisterPanel РёР· РїР»Р°РіРёРЅР°?");
 			m_RgnTest.Init(&(pp->WorkRect));
 
 			for(int i = 0; i < nDlgCount; i++)
 			{
-				// Пропустить прямоугольник соответсвующий самой панели
+				// РџСЂРѕРїСѓСЃС‚РёС‚СЊ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє СЃРѕРѕС‚РІРµС‚СЃРІСѓСЋС‰РёР№ СЃР°РјРѕР№ РїР°РЅРµР»Рё
 				if (rcDlg[i].Left == rcPanel.Left &&
 				        rcDlg[i].Bottom == rcPanel.Bottom &&
 				        rcDlg[i].Right == rcPanel.Right)
@@ -5629,10 +5629,10 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 				if (!IntersectSmallRect(pp->WorkRect, rcDlg[i]))
 					continue;
 
-				// Все остальные прямоугольники вычитать из hRgn
+				// Р’СЃРµ РѕСЃС‚Р°Р»СЊРЅС‹Рµ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРё РІС‹С‡РёС‚Р°С‚СЊ РёР· hRgn
 				int nCRC = m_RgnTest.DiffSmall(rcDlg+i);
 
-				// Проверка, может регион уже пуст?
+				// РџСЂРѕРІРµСЂРєР°, РјРѕР¶РµС‚ СЂРµРіРёРѕРЅ СѓР¶Рµ РїСѓСЃС‚?
 				if (nCRC == NULLREGION)
 				{
 					lbPanelVisible = FALSE; break;
@@ -5642,7 +5642,7 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 
 		if (abTestOnly)
 		{
-			// Только проверка
+			// РўРѕР»СЊРєРѕ РїСЂРѕРІРµСЂРєР°
 		}
 		else
 		{
@@ -5656,14 +5656,14 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 
 				if (pRgn->nRgnState == SIMPLEREGION)
 				{
-					//NULL регион пусть ставит всегда (окно может быть ReUsed)
+					//NULL СЂРµРіРёРѕРЅ РїСѓСЃС‚СЊ СЃС‚Р°РІРёС‚ РІСЃРµРіРґР° (РѕРєРЅРѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ ReUsed)
 					//if (!abOnRegister) {
 					mp_RCon->SetOtherWindowRgn(pp->hWnd, 0, NULL, TRUE);
 					//}
 				}
 				else if (lbChanged)
 				{
-					// А вот тут уже важно точное попадание в ячейки, поэтому через функцию, а не примерно...
+					// Рђ РІРѕС‚ С‚СѓС‚ СѓР¶Рµ РІР°Р¶РЅРѕ С‚РѕС‡РЅРѕРµ РїРѕРїР°РґР°РЅРёРµ РІ СЏС‡РµР№РєРё, РїРѕСЌС‚РѕРјСѓ С‡РµСЂРµР· С„СѓРЅРєС†РёСЋ, Р° РЅРµ РїСЂРёРјРµСЂРЅРѕ...
 					MSectionLock SCON; SCON.Lock(&csCON);
 					POINT ptShift = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
 					POINT pt[2];
@@ -5693,7 +5693,7 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 				lbPartHidden = TRUE;
 				pp->bVisible = FALSE;
 				//if (IsWindowVisible(pp->hWnd)) {
-				//	// Сбросит регион и скроет(!) окно
+				//	// РЎР±СЂРѕСЃРёС‚ СЂРµРіРёРѕРЅ Рё СЃРєСЂРѕРµС‚(!) РѕРєРЅРѕ
 				//	mp_RCon->SetOtherWindowRgn(pp->hWnd, -1, NULL, FALSE);
 				//}
 			}
@@ -5708,7 +5708,7 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 		}
 		else if (!pp->bVisible && IsWindowVisible(pp->hWnd))
 		{
-			// Сбросит регион и скроет(!) окно
+			// РЎР±СЂРѕСЃРёС‚ СЂРµРіРёРѕРЅ Рё СЃРєСЂРѕРµС‚(!) РѕРєРЅРѕ
 			mp_RCon->SetOtherWindowRgn(pp->hWnd, -1, NULL, FALSE);
 			//mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
 		}
@@ -5717,29 +5717,29 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 	return lbPanelVisible;
 }
 
-// Отсюда - Redraw не звать, только Invalidate!
+// РћС‚СЃСЋРґР° - Redraw РЅРµ Р·РІР°С‚СЊ, С‚РѕР»СЊРєРѕ Invalidate!
 bool CVirtualConsole::UpdatePanelView(bool abLeftPanel, bool abOnRegister/*=false*/)
 {
 	PanelViewInit* pp = abLeftPanel ? &m_LeftPanelView : &m_RightPanelView;
 	if (!IsWindow(pp->hWnd))
 	{
-		// Это при закрытии фара может так случиться
+		// Р­С‚Рѕ РїСЂРё Р·Р°РєСЂС‹С‚РёРё С„Р°СЂР° РјРѕР¶РµС‚ С‚Р°Рє СЃР»СѓС‡РёС‚СЊСЃСЏ
 		return false;
 	}
 
-	// Чтобы плагин знал, что поменялась палитра (это или Fade, или реальная перенастройка цветов).
+	// Р§С‚РѕР±С‹ РїР»Р°РіРёРЅ Р·РЅР°Р», С‡С‚Рѕ РїРѕРјРµРЅСЏР»Р°СЃСЊ РїР°Р»РёС‚СЂР° (СЌС‚Рѕ РёР»Рё Fade, РёР»Рё СЂРµР°Р»СЊРЅР°СЏ РїРµСЂРµРЅР°СЃС‚СЂРѕР№РєР° С†РІРµС‚РѕРІ).
 	//for (int i=0; i<16; i++)
 	//	SetWindowLong(pp->hWnd, i*4, mp_Colors[i]);
 	if (!mn_ConEmuFadeMsg)
 		mn_ConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWFADE);
 
 	LONG nNewFadeValue = isFade ? 2 : 1;
-	WARNING("Нифига не будет работать на Win7 RunAsAdmin");
+	WARNING("РќРёС„РёРіР° РЅРµ Р±СѓРґРµС‚ СЂР°Р±РѕС‚Р°С‚СЊ РЅР° Win7 RunAsAdmin");
 
 	if (GetWindowLong(pp->hWnd, 16*4) != nNewFadeValue)
 		PostMessage(pp->hWnd, mn_ConEmuFadeMsg, 100, nNewFadeValue);
 
-	// Подготовить размеры
+	// РџРѕРґРіРѕС‚РѕРІРёС‚СЊ СЂР°Р·РјРµСЂС‹
 	POINT pt[2];
 	int nTopShift = 1 + ((pp->FarPanelSettings.ShowColumnTitles) ? 1 : 0); //-V112
 	int nBottomShift = 0;
@@ -5753,17 +5753,17 @@ bool CVirtualConsole::UpdatePanelView(bool abLeftPanel, bool abOnRegister/*=fals
 	                   pp->PanelRect.left+1, pp->PanelRect.top+nTopShift,
 	                   pp->PanelRect.right, pp->PanelRect.bottom-nBottomShift);
 	//if (mb_DialogsChanged)
-	// Перенес вниз, т.к. при регистрации окошко отображает GUI
+	// РџРµСЂРµРЅРµСЃ РІРЅРёР·, С‚.Рє. РїСЂРё СЂРµРіРёСЃС‚СЂР°С†РёРё РѕРєРѕС€РєРѕ РѕС‚РѕР±СЂР°Р¶Р°РµС‚ GUI
 	//UpdatePanelRgn(abLeftPanel, FALSE, abOnRegister);
-	// лучше не зависеть от ConCharX - он может оказаться не инициализированным!
+	// Р»СѓС‡С€Рµ РЅРµ Р·Р°РІРёСЃРµС‚СЊ РѕС‚ ConCharX - РѕРЅ РјРѕР¶РµС‚ РѕРєР°Р·Р°С‚СЊСЃСЏ РЅРµ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅРЅС‹Рј!
 	pt[0] = MakePoint(pp->WorkRect.left*gpSetCls->FontWidth(), pp->WorkRect.top*gpSetCls->FontHeight());
 	pt[1] = MakePoint(pp->WorkRect.right*gpSetCls->FontWidth(), pp->WorkRect.bottom*gpSetCls->FontHeight());
 	//pt[0] = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
 	//pt[1] = ConsoleToClient(pp->WorkRect.right, pp->WorkRect.bottom);
-	//TODO("Потребуется коррекция для DoubleView");
+	//TODO("РџРѕС‚СЂРµР±СѓРµС‚СЃСЏ РєРѕСЂСЂРµРєС†РёСЏ РґР»СЏ DoubleView");
 	//MapWindowPoints(GetView(), ghWnd, pt, 2);
 	//MoveWindow(ahView, pt[0].x,pt[0].y, pt[1].x-pt[0].x,pt[1].y-pt[0].y, FALSE);
-	// Не дергаться, если менять ничего не нужно
+	// РќРµ РґРµСЂРіР°С‚СЊСЃСЏ, РµСЃР»Рё РјРµРЅСЏС‚СЊ РЅРёС‡РµРіРѕ РЅРµ РЅСѓР¶РЅРѕ
 	DWORD dwErr = 0; BOOL lbRc = TRUE;
 	RECT rcCur; GetWindowRect(pp->hWnd, &rcCur);
 	//MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcCur, 2);
@@ -5782,9 +5782,9 @@ bool CVirtualConsole::UpdatePanelView(bool abLeftPanel, bool abOnRegister/*=fals
 		}
 	}
 
-	// И отрисовать -- не нужно. окно еще не показано? когда будет показано - тогда и отрисуется
-	//InvalidateRect(pp->hWnd, NULL, FALSE); -- не нужно, так получается двойной WM_PAINT
-	// Регионы и видимость (видимость при регистрации не меняется)
+	// Р РѕС‚СЂРёСЃРѕРІР°С‚СЊ -- РЅРµ РЅСѓР¶РЅРѕ. РѕРєРЅРѕ РµС‰Рµ РЅРµ РїРѕРєР°Р·Р°РЅРѕ? РєРѕРіРґР° Р±СѓРґРµС‚ РїРѕРєР°Р·Р°РЅРѕ - С‚РѕРіРґР° Рё РѕС‚СЂРёСЃСѓРµС‚СЃСЏ
+	//InvalidateRect(pp->hWnd, NULL, FALSE); -- РЅРµ РЅСѓР¶РЅРѕ, С‚Р°Рє РїРѕР»СѓС‡Р°РµС‚СЃСЏ РґРІРѕР№РЅРѕР№ WM_PAINT
+	// Р РµРіРёРѕРЅС‹ Рё РІРёРґРёРјРѕСЃС‚СЊ (РІРёРґРёРјРѕСЃС‚СЊ РїСЂРё СЂРµРіРёСЃС‚СЂР°С†РёРё РЅРµ РјРµРЅСЏРµС‚СЃСЏ)
 	UpdatePanelRgn(abLeftPanel, FALSE, abOnRegister);
 	return TRUE;
 }
@@ -5803,21 +5803,21 @@ void CVirtualConsole::PolishPanelViews()
 		PanelViewInit *pp = i ? &m_RightPanelView : &m_LeftPanelView;
 
 		if (!pp->bRegister || !pp->hWnd)
-			continue; // Панель не зарегистрирована
+			continue; // РџР°РЅРµР»СЊ РЅРµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅР°
 
 		if (mb_DialogsChanged)
 		{
-			// Проверить, реально регион окна не меняется
+			// РџСЂРѕРІРµСЂРёС‚СЊ, СЂРµР°Р»СЊРЅРѕ СЂРµРіРёРѕРЅ РѕРєРЅР° РЅРµ РјРµРЅСЏРµС‚СЃСЏ
 			if (!UpdatePanelRgn(i==0, TRUE))
-				continue; // Панель стала невидимой
+				continue; // РџР°РЅРµР»СЊ СЃС‚Р°Р»Р° РЅРµРІРёРґРёРјРѕР№
 		}
 
 		const CEFAR_INFO_MAPPING* pFarInfo = mp_RCon->GetFarInfo();
 
 		if (!pFarInfo || !IsWindowVisible(pp->hWnd))
-			continue; // Панель полностью закрыта
+			continue; // РџР°РЅРµР»СЊ РїРѕР»РЅРѕСЃС‚СЊСЋ Р·Р°РєСЂС‹С‚Р°
 
-		/* Так, панель видима, нужно "поправить" заголовки и разделитель перед статусом */
+		/* РўР°Рє, РїР°РЅРµР»СЊ РІРёРґРёРјР°, РЅСѓР¶РЅРѕ "РїРѕРїСЂР°РІРёС‚СЊ" Р·Р°РіРѕР»РѕРІРєРё Рё СЂР°Р·РґРµР»РёС‚РµР»СЊ РїРµСЂРµРґ СЃС‚Р°С‚СѓСЃРѕРј */
 		RECT rc = pp->PanelRect;
 
 		if (rc.right >= (LONG)TextWidth || rc.bottom >= (LONG)TextHeight)
@@ -5836,10 +5836,10 @@ void CVirtualConsole::PolishPanelViews()
 			rc = pp->PanelRect;
 		}
 
-		// Цвета фара
+		// Р¦РІРµС‚Р° С„Р°СЂР°
 		BYTE btNamesColor = pFarInfo->nFarColors[col_PanelColumnTitle];
 		BYTE btPanelColor = pFarInfo->nFarColors[col_PanelBox];
-		// 1. Заголовок панели
+		// 1. Р—Р°РіРѕР»РѕРІРѕРє РїР°РЅРµР»Рё
 		int x;
 		wchar_t *pszLine = mpsz_ConChar;
 		CharAttr *pAttrs = mpn_ConAttrEx;
@@ -5858,7 +5858,7 @@ void CVirtualConsole::PolishPanelViews()
 				pszLine[x] = ucBoxDblHorz;
 		}
 
-		// 2. Строка с именами колонок
+		// 2. РЎС‚СЂРѕРєР° СЃ РёРјРµРЅР°РјРё РєРѕР»РѕРЅРѕРє
 		pszLine = mpsz_ConChar+TextWidth;
 		pAttrs = mpn_ConAttrEx+TextWidth;
 		int nNFore = btNamesColor & 0xF;
@@ -5884,7 +5884,7 @@ void CVirtualConsole::PolishPanelViews()
 			_ASSERTE(nX3<=rc.right);
 
 			//wmemcpy(pszLine+nX3, mp_RCon->ms_NameTitle, nNameLen);
-			//TODO("Возможно нужно будет и атрибуты (цвет) обновить");
+			//TODO("Р’РѕР·РјРѕР¶РЅРѕ РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ Рё Р°С‚СЂРёР±СѓС‚С‹ (С†РІРµС‚) РѕР±РЅРѕРІРёС‚СЊ");
 			for(x = nX1; x < nX3; x++)
 				if ((pszLine[x] != L' ' && pAttrs[x].nForeIdx == nNFore && pAttrs[x].nBackIdx == nNBack)
 				        || ((pszLine[x] == ucBoxSinglVert || pszLine[x] == ucBoxDblVert) && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
@@ -5907,7 +5907,7 @@ void CVirtualConsole::PolishPanelViews()
 				  ) pszLine[x] = L' ';
 		}
 
-		// 3. Разделитель
+		// 3. Р Р°Р·РґРµР»РёС‚РµР»СЊ
 		rc = pp->WorkRect;
 		pszLine = mpsz_ConChar+TextWidth*(rc.bottom);
 		pAttrs = mpn_ConAttrEx+TextWidth*(rc.bottom);
@@ -5935,8 +5935,8 @@ void CVirtualConsole::CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr)
 	pAttr->crBackColor = pAttr->crOrigBackColor = mp_Colors[pAttr->nBackIdx];
 }
 
-// вызывается при получении нового Background (CECMD_SETBACKGROUND) из плагина
-// и для очистки при закрытии (рестарте) консоли
+// РІС‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё РїРѕР»СѓС‡РµРЅРёРё РЅРѕРІРѕРіРѕ Background (CECMD_SETBACKGROUND) РёР· РїР»Р°РіРёРЅР°
+// Рё РґР»СЏ РѕС‡РёСЃС‚РєРё РїСЂРё Р·Р°РєСЂС‹С‚РёРё (СЂРµСЃС‚Р°СЂС‚Рµ) РєРѕРЅСЃРѕР»Рё
 SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData)
 {
 	if (!this) return esbr_Unexpected;
@@ -5944,7 +5944,7 @@ SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACK
 	//if (!gpConEmu->isMainThread())
 	//{
 
-	// При вызове из серверной нити (только что пришло из плагина)
+	// РџСЂРё РІС‹Р·РѕРІРµ РёР· СЃРµСЂРІРµСЂРЅРѕР№ РЅРёС‚Рё (С‚РѕР»СЊРєРѕ С‡С‚Рѕ РїСЂРёС€Р»Рѕ РёР· РїР»Р°РіРёРЅР°)
 	if (mp_RCon->isConsoleClosing())
 		return esbr_ConEmuInShutdown;
 
@@ -5989,7 +5989,7 @@ bool CVirtualConsole::HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)
 
 	//if (!mb_BkImgExist || !(mp_BkImgData || (mp_BkEmfData && mb_BkEmfChanged))) return false;
 
-	//// Возвращаем mn_BkImgXXX чтобы не беспокоиться об указателе mp_BkImgData
+	//// Р’РѕР·РІСЂР°С‰Р°РµРј mn_BkImgXXX С‡С‚РѕР±С‹ РЅРµ Р±РµСЃРїРѕРєРѕРёС‚СЊСЃСЏ РѕР± СѓРєР°Р·Р°С‚РµР»Рµ mp_BkImgData
 
 	//if (pnBgWidth)
 	//	*pnBgWidth = mn_BkImgWidth;
@@ -6030,7 +6030,7 @@ void CVirtualConsole::SavePaneSnapshoot()
 	}
 }
 
-// Вызывается при кликах по CheckBox-у "Show on taskbar"
+// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё РєР»РёРєР°С… РїРѕ CheckBox-Сѓ "Show on taskbar"
 void CVirtualConsole::OnTaskbarSettingsChanged()
 {
 	if (gpSet->isTabsOnTaskBar())

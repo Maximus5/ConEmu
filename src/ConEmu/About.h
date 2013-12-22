@@ -1,4 +1,4 @@
-
+ï»¿
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define pCmdLine \
 	L"Command line examples\r\n" \
-	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
+	VCGCCTEST(L"â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“\r\n",L"----------------------\r\n") \
 	L"ConEmu.exe /cmd Far.exe /w\r\n" \
 	L"ConEmu.exe /font \"Consolas\" /size 16 /bufferheight 9999 /cmd powershell\r\n" \
 	L"ConEmu.exe /config \"Hiew\" /cmd \"C:\\Tools\\HIEW32.EXE\"\r\n" \
@@ -88,7 +88,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"Thanks to all testers and reporters! You help to make the ConEmu better.\r\n" \
 	L"\r\n" \
 	L"Special Thanks\r\n" \
-	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
+	VCGCCTEST(L"â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“\r\n",L"----------------------\r\n") \
 	L"Rick Sladkey: bugfixes\r\n" \
 	L"ForNeVeR: some ConEmuBg improvements\r\n" \
 	L"thecybershadow: bdf support, Documentation\r\n" \
@@ -152,13 +152,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define pDosBoxHelpFull \
 	L"ConEmu supports DosBox, read more online:\r\n" \
 	L"http://code.google.com/p/conemu-maximus5/wiki/DosBox\r\n" \
-	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
+	VCGCCTEST(L"â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“\r\n",L"----------------------\r\n") \
 	pDosBoxHelp
 
 #define pGuiMacro \
 	L"Sort of simple macro language, read more online:\r\n" \
 	L"http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
-	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
+	VCGCCTEST(L"â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“\r\n",L"----------------------\r\n") \
 	L"Close(<What>[,<Flags>])\r\n" \
 	L"  - close current console (0), without confirmation (0,1),\r\n" \
 	L"    terminate active process (1), without confirmation (1,1)\r\n" \

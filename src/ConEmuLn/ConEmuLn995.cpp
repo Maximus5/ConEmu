@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2010-2011 Maximus5
 All rights reserved.
@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif
-#include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
+#include "../common/pluginW1761.hpp" // РћС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ 995 РЅР°Р»РёС‡РёРµРј SynchoApi
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif

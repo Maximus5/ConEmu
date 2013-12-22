@@ -1,4 +1,4 @@
-
+п»ї
 #define SHOWDEBUGSTR
 
 #include <stdio.h>
@@ -73,8 +73,8 @@ CImgCache::CImgCache(HMODULE hSelf)
 
 	*mpsz_ModuleSlash = 0;
 	// Prepare root storage file pathname
-	SetCacheLocation(NULL); // По умолчанию - в %TEMP%
-	// Загрузить "модули"
+	SetCacheLocation(NULL); // РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - РІ %TEMP%
+	// Р—Р°РіСЂСѓР·РёС‚СЊ "РјРѕРґСѓР»Рё"
 	LoadModules();
 	// Initialize interfaces
 	mp_RootStorage = mp_CurrentStorage = NULL;
@@ -134,7 +134,7 @@ CImgCache::~CImgCache(void)
 
 void CImgCache::LoadModules()
 {
-	if (mn_ModuleCount) return;  // Уже загружали!
+	if (mn_ModuleCount) return;  // РЈР¶Рµ Р·Р°РіСЂСѓР¶Р°Р»Рё!
 
 	_ASSERTE(mpsz_ModuleSlash);
 #ifdef WIN64
@@ -146,7 +146,7 @@ void CImgCache::LoadModules()
 	HANDLE hFind = FindFirstFile(ms_ModulePath, &fnd);
 
 	if (hFind == INVALID_HANDLE_VALUE)
-		return; // ни одного нету
+		return; // РЅРё РѕРґРЅРѕРіРѕ РЅРµС‚Сѓ
 
 	do
 	{
@@ -392,7 +392,7 @@ BOOL CImgCache::CheckDrawDibCreated()
 
 void CImgCache::Reset()
 {
-	// Сначала остановим фоновые декодеры
+	// РЎРЅР°С‡Р°Р»Р° РѕСЃС‚Р°РЅРѕРІРёРј С„РѕРЅРѕРІС‹Рµ РґРµРєРѕРґРµСЂС‹
 	if (mp_ShellLoader)
 		mp_ShellLoader->Terminate();
 
@@ -486,22 +486,22 @@ void CImgCache::Reset()
 };
 void CImgCache::Init(COLORREF acrBack)
 {
-	// Инициализация (или сброс если изменились размеры превьюшек)
+	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ (РёР»Рё СЃР±СЂРѕСЃ РµСЃР»Рё РёР·РјРµРЅРёР»РёСЃСЊ СЂР°Р·РјРµСЂС‹ РїСЂРµРІСЊСЋС€РµРє)
 	//hWhiteBrush = ahWhiteBrush;
 	_ASSERTE(gThSet.Thumbs.nImgSize>=16 && gThSet.Tiles.nImgSize>=16);
-	WARNING("Не предусмотрен размер gThSet.Tiles.nImgSize?");
+	WARNING("РќРµ РїСЂРµРґСѓСЃРјРѕС‚СЂРµРЅ СЂР°Р·РјРµСЂ gThSet.Tiles.nImgSize?");
 	int nMaxSize = max(gThSet.Thumbs.nImgSize,gThSet.Tiles.nImgSize);
 
-	// Не будем при смене фона дергаться, а то на Fade проблемы...
+	// РќРµ Р±СѓРґРµРј РїСЂРё СЃРјРµРЅРµ С„РѕРЅР° РґРµСЂРіР°С‚СЊСЃСЏ, Р° С‚Рѕ РЅР° Fade РїСЂРѕР±Р»РµРјС‹...
 	if (nPreviewSize != nMaxSize /*|| crBackground != gThSet.crBackground*/)
 	{
 		Reset();
 		nPreviewSize = nMaxSize;
-		crBackground = acrBack; //gThSet.crBackground; -- gThSet.crBackground пока не инициализируется
+		crBackground = acrBack; //gThSet.crBackground; -- gThSet.crBackground РїРѕРєР° РЅРµ РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚СЃСЏ
 		hbrBack = CreateSolidBrush(acrBack);
 	}
 
-	//// Как центрируется иконка
+	//// РљР°Рє С†РµРЅС‚СЂРёСЂСѓРµС‚СЃСЏ РёРєРѕРЅРєР°
 	//nXIcon = GetSystemMetrics(SM_CXICON);
 	//nYIcon = GetSystemMetrics(SM_CYICON);
 	//nXIconSpace = (nPreviewSize - nXIcon) >> 1;
@@ -521,7 +521,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, ImgLoadType 
 	        && pItem->FindData.lpwszFileNamePart[1] == L'.'
 	        && pItem->FindData.lpwszFileNamePart[2] == 0)
 	{
-		// pszFullName содержит и полный путь к папке, а для удобства оставить только ".."
+		// pszFullName СЃРѕРґРµСЂР¶РёС‚ Рё РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє РїР°РїРєРµ, Р° РґР»СЏ СѓРґРѕР±СЃС‚РІР° РѕСЃС‚Р°РІРёС‚СЊ С‚РѕР»СЊРєРѕ ".."
 		pszName = L".."; //pItem->FindData.lpwszFileNamePart;
 	}
 
@@ -534,16 +534,16 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, ImgLoadType 
 			continue;
 		}
 
-		// Некторые плагины по ShiftF7 переключают режим папка-файл (Reg, Torrent,...)
+		// РќРµРєС‚РѕСЂС‹Рµ РїР»Р°РіРёРЅС‹ РїРѕ ShiftF7 РїРµСЂРµРєР»СЋС‡Р°СЋС‚ СЂРµР¶РёРј РїР°РїРєР°-С„Р°Р№Р» (Reg, Torrent,...)
 		if ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		        == (CacheInfo[i].dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		        && lstrcmpi(CacheInfo[i].lpwszFileName, pszName) == 0)
 		{
-			// Наш.
+			// РќР°С€.
 			*pnIndex = nIndex = i; lbFound = TRUE;
-			TODO("Пока будем игнорировать изменение размера/даты - сильное мелькание для изменяющихся файлов(.log)");
-			//т.е. если на панели открыта папка, содержащая пишущийся log-файл - иконка
-			//этого файла дико моргает - постоянно сбрасывается и обновляется заново
+			TODO("РџРѕРєР° Р±СѓРґРµРј РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ РёР·РјРµРЅРµРЅРёРµ СЂР°Р·РјРµСЂР°/РґР°С‚С‹ - СЃРёР»СЊРЅРѕРµ РјРµР»СЊРєР°РЅРёРµ РґР»СЏ РёР·РјРµРЅСЏСЋС‰РёС…СЃСЏ С„Р°Р№Р»РѕРІ(.log)");
+			//С‚.Рµ. РµСЃР»Рё РЅР° РїР°РЅРµР»Рё РѕС‚РєСЂС‹С‚Р° РїР°РїРєР°, СЃРѕРґРµСЂР¶Р°С‰Р°СЏ РїРёС€СѓС‰РёР№СЃСЏ log-С„Р°Р№Р» - РёРєРѕРЅРєР°
+			//СЌС‚РѕРіРѕ С„Р°Р№Р»Р° РґРёРєРѕ РјРѕСЂРіР°РµС‚ - РїРѕСЃС‚РѕСЏРЅРЅРѕ СЃР±СЂР°СЃС‹РІР°РµС‚СЃСЏ Рё РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ Р·Р°РЅРѕРІРѕ
 			lbReady = TRUE;
 			//if (CacheInfo[i].nFileSize == pItem->FindData.nFileSize
 			//	&& CacheInfo[i].ftLastWriteTime.dwHighDateTime == pItem->FindData.ftLastWriteTime.dwHighDateTime
@@ -551,7 +551,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, ImgLoadType 
 			//{
 			//	lbReady = TRUE;
 			//	CacheInfo[i].dwFileAttributes = pItem->FindData.dwFileAttributes;
-			//} // иначе потребуется обновление превьюшки (файл изменился)
+			//} // РёРЅР°С‡Рµ РїРѕС‚СЂРµР±СѓРµС‚СЃСЏ РѕР±РЅРѕРІР»РµРЅРёРµ РїСЂРµРІСЊСЋС€РєРё (С„Р°Р№Р» РёР·РјРµРЅРёР»СЃСЏ)
 			break;
 		}
 
@@ -577,7 +577,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, ImgLoadType 
 
 			if (CacheInfo[nOldest].lpwszFileName)
 			{
-				WARNING("В этом месте мы можем теоретически подраться с mp_ShellLoader");
+				WARNING("Р’ СЌС‚РѕРј РјРµСЃС‚Рµ РјС‹ РјРѕР¶РµРј С‚РµРѕСЂРµС‚РёС‡РµСЃРєРё РїРѕРґСЂР°С‚СЊСЃСЏ СЃ mp_ShellLoader");
 				free(CacheInfo[nOldest].lpwszFileName);
 				CacheInfo[nOldest].lpwszFileName = NULL;
 			}
@@ -612,7 +612,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, ImgLoadType 
 	{
 		if (!lbFound)
 		{
-			TODO("Если потребуется обновление превьюшки/иконки - нужно таки сбрасывать соответствующие биты");
+			TODO("Р•СЃР»Рё РїРѕС‚СЂРµР±СѓРµС‚СЃСЏ РѕР±РЅРѕРІР»РµРЅРёРµ РїСЂРµРІСЊСЋС€РєРё/РёРєРѕРЅРєРё - РЅСѓР¶РЅРѕ С‚Р°РєРё СЃР±СЂР°СЃС‹РІР°С‚СЊ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРµ Р±РёС‚С‹");
 			CacheInfo[i].PreviewLoaded = ilt_None;
 		}
 
@@ -636,13 +636,13 @@ BOOL CImgCache::RequestItem(CePluginPanelItem* pItem, ImgLoadType aLoadType)
 	if (!pItem || !pItem->pszFullName)
 		return FALSE;
 
-	// Если отсутствует - добавляет
-	// Если в прошлый раз загрузили только ShellIcon и сейчас просят Preview - вернет FALSE
-	// Возвращает TRUE только если картинка уже готова
+	// Р•СЃР»Рё РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ - РґРѕР±Р°РІР»СЏРµС‚
+	// Р•СЃР»Рё РІ РїСЂРѕС€Р»С‹Р№ СЂР°Р· Р·Р°РіСЂСѓР·РёР»Рё С‚РѕР»СЊРєРѕ ShellIcon Рё СЃРµР№С‡Р°СЃ РїСЂРѕСЃСЏС‚ Preview - РІРµСЂРЅРµС‚ FALSE
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ TRUE С‚РѕР»СЊРєРѕ РµСЃР»Рё РєР°СЂС‚РёРЅРєР° СѓР¶Рµ РіРѕС‚РѕРІР°
 	BOOL lbReady = FindInCache(pItem, &nIndex, aLoadType);
 	_ASSERTE(nIndex>=0 && nIndex<countof(CacheInfo));
 
-	// Если нужно загрузить иконку или превьюшку (или обновить их)
+	// Р•СЃР»Рё РЅСѓР¶РЅРѕ Р·Р°РіСЂСѓР·РёС‚СЊ РёРєРѕРЅРєСѓ РёР»Рё РїСЂРµРІСЊСЋС€РєСѓ (РёР»Рё РѕР±РЅРѕРІРёС‚СЊ РёС…)
 	if (!lbReady && (nIndex  >= 0))
 	{
 		//UpdateCell(CacheInfo+nIndex, aLoadType);
@@ -678,15 +678,15 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 		if (pItem) _ASSERTE(pItem->pszFullName != NULL);
 
 #endif
-		// Очистить
+		// РћС‡РёСЃС‚РёС‚СЊ
 		RECT rc = {x,y,x+nImgSize,y+nImgSize};
 		FillRect(hdc, &rc, hbrBack);
 		return TRUE;
 	}
 
 	BOOL lbWasDraw = FALSE;
-	BOOL lbReady = FindInCache(pItem, &nIndex, FALSE/*вернуть что есть*/);
-	// -- // Если нужно загрузить иконку или превьюшку (или обновить их)
+	BOOL lbReady = FindInCache(pItem, &nIndex, FALSE/*РІРµСЂРЅСѓС‚СЊ С‡С‚Рѕ РµСЃС‚СЊ*/);
+	// -- // Р•СЃР»Рё РЅСѓР¶РЅРѕ Р·Р°РіСЂСѓР·РёС‚СЊ РёРєРѕРЅРєСѓ РёР»Рё РїСЂРµРІСЊСЋС€РєСѓ (РёР»Рё РѕР±РЅРѕРІРёС‚СЊ РёС…)
 	//if (!lbReady)
 	//{
 	//	UpdateCell(CacheInfo+nIndex, abLoadPreview);
@@ -717,7 +717,7 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 	if (pbIgnoreFileDescription)
 		*pbIgnoreFileDescription = CacheInfo[nIndex].bIgnoreFileDescription;
 
-	// Скинуть биты в MemDC
+	// РЎРєРёРЅСѓС‚СЊ Р±РёС‚С‹ РІ MemDC
 	if (pImg && pImg->cbStride && pImg->Pixels)
 	{
 		CopyBits(pImg->crSize, (LPBYTE)(pImg->Pixels), pImg->cbStride,
@@ -725,24 +725,24 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 	}
 	else
 	{
-		//_ASSERTE(CacheInfo[nIndex].cbStride!=0); -- значит еще загрузить не успели
-		// Просто очистка на всякий случай
+		//_ASSERTE(CacheInfo[nIndex].cbStride!=0); -- Р·РЅР°С‡РёС‚ РµС‰Рµ Р·Р°РіСЂСѓР·РёС‚СЊ РЅРµ СѓСЃРїРµР»Рё
+		// РџСЂРѕСЃС‚Рѕ РѕС‡РёСЃС‚РєР° РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№
 		RECT rc = {x,y,x+nImgSize,y+nImgSize};
 		FillRect(hdc, &rc, hbrBack);
 		return FALSE;
 	}
 
-	/* *** А теперь - собственно отрисовка куда просили *** */
+	/* *** Рђ С‚РµРїРµСЂСЊ - СЃРѕР±СЃС‚РІРµРЅРЅРѕ РѕС‚СЂРёСЃРѕРІРєР° РєСѓРґР° РїСЂРѕСЃРёР»Рё *** */
 
-	// nImgSize - размер поля отрисовки (по умолчанию 96 для thumbs, 46 для tiles)
+	// nImgSize - СЂР°Р·РјРµСЂ РїРѕР»СЏ РѕС‚СЂРёСЃРѕРІРєРё (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 96 РґР»СЏ thumbs, 46 РґР»СЏ tiles)
 
-	// Если загруженная превьюшка БОЛЬШЕ поля отрисовки
+	// Р•СЃР»Рё Р·Р°РіСЂСѓР¶РµРЅРЅР°СЏ РїСЂРµРІСЊСЋС€РєР° Р‘РћР›Р¬РЁР• РїРѕР»СЏ РѕС‚СЂРёСЃРѕРІРєРё
 	if (nImgSize < pImg->crSize.X || nImgSize < pImg->crSize.Y)
 	{
-		// Очистить
+		// РћС‡РёСЃС‚РёС‚СЊ
 		RECT rc = {x,y,x+nImgSize,y+nImgSize};
 		FillRect(hdc, &rc, hbrBack);
-		// Посчитать
+		// РџРѕСЃС‡РёС‚Р°С‚СЊ
 		int lWidth = pImg->crSize.X;
 		int lHeight = pImg->crSize.Y;
 		int nCanvasWidth  = nImgSize;
@@ -764,10 +764,10 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 			nShowHeight = nCanvasHeight;
 		}
 
-		// Со сдвигом
+		// РЎРѕ СЃРґРІРёРіРѕРј
 		int nXSpace = (nImgSize - nShowWidth) >> 1;
 		int nYSpace = (nImgSize - nShowHeight) >> 1;
-		WARNING("В MSDN какие-то предупреждения про MultiMonitor... возможно стоит StretchDIBits");
+		WARNING("Р’ MSDN РєР°РєРёРµ-С‚Рѕ РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёСЏ РїСЂРѕ MultiMonitor... РІРѕР·РјРѕР¶РЅРѕ СЃС‚РѕРёС‚ StretchDIBits");
 		SetStretchBltMode(hdc, COLORONCOLOR);
 
 		if (pImg->ColorModel == CET_CM_BGRA /*&& fAlphaBlend*/)
@@ -791,15 +791,15 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 			                SRCCOPY);
 		}
 	}
-	// Если загруженная превьюшка МЕНЬШЕ поля отрисовки И юзер включил увеличение превьюшки
-	// и только если это действительно превьшка (ilt_ThumbnailMask), а не ShellIcon+информация о файле
+	// Р•СЃР»Рё Р·Р°РіСЂСѓР¶РµРЅРЅР°СЏ РїСЂРµРІСЊСЋС€РєР° РњР•РќР¬РЁР• РїРѕР»СЏ РѕС‚СЂРёСЃРѕРІРєРё Р СЋР·РµСЂ РІРєР»СЋС‡РёР» СѓРІРµР»РёС‡РµРЅРёРµ РїСЂРµРІСЊСЋС€РєРё
+	// Рё С‚РѕР»СЊРєРѕ РµСЃР»Рё СЌС‚Рѕ РґРµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ РїСЂРµРІСЊС€РєР° (ilt_ThumbnailMask), Р° РЅРµ ShellIcon+РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ С„Р°Р№Р»Рµ
 	else if (((CacheInfo[nIndex].PreviewLoaded & ilt_ThumbnailMask) == ilt_ThumbnailMask) && gThSet.nMaxZoom>100
 	        && (nImgSize >= 2*pImg->crSize.X && nImgSize >= 2*pImg->crSize.Y))
 	{
-		// Очистить
+		// РћС‡РёСЃС‚РёС‚СЊ
 		RECT rc = {x,y,x+nImgSize,y+nImgSize};
 		FillRect(hdc, &rc, hbrBack);
-		// Максимальное увеличение, пока картинка вписывается в область
+		// РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ СѓРІРµР»РёС‡РµРЅРёРµ, РїРѕРєР° РєР°СЂС‚РёРЅРєР° РІРїРёСЃС‹РІР°РµС‚СЃСЏ РІ РѕР±Р»Р°СЃС‚СЊ
 		int nZ = 2;
 
 		for(UINT i = 300; i <= gThSet.nMaxZoom; i+=100)
@@ -812,10 +812,10 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 
 		int nShowWidth  = nZ*pImg->crSize.X;
 		int nShowHeight = nZ*pImg->crSize.Y;
-		// Со сдвигом
+		// РЎРѕ СЃРґРІРёРіРѕРј
 		int nXSpace = (nImgSize - nShowWidth) >> 1;
 		int nYSpace = (nImgSize - nShowHeight) >> 1;
-		WARNING("В MSDN какие-то предупреждения про MultiMonitor... возможно стоит StretchDIBits");
+		WARNING("Р’ MSDN РєР°РєРёРµ-С‚Рѕ РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёСЏ РїСЂРѕ MultiMonitor... РІРѕР·РјРѕР¶РЅРѕ СЃС‚РѕРёС‚ StretchDIBits");
 		SetStretchBltMode(hdc, COLORONCOLOR);
 
 		if (pImg->ColorModel == CET_CM_BGRA /*&& fAlphaBlend*/)
@@ -839,20 +839,20 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 			                SRCCOPY);
 		}
 	}
-	// Превьюшка (или иконка) меньше поля отрисовки
+	// РџСЂРµРІСЊСЋС€РєР° (РёР»Рё РёРєРѕРЅРєР°) РјРµРЅСЊС€Рµ РїРѕР»СЏ РѕС‚СЂРёСЃРѕРІРєРё
 	else if (nImgSize > pImg->crSize.X || nImgSize > pImg->crSize.Y)
 	{
-		// Очистить
+		// РћС‡РёСЃС‚РёС‚СЊ
 		RECT rc = {x,y,x+nImgSize,y+nImgSize};
 		FillRect(hdc, &rc, hbrBack);
-		// Со сдвигом
+		// РЎРѕ СЃРґРІРёРіРѕРј
 		int nXSpace = (nImgSize - pImg->crSize.X) >> 1;
 		int nYSpace = (nImgSize - pImg->crSize.Y) >> 1;
 		lbWasDraw = BitBlt(hdc, x+nXSpace,y+nYSpace,
 		                   pImg->crSize.X,pImg->crSize.Y, mh_DrawDC,
 		                   0,0, SRCCOPY);
 	}
-	else // размеры совпадают?
+	else // СЂР°Р·РјРµСЂС‹ СЃРѕРІРїР°РґР°СЋС‚?
 	{
 		lbWasDraw = BitBlt(hdc, x,y,nImgSize,nImgSize, mh_DrawDC,
 		                   0,0, SRCCOPY);
@@ -880,14 +880,14 @@ void CImgCache::CopyBits(COORD crSrcSize, LPBYTE lpSrc, DWORD nSrcStride, COORD 
 //void CImgCache::UpdateCell(struct IMAGE_CACHE_INFO* pInfo, BOOL abLoadPreview)
 //{
 //	if (pInfo->PreviewLoaded)
-//		return; // Уже
+//		return; // РЈР¶Рµ
 //
 //	if (abLoadPreview)
 //	{
-//		// Если хотят превьюшку - сразу поставим флажок, что пытались
+//		// Р•СЃР»Рё С…РѕС‚СЏС‚ РїСЂРµРІСЊСЋС€РєСѓ - СЃСЂР°Р·Сѓ РїРѕСЃС‚Р°РІРёРј С„Р»Р°Р¶РѕРє, С‡С‚Рѕ РїС‹С‚Р°Р»РёСЃСЊ
 //		pInfo->bPreviewLoaded = TRUE;
 //
-//		// Для папок - самостоятельно
+//		// Р”Р»СЏ РїР°РїРѕРє - СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅРѕ
 //		if (pInfo->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 //		{
 //			return;
@@ -912,7 +912,7 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem, BOOL bLargeIcon /*
 	SHFILEINFO sfi = {NULL};
 	UINT cbSize = sizeof(sfi);
 	DWORD_PTR shRc = 0;
-	RECT rc = {0,0,32,32}; // если иконку удастся загрузить - будет перебито
+	RECT rc = {0,0,32,32}; // РµСЃР»Рё РёРєРѕРЅРєСѓ СѓРґР°СЃС‚СЃСЏ Р·Р°РіСЂСѓР·РёС‚СЊ - Р±СѓРґРµС‚ РїРµСЂРµР±РёС‚Рѕ
 
 	if (!CheckLoadDibCreated())
 		return FALSE;
@@ -971,7 +971,7 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem, BOOL bLargeIcon /*
 			uFlags |= SHGFI_ADDOVERLAYS|SHGFI_ATTRIBUTES;
 		}
 
-		// ассоциированная иконка
+		// Р°СЃСЃРѕС†РёРёСЂРѕРІР°РЅРЅР°СЏ РёРєРѕРЅРєР°
 		shRc = SHGetFileInfo(pszFileName, pItem->dwFileAttributes, &sfi, cbSize, uFlags);
 
 		if (shRc && sfi.hIcon)
@@ -979,7 +979,7 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem, BOOL bLargeIcon /*
 			hIcon = sfi.hIcon;
 		}
 
-		TODO("Обработать (sfi.dwAttributes & SFGAO_SHARE (0x00020000)) - The specified objects are shared.");
+		TODO("РћР±СЂР°Р±РѕС‚Р°С‚СЊ (sfi.dwAttributes & SFGAO_SHARE (0x00020000)) - The specified objects are shared.");
 	}
 
 	if (hIcon)
@@ -1017,7 +1017,7 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem, BOOL bLargeIcon /*
 		}
 	}
 
-	// Очистить
+	// РћС‡РёСЃС‚РёС‚СЊ
 	FillRect(mh_LoadDC, &rc, hbrBack);
 
 	if (hIcon)
@@ -1031,10 +1031,10 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem, BOOL bLargeIcon /*
 	}
 	else
 	{
-		// Нарисовать стандартную иконку?
+		// РќР°СЂРёСЃРѕРІР°С‚СЊ СЃС‚Р°РЅРґР°СЂС‚РЅСѓСЋ РёРєРѕРЅРєСѓ?
 	}
 
-	// Commit changes to MemDC (но это может затронуть и ScreenDC?)
+	// Commit changes to MemDC (РЅРѕ СЌС‚Рѕ РјРѕР¶РµС‚ Р·Р°С‚СЂРѕРЅСѓС‚СЊ Рё ScreenDC?)
 	GdiFlush();
 	pItem->Icon.crSize.X = (SHORT)rc.right; pItem->Icon.crSize.Y = (SHORT)rc.bottom;
 	pItem->Icon.cbStride = ((SHORT)rc.right)*4;
@@ -1053,9 +1053,9 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem, BOOL bLargeIcon /*
 	_ASSERTE(nPreviewSize == mcr_LoadDibSize.X);
 	COORD crSize = {nPreviewSize,pItem->Icon.crSize.Y};
 	CopyBits(crSize, mp_LoadDibBytes, nPreviewSize*4, pItem->Icon.crSize, (LPBYTE)pItem->Icon.Pixels);
-	// ShellIcon загрузили
+	// ShellIcon Р·Р°РіСЂСѓР·РёР»Рё
 	pItem->PreviewLoaded |= (bLargeIcon ? ilt_ShellLarge : ilt_ShellSmall);
-	TODO("Хорошо бы инвалидатить только соответствующий прямоугольник?");
+	TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РёРЅРІР°Р»РёРґР°С‚РёС‚СЊ С‚РѕР»СЊРєРѕ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє?");
 	CeFullPanelInfo::InvalidateAll();
 	DEBUGSTRLOAD2(L"result=OK\n");
 	return TRUE;
@@ -1095,7 +1095,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 
 	if (!PV.bVirtualItem)
 	{
-		WARNING("Переделать на UNC!"); // Не работает на "PictureView.img\Bad Names"
+		WARNING("РџРµСЂРµРґРµР»Р°С‚СЊ РЅР° UNC!"); // РќРµ СЂР°Р±РѕС‚Р°РµС‚ РЅР° "PictureView.img\Bad Names"
 		hFile = CreateFileW(PV.sFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 
 		if (hFile == INVALID_HANDLE_VALUE)
@@ -1121,8 +1121,8 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 	}
 	else if (pItem->UserData)
 	{
-		// Из некоторых плагином данные можно извлечь...
-		// Хм... в фаре IsBadReadPtr иногда зависал. А тут?
+		// РР· РЅРµРєРѕС‚РѕСЂС‹С… РїР»Р°РіРёРЅРѕРј РґР°РЅРЅС‹Рµ РјРѕР¶РЅРѕ РёР·РІР»РµС‡СЊ...
+		// РҐРј... РІ С„Р°СЂРµ IsBadReadPtr РёРЅРѕРіРґР° Р·Р°РІРёСЃР°Р». Рђ С‚СѓС‚?
 		if (!IsBadReadPtr((void*)pItem->UserData, sizeof(ImpExPanelItem)))
 		{
 			ImpExPanelItem *pImpEx = (ImpExPanelItem*)pItem->UserData;
@@ -1135,7 +1135,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 				{
 					PV.nFileSize = pImpEx->nBinarySize;
 					PV.pFileData = (const BYTE*)pImpEx->pBinaryData;
-					// ImpEx показывает в описании размер изображения, получается некрасивое дублирование
+					// ImpEx РїРѕРєР°Р·С‹РІР°РµС‚ РІ РѕРїРёСЃР°РЅРёРё СЂР°Р·РјРµСЂ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ, РїРѕР»СѓС‡Р°РµС‚СЃСЏ РЅРµРєСЂР°СЃРёРІРѕРµ РґСѓР±Р»РёСЂРѕРІР°РЅРёРµ
 					//lbIgnoreFileDescription = TRUE;
 					lbIgnoreComments = TRUE;
 				}
@@ -1214,7 +1214,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 				continue;
 			}
 
-			// Здесь может быть не только Pixels, например только информация о версии dll (в pszComments)
+			// Р—РґРµСЃСЊ РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅРµ С‚РѕР»СЊРєРѕ Pixels, РЅР°РїСЂРёРјРµСЂ С‚РѕР»СЊРєРѕ РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ РІРµСЂСЃРёРё dll (РІ pszComments)
 			if (!lbLoadRc || ((!PV.Pixels || !PV.cbPixelsSize) && !PV.pszComments))
 			{
 				if (PV.pFileContext)
@@ -1230,10 +1230,10 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 				continue;
 			}
 
-			// Если принятый размер данных (битмап) больше ранее созданного в pItem
+			// Р•СЃР»Рё РїСЂРёРЅСЏС‚С‹Р№ СЂР°Р·РјРµСЂ РґР°РЅРЅС‹С… (Р±РёС‚РјР°Рї) Р±РѕР»СЊС€Рµ СЂР°РЅРµРµ СЃРѕР·РґР°РЅРЅРѕРіРѕ РІ pItem
 			if (PV.Pixels && pItem->Preview.Pixels && pItem->Preview.cbPixelsSize < PV.cbPixelsSize)
 			{
-				// Освободить и пересоздать
+				// РћСЃРІРѕР±РѕРґРёС‚СЊ Рё РїРµСЂРµСЃРѕР·РґР°С‚СЊ
 				free(pItem->Preview.Pixels); pItem->Preview.Pixels = NULL;
 			}
 
@@ -1260,11 +1260,11 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 
 				_ASSERTE(pItem->Preview.cbPixelsSize >= PV.cbPixelsSize);
 				memmove(pItem->Preview.Pixels, PV.Pixels, PV.cbPixelsSize);
-				pItem->Preview.crSize = PV.crSize; // Предпочтительно, должен совпадать с crLoadSize
+				pItem->Preview.crSize = PV.crSize; // РџСЂРµРґРїРѕС‡С‚РёС‚РµР»СЊРЅРѕ, РґРѕР»Р¶РµРЅ СЃРѕРІРїР°РґР°С‚СЊ СЃ crLoadSize
 				pItem->Preview.cbStride = PV.cbStride; // Bytes per line
 				pItem->Preview.nBits = PV.nBits; // 32 bit required!
 				pItem->Preview.ColorModel = PV.ColorModel; // One of CET_CM_xxx
-				// Запомнить, что превьюшка действительно есть
+				// Р—Р°РїРѕРјРЅРёС‚СЊ, С‡С‚Рѕ РїСЂРµРІСЊСЋС€РєР° РґРµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ РµСЃС‚СЊ
 				pItem->PreviewLoaded |= ilt_ThumbnailLoaded; //-V112
 			}
 
@@ -1310,7 +1310,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 		}
 	}
 
-	// Поставим флаг того, что превьюшку загружать ПЫТАЛИСЬ
+	// РџРѕСЃС‚Р°РІРёРј С„Р»Р°Рі С‚РѕРіРѕ, С‡С‚Рѕ РїСЂРµРІСЊСЋС€РєСѓ Р·Р°РіСЂСѓР¶Р°С‚СЊ РџР«РўРђР›РРЎР¬
 	pItem->PreviewLoaded |= ilt_Thumbnail;
 #ifdef _DEBUG
 	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"result=%s, preview=%s\n", lbThumbRc ? L"OK" : L"FAILED", (pItem->PreviewLoaded & ilt_ThumbnailLoaded) ? L"Loaded" : L"NOT loaded"); //-V112
@@ -1339,7 +1339,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 
 	if (lbThumbRc)
 	{
-		TODO("Хорошо бы инвалидатить только соответствующий прямоугольник?");
+		TODO("РҐРѕСЂРѕС€Рѕ Р±С‹ РёРЅРІР°Р»РёРґР°С‚РёС‚СЊ С‚РѕР»СЊРєРѕ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє?");
 		CeFullPanelInfo::InvalidateAll();
 	}
 
@@ -1353,7 +1353,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 	//if (!gpDesktopFolder)
 	//	return NULL;
 	//const wchar_t* pFileName = pItem->lpwszFileName;
-	//// Пока UNC не обрабатываем
+	//// РџРѕРєР° UNC РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј
 	//if (pFileName[0] == L'\\' && pFileName[1] == L'\\' && (pFileName[2] == L'.' || pFileName[2] == L'?') && pFileName[3] == L'\\') {
 	//	pFileName += 4;
 	//	if (pFileName[0] == L'U' && pFileName[1] == L'N' && pFileName[2] == L'C' && pFileName[3] == L'\\') {
@@ -1362,7 +1362,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 	//}
 	//int nLen = lstrlen(pFileName);
 	//if (nLen > 2*MAX_PATH)
-	//	return NULL; // Шелл такой путь не обработает
+	//	return NULL; // РЁРµР»Р» С‚Р°РєРѕР№ РїСѓС‚СЊ РЅРµ РѕР±СЂР°Р±РѕС‚Р°РµС‚
 	//wchar_t *pszSourceFile = /*lstrdup(pFileName)*/ (wchar_t*)calloc((nLen+1),2), *pszSlash = NULL;
 	//if (!pszSourceFile) {
 	//	_ASSERTE(pszSourceFile!=NULL);
@@ -1388,7 +1388,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 	//DWORD dwPrior = 0, dwFlags = 0;
 	//DWORD nBitDepth = 32;
 	////HBITMAP hBmp = NULL, hOldBmp = NULL;
-	////// Подготовить путь к шелловскому кешу превьюшек
+	////// РџРѕРґРіРѕС‚РѕРІРёС‚СЊ РїСѓС‚СЊ Рє С€РµР»Р»РѕРІСЃРєРѕРјСѓ РєРµС€Сѓ РїСЂРµРІСЊСЋС€РµРє
 	////lstrcpy(wsPathBuffer, pFileName);
 	////if (abFolder) {
 	////	pszThumbs = wsPathBuffer+lstrlen(wsPathBuffer)-1;
@@ -1410,7 +1410,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 	// SAFETRY
 	//{
 	//	if (SUCCEEDED(hr)) {
-	//		if (*(pszSlash-1) == L':') pszSlash++; // для корня диска нужно слэш оставить
+	//		if (*(pszSlash-1) == L':') pszSlash++; // РґР»СЏ РєРѕСЂРЅСЏ РґРёСЃРєР° РЅСѓР¶РЅРѕ СЃР»СЌС€ РѕСЃС‚Р°РІРёС‚СЊ
 	//		wchPrev = *pszSlash; *pszSlash = 0;
 	//		hr = gpDesktopFolder->ParseDisplayName(NULL, NULL, pszSourceFile, &nEaten, &pIdl, &dwAttr);
 	//		*pszSlash = wchPrev;
@@ -1425,28 +1425,28 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 	//	}
 	//	if (SUCCEEDED(hr)) {
 	//		hr = pFile->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)&pIdl, IID_IExtractImage, NULL, (void**)&pEI);
-	//		// Если возвращает "Файл не найден" - значит файл не содержит превьюшки!
+	//		// Р•СЃР»Рё РІРѕР·РІСЂР°С‰Р°РµС‚ "Р¤Р°Р№Р» РЅРµ РЅР°Р№РґРµРЅ" - Р·РЅР°С‡РёС‚ С„Р°Р№Р» РЅРµ СЃРѕРґРµСЂР¶РёС‚ РїСЂРµРІСЊСЋС€РєРё!
 	//		if (pIdl) { CoTaskMemFree(pIdl); pIdl = NULL; }
 	//	}
 	//	if (SUCCEEDED(hr)) {
-	//		// Пытаемся дернуть картинку сразу. Большое разрешение все-равно получить
-	//		// не удастся, а иногда Shell дает IID_IExtractImage, но отказывается отдать Bitmap.
+	//		// РџС‹С‚Р°РµРјСЃСЏ РґРµСЂРЅСѓС‚СЊ РєР°СЂС‚РёРЅРєСѓ СЃСЂР°Р·Сѓ. Р‘РѕР»СЊС€РѕРµ СЂР°Р·СЂРµС€РµРЅРёРµ РІСЃРµ-СЂР°РІРЅРѕ РїРѕР»СѓС‡РёС‚СЊ
+	//		// РЅРµ СѓРґР°СЃС‚СЃСЏ, Р° РёРЅРѕРіРґР° Shell РґР°РµС‚ IID_IExtractImage, РЅРѕ РѕС‚РєР°Р·С‹РІР°РµС‚СЃСЏ РѕС‚РґР°С‚СЊ Bitmap.
 	//		wsPathBuffer[0] = 0;
 	//		size.cx = nWidth;
 	//		size.cy = nHeight;
 	//		dwFlags = IEIFLAG_SCREEN|IEIFLAG_ASYNC; //|IEIFLAG_QUALITY; // IEIFLAG_ASPECT
 	//		wsPathBuffer[0] = 0;
 	//		hr = pEI->GetLocation(wsPathBuffer, 512, &dwPrior, &size, nBitDepth, &dwFlags);
-	//		// Ошибка 0x8000000a (E_PENDING) теоретически может возвращаться, если pEI запустил извлечение превьюшки
-	//		// в Background thread. И теоретически, он должен поддерживать интерфейс IID_IRunnableTask для его
-	//		// остановки и проверки статуса.
-	//		// Эту ошибку могут возвращать Adobe, SolidEdge (jt), может еще кто...
-	//		// На путь (wsPathBuffer) ориентироваться нельзя (в SE его нет). Вообще непонятно зачем он нужен...
+	//		// РћС€РёР±РєР° 0x8000000a (E_PENDING) С‚РµРѕСЂРµС‚РёС‡РµСЃРєРё РјРѕР¶РµС‚ РІРѕР·РІСЂР°С‰Р°С‚СЊСЃСЏ, РµСЃР»Рё pEI Р·Р°РїСѓСЃС‚РёР» РёР·РІР»РµС‡РµРЅРёРµ РїСЂРµРІСЊСЋС€РєРё
+	//		// РІ Background thread. Р С‚РµРѕСЂРµС‚РёС‡РµСЃРєРё, РѕРЅ РґРѕР»Р¶РµРЅ РїРѕРґРґРµСЂР¶РёРІР°С‚СЊ РёРЅС‚РµСЂС„РµР№СЃ IID_IRunnableTask РґР»СЏ РµРіРѕ
+	//		// РѕСЃС‚Р°РЅРѕРІРєРё Рё РїСЂРѕРІРµСЂРєРё СЃС‚Р°С‚СѓСЃР°.
+	//		// Р­С‚Сѓ РѕС€РёР±РєСѓ РјРѕРіСѓС‚ РІРѕР·РІСЂР°С‰Р°С‚СЊ Adobe, SolidEdge (jt), РјРѕР¶РµС‚ РµС‰Рµ РєС‚Рѕ...
+	//		// РќР° РїСѓС‚СЊ (wsPathBuffer) РѕСЂРёРµРЅС‚РёСЂРѕРІР°С‚СЊСЃСЏ РЅРµР»СЊР·СЏ (РІ SE РµРіРѕ РЅРµС‚). Р’РѕРѕР±С‰Рµ РЅРµРїРѕРЅСЏС‚РЅРѕ Р·Р°С‡РµРј РѕРЅ РЅСѓР¶РµРЅ...
 	//		if (hr==E_PENDING) {
 	//			IRunnableTask* pRun = NULL;
 	//			ULONG lRunState = 0;
 	//			hr = pEI->QueryInterface(IID_IRunnableTask, (void**)&pRun);
-	//			// А вот не экспортит SE этот интерфейс
+	//			// Рђ РІРѕС‚ РЅРµ СЌРєСЃРїРѕСЂС‚РёС‚ SE СЌС‚РѕС‚ РёРЅС‚РµСЂС„РµР№СЃ
 	//			if (SUCCEEDED(hr) && pRun) {
 	//				hr = pRun->Run();
 	//				Sleep(10);

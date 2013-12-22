@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -118,7 +118,7 @@ BOOL CConEmuInside::EnumInsideFindParent(HWND hwnd, LPARAM lParam)
 		DWORD nStyles = GetWindowLong(hwnd, GWL_STYLE);
 		if ((nStyles & nNeedStyles) == nNeedStyles)
 		{
-			// Нашли
+			// РќР°С€Р»Рё
 			gpConEmu->mp_Inside->mn_InsideParentPID = nPID;
 			gpConEmu->mp_Inside->mh_InsideParentRoot = hwnd;
 			return FALSE;
@@ -159,12 +159,12 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 	wchar_t szParent[128];
 	wchar_t szRoot[128];
 	HWND hChild = NULL;
-	// Для WinXP
+	// Р”Р»СЏ WinXP
 	HWND hXpView = NULL, hXpPlace = NULL;
 
 	while ((hChild = FindWindowEx(hFrom, hChild, NULL, NULL)) != NULL)
 	{
-		// Нас интересуют только видимые окна!
+		// РќР°СЃ РёРЅС‚РµСЂРµСЃСѓСЋС‚ С‚РѕР»СЊРєРѕ РІРёРґРёРјС‹Рµ РѕРєРЅР°!
 		if (!IsWindowVisible(hChild))
 			continue;
 
@@ -202,11 +202,11 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 			if ((-10 <= (rcBar.right - rcParent.right))
 				&& ((rcBar.right - rcParent.right) <= 10))
 			{
-				// Нас интересует область, прилепленная к правому-нижнему углу
+				// РќР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ РѕР±Р»Р°СЃС‚СЊ, РїСЂРёР»РµРїР»РµРЅРЅР°СЏ Рє РїСЂР°РІРѕРјСѓ-РЅРёР¶РЅРµРјСѓ СѓРіР»Сѓ
 				hXpPlace = hChild;
 			}
 		}
-		// Путь в этом (hChild) хранится в формате "Address: D:\users\max"
+		// РџСѓС‚СЊ РІ СЌС‚РѕРј (hChild) С…СЂР°РЅРёС‚СЃСЏ РІ С„РѕСЂРјР°С‚Рµ "Address: D:\users\max"
 		else if ((gnOsVer >= 0x600) && lstrcmp(szClass, L"ToolbarWindow32") == 0)
 		{
 			GetClassName(hFrom, szParent, countof(szParent));
@@ -220,8 +220,8 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 
 					mh_InsideParentPath = hChild;
 
-					// Остается ComboBox/Edit, в который можно запихнуть путь, чтобы заставить эксплорер по нему перейти
-					// Но есть проблема. Этот контрол не создается при открытии окна!
+					// РћСЃС‚Р°РµС‚СЃСЏ ComboBox/Edit, РІ РєРѕС‚РѕСЂС‹Р№ РјРѕР¶РЅРѕ Р·Р°РїРёС…РЅСѓС‚СЊ РїСѓС‚СЊ, С‡С‚РѕР±С‹ Р·Р°СЃС‚Р°РІРёС‚СЊ СЌРєСЃРїР»РѕСЂРµСЂ РїРѕ РЅРµРјСѓ РїРµСЂРµР№С‚Рё
+					// РќРѕ РµСЃС‚СЊ РїСЂРѕР±Р»РµРјР°. Р­С‚РѕС‚ РєРѕРЅС‚СЂРѕР» РЅРµ СЃРѕР·РґР°РµС‚СЃСЏ РїСЂРё РѕС‚РєСЂС‹С‚РёРё РѕРєРЅР°!
 
 					return true;
 				}
@@ -245,7 +245,7 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 			if (!mh_InsideParentRel)
 			{
 				_ASSERTE(mh_InsideParentRel && L"ReBar must be found on XP & 2k3");
-				return true; // закончить поиск
+				return true; // Р·Р°РєРѕРЅС‡РёС‚СЊ РїРѕРёСЃРє
 			}
 			mh_InsideParentWND = hXpPlace;
 			mh_InsideParentPath = mh_InsideParentRoot;
@@ -257,7 +257,7 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 	return false;
 }
 
-// Вызывается для инициализации из Settings::LoadSettings()
+// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РґР»СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РёР· Settings::LoadSettings()
 HWND CConEmuInside::InsideFindParent()
 {
 	bool bFirstStep = true;
@@ -276,7 +276,7 @@ HWND CConEmuInside::InsideFindParent()
 			{
 				if (mh_InsideParentRoot == NULL)
 				{
-					// Если еще не искали "корневое" окно
+					// Р•СЃР»Рё РµС‰Рµ РЅРµ РёСЃРєР°Р»Рё "РєРѕСЂРЅРµРІРѕРµ" РѕРєРЅРѕ
 					HWND hParent = mh_InsideParentWND;
 					while (hParent)
 					{
@@ -284,7 +284,7 @@ HWND CConEmuInside::InsideFindParent()
 						hParent = GetParent(hParent);
 					}
 				}
-				// В этом режиме занимаем всю клиентскую область
+				// Р’ СЌС‚РѕРј СЂРµР¶РёРјРµ Р·Р°РЅРёРјР°РµРј РІСЃСЋ РєР»РёРµРЅС‚СЃРєСѓСЋ РѕР±Р»Р°СЃС‚СЊ
 				_ASSERTE(mh_InsideParentRel==NULL);
 				mh_InsideParentRel = NULL;
 			}
@@ -340,9 +340,9 @@ HWND CConEmuInside::InsideFindParent()
 		if (nBtn != IDYES)
 		{
 			mh_InsideParentWND = INSIDE_PARENT_NOT_FOUND;
-			return mh_InsideParentWND; // Закрыться!
+			return mh_InsideParentWND; // Р—Р°РєСЂС‹С‚СЊСЃСЏ!
 		}
-		// Продолжить в обычном режиме
+		// РџСЂРѕРґРѕР»Р¶РёС‚СЊ РІ РѕР±С‹С‡РЅРѕРј СЂРµР¶РёРјРµ
 		m_InsideIntegration = ii_None;
 		mh_InsideParentWND = NULL;
 		goto wrap;
@@ -353,20 +353,20 @@ HWND CConEmuInside::InsideFindParent()
     if ((hExistConEmu = InsideFindConEmu(mh_InsideParentRoot)) != NULL)
     {
     	_ASSERTE(FALSE && "Continue to create tab in existing instance");
-    	// Если в проводнике уже есть ConEmu - открыть в нем новую вкладку
+    	// Р•СЃР»Рё РІ РїСЂРѕРІРѕРґРЅРёРєРµ СѓР¶Рµ РµСЃС‚СЊ ConEmu - РѕС‚РєСЂС‹С‚СЊ РІ РЅРµРј РЅРѕРІСѓСЋ РІРєР»Р°РґРєСѓ
     	gpSetCls->SingleInstanceShowHide = sih_None;
     	LPCWSTR pszCmdLine = GetCommandLine();
     	LPCWSTR pszCmd = StrStrI(pszCmdLine, L" /cmd ");
     	gpConEmu->RunSingleInstance(hExistConEmu, pszCmd ? (pszCmd + 6) : NULL);
 
 		mh_InsideParentWND = INSIDE_PARENT_NOT_FOUND;
-		return mh_InsideParentWND; // Закрыться!
+		return mh_InsideParentWND; // Р—Р°РєСЂС‹С‚СЊСЃСЏ!
     }
 
-	// Теперь нужно найти дочерние окна
-	// 1. в которое будем внедряться
-	// 2. по которому будем позиционироваться
-	// 3. для синхронизации текущего пути
+	// РўРµРїРµСЂСЊ РЅСѓР¶РЅРѕ РЅР°Р№С‚Рё РґРѕС‡РµСЂРЅРёРµ РѕРєРЅР°
+	// 1. РІ РєРѕС‚РѕСЂРѕРµ Р±СѓРґРµРј РІРЅРµРґСЂСЏС‚СЊСЃСЏ
+	// 2. РїРѕ РєРѕС‚РѕСЂРѕРјСѓ Р±СѓРґРµРј РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°С‚СЊСЃСЏ
+	// 3. РґР»СЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё С‚РµРєСѓС‰РµРіРѕ РїСѓС‚Рё
 	InsideFindShellView(mh_InsideParentRoot);
 
 RepeatCheck:
@@ -390,7 +390,7 @@ RepeatCheck:
 		if (nBtn != IDYES)
 		{
 			mh_InsideParentWND = INSIDE_PARENT_NOT_FOUND;
-			return mh_InsideParentWND; // Закрыться!
+			return mh_InsideParentWND; // Р—Р°РєСЂС‹С‚СЊСЃСЏ!
 		}
 		m_InsideIntegration = ii_None;
 		mh_InsideParentRoot = NULL;
@@ -407,7 +407,7 @@ wrap:
 	else
 	{
 		GetWindowThreadProcessId(mh_InsideParentWND, &mn_InsideParentPID);
-		// Для мониторинга папки
+		// Р”Р»СЏ РјРѕРЅРёС‚РѕСЂРёРЅРіР° РїР°РїРєРё
 		GetCurrentDirectory(countof(ms_InsideParentPath), ms_InsideParentPath);
 		int nLen = lstrlen(ms_InsideParentPath);
 		if ((nLen > 3) && (ms_InsideParentPath[nLen-1] == L'\\'))
@@ -495,14 +495,14 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 			UNREFERENCED_PARAMETER(lSendRc);
 
 			mb_InsidePaneWasForced = true;
-			// Подготовим сообщение если не удастся
+			// РџРѕРґРіРѕС‚РѕРІРёРј СЃРѕРѕР±С‰РµРЅРёРµ РµСЃР»Рё РЅРµ СѓРґР°СЃС‚СЃСЏ
 			wcscpy_c(szAddMsg, L"Forcing Explorer to show Tip pane failed.\nShow pane yourself and recall ConEmu.\n\n");
 		}
 	}
 
 	if (nBtn == IDYES)
 	{
-		// Первая проверка
+		// РџРµСЂРІР°СЏ РїСЂРѕРІРµСЂРєР°
 		mh_InsideParentWND = mh_InsideParentRel = NULL;
 		m_InsideIntegration = ii_Auto;
 		InsideFindShellView(mh_InsideParentRoot);
@@ -511,7 +511,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 			bRepeat = true;
 			goto wrap;
 		}
-		// Если не нашли - задержка и повторная проверка
+		// Р•СЃР»Рё РЅРµ РЅР°С€Р»Рё - Р·Р°РґРµСЂР¶РєР° Рё РїРѕРІС‚РѕСЂРЅР°СЏ РїСЂРѕРІРµСЂРєР°
 		Sleep(500);
 		mh_InsideParentWND = mh_InsideParentRel = NULL;
 		m_InsideIntegration = ii_Auto;
@@ -596,7 +596,7 @@ bool CConEmuInside::SendVkKeySequence(HWND hWnd, WORD* pvkKeys)
 		return false;
 	}
 
-	// Только для XP
+	// РўРѕР»СЊРєРѕ РґР»СЏ XP
 	_ASSERTE(gnOsVer < 0x600);
 	HWND hWorker1 = GetDlgItem(hWnd, 0xA005);
 	if (!CheckClassName(hWorker1, L"WorkerW"))
@@ -668,12 +668,12 @@ bool CConEmuInside::SendVkKeySequence(HWND hWnd, WORD* pvkKeys)
 
 void CConEmuInside::InsideParentMonitor()
 {
-	// При смене положения "сплиттеров" - обновить свой размер/положение
+	// РџСЂРё СЃРјРµРЅРµ РїРѕР»РѕР¶РµРЅРёСЏ "СЃРїР»РёС‚С‚РµСЂРѕРІ" - РѕР±РЅРѕРІРёС‚СЊ СЃРІРѕР№ СЂР°Р·РјРµСЂ/РїРѕР»РѕР¶РµРЅРёРµ
 	InsideUpdatePlacement();
 
 	if (mb_InsideSynchronizeCurDir)
 	{
-		// При смене папки в проводнике
+		// РџСЂРё СЃРјРµРЅРµ РїР°РїРєРё РІ РїСЂРѕРІРѕРґРЅРёРєРµ
 		InsideUpdateDir();
 	}
 }
@@ -690,30 +690,30 @@ void CConEmuInside::InsideUpdateDir()
 		{
 			if (gnOsVer < 0x600)
 			{
-				// Если в заголовке нет полного пути
+				// Р•СЃР»Рё РІ Р·Р°РіРѕР»РѕРІРєРµ РЅРµС‚ РїРѕР»РЅРѕРіРѕ РїСѓС‚Рё
 				if (wcschr(szCurText, L'\\') == NULL)
 				{
-					// Сразу выходим
+					// РЎСЂР°Р·Сѓ РІС‹С…РѕРґРёРј
 					return;
 				}
 			}
 
 			LPCWSTR pszPath = NULL;
-			// Если тут уже путь - то префикс не отрезать
-            if ((szCurText[0] == L'\\' && szCurText[1] == L'\\' && szCurText[2]) // сетевой путь
-            	|| (szCurText[0] && szCurText[1] == L':' && szCurText[2] == L'\\' /*&& szCurText[3]*/)) // Путь через букву диска
+			// Р•СЃР»Рё С‚СѓС‚ СѓР¶Рµ РїСѓС‚СЊ - С‚Рѕ РїСЂРµС„РёРєСЃ РЅРµ РѕС‚СЂРµР·Р°С‚СЊ
+            if ((szCurText[0] == L'\\' && szCurText[1] == L'\\' && szCurText[2]) // СЃРµС‚РµРІРѕР№ РїСѓС‚СЊ
+            	|| (szCurText[0] && szCurText[1] == L':' && szCurText[2] == L'\\' /*&& szCurText[3]*/)) // РџСѓС‚СЊ С‡РµСЂРµР· Р±СѓРєРІСѓ РґРёСЃРєР°
         	{
         		pszPath = szCurText;
         	}
         	else
         	{
-        		// Иначе - отрезать префикс. На английской винде это "Address: D:\dir1\dir2"
+        		// РРЅР°С‡Рµ - РѕС‚СЂРµР·Р°С‚СЊ РїСЂРµС„РёРєСЃ. РќР° Р°РЅРіР»РёР№СЃРєРѕР№ РІРёРЅРґРµ СЌС‚Рѕ "Address: D:\dir1\dir2"
 				pszPath = wcschr(szCurText, L':');
         		if (pszPath)
         			pszPath = SkipNonPrintable(pszPath+1);
         	}
 
-        	// Если успешно - сравниваем с ms_InsideParentPath
+        	// Р•СЃР»Рё СѓСЃРїРµС€РЅРѕ - СЃСЂР°РІРЅРёРІР°РµРј СЃ ms_InsideParentPath
         	if (pszPath && *pszPath && (lstrcmpi(ms_InsideParentPath, pszPath) != 0))
         	{
         		int nLen = lstrlen(pszPath);
@@ -723,9 +723,9 @@ void CConEmuInside::InsideUpdateDir()
         		}
         		else //if (VCon->RCon())
         		{
-        			// Запомнить для сравнения
+        			// Р—Р°РїРѕРјРЅРёС‚СЊ РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ
         			lstrcpyn(ms_InsideParentPath, pszPath, countof(ms_InsideParentPath));
-        			// Подготовить команду для выполнения в Shell
+        			// РџРѕРґРіРѕС‚РѕРІРёС‚СЊ РєРѕРјР°РЅРґСѓ РґР»СЏ РІС‹РїРѕР»РЅРµРЅРёСЏ РІ Shell
         			VCon->RCon()->PostPromptCmd(true, pszPath);
         		}
         	}
@@ -744,7 +744,7 @@ void CConEmuInside::InsideUpdatePlacement()
 	if ((m_InsideIntegration == ii_Explorer) && mh_InsideParentRel
 		&& (!IsWindow(mh_InsideParentRel) || !IsWindowVisible(mh_InsideParentRel)))
 	{
-		//Vista: Проводник мог пересоздать окошко со списком файлов, его нужно найти повторно
+		//Vista: РџСЂРѕРІРѕРґРЅРёРє РјРѕРі РїРµСЂРµСЃРѕР·РґР°С‚СЊ РѕРєРѕС€РєРѕ СЃРѕ СЃРїРёСЃРєРѕРј С„Р°Р№Р»РѕРІ, РµРіРѕ РЅСѓР¶РЅРѕ РЅР°Р№С‚Рё РїРѕРІС‚РѕСЂРЅРѕ
 		HWND hChild = NULL;
 		bool bFound = false;
 		while (((hChild = FindWindowEx(mh_InsideParentWND, hChild, NULL, NULL)) != NULL))
@@ -775,11 +775,11 @@ void CConEmuInside::InsideUpdatePlacement()
 		if (memcmp(&mrc_InsideParent, &rcParent, sizeof(rcParent))
 			|| ((m_InsideIntegration != ii_Simple) && memcmp(&mrc_InsideParentRel, &rcRelative, sizeof(rcRelative))))
 		{
-			// Расчитать
+			// Р Р°СЃС‡РёС‚Р°С‚СЊ
 			RECT rcWnd = {}; // GetDefaultRect();
 			if (GetInsideRect(&rcWnd))
 			{
-				// Запомнить и Подвинуть
+				// Р—Р°РїРѕРјРЅРёС‚СЊ Рё РџРѕРґРІРёРЅСѓС‚СЊ
 				gpConEmu->UpdateInsideRect(rcWnd);
 			}
 		}
@@ -821,8 +821,8 @@ bool CConEmuInside::GetInsideRect(RECT* prWnd)
 		// Windows 7
 		else if ((rcParent.bottom - rcRelative.bottom) >= 100)
 		{
-			// Предпочтительно
-			// Далее - ветвимся по OS
+			// РџСЂРµРґРїРѕС‡С‚РёС‚РµР»СЊРЅРѕ
+			// Р”Р°Р»РµРµ - РІРµС‚РІРёРјСЃСЏ РїРѕ OS
 			if (gnOsVer < 0x600)
 			{
 				rcWnd = MakeRect(rcRelative.left, rcRelative.bottom + 4, rcParent.right, rcParent.bottom);
@@ -838,7 +838,7 @@ bool CConEmuInside::GetInsideRect(RECT* prWnd)
 		}
 		else
 		{
-			TODO("Другие системы и проверки на валидность");
+			TODO("Р”СЂСѓРіРёРµ СЃРёСЃС‚РµРјС‹ Рё РїСЂРѕРІРµСЂРєРё РЅР° РІР°Р»РёРґРЅРѕСЃС‚СЊ");
 			rcWnd = MakeRect(rcParent.left, rcParent.bottom - 100, rcParent.right, rcParent.bottom);
 		}
 	}

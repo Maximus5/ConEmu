@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2011 Maximus5
 All rights reserved.
@@ -217,7 +217,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //			{
 //				if ((mn_DataPos+cb)>mn_DataSize)
 //				{
-//					// Нужно увеличить буфер, но сохранить текущий размер
+//					// РќСѓР¶РЅРѕ СѓРІРµР»РёС‡РёС‚СЊ Р±СѓС„РµСЂ, РЅРѕ СЃРѕС…СЂР°РЅРёС‚СЊ С‚РµРєСѓС‰РёР№ СЂР°Р·РјРµСЂ
 //					DWORD lLastLen = mn_DataLen;
 //					ULARGE_INTEGER lNewSize; lNewSize.QuadPart = mn_DataSize + max((cb+1024), 256*1024);
 //
@@ -227,10 +227,10 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //					if (FAILED(SetSize(lNewSize)))
 //						return S_FALSE;
 //
-//					mn_DataLen = lLastLen; // Вернули текущий размер
+//					mn_DataLen = lLastLen; // Р’РµСЂРЅСѓР»Рё С‚РµРєСѓС‰РёР№ СЂР°Р·РјРµСЂ
 //				}
 //
-//				// Теперь можно писать в буфер
+//				// РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ РїРёСЃР°С‚СЊ РІ Р±СѓС„РµСЂ
 //				memmove(mp_Data+mn_DataPos, pv, cb);
 //				dwWritten = cb;
 //				mn_DataPos += cb;
@@ -317,7 +317,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //
 //				mn_DataLen = libNewSize.LowPart;
 //
-//				if (mn_DataPos>mn_DataLen)  // Если размер уменьшили - проверить позицию
+//				if (mn_DataPos>mn_DataLen)  // Р•СЃР»Рё СЂР°Р·РјРµСЂ СѓРјРµРЅСЊС€РёР»Рё - РїСЂРѕРІРµСЂРёС‚СЊ РїРѕР·РёС†РёСЋ
 //					mn_DataPos = mn_DataLen;
 //
 //				hr = S_OK;
@@ -504,7 +504,7 @@ BITMAPFILEHEADER* LoadImageGdip(LPCWSTR asImgPath)
 		if (pBkImgData)
 		{
 			BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(pBkImgData+1);
-			// Заполняем данными
+			// Р—Р°РїРѕР»РЅСЏРµРј РґР°РЅРЅС‹РјРё
 			pBkImgData->bfType = 0x4D42/*BM*/;
 			pBkImgData->bfSize = (DWORD)nAllSize;
 			pBkImgData->bfReserved1 = pBkImgData->bfReserved2 = 0;
@@ -578,7 +578,7 @@ BITMAPFILEHEADER* CreateSolidImage(COLORREF clr, UINT lWidth, UINT lHeight)
 		if (pBkImgData)
 		{
 			BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(pBkImgData+1);
-			// Заполняем данными
+			// Р—Р°РїРѕР»РЅСЏРµРј РґР°РЅРЅС‹РјРё
 			pBkImgData->bfType = 0x4D42/*BM*/;
 			pBkImgData->bfSize = (DWORD)nAllSize;
 			pBkImgData->bfReserved1 = pBkImgData->bfReserved2 = 0;
@@ -685,7 +685,7 @@ BITMAPFILEHEADER* LoadImageEx(LPCWSTR asImgPath, BY_HANDLE_FILE_INFORMATION& inf
 
 		if (!pBkImgData && lbFileIsValid && !lbIsBmpFile)
 		{
-			// Если это не BMP - попытаться через GDI+
+			// Р•СЃР»Рё СЌС‚Рѕ РЅРµ BMP - РїРѕРїС‹С‚Р°С‚СЊСЃСЏ С‡РµСЂРµР· GDI+
 			pBkImgData = LoadImageGdip(asImgPath);
 		}
 	}

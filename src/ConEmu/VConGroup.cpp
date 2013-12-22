@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -54,13 +54,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static CVirtualConsole* gp_VCon[MAX_CONSOLE_COUNT] = {};
 
 static CVirtualConsole* gp_VActive = NULL;
-//static CVirtualConsole* gp_GroupPostCloseActivate = NULL; // Если открыты сплиты - то при закрытии одного pane - остаться в активной группе
+//static CVirtualConsole* gp_GroupPostCloseActivate = NULL; // Р•СЃР»Рё РѕС‚РєСЂС‹С‚С‹ СЃРїР»РёС‚С‹ - С‚Рѕ РїСЂРё Р·Р°РєСЂС‹С‚РёРё РѕРґРЅРѕРіРѕ pane - РѕСЃС‚Р°С‚СЊСЃСЏ РІ Р°РєС‚РёРІРЅРѕР№ РіСЂСѓРїРїРµ
 static bool gb_CreatingActive = false, gb_SkipSyncSize = false;
 static UINT gn_CreateGroupStartVConIdx = 0;
 static bool gb_InCreateGroup = false;
 
 static CRITICAL_SECTION gcs_VGroups;
-static CVConGroup* gp_VGroups[MAX_CONSOLE_COUNT*2] = {}; // на каждое разбиение добавляется +Parent
+static CVConGroup* gp_VGroups[MAX_CONSOLE_COUNT*2] = {}; // РЅР° РєР°Р¶РґРѕРµ СЂР°Р·Р±РёРµРЅРёРµ РґРѕР±Р°РІР»СЏРµС‚СЃСЏ +Parent
 
 //CVirtualConsole* CVConGroup::mp_GrpVCon[MAX_CONSOLE_COUNT] = {};
 
@@ -151,10 +151,10 @@ void CVConGroup::Deinitialize()
 }
 
 
-// Вызывается при создании нового таба, без разбивки
+// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё СЃРѕР·РґР°РЅРёРё РЅРѕРІРѕРіРѕ С‚Р°Р±Р°, Р±РµР· СЂР°Р·Р±РёРІРєРё
 CVConGroup* CVConGroup::CreateVConGroup()
 {
-	_ASSERTE(gpConEmu->isMainThread()); // во избежание сбоев в индексах?
+	_ASSERTE(gpConEmu->isMainThread()); // РІРѕ РёР·Р±РµР¶Р°РЅРёРµ СЃР±РѕРµРІ РІ РёРЅРґРµРєСЃР°С…?
 	CVConGroup* pGroup = new CVConGroup(NULL);
 	return pGroup;
 }
@@ -173,14 +173,14 @@ CVConGroup* CVConGroup::SplitVConGroup(RConStartArgs::SplitType aSplitType /*eSp
 		return NULL;
 	}
 	
-	// Разбивать можно только то, что еще не разбито ("листья")
+	// Р Р°Р·Р±РёРІР°С‚СЊ РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ С‚Рѕ, С‡С‚Рѕ РµС‰Рµ РЅРµ СЂР°Р·Р±РёС‚Рѕ ("Р»РёСЃС‚СЊСЏ")
 	if (m_SplitType != RConStartArgs::eSplitNone)
 	{
 		MBoxAssert(m_SplitType == RConStartArgs::eSplitNone && "Can't split this pane");
 		return CreateVConGroup();
 	}
 	
-	// Создать две пустых панели без привязки
+	// РЎРѕР·РґР°С‚СЊ РґРІРµ РїСѓСЃС‚С‹С… РїР°РЅРµР»Рё Р±РµР· РїСЂРёРІСЏР·РєРё
 	_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
 	mp_Grp1 = new CVConGroup(this);
 	mp_Grp2 = new CVConGroup(this);
@@ -192,15 +192,15 @@ CVConGroup* CVConGroup::SplitVConGroup(RConStartArgs::SplitType aSplitType /*eSp
 		return NULL;
 	}
 
-	// Параметры разбиения
+	// РџР°СЂР°РјРµС‚СЂС‹ СЂР°Р·Р±РёРµРЅРёСЏ
 	m_SplitType = aSplitType; // eSplitNone/eSplitHorz/eSplitVert
 	mn_SplitPercent10 = max(1,min(anPercent10,999)); // (0.1% - 99.9%)*10
 	mrc_Splitter = MakeRect(0,0);
 
-	// Перенести в mp_Grp1 текущий VCon, mp_Grp2 - будет новый пустой (пока) панелью
+	// РџРµСЂРµРЅРµСЃС‚Рё РІ mp_Grp1 С‚РµРєСѓС‰РёР№ VCon, mp_Grp2 - Р±СѓРґРµС‚ РЅРѕРІС‹Р№ РїСѓСЃС‚РѕР№ (РїРѕРєР°) РїР°РЅРµР»СЊСЋ
 	mp_Grp1->mp_Item = mp_Item;
 	mp_Item->mp_Group = mp_Grp1;
-	mp_Item = NULL; // Отвязываемся от VCon, его обработкой теперь занимается mp_Grp1
+	mp_Item = NULL; // РћС‚РІСЏР·С‹РІР°РµРјСЃСЏ РѕС‚ VCon, РµРіРѕ РѕР±СЂР°Р±РѕС‚РєРѕР№ С‚РµРїРµСЂСЊ Р·Р°РЅРёРјР°РµС‚СЃСЏ mp_Grp1
 
 	SetResizeFlags();
 
@@ -217,7 +217,7 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 		return NULL;
 	}
 
-	_ASSERTE(gpConEmu->isMainThread()); // во избежание сбоев в индексах?
+	_ASSERTE(gpConEmu->isMainThread()); // РІРѕ РёР·Р±РµР¶Р°РЅРёРµ СЃР±РѕРµРІ РІ РёРЅРґРµРєСЃР°С…?
 
 	if (args->pszSpecialCmd)
 	{
@@ -233,7 +233,7 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 		if (nRc != IDC_START)
 			return NULL;
 
-		// После диалога могли измениться параметры группы
+		// РџРѕСЃР»Рµ РґРёР°Р»РѕРіР° РјРѕРіР»Рё РёР·РјРµРЅРёС‚СЊСЃСЏ РїР°СЂР°РјРµС‚СЂС‹ РіСЂСѓРїРїС‹
 	}
 
 	void* pActiveGroupVConPtr = NULL;
@@ -297,14 +297,14 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 CVConGroup::CVConGroup(CVConGroup *apParent)
 {
 	mb_Released = false;
-	mp_Item = NULL/*apVCon*/;     // консоль, к которой привязан этот "Pane"
+	mp_Item = NULL/*apVCon*/;     // РєРѕРЅСЃРѕР»СЊ, Рє РєРѕС‚РѕСЂРѕР№ РїСЂРёРІСЏР·Р°РЅ СЌС‚РѕС‚ "Pane"
 	//apVCon->mp_Group = this;
 	m_SplitType = RConStartArgs::eSplitNone;
-	mn_SplitPercent10 = 500; // Default - пополам
+	mn_SplitPercent10 = 500; // Default - РїРѕРїРѕР»Р°Рј
 	mrc_Full = MakeRect(0,0);
 	mrc_Splitter = MakeRect(0,0);
-	mp_Grp1 = mp_Grp2 = NULL; // Ссылки на "дочерние" панели
-	mp_Parent = apParent; // Ссылка на "родительскую" панель
+	mp_Grp1 = mp_Grp2 = NULL; // РЎСЃС‹Р»РєРё РЅР° "РґРѕС‡РµСЂРЅРёРµ" РїР°РЅРµР»Рё
+	mp_Parent = apParent; // РЎСЃС‹Р»РєР° РЅР° "СЂРѕРґРёС‚РµР»СЊСЃРєСѓСЋ" РїР°РЅРµР»СЊ
 	mp_ActiveGroupVConPtr = NULL;
 
 
@@ -339,9 +339,9 @@ void CVConGroup::RemoveGroup()
 	if (InterlockedExchange(&mb_Released, TRUE))
 		return;
 
-	_ASSERTE(gpConEmu->isMainThread()); // во избежание сбоев в индексах?
+	_ASSERTE(gpConEmu->isMainThread()); // РІРѕ РёР·Р±РµР¶Р°РЅРёРµ СЃР±РѕРµРІ РІ РёРЅРґРµРєСЃР°С…?
 
-	// Не должно быть дочерних панелей
+	// РќРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РґРѕС‡РµСЂРЅРёС… РїР°РЅРµР»РµР№
 	_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
 
 
@@ -349,8 +349,8 @@ void CVConGroup::RemoveGroup()
 
 	if (mp_Parent)
 	{
-		// Если есть родитель - то нужно перекинуть "AnotherPane" в родителя,
-		// чтобы не было разрывов в дереве панелей.
+		// Р•СЃР»Рё РµСЃС‚СЊ СЂРѕРґРёС‚РµР»СЊ - С‚Рѕ РЅСѓР¶РЅРѕ РїРµСЂРµРєРёРЅСѓС‚СЊ "AnotherPane" РІ СЂРѕРґРёС‚РµР»СЏ,
+		// С‡С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ СЂР°Р·СЂС‹РІРѕРІ РІ РґРµСЂРµРІРµ РїР°РЅРµР»РµР№.
 		CVConGroup* p = GetAnotherGroup();
 		if (!p)
 		{
@@ -380,7 +380,7 @@ void CVConGroup::RemoveGroup()
 
 CVConGroup::~CVConGroup()
 {
-	_ASSERTE(gpConEmu->isMainThread()); // во избежание сбоев в индексах?
+	_ASSERTE(gpConEmu->isMainThread()); // РІРѕ РёР·Р±РµР¶Р°РЅРёРµ СЃР±РѕРµРІ РІ РёРЅРґРµРєСЃР°С…?
 
 	if (!mb_Released)
 		RemoveGroup();
@@ -469,10 +469,10 @@ void CVConGroup::SetResizeFlags()
 
 void CVConGroup::MoveToParent(CVConGroup* apParent)
 {
-	// По идее пока только так.
+	// РџРѕ РёРґРµРµ РїРѕРєР° С‚РѕР»СЊРєРѕ С‚Р°Рє.
 	_ASSERTE(apParent && apParent == mp_Parent);
 
-	// Не должно быть И VCon и разбиения на группы
+	// РќРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ Р VCon Рё СЂР°Р·Р±РёРµРЅРёСЏ РЅР° РіСЂСѓРїРїС‹
 	_ASSERTE((mp_Item!=NULL) != (mp_Grp1!=NULL || mp_Grp2!=NULL));
 
 	apParent->SetResizeFlags();
@@ -483,10 +483,10 @@ void CVConGroup::MoveToParent(CVConGroup* apParent)
 	apParent->mrc_Full = mrc_Full;
 	apParent->mrc_Splitter = mrc_Splitter;
 
-	// Ссылки на "дочерние" панели
+	// РЎСЃС‹Р»РєРё РЅР° "РґРѕС‡РµСЂРЅРёРµ" РїР°РЅРµР»Рё
 	apParent->mp_Grp1 = mp_Grp1;
 	apParent->mp_Grp2 = mp_Grp2;
-	// Ссылки на "родительскую" панель
+	// РЎСЃС‹Р»РєРё РЅР° "СЂРѕРґРёС‚РµР»СЊСЃРєСѓСЋ" РїР°РЅРµР»СЊ
 	if (mp_Grp1)
 	{
 		mp_Grp1->mp_Parent = apParent;
@@ -503,7 +503,7 @@ void CVConGroup::MoveToParent(CVConGroup* apParent)
 	{
 		_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
 		mp_Item->mp_Group = apParent;
-		mp_Item = NULL; // Отвязываемся от VCon, его обработкой теперь занимается mp_Grp1
+		mp_Item = NULL; // РћС‚РІСЏР·С‹РІР°РµРјСЃСЏ РѕС‚ VCon, РµРіРѕ РѕР±СЂР°Р±РѕС‚РєРѕР№ С‚РµРїРµСЂСЊ Р·Р°РЅРёРјР°РµС‚СЃСЏ mp_Grp1
 	}
 
 	mp_Parent = NULL;
@@ -671,7 +671,7 @@ void CVConGroup::DestroyAllVCon()
 
 void CVConGroup::OnDestroyConEmu()
 {
-	// Нужно проверить, вдруг окно закрылось без нашего ведома (InsideIntegration)
+	// РќСѓР¶РЅРѕ РїСЂРѕРІРµСЂРёС‚СЊ, РІРґСЂСѓРі РѕРєРЅРѕ Р·Р°РєСЂС‹Р»РѕСЃСЊ Р±РµР· РЅР°С€РµРіРѕ РІРµРґРѕРјР° (InsideIntegration)
 	for (size_t i = countof(gp_VCon); i--;)
 	{
 		if (gp_VCon[i] && gp_VCon[i]->RCon())
@@ -732,24 +732,24 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 			}
 			else
 			{
-				// Тут нас интересует только X/Y
+				// РўСѓС‚ РЅР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ С‚РѕР»СЊРєРѕ X/Y
 				lbPosChanged = memcmp(&rcCurCon, &rcDC, sizeof(POINT))!=0
 					|| memcmp(&rcCurBack, &rcNewCon, sizeof(RECT))!=0;
 			}
 
-			// Двигаем/ресайзим
+			// Р”РІРёРіР°РµРј/СЂРµСЃР°Р№Р·РёРј
 			if (lbPosChanged)
 			{
 				VConI->SetVConSizePos(rcNewCon, bVisible);
 				//if (bVisible)
 				//{
-				//	// Двигаем/ресайзим окошко DC
+				//	// Р”РІРёРіР°РµРј/СЂРµСЃР°Р№Р·РёРј РѕРєРѕС€РєРѕ DC
 				//	MoveWindow(hWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
 				//	VConI->Invalidate();
 				//}
 				//else
 				//{
-				//	// Двигаем окошко DC
+				//	// Р”РІРёРіР°РµРј РѕРєРѕС€РєРѕ DC
 				//	SetWindowPos(hWndDC, NULL, rcNewCon.left, rcNewCon.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 				//}
 			}
@@ -788,7 +788,7 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 	int nCellSize = (m_SplitType == RConStartArgs::eSplitVert) ? gpSetCls->FontHeight() : gpSetCls->FontWidth();
 	int nMinCells = (m_SplitType == RConStartArgs::eSplitVert) ? MIN_CON_HEIGHT : MIN_CON_WIDTH;
 
-	// Нашли? Корректируем mn_SplitPercent10
+	// РќР°С€Р»Рё? РљРѕСЂСЂРµРєС‚РёСЂСѓРµРј mn_SplitPercent10
 	if (mp_Grp1 && mp_Grp1->mp_Item && mp_Grp2 && mp_Grp2->mp_Item && (nCellSize > 0))
 	{
 		RECT rcCon1 = {0}, rcCon2 = {0}, rcSplitter = {0};
@@ -820,9 +820,9 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 			}
 			_ASSERTE(((iSize1+iSize2)==(iNewSize1+iNewSize2)) && ((iNewSize1+iNewSize2)>0));
 
-			// Считаем новый процент
+			// РЎС‡РёС‚Р°РµРј РЅРѕРІС‹Р№ РїСЂРѕС†РµРЅС‚
 			int nNewSplitPercent10 = (iNewSize1 * 1000 / (iNewSize1 + iNewSize2));
-			// Из-за округлений - могли "несмочь"
+			// РР·-Р·Р° РѕРєСЂСѓРіР»РµРЅРёР№ - РјРѕРіР»Рё "РЅРµСЃРјРѕС‡СЊ"
 			//if (nNewSplitPercent10 != mn_SplitPercent10)
 			{
 				int nOldPercent = mn_SplitPercent10;
@@ -836,7 +836,7 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 
 				bChanged = (m_SplitType == RConStartArgs::eSplitVert) ? (rcNewSplitter.top != rcSplitter.top) : (rcNewSplitter.left != rcSplitter.left);
 
-				// Из-за округлений - могли "несмочь"
+				// РР·-Р·Р° РѕРєСЂСѓРіР»РµРЅРёР№ - РјРѕРіР»Рё "РЅРµСЃРјРѕС‡СЊ"
 				if (!bChanged)
 				{
 					int nTries = 20;
@@ -847,15 +847,15 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 					{
 						nNewSplitPercent10 = max(1,min(mn_SplitPercent10+nDiff,999)); // (0.1% - 99.9%)*10
 						if (nNewSplitPercent10 == mn_SplitPercent10)
-							break; // дальше некуда
+							break; // РґР°Р»СЊС€Рµ РЅРµРєСѓРґР°
 						mn_SplitPercent10 = nNewSplitPercent10;
-						// Пробуем еще раз
+						// РџСЂРѕР±СѓРµРј РµС‰Рµ СЂР°Р·
 						CalcSplitRect(mrc_Full, rcNewCon1, rcNewCon2, rcNewSplitter);
 						bChanged = (m_SplitType == RConStartArgs::eSplitVert) ? (rcNewSplitter.top != rcSplitter.top) : (rcNewSplitter.left != rcSplitter.left);
 					}
 				}
 
-				// Если размер консоли окажется менее минимального - откатим
+				// Р•СЃР»Рё СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё РѕРєР°Р¶РµС‚СЃСЏ РјРµРЅРµРµ РјРёРЅРёРјР°Р»СЊРЅРѕРіРѕ - РѕС‚РєР°С‚РёРј
 				if (((m_SplitType == RConStartArgs::eSplitVert)
 						&& (((rcNewCon1.bottom-rcNewCon1.top) < (iPadSize+nCellSize*nMinCells))
 							|| ((rcNewCon2.bottom-rcNewCon2.top) < (iPadSize+nCellSize*nMinCells))))
@@ -896,13 +896,13 @@ bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int 
 
 	if (iHorz != 0)
 	{
-		// Нужно найти ближайшую группу, разделенную слева-направо
+		// РќСѓР¶РЅРѕ РЅР°Р№С‚Рё Р±Р»РёР¶Р°Р№С€СѓСЋ РіСЂСѓРїРїСѓ, СЂР°Р·РґРµР»РµРЅРЅСѓСЋ СЃР»РµРІР°-РЅР°РїСЂР°РІРѕ
 		CVConGroup* ps = p;
 		while (ps && (ps->m_SplitType != RConStartArgs::eSplitHorz))
 		{
 			ps = ps->mp_Parent;
 		}
-		// Нашли? Корректируем mn_SplitPercent10
+		// РќР°С€Р»Рё? РљРѕСЂСЂРµРєС‚РёСЂСѓРµРј mn_SplitPercent10
 		if (ps && ps->ReSizeSplitter(iHorz))
 		{
 			bChanged = true;
@@ -911,13 +911,13 @@ bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int 
 
 	if (iVert != 0)
 	{
-		// Нужно найти ближайшую группу, разделенную сверху-вниз
+		// РќСѓР¶РЅРѕ РЅР°Р№С‚Рё Р±Р»РёР¶Р°Р№С€СѓСЋ РіСЂСѓРїРїСѓ, СЂР°Р·РґРµР»РµРЅРЅСѓСЋ СЃРІРµСЂС…Сѓ-РІРЅРёР·
 		CVConGroup* ps = p;
 		while (ps && (ps->m_SplitType != RConStartArgs::eSplitVert))
 		{
 			ps = ps->mp_Parent;
 		}
-		// Нашли? Корректируем mn_SplitPercent10
+		// РќР°С€Р»Рё? РљРѕСЂСЂРµРєС‚РёСЂСѓРµРј mn_SplitPercent10
 		if (ps && ps->ReSizeSplitter(iVert))
 		{
 			bChanged = true;
@@ -934,7 +934,7 @@ bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int 
 	return bChanged;
 }
 
-// Разбиение в координатах DC (pixels)
+// Р Р°Р·Р±РёРµРЅРёРµ РІ РєРѕРѕСЂРґРёРЅР°С‚Р°С… DC (pixels)
 void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter)
 {
 	rcCon1 = rcNewCon;
@@ -947,7 +947,7 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 		return;
 	}
 
-	// Заблокируем заранее
+	// Р—Р°Р±Р»РѕРєРёСЂСѓРµРј Р·Р°СЂР°РЅРµРµ
 	CVConGuard VCon1(mp_Grp1 ? mp_Grp1->mp_Item : NULL);
 	CVConGuard VCon2(mp_Grp2 ? mp_Grp2->mp_Item : NULL);
 
@@ -958,7 +958,7 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 		return;
 	}
 
-	WARNING("Не учитывается gpSet->nCenterConsolePad?");
+	WARNING("РќРµ СѓС‡РёС‚С‹РІР°РµС‚СЃСЏ gpSet->nCenterConsolePad?");
 
 	UINT nSplit = max(1,min(mn_SplitPercent10,999));
 	//UINT nPadSizeX = 0, nPadSizeY = 0;
@@ -974,7 +974,7 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 		_ASSERTE(rcScroll.left==0);
 		if (rcScroll.right)
 		{
-			_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // сюда должны попадать только при включенном постоянно скролле
+			_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // СЃСЋРґР° РґРѕР»Р¶РЅС‹ РїРѕРїР°РґР°С‚СЊ С‚РѕР»СЊРєРѕ РїСЂРё РІРєР»СЋС‡РµРЅРЅРѕРј РїРѕСЃС‚РѕСЏРЅРЅРѕ СЃРєСЂРѕР»Р»Рµ
 			if (nWidth > (UINT)(rcScroll.right * 2))
 				nWidth -= rcScroll.right * 2;
 			else
@@ -1020,7 +1020,7 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 		_ASSERTE(rcScroll.top==0);
 		if (rcScroll.bottom)
 		{
-			_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // сюда должны попадать только при включенном постоянно скролле
+			_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // СЃСЋРґР° РґРѕР»Р¶РЅС‹ РїРѕРїР°РґР°С‚СЊ С‚РѕР»СЊРєРѕ РїСЂРё РІРєР»СЋС‡РµРЅРЅРѕРј РїРѕСЃС‚РѕСЏРЅРЅРѕ СЃРєСЂРѕР»Р»Рµ
 			if (nHeight > (UINT)(rcScroll.bottom * 2))
 				nHeight -= rcScroll.bottom * 2;
 			else
@@ -1135,7 +1135,7 @@ void CVConGroup::MoveAllVCon(CVirtualConsole* pVConCurrent, RECT rcNewCon)
 	CVConGroup* pRoots[MAX_CONSOLE_COUNT+1] = {pGroup};
 	CVConGuard VCon(pVConCurrent);
 
-	WARNING("DoubleView и не только: Переделать. Ресайз должен жить в ConEmuChild/VConGroup!");
+	WARNING("DoubleView Рё РЅРµ С‚РѕР»СЊРєРѕ: РџРµСЂРµРґРµР»Р°С‚СЊ. Р РµСЃР°Р№Р· РґРѕР»Р¶РµРЅ Р¶РёС‚СЊ РІ ConEmuChild/VConGroup!");
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -1144,7 +1144,7 @@ void CVConGroup::MoveAllVCon(CVirtualConsole* pVConCurrent, RECT rcNewCon)
 			break;
 		if (VConI.VCon() == pVConCurrent)
 			continue;
-		// Обрабатывать "по группам", а не "по консолям"
+		// РћР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ "РїРѕ РіСЂСѓРїРїР°Рј", Р° РЅРµ "РїРѕ РєРѕРЅСЃРѕР»СЏРј"
 		bool bProcessed = false;
 		CVConGroup* pCurGroup = GetRootOfVCon(VConI.VCon());
 		size_t j = 0;
@@ -1157,44 +1157,44 @@ void CVConGroup::MoveAllVCon(CVirtualConsole* pVConCurrent, RECT rcNewCon)
 			j++;
 		}
 		if (bProcessed)
-			continue; // уже
-		pRoots[j] = pCurGroup; // Запомним, однократно
+			continue; // СѓР¶Рµ
+		pRoots[j] = pCurGroup; // Р—Р°РїРѕРјРЅРёРј, РѕРґРЅРѕРєСЂР°С‚РЅРѕ
 
-		// Двигаем окошко DC
+		// Р”РІРёРіР°РµРј РѕРєРѕС€РєРѕ DC
 		pCurGroup->RepositionVCon(rcNewCon, false);
 
-		//// Двигаем
+		//// Р”РІРёРіР°РµРј
 		//HWND hWndDC = VConI->GetView();
 		//if (hWndDC)
 		//{
-		//	WARNING("DoubleView и не только: Переделать. Ресайз должен жить в ConEmuChild!");
+		//	WARNING("DoubleView Рё РЅРµ С‚РѕР»СЊРєРѕ: РџРµСЂРµРґРµР»Р°С‚СЊ. Р РµСЃР°Р№Р· РґРѕР»Р¶РµРЅ Р¶РёС‚СЊ РІ ConEmuChild!");
 		//	GetWindowRect(hWndDC, &rcCurCon);
 		//	MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcCurCon, 2);
-		//	// Тут нас интересует только X/Y
+		//	// РўСѓС‚ РЅР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ С‚РѕР»СЊРєРѕ X/Y
 		//	lbPosChanged = memcmp(&rcCurCon, &rcNewCon, sizeof(POINT))!=0;
 
 		//	if (lbPosChanged)
 		//	{
-		//		// Двигаем окошко DC
+		//		// Р”РІРёРіР°РµРј РѕРєРѕС€РєРѕ DC
 		//		SetWindowPos(hWndDC, NULL, rcNewCon.left, rcNewCon.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 		//	}
 		//}
 	}
 
-	// Двигаем/ресайзим окошко DC
+	// Р”РІРёРіР°РµРј/СЂРµСЃР°Р№Р·РёРј РѕРєРѕС€РєРѕ DC
 	pGroup->RepositionVCon(rcNewCon, true);
 
 	//HWND hWndDC = pVConCurrent ? pVConCurrent->GetView() : NULL;
 	//if (hWndDC)
 	//{
-	//	WARNING("DoubleView и не только: Переделать. Ресайз должен жить в ConEmuChild!");
+	//	WARNING("DoubleView Рё РЅРµ С‚РѕР»СЊРєРѕ: РџРµСЂРµРґРµР»Р°С‚СЊ. Р РµСЃР°Р№Р· РґРѕР»Р¶РµРЅ Р¶РёС‚СЊ РІ ConEmuChild!");
 	//	GetWindowRect(hWndDC, &rcCurCon);
 	//	MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcCurCon, 2);
 	//	lbPosChanged = memcmp(&rcCurCon, &rcNewCon, sizeof(RECT))!=0;
 
 	//	if (lbPosChanged)
 	//	{
-	//		// Двигаем/ресайзим окошко DC
+	//		// Р”РІРёРіР°РµРј/СЂРµСЃР°Р№Р·РёРј РѕРєРѕС€РєРѕ DC
 	//		MoveWindow(hWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
 	//		pVConCurrent->Invalidate();
 	//	}
@@ -1280,7 +1280,7 @@ bool CVConGroup::isFar(bool abPluginRequired/*=false*/)
 	return gp_VActive->RCon()->isFar(abPluginRequired);
 }
 
-// Если ли фар где-то?
+// Р•СЃР»Рё Р»Рё С„Р°СЂ РіРґРµ-С‚Рѕ?
 // Return "1-based"(!) value. 1 - Far Panels (or console), 2,3,... - Far Editor/Viewer windows
 int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asName/*=NULL*/, CVConGuard* rpVCon/*=NULL*/)
 {
@@ -1300,14 +1300,14 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 
 		if (VCon.VCon())
 		{
-			// Это фар?
+			// Р­С‚Рѕ С„Р°СЂ?
 			CRealConsole* pRCon = VCon->RCon();
 			if (!pRCon)
 				continue;
 
 			if (pRCon && pRCon->isFar(anWindowType & fwt_PluginRequired))
 			{
-				// Ищем что-то конкретное?
+				// РС‰РµРј С‡С‚Рѕ-С‚Рѕ РєРѕРЅРєСЂРµС‚РЅРѕРµ?
 				if (!(anWindowType & (fwt_TypeMask|fwt_Elevated|fwt_NonElevated|fwt_ModalFarWnd|fwt_NonModal|fwt_ActivateFound|fwt_ActivateOther)) && !(asName && *asName))
 				{
 					iFound = 1; // Just "exists"
@@ -1318,20 +1318,20 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 				{
 					CEFarWindowType t = pRCon->GetActiveTabType();
 
-					// Этот Far Elevated?
+					// Р­С‚РѕС‚ Far Elevated?
 					if ((anWindowType & fwt_Elevated) && !(t & fwt_Elevated))
 						continue;
-					// В табе устанавливается флаг fwt_Elevated
-					// fwt_NonElevated используется только как аргумент поиска
+					// Р’ С‚Р°Р±Рµ СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ С„Р»Р°Рі fwt_Elevated
+					// fwt_NonElevated РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РєР°Рє Р°СЂРіСѓРјРµРЅС‚ РїРѕРёСЃРєР°
 					if ((anWindowType & fwt_NonElevated) && (t & fwt_Elevated))
 						continue;
 
-					// Модальное окно?
-					WARNING("Нужно еще учитывать <модальность> заблокированным диалогом, или меню, или еще чем-либо!");
+					// РњРѕРґР°Р»СЊРЅРѕРµ РѕРєРЅРѕ?
+					WARNING("РќСѓР¶РЅРѕ РµС‰Рµ СѓС‡РёС‚С‹РІР°С‚СЊ <РјРѕРґР°Р»СЊРЅРѕСЃС‚СЊ> Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹Рј РґРёР°Р»РѕРіРѕРј, РёР»Рё РјРµРЅСЋ, РёР»Рё РµС‰Рµ С‡РµРј-Р»РёР±Рѕ!");
 					if ((anWindowType & fwt_ModalFarWnd) && !(t & fwt_ModalFarWnd))
 						continue;
-					// В табе устанавливается флаг fwt_Modal
-					// fwt_NonModal используется только как аргумент поиска
+					// Р’ С‚Р°Р±Рµ СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ С„Р»Р°Рі fwt_Modal
+					// fwt_NonModal РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РєР°Рє Р°СЂРіСѓРјРµРЅС‚ РїРѕРёСЃРєР°
 					if ((anWindowType & fwt_NonModal) && (t & fwt_ModalFarWnd))
 						continue;
 
@@ -1340,13 +1340,13 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 				}
 				else
 				{
-					// Нужны доп.проверки окон фара
+					// РќСѓР¶РЅС‹ РґРѕРї.РїСЂРѕРІРµСЂРєРё РѕРєРѕРЅ С„Р°СЂР°
 					ConEmuTab tab;
 					LPCWSTR pszNameOnly = (anWindowType & fwt_FarFullPathReq) ? NULL : asName ? PointToName(asName) : NULL;
 					if (pszNameOnly)
 					{
-						// Обработаем как обратные (в PointToName), так и прямые слеши
-						// Это может быть актуально при переходе на ошибку/гиперссылку
+						// РћР±СЂР°Р±РѕС‚Р°РµРј РєР°Рє РѕР±СЂР°С‚РЅС‹Рµ (РІ PointToName), С‚Р°Рє Рё РїСЂСЏРјС‹Рµ СЃР»РµС€Рё
+						// Р­С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р°РєС‚СѓР°Р»СЊРЅРѕ РїСЂРё РїРµСЂРµС…РѕРґРµ РЅР° РѕС€РёР±РєСѓ/РіРёРїРµСЂСЃСЃС‹Р»РєСѓ
 						LPCWSTR pszSlash = wcsrchr(pszNameOnly, L'/');
 						if (pszSlash)
 							pszNameOnly = pszSlash+1;
@@ -1360,24 +1360,24 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 						if ((tab.Type & fwt_TypeMask) != (anWindowType & fwt_TypeMask))
 							continue;
 
-						// Этот Far Elevated?
+						// Р­С‚РѕС‚ Far Elevated?
 						if ((anWindowType & fwt_Elevated) && !(tab.Type & fwt_Elevated))
 							continue;
-						// В табе устанавливается флаг fwt_Elevated
-						// fwt_NonElevated используется только как аргумент поиска
+						// Р’ С‚Р°Р±Рµ СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ С„Р»Р°Рі fwt_Elevated
+						// fwt_NonElevated РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РєР°Рє Р°СЂРіСѓРјРµРЅС‚ РїРѕРёСЃРєР°
 						if ((anWindowType & fwt_NonElevated) && (tab.Type & fwt_Elevated))
 							continue;
 
-						// Модальное окно?
-						WARNING("Нужно еще учитывать <модальность> заблокированным диалогом, или меню, или еще чем-либо!");
+						// РњРѕРґР°Р»СЊРЅРѕРµ РѕРєРЅРѕ?
+						WARNING("РќСѓР¶РЅРѕ РµС‰Рµ СѓС‡РёС‚С‹РІР°С‚СЊ <РјРѕРґР°Р»СЊРЅРѕСЃС‚СЊ> Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹Рј РґРёР°Р»РѕРіРѕРј, РёР»Рё РјРµРЅСЋ, РёР»Рё РµС‰Рµ С‡РµРј-Р»РёР±Рѕ!");
 						if ((anWindowType & fwt_ModalFarWnd) && !(tab.Type & fwt_ModalFarWnd))
 							continue;
-						// В табе устанавливается флаг fwt_Modal
-						// fwt_NonModal используется только как аргумент поиска
+						// Р’ С‚Р°Р±Рµ СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ С„Р»Р°Рі fwt_Modal
+						// fwt_NonModal РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РєР°Рє Р°СЂРіСѓРјРµРЅС‚ РїРѕРёСЃРєР°
 						if ((anWindowType & fwt_NonModal) && (tab.Type & fwt_ModalFarWnd))
 							continue;
 
-						// Если ищем конкретный редактор/вьювер
+						// Р•СЃР»Рё РёС‰РµРј РєРѕРЅРєСЂРµС‚РЅС‹Р№ СЂРµРґР°РєС‚РѕСЂ/РІСЊСЋРІРµСЂ
 						if (asName && *asName)
 						{
 							if (lstrcmpi(tab.Name, asName) == 0)
@@ -1422,7 +1422,7 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 		}
 	}
 
-	// Нашли?
+	// РќР°С€Р»Рё?
 	if (iFound)
 	{
 		if (rpVCon)
@@ -1436,7 +1436,7 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 	return iFound;
 }
 
-// Возвращает индекс (0-based) активной консоли
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ РёРЅРґРµРєСЃ (0-based) Р°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё
 int CVConGroup::GetActiveVCon(CVConGuard* pVCon /*= NULL*/, int* pAllCount /*= NULL*/)
 {
 	int nCount = 0, nFound = -1;
@@ -1464,7 +1464,7 @@ int CVConGroup::GetActiveVCon(CVConGuard* pVCon /*= NULL*/, int* pAllCount /*= N
 	return nFound;
 }
 
-// Возвращает индекс (0-based) консоли, или -1, если такой нет
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ РёРЅРґРµРєСЃ (0-based) РєРѕРЅСЃРѕР»Рё, РёР»Рё -1, РµСЃР»Рё С‚Р°РєРѕР№ РЅРµС‚
 int CVConGroup::GetVConIndex(CVirtualConsole* apVCon)
 {
 	if (!apVCon)
@@ -1500,7 +1500,7 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 			bWasIndeterminate = (nState & 2) == 2;
 			//mn_Progress = max(nProgress, nUpdateProgress);
 			bActiveHasProgress = TRUE;
-			_ASSERTE(lbNotFromTitle==FALSE); // CRealConsole должен проценты добавлять в GetTitle сам
+			_ASSERTE(lbNotFromTitle==FALSE); // CRealConsole РґРѕР»Р¶РµРЅ РїСЂРѕС†РµРЅС‚С‹ РґРѕР±Р°РІР»СЏС‚СЊ РІ GetTitle СЃР°Рј
 			//bNeedAddToTitle = lbNotFromTitle;
 		}
 	}
@@ -1510,7 +1510,7 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 		nProgress = max(nProgress, nUpdateProgress);
 	}
 
-	// нас интересует возможное наличие ошибки во всех остальных консолях
+	// РЅР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ РІРѕР·РјРѕР¶РЅРѕРµ РЅР°Р»РёС‡РёРµ РѕС€РёР±РєРё РІРѕ РІСЃРµС… РѕСЃС‚Р°Р»СЊРЅС‹С… РєРѕРЅСЃРѕР»СЏС…
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		if (gp_VCon[i])
@@ -1546,8 +1546,8 @@ void CVConGroup::OnDosAppStartStop(HWND hwnd, StartStopType sst, DWORD idChild)
 	{
 		if (!gp_VCon[i]) continue;
 
-		// Запускаемые через "-new_console" цепляются через CECMD_ATTACH2GUI, а не через WinEvent
-		// 111211 - "-new_console" теперь передается в GUI и исполняется в нем
+		// Р—Р°РїСѓСЃРєР°РµРјС‹Рµ С‡РµСЂРµР· "-new_console" С†РµРїР»СЏСЋС‚СЃСЏ С‡РµСЂРµР· CECMD_ATTACH2GUI, Р° РЅРµ С‡РµСЂРµР· WinEvent
+		// 111211 - "-new_console" С‚РµРїРµСЂСЊ РїРµСЂРµРґР°РµС‚СЃСЏ РІ GUI Рё РёСЃРїРѕР»РЅСЏРµС‚СЃСЏ РІ РЅРµРј
 		if (gp_VCon[i]->RCon()->isDetached() || !gp_VCon[i]->RCon()->isServerCreated())
 			continue;
 
@@ -1639,7 +1639,7 @@ bool CVConGroup::isActive(CVirtualConsole* apVCon, bool abAllowGroup /*= true*/)
 
 	if (abAllowGroup)
 	{
-		// DoubleView: когда будет группировка ввода - чтобы курсором мигать во всех консолях
+		// DoubleView: РєРѕРіРґР° Р±СѓРґРµС‚ РіСЂСѓРїРїРёСЂРѕРІРєР° РІРІРѕРґР° - С‡С‚РѕР±С‹ РєСѓСЂСЃРѕСЂРѕРј РјРёРіР°С‚СЊ РІРѕ РІСЃРµС… РєРѕРЅСЃРѕР»СЏС…
 		CVConGroup* pRoot = GetRootOfVCon(apVCon);
 		CVConGroup* pActiveRoot = GetRootOfVCon(gp_VActive);
 		if (pRoot && (pRoot == pActiveRoot))
@@ -1661,10 +1661,10 @@ bool CVConGroup::isActiveGroupVCon(CVirtualConsole* pVCon)
 	if (pGr->mp_ActiveGroupVConPtr == (void*)pVCon)
 		return true;
 
-	// Та, что была ранее активной - могла закрыться
+	// РўР°, С‡С‚Рѕ Р±С‹Р»Р° СЂР°РЅРµРµ Р°РєС‚РёРІРЅРѕР№ - РјРѕРіР»Р° Р·Р°РєСЂС‹С‚СЊСЃСЏ
 	if (!isValid((CVirtualConsole*)pGr->mp_ActiveGroupVConPtr))
 	{
-		// Тогда ставим первой - эту консоль!
+		// РўРѕРіРґР° СЃС‚Р°РІРёРј РїРµСЂРІРѕР№ - СЌС‚Сѓ РєРѕРЅСЃРѕР»СЊ!
 		pGr->StoreActiveVCon(pVCon);
 		return true;
 	}
@@ -1692,7 +1692,7 @@ bool CVConGroup::isVisible(CVirtualConsole* apVCon)
 
 bool CVConGroup::isConSelectMode()
 {
-	//TODO: По курсору, что-ли попробовать определять?
+	//TODO: РџРѕ РєСѓСЂСЃРѕСЂСѓ, С‡С‚Рѕ-Р»Рё РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РѕРїСЂРµРґРµР»СЏС‚СЊ?
 	//return gb_ConsoleSelectMode;
 	if (gp_VActive)
 		return gp_VActive->RCon()->isConSelectMode();
@@ -1782,8 +1782,8 @@ bool CVConGroup::isOurConsoleWindow(HWND hCon)
 	return false;
 }
 
-// Вернуть true, если hAnyWnd это наше окно, консольное окно,
-// или принадлежит дочернему GUI приложению, запущенному во вкладке ConEmu
+// Р’РµСЂРЅСѓС‚СЊ true, РµСЃР»Рё hAnyWnd СЌС‚Рѕ РЅР°С€Рµ РѕРєРЅРѕ, РєРѕРЅСЃРѕР»СЊРЅРѕРµ РѕРєРЅРѕ,
+// РёР»Рё РїСЂРёРЅР°РґР»РµР¶РёС‚ РґРѕС‡РµСЂРЅРµРјСѓ GUI РїСЂРёР»РѕР¶РµРЅРёСЋ, Р·Р°РїСѓС‰РµРЅРЅРѕРјСѓ РІРѕ РІРєР»Р°РґРєРµ ConEmu
 bool CVConGroup::isOurWindow(HWND hAnyWnd)
 {
 	if (!hAnyWnd)
@@ -1796,7 +1796,7 @@ bool CVConGroup::isOurWindow(HWND hAnyWnd)
 	DWORD nPID = 0;
 	if (!GetWindowThreadProcessId(hAnyWnd, &nPID))
 		return false;
-	// Еще какие-то наши окна?
+	// Р•С‰Рµ РєР°РєРёРµ-С‚Рѕ РЅР°С€Рё РѕРєРЅР°?
 	if (nPID == GetCurrentProcessId())
 		return true;
 
@@ -1825,7 +1825,7 @@ bool CVConGroup::isOurGuiChildWindow(HWND hWnd)
 	DWORD nPID = 0;
 	if (!GetWindowThreadProcessId(hWnd, &nPID))
 		return false;
-	// интересует только Child GUI
+	// РёРЅС‚РµСЂРµСЃСѓРµС‚ С‚РѕР»СЊРєРѕ Child GUI
 	if (nPID == GetCurrentProcessId())
 		return false;
 
@@ -1862,8 +1862,8 @@ bool CVConGroup::isChildWindowVisible()
 	return false;
 }
 
-// Заголовок окна для PictureView вообще может пользователем настраиваться, так что
-// рассчитывать на него при определения "Просмотра" - нельзя
+// Р—Р°РіРѕР»РѕРІРѕРє РѕРєРЅР° РґР»СЏ PictureView РІРѕРѕР±С‰Рµ РјРѕР¶РµС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј РЅР°СЃС‚СЂР°РёРІР°С‚СЊСЃСЏ, С‚Р°Рє С‡С‚Рѕ
+// СЂР°СЃСЃС‡РёС‚С‹РІР°С‚СЊ РЅР° РЅРµРіРѕ РїСЂРё РѕРїСЂРµРґРµР»РµРЅРёСЏ "РџСЂРѕСЃРјРѕС‚СЂР°" - РЅРµР»СЊР·СЏ
 bool CVConGroup::isPictureView()
 {
 	bool lbRc = false;
@@ -1881,7 +1881,7 @@ bool CVConGroup::isPictureView()
 	for (size_t i = 0; !lbRc && i < countof(gp_VCon); i++)
 	{
 		CVirtualConsole* pVCon = gp_VCon[i];
-		// Было isVisible, но некорректно блокировать другие сплиты, в которых PicView нету
+		// Р‘С‹Р»Рѕ isVisible, РЅРѕ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕ Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ РґСЂСѓРіРёРµ СЃРїР»РёС‚С‹, РІ РєРѕС‚РѕСЂС‹С… PicView РЅРµС‚Сѓ
 		if (!pVCon || !isActive(pVCon) || !pVCon->RCon())
 			continue;
 
@@ -1889,7 +1889,7 @@ bool CVConGroup::isPictureView()
 
 		lbRc = (hPicView != NULL);
 
-		// Если вызывали Help (F1) - окошко PictureView прячется
+		// Р•СЃР»Рё РІС‹Р·С‹РІР°Р»Рё Help (F1) - РѕРєРѕС€РєРѕ PictureView РїСЂСЏС‡РµС‚СЃСЏ
 		if (hPicView && !IsWindowVisible(hPicView))
 		{
 			lbRc = false;
@@ -2029,11 +2029,11 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 		{
 			nConsoles++;
 
-			// Прогрессы (копирование, удаление, и т.п.)
+			// РџСЂРѕРіСЂРµСЃСЃС‹ (РєРѕРїРёСЂРѕРІР°РЅРёРµ, СѓРґР°Р»РµРЅРёРµ, Рё С‚.Рї.)
 			if (pRCon->GetProgress(NULL) != -1)
 				nProgress ++;
 
-			// Несохраненные редакторы
+			// РќРµСЃРѕС…СЂР°РЅРµРЅРЅС‹Рµ СЂРµРґР°РєС‚РѕСЂС‹
 			int n = pRCon->GetModifiedEditors();
 
 			if (n)
@@ -2061,7 +2061,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 			}
 			else
 			{
-				TODO("Перенести в ConfirmDlg.cpp");
+				TODO("РџРµСЂРµРЅРµСЃС‚Рё РІ ConfirmDlg.cpp");
 
 				wchar_t szText[360], *pszText;
 				//wcscpy_c(szText, L"Close confirmation.\r\n\r\n");
@@ -2120,14 +2120,14 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 		}
 		else if ((nBtn != IDYES) && (nBtn != IDOK))
 		{
-			return false; // не закрывать
+			return false; // РЅРµ Р·Р°РєСЂС‹РІР°С‚СЊ
 		}
 
 		if (rbMsgConfirmed)
 			*rbMsgConfirmed = true;
 	}
 
-	return true; // можно
+	return true; // РјРѕР¶РЅРѕ
 }
 
 bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
@@ -2139,7 +2139,7 @@ bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
 		return false;
 	}
 
-	// Выставить флажок, чтобы ConEmu знал: "закрытие инициировано пользователем через крестик/меню"
+	// Р’С‹СЃС‚Р°РІРёС‚СЊ С„Р»Р°Р¶РѕРє, С‡С‚РѕР±С‹ ConEmu Р·РЅР°Р»: "Р·Р°РєСЂС‹С‚РёРµ РёРЅРёС†РёРёСЂРѕРІР°РЅРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј С‡РµСЂРµР· РєСЂРµСЃС‚РёРє/РјРµРЅСЋ"
 	gpConEmu->SetScClosePending(true);
 
 	#ifdef _DEBUG
@@ -2150,9 +2150,9 @@ bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
 	}
 	#endif
 
-	// Чтобы мог сработать таймер закрытия
+	// Р§С‚РѕР±С‹ РјРѕРі СЃСЂР°Р±РѕС‚Р°С‚СЊ С‚Р°Р№РјРµСЂ Р·Р°РєСЂС‹С‚РёСЏ
 	gpConEmu->OnRConStartedSuccess(NULL);
-	return true; // можно
+	return true; // РјРѕР¶РЅРѕ
 }
 
 // true - found
@@ -2162,7 +2162,7 @@ bool CVConGroup::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
 
 	bool lbFlashSimple = false;
 
-	// Достало. Настройка полного отключения флэшинга
+	// Р”РѕСЃС‚Р°Р»Рѕ. РќР°СЃС‚СЂРѕР№РєР° РїРѕР»РЅРѕРіРѕ РѕС‚РєР»СЋС‡РµРЅРёСЏ С„Р»СЌС€РёРЅРіР°
 	if (gpSet->isDisableFarFlashing && gp_VActive->RCon()->GetFarPID(FALSE))
 	{
 		if (gpSet->isDisableFarFlashing == 1)
@@ -2192,10 +2192,10 @@ bool CVConGroup::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
 
 			if (gpConEmu->isMeForeground())
 			{
-				if (gp_VCon[i] != gp_VActive)    // Только для неактивной консоли
+				if (gp_VCon[i] != gp_VActive)    // РўРѕР»СЊРєРѕ РґР»СЏ РЅРµР°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё
 				{
 					fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
-					FlashWindowEx(&fl); // Чтобы мигание не накапливалось
+					FlashWindowEx(&fl); // Р§С‚РѕР±С‹ РјРёРіР°РЅРёРµ РЅРµ РЅР°РєР°РїР»РёРІР°Р»РѕСЃСЊ
 					fl.uCount = 3; fl.dwFlags = lbFlashSimple ? FLASHW_ALL : FLASHW_TRAY; fl.hwnd = ghWnd;
 					FlashWindowEx(&fl);
 				}
@@ -2212,10 +2212,10 @@ bool CVConGroup::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
 				}
 
 				fl.hwnd = ghWnd;
-				FlashWindowEx(&fl); // Помигать в GUI
+				FlashWindowEx(&fl); // РџРѕРјРёРіР°С‚СЊ РІ GUI
 			}
 
-			//fl.dwFlags = FLASHW_STOP; fl.hwnd = hCon; -- не требуется, т.к. это хучится
+			//fl.dwFlags = FLASHW_STOP; fl.hwnd = hCon; -- РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ, С‚.Рє. СЌС‚Рѕ С…СѓС‡РёС‚СЃСЏ
 			//FlashWindowEx(&fl);
 			break;
 		}
@@ -2226,10 +2226,10 @@ bool CVConGroup::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
 
 void CVConGroup::ExportEnvVarAll(CESERVER_REQ* pIn, CRealConsole* pExceptRCon)
 {
-	// Просто перебить заголовок на наши данные
+	// РџСЂРѕСЃС‚Рѕ РїРµСЂРµР±РёС‚СЊ Р·Р°РіРѕР»РѕРІРѕРє РЅР° РЅР°С€Рё РґР°РЅРЅС‹Рµ
 	ExecutePrepareCmd(&pIn->hdr, CECMD_EXPORTVARS, pIn->hdr.cbSize);
 
-	// и пробежаться по табам
+	// Рё РїСЂРѕР±РµР¶Р°С‚СЊСЃСЏ РїРѕ С‚Р°Р±Р°Рј
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		CVConGuard VCon(gp_VCon[i]);
@@ -2310,7 +2310,7 @@ void CVConGroup::OnTaskbarCreated()
 	}
 }
 
-// true - если nPID запущен в одной из консолей
+// true - РµСЃР»Рё nPID Р·Р°РїСѓС‰РµРЅ РІ РѕРґРЅРѕР№ РёР· РєРѕРЅСЃРѕР»РµР№
 bool CVConGroup::isConsolePID(DWORD nPID)
 {
 	bool lbPidFound = false;
@@ -2334,7 +2334,7 @@ bool CVConGroup::isConsolePID(DWORD nPID)
 }
 
 // returns true if gpConEmu->Destroy() was called
-// bMsgConfirmed - был ли показан диалог подтверждения, или юзер не включил эту опцию
+// bMsgConfirmed - Р±С‹Р» Р»Рё РїРѕРєР°Р·Р°РЅ РґРёР°Р»РѕРі РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ, РёР»Рё СЋР·РµСЂ РЅРµ РІРєР»СЋС‡РёР» СЌС‚Сѓ РѕРїС†РёСЋ
 bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 {
 	gpConEmu->LogString(L"CVConGroup::OnScClose()");
@@ -2345,7 +2345,7 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 
 	bool bConfirmEach = (bMsgConfirmed || !gpSet->isCloseConsoleConfirm) ? false : true;
 
-	// Сохраним размер перед закрытием консолей, а то они могут напакостить и "вернуть" старый размер
+	// РЎРѕС…СЂР°РЅРёРј СЂР°Р·РјРµСЂ РїРµСЂРµРґ Р·Р°РєСЂС‹С‚РёРµРј РєРѕРЅСЃРѕР»РµР№, Р° С‚Рѕ РѕРЅРё РјРѕРіСѓС‚ РЅР°РїР°РєРѕСЃС‚РёС‚СЊ Рё "РІРµСЂРЅСѓС‚СЊ" СЃС‚Р°СЂС‹Р№ СЂР°Р·РјРµСЂ
 	gpSet->SaveSettingsOnExit();
 		
 	for (int i = (int)(countof(gp_VCon)-1); i >= 0; i--)
@@ -2393,10 +2393,10 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 
 	bool bEmpty = (!nConCount && !nDetachedCount);
 
-	// Закрыть окно, если просили
+	// Р—Р°РєСЂС‹С‚СЊ РѕРєРЅРѕ, РµСЃР»Рё РїСЂРѕСЃРёР»Рё
 	if (lbAllowed && bEmpty && gpConEmu->isDestroyOnClose(bEmpty))
 	{
-		// Поэтому проверяем, и если никого не осталось, то по крестику - прибиваемся
+		// РџРѕСЌС‚РѕРјСѓ РїСЂРѕРІРµСЂСЏРµРј, Рё РµСЃР»Рё РЅРёРєРѕРіРѕ РЅРµ РѕСЃС‚Р°Р»РѕСЃСЊ, С‚Рѕ РїРѕ РєСЂРµСЃС‚РёРєСѓ - РїСЂРёР±РёРІР°РµРјСЃСЏ
 		gpConEmu->Destroy();
 	}
 	else
@@ -2545,10 +2545,10 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 		{
 			iDbg1 = i;
 
-			// Сначала нужно обновить закладки, иначе в закрываемой консоли
-			// может быть несколько вкладок и вместо активации другой консоли
-			// будет попытка активировать другую вкладку закрываемой консоли
-			//gpConEmu->mp_TabBar->Update(TRUE); -- а и не сможет он другую активировать, т.к. RCon вернет FALSE
+			// РЎРЅР°С‡Р°Р»Р° РЅСѓР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ Р·Р°РєР»Р°РґРєРё, РёРЅР°С‡Рµ РІ Р·Р°РєСЂС‹РІР°РµРјРѕР№ РєРѕРЅСЃРѕР»Рё
+			// РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅРµСЃРєРѕР»СЊРєРѕ РІРєР»Р°РґРѕРє Рё РІРјРµСЃС‚Рѕ Р°РєС‚РёРІР°С†РёРё РґСЂСѓРіРѕР№ РєРѕРЅСЃРѕР»Рё
+			// Р±СѓРґРµС‚ РїРѕРїС‹С‚РєР° Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РґСЂСѓРіСѓСЋ РІРєР»Р°РґРєСѓ Р·Р°РєСЂС‹РІР°РµРјРѕР№ РєРѕРЅСЃРѕР»Рё
+			//gpConEmu->mp_TabBar->Update(TRUE); -- Р° Рё РЅРµ СЃРјРѕР¶РµС‚ РѕРЅ РґСЂСѓРіСѓСЋ Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ, С‚.Рє. RCon РІРµСЂРЅРµС‚ FALSE
 
 			if (apVCon == gp_VActive)
 			{
@@ -2581,7 +2581,7 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 			//	gp_GroupPostCloseActivate = NULL;
 			//}
 
-			//// Эта комбинация должна активировать предыдущую консоль (если активна текущая)
+			//// Р­С‚Р° РєРѕРјР±РёРЅР°С†РёСЏ РґРѕР»Р¶РЅР° Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РїСЂРµРґС‹РґСѓС‰СѓСЋ РєРѕРЅСЃРѕР»СЊ (РµСЃР»Рё Р°РєС‚РёРІРЅР° С‚РµРєСѓС‰Р°СЏ)
 			//if (bAllowRecent && gpSet->isTabRecent && apVCon == gp_VActive)
 			//{
 			//	if (gpConEmu->GetVCon(1))
@@ -2593,9 +2593,9 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 			//	}
 			//}
 
-			// Теперь можно очистить переменную массива
+			// РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ РѕС‡РёСЃС‚РёС‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ РјР°СЃСЃРёРІР°
 			gp_VCon[i] = NULL;
-			WARNING("Вообще-то это нужно бы в CriticalSection закрыть. Несколько консолей может одновременно закрыться");
+			WARNING("Р’РѕРѕР±С‰Рµ-С‚Рѕ СЌС‚Рѕ РЅСѓР¶РЅРѕ Р±С‹ РІ CriticalSection Р·Р°РєСЂС‹С‚СЊ. РќРµСЃРєРѕР»СЊРєРѕ РєРѕРЅСЃРѕР»РµР№ РјРѕР¶РµС‚ РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ Р·Р°РєСЂС‹С‚СЊСЃСЏ");
 
 			//if (gp_VActive == apVCon)
 			//{
@@ -2648,8 +2648,8 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 
 	if (gp_VActive == apVCon)
 	{
-		// Сюда вообще попадать не должны, но на всякий случай, сбрасываем gp_VActive
-		// Сюда можем попасть если не удалось создать активную консоль (облом с паролем, например)
+		// РЎСЋРґР° РІРѕРѕР±С‰Рµ РїРѕРїР°РґР°С‚СЊ РЅРµ РґРѕР»Р¶РЅС‹, РЅРѕ РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, СЃР±СЂР°СЃС‹РІР°РµРј gp_VActive
+		// РЎСЋРґР° РјРѕР¶РµРј РїРѕРїР°СЃС‚СЊ РµСЃР»Рё РЅРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ Р°РєС‚РёРІРЅСѓСЋ РєРѕРЅСЃРѕР»СЊ (РѕР±Р»РѕРј СЃ РїР°СЂРѕР»РµРј, РЅР°РїСЂРёРјРµСЂ)
 		_ASSERTE((gp_VActive == NULL && gp_VCon[0] == NULL) || gb_CreatingActive);
 
 		CVirtualConsole* pNewActive = NULL;
@@ -2671,11 +2671,11 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 	}
 
 wrap:
-	// Теперь перетряхнуть заголовок (табы могут быть отключены и в заголовке отображается количество консолей)
-	gpConEmu->UpdateTitle(); // сам перечитает
+	// РўРµРїРµСЂСЊ РїРµСЂРµС‚СЂСЏС…РЅСѓС‚СЊ Р·Р°РіРѕР»РѕРІРѕРє (С‚Р°Р±С‹ РјРѕРіСѓС‚ Р±С‹С‚СЊ РѕС‚РєР»СЋС‡РµРЅС‹ Рё РІ Р·Р°РіРѕР»РѕРІРєРµ РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ РєРѕР»РёС‡РµСЃС‚РІРѕ РєРѕРЅСЃРѕР»РµР№)
+	gpConEmu->UpdateTitle(); // СЃР°Рј РїРµСЂРµС‡РёС‚Р°РµС‚
 	//
-	gpConEmu->mp_TabBar->Update(); // Иначе не будет обновлены закладки
-	// А теперь можно обновить активную закладку
+	gpConEmu->mp_TabBar->Update(); // РРЅР°С‡Рµ РЅРµ Р±СѓРґРµС‚ РѕР±РЅРѕРІР»РµРЅС‹ Р·Р°РєР»Р°РґРєРё
+	// Рђ С‚РµРїРµСЂСЊ РјРѕР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ Р°РєС‚РёРІРЅСѓСЋ Р·Р°РєР»Р°РґРєСѓ
 	int nActiveConNum = gpConEmu->ActiveConNum();
 	gpConEmu->mp_TabBar->OnConsoleActivated(nActiveConNum/*, FALSE*/);
 	// StatusBar
@@ -2719,7 +2719,7 @@ void CVConGroup::OnUpdateProcessDisplay(HWND hInfo)
 	}
 }
 
-// Возвращает HWND окна отрисовки
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ HWND РѕРєРЅР° РѕС‚СЂРёСЃРѕРІРєРё
 HWND CVConGroup::DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const DWORD dwKeybLayout, DWORD& t1, DWORD& t2, DWORD& t3, int& iFound, HWND& hWndBack)
 {
 	HWND hWndDC = NULL;
@@ -2955,7 +2955,7 @@ int CVConGroup::GetConCount(bool bNoDetached /*= false*/)
 
 		if (bNoDetached)
 		{
-			_ASSERTE(gpConEmu->isMainThread()); // чтобы не морочится с блокировками
+			_ASSERTE(gpConEmu->isMainThread()); // С‡С‚РѕР±С‹ РЅРµ РјРѕСЂРѕС‡РёС‚СЃСЏ СЃ Р±Р»РѕРєРёСЂРѕРІРєР°РјРё
 			if (gp_VCon[i]->RCon()->isDetached())
 				continue;
 		}
@@ -2989,13 +2989,13 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 		free(pszLog);
 	}
 
-	// Может быть какой-то VCon ждет аттача?
+	// РњРѕР¶РµС‚ Р±С‹С‚СЊ РєР°РєРѕР№-С‚Рѕ VCon Р¶РґРµС‚ Р°С‚С‚Р°С‡Р°?
 	if (!bFound)
 	{
 		#ifdef _DEBUG
 		if (pStartStop->dwAID == 0)
 		{
-			//Штатная ситуация, если аттач (запуск ConEmu.exe) инициируется из сервера
+			//РЁС‚Р°С‚РЅР°СЏ СЃРёС‚СѓР°С†РёСЏ, РµСЃР»Рё Р°С‚С‚Р°С‡ (Р·Р°РїСѓСЃРє ConEmu.exe) РёРЅРёС†РёРёСЂСѓРµС‚СЃСЏ РёР· СЃРµСЂРІРµСЂР°
 			wchar_t szDbg[128];
 			//_ASSERTE(pStartStop->dwAID!=0);
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Attach was requested from ServerPID=%u without dwAID\n", pStartStop->dwPID);
@@ -3029,7 +3029,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 		}
 	}
 
-	// Если по ИД не нашли - ищем любую "ожидающую" аттача
+	// Р•СЃР»Рё РїРѕ РР” РЅРµ РЅР°С€Р»Рё - РёС‰РµРј Р»СЋР±СѓСЋ "РѕР¶РёРґР°СЋС‰СѓСЋ" Р°С‚С‚Р°С‡Р°
 	if (!bFound)
 	{
 		for (size_t i = 0; i < countof(gp_VCon); i++)
@@ -3047,7 +3047,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 		}
 	}
 
-	// Если не нашли - определим, можно ли добавить новую консоль?
+	// Р•СЃР»Рё РЅРµ РЅР°С€Р»Рё - РѕРїСЂРµРґРµР»РёРј, РјРѕР¶РЅРѕ Р»Рё РґРѕР±Р°РІРёС‚СЊ РЅРѕРІСѓСЋ РєРѕРЅСЃРѕР»СЊ?
 	if (!bFound)
 	{
 		RConStartArgs* pArgs = new RConStartArgs;
@@ -3061,7 +3061,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 			gpConEmu->DoMinimizeRestore(sih_SetForeground);
 		}
 
-		// т.к. это приходит из серверного потока - зовем в главном
+		// С‚.Рє. СЌС‚Рѕ РїСЂРёС…РѕРґРёС‚ РёР· СЃРµСЂРІРµСЂРЅРѕРіРѕ РїРѕС‚РѕРєР° - Р·РѕРІРµРј РІ РіР»Р°РІРЅРѕРј
 		VCon = (CVirtualConsole*)SendMessage(ghWnd, gpConEmu->mn_MsgCreateCon, gpConEmu->mn_MsgCreateCon, (LPARAM)pArgs);
 		if (VCon.VCon() && !isValid(VCon.VCon()))
 		{
@@ -3081,7 +3081,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 	}
 	else
 	{
-		// Пытаемся подцепить консоль
+		// РџС‹С‚Р°РµРјСЃСЏ РїРѕРґС†РµРїРёС‚СЊ РєРѕРЅСЃРѕР»СЊ
 		bFound = VCon->RCon()->AttachConemuC(ahConWnd, pStartStop->dwPID, pStartStop, pRet);
 	}
 
@@ -3104,7 +3104,7 @@ CRealConsole* CVConGroup::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppP
 	return NULL;
 }
 
-// Вернуть общее количество процессов по всем консолям
+// Р’РµСЂРЅСѓС‚СЊ РѕР±С‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїСЂРѕС†РµСЃСЃРѕРІ РїРѕ РІСЃРµРј РєРѕРЅСЃРѕР»СЏРј
 DWORD CVConGroup::CheckProcesses()
 {
 	DWORD dwAllCount = 0;
@@ -3280,7 +3280,7 @@ void CVConGroup::ShowActiveGroup(CVirtualConsole* pOldActive)
 	if (pActiveGroup && pActiveGroup->mb_ResizeFlag)
 	{
 		SyncConsoleToWindow();
-		// Отресайзить, могла измениться конфигурация
+		// РћС‚СЂРµСЃР°Р№Р·РёС‚СЊ, РјРѕРіР»Р° РёР·РјРµРЅРёС‚СЊСЃСЏ РєРѕРЅС„РёРіСѓСЂР°С†РёСЏ
 		RECT mainClient = gpConEmu->CalcRect(CER_MAINCLIENT, gp_VActive);
 		CVConGroup::ReSizePanes(mainClient);
 	}
@@ -3288,9 +3288,9 @@ void CVConGroup::ShowActiveGroup(CVirtualConsole* pOldActive)
 	// Showing...
 	CVConGroup* pOldGroup = (pOldActive && (pOldActive != gp_VActive)) ? GetRootOfVCon(pOldActive) : NULL;
 
-	// Теперь можно показать активную
+	// РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ РїРѕРєР°Р·Р°С‚СЊ Р°РєС‚РёРІРЅСѓСЋ
 	pActiveGroup->ShowAllVCon(SW_SHOW);
-	// и спрятать деактивированную
+	// Рё СЃРїСЂСЏС‚Р°С‚СЊ РґРµР°РєС‚РёРІРёСЂРѕРІР°РЅРЅСѓСЋ
 	if (pOldGroup && (pOldGroup != pActiveGroup))
 		pOldGroup->ShowAllVCon(SW_HIDE);
 
@@ -3323,7 +3323,7 @@ void CVConGroup::StoreActiveVCon(CVirtualConsole* pVCon)
 bool CVConGroup::ConActivate(int nCon)
 {
 	FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
-	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
+	FlashWindowEx(&fl); // РџСЂРё РјРЅРѕРіРѕРєСЂР°С‚РЅС‹С… СЃРѕР·РґР°РЅРёСЏС… РјРёРіР°С‚СЊ РЅР°С‡РёРЅР°РµС‚...
 
 	if (nCon >= 0 && nCon < (int)countof(gp_VCon))
 	{
@@ -3334,21 +3334,21 @@ bool CVConGroup::ConActivate(int nCon)
 		{
 			if (gpSet->isMultiAutoCreate)
 			{
-				// Создать новую default-консоль
+				// РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ default-РєРѕРЅСЃРѕР»СЊ
 				gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, FALSE, FALSE);
-				return true; // создана новая консоль
+				return true; // СЃРѕР·РґР°РЅР° РЅРѕРІР°СЏ РєРѕРЅСЃРѕР»СЊ
 			}
 
-			return false; // консоль с этим номером не была создана!
+			return false; // РєРѕРЅСЃРѕР»СЊ СЃ СЌС‚РёРј РЅРѕРјРµСЂРѕРј РЅРµ Р±С‹Р»Р° СЃРѕР·РґР°РЅР°!
 		}
 
 		if (pVCon == gp_VActive)
 		{
-			// Итерация табов
+			// РС‚РµСЂР°С†РёСЏ С‚Р°Р±РѕРІ
 			int nTabCount;
 			CRealConsole *pRCon;
 
-			// При последовательном нажатии "Win+<Number>" - крутить табы активной консоли
+			// РџСЂРё РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕРј РЅР°Р¶Р°С‚РёРё "Win+<Number>" - РєСЂСѓС‚РёС‚СЊ С‚Р°Р±С‹ Р°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё
 			if (gpSet->isMultiIterate
 			        && ((pRCon = gp_VActive->RCon()) != NULL)
 			        && ((nTabCount = pRCon->GetTabCount())>1))
@@ -3362,7 +3362,7 @@ bool CVConGroup::ConActivate(int nCon)
 					pRCon->ActivateFarWindow(nActive);
 			}
 
-			return true; // уже
+			return true; // СѓР¶Рµ
 		}
 
 		bool lbSizeOK = true;
@@ -3370,13 +3370,13 @@ bool CVConGroup::ConActivate(int nCon)
 
 		CVirtualConsole* pOldActive = gp_VActive;
 
-		// Спрятать PictureView, или еще чего...
+		// РЎРїСЂСЏС‚Р°С‚СЊ PictureView, РёР»Рё РµС‰Рµ С‡РµРіРѕ...
 		if (gp_VActive && gp_VActive->RCon())
 		{
 			gp_VActive->RCon()->OnDeactivate(nCon);
 		}
 
-		// ПЕРЕД переключением на новую консоль - обновить ее размеры
+		// РџР•Р Р•Р” РїРµСЂРµРєР»СЋС‡РµРЅРёРµРј РЅР° РЅРѕРІСѓСЋ РєРѕРЅСЃРѕР»СЊ - РѕР±РЅРѕРІРёС‚СЊ РµРµ СЂР°Р·РјРµСЂС‹
 		if (pVCon)
 		{
 			//int nOldConWidth = gp_VActive->RCon()->TextWidth();
@@ -3403,7 +3403,7 @@ bool CVConGroup::ConActivate(int nCon)
 				lbSizeOK = pVCon->RCon()->SetConsoleSize(nNewConWidth,nNewConHeight);
 			}
 
-			// И поправить размеры VCon/Back
+			// Р РїРѕРїСЂР°РІРёС‚СЊ СЂР°Р·РјРµСЂС‹ VCon/Back
 			RECT rcWork = {};
 			rcWork = gpConEmu->CalcRect(CER_WORKSPACE, pVCon);
 			CVConGroup::MoveAllVCon(pVCon, rcWork);
@@ -3413,7 +3413,7 @@ bool CVConGroup::ConActivate(int nCon)
 		pVCon->RCon()->OnActivate(nCon, nOldConNum);
 
 		if (!lbSizeOK)
-			SyncWindowToConsole(); // -- функция пустая, игнорируется
+			SyncWindowToConsole(); // -- С„СѓРЅРєС†РёСЏ РїСѓСЃС‚Р°СЏ, РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ
 
 		ShowActiveGroup(pOldActive);
 	}
@@ -3446,7 +3446,7 @@ void CVConGroup::OnCreateGroupEnd()
 	gn_CreateGroupStartVConIdx = 0;
 	gb_InCreateGroup = false;
 
-	// А вот теперь можно начинать запускать процессы
+	// Рђ РІРѕС‚ С‚РµРїРµСЂСЊ РјРѕР¶РЅРѕ РЅР°С‡РёРЅР°С‚СЊ Р·Р°РїСѓСЃРєР°С‚СЊ РїСЂРѕС†РµСЃСЃС‹
 	gpConEmu->mp_RunQueue->ProcessRunQueue(true);
 }
 
@@ -3455,7 +3455,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 	_ASSERTE(args!=NULL);
 	if (!gpConEmu->isMainThread())
 	{
-		// Создание VCon в фоновых потоках не допускается, т.к. здесь создаются HWND
+		// РЎРѕР·РґР°РЅРёРµ VCon РІ С„РѕРЅРѕРІС‹С… РїРѕС‚РѕРєР°С… РЅРµ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ, С‚.Рє. Р·РґРµСЃСЊ СЃРѕР·РґР°СЋС‚СЃСЏ HWND
 		MBoxAssert(gpConEmu->isMainThread());
 		return NULL;
 	}
@@ -3469,22 +3469,22 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		_ASSERTE(gpConEmu->mn_StartupFinished == CConEmuMain::ss_Started);
 		_ASSERTE(args->pszSpecialCmd==NULL);
 
-		// Сюда мы попадаем, если юзер жмет Win+W (создание без подтверждения)
+		// РЎСЋРґР° РјС‹ РїРѕРїР°РґР°РµРј, РµСЃР»Рё СЋР·РµСЂ Р¶РјРµС‚ Win+W (СЃРѕР·РґР°РЅРёРµ Р±РµР· РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ)
 		LPCWSTR pszSysCmd = gpSetCls->GetCmd(NULL, true);
 		LPCWSTR pszSysDir = NULL;
 		CVConGuard vActive;
-		// OK, если ConEmu стартовал с задачей (именованой или <Startup>)
+		// OK, РµСЃР»Рё ConEmu СЃС‚Р°СЂС‚РѕРІР°Р» СЃ Р·Р°РґР°С‡РµР№ (РёРјРµРЅРѕРІР°РЅРѕР№ РёР»Рё <Startup>)
 		if (!pszSysCmd || !*pszSysCmd)
 		{
-			// То нельзя запускать _консоль_ с _задачей_ или вообще "без команды"
+			// РўРѕ РЅРµР»СЊР·СЏ Р·Р°РїСѓСЃРєР°С‚СЊ _РєРѕРЅСЃРѕР»СЊ_ СЃ _Р·Р°РґР°С‡РµР№_ РёР»Рё РІРѕРѕР±С‰Рµ "Р±РµР· РєРѕРјР°РЅРґС‹"
 			if (GetActiveVCon(&vActive) >= 0)
 			{
-				// Попробовать взять команду из текущей консоли?
+				// РџРѕРїСЂРѕР±РѕРІР°С‚СЊ РІР·СЏС‚СЊ РєРѕРјР°РЅРґСѓ РёР· С‚РµРєСѓС‰РµР№ РєРѕРЅСЃРѕР»Рё?
 				pszSysCmd = vActive->RCon()->GetCmd(true);
 				if (pszSysCmd && *pszSysCmd && !args->pszStartupDir)
 					pszSysDir = vActive->RCon()->GetStartupDir();
 			}
-			// Хм? Команда по умолчанию тогда.
+			// РҐРј? РљРѕРјР°РЅРґР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ С‚РѕРіРґР°.
 			if (!pszSysCmd || !*pszSysCmd)
 			{
 				pszSysCmd = gpSetCls->GetDefaultCmd();
@@ -3529,7 +3529,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 			return NULL;
 		}
 
-		// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
+		// Р’ РєР°С‡РµСЃС‚РІРµ "РєРѕРјР°РЅРґС‹" СѓРєР°Р·Р°РЅ "РїР°РєРµС‚РЅС‹Р№ С„Р°Р№Р»" РёР»Рё "РіСЂСѓРїРїР° РєРѕРјР°РЅРґ" РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕРіРѕ Р·Р°РїСѓСЃРєР° РЅРµСЃРєРѕР»СЊРєРёС… РєРѕРЅСЃРѕР»РµР№
 		wchar_t* pszDataW = gpConEmu->LoadConsoleBatch(args->pszSpecialCmd, &args->pszStartupDir);
 		if (!pszDataW)
 			return NULL;
@@ -3542,9 +3542,9 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		return pVCon;
 	}
 
-	// Если на ярлык ConEmu наброшен другой ярлык или программа
+	// Р•СЃР»Рё РЅР° СЏСЂР»С‹Рє ConEmu РЅР°Р±СЂРѕС€РµРЅ РґСЂСѓРіРѕР№ СЏСЂР»С‹Рє РёР»Рё РїСЂРѕРіСЂР°РјРјР°
 
-	// Ok, Теперь смотрим свободную ячейку в gp_VCon и запускаемся
+	// Ok, РўРµРїРµСЂСЊ СЃРјРѕС‚СЂРёРј СЃРІРѕР±РѕРґРЅСѓСЋ СЏС‡РµР№РєСѓ РІ gp_VCon Рё Р·Р°РїСѓСЃРєР°РµРјСЃСЏ
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		if (gp_VCon[i])
@@ -3604,7 +3604,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 					ShowActiveGroup(NULL);
 				}
 
-				// Если была смена конфигурации окна (появились табы)
+				// Р•СЃР»Рё Р±С‹Р»Р° СЃРјРµРЅР° РєРѕРЅС„РёРіСѓСЂР°С†РёРё РѕРєРЅР° (РїРѕСЏРІРёР»РёСЃСЊ С‚Р°Р±С‹)
 				if (!bTabbar && gpConEmu->mp_TabBar->IsTabsShown())
 				{
 					gpConEmu->OnTabbarActivated(true);
@@ -3623,7 +3623,7 @@ HRGN CVConGroup::GetExclusionRgn(bool abTestOnly/*=false*/)
 	HRGN hExclusion = NULL;
 	int iComb = 0;
 
-	// DoubleView: Если видимы несколько консолей - нужно совместить регионы
+	// DoubleView: Р•СЃР»Рё РІРёРґРёРјС‹ РЅРµСЃРєРѕР»СЊРєРѕ РєРѕРЅСЃРѕР»РµР№ - РЅСѓР¶РЅРѕ СЃРѕРІРјРµСЃС‚РёС‚СЊ СЂРµРіРёРѕРЅС‹
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -3643,7 +3643,7 @@ HRGN CVConGroup::GetExclusionRgn(bool abTestOnly/*=false*/)
 			{
 				if (!hExclusion)
 				{
-					hExclusion = hVCon; // Первый (или единственный)
+					hExclusion = hVCon; // РџРµСЂРІС‹Р№ (РёР»Рё РµРґРёРЅСЃС‚РІРµРЅРЅС‹Р№)
 				}
 				else
 				{
@@ -3671,13 +3671,13 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 
 	CVConGroup* pGroup = pVCon ? ((CVConGroup*)pVCon->mp_Group) : NULL;
 
-	// Теперь rc должен соответствовать CER_MAINCLIENT/CER_BACK
+	// РўРµРїРµСЂСЊ rc РґРѕР»Р¶РµРЅ СЃРѕРѕС‚РІРµС‚СЃС‚РІРѕРІР°С‚СЊ CER_MAINCLIENT/CER_BACK
 	RECT rcAddShift = MakeRect(0,0);
 
 #ifdef _DEBUG
 	if ((tWhat == CER_DC || tWhat == CER_BACK) && (tFrom == CER_MAIN || tFrom == CER_MAINCLIENT))
 	{
-		//_ASSERTE(FALSE && "Fails in DoubleView"); // нужно переделать для split, считает по целой области
+		//_ASSERTE(FALSE && "Fails in DoubleView"); // РЅСѓР¶РЅРѕ РїРµСЂРµРґРµР»Р°С‚СЊ РґР»СЏ split, СЃС‡РёС‚Р°РµС‚ РїРѕ С†РµР»РѕР№ РѕР±Р»Р°СЃС‚Рё
 		bool bDbg = false;
 	}
 #endif
@@ -3685,15 +3685,15 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 	if ((tWhat == CER_DC) && (tFrom != CER_CONSOLE_CUR))
 	{
 		_ASSERTE(pVCon!=NULL);
-		WARNING("warning: DoubleView - тут нужно допиливать");
+		WARNING("warning: DoubleView - С‚СѓС‚ РЅСѓР¶РЅРѕ РґРѕРїРёР»РёРІР°С‚СЊ");
 		RECT rcCalcBack = rFrom;
-		// нужно посчитать дополнительные сдвиги
+		// РЅСѓР¶РЅРѕ РїРѕСЃС‡РёС‚Р°С‚СЊ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ СЃРґРІРёРіРё
 		if (tFrom != CER_BACK)
 		{
 			_ASSERTE(tFrom==CER_BACK);
 			rcCalcBack = gpConEmu->CalcRect(CER_BACK, pVCon);
 		}
-		//--// расчетный НЕ ДОЛЖЕН быть меньше переданного
+		//--// СЂР°СЃС‡РµС‚РЅС‹Р№ РќР• Р”РћР›Р–Р•Рќ Р±С‹С‚СЊ РјРµРЅСЊС€Рµ РїРµСЂРµРґР°РЅРЅРѕРіРѕ
 		//#ifdef MSGLOGGER
 		//_ASSERTE((rcCalcDC.right - rcCalcDC.left)>=(prDC->right - prDC->left));
 		//_ASSERTE((rcCalcDC.bottom - rcCalcDC.top)>=(prDC->bottom - prDC->top));
@@ -3703,7 +3703,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		{
 			rcCalcCon = CalcRect(CER_CONSOLE_CUR, rcCalcBack, CER_BACK, pVCon);
 		}
-		// Расчетное DC (размер)
+		// Р Р°СЃС‡РµС‚РЅРѕРµ DC (СЂР°Р·РјРµСЂ)
 		_ASSERTE(rcCalcCon.left==0 && rcCalcCon.top==0);
 		RECT rcCalcDC = MakeRect(0,0,rcCalcCon.right*gpSetCls->FontWidth(), rcCalcCon.bottom*gpSetCls->FontHeight());
 
@@ -3713,10 +3713,10 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		int nDeltaX = (rcCalcBack.right - rcCalcBack.left) - (rcCalcDC.right - rcCalcDC.left);
 		int nDeltaY = (rcCalcBack.bottom - rcCalcBack.top) - (rcCalcDC.bottom - rcCalcDC.top);
 
-		// Теперь сдвиги
+		// РўРµРїРµСЂСЊ СЃРґРІРёРіРё
 		if (gpSet->isTryToCenter && (gpConEmu->isZoomed() || gpConEmu->isFullScreen() || gpSet->isQuakeStyle))
 		{
-			// считаем доп.сдвиги. ТОЧНО
+			// СЃС‡РёС‚Р°РµРј РґРѕРї.СЃРґРІРёРіРё. РўРћР§РќРћ
 			if (nDeltaX > 0)
 			{
 				rcAddShift.left = nDeltaX >> 1;
@@ -3757,7 +3757,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			RECT rcShift = gpConEmu->CalcMargins(tTabAction);
 			CConEmuMain::AddMargins(rc, rcShift);
 			rc.left = rc.right - GetSystemMetrics(SM_CXVSCROLL);
-			return rc; // Иначе внизу еще будет коррекция по DC (rcAddShift)
+			return rc; // РРЅР°С‡Рµ РІРЅРёР·Сѓ РµС‰Рµ Р±СѓРґРµС‚ РєРѕСЂСЂРµРєС†РёСЏ РїРѕ DC (rcAddShift)
 		} break;
 		case CER_DC: // switch (tWhat)
 		case CER_BACK: // switch (tWhat)
@@ -3765,27 +3765,27 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		case CER_CONSOLE_CUR: // switch (tWhat)
 		case CER_CONSOLE_NTVDMOFF: // switch (tWhat)
 		{
-			_ASSERTE(tWhat!=CER_DC || (tFrom==CER_BACK || tFrom==CER_CONSOLE_CUR)); // CER_DC должен считаться от CER_BACK
+			_ASSERTE(tWhat!=CER_DC || (tFrom==CER_BACK || tFrom==CER_CONSOLE_CUR)); // CER_DC РґРѕР»Р¶РµРЅ СЃС‡РёС‚Р°С‚СЊСЃСЏ РѕС‚ CER_BACK
 
 			if (tFrom == CER_MAINCLIENT)
 			{
-				// Учесть высоту закладок (табов)
+				// РЈС‡РµСЃС‚СЊ РІС‹СЃРѕС‚Сѓ Р·Р°РєР»Р°РґРѕРє (С‚Р°Р±РѕРІ)
 				RECT rcShift = gpConEmu->CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
 				CConEmuMain::AddMargins(rc, rcShift);
 			}
 			else if (tFrom == CER_BACK || tFrom == CER_WORKSPACE)
 			{
-				// -- отрезание полосы прокрутки ПОСЛЕ разбиения
+				// -- РѕС‚СЂРµР·Р°РЅРёРµ РїРѕР»РѕСЃС‹ РїСЂРѕРєСЂСѓС‚РєРё РџРћРЎР›Р• СЂР°Р·Р±РёРµРЅРёСЏ
 				//rcShift = gpConEmu->CalcMargins(CEM_SCROLL);
 				//CConEmuMain::AddMargins(rc, rcShift);
 			}
 			else
 			{
-				// Другие значения - не допускаются
+				// Р”СЂСѓРіРёРµ Р·РЅР°С‡РµРЅРёСЏ - РЅРµ РґРѕРїСѓСЃРєР°СЋС‚СЃСЏ
 				_ASSERTE(tFrom == CER_MAINCLIENT);
 			}
 
-			// Теперь обработка SplitScreen/DoubleView/....
+			// РўРµРїРµСЂСЊ РѕР±СЂР°Р±РѕС‚РєР° SplitScreen/DoubleView/....
 			RECT rcAll = rc;
 			if (pGroup && (tWhat != CER_CONSOLE_ALL)
 				&& (tFrom == CER_MAINCLIENT || tFrom == CER_WORKSPACE))
@@ -3794,45 +3794,45 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				pGroup->CalcSplitRootRect(rcAll, rc);
 			}
 
-			// Коррекция отступов
+			// РљРѕСЂСЂРµРєС†РёСЏ РѕС‚СЃС‚СѓРїРѕРІ
 			if ((tFrom == CER_MAINCLIENT || tFrom == CER_BACK || tFrom == CER_WORKSPACE)
 				&& (tWhat != CER_BACK))
 			{
-				// Прокрутка. Пока только справа (планируется и внизу)
+				// РџСЂРѕРєСЂСѓС‚РєР°. РџРѕРєР° С‚РѕР»СЊРєРѕ СЃРїСЂР°РІР° (РїР»Р°РЅРёСЂСѓРµС‚СЃСЏ Рё РІРЅРёР·Сѓ)
 				RECT rcShift = gpConEmu->CalcMargins(CEM_SCROLL);
 				CConEmuMain::AddMargins(rc, rcShift);
 			}
 
-			TODO("Вообще, для CER_CONSOLE_ALL CEM_PAD считать не нужно, но т.к. пока используется SetAllConsoleWindowsSize - оставим");
+			TODO("Р’РѕРѕР±С‰Рµ, РґР»СЏ CER_CONSOLE_ALL CEM_PAD СЃС‡РёС‚Р°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ, РЅРѕ С‚.Рє. РїРѕРєР° РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ SetAllConsoleWindowsSize - РѕСЃС‚Р°РІРёРј");
 			if (tWhat == CER_DC || tWhat == CER_CONSOLE_CUR || tWhat == CER_CONSOLE_ALL)
 			{
-				// Pad. Отступ от всех краев (gpSet->nCenterConsolePad)
+				// Pad. РћС‚СЃС‚СѓРї РѕС‚ РІСЃРµС… РєСЂР°РµРІ (gpSet->nCenterConsolePad)
 				RECT rcShift = gpConEmu->CalcMargins(CEM_PAD);
 				CConEmuMain::AddMargins(rc, rcShift);
 			}
 
-			//// Для корректного деления на размер знакоместа...
+			//// Р”Р»СЏ РєРѕСЂСЂРµРєС‚РЅРѕРіРѕ РґРµР»РµРЅРёСЏ РЅР° СЂР°Р·РјРµСЂ Р·РЅР°РєРѕРјРµСЃС‚Р°...
 			//         if (gpSetCls->FontWidth()==0 || gpSetCls->FontHeight()==0)
-			//             pVCon->InitDC(false, true); // инициализировать ширину шрифта по умолчанию
+			//             pVCon->InitDC(false, true); // РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°С‚СЊ С€РёСЂРёРЅСѓ С€СЂРёС„С‚Р° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 			//rc.right ++;
 			//int nShift = (gpSetCls->FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
 			//rc.right += nShift;
-			// Если есть вкладки
+			// Р•СЃР»Рё РµСЃС‚СЊ РІРєР»Р°РґРєРё
 			//if (rcShift.top || rcShift.bottom || )
 			//nShift = (gpSetCls->FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
 
-			// Если активен NTVDM.
-			TODO("Вообще это нужно расширить. Размер может менять и любое консольное приложение.");
+			// Р•СЃР»Рё Р°РєС‚РёРІРµРЅ NTVDM.
+			TODO("Р’РѕРѕР±С‰Рµ СЌС‚Рѕ РЅСѓР¶РЅРѕ СЂР°СЃС€РёСЂРёС‚СЊ. Р Р°Р·РјРµСЂ РјРѕР¶РµС‚ РјРµРЅСЏС‚СЊ Рё Р»СЋР±РѕРµ РєРѕРЅСЃРѕР»СЊРЅРѕРµ РїСЂРёР»РѕР¶РµРЅРёРµ.");
 			if (tWhat != CER_CONSOLE_NTVDMOFF && pVCon && pVCon->RCon() && pVCon->RCon()->isNtvdm())
 			{
-				// NTVDM устанавливает ВЫСОТУ экранного буфера... в 25/28/43/50 строк
-				// путем округления текущей высоты (то есть если до запуска 16bit
-				// было 27 строк, то скорее всего будет установлена высота в 28 строк)
+				// NTVDM СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р’Р«РЎРћРўРЈ СЌРєСЂР°РЅРЅРѕРіРѕ Р±СѓС„РµСЂР°... РІ 25/28/43/50 СЃС‚СЂРѕРє
+				// РїСѓС‚РµРј РѕРєСЂСѓРіР»РµРЅРёСЏ С‚РµРєСѓС‰РµР№ РІС‹СЃРѕС‚С‹ (С‚Рѕ РµСЃС‚СЊ РµСЃР»Рё РґРѕ Р·Р°РїСѓСЃРєР° 16bit
+				// Р±С‹Р»Рѕ 27 СЃС‚СЂРѕРє, С‚Рѕ СЃРєРѕСЂРµРµ РІСЃРµРіРѕ Р±СѓРґРµС‚ СѓСЃС‚Р°РЅРѕРІР»РµРЅР° РІС‹СЃРѕС‚Р° РІ 28 СЃС‚СЂРѕРє)
 				RECT rc1 = MakeRect(pVCon->TextWidth*gpSetCls->FontWidth(), pVCon->TextHeight*gpSetCls->FontHeight());
 
 				//gpSet->ntvdmHeight /* pVCon->TextHeight */ * gpSetCls->FontHeight());
 				if (rc1.bottom > (rc.bottom - rc.top))
-					rc1.bottom = (rc.bottom - rc.top); // Если размер вылез за текущий - обрежем снизу :(
+					rc1.bottom = (rc.bottom - rc.top); // Р•СЃР»Рё СЂР°Р·РјРµСЂ РІС‹Р»РµР· Р·Р° С‚РµРєСѓС‰РёР№ - РѕР±СЂРµР¶РµРј СЃРЅРёР·Сѓ :(
 
 				int nS = rc.right - rc.left - rc1.right;
 
@@ -3865,12 +3865,12 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				CConEmuMain::AddMargins(rc, rcShift);
 			}
 
-			// Если нужен размер консоли в символах сразу делим и выходим
+			// Р•СЃР»Рё РЅСѓР¶РµРЅ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё РІ СЃРёРјРІРѕР»Р°С… СЃСЂР°Р·Сѓ РґРµР»РёРј Рё РІС‹С…РѕРґРёРј
 			if (tWhat == CER_CONSOLE_ALL || tWhat == CER_CONSOLE_CUR || tWhat == CER_CONSOLE_NTVDMOFF)
 			{
-				//2009-07-09 - ClientToConsole использовать нельзя, т.к. после его
-				//  приближений высота может получиться больше Ideal, а ширина - меньше
-				//120822 - было "(rc.right - rc.left + 1)"
+				//2009-07-09 - ClientToConsole РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РЅРµР»СЊР·СЏ, С‚.Рє. РїРѕСЃР»Рµ РµРіРѕ
+				//  РїСЂРёР±Р»РёР¶РµРЅРёР№ РІС‹СЃРѕС‚Р° РјРѕР¶РµС‚ РїРѕР»СѓС‡РёС‚СЊСЃСЏ Р±РѕР»СЊС€Рµ Ideal, Р° С€РёСЂРёРЅР° - РјРµРЅСЊС€Рµ
+				//120822 - Р±С‹Р»Рѕ "(rc.right - rc.left + 1)"
 				int nW = (rc.right - rc.left) / gpSetCls->FontWidth();
 				int nH = (rc.bottom - rc.top) / gpSetCls->FontHeight();
 				rc.left = 0; rc.top = 0; rc.right = nW; rc.bottom = nH;
@@ -3884,7 +3884,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 					//if (gpConEmu->wndHeight && rc.bottom > (LONG)gpConEmu->wndHeight)
 					//	rc.bottom = gpConEmu->wndHeight;
 
-					TODO("Проверить, нужно ли это?");
+					TODO("РџСЂРѕРІРµСЂРёС‚СЊ, РЅСѓР¶РЅРѕ Р»Рё СЌС‚Рѕ?");
 
 					SIZE curSize = gpConEmu->GetDefaultSize(true);
 
@@ -3899,7 +3899,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				_ASSERTE(rc.bottom>=MIN_CON_HEIGHT);
 				#endif
 
-				// Возможно, что в RealConsole выставлен большой шрифт, который помешает установке этого размера
+				// Р’РѕР·РјРѕР¶РЅРѕ, С‡С‚Рѕ РІ RealConsole РІС‹СЃС‚Р°РІР»РµРЅ Р±РѕР»СЊС€РѕР№ С€СЂРёС„С‚, РєРѕС‚РѕСЂС‹Р№ РїРѕРјРµС€Р°РµС‚ СѓСЃС‚Р°РЅРѕРІРєРµ СЌС‚РѕРіРѕ СЂР°Р·РјРµСЂР°
 				if (pVCon)
 				{
 					CRealConsole* pRCon = pVCon->RCon();
@@ -3908,9 +3908,9 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 					{
 						COORD crMaxConSize = {0,0};
 
-						// Даже если открыто несколько паналей - не разрешим устанавливать
-						// в общей сложности больший размер, т.к. при закрытии одной панели
-						// консоль слелит (превысит максимально допустимый размер)
+						// Р”Р°Р¶Рµ РµСЃР»Рё РѕС‚РєСЂС‹С‚Рѕ РЅРµСЃРєРѕР»СЊРєРѕ РїР°РЅР°Р»РµР№ - РЅРµ СЂР°Р·СЂРµС€РёРј СѓСЃС‚Р°РЅР°РІР»РёРІР°С‚СЊ
+						// РІ РѕР±С‰РµР№ СЃР»РѕР¶РЅРѕСЃС‚Рё Р±РѕР»СЊС€РёР№ СЂР°Р·РјРµСЂ, С‚.Рє. РїСЂРё Р·Р°РєСЂС‹С‚РёРё РѕРґРЅРѕР№ РїР°РЅРµР»Рё
+						// РєРѕРЅСЃРѕР»СЊ СЃР»РµР»РёС‚ (РїСЂРµРІС‹СЃРёС‚ РјР°РєСЃРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Р№ СЂР°Р·РјРµСЂ)
 						if (pRCon->GetMaxConSize(&crMaxConSize))
 						{
 							if (rc.right > crMaxConSize.X)
@@ -3924,7 +3924,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			}
 			else
 			{
-				// корректировка, центрирование
+				// РєРѕСЂСЂРµРєС‚РёСЂРѕРІРєР°, С†РµРЅС‚СЂРёСЂРѕРІР°РЅРёРµ
 				CConEmuMain::AddMargins(rc, rcAddShift);
 			}
 		}
@@ -3945,8 +3945,8 @@ void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
 
 	RECT rcCon = MakeRect(size.X, size.Y);
 	RECT rcPixels = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE_CUR, gp_VActive);
-	// в пикселях нужно учитывать разделители и прокрутки
-	_ASSERTE(gpSet->isAlwaysShowScrollbar!=1); // доделать
+	// РІ РїРёРєСЃРµР»СЏС… РЅСѓР¶РЅРѕ СѓС‡РёС‚С‹РІР°С‚СЊ СЂР°Р·РґРµР»РёС‚РµР»Рё Рё РїСЂРѕРєСЂСѓС‚РєРё
+	_ASSERTE(gpSet->isAlwaysShowScrollbar!=1); // РґРѕРґРµР»Р°С‚СЊ
 	if (m_SplitType == RConStartArgs::eSplitHorz)
 	{
 		if (gpSet->nSplitWidth && (rcPixels.right > (LONG)gpSet->nSplitWidth))
@@ -3976,7 +3976,7 @@ void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
 		//_ASSERTE(rcScroll.left==0);
 		//if (size.X > (UINT)(rcScroll.right * 2))
 		//{
-		//	_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // сюда должны попадать только при включенном постоянно скролле
+		//	_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // СЃСЋРґР° РґРѕР»Р¶РЅС‹ РїРѕРїР°РґР°С‚СЊ С‚РѕР»СЊРєРѕ РїСЂРё РІРєР»СЋС‡РµРЅРЅРѕРј РїРѕСЃС‚РѕСЏРЅРЅРѕ СЃРєСЂРѕР»Р»Рµ
 		//	size.X -= rcScroll.right * 2;
 		//}
 
@@ -4000,15 +4000,15 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 	MSectionLockSimple lockGroups; lockGroups.Lock(&gcs_VGroups);
 	CVConGuard VCon(mp_Item);
 
-	// Некорректно. Нужно прокрутку просто вводить. А игнорировать установку размера окна нельзя.
+	// РќРµРєРѕСЂСЂРµРєС‚РЅРѕ. РќСѓР¶РЅРѕ РїСЂРѕРєСЂСѓС‚РєСѓ РїСЂРѕСЃС‚Рѕ РІРІРѕРґРёС‚СЊ. Рђ РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ СѓСЃС‚Р°РЅРѕРІРєСѓ СЂР°Р·РјРµСЂР° РѕРєРЅР° РЅРµР»СЊР·СЏ.
 #if 0
-	// Это не совсем корректно... ntvdm.exe не выгружается после выхода из 16бит приложения
+	// Р­С‚Рѕ РЅРµ СЃРѕРІСЃРµРј РєРѕСЂСЂРµРєС‚РЅРѕ... ntvdm.exe РЅРµ РІС‹РіСЂСѓР¶Р°РµС‚СЃСЏ РїРѕСЃР»Рµ РІС‹С…РѕРґР° РёР· 16Р±РёС‚ РїСЂРёР»РѕР¶РµРЅРёСЏ
 	if (isNtvdm())
 	{
 		//if (size.X == 80 && size.Y>25 && lastSize1.X != size.X && size.Y == lastSize1.Y) {
-		TODO("Ntvdm почему-то не всегда устанавливает ВЫСОТУ консоли в 25/28/50 символов...")
+		TODO("Ntvdm РїРѕС‡РµРјСѓ-С‚Рѕ РЅРµ РІСЃРµРіРґР° СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р’Р«РЎРћРўРЈ РєРѕРЅСЃРѕР»Рё РІ 25/28/50 СЃРёРјРІРѕР»РѕРІ...")
 		//}
-		return; // запрет изменения размеров консоли для 16бит приложений
+		return; // Р·Р°РїСЂРµС‚ РёР·РјРµРЅРµРЅРёСЏ СЂР°Р·РјРµСЂРѕРІ РєРѕРЅСЃРѕР»Рё РґР»СЏ 16Р±РёС‚ РїСЂРёР»РѕР¶РµРЅРёР№
 	}
 #endif
 
@@ -4028,7 +4028,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 
 
 
-	// Заблокируем заранее
+	// Р—Р°Р±Р»РѕРєРёСЂСѓРµРј Р·Р°СЂР°РЅРµРµ
 	CVConGuard VCon1(mp_Grp1 ? mp_Grp1->mp_Item : NULL);
 	CVConGuard VCon2(mp_Grp2 ? mp_Grp2->mp_Item : NULL);
 
@@ -4084,25 +4084,25 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 }
 
 // size in columns and lines
-// здесь нужно привести размер GUI к "общей" ширине консолей в символах
-// т.е. если по горизонтали есть 2 консоли, и просят размер 80x25
-// то эти две консоли должны стать 40x25 а GUI отресайзиться под 80x25
-// В принципе, эту функцию можно было бы и в CConEmu оставить, но для общности путь здесь будет
+// Р·РґРµСЃСЊ РЅСѓР¶РЅРѕ РїСЂРёРІРµСЃС‚Рё СЂР°Р·РјРµСЂ GUI Рє "РѕР±С‰РµР№" С€РёСЂРёРЅРµ РєРѕРЅСЃРѕР»РµР№ РІ СЃРёРјРІРѕР»Р°С…
+// С‚.Рµ. РµСЃР»Рё РїРѕ РіРѕСЂРёР·РѕРЅС‚Р°Р»Рё РµСЃС‚СЊ 2 РєРѕРЅСЃРѕР»Рё, Рё РїСЂРѕСЃСЏС‚ СЂР°Р·РјРµСЂ 80x25
+// С‚Рѕ СЌС‚Рё РґРІРµ РєРѕРЅСЃРѕР»Рё РґРѕР»Р¶РЅС‹ СЃС‚Р°С‚СЊ 40x25 Р° GUI РѕС‚СЂРµСЃР°Р№Р·РёС‚СЊСЃСЏ РїРѕРґ 80x25
+// Р’ РїСЂРёРЅС†РёРїРµ, СЌС‚Сѓ С„СѓРЅРєС†РёСЋ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ Р±С‹ Рё РІ CConEmu РѕСЃС‚Р°РІРёС‚СЊ, РЅРѕ РґР»СЏ РѕР±С‰РЅРѕСЃС‚Рё РїСѓС‚СЊ Р·РґРµСЃСЊ Р±СѓРґРµС‚
 void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN or CER_MAINCLIENT*/, COORD size, bool bSetRedraw /*= false*/)
 {
 	MSectionLockSimple lockGroups; lockGroups.Lock(&gcs_VGroups);
 	CVConGuard VCon(gp_VActive);
 	CVConGroup* pRoot = GetRootOfVCon(VCon.VCon());
 
-	// Некорректно. Нужно прокрутку просто вводить. А игнорировать установку размера окна нельзя.
+	// РќРµРєРѕСЂСЂРµРєС‚РЅРѕ. РќСѓР¶РЅРѕ РїСЂРѕРєСЂСѓС‚РєСѓ РїСЂРѕСЃС‚Рѕ РІРІРѕРґРёС‚СЊ. Рђ РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ СѓСЃС‚Р°РЅРѕРІРєСѓ СЂР°Р·РјРµСЂР° РѕРєРЅР° РЅРµР»СЊР·СЏ.
 #if 0
-	// Это не совсем корректно... ntvdm.exe не выгружается после выхода из 16бит приложения
+	// Р­С‚Рѕ РЅРµ СЃРѕРІСЃРµРј РєРѕСЂСЂРµРєС‚РЅРѕ... ntvdm.exe РЅРµ РІС‹РіСЂСѓР¶Р°РµС‚СЃСЏ РїРѕСЃР»Рµ РІС‹С…РѕРґР° РёР· 16Р±РёС‚ РїСЂРёР»РѕР¶РµРЅРёСЏ
 	if (isNtvdm())
 	{
 		//if (size.X == 80 && size.Y>25 && lastSize1.X != size.X && size.Y == lastSize1.Y) {
-		TODO("Ntvdm почему-то не всегда устанавливает ВЫСОТУ консоли в 25/28/50 символов...")
+		TODO("Ntvdm РїРѕС‡РµРјСѓ-С‚Рѕ РЅРµ РІСЃРµРіРґР° СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р’Р«РЎРћРўРЈ РєРѕРЅСЃРѕР»Рё РІ 25/28/50 СЃРёРјРІРѕР»РѕРІ...")
 		//}
-		return; // запрет изменения размеров консоли для 16бит приложений
+		return; // Р·Р°РїСЂРµС‚ РёР·РјРµРЅРµРЅРёСЏ СЂР°Р·РјРµСЂРѕРІ РєРѕРЅСЃРѕР»Рё РґР»СЏ 16Р±РёС‚ РїСЂРёР»РѕР¶РµРЅРёР№
 	}
 #endif
 
@@ -4131,10 +4131,10 @@ void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= 
 		SetRedraw(FALSE);
 	}
 
-	// Для разбиения имеет смысл использовать текущий размер окна в пикселях
+	// Р”Р»СЏ СЂР°Р·Р±РёРµРЅРёСЏ РёРјРµРµС‚ СЃРјС‹СЃР» РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‚РµРєСѓС‰РёР№ СЂР°Р·РјРµСЂ РѕРєРЅР° РІ РїРёРєСЃРµР»СЏС…
 	RECT rcWorkspace = gpConEmu->CalcRect(CER_WORKSPACE, rcWnd, tFrom);
 
-	// Избежать мерцания панелей в Far
+	// РР·Р±РµР¶Р°С‚СЊ РјРµСЂС†Р°РЅРёСЏ РїР°РЅРµР»РµР№ РІ Far
 	if (!bSetRedraw && pRoot->mp_Item && pRoot->m_SplitType == RConStartArgs::eSplitNone)
 	{
 		bSetRedraw = pRoot->mp_Item->RCon()->isFar(true);
@@ -4169,7 +4169,7 @@ void CVConGroup::LockSyncConsoleToWindow(bool abLockSync)
 	gb_SkipSyncSize = abLockSync;
 }
 
-// Изменить размер консоли по размеру окна (главного)
+// РР·РјРµРЅРёС‚СЊ СЂР°Р·РјРµСЂ РєРѕРЅСЃРѕР»Рё РїРѕ СЂР°Р·РјРµСЂСѓ РѕРєРЅР° (РіР»Р°РІРЅРѕРіРѕ)
 void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/, bool bSync/*=false*/)
 {
 	if (gb_SkipSyncSize || isNtvdm())
@@ -4182,7 +4182,7 @@ void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/, bool bSync/*=fal
 	_ASSERTE(gpConEmu->mn_InResize <= 1);
 
 	#ifdef _DEBUG
-	// Не должно вызываться в процессе изменения режима окна
+	// РќРµ РґРѕР»Р¶РЅРѕ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РІ РїСЂРѕС†РµСЃСЃРµ РёР·РјРµРЅРµРЅРёСЏ СЂРµР¶РёРјР° РѕРєРЅР°
 	if (gpConEmu->changeFromWindowMode!=wmNotChanging)
 	{
 		_ASSERTE(gpConEmu->changeFromWindowMode==wmNotChanging);
@@ -4200,16 +4200,16 @@ void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/, bool bSync/*=fal
 	SyncAllConsoles2Window(rcWnd, CER_MAINCLIENT, bSync/*abSetRedraw*/);
 }
 
-// -- функция пустая, игнорируется
-// Установить размер основного окна по текущему размеру gp_VActive
+// -- С„СѓРЅРєС†РёСЏ РїСѓСЃС‚Р°СЏ, РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ
+// РЈСЃС‚Р°РЅРѕРІРёС‚СЊ СЂР°Р·РјРµСЂ РѕСЃРЅРѕРІРЅРѕРіРѕ РѕРєРЅР° РїРѕ С‚РµРєСѓС‰РµРјСѓ СЂР°Р·РјРµСЂСѓ gp_VActive
 void CVConGroup::SyncWindowToConsole()
 {
-	TODO("warning: Допилить прокрутки, чтобы при изменении размера в КОНСОЛИ ее можно было показать в ConEmu");
+	TODO("warning: Р”РѕРїРёР»РёС‚СЊ РїСЂРѕРєСЂСѓС‚РєРё, С‡С‚РѕР±С‹ РїСЂРё РёР·РјРµРЅРµРЅРёРё СЂР°Р·РјРµСЂР° РІ РљРћРќРЎРћР›Р РµРµ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ РїРѕРєР°Р·Р°С‚СЊ РІ ConEmu");
 
 #if 0
 	_ASSERTE(FALSE && "May be this function must be eliminated!");
-	// Наверное имеет смысл вообще не ресайзить GUI по размеру консоли.
-	// Если консоль больше - прокрутка, если меньше - центрирование.
+	// РќР°РІРµСЂРЅРѕРµ РёРјРµРµС‚ СЃРјС‹СЃР» РІРѕРѕР±С‰Рµ РЅРµ СЂРµСЃР°Р№Р·РёС‚СЊ GUI РїРѕ СЂР°Р·РјРµСЂСѓ РєРѕРЅСЃРѕР»Рё.
+	// Р•СЃР»Рё РєРѕРЅСЃРѕР»СЊ Р±РѕР»СЊС€Рµ - РїСЂРѕРєСЂСѓС‚РєР°, РµСЃР»Рё РјРµРЅСЊС€Рµ - С†РµРЅС‚СЂРёСЂРѕРІР°РЅРёРµ.
 
 	DEBUGLOGFILE("SyncWindowToConsole\n");
 
@@ -4239,9 +4239,9 @@ void CVConGroup::SyncWindowToConsole()
 	rcDC = MakeRect(gp_VActive->winSize.X, gp_VActive->winSize.Y);
 	}*/
 	//_ASSERTE(rcDC.right>250 && rcDC.bottom>200);
-	RECT rcWnd = CalcRect(CER_MAIN, rcDC, CER_DC, gp_VActive); // размеры окна
+	RECT rcWnd = CalcRect(CER_MAIN, rcDC, CER_DC, gp_VActive); // СЂР°Р·РјРµСЂС‹ РѕРєРЅР°
 	//GetCWShift(ghWnd, &cwShift);
-	RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
+	RECT wndR; GetWindowRect(ghWnd, &wndR); // С‚РµРєСѓС‰РёР№ XY
 
 	if (gpSetCls->isAdvLogging)
 	{
@@ -4254,8 +4254,8 @@ void CVConGroup::SyncWindowToConsole()
 #endif
 }
 
-//// Это некие сводные размеры, соответствующие тому, как если бы была
-//// только одна активная консоль, БЕЗ Split-screen
+//// Р­С‚Рѕ РЅРµРєРёРµ СЃРІРѕРґРЅС‹Рµ СЂР°Р·РјРµСЂС‹, СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРµ С‚РѕРјСѓ, РєР°Рє РµСЃР»Рё Р±С‹ Р±С‹Р»Р°
+//// С‚РѕР»СЊРєРѕ РѕРґРЅР° Р°РєС‚РёРІРЅР°СЏ РєРѕРЅСЃРѕР»СЊ, Р‘Р•Р— Split-screen
 //uint CVConGroup::TextWidth()
 //{
 //	uint nWidth = gpSet->_wndWidth;
@@ -4283,8 +4283,8 @@ void CVConGroup::SyncWindowToConsole()
 //
 //			if (gp_VActive->RCon())
 //			{
-//				// При ресайзе через окно настройки - gp_VActive еще не перерисовался
-//				// так что и TextWidth/TextHeight не обновился
+//				// РџСЂРё СЂРµСЃР°Р№Р·Рµ С‡РµСЂРµР· РѕРєРЅРѕ РЅР°СЃС‚СЂРѕР№РєРё - gp_VActive РµС‰Рµ РЅРµ РїРµСЂРµСЂРёСЃРѕРІР°Р»СЃСЏ
+//				// С‚Р°Рє С‡С‚Рѕ Рё TextWidth/TextHeight РЅРµ РѕР±РЅРѕРІРёР»СЃСЏ
 //				//-- gpSetCls->UpdateSize(gp_VActive->TextWidth, gp_VActive->TextHeight);
 //				nWidth = gp_VActive->RCon()->TextWidth();
 //			}
@@ -4319,8 +4319,8 @@ void CVConGroup::SyncWindowToConsole()
 //
 //			if (gp_VActive->RCon())
 //			{
-//				// При ресайзе через окно настройки - gp_VActive еще не перерисовался
-//				// так что и TextWidth/TextHeight не обновился
+//				// РџСЂРё СЂРµСЃР°Р№Р·Рµ С‡РµСЂРµР· РѕРєРЅРѕ РЅР°СЃС‚СЂРѕР№РєРё - gp_VActive РµС‰Рµ РЅРµ РїРµСЂРµСЂРёСЃРѕРІР°Р»СЃСЏ
+//				// С‚Р°Рє С‡С‚Рѕ Рё TextWidth/TextHeight РЅРµ РѕР±РЅРѕРІРёР»СЃСЏ
 //				//-- gpSetCls->UpdateSize(gp_VActive->TextWidth, gp_VActive->TextHeight);
 //				nHeight = gp_VActive->RCon()->TextHeight();
 //			}
@@ -4359,8 +4359,8 @@ RECT CVConGroup::AllTextRect(bool abMinimal /*= false*/)
 
 			if (gp_VActive->RCon())
 			{
-				// При ресайзе через окно настройки - gp_VActive еще не перерисовался
-				// так что и TextWidth/TextHeight не обновился
+				// РџСЂРё СЂРµСЃР°Р№Р·Рµ С‡РµСЂРµР· РѕРєРЅРѕ РЅР°СЃС‚СЂРѕР№РєРё - gp_VActive РµС‰Рµ РЅРµ РїРµСЂРµСЂРёСЃРѕРІР°Р»СЃСЏ
+				// С‚Р°Рє С‡С‚Рѕ Рё TextWidth/TextHeight РЅРµ РѕР±РЅРѕРІРёР»СЃСЏ
 				//-- gpSetCls->UpdateSize(gp_VActive->TextWidth, gp_VActive->TextHeight);
 				int nWidth = gp_VActive->RCon()->TextWidth();
 				int nHeight = gp_VActive->RCon()->TextHeight();
@@ -4381,8 +4381,8 @@ RECT CVConGroup::AllTextRect(bool abMinimal /*= false*/)
 }
 
 // WindowMode: rNormal, rMaximized, rFullScreen
-// rcWnd: размер ghWnd
-// Returns: true - если успешно, можно продолжать
+// rcWnd: СЂР°Р·РјРµСЂ ghWnd
+// Returns: true - РµСЃР»Рё СѓСЃРїРµС€РЅРѕ, РјРѕР¶РЅРѕ РїСЂРѕРґРѕР»Р¶Р°С‚СЊ
 bool CVConGroup::PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN*/, bool bSetRedraw /*= false*/)
 {
 	bool lbRc = true;
@@ -4500,11 +4500,11 @@ void CVConGroup::InvalidateGaps()
 	}
 	#endif
 
-	// Теперь - VConsole (все видимые!)
+	// РўРµРїРµСЂСЊ - VConsole (РІСЃРµ РІРёРґРёРјС‹Рµ!)
 	if (iRc != NULLREGION)
 	{
 		TODO("DoubleView");
-		TODO("Заменить на Background, когда будет");
+		TODO("Р—Р°РјРµРЅРёС‚СЊ РЅР° Background, РєРѕРіРґР° Р±СѓРґРµС‚");
 		HWND hView = gp_VActive ? gp_VActive->GetView() : NULL;
 		if (hView && GetWindowRect(hView, &rc))
 		{
@@ -4525,14 +4525,14 @@ wrap:
 #endif
 }
 
-// Должно вызываться ТОЛЬКО для DC в ghWndWork!!!
+// Р”РѕР»Р¶РЅРѕ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РўРћР›Р¬РљРћ РґР»СЏ DC РІ ghWndWork!!!
 void CVConGroup::PaintGaps(HDC hDC)
 {
 	bool lbReleaseDC = false;
 
 	if (hDC == NULL)
 	{
-		hDC = GetDC(ghWnd); // Главное окно!
+		hDC = GetDC(ghWnd); // Р“Р»Р°РІРЅРѕРµ РѕРєРЅРѕ!
 		lbReleaseDC = true;
 	}
 
@@ -4542,7 +4542,7 @@ void CVConGroup::PaintGaps(HDC hDC)
 	bool lbFade = gpSet->isFadeInactive && !gpConEmu->isMeForeground(true);
 
 
-	////RECT rcClient = GetGuiClientRect(); // Клиентская часть главного окна
+	////RECT rcClient = GetGuiClientRect(); // РљР»РёРµРЅС‚СЃРєР°СЏ С‡Р°СЃС‚СЊ РіР»Р°РІРЅРѕРіРѕ РѕРєРЅР°
 	//RECT rcClient = gpConEmu->CalcRect(CER_WORKSPACE);
 
 	_ASSERTE(ghWndWork!=NULL);
@@ -4570,7 +4570,7 @@ void CVConGroup::PaintGaps(HDC hDC)
 
 		hBrush = CreateSolidBrush(crBack);
 
-		TODO("DoubleView: красивая отрисовка выпуклых сплиттеров");
+		TODO("DoubleView: РєСЂР°СЃРёРІР°СЏ РѕС‚СЂРёСЃРѕРІРєР° РІС‹РїСѓРєР»С‹С… СЃРїР»РёС‚С‚РµСЂРѕРІ");
 
 		FillRect(hDC, &rcClient, hBrush);
 
@@ -4593,7 +4593,7 @@ void CVConGroup::PaintGaps(HDC hDC)
 		//	DeleteObject(h2);
 		//}
 
-		//// Теперь - VConsole (все видимые!)
+		//// РўРµРїРµСЂСЊ - VConsole (РІСЃРµ РІРёРґРёРјС‹Рµ!)
 		//if (iRc != NULLREGION)
 		//{
 		//	for (size_t i = 0; i < countof(gp_VCon); i++)
@@ -4620,14 +4620,14 @@ void CVConGroup::PaintGaps(HDC hDC)
 
 		//DeleteObject(h);
 
-		////RECT rcMargins = gpConEmu->CalcMargins(CEM_TAB); // Откусить площадь, занятую строкой табов
+		////RECT rcMargins = gpConEmu->CalcMargins(CEM_TAB); // РћС‚РєСѓСЃРёС‚СЊ РїР»РѕС‰Р°РґСЊ, Р·Р°РЅСЏС‚СѓСЋ СЃС‚СЂРѕРєРѕР№ С‚Р°Р±РѕРІ
 		////AddMargins(rcClient, rcMargins, FALSE);
-		////// На старте при /max - ghWnd DC еще не изменил свое положение
+		////// РќР° СЃС‚Р°СЂС‚Рµ РїСЂРё /max - ghWnd DC РµС‰Рµ РЅРµ РёР·РјРµРЅРёР» СЃРІРѕРµ РїРѕР»РѕР¶РµРЅРёРµ
 		//////RECT offsetRect; Get ClientRect(ghWnd DC, &offsetRect);
 		////RECT rcWndClient; Get ClientRect(ghWnd, &rcWndClient);
 		////RECT rcCalcCon = gpConEmu->CalcRect(CER_BACK, rcWndClient, CER_MAINCLIENT);
 		////RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
-		//// -- работает не правильно - не учитывает центрирование в Maximized
+		//// -- СЂР°Р±РѕС‚Р°РµС‚ РЅРµ РїСЂР°РІРёР»СЊРЅРѕ - РЅРµ СѓС‡РёС‚С‹РІР°РµС‚ С†РµРЅС‚СЂРёСЂРѕРІР°РЅРёРµ РІ Maximized
 		////RECT offsetRect = gpConEmu->CalcRect(CER_BACK, rcCon, CER_CONSOLE);
 		///*
 		//RECT rcClient = {0};
@@ -4638,7 +4638,7 @@ void CVConGroup::PaintGaps(HDC hDC)
 		//*/
 		//RECT dcSize = CalcRect(CER_DC, rcClient, CER_MAINCLIENT);
 		//RECT client = CalcRect(CER_DC, rcClient, CER_MAINCLIENT, NULL, &dcSize);
-		//WARNING("Вынести в CalcRect");
+		//WARNING("Р’С‹РЅРµСЃС‚Рё РІ CalcRect");
 		//RECT offsetRect; memset(&offsetRect,0,sizeof(offsetRect));
 
 		//if (gp_VActive && gp_VActive->Width && gp_VActive->Height)
@@ -4732,7 +4732,7 @@ DWORD CVConGroup::GetFarPID(BOOL abPluginRequired/*=FALSE*/)
 	return dwPID;
 }
 
-// Чтобы при создании ПЕРВОЙ консоли на экране сразу можно было что-то нарисовать
+// Р§С‚РѕР±С‹ РїСЂРё СЃРѕР·РґР°РЅРёРё РџР•Р Р’РћР™ РєРѕРЅСЃРѕР»Рё РЅР° СЌРєСЂР°РЅРµ СЃСЂР°Р·Сѓ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ С‡С‚Рѕ-С‚Рѕ РЅР°СЂРёСЃРѕРІР°С‚СЊ
 void CVConGroup::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args)
 {
 	if (!gp_VActive || (gb_CreatingActive && !args->bBackgroundTab))
@@ -4743,7 +4743,7 @@ void CVConGroup::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *arg
 		if (hWndDC != NULL)
 		{
 			_ASSERTE(hWndDC==NULL && "Called from constructor, NULL expected");
-			// Теперь можно показать созданную консоль
+			// РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ РїРѕРєР°Р·Р°С‚СЊ СЃРѕР·РґР°РЅРЅСѓСЋ РєРѕРЅСЃРѕР»СЊ
 			apiShowWindow(gp_VActive->GetView(), SW_SHOW);
 		}
 	}
@@ -4761,24 +4761,24 @@ void CVConGroup::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 
 void CVConGroup::OnConsoleResize(bool abSizingToDo)
 {
-	//DEBUGSTRERR(L"На удаление. ConEmu не должен дергаться при смене размера ИЗ КОНСОЛИ\n");
+	//DEBUGSTRERR(L"РќР° СѓРґР°Р»РµРЅРёРµ. ConEmu РЅРµ РґРѕР»Р¶РµРЅ РґРµСЂРіР°С‚СЊСЃСЏ РїСЂРё СЃРјРµРЅРµ СЂР°Р·РјРµСЂР° РР— РљРћРќРЎРћР›Р\n");
 	DEBUGSTRERR(L"CVConGroup::OnConsoleResize must NOT!!! be called while CONSOLE size is changed (from console)\n");
 
 	//MSetter lInConsoleResize(&mb_InConsoleResize);
-	// Выполняться должно в нити окна, иначе можем повиснуть
+	// Р’С‹РїРѕР»РЅСЏС‚СЊСЃСЏ РґРѕР»Р¶РЅРѕ РІ РЅРёС‚Рё РѕРєРЅР°, РёРЅР°С‡Рµ РјРѕР¶РµРј РїРѕРІРёСЃРЅСѓС‚СЊ
 	_ASSERTE(gpConEmu->isMainThread() && !gpConEmu->isIconic());
 
 	//COORD c = ConsoleSizeFromWindow();
 	RECT client = gpConEmu->GetGuiClientRect();
 
-	// Проверим, вдруг не отработал isIconic
+	// РџСЂРѕРІРµСЂРёРј, РІРґСЂСѓРі РЅРµ РѕС‚СЂР°Р±РѕС‚Р°Р» isIconic
 	if (client.bottom > 10)
 	{
 		CVConGuard VCon(gp_VActive);
 		gpConEmu->AutoSizeFont(client, CER_MAINCLIENT);
 		RECT c = CalcRect(CER_CONSOLE_CUR, client, CER_MAINCLIENT, gp_VActive);
-		// чтобы не насиловать консоль лишний раз - реальное измененение ее размеров только
-		// при отпускании мышкой рамки окна
+		// С‡С‚РѕР±С‹ РЅРµ РЅР°СЃРёР»РѕРІР°С‚СЊ РєРѕРЅСЃРѕР»СЊ Р»РёС€РЅРёР№ СЂР°Р· - СЂРµР°Р»СЊРЅРѕРµ РёР·РјРµРЅРµРЅРµРЅРёРµ РµРµ СЂР°Р·РјРµСЂРѕРІ С‚РѕР»СЊРєРѕ
+		// РїСЂРё РѕС‚РїСѓСЃРєР°РЅРёРё РјС‹С€РєРѕР№ СЂР°РјРєРё РѕРєРЅР°
 		BOOL lbSizeChanged = FALSE;
 		int nCurConWidth = (int)gp_VActive->RCon()->TextWidth();
 		int nCurConHeight = (int)gp_VActive->RCon()->TextHeight();
@@ -4797,9 +4797,9 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 		}
 
 		if (!gpConEmu->isSizing() &&
-		        (abSizingToDo /*после реального ресайза мышкой*/ ||
-		         gpConEmu->gbPostUpdateWindowSize /*после появления/скрытия табов*/ ||
-		         lbSizeChanged /*или размер в виртуальной консоли не совпадает с расчетным*/))
+		        (abSizingToDo /*РїРѕСЃР»Рµ СЂРµР°Р»СЊРЅРѕРіРѕ СЂРµСЃР°Р№Р·Р° РјС‹С€РєРѕР№*/ ||
+		         gpConEmu->gbPostUpdateWindowSize /*РїРѕСЃР»Рµ РїРѕСЏРІР»РµРЅРёСЏ/СЃРєСЂС‹С‚РёСЏ С‚Р°Р±РѕРІ*/ ||
+		         lbSizeChanged /*РёР»Рё СЂР°Р·РјРµСЂ РІ РІРёСЂС‚СѓР°Р»СЊРЅРѕР№ РєРѕРЅСЃРѕР»Рё РЅРµ СЃРѕРІРїР°РґР°РµС‚ СЃ СЂР°СЃС‡РµС‚РЅС‹Рј*/))
 		{
 			gpConEmu->gbPostUpdateWindowSize = false;
 
@@ -4810,7 +4810,7 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 			else
 			{
 				if ((gpConEmu->WindowMode == wmNormal) && !abSizingToDo)
-					SyncWindowToConsole(); // -- функция пустая, игнорируется
+					SyncWindowToConsole(); // -- С„СѓРЅРєС†РёСЏ РїСѓСЃС‚Р°СЏ, РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ
 				else
 					SyncConsoleToWindow();
 
@@ -4823,7 +4823,7 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 				g_LastConSize = MakeCoord(gp_VActive->TextWidth,gp_VActive->TextHeight);
 			}
 
-			//// Запомнить "идеальный" размер окна, выбранный пользователем
+			//// Р—Р°РїРѕРјРЅРёС‚СЊ "РёРґРµР°Р»СЊРЅС‹Р№" СЂР°Р·РјРµСЂ РѕРєРЅР°, РІС‹Р±СЂР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј
 			//if (abSizingToDo)
 			//	gpConEmu->UpdateIdealRect();
 
@@ -4835,7 +4835,7 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 		        && (g_LastConSize.X != (int)gp_VActive->TextWidth
 		            || g_LastConSize.Y != (int)gp_VActive->TextHeight))
 		{
-			// По идее, сюда мы попадаем только для 16-бит приложений
+			// РџРѕ РёРґРµРµ, СЃСЋРґР° РјС‹ РїРѕРїР°РґР°РµРј С‚РѕР»СЊРєРѕ РґР»СЏ 16-Р±РёС‚ РїСЂРёР»РѕР¶РµРЅРёР№
 			if (isNtvdm())
 				gpConEmu->SyncNtvdm();
 
@@ -4844,13 +4844,13 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 	}
 }
 
-// вызывается из CConEmuMain::OnSize
+// РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· CConEmuMain::OnSize
 void CVConGroup::ReSizePanes(RECT mainClient)
 {
 	//RECT mainClient = MakeRect(newClientWidth,newClientHeight);
 	if (!gp_VActive)
 	{
-		// Еще нету никого
+		// Р•С‰Рµ РЅРµС‚Сѓ РЅРёРєРѕРіРѕ
 		_ASSERTE(gp_VActive);
 		return;
 	}

@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -31,8 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #include "MStrSafe.h"
 
-// Используется в ConEmuC.exe, и для минимизации кода
-// менеджер памяти тут использоваться не должен!
+// РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ ConEmuC.exe, Рё РґР»СЏ РјРёРЅРёРјРёР·Р°С†РёРё РєРѕРґР°
+// РјРµРЅРµРґР¶РµСЂ РїР°РјСЏС‚Рё С‚СѓС‚ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ РЅРµ РґРѕР»Р¶РµРЅ!
 #undef malloc
 #define malloc "malloc"
 #undef calloc
@@ -93,8 +93,8 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 					char* pszValueA = va_arg( argptr, char* );
 					if (pszValueA)
 					{
-						// по хорошему, тут бы MultiByteToWideChar звать, но
-						// эта ветка должна по идее только для отладки использоваться
+						// РїРѕ С…РѕСЂРѕС€РµРјСѓ, С‚СѓС‚ Р±С‹ MultiByteToWideChar Р·РІР°С‚СЊ, РЅРѕ
+						// СЌС‚Р° РІРµС‚РєР° РґРѕР»Р¶РЅР° РїРѕ РёРґРµРµ С‚РѕР»СЊРєРѕ РґР»СЏ РѕС‚Р»Р°РґРєРё РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ
 						while (*pszValueA)
 						{
 							*(pszDst++) = (wchar_t)*(pszValueA++);
@@ -134,7 +134,7 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 					}
 					if (pszValue == szValue)
 						*(pszValue++) = L'0';
-					// Теперь перекинуть в szGuiPipeName
+					// РўРµРїРµСЂСЊ РїРµСЂРµРєРёРЅСѓС‚СЊ РІ szGuiPipeName
 					while (pszValue > szValue)
 					{
 						*(pszDst++) = *(--pszValue);
@@ -211,7 +211,7 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 						{
 							pszValue = (szValue+nLen);
 						}
-						// Теперь перекинуть в Dest
+						// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ Dest
 						while (pszValue > szValue)
 						{
 							*(pszDst++) = *(--pszValue);
@@ -299,8 +299,8 @@ LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...)
 					char* pszValueA = va_arg( argptr, char* );
 					if (pszValueA)
 					{
-						// по хорошему, тут бы MultiByteToWideChar звать, но
-						// эта ветка должна по идее только для отладки использоваться
+						// РїРѕ С…РѕСЂРѕС€РµРјСѓ, С‚СѓС‚ Р±С‹ MultiByteToWideChar Р·РІР°С‚СЊ, РЅРѕ
+						// СЌС‚Р° РІРµС‚РєР° РґРѕР»Р¶РЅР° РїРѕ РёРґРµРµ С‚РѕР»СЊРєРѕ РґР»СЏ РѕС‚Р»Р°РґРєРё РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ
 						while (*pszValueA)
 						{
 							*(pszDst++) = (char)*(pszValueA++);
@@ -340,7 +340,7 @@ LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...)
 					}
 					if (pszValue == szValue)
 						*(pszValue++) = '0';
-					// Теперь перекинуть в szGuiPipeName
+					// РўРµРїРµСЂСЊ РїРµСЂРµРєРёРЅСѓС‚СЊ РІ szGuiPipeName
 					while (pszValue > szValue)
 					{
 						*(pszDst++) = *(--pszValue);
@@ -399,7 +399,7 @@ LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...)
 					{
 						pszValue = (szValue+nLen);
 					}
-					// Теперь перекинуть в Dest
+					// РўРµРїРµСЂСЊ РїРµСЂРµРєРёРЅСѓС‚СЊ РІ Dest
 					while (pszValue > szValue)
 					{
 						*(pszDst++) = *(--pszValue);

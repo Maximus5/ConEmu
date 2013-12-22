@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -193,15 +193,15 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	else
 	{
 		_ASSERTE(pci->Length==sizeof(CONSOLE_INFO));
-		//2010-09-19 что-то на XP стало окошко мелькать.
-		// при отсылке WM_SETCONSOLEINFO консоль отображается :(
+		//2010-09-19 С‡С‚Рѕ-С‚Рѕ РЅР° XP СЃС‚Р°Р»Рѕ РѕРєРѕС€РєРѕ РјРµР»СЊРєР°С‚СЊ.
+		// РїСЂРё РѕС‚СЃС‹Р»РєРµ WM_SETCONSOLEINFO РєРѕРЅСЃРѕР»СЊ РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ :(
 		BOOL lbWasVisible = IsWindowVisible(hwndConsole);
 		RECT rcOldPos = {0}, rcAllMonRect = {0};
 
 		if (!lbWasVisible)
 		{
 			GetWindowRect(hwndConsole, &rcOldPos);
-			// В много-мониторных конфигурациях координаты на некоторых могут быть отрицательными!
+			// Р’ РјРЅРѕРіРѕ-РјРѕРЅРёС‚РѕСЂРЅС‹С… РєРѕРЅС„РёРіСѓСЂР°С†РёСЏС… РєРѕРѕСЂРґРёРЅР°С‚С‹ РЅР° РЅРµРєРѕС‚РѕСЂС‹С… РјРѕРіСѓС‚ Р±С‹С‚СЊ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹РјРё!
 			rcAllMonRect = GetAllMonitorsWorkspace();
 			pci->AutoPosition = FALSE;
 			pci->WindowPosX = rcAllMonRect.left - 1280;
@@ -223,8 +223,8 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 
 			ShowWindow(hwndConsole, SW_HIDE);
 			//SetWindowPos(hwndConsole, NULL, rcOldPos.left, rcOldPos.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-			// -- чтобы на некоторых системах не возникала проблема с позиционированием -> {0,0}
-			// Issue 274: Окно реальной консоли позиционируется в неудобном месте
+			// -- С‡С‚РѕР±С‹ РЅР° РЅРµРєРѕС‚РѕСЂС‹С… СЃРёСЃС‚РµРјР°С… РЅРµ РІРѕР·РЅРёРєР°Р»Р° РїСЂРѕР±Р»РµРјР° СЃ РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°РЅРёРµРј -> {0,0}
+			// Issue 274: РћРєРЅРѕ СЂРµР°Р»СЊРЅРѕР№ РєРѕРЅСЃРѕР»Рё РїРѕР·РёС†РёРѕРЅРёСЂСѓРµС‚СЃСЏ РІ РЅРµСѓРґРѕР±РЅРѕРј РјРµСЃС‚Рµ
 			SetWindowPos(hwndConsole, NULL, 0, 0, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 		}
 	}
@@ -246,17 +246,17 @@ void ChangeScreenBufferSize(CONSOLE_SCREEN_BUFFER_INFO& sbi, SHORT VisibleX, SHO
 	sbi.srWindow.Top = max(0,(sbi.srWindow.Bottom+1-VisibleY));
 }
 
-// sbi - откуда брать данные
-// nCurWidth, nCurHeight - текущие (запомненные) высота и ширина рабочей области
-// nCurScroll - текущие (запомненные) флаги
-// pnNewWidth, pnNewHeight - результат
-// pnScroll - флаги из RealBufferScroll
+// sbi - РѕС‚РєСѓРґР° Р±СЂР°С‚СЊ РґР°РЅРЅС‹Рµ
+// nCurWidth, nCurHeight - С‚РµРєСѓС‰РёРµ (Р·Р°РїРѕРјРЅРµРЅРЅС‹Рµ) РІС‹СЃРѕС‚Р° Рё С€РёСЂРёРЅР° СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё
+// nCurScroll - С‚РµРєСѓС‰РёРµ (Р·Р°РїРѕРјРЅРµРЅРЅС‹Рµ) С„Р»Р°РіРё
+// pnNewWidth, pnNewHeight - СЂРµР·СѓР»СЊС‚Р°С‚
+// pnScroll - С„Р»Р°РіРё РёР· RealBufferScroll
 BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int nCurWidth, int nCurHeight, DWORD nCurScroll, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll)
 {
 	DWORD nScroll = rbs_None; // enum RealBufferScroll
 	int nNewWidth = 0, nNewHeight = 0;
 	
-	// Функция возвращает размер ОКНА (видимой области), то есть буфер может быть больше
+	// Р¤СѓРЅРєС†РёСЏ РІРѕР·РІСЂР°С‰Р°РµС‚ СЂР°Р·РјРµСЂ РћРљРќРђ (РІРёРґРёРјРѕР№ РѕР±Р»Р°СЃС‚Рё), С‚Рѕ РµСЃС‚СЊ Р±СѓС„РµСЂ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ
 	
 	if (sbi.dwSize.X == nCurWidth)
 	{
@@ -275,10 +275,10 @@ BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int nCurWidth, int 
 			nNewWidth = sbi.dwSize.X;
 		}
 	}
-	// Флаги
+	// Р¤Р»Р°РіРё
 	if (/*(sbi.dwSize.X > sbi.dwMaximumWindowSize.X) ||*/ (nNewWidth < sbi.dwSize.X))
 	{
-		// для проверки условий
+		// РґР»СЏ РїСЂРѕРІРµСЂРєРё СѓСЃР»РѕРІРёР№
 		//_ASSERTE((sbi.dwSize.X > sbi.dwMaximumWindowSize.X) && (nNewWidth < sbi.dwSize.X));
 		nScroll |= rbs_Horz;
 	}
@@ -300,10 +300,10 @@ BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int nCurWidth, int 
 			nNewHeight = sbi.dwSize.Y;
 		}
 	}
-	// Флаги
+	// Р¤Р»Р°РіРё
 	if (/*(sbi.dwSize.Y > sbi.dwMaximumWindowSize.Y) ||*/ (nNewHeight < sbi.dwSize.Y))
 	{
-		// для проверки условий
+		// РґР»СЏ РїСЂРѕРІРµСЂРєРё СѓСЃР»РѕРІРёР№
 		//_ASSERTE((sbi.dwSize.Y >= sbi.dwMaximumWindowSize.Y) && (nNewHeight < sbi.dwSize.Y));
 		nScroll |= rbs_Vert;
 	}
@@ -327,12 +327,12 @@ BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int nCurWidth, int 
 	
 	//BOOL lbBufferHeight = this->isScroll();
 
-	//// Проверка режимов прокрутки
+	//// РџСЂРѕРІРµСЂРєР° СЂРµР¶РёРјРѕРІ РїСЂРѕРєСЂСѓС‚РєРё
 	//if (!lbBufferHeight)
 	//{
 	//	if (sbi.dwSize.Y > sbi.dwMaximumWindowSize.Y)
 	//	{
-	//		lbBufferHeight = TRUE; // однозначное включение прокрутки
+	//		lbBufferHeight = TRUE; // РѕРґРЅРѕР·РЅР°С‡РЅРѕРµ РІРєР»СЋС‡РµРЅРёРµ РїСЂРѕРєСЂСѓС‚РєРё
 	//	}
 	//}
 
@@ -342,25 +342,25 @@ BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int nCurWidth, int 
 	//	        && sbi.dwSize.Y == (sbi.srWindow.Bottom + 1)
 	//	  )
 	//	{
-	//		lbBufferHeight = FALSE; // однозначное вЫключение прокрутки
+	//		lbBufferHeight = FALSE; // РѕРґРЅРѕР·РЅР°С‡РЅРѕРµ РІР«РєР»СЋС‡РµРЅРёРµ РїСЂРѕРєСЂСѓС‚РєРё
 	//	}
 	//}
 
-	//// Теперь собственно размеры
+	//// РўРµРїРµСЂСЊ СЃРѕР±СЃС‚РІРµРЅРЅРѕ СЂР°Р·РјРµСЂС‹
 	//if (!lbBufferHeight)
 	//{
 	//	nNewHeight =  sbi.dwSize.Y;
 	//}
 	//else
 	//{
-	//	// Это может прийти во время смены размера
+	//	// Р­С‚Рѕ РјРѕР¶РµС‚ РїСЂРёР№С‚Рё РІРѕ РІСЂРµРјСЏ СЃРјРµРЅС‹ СЂР°Р·РјРµСЂР°
 	//	if ((sbi.srWindow.Bottom - sbi.srWindow.Top + 1) < MIN_CON_HEIGHT)
 	//		nNewHeight = con.nTextHeight;
 	//	else
 	//		nNewHeight = sbi.srWindow.Bottom - sbi.srWindow.Top + 1;
 	//}
 
-	//WARNING("Здесь нужно выполнить коррекцию, если nNewHeight велико - включить режим BufferHeight");
+	//WARNING("Р—РґРµСЃСЊ РЅСѓР¶РЅРѕ РІС‹РїРѕР»РЅРёС‚СЊ РєРѕСЂСЂРµРєС†РёСЋ, РµСЃР»Рё nNewHeight РІРµР»РёРєРѕ - РІРєР»СЋС‡РёС‚СЊ СЂРµР¶РёРј BufferHeight");
 
 	//if (pbBufferHeight)
 	//	*pbBufferHeight = lbBufferHeight;
@@ -395,7 +395,7 @@ void GetConsoleSizeInfo(CONSOLE_INFO *pci)
 		pci->ScreenBufferSize = csbi.dwSize;
 		pci->WindowSize.X	  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
 		pci->WindowSize.Y	  = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-		// Было... а это координаты окна (хотя включается флажок "Autoposition"
+		// Р‘С‹Р»Рѕ... Р° СЌС‚Рѕ РєРѕРѕСЂРґРёРЅР°С‚С‹ РѕРєРЅР° (С…РѕС‚СЏ РІРєР»СЋС‡Р°РµС‚СЃСЏ С„Р»Р°Р¶РѕРє "Autoposition"
 		//pci->WindowPosX	      = csbi.srWindow.Left;
 		//pci->WindowPosY		  = csbi.srWindow.Top;
 	}
@@ -406,7 +406,7 @@ void GetConsoleSizeInfo(CONSOLE_INFO *pci)
 		pci->ScreenBufferSize.Y = pci->WindowSize.Y = 25;
 	}
 
-	// Поскольку включен флажок "AutoPosition" - то это игнорируется
+	// РџРѕСЃРєРѕР»СЊРєСѓ РІРєР»СЋС‡РµРЅ С„Р»Р°Р¶РѕРє "AutoPosition" - С‚Рѕ СЌС‚Рѕ РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ
 	pci->WindowPosX = pci->WindowPosY = 0;
 	/*
 	RECT rcWnd = {0}; GetWindowRect(Get ConsoleWindow(), &rcWnd);
@@ -462,10 +462,10 @@ BOOL apiGetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BU
 }
 
 // Vista+ only
-// Функция глюкавая. По крайней мере в Win7.
-// 1. После ее вызова слетает видимая область в окне консоли
-// 2. После ее вызова окно консоли безусловно показыватся
-// 1 - поправлено здесь, 2 - озаботиться должен вызывающий
+// Р¤СѓРЅРєС†РёСЏ РіР»СЋРєР°РІР°СЏ. РџРѕ РєСЂР°Р№РЅРµР№ РјРµСЂРµ РІ Win7.
+// 1. РџРѕСЃР»Рµ РµРµ РІС‹Р·РѕРІР° СЃР»РµС‚Р°РµС‚ РІРёРґРёРјР°СЏ РѕР±Р»Р°СЃС‚СЊ РІ РѕРєРЅРµ РєРѕРЅСЃРѕР»Рё
+// 2. РџРѕСЃР»Рµ РµРµ РІС‹Р·РѕРІР° РѕРєРЅРѕ РєРѕРЅСЃРѕР»Рё Р±РµР·СѓСЃР»РѕРІРЅРѕ РїРѕРєР°Р·С‹РІР°С‚СЃСЏ
+// 1 - РїРѕРїСЂР°РІР»РµРЅРѕ Р·РґРµСЃСЊ, 2 - РѕР·Р°Р±РѕС‚РёС‚СЊСЃСЏ РґРѕР»Р¶РµРЅ РІС‹Р·С‹РІР°СЋС‰РёР№
 BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx)
 {
 	typedef BOOL (WINAPI* SetConsoleScreenBufferInfoEx_t)(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
@@ -486,7 +486,7 @@ BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BU
 	{
 		lbRc = SetConsoleScreenBufferInfoEx_f(hConsoleOutput, lpConsoleScreenBufferInfoEx);
 
-		// Win7 x64 - глюк. после вызова этой функции идет срыв размеров видимой области.
+		// Win7 x64 - РіР»СЋРє. РїРѕСЃР»Рµ РІС‹Р·РѕРІР° СЌС‚РѕР№ С„СѓРЅРєС†РёРё РёРґРµС‚ СЃСЂС‹РІ СЂР°Р·РјРµСЂРѕРІ РІРёРґРёРјРѕР№ РѕР±Р»Р°СЃС‚Рё.
 		DEBUGTEST(lbWnd =)
 		SetConsoleWindowInfo(hConsoleOutput, TRUE, &lpConsoleScreenBufferInfoEx->srWindow);
 	}
@@ -570,7 +570,7 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize)
 		int nMaxY = GetSystemMetrics(SM_CYFULLSCREEN);
 
 		#ifdef _DEBUG
-		// Для отладки, смотрим какой размер получится по crLargest
+		// Р”Р»СЏ РѕС‚Р»Р°РґРєРё, СЃРјРѕС‚СЂРёРј РєР°РєРѕР№ СЂР°Р·РјРµСЂ РїРѕР»СѓС‡РёС‚СЃСЏ РїРѕ crLargest
 		int nDbgFontX = crLargest.X ? (nMaxX / crLargest.X) : -1;
 		int nDbgFontY = crLargest.Y ? (nMaxY / crLargest.Y) : -1;
 		#endif
@@ -579,10 +579,10 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize)
 		wchar_t sFontName[LF_FACESIZE];
 		if (apiGetConsoleFontSize(hOutput, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
 		{
-			// Увеличение
+			// РЈРІРµР»РёС‡РµРЅРёРµ
 			if (crLargest.X && crLargest.Y && ((dwSize.X > crLargest.X) || (dwSize.Y > crLargest.Y)))
 			{
-				// Теперь прикинуть, какой размер шрифта нам нужен
+				// РўРµРїРµСЂСЊ РїСЂРёРєРёРЅСѓС‚СЊ, РєР°РєРѕР№ СЂР°Р·РјРµСЂ С€СЂРёС„С‚Р° РЅР°Рј РЅСѓР¶РµРЅ
 				newSizeY = max(1,(nMaxY / (dwSize.Y+1)));
 				newSizeX = max(1,(nMaxX / (dwSize.X+1)));
 				if ((newSizeY < curSizeY) || (newSizeX < curSizeX))
@@ -599,7 +599,7 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize)
 					lbRetry = TRUE;
 				}
 			}
-			// Уменьшение
+			// РЈРјРµРЅСЊС€РµРЅРёРµ
 			else if ((dwSize.X <= (csbi.srWindow.Right - csbi.srWindow.Left))
 				|| (dwSize.Y <= (csbi.srWindow.Bottom - csbi.srWindow.Top)))
 			{
@@ -607,7 +607,7 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize)
 				int nMinX = GetSystemMetrics(SM_CXMIN) - 2*GetSystemMetrics(SM_CXSIZEFRAME);
 				if ((nMinX > 0) && (nMinY > 0))
 				{
-					// Теперь прикинуть, какой размер шрифта нам нужен
+					// РўРµРїРµСЂСЊ РїСЂРёРєРёРЅСѓС‚СЊ, РєР°РєРѕР№ СЂР°Р·РјРµСЂ С€СЂРёС„С‚Р° РЅР°Рј РЅСѓР¶РµРЅ
 					newSizeY = (nMinY / (dwSize.Y)) + 1;
 					newSizeX = (nMinX / (dwSize.X)) + 1;
 					if ((newSizeY > curSizeY) || (newSizeX > curSizeX))
@@ -754,7 +754,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 }
 #endif
 /*
--- пробовал в Win7 это не работает
+-- РїСЂРѕР±РѕРІР°Р» РІ Win7 СЌС‚Рѕ РЅРµ СЂР°Р±РѕС‚Р°РµС‚
 void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBufferHeight)
 {
 	if (!gpConsoleInfoStr) {
@@ -762,10 +762,10 @@ void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBuffer
 		return; // memory allocation failed
 	}
 
-	TODO("Заполнить и другие текущие значения!");
+	TODO("Р—Р°РїРѕР»РЅРёС‚СЊ Рё РґСЂСѓРіРёРµ С‚РµРєСѓС‰РёРµ Р·РЅР°С‡РµРЅРёСЏ!");
 	gpConsoleInfoStr->CodePage					= GetConsoleOutputCP();//0;//0x352;
 
-	// Теперь собственно, что хотим поменять
+	// РўРµРїРµСЂСЊ СЃРѕР±СЃС‚РІРµРЅРЅРѕ, С‡С‚Рѕ С…РѕС‚РёРј РїРѕРјРµРЅСЏС‚СЊ
 	gpConsoleInfoStr->ScreenBufferSize.X = gpConsoleInfoStr->WindowSize.X = anWidth;
 	gpConsoleInfoStr->WindowSize.Y = anHeight;
 	gpConsoleInfoStr->ScreenBufferSize.Y = anBufferHeight;
@@ -814,8 +814,8 @@ void SetUserFriendlyFont(HWND hConWnd)
 	OSVERSIONINFO OSVer = {sizeof(OSVer)};
 	GetVersionEx(&OSVer);
 
-	// Соответствующие функции появились только в API Vista
-	// Win2k & WinXP - доступны только хаки, что не подходит
+	// РЎРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРµ С„СѓРЅРєС†РёРё РїРѕСЏРІРёР»РёСЃСЊ С‚РѕР»СЊРєРѕ РІ API Vista
+	// Win2k & WinXP - РґРѕСЃС‚СѓРїРЅС‹ С‚РѕР»СЊРєРѕ С…Р°РєРё, С‡С‚Рѕ РЅРµ РїРѕРґС…РѕРґРёС‚
 	if (OSVer.dwMajorVersion >= 6)
 	{
 		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -937,7 +937,7 @@ void EmergencyShow(HWND hConWnd)
 	{
 		hConWnd = GetConsoleWindow();
 		if (IsWindowVisible(hConWnd))
-			return; // уже, делать ничего не будем
+			return; // СѓР¶Рµ, РґРµР»Р°С‚СЊ РЅРёС‡РµРіРѕ РЅРµ Р±СѓРґРµРј
 	}
 
 	if (hConWnd)
@@ -954,7 +954,7 @@ void EmergencyShow(HWND hConWnd)
 		}
 		else
 		{
-			// Снять TOPMOST
+			// РЎРЅСЏС‚СЊ TOPMOST
 			SetWindowPos(hConWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 		}
 

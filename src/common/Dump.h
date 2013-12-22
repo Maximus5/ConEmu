@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2013 Maximus5
 All rights reserved.
@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _T(x)       __T(x)
 #endif
 
-// Возвращает текст с информацией о пути к сохраненному дампу
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ С‚РµРєСЃС‚ СЃ РёРЅС„РѕСЂРјР°С†РёРµР№ Рѕ РїСѓС‚Рё Рє СЃРѕС…СЂР°РЅРµРЅРЅРѕРјСѓ РґР°РјРїСѓ
 DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024], LPWSTR pszComment = NULL)
 {
 	DWORD dwErr = 0;

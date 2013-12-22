@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2010-2011 Maximus5
 All rights reserved.
@@ -38,7 +38,7 @@ extern bool gbSetStartupInfoOk;
 // minimal(?) FAR version 1.71 alpha 4 build 2470
 int WINAPI _export GetMinFarVersion(void)
 {
-	// Однако, FAR2 до сборки 748 не понимал две версии плагина в одном файле
+	// РћРґРЅР°РєРѕ, FAR2 РґРѕ СЃР±РѕСЂРєРё 748 РЅРµ РїРѕРЅРёРјР°Р» РґРІРµ РІРµСЂСЃРёРё РїР»Р°РіРёРЅР° РІ РѕРґРЅРѕРј С„Р°Р№Р»Рµ
 	BOOL bFar2=FALSE;
 
 	if (!LoadFarVersion())
@@ -75,7 +75,7 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 {
 	gbSetStartupInfoOk = true;
 
-	//LoadFarVersion - уже вызван в GetStartupInfo
+	//LoadFarVersion - СѓР¶Рµ РІС‹Р·РІР°РЅ РІ GetStartupInfo
 
 	INIT_FAR_PSI(::InfoA, ::FSFA, aInfo);
 	

@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 
 #ifdef REGPREPARE_EXTERNAL

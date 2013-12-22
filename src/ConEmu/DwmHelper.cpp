@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -264,7 +264,7 @@ void CDwmHelper::EnableGlass(bool abGlass)
 	CheckGlassAttribute();
 	if (mb_DwmAllowed && !abGlass)
 	{
-		//TODO: При отключении Aero в окне остается "мусор" (что-то из альфа-канала)
+		//TODO: РџСЂРё РѕС‚РєР»СЋС‡РµРЅРёРё Aero РІ РѕРєРЅРµ РѕСЃС‚Р°РµС‚СЃСЏ "РјСѓСЃРѕСЂ" (С‡С‚Рѕ-С‚Рѕ РёР· Р°Р»СЊС„Р°-РєР°РЅР°Р»Р°)
 	}
 }
 
@@ -280,8 +280,8 @@ void CDwmHelper::EnableBlurBehind(bool abBlurBehindClient)
 	HRESULT hr = E_NOINTERFACE;
 	if (_DwmEnableBlurBehindWindow)
 	{
-		// Возможно, ghWndWork впоследствии будет отдельным окном (WS_POPUP?)
-		// чтобы реализовать прозрачность только клиентской части
+		// Р’РѕР·РјРѕР¶РЅРѕ, ghWndWork РІРїРѕСЃР»РµРґСЃС‚РІРёРё Р±СѓРґРµС‚ РѕС‚РґРµР»СЊРЅС‹Рј РѕРєРЅРѕРј (WS_POPUP?)
+		// С‡С‚РѕР±С‹ СЂРµР°Р»РёР·РѕРІР°С‚СЊ РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ С‚РѕР»СЊРєРѕ РєР»РёРµРЅС‚СЃРєРѕР№ С‡Р°СЃС‚Рё
 		HWND hWnd = ghWnd;
 		_ASSERTE(ghWndWork!=NULL);
 		if (ghWndWork && !(GetWindowLong(ghWndWork, GWL_STYLE) & WS_CHILD))
@@ -335,7 +335,7 @@ void CDwmHelper::CheckGlassAttribute()
 	
 	if (mb_ThemeAllowed)
 	{
-		//TODO: Включить или отключить темы XP+
+		//TODO: Р’РєР»СЋС‡РёС‚СЊ РёР»Рё РѕС‚РєР»СЋС‡РёС‚СЊ С‚РµРјС‹ XP+
 		//_SetThemeAppProperties(mb_EnableTheming ? STAP_VALIDBITS : 0);
 		//if (_SetWindowThemeNonClientAttributes)
 		//	_SetWindowThemeNonClientAttributes(ghWnd, STAP_VALIDBITS, mb_EnableTheming ? STAP_VALIDBITS : 0);

@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -77,12 +77,12 @@ class CVirtualConsole :
 		bool GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
 		bool GetTab(int tabIdx, /*OUT*/ CTab* pTab);
 	public:
-		WARNING("Сделать protected!");
-		uint TextWidth, TextHeight; // размер в символах
-		uint Width, Height; // размер в пикселях
+		WARNING("РЎРґРµР»Р°С‚СЊ protected!");
+		uint TextWidth, TextHeight; // СЂР°Р·РјРµСЂ РІ СЃРёРјРІРѕР»Р°С…
+		uint Width, Height; // СЂР°Р·РјРµСЂ РІ РїРёРєСЃРµР»СЏС…
 		bool LoadConsoleData();
 	private:
-		uint nMaxTextWidth, nMaxTextHeight; // размер в символах
+		uint nMaxTextWidth, nMaxTextHeight; // СЂР°Р·РјРµСЂ РІ СЃРёРјРІРѕР»Р°С…
 		uint LastPadSize;
 	private:
 		struct
@@ -99,12 +99,12 @@ class CVirtualConsole :
 			wchar_t ch;
 			DWORD nBlinkTime, nLastBlink;
 			RECT lastRect;
-			UINT lastSize; // предыдущая высота курсора (в процентах)
+			UINT lastSize; // РїСЂРµРґС‹РґСѓС‰Р°СЏ РІС‹СЃРѕС‚Р° РєСѓСЂСЃРѕСЂР° (РІ РїСЂРѕС†РµРЅС‚Р°С…)
 		} Cursor;
 		//
-		bool    mb_IsForceUpdate; // Это устанавливается в InitDC, чтобы случайно isForce не потерялся
-		bool    mb_RequiredForceUpdate; // Сменился шрифт, например...
-		bool    isForce; // а это - сейчас (устанавливается по аргументу в Update)
+		bool    mb_IsForceUpdate; // Р­С‚Рѕ СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РІ InitDC, С‡С‚РѕР±С‹ СЃР»СѓС‡Р°Р№РЅРѕ isForce РЅРµ РїРѕС‚РµСЂСЏР»СЃСЏ
+		bool    mb_RequiredForceUpdate; // РЎРјРµРЅРёР»СЃСЏ С€СЂРёС„С‚, РЅР°РїСЂРёРјРµСЂ...
+		bool    isForce; // Р° СЌС‚Рѕ - СЃРµР№С‡Р°СЃ (СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РїРѕ Р°СЂРіСѓРјРµРЅС‚Сѓ РІ Update)
 		bool    isFontSizeChanged;
 		DWORD   mn_LastBitsPixel;
 	protected:
@@ -117,7 +117,7 @@ class CVirtualConsole :
 		HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
 		HBRUSH  CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COLORREF *pColors = NULL);
 		CEFONT  hSelectedFont, hOldFont;
-		CEFONT  mh_FontByIndex[MAX_FONT_STYLES+1]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
+		CEFONT  mh_FontByIndex[MAX_FONT_STYLES+1]; // СЃСЃС‹Р»РєРё РЅР° Normal/Bold/Italic/Bold&Italic/...Underline
 		HFONT   mh_UCharMapFont; SMALL_RECT mrc_UCharMap;
 		wchar_t ms_LastUCharMapFont[32];
 		
@@ -134,36 +134,36 @@ class CVirtualConsole :
 	private:
 		enum _PartType
 		{
-			pNull=0,     // конец строки/последний, неотображаемый элемент
-			pSpace,      // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
-			pBorder,     // символы, которые нужно рисовать шрифтом hFont2
+			pNull=0,     // РєРѕРЅРµС† СЃС‚СЂРѕРєРё/РїРѕСЃР»РµРґРЅРёР№, РЅРµРѕС‚РѕР±СЂР°Р¶Р°РµРјС‹Р№ СЌР»РµРјРµРЅС‚
+			pSpace,      // РїСЂРё СЂР°Р·Р±РѕСЂРµ СЃС‚СЂРѕРєРё Р±СѓРґРµРј СЃРјРѕС‚СЂРµС‚СЊ, РµСЃР»Рё РЅР°С€Р»Рё pText,pSpace,pText С‚Рѕ pSpace,pText РґРѕР±Р°РІРёС‚СЊ РІ РїРµСЂРІС‹Р№ pText
+			pBorder,     // СЃРёРјРІРѕР»С‹, РєРѕС‚РѕСЂС‹Рµ РЅСѓР¶РЅРѕ СЂРёСЃРѕРІР°С‚СЊ С€СЂРёС„С‚РѕРј hFont2
 			pFills,      // Progressbars & Scrollbars
-			pText,       // Если шрифт НЕ OEM  (вывод через TextOutW)
-			pOemText,    // Если шрифт OEM-ный (вывод нужно делать через TextOutA)
-			pDummy  // дополнительные "пробелы", которые нужно отрисовать после конца строки
-			//pUnderscore, // '_' прочерк. их тоже будем чикать в угоду тексту
+			pText,       // Р•СЃР»Рё С€СЂРёС„С‚ РќР• OEM  (РІС‹РІРѕРґ С‡РµСЂРµР· TextOutW)
+			pOemText,    // Р•СЃР»Рё С€СЂРёС„С‚ OEM-РЅС‹Р№ (РІС‹РІРѕРґ РЅСѓР¶РЅРѕ РґРµР»Р°С‚СЊ С‡РµСЂРµР· TextOutA)
+			pDummy  // РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ "РїСЂРѕР±РµР»С‹", РєРѕС‚РѕСЂС‹Рµ РЅСѓР¶РЅРѕ РѕС‚СЂРёСЃРѕРІР°С‚СЊ РїРѕСЃР»Рµ РєРѕРЅС†Р° СЃС‚СЂРѕРєРё
+			//pUnderscore, // '_' РїСЂРѕС‡РµСЂРє. РёС… С‚РѕР¶Рµ Р±СѓРґРµРј С‡РёРєР°С‚СЊ РІ СѓРіРѕРґСѓ С‚РµРєСЃС‚Сѓ
 		};
 		enum _PartType GetCharType(wchar_t ch);
 		typedef struct _TextParts
 		{
 			enum _PartType partType;
-			int  nFontIdx;   // Индекс используемого шрифта
-			COLORREF crFore; // Цвет текста
-			COLORREF crBack; // !!! Используется только для отрисовки блочных симполов (прогрессов и пр.)
-			uint i;     // индекс в текущей строке (0-based)
-			uint n;     // количество символов в блоке
-			int  x;     // координата начала строки (may be >0)
-			uint width; // ширини символов блока в пикселях
+			int  nFontIdx;   // РРЅРґРµРєСЃ РёСЃРїРѕР»СЊР·СѓРµРјРѕРіРѕ С€СЂРёС„С‚Р°
+			COLORREF crFore; // Р¦РІРµС‚ С‚РµРєСЃС‚Р°
+			COLORREF crBack; // !!! РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РґР»СЏ РѕС‚СЂРёСЃРѕРІРєРё Р±Р»РѕС‡РЅС‹С… СЃРёРјРїРѕР»РѕРІ (РїСЂРѕРіСЂРµСЃСЃРѕРІ Рё РїСЂ.)
+			uint i;     // РёРЅРґРµРєСЃ РІ С‚РµРєСѓС‰РµР№ СЃС‚СЂРѕРєРµ (0-based)
+			uint n;     // РєРѕР»РёС‡РµСЃС‚РІРѕ СЃРёРјРІРѕР»РѕРІ РІ Р±Р»РѕРєРµ
+			int  x;     // РєРѕРѕСЂРґРёРЅР°С‚Р° РЅР°С‡Р°Р»Р° СЃС‚СЂРѕРєРё (may be >0)
+			uint width; // С€РёСЂРёРЅРё СЃРёРјРІРѕР»РѕРІ Р±Р»РѕРєР° РІ РїРёРєСЃРµР»СЏС…
 
-			DWORD *pDX; // сдвиги для отрисовки (как-бы ширины знакомест). Это указатель на часть ConCharDX
+			DWORD *pDX; // СЃРґРІРёРіРё РґР»СЏ РѕС‚СЂРёСЃРѕРІРєРё (РєР°Рє-Р±С‹ С€РёСЂРёРЅС‹ Р·РЅР°РєРѕРјРµСЃС‚). Р­С‚Рѕ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° С‡Р°СЃС‚СЊ ConCharDX
 		} TEXTPARTS;
 		typedef struct _BgParts
 		{
-			// индекс ячейки
-			uint i; // i строго больше 0 (0 - основной фон и он уже залит)
-			// и количество ячеек
+			// РёРЅРґРµРєСЃ СЏС‡РµР№РєРё
+			uint i; // i СЃС‚СЂРѕРіРѕ Р±РѕР»СЊС€Рµ 0 (0 - РѕСЃРЅРѕРІРЅРѕР№ С„РѕРЅ Рё РѕРЅ СѓР¶Рµ Р·Р°Р»РёС‚)
+			// Рё РєРѕР»РёС‡РµСЃС‚РІРѕ СЏС‡РµРµРє
 			uint n;
-			// Картинка или фон?
+			// РљР°СЂС‚РёРЅРєР° РёР»Рё С„РѕРЅ?
 			BOOL bBackIsPic;
 			COLORREF nBackRGB;
 		} BGPARTS;
@@ -171,7 +171,7 @@ class CVirtualConsole :
 		// Working pointers
 		bool mb_PointersAllocated;
 		wchar_t  *mpsz_ConChar, *mpsz_ConCharSave;   // nMaxTextWidth * nMaxTextHeight
-		// CharAttr определен в RealConsole.h
+		// CharAttr РѕРїСЂРµРґРµР»РµРЅ РІ RealConsole.h
 		CharAttr *mpn_ConAttrEx, *mpn_ConAttrExSave; // nMaxTextWidth * nMaxTextHeight
 		DWORD *ConCharX;      // nMaxTextWidth * nMaxTextHeight
 		DWORD *ConCharDX;     // nMaxTextWidth
@@ -180,27 +180,27 @@ class CVirtualConsole :
 		BGPARTS *BgParts;     // nMaxTextWidth
 		POLYTEXT  *PolyText;  // nMaxTextWidth
 		bool *pbLineChanged;  // nMaxTextHeight
-		bool *pbBackIsPic;    // nMaxTextHeight :: заполняется если *pbLineChanged
-		COLORREF* pnBackRGB;  // nMaxTextHeight :: заполняется если *pbLineChanged и НЕ *pbBackIsPic
+		bool *pbBackIsPic;    // nMaxTextHeight :: Р·Р°РїРѕР»РЅСЏРµС‚СЃСЏ РµСЃР»Рё *pbLineChanged
+		COLORREF* pnBackRGB;  // nMaxTextHeight :: Р·Р°РїРѕР»РЅСЏРµС‚СЃСЏ РµСЃР»Рё *pbLineChanged Рё РќР• *pbBackIsPic
 
-		// функции выделения памяти
+		// С„СѓРЅРєС†РёРё РІС‹РґРµР»РµРЅРёСЏ РїР°РјСЏС‚Рё
 		void PointersInit();
 		void PointersFree();
 		bool PointersAlloc();
 		void PointersZero();
 
-		// *** Анализ строк ***
-		// Заливка измененных строк основным фоном и заполнение pbLineChanged, pbBackIsPic, pnBackRGB
+		// *** РђРЅР°Р»РёР· СЃС‚СЂРѕРє ***
+		// Р—Р°Р»РёРІРєР° РёР·РјРµРЅРµРЅРЅС‹С… СЃС‚СЂРѕРє РѕСЃРЅРѕРІРЅС‹Рј С„РѕРЅРѕРј Рё Р·Р°РїРѕР»РЅРµРЅРёРµ pbLineChanged, pbBackIsPic, pnBackRGB
 		void Update_CheckAndFill();
-		// Разбор строки на составляющие (возвращает true, если есть ячейки с НЕ основным фоном)
-		// Функция также производит распределение (заполнение координат и DX)
+		// Р Р°Р·Р±РѕСЂ СЃС‚СЂРѕРєРё РЅР° СЃРѕСЃС‚Р°РІР»СЏСЋС‰РёРµ (РІРѕР·РІСЂР°С‰Р°РµС‚ true, РµСЃР»Рё РµСЃС‚СЊ СЏС‡РµР№РєРё СЃ РќР• РѕСЃРЅРѕРІРЅС‹Рј С„РѕРЅРѕРј)
+		// Р¤СѓРЅРєС†РёСЏ С‚Р°РєР¶Рµ РїСЂРѕРёР·РІРѕРґРёС‚ СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ (Р·Р°РїРѕР»РЅРµРЅРёРµ РєРѕРѕСЂРґРёРЅР°С‚ Рё DX)
 		bool Update_ParseTextParts(uint row, const wchar_t* ConCharLine, const CharAttr* ConAttrLine);
-		// Заливка ячеек с НЕ основным фоном, отрисовка прогрессов и рамок
+		// Р—Р°Р»РёРІРєР° СЏС‡РµРµРє СЃ РќР• РѕСЃРЅРѕРІРЅС‹Рј С„РѕРЅРѕРј, РѕС‚СЂРёСЃРѕРІРєР° РїСЂРѕРіСЂРµСЃСЃРѕРІ Рё СЂР°РјРѕРє
 		void Update_FillAlternate(uint row, uint nY);
-		// Вывод собственно текста (при необходимости Clipped)
+		// Р’С‹РІРѕРґ СЃРѕР±СЃС‚РІРµРЅРЅРѕ С‚РµРєСЃС‚Р° (РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё Clipped)
 		void Update_DrawText(uint row, uint nY);
 
-		// распределение ширин
+		// СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ С€РёСЂРёРЅ
 		void DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end);
 
 		// PanelViews
@@ -227,9 +227,9 @@ class CVirtualConsole :
 		const PanelViewInit* GetPanelView(bool abLeftPanel);
 
 	public:
-		// Плагин к фару может установить свою "картинку" для панелей (например, нарисовать в фоне букву диска)
-		//void FreeBackgroundImage(); // Освободить (если создан) HBITMAP для mp_BkImgData
-		SetBackgroundResult SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData); // вызывается при получении нового Background
+		// РџР»Р°РіРёРЅ Рє С„Р°СЂСѓ РјРѕР¶РµС‚ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ СЃРІРѕСЋ "РєР°СЂС‚РёРЅРєСѓ" РґР»СЏ РїР°РЅРµР»РµР№ (РЅР°РїСЂРёРјРµСЂ, РЅР°СЂРёСЃРѕРІР°С‚СЊ РІ С„РѕРЅРµ Р±СѓРєРІСѓ РґРёСЃРєР°)
+		//void FreeBackgroundImage(); // РћСЃРІРѕР±РѕРґРёС‚СЊ (РµСЃР»Рё СЃРѕР·РґР°РЅ) HBITMAP РґР»СЏ mp_BkImgData
+		SetBackgroundResult SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData); // РІС‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё РїРѕР»СѓС‡РµРЅРёРё РЅРѕРІРѕРіРѕ Background
 		bool HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight);
 		//void NeedBackgroundUpdate();
 		#ifdef APPDISTINCTBACKGROUND
@@ -237,7 +237,7 @@ class CVirtualConsole :
 		#endif
 		void NeedBackgroundUpdate();
 	protected:
-		// Содержит текущий фон (из плагина или из файла-цвета по настройке)
+		// РЎРѕРґРµСЂР¶РёС‚ С‚РµРєСѓС‰РёР№ С„РѕРЅ (РёР· РїР»Р°РіРёРЅР° РёР»Рё РёР· С„Р°Р№Р»Р°-С†РІРµС‚Р° РїРѕ РЅР°СЃС‚СЂРѕР№РєРµ)
 		CBackground*     mp_Bg;
 		#ifdef APPDISTINCTBACKGROUND
 		CBackgroundInfo* mp_BgInfo; // RefRelease, global object list
@@ -249,15 +249,15 @@ class CVirtualConsole :
 		//MSection *mcs_BkImgData;
 		//size_t mn_BkImgDataMax;
 		//CESERVER_REQ_SETBACKGROUND* mp_BkImgData; // followed by image data
-		//bool mb_BkImgChanged; // Данные в mp_BkImgData были изменены плагином, требуется отрисовка
+		//bool mb_BkImgChanged; // Р”Р°РЅРЅС‹Рµ РІ mp_BkImgData Р±С‹Р»Рё РёР·РјРµРЅРµРЅС‹ РїР»Р°РіРёРЅРѕРј, С‚СЂРµР±СѓРµС‚СЃСЏ РѕС‚СЂРёСЃРѕРІРєР°
 		//bool mb_BkImgExist; //, mb_BkImgDelete;
 		//LONG mn_BkImgWidth, mn_BkImgHeight;
-		//// Поддержка EMF
+		//// РџРѕРґРґРµСЂР¶РєР° EMF
 		//size_t mn_BkEmfDataMax;
 		//CESERVER_REQ_SETBACKGROUND* mp_BkEmfData; // followed by EMF data
-		//bool mb_BkEmfChanged; // Данные в mp_BkEmfData были изменены плагином, требуется отрисовка
-		//UINT IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, bool* rpIsEmf) const; // возвращает размер данных, или 0 при ошибке
-		//bool PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height); // Положить в pBack свою картинку
+		//bool mb_BkEmfChanged; // Р”Р°РЅРЅС‹Рµ РІ mp_BkEmfData Р±С‹Р»Рё РёР·РјРµРЅРµРЅС‹ РїР»Р°РіРёРЅРѕРј, С‚СЂРµР±СѓРµС‚СЃСЏ РѕС‚СЂРёСЃРѕРІРєР°
+		//UINT IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, bool* rpIsEmf) const; // РІРѕР·РІСЂР°С‰Р°РµС‚ СЂР°Р·РјРµСЂ РґР°РЅРЅС‹С…, РёР»Рё 0 РїСЂРё РѕС€РёР±РєРµ
+		//bool PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height); // РџРѕР»РѕР¶РёС‚СЊ РІ pBack СЃРІРѕСЋ РєР°СЂС‚РёРЅРєСѓ
 		//bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
 //public:
 		//MSection csBkImgData;
@@ -271,9 +271,9 @@ class CVirtualConsole :
 
 		//wchar_t *Spaces; WORD nSpaceCount;
 		static wchar_t ms_Spaces[MAX_SPACES], ms_HorzDbl[MAX_SPACES], ms_HorzSingl[MAX_SPACES];
-		// Для ускорения получения индексов цвета
+		// Р”Р»СЏ СѓСЃРєРѕСЂРµРЅРёСЏ РїРѕР»СѓС‡РµРЅРёСЏ РёРЅРґРµРєСЃРѕРІ С†РІРµС‚Р°
 		//BYTE  m_ForegroundColors[0x100], m_BackgroundColors[0x100];
-		//HFONT mh_FontByIndex[0x100]; // содержит ссылки (не копии) на шрифты normal/bold/italic
+		//HFONT mh_FontByIndex[0x100]; // СЃРѕРґРµСЂР¶РёС‚ СЃСЃС‹Р»РєРё (РЅРµ РєРѕРїРёРё) РЅР° С€СЂРёС„С‚С‹ normal/bold/italic
 
 		bool  mb_LastFadeFlag;
 
@@ -336,7 +336,7 @@ class CVirtualConsole :
 		uint TextLen;
 		bool isCursorValid, drawImage, textChanged, attrChanged;
 		DWORD nBgImageColors;
-		COORD bgBmpSize; HDC hBgDc; // Это только ссылка, для удобства отрисовки
+		COORD bgBmpSize; HDC hBgDc; // Р­С‚Рѕ С‚РѕР»СЊРєРѕ СЃСЃС‹Р»РєР°, РґР»СЏ СѓРґРѕР±СЃС‚РІР° РѕС‚СЂРёСЃРѕРІРєРё
 		void PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisible);
 		void PaintVConNormal(HDC hPaintDc, RECT rcClient);
 		void PaintVConDebug(HDC hPaintDc, RECT rcClient);
@@ -359,7 +359,7 @@ class CVirtualConsole :
 		char Uni2Oem(wchar_t ch);
 		typedef struct tag_PARTBRUSHES
 		{
-			wchar_t ch; // 0x2591 0x2592 0x2593 0x2588 - по увеличению плотности
+			wchar_t ch; // 0x2591 0x2592 0x2593 0x2588 - РїРѕ СѓРІРµР»РёС‡РµРЅРёСЋ РїР»РѕС‚РЅРѕСЃС‚Рё
 			COLORREF nBackCol;
 			COLORREF nForeCol;
 			HBRUSH  hBrush;

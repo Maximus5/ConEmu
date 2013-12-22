@@ -1,4 +1,4 @@
-
+п»ї
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
@@ -210,7 +210,7 @@ HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfK
 		return DRAGDROP_S_DROP;
 	}
 
-	// Если юзер нажимает другую мышиную кнопку
+	// Р•СЃР»Рё СЋР·РµСЂ РЅР°Р¶РёРјР°РµС‚ РґСЂСѓРіСѓСЋ РјС‹С€РёРЅСѓСЋ РєРЅРѕРїРєСѓ
 	if ((grfKeyState & nOtherKey) == nOtherKey)
 	{
 		if (mp_Callback)
@@ -235,7 +235,7 @@ HRESULT __stdcall CDropSource::GiveFeedback(DWORD dwEffect)
 	HCURSOR hCur = NULL;
 	DEBUGTEST(HRESULT hrTest = S_FALSE);
 
-	//-- пока CFSTR_DROPDESCRIPTION не заводится...
+	//-- РїРѕРєР° CFSTR_DROPDESCRIPTION РЅРµ Р·Р°РІРѕРґРёС‚СЃСЏ...
 	//if ((gOSVer.dwMajorVersion < 6) || !mp_Callback)
 	{
 		if (dwEffect != DROPEFFECT_NONE)
@@ -322,7 +322,7 @@ CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count)
 //
 CDataObject::~CDataObject()
 {
-	// Освобождать данные в m_pStgMedium.hGlobal
+	// РћСЃРІРѕР±РѕР¶РґР°С‚СЊ РґР°РЅРЅС‹Рµ РІ m_pStgMedium.hGlobal
 	for (int i = 0; i < m_Data.size(); i++)
 	{
 		if (m_Data[i].fUsed && m_Data[i].fRelease)

@@ -1,4 +1,4 @@
-
+﻿
 #define ID_STORECMDHISTORY 0xABA8 // Store command history
 #define ID_CON_COPY_HTML0 0xABA9 // Plain text only
 #define ID_CON_COPY_HTML1 0xABAA // Copy HTML format

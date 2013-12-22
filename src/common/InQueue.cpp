@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -61,7 +61,7 @@ void InQueue::Release()
 // this->nMaxInputQueue = CE_MAX_INPUT_QUEUE_BUFFER;
 BOOL InQueue::WriteInputQueue(const INPUT_RECORD *pr, BOOL bSetEvent /*= TRUE*/, DWORD nLength /*= 1*/)
 {
-	// Передернуть буфер (записать в консоль то, что накопилось)
+	// РџРµСЂРµРґРµСЂРЅСѓС‚СЊ Р±СѓС„РµСЂ (Р·Р°РїРёСЃР°С‚СЊ РІ РєРѕРЅСЃРѕР»СЊ С‚Рѕ, С‡С‚Рѕ РЅР°РєРѕРїРёР»РѕСЃСЊ)
 	if (pr == NULL)
 	{
 		if (bSetEvent)
@@ -79,7 +79,7 @@ BOOL InQueue::WriteInputQueue(const INPUT_RECORD *pr, BOOL bSetEvent /*= TRUE*/,
 	{
 		INPUT_RECORD* pNext = this->pInputQueueWrite;
 
-		// Проверяем, есть ли свободное место в буфере
+		// РџСЂРѕРІРµСЂСЏРµРј, РµСЃС‚СЊ Р»Рё СЃРІРѕР±РѕРґРЅРѕРµ РјРµСЃС‚Рѕ РІ Р±СѓС„РµСЂРµ
 		if (this->pInputQueueRead != this->pInputQueueEnd)
 		{
 			if (this->pInputQueueRead < this->pInputQueueEnd
@@ -97,7 +97,7 @@ BOOL InQueue::WriteInputQueue(const INPUT_RECORD *pr, BOOL bSetEvent /*= TRUE*/,
 		if (this->pInputQueueWrite >= this->pInputQueueEnd)
 			this->pInputQueueWrite = this->pInputQueue;
 
-		// Могут писать "пачку", тогда подождать ее окончания
+		// РњРѕРіСѓС‚ РїРёСЃР°С‚СЊ "РїР°С‡РєСѓ", С‚РѕРіРґР° РїРѕРґРѕР¶РґР°С‚СЊ РµРµ РѕРєРѕРЅС‡Р°РЅРёСЏ
 		if (bSetEvent && !nLength)
 		{
 			DEBUGSTRINPUTEVENT(L"SetEvent(this->hInputEvent)\n");
@@ -105,7 +105,7 @@ BOOL InQueue::WriteInputQueue(const INPUT_RECORD *pr, BOOL bSetEvent /*= TRUE*/,
 				SetEvent(this->hInputEvent);
 		}
 
-		// Подвинуть указатель чтения, если до этого буфер был пуст
+		// РџРѕРґРІРёРЅСѓС‚СЊ СѓРєР°Р·Р°С‚РµР»СЊ С‡С‚РµРЅРёСЏ, РµСЃР»Рё РґРѕ СЌС‚РѕРіРѕ Р±СѓС„РµСЂ Р±С‹Р» РїСѓСЃС‚
 		if (this->pInputQueueRead == this->pInputQueueEnd)
 			this->pInputQueueRead = pNext;
 	}
@@ -139,11 +139,11 @@ BOOL InQueue::ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount, BOOL bNoRemove /*
 		{
 			*pDst = *pSrc; nCount++; pSrc++;
 			InterlockedDecrement(&nUsedLen);
-			//// Для приведения поведения к стандартному RealConsole&Far
+			//// Р”Р»СЏ РїСЂРёРІРµРґРµРЅРёСЏ РїРѕРІРµРґРµРЅРёСЏ Рє СЃС‚Р°РЅРґР°СЂС‚РЅРѕРјСѓ RealConsole&Far
 			//if (pDst->EventType == KEY_EVENT
-			//	// Для нажатия НЕ символьных клавиш
+			//	// Р”Р»СЏ РЅР°Р¶Р°С‚РёСЏ РќР• СЃРёРјРІРѕР»СЊРЅС‹С… РєР»Р°РІРёС€
 			//	&& pDst->Event.KeyEvent.bKeyDown && pDst->Event.KeyEvent.uChar.UnicodeChar < 32
-			//	&& pSrc < (pEnd = (this->pInputQueueRead < this->pInputQueueWrite) ? this->pInputQueueWrite : this->pInputQueueEnd)) // и пока в буфере еще что-то есть
+			//	&& pSrc < (pEnd = (this->pInputQueueRead < this->pInputQueueWrite) ? this->pInputQueueWrite : this->pInputQueueEnd)) // Рё РїРѕРєР° РІ Р±СѓС„РµСЂРµ РµС‰Рµ С‡С‚Рѕ-С‚Рѕ РµСЃС‚СЊ
 			//{
 			//	while (pSrc < (pEnd = (this->pInputQueueRead < this->pInputQueueWrite) ? this->pInputQueueWrite : this->pInputQueueEnd)
 			//		&& pSrc->EventType == KEY_EVENT
@@ -162,7 +162,7 @@ BOOL InQueue::ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount, BOOL bNoRemove /*
 		if (pSrc == this->pInputQueueEnd)
 			pSrc = this->pInputQueue;
 
-		TODO("Доделать чтение начала буфера, если считали его конец");
+		TODO("Р”РѕРґРµР»Р°С‚СЊ С‡С‚РµРЅРёРµ РЅР°С‡Р°Р»Р° Р±СѓС„РµСЂР°, РµСЃР»Рё СЃС‡РёС‚Р°Р»Рё РµРіРѕ РєРѕРЅРµС†");
 		//
 		if (!bNoRemove)
 		{

@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -45,8 +45,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define QUAKEANIMATION_DEF 300
 #define QUAKEANIMATION_MAX 2000
-#define QUAKEVISIBLELIMIT 80 // Если "Видимая область" окна стала менее (%) - считаем что окно стало "не видимым"
-#define QUAKEVISIBLETRASH 10 // Не "выезжать" а просто "вынести наверх", если видимая область достаточно большая
+#define QUAKEVISIBLELIMIT 80 // Р•СЃР»Рё "Р’РёРґРёРјР°СЏ РѕР±Р»Р°СЃС‚СЊ" РѕРєРЅР° СЃС‚Р°Р»Р° РјРµРЅРµРµ (%) - СЃС‡РёС‚Р°РµРј С‡С‚Рѕ РѕРєРЅРѕ СЃС‚Р°Р»Рѕ "РЅРµ РІРёРґРёРјС‹Рј"
+#define QUAKEVISIBLETRASH 10 // РќРµ "РІС‹РµР·Р¶Р°С‚СЊ" Р° РїСЂРѕСЃС‚Рѕ "РІС‹РЅРµСЃС‚Рё РЅР°РІРµСЂС…", РµСЃР»Рё РІРёРґРёРјР°СЏ РѕР±Р»Р°СЃС‚СЊ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ Р±РѕР»СЊС€Р°СЏ
 
 enum FarMacroVersion
 {
@@ -155,9 +155,9 @@ struct Settings
 		void ReleasePointers();		
 	public:
 
-		wchar_t Type[16]; // Информационно: L"[reg]" или L"[xml]"
+		wchar_t Type[16]; // РРЅС„РѕСЂРјР°С†РёРѕРЅРЅРѕ: L"[reg]" РёР»Рё L"[xml]"
 
-		bool IsConfigNew; // true, если конфигурация новая
+		bool IsConfigNew; // true, РµСЃР»Рё РєРѕРЅС„РёРіСѓСЂР°С†РёСЏ РЅРѕРІР°СЏ
 
 		//reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);
 		int DefaultBufferHeight;
@@ -221,15 +221,15 @@ struct Settings
 		struct AppSettings
 		{
 			size_t   cchNameMax;
-			wchar_t* AppNames; // "far.exe|far64.exe" и т.п.
+			wchar_t* AppNames; // "far.exe|far64.exe" Рё С‚.Рї.
 			wchar_t* AppNamesLwr; // For internal use
 			BYTE Elevated; // 00 - unimportant, 01 - elevated, 02 - nonelevated
 			
-			//const COLORREF* Palette/*[0x20]*/; // текущая палитра (Fade/не Fade)
+			//const COLORREF* Palette/*[0x20]*/; // С‚РµРєСѓС‰Р°СЏ РїР°Р»РёС‚СЂР° (Fade/РЅРµ Fade)
 
 			bool OverridePalette; // Palette+Extend
 			wchar_t szPaletteName[128];
-			//TODO: Тут хорошо бы индекс палитры хранить...
+			//TODO: РўСѓС‚ С…РѕСЂРѕС€Рѕ Р±С‹ РёРЅРґРµРєСЃ РїР°Р»РёС‚СЂС‹ С…СЂР°РЅРёС‚СЊ...
 			int GetPaletteIndex();
 			void SetPaletteName(LPCWSTR asNewPaletteName);
 			void ResetPaletteIndex();
@@ -295,12 +295,12 @@ struct Settings
 				? ((bActive || !CursorInactive.Used) ? CursorActive.isFixedSize : CursorInactive.isFixedSize)
 				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.isFixedSize : gpSet->AppStd.CursorInactive.isFixedSize); };
 			////reg->Load(L"CursorFixedSize", nCursorFixedSize);
-			////BYTE nCursorFixedSize; // в процентах
+			////BYTE nCursorFixedSize; // РІ РїСЂРѕС†РµРЅС‚Р°С…
 			BYTE CursorFixedSize(bool bActive) const { return (OverrideCursor || !AppNames)
 				? ((bActive || !CursorInactive.Used) ? CursorActive.FixedSize : CursorInactive.FixedSize)
 				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.FixedSize : gpSet->AppStd.CursorInactive.FixedSize); };
 			//reg->Load(L"CursorMinSize", nCursorMinSize);
-			//BYTE nCursorMinSize; // в пикселях
+			//BYTE nCursorMinSize; // РІ РїРёРєСЃРµР»СЏС…
 			BYTE CursorMinSize(bool bActive) const { return (OverrideCursor || !AppNames)
 				? ((bActive || !CursorInactive.Used) ? CursorActive.MinSize : CursorInactive.MinSize)
 				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.MinSize : gpSet->AppStd.CursorInactive.MinSize); };
@@ -314,7 +314,7 @@ struct Settings
 			bool isCTSBashMargin; // cbCTSBashMargin
 			bool CTSBashMargin() const { return (OverrideClipboard || !AppNames) ? isCTSBashMargin : gpSet->AppStd.isCTSBashMargin; };
 			//reg->Load(L"ClipboardTrimTrailing", isCTSTrimTrailing);
-			BYTE isCTSTrimTrailing; // cbCTSTrimTrailing: 0 - нет, 1 - да, 2 - только для stream-selection
+			BYTE isCTSTrimTrailing; // cbCTSTrimTrailing: 0 - РЅРµС‚, 1 - РґР°, 2 - С‚РѕР»СЊРєРѕ РґР»СЏ stream-selection
 			BYTE CTSTrimTrailing() const { return (OverrideClipboard || !AppNames) ? isCTSTrimTrailing : gpSet->AppStd.isCTSTrimTrailing; };
 			//reg->Load(L"ClipboardEOL", isCTSEOL);
 			BYTE isCTSEOL; // cbCTSEOL: 0="CR+LF", 1="LF", 2="CR"
@@ -425,7 +425,7 @@ struct Settings
 					asName = szCmd;
 				}
 
-				// Для простоты дальнейшей работы - имя должно быть заключено в угловые скобки
+				// Р”Р»СЏ РїСЂРѕСЃС‚РѕС‚С‹ РґР°Р»СЊРЅРµР№С€РµР№ СЂР°Р±РѕС‚С‹ - РёРјСЏ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ Р·Р°РєР»СЋС‡РµРЅРѕ РІ СѓРіР»РѕРІС‹Рµ СЃРєРѕР±РєРё
 				size_t iLen = wcslen(asName);
 
 				if (!pszName || ((iLen+2) >= cchNameMax))
@@ -519,7 +519,7 @@ struct Settings
 						{
 							wchar_t* pszExpand = NULL;
 
-							// Например, "%USERPROFILE%"
+							// РќР°РїСЂРёРјРµСЂ, "%USERPROFILE%"
 							if (wcschr(szArg, L'%'))
 							{
 								pszExpand = ExpandEnvStr(szArg);
@@ -536,7 +536,7 @@ struct Settings
 						{
 							wchar_t* pszExpand = NULL;
 
-							// Например, "%USERPROFILE%"
+							// РќР°РїСЂРёРјРµСЂ, "%USERPROFILE%"
 							if (wcschr(szArg, L'%'))
 							{
 								pszExpand = ExpandEnvStr(szArg);
@@ -583,7 +583,7 @@ struct Settings
 		AppSettings AppStd;
 		int AppCount;
 		AppSettings** Apps;
-		// Для CSettings
+		// Р”Р»СЏ CSettings
 		AppSettings* GetAppSettingsPtr(int anAppId, BOOL abCreateNew = FALSE);
 		void AppSettingsDelete(int anAppId);
 		bool AppSettingsXch(int anIndex1, int anIndex2); // 0-based, index of Apps
@@ -736,19 +736,19 @@ struct Settings
 		//reg->Load(L"FontItalic", isItalic);
 		bool isItalic;
 		//reg->Load(L"Anti-aliasing", Quality);
-		DWORD mn_AntiAlias; //загружался как Quality
+		DWORD mn_AntiAlias; //Р·Р°РіСЂСѓР¶Р°Р»СЃСЏ РєР°Рє Quality
 		//reg->Load(L"FontCharSet", mn_LoadFontCharSet); mb_CharSetWasSet = FALSE;
-		BYTE mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр)
+		BYTE mn_LoadFontCharSet; // РўРѕ С‡С‚Рѕ Р·Р°РіСЂСѓР¶РµРЅРѕ РёР·РЅР°С‡Р°Р»СЊРЅРѕ (РёР»Рё СѓР¶Рµ СЃРѕС…СЂР°РЅРµРЅРѕ РІ СЂРµРµСЃС‚СЂ)
 		//reg->Load(L"FontCharSet", mn_LoadFontCharSet); mb_CharSetWasSet = FALSE;
 		BOOL mb_CharSetWasSet;
 		//reg->Load(L"FontSize", FontSizeY);
-		DWORD FontSizeY;  // высота основного шрифта (загруженная из настроек!)
+		DWORD FontSizeY;  // РІС‹СЃРѕС‚Р° РѕСЃРЅРѕРІРЅРѕРіРѕ С€СЂРёС„С‚Р° (Р·Р°РіСЂСѓР¶РµРЅРЅР°СЏ РёР· РЅР°СЃС‚СЂРѕРµРє!)
 		//reg->Load(L"FontSizeX", FontSizeX);
-		DWORD FontSizeX;  // ширина основного шрифта
+		DWORD FontSizeX;  // С€РёСЂРёРЅР° РѕСЃРЅРѕРІРЅРѕРіРѕ С€СЂРёС„С‚Р°
 		//reg->Load(L"FontSizeX2", FontSizeX2);
-		DWORD FontSizeX2; // ширина для FixFarBorders (ширина создаваемого шрифта для отрисовки рамок, не путать со знакоместом)
+		DWORD FontSizeX2; // С€РёСЂРёРЅР° РґР»СЏ FixFarBorders (С€РёСЂРёРЅР° СЃРѕР·РґР°РІР°РµРјРѕРіРѕ С€СЂРёС„С‚Р° РґР»СЏ РѕС‚СЂРёСЃРѕРІРєРё СЂР°РјРѕРє, РЅРµ РїСѓС‚Р°С‚СЊ СЃРѕ Р·РЅР°РєРѕРјРµСЃС‚РѕРј)
 		//reg->Load(L"FontSizeX3", FontSizeX3);
-		DWORD FontSizeX3; // ширина знакоместа при моноширном режиме (не путать с FontSizeX2)
+		DWORD FontSizeX3; // С€РёСЂРёРЅР° Р·РЅР°РєРѕРјРµСЃС‚Р° РїСЂРё РјРѕРЅРѕС€РёСЂРЅРѕРј СЂРµР¶РёРјРµ (РЅРµ РїСѓС‚Р°С‚СЊ СЃ FontSizeX2)
 		
 		
 		//reg->Load(L"HideCaption", isHideCaption);
@@ -770,7 +770,7 @@ struct Settings
 		void SwitchHideCaptionAlways();
 		bool isHideCaptionAlways(); //<<mb_HideCaptionAlways
 		bool isMinimizeOnLoseFocus();
-		bool isForcedHideCaptionAlways(); // true, если mb_HideCaptionAlways отключать нельзя
+		bool isForcedHideCaptionAlways(); // true, РµСЃР»Рё mb_HideCaptionAlways РѕС‚РєР»СЋС‡Р°С‚СЊ РЅРµР»СЊР·СЏ
 		bool isCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);
 		bool isFrameHidden();
 		//reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
@@ -816,7 +816,7 @@ struct Settings
 		//reg->Load(L"CTS.EndOnTyping", isCTSEndOnTyping);
 		BYTE isCTSEndOnTyping; // 0 - off, 1 - copy & reset, 2 - reset only
 		//reg->Load(L"CTS.EndOnKeyPress", isCTSEndOnKeyPress);
-		bool isCTSEndOnKeyPress; // +isCTSEndOnTyping. +все, что не генерит WM_CHAR (стрелки и пр.)
+		bool isCTSEndOnKeyPress; // +isCTSEndOnTyping. +РІСЃРµ, С‡С‚Рѕ РЅРµ РіРµРЅРµСЂРёС‚ WM_CHAR (СЃС‚СЂРµР»РєРё Рё РїСЂ.)
 		//reg->Load(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		bool isCTSFreezeBeforeSelect;
 		//reg->Load(L"CTS.SelectBlock", isCTSSelectBlock);
@@ -829,17 +829,17 @@ struct Settings
 		////reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
 		//BYTE isCTSClickPromptPosition; // & vkCTSVkPromptClk
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
-		//BYTE isCTSVkBlock; // модификатор запуска выделения мышкой
+		//BYTE isCTSVkBlock; // РјРѕРґРёС„РёРєР°С‚РѕСЂ Р·Р°РїСѓСЃРєР° РІС‹РґРµР»РµРЅРёСЏ РјС‹С€РєРѕР№
 		//reg->Load(L"CTS.VkBlockStart", vmCTSVkBlockStart);
-		//DWORD vmCTSVkBlockStart; // кнопка начала выделения вертикального блока
+		//DWORD vmCTSVkBlockStart; // РєРЅРѕРїРєР° РЅР°С‡Р°Р»Р° РІС‹РґРµР»РµРЅРёСЏ РІРµСЂС‚РёРєР°Р»СЊРЅРѕРіРѕ Р±Р»РѕРєР°
 		//reg->Load(L"CTS.VkText", isCTSVkText);
-		//BYTE isCTSVkText; // модификатор запуска выделения мышкой
+		//BYTE isCTSVkText; // РјРѕРґРёС„РёРєР°С‚РѕСЂ Р·Р°РїСѓСЃРєР° РІС‹РґРµР»РµРЅРёСЏ РјС‹С€РєРѕР№
 		//reg->Load(L"CTS.VkTextStart", vmCTSVkTextStart);
-		//DWORD vmCTSVkTextStart; // кнопка начала выделения текстового блока
+		//DWORD vmCTSVkTextStart; // РєРЅРѕРїРєР° РЅР°С‡Р°Р»Р° РІС‹РґРµР»РµРЅРёСЏ С‚РµРєСЃС‚РѕРІРѕРіРѕ Р±Р»РѕРєР°
 		//reg->Load(L"CTS.ActMode", isCTSActMode);
-		BYTE isCTSActMode; // режим и модификатор разрешения действий правой и средней кнопки мышки
+		BYTE isCTSActMode; // СЂРµР¶РёРј Рё РјРѕРґРёС„РёРєР°С‚РѕСЂ СЂР°Р·СЂРµС€РµРЅРёСЏ РґРµР№СЃС‚РІРёР№ РїСЂР°РІРѕР№ Рё СЃСЂРµРґРЅРµР№ РєРЅРѕРїРєРё РјС‹С€РєРё
 		//reg->Load(L"CTS.VkAct", isCTSVkAct);
-		//BYTE isCTSVkAct; // режим и модификатор разрешения действий правой и средней кнопки мышки
+		//BYTE isCTSVkAct; // СЂРµР¶РёРј Рё РјРѕРґРёС„РёРєР°С‚РѕСЂ СЂР°Р·СЂРµС€РµРЅРёСЏ РґРµР№СЃС‚РІРёР№ РїСЂР°РІРѕР№ Рё СЃСЂРµРґРЅРµР№ РєРЅРѕРїРєРё РјС‹С€РєРё
 		//reg->Load(L"CTS.RBtnAction", isCTSRBtnAction);
 		BYTE isCTSRBtnAction; // 0-off, 1-copy, 2-paste, 3-auto
 		//reg->Load(L"CTS.MBtnAction", isCTSMBtnAction);
@@ -851,11 +851,11 @@ struct Settings
 		//reg->Load(L"ClipboardConfirmLonger", nPasteConfirmLonger);
 		DWORD nPasteConfirmLonger;
 		//reg->Load(L"FarGotoEditorOpt", isFarGotoEditor);
-		bool isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
+		bool isFarGotoEditor; // РџРѕРґСЃРІРµС‡РёРІР°С‚СЊ Рё РїРµСЂРµС…РѕРґРёС‚СЊ РЅР° С„Р°Р№Р»/СЃС‚СЂРѕРєСѓ (РѕС€РёР±РєРё РєРѕРјРїРёР»СЏС‚РѕСЂР°)
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
-		//BYTE isFarGotoEditorVk; // Клавиша-модификатор для isFarGotoEditor
+		//BYTE isFarGotoEditorVk; // РљР»Р°РІРёС€Р°-РјРѕРґРёС„РёРєР°С‚РѕСЂ РґР»СЏ isFarGotoEditor
 		//reg->Load(L"FarGotoEditorPath", sFarGotoEditor);
-		wchar_t* sFarGotoEditor; // Команда запуска редактора
+		wchar_t* sFarGotoEditor; // РљРѕРјР°РЅРґР° Р·Р°РїСѓСЃРєР° СЂРµРґР°РєС‚РѕСЂР°
 		//reg->Load(L"HighlightMouseRow", isHighlightMouseRow);
 		bool isHighlightMouseRow;
 		//reg->Load(L"HighlightMouseCol", isHighlightMouseCol);
@@ -871,8 +871,8 @@ struct Settings
 		//wchar_t mszCharRanges[120];
 		//CharRanges icFixFarBorderRanges[10];
 		
-		// !!! Зовется из настроек Init/Load... !!!
-		int ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue = TRUE); // например, L"2013-25C3,25C4"
+		// !!! Р—РѕРІРµС‚СЃСЏ РёР· РЅР°СЃС‚СЂРѕРµРє Init/Load... !!!
+		int ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue = TRUE); // РЅР°РїСЂРёРјРµСЂ, L"2013-25C3,25C4"
 		wchar_t* CreateCharRanges(BYTE (&Chars)[0x10000]); // caller must free(result)
 		BYTE mpc_FixFarBorderValues[0x10000];
 		
@@ -895,14 +895,14 @@ struct Settings
 		BYTE isPartBrushBlack;
 		
 		//reg->Load(L"RightClick opens context menu", isRClickSendKey);
-		// 0 - не звать EMenu, 1 - звать всегда, 2 - звать по длинному клику
+		// 0 - РЅРµ Р·РІР°С‚СЊ EMenu, 1 - Р·РІР°С‚СЊ РІСЃРµРіРґР°, 2 - Р·РІР°С‚СЊ РїРѕ РґР»РёРЅРЅРѕРјСѓ РєР»РёРєСѓ
 		char isRClickSendKey;
-		//Для тачскринов - удобнее по длинному тапу показывать меню,
-		// а по двойному (Press and tap) выполнять выделение файлов
-		// Поэтому, если isRClickTouch, то "длинный"/"короткий" клик инвертируется
-		// --> isRClickSendKey==1 - звать всегда (isRClickTouchInvert не влияет)
-		// --> isRClickSendKey==2 - звать по длинному тапу (аналог простого RClick)
-		// При этом, PressAndTap всегда посылает RClick в консоль (для выделения файлов).
+		//Р”Р»СЏ С‚Р°С‡СЃРєСЂРёРЅРѕРІ - СѓРґРѕР±РЅРµРµ РїРѕ РґР»РёРЅРЅРѕРјСѓ С‚Р°РїСѓ РїРѕРєР°Р·С‹РІР°С‚СЊ РјРµРЅСЋ,
+		// Р° РїРѕ РґРІРѕР№РЅРѕРјСѓ (Press and tap) РІС‹РїРѕР»РЅСЏС‚СЊ РІС‹РґРµР»РµРЅРёРµ С„Р°Р№Р»РѕРІ
+		// РџРѕСЌС‚РѕРјСѓ, РµСЃР»Рё isRClickTouch, С‚Рѕ "РґР»РёРЅРЅС‹Р№"/"РєРѕСЂРѕС‚РєРёР№" РєР»РёРє РёРЅРІРµСЂС‚РёСЂСѓРµС‚СЃСЏ
+		// --> isRClickSendKey==1 - Р·РІР°С‚СЊ РІСЃРµРіРґР° (isRClickTouchInvert РЅРµ РІР»РёСЏРµС‚)
+		// --> isRClickSendKey==2 - Р·РІР°С‚СЊ РїРѕ РґР»РёРЅРЅРѕРјСѓ С‚Р°РїСѓ (Р°РЅР°Р»РѕРі РїСЂРѕСЃС‚РѕРіРѕ RClick)
+		// РџСЂРё СЌС‚РѕРј, PressAndTap РІСЃРµРіРґР° РїРѕСЃС‹Р»Р°РµС‚ RClick РІ РєРѕРЅСЃРѕР»СЊ (РґР»СЏ РІС‹РґРµР»РµРЅРёСЏ С„Р°Р№Р»РѕРІ).
 		bool isRClickTouchInvert();
 		//reg->Load(L"RightClickMacro2", &sRClickMacro);
 		wchar_t *sRClickMacro;
@@ -955,7 +955,7 @@ struct Settings
 		//reg->Load(L"DndLKey", nLDragKey);
 		//BYTE nLDragKey;
 		//reg->Load(L"DndRKey", nRDragKey);
-		//BYTE nRDragKey; // Был DWORD
+		//BYTE nRDragKey; // Р‘С‹Р» DWORD
 		//reg->Load(L"DefCopy", isDefCopy);
 		bool isDefCopy;
 		//reg->Load(L"DropUseMenu", isDropUseMenu);
@@ -965,12 +965,12 @@ struct Settings
 		//reg->Load(L"DragShowIcons", isDragShowIcons);
 		bool isDragShowIcons;
 		//reg->Load(L"DragPanel", isDragPanel); if (isDragPanel > 2) isDragPanel = 1;
-		BYTE isDragPanel; // изменение размера панелей мышкой
+		BYTE isDragPanel; // РёР·РјРµРЅРµРЅРёРµ СЂР°Р·РјРµСЂР° РїР°РЅРµР»РµР№ РјС‹С€РєРѕР№
 		//reg->Load(L"DragPanelBothEdges", isDragPanelBothEdges);
-		bool isDragPanelBothEdges; // таскать за обе рамки (правую-левой панели и левую-правой панели)
+		bool isDragPanelBothEdges; // С‚Р°СЃРєР°С‚СЊ Р·Р° РѕР±Рµ СЂР°РјРєРё (РїСЂР°РІСѓСЋ-Р»РµРІРѕР№ РїР°РЅРµР»Рё Рё Р»РµРІСѓСЋ-РїСЂР°РІРѕР№ РїР°РЅРµР»Рё)
 
 		//reg->Load(L"KeyBarRClick", isKeyBarRClick);
-		bool isKeyBarRClick; // Правый клик по кейбару - показать PopupMenu
+		bool isKeyBarRClick; // РџСЂР°РІС‹Р№ РєР»РёРє РїРѕ РєРµР№Р±Р°СЂСѓ - РїРѕРєР°Р·Р°С‚СЊ PopupMenu
 		
 		//reg->Load(L"DebugSteps", isDebugSteps);
 		bool isDebugSteps;
@@ -1013,7 +1013,7 @@ struct Settings
 		DWORD nStatusBarDark;
 		//reg->Load(L"StatusBar.HideColumns", nHideStatusColumns);
 		bool isStatusColumnHidden[64]; // _ASSERTE(countof(isStatusColumnHidden)>csi_Last);
-		//для информации, чтобы сохранить изменения при выходе
+		//РґР»СЏ РёРЅС„РѕСЂРјР°С†РёРё, С‡С‚РѕР±С‹ СЃРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ РїСЂРё РІС‹С…РѕРґРµ
 		bool mb_StatusSettingsWasChanged;
 		
 		//reg->Load(L"Tabs", isTabs);
@@ -1076,11 +1076,11 @@ struct Settings
 		//reg->Load(L"ConWnd Height", wndHeight);
 		CESize wndHeight;
 		//reg->Load(L"16bit Height", ntvdmHeight);
-		DWORD ntvdmHeight; // в символах
+		DWORD ntvdmHeight; // РІ СЃРёРјРІРѕР»Р°С…
 		//reg->Load(L"ConWnd X", wndX);
-		int _wndX; // в пикселях
+		int _wndX; // РІ РїРёРєСЃРµР»СЏС…
 		//reg->Load(L"ConWnd Y", wndY);
-		int _wndY; // в пикселях
+		int _wndY; // РІ РїРёРєСЃРµР»СЏС…
 		//reg->Load(L"WindowMode", WindowMode); if (WindowMode!=rFullScreen && WindowMode!=rMaximized && WindowMode!=rNormal) WindowMode = rNormal;
 		DWORD _WindowMode;
 		//reg->Load(L"Cascaded", wndCascade);
@@ -1093,8 +1093,8 @@ struct Settings
 		bool isIntegralSize();
 
 	private:
-		// При закрытии окна крестиком - сохранять только один раз,
-		// а то размер может в процессе закрытия консолей измениться
+		// РџСЂРё Р·Р°РєСЂС‹С‚РёРё РѕРєРЅР° РєСЂРµСЃС‚РёРєРѕРј - СЃРѕС…СЂР°РЅСЏС‚СЊ С‚РѕР»СЊРєРѕ РѕРґРёРЅ СЂР°Р·,
+		// Р° С‚Рѕ СЂР°Р·РјРµСЂ РјРѕР¶РµС‚ РІ РїСЂРѕС†РµСЃСЃРµ Р·Р°РєСЂС‹С‚РёСЏ РєРѕРЅСЃРѕР»РµР№ РёР·РјРµРЅРёС‚СЊСЃСЏ
 		bool mb_ExitSettingsAutoSaved;
 	public:
 		//reg->Load(L"SlideShowElapse", nSlideShowElapse);
@@ -1106,7 +1106,7 @@ struct Settings
 		//reg->Load(L"CenterConsolePad", nCenterConsolePad);
 		DWORD nCenterConsolePad;
 		//reg->Load(L"ShowScrollbar", isAlwaysShowScrollbar); if (isAlwaysShowScrollbar > 2) isAlwaysShowScrollbar = 2;
-		BYTE isAlwaysShowScrollbar; // 0-не показывать, 1-всегда, 2-автоматически (на откусывает место от консоли)
+		BYTE isAlwaysShowScrollbar; // 0-РЅРµ РїРѕРєР°Р·С‹РІР°С‚СЊ, 1-РІСЃРµРіРґР°, 2-Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё (РЅР° РѕС‚РєСѓСЃС‹РІР°РµС‚ РјРµСЃС‚Рѕ РѕС‚ РєРѕРЅСЃРѕР»Рё)
 		//reg->Load(L"ScrollBarAppearDelay", nScrollBarAppearDelay);
 		DWORD nScrollBarAppearDelay;
 		//reg->Load(L"ScrollBarDisappearDelay", nScrollBarDisappearDelay);
@@ -1131,9 +1131,9 @@ struct Settings
 		bool isNumberInCaption;
 		private:
 		//reg->Load(L"Multi.Modifier", nHostkeyModifier); TestHostkeyModifiers();
-		DWORD nHostkeyNumberModifier; // Используется для 0..9, WinSize
+		DWORD nHostkeyNumberModifier; // РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ 0..9, WinSize
 		//reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); TestHostkeyModifiers();
-		DWORD nHostkeyArrowModifier; // Используется для WinSize
+		DWORD nHostkeyArrowModifier; // РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ WinSize
 		public:
 		DWORD HostkeyNumberModifier() { return nHostkeyNumberModifier; };
 		DWORD HostkeyArrowModifier() { return nHostkeyArrowModifier; };
@@ -1161,9 +1161,9 @@ struct Settings
 		//reg->Load(L"Multi.AutoCreate", isMultiAutoCreate);
 		bool isMultiAutoCreate;
 		//reg->Load(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
-		BYTE isMultiLeaveOnClose; // 0 - закрываться, 1 - оставаться, 2 - НЕ оставаться при закрытии "крестиком"
+		BYTE isMultiLeaveOnClose; // 0 - Р·Р°РєСЂС‹РІР°С‚СЊСЃСЏ, 1 - РѕСЃС‚Р°РІР°С‚СЊСЃСЏ, 2 - РќР• РѕСЃС‚Р°РІР°С‚СЊСЃСЏ РїСЂРё Р·Р°РєСЂС‹С‚РёРё "РєСЂРµСЃС‚РёРєРѕРј"
 		//reg->Load(L"Multi.HideOnClose", isMultiHideOnClose);
-		BYTE isMultiHideOnClose; // 0 - не скрываться, 1 - в трей, 2 - просто минимизация
+		BYTE isMultiHideOnClose; // 0 - РЅРµ СЃРєСЂС‹РІР°С‚СЊСЃСЏ, 1 - РІ С‚СЂРµР№, 2 - РїСЂРѕСЃС‚Рѕ РјРёРЅРёРјРёР·Р°С†РёСЏ
 		//reg->Load(L"Multi.MinByEsc", isMultiMinByEsc);
 		BYTE isMultiMinByEsc; // 0 - Never, 1 - Always, 2 - NoConsoles
 		//reg->Load(L"MapShiftEscToEsc", isMapShiftEscToEsc);
@@ -1204,26 +1204,26 @@ struct Settings
 		/* ************************ */
 		/* ************************ */
 
-		// VkMod = LOBYTE - VK, старшие три байта - модификаторы (тоже VK)
+		// VkMod = LOBYTE - VK, СЃС‚Р°СЂС€РёРµ С‚СЂРё Р±Р°Р№С‚Р° - РјРѕРґРёС„РёРєР°С‚РѕСЂС‹ (С‚РѕР¶Рµ VK)
 
-		// Вернуть заданный VkMod, или 0 если не задан. nDescrID = vkXXX (e.g. vkMinimizeRestore)
+		// Р’РµСЂРЅСѓС‚СЊ Р·Р°РґР°РЅРЅС‹Р№ VkMod, РёР»Рё 0 РµСЃР»Рё РЅРµ Р·Р°РґР°РЅ. nDescrID = vkXXX (e.g. vkMinimizeRestore)
 		DWORD GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK = NULL);
-		// Проверить, задан ли этот hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore)
+		// РџСЂРѕРІРµСЂРёС‚СЊ, Р·Р°РґР°РЅ Р»Рё СЌС‚РѕС‚ hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore)
 		bool IsHotkey(int nDescrID);
-		// Установить новый hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore).
+		// РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РЅРѕРІС‹Р№ hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore).
 		void SetHotkeyById(int nDescrID, DWORD VkMod);
-		// Проверить, есть ли хоткеи с назначенным одиночным модификатором
+		// РџСЂРѕРІРµСЂРёС‚СЊ, РµСЃС‚СЊ Р»Рё С…РѕС‚РєРµРё СЃ РЅР°Р·РЅР°С‡РµРЅРЅС‹Рј РѕРґРёРЅРѕС‡РЅС‹Рј РјРѕРґРёС„РёРєР°С‚РѕСЂРѕРј
 		bool isModifierExist(BYTE Mod/*VK*/, bool abStrictSingle = false);
-		// Есть ли такой хоткей или модификатор (актуально для VK_APPS)
+		// Р•СЃС‚СЊ Р»Рё С‚Р°РєРѕР№ С…РѕС‚РєРµР№ РёР»Рё РјРѕРґРёС„РёРєР°С‚РѕСЂ (Р°РєС‚СѓР°Р»СЊРЅРѕ РґР»СЏ VK_APPS)
 		bool isKeyOrModifierExist(BYTE Mod/*VK*/);
-		// Проверить на дубли
+		// РџСЂРѕРІРµСЂРёС‚СЊ РЅР° РґСѓР±Р»Рё
 		void CheckHotkeyUnique();
 	private:
 		void LoadHotkeys(SettingsBase* reg);
 		void SaveHotkeys(SettingsBase* reg);
 	public:
 
-		/* *** Заголовки табов *** */
+		/* *** Р—Р°РіРѕР»РѕРІРєРё С‚Р°Р±РѕРІ *** */
 		//reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
 		WCHAR szTabConsole[32];
 		//reg->Load(L"TabSkipWords", &pszTabSkipWords);
@@ -1249,7 +1249,7 @@ struct Settings
 		//reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
 		bool bHideInactiveConsoleTabs;
 
-		TODO("загрузка/сохранение bHideDisabledTabs");
+		TODO("Р·Р°РіСЂСѓР·РєР°/СЃРѕС…СЂР°РЅРµРЅРёРµ bHideDisabledTabs");
 		bool bHideDisabledTabs;
 		
 		//reg->Load(L"ShowFarWindows", bShowFarWindows);
@@ -1258,11 +1258,11 @@ struct Settings
 		bool NeedCreateAppWindow();
 		
 		//reg->Load(L"MainTimerElapse", nMainTimerElapse); if (nMainTimerElapse>1000) nMainTimerElapse = 1000;
-		DWORD nMainTimerElapse; // периодичность, с которой из консоли считывается текст
+		DWORD nMainTimerElapse; // РїРµСЂРёРѕРґРёС‡РЅРѕСЃС‚СЊ, СЃ РєРѕС‚РѕСЂРѕР№ РёР· РєРѕРЅСЃРѕР»Рё СЃС‡РёС‚С‹РІР°РµС‚СЃСЏ С‚РµРєСЃС‚
 		//reg->Load(L"MainTimerInactiveElapse", nMainTimerInactiveElapse); if (nMainTimerInactiveElapse>10000) nMainTimerInactiveElapse = 10000;
-		DWORD nMainTimerInactiveElapse; // периодичность при неактивности
+		DWORD nMainTimerInactiveElapse; // РїРµСЂРёРѕРґРёС‡РЅРѕСЃС‚СЊ РїСЂРё РЅРµР°РєС‚РёРІРЅРѕСЃС‚Рё
 		
-		//bool isAdvLangChange; // в Висте без ConIme в самой консоли не меняется язык, пока не послать WM_SETFOCUS. Но при этом исчезает диалог быстрого поиска
+		//bool isAdvLangChange; // РІ Р’РёСЃС‚Рµ Р±РµР· ConIme РІ СЃР°РјРѕР№ РєРѕРЅСЃРѕР»Рё РЅРµ РјРµРЅСЏРµС‚СЃСЏ СЏР·С‹Рє, РїРѕРєР° РЅРµ РїРѕСЃР»Р°С‚СЊ WM_SETFOCUS. РќРѕ РїСЂРё СЌС‚РѕРј РёСЃС‡РµР·Р°РµС‚ РґРёР°Р»РѕРі Р±С‹СЃС‚СЂРѕРіРѕ РїРѕРёСЃРєР°
 		
 		//reg->Load(L"SkipFocusEvents", isSkipFocusEvents);
 		bool isSkipFocusEvents;
@@ -1288,7 +1288,7 @@ struct Settings
 		//reg->Load(L"ProcessNewConArg", isProcessNewConArg)
 		bool isProcessNewConArg; // Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs
 		//reg->Load(L"UseClink", mb_UseClink);
-		bool mb_UseClink; // использовать расширение командной строки (ReadConsole)
+		bool mb_UseClink; // РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЂР°СЃС€РёСЂРµРЅРёРµ РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРё (ReadConsole)
 		DWORD isUseClink(bool abCheckVersion = false);
 		//reg->Load(L"PortableReg", isPortableReg);
 		bool isPortableReg;
@@ -1306,7 +1306,7 @@ struct Settings
 		/* *** Thumbnails and Tiles *** */
 		//reg->Load(L"PanView.BackColor", ThSet.crBackground.RawColor);
 		//reg->Load(L"PanView.PFrame", ThSet.nPreviewFrame); if (ThSet.nPreviewFrame!=0 && ThSet.nPreviewFrame!=1) ThSet.nPreviewFrame = 1;
-		//и т.п...
+		//Рё С‚.Рї...
 		PanelViewSetMapping ThSet;
 		
 		/* *** AutoUpdate *** */
@@ -1324,7 +1324,7 @@ struct Settings
 		//wchar_t *szUpdateArcCmdLine; // "%1"-archive file, "%2"-ConEmu base dir
 		//wchar_t *szUpdateDownloadPath; // "%TEMP%"
 		//bool isUpdateLeavePackages;
-		//wchar_t *szUpdatePostUpdateCmd; // Юзер может чего-то свое делать с распакованными файлами
+		//wchar_t *szUpdatePostUpdateCmd; // Р®Р·РµСЂ РјРѕР¶РµС‚ С‡РµРіРѕ-С‚Рѕ СЃРІРѕРµ РґРµР»Р°С‚СЊ СЃ СЂР°СЃРїР°РєРѕРІР°РЅРЅС‹РјРё С„Р°Р№Р»Р°РјРё
 
 
 		/* *** HotKeys & GuiMacros *** */

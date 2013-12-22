@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -70,7 +70,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TODO(s)
 #define WARNING(s)
 #else
-// Чтобы было удобнее работать с ErrorList - для TODO тоже префикс warning
+// Р§С‚РѕР±С‹ Р±С‹Р»Рѕ СѓРґРѕР±РЅРµРµ СЂР°Р±РѕС‚Р°С‚СЊ СЃ ErrorList - РґР»СЏ TODO С‚РѕР¶Рµ РїСЂРµС„РёРєСЃ warning
 #define TODO(s) __pragma(message (FILE_LINE /*"warning: "*/ "TODO: " s))
 #define WARNING(s) __pragma(message (FILE_LINE /*"warning: "*/ "WARN: " s))
 #endif
@@ -138,19 +138,19 @@ WARNING("WIN64 was not defined");
 #define WM_WTSSESSION_CHANGE 0x02B1
 #endif
 
-// Для облегчения кодинга - возвращает значение для соответствующей платформы
+// Р”Р»СЏ РѕР±Р»РµРіС‡РµРЅРёСЏ РєРѕРґРёРЅРіР° - РІРѕР·РІСЂР°С‰Р°РµС‚ Р·РЅР°С‡РµРЅРёРµ РґР»СЏ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµР№ РїР»Р°С‚С„РѕСЂРјС‹
 #ifdef _WIN64
 	#define WIN3264TEST(v32,v64) v64
 #else
 	#define WIN3264TEST(v32,v64) v32
 #endif
-// Чтобы можно было пользовать 64битные значения в wsprintf
+// Р§С‚РѕР±С‹ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ РїРѕР»СЊР·РѕРІР°С‚СЊ 64Р±РёС‚РЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РІ wsprintf
 #ifdef _WIN64
 	#define WIN3264WSPRINT(ptr) (DWORD)(((DWORD_PTR)ptr)>>32), (DWORD)(((DWORD_PTR)ptr) & ((DWORD)-1))
 #else
 	#define WIN3264WSPRINT(ptr) (DWORD)(ptr)
 #endif
-// И еще
+// Р РµС‰Рµ
 #ifdef _DEBUG
 	#define RELEASEDEBUGTEST(rel,dbg) dbg
 	#define DEBUGTEST(dbg) dbg

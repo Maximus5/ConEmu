@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2013 Maximus5
 All rights reserved.
@@ -143,7 +143,7 @@ public:
 		wchar_t  First;  // ESC (27)
 		wchar_t  Second; // any of 64 to 95 ('@' to '_')
 		wchar_t  Action; // any of 64 to 126 (@ to ~). this is terminator
-		wchar_t  Skip;   // Если !=0 - то эту последовательность нужно пропустить
+		wchar_t  Skip;   // Р•СЃР»Рё !=0 - С‚Рѕ СЌС‚Сѓ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ РЅСѓР¶РЅРѕ РїСЂРѕРїСѓСЃС‚РёС‚СЊ
 		int      ArgC;
 		int      ArgV[16];
 		LPCWSTR  ArgSZ; // Reserved for key mapping

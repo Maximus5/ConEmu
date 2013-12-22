@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DROP_SETCP_ON_WIN2K3R2
 
-// Иначе не опередяется GetConsoleAliases (хотя он должен быть доступен в Win2k)
+// РРЅР°С‡Рµ РЅРµ РѕРїРµСЂРµРґСЏРµС‚СЃСЏ GetConsoleAliases (С…РѕС‚СЏ РѕРЅ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РґРѕСЃС‚СѓРїРµРЅ РІ Win2k)
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
 
@@ -80,16 +80,16 @@ extern VOID WINAPI OnLibraryLoaded(HMODULE ahModule);
 
 
 HMODULE ghHooksModule = NULL;
-BOOL gbHooksModuleLoaded = FALSE; // TRUE, если был вызов LoadLibrary("ConEmuHk.dll"), тогда его нужно FreeLibrary при выходе
+BOOL gbHooksModuleLoaded = FALSE; // TRUE, РµСЃР»Рё Р±С‹Р» РІС‹Р·РѕРІ LoadLibrary("ConEmuHk.dll"), С‚РѕРіРґР° РµРіРѕ РЅСѓР¶РЅРѕ FreeLibrary РїСЂРё РІС‹С…РѕРґРµ
 SetHookCallbacks_t SetHookCallbacks = NULL;
 SetLoadLibraryCallback_t SetLoadLibraryCallback = NULL;
 SetFarHookMode_t SetFarHookMode = NULL;
 
 
-// Эту функцию нужно позвать из DllMain плагина
+// Р­С‚Сѓ С„СѓРЅРєС†РёСЋ РЅСѓР¶РЅРѕ РїРѕР·РІР°С‚СЊ РёР· DllMain РїР»Р°РіРёРЅР°
 BOOL StartupHooks(HMODULE ahOurDll)
 {
-	WARNING("Добавить в аргументы строковый параметр - инфа об ошибке");
+	WARNING("Р”РѕР±Р°РІРёС‚СЊ РІ Р°СЂРіСѓРјРµРЅС‚С‹ СЃС‚СЂРѕРєРѕРІС‹Р№ РїР°СЂР°РјРµС‚СЂ - РёРЅС„Р° РѕР± РѕС€РёР±РєРµ");
 
 	if (ghHooksModule == NULL)
 	{
@@ -103,7 +103,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 
 		if ((ghHooksModule == NULL) && (ConEmuHwnd != NULL))
 		{
-			// Попробовать выполнить LoadLibrary? в некоторых случаях GetModuleHandle может обламываться
+			// РџРѕРїСЂРѕР±РѕРІР°С‚СЊ РІС‹РїРѕР»РЅРёС‚СЊ LoadLibrary? РІ РЅРµРєРѕС‚РѕСЂС‹С… СЃР»СѓС‡Р°СЏС… GetModuleHandle РјРѕР¶РµС‚ РѕР±Р»Р°РјС‹РІР°С‚СЊСЃСЏ
 			ghHooksModule = LoadLibrary(szHkModule);
 			if (ghHooksModule)
 				gbHooksModuleLoaded = TRUE;
@@ -186,7 +186,7 @@ void ShutdownHooks()
 		SetHookCallbacks = NULL;
 	}
 
-	// Если gbHooksModuleLoaded - нужно выполнить FreeLibrary
+	// Р•СЃР»Рё gbHooksModuleLoaded - РЅСѓР¶РЅРѕ РІС‹РїРѕР»РЅРёС‚СЊ FreeLibrary
 	if (gbHooksModuleLoaded)
 	{
 		gbHooksModuleLoaded = FALSE;
@@ -196,7 +196,7 @@ void ShutdownHooks()
 			//if (!FreeLibrary(ghHooksModule))
 			//{
 			//	dwErr = GetLastError();
-			//	// Т.к. FreeLibrary перехватывается в ghHooksModule, то первый проход фиктивный
+			//	// Рў.Рє. FreeLibrary РїРµСЂРµС…РІР°С‚С‹РІР°РµС‚СЃСЏ РІ ghHooksModule, С‚Рѕ РїРµСЂРІС‹Р№ РїСЂРѕС…РѕРґ С„РёРєС‚РёРІРЅС‹Р№
 			//	if (dwErr)
 			//		FreeLibrary(ghHooksModule);
 			//}

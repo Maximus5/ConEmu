@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -46,15 +46,15 @@ extern HWND    ghConEmuWndDC;   // ConEmu DC window
 extern HWND    ghConEmuWndBack; // ConEmu Back window - holder for GUI client
 extern DWORD   gnHookMainThreadId;
 
-// Этот TID может отличаться от основного потока.
-// Например, VLC создает окна не в главном, а в фоновом потоке.
+// Р­С‚РѕС‚ TID РјРѕР¶РµС‚ РѕС‚Р»РёС‡Р°С‚СЊСЃСЏ РѕС‚ РѕСЃРЅРѕРІРЅРѕРіРѕ РїРѕС‚РѕРєР°.
+// РќР°РїСЂРёРјРµСЂ, VLC СЃРѕР·РґР°РµС‚ РѕРєРЅР° РЅРµ РІ РіР»Р°РІРЅРѕРј, Р° РІ С„РѕРЅРѕРІРѕРј РїРѕС‚РѕРєРµ.
 DWORD  gnAttachGuiClientThreadId = 0;
 
-RECT    grcConEmuClient = {}; // Для аттача гуевых окон
-BOOL    gbAttachGuiClient = FALSE; // Для аттача гуевых окон
-BOOL 	gbGuiClientAttached = FALSE; // Для аттача гуевых окон (успешно подключились)
-BOOL 	gbGuiClientExternMode = FALSE; // Если нужно показать Gui-приложение вне вкладки ConEmu
-struct GuiStylesAndShifts gGuiClientStyles = {}; // Запомнить сдвиги окна внутри ConEmu
+RECT    grcConEmuClient = {}; // Р”Р»СЏ Р°С‚С‚Р°С‡Р° РіСѓРµРІС‹С… РѕРєРѕРЅ
+BOOL    gbAttachGuiClient = FALSE; // Р”Р»СЏ Р°С‚С‚Р°С‡Р° РіСѓРµРІС‹С… РѕРєРѕРЅ
+BOOL 	gbGuiClientAttached = FALSE; // Р”Р»СЏ Р°С‚С‚Р°С‡Р° РіСѓРµРІС‹С… РѕРєРѕРЅ (СѓСЃРїРµС€РЅРѕ РїРѕРґРєР»СЋС‡РёР»РёСЃСЊ)
+BOOL 	gbGuiClientExternMode = FALSE; // Р•СЃР»Рё РЅСѓР¶РЅРѕ РїРѕРєР°Р·Р°С‚СЊ Gui-РїСЂРёР»РѕР¶РµРЅРёРµ РІРЅРµ РІРєР»Р°РґРєРё ConEmu
+struct GuiStylesAndShifts gGuiClientStyles = {}; // Р—Р°РїРѕРјРЅРёС‚СЊ СЃРґРІРёРіРё РѕРєРЅР° РІРЅСѓС‚СЂРё ConEmu
 HWND 	ghAttachGuiClient = NULL;
 DWORD 	gnAttachGuiClientFlags = 0;
 DWORD 	gnAttachGuiClientStyle = 0, gnAttachGuiClientStyleEx = 0;
@@ -205,7 +205,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	bAttachGui = FALSE;
 
 #ifdef _DEBUG
-	// "!dwStyle" добавил для shell32.dll!CExecuteApplication::_CreateHiddenDDEWindow()
+	// "!dwStyle" РґРѕР±Р°РІРёР» РґР»СЏ shell32.dll!CExecuteApplication::_CreateHiddenDDEWindow()
 	_ASSERTE(hWndParent==NULL || ghConEmuWnd == NULL || hWndParent!=ghConEmuWnd || !dwStyle);
 	STARTUPINFO si = {sizeof(si)};
 	GetStartupInfo(&si);
@@ -243,11 +243,11 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 		else
 		{
 			bool lbCanAttach =
-							// Обычное окно с заголовком
+							// РћР±С‹С‡РЅРѕРµ РѕРєРЅРѕ СЃ Р·Р°РіРѕР»РѕРІРєРѕРј
 							((dwStyle & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW)
-							// Диалог с ресайзом рамки
+							// Р”РёР°Р»РѕРі СЃ СЂРµСЃР°Р№Р·РѕРј СЂР°РјРєРё
 							|| ((dwStyle & (WS_POPUP|WS_THICKFRAME)) == (WS_POPUP|WS_THICKFRAME))
-							// Обычное окно без заголовка
+							// РћР±С‹С‡РЅРѕРµ РѕРєРЅРѕ Р±РµР· Р·Р°РіРѕР»РѕРІРєР°
 							|| ((dwStyle & (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_POPUP|DS_MODALFRAME|WS_CHILDWINDOW)) == (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX)) 
 							;
 			if (dwStyle & (DS_MODALFRAME|WS_CHILDWINDOW))
@@ -259,20 +259,20 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 
 			if (lbCanAttach)
 			{
-				// Родительское окно - ConEmu DC
-				// -- hWndParent = ghConEmuWndBack; // Надо ли его ставить сразу, если не включаем WS_CHILD?
+				// Р РѕРґРёС‚РµР»СЊСЃРєРѕРµ РѕРєРЅРѕ - ConEmu DC
+				// -- hWndParent = ghConEmuWndBack; // РќР°РґРѕ Р»Рё РµРіРѕ СЃС‚Р°РІРёС‚СЊ СЃСЂР°Р·Сѓ, РµСЃР»Рё РЅРµ РІРєР»СЋС‡Р°РµРј WS_CHILD?
 
-				// WS_CHILDWINDOW перед созданием выставлять нельзя, т.к. например у WordPad.exe сносит крышу:
-				// все его окна создаются нормально, но он показывает ошибку "Не удалось создать новый документ"
-				//// Уберем рамку, меню и заголовок - оставим
+				// WS_CHILDWINDOW РїРµСЂРµРґ СЃРѕР·РґР°РЅРёРµРј РІС‹СЃС‚Р°РІР»СЏС‚СЊ РЅРµР»СЊР·СЏ, С‚.Рє. РЅР°РїСЂРёРјРµСЂ Сѓ WordPad.exe СЃРЅРѕСЃРёС‚ РєСЂС‹С€Сѓ:
+				// РІСЃРµ РµРіРѕ РѕРєРЅР° СЃРѕР·РґР°СЋС‚СЃСЏ РЅРѕСЂРјР°Р»СЊРЅРѕ, РЅРѕ РѕРЅ РїРѕРєР°Р·С‹РІР°РµС‚ РѕС€РёР±РєСѓ "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ РЅРѕРІС‹Р№ РґРѕРєСѓРјРµРЅС‚"
+				//// РЈР±РµСЂРµРј СЂР°РјРєСѓ, РјРµРЅСЋ Рё Р·Р°РіРѕР»РѕРІРѕРє - РѕСЃС‚Р°РІРёРј
 				//dwStyle = (dwStyle | WS_CHILDWINDOW|WS_TABSTOP) & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
 				bStyleHidden = (dwStyle & WS_VISIBLE) == WS_VISIBLE;
-				dwStyle &= ~WS_VISIBLE; // А вот видимость - точно сбросим
+				dwStyle &= ~WS_VISIBLE; // Рђ РІРѕС‚ РІРёРґРёРјРѕСЃС‚СЊ - С‚РѕС‡РЅРѕ СЃР±СЂРѕСЃРёРј
 				////dwExStyle = dwExStyle & ~WS_EX_WINDOWEDGE;
 
 				bAttachGui = TRUE;
-				//gbAttachGuiClient = FALSE; // Только одно окно приложения -- сбросим после реального создания окна
-				gbGuiClientAttached = TRUE; // Сразу взведем флажок режима
+				//gbAttachGuiClient = FALSE; // РўРѕР»СЊРєРѕ РѕРґРЅРѕ РѕРєРЅРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ -- СЃР±СЂРѕСЃРёРј РїРѕСЃР»Рµ СЂРµР°Р»СЊРЅРѕРіРѕ СЃРѕР·РґР°РЅРёСЏ РѕРєРЅР°
+				gbGuiClientAttached = TRUE; // РЎСЂР°Р·Сѓ РІР·РІРµРґРµРј С„Р»Р°Р¶РѕРє СЂРµР¶РёРјР°
 
 				#ifdef _DEBUG
 				if (!ghGuiClientRetHook)
@@ -283,7 +283,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 				//	ghGuiClientMsgHook = user->setWindowsHookExW(WH_GETMESSAGE, GuiClientMsgHook, NULL, GetCurrentThreadId());
 				#endif
 
-				//gnAttachGuiClientThreadId = nTID; -- перенес к "ghAttachGuiClient = hWindow;"
+				//gnAttachGuiClientThreadId = nTID; -- РїРµСЂРµРЅРµСЃ Рє "ghAttachGuiClient = hWindow;"
 
 				RECT rcGui = AttachGuiClientPos(dwStyle, dwExStyle);
 				if (hWndParent != ghConEmuWndBack)
@@ -298,18 +298,18 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 
 	if (gbGuiClientAttached /*ghAttachGuiClient*/)
 	{
-		return true; // В GUI приложениях - разрешено все
+		return true; // Р’ GUI РїСЂРёР»РѕР¶РµРЅРёСЏС… - СЂР°Р·СЂРµС€РµРЅРѕ РІСЃРµ
 	}
 
 #ifndef _DEBUG
 	return true;
 #else
 	if (gnHookMainThreadId && gnHookMainThreadId != GetCurrentThreadId())
-		return true; // Разрешено, отдается на откуп консольной программе/плагинам
+		return true; // Р Р°Р·СЂРµС€РµРЅРѕ, РѕС‚РґР°РµС‚СЃСЏ РЅР° РѕС‚РєСѓРї РєРѕРЅСЃРѕР»СЊРЅРѕР№ РїСЂРѕРіСЂР°РјРјРµ/РїР»Р°РіРёРЅР°Рј
 	
 	if ((dwStyle & (WS_POPUP|DS_MODALFRAME)) == (WS_POPUP|DS_MODALFRAME))
 	{
-		// Это скорее всего обычный диалог, разрешим, но пока для отладчика - assert
+		// Р­С‚Рѕ СЃРєРѕСЂРµРµ РІСЃРµРіРѕ РѕР±С‹С‡РЅС‹Р№ РґРёР°Р»РѕРі, СЂР°Р·СЂРµС€РёРј, РЅРѕ РїРѕРєР° РґР»СЏ РѕС‚Р»Р°РґС‡РёРєР° - assert
 		_ASSERTE((dwStyle & WS_POPUP) == 0);
 		return true;
 	}
@@ -317,11 +317,11 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	if ((lpClassNameA && ((DWORD_PTR)lpClassNameA) <= 0xFFFF)
 		|| (lpClassNameW && ((DWORD_PTR)lpClassNameW) <= 0xFFFF))
 	{
-		// Что-то системное
+		// Р§С‚Рѕ-С‚Рѕ СЃРёСЃС‚РµРјРЅРѕРµ
 		return true;
 	}
 	
-	// Окно на любой чих создается. dwStyle == 0x88000000.
+	// РћРєРЅРѕ РЅР° Р»СЋР±РѕР№ С‡РёС… СЃРѕР·РґР°РµС‚СЃСЏ. dwStyle == 0x88000000.
 	if ((lpClassNameW && lstrcmpW(lpClassNameW, L"CicMarshalWndClass") == 0)
 		|| (lpClassNameA && lstrcmpA(lpClassNameA, "CicMarshalWndClass") == 0)
 		)
@@ -337,9 +337,9 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	}
 
 	#ifdef _DEBUG
-	// В консоли нет обработчика сообщений, поэтому создание окон в главной
-	// нити приводит к "зависанию" приложения - например, любые программы,
-	// использующие DDE могут виснуть.
+	// Р’ РєРѕРЅСЃРѕР»Рё РЅРµС‚ РѕР±СЂР°Р±РѕС‚С‡РёРєР° СЃРѕРѕР±С‰РµРЅРёР№, РїРѕСЌС‚РѕРјСѓ СЃРѕР·РґР°РЅРёРµ РѕРєРѕРЅ РІ РіР»Р°РІРЅРѕР№
+	// РЅРёС‚Рё РїСЂРёРІРѕРґРёС‚ Рє "Р·Р°РІРёСЃР°РЅРёСЋ" РїСЂРёР»РѕР¶РµРЅРёСЏ - РЅР°РїСЂРёРјРµСЂ, Р»СЋР±С‹Рµ РїСЂРѕРіСЂР°РјРјС‹,
+	// РёСЃРїРѕР»СЊР·СѓСЋС‰РёРµ DDE РјРѕРіСѓС‚ РІРёСЃРЅСѓС‚СЊ.
 	wchar_t szModule[MAX_PATH] = {}; GetModuleFileName(ghOurModule, szModule, countof(szModule));
 	//const wchar_t* pszSlash = PointToName(szModule);
 	//if (lstrcmpi(pszSlash, L"far.exe")==0 || lstrcmpi(szModule, L"far64.exe")==0)
@@ -351,7 +351,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	//return false;
 	#endif
 	
-	// Разрешить? По настройке?
+	// Р Р°Р·СЂРµС€РёС‚СЊ? РџРѕ РЅР°СЃС‚СЂРѕР№РєРµ?
 	return true;
 #endif
 }
@@ -383,13 +383,13 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 		gnAttachGuiClientStyleEx = (DWORD)dwStyleEx;
 	}
 
-	// Позвать user->getWindowRect(ghAttachGuiClient, &grcAttachGuiClientOrig); если надо
+	// РџРѕР·РІР°С‚СЊ user->getWindowRect(ghAttachGuiClient, &grcAttachGuiClientOrig); РµСЃР»Рё РЅР°РґРѕ
 	CheckOrigGuiClientRect();
 	
 	if (!gbGuiClientExternMode)
 	{
-		// DotNet: если не включить WS_CHILD - не работают toolStrip & menuStrip
-		// Native: если включить WS_CHILD - исчезает оконное меню
+		// DotNet: РµСЃР»Рё РЅРµ РІРєР»СЋС‡РёС‚СЊ WS_CHILD - РЅРµ СЂР°Р±РѕС‚Р°СЋС‚ toolStrip & menuStrip
+		// Native: РµСЃР»Рё РІРєР»СЋС‡РёС‚СЊ WS_CHILD - РёСЃС‡РµР·Р°РµС‚ РѕРєРѕРЅРЅРѕРµ РјРµРЅСЋ
 		DWORD_PTR dwNewStyle = dwStyle & ~(WS_MAXIMIZEBOX|WS_MINIMIZEBOX);
 		if (gnAttachGuiClientFlags & agaf_WS_CHILD)
 			dwNewStyle = (dwNewStyle|WS_CHILD/*|DS_CONTROL*/) & ~(WS_POPUP);
@@ -420,7 +420,7 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 				abStyleHidden = FALSE;
 		}
 		
-		// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
+		// !!! OnSetForegroundWindow РЅРµ РїРѕРґС…РѕРґРёС‚ - РѕРЅ РґРµСЂРіР°РµС‚ Cmd.
 		user->setForegroundWindow(ghConEmuWnd);
 
 		user->postMessageW(ghAttachGuiClient, WM_NCPAINT, 0, 0);
@@ -457,7 +457,7 @@ LRESULT CALLBACK AttachGuiWindowCallback(int nCode, WPARAM wParam, LPARAM lParam
 			_ASSERTEX(IsWindowVisible(hOurWindow));
 			OnGuiWindowAttached(hOurWindow, hMenu, NULL, szClassName, nCurStyle, nCurStyleEx, FALSE, SW_SHOW);
 			args->Result = gnAttachMsgId;
-			//if (!bWasVisible) // Надо?
+			//if (!bWasVisible) // РќР°РґРѕ?
 			//	ShowWindow(hOurWindow, SW_SHOW);
 		}
 	}
@@ -467,7 +467,7 @@ LRESULT CALLBACK AttachGuiWindowCallback(int nCode, WPARAM wParam, LPARAM lParam
 
 void AttachGuiWindow(HWND hOurWindow)
 {
-	_ASSERTEX(gbAttachGuiClient); // Уже должен был быть установлен?
+	_ASSERTEX(gbAttachGuiClient); // РЈР¶Рµ РґРѕР»Р¶РµРЅ Р±С‹Р» Р±С‹С‚СЊ СѓСЃС‚Р°РЅРѕРІР»РµРЅ?
 	_ASSERTEX(user);
 	gnAttachMsgId = user->registerWindowMessageW(L"ConEmu:Attach2Gui");
 	if (gnAttachMsgId)
@@ -475,7 +475,7 @@ void AttachGuiWindow(HWND hOurWindow)
 		DWORD nWndTID = user->getWindowThreadProcessId(hOurWindow, NULL);
 		ghAttachMsgHook = user->setWindowsHookExW(WH_CALLWNDPROC, AttachGuiWindowCallback, NULL, nWndTID);
 
-		// Поскольку аттач хорошо бы выполнять в той нити, в которой крутится окно - то через хук
+		// РџРѕСЃРєРѕР»СЊРєСѓ Р°С‚С‚Р°С‡ С…РѕСЂРѕС€Рѕ Р±С‹ РІС‹РїРѕР»РЅСЏС‚СЊ РІ С‚РѕР№ РЅРёС‚Рё, РІ РєРѕС‚РѕСЂРѕР№ РєСЂСѓС‚РёС‚СЃСЏ РѕРєРЅРѕ - С‚Рѕ С‡РµСЂРµР· С…СѓРє
 		AttachMsgArg args = {gnAttachMsgId, 0, ghConEmuWnd, hOurWindow};
 		LRESULT lRc = user->sendMessageW(hOurWindow, gnAttachMsgId, gnAttachMsgId, (LPARAM)&args);
 		_ASSERTEX(args.Result == gnAttachMsgId);
@@ -488,11 +488,11 @@ void AttachGuiWindow(HWND hOurWindow)
 
 bool IsDotNetWindow(HWND hWindow)
 {
-	// С приложенями .Net - приходится работать как с WS_CHILD,
-	// иначе в них "не нажимаются" тулбары и меню
+	// РЎ РїСЂРёР»РѕР¶РµРЅСЏРјРё .Net - РїСЂРёС…РѕРґРёС‚СЃСЏ СЂР°Р±РѕС‚Р°С‚СЊ РєР°Рє СЃ WS_CHILD,
+	// РёРЅР°С‡Рµ РІ РЅРёС… "РЅРµ РЅР°Р¶РёРјР°СЋС‚СЃСЏ" С‚СѓР»Р±Р°СЂС‹ Рё РјРµРЅСЋ
 
-	//Issue 624: mscoree может быть загружен и НЕ в .Net приложение
-	//if (GetModuleHandle(L"mscoree.dll") != NULL) -- некорректно
+	//Issue 624: mscoree РјРѕР¶РµС‚ Р±С‹С‚СЊ Р·Р°РіСЂСѓР¶РµРЅ Рё РќР• РІ .Net РїСЂРёР»РѕР¶РµРЅРёРµ
+	//if (GetModuleHandle(L"mscoree.dll") != NULL) -- РЅРµРєРѕСЂСЂРµРєС‚РЅРѕ
 
 	wchar_t szClass[255];
 	const wchar_t szWindowsForms[] = L"WindowsForms";
@@ -505,7 +505,7 @@ bool IsDotNetWindow(HWND hWindow)
 		szClass[nNeedLen] = 0;
 		if (lstrcmpi(szClass, szWindowsForms) == 0)
 		{
-			// Ну а теперь проверим, что это ".Net"
+			// РќСѓ Р° С‚РµРїРµСЂСЊ РїСЂРѕРІРµСЂРёРј, С‡С‚Рѕ СЌС‚Рѕ ".Net"
 			HMODULE hCore = GetModuleHandle(L"mscoree.dll");
 			if (hCore != NULL)
 			{
@@ -532,7 +532,7 @@ bool IsQtWindow(LPCSTR asClassA, LPCWSTR asClassW)
 	return false;
 }
 
-// Если (anFromShowWindow != -1), значит функу зовут из ShowWindow
+// Р•СЃР»Рё (anFromShowWindow != -1), Р·РЅР°С‡РёС‚ С„СѓРЅРєСѓ Р·РѕРІСѓС‚ РёР· ShowWindow
 void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asClassW, DWORD anStyle, DWORD anStyleEx, BOOL abStyleHidden, int anFromShowWindow/*=-1*/)
 {
 	DWORD nCurStyle = (DWORD)user->getWindowLongPtrW(hWindow, GWL_STYLE);
@@ -540,22 +540,22 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 
 	user->allowSetForegroundWindow(ASFW_ANY);
 
-	// VLC создает несколько "подходящих" окон, но ShowWindow зовет
-	// только для одного из них. Поэтому фактический аттач делаем
-	// только в том случае, если окно "видимое"
+	// VLC СЃРѕР·РґР°РµС‚ РЅРµСЃРєРѕР»СЊРєРѕ "РїРѕРґС…РѕРґСЏС‰РёС…" РѕРєРѕРЅ, РЅРѕ ShowWindow Р·РѕРІРµС‚
+	// С‚РѕР»СЊРєРѕ РґР»СЏ РѕРґРЅРѕРіРѕ РёР· РЅРёС…. РџРѕСЌС‚РѕРјСѓ С„Р°РєС‚РёС‡РµСЃРєРёР№ Р°С‚С‚Р°С‡ РґРµР»Р°РµРј
+	// С‚РѕР»СЊРєРѕ РІ С‚РѕРј СЃР»СѓС‡Р°Рµ, РµСЃР»Рё РѕРєРЅРѕ "РІРёРґРёРјРѕРµ"
 	if ((!(nCurStyle & WS_VISIBLE)) && (anFromShowWindow <= SW_HIDE))
 	{
-		// Значит потом, из ShowWindow
+		// Р—РЅР°С‡РёС‚ РїРѕС‚РѕРј, РёР· ShowWindow
 		return;
 	}
 
 	ghAttachGuiClient = hWindow;
 	gnAttachGuiClientThreadId = user->getWindowThreadProcessId(hWindow, NULL);
 	gbForceShowGuiClient = TRUE;
-	gbAttachGuiClient = FALSE; // Только одно окно приложения. Пока?
+	gbAttachGuiClient = FALSE; // РўРѕР»СЊРєРѕ РѕРґРЅРѕ РѕРєРЅРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ. РџРѕРєР°?
 
 #if 0
-	// Для WS_CHILDWINDOW меню нельзя указать при создании окна
+	// Р”Р»СЏ WS_CHILDWINDOW РјРµРЅСЋ РЅРµР»СЊР·СЏ СѓРєР°Р·Р°С‚СЊ РїСЂРё СЃРѕР·РґР°РЅРёРё РѕРєРЅР°
 	if (!hMenu && !ghAttachGuiClientMenu && (asClassA || asClassW))
 	{
 		BOOL lbRcClass;
@@ -577,13 +577,13 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	}
 	if (hMenu)
 	{
-		// Для WS_CHILDWINDOW - не работает
+		// Р”Р»СЏ WS_CHILDWINDOW - РЅРµ СЂР°Р±РѕС‚Р°РµС‚
 		SetMenu(hWindow, hMenu);
 		HMENU hSys = GetSystemMenu(hWindow, FALSE);
-		TODO("Это в принципе прокатывает, но нужно транслировать WM_SYSCOMMAND -> WM_COMMAND, соответственно, перехватывать WndProc, или хук ставить");
+		TODO("Р­С‚Рѕ РІ РїСЂРёРЅС†РёРїРµ РїСЂРѕРєР°С‚С‹РІР°РµС‚, РЅРѕ РЅСѓР¶РЅРѕ С‚СЂР°РЅСЃР»РёСЂРѕРІР°С‚СЊ WM_SYSCOMMAND -> WM_COMMAND, СЃРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ, РїРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ WndProc, РёР»Рё С…СѓРє СЃС‚Р°РІРёС‚СЊ");
 		if (hSys)
 		{
-			TODO("Хотя, хорошо бы не все в Popup засоывать, а извлечь ChildPopups из hMenu");
+			TODO("РҐРѕС‚СЏ, С…РѕСЂРѕС€Рѕ Р±С‹ РЅРµ РІСЃРµ РІ Popup Р·Р°СЃРѕС‹РІР°С‚СЊ, Р° РёР·РІР»РµС‡СЊ ChildPopups РёР· hMenu");
 			InsertMenu(hSys, 0, MF_BYPOSITION|MF_POPUP, (UINT_PTR)hMenu, L"Window menu");
 			InsertMenu(hSys, 1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL);
 		}
@@ -594,14 +594,14 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_ATTACHGUIAPP, nSize);
 
 	gnAttachGuiClientFlags = agaf_Success;
-	// С приложенями .Net - приходится работать как с WS_CHILD,
-	// иначе в них "не нажимаются" тулбары и меню
+	// РЎ РїСЂРёР»РѕР¶РµРЅСЏРјРё .Net - РїСЂРёС…РѕРґРёС‚СЃСЏ СЂР°Р±РѕС‚Р°С‚СЊ РєР°Рє СЃ WS_CHILD,
+	// РёРЅР°С‡Рµ РІ РЅРёС… "РЅРµ РЅР°Р¶РёРјР°СЋС‚СЃСЏ" С‚СѓР»Р±Р°СЂС‹ Рё РјРµРЅСЋ
 	if (IsDotNetWindow(hWindow))
 	{
 		gnAttachGuiClientFlags |= (agaf_DotNet|agaf_WS_CHILD);
 	}
-	// Если в окне нет меню - работаем с ним как с WS_CHILD
-	// так не возникает проблем с активацией и т.д.
+	// Р•СЃР»Рё РІ РѕРєРЅРµ РЅРµС‚ РјРµРЅСЋ - СЂР°Р±РѕС‚Р°РµРј СЃ РЅРёРј РєР°Рє СЃ WS_CHILD
+	// С‚Р°Рє РЅРµ РІРѕР·РЅРёРєР°РµС‚ РїСЂРѕР±Р»РµРј СЃ Р°РєС‚РёРІР°С†РёРµР№ Рё С‚.Рґ.
 	else if (user->getMenu(hWindow) == NULL)
 	{
 		if (IsQtWindow(asClassA, asClassW))
@@ -612,8 +612,8 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	pIn->AttachGuiApp.nFlags = gnAttachGuiClientFlags;
 	pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 	pIn->AttachGuiApp.hAppWindow = hWindow;
-	pIn->AttachGuiApp.Styles.nStyle = nCurStyle; // стили могли измениться после создания окна,
-	pIn->AttachGuiApp.Styles.nStyleEx = nCurStyleEx; // поэтому получим актуальные
+	pIn->AttachGuiApp.Styles.nStyle = nCurStyle; // СЃС‚РёР»Рё РјРѕРіР»Рё РёР·РјРµРЅРёС‚СЊСЃСЏ РїРѕСЃР»Рµ СЃРѕР·РґР°РЅРёСЏ РѕРєРЅР°,
+	pIn->AttachGuiApp.Styles.nStyleEx = nCurStyleEx; // РїРѕСЌС‚РѕРјСѓ РїРѕР»СѓС‡РёРј Р°РєС‚СѓР°Р»СЊРЅС‹Рµ
 	user->getWindowRect(hWindow, &pIn->AttachGuiApp.rcWindow);
 	GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
 	pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
@@ -637,7 +637,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 
 	ExecuteFreeResult(pIn);
 
-	// abStyleHidden == TRUE, если окно при создании указало флаг WS_VISIBLE (т.е. не собиралось звать ShowWindow)
+	// abStyleHidden == TRUE, РµСЃР»Рё РѕРєРЅРѕ РїСЂРё СЃРѕР·РґР°РЅРёРё СѓРєР°Р·Р°Р»Рѕ С„Р»Р°Рі WS_VISIBLE (С‚.Рµ. РЅРµ СЃРѕР±РёСЂР°Р»РѕСЃСЊ Р·РІР°С‚СЊ ShowWindow)
 
 	if (pOut)
 	{
@@ -689,7 +689,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 			UINT nMsgID = user->registerWindowMessageW(CONEMUMSG_RESTORECHILDFOCUS);
 			user->postMessageW(ghConEmuWndBack, nMsgID, 0,0);
 
-			//// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
+			//// !!! OnSetForegroundWindow РЅРµ РїРѕРґС…РѕРґРёС‚ - РѕРЅ РґРµСЂРіР°РµС‚ Cmd.
 			////user->setForegroundWindow(ghConEmuWnd);
 			//#if 0
 			//wchar_t szClass[64] = {}; user->getClassNameW(hFocus, szClass, countof(szClass));
@@ -697,7 +697,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 			//#endif
 			////if (!(nCurStyle & WS_CHILDWINDOW))
 			//{
-			//	// Если ставить WS_CHILD - пропадет меню!
+			//	// Р•СЃР»Рё СЃС‚Р°РІРёС‚СЊ WS_CHILD - РїСЂРѕРїР°РґРµС‚ РјРµРЅСЋ!
 			//	//nCurStyle = (nCurStyle | WS_CHILDWINDOW|WS_TABSTOP); // & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
 			//	//user->setWindowLongPtrW(hWindow, GWL_STYLE, nCurStyle);
 			//	if (gnAttachGuiClientFlags & agaf_DotNet)
@@ -717,10 +717,10 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 			//		abStyleHidden = FALSE;
 			//}
 			//
-			//// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
+			//// !!! OnSetForegroundWindow РЅРµ РїРѕРґС…РѕРґРёС‚ - РѕРЅ РґРµСЂРіР°РµС‚ Cmd.
 			//user->setForegroundWindow(ghConEmuWnd);
 			////if (hFocus)
-			////SetFocus(hFocus ? hFocus : hWindow); // hFocus==NULL, эффекта нет
+			////SetFocus(hFocus ? hFocus : hWindow); // hFocus==NULL, СЌС„С„РµРєС‚Р° РЅРµС‚
 			////OnSetForegroundWindow(hWindow);
 			////user->postMessage(ghConEmuWnd, WM_NCACTIVATE, TRUE, 0);
 			////user->postMessage(ghConEmuWnd, WM_NCPAINT, 0, 0);
@@ -760,9 +760,9 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 
 	if ((!ghAttachGuiClient) && gbAttachGuiClient && (nCmdShow >= SW_SHOWNORMAL))
 	{
-		// VLC создает несколько "подходящих" окон, но ShowWindow зовет
-		// только для одного из них. Поэтому фактический аттач делаем
-		// только в том случае, если окно "видимое"
+		// VLC СЃРѕР·РґР°РµС‚ РЅРµСЃРєРѕР»СЊРєРѕ "РїРѕРґС…РѕРґСЏС‰РёС…" РѕРєРѕРЅ, РЅРѕ ShowWindow Р·РѕРІРµС‚
+		// С‚РѕР»СЊРєРѕ РґР»СЏ РѕРґРЅРѕРіРѕ РёР· РЅРёС…. РџРѕСЌС‚РѕРјСѓ С„Р°РєС‚РёС‡РµСЃРєРёР№ Р°С‚С‚Р°С‡ РґРµР»Р°РµРј
+		// С‚РѕР»СЊРєРѕ РІ С‚РѕРј СЃР»СѓС‡Р°Рµ, РµСЃР»Рё РѕРєРЅРѕ "РІРёРґРёРјРѕРµ"
 		HMENU hMenu = user->getMenu(hWnd);
 		wchar_t szClassName[255]; user->getClassNameW(hWnd, szClassName, countof(szClassName));
 		DWORD nCurStyle = (DWORD)user->getWindowLongPtrW(hWnd, GWL_STYLE);
@@ -778,7 +778,7 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 			CheckCanCreateWindow(NULL, szClassName, dwStyle, dwExStyle, hWndParent, bAttachGui, bStyleHidden);
 		}
 
-		// Пробуем
+		// РџСЂРѕР±СѓРµРј
 		if (bAttachGui)
 		{
 			OnGuiWindowAttached(hWnd, hMenu, NULL, szClassName, nCurStyle, nCurStyleEx, FALSE, nCmdShow);
@@ -802,8 +802,8 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 			pIn->AttachGuiApp.nFlags = gnAttachGuiClientFlags;
 			pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 			pIn->AttachGuiApp.hAppWindow = hWnd;
-			pIn->AttachGuiApp.Styles.nStyle = nCurStyle; // стили могли измениться после создания окна,
-			pIn->AttachGuiApp.Styles.nStyleEx = nCurStyleEx; // поэтому получим актуальные
+			pIn->AttachGuiApp.Styles.nStyle = nCurStyle; // СЃС‚РёР»Рё РјРѕРіР»Рё РёР·РјРµРЅРёС‚СЊСЃСЏ РїРѕСЃР»Рµ СЃРѕР·РґР°РЅРёСЏ РѕРєРЅР°,
+			pIn->AttachGuiApp.Styles.nStyleEx = nCurStyleEx; // РїРѕСЌС‚РѕРјСѓ РїРѕР»СѓС‡РёРј Р°РєС‚СѓР°Р»СЊРЅС‹Рµ
 			user->getWindowRect(hWnd, &pIn->AttachGuiApp.rcWindow);
 			GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
 
@@ -824,7 +824,7 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 					SetConEmuHkWindows(pOut->AttachGuiApp.hConEmuDc, pOut->AttachGuiApp.hConEmuBack);
 					//gbGuiClientHideCaption = pOut->AttachGuiApp.bHideCaption;
 					gGuiClientStyles = pOut->AttachGuiApp.Styles;
-					//Если приложение создается в НЕ активной вкладке - фокус нужно вернуть в ConEmu
+					//Р•СЃР»Рё РїСЂРёР»РѕР¶РµРЅРёРµ СЃРѕР·РґР°РµС‚СЃСЏ РІ РќР• Р°РєС‚РёРІРЅРѕР№ РІРєР»Р°РґРєРµ - С„РѕРєСѓСЃ РЅСѓР¶РЅРѕ РІРµСЂРЅСѓС‚СЊ РІ ConEmu
 					rbInactive = (pOut->AttachGuiApp.nFlags & agaf_Inactive) == agaf_Inactive;
 				}
 				ExecuteFreeResult(pOut);
@@ -840,7 +840,7 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 		//	SWP_FRAMECHANGED);
 	
 		nCmdShow = SW_SHOWNORMAL;
-		gbForceShowGuiClient = FALSE; // Один раз?
+		gbForceShowGuiClient = FALSE; // РћРґРёРЅ СЂР°Р·?
 		rbGuiAttach = TRUE;
 	}
 }
@@ -956,10 +956,10 @@ RECT AttachGuiClientPos(DWORD anStyle /*= 0*/, DWORD anStyleEx /*= 0*/)
 bool OnSetGuiClientWindowPos(HWND hWnd, HWND hWndInsertAfter, int &X, int &Y, int &cx, int &cy, UINT uFlags)
 {
 	bool lbChanged = false;
-	// GUI приложениями запрещено самостоятельно двигаться внутри ConEmu
+	// GUI РїСЂРёР»РѕР¶РµРЅРёСЏРјРё Р·Р°РїСЂРµС‰РµРЅРѕ СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅРѕ РґРІРёРіР°С‚СЊСЃСЏ РІРЅСѓС‚СЂРё ConEmu
 	if (ghAttachGuiClient && hWnd == ghAttachGuiClient)
 	{
-		// -- что-то GetParent возвращает NULL (для cifirica по крайней мере)
+		// -- С‡С‚Рѕ-С‚Рѕ GetParent РІРѕР·РІСЂР°С‰Р°РµС‚ NULL (РґР»СЏ cifirica РїРѕ РєСЂР°Р№РЅРµР№ РјРµСЂРµ)
 		//if (user->getParent(hWnd) == ghConEmuWndBack)
 		{
 			RECT rcGui = AttachGuiClientPos();
@@ -998,7 +998,7 @@ void SetGuiExternMode(BOOL abUseExternMode, LPRECT prcOldPos /*= NULL*/)
 			}
 			user->setParent(ghAttachGuiClient, NULL);
 			
-			TODO("Вернуть старый размер?");
+			TODO("Р’РµСЂРЅСѓС‚СЊ СЃС‚Р°СЂС‹Р№ СЂР°Р·РјРµСЂ?");
 			user->setWindowPos(ghAttachGuiClient, ghConEmuWnd, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 				SWP_DRAWFRAME | SWP_SHOWWINDOW | SWP_ASYNCWINDOWPOS | SWP_NOACTIVATE);
 		}

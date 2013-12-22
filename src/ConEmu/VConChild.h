@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -97,7 +97,7 @@ class CConEmuChild
 		DWORD mn_WndDCStyle;
 		DWORD mn_WndDCExStyle;
 		HWND mh_WndDC;
-		HWND mh_WndBack; // скроллинг и фон
+		HWND mh_WndBack; // СЃРєСЂРѕР»Р»РёРЅРі Рё С„РѕРЅ
 		HWND mh_LastGuiChild;
 		long mn_MsgVConTerminated; // == 0, Registered when post destroing
 		UINT mn_MsgTabChanged;

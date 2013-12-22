@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -91,8 +91,8 @@ private:
 	void SendRClick(HWND hWnd, const LONG ldx, const LONG ldy);
 	void DumpGesture(LPCWSTR tp, const GESTUREINFO& gi);
 private:
-	// При Pan и прочем это первая точка, в отличие от _ptFirst не меняется
-	// в процессе перетаскивания и содержит ЭКРАННЫЕ координаты
+	// РџСЂРё Pan Рё РїСЂРѕС‡РµРј СЌС‚Рѕ РїРµСЂРІР°СЏ С‚РѕС‡РєР°, РІ РѕС‚Р»РёС‡РёРµ РѕС‚ _ptFirst РЅРµ РјРµРЅСЏРµС‚СЃСЏ
+	// РІ РїСЂРѕС†РµСЃСЃРµ РїРµСЂРµС‚Р°СЃРєРёРІР°РЅРёСЏ Рё СЃРѕРґРµСЂР¶РёС‚ Р­РљР РђРќРќР«Р• РєРѕРѕСЂРґРёРЅР°С‚С‹
 	POINT _ptBegin;
 	// first significant point of the gesture
     POINT _ptFirst;

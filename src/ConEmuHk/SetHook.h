@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -142,7 +142,7 @@ struct HookItem
 	//const wchar_t*  ModuleOnly; // others - only for the one module.
 	
 	//#ifdef _DEBUG
-	//DWORD   nOrdinal;      // Ordinal of the procedure // !!! Это не Ordinal, а Hint !
+	//DWORD   nOrdinal;      // Ordinal of the procedure // !!! Р­С‚Рѕ РЅРµ Ordinal, Р° Hint !
 	//#endif
 
 
@@ -169,13 +169,13 @@ typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
 
 struct HookModeFar
 {
-	DWORD cbSize;            // размер структуры
-	BOOL  bFarHookMode;      // устанавливается в TRUE из плагина ConEmu.dll !!! MUST BE FIRST BOOL !!!
+	DWORD cbSize;            // СЂР°Р·РјРµСЂ СЃС‚СЂСѓРєС‚СѓСЂС‹
+	BOOL  bFarHookMode;      // СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РІ TRUE РёР· РїР»Р°РіРёРЅР° ConEmu.dll !!! MUST BE FIRST BOOL !!!
 	BOOL  bFARuseASCIIsort;  // -> OnCompareStringW
 	BOOL  bShellNoZoneCheck; // -> OnShellExecuteXXX
-	BOOL  bMonitorConsoleInput; // при (Read/Peek)ConsoleInput(A/W) послать инфу в GUI/Settings/Debug
-	BOOL  bPopupMenuPos;     // при вызове EMenu показать меню в позиции мышиного курсора
-	BOOL  bLongConsoleOutput; // при выполнении консольных программ из Far - увеличивать высоту буфера
+	BOOL  bMonitorConsoleInput; // РїСЂРё (Read/Peek)ConsoleInput(A/W) РїРѕСЃР»Р°С‚СЊ РёРЅС„Сѓ РІ GUI/Settings/Debug
+	BOOL  bPopupMenuPos;     // РїСЂРё РІС‹Р·РѕРІРµ EMenu РїРѕРєР°Р·Р°С‚СЊ РјРµРЅСЋ РІ РїРѕР·РёС†РёРё РјС‹С€РёРЅРѕРіРѕ РєСѓСЂСЃРѕСЂР°
+	BOOL  bLongConsoleOutput; // РїСЂРё РІС‹РїРѕР»РЅРµРЅРёРё РєРѕРЅСЃРѕР»СЊРЅС‹С… РїСЂРѕРіСЂР°РјРј РёР· Far - СѓРІРµР»РёС‡РёРІР°С‚СЊ РІС‹СЃРѕС‚Сѓ Р±СѓС„РµСЂР°
 };
 
 #if defined(EXTERNAL_HOOK_LIBRARY) && !defined(DEFINE_HOOK_MACROS)
@@ -256,11 +256,11 @@ class CInFuncCall
 #ifdef DEFINE_HOOK_MACROS
 void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL abAllowModified, HookItem** ph);
 
-//110202 поскольку хуки теперь ставятся при старте процесса, не будем морочиться с зацикливанием
+//110202 РїРѕСЃРєРѕР»СЊРєСѓ С…СѓРєРё С‚РµРїРµСЂСЊ СЃС‚Р°РІСЏС‚СЃСЏ РїСЂРё СЃС‚Р°СЂС‚Рµ РїСЂРѕС†РµСЃСЃР°, РЅРµ Р±СѓРґРµРј РјРѕСЂРѕС‡РёС‚СЊСЃСЏ СЃ Р·Р°С†РёРєР»РёРІР°РЅРёРµРј
 //#define ORIGINAL(n) \.
 //	static HookItem *ph = NULL; \.
 //	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); \.
-//	void* f##n = NULL; /* static низя - функции могут различаться по потокам */ \.
+//	void* f##n = NULL; /* static РЅРёР·СЏ - С„СѓРЅРєС†РёРё РјРѕРіСѓС‚ СЂР°Р·Р»РёС‡Р°С‚СЊСЃСЏ РїРѕ РїРѕС‚РѕРєР°Рј */ \.
 //	static int nMainThCounter = 0; CInFuncCall CounterLocker; \.
 //	BOOL bAllowModified = bMainThread; \.
 //	if (bMainThread) bAllowModified = CounterLocker.Inc(&nMainThCounter); \.
@@ -321,4 +321,4 @@ void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL 
 #define SETARGS8(r,a1,a2,a3,a4,a5,a6,a7,a8) SETARGS7(r,a1,a2,a3,a4,a5,a6,a7); args.lArguments[7] = (DWORD_PTR)(a8)
 #define SETARGS9(r,a1,a2,a3,a4,a5,a6,a7,a8,a9) SETARGS8(r,a1,a2,a3,a4,a5,a6,a7,a8); args.lArguments[8] = (DWORD_PTR)(a9)
 #define SETARGS10(r,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) SETARGS9(r,a1,a2,a3,a4,a5,a6,a7,a8,a9); args.lArguments[9] = (DWORD_PTR)(a10)
-// !!! WARNING !!! DWORD_PTR lArguments[10]; - пока максимум - 10 аргументов
+// !!! WARNING !!! DWORD_PTR lArguments[10]; - РїРѕРєР° РјР°РєСЃРёРјСѓРј - 10 Р°СЂРіСѓРјРµРЅС‚РѕРІ

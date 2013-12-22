@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -34,8 +34,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include <shlobj.h>
 
-// 0 - OK, иначе - ошибка
-// Здесь вызывается CreateRemoteThread
+// 0 - OK, РёРЅР°С‡Рµ - РѕС€РёР±РєР°
+// Р—РґРµСЃСЊ РІС‹Р·С‹РІР°РµС‚СЃСЏ CreateRemoteThread
 int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 {
 	int iRc = -150;
@@ -60,7 +60,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 	//_ASSERTE("InfiltrateDll"==(void*)TRUE);
 
 	cbCode = GetInfiltrateProc(&ptrCode);
-	// Примерно, проверка размера кода созданного компилятором
+	// РџСЂРёРјРµСЂРЅРѕ, РїСЂРѕРІРµСЂРєР° СЂР°Р·РјРµСЂР° РєРѕРґР° СЃРѕР·РґР°РЅРЅРѕРіРѕ РєРѕРјРїРёР»СЏС‚РѕСЂРѕРј
 	if (cbCode != WIN3264TEST(68,79))
 	{
 		_ASSERTE(cbCode == WIN3264TEST(68,79));
@@ -74,7 +74,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		goto wrap;
 	}
 
-	// Исполняемый код загрузки библиотеки
+	// РСЃРїРѕР»РЅСЏРµРјС‹Р№ РєРѕРґ Р·Р°РіСЂСѓР·РєРё Р±РёР±Р»РёРѕС‚РµРєРё
 	pRemoteProc = (LPTHREAD_START_ROUTINE) VirtualAllocEx(
 		hProcess,	// Target process
 		NULL,		// Let the VMM decide where
@@ -97,10 +97,10 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		goto wrap;
 	}
 
-	// Путь к нашей библиотеке
+	// РџСѓС‚СЊ Рє РЅР°С€РµР№ Р±РёР±Р»РёРѕС‚РµРєРµ
 	lstrcpyn(dat.szConEmuHk, asConEmuHk, countof(dat.szConEmuHk));
 
-	// Kernel-процедуры
+	// Kernel-РїСЂРѕС†РµРґСѓСЂС‹
 	hKernel = LoadLibrary(L"Kernel32.dll");
 	if (!hKernel)
 	{
@@ -108,7 +108,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		goto wrap;
 	}
 
-	// Избежать статической линковки и строки "CreateRemoteThread" в бинарнике
+	// РР·Р±РµР¶Р°С‚СЊ СЃС‚Р°С‚РёС‡РµСЃРєРѕР№ Р»РёРЅРєРѕРІРєРё Рё СЃС‚СЂРѕРєРё "CreateRemoteThread" РІ Р±РёРЅР°СЂРЅРёРєРµ
 	FuncName[ 0] = 'C'; FuncName[ 2] = 'e'; FuncName[ 4] = 't'; FuncName[ 6] = 'R'; FuncName[ 8] = 'm';
 	FuncName[ 1] = 'r'; FuncName[ 3] = 'a'; FuncName[ 5] = 'e'; FuncName[ 7] = 'e'; FuncName[ 9] = 'o';
 	FuncName[10] = 't'; FuncName[12] = 'T'; FuncName[14] = 'r'; FuncName[16] = 'a';
@@ -116,8 +116,8 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 	_CreateRemoteThread = (CreateRemoteThread_t)GetProcAddress(hKernel, FuncName);
 
 	// Functions for external process. MUST BE SAME ADDRESSES AS CURRENT PROCESS.
-	// kernel32.dll компонуется таким образом, что всегда загружается по одному определенному адресу в памяти
-	// Поэтому адреса процедур для приложений одинаковой битности совпадают (в разных процессах)
+	// kernel32.dll РєРѕРјРїРѕРЅСѓРµС‚СЃСЏ С‚Р°РєРёРј РѕР±СЂР°Р·РѕРј, С‡С‚Рѕ РІСЃРµРіРґР° Р·Р°РіСЂСѓР¶Р°РµС‚СЃСЏ РїРѕ РѕРґРЅРѕРјСѓ РѕРїСЂРµРґРµР»РµРЅРЅРѕРјСѓ Р°РґСЂРµСЃСѓ РІ РїР°РјСЏС‚Рё
+	// РџРѕСЌС‚РѕРјСѓ Р°РґСЂРµСЃР° РїСЂРѕС†РµРґСѓСЂ РґР»СЏ РїСЂРёР»РѕР¶РµРЅРёР№ РѕРґРёРЅР°РєРѕРІРѕР№ Р±РёС‚РЅРѕСЃС‚Рё СЃРѕРІРїР°РґР°СЋС‚ (РІ СЂР°Р·РЅС‹С… РїСЂРѕС†РµСЃСЃР°С…)
 	dat._GetLastError = (GetLastError_t)GetProcAddress(hKernel, "GetLastError");
 	dat._SetLastError = (SetLastError_t)GetProcAddress(hKernel, "SetLastError");
 	dat._LoadLibraryW = (LoadLibraryW_t)GetLoadLibraryAddress(); // GetProcAddress(hKernel, "LoadLibraryW");
@@ -128,19 +128,19 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 	}
 	else
 	{
-		// Проверим, что адреса этих функций действительно лежат в модуле Kernel32.dll
-		// и не были кем-то перехвачены до нас.
+		// РџСЂРѕРІРµСЂРёРј, С‡С‚Рѕ Р°РґСЂРµСЃР° СЌС‚РёС… С„СѓРЅРєС†РёР№ РґРµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ Р»РµР¶Р°С‚ РІ РјРѕРґСѓР»Рµ Kernel32.dll
+		// Рё РЅРµ Р±С‹Р»Рё РєРµРј-С‚Рѕ РїРµСЂРµС…РІР°С‡РµРЅС‹ РґРѕ РЅР°СЃ.
 		FARPROC proc[] = {(FARPROC)dat._GetLastError, (FARPROC)dat._SetLastError, (FARPROC)dat._LoadLibraryW};
 		if (!CheckCallbackPtr(hKernel, countof(proc), proc, TRUE, TRUE))
 		{
-			// Если функции перехвачены - попытка выполнить код по этим адресам
-			// скорее всего приведет к ошибке доступа, что не есть гут.
+			// Р•СЃР»Рё С„СѓРЅРєС†РёРё РїРµСЂРµС…РІР°С‡РµРЅС‹ - РїРѕРїС‹С‚РєР° РІС‹РїРѕР»РЅРёС‚СЊ РєРѕРґ РїРѕ СЌС‚РёРј Р°РґСЂРµСЃР°Рј
+			// СЃРєРѕСЂРµРµ РІСЃРµРіРѕ РїСЂРёРІРµРґРµС‚ Рє РѕС€РёР±РєРµ РґРѕСЃС‚СѓРїР°, С‡С‚Рѕ РЅРµ РµСЃС‚СЊ РіСѓС‚.
 			iRc = -111;
 			goto wrap;
 		}
 	}
 
-	// Копируем параметры в процесс
+	// РљРѕРїРёСЂСѓРµРј РїР°СЂР°РјРµС‚СЂС‹ РІ РїСЂРѕС†РµСЃСЃ
 	pRemoteDat = VirtualAllocEx(hProcess, NULL, sizeof(InfiltrateArg), MEM_COMMIT, PAGE_READWRITE);
 	if(!pRemoteDat)
 	{
@@ -153,8 +153,8 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		goto wrap;
 	}
 
-	// Запускаем поток в процессе hProcess
-	// В принципе, на эту функцию могут ругаться антивирусы
+	// Р—Р°РїСѓСЃРєР°РµРј РїРѕС‚РѕРє РІ РїСЂРѕС†РµСЃСЃРµ hProcess
+	// Р’ РїСЂРёРЅС†РёРїРµ, РЅР° СЌС‚Сѓ С„СѓРЅРєС†РёСЋ РјРѕРіСѓС‚ СЂСѓРіР°С‚СЊСЃСЏ Р°РЅС‚РёРІРёСЂСѓСЃС‹
 	hThread = _CreateRemoteThread(
 		hProcess,		// Target process
 		NULL,			// No security
@@ -169,10 +169,10 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		goto wrap;
 	}
 
-	// Дождаться пока поток завершится
+	// Р”РѕР¶РґР°С‚СЊСЃСЏ РїРѕРєР° РїРѕС‚РѕРє Р·Р°РІРµСЂС€РёС‚СЃСЏ
 	WaitForSingleObject(hThread, INFINITE);
 
-	// И считать результат
+	// Р СЃС‡РёС‚Р°С‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚
 	if (!ReadProcessMemory(
 		hProcess,		// Target process
 		pRemoteDat,		// Their data
@@ -184,7 +184,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		goto wrap;
 	}
 
-	// Вернуть результат загрузки
+	// Р’РµСЂРЅСѓС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚ Р·Р°РіСЂСѓР·РєРё
 	SetLastError((dat.hInst != NULL) ? 0 : (DWORD)dat.ErrCode);
 	iRc = (dat.hInst != NULL) ? 0 : -110;
 wrap:
@@ -308,8 +308,8 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 		goto wrap;
 	}
 
-	// Определить битность процесса, Если он 32битный, а текущий - ConEmuC64.exe
-	// Перезапустить 32битную версию ConEmuC.exe
+	// РћРїСЂРµРґРµР»РёС‚СЊ Р±РёС‚РЅРѕСЃС‚СЊ РїСЂРѕС†РµСЃСЃР°, Р•СЃР»Рё РѕРЅ 32Р±РёС‚РЅС‹Р№, Р° С‚РµРєСѓС‰РёР№ - ConEmuC64.exe
+	// РџРµСЂРµР·Р°РїСѓСЃС‚РёС‚СЊ 32Р±РёС‚РЅСѓСЋ РІРµСЂСЃРёСЋ ConEmuC.exe
 	if (!lbWin64)
 	{
 		is32bit = true; // x86 OS!
@@ -318,7 +318,7 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 	{
 		is32bit = false; // x64 OS!
 
-		// Проверяем, кто такой nRemotePID
+		// РџСЂРѕРІРµСЂСЏРµРј, РєС‚Рѕ С‚Р°РєРѕР№ nRemotePID
 		HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
 
 		if (hKernel)
@@ -332,7 +332,7 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 
 				if (IsWow64Process_f(hProc, &bWow64) && bWow64)
 				{
-					// По идее, такого быть не должно. ConEmu должен был запустить 32битный conemuC.exe
+					// РџРѕ РёРґРµРµ, С‚Р°РєРѕРіРѕ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ. ConEmu РґРѕР»Р¶РµРЅ Р±С‹Р» Р·Р°РїСѓСЃС‚РёС‚СЊ 32Р±РёС‚РЅС‹Р№ conemuC.exe
 					#ifdef _WIN64
 					_ASSERTE(bWow64==FALSE);
 					#endif
@@ -344,7 +344,7 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 
 	if (is32bit != WIN3264TEST(true,false))
 	{
-		// По идее, такого быть не должно. ConEmu должен был запустить соответствующий conemuC*.exe
+		// РџРѕ РёРґРµРµ, С‚Р°РєРѕРіРѕ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ. ConEmu РґРѕР»Р¶РµРЅ Р±С‹Р» Р·Р°РїСѓСЃС‚РёС‚СЊ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ conemuC*.exe
 		_ASSERTE(is32bit == WIN3264TEST(true,false));
 		PROCESS_INFORMATION pi = {};
 		STARTUPINFO si = {sizeof(si)};
@@ -367,12 +367,12 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 			SetLastError(nWrapperResult);
 			goto wrap;
 		}
-		// Значит всю работу сделал враппер
+		// Р—РЅР°С‡РёС‚ РІСЃСЋ СЂР°Р±РѕС‚Сѓ СЃРґРµР»Р°Р» РІСЂР°РїРїРµСЂ
 		iRc = 0;
 		goto wrap;
 	}
 
-	// Поехали
+	// РџРѕРµС…Р°Р»Рё
 	_wcscpy_c(pszNamePtr, 16, is32bit ? L"ConEmuHk.dll" : L"ConEmuHk64.dll");
 	if (!FileExists(szHooks))
 	{
@@ -392,7 +392,7 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 
 	iRc = InfiltrateDll(hProc, szHooks);
 
-	// Если создавали временную копию - запланировать ее удаление
+	// Р•СЃР»Рё СЃРѕР·РґР°РІР°Р»Рё РІСЂРµРјРµРЅРЅСѓСЋ РєРѕРїРёСЋ - Р·Р°РїР»Р°РЅРёСЂРѕРІР°С‚СЊ РµРµ СѓРґР°Р»РµРЅРёРµ
 	if (abDefTermOnly && (lstrcmpi(szHooks, szSelf) != 0))
 	{
 		MoveFileEx(szHooks, NULL, MOVEFILE_DELAY_UNTIL_REBOOT);

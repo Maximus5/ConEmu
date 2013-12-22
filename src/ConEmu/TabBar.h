@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -64,7 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class TabBarClass
 {
 	private:
-		// Пока - банально. VCon, номер в FAR
+		// РџРѕРєР° - Р±Р°РЅР°Р»СЊРЅРѕ. VCon, РЅРѕРјРµСЂ РІ FAR
 		typedef struct tag_FAR_WND_ID
 		{
 			CVirtualConsole* pVCon;
@@ -92,7 +92,7 @@ class TabBarClass
 		//	int nCmd;
 		//	LPCWSTR pszCmd;
 		//	wchar_t szShort[32];
-		//} m_CmdPopupMenu[MAX_CMD_HISTORY+1]; // структура для меню выбора команды новой консоли
+		//} m_CmdPopupMenu[MAX_CMD_HISTORY+1]; // СЃС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ РјРµРЅСЋ РІС‹Р±РѕСЂР° РєРѕРјР°РЅРґС‹ РЅРѕРІРѕР№ РєРѕРЅСЃРѕР»Рё
 		//bool mb_InNewConPopup, mb_InNewConRPopup;
 		//int mn_FirstTaskID, mn_LastTaskID; // MenuItemID for Tasks, when mb_InNewConPopup==true
 		bool _active, _visible;
@@ -156,8 +156,8 @@ class TabBarClass
 
 		// Tab stack
 		MArray<VConTabs> m_TabStack;
-		void CheckStack(); // Убьет из стека отсутствующих
-		void AddStack(VConTabs tab); // Убьет из стека отсутствующих и поместит tab на верх стека
+		void CheckStack(); // РЈР±СЊРµС‚ РёР· СЃС‚РµРєР° РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС…
+		void AddStack(VConTabs tab); // РЈР±СЊРµС‚ РёР· СЃС‚РµРєР° РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… Рё РїРѕРјРµСЃС‚РёС‚ tab РЅР° РІРµСЂС… СЃС‚РµРєР°
 
 		BOOL mb_DisableRedraw;
 
@@ -203,7 +203,7 @@ class TabBarClass
 		void OnCommand(WPARAM wParam, LPARAM lParam);
 		void OnMouse(int message, int x, int y);
 		LRESULT OnTimer(WPARAM wParam);
-		// Переключение табов
+		// РџРµСЂРµРєР»СЋС‡РµРЅРёРµ С‚Р°Р±РѕРІ
 		void Switch(BOOL abForward, BOOL abAltStyle=FALSE);
 		void SwitchNext(BOOL abAltStyle=FALSE);
 		void SwitchPrev(BOOL abAltStyle=FALSE);
@@ -217,7 +217,7 @@ class TabBarClass
 		void GetActiveTabRect(RECT* rcTab);
 		void OnShowButtonsChanged();
 
-		// Из Samples\Tabs
+		// РР· Samples\Tabs
 		bool ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };
 		int GetHoverTab() { return -1; };
 		void HoverTab(int anTab) {};

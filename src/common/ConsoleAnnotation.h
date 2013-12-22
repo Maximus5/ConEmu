@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /*
  * v0.1 color&border styles
  * v0.2 interface formal description, unified with ConEmu

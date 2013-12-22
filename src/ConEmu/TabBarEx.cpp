@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -52,7 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Menu.h"
 #include "DwmApi_Part.h"
 
-// Пока не вышло в релиз - так
+// РџРѕРєР° РЅРµ РІС‹С€Р»Рѕ РІ СЂРµР»РёР· - С‚Р°Рє
 #ifdef USE_CONEMU_TOOLBAR
 #include "ToolBarClass.cpp"
 #endif
@@ -62,8 +62,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define POST_UPDATE_TIMEOUT 2000
 #define TAB_CANT_BE_ACTIVATED L"This tab can't be activated now!"
 
-#define TOOL_TAB_SPACING 5   // промежуток между табами и нашим toolbar-ом
-#define TAB_BUTTON_SPACING 10 // промежуток между нашим toolbar-ом (или табами, если бар не виден) и кнопками заголовка
+#define TOOL_TAB_SPACING 5   // РїСЂРѕРјРµР¶СѓС‚РѕРє РјРµР¶РґСѓ С‚Р°Р±Р°РјРё Рё РЅР°С€РёРј toolbar-РѕРј
+#define TAB_BUTTON_SPACING 10 // РїСЂРѕРјРµР¶СѓС‚РѕРє РјРµР¶РґСѓ РЅР°С€РёРј toolbar-РѕРј (РёР»Рё С‚Р°Р±Р°РјРё, РµСЃР»Рё Р±Р°СЂ РЅРµ РІРёРґРµРЅ) Рё РєРЅРѕРїРєР°РјРё Р·Р°РіРѕР»РѕРІРєР°
 
 #define FAILED_TABBAR_TIMERID 101
 #define FAILED_TABBAR_TIMEOUT 3000
@@ -79,7 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 	//#define DEBUG_NO_DRAW_TABS
 	#undef DEBUG_NO_DRAW_TABS
-	//#define DRAW_CAPTION_MARKERS // для отладки
+	//#define DRAW_CAPTION_MARKERS // РґР»СЏ РѕС‚Р»Р°РґРєРё
 	#undef DRAW_CAPTION_MARKERS
 	#define DIRECT_CAP_PAINT
 	//#undef DIRECT_CAP_PAINT
@@ -96,7 +96,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern HICON hClassIconSm;
 
-//TODO: Заменить на "ConEmu XXXXXX"
+//TODO: Р—Р°РјРµРЅРёС‚СЊ РЅР° "ConEmu XXXXXX"
 #define DefaultTitle gpConEmu->GetDefaultTitle();
 #define SafeTitle(t) (((t)!=NULL) ? (t) : DefaultTitle )
 
@@ -109,7 +109,7 @@ TabBarClass::TabBarClass()
 	mb_ToolbarFit = false;
 	mn_ActiveTab = 0;
 	mn_HoverTab = -1;
-	mn_TabWidth = MIN_TAB_WIDTH; // Информационно, фактическое расположение табов фиксируется в RepositionTabs
+	mn_TabWidth = MIN_TAB_WIDTH; // РРЅС„РѕСЂРјР°С†РёРѕРЅРЅРѕ, С„Р°РєС‚РёС‡РµСЃРєРѕРµ СЂР°СЃРїРѕР»РѕР¶РµРЅРёРµ С‚Р°Р±РѕРІ С„РёРєСЃРёСЂСѓРµС‚СЃСЏ РІ RepositionTabs
 	mn_EdgeWidth = 4;
 	ZeroStruct(mrc_Caption);
 	ZeroStruct(mrc_Tabs);
@@ -152,13 +152,13 @@ TabBarClass::TabBarClass()
 	ms_TabErrText[0] = 0;
 	mh_TabIcons = 0;
 
-	// *** Создать дефолтные тулбары ***
+	// *** РЎРѕР·РґР°С‚СЊ РґРµС„РѕР»С‚РЅС‹Рµ С‚СѓР»Р±Р°СЂС‹ ***
 	InitToolbar();
 }
 
 void TabBarClass::InitToolbar()
 {
-	// *** Создать дефолтные тулбары ***
+	// *** РЎРѕР·РґР°С‚СЊ РґРµС„РѕР»С‚РЅС‹Рµ С‚СѓР»Р±Р°СЂС‹ ***
 	LPARAM lParam = (LPARAM)(TabBarClass*)this;
 	//mn_ToolbarBmp = IDB_MAIN_TOOLBAR;
 	SIZE sz = {14,14};
@@ -210,7 +210,7 @@ void TabBarClass::InitToolbar()
 
 TabBarClass::~TabBarClass()
 {
-	// Освободить все табы
+	// РћСЃРІРѕР±РѕРґРёС‚СЊ РІСЃРµ С‚Р°Р±С‹
 	m_Tabs.ReleaseTabs(FALSE);
 	m_TabStack.ReleaseTabs(FALSE);
 
@@ -317,7 +317,7 @@ void TabBarClass::CreateRebar()
 		SetWindowPos(mh_Balloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 		// Set up tool information.
 		// In this case, the "tool" is the entire parent window.
-		tiBalloon.cbSize = 44; // был sizeof(TOOLINFO);
+		tiBalloon.cbSize = 44; // Р±С‹Р» sizeof(TOOLINFO);
 		tiBalloon.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
 		tiBalloon.hwnd = ghWnd;
 		tiBalloon.hinst = g_hInstance;
@@ -338,7 +338,7 @@ void TabBarClass::CreateRebar()
 
 void TabBarClass::Invalidate()
 {
-	TODO("Обновить Frame/Caption?");
+	TODO("РћР±РЅРѕРІРёС‚СЊ Frame/Caption?");
 	// -- gpConEmu->RedrawFrame();
 	InvalidateRect(ghWnd, NULL, TRUE);
 }
@@ -445,7 +445,7 @@ bool TabBarClass::OnMouse(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LR
 		{
 			HoverTab(-1);
 			#if defined(USE_CONEMU_TOOLBAR)
-			// с кнопок убрать подсветку, если была
+			// СЃ РєРЅРѕРїРѕРє СѓР±СЂР°С‚СЊ РїРѕРґСЃРІРµС‚РєСѓ, РµСЃР»Рё Р±С‹Р»Р°
 			mp_Toolbar->UnHover();
 			#endif
 		}
@@ -482,7 +482,7 @@ bool TabBarClass::OnMouse(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LR
 			else
 			{
 				#if defined(USE_CONEMU_TOOLBAR)
-				// с кнопок убрать подсветку, если была
+				// СЃ РєРЅРѕРїРѕРє СѓР±СЂР°С‚СЊ РїРѕРґСЃРІРµС‚РєСѓ, РµСЃР»Рё Р±С‹Р»Р°
 				mp_Toolbar->UnHover();
 				#endif
 			}
@@ -522,7 +522,7 @@ bool TabBarClass::OnMouse(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LR
 				}
 				else if (uMsg == WM_MBUTTONUP)
 				{
-					// Закрыть таб?
+					// Р—Р°РєСЂС‹С‚СЊ С‚Р°Р±?
 				}
 				break;
 			}
@@ -534,7 +534,7 @@ bool TabBarClass::OnMouse(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LR
 		break;
 
 	case WM_MOUSEHOVER:
-		// Показать тултип, если текст был обрезан
+		// РџРѕРєР°Р·Р°С‚СЊ С‚СѓР»С‚РёРї, РµСЃР»Рё С‚РµРєСЃС‚ Р±С‹Р» РѕР±СЂРµР·Р°РЅ
 		break;
 
 	case WM_MOUSELEAVE:
@@ -542,7 +542,7 @@ bool TabBarClass::OnMouse(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LR
 		{
 			HoverTab(-1);
 			#if defined(USE_CONEMU_TOOLBAR)
-			// с кнопок убрать подсветку, если была
+			// СЃ РєРЅРѕРїРѕРє СѓР±СЂР°С‚СЊ РїРѕРґСЃРІРµС‚РєСѓ, РµСЃР»Рё Р±С‹Р»Р°
 			mp_Toolbar->UnHover();
 			#endif
 		}
@@ -550,10 +550,10 @@ bool TabBarClass::OnMouse(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LR
 
 	}
 
-	return true; // событие над нашей панелью, дальше не обрабатывать!
+	return true; // СЃРѕР±С‹С‚РёРµ РЅР°Рґ РЅР°С€РµР№ РїР°РЅРµР»СЊСЋ, РґР°Р»СЊС€Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ!
 }
 
-// Переключение табов
+// РџРµСЂРµРєР»СЋС‡РµРЅРёРµ С‚Р°Р±РѕРІ
 //void TabBarClass::Switch(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 //{
 //}
@@ -682,7 +682,7 @@ void TabBarClass::CreateStockObjects(HDC hdc, const RECT &rcTabs)
 	SetTextColor(hdc, m_Colors[clrText]);
 	SetBkMode(hdc, TRANSPARENT);
 
-	// Прикинуть высоту получившегося шрифта
+	// РџСЂРёРєРёРЅСѓС‚СЊ РІС‹СЃРѕС‚Сѓ РїРѕР»СѓС‡РёРІС€РµРіРѕСЃСЏ С€СЂРёС„С‚Р°
 	GetTextExtentPoint32(hdc, L"Ay", 2, &m_TabFontSize);
 	switch (gpSet->nTabStyle)
 	{
@@ -719,7 +719,7 @@ void TabBarClass::DeleteStockObjects(HDC hdc)
 
 void TabBarClass::RepositionTabs(const RECT &rcCaption, const RECT &rcTabs)
 {
-	//TODO: Если мышка над полосой табов - не увеличивать ширину таба?
+	//TODO: Р•СЃР»Рё РјС‹С€РєР° РЅР°Рґ РїРѕР»РѕСЃРѕР№ С‚Р°Р±РѕРІ - РЅРµ СѓРІРµР»РёС‡РёРІР°С‚СЊ С€РёСЂРёРЅСѓ С‚Р°Р±Р°?
 
 	switch (gpSet->nTabStyle)
 	{
@@ -750,18 +750,18 @@ void TabBarClass::RepositionTabs(const RECT &rcCaption, const RECT &rcTabs)
 			{
 				bToolbarFit = true;
 				mrc_Toolbar = rcTabs;
-				//mrc_Toolbar.right -= TAB_BUTTON_SPACING; -- отступ от оригинальных кнопок в заголовке, если они рисуются виндой
+				//mrc_Toolbar.right -= TAB_BUTTON_SPACING; -- РѕС‚СЃС‚СѓРї РѕС‚ РѕСЂРёРіРёРЅР°Р»СЊРЅС‹С… РєРЅРѕРїРѕРє РІ Р·Р°РіРѕР»РѕРІРєРµ, РµСЃР»Рё РѕРЅРё СЂРёСЃСѓСЋС‚СЃСЏ РІРёРЅРґРѕР№
 				mrc_Toolbar.left = mrc_Toolbar.right - nToolbarWidth;
 				mrc_Toolbar.top = rcTabs.bottom - mp_Toolbar->GetHeight();
 				if (gpConEmu->DrawType() == fdt_Aero)
 				{
 					if (mrc_Toolbar.top < (rcCaption.top+2))
-						mrc_Toolbar.top = (rcCaption.top+2); // 2pix на окантовку/подсветку вокруг кнопки
+						mrc_Toolbar.top = (rcCaption.top+2); // 2pix РЅР° РѕРєР°РЅС‚РѕРІРєСѓ/РїРѕРґСЃРІРµС‚РєСѓ РІРѕРєСЂСѓРі РєРЅРѕРїРєРё
 				}
 				else
 				{
 					if (mrc_Toolbar.top < (rcCaption.top+2))
-						mrc_Toolbar.top = (rcCaption.top+2); // 2pix на окантовку/подсветку вокруг кнопки
+						mrc_Toolbar.top = (rcCaption.top+2); // 2pix РЅР° РѕРєР°РЅС‚РѕРІРєСѓ/РїРѕРґСЃРІРµС‚РєСѓ РІРѕРєСЂСѓРі РєРЅРѕРїРєРё
 				}
 				nAllWidth -= (nToolbarWidth + TOOL_TAB_SPACING);
 			}
@@ -826,7 +826,7 @@ void TabBarClass::PaintTabs(const PaintDC& dc, const RECT &rcCaption, const RECT
 	
 	mrc_Caption = rcCaption;
 	mrc_Tabs = rcTabs;
-	WARNING("Должна быть отрисовка в КЛИЕНТСКОЙ области, а не в заголовке!");
+	WARNING("Р”РѕР»Р¶РЅР° Р±С‹С‚СЊ РѕС‚СЂРёСЃРѕРІРєР° РІ РљР›РР•РќРўРЎРљРћР™ РѕР±Р»Р°СЃС‚Рё, Р° РЅРµ РІ Р·Р°РіРѕР»РѕРІРєРµ!");
 	mrc_TabsClient = rcTabs;
 
 	PaintTabs_Common(dc, rcCaption, rcTabs);
@@ -881,10 +881,10 @@ void TabBarClass::PaintFlush()
 #endif
 }
 
-// Чистый фон
+// Р§РёСЃС‚С‹Р№ С„РѕРЅ
 void TabBarClass::PaintCaption_Plain(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs)
 {
-	TODO("Настройка цвета TabBar");
+	TODO("РќР°СЃС‚СЂРѕР№РєР° С†РІРµС‚Р° TabBar");
 
 	bool lbSysColor = (gpSet->isStatusBarFlags & csf_SystemColors) == csf_SystemColors;
 	bool lbFade = lbSysColor ? false : gpSet->isFadeInactive && !gpConEmu->isMeForeground(true);
@@ -898,7 +898,7 @@ void TabBarClass::PaintCaption_Plain(const PaintDC& dc, const RECT &rcCaption, c
 
 void TabBarClass::PaintCaption_2k(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs)
 {
-	//// Мог мусор остаться от Aero
+	//// РњРѕРі РјСѓСЃРѕСЂ РѕСЃС‚Р°С‚СЊСЃСЏ РѕС‚ Aero
 	//memset(pPixels, 0xFF, bi.biWidth*bi.biHeight*sizeof(*pPixels));
 
 
@@ -906,7 +906,7 @@ void TabBarClass::PaintCaption_2k(const PaintDC& dc, const RECT &rcCaption, cons
 	BOOL lbGradient = TRUE;
 	SystemParametersInfo(SPI_GETGRADIENTCAPTIONS, 0, &lbGradient, 0);
 	
-	// -- Не работает
+	// -- РќРµ СЂР°Р±РѕС‚Р°РµС‚
 	//RECT rc = rcCaption;
 	//DrawCaption(ghWnd, hdc, &rc, (lbActive?DC_ACTIVE:0)|DC_BUTTONS|(lbGradient?DC_GRADIENT:0));
 	
@@ -916,17 +916,17 @@ void TabBarClass::PaintCaption_2k(const PaintDC& dc, const RECT &rcCaption, cons
 	{
 		clrRight = lbGradient ? GetSysColor(lbActive ? COLOR_GRADIENTACTIVECAPTION : COLOR_GRADIENTINACTIVECAPTION) : clrLeft;
 		
-		// Градиент идет именно по "рабочей" области заголовка. 
+		// Р“СЂР°РґРёРµРЅС‚ РёРґРµС‚ РёРјРµРЅРЅРѕ РїРѕ "СЂР°Р±РѕС‡РµР№" РѕР±Р»Р°СЃС‚Рё Р·Р°РіРѕР»РѕРІРєР°. 
 		TRIVERTEX vtx[2] = {
 			{rcTabs.left, rcCaption.top, GetRValue(clrLeft)<<8, GetGValue(clrLeft)<<8, GetBValue(clrLeft)<<8, 0},
 			{rcTabs.right+1, rcCaption.bottom, GetRValue(clrRight)<<8, GetGValue(clrRight)<<8, GetBValue(clrRight)<<8, 0}
 		};
 		GRADIENT_RECT gRect = {0,1};
 		
-		//TODO: А место с иконкой?!
+		//TODO: Рђ РјРµСЃС‚Рѕ СЃ РёРєРѕРЅРєРѕР№?!
 		if (!GdiGradientFill(dc.hDC, vtx, 2, &gRect, 1, GRADIENT_FILL_RECT_H))
 		{
-			lbGradient = FALSE; // Странно, что градиент обломался
+			lbGradient = FALSE; // РЎС‚СЂР°РЅРЅРѕ, С‡С‚Рѕ РіСЂР°РґРёРµРЅС‚ РѕР±Р»РѕРјР°Р»СЃСЏ
 			clrRight = clrLeft;
 		}
 		//PaintFlush();
@@ -935,13 +935,13 @@ void TabBarClass::PaintCaption_2k(const PaintDC& dc, const RECT &rcCaption, cons
 	if (!lbGradient)
 	{
 		HBRUSH br = (HBRUSH)GetSysColorBrush(lbActive ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION);
-		//TODO: А место с иконкой?!
+		//TODO: Рђ РјРµСЃС‚Рѕ СЃ РёРєРѕРЅРєРѕР№?!
 		RECT rc = {rcTabs.left, rcCaption.top, rcTabs.right, rcCaption.bottom};
 		FillRect(dc.hDC, &rc, br);
 		//PaintFlush();
 	}
 	
-	// Иконка
+	// РРєРѕРЅРєР°
 	{
 		HBRUSH br = (HBRUSH)GetSysColorBrush(lbActive ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION);
 		RECT rc = {rcCaption.left, rcCaption.top, rcTabs.left, rcTabs.bottom};
@@ -952,7 +952,7 @@ void TabBarClass::PaintCaption_2k(const PaintDC& dc, const RECT &rcCaption, cons
 		PaintCaption_Icon(dc, rcCaption.left+IconShift.x, rcCaption.top+IconShift.y);
 	}
 	
-	// Кнопки
+	// РљРЅРѕРїРєРё
 	{
 		HBRUSH br = (HBRUSH)GetSysColorBrush(lbActive 
 			? (lbGradient?COLOR_GRADIENTACTIVECAPTION:COLOR_ACTIVECAPTION)
@@ -1061,7 +1061,7 @@ void TabBarClass::PaintCaption_XP(const PaintDC& dc, const RECT &rcCaption, cons
 		FillRect(dc.hDC, &rcCaption, br);
 	}
 
-	// Иконка
+	// РРєРѕРЅРєР°
 	{
 		//HBRUSH br = (HBRUSH)GetSysColorBrush(lbActive ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION);
 		//RECT rc = {rcCaption.left, rcCaption.top, rcTabs.left, rcTabs.bottom};
@@ -1072,7 +1072,7 @@ void TabBarClass::PaintCaption_XP(const PaintDC& dc, const RECT &rcCaption, cons
 		PaintCaption_Icon(dc, rcCaption.left+IconShift.x, rcCaption.top+IconShift.y);
 	}
 	
-	// Кнопки
+	// РљРЅРѕРїРєРё
 	{
 		RECT rc = {}; // = {rcCaption.right-50, rcCaption.top, rcCaption.right, rcCaption.bottom};
 		hr = gpConEmu->GetThemeBackgroundContentRect(mh_Theme, dc.hDC, 18/*WP_CLOSEBUTTON*/, 1/*CBS_NORMAL*/, &wr, &rc);
@@ -1105,7 +1105,7 @@ void TabBarClass::PaintCaption_Aero(const PaintDC& dc, const RECT &rcCaption, co
 {
 #if 0
 	nColorMagic = 0x1ABCDEF;
-	// bi.biHeight для Aero БОЛЬШЕ чем rcCaption.bottom!
+	// bi.biHeight РґР»СЏ Aero Р‘РћР›Р¬РЁР• С‡РµРј rcCaption.bottom!
 	int nMax = bi.biWidth*bi.biHeight;
 	for (int i = 0; i < nMax; i++)
 	{
@@ -1122,7 +1122,7 @@ void TabBarClass::PaintCaption_Win8(const PaintDC& dc, const RECT &rcCaption, co
 {
 	if (gpSet->isTabsInCaption)
 	{
-		// Иконка
+		// РРєРѕРЅРєР°
 		POINT IconShift;
 		gpConEmu->GetIconShift(IconShift);
 		PaintCaption_Icon(dc, rcCaption.left+IconShift.x, rcCaption.top+IconShift.y);
@@ -1134,16 +1134,16 @@ void TabBarClass::PaintCaption_Win8(const PaintDC& dc, const RECT &rcCaption, co
 	BOOL lbGradient = TRUE;
 	SystemParametersInfo(SPI_GETGRADIENTCAPTIONS, 0, &lbGradient, 0);
 	
-	// -- Не работает
+	// -- РќРµ СЂР°Р±РѕС‚Р°РµС‚
 	//RECT rc = rcCaption;
 	//DrawCaption(ghWnd, hdc, &rc, (lbActive?DC_ACTIVE:0)|DC_BUTTONS|(lbGradient?DC_GRADIENT:0));
 	
 	HBRUSH br = (HBRUSH)GetSysColorBrush(lbActive ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION);
-	//TODO: А место с иконкой?!
+	//TODO: Рђ РјРµСЃС‚Рѕ СЃ РёРєРѕРЅРєРѕР№?!
 	RECT rc = {rcCaption.left, rcCaption.top, rcTabs.right, rcCaption.bottom};
 	FillRect(dc.hDC, &rc, br);
 	
-	// Иконка
+	// РРєРѕРЅРєР°
 	{
 		HBRUSH br = (HBRUSH)GetSysColorBrush(lbActive ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION);
 		RECT rc = {rcCaption.left, rcCaption.top, rcTabs.left, rcTabs.bottom};
@@ -1154,7 +1154,7 @@ void TabBarClass::PaintCaption_Win8(const PaintDC& dc, const RECT &rcCaption, co
 		PaintCaption_Icon(dc, rcCaption.left+IconShift.x, rcCaption.top+IconShift.y);
 	}
 	
-	// Кнопки
+	// РљРЅРѕРїРєРё
 	{
 		HBRUSH br = (HBRUSH)GetSysColorBrush(lbActive 
 			? (lbGradient?COLOR_GRADIENTACTIVECAPTION:COLOR_ACTIVECAPTION)
@@ -1177,14 +1177,14 @@ void TabBarClass::PaintCaption_Win8(const PaintDC& dc, const RECT &rcCaption, co
 
 void TabBarClass::PaintCaption_Icon(const PaintDC& dc, int X, int Y)
 {
-	_ASSERTE(gpSet->isCaptionHidden() || gpConEmu->DrawType() >= fdt_Aero); // Должна вызываться только при скрытом заголовке!
+	_ASSERTE(gpSet->isCaptionHidden() || gpConEmu->DrawType() >= fdt_Aero); // Р”РѕР»Р¶РЅР° РІС‹Р·С‹РІР°С‚СЊСЃСЏ С‚РѕР»СЊРєРѕ РїСЂРё СЃРєСЂС‹С‚РѕРј Р·Р°РіРѕР»РѕРІРєРµ!
 
 	int nW = GetSystemMetrics(SM_CXSMICON);
 	int nH = GetSystemMetrics(SM_CYSMICON);
 
 	if (hClassIconSm && (mrc_Tabs.right > (X + nW)))
 	{
-		//TODO: заменить на DrawThemeIcon
+		//TODO: Р·Р°РјРµРЅРёС‚СЊ РЅР° DrawThemeIcon
 		DrawIconEx(dc.hDC, X,Y, hClassIconSm, nW,nH, 0, 0, DI_IMAGE);
 
 		RECT rcAlpha = {X, Y, X+nW, Y+nH};
@@ -1207,8 +1207,8 @@ void TabBarClass::PaintCaption_Icon(const PaintDC& dc, int X, int Y)
 //	{
 //		if ((m_Tabs[i].rcTab.left+MIN_TAB_WIDTH-1) >= rcTabs.right)
 //		{
-//			//TODO: Если табы не видимы - дорисовать стрелочки?
-//			continue; // этот таб не виден
+//			//TODO: Р•СЃР»Рё С‚Р°Р±С‹ РЅРµ РІРёРґРёРјС‹ - РґРѕСЂРёСЃРѕРІР°С‚СЊ СЃС‚СЂРµР»РѕС‡РєРё?
+//			continue; // СЌС‚РѕС‚ С‚Р°Р± РЅРµ РІРёРґРµРЅ
 //		}
 //		
 //		if (i != mn_ActiveTab)
@@ -1251,8 +1251,8 @@ void TabBarClass::PaintCaption_Icon(const PaintDC& dc, int X, int Y)
 //	{
 //		if ((m_Tabs[i].rcTab.left+MIN_TAB_WIDTH-1) >= rcTabs.right)
 //		{
-//			//TODO: Если табы не видимы - дорисовать стрелочки?
-//			continue; // этот таб не виден
+//			//TODO: Р•СЃР»Рё С‚Р°Р±С‹ РЅРµ РІРёРґРёРјС‹ - РґРѕСЂРёСЃРѕРІР°С‚СЊ СЃС‚СЂРµР»РѕС‡РєРё?
+//			continue; // СЌС‚РѕС‚ С‚Р°Р± РЅРµ РІРёРґРµРЅ
 //		}
 //		
 //		if ((m_Tabs[i].nFlags & etfActive) && !pActiveTab)
@@ -1308,8 +1308,8 @@ void TabBarClass::PaintCaption_Icon(const PaintDC& dc, int X, int Y)
 //	{
 //		if ((m_Tabs[i].rcTab.left+MIN_TAB_WIDTH-1) >= rcTabs.right)
 //		{
-//			//TODO: Если табы не видимы - дорисовать стрелочки?
-//			continue; // этот таб не виден
+//			//TODO: Р•СЃР»Рё С‚Р°Р±С‹ РЅРµ РІРёРґРёРјС‹ - РґРѕСЂРёСЃРѕРІР°С‚СЊ СЃС‚СЂРµР»РѕС‡РєРё?
+//			continue; // СЌС‚РѕС‚ С‚Р°Р± РЅРµ РІРёРґРµРЅ
 //		}
 //		
 //		if ((m_Tabs[i].nFlags & etfActive) && !pActiveTab)
@@ -1343,7 +1343,7 @@ void TabBarClass::PaintCaption_Icon(const PaintDC& dc, int X, int Y)
 //	}
 //
 //
-//	// Заливку нужно делать всей верхней части окна, или некоторые части Aero будут "грязные"
+//	// Р—Р°Р»РёРІРєСѓ РЅСѓР¶РЅРѕ РґРµР»Р°С‚СЊ РІСЃРµР№ РІРµСЂС…РЅРµР№ С‡Р°СЃС‚Рё РѕРєРЅР°, РёР»Рё РЅРµРєРѕС‚РѕСЂС‹Рµ С‡Р°СЃС‚Рё Aero Р±СѓРґСѓС‚ "РіСЂСЏР·РЅС‹Рµ"
 //	Bit Blt(hdc, 0, 0, bi.biWidth, bi.biHeight, hdcPaint, 0, 0, SRCCOPY);
 //
 //	SelectObject(hdcPaint, hOldBmp);
@@ -1357,7 +1357,7 @@ void TabBarClass::PaintTabs_Common(const PaintDC& dc, const RECT &rcCaption, con
 	//bi.biSize = sizeof(BITMAPINFOHEADER);
 	//RECT wr; GetWindowRect(ghWnd, &wr);
 	//bi.biWidth = (wr.right-wr.left);
-	//// bi.biHeight для Aero БОЛЬШЕ чем rcCaption.bottom!
+	//// bi.biHeight РґР»СЏ Aero Р‘РћР›Р¬РЁР• С‡РµРј rcCaption.bottom!
 	//int nBottom = rcCaption.bottom; //(m_TabDrawStyle == fdt_Aero) ? gpConEmu->GetDwmClientRectTopOffset() : rcCaption.bottom;
 	//if (rcCaption.bottom > nBottom) nBottom = rcCaption.bottom;
 	//bi.biHeight = nBottom;
@@ -1398,16 +1398,16 @@ void TabBarClass::PaintTabs_Common(const PaintDC& dc, const RECT &rcCaption, con
 	}
 	else
 	{
-		// Иконка
+		// РРєРѕРЅРєР°
 		POINT IconShift;
 		gpConEmu->GetIconShift(IconShift);
-		// rcCaption.top не используем, т.к. "табы" рисуются ниже "начала" заголовка
+		// rcCaption.top РЅРµ РёСЃРїРѕР»СЊР·СѓРµРј, С‚.Рє. "С‚Р°Р±С‹" СЂРёСЃСѓСЋС‚СЃСЏ РЅРёР¶Рµ "РЅР°С‡Р°Р»Р°" Р·Р°РіРѕР»РѕРІРєР°
 		int nY = gpConEmu->GetFrameHeight();
 		PaintCaption_Icon(dc, rcCaption.left+IconShift.x, nY+IconShift.y);
 	}
 
-	RECT rcActive = {}; //TODO: Лучше бы конечно регионом, т.к. захватится кусочек от неактивного таба?
-	RECT rcHover = {}; //TODO: Лучше бы конечно регионом, т.к. захватится кусочек от неактивного таба?
+	RECT rcActive = {}; //TODO: Р›СѓС‡С€Рµ Р±С‹ РєРѕРЅРµС‡РЅРѕ СЂРµРіРёРѕРЅРѕРј, С‚.Рє. Р·Р°С…РІР°С‚РёС‚СЃСЏ РєСѓСЃРѕС‡РµРє РѕС‚ РЅРµР°РєС‚РёРІРЅРѕРіРѕ С‚Р°Р±Р°?
+	RECT rcHover = {}; //TODO: Р›СѓС‡С€Рµ Р±С‹ РєРѕРЅРµС‡РЅРѕ СЂРµРіРёРѕРЅРѕРј, С‚.Рє. Р·Р°С…РІР°С‚РёС‚СЃСЏ РєСѓСЃРѕС‡РµРє РѕС‚ РЅРµР°РєС‚РёРІРЅРѕРіРѕ С‚Р°Р±Р°?
 #ifndef DEBUG_NO_DRAW_TABS
 
 	CTab Tab;
@@ -1417,18 +1417,18 @@ void TabBarClass::PaintTabs_Common(const PaintDC& dc, const RECT &rcCaption, con
 	{
 		if (!m_Tabs.GetTabByIndex(i, /*OUT*/ Tab))
 		{
-			_ASSERTE(FALSE); // таб исчез?
+			_ASSERTE(FALSE); // С‚Р°Р± РёСЃС‡РµР·?
 			continue;
 		}
 		if ((Tab->DrawInfo.rcTab.left+MIN_TAB_WIDTH-1) >= rcTabs.right)
 		{
-			//TODO: Если табы не видимы - дорисовать стрелочки?
-			continue; // этот таб не виден
+			//TODO: Р•СЃР»Рё С‚Р°Р±С‹ РЅРµ РІРёРґРёРјС‹ - РґРѕСЂРёСЃРѕРІР°С‚СЊ СЃС‚СЂРµР»РѕС‡РєРё?
+			continue; // СЌС‚РѕС‚ С‚Р°Р± РЅРµ РІРёРґРµРЅ
 		}
 		
 		if (i != mn_ActiveTab)
 		{
-			//TODO: Форматирование заголовка? Или не здесь?
+			//TODO: Р¤РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёРµ Р·Р°РіРѕР»РѕРІРєР°? РР»Рё РЅРµ Р·РґРµСЃСЊ?
 			Tab->DrawInfo.Display.Set(Tab->Name.Ptr());
 			PaintTab_Common(dc, Tab->DrawInfo.rcTab, &Tab->DrawInfo, Tab->Flags(), FALSE/*bCurrent*/, (i == mn_HoverTab && i != mn_ActiveTab)/*bHover*/);
 			if (i == mn_HoverTab)
@@ -1442,7 +1442,7 @@ void TabBarClass::PaintTabs_Common(const PaintDC& dc, const RECT &rcCaption, con
 		{
 			if ((Tab->DrawInfo.rcTab.left+MIN_TAB_WIDTH-1) < rcTabs.right)
 			{
-				//TODO: Форматирование заголовка? Или не здесь?
+				//TODO: Р¤РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёРµ Р·Р°РіРѕР»РѕРІРєР°? РР»Рё РЅРµ Р·РґРµСЃСЊ?
 				Tab->DrawInfo.Display.Set(Tab->Name.Ptr());
 				PaintTab_Common(dc, Tab->DrawInfo.rcTab, &Tab->DrawInfo, Tab->Flags(), TRUE/*bCurrent*/, FALSE/*bHover*/);
 				rcActive = Tab->DrawInfo.rcTab;
@@ -1463,8 +1463,8 @@ void TabBarClass::PaintTabs_Common(const PaintDC& dc, const RECT &rcCaption, con
 	DeleteStockObjects(dc.hDC);
 
 #if 0
-	// Для Aero - нужно обновить прозрачность элементов
-	//TODO: При отключении Aero в окне остается "мусор" (что-то из альфа-канала)
+	// Р”Р»СЏ Aero - РЅСѓР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ СЌР»РµРјРµРЅС‚РѕРІ
+	//TODO: РџСЂРё РѕС‚РєР»СЋС‡РµРЅРёРё Aero РІ РѕРєРЅРµ РѕСЃС‚Р°РµС‚СЃСЏ "РјСѓСЃРѕСЂ" (С‡С‚Рѕ-С‚Рѕ РёР· Р°Р»СЊС„Р°-РєР°РЅР°Р»Р°)
 	if (m_TabDrawStyle == fdt_Aero || gpConEmu->IsDwmAllowed())
 	{
 		#ifdef _DEBUG
@@ -1499,7 +1499,7 @@ void TabBarClass::PaintTabs_Common(const PaintDC& dc, const RECT &rcCaption, con
 	// Blitting result!
 	if (m_TabDrawStyle == fdt_Aero)
 	{
-		// Заливку нужно делать всей верхней части окна, или некоторые части Aero будут "грязные"
+		// Р—Р°Р»РёРІРєСѓ РЅСѓР¶РЅРѕ РґРµР»Р°С‚СЊ РІСЃРµР№ РІРµСЂС…РЅРµР№ С‡Р°СЃС‚Рё РѕРєРЅР°, РёР»Рё РЅРµРєРѕС‚РѕСЂС‹Рµ С‡Р°СЃС‚Рё Aero Р±СѓРґСѓС‚ "РіСЂСЏР·РЅС‹Рµ"
 		BitBlt(hdc, 0, 0, bi.biWidth, bi.biHeight, hdcPaint, 0, 0, SRCCOPY);
 	}
 	else if (m_TabDrawStyle == fdt_Themed)
@@ -1507,11 +1507,11 @@ void TabBarClass::PaintTabs_Common(const PaintDC& dc, const RECT &rcCaption, con
 		BitBlt(
 			hdc, rcCaption.left, rcCaption.top, rcCaption.right-rcCaption.left+1, rcTabs.bottom-rcCaption.top+1,
 			hdcPaint, rcCaption.left, rcCaption.top, SRCCOPY);
-		////TODO: Отрисовка иконки/кнопок минимизации/.../закрытия
+		////TODO: РћС‚СЂРёСЃРѕРІРєР° РёРєРѕРЅРєРё/РєРЅРѕРїРѕРє РјРёРЅРёРјРёР·Р°С†РёРё/.../Р·Р°РєСЂС‹С‚РёСЏ
 		//BitBlt(
 		//	hdc, rcCaption.left, rcCaption.top, rcTabs.right-rcCaption.left+1, rcTabs.bottom-rcCaption.top+1,
 		//	hdcPaint, rcCaption.left, rcCaption.top, SRCCOPY);
-		//// Дорисовать кусочек ПОД кнопками Min/Max/Close
+		//// Р”РѕСЂРёСЃРѕРІР°С‚СЊ РєСѓСЃРѕС‡РµРє РџРћР” РєРЅРѕРїРєР°РјРё Min/Max/Close
 		//int nTop = rcCaption.top + gpConEmu->GetWinCaptionHeight();
 		//if (nTop <= rcCaption.bottom)
 		//{
@@ -1558,7 +1558,7 @@ void TabBarClass::PaintTab_VS2008(const PaintDC& dc, RECT rcTab, struct TabDrawI
 
 	int T = bCurrent ? 0 : 1;
 
-	// Коряво в 2k выглядит
+	// РљРѕСЂСЏРІРѕ РІ 2k РІС‹РіР»СЏРґРёС‚
 	//POINT ptOuter[] = {
 	//	{rcTab.left,rcTab.bottom}, // 0
 	//	{rcTab.left+E3+1,rcTab.bottom-H3+T}, // 1
@@ -1639,7 +1639,7 @@ void TabBarClass::PaintTab_VS2008(const PaintDC& dc, RECT rcTab, struct TabDrawI
 		nColorR = clrInactiveEdgeRight;
 	}
 
-	// фон таба
+	// С„РѕРЅ С‚Р°Р±Р°
 	//SelectObject(hdcPaint, mh_Brushes[nColor2]);
 	//SelectObject(hdcPaint, mh_Pens[nColor2]);
 	//SetPolyFillMode(hdcPaint, WINDING);
@@ -1679,22 +1679,22 @@ void TabBarClass::PaintTab_VS2008(const PaintDC& dc, RECT rcTab, struct TabDrawI
 	// Draw a shaded triangle.
 	GdiGradientFill(dc.hDC, vertex, countof(vertex), triangles, countof(triangles), GRADIENT_FILL_TRIANGLE);
 
-	// Запомнить регион, для проверки в HitTest
-	if (pTab->rgnTab) DeleteObject(pTab->rgnTab); //TODO: можно бы не пересоздавать регион, если не менятся
+	// Р—Р°РїРѕРјРЅРёС‚СЊ СЂРµРіРёРѕРЅ, РґР»СЏ РїСЂРѕРІРµСЂРєРё РІ HitTest
+	if (pTab->rgnTab) DeleteObject(pTab->rgnTab); //TODO: РјРѕР¶РЅРѕ Р±С‹ РЅРµ РїРµСЂРµСЃРѕР·РґР°РІР°С‚СЊ СЂРµРіРёРѕРЅ, РµСЃР»Рё РЅРµ РјРµРЅСЏС‚СЃСЏ
 	pTab->rgnTab = CreatePolygonRgn(ptInner, countof(ptInner), WINDING);
 
-	// Собственно текст
+	// РЎРѕР±СЃС‚РІРµРЅРЅРѕ С‚РµРєСЃС‚
 	RECT rcText = {rcTab.left+mn_EdgeWidth, rcTab.top+mn_TextShift, rcTab.right-mn_EdgeWidth, rcTab.bottom};
 	PaintTab_Text(dc, rcText, pTab, anFlags, bCurrent, bHover);
 	
-	// Скосы
+	// РЎРєРѕСЃС‹
 	SelectObject(dc.hDC, mh_Pens[nColorL]);
 	Polyline(dc.hDC, ptInner, 4);
 	SelectObject(dc.hDC, mh_Pens[nColorR]);
 	_ASSERTE(countof(ptInner) == 8);
 	Polyline(dc.hDC, ptInner+4, 4);
 
-	// Окантовка
+	// РћРєР°РЅС‚РѕРІРєР°
 	SelectObject(dc.hDC, mh_Pens[nColorO]);
 	Polyline(dc.hDC, ptOuter, countof(ptOuter));
 
@@ -1770,7 +1770,7 @@ void TabBarClass::PaintTab_Win8(const PaintDC& dc, RECT rcTab, struct TabDrawInf
 	};
 
 
-	// фон таба
+	// С„РѕРЅ С‚Р°Р±Р°
 	nY1 = bUpDown ? (rcTab.bottom-T) : (rcTab.top+1+T);
 	nY2 = bUpDown ? (rcTab.top+1) : (rcTab.bottom+1);
 	TRIVERTEX vertex[] =
@@ -1810,21 +1810,21 @@ void TabBarClass::PaintTab_Win8(const PaintDC& dc, RECT rcTab, struct TabDrawInf
 	GRADIENT_TRIANGLE triangles[] = {{0,2,3},{0,1,3}};
 	GdiGradientFill(dc.hDC, vertex, countof(vertex), triangles, countof(triangles), GRADIENT_FILL_TRIANGLE);
 
-	// Запомнить регион, для проверки в HitTest
-	if (pTab->rgnTab) DeleteObject(pTab->rgnTab); //TODO: можно бы не пересоздавать регион, если не менятся
+	// Р—Р°РїРѕРјРЅРёС‚СЊ СЂРµРіРёРѕРЅ, РґР»СЏ РїСЂРѕРІРµСЂРєРё РІ HitTest
+	if (pTab->rgnTab) DeleteObject(pTab->rgnTab); //TODO: РјРѕР¶РЅРѕ Р±С‹ РЅРµ РїРµСЂРµСЃРѕР·РґР°РІР°С‚СЊ СЂРµРіРёРѕРЅ, РµСЃР»Рё РЅРµ РјРµРЅСЏС‚СЃСЏ
 	pTab->rgnTab = CreatePolygonRgn(ptInner, countof(ptInner), WINDING);
 
-	// Собственно текст
+	// РЎРѕР±СЃС‚РІРµРЅРЅРѕ С‚РµРєСЃС‚
 	PaintTab_Text(dc, rcText, pTab, anFlags, bCurrent, bHover);
 	
-	////Скосы
+	////РЎРєРѕСЃС‹
 	////SelectObject(dc.hDC, mh_Pens[nColorL]);
 	////Polyline(dc.hDC, ptInner, 4);
 	////SelectObject(dc.hDC, mh_Pens[nColorR]);
 	////_ASSERTE(countof(ptInner) == 8);
 	////Polyline(dc.hDC, ptInner+4, 4);
 
-	// Окантовка
+	// РћРєР°РЅС‚РѕРІРєР°
 	SelectObject(dc.hDC, mh_Pens[nColorO]);
 	Polyline(dc.hDC, ptOuter, countof(ptOuter));
 
@@ -1856,7 +1856,7 @@ void TabBarClass::PaintTab_Text(const PaintDC& dc, RECT rcText, struct TabDrawIn
 //{
 //	if (rcTab.right > rcTab.right)
 //	{
-//		// Если таки вылезает за границы отрисовки - отрисовать только часть
+//		// Р•СЃР»Рё С‚Р°РєРё РІС‹Р»РµР·Р°РµС‚ Р·Р° РіСЂР°РЅРёС†С‹ РѕС‚СЂРёСЃРѕРІРєРё - РѕС‚СЂРёСЃРѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ С‡Р°СЃС‚СЊ
 //		rcTab.right = rcTab.right;
 //	}
 //
@@ -1897,7 +1897,7 @@ void TabBarClass::PaintTab_Text(const PaintDC& dc, RECT rcText, struct TabDrawIn
 //{
 //	if (rcTab.right > rcTab.right)
 //	{
-//		// Если таки вылезает за границы отрисовки - отрисовать только часть
+//		// Р•СЃР»Рё С‚Р°РєРё РІС‹Р»РµР·Р°РµС‚ Р·Р° РіСЂР°РЅРёС†С‹ РѕС‚СЂРёСЃРѕРІРєРё - РѕС‚СЂРёСЃРѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ С‡Р°СЃС‚СЊ
 //		rcTab.right = rcTab.right;
 //	}
 //
@@ -1928,7 +1928,7 @@ void TabBarClass::PaintTab_Text(const PaintDC& dc, RECT rcText, struct TabDrawIn
 //{
 //	if (rcTab.right > rcTab.right)
 //	{
-//		// Если таки вылезает за границы отрисовки - отрисовать только часть
+//		// Р•СЃР»Рё С‚Р°РєРё РІС‹Р»РµР·Р°РµС‚ Р·Р° РіСЂР°РЅРёС†С‹ РѕС‚СЂРёСЃРѕРІРєРё - РѕС‚СЂРёСЃРѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ С‡Р°СЃС‚СЊ
 //		rcTab.right = rcTab.right;
 //	}
 //	
@@ -1990,7 +1990,7 @@ void TabBarClass::PaintTab_Text(const PaintDC& dc, RECT rcText, struct TabDrawIn
 //
 //void TabBarClass::CommitTabs(void)
 //{
-//	// Должен быть как минимум один таб!
+//	// Р”РѕР»Р¶РµРЅ Р±С‹С‚СЊ РєР°Рє РјРёРЅРёРјСѓРј РѕРґРёРЅ С‚Р°Р±!
 //	if (mn_EditTabCount < 1)
 //	{
 //		_ASSERTE(mn_EditTabCount == 0);
@@ -1999,7 +1999,7 @@ void TabBarClass::PaintTab_Text(const PaintDC& dc, RECT rcText, struct TabDrawIn
 //	}
 //	if (mn_TabCount != mn_EditTabCount)
 //	{
-//		// Если табов стало МЕНЬШЕ - освободить указатели на исчезнувшие табы
+//		// Р•СЃР»Рё С‚Р°Р±РѕРІ СЃС‚Р°Р»Рѕ РњР•РќР¬РЁР• - РѕСЃРІРѕР±РѕРґРёС‚СЊ СѓРєР°Р·Р°С‚РµР»Рё РЅР° РёСЃС‡РµР·РЅСѓРІС€РёРµ С‚Р°Р±С‹
 //    	for (int i = (mn_EditTabCount+1); i < mn_TabCount; i++)
 //		{
 //			m_Tabs[i].Display.Release();
@@ -2029,7 +2029,7 @@ void TabBarClass::PaintTab_Text(const PaintDC& dc, RECT rcText, struct TabDrawIn
 //		mn_HoverTab = -1;
 //	}
 //
-//	// Проверить, или сформировать стек
+//	// РџСЂРѕРІРµСЂРёС‚СЊ, РёР»Рё СЃС„РѕСЂРјРёСЂРѕРІР°С‚СЊ СЃС‚РµРє
 //	for (int i = 0; i < mn_TabCount; i++)
 //		m_TabStack.CheckOrCreate((i == mn_ActiveTab), m_Tabs[i].pVCon, m_Tabs[i].Full.Ptr(), m_Tabs[i].nFlags & 0xFF);
 //
@@ -2046,11 +2046,11 @@ void TabBarClass::PaintTab_Text(const PaintDC& dc, RECT rcText, struct TabDrawIn
 //{
 //	//if (mn_EditTabCount >= mn_MaxTabCount)
 //	//{
-//	//	// Превышено количество допустимо-отображаемых табов
+//	//	// РџСЂРµРІС‹С€РµРЅРѕ РєРѕР»РёС‡РµСЃС‚РІРѕ РґРѕРїСѓСЃС‚РёРјРѕ-РѕС‚РѕР±СЂР°Р¶Р°РµРјС‹С… С‚Р°Р±РѕРІ
 //	//	return;
 //	//}
 //
-//	// Проверяем не изменилось ли чего?
+//	// РџСЂРѕРІРµСЂСЏРµРј РЅРµ РёР·РјРµРЅРёР»РѕСЃСЊ Р»Рё С‡РµРіРѕ?
 //	if (lstrcmpW(m_Tabs[mn_EditTabCount].Full.Ptr(), SafeTitle(asTitle))
 //		|| (m_Tabs[mn_EditTabCount].nFlags = anFlags)
 //		|| (m_Tabs[mn_EditTabCount].pVCon != pVCon)
@@ -2060,7 +2060,7 @@ void TabBarClass::PaintTab_Text(const PaintDC& dc, RECT rcText, struct TabDrawIn
 //	}
 //	//lstrcpynW(m_Tabs[mn_EditTabCount].sTitle, SafeTitle(asTitle), countof(m_Tabs->sTitle));
 //	m_Tabs[mn_EditTabCount].Full.Set(asTitle);
-//	//TODO: Форматирование текста
+//	//TODO: Р¤РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёРµ С‚РµРєСЃС‚Р°
 //	m_Tabs[mn_EditTabCount].Display.Set(asTitle);
 //	m_Tabs[mn_EditTabCount].nFlags = anFlags;
 //	m_Tabs[mn_EditTabCount].pVCon = pVCon;
@@ -2082,7 +2082,7 @@ int TabBarClass::TabFromCursor(POINT point, DWORD *pnFlags /*= NULL*/)
 		if (m_Tabs.GetTabByIndex(i, Tab) && PtInRect(&Tab->DrawInfo.rcTab, point))
 		{
 			if (Tab->DrawInfo.rgnTab && !PtInRegion(Tab->DrawInfo.rgnTab, point.x, point.y))
-				continue; // видимо попали в угол, не относящийся к занятой области
+				continue; // РІРёРґРёРјРѕ РїРѕРїР°Р»Рё РІ СѓРіРѕР», РЅРµ РѕС‚РЅРѕСЃСЏС‰РёР№СЃСЏ Рє Р·Р°РЅСЏС‚РѕР№ РѕР±Р»Р°СЃС‚Рё
 
 			nTab = i;
 			if (pnFlags)
@@ -2097,11 +2097,11 @@ int TabBarClass::TabFromCursor(POINT point, DWORD *pnFlags /*= NULL*/)
 int TabBarClass::TabBtnFromCursor(POINT point, DWORD *pnFlags /*= NULL*/)
 {
 	if (mb_ToolbarFit && PtInRect(&mrc_Toolbar, point))
-		return 1; // Сам ИД - не интересует
+		return 1; // РЎР°Рј РР” - РЅРµ РёРЅС‚РµСЂРµСЃСѓРµС‚
 	return -1;
 }
 
-// Должна выполняться ТОЛЬКО в главной нити!
+// Р”РѕР»Р¶РЅР° РІС‹РїРѕР»РЅСЏС‚СЊСЃСЏ РўРћР›Р¬РљРћ РІ РіР»Р°РІРЅРѕР№ РЅРёС‚Рё!
 void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 {
     if (!gpConEmu->isMainThread())
@@ -2113,10 +2113,10 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 	mb_PostUpdateCalled = FALSE;
 
-	//TODO: Обновить mn_ActiveTab & mn_HoverTab=-1
+	//TODO: РћР±РЅРѕРІРёС‚СЊ mn_ActiveTab & mn_HoverTab=-1
 	mn_InUpdate++;
 
-	////TODO: Загрузить вкладки из VCon/RCon
+	////TODO: Р—Р°РіСЂСѓР·РёС‚СЊ РІРєР»Р°РґРєРё РёР· VCon/RCon
 	//BeginTabs();
 	//AddTab(L"{F:\\VCProject\\ConEmu\\src\\ConEmu\\ConEmuTh\\Modules\\gdip} - Far", etfActive);
 	//AddTab(L"{C:\\Windows\\System32} - Far", etfAdmin);
@@ -2173,7 +2173,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		RequestPostUpdate();
 	}
 
-	TODO("Проверить, а нужно ли обновлять табы?");
+	TODO("РџСЂРѕРІРµСЂРёС‚СЊ, Р° РЅСѓР¶РЅРѕ Р»Рё РѕР±РЅРѕРІР»СЏС‚СЊ С‚Р°Р±С‹?");
 	Invalidate();
 }
 
@@ -2228,8 +2228,8 @@ int TabBarClass::GetHoverTab()
 	return mn_HoverTab;
 }
 
-// В результате действий пользователя (щелчек или клавиатура)
-// нужно сменить выделенный таб
+// Р’ СЂРµР·СѓР»СЊС‚Р°С‚Рµ РґРµР№СЃС‚РІРёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ (С‰РµР»С‡РµРє РёР»Рё РєР»Р°РІРёР°С‚СѓСЂР°)
+// РЅСѓР¶РЅРѕ СЃРјРµРЅРёС‚СЊ РІС‹РґРµР»РµРЅРЅС‹Р№ С‚Р°Р±
 bool TabBarClass::OnTabSelected(int anNewTab)
 {
 	if (anNewTab < 0 || anNewTab >= m_Tabs.GetCount())
@@ -2250,8 +2250,8 @@ bool TabBarClass::OnTabSelected(int anNewTab)
 		return false;
 	}
 
-	BOOL bChangeOk = FALSE; // Удалось ли сменить активное окно в фаре (панели/редактор/вьювер)
-	BOOL bNeedActivate = FALSE; // Нужно ли менять активную VConsole	
+	BOOL bChangeOk = FALSE; // РЈРґР°Р»РѕСЃСЊ Р»Рё СЃРјРµРЅРёС‚СЊ Р°РєС‚РёРІРЅРѕРµ РѕРєРЅРѕ РІ С„Р°СЂРµ (РїР°РЅРµР»Рё/СЂРµРґР°РєС‚РѕСЂ/РІСЊСЋРІРµСЂ)
+	BOOL bNeedActivate = FALSE; // РќСѓР¶РЅРѕ Р»Рё РјРµРЅСЏС‚СЊ Р°РєС‚РёРІРЅСѓСЋ VConsole	
 	
 	if (!gpConEmu->isActive(ti.pVCon))
 		bNeedActivate = TRUE;
@@ -2260,40 +2260,40 @@ bool TabBarClass::OnTabSelected(int anNewTab)
 
 	if (!bChangeOk)
 	{
-		// Всплыть тултип с руганью - не смогли активировать
+		// Р’СЃРїР»С‹С‚СЊ С‚СѓР»С‚РёРї СЃ СЂСѓРіР°РЅСЊСЋ - РЅРµ СЃРјРѕРіР»Рё Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ
 		ShowTabError(L"This tab can't be activated now!", anNewTab);
 	}
 
-	// Чтобы лишнее не мелькало - активируем консоль
-	// ТОЛЬКО после смены таба (успешной или неудачной - неважно)
-	TODO("Не срабатывает. Новые данные из консоли получаются с задержкой и мелькает старое содержимое активируемой консоли");
+	// Р§С‚РѕР±С‹ Р»РёС€РЅРµРµ РЅРµ РјРµР»СЊРєР°Р»Рѕ - Р°РєС‚РёРІРёСЂСѓРµРј РєРѕРЅСЃРѕР»СЊ
+	// РўРћР›Р¬РљРћ РїРѕСЃР»Рµ СЃРјРµРЅС‹ С‚Р°Р±Р° (СѓСЃРїРµС€РЅРѕР№ РёР»Рё РЅРµСѓРґР°С‡РЅРѕР№ - РЅРµРІР°Р¶РЅРѕ)
+	TODO("РќРµ СЃСЂР°Р±Р°С‚С‹РІР°РµС‚. РќРѕРІС‹Рµ РґР°РЅРЅС‹Рµ РёР· РєРѕРЅСЃРѕР»Рё РїРѕР»СѓС‡Р°СЋС‚СЃСЏ СЃ Р·Р°РґРµСЂР¶РєРѕР№ Рё РјРµР»СЊРєР°РµС‚ СЃС‚Р°СЂРѕРµ СЃРѕРґРµСЂР¶РёРјРѕРµ Р°РєС‚РёРІРёСЂСѓРµРјРѕР№ РєРѕРЅСЃРѕР»Рё");
 
 	if (bNeedActivate)
 	{
 		if (!gpConEmu->Activate(ti.pVCon))
 		{
-			if (mb_InKeySwitching) Update();  // показать реальное положение дел
+			if (mb_InKeySwitching) Update();  // РїРѕРєР°Р·Р°С‚СЊ СЂРµР°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РґРµР»
 
-			TODO("А текущий таб не слетит, если активировать не удалось?");
+			TODO("Рђ С‚РµРєСѓС‰РёР№ С‚Р°Р± РЅРµ СЃР»РµС‚РёС‚, РµСЃР»Рё Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РЅРµ СѓРґР°Р»РѕСЃСЊ?");
 			return false;
 		}
 	}
 
 	if (!bChangeOk)
 	{
-		if (mb_InKeySwitching) Update();  // показать реальное положение дел
+		if (mb_InKeySwitching) Update();  // РїРѕРєР°Р·Р°С‚СЊ СЂРµР°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РґРµР»
 		return false;
 	}
 	
 	////TODO: -> FarSendChangeTab ( anNewTab );
 	//SelectTab(anNewTab);
-	//return true; // Потомок может заблокировать смену выделения, вернув false
+	//return true; // РџРѕС‚РѕРјРѕРє РјРѕР¶РµС‚ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ СЃРјРµРЅСѓ РІС‹РґРµР»РµРЅРёСЏ, РІРµСЂРЅСѓРІ false
 	
-	Update();  // показать реальное положение дел
+	Update();  // РїРѕРєР°Р·Р°С‚СЊ СЂРµР°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РґРµР»
 	return true;
 }
 
-// Потомок может перекрыть функцию
+// РџРѕС‚РѕРјРѕРє РјРѕР¶РµС‚ РїРµСЂРµРєСЂС‹С‚СЊ С„СѓРЅРєС†РёСЋ
 bool TabBarClass::CanSelectTab(int anNewTab, const TabInfo& ti)
 {
 	return ((ti.Flags & fwt_Disabled) == 0);
@@ -2305,7 +2305,7 @@ bool TabBarClass::ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 	switch (uMsg)
 	{
-	//TODO: А если табы в клиентской области? Ничего не провалится?
+	//TODO: Рђ РµСЃР»Рё С‚Р°Р±С‹ РІ РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё? РќРёС‡РµРіРѕ РЅРµ РїСЂРѕРІР°Р»РёС‚СЃСЏ?
 	case WM_NCLBUTTONDOWN:
 	case WM_NCLBUTTONUP:
 	case WM_NCLBUTTONDBLCLK:
@@ -2316,7 +2316,7 @@ bool TabBarClass::ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	case WM_NCMOUSEMOVE:
 		if (wParam == HT_CONEMUTAB || wParam == HTCAPTION)
 		{
-			//TODO: Мышь не перехватывается (продолжается обработка в оконной процедуре)
+			//TODO: РњС‹С€СЊ РЅРµ РїРµСЂРµС…РІР°С‚С‹РІР°РµС‚СЃСЏ (РїСЂРѕРґРѕР»Р¶Р°РµС‚СЃСЏ РѕР±СЂР°Р±РѕС‚РєР° РІ РѕРєРѕРЅРЅРѕР№ РїСЂРѕС†РµРґСѓСЂРµ)
 			
 			POINT point;
 			RECT wr; GetWindowRect(hWnd, &wr);
@@ -2340,7 +2340,7 @@ bool TabBarClass::ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			else
 			{
 				#if defined(USE_CONEMU_TOOLBAR)
-				// с кнопок убрать подсветку, если была
+				// СЃ РєРЅРѕРїРѕРє СѓР±СЂР°С‚СЊ РїРѕРґСЃРІРµС‚РєСѓ, РµСЃР»Рё Р±С‹Р»Р°
 				mp_Toolbar->UnHover();
 				#endif
 			}
@@ -2380,31 +2380,31 @@ bool TabBarClass::ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 				}
 				else if (uMsg == WM_NCMBUTTONUP)
 				{
-					// Закрыть таб?
+					// Р—Р°РєСЂС‹С‚СЊ С‚Р°Р±?
 				}
-				return true; // Обработали сами
+				return true; // РћР±СЂР°Р±РѕС‚Р°Р»Рё СЃР°РјРё
 			}
 			else if (mn_HoverTab >= 0)
 			{
 				HoverTab(-1);
 			}
 		}
-		return false; // продолжить обработку
+		return false; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ
 	case WM_NCMOUSEHOVER:
-		// Показать тултип, если текст был обрезан
-		return false; // продолжить обработку
+		// РџРѕРєР°Р·Р°С‚СЊ С‚СѓР»С‚РёРї, РµСЃР»Рё С‚РµРєСЃС‚ Р±С‹Р» РѕР±СЂРµР·Р°РЅ
+		return false; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ
 	case WM_NCMOUSELEAVE:
 		if (mn_HoverTab >= 0)
 		{
 			HoverTab(-1);
 			#if defined(USE_CONEMU_TOOLBAR)
-			// с кнопок убрать подсветку, если была
+			// СЃ РєРЅРѕРїРѕРє СѓР±СЂР°С‚СЊ РїРѕРґСЃРІРµС‚РєСѓ, РµСЃР»Рё Р±С‹Р»Р°
 			mp_Toolbar->UnHover();
 			#endif
 		}
-		return false; // продолжить обработку
+		return false; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ
 	}
-	return false; // продолжить обработку
+	return false; // РїСЂРѕРґРѕР»Р¶РёС‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ
 }
 
 bool TabBarClass::ProcessTabKeyboardEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult)
@@ -2435,9 +2435,9 @@ bool TabBarClass::ProcessTabKeyboardEvent(HWND hWnd, UINT uMsg, WPARAM wParam, L
     return TRUE;
 }
 
-// Если во время обновления списка табов (считывание списка из RealCon)
-// произошла ошибка (таб закрылся в процессе?) то нужно обновить список,
-// но застраховаться от зацикливания этого обновления
+// Р•СЃР»Рё РІРѕ РІСЂРµРјСЏ РѕР±РЅРѕРІР»РµРЅРёСЏ СЃРїРёСЃРєР° С‚Р°Р±РѕРІ (СЃС‡РёС‚С‹РІР°РЅРёРµ СЃРїРёСЃРєР° РёР· RealCon)
+// РїСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР° (С‚Р°Р± Р·Р°РєСЂС‹Р»СЃСЏ РІ РїСЂРѕС†РµСЃСЃРµ?) С‚Рѕ РЅСѓР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ СЃРїРёСЃРѕРє,
+// РЅРѕ Р·Р°СЃС‚СЂР°С…РѕРІР°С‚СЊСЃСЏ РѕС‚ Р·Р°С†РёРєР»РёРІР°РЅРёСЏ СЌС‚РѕРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ
 BOOL TabBarClass::NeedPostUpdate()
 {
 	return (mb_PostUpdateCalled || mb_PostUpdateRequested);
@@ -2448,9 +2448,9 @@ void TabBarClass::RequestPostUpdate()
 	if (mb_PostUpdateCalled)
 	{
 		DWORD nDelta = GetTickCount() - mn_PostUpdateTick;
-		// Может так получиться, что флажок остался, а Post не вызвался
+		// РњРѕР¶РµС‚ С‚Р°Рє РїРѕР»СѓС‡РёС‚СЊСЃСЏ, С‡С‚Рѕ С„Р»Р°Р¶РѕРє РѕСЃС‚Р°Р»СЃСЏ, Р° Post РЅРµ РІС‹Р·РІР°Р»СЃСЏ
 		if (nDelta <= POST_UPDATE_TIMEOUT)
-			return; // Уже
+			return; // РЈР¶Рµ
 	}
 
 	if (mn_InUpdate > 0)
@@ -2503,7 +2503,7 @@ void TabBarClass::RequestPostUpdate()
 //	ShowTabError(NULL);
 //
 //    if (!GetVConFromTab(tabIndex, &pVCon, &wndIndex)) {
-//        if (mb_InKeySwitching) Update(); // показать реальное положение дел
+//        if (mb_InKeySwitching) Update(); // РїРѕРєР°Р·Р°С‚СЊ СЂРµР°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РґРµР»
 //        return NULL;
 //    }
 //    
@@ -2514,25 +2514,25 @@ void TabBarClass::RequestPostUpdate()
 //    bChangeOk = pVCon->RCon()->ActivateFarWindow(wndIndex);
 //	if (!bChangeOk)
 //	{
-//		// Всплыть тултип с руганью - не смогли активировать
+//		// Р’СЃРїР»С‹С‚СЊ С‚СѓР»С‚РёРї СЃ СЂСѓРіР°РЅСЊСЋ - РЅРµ СЃРјРѕРіР»Рё Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ
 //		ShowTabError(TAB_CANT_BE_ACTIVATED, tabIndex);
 //	}
 //    
-//    // Чтобы лишнее не мелькало - активируем консоль 
-//    // ТОЛЬКО после смены таба (успешной или неудачной - неважно)
-//	TODO("Не срабатывает. Новые данные из консоли получаются с задержкой и мелькает старое содержимое активируемой консоли");
+//    // Р§С‚РѕР±С‹ Р»РёС€РЅРµРµ РЅРµ РјРµР»СЊРєР°Р»Рѕ - Р°РєС‚РёРІРёСЂСѓРµРј РєРѕРЅСЃРѕР»СЊ 
+//    // РўРћР›Р¬РљРћ РїРѕСЃР»Рµ СЃРјРµРЅС‹ С‚Р°Р±Р° (СѓСЃРїРµС€РЅРѕР№ РёР»Рё РЅРµСѓРґР°С‡РЅРѕР№ - РЅРµРІР°Р¶РЅРѕ)
+//	TODO("РќРµ СЃСЂР°Р±Р°С‚С‹РІР°РµС‚. РќРѕРІС‹Рµ РґР°РЅРЅС‹Рµ РёР· РєРѕРЅСЃРѕР»Рё РїРѕР»СѓС‡Р°СЋС‚СЃСЏ СЃ Р·Р°РґРµСЂР¶РєРѕР№ Рё РјРµР»СЊРєР°РµС‚ СЃС‚Р°СЂРѕРµ СЃРѕРґРµСЂР¶РёРјРѕРµ Р°РєС‚РёРІРёСЂСѓРµРјРѕР№ РєРѕРЅСЃРѕР»Рё");
 //    if (bNeedActivate) {
 //        if (!gpConEmu->Activate(pVCon)) {
-//            if (mb_InKeySwitching) Update(); // показать реальное положение дел
+//            if (mb_InKeySwitching) Update(); // РїРѕРєР°Р·Р°С‚СЊ СЂРµР°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РґРµР»
 //            
-//            TODO("А текущий таб не слетит, если активировать не удалось?");
+//            TODO("Рђ С‚РµРєСѓС‰РёР№ С‚Р°Р± РЅРµ СЃР»РµС‚РёС‚, РµСЃР»Рё Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РЅРµ СѓРґР°Р»РѕСЃСЊ?");
 //            return NULL;
 //        }
 //    }
 //    
 //    if (!bChangeOk) {
 //        pVCon = NULL;
-//        if (mb_InKeySwitching) Update(); // показать реальное положение дел
+//        if (mb_InKeySwitching) Update(); // РїРѕРєР°Р·Р°С‚СЊ СЂРµР°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РґРµР»
 //    }
 //
 //    return pVCon;
@@ -2596,9 +2596,9 @@ void TabBarClass::RequestPostUpdate()
 //				lParam = MAKELONG(ptScr.x,ptScr.y);
 //				LRESULT lRc = 0;
 //				if (uMsg == WM_LBUTTONDBLCLK) {
-//					// Чтобы клик случайно не провалился в консоль
+//					// Р§С‚РѕР±С‹ РєР»РёРє СЃР»СѓС‡Р°Р№РЅРѕ РЅРµ РїСЂРѕРІР°Р»РёР»СЃСЏ РІ РєРѕРЅСЃРѕР»СЊ
 //					gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
-//					// Аналог AltF9
+//					// РђРЅР°Р»РѕРі AltF9
 //					//gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(gpSet->isFullScreen&&gpConEmu->isWndNotFSMaximized)) ? rNormal : rMaximized);
 //					gpConEmu->OnAltF9(TRUE);
 //				} else if (uMsg == WM_RBUTTONUP) {
@@ -2624,8 +2624,8 @@ void TabBarClass::RequestPostUpdate()
 //	        	LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
 //				//if (gpConEmu->mp_TabBar->mb_ThemingEnabled) {
 //				if (gpSet->CheckTheming()) {
-//		            pos->y = 2; // иначе в Win7 он смещается в {0x0} и снизу видна некрасивая полоса
-//					pos->cy = gpConEmu->mp_TabBar->_tabHeight -3; // на всякий случай
+//		            pos->y = 2; // РёРЅР°С‡Рµ РІ Win7 РѕРЅ СЃРјРµС‰Р°РµС‚СЃСЏ РІ {0x0} Рё СЃРЅРёР·Сѓ РІРёРґРЅР° РЅРµРєСЂР°СЃРёРІР°СЏ РїРѕР»РѕСЃР°
+//					pos->cy = gpConEmu->mp_TabBar->_tabHeight -3; // РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№
 //				} else {
 //					pos->y = 1;
 //					pos->cy = gpConEmu->mp_TabBar->_tabHeight + 1;
@@ -2695,7 +2695,7 @@ void TabBarClass::RequestPostUpdate()
 //			// the zero-based index of the nonseparator item in which the point lies.
 //			if (nIdx >= 0 && nIdx < MAX_CONSOLE_COUNT)
 //			{
-//				// Пока кнопки не настраиваются - это будет строго номер консоли
+//				// РџРѕРєР° РєРЅРѕРїРєРё РЅРµ РЅР°СЃС‚СЂР°РёРІР°СЋС‚СЃСЏ - СЌС‚Рѕ Р±СѓРґРµС‚ СЃС‚СЂРѕРіРѕ РЅРѕРјРµСЂ РєРѕРЅСЃРѕР»Рё
 //				CVirtualConsole* pVCon = gpConEmu->GetVCon(nIdx);
 //				if (!gpConEmu->isActive(pVCon))
 //				{
@@ -2784,7 +2784,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //    /*if (!_active)
 //    {
 //        return;
-//    }*/ // Теперь - ВСЕГДА! т.к. сами управляем мультиконсолью
+//    }*/ // РўРµРїРµСЂСЊ - Р’РЎР•Р“Р”Рђ! С‚.Рє. СЃР°РјРё СѓРїСЂР°РІР»СЏРµРј РјСѓР»СЊС‚РёРєРѕРЅСЃРѕР»СЊСЋ
 //
 //	if (mb_DisableRedraw)
 //		return;
@@ -2811,7 +2811,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //	CVirtualConsole* pVCon = NULL;
 //    VConTabs vct = {NULL};
 //
-//    // Выполняться должно только в основной нити, так что CriticalSection не нужна
+//    // Р’С‹РїРѕР»РЅСЏС‚СЊСЃСЏ РґРѕР»Р¶РЅРѕ С‚РѕР»СЊРєРѕ РІ РѕСЃРЅРѕРІРЅРѕР№ РЅРёС‚Рё, С‚Р°Рє С‡С‚Рѕ CriticalSection РЅРµ РЅСѓР¶РЅР°
 //    m_Tab2VCon.clear();
 //	_ASSERTE(m_Tab2VCon.size()==0);
 //
@@ -2821,7 +2821,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //	}
 //	#endif
 //
-//	TODO("Обработка gpSet->bHideInactiveConsoleTabs");
+//	TODO("РћР±СЂР°Р±РѕС‚РєР° gpSet->bHideInactiveConsoleTabs");
 //
 //	MCHKHEAP
 //	if (!gpConEmu->mp_TabBar->IsActive() && gpSet->isTabs)
@@ -2929,7 +2929,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //			#endif
 //
 //            AddTab2VCon(vct);
-//            // Добавляет закладку, или меняет (при необходимости) заголовок существующей
+//            // Р”РѕР±Р°РІР»СЏРµС‚ Р·Р°РєР»Р°РґРєСѓ, РёР»Рё РјРµРЅСЏРµС‚ (РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё) Р·Р°РіРѕР»РѕРІРѕРє СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµР№
 //            AddTab(tab.Name, tabIdx, (tab.Type & 0x100)==0x100);
 //            
 //            if (lbActive && tab.Current)
@@ -2946,27 +2946,27 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //        }
 //    }
 //	MCHKHEAP
-//    if (tabIdx == 0) // хотя бы "Console" покажем
+//    if (tabIdx == 0) // С…РѕС‚СЏ Р±С‹ "Console" РїРѕРєР°Р¶РµРј
 //    {
 //        PrepareTab(&tab);
 //        
 //        vct.pVCon = NULL;
 //        vct.nFarWindowId = 0;
-//		AddTab2VCon(vct); //2009-06-14. Не было!
+//		AddTab2VCon(vct); //2009-06-14. РќРµ Р±С‹Р»Рѕ!
 //
-//        // Добавляет закладку, или меняет (при необходимости) заголовок существующей
+//        // Р”РѕР±Р°РІР»СЏРµС‚ Р·Р°РєР»Р°РґРєСѓ, РёР»Рё РјРµРЅСЏРµС‚ (РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё) Р·Р°РіРѕР»РѕРІРѕРє СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµР№
 //        AddTab(tab.Name, tabIdx, (tab.Type & 0x100)==0x100);
 //        nCurTab = tabIdx;
 //        tabIdx++;
 //    }
 //
-//	// Update последних выбранных
+//	// Update РїРѕСЃР»РµРґРЅРёС… РІС‹Р±СЂР°РЅРЅС‹С…
 //	if (nCurTab >= 0 && (UINT)nCurTab < m_Tab2VCon.size())
 //		AddStack(m_Tab2VCon[nCurTab]);
 //	else
-//		CheckStack(); // иначе просто проверим стек
+//		CheckStack(); // РёРЅР°С‡Рµ РїСЂРѕСЃС‚Рѕ РїСЂРѕРІРµСЂРёРј СЃС‚РµРє
 //
-//    // удалить лишние закладки (визуально)
+//    // СѓРґР°Р»РёС‚СЊ Р»РёС€РЅРёРµ Р·Р°РєР»Р°РґРєРё (РІРёР·СѓР°Р»СЊРЅРѕ)
 //    int nCurCount = GetItemCount();
 //	#ifdef _DEBUG
 //	wchar_t szDbg[128];
@@ -2985,7 +2985,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //	MCHKHEAP
 //    if (mb_InKeySwitching)
 //	{
-//	    if (mn_CurSelTab >= nCurCount) // Если выбранный таб вылез за границы
+//	    if (mn_CurSelTab >= nCurCount) // Р•СЃР»Рё РІС‹Р±СЂР°РЅРЅС‹Р№ С‚Р°Р± РІС‹Р»РµР· Р·Р° РіСЂР°РЅРёС†С‹
 //		    mb_InKeySwitching = FALSE;
 //    }
 //        
@@ -3030,10 +3030,10 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //void TabBarClass::UpdatePosition()
 //{
 //	if (gpConEmu->isIconic())
-//		return; // иначе расчет размеров будет некорректным!
+//		return; // РёРЅР°С‡Рµ СЂР°СЃС‡РµС‚ СЂР°Р·РјРµСЂРѕРІ Р±СѓРґРµС‚ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Рј!
 //
 //    RECT client;
-//    GetClientRect(ghWnd, &client); // нас интересует ширина окна
+//    GetClientRect(ghWnd, &client); // РЅР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ С€РёСЂРёРЅР° РѕРєРЅР°
 //
 //	DEBUGSTRTABS(_active ? L"TabBarClass::UpdatePosition(activate)\n" : L"TabBarClass::UpdatePosition(DEactivate)\n");
 //    
@@ -3060,12 +3060,12 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //		dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 //		#endif
 //
-//		//CVConGroup::SyncConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
+//		//CVConGroup::SyncConsoleToWindow(); -- 2009.07.04 Sync РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІС‹РїРѕР»РЅРµРЅ РІ СЃР°РјРѕРј ReSize
 //		gpConEmu->ReSize(TRUE);
 //    } else {
-//		//CVConGroup::SyncConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
+//		//CVConGroup::SyncConsoleToWindow(); -- 2009.07.04 Sync РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІС‹РїРѕР»РЅРµРЅ РІ СЃР°РјРѕРј ReSize
 //		gpConEmu->ReSize(TRUE);
-//		// _active уже сбросили, поэтому реально спрятать можно и позже
+//		// _active СѓР¶Рµ СЃР±СЂРѕСЃРёР»Рё, РїРѕСЌС‚РѕРјСѓ СЂРµР°Р»СЊРЅРѕ СЃРїСЂСЏС‚Р°С‚СЊ РјРѕР¶РЅРѕ Рё РїРѕР·Р¶Рµ
 //        if (mh_Rebar) {
 //            if (IsWindowVisible(mh_Rebar))
 //                apiShowWindow(mh_Rebar, SW_HIDE);
@@ -3129,7 +3129,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //        if (mh_Rebar) {
 //            if (sz.cx != mn_LastToolbarWidth)
 //            {
-//                REBARBANDINFO rbBand={80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+//                REBARBANDINFO rbBand={80}; // РЅРµ РёСЃРїРѕР»СЊР·СѓРµРј size, С‚.Рє. РїСЂРёС…РѕРґРёС‚ "РЅРѕРІС‹Р№" СЂР°Р·РјРµСЂ РёР· РІРёСЃС‚С‹ Рё РІ XP РѕР±Р»Р°РјС‹РІР°РµРјСЃСЏ
 //                rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILDSIZE;
 //                // Set values unique to the band with the toolbar.
 //                rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
@@ -3162,7 +3162,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //        //  return FALSE;
 //        //}
 //        _prevTab = GetCurSel(); 
-//        return FALSE; // разрешаем
+//        return FALSE; // СЂР°Р·СЂРµС€Р°РµРј
 //    }
 //
 //    if (nmhdr->code == TCN_SELCHANGE)
@@ -3238,8 +3238,8 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //        int iPage = TabCtrl_HitTest(mh_Tabbar, &htInfo);
 //        
 //        if (iPage >= 0) {
-//            // Если в табе нет "…" - тип не нужен
-//            if (!wcschr(GetTabText(iPage), L'\x2026' /*"…"*/))
+//            // Р•СЃР»Рё РІ С‚Р°Р±Рµ РЅРµС‚ "вЂ¦" - С‚РёРї РЅРµ РЅСѓР¶РµРЅ
+//            if (!wcschr(GetTabText(iPage), L'\x2026' /*"вЂ¦"*/))
 //                return 0;
 //        
 //            if (!GetVConFromTab(iPage, &pVCon, &wndIndex))
@@ -3290,9 +3290,9 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //    	PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 //    } else 
 //    if (wParam == TID_MAXIMIZE) {
-//		// Чтобы клик случайно не провалился в консоль
+//		// Р§С‚РѕР±С‹ РєР»РёРє СЃР»СѓС‡Р°Р№РЅРѕ РЅРµ РїСЂРѕРІР°Р»РёР»СЃСЏ РІ РєРѕРЅСЃРѕР»СЊ
 //		gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
-//		// Аналог AltF9
+//		// РђРЅР°Р»РѕРі AltF9
 //		gpConEmu->OnAltF9(TRUE);
 //    } else
 //    if (wParam == TID_APPCLOSE) {
@@ -3318,8 +3318,8 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //        if (iPage != -1)
 //        {
 //            CVirtualConsole* pVCon = NULL;
-//            // для меню нужны экранные координаты, получим их сразу, чтобы менюшка вплывала на клике
-//            // а то вдруг мышка уедет, во время активации таба...
+//            // РґР»СЏ РјРµРЅСЋ РЅСѓР¶РЅС‹ СЌРєСЂР°РЅРЅС‹Рµ РєРѕРѕСЂРґРёРЅР°С‚С‹, РїРѕР»СѓС‡РёРј РёС… СЃСЂР°Р·Сѓ, С‡С‚РѕР±С‹ РјРµРЅСЋС€РєР° РІРїР»С‹РІР°Р»Р° РЅР° РєР»РёРєРµ
+//            // Р° С‚Рѕ РІРґСЂСѓРі РјС‹С€РєР° СѓРµРґРµС‚, РІРѕ РІСЂРµРјСЏ Р°РєС‚РёРІР°С†РёРё С‚Р°Р±Р°...
 //            POINT ptCur = {0,0}; GetCursorPos(&ptCur);
 //
 //			pVCon = OnTabSelected(iPage);
@@ -3332,8 +3332,8 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //					if (pVCon->RCon()->GetFarPID()) {
 //						pVCon->RCon()->PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
 //					} else {
-//						// Если запущен CMD, PowerShell, и т.п. - показать ДИАЛОГ пересоздания консоли
-//						// Там есть кнопки Terminate & Recreate
+//						// Р•СЃР»Рё Р·Р°РїСѓС‰РµРЅ CMD, PowerShell, Рё С‚.Рї. - РїРѕРєР°Р·Р°С‚СЊ Р”РРђР›РћР“ РїРµСЂРµСЃРѕР·РґР°РЅРёСЏ РєРѕРЅСЃРѕР»Рё
+//						// РўР°Рј РµСЃС‚СЊ РєРЅРѕРїРєРё Terminate & Recreate
 //						gpConEmu->Recreate ( TRUE, TRUE );
 //					}
 //				}
@@ -3401,7 +3401,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //    UpdateToolbarPos();
 //    SendMessage(mh_Toolbar, WM_SETREDRAW, 1, 0);
 //
-//    //nConNumber = gpConEmu->ActiveConNum()+1; -- сюда пришел уже правильный номер!
+//    //nConNumber = gpConEmu->ActiveConNum()+1; -- СЃСЋРґР° РїСЂРёС€РµР» СѓР¶Рµ РїСЂР°РІРёР»СЊРЅС‹Р№ РЅРѕРјРµСЂ!
 //    
 //    if (nConNumber>=1 && nConNumber<=MAX_CONSOLE_COUNT)
 //	{
@@ -3449,7 +3449,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //        if (pTab->Name[0] == 0)
 //		{
 //            #ifdef _DEBUG
-//            // Это должно случаться ТОЛЬКО при инициализации GUI
+//            // Р­С‚Рѕ РґРѕР»Р¶РЅРѕ СЃР»СѓС‡Р°С‚СЊСЃСЏ РўРћР›Р¬РљРћ РїСЂРё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё GUI
 //            int nTabCount = GetItemCount();
 //            if (nTabCount>0 && gpConEmu->ActiveCon()!=NULL)
 //			{
@@ -3457,16 +3457,16 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //                nTabCount = nTabCount;
 //            }
 //            #endif
-//			//100930 - нельзя. GetLastTitle() вернет текущую консоль, а pTab может быть из любой консоли!
+//			//100930 - РЅРµР»СЊР·СЏ. GetLastTitle() РІРµСЂРЅРµС‚ С‚РµРєСѓС‰СѓСЋ РєРѕРЅСЃРѕР»СЊ, Р° pTab РјРѕР¶РµС‚ Р±С‹С‚СЊ РёР· Р»СЋР±РѕР№ РєРѕРЅСЃРѕР»Рё!
 //            // -- _tcscpy(pTab->Name, gpConEmu->GetLastTitle()); //isFar() ? gpSet->szTabPanels : gpSet->pszTabConsole);
 //			_tcscpy(pTab->Name, _T("ConEmu"));
 //        }
 //        tFileName = pTab->Name;
 //        origLength = _tcslen(tFileName);
 //        //if (origLength>6) {
-//	    //    // Чтобы в заголовке было что-то вроде "{C:\Program Fil...- Far"
-//	    //    //                              вместо "{C:\Program F...} - Far"
-//		//	После добавления суффиков к заголовку фара - оно уже влезать не будет в любом случае... Так что если панели - '...' строго ставить в конце
+//	    //    // Р§С‚РѕР±С‹ РІ Р·Р°РіРѕР»РѕРІРєРµ Р±С‹Р»Рѕ С‡С‚Рѕ-С‚Рѕ РІСЂРѕРґРµ "{C:\Program Fil...- Far"
+//	    //    //                              РІРјРµСЃС‚Рѕ "{C:\Program F...} - Far"
+//		//	РџРѕСЃР»Рµ РґРѕР±Р°РІР»РµРЅРёСЏ СЃСѓС„С„РёРєРѕРІ Рє Р·Р°РіРѕР»РѕРІРєСѓ С„Р°СЂР° - РѕРЅРѕ СѓР¶Рµ РІР»РµР·Р°С‚СЊ РЅРµ Р±СѓРґРµС‚ РІ Р»СЋР±РѕРј СЃР»СѓС‡Р°Рµ... РўР°Рє С‡С‚Рѕ РµСЃР»Рё РїР°РЅРµР»Рё - '...' СЃС‚СЂРѕРіРѕ СЃС‚Р°РІРёС‚СЊ РІ РєРѕРЅС†Рµ
 //	    //    if (lstrcmp(tFileName + origLength - 6, L" - Far") == 0)
 //		//        nSplit = nMaxLen - 6;
 //	    //}
@@ -3503,29 +3503,29 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 //        _tcsncat(fileName, tFileName + origLength - 10, 10);*/
 //        //if (!nSplit)
 //	    //    nSplit = nMaxLen*2/3;
-//		//// 2009-09-20 Если в заголовке нет расширения (отсутствует точка)
+//		//// 2009-09-20 Р•СЃР»Рё РІ Р·Р°РіРѕР»РѕРІРєРµ РЅРµС‚ СЂР°СЃС€РёСЂРµРЅРёСЏ (РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ С‚РѕС‡РєР°)
 //		//const wchar_t* pszAdmin = gpSet->szAdminTitleSuffix;
 //		//const wchar_t* pszFrom = tFileName + origLength - (nMaxLen - nSplit);
 //		//if (!wcschr(pszFrom, L'.') && (*pszAdmin && !wcsstr(tFileName, pszAdmin)))
 //		//{
-//		//	// то троеточие ставить в конец, а не середину
+//		//	// С‚Рѕ С‚СЂРѕРµС‚РѕС‡РёРµ СЃС‚Р°РІРёС‚СЊ РІ РєРѕРЅРµС†, Р° РЅРµ СЃРµСЂРµРґРёРЅСѓ
 //		//	nSplit = nMaxLen;
 //		//}
 //		
 //		// "{C:\Program Files} - Far 2.1283 Administrator x64"
-//		// После добавления суффиков к заголовку фара - оно уже влезать не будет в любом случае... Так что если панели - '...' строго ставить в конце
+//		// РџРѕСЃР»Рµ РґРѕР±Р°РІР»РµРЅРёСЏ СЃСѓС„С„РёРєРѕРІ Рє Р·Р°РіРѕР»РѕРІРєСѓ С„Р°СЂР° - РѕРЅРѕ СѓР¶Рµ РІР»РµР·Р°С‚СЊ РЅРµ Р±СѓРґРµС‚ РІ Р»СЋР±РѕРј СЃР»СѓС‡Р°Рµ... РўР°Рє С‡С‚Рѕ РµСЃР»Рё РїР°РЅРµР»Рё - '...' СЃС‚СЂРѕРіРѕ СЃС‚Р°РІРёС‚СЊ РІ РєРѕРЅС†Рµ
 //		nSplit = nMaxLen;
 //        
 //        _tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
-//        szEllip[nSplit] = L'\x2026' /*"…"*/;
+//        szEllip[nSplit] = L'\x2026' /*"вЂ¦"*/;
 //        szEllip[nSplit+1] = 0;
-//        //_tcscat(szEllip, L"\x2026" /*"…"*/);
+//        //_tcscat(szEllip, L"\x2026" /*"вЂ¦"*/);
 //        //_tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
 //        
 //        tFileName = szEllip;
 //    }
-//    // szFormat различается для Panel/Viewer(*)/Editor(*)
-//    // Пример: "%i-[%s] *"
+//    // szFormat СЂР°Р·Р»РёС‡Р°РµС‚СЃСЏ РґР»СЏ Panel/Viewer(*)/Editor(*)
+//    // РџСЂРёРјРµСЂ: "%i-[%s] *"
 //    pszNo = wcsstr(szFormat, L"%i");
 //    pszTitle = wcsstr(szFormat, L"%s");
 //    if (pszNo == NULL)
@@ -3541,7 +3541,7 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 
 
 
-// Переключение табов
+// РџРµСЂРµРєР»СЋС‡РµРЅРёРµ С‚Р°Р±РѕРІ
 
 //int TabBarClass::GetIndexByTab(VConTabs tab)
 //{
@@ -3559,11 +3559,11 @@ void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 
 int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 {
-	_ASSERTE(FALSE); // переделать
+	_ASSERTE(FALSE); // РїРµСЂРµРґРµР»Р°С‚СЊ
 	return 0;
 //#if 0
 //    BOOL lbRecentMode = /*(gpSet->isTabs != 0) &&*/ gpSet->isTabRecent;
-//	// GetCurSel вернет текущий HoverTab, если переключение уже было начато (удерживается Ctrl)
+//	// GetCurSel РІРµСЂРЅРµС‚ С‚РµРєСѓС‰РёР№ HoverTab, РµСЃР»Рё РїРµСЂРµРєР»СЋС‡РµРЅРёРµ СѓР¶Рµ Р±С‹Р»Рѕ РЅР°С‡Р°С‚Рѕ (СѓРґРµСЂР¶РёРІР°РµС‚СЃСЏ Ctrl)
 //    int nCurSel = GetCurSel();
 //    int nCurCount = GetItemCount();
 //	VConTabs cur = {NULL};
@@ -3575,7 +3575,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 //	//}
 //	//#endif
 //    if (nCurCount < 1)
-//    	return 0; // хотя такого и не должно быть
+//    	return 0; // С…РѕС‚СЏ С‚Р°РєРѕРіРѕ Рё РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ
 //    
 //    if (lbRecentMode && nCurSel >= 0 && (UINT)nCurSel < m_Tab2VCon.size())
 //        cur = m_Tab2VCon[nCurSel];
@@ -3591,15 +3591,15 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 //        	while (iter != m_TabStack.end())
 //			{
 //				VConTabs Item = *iter;
-//        		// Найти в стеке выделенный таб
+//        		// РќР°Р№С‚Рё РІ СЃС‚РµРєРµ РІС‹РґРµР»РµРЅРЅС‹Р№ С‚Р°Р±
 //        		if (Item == cur)
 //				{
-//        			// Определить следующий таб, который мы можем активировать
+//        			// РћРїСЂРµРґРµР»РёС‚СЊ СЃР»РµРґСѓСЋС‰РёР№ С‚Р°Р±, РєРѕС‚РѕСЂС‹Р№ РјС‹ РјРѕР¶РµРј Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ
 //        			do
 //					{
-//	        			iter ++; // Если дошли до конца (сейчас выделен последний таб) вернуть первый
+//	        			iter ++; // Р•СЃР»Рё РґРѕС€Р»Рё РґРѕ РєРѕРЅС†Р° (СЃРµР№С‡Р°СЃ РІС‹РґРµР»РµРЅ РїРѕСЃР»РµРґРЅРёР№ С‚Р°Р±) РІРµСЂРЅСѓС‚СЊ РїРµСЂРІС‹Р№
 //    	    			if (iter == m_TabStack.end()) iter = m_TabStack.begin();
-//    	    			// Определить индекс в m_Tab2VCon
+//    	    			// РћРїСЂРµРґРµР»РёС‚СЊ РёРЅРґРµРєСЃ РІ m_Tab2VCon
 //    	    			i = GetIndexByTab ( *iter );
 //    	    			if (CanActivateTab(i))
 //						{
@@ -3610,7 +3610,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 //        		}
 //				iter ++;
 //        	}
-//    	} // Если не смогли в стиле Recent - идем простым путем
+//    	} // Р•СЃР»Рё РЅРµ СЃРјРѕРіР»Рё РІ СЃС‚РёР»Рµ Recent - РёРґРµРј РїСЂРѕСЃС‚С‹Рј РїСѓС‚РµРј
 //    	
 //    
 //        for (i = nCurSel+1; nNewSel == -1 && i < nCurCount; i++)
@@ -3629,15 +3629,15 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 //        	while (iter != m_TabStack.rend())
 //			{
 //				VConTabs Item = *iter;
-//        		// Найти в стеке выделенный таб
+//        		// РќР°Р№С‚Рё РІ СЃС‚РµРєРµ РІС‹РґРµР»РµРЅРЅС‹Р№ С‚Р°Р±
 //        		if (Item == cur)
 //				{
-//        			// Определить следующий таб, который мы можем активировать
+//        			// РћРїСЂРµРґРµР»РёС‚СЊ СЃР»РµРґСѓСЋС‰РёР№ С‚Р°Р±, РєРѕС‚РѕСЂС‹Р№ РјС‹ РјРѕР¶РµРј Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ
 //        			do
 //					{
-//	        			iter ++; // Если дошли до конца (сейчас выделен последний таб) вернуть первый
+//	        			iter ++; // Р•СЃР»Рё РґРѕС€Р»Рё РґРѕ РєРѕРЅС†Р° (СЃРµР№С‡Р°СЃ РІС‹РґРµР»РµРЅ РїРѕСЃР»РµРґРЅРёР№ С‚Р°Р±) РІРµСЂРЅСѓС‚СЊ РїРµСЂРІС‹Р№
 //    	    			if (iter == m_TabStack.rend()) iter = m_TabStack.rbegin();
-//    	    			// Определить индекс в m_Tab2VCon
+//    	    			// РћРїСЂРµРґРµР»РёС‚СЊ РёРЅРґРµРєСЃ РІ m_Tab2VCon
 //    	    			i = GetIndexByTab ( *iter );
 //    	    			if (CanActivateTab(i))
 //						{
@@ -3648,7 +3648,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 //        		}
 //				iter++;
 //        	}
-//    	} // Если не смогли в стиле Recent - идем простым путем
+//    	} // Р•СЃР»Рё РЅРµ СЃРјРѕРіР»Рё РІ СЃС‚РёР»Рµ Recent - РёРґРµРј РїСЂРѕСЃС‚С‹Рј РїСѓС‚РµРј
 //    
 //        for (i = nCurSel-1; nNewSel == -1 && i >= 0; i++)
 //            if (CanActivateTab(i)) nNewSel = i;
@@ -3679,11 +3679,11 @@ void TabBarClass::Switch(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
     
     if (nNewSel != -1)
 	{
-		// mh_Tabbar может быть и создан, Но отключен пользователем!
+		// mh_Tabbar РјРѕР¶РµС‚ Р±С‹С‚СЊ Рё СЃРѕР·РґР°РЅ, РќРѕ РѕС‚РєР»СЋС‡РµРЅ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј!
         if (gpSet->isTabLazy && /*mh_Tabbar &&*/ gpSet->isTabs)
 		{
             mb_InKeySwitching = TRUE;
-            // Пока Ctrl не отпущен - только подсвечиваем таб, а не переключаем реально
+            // РџРѕРєР° Ctrl РЅРµ РѕС‚РїСѓС‰РµРЅ - С‚РѕР»СЊРєРѕ РїРѕРґСЃРІРµС‡РёРІР°РµРј С‚Р°Р±, Р° РЅРµ РїРµСЂРµРєР»СЋС‡Р°РµРј СЂРµР°Р»СЊРЅРѕ
             HoverTab ( nNewSel );
         }
 		else
@@ -3718,7 +3718,7 @@ void TabBarClass::SwitchRollback()
 	}
 }
 
-//// Убьет из стека старые, и добавит новые
+//// РЈР±СЊРµС‚ РёР· СЃС‚РµРєР° СЃС‚Р°СЂС‹Рµ, Рё РґРѕР±Р°РІРёС‚ РЅРѕРІС‹Рµ
 //void TabBarClass::CheckStack()
 //{
 //	_ASSERTE(gpConEmu->isMainThread());
@@ -3758,7 +3758,7 @@ void TabBarClass::SwitchRollback()
 //	}
 //}
 //
-//// Убьет из стека отсутствующих и поместит tab на верх стека
+//// РЈР±СЊРµС‚ РёР· СЃС‚РµРєР° РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… Рё РїРѕРјРµСЃС‚РёС‚ tab РЅР° РІРµСЂС… СЃС‚РµРєР°
 //void TabBarClass::AddStack(VConTabs tab)
 //{
 //	_ASSERTE(gpConEmu->isMainThread());
@@ -3785,7 +3785,7 @@ void TabBarClass::SwitchRollback()
 //			iter ++;
 //		}
 //	}
-//	if (!lbExist) // поместить наверх стека
+//	if (!lbExist) // РїРѕРјРµСЃС‚РёС‚СЊ РЅР°РІРµСЂС… СЃС‚РµРєР°
 //		m_TabStack.insert(m_TabStack.begin(), tab);
 //
 //	CheckStack();
@@ -3858,7 +3858,7 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 
 	if (!GetVConFromTab(tabIndex, &pVCon, &wndIndex))
 	{
-		if (mb_InKeySwitching) Update();  // показать реальное положение дел
+		if (mb_InKeySwitching) Update();  // РїРѕРєР°Р·Р°С‚СЊ СЂРµР°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РґРµР»
 
 		return NULL;
 	}
@@ -3870,21 +3870,21 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 
 	if (!bChangeOk)
 	{
-		// Всплыть тултип с руганью - не смогли активировать
+		// Р’СЃРїР»С‹С‚СЊ С‚СѓР»С‚РёРї СЃ СЂСѓРіР°РЅСЊСЋ - РЅРµ СЃРјРѕРіР»Рё Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ
 		ShowTabError(L"This tab can't be activated now!", tabIndex);
 	}
 
-	// Чтобы лишнее не мелькало - активируем консоль
-	// ТОЛЬКО после смены таба (успешной или неудачной - неважно)
-	TODO("Не срабатывает. Новые данные из консоли получаются с задержкой и мелькает старое содержимое активируемой консоли");
+	// Р§С‚РѕР±С‹ Р»РёС€РЅРµРµ РЅРµ РјРµР»СЊРєР°Р»Рѕ - Р°РєС‚РёРІРёСЂСѓРµРј РєРѕРЅСЃРѕР»СЊ
+	// РўРћР›Р¬РљРћ РїРѕСЃР»Рµ СЃРјРµРЅС‹ С‚Р°Р±Р° (СѓСЃРїРµС€РЅРѕР№ РёР»Рё РЅРµСѓРґР°С‡РЅРѕР№ - РЅРµРІР°Р¶РЅРѕ)
+	TODO("РќРµ СЃСЂР°Р±Р°С‚С‹РІР°РµС‚. РќРѕРІС‹Рµ РґР°РЅРЅС‹Рµ РёР· РєРѕРЅСЃРѕР»Рё РїРѕР»СѓС‡Р°СЋС‚СЃСЏ СЃ Р·Р°РґРµСЂР¶РєРѕР№ Рё РјРµР»СЊРєР°РµС‚ СЃС‚Р°СЂРѕРµ СЃРѕРґРµСЂР¶РёРјРѕРµ Р°РєС‚РёРІРёСЂСѓРµРјРѕР№ РєРѕРЅСЃРѕР»Рё");
 
 	if (bNeedActivate)
 	{
 		if (!gpConEmu->Activate(pVCon))
 		{
-			if (mb_InKeySwitching) Update();  // показать реальное положение дел
+			if (mb_InKeySwitching) Update();  // РїРѕРєР°Р·Р°С‚СЊ СЂРµР°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РґРµР»
 
-			TODO("А текущий таб не слетит, если активировать не удалось?");
+			TODO("Рђ С‚РµРєСѓС‰РёР№ С‚Р°Р± РЅРµ СЃР»РµС‚РёС‚, РµСЃР»Рё Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РЅРµ СѓРґР°Р»РѕСЃСЊ?");
 			return NULL;
 		}
 	}
@@ -3893,7 +3893,7 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 	{
 		pVCon = NULL;
 
-		if (mb_InKeySwitching) Update();  // показать реальное положение дел
+		if (mb_InKeySwitching) Update();  // РїРѕРєР°Р·Р°С‚СЊ СЂРµР°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РґРµР»
 	}
 
 	return pVCon;
@@ -3968,9 +3968,9 @@ void TabBarClass::OnToolbarCommand(LPARAM lParam, int anPaneID, int anCmd, bool 
 		break;
 
 	case TID_MAXIMIZE:
-		// Чтобы клик случайно не провалился в консоль
+		// Р§С‚РѕР±С‹ РєР»РёРє СЃР»СѓС‡Р°Р№РЅРѕ РЅРµ РїСЂРѕРІР°Р»РёР»СЃСЏ РІ РєРѕРЅСЃРѕР»СЊ
 		gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
-		// Аналог AltF9
+		// РђРЅР°Р»РѕРі AltF9
 		gpConEmu->OnAltF9(TRUE);
 		break;
 

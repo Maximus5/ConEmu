@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 
 #define CE_PIPE_TYPE       PIPE_TYPE_MESSAGE

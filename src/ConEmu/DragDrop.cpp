@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -142,11 +142,11 @@ CDragDrop::~CDragDrop()
 	}
 	else
 	{
-		// незаконченных нитей нет
-		// -- LeaveCriticalSection(&m_CrThreads); -- 101229 секция уже закрыта
+		// РЅРµР·Р°РєРѕРЅС‡РµРЅРЅС‹С… РЅРёС‚РµР№ РЅРµС‚
+		// -- LeaveCriticalSection(&m_CrThreads); -- 101229 СЃРµРєС†РёСЏ СѓР¶Рµ Р·Р°РєСЂС‹С‚Р°
 	}
 
-	// Завершение всех нитей драга
+	// Р—Р°РІРµСЂС€РµРЅРёРµ РІСЃРµС… РЅРёС‚РµР№ РґСЂР°РіР°
 	TerminateDrag();
 
 
@@ -197,7 +197,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 			wchar_t szStep[255]; _wsprintf(szStep, countof(szStep), L"Posting DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)mp_DataObject, (DWORD)pDropSource);
 			DebugLog(szStep);
 			PostMessage(pds->hWnd, MSG_STARTDRAG, dwAllowedEffects, (LPARAM)pDropSource);
-			pDropSource = NULL; // чтобы ниже не от-release-илось
+			pDropSource = NULL; // С‡С‚РѕР±С‹ РЅРёР¶Рµ РЅРµ РѕС‚-release-РёР»РѕСЃСЊ
 		}
 		else
 		{
@@ -296,7 +296,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 		return NULL;
 	}
 
-	// Скорее всего на панели путь НЕ в UNC формате, конвертим
+	// РЎРєРѕСЂРµРµ РІСЃРµРіРѕ РЅР° РїР°РЅРµР»Рё РїСѓС‚СЊ РќР• РІ UNC С„РѕСЂРјР°С‚Рµ, РєРѕРЅРІРµСЂС‚РёРј
 	BOOL lbNeedUnc = FALSE;
 
 	if (pszPanelPath[0] != L'\\' || pszPanelPath[1] != L'\\' || pszPanelPath[2] != L'?' || pszPanelPath[3] != L'\\')
@@ -328,7 +328,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 	wcscat(pszFullName, L"\\");
 	MCHKHEAP;
 
-	// Должен содержать заключительный "\\"
+	// Р”РѕР»Р¶РµРЅ СЃРѕРґРµСЂР¶Р°С‚СЊ Р·Р°РєР»СЋС‡РёС‚РµР»СЊРЅС‹Р№ "\\"
 	if (asSubFolder && *asSubFolder)
 	{
 		if (abFolder)
@@ -345,7 +345,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 
 	wcscpy(pszFullName+nPathLen, pszNameW);
 
-	// Отрезать хвостовые пробелы. Гррр....
+	// РћС‚СЂРµР·Р°С‚СЊ С…РІРѕСЃС‚РѕРІС‹Рµ РїСЂРѕР±РµР»С‹. Р“СЂСЂСЂ....
 	INT_PTR nTotal = _tcslen(pszFullName);
 	while ((nTotal > 0) && (pszFullName[nTotal-1] == L' '))
 	{
@@ -360,10 +360,10 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 
 
 	MCHKHEAP;
-	// Путь готов, проверяем наличие файла?
+	// РџСѓС‚СЊ РіРѕС‚РѕРІ, РїСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ С„Р°Р№Р»Р°?
 	WIN32_FIND_DATAW fnd = {0};
-	WARNING("Обломается в SymLink'е :(");
-	// В SymLink проверка наличия папки не получится
+	WARNING("РћР±Р»РѕРјР°РµС‚СЃСЏ РІ SymLink'Рµ :(");
+	// Р’ SymLink РїСЂРѕРІРµСЂРєР° РЅР°Р»РёС‡РёСЏ РїР°РїРєРё РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ
 	HANDLE hFind = FindFirstFile(pszFullName, &fnd);
 
 	if (hFind != INVALID_HANDLE_VALUE)
@@ -415,7 +415,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 				return NULL;
 			}
 
-			// сброс ReadOnly, при необходимости
+			// СЃР±СЂРѕСЃ ReadOnly, РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё
 			if (fnd.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM|FILE_ATTRIBUTE_READONLY))
 				SetFileAttributes(pszFullName, FILE_ATTRIBUTE_NORMAL);
 		}
@@ -444,7 +444,7 @@ HANDLE CDragDrop::FileStart(LPCWSTR pszFullName)
 	if (!pszFullName || !*pszFullName)
 		return INVALID_HANDLE_VALUE;
 
-	// Создаем файл
+	// РЎРѕР·РґР°РµРј С„Р°Р№Р»
 	HANDLE hFile = CreateFile(pszFullName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	if (hFile == INVALID_HANDLE_VALUE)
@@ -518,10 +518,10 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 		goto wrap;
 	}
 
-	// CF_HDROP в структуре отсутсвует!
+	// CF_HDROP РІ СЃС‚СЂСѓРєС‚СѓСЂРµ РѕС‚СЃСѓС‚СЃРІСѓРµС‚!
 	//fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
 
-	// Опитизировано. объединены юникодная и ансишная ветки
+	// РћРїРёС‚РёР·РёСЂРѕРІР°РЅРѕ. РѕР±СЉРµРґРёРЅРµРЅС‹ СЋРЅРёРєРѕРґРЅР°СЏ Рё Р°РЅСЃРёС€РЅР°СЏ РІРµС‚РєРё
 
 	for (int iu = 0; iu <= 1; iu++)
 	{
@@ -531,7 +531,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 		}
 		else
 		{
-			// Outlook 2k передает ANSI!
+			// Outlook 2k РїРµСЂРµРґР°РµС‚ ANSI!
 			fmtetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILEDESCRIPTORA);
 		}
 
@@ -556,7 +556,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 				mn_AllFiles = pDescA->cItems;
 			}
 
-			// Имена файлов теперь лежат в stgMedium, а для получения содержимого
+			// РРјРµРЅР° С„Р°Р№Р»РѕРІ С‚РµРїРµСЂСЊ Р»РµР¶Р°С‚ РІ stgMedium, Р° РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ СЃРѕРґРµСЂР¶РёРјРѕРіРѕ
 			fmtetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILECONTENTS);
 			pszSubFolder[0] = 0;
 
@@ -596,24 +596,24 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 
 				if (!lbFolder)
 				{
-					// Файл? Сменилась подпапка?
+					// Р¤Р°Р№Р»? РЎРјРµРЅРёР»Р°СЃСЊ РїРѕРґРїР°РїРєР°?
 					LPCWSTR pszSlash = wcsrchr(pszWideName, L'\\');
 
 					if (pszSlash)
 					{
-						INT_PTR nFolderLen = pszSlash - pszWideName; // БЕЗ слеша
-						INT_PTR nCurFolderLen = _tcslen(pszSubFolder); // с учетом слеша
+						INT_PTR nFolderLen = pszSlash - pszWideName; // Р‘Р•Р— СЃР»РµС€Р°
+						INT_PTR nCurFolderLen = _tcslen(pszSubFolder); // СЃ СѓС‡РµС‚РѕРј СЃР»РµС€Р°
 						int nCmp = wcsncmp(pszWideName, pszSubFolder, nCurFolderLen);
 
 						if (((nFolderLen + 1) != nCurFolderLen) && (nCmp == 0))
 						{
-							// OK, папка уже была создана
+							// OK, РїР°РїРєР° СѓР¶Рµ Р±С‹Р»Р° СЃРѕР·РґР°РЅР°
 						}
 						else
 						{
 							//_ASSERTE(FALSE && "Folder was not processed from DragObject?");
 							
-							// Поместить новый путь в SubFolder
+							// РџРѕРјРµСЃС‚РёС‚СЊ РЅРѕРІС‹Р№ РїСѓС‚СЊ РІ SubFolder
 
 							if ((nFolderLen + 1) >= cchSubFolder)
 							{
@@ -634,7 +634,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 					else
 					{
 						_ASSERTE((pszSubFolder[0]==0) && "Files in stream must contains local paths?");
-						// Сброс папки. По идее, файлы должны указываться с относительными путями.
+						// РЎР±СЂРѕСЃ РїР°РїРєРё. РџРѕ РёРґРµРµ, С„Р°Р№Р»С‹ РґРѕР»Р¶РЅС‹ СѓРєР°Р·С‹РІР°С‚СЊСЃСЏ СЃ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅС‹РјРё РїСѓС‚СЏРјРё.
 						pszSubFolder[0] = 0;
 					}
 				}
@@ -664,7 +664,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 					// if !lbFolder - pszSubFolder already processed
 					if (lbFolder)
 					{
-						// Запомнить текущий путь в SubFolder
+						// Р—Р°РїРѕРјРЅРёС‚СЊ С‚РµРєСѓС‰РёР№ РїСѓС‚СЊ РІ SubFolder
 						INT_PTR nFolderLen = _tcslen(pszWideName);
 
 						if ((nFolderLen + 1) >= cchSubFolder)
@@ -685,7 +685,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 						}
 					}
 
-					// Раз это папка - просто создать
+					// Р Р°Р· СЌС‚Рѕ РїР°РїРєР° - РїСЂРѕСЃС‚Рѕ СЃРѕР·РґР°С‚СЊ
 					if (!MyCreateDirectory(pszNewFolder))
 					{
 						DWORD nErr = GetLastError();
@@ -711,7 +711,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 					if (lbFolder)
 					{
 						SafeFree(pszWideBuf);
-						continue; // переходим к следующему файлу/папке
+						continue; // РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ С„Р°Р№Р»Сѓ/РїР°РїРєРµ
 					}
 				}
 
@@ -732,13 +732,13 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 
 				// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
 				STGMEDIUM stgMedium = { 0 };
-				//было if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm)
-				// не встречалось ни одного источника, который GetDataHere поддерживает
-				//fmtetc.tymed = TYMED_FILE; // Сначала пробуем "попросить записать в файл"
+				//Р±С‹Р»Рѕ if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm)
+				// РЅРµ РІСЃС‚СЂРµС‡Р°Р»РѕСЃСЊ РЅРё РѕРґРЅРѕРіРѕ РёСЃС‚РѕС‡РЅРёРєР°, РєРѕС‚РѕСЂС‹Р№ GetDataHere РїРѕРґРґРµСЂР¶РёРІР°РµС‚
+				//fmtetc.tymed = TYMED_FILE; // РЎРЅР°С‡Р°Р»Р° РїСЂРѕР±СѓРµРј "РїРѕРїСЂРѕСЃРёС‚СЊ Р·Р°РїРёСЃР°С‚СЊ РІ С„Р°Р№Р»"
 				//stgMedium.tymed = TYMED_FILE;
 				//stgMedium.pstm = NULL;
 				//stgMedium.lpszFileName = ::SysAllocString(pszNewFileName);
-				//// Попробуем? Но пока не встречал. Возвращают E_NOTIMPL
+				//// РџРѕРїСЂРѕР±СѓРµРј? РќРѕ РїРѕРєР° РЅРµ РІСЃС‚СЂРµС‡Р°Р». Р’РѕР·РІСЂР°С‰Р°СЋС‚ E_NOTIMPL
 				//hrStg = pDataObject->GetDataHere(&fmtetc, &stgMedium);
 				//::SysFreeString(stgMedium.lpszFileName);
 				//if (hrStg == S_OK)
@@ -746,7 +746,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 				//	free(pszNewFileName); pszNewFileName = NULL;
 				//	continue;
 				//}
-				// Теперь - пробуем IStream
+				// РўРµРїРµСЂСЊ - РїСЂРѕР±СѓРµРј IStream
 				fmtetc.tymed = TYMED_ISTREAM|TYMED_HGLOBAL;
 				stgMedium.tymed = 0; //TYMED_ISTREAM;
 				stgMedium.pstm = NULL;
@@ -769,10 +769,10 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 
 						if (hFile != INVALID_HANDLE_VALUE)
 						{
-							// Может возвращать и S_FALSE (конец файла?)
+							// РњРѕР¶РµС‚ РІРѕР·РІСЂР°С‰Р°С‚СЊ Рё S_FALSE (РєРѕРЅРµС† С„Р°Р№Р»Р°?)
 							while(SUCCEEDED(hr = pFile->Read(cBuffer, BufferSize, &dwRead)) && dwRead)
 							{
-								TODO("Сюда прогресс с градусником прицепить можно");
+								TODO("РЎСЋРґР° РїСЂРѕРіСЂРµСЃСЃ СЃ РіСЂР°РґСѓСЃРЅРёРєРѕРј РїСЂРёС†РµРїРёС‚СЊ РјРѕР¶РЅРѕ");
 
 								if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
 									break;
@@ -789,7 +789,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 
 						//pFile->Release();
 						ReleaseStgMedium(&stgMedium);
-						// OK! Могут быть еще файлы!
+						// OK! РњРѕРіСѓС‚ Р±С‹С‚СЊ РµС‰Рµ С„Р°Р№Р»С‹!
 						// -- break;
 					}
 					else if (stgMedium.tymed == TYMED_HGLOBAL && stgMedium.hGlobal)
@@ -815,7 +815,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 								while(nFileSize > 0)
 								{
 									dwRead = min(nFileSize,65536); //-V103
-									TODO("Сюда прогресс с градусником прицепить можно");
+									TODO("РЎСЋРґР° РїСЂРѕРіСЂРµСЃСЃ СЃ РіСЂР°РґСѓСЃРЅРёРєРѕРј РїСЂРёС†РµРїРёС‚СЊ РјРѕР¶РЅРѕ");
 
 									if (FileWrite(hFile, dwRead, ptrCur) != S_OK)
 										break;
@@ -831,7 +831,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 						GlobalUnlock(stgMedium.hGlobal);
 						//GlobalFree(stgMedium.hGlobal);
 						ReleaseStgMedium(&stgMedium);
-						// OK! Могут быть еще файлы!
+						// OK! РњРѕРіСѓС‚ Р±С‹С‚СЊ РµС‰Рµ С„Р°Р№Р»С‹!
 						// -- break;
 					}
 					else
@@ -840,16 +840,16 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 						ReleaseStgMedium(&stgMedium);
 					}
 
-					//continue; -- не нужно
+					//continue; -- РЅРµ РЅСѓР¶РЅРѕ
 
 					if (pszNewFileName)
 					{
-						// Уже должен быть освобожден, но проверим
+						// РЈР¶Рµ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РѕСЃРІРѕР±РѕР¶РґРµРЅ, РЅРѕ РїСЂРѕРІРµСЂРёРј
 						free(pszNewFileName); pszNewFileName = NULL;
 					}
 				}
 
-				// Ошибку показать один раз на дроп (чтобы не ругаться на КАЖДЫЙ бросаемый файл)
+				// РћС€РёР±РєСѓ РїРѕРєР°Р·Р°С‚СЊ РѕРґРёРЅ СЂР°Р· РЅР° РґСЂРѕРї (С‡С‚РѕР±С‹ РЅРµ СЂСѓРіР°С‚СЊСЃСЏ РЅР° РљРђР–Р”Р«Р™ Р±СЂРѕСЃР°РµРјС‹Р№ С„Р°Р№Р»)
 				//MBoxA(_T("Drag object does not contains known medium!"));
 				if (!lbKnownMedium && (sUnknownError[0] == 0))
 					_wsprintf(sUnknownError, SKIPLEN(countof(sUnknownError)) L"Drag item #%i does not contains known medium!", mn_CurFile+1);
@@ -860,7 +860,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 			//GlobalFree(hDesc);
 			ReleaseStgMedium(&stgDescr);
 
-			// Если был обнаружен элемент, в котором ни один формат не известен - ругаемся
+			// Р•СЃР»Рё Р±С‹Р» РѕР±РЅР°СЂСѓР¶РµРЅ СЌР»РµРјРµРЅС‚, РІ РєРѕС‚РѕСЂРѕРј РЅРё РѕРґРёРЅ С„РѕСЂРјР°С‚ РЅРµ РёР·РІРµСЃС‚РµРЅ - СЂСѓРіР°РµРјСЃСЏ
 			if (sUnknownError[0])
 			{
 				ReportUnknownData(pDataObject, sUnknownError);
@@ -868,7 +868,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 
 			DebugLog(NULL, TRUE);
 			goto wrap;
-		} // если удалось получить "pDataObject->GetData(&fmtetc, &stgMedium)" - уже вышли из функции
+		} // РµСЃР»Рё СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ "pDataObject->GetData(&fmtetc, &stgMedium)" - СѓР¶Рµ РІС‹С€Р»Рё РёР· С„СѓРЅРєС†РёРё
 	}
 
 	ReportUnknownData(pDataObject, L"Drag object does not contains known formats!");
@@ -932,7 +932,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 
 	if (!bNoFarConsole && gpSet->isDropUseMenu && pRCon->isFar(true))
 	{
-		// Drop в ком.строку
+		// Drop РІ РєРѕРј.СЃС‚СЂРѕРєСѓ
 		HMENU hPopup = CreatePopupMenu();
 		enum {
 			idNamesOnly = 1,
@@ -977,7 +977,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 
 	if (bNoFarConsole && pRCon->isFar(true) /*&& pRCon->isAlive()*/)
 	{
-		bNoFarConsole = FALSE; // таки послать макросом (это может быть редактор или диалог)
+		bNoFarConsole = FALSE; // С‚Р°РєРё РїРѕСЃР»Р°С‚СЊ РјР°РєСЂРѕСЃРѕРј (СЌС‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ СЂРµРґР°РєС‚РѕСЂ РёР»Рё РґРёР°Р»РѕРі)
 		bDontAddSpace = TRUE;
 	}
 
@@ -1004,7 +1004,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		if (lQueryRc >= MAX_DROP_PATH) continue;
 
 		wchar_t* psz = pszText;
-		// обработка кавычек и слэшей
+		// РѕР±СЂР°Р±РѕС‚РєР° РєР°РІС‹С‡РµРє Рё СЃР»СЌС€РµР№
 		//while ((psz = wcschr(psz, L'"')) != NULL) {
 		//	*psz = L'\'';
 		//}
@@ -1037,7 +1037,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 
 		if ((psz = wcschr(pszText, L' ')) != NULL)
 		{
-			// Имя нужно окавычить
+			// РРјСЏ РЅСѓР¶РЅРѕ РѕРєР°РІС‹С‡РёС‚СЊ
 			if (!bNoFarConsole)
 			{
 				*(--pszText) = L'\"';
@@ -1209,7 +1209,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		return S_FALSE;
 	}
 
-	// Определить, на какую панель бросаем
+	// РћРїСЂРµРґРµР»РёС‚СЊ, РЅР° РєР°РєСѓСЋ РїР°РЅРµР»СЊ Р±СЂРѕСЃР°РµРј
 	HWND hWndDC = VCon->GetView();
 	if (!hWndDC)
 	{
@@ -1222,7 +1222,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	//pt.x/=gpSet->Log Font.lfWidth;
 	//pt.y/=gpSet->Log Font.lfHeight;
 	BOOL lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt);
-	// Бросок в командную строку (или в редактор, потом...)
+	// Р‘СЂРѕСЃРѕРє РІ РєРѕРјР°РЅРґРЅСѓСЋ СЃС‚СЂРѕРєСѓ (РёР»Рё РІ СЂРµРґР°РєС‚РѕСЂ, РїРѕС‚РѕРј...)
 	BOOL lbDropFileNamesOnly = FALSE;
 
 	if (m_pfpi->NoFarConsole ||
@@ -1234,19 +1234,19 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 
 	SetForegroundWindow(ghWnd);
 
-	// Если тащат просто между панелями - сразу в FAR
+	// Р•СЃР»Рё С‚Р°С‰Р°С‚ РїСЂРѕСЃС‚Рѕ РјРµР¶РґСѓ РїР°РЅРµР»СЏРјРё - СЃСЂР°Р·Сѓ РІ FAR
 	if (!lbDropFileNamesOnly && !lbActive && mb_selfdrag
 	        && (*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE))
 	{
 		//wchar_t *mcr = (wchar_t*)calloc(128, sizeof(wchar_t));
-		////2010-02-18 Не было префикса '@'
-		////2010-03-26 префикс '@' ставить нельзя, ибо тогда процесса копирования видно не будет при отсутствии подтверждения
-		//// Если тянули ".." то перед копированием на другую панель сначала необходимо выйти на верхний уровень
+		////2010-02-18 РќРµ Р±С‹Р»Рѕ РїСЂРµС„РёРєСЃР° '@'
+		////2010-03-26 РїСЂРµС„РёРєСЃ '@' СЃС‚Р°РІРёС‚СЊ РЅРµР»СЊР·СЏ, РёР±Рѕ С‚РѕРіРґР° РїСЂРѕС†РµСЃСЃР° РєРѕРїРёСЂРѕРІР°РЅРёСЏ РІРёРґРЅРѕ РЅРµ Р±СѓРґРµС‚ РїСЂРё РѕС‚СЃСѓС‚СЃС‚РІРёРё РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ
+		//// Р•СЃР»Рё С‚СЏРЅСѓР»Рё ".." С‚Рѕ РїРµСЂРµРґ РєРѕРїРёСЂРѕРІР°РЅРёРµРј РЅР° РґСЂСѓРіСѓСЋ РїР°РЅРµР»СЊ СЃРЅР°С‡Р°Р»Р° РЅРµРѕР±С…РѕРґРёРјРѕ РІС‹Р№С‚Рё РЅР° РІРµСЂС…РЅРёР№ СѓСЂРѕРІРµРЅСЊ
 		//lstrcpyW(mcr, L"$If (APanel.SelCount==0 && APanel.Current==\"..\") CtrlPgUp $End ");
-		//// Теперь собственно клавиша запуска
+		//// РўРµРїРµСЂСЊ СЃРѕР±СЃС‚РІРµРЅРЅРѕ РєР»Р°РІРёС€Р° Р·Р°РїСѓСЃРєР°
 		//lstrcatW(mcr, (*pdwEffect == DROPEFFECT_MOVE) ? L"F6" : L"F5");
 
-		//// И если просили копировать сразу без подтверждения
+		//// Р РµСЃР»Рё РїСЂРѕСЃРёР»Рё РєРѕРїРёСЂРѕРІР°С‚СЊ СЃСЂР°Р·Сѓ Р±РµР· РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ
 		//if (gpSet->isDropEnabled==2)
 		//	lstrcatW(mcr, L" Enter "); //$MMode 1");
 
@@ -1254,7 +1254,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 
 		gpConEmu->PostDragCopy((*pdwEffect == DROPEFFECT_MOVE));
 
-		return S_OK; // Тащим внутри ФАРа
+		return S_OK; // РўР°С‰РёРј РІРЅСѓС‚СЂРё Р¤РђР Р°
 	}
 
 	STGMEDIUM stgMedium = { 0 };
@@ -1277,7 +1277,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 			return S_OK;
 		}
 
-		// Выполнить Drop из Outlook, и др. ShellExtensions (через IStream)
+		// Р’С‹РїРѕР»РЅРёС‚СЊ Drop РёР· Outlook, Рё РґСЂ. ShellExtensions (С‡РµСЂРµР· IStream)
 		hr = DropFromStream(pDataObject, lbActive);
 		return hr;
 	}
@@ -1291,7 +1291,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	{
 		//GlobalFree(stgMedium.hGlobal);
 		ReleaseStgMedium(&stgMedium);
-		return S_OK; // ничего нет, выходим
+		return S_OK; // РЅРёС‡РµРіРѕ РЅРµС‚, РІС‹С…РѕРґРёРј
 	}
 
 	DebugLog(_T("DnD: Drop starting"));
@@ -1303,7 +1303,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		return hr;
 	}
 
-	// Если создавать линки - делаем сразу и выходим
+	// Р•СЃР»Рё СЃРѕР·РґР°РІР°С‚СЊ Р»РёРЅРєРё - РґРµР»Р°РµРј СЃСЂР°Р·Сѓ Рё РІС‹С…РѕРґРёРј
 	if (*pdwEffect == DROPEFFECT_LINK)
 	{
 		hr = DropLinks(hDrop, iQuantity, lbActive);
@@ -1319,7 +1319,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		sfop->pDnD = this;
 		hr = pDataObject->GetData(&fmtetcMap, &stgMediumMap);
 		BOOL lbMultiDest = (hr == S_OK && stgMediumMap.hGlobal);
-		TODO("Освободить stgMediumMap");
+		TODO("РћСЃРІРѕР±РѕРґРёС‚СЊ stgMediumMap");
 		LPCWSTR pszFileMap = (LPCWSTR)GlobalLock(stgMediumMap.hGlobal);
 
 		if (!pszFileMap) lbMultiDest = FALSE;
@@ -1394,7 +1394,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 			sfop->fop.wFunc=FO_COPY;
 
 		sfop->fop.fFlags = lbMultiDest ? FOF_MULTIDESTFILES : 0;
-		//sfop->fop.fFlags=FOF_SIMPLEPROGRESS; -- пусть полностью показывает
+		//sfop->fop.fFlags=FOF_SIMPLEPROGRESS; -- РїСѓСЃС‚СЊ РїРѕР»РЅРѕСЃС‚СЊСЋ РїРѕРєР°Р·С‹РІР°РµС‚
 		DebugLog(_T("DnD: Shell operation starting"));
 		ThInfo th;
 		th.hThread = CreateThread(NULL, 0, CDragDrop::ShellOpThreadProc, sfop, 0, &th.dwThreadId);
@@ -1423,11 +1423,11 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 	int hr = S_OK;
 	CDragDrop* pDragDrop = sfop->pDnD;
 
-	// Собственно операция копирования/перемещения...
+	// РЎРѕР±СЃС‚РІРµРЅРЅРѕ РѕРїРµСЂР°С†РёСЏ РєРѕРїРёСЂРѕРІР°РЅРёСЏ/РїРµСЂРµРјРµС‰РµРЅРёСЏ...
 	try
 	{
-		//-- не сбрасывать! может быть установлен FOF_MULTIDESTFILES
-		//sfop->fop.fFlags = 0; //FOF_SIMPLEPROGRESS; -- пусть полную инфу показывает
+		//-- РЅРµ СЃР±СЂР°СЃС‹РІР°С‚СЊ! РјРѕР¶РµС‚ Р±С‹С‚СЊ СѓСЃС‚Р°РЅРѕРІР»РµРЅ FOF_MULTIDESTFILES
+		//sfop->fop.fFlags = 0; //FOF_SIMPLEPROGRESS; -- РїСѓСЃС‚СЊ РїРѕР»РЅСѓСЋ РёРЅС„Сѓ РїРѕРєР°Р·С‹РІР°РµС‚
 		sfop->fop.fAnyOperationsAborted = FALSE;
 		hr = SHFileOperation(&(sfop->fop));
 	}
@@ -1440,8 +1440,8 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 	{
 		if (hr == 0x402)
 		{
-			// 0x402 Ошибка возникает если нет доступа к сетевому диску, а тащат "снаружи".
-			// Shell уже ругнулся по этому поводу, так что свою ошибку вроде показывать лишнее.
+			// 0x402 РћС€РёР±РєР° РІРѕР·РЅРёРєР°РµС‚ РµСЃР»Рё РЅРµС‚ РґРѕСЃС‚СѓРїР° Рє СЃРµС‚РµРІРѕРјСѓ РґРёСЃРєСѓ, Р° С‚Р°С‰Р°С‚ "СЃРЅР°СЂСѓР¶Рё".
+			// Shell СѓР¶Рµ СЂСѓРіРЅСѓР»СЃСЏ РїРѕ СЌС‚РѕРјСѓ РїРѕРІРѕРґСѓ, С‚Р°Рє С‡С‚Рѕ СЃРІРѕСЋ РѕС€РёР±РєСѓ РІСЂРѕРґРµ РїРѕРєР°Р·С‹РІР°С‚СЊ Р»РёС€РЅРµРµ.
 			// An unknown error occurred. This is typically due to an invalid path in the source or destination.
 			// This error does not occur on Windows Vista and later.
 		}
@@ -1524,7 +1524,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 
 	if (mb_IsUpdatePackage && !mp_LastRCon)
 	{
-		// OK, Запустить AutoUpdate c заранее загруженным пакетом
+		// OK, Р—Р°РїСѓСЃС‚РёС‚СЊ AutoUpdate c Р·Р°СЂР°РЅРµРµ Р·Р°РіСЂСѓР¶РµРЅРЅС‹Рј РїР°РєРµС‚РѕРј
 		*pdwEffect = DROPEFFECT_COPY;
 	}
 	else if (!gpSet->isDropEnabled && !gpConEmu->isDragging())
@@ -1550,7 +1550,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 			mb_selfdrag = (mp_DraggedVCon == VCon.VCon());
 		}
 
-		TODO("Если drop идет ПОД панели - впечатать путь в командную строку");
+		TODO("Р•СЃР»Рё drop РёРґРµС‚ РџРћР” РїР°РЅРµР»Рё - РІРїРµС‡Р°С‚Р°С‚СЊ РїСѓС‚СЊ РІ РєРѕРјР°РЅРґРЅСѓСЋ СЃС‚СЂРѕРєСѓ");
 		DEBUGSTRSTEP(_T("DnD: DragOverInt starting"));
 		POINT ptCur; ptCur.x = pt.x; ptCur.y = pt.y;
 #ifdef _DEBUG
@@ -1581,22 +1581,22 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 				//pt.x/=gpSet->Log Font.lfWidth;
 				//pt.y/=gpSet->Log Font.lfHeight;
 				BOOL lbActive = FALSE, lbPassive = FALSE;
-				BOOL lbAllowToActive = // Можно ли бросать на активную панель
-					(!mb_selfdrag) // если тащат снаружи
-					|| (grfKeyState & MK_ALT) // или нажат Alt
-					|| (grfKeyState == MK_RBUTTON); // или тащат правой кнопкой без модификаторов
+				BOOL lbAllowToActive = // РњРѕР¶РЅРѕ Р»Рё Р±СЂРѕСЃР°С‚СЊ РЅР° Р°РєС‚РёРІРЅСѓСЋ РїР°РЅРµР»СЊ
+					(!mb_selfdrag) // РµСЃР»Рё С‚Р°С‰Р°С‚ СЃРЅР°СЂСѓР¶Рё
+					|| (grfKeyState & MK_ALT) // РёР»Рё РЅР°Р¶Р°С‚ Alt
+					|| (grfKeyState == MK_RBUTTON); // РёР»Рё С‚Р°С‰Р°С‚ РїСЂР°РІРѕР№ РєРЅРѕРїРєРѕР№ Р±РµР· РјРѕРґРёС„РёРєР°С‚РѕСЂРѕРІ
 
 				if (m_pfpi->NoFarConsole)
 				{
-					*pdwEffect = DROPEFFECT_COPY; // Drop в консоль с cmd.exe
+					*pdwEffect = DROPEFFECT_COPY; // Drop РІ РєРѕРЅСЃРѕР»СЊ СЃ cmd.exe
 				}
 				else
 				{
 					lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt);
-					// пассивная панель может быть FullScreen и частично ПОД активной
+					// РїР°СЃСЃРёРІРЅР°СЏ РїР°РЅРµР»СЊ РјРѕР¶РµС‚ Р±С‹С‚СЊ FullScreen Рё С‡Р°СЃС‚РёС‡РЅРѕ РџРћР” Р°РєС‚РёРІРЅРѕР№
 					lbPassive = !lbActive && PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt);
 
-					// Проверяем, можно ли
+					// РџСЂРѕРІРµСЂСЏРµРј, РјРѕР¶РЅРѕ Р»Рё
 					if ((lbActive && m_pfpi->pszActivePath && m_pfpi->pszActivePath[0] && lbAllowToActive) ||
 						(lbPassive && m_pfpi->pszPassivePath && (m_pfpi->pszPassivePath[0] || mb_selfdrag)))
 					{
@@ -1607,10 +1607,10 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 						else if (grfKeyState & (MK_ALT | MK_RBUTTON))
 							*pdwEffect = DROPEFFECT_LINK;
 						else if (gpConEmu->mouse.state & DRAG_R_STARTED)
-							*pdwEffect = DROPEFFECT_LINK; // при Drop - правая кнопка уже отпущена
+							*pdwEffect = DROPEFFECT_LINK; // РїСЂРё Drop - РїСЂР°РІР°СЏ РєРЅРѕРїРєР° СѓР¶Рµ РѕС‚РїСѓС‰РµРЅР°
 						else
 						{
-							// Смотрим на допустимые эфеекты, определенные источником (иначе драг из корзины не работает)
+							// РЎРјРѕС‚СЂРёРј РЅР° РґРѕРїСѓСЃС‚РёРјС‹Рµ СЌС„РµРµРєС‚С‹, РѕРїСЂРµРґРµР»РµРЅРЅС‹Рµ РёСЃС‚РѕС‡РЅРёРєРѕРј (РёРЅР°С‡Рµ РґСЂР°Рі РёР· РєРѕСЂР·РёРЅС‹ РЅРµ СЂР°Р±РѕС‚Р°РµС‚)
 							*pdwEffect = (gpSet->isDefCopy && (dwAllowed&DROPEFFECT_COPY)==DROPEFFECT_COPY) ? DROPEFFECT_COPY : DROPEFFECT_MOVE;
 						}
 
@@ -1658,7 +1658,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 	//		if (!mh_Overlapped)
 	//			CreateDragImageWindow();
 	//		#elif defined(PERSIST_OVL)
-	//		_ASSERTE(mh_Overlapped); // должно быть создано при запуске ConEmu
+	//		_ASSERTE(mh_Overlapped); // РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ СЃРѕР·РґР°РЅРѕ РїСЂРё Р·Р°РїСѓСЃРєРµ ConEmu
 	//		#else
 	//		CreateDragImageWindow();
 	//		#endif
@@ -1691,11 +1691,11 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 
 	//bool bNeedLoadImg = false;
 
-	// При "DragEnter" считывать информацию из фара нужно всегда
+	// РџСЂРё "DragEnter" СЃС‡РёС‚С‹РІР°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РёР· С„Р°СЂР° РЅСѓР¶РЅРѕ РІСЃРµРіРґР°
 	if (gpSet->isDropEnabled /*&& !mb_selfdrag*/ /*&& NeedRefreshToInfo(pt)*/)
 	{
 		DEBUGSTRFAR(L"DragEnter: NeedRefreshToInfo -> RetrieveDragToInfo");
-		// при "своем" драге - информация уже получена
+		// РїСЂРё "СЃРІРѕРµРј" РґСЂР°РіРµ - РёРЅС„РѕСЂРјР°С†РёСЏ СѓР¶Рµ РїРѕР»СѓС‡РµРЅР°
 		RetrieveDragToInfo(pt);
 	}
 	else if (!m_pfpi)
@@ -1709,7 +1709,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 		DEBUGSTRFAR(L"DragEnter: skipping RetrieveDragToInfo");
 	}
 
-	// Скорректировать допустимые действия
+	// РЎРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ РґРѕРїСѓСЃС‚РёРјС‹Рµ РґРµР№СЃС‚РІРёСЏ
 	DragOverInt(grfKeyState, pt, pdwEffect);
 
 	if (gpSet->isDropEnabled || mb_selfdrag)
@@ -1725,7 +1725,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 	if (UseTargetHelper(mb_selfdrag))
 	{
 		#ifdef UNLOCKED_DRAG
-		PRAGMA_ERROR("UNLOCKED_DRAG - проверить HWND");
+		PRAGMA_ERROR("UNLOCKED_DRAG - РїСЂРѕРІРµСЂРёС‚СЊ HWND");
 		#endif
 
 		POINT ppt = {pt.x,pt.y};
@@ -1834,7 +1834,7 @@ void CDragDrop::ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownErr
 	if (nBtn != IDRETRY)
 		return;
 
-	// Дать пользователю выбрать файл
+	// Р”Р°С‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РІС‹Р±СЂР°С‚СЊ С„Р°Р№Р»
 	OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
 	WCHAR temp[MAX_PATH+5];
 	ofn.lStructSize=sizeof(ofn);

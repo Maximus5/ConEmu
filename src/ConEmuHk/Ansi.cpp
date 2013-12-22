@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012-2013 Maximus5
 All rights reserved.
@@ -60,7 +60,7 @@ DWORD AnsiTlsIndex = 0;
 #endif
 
 /* ************ Globals ************ */
-extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
+extern HMODULE ghOurModule; // РҐСЌРЅРґР» РЅР°С€РµР№ dll'РєРё (Р·РґРµСЃСЊ С…СѓРєРё РЅРµ СЃС‚Р°РІСЏС‚СЃСЏ)
 extern DWORD   gnHookMainThreadId;
 extern BOOL    gbHooksTemporaryDisabled;
 
@@ -136,7 +136,7 @@ bool CEAnsi::IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput /*= NULL*/)
 
 	if ((hFile == INVALID_HANDLE_VALUE) && (((HANDLE)bIsConsoleOutput) == INVALID_HANDLE_VALUE))
 	{
-		// Проверка настроек на старте
+		// РџСЂРѕРІРµСЂРєР° РЅР°СЃС‚СЂРѕРµРє РЅР° СЃС‚Р°СЂС‚Рµ
 		bIsOut = true;
 		Mode = ENABLE_PROCESSED_OUTPUT;
 	}
@@ -155,8 +155,8 @@ bool CEAnsi::IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput /*= NULL*/)
 			HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 			HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
 			#endif
-			// Где-то по дороге между "cmd /c test.cmd", "pause" в нем и "WriteConsole"
-			// слетает ENABLE_PROCESSED_OUTPUT, поэтому пока обрабатываем всегда.
+			// Р“РґРµ-С‚Рѕ РїРѕ РґРѕСЂРѕРіРµ РјРµР¶РґСѓ "cmd /c test.cmd", "pause" РІ РЅРµРј Рё "WriteConsole"
+			// СЃР»РµС‚Р°РµС‚ ENABLE_PROCESSED_OUTPUT, РїРѕСЌС‚РѕРјСѓ РїРѕРєР° РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РІСЃРµРіРґР°.
 			bAnsi = true;
 		}
 
@@ -190,8 +190,8 @@ bool CEAnsi::IsOutputHandle(HANDLE hFile, DWORD* pMode /*= NULL*/)
 	DWORD Mode = 0, nErrCode = 0;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 
-	// GetConsoleMode не совсем подходит, т.к. он проверяет и ConIn & ConOut
-	// Поэтому, добавляем
+	// GetConsoleMode РЅРµ СЃРѕРІСЃРµРј РїРѕРґС…РѕРґРёС‚, С‚.Рє. РѕРЅ РїСЂРѕРІРµСЂСЏРµС‚ Рё ConIn & ConOut
+	// РџРѕСЌС‚РѕРјСѓ, РґРѕР±Р°РІР»СЏРµРј
 	if (GetConsoleMode(hFile, &Mode))
 	{
 		if (!GetConsoleScreenBufferInfoCached(hFile, &csbi, TRUE))
@@ -305,7 +305,7 @@ static const wchar_t szAnalogues[32] =
 
 void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 {
-	WARNING("Эту функу нужно дергать при смене буферов, закрытии дескрипторов, и т.п.");
+	WARNING("Р­С‚Сѓ С„СѓРЅРєСѓ РЅСѓР¶РЅРѕ РґРµСЂРіР°С‚СЊ РїСЂРё СЃРјРµРЅРµ Р±СѓС„РµСЂРѕРІ, Р·Р°РєСЂС‹С‚РёРё РґРµСЃРєСЂРёРїС‚РѕСЂРѕРІ, Рё С‚.Рї.");
 
 	if (bReset || !gDisplayParm.WasSet)
 	{
@@ -320,7 +320,7 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 
 	if (bApply)
 	{
-		// на дисплей
+		// РЅР° РґРёСЃРїР»РµР№
 		ExtAttributesParm attr = {sizeof(attr), hConsoleOutput};
 		//DWORD wAttrs = 0;
 
@@ -610,12 +610,12 @@ BOOL /*WINAPI*/ CEAnsi::OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, cons
 {
 	typedef BOOL (WINAPI* OnScrollConsoleScreenBufferA_t)(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
 	ORIGINALFAST(ScrollConsoleScreenBufferA);
-	//BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // РїРѕС‚РѕРє РЅРµ РІР°Р¶РµРЅ
 	BOOL lbRc = FALSE;
 
 	if (IsOutputHandle(hConsoleOutput))
 	{
-		WARNING("Проверка аргументов! Скролл может быть частичным");
+		WARNING("РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ! РЎРєСЂРѕР»Р» РјРѕР¶РµС‚ Р±С‹С‚СЊ С‡Р°СЃС‚РёС‡РЅС‹Рј");
 		ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConsoleOutput, dwDestinationOrigin.Y - lpScrollRectangle->Top};
 		ExtScrollScreen(&scrl);
 	}
@@ -629,12 +629,12 @@ BOOL /*WINAPI*/ CEAnsi::OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, cons
 {
 	typedef BOOL (WINAPI* OnScrollConsoleScreenBufferW_t)(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
 	ORIGINALFAST(ScrollConsoleScreenBufferW);
-	//BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // РїРѕС‚РѕРє РЅРµ РІР°Р¶РµРЅ
 	BOOL lbRc = FALSE;
 
 	if (IsOutputHandle(hConsoleOutput))
 	{
-		WARNING("Проверка аргументов! Скролл может быть частичным");
+		WARNING("РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ! РЎРєСЂРѕР»Р» РјРѕР¶РµС‚ Р±С‹С‚СЊ С‡Р°СЃС‚РёС‡РЅС‹Рј");
 		ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConsoleOutput, dwDestinationOrigin.Y - lpScrollRectangle->Top};
 		ExtScrollScreen(&scrl);
 	}
@@ -653,7 +653,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumbe
 {
 	typedef BOOL (WINAPI* OnWriteFile_t)(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 	ORIGINALFAST(WriteFile);
-	//BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // РїРѕС‚РѕРє РЅРµ РІР°Р¶РµРЅ
 	BOOL lbRc = FALSE;
 	DWORD nDBCSCP = 0;
 
@@ -676,7 +676,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuf
 {
 	typedef BOOL (WINAPI* OnWriteConsoleA_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 	ORIGINALFAST(WriteConsoleA);
-	//BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // РїРѕС‚РѕРє РЅРµ РІР°Р¶РµРЅ
 	BOOL lbRc = FALSE;
 	wchar_t* buf = NULL;
 	DWORD len, cp;
@@ -735,7 +735,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuf
 		{
 			DWORD newLen = MultiByteToWideChar(cp, nFlags, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, buf, len);
 			_ASSERTE(newLen==len);
-			buf[newLen] = 0; // ASCII-Z, хотя, если функцию WriteConsoleW зовет приложение - "\0" может и не быть...
+			buf[newLen] = 0; // ASCII-Z, С…РѕС‚СЏ, РµСЃР»Рё С„СѓРЅРєС†РёСЋ WriteConsoleW Р·РѕРІРµС‚ РїСЂРёР»РѕР¶РµРЅРёРµ - "\0" РјРѕР¶РµС‚ Рё РЅРµ Р±С‹С‚СЊ...
 
 			DWORD nWideWritten = 0;
 			lbRc = OnWriteConsoleW(hConsoleOutput, buf, len, &nWideWritten, NULL);
@@ -748,7 +748,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuf
 	}
 
 badchar:
-	// По идее, сюда попадать не должны. Ошибка в параметрах?
+	// РџРѕ РёРґРµРµ, СЃСЋРґР° РїРѕРїР°РґР°С‚СЊ РЅРµ РґРѕР»Р¶РЅС‹. РћС€РёР±РєР° РІ РїР°СЂР°РјРµС‚СЂР°С…?
 	_ASSERTE((lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput)) || (curBadUnicode||badUnicode));
 	lbRc = F(WriteConsoleA)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
 
@@ -757,15 +757,15 @@ fin:
 	return lbRc;
 }
 
-TODO("По хорошему, после WriteConsoleOutputAttributes тоже нужно делать efof_ResetExt");
-// Но пока можно это проигнорировать, большинство (?) программ, используюет ее в связке
+TODO("РџРѕ С…РѕСЂРѕС€РµРјСѓ, РїРѕСЃР»Рµ WriteConsoleOutputAttributes С‚РѕР¶Рµ РЅСѓР¶РЅРѕ РґРµР»Р°С‚СЊ efof_ResetExt");
+// РќРѕ РїРѕРєР° РјРѕР¶РЅРѕ СЌС‚Рѕ РїСЂРѕРёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ, Р±РѕР»СЊС€РёРЅСЃС‚РІРѕ (?) РїСЂРѕРіСЂР°РјРј, РёСЃРїРѕР»СЊР·СѓСЋРµС‚ РµРµ РІ СЃРІСЏР·РєРµ
 // WriteConsoleOutputAttributes/WriteConsoleOutputCharacter
 
 BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
 {
 	typedef BOOL (WINAPI* OnWriteConsoleOutputCharacterA_t)(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
 	ORIGINALFAST(WriteConsoleOutputCharacterA);
-	//BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // РїРѕС‚РѕРє РЅРµ РІР°Р¶РµРЅ
 
 	FIRST_ANSI_CALL((const BYTE*)lpCharacter, nLength);
 
@@ -783,7 +783,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LP
 {
 	typedef BOOL (WINAPI* OnWriteConsoleOutputCharacterW_t)(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
 	ORIGINALFAST(WriteConsoleOutputCharacterW);
-	//BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // РїРѕС‚РѕРє РЅРµ РІР°Р¶РµРЅ
 
 	FIRST_ANSI_CALL((const BYTE*)lpCharacter, nLength);
 
@@ -842,7 +842,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
 {
 	ORIGINALFAST(WriteConsoleW);
-	//BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // РїРѕС‚РѕРє РЅРµ РІР°Р¶РµРЅ
 	BOOL lbRc = FALSE;
 	//ExtWriteTextParm wrt = {sizeof(wrt), ewtf_None, hConsoleOutput};
 	bool bIsConOut = false;
@@ -860,7 +860,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuf
 #endif
 
 	#ifdef DUMP_WRITECONSOLE_LINES
-	// Логирование в отладчик ВСЕГО, что пишется в консольный Output
+	// Р›РѕРіРёСЂРѕРІР°РЅРёРµ РІ РѕС‚Р»Р°РґС‡РёРє Р’РЎР•Р“Рћ, С‡С‚Рѕ РїРёС€РµС‚СЃСЏ РІ РєРѕРЅСЃРѕР»СЊРЅС‹Р№ Output
 	DumpEscape((wchar_t*)lpBuffer, nNumberOfCharsToWrite, false);
 	#endif
 
@@ -873,7 +873,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuf
 		{
 			if (pObj->gnPrevAnsiPart || pObj->gDisplayOpt.WrapWasSet)
 			{
-				// Если остался "хвост" от предущей записи - сразу, без проверок
+				// Р•СЃР»Рё РѕСЃС‚Р°Р»СЃСЏ "С…РІРѕСЃС‚" РѕС‚ РїСЂРµРґСѓС‰РµР№ Р·Р°РїРёСЃРё - СЃСЂР°Р·Сѓ, Р±РµР· РїСЂРѕРІРµСЂРѕРє
 				lbRc = pObj->WriteAnsiCodes(F(WriteConsoleW), hConsoleOutput, (const wchar_t*)lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten);
 				goto ansidone;
 			}
@@ -883,7 +883,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuf
 				const wchar_t* pch = (const wchar_t*)lpBuffer;
 				for (size_t i = nNumberOfCharsToWrite; i--; pch++)
 				{
-					// Если в выводимой строке встречается "Ansi ESC Code" - выводим сами
+					// Р•СЃР»Рё РІ РІС‹РІРѕРґРёРјРѕР№ СЃС‚СЂРѕРєРµ РІСЃС‚СЂРµС‡Р°РµС‚СЃСЏ "Ansi ESC Code" - РІС‹РІРѕРґРёРј СЃР°РјРё
 					TODO("Non-CSI codes, like as BEL, BS, CR, LF, FF, TAB, VT, SO, SI");
 					if (*pch == ESC /*|| *pch == BEL*/ /*|| *pch == ENQ*/)
 					{
@@ -931,7 +931,7 @@ wrap:
 //	wchar_t  First;  // ESC (27)
 //	wchar_t  Second; // any of 64 to 95 ('@' to '_')
 //	wchar_t  Action; // any of 64 to 126 (@ to ~). this is terminator
-//	wchar_t  Skip;   // Если !=0 - то эту последовательность нужно пропустить
+//	wchar_t  Skip;   // Р•СЃР»Рё !=0 - С‚Рѕ СЌС‚Сѓ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ РЅСѓР¶РЅРѕ РїСЂРѕРїСѓСЃС‚РёС‚СЊ
 //	int      ArgC;
 //	int      ArgV[16];
 //	LPCWSTR  ArgSZ; // Reserved for key mapping
@@ -947,9 +947,9 @@ wrap:
 //};
 
 
-// 0 - нет (в lpBuffer только текст)
-// 1 - в Code помещена Esc последовательность (может быть простой текст ДО нее)
-// 2 - нет, но кусок последовательности сохранен в gsPrevAnsiPart
+// 0 - РЅРµС‚ (РІ lpBuffer С‚РѕР»СЊРєРѕ С‚РµРєСЃС‚)
+// 1 - РІ Code РїРѕРјРµС‰РµРЅР° Esc РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ (РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСЂРѕСЃС‚РѕР№ С‚РµРєСЃС‚ Р”Рћ РЅРµРµ)
+// 2 - РЅРµС‚, РЅРѕ РєСѓСЃРѕРє РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё СЃРѕС…СЂР°РЅРµРЅ РІ gsPrevAnsiPart
 int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CEAnsi_MaxPrevPart], DWORD& cchPrevPart, LPCWSTR& lpStart, LPCWSTR& lpNext, CEAnsi::AnsiEscCode& Code, BOOL ReEntrance /*= FALSE*/)
 {
 	int iRc = 0;
@@ -972,7 +972,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 			wmemcpy(gsPrevAnsiPart+nCurPrevLen, lpBuffer, nAdd);
 			gsPrevAnsiPart[nCurPrevLen+nAdd] = 0;
 
-			WARNING("Проверить!!!");
+			WARNING("РџСЂРѕРІРµСЂРёС‚СЊ!!!");
 			LPCWSTR lpReStart, lpReNext;
 			int iCall = NextEscCode(gsPrevAnsiPart, gsPrevAnsiPart+nAdd+gnPrevAnsiPart, szPreDump, cchPrevPart, lpReStart, lpReNext, Code, TRUE);
 			if (iCall == 1)
@@ -1007,7 +1007,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					_ASSERTE(lpReStart == gsPrevAnsiPart);
 					lpStart = lpBuffer; // nothing to dump before Esc-sequence
 					_ASSERTE((lpReNext - gsPrevAnsiPart) >= gnPrevAnsiPart);
-					WARNING("Проверить!!!");
+					WARNING("РџСЂРѕРІРµСЂРёС‚СЊ!!!");
 					lpNext = lpBuffer + (lpReNext - gsPrevAnsiPart - gnPrevAnsiPart);
 				}
 				else
@@ -1090,8 +1090,8 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						continue; // invalid code
 					}
 
-					// Теперь идут параметры.
-					++lpBuffer; // переместим указатель на первый символ ЗА CSI (после '[')
+					// РўРµРїРµСЂСЊ РёРґСѓС‚ РїР°СЂР°РјРµС‚СЂС‹.
+					++lpBuffer; // РїРµСЂРµРјРµСЃС‚РёРј СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РїРµСЂРІС‹Р№ СЃРёРјРІРѕР» Р—Рђ CSI (РїРѕСЃР»Рµ '[')
 
 					switch (Code.Second)
 					{
@@ -1119,7 +1119,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 									break;
 
 								case L';':
-									// Даже если цифр не было - default "0"
+									// Р”Р°Р¶Рµ РµСЃР»Рё С†РёС„СЂ РЅРµ Р±С‹Р»Рѕ - default "0"
 									if (Code.ArgC < (int)countof(Code.ArgV))
 										Code.ArgV[Code.ArgC++] = nValue; // save argument
 									nDigits = nValue = 0;
@@ -1151,9 +1151,9 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 								++lpBuffer;
 							}
 						}
-						// В данном запросе (на запись) конца последовательности нет,
-						// оставшийся хвост нужно сохранить в буфере, для следующего запроса
-						// Ниже
+						// Р’ РґР°РЅРЅРѕРј Р·Р°РїСЂРѕСЃРµ (РЅР° Р·Р°РїРёСЃСЊ) РєРѕРЅС†Р° РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё РЅРµС‚,
+						// РѕСЃС‚Р°РІС€РёР№СЃСЏ С…РІРѕСЃС‚ РЅСѓР¶РЅРѕ СЃРѕС…СЂР°РЅРёС‚СЊ РІ Р±СѓС„РµСЂРµ, РґР»СЏ СЃР»РµРґСѓСЋС‰РµРіРѕ Р·Р°РїСЂРѕСЃР°
+						// РќРёР¶Рµ
 						break;
 
 					case L']':
@@ -1192,7 +1192,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 							if ((lpBuffer[0] == 7) ||
 								((lpBuffer[0] == 27) && ((lpBuffer + 1) < lpEnd) && (lpBuffer[1] == L'\\')))
 							{
-								Code.Action = *Code.ArgSZ; // первый символ последовательности
+								Code.Action = *Code.ArgSZ; // РїРµСЂРІС‹Р№ СЃРёРјРІРѕР» РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё
 								Code.cchArgSZ = (lpBuffer - Code.ArgSZ);
 								lpStart = lpSaveStart;
 								if (lpBuffer[0] == 27)
@@ -1208,9 +1208,9 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 							}
 							++lpBuffer;
 						}
-						// В данном запросе (на запись) конца последовательности нет,
-						// оставшийся хвост нужно сохранить в буфере, для следующего запроса
-						// Ниже
+						// Р’ РґР°РЅРЅРѕРј Р·Р°РїСЂРѕСЃРµ (РЅР° Р·Р°РїРёСЃСЊ) РєРѕРЅС†Р° РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё РЅРµС‚,
+						// РѕСЃС‚Р°РІС€РёР№СЃСЏ С…РІРѕСЃС‚ РЅСѓР¶РЅРѕ СЃРѕС…СЂР°РЅРёС‚СЊ РІ Р±СѓС„РµСЂРµ, РґР»СЏ СЃР»РµРґСѓСЋС‰РµРіРѕ Р·Р°РїСЂРѕСЃР°
+						// РќРёР¶Рµ
 						break;
 
 					case L'=':
@@ -1221,7 +1221,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						goto wrap;
 
 					default:
-						// Неизвестный код, обрабатываем по общим правилам
+						// РќРµРёР·РІРµСЃС‚РЅС‹Р№ РєРѕРґ, РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РїРѕ РѕР±С‰РёРј РїСЂР°РІРёР»Р°Рј
 						Code.Skip = Code.Second;
 						Code.ArgSZ = lpBuffer;
 						Code.cchArgSZ = 0;
@@ -1654,6 +1654,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 						{
 							lbApply = TRUE;
 							WriteAnsiCode_CSI(_WriteConsoleW, hConsoleOutput, Code, lbApply);
+
 						} // case L'[':
 						break;
 
@@ -1661,6 +1662,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 						{
 							lbApply = TRUE;
 							WriteAnsiCode_OSC(_WriteConsoleW, hConsoleOutput, Code, lbApply);
+
 						} // case L']':
 						break;
 
@@ -1812,12 +1814,12 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 			#endif
 			}
 
-			// проверка Row
+			// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Row
 			if (crNewPos.Y < 0)
 				crNewPos.Y = 0;
 			else if (crNewPos.Y >= csbi.dwSize.Y)
 				crNewPos.Y = csbi.dwSize.Y - 1;
-			// проверка Col
+			// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Col
 			if (crNewPos.X < 0)
 				crNewPos.X = 0;
 			else if (crNewPos.X >= csbi.dwSize.X)
@@ -2267,7 +2269,7 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 					}
 					break;
 				case 21:
-					// 2 1 --> Report xterm window’s title as OSC l title ST 
+					// 2 1 --> Report xterm windowпїЅs title as OSC l title ST 
 					ReportConsoleTitle();
 					break;
 				default:
@@ -2286,7 +2288,7 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 					// 1 1 --> Report xterm window state. If the xterm window is open (non-iconified), it returns CSI 1 t . If the xterm window is iconified, it returns CSI 2 t .
 					// 1 3 --> Report xterm window position as CSI 3 ; x; y t
 					// 1 4 --> Report xterm window in pixels as CSI 4 ; height ; width t
-					// 2 0 --> Report xterm window’s icon label as OSC L label ST
+					// 2 0 --> Report xterm windowпїЅs icon label as OSC L label ST
 					// >= 2 4 --> Resize to P s lines (DECSLPP)
 					DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 				}
@@ -2303,7 +2305,7 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'>')
 			&& ((Code.ArgC < 1) || (Code.ArgV[0] == 0)))
 		{
-			// P s = 0 or omitted -> request the terminal’s identification code.
+			// P s = 0 or omitted -> request the terminalпїЅs identification code.
 			wchar_t szVerInfo[64];
 			// this will be "ESC > 67 ; build ; 0 c"
 			// 67 is ASCII code of 'C' (ConEmu, yeah)
@@ -2393,7 +2395,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		// ESC ] 9 ; 6 ; "txt" ST        Execute GuiMacro. Set EnvVar "ConEmuMacroResult" on exit.
 		// ESC ] 9 ; 7 ; "cmd" ST        Run some process with arguments
 		// ESC ] 9 ; 8 ; "env" ST        Output value of environment variable
-		// -- You may specify timeout _s_ in seconds. - не работает
+		// -- You may specify timeout _s_ in seconds. - пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 		if (Code.ArgSZ[1] == L';')
 		{
 			if (Code.ArgSZ[2] == L'1' && Code.ArgSZ[3] == L';')
@@ -2570,7 +2572,7 @@ BOOL /*WINAPI*/ CEAnsi::OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 {
 	typedef BOOL (WINAPI* OnSetConsoleMode_t)(HANDLE hConsoleHandle, DWORD dwMode);
 	ORIGINALFAST(SetConsoleMode);
-	//BOOL bMainThread = FALSE; // поток не важен
+	//BOOL bMainThread = FALSE; // РїРѕС‚РѕРє РЅРµ РІР°Р¶РµРЅ
 	BOOL lbRc = FALSE;
 
 	#if 0
@@ -2613,7 +2615,7 @@ void CEAnsi::StartVimTerm(bool bFromDllStart)
 	if (/*bFromDllStart ||*/ gbVimTermWasChangedBuffer)
 		return;
 
-	TODO("Переделать на команду сервера?");
+	TODO("РџРµСЂРµРґРµР»Р°С‚СЊ РЅР° РєРѕРјР°РЅРґСѓ СЃРµСЂРІРµСЂР°?");
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -2664,16 +2666,16 @@ void CEAnsi::StopVimTerm()
 	if (!gbVimTermWasChangedBuffer)
 		return;
 
-	// Однократно
+	// РћРґРЅРѕРєСЂР°С‚РЅРѕ
 	gbVimTermWasChangedBuffer = false;
 
-	// Сброс расширенных атрибутов!
+	// РЎР±СЂРѕСЃ СЂР°СЃС€РёСЂРµРЅРЅС‹С… Р°С‚СЂРёР±СѓС‚РѕРІ!
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
 	{
 		WORD nDefAttr = GetDefaultTextAttr();
-		// Сброс только расширенных атрибутов
+		// РЎР±СЂРѕСЃ С‚РѕР»СЊРєРѕ СЂР°СЃС€РёСЂРµРЅРЅС‹С… Р°С‚СЂРёР±СѓС‚РѕРІ
 		ExtFillOutputParm fill = {sizeof(fill), /*efof_ResetExt|*/efof_Attribute/*|efof_Character*/,
 			hOut, {CECF_NONE,nDefAttr&0xF,(nDefAttr&0xF0)>>4}, L' ', {0,0}, csbi.dwSize.X * csbi.dwSize.Y};
 		ExtFillOutput(&fill);
@@ -2684,7 +2686,7 @@ void CEAnsi::StopVimTerm()
 			SetConsoleTextAttribute(hOut, nDefAttr);
 	}
 
-	// Восстановление прокрутки и данных
+	// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РїСЂРѕРєСЂСѓС‚РєРё Рё РґР°РЅРЅС‹С…
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
 	pIn = ExecuteNewCmd(CECMD_ALTBUFFER,sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ALTBUFFER));
 	if (pIn)
@@ -2692,14 +2694,14 @@ void CEAnsi::StopVimTerm()
 		TODO("BufferWidth");
 		pIn->AltBuf.AbFlags = abf_BufferOn|abf_RestoreContents;
 		pIn->AltBuf.BufferHeight = gnVimTermWasChangedBuffer;
-		// Async - нельзя. Иначе cmd может отрисовать prompt раньше чем управится сервер.
+		// Async - РЅРµР»СЊР·СЏ. РРЅР°С‡Рµ cmd РјРѕР¶РµС‚ РѕС‚СЂРёСЃРѕРІР°С‚СЊ prompt СЂР°РЅСЊС€Рµ С‡РµРј СѓРїСЂР°РІРёС‚СЃСЏ СЃРµСЂРІРµСЂ.
 		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
 		ExecuteFreeResult(pIn);
 		ExecuteFreeResult(pOut);
 	}
 
 	/*
-	TODO("Переделать на команду сервера?");
+	TODO("РџРµСЂРµРґРµР»Р°С‚СЊ РЅР° РєРѕРјР°РЅРґСѓ СЃРµСЂРІРµСЂР°?");
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);

@@ -1,4 +1,4 @@
-
+ï»¿
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -120,8 +120,8 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 
 		for (DWORD i = 0; i < pCmd->nCount; i++)
 		{
-			// Ïðè ïîñûëêå ìàññîâûõ íàæàòèé êëàâèø (âñòàâêà èç áóôåðà)
-			// î÷åðåäü ìîæåò "íå óñïåâàòü"
+			// ÐŸÑ€Ð¸ Ð¿Ð¾ÑÑ‹Ð»ÐºÐµ Ð¼Ð°ÑÑÐ¾Ð²Ñ‹Ñ… Ð½Ð°Ð¶Ð°Ñ‚Ð¸Ð¹ ÐºÐ»Ð°Ð²Ð¸Ñˆ (Ð²ÑÑ‚Ð°Ð²ÐºÐ° Ð¸Ð· Ð±ÑƒÑ„ÐµÑ€Ð°)
+			// Ð¾Ñ‡ÐµÑ€ÐµÐ´ÑŒ Ð¼Ð¾Ð¶ÐµÑ‚ "Ð½Ðµ ÑƒÑÐ¿ÐµÐ²Ð°Ñ‚ÑŒ"
 			if (i && !(i & 31))
 			{
 				InputLogger::Log(InputLogger::Event::evt_InputQueueFlush);
@@ -140,28 +140,28 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 
 			INPUT_RECORD r;
 
-			// Ñáðîñèì ôëàã
+			// Ð¡Ð±Ñ€Ð¾ÑÐ¸Ð¼ Ñ„Ð»Ð°Ð³
 			InputLogger::Log(InputLogger::Event::evt_ResetEvent, gpSrv->InputQueue.nUsedLen);
 			ResetEvent(gpSrv->hInputWasRead);
 
-			// Íåêîððåêòíûå ñîáûòèÿ - îòñåèâàþòñÿ,
-			// íåêîòîðûå ñîáûòèÿ (CtrlC/CtrlBreak) íå ïèøóòñÿ â áóôåðíîì ðåæèìå
+			// ÐÐµÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð½Ñ‹Ðµ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ñ - Ð¾Ñ‚ÑÐµÐ¸Ð²Ð°ÑŽÑ‚ÑÑ,
+			// Ð½ÐµÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ðµ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ñ (CtrlC/CtrlBreak) Ð½Ðµ Ð¿Ð¸ÑˆÑƒÑ‚ÑÑ Ð² Ð±ÑƒÑ„ÐµÑ€Ð½Ð¾Ð¼ Ñ€ÐµÐ¶Ð¸Ð¼Ðµ
 			InputLogger::Log(InputLogger::Event::evt_ProcessInputMessage, gpSrv->InputQueue.nUsedLen);
 			if (ProcessInputMessage(pCmd->msg[i], r))
 			{
 				//SendConsoleEvent(&r, 1);
 				InputLogger::Log(InputLogger::Event::evt_WriteInputQueue1, r, gpSrv->InputQueue.nUsedLen);
 				BOOL bWritten = gpSrv->InputQueue.WriteInputQueue(&r, FALSE);
-				// Îáëîì ñ çàïèñüþ â íàø âíóòðåííèé áóôåð ìîæåò áûòü òîëüêî ïðè åãî ïåðåïîëíåíèè
-				// Ò.å. InputThread åùå íå óñïåë ñ÷èòàòü äàííûå èç âíóòðåííåãî áóôåðà
-				// è åùå íå ïåðåêèíóë ñ÷èòàííîå â êîíñîëüíûé áóôåð.
+				// ÐžÐ±Ð»Ð¾Ð¼ Ñ Ð·Ð°Ð¿Ð¸ÑÑŒÑŽ Ð² Ð½Ð°Ñˆ Ð²Ð½ÑƒÑ‚Ñ€ÐµÐ½Ð½Ð¸Ð¹ Ð±ÑƒÑ„ÐµÑ€ Ð¼Ð¾Ð¶ÐµÑ‚ Ð±Ñ‹Ñ‚ÑŒ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð¿Ñ€Ð¸ ÐµÐ³Ð¾ Ð¿ÐµÑ€ÐµÐ¿Ð¾Ð»Ð½ÐµÐ½Ð¸Ð¸
+				// Ð¢.Ðµ. InputThread ÐµÑ‰Ðµ Ð½Ðµ ÑƒÑÐ¿ÐµÐ» ÑÑ‡Ð¸Ñ‚Ð°Ñ‚ÑŒ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð¸Ð· Ð²Ð½ÑƒÑ‚Ñ€ÐµÐ½Ð½ÐµÐ³Ð¾ Ð±ÑƒÑ„ÐµÑ€Ð°
+				// Ð¸ ÐµÑ‰Ðµ Ð½Ðµ Ð¿ÐµÑ€ÐµÐºÐ¸Ð½ÑƒÐ» ÑÑ‡Ð¸Ñ‚Ð°Ð½Ð½Ð¾Ðµ Ð² ÐºÐ¾Ð½ÑÐ¾Ð»ÑŒÐ½Ñ‹Ð¹ Ð±ÑƒÑ„ÐµÑ€.
 				if (!bWritten)
 				{
-					// Ïåðåäåðíóòü íà âñÿêèé ñëó÷àé î÷åðåäü
+					// ÐŸÐµÑ€ÐµÐ´ÐµÑ€Ð½ÑƒÑ‚ÑŒ Ð½Ð° Ð²ÑÑÐºÐ¸Ð¹ ÑÐ»ÑƒÑ‡Ð°Ð¹ Ð¾Ñ‡ÐµÑ€ÐµÐ´ÑŒ
 					InputLogger::Log(InputLogger::Event::evt_InputQueueFlush);
 					gpSrv->InputQueue.WriteInputQueue(NULL, TRUE);
 
-					// Ïîäîæäåì ÷óòü-÷óòü
+					// ÐŸÐ¾Ð´Ð¾Ð¶Ð´ÐµÐ¼ Ñ‡ÑƒÑ‚ÑŒ-Ñ‡ÑƒÑ‚ÑŒ
 					InputLogger::Log(InputLogger::Event::evt_WaitIntputReady, gpSrv->InputQueue.nUsedLen);
 					DWORD nReadyWait = WaitForSingleObject(gpSrv->hInputWasRead, 250);
 					if (nReadyWait == WAIT_OBJECT_0)
@@ -177,7 +177,7 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 						OutputDebugString(L"\n!!!ConEmuC input buffer overflow!!!\n");
 						_ASSERTE(FALSE && "Input buffer overflow");
 					}
-					WARNING("Åñëè áóôåð ïåðåïîëíåí - æäàòü? Õîòÿ åñëè áóäåì æäàòü çäåñü - ìîæåò ïîâèñíóòü GUI íà çàïèñè â pipe...");
+					WARNING("Ð•ÑÐ»Ð¸ Ð±ÑƒÑ„ÐµÑ€ Ð¿ÐµÑ€ÐµÐ¿Ð¾Ð»Ð½ÐµÐ½ - Ð¶Ð´Ð°Ñ‚ÑŒ? Ð¥Ð¾Ñ‚Ñ ÐµÑÐ»Ð¸ Ð±ÑƒÐ´ÐµÐ¼ Ð¶Ð´Ð°Ñ‚ÑŒ Ð·Ð´ÐµÑÑŒ - Ð¼Ð¾Ð¶ÐµÑ‚ Ð¿Ð¾Ð²Ð¸ÑÐ½ÑƒÑ‚ÑŒ GUI Ð½Ð° Ð·Ð°Ð¿Ð¸ÑÐ¸ Ð² pipe...");
 				}
 
 				#ifdef _DEBUG
@@ -223,7 +223,7 @@ BOOL WINAPI CmdServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppR
 	if (pIn->hdr.nVersion != CESERVER_REQ_VER)
 	{
 		_ASSERTE(pIn->hdr.nVersion == CESERVER_REQ_VER);
-		// ïåðåîòêðûòü ïàéï!
+		// Ð¿ÐµÑ€ÐµÐ¾Ñ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ð¿Ð°Ð¹Ð¿!
 		gpSrv->CmdServer.BreakConnection(pInst);
 		return FALSE;
 	}
@@ -265,13 +265,13 @@ BOOL WINAPI CmdServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppR
 	//if (in.hdr.cbSize > cbBytesRead)
 	//{
 	//	DWORD cbNextRead = 0;
-	//	// Òóò èìåííî calloc, à íå ExecuteNewCmd, ò.ê. äàííûå ïðèøëè ñíàðóæè, à íå çàïîëíÿþòñÿ çäåñü
+	//	// Ð¢ÑƒÑ‚ Ð¸Ð¼ÐµÐ½Ð½Ð¾ calloc, Ð° Ð½Ðµ ExecuteNewCmd, Ñ‚.Ðº. Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð¿Ñ€Ð¸ÑˆÐ»Ð¸ ÑÐ½Ð°Ñ€ÑƒÐ¶Ð¸, Ð° Ð½Ðµ Ð·Ð°Ð¿Ð¾Ð»Ð½ÑÑŽÑ‚ÑÑ Ð·Ð´ÐµÑÑŒ
 	//	pIn = (CESERVER_REQ*)calloc(in.hdr.cbSize, 1);
 
 	//	if (!pIn)
 	//		goto wrap;
 
-	//	memmove(pIn, &in, cbBytesRead); // ñòîÿëî îøèáî÷íîå ïðèñâîåíèå
+	//	memmove(pIn, &in, cbBytesRead); // ÑÑ‚Ð¾ÑÐ»Ð¾ Ð¾ÑˆÐ¸Ð±Ð¾Ñ‡Ð½Ð¾Ðµ Ð¿Ñ€Ð¸ÑÐ²Ð¾ÐµÐ½Ð¸Ðµ
 	//	fSuccess = ReadFile(
 	//		hPipe,        // handle to pipe
 	//		((LPBYTE)pIn)+cbBytesRead,  // buffer to receive data
@@ -285,7 +285,7 @@ BOOL WINAPI CmdServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppR
 
 	//	if (!ProcessSrvCommand(pIn ? *pIn : in, &pOut) || pOut==NULL)
 	//	{
-	//		// Åñëè ðåçóëüòàòà íåò - âñå ðàâíî ÷òî-íèáóäü çàïèøåì, èíà÷å TransactNamedPipe ìîæåò âèñíóòü?
+	//		// Ð•ÑÐ»Ð¸ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ð° Ð½ÐµÑ‚ - Ð²ÑÐµ Ñ€Ð°Ð²Ð½Ð¾ Ñ‡Ñ‚Ð¾-Ð½Ð¸Ð±ÑƒÐ´ÑŒ Ð·Ð°Ð¿Ð¸ÑˆÐµÐ¼, Ð¸Ð½Ð°Ñ‡Ðµ TransactNamedPipe Ð¼Ð¾Ð¶ÐµÑ‚ Ð²Ð¸ÑÐ½ÑƒÑ‚ÑŒ?
 	//		CESERVER_REQ_HDR Out;
 	//		ExecutePrepareCmd(&Out, in.hdr.nCmd, sizeof(Out));
 	//		fSuccess = WriteFile(
@@ -306,12 +306,12 @@ BOOL WINAPI CmdServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppR
 	//			&cbWritten,   // number of bytes written
 	//			NULL);        // not overlapped I/O
 	//
-	//		// îñâîáîäèòü ïàìÿòü
-	//		if ((LPVOID)pOut != (LPVOID)gpStoredOutput)  // Åñëè ýòî ÍÅ ñîõðàíåííûé âûâîä
+	//		// Ð¾ÑÐ²Ð¾Ð±Ð¾Ð´Ð¸Ñ‚ÑŒ Ð¿Ð°Ð¼ÑÑ‚ÑŒ
+	//		if ((LPVOID)pOut != (LPVOID)gpStoredOutput)  // Ð•ÑÐ»Ð¸ ÑÑ‚Ð¾ ÐÐ• ÑÐ¾Ñ…Ñ€Ð°Ð½ÐµÐ½Ð½Ñ‹Ð¹ Ð²Ñ‹Ð²Ð¾Ð´
 	//			ExecuteFreeResult(pOut);
 	//	}
 	//
-	//	if (pIn)    // íå îñâîáîæäàëàñü, õîòÿ, òàêèõ äëèííûõ êîìàíä íàâåðíîå íå áûëî
+	//	if (pIn)    // Ð½Ðµ Ð¾ÑÐ²Ð¾Ð±Ð¾Ð¶Ð´Ð°Ð»Ð°ÑÑŒ, Ñ…Ð¾Ñ‚Ñ, Ñ‚Ð°ÐºÐ¸Ñ… Ð´Ð»Ð¸Ð½Ð½Ñ‹Ñ… ÐºÐ¾Ð¼Ð°Ð½Ð´ Ð½Ð°Ð²ÐµÑ€Ð½Ð¾Ðµ Ð½Ðµ Ð±Ñ‹Ð»Ð¾
 	//	{
 	//		free(pIn); pIn = NULL;
 	//	}
@@ -321,7 +321,7 @@ BOOL WINAPI CmdServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppR
 	//	// Flush the pipe to allow the client to read the pipe's contents
 	//	// before disconnecting. Then disconnect the pipe, and close the
 	//	// handle to this pipe instance.
-	//wrap: // Flush è Disconnect äåëàòü âñåãäà
+	//wrap: // Flush Ð¸ Disconnect Ð´ÐµÐ»Ð°Ñ‚ÑŒ Ð²ÑÐµÐ³Ð´Ð°
 	//	FlushFileBuffers(hPipe);
 	//	DisconnectNamedPipe(hPipe);
 	//	SafeCloseHandle(hPipe);
@@ -346,7 +346,7 @@ BOOL WINAPI DataServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 	{
 		_ASSERTE(pIn->hdr.nVersion == CESERVER_REQ_VER);
 		_ASSERTE(pIn->hdr.nCmd == CECMD_CONSOLEDATA);
-		// ïåðåîòêðûòü ïàéï!
+		// Ð¿ÐµÑ€ÐµÐ¾Ñ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ð¿Ð°Ð¹Ð¿!
 		gpSrv->DataServer.BreakConnection(pInst);
 		return FALSE;
 	}
@@ -357,7 +357,7 @@ BOOL WINAPI DataServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		pcbReplySize = sizeof(gpSrv->pConsole->info);
 		if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 		{
-			// Îòäàåì òîëüêî èíôó, áåç òåêñòà/àòðèáóòîâ
+			// ÐžÑ‚Ð´Ð°ÐµÐ¼ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð¸Ð½Ñ„Ñƒ, Ð±ÐµÐ· Ñ‚ÐµÐºÑÑ‚Ð°/Ð°Ñ‚Ñ€Ð¸Ð±ÑƒÑ‚Ð¾Ð²
 			memmove(ppReply->Data, (&gpSrv->pConsole->info.cmd)+1, pcbReplySize - sizeof(ppReply->hdr));
 			_ASSERTE(sizeof(gpSrv->pConsole->info.cmd) == sizeof(ppReply->hdr));
 			((CESERVER_REQ_CONINFO_INFO*)ppReply)->nDataShift = 0;
@@ -371,7 +371,7 @@ BOOL WINAPI DataServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		gpSrv->pConsole->bDataChanged = FALSE;
 		DWORD ccCells = gpSrv->pConsole->info.crWindow.X * gpSrv->pConsole->info.crWindow.Y;
 
-		// Òàêîãî áûòü íå äîëæíî, ReadConsoleData êîððåêòèðóåò âîçìîæíûé ðàçìåð
+		// Ð¢Ð°ÐºÐ¾Ð³Ð¾ Ð±Ñ‹Ñ‚ÑŒ Ð½Ðµ Ð´Ð¾Ð»Ð¶Ð½Ð¾, ReadConsoleData ÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð¸Ñ€ÑƒÐµÑ‚ Ð²Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ñ‹Ð¹ Ñ€Ð°Ð·Ð¼ÐµÑ€
 		if (ccCells > (size_t)(gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y))
 		{
 			_ASSERTE(ccCells <= (size_t)(gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y));

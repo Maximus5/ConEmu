@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -188,7 +188,7 @@ class MArray
                 MCHKHEAP;
                 memmove(((_Ty*)mp_Elements)+_P,((_Ty*)mp_Elements)+_P+1,
                     mn_TySize*(mn_Elements - _P - 1));
-                //TODO: проверить, правильно ли зачищается элемент
+                //TODO: РїСЂРѕРІРµСЂРёС‚СЊ, РїСЂР°РІРёР»СЊРЅРѕ Р»Рё Р·Р°С‡РёС‰Р°РµС‚СЃСЏ СЌР»РµРјРµРЅС‚
                 memset(((_Ty*)mp_Elements)+mn_Elements-1,0,mn_TySize);
                 MCHKHEAP;
             }

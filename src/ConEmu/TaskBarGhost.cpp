@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2011 Maximus5
 All rights reserved.
@@ -199,7 +199,7 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 	CheckTitle();
 
 	if (!gpConEmu->Taskbar_GhostSnapshootRequired())
-		return FALSE; // Сразу выйдем.
+		return FALSE; // РЎСЂР°Р·Сѓ РІС‹Р№РґРµРј.
 
 	if (!gpConEmu->isValid(mp_VCon))
 		return FALSE;
@@ -260,7 +260,7 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 
 	        mh_Snap = CreateDIBSection(hdcMem, &mbmi_Snap, DIB_RGB_COLORS, (VOID**)&mpb_DS, NULL, 0);
 
-			// Чтобы в созданном mh_Snap гарантировано не было "мусора"
+			// Р§С‚РѕР±С‹ РІ СЃРѕР·РґР°РЅРЅРѕРј mh_Snap РіР°СЂР°РЅС‚РёСЂРѕРІР°РЅРѕ РЅРµ Р±С‹Р»Рѕ "РјСѓСЃРѕСЂР°"
 			if (mh_Snap && mpb_DS)
 			{
 				_ASSERTE(sizeof(COLORREF)==4);
@@ -272,8 +272,8 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
         {
 			HBITMAP hOld = (HBITMAP)SelectObject(hdcMem, mh_Snap);
 
-			// Если в "консоли" есть графические окна (GUI Application, PicView, MMView, PanelViews, и т.п.)
-			// то делать snapshoot по тексту консоли некорректно - нужно "фотографировать" содержимое окна
+			// Р•СЃР»Рё РІ "РєРѕРЅСЃРѕР»Рё" РµСЃС‚СЊ РіСЂР°С„РёС‡РµСЃРєРёРµ РѕРєРЅР° (GUI Application, PicView, MMView, PanelViews, Рё С‚.Рї.)
+			// С‚Рѕ РґРµР»Р°С‚СЊ snapshoot РїРѕ С‚РµРєСЃС‚Сѓ РєРѕРЅСЃРѕР»Рё РЅРµРєРѕСЂСЂРµРєС‚РЅРѕ - РЅСѓР¶РЅРѕ "С„РѕС‚РѕРіСЂР°С„РёСЂРѕРІР°С‚СЊ" СЃРѕРґРµСЂР¶РёРјРѕРµ РѕРєРЅР°
 			if (NeedSnapshootCache())
 			{
 				HWND hView = mp_VCon->GetView();
@@ -282,7 +282,7 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 				bool bLockSnapshoot = false;
 				if (gpConEmu->IsDwm())
 				{
-					// Если уже всплыл "DWM-ное" окошко с иконками...
+					// Р•СЃР»Рё СѓР¶Рµ РІСЃРїР»С‹Р» "DWM-РЅРѕРµ" РѕРєРѕС€РєРѕ СЃ РёРєРѕРЅРєР°РјРё...
 					HWND hFind = FindWindowEx(NULL, NULL, L"TaskListOverlayWnd", NULL);
 					if (hFind)
 					{
@@ -296,17 +296,17 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 				if (!bLockSnapshoot)
 				{
 					WARNING("TODO: Use WM_PRINT & WM_PRINTCLIENT?");
-					// Нужно фото экрана
+					// РќСѓР¶РЅРѕ С„РѕС‚Рѕ СЌРєСЂР°РЅР°
 					#if 1
-					// Этот метод вроде срабатывает, но
-					// - если снапшот запрашивается в момент отображения DWM-иконок
-					//   то он (снапшот) захватит и само плавающее окно DWM для иконок
+					// Р­С‚РѕС‚ РјРµС‚РѕРґ РІСЂРѕРґРµ СЃСЂР°Р±Р°С‚С‹РІР°РµС‚, РЅРѕ
+					// - РµСЃР»Рё СЃРЅР°РїС€РѕС‚ Р·Р°РїСЂР°С€РёРІР°РµС‚СЃСЏ РІ РјРѕРјРµРЅС‚ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ DWM-РёРєРѕРЅРѕРє
+					//   С‚Рѕ РѕРЅ (СЃРЅР°РїС€РѕС‚) Р·Р°С…РІР°С‚РёС‚ Рё СЃР°РјРѕ РїР»Р°РІР°СЋС‰РµРµ РѕРєРЅРѕ DWM РґР»СЏ РёРєРѕРЅРѕРє
 					HDC hdcScrn = GetDC(NULL);
 					BitBlt(hdcMem, PtViewOffset.x,PtViewOffset.y, PtViewSize.x,PtViewSize.y, hdcScrn, rcSnap.left,rcSnap.top, SRCCOPY);
 					ReleaseDC(NULL, hdcScrn);
 					#else
 					HDC hdcScrn;
-					// -- Этот метод не захватывает содержимое других окон (PicView, GUI-apps, и т.п.)
+					// -- Р­С‚РѕС‚ РјРµС‚РѕРґ РЅРµ Р·Р°С…РІР°С‚С‹РІР°РµС‚ СЃРѕРґРµСЂР¶РёРјРѕРµ РґСЂСѓРіРёС… РѕРєРѕРЅ (PicView, GUI-apps, Рё С‚.Рї.)
 					hdcScrn = GetDC(hView);
 					//hdcScrn = GetDCEx(hView, NULL, 0);
 					BitBlt(hdcMem, PtViewOffset.x,PtViewOffset.y, PtViewSize.x,PtViewSize.y, hdcScrn, 0,0, SRCCOPY);
@@ -316,7 +316,7 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 			}
 			else
 			{
-				// Просто отрисуем "консоль" на нашем DC
+				// РџСЂРѕСЃС‚Рѕ РѕС‚СЂРёСЃСѓРµРј "РєРѕРЅСЃРѕР»СЊ" РЅР° РЅР°С€РµРј DC
 				RECT rcPaint = m_TabSize.UsedRect;
 				mp_VCon->PrintClient(hdcMem, true, &rcPaint);
 			}
@@ -350,8 +350,8 @@ bool CTaskBarGhost::CalcThumbnailSize(int nWidth, int nHeight, int &nShowWidth, 
 	return false;
 }
 
-// Если в "консоли" есть графические окна (GUI Application, PicView, MMView, PanelViews, и т.п.)
-// то делать snapshoot по тексту консоли некорректно - нужно "фотографировать" содержимое окна
+// Р•СЃР»Рё РІ "РєРѕРЅСЃРѕР»Рё" РµСЃС‚СЊ РіСЂР°С„РёС‡РµСЃРєРёРµ РѕРєРЅР° (GUI Application, PicView, MMView, PanelViews, Рё С‚.Рї.)
+// С‚Рѕ РґРµР»Р°С‚СЊ snapshoot РїРѕ С‚РµРєСЃС‚Сѓ РєРѕРЅСЃРѕР»Рё РЅРµРєРѕСЂСЂРµРєС‚РЅРѕ - РЅСѓР¶РЅРѕ "С„РѕС‚РѕРіСЂР°С„РёСЂРѕРІР°С‚СЊ" СЃРѕРґРµСЂР¶РёРјРѕРµ РѕРєРЅР°
 bool CTaskBarGhost::NeedSnapshootCache()
 {
 	if (!gpConEmu->IsDwm())
@@ -418,7 +418,7 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 				{
 					if (NeedSnapshootCache())
 					{
-						// При наличии дочерних GUI окон - вероятно, snapshoot-ы имеют смысл только когда окна видимы
+						// РџСЂРё РЅР°Р»РёС‡РёРё РґРѕС‡РµСЂРЅРёС… GUI РѕРєРѕРЅ - РІРµСЂРѕСЏС‚РЅРѕ, snapshoot-С‹ РёРјРµСЋС‚ СЃРјС‹СЃР» С‚РѕР»СЊРєРѕ РєРѕРіРґР° РѕРєРЅР° РІРёРґРёРјС‹
 						if (gpConEmu->isVisible(mp_VCon))
 							CreateTabSnapshoot();
 
@@ -498,7 +498,7 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 LPCWSTR CTaskBarGhost::CheckTitle(BOOL abSkipValidation /*= FALSE*/)
 {
 	LPCWSTR pszTitle = NULL;
-	TODO("Разбивка по табам консоли");
+	TODO("Р Р°Р·Р±РёРІРєР° РїРѕ С‚Р°Р±Р°Рј РєРѕРЅСЃРѕР»Рё");
 	if (mp_VCon && (abSkipValidation || gpConEmu->isValid(mp_VCon)) && mp_VCon->RCon())
 	{
 		pszTitle = mp_VCon->RCon()->GetTitle(true);
@@ -530,7 +530,7 @@ void CTaskBarGhost::ActivateTaskbar()
 {
 	gpConEmu->Taskbar_SetActiveTab(mh_Ghost);
 #if 0
-	// -- смена родителя (owner) на WinXP не срабатывает
+	// -- СЃРјРµРЅР° СЂРѕРґРёС‚РµР»СЏ (owner) РЅР° WinXP РЅРµ СЃСЂР°Р±Р°С‚С‹РІР°РµС‚
 	if (!IsWindows7)
 	{
 		HWND hParent = GetParent(ghWnd);
@@ -583,7 +583,7 @@ LRESULT CTaskBarGhost::OnCreate()
 	// to always render the thumbnail using the iconic bitmap.
 	gpConEmu->ForceSetIconic(mh_Ghost);
 
-	// Win7 и выше!
+	// Win7 Рё РІС‹С€Рµ!
 	if (IsWindows7)
 	{
 		// Tell the taskbar about this tab window
@@ -591,7 +591,7 @@ LRESULT CTaskBarGhost::OnCreate()
 	}
 
 	#if 0
-	// -- смена родителя (owner) на WinXP не срабатывает, а для других систем (Vista+) вообще не требуется
+	// -- СЃРјРµРЅР° СЂРѕРґРёС‚РµР»СЏ (owner) РЅР° WinXP РЅРµ СЃСЂР°Р±Р°С‚С‹РІР°РµС‚, Р° РґР»СЏ РґСЂСѓРіРёС… СЃРёСЃС‚РµРј (Vista+) РІРѕРѕР±С‰Рµ РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ
 	else if (gpConEmu->isActive(mp_VCon))
 	{
 		HWND hParent = GetParent(ghWnd);
@@ -635,7 +635,7 @@ LRESULT CTaskBarGhost::OnActivate(WPARAM wParam, LPARAM lParam)
 		mb_WasSkipActivate = false;
 		if (!IsWindows7 && mh_SkipActivateEvent)
 		{
-			// Чтобы не было глюков при Alt-Tab, Alt-Tab
+			// Р§С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ РіР»СЋРєРѕРІ РїСЂРё Alt-Tab, Alt-Tab
 			DWORD nSkipActivate = WaitForSingleObject(mh_SkipActivateEvent, 0);
 			if (nSkipActivate == WAIT_OBJECT_0)
 			{
@@ -654,8 +654,8 @@ LRESULT CTaskBarGhost::OnActivate(WPARAM wParam, LPARAM lParam)
 		//hr = gpConEmu->DwmInvalidateIconicBitmaps(mh_Ghost); -- need?
 
 		// Activate tab.
-		// Чтобы при клике по миниатюре табы НЕ итерировались (gpSet->isMultiIterate)
-		// сначала проверяем активный таб
+		// Р§С‚РѕР±С‹ РїСЂРё РєР»РёРєРµ РїРѕ РјРёРЅРёР°С‚СЋСЂРµ С‚Р°Р±С‹ РќР• РёС‚РµСЂРёСЂРѕРІР°Р»РёСЃСЊ (gpSet->isMultiIterate)
+		// СЃРЅР°С‡Р°Р»Р° РїСЂРѕРІРµСЂСЏРµРј Р°РєС‚РёРІРЅС‹Р№ С‚Р°Р±
 		CVConGuard guard(mp_VCon);
 		CVConGuard VCon;
 		gpConEmu->GetActiveVCon(&VCon);
@@ -699,7 +699,7 @@ HICON CTaskBarGhost::OnGetIcon(WPARAM anIconType)
 {
 	HICON lResult = NULL;
 
-	TODO("Получить иконку активного приложения в консоли");
+	TODO("РџРѕР»СѓС‡РёС‚СЊ РёРєРѕРЅРєСѓ Р°РєС‚РёРІРЅРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ РІ РєРѕРЅСЃРѕР»Рё");
 	//lResult = SendMessage(ghWnd, message, wParam, lParam);
 	if (anIconType == ICON_BIG)
 		lResult = hClassIcon;
@@ -745,22 +745,22 @@ LRESULT CTaskBarGhost::OnDwmSendIconicThumbnail(short anWidth, short anHeight)
 	return 0;
 }
 
-// pPtOffset		Смещение левого верхнего угла сформированного LiveBitmap
-//					относительно левого верхнего угла окна ghWnd.
-//					Чаще всего, это разница между GetWindowRect(hView) и GetWindowRect(ghWnd)
-//					Но! В дальнейшем, при появлении групп табов все может стать сложнее...
-// pPtViewOffset	Если размер GetClientRect(hView) меньше рабочей области ghWnd - центрирование
-//					Смещение - относительно формируемого LiveBitmap
-// pPtSize			размер рабочей области (размер формируемого LiveBitmap)
-// pPtViewSize		размер окна отрисовки
+// pPtOffset		РЎРјРµС‰РµРЅРёРµ Р»РµРІРѕРіРѕ РІРµСЂС…РЅРµРіРѕ СѓРіР»Р° СЃС„РѕСЂРјРёСЂРѕРІР°РЅРЅРѕРіРѕ LiveBitmap
+//					РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ Р»РµРІРѕРіРѕ РІРµСЂС…РЅРµРіРѕ СѓРіР»Р° РѕРєРЅР° ghWnd.
+//					Р§Р°С‰Рµ РІСЃРµРіРѕ, СЌС‚Рѕ СЂР°Р·РЅРёС†Р° РјРµР¶РґСѓ GetWindowRect(hView) Рё GetWindowRect(ghWnd)
+//					РќРѕ! Р’ РґР°Р»СЊРЅРµР№С€РµРј, РїСЂРё РїРѕСЏРІР»РµРЅРёРё РіСЂСѓРїРї С‚Р°Р±РѕРІ РІСЃРµ РјРѕР¶РµС‚ СЃС‚Р°С‚СЊ СЃР»РѕР¶РЅРµРµ...
+// pPtViewOffset	Р•СЃР»Рё СЂР°Р·РјРµСЂ GetClientRect(hView) РјРµРЅСЊС€Рµ СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё ghWnd - С†РµРЅС‚СЂРёСЂРѕРІР°РЅРёРµ
+//					РЎРјРµС‰РµРЅРёРµ - РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ С„РѕСЂРјРёСЂСѓРµРјРѕРіРѕ LiveBitmap
+// pPtSize			СЂР°Р·РјРµСЂ СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё (СЂР°Р·РјРµСЂ С„РѕСЂРјРёСЂСѓРµРјРѕРіРѕ LiveBitmap)
+// pPtViewSize		СЂР°Р·РјРµСЂ РѕРєРЅР° РѕС‚СЂРёСЃРѕРІРєРё
 void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, POINT* pPtSize, POINT* pPtViewSize)
 {
 	POINT ptOffset = {};
 
 	//RECT rcMain = gpConEmu->CalcRect(CER_MAIN);
-	//// размер всей рабочей области (но БЕЗ табов, прокруток, статусов)
-	//RECT rcWork = gpConEmu->CalcRect(CER_WORKSPACE, rcMain, CER_MAIN, mp_VCon/*хотя VCon и не важен, нужен полный размер*/);
-	RECT rcWork = gpConEmu->CalcRect(CER_WORKSPACE, mp_VCon/*хотя VCon и не важен, нужен полный размер*/);
+	//// СЂР°Р·РјРµСЂ РІСЃРµР№ СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё (РЅРѕ Р‘Р•Р— С‚Р°Р±РѕРІ, РїСЂРѕРєСЂСѓС‚РѕРє, СЃС‚Р°С‚СѓСЃРѕРІ)
+	//RECT rcWork = gpConEmu->CalcRect(CER_WORKSPACE, rcMain, CER_MAIN, mp_VCon/*С…РѕС‚СЏ VCon Рё РЅРµ РІР°Р¶РµРЅ, РЅСѓР¶РµРЅ РїРѕР»РЅС‹Р№ СЂР°Р·РјРµСЂ*/);
+	RECT rcWork = gpConEmu->CalcRect(CER_WORKSPACE, mp_VCon/*С…РѕС‚СЏ VCon Рё РЅРµ РІР°Р¶РµРЅ, РЅСѓР¶РµРЅ РїРѕР»РЅС‹Р№ СЂР°Р·РјРµСЂ*/);
 	_ASSERTE(rcWork.right>rcWork.left && rcWork.bottom>rcWork.top);
 
 	//RECT rcView = {0};
@@ -775,7 +775,7 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 	//else
 	//{
 	//	_ASSERTE(hView!=NULL && "mp_VCon->GetView() must returns DC window");
-	//	// Если View не сформирован - получить размер всей рабочей области (но БЕЗ табов, прокруток, статусов)
+	//	// Р•СЃР»Рё View РЅРµ СЃС„РѕСЂРјРёСЂРѕРІР°РЅ - РїРѕР»СѓС‡РёС‚СЊ СЂР°Р·РјРµСЂ РІСЃРµР№ СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё (РЅРѕ Р‘Р•Р— С‚Р°Р±РѕРІ, РїСЂРѕРєСЂСѓС‚РѕРє, СЃС‚Р°С‚СѓСЃРѕРІ)
 	//	rcView = rcWork;
 	//}
 
@@ -788,7 +788,7 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 	if ((gpConEmu->WindowMode == rFullScreen)
 		|| ((gpConEmu->WindowMode == rMaximized) && (gpSet->isHideCaptionAlways() || gpSet->isHideCaption)))
 	{
-		// Финт ушами, т.к. в этих режимах идет принудительный сдвиг
+		// Р¤РёРЅС‚ СѓС€Р°РјРё, С‚.Рє. РІ СЌС‚РёС… СЂРµР¶РёРјР°С… РёРґРµС‚ РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅС‹Р№ СЃРґРІРёРі
 		ptOffset.x += GetSystemMetrics(SM_CXFRAME);
 		ptOffset.y += GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
 	}
@@ -797,7 +797,7 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 	//	//	ptOffset.x += GetSystemMetrics(SM_CXFRAME);
 	//	//	ptOffset.y += GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
 	//}
-	////TODO("Проверить, учитывается ли DWM и прочая фигня с шириной рамок");
+	////TODO("РџСЂРѕРІРµСЂРёС‚СЊ, СѓС‡РёС‚С‹РІР°РµС‚СЃСЏ Р»Рё DWM Рё РїСЂРѕС‡Р°СЏ С„РёРіРЅСЏ СЃ С€РёСЂРёРЅРѕР№ СЂР°РјРѕРє");
 	//ptOffset.x = rcWork.left - rcMain.left;
 	//ptOffset.y = rcWork.top - rcMain.top;
 	//if (!gpConEmu->isIconic())
@@ -832,7 +832,7 @@ LRESULT CTaskBarGhost::OnDwmSendIconicLivePreviewBitmap()
 		//{
 		//	RECT rcMain = {0}; GetWindowRect(ghWnd, &rcMain);
 		//	RECT rcView = {0}; GetWindowRect(hView, &rcView);
-		//	TODO("Проверить, учитывается ли DWM и прочая фигня с шириной рамок");
+		//	TODO("РџСЂРѕРІРµСЂРёС‚СЊ, СѓС‡РёС‚С‹РІР°РµС‚СЃСЏ Р»Рё DWM Рё РїСЂРѕС‡Р°СЏ С„РёРіРЅСЏ СЃ С€РёСЂРёРЅРѕР№ СЂР°РјРѕРє");
 		//	ptOffset.x = rcView.left - rcMain.left;
 		//	ptOffset.y = rcView.top - rcMain.top;
 		//	if (!gpConEmu->isIconic())
@@ -900,7 +900,7 @@ LRESULT CTaskBarGhost::GhostProc(UINT message, WPARAM wParam, LPARAM lParam)
     LRESULT lResult = 0;
 
 #ifdef _DEBUG
-	// Для уменьшения мусора в DebugLog
+	// Р”Р»СЏ СѓРјРµРЅСЊС€РµРЅРёСЏ РјСѓСЃРѕСЂР° РІ DebugLog
 	if (message == WM_SETTEXT)
 	{
 		bool lbDbg = false;

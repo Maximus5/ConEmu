@@ -1,4 +1,4 @@
-
+п»ї
 #undef TEST_BUILD
 
 #include <windows.h>
@@ -155,7 +155,7 @@ BOOL IsWindows64()
 {
 	BOOL is64bitOs = FALSE, isWow64process = FALSE;
 
-	// Проверяем, где мы запущены
+	// РџСЂРѕРІРµСЂСЏРµРј, РіРґРµ РјС‹ Р·Р°РїСѓС‰РµРЅС‹
 	isWow64process = FALSE;
 	HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
 
@@ -182,7 +182,7 @@ BOOL IsWindows64()
 
 bool IsUserAdmin()
 {
-	// Проверять нужно только для висты и выше
+	// РџСЂРѕРІРµСЂСЏС‚СЊ РЅСѓР¶РЅРѕ С‚РѕР»СЊРєРѕ РґР»СЏ РІРёСЃС‚С‹ Рё РІС‹С€Рµ
 	if (gOSVer.dwMajorVersion < 6)
 		return FALSE;
 
@@ -680,7 +680,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 		DWORD nErr = GetLastError();
 		if (nErr == 1223)
 		{
-			// Отмена пользователем UAC, или правов не хватило?
+			// РћС‚РјРµРЅР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј UAC, РёР»Рё РїСЂР°РІРѕРІ РЅРµ С…РІР°С‚РёР»Рѕ?
 			sei.fMask = SEE_MASK_NOCLOSEPROCESS|/*SEE_MASK_NOASYNC*/0x00000100; //|/*SEE_MASK_NOZONECHECKS*/0x00800000;
 			sei.lpVerb = L"open";
 			sei.lpFile = gsMsiFile;
@@ -708,7 +708,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 			WaitForSingleObject(sei.hProcess, INFINITE);
 			DWORD nCode = 0;
 			SetLastError(0);
-			//1602 - это похоже "Отмена" пользователем
+			//1602 - СЌС‚Рѕ РїРѕС…РѕР¶Рµ "РћС‚РјРµРЅР°" РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј
 			if (!GetExitCodeProcess(sei.hProcess, &nCode) || (nCode != 0 && nCode != 1602))
 			{
 				wchar_t szFormat[128]; wsprintf(szFormat, L"Installer failed\n%%s\nExitCode=%u", nCode);

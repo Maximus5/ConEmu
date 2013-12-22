@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2013 Maximus5
 All rights reserved.
@@ -36,7 +36,7 @@ void SetConEmuEnvHWND(LPCWSTR pszVarName, HWND hWnd)
 {
 	if (hWnd)
 	{
-		// Установить переменную среды с дескриптором окна
+		// РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ СЃСЂРµРґС‹ СЃ РґРµСЃРєСЂРёРїС‚РѕСЂРѕРј РѕРєРЅР°
 		wchar_t szVar[16];
 		msprintf(szVar, countof(szVar), L"0x%08X", (DWORD)(DWORD_PTR)hWnd); //-V205
 		SetEnvironmentVariable(pszVarName, szVar);

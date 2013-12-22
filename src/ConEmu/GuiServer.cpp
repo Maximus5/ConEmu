@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -67,8 +67,8 @@ CGuiServer::~CGuiServer()
 
 bool CGuiServer::Start()
 {
-	// Запустить серверную нить
-	// 120122 - теперь через PipeServer
+	// Р—Р°РїСѓСЃС‚РёС‚СЊ СЃРµСЂРІРµСЂРЅСѓСЋ РЅРёС‚СЊ
+	// 120122 - С‚РµРїРµСЂСЊ С‡РµСЂРµР· PipeServer
 	_wsprintf(ms_ServerPipe, SKIPLEN(countof(ms_ServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghWnd); //-V205
 	
 	mp_GuiServer->SetOverlapped(true);
@@ -82,7 +82,7 @@ bool CGuiServer::Start()
 	
 	if (!mp_GuiServer->StartPipeServer(ms_ServerPipe, (LPARAM)this, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, NULL))
 	{
-		// Ошибка уже показана
+		// РћС€РёР±РєР° СѓР¶Рµ РїРѕРєР°Р·Р°РЅР°
 		return false;
 	}
 	//mh_GuiServerThreadTerminate = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -94,7 +94,7 @@ bool CGuiServer::Start()
 
 void CGuiServer::Stop(bool abDeinitialize/*=false*/)
 {
-	//120122 - Теперь через PipeServer
+	//120122 - РўРµРїРµСЂСЊ С‡РµСЂРµР· PipeServer
 	if (mp_GuiServer)
 	{
 		ShutdownGuiStep(L"mp_GuiServer->StopPipeServer");
@@ -111,7 +111,7 @@ void CGuiServer::Stop(bool abDeinitialize/*=false*/)
 	}
 }
 
-//// Эта функция пайп не закрывает!
+//// Р­С‚Р° С„СѓРЅРєС†РёСЏ РїР°Р№Рї РЅРµ Р·Р°РєСЂС‹РІР°РµС‚!
 //void CGuiServer::GuiServerThreadCommand(HANDLE hPipe)
 BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
@@ -132,7 +132,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 	#ifdef _DEBUG
 	UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
 	#endif
-	// Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
+	// Р’СЃРµ РґР°РЅРЅС‹Рµ РёР· РїР°Р№РїР° РїРѕР»СѓС‡РµРЅС‹, РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РєРѕРјР°РЅРґСѓ Рё РІРѕР·РІСЂР°С‰Р°РµРј (РµСЃР»Рё РЅСѓР¶РЅРѕ) СЂРµР·СѓР»СЊС‚Р°С‚
 
 	#ifdef ALLOW_WINE_MSG
 	if (gbIsWine)
@@ -148,7 +148,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 	{
 		case CECMD_NEWCMD:
 		{
-			// Приходит из другой копии ConEmu.exe, когда она запущена с ключом /single, /showhide, /showhideTSA
+			// РџСЂРёС…РѕРґРёС‚ РёР· РґСЂСѓРіРѕР№ РєРѕРїРёРё ConEmu.exe, РєРѕРіРґР° РѕРЅР° Р·Р°РїСѓС‰РµРЅР° СЃ РєР»СЋС‡РѕРј /single, /showhide, /showhideTSA
 			DEBUGSTR(L"GUI recieved CECMD_NEWCMD\n");
 
 			if (pIn->NewCmd.isAdvLogging && !gpSetCls->isAdvLogging)
@@ -197,7 +197,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 					|| (pIn->NewCmd.szCommand[0] && !CVConGroup::isVConExists(0));
 				gpConEmu->DoMinimizeRestore(bCreateTab ? sih_SetForeground : pIn->NewCmd.ShowHide);
 
-				// Может быть пусто
+				// РњРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚Рѕ
 				if (bCreateTab && pIn->NewCmd.szCommand[0])
 				{
 					RConStartArgs *pArgs = new RConStartArgs;
@@ -218,7 +218,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 					}
 					else
 					{
-						// Если хотят в одном окне - только одну консоль
+						// Р•СЃР»Рё С…РѕС‚СЏС‚ РІ РѕРґРЅРѕРј РѕРєРЅРµ - С‚РѕР»СЊРєРѕ РѕРґРЅСѓ РєРѕРЅСЃРѕР»СЊ
 						gpConEmu->CreateWnd(pArgs);
 						SafeDelete(pArgs);
 					}
@@ -241,7 +241,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 		case CECMD_TABSCMD:
 		{
-			// 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
+			// 0: СЃРїСЂСЏС‚Р°С‚СЊ/РїРѕРєР°Р·Р°С‚СЊ С‚Р°Р±С‹, 1: РїРµСЂРµР№С‚Рё РЅР° СЃР»РµРґСѓСЋС‰СѓСЋ, 2: РїРµСЂРµР№С‚Рё РЅР° РїСЂРµРґС‹РґСѓС‰СѓСЋ, 3: commit switch
 			DEBUGSTR(L"GUI recieved CECMD_TABSCMD\n");
 			_ASSERTE(nDataSize>=1);
 			DWORD nTabCmd = pIn->Data[0];
@@ -353,7 +353,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 		case CECMD_ATTACH2GUI:
 		{
-			// Получен запрос на Attach из сервера
+			// РџРѕР»СѓС‡РµРЅ Р·Р°РїСЂРѕСЃ РЅР° Attach РёР· СЃРµСЂРІРµСЂР°
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOPRET);
 			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 				goto wrap;
@@ -376,7 +376,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 			if (pIn->SrvStartStop.Started == srv_Started)
 			{
-				// Запущен процесс сервера
+				// Р—Р°РїСѓС‰РµРЅ РїСЂРѕС†РµСЃСЃ СЃРµСЂРІРµСЂР°
 				HWND hConWnd = (HWND)pIn->dwData[1];
 				_ASSERTE(hConWnd && IsWindow(hConWnd));
 
@@ -384,11 +384,11 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 				//LRESULT l = 0;
 				//DWORD_PTR dwRc = 0;
-				//2010-05-21 Поскольку это критично - лучше ждать до упора, хотя может быть DeadLock?
+				//2010-05-21 РџРѕСЃРєРѕР»СЊРєСѓ СЌС‚Рѕ РєСЂРёС‚РёС‡РЅРѕ - Р»СѓС‡С€Рµ Р¶РґР°С‚СЊ РґРѕ СѓРїРѕСЂР°, С…РѕС‚СЏ РјРѕР¶РµС‚ Р±С‹С‚СЊ DeadLock?
 				//l = SendMessageTimeout(ghWnd, gpConEmu->mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID,
 				//	SMTO_BLOCK, 5000, &dwRc);
 
-				//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
+				//111002 - РІРµСЂРЅСѓС‚СЊ РґРѕР»Р¶РµРЅ HWND РѕРєРЅР° РѕС‚СЂРёСЃРѕРІРєРё (РґРѕС‡РµСЂРЅРµРµ РѕРєРЅРѕ ConEmu)
 				MsgSrvStartedArg arg = {hConWnd, pIn->hdr.nSrcPID, pIn->SrvStartStop.dwKeybLayout, nStartTick};
 				SendMessage(ghWnd, gpConEmu->mn_MsgSrvStarted, 0, (LPARAM)&arg);
 				HWND hWndDC = arg.hWndDc;
@@ -417,7 +417,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			}
 			else if (pIn->SrvStartStop.Started == srv_Stopped)
 			{
-				// Процесс сервера завершается
+				// РџСЂРѕС†РµСЃСЃ СЃРµСЂРІРµСЂР° Р·Р°РІРµСЂС€Р°РµС‚СЃСЏ
 				CRealConsole* pRCon = NULL;
 				CVConGuard VCon;
 
@@ -445,7 +445,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			}
 
 			lbRc = TRUE;
-			//// Отправляем
+			//// РћС‚РїСЂР°РІР»СЏРµРј
 			//fSuccess = WriteFile(
 			//               hPipe,        // handle to pipe
 			//               pOut,         // buffer to write from
@@ -470,7 +470,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 			//ExecutePrepareCmd(&pIn->hdr, CECMD_ASSERT, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
 			//pIn->dwData[0] = nBtn;
-			//// Отправляем
+			//// РћС‚РїСЂР°РІР»СЏРµРј
 			//fSuccess = WriteFile(
 			//               hPipe,        // handle to pipe
 			//               pIn,         // buffer to write from
@@ -501,7 +501,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			}
 			#endif
 
-			// Уведомить ожидающую вкладку
+			// РЈРІРµРґРѕРјРёС‚СЊ РѕР¶РёРґР°СЋС‰СѓСЋ РІРєР»Р°РґРєСѓ
 			CRealConsole* pRCon = gpConEmu->AttachRequestedGui(pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID);
 			if (pRCon)
 			{
@@ -509,7 +509,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				RECT rcPrev = ppReply->AttachGuiApp.rcWindow;
 				HWND hBack = pRCon->VCon()->GetBack();
 
-				//// Размер должен быть независим от возможности наличия прокрутки в VCon
+				//// Р Р°Р·РјРµСЂ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РЅРµР·Р°РІРёСЃРёРј РѕС‚ РІРѕР·РјРѕР¶РЅРѕСЃС‚Рё РЅР°Р»РёС‡РёСЏ РїСЂРѕРєСЂСѓС‚РєРё РІ VCon
 				//GetWindowRect(hBack, &ppReply->AttachGuiApp.rcWindow);
 				//ppReply->AttachGuiApp.rcWindow.right -= ppReply->AttachGuiApp.rcWindow.left;
 				//ppReply->AttachGuiApp.rcWindow.bottom -= ppReply->AttachGuiApp.rcWindow.top;
@@ -517,8 +517,8 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				////MapWindowPoints(NULL, hBack, (LPPOINT)&ppReply->AttachGuiApp.rcWindow, 2);
 				//pRCon->CorrectGuiChildRect(ppReply->AttachGuiApp.nStyle, ppReply->AttachGuiApp.nStyleEx, ppReply->AttachGuiApp.rcWindow);
 				
-				// Уведомить RCon и ConEmuC, что гуй подцепился
-				// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
+				// РЈРІРµРґРѕРјРёС‚СЊ RCon Рё ConEmuC, С‡С‚Рѕ РіСѓР№ РїРѕРґС†РµРїРёР»СЃСЏ
+				// Р’С‹Р·С‹РІР°РµС‚СЃСЏ РґРІР° СЂР°Р·Р°. РџРµСЂРІС‹Р№ (РїСЂРё Р·Р°РїСѓСЃРєРµ exe) ahGuiWnd==NULL, РІС‚РѕСЂРѕР№ - РїРѕСЃР»Рµ С„Р°РєС‚РёС‡РµСЃРєРѕРіРѕ СЃРѕР·РґР°РЅРёСЏ РѕРєРЅР°
 				pRCon->SetGuiMode(pIn->AttachGuiApp.nFlags, pIn->AttachGuiApp.hAppWindow, pIn->AttachGuiApp.Styles.nStyle, pIn->AttachGuiApp.Styles.nStyleEx, pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID, rcPrev);
 
 				ppReply->AttachGuiApp.nFlags = agaf_Success | (pRCon->isActive(false) ? 0 : agaf_Inactive);
@@ -539,7 +539,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 			lbRc = TRUE;
 
-			//// Отправляем
+			//// РћС‚РїСЂР°РІР»СЏРµРј
 			//fSuccess = WriteFile(
 			//               hPipe,        // handle to pipe
 			//               &Out,         // buffer to write from
@@ -565,7 +565,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 		case CECMD_GUIMACRO:
 		{
-			// Допустимо, если GuiMacro пытаются выполнить извне
+			// Р”РѕРїСѓСЃС‚РёРјРѕ, РµСЃР»Рё GuiMacro РїС‹С‚Р°СЋС‚СЃСЏ РІС‹РїРѕР»РЅРёС‚СЊ РёР·РІРЅРµ
 			CVConGuard VCon; CVConGroup::GetActiveVCon(&VCon);
 
 			DWORD nFarPluginPID = VCon->RCon()->GetFarPID(true);
@@ -608,7 +608,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			_ASSERTE(FALSE && "Command was not handled in CGuiServer::GuiServerCommand");
 	}
 
-	//// Освободить память
+	//// РћСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ
 	//if (pIn && (LPVOID)pIn != (LPVOID)&in)
 	//{
 	//	free(pIn); pIn = NULL;

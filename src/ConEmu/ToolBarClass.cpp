@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -61,7 +61,7 @@ CToolBarClass::~CToolBarClass()
 {
 	EnterCriticalSection(&m_CS);
 	
-	// Освободить память и ресурсы
+	// РћСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ Рё СЂРµСЃСѓСЂСЃС‹
 	for (INT_PTR i = m_Panels.size(); i--;)
 	{
 		PaneInfo* pane = m_Panels[i];
@@ -105,7 +105,7 @@ int CToolBarClass::GetWidth(int anMaxWidth /*= -1*/)
 	for (INT_PTR i = 0; i < m_Panels.size(); i++)
 	{
 		if ((anMaxWidth >= 0) && (nWidth + mn_SeparatorWidth) > anMaxWidth)
-			break; // больше некуда
+			break; // Р±РѕР»СЊС€Рµ РЅРµРєСѓРґР°
 
 		PaneInfo* pane = m_Panels[i];
 
@@ -412,7 +412,7 @@ void CToolBarClass::Commit()
 	}
 	LeaveCriticalSection(&m_CS);
 
-	// Если надо - обновиться/перерисоваться
+	// Р•СЃР»Рё РЅР°РґРѕ - РѕР±РЅРѕРІРёС‚СЊСЃСЏ/РїРµСЂРµСЂРёСЃРѕРІР°С‚СЊСЃСЏ
 	if (ghWnd && gpSet->isTabs && gpSet->isMultiShowButtons)
 	{
 		Invalidate();
@@ -421,7 +421,7 @@ void CToolBarClass::Commit()
 
 void CToolBarClass::Invalidate()
 {
-	TODO("Обновить Frame/Caption?");
+	TODO("РћР±РЅРѕРІРёС‚СЊ Frame/Caption?");
 	// -- gpConEmu->RedrawFrame();
 	InvalidateRect(ghWnd, NULL, TRUE);
 }
@@ -466,7 +466,7 @@ void CToolBarClass::Paint(const PaintDC& dc, const RECT& rcTB)
 	for (INT_PTR i = 0; i < m_Panels.size(); i++)
 	{
 		if ((nWidth + mn_SeparatorWidth) > nMaxWidth)
-			break; // больше некуда
+			break; // Р±РѕР»СЊС€Рµ РЅРµРєСѓРґР°
 
 		PaneInfo* pane = m_Panels[i];
 
@@ -566,7 +566,7 @@ void CToolBarClass::PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 	int y1 = t->rcTool.top = y;
 	int x2 = t->rcTool.right = x + t->rcBmp.right-t->rcBmp.left+1;
 	int y2 = t->rcTool.bottom = y + t->rcBmp.bottom-t->rcBmp.top+1;
-	// Если нужно
+	// Р•СЃР»Рё РЅСѓР¶РЅРѕ
 	int x11, x21;
 	if (t->nFlags & TIS_DROPDOWN)
 	{
@@ -605,7 +605,7 @@ void CToolBarClass::PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 
 		RECT rcAlpha = {x1-3, y1-3, x2+4, y2+4};
 		
-		// Отрисовка рамки вокруг стрелки
+		// РћС‚СЂРёСЃРѕРІРєР° СЂР°РјРєРё РІРѕРєСЂСѓРі СЃС‚СЂРµР»РєРё
 		if (t->nFlags & TIS_DROPDOWN)
 		{
 			//POINT ptFrameDrop[] = {
@@ -627,7 +627,7 @@ void CToolBarClass::PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 	}
 	
 	
-	// Отрисовка стрелки
+	// РћС‚СЂРёСЃРѕРІРєР° СЃС‚СЂРµР»РєРё
 	if (t->nFlags & TIS_DROPDOWN)
 	{
 		int xs1 = x11+(lbClicked?2:1);
@@ -647,7 +647,7 @@ void CToolBarClass::PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 	}
 
 
-	// Отрисовка собственно картинки-кнопки
+	// РћС‚СЂРёСЃРѕРІРєР° СЃРѕР±СЃС‚РІРµРЅРЅРѕ РєР°СЂС‚РёРЅРєРё-РєРЅРѕРїРєРё
 	if (t->nFlags & TIS_DRAWCALLBACK)
 	{
 		RECT rcPaint = {x+(((lbClicked&!mb_ArrowClicked)||lbChecked)?1:0), y};
@@ -900,7 +900,7 @@ bool CToolBarClass::MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 			}
 			m_Clicked.nID = -1;
 			Invalidate();
-			lbRedraw = false; // уже
+			lbRedraw = false; // СѓР¶Рµ
 		}
 	}
 	else if ((uMsg == WM_NCRBUTTONUP) || (uMsg == WM_RBUTTONUP))
@@ -915,7 +915,7 @@ bool CToolBarClass::MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 			}
 			m_Clicked.nID = -1;
 			Invalidate();
-			lbRedraw = false; // уже
+			lbRedraw = false; // СѓР¶Рµ
 		}
 	}
 	else if (m_Clicked.nID != -1)
@@ -933,7 +933,7 @@ bool CToolBarClass::MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	{
 		Invalidate();
 	}
-	// Продолжить обработку
+	// РџСЂРѕРґРѕР»Р¶РёС‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ
 	return false;
 }
 

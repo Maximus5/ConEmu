@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2010-2011 Maximus5
 All rights reserved.
@@ -38,36 +38,36 @@ struct CeFullPanelInfo
 	wchar_t sFontName[32]; // Tahoma
 	int nFontHeight; // 14
 	//
-	int nWholeW, nWholeH; // инициализируется при первом Paint
-	int nXCountFull; // тут четко, кусок иконки не допускается
-	int nXCount; // а тут допускается отображение левой части иконки
-	int nYCountFull; // тут четко, кусок иконки не допускается
-	int nYCount; // а тут допускается отображение верхней части иконки
+	int nWholeW, nWholeH; // РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚СЃСЏ РїСЂРё РїРµСЂРІРѕРј Paint
+	int nXCountFull; // С‚СѓС‚ С‡РµС‚РєРѕ, РєСѓСЃРѕРє РёРєРѕРЅРєРё РЅРµ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ
+	int nXCount; // Р° С‚СѓС‚ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ Р»РµРІРѕР№ С‡Р°СЃС‚Рё РёРєРѕРЅРєРё
+	int nYCountFull; // С‚СѓС‚ С‡РµС‚РєРѕ, РєСѓСЃРѕРє РёРєРѕРЅРєРё РЅРµ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ
+	int nYCount; // Р° С‚СѓС‚ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ РІРµСЂС…РЅРµР№ С‡Р°СЃС‚Рё РёРєРѕРЅРєРё
 	//
 	CEFarInterfaceSettings FarInterfaceSettings;
 	CEFarPanelSettings FarPanelSettings;
 	BOOL  bLeftPanel, bPlugin;
 	BOOL IsFilePanel;
-	int PanelMode; // 0..9 - текущий режим панели.
+	int PanelMode; // 0..9 - С‚РµРєСѓС‰РёР№ СЂРµР¶РёРј РїР°РЅРµР»Рё.
 	BOOL Visible;
 	BOOL ShortNames;
 	BOOL Focus;
 	RECT  PanelRect;
-	RECT  WorkRect; // "рабочий" прямоугольник. где собственно файлы лежат
+	RECT  WorkRect; // "СЂР°Р±РѕС‡РёР№" РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє. РіРґРµ СЃРѕР±СЃС‚РІРµРЅРЅРѕ С„Р°Р№Р»С‹ Р»РµР¶Р°С‚
 	INT_PTR ItemsNumber;
 	//
 	INT_PTR CurrentItem;
 	INT_PTR TopPanelItem;
-	// Это мы хотим выставить при следующем Synchro
+	// Р­С‚Рѕ РјС‹ С…РѕС‚РёРј РІС‹СЃС‚Р°РІРёС‚СЊ РїСЂРё СЃР»РµРґСѓСЋС‰РµРј Synchro
 	bool bRequestItemSet;
 	INT_PTR ReqCurrentItem;
 	INT_PTR ReqTopPanelItem;
 	//
-	INT_PTR OurTopPanelItem; // он может НЕ совпадать с фаровским, чтобы CurrentItem был таки видим
+	INT_PTR OurTopPanelItem; // РѕРЅ РјРѕР¶РµС‚ РќР• СЃРѕРІРїР°РґР°С‚СЊ СЃ С„Р°СЂРѕРІСЃРєРёРј, С‡С‚РѕР±С‹ CurrentItem Р±С‹Р» С‚Р°РєРё РІРёРґРёРј
 	unsigned __int64 Flags; // CEPANELINFOFLAGS
 	// ************************
 	//int nMaxFarColors;
-	BYTE nFarColors[col_LastIndex]; // Массив цветов фара
+	BYTE nFarColors[col_LastIndex]; // РњР°СЃСЃРёРІ С†РІРµС‚РѕРІ С„Р°СЂР°
 	COLORREF crLastBackBrush;
 	HBRUSH hLastBackBrush;
 	// ************************
@@ -81,8 +81,8 @@ struct CeFullPanelInfo
 	CePluginPanelItemColor* pItemColors;
 	MSection* pSection;
 	// ************************
-	size_t nFarTmpBuf;    // Временный буфер для получения
-	LPVOID pFarTmpBuf; // информации об элементе панели
+	size_t nFarTmpBuf;    // Р’СЂРµРјРµРЅРЅС‹Р№ Р±СѓС„РµСЂ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ
+	LPVOID pFarTmpBuf; // РёРЅС„РѕСЂРјР°С†РёРё РѕР± СЌР»РµРјРµРЅС‚Рµ РїР°РЅРµР»Рё
 
 
 	int RegisterPanelView();
@@ -92,10 +92,10 @@ struct CeFullPanelInfo
 	BOOL ReallocItems(INT_PTR anCount);
 	void FinalRelease();
 
-	// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
+	// Р­С‚Р° "РґРёСЃРїР»РµР№РЅР°СЏ" С„СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· РѕСЃРЅРѕРІРЅРѕР№ РЅРёС‚Рё, С‚Р°Рј РјРѕР¶РЅРѕ РґРµСЂРіР°С‚СЊ FAR Api
 	void DisplayReloadPanel();
 
-	// Эта функция Safe-thread - ее можно дергать из любой нити
+	// Р­С‚Р° С„СѓРЅРєС†РёСЏ Safe-thread - РµРµ РјРѕР¶РЅРѕ РґРµСЂРіР°С‚СЊ РёР· Р»СЋР±РѕР№ РЅРёС‚Рё
 	void RequestSetPos(INT_PTR anCurrentItem, INT_PTR anTopItem, BOOL abSetFocus = FALSE);
 
 	static LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

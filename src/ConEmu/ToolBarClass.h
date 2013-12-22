@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -39,7 +39,7 @@ enum ToolInfoStyles
 	TIS_CHECKED      = 0x0004,
 	TIS_DRAWCALLBACK = 0x0008,
 	TIS_TIPCALLBACK  = 0x0010,
-	TIS_PRESSED      = 0x0020, // Передается только в OnToolBarDraw если кнопка сейчас нажата мышкой
+	TIS_PRESSED      = 0x0020, // РџРµСЂРµРґР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РІ OnToolBarDraw РµСЃР»Рё РєРЅРѕРїРєР° СЃРµР№С‡Р°СЃ РЅР°Р¶Р°С‚Р° РјС‹С€РєРѕР№
 	TIS_VISIBLE      = 0x0040, // Pane-only style
 };
 
@@ -54,33 +54,33 @@ private:
 	{
 		union {
 			struct {
-				int       nPane; // ИД панели
-				int       nCmd;  // ID кнопки
+				int       nPane; // РР” РїР°РЅРµР»Рё
+				int       nCmd;  // ID РєРЅРѕРїРєРё
 			};
-			__int64 nID; // для удобства
+			__int64 nID; // РґР»СЏ СѓРґРѕР±СЃС‚РІР°
 		};
 	};
 	struct ToolInfo
 	{
-		ToolId    ID;     // ИД панели/кнопки
+		ToolId    ID;     // РР” РїР°РЅРµР»Рё/РєРЅРѕРїРєРё
 		DWORD     nFlags; // enum ToolInfoStyles
-		RECT      rcBmp;  // координаты кнопки в hBmp;
+		RECT      rcBmp;  // РєРѕРѕСЂРґРёРЅР°С‚С‹ РєРЅРѕРїРєРё РІ hBmp;
 		wchar_t*  sTip;   // Tooltip
 		int       nTipCchMax;
-		// Далее - используется при отрисовке
+		// Р”Р°Р»РµРµ - РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РїСЂРё РѕС‚СЂРёСЃРѕРІРєРµ
 		RECT      rcTool;
 		RECT      rcArrow;
 	};
 	struct PaneInfo
 	{
-		int       nPane;        // ИД панели
-		DWORD     nStyles;      // Показывать или спрятать эту панель (TIS_VISIBLE)
-		int       nPriority;    // При нехватке места - остаются имеющие высший nPriority. Пока не реализовано.
-		int       nTotalWidth;  // общая ширина "панели"
-		int       nCount, nMax; // Количество кнопок, и размер выделенных ячеек
+		int       nPane;        // РР” РїР°РЅРµР»Рё
+		DWORD     nStyles;      // РџРѕРєР°Р·С‹РІР°С‚СЊ РёР»Рё СЃРїСЂСЏС‚Р°С‚СЊ СЌС‚Сѓ РїР°РЅРµР»СЊ (TIS_VISIBLE)
+		int       nPriority;    // РџСЂРё РЅРµС…РІР°С‚РєРµ РјРµСЃС‚Р° - РѕСЃС‚Р°СЋС‚СЃСЏ РёРјРµСЋС‰РёРµ РІС‹СЃС€РёР№ nPriority. РџРѕРєР° РЅРµ СЂРµР°Р»РёР·РѕРІР°РЅРѕ.
+		int       nTotalWidth;  // РѕР±С‰Р°СЏ С€РёСЂРёРЅР° "РїР°РЅРµР»Рё"
+		int       nCount, nMax; // РљРѕР»РёС‡РµСЃС‚РІРѕ РєРЅРѕРїРѕРє, Рё СЂР°Р·РјРµСЂ РІС‹РґРµР»РµРЅРЅС‹С… СЏС‡РµРµРє
 		HBITMAP   hBmp;
 		ToolInfo* pTool;
-		// Далее - используется при отрисовке
+		// Р”Р°Р»РµРµ - РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РїСЂРё РѕС‚СЂРёСЃРѕРІРєРµ
 		BOOL      bVisible;
 		RECT      rcPane;
 		// Callbacks
@@ -95,7 +95,7 @@ private:
 	int mn_MaxPaneId;
 	int mn_SeparatorWidth;
 	int mn_PaddingWidth;
-	int mn_DropArrowWidth; // размер поля со стрелкой
+	int mn_DropArrowWidth; // СЂР°Р·РјРµСЂ РїРѕР»СЏ СЃРѕ СЃС‚СЂРµР»РєРѕР№
 	int mn_ToolWidth, mn_ToolHeight;
 	MArray<PaneInfo*> m_Panels;
 	CRITICAL_SECTION m_CS;

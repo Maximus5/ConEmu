@@ -1,5 +1,5 @@
-//TODO: Осталось сделать только список цветов с перебором по букве диска
-//TODO: И аналогично для цвета фона градусника/картинок/текста и самого градусника
+п»ї//TODO: РћСЃС‚Р°Р»РѕСЃСЊ СЃРґРµР»Р°С‚СЊ С‚РѕР»СЊРєРѕ СЃРїРёСЃРѕРє С†РІРµС‚РѕРІ СЃ РїРµСЂРµР±РѕСЂРѕРј РїРѕ Р±СѓРєРІРµ РґРёСЃРєР°
+//TODO: Р Р°РЅР°Р»РѕРіРёС‡РЅРѕ РґР»СЏ С†РІРµС‚Р° С„РѕРЅР° РіСЂР°РґСѓСЃРЅРёРєР°/РєР°СЂС‚РёРЅРѕРє/С‚РµРєСЃС‚Р° Рё СЃР°РјРѕРіРѕ РіСЂР°РґСѓСЃРЅРёРєР°
 
 /*
 Copyright (c) 2010-2011 Maximus5
@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifdef _DEBUG
-//  Раскомментировать, чтобы сразу после загрузки плагина показать MessageBox, чтобы прицепиться дебаггером
+//  Р Р°СЃРєРѕРјРјРµРЅС‚РёСЂРѕРІР°С‚СЊ, С‡С‚РѕР±С‹ СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ Р·Р°РіСЂСѓР·РєРё РїР»Р°РіРёРЅР° РїРѕРєР°Р·Р°С‚СЊ MessageBox, С‡С‚РѕР±С‹ РїСЂРёС†РµРїРёС‚СЊСЃСЏ РґРµР±Р°РіРіРµСЂРѕРј
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_WRITING_RECTS
 #endif
@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif
-#include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
+#include "../common/pluginW1761.hpp" // РћС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ 995 РЅР°Р»РёС‡РёРµРј SynchoApi
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif
@@ -71,7 +71,7 @@ extern "C" {
 #define DT_HIDEPREFIX               0x00100000
 #endif
 
-HMODULE ghPluginModule = NULL; // ConEmuBg.dll - сам плагин
+HMODULE ghPluginModule = NULL; // ConEmuBg.dll - СЃР°Рј РїР»Р°РіРёРЅ
 //wchar_t* gszRootKey = NULL;
 FarVersion gFarVersion = {};
 static RegisterBackground_t gfRegisterBackground = NULL;
@@ -90,10 +90,10 @@ ConEmuBgSettings gSettings[] = {
 BOOL gbBackgroundEnabled = FALSE;
 wchar_t gsXmlConfigFile[MAX_PATH] = {};
 BOOL gbMonitorFileChange = FALSE;
-//COLORREF gcrLinesColor = RGB(0,0,0xA8); // чуть светлее синего
-//int giHilightType = 0; // 0 - линии, 1 - полосы
+//COLORREF gcrLinesColor = RGB(0,0,0xA8); // С‡СѓС‚СЊ СЃРІРµС‚Р»РµРµ СЃРёРЅРµРіРѕ
+//int giHilightType = 0; // 0 - Р»РёРЅРёРё, 1 - РїРѕР»РѕСЃС‹
 //BOOL gbHilightPlugins = FALSE;
-//COLORREF gcrHilightPlugBack = RGB(0xA8,0,0); // чуть светлее красного
+//COLORREF gcrHilightPlugBack = RGB(0xA8,0,0); // С‡СѓС‚СЊ СЃРІРµС‚Р»РµРµ РєСЂР°СЃРЅРѕРіРѕ
 
 
 
@@ -234,13 +234,13 @@ struct DrawInfo
 		dib_Small = 0, dib_Large = 1, dib_Off = 2
 	} nSpaceBar;
 
-	wchar_t  szPic[MAX_PATH];  // Это относительный путь! считая от папки с плагином ("img/plugin.png")
-	wchar_t  szText[MAX_PATH]; // Текст, который отображается под картинкой ("G: 128Gb")
-	COLORREF crBack[32];       // Цвет фона
+	wchar_t  szPic[MAX_PATH];  // Р­С‚Рѕ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅС‹Р№ РїСѓС‚СЊ! СЃС‡РёС‚Р°СЏ РѕС‚ РїР°РїРєРё СЃ РїР»Р°РіРёРЅРѕРј ("img/plugin.png")
+	wchar_t  szText[MAX_PATH]; // РўРµРєСЃС‚, РєРѕС‚РѕСЂС‹Р№ РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ РїРѕРґ РєР°СЂС‚РёРЅРєРѕР№ ("G: 128Gb")
+	COLORREF crBack[32];       // Р¦РІРµС‚ С„РѕРЅР°
 	int      nBackCount;
-	COLORREF crDark[32];       // Цвет спрайтов, текста, фона градусника
+	COLORREF crDark[32];       // Р¦РІРµС‚ СЃРїСЂР°Р№С‚РѕРІ, С‚РµРєСЃС‚Р°, С„РѕРЅР° РіСЂР°РґСѓСЃРЅРёРєР°
 	int      nDarkCount;
-	COLORREF crLight[32];      // Цвет градусника
+	COLORREF crLight[32];      // Р¦РІРµС‚ РіСЂР°РґСѓСЃРЅРёРєР°
 	int      nLightCount;
 	
 	enum DrawInfoFlags
@@ -280,7 +280,7 @@ bool WasXmlLoaded()
 	return (XmlFile.FileData != NULL);
 }
 
-// Возвращает TRUE, если файл изменился
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ TRUE, РµСЃР»Рё С„Р°Р№Р» РёР·РјРµРЅРёР»СЃСЏ
 bool CheckXmlFile(bool abUpdateName /*= false*/)
 {
 	bool lbChanged = false, lbNeedCheck = false;
@@ -333,7 +333,7 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 			goto wrap;
 		}
 
-		// Notification - мониторинг изменения файла
+		// Notification - РјРѕРЅРёС‚РѕСЂРёРЅРі РёР·РјРµРЅРµРЅРёСЏ С„Р°Р№Р»Р°
 		if (ghXmlNotification && (ghXmlNotification != INVALID_HANDLE_VALUE))
 		{
 			FindCloseChangeNotification(ghXmlNotification);
@@ -372,11 +372,11 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 		if (nNotify == WAIT_OBJECT_0)
 		{
 			lbNeedCheck = true;
-			//FindNextChangeNotification(ghXmlNotification); -- в конце позовем
+			//FindNextChangeNotification(ghXmlNotification); -- РІ РєРѕРЅС†Рµ РїРѕР·РѕРІРµРј
 		}
 	}
 
-	// в первый раз - выставляем строго
+	// РІ РїРµСЂРІС‹Р№ СЂР°Р· - РІС‹СЃС‚Р°РІР»СЏРµРј СЃС‚СЂРѕРіРѕ
 	if (!lbNeedCheck && !XmlFile.FileData)
 		lbNeedCheck = true;
 	
@@ -429,7 +429,7 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 					XmlFile.FileSize = dwRead;
 				}
 				
-				if (ptrData) // Если ошибка, освободить память
+				if (ptrData) // Р•СЃР»Рё РѕС€РёР±РєР°, РѕСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ
 					free(ptrData);
 			}
 			
@@ -438,7 +438,7 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 		}
 		else
 		{
-			// В первый раз - на отсутствие файла ругнемся
+			// Р’ РїРµСЂРІС‹Р№ СЂР°Р· - РЅР° РѕС‚СЃСѓС‚СЃС‚РІРёРµ С„Р°Р№Р»Р° СЂСѓРіРЅРµРјСЃСЏ
 			if (!XmlFile.FileData)
 			{
 				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s not found in the plugin folder", szDefaultXmlName);
@@ -447,7 +447,7 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 		}
 	}
 	
-	// Если файла нет, или его не удалось прочитать - подсунем пустышку
+	// Р•СЃР»Рё С„Р°Р№Р»Р° РЅРµС‚, РёР»Рё РµРіРѕ РЅРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕС‡РёС‚Р°С‚СЊ - РїРѕРґСЃСѓРЅРµРј РїСѓСЃС‚С‹С€РєСѓ
 	if (!XmlFile.FileData)
 	{
 		XmlFile.FileSize = 0;
@@ -475,10 +475,10 @@ struct CachedImage
 {
 	DWORD   nMagic;
 	BOOL    bUsed;
-	// Имя картинки
+	// РРјСЏ РєР°СЂС‚РёРЅРєРё
 	wchar_t sImgName[MAX_PATH]; // i.e. L"img/plugin.png"
 
-	// Хэндлы. CompatibleDC & Bitmap
+	// РҐСЌРЅРґР»С‹. CompatibleDC & Bitmap
 	HDC     hDc;
 	HBITMAP hBmp, hOldBmp;
 	int     nWidth, nHeight;
@@ -527,7 +527,7 @@ struct CachedImage
 		return true;
 	};
 
-	// Деструктор
+	// Р”РµСЃС‚СЂСѓРєС‚РѕСЂ
 	void Close()
 	{
 		sImgName[0] = 0;
@@ -613,9 +613,9 @@ struct GDIPlusDecoder
 		{
 			wchar_t* pszSlash = wcsrchr(sModulePath, L'\\');
 			if (pszSlash)
-				pszSlash[1] = 0; // Оставить слеш.
+				pszSlash[1] = 0; // РћСЃС‚Р°РІРёС‚СЊ СЃР»РµС€.
 			else
-				sModulePath[0] = 0; // Ошибка?
+				sModulePath[0] = 0; // РћС€РёР±РєР°?
 		}
 
 		bool result = false;
@@ -679,8 +679,8 @@ struct GDIPlusDecoder
 		return result;
 	};
 
-	// При использовании в фаре GdiPlus иногда может зависать на FreeLibrary.
-	// Причины пока не выяснены
+	// РџСЂРё РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРё РІ С„Р°СЂРµ GdiPlus РёРЅРѕРіРґР° РјРѕР¶РµС‚ Р·Р°РІРёСЃР°С‚СЊ РЅР° FreeLibrary.
+	// РџСЂРёС‡РёРЅС‹ РїРѕРєР° РЅРµ РІС‹СЏСЃРЅРµРЅС‹
 	static DWORD WINAPI FreeThreadProc(LPVOID lpParameter)
 	{
 		struct GDIPlusDecoder* p = (struct GDIPlusDecoder*)lpParameter;
@@ -770,7 +770,7 @@ struct GDIPlusDecoder
 		
 		if (*asRelativeName == L'\\' || *asRelativeName == L'/')
 			asRelativeName++;
-		// Заменить "/" на "\"
+		// Р—Р°РјРµРЅРёС‚СЊ "/" РЅР° "\"
 		_wcscpy_c(szName, cchName, asRelativeName);
 		psz = wcschr(szName, L'/');
 		while (psz)
@@ -778,10 +778,10 @@ struct GDIPlusDecoder
 			*psz = L'\\';
 			psz = wcschr(psz+1, L'/');
 		}
-		// Lowercase, для сравнения
+		// Lowercase, РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ
 		CharLowerBuff(szName, lstrlen(szName));
 		
-		// Может уже есть?
+		// РњРѕР¶РµС‚ СѓР¶Рµ РµСЃС‚СЊ?
 		pI = pImages;
 		while (pI != NULL)
 		{
@@ -794,7 +794,7 @@ struct GDIPlusDecoder
 		}
 		
 
-		// Загрузить из файла
+		// Р—Р°РіСЂСѓР·РёС‚СЊ РёР· С„Р°Р№Р»Р°
 		_ASSERTE(pI == NULL);
 		pI = NULL;
 		
@@ -881,7 +881,7 @@ struct GDIPlusDecoder
 		}*/
 		#endif
 		
-		// OK, теперь можно запомнить в кеше
+		// OK, С‚РµРїРµСЂСЊ РјРѕР¶РЅРѕ Р·Р°РїРѕРјРЅРёС‚СЊ РІ РєРµС€Рµ
 		if (!pLast)
 		{
 			_ASSERTE(pImages == NULL);
@@ -940,14 +940,14 @@ GDIPlusDecoder* gpDecoder = NULL;
 bool GdipInit()
 {
 	if (gbGdiPlusInitialized)
-		return true; // уже
+		return true; // СѓР¶Рµ
 		
 	_ASSERTE(XmlFile.crInit==TRUE);
 	
-	// Загрузить его содержимое
+	// Р—Р°РіСЂСѓР·РёС‚СЊ РµРіРѕ СЃРѕРґРµСЂР¶РёРјРѕРµ
 	CheckXmlFile(true);
 		
-	// Инициализация XMLLite
+	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ XMLLite
 	ghXmlLite = LoadLibrary(L"xmllite.dll");
 	if (!ghXmlLite)
 	{
@@ -978,7 +978,7 @@ bool GdipInit()
 void GdipDone()
 {
 	if (!gbGdiPlusInitialized)
-		return; // Не выполнялось
+		return; // РќРµ РІС‹РїРѕР»РЅСЏР»РѕСЃСЊ
 		
 	if (XmlFile.crInit)
 		EnterCriticalSection(&XmlFile.cr);
@@ -1093,7 +1093,7 @@ void ParseColors(LPCWSTR asColors, BOOL abSwap/*RGB->COLORREF*/, COLORREF (&crVa
 	{
 		if (abSwap)
 		{
-			// Нам нужен COLORREF - это перевернутые R&B
+			// РќР°Рј РЅСѓР¶РµРЅ COLORREF - СЌС‚Рѕ РїРµСЂРµРІРµСЂРЅСѓС‚С‹Рµ R&B
 			RGBColor rgb = {}, bgr;
 			if (*asColors == L'#')
 				bgr.clr = wcstoul(asColors+1, &pszEnd, 16) & 0xFFFFFF;
@@ -1205,7 +1205,7 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 
 	wchar_t szTemp[MAX_PATH+1];
 
-	// Проверка, путь - %TEMP%?
+	// РџСЂРѕРІРµСЂРєР°, РїСѓС‚СЊ - %TEMP%?
 	if (*pszPath)
 	{
 		if (!bTempPath)
@@ -1322,9 +1322,9 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 
 				if (lstrcmpi(pszName, L"window") == 0)
 				{
-					// Сначала - сброс
+					// РЎРЅР°С‡Р°Р»Р° - СЃР±СЂРѕСЃ
 					Test.WindowType = ChunkInfo::ci_WindowNone;
-					// Смотрим атрибуты
+					// РЎРјРѕС‚СЂРёРј Р°С‚СЂРёР±СѓС‚С‹
 					hr = pXmlReader->MoveToFirstAttribute();
 					if (SUCCEEDED(hr))
 					{
@@ -1361,9 +1361,9 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 					}
 					else
 					{
-						// Сначала - сброс
+						// РЎРЅР°С‡Р°Р»Р° - СЃР±СЂРѕСЃ
 						Test.PanelType = ChunkInfo::ci_PanelNone;
-						// Смотрим атрибуты
+						// РЎРјРѕС‚СЂРёРј Р°С‚СЂРёР±СѓС‚С‹
 						hr = pXmlReader->MoveToFirstAttribute();
 						if (SUCCEEDED(hr))
 						{
@@ -1447,12 +1447,12 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 						break;
 					}
 
-					// Блок подошел, больше не проверяем
+					// Р‘Р»РѕРє РїРѕРґРѕС€РµР», Р±РѕР»СЊС€Рµ РЅРµ РїСЂРѕРІРµСЂСЏРµРј
 					bFound = true;
-					// Смотрим, что там настроили
+					// РЎРјРѕС‚СЂРёРј, С‡С‚Рѕ С‚Р°Рј РЅР°СЃС‚СЂРѕРёР»Рё
 					if (lstrcmpi(pszName, L"color") == 0)
 					{
-						// Смотрим атрибуты
+						// РЎРјРѕС‚СЂРёРј Р°С‚СЂРёР±СѓС‚С‹
 						hr = pXmlReader->MoveToFirstAttribute();
 						if (SUCCEEDED(hr))
 						{
@@ -1466,19 +1466,19 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 									{
 										if (lstrcmpi(pszAttrName, L"rgb") == 0)
 										{
-											// Нам нужен COLORREF - это перевернутые R&B
+											// РќР°Рј РЅСѓР¶РµРЅ COLORREF - СЌС‚Рѕ РїРµСЂРµРІРµСЂРЅСѓС‚С‹Рµ R&B
 											ParseColors(pszAttrValue, TRUE/*RGB->COLORREF*/, pDraw->crBack, pDraw->nBackCount);
 											pDraw->Flags |= DrawInfo::dif_BackFilled;
 										}
 										else if (lstrcmpi(pszAttrName, L"rgb_dark") == 0)
 										{
-											// Нам нужен COLORREF - это перевернутые R&B
+											// РќР°Рј РЅСѓР¶РµРЅ COLORREF - СЌС‚Рѕ РїРµСЂРµРІРµСЂРЅСѓС‚С‹Рµ R&B
 											ParseColors(pszAttrValue, TRUE/*RGB->COLORREF*/, pDraw->crDark, pDraw->nDarkCount);
 											pDraw->Flags |= DrawInfo::dif_DarkFilled;
 										}
 										else if (lstrcmpi(pszAttrName, L"rgb_light") == 0)
 										{
-											// Нам нужен COLORREF - это перевернутые R&B
+											// РќР°Рј РЅСѓР¶РµРЅ COLORREF - СЌС‚Рѕ РїРµСЂРµРІРµСЂРЅСѓС‚С‹Рµ R&B
 											ParseColors(pszAttrValue, TRUE/*RGB->COLORREF*/, pDraw->crLight, pDraw->nLightCount);
 											pDraw->Flags |= DrawInfo::dif_LightFilled;
 										}
@@ -1509,7 +1509,7 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 					}
 					else if (lstrcmpi(pszName, L"space") == 0)
 					{
-						// Смотрим атрибуты
+						// РЎРјРѕС‚СЂРёРј Р°С‚СЂРёР±СѓС‚С‹
 						hr = pXmlReader->MoveToFirstAttribute();
 						if (SUCCEEDED(hr))
 						{
@@ -1537,7 +1537,7 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 					}
 					else if (lstrcmpi(pszName, L"title") == 0)
 					{
-						//TODO: Обработка функций
+						//TODO: РћР±СЂР°Р±РѕС‚РєР° С„СѓРЅРєС†РёР№
 						hr = pXmlReader->Read(&nodeType);
 						if (SUCCEEDED(hr) && (nodeType == XmlNodeType_Text))
 						{
@@ -1738,7 +1738,7 @@ void HSB2COLORREF(const HSBColor& hsb, COLORREF& rgbclr)
 	C = (hsb.Brightness/100.0) * (hsb.Saturnation/100.0);
 	H1 = (hsb.Hue / 60);
 	X = C*(1 - Abs((H1 - 2*(int)(H1 / 2)) - 1));
-	m = 0;// (hsb.Brightness/100.0) - (C / 2); -- пока без доп.яркости
+	m = 0;// (hsb.Brightness/100.0) - (C / 2); -- РїРѕРєР° Р±РµР· РґРѕРї.СЏСЂРєРѕСЃС‚Рё
 	
 	if ((hsb.Brightness == 0) || (hsb.Hue < 0 || hsb.Hue >= 360))
 	{
@@ -1953,12 +1953,12 @@ void HSV2RGB(const HSVColor& HSV, RGBColor& rgb)
 }
 
 
-// Сколько линий в области статуса (без учета рамок)
+// РЎРєРѕР»СЊРєРѕ Р»РёРЅРёР№ РІ РѕР±Р»Р°СЃС‚Рё СЃС‚Р°С‚СѓСЃР° (Р±РµР· СѓС‡РµС‚Р° СЂР°РјРѕРє)
 int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 {
 	if (!(pBk->FarPanelSettings.ShowStatusLine))
 	{
-		// Что-то при запуске (1.7x?) иногда картинки прыгают, как будто статус сразу не нашли
+		// Р§С‚Рѕ-С‚Рѕ РїСЂРё Р·Р°РїСѓСЃРєРµ (1.7x?) РёРЅРѕРіРґР° РєР°СЂС‚РёРЅРєРё РїСЂС‹РіР°СЋС‚, РєР°Рє Р±СѓРґС‚Рѕ СЃС‚Р°С‚СѓСЃ СЃСЂР°Р·Сѓ РЅРµ РЅР°С€Р»Рё
 		_ASSERTE(pBk->FarPanelSettings.ShowStatusLine);
 		return 0;
 	}
@@ -1972,7 +1972,7 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 	RECT rcPanel = bLeft ? pBk->LeftPanel.rcPanelRect : pBk->RightPanel.rcPanelRect;
 		
 	if ((rcPanel.bottom-rcPanel.top) <= ((pBk->FarPanelSettings.ShowColumnTitles) ? 5 : 4))
-		return 1; // минимальная высота панели
+		return 1; // РјРёРЅРёРјР°Р»СЊРЅР°СЏ РІС‹СЃРѕС‚Р° РїР°РЅРµР»Рё
 		
 	COORD bufSize = {(SHORT)(rcPanel.right-rcPanel.left+1),min(10,(SHORT)(rcPanel.bottom-rcPanel.top))};
 	COORD bufCoord = {0,0};
@@ -1982,7 +1982,7 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 	short nShiftX = 0, nShiftY = 0;
 	if (GetConsoleScreenBufferInfo(hStd, &csbi))
 	{
-		// Начиная с какой-то версии в фаре поменяли координаты :(
+		// РќР°С‡РёРЅР°СЏ СЃ РєР°РєРѕР№-С‚Рѕ РІРµСЂСЃРёРё РІ С„Р°СЂРµ РїРѕРјРµРЅСЏР»Рё РєРѕРѕСЂРґРёРЅР°С‚С‹ :(
 		if (rcPanel.top <= 1)
 		{
 			nShiftY = csbi.dwSize.Y - (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
@@ -2023,7 +2023,7 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 		}
 	}
 	
-	// Что-то при запуске (1.7x?) иногда картинки прыгают, как будто статус сразу не нашли
+	// Р§С‚Рѕ-С‚Рѕ РїСЂРё Р·Р°РїСѓСЃРєРµ (1.7x?) РёРЅРѕРіРґР° РєР°СЂС‚РёРЅРєРё РїСЂС‹РіР°СЋС‚, РєР°Рє Р±СѓРґС‚Рѕ СЃС‚Р°С‚СѓСЃ СЃСЂР°Р·Сѓ РЅРµ РЅР°С€Р»Рё
 #ifdef _DEBUG
 	int nArea = -1;
 	if (nLines<1)
@@ -2035,7 +2035,7 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 			if (nArea == 1/*MACROAREA_SHELL*/ || nArea == 5/*MACROAREA_SEARCH*/)
 			{
 				bWarnLines = true;
-				// Far 3.0.3716. Assert при старте. Плагин активирован, а панелей на экране еще НЕТ.
+				// Far 3.0.3716. Assert РїСЂРё СЃС‚Р°СЂС‚Рµ. РџР»Р°РіРёРЅ Р°РєС‚РёРІРёСЂРѕРІР°РЅ, Р° РїР°РЅРµР»РµР№ РЅР° СЌРєСЂР°РЅРµ РµС‰Рµ РќР•Рў.
 				_ASSERTE(nLines>0);
 			}
 		}
@@ -2052,7 +2052,7 @@ void FormatSize(ULARGE_INTEGER size, wchar_t* out)
 {
 	if (size.QuadPart)
 	{
-		// Сформатировать размер
+		// РЎС„РѕСЂРјР°С‚РёСЂРѕРІР°С‚СЊ СЂР°Р·РјРµСЂ
 		u64 lSize = size.QuadPart, lDec = 0;
 		const wchar_t *SizeSymbol[]={L"B",L"KB",L"MB",L"GB",L"TB",L"PB"};
 		for (size_t n = 0; n < countof(SizeSymbol); n++)
@@ -2086,14 +2086,14 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 
 	wchar_t szDbg[128];
 
-	// Инициализация и начальное определение размеров и прочего...
+	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ Рё РЅР°С‡Р°Р»СЊРЅРѕРµ РѕРїСЂРµРґРµР»РµРЅРёРµ СЂР°Р·РјРµСЂРѕРІ Рё РїСЂРѕС‡РµРіРѕ...
 	int nStatusLines = GetStatusLineCount(pBk, bLeft);
 	RECT rcPanel = bLeft ? pBk->rcDcLeft : pBk->rcDcRight;
 	RECT rcConPanel = bLeft ? pBk->LeftPanel.rcPanelRect : pBk->RightPanel.rcPanelRect;
 	PaintBackgroundArg::BkPanelInfo *bkInfo = bLeft ? &pBk->LeftPanel : &pBk->RightPanel;
-	// Не должен содержать рамки
-	int nPanelWidth = max(1,rcConPanel.right - rcConPanel.left + 1);  // ширина в символах
-	int nPanelHeight = max(1,rcConPanel.bottom - rcConPanel.top + 1); // высота в символах
+	// РќРµ РґРѕР»Р¶РµРЅ СЃРѕРґРµСЂР¶Р°С‚СЊ СЂР°РјРєРё
+	int nPanelWidth = max(1,rcConPanel.right - rcConPanel.left + 1);  // С€РёСЂРёРЅР° РІ СЃРёРјРІРѕР»Р°С…
+	int nPanelHeight = max(1,rcConPanel.bottom - rcConPanel.top + 1); // РІС‹СЃРѕС‚Р° РІ СЃРёРјРІРѕР»Р°С…
 	RECT rcWork = {}; //rcPanel;
 	rcWork.left = rcPanel.left + ((rcPanel.right - rcPanel.left + 1) / nPanelWidth);
 	rcWork.right = rcPanel.right - ((rcPanel.right - rcPanel.left + 1) / nPanelWidth);
@@ -2106,7 +2106,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 
 	ULARGE_INTEGER llTotalSize = {}, llFreeSize = {};
 	UINT nDriveType = DRIVE_UNKNOWN;
-	BOOL bProgressAllowed = FALSE; // Градусник свободного места
+	BOOL bProgressAllowed = FALSE; // Р“СЂР°РґСѓСЃРЅРёРє СЃРІРѕР±РѕРґРЅРѕРіРѕ РјРµСЃС‚Р°
 	
 	int nMaxVolumeLen = lstrlen(bkInfo->szCurDir ? bkInfo->szCurDir : L"");
 	wchar_t* szVolumeRoot = (wchar_t*)calloc(nMaxVolumeLen+2,sizeof(*szVolumeRoot));
@@ -2117,7 +2117,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 	{
 		if (!bkInfo->bPlugin)
 		{
-			// Определить размер свободного места на диске
+			// РћРїСЂРµРґРµР»РёС‚СЊ СЂР°Р·РјРµСЂ СЃРІРѕР±РѕРґРЅРѕРіРѕ РјРµСЃС‚Р° РЅР° РґРёСЃРєРµ
 			bool lbSizeOk = false, lbTypeOk = false;
 			_wcscpy_c(szVolumeRoot, nMaxVolumeLen+2, bkInfo->szCurDir);
 			if (szVolumeRoot[nMaxVolumeLen-1] != L'\\')
@@ -2143,7 +2143,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 					nDriveType = nType;
 					lbTypeOk = TRUE;
 				}
-				// Если не все определили - пробуем откусить папку
+				// Р•СЃР»Рё РЅРµ РІСЃРµ РѕРїСЂРµРґРµР»РёР»Рё - РїСЂРѕР±СѓРµРј РѕС‚РєСѓСЃРёС‚СЊ РїР°РїРєСѓ
 				if (!lbSizeOk || !lbTypeOk)
 				{
 					if (szVolumeRoot[nLen-1] != L'\\')
@@ -2152,13 +2152,13 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 						break;
 					}
 					szVolumeRoot[--nLen] = 0;
-					// Найти следующий слеш
+					// РќР°Р№С‚Рё СЃР»РµРґСѓСЋС‰РёР№ СЃР»РµС€
 					while ((nLen > 0) && (szVolumeRoot[nLen-1] != L'\\'))
 						nLen--;
-					// Пропустить все слеши
+					// РџСЂРѕРїСѓСЃС‚РёС‚СЊ РІСЃРµ СЃР»РµС€Рё
 					while ((nLen > 0) && (szVolumeRoot[nLen-1] == L'\\'))
 						nLen--;
-					// Откусить
+					// РћС‚РєСѓСЃРёС‚СЊ
 					szVolumeRoot[nLen] = 0;
 				}
 			}
@@ -2167,7 +2167,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			FormatSize(llFreeSize, szVolumeFree);
 		}
 		
-		// Извлечь "Букву" диска
+		// РР·РІР»РµС‡СЊ "Р‘СѓРєРІСѓ" РґРёСЃРєР°
 		LPCWSTR psz = bkInfo->szCurDir;
 		if (psz[0] == L'\\' && psz[1] == L'\\' && (psz[2] == L'.' || psz[2] == L'?') && psz[3] == L'\\')
 		{
@@ -2199,7 +2199,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		bProgressAllowed = FALSE;
 	}
 	
-	// Если есть xml - получить из него настройки для текущего случая
+	// Р•СЃР»Рё РµСЃС‚СЊ xml - РїРѕР»СѓС‡РёС‚СЊ РёР· РЅРµРіРѕ РЅР°СЃС‚СЂРѕР№РєРё РґР»СЏ С‚РµРєСѓС‰РµРіРѕ СЃР»СѓС‡Р°СЏ
 	if (gfCreateXmlReader && XmlFile.FileData && XmlFile.FileSize)
 	{
 		FillPanelParams(pBk, bkInfo, pDraw);
@@ -2222,7 +2222,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 	}
 	else
 	{
-		// Если не было задано - инициализируем умолчания
+		// Р•СЃР»Рё РЅРµ Р±С‹Р»Рѕ Р·Р°РґР°РЅРѕ - РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј СѓРјРѕР»С‡Р°РЅРёСЏ
 		if (!(pDraw->Flags & DrawInfo::dif_BackFilled))
 		{
 			if (bkInfo->bPlugin)
@@ -2265,7 +2265,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			}
 			else
 			{
-				// Сконвертить в HSV, сдвинуть, и обратно в COLORREF
+				// РЎРєРѕРЅРІРµСЂС‚РёС‚СЊ РІ HSV, СЃРґРІРёРЅСѓС‚СЊ, Рё РѕР±СЂР°С‚РЅРѕ РІ COLORREF
 				int nShift = (nLetter % 5) * 15;
 				HSVColor hsv = {};
 				RGBColor rgb; rgb.clr = *pDraw->crBack;
@@ -2296,7 +2296,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			}
 		}
 		
-		// Цвет спрайтов, текста, фона градусника
+		// Р¦РІРµС‚ СЃРїСЂР°Р№С‚РѕРІ, С‚РµРєСЃС‚Р°, С„РѕРЅР° РіСЂР°РґСѓСЃРЅРёРєР°
 		if (!(pDraw->Flags & DrawInfo::dif_DarkFilled))
 		{
 			RGBColor rgb; rgb.clr = *pDraw->crBack;
@@ -2314,7 +2314,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 				pDraw->crDark[0] = pDraw->crDark[nLetter % pDraw->nDarkCount];
 			}
 		}
-		// Цвет градусника
+		// Р¦РІРµС‚ РіСЂР°РґСѓСЃРЅРёРєР°
 		if (!(pDraw->Flags & DrawInfo::dif_LightFilled))
 		{
 			HSVColor hsv = {};
@@ -2362,12 +2362,12 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		}
 		if (!(pDraw->Flags & DrawInfo::dif_TextFilled))
 		{
-			TODO("Размер диска");
+			TODO("Р Р°Р·РјРµСЂ РґРёСЃРєР°");
 			wcscpy_c(pDraw->szText, szVolume);
 		}
 		
 
-		// Поехали рисовать
+		// РџРѕРµС…Р°Р»Рё СЂРёСЃРѕРІР°С‚СЊ
 		if (pBk->dwLevel == 0)
 		{
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"ConEmuBk: %s - {%i,%i,%i,%i) #%06X\n",
@@ -2422,10 +2422,10 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			if (pI)
 			{
 				int nPicDim = max(pI->nWidth,pI->nHeight);
-				int nW = min(nMaxPicSize,nPicDim), nH = min(nMaxPicSize,nPicDim); //TODO: Пропорционально pI->nWidth/pI->nHeight
+				int nW = min(nMaxPicSize,nPicDim), nH = min(nMaxPicSize,nPicDim); //TODO: РџСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅРѕ pI->nWidth/pI->nHeight
 				if (pI && (rcWork.top <= (rcText.top - nH - IMG_SHIFT_Y)) && (rcWork.left <= (rcWork.right - nW - IMG_SHIFT_X)))
 				{
-					// - картинки чисто черного цвета
+					// - РєР°СЂС‚РёРЅРєРё С‡РёСЃС‚Рѕ С‡РµСЂРЅРѕРіРѕ С†РІРµС‚Р°
 				#if 0
 					const HDC hScreenDC = GetDC(0);
 					
@@ -2539,7 +2539,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 					ReleaseDC(0, hScreenDC);
 				#endif
 
-					// - Черная окантовка вокруг плагиновой картинки
+					// - Р§РµСЂРЅР°СЏ РѕРєР°РЅС‚РѕРІРєР° РІРѕРєСЂСѓРі РїР»Р°РіРёРЅРѕРІРѕР№ РєР°СЂС‚РёРЅРєРё
 				#if 0
 					const HDC hScreenDC = GetDC(0);
 
@@ -2615,7 +2615,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		/*
 		OffsetRect(&rcText, 0, LINE_SHIFT_Y);
 		
-		_wsprintf(szText, SKIPLEN(countof(szText)) L"Volume: «%s» %s, Format: «%s»", szVolume, szVolumeSize, bkInfo->szFormat ? bkInfo->szFormat : L"");
+		_wsprintf(szText, SKIPLEN(countof(szText)) L"Volume: В«%sВ» %s, Format: В«%sВ»", szVolume, szVolumeSize, bkInfo->szFormat ? bkInfo->szFormat : L"");
 		DrawText(pBk->hdc, szText, -1, &rcText, DT_HIDEPREFIX|DT_RIGHT|DT_SINGLELINE|DT_TOP);
 		OffsetRect(&rcText, 0, LINE_SHIFT_Y);
 
@@ -2624,7 +2624,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		OffsetRect(&rcText, 0, LINE_SHIFT_Y);
 		*/
 		
-		TODO("В Far3 можно и в плагинах свободное место получить");
+		TODO("Р’ Far3 РјРѕР¶РЅРѕ Рё РІ РїР»Р°РіРёРЅР°С… СЃРІРѕР±РѕРґРЅРѕРµ РјРµСЃС‚Рѕ РїРѕР»СѓС‡РёС‚СЊ");
 		if (bProgressAllowed && pDraw->nSpaceBar == DrawInfo::dib_Off)
 			bProgressAllowed = FALSE;
 		if (bProgressAllowed && (nStatusLines > 0) && !bkInfo->bPlugin && llTotalSize.QuadPart)
@@ -2686,7 +2686,7 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 	}
 	else
 	{
-		// Проверить, может содержимое xml-ки изменилось?
+		// РџСЂРѕРІРµСЂРёС‚СЊ, РјРѕР¶РµС‚ СЃРѕРґРµСЂР¶РёРјРѕРµ xml-РєРё РёР·РјРµРЅРёР»РѕСЃСЊ?
 		CheckXmlFile();
 	}
 
@@ -2807,7 +2807,7 @@ void WINAPI OnConEmuLoaded(struct ConEmuLoadedArg* pConEmuInfo)
 
 	if (gfRegisterBackground && gbBackgroundEnabled)
 	{
-		StartPlugin(FALSE/*считать параметры из реестра*/);
+		StartPlugin(FALSE/*СЃС‡РёС‚Р°С‚СЊ РїР°СЂР°РјРµС‚СЂС‹ РёР· СЂРµРµСЃС‚СЂР°*/);
 	}
 }
 
@@ -2915,7 +2915,7 @@ void StartPlugin(BOOL bConfigure)
 {
 	if (gbInStartPlugin)
 	{
-		// Вложенных вызовов быть не должно
+		// Р’Р»РѕР¶РµРЅРЅС‹С… РІС‹Р·РѕРІРѕРІ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅРѕ
 		_ASSERTE(gbInStartPlugin==false);
 		return;
 	}
@@ -2966,7 +2966,7 @@ void StartPlugin(BOOL bConfigure)
 		bWasRegistered = false;
 	}
 
-	// Вернуть флаг обратно
+	// Р’РµСЂРЅСѓС‚СЊ С„Р»Р°Рі РѕР±СЂР°С‚РЅРѕ
 	gbInStartPlugin = false;
 }
 
@@ -2978,7 +2978,7 @@ void ExitPlugin(void)
 		gfRegisterBackground(&inf);
 	}
 
-	// Вообще-то это нужно делать в нити отрисовки, но на всякий случай, дернем здесь (LastChance)
+	// Р’РѕРѕР±С‰Рµ-С‚Рѕ СЌС‚Рѕ РЅСѓР¶РЅРѕ РґРµР»Р°С‚СЊ РІ РЅРёС‚Рё РѕС‚СЂРёСЃРѕРІРєРё, РЅРѕ РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, РґРµСЂРЅРµРј Р·РґРµСЃСЊ (LastChance)
 	GdipDone();
 	gbSetStartupInfoOk = false;
 }
@@ -3119,7 +3119,7 @@ int GetMacroArea()
 	if (gFarVersion.dwVerMajor==1)
 	{
 		_ASSERTE(gFarVersion.dwVerMajor>1);
-		nMacroArea = 1; // в Far 1.7x не поддерживается
+		nMacroArea = 1; // РІ Far 1.7x РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ
 	}
 	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
 		nMacroArea = FUNC_Y2(GetMacroAreaW)();

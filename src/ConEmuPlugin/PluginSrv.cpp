@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -118,13 +118,13 @@ namespace PipeServerLogger
 //#endif
 //
 //
-//HMODULE ghPluginModule = NULL; // ConEmu.dll - сам плагин
-//HWND ConEmuHwnd = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
+//HMODULE ghPluginModule = NULL; // ConEmu.dll - СЃР°Рј РїР»Р°РіРёРЅ
+//HWND ConEmuHwnd = NULL; // РЎРѕРґРµСЂР¶РёС‚ С…СЌРЅРґР» РѕРєРЅР° РѕС‚СЂРёСЃРѕРІРєРё. Р­С‚Рѕ Р”РћР§Р•Р РќР•Р• РѕРєРЅРѕ.
 //DWORD gdwPreDetachGuiPID = 0;
 //DWORD gdwServerPID = 0;
 //BOOL TerminalMode = FALSE;
 //HWND FarHwnd = NULL;
-////WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
+////WARNING("РЈР±СЂР°С‚СЊ, Р·Р°РјРµРЅРёС‚СЊ ghConIn РЅР° GetStdHandle()"); // РРЅР°С‡Рµ РІ Win7 Р±СѓРґРµС‚ Р±СѓС„РµСЂ СЂР°Р·СЂСѓС€Р°С‚СЊСЃСЏ
 ////HANDLE ghConIn = NULL;
 //DWORD gnMainThreadId = 0, gnMainThreadIdInitial = 0;
 ////HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
@@ -133,27 +133,27 @@ namespace PipeServerLogger
 extern HANDLE ghSetWndSendTabsEvent;
 //FarVersion gFarVersion = {};
 //WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
-//// gszRootKey используется ТОЛЬКО для ЧТЕНИЯ настроек PanelTabs (SeparateTabs/ButtonColors)
-//WCHAR gszRootKey[MAX_PATH*2]; // НЕ ВКЛЮЧАЯ "\\Plugins"
+//// gszRootKey РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РўРћР›Р¬РљРћ РґР»СЏ Р§РўР•РќРРЇ РЅР°СЃС‚СЂРѕРµРє PanelTabs (SeparateTabs/ButtonColors)
+//WCHAR gszRootKey[MAX_PATH*2]; // РќР• Р’РљР›Р®Р§РђРЇ "\\Plugins"
 //int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
 //CESERVER_REQ* gpTabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
-//BOOL gbIgnoreUpdateTabs = FALSE; // выставляется на время CMD_SETWINDOW
-//BOOL gbRequestUpdateTabs = FALSE; // выставляется при получении события FOCUS/KILLFOCUS
-//BOOL gbClosingModalViewerEditor = FALSE; // выставляется при закрытии модального редактора/вьювера
+//BOOL gbIgnoreUpdateTabs = FALSE; // РІС‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РЅР° РІСЂРµРјСЏ CMD_SETWINDOW
+//BOOL gbRequestUpdateTabs = FALSE; // РІС‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РїСЂРё РїРѕР»СѓС‡РµРЅРёРё СЃРѕР±С‹С‚РёСЏ FOCUS/KILLFOCUS
+//BOOL gbClosingModalViewerEditor = FALSE; // РІС‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РїСЂРё Р·Р°РєСЂС‹С‚РёРё РјРѕРґР°Р»СЊРЅРѕРіРѕ СЂРµРґР°РєС‚РѕСЂР°/РІСЊСЋРІРµСЂР°
 //MOUSE_EVENT_RECORD gLastMouseReadEvent = {{0,0}};
 //BOOL gbUngetDummyMouseEvent = FALSE;
 //LONG gnAllowDummyMouseEvent = 0;
 //LONG gnDummyMouseEventFromMacro = 0;
 //
 //extern HMODULE ghHooksModule;
-//extern BOOL gbHooksModuleLoaded; // TRUE, если был вызов LoadLibrary("ConEmuHk.dll"), тогда его нужно FreeLibrary при выходе
+//extern BOOL gbHooksModuleLoaded; // TRUE, РµСЃР»Рё Р±С‹Р» РІС‹Р·РѕРІ LoadLibrary("ConEmuHk.dll"), С‚РѕРіРґР° РµРіРѕ РЅСѓР¶РЅРѕ FreeLibrary РїСЂРё РІС‹С…РѕРґРµ
 //
 //
 ////CRITICAL_SECTION csData;
 //MSection *csData = NULL;
-//// результат выполнения команды (пишется функциями OutDataAlloc/OutDataWrite)
+//// СЂРµР·СѓР»СЊС‚Р°С‚ РІС‹РїРѕР»РЅРµРЅРёСЏ РєРѕРјР°РЅРґС‹ (РїРёС€РµС‚СЃСЏ С„СѓРЅРєС†РёСЏРјРё OutDataAlloc/OutDataWrite)
 //CESERVER_REQ* gpCmdRet = NULL;
-//// инициализируется как "gpData = gpCmdRet->Data;"
+//// РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚СЃСЏ РєР°Рє "gpData = gpCmdRet->Data;"
 //LPBYTE gpData = NULL, gpCursor = NULL;
 //DWORD  gnDataSize=0;
 //
@@ -183,8 +183,8 @@ HANDLE ghServerTerminateEvent = NULL;
 //wchar_t gsFarLang[64] = {0};
 //BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID);
 //BOOL gbNeedPostTabSend = FALSE;
-//BOOL gbNeedPostEditCheck = FALSE; // проверить, может в активном редакторе изменился статус
-////BOOL gbNeedBgUpdate = FALSE; // требуется перерисовка Background
+//BOOL gbNeedPostEditCheck = FALSE; // РїСЂРѕРІРµСЂРёС‚СЊ, РјРѕР¶РµС‚ РІ Р°РєС‚РёРІРЅРѕРј СЂРµРґР°РєС‚РѕСЂРµ РёР·РјРµРЅРёР»СЃСЏ СЃС‚Р°С‚СѓСЃ
+////BOOL gbNeedBgUpdate = FALSE; // С‚СЂРµР±СѓРµС‚СЃСЏ РїРµСЂРµСЂРёСЃРѕРІРєР° Background
 //int lastModifiedStateW = -1;
 //BOOL gbNeedPostReloadFarInfo = FALSE;
 //DWORD gnNeedPostTabSendTick = 0;
@@ -194,10 +194,10 @@ HANDLE ghServerTerminateEvent = NULL;
 //#define MONITORENVVARDELTA 1000
 //void UpdateEnvVar(const wchar_t* pszList);
 //BOOL StartupHooks();
-////BOOL gbFARuseASCIIsort = FALSE; // попытаться перехватить строковую сортировку в FAR
+////BOOL gbFARuseASCIIsort = FALSE; // РїРѕРїС‹С‚Р°С‚СЊСЃСЏ РїРµСЂРµС…РІР°С‚РёС‚СЊ СЃС‚СЂРѕРєРѕРІСѓСЋ СЃРѕСЂС‚РёСЂРѕРІРєСѓ РІ FAR
 ////HANDLE ghFileMapping = NULL;
-////HANDLE ghColorMapping = NULL; // Создается при детаче консоли сразу после AllocConsole
-////BOOL gbHasColorMapping = FALSE; // Чтобы знать, что буфер True-Colorer создан
+////HANDLE ghColorMapping = NULL; // РЎРѕР·РґР°РµС‚СЃСЏ РїСЂРё РґРµС‚Р°С‡Рµ РєРѕРЅСЃРѕР»Рё СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ AllocConsole
+////BOOL gbHasColorMapping = FALSE; // Р§С‚РѕР±С‹ Р·РЅР°С‚СЊ, С‡С‚Рѕ Р±СѓС„РµСЂ True-Colorer СЃРѕР·РґР°РЅ
 ////int gnColorMappingMaxCells = 0;
 ////MFileMapping<AnnotationHeader>* gpColorMapping = NULL;
 ////#ifdef TRUE_COLORER_OLD_SUPPORT
@@ -219,7 +219,7 @@ HANDLE ghServerTerminateEvent = NULL;
 //HANDLE ghFarAliveEvent = NULL;
 //PanelViewRegInfo gPanelRegLeft = {NULL};
 //PanelViewRegInfo gPanelRegRight = {NULL};
-//// Для плагинов PicView & MMView нужно знать, нажат ли CtrlShift при F3
+//// Р”Р»СЏ РїР»Р°РіРёРЅРѕРІ PicView & MMView РЅСѓР¶РЅРѕ Р·РЅР°С‚СЊ, РЅР°Р¶Р°С‚ Р»Рё CtrlShift РїСЂРё F3
 //HANDLE ghConEmuCtrlPressed = NULL, ghConEmuShiftPressed = NULL;
 //BOOL gbWaitConsoleInputEmpty = FALSE, gbWaitConsoleWrite = FALSE; //, gbWaitConsoleInputPeek = FALSE;
 //HANDLE ghConsoleInputEmpty = NULL, ghConsoleWrite = NULL; //, ghConsoleInputWasPeek = NULL;
@@ -305,15 +305,15 @@ void PlugServerStop(bool abDelete)
 //	//hWait[0] = ghServerTerminateEvent;
 //	//hWait[1] = ghServerSemaphore;
 //
-//	// Пока не затребовано завершение консоли
+//	// РџРѕРєР° РЅРµ Р·Р°С‚СЂРµР±РѕРІР°РЅРѕ Р·Р°РІРµСЂС€РµРЅРёРµ РєРѕРЅСЃРѕР»Рё
 //	do
 //	{
-//		fConnected = FALSE; // Новый пайп
+//		fConnected = FALSE; // РќРѕРІС‹Р№ РїР°Р№Рї
 //
 //		while(!fConnected)
 //		{
 //			_ASSERTE(hPipe == NULL);
-//			// Проверить, может какие-то командные нити уже завершились
+//			// РџСЂРѕРІРµСЂРёС‚СЊ, РјРѕР¶РµС‚ РєР°РєРёРµ-С‚Рѕ РєРѕРјР°РЅРґРЅС‹Рµ РЅРёС‚Рё СѓР¶Рµ Р·Р°РІРµСЂС€РёР»РёСЃСЊ
 //			ghCommandThreads->CheckTerminated();
 //			//iter = ghCommandThreads.begin();
 //			//while (iter != ghCommandThreads.end()) {
@@ -325,10 +325,10 @@ void PlugServerStop(bool abDelete)
 //			//		iter++;
 //			//	}
 //			//}
-//			//// Дождаться разрешения семафора, или закрытия консоли
+//			//// Р”РѕР¶РґР°С‚СЊСЃСЏ СЂР°Р·СЂРµС€РµРЅРёСЏ СЃРµРјР°С„РѕСЂР°, РёР»Рё Р·Р°РєСЂС‹С‚РёСЏ РєРѕРЅСЃРѕР»Рё
 //			//dwErr = WaitForMultipleObjects ( 2, hWait, FALSE, INFINITE );
 //			//if (dwErr == WAIT_OBJECT_0) {
-//			//    return 0; // Консоль закрывается
+//			//    return 0; // РљРѕРЅСЃРѕР»СЊ Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ
 //			//}
 //			//for (int i=0; i<MAX_SERVER_THREADS; i++) {
 //			//	if (gnServerThreadsId[i] == dwTID) {
@@ -353,10 +353,10 @@ void PlugServerStop(bool abDelete)
 //			// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
 //			fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED);
 //
-//			// Консоль закрывается!
+//			// РљРѕРЅСЃРѕР»СЊ Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ!
 //			if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0)
 //			{
-//				//FlushFileBuffers(hPipe); -- это не нужно, мы ничего не возвращали
+//				//FlushFileBuffers(hPipe); -- СЌС‚Рѕ РЅРµ РЅСѓР¶РЅРѕ, РјС‹ РЅРёС‡РµРіРѕ РЅРµ РІРѕР·РІСЂР°С‰Р°Р»Рё
 //				//DisconnectNamedPipe(hPipe);
 //				//ReleaseSemaphore(ghServerSemaphore, 1, NULL);
 //				SafeCloseHandle(hPipe);
@@ -369,18 +369,18 @@ void PlugServerStop(bool abDelete)
 //
 //		if (fConnected)
 //		{
-//			// сразу сбросим, чтобы не забыть
+//			// СЃСЂР°Р·Сѓ СЃР±СЂРѕСЃРёРј, С‡С‚РѕР±С‹ РЅРµ Р·Р°Р±С‹С‚СЊ
 //			//fConnected = FALSE;
-//			// разрешить другой нити принять вызов
+//			// СЂР°Р·СЂРµС€РёС‚СЊ РґСЂСѓРіРѕР№ РЅРёС‚Рё РїСЂРёРЅСЏС‚СЊ РІС‹Р·РѕРІ
 //			//ReleaseSemaphore(ghServerSemaphore, 1, NULL);
-//			//ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
+//			//ServerThreadCommand ( hPipe ); // РџСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё - Р·Р°РїРёСЃС‹РІР°РµС‚ РІ РїР°Р№Рї СЂРµР·СѓР»СЊС‚Р°С‚ СЃР°РјР°
 //			DWORD dwThread = 0;
 //			HANDLE hThread = CreateThread(NULL, 0, PlugServerThreadCommand, (LPVOID)hPipe, 0, &dwThread);
 //			_ASSERTE(hThread!=NULL);
 //
 //			if (hThread==NULL)
 //			{
-//				// Раз не удалось запустить нить - можно попробовать так обработать...
+//				// Р Р°Р· РЅРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РїСѓСЃС‚РёС‚СЊ РЅРёС‚СЊ - РјРѕР¶РЅРѕ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ С‚Р°Рє РѕР±СЂР°Р±РѕС‚Р°С‚СЊ...
 //				PlugServerThreadCommand((LPVOID)hPipe);
 //			}
 //			else
@@ -388,7 +388,7 @@ void PlugServerStop(bool abDelete)
 //				ghCommandThreads->push_back(hThread);
 //			}
 //
-//			hPipe = NULL; // закрывает ServerThreadCommand
+//			hPipe = NULL; // Р·Р°РєСЂС‹РІР°РµС‚ ServerThreadCommand
 //		}
 //
 //		if (hPipe)
@@ -402,12 +402,12 @@ void PlugServerStop(bool abDelete)
 //
 //			hPipe = NULL;
 //		}
-//	} // Перейти к открытию нового instance пайпа
+//	} // РџРµСЂРµР№С‚Рё Рє РѕС‚РєСЂС‹С‚РёСЋ РЅРѕРІРѕРіРѕ instance РїР°Р№РїР°
 //
 //	while(WaitForSingleObject(ghServerTerminateEvent, 0) != WAIT_OBJECT_0);
 //
 //wrap:
-//	// Прибивание всех запущенных нитей
+//	// РџСЂРёР±РёРІР°РЅРёРµ РІСЃРµС… Р·Р°РїСѓС‰РµРЅРЅС‹С… РЅРёС‚РµР№
 //	ghCommandThreads->KillAllThreads();
 //	//iter = ghCommandThreads.begin();
 //	//while (iter != ghCommandThreads.end()) {
@@ -426,7 +426,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 	BOOL lbRc = FALSE;
 	//HANDLE hPipe = (HANDLE)ahPipe;
 	//CESERVER_REQ *pIn=NULL;
-	//BYTE cbBuffer[64]; // Для большей части команд нам хватит
+	//BYTE cbBuffer[64]; // Р”Р»СЏ Р±РѕР»СЊС€РµР№ С‡Р°СЃС‚Рё РєРѕРјР°РЅРґ РЅР°Рј С…РІР°С‚РёС‚
 	//DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
 	BOOL fSuccess = FALSE;
 	MSectionThread SCT(csTabs);
@@ -441,7 +441,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 	//	return 0;
 	//}
 
-	//pIn = (CESERVER_REQ*)cbBuffer; // Пока cast, если нужно больше - выделим память
+	//pIn = (CESERVER_REQ*)cbBuffer; // РџРѕРєР° cast, РµСЃР»Рё РЅСѓР¶РЅРѕ Р±РѕР»СЊС€Рµ - РІС‹РґРµР»РёРј РїР°РјСЏС‚СЊ
 	//_ASSERTE(pIn->hdr.cbSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
 	//_ASSERTE(pIn->hdr.nVersion == CESERVER_REQ_VER);
 
@@ -491,7 +491,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 	//	nAllSize -= cbRead;
 	//}
 
-	//TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
+	//TODO("РњРѕР¶РµС‚ РІРѕР·РЅРёРєРЅСѓС‚СЊ ASSERT, РµСЃР»Рё РєРѕРЅСЃРѕР»СЊ Р±С‹Р»Р° Р·Р°РєСЂС‹С‚Р° РІ РїСЂРѕС†РµСЃСЃРµ С‡С‚РµРЅРёСЏ");
 	//_ASSERTE(nAllSize==0);
 
 	//if (nAllSize>0)
@@ -500,20 +500,20 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 	//		Free(pIn);
 
 	//	CloseHandle(hPipe);
-	//	return 0; // удалось считать не все данные
+	//	return 0; // СѓРґР°Р»РѕСЃСЊ СЃС‡РёС‚Р°С‚СЊ РЅРµ РІСЃРµ РґР°РЅРЅС‹Рµ
 	//}
 
 	UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
 
-	// Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
+	// Р’СЃРµ РґР°РЅРЅС‹Рµ РёР· РїР°Р№РїР° РїРѕР»СѓС‡РµРЅС‹, РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РєРѕРјР°РЅРґСѓ Рё РІРѕР·РІСЂР°С‰Р°РµРј (РµСЃР»Рё РЅСѓР¶РЅРѕ) СЂРµР·СѓР»СЊС‚Р°С‚
 	//fSuccess = WriteFile( hPipe, pOut, pOut->nSize, &cbWritten, NULL);
 
 	if (pIn->hdr.nCmd == CMD_LANGCHANGE)
 	{
 		_ASSERTE(nDataSize>=4); //-V112
 		// LayoutName: "00000409", "00010409", ...
-		// А HKL от него отличается, так что передаем DWORD
-		// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
+		// Рђ HKL РѕС‚ РЅРµРіРѕ РѕС‚Р»РёС‡Р°РµС‚СЃСЏ, С‚Р°Рє С‡С‚Рѕ РїРµСЂРµРґР°РµРј DWORD
+		// HKL РІ x64 РІС‹РіР»СЏРґРёС‚ РєР°Рє: "0x0000000000020409", "0xFFFFFFFFF0010409"
 		DWORD hkl = pIn->dwData[0];
 		DWORD dwLastError = 0;
 		HKL hkl1 = NULL, hkl2 = NULL;
@@ -540,9 +540,9 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 
 	}
 	//} else if (pIn->hdr.nCmd == CMD_DEFFONT) {
-	//	// исключение - асинхронный, результат не требуется
+	//	// РёСЃРєР»СЋС‡РµРЅРёРµ - Р°СЃРёРЅС…СЂРѕРЅРЅС‹Р№, СЂРµР·СѓР»СЊС‚Р°С‚ РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ
 	//	SetConsoleFontSizeTo(FarHwnd, 4, 6);
-	//	MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
+	//	MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // С‡С‚РѕР±С‹ СѓР±СЂР°С‚СЊ РІРѕР·РјРѕР¶РЅС‹Рµ РїРѕР»РѕСЃС‹ РїСЂРѕРєСЂСѓС‚РєРё...
 	else if (pIn->hdr.nCmd == CMD_REQTABS || pIn->hdr.nCmd == CMD_SETWINDOW)
 	{
 		MSectionLock SC; SC.Lock(csTabs, FALSE, 1000);
@@ -552,19 +552,19 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		{
 			ResetEvent(ghSetWndSendTabsEvent);
 
-			// Для FAR2 - сброс QSearch выполняется в том же макро, в котором актирируется окно
+			// Р”Р»СЏ FAR2 - СЃР±СЂРѕСЃ QSearch РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РІ С‚РѕРј Р¶Рµ РјР°РєСЂРѕ, РІ РєРѕС‚РѕСЂРѕРј Р°РєС‚РёСЂРёСЂСѓРµС‚СЃСЏ РѕРєРЅРѕ
 			if (gFarVersion.dwVerMajor == 1 && pIn->dwData[1])
 			{
-				// А вот для FAR1 - нужно шаманить
-				ProcessCommand(CMD_CLOSEQSEARCH, TRUE/*bReqMainThread*/, pIn->dwData/*хоть и не нужно?*/);
+				// Рђ РІРѕС‚ РґР»СЏ FAR1 - РЅСѓР¶РЅРѕ С€Р°РјР°РЅРёС‚СЊ
+				ProcessCommand(CMD_CLOSEQSEARCH, TRUE/*bReqMainThread*/, pIn->dwData/*С…РѕС‚СЊ Рё РЅРµ РЅСѓР¶РЅРѕ?*/);
 			}
 
-			// Пересылается 2 DWORD
+			// РџРµСЂРµСЃС‹Р»Р°РµС‚СЃСЏ 2 DWORD
 			BOOL bCmdRc = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->dwData);
 
 			DEBUGSTRCMD(L"Plugin: PlugServerThreadCommand: CMD_SETWINDOW waiting...\n");
 
-			WARNING("Почему для FAR1 не ждем? Есть возможность заблокироваться в 1.7 или что?");
+			WARNING("РџРѕС‡РµРјСѓ РґР»СЏ FAR1 РЅРµ Р¶РґРµРј? Р•СЃС‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°С‚СЊСЃСЏ РІ 1.7 РёР»Рё С‡С‚Рѕ?");
 			if ((gFarVersion.dwVerMajor >= 2) && bCmdRc)
 			{
 				DWORD nTimeout = 2000;
@@ -593,8 +593,8 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 	}
 	else if (pIn->hdr.nCmd == CMD_FARSETCHANGED)
 	{
-		// Установить переменные окружения
-		// Плагин это получает в ответ на CECMD_RESOURCES, посланное в GUI при загрузке плагина
+		// РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РїРµСЂРµРјРµРЅРЅС‹Рµ РѕРєСЂСѓР¶РµРЅРёСЏ
+		// РџР»Р°РіРёРЅ СЌС‚Рѕ РїРѕР»СѓС‡Р°РµС‚ РІ РѕС‚РІРµС‚ РЅР° CECMD_RESOURCES, РїРѕСЃР»Р°РЅРЅРѕРµ РІ GUI РїСЂРё Р·Р°РіСЂСѓР·РєРµ РїР»Р°РіРёРЅР°
 		_ASSERTE(nDataSize>=8);
 		//wchar_t *pszName  = (wchar_t*)pIn->Data;
 		FAR_REQ_FARSETCHANGED *pFarSet = (FAR_REQ_FARSETCHANGED*)pIn->Data;
@@ -608,7 +608,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 
 		if (SetFarHookMode)
 		{
-			// Уведомить об изменениях библиотеку хуков (ConEmuHk.dll)
+			// РЈРІРµРґРѕРјРёС‚СЊ РѕР± РёР·РјРµРЅРµРЅРёСЏС… Р±РёР±Р»РёРѕС‚РµРєСѓ С…СѓРєРѕРІ (ConEmuHk.dll)
 			SetFarHookMode(&gFarMode);
 
 			pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
@@ -621,7 +621,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 
 		//_ASSERTE(nDataSize<sizeof(gsMonitorEnvVar));
 		//gbMonitorEnvVar = false;
-		//// Плагин FarCall "нарушает" COMSPEC (копирует содержимое запускаемого процесса)
+		//// РџР»Р°РіРёРЅ FarCall "РЅР°СЂСѓС€Р°РµС‚" COMSPEC (РєРѕРїРёСЂСѓРµС‚ СЃРѕРґРµСЂР¶РёРјРѕРµ Р·Р°РїСѓСЃРєР°РµРјРѕРіРѕ РїСЂРѕС†РµСЃСЃР°)
 		//bool lbOk = false;
 
 		//if (nDataSize<sizeof(gsMonitorEnvVar))
@@ -633,14 +633,14 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		//UpdateEnvVar(pszName);
 		////while (*pszName && *pszValue) {
 		////	const wchar_t* pszChanged = pszValue;
-		////	// Для ConEmuOutput == AUTO выбирается по версии ФАРа
+		////	// Р”Р»СЏ ConEmuOutput == AUTO РІС‹Р±РёСЂР°РµС‚СЃСЏ РїРѕ РІРµСЂСЃРёРё Р¤РђР Р°
 		////	if (!lstrcmpi(pszName, L"ConEmuOutput") && !lstrcmp(pszChanged, L"AUTO")) {
 		////		if (gFarVersion.dwVerMajor==1)
 		////			pszChanged = L"ANSI";
 		////		else
 		////			pszChanged = L"UNICODE";
 		////	}
-		////	// Если в pszValue пустая строка - удаление переменной
+		////	// Р•СЃР»Рё РІ pszValue РїСѓСЃС‚Р°СЏ СЃС‚СЂРѕРєР° - СѓРґР°Р»РµРЅРёРµ РїРµСЂРµРјРµРЅРЅРѕР№
 		////	SetEnvironmentVariableW(pszName, (*pszChanged != 0) ? pszChanged : NULL);
 		////	//
 		////	pszName = pszValue + lstrlenW(pszValue) + 1;
@@ -686,12 +686,12 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 #endif
 		DWORD ClickArg[2] = {TRUE, MAKELONG(crMouse->X, crMouse->Y)};
 		
-		// Выделить файл под курсором
+		// Р’С‹РґРµР»РёС‚СЊ С„Р°Р№Р» РїРѕРґ РєСѓСЂСЃРѕСЂРѕРј
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_LEFTCLKSYNC) begin\n");
 		BOOL lb1 = ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, ClickArg/*pIn->Data*/);
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_LEFTCLKSYNC) done\n");
 
-		// А теперь, собственно вызовем меню
+		// Рђ С‚РµРїРµСЂСЊ, СЃРѕР±СЃС‚РІРµРЅРЅРѕ РІС‹Р·РѕРІРµРј РјРµРЅСЋ
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_EMENU) begin\n");
 		BOOL lb2 = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_EMENU) done\n");
@@ -745,7 +745,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		//}
 	}
 
-	//// Освободить память
+	//// РћСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ
 	//if (((LPVOID)cbBuffer) != ((LPVOID)pIn))
 	//	Free(pIn);
 

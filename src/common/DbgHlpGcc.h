@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 
 typedef enum _MINIDUMP_TYPE {

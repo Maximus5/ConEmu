@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -297,8 +297,8 @@ void RaiseTestException();
 struct SettingsStorage
 {
 	wchar_t szType[8]; // CONEMU_CONFIGTYPE_REG, CONEMU_CONFIGTYPE_XML
-	LPCWSTR pszFile;   // NULL или полный путь к xml-файлу
-	LPCWSTR pszConfig; // Имя конфигурации
+	LPCWSTR pszFile;   // NULL РёР»Рё РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє xml-С„Р°Р№Р»Сѓ
+	LPCWSTR pszConfig; // РРјСЏ РєРѕРЅС„РёРіСѓСЂР°С†РёРё
 };
 
 #define CONEMU_ROOT_KEY L"Software\\ConEmu"
@@ -340,7 +340,7 @@ typedef BOOL (WINAPI* AlphaBlend_t)(HDC hdcDest, int xoriginDest, int yoriginDes
 typedef BOOL (WINAPI* SetLayeredWindowAttributes_t)(HWND hwnd, COLORREF crKey, BYTE bAlpha, DWORD dwFlags);
 typedef BOOL (WINAPI* CreateRestrictedToken_t)(HANDLE ExistingTokenHandle, DWORD Flags, DWORD DisableSidCount, PSID_AND_ATTRIBUTES SidsToDisable, DWORD DeletePrivilegeCount, PLUID_AND_ATTRIBUTES PrivilegesToDelete, DWORD RestrictedSidCount, PSID_AND_ATTRIBUTES SidsToRestrict, PHANDLE NewTokenHandle);
 #endif
-// GetLayeredWindowAttributes появилась только в XP
+// GetLayeredWindowAttributes РїРѕСЏРІРёР»Р°СЃСЊ С‚РѕР»СЊРєРѕ РІ XP
 typedef BOOL (WINAPI* GetLayeredWindowAttributes_t)(HWND hwnd, COLORREF *pcrKey, BYTE *pbAlpha, DWORD *pdwFlags);
 
 #if !defined(MAPVK_VSC_TO_VK_EX)
@@ -385,42 +385,42 @@ typedef BOOL (WINAPI* GetLayeredWindowAttributes_t)(HWND hwnd, COLORREF *pcrKey,
 
 enum ConEmuMargins
 {
-	// Разница между размером всего окна и клиентской области окна (рамка + заголовок)
+	// Р Р°Р·РЅРёС†Р° РјРµР¶РґСѓ СЂР°Р·РјРµСЂРѕРј РІСЃРµРіРѕ РѕРєРЅР° Рё РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё РѕРєРЅР° (СЂР°РјРєР° + Р·Р°РіРѕР»РѕРІРѕРє)
 	CEM_FRAMEONLY = 0x0001,
 	CEM_CAPTION = 0x0002,
 	CEM_FRAMECAPTION = (CEM_FRAMEONLY|CEM_CAPTION),
-	CEM_CLIENTSHIFT = 0x0004, // Если клиентская часть "расширена" на рамку
-	// Высота таба (пока только .top)
+	CEM_CLIENTSHIFT = 0x0004, // Р•СЃР»Рё РєР»РёРµРЅС‚СЃРєР°СЏ С‡Р°СЃС‚СЊ "СЂР°СЃС€РёСЂРµРЅР°" РЅР° СЂР°РјРєСѓ
+	// Р’С‹СЃРѕС‚Р° С‚Р°Р±Р° (РїРѕРєР° С‚РѕР»СЊРєРѕ .top)
 	CEM_TAB = 0x0010,
-	CEM_TABACTIVATE = 0x1010,   // Принудительно считать, что таб есть (при включении таба)
-	CEM_TABDEACTIVATE = 0x2010, // Принудительно считать, что таба нет (при отключении таба)
+	CEM_TABACTIVATE = 0x1010,   // РџСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ СЃС‡РёС‚Р°С‚СЊ, С‡С‚Рѕ С‚Р°Р± РµСЃС‚СЊ (РїСЂРё РІРєР»СЋС‡РµРЅРёРё С‚Р°Р±Р°)
+	CEM_TABDEACTIVATE = 0x2010, // РџСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ СЃС‡РёС‚Р°С‚СЊ, С‡С‚Рѕ С‚Р°Р±Р° РЅРµС‚ (РїСЂРё РѕС‚РєР»СЋС‡РµРЅРёРё С‚Р°Р±Р°)
 	CEM_TAB_MASK = (CEM_TAB|CEM_TABACTIVATE|CEM_TABDEACTIVATE),
-	CEM_SCROLL = 0x0020, // Если полоса прокрутки всегда (!!!) видна - то ее ширина/высота
-	CEM_STATUS = 0x0040, // Высота строки статуса
-	CEM_PAD = 0x0080, // Ширина "отступа" от краев
-	// Маска для получения всех отступов
+	CEM_SCROLL = 0x0020, // Р•СЃР»Рё РїРѕР»РѕСЃР° РїСЂРѕРєСЂСѓС‚РєРё РІСЃРµРіРґР° (!!!) РІРёРґРЅР° - С‚Рѕ РµРµ С€РёСЂРёРЅР°/РІС‹СЃРѕС‚Р°
+	CEM_STATUS = 0x0040, // Р’С‹СЃРѕС‚Р° СЃС‚СЂРѕРєРё СЃС‚Р°С‚СѓСЃР°
+	CEM_PAD = 0x0080, // РЁРёСЂРёРЅР° "РѕС‚СЃС‚СѓРїР°" РѕС‚ РєСЂР°РµРІ
+	// РњР°СЃРєР° РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РІСЃРµС… РѕС‚СЃС‚СѓРїРѕРІ
 	CEM_ALL_MARGINS = CEM_FRAMECAPTION|CEM_TAB|/*CEM_SCROLL|*/CEM_STATUS/*|CEM_PAD*/,
 	CEM_CLIENT_MARGINS = CEM_TAB|/*CEM_SCROLL|*/CEM_STATUS/*|CEM_PAD*/,
 };
 
 enum ConEmuRect
 {
-	CER_MAIN = 0,   // Полный размер окна
-	// Далее все координаты считаются относительно клиенсткой области {0,0}
-	CER_MAINCLIENT, // клиентская область главного окна (БЕЗ отрезания табов, прокруток, DoubleView и прочего. Целиком)
-	CER_TAB,        // положение контрола с закладками (всего)
-	CER_WORKSPACE,  // рабочая область ConEmu. В ней располагаются все видимые VCon/GUI apps. (БОЛЬШЕ чем CER_BACK при SplitScreen/DoubleView).
-	CER_BACK,       // область, отведенная под VCon. Тут нужна вся область, без отрезания прокруток и округлений размеров под знакоместо
-	CER_SCROLL,     // положение полосы прокрутки
-	CER_DC,         // положение окна отрисовки
-	CER_CONSOLE_ALL,// !!! _ размер в символах _ !!! размер всего поля (всех видимых сплитов)
-	CER_CONSOLE_CUR,// !!! _ размер в символах _ !!! размер активной консоли (активный сплит)
-	CER_CONSOLE_NTVDMOFF, // same as CER_CONSOLE, но во время отключения режима 16бит
-	CER_FULLSCREEN, // полный размер в pix текущего монитора (содержащего ghWnd)
-	CER_MAXIMIZED,  // размер максимизированного окна на текущем мониторе (содержащего ghWnd)
-	CER_RESTORE,    // размер "восстановленного" окна после максимизации (коррекция по размеру монитора?)
-	CER_MONITOR,    // полный размер в pix рабочей области текущего монитора (содержащего ghWnd)
-//	CER_CORRECTED   // скорректированное положение (чтобы окно было видно на текущем мониторе)
+	CER_MAIN = 0,   // РџРѕР»РЅС‹Р№ СЂР°Р·РјРµСЂ РѕРєРЅР°
+	// Р”Р°Р»РµРµ РІСЃРµ РєРѕРѕСЂРґРёРЅР°С‚С‹ СЃС‡РёС‚Р°СЋС‚СЃСЏ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РєР»РёРµРЅСЃС‚РєРѕР№ РѕР±Р»Р°СЃС‚Рё {0,0}
+	CER_MAINCLIENT, // РєР»РёРµРЅС‚СЃРєР°СЏ РѕР±Р»Р°СЃС‚СЊ РіР»Р°РІРЅРѕРіРѕ РѕРєРЅР° (Р‘Р•Р— РѕС‚СЂРµР·Р°РЅРёСЏ С‚Р°Р±РѕРІ, РїСЂРѕРєСЂСѓС‚РѕРє, DoubleView Рё РїСЂРѕС‡РµРіРѕ. Р¦РµР»РёРєРѕРј)
+	CER_TAB,        // РїРѕР»РѕР¶РµРЅРёРµ РєРѕРЅС‚СЂРѕР»Р° СЃ Р·Р°РєР»Р°РґРєР°РјРё (РІСЃРµРіРѕ)
+	CER_WORKSPACE,  // СЂР°Р±РѕС‡Р°СЏ РѕР±Р»Р°СЃС‚СЊ ConEmu. Р’ РЅРµР№ СЂР°СЃРїРѕР»Р°РіР°СЋС‚СЃСЏ РІСЃРµ РІРёРґРёРјС‹Рµ VCon/GUI apps. (Р‘РћР›Р¬РЁР• С‡РµРј CER_BACK РїСЂРё SplitScreen/DoubleView).
+	CER_BACK,       // РѕР±Р»Р°СЃС‚СЊ, РѕС‚РІРµРґРµРЅРЅР°СЏ РїРѕРґ VCon. РўСѓС‚ РЅСѓР¶РЅР° РІСЃСЏ РѕР±Р»Р°СЃС‚СЊ, Р±РµР· РѕС‚СЂРµР·Р°РЅРёСЏ РїСЂРѕРєСЂСѓС‚РѕРє Рё РѕРєСЂСѓРіР»РµРЅРёР№ СЂР°Р·РјРµСЂРѕРІ РїРѕРґ Р·РЅР°РєРѕРјРµСЃС‚Рѕ
+	CER_SCROLL,     // РїРѕР»РѕР¶РµРЅРёРµ РїРѕР»РѕСЃС‹ РїСЂРѕРєСЂСѓС‚РєРё
+	CER_DC,         // РїРѕР»РѕР¶РµРЅРёРµ РѕРєРЅР° РѕС‚СЂРёСЃРѕРІРєРё
+	CER_CONSOLE_ALL,// !!! _ СЂР°Р·РјРµСЂ РІ СЃРёРјРІРѕР»Р°С… _ !!! СЂР°Р·РјРµСЂ РІСЃРµРіРѕ РїРѕР»СЏ (РІСЃРµС… РІРёРґРёРјС‹С… СЃРїР»РёС‚РѕРІ)
+	CER_CONSOLE_CUR,// !!! _ СЂР°Р·РјРµСЂ РІ СЃРёРјРІРѕР»Р°С… _ !!! СЂР°Р·РјРµСЂ Р°РєС‚РёРІРЅРѕР№ РєРѕРЅСЃРѕР»Рё (Р°РєС‚РёРІРЅС‹Р№ СЃРїР»РёС‚)
+	CER_CONSOLE_NTVDMOFF, // same as CER_CONSOLE, РЅРѕ РІРѕ РІСЂРµРјСЏ РѕС‚РєР»СЋС‡РµРЅРёСЏ СЂРµР¶РёРјР° 16Р±РёС‚
+	CER_FULLSCREEN, // РїРѕР»РЅС‹Р№ СЂР°Р·РјРµСЂ РІ pix С‚РµРєСѓС‰РµРіРѕ РјРѕРЅРёС‚РѕСЂР° (СЃРѕРґРµСЂР¶Р°С‰РµРіРѕ ghWnd)
+	CER_MAXIMIZED,  // СЂР°Р·РјРµСЂ РјР°РєСЃРёРјРёР·РёСЂРѕРІР°РЅРЅРѕРіРѕ РѕРєРЅР° РЅР° С‚РµРєСѓС‰РµРј РјРѕРЅРёС‚РѕСЂРµ (СЃРѕРґРµСЂР¶Р°С‰РµРіРѕ ghWnd)
+	CER_RESTORE,    // СЂР°Р·РјРµСЂ "РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРЅРѕРіРѕ" РѕРєРЅР° РїРѕСЃР»Рµ РјР°РєСЃРёРјРёР·Р°С†РёРё (РєРѕСЂСЂРµРєС†РёСЏ РїРѕ СЂР°Р·РјРµСЂСѓ РјРѕРЅРёС‚РѕСЂР°?)
+	CER_MONITOR,    // РїРѕР»РЅС‹Р№ СЂР°Р·РјРµСЂ РІ pix СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё С‚РµРєСѓС‰РµРіРѕ РјРѕРЅРёС‚РѕСЂР° (СЃРѕРґРµСЂР¶Р°С‰РµРіРѕ ghWnd)
+//	CER_CORRECTED   // СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°РЅРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ (С‡С‚РѕР±С‹ РѕРєРЅРѕ Р±С‹Р»Рѕ РІРёРґРЅРѕ РЅР° С‚РµРєСѓС‰РµРј РјРѕРЅРёС‚РѕСЂРµ)
 };
 
 enum ConEmuBorders
@@ -437,9 +437,9 @@ enum ConEmuBorders
 enum DragPanelBorder
 {
 	DPB_NONE = 0,
-	DPB_SPLIT,    // драг влево/вправо
-	DPB_LEFT,     // высота левой
-	DPB_RIGHT,    // высота правой
+	DPB_SPLIT,    // РґСЂР°Рі РІР»РµРІРѕ/РІРїСЂР°РІРѕ
+	DPB_LEFT,     // РІС‹СЃРѕС‚Р° Р»РµРІРѕР№
+	DPB_RIGHT,    // РІС‹СЃРѕС‚Р° РїСЂР°РІРѕР№
 };
 
 enum TrackMenuPlace

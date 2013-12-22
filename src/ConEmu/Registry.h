@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -44,7 +44,7 @@ struct SettingsBase
 
 		virtual bool Load(const wchar_t *regName, wchar_t **value) = 0;
 		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize) = 0;
-		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) = 0; // нада, для проверки валидности типа реестра
+		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) = 0; // РЅР°РґР°, РґР»СЏ РїСЂРѕРІРµСЂРєРё РІР°Р»РёРґРЅРѕСЃС‚Рё С‚РёРїР° СЂРµРµСЃС‚СЂР°
 		/*template <class T> bool Load(const wchar_t *regName, T &value)
 		{
 			DWORD len = sizeof(T);
@@ -63,10 +63,10 @@ struct SettingsBase
 
 		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize) = 0;
 
-		//virtual void Save(const wchar_t *regName, const wchar_t *value) = 0; // value = _T(""); // сюда мог придти и NULL
+		//virtual void Save(const wchar_t *regName, const wchar_t *value) = 0; // value = _T(""); // СЃСЋРґР° РјРѕРі РїСЂРёРґС‚Рё Рё NULL
 		void Save(const wchar_t *regName, const wchar_t *value)
 		{
-			if (!value) value = L"";  // сюда мог придти и NULL
+			if (!value) value = L"";  // СЃСЋРґР° РјРѕРі РїСЂРёРґС‚Рё Рё NULL
 
 			Save(regName, (LPCBYTE)value, REG_SZ, (_tcslen(value)+1)*sizeof(wchar_t));
 		}
@@ -80,7 +80,7 @@ struct SettingsBase
 		}
 		void Save(const wchar_t *regName, wchar_t *value)
 		{
-			// нада, чтобы вниз в template не провалился
+			// РЅР°РґР°, С‡С‚РѕР±С‹ РІРЅРёР· РІ template РЅРµ РїСЂРѕРІР°Р»РёР»СЃСЏ
 			Save(regName, (const wchar_t*)value);
 		}
 		// bool, dword, rect, etc.
@@ -111,11 +111,11 @@ struct SettingsRegistry : public SettingsBase
 
 		virtual bool Load(const wchar_t *regName, wchar_t **value);
 		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize);
-		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen); // нада, для проверки валидности типа реестра
+		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen); // РЅР°РґР°, РґР»СЏ РїСЂРѕРІРµСЂРєРё РІР°Р»РёРґРЅРѕСЃС‚Рё С‚РёРїР° СЂРµРµСЃС‚СЂР°
 
 		virtual void Delete(const wchar_t *regName);
 
-		//virtual void Save(const wchar_t *regName, const wchar_t *value); // value = _T(""); // сюда мог придти и NULL
+		//virtual void Save(const wchar_t *regName, const wchar_t *value); // value = _T(""); // СЃСЋРґР° РјРѕРі РїСЂРёРґС‚Рё Рё NULL
 		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize);
 
 	public:
@@ -135,11 +135,11 @@ struct SettingsINI : public SettingsBase
 
 		virtual bool Load(const wchar_t *regName, wchar_t **value);
 		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize);
-		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen); // нада, для проверки валидности типа реестра
+		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen); // РЅР°РґР°, РґР»СЏ РїСЂРѕРІРµСЂРєРё РІР°Р»РёРґРЅРѕСЃС‚Рё С‚РёРїР° СЂРµРµСЃС‚СЂР°
 
 		virtual void Delete(const wchar_t *regName);
 
-		//virtual void Save(const wchar_t *regName, const wchar_t *value); // value = _T(""); // сюда мог придти и NULL
+		//virtual void Save(const wchar_t *regName, const wchar_t *value); // value = _T(""); // СЃСЋРґР° РјРѕРі РїСЂРёРґС‚Рё Рё NULL
 		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize);
 
 	public:
@@ -167,11 +167,11 @@ struct SettingsXML : public SettingsBase
 
 		virtual bool Load(const wchar_t *regName, wchar_t **value);
 		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize);
-		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen); // нада, для проверки валидности типа реестра
+		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen); // РЅР°РґР°, РґР»СЏ РїСЂРѕРІРµСЂРєРё РІР°Р»РёРґРЅРѕСЃС‚Рё С‚РёРїР° СЂРµРµСЃС‚СЂР°
 
 		virtual void Delete(const wchar_t *regName);
 
-		//virtual void Save(const wchar_t *regName, const wchar_t *value); // value = _T(""); // сюда мог придти и NULL
+		//virtual void Save(const wchar_t *regName, const wchar_t *value); // value = _T(""); // СЃСЋРґР° РјРѕРі РїСЂРёРґС‚Рё Рё NULL
 		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize);
 
 	protected:

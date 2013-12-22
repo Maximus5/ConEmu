@@ -1,2 +1,2 @@
-#include <windows.h>
+﻿#include <windows.h>
 #define IDC_STATIC -1

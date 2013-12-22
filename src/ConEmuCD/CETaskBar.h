@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 
 #include "../ConEmu/ShObjIdl_Part.h"

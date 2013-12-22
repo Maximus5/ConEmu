@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -45,7 +45,7 @@ HANDLE ghSkipSetThreadContextForThread = NULL;
 
 HANDLE ghInjectsInMainThread = NULL;
 
-// Проверить, что gfnLoadLibrary лежит в пределах модуля hKernel!
+// РџСЂРѕРІРµСЂРёС‚СЊ, С‡С‚Рѕ gfnLoadLibrary Р»РµР¶РёС‚ РІ РїСЂРµРґРµР»Р°С… РјРѕРґСѓР»СЏ hKernel!
 UINT_PTR GetLoadLibraryAddress()
 {
 	if (gfnLoadLibrary)
@@ -75,10 +75,10 @@ UINT_PTR GetLoadLibraryAddress()
 		fnLoadLibrary = (UINT_PTR)::GetProcAddress(hKernel, "LoadLibraryW");
 	}
 
-	// Функция должна быть именно в Kernel32.dll (а не в какой либо другой библиотеке, мало ли кто захукал...)
+	// Р¤СѓРЅРєС†РёСЏ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РёРјРµРЅРЅРѕ РІ Kernel32.dll (Р° РЅРµ РІ РєР°РєРѕР№ Р»РёР±Рѕ РґСЂСѓРіРѕР№ Р±РёР±Р»РёРѕС‚РµРєРµ, РјР°Р»Рѕ Р»Рё РєС‚Рѕ Р·Р°С…СѓРєР°Р»...)
 	if (!CheckCallbackPtr(hKernel, 1, (FARPROC*)&fnLoadLibrary, TRUE))
 	{
-		// _ASSERTE уже был
+		// _ASSERTE СѓР¶Рµ Р±С‹Р»
 		return 0;
 	}
 
@@ -101,10 +101,10 @@ UINT_PTR GetLdrGetDllHandleByNameAddress()
 
 	fnLdrGetDllHandleByName = (UINT_PTR)::GetProcAddress(hNtDll, "LdrGetDllHandleByName");
 
-	// Функция должна быть именно в ntdll.dll (а не в какой либо другой библиотеке, мало ли кто захукал...)
+	// Р¤СѓРЅРєС†РёСЏ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РёРјРµРЅРЅРѕ РІ ntdll.dll (Р° РЅРµ РІ РєР°РєРѕР№ Р»РёР±Рѕ РґСЂСѓРіРѕР№ Р±РёР±Р»РёРѕС‚РµРєРµ, РјР°Р»Рѕ Р»Рё РєС‚Рѕ Р·Р°С…СѓРєР°Р»...)
 	if (!CheckCallbackPtr(hNtDll, 1, (FARPROC*)&fnLdrGetDllHandleByName, TRUE))
 	{
-		// _ASSERTE уже был
+		// _ASSERTE СѓР¶Рµ Р±С‹Р»
 		return 0;
 	}
 
@@ -135,7 +135,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 #ifdef WIN64
 	is64bitOs = TRUE;
 #endif
-	// для проверки IsWow64Process
+	// РґР»СЏ РїСЂРѕРІРµСЂРєРё IsWow64Process
 	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 	HMODULE hNtDll = NULL;
 	DEBUGTEST(int iFindAddress = 0);
@@ -169,7 +169,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 		}
 	}
 
-	// Процесс не был стартован, или уже завершился
+	// РџСЂРѕС†РµСЃСЃ РЅРµ Р±С‹Р» СЃС‚Р°СЂС‚РѕРІР°РЅ, РёР»Рё СѓР¶Рµ Р·Р°РІРµСЂС€РёР»СЃСЏ
 	nWait = WaitForSingleObject(pi.hProcess, 0);
 	if (nWait == WAIT_OBJECT_0)
 	{
@@ -226,14 +226,14 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 			BOOL bWow64 = FALSE;
 #ifndef WIN64
 
-			// Текущий процесс - 32-битный, (bWow64==TRUE) будет означать что OS - 64битная
+			// РўРµРєСѓС‰РёР№ РїСЂРѕС†РµСЃСЃ - 32-Р±РёС‚РЅС‹Р№, (bWow64==TRUE) Р±СѓРґРµС‚ РѕР·РЅР°С‡Р°С‚СЊ С‡С‚Рѕ OS - 64Р±РёС‚РЅР°СЏ
 			if (IsWow64Process_f(GetCurrentProcess(), &bWow64) && bWow64)
 				is64bitOs = TRUE;
 
 #else
 			_ASSERTE(is64bitOs);
 #endif
-			// Теперь проверить запущенный процесс
+			// РўРµРїРµСЂСЊ РїСЂРѕРІРµСЂРёС‚СЊ Р·Р°РїСѓС‰РµРЅРЅС‹Р№ РїСЂРѕС†РµСЃСЃ
 			bWow64 = FALSE;
 
 			if (is64bitOs && IsWow64Process_f(pi.hProcess, &bWow64) && !bWow64)
@@ -256,11 +256,11 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	//#ifdef WIN64
 	//	fnLoadLibrary = (UINT_PTR)::GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "LoadLibraryW");
 
-	//	// 64битный conemuc сможет найти процедуру и в 32битном процессе
+	//	// 64Р±РёС‚РЅС‹Р№ conemuc СЃРјРѕР¶РµС‚ РЅР°Р№С‚Рё РїСЂРѕС†РµРґСѓСЂСѓ Рё РІ 32Р±РёС‚РЅРѕРј РїСЂРѕС†РµСЃСЃРµ
 	//	iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
 
 	//#else
-	// Если битность не совпадает - нужен helper
+	// Р•СЃР»Рё Р±РёС‚РЅРѕСЃС‚СЊ РЅРµ СЃРѕРІРїР°РґР°РµС‚ - РЅСѓР¶РµРЅ helper
 	if (ImageBits != SelfImageBits)
 	{
 		DWORD dwPidWait = WaitForSingleObject(pi.hProcess, 0);
@@ -268,14 +268,14 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 		{
 			_ASSERTE(dwPidWait != WAIT_OBJECT_0);
 		}
-		// Требуется 64битный(32битный?) comspec для установки хука
+		// РўСЂРµР±СѓРµС‚СЃСЏ 64Р±РёС‚РЅС‹Р№(32Р±РёС‚РЅС‹Р№?) comspec РґР»СЏ СѓСЃС‚Р°РЅРѕРІРєРё С…СѓРєР°
 		DEBUGTEST(iFindAddress = -1);
 		HANDLE hProcess = NULL, hThread = NULL;
 		DuplicateHandle(GetCurrentProcess(), pi.hProcess, GetCurrentProcess(), &hProcess, 0, TRUE, DUPLICATE_SAME_ACCESS);
 		DuplicateHandle(GetCurrentProcess(), pi.hThread, GetCurrentProcess(), &hThread, 0, TRUE, DUPLICATE_SAME_ACCESS);
 		_ASSERTE(hProcess && hThread);
 		#ifdef _WIN64
-		// Если превышение DWORD в Handle - то запускаемый 32битный обломится. Но вызывается ли он вообще?
+		// Р•СЃР»Рё РїСЂРµРІС‹С€РµРЅРёРµ DWORD РІ Handle - С‚Рѕ Р·Р°РїСѓСЃРєР°РµРјС‹Р№ 32Р±РёС‚РЅС‹Р№ РѕР±Р»РѕРјРёС‚СЃСЏ. РќРѕ РІС‹Р·С‹РІР°РµС‚СЃСЏ Р»Рё РѕРЅ РІРѕРѕР±С‰Рµ?
 		if (((DWORD)hProcess != (DWORD_PTR)hProcess) || ((DWORD)hThread != (DWORD_PTR)hThread))
 		{
 			_ASSERTE(((DWORD)hProcess == (DWORD_PTR)hProcess) && ((DWORD)hThread == (DWORD_PTR)hThread));
@@ -295,14 +295,14 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 		SecInh.lpSecurityDescriptor = lpNotInh->lpSecurityDescriptor;
 		SecInh.bInheritHandle = TRUE;
 
-		// Добавил DETACHED_PROCESS, чтобы helper не появлялся в списке процессов консоли,
-		// а то у сервера может крышу сорвать, когда helper исчезнет, а приложение еще не появится.
+		// Р”РѕР±Р°РІРёР» DETACHED_PROCESS, С‡С‚РѕР±С‹ helper РЅРµ РїРѕСЏРІР»СЏР»СЃСЏ РІ СЃРїРёСЃРєРµ РїСЂРѕС†РµСЃСЃРѕРІ РєРѕРЅСЃРѕР»Рё,
+		// Р° С‚Рѕ Сѓ СЃРµСЂРІРµСЂР° РјРѕР¶РµС‚ РєСЂС‹С€Сѓ СЃРѕСЂРІР°С‚СЊ, РєРѕРіРґР° helper РёСЃС‡РµР·РЅРµС‚, Р° РїСЂРёР»РѕР¶РµРЅРёРµ РµС‰Рµ РЅРµ РїРѕСЏРІРёС‚СЃСЏ.
 		BOOL lbHelper = CreateProcess(NULL, sz64helper, &SecInh, &SecInh, TRUE, HIGH_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL, &si, &pi64);
 
 		if (!lbHelper)
 		{
 			nErrCode = GetLastError();
-			// Ошибки показывает вызывающая функция/процесс
+			// РћС€РёР±РєРё РїРѕРєР°Р·С‹РІР°РµС‚ РІС‹Р·С‹РІР°СЋС‰Р°СЏ С„СѓРЅРєС†РёСЏ/РїСЂРѕС†РµСЃСЃ
 			iRc = -502;
 			
 			CloseHandle(hProcess); CloseHandle(hThread);
@@ -329,10 +329,10 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 				goto wrap;
 			}
 
-			// Ошибки показывает вызывающая функция/процесс
+			// РћС€РёР±РєРё РїРѕРєР°Р·С‹РІР°РµС‚ РІС‹Р·С‹РІР°СЋС‰Р°СЏ С„СѓРЅРєС†РёСЏ/РїСЂРѕС†РµСЃСЃ
 		}
 		
-		// Уже все ветки должны были быть обработаны!
+		// РЈР¶Рµ РІСЃРµ РІРµС‚РєРё РґРѕР»Р¶РЅС‹ Р±С‹Р»Рё Р±С‹С‚СЊ РѕР±СЂР°Р±РѕС‚Р°РЅС‹!
 		_ASSERTE(FALSE);
 		iRc = -504;
 		goto wrap;
@@ -356,8 +356,8 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 		}
 		else
 		{
-			// -- не имеет смысла. процесс еще "не отпущен", поэтому CreateToolhelp32Snapshot(TH32CS_SNAPMODULE) обламывается
-			//// Проверить, а не Гуй ли это?
+			// -- РЅРµ РёРјРµРµС‚ СЃРјС‹СЃР»Р°. РїСЂРѕС†РµСЃСЃ РµС‰Рµ "РЅРµ РѕС‚РїСѓС‰РµРЅ", РїРѕСЌС‚РѕРјСѓ CreateToolhelp32Snapshot(TH32CS_SNAPMODULE) РѕР±Р»Р°РјС‹РІР°РµС‚СЃСЏ
+			//// РџСЂРѕРІРµСЂРёС‚СЊ, Р° РЅРµ Р“СѓР№ Р»Рё СЌС‚Рѕ?
 			//BOOL lbIsGui = FALSE;
 			//if (!abForceGui)
 			//{
@@ -372,8 +372,8 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 			//	}
 			//}
 
-			// ??? Сначала нужно проверить, может есть проблема с адресами (ASLR) ???
-			//-- ReadProcessMemory возвращает ошибку 299, и cch_dos_read==0, так что не катит...
+			// ??? РЎРЅР°С‡Р°Р»Р° РЅСѓР¶РЅРѕ РїСЂРѕРІРµСЂРёС‚СЊ, РјРѕР¶РµС‚ РµСЃС‚СЊ РїСЂРѕР±Р»РµРјР° СЃ Р°РґСЂРµСЃР°РјРё (ASLR) ???
+			//-- ReadProcessMemory РІРѕР·РІСЂР°С‰Р°РµС‚ РѕС€РёР±РєСѓ 299, Рё cch_dos_read==0, С‚Р°Рє С‡С‚Рѕ РЅРµ РєР°С‚РёС‚...
 			//IMAGE_DOS_HEADER dos_hdr = {}; SIZE_T cch_dos_read = 0;
 			//BOOL bRead = ::ReadProcessMemory(pi.hProcess, (LPVOID)(DWORD_PTR)hKernel, &dos_hdr, sizeof(dos_hdr), &cch_dos_read);
 
@@ -442,8 +442,8 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	//}
 	//WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");
 	//size = (lstrlen(szPluginPath)+1)*2;
-	//TODO("Будет облом на DOS (16бит) приложениях");
-	//TODO("Проверить, сможет ли ConEmu.x64 инжектиться в 32битные приложения?");
+	//TODO("Р‘СѓРґРµС‚ РѕР±Р»РѕРј РЅР° DOS (16Р±РёС‚) РїСЂРёР»РѕР¶РµРЅРёСЏС…");
+	//TODO("РџСЂРѕРІРµСЂРёС‚СЊ, СЃРјРѕР¶РµС‚ Р»Рё ConEmu.x64 РёРЅР¶РµРєС‚РёС‚СЊСЃСЏ РІ 32Р±РёС‚РЅС‹Рµ РїСЂРёР»РѕР¶РµРЅРёСЏ?");
 	//pszPathInProcess = (wchar_t*)VirtualAllocEx(hProcess, 0, size, MEM_COMMIT, PAGE_READWRITE);
 	//if (!pszPathInProcess)
 	//{
@@ -458,7 +458,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	//	goto wrap;
 	//}
 	//
-	//TODO("Получить адрес LoadLibraryW в адресном пространстве запущенного процесса!");
+	//TODO("РџРѕР»СѓС‡РёС‚СЊ Р°РґСЂРµСЃ LoadLibraryW РІ Р°РґСЂРµСЃРЅРѕРј РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІРµ Р·Р°РїСѓС‰РµРЅРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР°!");
 	//ptrLoadLibrary = (LPTHREAD_START_ROUTINE)::GetProcAddress(::GetModuleHandle(L"Kernel32.dll"), "LoadLibraryW");
 	//if (ptrLoadLibrary == NULL)
 	//{
@@ -477,7 +477,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	//		_printf("CreateRemoteThread failed! ErrCode=0x%08X\n", dwErr);
 	//		goto wrap;
 	//	}
-	//	// Дождаться, пока отработает
+	//	// Р”РѕР¶РґР°С‚СЊСЃСЏ, РїРѕРєР° РѕС‚СЂР°Р±РѕС‚Р°РµС‚
 	//	dwWait = WaitForSingleObject(hThread,
 	//		#ifdef _DEBUG
 	//					INFINITE

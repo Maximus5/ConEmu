@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -49,26 +49,26 @@ public:
 	static bool InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncDirCmdFmt, DWORD nParentPID, HWND hParentWnd);
 
 public:
-	// Режим интеграции. Запуститься как дочернее окно, например, в области проводника.
+	// Р РµР¶РёРј РёРЅС‚РµРіСЂР°С†РёРё. Р—Р°РїСѓСЃС‚РёС‚СЊСЃСЏ РєР°Рє РґРѕС‡РµСЂРЅРµРµ РѕРєРЅРѕ, РЅР°РїСЂРёРјРµСЂ, РІ РѕР±Р»Р°СЃС‚Рё РїСЂРѕРІРѕРґРЅРёРєР°.
 	InsideIntegration m_InsideIntegration;
 
 	bool  mb_InsideIntegrationShift; // Run first started console "As Admin"
 	bool  mb_InsideSynchronizeCurDir;
 	wchar_t* ms_InsideSynchronizeCurDir; // \ecd /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
 	bool  mb_InsidePaneWasForced;
-	DWORD mn_InsideParentPID;  // PID "родительского" процесса режима интеграции
-	HWND  mh_InsideParentWND; // Это окно используется как родительское в режиме интеграции
-	HWND  mh_InsideParentRoot; // Корневое окно режима интеграции (для проверки isMeForeground)
+	DWORD mn_InsideParentPID;  // PID "СЂРѕРґРёС‚РµР»СЊСЃРєРѕРіРѕ" РїСЂРѕС†РµСЃСЃР° СЂРµР¶РёРјР° РёРЅС‚РµРіСЂР°С†РёРё
+	HWND  mh_InsideParentWND; // Р­С‚Рѕ РѕРєРЅРѕ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РєР°Рє СЂРѕРґРёС‚РµР»СЊСЃРєРѕРµ РІ СЂРµР¶РёРјРµ РёРЅС‚РµРіСЂР°С†РёРё
+	HWND  mh_InsideParentRoot; // РљРѕСЂРЅРµРІРѕРµ РѕРєРЅРѕ СЂРµР¶РёРјР° РёРЅС‚РµРіСЂР°С†РёРё (РґР»СЏ РїСЂРѕРІРµСЂРєРё isMeForeground)
 	
 	HWND  InsideFindParent();
 	void  InsideParentMonitor();
 	bool  GetInsideRect(RECT* prWnd);
 
 private:
-	HWND  mh_InsideParentRel;  // Может быть NULL (ii_Simple). HWND относительно которого нужно позиционироваться
+	HWND  mh_InsideParentRel;  // РњРѕР¶РµС‚ Р±С‹С‚СЊ NULL (ii_Simple). HWND РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РєРѕС‚РѕСЂРѕРіРѕ РЅСѓР¶РЅРѕ РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°С‚СЊСЃСЏ
 	HWND  mh_InsideParentPath; // Win7 Text = "Address: D:\MYDOC"
-	HWND  mh_InsideParentCD;   // Edit для смены текущей папки, например -> "C:\USERS"
-	RECT  mrc_InsideParent, mrc_InsideParentRel; // для сравнения, чтоб знать, что подвинуться нада
+	HWND  mh_InsideParentCD;   // Edit РґР»СЏ СЃРјРµРЅС‹ С‚РµРєСѓС‰РµР№ РїР°РїРєРё, РЅР°РїСЂРёРјРµСЂ -> "C:\USERS"
+	RECT  mrc_InsideParent, mrc_InsideParentRel; // РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ, С‡С‚РѕР± Р·РЅР°С‚СЊ, С‡С‚Рѕ РїРѕРґРІРёРЅСѓС‚СЊСЃСЏ РЅР°РґР°
 	bool  mb_TipPaneWasShown;
 	wchar_t ms_InsideParentPath[MAX_PATH+1];
 	static BOOL CALLBACK EnumInsideFindParent(HWND hwnd, LPARAM lParam);

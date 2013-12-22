@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2011 Maximus5
 All rights reserved.
@@ -78,7 +78,7 @@ protected:
 				OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7)};
 				DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
 				if (!VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
-					continue; // в Vista и ниже "KernelBase.dll" еще не было
+					continue; // РІ Vista Рё РЅРёР¶Рµ "KernelBase.dll" РµС‰Рµ РЅРµ Р±С‹Р»Рѕ
 				mh_AdvApi = LoadLibrary(L"KernelBase.dll");
 			}
 			else
@@ -201,7 +201,7 @@ public:
 
 		m_NullSecurity.nLength = sizeof(m_NullSecurity);
 		m_NullSecurity.lpSecurityDescriptor = mp_NullDesc;
-		m_NullSecurity.bInheritHandle = FALSE; //111122 - установка Inherit на пайпы приводит к неприятным результатам (хэндл пайпа не закрывается)
+		m_NullSecurity.bInheritHandle = FALSE; //111122 - СѓСЃС‚Р°РЅРѕРІРєР° Inherit РЅР° РїР°Р№РїС‹ РїСЂРёРІРѕРґРёС‚ Рє РЅРµРїСЂРёСЏС‚РЅС‹Рј СЂРµР·СѓР»СЊС‚Р°С‚Р°Рј (С…СЌРЅРґР» РїР°Р№РїР° РЅРµ Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ)
 		lpSec = &m_NullSecurity;
 	wrap:
 		UnloadAdvApi();
@@ -221,7 +221,7 @@ public:
 		#endif
 
 		//#ifdef CONEMU_MINIMAL
-		//		// Возможно, есть переменная окружения CESECURITYNAME?
+		//		// Р’РѕР·РјРѕР¶РЅРѕ, РµСЃС‚СЊ РїРµСЂРµРјРµРЅРЅР°СЏ РѕРєСЂСѓР¶РµРЅРёСЏ CESECURITYNAME?
 		//		int nLen = 1024;
 		//		char* pszEncoded = (char*)calloc(1024,1);
 		//		if (!pszEncoded)
@@ -317,7 +317,7 @@ public:
 	//SetLocal:
 		m_LocalSecurity.nLength = sizeof(m_LocalSecurity);
 		m_LocalSecurity.lpSecurityDescriptor = mp_LocalDesc;
-		m_LocalSecurity.bInheritHandle = FALSE; //111122 - установка Inherit на пайпы приводит к неприятным результатам (хэндл пайпа не закрывается)
+		m_LocalSecurity.bInheritHandle = FALSE; //111122 - СѓСЃС‚Р°РЅРѕРІРєР° Inherit РЅР° РїР°Р№РїС‹ РїСЂРёРІРѕРґРёС‚ Рє РЅРµРїСЂРёСЏС‚РЅС‹Рј СЂРµР·СѓР»СЊС‚Р°С‚Р°Рј (С…СЌРЅРґР» РїР°Р№РїР° РЅРµ Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ)
 		lpSec = &m_LocalSecurity;
 	wrap:
 		UnloadAdvApi();

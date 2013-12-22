@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2012 Maximus5
 All rights reserved.
@@ -106,7 +106,7 @@ public:
 	bool OnMouse(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult);
 	void OnShowButtonsChanged();
 
-	// Переключение табов
+	// РџРµСЂРµРєР»СЋС‡РµРЅРёРµ С‚Р°Р±РѕРІ
 	void Switch(BOOL abForward, BOOL abAltStyle=FALSE);
 	void SwitchNext(BOOL abAltStyle=FALSE);
 	void SwitchPrev(BOOL abAltStyle=FALSE);
@@ -119,7 +119,7 @@ public:
 	int  ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon);
 	void GetActiveTabRect(RECT* rcTab);
 
-	// Из Samples\Tabs
+	// РР· Samples\Tabs
 	bool ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult);
 	int GetCurSel();
 	int GetHoverTab();
@@ -148,13 +148,13 @@ public:
 	static void OnToolBarDraw(LPARAM lParam, const PaintDC& dc, const RECT& rc, int nPane, int nCmd, DWORD nFlags);
 
 protected:
-	RECT mrc_TabsClient; // координаты в клиентской(!) области ConEmu панели табов и тулбара
+	RECT mrc_TabsClient; // РєРѕРѕСЂРґРёРЅР°С‚С‹ РІ РєР»РёРµРЅС‚СЃРєРѕР№(!) РѕР±Р»Р°СЃС‚Рё ConEmu РїР°РЅРµР»Рё С‚Р°Р±РѕРІ Рё С‚СѓР»Р±Р°СЂР°
 	RECT mrc_Tabs, mrc_Caption, mrc_Toolbar;
 
-	bool mb_Active; // режим автоскрытия табов?
+	bool mb_Active; // СЂРµР¶РёРј Р°РІС‚РѕСЃРєСЂС‹С‚РёСЏ С‚Р°Р±РѕРІ?
 	bool mb_UpdateModified;
-	int mn_ActiveTab; // активная вкладка (белый фон)
-	int mn_HoverTab;  // пассивная вкладка под мышиным курсором (более светлая, чем просто пассивная)
+	int mn_ActiveTab; // Р°РєС‚РёРІРЅР°СЏ РІРєР»Р°РґРєР° (Р±РµР»С‹Р№ С„РѕРЅ)
+	int mn_HoverTab;  // РїР°СЃСЃРёРІРЅР°СЏ РІРєР»Р°РґРєР° РїРѕРґ РјС‹С€РёРЅС‹Рј РєСѓСЂСЃРѕСЂРѕРј (Р±РѕР»РµРµ СЃРІРµС‚Р»Р°СЏ, С‡РµРј РїСЂРѕСЃС‚Рѕ РїР°СЃСЃРёРІРЅР°СЏ)
 	CTabStack m_Tabs, m_TabStack;
 	
 	bool mb_ToolbarFit;
@@ -229,7 +229,7 @@ private:
 	
 	bool TabGetItemRect(int tabIndex, LPRECT rcTab);
 
-	// вызывается при реакции на действия пользователя! при SelectTab(anTab) - не вызывается
+	// РІС‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё СЂРµР°РєС†РёРё РЅР° РґРµР№СЃС‚РІРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ! РїСЂРё SelectTab(anTab) - РЅРµ РІС‹Р·С‹РІР°РµС‚СЃСЏ
 	bool OnTabSelected(int anNewTab);
 };
 

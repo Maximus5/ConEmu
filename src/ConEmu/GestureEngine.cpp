@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -152,13 +152,13 @@ bool CGestures::IsGesturesEnabled()
 {
 	if (!_isTabletPC || !_isGestures)
 		return false;
-	// Финт ушами - считаем, что событие от мыши, если мышиный курсор
-	// видим на экране. Если НЕ видим - то событие от тачскрина. Актуально
-	// для того, чтобы различать правый клик от мышки и от тачскрина.
+	// Р¤РёРЅС‚ СѓС€Р°РјРё - СЃС‡РёС‚Р°РµРј, С‡С‚Рѕ СЃРѕР±С‹С‚РёРµ РѕС‚ РјС‹С€Рё, РµСЃР»Рё РјС‹С€РёРЅС‹Р№ РєСѓСЂСЃРѕСЂ
+	// РІРёРґРёРј РЅР° СЌРєСЂР°РЅРµ. Р•СЃР»Рё РќР• РІРёРґРёРј - С‚Рѕ СЃРѕР±С‹С‚РёРµ РѕС‚ С‚Р°С‡СЃРєСЂРёРЅР°. РђРєС‚СѓР°Р»СЊРЅРѕ
+	// РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ СЂР°Р·Р»РёС‡Р°С‚СЊ РїСЂР°РІС‹Р№ РєР»РёРє РѕС‚ РјС‹С€РєРё Рё РѕС‚ С‚Р°С‡СЃРєСЂРёРЅР°.
 	CURSORINFO ci = {sizeof(ci)};
 	if (!GetCursorInfo(&ci))
 		return false;
-	// 0 - курсор скрыт, а 2 - похоже недокументировано (тачскрин)
+	// 0 - РєСѓСЂСЃРѕСЂ СЃРєСЂС‹С‚, Р° 2 - РїРѕС…РѕР¶Рµ РЅРµРґРѕРєСѓРјРµРЅС‚РёСЂРѕРІР°РЅРѕ (С‚Р°С‡СЃРєСЂРёРЅ)
 	if (ci.flags == 0 || ci.flags == 2)
 		return true;
 	_ASSERTE(ci.flags == CURSOR_SHOWING);
@@ -172,7 +172,7 @@ void CGestures::DumpGesture(LPCWSTR tp, const GESTUREINFO& gi)
 	_wsprintf(szDump, SKIPLEN(countof(szDump))
 		L"Gesture(x%08X {%i,%i} %s",
 		(DWORD)gi.hwndTarget, gi.ptsLocation.x, gi.ptsLocation.y,
-		tp); // tp - имя жеста
+		tp); // tp - РёРјСЏ Р¶РµСЃС‚Р°
 
 	switch (gi.dwID)
 	{
@@ -274,7 +274,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		return true;
 	}
 
-	// Остался только WM_GESTURE
+	// РћСЃС‚Р°Р»СЃСЏ С‚РѕР»СЊРєРѕ WM_GESTURE
 	Assert(uMsg==WM_GESTURE);
 
     // helper variables
@@ -415,14 +415,14 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         if (gi.dwFlags & GF_BEGIN)
         {
 			_inRotate = false;
-            _dwArguments = LODWORD(gi.ullArguments); // Запомним начальный угол
+            _dwArguments = LODWORD(gi.ullArguments); // Р—Р°РїРѕРјРЅРёРј РЅР°С‡Р°Р»СЊРЅС‹Р№ СѓРіРѕР»
 		}
 		else
 		{
             _ptFirst.x = gi.ptsLocation.x;
             _ptFirst.y = gi.ptsLocation.y;
             ScreenToClient(hWnd, &_ptFirst);
-			// Пока угол не станет достаточным для смены таба - игнорируем
+			// РџРѕРєР° СѓРіРѕР» РЅРµ СЃС‚Р°РЅРµС‚ РґРѕСЃС‚Р°С‚РѕС‡РЅС‹Рј РґР»СЏ СЃРјРµРЅС‹ С‚Р°Р±Р° - РёРіРЅРѕСЂРёСЂСѓРµРј
             if (ProcessRotate(hWnd, 
 					LODWORD(gi.ullArguments) - _dwArguments,
 					_ptFirst.x,_ptFirst.y, ((gi.dwFlags & GF_END) == GF_END)))
@@ -531,8 +531,8 @@ bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 		CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 		if (pRCon)
 		{
-			TODO("Если можно будет задавать разный шрифт для разных консолей - заменить gpSet->FontSizeY");
-			// Соотнести Pan с высотой шрифта
+			TODO("Р•СЃР»Рё РјРѕР¶РЅРѕ Р±СѓРґРµС‚ Р·Р°РґР°РІР°С‚СЊ СЂР°Р·РЅС‹Р№ С€СЂРёС„С‚ РґР»СЏ СЂР°Р·РЅС‹С… РєРѕРЅСЃРѕР»РµР№ - Р·Р°РјРµРЅРёС‚СЊ gpSet->FontSizeY");
+			// РЎРѕРѕС‚РЅРµСЃС‚Рё Pan СЃ РІС‹СЃРѕС‚РѕР№ С€СЂРёС„С‚Р°
 			int dy = ((ldy < 0) ? -ldy : ldy) / gpSet->FontSizeY;
 			if (dy > 0)
 			{
@@ -549,7 +549,7 @@ bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 				
 				pRCon->OnMouse(WM_MOUSEWHEEL, MAKELPARAM(0,Delta), pt.x, pt.y, true, true);
 
-				lbSent = true; // Запомнить обработанную координату
+				lbSent = true; // Р—Р°РїРѕРјРЅРёС‚СЊ РѕР±СЂР°Р±РѕС‚Р°РЅРЅСѓСЋ РєРѕРѕСЂРґРёРЅР°С‚Сѓ
 			}
 		}
 	}

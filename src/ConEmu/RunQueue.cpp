@@ -1,4 +1,4 @@
-
+ï»¿
 /*
 Copyright (c) 2013 Maximus5
 All rights reserved.
@@ -59,7 +59,7 @@ void CRunQueue::RequestRConStartup(CRealConsole* pRCon)
 	bool bFound = false;
 	CVirtualConsole* pVCon = pRCon->VCon();
 
-	// Äîëæåí âûçûâàòüñÿ â ãëàâíîé íèòè, ÷òîáû ñîáëþñòè ïîðÿäîê ñîçäàíèÿ ïðè çàïóñêå ãðóïïû
+	// Ð”Ð¾Ð»Ð¶ÐµÐ½ Ð²Ñ‹Ð·Ñ‹Ð²Ð°Ñ‚ÑŒÑÑ Ð² Ð³Ð»Ð°Ð²Ð½Ð¾Ð¹ Ð½Ð¸Ñ‚Ð¸, Ñ‡Ñ‚Ð¾Ð±Ñ‹ ÑÐ¾Ð±Ð»ÑŽÑÑ‚Ð¸ Ð¿Ð¾Ñ€ÑÐ´Ð¾Ðº ÑÐ¾Ð·Ð´Ð°Ð½Ð¸Ñ Ð¿Ñ€Ð¸ Ð·Ð°Ð¿ÑƒÑÐºÐµ Ð³Ñ€ÑƒÐ¿Ð¿Ñ‹
 	_ASSERTE(gpConEmu->isMainThread() == true);
 
 	EnterCriticalSection(&mcs_QueueLock);

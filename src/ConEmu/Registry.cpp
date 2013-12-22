@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -95,12 +95,12 @@ bool SettingsRegistry::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 	if (lRc == ERROR_SUCCESS)
 		return true;
 	
-	// Access denied может быть, если пытаемся _читать_ из ключа, открытого на _запись_
+	// Access denied РјРѕР¶РµС‚ Р±С‹С‚СЊ, РµСЃР»Рё РїС‹С‚Р°РµРјСЃСЏ _С‡РёС‚Р°С‚СЊ_ РёР· РєР»СЋС‡Р°, РѕС‚РєСЂС‹С‚РѕРіРѕ РЅР° _Р·Р°РїРёСЃСЊ_
 	_ASSERTE(lRc != ERROR_ACCESS_DENIED);
 
 	if (lRc == ERROR_MORE_DATA && nSize == sizeof(BYTE) && nNewSize == sizeof(DWORD))
 	{
-		// если тип раньше был DWORD а стал - BYTE
+		// РµСЃР»Рё С‚РёРї СЂР°РЅСЊС€Рµ Р±С‹Р» DWORD Р° СЃС‚Р°Р» - BYTE
 		DWORD nData = 0;
 		lRc = RegQueryValueEx(regMy, regName, NULL, NULL, (LPBYTE)&nData, &nNewSize);
 		if (lRc == ERROR_SUCCESS)
@@ -111,7 +111,7 @@ bool SettingsRegistry::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 	}
 	return false;
 }
-// эта функция, если значения нет (или тип некорректный) *value НЕ трогает
+// СЌС‚Р° С„СѓРЅРєС†РёСЏ, РµСЃР»Рё Р·РЅР°С‡РµРЅРёСЏ РЅРµС‚ (РёР»Рё С‚РёРї РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№) *value РќР• С‚СЂРѕРіР°РµС‚
 bool SettingsRegistry::Load(const wchar_t *regName, wchar_t **value)
 {
 	DWORD len = 0;
@@ -126,19 +126,19 @@ bool SettingsRegistry::Load(const wchar_t *regName, wchar_t **value)
 
 		if (!lbRc)
 			nChLen = 0;
-		(*value)[nChLen] = 0; (*value)[nChLen+1] = 0; // На случай REG_MULTI_SZ
+		(*value)[nChLen] = 0; (*value)[nChLen+1] = 0; // РќР° СЃР»СѓС‡Р°Р№ REG_MULTI_SZ
 
 		return lbRc;
 	}
 	//else if (!*value)
 	//{
 	//	*value = (wchar_t*)malloc(sizeof(wchar_t)*2);
-	//	(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
+	//	(*value)[0] = 0; (*value)[1] = 0; // РќР° СЃР»СѓС‡Р°Р№ REG_MULTI_SZ
 	//}
 
 	return false;
 }
-// эта функция, если значения нет (или тип некорректный) value НЕ трогает
+// СЌС‚Р° С„СѓРЅРєС†РёСЏ, РµСЃР»Рё Р·РЅР°С‡РµРЅРёСЏ РЅРµС‚ (РёР»Рё С‚РёРї РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№) value РќР• С‚СЂРѕРіР°РµС‚
 bool SettingsRegistry::Load(const wchar_t *regName, wchar_t *value, int maxLen)
 {
 	_ASSERTE(maxLen>1);
@@ -150,7 +150,7 @@ bool SettingsRegistry::Load(const wchar_t *regName, wchar_t *value, int maxLen)
 
 		if (RegQueryValueExW(regMy, regName, NULL, NULL, (LPBYTE)value, &len) == ERROR_SUCCESS)
 		{
-			value[maxLen-1] = 0; // на всякий случай, чтобы ASCIIZ был однозначно
+			value[maxLen-1] = 0; // РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, С‡С‚РѕР±С‹ ASCIIZ Р±С‹Р» РѕРґРЅРѕР·РЅР°С‡РЅРѕ
 			return true;
 		}
 	}
@@ -174,7 +174,7 @@ void SettingsRegistry::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, 
 }
 //void SettingsRegistry::Save(const wchar_t *regName, const wchar_t *value)
 //{
-//	if (!value) value = _T("");  // сюда мог придти и NULL
+//	if (!value) value = _T("");  // СЃСЋРґР° РјРѕРі РїСЂРёРґС‚Рё Рё NULL
 //
 //	RegSetValueEx(regMy, regName, NULL, REG_SZ, (LPBYTE)value, (lstrlenW(value)+1) * sizeof(wchar_t));
 //}
@@ -263,7 +263,7 @@ bool SettingsINI::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 		mpsz_IniFile = NULL;
 		return FALSE;
 	}
-	// Замена символов
+	// Р—Р°РјРµРЅР° СЃРёРјРІРѕР»РѕРІ
 	wchar_t* psz = pszDup;
 	while ((psz = wcspbrk(psz, L" ?")))
 		*psz = L'_';
@@ -308,7 +308,7 @@ bool SettingsINI::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 
 	return false;
 }
-// эта функция, если значения нет (или тип некорректный) *value НЕ трогает
+// СЌС‚Р° С„СѓРЅРєС†РёСЏ, РµСЃР»Рё Р·РЅР°С‡РµРЅРёСЏ РЅРµС‚ (РёР»Рё С‚РёРї РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№) *value РќР• С‚СЂРѕРіР°РµС‚
 bool SettingsINI::Load(const wchar_t *regName, wchar_t **value)
 {
 	//DWORD len = 0;
@@ -316,7 +316,7 @@ bool SettingsINI::Load(const wchar_t *regName, wchar_t **value)
 
 	return false;
 }
-// эта функция, если значения нет (или тип некорректный) value НЕ трогает
+// СЌС‚Р° С„СѓРЅРєС†РёСЏ, РµСЃР»Рё Р·РЅР°С‡РµРЅРёСЏ РЅРµС‚ (РёР»Рё С‚РёРї РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№) value РќР• С‚СЂРѕРіР°РµС‚
 bool SettingsINI::Load(const wchar_t *regName, wchar_t *value, int maxLen)
 {
 	_ASSERTE(maxLen>1);
@@ -381,18 +381,18 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size
 
 	hr = CoInitialize(NULL);
 
-	// Если в прошлый раз обломались, и загрузили "msxml3.dll" - то и не дергаться
+	// Р•СЃР»Рё РІ РїСЂРѕС€Р»С‹Р№ СЂР°Р· РѕР±Р»РѕРјР°Р»РёСЃСЊ, Рё Р·Р°РіСЂСѓР·РёР»Рё "msxml3.dll" - С‚Рѕ Рё РЅРµ РґРµСЂРіР°С‚СЊСЃСЏ
 	if (hMsXml3 && (hMsXml3 != (HMODULE)INVALID_HANDLE_VALUE))
 		hr = REGDB_E_CLASSNOTREG;
 	else
 		hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, //-V519
 							  IID_IXMLDOMDocument, (void**)&pFile);
 
-	// Если msxml3.dll (Msxml2.DOMDocument.3.0) не зарегистрирована - будет такая ошибка
+	// Р•СЃР»Рё msxml3.dll (Msxml2.DOMDocument.3.0) РЅРµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅР° - Р±СѓРґРµС‚ С‚Р°РєР°СЏ РѕС€РёР±РєР°
 	if (FAILED(hr)) // (hr == REGDB_E_CLASSNOTREG)
 	{
 		HRESULT hFact;
-		// Попробовать грузануть ее ручками
+		// РџРѕРїСЂРѕР±РѕРІР°С‚СЊ РіСЂСѓР·Р°РЅСѓС‚СЊ РµРµ СЂСѓС‡РєР°РјРё
 		if (!hMsXml3)
 		{
 			wchar_t szDll[MAX_PATH+16];
@@ -484,7 +484,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size
 			static bool bWarned = false;
 			if (!bWarned)
 			{
-				// Не задалбывать пользователя ошибками. Один раз - и хватит
+				// РќРµ Р·Р°РґР°Р»Р±С‹РІР°С‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РѕС€РёР±РєР°РјРё. РћРґРёРЅ СЂР°Р· - Рё С…РІР°С‚РёС‚
 				bWarned = true;
 				MBoxError(szErr);
 			}
@@ -520,7 +520,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 	IXMLDOMNode* pChild = NULL;
 	VARIANT vt; VariantInit(&vt);
 	bool bAllowCreate = (access & KEY_WRITE) == KEY_WRITE;
-	CloseKey(); // на всякий
+	CloseKey(); // РЅР° РІСЃСЏРєРёР№
 
 	if (!regPath || !*regPath)
 	{
@@ -552,7 +552,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 	hFile = CreateFile(pszXmlFile, dwAccess, FILE_SHARE_READ|FILE_SHARE_WRITE,
 	                   NULL, OPEN_EXISTING, 0, 0);
 
-	// XML-файл отсутсвует
+	// XML-С„Р°Р№Р» РѕС‚СЃСѓС‚СЃРІСѓРµС‚
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		return false;
@@ -588,7 +588,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 
 		if (FAILED(hr) || !mp_File)
 		{
-			//Ошибка уже в szErr
+			//РћС€РёР±РєР° СѓР¶Рµ РІ szErr
 			//_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create IID_IXMLDOMDocument!\nErrCode=0x%08X", (DWORD)hr);
 			goto wrap;
 		}
@@ -596,7 +596,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 		hr = mp_File->put_preserveWhiteSpace(VARIANT_TRUE);
 		hr = mp_File->put_async(VARIANT_FALSE);
 
-		// Загрузить xml-ку
+		// Р—Р°РіСЂСѓР·РёС‚СЊ xml-РєСѓ
 		bSuccess = VARIANT_FALSE;
 		vt.vt = VT_BSTR; vt.bstrVal = ::SysAllocString(pszXmlFile);
 		hr = mp_File->load(vt, &bSuccess);
@@ -604,7 +604,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 
 		if (hr == S_FALSE)
 		{
-			mb_Empty = true; // Файл пуст (может только заголовок?)
+			mb_Empty = true; // Р¤Р°Р№Р» РїСѓСЃС‚ (РјРѕР¶РµС‚ С‚РѕР»СЊРєРѕ Р·Р°РіРѕР»РѕРІРѕРє?)
 		}
 		else if (FAILED(hr) || !bSuccess)
 		{
@@ -637,13 +637,13 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 
 		while(*regPath)
 		{
-			// Получить следующий токен
+			// РџРѕР»СѓС‡РёС‚СЊ СЃР»РµРґСѓСЋС‰РёР№ С‚РѕРєРµРЅ
 			psz = wcschr(regPath, L'\\');
 
 			if (!psz) psz = regPath + _tcslen(regPath);
 
 			lstrcpyn(szName, regPath, psz-regPath+1);
-			// Найти в структуре XML
+			// РќР°Р№С‚Рё РІ СЃС‚СЂСѓРєС‚СѓСЂРµ XML
 			pChild = FindItem(pKey, L"key", szName, bAllowCreate);
 			pKey->Release();
 			pKey = pChild; pChild = NULL;
@@ -658,7 +658,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 				else
 				{
 					//_wsprintf(szErr, SKIPLEN(countof(szErr)) L"XML: key <%s> not found!", szName);
-					szErr[0] = 0; // ошибку не показывать - настройки по умолчанию
+					szErr[0] = 0; // РѕС€РёР±РєСѓ РЅРµ РїРѕРєР°Р·С‹РІР°С‚СЊ - РЅР°СЃС‚СЂРѕР№РєРё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 				}
 
 				goto wrap;
@@ -674,7 +674,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 			}
 		}
 
-		// Нашли, запомнили
+		// РќР°С€Р»Рё, Р·Р°РїРѕРјРЅРёР»Рё
 		mp_Key = pKey; pKey = NULL;
 
 		if (mp_Key)
@@ -719,7 +719,7 @@ void SettingsXML::CloseKey()
 
 	if (mb_Modified && mp_File)
 	{
-		// Путь к файлу проинициализирован в OpenKey
+		// РџСѓС‚СЊ Рє С„Р°Р№Р»Сѓ РїСЂРѕРёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅ РІ OpenKey
 		_ASSERTE(m_Storage.pszFile && *m_Storage.pszFile);
 		LPCWSTR pszXmlFile = m_Storage.pszFile;
 
@@ -728,7 +728,7 @@ void SettingsXML::CloseKey()
 			hFile = CreateFile(pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
 			                   NULL, OPEN_EXISTING, 0, 0);
 
-			// XML-файл отсутсвует, или ошибка доступа
+			// XML-С„Р°Р№Р» РѕС‚СЃСѓС‚СЃРІСѓРµС‚, РёР»Рё РѕС€РёР±РєР° РґРѕСЃС‚СѓРїР°
 			if (hFile == INVALID_HANDLE_VALUE)
 			{
 				DWORD dwErrCode = GetLastError();
@@ -825,7 +825,7 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 	wchar_t* pszEsc = wcschr(bsValue, (wchar_t)27);
 	if (pszEsc != NULL)
 	{
-		_ASSERTE(wcschr(bsValue, (wchar_t)27) == NULL); // У DOM сносит крышу, если писать "ESC" в значение
+		_ASSERTE(wcschr(bsValue, (wchar_t)27) == NULL); // РЈ DOM СЃРЅРѕСЃРёС‚ РєСЂС‹С€Сѓ, РµСЃР»Рё РїРёСЃР°С‚СЊ "ESC" РІ Р·РЅР°С‡РµРЅРёРµ
 		while ((pszEsc = wcschr(bsValue, (wchar_t)27)) != NULL)
 		{
 			*pszEsc = L'?';
@@ -923,7 +923,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 	BSTR bsText = NULL;
 	BOOL lbEmpty = TRUE;
 
-	// Получить все дочерние элементы нужного типа
+	// РџРѕР»СѓС‡РёС‚СЊ РІСЃРµ РґРѕС‡РµСЂРЅРёРµ СЌР»РµРјРµРЅС‚С‹ РЅСѓР¶РЅРѕРіРѕ С‚РёРїР°
 	if (apFrom == NULL)
 	{
 		hr = S_FALSE;
@@ -965,7 +965,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 		}
 
 		pList->Release();
-		//pList = NULL; -- для отладки
+		//pList = NULL; -- РґР»СЏ РѕС‚Р»Р°РґРєРё
 	}
 	
 	if (lbEmpty && abAllowCreate && (asType[0] == L'k'))
@@ -982,7 +982,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 				pIXMLDOMNode->Release(); pIXMLDOMNode = NULL;
 			}
 			pList->Release();
-			//pList = NULL; -- для отладки
+			//pList = NULL; -- РґР»СЏ РѕС‚Р»Р°РґРєРё
 		}
 	}
 
@@ -1046,7 +1046,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 	return pChild;
 }
 
-// эта функция, если значения нет (или тип некорректный) *value НЕ трогает
+// СЌС‚Р° С„СѓРЅРєС†РёСЏ, РµСЃР»Рё Р·РЅР°С‡РµРЅРёСЏ РЅРµС‚ (РёР»Рё С‚РёРї РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№) *value РќР• С‚СЂРѕРіР°РµС‚
 bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 {
 	bool lbRc = false;
@@ -1079,7 +1079,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 	{
 		if (!lstrcmpi(bsType, L"multi"))
 		{
-			// Тут значения хранятся так:
+			// РўСѓС‚ Р·РЅР°С‡РµРЅРёСЏ С…СЂР°РЅСЏС‚СЃСЏ С‚Р°Рє:
 			//<value name="CmdLineHistory" type="multi">
 			//	<line data="C:\Far\Far.exe"/>
 			//	<line data="cmd"/>
@@ -1090,7 +1090,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 
 			if (pAttrs) { pAttrs->Release(); pAttrs = NULL; }
 
-			// Получить все дочерние элементы нужного типа
+			// РџРѕР»СѓС‡РёС‚СЊ РІСЃРµ РґРѕС‡РµСЂРЅРёРµ СЌР»РµРјРµРЅС‚С‹ РЅСѓР¶РЅРѕРіРѕ С‚РёРїР°
 			bsData = ::SysAllocString(L"line");
 			hr = pChild->selectNodes(bsData, &pList);
 			::SysFreeString(bsData); bsData = NULL;
@@ -1106,7 +1106,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 					pszData = (wchar_t*)malloc(nMaxLen * sizeof(wchar_t));
 					pszCur = pszData;
 					pszCur[0] = 0; pszCur[1] = 0;
-					nCurLen = 2; // сразу посчитать DoubleZero
+					nCurLen = 2; // СЃСЂР°Р·Сѓ РїРѕСЃС‡РёС‚Р°С‚СЊ DoubleZero
 					HEAPVAL;
 				}
 			}
@@ -1126,12 +1126,12 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 
 						if ((nCurLen + nLen) > nMaxLen)
 						{
-							// Нужно пересоздать!
+							// РќСѓР¶РЅРѕ РїРµСЂРµСЃРѕР·РґР°С‚СЊ!
 							nMaxLen = nCurLen + nLen + MAX_PATH + 1;
 							wchar_t *psz = (wchar_t*)malloc(nMaxLen * sizeof(wchar_t));
 							_ASSERTE(psz);
 
-							if (!psz) break;  // Не удалось выделить память!
+							if (!psz) break;  // РќРµ СѓРґР°Р»РѕСЃСЊ РІС‹РґРµР»РёС‚СЊ РїР°РјСЏС‚СЊ!
 
 							wmemmove(psz, pszData, nCurLen);
 							pszCur = psz + (pszCur - pszData);
@@ -1142,7 +1142,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 						}
 
 						lstrcpy(pszCur, bsData);
-						pszCur += nLen; // указатель - на место для следующей строки
+						pszCur += nLen; // СѓРєР°Р·Р°С‚РµР»СЊ - РЅР° РјРµСЃС‚Рѕ РґР»СЏ СЃР»РµРґСѓСЋС‰РµР№ СЃС‚СЂРѕРєРё
 						nCurLen += nLen;
 						*pszCur = 0; // ASCIIZZ
 						HEAPVAL;
@@ -1153,7 +1153,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 				pList->Release(); pList = NULL;
 			}
 
-			// значит что-то прочитать удалось
+			// Р·РЅР°С‡РёС‚ С‡С‚Рѕ-С‚Рѕ РїСЂРѕС‡РёС‚Р°С‚СЊ СѓРґР°Р»РѕСЃСЊ
 			if (pszData)
 			{
 				if (*value) {free(*value); *value = NULL;}
@@ -1171,13 +1171,13 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 				if (*value) {free(*value); *value = NULL;}
 				*value = (wchar_t*)malloc((nLen+2)*sizeof(wchar_t));
 				lstrcpy(*value, bsData);
-				(*value)[nLen] = 0; // уже должен быть после lstrcpy
+				(*value)[nLen] = 0; // СѓР¶Рµ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РїРѕСЃР»Рµ lstrcpy
 				(*value)[nLen+1] = 0; // ASCIIZZ
 				lbRc = true;
 			}
 		}
 
-		// Все остальные типы - не интересуют. Нам нужны только строки
+		// Р’СЃРµ РѕСЃС‚Р°Р»СЊРЅС‹Рµ С‚РёРїС‹ - РЅРµ РёРЅС‚РµСЂРµСЃСѓСЋС‚. РќР°Рј РЅСѓР¶РЅС‹ С‚РѕР»СЊРєРѕ СЃС‚СЂРѕРєРё
 	}
 
 	if (bsType) { ::SysFreeString(bsType); bsType = NULL; }
@@ -1192,12 +1192,12 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 	//{
 	//	_ASSERTE(*value == NULL);
 	//	*value = (wchar_t*)malloc(sizeof(wchar_t)*2);
-	//	(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
+	//	(*value)[0] = 0; (*value)[1] = 0; // РќР° СЃР»СѓС‡Р°Р№ REG_MULTI_SZ
 	//}
 
 	return lbRc;
 }
-// эта функция, если значения нет (или тип некорректный) value НЕ трогает
+// СЌС‚Р° С„СѓРЅРєС†РёСЏ, РµСЃР»Рё Р·РЅР°С‡РµРЅРёСЏ РЅРµС‚ (РёР»Рё С‚РёРї РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№) value РќР• С‚СЂРѕРіР°РµС‚
 bool SettingsXML::Load(const wchar_t *regName, wchar_t *value, int maxLen)
 {
 	_ASSERTE(maxLen>1);
@@ -1366,12 +1366,12 @@ bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 				}
 			}
 
-			while(nSize--)  // очистить хвост
+			while(nSize--)  // РѕС‡РёСЃС‚РёС‚СЊ С…РІРѕСЃС‚
 				*(pCur++) = 0;
 		}
 	}
 
-	// Остальные типы (строки) - не интересуют
+	// РћСЃС‚Р°Р»СЊРЅС‹Рµ С‚РёРїС‹ (СЃС‚СЂРѕРєРё) - РЅРµ РёРЅС‚РµСЂРµСЃСѓСЋС‚
 
 	if (bsType) { ::SysFreeString(bsType); bsType = NULL; }
 
@@ -1384,7 +1384,7 @@ bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 	return lbRc;
 }
 
-// Очистка содержимого параметра REG_MULTI_SZ
+// РћС‡РёСЃС‚РєР° СЃРѕРґРµСЂР¶РёРјРѕРіРѕ РїР°СЂР°РјРµС‚СЂР° REG_MULTI_SZ
 void SettingsXML::Delete(const wchar_t *regName)
 {
 	Save(regName, NULL, REG_MULTI_SZ, 0);
@@ -1392,7 +1392,7 @@ void SettingsXML::Delete(const wchar_t *regName)
 
 //void SettingsXML::Save(const wchar_t *regName, const wchar_t *value)
 //{
-//	if (!value) value = L"";  // сюда мог придти и NULL
+//	if (!value) value = L"";  // СЃСЋРґР° РјРѕРі РїСЂРёРґС‚Рё Рё NULL
 //
 //	Save(regName, (LPCBYTE)value, REG_SZ, (_tcslen(value)+1)*sizeof(wchar_t));
 //}
@@ -1409,11 +1409,11 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 	BSTR bsType = NULL;
 	bool bNeedSetType = false;
 	// nType:
-	// REG_DWORD:    сохранение числа в 16-ричном или 10-чном формате, в зависимости от того, что сейчас указано в xml ("dword"/"ulong"/"long")
-	// REG_BINARY:   строго в hex (FF,FF,...)
-	// REG_SZ:       ASCIIZ строка, можно проконтролировать, чтобы nSize/2 не был меньше длины строки
-	// REG_MULTI_SZ: ASCIIZZ. При формировании <list...> нужно убедиться, что мы не вылезли за пределы nSize
-	pChild = FindItem(mp_Key, L"value", regName, true); // создать, если его еще нету
+	// REG_DWORD:    СЃРѕС…СЂР°РЅРµРЅРёРµ С‡РёСЃР»Р° РІ 16-СЂРёС‡РЅРѕРј РёР»Рё 10-С‡РЅРѕРј С„РѕСЂРјР°С‚Рµ, РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ С‚РѕРіРѕ, С‡С‚Рѕ СЃРµР№С‡Р°СЃ СѓРєР°Р·Р°РЅРѕ РІ xml ("dword"/"ulong"/"long")
+	// REG_BINARY:   СЃС‚СЂРѕРіРѕ РІ hex (FF,FF,...)
+	// REG_SZ:       ASCIIZ СЃС‚СЂРѕРєР°, РјРѕР¶РЅРѕ РїСЂРѕРєРѕРЅС‚СЂРѕР»РёСЂРѕРІР°С‚СЊ, С‡С‚РѕР±С‹ nSize/2 РЅРµ Р±С‹Р» РјРµРЅСЊС€Рµ РґР»РёРЅС‹ СЃС‚СЂРѕРєРё
+	// REG_MULTI_SZ: ASCIIZZ. РџСЂРё С„РѕСЂРјРёСЂРѕРІР°РЅРёРё <list...> РЅСѓР¶РЅРѕ СѓР±РµРґРёС‚СЊСЃСЏ, С‡С‚Рѕ РјС‹ РЅРµ РІС‹Р»РµР·Р»Рё Р·Р° РїСЂРµРґРµР»С‹ nSize
+	pChild = FindItem(mp_Key, L"value", regName, true); // СЃРѕР·РґР°С‚СЊ, РµСЃР»Рё РµРіРѕ РµС‰Рµ РЅРµС‚Сѓ
 
 	if (!pChild)
 		goto wrap;
@@ -1445,7 +1445,7 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 
 				if (bsType) ::SysFreeString(bsType);
 
-				// нужно добавить/установить тип
+				// РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ/СѓСЃС‚Р°РЅРѕРІРёС‚СЊ С‚РёРї
 				bsType = ::SysAllocString(L"dword"); bNeedSetType = true;
 			}
 
@@ -1469,9 +1469,9 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 			}
 			else
 			{
-				DWORD nLen = nSize*2 + (nSize-1); // по 2 символа на байт + ',' между ними
+				DWORD nLen = nSize*2 + (nSize-1); // РїРѕ 2 СЃРёРјРІРѕР»Р° РЅР° Р±Р°Р№С‚ + ',' РјРµР¶РґСѓ РЅРёРјРё
 				bsValue = ::SysAllocStringLen(NULL, nLen);
-				nLen ++; // Чтобы далее не добавлять WCHAR на '\0'
+				nLen ++; // Р§С‚РѕР±С‹ РґР°Р»РµРµ РЅРµ РґРѕР±Р°РІР»СЏС‚СЊ WCHAR РЅР° '\0'
 				wchar_t* psz = (wchar_t*)bsValue;
 				LPCBYTE  ptr = value;
 
@@ -1486,13 +1486,13 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 
 				if (bsType && lstrcmp(bsType, L"hex"))
 				{
-					// Допустим только "hex"
+					// Р”РѕРїСѓСЃС‚РёРј С‚РѕР»СЊРєРѕ "hex"
 					::SysFreeString(bsType); bsType = NULL;
 				}
 
 				if (!bsType)
 				{
-					// нужно добавить/установить тип
+					// РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ/СѓСЃС‚Р°РЅРѕРІРёС‚СЊ С‚РёРї
 					bsType = ::SysAllocString(L"hex"); bNeedSetType = true;
 				}
 			}
@@ -1504,13 +1504,13 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 
 			if (bsType && lstrcmp(bsType, L"string"))
 			{
-				// Допустим только "string"
+				// Р”РѕРїСѓСЃС‚РёРј С‚РѕР»СЊРєРѕ "string"
 				::SysFreeString(bsType); bsType = NULL;
 			}
 
 			if (!bsType)
 			{
-				// нужно добавить/установить тип
+				// РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ/СѓСЃС‚Р°РЅРѕРІРёС‚СЊ С‚РёРї
 				bsType = ::SysAllocString(L"string"); bNeedSetType = true;
 			}
 		} break;
@@ -1518,18 +1518,18 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 		{
 			if (bsType && lstrcmp(bsType, L"multi"))
 			{
-				// Допустим только "multi"
+				// Р”РѕРїСѓСЃС‚РёРј С‚РѕР»СЊРєРѕ "multi"
 				::SysFreeString(bsType); bsType = NULL;
 			}
 
 			if (!bsType)
 			{
-				// нужно добавить/установить тип
+				// РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ/СѓСЃС‚Р°РЅРѕРІРёС‚СЊ С‚РёРї
 				bsType = ::SysAllocString(L"multi"); bNeedSetType = true;
 			}
 		} break;
 		default:
-			goto wrap; // не поддерживается
+			goto wrap; // РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ
 	}
 
 	if (bNeedSetType)
@@ -1539,18 +1539,18 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 		::SysFreeString(bsType); bsType = NULL;
 	}
 
-	// Теперь собственно значение
+	// РўРµРїРµСЂСЊ СЃРѕР±СЃС‚РІРµРЅРЅРѕ Р·РЅР°С‡РµРЅРёРµ
 	if (nType != REG_MULTI_SZ)
 	{
 		_ASSERTE(bsValue != NULL);
 		SetAttr(pChild, pAttrs, L"data", bsValue);
 		::SysFreeString(bsValue); bsValue = NULL;
 	}
-	else     // Тут нужно формировать список элементов <list>
+	else     // РўСѓС‚ РЅСѓР¶РЅРѕ С„РѕСЂРјРёСЂРѕРІР°С‚СЊ СЃРїРёСЃРѕРє СЌР»РµРјРµРЅС‚РѕРІ <list>
 	{
 		VARIANT_BOOL bHasChild = VARIANT_FALSE;
 		DOMNodeType  nodeType = NODE_INVALID;
-		// Если ранее был параметр "data" - удалить его из списка атрибутов
+		// Р•СЃР»Рё СЂР°РЅРµРµ Р±С‹Р» РїР°СЂР°РјРµС‚СЂ "data" - СѓРґР°Р»РёС‚СЊ РµРіРѕ РёР· СЃРїРёСЃРєР° Р°С‚СЂРёР±СѓС‚РѕРІ
 		hr = pAttrs->getNamedItem(L"data", &pNode);
 
 		if (SUCCEEDED(hr) && pNode)
@@ -1561,8 +1561,8 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 			if (pNodeRmv) { pNodeRmv->Release(); pNodeRmv = NULL; }
 		}
 
-		//TODO: может оставить перевод строки?
-		// Сначала почистим
+		//TODO: РјРѕР¶РµС‚ РѕСЃС‚Р°РІРёС‚СЊ РїРµСЂРµРІРѕРґ СЃС‚СЂРѕРєРё?
+		// РЎРЅР°С‡Р°Р»Р° РїРѕС‡РёСЃС‚РёРј
 #ifdef _DEBUG
 		hr = pChild->get_nodeType(&nodeType);
 #endif
@@ -1588,11 +1588,11 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 			}
 		}
 
-		// Теперь - добавляем список
+		// РўРµРїРµСЂСЊ - РґРѕР±Р°РІР»СЏРµРј СЃРїРёСЃРѕРє
 		wchar_t* psz = (wchar_t*)value;
 		BSTR bsNodeType = ::SysAllocString(L"line");
 		VARIANT vtType; vtType.vt = VT_I4; vtType.lVal = NODE_ELEMENT;
-		long nAllLen = nSize/2; // длина в wchar_t
+		long nAllLen = nSize/2; // РґР»РёРЅР° РІ wchar_t
 		long nLen = 0;
 
 		while(psz && *psz && nAllLen > 0)

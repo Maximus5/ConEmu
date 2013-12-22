@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2013 Maximus5
 All rights reserved.
@@ -65,7 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed raster font size. Select 'Terminal' instead of '[Raster Fonts ...]'";
 
 //#define TEST_FONT_WIDTH_STRING_EN L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-//#define TEST_FONT_WIDTH_STRING_RU L"АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
+//#define TEST_FONT_WIDTH_STRING_RU L"РђР‘Р’Р“Р”Р•Р–Р—РР™РљР›РњРќРћРџР РЎРўРЈР¤РҐР¦Р§РЁР©РЄР«Р¬Р­Р®РЇ"
 
 //#define FAILED_FONT_TIMERID 101
 //#define FAILED_FONT_TIMEOUT 3000
@@ -249,12 +249,12 @@ const CONEMUDEFCOLORS DefColors[] =
 
 Settings::Settings()
 {
-	//gpSet = this; // -- нельзя. Settings может использоваться как копия настроек (!= gpSet)
+	//gpSet = this; // -- РЅРµР»СЊР·СЏ. Settings РјРѕР¶РµС‚ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ РєР°Рє РєРѕРїРёСЏ РЅР°СЃС‚СЂРѕРµРє (!= gpSet)
 	
 	ResetSettings();
 
-	// Умолчания устанавливаются в CSettings::CSettings
-	//-- // Теперь установим умолчания настроек	
+	// РЈРјРѕР»С‡Р°РЅРёСЏ СѓСЃС‚Р°РЅР°РІР»РёРІР°СЋС‚СЃСЏ РІ CSettings::CSettings
+	//-- // РўРµРїРµСЂСЊ СѓСЃС‚Р°РЅРѕРІРёРј СѓРјРѕР»С‡Р°РЅРёСЏ РЅР°СЃС‚СЂРѕРµРє	
 	//-- InitSettings();
 }
 
@@ -265,7 +265,7 @@ void Settings::ResetSettings()
 
 	#else
 
-	// Сброс переменных (struct, допустимо)
+	// РЎР±СЂРѕСЃ РїРµСЂРµРјРµРЅРЅС‹С… (struct, РґРѕРїСѓСЃС‚РёРјРѕ)
 	memset(this, 0, sizeof(*this));
 
 	#endif
@@ -313,10 +313,10 @@ void Settings::InitSettings()
 	if (gpConEmu) gpConEmu->LogString(L"Settings::InitSettings()");
 	MCHKHEAP
 
-	// Освободить память, т.к. функция может быть вызвана из окна интерфейса настроек	
+	// РћСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ, С‚.Рє. С„СѓРЅРєС†РёСЏ РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹Р·РІР°РЅР° РёР· РѕРєРЅР° РёРЅС‚РµСЂС„РµР№СЃР° РЅР°СЃС‚СЂРѕРµРє	
 	ReleasePointers();
 	
-	// Сброс переменных
+	// РЎР±СЂРѕСЃ РїРµСЂРµРјРµРЅРЅС‹С…
 	ResetSettings();
 	
 //------------------------------------------------------------------------
@@ -332,7 +332,7 @@ void Settings::InitSettings()
 	isNumberInCaption = false;
 	//vmMultiNew = 'W' | (nMultiHotkeyModifier << 8);
 	//vmMultiNext = 'Q' | (nMultiHotkeyModifier << 8);
-	//vmMultiRecreate = 192/*VK_тильда*/ | (nMultiHotkeyModifier << 8);
+	//vmMultiRecreate = 192/*VK_С‚РёР»СЊРґР°*/ | (nMultiHotkeyModifier << 8);
 	//vmMultiBuffer = 'A' | (nMultiHotkeyModifier << 8);
 	//vmMinimizeRestore = 'C' | (nMultiHotkeyModifier << 8);
 	//vmMultiClose = VK_DELETE | (nMultiHotkeyModifier << 8);
@@ -378,17 +378,17 @@ void Settings::InitSettings()
 
 	bool bIsDbcs = (GetSystemMetrics(SM_DBCSENABLED) != 0);
 
-	//WARNING("InitSettings() может вызываться из интерфейса настройки, не промахнуться с хэндлами");
-	//// Шрифты
+	//WARNING("InitSettings() РјРѕР¶РµС‚ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РёР· РёРЅС‚РµСЂС„РµР№СЃР° РЅР°СЃС‚СЂРѕР№РєРё, РЅРµ РїСЂРѕРјР°С…РЅСѓС‚СЊСЃСЏ СЃ С…СЌРЅРґР»Р°РјРё");
+	//// РЁСЂРёС„С‚С‹
 	//memset(m_Fonts, 0, sizeof(m_Fonts));
-	////TODO: OLD - на переделку
+	////TODO: OLD - РЅР° РїРµСЂРµРґРµР»РєСѓ
 	//memset(&LogFont, 0, sizeof(LogFont));
 	//memset(&LogFont2, 0, sizeof(LogFont2));
 	/*LogFont.lfHeight = mn_FontHeight =*/
 	FontSizeY = 16 * gpSetCls->_dpiY / 96;
-	//-- Issue 577: Для иероглифов - сделаем "пошире", а то глифы в консоль не влезут...
-	//-- пошире не будем. DBCS консоль хитрая, на каждый иероглиф отводится 2 ячейки
-	//-- "не влезть" может только если выполнить "chcp 65001", что врядли, а у если надо - руками пусть ставят
+	//-- Issue 577: Р”Р»СЏ РёРµСЂРѕРіР»РёС„РѕРІ - СЃРґРµР»Р°РµРј "РїРѕС€РёСЂРµ", Р° С‚Рѕ РіР»РёС„С‹ РІ РєРѕРЅСЃРѕР»СЊ РЅРµ РІР»РµР·СѓС‚...
+	//-- РїРѕС€РёСЂРµ РЅРµ Р±СѓРґРµРј. DBCS РєРѕРЅСЃРѕР»СЊ С…РёС‚СЂР°СЏ, РЅР° РєР°Р¶РґС‹Р№ РёРµСЂРѕРіР»РёС„ РѕС‚РІРѕРґРёС‚СЃСЏ 2 СЏС‡РµР№РєРё
+	//-- "РЅРµ РІР»РµР·С‚СЊ" РјРѕР¶РµС‚ С‚РѕР»СЊРєРѕ РµСЃР»Рё РІС‹РїРѕР»РЅРёС‚СЊ "chcp 65001", С‡С‚Рѕ РІСЂСЏРґР»Рё, Р° Сѓ РµСЃР»Рё РЅР°РґРѕ - СЂСѓРєР°РјРё РїСѓСЃС‚СЊ СЃС‚Р°РІСЏС‚
 	FontSizeX3 = 0; // bIsDbcs ? 15 : 0;
 	//LogFont.lfWidth = mn_FontWidth = FontSizeX = mn_BorderFontWidth = 0;
 	//FontSizeX2 = 0; FontSizeX3 = 0;
@@ -416,7 +416,7 @@ void Settings::InitSettings()
 	//isTabFrame = true;
 	//isForceMonospace = false; isProportional = false;
 	
-	//Issue 577: Для иероглифов - по умолчанию отключим моноширность
+	//Issue 577: Р”Р»СЏ РёРµСЂРѕРіР»РёС„РѕРІ - РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РѕС‚РєР»СЋС‡РёРј РјРѕРЅРѕС€РёСЂРЅРѕСЃС‚СЊ
 	isMonospace = bIsDbcs ? 0 : 1;
 
 	mb_MinToTray = false; isAlwaysShowTrayIcon = false;
@@ -454,7 +454,7 @@ void Settings::InitSettings()
 						Colors[i] = DefColors[0].dwDefColors[i]; //-V108
 				}
 
-				Colors[i+0x10] = Colors[i]; // Умолчания
+				Colors[i+0x10] = Colors[i]; // РЈРјРѕР»С‡Р°РЅРёСЏ
 			}
 
 			RegConDef.CloseKey();
@@ -462,7 +462,7 @@ void Settings::InitSettings()
 		}
 	}
 
-	isTrueColorer = true; // включим по умочанию, ибо Far3
+	isTrueColorer = true; // РІРєР»СЋС‡РёРј РїРѕ СѓРјРѕС‡Р°РЅРёСЋ, РёР±Рѕ Far3
 
 	AppStd.isExtendColors = false;
 	AppStd.nExtendColorIdx = 14;
@@ -472,16 +472,16 @@ void Settings::InitSettings()
 	AppStd.nFontNormalColor = 1; AppStd.nFontBoldColor = 12; AppStd.nFontItalicColor = 13;
 	{
 		_ASSERTE(sizeof(AppStd.CursorActive) == sizeof(DWORD));
-		AppStd.CursorActive.Raw = 0; // Сброс
+		AppStd.CursorActive.Raw = 0; // РЎР±СЂРѕСЃ
 		AppStd.CursorActive.CursorType = cur_Vert; // 0 - Horz, 1 - Vert, 2 - Hollow-block
 		AppStd.CursorActive.isBlinking = true;
 		AppStd.CursorActive.isColor = true;
 		//AppStd.CursorActive.isCursorBlockInactive = true;
 		AppStd.CursorActive.isFixedSize = false;
-		AppStd.CursorActive.FixedSize = 25; // в процентах
-		AppStd.CursorActive.MinSize = 2; // в пикселях
+		AppStd.CursorActive.FixedSize = 25; // РІ РїСЂРѕС†РµРЅС‚Р°С…
+		AppStd.CursorActive.MinSize = 2; // РІ РїРёРєСЃРµР»СЏС…
 
-		AppStd.CursorInactive.Raw = AppStd.CursorActive.Raw; // копирование
+		AppStd.CursorInactive.Raw = AppStd.CursorActive.Raw; // РєРѕРїРёСЂРѕРІР°РЅРёРµ
 		AppStd.CursorInactive.Used = true;
 		AppStd.CursorInactive.CursorType = cur_Rect;
 		AppStd.CursorInactive.isBlinking = false;
@@ -495,15 +495,15 @@ void Settings::InitSettings()
 	AppStd.isPasteFirstLine = true;
 	
 	// 0 - off, 1 - force, 2 - try to detect "ReadConsole" (don't use 2 in bash)
-	AppStd.isCTSClickPromptPosition = 2; // Кликом мышки позиционировать курсор в Cmd Prompt (cmd.exe, Powershell.exe, ...) + vkCTSVkPromptClk
-	AppStd.isCTSDeleteLeftWord = 2; // Ctrl+BS - удалять слово слева от курсора
+	AppStd.isCTSClickPromptPosition = 2; // РљР»РёРєРѕРј РјС‹С€РєРё РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°С‚СЊ РєСѓСЂСЃРѕСЂ РІ Cmd Prompt (cmd.exe, Powershell.exe, ...) + vkCTSVkPromptClk
+	AppStd.isCTSDeleteLeftWord = 2; // Ctrl+BS - СѓРґР°Р»СЏС‚СЊ СЃР»РѕРІРѕ СЃР»РµРІР° РѕС‚ РєСѓСЂСЃРѕСЂР°
 
-	// пока не учитывается
+	// РїРѕРєР° РЅРµ СѓС‡РёС‚С‹РІР°РµС‚СЃСЏ
 	AppStd.isShowBgImage = 0;
 	AppStd.sBgImage[0] = 0;
 	AppStd.nBgOperation = eUpLeft;
 
-	//CheckTheming(); -- сейчас - нельзя. нужно дождаться, пока главное окно будет создано
+	//CheckTheming(); -- СЃРµР№С‡Р°СЃ - РЅРµР»СЊР·СЏ. РЅСѓР¶РЅРѕ РґРѕР¶РґР°С‚СЊСЃСЏ, РїРѕРєР° РіР»Р°РІРЅРѕРµ РѕРєРЅРѕ Р±СѓРґРµС‚ СЃРѕР·РґР°РЅРѕ
 	//mb_ThemingEnabled = (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1));
 //------------------------------------------------------------------------
 ///| Default settings |///////////////////////////////////////////////////
@@ -511,9 +511,9 @@ void Settings::InitSettings()
 	isShowBgImage = 0;
 	wcscpy_c(sBgImage, L"c:\\back.bmp");
 	bgImageDarker = 255; // 0x46;
-	//nBgImageColors = 1|2; синий,зеленый
-	//nBgImageColors = 2; // только синий
-	nBgImageColors = (DWORD)-1; // Получить цвет панелей из фара - иначе "1|2" == BgImageColorsDefaults.
+	//nBgImageColors = 1|2; СЃРёРЅРёР№,Р·РµР»РµРЅС‹Р№
+	//nBgImageColors = 2; // С‚РѕР»СЊРєРѕ СЃРёРЅРёР№
+	nBgImageColors = (DWORD)-1; // РџРѕР»СѓС‡РёС‚СЊ С†РІРµС‚ РїР°РЅРµР»РµР№ РёР· С„Р°СЂР° - РёРЅР°С‡Рµ "1|2" == BgImageColorsDefaults.
 	bgOperation = eUpLeft;
 	isBgPluginAllowed = 1;
 	nTransparent = nTransparentInactive = 255;
@@ -531,7 +531,7 @@ void Settings::InitSettings()
 	ParseCharRanges(L"2013-25C4", mpc_FixFarBorderValues);
 	wndWidth.Set(true, ss_Standard, 80);
 	wndHeight.Set(false, ss_Standard, 25);
-	ntvdmHeight = 0; // Подбирать автоматически
+	ntvdmHeight = 0; // РџРѕРґР±РёСЂР°С‚СЊ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё
 	mb_IntegralSize = false;
 	_WindowMode = rNormal;
 	isUseCurrentSizePos = true; // Show in settings dialog and save current window size/pos
@@ -543,8 +543,8 @@ void Settings::InitSettings()
 	isDesktopMode = false;
 	isSnapToDesktopEdges = false;
 	isAlwaysOnTop = false;
-	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
-	mb_MinimizeOnLoseFocus = false; // не "прятаться" при потере фокуса
+	isSleepInBackground = false; // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - РЅРµ РІРєР»СЋС‡Р°С‚СЊ "Р·Р°СЃС‹РїР°РЅРёРµ РІ С„РѕРЅРµ".
+	mb_MinimizeOnLoseFocus = false; // РЅРµ "РїСЂСЏС‚Р°С‚СЊСЃСЏ" РїСЂРё РїРѕС‚РµСЂРµ С„РѕРєСѓСЃР°
 	RECT rcWork = {}; SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
 	if (gbIsWine)
 	{
@@ -569,15 +569,15 @@ void Settings::InitSettings()
 
 	isProcessAnsi = true;
 	isProcessNewConArg = true;
-	isSuppressBells = false; // пока не доделано - false
-	isConsoleExceptionHandler = false; // по умолчанию - false
+	isSuppressBells = false; // РїРѕРєР° РЅРµ РґРѕРґРµР»Р°РЅРѕ - false
+	isConsoleExceptionHandler = false; // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - false
 	mb_UseClink = true;
 	#ifdef USEPORTABLEREGISTRY
-	isPortableReg = true; // включено по умолчанию, DEBUG
+	isPortableReg = true; // РІРєР»СЋС‡РµРЅРѕ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ, DEBUG
 	#else
 	isPortableReg = false;
 	#endif
-	nConInMode = (DWORD)-1; // по умолчанию, включится (ENABLE_QUICK_EDIT_MODE|ENABLE_EXTENDED_FLAGS|ENABLE_INSERT_MODE)
+	nConInMode = (DWORD)-1; // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ, РІРєР»СЋС‡РёС‚СЃСЏ (ENABLE_QUICK_EDIT_MODE|ENABLE_EXTENDED_FLAGS|ENABLE_INSERT_MODE)
 	nSlideShowElapse = 2500;
 	nIconID = IDI_ICON1;
 	isRClickSendKey = 2;
@@ -587,11 +587,11 @@ void Settings::InitSettings()
 	//wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] `%p` *" /* L"[%s] *" */);
 	//wcscpy_c(szTabViewer, L"<%c.%i>[%s] `%p`" /* L"{%s}" */);
 	wcscpy_c(szTabConsole, L"<%c> %s");
-	//wcscpy_c(szTabSkipWords, L"Administrator:|Администратор:");
+	//wcscpy_c(szTabSkipWords, L"Administrator:|РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ:");
 	wchar_t szTabSkipWords[64];
-	MultiByteToWideChar(1251/*rus*/, 0, "Administrator:|Администратор:", -1, szTabSkipWords, countof(szTabSkipWords));
+	MultiByteToWideChar(1251/*rus*/, 0, "Administrator:|РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ:", -1, szTabSkipWords, countof(szTabSkipWords));
 	pszTabSkipWords = lstrdup(szTabSkipWords);
-	wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
+	wcscpy_c(szTabPanels, szTabConsole); // Р Р°РЅСЊС€Рµ Р±С‹Р»Р° С‚РѕР»СЊРєРѕ РЅР°СЃС‚СЂРѕР№РєР° "TabConsole". РЈРЅР°СЃР»РµРґРѕРІР°С‚СЊ РµРµ РІ "TabPanels"
 	wcscpy_c(szTabEditor, L"<%c.%i>{%s}");
 	wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] *");
 	wcscpy_c(szTabViewer, L"<%c.%i>[%s]");
@@ -599,21 +599,21 @@ void Settings::InitSettings()
 	nTabWidthMax = 200;
 	nTabStyle = ts_Win8;
 	isSafeFarClose = true;
-	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
+	sSafeFarCloseMacro = NULL; // РµСЃР»Рё NULL - С‚Рѕ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РјР°РєСЂРѕСЃ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 	isConsoleTextSelection = 1; // Always
 	isCTSAutoCopy = true;
 	isCTSIBeam = true;
 	isCTSEndOnTyping = false;
 	isCTSEndOnKeyPress = false;
 	isCTSFreezeBeforeSelect = false;
-	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
-	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
+	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - Р±Р»РѕРє РІС‹РґРµР»СЏРµС‚СЃСЏ c LAlt
+	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // Р° С‚РµРєСЃС‚ - РїСЂРё РЅР°Р¶Р°С‚РѕРј LShift
 	isCTSHtmlFormat = 0; // Don't use HTML formatting with copy (by default)
-	//vmCTSVkBlockStart = 0; // при желании, пользователь может назначить hotkey запуска выделения
-	//vmCTSVkTextStart = 0;  // при желании, пользователь может назначить hotkey запуска выделения
+	//vmCTSVkBlockStart = 0; // РїСЂРё Р¶РµР»Р°РЅРёРё, РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РјРѕР¶РµС‚ РЅР°Р·РЅР°С‡РёС‚СЊ hotkey Р·Р°РїСѓСЃРєР° РІС‹РґРµР»РµРЅРёСЏ
+	//vmCTSVkTextStart = 0;  // РїСЂРё Р¶РµР»Р°РЅРёРё, РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РјРѕР¶РµС‚ РЅР°Р·РЅР°С‡РёС‚СЊ hotkey Р·Р°РїСѓСЃРєР° РІС‹РґРµР»РµРЅРёСЏ
 	isCTSActMode = 2; // BufferOnly
-	//isCTSVkAct = 0; // т.к. по умолчанию - только BufferOnly, то вообще без модификаторов
-	isCTSRBtnAction = 3; // Auto (Выделения нет - Paste, Есть - Copy)
+	//isCTSVkAct = 0; // С‚.Рє. РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - С‚РѕР»СЊРєРѕ BufferOnly, С‚Рѕ РІРѕРѕР±С‰Рµ Р±РµР· РјРѕРґРёС„РёРєР°С‚РѕСЂРѕРІ
+	isCTSRBtnAction = 3; // Auto (Р’С‹РґРµР»РµРЅРёСЏ РЅРµС‚ - Paste, Р•СЃС‚СЊ - Copy)
 	isCTSMBtnAction = 0; // <None>
 	isCTSColorIndex = 0xE0;
 	isPasteConfirmEnter = true;
@@ -633,7 +633,7 @@ void Settings::InitSettings()
 	//nHideStatusColumns = ces_CursorInfo;
 	_ASSERTE(countof(isStatusColumnHidden)>csi_Last);
 	memset(isStatusColumnHidden, 0, sizeof(isStatusColumnHidden));
-	// выставим те колонки, которые не нужны "юзеру" по умолчанию
+	// РІС‹СЃС‚Р°РІРёРј С‚Рµ РєРѕР»РѕРЅРєРё, РєРѕС‚РѕСЂС‹Рµ РЅРµ РЅСѓР¶РЅС‹ "СЋР·РµСЂСѓ" РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 	isStatusColumnHidden[csi_ConsoleTitle] = true;
 	isStatusColumnHidden[csi_InputLocale] = true;
 	isStatusColumnHidden[csi_WindowPos] = true;
@@ -679,9 +679,9 @@ void Settings::InitSettings()
 	isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1; isDefCopy = true; isDropUseMenu = 2;
 	//nLDragKey = 0; nRDragKey = VK_LCONTROL;
 	isDragOverlay = 1; isDragShowIcons = true;
-	// изменение размера панелей мышкой
-	isDragPanel = 2; // по умолчанию сделаем чтобы драгалось макросами (вдруг у юзера на Ctrl-Left/Right/Up/Down макросы висят... как бы конфуза не получилось)
-	isDragPanelBothEdges = false; // таскать за обе рамки (правую-левой панели и левую-правой панели)
+	// РёР·РјРµРЅРµРЅРёРµ СЂР°Р·РјРµСЂР° РїР°РЅРµР»РµР№ РјС‹С€РєРѕР№
+	isDragPanel = 2; // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ СЃРґРµР»Р°РµРј С‡С‚РѕР±С‹ РґСЂР°РіР°Р»РѕСЃСЊ РјР°РєСЂРѕСЃР°РјРё (РІРґСЂСѓРі Сѓ СЋР·РµСЂР° РЅР° Ctrl-Left/Right/Up/Down РјР°РєСЂРѕСЃС‹ РІРёСЃСЏС‚... РєР°Рє Р±С‹ РєРѕРЅС„СѓР·Р° РЅРµ РїРѕР»СѓС‡РёР»РѕСЃСЊ)
+	isDragPanelBothEdges = false; // С‚Р°СЃРєР°С‚СЊ Р·Р° РѕР±Рµ СЂР°РјРєРё (РїСЂР°РІСѓСЋ-Р»РµРІРѕР№ РїР°РЅРµР»Рё Рё Р»РµРІСѓСЋ-РїСЂР°РІРѕР№ РїР°РЅРµР»Рё)
 	isKeyBarRClick = true;
 	isDebugSteps = true;
 	MCHKHEAP
@@ -693,32 +693,32 @@ void Settings::InitSettings()
 	// Thumbnails
 	memset(&ThSet, 0, sizeof(ThSet));
 	ThSet.cbSize = sizeof(ThSet);
-	// фон превьюшки: RGB или Index
-	SetThumbColor(ThSet.crBackground, RGB(255,255,255), 16, TRUE); // Поставим по умолчанию "Auto"
-	// серая рамка вокруг превьюшки
+	// С„РѕРЅ РїСЂРµРІСЊСЋС€РєРё: RGB РёР»Рё Index
+	SetThumbColor(ThSet.crBackground, RGB(255,255,255), 16, TRUE); // РџРѕСЃС‚Р°РІРёРј РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ "Auto"
+	// СЃРµСЂР°СЏ СЂР°РјРєР° РІРѕРєСЂСѓРі РїСЂРµРІСЊСЋС€РєРё
 	ThSet.nPreviewFrame = 1;
 	SetThumbColor(ThSet.crPreviewFrame, RGB(128,128,128), 8, TRUE);
-	// рамка вокруг текущего элемента
+	// СЂР°РјРєР° РІРѕРєСЂСѓРі С‚РµРєСѓС‰РµРіРѕ СЌР»РµРјРµРЅС‚Р°
 	ThSet.nSelectFrame = 1;
 	SetThumbColor(ThSet.crSelectFrame, RGB(192,192,192), 7, FALSE);
-	/* теперь разнообразные размеры */
-	// отступы для preview
+	/* С‚РµРїРµСЂСЊ СЂР°Р·РЅРѕРѕР±СЂР°Р·РЅС‹Рµ СЂР°Р·РјРµСЂС‹ */
+	// РѕС‚СЃС‚СѓРїС‹ РґР»СЏ preview
 	SetThumbSize(ThSet.Thumbs,96,1,1,5,20,2,0,gsDefMUIFont,14);
-	// отступы для tiles
+	// РѕС‚СЃС‚СѓРїС‹ РґР»СЏ tiles
 	SetThumbSize(ThSet.Tiles,48,4,4,172,4,4,1,gsDefMUIFont,14); //-V112
-	// Прочие параметры загрузки
+	// РџСЂРѕС‡РёРµ РїР°СЂР°РјРµС‚СЂС‹ Р·Р°РіСЂСѓР·РєРё
 	ThSet.bLoadPreviews = 3;   // bitmask of {1=Thumbs, 2=Tiles}
 	ThSet.bLoadFolders = true; // true - load infolder previews (only for Thumbs)
 	ThSet.nLoadTimeout = 15;   // 15 sec
 	ThSet.nMaxZoom = 600; // %%
 	ThSet.bUsePicView2 = true;
 	ThSet.bRestoreOnStartup = false;
-	//// Пока не используется
-	//DWORD nCacheFolderType; // юзер/программа/temp/и т.п.
+	//// РџРѕРєР° РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
+	//DWORD nCacheFolderType; // СЋР·РµСЂ/РїСЂРѕРіСЂР°РјРјР°/temp/Рё С‚.Рї.
 	//wchar_t sCacheFolder[MAX_PATH];
 
 	/* *** AutoUpdate *** */
-	_ASSERTE(UpdSet.szUpdateVerLocation==NULL); // Уже должен был быть вызван ReleasePointers
+	_ASSERTE(UpdSet.szUpdateVerLocation==NULL); // РЈР¶Рµ РґРѕР»Р¶РµРЅ Р±С‹Р» Р±С‹С‚СЊ РІС‹Р·РІР°РЅ ReleasePointers
 	UpdSet.ResetToDefaults();
 }
 
@@ -727,23 +727,23 @@ void Settings::ResetSavedOnExit()
 	mb_ExitSettingsAutoSaved = false;
 }
 
-// В Desktop, Inside (и еще может быть когда) Transparent включать нельзя
+// Р’ Desktop, Inside (Рё РµС‰Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РєРѕРіРґР°) Transparent РІРєР»СЋС‡Р°С‚СЊ РЅРµР»СЊР·СЏ
 bool Settings::isTransparentAllowed()
 {
-	// Окно работает в "Child" режиме, прозрачность не допускается
+	// РћРєРЅРѕ СЂР°Р±РѕС‚Р°РµС‚ РІ "Child" СЂРµР¶РёРјРµ, РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ РЅРµ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ
 	if (isDesktopMode || gpConEmu->mp_Inside)
 		return false;
 
-	// Чтобы не рушилось отображение картинки плагинами
+	// Р§С‚РѕР±С‹ РЅРµ СЂСѓС€РёР»РѕСЃСЊ РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ РєР°СЂС‚РёРЅРєРё РїР»Р°РіРёРЅР°РјРё
 	if (gpConEmu->isPictureView())
 		return false;
 
-	// Можно, по настройкам
+	// РњРѕР¶РЅРѕ, РїРѕ РЅР°СЃС‚СЂРѕР№РєР°Рј
 	return true;
 }
 
-// true - не допускать Gaps в Normal режиме. Подгонять размер окна точно под консоль.
-// false - размер окна - свободный (попиксельно)
+// true - РЅРµ РґРѕРїСѓСЃРєР°С‚СЊ Gaps РІ Normal СЂРµР¶РёРјРµ. РџРѕРґРіРѕРЅСЏС‚СЊ СЂР°Р·РјРµСЂ РѕРєРЅР° С‚РѕС‡РЅРѕ РїРѕРґ РєРѕРЅСЃРѕР»СЊ.
+// false - СЂР°Р·РјРµСЂ РѕРєРЅР° - СЃРІРѕР±РѕРґРЅС‹Р№ (РїРѕРїРёРєСЃРµР»СЊРЅРѕ)
 bool Settings::isIntegralSize()
 {
 	if (mb_IntegralSize)
@@ -784,7 +784,7 @@ void Settings::LoadAppSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 	bool lbDelete = false;
 	if (!reg)
 	{
-		// Если открыто окно настроек - не передергивать
+		// Р•СЃР»Рё РѕС‚РєСЂС‹С‚Рѕ РѕРєРЅРѕ РЅР°СЃС‚СЂРѕРµРє - РЅРµ РїРµСЂРµРґРµСЂРіРёРІР°С‚СЊ
 		if (!abFromOpDlg && ghOpWnd)
 		{
 			return;
@@ -834,14 +834,14 @@ void Settings::LoadAppSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 				NewApps[nSucceeded] = (AppSettings*)malloc(sizeof(AppSettings));
 				//NewAppColors[nSucceeded] = (CEAppColors*)calloc(1,sizeof(CEAppColors));
 
-				// Умолчания берем из основной ветки!
+				// РЈРјРѕР»С‡Р°РЅРёСЏ Р±РµСЂРµРј РёР· РѕСЃРЅРѕРІРЅРѕР№ РІРµС‚РєРё!
 				*NewApps[nSucceeded] = AppStd;
 				//memmove(NewAppColors[nSucceeded]->Colors, Colors, sizeof(Colors));
 				NewApps[nSucceeded]->AppNames = NULL;
 				NewApps[nSucceeded]->AppNamesLwr = NULL;
 				NewApps[nSucceeded]->cchNameMax = 0;
 
-				// Загрузка "AppNames" - снаружи, т.к. LoadAppSettings используется и для загрузки &AppStd
+				// Р—Р°РіСЂСѓР·РєР° "AppNames" - СЃРЅР°СЂСѓР¶Рё, С‚.Рє. LoadAppSettings РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ Рё РґР»СЏ Р·Р°РіСЂСѓР·РєРё &AppStd
 				reg->Load(L"AppNames", &NewApps[nSucceeded]->AppNames);
 				if (NewApps[nSucceeded]->AppNames /*&& *NewApps[nSucceeded]->AppNames*/)
 				{
@@ -894,8 +894,8 @@ void Settings::LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECu
 		bool isCursorColor = true;
 		bool isCursorBlockInactive = true;
 		bool isCursorIgnoreSize = false;
-		BYTE nCursorFixedSize = 25; // в процентах
-		BYTE nCursorMinSize = 2; // в пикселях
+		BYTE nCursorFixedSize = 25; // РІ РїСЂРѕС†РµРЅС‚Р°С…
+		BYTE nCursorMinSize = 2; // РІ РїРёРєСЃРµР»СЏС…
 
 		reg->Load(L"CursorType", isCursorType);
 			_MinMax(isCursorType, cur_First, cur_Last);
@@ -908,16 +908,16 @@ void Settings::LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECu
 		reg->Load(L"CursorMinSize", nCursorMinSize);
 			_MinMax(nCursorMinSize, CURSORSIZEPIX_MIN, CURSORSIZEPIX_MAX);
 
-		pActive->Raw = 0; // Сброс
+		pActive->Raw = 0; // РЎР±СЂРѕСЃ
 		pActive->CursorType = (CECursorStyle)isCursorType; // 0 - Horz, 1 - Vert, 2 - Hollow-block
 		pActive->isBlinking = isCursorBlink;
 		pActive->isColor = isCursorColor;
 		//AppStd.CursorActive.isCursorBlockInactive = true;
 		pActive->isFixedSize = isCursorIgnoreSize;
-		pActive->FixedSize = nCursorFixedSize; // в процентах
-		pActive->MinSize = nCursorMinSize; // в пикселях
+		pActive->FixedSize = nCursorFixedSize; // РІ РїСЂРѕС†РµРЅС‚Р°С…
+		pActive->MinSize = nCursorMinSize; // РІ РїРёРєСЃРµР»СЏС…
 
-		pInactive->Raw = AppStd.CursorActive.Raw; // копирование
+		pInactive->Raw = AppStd.CursorActive.Raw; // РєРѕРїРёСЂРѕРІР°РЅРёРµ
 		pInactive->Used = isCursorBlockInactive;
 		pInactive->CursorType = cur_Rect;
 		pInactive->isBlinking = false;
@@ -926,7 +926,7 @@ void Settings::LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECu
 
 void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp/*, COLORREF* pColors*/)
 {
-	// Для AppStd данные загружаются из основной ветки! В том числе и цвета (RGB[32] а не имя палитры)
+	// Р”Р»СЏ AppStd РґР°РЅРЅС‹Рµ Р·Р°РіСЂСѓР¶Р°СЋС‚СЃСЏ РёР· РѕСЃРЅРѕРІРЅРѕР№ РІРµС‚РєРё! Р’ С‚РѕРј С‡РёСЃР»Рµ Рё С†РІРµС‚Р° (RGB[32] Р° РЅРµ РёРјСЏ РїР°Р»РёС‚СЂС‹)
 	bool bStd = (pApp == &AppStd);
 
 	pApp->OverridePalette = bStd;
@@ -961,7 +961,7 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp/*,
 		pApp->ResetPaletteIndex();
 		const Settings::ColorPalette* pPal = PaletteGet(pApp->GetPaletteIndex());
 
-		_ASSERTE(pPal!=NULL); // NULL не может быть. Всегда как минимум - стандартная палитра
+		_ASSERTE(pPal!=NULL); // NULL РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ. Р’СЃРµРіРґР° РєР°Рє РјРёРЅРёРјСѓРј - СЃС‚Р°РЅРґР°СЂС‚РЅР°СЏ РїР°Р»РёС‚СЂР°
 		pApp->isExtendColors = pPal->isExtendColors;
 		pApp->nExtendColorIdx = pPal->nExtendColorIdx;
 
@@ -1018,7 +1018,7 @@ void Settings::FreeCmdTasks()
 	if (StartupTask)
 	{
 		StartupTask->FreePtr();
-		StartupTask = NULL; // освобождается в FreePtr
+		StartupTask = NULL; // РѕСЃРІРѕР±РѕР¶РґР°РµС‚СЃСЏ РІ FreePtr
 	}
 }
 
@@ -1027,7 +1027,7 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 	bool lbDelete = false;
 	if (!reg)
 	{
-		// Если открыто окно настроек - не передергивать
+		// Р•СЃР»Рё РѕС‚РєСЂС‹С‚Рѕ РѕРєРЅРѕ РЅР°СЃС‚СЂРѕРµРє - РЅРµ РїРµСЂРµРґРµСЂРіРёРІР°С‚СЊ
 		if (!abFromOpDlg && ghOpWnd)
 		{
 			return;
@@ -1052,7 +1052,7 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 
 
 	{
-		// Таск автозагрузки
+		// РўР°СЃРє Р°РІС‚РѕР·Р°РіСЂСѓР·РєРё
 		_wcscpy_c(pszCmdKey, 32, L"\\" AutoStartTaskName);
 		lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
 		if (lbOpened)
@@ -1061,7 +1061,7 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 
 			reg->CloseKey();
 		}
-		// Обязательно вернуть "начальный" путь
+		// РћР±СЏР·Р°С‚РµР»СЊРЅРѕ РІРµСЂРЅСѓС‚СЊ "РЅР°С‡Р°Р»СЊРЅС‹Р№" РїСѓС‚СЊ
 		*pszCmdKey = 0;
 	}
 
@@ -1150,7 +1150,7 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 
 	if (reg->Load(L"Count", iCmdMax) && (iCmdMax > 0))
 	{
-		size_t nTotalLen = 1024; // с запасом, для редактирования через интерфейс
+		size_t nTotalLen = 1024; // СЃ Р·Р°РїР°СЃРѕРј, РґР»СЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ С‡РµСЂРµР· РёРЅС‚РµСЂС„РµР№СЃ
 		wchar_t** pszCommands = (wchar_t**)calloc(iCmdMax, sizeof(wchar_t*));
 
 		for (int j = 0; j < iCmdMax; j++)
@@ -1190,7 +1190,7 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 					SafeFree(pszCommands[k]);
 
 					if ((k+1) < iCmdCount)
-						lstrcat(psz, L"\r\n\r\n"); // для визуальности редактирования
+						lstrcat(psz, L"\r\n\r\n"); // РґР»СЏ РІРёР·СѓР°Р»СЊРЅРѕСЃС‚Рё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
 
 					psz += lstrlen(psz);	
 				}
@@ -1399,11 +1399,11 @@ void Settings::CreatePredefinedPalettes(int iAddUserCount)
 			Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = 16; // Auto
 			Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
 		}
-    	// Расширения - инициализируем теми же цветами
+    	// Р Р°СЃС€РёСЂРµРЅРёСЏ - РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј С‚РµРјРё Р¶Рµ С†РІРµС‚Р°РјРё
     	memmove(Palettes[n]->Colors+0x10, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
 	}
 
-	// Инициализировали "Палитрами по умолчанию"
+	// РРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°Р»Рё "РџР°Р»РёС‚СЂР°РјРё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ"
 	PaletteCount = (int)countof(DefColors);
 }
 
@@ -1518,7 +1518,7 @@ void Settings::SavePalettes(SettingsBase* reg)
 	for (int i = 0; i < PaletteCount; i++)
 	{
 		if (!Palettes[i] || Palettes[i]->bPredefined)
-			continue; // Системные - не сохраняем
+			continue; // РЎРёСЃС‚РµРјРЅС‹Рµ - РЅРµ СЃРѕС…СЂР°РЅСЏРµРј
 
 		_wsprintf(pszColorKey, SKIPLEN(32) L"\\Palette%i", UserCount+1); // 1-based
 
@@ -1580,7 +1580,7 @@ void Settings::SavePalettes(SettingsBase* reg)
 
 		if (!bFound)
 		{
-			Apps[k]->OverridePalette = false; // нету такой палитры, будем рисовать "основной"
+			Apps[k]->OverridePalette = false; // РЅРµС‚Сѓ С‚Р°РєРѕР№ РїР°Р»РёС‚СЂС‹, Р±СѓРґРµРј СЂРёСЃРѕРІР°С‚СЊ "РѕСЃРЅРѕРІРЅРѕР№"
 		}
 	}
 
@@ -1636,7 +1636,7 @@ Settings::ColorPalette* Settings::PaletteGetPtr(int anIndex)
 void Settings::PaletteSetStdIndexes()
 {
 	if (!Apps || AppCount < 1)
-		return; // Нету никого
+		return; // РќРµС‚Сѓ РЅРёРєРѕРіРѕ
 
 	for (int i = 0; i < AppCount; i++)
 	{
@@ -1726,7 +1726,7 @@ int Settings::PaletteSetActive(LPCWSTR asName)
 // Save active colors to named palette
 void Settings::PaletteSaveAs(LPCWSTR asName)
 {
-	// Пользовательские палитры не могут именоваться как "<...>"
+	// РџРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РїР°Р»РёС‚СЂС‹ РЅРµ РјРѕРіСѓС‚ РёРјРµРЅРѕРІР°С‚СЊСЃСЏ РєР°Рє "<...>"
 	if (!asName || !*asName || wcspbrk(asName, L"<>"))
 	{
 		DisplayLastError(L"Invalid palette name!\nUser palette name must not contain '<' or '>' symbols.", -1, MB_ICONSTOP, asName ? asName : L"<Null>");
@@ -1735,7 +1735,7 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 
 	int nIndex = PaletteGetIndex(asName);
 
-	// "Предопределенные" палитры перезаписывать нельзя
+	// "РџСЂРµРґРѕРїСЂРµРґРµР»РµРЅРЅС‹Рµ" РїР°Р»РёС‚СЂС‹ РїРµСЂРµР·Р°РїРёСЃС‹РІР°С‚СЊ РЅРµР»СЊР·СЏ
 	if ((nIndex != -1) && Palettes[nIndex]->bPredefined)
 		nIndex = -1;
 
@@ -1743,7 +1743,7 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 
 	if (nIndex == -1)
 	{
-		// Добавляем новую палитру
+		// Р”РѕР±Р°РІР»СЏРµРј РЅРѕРІСѓСЋ РїР°Р»РёС‚СЂСѓ
 		bNewPalette = true;
 		nIndex = PaletteCount;
 
@@ -1778,7 +1778,7 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 	}
 
 
-	// Сохранять допускается только пользовательские палитры
+	// РЎРѕС…СЂР°РЅСЏС‚СЊ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РїР°Р»РёС‚СЂС‹
 	Palettes[nIndex]->bPredefined = false;
 	Palettes[nIndex]->pszName = lstrdup(asName);
 	Palettes[nIndex]->isExtendColors = AppStd.isExtendColors;
@@ -1795,10 +1795,10 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 	memmove(Palettes[nIndex]->Colors, this->Colors, sizeof(Palettes[nIndex]->Colors));
 	_ASSERTE(nIndex < PaletteCount);
 
-	// Теперь, собственно, пишем настройки
+	// РўРµРїРµСЂСЊ, СЃРѕР±СЃС‚РІРµРЅРЅРѕ, РїРёС€РµРј РЅР°СЃС‚СЂРѕР№РєРё
 	SavePalettes(NULL);
 
-	// Обновить консоли
+	// РћР±РЅРѕРІРёС‚СЊ РєРѕРЅСЃРѕР»Рё
 	if (bTextChanged || bPopupChanged)
 	{
 		gpSetCls->UpdateTextColorSettings(bTextChanged, bPopupChanged);
@@ -1810,25 +1810,25 @@ void Settings::PaletteDelete(LPCWSTR asName)
 {
 	int nIndex = PaletteGetIndex(asName);
 
-	// "Предопределенные" палитры удалять нельзя
+	// "РџСЂРµРґРѕРїСЂРµРґРµР»РµРЅРЅС‹Рµ" РїР°Р»РёС‚СЂС‹ СѓРґР°Р»СЏС‚СЊ РЅРµР»СЊР·СЏ
 	if ((nIndex == -1) || Palettes[nIndex]->bPredefined)
 		return;
 
-	// Грохнуть
+	// Р“СЂРѕС…РЅСѓС‚СЊ
 	Palettes[nIndex]->FreePtr();
-	// Сдвинуть хвост
+	// РЎРґРІРёРЅСѓС‚СЊ С…РІРѕСЃС‚
 	for (int i = (nIndex+1); i < PaletteCount; i++)
 	{
 		Palettes[i-1] = Palettes[i];
 	}
-	// Уменьшить количество
+	// РЈРјРµРЅСЊС€РёС‚СЊ РєРѕР»РёС‡РµСЃС‚РІРѕ
 	if (PaletteCount > 0)
 	{
 		Palettes[PaletteCount-1] = NULL;
 		PaletteCount--;
 	}
 	
-	// Теперь, собственно, пишем настройки
+	// РўРµРїРµСЂСЊ, СЃРѕР±СЃС‚РІРµРЅРЅРѕ, РїРёС€РµРј РЅР°СЃС‚СЂРѕР№РєРё
 	SavePalettes(NULL);
 }
 
@@ -1907,7 +1907,7 @@ void Settings::ProgressesSetDuration(LPCWSTR asName, DWORD anDuration)
 	ProgressesCount++;
 
 done:
-	// Теперь, собственно, пишем настройки
+	// РўРµРїРµСЂСЊ, СЃРѕР±СЃС‚РІРµРЅРЅРѕ, РїРёС€РµРј РЅР°СЃС‚СЂРѕР№РєРё
 	SaveProgresses(NULL);
 }
 
@@ -2092,13 +2092,13 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 	MCHKHEAP
 	mb_CharSetWasSet = FALSE;
 
-	// -- перенесено в CheckOptionsFast()
-	//;; Q. В Windows Vista зависают другие консольные процессы.
-	//	;; A. "Виноват" процесс ConIme.exe. Вроде бы он служит для ввода иероглифов
-	//	;;    (китай и т.п.). Зачем он нужен, если ввод теперь идет в графическом окне?
-	//	;;    Нужно запретить его автозапуск или вообще переименовать этот файл, например
-	//	;;    в 'ConIme.ex1' (видимо это возможно только в безопасном режиме).
-	//	;;    Запретить автозапуск: Внесите в реестр и перезагрузитесь
+	// -- РїРµСЂРµРЅРµСЃРµРЅРѕ РІ CheckOptionsFast()
+	//;; Q. Р’ Windows Vista Р·Р°РІРёСЃР°СЋС‚ РґСЂСѓРіРёРµ РєРѕРЅСЃРѕР»СЊРЅС‹Рµ РїСЂРѕС†РµСЃСЃС‹.
+	//	;; A. "Р’РёРЅРѕРІР°С‚" РїСЂРѕС†РµСЃСЃ ConIme.exe. Р’СЂРѕРґРµ Р±С‹ РѕРЅ СЃР»СѓР¶РёС‚ РґР»СЏ РІРІРѕРґР° РёРµСЂРѕРіР»РёС„РѕРІ
+	//	;;    (РєРёС‚Р°Р№ Рё С‚.Рї.). Р—Р°С‡РµРј РѕРЅ РЅСѓР¶РµРЅ, РµСЃР»Рё РІРІРѕРґ С‚РµРїРµСЂСЊ РёРґРµС‚ РІ РіСЂР°С„РёС‡РµСЃРєРѕРј РѕРєРЅРµ?
+	//	;;    РќСѓР¶РЅРѕ Р·Р°РїСЂРµС‚РёС‚СЊ РµРіРѕ Р°РІС‚РѕР·Р°РїСѓСЃРє РёР»Рё РІРѕРѕР±С‰Рµ РїРµСЂРµРёРјРµРЅРѕРІР°С‚СЊ СЌС‚РѕС‚ С„Р°Р№Р», РЅР°РїСЂРёРјРµСЂ
+	//	;;    РІ 'ConIme.ex1' (РІРёРґРёРјРѕ СЌС‚Рѕ РІРѕР·РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РІ Р±РµР·РѕРїР°СЃРЅРѕРј СЂРµР¶РёРјРµ).
+	//	;;    Р—Р°РїСЂРµС‚РёС‚СЊ Р°РІС‚РѕР·Р°РїСѓСЃРє: Р’РЅРµСЃРёС‚Рµ РІ СЂРµРµСЃС‚СЂ Рё РїРµСЂРµР·Р°РіСЂСѓР·РёС‚РµСЃСЊ
 	//if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)
 	//{
 	//	CheckConIme();
@@ -2119,13 +2119,13 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 			}
 			else if (hParent)
 			{
-				// Типа, запуститься как панель в Explorer (не в таскбаре, а в проводнике)
+				// РўРёРїР°, Р·Р°РїСѓСЃС‚РёС‚СЊСЃСЏ РєР°Рє РїР°РЅРµР»СЊ РІ Explorer (РЅРµ РІ С‚Р°СЃРєР±Р°СЂРµ, Р° РІ РїСЂРѕРІРѕРґРЅРёРєРµ)
 				//isStatusBarShow = false;
 				isTabs = 0;
 				FontSizeY = 10;
 				isTryToCenter = true;
 				nCenterConsolePad = 3;
-				// Скрыть колонки, чтобы много слишком не было...
+				// РЎРєСЂС‹С‚СЊ РєРѕР»РѕРЅРєРё, С‡С‚РѕР±С‹ РјРЅРѕРіРѕ СЃР»РёС€РєРѕРј РЅРµ Р±С‹Р»Рѕ...
 				isStatusColumnHidden[csi_ConsolePos] = true;
 				isStatusColumnHidden[csi_ConsoleSize] = true;
 				isStatusColumnHidden[csi_CursorX] = true;
@@ -2162,7 +2162,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 	*rbNeedCreateVanilla = false;
 
 	lbOpened = reg->OpenKey(gpSetCls->GetConfigPath(), KEY_READ);
-	// Поддержка старого стиля хранения (настройки БЕЗ имени конфига - лежали в корне ключа Software\ConEmu)
+	// РџРѕРґРґРµСЂР¶РєР° СЃС‚Р°СЂРѕРіРѕ СЃС‚РёР»СЏ С…СЂР°РЅРµРЅРёСЏ (РЅР°СЃС‚СЂРѕР№РєРё Р‘Р•Р— РёРјРµРЅРё РєРѕРЅС„РёРіР° - Р»РµР¶Р°Р»Рё РІ РєРѕСЂРЅРµ РєР»СЋС‡Р° Software\ConEmu)
 	if (!lbOpened && (*gpSetCls->GetConfigName() == 0))
 	{
 		lbOpened = reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ);
@@ -2172,7 +2172,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 	if (*rbNeedCreateVanilla)
 	{
 		IsConfigNew = true;
-		TODO("Здесь можно включить настройки, которые должны включаться только для новых конфигураций!");
+		TODO("Р—РґРµСЃСЊ РјРѕР¶РЅРѕ РІРєР»СЋС‡РёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё, РєРѕС‚РѕСЂС‹Рµ РґРѕР»Р¶РЅС‹ РІРєР»СЋС‡Р°С‚СЊСЃСЏ С‚РѕР»СЊРєРѕ РґР»СЏ РЅРѕРІС‹С… РєРѕРЅС„РёРіСѓСЂР°С†РёР№!");
 	}
 	else
 	{
@@ -2180,7 +2180,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 	}
 
 
-	// Для совместимости настроек
+	// Р”Р»СЏ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё РЅР°СЃС‚СЂРѕРµРє
 	bool bSendAltEnter = false, bSendAltSpace = false, bSendAltF9 = false;
 
 
@@ -2245,7 +2245,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		if (!reg->Load(L"Monospace", isMonospace) && !GetSystemMetrics(SM_DBCSENABLED))
 		{
-			// Compatibility. Пережитки прошлого, загрузить по "старым" именам параметров
+			// Compatibility. РџРµСЂРµР¶РёС‚РєРё РїСЂРѕС€Р»РѕРіРѕ, Р·Р°РіСЂСѓР·РёС‚СЊ РїРѕ "СЃС‚Р°СЂС‹Рј" РёРјРµРЅР°Рј РїР°СЂР°РјРµС‚СЂРѕРІ
 			bool bForceMonospace = false, bProportional = false;
 			reg->Load(L"ForceMonospace", bForceMonospace);
 			reg->Load(L"Proportional", bProportional);
@@ -2253,7 +2253,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		}
 		if (isMonospace > 2) isMonospace = 2;
 
-		//isMonospaceSelected = isMonospace ? isMonospace : 1; // запомнить, чтобы выбирать то что нужно при смене шрифта
+		//isMonospaceSelected = isMonospace ? isMonospace : 1; // Р·Р°РїРѕРјРЅРёС‚СЊ, С‡С‚РѕР±С‹ РІС‹Р±РёСЂР°С‚СЊ С‚Рѕ С‡С‚Рѕ РЅСѓР¶РЅРѕ РїСЂРё СЃРјРµРЅРµ С€СЂРёС„С‚Р°
 			
 			
 			
@@ -2337,7 +2337,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"HideCaption", isHideCaption);
 		reg->Load(L"HideChildCaption", isHideChildCaption);
 		reg->Load(L"FocusInChildWindows", isFocusInChildWindows);
-		// грузим именно в mb_HideCaptionAlways, т.к. прозрачность сбивает темы в заголовке, поэтому возврат идет через isHideCaptionAlways()
+		// РіСЂСѓР·РёРј РёРјРµРЅРЅРѕ РІ mb_HideCaptionAlways, С‚.Рє. РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ СЃР±РёРІР°РµС‚ С‚РµРјС‹ РІ Р·Р°РіРѕР»РѕРІРєРµ, РїРѕСЌС‚РѕРјСѓ РІРѕР·РІСЂР°С‚ РёРґРµС‚ С‡РµСЂРµР· isHideCaptionAlways()
 		reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
 		reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame); if (nHideCaptionAlwaysFrame > 0x7F) nHideCaptionAlwaysFrame = 255;
 
@@ -2354,8 +2354,8 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"ConWnd X", _wndX); /*if (wndX<-10) wndX = 0;*/
 		reg->Load(L"ConWnd Y", _wndY); /*if (wndY<-10) wndY = 0;*/
 		reg->Load(L"AutoSaveSizePos", isAutoSaveSizePos);
-		// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N"
-		// может сменить (умолчательную) команду запуска на "cmd" или "far"
+		// Р­РўРћ РЅРµ РІР»РёСЏРµС‚ РЅР° szDefCmd. РўРѕР»СЊРєРѕ РїСЂСЏРјРѕРµ СѓРєР°Р·Р°РЅРёРµ С„Р»Р°Р¶РєР° "/BufferHeight N"
+		// РјРѕР¶РµС‚ СЃРјРµРЅРёС‚СЊ (СѓРјРѕР»С‡Р°С‚РµР»СЊРЅСѓСЋ) РєРѕРјР°РЅРґСѓ Р·Р°РїСѓСЃРєР° РЅР° "cmd" РёР»Рё "far"
 		reg->Load(L"Cascaded", wndCascade);
 		DWORD sizeRaw = wndWidth.Raw;
 		reg->Load(L"ConWnd Width", sizeRaw); wndWidth.SetFromRaw(true, sizeRaw);
@@ -2368,7 +2368,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 			gpConEmu->LogString(szInfo);
 		}
 
-		//TODO: Эти два параметра не сохраняются
+		//TODO: Р­С‚Рё РґРІР° РїР°СЂР°РјРµС‚СЂР° РЅРµ СЃРѕС…СЂР°РЅСЏСЋС‚СЃСЏ
 		reg->Load(L"16bit Height", ntvdmHeight);
 
 		if (ntvdmHeight!=0 && ntvdmHeight!=25 && ntvdmHeight!=28 && ntvdmHeight!=43 && ntvdmHeight!=50) ntvdmHeight = 25;
@@ -2410,7 +2410,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		//
 		reg->Load(L"ComSpec.Path", ComSpec.ComspecExplicit, countof(ComSpec.ComspecExplicit));
 		//-- wcscpy_c(ComSpec.ComspecInitial, gpConEmu->ms_ComSpecInitial);
-		//// Обработать 32/64 (найти tcc.exe и т.п.)
+		//// РћР±СЂР°Р±РѕС‚Р°С‚СЊ 32/64 (РЅР°Р№С‚Рё tcc.exe Рё С‚.Рї.)
 		//FindComspec(&ComSpec);
 		//Update Comspec(&ComSpec); --> CSettings::SettingsLoaded
 
@@ -2451,11 +2451,11 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"HighlightMouseCol", isHighlightMouseCol);
 
 		if (!reg->Load(L"FixFarBorders", isFixFarBorders))
-			reg->Load(L"Experimental", isFixFarBorders); //очень старое имя настройки
+			reg->Load(L"Experimental", isFixFarBorders); //РѕС‡РµРЅСЊ СЃС‚Р°СЂРѕРµ РёРјСЏ РЅР°СЃС‚СЂРѕР№РєРё
 
 		//mszCharRanges[0] = 0;
 
-		TODO("Это вообще нужно будет расширить, определяя произвольное количество групп шрифтов");
+		TODO("Р­С‚Рѕ РІРѕРѕР±С‰Рµ РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ СЂР°СЃС€РёСЂРёС‚СЊ, РѕРїСЂРµРґРµР»СЏСЏ РїСЂРѕРёР·РІРѕР»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РіСЂСѓРїРї С€СЂРёС„С‚РѕРІ");
 		// max 100 ranges x 10 chars + a little ;)		
 		wchar_t szCharRanges[1024] = {};		
 		if (!reg->Load(L"FixFarBordersRanges", szCharRanges, countof(szCharRanges)))		
@@ -2503,7 +2503,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		if (isPartBrush25>=isPartBrush50) isPartBrush25=isPartBrush50-10;
 
-		// Выделим в отдельную настройку
+		// Р’С‹РґРµР»РёРј РІ РѕС‚РґРµР»СЊРЅСѓСЋ РЅР°СЃС‚СЂРѕР№РєСѓ
 		reg->Load(L"EnhanceGraphics", isEnhanceGraphics);
 		
 		reg->Load(L"EnhanceButtons", isEnhanceButtons);
@@ -2518,7 +2518,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		if (!reg->Load(L"RightClickMacro2", &sRClickMacro) || (sRClickMacro && !*sRClickMacro)) { SafeFree(sRClickMacro); }
 		
 		//reg->Load(L"AltEnter", isSendAltEnter);
-		//reg->Load(L"AltSpace", isSendAltSpace); //if (isSendAltSpace > 2) isSendAltSpace = 2; // когда-то был 3state, теперь - bool
+		//reg->Load(L"AltSpace", isSendAltSpace); //if (isSendAltSpace > 2) isSendAltSpace = 2; // РєРѕРіРґР°-С‚Рѕ Р±С‹Р» 3state, С‚РµРїРµСЂСЊ - bool
 		reg->Load(L"SendAltTab", isSendAltTab);
 		reg->Load(L"SendAltEsc", isSendAltEsc);
 		reg->Load(L"SendAltPrintScrn", isSendAltPrintScrn);
@@ -2526,7 +2526,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"SendCtrlEsc", isSendCtrlEsc);
 		//reg->Load(L"SendAltF9", isSendAltF9);
 
-		// Для совместимости настроек
+		// Р”Р»СЏ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё РЅР°СЃС‚СЂРѕРµРє
 		reg->Load(L"AltEnter", bSendAltEnter);
 		reg->Load(L"AltSpace", bSendAltSpace);
 		reg->Load(L"SendAltF9", bSendAltF9);
@@ -2580,7 +2580,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"FarHourglassDelay", nFarHourglassDelay);
 		
 		reg->Load(L"Dnd", isDragEnabled);
-		isDropEnabled = (BYTE)(isDragEnabled ? 1 : 0); // ранее "DndDrop" не было, поэтому ставим default
+		isDropEnabled = (BYTE)(isDragEnabled ? 1 : 0); // СЂР°РЅРµРµ "DndDrop" РЅРµ Р±С‹Р»Рѕ, РїРѕСЌС‚РѕРјСѓ СЃС‚Р°РІРёРј default
 		//reg->Load(L"DndLKey", nLDragKey);
 		//reg->Load(L"DndRKey", nRDragKey);
 		reg->Load(L"DndDrop", isDropEnabled);
@@ -2652,7 +2652,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		
 		reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
 		reg->Load(L"TabSkipWords", &pszTabSkipWords);
-		wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
+		wcscpy_c(szTabPanels, szTabConsole); // Р Р°РЅСЊС€Рµ Р±С‹Р»Р° С‚РѕР»СЊРєРѕ РЅР°СЃС‚СЂРѕР№РєР° "TabConsole". РЈРЅР°СЃР»РµРґРѕРІР°С‚СЊ РµРµ РІ "TabPanels"
 		reg->Load(L"TabPanels", szTabPanels, countof(szTabPanels));
 		reg->Load(L"TabEditor", szTabEditor, countof(szTabEditor));
 		reg->Load(L"TabEditorModified", szTabEditorModified, countof(szTabEditorModified));
@@ -2717,10 +2717,10 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"PanView.SFrame", ThSet.nSelectFrame); if (ThSet.nSelectFrame!=0 && ThSet.nSelectFrame!=1) ThSet.nSelectFrame = 1;
 
 		reg->Load(L"PanView.SFrameColor", ThSet.crSelectFrame.RawColor);
-		/* теперь разнообразные размеры */
+		/* С‚РµРїРµСЂСЊ СЂР°Р·РЅРѕРѕР±СЂР°Р·РЅС‹Рµ СЂР°Р·РјРµСЂС‹ */
 		ThumbLoadSet(L"Thumbs", ThSet.Thumbs);
 		ThumbLoadSet(L"Tiles", ThSet.Tiles);
-		// Прочие параметры загрузки
+		// РџСЂРѕС‡РёРµ РїР°СЂР°РјРµС‚СЂС‹ Р·Р°РіСЂСѓР·РєРё
 		reg->Load(L"PanView.LoadPreviews", ThSet.bLoadPreviews);
 		reg->Load(L"PanView.LoadFolders", ThSet.bLoadFolders);
 		reg->Load(L"PanView.LoadTimeout", ThSet.nLoadTimeout);
@@ -2747,24 +2747,24 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		/* Hotkeys */
 		LoadHotkeys(reg);
-		// Для совместимости настроек
+		// Р”Р»СЏ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё РЅР°СЃС‚СЂРѕРµРє
 		if (bSendAltSpace || bSendAltEnter || bSendAltF9)
 		{
 			ConEmuHotKey* pHK;
-			// Если раньше был включен флажок "Send Alt+Space to console"
+			// Р•СЃР»Рё СЂР°РЅСЊС€Рµ Р±С‹Р» РІРєР»СЋС‡РµРЅ С„Р»Р°Р¶РѕРє "Send Alt+Space to console"
 			if (bSendAltSpace && GetHotkeyById(vkSystemMenu, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == ConEmuHotKey::MakeHotKey(VK_SPACE,VK_MENU)))
 			{
-				pHK->VkMod = 0; // Сбросить VkMod для vkSystemMenu (раньше назывался vkAltSpace)
+				pHK->VkMod = 0; // РЎР±СЂРѕСЃРёС‚СЊ VkMod РґР»СЏ vkSystemMenu (СЂР°РЅСЊС€Рµ РЅР°Р·С‹РІР°Р»СЃСЏ vkAltSpace)
 			}
-			// Если раньше был включен флажок "Send Alt+Enter to console"
+			// Р•СЃР»Рё СЂР°РЅСЊС€Рµ Р±С‹Р» РІРєР»СЋС‡РµРЅ С„Р»Р°Р¶РѕРє "Send Alt+Enter to console"
 			if (bSendAltEnter && GetHotkeyById(vkAltEnter, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == ConEmuHotKey::MakeHotKey(VK_RETURN,VK_MENU)))
 			{
-				pHK->VkMod = 0; // Сбросить VkMod для vkAltEnter
+				pHK->VkMod = 0; // РЎР±СЂРѕСЃРёС‚СЊ VkMod РґР»СЏ vkAltEnter
 			}
-			// Если раньше был включен флажок "Send Alt+F9 to console"
+			// Р•СЃР»Рё СЂР°РЅСЊС€Рµ Р±С‹Р» РІРєР»СЋС‡РµРЅ С„Р»Р°Р¶РѕРє "Send Alt+F9 to console"
 			if (bSendAltF9 && GetHotkeyById(vkMaximize, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == ConEmuHotKey::MakeHotKey(VK_F9,VK_MENU)))
 			{
-				pHK->VkMod = 0; // Сбросить VkMod для vkMaximize
+				pHK->VkMod = 0; // РЎР±СЂРѕСЃРёС‚СЊ VkMod РґР»СЏ vkMaximize
 			}
 		}
 
@@ -2778,12 +2778,12 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 	LoadCmdTasks(reg);
 
-	// сервис больше не нужен
+	// СЃРµСЂРІРёСЃ Р±РѕР»СЊС€Рµ РЅРµ РЅСѓР¶РµРЅ
 	delete reg;
 	reg = NULL;
 
-	// -- перенесено в gpSetCls->SettingsLoaded();
-	//// Зовем "FastConfiguration" (перед созданием новой/чистой конфигурации)
+	// -- РїРµСЂРµРЅРµСЃРµРЅРѕ РІ gpSetCls->SettingsLoaded();
+	//// Р—РѕРІРµРј "FastConfiguration" (РїРµСЂРµРґ СЃРѕР·РґР°РЅРёРµРј РЅРѕРІРѕР№/С‡РёСЃС‚РѕР№ РєРѕРЅС„РёРіСѓСЂР°С†РёРё)
 	//{
 	//	LPCWSTR pszDef = gpConEmu->GetDefaultTitle();
 	//	wchar_t szType[8]; bool ReadOnly;
@@ -2804,23 +2804,23 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 	//	SaveSettings(TRUE/*abSilent*/);
 	//}
 
-	//// Передернуть палитру затенения
+	//// РџРµСЂРµРґРµСЂРЅСѓС‚СЊ РїР°Р»РёС‚СЂСѓ Р·Р°С‚РµРЅРµРЅРёСЏ
 	//ResetFadeColors();
 	//GetColors(-1, TRUE);
 	//
 	//
 
-	//// Проверить необходимость установки хуков
+	//// РџСЂРѕРІРµСЂРёС‚СЊ РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ СѓСЃС‚Р°РЅРѕРІРєРё С…СѓРєРѕРІ
 	////-- isKeyboardHooks();
-	//// При первом запуске - проверить, хотят ли включить автообновление?
+	//// РџСЂРё РїРµСЂРІРѕРј Р·Р°РїСѓСЃРєРµ - РїСЂРѕРІРµСЂРёС‚СЊ, С…РѕС‚СЏС‚ Р»Рё РІРєР»СЋС‡РёС‚СЊ Р°РІС‚РѕРѕР±РЅРѕРІР»РµРЅРёРµ?
 	////-- CheckUpdatesWanted();
 
 
 
-	//// Стили окна
+	//// РЎС‚РёР»Рё РѕРєРЅР°
 	//if ((_WindowMode!=rNormal) && (_WindowMode!=rMaximized) && (_WindowMode!=rFullScreen))
 	//{
-	//	// Иначе окно вообще не отображается
+	//	// РРЅР°С‡Рµ РѕРєРЅРѕ РІРѕРѕР±С‰Рµ РЅРµ РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ
 	//	_ASSERTE(_WindowMode!=0);
 	//	_WindowMode = rNormal;
 	//}
@@ -2845,8 +2845,8 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 	//MCHKHEAP
 	
-	// -- перенесено в WinMain
-	//// Переменные загружены, выполнить дополнительные действия в классе настроек
+	// -- РїРµСЂРµРЅРµСЃРµРЅРѕ РІ WinMain
+	//// РџРµСЂРµРјРµРЅРЅС‹Рµ Р·Р°РіСЂСѓР¶РµРЅС‹, РІС‹РїРѕР»РЅРёС‚СЊ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РґРµР№СЃС‚РІРёСЏ РІ РєР»Р°СЃСЃРµ РЅР°СЃС‚СЂРѕРµРє
 	//gpSetCls->SettingsLoaded();
 }
 
@@ -2855,19 +2855,19 @@ void Settings::SaveSettingsOnExit()
 	if (!this)
 		return;
 
-	// При закрытии окна крестиком - сохранять только один раз!
-	// а то размер/таски/настройки могут в процессе закрытия консолей измениться
+	// РџСЂРё Р·Р°РєСЂС‹С‚РёРё РѕРєРЅР° РєСЂРµСЃС‚РёРєРѕРј - СЃРѕС…СЂР°РЅСЏС‚СЊ С‚РѕР»СЊРєРѕ РѕРґРёРЅ СЂР°Р·!
+	// Р° С‚Рѕ СЂР°Р·РјРµСЂ/С‚Р°СЃРєРё/РЅР°СЃС‚СЂРѕР№РєРё РјРѕРіСѓС‚ РІ РїСЂРѕС†РµСЃСЃРµ Р·Р°РєСЂС‹С‚РёСЏ РєРѕРЅСЃРѕР»РµР№ РёР·РјРµРЅРёС‚СЊСЃСЏ
 	if (mb_ExitSettingsAutoSaved)
 		return;
 	mb_ExitSettingsAutoSaved = true;
 
-	// В некоторых случаях сохранение опций при выходе не допустимо
+	// Р’ РЅРµРєРѕС‚РѕСЂС‹С… СЃР»СѓС‡Р°СЏС… СЃРѕС…СЂР°РЅРµРЅРёРµ РѕРїС†РёР№ РїСЂРё РІС‹С…РѕРґРµ РЅРµ РґРѕРїСѓСЃС‚РёРјРѕ
 	if (!gpConEmu->IsAllowSaveSettingsOnExit())
 		return;
 
 	bool bTaskAutoSave = (nStartType == (rbStartLastTabs - rbStartSingleApp));
 
-	// Смотрим, нужно ли сохранять что-либо при выходе?
+	// РЎРјРѕС‚СЂРёРј, РЅСѓР¶РЅРѕ Р»Рё СЃРѕС…СЂР°РЅСЏС‚СЊ С‡С‚Рѕ-Р»РёР±Рѕ РїСЂРё РІС‹С…РѕРґРµ?
 	if (!isAutoSaveSizePos && !mb_StatusSettingsWasChanged && !bTaskAutoSave)
 		return;
 
@@ -2886,8 +2886,8 @@ void Settings::SaveSettingsOnExit()
 		if (isAutoSaveSizePos)
 		{
 			reg->Save(L"UseCurrentSizePos", isUseCurrentSizePos);
-			DWORD saveMode = (isUseCurrentSizePos==false) ? _WindowMode // сохранять будем то, что задано пользователем явно
-					: ( (ghWnd == NULL)  // иначе - текущее состояние
+			DWORD saveMode = (isUseCurrentSizePos==false) ? _WindowMode // СЃРѕС…СЂР°РЅСЏС‚СЊ Р±СѓРґРµРј С‚Рѕ, С‡С‚Рѕ Р·Р°РґР°РЅРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј СЏРІРЅРѕ
+					: ( (ghWnd == NULL)  // РёРЅР°С‡Рµ - С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
 							? gpConEmu->WindowMode
 							: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal));
 			reg->Save(L"WindowMode", saveMode);
@@ -2913,7 +2913,7 @@ void Settings::SaveSettingsOnExit()
 
 		reg->CloseKey();
 
-		// Таски пишутся в отдельный ключ
+		// РўР°СЃРєРё РїРёС€СѓС‚СЃСЏ РІ РѕС‚РґРµР»СЊРЅС‹Р№ РєР»СЋС‡
 		if (bTaskAutoSave)
 		{
 			wchar_t* pszTabs = CVConGroup::GetTasks(NULL);
@@ -3011,7 +3011,7 @@ void Settings::SaveFindOptions(SettingsBase* reg/* = NULL*/)
 	reg->Save(L"FindMatchCase", FindOptions.bMatchCase);
 	reg->Save(L"FindMatchWholeWords", FindOptions.bMatchWholeWords);
 #if 0
-	// пока не работает - не сохраняем
+	// РїРѕРєР° РЅРµ СЂР°Р±РѕС‚Р°РµС‚ - РЅРµ СЃРѕС…СЂР°РЅСЏРµРј
 	reg->Save(L"FindFreezeConsole", FindOptions.bFreezeConsole);
 	reg->Save(L"FindHighlightAll", FindOptions.bHighlightAll);
 #endif
@@ -3046,10 +3046,10 @@ void Settings::SaveAppSettings(SettingsBase* reg)
 		lbOpened = reg->OpenKey(szAppKey, KEY_WRITE);
 		if (lbOpened)
 		{
-			// Загрузка "AppNames" - снаружи, т.к. LoadAppSettings используется и для загрузки &AppStd
+			// Р—Р°РіСЂСѓР·РєР° "AppNames" - СЃРЅР°СЂСѓР¶Рё, С‚.Рє. LoadAppSettings РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ Рё РґР»СЏ Р·Р°РіСЂСѓР·РєРё &AppStd
 			reg->Save(L"AppNames", Apps[i]->AppNames);
 			reg->Save(L"Elevated", Apps[i]->Elevated);
-			SaveAppSettings(reg, Apps[i]/*, Цвета сохраняются как Имя палитры*/);
+			SaveAppSettings(reg, Apps[i]/*, Р¦РІРµС‚Р° СЃРѕС…СЂР°РЅСЏСЋС‚СЃСЏ РєР°Рє РРјСЏ РїР°Р»РёС‚СЂС‹*/);
 			reg->CloseKey();
 		}
 	}
@@ -3057,7 +3057,7 @@ void Settings::SaveAppSettings(SettingsBase* reg)
 
 void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp/*, COLORREF* pColors*/)
 {
-	// Для AppStd данные загружаются из основной ветки! В том числе и цвета (RGB[32] а не имя палитры)
+	// Р”Р»СЏ AppStd РґР°РЅРЅС‹Рµ Р·Р°РіСЂСѓР¶Р°СЋС‚СЃСЏ РёР· РѕСЃРЅРѕРІРЅРѕР№ РІРµС‚РєРё! Р’ С‚РѕРј С‡РёСЃР»Рµ Рё С†РІРµС‚Р° (RGB[32] Р° РЅРµ РёРјСЏ РїР°Р»РёС‚СЂС‹)
 	bool bStd = (pApp == &AppStd);
 
 	if (bStd)
@@ -3149,7 +3149,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		return FALSE;
 	}
 
-	// Если в реестре настройка есть, или изменилось значение
+	// Р•СЃР»Рё РІ СЂРµРµСЃС‚СЂРµ РЅР°СЃС‚СЂРѕР№РєР° РµСЃС‚СЊ, РёР»Рё РёР·РјРµРЅРёР»РѕСЃСЊ Р·РЅР°С‡РµРЅРёРµ
 	bool lbCurAutoRegisterFonts = isAutoRegisterFonts, lbCurAutoRegisterFontsRc = false;
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_READ, abSilent))
 	{
@@ -3160,8 +3160,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE, abSilent))
 	{
-		// При сохранении меняем "сохраненный" тип (отображается в заголовке диалога)
-		// только если сохранение было "умолчательное", а не "Экспорт в файл"
+		// РџСЂРё СЃРѕС…СЂР°РЅРµРЅРёРё РјРµРЅСЏРµРј "СЃРѕС…СЂР°РЅРµРЅРЅС‹Р№" С‚РёРї (РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ РІ Р·Р°РіРѕР»РѕРІРєРµ РґРёР°Р»РѕРіР°)
+		// С‚РѕР»СЊРєРѕ РµСЃР»Рё СЃРѕС…СЂР°РЅРµРЅРёРµ Р±С‹Р»Рѕ "СѓРјРѕР»С‡Р°С‚РµР»СЊРЅРѕРµ", Р° РЅРµ "Р­РєСЃРїРѕСЂС‚ РІ С„Р°Р№Р»"
 		if (apStorage == NULL)
 		{
 			wcscpy_c(Type, reg->m_Storage.szType);
@@ -3199,7 +3199,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ProcessAnsi", isProcessAnsi);
 		reg->Save(L"ProcessNewConArg", isProcessNewConArg);
 
-		_ASSERTE(isSuppressBells==false); // пока не доделано - не сохраняем
+		_ASSERTE(isSuppressBells==false); // РїРѕРєР° РЅРµ РґРѕРґРµР»Р°РЅРѕ - РЅРµ СЃРѕС…СЂР°РЅСЏРµРј
 		//reg->Save(L"SuppressBells", isSuppressBells);
 
 		reg->Save(L"ConsoleExceptionHandler", isConsoleExceptionHandler);
@@ -3225,7 +3225,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"SaveCmdHistory", isSaveCmdHistory);
 		if (psCmdHistory)
 		{
-			// Пишем всегда, даже если (!isSaveCmdHistory), т.к. история могла быть "преднастроена"
+			// РџРёС€РµРј РІСЃРµРіРґР°, РґР°Р¶Рµ РµСЃР»Рё (!isSaveCmdHistory), С‚.Рє. РёСЃС‚РѕСЂРёСЏ РјРѕРіР»Р° Р±С‹С‚СЊ "РїСЂРµРґРЅР°СЃС‚СЂРѕРµРЅР°"
 			reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
 		}
 
@@ -3265,7 +3265,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"FontName", inFont);
 		reg->Save(L"FontName2", inFont2);
 
-		// Если в реестре настройка есть, или изменилось значение
+		// Р•СЃР»Рё РІ СЂРµРµСЃС‚СЂРµ РЅР°СЃС‚СЂРѕР№РєР° РµСЃС‚СЊ, РёР»Рё РёР·РјРµРЅРёР»РѕСЃСЊ Р·РЅР°С‡РµРЅРёРµ
 		if (lbCurAutoRegisterFontsRc || (isAutoRegisterFonts != lbCurAutoRegisterFonts))
 			reg->Save(L"AutoRegisterFonts", isAutoRegisterFonts);
 			
@@ -3298,8 +3298,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ColorKeyTransparent", isColorKeyTransparent);
 		reg->Save(L"ColorKeyValue", nColorKeyValue);
 		reg->Save(L"UseCurrentSizePos", isUseCurrentSizePos);
-		DWORD saveMode = (isUseCurrentSizePos==false) ? _WindowMode // сохранять будем то, что задано пользователем явно
-				: ( (ghWnd == NULL)  // иначе - текущее состояние
+		DWORD saveMode = (isUseCurrentSizePos==false) ? _WindowMode // СЃРѕС…СЂР°РЅСЏС‚СЊ Р±СѓРґРµРј С‚Рѕ, С‡С‚Рѕ Р·Р°РґР°РЅРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј СЏРІРЅРѕ
+				: ( (ghWnd == NULL)  // РёРЅР°С‡Рµ - С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
 						? gpConEmu->WindowMode
 						: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal));
 		reg->Save(L"WindowMode", saveMode);
@@ -3310,7 +3310,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ConWnd Y", isUseCurrentSizePos ? gpConEmu->wndY : _wndY);
 		reg->Save(L"16bit Height", ntvdmHeight);
 		reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
-		ResetSavedOnExit(); // Раз было инициированное пользователем сохранение настроек - сбросим флажок (mb_ExitSettingsAutoSaved)
+		ResetSavedOnExit(); // Р Р°Р· Р±С‹Р»Рѕ РёРЅРёС†РёРёСЂРѕРІР°РЅРЅРѕРµ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј СЃРѕС…СЂР°РЅРµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє - СЃР±СЂРѕСЃРёРј С„Р»Р°Р¶РѕРє (mb_ExitSettingsAutoSaved)
 		reg->Save(L"IntegralSize", mb_IntegralSize);
 		reg->Save(L"QuakeStyle", isQuakeStyle);
 		reg->Save(L"QuakeAnimation", nQuakeAnimation);
@@ -3476,10 +3476,10 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"PanView.PFrameColor", ThSet.crPreviewFrame.RawColor);
 		reg->Save(L"PanView.SFrame", ThSet.nSelectFrame);
 		reg->Save(L"PanView.SFrameColor", ThSet.crSelectFrame.RawColor);
-		/* теперь разнообразные размеры */
+		/* С‚РµРїРµСЂСЊ СЂР°Р·РЅРѕРѕР±СЂР°Р·РЅС‹Рµ СЂР°Р·РјРµСЂС‹ */
 		ThumbSaveSet(L"Thumbs", ThSet.Thumbs);
 		ThumbSaveSet(L"Tiles", ThSet.Tiles);
-		// Прочие параметры загрузки
+		// РџСЂРѕС‡РёРµ РїР°СЂР°РјРµС‚СЂС‹ Р·Р°РіСЂСѓР·РєРё
 		reg->Save(L"PanView.LoadPreviews", ThSet.bLoadPreviews);
 		reg->Save(L"PanView.LoadFolders", ThSet.bLoadFolders);
 		reg->Save(L"PanView.LoadTimeout", ThSet.nLoadTimeout);
@@ -3522,7 +3522,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 	//}
 	delete reg;
 
-	// Вроде и показывать не нужно. Объект уже сам ругнулся
+	// Р’СЂРѕРґРµ Рё РїРѕРєР°Р·С‹РІР°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ. РћР±СЉРµРєС‚ СѓР¶Рµ СЃР°Рј СЂСѓРіРЅСѓР»СЃСЏ
 	//MessageBoxA(ghOpWnd, "Failed", "Information", MB_ICONERROR);
 	return lbRc;
 }
@@ -3629,7 +3629,7 @@ DWORD Settings::isUseClink(bool abCheckVersion /*= false*/)
 
 bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/)
 {
-	// Если хуки запрещены ключом "/nokeyhooks"
+	// Р•СЃР»Рё С…СѓРєРё Р·Р°РїСЂРµС‰РµРЅС‹ РєР»СЋС‡РѕРј "/nokeyhooks"
 	if (gpConEmu->DisableKeybHooks && !abNoDisable)
 		return false;
 
@@ -3682,7 +3682,7 @@ void Settings::HistoryReset()
 	psCmdHistory = (wchar_t*)calloc(2,2);
 	nCmdHistorySize = 0;
 
-	// И сразу сохранить в настройках
+	// Р СЃСЂР°Р·Сѓ СЃРѕС…СЂР°РЅРёС‚СЊ РІ РЅР°СЃС‚СЂРѕР№РєР°С…
 	SettingsBase* reg = CreateSettings(NULL);
 	if (!reg)
 	{
@@ -3706,7 +3706,7 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 	if (!isSaveCmdHistory)
 		return;
 
-	// Группы и так отображаются в диалоге/меню. В историю их не пишем
+	// Р“СЂСѓРїРїС‹ Рё С‚Р°Рє РѕС‚РѕР±СЂР°Р¶Р°СЋС‚СЃСЏ РІ РґРёР°Р»РѕРіРµ/РјРµРЅСЋ. Р’ РёСЃС‚РѕСЂРёСЋ РёС… РЅРµ РїРёС€РµРј
 	if (!asCmd || !*asCmd || (*asCmd == TaskBracketLeft))
 		return;
 
@@ -3764,7 +3764,7 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 
 	if (!gpConEmu->IsResetBasicSettings())
 	{
-		// И сразу сохранить в настройках
+		// Р СЃСЂР°Р·Сѓ СЃРѕС…СЂР°РЅРёС‚СЊ РІ РЅР°СЃС‚СЂРѕР№РєР°С…
 		SettingsBase* reg = CreateSettings(NULL);
 		if (!reg)
 		{
@@ -3792,10 +3792,10 @@ LPCWSTR Settings::HistoryGet()
 	return NULL;
 }
 
-// например, L"2013-25C3,25C4"
-// Возвращает 0 - в случае успеха,
-// при ошибке - индекс (1-based) ошибочного символа в asRanges
-// -1 - ошибка выделения памяти
+// РЅР°РїСЂРёРјРµСЂ, L"2013-25C3,25C4"
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ 0 - РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС…Р°,
+// РїСЂРё РѕС€РёР±РєРµ - РёРЅРґРµРєСЃ (1-based) РѕС€РёР±РѕС‡РЅРѕРіРѕ СЃРёРјРІРѕР»Р° РІ asRanges
+// -1 - РѕС€РёР±РєР° РІС‹РґРµР»РµРЅРёСЏ РїР°РјСЏС‚Рё
 int Settings::ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue /*= TRUE*/)
 {
 	if (!asRanges)
@@ -3883,7 +3883,7 @@ wchar_t* Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
 		{
 			if ((psz + 10) >= pszEnd)
 			{
-				// Слишком длинный блок
+				// РЎР»РёС€РєРѕРј РґР»РёРЅРЅС‹Р№ Р±Р»РѕРє
 				_ASSERTE((psz + 10) < pszEnd);
 				break;
 			}
@@ -3922,9 +3922,9 @@ bool Settings::isCharBorder(wchar_t inChar)
 
 void Settings::CheckConsoleSettings()
 {
-	// Если в ключе [HKEY_CURRENT_USER\Console] будут левые значения - то в Win7 могут
-	// начаться страшные глюки :-)
-	// например, консольное окно будет "дырявое" - рамка есть, а содержимого - нет :-P
+	// Р•СЃР»Рё РІ РєР»СЋС‡Рµ [HKEY_CURRENT_USER\Console] Р±СѓРґСѓС‚ Р»РµРІС‹Рµ Р·РЅР°С‡РµРЅРёСЏ - С‚Рѕ РІ Win7 РјРѕРіСѓС‚
+	// РЅР°С‡Р°С‚СЊСЃСЏ СЃС‚СЂР°С€РЅС‹Рµ РіР»СЋРєРё :-)
+	// РЅР°РїСЂРёРјРµСЂ, РєРѕРЅСЃРѕР»СЊРЅРѕРµ РѕРєРЅРѕ Р±СѓРґРµС‚ "РґС‹СЂСЏРІРѕРµ" - СЂР°РјРєР° РµСЃС‚СЊ, Р° СЃРѕРґРµСЂР¶РёРјРѕРіРѕ - РЅРµС‚ :-P
 	DWORD nFullScr = 0, nFullScrEmu = 0, nSize;
 	HKEY hkCon, hkEmu;
 	if (!RegOpenKeyEx(HKEY_CURRENT_USER, L"Console", 0, KEY_ALL_ACCESS, &hkCon))
@@ -3998,7 +3998,7 @@ SettingsBase* Settings::CreateSettings(const SettingsStorage* apStorage)
 		pszFile = gpConEmu->ConEmuXml();
 	}
 
-	// добавил lbXml - он мог быть принудительно включен
+	// РґРѕР±Р°РІРёР» lbXml - РѕРЅ РјРѕРі Р±С‹С‚СЊ РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ РІРєР»СЋС‡РµРЅ
 	if (pszFile && *pszFile && !lbXml)
 	{
 		dwAttr = GetFileAttributes(pszFile);
@@ -4016,10 +4016,10 @@ SettingsBase* Settings::CreateSettings(const SettingsStorage* apStorage)
 
 		if (!((SettingsXML*)pReg)->IsXmlAllowed())
 		{
-			// Если MSXml.DomDocument не зарегистрирован
+			// Р•СЃР»Рё MSXml.DomDocument РЅРµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅ
 			if (!apStorage)
 			{
-				// Чтобы не пытаться повторно открыть XML - интерфейс не доступен!
+				// Р§С‚РѕР±С‹ РЅРµ РїС‹С‚Р°С‚СЊСЃСЏ РїРѕРІС‚РѕСЂРЅРѕ РѕС‚РєСЂС‹С‚СЊ XML - РёРЅС‚РµСЂС„РµР№СЃ РЅРµ РґРѕСЃС‚СѓРїРµРЅ!
 				gpConEmu->ConEmuXml()[0] = 0;
 			}
 			lbXml = FALSE;
@@ -4058,7 +4058,7 @@ void Settings::GetSettingsType(SettingsStorage& Storage, bool& ReadOnly)
 		hFile = CreateFile(pszXmlFile, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
 		                   NULL, OPEN_EXISTING, 0, 0);
 
-		// XML-файл есть
+		// XML-С„Р°Р№Р» РµСЃС‚СЊ
 		if (hFile != INVALID_HANDLE_VALUE)
 		{
 			CloseHandle(hFile); hFile = NULL;
@@ -4068,7 +4068,7 @@ void Settings::GetSettingsType(SettingsStorage& Storage, bool& ReadOnly)
 				pszType = CONEMU_CONFIGTYPE_XML /*L"[xml]"*/;
 				Storage.pszFile = pszXmlFile;
 
-				// Проверим, сможем ли мы в него записать
+				// РџСЂРѕРІРµСЂРёРј, СЃРјРѕР¶РµРј Р»Рё РјС‹ РІ РЅРµРіРѕ Р·Р°РїРёСЃР°С‚СЊ
 				hFile = CreateFile(pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
 				                   NULL, OPEN_EXISTING, 0, 0);
 
@@ -4079,7 +4079,7 @@ void Settings::GetSettingsType(SettingsStorage& Storage, bool& ReadOnly)
 				else
 				{
 					DWORD nErr = GetLastError();
-					//EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
+					//EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // РЎРѕС…СЂР°РЅРµРЅРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ
 					ReadOnly = true;
 					UNREFERENCED_PARAMETER(nErr);
 				}
@@ -4119,7 +4119,7 @@ bool Settings::isMinimizeOnLoseFocus()
 
 bool Settings::isMinToTray(bool bRawOnly /*= false*/)
 {
-	// Сворачивать в TSA только если включен флажок. Юзер его мог принудительно отключить.
+	// РЎРІРѕСЂР°С‡РёРІР°С‚СЊ РІ TSA С‚РѕР»СЊРєРѕ РµСЃР»Рё РІРєР»СЋС‡РµРЅ С„Р»Р°Р¶РѕРє. Р®Р·РµСЂ РµРіРѕ РјРѕРі РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ РѕС‚РєР»СЋС‡РёС‚СЊ.
 	return (mb_MinToTray || /*(m_isTabsOnTaskBar == 3) ||*/ gpConEmu->ForceMinimizeToTray);
 }
 
@@ -4147,9 +4147,9 @@ bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 	return bCaptionHidden;
 }
 
-// Функция НЕ учитывает isCaptionHidden.
-// Возвращает true, если 'Frame width' меньше системной для ThickFame
-// иначе - false, меняем рамку на "NonResizable"
+// Р¤СѓРЅРєС†РёСЏ РќР• СѓС‡РёС‚С‹РІР°РµС‚ isCaptionHidden.
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ true, РµСЃР»Рё 'Frame width' РјРµРЅСЊС€Рµ СЃРёСЃС‚РµРјРЅРѕР№ РґР»СЏ ThickFame
+// РёРЅР°С‡Рµ - false, РјРµРЅСЏРµРј СЂР°РјРєСѓ РЅР° "NonResizable"
 bool Settings::isFrameHidden()
 {
 	if (!nHideCaptionAlwaysFrame || isQuakeStyle)
@@ -4216,11 +4216,11 @@ int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)
 			if (pch)
 			{
 				pch++;
-				continue; // перечислено несколько допустимых имен
+				continue; // РїРµСЂРµС‡РёСЃР»РµРЅРѕ РЅРµСЃРєРѕР»СЊРєРѕ РґРѕРїСѓСЃС‚РёРјС‹С… РёРјРµРЅ
 			}
 			else
 			{
-				break; // не совпало
+				break; // РЅРµ СЃРѕРІРїР°Р»Рѕ
 			}
 		}
 	}
@@ -4232,7 +4232,7 @@ const Settings::AppSettings* Settings::GetAppSettings(int anAppId/*=-1*/)
 {
 	if ((anAppId < 0) || (anAppId >= AppCount))
 	{
-		_ASSERTE(!((anAppId < -1) || (anAppId > AppCount))); // - иначе здесь должен быть валидный индекс для Apps/AppColors
+		_ASSERTE(!((anAppId < -1) || (anAppId > AppCount))); // - РёРЅР°С‡Рµ Р·РґРµСЃСЊ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІР°Р»РёРґРЅС‹Р№ РёРЅРґРµРєСЃ РґР»СЏ Apps/AppColors
 		if (AppStd.AppNames != NULL)
 		{
 			_ASSERTE(AppStd.AppNames == NULL);
@@ -4410,10 +4410,10 @@ COLORREF* Settings::GetColorsPrepare(COLORREF *pColors, COLORREF *pColorsFade, b
 
 	if (!*pbFadeInitialized)
 	{
-		// Для ускорения, при повторных запросах, GetFadeColor кеширует результат
+		// Р”Р»СЏ СѓСЃРєРѕСЂРµРЅРёСЏ, РїСЂРё РїРѕРІС‚РѕСЂРЅС‹С… Р·Р°РїСЂРѕСЃР°С…, GetFadeColor РєРµС€РёСЂСѓРµС‚ СЂРµР·СѓР»СЊС‚Р°С‚
 		mn_LastFadeSrc = mn_LastFadeDst = -1;
 
-		// Валидация
+		// Р’Р°Р»РёРґР°С†РёСЏ
 		if (((int)mn_FadeHigh - (int)mn_FadeLow) < 64)
 		{
 			mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH;
@@ -4423,7 +4423,7 @@ COLORREF* Settings::GetColorsPrepare(COLORREF *pColors, COLORREF *pColorsFade, b
 		mn_FadeMul = mn_FadeHigh - mn_FadeLow;
 		*pbFadeInitialized = true;
 
-		// Посчитать "затемненные" цвета
+		// РџРѕСЃС‡РёС‚Р°С‚СЊ "Р·Р°С‚РµРјРЅРµРЅРЅС‹Рµ" С†РІРµС‚Р°
 		for (size_t i = 0; i < countof(ColorsFade); i++)
 		{
 			pColorsFade[i] = GetFadeColor(pColors[i]);
@@ -4443,7 +4443,7 @@ COLORREF Settings::GetFadeColor(COLORREF cr)
 
 	MYCOLORREF mcr, mcrFade = {}; mcr.color = cr;
 
-	//-нафиг
+	//-РЅР°С„РёРі
 	//if (!mb_FadeInitialized)
 	//{
 	//	GetColors(TRUE);
@@ -4474,7 +4474,7 @@ BYTE Settings::GetFadeColorItem(BYTE c)
 
 			if (nRc >= 255)
 			{
-				//_ASSERTE(nRc <= 255); -- такие (mn_FadeLow&mn_FadeHigh) пользователь в настройке мог задать
+				//_ASSERTE(nRc <= 255); -- С‚Р°РєРёРµ (mn_FadeLow&mn_FadeHigh) РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РІ РЅР°СЃС‚СЂРѕР№РєРµ РјРѕРі Р·Р°РґР°С‚СЊ
 				return 255;
 			}
 
@@ -4484,7 +4484,7 @@ BYTE Settings::GetFadeColorItem(BYTE c)
 
 bool Settings::NeedDialogDetect()
 {
-	// 100331 теперь оно нужно и для PanelView
+	// 100331 С‚РµРїРµСЂСЊ РѕРЅРѕ РЅСѓР¶РЅРѕ Рё РґР»СЏ PanelView
 	return true;
 	//return (isUserScreenTransparent || !isMonospace);
 }
@@ -4493,7 +4493,7 @@ bool Settings::IsModifierPressed(int nDescrID, bool bAllowEmpty)
 {
 	DWORD vk = ConEmuHotKey::GetHotkey(GetHotkeyById(nDescrID));
 
-	// если НЕ 0 - должен быть нажат
+	// РµСЃР»Рё РќР• 0 - РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РЅР°Р¶Р°С‚
 	if (vk)
 	{
 		if (!isPressed(vk))
@@ -4504,7 +4504,7 @@ bool Settings::IsModifierPressed(int nDescrID, bool bAllowEmpty)
 		return false;
 	}
 
-	// но другие модификаторы нажаты быть не должны!
+	// РЅРѕ РґСЂСѓРіРёРµ РјРѕРґРёС„РёРєР°С‚РѕСЂС‹ РЅР°Р¶Р°С‚С‹ Р±С‹С‚СЊ РЅРµ РґРѕР»Р¶РЅС‹!
 	if (vk != VK_SHIFT && vk != VK_LSHIFT && vk != VK_RSHIFT)
 	{
 		if (isPressed(VK_SHIFT))
@@ -4523,26 +4523,26 @@ bool Settings::IsModifierPressed(int nDescrID, bool bAllowEmpty)
 			return false;
 	}
 
-	// Можно
+	// РњРѕР¶РЅРѕ
 	return true;
 }
 
 bool Settings::NeedCreateAppWindow()
 {
-	// Если просили не показывать на таскбаре - создать скрытое родительское окно
+	// Р•СЃР»Рё РїСЂРѕСЃРёР»Рё РЅРµ РїРѕРєР°Р·С‹РІР°С‚СЊ РЅР° С‚Р°СЃРєР±Р°СЂРµ - СЃРѕР·РґР°С‚СЊ СЃРєСЂС‹С‚РѕРµ СЂРѕРґРёС‚РµР»СЊСЃРєРѕРµ РѕРєРЅРѕ
 	// m_isTabsOnTaskBar: 0 - ConEmu only, 1 - all tabs & all OS, 2 - all tabs & Win 7, 3 - DON'T SHOW
 	if (m_isTabsOnTaskBar == 3)
 		return true;
 
-	// Пока что, окно для Application нужно создавать только для XP и ниже
-	// в том случае, если на таскбаре отображаются кнопки запущенных консолей
-	// Это для того, чтобы при Alt-Tab не светилась "лишняя" иконка главного окна
+	// РџРѕРєР° С‡С‚Рѕ, РѕРєРЅРѕ РґР»СЏ Application РЅСѓР¶РЅРѕ СЃРѕР·РґР°РІР°С‚СЊ С‚РѕР»СЊРєРѕ РґР»СЏ XP Рё РЅРёР¶Рµ
+	// РІ С‚РѕРј СЃР»СѓС‡Р°Рµ, РµСЃР»Рё РЅР° С‚Р°СЃРєР±Р°СЂРµ РѕС‚РѕР±СЂР°Р¶Р°СЋС‚СЃСЏ РєРЅРѕРїРєРё Р·Р°РїСѓС‰РµРЅРЅС‹С… РєРѕРЅСЃРѕР»РµР№
+	// Р­С‚Рѕ РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ РїСЂРё Alt-Tab РЅРµ СЃРІРµС‚РёР»Р°СЃСЊ "Р»РёС€РЅСЏСЏ" РёРєРѕРЅРєР° РіР»Р°РІРЅРѕРіРѕ РѕРєРЅР°
 	if (!IsWindows7 && isTabsOnTaskBar())
 		return true;
 	return false;
 }
 
-// Показывать табы на таскбаре? (для каждой консоли - своя кнопка)
+// РџРѕРєР°Р·С‹РІР°С‚СЊ С‚Р°Р±С‹ РЅР° С‚Р°СЃРєР±Р°СЂРµ? (РґР»СЏ РєР°Р¶РґРѕР№ РєРѕРЅСЃРѕР»Рё - СЃРІРѕСЏ РєРЅРѕРїРєР°)
 bool Settings::isTabsOnTaskBar()
 {
 	if (isDesktopMode || (m_isTabsOnTaskBar == 3) || gpConEmu->mp_Inside)
@@ -4552,7 +4552,7 @@ bool Settings::isTabsOnTaskBar()
 	return false;
 }
 
-// Показывать ConEmu (ghWnd) на таскбаре
+// РџРѕРєР°Р·С‹РІР°С‚СЊ ConEmu (ghWnd) РЅР° С‚Р°СЃРєР±Р°СЂРµ
 bool Settings::isWindowOnTaskBar(bool bStrictOnly /*= false*/)
 {
 	// m_isTabsOnTaskBar: 0 - ConEmu only, 1 - all tabs & all OS, 2 - all tabs & Win 7, 3 - DON'T SHOW
@@ -4565,13 +4565,13 @@ bool Settings::isWindowOnTaskBar(bool bStrictOnly /*= false*/)
 
 	if (IsWindows7)
 	{
-		// Реализовано через API таскбара
+		// Р РµР°Р»РёР·РѕРІР°РЅРѕ С‡РµСЂРµР· API С‚Р°СЃРєР±Р°СЂР°
 		if ((m_isTabsOnTaskBar == 1) || (m_isTabsOnTaskBar == 2))
 			return true;
 	}
 	else
 	{
-		// в старых OS - нужно создавать фейковые окна, а ghWnd на таскбаре не показывать
+		// РІ СЃС‚Р°СЂС‹С… OS - РЅСѓР¶РЅРѕ СЃРѕР·РґР°РІР°С‚СЊ С„РµР№РєРѕРІС‹Рµ РѕРєРЅР°, Р° ghWnd РЅР° С‚Р°СЃРєР±Р°СЂРµ РЅРµ РїРѕРєР°Р·С‹РІР°С‚СЊ
 		if (m_isTabsOnTaskBar == 1)
 			return false;
 	}
@@ -4653,7 +4653,7 @@ const Settings::CommandTasks* Settings::CmdTaskGet(int anIndex)
 	{
 		if (!StartupTask)
 			StartupTask = (CommandTasks*)calloc(1, sizeof(CommandTasks));
-		// Создать!
+		// РЎРѕР·РґР°С‚СЊ!
 		return StartupTask;
 	}
 
@@ -4681,8 +4681,8 @@ void Settings::CmdTaskSetVkMod(int anIndex, DWORD VkMod)
 }
 
 // anIndex - 0-based, index of CmdTasks
-// asName - имя, или NULL, если эту группу нужно удалить (хвост сдвигается вверх)
-// asCommands - список команд (скрипт)
+// asName - РёРјСЏ, РёР»Рё NULL, РµСЃР»Рё СЌС‚Сѓ РіСЂСѓРїРїСѓ РЅСѓР¶РЅРѕ СѓРґР°Р»РёС‚СЊ (С…РІРѕСЃС‚ СЃРґРІРёРіР°РµС‚СЃСЏ РІРІРµСЂС…)
+// asCommands - СЃРїРёСЃРѕРє РєРѕРјР°РЅРґ (СЃРєСЂРёРїС‚)
 void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR asCommands)
 {
 	if (anIndex < 0)
@@ -4693,14 +4693,14 @@ void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWST
 
 	if (CmdTasks && (asName == NULL))
 	{
-		// Грохнуть ту, что просили
+		// Р“СЂРѕС…РЅСѓС‚СЊ С‚Сѓ, С‡С‚Рѕ РїСЂРѕСЃРёР»Рё
 		CmdTasks[anIndex]->FreePtr();
-		// Сдвинуть хвост
+		// РЎРґРІРёРЅСѓС‚СЊ С…РІРѕСЃС‚
 		for (int i = (anIndex+1); i < CmdTaskCount; i++)
 		{
 			CmdTasks[i-1] = CmdTasks[i];
 		}
-		// Уменьшить количество
+		// РЈРјРµРЅСЊС€РёС‚СЊ РєРѕР»РёС‡РµСЃС‚РІРѕ
 		if (CmdTaskCount > 0)
 		{
 			CmdTasks[CmdTaskCount-1] = NULL;
@@ -4724,7 +4724,7 @@ void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWST
 		SafeFree(CmdTasks);
 		CmdTasks = ppNew;
 
-		// CmdTaskCount накручивается в конце функции
+		// CmdTaskCount РЅР°РєСЂСѓС‡РёРІР°РµС‚СЃСЏ РІ РєРѕРЅС†Рµ С„СѓРЅРєС†РёРё
 	}
 
 	if (!CmdTasks)
@@ -4856,7 +4856,7 @@ void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
 				apszApps = pszNext + 1;
 			}
 			*(psz++) = 0;
-			*(psz++) = 0; // для гарантии
+			*(psz++) = 0; // РґР»СЏ РіР°СЂР°РЅС‚РёРё
 
 			psDefaultTerminalApps = pszDst;
 		}
@@ -4870,9 +4870,9 @@ void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
 
 
 
-// Вернуть заданный VkMod, или 0 если не задан
+// Р’РµСЂРЅСѓС‚СЊ Р·Р°РґР°РЅРЅС‹Р№ VkMod, РёР»Рё 0 РµСЃР»Рё РЅРµ Р·Р°РґР°РЅ
 // nDescrID = vkXXX (e.g. vkMinimizeRestore)
-// Используется при отображении клавиш в меню
+// РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РїСЂРё РѕС‚РѕР±СЂР°Р¶РµРЅРёРё РєР»Р°РІРёС€ РІ РјРµРЅСЋ
 DWORD Settings::GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK)
 {
 	static int iLastFound = -1;
@@ -4888,7 +4888,7 @@ DWORD Settings::GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK)
 			if (j == -1)
 				continue;
 			else
-				break; // Кончились
+				break; // РљРѕРЅС‡РёР»РёСЃСЊ
 		}
 
 		if (pHK->DescrLangID == nDescrID)
@@ -4900,7 +4900,7 @@ DWORD Settings::GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK)
 			if (pHK->HkType == chk_Modifier)
 			{
 				_ASSERTE(VkMod == ConEmuHotKey::GetHotkey(VkMod));
-				VkMod = ConEmuHotKey::GetHotkey(VkMod); // младший байт
+				VkMod = ConEmuHotKey::GetHotkey(VkMod); // РјР»Р°РґС€РёР№ Р±Р°Р№С‚
 			}
 
 			if (ppHK)
@@ -4912,7 +4912,7 @@ DWORD Settings::GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK)
 	return 0;
 }
 
-// Проверить, задан ли этот hotkey
+// РџСЂРѕРІРµСЂРёС‚СЊ, Р·Р°РґР°РЅ Р»Рё СЌС‚РѕС‚ hotkey
 // nDescrID = vkXXX (e.g. vkMinimizeRestore)
 bool Settings::IsHotkey(int nDescrID)
 {
@@ -4920,9 +4920,9 @@ bool Settings::IsHotkey(int nDescrID)
 	return (nVk != 0);
 }
 
-// Установить новый hotkey
+// РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РЅРѕРІС‹Р№ hotkey
 // nDescrID = vkXXX (e.g. vkMinimizeRestore)
-// VkMod = LOBYTE - VK, старшие три байта - модификаторы (тоже VK)
+// VkMod = LOBYTE - VK, СЃС‚Р°СЂС€РёРµ С‚СЂРё Р±Р°Р№С‚Р° - РјРѕРґРёС„РёРєР°С‚РѕСЂС‹ (С‚РѕР¶Рµ VK)
 void Settings::SetHotkeyById(int nDescrID, DWORD VkMod)
 {
 	if (nDescrID > 0)
@@ -4981,7 +4981,7 @@ bool Settings::isModifierExist(BYTE Mod/*VK*/, bool abStrictSingle /*= false*/)
 	return false;
 }
 
-// Есть ли такой хоткей или модификатор (актуально для VK_APPS)
+// Р•СЃС‚СЊ Р»Рё С‚Р°РєРѕР№ С…РѕС‚РєРµР№ РёР»Рё РјРѕРґРёС„РёРєР°С‚РѕСЂ (Р°РєС‚СѓР°Р»СЊРЅРѕ РґР»СЏ VK_APPS)
 bool Settings::isKeyOrModifierExist(BYTE Mod/*VK*/)
 {
 	for (int i = 0;; i++)
@@ -4994,7 +4994,7 @@ bool Settings::isKeyOrModifierExist(BYTE Mod/*VK*/)
 			continue;
 
 		if (ppHK->HkType == chk_Modifier)
-			continue; // эти не рассматриваем
+			continue; // СЌС‚Рё РЅРµ СЂР°СЃСЃРјР°С‚СЂРёРІР°РµРј
 
 		if ((ConEmuHotKey::GetHotkey(ppHK->VkMod) == Mod) || ConEmuHotKey::HasModifier(ppHK->VkMod, Mod))
 			return true;
@@ -5006,7 +5006,7 @@ bool Settings::isKeyOrModifierExist(BYTE Mod/*VK*/)
 void Settings::LoadHotkeys(SettingsBase* reg)
 {
 	reg->Load(L"Multi.Modifier", nHostkeyNumberModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyNumberModifier);
-	nHostkeyArrowModifier = nHostkeyArrowModifier; // Умолчание - то же что и "Multi.Modifier"
+	nHostkeyArrowModifier = nHostkeyArrowModifier; // РЈРјРѕР»С‡Р°РЅРёРµ - С‚Рѕ Р¶Рµ С‡С‚Рѕ Рё "Multi.Modifier"
 	reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyArrowModifier);
 
 	wchar_t szMacroName[80];
@@ -5031,7 +5031,7 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 			continue;
 		}
 		
-		// Эти модификаторы раньше в настройке не сохранялись, для совместимости - добавляем VK_SHIFT к предыдущей
+		// Р­С‚Рё РјРѕРґРёС„РёРєР°С‚РѕСЂС‹ СЂР°РЅСЊС€Рµ РІ РЅР°СЃС‚СЂРѕР№РєРµ РЅРµ СЃРѕС…СЂР°РЅСЏР»РёСЃСЊ, РґР»СЏ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё - РґРѕР±Р°РІР»СЏРµРј VK_SHIFT Рє РїСЂРµРґС‹РґСѓС‰РµР№
 		switch (ppHK->DescrLangID)
 		{
 		case vkMultiNewShift:
@@ -5050,18 +5050,18 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 
 		if (reg->Load(ppHK->Name, ppHK->VkMod))
 		{
-			// Чтобы знать, что комбинация уже сохранялась в настройке ранее
+			// Р§С‚РѕР±С‹ Р·РЅР°С‚СЊ, С‡С‚Рѕ РєРѕРјР±РёРЅР°С†РёСЏ СѓР¶Рµ СЃРѕС…СЂР°РЅСЏР»Р°СЃСЊ РІ РЅР°СЃС‚СЂРѕР№РєРµ СЂР°РЅРµРµ
 			ppHK->NotChanged = false;
 		}
 
 		if (ppHK->HkType != chk_Modifier)
 		{
-			// Если это НЕ 0 (0 - значит HotKey не задан)
-			// И это не DWORD (для HotKey без модификатора - пишется CEHOTKEY_NOMOD)
-			// Т.к. раньше был Byte - нужно добавить nHostkeyModifier
+			// Р•СЃР»Рё СЌС‚Рѕ РќР• 0 (0 - Р·РЅР°С‡РёС‚ HotKey РЅРµ Р·Р°РґР°РЅ)
+			// Р СЌС‚Рѕ РЅРµ DWORD (РґР»СЏ HotKey Р±РµР· РјРѕРґРёС„РёРєР°С‚РѕСЂР° - РїРёС€РµС‚СЃСЏ CEHOTKEY_NOMOD)
+			// Рў.Рє. СЂР°РЅСЊС€Рµ Р±С‹Р» Byte - РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ nHostkeyModifier
 			if (ppHK->VkMod && ((ppHK->VkMod & CEHOTKEY_MODMASK) == 0))
 			{
-				// Добавляем тот модификатор, который был раньше общий
+				// Р”РѕР±Р°РІР»СЏРµРј С‚РѕС‚ РјРѕРґРёС„РёРєР°С‚РѕСЂ, РєРѕС‚РѕСЂС‹Р№ Р±С‹Р» СЂР°РЅСЊС€Рµ РѕР±С‰РёР№
 				_ASSERTE(nHostkeyNumberModifier!=0);
 				ppHK->VkMod |= (nHostkeyNumberModifier << 8);
 			}
@@ -5089,11 +5089,11 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 
 void Settings::CheckHotkeyUnique()
 {
-	// Проверка уникальности
+	// РџСЂРѕРІРµСЂРєР° СѓРЅРёРєР°Р»СЊРЅРѕСЃС‚Рё
 	wchar_t* pszFailMsg = NULL;
 
-	// Некоторые хоткеи имеют "локальное" действие
-	// А некоторые проверять не хочется
+	// РќРµРєРѕС‚РѕСЂС‹Рµ С…РѕС‚РєРµРё РёРјРµСЋС‚ "Р»РѕРєР°Р»СЊРЅРѕРµ" РґРµР№СЃС‚РІРёРµ
+	// Рђ РЅРµРєРѕС‚РѕСЂС‹Рµ РїСЂРѕРІРµСЂСЏС‚СЊ РЅРµ С…РѕС‡РµС‚СЃСЏ
 	int SkipCheckID[] = {vkCtrlTab_Left, vkCtrlTab_Up, vkCtrlTab_Right, vkCtrlTab_Down, vkEscNoConsoles};
 	bool bSkip = false;
 	int iHK1, iHK2;
@@ -5105,7 +5105,7 @@ void Settings::CheckHotkeyUnique()
 		ppHK1 = gpSetCls->GetHotKeyPtr(iHK1);
 		if (!ppHK1)
 			break;
-		// Сразу проверить следующий за ним
+		// РЎСЂР°Р·Сѓ РїСЂРѕРІРµСЂРёС‚СЊ СЃР»РµРґСѓСЋС‰РёР№ Р·Р° РЅРёРј
 		ppHK2 = gpSetCls->GetHotKeyPtr(iHK1+1);
 		if (!ppHK2)
 			break;
@@ -5114,11 +5114,11 @@ void Settings::CheckHotkeyUnique()
 		if ((ppHK1->HkType == chk_Modifier) || (ConEmuHotKey::GetHotkey(ppHK1->VkMod) == 0))
 			continue;
 
-		// Отключен пользователем?
+		// РћС‚РєР»СЋС‡РµРЅ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј?
 		if (ppHK1->Enabled && !ppHK1->Enabled())
 			continue;
 
-		// Некоторые хоткеи не проверять
+		// РќРµРєРѕС‚РѕСЂС‹Рµ С…РѕС‚РєРµРё РЅРµ РїСЂРѕРІРµСЂСЏС‚СЊ
 		bSkip = false;
 		for (size_t i = 0; i < countof(SkipCheckID); i++)
 		{
@@ -5140,11 +5140,11 @@ void Settings::CheckHotkeyUnique()
 			if ((ppHK2->HkType == chk_Modifier) || (ConEmuHotKey::GetHotkey(ppHK2->VkMod) == 0))
 				continue;
 
-			// Отключен пользователем?
+			// РћС‚РєР»СЋС‡РµРЅ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј?
 			if (ppHK2->Enabled && !ppHK2->Enabled())
 				continue;
 
-			// Некоторые хоткеи не проверять
+			// РќРµРєРѕС‚РѕСЂС‹Рµ С…РѕС‚РєРµРё РЅРµ РїСЂРѕРІРµСЂСЏС‚СЊ
 			bSkip = false;
 			for (size_t i = 0; i < countof(SkipCheckID); i++)
 			{
@@ -5156,17 +5156,17 @@ void Settings::CheckHotkeyUnique()
 			if (bSkip)
 				continue;
 
-			// Хоткеи различаются?
+			// РҐРѕС‚РєРµРё СЂР°Р·Р»РёС‡Р°СЋС‚СЃСЏ?
 			if (ppHK1->VkMod != ppHK2->VkMod)
 				continue;
 
-			// Если совпадают - может быть это макрос, переехавший в системную область?
+			// Р•СЃР»Рё СЃРѕРІРїР°РґР°СЋС‚ - РјРѕР¶РµС‚ Р±С‹С‚СЊ СЌС‚Рѕ РјР°РєСЂРѕСЃ, РїРµСЂРµРµС…Р°РІС€РёР№ РІ СЃРёСЃС‚РµРјРЅСѓСЋ РѕР±Р»Р°СЃС‚СЊ?
 			if (((ppHK1->HkType == chk_Macro) || (ppHK2->HkType == chk_Macro))
 				&& ppHK1->GuiMacro && *ppHK1->GuiMacro && ppHK2->GuiMacro && *ppHK2->GuiMacro)
 			{
 				if (lstrcmp(ppHK1->GuiMacro, ppHK2->GuiMacro) == 0)
 				{
-					// Нам - можно
+					// РќР°Рј - РјРѕР¶РЅРѕ
 					if (ppHK1->HkType == chk_Macro)
 						((ConEmuHotKey*)ppHK1)->VkMod = 0;
 					else
@@ -5225,7 +5225,7 @@ void Settings::SaveHotkeys(SettingsBase* reg)
 
 	wchar_t szMacroName[80];
 
-	// Таски сохраняются отдельно
+	// РўР°СЃРєРё СЃРѕС…СЂР°РЅСЏСЋС‚СЃСЏ РѕС‚РґРµР»СЊРЅРѕ
 	for (int i = 0; i < gpSetCls->mn_HotKeys; i++)
 	{
 		ConEmuHotKey *ppHK = gpSetCls->mp_HotKeys+i;

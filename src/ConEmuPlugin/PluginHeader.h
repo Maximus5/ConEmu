@@ -1,4 +1,4 @@
-
+ï»¿
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -50,7 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ISALPHA(c) ((((c) >= (BYTE)'c') && ((c) <= (BYTE)'z')) || (((c) >= (BYTE)'C') && ((c) <= (BYTE)'Z')))
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
-// X - ìåíüøàÿ, Y - áîëüøàÿ
+// X - Ð¼ÐµÐ½ÑŒÑˆÐ°Ñ, Y - Ð±Ð¾Ð»ÑŒÑˆÐ°Ñ
 #define FAR_X_VER 995
 #define FAR_Y1_VER 1900
 #define FAR_Y2_VER 2800
@@ -75,7 +75,7 @@ extern int lastModifiedStateW;
 //extern HANDLE hEventCmd[MAXCMDCOUNT];
 extern HANDLE hThread;
 //extern WCHAR gcPlugKey;
-//WARNING("Óáðàòü, çàìåíèòü ghConIn íà GetStdHandle()"); // Èíà÷å â Win7 áóäåò áóôåð ðàçðóøàòüñÿ
+//WARNING("Ð£Ð±Ñ€Ð°Ñ‚ÑŒ, Ð·Ð°Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ ghConIn Ð½Ð° GetStdHandle()"); // Ð˜Ð½Ð°Ñ‡Ðµ Ð² Win7 Ð±ÑƒÐ´ÐµÑ‚ Ð±ÑƒÑ„ÐµÑ€ Ñ€Ð°Ð·Ñ€ÑƒÑˆÐ°Ñ‚ÑŒÑÑ
 //extern HANDLE ghConIn;
 extern BOOL gbNeedPostTabSend, gbNeedPostEditCheck;
 extern HANDLE ghServerTerminateEvent;
@@ -178,7 +178,7 @@ bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Para
 
 BOOL LoadFarVersion();
 
-BOOL OutDataAlloc(DWORD anSize); // íåîáÿçàòåëüíî
+BOOL OutDataAlloc(DWORD anSize); // Ð½ÐµÐ¾Ð±ÑÐ·Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð¾
 BOOL OutDataWrite(LPVOID apData, DWORD anSize);
 
 //void CheckMacro(BOOL abAllowAPI);
@@ -310,7 +310,7 @@ BOOL FUNC_Y2(CheckBufferEnabledW)();
 
 extern int gnSynchroCount;
 extern bool gbSynchroProhibited;
-void ExecuteSynchro(); // åñëè äîñòóïåí - ïîçîâåò ACTL_SYNCHRO (FAR2 only)
+void ExecuteSynchro(); // ÐµÑÐ»Ð¸ Ð´Ð¾ÑÑ‚ÑƒÐ¿ÐµÐ½ - Ð¿Ð¾Ð·Ð¾Ð²ÐµÑ‚ ACTL_SYNCHRO (FAR2 only)
 BOOL FUNC_X(ExecuteSynchroW)();
 BOOL FUNC_Y1(ExecuteSynchroW)();
 BOOL FUNC_Y2(ExecuteSynchroW)();
@@ -372,7 +372,7 @@ enum PluginMenuCommands
 	menu_SwitchTabCommit,
 	menu_ShowTabsList,
 	menu_Separator2,
-	menu_ConEmuMacro, // äîëæåí âûçûâàòüñÿ "ïî íàñòîÿùåìó", à íå ÷åðåç callplugin
+	menu_ConEmuMacro, // Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð²Ñ‹Ð·Ñ‹Ð²Ð°Ñ‚ÑŒÑÑ "Ð¿Ð¾ Ð½Ð°ÑÑ‚Ð¾ÑÑ‰ÐµÐ¼Ñƒ", Ð° Ð½Ðµ Ñ‡ÐµÑ€ÐµÐ· callplugin
 	menu_Separator3,
 	menu_AttachToConEmu,
 	menu_Separator4,
@@ -384,9 +384,9 @@ enum PluginMenuCommands
 
 struct PluginAndMenuCommands
 {
-	int LangID; // ID äëÿ GetMsg
-	PluginMenuCommands MenuID; // ïî ñóòè - èíäåêñ â âåêòîðå
-	PluginCallCommands CallID; // ID äëÿ CallPlugin
+	int LangID; // ID Ð´Ð»Ñ GetMsg
+	PluginMenuCommands MenuID; // Ð¿Ð¾ ÑÑƒÑ‚Ð¸ - Ð¸Ð½Ð´ÐµÐºÑ Ð² Ð²ÐµÐºÑ‚Ð¾Ñ€Ðµ
+	PluginCallCommands CallID; // ID Ð´Ð»Ñ CallPlugin
 };
 
 struct ConEmuPluginMenuItem

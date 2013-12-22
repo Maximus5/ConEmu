@@ -1,4 +1,4 @@
-/*
+п»ї/*
 Copyright (c) 1996 Eugene Roshal
 Copyright (c) 2000 Far Group
 All rights reserved.
@@ -37,15 +37,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-// Выдранный кусок из будущего GetFileInfo, получаем достоверную информацию о ГУЯХ PE-модуля
+// Р’С‹РґСЂР°РЅРЅС‹Р№ РєСѓСЃРѕРє РёР· Р±СѓРґСѓС‰РµРіРѕ GetFileInfo, РїРѕР»СѓС‡Р°РµРј РґРѕСЃС‚РѕРІРµСЂРЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ Р“РЈРЇРҐ PE-РјРѕРґСѓР»СЏ
 
-// Возвращаем константы IMAGE_SUBSYSTEM_* дабы консоль отличать
-// При выходе из процедуры IMAGE_SUBSYTEM_UNKNOWN означает
-// "файл не является исполняемым".
-// Для DOS-приложений определим еще одно значение флага.
+// Р’РѕР·РІСЂР°С‰Р°РµРј РєРѕРЅСЃС‚Р°РЅС‚С‹ IMAGE_SUBSYSTEM_* РґР°Р±С‹ РєРѕРЅСЃРѕР»СЊ РѕС‚Р»РёС‡Р°С‚СЊ
+// РџСЂРё РІС‹С…РѕРґРµ РёР· РїСЂРѕС†РµРґСѓСЂС‹ IMAGE_SUBSYTEM_UNKNOWN РѕР·РЅР°С‡Р°РµС‚
+// "С„Р°Р№Р» РЅРµ СЏРІР»СЏРµС‚СЃСЏ РёСЃРїРѕР»РЅСЏРµРјС‹Рј".
+// Р”Р»СЏ DOS-РїСЂРёР»РѕР¶РµРЅРёР№ РѕРїСЂРµРґРµР»РёРј РµС‰Рµ РѕРґРЅРѕ Р·РЅР°С‡РµРЅРёРµ С„Р»Р°РіР°.
 
 // 17.12.2010 Maks
-// Если GetImageSubsystem вернет true - то имеет смысл проверять следующие значения
+// Р•СЃР»Рё GetImageSubsystem РІРµСЂРЅРµС‚ true - С‚Рѕ РёРјРµРµС‚ СЃРјС‹СЃР» РїСЂРѕРІРµСЂСЏС‚СЊ СЃР»РµРґСѓСЋС‰РёРµ Р·РЅР°С‡РµРЅРёСЏ
 // IMAGE_SUBSYSTEM_WINDOWS_CUI    -- Win Console (32/64)
 // IMAGE_SUBSYSTEM_DOS_EXECUTABLE -- DOS Executable (ImageBits == 16)
 
@@ -69,10 +69,10 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 	ImageBits = 0;
 	FileAttrs = (DWORD)-1;
 	wchar_t* pszExpand = NULL;
-	// Пытаться в UNC? Хотя сам CreateProcess UNC не поддерживает, так что смысла пока нет
+	// РџС‹С‚Р°С‚СЊСЃСЏ РІ UNC? РҐРѕС‚СЏ СЃР°Рј CreateProcess UNC РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚, С‚Р°Рє С‡С‚Рѕ СЃРјС‹СЃР»Р° РїРѕРєР° РЅРµС‚
 	HANDLE hModuleFile = CreateFile(FileName,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
 
-	// Переменные окружения
+	// РџРµСЂРµРјРµРЅРЅС‹Рµ РѕРєСЂСѓР¶РµРЅРёСЏ
 	if ((hModuleFile == INVALID_HANDLE_VALUE) && FileName && wcschr(FileName, L'%'))
 	{
 		pszExpand = ExpandEnvStr(FileName);
@@ -87,7 +87,7 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 	}
 
 #if 0
-	// Если не указан путь к файлу - попробовать найти его в %PATH%
+	// Р•СЃР»Рё РЅРµ СѓРєР°Р·Р°РЅ РїСѓС‚СЊ Рє С„Р°Р№Р»Сѓ - РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РЅР°Р№С‚Рё РµРіРѕ РІ %PATH%
 	if (hModuleFile != INVALID_HANDLE_VALUE && FileName && wcschr(FileName, L'\\') == NULL && wcschr(FileName, L'.') != NULL)
 	{
 		DWORD nErrCode = GetLastError();
@@ -110,7 +110,7 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 		if (GetFileInformationByHandle(hModuleFile, &bfi))
 			FileAttrs = bfi.dwFileAttributes;
 
-		// Это это батник - сразу вернуть IMAGE_SUBSYSTEM_BATCH_FILE
+		// Р­С‚Рѕ СЌС‚Рѕ Р±Р°С‚РЅРёРє - СЃСЂР°Р·Сѓ РІРµСЂРЅСѓС‚СЊ IMAGE_SUBSYSTEM_BATCH_FILE
 		LPCWSTR pszExt = PointToExt(FileName);
 		if (pszExt 
 			&& (!lstrcmpi(pszExt, L".cmd")
@@ -180,12 +180,12 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 						{
 							ImageBits = 32; //-V112
 							/*
-							NE,  хмм...  а как определить что оно ГУЕВОЕ?
+							NE,  С…РјРј...  Р° РєР°Рє РѕРїСЂРµРґРµР»РёС‚СЊ С‡С‚Рѕ РѕРЅРѕ Р“РЈР•Р’РћР•?
 
 							Andrzej Novosiolov <andrzej@se.kiev.ua>
-							AN> ориентироваться по флагу "Target operating system" NE-заголовка
-							AN> (1 байт по смещению 0x36). Если там Windows (значения 2, 4) - подразумеваем
-							AN> GUI, если OS/2 и прочая экзотика (остальные значения) - подразумеваем консоль.
+							AN> РѕСЂРёРµРЅС‚РёСЂРѕРІР°С‚СЊСЃСЏ РїРѕ С„Р»Р°РіСѓ "Target operating system" NE-Р·Р°РіРѕР»РѕРІРєР°
+							AN> (1 Р±Р°Р№С‚ РїРѕ СЃРјРµС‰РµРЅРёСЋ 0x36). Р•СЃР»Рё С‚Р°Рј Windows (Р·РЅР°С‡РµРЅРёСЏ 2, 4) - РїРѕРґСЂР°Р·СѓРјРµРІР°РµРј
+							AN> GUI, РµСЃР»Рё OS/2 Рё РїСЂРѕС‡Р°СЏ СЌРєР·РѕС‚РёРєР° (РѕСЃС‚Р°Р»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ) - РїРѕРґСЂР°Р·СѓРјРµРІР°РµРј РєРѕРЅСЃРѕР»СЊ.
 							*/
 							BYTE ne_exetyp = reinterpret_cast<PIMAGE_OS2_HEADER>(&PEHeader)->ne_exetyp;
 
@@ -207,34 +207,34 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 
 					/*else
 					{
-						// обломс вышел с чтением следующего заголовка ;-(
+						// РѕР±Р»РѕРјСЃ РІС‹С€РµР» СЃ С‡С‚РµРЅРёРµРј СЃР»РµРґСѓСЋС‰РµРіРѕ Р·Р°РіРѕР»РѕРІРєР° ;-(
 					}*/
 				}
 
 				/*else
 				{
-					// видимо улетели куда нить в трубу, т.к. dos_head.e_lfanew указал
-					// слишком в неправдоподное место (например это чистой воды DOS-файл)
+					// РІРёРґРёРјРѕ СѓР»РµС‚РµР»Рё РєСѓРґР° РЅРёС‚СЊ РІ С‚СЂСѓР±Сѓ, С‚.Рє. dos_head.e_lfanew СѓРєР°Р·Р°Р»
+					// СЃР»РёС€РєРѕРј РІ РЅРµРїСЂР°РІРґРѕРїРѕРґРЅРѕРµ РјРµСЃС‚Рѕ (РЅР°РїСЂРёРјРµСЂ СЌС‚Рѕ С‡РёСЃС‚РѕР№ РІРѕРґС‹ DOS-С„Р°Р№Р»)
 				}*/
 			}
 
 			/*else
 			{
-				// это не исполняемый файл - у него нету заголовка MZ, например, NLM-модуль
-				// TODO: здесь можно разбирать POSIX нотацию, например "/usr/bin/sh"
+				// СЌС‚Рѕ РЅРµ РёСЃРїРѕР»РЅСЏРµРјС‹Р№ С„Р°Р№Р» - Сѓ РЅРµРіРѕ РЅРµС‚Сѓ Р·Р°РіРѕР»РѕРІРєР° MZ, РЅР°РїСЂРёРјРµСЂ, NLM-РјРѕРґСѓР»СЊ
+				// TODO: Р·РґРµСЃСЊ РјРѕР¶РЅРѕ СЂР°Р·Р±РёСЂР°С‚СЊ POSIX РЅРѕС‚Р°С†РёСЋ, РЅР°РїСЂРёРјРµСЂ "/usr/bin/sh"
 			}*/
 		}
 
 		/*else
 		{
-			// ошибка чтения
+			// РѕС€РёР±РєР° С‡С‚РµРЅРёСЏ
 		}*/
 		CloseHandle(hModuleFile);
 	}
 
 	/*else
 	{
-		// ошибка открытия
+		// РѕС€РёР±РєР° РѕС‚РєСЂС‹С‚РёСЏ
 	}*/
 wrap:
 	SafeFree(pszExpand);
@@ -337,11 +337,11 @@ bool GetImageSubsystem(PROCESS_INFORMATION pi,DWORD& ImageSubsystem,DWORD& Image
 	if (!lbModule)
 		return false;
 	
-	// Теперь можно считать данные процесса
+	// РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ СЃС‡РёС‚Р°С‚СЊ РґР°РЅРЅС‹Рµ РїСЂРѕС†РµСЃСЃР°
 	if (!ReadProcessMemory(pi.hProcess, mi.modBaseAddr, &dos, sizeof(dos), &hdrReadSize))
 		nErrCode = -3;
 	else if (dos.e_magic != IMAGE_DOS_SIGNATURE)
-		nErrCode = -4; // некорректная сигнатура - должно быть 'MZ'
+		nErrCode = -4; // РЅРµРєРѕСЂСЂРµРєС‚РЅР°СЏ СЃРёРіРЅР°С‚СѓСЂР° - РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ 'MZ'
 	else if (!ReadProcessMemory(pi.hProcess, mi.modBaseAddr+dos.e_lfanew, &hdr, sizeof(hdr), &hdrReadSize))
 		nErrCode = -5;
 	else if (hdr.Signature != IMAGE_NT_SIGNATURE)
@@ -524,7 +524,7 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //				{
 //					if (strcmp(pszFuncName, "LoadLibraryW"))
 //					{
-//						// Нашли
+//						// РќР°С€Р»Рё
 //						return entryPointRVA;
 //					}
 //				}
@@ -538,7 +538,7 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //static int FindLoadLibrary(LPCWSTR asKernel32)
 //{
 //	int nLoadLibraryOffset = 0;
-//	MWow64Disable wow; wow.Disable(); // Требуется в Win64 системах. Если не нужно - ничего не делает.
+//	MWow64Disable wow; wow.Disable(); // РўСЂРµР±СѓРµС‚СЃСЏ РІ Win64 СЃРёСЃС‚РµРјР°С…. Р•СЃР»Рё РЅРµ РЅСѓР¶РЅРѕ - РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµС‚.
 //	HANDLE hMapping = NULL, hKernel = NULL;
 //	LPBYTE ptrMapping = NULL;
 //	LARGE_INTEGER nFileSize;
@@ -554,7 +554,7 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //		nLoadLibraryOffset = -104;
 //	else if (!(ptrMapping = (LPBYTE)MapViewOfFile(hMapping, FILE_MAP_READ, 0,0,0)))
 //		nLoadLibraryOffset = -105;
-//	else // Поехали
+//	else // РџРѕРµС…Р°Р»Рё
 //	{
 //		IMAGE_MAPPING img;
 //		img.pDos = (PIMAGE_DOS_HEADER)ptrMapping;
@@ -562,7 +562,7 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //		img.ptrEnd = (ptrMapping + nFileSize.LowPart);
 //
 //		if (img.pDos->e_magic != IMAGE_DOS_SIGNATURE)
-//			nLoadLibraryOffset = -110; // некорректная сигнатура - должно быть 'MZ'
+//			nLoadLibraryOffset = -110; // РЅРµРєРѕСЂСЂРµРєС‚РЅР°СЏ СЃРёРіРЅР°С‚СѓСЂР° - РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ 'MZ'
 //		else if (!ValidateMemory(img.pHdr, sizeof(*img.pHdr), &img))
 //			nLoadLibraryOffset = -111;
 //		else if (img.pHdr->Signature != IMAGE_NT_SIGNATURE)
@@ -570,13 +570,13 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //		else if (img.pHdr->OptionalHeader32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC
 //		        &&  img.pHdr->OptionalHeader64.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
 //			nLoadLibraryOffset = -113;
-//		else // OK, файл первичную валидацию прошел
+//		else // OK, С„Р°Р№Р» РїРµСЂРІРёС‡РЅСѓСЋ РІР°Р»РёРґР°С†РёСЋ РїСЂРѕС€РµР»
 //		{
 //			nLoadLibraryOffset = ParseExportsSection(&img);
 //		}
 //	}
 //
-//	// Закрываем дескрипторы
+//	// Р—Р°РєСЂС‹РІР°РµРј РґРµСЃРєСЂРёРїС‚РѕСЂС‹
 //	if (ptrMapping)
 //		UnmapViewOfFile(ptrMapping);
 //
@@ -590,7 +590,7 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //	return nLoadLibraryOffset;
 //}
 
-//// Определить адрес процедуры LoadLibraryW для запущенного процесса
+//// РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ РїСЂРѕС†РµРґСѓСЂС‹ LoadLibraryW РґР»СЏ Р·Р°РїСѓС‰РµРЅРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР°
 //int FindKernelAddress(HANDLE ahProcess, DWORD anPID, DWORD* pLoadLibrary)
 //{
 //	int iRc = -100;
@@ -601,22 +601,22 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //	IMAGE_HEADERS hdr;
 //	MODULEENTRY32 mi = {sizeof(MODULEENTRY32)};
 //	// Must be TH32CS_SNAPMODULE32 for spy 32bit from 64bit process
-//	// Сначала пробуем как Native, если процесс окажется другой битности - переоткроем snapshoot
+//	// РЎРЅР°С‡Р°Р»Р° РїСЂРѕР±СѓРµРј РєР°Рє Native, РµСЃР»Рё РїСЂРѕС†РµСЃСЃ РѕРєР°Р¶РµС‚СЃСЏ РґСЂСѓРіРѕР№ Р±РёС‚РЅРѕСЃС‚Рё - РїРµСЂРµРѕС‚РєСЂРѕРµРј snapshoot
 //	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, anPID);
 //
 //	if (!hSnap || hSnap == INVALID_HANDLE_VALUE)
 //		iRc = -1;
 //	else
 //	{
-//		WARNING("По всей видимости, 32-битный процесс не может получить информацию о 64-битном!");
+//		WARNING("РџРѕ РІСЃРµР№ РІРёРґРёРјРѕСЃС‚Рё, 32-Р±РёС‚РЅС‹Р№ РїСЂРѕС†РµСЃСЃ РЅРµ РјРѕР¶РµС‚ РїРѕР»СѓС‡РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ 64-Р±РёС‚РЅРѕРј!");
 //
-//		// Теперь нужно определить битность процесса
+//		// РўРµРїРµСЂСЊ РЅСѓР¶РЅРѕ РѕРїСЂРµРґРµР»РёС‚СЊ Р±РёС‚РЅРѕСЃС‚СЊ РїСЂРѕС†РµСЃСЃР°
 //		if (!Module32First(hSnap, &mi))
 //			iRc = -2;
 //		else if (!ReadProcessMemory(ahProcess, mi.modBaseAddr, &dos, sizeof(dos), &hdrReadSize))
 //			iRc = -3;
 //		else if (dos.e_magic != IMAGE_DOS_SIGNATURE)
-//			iRc = -4; // некорректная сигнатура - должно быть 'MZ'
+//			iRc = -4; // РЅРµРєРѕСЂСЂРµРєС‚РЅР°СЏ СЃРёРіРЅР°С‚СѓСЂР° - РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ 'MZ'
 //		else if (!ReadProcessMemory(ahProcess, mi.modBaseAddr+dos.e_lfanew, &hdr, sizeof(hdr), &hdrReadSize))
 //			iRc = -5;
 //		else if (hdr.Signature != IMAGE_NT_SIGNATURE)
@@ -626,12 +626,12 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //			iRc = -7;
 //		else
 //		{
-//			TODO("Потенциально, еще можно попробовать обработать IMAGE_OS2_SIGNATURE?");
+//			TODO("РџРѕС‚РµРЅС†РёР°Р»СЊРЅРѕ, РµС‰Рµ РјРѕР¶РЅРѕ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ IMAGE_OS2_SIGNATURE?");
 //			nBits = (hdr.OptionalHeader32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC) ? 32 : 64;
 //#ifdef WIN64
 //
-//			// Если ahProcess - 64 бита, но нужно переоткрыть snapshoot с флагом TH32CS_SNAPMODULE32
-//			// В принципе, мы сюда попадать не должны, т.к. ConEmuC.exe - 32битный.
+//			// Р•СЃР»Рё ahProcess - 64 Р±РёС‚Р°, РЅРѕ РЅСѓР¶РЅРѕ РїРµСЂРµРѕС‚РєСЂС‹С‚СЊ snapshoot СЃ С„Р»Р°РіРѕРј TH32CS_SNAPMODULE32
+//			// Р’ РїСЂРёРЅС†РёРїРµ, РјС‹ СЃСЋРґР° РїРѕРїР°РґР°С‚СЊ РЅРµ РґРѕР»Р¶РЅС‹, С‚.Рє. ConEmuC.exe - 32Р±РёС‚РЅС‹Р№.
 //			if (nBits == 32)
 //			{
 //				CloseHandle(hSnap);
@@ -663,7 +663,7 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //						//if (!ReadProcessMemory(ahProcess, mi.modBaseAddr, &dos, sizeof(dos), &hdrReadSize))
 //						//	iRc = -23;
 //						//else if (dos.e_magic != IMAGE_DOS_SIGNATURE)
-//						//	iRc = -24; // некорректная сигнатура - должно быть 'MZ'
+//						//	iRc = -24; // РЅРµРєРѕСЂСЂРµРєС‚РЅР°СЏ СЃРёРіРЅР°С‚СѓСЂР° - РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ 'MZ'
 //						//else if (!ReadProcessMemory(ahProcess, mi.modBaseAddr+dos.e_lfanew, &hdr, sizeof(hdr), &hdrReadSize))
 //						//	iRc = -25;
 //						//else if (hdr.Signature != IMAGE_NT_SIGNATURE)
@@ -684,7 +684,7 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //			CloseHandle(hSnap);
 //	}
 //
-//	// Если kernel32.dll нашли в обрабатываемом процессе
+//	// Р•СЃР»Рё kernel32.dll РЅР°С€Р»Рё РІ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјРѕРј РїСЂРѕС†РµСЃСЃРµ
 //	if (iRc == 0 && nBits)
 //	{
 //		BOOL lbNeedLoad = FALSE;
@@ -729,7 +729,7 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //
 //		if (lbNeedLoad)
 //		{
-//			// Не удалось
+//			// РќРµ СѓРґР°Р»РѕСЃСЊ
 //			if (iRc == 0)
 //				iRc = -40;
 //		}
@@ -739,8 +739,8 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //
 //			if (ptr != (DWORD)ptr)
 //			{
-//				// BaseAddress даже для 64-битного Kernel32 мал, и доступен в 32-битных процессах,
-//				// но тем не менее проверяем, и если он "ушел" - то возвращаем ошибку.
+//				// BaseAddress РґР°Р¶Рµ РґР»СЏ 64-Р±РёС‚РЅРѕРіРѕ Kernel32 РјР°Р», Рё РґРѕСЃС‚СѓРїРµРЅ РІ 32-Р±РёС‚РЅС‹С… РїСЂРѕС†РµСЃСЃР°С…,
+//				// РЅРѕ С‚РµРј РЅРµ РјРµРЅРµРµ РїСЂРѕРІРµСЂСЏРµРј, Рё РµСЃР»Рё РѕРЅ "СѓС€РµР»" - С‚Рѕ РІРѕР·РІСЂР°С‰Р°РµРј РѕС€РёР±РєСѓ.
 //				iRc = -41;
 //			}
 //			else
@@ -759,10 +759,10 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 	bool Result = false;
 	//ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
 
-	// Исключения нас не интересуют - команда уже сформирована и отдана в CreateProcess!
-	//// нулевой проход - смотрим исключения
-	//// Берем "исключения" из реестра, которые должны исполняться директом,
-	//// например, некоторые внутренние команды ком. процессора.
+	// РСЃРєР»СЋС‡РµРЅРёСЏ РЅР°СЃ РЅРµ РёРЅС‚РµСЂРµСЃСѓСЋС‚ - РєРѕРјР°РЅРґР° СѓР¶Рµ СЃС„РѕСЂРјРёСЂРѕРІР°РЅР° Рё РѕС‚РґР°РЅР° РІ CreateProcess!
+	//// РЅСѓР»РµРІРѕР№ РїСЂРѕС…РѕРґ - СЃРјРѕС‚СЂРёРј РёСЃРєР»СЋС‡РµРЅРёСЏ
+	//// Р‘РµСЂРµРј "РёСЃРєР»СЋС‡РµРЅРёСЏ" РёР· СЂРµРµСЃС‚СЂР°, РєРѕС‚РѕСЂС‹Рµ РґРѕР»Р¶РЅС‹ РёСЃРїРѕР»РЅСЏС‚СЊСЃСЏ РґРёСЂРµРєС‚РѕРј,
+	//// РЅР°РїСЂРёРјРµСЂ, РЅРµРєРѕС‚РѕСЂС‹Рµ РІРЅСѓС‚СЂРµРЅРЅРёРµ РєРѕРјР°РЅРґС‹ РєРѕРј. РїСЂРѕС†РµСЃСЃРѕСЂР°.
 	//string strExcludeCmds;
 	//GetRegKey(strSystemExecutor,L"ExcludeCmds",strExcludeCmds,L"");
 	//UserDefinedList ExcludeCmdsList;
@@ -814,7 +814,7 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 		nPathExtLen = lstrlen(strPathExt);
 	}
 	pszPathExtEnd = strPathExt+nPathExtLen;
-	// Разбить на токены
+	// Р Р°Р·Р±РёС‚СЊ РЅР° С‚РѕРєРµРЅС‹
 	strPathExt[nPathExtLen] = strPathExt[nPathExtLen+1] = 0;
 	Ext = wcschr(strPathExt, L';');
 	while (Ext)
@@ -823,9 +823,9 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 		Ext = wcschr(Ext+1, L';');
 	}
 
-	TODO("Проверить на превышение длин строк");
+	TODO("РџСЂРѕРІРµСЂРёС‚СЊ РЅР° РїСЂРµРІС‹С€РµРЅРёРµ РґР»РёРЅ СЃС‚СЂРѕРє");
 
-	// первый проход - в текущем каталоге
+	// РїРµСЂРІС‹Р№ РїСЂРѕС…РѕРґ - РІ С‚РµРєСѓС‰РµРј РєР°С‚Р°Р»РѕРіРµ
 	LPWSTR pszExtCur = strPathExt;
 	while (pszExtCur < pszPathExtEnd)
 	{
@@ -853,9 +853,9 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 		}
 	}
 
-	// второй проход - по правилам SearchPath
+	// РІС‚РѕСЂРѕР№ РїСЂРѕС…РѕРґ - РїРѕ РїСЂР°РІРёР»Р°Рј SearchPath
 
-	// поиск по переменной PATH
+	// РїРѕРёСЃРє РїРѕ РїРµСЂРµРјРµРЅРЅРѕР№ PATH
 	if (GetEnvironmentVariable(L"PATH", strPathEnv, cchstrPathEnv))
 	{
 		LPWSTR pszPathEnvEnd = strPathEnv + lstrlen(strPathEnv);
@@ -915,7 +915,7 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 		}
 	}
 
-	// третий проход - лезем в реестр в "App Paths"
+	// С‚СЂРµС‚РёР№ РїСЂРѕС…РѕРґ - Р»РµР·РµРј РІ СЂРµРµСЃС‚СЂ РІ "App Paths"
 	if (!wcschr(Module, L'\\'))
 	{
 		hAdvApi = LoadLibrary(L"AdvApi32.dll");
@@ -928,9 +928,9 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 			goto wrap;
 
 		LPCWSTR RegPath = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
-		// В строке Module заменить исполняемый модуль на полный путь, который
-		// берется из SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths
-		// Сначала смотрим в HKCU, затем - в HKLM
+		// Р’ СЃС‚СЂРѕРєРµ Module Р·Р°РјРµРЅРёС‚СЊ РёСЃРїРѕР»РЅСЏРµРјС‹Р№ РјРѕРґСѓР»СЊ РЅР° РїРѕР»РЅС‹Р№ РїСѓС‚СЊ, РєРѕС‚РѕСЂС‹Р№
+		// Р±РµСЂРµС‚СЃСЏ РёР· SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths
+		// РЎРЅР°С‡Р°Р»Р° СЃРјРѕС‚СЂРёРј РІ HKCU, Р·Р°С‚РµРј - РІ HKLM
 		HKEY RootFindKey[] = {HKEY_CURRENT_USER,HKEY_LOCAL_MACHINE,HKEY_LOCAL_MACHINE};
 
 		BOOL lbAddExt = FALSE;

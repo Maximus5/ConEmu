@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -57,7 +57,7 @@ extern DWORD   gnSelfPID;
 extern HWND    ghConWnd;
 extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
-extern DWORD   gnServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
+extern DWORD   gnServerPID; // PID СЃРµСЂРІРµСЂР° (РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚СЃСЏ РЅР° СЃС‚Р°СЂС‚Рµ, РїСЂРё Р·Р°РіСЂСѓР·РєРµ Dll)
 
 struct CEStartupEnv;
 extern CEStartupEnv* gpStartEnv;
@@ -155,7 +155,7 @@ extern bool gbPrepareDefaultTerminal;
 extern bool gbIsNetVsHost;
 extern bool gbIsVStudio;
 //extern HANDLE ghDefaultTerminalReady;
-extern ConEmuGuiMapping* gpDefaultTermParm; // полный путь к ConEmu.exe (GUI), "/config", параметры для "confirm" и "no-injects"
+extern ConEmuGuiMapping* gpDefaultTermParm; // РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє ConEmu.exe (GUI), "/config", РїР°СЂР°РјРµС‚СЂС‹ РґР»СЏ "confirm" Рё "no-injects"
 bool isDefaultTerminalEnabled();
 /* ************ Globals for "Default terminal ************ */
 

@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -36,14 +36,14 @@ class CFrameHolder
 private:
 	BOOL mb_Initialized;
 	BOOL mb_WasGlassDraw;
-	bool mb_AllowPreserveClient;// по возможности(!) - разрешить сохранение клиентской области (имеет приоритет перед mb_DontPreserveClient)
-	bool mb_DontPreserveClient; // запретить сохранение клиентской области при ресайзе
+	bool mb_AllowPreserveClient;// РїРѕ РІРѕР·РјРѕР¶РЅРѕСЃС‚Рё(!) - СЂР°Р·СЂРµС€РёС‚СЊ СЃРѕС…СЂР°РЅРµРЅРёРµ РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё (РёРјРµРµС‚ РїСЂРёРѕСЂРёС‚РµС‚ РїРµСЂРµРґ mb_DontPreserveClient)
+	bool mb_DontPreserveClient; // Р·Р°РїСЂРµС‚РёС‚СЊ СЃРѕС…СЂР°РЅРµРЅРёРµ РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё РїСЂРё СЂРµСЃР°Р№Р·Рµ
 public:
 	BOOL mb_NcActive;
 public:
-	//TODO: Во время анимации Maximize/Restore/Minimize заголовок отрисовывается 
-	//TODO: системой, в итоге мелькает текст и срезаются табы                    
-	//TODO: Сделаем, пока, чтобы текст хотя бы не мелькал...                     
+	//TODO: Р’Рѕ РІСЂРµРјСЏ Р°РЅРёРјР°С†РёРё Maximize/Restore/Minimize Р·Р°РіРѕР»РѕРІРѕРє РѕС‚СЂРёСЃРѕРІС‹РІР°РµС‚СЃСЏ 
+	//TODO: СЃРёСЃС‚РµРјРѕР№, РІ РёС‚РѕРіРµ РјРµР»СЊРєР°РµС‚ С‚РµРєСЃС‚ Рё СЃСЂРµР·Р°СЋС‚СЃСЏ С‚Р°Р±С‹                    
+	//TODO: РЎРґРµР»Р°РµРј, РїРѕРєР°, С‡С‚РѕР±С‹ С‚РµРєСЃС‚ С…РѕС‚СЏ Р±С‹ РЅРµ РјРµР»СЊРєР°Р»...                     
 	BOOL mb_NcAnimate;
 public:
 	CFrameHolder();
@@ -89,11 +89,11 @@ private:
 	int mn_WinCaptionHeight, mn_FrameWidth, mn_FrameHeight, mn_OurCaptionHeight, mn_TabsHeight, mn_CaptionDragHeight;
 public:
 	void RecalculateFrameSizes();
-	int GetFrameWidth(); // ширина рамки окна
-	int GetFrameHeight(); // высота рамки окна
-	int GetCaptionHeight(); // высота НАШЕГО заголовка (с учетом табов)
-	int GetTabsHeight(); // высота табов
-	int GetCaptionDragHeight(); // высота части заголовка, который оставляем для "таскания" окна
-	int GetWinCaptionHeight(); // высота заголовка в окнах Windows по умолчанию (без учета табов)
+	int GetFrameWidth(); // С€РёСЂРёРЅР° СЂР°РјРєРё РѕРєРЅР°
+	int GetFrameHeight(); // РІС‹СЃРѕС‚Р° СЂР°РјРєРё РѕРєРЅР°
+	int GetCaptionHeight(); // РІС‹СЃРѕС‚Р° РќРђРЁР•Р“Рћ Р·Р°РіРѕР»РѕРІРєР° (СЃ СѓС‡РµС‚РѕРј С‚Р°Р±РѕРІ)
+	int GetTabsHeight(); // РІС‹СЃРѕС‚Р° С‚Р°Р±РѕРІ
+	int GetCaptionDragHeight(); // РІС‹СЃРѕС‚Р° С‡Р°СЃС‚Рё Р·Р°РіРѕР»РѕРІРєР°, РєРѕС‚РѕСЂС‹Р№ РѕСЃС‚Р°РІР»СЏРµРј РґР»СЏ "С‚Р°СЃРєР°РЅРёСЏ" РѕРєРЅР°
+	int GetWinCaptionHeight(); // РІС‹СЃРѕС‚Р° Р·Р°РіРѕР»РѕРІРєР° РІ РѕРєРЅР°С… Windows РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ (Р±РµР· СѓС‡РµС‚Р° С‚Р°Р±РѕРІ)
 	void GetIconShift(POINT& IconShift);
 };
