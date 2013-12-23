@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #ifndef __COLORS_HPP__
 #define __COLORS_HPP__
 /*

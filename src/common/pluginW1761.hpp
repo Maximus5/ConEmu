@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #ifndef __PLUGIN_HPP__
 #define __PLUGIN_HPP__
 

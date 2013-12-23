@@ -1,4 +1,4 @@
-#ifndef __COLORS_HPP__
+﻿#ifndef __COLORS_HPP__
 #define __COLORS_HPP__
 /*
   farcolor.hpp

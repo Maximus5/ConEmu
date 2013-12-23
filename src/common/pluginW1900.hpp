@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #ifndef __PLUGIN_HPP__
 #define __PLUGIN_HPP__
 
@@ -9,8 +9,8 @@
 */
 
 /*
-Copyright © 1996 Eugene Roshal
-Copyright © 2000 Far Group
+Copyright В© 1996 Eugene Roshal
+Copyright В© 2000 Far Group
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -2205,9 +2205,9 @@ struct PluginInfo
 	struct PluginMenuItem PluginMenu;
 	struct PluginMenuItem PluginConfig;
 	const wchar_t *CommandPrefix;
-	/* *** чтобы не было конфликтов с оф.версией фара *** **
+	/* *** С‡С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ РєРѕРЅС„Р»РёРєС‚РѕРІ СЃ РѕС„.РІРµСЂСЃРёРµР№ С„Р°СЂР° *** **
 	const wchar_t *MacroFunctions;
-	** *** чтобы не было конфликтов с оф.версией фара *** */
+	** *** С‡С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ РєРѕРЅС„Р»РёРєС‚РѕРІ СЃ РѕС„.РІРµСЂСЃРёРµР№ С„Р°СЂР° *** */
 };
 
 struct FarGetPluginInformation
