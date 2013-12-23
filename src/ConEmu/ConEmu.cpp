@@ -9494,16 +9494,19 @@ void CConEmuMain::InitInactiveDC(CVirtualConsole* apVCon)
 	PostMessage(ghWnd, mn_MsgInitInactiveDC, 0, (LPARAM)apVCon);
 }
 
-void CConEmuMain::Invalidate(CVirtualConsole* apVCon)
+void CConEmuMain::Invalidate(LPRECT lpRect, BOOL bErase /*= TRUE*/)
 {
-	if (!this || !apVCon || !apVCon->isVisible()) return;
-
-	apVCon->Invalidate();
+	#ifdef _DEBUG
+	static bool bSkip = false;
+	if (bSkip)
+		return;
+	#endif
+	::InvalidateRect(ghWnd, lpRect, bErase);
 }
 
 void CConEmuMain::InvalidateAll()
 {
-	InvalidateRect(ghWnd, NULL, TRUE);
+	Invalidate(NULL, TRUE);
 
 	CVConGroup::InvalidateAll();
 
@@ -9512,8 +9515,9 @@ void CConEmuMain::InvalidateAll()
 	if (mp_TabBar)
 		mp_TabBar->Invalidate();
 
-	if (mp_Status)
-		mp_Status->InvalidateStatusBar();
+	//-- No need to invalidate status due to Invalidate(NULL) called above
+	//if (mp_Status)
+	//	mp_Status->InvalidateStatusBar();
 }
 
 void CConEmuMain::UpdateWindowChild(CVirtualConsole* apVCon)
@@ -12589,7 +12593,7 @@ void CConEmuMain::OnHideCaption()
 		// Refresh JIC
 		RedrawFrame();
 		// Status bar and others
-		InvalidateRect(ghWnd, NULL, TRUE);
+		Invalidate(NULL, TRUE);
 	}
 
 	if (changeFromWindowMode == wmNotChanging)
@@ -17690,7 +17694,6 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		// После скрытия/закрытия PictureView нужно передернуть консоль - ее размер мог измениться
 		isPiewUpdate = false;
 		CVConGroup::SyncConsoleToWindow();
-		//INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
 		InvalidateAll();
 	}
 
@@ -17775,7 +17778,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		if (bLastFade != bNewFade)
 		{
 			pVCon->mb_LastFadeFlag = bNewFade;
-			Invalidate(pVCon);
+			pVCon->Invalidate();
 		}
 	}
 

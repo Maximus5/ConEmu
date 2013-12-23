@@ -720,7 +720,7 @@ class CConEmuMain :
 		//LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, CVirtualConsole* apVCon);
 		BOOL Init();
 		void InitInactiveDC(CVirtualConsole* apVCon);
-		void Invalidate(CVirtualConsole* apVCon);
+		void Invalidate(LPRECT lpRect, BOOL bErase = TRUE);
 		void InvalidateAll();
 		void UpdateWindowChild(CVirtualConsole* apVCon);
 		void UpdateInsideRect(RECT rcNewPos);

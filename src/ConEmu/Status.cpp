@@ -939,7 +939,7 @@ void CStatus::InvalidateStatusBar(LPRECT rcInvalidated /*= NULL*/)
 	// и по таймеру, чтобы гарантировать актуальность данных
 	// (не все данные хранятся в объекте, например CAPS/NUM/SCRL нужно проверять)
 
-	InvalidateRect(ghWnd, &rcClient, FALSE);
+	gpConEmu->Invalidate(&rcClient, FALSE);
 
 	if (rcInvalidated)
 	{

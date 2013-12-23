@@ -422,12 +422,12 @@ LRESULT CFrameHolder::OnDwmMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-void CFrameHolder::NC_Redraw(HWND hWnd)
+void CFrameHolder::NC_Redraw()
 {
 	mb_RedrawRequested = false;
 	
 	//TODO: ѕри потере фокуса (клик мышкой по другому окну) лезут глюки отрисовки этого нового окна
-	SetWindowPos(hWnd, 0, 0, 0, 0, 0,
+	SetWindowPos(ghWnd, 0, 0, 0, 0, 0,
 		SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_DRAWFRAME);
 	
 	//SetWindowPos(ghWnd, NULL, 0, 0, 0, 0,
@@ -438,7 +438,7 @@ void CFrameHolder::NC_Redraw(HWND hWnd)
 	// ¬ Aero отрисовка идет как бы на клиентской части
 	if (gpConEmu->DrawType() == fdt_Aero)
 	{
-		InvalidateRect(hWnd, 0,0);
+		gpConEmu->Invalidate(NULL, FALSE);
 	}
 }
 
@@ -452,7 +452,7 @@ void CFrameHolder::RedrawUnlock()
 	mn_RedrawLockCount = 0;
 	if (mb_RedrawRequested)
 	{
-		NC_Redraw(ghWnd);
+		NC_Redraw();
 	}
 }
 
@@ -465,7 +465,7 @@ void CFrameHolder::RedrawFrame()
 	}
 	else
 	{
-		NC_Redraw(ghWnd);
+		NC_Redraw();
 	}
 }
 
@@ -1066,7 +1066,7 @@ LRESULT CFrameHolder::OnNcActivate(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		lRc = NC_Wrapper(hWnd, uMsg, wParam, lParam);
 	//}
 	//lRc = DefWindowProc(hWnd, uMsg, wParam, lParam);
-	//NC_Redraw(hWnd);
+	//NC_Redraw();
 	OnNcPaint(hWnd, WM_NCPAINT, 1, 0);
 	return lRc;
 }

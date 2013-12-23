@@ -74,7 +74,7 @@ protected:
 	// NC helpers
 	LRESULT NC_Wrapper(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	// NC Invalidating
-	void NC_Redraw(HWND hWnd);
+	void NC_Redraw();
 	int mn_RedrawLockCount;
 	bool mb_RedrawRequested;
 	void RedrawLock();

@@ -1718,7 +1718,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 			{
 				if (gpSetCls->isAdvLogging>=3) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.1");
 
-				gpConEmu->Invalidate(this);
+				Invalidate();
 			}
 
 			return true;
@@ -1884,7 +1884,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 			// должен вызываться в основной нити
 			_ASSERTE(gpConEmu->isMainThread());
 			//mb_PaintRequested = TRUE;
-			gpConEmu->Invalidate(this);
+			Invalidate();
 
 			if (gpSetCls->isAdvLogging>=3) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
 
