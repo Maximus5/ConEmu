@@ -187,7 +187,9 @@ class MPipe
 			DEBUGTEST(DWORD nStartTick2 = GetTickCount());
 			DEBUGTEST(DWORD nTickOvl = 0);
 
-			if (mb_Overlapped && (!fSuccess || !cbRead))
+			// MSDN: If the operation cannot be completed immediately,
+			// TransactNamedPipe returns FALSE and GetLastError returns ERROR_IO_PENDING.
+			if (mb_Overlapped && !fSuccess && dwErr == ERROR_IO_PENDING)
 			{
 				if (mh_TermEvent)
 				{
