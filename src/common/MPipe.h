@@ -325,13 +325,16 @@ class MPipe
 					DEBUGTEST(nMoreDataTick[1] = GetTickCount());
 					// Read from the pipe if there is more data in the message.
 					//WARNING: Если в буфере пайпа данных меньше чем nAllSize - повиснем!
-					fSuccess = ReadFile(mh_Pipe, ptrData, nAllSize, &cbRead, NULL);
+					fSuccess = ReadFile(mh_Pipe, ptrData, nAllSize, &cbRead, mb_Overlapped ? &m_Ovl : NULL);
 					dwErr = fSuccess ? 0 : GetLastError();
 					SaveErrorCode(dwErr);
 
 					DEBUGTEST(nMoreDataTick[2] = GetTickCount());
 
-					if (mb_Overlapped && (!fSuccess || !cbRead))
+					// MSDN: ReadFile may return before the read operation is complete.
+					// In this scenario, ReadFile returns FALSE and the GetLastError
+					// function returns ERROR_IO_PENDING.
+					if (mb_Overlapped && !fSuccess && dwErr == ERROR_IO_PENDING)
 					{
 						if (mh_TermEvent)
 						{

@@ -2123,6 +2123,10 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		{
 			int nDbg = ERROR_PIPE_NOT_CONNECTED;
 		}
+		else if (mp_RCon->m_GetDataPipe.GetErrorCode() == ERROR_BAD_PIPE)
+		{
+			int nDbg = ERROR_BAD_PIPE;
+		}
 		else
 		{
 			wchar_t szInfo[128];
