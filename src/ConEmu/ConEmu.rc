@@ -1060,8 +1060,8 @@ BEGIN
     LTEXT           "Font must be declared in: HKEY_LOCAL_MACHINE\\Software\\",IDC_STATIC,12,82,214,8
     LTEXT           "Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",IDC_STATIC,12,91,214,8
     PUSHBUTTON      "Add font to ‘...\\Console\\TrueTypeFont’",bConFontAdd2HKLM,11,102,214,14,WS_DISABLED
-    LTEXT           "Console restart required",tConsoleFontConsoleNote,12,141,110,8,WS_DISABLED
-    LTEXT           "NOTE!!! You must restart computer to apply registry changes",tConsoleFontHklmNote,12,120,213,8,WS_DISABLED
+    LTEXT           "Console restart may be required",tConsoleFontConsoleNote,12,141,110,8,WS_DISABLED
+    LTEXT           "NOTE!!! Computer restart may be required to apply registry changes",tConsoleFontHklmNote,12,120,213,8,WS_DISABLED
 END
 
 IDD_MORE_DOSBOX DIALOGEX 0, 0, 210, 150
