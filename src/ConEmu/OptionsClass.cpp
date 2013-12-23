@@ -1610,6 +1610,11 @@ wrap:
 	SetCursor(LoadCursor(NULL,IDC_ARROW));
 }
 
+void CSettings::InvalidateCtrl(HWND hCtrl, BOOL bErase)
+{
+	::InvalidateRect(hCtrl, NULL, bErase);
+}
+
 LRESULT CSettings::OnInitDialog()
 {
 	//_ASSERTE(!hMain && !hColors && !hCmdTasks && !hViews && !hExt && !hFar && !hInfo && !hDebug && !hUpdate && !hSelection);
@@ -5654,15 +5659,15 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case rbThumbBackColorIdx: case rbThumbBackColorRGB:
 			gpSet->ThSet.crBackground.UseIndex = IsChecked(hWnd2, rbThumbBackColorIdx);
-			InvalidateRect(GetDlgItem(hWnd2, c32), 0, 1);
+			InvalidateCtrl(GetDlgItem(hWnd2, c32), TRUE);
 			break;
 		case rbThumbPreviewBoxColorIdx: case rbThumbPreviewBoxColorRGB:
 			gpSet->ThSet.crPreviewFrame.UseIndex = IsChecked(hWnd2, rbThumbPreviewBoxColorIdx);
-			InvalidateRect(GetDlgItem(hWnd2, c33), 0, 1);
+			InvalidateCtrl(GetDlgItem(hWnd2, c33), TRUE);
 			break;
 		case rbThumbSelectionBoxColorIdx: case rbThumbSelectionBoxColorRGB:
 			gpSet->ThSet.crSelectFrame.UseIndex = IsChecked(hWnd2, rbThumbSelectionBoxColorIdx);
-			InvalidateRect(GetDlgItem(hWnd2, c34), 0, 1);
+			InvalidateCtrl(GetDlgItem(hWnd2, c34), TRUE);
 			break;
 
 		case cbActivityReset:
@@ -6250,7 +6255,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						checkRadioButton(hWnd2, rbThumbSelectionBoxColorIdx, rbThumbSelectionBoxColorRGB, rbThumbSelectionBoxColorRGB);
 					}
 
-					InvalidateRect(GetDlgItem(hWnd2, CB), 0, 1);
+					InvalidateCtrl(GetDlgItem(hWnd2, CB), TRUE);
 					// done
 				}
 			} // else if (CB >= c32 && CB <= c34)
@@ -7353,7 +7358,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					{
 						if (gpSetCls->SetColorById(TB - (tc0-c0), color))
 						{
-							InvalidateRect(GetDlgItem(hWnd2, TB - (tc0-c0)), 0, 1);
+							InvalidateCtrl(GetDlgItem(hWnd2, TB - (tc0-c0)), TRUE);
 							// done
 						}
 					}
@@ -7392,7 +7397,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						if (TB >= tc0 && TB <= tc31)
 							gpConEmu->Update(true);
 
-						InvalidateRect(GetDlgItem(hWnd2, TB - (tc0-c0)), 0, 1);
+						InvalidateCtrl(GetDlgItem(hWnd2, TB - (tc0-c0)), TRUE);
 					}
 				}
 			}
@@ -7408,7 +7413,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				{
 					if (SetColorById(TB - (tc0-c0), color))
 					{
-						InvalidateRect(GetDlgItem(hWnd2, TB - (tc0-c0)), 0, 1);
+						InvalidateCtrl(GetDlgItem(hWnd2, TB - (tc0-c0)), TRUE);
 					}
 				}
 			}
@@ -7950,15 +7955,15 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				{
 					case lbThumbBackColorIdx:
 						gpSet->ThSet.crBackground.ColorIdx = nSel;
-						InvalidateRect(GetDlgItem(hWnd2, c32), 0, 1);
+						InvalidateCtrl(GetDlgItem(hWnd2, c32), TRUE);
 						break;
 					case lbThumbPreviewBoxColorIdx:
 						gpSet->ThSet.crPreviewFrame.ColorIdx = nSel;
-						InvalidateRect(GetDlgItem(hWnd2, c33), 0, 1);
+						InvalidateCtrl(GetDlgItem(hWnd2, c33), TRUE);
 						break;
 					case lbThumbSelectionBoxColorIdx:
 						gpSet->ThSet.crSelectFrame.ColorIdx = nSel;
-						InvalidateRect(GetDlgItem(hWnd2, c34), 0, 1);
+						InvalidateCtrl(GetDlgItem(hWnd2, c34), TRUE);
 						break;
 					case tThumbsFontName:
 						SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->ThSet.Thumbs.sFontName);
@@ -8072,7 +8077,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpSet->Colors[i] = pPal->Colors[i]; //-V108
 						_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(gpSet->Colors[i]), getG(gpSet->Colors[i]), getB(gpSet->Colors[i]));
 						SetDlgItemText(hWnd2, 1100 + i, temp);
-						InvalidateRect(GetDlgItem(hWnd2, c0+i), 0, 1);
+						InvalidateCtrl(GetDlgItem(hWnd2, c0+i), TRUE);
 					}
 
 					DWORD nVal;
@@ -8688,8 +8693,8 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 							dwStyle = GetWindowLong(hSave, GWL_STYLE);
 							SetWindowLong(hSave, GWL_STYLE, dwStyle | BS_DEFPUSHBUTTON);
 						}
-						InvalidateRect(hSearch, NULL, FALSE);
-						InvalidateRect(hSave, NULL, FALSE);
+						InvalidateCtrl(hSearch, FALSE);
+						InvalidateCtrl(hSave, FALSE);
 					}
 				}
 				break;
@@ -9637,7 +9642,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 				EnableDlgItems(hDlg, DistinctControls[i].nCtrls, countof(DistinctControls[i].nCtrls), bEnabled);
 			}
 
-			InvalidateRect(hChild, NULL, FALSE);
+			InvalidateCtrl(hChild, FALSE);
 		} // UM_DISTINCT_ENABLE
 		break;
 	case WM_COMMAND:
@@ -13833,7 +13838,7 @@ bool CSettings::ColorEditDialog(HWND hWnd2, WORD c)
 		SetColorById(c, colornew);
 		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(colornew), getG(colornew), getB(colornew));
 		SetDlgItemText(hWnd2, c + (tc0-c0), temp);
-		InvalidateRect(GetDlgItem(hWnd2, c), 0, 1);
+		InvalidateCtrl(GetDlgItem(hWnd2, c), TRUE);
 		bChanged = true;
 	}
 

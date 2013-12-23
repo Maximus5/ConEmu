@@ -321,6 +321,7 @@ class CSettings
 	protected:
 		void OnResetOrReload(BOOL abResetOnly);
 		void SearchForControls();
+		static void InvalidateCtrl(HWND hCtrl, BOOL bErase);
 		// IDD_SETTINGS
 		LRESULT OnInitDialog();
 		// OnInitDialogPage_t: IDD_SPG_MAIN, è ò.ä.
