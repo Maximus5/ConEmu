@@ -1714,32 +1714,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 
 	if (gpSet->isDropEnabled || mb_selfdrag)
 	{
-		if (!mb_selfdrag)
-		{
-			//// при "своем" драге - информация уже получена
-			//RetrieveDragToInfo();
-
-			//// Скорректировать допустимые действия
-			//DragOverInt(grfKeyState, pt, pdwEffect);
-
-			//if (LoadDragImageBits(pDataObject))
-			//{
-			//	#ifdef PERSIST_OVL
-			//	if (!mh_Overlapped || !IsWindow(mh_Overlapped))
-			//	{
-			//		_ASSERTE(mh_Overlapped); // должно быть создано при запуске ConEmu
-			//		mh_Overlapped = NULL;
-			//		CreateDragImageWindow();
-			//	}
-			//	else
-			//	{
-			//		InvalidateRect(mh_Overlapped, NULL, TRUE);
-			//	}
-			//	#else
-			//	CreateDragImageWindow();
-			//	#endif
-			//}
-		}
+		//
 	}
 	else
 	{

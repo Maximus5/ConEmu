@@ -16022,15 +16022,6 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 					//WARNING("!!! Заменить на CMD_LEFTCLKSYNC?");
 				}
 
-				//// Сначала выделить файл под курсором
-				////POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-				//pVCon->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
-				////POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-				//pVCon->RCon()->OnMouse(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
-				//
-				//pVCon->RCon()->FlushInputQueue();
-				//pVCon->Update(true);
-				//INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
 				// А теперь можно и Apps нажать
 				mouse.bSkipRDblClk=true; // чтобы пока FAR думает в консоль не проскочило мышиное сообщение
 				//POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
@@ -16039,18 +16030,6 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 				if (dwFarPID)
 				{
 					AllowSetForegroundWindow(dwFarPID);
-					//if (gpSet->sRClickMacro && *gpSet->sRClickMacro) {
-					//    //// Сначала выделить файл под курсором
-					//    ////POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-					//    //pVCon->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
-					//    ////POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-					//    //pVCon->RCon()->OnMouse(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
-					//    //
-					//    //pVCon->RCon()->FlushInputQueue();
-					//
-					//    // Если юзер задал свой макрос - выполняем его
-					//    PostMacro(gpSet->sRClickMacro);
-					//} else {
 					COORD crMouse = pVCon->RCon()->ScreenToBuffer(
 					                    pVCon->ClientToConsole(mouse.RClkDC.X, mouse.RClkDC.Y)
 					                );
@@ -18523,22 +18502,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_MENURBUTTONUP:
 			this->mp_Menu->OnMenuRClick((HMENU)lParam, (UINT)wParam);
 			return 0;
-		case WM_ERASEBKGND:
-			//return 0;
-			return 1; //2010-10-05
-		//case WM_NCPAINT:
-		//case WM_NCACTIVATE:
-		//case WM_NCCALCSIZE:
-		//case WM_NCHITTEST:
-		//case 0x31E: // WM_DWMCOMPOSITIONCHANGED:
-		//case 0xAE: // WM_NCUAHDRAWCAPTION:
-		//case 0xAF: // WM_NCUAHDRAWFRAME:
-		//	//result = this->OnNcPaint((HRGN)wParam);
-		//	result = this->OnNcMessage(hWnd, messg, wParam, lParam);
-		//	break;
-		//case WM_PAINT:
-		//	result = this->OnPaint(wParam, lParam);
-		//	break;
 		case WM_PRINTCLIENT:
 			DefWindowProc(hWnd, messg, wParam, lParam);
 			if (wParam && (hWnd == ghWnd) && gpSet->isStatusBarShow && (lParam & PRF_CLIENT))

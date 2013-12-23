@@ -170,8 +170,8 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 	case WM_ERASEBKGND:
 		DBGFUNCTION(L"WM_ERASEBKGND \n");
-		lResult = TRUE; return true;
-		//return false;
+		lResult = TRUE;
+		return true;
 
 	case WM_PAINT:
 		DBGFUNCTION(L"WM_PAINT \n");
