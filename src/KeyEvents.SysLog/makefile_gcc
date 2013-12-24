@@ -1,6 +1,8 @@
 NAME = KeyEvents
 SRCS = KeyEvents.cpp
 
+ENCFLAGS = -finput-charset=utf-8
+
 WIDE = 1
 DIRSURF = W
 CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500
@@ -26,7 +28,7 @@ MV = mv -f
 MKDIR = mkdir -p
 WINDRES = windres -D__FARBIT__=$(DIRBIT)
 DEFINES = -D FAR_ALPHA_VERSION -D UNICODE -D _UNICODE
-CXXFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -fno-rtti -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CXXWIDE)
+CXXFLAGS = $(ENCFLAGS) -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -fno-rtti -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CXXWIDE)
 CFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CCWIDE)
 LNKFLAGS = -mconsole -s -lShlwapi -lgdi32
 RCFLAGS = $(RCWIDE)
