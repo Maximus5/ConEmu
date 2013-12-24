@@ -74,10 +74,10 @@ protected:
 		{
 			if (i == 0)
 			{
-				OSVERSIONINFOW osv = {sizeof(OSVERSIONINFOW)};
-				GetVersionExW(&osv);
-				if ((osv.dwMajorVersion < 6)
-					|| ((osv.dwMajorVersion == 6) && (osv.dwMinorVersion == 0)))
+				_ASSERTE(_WIN32_WINNT_WIN7==0x601);
+				OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7)};
+				DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+				if (!VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
 					continue; // в Vista и ниже "KernelBase.dll" еще не было
 				mh_AdvApi = LoadLibrary(L"KernelBase.dll");
 			}
