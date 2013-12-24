@@ -15,6 +15,31 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.12.23
+[%] Issue 1379: Disable fade in effect on startup.
+[*] Console font dialog - 'restart may be required'.
+[%] Issue 1402: Prevent RM_ALTSERVER mode from warping CurrentDirectory (by Rick Sladkey).
+[+] New ANSI sequences supported:
+    "ESC [ n X" - erase n characters
+    "ESC [ > c" --> Report "ESC > 67 ; build ; 0 c"
+    "ESC [ c"   --> Report "ESC [ ? 1 ; 2 c"
+    "ESC [ 5 n" -> Report status as "CSI 0 n" (OK)
+    "ESC [ 6 n" -> Report Cursor Position as "ESC [ row ; col R"
+    "ESC [ 1 8 t" --> Report the size of the text area in characters as "ESC [ 8 ; height ; width t"
+    "ESC [ 1 9 t" --> Report the size of the screen in characters as "ESC [ 9 ; height ; width t"
+    "ESC [ 2 1 t" --> Report window’s title as "ESC ] l title ESC \"
+[%] ANSI xterm256. When line was wrapped (long prompt or output)
+    * extended atributes was not shifted properly;
+    * rest of line was printed char-by-char.
+[%] Issue 1403: Seamless start with default ConEmu config in WinPE.
+[%] Ready to create MiniDump in WinPE.
+[*] Try to use 'Courier New' as border font if 'Lucida Console' fails
+[%] Issue 1399: Angular quotation marks in the English translation.
+[%] Issue 1400: Environment variables dont't work in update path to 7zip
+[+] Portable_Test.cmd - creates simple one-file portable executable using WinRar.
+[*] Some internal changes.
+
+
 2013.12.19
 [!] ConEmuHk linked with flags /DYNAMICBASE:NO /FIXED:NO /BASE:0x7E110000.
 [*] GuiMacro Transparent&HighlightMouse described in the About dialog.
