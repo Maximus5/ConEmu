@@ -10504,7 +10504,7 @@ void CSettings::debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTick,
 	if ((m_ActivityLoggingType != glt_Commands) || (mh_Tabs[thi_Debug] == NULL))
 		return;
 
-	_ASSERTE(abInput==TRUE || pResult!=NULL || (pInfo->hdr.nCmd==CECMD_LANGCHANGE || pInfo->hdr.nCmd==CECMD_GUICHANGED || pInfo->hdr.nCmd==CMD_FARSETCHANGED));
+	_ASSERTE(abInput==TRUE || pResult!=NULL || (pInfo->hdr.nCmd==CECMD_LANGCHANGE || pInfo->hdr.nCmd==CECMD_GUICHANGED || pInfo->hdr.nCmd==CMD_FARSETCHANGED || pInfo->hdr.nCmd==CECMD_ONACTIVATION));
 		
 	LogCommandsData* pData = (LogCommandsData*)calloc(1,sizeof(LogCommandsData));
 	
