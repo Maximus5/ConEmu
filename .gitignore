@@ -26,7 +26,7 @@ _*.sln
 \!*.mht
 \!*.htm
 
-
+/gcc
 
 /Portable_Test
 /ConEmuPortableRarInfo.txt
