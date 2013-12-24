@@ -8421,7 +8421,8 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 	if (!isServerCreated(true))
 		return; // сервер еще не завершил инициализацию
 
-	//DWORD nTID = GetCurrentThreadId();
+	DEBUGTEST(DWORD nTID = GetCurrentThreadId());
+
 	if (!abImmediate && (mn_MonitorThreadID && (GetCurrentThreadId() != mn_MonitorThreadID)))
 	{
 		#ifdef _DEBUG
@@ -8441,16 +8442,14 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 
 	BOOL fSuccess = FALSE;
 
-	// -- всегда строго в главном сервере
+	// Always and only in the Main server
 	if (ms_MainSrv_Pipe[0])
 	{
-		size_t nInSize = sizeof(CESERVER_REQ_HDR); //+sizeof(DWORD)*2;
-		//DWORD dwRead = 0;
-		//CESERVER_REQ lIn = {{nInSize}}, lOut = {};
+		size_t nInSize = sizeof(CESERVER_REQ_HDR);
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ONACTIVATION, nInSize);
-		CESERVER_REQ* pOut = NULL; //ExecuteNewCmd(CECMD_ONACTIVATION, sizeof(CESERVER_REQ));
+		CESERVER_REQ* pOut = NULL;
 
-		if (pIn /*&& pOut*/)
+		if (pIn)
 		{
 			#if 0
 			wchar_t szInfo[255];
@@ -8463,20 +8462,9 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 				szForeWnd, (DWORD)hFocus);
 			#endif
 
-			//bool lbThaw = mb_ThawRefreshThread;
-			//if (abActive && !lbThaw && gpConEmu->isMeForeground(true, true))
-			//{
-			//	mb_ThawRefreshThread = lbThaw = true;
-			//}
-			//pIn->dwData[0] = abActive;
-			//pIn->dwData[1] = lbThaw;
-
-			//ExecutePrepareCmd(&lIn.hdr, CECMD_ONACTIVATION, lIn.hdr.cbSize);
 			DWORD dwTickStart = timeGetTime();
 			mn_LastUpdateServerActive = GetTickCount();
-			WARNING("Таймаут, чтобы не зависнуть");
-			
-			/*fSuccess = CallNamedPipe(ms_MainSrv_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, 500);*/
+
 			pOut = ExecuteCmd(ms_MainSrv_Pipe, pIn, 500, ghWnd);
 			fSuccess = (pOut != NULL);
 
