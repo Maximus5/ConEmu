@@ -157,7 +157,7 @@ int CPluginBackground::RegisterSubplugin(RegisterBackgroundArg *pbk)
 
 	if (pbk->Cmd == rbc_Register)
 	{
-		BOOL lbCheckCallback = CheckCallbackPtr(pbk->hPlugin, 1, (FARPROC*)&pbk->PaintConEmuBackground, TRUE);
+		BOOL lbCheckCallback = CheckCallbackPtr(pbk->hPlugin, 1, (FARPROC*)&pbk->PaintConEmuBackground, TRUE, FALSE, FALSE);
 
 		if (!lbCheckCallback)
 		{
@@ -463,7 +463,7 @@ void CPluginBackground::SetDcPanelRect(RECT *rcDc, PaintBackgroundArg::BkPanelIn
 
 void CPluginBackground::UpdateBackground_Exec(struct RegisterBackgroundArg *pPlugin, struct PaintBackgroundArg *pArg)
 {
-	if (!CheckCallbackPtr(pPlugin->hPlugin, 1, (FARPROC*)&pPlugin->PaintConEmuBackground, TRUE))
+	if (!CheckCallbackPtr(pPlugin->hPlugin, 1, (FARPROC*)&pPlugin->PaintConEmuBackground, TRUE, FALSE, FALSE))
 		return;
 
 	pPlugin->PaintConEmuBackground(pArg);

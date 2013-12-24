@@ -1029,7 +1029,7 @@ bool isTerminalMode()
 }
 
 // Проверить, валиден ли модуль?
-bool IsModuleValid(HMODULE module)
+bool IsModuleValid(HMODULE module, BOOL abTestVirtual /*= TRUE*/)
 {
 	if ((module == NULL) || (module == INVALID_HANDLE_VALUE))
 		return false;
@@ -1053,24 +1053,28 @@ bool IsModuleValid(HMODULE module)
 	LPBYTE lpTest;
 	SIZE_T cbCommitSize = max(max(4096,sizeof(IMAGE_DOS_HEADER)),si.dwPageSize);
 
-	// Issue 881
-	lpTest = (LPBYTE)VirtualAlloc((LPVOID)module, cbCommitSize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-	if (lpTest)
+	// If module is hooked by ConEmuHk, we get excess debug "assertion" from ConEmu.dll (Far plugin)
+	if (abTestVirtual)
 	{
-		// If we can lock mem region with (IMAGE_DOS_HEADER) of checking module
-		if ((lpTest <= (LPBYTE)module) && ((lpTest + cbCommitSize) >= (((LPBYTE)module) + sizeof(IMAGE_DOS_HEADER))))
+		// Issue 881
+		lpTest = (LPBYTE)VirtualAlloc((LPVOID)module, cbCommitSize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+		if (lpTest)
 		{
-			// That means, it was unloaded
-			lbValid = false;
-		}
-		VirtualFree(lpTest, 0, MEM_RELEASE);
+			// If we can lock mem region with (IMAGE_DOS_HEADER) of checking module
+			if ((lpTest <= (LPBYTE)module) && ((lpTest + cbCommitSize) >= (((LPBYTE)module) + sizeof(IMAGE_DOS_HEADER))))
+			{
+				// That means, it was unloaded
+				lbValid = false;
+			}
+			VirtualFree(lpTest, 0, MEM_RELEASE);
 
-		if (!lbValid)
-			goto wrap;
-	}
-	else
-	{
-		// Memory is used (supposing by module)
+			if (!lbValid)
+				goto wrap;
+		}
+		else
+		{
+			// Memory is used (supposing by module)
+		}
 	}
 
 #ifdef USE_SEH
@@ -1120,7 +1124,7 @@ wrap:
 	return lbValid;
 }
 
-bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL)
+bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL, BOOL abTestVirtual /*= TRUE*/)
 {
 	if ((hModule == NULL) || (hModule == INVALID_HANDLE_VALUE) || LDR_IS_RESOURCE(hModule))
 	{
@@ -1148,7 +1152,7 @@ bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 	// Если разрешили - попробовать определить размер модуля, чтобы CallBack не выпал из его тела
 	if (abCheckModuleInfo)
 	{
-		if (!IsModuleValid(hModule))
+		if (!IsModuleValid(hModule, abTestVirtual))
 		{
 			_ASSERTE("!IsModuleValid(hModule)" && 0);
 			return false;

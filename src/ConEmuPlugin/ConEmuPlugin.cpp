@@ -2593,7 +2593,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			        && ((SyncExecuteArg*)pCommandData)->CallBack != NULL)
 			{
 				SyncExecuteArg* pExec = (SyncExecuteArg*)pCommandData;
-				BOOL lbCallbackValid = CheckCallbackPtr(pExec->hModule, 1, (FARPROC*)&pExec->CallBack, FALSE);
+				BOOL lbCallbackValid = CheckCallbackPtr(pExec->hModule, 1, (FARPROC*)&pExec->CallBack, FALSE, FALSE, FALSE);
 
 				if (lbCallbackValid)
 				{
