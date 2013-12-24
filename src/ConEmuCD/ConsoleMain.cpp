@@ -6770,7 +6770,10 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 		}
 		else
 		{
-			ReloadFullConsoleInfo(TRUE);
+			// Warning: If refresh thread is in an AltServerStop
+			// transaction, ReloadFullConsoleInfo will deadlock.
+			//ReloadFullConsoleInfo(TRUE);
+			ReloadFullConsoleInfo(FALSE);
 		}
 	}
 	

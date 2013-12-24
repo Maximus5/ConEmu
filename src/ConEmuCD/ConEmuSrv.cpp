@@ -3684,11 +3684,10 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 
 	// Должен вызываться ТОЛЬКО в нити (RefreshThread)
 	// Иначе возможны блокировки
-	if (gpSrv->dwRefreshThread && dwCurThId != gpSrv->dwRefreshThread)
+	if (abForceSend && gpSrv->dwRefreshThread && dwCurThId != gpSrv->dwRefreshThread)
 	{
 		//ResetEvent(gpSrv->hDataReadyEvent);
-		if (abForceSend)
-			gpSrv->bForceConsoleRead = TRUE;
+		gpSrv->bForceConsoleRead = TRUE;
 
 		ResetEvent(gpSrv->hRefreshDoneEvent);
 		SetEvent(gpSrv->hRefreshEvent);
@@ -3697,8 +3696,7 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 		DWORD nWait = WaitForMultipleObjects(2, hEvents, FALSE, RELOAD_INFO_TIMEOUT);
 		lbChanged = (nWait == (WAIT_OBJECT_0+1));
 
-		if (abForceSend)
-			gpSrv->bForceConsoleRead = FALSE;
+		gpSrv->bForceConsoleRead = FALSE;
 
 		return lbChanged;
 	}
