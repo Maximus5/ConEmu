@@ -343,11 +343,21 @@ typedef BOOL (WINAPI* CreateRestrictedToken_t)(HANDLE ExistingTokenHandle, DWORD
 // GetLayeredWindowAttributes появилась только в XP
 typedef BOOL (WINAPI* GetLayeredWindowAttributes_t)(HWND hwnd, COLORREF *pcrKey, BYTE *pbAlpha, DWORD *pdwFlags);
 
-#ifdef __GNUC__
+#if !defined(MAPVK_VSC_TO_VK_EX)
 	#define MAPVK_VK_TO_VSC     (0)
 	#define MAPVK_VSC_TO_VK     (1)
 	#define MAPVK_VK_TO_CHAR    (2)
 	#define MAPVK_VSC_TO_VK_EX  (3)
+#endif
+
+#if !defined(WM_XBUTTONDBLCLK)
+	#define WM_XBUTTONDOWN       0x020B
+	#define WM_XBUTTONUP         0x020C
+	#define WM_XBUTTONDBLCLK     0x020D
+#endif
+
+#if !defined(SPI_GETCLEARTYPE)
+	#define SPI_GETCLEARTYPE     0x1048
 #endif
 
 #ifndef SEE_MASK_NOASYNC

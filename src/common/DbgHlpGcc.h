@@ -42,3 +42,10 @@ typedef struct _MINIDUMP_CALLBACK_INFORMATION {
 //  const PMINIDUMP_CALLBACK_INPUT CallbackInput,
 //  PMINIDUMP_CALLBACK_OUTPUT CallbackOutput
 //);
+
+typedef struct _MINIDUMP_USER_STREAM {
+    ULONG32 Type;
+    ULONG BufferSize;
+    PVOID Buffer;
+
+} MINIDUMP_USER_STREAM, *PMINIDUMP_USER_STREAM;

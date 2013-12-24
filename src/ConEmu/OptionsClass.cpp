@@ -183,7 +183,7 @@ namespace SettingsNS
 	const WORD nSizeCtrlId[] = {tWndWidth, stWndWidth, tWndHeight, stWndHeight};
 	const WORD nTaskCtrlId[] = {tCmdGroupName, tCmdGroupKey, cbCmdGroupKey, tCmdGroupGuiArg, tCmdGroupCommands, stCmdTaskAdd, cbCmdGroupApp, cbCmdTasksDir, cbCmdTasksParm, cbCmdTasksActive};
 	const WORD nStatusColorIds[] = {stStatusColorBack, tc35, c35, stStatusColorLight, tc36, c36, stStatusColorDark, tc37, c37};
-	const struct TabDefaultClickAction { int value; WCHAR *name; } tabBtnDblClickActions[] =
+	const struct TabDefaultClickAction { int value; LPCWSTR name; } tabBtnDblClickActions[] =
 	{// gpSet->nTabBtnDblClickAction
 		{ 0, L"No action" },
 		{ 1, L"Maximize/restore window size" },
@@ -1494,7 +1494,7 @@ void CSettings::SearchForControls()
 						for (INT_PTR i = 0; i < iCount; i++)
 						{
 							INT_PTR iLen = SendMessage(hCtrl, LB_GETTEXTLEN, 0, 0);
-							if (iLen >= countof(szText))
+							if (iLen >= (INT_PTR)countof(szText))
 							{
 								_ASSERTE(iLen < countof(szText));
 							}
@@ -2566,13 +2566,13 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 	} Keys[] = {
 		{lbCTSBlockSelection, L"Block selection", thi_MarkCopy, gpSet->isCTSSelectBlock, vkCTSVkBlock},
 		{lbCTSTextSelection, L"Text selection", thi_MarkCopy, gpSet->isCTSSelectText, vkCTSVkText},
-		{lbCTSClickPromptPosition, L"Prompt position", thi_KeybMouse, gpSet->AppStd.isCTSClickPromptPosition, vkCTSVkPromptClk},
+		{lbCTSClickPromptPosition, L"Prompt position", thi_KeybMouse, gpSet->AppStd.isCTSClickPromptPosition!=0, vkCTSVkPromptClk},
 
 		// Don't check it?
 		// -- {lbFarGotoEditorVk, L"Highlight and goto", ..., gpSet->isFarGotoEditor},
 
 		// Far manager only
-		{lbLDragKey, L"Far Manager LDrag", thi_Far, (gpSet->isDragEnabled & DRAG_L_ALLOWED), vkLDragKey},
+		{lbLDragKey, L"Far Manager LDrag", thi_Far, (gpSet->isDragEnabled & DRAG_L_ALLOWED)!=0, vkLDragKey},
 		{0},
 	};
 
@@ -7898,7 +7898,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tSaveAllMacro:
 	{
 		wchar_t** ppszMacro = NULL;
-		LPCWSTR pszDefaultMacro;
+		LPCWSTR pszDefaultMacro = NULL;
 		switch (wId)
 		{
 			case tRClickMacro:
@@ -11697,7 +11697,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 				// So, try to create Lucida or Courier (we need font with 'frames')
 				bool bCreated = false;
 				LPCWSTR szAltNames[] = {gsDefGuiFont, gsAltGuiFont};
-				for (int a = 0; a < countof(szAltNames); a++)
+				for (size_t a = 0; a < countof(szAltNames); a++)
 				{
 					if (!a && lstrcmpi(LogFont2.lfFaceName, gsDefGuiFont) == 0)
 						continue; // It was already failed...
@@ -14481,6 +14481,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 			wcscpy_c(gpSet->ConsoleFont.lfFaceName, gsAltConFont);
 			goto wrap;
 		}
+		gpSetCls->nConFontError = errSave;
 	}
 
 	if ((gpSetCls->nConFontError & ConFontErr_NonRegistry)

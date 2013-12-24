@@ -88,8 +88,6 @@ bool CDefaultTerminal::IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, boo
 	HKEY hk;
 	DWORD nSize, nType = 0;
 	LONG lRc;
-	bool bNeedFree = false;
-
 	if (0 == (lRc = RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_READ, &hk)))
 	{
 		if (!rsValue)
@@ -380,7 +378,7 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 	bool bMonitored = false;
 	const wchar_t* pszMonitored = NULL;
 	HANDLE hProcess = NULL;
-	int nBits = 0;
+	//int nBits = 0;
 	//wchar_t szCmdLine[MAX_PATH*3];
 	//wchar_t szName[64];
 	//PROCESS_INFORMATION pi = {};

@@ -1188,7 +1188,7 @@ bool CDragDropData::CheckIsUpdatePackage(IDataObject * pDataObject)
 	{
 		HRESULT hr;
 		STGMEDIUM stgMedium = { 0 };
-		FORMATETC fmtetc = { RegisterClipboardFormat(CFSTR_FILENAMEW/*L"FileNameW"*/), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+		FORMATETC fmtetc = { (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILENAMEW/*L"FileNameW"*/), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 
 		hr = pDataObject->QueryGetData(&fmtetc);
 

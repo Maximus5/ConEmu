@@ -4367,7 +4367,7 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 COORD CRealBuffer::GetDefaultNtvdmHeight()
 {
 	// 100627 - con.m_sbi.dwSize.Y áîëåå èñïîëüçîâàòü íåêîğğåêòíî ââèäó "far/w"
-	COORD cr16bit = {80,con.m_sbi.srWindow.Bottom-con.m_sbi.srWindow.Top+1};
+	COORD cr16bit = {80,(SHORT)(con.m_sbi.srWindow.Bottom-con.m_sbi.srWindow.Top+1)};
 
 	if (gpSet->ntvdmHeight && cr16bit.Y >= (int)gpSet->ntvdmHeight) cr16bit.Y = gpSet->ntvdmHeight;
 	else if (cr16bit.Y>=50) cr16bit.Y = 50;

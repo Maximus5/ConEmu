@@ -33,7 +33,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "MenuIds.h"
 
+#if !defined(IID_IShellLink)
 #define IID_IShellLink IID_IShellLinkW
+#endif
 
 #define GET_X_LPARAM(inPx) ((int)(short)LOWORD(inPx))
 #define GET_Y_LPARAM(inPy) ((int)(short)HIWORD(inPy))

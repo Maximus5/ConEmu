@@ -735,7 +735,6 @@ CConEmuMain::CConEmuMain()
 	mp_RecreateDlg = NULL;
 
 	// Dynamic messages
-	UINT nAppMsg = WM_APP+10;
 	mn__FirstAppMsg = WM_APP+10;
 	m__AppMsgs.Init(128, true);
 	// Go
@@ -746,28 +745,19 @@ CConEmuMain::CConEmuMain()
 	mn_MsgUpdateCursorInfo = RegisterMessage("UpdateCursorInfo");
 	mn_MsgSetWindowMode = RegisterMessage("SetWindowMode");
 	mn_MsgUpdateTitle = RegisterMessage("UpdateTitle");
-	//mn_MsgAttach = RegisterMessage(...,CONEMUMSG_ATTACH);
 	mn_MsgSrvStarted = RegisterMessage("SrvStarted"); //RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
-	//mn_MsgVConTerminated = RegisterMessage("VConTerminated");
 	mn_MsgUpdateScrollInfo = RegisterMessage("UpdateScrollInfo");
 	mn_MsgUpdateTabs = RegisterMessage("UpdateTabs"); //RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 	mn_MsgOldCmdVer = RegisterMessage("OldCmdVer"); mb_InShowOldCmdVersion = FALSE;
 	mn_MsgTabCommand = RegisterMessage("TabCommand");
 	mn_MsgTabSwitchFromHook = RegisterMessage("CONEMUMSG_SWITCHCON",CONEMUMSG_SWITCHCON); //mb_InWinTabSwitch = FALSE;
 	mn_MsgWinKeyFromHook = RegisterMessage("CONEMUMSG_HOOKEDKEY",CONEMUMSG_HOOKEDKEY);
-	//mn_MsgConsoleHookedKey = RegisterWindowMessage(CONEMUMSG_CONSOLEHOOKEDKEY);
-	//mn_ShellExecuteEx = ++nAppMsg;
-	//	InitializeCriticalSection(&mcs_ShellExecuteEx);
-	//	mb_InShellExecuteQueue = false;
 	mn_PostConsoleResize = RegisterMessage("PostConsoleResize");
 	mn_ConsoleLangChanged = RegisterMessage("ConsoleLangChanged");
 	mn_MsgPostOnBufferHeight = RegisterMessage("PostOnBufferHeight");
-	//mn_MsgSetForeground = RegisterMessage(...,CONEMUMSG_SETFOREGROUND);
 	mn_MsgFlashWindow = RegisterMessage("CONEMUMSG_FLASHWINDOW",CONEMUMSG_FLASHWINDOW);
 	mn_MsgPostAltF9 = RegisterMessage("PostAltF9");
-	//mn_MsgPostSetBackground = ++nAppMsg;
 	mn_MsgInitInactiveDC = RegisterMessage("InitInactiveDC");
-	//mn_MsgActivateCon = RegisterMessage(...,CONEMUMSG_ACTIVATECON);
 	mn_MsgUpdateProcDisplay = RegisterMessage("UpdateProcDisplay");
 	mn_MsgAutoSizeFont = RegisterMessage("AutoSizeFont");
 	mn_MsgDisplayRConError = RegisterMessage("DisplayRConError");
@@ -783,10 +773,6 @@ CConEmuMain::CConEmuMain()
 	mn_MsgSheelHook = RegisterMessage("SHELLHOOK",L"SHELLHOOK");
 	mn_MsgRequestRunProcess = RegisterMessage("RequestRunProcess");
 	mn_MsgDeleteVConMainThread = RegisterMessage("DeleteVConMainThread");
-	//// ¬ Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
-	//wmInputLangChange = WM_INPUTLANGCHANGE;
-
-	//InitFrameHolder();
 }
 
 bool CConEmuMain::isMingwMode()
@@ -1470,7 +1456,6 @@ SIZE CConEmuMain::GetDefaultSize(bool bCells, const CESize* pSizeW/*=NULL*/, con
 		|| gpSet->isQuakeStyle
 		|| (wmCurMode == wmMaximized || wmCurMode == wmFullScreen))
 	{
-		BOOL bMonitor = FALSE;
 		if (hMon != NULL)
 		{
 			GetMonitorInfoSafe(hMon, mi);
@@ -5084,8 +5069,10 @@ bool CConEmuMain::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	{
 		_ASSERTE(WindowMode==wmNormal || hJumpWnd!=ghWnd);
 
+		#ifdef _DEBUG
 		RECT rcPrevMon = bFullScreen ? miCur.rcMonitor : miCur.rcWork;
 		RECT rcNextMon = bFullScreen ? mi.rcMonitor : mi.rcWork;
+		#endif
 
 		// ≈сли мониторы различаютс€ по разрешению или рабочей области - коррекци€ позиционировани€
 		int ShiftX = rcMain.left - miCur.rcWork.left;
@@ -6664,7 +6651,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		{
 			// –азрешить мен€ть и ширину окна Quake
 			//CESize SaveWidth = {WndWidth.Raw};
-			bool tempChanged = false;
+			//bool tempChanged = false;
 
 			RECT rc = GetDefaultRect();
 			
@@ -10950,11 +10937,11 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 			wchar_t szCurDir[MAX_PATH*2]; szCurDir[0] = 0; GetCurrentDirectory(countof(szCurDir), szCurDir);
 			size_t cchMax = _tcslen(asSource)+100+_tcslen(szCurDir);
 			wchar_t* pszErrMsg = (wchar_t*)calloc(cchMax,2);
-			_wcscpy_c(pszErrMsg, cchMax, L"Can't open console batch file:\nС");
+			_wcscpy_c(pszErrMsg, cchMax, L"Can't open console batch file:\n" L"\x2018"/*С*/);
 			_wcscat_c(pszErrMsg, cchMax, asSource+1);
-			_wcscat_c(pszErrMsg, cchMax, L"Т" L"\nCurrent directory:\nС");
+			_wcscat_c(pszErrMsg, cchMax, L"\x2019"/*Т*/ L"\nCurrent directory:\n" L"\x2018"/*С*/);
 			_wcscat_c(pszErrMsg, cchMax, szCurDir);
-			_wcscat_c(pszErrMsg, cchMax, L"Т");
+			_wcscat_c(pszErrMsg, cchMax, L"\x2019"/*Т*/);
 			DisplayLastError(pszErrMsg, dwErr);
 			free(pszErrMsg);
 			//Destroy(); -- must caller
@@ -10968,7 +10955,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 			DWORD dwErr = GetLastError();
 			CloseHandle(hFile);
 			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(asSource)+100,2);
-			lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\nС"); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"Т");
+			lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n" L"\x2018"/*С*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\x2019"/*Т*/);
 			DisplayLastError(pszErrMsg, dwErr);
 			free(pszErrMsg);
 			//Destroy(); -- must caller
@@ -10986,7 +10973,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 		{
 			free(pszDataA);
 			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(asSource)+100,2);
-			lstrcpy(pszErrMsg, L"Reading console batch file failed:\nС"); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"Т");
+			lstrcpy(pszErrMsg, L"Reading console batch file failed:\n" L"\x2018"/*С*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\x2019"/*Т*/);
 			DisplayLastError(pszErrMsg, dwErr);
 			free(pszErrMsg);
 			//Destroy(); -- must caller
@@ -11115,7 +11102,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 			{
 				cchLen = _tcslen(szPart) + 3;
 				pszConsoles[iCount] = (wchar_t*)malloc(cchLen*sizeof(wchar_t));
-				_wsprintf(pszConsoles[iCount], SKIPLEN(cchLen) L"\"%s\"", szPart);
+				_wsprintf(pszConsoles[iCount], SKIPLEN(cchLen) L"\"%s\"", (LPCWSTR)szPart);
 				iCount++;
 
 				cchAllLen += cchLen+3;
@@ -11825,7 +11812,9 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 	bool lbSetFocus = false;
+	#ifdef _DEBUG
 	DWORD lnForceTimerCheckLoseFocus = mn_ForceTimerCheckLoseFocus;
+	#endif
 	
 	WCHAR szDbg[128];
 
@@ -12314,7 +12303,6 @@ HMONITOR CConEmuMain::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prc
 {
 	HMONITOR hMon = NULL;
 	MONITORINFO mi = {sizeof(mi)};
-	BOOL bRc = FALSE;
 
 	if (prcWnd)
 	{
@@ -14356,7 +14344,7 @@ void CConEmuMain::StoreLayoutName(int iIdx, DWORD dwLayout, HKL hkl)
 	LogString(szInfo);
 
 	// Check. This layout must not be stored already!
-	for (int i = 0; i < countof(m_LayoutNames); i++)
+	for (size_t i = 0; i < countof(m_LayoutNames); i++)
 	{
 		if (m_LayoutNames[i].bUsed
 			&& ((m_LayoutNames[i].klName == dwLayout)

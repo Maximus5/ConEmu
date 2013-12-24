@@ -78,7 +78,7 @@ class CDragDropData
 {
 	public:
 		CDragDropData();
-		~CDragDropData();
+		virtual ~CDragDropData();
 		// Регистрация окна ConEmu, как поддерживающего D&D
 		BOOL Register();
 		// Загрузить из фара информацию для Drag

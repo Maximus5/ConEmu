@@ -2526,6 +2526,7 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 {
 	bool bDbg1 = false, bDbg2 = false, bDbg3 = false, bDbg4 = false;
 	int iDbg1 = -100, iDbg2 = -100, iDbg3 = -100;
+	CVConGroup* pClosedGroup = NULL;
 
 	if (!isValid(apVCon) || apVCon->isAlreadyDestroyed())
 	{
@@ -2536,7 +2537,7 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 	ShutdownGuiStep(L"OnVConClosed");
 
 	//CVConGroup* pClosedGroupRoot = GetRootOfVCon(apVCon);
-	CVConGroup* pClosedGroup = ((CVConGroup*)apVCon->mp_Group);
+	pClosedGroup = ((CVConGroup*)apVCon->mp_Group);
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -4159,7 +4160,7 @@ void CVConGroup::SyncAllConsoles2Window(RECT rcWnd, enum ConEmuRect tFrom /*= CE
 		return;
 	CVConGuard VCon(gp_VActive);
 	RECT rcAllCon = gpConEmu->CalcRect(CER_CONSOLE_ALL, rcWnd, tFrom, VCon.VCon());
-	COORD crNewAllSize = {rcAllCon.right,rcAllCon.bottom};
+	COORD crNewAllSize = {(SHORT)rcAllCon.right,(SHORT)rcAllCon.bottom};
 	SetAllConsoleWindowsSize(rcWnd, tFrom, crNewAllSize, bSetRedraw);
 }
 
@@ -4562,8 +4563,10 @@ void CVConGroup::PaintGaps(HDC hDC)
 	else
 	{
 		COLORREF crBack = lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarBack) : gpSet->nStatusBarBack;
+		#if 0
 		COLORREF crText = lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarLight) : gpSet->nStatusBarLight;
 		COLORREF crDash = lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarDark) : gpSet->nStatusBarDark;
+		#endif
 
 		hBrush = CreateSolidBrush(crBack);
 
@@ -4972,7 +4975,7 @@ wchar_t* CVConGroup::GetTasks(CVConGroup* apRoot /*= NULL*/)
 		nAllLen += nLen + 6; // + "\r\n\r\n"
 	}
 
-	if (nAllLen == NULL)
+	if (nAllLen == 0)
 		return NULL; // Nothing to return
 
 	nAllLen += 2;

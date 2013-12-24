@@ -12,7 +12,7 @@ class CBaseDropTarget : public IDropTarget
 	public:
 		//CBaseDropTarget(/*HWND hwnd*/);
 		CBaseDropTarget();
-		~CBaseDropTarget();
+		virtual ~CBaseDropTarget();
 		// IUnknown implementation
 		HRESULT __stdcall QueryInterface(REFIID iid, void ** ppvObject);
 		ULONG	__stdcall AddRef(void);
@@ -52,7 +52,7 @@ class CDropSource : public IDropSource
 		// Constructor / Destructor
 		//
 		CDropSource(CDragDropData* pCallback);
-		~CDropSource();
+		virtual ~CDropSource();
 
 	private:
 
@@ -95,7 +95,7 @@ class CDataObject : public IDataObject
 		// Constructor / Destructor
 		//
 		CDataObject(FORMATETC *fmt, STGMEDIUM *stgmed, int count);
-		~CDataObject();
+		virtual ~CDataObject();
 
 		// Helper methods
 		HRESULT SetDataInt(LPCWSTR sFmtName, const void* hData, DWORD nDataSize = 0);
@@ -147,7 +147,7 @@ class CEnumFormatEtc : public IEnumFORMATETC
 		// Construction / Destruction
 		//
 		CEnumFormatEtc(FORMATETC *pFormatEtc, int nNumFormats);
-		~CEnumFormatEtc();
+		virtual ~CEnumFormatEtc();
 
 	private:
 

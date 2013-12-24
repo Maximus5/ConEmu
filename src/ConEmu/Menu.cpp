@@ -552,7 +552,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 	if (lstrcmp(szClass, L"#32768") != 0)
 		hMenuWnd = NULL;
 
-	UINT nId = mi.wID;
+	int nId = (int)mi.wID;
 	HMENU hPopup = mi.hSubMenu;
 
 	//if (mn_LastTaskID < 0 || nId > (UINT)mn_LastTaskID)
@@ -595,45 +595,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 
 		// ѕоехали
 		HMENU hPopup = CreatePopupMenu();
-		const int nStartID = mn_CmdLastID;
-		_ASSERTE(nStartID > 0);
 		int nLastID = FillTaskPopup(hPopup, itm);
-
-		//wchar_t *pszDataW = lstrdup(pGrp->pszCommands);
-		//wchar_t *pszLine = pszDataW;
-		//wchar_t *pszNewLine = wcschr(pszLine, L'\n');
-		//const UINT nStartID = 1000;
-		//UINT nLastID = 0;
-		//LPCWSTR pszLines[MAX_CONSOLE_COUNT];
-
-		//while (*pszLine && (nLastID < MAX_CONSOLE_COUNT))
-		//{
-		//	if (pszNewLine)
-		//	{
-		//		*pszNewLine = 0;
-		//		if ((pszNewLine > pszDataW) && (*(pszNewLine-1) == L'\r'))
-		//			*(pszNewLine-1) = 0;
-		//	}
-
-		//	while (*pszLine == L' ') pszLine++;
-
-		//	if (*pszLine)
-		//	{
-		//		pszLines[nLastID] = pszLine;
-		//		InsertMenu(hPopup, -1, MF_BYPOSITION | MF_STRING | MF_ENABLED, (++nLastID) + nStartID, pszLine);
-		//	}
-
-		//	if (!pszNewLine) break;
-
-		//	pszLine = pszNewLine+1;
-
-		//	if (!*pszLine) break;
-
-		//	while ((*pszLine == L'\r') || (*pszLine == L'\n'))
-		//		pszLine++; // пропустить все переводы строк
-
-		//	pszNewLine = wcschr(pszLine, L'\n');
-		//}
 
 		int nRetID = -1;
 	
@@ -672,7 +634,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 			}
 
 			bool bRunAs = false;
-			//LPCWSTR pszCmd = gpConEmu->ParseScriptLineOptions(pszLines[nRetID-nStartID-1], &bRunAs, NULL);
+
 			LPCWSTR pszCmd = gpConEmu->ParseScriptLineOptions(itm.pszCmd, &bRunAs, NULL);
 
 			// Well, start selected line from Task
@@ -1564,7 +1526,7 @@ void CConEmuMenu::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
 	//mb_InTrackSysMenu = FALSE;
 	if (command == 0)
 	{
-		bool bLbnPressed = isPressed(VK_LBUTTON);
+		DEBUGTEST(bool bLbnPressed = isPressed(VK_LBUTTON));
 		mn_SysMenuCloseTick = GetTickCount();
 
 		if ((mn_SysMenuCloseTick - mn_SysMenuOpenTick) < GetDoubleClickTime())

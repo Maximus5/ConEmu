@@ -39,7 +39,7 @@ public:
 		mn_DataSize = 0; mn_DataPos = 0; mn_DataLen = 0;
 		mp_Data = NULL;
 	};
-	~MStream()
+	virtual ~MStream()
 	{
 		if (mp_Data!=NULL)
 		{

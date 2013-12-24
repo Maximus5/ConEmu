@@ -300,8 +300,9 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         return FALSE;
     }
 
-    bool bLog = (gpSetCls->isAdvLogging >= 2);
 	#ifdef USE_DUMPGEST
+    bool bLog = (gpSetCls->isAdvLogging >= 2);
+    UNREFERENCED_PARAMETER(bLog);
 	bLog = true;
 	#endif
 
@@ -309,23 +310,23 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 	//#ifdef USE_DUMPGEST
 	//	wchar_t szDump[256];
-	//	#define DUMPGEST(tp) \
-	//		_wsprintf(szDump, SKIPLEN(countof(szDump)) \
-	//			L"Gesture(x%08X {%i,%i} %s", \
-	//			(DWORD)gi.hwndTarget, gi.ptsLocation.x, gi.ptsLocation.y, \
-	//			tp); \
-	//		if (gi.dwID==GID_PRESSANDTAP) { \
-	//			DWORD h = LODWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32) \
-	//				L" Dist={%i,%i}", (int)(short)LOWORD(h), (int)(short)HIWORD(h)); } \
-	//		if (gi.dwID==GID_ROTATE) { \
-	//			DWORD h = LODWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32) \
-	//				L" %i", (int)LOWORD(h)); } \
-	//		if (gi.dwFlags&GF_BEGIN) wcscat_c(szDump, L" GF_BEGIN"); \
-	//		if (gi.dwFlags&GF_END) wcscat_c(szDump, L" GF_END"); \
-	//		if (gi.dwFlags&GF_INERTIA) { wcscat_c(szDump, L" GF_INERTIA"); \
-	//			DWORD h = HIDWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32) \
-	//				L" {%i,%i}", (int)(short)LOWORD(h), (int)(short)HIWORD(h)); } \
-	//		wcscat_c(szDump, L")\n"); \
+	//	#define DUMPGEST(tp)
+	//		_wsprintf(szDump, SKIPLEN(countof(szDump))
+	//			L"Gesture(x%08X {%i,%i} %s",
+	//			(DWORD)gi.hwndTarget, gi.ptsLocation.x, gi.ptsLocation.y,
+	//			tp);
+	//		if (gi.dwID==GID_PRESSANDTAP) {
+	//			DWORD h = LODWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32)
+	//				L" Dist={%i,%i}", (int)(short)LOWORD(h), (int)(short)HIWORD(h)); }
+	//		if (gi.dwID==GID_ROTATE) {
+	//			DWORD h = LODWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32)
+	//				L" %i", (int)LOWORD(h)); }
+	//		if (gi.dwFlags&GF_BEGIN) wcscat_c(szDump, L" GF_BEGIN");
+	//		if (gi.dwFlags&GF_END) wcscat_c(szDump, L" GF_END");
+	//		if (gi.dwFlags&GF_INERTIA) { wcscat_c(szDump, L" GF_INERTIA");
+	//			DWORD h = HIDWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32)
+	//				L" {%i,%i}", (int)(short)LOWORD(h), (int)(short)HIWORD(h)); }
+	//		wcscat_c(szDump, L")\n");
 	//		DEBUGSTR(szDump)
 	//#else
 	//#define DUMPGEST(s)

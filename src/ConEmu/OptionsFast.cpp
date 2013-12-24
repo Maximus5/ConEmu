@@ -441,6 +441,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 {
 	bool bFound = false;
 	wchar_t* pszExpanded = NULL;
+	wchar_t szDrive[4] = L"C:\\";
 	bNeedQuot = false;
 
 	// Using environment variables?
@@ -482,7 +483,6 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		}
 	}
 
-	wchar_t szDrive[4] = L"C:\\";
 	for (szDrive[0] = L'C'; szDrive[0] <= L'Z'; szDrive[0]++)
 	{
 		UINT nType = GetDriveType(szDrive);

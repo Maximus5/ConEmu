@@ -605,7 +605,7 @@ HRESULT CDataObject::SetDataInt(LPCWSTR sFmtName, const void* hData, DWORD nData
 
 	FORMATETC       fmtetc[] =
 	{
-		{ RegisterClipboardFormat(sFmtName), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+		{ (CLIPFORMAT)RegisterClipboardFormat(sFmtName), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
 	};
 	STGMEDIUM       stgmed[] =
 	{

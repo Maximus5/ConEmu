@@ -1476,7 +1476,7 @@ bool CRealConsole::PostLeftClickSync(COORD crDC)
 	{
 		gpConEmu->DebugStep(_T("PostLeftClickSync: Waiting for result (10 sec)"));
 
-		DWORD nClickData[2] = {TRUE, MAKELONG(crMouse.X,crMouse.Y)};
+		DWORD nClickData[2] = {TRUE, (DWORD)MAKELONG(crMouse.X,crMouse.Y)};
 
 		if (!pipe.Execute(CMD_LEFTCLKSYNC, nClickData, sizeof(nClickData)))
 		{
@@ -2064,7 +2064,7 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			{
 				_ASSERTE(hConWnd!=NULL && "Console window must be already detected!");
 				mn_ServerActiveTick2 = GetTickCount();
-				DWORD nDelay = mn_ServerActiveTick2 - mn_ServerActiveTick1;
+				DEBUGTEST(DWORD nDelay = mn_ServerActiveTick2 - mn_ServerActiveTick1);
 
 				UpdateServerActive(TRUE);
 			}
@@ -2948,7 +2948,6 @@ DWORD CRealConsole::ConHostSearch(bool bFinal)
 			PROCESSENTRY32 PI = {sizeof(PI)};
 			if (Process32First(h, &PI))
 			{
-				BOOL bFlag = TRUE;
 				do {
 					if (lstrcmpi(PI.szExeFile, L"conhost.exe") == 0)
 					{
@@ -6659,7 +6658,9 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 										}
 										SafeCloseHandle(hMod);
 									}
+									UNREFERENCED_PARAMETER(nErrCode);
 								}
+								UNREFERENCED_PARAMETER(bIsWowProcess);
 
 
 								SPRC.RelockExclusive(300); // «аблокировать, если это еще не сделано
@@ -9386,7 +9387,7 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 
 	if (pipe.Init(_T("CRealConsole::ActivateFarWindow")))
 	{
-		DWORD nData[2] = {anWndIndex,0};
+		DWORD nData[2] = {(DWORD)anWndIndex,0};
 
 		// ≈сли в панел€х висит QSearch - его нужно предварительно "сн€ть"
 		if (!mn_ActiveTab && (mp_ABuf && (mp_ABuf->GetDetector()->GetFlags() & FR_QSEARCH)))
@@ -11582,6 +11583,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 		DWORD nTID = GetWindowThreadProcessId(hGuiWnd, &nPID);
 		_ASSERTE(nPID == anAppPID);
 		AllowSetForegroundWindow(nPID);
+		UNREFERENCED_PARAMETER(nTID);
 		
 		/*
 		BOOL lbThreadAttach = AttachThreadInput(nTID, GetCurrentThreadId(), TRUE);

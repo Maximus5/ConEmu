@@ -505,7 +505,7 @@ public:
 			{
 				*pszPath = 0;
 
-				DWORD nErr = 0;
+				DEBUGTEST(DWORD nErr = 0);
 				HANDLE h = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, anPID);
 				if (h == NULL)
 				{
@@ -526,12 +526,14 @@ public:
 					}
 				}
 
+				#ifdef _DEBUG
 				if (h == NULL)
 				{
 					nErr = GetLastError();
 					// Most usually this will be "Access denied", check others?
 					_ASSERTE(nErr == ERROR_ACCESS_DENIED);
 				}
+				#endif
 
 				if (h && h != INVALID_HANDLE_VALUE)
 				{

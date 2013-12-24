@@ -41,7 +41,7 @@ class CDragDrop :
 	public:
 		CDragDrop();
 		//BOOL Init(); --> CDragDropData::Register
-		~CDragDrop();
+		virtual ~CDragDrop();
 		virtual HRESULT __stdcall Drop(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
 		virtual HRESULT __stdcall DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
 		virtual HRESULT __stdcall DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);

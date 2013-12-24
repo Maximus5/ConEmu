@@ -517,7 +517,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			// размера под измененную конфигурацию сплитов...
 			RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, mp_RCon->mp_VCon);
 			//COORD crNewSize = {mp_RCon->TextWidth(),mp_RCon->TextHeight()};
-			COORD crNewSize = {rcCon.right,rcCon.bottom};
+			COORD crNewSize = {(SHORT)rcCon.right, (SHORT)rcCon.bottom};
 			int nNewWidth=0, nNewHeight=0;
 
 			if ((mp_RCon->mn_ProgramStatus & CES_NTVDM) == 0

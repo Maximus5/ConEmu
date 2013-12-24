@@ -695,6 +695,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 			GdiFlush();
 			memmove(mp_BkImgData+1, pBits, nBitSize);
 		}
+		UNREFERENCED_PARAMETER(nPlayErr);
 		
 		SelectObject(hdcDib, hOld);
 		DeleteObject(hDib);
@@ -789,7 +790,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 
 		pBgFile->PollBackgroundFile();
 
-		RECT rcWork = {0,0,pVCon->Width,pVCon->Height};
+		RECT rcWork = {0,0,(int)pVCon->Width,(int)pVCon->Height};
 
 		// необходимо проверить размер требуемой картинки
 		// -- здесь - всегда только файловая подложка

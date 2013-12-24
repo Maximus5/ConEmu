@@ -1076,6 +1076,8 @@ LPWSTR CConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon)
 	case cwc_NextMonitor:
 		gpConEmu->JumpNextMonitor(Cmd==cwc_NextMonitor);
 		break;
+	default:
+		; // GCC fix
 	}
 
 	if (!IsWindowVisible(ghWnd))
@@ -1222,7 +1224,6 @@ LPWSTR CConEmuMacro::FontSetName(GuiMacro* p, CRealConsole* apRCon)
 LPWSTR CConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon)
 {
 	int nWhat = 0, nFormat;
-	LPWSTR pszText = NULL;
 
 	if (!apRCon)
 		return lstrdup(L"InvalidArg");

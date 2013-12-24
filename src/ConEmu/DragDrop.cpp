@@ -527,12 +527,12 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 	{
 		if (iu == 0)
 		{
-			fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
+			fmtetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
 		}
 		else
 		{
 			// Outlook 2k передает ANSI!
-			fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORA);
+			fmtetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILEDESCRIPTORA);
 		}
 
 		// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
@@ -557,7 +557,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 			}
 
 			// Имена файлов теперь лежат в stgMedium, а для получения содержимого
-			fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILECONTENTS);
+			fmtetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILECONTENTS);
 			pszSubFolder[0] = 0;
 
 			int nLastProgress = -1;
@@ -1283,7 +1283,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	}
 
 	STGMEDIUM stgMediumMap = { 0 };
-	FORMATETC fmtetcMap = { RegisterClipboardFormat(CFSTR_FILENAMEMAPW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+	FORMATETC fmtetcMap = { (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILENAMEMAPW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 	hDrop = (HDROP)stgMedium.hGlobal;
 	int iQuantity = DragQueryFile(hDrop,(UINT)-1,NULL,0);
 

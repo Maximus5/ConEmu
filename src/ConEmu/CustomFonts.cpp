@@ -727,7 +727,7 @@ BOOL CEDC::ExtTextOut(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lp
 				//hOldBrush = ::SelectObject(hDC, m_BgBrush.Get(m_BkColor));
 				LONG w, h;
 				m_Font.pCustomFont->GetBoundingBox(&w, &h);
-				RECT r = {X, Y, X+w*cbCount, Y+h};
+				RECT r = {X, Y, (LONG)(X+w*cbCount), Y+h};
 				FillRect(hDC, &r, m_BgBrush.Get(m_BkColor));
 			}
 

@@ -1103,13 +1103,14 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 		return 100;
 	}
 
+
+#if !defined(__GNUC__)
+
 	// Task не выносит окна созданных задач "наверх"
 	HWND hPrevEmu = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
 	HWND hCreated = NULL;
-	
 
 
-#if !defined(__GNUC__)
 	// Really working method: Run cmd-line via task sheduler
 	// But there is one caveat: Task sheduler may be disable on PC!
 
@@ -1392,7 +1393,6 @@ wrap:
 		lbTryStdCreate = TRUE;
 	}
 	#endif
-
 
 #if 0
 	// There is IShellDispatch2::ShellExecute but explorer does not create/connect OutProcess servers...
@@ -2981,6 +2981,20 @@ void DebugUnitTests()
 }
 #endif
 
+#if defined(__GNUC__) || defined(_DEBUG)
+void GnuUnitTests()
+{
+	int nRegW = RegisterClipboardFormatW(CFSTR_FILENAMEW/*L"FileNameW"*/);
+	int nRegA = RegisterClipboardFormatA("FileNameW");
+	Assert(nRegW && nRegA && nRegW==nRegA);
+
+	wchar_t szHex[] = L"\x2018"/*С*/ L"\x2019"/*Т*/;
+	wchar_t szNum[] = {0x2018, 0x2019, 0};
+	int iDbg = lstrcmp(szHex, szNum);
+	Assert(iDbg==0);
+}
+#endif
+
 LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 {
 	wchar_t szFull[1024] = L"";
@@ -3104,7 +3118,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//msprintf(szDbg, countof(szDbg), L"xx=0x%X.", 0);
 	#endif
 
-	DEBUGTEST(DebugUnitTests());
+	#if defined(_DEBUG)
+	DebugUnitTests();
+	#endif
+	#if defined(__GNUC__) || defined(_DEBUG)
+	GnuUnitTests();
+	#endif
+
 
 //#ifdef _DEBUG
 //	wchar_t* pszShort = GetShortFileNameEx(L"T:\\VCProject\\FarPlugin\\ConEmu\\Maximus5\\Debug\\Far2x86\\ConEmu\\ConEmu.exe");
