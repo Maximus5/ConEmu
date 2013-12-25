@@ -83,7 +83,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FULL_STARTUP_ENV
 #include "../common/StartupEnv.h"
 
+#ifndef __GNUC__
 #pragma comment(lib, "shlwapi.lib")
+#endif
 
 
 WARNING("Обязательно после запуска сделать apiSetForegroundWindow на GUI окно, если в фокусе консоль");
@@ -255,10 +257,13 @@ void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int
 }
 
 
+#if 0
+// Current MinGW GCC doesn't require that anymore
 #if defined(__GNUC__)
 extern "C" {
 	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
 };
+#endif
 #endif
 
 //extern UINT_PTR gfnLoadLibrary;
@@ -267,9 +272,12 @@ UINT gnMsgSwitchCon = 0;
 UINT gnMsgHookedKey = 0;
 //UINT gnMsgConsoleHookedKey = 0;
 
-BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
+#if defined(__GNUC__)
+extern "C"
+#endif
+BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-	switch(ul_reason_for_call)
+	switch (ul_reason_for_call)
 	{
 		case DLL_PROCESS_ATTACH:
 		{
@@ -530,7 +538,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 	return TRUE;
 }
 
-//#if defined(CRTSTARTUP)
+//#if defined(GNUCRTSTARTUP)
 //extern "C" {
 //	BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
 //};
@@ -824,10 +832,11 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	// На всякий случай - сбросим
 	gnRunMode = RM_UNDEFINED;
 
+	// Check linker fails!
 	if (ghOurModule == NULL)
 	{
-		wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
-		MessageBox(NULL, L"ConsoleMain2. ghOurModule is NULL\nDllMain was not executed", szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+		wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) WIN3264TEST(L"ConEmuCD",L"ConEmuCD64") L", PID=%u", GetCurrentProcessId());
+		MessageBox(NULL, L"ConsoleMain2: ghOurModule is NULL\nDllMain was not executed", szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 		return CERR_DLLMAIN_SKIPPED;
 	}
 
@@ -2958,13 +2967,15 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 	return CERR_HOOKS_FAILED;
 }
 
+// GCC error: template argument for 'template<class _Ty> class MArray' uses local type
+struct ProcInfo {
+	DWORD nPID, nParentPID;
+	DWORD_PTR Flags;
+};
+
 int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = false)
 {
 	int iRc = CERR_CARGUMENT;
-	struct ProcInfo {
-		DWORD nPID, nParentPID;
-		DWORD_PTR Flags;
-	};
 	//ProcInfo* pList = NULL;
 	MArray<ProcInfo> List;
 	LPWSTR pszAllVars = NULL, pszSrc;

@@ -108,6 +108,8 @@ DWORD gnLastShowExeTick = 0;
 #endif
 
 
+#if 0
+// Current MinGW GCC doesn't require that anymore
 #if defined(__GNUC__)
 extern "C" {
 	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
@@ -117,6 +119,7 @@ extern "C" {
 	//__declspec(dllexport) HWND  ghKeyHookConEmuRoot = NULL;
 #if defined(__GNUC__)
 };
+#endif
 #endif
 
 //__declspec(dllexport) HHOOK ghKeyHook = 0;
@@ -1285,7 +1288,10 @@ void DllStop()
 	//DLOGEND();
 }
 
-BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
+#if defined(__GNUC__)
+extern "C"
+#endif
+BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
 	BOOL lbAllow = TRUE;
 
@@ -1544,17 +1550,17 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 	return lbAllow;
 }
 
-#if defined(CRTSTARTUP)
-extern "C" {
-	BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
-};
-
-BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
-{
-	DllMain(hDll, dwReason, lpReserved);
-	return TRUE;
-}
-#endif
+//#if defined(CRTSTARTUP)
+//extern "C" {
+//	BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
+//};
+//
+//BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
+//{
+//	DllMain(hDll, dwReason, lpReserved);
+//	return TRUE;
+//}
+//#endif
 
 ///* Используются как extern в ConEmuCheck.cpp */
 //LPVOID _calloc(size_t nCount,size_t nSize) {
