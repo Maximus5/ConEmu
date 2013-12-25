@@ -1,4 +1,5 @@
-﻿
+// NO BOM! Compiled with old gcc!
+
 #undef TEST_BUILD
 
 #include <windows.h>

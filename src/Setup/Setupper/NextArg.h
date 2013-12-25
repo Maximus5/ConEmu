@@ -1,4 +1,5 @@
-﻿
+// NO BOM! Compiled with old gcc!
+
 #pragma once
 
 // Возвращает 0, если успешно, иначе - ошибка
