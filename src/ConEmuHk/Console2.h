@@ -242,37 +242,37 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	*ip.pB++ = 0x4C;					// lea	       r8,&ptrProc
 	*ip.pB++ = 0x8D;
 	*ip.pB++ = 0x05;
-	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- указатель на адрес процедуры (code+8) [OUT]
+	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- указатель на адрес процедуры (code+8) [OUT]  // GCC do the INC before rvalue eval
 	*ip.pB++ = 0x33;                    // xor         rdx,rdx 
 	*ip.pB++ = 0xD2;
 	*ip.pB++ = 0x48;                    // lea         rcx,&UNICODE_STRING
 	*ip.pB++ = 0x8D;
 	*ip.pB++ = 0x0D;
-	*ip.pI++ = (int)(((LPBYTE)pStr) - ip.pB - 4); // &UNICODE_STRING
+	*ip.pI   = (int)(((LPBYTE)pStr) - ip.pB - 4);  ip.pI++;  // &UNICODE_STRING  // GCC do the INC before rvalue eval
 	*ip.pB++ = 0xFF;					// call  LdrGetDllHandleByName
 	*ip.pB++ = 0x15;
-	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- указатель на адрес процедуры (code+8)
+	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- указатель на адрес процедуры (code+8)  // GCC do the INC before rvalue eval
 	//
 	*ip.pB++ = 0x48;                    // mov         rax,&ProcAddress
 	*ip.pB++ = 0x8B;
 	*ip.pB++ = 0x05;
-	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- указатель на адрес процедуры (code+8)
+	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- указатель на адрес процедуры (code+8)  // GCC do the INC before rvalue eval
 	*ip.pB++ = 0x48;                    // add         rax,nProcShift
 	*ip.pB++ = 0x05;
 	*ip.pI++ = (DWORD)nLoadLibraryProcShift;
 	*ip.pB++ = 0x48;                    // mov         &ProcAddress,rax
 	*ip.pB++ = 0x89;
 	*ip.pB++ = 0x05;
-	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- указатель на адрес процедуры (code+8)
+	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- указатель на адрес процедуры (code+8)  // GCC do the INC before rvalue eval
 	}
 
 	*ip.pB++ = 0x48;					// lea	 rcx, "path\to\our.dll"
 	*ip.pB++ = 0x8D;
 	*ip.pB++ = 0x0D;
-	*ip.pI++ = (int)(codeSize + code - ip.pB - 4); // 45; -- указатель на "path\to\our.dll"
+	*ip.pI   = (int)(codeSize + code - ip.pB - 4);  ip.pI++;  // 45; -- указатель на "path\to\our.dll"  // GCC do the INC before rvalue eval
 	*ip.pB++ = 0xFF;					// call  LoadLibraryW
 	*ip.pB++ = 0x15;
-	*ip.pI++ = -(int)(ip.pB - code + 4 - 8); // -49; -- указатель на адрес процедуры (code+8)
+	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -49; -- указатель на адрес процедуры (code+8)  // GCC do the INC before rvalue eval
 	*ip.pB++ = 0x48;					// add   rsp, 40
 	*ip.pB++ = 0x83;
 	*ip.pB++ = 0xC4;
@@ -295,7 +295,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	*ip.pB++ = 0x9D;					// popfq
 	*ip.pB++ = 0xff;					// jmp	 Rip
 	*ip.pB++ = 0x25;
-	*ip.pI++ = -(int)(ip.pB - code + 4); // -91;
+	*ip.pI   = -(int)(ip.pB - code + 4);  ip.pI++;  // -91;  // GCC do the INC before rvalue eval
 	/* 0x5B */
 
 	context.Rip = (UINT_PTR)mem + 16;	// начало (иструкция pushfq)
@@ -308,7 +308,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	*ip.pI++ = (UINT_PTR)mem + codeSize;
 	*ip.pB++ = 0xe8;			// call  LoadLibraryW
 	TODO("???");
-	*ip.pI++ = (UINT_PTR)pfn->fnLoadLibrary - ((UINT_PTR)mem + (ip.pB+4 - code));
+	*ip.pI   = (UINT_PTR)pfn->fnLoadLibrary - ((UINT_PTR)mem + (ip.pB+4 - code));  ip.pI++;  // GCC do the INC before rvalue eval
 	*ip.pB++ = 0x61;			// popa
 	*ip.pB++ = 0x9d;			// popf
 	*ip.pB++ = 0xc3;			// ret
