@@ -15,6 +15,19 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2013.12.25
+[!] Issue 1406: Sources was converted to utf-8 (mostly by Rick Sladkey).
+[%] GCC makefiles and source fixes.
+[%] DllMain was not called when compiled with GCC.
+[%] InjectHookDLL cause crash in hooked process when compiled with GCC.
+[*] File ".editorconfig" added into "src" folder.
+[%] Issue 1404: Workaround for deadlock between AltServerStop and ReloadFullConsoleInfo (by Rick Sladkey).
+[%] Issue 1404: Fix overlapped I/O for ReadFile like TransactNamePipe (by Rick Sladkey).
+[%] Issue 1405: Don't wait for overlapped event unless the API assures us that I/O is pending (by Rick Sladkey).
+[%] If no desktop dir is available - save dump into %TEMP%.
+[*] Some internal code changes.
+
+
 2013.12.23
 [%] Issue 1379: Disable fade in effect on startup.
 [*] Console font dialog - 'restart may be required'.
