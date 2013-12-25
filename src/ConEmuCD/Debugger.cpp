@@ -584,7 +584,14 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 
 	if (gpSrv->DbgInfo.bDebugProcessTree || !_GetSaveFileName)
 	{
-		HRESULT dwErr = SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, SHGFP_TYPE_CURRENT, dmpfile);
+		HRESULT dwErr = SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0/*SHGFP_TYPE_CURRENT*/, dmpfile);
+		if (FAILED(dwErr))
+		{
+			memset(dmpfile, 0, cchMaxDmpFile*sizeof(*dmpfile));
+			if (GetTempPath(cchMaxDmpFile-32, dmpfile) && *dmpfile)
+				dwErr = S_OK;
+		}
+
 		if (FAILED(dwErr))
 		{
 			_printf("\nGetSaveDumpName called, get desktop folder failed, code=%u\n", (DWORD)dwErr);
