@@ -19,6 +19,8 @@ compile.txt
 *.t32
 *.t64
 
+*.o
+
 *.suo
 *.log
 *.sdf
