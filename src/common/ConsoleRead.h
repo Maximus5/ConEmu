@@ -28,6 +28,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#ifndef COMMON_LVB_LEADING_BYTE
+#define COMMON_LVB_LEADING_BYTE    0x0100 // Leading Byte of DBCS
+#define COMMON_LVB_TRAILING_BYTE   0x0200 // Trailing Byte of DBCS
+#endif
+
 // Issue 924: "30000" was too large
 #define MAX_CONREAD_SIZE 8000 // in "cells"
 

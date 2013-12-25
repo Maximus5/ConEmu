@@ -99,11 +99,11 @@ CEStartupEnv* LoadStartupEnv()
 
 	// Enum registered Console Fonts
 	// HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
-	int nLenMax = 2048;
 	wchar_t* pszFonts;
 #ifndef FULL_STARTUP_ENV
 	pszFonts = NULL;
 #else
+	int nLenMax = 2048;
 	pszFonts = (wchar_t*)calloc(nLenMax,sizeof(*pszFonts));
 	wchar_t szName[64], szValue[64];
 	if (pszFonts)

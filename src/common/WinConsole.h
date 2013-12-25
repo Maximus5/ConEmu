@@ -29,6 +29,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#ifndef COMMON_LVB_LEADING_BYTE
+#define COMMON_LVB_LEADING_BYTE    0x0100 // Leading Byte of DBCS
+#define COMMON_LVB_TRAILING_BYTE   0x0200 // Trailing Byte of DBCS
+#endif
+
+#ifndef CONSOLE_FULLSCREEN_HARDWARE
+#define CONSOLE_FULLSCREEN_HARDWARE 2   // console owns the hardware
+#endif
+
 struct MY_CONSOLE_SCREEN_BUFFER_INFOEX
 {
 	ULONG      cbSize;
@@ -40,6 +49,14 @@ struct MY_CONSOLE_SCREEN_BUFFER_INFOEX
 	WORD       wPopupAttributes;
 	BOOL       bFullscreenSupported;
 	COLORREF   ColorTable[16];
+};
+
+struct MY_CONSOLE_READCONSOLE_CONTROL
+{
+    ULONG nLength;
+    ULONG nInitialChars;
+    ULONG dwCtrlWakeupMask;
+    ULONG dwControlKeyState;
 };
 
 

@@ -33,7 +33,6 @@ extern WORD AddConAttr[16];
 
 // There bits must be left unchanged in "real console"
 #define UNCHANGED_CONATTR (0x00FF | COMMON_LVB_LEADING_BYTE | COMMON_LVB_TRAILING_BYTE)
-#define CHANGED_CONATTR (CON_ATTR_0|CON_ATTR_1|CON_ATTR_2|CON_ATTR_4|CON_ATTR_8)
 
 struct CEConsoleMark
 {

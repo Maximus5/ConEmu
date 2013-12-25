@@ -317,7 +317,7 @@ class MArray
             #ifdef _DEBUG
             if (_P<0/* || _P>=mn_Elements*/)
             {
-                _ARRAY_ASSERTE!((_P<0/* || _P>=mn_Elements*/));
+                _ARRAY_ASSERTE(!(_P<0/* || _P>=mn_Elements*/));
             }
             #endif
             

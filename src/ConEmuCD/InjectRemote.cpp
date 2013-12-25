@@ -207,7 +207,7 @@ int PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 	bool bAlreadyExists = false;
 
 	// Copy szModule to CSIDL_LOCAL_APPDATA and return new path
-	HRESULT hr = SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, szNewPath);
+	HRESULT hr = SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, 0/*SHGFP_TYPE_CURRENT*/, szNewPath);
 	if ((hr != S_OK) || !*szNewPath)
 	{
 		iRc = -251;

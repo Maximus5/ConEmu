@@ -72,7 +72,7 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 
 	memset(szFullInfo, 0, sizeof(szFullInfo));
 
-	dwErr = SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, SHGFP_TYPE_CURRENT, dmpfile);
+	dwErr = SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0/*SHGFP_TYPE_CURRENT*/, dmpfile);
 	if (FAILED(dwErr))
 	{
 		memset(dmpfile, 0, sizeof(dmpfile));

@@ -48,7 +48,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include <Tlhelp32.h>
+#ifndef __GNUC__
 #include <intrin.h>
+#else
+#define _InterlockedIncrement InterlockedIncrement
+#endif
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/WinObjects.h"

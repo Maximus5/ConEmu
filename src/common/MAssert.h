@@ -36,8 +36,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _CRT_WIDE(_String) __CRT_WIDE(_String)
 #endif
 
-#ifdef _DEBUG
+#if defined(_DEBUG)
+	#if !defined(__GNUC__)
 	#include <crtdbg.h>
+	#endif
 
 	enum CEAssertMode
 	{
@@ -61,7 +63,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	//extern int MDEBUG_CHK;
 	//extern char gsz_MDEBUG_TRAP_MSG_APPEND[2000];
 	//#define MDEBUG_TRAP1(S1) {strcpy(gsz_MDEBUG_TRAP_MSG_APPEND,(S1));_MDEBUG_TRAP(__FILE__,__LINE__);}
+	#if !defined(__GNUC__)
 	#define MCHKHEAP MY_ASSERT_EXPR(_CrtCheckMemory(),L"_CrtCheckMemory failed",false);
+	#else
+	#define MCHKHEAP
+	#define _CrtDbgBreak()
+	#endif
 
 	#define ASSERT(expr)   MY_ASSERT_EXPR((expr), _CRT_WIDE(#expr), false)
 	#define ASSERTE(expr)  MY_ASSERT_EXPR((expr), _CRT_WIDE(#expr), false)

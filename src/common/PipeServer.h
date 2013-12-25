@@ -78,7 +78,11 @@ enum PipeState
 
 
 #ifdef USEPIPELOG
+	#ifndef __GNUC__
 	#include <intrin.h>
+	#else
+	#define _InterlockedIncrement InterlockedIncrement
+	#endif
 
 	#define getThreadId() WIN3264TEST(((DWORD*) __readfsdword(24))[9],GetCurrentThreadId())
 
