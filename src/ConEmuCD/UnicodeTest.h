@@ -1,8 +1,4 @@
 ﻿
 #pragma once
 
-#if !defined(__GNUC__)
-#include "UnicodeTest_VC.h"
-#else
-#include "UnicodeTest_GCC.h"
-#endif
+#define UnicodeTestString L"AÀΑ╬豈Ａꊠ黠だ➀ጀะڰЯ0123456789"
