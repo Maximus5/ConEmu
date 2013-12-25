@@ -1,7 +1,4 @@
-LIBRARY
-
 EXPORTS
-; functions
 	SetHookCallbacks=SetHookCallbacks@24
 	SetLoadLibraryCallback=SetLoadLibraryCallback@12
 	SetFarHookMode=SetFarHookMode@4

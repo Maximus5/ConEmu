@@ -14,8 +14,7 @@ SRCS = ConsoleMain.cpp \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp \
        ../common/ConsoleRead.cpp \
-       ../common/ExecPty.cpp \
-       ../common/Execute.cpp \
+       ../common/execute.cpp \
        ../common/InQueue.cpp \
        ../common/MAssert.cpp \
        ../common/Monitors.cpp \
@@ -31,6 +30,7 @@ SRCS = ConsoleMain.cpp \
 USERLIBS =  -lgdi32
 ENCFLAGS = -finput-charset=utf-8
 
+# USERCPP = -D SHOW_STARTED_MSGBOX
 
 #The following variables can be set by the user:
 #
@@ -52,10 +52,6 @@ ENCFLAGS = -finput-charset=utf-8
 #                (libraries order is important for gcc).
 #
 #USERRC - user defined switches for windres
-#
-#NEEDENTRY - set if you want to disable the -nostartfiles link flag
-#
-#NEEDDEFLIB - set if you want to disable the -nodefaultlibs link flag
 #
 #EXCLUDECRT - set if you do not want to link with common/crt lib.
 #
@@ -95,16 +91,6 @@ DEF = export.gcc.def
 RC_NAME = $(NAME).rc
 RES = $(OBJDIR)/$(NAME).res.o
 
-NOSTART = -nostartfiles
-ifdef NEEDENTRY
-NOSTART = 
-endif
-
-NODEFLIBS = -nodefaultlibs
-ifdef NEEDDEFLIB
-NODEFLIBS = 
-endif
-
 COMMONLIB = -L $(COMMON) 
 ifdef EXCLUDECRT
 COMMONLIB = 
@@ -135,8 +121,8 @@ MAP = $(patsubst %.$(EXT),%.map,$(DLLFULLNAME))
 
 
 .PHONY: all
-#all: build
-all: iclean build
+all: build
+#all: iclean build
 #	@$(MAKE) -f makefile_gcc build 
 # clean
 

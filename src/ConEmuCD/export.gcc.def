@@ -1,5 +1,3 @@
-LIBRARY
-
 EXPORTS
 ; functions
 	LLKeybHook=LLKeybHook@12
