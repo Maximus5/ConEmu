@@ -2968,7 +2968,6 @@ int CVConGroup::GetConCount(bool bNoDetached /*= false*/)
 
 BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
 {
-	//CVirtualConsole* pVCon = NULL;
 	CVConGuard VCon;
 	bool bFound = false;
 	_ASSERTE(pStartStop->dwPID!=0);

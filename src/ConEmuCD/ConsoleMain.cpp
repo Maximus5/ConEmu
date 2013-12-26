@@ -6514,6 +6514,11 @@ BOOL cmd_GetOutput(CESERVER_REQ& in, CESERVER_REQ** out)
 }
 #endif
 
+// Запрос к серверу - "Подцепись в ConEmu GUI".
+// Может придти из
+// * GUI (диалог аттача)
+// * из Far плагина (меню или команда "Attach to ConEmu")
+// * из "ConEmuC /ATTACH"
 BOOL cmd_Attach2Gui(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;

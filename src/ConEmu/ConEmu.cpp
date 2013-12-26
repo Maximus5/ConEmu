@@ -7078,11 +7078,6 @@ void CConEmuMain::AttachToDialog()
 	mp_AttachDlg->AttachDlg();
 }
 
-BOOL CConEmuMain::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
-{
-	return CVConGroup::AttachRequested(ahConWnd, pStartStop, pRet);
-}
-
 CRealConsole* CConEmuMain::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID)
 {
 	wchar_t szLogInfo[MAX_PATH];
@@ -18914,11 +18909,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgUpdateTitle)
 			{
-				//this->UpdateTitle(TitleCmp);
-				this->UpdateTitle(/*mp_ VActive->RCon()->GetTitle()*/);
+				this->UpdateTitle();
 				return 0;
-				//} else if (messg == this->mn_MsgAttach) {
-				//    return this->AttachRequested ( (HWND)wParam, (DWORD)lParam );
 			}
 			else if (messg == this->mn_MsgSrvStarted)
 			{
