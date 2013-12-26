@@ -37,8 +37,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	    L"This is a console part of ConEmu product.\r\n" \
 	    L"Usage: ConEmuC [switches] [/U | /A] /C <command line, passed to %COMSPEC%>\r\n" \
 	    L"   or: ConEmuC [switches] /ROOT <program with arguments, far.exe for example>\r\n" \
+	    L"   or: ConEmuC /AUTOATTACH [/GHWND=NEW|<HWND>]\r\n" \
 	    L"   or: ConEmuC /ATTACH /NOCMD\r\n" \
-		L"   or: ConEmuC /ATTACH /[FAR|CON]PID=<PID>\r\n" \
+		L"   or: ConEmuC /ATTACH [/GHWND=NEW|<HWND>] /[FAR|CON|TRM]PID=<PID>\r\n" \
 	    L"   or: ConEmuC /GUIMACRO <ConEmu GUI macro command>\r\n" \
 		L"   or: ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]\r\n" \
 		L"   or: ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]\r\n" \
@@ -46,9 +47,15 @@ _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n")
 	    L"   or: ConEmuC /?\r\n" \
 	    L"Switches:\r\n" \
 	    L"     /[NO]CONFIRM    - [don't] confirm closing console on program termination\r\n" \
+	    L"     /AUTOATTACH     - asynchronous attach to ConEmu GUI (for batches)\r\n" \
+	    L"                       always returns 0 as errorlevel on exit (Issue 1003)\r\n" \
 	    L"     /ATTACH         - auto attach to ConEmu GUI\r\n" \
-	    L"     /NOCMD          - attach current (existing) console to GUI\r\n" \
-		L"     /[FAR]PID=<PID> - use <PID> as root process\r\n" \
+	    L"       /GHWND        - you may force new ConEmu window or attach to specific one\r\n" \
+	    L"       /NOCMD        - attach current (existing) console to GUI\r\n" \
+		L"       /PID=<PID>    - use <PID> as root process\r\n" \
+		L"       /FARPID=<PID> - for internal use from Far plugin\r\n" \
+		L"       /CONPID=<PID> - 'soft' mode, don't inject ConEmuHk into <PID>\r\n" \
+		L"       /TRMPID=<PID> - called from *.vshost.exe when 'AllocConsole' just created\r\n" \
 	    L"     /B{W|H|Z}       - define window width, height and buffer height\r\n" \
 _DBGHLP(L"     /BW=<WndX> /BH=<WndY> /BZ=<BufY>\r\n") \
 	    L"     /F{N|W|H}    - define console font name, width, height\r\n" \
