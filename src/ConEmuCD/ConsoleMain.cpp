@@ -2155,85 +2155,16 @@ void PrintVersion()
 void Help()
 {
 	PrintVersion();
+
+	// See definition in "ConEmuCD/ConsoleHelp.h"
 	_wprintf(pConsoleHelp);
 	_wprintf(pNewConsoleHelp);
-	
-	//_printf(
-	//	    "This is a console part of ConEmu product.\n"
-	//	    "Usage: ConEmuC [switches] [/U | /A] /C <command line, passed to %%COMSPEC%%>\n"
-	//	    "   or: ConEmuC [switches] /ROOT <program with arguments, far.exe for example>\n"
-	//	    "   or: ConEmuC /ATTACH /NOCMD\n"
-	//		"   or: ConEmuC /ATTACH /[FAR]PID=<PID>\n"
-	//	    "   or: ConEmuC /GUIMACRO <ConEmu GUI macro command>\n"
-	//		"   or: ConEmuC /DEBUGPID=<Debugging PID>\n"
-	//#ifdef _DEBUG
-	//		"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\n"
-	//#endif
-	//	    "   or: ConEmuC /?\n"
-	//	    "Switches:\n"
-	//	    "     /[NO]CONFIRM    - [don't] confirm closing console on program termination\n"
-	//	    "     /ATTACH         - auto attach to ConEmu GUI\n"
-	//	    "     /NOCMD          - attach current (existing) console to GUI\n"
-	//		"     /[FAR]PID=<PID> - use <PID> as root process\n"
-	//	    "     /B{W|H|Z}       - define window width, height and buffer height\n"
-	//#ifdef _DEBUG
-	//		"     /BW=<WndX> /BH=<WndY> /BZ=<BufY>\n"
-	//#endif
-	//	    "     /F{N|W|H}    - define console font name, width, height\n"
-	//#ifdef _DEBUG
-	//		"     /FN=<ConFontName> /FH=<FontHeight> /FW=<FontWidth>\n"
-	//#endif
-	//	    "     /LOG[N]      - create (debug) log file, N is number from 0 to 3\n"
-	//#ifdef _DEBUG
-	//		"     /CINMODE==<hex:gnConsoleModeFlags>\n"
-	//		"     /HIDE -> gbForceHideConWnd=TRUE\n"
-	//		"     /GID=<ConEmu.exe PID>\n"
-	//		"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\n"
-	//		"     /INJECT=PID{10}\n"
-	//		"     /DOSBOX -> use DosBox\n"
-	//#endif
-	//	    "\n"
-	//	    "When you run application from ConEmu console, you may use\n"
-	//        "  Switch: -new_console[:abch[N]rx[N]y[N]u[:user:pwd]]\n"
-	//        "     a - RunAs shell verb (as Admin on Vista+, login/passw in Win2k and WinXP)\n"
-	//        "     b - Create background tab\n"
-	//        "     c - force enable 'Press Enter or Esc to close console' (default)\n"
-	//        "     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\n"
-	//        "     l - lock console size, do not sync it to ConEmu window\n"
-	//        "     n - disable 'Press Enter or Esc to close console'\n"
-	//        "     r - run as restricted user\n"
-	//        "     x<width>, y<height> - change size of visible area, use with 'l'\n"
-	//        "     u - ConEmu choose user dialog\n"
-	//        "     u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST OPTION\n"
-	//        "  Warning: Option 'Inject ConEmuHk' must be enabled in ConEmu settings!\n"
-	//        "  Example: dir \"-new_console:bh9999c\" c:\\ /s\n");
 }
 
 void DosBoxHelp()
 {
+	// See definition in "ConEmuCD/ConsoleHelp.h"
 	_wprintf(pDosBoxHelp);
-	//_printf(
-	//	"Starting DosBox, You may use following default combinations in DosBox window\n"
-	//	"ALT-ENTER     Switch to full screen and back.\n"
-	//	"ALT-PAUSE     Pause emulation (hit ALT-PAUSE again to continue).\n"
-	//	"CTRL-F1       Start the keymapper.\n"
-	//	"CTRL-F4       Change between mounted floppy/CD images. Update directory cache \n"
-	//	"              for all drives.\n"
-	//	"CTRL-ALT-F5   Start/Stop creating a movie of the screen. (avi video capturing)\n"
-	//	"CTRL-F5       Save a screenshot. (PNG format)\n"
-	//	"CTRL-F6       Start/Stop recording sound output to a wave file.\n"
-	//	"CTRL-ALT-F7   Start/Stop recording of OPL commands. (DRO format)\n"
-	//	"CTRL-ALT-F8   Start/Stop the recording of raw MIDI commands.\n"
-	//	"CTRL-F7       Decrease frameskip.\n"
-	//	"CTRL-F8       Increase frameskip.\n"
-	//	"CTRL-F9       Kill DOSBox.\n"
-	//	"CTRL-F10      Capture/Release the mouse.\n"
-	//	"CTRL-F11      Slow down emulation (Decrease DOSBox Cycles).\n"
-	//	"CTRL-F12      Speed up emulation (Increase DOSBox Cycles).\n"
-	//	"ALT-F12       Unlock speed (turbo button/fast forward).\n"
-	//	"F11, ALT-F11  (machine=cga) change tint in NTSC output modes\n"
-	//	"F11           (machine=hercules) cycle through amber, green, white colouring\n"
-	//);
 }
 
 void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=NULL*/)
@@ -4064,14 +3995,18 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 			else
 			{
-				gpSrv->hGuiWnd = (HWND)wcstoul(szArg+7, &pszEnd, 16);
+				LPCWSTR pszDescr = szArg+7;
+				if (pszDescr[0] == L'0' && (pszDescr[1] == L'x' || pszDescr[1] == L'X'))
+					pszDescr += 2; // That may be useful for calling from batch files
+				gpSrv->hGuiWnd = (HWND)wcstoul(pszDescr, &pszEnd, 16);
+				gpSrv->bRequestNewGuiWnd = FALSE;
 
 				if ((gpSrv->hGuiWnd) == NULL || !IsWindow(gpSrv->hGuiWnd))
 				{
 					_printf("Invalid GUI HWND specified:\n");
 					_wprintf(GetCommandLineW());
 					_printf("\n");
-					_ASSERTE(FALSE);
+					_ASSERTE(FALSE && "Invalid window was specified in /GHWND arg");
 					return CERR_CARGUMENT;
 				}
 			}

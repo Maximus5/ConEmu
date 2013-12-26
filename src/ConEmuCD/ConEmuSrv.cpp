@@ -381,7 +381,16 @@ int AttachRootProcess()
 		//	lstrcatW(pszSelf, L"\"");
 		//}
 
-		_wsprintf(szCommand, SKIPLEN(countof(szCommand)) L"\"%s\" /ATTACH %s/PID=%u", szSelf, gpSrv->bRequestNewGuiWnd ? L"/GHWND=NEW " : L"", dwParentPID);
+		wchar_t szGuiWnd[32];
+		if (gpSrv->bRequestNewGuiWnd)
+			wcscat_c(szGuiWnd, L"/GHWND=NEW");
+		else if (gpSrv->hGuiWnd)
+			_wsprintf(szGuiWnd, SKIPLEN(countof(szGuiWnd)) L"/GHWND=%08X", (DWORD)(DWORD_PTR)gpSrv->hGuiWnd);
+		else
+			szGuiWnd[0] = 0;
+
+		_wsprintf(szCommand, SKIPLEN(countof(szCommand)) L"\"%s\" %s /ATTACH /PID=%u", szSelf, szGuiWnd, dwParentPID);
+
 		PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
 		STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
 		PRINT_COMSPEC(L"Starting modeless:\n%s\n", pszSelf);
@@ -2316,19 +2325,18 @@ HWND Attach2Gui(DWORD nTimeout)
 		bNeedStartGui = TRUE;
 		hGui = (HWND)-1;
 	}
-	else if (gpSrv->dwGuiPID && gpSrv->hGuiWnd)
+	else if (gpSrv->hGuiWnd)
 	{
-		wchar_t szClass[128];
+		// Only HWND may be (was) specified, especially when running from batches
+		if (!gpSrv->dwGuiPID)
+			GetWindowThreadProcessId(gpSrv->hGuiWnd, &gpSrv->dwGuiPID);
+
+		wchar_t szClass[128] = L"";
 		GetClassName(gpSrv->hGuiWnd, szClass, countof(szClass));
-		if (lstrcmp(szClass, VirtualConsoleClassMain) == 0)
+		if (gpSrv->dwGuiPID && lstrcmp(szClass, VirtualConsoleClassMain) == 0)
 			hGui = gpSrv->hGuiWnd;
 		else
 			gpSrv->hGuiWnd = NULL;
-	}
-	else if (gpSrv->hGuiWnd)
-	{
-		_ASSERTE(gpSrv->hGuiWnd==NULL);
-		gpSrv->hGuiWnd = NULL;
 	}
 
 	if (!hGui)
