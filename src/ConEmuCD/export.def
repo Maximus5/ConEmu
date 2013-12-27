@@ -8,6 +8,7 @@ EXPORTS
 	MountVirtualHive
 	UnMountVirtualHive
 	PrivateEntry=RequestLocalServer
+	DownloadCommand
 
 ; LLKeyHooks (ConEmu GUI)
 	ghKeyHook

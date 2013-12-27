@@ -28,48 +28,44 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-struct CmdArg
+#define DOWNLOADTIMEOUT     30000
+#define DOWNLOADTIMEOUTMAX  180000
+
+struct CEDownloadErrorArg
 {
-public:
-	INT_PTR mn_MaxLen;
-	wchar_t *ms_Arg;
-
-	// Point to the end dblquot
-	LPCWSTR mpsz_Dequoted;
-	// if 0 - this is must be first call (first token of command line)
-	// so, we need to test for mpsz_Dequoted
-	int mn_TokenNo;
-
-	#ifdef _DEBUG
-	// Debug, для отлова "не сброшенных" вызовов
-	LPCWSTR ms_LastTokenEnd;
-	wchar_t ms_LastTokenSave[32];
-	#endif
-
-public:
-	operator LPCWSTR() const { return ms_Arg; };
-
-	wchar_t* GetBuffer(INT_PTR cchMaxLen);
-	wchar_t* Detach();
-	void Empty();
-	LPCWSTR Set(LPCWSTR asNewValue, int anChars = -1);
-
-	void GetPosFrom(const CmdArg& arg);
-
-	CmdArg();
-	~CmdArg();
+	union {
+	LPCWSTR   strArg;
+	DWORD_PTR uintArg;
+	};
+	bool isString;
 };
 
-int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart=NULL);
-bool IsNeedDequote(LPCWSTR asCmdLine, LPCWSTR* rsEndQuote=NULL);
+struct CEDownloadInfo
+{
+	size_t	strSize;
+	LPARAM  lParam;
+	LPCWSTR strFormat;
+	size_t  argCount;
+	CEDownloadErrorArg Args[3];
+};
 
-const wchar_t* SkipNonPrintable(const wchar_t* asParams);
-bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
-LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax);
+typedef void (WINAPI* FDownloadCallback)(const CEDownloadInfo* pError);
 
-bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars = NULL);
-bool IsFarExe(LPCWSTR asModuleName);
-BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQuot,
-			   CmdArg &szExe,
-			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit);
-bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet);
+enum CEDownloadCommand
+{
+	dc_Init           = 1,
+	dc_Reset          = 2,
+	dc_Finalize       = 3,
+	dc_SetProxy       = 4, // [0]="Server:Port", [1]="User", [2]="Password"
+	dc_SetErrCallback = 5, // [0]=FDownloadCallback, [1]=lParam
+	dc_SetProgress    = 6, // [0]=FDownloadCallback, [1]=lParam
+	dc_SetLogLevel    = 7, // [0]=LogLevelNo
+	dc_DownloadFile   = 8, // {IN}  - [0]="http", [1]="DestLocalFilePath", [2]=HANDLE(hDstFile), [3]=abShowAllErrors
+	                       // {OUT} - [0]=SizeInBytes, [1] = CRC32
+	dc_DownloadData   = 9, // [0]="http" -- not implemented yet
+};
+
+#if defined(__GNUC__)
+extern "C"
+#endif
+DWORD_PTR DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErrorArg* argv);

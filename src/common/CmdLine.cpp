@@ -70,6 +70,13 @@ wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
 	}
 	return ms_Arg;
 }
+wchar_t* CmdArg::Detach()
+{
+	wchar_t* psz = ms_Arg;
+	ms_Arg = NULL;
+	mn_MaxLen = 0;
+	return psz;
+}
 void CmdArg::Empty()
 {
 	if (ms_Arg)

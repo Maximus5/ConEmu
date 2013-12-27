@@ -3,6 +3,7 @@ SRCS = ConsoleMain.cpp \
        ConEmuCmd.cpp \
        ConEmuSrv.cpp \
        Debugger.cpp \
+       Downloader.cpp \
        GuiHooks.cpp \
        Infiltrate.cpp \
        InjectRemote.cpp \

@@ -32,6 +32,7 @@ $(OBJDIR)\RegPrepare.obj \
 $(OBJDIR)\ConEmuCmd.obj \
 $(OBJDIR)\ConEmuSrv.obj \
 $(OBJDIR)\Debugger.obj \
+$(OBJDIR)\Downloader.obj \
 $(OBJDIR)\Injects.obj \
 $(OBJDIR)\Infiltrate.obj \
 $(OBJDIR)\InjectRemote.obj \
@@ -281,7 +282,9 @@ $(OBJDIR)\ConEmuCmd.obj: ConEmuCmd.cpp ../common/PipeServer.h
 
 $(OBJDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ../common/PipeServer.h
 
-$(OBJDIR)\ConEmuSrv.obj: Debugger.cpp Debugger.h
+$(OBJDIR)\Debugger.obj: Debugger.cpp Debugger.h
+
+$(OBJDIR)\Downloader.obj: Downloader.cpp Downloader.h
 
 $(OBJDIR)\Injects.obj: ..\ConEmuHk\Injects.cpp
 

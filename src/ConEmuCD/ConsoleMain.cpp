@@ -78,6 +78,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "ConsoleHelp.h"
 #include "Debugger.h"
+#include "Downloader.h"
 #include "UnicodeTest.h"
 
 #define FULL_STARTUP_ENV
@@ -2652,6 +2653,7 @@ enum ConEmuExecAction
 	ea_ExportCon,  // export env.vars to processes of active console
 	ea_ExportGui,  // ea_ExportCon + ConEmu window
 	ea_ExportAll,  // export env.vars to all opened tabs of current ConEmu window
+	ea_Download,   // after "/download" switch may be unlimited pairs of {"url","file"},{"url","file"},...
 };
 
 int DoInjectHooks(LPWSTR asCmdArg)
@@ -3221,6 +3223,52 @@ wrap:
 	return iRc;
 }
 
+int DoDownload(LPCWSTR asCmdLine)
+{
+	int iRc = CERR_CARGUMENT;
+	DWORD_PTR drc;
+	CmdArg szArg;
+	wchar_t* pszUrl = NULL;
+	size_t iFiles = 0;
+	CEDownloadErrorArg args[4];
+
+	TODO("Process -proxy=... -user=... -pwd=... ");
+
+	DownloadCommand(dc_Init, 0, NULL);
+
+	while (NextArg(&asCmdLine, szArg) == 0)
+	{
+		SafeFree(pszUrl);
+		pszUrl = szArg.Detach();
+		if (NextArg(&asCmdLine, szArg) != 0)
+		{
+			iRc = CERR_CARGUMENT;
+			goto wrap;
+		}
+
+		args[0].strArg = pszUrl; args[0].isString = true;
+		args[1].strArg = szArg;  args[1].isString = true;
+		args[2].uintArg = 0;     args[2].isString = false;
+		args[3].uintArg = TRUE;  args[3].isString = false;
+
+		drc = DownloadCommand(dc_Init, 0, NULL);
+		if (drc == 0)
+		{
+			iRc = CERR_DOWNLOAD_FAILED;
+			_printf("Download failed\n");
+			goto wrap;
+		}
+
+		iFiles++;
+		_printf("File downloaded, size=%u, crc32=x%08X\n", (DWORD)args[0].uintArg, (DWORD)args[1].uintArg, NULL);
+	}
+
+	iRc = iFiles ? 0 : CERR_CARGUMENT;
+wrap:
+	DownloadCommand(dc_Finalize, 0, NULL);
+	return iRc;
+}
+
 int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
 {
 	HWND hCallWnd = hMacroInstance ? hMacroInstance : ghConWnd;
@@ -3292,6 +3340,11 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 	case ea_ExportAll:
 		{
 			iRc = DoExportEnv(asCmdArg, eExecAction);
+			break;
+		}
+	case ea_Download:
+		{
+			iRc = DoDownload(asCmdArg);
 			break;
 		}
 	default:
@@ -3639,6 +3692,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				eExecAction = ea_ExportCon;
 			else
 				eExecAction = ea_ExportGui;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/Download")==0)
+		{
+			eExecAction = ea_Download;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/IsConEmu")==0)

@@ -1440,6 +1440,9 @@ wrap:
 	return pszResult;
 }
 
+// This checks if file is located on local drive
+// (has "file://" prefix, or "\\server\share\..." or "X:\path\...")
+// and set asPathOrUrl back to local path (if prefix was specified)
 bool CConEmuUpdate::IsLocalFile(LPCWSTR& asPathOrUrl)
 {
 	LPWSTR psz = (LPWSTR)asPathOrUrl;
@@ -1448,6 +1451,10 @@ bool CConEmuUpdate::IsLocalFile(LPCWSTR& asPathOrUrl)
 	return lbLocal;
 }
 
+// This checks if file is located on local drive
+// (has "file://" prefix, or "\\server\share\..." or "X:\path\...")
+// and set asPathOrUrl back to local path (if prefix was specified)
+// Function DOES NOT modify the contents of buffer pointed by asPathOrUrl!
 bool CConEmuUpdate::IsLocalFile(LPWSTR& asPathOrUrl)
 {
 	if (!asPathOrUrl || !*asPathOrUrl)
