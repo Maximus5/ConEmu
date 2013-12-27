@@ -1586,272 +1586,86 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath="..\common\CmdLine.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\common.hpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuC.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Debugger.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuCheck.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuPipeMode.h"
-				>
-			</File>
-			<File
-				RelativePath="..\ConEmuHk\Console2.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ConsoleHelp.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConsoleRead.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\defines.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ExecPty.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\SetEnvVar.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Execute.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ExitCodes.h"
-				>
-			</File>
-			<File
-				RelativePath=".\GuiHooks.h"
-				>
-			</File>
-			<File
-				RelativePath="..\ConEmuHk\Injects.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\InQueue.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Memory.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MMap.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Monitors.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MSecurity.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MStrSafe.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\PipeServer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Queue.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\RConStartArgs.h"
-				>
-			</File>
-			<File
-				RelativePath=".\RegPrepare.h"
-				>
-			</File>
-			<File
-				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\StartupEnv.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinConsole.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinObjects.h"
-				>
-			</File>
+			<File RelativePath="..\common\CmdLine.h" />
+			<File RelativePath="..\common\common.hpp" />
+			<File RelativePath="..\common\ConEmuCheck.h" />
+			<File RelativePath="..\common\ConEmuPipeMode.h" />
+			<File RelativePath="..\common\ConsoleRead.h" />
+			<File RelativePath="..\common\defines.h" />
+			<File RelativePath="..\common\ExecPty.h" />
+			<File RelativePath="..\common\Execute.h" />
+			<File RelativePath="..\common\InQueue.h" />
+			<File RelativePath="..\common\Memory.h" />
+			<File RelativePath="..\common\MMap.h" />
+			<File RelativePath="..\common\Monitors.h" />
+			<File RelativePath="..\common\MSecurity.h" />
+			<File RelativePath="..\common\MStrSafe.h" />
+			<File RelativePath="..\common\PipeServer.h" />
+			<File RelativePath="..\common\RConStartArgs.h" />
+			<File RelativePath="..\common\SetEnvVar.h" />
+			<File RelativePath="..\common\StartupEnv.h" />
+			<File RelativePath="..\common\WinConsole.h" />
+			<File RelativePath="..\common\WinObjects.h" />
+			<File RelativePath="..\ConEmuHk\Console2.h" />
+			<File RelativePath="..\ConEmuHk\Injects.h" />
+			<File RelativePath=".\ConEmuC.h" />
+			<File RelativePath=".\ConsoleHelp.h" />
+			<File RelativePath=".\Debugger.h" />
+			<File RelativePath=".\Downloader.h" />
+			<File RelativePath=".\ExitCodes.h" />
+			<File RelativePath=".\GuiHooks.h" />
+			<File RelativePath=".\Queue.h" />
+			<File RelativePath=".\RegPrepare.h" />
+			<File RelativePath=".\resource.h" />
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
-			<File
-				RelativePath=".\ConEmuCD.rc"
-				>
-			</File>
+			<File RelativePath=".\ConEmuCD.rc" />
 		</Filter>
 		<Filter
 			Name="0 - Source Files"
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
-			<File
-				RelativePath="..\common\CmdLine.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Common.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuCheck.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuCmd.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuSrv.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Debugger.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConsoleMain.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConsoleRead.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ExecPty.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\SetEnvVar.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Execute.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\export.def"
-				>
-			</File>
-			<File
-				RelativePath=".\GuiHooks.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Infiltrate.cpp"
-				>
-				<FileConfiguration
-					Name="Debug_F3|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						BasicRuntimeChecks="0"
-						BufferSecurityCheck="false"
-					/>
+			<File RelativePath=".\Infiltrate.cpp" >
+				<FileConfiguration Name="Debug_F3|Win32" >
+					<Tool Name="VCCLCompilerTool" BasicRuntimeChecks="0" BufferSecurityCheck="false" />
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F3|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						BasicRuntimeChecks="0"
-						BufferSecurityCheck="false"
-					/>
+				<FileConfiguration Name="Debug_F3|x64" >
+					<Tool Name="VCCLCompilerTool" BasicRuntimeChecks="0" BufferSecurityCheck="false" />
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath=".\InjectRemote.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\ConEmuHk\Injects.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\InQueue.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MAssert.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Memory.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Monitors.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MSecurity.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MStrSafe.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Queue.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\RConStartArgs.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\RegPrepare.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SrvPipes.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinConsole.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinObjects.cpp"
-				>
-			</File>
+			<File RelativePath="..\common\CmdLine.cpp" />
+			<File RelativePath="..\common\Common.cpp" />
+			<File RelativePath="..\common\ConEmuCheck.cpp" />
+			<File RelativePath="..\common\ConsoleRead.cpp" />
+			<File RelativePath="..\common\ExecPty.cpp" />
+			<File RelativePath="..\common\Execute.cpp" />
+			<File RelativePath="..\common\InQueue.cpp" />
+			<File RelativePath="..\common\MAssert.cpp" />
+			<File RelativePath="..\common\Memory.cpp" />
+			<File RelativePath="..\common\Monitors.cpp" />
+			<File RelativePath="..\common\MSecurity.cpp" />
+			<File RelativePath="..\common\MStrSafe.cpp" />
+			<File RelativePath="..\common\RConStartArgs.cpp" />
+			<File RelativePath="..\common\SetEnvVar.cpp" />
+			<File RelativePath="..\common\WinConsole.cpp" />
+			<File RelativePath="..\common\WinObjects.cpp" />
+			<File RelativePath="..\ConEmuHk\Injects.cpp" />
+			<File RelativePath=".\ConEmuCmd.cpp" />
+			<File RelativePath=".\ConEmuSrv.cpp" />
+			<File RelativePath=".\ConsoleMain.cpp" />
+			<File RelativePath=".\Debugger.cpp" />
+			<File RelativePath=".\Downloader.cpp" />
+			<File RelativePath=".\export.def" />
+			<File RelativePath=".\GuiHooks.cpp" />
+			<File RelativePath=".\InjectRemote.cpp" />
+			<File RelativePath=".\Queue.cpp" />
+			<File RelativePath=".\RegPrepare.cpp" />
+			<File RelativePath=".\SrvPipes.cpp" />
 		</Filter>
 		<Filter
 			Name="1 - Registry"

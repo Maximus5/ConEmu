@@ -800,32 +800,33 @@
   <ItemGroup>
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
-    <ClInclude Include="..\common\ExecPty.h" />
-    <ClInclude Include="..\common\MArray.h" />
-    <ClInclude Include="..\common\MMap.h" />
-    <ClInclude Include="..\common\SetEnvVar.h" />
-    <ClInclude Include="..\common\StartupEnv.h" />
-    <ClInclude Include="ConEmuC.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConsoleRead.h" />
-    <ClInclude Include="Debugger.h" />
     <ClInclude Include="..\common\defines.h" />
+    <ClInclude Include="..\common\ExecPty.h" />
     <ClInclude Include="..\common\Execute.h" />
-    <ClInclude Include="ExitCodes.h" />
-    <ClInclude Include="GuiHooks.h" />
-    <ClInclude Include="..\ConEmuHk\Injects.h" />
+    <ClInclude Include="..\common\InQueue.h" />
+    <ClInclude Include="..\common\MArray.h" />
     <ClInclude Include="..\common\Memory.h" />
+    <ClInclude Include="..\common\MMap.h" />
     <ClInclude Include="..\common\Monitors.h" />
     <ClInclude Include="..\common\MSecurity.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\PipeServer.h" />
-    <ClInclude Include="Queue.h" />
     <ClInclude Include="..\common\RConStartArgs.h" />
-    <ClInclude Include="RegPrepare.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="..\common\InQueue.h" />
+    <ClInclude Include="..\common\SetEnvVar.h" />
+    <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="..\ConEmuHk\Injects.h" />
+    <ClInclude Include="ConEmuC.h" />
+    <ClInclude Include="Debugger.h" />
+    <ClInclude Include="Downloader.h" />
+    <ClInclude Include="ExitCodes.h" />
+    <ClInclude Include="GuiHooks.h" />
+    <ClInclude Include="Queue.h" />
+    <ClInclude Include="RegPrepare.h" />
+    <ClInclude Include="resource.h" />
     <CustomBuild Include="header.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">true</ExcludedFromBuild>
@@ -1111,38 +1112,39 @@
     <ResourceCompile Include="ConEmuCD.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\common\CmdLine.cpp" />
-    <ClCompile Include="..\common\Common.cpp" />
-    <ClCompile Include="..\common\ConEmuCheck.cpp" />
-    <ClCompile Include="..\common\ConsoleRead.cpp" />
-    <ClCompile Include="..\common\ExecPty.cpp" />
-    <ClCompile Include="..\common\SetEnvVar.cpp" />
-    <ClCompile Include="ConEmuCmd.cpp" />
-    <ClCompile Include="ConEmuSrv.cpp" />
-    <ClCompile Include="ConsoleMain.cpp" />
-    <ClCompile Include="Debugger.cpp" />
-    <ClCompile Include="..\common\Execute.cpp" />
-    <ClCompile Include="GuiHooks.cpp" />
     <ClCompile Include="Infiltrate.cpp">
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">Default</BasicRuntimeChecks>
       <BufferSecurityCheck Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">false</BufferSecurityCheck>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">Default</BasicRuntimeChecks>
       <BufferSecurityCheck Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">false</BufferSecurityCheck>
     </ClCompile>
-    <ClCompile Include="InjectRemote.cpp" />
-    <ClCompile Include="..\ConEmuHk\Injects.cpp" />
+    <ClCompile Include="..\common\CmdLine.cpp" />
+    <ClCompile Include="..\common\Common.cpp" />
+    <ClCompile Include="..\common\ConEmuCheck.cpp" />
+    <ClCompile Include="..\common\ConsoleRead.cpp" />
+    <ClCompile Include="..\common\ExecPty.cpp" />
+    <ClCompile Include="..\common\Execute.cpp" />
+    <ClCompile Include="..\common\InQueue.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\Monitors.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
-    <ClCompile Include="Queue.cpp" />
     <ClCompile Include="..\common\RConStartArgs.cpp" />
-    <ClCompile Include="RegPrepare.cpp" />
-    <ClCompile Include="SrvPipes.cpp" />
-    <ClCompile Include="..\common\InQueue.cpp" />
+    <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="..\common\WinConsole.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
+    <ClCompile Include="..\ConEmuHk\Injects.cpp" />
+    <ClCompile Include="ConEmuCmd.cpp" />
+    <ClCompile Include="ConEmuSrv.cpp" />
+    <ClCompile Include="ConsoleMain.cpp" />
+    <ClCompile Include="Debugger.cpp" />
+    <ClCompile Include="Downloader.cpp" />
+    <ClCompile Include="GuiHooks.cpp" />
+    <ClCompile Include="InjectRemote.cpp" />
+    <ClCompile Include="Queue.cpp" />
+    <ClCompile Include="RegPrepare.cpp" />
+    <ClCompile Include="SrvPipes.cpp" />
     <ClCompile Include="RE_Config.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">true</ExcludedFromBuild>

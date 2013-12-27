@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Windows.h>
 #include <Wininet.h>
 #include "../common/defines.h"
+#include "../common/MAssert.h"
 #include "Downloader.h"
 
 #ifdef __GNUC__
@@ -46,7 +47,7 @@ static bool CalcCRC(const BYTE *pData, size_t cchSize, DWORD& crc)
 {
 	if (!pData)
 	{
-		_ASSERTE(pData==NULL || cchSize==0)
+		_ASSERTE(pData==NULL || cchSize==0);
 		return false;
 	}
 
@@ -264,8 +265,6 @@ public:
 
 CDownloader::CDownloader()
 {
-	_ASSERTE(gpConEmu->isMainThread());
-
 	mfn_ErrCallback = NULL;
 	m_ErrCallbackLParam = 0;
 
