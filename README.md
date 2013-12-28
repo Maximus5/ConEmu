@@ -74,6 +74,9 @@ are applied. You may easily use several named configurations (for different PCs 
 	Alternatively, You may run any root command, specifying `/Cmd \<App with params\>`
 	argument in ConEmu shortcut or command line.
 
+## Building from sources
+https://github.com/Maximus5/ConEmu/blob/master/src/HowToBuild.txt
+
  
 ## Screenshots
 ![Splits and tabs in ConEmu](https://github.com/Maximus5/ConEmu/wiki/ConEmuSplits.png)

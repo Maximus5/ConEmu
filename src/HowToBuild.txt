@@ -1,18 +1,39 @@
-You can choose any method:
+== Sources location ==
 
-1. Use Visual C++ 2008 and solution file CE.sln from this folder
-   ! Visual C++ related files are available on project`s svn:
-   ! http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/
+If you are reading this file, you have already get them.
+But here are the official sources location list.
 
-2. Use Visual C++ nmake (2008) and makefile_all_vc.
+https://github.com/Maximus5/ConEmu
+  Use this command to check out the project source code:
+    git clone git@github.com:Maximus5/ConEmu.git
+
+http://conemu-maximus5.googlecode.com/svn/trunk/
+  Use this command to check out the latest project source code:
+    svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-alpha/ ConEmu-alpha
+  Preview branch:
+    svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-preview/ ConEmu-preview
+  And stable version (may be old and obsolete):
+    svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-stable/ ConEmu-stable
+
+== How to build ==
+
+1. Visual Studio solution (*.sln) files. Supported versions:
+   CE.sln    Visual C++ 2008 and Windows SDK 7.0 (required!)
+   CE10.sln  Visual C++ 2010
+   CE11.sln  Visual C++ 2012
+   CE12.sln  Visual C++ 2013
+
+2. Visual C++ makefiles (current releases are build with Windows SDK 7.0)
    Example: nmake /F makefile_all_vc
    ! This method requires libCRT.lib (libCRT64.lib),
    ! placed in 'common' subfolder.
-   ! Theese files must be compiled from Far 3 sources.
-   ! http://farmanager.com/svn/trunk/plugins  -->  common folder
+   ! These files may be compiled from Far Manager sources.
+   ! http://farmanager.googlecode.com/svn/trunk/plugins  -->  common folder
    ! Windows SDK 7.0 required, check version in registry:
    ! HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows
+   ! HKEY_CURRENT_USER\SOFTWARE\Microsoft\Microsoft SDKs\Windows
 
 3. Use GnuC (MinGW) and makefile_all_gcc.
    Example: mingw32-make -f makefile_all_gcc WIDE=1
    ! This method was tested only for x86 builds.
+   ! Still has several limitations due to lack of MinGW headers.
