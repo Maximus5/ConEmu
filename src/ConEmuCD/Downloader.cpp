@@ -220,7 +220,7 @@ public:
 		wchar_t name[MAX_PATH] = L"iWInen.tldl";
 		char func[64];
 
-		for (wchar_t* p = name; *p && *(p+1); p+=2) { char c = p[0]; p[0] = p[1]; p[1] = c; }
+		for (wchar_t* p = name; *p && *(p+1); p+=2) { wchar_t c = p[0]; p[0] = p[1]; p[1] = c; }
 		_hWinInet = LoadLibrary(name);
 		if (!_hWinInet)
 		{
@@ -537,7 +537,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		if ((pszColon = wcsrchr(szServer, L':')) != NULL)
 		{
 			*pszColon = 0;
-			nServerPort = wcstoul(pszColon+1, &pszColon, 10);
+			nServerPort = (INTERNET_PORT)LOWORD(wcstoul(pszColon+1, &pszColon, 10));
 			if (!nServerPort)
 				nServerPort = INTERNET_DEFAULT_HTTP_PORT;
 		}
