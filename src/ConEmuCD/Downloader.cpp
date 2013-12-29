@@ -389,6 +389,7 @@ bool CDownloader::InitInterface()
 	bool bRc = false;
 	if (!wi)
 	{
+		ReportMessage(dc_LogCallback, L"InitInterface()");
 		wi = new CWinInet;
 		if (!wi)
 		{
@@ -428,22 +429,29 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 	DWORD nConnTimeoutSet, nDataTimeoutSet, cbSize;
 	DWORD ProxyType = INTERNET_OPEN_TYPE_DIRECT;
 	LPCWSTR ProxyName = NULL;
-	wchar_t szServer[MAX_PATH], szSrvPath[MAX_PATH*2];
+	wchar_t szServer[MAX_PATH];
+	wchar_t* pszSrvPath = NULL;
 	wchar_t *pszColon;
 	INTERNET_PORT nServerPort = INTERNET_DEFAULT_HTTP_PORT;
-	HTTP_VERSION_INFO httpver = {1,0};
+	bool bSecureHTTPS = false;
+	HTTP_VERSION_INFO httpver = {1,1};
 	wchar_t szHttpVer[32]; _wsprintf(szHttpVer, SKIPLEN(countof(szHttpVer)) L"HTTP/%u.%u", httpver.dwMajorVersion, httpver.dwMinorVersion);
 	wchar_t szAgent[] = L"Mozilla/5.0 (compatible; ConEmu Update)";
 	LPCWSTR szAcceptTypes[] = {L"*/*", NULL};
 	LPCWSTR pszReferrer = NULL;
 	DWORD nFlags;
 
-	if (!InitInterface())
+	if (!wi)
 	{
-		goto wrap;
+		if (!InitInterface())
+		{
+			goto wrap;
+		}
 	}
-
-	CloseInternet(false);
+	else
+	{
+		CloseInternet(false);
+	}
 
 	mn_InternetContentReady = 0;
 	mn_InternetContentLen = 0;
@@ -452,28 +460,40 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 	
 	if (mb_InetMode)
 	{
-		if (memcmp(asSource, L"http://", 7*sizeof(*asSource)) != 0)
+		LPCWSTR pszSource;
+		if (memcmp(asSource, L"http://", 7*sizeof(*asSource)) == 0)
+		{
+			bSecureHTTPS = false;
+			pszSource = asSource + 7;
+		}
+		if (memcmp(asSource, L"https://", 8*sizeof(*asSource)) == 0)
+		{
+			bSecureHTTPS = true;
+			pszSource = asSource + 8;
+			nServerPort = INTERNET_DEFAULT_HTTPS_PORT;
+		}
+		else
 		{
 			_ASSERTE(FALSE && "Only http addresses are supported now!");
 			ReportMessage(dc_ErrCallback,
 				L"Only http addresses are supported!\n\t%s", at_Str, asSource, at_None);
 			goto wrap;
 		}
-		LPCWSTR pszSlash = wcschr(asSource+7, L'/');
-		if (!pszSlash || (pszSlash == (asSource+7)) || ((pszSlash - (asSource+7)) >= (INT_PTR)countof(szServer)))
+		LPCWSTR pszSlash = wcschr(pszSource, L'/');
+		if (!pszSlash || (pszSlash == pszSource) || ((pszSlash - pszSource) >= (INT_PTR)countof(szServer)))
 		{
 			ReportMessage(dc_ErrCallback,
-				L"Invalid server specified!\n\t%s", at_Str, asSource, at_None);
+				L"Invalid server (domain) specified!\n\t%s", at_Str, asSource, at_None);
 			goto wrap;
 		}
-		lstrcpyn(szServer, asSource+7, (pszSlash - (asSource+6)));
 		if (!*(pszSlash+1))
 		{
 			ReportMessage(dc_ErrCallback,
 				L"Invalid server path specified!\n%s", at_Str, asSource, at_None);
 			goto wrap;
 		}
-		lstrcpyn(szSrvPath, pszSlash, countof(szSrvPath));
+		lstrcpyn(szServer, pszSource, (pszSlash - pszSource + 1));
+		pszSrvPath = lstrdup(pszSlash);
 	}
 
 	if (!asSource || !*asSource || !asTarget || !*asTarget)
@@ -524,6 +544,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		// Открыть WinInet
 		if (mh_Internet == NULL)
 		{
+			ReportMessage(dc_LogCallback, L"Open internet");
 			nFlags = 0; //INTERNET_FLAG_ASYNC;
 			mh_Internet = wi->_InternetOpenW(szAgent, ProxyType, ProxyName, NULL, nFlags);
 			if (!mh_Internet)
@@ -553,6 +574,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			}
 
 			// Protocol version
+			ReportMessage(dc_LogCallback, L"Set protocol version (%u.%u)", at_Uint, httpver.dwMajorVersion, at_Uint, httpver.dwMinorVersion, at_None);
 			if (!wi->_InternetSetOptionW(mh_Internet, INTERNET_OPTION_HTTP_VERSION, &httpver, sizeof(httpver)))
 			{
 				ReportMessage(dc_ErrCallback,
@@ -566,9 +588,17 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		{
 			cbSize = sizeof(mn_ConnTimeout);
 			if (!wi->_InternetQueryOptionW(mh_Internet, INTERNET_OPTION_RECEIVE_TIMEOUT, &mn_ConnTimeout, &cbSize))
+			{
+				ReportMessage(dc_LogCallback, L"Warning: Query internet receive timeout failed, code=%u", at_Uint, GetLastError(), at_None);
 				mn_ConnTimeout = 0;
+			}
+			else
+			{
+				ReportMessage(dc_LogCallback, L"Current internet receive timeout: %u ms", at_Uint, mn_ConnTimeout, at_None);
+			}
 		}
 		nConnTimeoutSet = max(mn_ConnTimeout,mn_Timeout);
+		ReportMessage(dc_LogCallback, L"Set internet receive timeout: %u ms", at_Uint, nConnTimeoutSet, at_None);
 		if (!wi->_InternetSetOptionW(mh_Internet, INTERNET_OPTION_RECEIVE_TIMEOUT, &nConnTimeoutSet, sizeof(nConnTimeoutSet)))
 		{
 			ReportMessage(dc_ErrCallback,
@@ -580,9 +610,17 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		{
 			cbSize = sizeof(mn_ConnTimeout);
 			if (!wi->_InternetQueryOptionW(mh_Internet, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT, &mn_DataTimeout, &cbSize))
+			{
+				ReportMessage(dc_LogCallback, L"Warning: Query internet data receive timeout failed, code=%u", at_Uint, GetLastError(), at_None);
 				mn_ConnTimeout = 0;
+			}
+			else
+			{
+				ReportMessage(dc_LogCallback, L"Current internet data receive timeout: %u ms", at_Uint, mn_DataTimeout, at_None);
+			}
 		}
 		nDataTimeoutSet = max(mn_DataTimeout,mn_Timeout);
+		ReportMessage(dc_LogCallback, L"Set internet receive timeout: %u ms", at_Uint, nConnTimeoutSet, at_None);
 		if (!wi->_InternetSetOptionW(mh_Internet, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT, &nDataTimeoutSet, sizeof(nDataTimeoutSet)))
 		{
 			ReportMessage(dc_ErrCallback,
@@ -660,12 +698,14 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		_ASSERTE(mh_SrcFile==NULL);
 		// Send request for the file
 		nFlags = INTERNET_FLAG_KEEP_CONNECTION
+			|(bSecureHTTPS?(INTERNET_FLAG_SECURE|INTERNET_FLAG_IGNORE_CERT_CN_INVALID|INTERNET_FLAG_IGNORE_CERT_DATE_INVALID):0)
 			|INTERNET_FLAG_HYPERLINK
 			//|INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP
 			|INTERNET_FLAG_NO_CACHE_WRITE
 			|INTERNET_FLAG_PRAGMA_NOCACHE
 			|INTERNET_FLAG_RELOAD;
-		mh_SrcFile = wi->_HttpOpenRequestW(mh_Connect, L"GET", szSrvPath, szHttpVer, pszReferrer,
+		ReportMessage(dc_LogCallback, L"Opening request with flags x%08X", at_Uint, nFlags, at_None);
+		mh_SrcFile = wi->_HttpOpenRequestW(mh_Connect, L"GET", pszSrvPath, szHttpVer, pszReferrer,
 			szAcceptTypes, nFlags, (DWORD_PTR)this);
 		if (!mh_SrcFile || (mh_SrcFile == INVALID_HANDLE_VALUE))
 		{
@@ -682,7 +722,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			goto wrap;
 		}
 
-
+		ReportMessage(dc_LogCallback, L"Sending request");
 		if (!wi->_HttpSendRequestW(mh_SrcFile,NULL,0,NULL,0))
 		{
 			DWORD dwErr = GetLastError();
@@ -699,6 +739,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			DWORD sz = sizeof(mn_InternetContentLen);
 			DWORD dwIndex = 0;
 			nFlags = HTTP_QUERY_CONTENT_LENGTH|HTTP_QUERY_FLAG_NUMBER;
+			ReportMessage(dc_LogCallback, L"Quering file info with flags x%08X", at_Uint, nFlags, at_None);
 			if (!wi->_HttpQueryInfoW(mh_SrcFile, nFlags, &mn_InternetContentLen, &sz, &dwIndex))
 			{
 				DWORD dwErr = GetLastError();
@@ -709,6 +750,11 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 				//if (abShowAllErrors)
 				//	ReportError(L"QueryContentLen failed\nURL=%s\ncode=%u", asSource, dwErr);
 				//goto wrap;
+				ReportMessage(dc_LogCallback, L"Warning: Quering file info failed, code=%u", at_Uint, dwErr, at_None);
+			}
+			else
+			{
+				ReportMessage(dc_LogCallback, L"File length retrieved: %u bytes", at_Uint, mn_InternetContentLen, at_None);
 			}
 		}
 
@@ -734,6 +780,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 	}
 	else
 	{
+		ReportMessage(dc_LogCallback, L"Opening source from file system");
 		mh_SrcFile = CreateFile(asSource, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 		if (!mh_SrcFile || (mh_SrcFile == INVALID_HANDLE_VALUE))
 		{
@@ -743,7 +790,10 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		}
 		LARGE_INTEGER liSize;
 		if (GetFileSizeEx(mh_SrcFile, &liSize))
+		{
 			mn_InternetContentLen = liSize.LowPart;
+			ReportMessage(dc_LogCallback, L"File length: %u bytes", at_Uint, mn_InternetContentLen, at_None);
+		}
 	}
 	
 	while (TRUE)
@@ -818,6 +868,7 @@ wrap:
 	}
 
 	SafeFree(ptrData);
+	SafeFree(pszSrvPath);
 	return lbRc;
 }
 
@@ -830,6 +881,7 @@ void CDownloader::CloseInternet(bool bFull)
 	{
 		if (mh_SrcFile && (mh_SrcFile != INVALID_HANDLE_VALUE))
 		{
+			ReportMessage(dc_LogCallback, L"Close source handle");
 			bClose = wi->_InternetCloseHandle(mh_SrcFile);
 			if (!bClose)
 				nCloseErr = GetLastError();
@@ -837,6 +889,7 @@ void CDownloader::CloseInternet(bool bFull)
 
 		if (mh_Connect)
 		{
+			ReportMessage(dc_LogCallback, L"Close connect handle");
 			bClose = wi->_InternetCloseHandle(mh_Connect);
 			if (!bClose)
 				nCloseErr = GetLastError();
@@ -844,6 +897,7 @@ void CDownloader::CloseInternet(bool bFull)
 
 		if (bFull && mh_Internet)
 		{
+			ReportMessage(dc_LogCallback, L"Close internet handle");
 			bClose = wi->_InternetCloseHandle(mh_Internet);
 			if (!bClose)
 				nCloseErr = GetLastError();
@@ -871,21 +925,23 @@ BOOL CDownloader::ReadSource(LPCWSTR asSource, BOOL bInet, HANDLE hSource, BYTE*
 	
 	if (bInet)
 	{
+		ReportMessage(dc_LogCallback, L"Reading source");
 		lbRc = wi->_InternetReadFile(hSource, pData, cbData, pcbRead);
 		if (!lbRc)
-		{
 			ReportMessage(dc_ErrCallback,
 				L"DownloadFile(%s) failed, code=%u", at_Str, asSource, at_Uint, GetLastError(), at_None);
-		}
+		else
+			ReportMessage(dc_LogCallback, L"Retrieved %u bytes", at_Uint, *pcbRead, at_None);
 	}
 	else
 	{
+		ReportMessage(dc_LogCallback, L"Reading file");
 		lbRc = ReadFile(hSource, pData, cbData, pcbRead, NULL);
 		if (!lbRc)
-		{
 			ReportMessage(dc_ErrCallback,
 				L"ReadFile(%s) failed, code=%u", at_Str, asSource, at_Uint, GetLastError(), at_None);
-		}
+		else
+			ReportMessage(dc_LogCallback, L"Read %u bytes", at_Uint, *pcbRead, at_None);
 	}
 	
 	return lbRc;
@@ -895,7 +951,8 @@ BOOL CDownloader::WriteTarget(LPCWSTR asTarget, HANDLE hTarget, const BYTE* pDat
 {
 	BOOL lbRc;
 	DWORD nWritten;
-	
+
+	ReportMessage(dc_LogCallback, L"Writing target file %u bytes", at_Uint, cbData, at_None);
 	lbRc = WriteFile(hTarget, pData, cbData, &nWritten, NULL);
 	
 	if (lbRc && (nWritten != cbData))
@@ -913,6 +970,7 @@ BOOL CDownloader::WriteTarget(LPCWSTR asTarget, HANDLE hTarget, const BYTE* pDat
 	return lbRc;
 }
 
+// Logging, errors, download progress
 void CDownloader::SetCallback(CEDownloadCommand cb, FDownloadCallback afnErrCallback, LPARAM lParam)
 {
 	if (cb > dc_LogCallback)
@@ -945,7 +1003,10 @@ void CDownloader::ReportMessage(CEDownloadCommand rm, LPCWSTR asFormat, CEDownlo
 		else if (argType == at_Str)
 			args.Args[i].strArg = va_arg( argptr, wchar_t* );
 		else
+		{
+			_ASSERTE(argType==at_Uint || argType==at_Str);
 			break;
+		}
 
 		args.Args[i++].argType = argType;
 		if (i >= countof(args.Args))
@@ -961,14 +1022,7 @@ void CDownloader::ReportMessage(CEDownloadCommand rm, LPCWSTR asFormat, CEDownlo
 
 void CDownloader::UpdateProgress()
 {
-	if (!mfn_Callback[dc_ProgressCallback])
-		return;
-
-	CEDownloadInfo args = {sizeof(args), m_CallbackLParam[dc_ProgressCallback], L"Bytes downloaded %u", 1};
-	args.Args[0].argType = at_Uint;
-	args.Args[0].uintArg = mn_InternetContentReady;
-
-	mfn_Callback[dc_ProgressCallback](&args);
+	ReportMessage(dc_ProgressCallback, L"Bytes downloaded %u", at_Uint, mn_InternetContentReady, at_None);
 }
 
 static CDownloader* gpInet = NULL;
