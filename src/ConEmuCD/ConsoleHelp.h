@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	    L"   or: ConEmuC /AUTOATTACH [/GHWND=NEW|<HWND>]\r\n" \
 	    L"   or: ConEmuC /ATTACH /NOCMD\r\n" \
 		L"   or: ConEmuC /ATTACH [/GHWND=NEW|<HWND>] /[FAR|CON|TRM]PID=<PID>\r\n" \
-	    L"   or: ConEmuC /GUIMACRO <ConEmu GUI macro command>\r\n" \
+	    L"   or: ConEmuC /GUIMACRO[:PID|HWND] <ConEmu GUI macro command>\r\n" \
 		L"   or: ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]\r\n" \
 		L"   or: ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]\r\n" \
 _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n") \
@@ -60,7 +60,8 @@ _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n")
 _DBGHLP(L"     /BW=<WndX> /BH=<WndY> /BZ=<BufY>\r\n") \
 	    L"     /F{N|W|H}    - define console font name, width, height\r\n" \
 _DBGHLP(L"     /FN=<ConFontName> /FH=<FontHeight> /FW=<FontWidth>\r\n") \
-	    L"     /LOG[N]      - create (debug) log file, N is number from 0 to 3\r\n" \
+	    L"     /LOG[N]         - create (debug) log file, N is number from 0 to 3\r\n" \
+	    L"     /GUIMACRO       - http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
 _DBGHLP(L"     /CINMODE==<hex:gnConsoleModeFlags>\r\n") \
 _DBGHLP(L"     /HIDE -> gbForceHideConWnd=TRUE\r\n") \
 _DBGHLP(L"     /GID=<ConEmu.exe PID>\r\n") \
