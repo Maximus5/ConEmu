@@ -1768,7 +1768,8 @@ wrap:
 	xf_validate(NULL);
 	#endif
 
-	if (iRc == CERR_GUIMACRO_SUCCEEDED)
+	if ((iRc == CERR_GUIMACRO_SUCCEEDED)
+		|| (iRc == CERR_DOWNLOAD_SUCCEEDED))
 	{
 		iRc = 0;
 	}
@@ -3223,6 +3224,22 @@ wrap:
 	return iRc;
 }
 
+static void PrintTime(LPCWSTR asLabel)
+{
+	SYSTEMTIME st = {}; GetLocalTime(&st);
+	wchar_t szTime[64];
+	_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%i:%02i:%02i.%03i %s",
+	           st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, asLabel);
+	_wprintf(szTime);
+}
+static void WINAPI DownloadCallback(const CEDownloadInfo* pInfo)
+{
+	wchar_t* pszInfo = pInfo->GetFormatted(true);
+	PrintTime(pInfo->lParam==1 ? L"Error: " : pInfo->lParam==2 ? L"Info:  " : pInfo->lParam==3 ? L"Progr: " : L"");
+	_wprintf(pszInfo ? pszInfo : L"<NULL>\n");
+	SafeFree(pszInfo);
+}
+
 int DoDownload(LPCWSTR asCmdLine)
 {
 	int iRc = CERR_CARGUMENT;
@@ -3231,10 +3248,22 @@ int DoDownload(LPCWSTR asCmdLine)
 	wchar_t* pszUrl = NULL;
 	size_t iFiles = 0;
 	CEDownloadErrorArg args[4];
+	wchar_t* pszExpanded = NULL;
+	wchar_t szFullPath[MAX_PATH*2];
+	DWORD nFullRc;
 
-	TODO("Process -proxy=... -user=... -pwd=... ");
+	TODO("Process -proxy=... -user=... -pwd=... -timeout=... -log");
 
 	DownloadCommand(dc_Init, 0, NULL);
+
+	args[0].uintArg = (DWORD_PTR)DownloadCallback; args[0].argType = at_Uint;
+	args[1].argType = at_Uint;
+	_ASSERTE(dc_ErrCallback==0 && dc_LogCallback==2);
+	for (int i = dc_ErrCallback; i <= dc_LogCallback; i++)
+	{
+		args[1].uintArg = (i+1);
+		DownloadCommand((CEDownloadCommand)i, 1, args);
+	}
 
 	while (NextArg(&asCmdLine, szArg) == 0)
 	{
@@ -3246,12 +3275,19 @@ int DoDownload(LPCWSTR asCmdLine)
 			goto wrap;
 		}
 
-		args[0].strArg = pszUrl; args[0].isString = true;
-		args[1].strArg = szArg;  args[1].isString = true;
-		args[2].uintArg = 0;     args[2].isString = false;
-		args[3].uintArg = TRUE;  args[3].isString = false;
+		args[0].strArg = pszUrl; args[0].argType = at_Str;
+		args[1].strArg = szArg;  args[1].argType = at_Str;
+		args[2].uintArg = 0;     args[2].argType = at_Uint;
+		args[3].uintArg = TRUE;  args[3].argType = at_Uint;
 
-		drc = DownloadCommand(dc_Init, 0, NULL);
+		// May be file name was specified relatively or even with env.vars?
+		SafeFree(pszExpanded);
+		pszExpanded = ExpandEnvStr(szArg);
+		nFullRc = GetFullPathName((pszExpanded && *pszExpanded) ? pszExpanded : szArg, countof(szFullPath), szFullPath, NULL);
+		if (nFullRc && nFullRc < countof(szFullPath))
+			args[1].strArg = szFullPath;
+
+		drc = DownloadCommand(dc_DownloadFile, 4, args);
 		if (drc == 0)
 		{
 			iRc = CERR_DOWNLOAD_FAILED;
@@ -3263,9 +3299,10 @@ int DoDownload(LPCWSTR asCmdLine)
 		_printf("File downloaded, size=%u, crc32=x%08X\n", (DWORD)args[0].uintArg, (DWORD)args[1].uintArg, NULL);
 	}
 
-	iRc = iFiles ? 0 : CERR_CARGUMENT;
+	iRc = iFiles ? CERR_DOWNLOAD_SUCCEEDED : CERR_CARGUMENT;
 wrap:
-	DownloadCommand(dc_Finalize, 0, NULL);
+	DownloadCommand(dc_Deinit, 0, NULL);
+	SafeFree(pszExpanded);
 	return iRc;
 }
 
