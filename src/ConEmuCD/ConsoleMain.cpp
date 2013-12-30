@@ -3251,6 +3251,8 @@ int DoDownload(LPCWSTR asCmdLine)
 	wchar_t* pszExpanded = NULL;
 	wchar_t szFullPath[MAX_PATH*2];
 	DWORD nFullRc;
+	wchar_t *pszProxy = NULL, *pszProxyLogin = NULL, *pszProxyPassword = NULL;
+	wchar_t *pszLogin = NULL, *pszPassword = NULL;
 
 	TODO("Process -proxy=... -user=... -pwd=... -timeout=... -log");
 
@@ -3265,14 +3267,69 @@ int DoDownload(LPCWSTR asCmdLine)
 		DownloadCommand((CEDownloadCommand)i, 1, args);
 	}
 
+	struct {
+		LPCWSTR   pszArgName;
+		wchar_t** ppszValue;
+	} KnownArgs[] = {
+		{L"login", &pszLogin},
+		{L"password", &pszPassword},
+		{L"proxy", &pszProxy},
+		{L"proxylogin", &pszProxyLogin},
+		{L"proxypassword", &pszProxyPassword},
+		{NULL}
+	};
+
 	while (NextArg(&asCmdLine, szArg) == 0)
 	{
+		LPCWSTR psz = szArg;
+		if ((psz[0] == L'-') || (psz[0] == L'/'))
+		{
+			psz++;
+			bool bKnown = false;
+			for (size_t i = 0; KnownArgs[i].pszArgName; i++)
+			{
+				if (lstrcmpi(psz, KnownArgs[i].pszArgName) == 0)
+				{
+					SafeFree(*KnownArgs[i].ppszValue);
+					if (NextArg(&asCmdLine, szArg) == 0)
+						*KnownArgs[i].ppszValue = szArg.Detach();
+					bKnown = true;
+					break;
+				}
+			}
+			if (!bKnown)
+			{
+				_printf("Unknown argument '");
+				_wprintf(psz);
+				_printf("'\n");
+				iRc = CERR_CARGUMENT;
+				goto wrap;
+			}
+			continue;
+		}
+
 		SafeFree(pszUrl);
 		pszUrl = szArg.Detach();
 		if (NextArg(&asCmdLine, szArg) != 0)
 		{
 			iRc = CERR_CARGUMENT;
 			goto wrap;
+		}
+
+		// Proxy?
+		if (pszProxy || pszProxyLogin)
+		{
+			args[0].strArg = pszProxy;         args[0].argType = at_Str;
+			args[1].strArg = pszProxyLogin;    args[1].argType = at_Str;
+			args[2].strArg = pszProxyPassword; args[2].argType = at_Str;
+			DownloadCommand(dc_SetProxy, 3, args);
+		}
+		// Server login
+		if (pszLogin)
+		{
+			args[0].strArg = pszLogin;    args[0].argType = at_Str;
+			args[1].strArg = pszPassword; args[1].argType = at_Str;
+			DownloadCommand(dc_SetLogin, 2, args);
 		}
 
 		args[0].strArg = pszUrl; args[0].argType = at_Str;
@@ -3303,6 +3360,10 @@ int DoDownload(LPCWSTR asCmdLine)
 wrap:
 	DownloadCommand(dc_Deinit, 0, NULL);
 	SafeFree(pszExpanded);
+	for (size_t i = 0; KnownArgs[i].pszArgName; i++)
+	{
+		SafeFree(*KnownArgs[i].ppszValue);
+	}
 	return iRc;
 }
 

@@ -128,10 +128,15 @@ protected:
 	bool InitInterface();
 	
 	struct {
-		wchar_t* szUpdateProxy;
-		wchar_t* szUpdateProxyUser;
-		wchar_t* szUpdateProxyPassword;
+		wchar_t* szProxy;
+		wchar_t* szProxyUser;
+		wchar_t* szProxyPassword;
 	} m_Proxy;
+
+	struct {
+		wchar_t* szUser;
+		wchar_t* szPassword;
+	} m_Server;
 	
 	DWORD mn_Timeout, mn_ConnTimeout, mn_DataTimeout, mn_FileTimeout;
 	
@@ -157,6 +162,7 @@ public:
 	virtual ~CDownloader();
 	
 	void SetProxy(LPCWSTR asProxy, LPCWSTR asProxyUser, LPCWSTR asProxyPassword);
+	void SetLogin(LPCWSTR asUser, LPCWSTR asPassword);
 	void SetCallback(CEDownloadCommand cb, FDownloadCallback afnErrCallback, LPARAM lParam);
 
 	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE);
@@ -180,6 +186,8 @@ public:
 	typedef BOOL (WINAPI* InternetSetOptionW_t)(HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer, DWORD dwBufferLength);
 	typedef BOOL (WINAPI* InternetQueryOptionW_t)(HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer, LPDWORD lpdwBufferLength);
 	typedef INTERNET_STATUS_CALLBACK (WINAPI* InternetSetStatusCallbackW_t)(HINTERNET hInternet, INTERNET_STATUS_CALLBACK lpfnInternetCallback);
+	typedef BOOL (WINAPI* FtpSetCurrentDirectoryW_t)(HINTERNET hConnect, LPCWSTR lpszDirectory);
+	typedef HINTERNET (WINAPI* FtpOpenFileW_t)(HINTERNET hConnect, LPCWSTR lpszFileName, DWORD dwAccess, DWORD dwFlags, DWORD_PTR dwContext);
 
 
 
@@ -193,8 +201,28 @@ public:
 	InternetSetOptionW_t _InternetSetOptionW;
 	InternetQueryOptionW_t _InternetQueryOptionW;
 	InternetSetStatusCallbackW_t _InternetSetStatusCallbackW;
+	FtpSetCurrentDirectoryW_t _FtpSetCurrentDirectoryW;
+	FtpOpenFileW_t _FtpOpenFileW;
 protected:
 	HMODULE _hWinInet;
+	bool LoadFuncInt(CDownloader* pUpd, FARPROC* pfn, LPCSTR n)
+	{
+		char func[64];
+		lstrcpyA(func,n);
+		for (char* p = func; *p && *(p+1); p+=2) { char c = p[0]; p[0] = p[1]; p[1] = c; }
+		*pfn = GetProcAddress(_hWinInet, func);
+		if (*pfn == NULL)
+		{
+			wchar_t name[64];
+			MultiByteToWideChar(CP_ACP, 0, func, -1, name, countof(name));
+			pUpd->ReportMessage(dc_ErrCallback,
+				L"GetProcAddress(%s) failed, code=%u", at_Str, name, at_Uint, GetLastError(), at_None);
+			FreeLibrary(_hWinInet);
+			_hWinInet = NULL;
+			return false;
+		}
+		return true;
+	}
 public:
 	CWinInet()
 	{
@@ -209,6 +237,8 @@ public:
 		_InternetSetOptionW = NULL;
         _InternetQueryOptionW = NULL;
 		_InternetSetStatusCallbackW = NULL;
+		_FtpSetCurrentDirectoryW = NULL;
+		_FtpOpenFileW = NULL;
 	};
 	~CWinInet()
 	{
@@ -221,7 +251,6 @@ public:
 			return true;
 
 		wchar_t name[MAX_PATH] = L"iWInen.tldl";
-		char func[64];
 
 		for (wchar_t* p = name; *p && *(p+1); p+=2) { wchar_t c = p[0]; p[0] = p[1]; p[1] = c; }
 		_hWinInet = LoadLibrary(name);
@@ -233,24 +262,8 @@ public:
 		}
 
 		#define LoadFunc(s,n) \
-			lstrcpyA(func,n); \
-			for (char* p = func; *p && *(p+1); p+=2) { char c = p[0]; p[0] = p[1]; p[1] = c; } \
-			_##s = (s##_t)GetProcAddress(_hWinInet, func); \
-			if (_##s == NULL) \
-			{ \
-				MultiByteToWideChar(CP_ACP, 0, func, -1, name, countof(name)); \
-				pUpd->ReportMessage(dc_ErrCallback, \
-					L"GetProcAddress(%s) failed, code=%u", at_Str, name, at_Uint, GetLastError(), at_None); \
-				FreeLibrary(_hWinInet); \
-				_hWinInet = NULL; \
-				return false; \
-			}
-
-		//const char* Htt = "Htt";
-		////const char* Interne = "qqq"; // "Interne";
-		//char Interne[128], FuncEnd[128];
-		//Interne[0] = 'I'; Interne[2] = 't'; Interne[4] = 'r'; Interne[6] = 'e';
-		//Interne[1] = 'n'; Interne[3] = 'e'; Interne[5] = 'n'; Interne[7] = 0;
+			if (!LoadFuncInt(pUpd, (FARPROC*)&_##s, n)) \
+				return false;
 
 		LoadFunc(HttpOpenRequestW,     "tHptpOneeRuqseWt");
 		LoadFunc(HttpQueryInfoW,       "tHptuQreIyfnWo");
@@ -262,6 +275,8 @@ public:
 		LoadFunc(InternetOpenW,        "nIetnrtepOneW");
 		LoadFunc(InternetReadFile,     "nIetnrteeRdaiFel");
 		LoadFunc(InternetSetStatusCallbackW, "nIetnrteeSStatutCslablcaWk");
+		LoadFunc(FtpSetCurrentDirectoryW, "tFSpteuCrrneDtriceotyrW");
+		LoadFunc(FtpOpenFileW,         "tFOpepFnliWe");
 
 		return true;
 	}
@@ -278,6 +293,7 @@ CDownloader::CDownloader()
 	memset(m_CallbackLParam, 0, sizeof(m_CallbackLParam));
 
 	ZeroStruct(m_Proxy);
+	ZeroStruct(m_Server);
 
 	mn_Timeout = DOWNLOADTIMEOUT;
 	mn_ConnTimeout = mn_FileTimeout = 0;
@@ -294,42 +310,56 @@ CDownloader::~CDownloader()
 {
 	CloseInternet(true);
 	SetProxy(NULL, NULL, NULL);
+	SetLogin(NULL, NULL);
 }
 
 // asProxy = "" - autoconfigure
 // asProxy = "server:port"
 void CDownloader::SetProxy(LPCWSTR asProxy, LPCWSTR asProxyUser, LPCWSTR asProxyPassword)
 {
-	SafeFree(m_Proxy.szUpdateProxy);
-	SafeFree(m_Proxy.szUpdateProxyUser);
-	if (m_Proxy.szUpdateProxyPassword)
-		SecureZeroMemory(m_Proxy.szUpdateProxyPassword, lstrlen(m_Proxy.szUpdateProxyPassword)*sizeof(*m_Proxy.szUpdateProxyPassword));
-	SafeFree(m_Proxy.szUpdateProxyPassword);
+	SafeFree(m_Proxy.szProxy);
+	SafeFree(m_Proxy.szProxyUser);
+	if (m_Proxy.szProxyPassword)
+		SecureZeroMemory(m_Proxy.szProxyPassword, lstrlen(m_Proxy.szProxyPassword)*sizeof(*m_Proxy.szProxyPassword));
+	SafeFree(m_Proxy.szProxyPassword);
 
 	if (asProxy)
-		m_Proxy.szUpdateProxy = lstrdup(asProxy);
+		m_Proxy.szProxy = lstrdup(asProxy);
 	if (asProxyUser)
-		m_Proxy.szUpdateProxyUser = lstrdup(asProxyUser);
+		m_Proxy.szProxyUser = lstrdup(asProxyUser);
 	if (asProxyPassword)
-		m_Proxy.szUpdateProxyPassword = lstrdup(asProxyPassword);
+		m_Proxy.szProxyPassword = lstrdup(asProxyPassword);
+}
+
+void CDownloader::SetLogin(LPCWSTR asUser, LPCWSTR asPassword)
+{
+	SafeFree(m_Server.szUser);
+	if (m_Server.szPassword)
+		SecureZeroMemory(m_Server.szPassword, lstrlen(m_Server.szPassword)*sizeof(*m_Server.szPassword));
+	SafeFree(m_Server.szPassword);
+
+	if (asUser)
+		m_Server.szUser = lstrdup(asUser);
+	if (asPassword)
+		m_Server.szPassword = lstrdup(asPassword);
 }
 
 bool CDownloader::SetProxyForHandle(HANDLE hInternet)
 {
 	bool bOk = false;
 
-	if (m_Proxy.szUpdateProxyUser && *m_Proxy.szUpdateProxyUser)
+	if (m_Proxy.szProxyUser && *m_Proxy.szProxyUser)
 	{
-		if (!wi->_InternetSetOptionW(hInternet, INTERNET_OPTION_PROXY_USERNAME, (LPVOID)m_Proxy.szUpdateProxyUser, lstrlen(m_Proxy.szUpdateProxyUser)))
+		if (!wi->_InternetSetOptionW(hInternet, INTERNET_OPTION_PROXY_USERNAME, (LPVOID)m_Proxy.szProxyUser, lstrlen(m_Proxy.szProxyUser)))
 		{
 			ReportMessage(dc_ErrCallback,
 				L"ProxyUserName failed, code=%u", at_Uint, GetLastError(), at_None);
 			goto wrap;
 		}
 	}
-	if (m_Proxy.szUpdateProxyPassword && *m_Proxy.szUpdateProxyPassword)
+	if (m_Proxy.szProxyPassword && *m_Proxy.szProxyPassword)
 	{
-		if (!wi->_InternetSetOptionW(hInternet, INTERNET_OPTION_PROXY_PASSWORD, (LPVOID)m_Proxy.szUpdateProxyPassword, lstrlen(m_Proxy.szUpdateProxyPassword)))
+		if (!wi->_InternetSetOptionW(hInternet, INTERNET_OPTION_PROXY_PASSWORD, (LPVOID)m_Proxy.szProxyPassword, lstrlen(m_Proxy.szProxyPassword)))
 		{
 			ReportMessage(dc_ErrCallback,
 				L"ProxyPassword failed, code=%u", at_Uint, GetLastError(), at_None);
@@ -434,12 +464,13 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 	wchar_t *pszColon;
 	INTERNET_PORT nServerPort = INTERNET_DEFAULT_HTTP_PORT;
 	bool bSecureHTTPS = false;
+	bool bFtp = false;
 	HTTP_VERSION_INFO httpver = {1,1};
 	wchar_t szHttpVer[32]; _wsprintf(szHttpVer, SKIPLEN(countof(szHttpVer)) L"HTTP/%u.%u", httpver.dwMajorVersion, httpver.dwMinorVersion);
 	wchar_t szAgent[] = L"Mozilla/5.0 (compatible; ConEmu Update)";
 	LPCWSTR szAcceptTypes[] = {L"*/*", NULL};
 	LPCWSTR pszReferrer = NULL;
-	DWORD nFlags;
+	DWORD nFlags, nService;
 
 	if (!wi)
 	{
@@ -471,6 +502,12 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			bSecureHTTPS = true;
 			pszSource = asSource + 8;
 			nServerPort = INTERNET_DEFAULT_HTTPS_PORT;
+		}
+		if (memcmp(asSource, L"ftp://", 6*sizeof(*asSource)) == 0)
+		{
+			bFtp = true;
+			pszSource = asSource + 6;
+			nServerPort = INTERNET_DEFAULT_FTP_PORT;
 		}
 		else
 		{
@@ -525,12 +562,12 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 	
 	if (mb_InetMode)
 	{
-		if (m_Proxy.szUpdateProxy)
+		if (m_Proxy.szProxy)
 		{
-			if (m_Proxy.szUpdateProxy && *m_Proxy.szUpdateProxy)
+			if (m_Proxy.szProxy && *m_Proxy.szProxy)
 			{
 				ProxyType = INTERNET_OPEN_TYPE_PROXY;
-				ProxyName = m_Proxy.szUpdateProxy;
+				ProxyName = m_Proxy.szProxy;
 			}
 			else
 			{
@@ -639,19 +676,23 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		if ((pszColon = wcsrchr(szServer, L':')) != NULL)
 		{
 			*pszColon = 0;
-			nServerPort = (INTERNET_PORT)LOWORD(wcstoul(pszColon+1, &pszColon, 10));
-			if (!nServerPort)
-				nServerPort = INTERNET_DEFAULT_HTTP_PORT;
+			INTERNET_PORT nExplicit = (INTERNET_PORT)LOWORD(wcstoul(pszColon+1, &pszColon, 10));
+			if (nExplicit)
+				nServerPort = nExplicit;
+			_ASSERTE(nServerPort!=NULL);
 		}
 		nFlags = 0; // No special flags
-		mh_Connect = wi->_InternetConnectW(mh_Internet, szServer, nServerPort, NULL, NULL, INTERNET_SERVICE_HTTP, nFlags, (DWORD_PTR)this);
+		nService = bFtp?INTERNET_SERVICE_FTP:INTERNET_SERVICE_HTTP;
+		ReportMessage(dc_LogCallback, L"Connecting to server %s:%u (%u)", at_Str, szServer, at_Uint, nServerPort, at_Uint, nService, at_None);
+		mh_Connect = wi->_InternetConnectW(mh_Internet, szServer, nServerPort, m_Server.szUser, m_Server.szPassword, nService, nFlags, (DWORD_PTR)this);
 		if (!mh_Connect)
 		{
 			DWORD dwErr = GetLastError();
 			if (abShowAllErrors)
 			{
 				ReportMessage(dc_ErrCallback,
-					L"Connection failed, code=%u", at_Uint, dwErr, at_None);
+					(dwErr == 12015) ? L"Authorization failed, code=%u" : L"Connection failed, code=%u",
+					at_Uint, dwErr, at_None);
 			}
 			goto wrap;
 		}
@@ -697,67 +738,108 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 
 		_ASSERTE(mh_SrcFile==NULL);
 		// Send request for the file
-		nFlags = INTERNET_FLAG_KEEP_CONNECTION
-			|(bSecureHTTPS?(INTERNET_FLAG_SECURE|INTERNET_FLAG_IGNORE_CERT_CN_INVALID|INTERNET_FLAG_IGNORE_CERT_DATE_INVALID):0)
-			|INTERNET_FLAG_HYPERLINK
-			//|INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP
-			|INTERNET_FLAG_NO_CACHE_WRITE
-			|INTERNET_FLAG_PRAGMA_NOCACHE
-			|INTERNET_FLAG_RELOAD;
-		ReportMessage(dc_LogCallback, L"Opening request with flags x%08X", at_Uint, nFlags, at_None);
-		mh_SrcFile = wi->_HttpOpenRequestW(mh_Connect, L"GET", pszSrvPath, szHttpVer, pszReferrer,
-			szAcceptTypes, nFlags, (DWORD_PTR)this);
-		if (!mh_SrcFile || (mh_SrcFile == INVALID_HANDLE_VALUE))
+		if (bFtp)
 		{
-			DWORD dwErr = GetLastError();
-			if (abShowAllErrors)
+			wchar_t* pszSlash = wcsrchr(pszSrvPath, L'/');
+			// Break path to dir+file
+			if (pszSlash == pszSrvPath)
+				pszSlash = NULL; // Root
+			else if (pszSlash)
+				*pszSlash = 0; // It is our memory buffer, we can do anything with it
+			// Set ftp directory
+			LPCWSTR pszSetDir = pszSlash ? pszSrvPath : L"/";
+			LPCWSTR pszFile = pszSlash ? (pszSlash+1) : (*pszSrvPath == L'/') ? (pszSrvPath+1) : pszSrvPath;
+			if (!wi->_FtpSetCurrentDirectoryW(mh_Connect, pszSetDir))
 			{
-				// In offline mode, HttpSendRequest returns ERROR_FILE_NOT_FOUND if the resource is not found in the Internet cache.
-				ReportMessage(dc_ErrCallback,
-					(dwErr == 2)
-					? L"HttpOpenRequest failed\nURL=%s\ncode=%u, Internet is offline?"
-					: L"HttpOpenRequest failed\nURL=%s\ncode=%u"
-					, at_Str, asSource, at_Uint, dwErr, at_None);
+				ReportMessage(dc_ErrCallback, L"Ftp set directory failed '%s', code=%u", at_Str, pszSetDir, at_Uint, GetLastError(), at_None);
+				if (pszSlash) *pszSlash = L'/'; // return it back
+				goto wrap;
 			}
-			goto wrap;
-		}
-
-		ReportMessage(dc_LogCallback, L"Sending request");
-		if (!wi->_HttpSendRequestW(mh_SrcFile,NULL,0,NULL,0))
-		{
-			DWORD dwErr = GetLastError();
-			if (abShowAllErrors)
+			if (pszSlash) *pszSlash = L'/'; // return it back
+			nFlags = FTP_TRANSFER_TYPE_BINARY;
+			mh_SrcFile = wi->_FtpOpenFileW(mh_Connect, pszFile, GENERIC_READ, nFlags, (DWORD_PTR)this);
+			if (pszSlash) *pszSlash = L'/'; // return it back
+			if (!mh_SrcFile || (mh_SrcFile == INVALID_HANDLE_VALUE))
 			{
-				ReportMessage(dc_ErrCallback,
-					L"HttpSendRequest failed\nURL=%s\ncode=%u", at_Str, asSource, at_Uint, dwErr, at_None);
+				DWORD dwErr = GetLastError();
+				if (abShowAllErrors)
+				{
+					// In offline mode, HttpSendRequest returns ERROR_FILE_NOT_FOUND if the resource is not found in the Internet cache.
+					ReportMessage(dc_ErrCallback,
+						(dwErr == 2)
+						? L"FtpOpenFile failed\nURL=%s\ncode=%u, Internet is offline?"
+						: L"FtpOpenFile failed\nURL=%s\ncode=%u"
+						, at_Str, asSource, at_Uint, dwErr, at_None);
+				}
+				goto wrap;
 			}
-			goto wrap;
+			// Set length to "Unknown" (simple)
+			mn_InternetContentLen = 0;
 		}
 		else
 		{
-			mn_InternetContentLen = 0;
-			DWORD sz = sizeof(mn_InternetContentLen);
-			DWORD dwIndex = 0;
-			nFlags = HTTP_QUERY_CONTENT_LENGTH|HTTP_QUERY_FLAG_NUMBER;
-			ReportMessage(dc_LogCallback, L"Quering file info with flags x%08X", at_Uint, nFlags, at_None);
-			if (!wi->_HttpQueryInfoW(mh_SrcFile, nFlags, &mn_InternetContentLen, &sz, &dwIndex))
+			nFlags = INTERNET_FLAG_KEEP_CONNECTION
+				|(bSecureHTTPS?(INTERNET_FLAG_SECURE|INTERNET_FLAG_IGNORE_CERT_CN_INVALID|INTERNET_FLAG_IGNORE_CERT_DATE_INVALID):0)
+				|INTERNET_FLAG_HYPERLINK
+				//|INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP
+				|INTERNET_FLAG_NO_CACHE_WRITE
+				|INTERNET_FLAG_PRAGMA_NOCACHE
+				|INTERNET_FLAG_RELOAD;
+			ReportMessage(dc_LogCallback, L"Opening request with flags x%08X", at_Uint, nFlags, at_None);
+			mh_SrcFile = wi->_HttpOpenRequestW(mh_Connect, L"GET", pszSrvPath, szHttpVer, pszReferrer,
+				szAcceptTypes, nFlags, (DWORD_PTR)this);
+
+			if (!mh_SrcFile || (mh_SrcFile == INVALID_HANDLE_VALUE))
 			{
 				DWORD dwErr = GetLastError();
-				mn_InternetContentLen = 0;
-				UNREFERENCED_PARAMETER(dwErr);
-				//DWORD dwErr = GetLastError();
-				//// были ошибки: ERROR_HTTP_HEADER_NOT_FOUND
-				//if (abShowAllErrors)
-				//	ReportError(L"QueryContentLen failed\nURL=%s\ncode=%u", asSource, dwErr);
-				//goto wrap;
-				ReportMessage(dc_LogCallback, L"Warning: Quering file info failed, code=%u", at_Uint, dwErr, at_None);
+				if (abShowAllErrors)
+				{
+					// In offline mode, HttpSendRequest returns ERROR_FILE_NOT_FOUND if the resource is not found in the Internet cache.
+					ReportMessage(dc_ErrCallback,
+						(dwErr == 2)
+						? L"HttpOpenRequest failed\nURL=%s\ncode=%u, Internet is offline?"
+						: L"HttpOpenRequest failed\nURL=%s\ncode=%u"
+						, at_Str, asSource, at_Uint, dwErr, at_None);
+				}
+				goto wrap;
+			}
+
+			ReportMessage(dc_LogCallback, L"Sending request");
+			if (!wi->_HttpSendRequestW(mh_SrcFile,NULL,0,NULL,0))
+			{
+				DWORD dwErr = GetLastError();
+				if (abShowAllErrors)
+				{
+					ReportMessage(dc_ErrCallback,
+						L"HttpSendRequest failed, code=%u\n\tURL=%s", at_Uint, dwErr, at_Str, asSource, at_None);
+				}
+				goto wrap;
 			}
 			else
 			{
-				ReportMessage(dc_LogCallback, L"File length retrieved: %u bytes", at_Uint, mn_InternetContentLen, at_None);
+				mn_InternetContentLen = 0;
+				DWORD sz = sizeof(mn_InternetContentLen);
+				DWORD dwIndex = 0;
+				nFlags = HTTP_QUERY_CONTENT_LENGTH|HTTP_QUERY_FLAG_NUMBER;
+				ReportMessage(dc_LogCallback, L"Quering file info with flags x%08X", at_Uint, nFlags, at_None);
+				if (!wi->_HttpQueryInfoW(mh_SrcFile, nFlags, &mn_InternetContentLen, &sz, &dwIndex))
+				{
+					DWORD dwErr = GetLastError();
+					mn_InternetContentLen = 0;
+					UNREFERENCED_PARAMETER(dwErr);
+					//DWORD dwErr = GetLastError();
+					//// были ошибки: ERROR_HTTP_HEADER_NOT_FOUND
+					//if (abShowAllErrors)
+					//	ReportError(L"QueryContentLen failed\nURL=%s\ncode=%u", asSource, dwErr);
+					//goto wrap;
+					ReportMessage(dc_LogCallback, L"Warning: Quering file info failed, code=%u", at_Uint, dwErr, at_None);
+				}
+				else
+				{
+					ReportMessage(dc_LogCallback, L"File length retrieved: %u bytes", at_Uint, mn_InternetContentLen, at_None);
+				}
 			}
 		}
-
 
 		////Because of some antivirus programs tail of file may arrives with long delay...
 		////INTERNET_OPTION_RECEIVE_TIMEOUT - Sets or retrieves an unsigned long integer value that contains the time-out value, in milliseconds");
@@ -1054,6 +1136,14 @@ DWORD_PTR DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErrorArg* a
 				(argc > 0 && argv[0].argType == at_Str) ? argv[0].strArg : NULL,
 				(argc > 1 && argv[1].argType == at_Str) ? argv[1].strArg : NULL,
 				(argc > 2 && argv[2].argType == at_Str) ? argv[2].strArg : NULL);
+		}
+		break;
+	case dc_SetLogin: // [0]="User", [1]="Password"
+		if (gpInet)
+		{
+			gpInet->SetLogin(
+				(argc > 0 && argv[0].argType == at_Str) ? argv[0].strArg : NULL,
+				(argc > 1 && argv[1].argType == at_Str) ? argv[1].strArg : NULL);
 		}
 		break;
 	case dc_ErrCallback: // [0]=FDownloadCallback, [1]=lParam

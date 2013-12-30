@@ -113,6 +113,7 @@ enum CEDownloadCommand
 	dc_Reset,
 	dc_Deinit,
 	dc_SetProxy,            // [0]="Server:Port", [1]="User", [2]="Password"
+	dc_SetLogin,            // [0]="User", [1]="Password"
 };
 
 #if defined(__GNUC__)
