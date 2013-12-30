@@ -392,6 +392,8 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput);
 BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
 BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
 // WARNING!!! This function exist in Vista and higher OS only!!!
+BOOL WINAPI OnSetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx);
+// WARNING!!! This function exist in Vista and higher OS only!!!
 BOOL WINAPI OnSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
 COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput);
 BOOL WINAPI OnSetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosition);
@@ -525,6 +527,11 @@ bool InitHooksCommon()
 		{
 			(void*)OnSetConsoleScreenBufferSize,
 			"SetConsoleScreenBufferSize",
+			kernel32
+		},
+		{
+			(void*)OnSetCurrentConsoleFontEx,
+			"SetCurrentConsoleFontEx",
 			kernel32
 		},
 		{
@@ -6059,6 +6066,28 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 		LockServerReadingThread(false, dwSize, pIn, pOut);
 	}
 
+	return lbRc;
+}
+
+// WARNING!!! This function exist in Vista and higher OS only!!!
+// Issue 1410
+BOOL WINAPI OnSetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx)
+{
+	typedef BOOL (WINAPI* OnSetCurrentConsoleFontEx_t)(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx);
+	ORIGINALFASTEX(SetCurrentConsoleFontEx,NULL);
+	BOOL lbRc = FALSE;
+
+	if (ghConEmuWndDC)
+	{
+		_ASSERTEX(FALSE && "Application tries to change console font! Prohibited!");
+		SetLastError(ERROR_INVALID_HANDLE);
+		goto wrap;
+	}
+
+	if (F(SetCurrentConsoleFontEx))
+		lbRc = F(SetCurrentConsoleFontEx)(hConsoleOutput, bMaximumWindow, lpConsoleCurrentFontEx);
+
+wrap:
 	return lbRc;
 }
 
