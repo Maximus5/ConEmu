@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2013 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -211,7 +211,7 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 						{
 							pszValue = (szValue+nLen);
 						}
-						// ������ ���������� � Dest
+						// Теперь перекинуть в Dest
 						while (pszValue > szValue)
 						{
 							*(pszDst++) = *(--pszValue);
