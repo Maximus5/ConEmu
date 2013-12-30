@@ -720,12 +720,6 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 	return lbRc;
 }
 
-#if defined(__GNUC__)
-extern "C" {
-	int __stdcall ConsoleMain2(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/);
-};
-#endif
-
 // Возвращает текст с информацией о пути к сохраненному дампу
 // DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024], LPWSTR pszComment = NULL);
 #include "../common/Dump.h"
@@ -778,6 +772,9 @@ void SetupCreateDumpOnException()
 
 
 // Main entry point for ConEmuC.exe
+#if defined(__GNUC__)
+extern "C"
+#endif
 int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserved*/)
 {
 	TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
@@ -2008,6 +2005,12 @@ AltServerDone:
 	ShutdownSrvStep(L"Finalizing done");
 	UNREFERENCED_PARAMETER(gpszCheck4NeedCmd);
 	UNREFERENCED_PARAMETER(nWaitDebugExit);
+#if 0
+	if (gnRunMode == RM_SERVER)
+	{
+		xf_dump();
+	}
+#endif
 	return iRc;
 }
 
@@ -2161,6 +2164,9 @@ void Help()
 	// See definition in "ConEmuCD/ConsoleHelp.h"
 	_wprintf(pConsoleHelp);
 	_wprintf(pNewConsoleHelp);
+
+	// Don't ask keypress before exit
+	gbInShutdown = TRUE;
 }
 
 void DosBoxHelp()
@@ -9250,7 +9256,29 @@ void _wprintf(LPCWSTR asBuffer)
 	int nAllLen = lstrlenW(asBuffer);
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	DWORD dwWritten = 0;
-	WriteConsoleW(hOut, asBuffer, nAllLen, &dwWritten, 0);
+
+	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+	BOOL bIsConsole = GetConsoleScreenBufferInfo(hOut, &sbi);
+
+	if (bIsConsole)
+	{
+		WriteConsoleW(hOut, asBuffer, nAllLen, &dwWritten, 0);
+	}
+	else
+	{
+		UINT  cp = GetConsoleOutputCP();
+		DWORD cchMax = (nAllLen * ((cp==CP_UTF8 || cp==CP_UTF7) ? 3 : 1)) + 1;
+		char* pszOem = (char*)malloc(cchMax);
+		if (pszOem)
+		{
+			int nWrite = WideCharToMultiByte(cp, 0, asBuffer, -1, pszOem, cchMax, NULL, NULL);
+			if (nWrite > 0)
+			{
+				WriteFile(hOut, pszOem, nWrite, &dwWritten, 0);
+			}
+			free(pszOem);
+		}
+	}
 	
 	//UINT nOldCP = GetConsoleOutputCP();
 	//char* pszOEM = (char*)malloc(nAllLen+1);
