@@ -6079,8 +6079,11 @@ BOOL WINAPI OnSetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow
 
 	if (ghConEmuWndDC)
 	{
-		_ASSERTEX(FALSE && "Application tries to change console font! Prohibited!");
-		SetLastError(ERROR_INVALID_HANDLE);
+		DebugString(L"Application tries to change console font! Prohibited!");
+		//_ASSERTEX(FALSE && "Application tries to change console font! Prohibited!");
+		//SetLastError(ERROR_INVALID_HANDLE);
+		//Damn powershell close itself if received an error on this call
+		lbRc = TRUE; // Cheating
 		goto wrap;
 	}
 
