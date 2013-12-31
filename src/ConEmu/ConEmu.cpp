@@ -11180,7 +11180,8 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 		{
 			size_t cchMax = _tcslen(szName)+100;
 			wchar_t* pszErrMsg = (wchar_t*)calloc(cchMax,sizeof(*pszErrMsg));
-			_wsprintf(pszErrMsg, SKIPLEN(cchMax) L"Command group %s %s!\nChoose your shell?",
+			_wsprintf(pszErrMsg, SKIPLEN(cchMax) L"Command group %s %s!\n"
+				L"Choose your shell?",
 				szName, pszDataW ? L"is empty" : L"not found");
 
 			int nBtn = MessageBox(pszErrMsg, MB_YESNO|MB_ICONEXCLAMATION);
