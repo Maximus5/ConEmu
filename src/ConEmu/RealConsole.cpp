@@ -3287,7 +3287,7 @@ BOOL CRealConsole::StartProcess()
 		//Box("Cannot execute the command.");
 		//DWORD dwLastError = GetLastError();
 		DEBUGSTRPROC(L"CreateProcess failed\n");
-		size_t nErrLen = _tcslen(psCurCmd)+100+(lpszWorkDir ? _tcslen(lpszWorkDir) : 0);
+		size_t nErrLen = _tcslen(psCurCmd)+120+(lpszWorkDir ? _tcslen(lpszWorkDir) : 0);
 
 		LPCWSTR pszDefaultCmd = bAllowDefaultCmd ? gpSetCls->GetDefaultCmd() : NULL;
 		nErrLen += pszDefaultCmd ? (100 + _tcslen(pszDefaultCmd)) : 0;
@@ -3313,7 +3313,7 @@ BOOL CRealConsole::StartProcess()
 			_wsprintf(psz, SKIPLEN(nErrLen) L"Can't create new console, command execution failed (code %i)\r\n", (int)dwLastError);
 		}
 		_wcscat_c(psz, nErrLen, pszErr);
-		_wcscat_c(psz, nErrLen, L"\r\n\r\n");
+		_wcscat_c(psz, nErrLen, L"\r\n");
 		_wcscat_c(psz, nErrLen, psCurCmd);
 		_wcscat_c(psz, nErrLen, L"\r\n\r\nWorking folder:\r\n\"");
 		_wcscat_c(psz, nErrLen, lpszWorkDir ? lpszWorkDir : L"");
@@ -3321,18 +3321,12 @@ BOOL CRealConsole::StartProcess()
 		
 		
 
-		if ((nStep==1) && pszDefaultCmd && *pszDefaultCmd)
+		if (nStep==1)
 		{
 			if (psz[_tcslen(psz)-1]!=L'\n') _wcscat_c(psz, nErrLen, L"\r\n");
-
-			if (!gpSetCls->GetCurCmd() && StrStrI(gpSetCls->GetCmd(NULL, true), gpSetCls->GetDefaultCmd())==NULL)
-			{
-				_wcscat_c(psz, nErrLen, L"\r\n\r\n");
-				_wcscat_c(psz, nErrLen, L"Do You want to start ");
-				_wcscat_c(psz, nErrLen, gpSetCls->GetDefaultCmd());
-				_wcscat_c(psz, nErrLen, L"?");
-				nButtons |= MB_YESNO;
-			}
+			_wcscat_c(psz, nErrLen, L"\r\n");
+			_wcscat_c(psz, nErrLen, L"Choose your shell?");
+			nButtons |= MB_YESNO;
 		}
 
 		MCHKHEAP
@@ -3340,7 +3334,29 @@ BOOL CRealConsole::StartProcess()
 		int nBrc = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), nButtons);
 		Free(psz); Free(pszErr);
 
-		if (nBrc!=IDYES)
+		if (nBrc == IDYES)
+		{
+			RConStartArgs args;
+			args.AssignFrom(&m_Args);
+			args.aRecreate = cra_EditTab;
+
+			int nCreateRc = gpConEmu->RecreateDlg(&args);
+
+			if (nCreateRc != IDC_START)
+			{
+				nBrc = IDCANCEL;
+			}
+			else
+			{
+				SafeFree(m_Args.pszSpecialCmd);
+				SafeFree(m_Args.pszStartupDir);
+				// Rest of fields will be cleared by AssignFrom
+				m_Args.AssignFrom(&args);
+				lpszCmd = m_Args.pszSpecialCmd;
+			}
+		}
+
+		if (nBrc != IDYES)
 		{
 			// ??? Может ведь быть НЕСКОЛЬКО консолей. Нельзя так разрушать основное окно!
 			//gpConEmu->Destroy();
@@ -3365,17 +3381,6 @@ BOOL CRealConsole::StartProcess()
 			goto wrap;
 		}
 
-		// Выполнить стандартную команду...
-		if (!m_Args.pszSpecialCmd || !*m_Args.pszSpecialCmd)
-		{
-			if (!gpSetCls->GetCurCmd())
-			{
-				Assert(gpSetCls->GetCurCmd()==NULL);
-				wchar_t* pszTmpCmd = lstrdup(gpSetCls->GetDefaultCmd());
-				gpSetCls->SetCurCmd(pszTmpCmd, false);
-			}
-		}
-
 		nStep ++;
 		MCHKHEAP
 
@@ -3392,7 +3397,7 @@ BOOL CRealConsole::StartProcess()
 
 	MCHKHEAP
 
-	if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
+	SafeFree(psCurCmd);
 
 	MCHKHEAP
 	//TODO: а делать ли это?
