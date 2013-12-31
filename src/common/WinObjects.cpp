@@ -240,11 +240,12 @@ bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 		bool lbFileFound = false;
 
 		// FindFirstFile может обломаться из-за симлинков
-		if (GetLastError() == ERROR_ACCESS_DENIED)
+		DWORD nErrCode = GetLastError();
+		if (nErrCode == ERROR_ACCESS_DENIED)
 		{
 			hFind = CreateFile(asFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 
-			if (hFind != NULL)
+			if (hFind && hFind != INVALID_HANDLE_VALUE)
 			{
 				BY_HANDLE_FILE_INFORMATION fi = {0};
 
@@ -355,14 +356,29 @@ bool DirectoryExists(LPCWSTR asPath)
 	if (!asPath || !*asPath)
 		return false;
 
+	bool lbFound = false;
+
+	HANDLE hFind = CreateFile(asPath, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+	if (hFind && hFind != INVALID_HANDLE_VALUE)
+	{
+		BY_HANDLE_FILE_INFORMATION fi = {0};
+
+		if (GetFileInformationByHandle(hFind, &fi) && (fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+		{
+			lbFound = true;
+		}
+		CloseHandle(hFind);
+
+		return lbFound;
+	}
+
+	// Try to use FindFirstFile?
 	WIN32_FIND_DATAW fnd = {0};
-	HANDLE hFind = FindFirstFile(asPath, &fnd);
+	hFind = FindFirstFile(asPath, &fnd);
 	if (hFind == INVALID_HANDLE_VALUE)
 	{
 		return false;
 	}
-
-	BOOL lbFound = FALSE;
 
 	do
 	{
