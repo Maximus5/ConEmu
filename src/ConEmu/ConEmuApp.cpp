@@ -2969,6 +2969,18 @@ void DebugVersionTest()
 	_ASSERTE(bWin7 == bVerWin7);
 }
 
+void DebugFileExistTests()
+{
+	bool b;
+	b = DirectoryExists(L"C:\\Documents and Settings\\Maks\\.ipython\\");
+	b = DirectoryExists(L"C:\\Documents and Settings\\Maks\\.ipython\\.");
+	b = DirectoryExists(L"C:\\Documents and Settings\\Maks\\.ipython");
+	b = DirectoryExists(L"C:\\Documents and Settings\\Maks\\.ipython-qq");
+	b = FileExists(L"C:\\Documents and Settings\\Maks\\.ipython");
+	b = FileExists(L"C:\\Documents and Settings\\Maks\\.ipython\\README");
+	b = FileExists(L"C:\\Documents and Settings\\Maks\\.ipython\\.");
+}
+
 void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
@@ -2978,6 +2990,7 @@ void DebugUnitTests()
 	UnitModuleTest();
 	DebugUnitMprintfTest();
 	DebugVersionTest();
+	DebugFileExistTests();
 }
 #endif
 
