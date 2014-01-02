@@ -9,6 +9,7 @@ EXPORTS
 	UnMountVirtualHive
 	PrivateEntry=RequestLocalServer
 	DownloadCommand
+	CalcCRC
 
 ; LLKeyHooks (ConEmu GUI)
 	ghKeyHook

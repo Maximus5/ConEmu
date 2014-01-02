@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011 Maximus5
+Copyright (c) 2011-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#define DOWNLOADER_IMPORTS
+#include "../ConEmuCD/Downloader.h"
+
 struct ConEmuUpdateSettings;
 class CConEmuUpdate;
 class MSection;
@@ -45,13 +48,22 @@ protected:
 	
 	//HANDLE mh_StopThread;
 
-	CWinInet* wi;
-	friend class CWinInet;
 	bool mb_InetMode, mb_DroppedMode;
-	HANDLE mh_Internet, mh_Connect, mh_SrcFile;
-	DWORD mn_InternetContentLen, mn_InternetContentReady, mn_PackageSize;
-	DWORD_PTR mn_Context;
-	void CloseInternet(bool bFull);
+	DWORD mn_InternetContentReady, mn_PackageSize;
+
+	struct wininet
+	{
+		CConEmuUpdate* pUpd;
+		HMODULE hDll;
+		DownloadCommand_t DownloadCommand;
+		bool Init(CConEmuUpdate* apUpd);
+		bool Deinit(bool bFull);
+		void SetCallback(CEDownloadCommand cbk, FDownloadCallback pfnCallback, LPARAM lParam);
+	} Inet;
+
+	static void WINAPI ProgressCallback(const CEDownloadInfo* pError);
+	static void WINAPI ErrorCallback(const CEDownloadInfo* pError);
+	static void WINAPI LogCallback(const CEDownloadInfo* pError);
 	
 	BOOL mb_ManualCallMode;
 	ConEmuUpdateSettings* mp_Set;
@@ -83,8 +95,6 @@ protected:
 	bool NeedRunElevation();
 	
 	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc, BOOL abPackage = FALSE);
-	BOOL ReadSource(LPCWSTR asSource, BOOL bInet, HANDLE hSource, BYTE* pData, DWORD cbData, DWORD* pcbRead);
-	BOOL WriteTarget(LPCWSTR asTarget, HANDLE hTarget, const BYTE* pData, DWORD cbData);
 	
 	void ReportError(LPCWSTR asFormat, DWORD nErrCode);
 	void ReportError(LPCWSTR asFormat, LPCWSTR asArg, DWORD nErrCode);
