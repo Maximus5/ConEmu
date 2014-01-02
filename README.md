@@ -11,7 +11,7 @@ Today, ConEmu can be used with any other console application or simple GUI tools
 (like PuTTY for example). ConEmu is an active project, open to
 [suggestions](http://code.google.com/p/conemu-maximus5/issues/list).
 
-<a href="http://www.fosshub.com/ConEmu.html"><img src="http://conemu-maximus5.googlecode.com/svn/files/Downloads.png" alt="Fosshub.com" title="Fosshub.com mirror"/></a>
+<a href="http://www.fosshub.com/ConEmu.html">![Fosshub.com ConEmu mirror](https://github.com/Maximus5/ConEmu/wiki/Downloads.png)</a>
 
 Take a look at [screencast](http://dotnetsurfers.com/blog/2013/12/15/developer-tools-screencast-7-conemu/) about ConEmu.
 
