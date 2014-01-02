@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -116,8 +116,18 @@ enum CEDownloadCommand
 	dc_SetLogin,            // [0]="User", [1]="Password"
 };
 
+#if defined(DOWNLOADER_IMPORTS)
+typedef DWORD_PTR (WINAPI* DownloadCommand_t)(CEDownloadCommand cmd, int argc, CEDownloadErrorArg* argv);
+typedef bool (WINAPI* CalcCRC_t)(const BYTE *pData, size_t cchSize, DWORD& crc);
+#else
 #if defined(__GNUC__)
 extern "C"
+{
 #endif
 // For internal use only!
-DWORD_PTR DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErrorArg* argv);
+DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErrorArg* argv);
+bool WINAPI CalcCRC(const BYTE *pData, size_t cchSize, DWORD& crc);
+#if defined(__GNUC__)
+}
+#endif
+#endif

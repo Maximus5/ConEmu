@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,10 @@ typedef struct {
 #endif
 
 
-static bool CalcCRC(const BYTE *pData, size_t cchSize, DWORD& crc)
+#if defined(__GNUC__)
+extern "C"
+#endif
+bool WINAPI CalcCRC(const BYTE *pData, size_t cchSize, DWORD& crc)
 {
 	if (!pData)
 	{
@@ -123,7 +126,6 @@ protected:
 	INTERNET_STATUS_CALLBACK mp_SetCallbackRc;
 
 	DWORD mn_InternetContentLen, mn_InternetContentReady; // Used
-	void CloseInternet(bool bFull);
 
 	bool InitInterface();
 	
@@ -166,6 +168,8 @@ public:
 	void SetCallback(CEDownloadCommand cb, FDownloadCallback afnErrCallback, LPARAM lParam);
 
 	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE);
+
+	void CloseInternet(bool bFull);
 
 protected:
 	BOOL mb_RequestTerminate; // Used
@@ -497,13 +501,13 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			bSecureHTTPS = false;
 			pszSource = asSource + 7;
 		}
-		if (memcmp(asSource, L"https://", 8*sizeof(*asSource)) == 0)
+		else if (memcmp(asSource, L"https://", 8*sizeof(*asSource)) == 0)
 		{
 			bSecureHTTPS = true;
 			pszSource = asSource + 8;
 			nServerPort = INTERNET_DEFAULT_HTTPS_PORT;
 		}
-		if (memcmp(asSource, L"ftp://", 6*sizeof(*asSource)) == 0)
+		else if (memcmp(asSource, L"ftp://", 6*sizeof(*asSource)) == 0)
 		{
 			bFtp = true;
 			pszSource = asSource + 6;
@@ -1112,7 +1116,7 @@ static CDownloader* gpInet = NULL;
 #if defined(__GNUC__)
 extern "C"
 #endif
-DWORD_PTR DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErrorArg* argv)
+DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErrorArg* argv)
 {
 	DWORD_PTR nResult = 0;
 
@@ -1123,11 +1127,16 @@ DWORD_PTR DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErrorArg* a
 	case dc_Init:
 		if (!gpInet)
 			gpInet = new CDownloader;
+		nResult = (gpInet != NULL);
 		break;
 	case dc_Reset:
+		if (gpInet)
+			gpInet->CloseInternet(false);
+		nResult = TRUE;
 		break;
 	case dc_Deinit:
 		SafeDelete(gpInet);
+		nResult = TRUE;
 		break;
 	case dc_SetProxy: // [0]="Server:Port", [1]="User", [2]="Password"
 		if (gpInet)
@@ -1136,6 +1145,7 @@ DWORD_PTR DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErrorArg* a
 				(argc > 0 && argv[0].argType == at_Str) ? argv[0].strArg : NULL,
 				(argc > 1 && argv[1].argType == at_Str) ? argv[1].strArg : NULL,
 				(argc > 2 && argv[2].argType == at_Str) ? argv[2].strArg : NULL);
+			nResult = TRUE;
 		}
 		break;
 	case dc_SetLogin: // [0]="User", [1]="Password"
@@ -1144,6 +1154,7 @@ DWORD_PTR DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErrorArg* a
 			gpInet->SetLogin(
 				(argc > 0 && argv[0].argType == at_Str) ? argv[0].strArg : NULL,
 				(argc > 1 && argv[1].argType == at_Str) ? argv[1].strArg : NULL);
+			nResult = TRUE;
 		}
 		break;
 	case dc_ErrCallback: // [0]=FDownloadCallback, [1]=lParam
@@ -1155,6 +1166,7 @@ DWORD_PTR DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErrorArg* a
 				cmd,
 				(argc > 0) ? (FDownloadCallback)argv[0].uintArg : 0,
 				(argc > 1) ? argv[1].uintArg : 0);
+			nResult = TRUE;
 		}
 		break;
 	case dc_DownloadFile: // [0]="http", [1]="DestLocalFilePath"
