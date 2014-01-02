@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -3270,7 +3270,7 @@ int DoDownload(LPCWSTR asCmdLine)
 	for (int i = dc_ErrCallback; i <= dc_LogCallback; i++)
 	{
 		args[1].uintArg = (i+1);
-		DownloadCommand((CEDownloadCommand)i, 1, args);
+		DownloadCommand((CEDownloadCommand)i, 2, args);
 	}
 
 	struct {
