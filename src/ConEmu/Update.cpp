@@ -62,8 +62,7 @@ CConEmuUpdate::CConEmuUpdate()
 	mb_InCheckProcedure = FALSE;
 	mn_CheckThreadId = 0;
 	mh_CheckThread = NULL;
-	//mh_StopThread = NULL;
-	mb_RequestTerminate = FALSE;
+	mb_RequestTerminate = false;
 	mp_Set = NULL;
 	ms_LastErrorInfo = NULL;
 	mb_InShowLastError = false;
@@ -88,9 +87,7 @@ CConEmuUpdate::~CConEmuUpdate()
 		DWORD nWait;
 		if ((nWait = WaitForSingleObject(mh_CheckThread, 0)) == WAIT_TIMEOUT)
 		{
-			//_ASSERTE(mh_StopThread!=NULL);
-			//SetEvent(mh_StopThread);
-			mb_RequestTerminate = TRUE;
+			RequestTerminate();
 			nWait = WaitForSingleObject(mh_CheckThread, UPDATETHREADTIMEOUT);
 		}
 		
@@ -188,7 +185,7 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 	// Сразу проверим, как нужно будет запускаться
 	bNeedRunElevation = NeedRunElevation();
 	
-	mb_RequestTerminate = FALSE;
+	mb_RequestTerminate = false;
 	//if (!mh_StopThread)
 	//	mh_StopThread = CreateEvent(NULL, TRUE/*manual*/, FALSE, NULL);
 	//ResetEvent(mh_StopThread);
@@ -228,21 +225,25 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 	// OK
 }
 
+void CConEmuUpdate::RequestTerminate()
+{
+	Inet.DownloadCommand(dc_RequestTerminate, 0, NULL);
+	mb_RequestTerminate = true;
+}
+
 void CConEmuUpdate::StopChecking()
 {
 	if (MessageBox(NULL, L"Are you sure, stop updates checking?", ms_DefaultTitle, MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO) != IDYES)
 		return;
 
-	mb_RequestTerminate = TRUE;
+	RequestTerminate();
 
 	if (mh_CheckThread)
 	{
 		DWORD nWait;
 		if ((nWait = WaitForSingleObject(mh_CheckThread, 0)) == WAIT_TIMEOUT)
 		{
-			//_ASSERTE(mh_StopThread!=NULL);
-			//SetEvent(mh_StopThread);
-			mb_RequestTerminate = TRUE;
+			RequestTerminate();
 			nWait = WaitForSingleObject(mh_CheckThread, UPDATETHREADTIMEOUT);
 		}
 
@@ -323,7 +324,7 @@ bool CConEmuUpdate::ShowConfirmation()
 
 	if (!lbConfirm)
 	{
-		mb_RequestTerminate = true;
+		RequestTerminate();
 		// May be null, if update package was dropped on ConEmu icon
 		if (gpConEmu && ghWnd)
 		{
