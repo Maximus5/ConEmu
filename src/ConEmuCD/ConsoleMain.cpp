@@ -3233,16 +3233,22 @@ wrap:
 static void PrintTime(LPCWSTR asLabel)
 {
 	SYSTEMTIME st = {}; GetLocalTime(&st);
-	wchar_t szTime[64];
-	_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%i:%02i:%02i.%03i %s",
-	           st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, asLabel);
+	wchar_t szTime[80];
+	_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%i:%02i:%02i.%03i{%u} %s",
+	           st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, GetCurrentThreadId(), asLabel);
 	_wprintf(szTime);
+	#if defined(_DEBUG)
+	OutputDebugString(szTime);
+	#endif
 }
 static void WINAPI DownloadCallback(const CEDownloadInfo* pInfo)
 {
 	wchar_t* pszInfo = pInfo->GetFormatted(true);
 	PrintTime(pInfo->lParam==1 ? L"Error: " : pInfo->lParam==2 ? L"Info:  " : pInfo->lParam==3 ? L"Progr: " : L"");
 	_wprintf(pszInfo ? pszInfo : L"<NULL>\n");
+	#if defined(_DEBUG)
+	OutputDebugString(pszInfo);
+	#endif
 	SafeFree(pszInfo);
 }
 
