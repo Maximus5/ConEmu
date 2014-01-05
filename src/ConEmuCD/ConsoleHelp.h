@@ -35,12 +35,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Used via SetWindowText && _wprintf. Need not escape of "%".
 #define pConsoleHelp \
 	    L"This is a console part of ConEmu product.\r\n" \
-	    L"Usage: ConEmuC [switches] [/U | /A] /C <command line, passed to %COMSPEC%>\r\n" \
-	    L"   or: ConEmuC [switches] /ROOT <program with arguments, far.exe for example>\r\n" \
+	    L"Usage: ConEmuC [switches] /ROOT <program with arguments, far.exe for example>\r\n" \
+	    L"   or: ConEmuC [switches] [/U | /A] /C <command line, passed to %COMSPEC%>\r\n" \
 	    L"   or: ConEmuC /AUTOATTACH [/GHWND=NEW|<HWND>]\r\n" \
 	    L"   or: ConEmuC /ATTACH /NOCMD\r\n" \
 		L"   or: ConEmuC /ATTACH [/GHWND=NEW|<HWND>] /[FAR|CON|TRM]PID=<PID>\r\n" \
 	    L"   or: ConEmuC /GUIMACRO[:PID|HWND] <ConEmu GUI macro command>\r\n" \
+	    L"   or: ConEmuC /IsConEmu | /IsAnsi | /IsTerm\r\n" \
 		L"   or: ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]\r\n" \
 		L"   or: ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]\r\n" \
 _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n") \
@@ -62,6 +63,9 @@ _DBGHLP(L"     /BW=<WndX> /BH=<WndY> /BZ=<BufY>\r\n") \
 _DBGHLP(L"     /FN=<ConFontName> /FH=<FontHeight> /FW=<FontWidth>\r\n") \
 	    L"     /LOG[N]         - create (debug) log file, N is number from 0 to 3\r\n" \
 	    L"     /GUIMACRO       - http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
+	    L"     /IsConEmu       - returns 1 as errorlevel if running in ConEmu tab, 2 if not\r\n" \
+	    L"     /IsAnsi         - returns 1 as errorlevel if ANSI are processed, 2 if not\r\n" \
+	    L"     /IsTerm         - returns 1 as errorlevel if running in telnet, 2 if not\r\n" \
 _DBGHLP(L"     /CINMODE==<hex:gnConsoleModeFlags>\r\n") \
 _DBGHLP(L"     /HIDE -> gbForceHideConWnd=TRUE\r\n") \
 _DBGHLP(L"     /GID=<ConEmu.exe PID>\r\n") \

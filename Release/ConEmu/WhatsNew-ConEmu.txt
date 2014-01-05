@@ -15,6 +15,27 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.04
+[+] All internet code (Updater) moved to ConEmuCD.dll.
+    Side effect - you may download from http/https/ftp without any external tools.
+    ConEmuC /download [-login <name> -password <pwd>]
+      [-proxy <address:port> [-proxylogin <name> -proxypassword <pwd>]]
+      "full_url_to_file" "local_path_name"
+[%] Fix DirectoryExist for symlinks.
+[+] Allow to choose another shell or directory if console startup failed.
+    For example, if your saved named task was created for some directory,
+    which was deleted at some moment. ConEmu will suggest to show standard
+    'Create new console' dialog where user can change command and directory.
+[+] ConEmu will check directory existence before creating new tab.
+    If you type wrong startup directory for new process
+    in the 'Create new console' dialog, ConEmu will check it,
+    show warning and allows to change it to smth better.
+[+] Issue 1410: Fix unexpected SetCurrentConsoleFontEx from PowerShell.
+[%] Issue 1415: Some console output of ConEmuC was not able to redirecting.
+[+] More information in "ConEmuC /?".
+[+] Allow "ConEmuC /AUTOATTACH /GHWND=0x???" - attach to exact ConEmu instance.
+
+
 2013.12.25
 [!] Issue 1406: Sources was converted to utf-8 (mostly by Rick Sladkey).
 [%] GCC makefiles and source fixes.
