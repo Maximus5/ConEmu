@@ -122,6 +122,8 @@ protected:
 	CWinInet* wi; // Used
 	friend class CWinInet;
 	bool mb_InetMode; // Used
+	bool mb_AsyncMode;
+	bool mb_FtpMode;
 	HANDLE mh_Internet, mh_Connect, mh_SrcFile; // Used
 	INTERNET_STATUS_CALLBACK mp_SetCallbackRc;
 
@@ -158,6 +160,17 @@ protected:
 	void ReportMessage(CEDownloadCommand rm, LPCWSTR asFormat, CEDownloadArgType nextArgType = at_None, ...);
 
 	static VOID CALLBACK InetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus, LPVOID lpvStatusInformation, DWORD dwStatusInformationLength);
+	bool WaitAsyncResult();
+
+	HANDLE mh_CloseEvent;
+	LONG   mn_CloseRef;
+	bool   InetCloseHandle(HINTERNET& h, bool bForceSync = false);
+
+	HANDLE mh_ReadyEvent;
+	LONG   mn_ReadyRef;
+	INTERNET_ASYNC_RESULT m_Result;
+	bool ExecRequest(BOOL bResult, DWORD& nErrCode);
+	HINTERNET ExecRequest(HINTERNET hResult, DWORD& nErrCode);
 
 public:
 	CDownloader();
@@ -171,8 +184,10 @@ public:
 
 	void CloseInternet(bool bFull);
 
+	void RequestTerminate();
+
 protected:
-	BOOL mb_RequestTerminate; // Used
+	bool mb_RequestTerminate; // Used
 };
 
 
@@ -299,15 +314,23 @@ CDownloader::CDownloader()
 	ZeroStruct(m_Proxy);
 	ZeroStruct(m_Server);
 
+	WARNING("Set mb_AsyncMode to true in Release when finished!");
+	mb_AsyncMode = RELEASEDEBUGTEST(false,true);
 	mn_Timeout = DOWNLOADTIMEOUT;
 	mn_ConnTimeout = mn_FileTimeout = 0;
 	//mh_StopThread = NULL;
-	mb_RequestTerminate = FALSE;
+	mb_RequestTerminate = false;
 	mb_InetMode = false;
 	mh_Internet = mh_Connect = mh_SrcFile = NULL;
 	mp_SetCallbackRc = NULL;
 	mn_InternetContentLen = mn_InternetContentReady = 0;
 	wi = NULL;
+
+	mh_CloseEvent = NULL;
+	mn_CloseRef = 0;
+	mh_ReadyEvent = NULL;
+	mn_ReadyRef = 0;
+	ZeroStruct(m_Result);
 }
 
 CDownloader::~CDownloader()
@@ -315,6 +338,8 @@ CDownloader::~CDownloader()
 	CloseInternet(true);
 	SetProxy(NULL, NULL, NULL);
 	SetLogin(NULL, NULL);
+	SafeCloseHandle(mh_CloseEvent);
+	SafeCloseHandle(mh_ReadyEvent);
 }
 
 // asProxy = "" - autoconfigure
@@ -351,6 +376,8 @@ void CDownloader::SetLogin(LPCWSTR asUser, LPCWSTR asPassword)
 bool CDownloader::SetProxyForHandle(HANDLE hInternet)
 {
 	bool bOk = false;
+
+	WARNING("Check proxy!");
 
 	if (m_Proxy.szProxyUser && *m_Proxy.szProxyUser)
 	{
@@ -421,6 +448,7 @@ bool CDownloader::IsLocalFile(LPWSTR& asPathOrUrl)
 bool CDownloader::InitInterface()
 {
 	bool bRc = false;
+
 	if (!wi)
 	{
 		ReportMessage(dc_LogCallback, L"InitInterface()");
@@ -429,22 +457,290 @@ bool CDownloader::InitInterface()
 		{
 			ReportMessage(dc_ErrCallback,
 				L"new CWinInet failed (memory allocation failed)", at_None);
+			goto wrap;
 		}
 	}
+
 	if (!wi || !wi->Init(this))
 	{
 		ReportMessage(dc_ErrCallback,
-			L"CWinInet initialization failed", at_None);
+			L"CWinInet initialization failed, code=%u", at_Uint, GetLastError(), at_None);
 		goto wrap;
 	}
+
+	if (mb_AsyncMode)
+	{
+		HANDLE* phEvents[] = {&mh_CloseEvent, &mh_ReadyEvent};
+		for (size_t i = 0; i < countof(phEvents); i++)
+		{
+			if (!*(phEvents[i]))
+			{
+				*(phEvents[i]) = CreateEvent(NULL, FALSE, FALSE, NULL);
+				if (!*(phEvents[i]))
+				{
+					ReportMessage(dc_ErrCallback,
+						L"Create %s event failed, code=%u", at_Str, i?L"ready":L"close", at_Uint, GetLastError(), at_None);
+					goto wrap;
+				}
+			}
+		}
+	}
+
 	bRc = true;
 wrap:
+	if (!bRc)
+	{
+		SafeDelete(wi);
+	}
 	return bRc;
+}
+
+bool CDownloader::WaitAsyncResult()
+{
+	if (!mb_AsyncMode)
+		return true;
+	//TODO!!! Для отладки, пока просто смотрим, какие функции вызывают какие калбэки
+	ReportMessage(dc_LogCallback, L"... waiting 5 sec");
+	Sleep(5000);
+	return true;
+}
+
+bool CDownloader::InetCloseHandle(HINTERNET& h, bool bForceSync /*= false*/)
+{
+	if (!h || h == INVALID_HANDLE_VALUE)
+		return false;
+
+	DWORD nErrCode = 0, nWaitResult;
+	BOOL bClose;
+
+	ReportMessage(dc_LogCallback, L"Close handle x%08X", at_Uint, (DWORD_PTR)h, at_None);
+	// Debugging and checking purposes
+	LONG lCur = InterlockedIncrement(&mn_CloseRef);
+	_ASSERTE(lCur == 1);
+	ResetEvent(mh_CloseEvent);
+
+	bClose = wi->_InternetCloseHandle(h);
+	nErrCode = GetLastError();
+	if (!bClose)
+	{
+		ReportMessage(dc_LogCallback, L"Close handle x%08X failed, code=%u", at_Uint, (DWORD_PTR)h, at_Uint, nErrCode, at_None);
+	}
+	if (!bForceSync && mb_AsyncMode)
+	{
+		nWaitResult = WaitForSingleObject(mh_CloseEvent, DOWNLOADCLOSEHANDLETIMEOUT);
+		ReportMessage(dc_LogCallback, L"Async close handle x%08X wait result=%u", at_Uint, (DWORD_PTR)h, at_Uint, nWaitResult, at_None);
+	}
+
+	// Done
+	h = NULL;
+	InterlockedDecrement(&mn_CloseRef);
+	return (bClose != FALSE);
+}
+
+bool CDownloader::ExecRequest(BOOL bResult, DWORD& nErrCode)
+{
+	DWORD nWaitResult;
+	nErrCode = bResult ? 0 : GetLastError();
+
+	if (mb_AsyncMode && (nErrCode == ERROR_IO_PENDING))
+	{
+		nWaitResult = WaitForSingleObject(mh_ReadyEvent, DOWNLOADOPERATIONTIMEOUT);
+		ReportMessage(dc_LogCallback, L"Async operation (BOOL) wait=%u", at_Uint, nWaitResult, at_None);
+		if (nWaitResult == WAIT_OBJECT_0)
+		{
+			bResult = (m_Result.dwResult != 0);
+			nErrCode = m_Result.dwError;
+		}
+	}
+
+	return (bResult != FALSE);
+}
+
+HINTERNET CDownloader::ExecRequest(HINTERNET hResult, DWORD& nErrCode)
+{
+	DWORD nWaitResult;
+	nErrCode = hResult ? 0 : GetLastError();
+
+	if (mb_AsyncMode && (nErrCode == ERROR_IO_PENDING))
+	{
+		nWaitResult = WaitForSingleObject(mh_ReadyEvent, DOWNLOADOPERATIONTIMEOUT);
+		ReportMessage(dc_LogCallback, L"Async operation (HANDLE) wait=%u", at_Uint, nWaitResult, at_None);
+		if (nWaitResult == WAIT_OBJECT_0)
+		{
+			hResult = (HINTERNET)m_Result.dwResult;
+			nErrCode = m_Result.dwError;
+		}
+	}
+
+	return hResult;
 }
 
 VOID CDownloader::InetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus, LPVOID lpvStatusInformation, DWORD dwStatusInformationLength)
 {
-	return;
+    InternetCookieHistory cookieHistory;
+    CDownloader* pObj = (CDownloader*)dwContext;
+	wchar_t sFormat[200];
+ 
+    UNREFERENCED_PARAMETER(dwStatusInformationLength);
+
+	wcscpy_c(sFormat, L"InetCallback for handle x%08X: ");
+	#define LogCallback(msg,arg) \
+		wcscat_c(sFormat, msg);  \
+		pObj->ReportMessage(dc_LogCallback, sFormat, at_Uint, (DWORD_PTR)hInternet, at_Uint, arg, at_None);
+    
+    switch (dwInternetStatus)
+    {
+        case INTERNET_STATUS_COOKIE_SENT:
+			LogCallback(L"Cookie found and will be sent with request", 0);
+            break;
+            
+        case INTERNET_STATUS_COOKIE_RECEIVED:
+            LogCallback(L"Cookie Received", 0);
+            break;
+            
+        case INTERNET_STATUS_COOKIE_HISTORY:
+			wcscat_c(sFormat, L"Cookie History");
+
+            _ASSERTE(lpvStatusInformation);
+            _ASSERTE(dwStatusInformationLength == sizeof(InternetCookieHistory));
+
+            cookieHistory = *((InternetCookieHistory*)lpvStatusInformation);
+            
+            if(cookieHistory.fAccepted)
+            {
+                wcscat_c(sFormat, L": Cookie Accepted");
+            }
+            if(cookieHistory.fLeashed)
+            {
+                wcscat_c(sFormat, L": Cookie Leashed");
+            }        
+            if(cookieHistory.fDowngraded)
+            {
+                wcscat_c(sFormat, L": Cookie Downgraded");
+            }        
+            if(cookieHistory.fRejected)
+            {
+                wcscat_c(sFormat, L": Cookie Rejected");
+            }
+
+			LogCallback(L"", 0);
+ 
+            break;
+            
+        case INTERNET_STATUS_CLOSING_CONNECTION:
+            LogCallback(L"Closing Connection", 0);
+            break;
+            
+        case INTERNET_STATUS_CONNECTING_TO_SERVER:
+        case INTERNET_STATUS_CONNECTED_TO_SERVER:
+			_ASSERTE(lpvStatusInformation);
+			wcscat_c(sFormat, dwInternetStatus==INTERNET_STATUS_CONNECTING_TO_SERVER ? L"Connecting" : L"Connected");
+			if (dwStatusInformationLength >= (sizeof(u_short)+8))
+			{
+				wchar_t sAddr[32] = L"";
+				MultiByteToWideChar(CP_ACP, 0,
+					((SOCKADDR*)lpvStatusInformation)->sa_data, min(dwStatusInformationLength-sizeof(u_short),countof(sAddr)-1),
+					sAddr, countof(sAddr)-1);
+				wcscat_c(sFormat, L" to Server, family=%u, data=%s");
+				pObj->ReportMessage(dc_LogCallback, sFormat,
+					at_Uint, (DWORD_PTR)hInternet,
+					at_Uint, lpvStatusInformation ? ((SOCKADDR*)lpvStatusInformation)->sa_family : 0,
+					at_Str, sAddr, at_None);
+			}
+			else
+			{
+				_ASSERTE(dwStatusInformationLength >= (sizeof(u_short)+8));
+				wcscat_c(sFormat, L" to Server, datasize=%u");
+				pObj->ReportMessage(dc_LogCallback, sFormat, at_Uint, (DWORD_PTR)hInternet, at_Uint, dwStatusInformationLength, at_None);
+			}
+            break;
+            
+        case INTERNET_STATUS_CONNECTION_CLOSED:
+            LogCallback(L"Connection Closed", 0);
+            break;
+            
+        case INTERNET_STATUS_HANDLE_CLOSING:
+            LogCallback(L"Handle Closing x%08x", (DWORD)*((HINTERNET*)lpvStatusInformation));
+			SetEvent(pObj->mh_CloseEvent);
+            break;
+            
+        case INTERNET_STATUS_HANDLE_CREATED:
+            _ASSERTE(lpvStatusInformation);
+            LogCallback(L"Handle x%08X created", 
+                    ((LPINTERNET_ASYNC_RESULT)lpvStatusInformation)->dwResult);
+
+            break;
+            
+        case INTERNET_STATUS_INTERMEDIATE_RESPONSE:
+            LogCallback(L"Intermediate response", 0);
+            break;
+            
+        case INTERNET_STATUS_RECEIVING_RESPONSE:
+            LogCallback(L"Receiving Response", 0);    
+            break;
+            
+        case INTERNET_STATUS_RESPONSE_RECEIVED:
+            _ASSERTE(lpvStatusInformation);
+            _ASSERTE(dwStatusInformationLength == sizeof(DWORD));
+            
+            LogCallback(L"Response Received (%u bytes)", *((LPDWORD)lpvStatusInformation));
+            
+            break;
+            
+        case INTERNET_STATUS_REDIRECT:
+			wcscat_c(sFormat, L"Redirect to '%s'");
+			pObj->ReportMessage(dc_LogCallback, sFormat, at_Uint, (DWORD_PTR)hInternet, at_Str, lpvStatusInformation?(LPCWSTR)lpvStatusInformation:L"", at_None);
+            break;
+
+        case INTERNET_STATUS_REQUEST_COMPLETE:
+			wcscat_c(sFormat, L"Request complete, Result=x%08X, Value=%u");
+			_ASSERTE(lpvStatusInformation);
+			pObj->ReportMessage(dc_LogCallback, sFormat, at_Uint, (DWORD_PTR)hInternet,
+				at_Uint, ((INTERNET_ASYNC_RESULT*)lpvStatusInformation)->dwResult,
+				at_Uint, ((INTERNET_ASYNC_RESULT*)lpvStatusInformation)->dwError, at_None);
+            
+            pObj->m_Result = *(INTERNET_ASYNC_RESULT*)lpvStatusInformation;
+			SetEvent(pObj->mh_ReadyEvent);
+
+            break;
+            
+        case INTERNET_STATUS_REQUEST_SENT:
+            ASSERTE(lpvStatusInformation);
+            ASSERTE(dwStatusInformationLength == sizeof(DWORD));
+
+            LogCallback(L"Request sent (%u bytes)", *((LPDWORD)lpvStatusInformation));
+            break;
+            
+        case INTERNET_STATUS_DETECTING_PROXY:
+            LogCallback(L"Detecting Proxy", 0);
+            break;            
+            
+        case INTERNET_STATUS_RESOLVING_NAME:
+            LogCallback(L"Resolving Name", 0);
+            break;
+            
+        case INTERNET_STATUS_NAME_RESOLVED:
+            LogCallback(L"Name Resolved", 0);
+            break;
+            
+        case INTERNET_STATUS_SENDING_REQUEST:
+            LogCallback(L"Sending request", 0);
+            break;
+            
+        case INTERNET_STATUS_STATE_CHANGE:
+            LogCallback(L"State Change", 0);
+            break;
+            
+        case INTERNET_STATUS_P3P_HEADER:
+            LogCallback(L"Received P3P header", 0);
+            break;
+            
+        default:
+            LogCallback(L"Unknown callback status (%u)", dwInternetStatus);
+            break;
+    }
+
+    return;
 }
 
 BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc, DWORD& size, BOOL abShowAllErrors /*= FALSE*/)
@@ -471,10 +767,16 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 	bool bFtp = false;
 	HTTP_VERSION_INFO httpver = {1,1};
 	wchar_t szHttpVer[32]; _wsprintf(szHttpVer, SKIPLEN(countof(szHttpVer)) L"HTTP/%u.%u", httpver.dwMajorVersion, httpver.dwMinorVersion);
-	wchar_t szAgent[] = L"Mozilla/5.0 (compatible; ConEmu Update)";
+	wchar_t szAgent[] =
+		//L"Mozilla/5.0 (compatible; ConEmu Update)" // This was the cause of not working download redirects
+		L"ConEmu Update" // so we use that to enable redirects
+		;
 	LPCWSTR szAcceptTypes[] = {L"*/*", NULL};
+	LPCWSTR* ppszAcceptTypes = szAcceptTypes;
 	LPCWSTR pszReferrer = NULL;
 	DWORD nFlags, nService;
+	BOOL bFRc;
+	DWORD dwErr;
 
 	if (!wi)
 	{
@@ -488,8 +790,15 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		CloseInternet(false);
 	}
 
+	ReportMessage(dc_LogCallback, L"File download requested '%s'", at_Str, asSource, at_None);
+
+	_ASSERTE(mn_CloseRef==0);
+	ResetEvent(mh_CloseEvent);
+	ResetEvent(mh_ReadyEvent);
+
 	mn_InternetContentReady = 0;
 	mn_InternetContentLen = 0;
+	mb_FtpMode = false;
 	
 	crc = 0xFFFFFFFF;
 	
@@ -586,20 +895,27 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		if (mh_Internet == NULL)
 		{
 			ReportMessage(dc_LogCallback, L"Open internet");
-			nFlags = 0; //INTERNET_FLAG_ASYNC;
+			nFlags = (mb_AsyncMode ? INTERNET_FLAG_ASYNC : 0);
 			mh_Internet = wi->_InternetOpenW(szAgent, ProxyType, ProxyName, NULL, nFlags);
 			if (!mh_Internet)
 			{
-				DWORD dwErr = GetLastError();
+				dwErr = GetLastError();
 				ReportMessage(dc_ErrCallback,
 					L"Network initialization failed, code=%u", at_Uint, dwErr, at_None);
 				goto wrap;
 			}
+			ReportMessage(dc_LogCallback, L"Internet opened x%08X", at_Uint, (DWORD_PTR)mh_Internet, at_None);
 
-			#if 0
-			mp_SetCallbackRc = wi->_InternetSetStatusCallbackW(mh_Internet, InetCallback);
-			_ASSERTE(mp_SetCallbackRc != INTERNET_INVALID_STATUS_CALLBACK);
-			#endif
+			if (mb_AsyncMode)
+			{
+				mp_SetCallbackRc = wi->_InternetSetStatusCallbackW(mh_Internet, InetCallback);
+				if (mp_SetCallbackRc == INTERNET_INVALID_STATUS_CALLBACK)
+				{
+					ReportMessage(dc_ErrCallback, L"Failed to set internet status callback, code=%u", at_Uint, GetLastError(), at_None);
+					_ASSERTE(mp_SetCallbackRc != INTERNET_INVALID_STATUS_CALLBACK);
+					mb_AsyncMode = false;
+				}
+			}
 
 			if (mb_RequestTerminate)
 				goto wrap;
@@ -688,10 +1004,9 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		nFlags = 0; // No special flags
 		nService = bFtp?INTERNET_SERVICE_FTP:INTERNET_SERVICE_HTTP;
 		ReportMessage(dc_LogCallback, L"Connecting to server %s:%u (%u)", at_Str, szServer, at_Uint, nServerPort, at_Uint, nService, at_None);
-		mh_Connect = wi->_InternetConnectW(mh_Internet, szServer, nServerPort, m_Server.szUser, m_Server.szPassword, nService, nFlags, (DWORD_PTR)this);
+		mh_Connect = ExecRequest(wi->_InternetConnectW(mh_Internet, szServer, nServerPort, m_Server.szUser, m_Server.szPassword, nService, nFlags, (DWORD_PTR)this), dwErr);
 		if (!mh_Connect)
 		{
-			DWORD dwErr = GetLastError();
 			if (abShowAllErrors)
 			{
 				ReportMessage(dc_ErrCallback,
@@ -700,6 +1015,8 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			}
 			goto wrap;
 		}
+		ReportMessage(dc_LogCallback, L"Connect opened x%08X", at_Uint, (DWORD_PTR)mh_Connect, at_None);
+		//WaitAsyncResult();
 
 		if (ProxyName)
 		{
@@ -744,6 +1061,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		// Send request for the file
 		if (bFtp)
 		{
+			mb_FtpMode = true;
 			wchar_t* pszSlash = wcsrchr(pszSrvPath, L'/');
 			// Break path to dir+file
 			if (pszSlash == pszSrvPath)
@@ -753,26 +1071,33 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			// Set ftp directory
 			LPCWSTR pszSetDir = pszSlash ? pszSrvPath : L"/";
 			LPCWSTR pszFile = pszSlash ? (pszSlash+1) : (*pszSrvPath == L'/') ? (pszSrvPath+1) : pszSrvPath;
-			if (!wi->_FtpSetCurrentDirectoryW(mh_Connect, pszSetDir))
+
+			if (!ExecRequest(wi->_FtpSetCurrentDirectoryW(mh_Connect, pszSetDir), dwErr))
 			{
 				ReportMessage(dc_ErrCallback, L"Ftp set directory failed '%s', code=%u", at_Str, pszSetDir, at_Uint, GetLastError(), at_None);
 				if (pszSlash) *pszSlash = L'/'; // return it back
 				goto wrap;
 			}
+			//WaitAsyncResult();
+
 			if (pszSlash) *pszSlash = L'/'; // return it back
 			nFlags = FTP_TRANSFER_TYPE_BINARY;
-			mh_SrcFile = wi->_FtpOpenFileW(mh_Connect, pszFile, GENERIC_READ, nFlags, (DWORD_PTR)this);
+
+			mh_SrcFile = ExecRequest(wi->_FtpOpenFileW(mh_Connect, pszFile, GENERIC_READ, nFlags, (DWORD_PTR)this), dwErr);
+			ReportMessage(dc_LogCallback, L"Ftp file opened x%08X", at_Uint, (DWORD_PTR)mh_SrcFile, at_None);
+			//WaitAsyncResult();
+
 			if (pszSlash) *pszSlash = L'/'; // return it back
 			if (!mh_SrcFile || (mh_SrcFile == INVALID_HANDLE_VALUE))
 			{
-				DWORD dwErr = GetLastError();
+				dwErr = GetLastError();
 				if (abShowAllErrors)
 				{
-					// In offline mode, HttpSendRequest returns ERROR_FILE_NOT_FOUND if the resource is not found in the Internet cache.
+					// In offline mode, FtpOpenFile returns ERROR_FILE_NOT_FOUND if the resource is not found in the Internet cache.
 					ReportMessage(dc_ErrCallback,
 						(dwErr == 2)
-						? L"FtpOpenFile failed\nURL=%s\ncode=%u, Internet is offline?"
-						: L"FtpOpenFile failed\nURL=%s\ncode=%u"
+						? L"Ftp open file failed\nURL=%s\ncode=%u, Internet is offline?"
+						: L"Ftp open file failed\nURL=%s\ncode=%u"
 						, at_Str, asSource, at_Uint, dwErr, at_None);
 				}
 				goto wrap;
@@ -782,20 +1107,20 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		}
 		else
 		{
-			nFlags = INTERNET_FLAG_KEEP_CONNECTION
+			nFlags = 0 //INTERNET_FLAG_KEEP_CONNECTION
 				|(bSecureHTTPS?(INTERNET_FLAG_SECURE|INTERNET_FLAG_IGNORE_CERT_CN_INVALID|INTERNET_FLAG_IGNORE_CERT_DATE_INVALID):0)
-				|INTERNET_FLAG_HYPERLINK
+				//|INTERNET_FLAG_HYPERLINK
 				//|INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP
 				|INTERNET_FLAG_NO_CACHE_WRITE
-				|INTERNET_FLAG_PRAGMA_NOCACHE
+				//|INTERNET_FLAG_PRAGMA_NOCACHE
 				|INTERNET_FLAG_RELOAD;
 			ReportMessage(dc_LogCallback, L"Opening request with flags x%08X", at_Uint, nFlags, at_None);
 			mh_SrcFile = wi->_HttpOpenRequestW(mh_Connect, L"GET", pszSrvPath, szHttpVer, pszReferrer,
-				szAcceptTypes, nFlags, (DWORD_PTR)this);
+				ppszAcceptTypes, nFlags, (DWORD_PTR)this);
 
 			if (!mh_SrcFile || (mh_SrcFile == INVALID_HANDLE_VALUE))
 			{
-				DWORD dwErr = GetLastError();
+				dwErr = GetLastError();
 				if (abShowAllErrors)
 				{
 					// In offline mode, HttpSendRequest returns ERROR_FILE_NOT_FOUND if the resource is not found in the Internet cache.
@@ -807,11 +1132,16 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 				}
 				goto wrap;
 			}
+			ReportMessage(dc_LogCallback, L"Http file opened x%08X", at_Uint, (DWORD_PTR)mh_SrcFile, at_None);
+			//WaitAsyncResult();
 
 			ReportMessage(dc_LogCallback, L"Sending request");
-			if (!wi->_HttpSendRequestW(mh_SrcFile,NULL,0,NULL,0))
+			ResetEvent(mh_ReadyEvent);
+			bFRc = ExecRequest(wi->_HttpSendRequestW(mh_SrcFile,NULL,0,NULL,0), dwErr);
+
+			if (!bFRc)
 			{
-				DWORD dwErr = GetLastError();
+				dwErr = GetLastError();
 				if (abShowAllErrors)
 				{
 					ReportMessage(dc_ErrCallback,
@@ -821,14 +1151,15 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			}
 			else
 			{
+				//WaitAsyncResult();
+
 				mn_InternetContentLen = 0;
 				DWORD sz = sizeof(mn_InternetContentLen);
 				DWORD dwIndex = 0;
 				nFlags = HTTP_QUERY_CONTENT_LENGTH|HTTP_QUERY_FLAG_NUMBER;
 				ReportMessage(dc_LogCallback, L"Quering file info with flags x%08X", at_Uint, nFlags, at_None);
-				if (!wi->_HttpQueryInfoW(mh_SrcFile, nFlags, &mn_InternetContentLen, &sz, &dwIndex))
+				if (!ExecRequest(wi->_HttpQueryInfoW(mh_SrcFile, nFlags, &mn_InternetContentLen, &sz, &dwIndex), dwErr))
 				{
-					DWORD dwErr = GetLastError();
 					mn_InternetContentLen = 0;
 					UNREFERENCED_PARAMETER(dwErr);
 					//DWORD dwErr = GetLastError();
@@ -842,6 +1173,8 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 				{
 					ReportMessage(dc_LogCallback, L"File length retrieved: %u bytes", at_Uint, mn_InternetContentLen, at_None);
 				}
+
+				//WaitAsyncResult();
 			}
 		}
 
@@ -881,6 +1214,8 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			ReportMessage(dc_LogCallback, L"File length: %u bytes", at_Uint, mn_InternetContentLen, at_None);
 		}
 	}
+
+	//WaitAsyncResult();
 	
 	while (TRUE)
 	{
@@ -890,13 +1225,15 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		lbRead = ReadSource(asSource, mb_InetMode, mh_SrcFile, ptrData, cchDataMax, &nRead);
 		if (!lbRead)
 			goto wrap;
+
+		//WaitAsyncResult();
 			
 		if (!nRead)
 		{
 			if (!mn_InternetContentReady)
 			{
 				ReportMessage(dc_ErrCallback,
-					L"Invalid source file (%s), file is empty", at_Str, asSource, at_None);
+					L"Invalid source file '%s', file is empty", at_Str, asSource, at_None);
 				goto wrap;
 			}
 			break;
@@ -961,32 +1298,24 @@ wrap:
 void CDownloader::CloseInternet(bool bFull)
 {
 	BOOL bClose = FALSE;
-	DWORD nCloseErr = 0;
 
 	if (wi)
 	{
-		if (mh_SrcFile && (mh_SrcFile != INVALID_HANDLE_VALUE))
+		//WaitAsyncResult();
+
+		if (mh_SrcFile)
 		{
-			ReportMessage(dc_LogCallback, L"Close source handle");
-			bClose = wi->_InternetCloseHandle(mh_SrcFile);
-			if (!bClose)
-				nCloseErr = GetLastError();
+			bClose = InetCloseHandle(mh_SrcFile);
 		}
 
 		if (mh_Connect)
 		{
-			ReportMessage(dc_LogCallback, L"Close connect handle");
-			bClose = wi->_InternetCloseHandle(mh_Connect);
-			if (!bClose)
-				nCloseErr = GetLastError();
+			bClose = InetCloseHandle(mh_Connect);
 		}
 
 		if (bFull && mh_Internet)
 		{
-			ReportMessage(dc_LogCallback, L"Close internet handle");
-			bClose = wi->_InternetCloseHandle(mh_Internet);
-			if (!bClose)
-				nCloseErr = GetLastError();
+			bClose = InetCloseHandle(mh_Internet, true);
 		}
 	}
 
@@ -1001,21 +1330,35 @@ void CDownloader::CloseInternet(bool bFull)
 		mh_Internet = NULL;
 	}
 
-	UNREFERENCED_PARAMETER(nCloseErr);
+	UNREFERENCED_PARAMETER(bClose);
 }
 
+void CDownloader::RequestTerminate()
+{
+	mb_RequestTerminate = true;
+}
 
 BOOL CDownloader::ReadSource(LPCWSTR asSource, BOOL bInet, HANDLE hSource, BYTE* pData, DWORD cbData, DWORD* pcbRead)
 {
 	BOOL lbRc = FALSE;
+	DWORD dwErr = 0;
 	
 	if (bInet)
 	{
 		ReportMessage(dc_LogCallback, L"Reading source");
-		lbRc = wi->_InternetReadFile(hSource, pData, cbData, pcbRead);
+		*pcbRead = 0;
+		lbRc = ExecRequest(wi->_InternetReadFile(hSource, pData, cbData, pcbRead), dwErr);
+
+		if (mb_AsyncMode && lbRc && !*pcbRead && dwErr)
+		{
+			_ASSERTE(mb_FtpMode && dwErr <= cbData);
+			if (dwErr <= cbData)
+				*pcbRead = dwErr;
+		}
+
 		if (!lbRc)
 			ReportMessage(dc_ErrCallback,
-				L"DownloadFile(%s) failed, code=%u", at_Str, asSource, at_Uint, GetLastError(), at_None);
+				L"DownloadFile(%s) failed, code=%u", at_Str, asSource, at_Uint, dwErr, at_None);
 		else
 			ReportMessage(dc_LogCallback, L"Retrieved %u bytes", at_Uint, *pcbRead, at_None);
 	}
@@ -1190,6 +1533,18 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 	case dc_DownloadData: // [0]="http" -- not implemented yet
 		_ASSERTE(FALSE && "dc_DownloadData not implemented yet");
 		break;
+	case dc_RequestTerminate:
+		if (gpInet)
+		{
+			gpInet->RequestTerminate();
+			nResult = TRUE;
+		}
+		break;
+
+	#ifdef _DEBUG
+	default:
+		_ASSERTE(FALSE && "Unsupported command!");
+	#endif
 	}
 
 	return nResult;
