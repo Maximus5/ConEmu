@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2013 Maximus5
+Copyright (c) 2011-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -533,7 +533,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	wchar_t *szDosBoxExe = NULL, *szDosBoxCfg = NULL;
 	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
 	int nCchSize = 0;
-	BOOL lbEndQuote = FALSE;
+	BOOL lbEndQuote = FALSE, lbCheckEndQuote = FALSE;
 	#if 0
 	bool lbNewGuiConsole = false;
 	#endif
@@ -1006,7 +1006,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
 	// /C или /K в обоих случаях нужно пихать в psParam
-	lbEndQuote = FALSE;
+	_ASSERTE(lbEndQuote == FALSE); // Must not be set yet
 	*psParam = (wchar_t*)malloc(nCchSize*sizeof(wchar_t));
 	(*psParam)[0] = 0;
 	if (aCmd == eCreateProcess)
@@ -1027,6 +1027,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		// as_Param: "C:\test.cmd" "c:\my documents\test.txt"
 		// Если это не окавычить - cmd.exe отрежет первую и последнюю, и обломается
 		lbEndQuote = (asFile && *asFile == L'"') || (!asFile && asParam && *asParam == L'"');
+		// But don't put excess quotas
+		lbCheckEndQuote = TRUE;
 	}
 
 	if (lbUseDosBox)
@@ -1112,7 +1114,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	if (lbUseDosBox)
 	{
 		_ASSERTEX(!gbPrepareDefaultTerminal);
-		lbEndQuote = TRUE;
+		lbEndQuote = TRUE; lbCheckEndQuote = FALSE;
 		_wcscat_c((*psParam), nCchSize, L"\"\"");
 		_wcscat_c((*psParam), nCchSize, szDosBoxExe);
 		_wcscat_c((*psParam), nCchSize, L"\" -noconsole ");
@@ -1232,6 +1234,25 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	}
 	else //NOT lbUseDosBox
 	{
+		if (lbEndQuote && lbCheckEndQuote)
+		{
+			// May be double quotation will be excess?
+			if (!(asFile && *asFile) && asParam && *asParam)
+			{
+				LPCWSTR pszTest = asParam;
+				CmdArg szTest;
+				if (NextArg(&pszTest, szTest) == 0)
+				{
+					pszTest = SkipNonPrintable(pszTest);
+					// Now - checks
+					if (!pszTest || !*pszTest)
+					{
+						lbEndQuote = FALSE;
+					}
+				}
+			}
+		}
+
 		if (lbEndQuote)
 			_wcscat_c((*psParam), nCchSize, L"\"");
 

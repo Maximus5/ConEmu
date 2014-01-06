@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1650,10 +1650,14 @@ HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszSt
 	ORIGINALFASTEX(ShellExecCmdLine,NULL);
 	HRESULT hr = S_OK;
 
-	if (nShow && (dwSeclFlags & 0x40) && pwszCommand && pwszStartDir)
+	// This is used from "Run" dialog too. We need to process command internally, because
+	// otherwise Win can pass CREATE_SUSPENDED into CreateProcessW, so console will flickers.
+	if (nShow && !(dwSeclFlags & 0x10/*SECL_USE_IDLIST*/) && pwszCommand && pwszStartDir)
 	{
 		if (!IsBadStringPtrW(pwszCommand, MAX_PATH) && !IsBadStringPtrW(pwszStartDir, MAX_PATH))
 		{
+			BOOL bShell = FALSE;
+
 			// Bad thing, ShellExecuteEx needs File&Parm, but we get both in pwszCommand
 			CmdArg szExe;
 			LPCWSTR pszFile = pwszCommand;
@@ -1668,13 +1672,38 @@ HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszSt
 				pszFile = pwszCommand; pszParm = NULL;
 			}
 
-			SHELLEXECUTEINFO sei = {sizeof(sei), 0, hwnd, L"runas", pszFile, pszParm, pwszStartDir, nShow};
-			BOOL bShell = OnShellExecuteExW(&sei);
+			DWORD nCheckSybsystem1 = 0, nCheckBits1 = 0, nFileAttrs1 = 0;
+			if (!FindImageSubsystem(pszFile, nCheckSybsystem1, nCheckBits1, nFileAttrs1))
+				goto wrap;
+			if (nCheckSybsystem1 != IMAGE_SUBSYSTEM_WINDOWS_CUI)
+				goto wrap;
+
+			// "Run as admin" was requested?
+			if (dwSeclFlags & 0x40)
+			{
+				SHELLEXECUTEINFO sei = {sizeof(sei), 0, hwnd, L"runas", pszFile, pszParm, pwszStartDir, nShow};
+				bShell = OnShellExecuteExW(&sei);
+			}
+			else
+			{
+				wchar_t* pwCommand = lstrdup(pwszCommand);
+				DWORD nCreateFlags = CREATE_NEW_CONSOLE|CREATE_UNICODE_ENVIRONMENT|CREATE_DEFAULT_ERROR_MODE;
+				STARTUPINFO si = {sizeof(si)};
+				PROCESS_INFORMATION pi = {};
+				bShell = OnCreateProcessW(NULL, pwCommand, NULL, NULL, FALSE, nCreateFlags, NULL, pwszStartDir, &si, &pi);
+				if (bShell)
+				{
+					CloseHandle(pi.hProcess);
+					CloseHandle(pi.hThread);
+				}
+			}
+
 			hr = bShell ? S_OK : HRESULT_FROM_WIN32(GetLastError());
 			goto wrap;
 		}
 	}
 
+ApiCall:
 	if (!F(ShellExecCmdLine))
 	{
 		hr = HRESULT_FROM_WIN32(ERROR_INVALID_FUNCTION);
