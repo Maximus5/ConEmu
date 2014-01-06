@@ -202,6 +202,7 @@ OSVERSIONINFO gOSVer;
 WORD gnOsVer = 0x500;
 bool gbIsWine = false;
 bool gbIsDBCS = false;
+bool gbIsDownloading = false;
 
 
 SrvInfo* gpSrv = NULL;
@@ -257,15 +258,6 @@ void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int
 #endif
 }
 
-
-#if 0
-// Current MinGW GCC doesn't require that anymore
-#if defined(__GNUC__)
-extern "C" {
-	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
-};
-#endif
-#endif
 
 //extern UINT_PTR gfnLoadLibrary;
 //UINT gnMsgActivateCon = 0;
@@ -3244,7 +3236,7 @@ static void PrintTime(LPCWSTR asLabel)
 static void WINAPI DownloadCallback(const CEDownloadInfo* pInfo)
 {
 	wchar_t* pszInfo = pInfo->GetFormatted(true);
-	PrintTime(pInfo->lParam==1 ? L"Error: " : pInfo->lParam==2 ? L"Info:  " : pInfo->lParam==3 ? L"Progr: " : L"");
+	PrintTime(pInfo->lParam==(dc_ErrCallback+1) ? L"Error: " : pInfo->lParam==(dc_LogCallback+1) ? L"Info:  " : pInfo->lParam==(dc_ProgressCallback+1) ? L"Progr: " : L"");
 	_wprintf(pszInfo ? pszInfo : L"<NULL>\n");
 	#if defined(_DEBUG)
 	OutputDebugString(pszInfo);
@@ -3265,8 +3257,8 @@ int DoDownload(LPCWSTR asCmdLine)
 	DWORD nFullRc;
 	wchar_t *pszProxy = NULL, *pszProxyLogin = NULL, *pszProxyPassword = NULL;
 	wchar_t *pszLogin = NULL, *pszPassword = NULL;
-
-	TODO("Process -proxy=... -user=... -pwd=... -timeout=... -log");
+	wchar_t *pszOTimeout = NULL, *pszTimeout = NULL;
+	wchar_t *pszAsync = NULL;
 
 	DownloadCommand(dc_Init, 0, NULL);
 
@@ -3288,6 +3280,9 @@ int DoDownload(LPCWSTR asCmdLine)
 		{L"proxy", &pszProxy},
 		{L"proxylogin", &pszProxyLogin},
 		{L"proxypassword", &pszProxyPassword},
+		{L"otimeout", &pszOTimeout},
+		{L"timeout", &pszTimeout},
+		{L"async", &pszAsync},
 		{NULL}
 	};
 
@@ -3343,6 +3338,27 @@ int DoDownload(LPCWSTR asCmdLine)
 			args[1].strArg = pszPassword; args[1].argType = at_Str;
 			DownloadCommand(dc_SetLogin, 2, args);
 		}
+		// Sync or Ansync mode?
+		if (pszAsync)
+		{
+			args[0].uintArg = *pszAsync && (pszAsync[0] != L'0') && (pszAsync[0] != L'N') && (pszAsync[0] != L'n'); args[0].argType = at_Uint;
+			DownloadCommand(dc_SetAsync, 1, args);
+		}
+		// Timeouts?
+		if (pszOTimeout)
+		{
+			wchar_t* pszEnd;
+			args[0].uintArg = 0; args[0].argType = at_Uint;
+			args[1].uintArg = wcstol(pszOTimeout, &pszEnd, 10); args[1].argType = at_Uint;
+			DownloadCommand(dc_SetTimeout, 2, args);
+		}
+		if (pszTimeout)
+		{
+			wchar_t* pszEnd;
+			args[0].uintArg = 1; args[0].argType = at_Uint;
+			args[1].uintArg = wcstol(pszTimeout, &pszEnd, 10); args[1].argType = at_Uint;
+			DownloadCommand(dc_SetTimeout, 2, args);
+		}
 
 		args[0].strArg = pszUrl; args[0].argType = at_Str;
 		args[1].strArg = szArg;  args[1].argType = at_Str;
@@ -3356,7 +3372,9 @@ int DoDownload(LPCWSTR asCmdLine)
 		if (nFullRc && nFullRc < countof(szFullPath))
 			args[1].strArg = szFullPath;
 
+		gbIsDownloading = true;
 		drc = DownloadCommand(dc_DownloadFile, 4, args);
+		gbIsDownloading = false;
 		if (drc == 0)
 		{
 			iRc = CERR_DOWNLOAD_FAILED;
@@ -9011,13 +9029,17 @@ wrap:
 }
 
 #if defined(__GNUC__)
-extern "C" {
-	BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
-};
+extern "C"
 #endif
-
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
+	if (gbIsDownloading
+		&& ((dwCtrlType == CTRL_CLOSE_EVENT) || (dwCtrlType == CTRL_LOGOFF_EVENT) || (dwCtrlType == CTRL_SHUTDOWN_EVENT)
+			|| (dwCtrlType == CTRL_C_EVENT) || (dwCtrlType == CTRL_BREAK_EVENT)))
+	{
+		DownloadCommand(dc_RequestTerminate, 0, NULL);
+	}
+
 	//PRINT_COMSPEC(L"HandlerRoutine triggered. Event type=%i\n", dwCtrlType);
 	if ((dwCtrlType == CTRL_CLOSE_EVENT)
 		|| (dwCtrlType == CTRL_LOGOFF_EVENT)
