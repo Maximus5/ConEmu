@@ -29,7 +29,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #define DOWNLOADTIMEOUT             30000
-#define DOWNLOADTIMEOUTMAX          180000
 #define DOWNLOADCLOSEHANDLETIMEOUT  5000
 #define DOWNLOADOPERATIONTIMEOUT    120000
 
@@ -117,6 +116,8 @@ enum CEDownloadCommand
 	dc_SetProxy,            // [0]="Server:Port", [1]="User", [2]="Password"
 	dc_SetLogin,            // [0]="User", [1]="Password"
 	dc_RequestTerminate,    // Without args
+	dc_SetAsync,            // [0]=TRUE-Async, FALSE-Sync
+	dc_SetTimeout,          // [0]=type (0-operation, 1-receive), [1]=ms
 };
 
 #if defined(DOWNLOADER_IMPORTS)
