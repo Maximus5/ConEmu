@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_ROOT_STARTED
 	#define WINE_PRINT_PROC_INFO
 //	#define USE_PIPE_DEBUG_BOXES
+//	#define SHOW_SETCONTITLE_MSGBOX
 
 //	#define DEBUG_ISSUE_623
 
@@ -3569,6 +3570,9 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle /*= false*/)
 BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle)
 {
 	wchar_t* pszExpanded = (bExpandVars && lsTitle) ? ParseConEmuSubst(lsTitle, false) : NULL;
+	#ifdef SHOW_SETCONTITLE_MSGBOX
+	MessageBox(NULL, pszExpanded ? pszExpanded : lsTitle ? lsTitle : L"", WIN3264TEST(L"ConEmuCD - set title",L"ConEmuCD64 - set title"), MB_SYSTEMMODAL);
+	#endif
 	BOOL bRc = SetConsoleTitle(pszExpanded ? pszExpanded : lsTitle ? lsTitle : L"");
 	SafeFree(pszExpanded);
 	return bRc;
@@ -3577,78 +3581,70 @@ BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle)
 void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bExpandVars)
 {
 	// Сменим заголовок консоли
-	if (*lsCmdLine == L'"')
+	if (*lsCmdLine == L'"' && lsCmdLine[1])
 	{
-		if (lsCmdLine[1])
+		wchar_t *pszBuffer = lstrdup(lsCmdLine);;
+		wchar_t *pszTitle = pszBuffer;
+		wchar_t *pszEndQ = pszTitle + lstrlenW(pszTitle) - 1;
+
+		if (pszEndQ > (pszTitle+1) && *pszEndQ == L'"'
+			    && wcschr(pszTitle+1, L'"') == pszEndQ)
 		{
-			wchar_t *pszTitle = gpszRunCmd;
-			wchar_t *pszEndQ = pszTitle + lstrlenW(pszTitle) - 1;
+			*pszEndQ = 0; pszTitle ++;
+			bool lbCont = true;
 
-			if (pszEndQ > (pszTitle+1) && *pszEndQ == L'"'
-			        && wcschr(pszTitle+1, L'"') == pszEndQ)
+			// "F:\Temp\1\ConsoleTest.exe ." - кавычки не нужны, после программы идут параметры
+			if (lbCont && (*pszTitle != L'"') && ((*(pszEndQ-1) == L'.') ||(*(pszEndQ-1) == L' ')))
 			{
-				*pszEndQ = 0; pszTitle ++;
-				bool lbCont = true;
+				LPCWSTR pwszCopy = pszTitle;
+				CmdArg szTemp;
 
-				// "F:\Temp\1\ConsoleTest.exe ." - кавычки не нужны, после программы идут параметры
-				if (lbCont && (*pszTitle != L'"') && ((*(pszEndQ-1) == L'.') ||(*(pszEndQ-1) == L' ')))
+				if (NextArg(&pwszCopy, szTemp) == 0)
 				{
-					LPCWSTR pwszCopy = pszTitle;
-					CmdArg szTemp;
-
-					if (NextArg(&pwszCopy, szTemp) == 0)
-					{
-						// В полученном пути к файлу (исполняемому) не должно быть пробелов?
-						if (!wcschr(szTemp, ' ') && IsFilePath(szTemp) && FileExists(szTemp))
-						{
-							lbCont = false;
-							lbNeedCutStartEndQuot = TRUE;
-						}
-					}
-				}
-
-				// "C:\Program Files\FAR\far.exe" - кавычки нужны, иначе не запустится
-				if (lbCont)
-				{
-					if (IsFilePath(pszTitle) && FileExists(pszTitle))
+					// В полученном пути к файлу (исполняемому) не должно быть пробелов?
+					if (!wcschr(szTemp, ' ') && IsFilePath(szTemp) && FileExists(szTemp))
 					{
 						lbCont = false;
-						lbNeedCutStartEndQuot = FALSE;
+						lbNeedCutStartEndQuot = TRUE;
 					}
-
-					//DWORD dwFileAttr = GetFileAttributes(pszTitle);
-					//if (dwFileAttr != INVALID_FILE_ATTRIBUTES && !(dwFileAttr & FILE_ATTRIBUTE_DIRECTORY))
-					//	lbNeedCutStartEndQuot = FALSE;
-					//else
-					//	lbNeedCutStartEndQuot = TRUE;
 				}
 			}
-			else
+
+			// "C:\Program Files\FAR\far.exe" - кавычки нужны, иначе не запустится
+			if (lbCont)
 			{
-				pszEndQ = NULL;
-			}
-
-			int nLen = 4096; //GetWindowTextLength(ghConWnd); -- KIS2009 гундит "Посылка оконного сообщения"...
-
-			if (nLen > 0)
-			{
-				gpszPrevConTitle = (wchar_t*)calloc(nLen+1,2);
-
-				if (gpszPrevConTitle)
+				if (IsFilePath(pszTitle) && FileExists(pszTitle))
 				{
-					if (!GetConsoleTitleW(gpszPrevConTitle, nLen+1))
-					{
-						free(gpszPrevConTitle); gpszPrevConTitle = NULL;
-					}
+					lbCont = false;
+					lbNeedCutStartEndQuot = FALSE;
 				}
 			}
-
-			SetTitle(bExpandVars/*true*/, pszTitle);
-
-			if (pszEndQ) *pszEndQ = L'"';
-
-			return; // Done
 		}
+		else
+		{
+			pszEndQ = NULL;
+		}
+
+		int nLen = 4096; //GetWindowTextLength(ghConWnd); -- KIS2009 гундит "Посылка оконного сообщения"...
+
+		if (nLen > 0)
+		{
+			gpszPrevConTitle = (wchar_t*)calloc(nLen+1,2);
+
+			if (gpszPrevConTitle)
+			{
+				if (!GetConsoleTitleW(gpszPrevConTitle, nLen+1))
+				{
+					free(gpszPrevConTitle); gpszPrevConTitle = NULL;
+				}
+			}
+		}
+
+		SetTitle(bExpandVars/*true*/, pszTitle);
+
+		SafeFree(pszBuffer);
+
+		return; // Done
 	}
 	
 	if (*lsCmdLine)
