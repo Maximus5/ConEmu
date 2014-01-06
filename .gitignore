@@ -1,11 +1,13 @@
 .svn
 .svnignore
+Descript.ion
 
 _*.sln
 
 *.7z
 *.rar
 *.zip
+*.dat
 
 *.log
 
@@ -27,14 +29,16 @@ _*.sln
 \!*.htm
 
 /gcc
-
+/MinGW
 /Portable_Test
 /ConEmuPortableRarInfo.txt
+
+/Release/ConEmu/WhatsNew-ConEmu-Portable.txt
+/Release/ConEmu/Portable/
 
 ipch
 bin
 help
 x64
-
 
 /CreateRelease.cmd
