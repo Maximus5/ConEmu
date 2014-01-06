@@ -48,8 +48,6 @@ typedef struct {
 CConEmuUpdate* gpUpd = NULL;
 
 #define UPDATETHREADTIMEOUT 2500
-#define DOWNLOADTIMEOUT     30000
-#define DOWNLOADTIMEOUTMAX  180000
 
 
 
@@ -57,8 +55,6 @@ CConEmuUpdate::CConEmuUpdate()
 {
 	_ASSERTE(gpConEmu->isMainThread());
 
-	mn_Timeout = DOWNLOADTIMEOUT;
-	mn_ConnTimeout = mn_FileTimeout = 0;
 	mb_InCheckProcedure = FALSE;
 	mn_CheckThreadId = 0;
 	mh_CheckThread = NULL;
@@ -696,7 +692,6 @@ DWORD CConEmuUpdate::CheckProcInt()
 			goto wrap;
 		bTempUpdateVerLocation = true;
 		
-		mn_Timeout = DOWNLOADTIMEOUT;
 		bInfoRc = DownloadFile(pszUpdateVerLocationSet, pszUpdateVerLocation, hInfo, crc);
 		CloseHandle(hInfo);
 		if (!bInfoRc)
@@ -820,7 +815,6 @@ DWORD CConEmuUpdate::CheckProcInt()
 		if (!pszLocalPackage)
 			goto wrap;
 		
-		mn_Timeout = DOWNLOADTIMEOUTMAX;
 		lbDownloadRc = DownloadFile(pszSource, pszLocalPackage, hTarget, nLocalCRC, TRUE);
 		if (lbDownloadRc)
 		{

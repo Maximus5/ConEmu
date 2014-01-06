@@ -79,8 +79,6 @@ protected:
 
 	wchar_t* mpsz_PendingPackageFile;
 	wchar_t* mpsz_PendingBatchFile;
-
-	DWORD mn_Timeout, mn_ConnTimeout, mn_DataTimeout, mn_FileTimeout;
 	
 	static DWORD WINAPI CheckThreadProc(LPVOID lpParameter);
 	DWORD CheckProcInt();
