@@ -780,6 +780,14 @@ bool IsFarExe(LPCWSTR asModuleName)
 	return false;
 }
 
+static DWORD WINAPI OurSetConsoleCPThread(LPVOID lpParameter)
+{
+	UINT nCP = (UINT)lpParameter;
+	SetConsoleCP(nCP);
+	SetConsoleOutputCP(nCP);
+	return 0;
+}
+
 // Return true if "SetEnvironmentVariable" was processed
 // if (bDoSet==false) - just skip all "set" commands
 bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet)
@@ -812,10 +820,49 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet)
 				lsNameVal = (wchar_t*)psz;
 			}
 		}
-
-		// Well, "set name=val" command detected. What is next?
-		if (lsNameVal)
+		// Process "chcp <cp>" too
+		else if (lstrcmpi(lsSet, L"chcp") == 0)
 		{
+			if (NextArg(&lsCmdLine, lsSet) == 0)
+			{
+				UINT nCP = 0; wchar_t* pszEnd;
+				if (lstrcmpi(lsSet, L"utf-8") == 0 || lstrcmpi(lsSet, L"utf8") == 0)
+					nCP = CP_UTF8;
+				else if (lstrcmpi(lsSet, L"acp") == 0 || lstrcmpi(lsSet, L"ansi") == 0 || lstrcmpi(lsSet, L"ansicp") == 0)
+					nCP = CP_ACP;
+				else if (lstrcmpi(lsSet, L"oem") == 0 || lstrcmpi(lsSet, L"oemcp") == 0)
+					nCP = CP_OEMCP;
+				else
+					nCP = wcstol(lsSet, &pszEnd, 10);
+
+				if (nCP > 0 && nCP <= 0xFFFF)
+				{
+					bTokenOk = true;
+					_ASSERTE(lsNameVal == NULL);
+					// Ask to be changed?
+					if (bDoSet)
+					{
+						//BUGBUG: На некоторых системых (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
+						DWORD nTID;
+						HANDLE hThread = CreateThread(NULL,0,OurSetConsoleCPThread,(LPVOID)nCP,0,&nTID);
+						if (hThread)
+						{
+							DWORD nWait = WaitForSingleObject(hThread, 1000);
+							if (nWait == WAIT_TIMEOUT)
+							{
+								TerminateThread(hThread,100);
+							}
+							CloseHandle(hThread);
+						}
+					}
+				}
+			}
+		}
+
+		// Well, known command was detected. What is next?
+		if (lsNameVal || bTokenOk)
+		{
+			lsAmp.GetPosFrom(lsSet);
 			if (NextArg(&lsCmdLine, lsAmp) != 0)
 			{
 				// End of command? Use may call only "set" without following app? Run simple "cmd" in that case
@@ -838,11 +885,8 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet)
 		{
 			break; // Stop processing command line
 		}
-		else
+		else if (lsNameVal)
 		{
-			// Remember processed position
-			asCmdLine = lsCmdLine;
-
 			// And split name/value
 			_ASSERTE(lsNameVal!=NULL);
 
@@ -865,6 +909,10 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet)
 
 			bEnvChanged = true;
 		}
+
+		// Remember processed position
+		asCmdLine = lsCmdLine;
+
 	} // end of "while (NextArg(&lsCmdLine, lsSet) == 0)"
 
 	// Fin
