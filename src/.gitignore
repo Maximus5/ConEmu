@@ -3,14 +3,14 @@ sign2.bat
 reg
 TabThemes
 Tools
-/.build
-/.codeblocks
-/Icons
+.build/
+.codeblocks/
+Icons/
 CE2-preview.sln
 compile.txt
 *.opensdf
-/_VCBUILD
-/Test
+_VCBUILD/
+Test/
 
 *.exe
 *.map
