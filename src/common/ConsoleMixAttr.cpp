@@ -167,7 +167,7 @@ bool WriteConsoleRowId(HANDLE hConOut, SHORT nRow, WORD RowId, CEConsoleMark* pM
 		WORD RowIdPart = RowId;
 		for (size_t i = 0, j = (countof(nAttrs)-1); i < countof(nAttrs); i++, j--)
 		{
-			nNewAttrs[j] = (nAttrs[i] & ~CHANGED_CONATTR) | AddConAttr[RowIdPart&0xF];
+			nNewAttrs[j] = (nAttrs[j] & ~CHANGED_CONATTR) | AddConAttr[RowIdPart&0xF];
 			RowIdPart = (RowIdPart>>4);
 		}
 	}
