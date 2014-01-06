@@ -15,6 +15,20 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.06
+[%] Default terminal fixes.
+[*] Don't show excess paths and quotes in title.
+[%] Small memory leak while restaring tab on Win7.
+[%] Don't force ConEmuC64 as root server when using "set" before command.
+[+] Support "chcp ansi|oem|utf-8|<CodePageNumber>" internally by ConEmuC.
+[+] Support '-'style arguments in ConEmuC.
+[%] Issue 1421: PowerShell coloursed prompt displayed incorrectly.
+[+] Downloader. New internal commands, default to async, and new switches:
+    -otimeout <ms> - Our wait for async operation timeout
+    -timeout <ms>  - WinInet data receive timeout
+    -async Y|N     - Turn On/Off asynchronous mode.
+
+
 2014.01.04
 [+] All internet code (Updater) moved to ConEmuCD.dll.
     Side effect - you may download from http/https/ftp without any external tools.
