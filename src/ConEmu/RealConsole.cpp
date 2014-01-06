@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -3241,8 +3241,12 @@ BOOL CRealConsole::StartProcess()
 		if (!mp_ConHostSearch)
 		{
 			mp_ConHostSearch = (MMap<DWORD,BOOL>*)calloc(1,sizeof(*mp_ConHostSearch));
+			bNeedConHostSearch = mp_ConHostSearch && mp_ConHostSearch->Init();
 		}
-		bNeedConHostSearch = mp_ConHostSearch && mp_ConHostSearch->Init();
+		else
+		{
+			mp_ConHostSearch->Reset();
+		}
 	}
 	if (!bNeedConHostSearch)
 	{
