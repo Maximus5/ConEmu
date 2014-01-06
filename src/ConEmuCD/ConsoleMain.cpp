@@ -3729,8 +3729,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			return CERR_HELPREQUESTED;
 		}
 
-		// Далее - требуется чтобы у аргумента был "/"
-		if (szArg[0] != L'/')
+		// Following code wants '/'style arguments
+		// Change '-'style to '/'style
+		if (szArg[0] == L'-')
+			szArg.SetAt(0, L'/');
+		else if (szArg[0] != L'/')
 			continue;
 
 		#ifdef _DEBUG

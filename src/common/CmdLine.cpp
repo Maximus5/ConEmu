@@ -111,6 +111,11 @@ LPCWSTR CmdArg::Set(LPCWSTR asNewValue, int anChars /*= -1*/)
 	}
 	return ms_Arg;
 }
+void CmdArg::SetAt(INT_PTR nIdx, wchar_t wc)
+{
+	if (ms_Arg && (nIdx < mn_MaxLen))
+		ms_Arg[nIdx] = wc;
+}
 void CmdArg::GetPosFrom(const CmdArg& arg)
 {
 	mpsz_Dequoted = arg.mpsz_Dequoted;

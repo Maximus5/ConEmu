@@ -53,6 +53,7 @@ public:
 	wchar_t* Detach();
 	void Empty();
 	LPCWSTR Set(LPCWSTR asNewValue, int anChars = -1);
+	void SetAt(INT_PTR nIdx, wchar_t wc);
 
 	void GetPosFrom(const CmdArg& arg);
 
