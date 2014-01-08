@@ -569,7 +569,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.ComSpec.ConEmuBaseDir);
 		_wcscat_c(szConEmuC, cchConEmuC, L"\\");
 	}
-	
+
 	_ASSERTE(aCmd==eShellExecute || aCmd==eCreateProcess);
 
 
@@ -627,7 +627,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 					if (asFile)
 					{
 						LPCWSTR pszFileOnly = PointToName(asFile);
-						
+
 						if (pszFileOnly)
 						{
 							LPCWSTR pszCopy = pszParam;
@@ -729,7 +729,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 						{
 							ImageSubsystem = nCheckSybsystem1;
 							ImageBits = nCheckBits1;
-							
+
 						}
 						else
 						{
@@ -825,7 +825,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 					}
 					bSkip = true;
 				}
-				
+
 				if (!bSkip)
 				{
 					DWORD nCheckSybsystem = 0, nCheckBits = 0;
@@ -839,7 +839,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		}
 	}
 
-	
+
 
 	lbUseDosBox = FALSE;
 	szDosBoxExe = (wchar_t*)calloc(cchDosBoxExe, sizeof(*szDosBoxExe));
@@ -942,7 +942,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		//return FALSE;
 		goto wrap;
 	}
-	
+
 	nCchSize = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 64;
 	if (lbUseDosBox)
 	{
@@ -1007,7 +1007,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		// reserve space for m_GuiMapping.sDefaultTermArg
 		nCchSize += lstrlen(m_GuiMapping.sDefaultTermArg)+16;
 	}
-	
+
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
 	// /C или /K в обоих случаях нужно пихать в psParam
 	_ASSERTE(lbEndQuote == FALSE); // Must not be set yet
@@ -1489,7 +1489,7 @@ int CShellProc::PrepareExecuteParms(
 
 	// Current application is GUI subsystem run in ConEmu tab?
 	CheckIsCurrentGuiClient();
-	
+
 	bool bNewConsoleArg = false, bForceNewConsole = false, bCurConsoleArg = false;
 
 	// Service object (moved to members: RConStartArgs m_Args)
@@ -1498,7 +1498,7 @@ int CShellProc::PrepareExecuteParms(
 	BOOL bDebugWasRequested = FALSE, bVsNetHostRequested = FALSE;
 	mb_DebugWasRequested = FALSE;
 	mb_PostInjectWasRequested = FALSE;
-		
+
 	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить
 	//            левый хэндл (hStdOutput = 0x00010001), иногда получается 0x00060265
 	//            и недокументированный флаг 0x400 в lpStartupInfo->dwFlags
@@ -1522,7 +1522,7 @@ int CShellProc::PrepareExecuteParms(
 			}
 		}
 	}
-	
+
 	// Проверяем настройку ConEmuGuiMapping.bUseInjects
 	if (!LoadSrvMapping() || !(m_SrvMapping.cbSize && ((m_SrvMapping.bUseInjects & 1) || gbPrepareDefaultTerminal)))
 	{
@@ -1625,7 +1625,7 @@ int CShellProc::PrepareExecuteParms(
 				return NULL;
 			}
 		}
-		
+
 		// Поехали
 		LPWSTR pszConsoles[MAX_CONSOLE_COUNT] = {};
 		size_t cchLen, cchAllLen = 0, iCount = 0;
@@ -1682,7 +1682,7 @@ int CShellProc::PrepareExecuteParms(
 			pFile->Release();
 #endif
 	}
-		
+
 	//wchar_t *szTest = (wchar_t*)malloc(MAX_PATH*2*sizeof(wchar_t)); //[MAX_PATH*2]
 	//wchar_t *szExe = (wchar_t*)malloc((MAX_PATH+1)*sizeof(wchar_t)); //[MAX_PATH+1];
 	DWORD /*mn_ImageSubsystem = 0, mn_ImageBits = 0,*/ nFileAttrs = (DWORD)-1;
@@ -1693,7 +1693,7 @@ int CShellProc::PrepareExecuteParms(
 	BOOL lbNeedCutStartEndQuot = FALSE;
 
 	mn_ImageSubsystem = mn_ImageBits = 0;
-	
+
 	if (/*(aCmd == eShellExecute) &&*/ asFile && *asFile)
 	{
 		if (*asFile == L'"')
@@ -1719,7 +1719,7 @@ int CShellProc::PrepareExecuteParms(
 		BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
 		IsNeedCmd(false, SkipNonPrintable(asParam), NULL, &lbNeedCutStartEndQuot, ms_ExeTmp, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
 	}
-	
+
 	if (ms_ExeTmp[0])
 	{
 		int nLen = lstrlen(ms_ExeTmp);
@@ -1758,7 +1758,7 @@ int CShellProc::PrepareExecuteParms(
 		}
 	}
 
-	
+
 	BOOL lbChanged = FALSE;
 	mb_NeedInjects = FALSE;
 	//wchar_t szBaseDir[MAX_PATH+2]; szBaseDir[0] = 0;
@@ -1806,7 +1806,7 @@ int CShellProc::PrepareExecuteParms(
 
 	//wchar_t* pszExecFile = (wchar_t*)pOut->OnCreateProcRet.wsValue;
 	//wchar_t* pszBaseDir = (wchar_t*)(pOut->OnCreateProcRet.wsValue); // + pOut->OnCreateProcRet.nFileLen);
-	
+
 	if (asParam && *asParam && !mb_Opt_SkipNewConsole)
 	{
 		m_Args.pszSpecialCmd = lstrdup(asParam);
@@ -1849,7 +1849,7 @@ int CShellProc::PrepareExecuteParms(
 	{
 		lbGuiApp = true;
 	}
-	
+
 	if (aCmd == eShellExecute)
 	{
 		WARNING("Уточнить условие для флагов ShellExecute!");
@@ -1909,7 +1909,7 @@ int CShellProc::PrepareExecuteParms(
 			goto wrap;
 		}
 	}
-	
+
 	//bool lbGuiApp = false;
 	//DWORD ImageSubsystem = 0, ImageBits = 0;
 
@@ -2155,7 +2155,7 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
 		return TRUE; // Перехватывать только под ConEmu
-		
+
 	mb_InShellExecuteEx = TRUE;
 	gnInShellExecuteEx ++;
 
@@ -2208,7 +2208,7 @@ BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* as
 {
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
 		return TRUE; // Перехватывать только под ConEmu
-	
+
 	mb_InShellExecuteEx = TRUE;
 	gnInShellExecuteEx ++;
 
@@ -2289,7 +2289,7 @@ BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 		return TRUE;
 	}
 	memmove(mlp_ExecInfoA, (*lpExecInfo), (*lpExecInfo)->cbSize);
-	
+
 	FixShellArgs((*lpExecInfo)->fMask, (*lpExecInfo)->hwnd, &(mlp_ExecInfoA->fMask), &(mlp_ExecInfoA->hwnd));
 
 	BOOL lbRc = OnShellExecuteA(&mlp_ExecInfoA->lpVerb, &mlp_ExecInfoA->lpFile, &mlp_ExecInfoA->lpParameters, &mlp_ExecInfoA->lpDirectory, &mlp_ExecInfoA->fMask, (DWORD*)&mlp_ExecInfoA->nShow);
@@ -2314,7 +2314,7 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 		return TRUE;
 	}
 	memmove(mlp_ExecInfoW, (*lpExecInfo), (*lpExecInfo)->cbSize);
-	
+
 	FixShellArgs((*lpExecInfo)->fMask, (*lpExecInfo)->hwnd, &(mlp_ExecInfoW->fMask), &(mlp_ExecInfoW->hwnd));
 
 	BOOL lbRc = OnShellExecuteW(&mlp_ExecInfoW->lpVerb, &mlp_ExecInfoW->lpFile, &mlp_ExecInfoW->lpParameters, &mlp_ExecInfoW->lpDirectory, &mlp_ExecInfoW->fMask, (DWORD*)&mlp_ExecInfoW->nShow);
@@ -2401,7 +2401,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 			return TRUE; // Перехватывать только под ConEmu
 		}
 	}
-		
+
 	DWORD nShowCmd = (lpSI->dwFlags & STARTF_USESHOWWINDOW) ? lpSI->wShowWindow : SW_SHOWNORMAL;
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
 
