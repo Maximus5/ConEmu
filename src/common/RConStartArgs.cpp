@@ -995,11 +995,13 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 											lstrcpyn(szUserPassword, pszPwd+1, countof(szUserPassword));
 											if (nPwdLen > 0)
 												SecureZeroMemory(pszPwd+1, nPwdLen);
+											bUseEmptyPassword = (nPwdLen == 0);
 										}
 										else
 										{
 											// Password was NOT specified, dialog prompt IS required
 											bForceUserDialog = TRUE;
+											bUseEmptyPassword = FALSE;
 										}
 										wchar_t* pszSlash = wcschr(lpszTemp, L'\\');
 										if (pszSlash)
