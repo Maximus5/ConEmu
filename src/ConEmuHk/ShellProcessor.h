@@ -29,12 +29,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/CmdLine.h"
+#include "../common/RConStartArgs.h"
 
 struct RConStartArgs;
 
 class CShellProc
 {
 private:
+	RConStartArgs m_Args;
+
 	UINT mn_CP; // = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 	
 	// Для конвертации параметров Ansi функций (работаем через Unicode для унификации)
@@ -103,6 +106,7 @@ public:
 	BOOL LoadSrvMapping(BOOL bLightCheck = FALSE);
 	DWORD GetUseInjects();
 	BOOL GetLogLibraries();
+	const RConStartArgs* GetArgs();
 public:
 	CShellProc();
 	~CShellProc();

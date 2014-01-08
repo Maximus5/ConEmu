@@ -1162,7 +1162,28 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	force_print_timings(L"CreateProcessW");
 	#endif
 
-	lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	#if 0
+	// This is disabled for now. Command will create new visible console window,
+	// but excpected behavior will be "reuse" of existing console window
+	if (!sp->GetArgs()->bNewConsole && sp->GetArgs()->pszUserName)
+	{
+		LPCWSTR pszName = sp->GetArgs()->pszUserName;
+		LPCWSTR pszDomain = sp->GetArgs()->pszDomain;
+		LPCWSTR pszPassword = sp->GetArgs()->szUserPassword;
+		STARTUPINFOW si = {sizeof(si)};
+		PROCESS_INFORMATION pi = {};
+		DWORD dwOurFlags = (dwCreationFlags & ~EXTENDED_STARTUPINFO_PRESENT);
+		lbRc = CreateProcessWithLogonW(pszName, pszDomain, (pszPassword && *pszPassword) ? pszPassword : NULL, LOGON_WITH_PROFILE,
+			lpApplicationName, lpCommandLine, dwOurFlags, lpEnvironment, lpCurrentDirectory,
+			&si, &pi);
+		if (lbRc)
+			*lpProcessInformation = pi;
+	}
+	else
+	#endif
+	{
+		lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	}
 	dwErr = GetLastError();
 
 	#ifdef SHOWCREATEPROCESSTICK

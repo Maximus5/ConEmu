@@ -39,7 +39,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Injects.h"
 #include "GuiAttach.h"
 #include "../common/WinObjects.h"
-#include "../common/RConStartArgs.h"
 #include "../common/CmdLine.h"
 #include "../common/DefTermHooker.h"
 #include "UserImp.h"
@@ -271,6 +270,11 @@ BOOL CShellProc::GetLogLibraries()
 	if (m_SrvMapping.cbSize)
 		return (m_SrvMapping.nLoggingType == glt_Processes);
 	return FALSE;
+}
+
+const RConStartArgs* CShellProc::GetArgs()
+{
+	return &m_Args;
 }
 
 BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
@@ -1487,8 +1491,9 @@ int CShellProc::PrepareExecuteParms(
 	CheckIsCurrentGuiClient();
 	
 	bool bNewConsoleArg = false, bForceNewConsole = false, bCurConsoleArg = false;
-	// Service object
-	RConStartArgs args;
+
+	// Service object (moved to members: RConStartArgs m_Args)
+	_ASSERTEX(m_Args.pszSpecialCmd == NULL); // Must not be touched yet!
 
 	BOOL bDebugWasRequested = FALSE, bVsNetHostRequested = FALSE;
 	mb_DebugWasRequested = FALSE;
@@ -1804,10 +1809,10 @@ int CShellProc::PrepareExecuteParms(
 	
 	if (asParam && *asParam && !mb_Opt_SkipNewConsole)
 	{
-		args.pszSpecialCmd = lstrdup(asParam);
-		if (args.ProcessNewConArg() > 0)
+		m_Args.pszSpecialCmd = lstrdup(asParam);
+		if (m_Args.ProcessNewConArg() > 0)
 		{
-			if (args.bNewConsole)
+			if (m_Args.bNewConsole)
 			{
 				bNewConsoleArg = true;
 			}
@@ -1816,7 +1821,7 @@ int CShellProc::PrepareExecuteParms(
 				// А вот "-cur_console" нужно обрабатывать _здесь_
 				bCurConsoleArg = true;
 
-				if (args.bForceDosBox && m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
+				if (m_Args.bForceDosBox && m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
 				{
 					mn_ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
 					mn_ImageBits = 16;
@@ -1824,7 +1829,7 @@ int CShellProc::PrepareExecuteParms(
 					lbGuiApp = FALSE;
 				}
 
-				if (args.bLongOutputDisable)
+				if (m_Args.bLongOutputDisable)
 				{
 					bLongConsoleOutput = FALSE;
 				}
@@ -1956,7 +1961,7 @@ int CShellProc::PrepareExecuteParms(
 	if (gbPrepareDefaultTerminal)
 	{
 		// set up default terminal
-		bGoChangeParm = (!args.bNoDefaultTerm && (bVsNetHostRequested || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
+		bGoChangeParm = (!m_Args.bNoDefaultTerm && (bVsNetHostRequested || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
 	}
 	else
 	{
@@ -1966,7 +1971,7 @@ int CShellProc::PrepareExecuteParms(
 			|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
 				&& (bNewConsoleArg
 					|| (bLongConsoleOutput && (aCmd == eShellExecute))
-					|| (bCurConsoleArg && !args.bLongOutputDisable)
+					|| (bCurConsoleArg && !m_Args.bLongOutputDisable)
 					#ifdef _DEBUG
 					|| lbAlwaysAddConEmuC
 					#endif
@@ -2007,13 +2012,13 @@ int CShellProc::PrepareExecuteParms(
 		}
 
 		lbChanged = ChangeExecuteParms(aCmd, bNewConsoleArg, asFile, asParam,
-						ms_ExeTmp, args, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
+						ms_ExeTmp, m_Args, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 
 		if (!lbChanged)
 		{
 			// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
 			// И если просили не ставить хуки (-new_console:i) - тоже
-			mb_NeedInjects = (mn_ImageBits != 16) && !args.bInjectsDisable;
+			mb_NeedInjects = (mn_ImageBits != 16) && !m_Args.bInjectsDisable;
 		}
 		else
 		{
@@ -2071,13 +2076,13 @@ int CShellProc::PrepareExecuteParms(
 		// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
 		// И если просили не ставить хуки (-new_console:i) - тоже
 		mb_NeedInjects = (aCmd == eCreateProcess) && (mn_ImageBits != 16)
-			&& !args.bInjectsDisable && !gbPrepareDefaultTerminal
+			&& !m_Args.bInjectsDisable && !gbPrepareDefaultTerminal
 			&& !bDetachedOrHidden;
 
 		// Параметр -cur_console / -new_console нужно вырезать
 		if (bNewConsoleArg || bCurConsoleArg)
 		{
-			_ASSERTEX(args.pszSpecialCmd!=NULL && "Must be replaced already!");
+			_ASSERTEX(m_Args.pszSpecialCmd!=NULL && "Must be replaced already!");
 
 			// явно выставим в TRUE, т.к. это мог быть -new_console
 			bCurConsoleArg = TRUE;
@@ -2094,18 +2099,18 @@ wrap:
 		else
 		{
 			// Указание рабочей папки
-			if (args.pszStartupDir)
+			if (m_Args.pszStartupDir)
 			{
-				*psStartDir = args.pszStartupDir;
-				args.pszStartupDir = NULL;
+				*psStartDir = m_Args.pszStartupDir;
+				m_Args.pszStartupDir = NULL;
 			}
 
 			// Подмена параметров (вырезаны -cur_console, -new_console)
-			*psParam = args.pszSpecialCmd;
-			args.pszSpecialCmd = NULL;
+			*psParam = m_Args.pszSpecialCmd;
+			m_Args.pszSpecialCmd = NULL;
 
 			// Высота буфера!
-			if (args.bBufHeight && gnServerPID)
+			if (m_Args.bBufHeight && gnServerPID)
 			{
 				//CESERVER_REQ *pIn = ;
 				//ExecutePrepareCmd(&In, CECMD_SETSIZESYNC, sizeof(CESERVER_REQ_HDR));
@@ -2116,10 +2121,10 @@ wrap:
 				{
 					bool bNeedChange = false;
 					BOOL bBufChanged = FALSE;
-					if (args.nBufHeight)
+					if (m_Args.nBufHeight)
 					{
 						WARNING("Хорошо бы на команду сервера это перевести");
-						//SHORT nNewHeight = max((csbi.srWindow.Bottom - csbi.srWindow.Top + 1),(SHORT)args.nBufHeight);
+						//SHORT nNewHeight = max((csbi.srWindow.Bottom - csbi.srWindow.Top + 1),(SHORT)m_Args.nBufHeight);
 						//if (nNewHeight != csbi.dwSize.Y)
 						//{
 						//	csbi.dwSize.Y = nNewHeight;
