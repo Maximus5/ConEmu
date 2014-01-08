@@ -2657,6 +2657,7 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 		}
 	}
 
+wrap: // Wrap to here, because gp_VActive may be invalid already and we need to check it
 	if (gp_VActive == apVCon)
 	{
 		// Сюда вообще попадать не должны, но на всякий случай, сбрасываем gp_VActive
@@ -2681,7 +2682,6 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 		ShowActiveGroup(gp_VActive);
 	}
 
-wrap:
 	// Теперь перетряхнуть заголовок (табы могут быть отключены и в заголовке отображается количество консолей)
 	gpConEmu->UpdateTitle(); // сам перечитает
 	//
