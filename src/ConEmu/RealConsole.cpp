@@ -1805,7 +1805,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		DWORD nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, INFINITE);
 		if ((nWait == WAIT_OBJECT_0) || !pRCon->mb_StartResult)
 		{
-			_ASSERTE(FALSE && "Failed to start console?");
+			//_ASSERTE(FALSE && "Failed to start console?"); -- no need in debug
 			goto wrap;
 		}
 
