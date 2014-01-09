@@ -2250,6 +2250,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, bool& isScript, uint& p
 			// Если ком.строка содержит "/cmd" - все что после него используется для создания нового процесса
 			// или "/cmdlist cmd1 | cmd2 | ..."
 			cmdNew = wcsstr(cmdLine, L"/cmd");
+			if (!cmdNew) cmdNew = wcsstr(cmdLine, L"-cmd");
 
 			if (cmdNew)
 			{
