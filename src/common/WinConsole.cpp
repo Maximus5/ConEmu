@@ -641,10 +641,10 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize)
 #ifndef CONEMU_MINIMAL
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName, WORD anTextColors /*= 0*/, WORD anPopupColors /*= 0*/)
 {
-	OSVERSIONINFO osv = {sizeof(osv)};
-	GetVersionEx(&osv);
-
-	if (osv.dwMajorVersion >= 6)
+	_ASSERTE(_WIN32_WINNT_VISTA==0x600);
+	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA)};
+	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+	if (VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
 	{
 		// We have Vista
 		apiSetConsoleFontSize(GetStdHandle(STD_OUTPUT_HANDLE), inSizeY, inSizeX, asFontName);
@@ -811,12 +811,12 @@ int EvaluateDefaultFontWidth(int inSizeY, const wchar_t *asFontName)
 #ifndef CONEMU_MINIMAL
 void SetUserFriendlyFont(HWND hConWnd)
 {
-	OSVERSIONINFO OSVer = {sizeof(OSVer)};
-	GetVersionEx(&OSVer);
-
 	// Соответствующие функции появились только в API Vista
 	// Win2k & WinXP - доступны только хаки, что не подходит
-	if (OSVer.dwMajorVersion >= 6)
+	_ASSERTE(_WIN32_WINNT_VISTA==0x600);
+	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA)};
+	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+	if (VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
 	{
 		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 		COORD crVisibleSize = {};
