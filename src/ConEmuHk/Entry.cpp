@@ -162,6 +162,7 @@ extern void ShutdownHooks();
 extern void InitializeHookedModules();
 extern void FinalizeHookedModules();
 extern DWORD GetMainThreadId(bool bUseCurrentAsMain);
+extern HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, bool bRunAsAdmin, bool bForce);
 //HMODULE ghPsApi = NULL;
 #ifdef _DEBUG
 extern HHOOK ghGuiClientRetHook;
@@ -1992,13 +1993,22 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	}
 
 
-	if (!CreateProcess(NULL, pszCmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi))
+	if (args.bRunAsAdministrator)
 	{
-		iRc = GetLastError();
+		_ASSERTEX(FALSE && "We can't 'RunAsAdmin' from here, because ConEmu GUI main thread is blocked by call");
+		//wchar_t szCurDir[MAX_PATH+1] = L"";
+		//GetCurrentDirectory(countof(szCurDir), szCurDir);
+		//iRc = (DWORD)OurShellExecCmdLine(ghConEmuWnd, pszCmd, szCurDir, true, true);
+		iRc = E_INVALIDARG;
+		goto wrap;
+	}
+	else
+	{
+		BOOL bRunRc = CreateProcess(NULL, pszCmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+		iRc = bRunRc ? 0 : GetLastError();
 		goto wrap;
 	}
 
-	iRc = 0;
 wrap:
 	SafeFree(GuiMapping);
 	SafeFree(pszCmd);

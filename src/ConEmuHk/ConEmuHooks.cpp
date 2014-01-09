@@ -1664,6 +1664,65 @@ BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 	return lbRc;
 }
 
+HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, bool bRunAsAdmin, bool bForce)
+{
+	HRESULT hr = E_UNEXPECTED;
+	BOOL bShell = FALSE;
+
+	// Bad thing, ShellExecuteEx needs File&Parm, but we get both in pwszCommand
+	CmdArg szExe;
+	LPCWSTR pszFile = pwszCommand;
+	LPCWSTR pszParm = pwszCommand;
+	if (NextArg(&pszParm, szExe) == 0)
+	{
+		pszFile = szExe; pszParm = SkipNonPrintable(pszParm);
+	}
+	else
+	{
+		// Failed
+		pszFile = pwszCommand; pszParm = NULL;
+	}
+
+	if (!bForce)
+	{
+		DWORD nCheckSybsystem1 = 0, nCheckBits1 = 0, nFileAttrs1 = 0;
+		if (!FindImageSubsystem(pszFile, nCheckSybsystem1, nCheckBits1, nFileAttrs1))
+		{
+			hr = (HRESULT)-1;
+			goto wrap;
+		}
+		if (nCheckSybsystem1 != IMAGE_SUBSYSTEM_WINDOWS_CUI)
+		{
+			hr = (HRESULT)-1;
+			goto wrap;
+		}
+	}
+
+	// "Run as admin" was requested?
+	if (bRunAsAdmin)
+	{
+		SHELLEXECUTEINFO sei = {sizeof(sei), 0, hwnd, L"runas", pszFile, pszParm, pwszStartDir, SW_HIDE};
+		bShell = OnShellExecuteExW(&sei);
+	}
+	else
+	{
+		wchar_t* pwCommand = lstrdup(pwszCommand);
+		DWORD nCreateFlags = CREATE_NEW_CONSOLE|CREATE_UNICODE_ENVIRONMENT|CREATE_DEFAULT_ERROR_MODE;
+		STARTUPINFO si = {sizeof(si)};
+		PROCESS_INFORMATION pi = {};
+		bShell = OnCreateProcessW(NULL, pwCommand, NULL, NULL, FALSE, nCreateFlags, NULL, pwszStartDir, &si, &pi);
+		if (bShell)
+		{
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+		}
+	}
+
+	hr = bShell ? S_OK : HRESULT_FROM_WIN32(GetLastError());
+wrap:
+	return hr;
+}
+
 // Issue 1125: Hook undocumented function used for running commands typed in Windows 7 Win-menu search string.
 HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags)
 {
@@ -1677,50 +1736,11 @@ HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszSt
 	{
 		if (!IsBadStringPtrW(pwszCommand, MAX_PATH) && !IsBadStringPtrW(pwszStartDir, MAX_PATH))
 		{
-			BOOL bShell = FALSE;
-
-			// Bad thing, ShellExecuteEx needs File&Parm, but we get both in pwszCommand
-			CmdArg szExe;
-			LPCWSTR pszFile = pwszCommand;
-			LPCWSTR pszParm = pwszCommand;
-			if (NextArg(&pszParm, szExe) == 0)
-			{
-				pszFile = szExe; pszParm = SkipNonPrintable(pszParm);
-			}
+			hr = OurShellExecCmdLine(hwnd, pwszCommand, pwszStartDir, (dwSeclFlags & 0x40)==0x40, false);
+			if (hr == (HRESULT)-1)
+				goto ApiCall;
 			else
-			{
-				// Failed
-				pszFile = pwszCommand; pszParm = NULL;
-			}
-
-			DWORD nCheckSybsystem1 = 0, nCheckBits1 = 0, nFileAttrs1 = 0;
-			if (!FindImageSubsystem(pszFile, nCheckSybsystem1, nCheckBits1, nFileAttrs1))
 				goto wrap;
-			if (nCheckSybsystem1 != IMAGE_SUBSYSTEM_WINDOWS_CUI)
-				goto wrap;
-
-			// "Run as admin" was requested?
-			if (dwSeclFlags & 0x40)
-			{
-				SHELLEXECUTEINFO sei = {sizeof(sei), 0, hwnd, L"runas", pszFile, pszParm, pwszStartDir, nShow};
-				bShell = OnShellExecuteExW(&sei);
-			}
-			else
-			{
-				wchar_t* pwCommand = lstrdup(pwszCommand);
-				DWORD nCreateFlags = CREATE_NEW_CONSOLE|CREATE_UNICODE_ENVIRONMENT|CREATE_DEFAULT_ERROR_MODE;
-				STARTUPINFO si = {sizeof(si)};
-				PROCESS_INFORMATION pi = {};
-				bShell = OnCreateProcessW(NULL, pwCommand, NULL, NULL, FALSE, nCreateFlags, NULL, pwszStartDir, &si, &pi);
-				if (bShell)
-				{
-					CloseHandle(pi.hProcess);
-					CloseHandle(pi.hThread);
-				}
-			}
-
-			hr = bShell ? S_OK : HRESULT_FROM_WIN32(GetLastError());
-			goto wrap;
 		}
 	}
 

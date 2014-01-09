@@ -1683,12 +1683,16 @@ LPWSTR CConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon)
 
 		bool bNewConsoleVerb = (pszOper && (wmemcmp(pszOper, L"new_console", 11) == 0));
 		bool bForceDuplicate = false;
+		bool bDontDuplicate = false;
 		if (bNewConsoleVerb)
 		{
 			RConStartArgs args; args.pszSpecialCmd = lstrmerge(L"\"-", pszOper, L"\"");
 			args.ProcessNewConArg();
 			// new_console:I
 			bForceDuplicate = (args.bForceInherit != FALSE);
+			// RunAs - does not supported in "duplicate"
+			bDontDuplicate = (args.bRunAsAdministrator || args.bRunAsRestricted || args.pszUserName);
+			_ASSERTE(!(bForceDuplicate && bDontDuplicate));
 		}
 
 
@@ -1696,7 +1700,7 @@ LPWSTR CConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon)
 		{
 			LPCWSTR pszCmd;
 
-			if (bNewConsoleVerb)
+			if (bNewConsoleVerb && !bDontDuplicate)
 			{
 				wchar_t* pszNewConsoleArgs = lstrmerge(L"\"-", pszOper, L"\"");
 				bool bOk = apRCon->DuplicateRoot(true/*bSkipMsg*/, false/*bRunAsAdmin*/, pszNewConsoleArgs, pszFile, pszParm);
