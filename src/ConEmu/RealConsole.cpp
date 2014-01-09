@@ -3526,7 +3526,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	if (m_Args.bRunAsAdministrator && !gpConEmu->mb_IsUacAdmin)
 	{
 		m_Args.bDetached = TRUE;
-		_wcscat_c(psCurCmd, nLen, L" /ATTACH ");
+		_wcscat_c(psCurCmd, nLen, L" /ADMIN ");
 	}
 
 	if ((gpSet->nConInMode != (DWORD)-1) || m_Args.bOverwriteMode)

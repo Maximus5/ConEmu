@@ -3862,6 +3862,20 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			gnConfirmExitParm = 2;
 			gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
 		}
+		else if (wcscmp(szArg, L"/ADMIN")==0)
+		{
+			#if defined(SHOW_ATTACH_MSGBOX)
+			if (!IsDebuggerPresent())
+			{
+				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i) /ADMIN", gnSelfPID);
+				const wchar_t* pszCmdLine = GetCommandLineW();
+				MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
+			}
+			#endif
+
+			gbAttachMode = am_Admin;
+			gnRunMode = RM_SERVER;
+		}
 		else if (wcscmp(szArg, L"/ATTACH")==0)
 		{
 			#if defined(SHOW_ATTACH_MSGBOX)

@@ -122,7 +122,13 @@ extern bool    gbQuit;           // когда мы в процессе закр
 extern int     gnConfirmExitParm;
 extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
 extern int     gbRootWasFoundInCon;
-enum AttachModeEnum { am_None = 0, am_Simple, am_Auto };
+enum AttachModeEnum
+{
+	am_None = 0,
+	am_Simple,    // As is
+	am_Auto,      // Same as am_Simple, but always return 0 as errorlevel
+	am_Admin,     // Special "attach" when ConEmu is run under "User" and console "As admin"
+};
 extern AttachModeEnum gbAttachMode; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console)
 extern BOOL    gbAlienMode;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
 extern BOOL    gbForceHideConWnd;
