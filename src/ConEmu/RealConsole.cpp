@@ -788,6 +788,8 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	DWORD dwErr = 0;
 	HANDLE hProcess = NULL;
 	_ASSERTE(pRet!=NULL);
+	DEBUGTEST(bool bAdmStateChanged = (rStartStop->bUserIsAdmin != m_Args.bRunAsAdministrator));
+	m_Args.bRunAsAdministrator = rStartStop->bUserIsAdmin;
 
 	// Процесс запущен через ShellExecuteEx под другим пользователем (Administrator)
 	if (mp_sei)
