@@ -776,7 +776,11 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	}
 	else
 	{
-		lbCreate = CreateProcess(szSrv, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|(abAltMode ? CREATE_NO_WINDOW : CREATE_NEW_CONSOLE), NULL, NULL, &si, &pi);
+		DWORD dwFlags = 0
+			| (abAltMode ? CREATE_NO_WINDOW : CREATE_NEW_CONSOLE)
+			| CREATE_DEFAULT_ERROR_MODE
+			| NORMAL_PRIORITY_CLASS;
+		lbCreate = CreateProcess(szSrv, szArgs, NULL, NULL, FALSE, dwFlags, NULL, NULL, &si, &pi);
 	}
 
 	if (!lbCreate)

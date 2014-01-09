@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -95,17 +95,18 @@ int main(int argc, char** argv)
 	DWORD dwErr, dwOut;
 	typedef int (__stdcall* ConsoleMain2_t)(BOOL abAlternative);
 	ConsoleMain2_t lfConsoleMain2;
-	// Обязательно, иначе по CtrlC мы свалимся
-	SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
 
-	#if defined(SHOW_STARTED_MSGBOX) || defined(SHOW_COMSPEC_STARTED_MSGBOX)
+	#if defined(SHOW_STARTED_MSGBOX)
 	if (!IsDebuggerPresent())
 	{
-		wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC Loaded (PID=%i)", GetCurrentProcessId());
+		wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) WIN3264TEST(L"ConEmuC",L"ConEmuC64") L" Loaded (PID=%i)", GetCurrentProcessId());
 		const wchar_t* pszCmdLine = GetCommandLineW();
 		MessageBox(NULL,pszCmdLine,szTitle,0);
 	}
 	#endif
+
+	// Обязательно, иначе по CtrlC мы свалимся
+	SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
 
 	#ifdef _DEBUG
 	UnitTests();

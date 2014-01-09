@@ -153,6 +153,7 @@ BOOL    gbNonGuiMode = FALSE;
 DWORD   gnExitCode = 0;
 HANDLE  ghRootProcessFlag = NULL;
 HANDLE  ghExitQueryEvent = NULL; int nExitQueryPlace = 0, nExitPlaceStep = 0;
+#define EPS_WAITING4PROCESS 550
 SetTerminateEventPlace gTerminateEventPlace = ste_None;
 HANDLE  ghQuitEvent = NULL;
 bool    gbQuit = false;
@@ -499,6 +500,15 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			//	ShutdownHooks();
 			//}
 
+			#ifdef _DEBUG
+			if ((gnRunMode == RM_SERVER) && (nExitPlaceStep == EPS_WAITING4PROCESS/*550*/))
+			{
+				// Это происходило после Ctrl+C если не был установлен HandlerRoutine
+				// Ни _ASSERT ни DebugBreak здесь позвать уже не получится - все закрывается и игнорируется
+				OutputDebugString(L"!!! Server was abnormally terminated !!!\n");
+				LogString("!!! Server was abnormally terminated !!!\n");
+			}
+			#endif
 
 			if ((gnRunMode == RM_APPLICATION) || (gnRunMode == RM_ALTSERVER))
 			{
@@ -1637,7 +1647,7 @@ wait:
 	} // (gnRunMode == RM_ALTSERVER)
 	else if (gnRunMode == RM_SERVER)
 	{
-		nExitPlaceStep = 550;
+		nExitPlaceStep = EPS_WAITING4PROCESS/*550*/;
 		// По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
 		nWait = WAIT_TIMEOUT; nWaitExitEvent = -2;
 
@@ -4080,6 +4090,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 				ghConWnd = GetConEmuHWND(2);
 				gbVisibleOnStartup = IsWindowVisible(ghConWnd);
+
+				// Need to be set, because of new console === new handler
+				SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
+
 				#ifdef _DEBUG
 				_ASSERTE(ghFarInExecuteEvent==NULL);
 				_ASSERTE(ghConWnd!=NULL);
