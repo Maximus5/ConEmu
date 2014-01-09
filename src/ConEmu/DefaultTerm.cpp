@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2013 Maximus5
+Copyright (c) 2012-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -525,7 +525,9 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 
 	TODO("Show status in status line?");
 
+	bool bLocked = gpConEmu->LockConhostStart();
 	iHookerRc = StartDefTermHooker(nForePID, hProcess, nResult, gpConEmu->ms_ConEmuBaseDir, nErrCode);
+	if (bLocked) gpConEmu->UnlockConhostStart();
 	if (iHookerRc != 0)
 	{
 		mh_LastIgnoredWnd = hFore;

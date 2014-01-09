@@ -2991,6 +2991,8 @@ wrap:
 		LogString(szInfo, TRUE);
 	}
 
+	if (mn_ConHost_PID)
+		gpConEmu->ReleaseConhostDelay();
 	return mn_ConHost_PID;
 }
 
@@ -3233,10 +3235,10 @@ BOOL CRealConsole::StartProcess()
 	DWORD dwLastError = 0;
 	DWORD nCreateBegin, nCreateEnd, nCreateDuration = 0;
 
-	bool bNeedConHostSearch = false;
 	// ConHost.exe появился в Windows 7. Но там он создается "от родительского csrss".
 	// А вот в Win8 - уже все хорошо, он создается от корневого консольного процесса.
-	bNeedConHostSearch = (gnOsVer == 0x0601);
+	bool bNeedConHostSearch = (gnOsVer == 0x0601);
+	bool bConHostLocked = false;
 	//DEBUGTEST(if (gnOsVer == 0x0602) bNeedConHostSearch = true); // В Win8 искать не надо, но для отладки пока
 	if (bNeedConHostSearch)
 	{
@@ -3250,11 +3252,16 @@ BOOL CRealConsole::StartProcess()
 			mp_ConHostSearch->Reset();
 		}
 	}
+	//
 	if (!bNeedConHostSearch)
 	{
 		if (mp_ConHostSearch)
 			mp_ConHostSearch->Release();
 		SafeFree(mp_ConHostSearch);
+	}
+	else
+	{
+		bConHostLocked = gpConEmu->LockConhostStart();
 	}
 
 
@@ -3424,6 +3431,12 @@ BOOL CRealConsole::StartProcess()
 			mp_ConHostSearch->Release();
 			SafeFree(mp_ConHostSearch);
 		}
+		// Do Unlock immediately
+		if (bConHostLocked)
+		{
+			gpConEmu->UnlockConhostStart();
+			bConHostLocked = false;
+		}
 	}
 
 	if (!m_Args.bRunAsAdministrator)
@@ -3442,6 +3455,12 @@ BOOL CRealConsole::StartProcess()
 
 wrap:
 	//SetEvent(mh_CreateRootEvent);
+
+	if (bConHostLocked)
+	{
+		gpConEmu->UnlockConhostStart();
+		bConHostLocked = false;
+	}
 
 	// В режиме "администратора" мы будем в "CreateRoot" до тех пор, пока нам не отчитается запущенный сервер
 	if (!lbRc || mn_MainSrv_PID)

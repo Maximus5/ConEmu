@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -308,6 +308,11 @@ CConEmuMain::CConEmuMain()
 	mn_MainThreadId = GetCurrentThreadId();
 	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
 	
+	bool bNeedConHostSearch = (gnOsVer == 0x0601);
+	if (bNeedConHostSearch)
+		InitializeCriticalSection(&m_LockConhostStart.cs);
+	m_LockConhostStart.wait = false;
+
 	mn_StartupFinished = ss_Starting;
 	WindowMode = wmNormal;
 	mb_InSetQuakeMode = false;
@@ -3157,6 +3162,10 @@ CConEmuMain::~CConEmuMain()
 	//ghWnd = NULL;
 
 	SafeDelete(mp_DefTrm);
+
+	bool bNeedConHostSearch = (gnOsVer == 0x0601);
+	if (bNeedConHostSearch)
+		DeleteCriticalSection(&m_LockConhostStart.cs);
 
 	SafeDelete(mp_AttachDlg);
 	SafeDelete(mp_RecreateDlg);
@@ -8798,6 +8807,35 @@ void CConEmuMain::ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServe
 	MBox(pszMsg);
 	free(pszMsg);
 	mb_InShowOldCmdVersion = FALSE; // теперь можно показать еще одно...
+}
+
+bool CConEmuMain::LockConhostStart()
+{
+	// ConHost.exe появился в Windows 7. Но там он создается "от родительского csrss".
+	// А вот в Win8 - уже все хорошо, он создается от корневого консольного процесса.
+	bool bNeedConHostSearch = (gnOsVer == 0x0601);
+	if (!bNeedConHostSearch)
+		return false;
+	EnterCriticalSection(&m_LockConhostStart.cs);
+	if (m_LockConhostStart.wait)
+	{
+		// Если консоли создавать слишком быстро - может возникнуть проблема идентификации принадлежности процессов
+		Sleep(250);
+	}
+	m_LockConhostStart.wait = true;
+	return true;
+}
+void CConEmuMain::UnlockConhostStart()
+{
+	bool bNeedConHostSearch = (gnOsVer == 0x0601);
+	if (!bNeedConHostSearch)
+		return;
+	LeaveCriticalSection(&m_LockConhostStart.cs);
+}
+
+void CConEmuMain::ReleaseConhostDelay()
+{
+	m_LockConhostStart.wait = false;
 }
 
 // Запуск отладки текущего GUI

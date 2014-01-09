@@ -960,6 +960,17 @@ class CConEmuMain :
 		ImmSetCompositionFontW_t _ImmSetCompositionFont;
 		ImmSetCompositionWindow_t _ImmSetCompositionWindow;
 		ImmGetContext_t _ImmGetContext;
+
+	public:
+		// Windows7 - lock creating new consoles (ConHost search related)
+		bool LockConhostStart();
+		void UnlockConhostStart();
+		void ReleaseConhostDelay();
+	protected:
+		struct {
+			CRITICAL_SECTION cs;
+			bool wait;
+		} m_LockConhostStart;
 };
 
 #ifndef __GNUC__
