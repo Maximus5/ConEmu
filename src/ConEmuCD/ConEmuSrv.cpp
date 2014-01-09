@@ -2249,7 +2249,7 @@ bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
 			// В принципе, консоль может действительно запуститься видимой. В этом случае ее скрывать не нужно
 			// Но скорее всего, консоль запущенная под Админом в Win7 будет отображена ошибочно
 			// 110807 - Если gbAttachMode, тоже консоль нужно спрятать
-			if (gbForceHideConWnd || gbAttachMode)
+			if (gbForceHideConWnd || (gbAttachMode && (gbAttachMode != am_Admin)))
 				apiShowWindow(ghConWnd, SW_HIDE);
 
 			// Установить шрифт в консоли
