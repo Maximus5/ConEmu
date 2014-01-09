@@ -4254,7 +4254,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 						MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
 						if (apiGetConsoleScreenBufferInfoEx(hConOut, &csbi))
 						{
-							if ((!gnDefTextColors || (csbi.wAttributes = gnDefTextColors))
+							// Microsoft bug? When console is started elevated - it does NOT show
+							// required attributes, BUT GetConsoleScreenBufferInfoEx returns them.
+							if ((gbAttachMode != am_Admin)
+								&& (!gnDefTextColors || (csbi.wAttributes = gnDefTextColors))
 								&& (!gnDefPopupColors || (csbi.wPopupAttributes = gnDefPopupColors)))
 							{
 								bPassed = TRUE; // Менять не нужно, консоль соответствует
