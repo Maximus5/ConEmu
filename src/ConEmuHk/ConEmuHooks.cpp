@@ -1130,10 +1130,11 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
+	DWORD ldwCreationFlags = dwCreationFlags;
 
 	if (ph && ph->PreCallBack)
 	{
-		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, ldwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 
 		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!ph->PreCallBack(&args))
@@ -1141,14 +1142,14 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	}
 
 	CShellProc* sp = new CShellProc();
-	if (!sp || !sp->OnCreateProcessW(&lpApplicationName, (LPCWSTR*)&lpCommandLine, &lpCurrentDirectory, &dwCreationFlags, lpStartupInfo))
+	if (!sp || !sp->OnCreateProcessW(&lpApplicationName, (LPCWSTR*)&lpCommandLine, &lpCurrentDirectory, &ldwCreationFlags, lpStartupInfo))
 	{
 		delete sp;
 		SetLastError(ERROR_FILE_NOT_FOUND);
 		return FALSE;
 	}
 
-	if ((dwCreationFlags & CREATE_SUSPENDED) == 0)
+	if ((ldwCreationFlags & CREATE_SUSPENDED) == 0)
 	{
 		DebugString(L"CreateProcessW without CREATE_SUSPENDED Flag!\n");
 	}
@@ -1172,7 +1173,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 		LPCWSTR pszPassword = sp->GetArgs()->szUserPassword;
 		STARTUPINFOW si = {sizeof(si)};
 		PROCESS_INFORMATION pi = {};
-		DWORD dwOurFlags = (dwCreationFlags & ~EXTENDED_STARTUPINFO_PRESENT);
+		DWORD dwOurFlags = (ldwCreationFlags & ~EXTENDED_STARTUPINFO_PRESENT);
 		lbRc = CreateProcessWithLogonW(pszName, pszDomain, (pszPassword && *pszPassword) ? pszPassword : NULL, LOGON_WITH_PROFILE,
 			lpApplicationName, lpCommandLine, dwOurFlags, lpEnvironment, lpCurrentDirectory,
 			&si, &pi);
@@ -1182,7 +1183,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	else
 	#endif
 	{
-		lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+		lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, ldwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 	}
 	dwErr = GetLastError();
 
@@ -1201,7 +1202,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 
 	if (ph && ph->PostCallBack)
 	{
-		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, ldwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 		ph->PostCallBack(&args);
 	}
 
