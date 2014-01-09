@@ -1496,6 +1496,7 @@ int CShellProc::PrepareExecuteParms(
 	_ASSERTEX(m_Args.pszSpecialCmd == NULL); // Must not be touched yet!
 
 	BOOL bDebugWasRequested = FALSE, bVsNetHostRequested = FALSE;
+	bool bIgnoreSuspended = false;
 	mb_DebugWasRequested = FALSE;
 	mb_PostInjectWasRequested = FALSE;
 
@@ -1578,17 +1579,33 @@ int CShellProc::PrepareExecuteParms(
 			return 0;
 		}
 
+		// Started from explorer - CREATE_SUSPENDED is set (why?)
+		if (mb_WasSuspended && anCreateFlags)
+		{
+			_ASSERTE(anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED));
+			wchar_t szExecutable[MAX_PATH] = L"";
+			GetModuleFileName(NULL, szExecutable, countof(szExecutable));
+			LPCWSTR pszName = PointToName(szExecutable);
+			if (lstrcmpi(pszName, L"explorer.exe") == 0)
+			{
+				// Running from explorer?
+				bIgnoreSuspended = true;
+			}
+		}
+
 		// Issue 1312: .Net applications runs as "CREATE_SUSPENDED" when debugging in VS
 		//    Also: How to Disable the Hosting Process
 		//    http://msdn.microsoft.com/en-us/library/ms185330.aspx
-		if (anCreateFlags && ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS|CREATE_SUSPENDED)))
+		if (anCreateFlags && ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS|(bIgnoreSuspended?0:CREATE_SUSPENDED))))
 		{
+			#if 0
 			// Для поиска трапов в дереве запускаемых процессов
 			if (m_SrvMapping.Flags & CECF_BlockChildDbg)
 			{
 				(*anCreateFlags) &= ~(DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS);
 			}
 			else
+			#endif
 			{
 				bDebugWasRequested = TRUE;
 			}
