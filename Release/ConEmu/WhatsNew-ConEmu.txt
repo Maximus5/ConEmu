@@ -15,6 +15,21 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.09
+[%] Palette was failed to be set properly for elevated consoles.
+[%] Elevated console was hidden even if "ConEmu /visible" was called.
+[+] Allow '-'style arguments in ConEmu.exe cmd line.
+[*] Default terminal. Remove real console flickering when starting console app from explorer.
+[*] Issue 1340: Alternatively attached console was closed by Ctrl+C.
+[*] Macro `Shell("new_console:a")` allowed.
+[%] Update/fix 'RunAsAdmin' state on tab after attach.
+[%] Crash if user cancelled console creation in some cases.
+[%] Memory leak if user cancelled console creation in some cases.
+[%] Excess logon dialog when running "cmd -new_console:u:<name>:".
+[*] Win v6.1: conhost PID detection improved.
+[*] Some internal changes.
+
+
 2014.01.06
 [%] Default terminal fixes.
 [*] Don't show excess paths and quotes in title.

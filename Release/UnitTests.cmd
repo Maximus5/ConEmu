@@ -28,6 +28,8 @@ call cecho /Green "This is first tab, running new tab with two splits"
 c:\windows\system32\cmd.exe -new_console /k "%~0" tab1
 c:\windows\syswow64\cmd.exe -new_console:s2TV /k "%~0" tab2
 c:\windows\syswow64\cmd.exe -new_console:b /k "%~0" tab3
+c:\windows\syswow32\cmd.exe "-new_console:abP:^<Solarized^>" /k "%~0" tab4
+c:\windows\syswow32\cmd.exe "-new_console:absVP:^<Solarized^>" /k "%~0" tab5
 goto fin
 
 :tab1
