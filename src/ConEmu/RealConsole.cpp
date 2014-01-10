@@ -1848,15 +1848,15 @@ wrap:
 		if (nExitCode == 0)
 		{
 			pRCon->SetConStatus(NULL);
-			// А это чтобы не осталось висеть окно ConEmu, раз сервер завершился корректно
-			if (!lbChildProcessCreated)
-				pRCon->OnStartedSuccess();
 		}
 		else
 		{
 			pRCon->SetConStatus(szErrInfo);
 		}
 	}
+
+	// А это чтобы не осталось висеть окно ConEmu, раз всё уже закрыто
+	gpConEmu->OnRConStartedSuccess(NULL);
 
 	ShutdownGuiStep(L"StopSignal");
 
@@ -2032,7 +2032,10 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 				nSrvPID = getProcessId(hEvents[IDEVENT_SERVERPH]);
 			#endif
 
-			break; // требование завершения нити
+			// Чтобы однозначность кода в MonitorThread была
+			nWait = IDEVENT_SERVERPH;
+			// требование завершения нити
+			break;
 		}
 
 		if ((nWait == IDEVENT_SWITCHSRV) || mb_SwitchActiveServer)
@@ -2343,6 +2346,8 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 					_ASSERTE(mp_RBuf==mp_ABuf);
 					if (mb_InCloseConsole && mh_MainSrv && (WaitForSingleObject(mh_MainSrv, 0) == WAIT_OBJECT_0))
 					{
+						// Чтобы однозначность кода в MonitorThread была
+						nWait = IDEVENT_SERVERPH;
 						// Основной сервер закрылся (консоль закрыта), идем на выход
 						break;
 					}
@@ -4751,6 +4756,9 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		// А теперь можно ждать завершения
 		if (WaitForSingleObject(mh_MonitorThread, 300) != WAIT_OBJECT_0)
 		{
+			// А это чтобы не осталось висеть окно ConEmu, раз всё уже закрыто
+			gpConEmu->OnRConStartedSuccess(NULL);
+			LogString(L"### Main Thread wating timeout, terminating...\n");
 			DEBUGSTRPROC(L"### Main Thread wating timeout, terminating...\n");
 			TerminateThread(mh_MonitorThread, 1);
 		}

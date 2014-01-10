@@ -3119,7 +3119,6 @@ DWORD CVConGroup::CheckProcesses()
 {
 	DWORD dwAllCount = 0;
 
-	//mn_ActiveStatus &= ~CES_PROGRAMS;
 	for (size_t j = 0; j < countof(gp_VCon); j++)
 	{
 		if (gp_VCon[j])
@@ -3130,9 +3129,6 @@ DWORD CVConGroup::CheckProcesses()
 		}
 	}
 
-	//if (gp_VActive) {
-	//    mn_ActiveStatus |= gp_VActive->RCon()->GetProgramStatus();
-	//}
 	gpConEmu->m_ProcCount = dwAllCount;
 	return dwAllCount;
 }

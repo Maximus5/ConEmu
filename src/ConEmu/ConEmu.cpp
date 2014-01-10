@@ -363,7 +363,7 @@ CConEmuMain::CConEmuMain()
 	mb_InTimer = FALSE;
 	//mb_InClose = FALSE;
 	//memset(m_ProcList, 0, 1000*sizeof(DWORD));
-	m_ProcCount=0;
+	m_ProcCount = 0;
 	mb_ProcessCreated = false; /*mn_StartTick = 0;*/ mb_WorkspaceErasedOnClose = false;
 	mb_IgnoreSizeChange = false;
 	mb_InCaptionChange = false;
@@ -17664,12 +17664,6 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	}
 	else
 	{
-		//if (!mb_ProcessCreated && m_ProcCount>=1) --> OnRConStartedSuccess
-		//{
-		//	if ((GetTickCount() - mn_StartTick)>PROCESS_WAIT_START_TIME)
-		//		mb_ProcessCreated = true;
-		//}
-
 		if (!mb_WorkspaceErasedOnClose)
 			mb_WorkspaceErasedOnClose = false;
 	}
