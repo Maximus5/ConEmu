@@ -10746,6 +10746,16 @@ const RConStartArgs& CRealConsole::GetArgs()
 	return m_Args;
 }
 
+void CRealConsole::SetPaletteName(LPCWSTR asPaletteName)
+{
+	wchar_t* pszOld = m_Args.pszPalette;
+	wchar_t* pszNew = NULL;
+	if (asPaletteName && *asPaletteName)
+		pszNew = lstrdup(asPaletteName);
+	m_Args.pszPalette = pszNew;
+	SafeFree(pszOld);
+}
+
 LPCWSTR CRealConsole::GetCmd(bool bThisOnly /*= false*/)
 {
 	if (!this) return L"";

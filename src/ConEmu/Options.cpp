@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1651,7 +1651,7 @@ void Settings::PaletteSetStdIndexes()
 	}
 }
 
-int Settings::AppSettings::GetPaletteIndex()
+int Settings::AppSettings::GetPaletteIndex() const
 {
 	if (this == NULL) // *AppSettings
 	{

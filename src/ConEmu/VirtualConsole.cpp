@@ -2487,6 +2487,49 @@ COLORREF* CVirtualConsole::GetColors()
 	return mp_Colors;
 }
 
+int CVirtualConsole::GetPaletteIndex()
+{
+	int iActiveIndex = -1;
+	if (this && mp_RCon)
+	{
+		LPCWSTR pszPalName = mp_RCon->GetArgs().pszPalette;
+		if (pszPalName && *pszPalName)
+		{
+			iActiveIndex = gpSet->PaletteGetIndex(pszPalName);
+		}
+		else
+		{
+			const Settings::AppSettings* pAppSet = gpSet->GetAppSettings(mp_RCon ? mp_RCon->GetActiveAppSettingsId() : -1);
+			iActiveIndex = pAppSet ? pAppSet->GetPaletteIndex() : -1;
+		}
+	}
+	return iActiveIndex;
+}
+
+bool CVirtualConsole::ChangePalette(int aNewPaletteIdx)
+{
+	if (!this || !mp_RCon)
+		return false;
+
+	const Settings::ColorPalette* pOldPal = gpSet->PaletteGet(GetPaletteIndex());
+	const Settings::ColorPalette* pPal = gpSet->PaletteGet(aNewPaletteIdx);
+	if (!pPal)
+		return false;
+
+	BOOL bTextChanged = (pOldPal==NULL), bPopupChanged = (pOldPal==NULL);
+	if (pOldPal)
+	{
+		bTextChanged = (pOldPal->nTextColorIdx != pPal->nTextColorIdx) || (pOldPal->nBackColorIdx != pPal->nBackColorIdx);
+		bPopupChanged = (pOldPal->nPopTextColorIdx != pPal->nPopTextColorIdx) || (pOldPal->nPopBackColorIdx != pPal->nPopBackColorIdx);
+	}
+
+	mp_RCon->SetPaletteName(pPal->pszName);
+	mp_RCon->UpdateTextColorSettings(bTextChanged, bPopupChanged);
+
+	Update(true);
+	return true;
+}
+
 bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock *pSCON)
 {
 	MSectionLock SCON; SCON.Lock(&csCON);

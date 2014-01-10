@@ -1737,10 +1737,10 @@ void TabBarClass::OnMouse(int message, int x, int y)
 						guard->RCon()->CloseTab();
 						break;
 					case 3:
-						gpConEmu->mp_Menu->ExecPopupMenuCmd(guard.VCon(), IDM_RESTART);
+						gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_RESTART);
 						break;
 					case 4:
-						gpConEmu->mp_Menu->ExecPopupMenuCmd(guard.VCon(), IDM_DUPLICATE);
+						gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_DUPLICATE);
 						break;
 					}
 				}

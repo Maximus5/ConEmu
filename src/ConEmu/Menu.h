@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012 Maximus5
+Copyright (c) 2012-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,7 @@ public:
 
 	HMENU CreateDebugMenuPopup();
 	HMENU CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
+	HMENU CreateViewMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
 	HMENU CreateHelpMenuPopup();
 	HMENU CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly);
 	HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew, HMENU& hTerminate);
@@ -60,7 +61,7 @@ public:
 
 
 	void ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Align = TPM_LEFTALIGN);
-	void ExecPopupMenuCmd(CVirtualConsole* apVCon, int nCmd);
+	void ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon, int nCmd);
 
 	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
@@ -131,7 +132,11 @@ private:
 	HMENU mh_SysDebugPopup, mh_SysEditPopup, mh_ActiveVConPopup, mh_TerminateVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu
 	HMENU mh_InsideSysMenu;
 	// А это из VirtualConsole
-	HMENU mh_PopupMenu, mh_TerminatePopup, mh_VConDebugPopup, mh_VConEditPopup;
+	HMENU mh_PopupMenu;
+	HMENU mh_TerminatePopup;
+	HMENU mh_VConDebugPopup;
+	HMENU mh_VConEditPopup;
+	HMENU mh_VConViewPopup;
 	// Array
 	size_t mn_MenusCount; HMENU** mph_Menus;
 };

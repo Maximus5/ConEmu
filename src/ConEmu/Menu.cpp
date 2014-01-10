@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2013 Maximus5
+Copyright (c) 2012-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -74,7 +74,12 @@ CConEmuMenu::CConEmuMenu()
 	HMENU* hMenu[] = {
 		&mh_SysDebugPopup, &mh_SysEditPopup, &mh_ActiveVConPopup, &mh_TerminateVConPopup, &mh_VConListPopup, &mh_HelpPopup, // Popup's для SystemMenu
 		&mh_InsideSysMenu,
-		&mh_PopupMenu, &mh_TerminatePopup, &mh_VConDebugPopup, &mh_VConEditPopup, // А это из VirtualConsole
+		// А это для VirtualConsole
+		&mh_PopupMenu,
+		&mh_TerminatePopup,
+		&mh_VConDebugPopup,
+		&mh_VConEditPopup,
+		&mh_VConViewPopup,
 		NULL // end
 	};
 	mn_MenusCount = countof(hMenu);
@@ -807,9 +812,15 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 	{
 		AppendMenu(mh_PopupMenu, MF_BYPOSITION, MF_SEPARATOR, 0);
 
+		_ASSERTE(mh_VConEditPopup == NULL);
 		mh_VConEditPopup = CreateEditMenuPopup(apVCon);
 		AppendMenu(mh_PopupMenu, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_VConEditPopup, _T("Ed&it"));
 
+		_ASSERTE(mh_VConViewPopup == NULL);
+		mh_VConViewPopup = CreateViewMenuPopup(apVCon);
+		AppendMenu(mh_PopupMenu, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_VConViewPopup, _T("&View (palettes)"));
+
+		_ASSERTE(mh_VConDebugPopup == NULL);
 		mh_VConDebugPopup = CreateDebugMenuPopup();
 		AppendMenu(mh_PopupMenu, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_VConDebugPopup, _T("&Debug"));
 	}
@@ -817,6 +828,8 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 	{
 		// обновить enable/disable пунктов меню
 		CreateEditMenuPopup(apVCon, mh_VConEditPopup);
+		// имена палитр и флажок текущей
+		CreateViewMenuPopup(apVCon, mh_VConViewPopup);
 	}
 
 	// Некузяво. Может вслыть тултип под меню
@@ -848,10 +861,10 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 	if (!nCmd)
 		return; // отмена
 
-	ExecPopupMenuCmd(apVCon, nCmd);
+	ExecPopupMenuCmd(tmp_VCon, apVCon, nCmd);
 }
 
-void CConEmuMenu::ExecPopupMenuCmd(CVirtualConsole* apVCon, int nCmd)
+void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon, int nCmd)
 {
 	if (!apVCon)
 		return;
@@ -928,7 +941,11 @@ void CConEmuMenu::ExecPopupMenuCmd(CVirtualConsole* apVCon, int nCmd)
 			break;
 
 		default:
-			if (nCmd >= 0xAB00)
+			if ((place == tmp_VCon) && (nCmd >= ID_CON_SETPALETTE_FIRST) && (nCmd <= ID_CON_SETPALETTE_LAST))
+			{
+				apVCon->ChangePalette(nCmd - ID_CON_SETPALETTE_FIRST);
+			}
+			else if (nCmd >= 0xAB00)
 			{
 				// "Системные" команды, обрабатываемые в CConEmu
 				OnSysCommand(ghWnd, nCmd, 0);
@@ -1819,7 +1836,6 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 	return hMenu;
 }
 
-//void CConEmuMenu::PopulateEditMenuPopup(HMENU hMenu)
 HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*= NULL*/)
 {
 	CVConGuard VCon;
@@ -1867,6 +1883,48 @@ HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		CheckMenuItem(hMenu, ID_CON_COPY_HTML2, MF_BYCOMMAND | ((gpSet->isCTSHtmlFormat == 2)?MF_CHECKED:MF_UNCHECKED));
 	}
 	
+	return hMenu;
+}
+
+HMENU CConEmuMenu::CreateViewMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*= NULL*/)
+{
+	CVConGuard VCon;
+	if (!apVCon && (CVConGroup::GetActiveVCon(&VCon) >= 0))
+		apVCon = VCon.VCon();
+
+	bool  bNew = (ahExist == NULL);
+	HMENU hMenu = bNew ? CreatePopupMenu() : ahExist;
+
+	const Settings::ColorPalette* pPal;
+
+	int iActiveIndex = apVCon->GetPaletteIndex();
+
+	int i = 0;
+	while ((i < (ID_CON_SETPALETTE_LAST-ID_CON_SETPALETTE_FIRST)) && (pPal = gpSet->PaletteGet(i)))
+	{
+		if (!pPal->pszName)
+		{
+			_ASSERTE(pPal->pszName);
+			break;
+		}
+		wchar_t szItem[128] = L"";
+		CmdTaskPopupItem::SetMenuName(szItem, countof(szItem), pPal->pszName, true);
+
+		MENUITEMINFO mi = {sizeof(mi)};
+		mi.fMask = MIIM_STRING|MIIM_STATE; mi.dwTypeData = szItem; mi.cch = countof(szItem); mi.fState = ((i==iActiveIndex)?MF_CHECKED:MF_UNCHECKED);
+		if (bNew || !SetMenuItemInfo(hMenu, ID_CON_SETPALETTE_FIRST+i, FALSE, &mi))
+		{
+			AppendMenu(hMenu, MF_STRING | mi.fState, ID_CON_SETPALETTE_FIRST+i, szItem);
+		}
+
+		i++;
+	}
+
+	for (int j = i; j <= ID_CON_SETPALETTE_LAST; j++)
+	{
+		DeleteMenu(hMenu, ID_CON_SETPALETTE_FIRST+j, MF_BYCOMMAND);
+	}
+
 	return hMenu;
 }
 
@@ -2390,7 +2448,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			{
 				CVConGuard VCon;
 				if (CVConGroup::GetActiveVCon(&VCon) >= 0)
-					ExecPopupMenuCmd(VCon.VCon(), (int)(DWORD)wParam);
+					ExecPopupMenuCmd(tmp_System, VCon.VCon(), (int)(DWORD)wParam);
 				result = 0;
 			}
 			else if (wParam != 0xF100)

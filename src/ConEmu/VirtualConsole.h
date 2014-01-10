@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -296,6 +296,8 @@ class CVirtualConsole :
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
 		COLORREF* GetColors();
+		int GetPaletteIndex();
+		bool ChangePalette(int aNewPaletteIdx);
 		void PaintVCon(HDC hPaintDc);
 		bool PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT PaintRect);
 		bool StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight);

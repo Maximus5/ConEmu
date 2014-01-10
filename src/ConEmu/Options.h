@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -230,7 +230,7 @@ struct Settings
 			bool OverridePalette; // Palette+Extend
 			wchar_t szPaletteName[128];
 			//TODO: Тут хорошо бы индекс палитры хранить...
-			int GetPaletteIndex();
+			int GetPaletteIndex() const;
 			void SetPaletteName(LPCWSTR asNewPaletteName);
 			void ResetPaletteIndex();
 
