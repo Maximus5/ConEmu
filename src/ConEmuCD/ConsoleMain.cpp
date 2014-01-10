@@ -153,7 +153,8 @@ BOOL    gbNonGuiMode = FALSE;
 DWORD   gnExitCode = 0;
 HANDLE  ghRootProcessFlag = NULL;
 HANDLE  ghExitQueryEvent = NULL; int nExitQueryPlace = 0, nExitPlaceStep = 0;
-#define EPS_WAITING4PROCESS 550
+#define EPS_WAITING4PROCESS  550
+#define EPS_ROOTPROCFINISHED 560
 SetTerminateEventPlace gTerminateEventPlace = ste_None;
 HANDLE  ghQuitEvent = NULL;
 bool    gbQuit = false;
@@ -1688,6 +1689,7 @@ wait:
 		// Получить ExitCode
 		GetExitCodeProcess(gpSrv->hRootProcess, &gnExitCode);
 
+		nExitPlaceStep = EPS_ROOTPROCFINISHED/*560*/;
 
 		#ifdef _DEBUG
 		if (nWait == WAIT_OBJECT_0)
