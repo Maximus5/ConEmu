@@ -97,6 +97,7 @@ protected:
 	void ReportError(LPCWSTR asFormat, DWORD nErrCode);
 	void ReportError(LPCWSTR asFormat, LPCWSTR asArg, DWORD nErrCode);
 	void ReportError(LPCWSTR asFormat, LPCWSTR asArg1, LPCWSTR asArg2, DWORD nErrCode);
+	void ReportBrokenIni(LPCWSTR asSection, LPCWSTR asName, LPCWSTR asIni);
 
 	void ReportErrorInt(wchar_t* asErrorInfo);
 

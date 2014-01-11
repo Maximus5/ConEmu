@@ -49,6 +49,10 @@ CConEmuUpdate* gpUpd = NULL;
 
 #define UPDATETHREADTIMEOUT 2500
 
+#define sectionConEmuStable  L"ConEmu_Stable"
+#define sectionConEmuPreview L"ConEmu_Preview"
+#define sectionConEmuDevel   L"ConEmu_Devel"
+
 
 
 CConEmuUpdate::CConEmuUpdate()
@@ -278,7 +282,7 @@ void CConEmuUpdate::ShowLastError()
 		ms_LastErrorInfo = NULL;
 		SC.Unlock();
 
-		MBoxA(pszError);
+		MessageBox(pszError, MB_ICONINFORMATION, gpConEmu?gpConEmu->GetDefaultTitle():L"ConEmu Update");
 		SafeFree(pszError);
 
 		mb_InShowLastError = false;
@@ -709,13 +713,14 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 	// Проверить версии
 	_wcscpy_c(szSection, countof(szSection),
-		(mp_Set->isUpdateUseBuilds==1) ? L"ConEmu_Stable" :
-		(mp_Set->isUpdateUseBuilds==3) ? L"ConEmu_Preview" : L"ConEmu_Devel");
+		(mp_Set->isUpdateUseBuilds==1) ? sectionConEmuStable :
+		(mp_Set->isUpdateUseBuilds==3) ? sectionConEmuPreview
+		: sectionConEmuDevel);
 	_wcscpy_c(szItem, countof(szItem), (mp_Set->UpdateDownloadSetup()==1) ? L"location_exe" : L"location_arc");
 
-	if (!GetPrivateProfileString(szSection, L"version", ms_CurVersion, ms_NewVersion, countof(ms_NewVersion), pszUpdateVerLocation))
+	if (!GetPrivateProfileString(szSection, L"version", L"", ms_NewVersion, countof(ms_NewVersion), pszUpdateVerLocation) || !*ms_NewVersion)
 	{
-		ReportError(L"ProfileString(%s,version) failed, code=%u", szSection, GetLastError());
+		ReportBrokenIni(szSection, L"version", pszUpdateVerLocationSet);
 		goto wrap;
 	}
 
@@ -726,7 +731,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 	if (!GetPrivateProfileString(szSection, szItem, L"", szSourceFull, countof(szSourceFull), pszUpdateVerLocation) || !*szSourceFull)
 	{
-		ReportError(L"Version not available (%s,%s)", szSection, szItem, 0);
+		ReportBrokenIni(szSection, szItem, pszUpdateVerLocationSet);
 		goto wrap;
 	}
 
@@ -738,23 +743,51 @@ DWORD CConEmuUpdate::CheckProcInt()
 		if (mb_ManualCallMode)
 		{
 			wchar_t szInfo[100], szTest[64]; // Дописать stable/preview/alpha
+			wchar_t szServer[100] = L"";
+			wchar_t szFull[300];
+			bool bDetected = false;
 
 			wcscpy_c(szInfo, ms_CurVersion);
 
-			if (GetPrivateProfileString(L"ConEmu_Stable", L"version", L"", szTest, countof(szTest), pszUpdateVerLocation)
-				&& (lstrcmp(szTest, ms_CurVersion) >= 0))
-				wcscat_c(szInfo, L" stable");
-			else if (GetPrivateProfileString(L"ConEmu_Preview", L"version", L"", szTest, countof(szTest), pszUpdateVerLocation)
-				&& (lstrcmp(szTest, ms_CurVersion) >= 0))
-				wcscat_c(szInfo, L" preview");
-			else if (GetPrivateProfileString(L"ConEmu_Devel", L"version", L"", szTest, countof(szTest), pszUpdateVerLocation)
-				&& (lstrcmp(szTest, ms_CurVersion) >= 0))
-				wcscat_c(szInfo, L" alpha");
+			wcscat_c(szServer, L"Stable:\t");
+			if (GetPrivateProfileString(sectionConEmuStable, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
+			{
+				if (!bDetected && (lstrcmp(szTest, ms_CurVersion) >= 0))
+					wcscat_c(szInfo, L" stable");
+				szTest[10] = 0; wcscat_c(szServer, szTest);
+			}
+			else
+				wcscat_c(szServer, L"<Not found>");
+
+			wcscat_c(szServer, L"\nPreview:\t");
+			if (GetPrivateProfileString(sectionConEmuPreview, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
+			{
+				if (!bDetected && (lstrcmp(szTest, ms_CurVersion) >= 0))
+					wcscat_c(szInfo, L" preview");
+				szTest[10] = 0; wcscat_c(szServer, szTest);
+			}
+			else
+				wcscat_c(szServer, L"<Not found>");
+			
+			wcscat_c(szServer, L"\nDevel:\t");
+			if (GetPrivateProfileString(sectionConEmuDevel, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
+			{
+				if (!bDetected && (lstrcmp(szTest, ms_CurVersion) >= 0))
+					wcscat_c(szInfo, L" devel");
+				szTest[10] = 0; wcscat_c(szServer, szTest);
+			}
+			else
+				wcscat_c(szServer, L"<Not found>");
 
 			DEBUGTEST(int iCmp = lstrcmp(szTest, ms_CurVersion));
 
-			ReportError(L"Your current ConEmu version is %s\nNo newer %s version is available", szInfo,
+			_wsprintf(szFull, SKIPLEN(countof(szFull)) 
+				L"Your current ConEmu version is %s\n\n"
+				L"Versions on server\n%s\n\n"
+				L"No newer %s version is available",
+				szInfo, szServer,
 				(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer", 0);
+			ReportError(szFull, 0);
 		}
 
 		if (bTempUpdateVerLocation && pszUpdateVerLocation && *pszUpdateVerLocation)
@@ -1356,6 +1389,7 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 	ms_LastErrorInfo = asErrorInfo;
 	SC.Unlock();
 
+	// This will call back ShowLastError
 	if (gpConEmu)
 		gpConEmu->ReportUpdateError();
 }
@@ -1400,6 +1434,14 @@ void CConEmuUpdate::ReportError(LPCWSTR asFormat, LPCWSTR asArg1, LPCWSTR asArg2
 		_wsprintf(pszErrInfo, SKIPLEN(cchMax) asFormat, asArg1, asArg2, nErrCode);
 		ReportErrorInt(pszErrInfo);
 	}
+}
+
+void CConEmuUpdate::ReportBrokenIni(LPCWSTR asSection, LPCWSTR asName, LPCWSTR asIni)
+{
+	wchar_t szInfo[140];
+	DWORD nErr = GetLastError();
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"[%s] \"%s\"", asSection, asName);
+	ReportError(L"Version update information is broken\n%s\n\n%s\n\nError code=%u", szInfo, asIni, nErr);
 }
 
 bool CConEmuUpdate::NeedRunElevation()
