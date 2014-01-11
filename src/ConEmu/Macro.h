@@ -26,64 +26,15 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#define SHOWDEBUGSTR
-
-#include "Header.h"
+#pragma once
 
 #define GUI_MACRO_VERSION 2
-
-class CRealConsole;
-
-struct GuiMacro;
-struct GuiMacroArg;
-
-enum GuiMacroArgType
-{
-	gmt_Int,
-	gmt_Hex,
-	gmt_Str,
-	gmt_VStr,
-	gmt_Fn, // Reserved
-};
-
-struct GuiMacroArg
-{
-	GuiMacroArgType Type;
-
-	#ifdef _WIN64
-	DWORD Pad;
-	#endif
-
-	union
-	{
-		int Int;
-		LPWSTR Str;
-		GuiMacro* Macro;
-	};
-};
-
-struct GuiMacro
-{
-	size_t  cbSize;
-	LPCWSTR szFunc;
-	wchar_t chFuncTerm; // L'(', L':', L' ' - delimiter between func name and arguments
-
-	size_t  argc;
-	GuiMacroArg* argv; // No need to release mem, buffer allocated for the full GuiMacro data
-
-	wchar_t* AsString();
-	bool GetIntArg(size_t idx, int& val);
-	bool GetStrArg(size_t idx, LPWSTR& val);
-	bool IsIntArg(size_t idx);
-	bool IsStrArg(size_t idx);
-};
-
 
 namespace ConEmuMacro
 {
 	// Общая функция, для обработки любого известного макроса
 	LPWSTR ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin = false);
 	// Конвертация из "старого" в "новый" формат
+	// Старые макросы хранились как "Verbatim" но без префикса
 	LPWSTR ConvertMacro(LPCWSTR asMacro, BYTE FromVersion, bool bShowErrorTip = true);
 };

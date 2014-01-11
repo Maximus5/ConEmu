@@ -47,13 +47,58 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* ********************************* */
 /* ****** Forward definitions ****** */
 /* ********************************* */
+class CRealConsole;
+
+struct GuiMacro;
+struct GuiMacroArg;
+
+enum GuiMacroArgType
+{
+	gmt_Int,
+	gmt_Hex,
+	gmt_Str,
+	gmt_VStr,
+	gmt_Fn, // Reserved
+};
+
+struct GuiMacroArg
+{
+	GuiMacroArgType Type;
+
+	#ifdef _WIN64
+	DWORD Pad;
+	#endif
+
+	union
+	{
+		int Int;
+		LPWSTR Str;
+		GuiMacro* Macro;
+	};
+};
+
+struct GuiMacro
+{
+	size_t  cbSize;
+	LPCWSTR szFunc;
+	wchar_t chFuncTerm; // L'(', L':', L' ' - delimiter between func name and arguments
+
+	size_t  argc;
+	GuiMacroArg* argv; // No need to release mem, buffer allocated for the full GuiMacro data
+
+	wchar_t* AsString();
+	bool GetIntArg(size_t idx, int& val);
+	bool GetStrArg(size_t idx, LPWSTR& val);
+	bool IsIntArg(size_t idx);
+	bool IsStrArg(size_t idx);
+};
+
 namespace ConEmuMacro
 {
 	/* ****************************** */
 	/* ****** Helper functions ****** */
 	/* ****************************** */
 	LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim = false);
-	LPWSTR GetNextArg(LPWSTR& rsArguments, LPWSTR& rsArg);
 	LPWSTR GetNextInt(LPWSTR& rsArguments, int& rnValue);
 	void SkipWhiteSpaces(LPWSTR& rsString);
 	GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg);
@@ -496,6 +541,7 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 
 		if (rsErrMsg)
 			*rsErrMsg = lstrdup(L"Too long function name");
+		return NULL;
 	}
 
 	// Подготовить аргументы (отрезать закрывающую скобку)
@@ -518,9 +564,18 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 			|| (bEndBracket && (asString[0] == L')'))
 			|| (!bEndBracket && (asString[0] == L';')))
 		{
+			// Skip macro end token ans WhiteSpaces
 			while (*asString && wcschr(L"); \t\r\n", *asString))
 				asString++;
 			// OK
+			break;
+		}
+
+		if ((asString[0] == L'-' || asString[0] == L'/') && (lstrcmpni(asString+1, L"GuiMacro", 8) == 0))
+		{
+			asString += 9;
+			SkipWhiteSpaces(asString);
+			// That will be next macro
 			break;
 		}
 
@@ -534,12 +589,15 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 				break;
 			}
 		}
-		else 
+		else if (Args.empty() || ((asString[0] == L'"') || (asString[0] == L'@' && asString[1] == L'"')))
 		{
+			// If argument was specified without quotas - return it "as is" to the end of macro string
+
 			bool lbCvtVbt = false;
 			a.Type = (asString[0] == L'@' && asString[1] == L'"') ? gmt_VStr : gmt_Str;
 
-			_ASSERTE((asString[0] == L'"') || (asString[0] == L'@' && asString[1] == L'"') || (chTerm == L':'));
+			_ASSERTE(gbUnitTest || (asString[0] == L'"') || (asString[0] == L'@' && asString[1] == L'"'));
+			_ASSERTE(asString[0]!=L':');
 
 			if (abConvert && (asString[0] == L'"'))
 			{
@@ -572,6 +630,12 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 			}
 
 			cbAddSize += (_tcslen(a.Str)+1) * sizeof(*a.Str);
+		}
+		else
+		{
+			if (rsErrMsg)
+				*rsErrMsg = lstrdup(L"Unsupported argument type");
+			return NULL;
 		}
 
 		Args.push_back(a);
@@ -721,51 +785,46 @@ void ConEmuMacro::SkipWhiteSpaces(LPWSTR& rsString)
 
 /* ***  Функции для парсера параметров  *** */
 
-// Получить следующий параметр (до следующей ',')
-LPWSTR ConEmuMacro::GetNextArg(LPWSTR& rsArguments, LPWSTR& rsArg)
+// Get next numerical argument (dec or hex)
+// Delimiter - comma or space
+LPWSTR ConEmuMacro::GetNextInt(LPWSTR& rsArguments, int& rnValue)
 {
-	rsArg = NULL; // Сброс
+	LPWSTR pszArg = NULL, pszEnd = NULL;
+	rnValue = 0; // Reset
+
+	SkipWhiteSpaces(rsArguments);
 
 	if (!rsArguments || !*rsArguments)
 		return NULL;
 
-	// Пропустить white-space
-	SkipWhiteSpaces(rsArguments);
-
 	// Результат
-	rsArg = rsArguments;
-	// Пропустить все, что до следующей запятой
-	bool lbNextFound = false;
+	pszArg = rsArguments;
 
-	while (*rsArguments && !lbNextFound)
-	{
-		lbNextFound = (*rsArguments == L',');
+	#ifdef _DEBUG
+	// Returns all digits
+	LPCWSTR pszTestEnd = rsArguments;
+	if (*pszTestEnd == L'-' || *pszTestEnd == L'+')
+		pszTestEnd++;
+	if (pszTestEnd[0] == L'0' && (pszTestEnd[1] == L'x' || pszTestEnd[1] == L'X'))
+		pszTestEnd+=2;
+	while (isDigit(*pszTestEnd))
+		pszTestEnd++;
+	#endif
 
-		if (lbNextFound)
-			*rsArguments = 0; // Саму строку нужно "закрыть"
-
-		rsArguments++;
-	}
-
-	return (*rsArg) ? rsArg : NULL;
-}
-// Получить следующий числовой параметр
-LPWSTR ConEmuMacro::GetNextInt(LPWSTR& rsArguments, int& rnValue)
-{
-	LPWSTR pszArg = NULL;
-	rnValue = 0; // сброс
-
-	if (!GetNextArg(rsArguments, pszArg))
-		return NULL;
-
-	LPWSTR pszEnd = NULL;
-
-	// Допустим hex значения
+	// Hex value?
 	if (pszArg[0] == L'0' && (pszArg[1] == L'x' || pszArg[1] == L'X'))
 		rnValue = wcstol(pszArg+2, &pszEnd, 16);
 	else
 		rnValue = wcstol(pszArg, &pszEnd, 10);
 
+	_ASSERTE(pszEnd == pszTestEnd);
+	rsArguments = pszEnd;
+	if (rsArguments && *rsArguments)
+	{
+		SkipWhiteSpaces(rsArguments);
+		if (*rsArguments == L',')
+			rsArguments++;
+	}
 	return pszArg;
 }
 // Получить следующий строковый параметр
@@ -841,7 +900,6 @@ LPWSTR ConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bC
 	{
 		_ASSERTE(rsArguments>=pszArgStart && rsArguments<pszArgEnd);
 
-		// Пропустить все, что до следующей запятой
 		SkipWhiteSpaces(rsArguments);
 		if (*rsArguments == L',')
 			rsArguments++;
