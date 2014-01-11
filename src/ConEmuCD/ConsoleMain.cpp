@@ -9357,9 +9357,10 @@ void _wprintf(LPCWSTR asBuffer)
 		if (pszOem)
 		{
 			int nWrite = WideCharToMultiByte(cp, 0, asBuffer, -1, pszOem, cchMax, NULL, NULL);
-			if (nWrite > 0)
+			if (nWrite > 1)
 			{
-				WriteFile(hOut, pszOem, nWrite, &dwWritten, 0);
+				// Don't write terminating '\0' to redirected output
+				WriteFile(hOut, pszOem, nWrite-1, &dwWritten, 0);
 			}
 			free(pszOem);
 		}
