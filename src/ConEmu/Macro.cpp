@@ -65,9 +65,9 @@ namespace ConEmuMacro
 	// Закрыть/прибить текущую консоль
 	LPWSTR Close(GuiMacro* p, CRealConsole* apRCon);
 	// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
-	LPWSTR FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin = false);
-	LPWSTR FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin = false);
-	LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin = false);
+	LPWSTR FindEditor(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR FindViewer(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon);
 	LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon, bool abFromPlugin = false); // helper, это не макро-фукнция
 	// Изменить имя основного шрифта. string
 	LPWSTR FontSetName(GuiMacro* p, CRealConsole* apRCon);
@@ -123,6 +123,50 @@ namespace ConEmuMacro
 	LPWSTR WindowMinimize(GuiMacro* p, CRealConsole* apRCon);
 	// Вернуть текущий статус: NOR/MAX/FS/MIN/TSA
 	LPWSTR WindowMode(GuiMacro* p, CRealConsole* apRCon);
+
+
+	/* ******************************* */
+	/* ****** Macro enumeration ****** */
+	/* ******************************* */
+	typedef LPWSTR (*MacroFunction)(GuiMacro* p, CRealConsole* apRCon);
+	struct {
+		MacroFunction pfn;
+		LPCWSTR Alias[5]; // Some function can be called with different names (usability)
+	} Functions[] = {
+		// List all functions
+		{IsConEmu, {L"IsConEmu"}},
+		{Close, {L"Close"}},
+		{FindEditor, {L"FindEditor"}},
+		{FindViewer, {L"FindViewer"}},
+		{FindFarWindow, {L"FindFarWindow"}},
+		{WindowFullscreen, {L"WindowFullscreen"}},
+		{WindowMaximize, {L"WindowMaximize"}},
+		{WindowMinimize, {L"WindowMinimize"}},
+		{WindowMode, {L"WindowMode"}},
+		{MsgBox, {L"MsgBox"}},
+		{Menu, {L"Menu"}},
+		{FontSetSize, {L"FontSetSize"}},
+		{FontSetName, {L"FontSetName"}},
+		{HighlightMouse, {L"HighlightMouse"}},
+		{IsRealVisible, {L"IsRealVisible"}},
+		{IsConsoleActive, {L"IsConsoleActive"}},
+		{Copy, {L"Copy"}},
+		{Paste, {L"Paste"}},
+		{Palette, {L"Palette"}},
+		{Print, {L"Print"}},
+		{Progress, {L"Progress"}},
+		{Rename, {L"Rename"}},
+		{Shell, {L"Shell", L"ShellExecute"}},
+		{Select, {L"Select"}},
+		{SetOption, {L"SetOption"}},
+		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
+		{Task, {L"Task"}},
+		{Transparency, {L"Transparency"}},
+		{Status, {L"Status", L"StatusBar", L"StatusControl"}},
+		{Split, {L"Split", L"Splitter"}},
+		// End
+		{NULL}
+	};
 };
 
 
@@ -612,69 +656,22 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 		LPCWSTR szFunction = p->szFunc;
 
 		// Поехали
-		if (!lstrcmpi(szFunction, L"IsConEmu"))
-			pszResult = IsConEmu(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Close"))
-			pszResult = Close(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"FindEditor"))
-			pszResult = FindEditor(p, apRCon, abFromPlugin);
-		else if (!lstrcmpi(szFunction, L"FindViewer"))
-			pszResult = FindViewer(p, apRCon, abFromPlugin);
-		else if (!lstrcmpi(szFunction, L"FindFarWindow"))
-			pszResult = FindFarWindow(p, apRCon, abFromPlugin);
-		else if (!lstrcmpi(szFunction, L"WindowFullscreen"))
-			pszResult = WindowFullscreen(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"WindowMaximize"))
-			pszResult = WindowMaximize(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"WindowMinimize"))
-			pszResult = WindowMinimize(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"WindowMode"))
-			pszResult = WindowMode(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"MsgBox"))
-			pszResult = MsgBox(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Menu"))
-			pszResult = Menu(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"FontSetSize"))
-			pszResult = FontSetSize(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"FontSetName"))
-			pszResult = FontSetName(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"HighlightMouse"))
-			pszResult = HighlightMouse(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"IsRealVisible"))
-			pszResult = IsRealVisible(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"IsConsoleActive"))
-			pszResult = IsConsoleActive(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Copy"))
-			pszResult = Copy(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Paste"))
-			pszResult = Paste(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Palette"))
-			pszResult = Palette(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Print"))
-			pszResult = Print(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Progress"))
-			pszResult = Progress(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Rename"))
-			pszResult = Rename(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Shell") || !lstrcmpi(szFunction, L"ShellExecute"))
-			pszResult = Shell(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Select"))
-			pszResult = Select(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"SetOption"))
-			pszResult = SetOption(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Tab") || !lstrcmpi(szFunction, L"Tabs") || !lstrcmpi(szFunction, L"TabControl"))
-			pszResult = Tab(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Task"))
-			pszResult = Task(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Transparency"))
-			pszResult = Transparency(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Status") || !lstrcmpi(szFunction, L"StatusBar") || !lstrcmpi(szFunction, L"StatusControl"))
-			pszResult = Status(p, apRCon);
-		else if (!lstrcmpi(szFunction, L"Splitter") || !lstrcmpi(szFunction, L"Split"))
-			pszResult = Split(p, apRCon);
-		else
-			pszResult = lstrdup(L"UnknownMacro"); // Неизвестная функция
+		MacroFunction pfn = NULL;
+		for (size_t f = 0; Functions[f].pfn && !pfn; f++)
+		{
+			for (size_t n = 0; (n < countof(Functions[f].Alias)) && Functions[f].Alias[n]; n++)
+			{
+				if (lstrcmpi(szFunction, Functions[f].Alias[n]) == 0)
+				{
+					pszResult = Functions[f].pfn(p, apRCon);
+					goto executed;
+				}
+			}
+		}
 
+		pszResult = lstrdup(L"UnknownMacro"); // Неизвестная функция
+
+	executed:
 		if (pszResult == NULL)
 		{
 			_ASSERTE(FALSE && "MacroFunction must returns anything");
@@ -960,7 +957,7 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // Найти окно и активировать его. // LPWSTR asName
-LPWSTR ConEmuMacro::FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
+LPWSTR ConEmuMacro::FindEditor(GuiMacro* p, CRealConsole* apRCon)
 {
 	LPWSTR pszName = NULL;
 
@@ -971,10 +968,10 @@ LPWSTR ConEmuMacro::FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 	if (!pszName || !*pszName)
 		return lstrdup(L"");
 
-	return FindFarWindowHelper(3/*WTYPE_EDITOR*/, pszName, apRCon, abFromPlugin);
+	return FindFarWindowHelper(3/*WTYPE_EDITOR*/, pszName, apRCon);
 }
 // Найти окно и активировать его. // LPWSTR asName
-LPWSTR ConEmuMacro::FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
+LPWSTR ConEmuMacro::FindViewer(GuiMacro* p, CRealConsole* apRCon)
 {
 	LPWSTR pszName = NULL;
 
@@ -985,10 +982,10 @@ LPWSTR ConEmuMacro::FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 	if (!pszName || !*pszName)
 		return lstrdup(L"");
 
-	return FindFarWindowHelper(2/*WTYPE_VIEWER*/, pszName, apRCon, abFromPlugin);
+	return FindFarWindowHelper(2/*WTYPE_VIEWER*/, pszName, apRCon);
 }
 // Найти окно и активировать его. // int nWindowType, LPWSTR asName
-LPWSTR ConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
+LPWSTR ConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon)
 {
 	int nWindowType = 0;
 	LPWSTR pszName = NULL;
@@ -1000,7 +997,7 @@ LPWSTR ConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFrom
 	if (!pszName || !*pszName)
 		return lstrdup(L"");
 
-	return FindFarWindowHelper(nWindowType, pszName, apRCon, abFromPlugin);
+	return FindFarWindowHelper(nWindowType, pszName, apRCon);
 }
 LPWSTR ConEmuMacro::FindFarWindowHelper(
     CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3, |(Elevated=0x100), |(NotElevated=0x200), |(Modal=0x400)*/,
