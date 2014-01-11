@@ -132,6 +132,8 @@ class CConEmuMacro
 		static LPWSTR Print(GuiMacro* p, CRealConsole* apRCon);
 		// Keys("<Combo1>"[,"<Combo2>"[...]])
 		static LPWSTR Keys(GuiMacro* p, CRealConsole* apRCon);
+		// Palette([<Cmd>[,"<NewPalette>"]])
+		static LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon);
 		// Progress(<Type>[,<Value>])
 		static LPWSTR Progress(GuiMacro* p, CRealConsole* apRCon);
 		// Rename(<Type>,"<Title>")

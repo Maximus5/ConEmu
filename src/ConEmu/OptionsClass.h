@@ -387,6 +387,8 @@ class CSettings
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
+	public:
+		void ChangeCurrentPalette(const Settings::ColorPalette* pPal);
 	private:
 		bool GetColorById(WORD nID, COLORREF* color);
 		bool SetColorById(WORD nID, COLORREF color);

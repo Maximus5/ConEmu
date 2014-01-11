@@ -241,6 +241,10 @@ namespace SettingsNS
 
 #define BST(v) (int)(v & 3) // BST_UNCHECKED/BST_CHECKED/BST_INDETERMINATE
 
+#define getR(inColorref) (byte)(inColorref)
+#define getG(inColorref) (byte)((inColorref) >> 8)
+#define getB(inColorref) (byte)((inColorref) >> 16)
+
 //#define SetThumbColor(s,rgb,idx,us) { (s).RawColor = 0; (s).ColorRGB = rgb; (s).ColorIdx = idx; (s).UseIndex = us; }
 //#define SetThumbSize(s,sz,x1,y1,x2,y2,ls,lp,fn,fs) { 
 //		(s).nImgSize = sz; (s).nSpaceX1 = x1; (s).nSpaceY1 = y1; (s).nSpaceX2 = x2; (s).nSpaceY2 = y2; 
@@ -3401,16 +3405,79 @@ void CSettings::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL Cha
 	gpConEmu->UpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr);
 }
 
+// This is used if user choose palette from dropdown in the Settings dialog
+// OR when GuiMacro Palette was called.
+void CSettings::ChangeCurrentPalette(const Settings::ColorPalette* pPal)
+{
+	if (!pPal)
+	{
+		_ASSERTE(pPal!=NULL);
+		return;
+	}
+
+	HWND hDlg = IsWindow(ghOpWnd) ? mh_Tabs[thi_Colors] : NULL;
+
+	wchar_t temp[32];
+	uint nCount = countof(pPal->Colors);
+
+	for (uint i = 0; i < nCount; i++)
+	{
+		gpSet->Colors[i] = pPal->Colors[i]; //-V108
+		if (hDlg)
+		{
+			_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(gpSet->Colors[i]), getG(gpSet->Colors[i]), getB(gpSet->Colors[i]));
+			SetDlgItemText(hDlg, 1100 + i, temp);
+			InvalidateCtrl(GetDlgItem(hDlg, c0+i), TRUE);
+		}
+	}
+
+	DWORD nVal;
+
+	if (hDlg)
+	{
+		nVal = pPal->nTextColorIdx;
+		FillListBox(hDlg, lbConClrText, SettingsNS::ColorIdxTh, nVal);
+		nVal = pPal->nBackColorIdx;
+		FillListBox(hDlg, lbConClrBack, SettingsNS::ColorIdxTh, nVal);
+		nVal = pPal->nPopTextColorIdx;
+		FillListBox(hDlg, lbConClrPopText, SettingsNS::ColorIdxTh, nVal);
+		nVal = pPal->nPopBackColorIdx;
+		FillListBox(hDlg, lbConClrPopBack, SettingsNS::ColorIdxTh, nVal);
+	}
+
+	BOOL bTextChanged = (gpSet->AppStd.nTextColorIdx != pPal->nTextColorIdx) || (gpSet->AppStd.nBackColorIdx != pPal->nBackColorIdx);
+	BOOL bPopupChanged = (gpSet->AppStd.nPopTextColorIdx != pPal->nPopTextColorIdx) || (gpSet->AppStd.nPopBackColorIdx != pPal->nPopBackColorIdx);
+
+	if (bTextChanged || bPopupChanged)
+	{
+		gpSet->AppStd.nTextColorIdx = pPal->nTextColorIdx;
+		gpSet->AppStd.nBackColorIdx = pPal->nBackColorIdx;
+		gpSet->AppStd.nPopTextColorIdx = pPal->nPopTextColorIdx;
+		gpSet->AppStd.nPopBackColorIdx = pPal->nPopBackColorIdx;
+		// We need to change consoles contents if TEXT attributes was changed
+		UpdateTextColorSettings(bTextChanged, bPopupChanged);
+	}
+
+	nVal = pPal->nExtendColorIdx;
+	if (hDlg)
+		FillListBox(hDlg, lbExtendIdx, SettingsNS::ColorIdxSh, nVal);
+	gpSet->AppStd.nExtendColorIdx = nVal;
+	gpSet->AppStd.isExtendColors = pPal->isExtendColors;
+	if (hDlg)
+	{
+		checkDlgButton(hDlg, cbExtendColors, pPal->isExtendColors ? BST_CHECKED : BST_UNCHECKED);
+		OnButtonClicked(hDlg, cbExtendColors, 0);
+	}
+
+	gpConEmu->Update(true);
+}
+
 LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 {
 	#if 0
 	if (gpSetCls->EnableThemeDialogTextureF)
 		gpSetCls->EnableThemeDialogTextureF(hWnd2, 6/*ETDT_ENABLETAB*/);
 	#endif
-
-#define getR(inColorref) (byte)inColorref
-#define getG(inColorref) (byte)(inColorref >> 8)
-#define getB(inColorref) (byte)(inColorref >> 16)
 
 	//wchar_t temp[MAX_PATH];
 	DWORD nVal;
@@ -3466,28 +3533,22 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 		return 0;
 	}
 
-	INT_PTR iCurPalette = 0;
-	bool bBtnEnabled = false;
-
 	SendMessage(GetDlgItem(hWnd2, lbDefaultColors), CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessage(hWnd2, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM)gLastColors.pszName);
 
 	for (int i = 0; (pPal = gpSet->PaletteGet(i)) != NULL; i++)
 	{
 		SendDlgItemMessage(hWnd2, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
-
-		if (/*(iCurPalette == 0) -- покажем последнюю, чтобы приоритет пользовательским отдать
-			&&*/ (memcmp(gLastColors.Colors, pPal->Colors, sizeof(pPal->Colors)) == 0)
-			&& (gLastColors.isExtendColors == pPal->isExtendColors)
-			&& (gLastColors.nExtendColorIdx == pPal->nExtendColorIdx))
-		{
-			iCurPalette = i+1;
-			bBtnEnabled = !pPal->bPredefined;
-		}
 	}
 
-	SendDlgItemMessage(hWnd2, lbDefaultColors, CB_SETCURSEL, iCurPalette, 0);
+	// Find saved palette with current colors and attributes
+	pPal = gpSet->PaletteFindCurrent(true);
+	if (pPal)
+		SelectStringExact(hWnd2, lbDefaultColors, pPal->pszName);
+	else
+		SendDlgItemMessage(hWnd2, lbDefaultColors, CB_SETCURSEL, 0, 0);
 
+	bool bBtnEnabled = pPal && !pPal->bPredefined; // Save & Delete buttons
 	EnableWindow(GetDlgItem(hWnd2, cbColorSchemeSave), bBtnEnabled);
 	EnableWindow(GetDlgItem(hWnd2, cbColorSchemeDelete), bBtnEnabled);
 
@@ -8058,57 +8119,16 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				// Юзер выбрал в списке другую палитру
 				if ((HIWORD(wParam) == CBN_SELCHANGE) && gbLastColorsOk)  // только если инициализация палитр завершилась
 				{
-					//const DWORD* pdwDefData = NULL;
 					const Settings::ColorPalette* pPal = NULL;
-					wchar_t temp[32];
 
 					if (nIdx == 0)
 						pPal = &gLastColors;
-					//else if (nIdx >= 1 && nIdx <= (INT_PTR)countof(DefColors))
-					//	pdwDefData = DefColors[nIdx-1].dwDefColors;
-					//else
 					else if ((pPal = gpSet->PaletteGet(nIdx-1)) == NULL)
 						return 0; // неизвестный набор
 
-					uint nCount = countof(pPal->Colors);
+					gpSetCls->ChangeCurrentPalette(pPal);
 
-					for (uint i = 0; i < nCount; i++)
-					{
-						gpSet->Colors[i] = pPal->Colors[i]; //-V108
-						_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(gpSet->Colors[i]), getG(gpSet->Colors[i]), getB(gpSet->Colors[i]));
-						SetDlgItemText(hWnd2, 1100 + i, temp);
-						InvalidateCtrl(GetDlgItem(hWnd2, c0+i), TRUE);
-					}
-
-					DWORD nVal;
-
-					nVal = pPal->nTextColorIdx;
-					FillListBox(hWnd2, lbConClrText, SettingsNS::ColorIdxTh, nVal);
-					nVal = pPal->nBackColorIdx;
-					FillListBox(hWnd2, lbConClrBack, SettingsNS::ColorIdxTh, nVal);
-					nVal = pPal->nPopTextColorIdx;
-					FillListBox(hWnd2, lbConClrPopText, SettingsNS::ColorIdxTh, nVal);
-					nVal = pPal->nPopBackColorIdx;
-					FillListBox(hWnd2, lbConClrPopBack, SettingsNS::ColorIdxTh, nVal);
-
-					BOOL bTextChanged = (gpSet->AppStd.nTextColorIdx != pPal->nTextColorIdx) || (gpSet->AppStd.nBackColorIdx != pPal->nBackColorIdx);
-					BOOL bPopupChanged = (gpSet->AppStd.nPopTextColorIdx != pPal->nPopTextColorIdx) || (gpSet->AppStd.nPopBackColorIdx != pPal->nPopBackColorIdx);
-
-					if (bTextChanged || bPopupChanged)
-					{
-						gpSet->AppStd.nTextColorIdx = pPal->nTextColorIdx;
-						gpSet->AppStd.nBackColorIdx = pPal->nBackColorIdx;
-						gpSet->AppStd.nPopTextColorIdx = pPal->nPopTextColorIdx;
-						gpSet->AppStd.nPopBackColorIdx = pPal->nPopBackColorIdx;
-						UpdateTextColorSettings(bTextChanged, bPopupChanged);
-					}
-
-					nVal = pPal->nExtendColorIdx;
-					FillListBox(hWnd2, lbExtendIdx, SettingsNS::ColorIdxSh, nVal);
-					gpSet->AppStd.nExtendColorIdx = nVal;
-					gpSet->AppStd.isExtendColors = pPal->isExtendColors;
-					checkDlgButton(hWnd2, cbExtendColors, pPal->isExtendColors ? BST_CHECKED : BST_UNCHECKED);
-					OnButtonClicked(hWnd2, cbExtendColors, 0);
+					return 0;
 				}
 				else
 				{

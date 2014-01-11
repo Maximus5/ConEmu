@@ -560,6 +560,8 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abF
 			pszResult = Copy(p, apRCon);
 		else if (!lstrcmpi(szFunction, L"Paste"))
 			pszResult = Paste(p, apRCon);
+		else if (!lstrcmpi(szFunction, L"Palette"))
+			pszResult = Palette(p, apRCon);
 		else if (!lstrcmpi(szFunction, L"Print"))
 			pszResult = Print(p, apRCon);
 		else if (!lstrcmpi(szFunction, L"Progress"))
@@ -1450,6 +1452,72 @@ LPWSTR CConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon)
 	*/
 
 	return lstrdup(L"NotImplementedYet");
+}
+
+// Palette([<Cmd>[,"<NewPalette>"]])
+// Cmd=0 - return palette from ConEmu settings
+// Cmd=1 - change palette in ConEmu settings, returns prev palette
+// Cmd=2 - return palette from current console
+// Cmd=3 - change palette in current console, returns prev palette
+LPWSTR CConEmuMacro::Palette(GuiMacro* p, CRealConsole* apRCon)
+{
+	int nCmd = 0;
+	p->GetIntArg(0, nCmd);
+
+	wchar_t* pszRc = NULL;
+	LPWSTR pszNewName = NULL;
+	switch (nCmd)
+	{
+	case 0:
+	case 1:
+		{
+			// Return current palette name
+			const Settings::ColorPalette* pPal = gpSet->PaletteFindCurrent(true);
+			_ASSERTE(pPal!=NULL); // If find failed - it returns "<Current color scheme>"
+			pszRc = lstrdup(pPal ? pPal->pszName : L"Unexpected");
+			// And change to new, if asked
+			if ((nCmd == 1) && p->GetStrArg(1, pszNewName) && pszNewName && *pszNewName)
+			{
+				int iPal = gpSet->PaletteGetIndex(pszNewName);
+				if (iPal < 0)
+				{
+					SafeFree(pszRc);
+					pszRc = lstrdup(L"InvalidArg");
+				}
+				else
+				{
+					gpSetCls->ChangeCurrentPalette(gpSet->PaletteGet(iPal));
+				}
+			}
+		}
+		break;
+	case 2:
+	case 3:
+		if (apRCon)
+		{
+			// Return current palette name (in the active console)
+			int iPal = apRCon->VCon()->GetPaletteIndex();
+			const Settings::ColorPalette* pPal = (iPal >= 0)
+				? gpSet->PaletteGet(iPal)
+				: gpSet->PaletteFindCurrent(true);
+			_ASSERTE(pPal!=NULL); // At least "<Current color scheme>" must be returned
+			pszRc = lstrdup(pPal ? pPal->pszName : L"Unexpected");
+			// And change to new, if asked
+			if ((nCmd == 3) && p->GetStrArg(1, pszNewName) && pszNewName && *pszNewName)
+			{
+				apRCon->VCon()->ChangePalette(gpSet->PaletteGetIndex(pszNewName));
+			}
+		}
+		else
+		{
+			pszRc = lstrdup(L"InvalidArg");
+		}
+		break;
+	default:
+		pszRc = lstrdup(L"InvalidArg");
+	}
+
+	return pszRc;
 }
 
 // Progress(<Type>[,<Value>])

@@ -1593,14 +1593,51 @@ void Settings::SavePalettes(SettingsBase* reg)
 }
 
 // 0-based, index of Palettes
-// -1 -- current palette
+// -1 -- current palette, it will show name "<Current color scheme>"
 const Settings::ColorPalette* Settings::PaletteGet(int anIndex)
 {
 	return PaletteGetPtr(anIndex);
 }
 
+const Settings::ColorPalette* Settings::PaletteFindCurrent(bool bMatchAttributes)
+{
+	const Settings::ColorPalette* pCur = PaletteGetPtr(-1);
+	if (!pCur)
+	{
+		// MUST be NOT NULL
+		_ASSERTE(pCur!=NULL);
+		return NULL;
+	}
+
+	const Settings::ColorPalette* pFound = NULL;
+	const Settings::ColorPalette* pPal = NULL;
+	for (int i = 0; (pPal = PaletteGetPtr(i)) != NULL; i++)
+	{
+		if ((memcmp(pCur->Colors, pPal->Colors, sizeof(pPal->Colors)) == 0)
+			&& (pCur->isExtendColors == pPal->isExtendColors)
+			&& (pCur->nExtendColorIdx == pPal->nExtendColorIdx)
+			&& (!bMatchAttributes
+				|| ((pCur->nTextColorIdx == pPal->nTextColorIdx)
+					&& (pCur->nBackColorIdx == pPal->nBackColorIdx)
+					&& (pCur->nPopTextColorIdx == pPal->nPopTextColorIdx)
+					&& (pCur->nPopBackColorIdx == pPal->nPopBackColorIdx)))
+			)
+		{
+			pFound = pPal;
+			// Do not break, prefer last palette (use saved)
+		}
+	}
+
+	_ASSERTE(pFound != pCur); // pCur is expected to be StdPal ("<Current color scheme>")
+
+	// Return "<Current color scheme>" if was not found in saved palettes
+	if (!pFound)
+		pFound = pCur;
+	return pFound;
+}
+
 // 0-based, index of Palettes
-// -1 -- current palette
+// -1 -- current palette, it will show name "<Current color scheme>"
 Settings::ColorPalette* Settings::PaletteGetPtr(int anIndex)
 {
 	if ((anIndex >= 0) && (anIndex < PaletteCount) && Palettes && Palettes[anIndex])
@@ -1619,10 +1656,10 @@ Settings::ColorPalette* Settings::PaletteGetPtr(int anIndex)
 	StdPal.bPredefined = false;
 	static wchar_t szCurrentScheme[64] = L"<Current color scheme>";
 	StdPal.pszName = szCurrentScheme;
-		
+
 	StdPal.isExtendColors = AppStd.isExtendColors;
 	StdPal.nExtendColorIdx = AppStd.nExtendColorIdx;
-		
+
 	StdPal.nTextColorIdx = AppStd.nTextColorIdx;
 	StdPal.nBackColorIdx = AppStd.nBackColorIdx;
 	StdPal.nPopTextColorIdx = AppStd.nPopTextColorIdx;
