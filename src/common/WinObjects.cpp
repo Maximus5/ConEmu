@@ -691,11 +691,11 @@ wrap:
 #ifndef CONEMU_MINIMAL
 bool IsUserAdmin()
 {
-	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
-	GetVersionEx(&osv);
-
-	// Проверять нужно только для висты, чтобы на XP лишний "Щит" не отображался
-	if (osv.dwMajorVersion < 6)
+	// No need to show any "Shield" on XP or 2k
+	_ASSERTE(_WIN32_WINNT_VISTA==0x600);
+	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA)};
+	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+	if (!VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
 		return false;
 
 	BOOL b;
@@ -870,9 +870,13 @@ bool IsHwFullScreenAvailable()
 		return false;
 
 	// HW FullScreen was available in Win2k & WinXP (32bit)
-	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
-	GetVersionEx(&osv);
-	return (osv.dwMajorVersion <= 5);
+	_ASSERTE(_WIN32_WINNT_VISTA==0x600);
+	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA)};
+	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+	if (VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
+		return false; // Vista or higher - not available
+	else
+		return true;
 }
 
 bool IsVsNetHostExe(LPCWSTR asFilePatName)
@@ -2883,8 +2887,10 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 
 	BOOL bWin64 = IsWindows64();
 
+	#pragma warning(disable: 4996)
 	OSVERSIONINFOEXW osv = {sizeof(osv)};
 	GetVersionEx((OSVERSIONINFOW*)&osv);
+	#pragma warning(default: 4996)
 
 	LPCWSTR pszReactOS = osv.szCSDVersion + lstrlen(osv.szCSDVersion) + 1;
 	if (!*pszReactOS)
