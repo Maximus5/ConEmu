@@ -1461,33 +1461,38 @@ LPWSTR CConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon)
 // Cmd=3 - change palette in current console, returns prev palette
 LPWSTR CConEmuMacro::Palette(GuiMacro* p, CRealConsole* apRCon)
 {
-	int nCmd = 0;
+	wchar_t* pszRc = NULL;
+	int nCmd = 0, iPal;
+	LPWSTR pszNewName = NULL;
+	const Settings::ColorPalette* pPal;
+
 	p->GetIntArg(0, nCmd);
 
-	wchar_t* pszRc = NULL;
-	LPWSTR pszNewName = NULL;
 	switch (nCmd)
 	{
 	case 0:
 	case 1:
+		// Return current palette name
+		pPal = gpSet->PaletteFindCurrent(true);
+		_ASSERTE(pPal!=NULL); // If find failed - it returns "<Current color scheme>"
+		pszRc = lstrdup(pPal ? pPal->pszName : L"Unexpected");
+		// And change to new, if asked
+		if ((nCmd == 1) && (p->argc > 1))
 		{
-			// Return current palette name
-			const Settings::ColorPalette* pPal = gpSet->PaletteFindCurrent(true);
-			_ASSERTE(pPal!=NULL); // If find failed - it returns "<Current color scheme>"
-			pszRc = lstrdup(pPal ? pPal->pszName : L"Unexpected");
-			// And change to new, if asked
-			if ((nCmd == 1) && p->GetStrArg(1, pszNewName) && pszNewName && *pszNewName)
+			// Allow name or index
+			if (p->IsStrArg(1) && p->GetStrArg(1, pszNewName) && pszNewName && *pszNewName)
+				iPal = gpSet->PaletteGetIndex(pszNewName);
+			else if (!p->IsIntArg(1) || !p->GetIntArg(1, iPal))
+				iPal = -1;
+			// Index is valid?
+			if (iPal < 0)
 			{
-				int iPal = gpSet->PaletteGetIndex(pszNewName);
-				if (iPal < 0)
-				{
-					SafeFree(pszRc);
-					pszRc = lstrdup(L"InvalidArg");
-				}
-				else
-				{
-					gpSetCls->ChangeCurrentPalette(gpSet->PaletteGet(iPal));
-				}
+				SafeFree(pszRc);
+				pszRc = lstrdup(L"InvalidArg");
+			}
+			else
+			{
+				gpSetCls->ChangeCurrentPalette(gpSet->PaletteGet(iPal), true);
 			}
 		}
 		break;
@@ -1496,16 +1501,20 @@ LPWSTR CConEmuMacro::Palette(GuiMacro* p, CRealConsole* apRCon)
 		if (apRCon)
 		{
 			// Return current palette name (in the active console)
-			int iPal = apRCon->VCon()->GetPaletteIndex();
-			const Settings::ColorPalette* pPal = (iPal >= 0)
+			iPal = apRCon->VCon()->GetPaletteIndex();
+			pPal = (iPal >= 0)
 				? gpSet->PaletteGet(iPal)
 				: gpSet->PaletteFindCurrent(true);
 			_ASSERTE(pPal!=NULL); // At least "<Current color scheme>" must be returned
 			pszRc = lstrdup(pPal ? pPal->pszName : L"Unexpected");
 			// And change to new, if asked
-			if ((nCmd == 3) && p->GetStrArg(1, pszNewName) && pszNewName && *pszNewName)
+			if ((nCmd == 3) && (p->argc > 1))
 			{
-				apRCon->VCon()->ChangePalette(gpSet->PaletteGetIndex(pszNewName));
+				// Allow name or index
+				if (p->IsStrArg(1) && p->GetStrArg(1, pszNewName) && pszNewName && *pszNewName)
+					apRCon->VCon()->ChangePalette(gpSet->PaletteGetIndex(pszNewName));
+				else if (p->IsIntArg(1) && p->GetIntArg(1, iPal))
+					apRCon->VCon()->ChangePalette(iPal);
 			}
 		}
 		else

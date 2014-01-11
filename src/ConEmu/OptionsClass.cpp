@@ -3407,11 +3407,17 @@ void CSettings::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL Cha
 
 // This is used if user choose palette from dropdown in the Settings dialog
 // OR when GuiMacro Palette was called.
-void CSettings::ChangeCurrentPalette(const Settings::ColorPalette* pPal)
+void CSettings::ChangeCurrentPalette(const Settings::ColorPalette* pPal, bool bChangeDropDown)
 {
 	if (!pPal)
 	{
 		_ASSERTE(pPal!=NULL);
+		return;
+	}
+
+	if (!gpConEmu->isMainThread())
+	{
+		gpConEmu->PostChangeCurPalette(pPal->pszName, bChangeDropDown, false);
 		return;
 	}
 
@@ -8126,7 +8132,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					else if ((pPal = gpSet->PaletteGet(nIdx-1)) == NULL)
 						return 0; // неизвестный набор
 
-					gpSetCls->ChangeCurrentPalette(pPal);
+					gpSetCls->ChangeCurrentPalette(pPal, false);
 
 					return 0;
 				}

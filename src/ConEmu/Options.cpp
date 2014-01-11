@@ -1714,6 +1714,12 @@ void Settings::AppSettings::ResetPaletteIndex()
 	// TODO:
 }
 
+const Settings::ColorPalette* Settings::PaletteGetByName(LPCWSTR asName)
+{
+	int iPal = PaletteGetIndex(asName);
+	return PaletteGet(iPal);
+}
+
 // Returns Zero-based palette index, or "-1" when not found
 int Settings::PaletteGetIndex(LPCWSTR asName)
 {

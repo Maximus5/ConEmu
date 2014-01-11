@@ -575,6 +575,7 @@ class CConEmuMain :
 		UINT mn_MsgTaskBarBtnCreated;
 		UINT mn_MsgRequestRunProcess;
 		UINT mn_MsgDeleteVConMainThread;
+		UINT mn_MsgReqChangeCurPalette;
 
 		void SetRunQueueTimer(bool bSet, UINT uElapse);
 
@@ -718,6 +719,7 @@ class CConEmuMain :
 		void PostMacro(LPCWSTR asMacro);
 		void PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted);
 		void PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg);
+		void PostChangeCurPalette(LPCWSTR pszPalette, bool bChangeDropDown, bool abPosted);
 		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 		void RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, BOOL abRunAs = FALSE);
 		int RecreateDlg(RConStartArgs* apArg);

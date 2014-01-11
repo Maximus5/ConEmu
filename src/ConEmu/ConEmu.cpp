@@ -778,6 +778,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgSheelHook = RegisterMessage("SHELLHOOK",L"SHELLHOOK");
 	mn_MsgRequestRunProcess = RegisterMessage("RequestRunProcess");
 	mn_MsgDeleteVConMainThread = RegisterMessage("DeleteVConMainThread");
+	mn_MsgReqChangeCurPalette = RegisterMessage("ChangeCurrentPalette");
 }
 
 bool CConEmuMain::isMingwMode()
@@ -7914,6 +7915,20 @@ void CConEmuMain::PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0
 		if (gpSetCls)
 			gpSetCls->MacroFontSetName(pszFontName, anHeight, anWidth);
 		free(pszFontName);
+	}
+}
+
+void CConEmuMain::PostChangeCurPalette(LPCWSTR pszPalette, bool bChangeDropDown, bool abPosted)
+{
+	if (!abPosted)
+	{
+		// Synchronous!
+		SendMessage(ghWnd, mn_MsgReqChangeCurPalette, (WPARAM)bChangeDropDown, (LPARAM)pszPalette);
+	}
+	else
+	{
+		const Settings::ColorPalette* pPal = gpSet->PaletteGetByName(pszPalette);
+		gpSetCls->ChangeCurrentPalette(pPal, bChangeDropDown);
 	}
 }
 
@@ -19117,6 +19132,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			else if (messg == this->mn_MsgMacroFontSetName)
 			{
 				this->PostMacroFontSetName((wchar_t*)lParam, (WORD)(((DWORD)wParam & 0xFFFF0000)>>16), (WORD)(wParam & 0xFFFF), TRUE);
+				return 0;
+			}
+			else if (messg == this->mn_MsgReqChangeCurPalette)
+			{
+				this->PostChangeCurPalette((LPCWSTR)lParam, (wParam!=0), true);
 				return 0;
 			}
 			else if (messg == this->mn_MsgDisplayRConError)

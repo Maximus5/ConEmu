@@ -554,6 +554,7 @@ struct Settings
 		bool CmdTaskXch(int anIndex1, int anIndex2); // 0-based, index of CmdTasks
 
 		const ColorPalette* PaletteGet(int anIndex); // 0-based, index of Palettes, or -1 for "<Current color scheme>"
+		const ColorPalette* PaletteGetByName(LPCWSTR asName);
 		const ColorPalette* PaletteFindCurrent(bool bMatchAttributes);
 		int PaletteGetIndex(LPCWSTR asName);
 		void PaletteSaveAs(LPCWSTR asName); // Save active colors to named palette

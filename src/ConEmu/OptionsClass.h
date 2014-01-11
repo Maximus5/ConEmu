@@ -388,7 +388,7 @@ class CSettings
 		bool mb_IgnoreSelPage;
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 	public:
-		void ChangeCurrentPalette(const Settings::ColorPalette* pPal);
+		void ChangeCurrentPalette(const Settings::ColorPalette* pPal, bool bChangeDropDown);
 	private:
 		bool GetColorById(WORD nID, COLORREF* color);
 		bool SetColorById(WORD nID, COLORREF color);
