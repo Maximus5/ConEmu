@@ -858,7 +858,7 @@ CESERVER_REQ* CRealServer::cmdGuiMacro(LPVOID pInst, CESERVER_REQ* pIn, UINT nDa
 
 	DEBUGSTRCMD(L"GUI recieved CECMD_GUIMACRO\n");
 	DWORD nFarPluginPID = mp_RCon->GetFarPID(true);
-	LPWSTR pszResult = CConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, mp_RCon, (nFarPluginPID==pIn->hdr.nSrcPID));
+	LPWSTR pszResult = ConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, mp_RCon, (nFarPluginPID==pIn->hdr.nSrcPID));
 
 	int nLen = pszResult ? _tcslen(pszResult) : 0;
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));

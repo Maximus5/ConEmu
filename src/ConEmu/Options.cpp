@@ -5119,7 +5119,7 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 			reg->Load(szMacroName, &pszMacro);
 			if (MacroVersion < GUI_MACRO_VERSION)
 			{
-				ppHK->GuiMacro = CConEmuMacro::ConvertMacro(pszMacro, MacroVersion, true);
+				ppHK->GuiMacro = ConEmuMacro::ConvertMacro(pszMacro, MacroVersion, true);
 				SafeFree(pszMacro);
 			}
 			else

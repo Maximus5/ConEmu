@@ -569,7 +569,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			CVConGuard VCon; CVConGroup::GetActiveVCon(&VCon);
 
 			DWORD nFarPluginPID = VCon->RCon()->GetFarPID(true);
-			LPWSTR pszResult = CConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, VCon->RCon(), (nFarPluginPID==pIn->hdr.nSrcPID));
+			LPWSTR pszResult = ConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, VCon->RCon(), (nFarPluginPID==pIn->hdr.nSrcPID));
 
 			int nLen = pszResult ? _tcslen(pszResult) : 0;
 

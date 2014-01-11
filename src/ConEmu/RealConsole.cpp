@@ -12616,7 +12616,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		if (asMacro[1])
 		{
 			LPWSTR pszGui = lstrdup(asMacro+1);
-			LPWSTR pszRc = CConEmuMacro::ExecuteMacro(pszGui, this);
+			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(pszGui, this);
 			TODO("Показать результат в статусной строке?");
 			SafeFree(pszGui);
 			SafeFree(pszRc);

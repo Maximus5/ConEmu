@@ -1186,7 +1186,7 @@ bool CConEmuCtrl::key_GuiMacro(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 		}
 		else
 		{
-			wchar_t* pszResult = CConEmuMacro::ExecuteMacro(pszCopy, pRCon);
+			wchar_t* pszResult = ConEmuMacro::ExecuteMacro(pszCopy, pRCon);
 			TODO("Когда появится StatusLine - хорошо бы в ней результат показать");
 			SafeFree(pszResult);
 			free(pszCopy);
@@ -1634,7 +1634,7 @@ bool CConEmuCtrl::key_RunTask(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 	{
 		wchar_t szMacro[64];
 		_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"Task(%i)", hk->GetTaskIndex()+1); //1-based
-		CConEmuMacro::ExecuteMacro(szMacro, pRCon);
+		ConEmuMacro::ExecuteMacro(szMacro, pRCon);
 	}
 	return true;
 }
