@@ -70,7 +70,7 @@ struct GuiMacro
 	wchar_t chFuncTerm; // L'(', L':', L' ' - delimiter between func name and arguments
 
 	size_t  argc;
-	GuiMacroArg* argv;
+	GuiMacroArg* argv; // No need to release mem, buffer allocated for the full GuiMacro data
 
 	wchar_t* AsString();
 	bool GetIntArg(size_t idx, int& val);

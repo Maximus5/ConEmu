@@ -697,10 +697,12 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 			pszAllResult = pszAll;
 		}
 
+		free(p);
 		p = GetNextMacro(asMacro, false, NULL/*&pszErr*/);
 	}
 
 	// Fin
+	SafeFree(p);
 	return pszAllResult;
 }
 
