@@ -194,7 +194,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_AppProgressState = mn_AppProgress = 0;
 	mn_LastConProgrTick = mn_LastWarnCheckTick = 0;
 	hPictureView = NULL; mb_PicViewWasHidden = FALSE;
-	mh_MonitorThread = NULL; mn_MonitorThreadID = 0;
+	mh_MonitorThread = NULL; mn_MonitorThreadID = 0; mb_WasForceTerminated = FALSE;
 	mh_PostMacroThread = NULL; mn_PostMacroThreadID = 0;
 	//mh_InputThread = NULL; mn_InputThreadID = 0;
 	mp_sei = NULL;
@@ -3077,6 +3077,7 @@ void CRealConsole::ResetVarsOnStart()
 	setGuiWndPID(0, NULL); // set mn_GuiWndPID to 0
 	mn_GuiWndStyle = mn_GuiWndStylEx = 0;
 	mn_GuiAttachFlags = 0;
+	mb_WasForceTerminated = FALSE;
 }
 
 BOOL CRealConsole::StartProcess()
@@ -4760,6 +4761,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 			gpConEmu->OnRConStartedSuccess(NULL);
 			LogString(L"### Main Thread wating timeout, terminating...\n");
 			DEBUGSTRPROC(L"### Main Thread wating timeout, terminating...\n");
+			mb_WasForceTerminated = TRUE;
 			TerminateThread(mh_MonitorThread, 1);
 		}
 		else
@@ -10019,7 +10021,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 	{
 		if (!IsWindow(hConWnd))
 		{
-			_ASSERTE(FALSE && "Console window was abnormally terminated?");
+			_ASSERTE(FALSE && !mb_WasForceTerminated && "Console window was abnormally terminated?");
 			return;
 		}
 

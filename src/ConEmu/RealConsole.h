@@ -632,7 +632,7 @@ class CRealConsole
 		static DWORD WINAPI MonitorThread(LPVOID lpParameter);
 		DWORD MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCreated);
 		static int WorkerExFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep, LPCTSTR szFile, UINT nLine);
-		HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
+		HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID; BOOL mb_WasForceTerminated;
 		HANDLE mh_MonitorThreadEvent;
 		HANDLE mh_UpdateServerActiveEvent;
 		DWORD mn_ServerActiveTick1, mn_ServerActiveTick2;
