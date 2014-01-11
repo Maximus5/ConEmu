@@ -37,4 +37,8 @@ namespace ConEmuMacro
 	// Конвертация из "старого" в "новый" формат
 	// Старые макросы хранились как "Verbatim" но без префикса
 	LPWSTR ConvertMacro(LPCWSTR asMacro, BYTE FromVersion, bool bShowErrorTip = true);
+
+	#ifdef _DEBUG
+	void UnitTests();
+	#endif
 };

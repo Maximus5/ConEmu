@@ -102,6 +102,9 @@ namespace ConEmuMacro
 	LPWSTR GetNextInt(LPWSTR& rsArguments, int& rnValue);
 	void SkipWhiteSpaces(LPWSTR& rsString);
 	GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg);
+	#ifdef _DEBUG
+	bool gbUnitTest = false;
+	#endif
 
 	/* ****************************** */
 	/* ****** Macros functions ****** */
@@ -702,6 +705,61 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 }
 
 
+#ifdef _DEBUG
+void ConEmuMacro::UnitTests()
+{
+	gbUnitTest = true;
+
+	wchar_t szMacro[] = L"Function1 +1 \"Arg2\" -3 -guimacro Function2(@\"Arg1\"\"\\n999\",0x999); Function3: \"abc\\t\\e\\\"\\\"\\n999\"; InvalidArg(9q)";
+	LPWSTR pszString = szMacro;
+
+	GuiMacro* p = GetNextMacro(pszString, false, NULL);
+	_ASSERTE(p && lstrcmp(p->szFunc,L"Function1")==0);
+	_ASSERTE(p && p->argc==3 && p->argv[0].Int==1 && lstrcmp(p->argv[1].Str,L"Arg2")==0 && p->argv[2].Int==-3);
+	SafeFree(p);
+
+	p = GetNextMacro(pszString, false, NULL);
+	_ASSERTE(p && lstrcmp(p->szFunc,L"Function2")==0);
+	_ASSERTE(p && p->argc==2 && lstrcmp(p->argv[0].Str,L"Arg1\"\\n999")==0 && p->argv[1].Int==0x999);
+	SafeFree(p);
+
+	p = GetNextMacro(pszString, false, NULL);
+	_ASSERTE(p && lstrcmp(p->szFunc,L"Function3")==0);
+	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str,L"abc\t\x1B\"\"\n999")==0);
+	SafeFree(p);
+
+	p = GetNextMacro(pszString, false, NULL);
+	// InvalidArg(9q)
+	_ASSERTE(p==NULL);
+	_ASSERTE(pszString && lstrcmp(pszString, L"q)")==0);
+	SafeFree(p);
+
+	// Test some invalid declarations
+	wcscpy_c(szMacro, L"VeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongFunction(0);");
+	pszString = szMacro;
+	p = GetNextMacro(pszString, false, NULL);
+	_ASSERTE(p==NULL);
+	SafeFree(p);
+
+	wcscpy_c(szMacro, L"InvalidArg abc; Function2(\"\"\"\\n0);");
+	pszString = szMacro;
+	p = GetNextMacro(pszString, false, NULL);
+	_ASSERTE(p && lstrcmp(p->szFunc,L"InvalidArg")==0);
+	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str,L"abc; Function2(\"\"\"\\n0);")==0);
+	SafeFree(p);
+
+	wcscpy_c(szMacro, L"InvalidArg:abc");
+	pszString = szMacro;
+	p = GetNextMacro(pszString, false, NULL);
+	_ASSERTE(p && lstrcmp(p->szFunc,L"InvalidArg")==0);
+	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str,L"abc")==0);
+	SafeFree(p);
+
+	gbUnitTest = false;
+}
+#endif
+
+
 // Общая функция, для обработки любого известного макроса
 LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
 {
@@ -890,7 +948,7 @@ LPWSTR ConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bC
 	}
 	else
 	{
-		_ASSERTE(bColonDelim && "String without quotas!");
+		_ASSERTE(gbUnitTest | (bColonDelim && "String without quotas!"));
 		rsString = rsArguments;
 		rsArguments = rsArguments + _tcslen(rsArguments);
 		goto wrap;

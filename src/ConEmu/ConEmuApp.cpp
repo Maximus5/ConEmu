@@ -48,6 +48,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/TokenHelper.h"
 #include "Options.h"
 #include "ConEmu.h"
+#ifdef _DEBUG
+#include "Macro.h"
+#endif
 #include "Inside.h"
 #include "TaskBar.h"
 #include "DwmHelper.h"
@@ -2999,6 +3002,7 @@ void DebugUnitTests()
 	DebugUnitMprintfTest();
 	DebugVersionTest();
 	DebugFileExistTests();
+	ConEmuMacro::UnitTests();
 }
 #endif
 
