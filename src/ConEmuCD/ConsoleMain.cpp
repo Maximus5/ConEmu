@@ -3435,6 +3435,9 @@ int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
 
 			// Show macro result in StdOutput	
 			_wprintf(pOut->GuiMacro.sMacro);
+			// PowerShell... it does not insert linefeed
+			if (!IsOutputRedirected())
+				_wprintf(L"\n");
 			iRc = CERR_GUIMACRO_SUCCEEDED; // OK
 		}
 		ExecuteFreeResult(pOut);
