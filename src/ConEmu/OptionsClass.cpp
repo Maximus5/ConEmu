@@ -3423,6 +3423,11 @@ void CSettings::ChangeCurrentPalette(const Settings::ColorPalette* pPal, bool bC
 
 	HWND hDlg = IsWindow(ghOpWnd) ? mh_Tabs[thi_Colors] : NULL;
 
+	if (bChangeDropDown && hDlg)
+	{
+		SelectStringExact(hDlg, lbDefaultColors, pPal->pszName);
+	}
+
 	wchar_t temp[32];
 	uint nCount = countof(pPal->Colors);
 
