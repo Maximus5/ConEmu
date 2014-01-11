@@ -288,6 +288,7 @@ extern FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit;
 void ProcessDebugEvent();
 //BOOL IsUserAdmin();
 void _wprintf(LPCWSTR asBuffer);
+bool IsOutputRedirected();
 #ifdef CRTPRINTF
 void _printf(LPCSTR asBuffer);
 void _printf(LPCSTR asFormat, DWORD dwErr);

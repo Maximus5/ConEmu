@@ -9309,6 +9309,31 @@ void _printf(LPCSTR asBuffer)
 
 #endif
 
+bool IsOutputRedirected()
+{
+	static int isRedirected = 0;
+	if (isRedirected)
+	{
+		return (isRedirected == 2);
+	}
+
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD dwWritten = 0;
+
+	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+	BOOL bIsConsole = GetConsoleScreenBufferInfo(hOut, &sbi);
+	if (bIsConsole)
+	{
+		isRedirected = 1;
+		return false;
+	}
+	else
+	{
+		isRedirected = 2;
+		return true;
+	}
+}
+
 void _wprintf(LPCWSTR asBuffer)
 {
 	if (!asBuffer) return;
@@ -9317,10 +9342,7 @@ void _wprintf(LPCWSTR asBuffer)
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	DWORD dwWritten = 0;
 
-	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
-	BOOL bIsConsole = GetConsoleScreenBufferInfo(hOut, &sbi);
-
-	if (bIsConsole)
+	if (!IsOutputRedirected())
 	{
 		WriteConsoleW(hOut, asBuffer, nAllLen, &dwWritten, 0);
 	}
