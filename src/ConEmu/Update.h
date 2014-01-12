@@ -82,6 +82,7 @@ protected:
 	
 	static DWORD WINAPI CheckThreadProc(LPVOID lpParameter);
 	DWORD CheckProcInt();
+	void GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&szServer)[100], wchar_t (&szInfo)[100]);
 	
 	wchar_t* CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, HANDLE& hFile);
 	wchar_t* CreateBatchFile(LPCWSTR asPackage);
@@ -131,6 +132,8 @@ protected:
 	bool mb_RequestTerminate;
 	UpdateStep m_UpdateStep;
 	wchar_t ms_NewVersion[64], ms_CurVersion[64], ms_SkipVersion[64];
+	wchar_t ms_VerOnServer[100]; // Information about available server versions
+	wchar_t ms_CurVerInfo[100];  // Version + stable/preview/alpha
 	wchar_t ms_DefaultTitle[128];
 	bool QueryConfirmation(UpdateStep step, LPCWSTR asParm = NULL);
 	bool QueryConfirmationInt(LPCWSTR asConfirmInfo);

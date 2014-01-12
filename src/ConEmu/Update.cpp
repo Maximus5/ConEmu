@@ -74,6 +74,7 @@ CConEmuUpdate::CConEmuUpdate()
 	mpsz_PendingPackageFile = mpsz_PendingBatchFile = NULL;
 	m_UpdateStep = us_NotStarted;
 	ms_NewVersion[0] = ms_CurVersion[0] = ms_SkipVersion[0] = 0;
+	ms_VerOnServer[0] = ms_CurVerInfo[0] = 0;
 
 	lstrcpyn(ms_DefaultTitle, gpConEmu->GetDefaultTitle(), countof(ms_DefaultTitle));
 
@@ -636,6 +637,59 @@ wrap:
 	return bRc;
 }
 
+void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&szServer)[100], wchar_t (&szInfo)[100])
+{
+	wchar_t szTest[64]; // Дописать stable/preview/alpha
+	bool bDetected = false, bNewer;
+
+	wcscpy_c(szInfo, ms_CurVersion);
+
+	wcscat_c(szServer, L"Stable:\t");
+	if (GetPrivateProfileString(sectionConEmuStable, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
+	{
+		bNewer = (lstrcmp(szTest, ms_CurVersion) >= 0);
+		if (!bDetected && bNewer)
+		{
+			bDetected = true;
+			wcscat_c(szInfo, L" stable");
+		}
+		szTest[10] = 0; wcscat_c(szServer, szTest);
+		if (bNewer) wcscat_c(szServer, L" (newer)");
+	}
+	else
+		wcscat_c(szServer, L"<Not found>");
+
+	wcscat_c(szServer, L"\nPreview:\t");
+	if (GetPrivateProfileString(sectionConEmuPreview, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
+	{
+		bNewer = (lstrcmp(szTest, ms_CurVersion) >= 0);
+		if (!bDetected && bNewer)
+		{
+			bDetected = true;
+			wcscat_c(szInfo, L" preview");
+		}
+		szTest[10] = 0; wcscat_c(szServer, szTest);
+		if (bNewer) wcscat_c(szServer, L" (newer)");
+	}
+	else
+		wcscat_c(szServer, L"<Not found>");
+			
+	wcscat_c(szServer, L"\nDevel:\t");
+	if (GetPrivateProfileString(sectionConEmuDevel, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
+	{
+		bNewer = (lstrcmp(szTest, ms_CurVersion) >= 0);
+		if (!bDetected && bNewer)
+		{
+			bDetected = true;
+			wcscat_c(szInfo, L" devel");
+		}
+		szTest[10] = 0; wcscat_c(szServer, szTest);
+		if (bNewer) wcscat_c(szServer, L" (newer)");
+	}
+	else
+		wcscat_c(szServer, L"<Not found>");
+}
+
 DWORD CConEmuUpdate::CheckProcInt()
 {
 	BOOL lbDownloadRc = FALSE, lbExecuteRc = FALSE;
@@ -735,6 +789,8 @@ DWORD CConEmuUpdate::CheckProcInt()
 		goto wrap;
 	}
 
+	GetVersionsFromIni(pszUpdateVerLocation, ms_VerOnServer, ms_CurVerInfo);
+
 	if ((lstrcmpi(ms_NewVersion, ms_CurVersion) <= 0)
 		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
 		|| (!mb_ManualCallMode && (lstrcmp(ms_NewVersion, ms_SkipVersion) == 0)))
@@ -742,50 +798,13 @@ DWORD CConEmuUpdate::CheckProcInt()
 		// Новых версий нет
 		if (mb_ManualCallMode)
 		{
-			wchar_t szInfo[100], szTest[64]; // Дописать stable/preview/alpha
-			wchar_t szServer[100] = L"";
 			wchar_t szFull[300];
-			bool bDetected = false;
-
-			wcscpy_c(szInfo, ms_CurVersion);
-
-			wcscat_c(szServer, L"Stable:\t");
-			if (GetPrivateProfileString(sectionConEmuStable, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
-			{
-				if (!bDetected && (lstrcmp(szTest, ms_CurVersion) >= 0))
-					wcscat_c(szInfo, L" stable");
-				szTest[10] = 0; wcscat_c(szServer, szTest);
-			}
-			else
-				wcscat_c(szServer, L"<Not found>");
-
-			wcscat_c(szServer, L"\nPreview:\t");
-			if (GetPrivateProfileString(sectionConEmuPreview, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
-			{
-				if (!bDetected && (lstrcmp(szTest, ms_CurVersion) >= 0))
-					wcscat_c(szInfo, L" preview");
-				szTest[10] = 0; wcscat_c(szServer, szTest);
-			}
-			else
-				wcscat_c(szServer, L"<Not found>");
-			
-			wcscat_c(szServer, L"\nDevel:\t");
-			if (GetPrivateProfileString(sectionConEmuDevel, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
-			{
-				if (!bDetected && (lstrcmp(szTest, ms_CurVersion) >= 0))
-					wcscat_c(szInfo, L" devel");
-				szTest[10] = 0; wcscat_c(szServer, szTest);
-			}
-			else
-				wcscat_c(szServer, L"<Not found>");
-
-			DEBUGTEST(int iCmp = lstrcmp(szTest, ms_CurVersion));
 
 			_wsprintf(szFull, SKIPLEN(countof(szFull)) 
 				L"Your current ConEmu version is %s\n\n"
 				L"Versions on server\n%s\n\n"
 				L"No newer %s version is available",
-				szInfo, szServer,
+				ms_CurVerInfo, ms_VerOnServer,
 				(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer", 0);
 			ReportError(szFull, 0);
 		}
@@ -1566,7 +1585,7 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 	{
 	case us_ConfirmDownload:
 		{
-			cchMax = _tcslen(asParm)+255;
+			cchMax = _tcslen(asParm)+300;
 			pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
 
 			if (mb_ManualCallMode == 2)
@@ -1584,9 +1603,12 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 					asParm = pszDup;
 				}
 
-				_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\n\n%s\n%s\n\nDownload?",
+				_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\n\nVersions on server\n%s\n\n%s\n%s\n\nDownload?",
 					(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer",
-					ms_NewVersion, asParm ? asParm : L"", pszFile ? pszFile : L"");
+					ms_NewVersion,
+					ms_VerOnServer,
+					asParm ? asParm : L"",
+					pszFile ? pszFile : L"");
 				SafeFree(pszDup);
 
 				m_UpdateStep = step;
