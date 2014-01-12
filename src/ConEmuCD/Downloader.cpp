@@ -1239,7 +1239,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			if (!mn_InternetContentReady)
 			{
 				ReportMessage(dc_ErrCallback,
-					L"Invalid source file '%s', file is empty", at_Str, asSource, at_None);
+					L"Invalid source url '%s', file is empty or not found", at_Str, asSource, at_None);
 				goto wrap;
 			}
 			break;
