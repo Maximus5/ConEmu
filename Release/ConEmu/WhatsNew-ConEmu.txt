@@ -15,6 +15,32 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.12
+[*] Allow change of active VCon palette on the fly from Tab menu.
+[*] GuiMacro. Palette function to change or get palette name
+    Palette([<Cmd>[,"<NewPalette>"]]) or Palette([<Cmd>[,<PaletteIndex>]])
+      Cmd=0 - return palette from ConEmu settings
+      Cmd=1 - change palette in ConEmu settings, returns prev palette
+      Cmd=2 - return palette from current console
+      Cmd=3 - change palette in current console, returns prev palette
+[*] Updater. Don't try to extract filename from URL, use predefined format.
+[*] Shutdown server logging fixes.
+[*] Issue 1396: ConEmu was not closed if console was terminated too fast.
+[*] Remove warnings on GetVersionEx and other internal code changes.
+[*] Memory leak in macro execution.
+[*] GuiMacro. Parser refactoring, new syntax allowed.
+    * Arguments may be delimited with spaces
+    * Several macros in one cmdline may be delimited with "-GuiMacro"
+    Usage example:
+    ConEmuC.exe -GuiMacro palette 1 "<Solarized>" -guimacro WindowMaximize
+[*] ConEmuC. Add linefeed after GuiMacro output if ConEmuC is not redirected.
+[*] ConEmuC. Don't write terminating '\0' to redirected output.
+[*] Show all (stable/preview/devel) versions when "Check for updates" called
+    and no newer version was detected.
+[*] Issue 1424: Show time in status bar (optional).
+[*] Ready to new version.ini location. New (debug) switch -SetUpdateSrc <URL>.
+
+
 2014.01.09
 [%] Palette was failed to be set properly for elevated consoles.
 [%] Elevated console was hidden even if "ConEmu /visible" was called.
