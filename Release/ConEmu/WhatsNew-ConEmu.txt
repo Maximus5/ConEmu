@@ -15,6 +15,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.12a
+[*] Just for testing autoupdate from SourceForge.
+
+
 2014.01.12
 [*] Allow change of active VCon palette on the fly from Tab menu.
 [*] GuiMacro. Palette function to change or get palette name
