@@ -3749,18 +3749,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpSetCls->isDontCascade = true;
 				}
-				//else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
-				//{
-				//    setParentDisabled = true;
-				//}
-				//else if ( !klstricmp(curCommand, _T("/SetParent")) )
-				//{
-				//    gpConEmu->setParent = true;
-				//}
-				//else if ( !klstricmp(curCommand, _T("/SetParent2")) )
-				//{
-				//    gpConEmu->setParent = true; gpConEmu->setParent2 = true;
-				//}
 				else if ((!klstricmp(curCommand, _T("/Buffer")) || !klstricmp(curCommand, _T("/BufferHeight")))
 					&& i + 1 < params)
 				{
