@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2012 Maximus5
+Copyright (c) 2011-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -47,11 +47,18 @@ LPCWSTR ConEmuUpdateSettings::UpdateVerLocation()
 LPCWSTR ConEmuUpdateSettings::UpdateVerLocationDefault()
 {
 	static LPCWSTR pszDefault = 
-		//L"file://T:\\VCProject\\FarPlugin\\ConEmu\\Maximus5\\version.ini"
-		//L"http://conemu.narod.ru/version.ini"
+		//L"file://C:\\ConEmu-Update\\version.ini"
+		//L"http://conemu.ru/version.ini"
 		L"http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/version.ini"
 		;
 	return pszDefault;
+}
+
+void ConEmuUpdateSettings::SetUpdateVerLocation(LPCWSTR asNewIniLocation)
+{
+	SafeFree(szUpdateVerLocation);
+	if (asNewIniLocation && *asNewIniLocation && (lstrcmp(asNewIniLocation, L"-") != 0))
+		szUpdateVerLocation = lstrdup(asNewIniLocation);
 }
 
 void ConEmuUpdateSettings::ResetToDefaults()
@@ -185,7 +192,7 @@ void ConEmuUpdateSettings::FreePointers()
 void ConEmuUpdateSettings::LoadFrom(ConEmuUpdateSettings* apFrom)
 {
 	FreePointers();
-	
+
 	szUpdateVerLocation = (apFrom->szUpdateVerLocation && *apFrom->szUpdateVerLocation) ? lstrdup(apFrom->szUpdateVerLocation) : NULL; // ConEmu latest version location info
 	isUpdateCheckOnStartup = apFrom->isUpdateCheckOnStartup;
 	isUpdateCheckHourly = apFrom->isUpdateCheckHourly;
@@ -222,7 +229,7 @@ bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])
 		wcscpy_c(szReason, L"Update.UseBuilds is not specified");
 		return false; // Не указано, какие сборки можно загружать
 	}
-	
+
 	switch (UpdateDownloadSetup())
 	{
 	case 1:

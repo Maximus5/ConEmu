@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2012 Maximus5
+Copyright (c) 2011-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,8 @@ public:
 	wchar_t *szUpdateVerLocation; // ConEmu latest version location info
 	LPCWSTR UpdateVerLocation();
 	LPCWSTR UpdateVerLocationDefault();
-	
+	void SetUpdateVerLocation(LPCWSTR asNewIniLocation);
+
 	bool isUpdateCheckOnStartup;
 	bool isUpdateCheckHourly;
 	bool isUpdateConfirmDownload; // true-Show MessageBox, false-notify via TSA only
@@ -43,12 +44,12 @@ public:
 	BYTE isUpdateDownloadSetup; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
 	BYTE isSetupDetected; // 0-пока не проверялся, 1-установлено через Installer, пути совпали, 2-Installer не запускался
 	BYTE UpdateDownloadSetup();
-	
+
 	bool isUpdateUseProxy;
 	wchar_t *szUpdateProxy; // "Server:port"
 	wchar_t *szUpdateProxyUser;
 	wchar_t *szUpdateProxyPassword;
-	
+
 	// "%1"-archive or setup file, "%2"-ConEmu.exe folder, "%3"-x86/x64, "%4"-ConEmu PID
 	wchar_t *szUpdateExeCmdLine, *szUpdateExeCmdLineDef; // isUpdateDownloadSetup==1
 	LPCWSTR UpdateExeCmdLine();
@@ -65,7 +66,7 @@ public:
 public:
 	ConEmuUpdateSettings();
 	~ConEmuUpdateSettings();
-	
+
 	void ResetToDefaults();
 	void FreePointers();
 	void LoadFrom(ConEmuUpdateSettings* apFrom);

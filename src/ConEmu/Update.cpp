@@ -49,9 +49,9 @@ CConEmuUpdate* gpUpd = NULL;
 
 #define UPDATETHREADTIMEOUT 2500
 
-#define sectionConEmuStable  L"ConEmu_Stable"
-#define sectionConEmuPreview L"ConEmu_Preview"
-#define sectionConEmuDevel   L"ConEmu_Devel"
+#define sectionConEmuStable  L"ConEmu_Stable_2"
+#define sectionConEmuPreview L"ConEmu_Preview_2"
+#define sectionConEmuDevel   L"ConEmu_Devel_2"
 
 
 
@@ -644,7 +644,7 @@ void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&s
 
 	wcscpy_c(szInfo, ms_CurVersion);
 
-	wcscat_c(szServer, L"Stable:\t");
+	wcscpy_c(szServer, L"Stable:\t");
 	if (GetPrivateProfileString(sectionConEmuStable, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
 	{
 		bNewer = (lstrcmp(szTest, ms_CurVersion) >= 0);
@@ -673,7 +673,7 @@ void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&s
 	}
 	else
 		wcscat_c(szServer, L"<Not found>");
-			
+
 	wcscat_c(szServer, L"\nDevel:\t");
 	if (GetPrivateProfileString(sectionConEmuDevel, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
 	{
@@ -1460,7 +1460,25 @@ void CConEmuUpdate::ReportBrokenIni(LPCWSTR asSection, LPCWSTR asName, LPCWSTR a
 	wchar_t szInfo[140];
 	DWORD nErr = GetLastError();
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"[%s] \"%s\"", asSection, asName);
-	ReportError(L"Version update information is broken\n%s\n\n%s\n\nError code=%u", szInfo, asIni, nErr);
+
+	wchar_t* pszIni = (wchar_t*)asIni;
+	int nLen = lstrlen(asIni);
+	LPCWSTR pszSlash = (nLen > 50) ? wcschr(asIni+10, L'/') : NULL;
+	if (pszSlash)
+	{
+		pszIni = (wchar_t*)malloc((nLen+3)*sizeof(*pszIni));
+		if (pszIni)
+		{
+			lstrcpyn(pszIni, asIni, (pszSlash - asIni + 2));
+			_wcscat_c(pszIni, nLen+3, L"\n");
+			_wcscat_c(pszIni, nLen+3, pszSlash+1);
+		}
+	}
+
+	ReportError(L"Version update information is broken (not found)\n%s\n\n%s\n\nError code=%u", szInfo, pszIni?pszIni:L"<NULL>", nErr);
+
+	if (pszIni && pszIni != asIni)
+		free(pszIni);
 }
 
 bool CConEmuUpdate::NeedRunElevation()

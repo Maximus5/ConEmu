@@ -3211,6 +3211,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool WindowPrm = false; int WindowModeVal = 0;
 	bool LoadCfgFilePrm = false; TCHAR* LoadCfgFile = NULL;
 	bool SaveCfgFilePrm = false; TCHAR* SaveCfgFile = NULL;
+	bool UpdateSrcSetPrm = false; TCHAR* UpdateSrcSet = NULL;
 	bool SetUpDefaultTerminal = false;
 	bool ExitAfterActionPrm = false;
 #if 0
@@ -3803,6 +3804,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return 100;
 					}
 				}
+				else if (!klstricmp(curCommand, _T("/UpdateSrcSet")) && i + 1 < params)
+				{
+					// используем последний из параметров, если их несколько
+					if (!GetCfgParm(i, curCommand, UpdateSrcSetPrm, UpdateSrcSet, MAX_PATH*4, false))
+					{
+						return 100;
+					}
+				}
 				else if (!klstricmp(curCommand, _T("/SetDefTerm")))
 				{
 					SetUpDefaultTerminal = true;
@@ -3920,6 +3929,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (PalettePrm)
 	{
 		gpSet->PaletteSetActive(PaletteVal);
+	}
+
+	// Set another update location (-UpdateSrcSet <URL>)
+	if (UpdateSrcSetPrm)
+	{
+		gpSet->UpdSet.SetUpdateVerLocation(UpdateSrcSet);
 	}
 
 	gpConEmu->LogString(L"SettingsLoaded");
