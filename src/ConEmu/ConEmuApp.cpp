@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -547,7 +547,7 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*
 			pszText = (wchar_t*)calloc(cchMax,sizeof(*pszText));
 			_ASSERTE(pszText);
 		}
-		
+
 
 		if (pszText)
 		{
@@ -704,7 +704,7 @@ wchar_t* EscapeString(bool bSet, LPCWSTR pszSrc)
 		// This func is used mostly for print("...") GuiMacro, So, we don't need to set escapes on quotas
 
 		wchar_t* pszDst = pszBuf;
-		
+
 		LPCWSTR  pszCtrl = L"rntae\\\"";
 
 		while (*pszSrc)
@@ -880,7 +880,7 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote)
 			*(psz++) = *(asWinPath++);
 		}
 	}
-	
+
 	if (bAutoQuote)
 		*(psz++) = L'"';
 	*psz = 0;
@@ -1046,7 +1046,7 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 		{
 			{pAdmSid}
 		};
-		
+
 		#ifdef __GNUC__
 		HMODULE hAdvApi = GetModuleHandle(L"AdvApi32.dll");
 		CreateRestrictedToken_t CreateRestrictedToken = (CreateRestrictedToken_t)GetProcAddress(hAdvApi, "CreateRestrictedToken");
@@ -1291,7 +1291,7 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 		DisplayLastError(L"Error saving the Task : 0x%08X", hr);
 		goto wrap;
 	}
-	
+
 	// Success! Task successfully registered.
 	// Give 20 seconds for the task to start
 	nTickStart = GetTickCount();
@@ -1308,7 +1308,7 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 		Sleep(100);
 		nDuration = (GetTickCount() - nTickStart);
 	}
-	
+
 	if (taskState != TASK_STATE_RUNNING)
 	{
 		wchar_t* pszErr = lstrmerge(L"Failed to start task in user mode, timeout!\n", lpCommandLine);
@@ -1329,7 +1329,7 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 			nDuration = 0;
 			_ASSERTE(hCreated==NULL);
 			hCreated = NULL;
-			
+
 			while (nDuration <= nMaxWindowWait/*20000*/)
 			{
 				HWND hTop = NULL;
@@ -1337,7 +1337,7 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 				{
 					if (!IsWindowVisible(hTop) || (hTop == hPrevEmu))
 						continue;
-					
+
 					hCreated = hTop;
 					SetForegroundWindow(hCreated);
 					break;
@@ -1364,7 +1364,7 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 		goto wrap;
 	}
 	// Task successfully deleted
-	
+
 wrap:
 	// Clean up
 	SysFreeString(bsTaskName);
@@ -1421,7 +1421,7 @@ wrap:
     	VARIANT vtDir; vtDir.vt = VT_BSTR; vtDir.bstrVal = SysAllocString(gpConEmu->ms_ConEmuExeDir);
     	VARIANT vtOper; vtOper.vt = VT_BSTR; vtOper.bstrVal = SysAllocString(L"open");
     	VARIANT vtShow; vtShow.vt = VT_I4; vtShow.lVal = SW_SHOWNORMAL;
-		
+
 		hr = pshl->ShellExecute(bsFile, vtArgs, vtDir, vtOper, vtShow);
 		b = SUCCEEDED(hr);
 
@@ -1461,7 +1461,7 @@ wrap:
 		{
 			{pAdmSid, SE_GROUP_USE_FOR_DENY_ONLY}
 		};
-		
+
 		#ifdef __GNUC__
 		//HMODULE hAdvApi = GetModuleHandle(L"AdvApi32.dll");
 		//CreateRestrictedToken_t CreateRestrictedToken = (CreateRestrictedToken_t)GetProcAddress(hAdvApi, "CreateRestrictedToken");
@@ -1591,7 +1591,7 @@ wrap:
 				if (pdwLastError) *pdwLastError = 0;
 			}
 
-			
+
 		}
 
 		CloseHandle(hTokenDesktop);
@@ -1935,7 +1935,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 			bInAssert = false;
 			nPostCode = GetLastError();
 		}
-		
+
 		_wsprintf(szCodes, SKIPLEN(countof(szCodes)) L"\r\nPreError=%i, PostError=%i, Result=%i", nPreCode, nPostCode, nRet);
 		_wcscat_c(pszFull, cchMax, szCodes);
 	}
@@ -3315,17 +3315,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 					if (lbTurnOn)
 					{
-						//BOOL bNeedFree = FALSE;
-
-						//if (*curCommand!=_T('"') && _tcschr(curCommand, _T(' ')))
-						//{
-						//	TCHAR* psz = (TCHAR*)calloc(_tcslen(curCommand)+3, sizeof(TCHAR));
-						//	*psz = _T('"');
-						//	_tcscpy(psz+1, curCommand);
-						//	_tcscat(psz, _T("\""));
-						//	curCommand = psz;
-						//}
-
 						size_t cchMax = _tcslen(curCommand);
 						LPCWSTR pszArg1 = NULL;
 						if ((i + 1) < params)
@@ -3342,7 +3331,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						wchar_t* pszCmd = (wchar_t*)calloc(cchMax, sizeof(*pszCmd));
 						_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\"%s%s%s", curCommand,
 							pszArg1 ? L" \"" : L"", pszArg1 ? pszArg1 : L"", pszArg1 ? L"\"" : L"");
-						
+
 
 						if (0 == RegSetValueEx(hk, _T("AutoRun"), 0, REG_SZ, (LPBYTE)pszCmd,
 											(DWORD)sizeof(TCHAR)*(_tcslen(pszCmd)+1))) //-V220
@@ -3400,11 +3389,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/demote")))
 				{
-					// Этот ключик был придуман для "скрытого" запуска консоли
-					// в режиме администратора
-					// (т.е. чтобы окно UAC нормально всплывало, но не мелькало консольное окно)
-					// Но не получилось, пока требуются хэндлы процесса, а их не получается
-					// передать в НЕ приподнятый процесс (исходный ConEmu GUI).
+					// Запуск процесса (ком.строка после "/demote") в режиме простого юзера,
+					// когда текущий процесс уже запущен "под админом". "Понизить" текущие
+					// привилегии просто так нельзя, поэтому запуск идет через TaskSheduler.
 
 					if (!cmdNew || !*cmdNew)
 					{
@@ -3429,7 +3416,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 					BOOL b;
 					DWORD nErr = 0;
-					
+
 
 					b = CreateProcessDemoted(NULL, cmdNew, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
@@ -4047,8 +4034,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		return 100;
 	}
-	
-	
+
+
 	//#pragma message("Win2k: CLEARTYPE_NATURAL_QUALITY")
 	//if (ClearTypePrm)
 	//    gpSet->LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
@@ -4147,7 +4134,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				MBoxAssert(pszReady!=NULL);
 				return 100;
 			}
-			
+
 
 			if (pszDefCmd)
 			{
