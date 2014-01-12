@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,8 @@ enum CEStatusItems
 	csi_SyncInside,
 	csi_ActiveProcess,
 	csi_ConsoleTitle,
+
+	csi_Time,
 
 	csi_SizeGrip,
 
@@ -162,6 +164,9 @@ private:
 	HWND mh_Fore, mh_Focus;
 	wchar_t ms_ForeInfo[1024], ms_FocusInfo[1024];
 	bool IsWindowChanged();
+
+	SYSTEMTIME mt_LastTime;
+	bool IsTimeChanged();
 
 	bool ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly);
 

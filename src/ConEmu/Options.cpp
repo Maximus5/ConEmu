@@ -250,7 +250,7 @@ const CONEMUDEFCOLORS DefColors[] =
 Settings::Settings()
 {
 	//gpSet = this; // -- нельзя. Settings может использоваться как копия настроек (!= gpSet)
-	
+
 	ResetSettings();
 
 	// Умолчания устанавливаются в CSettings::CSettings
@@ -274,13 +274,13 @@ void Settings::ResetSettings()
 void Settings::ReleasePointers()
 {
 	SafeFree(sTabCloseMacro);
-	
+
 	SafeFree(sSafeFarCloseMacro);
 
 	SafeFree(sSaveAllMacro);
 
 	SafeFree(sRClickMacro);
-	
+
 	SafeFree(psStartSingleApp);
 	SafeFree(psStartTasksFile);
 	SafeFree(psStartTasksName);
@@ -290,7 +290,7 @@ void Settings::ReleasePointers()
 
 	FreeCmdTasks();
 	CmdTaskCount = 0;
-	
+
 	FreePalettes();
 	PaletteCount = 0;
 
@@ -299,7 +299,7 @@ void Settings::ReleasePointers()
 
 	FreeProgresses();
 	ProgressesCount = 0;
-	
+
 	UpdSet.FreePointers();
 }
 
@@ -315,10 +315,10 @@ void Settings::InitSettings()
 
 	// Освободить память, т.к. функция может быть вызвана из окна интерфейса настроек	
 	ReleasePointers();
-	
+
 	// Сброс переменных
 	ResetSettings();
-	
+
 //------------------------------------------------------------------------
 ///| Moved from CVirtualConsole |/////////////////////////////////////////
 //------------------------------------------------------------------------
@@ -415,18 +415,18 @@ void Settings::InitSettings()
 	nScrollBarDisappearDelay = 1000;
 	//isTabFrame = true;
 	//isForceMonospace = false; isProportional = false;
-	
+
 	//Issue 577: Для иероглифов - по умолчанию отключим моноширность
 	isMonospace = bIsDbcs ? 0 : 1;
 
 	mb_MinToTray = false; isAlwaysShowTrayIcon = false;
 	//memset(&rcTabMargins, 0, sizeof(rcTabMargins));
 	//isFontAutoSize = false; mn_AutoFontWidth = mn_AutoFontHeight = -1;
-	
+
 	ConsoleFont.lfHeight = 5;
 	ConsoleFont.lfWidth = 3;
 	wcscpy_c(ConsoleFont.lfFaceName, gsDefConFont);
-	
+
 	{
 		SettingsRegistry RegConColors, RegConDef;
 
@@ -493,7 +493,7 @@ void Settings::InitSettings()
 	AppStd.isCTSShiftArrowStart = true;
 	AppStd.isPasteAllLines = true;
 	AppStd.isPasteFirstLine = true;
-	
+
 	// 0 - off, 1 - force, 2 - try to detect "ReadConsole" (don't use 2 in bash)
 	AppStd.isCTSClickPromptPosition = 2; // Кликом мышки позиционировать курсор в Cmd Prompt (cmd.exe, Powershell.exe, ...) + vkCTSVkPromptClk
 	AppStd.isCTSDeleteLeftWord = 2; // Ctrl+BS - удалять слово слева от курсора
@@ -649,6 +649,7 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_ConEmuHWND] = true;
 	isStatusColumnHidden[csi_ConEmuView] = true;
 	isStatusColumnHidden[csi_ServerHWND] = true;
+	isStatusColumnHidden[csi_Time] = true;
 
 	isTabs = 1; nTabsLocation = 0; isTabIcons = true; isOneTabPerGroup = false;
 	isActivateSplitMouseOver = false;
@@ -808,7 +809,7 @@ void Settings::LoadAppSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 	int NewAppCount = 0;
 	AppSettings** NewApps = NULL;
 	//CEAppColors** NewAppColors = NULL;
-	
+
 	lbOpened = reg->OpenKey(szAppKey, KEY_READ);
 	if (lbOpened)
 	{
@@ -1066,8 +1067,8 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 	}
 
 	int NewTasksCount = 0;
-	
-	
+
+
 	lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
 	if (lbOpened)
 	{
@@ -1317,7 +1318,7 @@ bool Settings::SaveCmdTask(SettingsBase* reg, CommandTasks* pTask)
 
 		reg->Save(L"Active", nActive); // 1-based
 	}
-	
+
 	reg->Save(L"Count", iCmdCount);
 
 	return lbRc;
@@ -1441,7 +1442,7 @@ void Settings::LoadPalettes(SettingsBase* reg)
 		reg->CloseKey();
 	}
 
-	
+
 	// Predefined
 	CreatePredefinedPalettes(UserCount);
 	_ASSERTE(Palettes!=NULL);
@@ -1547,7 +1548,7 @@ void Settings::SavePalettes(SettingsBase* reg)
 			reg->CloseKey();
 		}
 	}
-	
+
 	*pszColorKey = 0;
 	lbOpened = reg->OpenKey(szColorKey, KEY_WRITE);
 	if (lbOpened)
@@ -1587,7 +1588,7 @@ void Settings::SavePalettes(SettingsBase* reg)
 	if (lbDelete)
 	{
 		delete reg;
-	
+
 		gpConEmu->Update(true);
 	}
 }
@@ -1826,7 +1827,7 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 	Palettes[nIndex]->pszName = lstrdup(asName);
 	Palettes[nIndex]->isExtendColors = AppStd.isExtendColors;
 	Palettes[nIndex]->nExtendColorIdx = AppStd.nExtendColorIdx;
-	
+
 	BOOL bTextChanged = !bNewPalette && ((Palettes[nIndex]->nTextColorIdx != AppStd.nTextColorIdx) || (Palettes[nIndex]->nBackColorIdx != AppStd.nBackColorIdx));
 	BOOL bPopupChanged = !bNewPalette && ((Palettes[nIndex]->nPopTextColorIdx != AppStd.nPopTextColorIdx) || (Palettes[nIndex]->nPopBackColorIdx != AppStd.nPopBackColorIdx));
 	Palettes[nIndex]->nTextColorIdx = AppStd.nTextColorIdx;
@@ -1870,7 +1871,7 @@ void Settings::PaletteDelete(LPCWSTR asName)
 		Palettes[PaletteCount-1] = NULL;
 		PaletteCount--;
 	}
-	
+
 	// Теперь, собственно, пишем настройки
 	SavePalettes(NULL);
 }
@@ -1977,7 +1978,7 @@ void Settings::LoadProgresses(SettingsBase* reg)
 	wchar_t* pszCmdKey = szCmdKey+lstrlen(szCmdKey);
 
 	int NewProgressesCount = 0;
-	
+
 	lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
 	if (lbOpened)
 	{
@@ -2242,8 +2243,8 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		// Debugging
 		reg->Load(L"ConVisible", isConVisible);
 		reg->Load(L"ConInMode", nConInMode);
-		
-		
+
+
 		reg->Load(L"UseInjects", isUseInjects); //MinMax(isUseInjects, BST_INDETERMINATE);
 
 		reg->Load(L"SetDefaultTerminal", isSetDefaultTerminal);
@@ -2270,7 +2271,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		#ifdef USEPORTABLEREGISTRY
 		reg->Load(L"PortableReg", isPortableReg);
 		#endif
-		
+
 		// Don't move invisible real console. This affects GUI eMenu.
 		//reg->Load(L"LockRealConsolePos", isLockRealConsolePos);
 		//reg->Load(L"DumpPackets", szDumpPackets);
@@ -2297,9 +2298,9 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		if (isMonospace > 2) isMonospace = 2;
 
 		//isMonospaceSelected = isMonospace ? isMonospace : 1; // запомнить, чтобы выбирать то что нужно при смене шрифта
-			
-			
-			
+
+
+
 		bool bCmdLine = reg->Load(L"CmdLine", &psStartSingleApp);
 		reg->Load(L"StartTasksFile", &psStartTasksFile);
 		reg->Load(L"StartTasksName", &psStartTasksName);
@@ -2367,11 +2368,11 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		// Must be explicitly defined, 0 - not allowed
 		if (mn_AntiAlias!=NONANTIALIASED_QUALITY && mn_AntiAlias!=ANTIALIASED_QUALITY && mn_AntiAlias!=CLEARTYPE_NATURAL_QUALITY)
 			mn_AntiAlias = NONANTIALIASED_QUALITY;
-		
+
 		reg->Load(L"ConsoleFontName", ConsoleFont.lfFaceName, countof(ConsoleFont.lfFaceName));
 		reg->Load(L"ConsoleFontWidth", ConsoleFont.lfWidth);
 		reg->Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
-		
+
 		reg->Load(L"UseCurrentSizePos", isUseCurrentSizePos);
 		reg->Load(L"WindowMode", _WindowMode); if (_WindowMode!=rFullScreen && _WindowMode!=rMaximized && _WindowMode!=rNormal) _WindowMode = rNormal;
 		reg->Load(L"IntegralSize", mb_IntegralSize);
@@ -2485,7 +2486,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		reg->Load(L"ClipboardConfirmEnter", isPasteConfirmEnter);
 		reg->Load(L"ClipboardConfirmLonger", nPasteConfirmLonger);
-		
+
 		reg->Load(L"FarGotoEditorOpt", isFarGotoEditor);
 		reg->Load(L"FarGotoEditorPath", &sFarGotoEditor);
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
@@ -2548,7 +2549,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		// Выделим в отдельную настройку
 		reg->Load(L"EnhanceGraphics", isEnhanceGraphics);
-		
+
 		reg->Load(L"EnhanceButtons", isEnhanceButtons);
 
 		if (isFixFarBorders == 2 && !isEnhanceGraphics)
@@ -2559,7 +2560,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		reg->Load(L"RightClick opens context menu", isRClickSendKey);
 		if (!reg->Load(L"RightClickMacro2", &sRClickMacro) || (sRClickMacro && !*sRClickMacro)) { SafeFree(sRClickMacro); }
-		
+
 		//reg->Load(L"AltEnter", isSendAltEnter);
 		//reg->Load(L"AltSpace", isSendAltSpace); //if (isSendAltSpace > 2) isSendAltSpace = 2; // когда-то был 3state, теперь - bool
 		reg->Load(L"SendAltTab", isSendAltTab);
@@ -2574,17 +2575,17 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"AltSpace", bSendAltSpace);
 		reg->Load(L"SendAltF9", bSendAltF9);
 
-		
+
 		reg->Load(L"Min2Tray", mb_MinToTray);
 		reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
-		
+
 		reg->Load(L"SafeFarClose", isSafeFarClose);
 		if (!reg->Load(L"SafeFarCloseMacro", &sSafeFarCloseMacro) || (sSafeFarCloseMacro && !*sSafeFarCloseMacro)) { SafeFree(sSafeFarCloseMacro); }
-		
+
 		reg->Load(L"FARuseASCIIsort", isFARuseASCIIsort);
 		reg->Load(L"ShellNoZoneCheck", isShellNoZoneCheck);
 		reg->Load(L"FixAltOnAltTab", isFixAltOnAltTab);
-		
+
 		reg->Load(L"BackGround Image show", isShowBgImage);
 		if (isShowBgImage!=0 && isShowBgImage!=1 && isShowBgImage!=2) isShowBgImage = 0;
 		reg->Load(L"BackGround Image", sBgImage, countof(sBgImage));
@@ -2613,7 +2614,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"ColorKeyTransparent", isColorKeyTransparent);
 		reg->Load(L"ColorKeyValue", nColorKeyValue); nColorKeyValue = nColorKeyValue & 0xFFFFFF;
 
-		
+
 		//reg->Load(L"Update Console handle", isUpdConHandle);
 		reg->Load(L"DisableMouse", isDisableMouse);
 		reg->Load(L"RSelectionFix", isRSelFix);
@@ -2621,7 +2622,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"MouseSkipMoving", isMouseSkipMoving);
 		reg->Load(L"FarHourglass", isFarHourglass);
 		reg->Load(L"FarHourglassDelay", nFarHourglassDelay);
-		
+
 		reg->Load(L"Dnd", isDragEnabled);
 		isDropEnabled = (BYTE)(isDragEnabled ? 1 : 0); // ранее "DndDrop" не было, поэтому ставим default
 		//reg->Load(L"DndLKey", nLDragKey);
@@ -2631,12 +2632,12 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"DropUseMenu", isDropUseMenu);
 		reg->Load(L"DragOverlay", isDragOverlay);
 		reg->Load(L"DragShowIcons", isDragShowIcons);
-		
+
 		reg->Load(L"DragPanel", isDragPanel); if (isDragPanel > 2) isDragPanel = 1;
 		reg->Load(L"DragPanelBothEdges", isDragPanelBothEdges);
 
 		reg->Load(L"KeyBarRClick", isKeyBarRClick);
-		
+
 		reg->Load(L"DebugSteps", isDebugSteps);				
 
 		mb_StatusSettingsWasChanged = false;
@@ -2684,15 +2685,15 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		//reg->Load(L"TabFrame", isTabFrame);
 		//reg->Load(L"TabMargins", rcTabMargins);
-		
+
 		reg->Load(L"ToolbarAddSpace", nToolbarAddSpace);
 		if (nToolbarAddSpace<0 || nToolbarAddSpace>100) nToolbarAddSpace = 0;
 
 		reg->Load(L"SlideShowElapse", nSlideShowElapse);
-		
+
 		reg->Load(L"IconID", nIconID);
-		
-		
+
+
 		reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
 		reg->Load(L"TabSkipWords", &pszTabSkipWords);
 		wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
@@ -2709,7 +2710,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
 		//reg->Load(L"HideDisabledTabs", bHideDisabledTabs);
 		reg->Load(L"ShowFarWindows", bShowFarWindows);
-		
+
 		reg->Load(L"TryToCenter", isTryToCenter);
 		reg->Load(L"CenterConsolePad", nCenterConsolePad); MinMax(nCenterConsolePad,CENTERCONSOLEPAD_MIN,CENTERCONSOLEPAD_MAX);
 
@@ -2724,11 +2725,11 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"MainTimerInactiveElapse", nMainTimerInactiveElapse); if (nMainTimerInactiveElapse>10000) nMainTimerInactiveElapse = 10000;
 
 		reg->Load(L"AffinityMask", nAffinity);
-		
+
 		//reg->Load(L"AdvLangChange", isAdvLangChange);
-		
+
 		reg->Load(L"SkipFocusEvents", isSkipFocusEvents);
-		
+
 		//reg->Load(L"LangChangeWsPlugin", isLangChangeWsPlugin);
 		reg->Load(L"MonitorConsoleLang", isMonitorConsoleLang);
 		reg->Load(L"DesktopMode", isDesktopMode);
@@ -2887,7 +2888,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 	//}
 
 	//MCHKHEAP
-	
+
 	// -- перенесено в WinMain
 	//// Переменные загружены, выполнить дополнительные действия в классе настроек
 	//gpSetCls->SettingsLoaded();
@@ -2915,7 +2916,7 @@ void Settings::SaveSettingsOnExit()
 		return;
 
 	gpConEmu->LogWindowPos(L"SaveSettingsOnExit");
-		
+
 	SettingsBase* reg = CreateSettings(NULL);
 	if (!reg)
 	{
@@ -2983,9 +2984,9 @@ void Settings::SaveSettingsOnExit()
 						}
 						StartupTask->SetGuiArg(szConfig);
 
-					
+
 						StartupTask->SetCommands(pszTabs);
-					
+
 
 						SaveCmdTask(reg, StartupTask);
 					}
@@ -3049,7 +3050,7 @@ void Settings::SaveFindOptions(SettingsBase* reg/* = NULL*/)
 			return;
 		}
 	}
-	
+
 	reg->Save(L"FindText", FindOptions.pszText);
 	reg->Save(L"FindMatchCase", FindOptions.bMatchCase);
 	reg->Save(L"FindMatchWholeWords", FindOptions.bMatchWholeWords);
@@ -3225,7 +3226,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		}*/
 		reg->Save(L"ConVisible", isConVisible);
 		reg->Save(L"ConInMode", nConInMode);
-		
+
 		reg->Save(L"UseInjects", isUseInjects);
 
 		reg->Save(L"SetDefaultTerminal", isSetDefaultTerminal);
@@ -3252,7 +3253,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		#ifdef USEPORTABLEREGISTRY
 		reg->Save(L"PortableReg", isPortableReg);
 		#endif
-		
+
 		//reg->Save(L"LockRealConsolePos", isLockRealConsolePos);
 
 		reg->Save(L"StartType", nStartType);
@@ -3311,7 +3312,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		// Если в реестре настройка есть, или изменилось значение
 		if (lbCurAutoRegisterFontsRc || (isAutoRegisterFonts != lbCurAutoRegisterFonts))
 			reg->Save(L"AutoRegisterFonts", isAutoRegisterFonts);
-			
+
 		reg->Save(L"FontAutoSize", isFontAutoSize);
 		reg->Save(L"FontSize", FontSizeY);
 		reg->Save(L"FontSizeX", FontSizeX);
@@ -3323,9 +3324,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"Anti-aliasing", mn_AntiAlias);
 		reg->Save(L"FontBold", isBold);
 		reg->Save(L"FontItalic", isItalic);
-		
+
 		reg->Save(L"Monospace", isMonospace);
-		
+
 		reg->Save(L"BackGround Image show", isShowBgImage);
 		reg->Save(L"BackGround Image", sBgImage);
 		reg->Save(L"bgImageDarker", bgImageDarker);
@@ -3397,14 +3398,14 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"CTS.RBtnAction", isCTSRBtnAction);
 		reg->Save(L"CTS.MBtnAction", isCTSMBtnAction);
 		reg->Save(L"CTS.ColorIndex", isCTSColorIndex);
-		
+
 		reg->Save(L"ClipboardConfirmEnter", isPasteConfirmEnter);
 		reg->Save(L"ClipboardConfirmLonger", nPasteConfirmLonger);
 
 		reg->Save(L"FarGotoEditorOpt", isFarGotoEditor);
 		reg->Save(L"FarGotoEditorPath", sFarGotoEditor);
 		//reg->Save(L"FarGotoEditorVk", isFarGotoEditorVk);
-		
+
 		reg->Save(L"HighlightMouseRow", isHighlightMouseRow);
 		reg->Save(L"HighlightMouseCol", isHighlightMouseCol);
 
@@ -3595,7 +3596,7 @@ DWORD Settings::isUseClink(bool abCheckVersion /*= false*/)
 		return 0;
 
 	wchar_t szClink32[MAX_PATH+30], szClink64[MAX_PATH+30];
-	
+
 	wcscpy_c(szClink32, gpConEmu->ms_ConEmuBaseDir);
 	wcscat_c(szClink32, L"\\clink\\clink_dll_x86.dll");
 	if (!FileExists(szClink32))
@@ -3846,7 +3847,7 @@ int Settings::ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abV
 		_ASSERTE(asRanges!=NULL);
 		return -1;
 	}
-	
+
 	int iRc = 0;
 	int n = 0, nMax = _tcslen(asRanges);
 	wchar_t *pszCopy = lstrdup(asRanges);
@@ -3858,7 +3859,7 @@ int Settings::ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abV
 	wchar_t *pszRange = pszCopy;
 	wchar_t *pszNext = NULL;
 	UINT cBegin, cEnd;
-	
+
 	memset(Chars, 0, sizeof(Chars));
 
 	while(*pszRange && n < nMax)
@@ -3869,7 +3870,7 @@ int Settings::ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abV
 			iRc = (int)(pszRange - asRanges);
 			goto wrap;
 		}
-			
+
 		switch (*pszNext)
 		{
 		case L';':
@@ -3893,11 +3894,11 @@ int Settings::ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abV
 
 		for (UINT i = cBegin; i <= cEnd; i++)
 			Chars[i] = abValue;
-		
+
 		if (*pszNext != L';') break;
 		pszRange = pszNext + 1;
 	}
-	
+
 	iRc = 0; // ok
 wrap:
 	if (pszCopy)
@@ -3915,7 +3916,7 @@ wchar_t* Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
 		_ASSERTE(pszRanges!=NULL);
 		return NULL;
 	}
-	
+
 	wchar_t* psz = pszRanges;
 	wchar_t* pszEnd = pszRanges + nMax;
 	UINT c = 0;
@@ -3930,15 +3931,15 @@ wchar_t* Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
 				_ASSERTE((psz + 10) < pszEnd);
 				break;
 			}
-			
+
 			UINT cBegin = (c++);
 			UINT cEnd = cBegin;
-			
+
 			while (c < countof(Chars) && Chars[c])
 			{
 				cEnd = (c++);
 			}
-			
+
 			if (cBegin == cEnd)
 			{
 				wsprintf(psz, L"%04X;", cBegin);
@@ -3954,7 +3955,7 @@ wchar_t* Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
 			c++;
 		}
 	}
-	
+
 	return pszRanges;
 }
 
@@ -3986,7 +3987,7 @@ void Settings::CheckConsoleSettings()
 		}
 		RegCloseKey(hkCon);
 	}
-	
+
 	if (nFullScr || nFullScrEmu)
 	{
 		if (gOSVer.dwMajorVersion >= 6)
@@ -4240,7 +4241,7 @@ int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)
 		{
 			return i;
 		}
-		
+
 		while (*pch)
 		{
 			wchar_t* pName = szLower;
@@ -4267,7 +4268,7 @@ int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)
 			}
 		}
 	}
-	
+
 	return -1;
 }
 
@@ -4317,7 +4318,7 @@ Settings::AppSettings* Settings::GetAppSettingsPtr(int anAppId, BOOL abCreateNew
 		//AppColors = NewAppColors;
 		SafeFree(pOld);
 		//SafeFree(pOldColors);
-		
+
 		Apps[anAppId] = (AppSettings*)calloc(1,sizeof(AppSettings));
 		//AppColors[anAppId] = (CEAppColors*)calloc(1,sizeof(CEAppColors));
 
@@ -4480,7 +4481,7 @@ COLORREF Settings::GetFadeColor(COLORREF cr)
 {
 	if (!isFadeInactive)
 		return cr;
-		
+
 	if (cr == mn_LastFadeSrc)
 		return mn_LastFadeDst;
 
@@ -4498,7 +4499,7 @@ COLORREF Settings::GetFadeColor(COLORREF cr)
 
 	mn_LastFadeSrc = cr;
 	mn_LastFadeDst = mcrFade.color;
-	
+
 	return mcrFade.color;
 }
 
@@ -4884,7 +4885,7 @@ void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
 			{
 				const wchar_t* pszNext = wcschr(apszApps, L'|');
 				if (!pszNext) pszNext = apszApps + _tcslen(apszApps);
-				
+
 				if (pszNext > apszApps)
 				{
 					wchar_t* pszLwr = psz;
@@ -5073,7 +5074,7 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 		{
 			continue;
 		}
-		
+
 		// Эти модификаторы раньше в настройке не сохранялись, для совместимости - добавляем VK_SHIFT к предыдущей
 		switch (ppHK->DescrLangID)
 		{
@@ -5152,7 +5153,7 @@ void Settings::CheckHotkeyUnique()
 		ppHK2 = gpSetCls->GetHotKeyPtr(iHK1+1);
 		if (!ppHK2)
 			break;
-		
+
 
 		if ((ppHK1->HkType == chk_Modifier) || (ConEmuHotKey::GetHotkey(ppHK1->VkMod) == 0))
 			continue;
@@ -5172,7 +5173,7 @@ void Settings::CheckHotkeyUnique()
 		}
 		if (bSkip)
 			continue;
-		
+
 		//for (ConEmuHotKey *ppHK2 = ppHK1+1; ppHK2[0].DescrLangID; ++ppHK2)
 		for (iHK2 = iHK1+1;; iHK2++)
 		{
@@ -5275,7 +5276,7 @@ void Settings::SaveHotkeys(SettingsBase* reg)
 
 		if (!*ppHK->Name)
 			continue;
-		
+
 		if ((ppHK->HkType == chk_Modifier)
 			|| (ppHK->HkType == chk_NumHost)
 			|| (ppHK->HkType == chk_ArrHost))

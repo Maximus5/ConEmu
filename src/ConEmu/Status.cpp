@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -192,6 +192,10 @@ static StatusColInfo gStatusCols[] =
 						L"Transparency",
 						L"Transparency, left click to change"},
 
+	{csi_Time,			L"StatusBar.Hide.Time",
+						L"System time",
+						L"System time"},
+
 	{csi_SizeGrip,		L"StatusBar.Hide.Resize",
 						L"Size grip",
 						L"Click and drag size grip to resize ConEmu window"},
@@ -238,6 +242,7 @@ CStatus::CStatus()
 	ZeroStruct(m_Values);
 	ZeroStruct(mrc_LastStatus);
 	ZeroStruct(mrc_LastResizeCol);
+	ZeroStruct(mt_LastTime);
 	mb_StatusResizing = false;
 
 	//mn_BmpSize; -- не важно
@@ -276,6 +281,8 @@ CStatus::CStatus()
 	// Fixed and self-draw
 	wcscpy_c(m_Values[csi_SizeGrip].sText, L"//");
 	wcscpy_c(m_Values[csi_SizeGrip].szFormat, L"//");
+	wcscpy_c(m_Values[csi_Time].sText, L"00:00:00");
+	wcscpy_c(m_Values[csi_Time].szFormat, L"00:00:00");
 
 	_ASSERTE(gpConEmu && *gpConEmu->ms_ConEmuBuild);
 	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L" %c %s%s", 
@@ -372,6 +379,8 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	IsKeyboardChanged();
 	// И статусы окна
 	IsWindowChanged();
+	// Время, если показано
+	IsTimeChanged();
 
 	if (!mh_MemDC || (nStatusWidth != mn_BmpSize.cx) || (nStatusHeight != mn_BmpSize.cy))
 	{
@@ -411,7 +420,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	HFONT hOldF = (HFONT)SelectObject(hDrawDC, hFont);
 
 	RECT rcFill = {ptUL.x, ptUL.y, ptUL.x+nStatusWidth, ptUL.y+nStatusHeight};
-	
+
 	#ifdef DUMP_STATUS_IMG
 	if (bNeedDumpImage)
 	{
@@ -493,7 +502,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 						|| (m_ClickedItemDesc > csi_Info && m_ClickedItemDesc < csi_Last))
 					? m_Values[m_ClickedItemDesc].sHelp :
 					pRCon ? pRCon->GetConStatus() : NULL;
-				
+
 				if (pszTmp && *pszTmp)
 				{
 					lstrcpyn(m_Items[nDrawCount].sText, pszTmp, countof(m_Items[nDrawCount].sText));
@@ -575,7 +584,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 					_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", (DWORD)mhk_Locale);
 					wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
 				}
-				
+
 				break;
 
 			case csi_WindowStyle:
@@ -619,7 +628,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 		{
 			m_Items[nDrawCount].TextSize.cx = max(m_Items[nDrawCount].TextSize.cx, szTemp.cx);
 		}
-		
+
 		if (nID == csi_Info)
 		{
 			m_Items[nDrawCount].TextSize.cx += szVerSize.cx; // Информация о версии
@@ -699,7 +708,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 		m_Items[0].TextSize.cx = max(nMinInfoWidth,(nStatusWidth - nTotalWidth + nMinInfoWidth));
 	}
 
-	
+
 
 	SetTextColor(hDrawDC, crText);
 	SetBkColor(hDrawDC, crBack);
@@ -975,6 +984,9 @@ void CStatus::OnTimer()
 	if (!mb_DataChanged && IsWindowChanged())
 		mb_DataChanged = true; // измения в стилях или текущем фокусе
 
+	if (!mb_DataChanged && IsTimeChanged())
+		mb_DataChanged = true; // Обновить время на статусе
+
 	if (mb_DataChanged /*&& !mb_Invalidated*/)
 		UpdateStatusBar(true);
 }
@@ -1074,7 +1086,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 					rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top,
 					SWP_NOZORDER|SWP_NOCOPYBITS);
 			}
-			
+
 			if (uMsg == WM_LBUTTONUP)
 			{
 				SetCapture(NULL);
@@ -1147,7 +1159,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			{
 				SetClickedItemDesc(csi_Last);
 			}
-			
+
 			bool bNeedUpdate = true;
 
 			#ifdef _DEBUG
@@ -1351,7 +1363,7 @@ void CStatus::ShowStatusSetupMenu()
 				if (nIdx >= 0 && nIdx < countof(gpSet->isStatusColumnHidden))
 				{
 					gpSet->isStatusColumnHidden[nIdx] = !gpSet->isStatusColumnHidden[nIdx];
-				
+
 					MENUITEMINFO mi = {sizeof(mi), MIIM_STATE|MIIM_ID};
 					mi.wID = nCmd;
 					GetMenuItemInfo(hPopup, nCmd, FALSE, &mi);
@@ -1704,6 +1716,23 @@ LPCWSTR CStatus::GetSettingName(CEStatusItems nID)
 
 	_ASSERTE(m_Values[nID].sSettingName!=NULL && m_Values[nID].sSettingName[0]!=0);
 	return m_Values[nID].sSettingName;
+}
+
+bool CStatus::IsTimeChanged()
+{
+	if (gpSet->isStatusColumnHidden[csi_Time])
+		return false; // Не показан
+
+	SYSTEMTIME st = {0};
+	GetLocalTime(&st);
+	if (st.wHour != mt_LastTime.wHour || st.wMinute != mt_LastTime.wMinute || st.wSecond != mt_LastTime.wSecond)
+	{
+		mt_LastTime = st;
+		_wsprintf(m_Values[csi_Time].sText, SKIPLEN(countof(m_Values[csi_Time].sText)) L"%u:%02u:%02u", (uint)st.wHour, (uint)st.wMinute, (uint)st.wSecond);
+		return true;
+	}
+
+	return false;
 }
 
 bool CStatus::IsKeyboardChanged()
