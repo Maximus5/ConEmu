@@ -111,72 +111,72 @@ namespace ConEmuMacro
 	/* ****************************** */
 
 	// Закрыть/прибить текущую консоль
-	LPWSTR Close(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
-	LPWSTR FindEditor(GuiMacro* p, CRealConsole* apRCon);
-	LPWSTR FindViewer(GuiMacro* p, CRealConsole* apRCon);
-	LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon);
-	LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon, bool abFromPlugin = false); // helper, это не макро-фукнция
+	LPWSTR FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	LPWSTR FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon, bool abFromPlugin); // helper, это не макро-фукнция
 	// Изменить имя основного шрифта. string
-	LPWSTR FontSetName(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR FontSetName(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Изменить размер шрифта. int nRelative, int N
-	LPWSTR FontSetSize(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR FontSetSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Change 'Highlight row/col' under mouse. Locally in current VCon.
-	LPWSTR HighlightMouse(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR HighlightMouse(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Проверка, есть ли ConEmu GUI. Функцию мог бы и сам плагин обработать, но для "общности" возвращаем "Yes" здесь
-	LPWSTR IsConEmu(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR IsConEmu(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Проверка, активна ли RealConsole
-	LPWSTR IsConsoleActive(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR IsConsoleActive(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Проверка, видима ли RealConsole
-	LPWSTR IsRealVisible(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR IsRealVisible(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Menu(Type)
-	LPWSTR Menu(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Menu(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
-	LPWSTR MsgBox(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR MsgBox(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Copy (<What>)
-	LPWSTR Copy(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Paste (<Cmd>[,"<Text>"])
-	LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// print("<Text>") - alias for Paste(2,"<Text>")
-	LPWSTR Print(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Keys("<Combo1>"[,"<Combo2>"[...]])
-	LPWSTR Keys(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Palette([<Cmd>[,"<NewPalette>"]])
-	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Progress(<Type>[,<Value>])
-	LPWSTR Progress(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Progress(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Rename(<Type>,"<Title>")
-	LPWSTR Rename(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Rename(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Select(<Type>,<DX>,<DY>)
-	LPWSTR Select(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// SetOption("<Name>",<Value>)
-	LPWSTR SetOption(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Shell (ShellExecute)
-	LPWSTR Shell(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Split
-	LPWSTR Split(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Split(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Status
-	LPWSTR Status(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Status(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Tabs
-	LPWSTR Tab(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Task
-	LPWSTR Task(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Transparency
-	LPWSTR Transparency(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Fullscreen
-	LPWSTR WindowFullscreen(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR WindowFullscreen(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Maximize
-	LPWSTR WindowMaximize(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR WindowMaximize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Минимизировать окно (можно насильно в трей) // [int nForceToTray=0/1]
-	LPWSTR WindowMinimize(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR WindowMinimize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Вернуть текущий статус: NOR/MAX/FS/MIN/TSA
-	LPWSTR WindowMode(GuiMacro* p, CRealConsole* apRCon);
+	LPWSTR WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 
 
 	/* ******************************* */
 	/* ****** Macro enumeration ****** */
 	/* ******************************* */
-	typedef LPWSTR (*MacroFunction)(GuiMacro* p, CRealConsole* apRCon);
+	typedef LPWSTR (*MacroFunction)(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	struct {
 		MacroFunction pfn;
 		LPCWSTR Alias[5]; // Some function can be called with different names (usability)
@@ -785,7 +785,7 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 			{
 				if (lstrcmpi(szFunction, Functions[f].Alias[n]) == 0)
 				{
-					pszResult = Functions[f].pfn(p, apRCon);
+					pszResult = Functions[f].pfn(p, apRCon, abFromPlugin);
 					goto executed;
 				}
 			}
@@ -975,14 +975,14 @@ wrap:
 
 // Проверка, есть ли ConEmu GUI. Функцию мог бы плагин и сам обработать,
 // но для "общности" возвращаем "Yes" здесь
-LPWSTR ConEmuMacro::IsConEmu(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::IsConEmu(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszResult = lstrdup(L"Yes");
 	return pszResult;
 }
 
 // Проверка, видима ли RealConsole
-LPWSTR ConEmuMacro::IsRealVisible(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::IsRealVisible(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszResult = NULL;
 
@@ -995,7 +995,7 @@ LPWSTR ConEmuMacro::IsRealVisible(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // Проверка, активна ли RealConsole
-LPWSTR ConEmuMacro::IsConsoleActive(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::IsConsoleActive(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszResult = NULL;
 
@@ -1007,7 +1007,7 @@ LPWSTR ConEmuMacro::IsConsoleActive(GuiMacro* p, CRealConsole* apRCon)
 	return pszResult;
 }
 
-LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszResult = NULL;
 	int nCmd = 0, nFlags = 0;
@@ -1076,7 +1076,7 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // Найти окно и активировать его. // LPWSTR asName
-LPWSTR ConEmuMacro::FindEditor(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszName = NULL;
 
@@ -1087,10 +1087,10 @@ LPWSTR ConEmuMacro::FindEditor(GuiMacro* p, CRealConsole* apRCon)
 	if (!pszName || !*pszName)
 		return lstrdup(L"");
 
-	return FindFarWindowHelper(3/*WTYPE_EDITOR*/, pszName, apRCon);
+	return FindFarWindowHelper(3/*WTYPE_EDITOR*/, pszName, apRCon, abFromPlugin);
 }
 // Найти окно и активировать его. // LPWSTR asName
-LPWSTR ConEmuMacro::FindViewer(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszName = NULL;
 
@@ -1101,10 +1101,10 @@ LPWSTR ConEmuMacro::FindViewer(GuiMacro* p, CRealConsole* apRCon)
 	if (!pszName || !*pszName)
 		return lstrdup(L"");
 
-	return FindFarWindowHelper(2/*WTYPE_VIEWER*/, pszName, apRCon);
+	return FindFarWindowHelper(2/*WTYPE_VIEWER*/, pszName, apRCon, abFromPlugin);
 }
 // Найти окно и активировать его. // int nWindowType, LPWSTR asName
-LPWSTR ConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nWindowType = 0;
 	LPWSTR pszName = NULL;
@@ -1116,7 +1116,7 @@ LPWSTR ConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon)
 	if (!pszName || !*pszName)
 		return lstrdup(L"");
 
-	return FindFarWindowHelper(nWindowType, pszName, apRCon);
+	return FindFarWindowHelper(nWindowType, pszName, apRCon, abFromPlugin);
 }
 LPWSTR ConEmuMacro::FindFarWindowHelper(
     CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3, |(Elevated=0x100), |(NotElevated=0x200), |(Modal=0x400)*/,
@@ -1151,9 +1151,9 @@ LPWSTR ConEmuMacro::FindFarWindowHelper(
 }
 
 // Fullscreen
-LPWSTR ConEmuMacro::WindowFullscreen(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::WindowFullscreen(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
-	LPWSTR pszRc = WindowMode(NULL, NULL);
+	LPWSTR pszRc = WindowMode(NULL, NULL, false);
 
 	gpConEmu->DoFullScreen();
 
@@ -1161,9 +1161,9 @@ LPWSTR ConEmuMacro::WindowFullscreen(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // WindowMaximize
-LPWSTR ConEmuMacro::WindowMaximize(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::WindowMaximize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
-	LPWSTR pszRc = WindowMode(NULL, NULL);
+	LPWSTR pszRc = WindowMode(NULL, NULL, false);
 
 	int nStyle = 0; // 
 	p->GetIntArg(0, nStyle);
@@ -1184,9 +1184,9 @@ LPWSTR ConEmuMacro::WindowMaximize(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // Минимизировать окно (можно насильно в трей) // [int nForceToTray=0/1]
-LPWSTR ConEmuMacro::WindowMinimize(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::WindowMinimize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
-	LPWSTR pszRc = WindowMode(NULL, NULL);
+	LPWSTR pszRc = WindowMode(NULL, NULL, false);
 
 	int nForceToTray = 0;
 	p->GetIntArg(0, nForceToTray);
@@ -1201,7 +1201,7 @@ LPWSTR ConEmuMacro::WindowMinimize(GuiMacro* p, CRealConsole* apRCon)
 
 // Опционально установить новый статус
 // Вернуть текущий/новый статус: NOR/MAX/FS/MIN/TSA/TLEFT/TRIGHT/THEIGHT
-LPWSTR ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPCWSTR pszRc = NULL;
 	LPWSTR pszMode = NULL;
@@ -1314,7 +1314,7 @@ LPWSTR ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // Menu(Type)
-LPWSTR ConEmuMacro::Menu(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Menu(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nType = 0;
 	p->GetIntArg(0, nType);
@@ -1347,7 +1347,7 @@ LPWSTR ConEmuMacro::Menu(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
-LPWSTR ConEmuMacro::MsgBox(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::MsgBox(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszText = NULL, pszTitle = NULL;
 	int nButtons = 0;
@@ -1384,7 +1384,7 @@ LPWSTR ConEmuMacro::MsgBox(GuiMacro* p, CRealConsole* apRCon)
 // для nRelative==0: N - высота
 // для nRelative==1: N - +-1, +-2
 // Возвращает - OK или InvalidArg
-LPWSTR ConEmuMacro::FontSetSize(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::FontSetSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	//bool lbSetFont = false;
 	int nRelative = 0, nValue = 0;
@@ -1406,7 +1406,7 @@ LPWSTR ConEmuMacro::FontSetSize(GuiMacro* p, CRealConsole* apRCon)
 
 // Изменить имя основного шрифта. string. Как бонус - можно сразу поменять и размер
 // <FontName>[,<Height>[,<Width>]]
-LPWSTR ConEmuMacro::FontSetName(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::FontSetName(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszFontName = NULL;
 	int nHeight = 0, nWidth = 0;
@@ -1427,7 +1427,7 @@ LPWSTR ConEmuMacro::FontSetName(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // Copy (<What>)
-LPWSTR ConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nWhat = 0, nFormat;
 
@@ -1457,7 +1457,7 @@ LPWSTR ConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // Paste (<Cmd>[,"<Text>"])
-LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nCommand = 0;
 	LPWSTR pszText = NULL;
@@ -1518,7 +1518,7 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // print("<Text>") - alias for Paste(2,"<Text>")
-LPWSTR ConEmuMacro::Print(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	if (!apRCon)
 		return lstrdup(L"InvalidArg");
@@ -1540,7 +1540,7 @@ LPWSTR ConEmuMacro::Print(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // Keys("<Combo1>"[,"<Combo2>"[...]])
-LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	// Наверное имеет смысл поддержать синтаксис AHK (допускаю, что многие им пользуются)
 	// Но по хорошему, проще всего разрешить что-то типа
@@ -1663,7 +1663,7 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon)
 // Cmd=1 - change palette in ConEmu settings, returns prev palette
 // Cmd=2 - return palette from current console
 // Cmd=3 - change palette in current console, returns prev palette
-LPWSTR ConEmuMacro::Palette(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	wchar_t* pszRc = NULL;
 	int nCmd = 0, iPal;
@@ -1734,7 +1734,7 @@ LPWSTR ConEmuMacro::Palette(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // Progress(<Type>[,<Value>])
-LPWSTR ConEmuMacro::Progress(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Progress(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nType = 0, nValue = 0;
 	LPWSTR pszName = NULL;
@@ -1762,7 +1762,7 @@ LPWSTR ConEmuMacro::Progress(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // Rename(<Type>,"<Title>")
-LPWSTR ConEmuMacro::Rename(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Rename(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nType = 0;
 	LPWSTR pszTitle = NULL;
@@ -1798,7 +1798,7 @@ LPWSTR ConEmuMacro::Rename(GuiMacro* p, CRealConsole* apRCon)
 	return lstrdup(L"InvalidArg");
 }
 
-LPWSTR ConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	if (!apRCon)
 		return lstrdup(L"No console");
@@ -1866,7 +1866,7 @@ LPWSTR ConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // SetOption("<Name>",<Value>)
-LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszResult = NULL;
 	LPWSTR pszName = NULL;
@@ -1940,7 +1940,7 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon)
 
 // ShellExecute
 // <oper>,<app>[,<parm>[,<dir>[,<showcmd>]]]
-LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	wchar_t* pszRc = NULL;
 	LPWSTR pszOper = NULL, pszFile = NULL, pszParm = NULL, pszDir = NULL;
@@ -2135,7 +2135,7 @@ wrap:
 	return pszRc ? pszRc : lstrdup(L"InvalidArg");
 }
 
-LPWSTR ConEmuMacro::Split(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Split(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszResult = NULL;
 	int nCmd = 0;
@@ -2187,7 +2187,7 @@ LPWSTR ConEmuMacro::Split(GuiMacro* p, CRealConsole* apRCon)
 
 // Status(0[,<Parm>]) - Show/Hide status bar, Parm=1 - Show, Parm=2 - Hide
 // Status(1[,"<Text>"]) - Set status bar text
-LPWSTR ConEmuMacro::Status(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Status(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszResult = NULL;
 	int nStatusCmd = 0;
@@ -2229,7 +2229,7 @@ LPWSTR ConEmuMacro::Status(GuiMacro* p, CRealConsole* apRCon)
 //      7 - activate console by number, parm=(one-based console index)
 //		8 - show tabs list menu (indiffirent Far/Not Far)
 // Returns "OK" on success
-LPWSTR ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszResult = NULL;
 
@@ -2344,7 +2344,7 @@ LPWSTR ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon)
 
 // Task(Index)
 // Task("Name")
-LPWSTR ConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPCWSTR pszResult = NULL;
 	LPCWSTR pszName = NULL;
@@ -2406,7 +2406,7 @@ LPWSTR ConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon)
 }
 
 // Change 'Highlight row/col' under mouse. Locally in current VCon.
-LPWSTR ConEmuMacro::HighlightMouse(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::HighlightMouse(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	if (!apRCon)
 		return lstrdup(L"NoActiveCon");
@@ -2422,7 +2422,7 @@ LPWSTR ConEmuMacro::HighlightMouse(GuiMacro* p, CRealConsole* apRCon)
 	return lstrdup(L"OK");
 }
 
-LPWSTR ConEmuMacro::Transparency(GuiMacro* p, CRealConsole* apRCon)
+LPWSTR ConEmuMacro::Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nCmd, nValue;
 	if (!p->GetIntArg(0, nCmd) || !(nCmd == 0 || nCmd == 1))
