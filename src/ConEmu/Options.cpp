@@ -3673,9 +3673,30 @@ DWORD Settings::isUseClink(bool abCheckVersion /*= false*/)
 
 bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/)
 {
-	// Если хуки запрещены ключом "/nokeyhooks"
-	if (gpConEmu->DisableKeybHooks && !abNoDisable)
-		return false;
+	if (!abNoDisable)
+	{
+		#ifdef _DEBUG
+		static int iAsked = 0;
+		if (!gpConEmu->DisableKeybHooks)
+		{
+			if (IsDebuggerPresent())
+			{
+				if (!iAsked)
+					iAsked = MessageBox(L"Debugger was detected!\nDo you want to disable hooks to avoid lags?", MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle());
+				if (iAsked == IDYES)
+					return false;
+			}
+			else
+			{
+				iAsked = 0;
+			}
+		}
+		#endif
+
+		// Hooks was disabled? Switch "/nokeyhooks" for example
+		if (gpConEmu->DisableKeybHooks)
+			return false;
+	}
 
 	return (m_isKeyboardHooks == 0) || (m_isKeyboardHooks == 1);
 }
