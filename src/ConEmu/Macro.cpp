@@ -599,7 +599,7 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 			bool lbCvtVbt = false;
 			a.Type = (asString[0] == L'@' && asString[1] == L'"') ? gmt_VStr : gmt_Str;
 
-			_ASSERTE(gbUnitTest || (asString[0] == L'"') || (asString[0] == L'@' && asString[1] == L'"'));
+			_ASSERTE(gbUnitTest || (asString[0] == L'"') || (asString[0] == L'@' && asString[1] == L'"') || (Args.empty() && chTerm == L':'));
 			_ASSERTE(asString[0]!=L':');
 
 			if (abConvert && (asString[0] == L'"'))
@@ -791,6 +791,7 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 			}
 		}
 
+		_ASSERTE(FALSE && "Unknown macro function!");
 		pszResult = lstrdup(L"UnknownMacro"); // Неизвестная функция
 
 	executed:
