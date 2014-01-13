@@ -1543,8 +1543,6 @@ int CShellProc::PrepareExecuteParms(
 	// Some additional checks for "Default terminal" mode
 	if (gbPrepareDefaultTerminal)
 	{
-		_ASSERTEX(aCmd == eCreateProcess || (asAction && lstrcmpi(asAction,L"runas")==0)); // Пока расчитано только на него
-
 		if (aCmd == eCreateProcess)
 		{
 			if (anCreateFlags && ((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS)))
@@ -1555,9 +1553,10 @@ int CShellProc::PrepareExecuteParms(
 		}
 		else if (aCmd == eShellExecute)
 		{
-			// We need to hook only "Run as administrator" action
+			// We need to hook only "Run as administrator" action, and only console applications (Subsystem will be checked below)
 			if (!asAction || (lstrcmpi(asAction, L"runas") != 0))
 			{
+				// This may be, for example, starting of "Taskmgr.exe" from "explorer.exe"
 				return 0;
 			}
 			// Skip some executions
