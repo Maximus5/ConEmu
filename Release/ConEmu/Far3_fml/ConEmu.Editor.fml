@@ -13,7 +13,7 @@ const ConEmu   = "4b675d80-1d4a-4ea9-8436-fdc23f2fc14b"
 farmacro
   Descr="ConEmu: Auto switch to Editor Tab"
   Key="F3 F4"
-  Area="Shell"
+  Area="Shell Search"
   Cond="PanelType:0"
 {{
   %k = akey(1,0);

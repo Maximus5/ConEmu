@@ -9,7 +9,7 @@ const ConEmu   = 0x43454D55
 
 macro Descr="ConEmu: Auto switch to Editor Tab"
   Key="F3 F4"
-  Area="Shell"
+  Area="Shell Search"
   Cond="PanelType:0"
 {{
   %k = Key(#AKey);

@@ -9,7 +9,7 @@
 local ConEmu   = "4b675d80-1d4a-4ea9-8436-fdc23f2fc14b"
 
 Macro {
-  area="Shell"; key="F3 F4"; flags="NoPluginPanels"; description="ConEmu: Auto switch to Editor Tab"; action = function()
+  area="Shell Search"; key="F3 F4"; flags="NoPluginPanels"; description="ConEmu: Auto switch to Editor Tab"; action = function()
 
   k = akey(1,1);
 
