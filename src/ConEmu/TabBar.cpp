@@ -567,6 +567,8 @@ LRESULT TabBarClass::TabHitTest(bool abForce /*= false*/, int* pnOverTabHit /*= 
 
 LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	int nOverTabHit = -1;
+
 	switch(uMsg)
 	{
 		case WM_WINDOWPOSCHANGING:
@@ -615,7 +617,6 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 					|| gpSet->isCaptionHidden())
 				&& gpSet->isTabs)
 			{
-				int nOverTabHit = -1;
 				if (TabHitTest(true, &nOverTabHit)==HTCAPTION)
 				{
 					POINT ptScr; GetCursorPos(&ptScr);
@@ -649,7 +650,7 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 
 					return lRc;
 				}
-				else if ((nOverTabHit >= 0) && ((uMsg == WM_LBUTTONDOWN) || (uMsg == WM_LBUTTONUP)))
+				else if ((nOverTabHit >= 0) && ((uMsg == WM_LBUTTONDOWN) || (uMsg == WM_LBUTTONUP) || (uMsg == WM_RBUTTONDOWN) || (uMsg == WM_RBUTTONUP)))
 				{
 					if (uMsg == WM_LBUTTONDOWN)
 					{
@@ -660,16 +661,25 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 							//gpConEmu->mp_TabBar->SelectTab(nOverTabHit);
 						}
 					}
+					else if (uMsg == WM_RBUTTONUP)
+					{
+						gpConEmu->mp_TabBar->OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), true);
+					}
 				}
 			}
 
 			break;
 
 		case WM_MBUTTONUP:
-			//if (uMsg == WM_MBUTTONUP)
+			if (gpSet->isCaptionHidden() && gpSet->isTabs)
 			{
-				gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+				if ((TabHitTest(true, &nOverTabHit) != HTCAPTION) && (nOverTabHit >= 0))
+				{
+					gpConEmu->mp_TabBar->OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), true);
+					break;
+				}
 			}
+			gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			break;
 	}
 
@@ -1691,7 +1701,7 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 }
 
-void TabBarClass::OnMouse(int message, int x, int y)
+void TabBarClass::OnMouse(int message, int x, int y, bool yCenter /*= false*/)
 {
 	if (!this)
 		return;
@@ -1699,6 +1709,13 @@ void TabBarClass::OnMouse(int message, int x, int y)
 	if (!_active)
 	{
 		return;
+	}
+
+	// After clicks above exact tab (Fullscreen or caption hidden)
+	if (yCenter)
+	{
+		RECT rcClient = {}; GetWindowRect(mh_Tabbar, &rcClient);
+		y = (rcClient.top + rcClient.bottom) >> 1;
 	}
 
 	if ((message == WM_MBUTTONUP)
