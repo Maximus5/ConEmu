@@ -39,7 +39,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CHILD_DESK_MODE
 #define REGPREPARE_EXTERNAL
 //#define CATCH_TOPMOST_SET
-#undef DEBUG_BK_COLORS
 
 #include "Header.h"
 #include "About.h"
@@ -281,9 +280,6 @@ CConEmuMain::CConEmuMain()
 
 	mb_CommCtrlsInitialized = false;
 	mh_AboutDlg = NULL;
-
-	mcr_BackBrush = 0;
-	mh_BackBrush = NULL;
 
 	//HeapInitialize(); - уже
 	//#define D(N) (1##N-100)
@@ -2055,29 +2051,23 @@ BOOL CConEmuMain::CreateMainWindow()
 		return FALSE;
 	}
 
-	HBRUSH hBlackBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	#if defined(_DEBUG) && defined(DEBUG_BK_COLORS)
-	hBlackBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	mh_BackBrush = CreateSolidBrush(255);
-	#endif
-
 	// 2009-06-11 Возможно, что CS_SAVEBITS приводит к глюкам отрисовки
 	// банально непрорисовываются некоторые части экрана (драйвер видюхи глючит?)
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC/*|CS_SAVEBITS*/, CConEmuMain::MainWndProc, 0, 16,
 	                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
-	                 mh_BackBrush ? mh_BackBrush : hBlackBrush,
+	                 NULL /*(HBRUSH)COLOR_BACKGROUND*/,
 	                 NULL, gsClassNameParent, hClassIconSm
 	                };// | CS_DROPSHADOW
 
 	WNDCLASSEX wcWork = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC/*|CS_SAVEBITS*/, CConEmuMain::WorkWndProc, 0, 16,
 	                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
-	                 mh_BackBrush ? mh_BackBrush : hBlackBrush,
+	                 NULL /*(HBRUSH)COLOR_BACKGROUND*/,
 	                 NULL, gsClassNameWork, hClassIconSm
 	                };// | CS_DROPSHADOW
 
 	WNDCLASSEX wcBack = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC/*|CS_SAVEBITS*/, CConEmuChild::BackWndProc, 0, 16,
 	                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
-	                 mh_BackBrush ? mh_BackBrush : hBlackBrush,
+	                 NULL /*(HBRUSH)COLOR_BACKGROUND*/,
 	                 NULL, gsClassNameBack, hClassIconSm
 	                };// | CS_DROPSHADOW
 
@@ -11289,21 +11279,6 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 	// First ShowWindow forced to use nCmdShow. This may be weird...
 	SkipOneShowWindow();
-
-	#if 0
-	//TODO: This may be excess. Also, Work area is already covered by VCon
-	const Settings::ColorPalette* pPal = gpSet->PaletteGet(-1);
-	if (pPal && (!mh_BackBrush || (pPal->Colors[pPal->nBackColorIdx] != mcr_BackBrush)))
-	{
-		mcr_BackBrush = pPal->Colors[pPal->nBackColorIdx];
-		HBRUSH hNewBrush = CreateSolidBrush(mcr_BackBrush);
-		SetClassLongPtr(ghWnd, GCLP_HBRBACKGROUND, (LONG_PTR)hNewBrush);
-		SetClassLongPtr(ghWndWork, GCLP_HBRBACKGROUND, (LONG_PTR)hNewBrush);
-		if (mh_BackBrush)
-			DeleteObject(mh_BackBrush);
-		mh_BackBrush = hNewBrush;
-	}
-	#endif
 
 	if (!abReceived)
 	{

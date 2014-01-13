@@ -525,8 +525,6 @@ class CConEmuMain :
 	protected:
 		friend class CConEmuCtrl;
 		friend class CRunQueue;
-		COLORREF mcr_BackBrush;
-		HBRUSH mh_BackBrush;
 		DWORD mn_MainThreadId;
 		// Registered messages
 		UINT mn__FirstAppMsg;
