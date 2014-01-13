@@ -201,6 +201,20 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 {
 	DontEnable de;
 
+	wchar_t szText[512], *pszText;
+	int nBtn = IDCANCEL;
+
+	static LONG lCounter = 0;
+	LONG l = InterlockedIncrement(&lCounter);
+	if (l > 1)
+	{
+		if (l == 2)
+		{
+			_ASSERTE(FALSE && "Confirm stack overflow!");
+		}
+		goto wrap;
+	}
+
 	if (Parm.rpLeaveConEmuOpened) *Parm.rpLeaveConEmuOpened = false;
 
 	// Use TaskDialog?
@@ -324,7 +338,8 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 				case IDCANCEL: // user cancelled the dialog
 				case IDYES:
 				case IDNO:
-					return nButtonPressed;
+					nBtn = nButtonPressed;
+					goto wrap;
 
 				default:
 		    		_ASSERTE(nButtonPressed==IDCANCEL||nButtonPressed==IDYES||nButtonPressed==IDNO);
@@ -335,7 +350,6 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 	}
 
 	// Иначе - через стандартный MessageBox
-	wchar_t szText[512], *pszText;
 
 	if (Parm.asSingleConsole)
 	{
@@ -370,20 +384,19 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 
 	if (Parm.nConsoles > 1)
 	{
-		//if (rpPanes)
-		//	wcscat_c(szText, L"\r\nProceed with close group?");
-		//else
-			wcscat_c(szText,
-				L"\r\nPress button <No> to close active console only\r\n"
-				L"\r\nProceed with close ConEmu?");
+		wcscat_c(szText,
+			L"\r\nPress button <No> to close active console only\r\n"
+			L"\r\nProceed with close ConEmu?");
 	}
 
-	int nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), (/*rpPanes ? MB_OKCANCEL :*/ (Parm.nConsoles>1) ? MB_YESNOCANCEL : MB_OKCANCEL)|MB_ICONEXCLAMATION);
+	nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), (/*rpPanes ? MB_OKCANCEL :*/ (Parm.nConsoles>1) ? MB_YESNOCANCEL : MB_OKCANCEL)|MB_ICONEXCLAMATION);
 
 	if (nBtn == IDOK)
 	{
 		nBtn = IDYES; // для однозначности
 	}
 
+wrap:
+	InterlockedDecrement(&lCounter);
 	return nBtn;
 }
