@@ -1590,6 +1590,7 @@
 			<File RelativePath="..\common\common.hpp" />
 			<File RelativePath="..\common\ConEmuCheck.h" />
 			<File RelativePath="..\common\ConEmuPipeMode.h" />
+			<File RelativePath="..\common\ConsoleMixAttr.h" />
 			<File RelativePath="..\common\ConsoleRead.h" />
 			<File RelativePath="..\common\defines.h" />
 			<File RelativePath="..\common\ExecPty.h" />
@@ -1641,6 +1642,7 @@
 			<File RelativePath="..\common\CmdLine.cpp" />
 			<File RelativePath="..\common\Common.cpp" />
 			<File RelativePath="..\common\ConEmuCheck.cpp" />
+			<File RelativePath="..\common\ConsoleMixAttr.cpp" />
 			<File RelativePath="..\common\ConsoleRead.cpp" />
 			<File RelativePath="..\common\ExecPty.cpp" />
 			<File RelativePath="..\common\Execute.cpp" />

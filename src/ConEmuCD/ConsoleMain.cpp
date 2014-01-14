@@ -74,6 +74,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MMap.h"
 #include "../common/RConStartArgs.h"
 #include "../common/ConsoleAnnotation.h"
+#include "../common/ConsoleMixAttr.h"
 #include "../common/ConsoleRead.h"
 #include "../common/WinConsole.h"
 #include "../common/CmdLine.h"
@@ -7874,6 +7875,17 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 			}
 		}
 
+		/*
+					// If some cells was marked as "RowIds" - we need to change them manually
+					SHORT nFromRow = csbi5.dwCursorPosition.Y, nRow = 0;
+					CEConsoleMark Mark;
+					while ((nFromRow >= 0) && FindConsoleRowId(ghConOut, nFromRow, &nRow, &Mark))
+					{
+						nFromRow = nRow - 1;
+						// Check attributes
+					}
+		*/
+
 		if (bOk && bCsbi5 && bTextChanged && in.SetConColor.ReFillConsole && csbi5.dwSize.X && csbi5.dwSize.Y)
 		{
 			// Считать из консоли текущие атрибуты (построчно/поблочно)
@@ -7897,7 +7909,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 					DWORD i = 0, iStarted = 0, iWritten;
 					while (i < nReady)
 					{
-						if (pnAttrs[i] == OldText)
+						if ((pnAttrs[i] & 0xFF) == OldText)
 						{
 							if (!bStarted)
 							{

@@ -42,6 +42,7 @@ $(OBJDIR)\SrvPipes.obj \
 $(OBJDIR)\ExecPty.obj \
 $(OBJDIR)\execute.obj \
 $(OBJDIR)\ConEmuCheck.obj \
+$(OBJDIR)\ConsoleMixAttr.obj \
 $(OBJDIR)\ConsoleRead.obj \
 $(OBJDIR)\CmdLine.obj \
 $(OBJDIR)\Common.obj \
@@ -303,6 +304,8 @@ $(OBJDIR)\ExecPty.obj: ../common/ExecPty.cpp ../common/ExecPty.h
 $(OBJDIR)\execute.obj: ../common/execute.cpp ../common/execute.h
 
 $(OBJDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp ../common/ConEmuCheck.h
+
+$(OBJDIR)\ConsoleMixAttr.obj: ../common/ConsoleMixAttr.cpp ../common/ConsoleMixAttr.h
 
 $(OBJDIR)\ConsoleRead.obj: ../common/ConsoleRead.cpp ../common/ConsoleRead.h
 

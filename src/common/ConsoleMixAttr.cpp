@@ -87,23 +87,16 @@ WORD AddConAttr[16] =
 	CON_ATTR_PART_15
 };
 
-WORD ReadConsoleRowId(HANDLE hConOut, SHORT nRow, CEConsoleMark* pMark/*=NULL*/)
+WORD GetRowIdFromAttrs(const WORD* pnAttrs4)
 {
-	WORD  nAttrs[4];
-	COORD crLeft = {0, nRow};
-	DWORD nRead = 0;
-
-	if (!ReadConsoleOutputAttribute(hConOut, nAttrs, countof(nAttrs), crLeft, &nRead) || (nRead != countof(nAttrs)))
-		return 0;
-
-	if (!(nAttrs[0] & CHANGED_CONATTR) && !(nAttrs[1] & CHANGED_CONATTR) && !(nAttrs[2] & CHANGED_CONATTR) && !(nAttrs[3] & CHANGED_CONATTR))
+	if (!(pnAttrs4[0] & CHANGED_CONATTR) && !(pnAttrs4[1] & CHANGED_CONATTR) && !(pnAttrs4[2] & CHANGED_CONATTR) && !(pnAttrs4[3] & CHANGED_CONATTR))
 		return 0;
 
 	WORD RowId = 0;
-	for (size_t i = 0; i < countof(nAttrs); i++)
+	for (size_t i = 0; i < ROWID_USED_CELLS; i++)
 	{
 		RowId = (RowId<<4);
-		switch (nAttrs[i] & CHANGED_CONATTR)
+		switch (pnAttrs4[i] & CHANGED_CONATTR)
 		{
 		case CON_ATTR_PART_0:
 			break;
@@ -143,6 +136,23 @@ WORD ReadConsoleRowId(HANDLE hConOut, SHORT nRow, CEConsoleMark* pMark/*=NULL*/)
 		}
 	}
 
+	return RowId;
+}
+
+WORD ReadConsoleRowId(HANDLE hConOut, SHORT nRow, CEConsoleMark* pMark/*=NULL*/)
+{
+	_ASSERTE(ROWID_USED_CELLS==4);
+	WORD  nAttrs[ROWID_USED_CELLS];
+	COORD crLeft = {0, nRow};
+	DWORD nRead = 0;
+
+	if (!ReadConsoleOutputAttribute(hConOut, nAttrs, ROWID_USED_CELLS, crLeft, &nRead) || (nRead != ROWID_USED_CELLS))
+		return 0;
+
+	WORD RowId = GetRowIdFromAttrs(nAttrs);
+	if (!RowId)
+		return 0;
+
 	if (pMark)
 	{
 		_ASSERTEX(countof(pMark->CellAttr)==countof(nAttrs));
@@ -155,17 +165,18 @@ WORD ReadConsoleRowId(HANDLE hConOut, SHORT nRow, CEConsoleMark* pMark/*=NULL*/)
 
 bool WriteConsoleRowId(HANDLE hConOut, SHORT nRow, WORD RowId, CEConsoleMark* pMark/*=NULL*/)
 {
-	WORD  nAttrs[4], nNewAttrs[4];
+	_ASSERTE(ROWID_USED_CELLS==4);
+	WORD  nAttrs[ROWID_USED_CELLS], nNewAttrs[ROWID_USED_CELLS];
 	COORD crLeft = {0, nRow};
 	DWORD nRead = 0, nWrite = 0;
 
-	if (!ReadConsoleOutputAttribute(hConOut, nAttrs, countof(nAttrs), crLeft, &nRead) || (nRead != countof(nAttrs)))
+	if (!ReadConsoleOutputAttribute(hConOut, nAttrs, ROWID_USED_CELLS, crLeft, &nRead) || (nRead != ROWID_USED_CELLS))
 		return false;
 
 	if (RowId)
 	{
 		WORD RowIdPart = RowId;
-		for (size_t i = 0, j = (countof(nAttrs)-1); i < countof(nAttrs); i++, j--)
+		for (size_t i = 0, j = (ROWID_USED_CELLS-1); i < ROWID_USED_CELLS; i++, j--)
 		{
 			nNewAttrs[j] = (nAttrs[j] & ~CHANGED_CONATTR) | AddConAttr[RowIdPart&0xF];
 			RowIdPart = (RowIdPart>>4);
@@ -173,13 +184,13 @@ bool WriteConsoleRowId(HANDLE hConOut, SHORT nRow, WORD RowId, CEConsoleMark* pM
 	}
 	else
 	{
-		for (size_t i = 0; i < countof(nAttrs); i++)
+		for (size_t i = 0; i < ROWID_USED_CELLS; i++)
 		{
 			nNewAttrs[i] = (nAttrs[i] & ~CHANGED_CONATTR);
 		}
 	}
 
-	if (!WriteConsoleOutputAttribute(hConOut, nNewAttrs, countof(nNewAttrs), crLeft, &nWrite) || (nWrite != countof(nAttrs)))
+	if (!WriteConsoleOutputAttribute(hConOut, nNewAttrs, ROWID_USED_CELLS, crLeft, &nWrite) || (nWrite != ROWID_USED_CELLS))
 		return false;
 
 	if (pMark)
@@ -201,9 +212,11 @@ bool FindConsoleRowId(HANDLE hConOut, const CEConsoleMark& Mark, SHORT nFromRow,
 	COORD crLeft = {0, nFromRow};
 	DWORD nRead = 0;
 
+	_ASSERTE(countof(Test.CellAttr)==ROWID_USED_CELLS);
+
 	for (; crLeft.Y >= 0; crLeft.Y--)
 	{
-		if (!ReadConsoleOutputAttribute(hConOut, Test.CellAttr, countof(Test.CellAttr), crLeft, &nRead) || (nRead != countof(Test.CellAttr)))
+		if (!ReadConsoleOutputAttribute(hConOut, Test.CellAttr, ROWID_USED_CELLS, crLeft, &nRead) || (nRead != ROWID_USED_CELLS))
 			return false;
 
 		if (Test.Raw == Mark.Raw)
