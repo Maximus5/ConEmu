@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012 Maximus5
+Copyright (c) 2012-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 
+#include "AboutDlg.h"
 #include "ConEmu.h"
 #include "ConEmuCtrl.h"
 #include "FindDlg.h"
@@ -672,7 +673,7 @@ bool CConEmuCtrl::key_About(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, 
 	if (TestOnly)
 		return true;
 	//KeyUp!
-	gpConEmu->OnInfo_About();
+	ConEmuAbout::OnInfo_About();
 	return true;
 }
 

@@ -933,6 +933,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="Attach.cpp" />
     <ClCompile Include="Background.cpp" />
     <ClCompile Include="BaseDragDrops.cpp" />
@@ -995,6 +996,7 @@
     <ClCompile Include="..\common\WinObjects.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AboutDlg.h" />
     <ClInclude Include="Attach.h" />
     <ClInclude Include="Background.h" />
     <ClInclude Include="BaseDragDrops.h" />

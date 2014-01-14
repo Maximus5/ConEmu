@@ -105,7 +105,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define pAboutLicense \
 	L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n" \
-	CECOPYRIGHTSTRING_W /*\x00A9 2009-2011 ConEmu.Maximus5@gmail.com*/ L"\r\n" \
+	CECOPYRIGHTSTRING_W /*© 2009-2014 ConEmu.Maximus5@gmail.com*/ L"\r\n" \
 	L"\r\n" \
 	L"Permission to use, copy, modify, and distribute this software for any\r\n" \
 	L"purpose with or without fee is hereby granted, provided that the above\r\n" \

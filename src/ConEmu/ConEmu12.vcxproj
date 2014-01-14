@@ -891,6 +891,7 @@
   <ItemGroup>
     <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
+    <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="Attach.cpp" />
     <ClCompile Include="Background.cpp" />
     <ClCompile Include="BaseDragDrops.cpp" />
@@ -958,6 +959,7 @@
     <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\ConEmuCD\ConsoleHelp.h" />
     <ClInclude Include="About.h" />
+    <ClInclude Include="AboutDlg.h" />
     <ClInclude Include="Attach.h" />
     <ClInclude Include="Background.h" />
     <ClInclude Include="BaseDragDrops.h" />

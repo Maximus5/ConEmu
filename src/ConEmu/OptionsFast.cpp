@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
+#include "AboutDlg.h"
 #include "Options.h"
 #include "OptionsFast.h"
 #include "ConEmu.h"
@@ -329,7 +330,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 					return 1;
 				}
 			case stHomePage:
-				gpConEmu->OnInfo_HomePage();
+				ConEmuAbout::OnInfo_HomePage();
 				return 1;
 			}
 		}

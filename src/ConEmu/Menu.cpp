@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include "header.h"
 //
+#include "AboutDlg.h"
 #include "Attach.h"
 #include "ConEmu.h"
 #include "FindDlg.h"
@@ -2164,10 +2165,10 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			return 0;
 
 		case ID_DEBUG_TRAP:
-			gpConEmu->OnInfo_ThrowTrapException(true);
+			ConEmuAbout::OnInfo_ThrowTrapException(true);
 			return 0;
 		case ID_DEBUG_TRAP2:
-			gpConEmu->OnInfo_ThrowTrapException(false);
+			ConEmuAbout::OnInfo_ThrowTrapException(false);
 			return 0;
 		case ID_DEBUG_ASSERT:
 			Assert(FALSE && "This is test assertion");
@@ -2193,19 +2194,19 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			
 		case ID_HELP:
 		{
-			gpConEmu->OnInfo_Help();
+			ConEmuAbout::OnInfo_Help();
 			return 0;
 		} // case ID_HELP:
 		
 		case ID_HOMEPAGE:
 		{
-			gpConEmu->OnInfo_HomePage();
+			ConEmuAbout::OnInfo_HomePage();
 			return 0;
 		}
 		
 		case ID_REPORTBUG:
 		{
-			gpConEmu->OnInfo_ReportBug();
+			ConEmuAbout::OnInfo_ReportBug();
 			return 0;
 		}
 		
@@ -2226,20 +2227,20 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 		case ID_DONATE_LINK:
 		{
-			gpConEmu->OnInfo_Donate();
+			ConEmuAbout::OnInfo_Donate();
 			return 0;
 		}
 
 		case ID_ABOUT:
 		{
-			gpConEmu->OnInfo_About();
+			ConEmuAbout::OnInfo_About();
 			return 0;
 		}
 
 		case ID_WHATS_NEW_FILE:
 		case ID_WHATS_NEW_WWW:
 		{
-			gpConEmu->OnInfo_WhatsNew((wParam == ID_WHATS_NEW_FILE));
+			ConEmuAbout::OnInfo_WhatsNew((wParam == ID_WHATS_NEW_FILE));
 			return 0;
 		}
 

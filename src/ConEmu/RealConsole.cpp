@@ -4864,20 +4864,6 @@ void CRealConsole::StopThread(BOOL abRecreating)
 	DEBUGSTRPROC(L"Leaving StopThread\n");
 }
 
-
-//void CRealConsole::Box(LPCTSTR szText, DWORD nBtns)
-//{
-//#ifdef _DEBUG
-//	_ASSERTE(FALSE);
-//#endif
-//	int nRet = MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), nBtns|MB_ICONSTOP|MB_SYSTEMMODAL);
-//
-//	if ((nBtns & 0xF) == MB_RETRYCANCEL)
-//	{
-//		gpConEmu->OnInfo_ReportBug();
-//	}
-//}
-
 bool CRealConsole::InScroll()
 {
 	if (!this || !mp_VCon || !isBufferHeight())

@@ -157,7 +157,6 @@ class CConEmuMain :
 	private:
 		struct
 		{
-			DWORD nLastCrashReported;
 			bool  bBlockChildrenDebuggers;
 		} m_DbgInfo;
 	private:
@@ -582,12 +581,6 @@ class CConEmuMain :
 		virtual void OnUseTheming(bool abEnableTheming);
 		virtual void OnUseDwm(bool abEnableDwm);
 
-		//
-		void InitCommCtrls();
-		bool mb_CommCtrlsInitialized;
-		HWND mh_AboutDlg;
-		static INT_PTR CALLBACK aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-
 		bool ExecuteProcessPrepare();
 		void ExecuteProcessFinished(bool bOpt);
 
@@ -811,14 +804,6 @@ class CConEmuMain :
 		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom = NULL, BOOL abForceChild = FALSE);
 		LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 		void OnHideCaption();
-		void OnInfo_About(LPCWSTR asPageName = NULL);
-		void OnInfo_Donate();
-		void OnInfo_WhatsNew(bool bLocal);
-		void OnInfo_Help();
-		void OnInfo_HomePage();
-		void OnInfo_ReportBug();
-		void OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg);
-		void OnInfo_ThrowTrapException(bool bMainThread);
 		LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnKeyboardHook(DWORD VkMod);
 		LRESULT OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

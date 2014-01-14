@@ -84,8 +84,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CTRL(x) ((x)&0x1F)
 
 
-#define CECOPYRIGHTSTRING_A "(c) 2009-2013, ConEmu.Maximus5@gmail.com"
-#define CECOPYRIGHTSTRING_W L"\x00A9 2009-2013 ConEmu.Maximus5@gmail.com"
+#define CECOPYRIGHTSTRING_A "(c) 2009-2014, ConEmu.Maximus5@gmail.com"
+#define CECOPYRIGHTSTRING_W L"© 2009-2014 ConEmu.Maximus5@gmail.com"
 
 #define CEHOMEPAGE     L"http://conemu-maximus5.googlecode.com"
 #define CEHOMEPAGE_A    "http://conemu-maximus5.googlecode.com"

@@ -27,6 +27,7 @@ RES_FILE = "$(INTDIR)\$(NAME).res"
 #PCH_FILE = "$(INTDIR)\headers.pch"
 
 LINK_OBJS = \
+$(INTDIR)\AboutDlg.obj \
 $(INTDIR)\Attach.obj \
 $(INTDIR)\Background.obj \
 $(INTDIR)\BaseDragDrops.obj \
@@ -239,6 +240,8 @@ MSG=echo generating $@
 #ConEmuC.rc: $@.m4 farversion.m4 tools.m4 vbuild.m4 Far.exe.manifest res.hpp
 #	$(MSG)
 #	$(M4) $@.m4 > $@
+
+$(INTDIR)\AboutDlg.obj: AboutDlg.cpp AboutDlg.h About.h ../ConEmuCD/ConsoleHelp.h
 
 $(INTDIR)\Attach.obj: Attach.cpp Attach.h ../common/ProcList.h
 

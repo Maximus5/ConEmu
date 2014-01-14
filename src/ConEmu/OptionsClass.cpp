@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuCD/ExitCodes.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuPlugin/FarDefaultMacros.h"
+#include "AboutDlg.h"
 #include "Background.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
@@ -5608,7 +5609,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case cbGuiMacroHelp:
-			gpConEmu->OnInfo_About(L"Macro");
+			ConEmuAbout::OnInfo_About(L"Macro");
 			break;
 			
 		case cbUseWinArrows:
@@ -8816,7 +8817,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 					{
 					case tCmdGroupCommands:
 						// Some controls are processed personally
-						gpConEmu->OnInfo_About(L"-new_console");
+						ConEmuAbout::OnInfo_About(L"-new_console");
 						break;
 					default:
 						gpSetCls->mp_HelpPopup->ShowItemHelp(hi);

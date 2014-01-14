@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MMap.h"
 #include "../common/execute.h"
 //#include "../common/TokenHelper.h"
+#include "AboutDlg.h"
 #include "Options.h"
 #include "ConEmu.h"
 #ifdef _DEBUG
@@ -1971,7 +1972,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 			CopyToClipboard(pszFull);
 		}
 
-		gpConEmu->OnInfo_ReportCrash(szFullInfo[0] ? szFullInfo : NULL);
+		ConEmuAbout::OnInfo_ReportCrash(szFullInfo[0] ? szFullInfo : NULL);
 	}
 
 	if (pszFull && pszFull != szAssertInfo)
@@ -3032,7 +3033,7 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 	if (nBtn == IDYES)
 	{
 		CopyToClipboard(szFull);
-		gpConEmu->OnInfo_ReportCrash(NULL);
+		ConEmuAbout::OnInfo_ReportCrash(NULL);
 	}
 
 	return EXCEPTION_EXECUTE_HANDLER;
@@ -3836,7 +3837,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/?")) || !klstricmp(curCommand, _T("/h")) || !klstricmp(curCommand, _T("/help")))
 				{
 					//MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);
-					gpConEmu->OnInfo_About();
+					ConEmuAbout::OnInfo_About();
 					free(cmdLine);
 					return -1;
 				}
