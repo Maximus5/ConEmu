@@ -1315,7 +1315,7 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 	{
 		if (((i == 0) && (op != eCenter)) || ((i != 0) && (op == eCenter)))
 		{
-			// Bacground part
+			// Background part
 			if (bgBmpSize.X>bgX && bgBmpSize.Y>bgY)
 			{
 				BitBlt((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, bgX, bgY, SRCCOPY);
