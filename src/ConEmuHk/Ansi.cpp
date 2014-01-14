@@ -197,7 +197,7 @@ bool CEAnsi::IsOutputHandle(HANDLE hFile, DWORD* pMode /*= NULL*/)
 		if (!GetConsoleScreenBufferInfoCached(hFile, &csbi, TRUE))
 		{
 			nErrCode = GetLastError();
-			_ASSERTE(nErrCode == ERROR_INVALID_HANDLE);
+			_ASSERTEX(nErrCode == ERROR_INVALID_HANDLE);
 			ghLastAnsiNotCapable = hFile;
 		}
 		else
@@ -422,11 +422,11 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 {
 	if (!buf || !cchLen)
 	{
-		_ASSERTE((buf && cchLen) || (gszClinkCmdLine && buf));
+		_ASSERTEX((buf && cchLen) || (gszClinkCmdLine && buf));
 	}
 	else if (iUnknown == 1)
 	{
-		_ASSERTE(FALSE && "Unknown Esc Sequence!");
+		_ASSERTEX(FALSE && "Unknown Esc Sequence!");
 	}
 
 	wchar_t szDbg[200];
@@ -734,7 +734,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuf
 		else
 		{
 			DWORD newLen = MultiByteToWideChar(cp, nFlags, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, buf, len);
-			_ASSERTE(newLen==len);
+			_ASSERTEX(newLen==len);
 			buf[newLen] = 0; // ASCII-Z, хотя, если функцию WriteConsoleW зовет приложение - "\0" может и не быть...
 
 			DWORD nWideWritten = 0;
@@ -749,7 +749,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuf
 
 badchar:
 	// По идее, сюда попадать не должны. Ошибка в параметрах?
-	_ASSERTE((lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput)) || (curBadUnicode||badUnicode));
+	_ASSERTEX((lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput)) || (curBadUnicode||badUnicode));
 	lbRc = F(WriteConsoleA)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
 
 fin:
@@ -964,11 +964,11 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 	{
 		if (*gsPrevAnsiPart == 27)
 		{
-			_ASSERTE(gnPrevAnsiPart < 79);
+			_ASSERTEX(gnPrevAnsiPart < 79);
 			INT_PTR nCurPrevLen = gnPrevAnsiPart;
 			INT_PTR nAdd = min((lpEnd-lpBuffer),(INT_PTR)countof(gsPrevAnsiPart)-nCurPrevLen-1);
 			// Need to check buffer overflow!!!
-			_ASSERTE((INT_PTR)countof(gsPrevAnsiPart)>(nCurPrevLen+nAdd));
+			_ASSERTEX((INT_PTR)countof(gsPrevAnsiPart)>(nCurPrevLen+nAdd));
 			wmemcpy(gsPrevAnsiPart+nCurPrevLen, lpBuffer, nAdd);
 			gsPrevAnsiPart[nCurPrevLen+nAdd] = 0;
 
@@ -1004,15 +1004,15 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						}
 						lpReStart = gsPrevAnsiPart;
 					}
-					_ASSERTE(lpReStart == gsPrevAnsiPart);
+					_ASSERTEX(lpReStart == gsPrevAnsiPart);
 					lpStart = lpBuffer; // nothing to dump before Esc-sequence
-					_ASSERTE((lpReNext - gsPrevAnsiPart) >= gnPrevAnsiPart);
+					_ASSERTEX((lpReNext - gsPrevAnsiPart) >= gnPrevAnsiPart);
 					WARNING("Проверить!!!");
 					lpNext = lpBuffer + (lpReNext - gsPrevAnsiPart - gnPrevAnsiPart);
 				}
 				else
 				{
-					_ASSERTE((lpReNext - gsPrevAnsiPart) >= gnPrevAnsiPart);
+					_ASSERTEX((lpReNext - gsPrevAnsiPart) >= gnPrevAnsiPart);
 					lpStart = lpNext = lpBuffer;
 				}
 				gnPrevAnsiPart = 0;
@@ -1023,16 +1023,16 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 			else if (iCall == 2)
 			{
 				gnPrevAnsiPart = nCurPrevLen+nAdd;
-				_ASSERTE(gsPrevAnsiPart[nCurPrevLen+nAdd] == 0);
+				_ASSERTEX(gsPrevAnsiPart[nCurPrevLen+nAdd] == 0);
 				iRc = 2;
 				goto wrap2;
 			}
 
-			_ASSERTE((iCall == 1) && "Invalid esc sequence, need dump to screen?");
+			_ASSERTEX((iCall == 1) && "Invalid esc sequence, need dump to screen?");
 		}
 		else
 		{
-			_ASSERTE(*gsPrevAnsiPart == 27);
+			_ASSERTEX(*gsPrevAnsiPart == 27);
 		}
 	}
 
@@ -1245,7 +1245,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 				{
 					if (ReEntrance)
 					{
-						_ASSERTE(!ReEntrance && "Need to be checked!");
+						_ASSERTEX(!ReEntrance && "Need to be checked!");
 
 						// gsPrevAnsiPart2 stored for debug purposes only (fully excess)
 						wmemmove(gsPrevAnsiPart2, lpEscStart, nLeft);
@@ -1261,7 +1261,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 				}
 				else
 				{
-					_ASSERTE(FALSE && "Too long Esc-sequence part, Need to be checked!");
+					_ASSERTEX(FALSE && "Too long Esc-sequence part, Need to be checked!");
 				}
 
 				lpStart = lpEscStart;
@@ -1374,15 +1374,25 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const int LinesCount)
 	if (gDisplayOpt.ScrollRegion)
 	{
 		_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>gDisplayOpt.ScrollStart);
-		TopLine = max(gDisplayOpt.ScrollStart-1,0);
-		BottomLine = max(gDisplayOpt.ScrollEnd-1,0);
+		// ScrollStart & ScrollEnd are 1-based line indexes
+		// relative to VISIBLE area, these are not absolute buffer coords
+		TopLine = gDisplayOpt.ScrollStart-1+csbi.srWindow.Top;
+		BottomLine = gDisplayOpt.ScrollEnd-1+csbi.srWindow.Top;
 	}
 	else
 	{
-		TODO("What we need to scroll? Buffer or visible rect?");
-		TopLine = 0;
-		BottomLine = csbi.srWindow.Bottom - csbi.srWindow.Top;
+		TopLine = csbi.srWindow.Top;
+		BottomLine = csbi.srWindow.Bottom;
 	}
+
+	if (BottomLine < TopLine)
+	{
+		_ASSERTEX(FALSE && "Invalid (empty) scroll region");
+		return FALSE;
+	}
+
+	// Apply default color before scrolling!
+	ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
 
 	ExtScrollScreenParm scrl = {
 		sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
@@ -1422,7 +1432,7 @@ void CEAnsi::EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, INT_PTR cchMaxLen
 
 	if (cchMaxLen < 0)
 	{
-		_ASSERTE(cchMaxLen >= 0);
+		_ASSERTEX(cchMaxLen >= 0);
 		cchMaxLen = 0;
 	}
 	if (cchMaxLen > 1)
@@ -1556,7 +1566,7 @@ void CEAnsi::ReportConsoleTitle()
 {
 	wchar_t sTitle[MAX_PATH*2+6] = L"\x1B]l";
 	wchar_t* p = sTitle+3;
-	_ASSERTE(lstrlen(sTitle)==3);
+	_ASSERTEX(lstrlen(sTitle)==3);
 
 	DWORD nTitle = GetConsoleTitle(sTitle+3, MAX_PATH*2);
 	p = sTitle+3+min(nTitle,MAX_PATH*2);
@@ -1687,7 +1697,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 		}
 		else //if (iEsc != 2) // 2 - means "Esc part stored in buffer"
 		{
-			_ASSERTE(iEsc == 0);
+			_ASSERTEX(iEsc == 0);
 			if (lpNext > lpBuffer)
 			{
 				if (lbApply)
@@ -1722,7 +1732,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 		}
 		else
 		{
-			_ASSERTE(lpNext > lpBuffer);
+			_ASSERTEX(lpNext > lpBuffer);
 			++lpBuffer;
 		}
 	}
@@ -1810,7 +1820,7 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 				break;
 			#ifdef _DEBUG
 			default:
-				_ASSERTE(FALSE && "Missed (sub)case value!");
+				_ASSERTEX(FALSE && "Missed (sub)case value!");
 			#endif
 			}
 
@@ -1961,8 +1971,8 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		LinesInsert(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1);
 		break;
 	case L'M':
-		// Delete P s Line(s) (default = 1) (DL).
-		_ASSERTEX(FALSE && "'Delete N lines', need to be checked");
+		// Delete N Line(s) (default = 1) (DL).
+		// This is actually "Scroll UP N line(s) inside defined scrolling region"
 		LinesDelete(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1);
 		break;
 
@@ -2382,7 +2392,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 	case L'4':
 		// the following is suggestion for exact palette colors
 		// bug we are using standard xterm palette or truecolor 24bit palette
-		_ASSERTE(Code.ArgSZ[1] == L';');
+		_ASSERTEX(Code.ArgSZ[1] == L';');
 		break;
 
 	case L'9':
@@ -2578,7 +2588,7 @@ BOOL /*WINAPI*/ CEAnsi::OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 	#if 0
 	if (!(dwMode & ENABLE_PROCESSED_OUTPUT))
 	{
-		_ASSERTE((dwMode & ENABLE_PROCESSED_OUTPUT)==ENABLE_PROCESSED_OUTPUT);
+		_ASSERTEX((dwMode & ENABLE_PROCESSED_OUTPUT)==ENABLE_PROCESSED_OUTPUT);
 	}
 	#endif
 

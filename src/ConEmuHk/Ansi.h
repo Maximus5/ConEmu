@@ -232,7 +232,7 @@ protected:
 		BOOL  AutoLfNl; // LF/NL (default off): Automatically follow echo of LF, VT or FF with CR.
 		//
 		BOOL  ScrollRegion;
-		SHORT ScrollStart, ScrollEnd; // 1-based line indexes
+		SHORT ScrollStart, ScrollEnd; // 1-based line indexes (relative to VISIBLE area, these are not absolute buffer coords)
 	}; // gDisplayOpt;
 	// Bad thing again...
 	static DisplayOpt gDisplayOpt;

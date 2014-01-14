@@ -1435,8 +1435,9 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			int nY1 = min(max((SrcLineTop - srWork.Top),0),nMaxRows);
 			int nY2 = min(max((SrcLineBottom - srWork.Top),0),nMaxRows);
 			int nRows = nY2 - nY1 + 1;
+			int nFromBottom = -nDir;
 
-			if (nRows > (-nDir))
+			if (nRows > 0)
 			{
 				if (nY1 > (-nDir))
 				{
@@ -1445,12 +1446,12 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 				}
 
 				WARNING("OPTIMIZE: Не нужно двигать заполненную нулями память. Нет атрибутов в строке - и не дергаться.");
-				memmove(pTrueColorStart, pTrueColorStart+(-nDir*nWindowWidth),
+				memmove(pTrueColorStart, pTrueColorStart+(nY1*nWindowWidth),
 					(nRows * nWindowWidth * sizeof(*pTrueColorStart)));
 
 				if (Info->Flags & essf_ExtOnly)
 				{
-					TODO("Чем заливать");
+					_ASSERTEX(FALSE && "Need to be checked. Чем заливать и какой регион");
 					AnnotationInfo AIInfo = {};
 					for (int i = (nWindowHeight+nDir)*nWindowWidth; i < nMaxCell; i++)
 					{
@@ -1460,7 +1461,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			}
 			else
 			{
-				_ASSERTEX(nRows > (-nDir));
+				_ASSERTEX(nRows > 0);
 			}
 		}
 
@@ -1486,8 +1487,8 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 			if (nDir < 0)
 			{
-				cr0.Y = max(0,(csbi.dwSize.Y - 1 + nDir));
-				int nLines = csbi.dwSize.Y - cr0.Y;
+				cr0.Y = max(0,(SrcLineBottom + nDir + 1));
+				int nLines = SrcLineBottom - cr0.Y + 1;
 				ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput,
 					Info->FillAttr, Info->FillChar, cr0, csbi.dwSize.X * nLines};
 				ExtFillOutput(&f);
