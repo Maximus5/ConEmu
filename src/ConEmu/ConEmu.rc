@@ -1346,7 +1346,7 @@ CAPTION "Dialog"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,322,187,50,14
-    ICON            IDI_ICON1,IDC_STATIC,7,7,20,20,WS_DISABLED
+    ICON            IDI_ICON1,pIconCtrl,7,7,20,20,WS_DISABLED
     CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,366,16
     EDITTEXT        tAboutText,7,50,365,131,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
     LTEXT           "Console emulation program. Visit home page:",stConEmuAbout,104,7,268,8
@@ -1601,6 +1601,8 @@ IDB_RIGHTCLICKING       BITMAP                  "Circles.bmp"
 IDB_COPY4               BITMAP                  "Copy4.bmp"
 IDB_COPY24              BITMAP                  "Copy24.bmp"
 IDB_SCROLL              BITMAP                  "Scroll.bmp"
+DONATE                  BITMAP                  "donate.bmp"
+FLATTR                  BITMAP                  "flattr.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //

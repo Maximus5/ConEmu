@@ -40,4 +40,7 @@ namespace ConEmuAbout
 	void OnInfo_ThrowTrapException(bool bMainThread);
 
 	void InitCommCtrls();
+
+	void DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId);
+	bool DonateBtns_Process(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam, INT_PTR& lResult);
 };

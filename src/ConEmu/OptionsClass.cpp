@@ -448,6 +448,16 @@ int CSettings::UpdateDpi()
 	return _dpiY;
 }
 
+int CSettings::QueryDpi()
+{
+	// Can Windows 8 change DPI on-the-fly? (Retina and multi-monitor issues)
+	if (IsWindows8)
+	{
+		UpdateDpi();
+	}
+	return _dpiY;
+}
+
 void CSettings::ReleaseHotkeys()
 {
 	if (mp_HotKeys)

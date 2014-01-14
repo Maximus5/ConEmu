@@ -1083,6 +1083,8 @@
   <ItemGroup>
     <Image Include="Copy24.bmp" />
     <Image Include="Copy4.bmp" />
+    <Image Include="donate.bmp" />
+    <Image Include="flattr.bmp" />
     <Image Include="Scroll.bmp" />
     <Image Include="Shield16.bmp" />
   </ItemGroup>

@@ -316,6 +316,8 @@ class CSettings
 		TOOLINFO tiConFontBalloon;
 		int _dpiY;
 		int UpdateDpi();
+	public:
+		int QueryDpi();
 	private:
 		static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh = false);
 	protected:

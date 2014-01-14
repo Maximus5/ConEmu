@@ -538,5 +538,11 @@
     <Image Include="Shield16.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="donate.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="flattr.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
