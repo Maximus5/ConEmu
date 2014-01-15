@@ -15,6 +15,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.14a
+[%] Fix. Autoupdate msg box info fixed.
+
+
 2014.01.14
 [%] Color artifacts in some cases after changing palette on-the-fly (cmd.exe).
 [%] Fix. ANSI. Wrong behavior of 'ESC [ n M' (VIM & xterm256).
