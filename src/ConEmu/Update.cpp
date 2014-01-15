@@ -644,50 +644,33 @@ void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&s
 
 	wcscpy_c(szInfo, ms_CurVersion);
 
-	wcscpy_c(szServer, L"Stable:\t");
-	if (GetPrivateProfileString(sectionConEmuStable, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
-	{
-		bNewer = (lstrcmp(szTest, ms_CurVersion) >= 0);
-		if (!bDetected && bNewer)
-		{
-			bDetected = true;
-			wcscat_c(szInfo, L" stable");
-		}
-		szTest[10] = 0; wcscat_c(szServer, szTest);
-		if (bNewer) wcscat_c(szServer, L" (newer)");
-	}
-	else
-		wcscat_c(szServer, L"<Not found>");
+	struct {
+		LPCWSTR szSect, szPref, szName;
+	} Vers[] = {
+		{sectionConEmuStable,    L"Stable:\t",  L" stable" },
+		{sectionConEmuPreview, L"\nPreview:\t", L" preview"},
+		{sectionConEmuDevel,   L"\nDevel:\t",   L" devel"  }
+	};
 
-	wcscat_c(szServer, L"\nPreview:\t");
-	if (GetPrivateProfileString(sectionConEmuPreview, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
-	{
-		bNewer = (lstrcmp(szTest, ms_CurVersion) >= 0);
-		if (!bDetected && bNewer)
-		{
-			bDetected = true;
-			wcscat_c(szInfo, L" preview");
-		}
-		szTest[10] = 0; wcscat_c(szServer, szTest);
-		if (bNewer) wcscat_c(szServer, L" (newer)");
-	}
-	else
-		wcscat_c(szServer, L"<Not found>");
+	szServer[0] = 0;
 
-	wcscat_c(szServer, L"\nDevel:\t");
-	if (GetPrivateProfileString(sectionConEmuDevel, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
+	for (size_t i = 0; i < countof(Vers); i++)
 	{
-		bNewer = (lstrcmp(szTest, ms_CurVersion) >= 0);
-		if (!bDetected && bNewer)
+		wcscat_c(szServer, Vers[i].szPref);
+		if (GetPrivateProfileString(Vers[i].szSect, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
 		{
-			bDetected = true;
-			wcscat_c(szInfo, L" devel");
+			bNewer = (lstrcmp(szTest, ms_CurVersion) >= 0);
+			if (!bDetected && bNewer)
+			{
+				bDetected = true;
+				wcscat_c(szInfo, Vers[i].szName);
+			}
+			szTest[10] = 0; wcscat_c(szServer, szTest);
+			if (bNewer) wcscat_c(szServer, (lstrcmp(szTest, ms_CurVersion) > 0) ? L" (newer)" : L" (equal)");
 		}
-		szTest[10] = 0; wcscat_c(szServer, szTest);
-		if (bNewer) wcscat_c(szServer, L" (newer)");
+		else
+			wcscat_c(szServer, L"<Not found>");
 	}
-	else
-		wcscat_c(szServer, L"<Not found>");
 }
 
 DWORD CConEmuUpdate::CheckProcInt()
