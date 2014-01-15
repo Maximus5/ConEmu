@@ -1451,12 +1451,20 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 				if (Info->Flags & essf_ExtOnly)
 				{
-					_ASSERTEX(FALSE && "Need to be checked. Чем заливать и какой регион");
+					_ASSERTE(FALSE && "Continue to fill");
+					#if !defined(_DEBUG)
 					AnnotationInfo AIInfo = {};
 					for (int i = (nWindowHeight+nDir)*nWindowWidth; i < nMaxCell; i++)
 					{
 						pTrueColorStart[i] = AIInfo;
 					}
+					#else
+					cr0.Y = max(0,(nWindowHeight+nDir));
+					int nLines = (-nDir);
+					ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput,
+						Info->FillAttr, Info->FillChar, cr0, csbi.dwSize.X * nLines};
+					ExtFillOutput(&f);
+					#endif
 				}
 			}
 			else
