@@ -6251,6 +6251,8 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 	//"Completed: 25%"
 	//Rar
 	// ...       Vista x86\Vista x86.7z         6%
+	//aria2c
+	//[#1 SIZE:0B/9.1MiB(0%) CN:1 SPD:1.2KiBs ETA:2h1m11s]
 	int nIdx = 0;
 	bool bAllowDot = false;
 	short nProgress = -1;
@@ -6300,6 +6302,14 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 			if (pszCurLine[nIdx] == L' ') nIdx++;
 
 			bAllowDot = true;
+		}
+		else if (!wcsncmp(pszCurLine, L"[#", 2))
+		{
+			wchar_t p = wcsstr(pszCurLine, L"%) ");
+			while (p > pszCurLine && p[-1] != L'(')
+				p--;
+			if (p > pszCurLine)
+				nIdx = p - pszCurLine;
 		}
 
 		// Известных префиксов не найдено, проверяем, может процент есть в конце строки?
