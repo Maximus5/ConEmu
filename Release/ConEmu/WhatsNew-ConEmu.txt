@@ -15,6 +15,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.14
+[%] Color artifacts in some cases after changing palette on-the-fly (cmd.exe).
+[%] Fix. ANSI. Wrong behavior of 'ESC [ n M' (VIM & xterm256).
+[*] GuiMacro. Add 'Palette' description to About dialog.
+[*] Some code refactoring.
+
+
 2014.01.13
 [%] Quake contents was not painted during animation (Revert 4d4fec3f35).
 [%] GuiMacro. Regression. Remove lags during Far F4 shell macro.
