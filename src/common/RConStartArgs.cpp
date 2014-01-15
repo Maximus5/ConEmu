@@ -216,7 +216,7 @@ RConStartArgs::RConStartArgs()
 }
 
 #ifndef CONEMU_MINIMAL
-bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
+bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /*= false*/)
 {
 	_ASSERTE(args!=NULL);
 
@@ -247,6 +247,9 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 
 	for (CopyValues* p = values; p->ppDst; p++)
 	{
+		if (abConcat && *p->ppDst && !p->pSrc)
+			continue;
+
 		SafeFree(*p->ppDst);
 		if (p->pSrc)
 		{
@@ -258,6 +261,8 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 
 	this->bRunAsRestricted = args->bRunAsRestricted;
 	this->bRunAsAdministrator = args->bRunAsAdministrator;
+	if (abConcat && this->pszUserName && !args->pszUserName)
+		goto SkipUserName;
 	SafeFree(this->pszUserName); //SafeFree(this->pszUserPassword);
 	SafeFree(this->pszDomain);
 	//SafeFree(this->pszUserProfile);
@@ -280,23 +285,34 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 		if (!this->pszUserName /*|| !*this->szUserPassword*/)
 			return false;
 	}
+SkipUserName:
 
-	this->bBackgroundTab = args->bBackgroundTab;
-	this->bForegroungTab = args->bForegroungTab;
+	if (!abConcat)
+		this->bBackgroundTab = args->bBackgroundTab;
+	if (!abConcat)
+		this->bForegroungTab = args->bForegroungTab;
 	this->bNoDefaultTerm = args->bNoDefaultTerm; _ASSERTE(args->bNoDefaultTerm == FALSE);
-	this->bBufHeight = args->bBufHeight;
-	this->nBufHeight = args->nBufHeight;
-	this->eConfirmation = args->eConfirmation;
-	this->bForceUserDialog = args->bForceUserDialog;
+	if (!abConcat || args->bBufHeight)
+	{
+		this->bBufHeight = args->bBufHeight;
+		this->nBufHeight = args->nBufHeight;
+	}
+	if (!abConcat || args->eConfirmation)
+		this->eConfirmation = args->eConfirmation;
+	if (!abConcat)
+		this->bForceUserDialog = args->bForceUserDialog;
 	this->bInjectsDisable = args->bInjectsDisable;
 	this->bForceNewWindow = args->bForceNewWindow;
 	this->bLongOutputDisable = args->bLongOutputDisable;
 	this->bOverwriteMode = args->bOverwriteMode;
 	this->nPTY = args->nPTY;
 
-	this->eSplit = args->eSplit;
-	this->nSplitValue = args->nSplitValue;
-    this->nSplitPane = args->nSplitPane;
+	if (!abConcat)
+	{
+		this->eSplit = args->eSplit;
+		this->nSplitValue = args->nSplitValue;
+		this->nSplitPane = args->nSplitPane;
+	}
 
 	return true;
 }
@@ -321,7 +337,7 @@ RConStartArgs::~RConStartArgs()
 }
 
 #ifndef CONEMU_MINIMAL
-wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
+wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 {
 	wchar_t* pszFull = NULL;
 	size_t cchMaxLen =
@@ -724,7 +740,12 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					case 0:
 						lbReady = true;
 						break;
-						
+
+					case L':':
+						_ASSERTE((cOpt!=L':') && "Bad -new_console switches");
+						lbReady = true;
+						break;
+
 					case L'b':
 						// b - background, не активировать таб
 						bBackgroundTab = TRUE; bForegroungTab = FALSE;

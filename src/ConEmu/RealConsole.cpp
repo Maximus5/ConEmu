@@ -7691,7 +7691,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 		SafeFree(pszInfo);
 	}
 
-	bool bCopied = m_Args.AssignFrom(args);
+	bool bCopied = m_Args.AssignFrom(args, true);
 
 	// Don't leave security information (passwords) in memory
 	if (args->pszUserName)

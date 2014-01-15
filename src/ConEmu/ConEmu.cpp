@@ -8480,6 +8480,18 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 	FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
 	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
 	RConStartArgs args;
+
+	if (aRecreate == cra_RecreateTab)
+	{
+		CVConGuard VCon;
+		if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
+		{
+			const RConStartArgs& CurArgs = VCon->RCon()->GetArgs();
+			args.AssignFrom(&CurArgs);
+			//args.pszSpecialCmd = CurArgs.CreateCommandLine();
+		}
+	}
+
 	args.aRecreate = aRecreate;
 	args.bRunAsAdministrator = abRunAs;
 

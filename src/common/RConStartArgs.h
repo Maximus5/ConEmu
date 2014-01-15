@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -110,10 +110,9 @@ struct RConStartArgs
 #ifndef CONEMU_MINIMAL
 	bool CheckUserToken(HWND hPwd);
 	HANDLE CheckUserToken();
-	wchar_t* CreateCommandLine(bool abForTasks = false);
-	bool AssignFrom(const struct RConStartArgs* args);
+	wchar_t* CreateCommandLine(bool abForTasks = false) const;
+	bool AssignFrom(const struct RConStartArgs* args, bool abConcat = false);
 #endif
-
 
 
 #ifdef _DEBUG
