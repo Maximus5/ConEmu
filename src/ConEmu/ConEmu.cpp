@@ -2133,13 +2133,15 @@ BOOL CConEmuMain::CreateMainWindow()
 	if (gpSetCls->isAdvLogging)
 	{
 		wchar_t szCreate[128];
-		_wsprintf(szCreate, SKIPLEN(countof(szCreate)) L"Creating main window.%s%s%s Parent=x%08X X=%i Y=%i W=%i H=%i style=x%08X exStyle=x%08X Mode=%u",
+		_wsprintf(szCreate, SKIPLEN(countof(szCreate)) L"Current display logical DPI=%u", gpSetCls->QueryDpi());
+		LogString(szCreate);
+		_wsprintf(szCreate, SKIPLEN(countof(szCreate)) L"Creating main window.%s%s%s Parent=x%08X X=%i Y=%i W=%i H=%i style=x%08X exStyle=x%08X Mode=%s",
 			gpSet->isQuakeStyle ? L" Quake" : L"",
 			this->mp_Inside ? L" Inside" : L"",
 			gpSet->isDesktopMode ? L" Desktop" : L"",
 			(DWORD)hParent,
 			this->wndX, this->wndY, nWidth, nHeight, style, styleEx,
-			gpSet->isQuakeStyle ? gpSet->_WindowMode : WindowMode);
+			GetWindowModeName(gpSet->isQuakeStyle ? (ConEmuWindowMode)gpSet->_WindowMode : WindowMode));
 		LogString(szCreate);
 	}
 
@@ -5194,10 +5196,11 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			inMode = (WindowMode != wmNormal) ? wmNormal : wmMaximized; // FullScreen на Desktop-е невозможен
 	}
 
+	wchar_t szInfo[128];
+
 	if (gpSetCls->isAdvLogging)
 	{
-		wchar_t szInfo[128];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode(%u) begin", inMode);
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode(%s) begin", GetWindowModeName(inMode));
 		LogString(szInfo);
 	}
 
@@ -5274,10 +5277,11 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	GetActiveVCon(&VCon);
 	//CRealConsole* pRCon = (gpSetCls->isAdvLogging!=0) ? (VCon.VCon() ? VCon.VCon()->RCon() : NULL) : NULL;
 
-	LogString((inMode==wmNormal) ? "SetWindowMode(wmNormal)" :
-		                           (inMode==wmMaximized) ? "SetWindowMode(wmMaximized)" :
-		                           (inMode==wmFullScreen) ? "SetWindowMode(wmFullScreen)" : "SetWindowMode(INVALID)",
-		                           TRUE);
+	if (gpSetCls->isAdvLogging)
+	{
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode(%s)", GetWindowModeName(inMode));
+		LogString(szInfo);
+	}
 
 	OnHideCaption(); // inMode из параметров убрал, т.к. WindowMode уже изменен
 

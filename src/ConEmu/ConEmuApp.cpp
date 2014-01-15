@@ -444,6 +444,29 @@ void LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*=
 	gpConEmu->LogString(asInfo, abWriteTime, abWriteLine);
 }
 
+LPCWSTR GetWindowModeName(ConEmuWindowMode wm)
+{
+	static wchar_t swmCurrent[] = L"wmCurrent";
+	static wchar_t swmNotChanging[] = L"wmNotChanging";
+	static wchar_t swmNormal[] = L"wmNormal";
+	static wchar_t swmMaximized[] = L"wmMaximized";
+	static wchar_t swmFullScreen[] = L"wmFullScreen";
+	switch (wm)
+	{
+	case wmCurrent:
+		return swmCurrent;
+	case wmNotChanging:
+		return swmNotChanging;
+	case wmNormal:
+		return swmNormal;
+	case wmMaximized:
+		return swmMaximized;
+	case wmFullScreen:
+		return swmFullScreen;
+	}
+	return L"INVALID";
+}
+
 void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
 {
 #ifdef _DEBUG

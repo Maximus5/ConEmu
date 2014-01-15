@@ -465,6 +465,8 @@ enum ConEmuWindowMode
 	wmFullScreen = rFullScreen,
 };
 
+LPCWSTR GetWindowModeName(ConEmuWindowMode wm);
+
 enum ExpandTextRangeType
 {
 	etr_None = 0,
