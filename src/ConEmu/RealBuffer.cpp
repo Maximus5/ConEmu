@@ -751,11 +751,10 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		ResetLastMousePos();
 	}
 
-	//}
+	char szInfo[128], szSizeCmd[32];
 
 	if (gpSetCls->isAdvLogging)
 	{
-		char szInfo[128], szSizeCmd[32];
 		switch (anCmdID)
 		{
 		case CECMD_SETSIZESYNC:
@@ -818,6 +817,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					fSuccess = (pOut != NULL);
 				}
 				// Inform user
+				mp_RCon->LogString(L"Maximum real console size was reached, lesser size was applyed");
 				Icon.ShowTrayIcon(L"Maximum real console size was reached\nDecrease font size in the real console properties", tsa_Console_Size);
 			}
 		}
@@ -829,7 +829,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	{
 		if (gpSetCls->isAdvLogging)
 		{
-			char szInfo[128]; DWORD dwErr = GetLastError();
+			DWORD dwErr = GetLastError();
 			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv.ExecuteCmd FAILED!!! ErrCode=0x%08X, Bytes read=%i", dwErr, pOut ? pOut->hdr.cbSize : 0);
 			mp_RCon->LogString(szInfo);
 		}

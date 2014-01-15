@@ -8865,10 +8865,11 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		#endif
 	}
 
+	char szLogInfo[128];
 
 	// Minimum console size
-	int curSizeY, curSizeX;
-	wchar_t sFontName[LF_FACESIZE];
+	int curSizeY = -1, curSizeX = -1;
+	wchar_t sFontName[LF_FACESIZE] = L"";
 	bool bCanChangeFontSize = false; // Vista+ only
 	if (apiGetConsoleFontSize(ghConOut, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
 	{
@@ -8882,10 +8883,29 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 			int minSizeX = (nMinX / curSizeX);
 			if ((minSizeX > crNewSize.X) || (minSizeY > crNewSize.Y))
 			{
-				apiFixFontSizeForBufferSize(ghConOut, crNewSize);
+				if (gpLogSize)
+				{
+					_wsprintfA(szLogInfo, SKIPLEN(countof(szLogInfo)) "Need to reduce minSize. Cur={%i,%i}, Req={%i,%i}", minSizeX, minSizeY, crNewSize.X, crNewSize.Y);
+					LogString(szLogInfo);
+				}
+
+				apiFixFontSizeForBufferSize(ghConOut, crNewSize, szLogInfo, countof(szLogInfo));
+				LogString(szLogInfo);
+
 				apiGetConsoleFontSize(ghConOut, curSizeY, curSizeX, sFontName);
 			}
 		}
+		if (gpLogSize)
+		{
+			_wsprintfA(szLogInfo, SKIPLEN(countof(szLogInfo)) "Console font size H=%i W=%i N=", curSizeY, curSizeX);
+			int nLen = lstrlenA(szLogInfo);
+			WideCharToMultiByte(CP_UTF8, 0, sFontName, -1, szLogInfo+nLen, countof(szLogInfo)-nLen, NULL, NULL);
+			LogString(szLogInfo);
+		}
+	}
+	else
+	{
+		LogString("Function GetConsoleFontSize is not available");
 	}
 
 
@@ -8903,18 +8923,34 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	if ((crMax.X && crNewSize.X > crMax.X)
 		|| (crMax.Y && crNewSize.Y > crMax.Y))
 	{
-		if (bCanChangeFontSize && apiFixFontSizeForBufferSize(ghConOut, crNewSize))
+		if (bCanChangeFontSize)
 		{
-			crMax = MyGetLargestConsoleWindowSize(ghConOut);
-			if ((crMax.X && crNewSize.X > crMax.X)
+			BOOL bChangeRc = apiFixFontSizeForBufferSize(ghConOut, crNewSize, szLogInfo, countof(szLogInfo));
+			LogString(szLogInfo);
+
+			if (bChangeRc)
+			{
+				crMax = MyGetLargestConsoleWindowSize(ghConOut);
+
+				if (gpLogSize)
+				{
+					_wsprintfA(szLogInfo, SKIPLEN(countof(szLogInfo)) "Largest console size is {%i,%i}", crMax.X, crMax.Y);
+					LogString(szLogInfo);
+				}
+			}
+
+			if (!bChangeRc
+				|| (crMax.X && crNewSize.X > crMax.X)
 				|| (crMax.Y && crNewSize.Y > crMax.Y))
 			{
 				lbRc = FALSE;
+				LogString("Change console size skipped: can't adapt font");
 				goto wrap;
 			}
 		}
 		else
 		{
+			LogString("Change console size skipped: too large");
 			lbRc = FALSE;
 			goto wrap;
 		}

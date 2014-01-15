@@ -557,10 +557,12 @@ BOOL apiSetConsoleFontSize(HANDLE hOutput, int inSizeY, int inSizeX, const wchar
 }
 
 // Vista+ only
-BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize)
+BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize, char* pszUtfLog /*= NULL*/, int cchLogMax /*= 0*/)
 {
 	BOOL lbRetry = FALSE;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+
+	if (pszUtfLog) *pszUtfLog = 0;
 
 	if (dwSize.Y > 0 && dwSize.X > 0
 		&& GetConsoleScreenBufferInfo(hOutput, &csbi))
