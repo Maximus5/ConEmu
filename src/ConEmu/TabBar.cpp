@@ -2620,6 +2620,7 @@ int TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	}
 	
 	TCHAR szTmp[64];
+	bool  bAppendAdmin = gpSet->isAdminSuffix() && (pTab->Type & fwt_Elevated);
 	
 	while (*pszFmt && pszDst < pszEnd)
 	{
@@ -2664,6 +2665,10 @@ int TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 						pszText = szTmp;
 					}
 					break;
+				case _T('a'): case _T('A'):
+					pszText = bAppendAdmin ? gpSet->szAdminTitleSuffix : NULL;
+					bAppendAdmin = false;
+					break;
 				case _T('%'):
 					pszText = L"%";
 					break;
@@ -2691,6 +2696,20 @@ int TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 			*(pszDst++) = *(pszFmt++);
 		}
 	}
+
+	// Fin. Append smth else?
+	if (bAppendAdmin)
+	{
+		LPCTSTR pszText = gpSet->szAdminTitleSuffix;
+		if (pszText)
+		{
+			while (*pszText && pszDst < pszEnd)
+			{
+				*(pszDst++) = *(pszText++);
+			}
+		}
+	}
+
 	*pszDst = 0;
 	
 	MCHKHEAP;

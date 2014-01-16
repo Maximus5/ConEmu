@@ -9058,12 +9058,6 @@ void CRealConsole::UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab)
 		{
 			pTab->Type |= fwt_Elevated;
 		}
-		else
-		{
-			INT_PTR nMaxLen = min(countof(TitleFull), countof(pTab->Name));
-			if ((INT_PTR)(_tcslen(pTab->Name) + _tcslen(gpSet->szAdminTitleSuffix)) < nMaxLen)
-				_wcscat_c(pTab->Name, nMaxLen, gpSet->szAdminTitleSuffix);
-		}
 	}
 }
 
