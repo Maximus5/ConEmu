@@ -1451,14 +1451,14 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 				if (Info->Flags & essf_ExtOnly)
 				{
-					_ASSERTE(FALSE && "Continue to fill");
-					#if !defined(_DEBUG)
+					#if 1
 					AnnotationInfo AIInfo = {};
 					for (int i = (nWindowHeight+nDir)*nWindowWidth; i < nMaxCell; i++)
 					{
 						pTrueColorStart[i] = AIInfo;
 					}
 					#else
+					_ASSERTE(FALSE && "Continue to fill");
 					cr0.Y = max(0,(nWindowHeight+nDir));
 					int nLines = (-nDir);
 					ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput,
