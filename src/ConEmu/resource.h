@@ -266,7 +266,6 @@
 #define tTabLenMax                      1643
 #define tTabPanels                      1644
 #define lbCTSActAlways                  1645
-#define cbAdminShield                   1646
 #define tAdminSuffix                    1647
 #define cbUseWinNumber                  1648
 #define cbInstallKeybHooks              1649
@@ -489,8 +488,8 @@
 #define tTabFontFace                    2106
 #define tTabFontHeight                  2107
 #define tTabFontCharset                 2108
-#define rbAdminShield                   2109
-#define rbAdminSuffix                   2110
+#define cbAdminShield                   2109
+#define cbAdminSuffix                   2110
 #define vkTabMenu                       2111
 #define vkCTSVkBlockStart               2112
 #define vkCTSVkTextStart                2113

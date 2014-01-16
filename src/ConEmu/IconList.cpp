@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -107,12 +107,15 @@ bool CIconList::Initialize()
 
 int CIconList::GetTabIcon(bool bAdmin)
 {
-	int iIconIdx = (bAdmin && gpSet->bAdminShield) ? mn_AdminIcon : -1;
+	int iIconIdx = (bAdmin && gpSet->isAdminShield()) ? mn_AdminIcon : -1;
 	return iIconIdx;
 }
 
 int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin)
 {
+	if (bAdmin && !gpSet->isAdminShield())
+		bAdmin = false;
+
 	if (!asIconDescr || !*asIconDescr)
 		return GetTabIcon(bAdmin);
 

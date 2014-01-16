@@ -290,12 +290,6 @@ void TabBarClass::Retrieve()
 	//}
 }
 
-//int TabBarClass::GetTabIcon(bool bAdmin)
-//{
-//	int iIconIdx = (bAdmin && gpSet->bAdminShield) ? mn_AdminIcon : -1;
-//	return iIconIdx;
-//}
-
 int TabBarClass::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin)
 {
 	if (!gpSet->isTabIcons)

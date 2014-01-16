@@ -8616,30 +8616,13 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 	}
 
 	// Если запущено под "администратором"
-	if (tabsCount && isAdministrator() && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix[0]))
+	if (tabsCount && isAdministrator() && (gpSet->isAdminShield() || gpSet->isAdminSuffix()))
 	{
-		// В идеале - иконкой на закладке (если пользователь это выбрал) или суффиксом (добавляется в GetTab)
-		//if (gpSet->bAdminShield)
+		// иконкой на закладке (если пользователь это выбрал) или суффиксом (добавляется в GetTab)
+		for (i = 0; i < tabsCount; i++)
 		{
-			for (i = 0; i < tabsCount; i++)
-			{
-				tabs[i].Type |= fwt_Elevated;
-			}
+			tabs[i].Type |= fwt_Elevated;
 		}
-		//else
-		//{
-		//	// Иначе - суффиксом (если он задан)
-		//	size_t nAddLen = _tcslen(gpSet->szAdminTitleSuffix) + 1;
-		//	for(i=0; i<tabsCount; i++)
-		//	{
-		//		if (tabs[i].Name[0])
-		//		{
-		//			// Если есть место
-		//			if (_tcslen(tabs[i].Name) < (nMaxTabName + nAddLen))
-		//				lstrcat(tabs[i].Name, gpSet->szAdminTitleSuffix);
-		//		}
-		//	}
-		//}
 	}
 
 	if (tabsCount != mn_tabsCount)
@@ -9053,11 +9036,11 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 	}
 
 	TODO("Надо/не надо?");
-	if (isAdministrator() && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix[0]))
+	if (isAdministrator() && (gpSet->isAdminShield() || gpSet->isAdminSuffix()))
 	{
-		if (gpSet->bAdminShield)
+		if (gpSet->isAdminShield())
 		{
-			nType |= 0x100;
+			nType |= fwt_Elevated;
 		}
 	}
 
@@ -9069,9 +9052,9 @@ void CRealConsole::UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab)
 	if (ms_RenameFirstTab[0])
 		pTab->Type |= fwt_Renamed;
 
-	if (isAdministrator() && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix[0]))
+	if (isAdministrator() && (gpSet->isAdminShield() || gpSet->isAdminSuffix()))
 	{
-		if (gpSet->bAdminShield)
+		if (gpSet->isAdminShield())
 		{
 			pTab->Type |= fwt_Elevated;
 		}
@@ -9172,19 +9155,6 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 			// 03.09.2009 Maks -> min
 			int nMaxLen = min(countof(ms_PanelTitle) , countof(pTab->Name));
 			lstrcpyn(pTab->Name, ms_PanelTitle, nMaxLen);
-
-			//if (isAdministrator() && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix[0]))
-			//{
-			//	if (gpSet->bAdminShield)
-			//	{
-			//		pTab->Type |= fwt_Elevated;
-			//	}
-			//	else
-			//	{
-			//		if ((INT_PTR)_tcslen(ms_PanelTitle) < (INT_PTR)(countof(pTab->Name) + _tcslen(gpSet->szAdminTitleSuffix) + 1))
-			//			lstrcat(pTab->Name, gpSet->szAdminTitleSuffix);
-			//	}
-			//}
 		}
 		else if (mn_tabsCount == 1 && TitleFull[0])  // Если панель единственная - точно показываем заголовок консоли
 		{
@@ -9193,11 +9163,6 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 			lstrcpyn(pTab->Name, TitleFull, nMaxLen);
 		}
 	}
-
-	//if (tabIdx == 0 && isAdministrator() && gpSet->bAdminShield)
-	//{
-	//	pTab->Type |= fwt_Elevated;
-	//}
 
 	wchar_t* pszAmp = pTab->Name;
 	int nCurLen = _tcslen(pTab->Name), nMaxLen = countof(pTab->Name)-1;
@@ -10595,16 +10560,6 @@ void CRealConsole::OnTitleChanged()
 	//SetProgress(nNewProgress);
 
 	TitleAdmin[0] = 0;
-	//if (isAdministrator())
-	//{
-	//	wcscpy_c(TitleAdmin, TitleFull);
-	//	wcscat_c(TitleAdmin, gpSet->szAdminTitleSuffix);
-	//}
-	// && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix))
-	//{
-	//	if (!gpSet->bAdminShield)
-	//		wcscat(TitleFull, gpSet->szAdminTitleSuffix);
-	//}
 
 	CheckFarStates();
 	// иначе может среагировать на изменение заголовка ДО того,

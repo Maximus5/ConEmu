@@ -671,8 +671,10 @@ void Settings::InitSettings()
 	nTabFontHeight = 16 * gpSetCls->_dpiY / 96;
 	sTabCloseMacro = sSaveAllMacro = NULL;
 	nToolbarAddSpace = 0;
-	wcscpy_c(szAdminTitleSuffix, L" (Admin)");
-	bAdminShield = true;
+	// Show only shield (szAdminTitleSuffix is ignored if ats_Shield)
+	bAdminShield = ats_Shield;
+	wcscpy_c(szAdminTitleSuffix, DefaultAdminTitleSuffix/*L" (Admin)"*/);
+	//
 	bHideInactiveConsoleTabs = false;
 	bHideDisabledTabs = false;
 	bShowFarWindows = true;
@@ -762,6 +764,16 @@ bool Settings::isIntegralSize()
 	#endif
 
 	return true;
+}
+
+bool Settings::isAdminShield()
+{
+	return ((bAdminShield & ats_Shield) == ats_Shield);
+}
+
+bool Settings::isAdminSuffix()
+{
+	return (szAdminTitleSuffix[0] && ((bAdminShield == ats_Empty) || (bAdminShield == ats_ShieldSuffix)));
 }
 
 void Settings::FreeApps(int NewAppCount, AppSettings** NewApps/*, Settings::CEAppColors** NewAppColors*/)
@@ -2708,8 +2720,19 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 		/*reg->Load(L"ScrollTitle", isScrollTitle);
 		reg->Load(L"ScrollTitleLen", ScrollTitleLen);*/
+
+		// Old style:
+		// * Disabled: bAdminShield = false, szAdminTitleSuffix = ""
+		// * Shield:   bAdminShield = true,  szAdminTitleSuffix ignored (may be filled!)
+		// * Suffix:   bAdminShield = false, szAdminTitleSuffix = " (Admin)"
+		// New style:
+		// * Disabled: bAdminShield = false, szAdminTitleSuffix = ""
+		// * Shield:   bAdminShield = true,  szAdminTitleSuffix ignored (may be filled!)
+		// * Suffix:   bAdminShield = false, szAdminTitleSuffix = " (Admin)"
+		// * Shld+Suf: bAdminShield = 3,     szAdminTitleSuffix = " (Admin)"
 		reg->Load(L"AdminTitleSuffix", szAdminTitleSuffix, countof(szAdminTitleSuffix)); szAdminTitleSuffix[countof(szAdminTitleSuffix)-1] = 0;
-		reg->Load(L"AdminShowShield", bAdminShield);
+		reg->Load(L"AdminShowShield", bAdminShield); if (!bAdminShield && !*szAdminTitleSuffix) bAdminShield = ats_Disabled;
+
 		reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
 		//reg->Load(L"HideDisabledTabs", bHideDisabledTabs);
 		reg->Load(L"ShowFarWindows", bShowFarWindows);
@@ -3489,8 +3512,14 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"TabEditorModified", szTabEditorModified);
 		reg->Save(L"TabViewer", szTabViewer);
 		reg->Save(L"TabLenMax", nTabLenMax);
+
+		if (bAdminShield == ats_Disabled) // Because of using temporarily in Settings dialog
+		{
+			bAdminShield = ats_Empty; szAdminTitleSuffix[0] = 0;
+		}
 		reg->Save(L"AdminTitleSuffix", szAdminTitleSuffix);
 		reg->Save(L"AdminShowShield", bAdminShield);
+
 		reg->Save(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
 		//reg->Save(L"HideDisabledTabs", bHideDisabledTabs);
 		reg->Save(L"ShowFarWindows", bShowFarWindows);

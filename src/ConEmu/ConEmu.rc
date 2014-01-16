@@ -897,8 +897,8 @@ BEGIN
     EDITTEXT        tAdminSuffix,261,174,57,12,ES_AUTOHSCROLL
     CONTROL         "‘Host-key’+Number iterates Far windows",cbMultiIterate,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,42,155,8
-    CONTROL         "Admin shield",rbAdminShield,"Button",BS_AUTORADIOBUTTON,167,176,55,8
-    CONTROL         "suffix",rbAdminSuffix,"Button",BS_AUTORADIOBUTTON,223,176,34,8
+    CONTROL         "Admin shield",cbAdminShield,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,176,55,8
+    CONTROL         "suffix",cbAdminSuffix,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,176,34,8
     RTEXT           "Template:",IDC_STATIC,8,139,35,8
     RTEXT           "Skip words from title:",IDC_STATIC,33,159,81,8
     EDITTEXT        tTabSkipWords,119,156,199,12,ES_AUTOHSCROLL

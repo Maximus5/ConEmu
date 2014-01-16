@@ -138,6 +138,16 @@ const SettingsLoadedFlags
 	slf_None              = 0x0000
 ;
 
+enum AdminTabStyle
+{
+	ats_Empty        = 0,
+	ats_Shield       = 1,
+	ats_ShieldSuffix = 3,
+	ats_Disabled     = 4,
+};
+
+#define DefaultAdminTitleSuffix L" (Admin)"
+
 #define DEFAULT_TERMINAL_APPS L"explorer.exe"
 
 #define TABBAR_DEFAULT_CLICK_ACTION 1
@@ -1245,9 +1255,20 @@ struct Settings
 		TabStyle nTabStyle; // enum
 
 		//reg->Load(L"AdminTitleSuffix", szAdminTitleSuffix, countof(szAdminTitleSuffix)); szAdminTitleSuffix[countof(szAdminTitleSuffix)-1] = 0;
-		wchar_t szAdminTitleSuffix[64]; //" (Admin)"
+		wchar_t szAdminTitleSuffix[64]; // DefaultAdminTitleSuffix /* " (Admin)" */
 		//reg->Load(L"AdminShowShield", bAdminShield);
-		bool bAdminShield;
+		BYTE bAdminShield; // enum AdminTabStyle
+		// Old style:
+		// * Disabled: bAdminShield = false, szAdminTitleSuffix = ""
+		// * Shield:   bAdminShield = true,  szAdminTitleSuffix ignored (may be filled!)
+		// * Suffix:   bAdminShield = false, szAdminTitleSuffix = " (Admin)"
+		// New style:
+		// * Disabled: bAdminShield = 0,  szAdminTitleSuffix = ""
+		// * Shield:   bAdminShield = 1,  szAdminTitleSuffix ignored (may be filled!)
+		// * Suffix:   bAdminShield = 0,  szAdminTitleSuffix = " (Admin)"
+		// * Shld+Suf: bAdminShield = 3,  szAdminTitleSuffix = " (Admin)"
+		bool isAdminShield();
+		bool isAdminSuffix();
 		//reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
 		bool bHideInactiveConsoleTabs;
 

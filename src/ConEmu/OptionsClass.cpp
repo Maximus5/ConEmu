@@ -3324,7 +3324,8 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	SetDlgItemText(hWnd2, tTabSkipWords, gpSet->pszTabSkipWords ? gpSet->pszTabSkipWords : L"");
 	SetDlgItemInt(hWnd2, tTabLenMax, gpSet->nTabLenMax, FALSE);
 
-	checkRadioButton(hWnd2, rbAdminShield, rbAdminSuffix, gpSet->bAdminShield ? rbAdminShield : rbAdminSuffix);
+	checkDlgButton(hWnd2, cbAdminShield, gpSet->isAdminShield() ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbAdminSuffix, gpSet->isAdminSuffix() ? BST_CHECKED : BST_UNCHECKED);
 	SetDlgItemText(hWnd2, tAdminSuffix, gpSet->szAdminTitleSuffix);
 
 	return 0;
@@ -5545,11 +5546,20 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isNumberInCaption = IsChecked(hWnd2, cbNumberInCaption);
 			gpConEmu->UpdateTitle();
 			break;
-		case rbAdminShield:
-		case rbAdminSuffix:
-			gpSet->bAdminShield = IsChecked(hWnd2, rbAdminShield);
+		case cbAdminShield:
+		case cbAdminSuffix:
+		{
+			BOOL bShield = IsChecked(hWnd2, cbAdminShield);
+			BOOL bSuffix = IsChecked(hWnd2, cbAdminSuffix);
+			gpSet->bAdminShield = (bShield && bSuffix) ? ats_ShieldSuffix : bShield ? ats_Shield : bSuffix ? ats_Empty : ats_Disabled;
+			if (bSuffix && !*gpSet->szAdminTitleSuffix)
+			{
+				wcscpy_c(gpSet->szAdminTitleSuffix, DefaultAdminTitleSuffix);
+                SetDlgItemText(hWnd2, tAdminSuffix, gpSet->szAdminTitleSuffix);
+			}
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
+		}
 		case cbHideInactiveConTabs:
 			gpSet->bHideInactiveConsoleTabs = IsChecked(hWnd2, cbHideInactiveConTabs);
 			gpConEmu->mp_TabBar->Update(TRUE);
@@ -7201,8 +7211,13 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	
 	case tAdminSuffix:
 	{
-		GetDlgItemText(hWnd2, tAdminSuffix, gpSet->szAdminTitleSuffix, countof(gpSet->szAdminTitleSuffix));
-		gpConEmu->mp_TabBar->Update(TRUE);
+		wchar_t szNew[64];
+		GetDlgItemText(hWnd2, tAdminSuffix, szNew, countof(szNew));
+		if (lstrcmp(szNew, gpSet->szAdminTitleSuffix) != 0)
+		{
+			wcscpy_c(gpSet->szAdminTitleSuffix, szNew);
+			gpConEmu->mp_TabBar->Update(TRUE);
+		}
 		break;
 	} // case tAdminSuffix:
 
