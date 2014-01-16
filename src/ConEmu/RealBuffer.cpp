@@ -6305,8 +6305,8 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 		}
 		else if (!wcsncmp(pszCurLine, L"[#", 2))
 		{
-			wchar_t p = wcsstr(pszCurLine, L"%) ");
-			while (p > pszCurLine && p[-1] != L'(')
+			const wchar_t* p = wcsstr(pszCurLine, L"%) ");
+			while ((p > pszCurLine) && (p[-1] != L'('))
 				p--;
 			if (p > pszCurLine)
 				nIdx = p - pszCurLine;
