@@ -2493,14 +2493,18 @@ int TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 					while ((pszFound = StrStrI(fileName, dummy)) != NULL)
 					{
 						size_t nLeft = _tcslen(pszFound);
-						if (nLeft <= (size_t)nLen)
+						size_t nCurLen = nLen;
+						// Strip spaces after replaced token
+						while (pszFound[nCurLen] == L' ')
+							nCurLen++;
+						if (nLeft <= nCurLen)
 						{
 							*pszFound = 0;
 							break;
 						}
 						else
 						{
-							wmemmove(pszFound, pszFound+(size_t)nLen, nLeft - nLen + 1);
+							wmemmove(pszFound, pszFound+nCurLen, nLeft - nCurLen + 1);
 						}
 					}
 				}
@@ -2594,6 +2598,7 @@ int TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	//wcscpy(pTab->Name, fileName);
 	const TCHAR* pszFmt = szFormat;
 	TCHAR* pszDst = pTab->Name;
+	TCHAR* pszStart = pszDst;
 	TCHAR* pszEnd = pTab->Name + countof(pTab->Name) - 1; // в конце еще нужно зарезервировать место для '\0'
 	
 	if (!pszFmt || !*pszFmt)
@@ -2669,11 +2674,17 @@ int TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 			pszFmt++;
 			if (pszText)
 			{
+				if ((*(pszDst-1) == L' ') && (*pszText == L' '))
+					pszText = SkipNonPrintable(pszText);
 				while (*pszText && pszDst < pszEnd)
 				{
 					*(pszDst++) = *(pszText++);
 				}
 			}
+		}
+		else if ((pszDst > pszStart) && (*(pszDst-1) == L' ') && (*pszFmt == L' '))
+		{
+			pszFmt++; // Avoid adding sequential spaces (e.g. if some macros was empty)
 		}
 		else
 		{
