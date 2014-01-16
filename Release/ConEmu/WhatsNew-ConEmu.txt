@@ -15,8 +15,23 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.16
+[*] Also show ANSI color indexes on ‘Colors’ settings page.
+[*] Donate/flattr buttons in the ‘About’ dialog.
+[*] Some more logging information to LogFiles.
+[+] Issue 1430: Progress indicator for aria2 downloader (thecybershadow).
+[*] Tab Admin shield/suffix. Separate settings, Shield was not be able to disabled.
+[*] Tab templates. Avoid adding sequential spaces (e.g. if some vars was empty).
+[*] New tab template var: ‘%a’ - admin suffix.
+    1. Admin suffix must be enabled on ‘Tabs’ settings page;
+    2. If ‘%a’ was not specified explicitly, suffix appended at the end;
+    3. If you don't need suffix in tab at all - clear ‘suffix’ edit box.
+[*] Apply ‘Skip words from title’ to admin console titles, but not tabs only.
+[*] Some internal changes.
+
+
 2014.01.14a
-[%] Fix. Autoupdate msg box info fixed.
+[%] Fix autoupdate msg box info.
 
 
 2014.01.14
