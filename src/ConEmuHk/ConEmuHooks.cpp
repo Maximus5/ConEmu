@@ -5447,7 +5447,9 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 		GetModuleFileName(NULL, szText+lstrlen(szText), MAX_PATH);
 
 	#if defined(REPORT_VIRTUAL_ALLOC)
-		int iBtn = GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL|MB_ICONSTOP);
+		// clink use bunch of VirtualAlloc to try to find suitable memory location
+		bool bReport = !gbIsCmdProcess || (dwSize != 0x1000);
+		int iBtn = bReport ? GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL|MB_ICONSTOP) : IDCANCEL;
 		SetLastError(nErr);
 		if (iBtn == IDOK)
 		{
