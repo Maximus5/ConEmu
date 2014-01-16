@@ -725,7 +725,7 @@ BEGIN
     EDITTEXT        tTabEditor,42,153,117,12,ES_AUTOHSCROLL
     RTEXT           "Modified:",IDC_STATIC,161,155,36,8
     EDITTEXT        tTabEditorMod,201,153,117,12,ES_AUTOHSCROLL
-    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %n - Name of active process, %% - %,\n%i - Far window number (you can see it in standard F12 menu)",IDC_STATIC,10,116,309,17
+    LTEXT           "%s - Title, %c - Console #, %n - Active process name, %p - PID, %a - ‘Admin’, %% - %,\n%i - Far window number (you can see it in standard F12 menu)",IDC_STATIC,10,116,309,17
 END
 
 IDD_SPG_FARMACRO DIALOGEX 0, 0, 328, 235
@@ -891,7 +891,7 @@ BEGIN
     COMBOBOX        tTabFontCharset,264,83,54,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Tab templates",IDC_STATIC,4,107,319,85
     EDITTEXT        tTabConsole,46,137,141,12,ES_AUTOHSCROLL
-    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %n - Name of active process, %% - %",IDC_STATIC,10,118,309,8
+    LTEXT           "%s - Title, %c - Console #, %n - Active process name, %p - PID, %a - ‘Admin’, %% - %",IDC_STATIC,10,118,309,8
     RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,176,107,8
     EDITTEXT        tTabLenMax,119,174,40,12,ES_AUTOHSCROLL
     EDITTEXT        tAdminSuffix,261,174,57,12,ES_AUTOHSCROLL
