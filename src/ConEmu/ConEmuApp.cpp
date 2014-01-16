@@ -1042,6 +1042,46 @@ bool NextLine(const wchar_t*& pszFrom, wchar_t** pszLine)
 	return bFound;
 }
 
+// pszWords - '|'separated
+void StripWords(wchar_t* pszText, const wchar_t* pszWords)
+{
+	wchar_t dummy[MAX_PATH];
+	LPCWSTR pszWord = pszWords;
+	while (pszWord && *pszWord)
+	{
+		LPCWSTR pszNext = wcschr(pszWord, L'|');
+		if (!pszNext) pszNext = pszWord + _tcslen(pszWord);
+
+		int nLen = (int)(pszNext - pszWord);
+		if (nLen > 0)
+		{
+			lstrcpyn(dummy, pszWord, min((int)countof(dummy),(nLen+1)));
+			wchar_t* pszFound;
+			while ((pszFound = StrStrI(pszText, dummy)) != NULL)
+			{
+				size_t nLeft = _tcslen(pszFound);
+				size_t nCurLen = nLen;
+				// Strip spaces after replaced token
+				while (pszFound[nCurLen] == L' ')
+					nCurLen++;
+				if (nLeft <= nCurLen)
+				{
+					*pszFound = 0;
+					break;
+				}
+				else
+				{
+					wmemmove(pszFound, pszFound+nCurLen, nLeft - nCurLen + 1);
+				}
+			}
+		}
+
+		if (!*pszNext)
+			break;
+		pszWord = pszNext + 1;
+	}
+}
+
 BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,

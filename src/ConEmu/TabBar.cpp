@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -2479,40 +2479,7 @@ int TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 		lstrcpyn(fileName, pTab->Name, countof(fileName));
 		if (gpSet->pszTabSkipWords && *gpSet->pszTabSkipWords)
 		{
-			LPCWSTR pszWord = gpSet->pszTabSkipWords;
-			while (pszWord && *pszWord)
-			{
-				LPCWSTR pszNext = wcschr(pszWord, L'|');
-				if (!pszNext) pszNext = pszWord + _tcslen(pszWord);
-				
-				int nLen = (int)(pszNext - pszWord);
-				if (nLen > 0)
-				{
-					lstrcpyn(dummy, pszWord, min((int)countof(dummy),(nLen+1)));
-					wchar_t* pszFound;
-					while ((pszFound = StrStrI(fileName, dummy)) != NULL)
-					{
-						size_t nLeft = _tcslen(pszFound);
-						size_t nCurLen = nLen;
-						// Strip spaces after replaced token
-						while (pszFound[nCurLen] == L' ')
-							nCurLen++;
-						if (nLeft <= nCurLen)
-						{
-							*pszFound = 0;
-							break;
-						}
-						else
-						{
-							wmemmove(pszFound, pszFound+nCurLen, nLeft - nCurLen + 1);
-						}
-					}
-				}
-
-				if (!*pszNext)
-					break;
-				pszWord = pszNext + 1;
-			}
+			StripWords(fileName, gpSet->pszTabSkipWords);
 		}
 		origLength = _tcslen(fileName);
 		//if (origLength>6) {
