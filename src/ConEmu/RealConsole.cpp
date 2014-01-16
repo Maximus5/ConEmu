@@ -4979,6 +4979,7 @@ LPCTSTR CRealConsole::GetTitle(bool abGetRenamed/*=false*/)
 		{
 			TitleAdmin[countof(TitleAdmin)-1] = 0;
 			wcscpy_c(TitleAdmin, TitleFull);
+			StripWords(TitleAdmin, gpSet->pszTabSkipWords);
 			wcscat_c(TitleAdmin, gpSet->szAdminTitleSuffix);
 		}
 		return TitleAdmin;
