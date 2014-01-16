@@ -837,8 +837,6 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Text selection",IDC_STATIC,4,1,319,60
-    CONTROL         "Always",rbCTSAlways,"Button",BS_AUTORADIOBUTTON,131,13,38,8
-    CONTROL         "Buffer only (cmd.exe)",rbCTSBufferOnly,"Button",BS_AUTORADIOBUTTON,173,13,85,8
     CONTROL         "Block (rectangular) selection",cbCTSBlockSelection,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,77,109,8
     COMBOBOX        lbCTSBlockSelection,262,75,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -848,9 +846,7 @@ BEGIN
     COMBOBOX        lbCTSForeIdx,293,11,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Back:",IDC_STATIC,269,30,22,8
     COMBOBOX        lbCTSBackIdx,293,28,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Never",rbCTSNever,"Button",BS_AUTORADIOBUTTON,90,13,35,8
     GROUPBOX        "Color indexes",IDC_STATIC,263,1,60,60
-    LTEXT           "Select text in console:",IDC_STATIC,12,13,72,8
     CONTROL         "Freeze console contents before selection (may cause small lag)",cbCTSFreezeBeforeSelect,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,28,249,8
     RTEXT           "Find:",IDC_STATIC,269,47,22,8,NOT WS_VISIBLE | WS_DISABLED
@@ -872,6 +868,9 @@ BEGIN
     CONTROL         "Copy plain text only",rbCopyFmtHtml0,"Button",BS_AUTORADIOBUTTON,11,168,98,8
     CONTROL         "Copy HTML format",rbCopyFmtHtml1,"Button",BS_AUTORADIOBUTTON,114,168,98,8
     CONTROL         "Copy as (RAW) HTML",rbCopyFmtHtml2,"Button",BS_AUTORADIOBUTTON,218,168,98,8
+    CONTROL         "Intelligent mode",cbCTSIntelligent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,13,80,8
+    EDITTEXT        tCTSIntelligentExceptions,195,11,65,12,ES_AUTOHSCROLL
+    RTEXT           "Exceptions (""|""-separated):",stCTSIntelligentExceptions,88,13,103,8
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235

@@ -250,9 +250,6 @@
 #define tFadeLow                        1624
 #define tFadeHigh                       1625
 #define cbToolbar                       1626
-#define rbCTSNever                      1627
-#define rbCTSAlways                     1628
-#define rbCTSBufferOnly                 1629
 #define cbCTSTextSelection              1630
 #define lbCTSMBtnAction                 1631
 #define lbCTSRBtnAction                 1632
@@ -994,6 +991,9 @@
 #define pLinkFlattr                     2650
 #define pIconCtrl                       2651
 #define cbTaskbarProgress               2656
+#define cbCTSIntelligent                2657
+#define tCTSIntelligentExceptions       2658
+#define stCTSIntelligentExceptions      2659
 
 // Next default values for new objects
 // 
@@ -1001,7 +1001,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        224
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2657
+#define _APS_NEXT_CONTROL_VALUE         2660
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
