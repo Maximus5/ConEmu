@@ -181,6 +181,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"FindFarWindow(<WindowType>,\"<WindowTitle>\")\r\n" \
 	L"  - Returns \"Found:<index of RealConsole>\", \"Active:<Far window number>\",  \"Blocked\", or \"NotFound\"\r\n" \
 	L"     <WindowType> is number from Far Manager enum WINDOWINFO_TYPE\r\n" \
+	L"Flash(<Cmd>[,<Flags>[,<Count>]])\r\n" \
+	L"  - Allows to flash taskbar icon and/or window caption\r\n" \
+	L"    Flash(0) - Stop all flashing\r\n" \
+	L"    Flash(0,1) - Simple flashing (see MSDN FlashWindow)\r\n" \
+	L"Flash(1,<Flags>,<Count>)\r\n" \
+	L"  - Special flashing (see MSDN FlashWindowEx)\r\n" \
+	L"    Flags: 0 - stop, 1 - caption, 2 - taskbar, 3 - caption+taskbar, etc.\r\n" \
+	L"    Count: the number of times to flash the window\r\n" \
 	L"FontSetName(\"<FontFaceName>\"[,FontHeight[,FontWidth]])\r\n" \
 	L"  - Change font face name and (optionally) height/width.\r\n" \
 	L"FontSetSize(Relative,N)\r\n" \
