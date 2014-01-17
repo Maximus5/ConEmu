@@ -2244,7 +2244,7 @@ LPWSTR ConEmuMacro::Status(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		if (apRCon)
 		{
 			p->GetStrArg(1, pszText);
-			gpConEmu->StatusCommand(csc_ShowHide, 0, pszText, apRCon);
+			gpConEmu->StatusCommand(csc_SetStatusText, 0, pszText, apRCon);
 			pszResult = lstrdup(L"OK");
 		}
 		break;
