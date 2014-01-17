@@ -15,6 +15,23 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.17
+[*] New option ‘Show progress indicator’ on ‘Task bar’ page.
+[*] GuiMacro. Some function must be executed in main thread.
+[%] Issue 1434: GuiMacro ‘Status(1,"TEST")’ toggles statusbar.
+[*] GuiMacro. Allow one-word string arguments with no quotas (powershell-style).
+[*] GuiMacro. ‘Flash’ function allows to flash taskbar icon and/or window caption.
+    Flash(0)
+      - Stop all flashing
+    Flash(0,1)
+      - Simple flashing (see MSDN FlashWindow)
+    Flash(1,<Flags>,<Count>)
+      - Special flashing (see MSDN FlashWindowEx)
+        Flags: 0 - stop, 1 - caption, 2 - taskbar, 3 - caption+taskbar, etc.
+        Count: the number of times to flash the window
+[%] Fix. ANSI. Wrong behavior of 'ESC [ n L' (VIM & xterm256)
+
+
 2014.01.16
 [*] Also show ANSI color indexes on ‘Colors’ settings page.
 [*] Donate/flattr buttons in the ‘About’ dialog.
