@@ -1354,6 +1354,9 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const int LinesCount)
 		BottomLine = csbi.srWindow.Bottom - csbi.srWindow.Top;
 	}
 
+	// Apply default color before scrolling!
+	ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+
 	ExtScrollScreenParm scrl = {
 		sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
 		LinesCount, {}, L' ', {0, TopLine, 0, BottomLine}};
@@ -1824,12 +1827,12 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 			#endif
 			}
 
-			// �������� Row
+			// Check Row
 			if (crNewPos.Y < 0)
 				crNewPos.Y = 0;
 			else if (crNewPos.Y >= csbi.dwSize.Y)
 				crNewPos.Y = csbi.dwSize.Y - 1;
-			// �������� Col
+			// Check Col
 			if (crNewPos.X < 0)
 				crNewPos.X = 0;
 			else if (crNewPos.X >= csbi.dwSize.X)
