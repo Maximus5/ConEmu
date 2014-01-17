@@ -599,17 +599,19 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 			if (!GetNextInt(asString, a.Int))
 			{
 				_wsprintf(szArgErr, SKIPLEN(countof(szArgErr)) L"Argument #%u failed (int)", Args.size()+1);
-				break;
+				if (rsErrMsg)
+					*rsErrMsg = lstrdup(szArgErr);
+				return NULL;
 			}
 		}
-		else if (Args.empty() || ((asString[0] == L'"') || (asString[0] == L'@' && asString[1] == L'"')))
+		else
 		{
-			// If argument was specified without quotas - return it "as is" to the end of macro string
+			// Delimiter was ':' and argument was specified without quotas - return it "as is" to the end of macro string
+			// Otherwise, if there are no ‘"’ or ‘@"’ - use powershell style (one word == one string arg)
 
 			bool lbCvtVbt = false;
 			a.Type = (asString[0] == L'@' && asString[1] == L'"') ? gmt_VStr : gmt_Str;
 
-			_ASSERTE(gbUnitTest || (asString[0] == L'"') || (asString[0] == L'@' && asString[1] == L'"') || (Args.empty() && chTerm == L':'));
 			_ASSERTE(asString[0]!=L':');
 
 			if (abConvert && (asString[0] == L'"'))
@@ -625,7 +627,9 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 			if (!GetNextString(asString, a.Str, (chTerm == L':')))
 			{
 				_wsprintf(szArgErr, SKIPLEN(countof(szArgErr)) L"Argument #%u failed (string)", Args.size()+1);
-				break;
+				if (rsErrMsg)
+					*rsErrMsg = lstrdup(szArgErr);
+				return NULL;
 			}
 
 			if (lbCvtVbt)
@@ -643,12 +647,6 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 			}
 
 			cbAddSize += (_tcslen(a.Str)+1) * sizeof(*a.Str);
-		}
-		else
-		{
-			if (rsErrMsg)
-				*rsErrMsg = lstrdup(L"Unsupported argument type");
-			return NULL;
 		}
 
 		Args.push_back(a);
@@ -720,7 +718,7 @@ void ConEmuMacro::UnitTests()
 {
 	gbUnitTest = true;
 
-	wchar_t szMacro[] = L"Function1 +1 \"Arg2\" -3 -guimacro Function2(@\"Arg1\"\"\\n999\",0x999); Function3: \"abc\\t\\e\\\"\\\"\\n999\"; InvalidArg(9q)";
+	wchar_t szMacro[] = L"Function1 +1 \"Arg2\" -3 -guimacro Function2(@\"Arg1\"\"\\n999\",0x999); Function3: \"abc\\t\\e\\\"\\\"\\n999\"; Function4 abc def; InvalidArg(9q)";
 	LPWSTR pszString = szMacro;
 
 	GuiMacro* p = GetNextMacro(pszString, false, NULL);
@@ -739,6 +737,11 @@ void ConEmuMacro::UnitTests()
 	SafeFree(p);
 
 	p = GetNextMacro(pszString, false, NULL);
+	_ASSERTE(p && lstrcmp(p->szFunc,L"Function4")==0);
+	_ASSERTE(p && p->argc==2 && lstrcmp(p->argv[0].Str,L"abc")==0 && lstrcmp(p->argv[1].Str,L"def")==0);
+	SafeFree(p);
+
+	p = GetNextMacro(pszString, false, NULL);
 	// InvalidArg(9q)
 	_ASSERTE(p==NULL);
 	_ASSERTE(pszString && lstrcmp(pszString, L"q)")==0);
@@ -751,18 +754,19 @@ void ConEmuMacro::UnitTests()
 	_ASSERTE(p==NULL);
 	SafeFree(p);
 
-	wcscpy_c(szMacro, L"InvalidArg abc; Function2(\"\"\"\\n0);");
+	wcscpy_c(szMacro, L"InvalidArg 1 abc d\"e fgh; Function2(\"\"\"\\n0);");
 	pszString = szMacro;
 	p = GetNextMacro(pszString, false, NULL);
 	_ASSERTE(p && lstrcmp(p->szFunc,L"InvalidArg")==0);
-	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str,L"abc; Function2(\"\"\"\\n0);")==0);
+	_ASSERTE(p && p->argc==4 && p->argv[0].Int == 1 && lstrcmp(p->argv[1].Str,L"abc")==0 && lstrcmp(p->argv[2].Str,L"d\"e")==0 && lstrcmp(p->argv[3].Str,L"fgh")==0);
+	_ASSERTE(pszString && lstrcmp(pszString, L"Function2(\"\"\"\\n0);") == 0);
 	SafeFree(p);
 
-	wcscpy_c(szMacro, L"InvalidArg:abc");
+	wcscpy_c(szMacro, L"InvalidArg:abc\";\"");
 	pszString = szMacro;
 	p = GetNextMacro(pszString, false, NULL);
 	_ASSERTE(p && lstrcmp(p->szFunc,L"InvalidArg")==0);
-	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str,L"abc")==0);
+	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str,L"abc\";\"")==0);
 	SafeFree(p);
 
 	gbUnitTest = false;
@@ -916,6 +920,12 @@ LPWSTR ConEmuMacro::GetNextInt(LPWSTR& rsArguments, int& rnValue)
 	rsArguments = pszEnd;
 	if (rsArguments && *rsArguments)
 	{
+		// Check, if next symbol is correct delimiter
+		if (wcschr(L" \t\r\n),", *rsArguments) == NULL)
+		{
+			_ASSERTE(gbUnitTest && "Wrong argument separator, parsing failed");
+			return NULL;
+		}
 		SkipWhiteSpaces(rsArguments);
 		if (*rsArguments == L',')
 			rsArguments++;
@@ -982,6 +992,29 @@ LPWSTR ConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bC
 		rsArguments = (wchar_t*)((*pszSrc == L'"') ? (pszSrc+1) : pszSrc);
 		_ASSERTE(rsArguments>pszDst || (rsArguments==pszDst && *rsArguments==0));
 		*pszDst = 0;
+	}
+	else if (!bColonDelim)
+	{
+		// Powershell style (one word == one string arg)
+		_ASSERTE(*rsArguments != L' ');
+		rsString = rsArguments;
+		rsArguments = wcschr(rsString+1, L' ');
+		if (rsArguments)
+		{
+			if (*(rsArguments-1) == L';')
+			{
+				*(rsArguments-1) = 0;
+				*rsArguments = L';'; // replace space with function-delimiter
+			}
+			else
+			{
+				*(rsArguments++) = 0;
+			}
+		}
+		else
+		{
+			rsArguments = rsString + _tcslen(rsString);
+		}
 	}
 	else
 	{
