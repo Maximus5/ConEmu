@@ -9265,7 +9265,7 @@ void CConEmuMain::UpdateProgress()
 
 		//if (mp_TaskBar3)
 		//{
-		if (mn_Progress >= 0)
+		if ((mn_Progress >= 0) && gpSet->isTaskbarProgress)
 		{
 			hr = Taskbar_SetProgressValue(mn_Progress);
 

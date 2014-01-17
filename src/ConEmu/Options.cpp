@@ -661,6 +661,7 @@ void Settings::InitSettings()
 	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
 	isTaskbarShield = true;
+	isTaskbarProgress = true;
 
 	isTabsInCaption = false; //cbTabsInCaption
 	#if defined(CONEMU_TABBAR_EX)
@@ -2689,6 +2690,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"TabBtnDblClick", nTabBtnDblClickAction); MinMax(nTabBtnDblClickAction, 4);
 		reg->Load(L"TabsOnTaskBar", m_isTabsOnTaskBar);
 		reg->Load(L"TaskBarOverlay", isTaskbarShield);
+		reg->Load(L"TaskbarProgress", isTaskbarProgress);
 
 		if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { SafeFree(sTabCloseMacro); }
 
@@ -3497,6 +3499,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"TabBtnDblClick", nTabBtnDblClickAction);
 		reg->Save(L"TabsOnTaskBar", m_isTabsOnTaskBar);
 		reg->Save(L"TaskBarOverlay", isTaskbarShield);
+		reg->Save(L"TaskbarProgress", isTaskbarProgress);
 		reg->Save(L"TabCloseMacro", sTabCloseMacro);
 		reg->Save(L"TabFontFace", sTabFontFace);
 		reg->Save(L"TabFontCharSet", nTabFontCharSet);

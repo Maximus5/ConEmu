@@ -280,6 +280,8 @@ BEGIN
                     "Button",BS_AUTORADIOBUTTON,158,59,159,8
     CONTROL         "Show Shield overlay (Win7 and higher)",cbTaskbarShield,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,74,143,8
+    CONTROL         "Show progress indicator (Win7 and higher)",cbTaskbarProgress,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,74,159,8
     GROUPBOX        "Action on closing last console (tab) and 'cross clicking'",IDC_STATIC,4,93,319,42
     GROUPBOX        "Minimize ConEmu automatically",IDC_STATIC,4,140,319,57
     CONTROL         "Minimize on focus lose (not in Quake style)",cbMinimizeOnLoseFocus,

@@ -2063,6 +2063,7 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 		(gpSet->m_isTabsOnTaskBar == 1) ? rbTaskbarBtnAll
 		: rbTaskbarBtnActive);
 	checkDlgButton(hWnd2, cbTaskbarShield, gpSet->isTaskbarShield);
+	checkDlgButton(hWnd2, cbTaskbarProgress, gpSet->isTaskbarProgress);
 
 	//checkRadioButton(hWnd2, rbMultiLastClose, rbMultiLastTSA,
 	//	gpSet->isMultiLeaveOnClose ? (gpSet->isMultiHideOnClose ? rbMultiLastTSA : rbMultiLastLeave) : rbMultiLastClose);
@@ -5299,6 +5300,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbTaskbarShield:
 			gpSet->isTaskbarShield = IsChecked(hWnd2, CB);
 			gpConEmu->Taskbar_UpdateOverlay();
+			break;
+		case cbTaskbarProgress:
+			gpSet->isTaskbarProgress = IsChecked(hWnd2, CB);
+			gpConEmu->UpdateProgress();
 			break;
 		case rbTaskbarBtnActive:
 		case rbTaskbarBtnAll:
