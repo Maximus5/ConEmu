@@ -37,6 +37,9 @@ namespace ConEmuMacro
 	// Конвертация из "старого" в "новый" формат
 	// Старые макросы хранились как "Verbatim" но без префикса
 	LPWSTR ConvertMacro(LPCWSTR asMacro, BYTE FromVersion, bool bShowErrorTip = true);
+	// Some functions must be executed in main thread
+	// but they may be called from console
+	LRESULT ExecuteMacroSync(WPARAM wParam, LPARAM lParam);
 
 	#ifdef _DEBUG
 	void UnitTests();

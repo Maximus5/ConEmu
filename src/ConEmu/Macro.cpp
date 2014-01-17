@@ -106,6 +106,16 @@ namespace ConEmuMacro
 	bool gbUnitTest = false;
 	#endif
 
+	typedef LPWSTR (*MacroFunction)(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+
+	struct SyncExecMacroParm
+	{
+		MacroFunction pfn;
+		GuiMacro* p;
+		CRealConsole* pRCon;
+		bool bFromPlugin;
+	};
+
 	/* ****************************** */
 	/* ****** Macros functions ****** */
 	/* ****************************** */
@@ -176,10 +186,10 @@ namespace ConEmuMacro
 	/* ******************************* */
 	/* ****** Macro enumeration ****** */
 	/* ******************************* */
-	typedef LPWSTR (*MacroFunction)(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	struct {
 		MacroFunction pfn;
 		LPCWSTR Alias[5]; // Some function can be called with different names (usability)
+		bool NoThreadSafe;
 	} Functions[] = {
 		// List all functions
 		{IsConEmu, {L"IsConEmu"}},
@@ -210,7 +220,7 @@ namespace ConEmuMacro
 		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
 		{Task, {L"Task"}},
 		{Transparency, {L"Transparency"}},
-		{Status, {L"Status", L"StatusBar", L"StatusControl"}},
+		{Status, {L"Status", L"StatusBar", L"StatusControl"}, true},
 		{Split, {L"Split", L"Splitter"}},
 		// End
 		{NULL}
@@ -772,6 +782,8 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 
 	LPWSTR pszAllResult = NULL;
 
+	bool bIsMainThread = gpConEmu->isMainThread();
+
 	while (p)
 	{
 		LPWSTR pszResult = NULL;
@@ -785,7 +797,15 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 			{
 				if (lstrcmpi(szFunction, Functions[f].Alias[n]) == 0)
 				{
-					pszResult = Functions[f].pfn(p, apRCon, abFromPlugin);
+					if (Functions[f].NoThreadSafe && !bIsMainThread)
+					{
+						SyncExecMacroParm parm = {Functions[f].pfn, p, apRCon, abFromPlugin};
+						pszResult = (LPWSTR)gpConEmu->SyncExecMacro(f, (LPARAM)&parm);
+					}
+					else
+					{
+						pszResult = Functions[f].pfn(p, apRCon, abFromPlugin);
+					}
 					goto executed;
 				}
 			}
@@ -827,6 +847,22 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 	// Fin
 	SafeFree(p);
 	return pszAllResult;
+}
+
+LRESULT ConEmuMacro::ExecuteMacroSync(WPARAM wParam, LPARAM lParam)
+{
+	if (wParam < 0 || wParam >= countof(Functions))
+	{
+		_ASSERTE(wParam >= 0 && wParam < countof(Functions));
+		return 0;
+	}
+
+	SyncExecMacroParm* parm = (SyncExecMacroParm*)lParam;
+	_ASSERTE(parm->pfn == Functions[wParam].pfn);
+
+	LPWSTR pszResult = Functions[wParam].pfn(parm->p, parm->pRCon, parm->bFromPlugin);
+
+	return (LRESULT)pszResult;
 }
 
 void ConEmuMacro::SkipWhiteSpaces(LPWSTR& rsString)

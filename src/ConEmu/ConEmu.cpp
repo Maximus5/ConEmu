@@ -772,6 +772,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgRequestRunProcess = RegisterMessage("RequestRunProcess");
 	mn_MsgDeleteVConMainThread = RegisterMessage("DeleteVConMainThread");
 	mn_MsgReqChangeCurPalette = RegisterMessage("ChangeCurrentPalette");
+	mn_MsgMacroExecSync = RegisterMessage("MacroExecSync");
 }
 
 bool CConEmuMain::isMingwMode()
@@ -7908,6 +7909,13 @@ void CConEmuMain::PostChangeCurPalette(LPCWSTR pszPalette, bool bChangeDropDown,
 		const Settings::ColorPalette* pPal = gpSet->PaletteGetByName(pszPalette);
 		gpSetCls->ChangeCurrentPalette(pPal, bChangeDropDown);
 	}
+}
+
+LRESULT CConEmuMain::SyncExecMacro(WPARAM wParam, LPARAM lParam)
+{
+	LRESULT lRc;
+	lRc = SendMessage(ghWnd, mn_MsgMacroExecSync, wParam, lParam);
+	return lRc;
 }
 
 void CConEmuMain::PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg)
@@ -18747,6 +18755,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				this->PostChangeCurPalette((LPCWSTR)lParam, (wParam!=0), true);
 				return 0;
+			}
+			else if (messg == this->mn_MsgMacroExecSync)
+			{
+				return ConEmuMacro::ExecuteMacroSync(wParam, lParam);
 			}
 			else if (messg == this->mn_MsgDisplayRConError)
 			{
