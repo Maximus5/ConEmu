@@ -2167,14 +2167,22 @@ bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
 }
 
 // true - found
-bool CVConGroup::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
+bool CVConGroup::OnFlashWindow(DWORD nOpt, DWORD nFlags, DWORD nCount, HWND hCon)
 {
 	if (!hCon) return false;
 
-	bool lbFlashSimple = false;
+	const bool abSimple = (nOpt & 1) != 0;
+	const bool abInvert = (nOpt & 2) != 0;
+	const bool abFromMacro = (nOpt & 4) != 0;
 
+	bool lbFlashSimple = abSimple;
+
+	if (abFromMacro)
+	{
+		// Через макросы - все разрешено
+	}
 	// Достало. Настройка полного отключения флэшинга
-	if (gpSet->isDisableFarFlashing && gp_VActive->RCon()->GetFarPID(FALSE))
+	else if (gpSet->isDisableFarFlashing && gp_VActive->RCon()->GetFarPID(FALSE))
 	{
 		if (gpSet->isDisableFarFlashing == 1)
 			return false;
@@ -2201,7 +2209,22 @@ bool CVConGroup::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
 
 			FLASHWINFO fl = {sizeof(FLASHWINFO)};
 
-			if (gpConEmu->isMeForeground())
+			if (abFromMacro)
+			{
+				// Через макросы - все разрешено
+				if (abSimple)
+				{
+					FlashWindow(ghWnd, abInvert);
+				}
+				else
+				{
+					fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
+					FlashWindowEx(&fl); // Чтобы мигание не накапливалось
+					fl.uCount = nCount; fl.dwFlags = nFlags; fl.hwnd = ghWnd;
+					FlashWindowEx(&fl);
+				}
+			}
+			else if (gpConEmu->isMeForeground())
 			{
 				if (gp_VCon[i] != gp_VActive)    // Только для неактивной консоли
 				{

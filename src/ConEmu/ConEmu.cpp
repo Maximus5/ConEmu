@@ -11733,11 +11733,30 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	return 0;
 }
 
-LRESULT CConEmuMain::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
+LRESULT CConEmuMain::OnFlashWindow(WPARAM wParam, LPARAM lParam)
 {
-	CVConGroup::OnFlashWindow(nFlags, nCount, hCon);
+	DWORD nOpt = ((DWORD)wParam & 0x00F00000) >> 20;
+	DWORD nFlags = ((DWORD)wParam & 0xFF000000) >> 24;
+	DWORD nCount = (DWORD)wParam & 0xFFFFF;
+	CVConGroup::OnFlashWindow(nOpt, nFlags, nCount, (HWND)lParam);
 
 	return 0;
+}
+
+void CConEmuMain::DoFlashWindow(CESERVER_REQ_FLASHWINFO* pFlash, bool bFromMacro)
+{
+	WPARAM wParam = 0;
+
+	if (pFlash->bSimple)
+	{
+		wParam = 0x00100000 | (pFlash->bInvert ? 0x00200000 : 0) | (bFromMacro ? 0x00400000 : 0);
+	}
+	else
+	{
+		wParam = ((pFlash->dwFlags & 0xFF) << 24) | (pFlash->uCount & 0xFFFFF) | (bFromMacro ? 0x00400000 : 0);
+	}
+
+	PostMessage(ghWnd, mn_MsgFlashWindow, wParam, (LPARAM)pFlash->hWnd.u);
 }
 
 void CConEmuMain::setFocus()
@@ -18717,7 +18736,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgFlashWindow)
 			{
-				return OnFlashWindow((DWORD)(wParam & 0xFF000000) >> 24, (DWORD)wParam & 0xFFFFFF, (HWND)lParam);
+				return OnFlashWindow(wParam, lParam);
 			}
 			else if (messg == this->mn_MsgPostAltF9)
 			{

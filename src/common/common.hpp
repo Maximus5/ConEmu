@@ -327,7 +327,7 @@ const CECMD
 	CECMD_POSTCONMSG     = 21, // В Win7 релизе нельзя посылать сообщения окну консоли, запущенной в режиме администратора
 //	CECMD_REQUESTCONSOLEINFO  = 22, // было CECMD_REQUESTFULLINFO
 	CECMD_SETFOREGROUND  = 23,
-	CECMD_FLASHWINDOW    = 24,
+	CECMD_FLASHWINDOW    = 24, // CESERVER_REQ_FLASHWINFO
 //	CECMD_SETCONSOLECP   = 25,
 	CECMD_SAVEALIASES    = 26,
 	CECMD_GETALIASES     = 27,

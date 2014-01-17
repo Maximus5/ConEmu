@@ -210,7 +210,7 @@ public:
 	static void PaintGaps(HDC hDC);
 	static void InvalidateAll();
 
-	static bool OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon);
+	static bool OnFlashWindow(DWORD nOpt, DWORD nFlags, DWORD nCount, HWND hCon);
 
 	static void ExportEnvVarAll(CESERVER_REQ* pIn, CRealConsole* pExceptRCon);
 

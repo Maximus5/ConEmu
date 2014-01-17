@@ -1076,20 +1076,10 @@ CESERVER_REQ* CRealServer::cmdFlashWindow(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 {
 	CESERVER_REQ* pOut = NULL;
 
-	DEBUGSTRCMD(L"GUI recieved CECMD_FLASHWINDOW\n");	
-	UINT nFlash = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
-	WPARAM wParam = 0;
+	DEBUGSTRCMD(L"GUI recieved CECMD_FLASHWINDOW\n");
 
-	if (pIn->Flash.bSimple)
-	{
-		wParam = (pIn->Flash.bInvert ? 2 : 1) << 25;
-	}
-	else
-	{
-		wParam = ((pIn->Flash.dwFlags & 0xF) << 24) | (pIn->Flash.uCount & 0xFFFFFF);
-	}
+	gpConEmu->DoFlashWindow(&pIn->Flash, false);
 
-	PostMessage(ghWnd, nFlash, wParam, (LPARAM)pIn->Flash.hWnd.u);
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
 
 	return pOut;

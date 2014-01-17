@@ -127,6 +127,8 @@ namespace ConEmuMacro
 	LPWSTR FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon, bool abFromPlugin); // helper, это не макро-фукнция
+	// Flash
+	LPWSTR Flash(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Изменить имя основного шрифта. string
 	LPWSTR FontSetName(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Изменить размер шрифта. int nRelative, int N
@@ -203,6 +205,7 @@ namespace ConEmuMacro
 		{WindowMode, {L"WindowMode"}},
 		{MsgBox, {L"MsgBox"}},
 		{Menu, {L"Menu"}},
+		{Flash, {L"Flash", L"FlashWindow"}},
 		{FontSetSize, {L"FontSetSize"}},
 		{FontSetName, {L"FontSetName"}},
 		{HighlightMouse, {L"HighlightMouse"}},
@@ -1446,6 +1449,37 @@ LPWSTR ConEmuMacro::MsgBox(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	}
 
 	return NULL;
+}
+
+LPWSTR ConEmuMacro::Flash(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	int iMode = 0, iFlags = 0, iCount = 0;
+	p->GetIntArg(0, iMode);
+
+	CESERVER_REQ_FLASHWINFO flash = {};
+
+	if (apRCon)
+		flash.hWnd = apRCon->ConWnd();
+
+	if (iMode == 0)
+	{
+		flash.bSimple = TRUE;
+		flash.bInvert = (p->GetIntArg(1, iFlags)) && (iFlags != 0);
+	}
+	else
+	{
+		if (p->GetIntArg(1, iFlags))
+			flash.dwFlags = iFlags;
+
+		if (p->GetIntArg(2, iCount) && (iCount > 0))
+			flash.uCount = iCount;
+		else
+			flash.uCount = 3;
+	}
+
+	gpConEmu->DoFlashWindow(&flash, true);
+
+	return lstrdup(L"OK");
 }
 
 // Изменить размер шрифта.

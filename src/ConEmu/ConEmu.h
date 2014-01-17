@@ -802,7 +802,8 @@ class CConEmuMain :
 		LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);
 		void OnDesktopMode();
 		LRESULT OnDestroy(HWND hWnd);
-		LRESULT OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon);
+		LRESULT OnFlashWindow(WPARAM wParam, LPARAM lParam);
+		void DoFlashWindow(CESERVER_REQ_FLASHWINFO* pFlash, bool bFromMacro);
 		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom = NULL, BOOL abForceChild = FALSE);
 		LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 		void OnHideCaption();
