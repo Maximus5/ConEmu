@@ -1849,6 +1849,13 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		// Clears the screen and moves the cursor to the home position (line 0, column 0).
 		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 		{
+			if (lbApply)
+			{
+				// Apply default color before scrolling!
+				ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+				lbApply = FALSE;
+			}
+
 			int nCmd = (Code.ArgC > 0) ? Code.ArgV[0] : 0;
 			COORD cr0 = {};
 			int nChars = 0;
@@ -1906,6 +1913,13 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		// (including the character at the cursor position).
 		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 		{
+			if (lbApply)
+			{
+				// Apply default color before scrolling!
+				ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+				lbApply = FALSE;
+			}
+
 			TODO("Need to clear attributes?");
 			int nChars = 0;
 			int nCmd = (Code.ArgC > 0) ? Code.ArgV[0] : 0;
@@ -1966,6 +1980,12 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 
 	case L'S':
 		// Scroll whole page up by n (default 1) lines. New lines are added at the bottom.
+		if (lbApply)
+		{
+			// Apply default color before scrolling!
+			ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+			lbApply = FALSE;
+		}
 		ScrollScreen(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? -Code.ArgV[0] : -1);
 		break;
 
@@ -1990,6 +2010,11 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 
 	case L'T':
 		// Scroll whole page down by n (default 1) lines. New lines are added at the top.
+		if (lbApply)
+		{
+			// Apply default color before scrolling!
+			ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+		}
 		TODO("Define scrolling region");
 		ScrollScreen(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1);
 		break;
@@ -2318,7 +2343,7 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'>')
 			&& ((Code.ArgC < 1) || (Code.ArgV[0] == 0)))
 		{
-			// P s = 0 or omitted -> request the terminal�s identification code.
+			// P s = 0 or omitted -> request the terminal's identification code.
 			wchar_t szVerInfo[64];
 			// this will be "ESC > 67 ; build ; 0 c"
 			// 67 is ASCII code of 'C' (ConEmu, yeah)
@@ -2342,6 +2367,13 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		// CSI P s X:  Erase P s Character(s) (default = 1) (ECH)
 		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 		{
+			if (lbApply)
+			{
+				// Apply default color before scrolling!
+				ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+				lbApply = FALSE;
+			}
+
 			int nCount = (Code.ArgC > 0) ? Code.ArgV[0] : 1;
 			int nScreenLeft = csbi.dwSize.X - csbi.dwCursorPosition.X - 1 + (csbi.dwSize.X * (csbi.dwSize.Y - csbi.dwCursorPosition.Y - 1));
 			int nChars = min(nCount,nScreenLeft);
