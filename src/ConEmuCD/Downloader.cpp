@@ -40,6 +40,20 @@ typedef struct {
 } HTTP_VERSION_INFO, * LPHTTP_VERSION_INFO;
 #define INTERNET_OPTION_HTTP_VERSION 59
 #define SecureZeroMemory(p,s) memset(p,0,s)
+struct InternetCookieHistory
+{
+    BOOL    fAccepted;
+    BOOL    fLeashed;
+    BOOL    fDowngraded;
+    BOOL    fRejected;
+};
+#define INTERNET_STATUS_COOKIE_SENT             320
+#define INTERNET_STATUS_COOKIE_RECEIVED         321
+#define INTERNET_STATUS_COOKIE_HISTORY          327
+#define INTERNET_STATUS_INTERMEDIATE_RESPONSE   120
+#define INTERNET_STATUS_DETECTING_PROXY         80
+#define INTERNET_STATUS_STATE_CHANGE            200
+#define INTERNET_STATUS_P3P_HEADER              325
 #endif
 
 

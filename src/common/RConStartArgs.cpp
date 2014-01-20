@@ -558,7 +558,7 @@ HANDLE RConStartArgs::CheckUserToken()
 	// Empty password? Really? Security hole? Are you sure?
 	// gpedit.msc - Конфигурация компьютера - Конфигурация Windows - Локальные политики - Параметры безопасности - Учетные записи
 	// Ограничить использование пустых паролей только для консольного входа -> "Отключить". 
-	LPCWSTR pszPassword = bUseEmptyPassword ? NULL : szUserPassword;
+	LPWSTR pszPassword = bUseEmptyPassword ? NULL : szUserPassword;
 	DWORD nFlags = LOGON32_LOGON_INTERACTIVE;
 	BOOL lbRc = LogonUser(pszUserName, pszDomain, pszPassword, nFlags, LOGON32_PROVIDER_DEFAULT, &hLogonToken);
 

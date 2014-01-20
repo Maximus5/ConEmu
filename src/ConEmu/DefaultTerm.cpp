@@ -372,6 +372,7 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 
 	bool lbRc = false;
 	bool lbLocked = false;
+	bool lbConHostLocked;
 	DWORD nResult = 0;
 	wchar_t szClass[MAX_PATH]; szClass[0] = 0;
 	PROCESSENTRY32 prc;
@@ -525,9 +526,9 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 
 	TODO("Show status in status line?");
 
-	bool bLocked = gpConEmu->LockConhostStart();
+	lbConHostLocked = gpConEmu->LockConhostStart();
 	iHookerRc = StartDefTermHooker(nForePID, hProcess, nResult, gpConEmu->ms_ConEmuBaseDir, nErrCode);
-	if (bLocked) gpConEmu->UnlockConhostStart();
+	if (lbConHostLocked) gpConEmu->UnlockConhostStart();
 	if (iHookerRc != 0)
 	{
 		mh_LastIgnoredWnd = hFore;

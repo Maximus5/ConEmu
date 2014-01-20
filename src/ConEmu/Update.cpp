@@ -1754,7 +1754,7 @@ bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 		{
 			DWORD nErr = GetLastError(); // No use?
 			pUpd->ReportError(L"Failed to re-inialize gpInet, code=%u", nErr);
-			goto wrap;
+			return false;
 		}
 		return true;
 	}
