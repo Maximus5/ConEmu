@@ -2,6 +2,9 @@
 // Microsoft Developer Studio generated include file.
 // Used by ConEmuDw.rc
 //
+#ifndef IDC_STATIC
+#define IDC_STATIC                     -1
+#endif
 #define IDD_COLORS                      101
 #define IDC_TEXT                        1001
 #define IDC_FORE                        1002

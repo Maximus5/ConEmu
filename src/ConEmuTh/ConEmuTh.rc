@@ -7,7 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "../ConEmu/afxres.h"
+#include <windows.h>
 #include "../ConEmu/version.h"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -35,7 +35,7 @@ END
 
 2 TEXTINCLUDE 
 BEGIN
-    "#include ""../ConEmu/afxres.h""\r\n"
+    "#include <windows.h>\r\n"
     "#include ""../ConEmu/version.h""\r\n"
     "\0"
 END
