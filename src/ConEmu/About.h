@@ -240,10 +240,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"  - Rename tab (Type=0) or console title (Type=1)\r\n" \
 	L"SetOption(\"<Name>\",<Value>)\r\n" \
 	L"  - Name=one of allowed for changing ConEmu options\r\n" \
-	L"    \"QuakeAutoHide\": auto hide on focus lose, Quake mode\r\n" \
-	L"      Value: 2 - switch auto-hide, 1 - enable, 0 - disable\r\n" \
+	L"    \"AlwaysOnTop\": place ConEmu window above all non-topmost windows\r\n" \
+	L"      Value: 2 - toggle, 1 - enable, 0 - disable\r\n" \
 	L"    \"bgImageDarker\": darkening of background image\r\n" \
 	L"      Value: 0 .. 255\r\n" \
+	L"    \"QuakeAutoHide\": auto hide on focus lose, Quake mode\r\n" \
+	L"      Value: 2 - switch auto-hide, 1 - enable, 0 - disable\r\n" \
 	L"Shell(\"<Verb>\",\"<File>\"[,\"<Parms>\"[,\"<Dir>\"[,<ShowCmd>]]])\r\n" \
 	L"  - Verb can be \"open\", \"print\" and so on, or special value \"new_console\",\r\n" \
 	L"     which starts File in the new tab of ConEmu window. Examples:\r\n" \
@@ -295,5 +297,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"  - Returns or set current window mode\r\n" \
 	L"     \"NOR\", \"MAX\", \"FS\" (fullscreen), \"MIN\", \"TSA\",\r\n" \
     L"     \"TLEFT\", \"TRIGHT\" (tile to left/right), \"THEIGHT\",\r\n" \
-    L"     \"MPREF\", \"MNEXT\" (move ConEmu to prev/next monitor)\r\n" \
+    L"     \"MPREV\", \"MNEXT\" (move ConEmu to prev/next monitor)\r\n" \
 	L""
