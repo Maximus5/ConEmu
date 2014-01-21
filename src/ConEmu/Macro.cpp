@@ -1035,7 +1035,7 @@ LPWSTR ConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bC
 		if (*rsArguments == L',')
 			rsArguments++;
 
-		_ASSERTE(rsArguments>=pszArgStart && rsArguments<pszArgEnd);
+		_ASSERTE(rsArguments>=pszArgStart && rsArguments<=pszArgEnd);
 	}
 
 wrap:
