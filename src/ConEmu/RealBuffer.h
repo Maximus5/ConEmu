@@ -1,7 +1,7 @@
 ﻿
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -126,8 +126,10 @@ private:
 	bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
 	bool DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */);
 	int  GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, int* pnSelWidth, int* pnSelHeight, int nNewLineLen);
+	bool PatchMouseCoords(int& x, int& y, COORD& crMouse);
 
 public:
+	void OnTimerCheckSelection();
 	void MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensitive, bool abWholeWords); // <<== CRealConsole::DoFindText
 	void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE, UINT anFromMsg=0, COORD *pcrTo=NULL);
 	void ExpandSelection(SHORT anX, SHORT anY);
@@ -229,7 +231,7 @@ protected:
 	struct RConInfo
 	{
 		CONSOLE_SELECTION_INFO m_sel;
-		DWORD m_SelClickTick, m_SelDblClickTick;
+		DWORD m_SelClickTick, m_SelDblClickTick, m_SelLastScrollCheck;
 		CONSOLE_CURSOR_INFO m_ci;
 		DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
 		CONSOLE_SCREEN_BUFFER_INFO m_sbi;

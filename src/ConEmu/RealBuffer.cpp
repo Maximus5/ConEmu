@@ -6,7 +6,7 @@
 //TODO: ChangeXXX - послать в консоль и установить значение переменной
 
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -59,19 +59,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
-#define DEBUGSTRINPUT(s) //DEBUGSTR(s)
-#define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
-#define DEBUGSTRPROC(s) DEBUGSTR(s)
-#define DEBUGSTRCMD(s) DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
-#define DEBUGSTRCON(s) //DEBUGSTR(s)
-#define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
-#define DEBUGSTRLOG(s) //OutputDebugStringA(s)
-#define DEBUGSTRALIVE(s) //DEBUGSTR(s)
-#define DEBUGSTRTABS(s) DEBUGSTR(s)
-#define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
+#define DEBUGSTRMOUSE(s) DEBUGSTR(s)
 
 // ANSI, without "\r\n"
 #define IFLOGCONSOLECHANGE gpSetCls->isAdvLogging>=2
@@ -80,6 +71,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CONSOLE_MOUSE_DOWN
 #define CONSOLE_MOUSE_DOWN 8
 #endif
+
+#define SELMOUSEAUTOSCROLLDELTA 25
+#define SELMOUSEAUTOSCROLLPIX   2
 
 #define Free SafeFree
 #define Alloc calloc
@@ -2522,7 +2516,7 @@ COORD CRealBuffer::ScreenToBuffer(COORD crMouse)
 	if (isScroll())
 	{
 		// Прокрутка может быть заблокирована?
-		_ASSERTE(con.nTopVisibleLine == con.m_sbi.srWindow.Top);
+		_ASSERTE((con.nTopVisibleLine == con.m_sbi.srWindow.Top) || (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION));
 
 		crMouse.X += con.m_sbi.srWindow.Left;
 		crMouse.Y += con.m_sbi.srWindow.Top;
@@ -2791,6 +2785,101 @@ void CRealBuffer::ShowKeyBarHint(WORD nID)
 	}
 }
 
+// If console IN selection - do autoscroll when mouse if outside or near VCon edges
+// If NO selection present - ensure that coordinates are inside our VCon (otherwise - exit)
+bool CRealBuffer::PatchMouseCoords(int& x, int& y, COORD& crMouse)
+{
+	// Хорошо бы скроллить выделение если мышка рядом с краем, а не только 'за'. Иначе в Fullsreen может быть сложно...
+	bool bMouse = ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) != 0);
+
+	if ((crMouse.X >= con.m_sbi.srWindow.Left) && (crMouse.X <= con.m_sbi.srWindow.Right)
+		&& ((!bMouse && (crMouse.Y >= con.m_sbi.srWindow.Top) && (crMouse.Y <= con.m_sbi.srWindow.Bottom))
+		|| (bMouse && (crMouse.Y > con.m_sbi.srWindow.Top) && (crMouse.Y < con.m_sbi.srWindow.Bottom))))
+	{
+		DEBUGSTRMOUSE(L"Nothing need to be patched, coordinates are OK (1)\n");
+		return true;
+	}
+
+	int nVConHeight = mp_RCon->VCon()->Height;
+
+	if (bMouse
+		&& ((crMouse.Y == con.m_sbi.srWindow.Top) && (y >= SELMOUSEAUTOSCROLLPIX))
+			|| ((crMouse.Y == con.m_sbi.srWindow.Bottom) && (y <= (nVConHeight-SELMOUSEAUTOSCROLLPIX))))
+	{
+		DEBUGSTRMOUSE(L"Nothing need to be patched, coordinates are OK (2)\n");
+		return true;
+	}
+
+	// In mouse selection only
+	if (!(con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION))
+	{
+		// No selection, mouse outside of VCon, skip this message!
+		DEBUGSTRMOUSE(L"!!! No mouse selection or mouse outside of VCon, message skipped !!!\n");
+		return false;
+	}
+
+	// Avoid too fast scrolling
+	DWORD nCurTick = GetTickCount();
+	DWORD nDelta = (nCurTick - con.m_SelLastScrollCheck);
+	if (nDelta < SELMOUSEAUTOSCROLLDELTA)
+	{
+		DEBUGSTRMOUSE(L"Mouse selection autoscroll skipped (waiting 100ms)\n");
+		return false;
+	}
+	con.m_SelLastScrollCheck = nCurTick;
+
+	// Lets scroll window content
+	if ((crMouse.Y < con.m_sbi.srWindow.Top) || (y < SELMOUSEAUTOSCROLLPIX))
+	{
+		DEBUGSTRMOUSE(L"Autoscrolling buffer one line up\n");
+		crMouse.Y = max(0,con.m_sbi.srWindow.Top-1);
+		OnScroll(SB_LINEUP);
+		y = 0;
+	}
+	else if ((crMouse.Y > con.m_sbi.srWindow.Bottom) || (y > (nVConHeight-SELMOUSEAUTOSCROLLPIX)))
+	{
+		DEBUGSTRMOUSE(L"Autoscrolling buffer one line down\n");
+		crMouse.Y = min(con.m_sbi.srWindow.Bottom+1,con.m_sbi.dwSize.Y-1);
+		OnScroll(SB_LINEDOWN);
+		y = (nVConHeight - 1);
+	}
+
+	// And patch X coords (while we are not support X scrolling yet)
+	if (crMouse.X < con.m_sbi.srWindow.Left)
+	{
+		crMouse.X = con.m_sbi.srWindow.Left;
+		x = 0;
+	}
+	else if (crMouse.X > con.m_sbi.srWindow.Right)
+	{
+		crMouse.X = con.m_sbi.srWindow.Right;
+		x = (mp_RCon->VCon()->Width - 1);
+	}
+
+	return true;
+}
+
+void CRealBuffer::OnTimerCheckSelection()
+{
+	// In mouse selection only
+	if (!(con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION))
+		return;
+
+	POINT ptCur = {}; GetCursorPos(&ptCur);
+	MapWindowPoints(NULL, mp_RCon->VCon()->GetView(), &ptCur, 1);
+	int nVConHeight = mp_RCon->VCon()->Height;
+	
+	if ((ptCur.y < SELMOUSEAUTOSCROLLPIX) || (ptCur.y > (nVConHeight-SELMOUSEAUTOSCROLLPIX)))
+	{
+		COORD crMouse = ScreenToBuffer(mp_RCon->VCon()->ClientToConsole(ptCur.x, ptCur.y));
+		int x = ptCur.x, y = ptCur.y;
+		WPARAM wParam = (isPressed(VK_LBUTTON) ? MK_LBUTTON : 0)
+			| (isPressed(VK_RBUTTON) ? MK_RBUTTON : 0)
+			| (isPressed(VK_MBUTTON) ? MK_MBUTTON : 0);
+		OnMouse(WM_MOUSEMOVE, wParam, x, y, crMouse);
+	}
+}
+
 // x,y - экранные координаты
 // crMouse - ScreenToBuffer
 // Возвращает true, если мышку обработал "сам буфер"
@@ -2799,6 +2888,21 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 #ifndef WM_MOUSEHWHEEL
 #define WM_MOUSEHWHEEL                  0x020E
 #endif
+
+	#ifdef _DEBUG
+	wchar_t szDbgInfo[200]; _wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"RBuf::OnMouse %s XY={%i,%i} CR={%i,%i}%s SelFlags=x%08X\n",
+		messg==WM_MOUSEMOVE?L"WM_MOUSEMOVE":
+		messg==WM_LBUTTONDOWN?L"WM_LBUTTONDOWN":messg==WM_LBUTTONUP?L"WM_LBUTTONUP":messg==WM_LBUTTONDBLCLK?L"WM_LBUTTONDBLCLK":
+		messg==WM_RBUTTONDOWN?L"WM_RBUTTONDOWN":messg==WM_RBUTTONUP?L"WM_RBUTTONUP":messg==WM_RBUTTONDBLCLK?L"WM_RBUTTONDBLCLK":
+		messg==WM_MBUTTONDOWN?L"WM_MBUTTONDOWN":messg==WM_MBUTTONUP?L"WM_MBUTTONUP":messg==WM_MBUTTONDBLCLK?L"WM_MBUTTONDBLCLK":
+		messg==WM_MOUSEWHEEL?L"WM_MOUSEWHEEL":messg==WM_MOUSEHWHEEL?L"WM_MOUSEHWHEEL":
+		L"{OtherMsg}", x,y, crMouse.X,crMouse.Y,(abFromTouch?L" Touch":L""), con.m_sel.dwFlags);
+	DEBUGSTRMOUSE(szDbgInfo);
+	#endif
+
+	// Ensure that coordinates are correct
+	if (!PatchMouseCoords(x, y, crMouse))
+		return false;
 
 	mcr_LastMousePos = crMouse;
 

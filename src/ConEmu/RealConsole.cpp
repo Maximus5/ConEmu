@@ -1765,6 +1765,12 @@ void CRealConsole::OnTimerCheck()
 	}
 	#endif
 
+	// Кроме того, здесь проверяется "нужно ли скроллить консоль во время выделения мышкой"
+	if (mp_ABuf->isSelectionPresent())
+	{
+		mp_ABuf->OnTimerCheckSelection();
+	}
+
 	return;
 }
 

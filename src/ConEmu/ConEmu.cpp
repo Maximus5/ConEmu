@@ -15200,7 +15200,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	CVirtualConsole* pVCon = NULL;
 	CVConGuard VCon;
 
-	if ((messg == WM_LBUTTONUP) && (GetActiveVCon(&VCon) >= 0) && VCon->RCon()->isMouseSelectionPresent())
+	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon()->isMouseSelectionPresent())
 		pVCon = VCon.VCon();
 	else if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
 		pVCon = VCon.VCon();
@@ -17320,6 +17320,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	}
 
 	// Чтобы не возникало "зависаний/блокировок" в потоке чтения консоли - проверяем "живость" сервера
+	// Кроме того, здесь проверяется "нужно ли скроллить консоль во время выделения мышкой"
 	CVConGroup::OnRConTimerCheck();
 
 	// TODO: поддержку SlideShow повесить на отдельный таймер
