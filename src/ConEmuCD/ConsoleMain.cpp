@@ -3196,8 +3196,10 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 		}
 	}
 
-	// В корневом сервере тоже применить
+	// We are trying to apply environment to parent tree even if NO server or GUI was found
+	if (nSrvPID)
 	{
+		// Server found? Try to apply environment
 		CESERVER_REQ *pOut = ExecuteSrvCmd(nSrvPID, pIn, ghConWnd);
 
 		if (!pOut)
