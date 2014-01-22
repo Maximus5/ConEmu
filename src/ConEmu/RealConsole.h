@@ -608,10 +608,12 @@ class CRealConsole
 		// Здесь сохраняется заголовок окна (с панелями), когда FAR фокус с панелей уходит (переходит в редактор...).
 		WCHAR ms_PanelTitle[CONEMUTABMAX];
 		// Процентики
-		short mn_Progress, mn_LastShownProgress;
-		short mn_PreWarningProgress; DWORD mn_LastWarnCheckTick;
-		short mn_ConsoleProgress, mn_LastConsoleProgress; DWORD mn_LastConProgrTick;
-		short mn_AppProgressState, mn_AppProgress; // Может быть задан из консоли (Ansi codes, Macro)
+		struct {
+			short Progress, LastShownProgress;
+			short PreWarningProgress; DWORD LastWarnCheckTick;
+			short ConsoleProgress, LastConsoleProgress; DWORD LastConProgrTick;
+			short AppProgressState, AppProgress; // Может быть задан из консоли (Ansi codes, Macro)
+		} m_Progress;
 		// a-la properties
 		void setProgress(short value);
 		void setLastShownProgress(short value);

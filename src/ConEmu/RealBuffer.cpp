@@ -5260,7 +5260,7 @@ void CRealBuffer::FindPanels()
 	BOOL bMayBePanels = FALSE;
 	BOOL lbNeedUpdateSizes = FALSE;
 	BOOL lbPanelsChanged = FALSE;
-	short nLastProgress = mp_RCon->mn_ConsoleProgress;
+	short nLastProgress = mp_RCon->m_Progress.ConsoleProgress;
 	short nNewProgress = -1;
 	/*
 	Имеем облом. При ресайзе панелей CtrlLeft/CtrlRight иногда сервер считывает
@@ -5550,7 +5550,7 @@ void CRealBuffer::FindPanels()
 		}
 	}
 
-	if (mp_RCon->mn_ConsoleProgress != nNewProgress || nLastProgress != nNewProgress)
+	if (mp_RCon->m_Progress.ConsoleProgress != nNewProgress || nLastProgress != nNewProgress)
 	{
 		// Запомнить, что получили из консоли
 		mp_RCon->setConsoleProgress(nNewProgress);
@@ -6524,14 +6524,14 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 
 	if (nProgress != -1)
 	{
-		mp_RCon->mn_LastConProgrTick = GetTickCount();
+		mp_RCon->m_Progress.LastConProgrTick = GetTickCount();
 		mp_RCon->setLastConsoleProgress(nProgress); // его обновляем всегда
 	}
 	else
 	{
-		DWORD nDelta = GetTickCount() - mp_RCon->mn_LastConProgrTick;
+		DWORD nDelta = GetTickCount() - mp_RCon->m_Progress.LastConProgrTick;
 		if (nDelta < CONSOLEPROGRESSTIMEOUT) // Если таймаут предыдущего значения еще не наступил
-			nProgress = mp_RCon->mn_ConsoleProgress; // возъмем предыдущее значение
+			nProgress = mp_RCon->m_Progress.ConsoleProgress; // возъмем предыдущее значение
 		mp_RCon->setLastConsoleProgress(-1); // его обновляем всегда
 	}
 
