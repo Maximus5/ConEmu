@@ -619,8 +619,9 @@ class CRealConsole
 		void setLastShownProgress(short value);
 		void setPreWarningProgress(short value);
 		void setConsoleProgress(short value);
-		void setLastConsoleProgress(short value);
+		void setLastConsoleProgress(short value, bool UpdateTick);
 		void setAppProgress(short AppProgressState, short AppProgress);
+		void logProgress(LPCWSTR asFormat, int V1, int V2 = 0);
 		// method
 		short CheckProgressInTitle();
 		//short CheckProgressInConsole(const wchar_t* pszCurLine);

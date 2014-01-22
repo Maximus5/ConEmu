@@ -62,7 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
-#define DEBUGSTRMOUSE(s) DEBUGSTR(s)
+#define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 
 // ANSI, without "\r\n"
 #define IFLOGCONSOLECHANGE gpSetCls->isAdvLogging>=2
@@ -6524,15 +6524,14 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 
 	if (nProgress != -1)
 	{
-		mp_RCon->m_Progress.LastConProgrTick = GetTickCount();
-		mp_RCon->setLastConsoleProgress(nProgress); // его обновляем всегда
+		mp_RCon->setLastConsoleProgress(nProgress, true); // его обновляем всегда
 	}
 	else
 	{
 		DWORD nDelta = GetTickCount() - mp_RCon->m_Progress.LastConProgrTick;
 		if (nDelta < CONSOLEPROGRESSTIMEOUT) // Если таймаут предыдущего значения еще не наступил
 			nProgress = mp_RCon->m_Progress.ConsoleProgress; // возъмем предыдущее значение
-		mp_RCon->setLastConsoleProgress(-1); // его обновляем всегда
+		mp_RCon->setLastConsoleProgress(-1, false); // его обновляем всегда
 	}
 
 	return nProgress;
