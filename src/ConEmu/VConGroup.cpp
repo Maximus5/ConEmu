@@ -1509,10 +1509,8 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 		{
 			bWasError = (nState & 1) == 1;
 			bWasIndeterminate = (nState & 2) == 2;
-			//mn_Progress = max(nProgress, nUpdateProgress);
 			bActiveHasProgress = TRUE;
 			_ASSERTE(lbNotFromTitle==FALSE); // CRealConsole должен проценты добавлять в GetTitle сам
-			//bNeedAddToTitle = lbNotFromTitle;
 		}
 	}
 

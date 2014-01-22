@@ -612,6 +612,14 @@ class CRealConsole
 		short mn_PreWarningProgress; DWORD mn_LastWarnCheckTick;
 		short mn_ConsoleProgress, mn_LastConsoleProgress; DWORD mn_LastConProgrTick;
 		short mn_AppProgressState, mn_AppProgress; // Может быть задан из консоли (Ansi codes, Macro)
+		// a-la properties
+		void setProgress(short value);
+		void setLastShownProgress(short value);
+		void setPreWarningProgress(short value);
+		void setConsoleProgress(short value);
+		void setLastConsoleProgress(short value);
+		void setAppProgress(short AppProgressState, short AppProgress);
+		// method
 		short CheckProgressInTitle();
 		//short CheckProgressInConsole(const wchar_t* pszCurLine);
 		//void SetProgress(short anProgress); // установить переменную mn_Progress и mn_LastProgressTick

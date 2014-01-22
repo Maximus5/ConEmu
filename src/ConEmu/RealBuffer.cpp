@@ -5553,7 +5553,7 @@ void CRealBuffer::FindPanels()
 	if (mp_RCon->mn_ConsoleProgress != nNewProgress || nLastProgress != nNewProgress)
 	{
 		// Запомнить, что получили из консоли
-		mp_RCon->mn_ConsoleProgress = nNewProgress;
+		mp_RCon->setConsoleProgress(nNewProgress);
 		// Показать прогресс в заголовке
 		mp_RCon->mb_ForceTitleChanged = TRUE;
 	}
@@ -6525,14 +6525,14 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 	if (nProgress != -1)
 	{
 		mp_RCon->mn_LastConProgrTick = GetTickCount();
-		mp_RCon->mn_LastConsoleProgress = nProgress; // его обновляем всегда
+		mp_RCon->setLastConsoleProgress(nProgress); // его обновляем всегда
 	}
 	else
 	{
 		DWORD nDelta = GetTickCount() - mp_RCon->mn_LastConProgrTick;
 		if (nDelta < CONSOLEPROGRESSTIMEOUT) // Если таймаут предыдущего значения еще не наступил
 			nProgress = mp_RCon->mn_ConsoleProgress; // возъмем предыдущее значение
-		mp_RCon->mn_LastConsoleProgress = -1; // его обновляем всегда
+		mp_RCon->setLastConsoleProgress(-1); // его обновляем всегда
 	}
 
 	return nProgress;
