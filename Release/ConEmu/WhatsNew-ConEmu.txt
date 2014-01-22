@@ -15,6 +15,17 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.22
+[*] SetOption(AlwaysOnTop) described in the About dialog.
+[%] Issue 1336: Vim, xterm256 drawing issues (T,S,K,J,L,M CSI commands).
+[%] Don't try to export environment to ServerPID==0.
+[+] Issue 823: Autoscroll console while select text with mouse.
+[%] Some fixes in GitShowBranch.cmd.
+[%] Console progress detector stucks sometimes.
+[!] Issue 1441: Don't enable (ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE) by default in new configs.
+[*] Some internal changes.
+
+
 2014.01.17
 [*] New option ‘Show progress indicator’ on ‘Task bar’ page.
 [*] GuiMacro. Some function must be executed in main thread.
