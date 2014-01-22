@@ -580,7 +580,8 @@ void Settings::InitSettings()
 	#else
 	isPortableReg = false;
 	#endif
-	nConInMode = (DWORD)-1; // по умолчанию, включится (ENABLE_QUICK_EDIT_MODE|ENABLE_EXTENDED_FLAGS|ENABLE_INSERT_MODE)
+	// Disable (ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE), Enable (ENABLE_EXTENDED_FLAGS)
+	nConInMode = (ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE)<<16;
 	nSlideShowElapse = 2500;
 	nIconID = IDI_ICON1;
 	isRClickSendKey = 2;
