@@ -1,21 +1,32 @@
 @echo off
 
+rem *** Usage ***
+rem call 'GitShowBranch /i' for prompt initialization
+rem you may change ConEmuGitPath variable, if git.exe/git.cmd is not in your %PATH%
+
+rem predefined dir where git binaries are stored
+if NOT DEFINED ConEmuGitPath set ConEmuGitPath="%~d0\Utils\Lans\GIT\bin\git.exe"
+if NOT exist %ConEmuGitPath% (
+  set ConEmuGitPath=git
+)
+
 if /I "%~1" == "/i" (
-prompt $P$E]9;7;"cmd /c%~nx0"$e\$E]9;8;"gitbranch"$e\$g
-goto :EOF
+  call %ConEmuGitPath% --version
+  if errorlevel 1 (
+    call cecho "GIT not found, change your ConEmuGitPath environment variable"
+    goto :EOF
+  )
+  prompt $P$E]9;7;"cmd /c%~nx0"$e\$E]9;8;"gitbranch"$e\$g
+  goto :EOF
+) else if /I "%~1" == "/u" (
+  prompt $P$G
+  goto :EOF
 )
 
 if /I "%~1" == "/?" goto help
 if /I "%~1" == "-?" goto help
 if /I "%~1" == "-h" goto help
 if /I "%~1" == "--help" goto help
-
-
-rem predefined dir where git binaries are stored
-set gitpath=%~d0\Utils\Lans\GIT\bin\
-if NOT exist "%gitpath%git.exe" (
-  set gitpath=
-)
 
 
 goto run
@@ -60,6 +71,8 @@ goto :EOF
 rem Calculate changes count
 if "%gitbranch_ln%" == "##" (
   rem save first line, this must be branch
+) else if "%gitbranch_ln:~0,2%" == "??" (
+  call :inc_add
 ) else if "%gitbranch_ln:~0,1%" == "A" (
   call :inc_add
 ) else if "%gitbranch_ln:~0,1%" == "D" (
@@ -83,7 +96,7 @@ if "%TEMP:~-1%" == "\" (set gitlogpath=%TEMP:~0,-1%) else (set gitlogpath=%TEMP%
 set git_out=%gitlogpath%\conemu_git_1.log
 set git_err=%gitlogpath%\conemu_git_2.log
 
-"%gitpath%git.exe"  -c color.status=false status --short --branch 1>"%git_out%" 2>"%git_err%"
+call %ConEmuGitPath%  -c color.status=false status --short --branch 1>"%git_out%" 2>"%git_err%"
 if errorlevel 1 (
 del "%git_out%">nul
 del "%git_err%">nul
@@ -113,6 +126,9 @@ rem call "%~dp0cecho" "Not `## `?"
 set gitbranch=
 goto prepare
 )
+
+rem "set" does not like brackets
+if "%gitbranch%" == "## HEAD (no branch)" set gitbranch=## HEAD.no_branch
 
 rem Are there changes? Or we need to display branch name only?
 if "%gitbranch_add% %gitbranch_chg% %gitbranch_del%" == "0 0 0" (
