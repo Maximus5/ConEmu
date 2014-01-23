@@ -470,8 +470,11 @@ LPCWSTR GetWindowModeName(ConEmuWindowMode wm);
 enum ExpandTextRangeType
 {
 	etr_None = 0,
+	// Used for DblClick word selection, for example
 	etr_Word = 1,
+	// Highlight and goto compiler errors
 	etr_FileAndLine = 2,
+	// Internet/intranet URL's
 	etr_Url = 3,
 };
 
