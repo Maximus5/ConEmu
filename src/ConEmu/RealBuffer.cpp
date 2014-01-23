@@ -2544,14 +2544,14 @@ ExpandTextRangeType CRealBuffer::GetLastTextRangeType()
 {
 	if (!this)
 		return etr_None;
-	return con.etrLast;
+	return con.etr.etrLast;
 }
 
 bool CRealBuffer::ResetLastMousePos()
 {
 	mcr_LastMousePos = MakeCoord(-1,-1);
 
-	bool bChanged = (con.etrLast != etr_None);
+	bool bChanged = (con.etr.etrLast != etr_None);
 
 	if (bChanged)
 		StoreLastTextRange(etr_None);
@@ -2596,7 +2596,7 @@ bool CRealBuffer::ProcessFarHyperlink(bool bUpdateScreen)
 		}
 	}
 
-	if ((mcr_LastMousePos.X == -1) && (con.etrLast != etr_None))
+	if ((mcr_LastMousePos.X == -1) && (con.etr.etrLast != etr_None))
 	{
 		ResetLastMousePos();
 	}
@@ -2630,11 +2630,11 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 	ExpandTextRangeType rc = mp_RCon->isActive()
 		? ExpandTextRange(crStart, crEnd, etr_FileAndLine, szText, countof(szText))
 		: etr_None;
-	if (memcmp(&crStart, &con.mcr_FileLineStart, sizeof(crStart)) != 0
-		|| memcmp(&crEnd, &con.mcr_FileLineEnd, sizeof(crStart)) != 0)
+	if (memcmp(&crStart, &con.etr.mcr_FileLineStart, sizeof(crStart)) != 0
+		|| memcmp(&crEnd, &con.etr.mcr_FileLineEnd, sizeof(crStart)) != 0)
 	{
-		con.mcr_FileLineStart = crStart;
-		con.mcr_FileLineEnd = crEnd;
+		con.etr.mcr_FileLineStart = crStart;
+		con.etr.mcr_FileLineEnd = crEnd;
 		// bUpdateScreen если вызов идет из GetConsoleData для коррекции отдаваемых координат
 		if (bUpdateScreen)
 		{
@@ -4606,7 +4606,7 @@ void CRealBuffer::PrepareColorTable(bool bExtendFonts, CharAttr (&lcaTableExt)[0
 }
 
 // nWidth и nHeight это размеры, которые хочет получить VCon (оно могло еще не среагировать на изменения?
-void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
+void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr)
 {
 	if (!this) return;
 
@@ -4630,8 +4630,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	// формирование умолчательных цветов, по атрибутам консоли
 	//TODO("В принципе, это можно делать не всегда, а только при изменениях");
 	bool lbIsFar = (mp_RCon->GetFarPID() != 0);
-	bool lbAllowHilightFileLine = mp_RCon->IsFarHyperlinkAllowed(false);
-	if (!lbAllowHilightFileLine && (con.etrLast != etr_None))
+	// Don't highlight while selection is present
+	bool lbAllowHilightFileLine = (con.m_sel.dwFlags == 0) && mp_RCon->IsFarHyperlinkAllowed(false);
+	if (!lbAllowHilightFileLine && (con.etr.etrLast != etr_None))
 		StoreLastTextRange(etr_None);
 	WARNING("lbIsFar - хорошо бы заменить на привязку к конкретным приложениям?");
 	const Settings::AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
@@ -4760,9 +4761,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			{
 				// Если мышь сместиласть - нужно посчитать
 				// Даже если мышь не двигалась - текст мог измениться.
-				/*if ((con.mcr_FileLineStart.X == con.mcr_FileLineEnd.X)
-					|| (con.mcr_FileLineStart.Y != mcr_LastMousePos.Y)
-					|| (con.mcr_FileLineStart.X > mcr_LastMousePos.X || con.mcr_FileLineEnd.X < mcr_LastMousePos.X))*/
+				/*if ((con.etr.mcr_FileLineStart.X == con.etr.mcr_FileLineEnd.X)
+					|| (con.etr.mcr_FileLineStart.Y != mcr_LastMousePos.Y)
+					|| (con.etr.mcr_FileLineStart.X > mcr_LastMousePos.X || con.etr.mcr_FileLineEnd.X < mcr_LastMousePos.X))*/
 				if ((mp_RCon->mp_ABuf == this) && gpConEmu->isMeForeground())
 				{
 					ProcessFarHyperlink(false);
@@ -4876,10 +4877,12 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				}
 				else
 				{
+					#if 0
 					bool lbHilightFileLine = lbAllowHilightFileLine 
 							&& (con.m_sel.dwFlags == 0)
-							&& (nY == con.mcr_FileLineStart.Y)
-							&& (con.mcr_FileLineStart.X < con.mcr_FileLineEnd.X);
+							&& (nY == con.etr.mcr_FileLineStart.Y)
+							&& (con.etr.mcr_FileLineStart.X < con.etr.mcr_FileLineEnd.X);
+					#endif
 					for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
 					{
 						atr = (*pnSrc) & 0xFF; // интересут только нижний байт - там индексы цветов
@@ -4943,7 +4946,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 							}
 						}
 
-						//if (lbHilightFileLine && (nX >= con.mcr_FileLineStart.X) && (nX <= con.mcr_FileLineEnd.X))
+						//if (lbHilightFileLine && (nX >= con.etr.mcr_FileLineStart.X) && (nX <= con.etr.mcr_FileLineEnd.X))
 						//	lca.nFontIndex |= 4; // Отрисовать его как Underline
 
 						TODO("OPTIMIZE: lca = lcaTable[atr];");
@@ -4951,15 +4954,17 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 						//memmove(pcaDst, pnSrc, cbLineSize);
 					}
 
+					#if 0
 					if (lbHilightFileLine)
 					{
-						int nFrom = con.mcr_FileLineStart.X;
-						int nTo = min(con.mcr_FileLineEnd.X,(int)cnSrcLineLen);
+						int nFrom = con.etr.mcr_FileLineStart.X;
+						int nTo = min(con.etr.mcr_FileLineEnd.X,(int)cnSrcLineLen);
 						for (nX = nFrom; nX <= nTo; nX++)
 						{
 							pcaDst[nX].nFontIndex |= 4; // Отрисовать его как Underline
 						}
 					}
+					#endif
 				}
 
 				// Залить остаток (если запрошен больший участок, чем есть консоль
@@ -5007,6 +5012,18 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 	// Чтобы безопасно использовать строковые функции - гарантированно делаем ASCIIZ. Хотя pChars может и \0 содержать?
 	*pszDst = 0;
+
+	// Update hyperlinks and other underlines
+	if (lbAllowHilightFileLine && (con.etr.etrLast != etr_None))
+	{
+		etr.mcr_FileLineStart = BufferToScreen(con.etr.mcr_FileLineStart);
+		etr.mcr_FileLineEnd = BufferToScreen(con.etr.mcr_FileLineEnd);
+		etr.etrLast = con.etr.etrLast;
+	}
+	else
+	{
+		etr.etrLast = etr_None;
+	}
 
 	if (bDataValid)
 	{
@@ -6301,12 +6318,12 @@ wrap:
 
 void CRealBuffer::StoreLastTextRange(ExpandTextRangeType etr)
 {
-	if (con.etrLast != etr)
+	if (con.etr.etrLast != etr)
 	{
-		con.etrLast = etr;
+		con.etr.etrLast = etr;
 		//if (etr == etr_None)
 		//{
-		//	con.mcr_FileLineStart = con.mcr_FileLineEnd = MakeCoord(0,0);
+		//	con.etr.mcr_FileLineStart = con.etr.mcr_FileLineEnd = MakeCoord(0,0);
 		//}
 
 		if ((mp_RCon->mp_ABuf == this) && mp_RCon->isVisible())

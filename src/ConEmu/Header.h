@@ -478,6 +478,13 @@ enum ExpandTextRangeType
 	etr_Url = 3,
 };
 
+// Подсветка URL's и строк-ошибок-компиляторов
+struct ConEmuTextRange
+{
+	COORD mcr_FileLineStart, mcr_FileLineEnd;
+	ExpandTextRangeType etrLast;
+};
+
 enum BackgroundOp
 {
 	eUpLeft = 0,

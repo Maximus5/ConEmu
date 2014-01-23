@@ -151,7 +151,7 @@ public:
 	//BOOL IsConsoleDataChanged();
 	
 	BOOL GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData = NULL);
-	void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+	void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
 	
 	DWORD_PTR GetKeybLayout();
 	void  SetKeybLayout(DWORD_PTR anNewKeyboardLayout);
@@ -243,7 +243,6 @@ protected:
 		BOOL bInGetConsoleData;
 		wchar_t *pConChar;
 		WORD  *pConAttr;
-		COORD mcr_FileLineStart, mcr_FileLineEnd; // Подсветка строк ошибок компиляторов
 		//CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
 		CHAR_INFO *pDataCmp;
 		int nTextWidth, nTextHeight, nBufferHeight;
@@ -262,8 +261,8 @@ protected:
 		COORD crRClick4KeyBar;
 		POINT ptRClick4KeyBar;
 		int nRClickVK; // VK_F1..F12
-		// Последний etr...
-		ExpandTextRangeType etrLast;
+		// Последний etr... (подсветка URL's и строк-ошибок-компиляторов)
+		ConEmuTextRange etr; // etrLast, mcr_FileLineStart, mcr_FileLineEnd
 	} con;
 	
 protected:

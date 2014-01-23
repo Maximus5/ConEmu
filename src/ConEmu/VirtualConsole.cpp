@@ -643,6 +643,7 @@ void CVirtualConsole::PointersInit()
 	PolyText = NULL;
 	pbLineChanged = pbBackIsPic = NULL;
 	pnBackRGB = NULL;
+	ZeroStruct(m_etr);
 }
 
 void CVirtualConsole::PointersFree()
@@ -665,6 +666,7 @@ void CVirtualConsole::PointersFree()
 	SafeFree(pbLineChanged);
 	SafeFree(pbBackIsPic);
 	SafeFree(pnBackRGB);
+	ZeroStruct(m_etr);
 	HEAPVAL;
 	mb_PointersAllocated = false;
 }
@@ -722,6 +724,7 @@ void CVirtualConsole::PointersZero()
 	ZeroMemory(pbBackIsPic, nMaxTextHeight*sizeof(*pbBackIsPic));
 	ZeroMemory(pnBackRGB, nMaxTextHeight*sizeof(*pnBackRGB));
 	HEAPVAL;
+	ZeroStruct(m_etr);
 }
 
 
@@ -2401,7 +2404,7 @@ bool CVirtualConsole::LoadConsoleData()
 		gpConEmu->DebugStep(L"mp_RCon->GetConsoleData");
 		#endif
 
-		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight); //TextLen*2);
+		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight, m_etr); //TextLen*2);
 
 		#ifdef SHOWDEBUGSTEPS
 		gpConEmu->DebugStep(NULL);
@@ -3920,6 +3923,20 @@ void CVirtualConsole::UpdateText()
 	}
 
 	free(nDX);
+
+	if (m_etr.etrLast != etr_None)
+	{
+		POINT ptStart = ConsoleToClient(m_etr.mcr_FileLineStart.X, m_etr.mcr_FileLineStart.Y);
+		_ASSERTE(m_etr.mcr_FileLineStart.Y == m_etr.mcr_FileLineEnd.Y); // May it extends to next line?
+		POINT ptEnd = ConsoleToClient(m_etr.mcr_FileLineEnd.X+1, m_etr.mcr_FileLineStart.Y);
+		// Height of "underline"?
+		int nHeight = nFontHeight / 10;
+		if (nHeight < 1) nHeight = 1;
+		// Just fill it (with color of the text?)
+		RECT rc = {ptStart.x, ptStart.y+nFontHeight, ptEnd.x, ptEnd.y+nFontHeight-nHeight};
+		PatInvertRect((HDC)m_DC, rc, (HDC)m_DC, true);
+		//FillRect((HDC)m_DC, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH));
+	}
 
 	// Screen updated, reset until next "UpdateHighlights()" call
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;

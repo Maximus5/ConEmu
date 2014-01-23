@@ -7859,14 +7859,14 @@ BOOL CRealConsole::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr
 }
 
 // nWidth и nHeight это размеры, которые хочет получить VCon (оно могло еще не среагировать на изменения?
-void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
+void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr)
 {
 	if (!this) return;
 
 	if (mb_ABufChaged)
 		mb_ABufChaged = false; // сбросим
 
-	mp_ABuf->GetConsoleData(pChar, pAttr, nWidth, nHeight);
+	mp_ABuf->GetConsoleData(pChar, pAttr, nWidth, nHeight, etr);
 }
 
 bool CRealConsole::SetFullScreen()

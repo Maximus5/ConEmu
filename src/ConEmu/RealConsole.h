@@ -448,7 +448,7 @@ class CRealConsole
 		bool isDetached();
 		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		BOOL RecreateProcess(RConStartArgs *args);
-		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
 		ExpandTextRangeType GetLastTextRangeType();
 	private:
 		bool PreCreate(RConStartArgs *args);

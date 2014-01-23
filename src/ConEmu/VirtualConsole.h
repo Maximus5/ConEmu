@@ -182,6 +182,7 @@ class CVirtualConsole :
 		bool *pbLineChanged;  // nMaxTextHeight
 		bool *pbBackIsPic;    // nMaxTextHeight :: заполняется если *pbLineChanged
 		COLORREF* pnBackRGB;  // nMaxTextHeight :: заполняется если *pbLineChanged и НЕ *pbBackIsPic
+		ConEmuTextRange m_etr;// Подсветка URL's и строк-ошибок-компиляторов
 
 		// функции выделения памяти
 		void PointersInit();
