@@ -12496,7 +12496,7 @@ DWORD CRealConsole::PostMacroThread(LPVOID lpParameter)
 		CConEmuPipe pipe(pArg->pRCon->GetFarPID(TRUE), CONEMUREADYTIMEOUT);
 		if (pipe.Init(_T("CRealConsole::PostMacroThread"), TRUE))
 		{
-			gpConEmu->DebugStep(_T("ProcessFarHyperlink: Waiting for result (10 sec)"));
+			gpConEmu->DebugStep(_T("PostMacroThread: Waiting for result (10 sec)"));
 			pipe.Execute(pArg->nCmdID, pArg->Data, pArg->nCmdSize);
 			gpConEmu->DebugStep(NULL);
 		}
