@@ -111,8 +111,8 @@ public:
 	
 	COORD ScreenToBuffer(COORD crMouse);
 	COORD BufferToScreen(COORD crMouse, bool bVertOnly = false);
-	bool ProcessFarHyperlink(UINT messg, COORD crFrom);
-	bool ProcessFarHyperlink(UINT messg=WM_USER);
+	bool ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScreen);
+	bool ProcessFarHyperlink(bool bUpdateScreen);
 	ExpandTextRangeType GetLastTextRangeType();
 	
 	void ShowKeyBarHint(WORD nID);
@@ -206,7 +206,7 @@ private:
 
 	void PrepareColorTable(bool bExtendFonts, CharAttr (&lcaTableExt)[0x100], CharAttr (&lcaTableOrg)[0x100], const Settings::AppSettings* pApp = NULL);
 
-	void ResetLastMousePos();
+	bool ResetLastMousePos();
 
 protected:
 	CRealConsole* mp_RCon;
@@ -217,6 +217,8 @@ protected:
 	CRgnDetect m_Rgn; DWORD mn_LastRgnFlags;
 
 	BOOL mb_BuferModeChangeLocked;
+
+	// Informational
 	COORD mcr_LastMousePos;
 
 	struct {

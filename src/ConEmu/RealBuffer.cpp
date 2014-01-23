@@ -1800,7 +1800,7 @@ void CRealBuffer::ChangeBufferHeightMode(BOOL abBufferHeight)
 		}
 	}
 
-	mcr_LastMousePos = MakeCoord(-1,-1);
+	ResetLastMousePos();
 
 	USHORT nNewBufHeightSize = abBufferHeight ? con.nBufferHeight : 0;
 	SetConsoleSize(TextWidth(), TextHeight(), nNewBufHeightSize, CECMD_SETSIZESYNC);
@@ -2547,22 +2547,16 @@ ExpandTextRangeType CRealBuffer::GetLastTextRangeType()
 	return con.etrLast;
 }
 
-void CRealBuffer::ResetLastMousePos()
+bool CRealBuffer::ResetLastMousePos()
 {
 	mcr_LastMousePos = MakeCoord(-1,-1);
-}
 
-bool CRealBuffer::ProcessFarHyperlink(UINT messg/*=WM_USER*/)
-{
-	if (mcr_LastMousePos.X == -1)
-	{
-		if (con.etrLast != etr_None)
-		{
-			StoreLastTextRange(etr_None);
-		}
-	}
+	bool bChanged = (con.etrLast != etr_None);
 
-	return ProcessFarHyperlink(messg, mcr_LastMousePos);
+	if (bChanged)
+		StoreLastTextRange(etr_None);
+
+	return bChanged;
 }
 
 bool CRealBuffer::LookupFilePath(LPCWSTR asFileOrPath, wchar_t* pszPath, size_t cchPathMax)
@@ -2582,7 +2576,35 @@ bool CRealBuffer::LookupFilePath(LPCWSTR asFileOrPath, wchar_t* pszPath, size_t 
 	return false;
 }
 
-bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
+bool CRealBuffer::ProcessFarHyperlink(bool bUpdateScreen)
+{
+	// Console may scrolls after last check time
+	if (bUpdateScreen)
+	{
+		POINT ptCur = {}; GetCursorPos(&ptCur);
+		RECT rcClient = {}; GetWindowRect(mp_RCon->VCon()->GetView(), &rcClient);
+		if (!PtInRect(&rcClient, ptCur))
+		{
+			if (mcr_LastMousePos.X != -1)
+				ResetLastMousePos();
+		}
+		else
+		{
+			ptCur.x -= rcClient.left; ptCur.y -= rcClient.top;
+			COORD crMouse = ScreenToBuffer(mp_RCon->VCon()->ClientToConsole(ptCur.x, ptCur.y));
+			mcr_LastMousePos = crMouse;
+		}
+	}
+
+	if ((mcr_LastMousePos.X == -1) && (con.etrLast != etr_None))
+	{
+		ResetLastMousePos();
+	}
+
+	return ProcessFarHyperlink(WM_MOUSEMOVE, mcr_LastMousePos, bUpdateScreen);
+}
+
+bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScreen)
 {
 	if (!mp_RCon->IsFarHyperlinkAllowed(false))
 		return false;
@@ -2598,13 +2620,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 	{
 		_ASSERTE((crStart.X==-1 && crStart.Y==-1) && "Must not get here");
 
-		bool bChanged = false;
-		ResetLastMousePos();
-		if (con.etrLast != etr_None)
-		{
-			StoreLastTextRange(etr_None);
-			bChanged = true;
-		}
+		bool bChanged = ResetLastMousePos();
 		return bChanged;
 	}
 
@@ -2619,8 +2635,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 	{
 		con.mcr_FileLineStart = crStart;
 		con.mcr_FileLineEnd = crEnd;
-		// WM_USER передается если вызов идет из GetConsoleData для коррекции отдаваемых координат
-		if (messg != WM_USER)
+		// bUpdateScreen если вызов идет из GetConsoleData для коррекции отдаваемых координат
+		if (bUpdateScreen)
 		{
 			UpdateSelection(); // обновить на экране
 		}
@@ -2953,7 +2969,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	{
 		if (messg == WM_MOUSEMOVE || messg == WM_LBUTTONDOWN || messg == WM_LBUTTONUP || messg == WM_LBUTTONDBLCLK)
 		{
-			if (ProcessFarHyperlink(messg, crMouse))
+			if (ProcessFarHyperlink(messg, crMouse, true))
 			{
 				// Пускать или нет событие мыши в консоль?
 				// Лучше наверное не пускать, а то вьювер может заклинить на прокрутке, например
@@ -4419,7 +4435,7 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	{
 		if (gpSet->isFarGotoEditor && isKey(wParam, gpSet->GetHotkeyById(vkFarGotoEditorVk)))
 		{
-			if (ProcessFarHyperlink(WM_MOUSEMOVE))
+			if (ProcessFarHyperlink(true))
 				UpdateSelection();
 		}
 
@@ -4749,7 +4765,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					|| (con.mcr_FileLineStart.X > mcr_LastMousePos.X || con.mcr_FileLineEnd.X < mcr_LastMousePos.X))*/
 				if ((mp_RCon->mp_ABuf == this) && gpConEmu->isMeForeground())
 				{
-					ProcessFarHyperlink();
+					ProcessFarHyperlink(false);
 				}
 			}
 
