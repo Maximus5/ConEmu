@@ -462,7 +462,6 @@ class CRealConsole
 		//};
 		//ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
 		bool IsFarHyperlinkAllowed(bool abFarRequired);
-		bool ProcessFarHyperlink(UINT messg, COORD crFrom);
 		void UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab);
 		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:

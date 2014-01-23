@@ -3820,13 +3820,6 @@ COORD CRealConsole::BufferToScreen(COORD crMouse, bool bVertOnly /*= false*/)
 	return mp_ABuf->BufferToScreen(crMouse, bVertOnly);
 }
 
-bool CRealConsole::ProcessFarHyperlink(UINT messg, COORD crFrom)
-{
-	if (!this)
-		return false;
-	return mp_ABuf->ProcessFarHyperlink(messg, crFrom);
-}
-
 // x,y - экранные координаты
 // Если abForceSend==true - не проверять на "повторность" события, и не проверять "isPressed(VK_?BUTTON)"
 void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend /*= false*/, bool abFromTouch /*= false*/)
