@@ -580,8 +580,17 @@ void Settings::InitSettings()
 	#else
 	isPortableReg = false;
 	#endif
-	// Disable (ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE), Enable (ENABLE_EXTENDED_FLAGS)
-	nConInMode = (ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE)<<16;
+
+	// By default (ConInMode==-1, DisableMouse==false)
+	// ==> turn OFF "Quick edit mode", turn ON "Insert mode"
+	// User can change behavior using mask. E.g 0x00300000 - uncheck both
+	// HIWORD(nConInMode) - mask (for clearing bits), LOWORD(nConInMode) - OR operator
+	// ((ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE)<<16) | (ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
+	// Note, ENABLE_EXTENDED_FLAGS is always turned ON
+	// This (nConInMode) is passed to the ConEmuC (server) with "/CINMODE=" switch
+	nConInMode = (DWORD)-1;
+	isDisableMouse = false;
+
 	nSlideShowElapse = 2500;
 	nIconID = IDI_ICON1;
 	isRClickSendKey = 2;
@@ -680,7 +689,6 @@ void Settings::InitSettings()
 	bHideInactiveConsoleTabs = false;
 	bHideDisabledTabs = false;
 	bShowFarWindows = true;
-	isDisableMouse = false;
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
 	isFarHourglass = true; nFarHourglassDelay = 500;
 	isDisableFarFlashing = false; isDisableAllFlashing = false;

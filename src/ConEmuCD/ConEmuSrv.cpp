@@ -438,10 +438,12 @@ BOOL ServerInitConsoleMode()
 	DWORD dwFlags = 0;
 	bConRc = GetConsoleMode(h, &dwFlags);
 
+	// This can be passed with "/CINMODE=..." or "-cur_console:w" switches
 	if (!gnConsoleModeFlags)
 	{
 		// Умолчание (параметр /CINMODE= не указан)
-		dwFlags |= (ENABLE_QUICK_EDIT_MODE|ENABLE_EXTENDED_FLAGS|ENABLE_INSERT_MODE);
+		// DON'T turn on ENABLE_QUICK_EDIT_MODE by default, let console applications "use" mouse
+		dwFlags |= (ENABLE_EXTENDED_FLAGS|ENABLE_INSERT_MODE);
 	}
 	else
 	{
