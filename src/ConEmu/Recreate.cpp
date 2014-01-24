@@ -650,9 +650,10 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 							{
 								//pArgs->pszUserPassword = GetDlgItemText(hDlg, tRunAsPassword);
 								// Попытаться проверить правильность введенного пароля и возможность запуска
-								if (!pArgs->CheckUserToken(GetDlgItem(hDlg, tRunAsPassword)))
+								bool bCheckPwd = pArgs->CheckUserToken(GetDlgItem(hDlg, tRunAsPassword));
+								DWORD nErr = bCheckPwd ? 0 : GetLastError();
+								if (!bCheckPwd)
 								{
-									DWORD nErr = GetLastError();
 									DisplayLastError(L"Invalid user name or password was specified!", nErr, MB_ICONSTOP, NULL, hDlg);
 									return 1;
 								}

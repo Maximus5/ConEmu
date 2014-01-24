@@ -93,7 +93,7 @@ struct RConStartArgs
 	RConStartArgs();
 	~RConStartArgs();
 
-	BOOL CheckUserToken(HWND hPwd);
+	bool CheckUserToken(HWND hPwd);
 	HANDLE CheckUserToken();
 
 	int ProcessNewConArg(bool bForceCurConsole = false);
