@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2013 Maximus5
+Copyright (c) 2012-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -373,13 +373,17 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 
 		if (Text256)
 		{
-			if (TextColor > 15)
-				attr.Attributes.Flags |= CECF_FG_24BIT;
-
 			if (Text256 == 2)
+			{
+				attr.Attributes.Flags |= CECF_FG_24BIT;
 				attr.Attributes.ForegroundColor = TextColor&0xFFFFFF;
+			}
 			else
+			{
+				if (TextColor > 15)
+					attr.Attributes.Flags |= CECF_FG_24BIT;
 				attr.Attributes.ForegroundColor = RgbMap[TextColor&0xFF];
+			}
 
 			if (gDisplayParm.BrightOrBold)
 				attr.Attributes.Flags |= CECF_FG_BOLD;
@@ -396,13 +400,17 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 
 		if (Back256)
 		{
-			if (BackColor > 15)
-				attr.Attributes.Flags |= CECF_BG_24BIT;
-
 			if (Back256 == 2)
+			{
+				attr.Attributes.Flags |= CECF_BG_24BIT;
 				attr.Attributes.BackgroundColor = BackColor&0xFFFFFF;
+			}
 			else
+			{
+				if (BackColor > 15)
+					attr.Attributes.Flags |= CECF_BG_24BIT;
 				attr.Attributes.BackgroundColor = RgbMap[BackColor&0xFF];
+			}
 		}
 		else
 		{
