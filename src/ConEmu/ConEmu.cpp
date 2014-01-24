@@ -7114,11 +7114,13 @@ void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
 
 bool CConEmuMain::CreateWnd(RConStartArgs *args)
 {
-	if (!args->pszSpecialCmd || !*args->pszSpecialCmd)
+	if (!args || !args->pszSpecialCmd || !*args->pszSpecialCmd)
 	{
-		_ASSERTE(args->pszSpecialCmd && *args->pszSpecialCmd);
+		_ASSERTE(args && args->pszSpecialCmd && *args->pszSpecialCmd);
 		return false;
 	}
+
+	_ASSERTE(args->aRecreate == cra_CreateWindow);
 
 	BOOL bStart = FALSE;
 
@@ -7130,7 +7132,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 	size_t cchMaxLen = _tcslen(ms_ConEmuExe)
 		+ _tcslen(args->pszSpecialCmd)
 		+ (pszConfig ? (_tcslen(pszConfig) + 32) : 0)
-		+ 128; // на всякие флажки и -new_console
+		+ 140; // на всякие флажки и -new_console
 	if ((pszCmdLine = (wchar_t*)malloc(cchMaxLen*sizeof(*pszCmdLine))) == NULL)
 	{
 		_ASSERTE(pszCmdLine);
@@ -7146,6 +7148,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 			_wcscat_c(pszCmdLine, cchMaxLen, pszConfig);
 			_wcscat_c(pszCmdLine, cchMaxLen, L"\" ");
 		}
+		_wcscat_c(pszCmdLine, cchMaxLen, L"/nosingle ");
 		_wcscat_c(pszCmdLine, cchMaxLen, L"/cmd ");
 		_wcscat_c(pszCmdLine, cchMaxLen, args->pszSpecialCmd);
 		if (args->bRunAsAdministrator || args->bRunAsRestricted || args->pszUserName)
@@ -8969,52 +8972,6 @@ bool CConEmuMain::MemoryDumpActiveProcess()
 
 	return lbRc;
 }
-
-//void CConEmuMain::StartLogCreateProcess()
-//{
-//    OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
-//    ofn.lStructSize=sizeof(ofn);
-//    ofn.hwndOwner = ghWnd;
-//    ofn.lpstrFilter = _T("Log files (*.log)\0*.log\0\0");
-//    ofn.nFilterIndex = 1;
-//    ofn.lpstrFile = ms_LogCreateProcess;
-//    ofn.nMaxFile = MAX_PATH;
-//    ofn.lpstrTitle = L"Log CreateProcess...";
-//    ofn.lpstrDefExt = L"log";
-//    ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-//            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
-//    if (!GetSaveFileName(&ofn))
-//        return;
-//
-//	mb_CreateProcessLogged = true;
-//	UpdateLogCreateProcess();
-//}
-//
-//void CConEmuMain::StopLogCreateProcess()
-//{
-//	mb_CreateProcessLogged = false;
-//	UpdateLogCreateProcess();
-//}
-//
-//void CConEmuMain::UpdateLogCreateProcess()
-//{
-//	UpdateGuiInfoMapping();
-//
-//	for (size_t i = 0; i < countof(mp_VCon); i++)
-//	{
-//		if (mp_VCon[i] == NULL)
-//			continue;
-//
-//		DWORD nFarPID = mp_VCon[i]->RCon()->GetFarPID(TRUE);
-//		if (nFarPID)
-//		{
-//			// Выполнить в плагине
-//			CConEmuPipe pipe(nFarPID, 300);
-//			if (pipe.Init(L"LogShell", TRUE))
-//    			pipe.Execute(CMD_LOG_SHELL);
-//		}
-//	}
-//}
 
 void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 {
