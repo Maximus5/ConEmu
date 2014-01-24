@@ -15,6 +15,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.24
+[*] Checkbox 'New window' in create dialog was ignored in 'Single instance mode'.
+[*] Wrong error message was displayed if empty passwords are disabled in system policy.
+[*] Use 'Fade when inactive' option for inactive splits.
+[*] Ansi xterm 24-bit fails for RED=0..15.
+
+
 2014.01.23
 [*] Don't turn on ‘Quick edit mode’ in real console by default.
 [*] Underline hyperlinks internally (don't use fontmapper).
