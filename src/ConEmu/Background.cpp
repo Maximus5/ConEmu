@@ -754,7 +754,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 	}
 
 	LONG lMaxBgWidth = 0, lMaxBgHeight = 0;
-	bool bIsForeground = gpConEmu->isMeForeground(false);
+	bool bIsForeground = gpConEmu->isMeForeground(true);
 
 
 	// Если плагин свой фон не подсунул

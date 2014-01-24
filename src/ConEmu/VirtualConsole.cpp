@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1772,8 +1772,8 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	// start timer before "Read Console Output*" calls, they do take time
 	//gpSetCls->Performance(tPerfRead, FALSE);
 	//if (gbNoDblBuffer) isForce = TRUE; // Debug, dblbuffer
-	isForeground = (gpConEmu->InQuakeAnimation() || gpConEmu->isMeForeground(false))
-		&& gpConEmu->isActive(this);
+	isForeground = (gpConEmu->InQuakeAnimation() || gpConEmu->isMeForeground(true))
+		&& gpConEmu->isActive(this, false);
 
 	if (isFade == isForeground && gpSet->isFadeInactive)
 		isForce = true;
