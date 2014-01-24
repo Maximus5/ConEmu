@@ -2229,7 +2229,8 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 38:
-					// 256 colors
+					// xterm-256 colors
+					// ESC [ 38 ; 5 ; I m -- set foreground to I (0..255) color from xterm palette
 					if (((i+2) < Code.ArgC) && (Code.ArgV[i+1] == 5))
 					{
 						gDisplayParm.TextColor = (Code.ArgV[i+2] & 0xFF);
@@ -2237,6 +2238,8 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 						gDisplayParm.WasSet = TRUE;
 						i += 2;
 					}
+					// xterm-256 colors
+					// ESC [ 38 ; 2 ; R ; G ; B m -- set foreground to RGB(R,G,B) 24-bit color
 					else if (((i+4) < Code.ArgC) && (Code.ArgV[i+1] == 2))
 					{
 						gDisplayParm.TextColor = RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF));
@@ -2257,7 +2260,8 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 48:
-					// 256 colors
+					// xterm-256 colors
+					// ESC [ 48 ; 5 ; I m -- set background to I (0..255) color from xterm palette
 					if (((i+2) < Code.ArgC) && (Code.ArgV[i+1] == 5))
 					{
 						gDisplayParm.BackColor = (Code.ArgV[i+2] & 0xFF);
@@ -2265,6 +2269,8 @@ void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 						gDisplayParm.WasSet = TRUE;
 						i += 2;
 					}
+					// xterm-256 colors
+					// ESC [ 48 ; 2 ; R ; G ; B m -- set background to RGB(R,G,B) 24-bit color
 					else if (((i+4) < Code.ArgC) && (Code.ArgV[i+1] == 2))
 					{
 						gDisplayParm.BackColor = RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF));
