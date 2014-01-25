@@ -451,7 +451,7 @@ struct PipeServer
 			
 			int nOverRc;
 			DWORD cbRead = 0, dwErr = 0, cbWholeSize = 0;
-			BOOL fSuccess = FALSE;
+			BOOL fSuccess;
 			DWORD In[32];
 			T *pIn = NULL;
 			SetLastError(0);

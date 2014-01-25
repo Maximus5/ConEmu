@@ -61,7 +61,7 @@ class MPipe
 	public:
 		MPipe()
 		{
-			ms_PipeName[0] = ms_Module[0] = 0;
+			ms_PipeName[0] = ms_Module[0] = ms_Error[0] = 0;
 			mh_Pipe = NULL;
 			memset(&m_In, 0, sizeof(m_In));
 			mp_Out = NULL;
