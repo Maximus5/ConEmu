@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Include>
   <Feature Id="ProductFeature" AllowAdvertise="no" Absent="disallow"
-           Title="ConEmu" 
+           Title="ConEmu"
            ConfigurableDirectory="APPLICATIONFOLDER"
            Display="collapse" Level="1" Description="ConEmu-Maximus5 product and features">
     <ComponentRef Id="CEInstallDir" />
@@ -161,6 +161,7 @@
         <ComponentRef Id="AnsiColors16.ans"/>
         <ComponentRef Id="AnsiColors16t.ans"/>
         <ComponentRef Id="AnsiColors256.ans"/>
+        <ComponentRef Id="AnsiColors24bit.ps1"/>
       </Feature>
       <Feature Id="FConEmuAddonsBackground" AllowAdvertise="no" Title="Background images" Level="1"
                Description="Sample background images">

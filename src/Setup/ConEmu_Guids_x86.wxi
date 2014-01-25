@@ -130,6 +130,7 @@
 	<?define Guid.AnsiColors16.ans = "D0B94B0D-E1C4-4CD4-9E6B-5AD30BD299D6" ?>
 	<?define Guid.AnsiColors16t.ans = "590BFE53-BB03-492B-A713-82AD42C682C9" ?>
 	<?define Guid.AnsiColors256.ans = "9507D711-8DC2-42E8-B64A-8DFDA2BE6210" ?>
+	<?define Guid.AnsiColors24bit.ps1 = "562741FB-EBEC-44B2-9A5F-89F020262AC5" ?>
 
 	<?define Guid.Blues16.bmp = "244B48C0-DC4F-4538-9F9B-110DFA9A639F" ?>
 	<?define Guid.Greys16.bmp = "D8791733-1D2E-4F64-9597-BF81618F83A1" ?>
