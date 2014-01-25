@@ -127,6 +127,7 @@ private:
 	bool DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */);
 	int  GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, int* pnSelWidth, int* pnSelHeight, int nNewLineLen);
 	bool PatchMouseCoords(int& x, int& y, COORD& crMouse);
+	bool CanProcessHyperlink(const COORD& crMouse);
 
 public:
 	void OnTimerCheckSelection();

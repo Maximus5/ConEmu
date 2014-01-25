@@ -2604,6 +2604,26 @@ bool CRealBuffer::ProcessFarHyperlink(bool bUpdateScreen)
 	return ProcessFarHyperlink(WM_MOUSEMOVE, mcr_LastMousePos, bUpdateScreen);
 }
 
+bool CRealBuffer::CanProcessHyperlink(const COORD& crMouse)
+{
+	if (!mp_RCon->isActive())
+		return false;
+
+	// Disallow hyperlinks on Far panels
+	if (mp_RCon->isFar())
+	{
+		RECT rc;
+		COORD crMap = BufferToScreen(crMouse);
+		if (isLeftPanel() && GetPanelRect(FALSE, &rc, TRUE, TRUE) && CoordInRect(crMap, rc))
+			return false;
+		if (isRightPanel() && GetPanelRect(TRUE, &rc, TRUE, TRUE) && CoordInRect(crMap, rc))
+			return false;
+	}
+
+	// Allow
+	return true;
+}
+
 bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScreen)
 {
 	if (!mp_RCon->IsFarHyperlinkAllowed(false))
@@ -2627,7 +2647,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 
 	COORD crEnd = crStart;
 	wchar_t szText[MAX_PATH+10];
-	ExpandTextRangeType rc = mp_RCon->isActive()
+	ExpandTextRangeType rc = CanProcessHyperlink(crStart)
 		? ExpandTextRange(crStart, crEnd, etr_FileAndLine, szText, countof(szText))
 		: etr_None;
 	if (memcmp(&crStart, &con.etr.mcr_FileLineStart, sizeof(crStart)) != 0
