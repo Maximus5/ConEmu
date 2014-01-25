@@ -5851,8 +5851,11 @@ bool CRealBuffer::FindRangeStart(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out
 			}
 
 			if ((crFrom.X >= 3)
-				&& ((pChar[crFrom.X-1] == L'/') && (pChar[crFrom.X-2] == L':')
-					&& wcschr(pszUrl, pChar[crFrom.X-3]))) // как минимум одна буква на протокол
+				&& ((pChar[crFrom.X-1] == L'/') // как минимум одна буква на протокол
+					&& (((pChar[crFrom.X-2] == L':') && wcschr(pszUrl, pChar[crFrom.X-3])) // http://www.ya.ru
+						|| ((crFrom.X >= 4) && (pChar[crFrom.X-2] == L'/') && (pChar[crFrom.X-3] == L':') && wcschr(pszUrl, pChar[crFrom.X-4])) // file:///c:\file.html
+					))
+				)
 			{
 				bUrlMode = true;
 				crTo.X = crFrom.X-2;
@@ -5911,29 +5914,14 @@ bool CRealBuffer::CheckValidUrl(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out]
 		if (((crTo.X+4) < nLen) && (pChar[crTo.X+1] == L'/') && (pChar[crTo.X+2] == L'/'))
 		{
 			bUrlMode = true;
-			if (wcschr(pszUrl+2 /*пропустить ":/"*/, pChar[crTo.X+3]))
+			if (wcschr(pszUrl+2 /*пропустить ":/"*/, pChar[crTo.X+3])
+				|| ((((crTo.X+5) < nLen) && (pChar[crTo.X+3] == L'/'))
+					&& wcschr(pszUrl+2 /*пропустить ":/"*/, pChar[crTo.X+4]))
+				)
 			{
-				if (((crTo.X+4) < nLen) // типа file://c:\xxx ?
-					&& ((pChar[crTo.X+3] >= L'a' && pChar[crTo.X+3] <= L'z')
-						|| (pChar[crTo.X+3] >= L'A' && pChar[crTo.X+3] <= L'Z'))
-					&& (pChar[crTo.X+4] == L':'))
-				{
-					if (((crTo.X+5) < nLen) && (pChar[crTo.X+5] == L'\\'))
-					{
-						_ASSERTE(*pszUrlDelim == L'\\');
-						pszUrlDelim++;
-					}
-					crTo.X += 3;
-					crFrom = crTo;
-					bUrlMode = false;
-				}
-
-				if (bUrlMode)
-				{
-					crFrom = crTo;
-					while ((crFrom.X > 0) && wcschr(pszProtocol, pChar[crFrom.X-1]))
-						crFrom.X--;
-				}
+				crFrom = crTo;
+				while ((crFrom.X > 0) && wcschr(pszProtocol, pChar[crFrom.X-1]))
+					crFrom.X--;
 			}
 			else
 			{
@@ -5997,11 +5985,12 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			const wchar_t* pszTermint = L":)],";
 			const wchar_t* pszDigits  = L"0123456789";
 			const wchar_t* pszSlashes = L"/\\";
-			const wchar_t* pszUrl = L":/%#ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz;?@&=+$,-_.!~*'()0123456789";
+			const wchar_t* pszUrl = L":/\\:%#ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz;?@&=+$,-_.!~*'()0123456789";
 			const wchar_t* pszUrlTrimRight = L".,;";
 			const wchar_t* pszProtocol = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.";
 			const wchar_t* pszEMail = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
 			const wchar_t* pszUrlDelim = L"\\\"<>{}[]^`' \t\r\n";
+			const wchar_t* pszUrlFileDelim = L"\"<>^ \t\r\n";
 			int nColons = 0;
 			bool bUrlMode = false, bMaybeMail = false;
 			SHORT MailX = -1;
@@ -6060,11 +6049,11 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			// Поехали
 			if (bUrlMode)
 			{
-				while (((lcrTo.X+1) < nLen) && !wcschr(pszUrlDelim, pChar[lcrTo.X+1]))
+				LPCWSTR pszDelim = (wcsncmp(pChar+lcrFrom.X, L"file://", 7) == 0) ? pszUrlFileDelim : pszUrlDelim;
+				while (((lcrTo.X+1) < nLen) && !wcschr(pszDelim, pChar[lcrTo.X+1]))
 					lcrTo.X++;
 			}
 			else while ((lcrTo.X+1) < nLen)
-				//&& ((pChar[lcrTo.X] != L':') || (pChar[lcrTo.X] == L':' && wcschr(pszDigits, pChar[lcrTo.X+1]))))
 			{
 				if ((pChar[lcrTo.X] == L'/') && ((lcrTo.X+1) < nLen) && (pChar[lcrTo.X+1] == L'/')
 					&& !((lcrTo.X > 1) && (pChar[lcrTo.X] == L':'))) // и НЕ URL адрес
@@ -6193,7 +6182,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 						break;
 					goto wrap; // Не оно
 				}
-			}
+			} // end of 'while ((lcrTo.X+1) < nLen)'
 
 			if (bUrlMode)
 			{
