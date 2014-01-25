@@ -5994,7 +5994,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 								0};
 			const wchar_t* pszSpacing = L" \t\xB7\x2192"; //B7 - режим "Show white spaces", 2192 - символ табуляции там же
 			const wchar_t* pszSeparat = L" \t:(";
-			const wchar_t* pszTermint = L":),";
+			const wchar_t* pszTermint = L":)],";
 			const wchar_t* pszDigits  = L"0123456789";
 			const wchar_t* pszSlashes = L"/\\";
 			const wchar_t* pszUrl = L":/%#ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz;?@&=+$,-_.!~*'()0123456789";
@@ -6033,6 +6033,8 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			// ConEmuC.cpp:49: error: 'qqq' does not name a type
 			// 1.c:3: some message
 			// file.cpp:29:29: error
+			// CPP Check
+			// [common\PipeServer.h:1145]: (style) C-style pointer casting
 			// Delphi
 			// T:\VCProject\FarPlugin\$FarPlugins\MaxRusov\far-plugins-read-only\FarLib\FarCtrl.pas(1002) Error: Undeclared identifier: 'PCTL_GETPLUGININFO'
 			// FPC
@@ -6131,18 +6133,21 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 							bWasSeparator = (wcschr(pszSeparat, pChar[lcrTo.X]) != NULL);
 					}
 
-					// Расчитано на закрывающие : или ) или ,
-					_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L',' && pszTermint[3]==0);
+					// Расчитано на закрывающие : или ) или ] или ,
+					_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L']' && pszTermint[3]==L',' && pszTermint[5]==0);
 					if (bDigits && wcschr(pszTermint, pChar[lcrTo.X]) /*pChar[lcrTo.X] == L':'*/)
 					{
-						// Если номер строки обрамлен скобками - скобки должны быть сбалансированы
+						// Validation
 						if (((pChar[lcrTo.X] == L':')
 								&& (wcschr(pszSpacing, pChar[lcrTo.X+1])
 									|| wcschr(pszDigits, pChar[lcrTo.X+1])))
+						// Если номер строки обрамлен скобками - скобки должны быть сбалансированы
 						|| ((pChar[lcrTo.X] == L')') && (iBracket == 1)
 								&& ((pChar[lcrTo.X+1] == L':')
 									|| wcschr(pszSpacing, pChar[lcrTo.X+1])
 									|| wcschr(pszDigits, pChar[lcrTo.X+1])))
+						// [file.cpp:1234]: (cppcheck)
+						|| ((pChar[lcrTo.X] == L']') && (pChar[lcrTo.X+1] == L':'))
 							)
 						{
 							_ASSERTE(bLineNumberFound==false);
@@ -6154,6 +6159,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 
 					switch (pChar[lcrTo.X])
 					{
+					// Пока регулярок нет...
 					case L'(': iBracket++; break;
 					case L')': iBracket--; break;
 					case L'/': case L'\\': iBracket = 0; break;
@@ -6202,7 +6208,12 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 				if (bLineNumberFound)
 					bMaybeMail = false;
 
-				if ((pChar[lcrTo.X] != L':' && pChar[lcrTo.X] != L' ' && !(pChar[lcrTo.X] == L')' && iBracket == 1)) || !bLineNumberFound || (nColons > 2))
+				if ((pChar[lcrTo.X] != L':'
+						&& pChar[lcrTo.X] != L' '
+						&& !((pChar[lcrTo.X] == L')') && iBracket == 1)
+						&& !((pChar[lcrTo.X] == L']') && (pChar[lcrTo.X+1] == L':'))
+					)
+					|| !bLineNumberFound || (nColons > 2))
 				{
 					if (!bMaybeMail)
 						goto wrap;
@@ -6227,6 +6238,9 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 					{
 						goto wrap; // Номера строки нет
 					}
+					// [file.cpp:1234]: (cppcheck) ?
+					if ((pChar[lcrTo.X+1] == L']') && (pChar[lcrFrom.X] == L'['))
+						lcrFrom.X++;
 					// Чтобы даты ошибочно не подсвечивать:
 					// 29.11.2011 18:31:47
 					{
