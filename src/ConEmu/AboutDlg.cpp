@@ -250,7 +250,7 @@ void ConEmuAbout::InitCommCtrls()
 
 void ConEmuAbout::OnInfo_Donate()
 {
-	int nBtn = MessageBox(
+	int nBtn = MsgBox(
 		L"You can show your appreciation and support future development by donating.\n\n"
 		L"Open PayPal website?"
 		//L"Donate (PayPal) button located on project website\r\n"
@@ -429,7 +429,7 @@ void ConEmuAbout::OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg)
 	}
 	else if (asDumpWasCreatedMsg)
 	{
-		MessageBox(asDumpWasCreatedMsg, MB_OK|MB_ICONEXCLAMATION|MB_SYSTEMMODAL);
+		MsgBox(asDumpWasCreatedMsg, MB_OK|MB_ICONEXCLAMATION|MB_SYSTEMMODAL);
 	}
 
 	nLastCrashReported = GetTickCount();
@@ -439,7 +439,7 @@ void ConEmuAbout::OnInfo_ThrowTrapException(bool bMainThread)
 {
 	if (bMainThread)
 	{
-		if (MessageBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's main thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
+		if (MsgBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's main thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
 		{
 			//#ifdef _DEBUG
 			//MyAssertTrap();
@@ -452,7 +452,7 @@ void ConEmuAbout::OnInfo_ThrowTrapException(bool bMainThread)
 	}
 	else
 	{
-		if (MessageBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's monitor thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
+		if (MsgBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's monitor thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
 		{
 			CVConGuard VCon;
 			if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())

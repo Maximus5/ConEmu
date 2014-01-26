@@ -6352,7 +6352,7 @@ void CConEmuMain::CheckTopMostState()
 			LogString(szInfo);
 		}
 
-		if (IDYES == MessageBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
+		if (IDYES == MsgBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
 		{
 	        //SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
 			OnAlwaysOnTop();
@@ -11173,7 +11173,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 				L"Choose your shell?",
 				szName, pszDataW ? L"is empty" : L"not found");
 
-			int nBtn = MessageBox(pszErrMsg, MB_YESNO|MB_ICONEXCLAMATION);
+			int nBtn = MsgBox(pszErrMsg, MB_YESNO|MB_ICONEXCLAMATION);
 
 			SafeFree(pszErrMsg);
 			SafeFree(pszDataW);

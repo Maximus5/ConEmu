@@ -548,7 +548,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetWindowLongPtr(hDlg, DWLP_MSGRESULT, 0);
 				return 1;
 			case ID_STORECMDHISTORY:
-				if (MessageBox(gpSet->isSaveCmdHistory ? L"Do you want to disable history?" : L"Do you want to enable history?", MB_YESNO|MB_ICONQUESTION, NULL, hDlg) == IDYES)
+				if (MsgBox(gpSet->isSaveCmdHistory ? L"Do you want to disable history?" : L"Do you want to enable history?", MB_YESNO|MB_ICONQUESTION, NULL, hDlg) == IDYES)
 				{
 					gpSetCls->SetSaveCmdHistory(!gpSet->isSaveCmdHistory);
 					HMENU hSysMenu = GetSystemMenu(hDlg, FALSE);

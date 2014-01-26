@@ -630,7 +630,7 @@ BOOL CGuiServer::OnGuiServerConnected(LPVOID pInst, LPARAM lParam)
 	{
 		wchar_t szMsg[128];
 		msprintf(szMsg, countof(szMsg), L"CGuiServer::OnGuiServerConnected.\nGUI TID=%u", GetCurrentThreadId());
-		MessageBox(szMsg, MB_ICONINFORMATION);
+		MsgBox(szMsg, MB_ICONINFORMATION);
 	}
 	#endif
 	return TRUE;

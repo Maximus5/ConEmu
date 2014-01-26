@@ -4469,7 +4469,7 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 					}
 					else
 					{
-						MessageBox(szCmd, MB_ICONSTOP, L"File not found", ghOpWnd);
+						MsgBox(szCmd, MB_ICONSTOP, L"File not found", ghOpWnd);
 
 						pszSet = pszCur ? pszCur : L"";
 					}
@@ -5482,7 +5482,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					L"Note that you don't need to check 'Use clink'\nif you already have set up clink globally.",
 					gpConEmu->ms_ConEmuBaseDir);
 				//MessageBox(L"Clink was not found in '%ConEmuBaseDir%\\clink'\nDownload and unpack clink files\nhttp://code.google.com/p/clink/", MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
-				MessageBox(szErrInfo, MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
+				MsgBox(szErrInfo, MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
 			}
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
@@ -6256,7 +6256,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					{
 						if (!gpSet->isSetDefaultTerminal)
 						{
-							if (MessageBox(L"Default Terminal feature was not enabled. Enable it now?", MB_YESNO, NULL, ghOpWnd) != IDYES)
+							if (MsgBox(L"Default Terminal feature was not enabled. Enable it now?", MB_YESNO, NULL, ghOpWnd) != IDYES)
 								break;
 							gpSet->isSetDefaultTerminal = true;
 							checkDlgButton(hWnd2, cbDefaultTerminal, BST_CHECKED);
@@ -6604,7 +6604,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 				bIsStartup ? L"Warning! You about to delete startup task!\n\n" : L"",
 				p->pszName ? p->pszName : L"{???}");
 
-			int nBtn = MessageBox(pszMsg, MB_YESNO|(bIsStartup ? MB_ICONEXCLAMATION : MB_ICONQUESTION), NULL, ghOpWnd);
+			int nBtn = MsgBox(pszMsg, MB_YESNO|(bIsStartup ? MB_ICONEXCLAMATION : MB_ICONQUESTION), NULL, ghOpWnd);
 			SafeFree(pszMsg);
 
             if (nBtn != IDYES)
@@ -12743,7 +12743,7 @@ void CSettings::ResetCmdArg()
 
 bool CSettings::ResetCmdHistory(HWND hParent)
 {
-	if (IDYES != MessageBox(L"Do you want to clear current history?\nThis can not be undone!", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), hParent ? hParent : ghWnd))
+	if (IDYES != MsgBox(L"Do you want to clear current history?\nThis can not be undone!", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), hParent ? hParent : ghWnd))
 		return false;
 
 	gpSet->HistoryReset();

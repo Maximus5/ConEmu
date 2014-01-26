@@ -336,7 +336,7 @@ HWND CConEmuInside::InsideFindParent()
 	EnumWindows(EnumInsideFindParent, nParentPID);
 	if (!mh_InsideParentRoot)
 	{
-		int nBtn = MessageBox(L"Can't find appropriate parent window!\n\nContinue in normal mode?", MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
+		int nBtn = MsgBox(L"Can't find appropriate parent window!\n\nContinue in normal mode?", MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
 		if (nBtn != IDYES)
 		{
 			mh_InsideParentWND = INSIDE_PARENT_NOT_FOUND;
@@ -385,7 +385,7 @@ RepeatCheck:
 
 		//MessageBox(L"Can't find appropriate shell window!", MB_ICONSTOP);
 		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"%sCan't find appropriate shell window!\nUnrecognized layout of the Explorer.\n\nContinue in normal mode?", szAddMsg);
-		int nBtn = MessageBox(szMsg, MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
+		int nBtn = MsgBox(szMsg, MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
 
 		if (nBtn != IDYES)
 		{

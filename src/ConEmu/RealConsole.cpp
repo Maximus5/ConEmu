@@ -4260,7 +4260,7 @@ bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0
 		}
 		else
 		{
-			MessageBox(L"Return to Primary buffer first!", MB_ICONEXCLAMATION);
+			MsgBox(L"Return to Primary buffer first!", MB_ICONEXCLAMATION);
 			goto wrap;
 		}
 	}
@@ -8814,7 +8814,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 	{
 		wchar_t szConfirm[255];
 		_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Do you want to duplicate tab with root '%s'?", p->Name);
-		if (bSkipMsg || ((MessageBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)))
+		if (bSkipMsg || ((MsgBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)))
 		{
 			bool bRootCmdRedefined = false;
 			RConStartArgs args;

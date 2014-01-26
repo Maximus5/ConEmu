@@ -129,7 +129,7 @@ extern BOOL bBlockDebugLog, bSendToDebugger, bSendToFile;
 extern HWND ghLastForegroundWindow;
 HWND getForegroundWindow();
 
-int MessageBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND hParent = NULL);
+int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND hParent = NULL, bool abLock = true);
 void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS ExceptionInfo = NULL);
 
 #define Assert(V) if ((V)==FALSE) { AssertBox(_T(#V), _T(__FILE__), __LINE__); }

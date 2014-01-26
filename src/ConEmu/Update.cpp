@@ -283,7 +283,7 @@ void CConEmuUpdate::ShowLastError()
 		ms_LastErrorInfo = NULL;
 		SC.Unlock();
 
-		MessageBox(pszError, MB_ICONINFORMATION, gpConEmu?gpConEmu->GetDefaultTitle():L"ConEmu Update");
+		MsgBox(pszError, MB_ICONINFORMATION, gpConEmu?gpConEmu->GetDefaultTitle():L"ConEmu Update");
 		SafeFree(pszError);
 
 		mb_InShowLastError = false;

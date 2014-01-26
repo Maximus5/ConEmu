@@ -1942,9 +1942,9 @@ void SkipOneShowWindow()
 	return;
 }
 
-int MessageBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND hParent /*= NULL*/)
+int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND hParent /*= NULL*/, bool abLock /*= true*/)
 {
-	DontEnable de;
+	DontEnable de(abLock);
 
 	int nBtn = MessageBox(gbMessagingStarted ? (hParent ? hParent : ghWnd) : NULL,
 		lpText, lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
@@ -2069,7 +2069,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 	WARNING("!!! Заменить MessageBox на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 
 	BOOL lb = gbInDisplayLastError; gbInDisplayLastError = TRUE;
-	nBtn = MessageBox(out ? out : asLabel, dwMsgFlags, asTitle, hParent);
+	nBtn = MsgBox(out ? out : asLabel, dwMsgFlags, asTitle, hParent);
 	gbInDisplayLastError = lb;
 
 	MCHKHEAP
