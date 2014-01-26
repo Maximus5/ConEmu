@@ -4980,7 +4980,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbComspecTest:
 			{
 				wchar_t* psz = GetComspec(&gpSet->ComSpec);
-				MessageBox(ghOpWnd, psz ? psz : L"<NULL>", gpConEmu->GetDefaultTitle(), MB_ICONINFORMATION);
+				MsgBox(psz ? psz : L"<NULL>", MB_ICONINFORMATION, gpConEmu->GetDefaultTitle(), ghOpWnd);
 				SafeFree(psz);
 			} // cbComspecTest
 			break;
@@ -5042,10 +5042,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 				if (gpSet->isShowBgImage && gpSet->bgImageDarker == 0)
 				{
-					if (MessageBox(ghOpWnd,
-								  L"Background image will NOT be visible\n"
-								  L"while 'Darkening' is 0. Increase it?",
-								  gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION)!=IDNO)
+					if (MsgBox( L"Background image will NOT be visible\n"
+								L"while 'Darkening' is 0. Increase it?",
+								MB_YESNO|MB_ICONEXCLAMATION,
+								gpConEmu->GetDefaultTitle(),
+								ghOpWnd )!=IDNO)
 					{
 						SetBgImageDarker(0x46, false);
 						//gpSet->bgImageDarker = 0x46;
@@ -5481,7 +5482,6 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					L"Clink was not found in '%s\\clink'. Download and unpack clink files\nhttp://code.google.com/p/clink/\n\n"
 					L"Note that you don't need to check 'Use clink'\nif you already have set up clink globally.",
 					gpConEmu->ms_ConEmuBaseDir);
-				//MessageBox(L"Clink was not found in '%ConEmuBaseDir%\\clink'\nDownload and unpack clink files\nhttp://code.google.com/p/clink/", MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
 				MsgBox(szErrInfo, MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
 			}
 			gpConEmu->OnGlobalSettingsChanged();
@@ -6256,8 +6256,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					{
 						if (!gpSet->isSetDefaultTerminal)
 						{
-							if (MsgBox(L"Default Terminal feature was not enabled. Enable it now?", MB_YESNO, NULL, ghOpWnd) != IDYES)
+							if (MsgBox(L"Default Terminal feature was not enabled. Enable it now?", MB_YESNO|MB_ICONEXCLAMATION,
+									NULL, ghOpWnd) != IDYES)
+							{
 								break;
+							}
 							gpSet->isSetDefaultTerminal = true;
 							checkDlgButton(hWnd2, cbDefaultTerminal, BST_CHECKED);
 							bUpdateGuiMapping = true;
@@ -6822,8 +6825,8 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 
 	case cbAddDefaults:
 		{
-			if (MessageBox(ghOpWnd, L"Do you want to ADD default tasks in your task list?",
-					gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION) != IDYES)
+			if (MsgBox(L"Do you want to ADD default tasks in your task list?",
+					MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), ghOpWnd) != IDYES)
 				break;
 
 			// Добавить таски В КОНЕЦ
@@ -6836,8 +6839,8 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 
 	case cbCmdTasksReload:
 		{
-			if (MessageBox(ghOpWnd, L"Warning! All unsaved changes will be lost!\n\nReload command groups from settings?",
-					gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION) != IDYES)
+			if (MsgBox(L"Warning! All unsaved changes will be lost!\n\nReload command groups from settings?",
+					MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), ghOpWnd) != IDYES)
 				break;
 
 			// Обновить группы команд
@@ -6858,7 +6861,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 		if (!gpSet->SaveCmdTasks(NULL))
 		{
 			LPCWSTR pszMsg = L"Can't save task list to settings!\r\nJump list may be not working!\r\nUpdate Windows 7 task list now?";
-			if (MessageBox(ghOpWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
+			if (MsgBox(pszMsg, MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), ghOpWnd) != IDYES)
 				break; // Обновлять таскбар не будем
 		}
 		UpdateWin7TaskList(true);
@@ -8470,9 +8473,8 @@ void CSettings::OnResetOrReload(BOOL abResetOnly)
 	RECT rcWnd = {};
 	int nSel = -1;
 	
-	int nBtn = MessageBox(ghOpWnd,
-		abResetOnly ? L"Confirm reset settings to defaults" : L"Confirm reload settings from xml/registry",
-		gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2);
+	int nBtn = MsgBox(abResetOnly ? L"Confirm reset settings to defaults" : L"Confirm reload settings from xml/registry",
+		MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), ghOpWnd);
 	if (nBtn != IDYES)
 		return;
 
@@ -8563,6 +8565,8 @@ INT_PTR CSettings::ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 // DlgProc для окна настроек (IDD_SETTINGS)
 INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	PatchMsgBoxIcon(hWnd2, messg, wParam, lParam);
+
 	switch (messg)
 	{
 		case WM_INITDIALOG:
@@ -9724,8 +9728,8 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 				{
 				case cbAppDistinctReload:
 					{
-						if (MessageBox(ghOpWnd, L"Warning! All unsaved changes will be lost!\n\nReload Apps from settings?",
-								gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION) != IDYES)
+						if (MsgBox(L"Warning! All unsaved changes will be lost!\n\nReload Apps from settings?",
+								MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), ghOpWnd) != IDYES)
 							break;
 
 						// Перезагрузить App distinct
@@ -9763,7 +9767,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 						if (!p)
             				break;
 
-						if (MessageBox(ghOpWnd, L"Delete application?", p->AppNames, MB_YESNO|MB_ICONQUESTION) != IDYES)
+						if (MsgBox(L"Delete application?", MB_YESNO|MB_ICONQUESTION, p->AppNames, ghOpWnd) != IDYES)
             				break;
 
         				gpSet->AppSettingsDelete(iCur);
@@ -12202,7 +12206,7 @@ int CSettings::checkDlgButton(HWND hParent, WORD nCtrlId, UINT uCheck)
 		{
 			//_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
 			wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"checkDlgButton failed\nControlID %u not found in hParent dlg", nCtrlId);
-			MessageBox(ghOpWnd, szErr, L"ConEmu settings", MB_SYSTEMMODAL|MB_ICONSTOP);
+			MsgBox(szErr, MB_SYSTEMMODAL|MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
 		}
 		else
 		{
@@ -12228,7 +12232,7 @@ int CSettings::checkRadioButton(HWND hParent, int nIDFirstButton, int nIDLastBut
 		//_ASSERTE(GetDlgItem(hParent, nIDLastButton) && "Checkbox not found in hParent dlg");
 		//_ASSERTE(GetDlgItem(hParent, nIDCheckButton) && "Checkbox not found in hParent dlg");
 		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"checkRadioButton failed\nControlIDs %u,%u,%u not found in hParent dlg", nIDFirstButton, nIDLastButton, nIDCheckButton);
-		MessageBox(ghOpWnd, szErr, L"ConEmu settings", MB_SYSTEMMODAL|MB_ICONSTOP);
+		MsgBox(szErr, MB_SYSTEMMODAL|MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
 	}
 #endif
 	// Аналог CheckRadioButton
@@ -12250,7 +12254,7 @@ int CSettings::IsChecked(HWND hParent, WORD nCtrlId)
 	{
 		//_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
 		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"IsChecked failed\nControlID %u not found in hParent dlg", nCtrlId);
-		MessageBox(ghOpWnd, szErr, L"ConEmu settings", MB_SYSTEMMODAL|MB_ICONSTOP);
+		MsgBox(szErr, MB_SYSTEMMODAL|MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
 	}
 #endif
 	// Аналог IsDlgButtonChecked
@@ -12274,7 +12278,7 @@ void CSettings::EnableDlgItem(HWND hParent, WORD nCtrlId, BOOL bEnabled)
 	{
 		//_ASSERTE(hDlgItem!=NULL && "Control not found in hParent dlg");
 		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"EnableDlgItem failed\nControlID %u not found in hParent dlg", nCtrlId);
-		MessageBox(ghOpWnd, szErr, L"ConEmu settings", MB_SYSTEMMODAL|MB_ICONSTOP);
+		MsgBox(szErr, MB_SYSTEMMODAL|MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
 	}
 #endif
 
@@ -12743,8 +12747,11 @@ void CSettings::ResetCmdArg()
 
 bool CSettings::ResetCmdHistory(HWND hParent)
 {
-	if (IDYES != MsgBox(L"Do you want to clear current history?\nThis can not be undone!", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), hParent ? hParent : ghWnd))
+	if (IDYES != MsgBox(L"Do you want to clear current history?\nThis can not be undone!",
+			MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), hParent ? hParent : ghWnd))
+	{
 		return false;
+	}
 
 	gpSet->HistoryReset();
 
@@ -12917,7 +12924,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		_wcscpy_c(psz, cchLen, L"Can't retrieve font family from file:\n");
 		_wcscat_c(psz, cchLen, asFontFile);
 		_wcscat_c(psz, cchLen, L"\nContinue?");
-		int nBtn = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OKCANCEL|MB_ICONSTOP);
+		int nBtn = MsgBox(psz, MB_OKCANCEL|MB_ICONSTOP, gpConEmu->GetDefaultTitle());
 		free(psz);
 
 		if (nBtn == IDCANCEL)
@@ -13017,7 +13024,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 			_wcscpy_c(psz, cchLen, L"Can't load BDF font:\n");
 			_wcscat_c(psz, cchLen, asFontFile);
 			_wcscat_c(psz, cchLen, L"\nContinue?");
-			int nBtn = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OKCANCEL|MB_ICONSTOP);
+			int nBtn = MsgBox(psz, MB_OKCANCEL|MB_ICONSTOP, gpConEmu->GetDefaultTitle());
 			free(psz);
 
 			if (nBtn == IDCANCEL)
@@ -13054,7 +13061,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		_wcscpy_c(psz, cchLen, L"Can't register font:\n");
 		_wcscat_c(psz, cchLen, asFontFile);
 		_wcscat_c(psz, cchLen, L"\nContinue?");
-		int nBtn = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OKCANCEL|MB_ICONSTOP);
+		int nBtn = MsgBox(psz, MB_OKCANCEL|MB_ICONSTOP, gpConEmu->GetDefaultTitle());
 		free(psz);
 
 		if (nBtn == IDCANCEL)
@@ -13249,7 +13256,7 @@ void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
 					wchar_t* psz=(wchar_t*)calloc(cchLen,sizeof(wchar_t));
 					_wcscpy_c(psz, cchLen, L"Too long full pathname for font:\n");
 					_wcscat_c(psz, cchLen, fnd.cFileName);
-					int nBtn = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OKCANCEL|MB_ICONSTOP);
+					int nBtn = MsgBox(psz, MB_OKCANCEL|MB_ICONSTOP, gpConEmu->GetDefaultTitle());
 					free(psz);
 
 					if (nBtn == IDCANCEL) break;
@@ -14816,7 +14823,8 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					if (gpSetCls->nConFontError)
 					{
 						_ASSERTE(gpSetCls->nConFontError==0);
-						MessageBox(hWnd2, gpSetCls->sConFontError[0] ? gpSetCls->sConFontError : gpSetCls->CreateConFontError(NULL,NULL), gpConEmu->GetDefaultTitle(), MB_OK|MB_ICONSTOP);
+						MsgBox(gpSetCls->sConFontError[0] ? gpSetCls->sConFontError : gpSetCls->CreateConFontError(NULL,NULL),
+							MB_OK|MB_ICONSTOP, gpConEmu->GetDefaultTitle(), hWnd2);
 						return 0;
 					}
 

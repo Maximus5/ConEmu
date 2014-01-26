@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __CRT_WIDE(_String) L ## _String
 #define _CRT_WIDE(_String) __CRT_WIDE(_String)
 #endif
+
+typedef int (*AppMsgBox_t)(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND hParent /*= NULL*/, bool abLock /*= true*/);
+extern AppMsgBox_t AssertMsgBox;
 
 #if defined(_DEBUG)
 	#if !defined(__GNUC__)

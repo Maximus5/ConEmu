@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -485,6 +485,8 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		return 0;
 	}
 	_ASSERTE(pDlg->mh_Dlg!=NULL);
+
+	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
 
 	switch (messg)
 	{

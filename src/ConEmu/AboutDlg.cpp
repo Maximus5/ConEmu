@@ -92,6 +92,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		return TRUE;
 	}
 
+	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
+
 	switch (messg)
 	{
 		case WM_INITDIALOG:
@@ -321,8 +323,8 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 			szTitle,
 			MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), 0, NULL, LANG_NEUTRAL
 		};
-		MessageBoxIndirectW(&mb);
-		//MessageBoxW(ghWnd, pHelp, szTitle, MB_ICONQUESTION);
+		// Use MessageBoxIndirect instead of MessageBox to show our icon instead of std ICONINFORMATION
+		MessageBoxIndirect(&mb);
 	}
 }
 

@@ -157,16 +157,18 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		return FALSE;
 	}
 
+	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
+
 	switch (messg)
 	{
 		case WM_INITDIALOG:
 		{
 			LRESULT lbRc = FALSE;
-			
 
 			// Visual
 			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
 			// Set password style (avoid "bars" on some OS)
 			SendDlgItemMessage(hDlg, tRunAsPassword, WM_SETFONT, (LPARAM)(HFONT)GetStockObject(DEFAULT_GUI_FONT), 0);
 

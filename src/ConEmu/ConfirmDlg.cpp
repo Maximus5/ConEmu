@@ -389,7 +389,8 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 			L"\r\nProceed with close ConEmu?");
 	}
 
-	nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), (/*rpPanes ? MB_OKCANCEL :*/ (Parm.nConsoles>1) ? MB_YESNOCANCEL : MB_OKCANCEL)|MB_ICONEXCLAMATION);
+	nBtn = MsgBox(szText, (/*rpPanes ? MB_OKCANCEL :*/ (Parm.nConsoles>1) ? MB_YESNOCANCEL : MB_OKCANCEL)|MB_ICONEXCLAMATION,
+		gpConEmu->GetDefaultTitle(), ghWnd);
 
 	if (nBtn == IDOK)
 	{

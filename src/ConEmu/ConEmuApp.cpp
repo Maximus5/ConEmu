@@ -111,6 +111,7 @@ BOOL gbDebugShowRects = FALSE;
 CEStartupEnv* gpStartEnv = NULL;
 
 LONG DontEnable::gnDontEnable = 0;
+LONG DontEnable::gnDontEnableCount = 0;
 //LONG nPrev;   // Informational!
 //bool bLocked; // Proceed only main thread
 DontEnable::DontEnable(bool abLock /*= true*/)
@@ -121,6 +122,7 @@ DontEnable::DontEnable(bool abLock /*= true*/)
 		_ASSERTE(gnDontEnable>=0);
 		nPrev = InterlockedIncrement(&gnDontEnable) - 1;
 	}
+	InterlockedIncrement(&gnDontEnableCount);
 };
 DontEnable::~DontEnable()
 {
@@ -128,9 +130,10 @@ DontEnable::~DontEnable()
 	{
 		InterlockedDecrement(&gnDontEnable);
 	}
+	InterlockedDecrement(&gnDontEnableCount);
 	_ASSERTE(gnDontEnable>=0);
 };
-BOOL DontEnable::isDontEnable()
+bool DontEnable::isDontEnable()
 {
 	return (gnDontEnable > 0);
 };
@@ -1942,12 +1945,41 @@ void SkipOneShowWindow()
 	return;
 }
 
-int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND hParent /*= NULL*/, bool abLock /*= true*/)
+static HWND ghDlgPendingFrom = NULL;
+void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	DontEnable de(abLock);
+	if (!ghDlgPendingFrom)
+		return;
+
+	HWND hFore = GetForegroundWindow();
+	HWND hActive = GetActiveWindow();
+	if (hFore && (hFore != ghDlgPendingFrom))
+	{
+		DWORD nPID = 0;
+		GetWindowThreadProcessId(hFore, &nPID);
+		if (nPID == GetCurrentProcessId())
+		{
+			wchar_t szClass[32] = L""; GetClassName(hFore, szClass, countof(szClass));
+			if (lstrcmp(szClass, L"#32770") == 0)
+			{
+				SendMessage(hFore, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+				SendMessage(hFore, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+				ghDlgPendingFrom = NULL;
+			}
+		}
+	}
+}
+
+int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND hParent /*= NULL*/, bool abModal /*= true*/)
+{
+	DontEnable de(abModal);
+
+	ghDlgPendingFrom = GetForegroundWindow();
 
 	int nBtn = MessageBox(gbMessagingStarted ? (hParent ? hParent : ghWnd) : NULL,
 		lpText, lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
+
+	ghDlgPendingFrom = NULL;
 
 	return nBtn;
 }
@@ -3134,6 +3166,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
 	HeapInitialize();
 	RemoveOldComSpecC();
+	AssertMsgBox = MsgBox;
 
 	/* *** DEBUG PURPOSES */
 	gpStartEnv = LoadStartupEnv();

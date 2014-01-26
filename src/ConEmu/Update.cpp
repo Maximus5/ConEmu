@@ -140,7 +140,7 @@ CConEmuUpdate::~CConEmuUpdate()
 			wchar_t szErrInfo[MAX_PATH*4];
 			_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
 				L"Failed to start update batch\n%s\nError code=%i", mpsz_PendingBatchFile, (int)nShellRc);
-			MessageBoxW(NULL, szErrInfo, L"ConEmu", MB_ICONSTOP|MB_SYSTEMMODAL);
+			MsgBox(szErrInfo, MB_ICONSTOP|MB_SYSTEMMODAL, L"ConEmu", NULL, false);
 
 			DeleteFile(mpsz_PendingBatchFile);
 			if (!(mp_Set && mp_Set->isUpdateLeavePackages))

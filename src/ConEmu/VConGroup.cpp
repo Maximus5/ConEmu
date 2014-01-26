@@ -2095,7 +2095,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 
 				wcscat_c(szText, L"\r\nProceed with close group?");
 
-				nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), MB_OKCANCEL|MB_ICONEXCLAMATION);
+				nBtn = MsgBox(szText, MB_OKCANCEL|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), ghWnd);
 			}
 		}
 		else if (nConsoles == 1)

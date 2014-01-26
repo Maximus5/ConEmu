@@ -68,12 +68,13 @@ class DontEnable
 private:
 	LONG nPrev; // Informational!
 	static LONG gnDontEnable;
+	static LONG gnDontEnableCount;
 	bool bLocked;
 public:
 	DontEnable(bool abLock = true);
 	~DontEnable();
 public:
-	static BOOL isDontEnable();
+	static bool isDontEnable();
 };
 
 extern OSVERSIONINFO gOSVer;
@@ -129,8 +130,9 @@ extern BOOL bBlockDebugLog, bSendToDebugger, bSendToFile;
 extern HWND ghLastForegroundWindow;
 HWND getForegroundWindow();
 
-int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND hParent = NULL, bool abLock = true);
+int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND hParent = NULL, bool abModal = true);
 void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS ExceptionInfo = NULL);
+void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 
 #define Assert(V) if ((V)==FALSE) { AssertBox(_T(#V), _T(__FILE__), __LINE__); }
 #define AssertMsg(V) AssertBox(V, _T(__FILE__), __LINE__);

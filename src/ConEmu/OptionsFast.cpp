@@ -52,6 +52,9 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 	case WM_INITDIALOG:
 		{
+			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
 			LRESULT lbRc = FALSE;
 			if (lParam)
 			{

@@ -18093,6 +18093,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 	#endif
 
+	PatchMsgBoxIcon(hWnd, messg, wParam, lParam);
+
 	if (messg == WM_SYSCHAR)  // Для пересылки в консоль не используется, но чтобы не пищало - необходимо
 		return TRUE;
 

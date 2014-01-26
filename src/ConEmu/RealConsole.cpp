@@ -8677,6 +8677,9 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	{
 		case WM_INITDIALOG:
 		{
+			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
 			gpConEmu->OnOurDialogOpened();
 			_ASSERTE(pRCon!=NULL);
 			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)pRCon);
@@ -9787,7 +9790,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		{
 			wcscpy_c(szMsg, L"Pasting text involves <Enter> keypress!\nContinue?");
 
-			if (MessageBox(ghWnd, szMsg, GetTitle(), MB_OKCANCEL|MB_ICONEXCLAMATION) != IDOK)
+			if (MsgBox(szMsg, MB_OKCANCEL|MB_ICONEXCLAMATION, GetTitle()) != IDOK)
 			{
 				goto wrap;
 			}
@@ -9798,7 +9801,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	{
 		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Pasting text length is %u chars!\nContinue?", (DWORD)(pszEnd - pszBuf));
 
-		if (MessageBox(ghWnd, szMsg, GetTitle(), MB_OKCANCEL|MB_ICONQUESTION) != IDOK)
+		if (MsgBox(szMsg, MB_OKCANCEL|MB_ICONQUESTION, GetTitle()) != IDOK)
 		{
 			goto wrap;
 		}
