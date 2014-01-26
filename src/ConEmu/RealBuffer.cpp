@@ -3348,8 +3348,14 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		BYTE bAction = (messg == WM_RBUTTONUP) ? gpSet->isCTSRBtnAction : gpSet->isCTSMBtnAction; // 0-off, 1-copy, 2-paste, 3-auto
 
 		// Только Copy. Делать Paste при наличии выделения - глупо. Так что только Copy.
-		BOOL bDoCopy = (bAction == 1) || (bAction == 3);
-		DoSelectionFinalize(bDoCopy);
+		bool bDoCopy = (bAction == 1) || (bAction == 3);
+		bool bCopyOk = DoSelectionFinalize(bDoCopy);
+
+		if (bCopyOk && (bAction == 3))
+		{
+			// Immediately paste into console ('Auto' mode)?
+			//-- mp_RCon->Paste();
+		}
 
 		return true;
 	}
