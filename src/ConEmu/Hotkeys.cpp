@@ -112,6 +112,9 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	{
 		case WM_INITDIALOG:
 		{
+			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
 			// Ensure, it will be "on screen"
 			RECT rect; GetWindowRect(hDlg, &rect);
 			RECT rcCenter = CenterInParent(rect, pDlg->mh_Parent);
