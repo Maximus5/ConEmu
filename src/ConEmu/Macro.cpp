@@ -1570,7 +1570,7 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 	if (p->GetIntArg(0, nCommand))
 	{
-		bool bFirstLineOnly = (nCommand & 1) != 0;
+		CEPasteMode PasteMode = (nCommand & 1) ? pm_FirstLine : pm_Standard;
 		bool bNoConfirm = (nCommand & 2) != 0;
 
 		wchar_t* pszChooseBuf = NULL;
@@ -1602,16 +1602,16 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				return lstrdup(L"Cancelled");
 
 			pszText = pszChooseBuf;
-			bFirstLineOnly = true;
+			PasteMode = pm_FirstLine;
 			bNoConfirm = true;
 		}
 		else if (nCommand == 8)
 		{
-			bFirstLineOnly = true;
+			PasteMode = pm_FirstLine;
 			bNoConfirm = true;
 		}
 
-		apRCon->Paste(bFirstLineOnly, pszText, bNoConfirm, (nCommand == 8)/*abCygWin*/);
+		apRCon->Paste(PasteMode, pszText, bNoConfirm, (nCommand == 8)/*abCygWin*/);
 
 		SafeFree(pszChooseBuf);
 		return lstrdup(L"OK");
@@ -1637,7 +1637,7 @@ LPWSTR ConEmuMacro::Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		pszText = NULL;
 	}
 
-	apRCon->Paste(false, pszText, true);
+	apRCon->Paste(pm_Standard, pszText, true);
 
 	return lstrdup(L"OK");
 }

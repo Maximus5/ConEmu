@@ -895,7 +895,7 @@ HRESULT CDragDrop::DropFromText(IDataObject * pDataObject)
 		LPCWSTR pszText = (LPCWSTR)GlobalLock(stgMedium.hGlobal);
 		if (pszText)
 		{
-			VCon->RCon()->Paste(false, pszText);
+			VCon->RCon()->Paste(pm_Standard, pszText);
 			GlobalUnlock(stgMedium.hGlobal);
 		}
 		ReleaseStgMedium(&stgMedium);
@@ -1076,7 +1076,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		}
 		else
 		{
-			pRCon->Paste(false, pszText, true, false);
+			pRCon->Paste(pm_Standard, pszText, true, false);
 			//psz = pszText;
 			////INPUT_RECORD r = {KEY_EVENT};
 			//while (*psz)
@@ -1091,7 +1091,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 			//}
 
 			if (!bDontAddSpace)
-				pRCon->Paste(false, L" ", true, false);
+				pRCon->Paste(pm_Standard, L" ", true, false);
 				//pRCon->PostKeyPress(0, 0, L' ');
 			//r.Event.KeyEvent.bKeyDown = TRUE;
 			//r.Event.KeyEvent.wRepeatCount = 1;

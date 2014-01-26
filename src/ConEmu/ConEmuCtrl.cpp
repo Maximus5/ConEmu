@@ -1421,7 +1421,7 @@ bool CConEmuCtrl::key_PasteTextAllApp(DWORD VkMod, bool TestOnly, const ConEmuHo
 	if (TestOnly)
 		return true;
 
-	pRCon->Paste(false);
+	pRCon->Paste(pm_Standard);
 	return true;
 }
 
@@ -1446,7 +1446,7 @@ bool CConEmuCtrl::key_PasteFirstLineAllApp(DWORD VkMod, bool TestOnly, const Con
 	if (TestOnly)
 		return true;
 
-	pRCon->Paste(true);
+	pRCon->Paste(pm_FirstLine);
 	return true;
 }
 

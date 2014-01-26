@@ -544,6 +544,13 @@ enum CEStatusFlags
 	csf_NoVerticalPad       = 0x00000008,
 };
 
+enum CEPasteMode
+{
+	pm_Standard  = 0, // Paste with possible "Return" keypresses
+	pm_FirstLine = 1, // Paste only first line from the clipboard
+	pm_OneLine   = 2, // Paste all lines from the clipboard, but delimit them with SPACES (cmd-line safe!)
+};
+
 enum CESizeStyle
 {
 	ss_Standard = 0,
