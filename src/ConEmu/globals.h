@@ -70,7 +70,7 @@ private:
 	static LONG gnDontEnable;
 	bool bLocked;
 public:
-	DontEnable();
+	DontEnable(bool abLock = true);
 	~DontEnable();
 public:
 	static BOOL isDontEnable();

@@ -113,9 +113,9 @@ CEStartupEnv* gpStartEnv = NULL;
 LONG DontEnable::gnDontEnable = 0;
 //LONG nPrev;   // Informational!
 //bool bLocked; // Proceed only main thread
-DontEnable::DontEnable()
+DontEnable::DontEnable(bool abLock /*= true*/)
 {
-	bLocked = gpConEmu->isMainThread();
+	bLocked = abLock && gpConEmu->isMainThread();
 	if (bLocked)
 	{
 		_ASSERTE(gnDontEnable>=0);
