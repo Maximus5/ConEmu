@@ -8200,12 +8200,6 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpSet->SetHotkeyById(vkCTSVkText, VkMod);
 						CheckSelectionModifiers(hWnd2);
 					} break;
-				case lbCTSActAlways:
-					{
-						BYTE VkMod = 0;
-						GetListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::KeysAct, VkMod);
-						gpSet->SetHotkeyById(vkCTSVkAct, VkMod);
-					} break;
 				case lbCTSEOL:
 					{
 						BYTE eol = 0;
@@ -8213,14 +8207,6 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpSet->AppStd.isCTSEOL = eol;
 					} // lbCTSEOL
 					break;
-				case lbCTSRBtnAction:
-					{
-						GetListBoxByte(hWnd2, lbCTSRBtnAction, SettingsNS::ClipAct, gpSet->isCTSRBtnAction);
-					} break;
-				case lbCTSMBtnAction:
-					{
-						GetListBoxByte(hWnd2, lbCTSMBtnAction, SettingsNS::ClipAct, gpSet->isCTSMBtnAction);
-					} break;
 				case lbCTSForeIdx:
 					{
 						DWORD nFore = 0;
@@ -8260,6 +8246,20 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						BYTE VkMod = 0;
 						GetListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::KeysAct, VkMod);
 						gpSet->SetHotkeyById(vkFarGotoEditorVk, VkMod);
+					} break;
+				case lbCTSActAlways:
+					{
+						BYTE VkMod = 0;
+						GetListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::KeysAct, VkMod);
+						gpSet->SetHotkeyById(vkCTSVkAct, VkMod);
+					} break;
+				case lbCTSRBtnAction:
+					{
+						GetListBoxByte(hWnd2, lbCTSRBtnAction, SettingsNS::ClipAct, gpSet->isCTSRBtnAction);
+					} break;
+				case lbCTSMBtnAction:
+					{
+						GetListBoxByte(hWnd2, lbCTSMBtnAction, SettingsNS::ClipAct, gpSet->isCTSMBtnAction);
 					} break;
 				default:
 					_ASSERTE(FALSE && "ListBox was not processed");
