@@ -1121,7 +1121,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 
 			if (CD)
 			{
-				pszFormat = gpConEmu->mp_Inside ? gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir : NULL; // \ecd /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
+				pszFormat = gpConEmu->mp_Inside ? gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir : NULL; // \ecd /d \1\n - \e - ESC, \b - BS, \n - ENTER, \1 - "dir", \2 - "bash dir"
 				if (!pszFormat || !*pszFormat)
 				{
 					LPCWSTR pszExe = GetActiveProcessName();
