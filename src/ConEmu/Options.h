@@ -521,7 +521,7 @@ struct Settings
 				CmdArg szArg;
 				while (0 == NextArg(&pszArgs, szArg))
 				{
-					if (lstrcmpi(szArg, L"/dir") == 0)
+					if (lstrcmpi(szArg, L"/dir") == 0 || lstrcmpi(szArg, L"-dir") == 0)
 					{
 						if (0 != NextArg(&pszArgs, szArg))
 							break;
@@ -538,7 +538,7 @@ struct Settings
 							*pszDir = pszExpand ? pszExpand : lstrdup(szArg);
 						}
 					}
-					else if (lstrcmpi(szArg, L"/icon") == 0)
+					else if (lstrcmpi(szArg, L"/icon") == 0 || lstrcmpi(szArg, L"-icon") == 0)
 					{
 						if (0 != NextArg(&pszArgs, szArg))
 							break;
