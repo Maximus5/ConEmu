@@ -2043,8 +2043,16 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 	case CECMD_ATTACHGUIAPP:
 		{
 			// При 'внешнем' аттаче инициированном юзером из ConEmu
-			_ASSERTEX(pCmd->AttachGuiApp.hConEmuWnd && ghConEmuWnd==pCmd->AttachGuiApp.hConEmuWnd);
-			//gbGuiClientHideCaption = pCmd->AttachGuiApp.bHideCaption;
+			_ASSERTEX(pCmd->AttachGuiApp.hConEmuWnd && (!ghConEmuWnd || ghConEmuWnd==pCmd->AttachGuiApp.hConEmuWnd));
+			if (!ghConEmuWnd)
+			{
+				// gnGuiPID мог остаться от предыдущего 'detach'
+				if (user->getWindowThreadProcessId(pCmd->AttachGuiApp.hConEmuWnd, &gnGuiPID) && gnGuiPID)
+				{
+					ghConEmuWnd = pCmd->AttachGuiApp.hConEmuWnd;
+				}
+			}
+			gbGuiClientExternMode = FALSE;
 			gGuiClientStyles = pCmd->AttachGuiApp.Styles;
 			//ghConEmuWndDC -- еще нету
 			AttachGuiWindow(pCmd->AttachGuiApp.hAppWindow);
