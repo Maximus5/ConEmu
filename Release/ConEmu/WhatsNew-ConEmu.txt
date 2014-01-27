@@ -15,6 +15,20 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.27
+[+] AnsiColors24bit.ps1 - example how to print with 24bit color with PowerShell script.
+[+] Support cppcheck erors in hyperlink detector.
+[+] Issue 992: Support ‘file:///c:\...’ hyperlinks.
+[%] Issue 1053: Disable hyperlinks detector on Far panels.
+[%] Settings. Mouse button action fails to be changed.
+[+] Allow ‘-’style switches in task params
+[+] Hints in ‘Settings\Tasks’ and ‘Settings\Integration’.
+[*] Small redesign of ‘Settings\Tasks’.
+[%] Fix icon in some dialogs captions.
+[%] Don't update xml if <CmdLineHistory> was not changed actually.
+[*] Some internal changes.
+
+
 2014.01.24
 [*] Checkbox 'New window' in create dialog was ignored in 'Single instance mode'.
 [*] Wrong error message was displayed if empty passwords are disabled in system policy.
