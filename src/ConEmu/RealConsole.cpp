@@ -3344,7 +3344,7 @@ BOOL CRealConsole::StartProcess()
 
 		MCHKHEAP
 		//Box(psz);
-		int nBrc = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), nButtons);
+		int nBrc = MsgBox(psz, nButtons, gpConEmu->GetDefaultTitle(), NULL, false);
 		Free(psz); Free(pszErr);
 
 		if (nBrc == IDYES)
@@ -9842,7 +9842,7 @@ bool CRealConsole::isConsoleClosing()
 			_wsprintf(szText, SKIPLEN(countof(szText))
 			          L"This is Debug message.\n\nServer hung. PID=%u\nm_ServerClosing.nServerPID=%u\n\nPress Ok to terminate server",
 			          mn_MainSrv_PID, m_ServerClosing.nServerPID);
-			MessageBox(NULL, szText, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+			MsgBox(szText, MB_ICONSTOP|MB_SYSTEMMODAL, szTitle);
 			#else
 			_ASSERTE(m_ServerClosing.nServerPID==0);
 			#endif
@@ -10055,7 +10055,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 					if (abConfirm)
 					{
 						DontEnable de;
-						nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_OKCANCEL);
+						nBtn = MsgBox(szMsg, MB_ICONEXCLAMATION|MB_OKCANCEL, Title, gbMessagingStarted ? ghWnd : NULL, false);
 					}
 
 					if (nBtn == IDOK)
@@ -10167,9 +10167,10 @@ void CRealConsole::CloseTab()
 		{
 			wchar_t szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
-				L"Far Manager (PID=%u) is not alive.\nClose realconsole window instead of posting Macro?",
+				L"Far Manager (PID=%u) is not alive.\n"
+				L"Close realconsole window instead of posting Macro?",
 				GetFarPID(TRUE));
-			int nBrc = MessageBox(NULL, szInfo, gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+			int nBrc = MsgBox(szInfo, MB_ICONEXCLAMATION|MB_YESNOCANCEL, gpConEmu->GetDefaultTitle());
 			switch (nBrc)
 			{
 			case IDCANCEL:
@@ -12726,7 +12727,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	{
 		if (!bPosted)
 		{
-			if (MessageBox(NULL, L"Detach GUI application from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
+			if (MsgBox(L"Detach GUI application from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES)
 				return;
 
 			RECT rcGui = {}; //rcPreGuiWndRect;
@@ -12786,7 +12787,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	{
 		if (!bPosted)
 		{
-			if (MessageBox(NULL, L"Detach console from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
+			if (MsgBox(L"Detach console from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES)
 				return;
 
 			mp_VCon->PostDetach(bSendCloseConsole);
