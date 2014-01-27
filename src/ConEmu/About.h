@@ -52,7 +52,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/Dir <workdir> - Set startup directory for ConEmu and consoles.\r\n" \
 	L"/FS | /Max | /Min - (Full screen), (Maximized) or (Minimized) mode.\r\n" \
 	L"/TSA - Override (enable) minimize to taskbar status area.\r\n" \
-	L"/MinTSA - start minimized in taskbar status area on startup only.\r\n" \
+	L"/MinTSA - start minimized in taskbar status area, hide to TSA after console close.\r\n" \
+	L"/StartTSA - start minimized in taskbar status area, exit after console close.\r\n" \
 	L"/Detached - start ConEmu without consoles.\r\n" \
 	L"/Icon <file> - Take icon from file (exe, dll, ico).\r\n" \
 	L"/Title <title> - Set fixed(!) title for ConEmu window. You may use environment variables in <title>.\r\n" \
