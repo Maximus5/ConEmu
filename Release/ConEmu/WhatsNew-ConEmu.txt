@@ -15,6 +15,15 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.01.28
+[+] New pasting mode ‘One line’ (useful with "git status" & "git add").
+    When ‘Right mouse button action’ is set to ‘Auto’ you may press it during
+    selection (when Left mouse button is still pressed) to paste all copies
+    lines as a ONE space-delimited line.
+[%] Issue 1416: ReAttach after Detach fails for non-console applications
+[*] One more icon fix in MessageBox dialogs
+
+
 2014.01.27
 [+] AnsiColors24bit.ps1 - example how to print with 24bit color with PowerShell script.
 [+] Support cppcheck erors in hyperlink detector.
