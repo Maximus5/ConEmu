@@ -3354,7 +3354,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		if (bCopyOk && (bAction == 3))
 		{
 			// Immediately paste into console ('Auto' mode)?
-			//-- mp_RCon->Paste();
+			mp_RCon->Paste(pm_OneLine);
 		}
 
 		return true;
@@ -3678,7 +3678,6 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 
 		if (gpSet->isCTSAutoCopy)
 		{
-			//DoSelectionFinalize(true);
 			mp_RCon->VCon()->SetAutoCopyTimer(true);
 		}
 	}
@@ -4344,12 +4343,14 @@ bool CRealBuffer::isStreamSelection()
 	return ((con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION);
 }
 
-// true/false - true-сменился буфер (вернули rbt_Primary)
+// true - if clipboard was set successfully
 bool CRealBuffer::DoSelectionFinalize(bool abCopy, WPARAM wParam)
 {
+	bool bCopied = false;
+
 	if (abCopy)
 	{
-		DoSelectionCopy();
+		bCopied = DoSelectionCopy();
 	}
 
 	mp_RCon->mn_SelectModeSkipVk = wParam;
@@ -4359,7 +4360,7 @@ bool CRealBuffer::DoSelectionFinalize(bool abCopy, WPARAM wParam)
 	{
 		mp_RCon->SetActiveBuffer(rbt_Primary);
 		// Сразу на выход!
-		return true;
+		return bCopied;
 	}
 	else
 	{
@@ -4367,7 +4368,7 @@ bool CRealBuffer::DoSelectionFinalize(bool abCopy, WPARAM wParam)
 		UpdateSelection(); // обновить на экране
 	}
 
-	return false;
+	return bCopied;
 }
 
 // pszChars may be NULL
@@ -4404,8 +4405,8 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	{
 		if ((wParam == VK_ESCAPE) || (wParam == VK_RETURN) /*|| (wParam == 'C' || wParam == VK_INSERT)*/)
 		{
-			if (DoSelectionFinalize(wParam != VK_ESCAPE, wParam))
-				return true;
+			DoSelectionFinalize(wParam != VK_ESCAPE, wParam);
+			return true;
 		}
 		else
 		{

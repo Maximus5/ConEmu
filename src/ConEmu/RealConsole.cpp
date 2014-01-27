@@ -9786,6 +9786,48 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 			*pszRN = 0; // буфер наш, что хотим - то и делаем )
 			pszEnd = pszRN;
 		}
+		else if (PasteMode == pm_OneLine)
+		{
+			const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
+			bool bTrimTailing = pApp ? (pApp->CTSTrimTrailing() != 0) : false;
+
+			//PRAGMA_ERROR("Неправильно вставляется, если в превой строке нет trailing space");
+
+			wchar_t *pszDst = pszBuf, *pszSrc = pszBuf, *pszEOL;
+			while (pszSrc < pszEnd)
+			{
+				// Find LineFeed
+				pszRN = wcspbrk(pszSrc, L"\r\n");
+				if (!pszRN) pszRN = pszSrc + _tcslen(pszSrc);
+				// Advance to next line
+				wchar_t* pszNext = pszRN;
+				if (*pszNext == L'\r') pszNext++;
+				if (*pszNext == L'\n') pszNext++;
+				// Find end of line, trim trailing spaces
+				pszEOL = pszRN;
+				if (bTrimTailing)
+				{
+					while ((pszEOL > pszSrc) && (*(pszEOL-1) == L' ')) pszEOL--;
+				}
+				// If line was not empty and there was already some changes
+				size_t cchLine = pszEOL - pszSrc;
+				if ((pszEOL > pszSrc) && (pszSrc != pszDst))
+				{
+					memmove(pszDst, pszSrc, cchLine * sizeof(*pszSrc));
+				}
+				// Move src pointer to next line
+				pszSrc = pszNext;
+				// Move Dest pointer and add one trailing space (line delimiter)
+				pszDst += cchLine;
+				if ((pszDst+1) < pszEnd)
+					*(pszDst++) = L' ';
+			}
+			// Z-terminate our string
+			*pszDst = 0;
+			// Done, it is ready to pasting
+			pszEnd = pszDst;
+			_ASSERTE(wcspbrk(pszBuf, L"\r\n") == NULL);
+		}
 		else if (gpSet->isPasteConfirmEnter && !abNoConfirm)
 		{
 			wcscpy_c(szMsg, L"Pasting text involves <Enter> keypress!\nContinue?");
