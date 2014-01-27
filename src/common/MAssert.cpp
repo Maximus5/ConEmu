@@ -37,6 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCheck.h"
 #endif
 
+AppMsgBox_t AssertMsgBox = NULL;
+
 #ifdef _DEBUG
 bool gbInMyAssertTrap = false;
 bool gbInMyAssertPipe = false;
@@ -47,7 +49,6 @@ DWORD gnInMyAssertThread = 0;
 #ifdef ASSERT_PIPE_ALLOWED
 extern HWND ghConEmuWnd;
 #endif
-AppMsgBox_t AssertMsgBox = NULL;
 DWORD WINAPI MyAssertThread(LPVOID p)
 {
 	if (gbInMyAssertTrap)
