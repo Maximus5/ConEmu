@@ -437,7 +437,7 @@ bool CConEmuCtrl::key_MinimizeByEsc(DWORD VkMod, bool TestOnly, const ConEmuHotK
 	if (TestOnly)
 		return true;
 
-	gpConEmu->DoMinimizeRestore((gpConEmu->WindowStartTSA || (gpSet->isMultiHideOnClose == 1) || gpSet->isMinToTray()) ? sih_HideTSA : sih_Minimize);
+	gpConEmu->DoMinimizeRestore(((gpSet->isMultiHideOnClose == 1) || gpSet->isMinToTray()) ? sih_HideTSA : sih_Minimize);
 	return true;
 }
 

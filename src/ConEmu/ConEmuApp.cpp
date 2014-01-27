@@ -3683,10 +3683,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					WindowModeVal = rMaximized; WindowPrm = true;
 				}
-				else if (!klstricmp(curCommand, _T("/min")) || !klstricmp(curCommand, _T("/mintsa")))
+				else if (!klstricmp(curCommand, _T("/min"))
+					|| !klstricmp(curCommand, _T("/mintsa"))
+					|| !klstricmp(curCommand, _T("/starttsa")))
 				{
 					gpConEmu->WindowStartMinimized = true;
-					gpConEmu->WindowStartTSA = (klstricmp(curCommand, _T("/mintsa")) == 0);
+					if (klstricmp(curCommand, _T("/min")) != 0)
+					{
+						gpConEmu->WindowStartTsa = true;
+						gpConEmu->WindowStartNoClose = (klstricmp(curCommand, _T("/mintsa")) == 0);
+					}
 				}
 				else if (!klstricmp(curCommand, _T("/tsa")) || !klstricmp(curCommand, _T("/tray")))
 				{

@@ -312,7 +312,8 @@ CConEmuMain::CConEmuMain()
 	changeFromWindowMode = wmNotChanging;
 	//isRestoreFromMinimized = false;
 	WindowStartMinimized = false;
-	WindowStartTSA = false;
+	WindowStartTsa = false;
+	WindowStartNoClose = false;
 	ForceMinimizeToTray = false;
 	mb_InCreateWindow = true;
 	mb_InShowMinimized = false;
@@ -4473,7 +4474,7 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 	BOOL lbRc = FALSE;
 	bool bUseApi = true;
 
-	if (mb_InCreateWindow && (WindowStartTSA || (WindowStartMinimized && gpSet->isMinToTray())))
+	if (mb_InCreateWindow && (WindowStartTsa || (WindowStartMinimized && gpSet->isMinToTray())))
 	{
 		_ASSERTE(anCmdShow == SW_SHOWMINNOACTIVE || anCmdShow == SW_HIDE);
 		_ASSERTE(::IsWindowVisible(ghWnd) == FALSE);
@@ -10717,7 +10718,7 @@ BOOL CConEmuMain::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int c
 
 	if (bInCreate)
 	{
-		if (WindowStartTSA || (WindowStartMinimized && gpSet->isMinToTray()))
+		if (WindowStartTsa || (WindowStartMinimized && gpSet->isMinToTray()))
 		{
 			uFlags |= SWP_NOACTIVATE;
 			uFlags &= ~SWP_SHOWWINDOW;
@@ -11511,13 +11512,15 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		if (WindowStartMinimized)
 		{
-			if (WindowStartTSA || gpConEmu->ForceMinimizeToTray)
+			_ASSERTE(!WindowStartNoClose || (WindowStartTsa && WindowStartNoClose));
+
+			if (WindowStartTsa || gpConEmu->ForceMinimizeToTray)
 			{
 				Icon.HideWindowToTray();
 
-				if (WindowStartTSA)
+				if (WindowStartNoClose)
 				{
-					LogString(L"Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1} due to WindowStartTSA");
+					LogString(L"Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1} due to WindowStartTsa & WindowStartNoClose");
 					//_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1}");
 					gpSet->isMultiLeaveOnClose = 1;
 					gpSet->isMultiHideOnClose = 1;

@@ -244,7 +244,8 @@ class CConEmuMain :
 		int    wndX, wndY;           // в пикселях
 
 		bool  WindowStartMinimized; // ключик "/min" или "Свернуть" в свойствах ярлыка
-		bool  WindowStartTSA;       // ключик "/mintsa"
+		bool  WindowStartTsa;       // ключики "/StartTSA" или "/MinTSA"
+		bool  WindowStartNoClose;   // ключик "/MinTSA"
 		bool  ForceMinimizeToTray;  // ключики "/tsa" или "/tray"
 		bool  DisableAutoUpdate;    // ключик "/noupdate"
 		bool  DisableKeybHooks;     // ключик "/nokeyhook"
