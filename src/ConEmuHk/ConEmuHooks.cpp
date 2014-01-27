@@ -789,9 +789,10 @@ bool InitHooksClink()
 
 	// Для Vista и ниже - AdvApi32.dll
 	// Причем, в WinXP этот модуль не прилинкован статически
-	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
-	GetVersionEx(&osv);
-	if ((osv.dwMajorVersion <= 5) || (osv.dwMajorVersion == 6 && osv.dwMinorVersion == 0))
+	_ASSERTE(_WIN32_WINNT_VISTA==0x600);
+	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA)};
+	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+	if (!VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
 	{
 		HooksCmdOnly[0].DllName = advapi32;
 	}
