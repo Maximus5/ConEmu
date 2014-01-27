@@ -1970,14 +1970,17 @@ void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 	}
 }
 
-int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND hParent /*= NULL*/, bool abModal /*= true*/)
+int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahParent /*= (HWND)-1*/, bool abModal /*= true*/)
 {
 	DontEnable de(abModal);
 
 	ghDlgPendingFrom = GetForegroundWindow();
 
-	int nBtn = MessageBox(gbMessagingStarted ? (hParent ? hParent : ghWnd) : NULL,
-		lpText, lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
+	HWND hParent = gbMessagingStarted
+		? ((ahParent == (HWND)-1) ? ghWnd :ahParent)
+		: NULL;
+
+	int nBtn = MessageBox(hParent, lpText, lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
 
 	ghDlgPendingFrom = NULL;
 
@@ -2027,7 +2030,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 		else
 		{
 			bInAssert = true;
-			nRet = MessageBox(NULL, pszFull, pszTitle, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL|MB_DEFBUTTON3);
+			nRet = MsgBox(pszFull, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL|MB_DEFBUTTON3, pszTitle, NULL);
 			bInAssert = false;
 			nPostCode = GetLastError();
 		}

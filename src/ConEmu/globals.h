@@ -130,7 +130,7 @@ extern BOOL bBlockDebugLog, bSendToDebugger, bSendToFile;
 extern HWND ghLastForegroundWindow;
 HWND getForegroundWindow();
 
-int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND hParent = NULL, bool abModal = true);
+int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND ahParent = (HWND)-1, bool abModal = true);
 void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS ExceptionInfo = NULL);
 void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 
