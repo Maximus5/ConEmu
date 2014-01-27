@@ -3854,6 +3854,8 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 	LPCWSTR psCurCmd = gpSetCls->GetCurCmd();
 	if (psCurCmd && lstrcmp(psCurCmd, asCmd)==0)
 		return;
+	if (psCmdHistory && lstrcmp(psCmdHistory, asCmd)==0)
+		return;
 
 	HEAPVAL
 	wchar_t *pszNewHistory, *psz;
