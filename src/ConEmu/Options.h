@@ -181,6 +181,10 @@ struct Settings
 
 		ConEmuComspec ComSpec;
 
+		// Service functions
+		wchar_t* LineDelimited2MSZ(const wchar_t* apszApps); // "|"-delimited string -> MSZ
+		wchar_t* MSZ2LineDelimited(const wchar_t* apszApps); // MSZ -> "|"-delimited string
+
 		// Replace default terminal
 		bool isSetDefaultTerminal;
 		bool isRegisterOnOsStartup;
@@ -868,7 +872,7 @@ struct Settings
 		bool isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
 		//BYTE isFarGotoEditorVk; // Клавиша-модификатор для isFarGotoEditor
-		//reg->Load(L"FarGotoEditorPath", sFarGotoEditor);
+		//reg->Load(L"FarGotoEditorPath", &sFarGotoEditor);
 		wchar_t* sFarGotoEditor; // Команда запуска редактора
 		//reg->Load(L"HighlightMouseRow", isHighlightMouseRow);
 		bool isHighlightMouseRow;

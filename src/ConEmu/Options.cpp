@@ -4909,16 +4909,44 @@ const wchar_t* Settings::GetDefaultTerminalAppsMSZ()
 	return psDefaultTerminalApps;
 }
 
-// "|" delimited
+// returns "|"-delimited string
 wchar_t* Settings::GetDefaultTerminalApps()
 {
-	if (!psDefaultTerminalApps || !*psDefaultTerminalApps)
+	return MSZ2LineDelimited(psDefaultTerminalApps);
+}
+// "|"-delimited apszApps -> MSZ psDefaultTerminalApps
+void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
+{
+	SafeFree(psDefaultTerminalApps);
+	if (!apszApps || !*apszApps)
+	{
+		_ASSERTE(apszApps && *apszApps);
+		apszApps = DEFAULT_TERMINAL_APPS/*L"explorer.exe"*/;
+	}
+
+	// "|" delimited String -> MSZ
+	if (apszApps && *apszApps)
+	{
+		psDefaultTerminalApps = LineDelimited2MSZ(apszApps);
+	}
+
+	if (gpConEmu)
+	{
+		gpConEmu->OnDefaultTermChanged();
+	}
+}
+
+
+// MSZ -> "|"-delimited string
+wchar_t* Settings::MSZ2LineDelimited(const wchar_t* apszApps)
+{
+	if (!apszApps || !*apszApps)
 	{
 		return lstrdup(L"");
 	}
 	// Evaluate required len
 	INT_PTR nTotalLen = 0, nLen;
-	const wchar_t* psz = psDefaultTerminalApps;
+	const wchar_t* psz = apszApps;
 	while (*psz)
 	{
 		nLen = _tcslen(psz)+1;
@@ -4933,7 +4961,7 @@ wchar_t* Settings::GetDefaultTerminalApps()
 		return lstrdup(L"");
 	}
 	// Conversion
-	wchar_t* pszDst = pszRet; psz = psDefaultTerminalApps;
+	wchar_t* pszDst = pszRet; psz = apszApps;
 	while (*psz)
 	{
 		nLen = _tcslen(psz);
@@ -4954,21 +4982,16 @@ wchar_t* Settings::GetDefaultTerminalApps()
 
 	return pszRet;
 }
-// "|" delimited
-void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
+// "|"-delimited string -> MSZ
+wchar_t* Settings::LineDelimited2MSZ(const wchar_t* apszApps)
 {
-	SafeFree(psDefaultTerminalApps);
-	if (!apszApps || !*apszApps)
-	{
-		_ASSERTE(apszApps && *apszApps);
-		apszApps = DEFAULT_TERMINAL_APPS/*L"explorer.exe"*/;
-	}
+	wchar_t* pszDst = NULL;
 
 	// "|" delimited String -> MSZ
-	INT_PTR nLen = _tcslen(apszApps);
-	if (nLen > 0)
+	if (*apszApps)
 	{
-		wchar_t* pszDst = (wchar_t*)malloc((nLen+3)*sizeof(*pszDst));
+		INT_PTR nLen = _tcslen(apszApps);
+		pszDst = (wchar_t*)malloc((nLen+3)*sizeof(*pszDst));
 
 		if (pszDst)
 		{
@@ -4993,15 +5016,10 @@ void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
 			}
 			*(psz++) = 0;
 			*(psz++) = 0; // для гарантии
-
-			psDefaultTerminalApps = pszDst;
 		}
 	}
 
-	if (gpConEmu)
-	{
-		gpConEmu->OnDefaultTermChanged();
-	}
+	return pszDst;
 }
 
 
