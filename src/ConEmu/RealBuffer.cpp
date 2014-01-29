@@ -5633,33 +5633,63 @@ bool CRealBuffer::isSelectionAllowed()
 	if (!this)
 		return false;
 
+	#ifdef _DEBUG
+	// Зачем звать эту функц из фоновых потоков?
+	if (!gpConEmu->isMainThread())
+	{
+		int nDbg = -1;
+	}
+	#endif
+
 	if (!con.pConChar || !con.pConAttr)
 		return false; // Если данных консоли еще нет
 
 	if (con.m_sel.dwFlags != 0)
 		return true; // Если выделение было запущено через меню
 
-	if (!gpSet->isConsoleTextSelection)
-		return false; // выделение мышкой запрещено в настройках
-	else if (gpSet->isConsoleTextSelection == 1)
-		return true; // разрешено всегда
-	else if (mp_RCon->isBufferHeight())
+	if (!gpSet->isCTSIntelligent)
+		return false; // Mouse selection was disabled
+	LPCWSTR pszPrcName = mp_RCon->GetActiveProcessName();
+	if (!pszPrcName)
+		return false; // No process - no selection
+	LPCWSTR pszExcl = gpSet->GetIntelligentExceptionsMSZ();
+	// Check exclusions
+	if (pszExcl)
 	{
-		// иначе - только в режиме с прокруткой
-		//DWORD nFarPid = 0;
-
-		// Но в FAR2 появился новый ключик /w
-		if (!mp_RCon->isFarBufferSupported())
-			return true;
+		while (*pszExcl)
+		{
+			if (lstrcmpi(pszExcl, L"far") == 0)
+			{
+				// Tricky a little
+				// Editor and panels - send mouse to console
+				// Userscreen and viewer - use mouse for selection
+				// If user want to send mouse to console always - set "far.exe" instead of "far"
+				if (mp_RCon->isFar())
+				{
+					if (mp_RCon->isViewer())
+						break; // Allow in viewer
+					else if (mp_RCon->isEditor() || mp_RCon->isFilePanel(true, true))
+						return false;
+					else
+					{
+						DWORD nDlgFlags = m_Rgn.GetFlags();
+						int nDialogs = m_Rgn.GetDetectedDialogs(3,NULL,NULL);
+						if (nDialogs > 0)
+							return false; // Any dialog on screen? Don't select
+					}
+				}
+			}
+			else if (lstrcmpi(pszExcl, pszPrcName) == 0)
+			{
+				// This app in the restricted list
+				// Seems like it uses mouse for internal selection, dragging and so on...
+				return false;
+			}
+			pszExcl += _tcslen(pszExcl)+1;
+		}
 	}
 
-	//if ((con.m_dwConsoleMode & ENABLE_QUICK_EDIT_MODE) == ENABLE_QUICK_EDIT_MODE)
-	//	return true;
-	//if (mp_ConsoleInfo && mp_RCon->isFar(TRUE)) {
-	//	if ((mp_ConsoleInfo->FarInfo.nFarInterfaceSettings & 4/*FIS_MOUSE*/) == 0)
-	//		return true;
-	//}
-	return false;
+	return true;
 }
 
 bool CRealBuffer::isSelectionPresent()

@@ -825,8 +825,16 @@ struct Settings
 		//reg->Load(L"DisableAllFlashing", isDisableAllFlashing); if (isDisableAllFlashing>2) isDisableAllFlashing = 2;
 		BYTE isDisableAllFlashing;
 		/* *** Text selection *** */
-		//reg->Load(L"ConsoleTextSelection", isConsoleTextSelection);
-		BYTE isConsoleTextSelection;
+		//reg->Load(L"CTSIntelligent", isCTSIntelligent);
+		bool isCTSIntelligent;
+		private:
+		//reg->Load(L"CTSIntelligentExceptions", &pszCTSIntelligentExceptions);
+		wchar_t* pszCTSIntelligentExceptions; // Don't use IntelliSel in these app-processes
+		public:
+		// Service functions
+		wchar_t* GetIntelligentExceptions(); // "|" delimited
+		const wchar_t* GetIntelligentExceptionsMSZ(); // "\0" delimited
+		void SetIntelligentExceptions(const wchar_t* apszApps); // "|" delimited
 		//reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
 		bool isCTSAutoCopy;
 		//reg->Load(L"CTS.IBeam", isCTSIBeam);

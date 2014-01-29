@@ -2417,8 +2417,6 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbMonitorConsoleLang, gpSet->isMonitorConsoleLang ? BST_CHECKED : BST_UNCHECKED);
 
-	//checkDlgButton(hWnd2, cbConsoleTextSelection, gpSet->isConsoleTextSelection);
-
 	checkDlgButton(hWnd2, cbSleepInBackground, gpSet->isSleepInBackground);
 
 	checkDlgButton(hWnd2, cbVisible, gpSet->isConVisible);
@@ -2500,9 +2498,10 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 
 LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2)
 {
-	checkRadioButton(hWnd2, rbCTSNever, rbCTSBufferOnly,
-		(gpSet->isConsoleTextSelection == 0) ? rbCTSNever :
-		(gpSet->isConsoleTextSelection == 1) ? rbCTSAlways : rbCTSBufferOnly);
+	checkDlgButton(hWnd2, cbCTSIntelligent, gpSet->isCTSIntelligent);
+	wchar_t* pszExcept = gpSet->GetIntelligentExceptions();
+	SetDlgItemText(hWnd2, tCTSIntelligentExceptions, pszExcept ? pszExcept : L"");
+	SafeFree(pszExcept);
 
 	checkDlgButton(hWnd2, cbCTSAutoCopy, gpSet->isCTSAutoCopy);
 	checkDlgButton(hWnd2, cbCTSIBeam, gpSet->isCTSIBeam);
@@ -5142,15 +5141,6 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isHideChildCaption = IsChecked(hWnd2, CB);
 			gpConEmu->OnSize(true);
 			break;
-		//case bHideCaptionSettings:
-		//	DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_HIDE), ghOpWnd, hideOpProc);
-		//	break;
-		//case cbConsoleTextSelection:
-		//	gpSet->isConsoleTextSelection = IsChecked(hWnd2, cbConsoleTextSelection);
-		//	break;
-		//case bCTSSettings:
-		//	DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_SPG_MARKCOPY), ghOpWnd, selectionOpProc);
-		//	break;
 		case cbFARuseASCIIsort:
 			gpSet->isFARuseASCIIsort = IsChecked(hWnd2, cbFARuseASCIIsort);
 			gpConEmu->UpdateFarSettings();
@@ -6025,11 +6015,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 
 		/* *** Text selections options *** */
-		case rbCTSNever:
-		case rbCTSAlways:
-		case rbCTSBufferOnly:
-			gpSet->isConsoleTextSelection = (CB==rbCTSNever) ? 0 : (CB==rbCTSAlways) ? 1 : 2;
-			//checkDlgButton(gpSetCls->hExt, cbConsoleTextSelection, gpSet->isConsoleTextSelection);
+		case cbCTSIntelligent:
+			gpSet->isCTSIntelligent = IsChecked(hWnd2, cbCTSIntelligent);
 			break;
 		case rbCTSActAlways: case rbCTSActBufferOnly:
 			gpSet->isCTSActMode = (CB==rbCTSActAlways) ? 1 : 2;
@@ -7401,6 +7388,16 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					break;
 				}
 			}
+		}
+		break;
+
+	/* *** Console text selections - intelligent exclusions *** */
+	case tCTSIntelligentExceptions:
+		if (HIWORD(wParam) == EN_CHANGE)
+		{
+			wchar_t* pszApps = GetDlgItemText(hWnd2, tCTSIntelligentExceptions);
+			gpSet->SetIntelligentExceptions(pszApps);
+			SafeFree(pszApps);
 		}
 		break;
 	

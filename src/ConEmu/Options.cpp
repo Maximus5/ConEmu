@@ -613,7 +613,8 @@ void Settings::InitSettings()
 	nTabStyle = ts_Win8;
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
-	isConsoleTextSelection = 1; // Always
+	isCTSIntelligent = true;
+	pszCTSIntelligentExceptions = LineDelimited2MSZ(L"far|vim.exe");
 	isCTSAutoCopy = true;
 	isCTSIBeam = true;
 	isCTSEndOnTyping = false;
@@ -2483,7 +2484,13 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		//FindComspec(&ComSpec);
 		//Update Comspec(&ComSpec); --> CSettings::SettingsLoaded
 
-		reg->Load(L"ConsoleTextSelection", isConsoleTextSelection); if (isConsoleTextSelection>2) isConsoleTextSelection = 2;
+		reg->Load(L"CTS.Intelligent", isCTSIntelligent);
+		{
+		wchar_t* pszApps = NULL;
+		if (reg->Load(L"CTS.IntelligentExceptions", &pszApps)) // do not reset 'default' settings
+			SetIntelligentExceptions(pszApps); // "|"-delimited string -> MSZ
+		SafeFree(pszApps);
+		}
 
 		reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
 		reg->Load(L"CTS.IBeam", isCTSIBeam);
@@ -3416,7 +3423,12 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ComSpec.EnvAddExePath", (bool)((ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) == CEAP_AddConEmuExeDir));
 		reg->Save(L"ComSpec.UncPaths", (bool)ComSpec.isAllowUncPaths);
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
-		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
+		reg->Save(L"CTS.Intelligent", isCTSIntelligent);
+		{
+		wchar_t* pszApps = GetIntelligentExceptions(); // MSZ -> "|"-delimited string
+		reg->Save(L"CTS.IntelligentExceptions", pszApps);
+		SafeFree(pszApps);
+		}
 		reg->Save(L"CTS.AutoCopy", isCTSAutoCopy);
 		reg->Save(L"CTS.IBeam", isCTSIBeam);
 		reg->Save(L"CTS.EndOnTyping", isCTSEndOnTyping);
@@ -5020,6 +5032,23 @@ wchar_t* Settings::LineDelimited2MSZ(const wchar_t* apszApps)
 	}
 
 	return pszDst;
+}
+
+// "\0"-delimited
+const wchar_t* Settings::GetIntelligentExceptionsMSZ()
+{
+	return pszCTSIntelligentExceptions;
+}
+// returns "|"-delimited
+wchar_t* Settings::GetIntelligentExceptions()
+{
+	return MSZ2LineDelimited(pszCTSIntelligentExceptions);
+}
+// "|"-delimited apszApps -> MSZ pszCTSIntelligentExceptions
+void Settings::SetIntelligentExceptions(const wchar_t* apszApps)
+{
+	SafeFree(pszCTSIntelligentExceptions);
+	pszCTSIntelligentExceptions = LineDelimited2MSZ(apszApps);
 }
 
 
