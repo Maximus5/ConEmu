@@ -4289,8 +4289,10 @@ bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
 	if (!lpVCon)
 		return false;
 
+#if 0
 	HWND hView = lpVCon->GetView();
 	ScreenToClient(hView, pt);
+#endif
 
 	if (ppVCon)
 		*ppVCon = lpVCon;
