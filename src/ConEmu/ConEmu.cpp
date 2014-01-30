@@ -16492,6 +16492,7 @@ DWORD CConEmuMain::isSelectionModifierPressed(bool bAllowEmpty)
 
 	if (m_Pressed.bChecked)
 	{
+		PRAGMA_ERROR("Не учитывает bAllowEmpty!");
 		nReadyToSel = m_Pressed.nReadyToSel;
 	}
 	else
@@ -16508,6 +16509,12 @@ DWORD CConEmuMain::isSelectionModifierPressed(bool bAllowEmpty)
 	}
 
 	return nReadyToSel;
+}
+
+void CConEmuMain::ForceSelectionModifierPressed(DWORD nValue)
+{
+	m_Pressed.nReadyToSel = nValue;
+	m_Pressed.bChecked = TRUE;
 }
 
 enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)

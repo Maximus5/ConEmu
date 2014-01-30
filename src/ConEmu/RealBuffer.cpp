@@ -2937,7 +2937,51 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 	mcr_LastMousePos = crMouse;
 
-	bool bSelAllowed = isSelectionAllowed();
+	bool  bSelAllowed = isSelectionAllowed();
+
+	if (bSelAllowed && gpSet->isCTSIntelligent
+		&& !isSelectionPresent()
+		&& !gpConEmu->isSelectionModifierPressed(true))
+	{
+		if (messg == WM_LBUTTONDOWN)
+		{
+			con.mpt_IntelliLClick = MakePoint(x,y);
+			con.mb_IntelliStored = TRUE;
+		}
+		else if (con.mb_IntelliStored)
+		{
+			if (!isPressed(VK_LBUTTON))
+			{
+				con.mb_IntelliStored = FALSE;
+			}
+			else if (messg == WM_MOUSEMOVE)
+			{
+				int nMinX = gpSetCls->FontWidth();
+				int nMinY = gpSetCls->FontHeight();
+				int nMinDiff = max(nMinX, nMinY);
+				int nXdiff = x - con.mpt_IntelliLClick.x;
+				int nYdiff = y - con.mpt_IntelliLClick.y;
+				// Приоритет - текстовому выделению?
+				DWORD nForce = 0;
+				if (_abs(nXdiff) >= nMinDiff)
+					nForce = CONSOLE_TEXT_SELECTION;
+				else if (_abs(nYdiff) >= nMinDiff)
+					nForce = CONSOLE_BLOCK_SELECTION;
+				// GO!
+				if (nForce)
+				{
+					gpConEmu->ForceSelectionModifierPressed(nForce);
+					_ASSERTE((nForce & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)) == nForce);
+					con.m_sel.dwFlags |= (nForce & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION));
+					OnMouseSelection(WM_LBUTTONDOWN, wParam, con.mpt_IntelliLClick.x, con.mpt_IntelliLClick.y);
+				}
+			}
+		}
+	}
+	else
+	{
+		con.mb_IntelliStored = FALSE;
+	}
 
 	if (bSelAllowed)
 	{

@@ -630,6 +630,7 @@ class CConEmuMain :
 		bool CheckRequiredFiles();
 		void CheckUpdates(BOOL abShowMessages);
 		DWORD isSelectionModifierPressed(bool bAllowEmpty);
+		void ForceSelectionModifierPressed(DWORD nValue);
 		enum DragPanelBorder CheckPanelDrag(COORD crCon);
 		bool ConActivate(int nCon);
 		bool ConActivateNext(BOOL abNext);
