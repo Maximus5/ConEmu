@@ -5700,16 +5700,18 @@ bool CRealBuffer::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
 	if (!this)
 		return false;
 
+	#if 0
+	// If it was already started - let it be... Don't look at settings
 	if (!isSelectionAllowed())
 		return false;
+	#endif
 
 	if (sel)
 	{
 		*sel = con.m_sel;
 	}
 
-	return (con.m_sel.dwFlags != 0);
-	//return (con.m_sel.dwFlags & CONSOLE_SELECTION_NOT_EMPTY) == CONSOLE_SELECTION_NOT_EMPTY;
+	return isSelectionPresent();
 }
 
 void CRealBuffer::ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
