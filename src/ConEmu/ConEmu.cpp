@@ -16653,7 +16653,8 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 		}
 		else if (pRCon->isSelectionPresent())
 		{
-			hCur = mh_CursorIBeam; // LoadCursor(NULL, IDC_IBEAM);
+			if (gpSet->isCTSIBeam)
+				hCur = mh_CursorIBeam; // LoadCursor(NULL, IDC_IBEAM);
 		}
 		else if ((etr = pRCon->GetLastTextRangeType()) != etr_None)
 		{
