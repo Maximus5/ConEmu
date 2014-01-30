@@ -2937,7 +2937,9 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 	mcr_LastMousePos = crMouse;
 
-	if (isSelectionAllowed())
+	bool bSelAllowed = isSelectionAllowed();
+
+	if (bSelAllowed)
 	{
 		if (messg == WM_LBUTTONDOWN)
 		{
@@ -2949,8 +2951,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		// Если выделение еще не начато, но удерживается модификатор - игнорировать WM_MOUSEMOVE
 		if (messg == WM_MOUSEMOVE && !con.m_sel.dwFlags)
 		{
-			if ((gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, false))
-				|| (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, false)))
+			if (gpConEmu->isSelectionModifierPressed(false))
 			{
 				// Пропустить, пользователь собирается начать выделение, не посылать движение мыши в консоль
 				return true;
@@ -3215,13 +3216,12 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		}
 		else
 		{
-			if (gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, true))
+			DWORD nPressed = gpConEmu->isSelectionModifierPressed(true);
+			if (nPressed)
 			{
-				lbStreamSelection = FALSE; vkMod = gpSet->GetHotkeyById(vkCTSVkBlock); // OK
-			}
-			else if (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, true))
-			{
-				lbStreamSelection = TRUE; vkMod = gpSet->GetHotkeyById(vkCTSVkText); // OK
+				// OK
+				lbStreamSelection = ((nPressed & CONSOLE_TEXT_SELECTION) != 0);
+				vkMod = gpSet->GetHotkeyById(lbStreamSelection ? vkCTSVkText : vkCTSVkBlock);
 			}
 			else
 			{

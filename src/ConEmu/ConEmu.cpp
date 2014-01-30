@@ -16530,8 +16530,7 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 		return DPB_NONE;
 
 	// Если удерживается модификатор запуска выделения текста
-	if ((gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, false))
-	        || (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, false)))
+	if (gpConEmu->isSelectionModifierPressed(false))
 		return DPB_NONE;
 
 	//CONSOLE_CURSOR_INFO ci;
@@ -16727,8 +16726,10 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 			// If mouse is used for selection, or specified modifier is pressed
 			if (!hCur && lbMeFore && gpSet->isCTSIBeam)
 			{
-				if ((gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, true))
-					|| (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, true)))
+				// Хм, если выделение настроено "всегда" и без модификатора -
+				// на экране всегда будет IBeam курсор, что может раздражать...
+				// Поэтому - false
+				if (isSelectionModifierPressed(false))
 				{
 					hCur = mh_CursorIBeam;
 				}
