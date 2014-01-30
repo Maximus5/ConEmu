@@ -411,5 +411,5 @@ class CVirtualConsole :
 	public:
 		void ChangeHighlightMouse(int nWhat, int nSwitch);
 	protected:
-		virtual void OnDestroy();
+		virtual void OnDestroy() override;
 };

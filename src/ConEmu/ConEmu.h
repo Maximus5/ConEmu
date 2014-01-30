@@ -579,9 +579,9 @@ class CConEmuMain :
 		void SetRunQueueTimer(bool bSet, UINT uElapse);
 
 		//
-		virtual void OnUseGlass(bool abEnableGlass);
-		virtual void OnUseTheming(bool abEnableTheming);
-		virtual void OnUseDwm(bool abEnableDwm);
+		virtual void OnUseGlass(bool abEnableGlass) override;
+		virtual void OnUseTheming(bool abEnableTheming) override;
+		virtual void OnUseDwm(bool abEnableDwm) override;
 
 		bool ExecuteProcessPrepare();
 		void ExecuteProcessFinished(bool bOpt);
@@ -826,7 +826,7 @@ class CConEmuMain :
 		LRESULT OnSize(bool bResizeRCon=true, WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
 		LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
 		LRESULT OnMoving(LPRECT prcWnd = NULL, bool bWmMove = false);
-		virtual LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		virtual LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 		LRESULT OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		void OnSizePanels(COORD cr);
 		LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);

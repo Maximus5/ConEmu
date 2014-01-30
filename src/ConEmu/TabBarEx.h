@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012 Maximus5
+Copyright (c) 2012-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -163,7 +163,7 @@ protected:
 	int GetStateIcon(const CTabID* pTab);
 protected:
 	void RepositionTabs(const RECT &rcCaption, const RECT &rcTabs);
-	virtual HFONT CreateTabFont(int anTabHeight);
+	virtual HFONT CreateTabFont(int anTabHeight) override;
 	void PaintFlush();
 	void RequestPostUpdate();
 	int GetNextTab(BOOL abForward, BOOL abAltStyle=FALSE);

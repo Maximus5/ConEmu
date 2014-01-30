@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -42,10 +42,10 @@ class CDragDrop :
 		CDragDrop();
 		//BOOL Init(); --> CDragDropData::Register
 		virtual ~CDragDrop();
-		virtual HRESULT __stdcall Drop(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
-		virtual HRESULT __stdcall DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
-		virtual HRESULT __stdcall DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
-		virtual HRESULT __stdcall DragLeave(void);
+		virtual HRESULT __stdcall Drop(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect) override;
+		virtual HRESULT __stdcall DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect) override;
+		virtual HRESULT __stdcall DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect) override;
+		virtual HRESULT __stdcall DragLeave(void) override;
 		void Drag(BOOL abClickNeed, COORD crMouseDC);
 		void DebugLog(LPCWSTR asInfo, BOOL abErrorSeverity=FALSE);
 		//IDataObject *mp_DataObject;
@@ -53,7 +53,7 @@ class CDragDrop :
 		//ForwardedPanelInfo *m_pfpi;
 		HRESULT CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR lpszDesc);
 		//BOOL InDragDrop();
-		//virtual void DragFeedBack(DWORD dwEffect);
+		//virtual void DragFeedBack(DWORD dwEffect) override;
 		//BOOL IsDragStarting() {return FALSE;};
 		//BOOL ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) { return FALSE;};
 	protected:

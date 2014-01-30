@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -106,17 +106,17 @@ struct SettingsRegistry : public SettingsBase
 		HKEY regMy;
 
 		bool OpenKey(HKEY inHKEY, const wchar_t *regPath, uint access, BOOL abSilent = FALSE);
-		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE);
-		virtual void CloseKey();
+		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) override;
+		virtual void CloseKey() override;
 
-		virtual bool Load(const wchar_t *regName, wchar_t **value);
-		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize);
-		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen); // нада, для проверки валидности типа реестра
+		virtual bool Load(const wchar_t *regName, wchar_t **value) override;
+		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize) override;
+		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) override; // нада, для проверки валидности типа реестра
 
-		virtual void Delete(const wchar_t *regName);
+		virtual void Delete(const wchar_t *regName) override;
 
-		//virtual void Save(const wchar_t *regName, const wchar_t *value); // value = _T(""); // сюда мог придти и NULL
-		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize);
+		//virtual void Save(const wchar_t *regName, const wchar_t *value) override; // value = _T(""); // сюда мог придти и NULL
+		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize) override;
 
 	public:
 		SettingsRegistry();
@@ -130,17 +130,17 @@ struct SettingsINI : public SettingsBase
 		LPCWSTR  mpsz_IniFile;
 	public:
 
-		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE);
-		virtual void CloseKey();
+		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) override;
+		virtual void CloseKey() override;
 
-		virtual bool Load(const wchar_t *regName, wchar_t **value);
-		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize);
-		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen); // нада, для проверки валидности типа реестра
+		virtual bool Load(const wchar_t *regName, wchar_t **value) override;
+		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize) override;
+		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) override; // нада, для проверки валидности типа реестра
 
-		virtual void Delete(const wchar_t *regName);
+		virtual void Delete(const wchar_t *regName) override;
 
-		//virtual void Save(const wchar_t *regName, const wchar_t *value); // value = _T(""); // сюда мог придти и NULL
-		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize);
+		//virtual void Save(const wchar_t *regName, const wchar_t *value) override; // value = _T(""); // сюда мог придти и NULL
+		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize) override;
 
 	public:
 		SettingsINI(const SettingsStorage& Storage);
@@ -162,17 +162,17 @@ struct SettingsXML : public SettingsBase
 		static IXMLDOMDocument* CreateDomDocument(wchar_t* pszErr = NULL, size_t cchErrMax = 0);
 	public:
 		static bool IsXmlAllowed();
-		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE);
-		virtual void CloseKey();
+		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) override;
+		virtual void CloseKey() override;
 
-		virtual bool Load(const wchar_t *regName, wchar_t **value);
-		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize);
-		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen); // нада, для проверки валидности типа реестра
+		virtual bool Load(const wchar_t *regName, wchar_t **value) override;
+		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize) override;
+		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) override; // нада, для проверки валидности типа реестра
 
-		virtual void Delete(const wchar_t *regName);
+		virtual void Delete(const wchar_t *regName) override;
 
-		//virtual void Save(const wchar_t *regName, const wchar_t *value); // value = _T(""); // сюда мог придти и NULL
-		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize);
+		//virtual void Save(const wchar_t *regName, const wchar_t *value) override; // value = _T(""); // сюда мог придти и NULL
+		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize) override;
 
 	protected:
 		IXMLDOMNode* FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, const wchar_t* asName, bool abAllowCreate);

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -164,7 +164,7 @@ class TabBarClass
 	public:
 		TabBarClass();
 		virtual ~TabBarClass();
-		//virtual bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags);
+		//virtual bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags) override;
 		//void Enable(BOOL abEnabled);
 		//void Refresh(BOOL abFarActive);
 		void Retrieve();
