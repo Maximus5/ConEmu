@@ -2942,7 +2942,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 	mcr_LastMousePos = crMouse;
 
-	if (mp_RCon->isSelectionAllowed())
+	if (isSelectionAllowed())
 	{
 		if (messg == WM_LBUTTONDOWN)
 		{
@@ -5705,7 +5705,7 @@ bool CRealBuffer::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
 	if (!this)
 		return false;
 
-	if (!mp_RCon->isSelectionAllowed())
+	if (!isSelectionAllowed())
 		return false;
 
 	if (sel)
