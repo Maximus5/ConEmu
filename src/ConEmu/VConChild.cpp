@@ -729,6 +729,9 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 		gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
 	}
 
+	if (gpConEmu)
+		gpConEmu->PreWndProc(messg);
+
 	CVConGuard guard;
 	CVirtualConsole* pVCon = NULL;
 	if (messg == WM_CREATE || messg == WM_NCCREATE)

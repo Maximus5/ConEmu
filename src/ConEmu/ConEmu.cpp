@@ -358,6 +358,7 @@ CConEmuMain::CConEmuMain()
 	ZeroStruct(mrc_FixPosAfterStyle);
 	mb_InImeComposition = false; mb_ImeMethodChanged = false;
 	ZeroStruct(mr_Ideal);
+	ZeroStruct(m_Pressed);
 	mn_InResize = 0;
 	mb_MouseCaptured = FALSE;
 	mb_HotKeyRegistered = false;
@@ -16485,6 +16486,30 @@ void CConEmuMain::RequestPostUpdateTabs()
 	PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
 }
 
+DWORD CConEmuMain::isSelectionModifierPressed(bool bAllowEmpty)
+{
+	DWORD nReadyToSel;
+
+	if (m_Pressed.bChecked)
+	{
+		nReadyToSel = m_Pressed.nReadyToSel;
+	}
+	else
+	{
+		if (gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, bAllowEmpty))
+			nReadyToSel = CONSOLE_BLOCK_SELECTION;
+		else if (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, bAllowEmpty))
+			nReadyToSel = CONSOLE_TEXT_SELECTION;
+		else
+			nReadyToSel = 0;
+		// Store it
+		m_Pressed.nReadyToSel = nReadyToSel;
+		m_Pressed.bChecked = TRUE;
+	}
+
+	return nReadyToSel;
+}
+
 enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 {
 	if (!gpSet->isDragPanel || isPictureView())
@@ -17919,6 +17944,9 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 {
 	LRESULT result = 0;
 
+	if (gpConEmu)
+		gpConEmu->PreWndProc(messg);
+
 	//if (messg == WM_CREATE)
 	//{
 	if (ghWnd == NULL)
@@ -17977,6 +18005,9 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	{
 		gpConEmu->LogMessage(hWnd, uMsg, wParam, lParam);
 	}
+
+	if (gpConEmu)
+		gpConEmu->PreWndProc(uMsg);
 
 	switch (uMsg)
 	{
@@ -18054,6 +18085,12 @@ UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal)
 		}
 	}
 	return RegisterMessage(asLocal);
+}
+
+// Speed up selection modifier checks
+void CConEmuMain::PreWndProc(UINT messg)
+{
+	m_Pressed.bChecked = FALSE;
 }
 
 // Window procedure for ghWnd

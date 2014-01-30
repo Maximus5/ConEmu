@@ -453,6 +453,11 @@ class CConEmuMain :
 			COORD crConsole;       // Console size in cells at storing moment
 			SIZE  csFont;          // VCon Font size (Width, Height) at storing moment
 		} mr_Ideal;
+		struct
+		{
+			BOOL  bChecked;
+			DWORD nReadyToSel;
+		} m_Pressed;
 	public:
 		void StoreIdealRect();
 		RECT GetIdealRect();
@@ -624,6 +629,7 @@ class CConEmuMain :
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
 		void CheckUpdates(BOOL abShowMessages);
+		DWORD isSelectionModifierPressed(bool bAllowEmpty);
 		enum DragPanelBorder CheckPanelDrag(COORD crCon);
 		bool ConActivate(int nCon);
 		bool ConActivateNext(BOOL abNext);
@@ -786,6 +792,7 @@ class CConEmuMain :
 		static LRESULT CALLBACK WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		BOOL isDialogMessage(MSG &Msg);
 		BOOL setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
+		void PreWndProc(UINT messg);
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		void DoFullScreen();
