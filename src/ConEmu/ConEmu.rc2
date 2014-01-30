@@ -144,6 +144,7 @@ BEGIN
 	lbConClrPopText         "Specify default foreground (font) popup color for new consoles"
 	lbConClrText            "Specify default foreground (font) text color for new consoles"
 	lbCTSBlockSelection     "Choose modifier to starting ‘Block selection’ with mouse LeftClick+Drag"
+	lbCTSEOL                "Choose preferred line separator (\\r\\n, \\n or \\r)"
 	lbCTSTextSelection      "Choose modifier to starting ‘Text selection’ with mouse LeftClick+Drag"
 	lbDefaultColors         "You may choose one of predefined color schemes.\r\nEach scheme customize 32 colors (16+16)\r\nand extend foreground options."
 	lbExtendFontBoldIdx     "Choose background color index for which ‘Bold’ font properties whill be inverted (default is Red #12)"
