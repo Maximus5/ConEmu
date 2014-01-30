@@ -162,6 +162,7 @@ public:
 	
 	bool isSelectionAllowed();
 	bool isSelectionPresent();
+	bool isMouseSelectionPresent();
 	bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 	
 	void ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);

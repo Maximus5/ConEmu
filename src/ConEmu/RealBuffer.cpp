@@ -5695,6 +5695,14 @@ bool CRealBuffer::isSelectionPresent()
 	return (con.m_sel.dwFlags != 0);
 }
 
+bool CRealBuffer::isMouseSelectionPresent()
+{
+	if (!this)
+		return false;
+
+	return ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) != 0);
+}
+
 bool CRealBuffer::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
 {
 	if (!this)

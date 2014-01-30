@@ -11882,10 +11882,9 @@ bool CRealConsole::isSelectionPresent()
 
 bool CRealConsole::isMouseSelectionPresent()
 {
-	CONSOLE_SELECTION_INFO sel;
-	if (!GetConsoleSelectionInfo(&sel))
+	if (!this)
 		return false;
-	return ((sel.dwFlags & CONSOLE_MOUSE_SELECTION) == CONSOLE_MOUSE_SELECTION);
+	return mp_ABuf->isMouseSelectionPresent();
 }
 
 bool CRealConsole::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
