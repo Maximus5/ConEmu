@@ -1944,9 +1944,6 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	BOOL lbScreenChanged = FALSE;
 	wchar_t* lpChar = con.pConChar;
 	WORD* lpAttr = con.pConAttr;
-	CONSOLE_SELECTION_INFO sel;
-	bool bSelectionPresent = GetConsoleSelectionInfo(&sel);
-	UNREFERENCED_PARAMETER(bSelectionPresent);
 
 	if (mp_RCon->mb_ResetStatusOnConsoleReady)
 	{
@@ -1997,8 +1994,6 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 		memmove(con.pDataCmp, pData, CharCount*sizeof(CHAR_INFO));
 		HEAPVAL;
 		CHAR_INFO* lpCur = con.pDataCmp;
-		//// Когда вернется возможность выделения - нужно сразу применять данные в атрибуты
-		//_ASSERTE(!bSelectionPresent); -- не нужно. Все сделает GetConsoleData
 		wchar_t ch;
 
 		// Расфуговка буфера CHAR_INFO на текст и атрибуты
