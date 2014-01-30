@@ -16504,7 +16504,7 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 	if (pRCon->isConSelectMode())
 		return DPB_NONE;
 
-	// Если удерживается модификатор запуска граббера
+	// Если удерживается модификатор запуска выделения текста
 	if ((gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, false))
 	        || (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, false)))
 		return DPB_NONE;
