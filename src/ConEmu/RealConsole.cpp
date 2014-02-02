@@ -11706,7 +11706,10 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 
 void CRealConsole::CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 {
-	//WARNING!! Same as "GuiAttach.cpp: CorrectGuiChildRect"
+	//Chrome: Styles: 0x16FF0000, ExStyles: 0x00000100
+
+	//These shift values are used in "GuiAttach.cpp: CorrectGuiChildRect" too
+
 	int nX = 0, nY = 0, nY0 = 0;
 	if (anStyle & WS_THICKFRAME)
 	{

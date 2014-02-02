@@ -885,44 +885,6 @@ void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 
 	rcGui.left += rcShift.left; rcGui.top += rcShift.top;
 	rcGui.right += rcShift.right; rcGui.bottom += rcShift.bottom;
-
-#if 0
-	//WARNING!! Same as "CRealConsole::CorrectGuiChildRect"
-	int nX = 0, nY = 0, nY0 = 0;
-	if (anStyle & WS_THICKFRAME)
-	{
-		nX = user->getSystemMetrics(SM_CXSIZEFRAME);
-		nY = user->getSystemMetrics(SM_CXSIZEFRAME);
-	}
-	else if (anStyleEx & WS_EX_WINDOWEDGE)
-	{
-		nX = user->getSystemMetrics(SM_CXFIXEDFRAME);
-		nY = user->getSystemMetrics(SM_CXFIXEDFRAME);
-	}
-	else if (anStyle & WS_DLGFRAME)
-	{
-		nX = user->getSystemMetrics(SM_CXEDGE);
-		nY = user->getSystemMetrics(SM_CYEDGE);
-	}
-	else if (anStyle & WS_BORDER)
-	{
-		nX = user->getSystemMetrics(SM_CXBORDER);
-		nY = user->getSystemMetrics(SM_CYBORDER);
-	}
-	else
-	{
-		nX = user->getSystemMetrics(SM_CXFIXEDFRAME);
-		nY = user->getSystemMetrics(SM_CXFIXEDFRAME);
-	}
-	if ((anStyle & WS_CAPTION) && gbGuiClientHideCaption)
-	{
-		if (anStyleEx & WS_EX_TOOLWINDOW)
-			nY0 += user->getSystemMetrics(SM_CYSMCAPTION);
-		else
-			nY0 += user->getSystemMetrics(SM_CYCAPTION);
-	}
-	rcGui.left -= nX; rcGui.right += nX; rcGui.top -= nY+nY0; rcGui.bottom += nY;
-#endif
 }
 
 RECT AttachGuiClientPos(DWORD anStyle /*= 0*/, DWORD anStyleEx /*= 0*/)
