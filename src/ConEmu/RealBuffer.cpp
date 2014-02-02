@@ -5686,6 +5686,10 @@ bool CRealBuffer::isSelectionAllowed()
 	if (con.m_sel.dwFlags != 0)
 		return true; // Если выделение было запущено через меню
 
+	// Если УЖЕ удерживается модификатор - то не требуется проверять "Intelligent selection"
+	if (gpConEmu->isSelectionModifierPressed(true))
+		return true; // force selection mode
+
 	if (!gpSet->isCTSIntelligent)
 		return false; // Mouse selection was disabled
 	LPCWSTR pszPrcName = mp_RCon->GetActiveProcessName();

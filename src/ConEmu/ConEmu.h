@@ -456,6 +456,7 @@ class CConEmuMain :
 		struct
 		{
 			BOOL  bChecked;
+			DWORD nReadyToSelNoEmpty;
 			DWORD nReadyToSel;
 		} m_Pressed;
 	public:

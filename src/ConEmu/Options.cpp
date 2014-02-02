@@ -4637,42 +4637,61 @@ bool Settings::NeedDialogDetect()
 	//return (isUserScreenTransparent || !isMonospace);
 }
 
+// Suppose that only ONE key can be set as modifier!
 bool Settings::IsModifierPressed(int nDescrID, bool bAllowEmpty)
 {
+	bool bIsPressed = false;
+	IsModifierPressed(nDescrID,
+		bAllowEmpty ? NULL : &bIsPressed,
+		bAllowEmpty ? &bIsPressed : NULL);
+	return bIsPressed;
+}
+
+void Settings::IsModifierPressed(int nDescrID, bool* pbNoEmpty, bool* pbAllowEmpty)
+{
+	if (pbNoEmpty) *pbNoEmpty = false;
+	if (pbAllowEmpty) *pbAllowEmpty = false;
+
 	DWORD vk = ConEmuHotKey::GetHotkey(GetHotkeyById(nDescrID));
 
 	// если НЕ 0 - должен быть нажат
 	if (vk)
 	{
 		if (!isPressed(vk))
-			return false;
-	}
-	else if (!bAllowEmpty)
-	{
-		return false;
+			return;
 	}
 
 	// но другие модификаторы нажаты быть не должны!
+	// В том числе если (vk == 0)
+
 	if (vk != VK_SHIFT && vk != VK_LSHIFT && vk != VK_RSHIFT)
 	{
 		if (isPressed(VK_SHIFT))
-			return false;
+			return;
 	}
 
 	if (vk != VK_MENU && vk != VK_LMENU && vk != VK_RMENU)
 	{
 		if (isPressed(VK_MENU))
-			return false;
+			return;
 	}
 
 	if (vk != VK_CONTROL && vk != VK_LCONTROL && vk != VK_RCONTROL)
 	{
 		if (isPressed(VK_CONTROL))
-			return false;
+			return;
+	}
+
+	// В том числе, отрубить Apps&Win
+	if (!vk)
+	{
+		if (isPressed(VK_APPS) || isPressed(VK_LWIN) || isPressed(VK_RWIN))
+			return;
 	}
 
 	// Можно
-	return true;
+	if (pbAllowEmpty) *pbAllowEmpty = true;
+	if (pbNoEmpty && vk) *pbNoEmpty = true;
 }
 
 bool Settings::NeedCreateAppWindow()

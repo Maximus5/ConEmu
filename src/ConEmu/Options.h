@@ -888,7 +888,7 @@ struct Settings
 		bool isHighlightMouseCol;
 		
 		bool IsModifierPressed(int nDescrID, bool bAllowEmpty);
-		//bool isSelectionModifierPressed();
+		void IsModifierPressed(int nDescrID, bool* pbNoEmpty, bool* pbAllowEmpty);
 		//typedef struct tag_CharRanges
 		//{
 		//	bool bUsed;

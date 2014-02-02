@@ -16488,27 +16488,45 @@ void CConEmuMain::RequestPostUpdateTabs()
 
 DWORD CConEmuMain::isSelectionModifierPressed(bool bAllowEmpty)
 {
-	DWORD nReadyToSel;
+	DWORD nResult;
 
 	if (m_Pressed.bChecked)
 	{
-		PRAGMA_ERROR("Не учитывает bAllowEmpty!");
-		nReadyToSel = m_Pressed.nReadyToSel;
+		nResult = bAllowEmpty ? m_Pressed.nReadyToSel : m_Pressed.nReadyToSelNoEmpty;
 	}
 	else
 	{
-		if (gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, bAllowEmpty))
-			nReadyToSel = CONSOLE_BLOCK_SELECTION;
-		else if (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, bAllowEmpty))
-			nReadyToSel = CONSOLE_TEXT_SELECTION;
-		else
-			nReadyToSel = 0;
+		DWORD nReadyToSel = 0, nReadyToSelNoEmpty = 0;
+		bool bNoEmptyPressed = false, bEmptyAllowed = false;
+
+		if (gpSet->isCTSSelectBlock)
+		{
+			gpSet->IsModifierPressed(vkCTSVkBlock, &bNoEmptyPressed, &bEmptyAllowed);
+			if (bNoEmptyPressed)
+				nReadyToSelNoEmpty = nReadyToSel = CONSOLE_BLOCK_SELECTION;
+			else if (bEmptyAllowed)
+				nReadyToSel = CONSOLE_BLOCK_SELECTION;
+		}
+
+		if (!nReadyToSelNoEmpty && gpSet->isCTSSelectText)
+		{
+			gpSet->IsModifierPressed(vkCTSVkText, &bNoEmptyPressed, &bEmptyAllowed);
+			if (bNoEmptyPressed)
+				nReadyToSelNoEmpty = nReadyToSel = CONSOLE_TEXT_SELECTION;
+			else if (bEmptyAllowed && !nReadyToSel)
+				nReadyToSel = CONSOLE_TEXT_SELECTION;
+			_ASSERTE(nReadyToSel || (nReadyToSelNoEmpty == nReadyToSel));
+		}
+
 		// Store it
 		m_Pressed.nReadyToSel = nReadyToSel;
+		m_Pressed.nReadyToSelNoEmpty = nReadyToSelNoEmpty;
 		m_Pressed.bChecked = TRUE;
+
+		nResult = bAllowEmpty ? nReadyToSel : nReadyToSelNoEmpty;
 	}
 
-	return nReadyToSel;
+	return nResult;
 }
 
 void CConEmuMain::ForceSelectionModifierPressed(DWORD nValue)
