@@ -252,6 +252,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_WasSendClickToReadCon = false;
 	mn_LastSetForegroundPID = 0;
 	mb_InPostCloseMacro = false;
+	mb_WasMouseSelection = false;
 
 	mn_TextColorIdx = 7; mn_BackColorIdx = 0;
 	mn_PopTextColorIdx = 5; mn_PopBackColorIdx = 15;
@@ -3846,6 +3847,10 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 
 	// Получить известные координаты символов
 	COORD crMouse = ScreenToBuffer(mp_VCon->ClientToConsole(x,y, bStrictMonospace));
+
+	// Do this BEFORE check in ABuf
+	if (messg == WM_LBUTTONDOWN)
+		mb_WasMouseSelection = false;
 	
 	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse, abFromTouch))
 		return; // В консоль не пересылать, событие обработал "сам буфер"
@@ -3899,7 +3904,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 
 
 	const Settings::AppSettings* pApp = NULL;
-	if ((messg == WM_LBUTTONDOWN) //&& gpSet->isCTSClickPromptPosition
+	if ((messg == WM_LBUTTONUP) && !mb_WasMouseSelection
 		&& ((pApp = gpSet->GetAppSettings(GetActiveAppSettingsId())) != NULL)
 		&& pApp->CTSClickPromptPosition()
 		&& gpSet->IsModifierPressed(vkCTSVkPromptClk, true))
@@ -4232,6 +4237,28 @@ void CRealConsole::ExpandSelection(SHORT anX, SHORT anY)
 void CRealConsole::DoSelectionStop()
 {
 	mp_ABuf->DoSelectionStop();
+}
+
+void CRealConsole::OnSelectionChanged()
+{
+	// Show current selection state in the Status bar
+	wchar_t szSelInfo[128] = L"";
+	CONSOLE_SELECTION_INFO sel = {};
+	if (mp_ABuf->GetConsoleSelectionInfo(&sel))
+	{
+		if (sel.dwFlags & CONSOLE_MOUSE_SELECTION)
+			mb_WasMouseSelection = true;
+
+		bool bStreamMode = ((sel.dwFlags & CONSOLE_TEXT_SELECTION) != 0);
+		int  nCellsCount = mp_ABuf->GetSelectionCellsCount();
+
+		_wsprintf(szSelInfo, SKIPLEN(countof(szSelInfo)) L"%s selection {%i,%i}-{%i,%i} total %i chars",
+			bStreamMode ? L"Stream" : L"Block",
+			sel.srSelection.Left, sel.srSelection.Top,
+			sel.srSelection.Right, sel.srSelection.Bottom,
+			nCellsCount);
+	}
+	SetConStatus(szSelInfo);
 }
 
 bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */)

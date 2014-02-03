@@ -4326,24 +4326,23 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	return Result;
 }
 
+int CRealBuffer::GetSelectionCellsCount()
+{
+	int nCharCount = 0;
+	if (con.m_sel.dwFlags)
+	{
+		nCharCount = GetSelectionCharCount(isStreamSelection(),
+			con.m_sel.srSelection.Left, con.m_sel.srSelection.Top,
+			con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, NULL, NULL, 0);
+	}
+	return nCharCount;
+}
+
 // обновить на экране
 void CRealBuffer::UpdateSelection()
 {
 	// Show current selection state in the Status bar
-	wchar_t szSelInfo[128] = L"";
-	if (con.m_sel.dwFlags)
-	{
-		bool bStreamMode = isStreamSelection();
-		int  nCharCount = GetSelectionCharCount(bStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top,
-			con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, NULL, NULL, 0);
-
-		_wsprintf(szSelInfo, SKIPLEN(countof(szSelInfo)) L"%s selection {%i,%i}-{%i,%i} total %i chars",
-			bStreamMode ? L"Stream" : L"Block",
-			con.m_sel.srSelection.Left, con.m_sel.srSelection.Top,
-			con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom,
-			nCharCount);
-	}
-	mp_RCon->SetConStatus(szSelInfo);
+	mp_RCon->OnSelectionChanged();
 
 	TODO("Это корректно? Нужно обновить VCon");
 	con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
@@ -4379,7 +4378,7 @@ bool CRealBuffer::isStreamSelection()
 {
 	if (!this) return false;
 	
-	return ((con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION);
+	return ((con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) != 0);
 }
 
 // true - if clipboard was set successfully

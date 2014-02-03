@@ -164,6 +164,7 @@ public:
 	bool isSelectionPresent();
 	bool isMouseSelectionPresent();
 	bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
+	int  GetSelectionCellsCount();
 	
 	void ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
 	void ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
