@@ -5716,7 +5716,7 @@ bool CRealBuffer::isSelectionAllowed()
 					{
 						DWORD nDlgFlags = m_Rgn.GetFlags();
 						int nDialogs = m_Rgn.GetDetectedDialogs(3,NULL,NULL);
-						if (nDialogs > 0)
+						if ((nDialogs > 0) && !((nDialogs == 1) && (nDlgFlags == FR_MENUBAR)))
 							return false; // Any dialog on screen? Don't select
 					}
 				}
