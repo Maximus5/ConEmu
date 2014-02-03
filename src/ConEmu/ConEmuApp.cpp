@@ -868,7 +868,7 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote)
 		}
 	}
 
-	size_t cchLen = _tcslen(asWinPath) + (bAutoQuote ? 3 : 1);
+	size_t cchLen = _tcslen(asWinPath) + (bAutoQuote ? 3 : 1) + 1/*Possible space-termination on paste*/;
 	wchar_t* pszResult = (wchar_t*)malloc(cchLen*sizeof(*pszResult));
 	if (!pszResult)
 		return NULL;
