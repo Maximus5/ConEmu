@@ -464,15 +464,16 @@ char* lstrdup(const char* asText)
 	return psz;
 }
 
-wchar_t* lstrdup(const wchar_t* asText)
+wchar_t* lstrdup(const wchar_t* asText, size_t cchExtraSizeAdd /* = 0 */)
 {
-	int nLen = asText ? lstrlenW(asText) : 0;
-	wchar_t* psz = (wchar_t*)malloc((nLen+1) * sizeof(*psz));
+	size_t nLen = asText ? lstrlenW(asText) : 0;
+	wchar_t* psz = (wchar_t*)malloc((nLen+1+cchExtraSizeAdd) * sizeof(*psz));
 
 	if (nLen)
 		StringCchCopyW(psz, nLen+1, asText);
-	else
-		psz[0] = 0;
+
+	// Ensure AsciiZ
+	psz[nLen] = 0;
 
 	return psz;
 }
