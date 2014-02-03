@@ -9836,10 +9836,11 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 				pszSrc = pszNext;
 				// Move Dest pointer and add one trailing space (line delimiter)
 				pszDst += cchLine;
-				if ((pszDst+1) < pszEnd)
+				if (pszDst < pszEnd)
 					*(pszDst++) = L' ';
 			}
 			// Z-terminate our string
+			_ASSERTE(pszDst <= pszEnd);
 			*pszDst = 0;
 			// Done, it is ready to pasting
 			pszEnd = pszDst;
