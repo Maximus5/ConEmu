@@ -15,6 +15,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.02.03
+[*] Vim fails to react for window size change in the xterm terminal mode.
+
+
 2014.02.02
 [+] New ‘Intelligent selection’ mode.
     Now, you may start both block or text selection with mouse without modifier pressed.
