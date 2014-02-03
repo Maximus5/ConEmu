@@ -249,7 +249,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_SkipFarPidChange = FALSE;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
 	CloseConfirmReset();
-	mb_WasSendClickToReadCon = false;
 	mn_LastSetForegroundPID = 0;
 	mb_InPostCloseMacro = false;
 	mb_WasMouseSelection = false;
@@ -3910,9 +3909,9 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 		&& gpSet->IsModifierPressed(vkCTSVkPromptClk, true))
 	{
 		DWORD nActivePID = GetActivePID();
+		bool bWasSendClickToReadCon = false;
 		if (nActivePID && (mp_ABuf->m_Type == rbt_Primary) && !isFar() && !isNtvdm())
 		{
-			mb_WasSendClickToReadCon = false; // сначала - сброс
 			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_MOUSECLICK, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PROMPTACTION));
 			if (pIn)
 			{
@@ -3924,24 +3923,15 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 				CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
 				if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
 				{
-					mb_WasSendClickToReadCon = (pOut->dwData[0] != 0);
+					bWasSendClickToReadCon = (pOut->dwData[0] != 0);
 				}
 				ExecuteFreeResult(pOut);
 				ExecuteFreeResult(pIn);
 			}
 
-			if (mb_WasSendClickToReadCon)
+			if (bWasSendClickToReadCon)
 				return; // уже клик обработали (перемещение текствого курсора в ReadConsoleW)
 		}
-		else
-		{
-			mb_WasSendClickToReadCon = false;
-		}
-	}
-	else if (messg == WM_LBUTTONUP && mb_WasSendClickToReadCon)
-	{
-		mb_WasSendClickToReadCon = false;
-		return; // однократно, клик пропускаем
 	}
 
 	// Если юзер запретил посылку мышиных событий в консоль
