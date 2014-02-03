@@ -15,6 +15,24 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.02.02
+[+] New ‘Intelligent selection’ mode.
+    Now, you may start both block or text selection with mouse without modifier pressed.
+    Type of selection will be determined by the direction of LButton mouse drag,
+    when you start drag vertically - block selection, horizontally - text selection.
+    If you set up and press selection modifier - mouse selection will start even
+    if ‘Intelligent selection’ is disabled with exceptions.
+    New mode may be disabled ‘totally’ or for specified processes only.
+    For example, Vim knows about text selection and can process mouse internally,
+    and Far Manager can use mouse for dragging files or text selection in Editors.
+    When "far" specified in the exceptions without extension, you can use new mode
+    in the ‘User screen’ (panels are off) and in Viewers.
+[*] So, ‘Mark/Copy’ settings page redesigned
+[*] GuiMacro. Paste(9), Paste(10) - One-line paste with or without confirmation.
+[*] ‘Change prompt position with LClick’ works on left button release.
+[*] Some internal changes.
+
+
 2014.01.28
 [+] New pasting mode ‘One line’ (useful with "git status" & "git add").
     When ‘Right mouse button action’ is set to ‘Auto’ you may press it during

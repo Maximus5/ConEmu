@@ -1,7 +1,7 @@
-// 140128
+// 140202
 #define MVV_1 14
-#define MVV_2 1
-#define MVV_3 28
+#define MVV_2 2
+#define MVV_3 2
 #define MVV_4 0
 #define MVV_4a ""
 //
