@@ -1575,7 +1575,7 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 		wchar_t* pszChooseBuf = NULL;
 
-		if (!(nCommand >= 0 && nCommand <= 8))
+		if (!(nCommand >= 0 && nCommand <= 10))
 		{
 			return lstrdup(L"InvalidArg");
 		}
@@ -1609,6 +1609,10 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		{
 			PasteMode = pm_FirstLine;
 			bNoConfirm = true;
+		}
+		else if (nCommand == 9 || nCommand == 10)
+		{
+			PasteMode = pm_OneLine;
 		}
 
 		apRCon->Paste(PasteMode, pszText, bNoConfirm, (nCommand == 8)/*abCygWin*/);
