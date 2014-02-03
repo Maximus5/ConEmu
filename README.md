@@ -85,6 +85,6 @@ https://github.com/Maximus5/ConEmu/blob/master/src/HowToBuild.txt
 ## Screenshots
 ![Splits and tabs in ConEmu](https://github.com/Maximus5/ConEmu/wiki/ConEmuSplits.png)
 
-![ANSI X3.64 and xterm 256 colors in ConEmu](https://github.com/Maximus5/ConEmu/wiki/ConEmuAnsi.png)
+![ConEmu+Powershell inside Windows Explorer pane](https://github.com/Maximus5/ConEmu/wiki/ConEmuInside.png)
 
 [More screenshots](http://code.google.com/p/conemu-maximus5/wiki/Screenshots)
