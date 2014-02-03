@@ -4545,6 +4545,10 @@ BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	//_ASSERTE(nSemaphore<=1);
 	//#endif
 
+#if 0
+	DWORD nMode = 0; GetConsoleMode(hConsoleInput, &nMode);
+#endif
+
 	lbRc = F(PeekConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 
 	//#ifdef USE_INPUT_SEMAPHORE

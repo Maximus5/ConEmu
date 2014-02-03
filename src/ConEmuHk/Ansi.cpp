@@ -2649,6 +2649,10 @@ BOOL /*WINAPI*/ CEAnsi::OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 			{
 				dwMode |= ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT;
 			}
+			else
+			{
+				dwMode |= ENABLE_WINDOW_INPUT;
+			}
 		}
 	}
 
