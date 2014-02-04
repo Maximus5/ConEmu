@@ -4612,6 +4612,12 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpSet->SetMinToTray(true);
 	}
 
+	if (NewQuakeMode && gpSet->isDesktopMode)  // этот режим с Desktop несовместим
+	{
+		gpSet->isDesktopMode = false;
+		gpConEmu->OnDesktopMode();
+	}
+
 	HWND hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Show] : NULL; // Страничка с настройками
 	if (hWnd2)
 	{
@@ -4625,6 +4631,8 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		
 		EnableWindow(GetDlgItem(hWnd2, cbSingleInstance), (gpSet->isQuakeStyle == 0));
 		gpSetCls->checkDlgButton(hWnd2, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
+
+		gpSetCls->checkDlgButton(hWnd2, cbDesktopMode, gpSet->isDesktopMode);
 	}
 
 	hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_SizePos] : NULL; // Страничка с настройками
