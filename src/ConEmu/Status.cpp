@@ -166,7 +166,7 @@ static StatusColInfo gStatusCols[] =
 
 	{csi_CursorInfo,	L"StatusBar.Hide.CurI",
 						L"Cursor information",
-						L"Col x Row, Height (visible|hidden): Console cursor, 0-based"},
+						L"Col, Row, Height (visible|hidden): Console cursor, 0-based"},
 
 	{csi_ConEmuPID,		L"StatusBar.Hide.ConEmuPID",
 						L"ConEmu GUI PID",
@@ -1573,20 +1573,20 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	else
 	{
 		wcscpy_c(m_Values[csi_CursorSize].sText, L" ");
-		wcscpy_c(m_Values[csi_CursorSize].szFormat, L"99x199,99V");
+		wcscpy_c(m_Values[csi_CursorSize].szFormat, L"(99,199) 99V");
 	}
 
 	// csi_CursorInfo:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_CursorInfo].sText, SKIPLEN(countof(m_Values[csi_CursorInfo].sText)-1) _T("%ix%i,%i%s"), (int)pcr->X, (int)pcr->Y, pci->dwSize, pci->bVisible ? L"V" : L"H");
+		_wsprintf(m_Values[csi_CursorInfo].sText, SKIPLEN(countof(m_Values[csi_CursorInfo].sText)-1) _T("(%i,%i) %i%s"), (int)pcr->X, (int)pcr->Y, pci->dwSize, pci->bVisible ? L"V" : L"H");
 		if (nMaxX && nMaxY)
-			_wsprintf(m_Values[csi_CursorInfo].szFormat, SKIPLEN(countof(m_Values[csi_CursorInfo].szFormat)) L" %ix%i,100V", nMaxX, nMaxY);
+			_wsprintf(m_Values[csi_CursorInfo].szFormat, SKIPLEN(countof(m_Values[csi_CursorInfo].szFormat)) L" (%i,%i) 100V", nMaxX, nMaxY);
 	}
 	else
 	{
 		wcscpy_c(m_Values[csi_CursorInfo].sText, L" ");
-		wcscpy_c(m_Values[csi_CursorInfo].szFormat, L"99x199,99V");
+		wcscpy_c(m_Values[csi_CursorInfo].szFormat, L"(99,199) 99V");
 	}
 
 	CEStatusItems Changed[] = {csi_CursorX, csi_CursorY, csi_CursorSize, csi_CursorInfo};
