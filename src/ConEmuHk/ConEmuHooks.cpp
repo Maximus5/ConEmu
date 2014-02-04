@@ -5768,7 +5768,7 @@ bool GetTime(bool bSystem, LPSYSTEMTIME lpSystemTime)
 			goto wrap;
 		if (!(st.wMonth = wcstol(p+1, &p, 10)) || !p || (*p != L'-' && *p != L'.'))
 			goto wrap;
-		if (!(st.wDay = wcstol(p+1, &p, 10)) || !p || (*p != L'T' && *p != L' '))
+		if (!(st.wDay = wcstol(p+1, &p, 10)) || !p || (*p != L'T' && *p != L' ' && *p != 0))
 			goto wrap;
 		// Possible format 'dd.mm.yyyy'? This is returned by "cmd /k echo %DATE%"
 		if (st.wDay >= 1900 && st.wYear <= 31)
