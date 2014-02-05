@@ -122,6 +122,7 @@ extern bool    gbQuit;           // когда мы в процессе закр
 extern int     gnConfirmExitParm;
 extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
 extern int     gbRootWasFoundInCon;
+extern BOOL    gbComspecInitCalled;
 enum AttachModeEnum
 {
 	am_None = 0,

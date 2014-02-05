@@ -169,6 +169,7 @@ BOOL    gbAlwaysConfirmExit = FALSE;
 BOOL	gbAutoDisableConfirmExit = FALSE; // если корневой процесс проработал достаточно (10 сек) - будет сброшен gbAlwaysConfirmExit
 BOOL    gbRootAliveLess10sec = FALSE; // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
 int     gbRootWasFoundInCon = 0;
+BOOL    gbComspecInitCalled = FALSE;
 AttachModeEnum gbAttachMode = am_None; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console, или /GUIATTACH)
 BOOL    gbAlienMode = FALSE;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
 BOOL    gbForceHideConWnd = FALSE;
@@ -1931,7 +1932,11 @@ wrap:
 	}
 	else if (gnRunMode == RM_COMSPEC)
 	{
-		ComspecDone(iRc);
+		_ASSERTE(iRc==CERR_RUNNEWCONSOLE || gbComspecInitCalled);
+		if (gbComspecInitCalled)
+		{
+			ComspecDone(iRc);
+		}
 		//MessageBox(0,L"Comspec done...",L"ConEmuC",0);
 	}
 	else if (gnRunMode == RM_APPLICATION)

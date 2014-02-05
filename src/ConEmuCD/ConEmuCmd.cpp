@@ -88,6 +88,7 @@ int ComspecInit()
 	//SMALL_RECT rNewWindow = gpSrv->sbi.srWindow;
 	BOOL lbSbiRc = FALSE;
 	gbRootWasFoundInCon = 2; // не добавлять к "Press Enter to close console" - "or wait"
+	gbComspecInitCalled = TRUE; // Нельзя вызывать ComspecDone, если не было вызова ComspecInit
 	// в режиме ComSpec - запрещено!
 	gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
 #ifdef _DEBUG
