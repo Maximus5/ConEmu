@@ -213,6 +213,7 @@ RConStartArgs::RConStartArgs()
 	//hLogonToken = NULL;
 }
 
+#ifndef CONEMU_MINIMAL
 bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 {
 	_ASSERTE(args!=NULL);
@@ -296,6 +297,7 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 
 	return true;
 }
+#endif
 
 RConStartArgs::~RConStartArgs()
 {
@@ -315,6 +317,7 @@ RConStartArgs::~RConStartArgs()
 	//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
 }
 
+#ifndef CONEMU_MINIMAL
 wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 {
 	wchar_t* pszFull = NULL;
@@ -506,6 +509,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 
 	return pszFull;
 }
+#endif
 
 void RConStartArgs::AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax)
 {
@@ -518,6 +522,7 @@ void RConStartArgs::AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax)
 		_wcscat_c(rsServerCmdLine, cchMax, L" /NOINJECT");
 }
 
+#ifndef CONEMU_MINIMAL
 bool RConStartArgs::CheckUserToken(HWND hPwd)
 {
 	//SafeFree(pszUserProfile);
@@ -571,6 +576,7 @@ HANDLE RConStartArgs::CheckUserToken()
 
 	return hLogonToken;
 }
+#endif
 
 // Returns ">0" - when changes was made
 //  0 - no changes

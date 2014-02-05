@@ -93,15 +93,20 @@ struct RConStartArgs
 	RConStartArgs();
 	~RConStartArgs();
 
-	bool CheckUserToken(HWND hPwd);
-	HANDLE CheckUserToken();
-
 	int ProcessNewConArg(bool bForceCurConsole = false);
 
-	wchar_t* CreateCommandLine(bool abForTasks = false);
 	void AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax);
 
+
+	// Hide unused (in dll's) methods
+#ifndef CONEMU_MINIMAL
+	bool CheckUserToken(HWND hPwd);
+	HANDLE CheckUserToken();
+	wchar_t* CreateCommandLine(bool abForTasks = false);
 	bool AssignFrom(const struct RConStartArgs* args);
+#endif
+
+
 
 #ifdef _DEBUG
 	static void RunArgTests();
