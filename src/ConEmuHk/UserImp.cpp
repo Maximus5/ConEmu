@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011 Maximus5
+Copyright (c) 2011-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -41,30 +41,39 @@ BOOL UserImp::loadExports(BOOL abAllowLoadLibrary)
 {
 	if (!hUser32)
 	{
+		/*
 		if (abAllowLoadLibrary)
 		{
 			hUser32 = LoadLibrary(L"user32.dll");
 			bUserLoaded = TRUE;
 		}
 		else
+		*/
 		{
 			hUser32 = GetModuleHandle(L"user32.dll");
 		}
 		
+		/*
 		if (hUser32)
 		{
 			loadExportsFrom(hUser32);
 		}
+		*/
 	}
 	
+	/*
 	if (abAllowLoadLibrary && !bUserLoaded)
 	{
 		hUser32 = LoadLibrary(L"user32.dll");
 	}
+	*/
 	
-	return (hUser32 != NULL);
+	bUserLoaded = (hUser32 != NULL);
+
+	return bUserLoaded;
 }
 
+/*
 BOOL UserImp::loadExportsFrom(HMODULE hModule)
 {
 	// bUserLoaded - то что LoadLibrary(L"user32.dll") дернули
@@ -125,16 +134,19 @@ BOOL UserImp::loadExportsFrom(HMODULE hModule)
 
 	return lbRc;
 }
+*/
 
 void UserImp::setAllowLoadLibrary()
 {
 	bAllowLoadLibrary = TRUE;
 }
 
+/*
 bool UserImp::isExportsLoaded()
 {
 	return (bUserLoaded!=0);
 }
+*/
 
 bool UserImp::isUser32(HMODULE hModule)
 {
@@ -149,7 +161,8 @@ BOOL UserImp::allowSetForegroundWindow(DWORD dwProcessId)
 		return FALSE;
 	}
 	
-	BOOL lbRc = FALSE;
+	BOOL lbRc = AllowSetForegroundWindow(dwProcessId);
+	/*
 	if (allowSetForegroundWindow_f)
 	{
 		lbRc = allowSetForegroundWindow_f(dwProcessId);
@@ -158,6 +171,7 @@ BOOL UserImp::allowSetForegroundWindow(DWORD dwProcessId)
 	{
 		_ASSERTEX(allowSetForegroundWindow_f!=NULL);
 	}
+	*/
 	return lbRc;
 }
 
@@ -169,7 +183,8 @@ BOOL UserImp::setForegroundWindow(HWND hWnd)
 		return FALSE;
 	}
 	
-	BOOL lbRc = FALSE;
+	BOOL lbRc = SetForegroundWindow(hWnd);
+	/*
 	if (setForegroundWindow_f)
 	{
 		lbRc = setForegroundWindow_f(hWnd);
@@ -178,6 +193,7 @@ BOOL UserImp::setForegroundWindow(HWND hWnd)
 	{
 		_ASSERTEX(setForegroundWindow_f!=NULL);
 	}
+	*/
 	return lbRc;
 }
 
@@ -189,7 +205,8 @@ HWND UserImp::getForegroundWindow()
 		return NULL;
 	}
 	
-	HWND hRc = NULL;
+	HWND hRc = GetForegroundWindow();
+	/*
 	if (getForegroundWindow_f)
 	{
 		hRc = getForegroundWindow_f();
@@ -198,6 +215,7 @@ HWND UserImp::getForegroundWindow()
 	{
 		_ASSERTEX(getForegroundWindow_f!=NULL);
 	}
+	*/
 	return hRc;
 }
 
@@ -209,7 +227,8 @@ DWORD UserImp::getWindowThreadProcessId(HWND hWnd, LPDWORD lpdwProcessId)
 		return 0;
 	}
 	
-	DWORD lRc = 0;
+	DWORD lRc = GetWindowThreadProcessId(hWnd, lpdwProcessId);
+	/*
 	if (getWindowThreadProcessId_f)
 	{
 		lRc = getWindowThreadProcessId_f(hWnd, lpdwProcessId);
@@ -218,6 +237,7 @@ DWORD UserImp::getWindowThreadProcessId(HWND hWnd, LPDWORD lpdwProcessId)
 	{
 		_ASSERTEX(getWindowThreadProcessId_f!=NULL);
 	}
+	*/
 	return lRc;
 }
 
@@ -229,7 +249,8 @@ BOOL UserImp::setWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx
 		return FALSE;
 	}
 	
-	BOOL lbRc = FALSE;
+	BOOL lbRc = SetWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
+	/*
 	if (setWindowPos_f)
 	{
 		lbRc = setWindowPos_f(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
@@ -238,6 +259,7 @@ BOOL UserImp::setWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx
 	{
 		_ASSERTEX(setWindowPos_f!=NULL);
 	}
+	*/
 	return lbRc;
 }
 
@@ -249,7 +271,8 @@ LONG_PTR UserImp::getWindowLongPtrW(HWND hWnd, int nIndex)
 		return 0;
 	}
 	
-	LONG_PTR lRc = 0;
+	LONG_PTR lRc = GetWindowLongPtrW(hWnd, nIndex);
+	/*
 	if (getWindowLongPtrW_f)
 	{
 		lRc = getWindowLongPtrW_f(hWnd, nIndex);
@@ -258,6 +281,7 @@ LONG_PTR UserImp::getWindowLongPtrW(HWND hWnd, int nIndex)
 	{
 		_ASSERTEX(getWindowLongPtrW_f!=NULL);
 	}
+	*/
 	return lRc;
 }
 
@@ -269,7 +293,8 @@ LONG_PTR UserImp::setWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 		return 0;
 	}
 	
-	LONG_PTR lRc = 0;
+	LONG_PTR lRc = SetWindowLongPtrW(hWnd, nIndex, dwNewLong);
+	/*
 	if (setWindowLongPtrW_f)
 	{
 		lRc = setWindowLongPtrW_f(hWnd, nIndex, dwNewLong);
@@ -278,6 +303,7 @@ LONG_PTR UserImp::setWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 	{
 		_ASSERTEX(setWindowLongPtrW_f!=NULL);
 	}
+	*/
 	return lRc;
 }
 
@@ -289,7 +315,8 @@ HWND UserImp::getParent(HWND hWnd)
 		return NULL;
 	}
 	
-	HWND hRc = NULL;
+	HWND hRc = GetParent(hWnd);
+	/*
 	if (getParent_f)
 	{
 		hRc = getParent_f(hWnd);
@@ -298,6 +325,7 @@ HWND UserImp::getParent(HWND hWnd)
 	{
 		_ASSERTEX(getParent_f!=NULL);
 	}
+	*/
 	return hRc;
 }
 
@@ -309,7 +337,8 @@ HWND UserImp::setParent(HWND hWndChild, HWND hWndNewParent)
 		return NULL;
 	}
 	
-	HWND hRc = NULL;
+	HWND hRc = SetParent(hWndChild, hWndNewParent);
+	/*
 	if (setParent_f)
 	{
 		hRc = setParent_f(hWndChild, hWndNewParent);
@@ -318,6 +347,7 @@ HWND UserImp::setParent(HWND hWndChild, HWND hWndNewParent)
 	{
 		_ASSERTEX(setParent_f!=NULL);
 	}
+	*/
 	return hRc;
 }
 
@@ -329,7 +359,8 @@ HWND UserImp::findWindowEx(HWND hwndParent, HWND hwndChildAfter, LPCTSTR lpszCla
 		return NULL;
 	}
 	
-	HWND hRc = NULL;
+	HWND hRc = FindWindowExW(hwndParent, hwndChildAfter, lpszClass, lpszWindow);
+	/*
 	if (findWindowEx_f)
 	{
 		hRc = findWindowEx_f(hwndParent, hwndChildAfter, lpszClass, lpszWindow);
@@ -338,6 +369,7 @@ HWND UserImp::findWindowEx(HWND hwndParent, HWND hwndChildAfter, LPCTSTR lpszCla
 	{
 		_ASSERTEX(findWindowEx_f!=NULL);
 	}
+	*/
 	return hRc;
 }
 
@@ -349,7 +381,8 @@ BOOL UserImp::getWindowRect(HWND hWnd, LPRECT lpRect)
 		return FALSE;
 	}
 	
-	BOOL bRc = FALSE;
+	BOOL bRc = GetWindowRect(hWnd, lpRect);
+	/*
 	if (getWindowRect_f)
 	{
 		bRc = getWindowRect_f(hWnd, lpRect);
@@ -358,6 +391,7 @@ BOOL UserImp::getWindowRect(HWND hWnd, LPRECT lpRect)
 	{
 		_ASSERTEX(getWindowRect_f!=NULL);
 	}
+	*/
 	return bRc;
 }
 
@@ -369,7 +403,8 @@ BOOL UserImp::getSystemMetrics(int nIndex)
 		return FALSE;
 	}
 	
-	int iRc = 0;
+	int iRc = GetSystemMetrics(nIndex);
+	/*
 	if (getSystemMetrics_f)
 	{
 		iRc = getSystemMetrics_f(nIndex);
@@ -378,6 +413,7 @@ BOOL UserImp::getSystemMetrics(int nIndex)
 	{
 		_ASSERTEX(getSystemMetrics_f!=NULL);
 	}
+	*/
 	return iRc;
 }
 
@@ -389,7 +425,8 @@ BOOL UserImp::systemParametersInfoW(UINT uiAction, UINT uiParam, PVOID pvParam, 
 		return FALSE;
 	}
 	
-	BOOL bRc = FALSE;
+	BOOL bRc = SystemParametersInfoW(uiAction, uiParam, pvParam, fWinIni);
+	/*
 	if (systemParametersInfoW_f)
 	{
 		bRc = systemParametersInfoW_f(uiAction, uiParam, pvParam, fWinIni);
@@ -398,6 +435,7 @@ BOOL UserImp::systemParametersInfoW(UINT uiAction, UINT uiParam, PVOID pvParam, 
 	{
 		_ASSERTEX(systemParametersInfoW_f!=NULL);
 	}
+	*/
 	return bRc;
 }
 
@@ -409,7 +447,8 @@ BOOL UserImp::setWindowTextW(HWND hWnd, LPCWSTR lpString)
 		return FALSE;
 	}
 	
-	BOOL bRc = FALSE;
+	BOOL bRc = SetWindowTextW(hWnd, lpString);
+	/*
 	if (setWindowTextW_f)
 	{
 		bRc = setWindowTextW_f(hWnd, lpString);
@@ -418,6 +457,7 @@ BOOL UserImp::setWindowTextW(HWND hWnd, LPCWSTR lpString)
 	{
 		_ASSERTEX(setWindowTextW_f!=NULL);
 	}
+	*/
 	return bRc;
 }
 
@@ -429,7 +469,8 @@ BOOL UserImp::endDialog(HWND hDlg, INT_PTR nResult)
 		return FALSE;
 	}
 	
-	BOOL bRc = FALSE;
+	BOOL bRc = EndDialog(hDlg, nResult);
+	/*
 	if (endDialog_f)
 	{
 		bRc = endDialog_f(hDlg, nResult);
@@ -438,6 +479,7 @@ BOOL UserImp::endDialog(HWND hDlg, INT_PTR nResult)
 	{
 		_ASSERTEX(endDialog_f!=NULL);
 	}
+	*/
 	return bRc;
 }
 
@@ -449,7 +491,8 @@ BOOL UserImp::postMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		return FALSE;
 	}
 	
-	BOOL lbRc = FALSE;
+	BOOL lbRc = PostMessageW(hWnd, Msg, wParam, lParam);
+	/*
 	if (postMessageW_f)
 	{
 		lbRc = postMessageW_f(hWnd, Msg, wParam, lParam);
@@ -458,6 +501,7 @@ BOOL UserImp::postMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	{
 		_ASSERTEX(postMessageW_f!=NULL);
 	}
+	*/
 	return lbRc;
 }
 
@@ -469,7 +513,8 @@ LRESULT UserImp::sendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 	}
 	
-	LRESULT lRc = 0;
+	LRESULT lRc = SendMessageW(hWnd, Msg, wParam, lParam);
+	/*
 	if (sendMessageW_f)
 	{
 		lRc = sendMessageW_f(hWnd, Msg, wParam, lParam);
@@ -478,6 +523,7 @@ LRESULT UserImp::sendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	{
 		_ASSERTEX(sendMessageW_f!=NULL);
 	}
+	*/
 	return lRc;
 }
 
@@ -489,7 +535,8 @@ INT_PTR UserImp::dialogBoxIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATE hDi
 		return 0;
 	}
 	
-	INT_PTR nRc = 0;
+	INT_PTR nRc = DialogBoxIndirectParamW(hInstance, hDialogTemplate, hWndParent, lpDialogFunc, dwInitParam);
+	/*
 	if (dialogBoxIndirectParamW_f)
 	{
 		nRc = dialogBoxIndirectParamW_f(hInstance, hDialogTemplate, hWndParent, lpDialogFunc, dwInitParam);
@@ -498,6 +545,7 @@ INT_PTR UserImp::dialogBoxIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATE hDi
 	{
 		_ASSERTEX(dialogBoxIndirectParamW_f!=NULL);
 	}
+	*/
 	return nRc;
 }
 
@@ -509,7 +557,8 @@ int UserImp::getClassNameW(HWND hWnd, LPTSTR lpClassName, int nMaxCount)
 		return 0;
 	}
 	
-	int lRc = 0;
+	int lRc = GetClassNameW(hWnd, lpClassName, nMaxCount);
+	/*
 	if (getClassNameW_f)
 	{
 		lRc = getClassNameW_f(hWnd, lpClassName, nMaxCount);
@@ -518,6 +567,7 @@ int UserImp::getClassNameW(HWND hWnd, LPTSTR lpClassName, int nMaxCount)
 	{
 		_ASSERTEX(getClassNameW_f!=NULL);
 	}
+	*/
 	return lRc;
 }
 
@@ -529,7 +579,8 @@ BOOL UserImp::getClientRect(HWND hWnd, LPRECT lpRect)
 		return 0;
 	}
 	
-	BOOL lbRc = FALSE;
+	BOOL lbRc = GetClientRect(hWnd, lpRect);
+	/*
 	if (getClientRect_f)
 	{
 		lbRc = getClientRect_f(hWnd, lpRect);
@@ -538,6 +589,7 @@ BOOL UserImp::getClientRect(HWND hWnd, LPRECT lpRect)
 	{
 		_ASSERTEX(getClientRect_f!=NULL);
 	}
+	*/
 	return lbRc;
 }
 
@@ -549,7 +601,8 @@ HMENU UserImp::getMenu(HWND hWnd)
 		return NULL;
 	}
 	
-	HMENU hRc = NULL;
+	HMENU hRc = GetMenu(hWnd);
+	/*
 	if (getMenu_f)
 	{
 		hRc = getMenu_f(hWnd);
@@ -558,6 +611,7 @@ HMENU UserImp::getMenu(HWND hWnd)
 	{
 		_ASSERTEX(getMenu_f!=NULL);
 	}
+	*/
 	return hRc;
 }
 
@@ -569,7 +623,8 @@ BOOL UserImp::attachThreadInput(DWORD idAttach, DWORD idAttachTo, BOOL fAttach)
 		return FALSE;
 	}
 	
-	BOOL lbRc = FALSE;
+	BOOL lbRc = AttachThreadInput(idAttach, idAttachTo, fAttach);
+	/*
 	if (attachThreadInput_f)
 	{
 		lbRc = attachThreadInput_f(idAttach, idAttachTo, fAttach);
@@ -578,6 +633,7 @@ BOOL UserImp::attachThreadInput(DWORD idAttach, DWORD idAttachTo, BOOL fAttach)
 	{
 		_ASSERTEX(attachThreadInput_f!=NULL);
 	}
+	*/
 	return lbRc;
 }
 
@@ -589,7 +645,8 @@ HWND UserImp::getFocus()
 		return NULL;
 	}
 	
-	HWND hRc = NULL;
+	HWND hRc = GetFocus();
+	/*
 	if (getFocus_f)
 	{
 		hRc = getFocus_f();
@@ -598,6 +655,7 @@ HWND UserImp::getFocus()
 	{
 		_ASSERTEX(getFocus_f!=NULL);
 	}
+	*/
 	return hRc;
 }
 
@@ -609,7 +667,8 @@ HWND UserImp::setFocus(HWND hWnd)
 		return NULL;
 	}
 	
-	HWND hRc = NULL;
+	HWND hRc = SetFocus(hWnd);
+	/*
 	if (setFocus_f)
 	{
 		hRc = setFocus_f(hWnd);
@@ -618,6 +677,7 @@ HWND UserImp::setFocus(HWND hWnd)
 	{
 		_ASSERTEX(setFocus_f!=NULL);
 	}
+	*/
 	return hRc;
 }
 
@@ -631,7 +691,8 @@ BOOL UserImp::isWindow(HWND hWnd)
 		return TRUE;
 	}
 	
-	BOOL lbRc = FALSE;
+	BOOL lbRc = IsWindow(hWnd);
+	/*
 	if (isWindow_f)
 	{
 		lbRc = isWindow_f(hWnd);
@@ -640,6 +701,7 @@ BOOL UserImp::isWindow(HWND hWnd)
 	{
 		_ASSERTEX(isWindow_f!=NULL);
 	}
+	*/
 	return lbRc;
 }
 
@@ -651,7 +713,8 @@ BOOL UserImp::isWindowVisible(HWND hWnd)
 		return FALSE;
 	}
 	
-	BOOL lbRc = FALSE;
+	BOOL lbRc = IsWindowVisible(hWnd);
+	/*
 	if (isWindowVisible_f)
 	{
 		lbRc = isWindowVisible_f(hWnd);
@@ -660,6 +723,7 @@ BOOL UserImp::isWindowVisible(HWND hWnd)
 	{
 		_ASSERTEX(isWindowVisible_f!=NULL);
 	}
+	*/
 	return lbRc;
 }
 
@@ -671,7 +735,8 @@ BOOL UserImp::showWindow(HWND hWnd, int nCmdShow)
 		return FALSE;
 	}
 	
-	BOOL lbRc = FALSE;
+	BOOL lbRc = ShowWindow(hWnd, nCmdShow);
+	/*
 	if (showWindow_f)
 	{
 		lbRc = showWindow_f(hWnd, nCmdShow);
@@ -680,6 +745,7 @@ BOOL UserImp::showWindow(HWND hWnd, int nCmdShow)
 	{
 		_ASSERTEX(showWindow_f!=NULL);
 	}
+	*/
 	return lbRc;
 }
 
@@ -691,7 +757,8 @@ SHORT UserImp::getKeyState(int nVirtKey)
 		return 0;
 	}
 	
-	SHORT lRc = 0;
+	SHORT lRc = GetKeyState(nVirtKey);
+	/*
 	if (getKeyState_f)
 	{
 		lRc = getKeyState_f(nVirtKey);
@@ -700,6 +767,7 @@ SHORT UserImp::getKeyState(int nVirtKey)
 	{
 		_ASSERTEX(getKeyState_f!=NULL);
 	}
+	*/
 	return lRc;
 }
 
@@ -711,7 +779,8 @@ LRESULT UserImp::callNextHookEx(HHOOK hhk, int nCode, WPARAM wParam, LPARAM lPar
 		return 0;
 	}
 
-	LRESULT lRc = FALSE;
+	LRESULT lRc = CallNextHookEx(hhk, nCode, wParam, lParam);
+	/*
 	if (callNextHookEx_f)
 	{
 		lRc = callNextHookEx_f(hhk, nCode, wParam, lParam);
@@ -720,6 +789,7 @@ LRESULT UserImp::callNextHookEx(HHOOK hhk, int nCode, WPARAM wParam, LPARAM lPar
 	{
 		_ASSERTEX(callNextHookEx_f!=NULL);
 	}
+	*/
 	return lRc;
 }
 
@@ -731,7 +801,8 @@ HHOOK UserImp::setWindowsHookExW(int idHook, HOOKPROC lpfn, HINSTANCE hMod, DWOR
 		return NULL;
 	}
 	
-	HHOOK hRc = NULL;
+	HHOOK hRc = SetWindowsHookExW(idHook, lpfn, hMod, dwThreadId);
+	/*
 	if (setWindowsHookExW_f)
 	{
 		hRc = setWindowsHookExW_f(idHook, lpfn, hMod, dwThreadId);
@@ -740,6 +811,7 @@ HHOOK UserImp::setWindowsHookExW(int idHook, HOOKPROC lpfn, HINSTANCE hMod, DWOR
 	{
 		_ASSERTEX(setWindowsHookExW_f!=NULL);
 	}
+	*/
 	return hRc;
 }
 
@@ -751,7 +823,8 @@ BOOL UserImp::unhookWindowsHookEx(HHOOK hhk)
 		return FALSE;
 	}
 
-	BOOL lbRc = FALSE;
+	BOOL lbRc = UnhookWindowsHookEx(hhk);
+	/*
 	if (unhookWindowsHookEx_f)
 	{
 		lbRc = unhookWindowsHookEx_f(hhk);
@@ -760,6 +833,7 @@ BOOL UserImp::unhookWindowsHookEx(HHOOK hhk)
 	{
 		_ASSERTEX(unhookWindowsHookEx_f!=NULL);
 	}
+	*/
 	return lbRc;
 }
 
@@ -771,7 +845,8 @@ BOOL UserImp::mapWindowPoints(HWND hWndFrom, HWND hWndTo, LPPOINT lpPoints, UINT
 		return FALSE;
 	}
 
-	BOOL lbRc = FALSE;
+	BOOL lbRc = MapWindowPoints(hWndFrom, hWndTo, lpPoints, cPoints);
+	/*
 	if (mapWindowPoints_f)
 	{
 		lbRc = mapWindowPoints_f(hWndFrom, hWndTo, lpPoints, cPoints);
@@ -780,6 +855,7 @@ BOOL UserImp::mapWindowPoints(HWND hWndFrom, HWND hWndTo, LPPOINT lpPoints, UINT
 	{
 		_ASSERTEX(mapWindowPoints_f!=NULL);
 	}
+	*/
 	return lbRc;
 }
 
@@ -791,7 +867,8 @@ UINT UserImp::registerWindowMessageW(LPCWSTR lpString)
 		return FALSE;
 	}
 
-	UINT iMsg = 0;
+	UINT iMsg = RegisterWindowMessageW(lpString);
+	/*
 	if (registerWindowMessageW_f)
 	{
 		iMsg = registerWindowMessageW_f(lpString);
@@ -800,5 +877,6 @@ UINT UserImp::registerWindowMessageW(LPCWSTR lpString)
 	{
 		_ASSERTEX(registerWindowMessageW_f!=NULL);
 	}
+	*/
 	return iMsg;
 }

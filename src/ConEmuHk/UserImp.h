@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011 Maximus5
+Copyright (c) 2011-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,14 @@ struct UserImp
 {
 public:
 	BOOL     loadExports(BOOL abAllowLoadLibrary);
+	/*
 	BOOL     loadExportsFrom(HMODULE hModule);
+	*/
 	void     setAllowLoadLibrary();
 	bool     isUser32(HMODULE hModule);
+	/*
 	bool     isExportsLoaded();
+	*/
 
 public:
 	BOOL     allowSetForegroundWindow(DWORD dwProcessId);
@@ -79,6 +83,7 @@ private:
 	BOOL     bUserLoaded;
 	BOOL     bAllowLoadLibrary;
 private:
+	/*
 	typedef BOOL     (WINAPI* allowSetForegroundWindow_t)(DWORD dwProcessId);
 	allowSetForegroundWindow_t allowSetForegroundWindow_f;
 	typedef BOOL     (WINAPI* setForegroundWindow_t)(HWND hWnd);
@@ -145,6 +150,7 @@ private:
 	mapWindowPoints_t mapWindowPoints_f;
 	typedef UINT     (WINAPI* registerWindowMessageW_t)(LPCWSTR lpString);
 	registerWindowMessageW_t registerWindowMessageW_f;
+	*/
 };
 
 extern UserImp* user;
