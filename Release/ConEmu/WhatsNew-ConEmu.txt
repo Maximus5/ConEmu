@@ -15,6 +15,18 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.02.05
+[%] Was not working: "set ConEmuFakeDT=2013-11-30".
+[*] New status line cursor info format: ‘(col,row) height [V|H]’.
+[*] Show one info col instead of three cursor columns (by default).
+[*] Issue 1431: Auto disable ‘Desktop’ mode when enabling ‘Quake’ mode.
+[%] Long console output may fails in Windows 8 (Far Manager).
+[*] Use static link of user32 in ConEmuHk.
+[%] After "cmd -new_console" from "far /w" prompt, buffer was disabled unexpectedly.
+[*] Issue 1464: Takes care of system ‘Active window tracking’ on 3rd-state of ‘Activate split on mouse over’.
+[%] Issue 1165: Scrolling console buffer with mouse wheel in Far only works when mouse is over scroll bar.
+
+
 2014.02.03
 [*] Vim fails to react for window size change in the xterm terminal mode.
 
