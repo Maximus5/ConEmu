@@ -522,7 +522,7 @@ bool InitDefaultTerm()
 		//GetModuleFileName(ghOurModule, szOurName, MAX_PATH);
 		wchar_t szVer[2] = {MVV_4a[0], 0};
 		wchar_t szAddName[32];
-		_wsprintf(szAddName, SKIPLEN(countof(szAddName))
+		msprintf(szAddName, countof(szAddName),
 			CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
 			WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szVer);
 		//LPCWSTR pszOurName = PointToName(szOurName);
@@ -635,7 +635,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	{
 		wchar_t szCpInfo[128];
 		DWORD nCP = GetConsoleOutputCP();
-		_wsprintf(szCpInfo, SKIPLEN(countof(szCpInfo)) L"Current Output CP = %u", nCP);
+		msprintf(szCpInfo, countof(szCpInfo), L"Current Output CP = %u", nCP);
 		print_timings(szCpInfo);
 	}
 	#endif
@@ -2169,14 +2169,14 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				if (gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_GUI)
 				{
 					_ASSERTEX(pCmd->NewServer.hAppWnd!=0);
-					_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /GID=%u /GHWND=%08X /GUIATTACH=%08X /PID=%u",
+					msprintf(szArgs, countof(szArgs), L" /GID=%u /GHWND=%08X /GUIATTACH=%08X /PID=%u",
 							pCmd->NewServer.nGuiPID, (DWORD)pCmd->NewServer.hGuiWnd, (DWORD)pCmd->NewServer.hAppWnd, GetCurrentProcessId());
 					gbAttachGuiClient = TRUE;
 				}
 				else
 				{
 					_ASSERTEX(pCmd->NewServer.hAppWnd==0);
-					_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /GID=%u /GHWND=%08X /ATTACH /PID=%u",
+					msprintf(szArgs, countof(szArgs), L" /GID=%u /GHWND=%08X /ATTACH /PID=%u",
 						pCmd->NewServer.nGuiPID, (DWORD)pCmd->NewServer.hGuiWnd, GetCurrentProcessId());
 				}
 

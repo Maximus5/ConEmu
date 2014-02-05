@@ -213,7 +213,7 @@ void _DEBUGSTR(LPCWSTR s)
 	MCHKHEAP; CHEKCDBGMODLABEL;
 	SYSTEMTIME st; GetLocalTime(&st);
 	wchar_t szDEBUGSTRTime[1040];
-	_wsprintf(szDEBUGSTRTime, SKIPLEN(countof(szDEBUGSTRTime)) L"%i:%02i:%02i.%03i(%s.%i.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentProcessId(), GetCurrentThreadId());
+	msprintf(szDEBUGSTRTime, countof(szDEBUGSTRTime), L"%u:%02u:%02u.%03u(%s.%u.%u) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentProcessId(), GetCurrentThreadId());
 	LPCWSTR psz = s; int nSLen = lstrlen(psz);
 	if (nSLen < 999)
 	{

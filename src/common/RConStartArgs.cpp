@@ -411,7 +411,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	if (bBufHeight)
 	{
 		if (nBufHeight)
-			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"h%u", nBufHeight);
+			msprintf(szAdd+lstrlen(szAdd), 16, L"h%u", nBufHeight);
 		else
 			wcscat_c(szAdd, L"h");
 	}
@@ -421,11 +421,11 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	{
 		wcscat_c(szAdd, L"s");
 		if (nSplitPane)
-			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"%uT", nSplitPane);
+			msprintf(szAdd+lstrlen(szAdd), 16, L"%uT", nSplitPane);
 		if (nSplitValue > 0 && nSplitValue < 1000)
 		{
 			UINT iPercent = (1000-nSplitValue)/10;
-			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"%u", max(1,min(iPercent,99)));
+			msprintf(szAdd+lstrlen(szAdd), 16, L"%u", max(1,min(iPercent,99)));
 		}
 		wcscat_c(szAdd, (eSplit == eSplitHorz) ? L"H" : L"V");
 	}
