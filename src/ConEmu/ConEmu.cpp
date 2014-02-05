@@ -108,7 +108,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define PROCESS_WAIT_START_TIME 1000
 
 #define DRAG_DELTA 5
-#define SPLITOVERCHECK_DELTA 5 // gpSet->isActivateSplitMouseOver
+#define SPLITOVERCHECK_DELTA 5 // gpSet->isActivateSplitMouseOver()
 
 #define PTDIFFTEST(C,D) PtDiffTest(C, ptCur.x, ptCur.y, D)
 //(((abs(C.x-(short)LOWORD(lParam)))<D) && ((abs(C.y-(short)HIWORD(lParam)))<D))
@@ -11556,6 +11556,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		#endif
 		n = SetKillTimer(true, TIMER_CONREDRAW_ID, CON_REDRAW_TIMOUT*2);
 		UNREFERENCED_PARAMETER(n);
+		OnActivateSplitChanged();
 
 		if (gpSet->isTaskbarShield && gpConEmu->mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
 		{
@@ -11690,6 +11691,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
 	SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
 	SetKillTimer(false, TIMER_QUAKE_AUTOHIDE_ID, 0);
+	SetKillTimer(false, TIMER_ACTIVATESPLIT_ID, 0);
 	PostQuitMessage(0);
 	return 0;
 }
@@ -14911,7 +14913,7 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 
 	if (mb_MouseCaptured
 		|| (messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN) || (messg == WM_MBUTTONDOWN)
-		/*|| ((messg == WM_MOUSEMOVE) && gpSet->isActivateSplitMouseOver)*/)
+		)
 	{
 		HWND hChild = ::ChildWindowFromPointEx(ghWnd, ptCurClient, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
 
@@ -17192,6 +17194,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		case TIMER_FAILED_TABBAR_ID:
 			mp_TabBar->OnTimer(wParam);
 			break;
+
+		case TIMER_ACTIVATESPLIT_ID:
+			OnTimer_ActivateSplit();
+			break;
 	}
 
 	mb_InTimer = FALSE;
@@ -17250,50 +17256,6 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	if (bForeground && !m_GuiInfo.bGuiActive)
 	{
 		UpdateGuiInfoMappingActive(true);
-	}
-
-	CVConGuard VConFromPoint;
-	// bForeground - does not fit our needs (it ignores GUI children)
-	// 130821 - Don't try to change focus during popup menu active!
-	if (gpSet->isActivateSplitMouseOver && (mp_Menu->GetTrackMenuPlace() == tmp_None))
-	{
-		POINT ptCur; GetCursorPos(&ptCur);
-		if (!PTDIFFTEST(mouse.ptLastSplitOverCheck, SPLITOVERCHECK_DELTA))
-		{
-			mouse.ptLastSplitOverCheck = ptCur;
-			if (!isIconic() && (hForeWnd == ghWnd || CVConGroup::isOurGuiChildWindow(hForeWnd)))
-			{
-				// Курсор над ConEmu?
-				RECT rcClient = CalcRect(CER_MAIN);
-				// Проверяем, в какой из VCon попадает курсор?
-				if (PtInRect(&rcClient, ptCur))
-				{
-					if (CVConGroup::GetVConFromPoint(ptCur, &VConFromPoint))
-					{
-						bool bActive = isActive(VConFromPoint.VCon(), false);
-						if (!bActive)
-						{
-							// Если был активирован GUI CHILD - то фокус нужно сначала поставить в ConEmu
-							if (!bForeground && pVCon && pVCon->RCon()->GuiWnd())
-							{
-								apiSetForegroundWindow(ghWnd);
-							}
-
-							if (Activate(VConFromPoint.VCon()))
-							{
-								pVCon = VConFromPoint.VCon();
-							}
-
-							// Если был активен GUI CHILD - то ConEmu может НЕ активироваться
-							if (!bForeground && !VConFromPoint.VCon()->RCon()->GuiWnd())
-							{
-								apiSetForegroundWindow(ghWnd);
-							}
-						}
-					}
-				}
-			}
-		}
 	}
 
 	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
@@ -17512,6 +17474,81 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		gpSet->UpdSet.CheckHourlyUpdate();
 	}
 
+}
+
+void CConEmuMain::OnActivateSplitChanged()
+{
+	DWORD nTimeout = 0;
+	bool bActive = gpSet->isActivateSplitMouseOver();
+	if (bActive)
+	{
+		if (!SystemParametersInfo(SPI_GETACTIVEWNDTRKTIMEOUT, 0, &nTimeout, 0))
+			nTimeout = TIMER_ACTIVATESPLIT_ELAPSE;
+		else if (nTimeout < 25)
+			nTimeout = 25;
+		else if (nTimeout > 2500)
+			nTimeout = 2500;
+	}
+	SetKillTimer(bActive, TIMER_ACTIVATESPLIT_ID, nTimeout);
+}
+
+void CConEmuMain::OnTimer_ActivateSplit()
+{
+	if (!gpSet->isActivateSplitMouseOver())
+	{
+		SetKillTimer(false, TIMER_ACTIVATESPLIT_ID, 0);
+		return;
+	}
+
+	if (mp_Menu->GetTrackMenuPlace() != tmp_None)
+	{
+		return;
+	}
+
+	HWND hForeWnd = NULL;
+	bool bForeground = isMeForeground(false, true, &hForeWnd);
+
+	CVConGuard VConFromPoint;
+	// bForeground - does not fit our needs (it ignores GUI children)
+	// 130821 - Don't try to change focus during popup menu active!
+	POINT ptCur; GetCursorPos(&ptCur);
+	if (!PTDIFFTEST(mouse.ptLastSplitOverCheck, SPLITOVERCHECK_DELTA))
+	{
+		mouse.ptLastSplitOverCheck = ptCur;
+		if (!isIconic() && (hForeWnd == ghWnd || CVConGroup::isOurGuiChildWindow(hForeWnd)))
+		{
+			// Курсор над ConEmu?
+			RECT rcClient = CalcRect(CER_MAIN);
+			// Проверяем, в какой из VCon попадает курсор?
+			if (PtInRect(&rcClient, ptCur))
+			{
+				if (CVConGroup::GetVConFromPoint(ptCur, &VConFromPoint))
+				{
+					bool bActive = isActive(VConFromPoint.VCon(), false);
+					if (!bActive)
+					{
+						CVConGuard VCon;
+						// Если был активирован GUI CHILD - то фокус нужно сначала поставить в ConEmu
+						if (!bForeground && (GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
+						{
+							apiSetForegroundWindow(ghWnd);
+						}
+
+						if (Activate(VConFromPoint.VCon()))
+						{
+							// Если был активен GUI CHILD - то ConEmu может НЕ активироваться
+							if (!bForeground && !VConFromPoint.VCon()->RCon()->GuiWnd())
+							{
+								apiSetForegroundWindow(ghWnd);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	UNREFERENCED_PARAMETER(bForeground);
 }
 
 void CConEmuMain::OnTimer_ConRedraw(CVirtualConsole* pVCon)

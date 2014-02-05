@@ -916,7 +916,7 @@ BEGIN
     CONTROL         "One tab per group",cbOneTabPerGroup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,55,82,8
     GROUPBOX        "Tabs font",IDC_STATIC,4,72,319,30
     CONTROL         "Activate split on mouse over",cbActivateSplitMouseOver,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,55,123,8
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,193,55,123,8
     LTEXT           "Far Manager templates are located on 'Far Manager' page",IDC_STATIC,196,135,120,16
 END
 

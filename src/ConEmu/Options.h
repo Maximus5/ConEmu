@@ -1050,8 +1050,9 @@ struct Settings
 		bool isTabIcons;
 		//reg->Load(L"OneTabPerGroup", isOneTabPerGroup);
 		bool isOneTabPerGroup;
-		//reg->Load(L"ActivateSplitMouseOver", isActivateSplitMouseOver);
-		bool isActivateSplitMouseOver;
+		//reg->Load(L"ActivateSplitMouseOver", bActivateSplitMouseOver);
+		BYTE bActivateSplitMouseOver;
+		bool isActivateSplitMouseOver();
 		//reg->Load(L"TabSelf", isTabSelf);
 		bool isTabSelf;
 		//reg->Load(L"TabRecent", isTabRecent);

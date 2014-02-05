@@ -842,11 +842,13 @@ class CConEmuMain :
 		UINT_PTR SetKillTimer(bool bEnable, UINT nTimerID, UINT nTimerElapse);
 		LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 		void OnTimer_Main(CVirtualConsole* pVCon);
+		void OnTimer_ActivateSplit();
 		void OnTimer_ConRedraw(CVirtualConsole* pVCon);
 		void OnTimer_FrameAppearDisappear(WPARAM wParam);
 		void OnTimer_RClickPaint();
 		void OnTimer_AdmShield();
 		void OnTimer_QuakeFocus();
+		void OnActivateSplitChanged();
 		void OnTransparent();
 		void OnTransparent(bool abFromFocus/* = false*/, bool bSetFocus/* = false*/);
 		void OnTransparentSeparate(bool bSetFocus);
