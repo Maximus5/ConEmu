@@ -3039,7 +3039,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	}
 
 	bool lbFarBufferSupported = mp_RCon->isFarBufferSupported();
-	bool lbMouseSendAllowed = mp_RCon->isSendMouseAllowed();
+	bool lbMouseSendAllowed = !gpSet->isDisableMouse && mp_RCon->isSendMouseAllowed();
 	bool lbMouseOverScroll = false;
 	// Проверять мышку имеет смысл только если она пересылается в фар, а не работает на прокрутку
 	if ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL))
