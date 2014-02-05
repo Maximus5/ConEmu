@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -164,11 +164,11 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 						nLen = 2;
 						pszSrc += 3;
 					}
-					else if (pszSrc[0] == L'0' && pszSrc[1] == L'2' && pszSrc[2] == L'u')
+					else if (pszSrc[0] == L'0' && (pszSrc[1] == L'2' || pszSrc[1] == L'3') && pszSrc[2] == L'u')
 					{
 						cBase = 0;
 						szValue[0] = 0;
-						nLen = 2;
+						nLen = ((int)pszSrc[1]) - ((int)L'0');
 						pszSrc += 3;
 					}
 					else if (pszSrc[0] == L'X' || pszSrc[0] == L'x')
