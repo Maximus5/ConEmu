@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -790,32 +790,74 @@ Cleanup:
 }
 #endif
 
+struct RegKeyExistArg
+{
+	HKEY hkParent;
+	LPCWSTR pszKey;
+};
+static bool CheckRegKeyExist(RegKeyExistArg* pKeys)
+{
+	bool bFound = false;
 
+	typedef LONG (WINAPI* RegOpenKeyExW_t)(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
+	typedef LONG (WINAPI* RegCloseKey_t)(HKEY hKey);
+
+	HMODULE hAdvApi = LoadLibrary(L"AdvApi32.dll");
+	if (hAdvApi)
+	{
+		RegOpenKeyExW_t _RegOpenKeyExW = (RegOpenKeyExW_t)GetProcAddress(hAdvApi, "RegOpenKeyExW");
+		RegCloseKey_t _RegCloseKey = (RegCloseKey_t)GetProcAddress(hAdvApi, "RegCloseKey");
+
+		while (pKeys->hkParent)
+		{
+			HKEY hk = NULL;
+			LONG lRc = _RegOpenKeyExW(pKeys->hkParent, pKeys->pszKey, 0, KEY_READ, &hk);
+			if (hk)
+				_RegCloseKey(hk);
+			if (lRc == 0)
+			{
+				bFound = true;
+				break;
+			}
+			pKeys++;
+		}
+
+        FreeLibrary(hAdvApi);
+	}
+
+	return bFound;
+}
+
+// Function is used for patching some bugs of Wine emulator
+// Used: MyGetLargestConsoleWindowSize, OnGetLargestConsoleWindowSize
 bool IsWine()
 {
 #ifdef _DEBUG
 //	return true;
 #endif
-	bool bIsWine = false;
-	HKEY hk1 = NULL, hk2 = NULL;
-	if (!RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Wine", 0, KEY_READ, &hk1)
-		&& !RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Wine", 0, KEY_READ, &hk2))
-		bIsWine = true; // В общем случае, на флажок ориентироваться нельзя. Это для информации.
-	if (hk1) RegCloseKey(hk1);
-	if (hk2) RegCloseKey(hk2);
-	return bIsWine;
+	static int ibIsWine = 0;
+	if (!ibIsWine)
+	{
+		RegKeyExistArg Keys[] = {{HKEY_CURRENT_USER, L"Software\\Wine"}, {HKEY_LOCAL_MACHINE, L"Software\\Wine"}, {NULL}};
+		ibIsWine = CheckRegKeyExist(Keys) ? 1 : -1;
+	}
+	// В общем случае, на флажок ориентироваться нельзя. Это для информации.
+	return (ibIsWine == 1);
 }
 
 bool IsWinPE()
 {
-	bool bIsWinPE = false;
-	HKEY hk1 = NULL, hk2 = NULL;
-	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\MiniNT", 0, KEY_READ, &hk1)
-		|| !RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\PE Builder", 0, KEY_READ, &hk2))
-		bIsWinPE = true; // � ����� ������, �� ������ ��������������� ������. ��� ��� ����������.
-	if (hk1) RegCloseKey(hk1);
-	if (hk2) RegCloseKey(hk2);
-	return bIsWinPE;
+	static int ibIsWinPE = 0;
+	if (!ibIsWinPE)
+	{
+		RegKeyExistArg Keys[] = {
+			{HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\MiniNT"},
+			{HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\PE Builder"},
+			{NULL}};
+		ibIsWinPE = CheckRegKeyExist(Keys) ? 1 : -1;
+	}
+	// В общем случае, на флажок ориентироваться нельзя. Это для информации.
+	return (ibIsWinPE == 1);
 }
 
 bool IsDbcs()

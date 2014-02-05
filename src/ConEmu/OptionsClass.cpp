@@ -14538,7 +14538,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 	}
 
 	// WinPE may not have "Lucida Console" preinstalled
-	if (gpSetCls->nConFontError && !asCheckName && gpStartEnv && gpStartEnv->bIsWinPE && (lstrcmpi(LF.lfFaceName, gsAltConFont) != 0))
+	if (gpSetCls->nConFontError && !asCheckName && gpStartEnv && (gpStartEnv->bIsWinPE == 1) && (lstrcmpi(LF.lfFaceName, gsAltConFont) != 0))
 	{
 		DWORD errSave = gpSetCls->nConFontError;
 		if (CheckConsoleFontFast(gsAltConFont))

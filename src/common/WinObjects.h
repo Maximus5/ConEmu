@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -125,8 +125,8 @@ struct CEStartupEnv
 	LPCWSTR pszWorkDir;
 	LPCWSTR pszPathEnv;
 	size_t  cchPathLen;
-	BOOL    bIsWine; // Информационно!
-	BOOL    bIsWinPE; // Информационно!
+	UINT    bIsWine; // Информационно!
+	UINT    bIsWinPE; // Информационно!
 	BOOL    bIsReactOS;
 	BOOL    bIsDbcs;
 	UINT    nAnsiCP, nOEMCP;
