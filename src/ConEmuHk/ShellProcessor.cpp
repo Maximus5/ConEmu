@@ -1866,6 +1866,14 @@ int CShellProc::PrepareExecuteParms(
 		lbGuiApp = true;
 	}
 
+	if (bLongConsoleOutput)
+	{
+		// MultiArc issue. При поиске нефиг включать длинный буфер. Как отсечь?
+		// Пока по запуску не из главного потока.
+		if (GetCurrentThreadId() != gnHookMainThreadId)
+			bLongConsoleOutput = FALSE;
+	}
+
 	if (aCmd == eShellExecute)
 	{
 		WARNING("Уточнить условие для флагов ShellExecute!");
@@ -1900,7 +1908,7 @@ int CShellProc::PrepareExecuteParms(
 					_ASSERTE(anShellFlags!=NULL);
 				}
 			}
-			else if (nFlags != nFlagsMask)
+			else if ((nFlags != nFlagsMask) && !bLongConsoleOutput)
 			{
 				goto wrap; // пока так - это фар выполняет консольную команду
 			}
@@ -1960,14 +1968,6 @@ int CShellProc::PrepareExecuteParms(
 	{
 		// Это может быть запускаемый документ, например .doc, или .sln файл
 		goto wrap;
-	}
-
-	if (bLongConsoleOutput)
-	{
-		// MultiArc issue. При поиске нефиг включать длинный буфер. Как отсечь?
-		// Пока по запуску не из главного потока.
-		if (GetCurrentThreadId() != gnHookMainThreadId)
-			bLongConsoleOutput = FALSE;
 	}
 
 	_ASSERTE(mn_ImageBits!=0);
