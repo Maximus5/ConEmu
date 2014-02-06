@@ -264,9 +264,12 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 				lbRc = true;
 			}
 			else if ((uMsg == WM_NCRBUTTONDOWN || uMsg == WM_NCRBUTTONUP)
-				&& (wParam == HTCLOSE || wParam == HTMINBUTTON))
+				&& (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON))
 			{
-				Icon.HideWindowToTray();
+				if (wParam == HTMINBUTTON)
+					Icon.HideWindowToTray();
+				else
+					gpConEmu->DoFullScreen();
 				lResult = 0;
 				lbRc = true;
 			}

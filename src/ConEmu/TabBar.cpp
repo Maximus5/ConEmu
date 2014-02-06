@@ -816,6 +816,13 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 					return 0;
 				}
 
+				LRESULT nTestIdxMax = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_MAXIMIZE, 0);
+				if (nIdx == nTestIdxMax)
+				{
+					gpConEmu->DoFullScreen();
+					return 0;
+				}
+
 				LRESULT nTestIdx = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_CREATE_CON, 0);
 				if (nIdx == nTestIdx)
 				{
