@@ -18062,6 +18062,27 @@ BOOL CConEmuMain::isDialogMessage(MSG &Msg)
 	return lbDlgMsg;
 }
 
+bool CConEmuMain::isSkipNcMessage(const MSG& Msg)
+{
+	// When some GuiChild applications has focus (e.g. PuTTY)
+	// Pressing Alt+F4 enexpectedly close all ConEmu's tabs instead of active (PuTTY) only
+	if ((Msg.message == WM_SYSCOMMAND) && (Msg.wParam == SC_CLOSE))
+	{
+		// Message was posted by system?
+		if (Msg.time)
+		{
+			CVConGuard VCon; HWND hGuiChild;
+			if ((GetActiveVCon(&VCon) >= 0) && ((hGuiChild = VCon->GuiWnd()) != NULL))
+			{
+				VCon->RCon()->PostConsoleMessage(hGuiChild, Msg.message, Msg.wParam, Msg.lParam);
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 // Window procedure for ghWndWork
 LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
