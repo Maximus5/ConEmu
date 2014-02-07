@@ -17478,9 +17478,10 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 
 void CConEmuMain::OnActivateSplitChanged()
 {
-	DWORD nTimeout = 0;
+	DWORD nTimeout = TIMER_ACTIVATESPLIT_ELAPSE;
 	bool bActive = gpSet->isActivateSplitMouseOver();
-	if (bActive)
+	// Try to get system default timeout only if 'system' options is used
+	if (gpSet->bActivateSplitMouseOver == 2)
 	{
 		if (!SystemParametersInfo(SPI_GETACTIVEWNDTRKTIMEOUT, 0, &nTimeout, 0))
 			nTimeout = TIMER_ACTIVATESPLIT_ELAPSE;
