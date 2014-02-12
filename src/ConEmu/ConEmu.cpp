@@ -16964,6 +16964,8 @@ void CConEmuMain::OnDesktopMode()
 {
 	if (!this) return;
 
+	Icon.SettingsChanged();
+
 	if (WindowStartMinimized || ForceMinimizeToTray)
 		return;
 
@@ -17017,7 +17019,7 @@ void CConEmuMain::OnDesktopMode()
 			// Все эти окна принадлежат одному процессу explorer.exe
 			HWND hShell = FindWindowEx(hDesktop, NULL, L"WorkerW", NULL);
 
-			while(hShell)
+			while (hShell)
 			{
 				// У него должны быть дочерние окна
 				if (IsWindowVisible(hShell) && FindWindowEx(hShell, NULL, NULL, NULL))

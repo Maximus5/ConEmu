@@ -69,7 +69,9 @@ TrayIcon::~TrayIcon()
 
 void TrayIcon::SettingsChanged()
 {
-	if (gpSet->isAlwaysShowTrayIcon)
+	bool bShowTSA = gpSet->isAlwaysShowTrayIcon();
+
+	if (bShowTSA)
 	{
 		AddTrayIcon(); // добавит или обновит tooltip
 	}
@@ -79,17 +81,10 @@ void TrayIcon::SettingsChanged()
 			RemoveTrayIcon();
 	}
 
-	//if (ghWnd)
-	//{
-	//	DWORD_PTR nStyleEx = GetWindowLongPtr(ghWnd, GWL_EXSTYLE);
-	//	DWORD_PTR nNewStyleEx = nStyleEx;
-	//	if (gpSet->isAlwaysShowTrayIcon == 2)
-	//		nNewStyleEx |= WS_EX_TOOLWINDOW;
-	//	else if (nNewStyleEx & WS_EX_TOOLWINDOW)
-	//		nNewStyleEx &= ~WS_EX_TOOLWINDOW;
-	//	if (nNewStyleEx != nStyleEx)
-	//		SetWindowLongPtr(ghWnd, GWL_EXSTYLE, nNewStyleEx);
-	//}
+	if (ghOpWnd && gpSetCls->mh_Tabs[gpSetCls->thi_Taskbar])
+	{
+		CheckDlgButton(gpSetCls->mh_Tabs[gpSetCls->thi_Taskbar], cbAlwaysShowTrayIcon, bShowTSA);
+	}
 }
 
 void TrayIcon::AddTrayIcon()
@@ -215,7 +210,7 @@ void TrayIcon::RestoreWindowFromTray(bool abIconOnly /*= false*/, bool abDontCal
 	//	EnableMenuItem(hMenu, mn_SysItemId[i], MF_BYCOMMAND | mn_SysItemState[i]);
 	//}
 
-	if (!gpSet->isAlwaysShowTrayIcon)
+	if (!gpSet->isAlwaysShowTrayIcon())
 		RemoveTrayIcon();
 	else
 		UpdateTitle();
@@ -297,7 +292,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 					gpConEmu->DoMinimizeRestore(sih);
 				}
 			}
-			else if (gpSet->isAlwaysShowTrayIcon && IsWindowVisible(ghWnd))
+			else if (gpSet->isAlwaysShowTrayIcon() && IsWindowVisible(ghWnd))
 			{
 				if (gpSet->isMinToTray())
 					Icon.HideWindowToTray();

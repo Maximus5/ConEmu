@@ -1980,18 +1980,6 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 {
-	//checkDlgButton(hWnd2, cbMinToTray, gpSet->mb_MinToTray);
-	//EnableWindow(GetDlgItem(hWnd2, cbMinToTray), !gpConEmu->ForceMinimizeToTray);
-
-	//checkDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon);
-
-	//checkRadioButton(hWnd2, rbTaskbarBtnActive, rbTaskbarBtnHidden, 
-	//	(gpSet->m_isTabsOnTaskBar == 3) ? rbTaskbarBtnHidden :
-	//	(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
-	//	(gpSet->m_isTabsOnTaskBar == 1) ? rbTaskbarBtnAll
-	//	: rbTaskbarBtnActive);
-	//checkDlgButton(hWnd2, cbTaskbarShield, gpSet->isTaskbarShield);
-
 	checkDlgButton(hWnd2, cbHideCaption, gpSet->isHideCaption);
 
 	checkDlgButton(hWnd2, cbHideCaptionAlways, gpSet->isHideCaptionAlways());
@@ -2055,7 +2043,7 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbMinToTray, gpSet->mb_MinToTray);
 	EnableWindow(GetDlgItem(hWnd2, cbMinToTray), !gpConEmu->ForceMinimizeToTray);
 
-	checkDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon);
+	checkDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon());
 
 	checkRadioButton(hWnd2, rbTaskbarBtnActive, rbTaskbarBtnHidden, 
 		(gpSet->m_isTabsOnTaskBar == 3) ? rbTaskbarBtnHidden :
@@ -5098,7 +5086,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isCloseEditViewConfirm = IsChecked(hWnd2, cbCloseEditViewConfirm);
 			break;
 		case cbAlwaysShowTrayIcon:
-			gpSet->isAlwaysShowTrayIcon = IsChecked(hWnd2, cbAlwaysShowTrayIcon);
+			gpSet->mb_AlwaysShowTrayIcon = IsChecked(hWnd2, cbAlwaysShowTrayIcon);
 			Icon.SettingsChanged();
 			break;
 		case cbQuakeStyle:

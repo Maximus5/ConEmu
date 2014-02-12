@@ -964,8 +964,9 @@ struct Settings
 		bool mb_MinToTray;
 		bool isMinToTray(bool bRawOnly = false);
 		void SetMinToTray(bool bMinToTray);
-		//reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
-		bool isAlwaysShowTrayIcon;
+		//reg->Load(L"AlwaysShowTrayIcon", mb_AlwaysShowTrayIcon);
+		bool mb_AlwaysShowTrayIcon;
+		bool isAlwaysShowTrayIcon();
 		//bool isForceMonospace, isProportional;
 		//reg->Load(L"Monospace", isMonospace)
 		BYTE isMonospace; // 0 - proportional, 1 - monospace, 2 - forcemonospace
