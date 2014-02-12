@@ -5455,15 +5455,14 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 		// clink use bunch of VirtualAlloc to try to find suitable memory location
 		bool bReport = !gbIsCmdProcess || (dwSize != 0x1000);
 		int iBtn = bReport ? GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL|MB_ICONSTOP) : IDCANCEL;
-		SetLastError(nErr);
 		if (iBtn == IDOK)
 		{
 			lpResult = F(VirtualAlloc)(NULL, dwSize, flAllocationType, flProtect);
 		}
 	#else
 		OutputDebugString(szText);
-		SetLastError(nErr);
 	#endif
+		SetLastError(nErr);
 	}
 	return lpResult;
 }
