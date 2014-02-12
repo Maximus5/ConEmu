@@ -77,9 +77,10 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 	{
 		{L"About", pAbout},
 		{L"Command line", pCmdLine},
-		{L"Macro", pGuiMacro},
-		{L"Console", pConsoleHelpFull},
+		{L"Tasks", pAboutTasks},
 		{L"-new_console", pNewConsoleHelpFull},
+		{L"Console", pConsoleHelpFull},
+		{L"Macro", pGuiMacro},
 		{L"DosBox", pDosBoxHelpFull},
 		{L"Contributors", pAboutContributors},
 		{L"License", pAboutLicense},
