@@ -26,7 +26,6 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #define HIDE_USE_EXCEPTION_INFO
 #include <windows.h>
 #include "CmdLine.h"
@@ -88,6 +87,10 @@ void CmdArg::Empty()
 	ms_LastTokenEnd = NULL;
 	ms_LastTokenSave[0] = 0;
 	#endif
+}
+bool CmdArg::IsEmpty()
+{
+	return (!ms_Arg || !*ms_Arg);
 }
 LPCWSTR CmdArg::Set(LPCWSTR asNewValue, int anChars /*= -1*/)
 {
@@ -790,7 +793,7 @@ static DWORD WINAPI OurSetConsoleCPThread(LPVOID lpParameter)
 
 // Return true if "SetEnvironmentVariable" was processed
 // if (bDoSet==false) - just skip all "set" commands
-bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet)
+bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL*/)
 {
 	LPCWSTR lsCmdLine = asCmdLine;
 	bool bEnvChanged = false;
@@ -856,6 +859,18 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet)
 						}
 					}
 				}
+			}
+		}
+		// Change title without need of cmd.exe
+		else if (lstrcmpi(lsSet, L"title") == 0)
+		{
+			if (NextArg(&lsCmdLine, lsSet) == 0)
+			{
+				bTokenOk = true;
+				_ASSERTE(lsNameVal == NULL);
+				// Ask to be changed?
+				if (rpsTitle)
+					rpsTitle->Set(lsSet);
 			}
 		}
 

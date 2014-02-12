@@ -52,6 +52,7 @@ public:
 	wchar_t* GetBuffer(INT_PTR cchMaxLen);
 	wchar_t* Detach();
 	void Empty();
+	bool IsEmpty();
 	LPCWSTR Set(LPCWSTR asNewValue, int anChars = -1);
 	void SetAt(INT_PTR nIdx, wchar_t wc);
 
@@ -73,4 +74,4 @@ bool IsFarExe(LPCWSTR asModuleName);
 BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQuot,
 			   CmdArg &szExe,
 			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit);
-bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet);
+bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle = NULL);

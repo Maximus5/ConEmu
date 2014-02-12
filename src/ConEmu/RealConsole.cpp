@@ -173,7 +173,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_TabsWasChanged = false;
 	mp_tabs = (ConEmuTab*)Alloc(mn_MaxTabs, sizeof(ConEmuTab));
 	_ASSERTE(mp_tabs!=NULL);
-	
+
 	lstrcpyn(ms_RenameFirstTab, args->pszRenameTab ? args->pszRenameTab : L"", countof(ms_RenameFirstTab));
 
 	//memset(&m_PacketQueue, 0, sizeof(m_PacketQueue));
@@ -403,7 +403,7 @@ CRealConsole::~CRealConsole()
 	
 	mn_ActiveTab = 0;
 	mn_tabsCount = 0;
-	
+
 	//
 	CloseLogFiles();
 
@@ -508,6 +508,14 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 	BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
 	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);
 
+	if (!ms_DefTitle.IsEmpty())
+	{
+		//lstrcpyn(Title, ms_DefTitle, countof(Title));
+		//wcscpy_c(TitleFull, Title);
+		//wcscpy_c(ms_PanelTitle, Title);
+		lstrcpyn(TitleCmp, ms_DefTitle, countof(TitleCmp));
+		OnTitleChanged();
+	}
 
 	if (args->bDetached)
 	{
@@ -3223,6 +3231,9 @@ BOOL CRealConsole::StartProcess()
 		RegCloseKey(hkConsole);
 		hkConsole = NULL;
 	}
+
+	if (!ms_DefTitle.IsEmpty())
+		si.lpTitle = ms_DefTitle.ms_Arg;
 
 	// Prepare cmd line
 	LPCWSTR lpszRawCmd = (m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd) ? m_Args.pszSpecialCmd : gpSetCls->GetCmd(NULL, true);
@@ -6158,7 +6169,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	}
 
 	// Parse command line
-	ProcessSetEnvCmd(lpszCmd, false);
+	ProcessSetEnvCmd(lpszCmd, false, &ms_DefTitle);
 	pszTemp = lpszCmd;
 
 	if (0 == NextArg(&pszTemp, szExe))
