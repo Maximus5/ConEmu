@@ -42,7 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"ConEmu.exe /font \"Consolas\" /size 16 /bufferheight 9999 /cmd powershell\r\n" \
 	L"ConEmu.exe /config \"Hiew\" /cmd \"C:\\Tools\\HIEW32.EXE\"\r\n" \
 	L"ConEmu.exe /cmd {Shells}\r\n" \
-	L"ConEmu.exe /tsa /min /icon \"cmd.exe\" /cmd cmd /c dir c:\\ /s\r\n" \
+	L"ConEmu.exe /nosingle /cmdlist cmd ||| cmd -new_console:sV ||| cmd -new_console:sH\r\n" \
+	L"ConEmu.exe /noupdate /tsa /min /icon \"cmd.exe\" /cmd cmd /c dir c:\\ /s\r\n" \
 	L"\r\n"\
 	L"By default (started without args) this program launches \"Far.exe\", \"tcc.exe\" or \"cmd.exe\" (which can be found).\r\n" \
 	L"\r\n" \
@@ -59,7 +60,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/Title <title> - Set fixed(!) title for ConEmu window. You may use environment variables in <title>.\r\n" \
 	L"/Multi | /NoMulti - Enable or disable multiconsole features.\r\n" \
 	L"/Single - New console will be started in new tab of existing ConEmu.\r\n" \
+	L"/NoSingle - Force new ConEmu window even if single mode is selected in the Settings.\r\n" \
 	L"/ShowHide | /ShowHideTSA - Works like \"Minimize/Restore\" global hotkey.\r\n" \
+	L"/NoCascade - Disable ‘Cascade’ option may be set in the Settings.\r\n" \
 	L"/NoDefTerm - Don't start initialization procedure for setting up ConEmu as default terminal.\r\n" \
 	L"/NoKeyHooks - Disable !SetWindowsHookEx and global hotkeys.\r\n" \
 	L"/NoRegFonts - Disable auto register fonts (font files from ConEmu folder).\r\n" \
@@ -82,8 +85,36 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/cmd <commandline>|@<taskfile>|{taskname} - Command line to start. This must be the last used switch.\r\n" \
 	L"\r\n" \
 	L"Read more online: http://code.google.com/p/conemu-maximus5/wiki/Command_Line\r\n"
-	//L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n"
-	//CECOPYRIGHTSTRING_W /*\x00A9 2009-2011 ConEmu.Maximus5@gmail.com*/ L"\r\n"
+
+#define pAboutTasks \
+	L"You may set up most used shells as ConEmu's ‘Tasks’ (‘Settings’ dialog ‘Tasks’ page).\r\n" \
+	L"\r\n" \
+	L"Each Task may contains one or more commands, " \
+	L"each command will be started in separate ConEmu tab or pane.\r\n" \
+	L"Delimit Task Commands with empty lines.\r\n" \
+	L"\r\n" \
+	L"Mark ‘Run as Admin’ tabs/consoles with '*' prefix.\r\n" \
+	L"When Task contains more then one command, you may mark active console tab/pane with '>' prefix.\r\n" \
+	L"Example:\r\n" \
+	L"   *cmd\r\n" \
+	L"   *>cmd -new_console:sV\r\n" \
+	L"   cmd -new_console:s1TH\r\n" \
+	L"\r\n" \
+	L"You may use \"-new_console\" switches to set up advanced properties of each command:\r\n" \
+	L"startup directory, palette, wallpaper, tab title, split configuration and so on.\r\n" \
+	L"More information here under the ‘-new_console’ label.\r\n" \
+	L"\r\n" \
+	L"Also, ConEmu can process some directives internally before executing your shell:\r\n" \
+	L"   \"set name=long value\"\r\n" \
+	L"   set name=value\r\n" \
+	L"   chcp <utf8|ansi|oem|#>\r\n" \
+	L"   title \"Your shell\"\r\n" \
+	L"Example:\r\n" \
+	L"   chcp 1251 & set TERM=MSYS & cmd\r\n" \
+	L"\r\n" \
+	L"Note! ‘title’ is useless with most of shells like cmd, powershell or Far! You need to change title within your shell:\r\n" \
+	L"   cmd /k title Your title\r\n" \
+	L"   powershell -noexit -command \"$host.UI.RawUI.WindowTitle='Your title'\"\r\n"
 
 #define pAboutContributors \
 	L"Thanks to all testers and reporters! You help to make the ConEmu better.\r\n" \
@@ -157,8 +188,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	pDosBoxHelp
 
 #define pGuiMacro \
-	L"Sort of simple macro language, read more online:\r\n" \
-	L"http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
+	L"Sort of simple macro language, use them with hotkeys or from your shell CLI.\r\n" \
+	L"CLI example: ConEmuC -GuiMacro Rename 0 PoSh\r\n"
+	L"Read more online: http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"Close(<What>[,<Flags>])\r\n" \
 	L"  - close current console (0), without confirmation (0,1),\r\n" \
