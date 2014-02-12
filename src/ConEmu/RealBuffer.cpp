@@ -5693,7 +5693,7 @@ bool CRealBuffer::isSelectionAllowed()
 		return false; // Mouse selection was disabled
 	LPCWSTR pszPrcName = mp_RCon->GetActiveProcessName();
 	if (!pszPrcName)
-		return false; // No process - no selection
+		return true; // Starting or terminated state? Allow selection
 	LPCWSTR pszExcl = gpSet->GetIntelligentExceptionsMSZ();
 	// Check exclusions
 	if (pszExcl)
@@ -5708,10 +5708,14 @@ bool CRealBuffer::isSelectionAllowed()
 				// If user want to send mouse to console always - set "far.exe" instead of "far"
 				if (mp_RCon->isFar())
 				{
-					if (mp_RCon->isViewer())
-						break; // Allow in viewer
-					else if (mp_RCon->isEditor() || mp_RCon->isFilePanel(true, true))
+					// Don't allow:
+					// in Far Viewer - click&drag is used for content scrolling
+					// in Far Editor - used for text selection
+					// in Far Panels - used for file drag&drop (ConEmu's or Far internal)
+					if (mp_RCon->isViewer() || mp_RCon->isEditor() || mp_RCon->isFilePanel(true, true))
+					{
 						return false;
+					}
 					else
 					{
 						DWORD nDlgFlags = m_Rgn.GetFlags();
