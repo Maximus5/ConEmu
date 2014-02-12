@@ -327,7 +327,9 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 
 		if (TaskDialogIndirect_f)
 		{
+			ghDlgPendingFrom = GetForegroundWindow();
 			HRESULT hr = TaskDialogIndirect_f(&config, &nButtonPressed, NULL, &lbCheckBox);
+			ghDlgPendingFrom = NULL;
 
 			if (hr == S_OK)
 			{

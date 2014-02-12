@@ -1945,7 +1945,7 @@ void SkipOneShowWindow()
 	return;
 }
 
-static HWND ghDlgPendingFrom = NULL;
+HWND ghDlgPendingFrom = NULL;
 void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	if (!ghDlgPendingFrom)
