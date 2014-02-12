@@ -2668,6 +2668,9 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	}
 	if (gpSet->isDefaultTerminalNoInjects)
 		*(pszOpt++) = L'i';
+	if (gpSet->isDefaultTerminalNewWindow)
+		*(pszOpt++) = L'N';
+	_ASSERTE(pszOpt < (szOpt+countof(szOpt)));
 	// Preparing arguments
 	m_GuiInfo.sDefaultTermArg[0] = 0;
 	if (pszConfig && *pszConfig)

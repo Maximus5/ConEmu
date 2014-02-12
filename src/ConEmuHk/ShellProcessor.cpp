@@ -1057,6 +1057,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	if (gbPrepareDefaultTerminal)
 	{
 		LPCWSTR pszNewCon = NULL;
+		RConStartArgs args;
+		if (m_GuiMapping.sDefaultTermArg[0])
+		{
+			args.pszSpecialCmd = lstrdup(m_GuiMapping.sDefaultTermArg);
+			args.ProcessNewConArg();
+		}
 
 		if (m_GuiMapping.sDefaultTermArg[0] == L'/')
 		{
@@ -1086,7 +1092,10 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		}
 		else
 		{
-			_wcscat_c((*psParam), nCchSize, L" /single /cmd ");
+			if (args.bForceNewWindow)
+				_wcscat_c((*psParam), nCchSize, L" /nosingle /cmd ");
+			else
+				_wcscat_c((*psParam), nCchSize, L" /single /cmd ");
 		}
 
 		if (pszNewCon && *pszNewCon)

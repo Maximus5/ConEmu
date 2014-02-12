@@ -69,6 +69,7 @@ struct RConStartArgs
 
 	BOOL     bLongOutputDisable;  // -new_console:o
 	BOOL     bInjectsDisable;     // -new_console:i
+	BOOL     bForceNewWindow;     // -new_console:N - Force new ConEmu window with Default terminal
 
  	enum {
  		eConfDefault = 0,

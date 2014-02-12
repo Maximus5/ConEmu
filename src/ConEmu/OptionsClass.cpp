@@ -3672,6 +3672,7 @@ LRESULT CSettings::OnInitDialog_DefTerm(HWND hWnd2, BOOL abInitial)
 	CheckDlgButton(hWnd2, cbDefaultTerminalTSA, bLeaveInTSA);
 	EnableWindow(GetDlgItem(hWnd2, cbDefaultTerminalTSA), bRegister);
 	CheckDlgButton(hWnd2, cbDefaultTerminalNoInjects, gpSet->isDefaultTerminalNoInjects);
+	CheckDlgButton(hWnd2, cbDefaultTerminalUseExisting, !gpSet->isDefaultTerminalNewWindow);
 	CheckRadioButton(hWnd2, rbDefaultTerminalConfAuto, rbDefaultTerminalConfNever, rbDefaultTerminalConfAuto+gpSet->nDefaultTerminalConfirmClose);
 	wchar_t* pszApps = gpSet->GetDefaultTerminalApps();
 	_ASSERTE(pszApps!=NULL);
@@ -6212,6 +6213,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbDefaultTerminalStartup:
 		case cbDefaultTerminalTSA:
 		case cbDefaultTerminalNoInjects:
+		case cbDefaultTerminalUseExisting:
 		case rbDefaultTerminalConfAuto:
 		case rbDefaultTerminalConfAlways:
 		case rbDefaultTerminalConfNever:
@@ -6255,6 +6257,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					break;
 				case cbDefaultTerminalNoInjects:
 					gpSet->isDefaultTerminalNoInjects = IsChecked(hWnd2, cbDefaultTerminalNoInjects);
+					bUpdateGuiMapping = true;
+					break;
+				case cbDefaultTerminalUseExisting:
+					gpSet->isDefaultTerminalNewWindow = !IsChecked(hWnd2, cbDefaultTerminalUseExisting);
 					bUpdateGuiMapping = true;
 					break;
 				case rbDefaultTerminalConfAuto:

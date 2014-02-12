@@ -207,6 +207,7 @@ RConStartArgs::RConStartArgs()
 	bBufHeight = FALSE; nBufHeight = 0; bLongOutputDisable = FALSE;
 	bOverwriteMode = FALSE; nPTY = 0;
 	bInjectsDisable = FALSE;
+	bForceNewWindow = FALSE;
 	eConfirmation = eConfDefault;
 	szUserPassword[0] = 0;
 	bUseEmptyPassword = FALSE;
@@ -287,6 +288,7 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 	this->eConfirmation = args->eConfirmation;
 	this->bForceUserDialog = args->bForceUserDialog;
 	this->bInjectsDisable = args->bInjectsDisable;
+	this->bForceNewWindow = args->bForceNewWindow;
 	this->bLongOutputDisable = args->bLongOutputDisable;
 	this->bOverwriteMode = args->bOverwriteMode;
 	this->nPTY = args->nPTY;
@@ -341,6 +343,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	cchMaxLen += (bOverwriteMode ? 15 : 0); // -new_console:w
 	cchMaxLen += (nPTY ? 15 : 0); // -new_console:e
 	cchMaxLen += (bInjectsDisable ? 15 : 0); // -new_console:i
+	cchMaxLen += (bForceNewWindow ? 15 : 0); // -new_console:N
 	cchMaxLen += (eConfirmation ? 15 : 0); // -new_console:c / -new_console:n
 	cchMaxLen += (bForceDosBox ? 15 : 0); // -new_console:x
 	cchMaxLen += (bForceInherit ? 15 : 0); // -new_console:I
@@ -410,6 +413,9 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 
 	if (bInjectsDisable)
 		wcscat_c(szAdd, L"i");
+
+	if (bForceNewWindow)
+		wcscat_c(szAdd, L"N");
 
 	if (bBufHeight)
 	{
@@ -778,6 +784,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					case L'i':
 						// i - don't inject ConEmuHk into the starting application
 						bInjectsDisable = TRUE;
+						break;
+
+					case L'N':
+						// N - Force new ConEmu window with Default terminal
+						bForceNewWindow = TRUE;
 						break;
 
 					case L'h':

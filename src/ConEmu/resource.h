@@ -994,6 +994,10 @@
 #define cbCTSIntelligent                2657
 #define tCTSIntelligentExceptions       2658
 #define stCTSIntelligentExceptions      2659
+#define gbDefaultTermConfClose          2660
+#define cbDefaultTerminalUseExisting    2661
+#define stDefaultTerminalSwitchInfo     2662
+#define stDefaultTerminal               2663
 
 // Next default values for new objects
 // 
@@ -1001,7 +1005,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        224
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2660
+#define _APS_NEXT_CONTROL_VALUE         2664
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
