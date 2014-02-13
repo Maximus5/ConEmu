@@ -189,7 +189,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define pGuiMacro \
 	L"Sort of simple macro language, use them with hotkeys or from your shell CLI.\r\n" \
-	L"CLI example: ConEmuC -GuiMacro Rename 0 PoSh\r\n"
+	L"CLI example: ConEmuC -GuiMacro Rename 0 PoSh\r\n" \
 	L"Read more online: http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"Close(<What>[,<Flags>])\r\n" \
