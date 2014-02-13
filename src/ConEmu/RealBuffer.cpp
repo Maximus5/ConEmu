@@ -3622,7 +3622,7 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	if (abByMouse)
 	{
 		Assert(!(gpConEmu->mouse.state & (DRAG_L_STARTED|DRAG_R_STARTED)));
-		gpConEmu->mouse.state &= ~(DRAG_L_ALLOWED | DRAG_R_STARTED);
+		gpConEmu->mouse.state &= ~(DRAG_L_STARTED|DRAG_L_ALLOWED|DRAG_R_STARTED|DRAG_R_ALLOWED);
 	}
 
 	if (!(con.m_sel.dwFlags & (CONSOLE_BLOCK_SELECTION|CONSOLE_TEXT_SELECTION)) && gpSet->isCTSFreezeBeforeSelect)
