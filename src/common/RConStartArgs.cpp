@@ -131,15 +131,15 @@ void RConStartArgs::RunArgTests()
 			_ASSERTE(nDbg==0);
 			break;
 		case 1:
-			_ASSERTE(arg.pszUserName==NULL && arg.pszDomain==NULL && arg.bForceUserDialog);
+			_ASSERTE(arg.pszUserName==NULL && arg.pszDomain==NULL && arg.ForceUserDialog==crb_On);
 			break;
 		case 2:
 			nDbg = lstrcmp(arg.pszUserName,L"Max");
-			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && arg.bForceUserDialog);
+			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && arg.ForceUserDialog==crb_On);
 			break;
 		case 3:
 			nDbg = lstrcmp(arg.pszUserName,L"Max");
-			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && !arg.bForceUserDialog);
+			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && !arg.ForceUserDialog==crb_Off);
 			break;
 		case 4:
 			nDbg = lstrcmp(arg.pszPalette, L"<Power\"Shell>");
@@ -198,19 +198,20 @@ void RConStartArgs::RunArgTests()
 // If you add some members - don't forget them in RConStartArgs::AssignFrom!
 RConStartArgs::RConStartArgs()
 {
-	bDetached = bRunAsAdministrator = bRunAsRestricted = bNewConsole = FALSE;
-	bForceUserDialog = bBackgroundTab = bForegroungTab = bNoDefaultTerm = bForceDosBox = bForceInherit = FALSE;
+	Detached = RunAsAdministrator = RunAsRestricted = NewConsole = crb_Undefined;
+	ForceUserDialog = BackgroundTab = ForegroungTab = NoDefaultTerm = ForceDosBox = ForceInherit = crb_Undefined;
 	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = pszRenameTab = NULL;
 	pszIconFile = pszPalette = pszWallpaper = NULL;
-	bBufHeight = FALSE; nBufHeight = 0; bLongOutputDisable = FALSE;
-	bOverwriteMode = FALSE; nPTY = 0;
-	bInjectsDisable = FALSE;
-	bForceNewWindow = FALSE;
+	BufHeight = crb_Undefined; nBufHeight = 0; LongOutputDisable = crb_Undefined;
+	OverwriteMode = crb_Undefined;
+	nPTY = 0;
+	InjectsDisable = crb_Undefined;
+	ForceNewWindow = crb_Undefined;
 	eConfirmation = eConfDefault;
 	szUserPassword[0] = 0;
-	bUseEmptyPassword = FALSE;
+	UseEmptyPassword = crb_Undefined;
 	//hLogonToken = NULL;
 }
 
@@ -330,24 +331,25 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	cchMaxLen += (pszIconFile   ? (lstrlen(pszIconFile) + 20) : 0); // "-new_console:C:..."
 	cchMaxLen += (pszPalette    ? (lstrlen(pszPalette)*2 + 20) : 0); // "-new_console:P:..."
 	cchMaxLen += (pszWallpaper  ? (lstrlen(pszWallpaper) + 20) : 0); // "-new_console:W:..."
-	cchMaxLen += (bRunAsAdministrator ? 15 : 0); // -new_console:a
-	cchMaxLen += (bRunAsRestricted ? 15 : 0); // -new_console:r
+	cchMaxLen += 15;
+	if (RunAsAdministrator == crb_On) cchMaxLen++; // -new_console:a
+	if (RunAsRestricted == crb_On) cchMaxLen++; // -new_console:r
 	cchMaxLen += (pszUserName ? (lstrlen(pszUserName) + 32 // "-new_console:u:<user>:<pwd>"
 						+ (pszDomain ? lstrlen(pszDomain) : 0)
 						+ (szUserPassword ? lstrlen(szUserPassword) : 0)) : 0);
-	cchMaxLen += (bForceUserDialog ? 15 : 0); // -new_console:u
-	cchMaxLen += (bBackgroundTab ? 15 : 0); // -new_console:b
-	cchMaxLen += (bForegroungTab ? 15 : 0); // -new_console:f
-	cchMaxLen += (bBufHeight ? 32 : 0); // -new_console:h<lines>
-	cchMaxLen += (bLongOutputDisable ? 15 : 0); // -new_console:o
-	cchMaxLen += (bOverwriteMode ? 15 : 0); // -new_console:w
+	if (ForceUserDialog == crb_On) cchMaxLen++; // -new_console:u
+	if (BackgroundTab == crb_On) cchMaxLen++; // -new_console:b
+	if (ForegroungTab == crb_On) cchMaxLen++; // -new_console:f
+	if (BufHeight == crb_On) cchMaxLen += 32; // -new_console:h<lines>
+	if (LongOutputDisable == crb_On) cchMaxLen++; // -new_console:o
+	if (OverwriteMode == crb_On) cchMaxLen++; // -new_console:w
 	cchMaxLen += (nPTY ? 15 : 0); // -new_console:e
-	cchMaxLen += (bInjectsDisable ? 15 : 0); // -new_console:i
-	cchMaxLen += (bForceNewWindow ? 15 : 0); // -new_console:N
-	cchMaxLen += (eConfirmation ? 15 : 0); // -new_console:c / -new_console:n
-	cchMaxLen += (bForceDosBox ? 15 : 0); // -new_console:x
-	cchMaxLen += (bForceInherit ? 15 : 0); // -new_console:I
-	cchMaxLen += (eSplit ? 64 : 0); // -new_console:s[<SplitTab>T][<Percents>](H|V)
+	if (InjectsDisable == crb_On) cchMaxLen++; // -new_console:i
+	if (ForceNewWindow == crb_On) cchMaxLen++; // -new_console:N
+	if (eConfirmation) cchMaxLen++; // -new_console:c / -new_console:n
+	if (ForceDosBox == crb_On) cchMaxLen++; // -new_console:x
+	if (ForceInherit == crb_On) cchMaxLen++; // -new_console:I
+	if (eSplit) cchMaxLen += 64; // -new_console:s[<SplitTab>T][<Percents>](H|V)
 
 	pszFull = (wchar_t*)malloc(cchMaxLen*sizeof(*pszFull));
 	if (!pszFull)

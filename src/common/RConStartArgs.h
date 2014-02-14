@@ -36,13 +36,20 @@ enum RecreateActionParm
 	cra_EditTab      = 3,
 };
 
+enum RConBoolArg
+{
+	crb_Undefined = 0,
+	crb_Off,
+	crb_On,
+};
+
 struct RConStartArgs
 {
-	BOOL     bDetached; // internal use
-	BOOL     bNewConsole; // TRUE==-new_console, FALSE==-cur_console
-	BOOL     bBackgroundTab;      // -new_console:b
-	BOOL     bForegroungTab;      // -new_console:f
-	BOOL     bNoDefaultTerm;      // -new_console:z - не использовать фичу "Default terminal". Не пишется в CreateCommandLine()
+	RConBoolArg     Detached; // internal use
+	RConBoolArg     NewConsole; // TRUE==-new_console, FALSE==-cur_console
+	RConBoolArg     BackgroundTab;      // -new_console:b
+	RConBoolArg     ForegroungTab;      // -new_console:f
+	RConBoolArg     NoDefaultTerm;      // -new_console:z - не использовать фичу "Default terminal". Не пишется в CreateCommandLine()
 
 	wchar_t* pszSpecialCmd; // собственно, command line
 	wchar_t* pszStartupDir; // "-new_console:d:<dir>"
@@ -53,23 +60,23 @@ struct RConStartArgs
 	wchar_t* pszPalette;    // "-new_console:P:<palette>"
 	wchar_t* pszWallpaper;  // "-new_console:W:<wallpaper>"
 	
-	BOOL     bRunAsAdministrator; // -new_console:a
-	BOOL     bRunAsRestricted;    // -new_console:r
+	RConBoolArg     RunAsAdministrator; // -new_console:a
+	RConBoolArg     RunAsRestricted;    // -new_console:r
 	wchar_t* pszUserName, *pszDomain, szUserPassword[MAX_PATH]; // "-new_console:u:<user>:<pwd>"
-	BOOL     bUseEmptyPassword;   // для GUI
-	BOOL     bForceUserDialog;    // -new_console:u
+	RConBoolArg     UseEmptyPassword;   // для GUI
+	RConBoolArg     ForceUserDialog;    // -new_console:u
 	//wchar_t* pszUserProfile;    // %USERPROFILE%
 
-	BOOL     bOverwriteMode;      // -new_console:w - enable "Overwrite" mode in console prompt
+	RConBoolArg     OverwriteMode;      // -new_console:w - enable "Overwrite" mode in console prompt
 
 	UINT     nPTY;                // -new_console:p[N] - 1 enable PTY, 2 - disable PTY (work as plain console), 0 - don't change
 	
-	BOOL     bBufHeight;          // -new_console:h<lines>
+	RConBoolArg     BufHeight;          // -new_console:h<lines>
 	UINT     nBufHeight;          //
 
-	BOOL     bLongOutputDisable;  // -new_console:o
-	BOOL     bInjectsDisable;     // -new_console:i
-	BOOL     bForceNewWindow;     // -new_console:N - Force new ConEmu window with Default terminal
+	RConBoolArg     LongOutputDisable;  // -new_console:o
+	RConBoolArg     InjectsDisable;     // -new_console:i
+	RConBoolArg     ForceNewWindow;     // -new_console:N - Force new ConEmu window with Default terminal
 
  	enum {
  		eConfDefault = 0,
@@ -77,9 +84,9 @@ struct RConStartArgs
  		eConfNever   = 2,         // -new_console:n
  	} eConfirmation;
 
-	BOOL     bForceDosBox;        // -new_console:x (may be useful with .bat files)
+	RConBoolArg     ForceDosBox;        // -new_console:x (may be useful with .bat files)
 
-	BOOL     bForceInherit;
+	RConBoolArg     ForceInherit;
 
 	enum SplitType {              // -new_console:s[<SplitTab>T][<Percents>](H|V)
 		eSplitNone = 0,
