@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -421,6 +421,26 @@ void PlugServerStop(bool abDelete)
 //	return 0;
 //}
 
+void cmd_FarSetChanged(FAR_REQ_FARSETCHANGED *pFarSet)
+{
+	// CMD_FARSETCHANGED, CECMD_RESOURCES
+
+	// Установить переменные окружения
+	// Плагин это получает в ответ на CECMD_RESOURCES, посланное в GUI при загрузке плагина
+	gFarMode.bFARuseASCIIsort = pFarSet->bFARuseASCIIsort;
+	gFarMode.bShellNoZoneCheck = pFarSet->bShellNoZoneCheck;
+	gFarMode.bMonitorConsoleInput = pFarSet->bMonitorConsoleInput;
+	gFarMode.bLongConsoleOutput = pFarSet->bLongConsoleOutput;
+
+	UpdateComspec(&pFarSet->ComSpec); // ComSpec, isAddConEmu2Path, ...
+
+	if (SetFarHookMode)
+	{
+		// Уведомить об изменениях библиотеку хуков (ConEmuHk.dll)
+		SetFarHookMode(&gFarMode);
+	}
+}
+
 BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
 	BOOL lbRc = FALSE;
@@ -596,27 +616,15 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		// Установить переменные окружения
 		// Плагин это получает в ответ на CECMD_RESOURCES, посланное в GUI при загрузке плагина
 		_ASSERTE(nDataSize>=8);
-		//wchar_t *pszName  = (wchar_t*)pIn->Data;
 		FAR_REQ_FARSETCHANGED *pFarSet = (FAR_REQ_FARSETCHANGED*)pIn->Data;
-		//wchar_t *pszName = pSetEnvVar->szEnv;
-		gFarMode.bFARuseASCIIsort = pFarSet->bFARuseASCIIsort;
-		gFarMode.bShellNoZoneCheck = pFarSet->bShellNoZoneCheck;
-		gFarMode.bMonitorConsoleInput = pFarSet->bMonitorConsoleInput;
-		gFarMode.bLongConsoleOutput = pFarSet->bLongConsoleOutput;
 
-		UpdateComspec(&pFarSet->ComSpec); // ComSpec, isAddConEmu2Path, ...
+		cmd_FarSetChanged(pFarSet);
 
-		if (SetFarHookMode)
+		pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+		if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 		{
-			// Уведомить об изменениях библиотеку хуков (ConEmuHk.dll)
-			SetFarHookMode(&gFarMode);
-
-			pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
-			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
-			{
-				lbRc = TRUE;
-				ppReply->dwData[0] = TRUE;
-			}
+			lbRc = TRUE;
+			ppReply->dwData[0] = TRUE;
 		}
 
 		//_ASSERTE(nDataSize<sizeof(gsMonitorEnvVar));

@@ -11032,7 +11032,7 @@ void CRealConsole::UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo)
 
 // Полать в активный фар CMD_FARSETCHANGED
 // Обновляются настройки: gpSet->isFARuseASCIIsort, gpSet->isShellNoZoneCheck;
-void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
+void CRealConsole::UpdateFarSettings(DWORD anFarPID /*= 0*/, FAR_REQ_FARSETCHANGED* rpSetEnvVar /*= NULL*/)
 {
 	if (!this) return;
 
@@ -11084,8 +11084,11 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 	//	}
 	//}
 
+	if (rpSetEnvVar)
+		memset(rpSetEnvVar, 0, sizeof(*rpSetEnvVar));
+
 	// [MAX_PATH*4+64]
-	FAR_REQ_FARSETCHANGED *pSetEnvVar = (FAR_REQ_FARSETCHANGED*)calloc(sizeof(FAR_REQ_FARSETCHANGED),1); //+2*(MAX_PATH*4+64),1);
+	FAR_REQ_FARSETCHANGED *pSetEnvVar = rpSetEnvVar ? rpSetEnvVar : (FAR_REQ_FARSETCHANGED*)calloc(sizeof(FAR_REQ_FARSETCHANGED),1); //+2*(MAX_PATH*4+64),1);
 	//wchar_t *szData = pSetEnvVar->szEnv;
 	pSetEnvVar->bFARuseASCIIsort = gpSet->isFARuseASCIIsort;
 	pSetEnvVar->bShellNoZoneCheck = gpSet->isShellNoZoneCheck;
@@ -11128,15 +11131,18 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 	//*(pszName++) = 0;
 	//*(pszName++) = 0;
 
-	// Выполнить в плагине
-	CConEmuPipe pipe(dwFarPID, 300);
-	int nSize = sizeof(FAR_REQ_FARSETCHANGED); //+2*(pszName - szData);
+	if (rpSetEnvVar == NULL)
+	{
+		// Выполнить в плагине
+		CConEmuPipe pipe(dwFarPID, 300);
+		int nSize = sizeof(FAR_REQ_FARSETCHANGED); //+2*(pszName - szData);
 
-	if (pipe.Init(L"FarSetChange", TRUE))
-		pipe.Execute(CMD_FARSETCHANGED, pSetEnvVar, nSize);
+		if (pipe.Init(L"FarSetChange", TRUE))
+			pipe.Execute(CMD_FARSETCHANGED, pSetEnvVar, nSize);
 
-	//pipe.Execute(CMD_SETENVVAR, szData, 2*(pszName - szData));
-	free(pSetEnvVar); pSetEnvVar = NULL;
+		//pipe.Execute(CMD_SETENVVAR, szData, 2*(pszName - szData));
+		SafeFree(pSetEnvVar);
+	}
 }
 
 void CRealConsole::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)

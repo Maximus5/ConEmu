@@ -1041,9 +1041,10 @@ CESERVER_REQ* CRealServer::cmdResources(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		//}
 	}
 
-	mp_RCon->UpdateFarSettings(mp_RCon->mn_FarPID_PluginDetected);
+	size_t cchRet = sizeof(CESERVER_REQ_HDR) + sizeof(FAR_REQ_FARSETCHANGED);
+	pOut = ExecuteNewCmd(pIn->hdr.nCmd, cchRet);
 
-	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
+	mp_RCon->UpdateFarSettings(mp_RCon->mn_FarPID_PluginDetected, &pOut->FarSetChanged);
 
 	return pOut;
 }

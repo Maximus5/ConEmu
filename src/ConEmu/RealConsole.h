@@ -520,7 +520,7 @@ class CRealConsole
 		short GetProgress(int* rpnState/*1-error,2-ind*/, BOOL* rpbNotFromTitle = NULL);
 		bool SetProgress(short nState, short nValue, LPCWSTR pszName = NULL);
 		void UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo);
-		void UpdateFarSettings(DWORD anFarPID=0);
+		void UpdateFarSettings(DWORD anFarPID = 0, FAR_REQ_FARSETCHANGED* rpSetEnvVar = NULL);
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 		int CoordInPanel(COORD cr, BOOL abIncludeEdges = FALSE);
 		BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE, BOOL abIncludeEdges = FALSE);

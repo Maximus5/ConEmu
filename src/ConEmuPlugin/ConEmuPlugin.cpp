@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -5233,7 +5233,14 @@ void InitResources()
 		pIn->hdr.cbSize = (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn));
 		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 
-		if (pOut) ExecuteFreeResult(pOut);
+		if (pOut)
+		{
+			if (pOut->DataSize() >= sizeof(FAR_REQ_FARSETCHANGED))
+			{
+				cmd_FarSetChanged(&pOut->FarSetChanged);
+			}
+			ExecuteFreeResult(pOut);
+		}
 
 		Free(pIn);
 		GetEnvironmentVariable(L"FARLANG", gsFarLang, 63);

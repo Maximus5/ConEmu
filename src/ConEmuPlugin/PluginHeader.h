@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -118,6 +118,8 @@ void SendTabs(int tabCount, BOOL abForceSend=FALSE);
 
 void InitHWND(/*HWND ahFarHwnd*/);
 void InitRootKey();
+
+void cmd_FarSetChanged(FAR_REQ_FARSETCHANGED *pFarSet);
 
 void WINAPI OnLibraryLoaded(HMODULE ahModule);
 
