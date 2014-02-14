@@ -259,8 +259,8 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /
 		}
 	}
 
-	this->bRunAsRestricted = args->bRunAsRestricted;
-	this->bRunAsAdministrator = args->bRunAsAdministrator;
+	this->RunAsRestricted = args->RunAsRestricted;
+	this->RunAsAdministrator = args->RunAsAdministrator;
 	if (abConcat && this->pszUserName && !args->pszUserName)
 		goto SkipUserName;
 	SafeFree(this->pszUserName); //SafeFree(this->pszUserPassword);
@@ -274,7 +274,7 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /
 		if (args->pszDomain)
 			this->pszDomain = lstrdup(args->pszDomain);
 		lstrcpy(this->szUserPassword, args->szUserPassword);
-		this->bUseEmptyPassword = args->bUseEmptyPassword;
+		this->UseEmptyPassword = args->UseEmptyPassword;
 		//this->pszUserProfile = args->pszUserProfile ? lstrdup(args->pszUserProfile) : NULL;
 		
 		//SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
@@ -288,23 +288,23 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /
 SkipUserName:
 
 	if (!abConcat)
-		this->bBackgroundTab = args->bBackgroundTab;
+		this->BackgroundTab = args->BackgroundTab;
 	if (!abConcat)
-		this->bForegroungTab = args->bForegroungTab;
-	this->bNoDefaultTerm = args->bNoDefaultTerm; _ASSERTE(args->bNoDefaultTerm == FALSE);
-	if (!abConcat || args->bBufHeight)
+		this->ForegroungTab = args->ForegroungTab;
+	this->NoDefaultTerm = args->NoDefaultTerm; _ASSERTE(args->NoDefaultTerm == crb_Undefined);
+	if (!abConcat || args->BufHeight)
 	{
-		this->bBufHeight = args->bBufHeight;
+		this->BufHeight = args->BufHeight;
 		this->nBufHeight = args->nBufHeight;
 	}
 	if (!abConcat || args->eConfirmation)
 		this->eConfirmation = args->eConfirmation;
 	if (!abConcat)
-		this->bForceUserDialog = args->bForceUserDialog;
-	this->bInjectsDisable = args->bInjectsDisable;
-	this->bForceNewWindow = args->bForceNewWindow;
-	this->bLongOutputDisable = args->bLongOutputDisable;
-	this->bOverwriteMode = args->bOverwriteMode;
+		this->ForceUserDialog = args->ForceUserDialog;
+	this->InjectsDisable = args->InjectsDisable;
+	this->ForceNewWindow = args->ForceNewWindow;
+	this->LongOutputDisable = args->LongOutputDisable;
+	this->OverwriteMode = args->OverwriteMode;
 	this->nPTY = args->nPTY;
 
 	if (!abConcat)
@@ -376,7 +376,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 
 	if (pszSpecialCmd)
 	{
-		if (bRunAsAdministrator && abForTasks)
+		if ((RunAsAdministrator == crb_On) && abForTasks)
 			_wcscpy_c(pszFull, cchMaxLen, L"*");
 		else
 			*pszFull = 0;						
@@ -396,23 +396,23 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	}
 
 	wchar_t szAdd[128] = L"";
-	if (bRunAsAdministrator)
+	if (RunAsAdministrator == crb_On)
 		wcscat_c(szAdd, L"a");
-	else if (bRunAsRestricted)
+	else if (RunAsRestricted == crb_On)
 		wcscat_c(szAdd, L"r");
 	
-	if (bForceUserDialog && !(pszUserName && *pszUserName))
+	if ((ForceUserDialog == crb_On) && !(pszUserName && *pszUserName))
 		wcscat_c(szAdd, L"u");
 
-	if (bBackgroundTab)
+	if (BackgroundTab == crb_On)
 		wcscat_c(szAdd, L"b");
-	else if (bForegroungTab)
+	else if (ForegroungTab == crb_On)
 		wcscat_c(szAdd, L"f");
 
-	if (bForceDosBox)
+	if (ForceDosBox == crb_On)
 		wcscat_c(szAdd, L"x");
 
-	if (bForceInherit)
+	if (ForceInherit == crb_On)
 		wcscat_c(szAdd, L"I");
 	
 	if (eConfirmation == eConfAlways)
@@ -420,22 +420,22 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	else if (eConfirmation == eConfNever)
 		wcscat_c(szAdd, L"n");
 
-	if (bLongOutputDisable)
+	if (LongOutputDisable == crb_On)
 		wcscat_c(szAdd, L"o");
 
-	if (bOverwriteMode)
+	if (OverwriteMode == crb_On)
 		wcscat_c(szAdd, L"w");
 
 	if (nPTY)
 		wcscat_c(szAdd, (nPTY == 1) ? L"p1" : (nPTY == 2) ? L"p2" : L"p0");
 
-	if (bInjectsDisable)
+	if (InjectsDisable == crb_On)
 		wcscat_c(szAdd, L"i");
 
-	if (bForceNewWindow)
+	if (ForceNewWindow == crb_On)
 		wcscat_c(szAdd, L"N");
 
-	if (bBufHeight)
+	if (BufHeight == crb_On)
 	{
 		if (nBufHeight)
 			msprintf(szAdd+lstrlen(szAdd), 16, L"h%u", nBufHeight);
@@ -459,7 +459,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 
 	if (szAdd[0])
 	{
-		_wcscat_c(pszFull, cchMaxLen, bNewConsole ? L" -new_console:" : L" -cur_console:");
+		_wcscat_c(pszFull, cchMaxLen, (NewConsole == crb_On) ? L" -new_console:" : L" -cur_console:");
 		_wcscat_c(pszFull, cchMaxLen, szAdd);
 	}
 
@@ -481,9 +481,9 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 			bool bQuot = wcspbrk(p->pVal, L" \"") != NULL;
 
 			if (bQuot)
-				msprintf(szCat, countof(szCat), bNewConsole ? L" \"-new_console:%c:" : L" \"-cur_console:%c:", p->cOpt);
+				msprintf(szCat, countof(szCat), (NewConsole == crb_On) ? L" \"-new_console:%c:" : L" \"-cur_console:%c:", p->cOpt);
 			else
-				msprintf(szCat, countof(szCat), bNewConsole ? L" -new_console:%c:" : L" -cur_console:%c:", p->cOpt);
+				msprintf(szCat, countof(szCat), (NewConsole == crb_On) ? L" -new_console:%c:" : L" -cur_console:%c:", p->cOpt);
 			
 			_wcscat_c(pszFull, cchMaxLen, szCat);
 
@@ -513,14 +513,14 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	// "-new_console:u:<user>:<pwd>"
 	if (pszUserName && *pszUserName)
 	{
-		_wcscat_c(pszFull, cchMaxLen, bNewConsole ? L" \"-new_console:u:" : L" \"-cur_console:u:");
+		_wcscat_c(pszFull, cchMaxLen, (NewConsole == crb_On) ? L" \"-new_console:u:" : L" \"-cur_console:u:");
 		if (pszDomain && *pszDomain)
 		{
 			_wcscat_c(pszFull, cchMaxLen, pszDomain);
 			_wcscat_c(pszFull, cchMaxLen, L"\\");
 		}
 		_wcscat_c(pszFull, cchMaxLen, pszUserName);
-		if (*szUserPassword || !bForceUserDialog)
+		if (*szUserPassword || (ForceUserDialog != crb_On))
 		{
 			_wcscat_c(pszFull, cchMaxLen, L":");
 		}
@@ -542,7 +542,7 @@ void RConStartArgs::AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax)
 	else if (eConfirmation == RConStartArgs::eConfNever)
 		_wcscat_c(rsServerCmdLine, cchMax, L" /NOCONFIRM");
 
-	if (bInjectsDisable)
+	if (InjectsDisable == crb_On)
 		_wcscat_c(rsServerCmdLine, cchMax, L" /NOINJECT");
 }
 
@@ -550,7 +550,7 @@ void RConStartArgs::AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax)
 bool RConStartArgs::CheckUserToken(HWND hPwd)
 {
 	//SafeFree(pszUserProfile);
-	bUseEmptyPassword = FALSE;
+	UseEmptyPassword = crb_Undefined;
 
 	//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
 	if (!pszUserName || !*pszUserName)
@@ -562,7 +562,11 @@ bool RConStartArgs::CheckUserToken(HWND hPwd)
 	if (!GetWindowText(hPwd, szUserPassword, MAX_PATH-1))
 	{
 		szUserPassword[0] = 0;
-		bUseEmptyPassword = TRUE;
+		UseEmptyPassword = crb_On;
+	}
+	else
+	{
+		UseEmptyPassword = crb_Off;
 	}
 
 	SafeFree(pszDomain);
@@ -589,7 +593,7 @@ HANDLE RConStartArgs::CheckUserToken()
 	// aka: code 1327 (ERROR_ACCOUNT_RESTRICTION)
 	// gpedit.msc - Конфигурация компьютера - Конфигурация Windows - Локальные политики - Параметры безопасности - Учетные записи
 	// Ограничить использование пустых паролей только для консольного входа -> "Отключить". 
-	LPWSTR pszPassword = bUseEmptyPassword ? NULL : szUserPassword;
+	LPWSTR pszPassword = (UseEmptyPassword == crb_On) ? NULL : szUserPassword;
 	DWORD nFlags = LOGON32_LOGON_INTERACTIVE;
 	BOOL lbRc = LogonUser(pszUserName, pszDomain, pszPassword, nFlags, LOGON32_PROVIDER_DEFAULT, &hLogonToken);
 
@@ -609,7 +613,7 @@ HANDLE RConStartArgs::CheckUserToken()
 //   при запуске Tasks из GUI
 int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 {
-	bNewConsole = FALSE;
+	NewConsole = crb_Undefined;
 
 	if (!pszSpecialCmd || !*pszSpecialCmd)
 	{
@@ -652,7 +656,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 		wchar_t* pszFindNew = wcsstr(pszFrom, pszNewCon);
 		wchar_t* pszFind = pszFindNew ? pszFindNew : wcsstr(pszFrom, pszCurCon);
 		if (pszFindNew)
-			bNewConsole = TRUE;
+			NewConsole = crb_On;
 		else if (!pszFind)
 			break;
 
@@ -748,36 +752,36 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 					case L'b':
 						// b - background, не активировать таб
-						bBackgroundTab = TRUE; bForegroungTab = FALSE;
+						BackgroundTab = crb_On; ForegroungTab = crb_Off;
 						break;
 					case L'f':
 						// f - foreground, активировать таб (аналог ">" в Tasks)
-						bForegroungTab = TRUE; bBackgroundTab = FALSE;
+						ForegroungTab = crb_On; BackgroundTab = crb_Off;
 						break;
 
 					case L'z':
 						// z - don't use "Default terminal" feature
-						bNoDefaultTerm = TRUE;
+						NoDefaultTerm = crb_On;
 						break;
 						
 					case L'a':
 						// a - RunAs shell verb (as admin on Vista+, login/password in WinXP-)
-						bRunAsAdministrator = TRUE;
+						RunAsAdministrator = crb_On;
 						break;
 						
 					case L'r':
 						// r - run as restricted user
-						bRunAsRestricted = TRUE;
+						RunAsRestricted = crb_On;
 						break;
 						
 					case L'o':
 						// o - disable "Long output" for next command (Far Manager)
-						bLongOutputDisable = TRUE;
+						LongOutputDisable = crb_On;
 						break;
 
 					case L'w':
 						// e - enable "Overwrite" mode in console prompt
-						bOverwriteMode = TRUE;
+						OverwriteMode = crb_On;
 						break;
 
 					case L'p':
@@ -806,18 +810,18 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 					case L'i':
 						// i - don't inject ConEmuHk into the starting application
-						bInjectsDisable = TRUE;
+						InjectsDisable = crb_On;
 						break;
 
 					case L'N':
 						// N - Force new ConEmu window with Default terminal
-						bForceNewWindow = TRUE;
+						ForceNewWindow = crb_On;
 						break;
 
 					case L'h':
 						// "h0" - отключить буфер, "h9999" - включить буфер в 9999 строк
 						{
-							bBufHeight = TRUE;
+							BufHeight = crb_On;
 							if (isDigit(*pszEnd))
 							{
 								wchar_t* pszDigits = NULL;
@@ -844,12 +848,12 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						
 					case L'x':
 						// x - Force using dosbox for .bat files
-						bForceDosBox = TRUE;
+						ForceDosBox = crb_On;
 						break;
 
 					case L'I':
 						// I - tell GuiMacro to execute new command inheriting active process state. This is only usage ATM.
-						bForceInherit = TRUE;
+						ForceInherit = crb_On;
 						break;
 						
 					// "Long" code blocks below: 'd', 'u', 's' and so on (in future)
@@ -960,7 +964,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							{
 								if (cOpt == L'u')
 								{
-									bForceUserDialog = TRUE;
+									ForceUserDialog = crb_On;
 									break;
 								}
 							}
@@ -1031,19 +1035,19 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 										if (pszPwd)
 										{
 											// Password was specified, dialog prompt is not required
-											bForceUserDialog = FALSE;
+											ForceUserDialog = crb_Off;
 											*pszPwd = 0;
 											int nPwdLen = lstrlen(pszPwd+1);
 											lstrcpyn(szUserPassword, pszPwd+1, countof(szUserPassword));
 											if (nPwdLen > 0)
 												SecureZeroMemory(pszPwd+1, nPwdLen);
-											bUseEmptyPassword = (nPwdLen == 0);
+											UseEmptyPassword = (nPwdLen == 0) ? crb_On : crb_Off;
 										}
 										else
 										{
 											// Password was NOT specified, dialog prompt IS required
-											bForceUserDialog = TRUE;
-											bUseEmptyPassword = FALSE;
+											ForceUserDialog = crb_On;
+											UseEmptyPassword = crb_Off;
 										}
 										wchar_t* pszSlash = wcschr(lpszTemp, L'\\');
 										if (pszSlash)
