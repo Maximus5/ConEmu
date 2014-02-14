@@ -3427,7 +3427,7 @@ static int ReadConsoleInfo()
 		int nWndHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
 
 		if (gpSrv->sbi.dwSize.Y > (max(gcrVisibleSize.Y,nWndHeight)+200)
-		        || (gpSrv->nRequestChangeSize && gpSrv->nReqSizeBufferHeight))
+		        || ((gpSrv->nRequestChangeSize > 0) && gpSrv->nReqSizeBufferHeight))
 		{
 			// Приложение изменило размер буфера!
 
@@ -4041,8 +4041,9 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 		// Из другой нити поступил запрос на изменение размера консоли
 		// 120507 - Если крутится альт.сервер - то игнорировать
-		if (!nAltWait && gpSrv->nRequestChangeSize)
+		if (!nAltWait && (gpSrv->nRequestChangeSize > 0))
 		{
+			InterlockedDecrement(&gpSrv->nRequestChangeSize);
 			// AVP гундит... да вроде и не нужно
 			//DWORD dwSusp = 0, dwSuspErr = 0;
 			//if (gpSrv->hRootThread) {

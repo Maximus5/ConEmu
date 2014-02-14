@@ -510,7 +510,7 @@ struct SrvInfo
 	#endif
 	BOOL bForceConsoleRead; // Пнуть нить опроса консоли RefreshThread чтобы она без задержек перечитала содержимое
 	// Смена размера консоли через RefreshThread
-	int nRequestChangeSize;
+	LONG nRequestChangeSize;
 	BOOL bRequestChangeSizeResult;
 	USHORT nReqSizeBufferHeight;
 	COORD crReqSizeNewSize;

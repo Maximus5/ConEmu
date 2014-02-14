@@ -8807,7 +8807,11 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		if (gpSrv->dwRefreshThread && dwCurThId != gpSrv->dwRefreshThread)
 		{
 			ResetEvent(gpSrv->hReqSizeChanged);
-			gpSrv->nRequestChangeSize++;
+			if (InterlockedIncrement(&gpSrv->nRequestChangeSize) <= 0)
+			{
+				_ASSERTE(FALSE && "gpSrv->nRequestChangeSize has invalid value");
+				gpSrv->nRequestChangeSize = 1;
+			}
 			//dwWait = WaitForSingleObject(gpSrv->hReqSizeChanged, REQSIZE_TIMEOUT);
 			// Ожидание, пока сработает RefreshThread
 			HANDLE hEvents[2] = {ghQuitEvent, gpSrv->hReqSizeChanged};
@@ -8820,13 +8824,17 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 
 			dwWait = WaitForMultipleObjects(2, hEvents, FALSE, nSizeTimeout);
 
-			if (gpSrv->nRequestChangeSize > 0)
+			// Generally, it must be decremented by RefreshThread...
+			if ((dwWait == WAIT_TIMEOUT) && (gpSrv->nRequestChangeSize > 0))
 			{
-				gpSrv->nRequestChangeSize --;
+				InterlockedDecrement(&gpSrv->nRequestChangeSize);
 			}
-			else
+			// Checking invalid value...
+			if (gpSrv->nRequestChangeSize < 0)
 			{
-				_ASSERTE(gpSrv->nRequestChangeSize>0);
+				// Decremented by RefreshThread and CurrentThread? Must not be...
+				_ASSERTE(gpSrv->nRequestChangeSize >= 0);
+				gpSrv->nRequestChangeSize = 0;
 			}
 
 			if (dwWait == WAIT_OBJECT_0)
