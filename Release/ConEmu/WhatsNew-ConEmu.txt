@@ -15,6 +15,33 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.02.14
+[*] RClick on Max caption button - Fullscreen switch.
+[*] Restore default split mouse hover activation timeout to 500ms.
+[%] Pressing Alt+F4 enexpectedly close all ConEmu's tabs instead of active (PuTTY) only
+[*] Support "title" directive in Tasks and cmdline.
+	Note! "title" is useless with most of shells like cmd, powershell or Far!
+	You need to change title within your shell!
+	  cmd /k title Your title
+	  powershell -noexit -command "$host.UI.RawUI.WindowTitle='Your title'"
+[*] Add ‘Tasks’ page to the ‘About’ dialog.
+[*] Fix caption icon in the close confirmation TaskDialogIndirect.
+[*] Force show icon in the TSA if taskbar icon is hidden (‘Desktop’ and ‘Quake’ modes).
+[*] Fix ‘Intelligent selection’ conditions
+    * Don't use in Far Manager viewers
+    * Use in ‘Terminated’ console state
+[*] Optional ‘Use existing ConEmu window’ with Default terminal feature.
+    * New checkbox on the ‘Default term’ Settings page
+    * Optional switch "-new_console:N"
+[*] Far. Sometimes scrolling (buffer) was not removed after command finished.
+[*] Optimize loading Far plugin (ConEmu.dll). Occasionally assertion box was appeared.
+    ---------------------------
+    ConEmuC: CheckResources started
+    ---------------------------
+    ConEmu ?????? [??].??: CreateFile(\\.\pipe\ConEmuPlugin????) failed, code=0x00000002, Timeout
+[*] Some internal changes.
+
+
 2014.02.05
 [%] Was not working: "set ConEmuFakeDT=2013-11-30".
 [*] New status line cursor info format: ‘(col,row) height [V|H]’.

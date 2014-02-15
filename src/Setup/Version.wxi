@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Include>
 
-  <?define Version = '$(var.MajorVersion).140.2070' ?>
-  <?define ConEmuVerS = '140207.$(var.Platform)' ?>
+  <?define Version = '$(var.MajorVersion).140.2140' ?>
+  <?define ConEmuVerS = '140214.$(var.Platform)' ?>
 
 </Include>
