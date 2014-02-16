@@ -3032,16 +3032,30 @@ void UnitModuleTest()
 	_ASSERTE(!IsModuleValid((HMODULE)INVALID_HANDLE_VALUE));
 
 	hMod = GetModuleHandle(L"kernel32.dll");
-	bTest = IsModuleValid(hMod);
-	_ASSERTE(bTest);
+	if (hMod)
+	{
+		bTest = IsModuleValid(hMod);
+		_ASSERTE(bTest);
+	}
+	else
+	{
+		_ASSERTE(FALSE && "GetModuleHandle(kernel32) failed");
+	}
 
 	hMod = LoadLibrary(pszConEmuCD);
-	bTest = IsModuleValid(hMod);
-	_ASSERTE(bTest);
+	if (hMod)
+	{
+		bTest = IsModuleValid(hMod);
+		_ASSERTE(bTest);
 
-	FreeLibrary(hMod);
-	bTest = IsModuleValid(hMod);
-	_ASSERTE(!bTest);
+		FreeLibrary(hMod);
+		bTest = IsModuleValid(hMod);
+		_ASSERTE(!bTest);
+	}
+	else
+	{
+		_ASSERTE(FALSE && "LoadLibrary(pszConEmuCD) failed");
+	}
 }
 
 void DebugUnitMprintfTest()
