@@ -905,9 +905,9 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 							mp_RCon->LogString(szInfo);
 						}
 
-#ifdef _DEBUG
+						#ifdef _DEBUG
 						_ASSERTE(crDebugCurSize.X == sizeX);
-#endif
+						#endif
 					}
 				}
 
@@ -1009,12 +1009,12 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				DEBUGSTRSIZE(L"SetConsoleSizeSrv.lbRc == TRUE\n");
 				con.nChange2TextWidth = sbi.dwSize.X;
 				con.nChange2TextHeight = con.bBufferHeight ? (sbi.srWindow.Bottom-sbi.srWindow.Top+1) : sbi.dwSize.Y;
-#ifdef _DEBUG
 
+				#ifdef _DEBUG
 				if (con.bBufferHeight)
 					_ASSERTE(con.nBufferHeight == sbi.dwSize.Y);
+				#endif
 
-#endif
 				con.nBufferHeight = con.bBufferHeight ? sbi.dwSize.Y : 0;
 
 				if (con.nChange2TextHeight > 200)
@@ -1069,6 +1069,7 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 			_ASSERTE(mp_RCon->hConWnd==NULL || mp_RCon->mb_InCloseConsole);
 			con.nTextWidth = sizeX;
 			con.nTextHeight = sizeY;
+			InitBuffers(sizeX*sizeY, sizeX, sizeY);
 			mp_RCon->VCon()->OnConsoleSizeReset(sizeX, sizeY);
 		}
 
@@ -1348,7 +1349,7 @@ BOOL CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 	// Тогда блокировка буфера не потребуется
 	#ifdef _DEBUG
 	DWORD dwCurThId = GetCurrentThreadId();
-	_ASSERTE((mp_RCon->mn_MonitorThreadID==0 || dwCurThId==mp_RCon->mn_MonitorThreadID || mp_RCon->mb_WaitingRootStartup)
+	_ASSERTE((mp_RCon->mn_MonitorThreadID==0 || dwCurThId==mp_RCon->mn_MonitorThreadID || mp_RCon->mb_WaitingRootStartup || mp_RCon->hConWnd==NULL)
 		|| ((m_Type==rbt_DumpScreen || m_Type==rbt_Alternative || m_Type==rbt_Selection || m_Type==rbt_Find) && gpConEmu->isMainThread()));
 	#endif
 
@@ -4606,9 +4607,9 @@ BOOL CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,
 		csData.Lock(&csCON);
 	}
 	
-	_ASSERTE(nLine>=0 && nLine<GetWindowHeight());
-	if (nLine < 0 || nLine >= con.nTextHeight)
+	if (nLine < 0 || nLine >= GetWindowHeight())
 	{
+		_ASSERTE(nLine>=0 && nLine<GetWindowHeight());
 		return FALSE;
 	}
 
@@ -4628,12 +4629,19 @@ BOOL CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,
 		if (!con.pConChar || !con.pConAttr)
 			return FALSE;
 		
+		if ((nLine >= con.nCreatedBufHeight)
+			|| (((nLine + 1) * con.nTextWidth) > con.nConBufCells))
+		{
+			_ASSERTE((nLine<con.nCreatedBufHeight) && (((nLine + 1) * con.nTextWidth) > con.nConBufCells));
+			return FALSE;
+		}
+
 		if (pChar)
-			*pChar = con.pConChar + (nLine * con.nTextWidth);
+			*pChar = con.pConChar + (nLine * con.nCreatedBufWidth);
 		//if (pAttr)
 		//	*pAttr = con.pConAttr + (nLine * con.nTextWidth);
 		if (pLen)
-			*pLen = con.nTextWidth;
+			*pLen = con.nCreatedBufWidth;
 	}
 
 	return TRUE;
@@ -4822,7 +4830,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 			TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
 			//_ASSERTE(*con.pConChar!=ucBoxDblVert);
-			nYMax = min(nHeight,con.nTextHeight);
+			nYMax = min(nHeight,con.nCreatedBufHeight);
 
 			wchar_t  *pszSrc = con.pConChar;
 			WORD     *pnSrc = con.pConAttr;
@@ -4831,7 +4839,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			// не должны меняться во время выполнения этой функции
 			const wchar_t* const pszSrcStart = con.pConChar;
 			WORD* const pnSrcStart = con.pConAttr;
-			size_t nSrcCells = (con.nTextWidth * con.nTextHeight);
+			size_t nSrcCells = (con.nCreatedBufWidth * con.nCreatedBufHeight);
 
 			Assert(pszSrcStart==pszSrc && pnSrcStart==pnSrc);
 
@@ -4873,8 +4881,13 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 						_ASSERTE(nShiftRows>=0);
 						if (nShiftRows > 0)
 						{
-							_ASSERTE(con.nTextWidth == (con.m_sbi.srWindow.Right - con.m_sbi.srWindow.Left + 1));
-							pcolSrc -= nShiftRows*con.nTextWidth;
+							#ifdef _DEBUG
+							if (con.nCreatedBufWidth != (con.m_sbi.srWindow.Right - con.m_sbi.srWindow.Left + 1))
+							{
+								_ASSERTE(con.nCreatedBufWidth == (con.m_sbi.srWindow.Right - con.m_sbi.srWindow.Left + 1));
+							}
+							#endif
+							pcolSrc -= nShiftRows*con.nCreatedBufWidth;
 							bUseColorData = FALSE;
 							bStartUseColorData = TRUE;
 						}
@@ -4883,18 +4896,22 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			}
 
 			DWORD cbDstLineSize = nWidth * 2;
-			DWORD cnSrcLineLen = con.nTextWidth;
+			DWORD cnSrcLineLen = con.nCreatedBufWidth;
 			DWORD cbSrcLineSize = cnSrcLineLen * 2;
 
 			#ifdef _DEBUG
 			if (con.nTextWidth != con.m_sbi.dwSize.X)
 			{
-				_ASSERTE(con.nTextWidth == con.m_sbi.dwSize.X);
+				_ASSERTE(con.nTextWidth == con.m_sbi.dwSize.X || con.nCreatedBufWidth == con.m_sbi.dwSize.X);
+			}
+			if (con.nCreatedBufWidth != con.m_sbi.dwSize.X)
+			{
+				_ASSERTE(con.nCreatedBufWidth == con.m_sbi.dwSize.X);
 			}
 			#endif
 
 			DWORD cbLineSize = min(cbDstLineSize,cbSrcLineSize);
-			int nCharsLeft = max(0, (nWidth-con.nTextWidth));
+			int nCharsLeft = max(0, (nWidth-con.nCreatedBufWidth));
 			//int nY, nX;
 			//120331 - Нехорошо заменять на "черный" с самого начала
 			BYTE attrBackLast = 0;
@@ -5065,8 +5082,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				}
 
 				// Next line
-				pszDst += nWidth; pszSrc += cnSrcLineLen;
-				pcaDst += nWidth; //pnSrc += con.nTextWidth;
+				pszDst += nWidth;
+				pcaDst += nWidth;
+				pszSrc += cnSrcLineLen;
 			}
 
 			#ifndef __GNUC__
