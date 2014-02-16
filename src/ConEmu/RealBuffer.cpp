@@ -1375,7 +1375,8 @@ BOOL CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 			_ASSERTE(anCellCount >= (DWORD)(nNewWidth * nNewHeight));
 			nCellCount = (nNewWidth * nNewHeight);
 		}
-		else if (con.nTextWidth == nNewWidth && con.nTextHeight == nNewHeight)
+		else if ((con.nCreatedBufWidth == nNewWidth && con.nCreatedBufHeight == nNewHeight)
+			&& (con.nTextWidth == nNewWidth && con.nTextHeight == nNewHeight))
 		{
 			// Не будем зря передергивать буферы и прочее, т.к. размер не менялся
 			if (con.pConChar!=NULL && con.pConAttr!=NULL && con.pDataCmp!=NULL)
@@ -1428,8 +1429,6 @@ BOOL CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 		if (con.pConChar && con.pConAttr && con.pDataCmp)
 		{
 			con.nConBufCells = cchNewCharMaxPlus;
-			con.nCreatedBufWidth = nNewWidth;
-			con.nCreatedBufHeight = nNewHeight;
 
 			HEAPVAL;
 			wmemset((wchar_t*)con.pConAttr, nDefTextAttr, cchNewCharMaxPlus);
@@ -1478,6 +1477,12 @@ BOOL CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 
 wrap:
 	HEAPVAL;
+
+	if (lbRc && ((size_t)(nNewWidth * nNewHeight) <= con.nConBufCells))
+	{
+		con.nCreatedBufWidth = nNewWidth;
+		con.nCreatedBufHeight = nNewHeight;
+	}
 
 	con.nTextWidth = nNewWidth;
 	con.nTextHeight = nNewHeight;
@@ -4630,7 +4635,7 @@ BOOL CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,
 			return FALSE;
 		
 		if ((nLine >= con.nCreatedBufHeight)
-			|| (((nLine + 1) * con.nTextWidth) > con.nConBufCells))
+			|| ((size_t)((nLine + 1) * con.nTextWidth) > con.nConBufCells))
 		{
 			_ASSERTE((nLine<con.nCreatedBufHeight) && (((nLine + 1) * con.nTextWidth) > con.nConBufCells));
 			return FALSE;
