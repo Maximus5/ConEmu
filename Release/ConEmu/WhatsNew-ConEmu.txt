@@ -15,6 +15,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2014.02.16
+[%] Fix crash after resizing ConEmu window in some cases.
+
+
 2014.02.14
 [*] RClick on Max caption button - Fullscreen switch.
 [*] Restore default split mouse hover activation timeout to 500ms.
