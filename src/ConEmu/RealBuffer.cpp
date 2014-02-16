@@ -80,7 +80,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define Alloc calloc
 
 #ifdef _DEBUG
-#define HEAPVAL //MCHKHEAP
+#define HEAPVAL MCHKHEAP
 #else
 #define HEAPVAL
 #endif
@@ -344,7 +344,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	//dump.NeedApply = TRUE;
 	
 	// Создание буферов
-	if (!InitBuffers(0))
+	if (!InitBuffers())
 	{
 		_ASSERTE(FALSE);
 		goto wrap;
@@ -458,7 +458,7 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	//dump.NeedApply = TRUE;
 	
 	// Создание буферов
-	if (!InitBuffers(0))
+	if (!InitBuffers())
 	{
 		_ASSERTE(FALSE);
 		goto wrap;
@@ -1331,55 +1331,69 @@ BOOL CRealBuffer::PreInit()
 	con.m_sbi.dwMaximumWindowSize = con.m_sbi.dwSize;
 	con.m_ci.dwSize = 15; con.m_ci.bVisible = TRUE;
 
-	if (!InitBuffers(0))
+	if (!InitBuffers())
 		return FALSE;
 
 	return TRUE;
 }
 
-BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
+BOOL CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 {
+	BOOL lbRc = FALSE;
+	int nNewWidth = 0, nNewHeight = 0;
+	DWORD nCellCount = 0;
+	BYTE nDefTextAttr;
+
 	// Эта функция должна вызываться только в MonitorThread.
 	// Тогда блокировка буфера не потребуется
-	
 	#ifdef _DEBUG
 	DWORD dwCurThId = GetCurrentThreadId();
 	_ASSERTE((mp_RCon->mn_MonitorThreadID==0 || dwCurThId==mp_RCon->mn_MonitorThreadID || mp_RCon->mb_WaitingRootStartup)
 		|| ((m_Type==rbt_DumpScreen || m_Type==rbt_Alternative || m_Type==rbt_Selection || m_Type==rbt_Find) && gpConEmu->isMainThread()));
 	#endif
 
-	BOOL lbRc = FALSE;
-	int nNewWidth = 0, nNewHeight = 0;
-	DWORD nScroll = 0;
 	HEAPVAL;
 
-	if (!GetConWindowSize(con.m_sbi, &nNewWidth, &nNewHeight, &nScroll))
-		return FALSE;
-
-	if (OneBufferSize)
+	if (anWidth > 0 && anHeight > 0)
 	{
-		if ((nNewWidth * nNewHeight * sizeof(*con.pConChar)) != OneBufferSize)
+		nNewWidth = anWidth; nNewHeight = anHeight;
+	}
+	else
+	{
+		if (!GetConWindowSize(con.m_sbi, &nNewWidth, &nNewHeight, NULL))
+			return FALSE;
+	}
+
+	// Функция вызывается с (anCellCount!=0) ТОЛЬКО из CRealBuffer::ApplyConsoleInfo()
+	if (anCellCount)
+	{
+		nCellCount = anCellCount;
+
+		if (anCellCount < (DWORD)(nNewWidth * nNewHeight))
 		{
-			// Это может случиться во время пересоздания консоли (когда фар падал)
-			//// Это может случиться во время ресайза
-			//nNewWidth = nNewWidth;
-			_ASSERTE((nNewWidth * nNewHeight * sizeof(*con.pConChar)) == OneBufferSize);
+			_ASSERTE(anCellCount >= (DWORD)(nNewWidth * nNewHeight));
+			nCellCount = (nNewWidth * nNewHeight);
 		}
 		else if (con.nTextWidth == nNewWidth && con.nTextHeight == nNewHeight)
 		{
-			// Не будем зря передергивать буферы и прочее
+			// Не будем зря передергивать буферы и прочее, т.к. размер не менялся
 			if (con.pConChar!=NULL && con.pConAttr!=NULL && con.pDataCmp!=NULL)
 			{
-				return TRUE;
+				lbRc = TRUE;
+				goto wrap;
 			}
 		}
-
-		//if ((nNewWidth * nNewHeight * sizeof(*con.pConChar)) != OneBufferSize)
-		//    return FALSE;
+	}
+	else
+	{
+		nCellCount = nNewWidth * nNewHeight;
 	}
 
+	// Evaluate default back/text color (indexes)
+	nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
+
 	// Если требуется увеличить или создать (первично) буфера
-	if (!con.pConChar || (con.nTextWidth*con.nTextHeight) < (nNewWidth*nNewHeight))
+	if (!con.pConChar || (con.nConBufCells < nCellCount))
 	{
 		// Exclusive(!) Lock
 		MSectionLock sc; sc.Lock(&csCON, TRUE);
@@ -1388,6 +1402,9 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 		con.LastStartInitBuffersTick = GetTickCount();
 
 		Assert(con.bInGetConsoleData==FALSE);
+
+		// Сначала - сброс
+		con.nConBufCells = 0;
 
 		if (con.pConChar)
 			{ Free(con.pConChar); con.pConChar = NULL; }
@@ -1398,41 +1415,57 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 		if (con.pDataCmp)
 			{ Free(con.pDataCmp); con.pDataCmp = NULL; }
 
-		//if (con.pCmp)
-		//	{ Free(con.pCmp); con.pCmp = NULL; }
 		HEAPVAL;
-		int cchCharMax = nNewWidth * nNewHeight * 2;
-		con.pConChar = (TCHAR*)Alloc(cchCharMax, sizeof(*con.pConChar));
-		con.pConAttr = (WORD*)Alloc(cchCharMax, sizeof(*con.pConAttr));
-		con.pDataCmp = (CHAR_INFO*)Alloc((nNewWidth * nNewHeight)*sizeof(CHAR_INFO),1);
-		//con.pCmp = (CESERVER_REQ_CONINFO_DATA*)Alloc((nNewWidth * nNewHeight)*sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA),1);
+		// Выделяем памяти чуть больше, чтобы не вызывать лишние Realloc при небольших изменениях размера консоли
+		size_t cchNewCharMaxPlus = nCellCount * 3 / 2;
+		_ASSERTE(cchNewCharMaxPlus > (size_t)(nNewWidth * nNewHeight));
 
-		BYTE nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
-		wmemset((wchar_t*)con.pConAttr, nDefTextAttr, cchCharMax);
+		con.pConChar = (TCHAR*)Alloc(cchNewCharMaxPlus, sizeof(*con.pConChar));
+		con.pConAttr = (WORD*)Alloc(cchNewCharMaxPlus, sizeof(*con.pConAttr));
+		con.pDataCmp = (CHAR_INFO*)Alloc(cchNewCharMaxPlus, sizeof(CHAR_INFO));
+
+		if (con.pConChar && con.pConAttr && con.pDataCmp)
+		{
+			con.nConBufCells = cchNewCharMaxPlus;
+			con.nCreatedBufWidth = nNewWidth;
+			con.nCreatedBufHeight = nNewHeight;
+
+			HEAPVAL;
+			wmemset((wchar_t*)con.pConAttr, nDefTextAttr, cchNewCharMaxPlus);
+
+			HEAPVAL;
+			lbRc = TRUE;
+		}
+		else
+		{
+			_ASSERTE(con.pConChar!=NULL);
+			_ASSERTE(con.pConAttr!=NULL);
+			_ASSERTE(con.pDataCmp!=NULL);
+		}
 
 		con.LastEndInitBuffersTick = GetTickCount();
 
 		Assert(con.bInGetConsoleData==FALSE);
 
 		sc.Unlock();
-		_ASSERTE(con.pConChar!=NULL);
-		_ASSERTE(con.pConAttr!=NULL);
-		_ASSERTE(con.pDataCmp!=NULL);
-		//_ASSERTE(con.pCmp!=NULL);
 		HEAPVAL
-		lbRc = con.pConChar!=NULL && con.pConAttr!=NULL && con.pDataCmp!=NULL;
 	}
 	else if (con.nTextWidth!=nNewWidth || con.nTextHeight!=nNewHeight)
 	{
 		HEAPVAL
 		MSectionLock sc; sc.Lock(&csCON);
-		int cchCharMax = nNewWidth * nNewHeight * 2;
-		memset(con.pConChar, 0, cchCharMax * sizeof(*con.pConChar));
-		//memset(con.pConAttr, 0, cchCharMax * sizeof(*con.pConAttr));
-		BYTE nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
-		wmemset((wchar_t*)con.pConAttr, nDefTextAttr, cchCharMax);
-		memset(con.pDataCmp, 0, (nNewWidth * nNewHeight) * sizeof(CHAR_INFO));
-		//memset(con.pCmp->Buf, 0, (nNewWidth * nNewHeight) * sizeof(CHAR_INFO));
+
+		size_t nFillCount = anCellCount ? min(anCellCount,con.nConBufCells) : con.nConBufCells;
+
+		if (nFillCount && con.pConChar && con.pConAttr && con.pDataCmp)
+		{
+			memset(con.pConChar, 0, nFillCount * sizeof(*con.pConChar));
+
+			wmemset((wchar_t*)con.pConAttr, nDefTextAttr, nFillCount);
+
+			memset(con.pDataCmp, 0, nFillCount * sizeof(CHAR_INFO));
+		}
+
 		sc.Unlock();
 		HEAPVAL
 		lbRc = TRUE;
@@ -1442,25 +1475,15 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 		lbRc = TRUE;
 	}
 
-	HEAPVAL
-#ifdef _DEBUG
+wrap:
+	HEAPVAL;
 
-	if (nNewHeight == 158)
-		nNewHeight = 158;
-
-#endif
 	con.nTextWidth = nNewWidth;
 	con.nTextHeight = nNewHeight;
 	// чтобы передернулись положения панелей и прочие флаги
 	if (this == mp_RCon->mp_ABuf)
 		mp_RCon->mb_DataChanged = TRUE;
-	//else
-	//{
-	//	// Чтобы не забыть, что после переключения буфера надо флажок выставить
-	//	_ASSERTE(this == mp_RCon->mp_ABuf);
-	//}
 
-	//InitDC(false,true);
 	return lbRc;
 }
 
@@ -1470,10 +1493,8 @@ void CRealBuffer::PreFillBuffers()
 	{
 		MSectionLock sc; sc.Lock(&csCON, TRUE);
 
-		size_t cchCharMax = (con.nTextWidth*con.nTextHeight) * 2;
-
 		BYTE nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
-		wmemset((wchar_t*)con.pConAttr, nDefTextAttr, cchCharMax);
+		wmemset((wchar_t*)con.pConAttr, nDefTextAttr, con.nConBufCells);
 
 		sc.Unlock();
 	}
@@ -1915,37 +1936,15 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	if (m_Type != rbt_Primary)
 	{
 		_ASSERTE(m_Type == rbt_Primary);
-		//if (dump.NeedApply)
-		//{
-		//	dump.NeedApply = FALSE;
-
-		//	// Создание буферов
-		//	if (!InitBuffers(0))
-		//	{
-		//		_ASSERTE(FALSE);
-		//	}
-		//	else
-		//	// И копирование
-		//	{
-		//		wchar_t*  pszSrc = dump.pszBlock1;
-		//		CharAttr* pcaSrc = dump.pcaBlock1;
-		//		wchar_t*  pszDst = con.pConChar;
-		//		TODO("Хорошо бы весь расширенный буфер тут хранить, а не только CHAR_ATTR");
-		//		WORD*     pnaDst = con.pConAttr;
-		//		
-		//		DWORD dwConDataBufSize = dump.crSize.X * dump.crSize.Y;
-		//		wmemmove(pszDst, pszSrc, dwConDataBufSize);
-
-		//		// Расфуговка буфера CharAttr на консольные атрибуты
-		//		for (DWORD n = 0; n < dwConDataBufSize; n++, pcaSrc++, pnaDst++)
-		//		{
-		//			*pnaDst = (pcaSrc->nForeIdx & 0xF0) | ((pcaSrc->nBackIdx & 0xF0) << 4);
-		//		}
-		//	}
-
-		//	return TRUE;
-		//}
 		return FALSE; // Изменений нет
+	}
+
+	DWORD nCharCmp = min(CharCount, con.nConBufCells);
+
+	if (!nCharCmp || !con.pDataCmp)
+	{
+		Assert(nCharCmp && con.pDataCmp);
+		return FALSE;
 	}
 
 	HEAPVAL;
@@ -1962,10 +1961,11 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 
 	_ASSERTE(sizeof(*con.pDataCmp) == sizeof(*pData));
 
-	lbScreenChanged = (memcmp(con.pDataCmp, pData, CharCount*sizeof(*pData)) != 0);
+	lbScreenChanged = (memcmp(con.pDataCmp, pData, nCharCmp*sizeof(*pData)) != 0);
 
 	if (lbScreenChanged)
 	{
+		// Extended logging?
 		if (IFLOGCONSOLECHANGE)
 		{
 			char sInfo[128];
@@ -1975,7 +1975,7 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 			const CHAR_INFO* lp2 = pData;
 			INT_PTR idx = -1;
 
-			for (DWORD n = 0; n < CharCount; n++, lp1++, lp2++)
+			for (DWORD n = 0; n < nCharCmp; n++, lp1++, lp2++)
 			{
 				if (memcmp(lp1, lp2, sizeof(*lp2)) != 0)
 				{
@@ -1997,15 +1997,15 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 			LOGCONSOLECHANGE(sInfo);
 		}
 
-		//con.pCopy->crBufSize = con.pCmp->crBufSize;
-		//memmove(con.pCopy->Buf, con.pCmp->Buf, CharCount*sizeof(CHAR_INFO));
-		memmove(con.pDataCmp, pData, CharCount*sizeof(CHAR_INFO));
+
+		memmove(con.pDataCmp, pData, nCharCmp*sizeof(CHAR_INFO));
 		HEAPVAL;
+
 		CHAR_INFO* lpCur = con.pDataCmp;
 		wchar_t ch;
 
 		// Расфуговка буфера CHAR_INFO на текст и атрибуты
-		for (DWORD n = 0; n < CharCount; n++, lpCur++)
+		for (DWORD n = 0; n < nCharCmp; n++, lpCur++)
 		{
 			TODO("OPTIMIZE: *(lpAttr++) = lpCur->Attributes;");
 			*(lpAttr++) = lpCur->Attributes;
@@ -2084,8 +2084,9 @@ wrap:
 
 BOOL CRealBuffer::ApplyConsoleInfo()
 {
-	BOOL bBufRecreated = FALSE;
-	BOOL lbChanged = FALSE;
+	bool bBufRecreate = false;
+	bool bNeedLoadData = false;
+	bool lbChanged = false;
 	
 	#ifdef _DEBUG
 	if (mp_RCon->mb_DebugLocked)
@@ -2178,7 +2179,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		{
 			//120325 - нет смысла перерисовывать консоль, если данные в ней не менялись.
 			//  это приводит 1) к лишнему мельканию; 2) глюкам отрисовки в запущенных консольных приложениях
-			//lbChanged = TRUE; // если сменился статус (Far/не Far) - перерисовать на всякий случай
+			//lbChanged = true; // если сменился статус (Far/не Far) - перерисовать на всякий случай
 		}
 		// Теперь нужно открыть секцию - начинаем изменение переменных класса
 		MSectionLock sc;
@@ -2192,7 +2193,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			if (memcmp(&con.m_ci, &pInfo->ci, sizeof(con.m_ci))!=0)
 			{
 				LOGCONSOLECHANGE("ApplyConsoleInfo: CursorInfo changed");
-				lbChanged = TRUE;
+				lbChanged = true;
 			}
 
 			con.m_ci = pInfo->ci;
@@ -2221,7 +2222,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			if (memcmp(&con.m_sbi, &pInfo->sbi, sizeof(con.m_sbi))!=0)
 			{
 				LOGCONSOLECHANGE("ApplyConsoleInfo: ScreenBufferInfo changed");
-				lbChanged = TRUE;
+				lbChanged = true;
 
 				//if (mp_RCon->isActive())
 				//	gpConEmu->UpdateCursorInfo(&pInfo->sbi, pInfo->sbi.dwCursorPosition, pInfo->ci);
@@ -2288,10 +2289,11 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 					DEBUGSTRSIZE(szDbgSize);
 					#endif
 
-					bBufRecreated = TRUE; // Смена размера, буфер пересоздается
 					//sc.Lock(&csCON, TRUE);
 					//WARNING("может не заблокировалось?");
-					InitBuffers(nNewWidth*nNewHeight*2);
+
+					// Смена размера, буфер пересоздается
+					bBufRecreate = true;
 				}
 			}
 
@@ -2308,9 +2310,8 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			HEAPVAL
 		}
 
-		//DWORD dwCharChanged = pInfo->ConInfo.RgnInfo.dwRgnInfoSize;
-		//BOOL  lbDataRecv = FALSE;
-		if (/*mp_ConsoleData &&*/ nNewWidth && nNewHeight)
+
+		if (nNewWidth && nNewHeight)
 		{
 			// Это может случиться во время пересоздания консоли (когда фар падал)
 			// или при изменении параметров экрана (Aero->Standard)
@@ -2323,51 +2324,61 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			//// Не будем гонять зря данные по пайпу, если изменений нет
 			//if (mp_RCon->mn_LastConsolePacketIdx != pInfo->nPacketId)
 
+			DWORD CharCount = nNewWidth * nNewHeight;
+			DWORD nCalcCount = 0;
+			CHAR_INFO *pData = NULL;
+
 			// Если вместе с заголовком пришли измененные данные
 			if (pInfo->nDataShift && pInfo->nDataCount)
 			{
 				LOGCONSOLECHANGE("ApplyConsoleInfo: Console contents received");
 
 				mp_RCon->mn_LastConsolePacketIdx = pInfo->nPacketId;
-				DWORD CharCount = pInfo->nDataCount;
 
+				if (CharCount < pInfo->nDataCount)
+					CharCount = pInfo->nDataCount;
 				
 				#ifdef _DEBUG
-				if (CharCount != (nNewWidth * nNewHeight))
+				if (pInfo->nDataCount != (nNewWidth * nNewHeight))
 				{
 					// Это может случиться во время пересоздания консоли (когда фар падал)
-					_ASSERTE(CharCount == (nNewWidth * nNewHeight));
+					_ASSERTE(pInfo->nDataCount == (nNewWidth * nNewHeight));
 				}
 				#endif
 
 
-				DWORD OneBufferSize = CharCount * sizeof(wchar_t);
-				CHAR_INFO *pData = (CHAR_INFO*)(((LPBYTE)pInfo) + pInfo->nDataShift);
-				// Проверка размера!
-				DWORD nCalcCount = (pInfo->cmd.cbSize - pInfo->nDataShift) / sizeof(CHAR_INFO);
+				pData = (CHAR_INFO*)(((LPBYTE)pInfo) + pInfo->nDataShift);
 
+				// Проверка размера!
+				nCalcCount = (pInfo->cmd.cbSize - pInfo->nDataShift) / sizeof(CHAR_INFO);
+				#ifdef _DEBUG
 				if (nCalcCount != CharCount)
 				{
 					_ASSERTE(nCalcCount == CharCount);
-
-					if (nCalcCount < CharCount)
-						CharCount = nCalcCount;
 				}
-
-				//MSectionLock sc2; sc2.Lock(&csCON);
-				sc.Lock(&csCON);
+				#endif
+				if (nCalcCount > CharCount)
+					nCalcCount = CharCount;
 				HEAPVAL;
 
-				if (InitBuffers(OneBufferSize))
+				bNeedLoadData = true;
+			}
+
+			if (bBufRecreate || bNeedLoadData)
+			{
+				sc.Lock(&csCON);
+
+				if (InitBuffers(CharCount, nNewWidth, nNewHeight))
 				{
-					if (LoadDataFromSrv(CharCount, pData))
+					if (bNeedLoadData && nCalcCount && pData)
 					{
-						LOGCONSOLECHANGE("ApplyConsoleInfo: InitBuffers&LoadDataFromSrv -> changed");
-						lbChanged = TRUE;
+						if (LoadDataFromSrv(nCalcCount, pData))
+						{
+							LOGCONSOLECHANGE("ApplyConsoleInfo: InitBuffers&LoadDataFromSrv -> changed");
+							lbChanged = true;
+						}
 					}
 				}
-
-				HEAPVAL;
 			}
 		}
 
@@ -2395,7 +2406,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			_ASSERTE(con.nTextWidth == con.m_sbi.dwSize.X);
 			uint TextLen = con.nTextWidth * con.nTextHeight;
 
-			while(n<TextLen)
+			while (n < TextLen)
 			{
 				if (con.pConChar[n] == 0)
 				{
@@ -2423,7 +2434,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		{
 			if (IsTrueColorerBufferChanged())
 			{
-				lbChanged = TRUE;
+				lbChanged = true;
 			}
 		}
 
@@ -2447,8 +2458,6 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		//if (mp_RCon->isActive()) -- mp_RCon->isActive() проверит сама UpdateScrollInfo, а скроллбар может быть и в видимой но НЕ активной консоли
 		mp_RCon->UpdateScrollInfo();
 	}
-
-	UNREFERENCED_PARAMETER(bBufRecreated);
 
 	return lbChanged;
 }

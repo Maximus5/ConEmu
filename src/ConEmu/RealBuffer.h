@@ -188,7 +188,7 @@ public:
 	
 private:
 	BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
-	BOOL InitBuffers(DWORD OneBufferSize);
+	BOOL InitBuffers(DWORD anCellCount = 0, int anWidth = 0, int anHeight = 0);
 	BOOL CheckBufferSize();
 	BOOL IsTrueColorerBufferChanged();
 	BOOL LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
@@ -245,9 +245,10 @@ protected:
 		USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
 		DWORD LastStartInitBuffersTick, LastEndInitBuffersTick, LastStartReadBufferTick, LastEndReadBufferTick;
 		BOOL bInGetConsoleData;
+		int nCreatedBufWidth, nCreatedBufHeight; // Informational
+		size_t nConBufCells; // Max buffers size (cells!)
 		wchar_t *pConChar;
 		WORD  *pConAttr;
-		//CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
 		CHAR_INFO *pDataCmp;
 		int nTextWidth, nTextHeight, nBufferHeight;
 		BOOL bLockChange2Text;
