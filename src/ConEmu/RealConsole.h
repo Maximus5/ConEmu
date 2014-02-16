@@ -673,8 +673,6 @@ class CRealConsole
 
 		//BOOL RetrieveConsoleInfo(/*BOOL bShortOnly,*/ UINT anWaitSize);
 		BOOL WaitConsoleSize(int anWaitSize, DWORD nTimeout);
-		BOOL InitBuffers(DWORD OneBufferSize);
-		BOOL LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
 	private:
 		friend class CRealBuffer;
 		CRealBuffer* mp_RBuf; // Реальный буфер консоли
@@ -689,37 +687,6 @@ class CRealConsole
 		BOOL mb_DebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
 		#endif
 		
-		//// Эти переменные инициализируются в RetrieveConsoleInfo()
-		//MSection csCON; //DWORD ncsT;
-		//struct RConInfo
-		//{
-		//	CONSOLE_SELECTION_INFO m_sel;
-		//	CONSOLE_CURSOR_INFO m_ci;
-		//	DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
-		//	CONSOLE_SCREEN_BUFFER_INFO m_sbi;
-		//	COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
-		//	USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
-		//	wchar_t *pConChar;
-		//	WORD  *pConAttr;
-		//	COORD mcr_FileLineStart, mcr_FileLineEnd; // Подсветка строк ошибок компиляторов
-		//	//CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
-		//	CHAR_INFO *pDataCmp;
-		//	int nTextWidth, nTextHeight, nBufferHeight;
-		//	BOOL bLockChange2Text;
-		//	int nChange2TextWidth, nChange2TextHeight;
-		//	BOOL bBufferHeight; // TRUE, если есть прокрутка
-		//	//DWORD nPacketIdx;
-		//	DWORD_PTR dwKeybLayout;
-		//	BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
-		//	COORD crRBtnDrag;
-		//	BOOL bInSetSize; HANDLE hInSetSize;
-		//	int DefaultBufferHeight;
-		//	BOOL bConsoleDataChanged;
-		//	DWORD nLastInactiveRgnCheck;
-		//	#ifdef _DEBUG
-		//	BOOL bDebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
-		//	#endif
-		//} con;
 		
 		//BOOL mb_ThawRefreshThread;
 		struct ServerClosing
