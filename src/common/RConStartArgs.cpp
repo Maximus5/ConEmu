@@ -108,42 +108,58 @@ void RConStartArgs::RunArgTests()
 		int nDbg = 0;
 	}
 
-	for (size_t i = 0; i <= 4; i++)
+	for (size_t i = 0; i <= 6; i++)
 	{
 		RConStartArgs arg;
-		switch (i)
-		{
-		case 0: arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:d:C:\\John Doe\\Home\" "); break;
-		case 1: arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u"); break;
-		case 2: arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max"); break;
-		case 3: arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max:"); break;
-		case 4: arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:P:^<Power\"\"Shell^>\""); break;
-		}
-
-		arg.ProcessNewConArg();
-		int nDbg = lstrcmp(arg.pszSpecialCmd, i ? L"cmd" : L"cmd ");
-		_ASSERTE(nDbg==0);
+		int nDbg;
 
 		switch (i)
 		{
 		case 0:
+			arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:d:C:\\John Doe\\Home\" ");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd ")==0);
 			nDbg = lstrcmp(arg.pszStartupDir, L"C:\\John Doe\\Home");
-			_ASSERTE(nDbg==0);
+			_ASSERTE(nDbg==0 && arg.NewConsole==crb_On);
 			break;
 		case 1:
-			_ASSERTE(arg.pszUserName==NULL && arg.pszDomain==NULL && arg.ForceUserDialog==crb_On);
+			arg.pszSpecialCmd = lstrdup(L"cmd -new_console:u -cur_console:h0");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd")==0);
+			_ASSERTE(arg.pszUserName==NULL && arg.pszDomain==NULL && arg.ForceUserDialog==crb_On && arg.NewConsole==crb_On && arg.BufHeight==crb_On && arg.nBufHeight==0);
 			break;
 		case 2:
+			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max -new_console");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd")==0);
 			nDbg = lstrcmp(arg.pszUserName,L"Max");
-			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && arg.ForceUserDialog==crb_On);
+			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && arg.ForceUserDialog==crb_On && arg.NewConsole==crb_On);
 			break;
 		case 3:
+			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max:");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd")==0);
 			nDbg = lstrcmp(arg.pszUserName,L"Max");
-			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && !arg.ForceUserDialog==crb_Off);
+			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && arg.ForceUserDialog==crb_Off && arg.NewConsole!=crb_On);
 			break;
 		case 4:
+			arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:P:^<Power\"\"Shell^>\"");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd")==0);
 			nDbg = lstrcmp(arg.pszPalette, L"<Power\"Shell>");
-			_ASSERTE(nDbg==0);
+			_ASSERTE(nDbg==0 && arg.NewConsole==crb_On);
+			break;
+		case 5:
+			arg.pszSpecialCmd = lstrdup(L"cmd \"-cur_console:t:My title\" /k ver");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd /k ver")==0);
+			_ASSERTE(arg.pszRenameTab && lstrcmp(arg.pszRenameTab, L"My title")==0 && arg.NewConsole==crb_Undefined);
+			break;
+		case 6:
+			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:b:P:\"^<Power\"\"Shell^>\":t:\"My title\" /k ConEmuC.exe -Guimacro print(\"-new_console:a\")");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd /k ConEmuC.exe -Guimacro print(\"-new_console:a\")")==0);
+			_ASSERTE(arg.pszRenameTab && arg.pszPalette && arg.BackgroundTab==crb_On && arg.NewConsole==crb_Undefined && arg.RunAsAdministrator==crb_Undefined && lstrcmp(arg.pszRenameTab, L"My title")==0 && lstrcmp(arg.pszPalette, L"<Power\"Shell>")==0);
 			break;
 		}
 	}
