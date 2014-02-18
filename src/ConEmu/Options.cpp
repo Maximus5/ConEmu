@@ -3784,7 +3784,14 @@ bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/)
 				}
 
 				if (!iAsked)
-					iAsked = MsgBox(L"Debugger was detected!\nDo you want to disable hooks to avoid lags?", MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle());
+				{
+					// Need to be set before MsgBox to avoid multiple boxes
+					iAsked = IDYES;
+					// Ask now
+					int iBtn = MsgBox(L"Debugger was detected!\nDo you want to disable hooks to avoid lags?", MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle());
+					if (iBtn != iAsked)
+						iAsked = iBtn;
+				}
 				if (iAsked == IDYES)
 					return false;
 			}
