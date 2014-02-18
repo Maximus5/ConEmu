@@ -259,10 +259,15 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /
 		}
 	}
 
-	this->RunAsRestricted = args->RunAsRestricted;
-	this->RunAsAdministrator = args->RunAsAdministrator;
-	if (abConcat && this->pszUserName && !args->pszUserName)
+	if (!abConcat || (args->RunAsRestricted || args->RunAsAdministrator || args->pszUserName))
+	{
+		this->RunAsRestricted = args->RunAsRestricted;
+		this->RunAsAdministrator = args->RunAsAdministrator;
+	}
+	else
+	{
 		goto SkipUserName;
+	}
 	SafeFree(this->pszUserName); //SafeFree(this->pszUserPassword);
 	SafeFree(this->pszDomain);
 	//SafeFree(this->pszUserProfile);
@@ -287,11 +292,15 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /
 	}
 SkipUserName:
 
-	if (!abConcat)
+	if (!abConcat || args->BackgroundTab || args->ForegroungTab)
+	{
 		this->BackgroundTab = args->BackgroundTab;
-	if (!abConcat)
 		this->ForegroungTab = args->ForegroungTab;
-	this->NoDefaultTerm = args->NoDefaultTerm; _ASSERTE(args->NoDefaultTerm == crb_Undefined);
+	}
+	if (!abConcat || args->NoDefaultTerm)
+	{
+		this->NoDefaultTerm = args->NoDefaultTerm; _ASSERTE(args->NoDefaultTerm == crb_Undefined);
+	}
 	if (!abConcat || args->BufHeight)
 	{
 		this->BufHeight = args->BufHeight;
@@ -299,13 +308,18 @@ SkipUserName:
 	}
 	if (!abConcat || args->eConfirmation)
 		this->eConfirmation = args->eConfirmation;
-	if (!abConcat)
+	if (!abConcat || args->ForceUserDialog)
 		this->ForceUserDialog = args->ForceUserDialog;
-	this->InjectsDisable = args->InjectsDisable;
-	this->ForceNewWindow = args->ForceNewWindow;
-	this->LongOutputDisable = args->LongOutputDisable;
-	this->OverwriteMode = args->OverwriteMode;
-	this->nPTY = args->nPTY;
+	if (!abConcat || args->InjectsDisable)
+		this->InjectsDisable = args->InjectsDisable;
+	if (!abConcat || args->ForceNewWindow)
+		this->ForceNewWindow = args->ForceNewWindow;
+	if (!abConcat || args->LongOutputDisable)
+		this->LongOutputDisable = args->LongOutputDisable;
+	if (!abConcat || args->OverwriteMode)
+		this->OverwriteMode = args->OverwriteMode;
+	if (!abConcat || args->nPTY)
+		this->nPTY = args->nPTY;
 
 	if (!abConcat)
 	{
