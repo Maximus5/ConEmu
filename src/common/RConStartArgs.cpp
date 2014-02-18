@@ -719,6 +719,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 				// Найти конец аргумента
 				const wchar_t* pszArgEnd = pszEnd;
+				bool lbLocalQuot = false;
 				while (*pszArgEnd)
 				{
 					switch (*pszArgEnd)
@@ -728,12 +729,30 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						break;
 					case L'"':
 						if (*(pszArgEnd+1) == L'"')
-							pszArgEnd++; // Skip qoubled qouble quote
-						else
-							goto EndFound;
-						break;
-					case L' ':
+						{
+							pszArgEnd += 2; // Skip qoubled qouble quote
+							continue;
+						}
 						if (!lbQuot)
+						{
+							if (!lbLocalQuot && (*(pszArgEnd-1) == L':'))
+							{
+								lbLocalQuot = true;
+								pszArgEnd++;
+								continue;
+							}
+							if (lbLocalQuot)
+							{
+								if (*(pszArgEnd+1) != L':')
+									goto EndFound;
+								lbLocalQuot = false;
+								pszArgEnd += 2;
+								continue;
+							}
+						}
+						goto EndFound;
+					case L' ':
+						if (!lbQuot && !lbLocalQuot)
 							goto EndFound;
 						break;
 					case 0:
@@ -748,21 +767,24 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 				bool lbReady = false;
 				while (!lbReady && *pszEnd)
 				{
+					_ASSERTE(pszEnd <= pszArgEnd);
 					wchar_t cOpt = *(pszEnd++);
+
 					switch (cOpt)
 					{
 					//case L'-':
 					//	bStop = true; // следующие "-new_console" - не трогать!
 					//	break;
 					case L'"':
+						lbReady = true;
+						break;
 					case L' ':
 					case 0:
 						lbReady = true;
 						break;
 
 					case L':':
-						_ASSERTE((cOpt!=L':') && "Bad -new_console switches");
-						lbReady = true;
+						// Just skip it. Delimiter between switches: -new_console:c:b:a
 						break;
 
 					case L'b':
@@ -1011,13 +1033,37 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 									//wmemmove(*pptr, pszTab, cchLen);
 									wchar_t* pD = *pptr;
 									const wchar_t* pS = pszTab;
+
+									if (lbQuot)
+									{
+										lbLocalQuot = false;
+									}
+									else if (*pS == L'"' && *(pS+1) != L'"')
+									{
+										lbLocalQuot = true;
+										pS++; // This item is local quoted. Example: -new_console:t:"My title"
+									}
+
 									// There is enough room allocated
 									while (pS < pszEnd)
 									{
 										if ((*pS == L'^') && ((pS + 1) < pszEnd))
+										{
 											pS++; // Skip control char, goto escaped char
-										else if ((*pS == L'"') && ((pS + 1) < pszEnd) && (*(pS+1) == L'"'))
-											pS++; // Skip qoubled qouble quote
+										}
+										else if (*pS == L'"')
+										{
+											if (((pS + 1) < pszEnd) && (*(pS+1) == L'"'))
+											{
+												pS++; // Skip qoubled qouble quote
+											}
+											else if (lbLocalQuot)
+											{
+												pszEnd = (pS+1);
+												_ASSERTE(*pszEnd==L':' || *pszEnd==L' ' || *pszEnd==0);
+												break; // End of local quoted argument: -new_console:d:"C:\User\super user":t:"My title"
+											}
+										}
 
 										*(pD++) = *(pS++);
 									}
