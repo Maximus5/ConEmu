@@ -2077,9 +2077,9 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			RConStartArgs args; args.pszSpecialCmd = lstrmerge(L"\"-", pszOper, L"\"");
 			args.ProcessNewConArg();
 			// new_console:I
-			bForceDuplicate = (args.bForceInherit != FALSE);
+			bForceDuplicate = (args.ForceInherit == crb_On);
 			// RunAs - does not supported in "duplicate"
-			bDontDuplicate = (args.bRunAsAdministrator || args.bRunAsRestricted || args.pszUserName);
+			bDontDuplicate = ((args.RunAsAdministrator == crb_On) || (args.RunAsRestricted == crb_On) || args.pszUserName);
 			_ASSERTE(!(bForceDuplicate && bDontDuplicate));
 		}
 

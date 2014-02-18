@@ -227,7 +227,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			const wchar_t *pszUser = pArgs->pszUserName;
 			const wchar_t *pszDomain = pArgs->pszDomain;
-			BOOL bResticted = pArgs->bRunAsRestricted;
+			bool bResticted = (pArgs->RunAsRestricted == crb_On);
 			int nChecked = rbCurrentUser;
 			DWORD nUserNameLen = countof(pDlg->ms_CurUser);
 
@@ -300,7 +300,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, 0, 0, (rcBox.right-rcBox.left)/2, rcBox.bottom-rcBox.top,
 				             SWP_NOMOVE|SWP_NOZORDER);
 			}
-			else if (gpConEmu->mb_IsUacAdmin || (pArgs && pArgs->bRunAsAdministrator))
+			else if (gpConEmu->mb_IsUacAdmin || (pArgs && (pArgs->RunAsAdministrator == crb_On)))
 			{
 				CheckDlgButton(hDlg, cbRunAsAdmin, BST_CHECKED);
 
@@ -645,7 +645,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						//SafeFree(pArgs->pszUserPassword);
 						if (SendDlgItemMessage(hDlg, rbAnotherUser, BM_GETCHECK, 0, 0))
 						{
-							pArgs->bRunAsRestricted = FALSE;
+							pArgs->RunAsRestricted = crb_Off;
 							pArgs->pszUserName = GetDlgItemText(hDlg, tRunAsUser);
 
 							if (pArgs->pszUserName)
@@ -663,11 +663,11 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						}
 						else
 						{
-							pArgs->bRunAsRestricted = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0);
+							pArgs->RunAsRestricted = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0) ? crb_On : crb_Off;
 						}
 
 						// Vista+ (As Admin...)
-						pArgs->bRunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
+						pArgs->RunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0) ? crb_On : crb_Off;
 
 						// StartupDir (may be specified as argument)
 						wchar_t* pszDir = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
@@ -830,12 +830,12 @@ void CRecreateDlg::InitVars()
 					pszLine--;
 				if (pszLine)
 					*pszLine = 0;
-				bool lbRunAdmin = (mp_Args->bRunAsAdministrator != FALSE);
+				bool lbRunAdmin = (mp_Args->RunAsAdministrator == crb_On);
 
 				pszCmd = gpConEmu->ParseScriptLineOptions(pszBuf, &lbRunAdmin, NULL);
 
 				if (lbRunAdmin)
-					mp_Args->bRunAsAdministrator = TRUE;
+					mp_Args->RunAsAdministrator = crb_On;
 			}
 			else
 			{

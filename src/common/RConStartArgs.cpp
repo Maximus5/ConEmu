@@ -792,6 +792,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					//	bStop = true; // следующие "-new_console" - не трогать!
 					//	break;
 					case L'"':
+						_ASSERTE(pszEnd > pszArgEnd);
 						lbReady = true;
 						break;
 					case L' ':

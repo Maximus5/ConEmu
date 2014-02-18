@@ -353,8 +353,8 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			//_ASSERTE(mn_ConEmuC_Input_TID==0 || mn_ConEmuC_Input_TID==nInputTID);
 			//mn_ConEmuC_Input_TID = nInputTID;
 			//
-			if (!mp_RCon->m_Args.bRunAsAdministrator && bUserIsAdmin)
-				mp_RCon->m_Args.bRunAsAdministrator = TRUE;
+			if ((mp_RCon->m_Args.RunAsAdministrator != crb_On) && bUserIsAdmin)
+				mp_RCon->m_Args.RunAsAdministrator = crb_On;
 
 			if (mp_RCon->mn_InRecreate>=1)
 				mp_RCon->mn_InRecreate = 0; // корневой процесс успешно пересоздался

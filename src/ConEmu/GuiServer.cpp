@@ -201,7 +201,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				if (bCreateTab && pIn->NewCmd.szCommand[0])
 				{
 					RConStartArgs *pArgs = new RConStartArgs;
-					pArgs->bDetached = (pIn->NewCmd.ShowHide == sih_StartDetached);
+					pArgs->Detached = (pIn->NewCmd.ShowHide == sih_StartDetached) ? crb_On : crb_Off;
 					pArgs->pszSpecialCmd = lstrdup(pIn->NewCmd.szCommand);
 					if (pIn->NewCmd.szCurDir[0] == 0)
 					{

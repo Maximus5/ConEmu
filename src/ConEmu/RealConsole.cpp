@@ -334,8 +334,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	if (!PreCreate(args))
 		return false;
 
-	mb_WasStartDetached = m_Args.bDetached;
-	_ASSERTE(mb_WasStartDetached == args->bDetached);
+	mb_WasStartDetached = (m_Args.Detached == crb_On);
+	_ASSERTE(mb_WasStartDetached == (args->Detached == crb_On));
 
 	// -- т.к. автопоказ табов может вызвать ресайз - то табы в самом конце инициализации!
 	_ASSERTE(gpConEmu->isMainThread()); // Иначе табы сразу не перетряхнутся
@@ -444,7 +444,7 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 		wchar_t szPrefix[128];
 		_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::PreCreate, hView=x%08X, hBack=x%08X, Detached=%u, AsAdmin=%u, Cmd=",
 			(DWORD)(DWORD_PTR)mp_VCon->GetView(), (DWORD)(DWORD_PTR)mp_VCon->GetBack(),
-			args->bDetached, args->bRunAsAdministrator);
+			(UINT)args->Detached, (UINT)args->RunAsAdministrator);
 		wchar_t* pszInfo = lstrmerge(szPrefix, args->pszSpecialCmd ? args->pszSpecialCmd : L"<NULL>");
 		gpConEmu->LogString(pszInfo ? pszInfo : szPrefix);
 		SafeFree(pszInfo);
@@ -460,7 +460,7 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 		SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
 
 		// When User name was set, but password - Not...
-		if (!*m_Args.szUserPassword && !m_Args.bUseEmptyPassword)
+		if (!*m_Args.szUserPassword && (m_Args.UseEmptyPassword != crb_On))
 		{
 			int nRc = gpConEmu->RecreateDlg(&m_Args);
 
@@ -481,7 +481,7 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 	}
 	else
 	{
-		_ASSERTE((args->bDetached || (args->pszSpecialCmd && *args->pszSpecialCmd)) && "Command line must be specified already!");
+		_ASSERTE(((args->Detached == crb_On) || (args->pszSpecialCmd && *args->pszSpecialCmd)) && "Command line must be specified already!");
 	}
 
 	mb_NeedStartProcess = FALSE;
@@ -498,7 +498,7 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 
 
 	// Go
-	if (m_Args.bBufHeight)
+	if (m_Args.BufHeight == crb_On)
 	{
 		mn_DefaultBufferHeight = m_Args.nBufHeight;
 		mp_RBuf->SetBufferHeightMode(mn_DefaultBufferHeight>0);
@@ -517,7 +517,7 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 		OnTitleChanged();
 	}
 
-	if (args->bDetached)
+	if (args->Detached == crb_On)
 	{
 		// Пока ничего не делаем - просто создается серверная нить
 		if (!PreInit())  //TODO: вообще-то PreInit() уже наверное вызван...
@@ -525,7 +525,7 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 			return false;
 		}
 
-		m_Args.bDetached = TRUE;
+		m_Args.Detached = crb_On;
 	}
 	else
 	{
@@ -543,7 +543,7 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 	}
 	
 	// В фоновой вкладке?
-	args->bBackgroundTab = m_Args.bBackgroundTab;
+	args->BackgroundTab = m_Args.BackgroundTab;
 
 	return true;
 }
@@ -796,8 +796,8 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	DWORD dwErr = 0;
 	HANDLE hProcess = NULL;
 	_ASSERTE(pRet!=NULL);
-	DEBUGTEST(bool bAdmStateChanged = (rStartStop->bUserIsAdmin != m_Args.bRunAsAdministrator));
-	m_Args.bRunAsAdministrator = rStartStop->bUserIsAdmin;
+	DEBUGTEST(bool bAdmStateChanged = ((rStartStop->bUserIsAdmin!=FALSE) != (m_Args.RunAsAdministrator==crb_On)));
+	m_Args.RunAsAdministrator = rStartStop->bUserIsAdmin ? crb_On : crb_Off;
 
 	// Процесс запущен через ShellExecuteEx под другим пользователем (Administrator)
 	if (mp_sei)
@@ -846,7 +846,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	if (rStartStop->sCmdLine && *rStartStop->sCmdLine)
 	{
 		SafeFree(m_Args.pszSpecialCmd);
-		_ASSERTE(m_Args.bDetached == TRUE);
+		_ASSERTE(m_Args.Detached == crb_On);
 		m_Args.pszSpecialCmd = lstrdup(rStartStop->sCmdLine);
 	}
 
@@ -1802,8 +1802,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 {
 	DWORD nWait = IDEVENT_TERM;
 	CRealConsole* pRCon = (CRealConsole*)lpParameter;
-	BOOL bDetached = pRCon->m_Args.bDetached && !pRCon->mb_ProcessRestarted && !pRCon->mn_InRecreate;
-	BOOL lbChildProcessCreated = FALSE;
+	bool bDetached = (pRCon->m_Args.Detached == crb_On) && !pRCon->mb_ProcessRestarted && !pRCon->mn_InRecreate;
+	bool lbChildProcessCreated = FALSE;
 
 	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...", true);
 
@@ -1890,9 +1890,9 @@ int CRealConsole::WorkerExFilter(unsigned int code, struct _EXCEPTION_POINTERS *
 	return EXCEPTION_EXECUTE_HANDLER;
 }
 
-DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCreated)
+DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCreated)
 {
-	rbChildProcessCreated = FALSE;
+	rbChildProcessCreated = false;
 
 	mb_MonitorAssertTrap = false;
 
@@ -1953,7 +1953,7 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			if (nSrvWait == WAIT_OBJECT_0)
 			{
 				// ConEmuC was terminated!
-				_ASSERTE(bDetached == FALSE);
+				_ASSERTE(bDetached == false);
 				nWait = IDEVENT_SERVERPH;
 				break;
 			}
@@ -2103,15 +2103,15 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			{
 				if (mh_MainSrv)
 				{
-					if (bDetached || m_Args.bRunAsAdministrator)
+					if (bDetached || (m_Args.RunAsAdministrator == crb_On))
 					{
-						bDetached = FALSE;
+						bDetached = false;
 						hEvents[IDEVENT_SERVERPH] = mh_MainSrv;
 						nEvents = countof(hEvents);
 					}
 					else
 					{
-						_ASSERTE(bDetached==TRUE);
+						_ASSERTE(bDetached==true);
 					}
 				}
 				else
@@ -2125,7 +2125,7 @@ DWORD CRealConsole::MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCrea
 			&& (mn_ProcessClientCount > 0)
 			&& ((GetTickCount() - nConsoleStartTick) > PROCESS_WAIT_START_TIME))
 		{
-			rbChildProcessCreated = TRUE;
+			rbChildProcessCreated = true;
 			OnStartedSuccess();
 		}
 
@@ -3301,7 +3301,7 @@ BOOL CRealConsole::StartProcess()
 		// ОШИБКА!!
 		if (InRecreate())
 		{
-			m_Args.bDetached = TRUE;
+			m_Args.Detached = crb_On;
 			_ASSERTE(mh_MainSrv==NULL);
 			SafeCloseHandle(mh_MainSrv);
 			_ASSERTE(isDetached());
@@ -3450,7 +3450,7 @@ BOOL CRealConsole::StartProcess()
 		}
 	}
 
-	if (!m_Args.bRunAsAdministrator)
+	if (m_Args.RunAsAdministrator != crb_On)
 	{
 		CreateLogFiles();
 		//// Событие "изменения" консоль //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
@@ -3480,7 +3480,7 @@ wrap:
 	}
 	else
 	{
-		_ASSERTE(m_Args.bRunAsAdministrator);
+		_ASSERTE(m_Args.RunAsAdministrator == crb_On);
 	}
 
 	mb_StartResult = lbRc;
@@ -3534,16 +3534,16 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	//lstrcpy(psCurCmd, gpConEmu->ms_ConEmuCExeName);
 	_wcscat_c(psCurCmd, nLen, L"\" ");
 
-	if (m_Args.bRunAsAdministrator && !gpConEmu->mb_IsUacAdmin)
+	if ((m_Args.RunAsAdministrator == crb_On) && !gpConEmu->mb_IsUacAdmin)
 	{
-		m_Args.bDetached = TRUE;
+		m_Args.Detached = crb_On;
 		_wcscat_c(psCurCmd, nLen, L" /ADMIN ");
 	}
 
-	if ((gpSet->nConInMode != (DWORD)-1) || m_Args.bOverwriteMode)
+	if ((gpSet->nConInMode != (DWORD)-1) || (m_Args.OverwriteMode == crb_On))
 	{
 		DWORD nMode = (gpSet->nConInMode != (DWORD)-1) ? gpSet->nConInMode : 0;
-		if (m_Args.bOverwriteMode)
+		if (m_Args.OverwriteMode == crb_On)
 		{
 			nMode |= (ENABLE_INSERT_MODE << 16); // Mask
 			nMode &= ~ENABLE_INSERT_MODE; // Turn bit OFF
@@ -3599,7 +3599,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		ConHostSearchPrepare();
 
 	// Если сам ConEmu запущен под админом - нет смысла звать ShellExecuteEx("RunAs")
-	if (!m_Args.bRunAsAdministrator || gpConEmu->mb_IsUacAdmin)
+	if ((m_Args.RunAsAdministrator != crb_On) || gpConEmu->mb_IsUacAdmin)
 	{
 		LockSetForegroundWindow(LSFW_LOCK);
 		SetConStatus(L"Starting root process...", true);
@@ -3631,7 +3631,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 			SecureZeroMemory(m_Args.szUserPassword, sizeof(m_Args.szUserPassword));
 		}
-		else if (m_Args.bRunAsRestricted)
+		else if (m_Args.RunAsRestricted == crb_On)
 		{
 			nCreateBegin = GetTickCount();
 			lpszWorkDir = GetStartupDir();
@@ -3758,7 +3758,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	if (lbRc)
 	{
-		if (!m_Args.bRunAsAdministrator)
+		if (m_Args.RunAsAdministrator != crb_On)
 		{
 			ProcessUpdate(&pi.dwProcessId, 1);
 			AllowSetForegroundWindow(pi.dwProcessId);
@@ -5661,7 +5661,7 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
 		if (dwDelta > CON_RECREATE_TIMEOUT)
 		{
 			mn_InRecreate = 0;
-			m_Args.bDetached = TRUE; // Чтобы GUI не захлопнулся
+			m_Args.Detached = crb_On; // Чтобы GUI не захлопнулся
 		}
 		else if (ppPrc == NULL)
 		{
@@ -6142,7 +6142,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	{
 		lpszCmd = m_Args.pszSpecialCmd;
 	}
-	else if (m_Args.bDetached)
+	else if (m_Args.Detached == crb_On)
 	{
 		goto wrap; 
 	}
@@ -6205,7 +6205,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	lstrcpyn(ms_RootProcessName, pszName, countof(ms_RootProcessName));
 
 	// In fact, m_Args.bRunAsAdministrator may be not true on startup
-	bAsAdmin = m_Args.pszSpecialCmd ? m_Args.bRunAsAdministrator : gpConEmu->mb_IsUacAdmin;
+	bAsAdmin = m_Args.pszSpecialCmd ? (m_Args.RunAsAdministrator == crb_On) : gpConEmu->mb_IsUacAdmin;
 
 	// Done. Get AppDistinct ID
 	iAppId = gpSet->GetAppSettingsId(pszName, bAsAdmin);
@@ -7227,7 +7227,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 	if (ahConWnd && mb_InCreateRoot)
 	{
 		// При запуске "под администратором" mb_InCreateRoot сразу не сбрасывается
-		_ASSERTE(m_Args.bRunAsAdministrator);
+		_ASSERTE(m_Args.RunAsAdministrator == crb_On);
 		mb_InCreateRoot = FALSE;
 	}
 
@@ -7240,7 +7240,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 	//OpenColorMapping();
 	mb_ProcessRestarted = FALSE; // Консоль запущена
 	mb_InCloseConsole = FALSE;
-	m_Args.bDetached = FALSE;
+	m_Args.Detached = crb_Off;
 	ZeroStruct(m_ServerClosing);
 	if (mn_InRecreate>=1)
 		mn_InRecreate = 0; // корневой процесс успешно пересоздался
@@ -7682,7 +7682,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	{
 		wchar_t szPrefix[128];
 		_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::RecreateProcess, hView=x%08X, Detached=%u, AsAdmin=%u, Cmd=",
-			(DWORD)(DWORD_PTR)mp_VCon->GetView(), args->bDetached, args->bRunAsAdministrator);
+			(DWORD)(DWORD_PTR)mp_VCon->GetView(), (UINT)args->Detached, (UINT)args->RunAsAdministrator);
 		wchar_t* pszInfo = lstrmerge(szPrefix, args->pszSpecialCmd ? args->pszSpecialCmd : L"<NULL>");
 		if (mp_Log)
 			mp_Log->LogString(pszInfo ? pszInfo : szPrefix);
@@ -8057,7 +8057,7 @@ BOOL CRealConsole::SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground)
 	DWORD dwErr = 0;
 	HWND hLastFocus = NULL;
 
-	if (!(m_Args.bRunAsAdministrator || m_Args.pszUserName || m_Args.bRunAsRestricted/*?*/))
+	if (!((m_Args.RunAsAdministrator == crb_On) || m_Args.pszUserName || (m_Args.RunAsRestricted == crb_On)/*?*/))
 	{
 		if (abSetForeground)
 		{
@@ -8877,7 +8877,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 			// Нужно оставить там "new_console", иначе не отключается подтверждение закрытия например
 			wchar_t* pszCmdRedefined = bRootCmdRedefined ? lstrdup(args.pszSpecialCmd) : NULL;
 			
-			args.bDetached = TRUE;
+			args.Detached = crb_On;
 			CVirtualConsole *pVCon = gpConEmu->CreateCon(&args);
 
 			if (pVCon)
@@ -10184,7 +10184,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 	}
 	else
 	{
-		m_Args.bDetached = FALSE;
+		m_Args.Detached = crb_Off;
 
 		if (mp_VCon)
 			CConEmuChild::ProcessVConClosed(mp_VCon);
@@ -10792,13 +10792,13 @@ wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)
 	return pszCmd;
 }
 
-BOOL CRealConsole::GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, BOOL* pbRestricted)
+bool CRealConsole::GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, bool* pbRestricted)
 {
-	if (m_Args.bRunAsRestricted)
+	if (m_Args.RunAsRestricted == crb_On)
 	{
-		*pbRestricted = TRUE;
+		*pbRestricted = true;
 		*ppszUser = /**ppszPwd =*/ NULL;
-		return TRUE;
+		return true;
 	}
 
 	if (m_Args.pszUserName /*&& m_Args.pszUserPassword*/)
@@ -10807,11 +10807,11 @@ BOOL CRealConsole::GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDoma
 		_ASSERTE(ppszDomain!=NULL);
 		*ppszDomain = m_Args.pszDomain;
 		//*ppszPwd = m_Args.pszUserPassword;
-		*pbRestricted = FALSE;
-		return TRUE;
+		*pbRestricted = false;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 void CRealConsole::logProgress(LPCWSTR asFormat, int V1, int V2)
@@ -11969,10 +11969,10 @@ bool CRealConsole::isAdministrator()
 	if (!this)
 		return false;
 
-	if (m_Args.bRunAsAdministrator)
+	if (m_Args.RunAsAdministrator == crb_On)
 		return true;
 
-	if (gpConEmu->mb_IsUacAdmin && !m_Args.bRunAsAdministrator && !m_Args.bRunAsRestricted && !m_Args.pszUserName)
+	if (gpConEmu->mb_IsUacAdmin && (m_Args.RunAsAdministrator != crb_On) && (m_Args.RunAsRestricted != crb_On) && !m_Args.pszUserName)
 		return true;
 
 	return false;
@@ -12904,7 +12904,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	}
 
 	// Чтобы случайно не закрыть RealConsole?
-	m_Args.bDetached = TRUE;
+	m_Args.Detached = crb_On;
 	
 	CConEmuChild::ProcessVConClosed(mp_VCon);
 }

@@ -516,7 +516,7 @@ class CRealConsole
 		LPCWSTR GetCmd(bool bThisOnly = false);
 		LPCWSTR GetStartupDir();
 		wchar_t* CreateCommandLine(bool abForTasks = false);
-		BOOL GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, BOOL* pbRestricted);
+		bool GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, bool* pbRestricted);
 		short GetProgress(int* rpnState/*1-error,2-ind*/, BOOL* rpbNotFromTitle = NULL);
 		bool SetProgress(short nState, short nValue, LPCWSTR pszName = NULL);
 		void UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo);
@@ -641,7 +641,7 @@ class CRealConsole
 
 		// Нить наблюдения за консолью
 		static DWORD WINAPI MonitorThread(LPVOID lpParameter);
-		DWORD MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCreated);
+		DWORD MonitorThreadWorker(bool bDetached, bool& rbChildProcessCreated);
 		static int WorkerExFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep, LPCTSTR szFile, UINT nLine);
 		HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID; BOOL mb_WasForceTerminated;
 		HANDLE mh_MonitorThreadEvent;
@@ -661,7 +661,7 @@ class CRealConsole
 		RConStartArgs m_Args;
 		CmdArg ms_DefTitle;
 		wchar_t ms_ProfilePathTemp[MAX_PATH+1];
-		BOOL mb_WasStartDetached;
+		bool mb_WasStartDetached;
 		wchar_t ms_RootProcessName[MAX_PATH];
 		int mn_RootProcessIcon;
 		// Replace in asCmd some env.vars (!ConEmuBackHWND! and so on)

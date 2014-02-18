@@ -2790,10 +2790,15 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 									{
 										RConStartArgs args;
 										args.pszSpecialCmd = pszCmd; pszCmd = NULL;
+										WARNING("Здесь нужно бы попытаться взять текущую директорию из шелла. Точнее, из консоли НА МОМЕНТ выдачи этой строки.");
 										args.pszStartupDir = mp_RCon->m_Args.pszStartupDir ? lstrdup(mp_RCon->m_Args.pszStartupDir) : NULL;
-										args.bRunAsAdministrator = mp_RCon->m_Args.bRunAsAdministrator;
-										args.bForceUserDialog = mp_RCon->m_Args.bForceUserDialog || mp_RCon->m_Args.bRunAsRestricted || (mp_RCon->m_Args.pszUserName != NULL);
-										args.bBufHeight = TRUE;
+										args.RunAsAdministrator = mp_RCon->m_Args.RunAsAdministrator;
+										args.ForceUserDialog = (
+												(mp_RCon->m_Args.ForceUserDialog == crb_On)
+												|| (mp_RCon->m_Args.RunAsRestricted == crb_On)
+												|| (mp_RCon->m_Args.pszUserName != NULL))
+											? crb_On : crb_Off;
+										args.BufHeight = crb_On;
 										//args.eConfirmation = RConStartArgs::eConfNever;
 
 										gpConEmu->CreateCon(&args);
@@ -4637,7 +4642,7 @@ BOOL CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,
 		if ((nLine >= con.nCreatedBufHeight)
 			|| ((size_t)((nLine + 1) * con.nTextWidth) > con.nConBufCells))
 		{
-			_ASSERTE((nLine<con.nCreatedBufHeight) && (((nLine + 1) * con.nTextWidth) > con.nConBufCells));
+			_ASSERTE((nLine<con.nCreatedBufHeight) && ((size_t)((nLine + 1) * con.nTextWidth) > con.nConBufCells));
 			return FALSE;
 		}
 

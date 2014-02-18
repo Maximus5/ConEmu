@@ -224,7 +224,7 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 		args->ProcessNewConArg();
 	}
 
-	if (args->bForceUserDialog)
+	if (args->ForceUserDialog == crb_On)
 	{
 		_ASSERTE(args->aRecreate!=cra_RecreateTab);
 		args->aRecreate = cra_CreateTab;
@@ -3089,8 +3089,8 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 	if (!bFound)
 	{
 		RConStartArgs* pArgs = new RConStartArgs;
-		pArgs->bDetached = TRUE;
-		pArgs->bBackgroundTab = pStartStop->bRunInBackgroundTab;
+		pArgs->Detached = crb_On;
+		pArgs->BackgroundTab = pStartStop->bRunInBackgroundTab ? crb_On : crb_Undefined;
 		_ASSERTE(pStartStop->sCmdLine[0]!=0);
 		pArgs->pszSpecialCmd = lstrdup(pStartStop->sCmdLine);
 
@@ -3498,7 +3498,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 	CVirtualConsole* pVCon = NULL;
 
 	// When no command specified - choose default one. Now!
-	if (!args->bDetached && (!args->pszSpecialCmd || !*args->pszSpecialCmd))
+	if ((args->Detached != crb_On) && (!args->pszSpecialCmd || !*args->pszSpecialCmd))
 	{
 		_ASSERTE(gpConEmu->mn_StartupFinished == CConEmuMain::ss_Started);
 		_ASSERTE(args->pszSpecialCmd==NULL);
@@ -3544,14 +3544,14 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 	if (gpConEmu->mp_Inside && gpConEmu->mp_Inside->m_InsideIntegration && gpConEmu->mp_Inside->mb_InsideIntegrationShift)
 	{
 		gpConEmu->mp_Inside->mb_InsideIntegrationShift = false;
-		args->bRunAsAdministrator = true;
+		args->RunAsAdministrator = crb_On;
 	}
 
 	//wchar_t* pszScript = NULL; //, szScript[MAX_PATH];
 
 	_ASSERTE(args->pszSpecialCmd!=NULL);
 
-	if (!args->bDetached
+	if ((args->Detached != crb_On)
 		&& args->pszSpecialCmd
 		&& (*args->pszSpecialCmd == CmdFilePrefix
 			|| *args->pszSpecialCmd == DropLnkPrefix
@@ -3569,7 +3569,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 			return NULL;
 
 		// GO
-		pVCon = gpConEmu->CreateConGroup(pszDataW, args->bRunAsAdministrator, NULL/*ignored when 'args' specified*/, args);
+		pVCon = gpConEmu->CreateConGroup(pszDataW, (args->RunAsAdministrator == crb_On), NULL/*ignored when 'args' specified*/, args);
 
 		SafeFree(pszDataW);
 		MCHKHEAP;
@@ -3602,7 +3602,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 			gb_CreatingActive = false;
 
 			// 130826 - "-new_console:sVb" - "b" was ignored!
-			BOOL lbInBackground = args->bBackgroundTab && (pOldActive != NULL); // && !args->eSplit;
+			BOOL lbInBackground = (args->BackgroundTab == crb_On) && (pOldActive != NULL); // && !args->eSplit;
 			// 131106 - "cmd -new_console:bsV" fails, split was left invisible
 			BOOL lbShowSplit = (args->eSplit != RConStartArgs::eSplitNone);
 
@@ -4769,7 +4769,7 @@ DWORD CVConGroup::GetFarPID(BOOL abPluginRequired/*=FALSE*/)
 // Чтобы при создании ПЕРВОЙ консоли на экране сразу можно было что-то нарисовать
 void CVConGroup::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args)
 {
-	if (!gp_VActive || (gb_CreatingActive && !args->bBackgroundTab))
+	if (!gp_VActive || (gb_CreatingActive && (args->BackgroundTab != crb_On)))
 	{
 		gp_VActive = apVCon;
 

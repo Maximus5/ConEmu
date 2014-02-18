@@ -490,7 +490,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 
 				// Task pre-options, for example ">*cmd"
 				con.pszSpecialCmd = lstrdup(gpConEmu->ParseScriptLineOptions(itm.pszCmd, &lbRunAdmin, &lbSetActive));
-				con.bRunAsAdministrator = lbRunAdmin;
+				con.RunAsAdministrator = lbRunAdmin ? crb_On : crb_Off;
 
 				// May be directory was set in task properties?
 				pGrp->ParseGuiArgs(&con.pszStartupDir, NULL);
@@ -652,7 +652,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 			}
 			else
 			{
-				con.bRunAsAdministrator = bRunAs; // May be set in style ">*powershell"
+				con.RunAsAdministrator = bRunAs ? crb_On : crb_Off; // May be set in style ">*powershell"
 
 				// May be directory was set in task properties?
 				pGrp->ParseGuiArgs(&con.pszStartupDir, NULL);
