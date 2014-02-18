@@ -69,10 +69,10 @@ struct RConStartArgs
 
 	RConBoolArg     OverwriteMode;      // -new_console:w - enable "Overwrite" mode in console prompt
 
-	UINT     nPTY;                // -new_console:p[N] - 1 enable PTY, 2 - disable PTY (work as plain console), 0 - don't change
+	UINT     		nPTY;               // -new_console:p[N] - 1 enable PTY, 2 - disable PTY (work as plain console), 0 - don't change
 	
 	RConBoolArg     BufHeight;          // -new_console:h<lines>
-	UINT     nBufHeight;          //
+	UINT     		nBufHeight;         //
 
 	RConBoolArg     LongOutputDisable;  // -new_console:o
 	RConBoolArg     InjectsDisable;     // -new_console:i
