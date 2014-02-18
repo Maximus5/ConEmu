@@ -5435,7 +5435,7 @@ void CRealBuffer::FindPanels()
 		{
 			lbIsMenu = TRUE;
 
-			for(int i=0; i<con.nTextWidth; i++)
+			for (int i=0; i<con.nTextWidth; i++)
 			{
 				if (con.pConChar[i]==ucBoxDblHorz || con.pConChar[i]==ucBoxDblDownRight || con.pConChar[i]==ucBoxDblDownLeft)
 				{
@@ -5470,8 +5470,9 @@ void CRealBuffer::FindPanels()
 		                        || (con.pConChar[0] == L'P' && (con.pConAttr[0] & 0xFF) == 0x2F) // символ воспроизведения макроса
 		                    );
 
-		BOOL bFarShowColNames = TRUE;
-		BOOL bFarShowStatus = TRUE;
+		bool bFarShowColNames = true;
+		bool bFarShowSortLetter = true;
+		bool bFarShowStatus = true;
 		const CEFAR_INFO_MAPPING *pFar = NULL;
 		if (mp_RCon->m_FarInfo.cbSize)
 		{
@@ -5479,30 +5480,35 @@ void CRealBuffer::FindPanels()
 			if (pFar)
 			{
 				if ((pFar->FarPanelSettings.ShowColumnTitles) == 0) //-V112
-					bFarShowColNames = FALSE;
+					bFarShowColNames = false;
+				if ((pFar->FarPanelSettings.ShowSortModeLetter) == 0)
+					bFarShowSortLetter = false;
 				if ((pFar->FarPanelSettings.ShowStatusLine) == 0)
-					bFarShowStatus = FALSE;
+					bFarShowStatus = false;
 			}
 		}
 
-		// из-за глюков индикации FAR2 пока вместо '[' - любой символ
-		//if (( ((bFirstCharOk || con.pConChar[nIdx] == L'[') && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
-		if ((
-		            ((bFirstCharOk || con.pConChar[nIdx] != ucBoxDblDownRight)
+		// Проверяем левую панель
+		bool bContinue = false;
+		if (con.pConChar[nIdx+con.nTextWidth] == ucBoxDblVert) // двойная рамка продолжается вниз
+		{
+			if ((bFirstCharOk || con.pConChar[nIdx] != ucBoxDblDownRight)
 		             && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
-		            ||
-		            ((bFirstCharOk || con.pConChar[nIdx] == ucBoxDblDownRight)
-		             && (((con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == L' ') && bFarShowColNames)
+				bContinue = true;
+			else if (((bFirstCharOk || con.pConChar[nIdx] == ucBoxDblDownRight)
+		             && (((con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == L' ') && (bFarShowColNames || !bFarShowSortLetter))
 		                 || con.pConChar[nIdx+1] == ucBoxSinglDownDblHorz // доп.окон нет, только рамка
 						 || con.pConChar[nIdx+1] == ucBoxDblDownDblHorz
 		                 || (con.pConChar[nIdx+1] == L'[' && con.pConChar[nIdx+2] == ucLeftScroll) // ScreenGadgets, default
 						 || (!bFarShowColNames && !(con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == L' ')
 							&& con.pConChar[nIdx+1] != ucBoxSinglDownDblHorz && con.pConChar[nIdx+1] != ucBoxDblDownDblHorz)
-		                ))
-		        )
-		        && con.pConChar[nIdx+con.nTextWidth] == ucBoxDblVert) // двойная рамка продолжается вниз
+		                )))
+				bContinue = true;
+		}
+
+		if (bContinue)
 		{
-			for(int i=2; !bLeftPanel && i<con.nTextWidth; i++)
+			for (int i=2; !bLeftPanel && i<con.nTextWidth; i++)
 			{
 				// Найти правый край левой панели
 				if (con.pConChar[nIdx+i] == ucBoxDblDownLeft
