@@ -300,7 +300,7 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /
 		lstrcpy(this->szUserPassword, args->szUserPassword);
 		this->UseEmptyPassword = args->UseEmptyPassword;
 		//this->pszUserProfile = args->pszUserProfile ? lstrdup(args->pszUserProfile) : NULL;
-		
+
 		//SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
 
 		//this->pszUserPassword = lstrdup(args->pszUserPassword ? args->pszUserPassword : L"");
@@ -441,7 +441,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 		wcscat_c(szAdd, L"a");
 	else if (RunAsRestricted == crb_On)
 		wcscat_c(szAdd, L"r");
-	
+
 	if ((ForceUserDialog == crb_On) && !(pszUserName && *pszUserName))
 		wcscat_c(szAdd, L"u");
 
@@ -455,7 +455,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 
 	if (ForceInherit == crb_On)
 		wcscat_c(szAdd, L"I");
-	
+
 	if (eConfirmation == eConfAlways)
 		wcscat_c(szAdd, L"c");
 	else if (eConfirmation == eConfNever)
@@ -525,7 +525,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 				msprintf(szCat, countof(szCat), (NewConsole == crb_On) ? L" \"-new_console:%c:" : L" \"-cur_console:%c:", p->cOpt);
 			else
 				msprintf(szCat, countof(szCat), (NewConsole == crb_On) ? L" -new_console:%c:" : L" -cur_console:%c:", p->cOpt);
-			
+
 			_wcscat_c(pszFull, cchMaxLen, szCat);
 
 			if (p->bEscape)
@@ -725,7 +725,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			//// По умолчанию, принудительно включить "Press Enter or Esc to close console"
 			//if (!bForceCurConsole)
 			//	eConfirmation = eConfAlways;
-		
+
 			bool lbQuot = (*(pszFind-1) == L'"');
 			const wchar_t* pszEnd = pszFind+nNewConLen;
 			//wchar_t szNewConArg[MAX_PATH+1];
@@ -836,17 +836,17 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						// z - don't use "Default terminal" feature
 						NoDefaultTerm = crb_On;
 						break;
-						
+
 					case L'a':
 						// a - RunAs shell verb (as admin on Vista+, login/password in WinXP-)
 						RunAsAdministrator = crb_On;
 						break;
-						
+
 					case L'r':
 						// r - run as restricted user
 						RunAsRestricted = crb_On;
 						break;
-						
+
 					case L'o':
 						// o - disable "Long output" for next command (Far Manager)
 						LongOutputDisable = crb_On;
@@ -908,17 +908,17 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							}
 						} // L'h':
 						break;
-						
+
 					case L'n':
 						// n - отключить "Press Enter or Esc to close console"
 						eConfirmation = eConfNever;
 						break;
-						
+
 					case L'c':
 						// c - принудительно включить "Press Enter or Esc to close console"
 						eConfirmation = eConfAlways;
 						break;
-						
+
 					case L'x':
 						// x - Force using dosbox for .bat files
 						ForceDosBox = crb_On;
@@ -928,7 +928,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						// I - tell GuiMacro to execute new command inheriting active process state. This is only usage ATM.
 						ForceInherit = crb_On;
 						break;
-						
+
 					// "Long" code blocks below: 'd', 'u', 's' and so on (in future)
 
 					case L's':
@@ -1164,7 +1164,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							SafeFree(lpszTemp);
 						} // L't':
 						break;
-						
+
 					}
 				}
 			}
