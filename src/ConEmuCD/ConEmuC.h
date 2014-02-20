@@ -136,7 +136,7 @@ extern BOOL    gbForceHideConWnd;
 extern DWORD   gdwMainThreadId;
 //int       gnBufferHeight = 0;
 extern wchar_t* gpszRunCmd;
-extern BOOL    gbRunInBackgroundTab;
+extern bool    gbRunInBackgroundTab;
 extern DWORD   gnImageSubsystem;
 //HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
 extern HANDLE ghHeap; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);

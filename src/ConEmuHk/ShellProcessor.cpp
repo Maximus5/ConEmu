@@ -990,7 +990,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
 		nCchSize += 128;
 	}
-	if (args.bInjectsDisable)
+	if (args.InjectsDisable == crb_On)
 	{
 		// добавить " /NOINJECT"
 		nCchSize += 12;
@@ -1048,7 +1048,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	}
 
 	// Don't add when gbPrepareDefaultTerminal - we are calling "ConEmu.exe", not "ConEmuC.exe"
-	if (args.bInjectsDisable && !gbPrepareDefaultTerminal)
+	if ((args.InjectsDisable == crb_On) && !gbPrepareDefaultTerminal)
 	{
 		// добавить " /NOINJECT"
 		_wcscat_c((*psParam), nCchSize, L" /NOINJECT");
@@ -1092,7 +1092,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		}
 		else
 		{
-			if (args.bForceNewWindow)
+			if (args.ForceNewWindow == crb_On)
 				_wcscat_c((*psParam), nCchSize, L" /nosingle /cmd ");
 			else
 				_wcscat_c((*psParam), nCchSize, L" /single /cmd ");
@@ -1837,7 +1837,7 @@ int CShellProc::PrepareExecuteParms(
 		m_Args.pszSpecialCmd = lstrdup(asParam);
 		if (m_Args.ProcessNewConArg() > 0)
 		{
-			if (m_Args.bNewConsole)
+			if (m_Args.NewConsole == crb_On)
 			{
 				bNewConsoleArg = true;
 			}
@@ -1846,7 +1846,7 @@ int CShellProc::PrepareExecuteParms(
 				// А вот "-cur_console" нужно обрабатывать _здесь_
 				bCurConsoleArg = true;
 
-				if (m_Args.bForceDosBox && m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
+				if ((m_Args.ForceDosBox == crb_On) && m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
 				{
 					mn_ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
 					mn_ImageBits = 16;
@@ -1854,7 +1854,7 @@ int CShellProc::PrepareExecuteParms(
 					lbGuiApp = FALSE;
 				}
 
-				if (m_Args.bLongOutputDisable)
+				if (m_Args.LongOutputDisable == crb_On)
 				{
 					bLongConsoleOutput = FALSE;
 				}
@@ -1986,7 +1986,7 @@ int CShellProc::PrepareExecuteParms(
 	if (gbPrepareDefaultTerminal)
 	{
 		// set up default terminal
-		bGoChangeParm = (!m_Args.bNoDefaultTerm && (bVsNetHostRequested || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
+		bGoChangeParm = ((m_Args.NoDefaultTerm != crb_On) && (bVsNetHostRequested || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
 	}
 	else
 	{
@@ -1996,7 +1996,7 @@ int CShellProc::PrepareExecuteParms(
 			|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
 				&& (bNewConsoleArg
 					|| (bLongConsoleOutput && (aCmd == eShellExecute))
-					|| (bCurConsoleArg && !m_Args.bLongOutputDisable)
+					|| (bCurConsoleArg && (m_Args.LongOutputDisable != crb_On))
 					#ifdef _DEBUG
 					|| lbAlwaysAddConEmuC
 					#endif
@@ -2043,7 +2043,7 @@ int CShellProc::PrepareExecuteParms(
 		{
 			// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
 			// И если просили не ставить хуки (-new_console:i) - тоже
-			mb_NeedInjects = (mn_ImageBits != 16) && !m_Args.bInjectsDisable;
+			mb_NeedInjects = (mn_ImageBits != 16) && (m_Args.InjectsDisable != crb_On);
 		}
 		else
 		{
@@ -2101,7 +2101,7 @@ int CShellProc::PrepareExecuteParms(
 		// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
 		// И если просили не ставить хуки (-new_console:i) - тоже
 		mb_NeedInjects = (aCmd == eCreateProcess) && (mn_ImageBits != 16)
-			&& !m_Args.bInjectsDisable && !gbPrepareDefaultTerminal
+			&& (m_Args.InjectsDisable != crb_On) && !gbPrepareDefaultTerminal
 			&& !bDetachedOrHidden;
 
 		// Параметр -cur_console / -new_console нужно вырезать
@@ -2135,7 +2135,7 @@ wrap:
 			m_Args.pszSpecialCmd = NULL;
 
 			// Высота буфера!
-			if (m_Args.bBufHeight && gnServerPID)
+			if ((m_Args.BufHeight == crb_On) && gnServerPID)
 			{
 				//CESERVER_REQ *pIn = ;
 				//ExecutePrepareCmd(&In, CECMD_SETSIZESYNC, sizeof(CESERVER_REQ_HDR));

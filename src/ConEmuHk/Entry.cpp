@@ -1993,7 +1993,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	}
 
 
-	if (args.bRunAsAdministrator)
+	if (args.RunAsAdministrator == crb_On)
 	{
 		_ASSERTEX(FALSE && "We can't 'RunAsAdmin' from here, because ConEmu GUI main thread is blocked by call");
 		//wchar_t szCurDir[MAX_PATH+1] = L"";

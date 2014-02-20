@@ -178,7 +178,7 @@ wchar_t* gpszRunCmd = NULL;
 wchar_t* gpszForcedTitle = NULL;
 LPCWSTR gpszCheck4NeedCmd = NULL; // Для отладки
 wchar_t gszComSpec[MAX_PATH+1] = {0};
-BOOL    gbRunInBackgroundTab = FALSE;
+bool    gbRunInBackgroundTab = false;
 BOOL    gbRunViaCmdExe = FALSE;
 DWORD   gnImageSubsystem = 0, gnImageBits = 32;
 //HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
@@ -4932,20 +4932,20 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		SetCurrentDirectory(args.pszStartupDir);
 	}
 	//
-	gbRunInBackgroundTab = args.bBackgroundTab;
-	if (args.bBufHeight)
+	gbRunInBackgroundTab = (args.BackgroundTab == crb_On);
+	if (args.BufHeight == crb_On)
 	{
 		TODO("gcrBufferSize - и ширину буфера");
 		gnBufferHeight = args.nBufHeight;
 		gbParmBufSize = TRUE;
 	}
 	// DosBox?
-	if (args.bForceDosBox)
+	if (args.ForceDosBox == crb_On)
 	{
 		gbUseDosBox = TRUE;
 	}
 	// Overwrite mode in Prompt?
-	if (args.bOverwriteMode)
+	if (args.OverwriteMode == crb_On)
 	{
 		gnConsoleModeFlags |= (ENABLE_INSERT_MODE << 16); // Mask
 		gnConsoleModeFlags &= ~ENABLE_INSERT_MODE; // Turn bit OFF
