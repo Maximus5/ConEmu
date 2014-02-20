@@ -663,21 +663,27 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 	}
 
 	int nChanges = 0;
-	
-	// 120115 - Если первый аргумент - "ConEmu.exe" или "ConEmu64.exe" - не обрабатывать "-cur_console" и "-new_console"
+
+	// 140219 - Остановить обработку, если встретим любой из: ConEmu[.exe], ConEmu64[.exe], ConEmuC[.exe], ConEmuC64[.exe]
+	LPCWSTR pszStopAt = NULL;
 	{
 		LPCWSTR pszTemp = pszSpecialCmd;
+		LPCWSTR pszSave = pszSpecialCmd;
+		LPCWSTR pszName;
 		CmdArg szExe;
-		if (0 == NextArg(&pszTemp, szExe))
+		LPCWSTR pszWords[] = {L"ConEmu", L"ConEmu.exe", L"ConEmu64", L"ConEmu64.exe", L"ConEmuC", L"ConEmuC.exe", L"ConEmuC64", L"ConEmuC64.exe", L"ConEmuPortable.exe", L"ConEmuPortable", NULL};
+		while (!pszStopAt && (0 == NextArg(&pszTemp, szExe)))
 		{
-			pszTemp = PointToName(szExe);
-			if (lstrcmpi(pszTemp, L"ConEmu.exe") == 0
-				|| lstrcmpi(pszTemp, L"ConEmu") == 0
-				|| lstrcmpi(pszTemp, L"ConEmu64.exe") == 0
-				|| lstrcmpi(pszTemp, L"ConEmu64") == 0)
+			pszName = PointToName(szExe);
+			for (size_t i = 0; pszWords[i]; i++)
 			{
-				return 0;
+				if (lstrcmpi(pszName, pszWords[i]) == 0)
+				{
+					pszStopAt = pszSave;
+					break;
+				}
 			}
+			pszSave = pszTemp;
 		}
 	}
 
@@ -697,24 +703,56 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 	LPCWSTR pszCurCon = L"-cur_console";
 	int nNewConLen = lstrlen(pszNewCon);
 	_ASSERTE(lstrlen(pszCurCon)==nNewConLen);
-	bool bStop = false;
 
 	wchar_t* pszFrom = pszSpecialCmd;
 
+	bool bStop = false;
 	while (!bStop)
 	{
-		wchar_t* pszFindNew = wcsstr(pszFrom, pszNewCon);
-		wchar_t* pszFind = pszFindNew ? pszFindNew : wcsstr(pszFrom, pszCurCon);
-		if (pszFindNew)
-			NewConsole = crb_On;
-		else if (!pszFind)
+		wchar_t* pszSwitch = wcschr(pszFrom, L'-');
+		if (!pszSwitch)
+			break;
+		// Pre-validation
+		if (((pszSwitch[1] != L'n') && (pszSwitch[1] != L'c')) // -new_... or -cur_...
+			|| (((pszSwitch != /* > */ pszFrom) // If it is started from pszFrom - no need to check previous symbols
+				&& (*(pszSwitch-1) != L'"') || (((pszSwitch-2) >= pszFrom) && (*(pszSwitch-2) == L'\\'))) // Found: \"-new...
+				&& (*(pszSwitch-1) != L' '))) // Prev symbol was space
+		{
+			// НЕ наш аргумент
+			pszSwitch = wcschr(pszSwitch+1, L' ');
+			if (!pszSwitch)
+				break;
+			pszFrom = pszSwitch;
+			continue;
+		}
+
+		wchar_t* pszFindNew = NULL;
+		wchar_t* pszFind = NULL;
+		wchar_t szTest[12]; lstrcpyn(szTest, pszSwitch+1, countof(szTest));
+
+		if (lstrcmp(szTest, L"new_console") == 0)
+			pszFindNew = pszFind = pszSwitch;
+		else if (lstrcmp(szTest, L"cur_console") == 0)
+			pszFind = pszSwitch;
+		else
+		{
+			// НЕ наш аргумент
+			pszSwitch = wcschr(pszSwitch+1, L' ');
+			if (!pszSwitch)
+				break;
+			pszFrom = pszSwitch;
+			continue;
+		}
+
+		if (!pszFind)
+			break;
+		if (pszStopAt && (pszFind >= pszStopAt))
 			break;
 
 		// Проверка валидности
 		_ASSERTE(pszFind >= pszSpecialCmd);
-		if (!(((pszFind == pszFrom) || (*(pszFind-1) == L'"') || (*(pszFind-1) == L' ')) // начало аргумента
-			&& (pszFind[nNewConLen] == L' ' || pszFind[nNewConLen] == L':' 
-				|| pszFind[nNewConLen] == L'"' || pszFind[nNewConLen] == 0)))
+		if ((pszFind[nNewConLen] != L' ') && (pszFind[nNewConLen] != L':')
+			&& (pszFind[nNewConLen] != L'"') && (pszFind[nNewConLen] != 0))
 		{
 			// НЕ наш аргумент
 			pszFrom = pszFind+nNewConLen;
