@@ -2626,6 +2626,10 @@ void PatchGuiMessage(bool bReceived, HWND& hWnd, UINT& Msg, WPARAM& wParam, LPAR
 			}
 		}
 		break;
+	case WM_DESTROY:
+		if (hWnd == ghAttachGuiClient)
+			break;
+		break;
 	}
 }
 
