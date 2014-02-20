@@ -768,6 +768,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			//	eConfirmation = eConfAlways;
 
 			bool lbQuot = (*(pszFind-1) == L'"');
+			bool lbWasQuot = lbQuot;
 			const wchar_t* pszEnd = pszFind+nNewConLen;
 			//wchar_t szNewConArg[MAX_PATH+1];
 			if (lbQuot)
@@ -861,7 +862,10 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						break;
 
 					case L':':
-						// Just skip it. Delimiter between switches: -new_console:c:b:a
+						// Just skip ':'. Delimiter between switches: -new_console:c:b:a
+						// Revert stored value to lbQuot. We need to "cut" last double quote in the first two cases
+						// cmd -cur_console:d:"C:\users":t:"My title" "-cur_console:C:C:\cmd.ico" -cur_console:P:"<PowerShell>":a /k ver
+						lbWasQuot = lbQuot;
 						break;
 
 					case L'b':
@@ -1117,8 +1121,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 									}
 									else if (*pS == L'"' && *(pS+1) != L'"')
 									{
+										// Remember, that last processed switch was local-quoted
+										lbWasQuot = true;
+										// This item is local quoted. Example: -new_console:t:"My title"
 										lbLocalQuot = true;
-										pS++; // This item is local quoted. Example: -new_console:t:"My title"
+										pS++;
 									}
 
 									// There is enough room allocated
@@ -1214,7 +1221,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			{
 				// pszEnd должен указывать на конец -new_console[:...] / -cur_console[:...]
 				// и включать обрамляющую кавычку, если он окавычен
-				if (lbQuot)
+				if (lbWasQuot)
 				{
 					if (*pszEnd == L'"' && *(pszEnd-1) != L'"')
 						pszEnd++;
