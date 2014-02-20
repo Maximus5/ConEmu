@@ -229,6 +229,9 @@ RConStartArgs::RConStartArgs()
 	szUserPassword[0] = 0;
 	UseEmptyPassword = crb_Undefined;
 	//hLogonToken = NULL;
+	#if 0
+	hShlwapi = NULL; WcsStrI = NULL;
+	#endif
 }
 
 #ifndef CONEMU_MINIMAL
@@ -364,6 +367,13 @@ RConStartArgs::~RConStartArgs()
 	if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
 
 	//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
+
+	#if 0
+	if (hShlwapi)
+		FreeLibrary(hShlwapi);
+	hShlwapi = NULL;
+	WcsStrI = NULL;
+	#endif
 }
 
 #ifndef CONEMU_MINIMAL
@@ -670,7 +680,16 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			}
 		}
 	}
-	
+
+	#if 0
+	// 140219 - Остановить обработку, если встретим любой из: ConEmu[.exe], ConEmu64[.exe], ConEmuC[.exe], ConEmuC64[.exe]
+	if (!hShlwapi)
+	{
+		hShlwapi = LoadLibrary(L"Shlwapi.dll");
+		WcsStrI = hShlwapi ? (StrStrI_t)GetProcAddress(hShlwapi, "StrStrIW") : NULL;
+	}
+	#endif
+
 
 	// 111211 - здесь может быть передан "-new_console:..."
 	LPCWSTR pszNewCon = L"-new_console";
