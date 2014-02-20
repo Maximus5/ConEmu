@@ -4404,6 +4404,7 @@ bool CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWid
 	}
 	else
 	{
+		WARNING("Похоже для ChildGui - mp_RCon->hGuiWnd - это происходит хронически...");
 		_ASSERTE((HDC)m_DC!=NULL);
 	}
 
