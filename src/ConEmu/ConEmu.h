@@ -581,6 +581,7 @@ class CConEmuMain :
 		UINT mn_MsgDeleteVConMainThread;
 		UINT mn_MsgReqChangeCurPalette;
 		UINT mn_MsgMacroExecSync;
+		UINT mn_MsgActivateVCon;
 
 		void SetRunQueueTimer(bool bSet, UINT uElapse);
 

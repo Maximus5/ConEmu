@@ -765,6 +765,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgDeleteVConMainThread = RegisterMessage("DeleteVConMainThread");
 	mn_MsgReqChangeCurPalette = RegisterMessage("ChangeCurrentPalette");
 	mn_MsgMacroExecSync = RegisterMessage("MacroExecSync");
+	mn_MsgActivateVCon = RegisterMessage("ActivateVCon");
 }
 
 bool CConEmuMain::isMingwMode()
@@ -7035,7 +7036,28 @@ void CConEmuMain::OnActiveConWndStore(HWND hConWnd)
 
 BOOL CConEmuMain::Activate(CVirtualConsole* apVCon)
 {
-	return CVConGroup::Activate(apVCon);
+	BOOL lbRc;
+	if (!isMainThread())
+	{
+		LRESULT lRc;
+		if (apVCon->GuiWnd())
+		{
+			// We can lock, if Activate VCon is called from ChildGui.
+			// That's why - PostMessage instead of SendMessage
+			PostMessage(ghWnd, mn_MsgActivateVCon, 0, (LPARAM)apVCon);
+			lRc = 0;
+		}
+		else
+		{
+			lRc = SendMessage(ghWnd, mn_MsgActivateVCon, 0, (LPARAM)apVCon);
+		}
+		lbRc = (lRc == (LRESULT)apVCon);
+	}
+	else
+	{
+		lbRc = CVConGroup::Activate(apVCon);
+	}
+	return lbRc;
 }
 
 void CConEmuMain::MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward)
@@ -18968,6 +18990,18 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					lDelRc = 1;
 				}
 				return lDelRc;
+			}
+			else if (messg == this->mn_MsgActivateVCon)
+			{
+				LRESULT lActivateRc = 0;
+				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
+				if (CVConGroup::isValid(pVCon))
+				{
+					BOOL bActivateRc = this->Activate(pVCon);
+					if (bActivateRc)
+						lActivateRc = (LRESULT)pVCon;
+				}
+				return lActivateRc;
 			}
 
 			//else if (messg == this->mn_MsgCmdStarted || messg == this->mn_MsgCmdStopped) {

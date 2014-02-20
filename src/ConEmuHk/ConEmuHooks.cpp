@@ -2596,7 +2596,7 @@ bool CanSendMessage(HWND& hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT&
 	return true; // разрешено
 }
 
-void PatchGuiMessage(HWND& hWnd, UINT& Msg, WPARAM& wParam, LPARAM& lParam)
+void PatchGuiMessage(bool bReceived, HWND& hWnd, UINT& Msg, WPARAM& wParam, LPARAM& lParam)
 {
 	if (!ghAttachGuiClient)
 		return;
@@ -2607,6 +2607,23 @@ void PatchGuiMessage(HWND& hWnd, UINT& Msg, WPARAM& wParam, LPARAM& lParam)
 		if (wParam == (WPARAM)ghConEmuWnd)
 		{
 			wParam = (WPARAM)ghAttachGuiClient;
+		}
+		break;
+	case WM_LBUTTONDOWN:
+		if (bReceived && ghConEmuWnd && ghConWnd)
+		{
+			HWND hActiveCon = (HWND)GetWindowLongPtr(ghConEmuWnd, GWLP_USERDATA);
+			if (hActiveCon != ghConWnd)
+			{
+				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ACTIVATECON, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_ACTIVATECONSOLE));
+				if (pIn)
+				{
+					pIn->ActivateCon.hConWnd = ghConWnd;
+					CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+					ExecuteFreeResult(pIn);
+					ExecuteFreeResult(pOut);
+				}
+			}
 		}
 		break;
 	}
@@ -2631,7 +2648,7 @@ BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		return TRUE; // Обманем, это сообщение запрещено посылать в ConEmuDC
 
 	if (ghAttachGuiClient)
-		PatchGuiMessage(hWnd, Msg, wParam, lParam);
+		PatchGuiMessage(false, hWnd, Msg, wParam, lParam);
 
 	if (F(PostMessageA))
 		lRc = F(PostMessageA)(hWnd, Msg, wParam, lParam);
@@ -2649,7 +2666,7 @@ BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		return TRUE; // Обманем, это сообщение запрещено посылать в ConEmuDC
 
 	if (ghAttachGuiClient)
-		PatchGuiMessage(hWnd, Msg, wParam, lParam);
+		PatchGuiMessage(false, hWnd, Msg, wParam, lParam);
 
 	if (F(PostMessageW))
 		lRc = F(PostMessageW)(hWnd, Msg, wParam, lParam);
@@ -2666,7 +2683,7 @@ LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		return lRc; // Обманем, это сообщение запрещено посылать в ConEmuDC
 
 	if (ghAttachGuiClient)
-		PatchGuiMessage(hWnd, Msg, wParam, lParam);
+		PatchGuiMessage(false, hWnd, Msg, wParam, lParam);
 
 	if (F(SendMessageA))
 		lRc = F(SendMessageA)(hWnd, Msg, wParam, lParam);
@@ -2683,7 +2700,7 @@ LRESULT WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		return lRc; // Обманем, это сообщение запрещено посылать в ConEmuDC
 
 	if (ghAttachGuiClient)
-		PatchGuiMessage(hWnd, Msg, wParam, lParam);
+		PatchGuiMessage(false, hWnd, Msg, wParam, lParam);
 
 	if (F(SendMessageW))
 		lRc = F(SendMessageW)(hWnd, Msg, wParam, lParam);
@@ -2701,7 +2718,7 @@ BOOL WINAPI OnGetMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgF
 		lRc = F(GetMessageA)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax);
 
 	if (lRc && ghAttachGuiClient)
-		PatchGuiMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
 		
 	return lRc;
 }
@@ -2715,7 +2732,7 @@ BOOL WINAPI OnGetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgF
 		lRc = F(GetMessageW)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax);
 
 	if (lRc && ghAttachGuiClient)
-		PatchGuiMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
 	
 	_ASSERTRESULT(TRUE);
 	return lRc;
@@ -2730,7 +2747,7 @@ BOOL WINAPI OnPeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsg
 		lRc = F(PeekMessageA)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
 
 	if (lRc && ghAttachGuiClient)
-		PatchGuiMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
 		
 	return lRc;
 }
@@ -2744,7 +2761,7 @@ BOOL WINAPI OnPeekMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsg
 		lRc = F(PeekMessageW)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
 
 	if (lRc && ghAttachGuiClient)
-		PatchGuiMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
 		
 	return lRc;
 }
