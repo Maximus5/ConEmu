@@ -12,6 +12,17 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.02.20
+[*] Issue 1477: Fix Far panels detection (No column titles and No sort letter).
+[*] Many changes within "-new_console" and "-cur_console" switches processor.
+    * Allow multiple quoted switches in one -new_console:d:"C:\My folder":t:"My title"
+    * Simple switches may be separated too: -new_console:c:b:a
+    * Issue 1354: Switches will not be processed AFTER ConEmu's executables, read more in [NewConsole#Exclusions wiki]
+    * Internal refactoring (allow ‘concatenate’ or ‘apply’ them correctly) and unit tests.
+[*] Issue 1478: Allow !ChildGui activation with LClick.
+[*] Some internal changes.
+
+
 2014.02.16
 [%] Fix crash after resizing ConEmu window in some cases.
 
