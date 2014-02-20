@@ -759,6 +759,9 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 		}
 		else
 		{
+			if (pszFindNew)
+				NewConsole = crb_On;
+
 			// -- не будем пока, мешает. например, при запуске задач
 			//// По умолчанию, принудительно включить "Press Enter or Esc to close console"
 			//if (!bForceCurConsole)
