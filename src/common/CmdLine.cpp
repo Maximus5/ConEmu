@@ -82,6 +82,7 @@ void CmdArg::Empty()
 		*ms_Arg = 0;
 
 	mn_TokenNo = 0;
+	mn_CmdCall = cc_Undefined;
 	mpsz_Dequoted = NULL;
 	#ifdef _DEBUG
 	ms_LastTokenEnd = NULL;
@@ -123,6 +124,7 @@ void CmdArg::GetPosFrom(const CmdArg& arg)
 {
 	mpsz_Dequoted = arg.mpsz_Dequoted;
 	mn_TokenNo = arg.mn_TokenNo;
+	mn_CmdCall = arg.mn_CmdCall;
 	#ifdef _DEBUG
 	ms_LastTokenEnd = arg.ms_LastTokenEnd;
 	lstrcpyn(ms_LastTokenSave, arg.ms_LastTokenSave, countof(ms_LastTokenSave));
@@ -132,12 +134,27 @@ void CmdArg::GetPosFrom(const CmdArg& arg)
 // Function checks, if we need drop first and last quotation marks
 // Example: ""7z.exe" /?"
 // Using cmd.exe rules
-bool IsNeedDequote(LPCWSTR asCmdLine, LPCWSTR* rsEndQuote/*=NULL*/)
+bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=NULL*/)
 {
 	if (rsEndQuote)
 		*rsEndQuote = NULL;
 
-	if (!asCmdLine || (asCmdLine[0] != L'"') || (asCmdLine[1] != L'"'))
+	if (!asCmdLine)
+		return false;
+
+	bool bDeQu = false;
+	if (asCmdLine[0] == L'"')
+	{
+		bDeQu = (asCmdLine[1] == L'"');
+		// Всегда - нельзя. Иначе парсинг строки запуска некорректно идет
+		// L"\"C:\\ConEmu\\ConEmuC64.exe\"  /PARENTFARPID=1 /C \"C:\\GIT\\cmdw\\ad.cmd CE12.sln & ci -m \"Solution debug build properties\"\""
+		if (!bDeQu && abFromCmdCK)
+		{
+			size_t nLen = lstrlen(asCmdLine);
+			bDeQu = ((asCmdLine[nLen-1] == L'"') && (asCmdLine[nLen-2] == L'"'));
+		}
+	}
+	if (!bDeQu)
 		return false;
 
 	// Don't dequote?
@@ -199,10 +216,13 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 
 	// Remote surrounding quotes, in certain cases
 	// Example: ""7z.exe" /?"
-	if (rsArg.mn_TokenNo == 0)
+	// Example: "C:\Windows\system32\cmd.exe" /C ""C:\Python27\python.EXE""
+	if ((rsArg.mn_TokenNo == 0) || (rsArg.mn_CmdCall == CmdArg::cc_CmdCK))
 	{
-		if (IsNeedDequote(psCmdLine, &rsArg.mpsz_Dequoted))
+		if (IsNeedDequote(psCmdLine, (rsArg.mn_CmdCall == CmdArg::cc_CmdCK), &rsArg.mpsz_Dequoted))
 			psCmdLine++;
+		if (rsArg.mn_CmdCall == CmdArg::cc_CmdCK)
+			rsArg.mn_CmdCall = CmdArg::cc_CmdCommand;
 	}
 
 	size_t nArgLen = 0;
@@ -214,6 +234,13 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 		lbQMode = true;
 		psCmdLine++;
 		pch = wcschr(psCmdLine, L'"');
+		if (pch && (pch > psCmdLine))
+		{
+			// To be correctly parsed something like this:
+			// reg.exe add "HKCU\command" /ve /t REG_EXPAND_SZ /d "\"C:\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f
+			while (pch && (*(pch-1) == L'\\'))
+				pch = wcschr(pch+1, L'"');
+		}
 
 		if (!pch) return CERR_CMDLINE;
 
@@ -263,6 +290,38 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 	rsArg.ms_LastTokenEnd = psCmdLine;
 	lstrcpyn(rsArg.ms_LastTokenSave, psCmdLine, countof(rsArg.ms_LastTokenSave));
 	#endif
+
+	switch (rsArg.mn_CmdCall)
+	{
+	case CmdArg::cc_Undefined:
+		// Если это однозначно "ключ" - то на имя файла не проверяем
+		if (*rsArg.ms_Arg == L'/' || *rsArg.ms_Arg == L'-')
+		{
+			// Это для парсинга (чтобы ассертов не было) параметров из ShellExecute (там cmd.exe указывается в другом аргументе)
+			if ((rsArg.mn_TokenNo == 1) && (lstrcmpi(rsArg.ms_Arg, L"/C") == 0 || lstrcmpi(rsArg.ms_Arg, L"/K") == 0))
+				rsArg.mn_CmdCall = CmdArg::cc_CmdCK;
+		}
+		else
+		{
+			pch = PointToName(rsArg.ms_Arg);
+			if (pch)
+			{
+				if ((lstrcmpi(pch, L"cmd") == 0 || lstrcmpi(pch, L"cmd.exe") == 0)
+					|| (lstrcmpi(pch, L"ConEmuC") == 0 || lstrcmpi(pch, L"ConEmuC.exe") == 0)
+					|| (lstrcmpi(pch, L"ConEmuC64") == 0 || lstrcmpi(pch, L"ConEmuC64.exe") == 0))
+				{
+					rsArg.mn_CmdCall = CmdArg::cc_CmdExeFound;
+				}
+			}
+		}
+		break;
+	case CmdArg::cc_CmdExeFound:
+		if (lstrcmpi(rsArg.ms_Arg, L"/C") == 0 || lstrcmpi(rsArg.ms_Arg, L"/K") == 0)
+			rsArg.mn_CmdCall = CmdArg::cc_CmdCK;
+		else if ((rsArg.ms_Arg[0] != L'/') && (rsArg.ms_Arg[0] != L'-'))
+			rsArg.mn_CmdCall = CmdArg::cc_Undefined;
+		break;
+	}
 
 	*asCmdLine = psCmdLine;
 	return 0;

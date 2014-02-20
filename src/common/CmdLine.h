@@ -39,6 +39,10 @@ public:
 	// if 0 - this is must be first call (first token of command line)
 	// so, we need to test for mpsz_Dequoted
 	int mn_TokenNo;
+	// To bee able corretly parse double quotes in commands like
+	// "C:\Windows\system32\cmd.exe" /C ""C:\Python27\python.EXE""
+	// "reg.exe add "HKEY_CLASSES_ROOT\Directory\Background\shell\Command Prompt\command" /ve /t REG_EXPAND_SZ /d "\"D:\Applications\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f"
+	enum { cc_Undefined, cc_CmdExeFound, cc_CmdCK, cc_CmdCommand } mn_CmdCall;
 
 	#ifdef _DEBUG
 	// Debug, для отлова "не сброшенных" вызовов
@@ -63,7 +67,6 @@ public:
 };
 
 int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart=NULL);
-bool IsNeedDequote(LPCWSTR asCmdLine, LPCWSTR* rsEndQuote=NULL);
 
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
