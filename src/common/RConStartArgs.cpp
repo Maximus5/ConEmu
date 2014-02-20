@@ -1233,13 +1233,24 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 				}
 
 				// Откусить лишние пробелы, которые стоят ПЕРЕД -new_console[:...] / -cur_console[:...]
-				while (((pszFind - 1) > pszSpecialCmd)
+				while (((pszFind - 1) >= pszSpecialCmd)
 					&& (*(pszFind-1) == L' ')
-					&& ((*(pszFind-2) == L' ') || (/**pszEnd == L'"' ||*/ *pszEnd == 0 || *pszEnd == L' ')))
+					&& (((pszFind - 1) == pszSpecialCmd) || (*(pszFind-2) == L' ') || (/**pszEnd == L'"' ||*/ *pszEnd == 0 || *pszEnd == L' ')))
 				{
 					pszFind--;
 				}
+				// Откусить лишние пробелы ПОСЛЕ -new_console[:...] / -cur_console[:...] если он стоит в НАЧАЛЕ строки!
+				if (pszFind == pszSpecialCmd)
+				{
+					while (*pszEnd == L' ')
+						pszEnd++;
+				}
 
+				// Здесь нужно подвинуть pszStopAt
+				if (pszStopAt)
+					pszStopAt -= (pszEnd - pszFind);
+
+				// Удалить из строки запуска обработанный ключ
 				wmemmove(pszFind, pszEnd, (lstrlen(pszEnd)+1));
 				nChanges++;
 			}
