@@ -2609,6 +2609,7 @@ void PatchGuiMessage(bool bReceived, HWND& hWnd, UINT& Msg, WPARAM& wParam, LPAR
 			wParam = (WPARAM)ghAttachGuiClient;
 		}
 		break;
+
 	case WM_LBUTTONDOWN:
 		if (bReceived && ghConEmuWnd && ghConWnd)
 		{
@@ -2626,10 +2627,15 @@ void PatchGuiMessage(bool bReceived, HWND& hWnd, UINT& Msg, WPARAM& wParam, LPAR
 			}
 		}
 		break;
+
+	#ifdef _DEBUG
 	case WM_DESTROY:
 		if (hWnd == ghAttachGuiClient)
-			break;
+		{
+			int iDbg = -1;
+		}
 		break;
+	#endif
 	}
 }
 
