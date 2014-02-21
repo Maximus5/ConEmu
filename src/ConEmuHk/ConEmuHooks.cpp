@@ -242,6 +242,15 @@ bool isDefaultTerminalEnabled()
 }
 /* ************ Globals for "Default terminal ************ */
 
+
+/* ************ From Entry.cpp ************ */
+#if defined(__GNUC__)
+extern "C"
+#endif
+BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved);
+/* ************ From Entry.cpp ************ */
+
+
 struct ReadConsoleInfo gReadConsoleInfo = {};
 
 int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
@@ -322,6 +331,13 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow);
 //BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName);
 //BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName);
+BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode);
+BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode);
+
+
+
+
+
 
 extern HANDLE ghSkipSetThreadContextForThread;
 BOOL WINAPI OnSetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext);
@@ -484,6 +500,9 @@ bool InitHooksCommon()
 		{(void*)OnSetConsoleTextAttribute, "SetConsoleTextAttribute", kernel32},
 		{(void*)OnSetConsoleKeyShortcuts, "SetConsoleKeyShortcuts", kernel32},
 		#endif
+		/* ************************ */
+		{(void*)OnTerminateProcess,		"TerminateProcess",		kernel32},
+		{(void*)OnTerminateThread,		"TerminateThread",		kernel32},
 		/* ************************ */
 		{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
 		{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
@@ -1073,6 +1092,39 @@ void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT u
 //				LPWSTR* psFile, LPWSTR* psParam, DWORD& nImageSubsystem, DWORD& nImageBits);
 //wchar_t* str2wcs(const char* psz, UINT anCP);
 //wchar_t* wcs2str(const char* psz, UINT anCP);
+
+// For example, mintty is terminated ‘abnormally’. It calls TerminateProcess instead of ExitProcess.
+BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
+{
+	typedef BOOL (WINAPI* OnTerminateProcess_t)(HANDLE hProcess, UINT uExitCode);
+	ORIGINALFAST(TerminateProcess);
+	BOOL lbRc;
+
+	if (hProcess == GetCurrentProcess())
+	{
+		DllMain(ghOurModule, DLL_PROCESS_DETACH, NULL);
+	}
+
+	lbRc = F(TerminateProcess)(hProcess, uExitCode);
+
+	return lbRc;
+}
+
+BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode)
+{
+	typedef BOOL (WINAPI* OnTerminateThread_t)(HANDLE hThread, UINT dwExitCode);
+	ORIGINALFAST(TerminateThread);
+	BOOL lbRc;
+
+	if (hThread == GetCurrentThread())
+	{
+		DllMain(ghOurModule, DLL_THREAD_DETACH, NULL);
+	}
+
+	lbRc = F(TerminateThread)(hThread, dwExitCode);
+
+	return lbRc;
+}
 
 
 BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)

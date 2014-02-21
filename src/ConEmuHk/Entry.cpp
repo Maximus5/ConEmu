@@ -1805,7 +1805,11 @@ void SendStopped()
 
 		pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
 
-		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd, TRUE/*bAsyncNoResult*/);
+
+		if (ghAttachGuiClient == NULL)
+			pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd, TRUE/*bAsyncNoResult*/);
+		else if (gnGuiPID)
+			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, FALSE/*bAsyncNoResult*/);
 
 		ExecuteFreeResult(pIn); pIn = NULL;
 

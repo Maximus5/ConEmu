@@ -666,6 +666,11 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	{
 		mp_RCon->OnDosAppStartStop((enum StartStopType)nStarted, nPID);
 	}
+	else if (nStarted == sst_AppStop && pIn->StartStop.nSubSystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+	{
+		_ASSERTE(mp_RCon->GuiWnd()!=NULL);
+		mp_RCon->setGuiWnd(NULL);
+	}
 	
 	// Готовим результат к отправке
 
