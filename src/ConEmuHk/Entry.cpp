@@ -354,7 +354,7 @@ void ShowStartedMsgBox(LPCWSTR asLabel, LPCWSTR pszName = NULL)
 			{
 				lstrcpyn(szMsg, pszName, 96);
 			}
-			
+
 			lstrcat(szMsg, asLabel/*L" loaded!"*/);
 
 			wchar_t szTitle[64]; msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
@@ -399,7 +399,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 
 	if (gpConInfo && !abForceRecreate)
 		goto wrap;
-	
+
 	if (!gpConMap || abForceRecreate)
 	{
 		if (!gpConMap)
@@ -411,12 +411,12 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 		}
 		gpConMap->InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
 	}
-	
+
 	if (!gpConInfo || abForceRecreate)
 	{
 		gpConInfo = gpConMap->Open();
 	}
-	
+
 	if (gpConInfo)
 	{
 		if (gpConInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
@@ -424,9 +424,9 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 			gnGuiPID = gpConInfo->nGuiPID;
 			ghConEmuWnd = gpConInfo->hConEmuRoot;
 			_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
-			
+
 			SetConEmuHkWindows(gpConInfo->hConEmuWndDc, gpConInfo->hConEmuWndBack);
-			
+
 			// Проверка. Но если в GUI аттачится существующая консоль - ConEmuHk может загрузиться раньше,
 			// чем создадутся HWND, т.е. GuiPID известен, но HWND еще вообще нету.
 			_ASSERTE(!ghConEmuWnd || ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
@@ -448,7 +448,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 		delete gpConMap;
 		gpConMap = NULL;
 	}
-	
+
 wrap:
 	bAnsi = ((gpConInfo != NULL) && ((gpConInfo->Flags & CECF_ProcessAnsi) != 0));
 	if (abForceRecreate || (bLastAnsi != bAnsi))
@@ -671,7 +671,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	{
 		//_ASSERTEX(FALSE && "settings gbIsBashProcess");
 		gbIsBashProcess = true;
-		
+
 		TODO("Start redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
 		#if 0
 		if (lstrcmpi(pszName, L"isatty.exe") == 0)
@@ -725,12 +725,12 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	{
 		_ASSERTE(gfnLoadLibrary!=0);
 	}
-	
+
 	ghUser32 = GetModuleHandle(user32);
 	if (ghUser32) ghUser32 = LoadLibrary(user32); // если подлинкован - увеличить счетчик
 
 	WARNING("Попробовать не создавать LocalSecurity при старте");
-	
+
 	//#ifndef TESTLINK
 	gpLocalSecurity = LocalSecurity();
 	//gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
@@ -780,7 +780,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 	print_timings(L"GetImageSubsystem");
 
-	
+
 	// Необходимо определить битность и тип (CUI/GUI) процесса, в который нас загрузили
 	gnImageBits = WIN3264TEST(32,64);
 	gnImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
@@ -789,11 +789,11 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	// Проверка чего получилось
 	_ASSERTE(gnImageBits==WIN3264TEST(32,64));
 	_ASSERTE(gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_GUI || gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI);
-	
-	
+
+
 	//BOOL lbGuiWindowAttach = FALSE; // Прицепить к ConEmu гуевую программу (notepad, putty, ...)
 
-	
+
 #ifdef USE_PIPE_SERVER
 	_ASSERTEX(gpHookServer==NULL);
 	// gbPrepareDefaultTerminal turned on in DllMain
@@ -805,12 +805,12 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		{
 			wchar_t szPipeName[128];
 			msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", GetCurrentProcessId());
-			
+
 			gpHookServer->SetMaxCount(3);
 			gpHookServer->SetOverlapped(true);
 			gpHookServer->SetLoopCommands(false);
 			gpHookServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
-			
+
 			if (!gpHookServer->StartPipeServer(szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady))
 			{
 				_ASSERTEX(FALSE); // Ошибка запуска Pipes?
@@ -826,7 +826,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 #endif
 
-	
+
 	// gbPrepareDefaultTerminal turned on in DllMain
 	if (gbPrepareDefaultTerminal)
 	{
@@ -842,7 +842,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		{
 			if (sp->LoadSrvMapping())
 			{
-			
+
 				wchar_t *szExeName = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
 				//BOOL lbDosBoxAllowed = FALSE;
 				if (!GetModuleFileName(NULL, szExeName, MAX_PATH+1)) szExeName[0] = 0;
@@ -910,7 +910,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 						dwConEmuHwnd = 0;
 				}
 			}
-			
+
 			if (dwConEmuHwnd)
 			{
 				// Предварительное уведомление ConEmu GUI, что запущено GUI приложение
@@ -924,7 +924,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 				wchar_t szGuiPipeName[128];
 				msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", dwConEmuHwnd);
-				
+
 				CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 10000, NULL);
 
 				free(pIn);
@@ -1030,7 +1030,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//{
 	//	gbHooksWasSet = FALSE;
 	//}
-	
+
 	//delete sp;
 
 	if (gbIsVimProcess)
@@ -1046,7 +1046,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	*/
 
 	SafeFree(szModule);
-	
+
 	//if (hStartedEvent)
 	//	SetEvent(hStartedEvent);
 
@@ -1074,7 +1074,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	print_timings(L"DllStart - done");
 
 	//DLOGEND();
-	
+
 	return 0;
 }
 
@@ -1176,7 +1176,7 @@ void DllStop()
 	#ifdef HOOK_USE_DLLTHREAD
 	DllThreadClose();
 	#endif
-	
+
 	#ifdef _DEBUG
 	wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
 	if (!GetModuleFileName(NULL, szModule, MAX_PATH+1))
@@ -1210,7 +1210,7 @@ void DllStop()
 		DLOGEND();
 	}
 #endif
-	
+
 	#ifdef _DEBUG
 	if (ghGuiClientRetHook)
 	{
@@ -1252,7 +1252,7 @@ void DllStop()
 		gpConMap = NULL;
 		DLOGEND();
 	}
-	
+
 	// CommonShutdown
 	{
 		DLOG0("CommonShutdown",0);
@@ -1262,7 +1262,7 @@ void DllStop()
 		DLOGEND();
 	}
 
-	
+
 	// FinalizeHookedModules
 	{
 		DLOG0("FinalizeHookedModules",0);
@@ -1274,7 +1274,7 @@ void DllStop()
 #ifndef _DEBUG
 	HeapDeinitialize();
 #endif
-	
+
 	#ifdef _DEBUG
 		#ifdef UseDebugExceptionFilter
 			// ?gfnPrevFilter?
@@ -1316,7 +1316,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			HANDLE hProcHeap = GetProcessHeap();
 			#endif
 			HeapInitialize();
-			
+
 			DLOG1("DllMain.LoadStartupEnv",ul_reason_for_call);
 			/* *** DEBUG PURPOSES */
 			gpStartEnv = LoadStartupEnv();
@@ -1414,7 +1414,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			#ifdef _DEBUG
 			gAllowAssertThread = am_Pipe;
 			#endif
-			
+
 			#ifdef _DEBUG
 				#ifdef UseDebugExceptionFilter
 					gfnPrevFilter = SetUnhandledExceptionFilter(HkExceptionFilter);
@@ -1439,7 +1439,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			if (gbPrepareDefaultTerminal)
 				user->setAllowLoadLibrary();
 
-			
+
 			DLOG1_("DllMain.DllStart",ul_reason_for_call);
 			#ifdef HOOK_USE_DLLTHREAD
 			_ASSERTEX(FALSE && "Hooks starting in background thread?");
@@ -1474,13 +1474,13 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			}
 			#endif
 			DLOGEND1();
-			
+
 			user->setAllowLoadLibrary();
 
 			DLOGEND();
 		}
 		break; // DLL_PROCESS_ATTACH
-		
+
 		case DLL_THREAD_ATTACH:
 		{
 			DLOG0("DllMain.DLL_THREAD_ATTACH",ul_reason_for_call);
@@ -1517,7 +1517,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			DLOGEND();
 		}
 		break; // DLL_THREAD_DETACH
-		
+
 		case DLL_PROCESS_DETACH:
 		{
 			DLOG0("DllMain.DLL_PROCESS_DETACH",ul_reason_for_call);
@@ -1773,7 +1773,7 @@ void SendStopped()
 {
 	if (gbNonGuiMode || !gnServerPID)
 		return;
-	
+
 	// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
 	_ASSERTEX(gbSelfIsRootConsoleProcess);
 
@@ -1808,7 +1808,7 @@ void SendStopped()
 		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd, TRUE/*bAsyncNoResult*/);
 
 		ExecuteFreeResult(pIn); pIn = NULL;
-		
+
 		if (pOut)
 		{
 			ExecuteFreeResult(pOut);
@@ -1876,9 +1876,9 @@ void StopPTY()
 	if (gpCEIO_In)
 	{
 		gpCEIO_In->CEIO_Terminate();
-		
+
 		SetStdHandle(STD_INPUT_HANDLE, gpCEIO_In->hStd);
-		
+
 		SafeFree(gpCEIO_In);
 	}
 
@@ -2035,9 +2035,9 @@ HWND WINAPI GetRealConsoleWindow()
 BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
 	WARNING("Собственно, выполнение команд!");
-	
+
 	BOOL lbRc = FALSE, lbFRc;
-	
+
 	switch (pCmd->hdr.nCmd)
 	{
 	case CECMD_ATTACHGUIAPP:
@@ -2234,7 +2234,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 		} // CECMD_DUPLICATE
 		break;
 	}
-	
+
 	// Если (lbRc == FALSE) - в пайп будет отдана "пустышка" ((DWORD)0)
 	return lbRc;
 }
