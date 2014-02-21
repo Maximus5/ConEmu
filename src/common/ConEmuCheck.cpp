@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -258,11 +258,11 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		dwErr = GetLastError();
 
 		// Break if the pipe handle is valid.
-		if (hPipe != INVALID_HANDLE_VALUE)
+		if (hPipe && (hPipe != INVALID_HANDLE_VALUE))
 		{
-			_ASSERTE(hPipe);
 			break; // OK, открыли
 		}
+		_ASSERTE(hPipe);
 
 		#ifdef _DEBUG
 		if (gbPipeDebugBoxes)
@@ -312,12 +312,11 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		// Сделаем так, чтобы хотя бы пару раз он попробовал повторить
 		if ((nTries <= 0) || (nDuration > nOpenPipeTimeout))
 		{
-			//if (pszErr)
-			{
-				msprintf(szErr, countof(szErr), L"%s.%u: CreateFile(%s) failed, code=0x%08X, Timeout",
-				          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
-				_ASSERTEX(FALSE && "Pipe open failed with timeout!");
-			}
+			msprintf(szErr, countof(szErr), L"%s.%u: CreateFile(%s) failed, code=%u%s%s",
+			          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr,
+			          (nTries <= 0) ? L", Tries" : L"", (nDuration > nOpenPipeTimeout) ? L", Duration" : L"");
+			_ASSERTEX(FALSE && "Pipe open failed with timeout!");
+			SetLastError(dwErr);
 			return NULL;
 		}
 		else
@@ -335,14 +334,12 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 
 		// Exit if an error other than ERROR_PIPE_BUSY occurs.
 		// -- if (dwErr != ERROR_PIPE_BUSY) // уже проверено выше
-		{
-			//if (pszErr)
-			{
-				msprintf(szErr, countof(szErr), L"%s.%u: CreateFile(%s) failed, code=0x%08X",
-				          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
-			}
-			return NULL;
-		}
+		msprintf(szErr, countof(szErr), L"%s.%u: CreateFile(%s) failed, code=%u",
+		          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
+		SetLastError(dwErr);
+
+		// Failed!
+		return NULL;
 
 		// Уже сделано выше
 		//// All pipe instances are busy, so wait for 500 ms.
