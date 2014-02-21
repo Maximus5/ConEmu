@@ -703,7 +703,7 @@ void CRealConsole::SyncGui2Window(const RECT rcVConBack)
 			// Странно это, по идее, приложение при закрытии окна должно было сообщить,
 			// что оно закрылось, hGuiWnd больше не валиден...
 			_ASSERTE(IsWindow(hGuiWnd));
-			hGuiWnd = mh_GuiWndFocusStore = NULL;
+			setGuiWnd(NULL);
 			return;
 		}
 
@@ -3072,7 +3072,7 @@ void CRealConsole::ResetVarsOnStart()
 	ZeroStruct(m_ServerClosing);
 
 	hConWnd = NULL;
-	hGuiWnd = mh_GuiWndFocusStore = NULL;
+	setGuiWnd(NULL);
 	mb_GuiExternMode = FALSE;
 	mb_GuiForceConView = false;
 	//mn_GuiApplicationPID = 0;
@@ -4728,7 +4728,7 @@ void CRealConsole::StopSignal()
 
 	if (!mn_InRecreate)
 	{
-		hGuiWnd = mh_GuiWndFocusStore = NULL;
+		setGuiWnd(NULL);
 		//mn_GuiApplicationPID = 0;
 
 		// Чтобы при закрытии не было попытка активировать
@@ -11569,7 +11569,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 
 	if ((hGuiWnd != NULL) && !IsWindow(hGuiWnd))
 	{
-		hGuiWnd = mh_GuiWndFocusStore = NULL; // окно закрылось, открылось другое
+		setGuiWnd(NULL); // окно закрылось, открылось другое
 	}
 
 	if (hGuiWnd != NULL && hGuiWnd != ahGuiWnd)
@@ -11643,7 +11643,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	}
 	// ahGuiWnd может быть на первом этапе, когда ConEmuHk уведомляет - запустился GUI процесс
 	_ASSERTE((hGuiWnd==NULL && ahGuiWnd==NULL) || (ahGuiWnd && IsWindow(ahGuiWnd))); // Проверить, чтобы мусор не пришел...
-	hGuiWnd = ahGuiWnd;
+	setGuiWnd(ahGuiWnd);
 	GuiWndFocusStore();
 	mn_GuiAttachFlags = anFlags;
 	//mn_GuiApplicationPID = anAppPID;
@@ -12839,7 +12839,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 		//SetOtherWindowPos(lhGuiWnd, HWND_NOTOPMOST, rcGui.left, rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top, SWP_SHOWWINDOW);
 
 		// Сбросить переменные, чтобы гуй закрыть не пыталось
-		hGuiWnd = mh_GuiWndFocusStore = NULL;
+		setGuiWnd(NULL);
 		setGuiWndPID(0, NULL);
 		//mb_IsGuiApplication = FALSE;
 
@@ -13130,6 +13130,18 @@ DWORD CRealConsole::GetConsoleMode()
 ExpandTextRangeType CRealConsole::GetLastTextRangeType()
 {
 	return mp_ABuf->GetLastTextRangeType();
+}
+
+void CRealConsole::setGuiWnd(HWND ahGuiWnd)
+{
+	if (ahGuiWnd)
+	{
+		hGuiWnd = ahGuiWnd;
+	}
+	else
+	{
+		hGuiWnd = mh_GuiWndFocusStore = NULL;
+	}
 }
 
 void CRealConsole::setGuiWndPID(DWORD anPID, LPCWSTR asProcessName)

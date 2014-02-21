@@ -278,6 +278,7 @@ class CRealConsole
 		//CESERVER_REQ_CONINFO* pConsoleData;
 		//void CloseMapping();
 		void setGuiWndPID(DWORD anPID, LPCWSTR asProcessName);
+		void setGuiWnd(HWND ahGuiWnd);
 
 	public:
 		HWND    ConWnd();  // HWND RealConsole
