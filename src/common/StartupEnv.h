@@ -37,17 +37,32 @@ typedef BOOL (WINAPI* GetConsoleHistoryInfo_t)(CE_CONSOLE_HISTORY_INFO* lpConsol
 static BOOL CALLBACK LoadStartupEnv_FillMonitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
 	CEStartupEnv* p = (CEStartupEnv*)dwData;
-	if (p->nMonitorsCount >= countof(p->rcMonitor))
+	if (p->nMonitorsCount >= countof(p->Monitors))
 		return FALSE;
 
-	MONITORINFO mi = {sizeof(mi)};
+	MONITORINFOEX mi = {}; mi.cbSize = sizeof(mi);
 	if (GetMonitorInfo(hMonitor, &mi))
 	{
 		size_t i = p->nMonitorsCount++;
-		p->rcMonitor[i] = mi.rcMonitor;
-		p->rcMonitorWork[i] = mi.rcWork;
+		p->Monitors[i].hMon = hMonitor;
+		p->Monitors[i].rcMonitor = mi.rcMonitor;
+		p->Monitors[i].rcWork = mi.rcWork;
+		p->Monitors[i].dwFlags = mi.dwFlags;
+		wcscpy_c(p->Monitors[i].szDevice, mi.szDevice);
 
-		if (p->nMonitorsCount >= countof(p->rcMonitor))
+		HDC hdc = CreateDC(mi.szDevice, mi.szDevice, NULL, NULL);
+		if (hdc)
+		{
+			p->Monitors[i].dpiX = GetDeviceCaps(hdc, LOGPIXELSX);
+			p->Monitors[i].dpiY = GetDeviceCaps(hdc, LOGPIXELSY);
+			DeleteDC(hdc);
+		}
+		else
+		{
+			p->Monitors[i].dpiX = p->Monitors[i].dpiY = -1;
+		}
+
+		if (p->nMonitorsCount >= countof(p->Monitors))
 			return FALSE;
 	}
 

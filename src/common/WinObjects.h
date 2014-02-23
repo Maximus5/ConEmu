@@ -131,7 +131,14 @@ struct CEStartupEnv
 	BOOL    bIsDbcs;
 	UINT    nAnsiCP, nOEMCP;
 	UINT    nMonitorsCount;
-	RECT    rcMonitor[16], rcMonitorWork[16];
+	struct MyMonitorInfo {
+		HMONITOR hMon;
+		RECT  rcMonitor;
+		RECT  rcWork;
+		DWORD dwFlags;
+		int   dpiX, dpiY;
+		TCHAR szDevice[CCHDEVICENAME];
+	} Monitors[16];
 	// HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
 	LPCWSTR pszRegConFonts; // "Index/CP ~t Name ~t Index/CP ..."
 };
@@ -548,7 +555,6 @@ class MFileLog
 		HRESULT  InitFileName(LPCWSTR asName = NULL, DWORD anPID = 0);
 	protected:
 		CRITICAL_SECTION mcs_Lock;
-		static BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
 	public:
 		MFileLog(LPCWSTR asName, LPCWSTR asDir = NULL, DWORD anPID = 0);
 		~MFileLog();

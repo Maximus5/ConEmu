@@ -2888,25 +2888,6 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 	FlushFileBuffers(mh_LogFile);
 #endif
 }
-BOOL MFileLog::MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
-{
-	MFileLog* p = (MFileLog*)dwData;
-	wchar_t szInfo[200];
-
-	MONITORINFO mi = {sizeof(mi)};
-	GetMonitorInfo(hMonitor, &mi);
-
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo))
-		L"  %08X: {%i,%i}-{%i,%i} (%ix%i), Working: {%i,%i}-{%i,%i} (%ix%i)%s",
-		(DWORD)(DWORD_PTR)hMonitor,
-		lprcMonitor->left, lprcMonitor->top, lprcMonitor->right, lprcMonitor->bottom, lprcMonitor->right-lprcMonitor->left, lprcMonitor->bottom-lprcMonitor->top,
-		mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom, mi.rcWork.right-mi.rcWork.left, mi.rcWork.bottom-mi.rcWork.top,
-		(mi.dwFlags & MONITORINFOF_PRIMARY) ? L" <<== Primary" : L"");
-
-	p->LogString(szInfo, false, NULL, true);
-
-	return TRUE;
-}
 void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 {
 	if (!apStartEnv || (apStartEnv->cbSize < sizeof(*apStartEnv)))
@@ -3027,14 +3008,27 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 	int nVRefr = GetDeviceCaps(hdcScreen,VREFRESH);
 	int nShadeCaps = GetDeviceCaps(hdcScreen,SHADEBLENDCAPS);
 	int nDevCaps = GetDeviceCaps(hdcScreen,RASTERCAPS);
+	int nDpiX = GetDeviceCaps(hdcScreen, LOGPIXELSX);
+	int nDpiY = GetDeviceCaps(hdcScreen, LOGPIXELSY);
 	_wsprintf(szSI, SKIPLEN(countof(szSI))
-		L"Display: bpp=%i, planes=%i, align=%i, vrefr=%i, shade=x%08X, rast=x%08X",
-		nBits, nPlanes, nAlignment, nVRefr, nShadeCaps, nDevCaps);
+		L"Display: bpp=%i, planes=%i, align=%i, vrefr=%i, shade=x%08X, rast=x%08X, dpi=%ix%i",
+		nBits, nPlanes, nAlignment, nVRefr, nShadeCaps, nDevCaps, nDpiX, nDpiY);
 	ReleaseDC(NULL, hdcScreen);
 	LogString(szSI, false, NULL, true);
 
 	LogString("Monitors:", false, NULL, true);
-	EnumDisplayMonitors(NULL, NULL, MFileLog::MonitorEnumProc, (LPARAM)this);
+	for (size_t i = 0; i < apStartEnv->nMonitorsCount; i++)
+	{
+		CEStartupEnv::MyMonitorInfo* p = (apStartEnv->Monitors + i);
+		_wsprintf(szSI, SKIPLEN(countof(szSI))
+			L"  %08X: {%i,%i}-{%i,%i} (%ix%i), Working: {%i,%i}-{%i,%i} (%ix%i), dpi: {%i,%i} `%s`%s",
+			(DWORD)(DWORD_PTR)p->hMon,
+			p->rcMonitor.left, p->rcMonitor.top, p->rcMonitor.right, p->rcMonitor.bottom, p->rcMonitor.right-p->rcMonitor.left, p->rcMonitor.bottom-p->rcMonitor.top,
+			p->rcWork.left, p->rcWork.top, p->rcWork.right, p->rcWork.bottom, p->rcWork.right-p->rcWork.left, p->rcWork.bottom-p->rcWork.top,
+			p->dpiX, p->dpiY, p->szDevice,
+			(p->dwFlags & MONITORINFOF_PRIMARY) ? L" <<== Primary" : L"");
+		LogString(szSI, false, NULL, true);
+	}
 
 	LogString("Modules:", false, NULL, true);
 	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
