@@ -105,6 +105,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRANIMATE(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #define DEBUGSTRSESS(s) DEBUGSTR(s)
+#define DEBUGSTRDPI(s) DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -7075,6 +7076,27 @@ LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	DEBUGSTRSESS(szInfo);
 
 	return 0; // Return value ignored
+}
+
+LRESULT CConEmuMain::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT rcSuggested)
+{
+	wchar_t szInfo[100];
+	RECT rc = {}; if (rcSuggested) rc = *rcSuggested;
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"WM_DPICHANGED: dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)\r\n",
+		dpiX, dpiY, rc.left, rc.top, rc.right, rc.bottom, rc.right-rc.left, rc.bottom-rc.top);
+	DEBUGSTRDPI(szInfo);
+	LogString(szInfo, true, false);
+	return 0;
+}
+
+LRESULT CConEmuMain::OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHeight)
+{
+	wchar_t szInfo[100];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"WM_DISPLAYCHANGED: bpp=%u, size={%u,%u}\r\n",
+		bpp, screenWidth, screenHeight);
+	DEBUGSTRDPI(szInfo);
+	LogString(szInfo, true, false);
+	return 0;
 }
 
 void CConEmuMain::OnSizePanels(COORD cr)
@@ -18637,6 +18659,17 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				LogWindowPos(L"WM_SHOWWINDOW.end");
 			}
+		} break;
+
+		case WM_DISPLAYCHANGE:
+		{
+			OnDisplayChanged(LOWORD(wParam), LOWORD(lParam), HIWORD(lParam));
+			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
+		} break;
+		case /*0x02E0*/ WM_DPICHANGED:
+		{
+			OnDpiChanged(LOWORD(wParam), HIWORD(wParam), (LPRECT)lParam);
+			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
 		} break;
 
 		case WM_SIZE:
