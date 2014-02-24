@@ -215,6 +215,7 @@ namespace ConEmuMacro
 		{Paste, {L"Paste"}},
 		{Palette, {L"Palette"}},
 		{Print, {L"Print"}},
+		{Keys, {L"Keys"}},
 		{Progress, {L"Progress"}},
 		{Rename, {L"Rename"}},
 		{Shell, {L"Shell", L"ShellExecute"}},
@@ -1653,6 +1654,67 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	// Но по хорошему, проще всего разрешить что-то типа
 	// Keys("CtrlC","ControlV","ShiftIns")
 
+	if (!apRCon)
+		return lstrdup(L"RConRequired");
+
+	LPWSTR pszKey;
+	int iKeyNo = 0;
+
+	while (p->GetStrArg(iKeyNo++, pszKey))
+	{
+		// Modifiers (for Example RCtrl+Shift+LAlt)
+		DWORD dwControlState = 0, dwScan = 0;
+		int iScanCode = -1;
+		bool  bRight = false;
+		// + the key
+		UINT VK = 0;
+		// Parse modifiers
+		while (pszKey[0] && pszKey[1])
+		{
+			switch (*pszKey)
+			{
+			case L'<':
+				bRight = false;
+				break;
+			case L'>':
+				bRight = true;
+				break;
+			case L'^':
+				dwControlState |= bRight ? RIGHT_CTRL_PRESSED : LEFT_CTRL_PRESSED;
+				bRight = false;
+				break;
+			case L'!':
+				dwControlState |= bRight ? RIGHT_ALT_PRESSED : LEFT_ALT_PRESSED;
+				bRight = false;
+				break;
+			case L'+':
+				dwControlState |= SHIFT_PRESSED;
+				bRight = false;
+				break;
+			default:
+				// Post {pszKey + dwControlState} to console
+				goto DoPost;
+			}
+			if (!pszKey)
+				break;
+			pszKey++;
+		}
+
+	DoPost:
+		VK = ConEmuHotKey::GetVkByKeyName(pszKey, &iScanCode, &dwControlState);
+		switch (VK)
+		{
+		case VK_WHEEL_UP: case VK_WHEEL_DOWN: case VK_WHEEL_LEFT: case VK_WHEEL_RIGHT:
+			return lstrdup(L"NotImplementedYet");
+		}
+		if (VK || (iScanCode != -1))
+			apRCon->PostKeyPress(VK, dwControlState, (pszKey[1] == 0) ? *pszKey : 0, iScanCode);
+		else
+			return lstrdup(L"UnknownKey");
+	}
+
+	return lstrdup(L"OK");
+
 	// Префиксы:
 	//	# - Win
 	//	! - Alt
@@ -1761,8 +1823,6 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	SCnnn Specify for nnn the scan code of a key. Recognizes unusual keys not mentioned above. See Special Keys for details. 
 	VKnn Specify for nn the hexadecimal virtual key code of a key. 
 	*/
-
-	return lstrdup(L"NotImplementedYet");
 }
 
 // Palette([<Cmd>[,"<NewPalette>"]])
