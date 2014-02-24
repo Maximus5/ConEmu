@@ -6909,7 +6909,133 @@ BOOL cmd_GetAliases(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
-BOOL cmd_SetDontClose(CESERVER_REQ& in, CESERVER_REQ** out)
+struct AltServerStartStop
+{
+	bool AltServerChanged; // = false;
+	bool ForceThawAltServer; // = false;
+	bool bPrevFound;
+	DWORD nAltServerWasStarted; // = 0
+	DWORD nAltServerWasStopped; // = 0;
+	DWORD nCurAltServerPID; // = gpSrv->dwAltServerPID;
+	HANDLE hAltServerWasStarted; // = NULL;
+	AltServerInfo info; // = {};
+};
+
+void OnAltServerChanged(int nStep, StartStopType nStarted, DWORD nAltServerPID, CESERVER_REQ_STARTSTOP* pStartStop, AltServerStartStop& AS)
+{
+	if (nStep == 1)
+	{
+		if (nStarted == sst_AltServerStart)
+		{
+			// Перевести нить монитора в режим ожидания завершения AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer
+			AS.nAltServerWasStarted = nAltServerPID;
+			if (pStartStop)
+				AS.hAltServerWasStarted = (HANDLE)(DWORD_PTR)pStartStop->hServerProcessHandle;
+			AS.AltServerChanged = true;
+		}
+		else
+		{
+			AS.bPrevFound = gpSrv->AltServers.Get(nAltServerPID, &AS.info, true/*Remove*/);
+
+			// Сначала проверяем, не текущий ли альт.сервер закрывается
+			if (gpSrv->dwAltServerPID && (nAltServerPID == gpSrv->dwAltServerPID))
+			{
+				// Поскольку текущий сервер завершается - то сразу сбросим PID (его морозить уже не нужно)
+				AS.nAltServerWasStopped = nAltServerPID;
+				gpSrv->dwAltServerPID = 0;
+				// Переключаемся на "старый" (если был)
+				if (AS.bPrevFound && AS.info.nPrevPID)
+				{
+					// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+					_ASSERTE(AS.info.hPrev!=NULL);
+					// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
+					// Активировать альтернативный сервер (повторно), отпустить его нити чтения
+					AS.AltServerChanged = true;
+					AS.nAltServerWasStarted = AS.info.nPrevPID;
+					AS.hAltServerWasStarted = AS.info.hPrev;
+					AS.ForceThawAltServer = true;
+				}
+				else
+				{
+					// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+					_ASSERTE(AS.info.hPrev==NULL);
+					AS.AltServerChanged = true;
+				}
+			}
+			else
+			{
+				// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+				_ASSERTE(((nAltServerPID == gpSrv->dwAltServerPID) || !gpSrv->dwAltServerPID || ((nStarted != sst_AltServerStop) && (nAltServerPID != gpSrv->dwAltServerPID) && !AS.bPrevFound)) && "Expected active alt.server!");
+            }
+		}
+	}
+	else if (nStep == 2)
+	{
+		if (AS.AltServerChanged)
+		{
+			if (AS.nAltServerWasStarted)
+			{
+				AltServerWasStarted(AS.nAltServerWasStarted, AS.hAltServerWasStarted, AS.ForceThawAltServer);
+			}
+			else if (AS.nCurAltServerPID && (nAltServerPID == AS.nCurAltServerPID))
+			{
+				if (gpSrv->hAltServerChanged)
+				{
+					// Чтобы не подраться между потоками - закрывать хэндл только в RefreshThread
+					gpSrv->hCloseAltServer = gpSrv->hAltServer;
+					gpSrv->dwAltServerPID = 0;
+					gpSrv->hAltServer = NULL;
+					// В RefreshThread ожидание хоть и небольшое (100мс), но лучше передернуть
+					SetEvent(gpSrv->hAltServerChanged);
+				}
+				else
+				{
+					gpSrv->dwAltServerPID = 0;
+					SafeCloseHandle(gpSrv->hAltServer);
+					_ASSERTE(gpSrv->hAltServerChanged!=NULL);
+				}
+			}
+
+			if (!ghConEmuWnd || !IsWindow(ghConEmuWnd))
+			{
+				_ASSERTE((ghConEmuWnd==NULL) && "ConEmu GUI was terminated? Invalid ghConEmuWnd");
+			}
+			else
+			{
+				CESERVER_REQ *pGuiIn = NULL, *pGuiOut = NULL;
+				int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
+				pGuiIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP, nSize);
+
+				if (!pGuiIn)
+				{
+					_ASSERTE(pGuiIn!=NULL && "Memory allocation failed");
+				}
+				else
+				{
+					if (pStartStop)
+						pGuiIn->StartStop = *pStartStop;
+					pGuiIn->StartStop.dwPID = AS.nAltServerWasStarted ? AS.nAltServerWasStarted : AS.nAltServerWasStopped;
+					pGuiIn->StartStop.hServerProcessHandle = NULL; // для GUI смысла не имеет
+					pGuiIn->StartStop.nStarted = AS.nAltServerWasStarted ? sst_AltServerStart : sst_AltServerStop;
+					if (pGuiIn->StartStop.nStarted == sst_AltServerStop)
+					{
+						// Если это был последний процесс в консоли, то главный сервер тоже закрывается
+						// Переоткрывать пайпы в ConEmu нельзя
+						pGuiIn->StartStop.bMainServerClosing = gbQuit || (WaitForSingleObject(ghExitQueryEvent,0) == WAIT_OBJECT_0);
+					}
+
+					pGuiOut = ExecuteGuiCmd(ghConWnd, pGuiIn, ghConWnd);
+
+					_ASSERTE(pGuiOut!=NULL && "Can not switch GUI to alt server?"); // успешное выполнение?
+					ExecuteFreeResult(pGuiOut);
+					ExecuteFreeResult(pGuiIn);
+				}
+			}
+		}
+	}
+}
+
+BOOL cmd_FarDetached(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 	
@@ -6917,7 +7043,40 @@ BOOL cmd_SetDontClose(CESERVER_REQ& in, CESERVER_REQ** out)
 	// консоль неожиданно не закрылась...
 	gbAutoDisableConfirmExit = FALSE;
 	gbAlwaysConfirmExit = TRUE;
+
+	MSectionLock CS; CS.Lock(gpSrv->csProc);
+	UINT nPrevCount = gpSrv->nProcessCount;
+	_ASSERTE(in.hdr.nSrcPID!=0);
+	DWORD nPID = in.hdr.nSrcPID;
+	DWORD nPrevAltServerPID = gpSrv->dwAltServerPID;
+
+	BOOL lbChanged = ProcessRemove(in.hdr.nSrcPID, nPrevCount, &CS);
+
+	MSectionLock CsAlt;
+	CsAlt.Lock(gpSrv->csAltSrv, TRUE, 1000);
 	
+	AltServerStartStop AS = {};
+	AS.nCurAltServerPID = gpSrv->dwAltServerPID;
+
+	OnAltServerChanged(1, sst_AltServerStop, nPID, NULL, AS);
+
+	// ***
+	if (lbChanged)
+		ProcessCountChanged(TRUE, nPrevCount, &CS);
+	CS.Unlock();
+	// ***
+
+	// После Unlock-а, зовем функцию
+	if (AS.AltServerChanged)
+	{
+		OnAltServerChanged(2, sst_AltServerStop, in.hdr.nSrcPID, NULL, AS);
+	}
+
+	// Обновить мэппинг
+	UpdateConsoleMapHeader();
+
+	CsAlt.Unlock();
+
 	return lbRc;
 }
 
@@ -7242,12 +7401,16 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 
 
 	// Переменные, чтобы позвать функцию AltServerWasStarted после отпускания CS.Unlock()
+	/*
 	bool AltServerChanged = false;
 	DWORD nAltServerWasStarted = 0, nAltServerWasStopped = 0;
 	DWORD nCurAltServerPID = gpSrv->dwAltServerPID;
 	HANDLE hAltServerWasStarted = NULL;
 	bool ForceThawAltServer = false;
 	AltServerInfo info = {};
+	*/
+	AltServerStartStop AS = {};
+	AS.nCurAltServerPID = gpSrv->dwAltServerPID;
 
 
 	if (in.StartStop.nStarted == sst_AltServerStart)
@@ -7256,11 +7419,8 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 		_ASSERTE(in.StartStop.hServerProcessHandle!=0);
 
-		nAltServerWasStarted = in.StartStop.dwPID;
-		hAltServerWasStarted = (HANDLE)(DWORD_PTR)in.StartStop.hServerProcessHandle;
-		AltServerChanged = true;
-		//ForceThawAltServer = false;
-		//AltServerWasStarted(in.StartStop.dwPID, (HANDLE)(DWORD_PTR)in.StartStop.hServerProcessHandle);
+		OnAltServerChanged(1, sst_AltServerStart, in.StartStop.dwPID, &in.StartStop, AS);
+
 	}
 	else if ((in.StartStop.nStarted == sst_ComspecStart)
 			|| (in.StartStop.nStarted == sst_AppStart))
@@ -7300,45 +7460,10 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		// Если это закрылся AltServer
 		if (nAltPID)
 		{
-			bool bPrevFound = gpSrv->AltServers.Get(nAltPID, &info, true/*Remove*/);
+			OnAltServerChanged(1, in.StartStop.nStarted, nAltPID, NULL, AS);
 
 			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
-			_ASSERTE(in.StartStop.nStarted==sst_ComspecStop || in.StartStop.nOtherPID==info.nPrevPID);
-
-			// Сначала проверяем, не текущий ли альт.сервер закрывается
-			if (gpSrv->dwAltServerPID && (nAltPID == gpSrv->dwAltServerPID))
-			{
-				// Поскольку текущий сервер завершается - то сразу сбросим PID (его морозить уже не нужно)
-				nAltServerWasStopped = nAltPID;
-				gpSrv->dwAltServerPID = 0;
-				// Переключаемся на "старый" (если был)
-				if (bPrevFound && info.nPrevPID)
-				{
-					// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
-					_ASSERTE(info.hPrev!=NULL);
-					// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
-					// Активировать альтернативный сервер (повторно), отпустить его нити чтения
-					AltServerChanged = true;
-					nAltServerWasStarted = info.nPrevPID;
-					hAltServerWasStarted = info.hPrev;
-					ForceThawAltServer = true;
-					//AltServerWasStarted(in.StartStop.nPrevAltServerPID, NULL, true);
-				}
-				else
-				{
-					// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
-					_ASSERTE(info.hPrev==NULL);
-					AltServerChanged = true;
-					// Уведомить ГУЙ!
-					//gpSrv->dwAltServerPID = 0;
-					//SafeCloseHandle(gpSrv->hAltServer);
-				}
-			}
-			else
-			{
-				// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
-				_ASSERTE(((nPID == gpSrv->dwAltServerPID) || !gpSrv->dwAltServerPID || ((in.StartStop.nStarted != sst_AltServerStop) && (nPID != gpSrv->dwAltServerPID) && !bPrevFound)) && "Expected active alt.server!");
-            }
+			_ASSERTE(in.StartStop.nStarted==sst_ComspecStop || in.StartStop.nOtherPID==AS.info.nPrevPID);
 		}
 	}
 	else
@@ -7354,65 +7479,9 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	// ***
 
 	// После Unlock-а, зовем функцию
-	if (AltServerChanged)
+	if (AS.AltServerChanged)
 	{
-		if (nAltServerWasStarted)
-		{
-			AltServerWasStarted(nAltServerWasStarted, hAltServerWasStarted, ForceThawAltServer);
-		}
-		else if (nCurAltServerPID && (nPID == nCurAltServerPID))
-		{
-			if (gpSrv->hAltServerChanged)
-			{
-				// Чтобы не подраться между потоками - закрывать хэндл только в RefreshThread
-				gpSrv->hCloseAltServer = gpSrv->hAltServer;
-				gpSrv->dwAltServerPID = 0;
-				gpSrv->hAltServer = NULL;
-				// В RefreshThread ожидание хоть и небольшое (100мс), но лучше передернуть
-				SetEvent(gpSrv->hAltServerChanged);
-			}
-			else
-			{
-				gpSrv->dwAltServerPID = 0;
-				SafeCloseHandle(gpSrv->hAltServer);
-				_ASSERTE(gpSrv->hAltServerChanged!=NULL);
-			}
-		}
-
-		if (!ghConEmuWnd || !IsWindow(ghConEmuWnd))
-		{
-			_ASSERTE((ghConEmuWnd==NULL) && "ConEmu GUI was terminated? Invalid ghConEmuWnd");
-		}
-		else
-		{
-			CESERVER_REQ *pGuiIn = NULL, *pGuiOut = NULL;
-			int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
-			pGuiIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP, nSize);
-
-			if (!pGuiIn)
-			{
-				_ASSERTE(pGuiIn!=NULL && "Memory allocation failed");
-			}
-			else
-			{
-				pGuiIn->StartStop = in.StartStop;
-				pGuiIn->StartStop.dwPID = nAltServerWasStarted ? nAltServerWasStarted : nAltServerWasStopped;
-				pGuiIn->StartStop.hServerProcessHandle = NULL; // для GUI смысла не имеет
-				pGuiIn->StartStop.nStarted = nAltServerWasStarted ? sst_AltServerStart : sst_AltServerStop;
-				if (pGuiIn->StartStop.nStarted == sst_AltServerStop)
-				{
-					// Если это был последний процесс в консоли, то главный сервер тоже закрывается
-					// Переоткрывать пайпы в ConEmu нельзя
-					pGuiIn->StartStop.bMainServerClosing = gbQuit || (WaitForSingleObject(ghExitQueryEvent,0) == WAIT_OBJECT_0);
-				}
-
-				pGuiOut = ExecuteGuiCmd(ghConWnd, pGuiIn, ghConWnd);
-
-				_ASSERTE(pGuiOut!=NULL && "Can not switch GUI to alt server?"); // успешное выполнение?
-				ExecuteFreeResult(pGuiOut);
-				ExecuteFreeResult(pGuiIn);
-			}
-		}
+		OnAltServerChanged(2, in.StartStop.nStarted, in.StartStop.dwPID, &in.StartStop, AS);
 	}
 
 	// Обновить мэппинг
@@ -8354,11 +8423,11 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 			// Возвращаем запомненные алиасы
 			lbRc = cmd_GetAliases(in, out);
 		} break;
-		case CECMD_SETDONTCLOSE:
+		case CECMD_FARDETACHED:
 		{
 			// После детача в фаре команда (например dir) схлопнется, чтобы
 			// консоль неожиданно не закрылась...
-			lbRc = cmd_SetDontClose(in, out);
+			lbRc = cmd_FarDetached(in, out);
 		} break;
 		case CECMD_ONACTIVATION:
 		{

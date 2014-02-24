@@ -3282,7 +3282,7 @@ BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
 		else
 		{
 			CESERVER_REQ In, *pOut = NULL;
-			ExecutePrepareCmd(&In, CECMD_SETDONTCLOSE, sizeof(CESERVER_REQ_HDR));
+			ExecutePrepareCmd(&In, CECMD_FARDETACHED, sizeof(CESERVER_REQ_HDR));
 			pOut = ExecuteSrvCmd(gdwServerPID, &In, FarHwnd);
 
 			if (pOut) ExecuteFreeResult(pOut);
