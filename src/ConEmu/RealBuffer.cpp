@@ -2022,6 +2022,16 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 			*(lpChar++) = (ch < 32) ? gszAnalogues[(WORD)ch] : ch;
 		}
 
+		// Для использования строковых функций - гарантируем ASCIIZ буфера
+		if (lpChar < (con.pConChar + con.nConBufCells))
+		{
+			*lpChar = 0;
+		}
+		else
+		{
+			_ASSERTE(lpChar < (con.pConChar + con.nConBufCells));
+		}
+
 		HEAPVAL
 	}
 
