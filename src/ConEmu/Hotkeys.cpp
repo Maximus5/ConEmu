@@ -873,6 +873,81 @@ void ConEmuHotKey::GetVkKeyName(BYTE vk, wchar_t (&szName)[32])
 	}
 }
 
+UINT ConEmuHotKey::GetVkByKeyName(LPCWSTR asName, int* pnScanCode/*=NULL*/, DWORD* pnControlState/*=NULL*/)
+{
+	if (!asName || !*asName)
+		return 0;
+
+	// pnScanCode и pnControlState заранее не трогаем специально, вызывающая функция может в них что-то хранить
+
+	static struct NameToVk { LPCWSTR sName; UINT VK; } Keys[] =
+	{
+		{L"Win", VK_LWIN}, {L"LWin", VK_LWIN}, {L"RWin", VK_RWIN},
+		{L"Ctrl", VK_CONTROL}, {L"LCtrl", VK_LCONTROL}, {L"RCtrl", VK_RCONTROL},
+		{L"Alt", VK_MENU}, {L"LAlt", VK_LMENU}, {L"RAlt", VK_RMENU},
+		{L"Shift", VK_SHIFT}, {L"LShift", VK_LSHIFT}, {L"RShift", VK_RSHIFT},
+		{L"Apps", VK_APPS},
+		{L"Left", VK_LEFT}, {L"Right", VK_RIGHT}, {L"Up", VK_UP}, {L"Down", VK_DOWN},
+		{L"PgUp", VK_PRIOR}, {L"PgDn", VK_NEXT}, {L"Home", VK_HOME}, {L"End", VK_END},
+		{L"Space", VK_SPACE}, {L" ", VK_SPACE}, {L"Tab", VK_TAB}, {L"\t", VK_TAB},
+		{L"Esc", VK_ESCAPE}, {L"\x1B", VK_ESCAPE},
+		{L"Insert", VK_INSERT}, {L"Delete", VK_DELETE}, {L"Backspace", VK_BACK},
+		{L"Enter", VK_RETURN}, {L"Return", VK_RETURN}, {L"NumpadEnter", VK_RETURN},
+		{L"Pause", VK_PAUSE},
+		//{L"_", 0xbd}, {L"=", 0xbb},
+		{L"Numpad0", VK_NUMPAD0}, {L"Numpad1", VK_NUMPAD1}, {L"Numpad2", VK_NUMPAD2}, {L"Numpad3", VK_NUMPAD3}, {L"Numpad4", VK_NUMPAD4},
+		{L"Numpad5", VK_NUMPAD5}, {L"Numpad6", VK_NUMPAD6}, {L"Numpad7", VK_NUMPAD7}, {L"Numpad8", VK_NUMPAD8}, {L"Numpad9", VK_NUMPAD9},
+		{L"NumpadDot", VK_DECIMAL}, {L"NumpadDiv", VK_DIVIDE}, {L"NumpadMult", VK_MULTIPLY}, {L"NumpadAdd", VK_ADD}, {L"NumpadSub", VK_SUBTRACT},
+		// ConEmu internal codes
+		{L"WheelUp", VK_WHEEL_UP}, {L"WheelDown", VK_WHEEL_DOWN}, {L"WheelLeft", VK_WHEEL_LEFT}, {L"WheelRight", VK_WHEEL_RIGHT},
+		// End of predefined codes
+		{NULL}
+	};
+
+	// Fn?
+	if (asName[0] == L'F' && isDigit(asName[1]) && (asName[2] == 0 || isDigit(asName[2])))
+	{
+		wchar_t* pEnd;
+		long iNo = wcstol(asName, &pEnd, 10);
+		if (iNo < 1 || iNo > 24)
+			return 0;
+		return (VK_F1 + (iNo-1));
+	}
+
+	// From table
+	for (NameToVk* pk = Keys; pk->sName; pk++)
+	{
+		if (lstrcmp(asName, pk->sName) == 0)
+			return pk->VK;
+	}
+
+	// Now, only One-char (OEM-ASCII) keys
+	if (asName[1] == 0)
+	{
+		UINT dwScan = OemKeyScan(*asName);
+		if (dwScan)
+		{
+			int iScanCode = LOWORD(dwScan);
+			if (pnControlState)
+			{
+				if (HIWORD(dwScan) & 1)
+					*pnControlState |= SHIFT_PRESSED;
+				if ((HIWORD(dwScan) & 2) && !((*pnControlState) & RIGHT_CTRL_PRESSED))
+					*pnControlState |= LEFT_CTRL_PRESSED;
+				if ((HIWORD(dwScan) & 4) && !((*pnControlState) & RIGHT_ALT_PRESSED))
+					*pnControlState |= LEFT_ALT_PRESSED;
+			}
+			UINT VK = MapVirtualKey(iScanCode, 1/*MAPVK_VSC_TO_VK*/);
+			if (pnScanCode)
+				*pnScanCode = iScanCode;
+			return VK;
+		}
+	}
+
+	// Unknown key
+	return 0;
+}
+
 // Извлечь сам VK
 DWORD ConEmuHotKey::GetHotkey(DWORD VkMod)
 {
