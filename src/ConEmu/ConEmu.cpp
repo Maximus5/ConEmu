@@ -101,6 +101,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMSG2(s) //DEBUGSTR(s)
 #define DEBUGSTRANIMATE(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
+#define DEBUGSTRSESS(s) DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -6840,6 +6841,57 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	}
 
 	return result;
+}
+
+LRESULT CConEmuMain::OnQueryEndSession(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	wchar_t szSession[128];
+	_wsprintf(szSession, SKIPLEN(countof(szSession)) L"Session End:%s%s%s\r\n",
+		(lParam & ENDSESSION_CLOSEAPP) ? L" ENDSESSION_CLOSEAPP" : L"",
+		(lParam & ENDSESSION_CRITICAL) ? L" ENDSESSION_CRITICAL" : L"",
+		(lParam & ENDSESSION_LOGOFF)   ? L" ENDSESSION_LOGOFF" : L"");
+	LogString(szSession, true, false);
+	DEBUGSTRSESS(szSession);
+
+	return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	session.SessionChanged(wParam, lParam);
+
+	wchar_t szInfo[128], szState[32];
+	switch (LOWORD(wParam))
+	{
+		//0x1 The session identified by lParam was connected to the console terminal or RemoteFX session.
+		case WTS_CONSOLE_CONNECT: wcscpy_c(szState, L"WTS_CONSOLE_CONNECT"); break;
+		//0x2 The session identified by lParam was disconnected from the console terminal or RemoteFX session.
+		case WTS_CONSOLE_DISCONNECT: wcscpy_c(szState, L"WTS_CONSOLE_DISCONNECT"); break;
+		//0x3 The session identified by lParam was connected to the remote terminal.
+		case WTS_REMOTE_CONNECT: wcscpy_c(szState, L"WTS_REMOTE_CONNECT"); break;
+		//0x4 The session identified by lParam was disconnected from the remote terminal.
+		case WTS_REMOTE_DISCONNECT: wcscpy_c(szState, L"WTS_REMOTE_DISCONNECT"); break;
+		//0x5 A user has logged on to the session identified by lParam.
+		case WTS_SESSION_LOGON: wcscpy_c(szState, L"WTS_SESSION_LOGON"); break;
+		//0x6 A user has logged off the session identified by lParam.
+		case WTS_SESSION_LOGOFF: wcscpy_c(szState, L"WTS_SESSION_LOGOFF"); break;
+		//0x7 The session identified by lParam has been locked.
+		case WTS_SESSION_LOCK: wcscpy_c(szState, L"WTS_SESSION_LOCK"); break;
+		//0x8 The session identified by lParam has been unlocked.
+		case WTS_SESSION_UNLOCK: wcscpy_c(szState, L"WTS_SESSION_UNLOCK"); break;
+		//0x9 The session identified by lParam has changed its remote controlled status. To determine the status, call GetSystemMetrics and check the SM_REMOTECONTROL metric.
+		case WTS_SESSION_REMOTE_CONTROL: wcscpy_c(szState, L"WTS_SESSION_REMOTE_CONTROL"); break;
+		//0xA Reserved for future use.
+		case WTS_SESSION_CREATE: wcscpy_c(szState, L"WTS_SESSION_CREATE"); break;
+		//0xB Reserved for future use.
+		case WTS_SESSION_TERMINATE: wcscpy_c(szState, L"WTS_SESSION_TERMINATE"); break;
+		default: _wsprintf(szState, SKIPLEN(countof(szState)) L"x%08X", (DWORD)wParam);
+	}
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Session State (#%i): %s\r\n", (int)lParam, szState);
+	LogString(szInfo, true, false);
+	DEBUGSTRSESS(szInfo);
+
+	return 0; // Return value ignored
 }
 
 void CConEmuMain::OnSizePanels(COORD cr)
@@ -18032,6 +18084,8 @@ void CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	CASE_MSG(WM_VSCROLL);
 	CASE_MSG(WM_GETICON);
 	CASE_MSG(WM_SETTEXT);
+	CASE_MSG(WM_QUERYENDSESSION);
+	CASE_MSG(WM_ENDSESSION);
 	default:
 		{
 			LPCSTR pszReg = NULL;
@@ -18292,7 +18346,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_WTSSESSION_CHANGE:
-			result = this->session.SessionChanged(wParam, lParam);
+			result = OnSessionChanged(hWnd, messg, wParam, lParam);
+			break;
+
+		case WM_QUERYENDSESSION:
+			result = OnQueryEndSession(hWnd, messg, wParam, lParam);
 			break;
 
 		case WM_NOTIFY:
