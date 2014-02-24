@@ -12,6 +12,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.02.23
+[%] Hook abnormal termination of child processes (cygwin, mintty, vim, etc.)
+[%] Issue 713: Far. After ConsoleDetach, 1st console does not work correctly.
+
+
 2014.02.20
 [*] Issue 1477: Fix Far panels detection (No column titles and No sort letter).
 [*] Many changes within "-new_console" and "-cur_console" switches processor.
