@@ -240,6 +240,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"  - Check, is RealConsole active or not, \"Yes\"/\"No\"\r\n" \
 	L"IsRealVisible\r\n" \
 	L"  - Check, is RealConsole visible or not, \"Yes\"/\"No\"\r\n" \
+	L"    Keys(\"<Combo1>\"[,\"<Combo2>\"[,...]])\r\n" \
+	L"     - Post special keystrokes to the console (AutoHotKey syntax)\r\n" \
+	L"       \"[Mod1[Mod2[Mod3]]]Key\"\r\n" \
+	L"       Mod: ^ - LCtrl, >^ - RCtrl, ! - LAlt, >! - RAlt, + - Shift\r\n" \
+	L"       Example: Keys(\"^_\") will post ‘Ctrl+_’\r\n" \
 	L"MsgBox(\"<Text>\",\"<Title>\",<ButtonType>)\r\n" \
 	L"  - Show modal GUI MessageBox, returns clicked button name (\"Ok\", \"Cancel\", \"Retry\", etc.),\r\n" \
 	L"     ButtonType (number) is from Windows SDK.\r\n" \
@@ -251,7 +256,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==3: change palette in current console, returns prev palette\r\n" \
 	L"     NewPalette: palette name (string)\r\n" \
 	L"     NewPaletteIndex: 0-based index (number)\r\n" \
-	L"Paste(<Cmd>[,\"<Text>])\r\n" \
+	L"Paste(<Cmd>[,\"<Text>\"[,\"<Text2>\"[...]]])\r\n" \
 	L"  - When <Text> is omitted - paste from Windows clipboard, otherwise - paste <Text>\r\n" \
 	L"     Cmd==0: paste all lines\r\n" \
 	L"     Cmd==1: paste first line\r\n" \
@@ -264,7 +269,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==8: paste path from clipboard converted to CygWin style\r\n" \
 	L"     Cmd==9: paste all lines space-separated\r\n" \
 	L"     Cmd==10: paste all lines space-separated, without confirmations\r\n" \
-	L"Print([\"<Text>\"])\r\n" \
+	L"Print([\"<Text>\"[,\"<Text2>\"[...]]])\r\n" \
 	L"  - Alias for Paste(2,\"<Text>\")\r\n" \
 	L"Progress(<Type>[,<Value>])\r\n" \
 	L"  - Set progress state on taskbar and ConEmu title\r\n" \
