@@ -6883,9 +6883,9 @@ LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		//0x9 The session identified by lParam has changed its remote controlled status. To determine the status, call GetSystemMetrics and check the SM_REMOTECONTROL metric.
 		case WTS_SESSION_REMOTE_CONTROL: wcscpy_c(szState, L"WTS_SESSION_REMOTE_CONTROL"); break;
 		//0xA Reserved for future use.
-		case WTS_SESSION_CREATE: wcscpy_c(szState, L"WTS_SESSION_CREATE"); break;
+		case 0xA/*WTS_SESSION_CREATE*/: wcscpy_c(szState, L"WTS_SESSION_CREATE"); break;
 		//0xB Reserved for future use.
-		case WTS_SESSION_TERMINATE: wcscpy_c(szState, L"WTS_SESSION_TERMINATE"); break;
+		case 0xB/*WTS_SESSION_TERMINATE*/: wcscpy_c(szState, L"WTS_SESSION_TERMINATE"); break;
 		default: _wsprintf(szState, SKIPLEN(countof(szState)) L"x%08X", (DWORD)wParam);
 	}
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Session State (#%i): %s\r\n", (int)lParam, szState);

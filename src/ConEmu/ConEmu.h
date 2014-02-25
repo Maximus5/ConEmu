@@ -40,6 +40,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define GET_X_LPARAM(inPx) ((int)(short)LOWORD(inPx))
 #define GET_Y_LPARAM(inPy) ((int)(short)HIWORD(inPy))
 
+#ifndef __GNUC__
+#include <intrin.h>
+#else
+#define _InterlockedIncrement InterlockedIncrement
+#endif
+
 //#define RCLICKAPPSTIMEOUT 600
 //#define RCLICKAPPS_START 100 // начало отрисовки кружка вокруг курсора
 //#define RCLICKAPPSTIMEOUT_MAX 10000
@@ -913,12 +919,6 @@ class CConEmuMain :
 			bool wait;
 		} m_LockConhostStart;
 };
-
-#ifndef __GNUC__
-#include <intrin.h>
-#else
-#define _InterlockedIncrement InterlockedIncrement
-#endif
 
 // Message Logger
 // Originally from http://preshing.com/20120522/lightweight-in-memory-logging
