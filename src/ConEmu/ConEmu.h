@@ -253,6 +253,7 @@ class CConEmuMain :
 		bool  DisableAllHotkeys;    // ключик "/nohotkey"
 		bool  DisableSetDefTerm;    // ключик "/nodeftrm"
 		bool  DisableRegisterFonts; // ключик "/noregfont"
+		bool  DisableCloseConfirm;  // ключик "/nocloseconfirm"
 
 		BOOL  mb_ExternalHidden;
 		

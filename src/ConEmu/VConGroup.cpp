@@ -2020,6 +2020,14 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 
 bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/, bool bForceKill /*= false*/, bool bNoGroup /*= false*/)
 {
+	// "ConEmu.exe /NoCloseConfirm" --> silent mode...
+	if (gpConEmu->DisableCloseConfirm)
+	{
+		if (rbMsgConfirmed)
+			*rbMsgConfirmed = true;
+		return true;
+	}
+
 	CVConGuard VCon(gp_VActive);
 
 	int nEditors = 0, nProgress = 0, i, nConsoles = 0;

@@ -3761,6 +3761,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpConEmu->DisableKeybHooks = true;
 				}
+				else if (!klstricmp(curCommand, _T("/nocloseconfirm")))
+				{
+					gpConEmu->DisableCloseConfirm = true;
+				}
 				else if (!klstricmp(curCommand, _T("/nomacro")))
 				{
 					gpConEmu->DisableAllMacro = true;

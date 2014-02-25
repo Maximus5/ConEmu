@@ -331,6 +331,7 @@ CConEmuMain::CConEmuMain()
 	DisableAllHotkeys = false;
 	DisableSetDefTerm = false;
 	DisableRegisterFonts = false;
+	DisableCloseConfirm = false;
 	//mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	//mb_PassSysCommand = false;
 	mb_ExternalHidden = FALSE;
@@ -10805,7 +10806,7 @@ void CConEmuMain::SetScClosePending(bool bFlag)
 
 bool CConEmuMain::isCloseConfirmed()
 {
-	return gpSet->isCloseConsoleConfirm ? mb_ScClosePending : true;
+	return (gpSet->isCloseConsoleConfirm && !DisableCloseConfirm) ? mb_ScClosePending : true;
 }
 
 BOOL CConEmuMain::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
