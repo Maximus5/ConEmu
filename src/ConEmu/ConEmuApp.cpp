@@ -621,28 +621,28 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 		wchar_t wc = *pszSrc;
 		switch (wc)
 		{
-			case L'"':
+			case L'"': // 34
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'"';
 				pszSrc++;
 				break;
-			case L'\\':
+			case L'\\': // 92
 				*(pszDst++) = L'\\';
 				pszSrc++;
 				if (!*pszSrc || !wcschr(pszCtrl, *pszSrc))
 					*(pszDst++) = L'\\';
 				break;
-			case L'\r':
+			case L'\r': // 13
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'r';
 				pszSrc++;
 				break;
-			case L'\n':
+			case L'\n': // 10
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'n';
 				pszSrc++;
 				break;
-			case L'\t':
+			case L'\t': // 9
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L't';
 				pszSrc++;
@@ -657,7 +657,7 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 				*(pszDst++) = L'e';
 				pszSrc++;
 				break;
-			case L'\a': //BELL
+			case L'\a': // 7 (BELL)
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'a';
 				pszSrc++;
@@ -682,7 +682,7 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 	}
 	else
 	{
-		// Remove escapes: "\\r" --> wchar(13)
+		// Remove escapes: "\\r" --> wchar(13), etc.
 
 		if (*pszSrc == L'\\')
 		{
