@@ -646,6 +646,11 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 				*(pszDst++) = L't';
 				pszSrc++;
 				break;
+			case L'\b': // 8 (BS)
+				*(pszDst++) = L'\\';
+				*(pszDst++) = L'b';
+				pszSrc++;
+				break;
 			case 27: //ESC
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'e';
@@ -687,6 +692,10 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 					break;
 				case L't': case L'T':
 					*(pszDst++) = L'\t';
+					pszSrc += 2;
+					break;
+				case L'b': case L'B':
+					*(pszDst++) = L'\b';
 					pszSrc += 2;
 					break;
 				case L'e': case L'E':
