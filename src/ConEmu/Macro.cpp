@@ -1708,9 +1708,36 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			return lstrdup(L"NotImplementedYet");
 		}
 		if (VK || (iScanCode != -1))
-			apRCon->PostKeyPress(VK, dwControlState, (pszKey[1] == 0) ? *pszKey : 0, iScanCode);
-		else
-			return lstrdup(L"UnknownKey");
+		{
+			wchar_t szSeq[4];
+			if (pszKey[1] != 0)
+				pszKey = NULL;
+
+			if (dwControlState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
+			{
+				BYTE pressed[256] = {};
+				if (dwControlState & RIGHT_ALT_PRESSED)  { pressed[VK_MENU] = 0x81;    pressed[VK_RMENU] = 0x81; }
+				if (dwControlState & LEFT_ALT_PRESSED)   { pressed[VK_MENU] = 0x81;    pressed[VK_LMENU] = 0x81; }
+				if (dwControlState & RIGHT_CTRL_PRESSED) { pressed[VK_CONTROL] = 0x81; pressed[VK_RCONTROL] = 0x81; }
+				if (dwControlState & LEFT_CTRL_PRESSED)  { pressed[VK_CONTROL] = 0x81; pressed[VK_LCONTROL] = 0x81; }
+				if (dwControlState & SHIFT_PRESSED)      { pressed[VK_SHIFT] = 0x81;   pressed[VK_LSHIFT] = 0x81; }
+
+				if (VK > 0 && VK <= 255)
+					pressed[VK] = 0x81;
+
+				int iMapRc = ToUnicode(VK, (iScanCode != -1) ? iScanCode : 0, pressed, szSeq, countof(szSeq), 0);
+
+				if (iMapRc == 1)
+					pszKey = szSeq;
+				else
+					pszKey = NULL;
+			}
+
+			// Send it...
+			apRCon->PostKeyPress(VK, dwControlState, pszKey ? *pszKey : 0, iScanCode);
+			continue;
+		}
+		return lstrdup(L"UnknownKey");
 	}
 
 	return lstrdup(L"OK");
