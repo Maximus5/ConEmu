@@ -274,8 +274,8 @@ wchar_t* GuiMacro::AsString()
 				cchTotal += _tcslen(szNum)+1;
 				break;
 			case gmt_Str:
-				// + " ... ", + escaped (double len in maximum)
-				pszArgs[i] = (wchar_t*)malloc((3+(argv[i].Str ? _tcslen(argv[i].Str)*2 : 0))*sizeof(*argv[i].Str));
+				// + " ... ", + escaped (4x len in maximum for "\xFF" form)
+				pszArgs[i] = (wchar_t*)malloc((3+(argv[i].Str ? _tcslen(argv[i].Str)*4 : 0))*sizeof(*argv[i].Str));
 				if (pszArgs[i])
 				{
 					LPCWSTR pszSrc = argv[i].Str;
