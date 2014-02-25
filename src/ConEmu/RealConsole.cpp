@@ -5099,6 +5099,16 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			}
 			// Continue!
 		}
+
+		#if 0
+		if (wParam == 189)
+		{
+			UINT sc = LOBYTE(HIWORD(lParam));
+			BYTE pressed[256] = {};
+			BOOL b = GetKeyboardState(pressed);
+			b = FALSE;
+		}
+		#endif
 		
 		// Hotkey?
 		if (((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST))
