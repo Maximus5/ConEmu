@@ -924,22 +924,22 @@ UINT ConEmuHotKey::GetVkByKeyName(LPCWSTR asName, int* pnScanCode/*=NULL*/, DWOR
 	// Now, only One-char (OEM-ASCII) keys
 	if (asName[1] == 0)
 	{
-		UINT dwScan = OemKeyScan(*asName);
-		if (dwScan)
+		UINT vkScan = VkKeyScan(*asName);
+		if (LOBYTE(vkScan))
 		{
-			int iScanCode = LOWORD(dwScan);
+			UINT VK = LOBYTE(vkScan);
 			if (pnControlState)
 			{
-				if (HIWORD(dwScan) & 1)
+				if (HIBYTE(vkScan) & 1)
 					*pnControlState |= SHIFT_PRESSED;
-				if ((HIWORD(dwScan) & 2) && !((*pnControlState) & RIGHT_CTRL_PRESSED))
+				if ((HIBYTE(vkScan) & 2) && !((*pnControlState) & RIGHT_CTRL_PRESSED))
 					*pnControlState |= LEFT_CTRL_PRESSED;
-				if ((HIWORD(dwScan) & 4) && !((*pnControlState) & RIGHT_ALT_PRESSED))
+				if ((HIBYTE(vkScan) & 4) && !((*pnControlState) & RIGHT_ALT_PRESSED))
 					*pnControlState |= LEFT_ALT_PRESSED;
 			}
-			UINT VK = MapVirtualKey(iScanCode, 1/*MAPVK_VSC_TO_VK*/);
+			UINT SC = MapVirtualKey(VK, 0/*MAPVK_VK_TO_VSC*/);
 			if (pnScanCode)
-				*pnScanCode = iScanCode;
+				*pnScanCode = SC;
 			return VK;
 		}
 	}
