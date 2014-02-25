@@ -618,7 +618,8 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 
 		_ASSERTE(pszSrc != pszDst);
 
-		switch (*pszSrc)
+		wchar_t wc = *pszSrc;
+		switch (wc)
 		{
 			case L'"':
 				*(pszDst++) = L'\\';
@@ -662,6 +663,20 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 				pszSrc++;
 				break;
 			default:
+				// Escape (if possible) ASCII symbols with codes 01..31 (dec)
+				if (wc < L' ')
+				{
+					wchar_t wcn = pszSrc[1];
+					// If next string character is 'hexadecimal' digit - back conversion will be ambiguous
+					if (!((wcn >= L'0' && wcn <= L'9') || (wcn >= L'a' && wcn <= L'f') || (wcn >= L'A' && wcn <= L'F')))
+					{
+						*(pszDst++) = L'\\';
+						*(pszDst++) = L'x';
+						msprintf(pszDst, 3, L"%02X", (UINT)wc);
+						pszDst+=2;
+						break;
+					}
+				}
 				*(pszDst++) = *(pszSrc++);
 		}
 	}
@@ -706,6 +721,22 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 					*(pszDst++) = L'\a'; // BELL
 					pszSrc += 2;
 					break;
+				case L'x':
+				{
+					wchar_t sTemp[5] = L"", *pszEnd = NULL;
+					lstrcpyn(sTemp, pszSrc+2, 5);
+					UINT wc = wcstoul(sTemp, &pszEnd, 16);
+					if (pszEnd > sTemp)
+					{
+						*(pszDst++) = LOWORD(wc);
+						pszSrc += (pszEnd - sTemp) + 2;
+					}
+					else
+					{
+						*(pszDst++) = *(pszSrc++);
+					}
+					break;
+				}
 				default:
 					*(pszDst++) = *(pszSrc++);
 			}
