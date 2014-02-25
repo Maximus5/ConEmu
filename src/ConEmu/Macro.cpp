@@ -89,6 +89,7 @@ struct GuiMacro
 	wchar_t* AsString();
 	bool GetIntArg(size_t idx, int& val);
 	bool GetStrArg(size_t idx, LPWSTR& val);
+	bool GetRestStrArgs(size_t idx, LPWSTR& val);
 	bool IsIntArg(size_t idx);
 	bool IsStrArg(size_t idx);
 };
@@ -392,6 +393,29 @@ bool GuiMacro::GetStrArg(size_t idx, LPWSTR& val)
 	}
 
 	val = argv[idx].Str;
+	return true;
+}
+
+bool GuiMacro::GetRestStrArgs(size_t idx, LPWSTR& val)
+{
+	if (!GetStrArg(idx, val))
+		return false;
+	if (!IsStrArg(idx+1))
+		return true; // No more string arguments!
+	// Concatenate string (memory was allocated continuously for all arguments)
+	LPWSTR pszEnd = val + _tcslen(val);
+	for (size_t i = idx+1; i < argc; i++)
+	{
+		LPWSTR pszAdd;
+		if (!GetStrArg(i, pszAdd))
+			break;
+		size_t iLen = _tcslen(pszAdd);
+		if (pszEnd < pszAdd)
+			wmemmove(pszEnd, pszAdd, iLen+1);
+		pszEnd += iLen;
+	}
+	// Trim argument list, there is only one returned string left...
+	argc = idx+1;
 	return true;
 }
 
@@ -1560,7 +1584,7 @@ LPWSTR ConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	return lstrdup(L"InvalidArg");
 }
 
-// Paste (<Cmd>[,"<Text>"])
+// Paste (<Cmd>[,"<Text>"[,"<Text2>"[...]]])
 LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nCommand = 0;
@@ -1581,7 +1605,7 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			return lstrdup(L"InvalidArg");
 		}
 
-		if (p->GetStrArg(1, pszText))
+		if (p->GetRestStrArgs(1, pszText))
 		{
 			// Пустая строка допускается только при выборе файла/папки для вставки
 			if (!*pszText && !((nCommand >= 4) && (nCommand <= 7)))
@@ -1625,14 +1649,14 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	return lstrdup(L"InvalidArg");
 }
 
-// print("<Text>") - alias for Paste(2,"<Text>")
+// print("<Text>"[,"<Text2>"[...]]) - alias for Paste(2,"<Text>")
 LPWSTR ConEmuMacro::Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	if (!apRCon)
 		return lstrdup(L"InvalidArg");
 
 	LPWSTR pszText = NULL;
-	if (p->GetStrArg(0, pszText))
+	if (p->GetRestStrArgs(0, pszText))
 	{
 		if (!*pszText)
 			return lstrdup(L"InvalidArg");
