@@ -1311,7 +1311,7 @@ struct Settings
 		//bool isLangChangeWsPlugin;
 		
 		//reg->Load(L"MonitorConsoleLang", isMonitorConsoleLang);
-		BYTE isMonitorConsoleLang;
+		BYTE isMonitorConsoleLang; // bitmask. 1 - follow up console HKL (e.g. after XLat in Far Manager), 2 - use one HKL for all tabs
 		
 		//reg->Load(L"SleepInBackground", isSleepInBackground);
 		bool isSleepInBackground;

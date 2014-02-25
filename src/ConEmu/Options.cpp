@@ -360,7 +360,7 @@ void Settings::InitSettings()
 	isSkipFocusEvents = false;
 	//isSendAltEnter = isSendAltSpace = isSendAltF9 = false;
 	isSendAltTab = isSendAltEsc = isSendAltPrintScrn = isSendPrintScrn = isSendCtrlEsc = false;
-	isMonitorConsoleLang = 3;
+	isMonitorConsoleLang = 3; // bitmask. 1 - follow up console HKL (e.g. after XLat in Far Manager), 2 - use one HKL for all tabs
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
 	isSaveCmdHistory = true;
 	nCmdOutputCP = 0;
