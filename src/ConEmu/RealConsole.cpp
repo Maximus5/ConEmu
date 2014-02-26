@@ -188,7 +188,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	wcscpy_c(Title, gpConEmu->GetDefaultTitle());
 	wcscpy_c(TitleFull, Title);
 	TitleAdmin[0] = 0;
-	wcscpy_c(ms_PanelTitle, Title);
+	ms_PanelTitle[0] = 0;
 	mb_ForceTitleChanged = FALSE;
 	ZeroStruct(m_Progress);
 	m_Progress.Progress = m_Progress.PreWarningProgress = m_Progress.LastShownProgress = -1; // Процентов нет
@@ -9173,7 +9173,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 
 	if (pTab->Name[0] == 0)
 	{
-		if (ms_PanelTitle[0])  // скорее всего - это Panels?
+		if (isFar() && ms_PanelTitle[0])  // скорее всего - это Panels?
 		{
 			// 03.09.2009 Maks -> min
 			int nMaxLen = min(countof(ms_PanelTitle) , countof(pTab->Name));
@@ -9253,7 +9253,7 @@ void CRealConsole::CheckPanelTitle()
 		{
 			WCHAR szPanelTitle[CONEMUTABMAX];
 
-			if (!GetWindowText(hConWnd, szPanelTitle, countof(ms_PanelTitle)-1))
+			if (!GetWindowText(hConWnd, szPanelTitle, countof(szPanelTitle)-1))
 				ms_PanelTitle[0] = 0;
 			else if (szPanelTitle[0] == L'{' || szPanelTitle[0] == L'(')
 				lstrcpy(ms_PanelTitle, szPanelTitle);

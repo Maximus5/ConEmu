@@ -997,7 +997,8 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/)
 	}
 
 
-	//wcscpy_c(szPath, asFilePath);
+	//The path must be already in full form, call GetFullPathName just for ensure (but it may return wrong path)
+	_ASSERTE((asFilePath[1]==L':' && asFilePath[2]==L'\\') || (asFilePath[0]==L'\\' && asFilePath[1]==L'\\'));
 	wchar_t* pszFilePart;
 	nLen = GetFullPathName(asFilePath, countof(szPath), szPath, &pszFilePart);
 	if ((nLen <= 0) || (nLen >= (INT_PTR)countof(szPath)))
