@@ -2070,6 +2070,10 @@ void CVirtualConsole::UpdateHighlights()
 	ZeroStruct(m_HighlightInfo.mrc_LastCol);
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
 
+	// During any popup menus (system, tab, etc.) don't highlight row/col
+	if (gpConEmu->isMenuActive())
+		return;
+
 	// Get COORDs (relative to upper-left visible pos)
 	COORD pos = {-1,-1};
 	if (!CalcHighlightRowCol(&pos))
