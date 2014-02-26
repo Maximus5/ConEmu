@@ -495,9 +495,6 @@ CConEmuMain::CConEmuMain()
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 	*pszSlash = 0;
 
-	// Чтобы не блокировать папку запуска - CD
-	SetCurrentDirectory(ms_ConEmuExeDir);
-
 	bool lbBaseFound = false;
 
 	// Mingw/msys installation?
@@ -1265,6 +1262,9 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 BOOL CConEmuMain::Init()
 {
 	_ASSERTE(mp_TabBar == NULL);
+
+	// Чтобы не блокировать папку запуска - CD
+	SetCurrentDirectory(ms_ConEmuExeDir);
 
 	// Только по настройке, а то дочерние процессы с тем же Affinity запускаются...
 	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-за глюков в железе могут быть ошибки подсчета производительности, если этого не сделать

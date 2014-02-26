@@ -4468,7 +4468,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	gpConEmu->LogString(L"gpConEmu->Init");
 
-	// Тут загружаются иконки, Affinity, и т.п.
+	// Тут загружаются иконки, Affinity, SetCurrentDirectory и т.п.
 	if (!gpConEmu->Init())
 	{
 		return 100;
