@@ -11852,9 +11852,14 @@ void CConEmuMain::OnOurDialogClosed()
 	CheckAllowAutoChildFocus((DWORD)-1);
 }
 
+bool CConEmuMain::isMenuActive()
+{
+	return (mp_Menu->GetTrackMenuPlace() != tmp_None);
+}
+
 bool CConEmuMain::CanSetChildFocus()
 {
-	if (mp_Menu->GetTrackMenuPlace() != tmp_None)
+	if (isMenuActive())
 		return false;
 	return true;
 }
@@ -15134,7 +15139,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (gpSetCls->isAdvLogging)
 		CVConGroup::LogInput(messg, wParam, lParam);
 
-	if (mp_Menu->GetTrackMenuPlace() != tmp_None)
+	if (isMenuActive())
 	{
 		if (mp_Tip)
 		{
@@ -15142,7 +15147,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 
 		if (gpSetCls->isAdvLogging)
-			LogString("Mouse event skipped due to (mp_Menu->GetTrackMenuPlace() != tmp_None)");
+			LogString("Mouse event skipped due to (isMenuActive())");
 
 		return 0;
 	}
@@ -16703,7 +16708,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 
 	POINT ptCur; GetCursorPos(&ptCur);
 	// Если сейчас идет trackPopupMenu - то на выход
-	CVirtualConsole* pVCon = (mp_Menu->GetTrackMenuPlace() == tmp_None) ? GetVConFromPoint(ptCur) : NULL;
+	CVirtualConsole* pVCon = isMenuActive() ? NULL : GetVConFromPoint(ptCur);
 	if (pVCon && !isActive(pVCon, false))
 		pVCon = NULL;
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
@@ -16784,7 +16789,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	BOOL lbMeFore = TRUE;
 	ExpandTextRangeType etr = etr_None;
 
-	if (mp_Menu->GetTrackMenuPlace())
+	if (isMenuActive())
 	{
 		goto DefaultCursor;
 	}
@@ -17533,7 +17538,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	}
 	#endif
 
-	if (mp_Menu->GetTrackMenuPlace() != tmp_None && mp_Tip)
+	if (isMenuActive() && mp_Tip)
 	{
 		POINT ptCur; GetCursorPos(&ptCur);
 		HWND hPoint = WindowFromPoint(ptCur);
@@ -17594,7 +17599,7 @@ void CConEmuMain::OnTimer_ActivateSplit()
 		return;
 	}
 
-	if (mp_Menu->GetTrackMenuPlace() != tmp_None)
+	if (isMenuActive())
 	{
 		return;
 	}
@@ -17759,7 +17764,7 @@ void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*=
 		// Запомнить
 		mb_LastTransparentFocused = bActive;
 
-		if (mp_Menu->GetTrackMenuPlace() == tmp_None)
+		if (!isMenuActive())
 		{
 			OnSetCursor();
 		}

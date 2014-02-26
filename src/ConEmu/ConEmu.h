@@ -428,6 +428,7 @@ class CConEmuMain :
 		void OnOurDialogOpened();
 		void OnOurDialogClosed();
 		void CheckAllowAutoChildFocus(DWORD nDeactivatedTID);
+		bool isMenuActive();
 		bool CanSetChildFocus();
 		void SetScClosePending(bool bFlag);
 		bool OnScClose();
