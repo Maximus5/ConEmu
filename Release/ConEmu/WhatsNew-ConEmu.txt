@@ -12,6 +12,24 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.02.25
+[*] Log Lock/Unlock/Logoff events.
+[*] GuiMacro. Keys("Combo1"[,"Combo2"[,...]])
+    Combo syntax is mostly similar to AutoHotKey syntax: [Mod1[Mod2[Mod3]]]Key
+    Where ‘Mod’ may be: ^ - LCtrl, >^ - RCtrl, ! - LAlt, >! - RAlt, + - Shift.
+    For example, if you want to ‘Ctrl+/’ post ‘Ctrl+_’ - use macro: Keys("^_").
+[*] Support "\b", "\xFF" and "\xFFFF" in GuiMacro strings.
+    Hexadecimal parser stops on first NON hexadecimal character. So, avoid ambiguous
+    strings like "\x05five", this will be parsed as two strings "\x05f" and "ive"
+[*] Support more that one string argument in Paste and Print GuiMacro functions
+    Paste (<Cmd>[,"<Text>"[,"<Text2>"[...]]])
+    Print("<Text>"[,"<Text2>"[...]])
+    All strings will be concatenated before pasting into console.
+    Example: print("123","\x1F","abc","def")
+[*] Command line switch "ConEmu.exe /NoCloseConfirm" to disable confirmation of ConEmu's window closing.
+[%] Issue 1488: Ctrl+Shift+O fails in ‘Cmd_Autorun’ consoles.
+
+
 2014.02.23
 [%] Hook abnormal termination of child processes (cygwin, mintty, vim, etc.)
 [%] Issue 713: Far. After ConsoleDetach, 1st console does not work correctly.
