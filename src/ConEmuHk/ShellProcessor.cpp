@@ -2636,7 +2636,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			OutputDebugString(szDbgMsg);
 			#endif
 
-			int iHookRc = InjectHooks(*lpPI, FALSE, (m_SrvMapping.cbSize && (m_SrvMapping.nLoggingType == glt_Processes)));
+			int iHookRc = InjectHooks(*lpPI, (m_SrvMapping.cbSize && (m_SrvMapping.nLoggingType == glt_Processes)));
 
 			if (iHookRc != 0)
 			{

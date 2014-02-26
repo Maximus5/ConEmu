@@ -1405,7 +1405,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 					}
 
 					// Теперь ставим хуки
-					iHookRc = InjectHooks(pi, FALSE, gbLogProcess);
+					iHookRc = InjectHooks(pi, gbLogProcess);
 				}
 
 				if (iHookRc != 0)
@@ -2725,12 +2725,8 @@ int DoInjectHooks(LPWSTR asCmdArg)
 
 	if (pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId)
 	{
-		//BOOL gbLogProcess = FALSE;
-		//TODO("Получить из мэппинга glt_Process");
-		//#ifdef _DEBUG
-		//gbLogProcess = TRUE;
-		//#endif
-		int iHookRc = InjectHooks(pi, lbForceGui, gbLogProcess);
+		// Аргумент abForceGui не использовался
+		int iHookRc = InjectHooks(pi, /*lbForceGui,*/ gbLogProcess);
 
 		if (iHookRc == 0)
 		{

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -113,7 +113,7 @@ UINT_PTR GetLdrGetDllHandleByNameAddress()
 }
 
 // The handle must have the PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION, PROCESS_VM_OPERATION, PROCESS_VM_WRITE, and PROCESS_VM_READ
-int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
+int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 {
 	int iRc = 0;
 #ifndef CONEMUHK_EXPORTS
