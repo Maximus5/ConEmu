@@ -3434,10 +3434,14 @@ int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
 	{
 		if (pOut->GuiMacro.nSucceeded)
 		{
-			// Передать переменную в родительский процесс
-			// Сработает только если включены хуки (Inject ConEmuHk)
-			// И может игнорироваться некоторыми шеллами (если победить не удастся)
-			DoExportEnv(CEGUIMACRORETENVVAR, ea_ExportCon, true/*bSilent*/);
+			// Только если текущая консоль запущена В ConEmu
+			if (ghConEmuWnd)
+			{
+				// Передать переменную в родительский процесс
+				// Сработает только если включены хуки (Inject ConEmuHk)
+				// И может игнорироваться некоторыми шеллами (если победить не удастся)
+				DoExportEnv(CEGUIMACRORETENVVAR, ea_ExportCon, true/*bSilent*/);
+			}
 
 			// Show macro result in StdOutput	
 			_wprintf(pOut->GuiMacro.sMacro);
