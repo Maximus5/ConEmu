@@ -79,7 +79,7 @@ CGroupGuard::~CGroupGuard()
 {
 	Release();
 }
-	
+
 void CGroupGuard::Release()
 {
 	if (mp_Ref)
@@ -113,7 +113,7 @@ bool CGroupGuard::Attach(CVConGroup* apRef)
 
 	return (mp_Ref != NULL);
 }
-	
+
 // Dereference
 CVConGroup* CGroupGuard::operator->() const
 {
@@ -172,14 +172,14 @@ CVConGroup* CVConGroup::SplitVConGroup(RConStartArgs::SplitType aSplitType /*eSp
 		_ASSERTE(mp_Item && "VCon was not associated");
 		return NULL;
 	}
-	
+
 	// Разбивать можно только то, что еще не разбито ("листья")
 	if (m_SplitType != RConStartArgs::eSplitNone)
 	{
 		MBoxAssert(m_SplitType == RConStartArgs::eSplitNone && "Can't split this pane");
 		return CreateVConGroup();
 	}
-	
+
 	// Создать две пустых панели без привязки
 	_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
 	mp_Grp1 = new CVConGroup(this);
@@ -251,7 +251,7 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 				pActiveGroupVConPtr = ((CVConGroup*)VCon->mp_Group)->mp_ActiveGroupVConPtr;
 			}
 		}
-		
+
 		_ASSERTE((pGroup!=NULL) && "No active VCon?");
 	}
 	// Check
@@ -320,7 +320,7 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 
 
 	MSectionLockSimple lockGroups; lockGroups.Lock(&gcs_VGroups);
-	
+
 	bool bAdded = false;
 	for (size_t i = 0; i < countof(gp_VGroups); i++)
 	{
@@ -487,7 +487,7 @@ void CVConGroup::MoveToParent(CVConGroup* apParent)
 	_ASSERTE((mp_Item!=NULL) != (mp_Grp1!=NULL || mp_Grp2!=NULL));
 
 	apParent->SetResizeFlags();
-	
+
 	apParent->mp_Item = mp_Item;
 	apParent->m_SplitType = m_SplitType; // eSplitNone/eSplitHorz/eSplitVert
 	apParent->mn_SplitPercent10 = mn_SplitPercent10; // (0.1% - 99.9%)*10
@@ -553,7 +553,7 @@ void CVConGroup::GetAllTextSize(SIZE& sz, bool abMinimal /*= false*/)
 		CVConGuard VCon1(mp_Grp1 ? mp_Grp1->mp_Item : NULL);
 		CVConGuard VCon2(mp_Grp2 ? mp_Grp2->mp_Item : NULL);
 		SIZE sz1 = {MIN_CON_WIDTH,MIN_CON_HEIGHT}, sz2 = {MIN_CON_WIDTH,MIN_CON_HEIGHT};
-		
+
 		if (mp_Grp1)
 		{
 			mp_Grp1->GetAllTextSize(sz1, abMinimal);
@@ -893,7 +893,7 @@ bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int 
 		_ASSERTE(apVCon && (iHorz || iVert));
 		return false;
 	}
-	
+
 	CVConGuard VCon(apVCon);
 	if (!apVCon->mp_Group)
 	{
@@ -1751,7 +1751,7 @@ bool CVConGroup::isNtvdm(BOOL abCheckAllConsoles/*=FALSE*/)
 	{
 		CVConGuard VCon(gp_VActive);
 		CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
-		
+
 		if (pRCon && pRCon->isNtvdm())
 			return true;
 	}
@@ -1776,7 +1776,7 @@ bool CVConGroup::isOurConsoleWindow(HWND hCon)
 {
 	if (!hCon)
 		return false;
-	
+
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		CVConGuard VCon(gp_VCon[i]);
@@ -1787,7 +1787,7 @@ bool CVConGroup::isOurConsoleWindow(HWND hCon)
 		if (pRCon->ConWnd() == hCon)
 			return true;
 	}
-	
+
 	return false;
 }
 
@@ -1980,7 +1980,7 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 
 		if (VCon.VCon() != NULL && VCon->isVisible())
 		{
-			
+
 			HWND hView = VCon->GetView();
 			HWND hBack = VCon->GetBack();
 			if (hView && hBack)
@@ -2394,7 +2394,7 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 
 	// Сохраним размер перед закрытием консолей, а то они могут напакостить и "вернуть" старый размер
 	gpSet->SaveSettingsOnExit();
-		
+
 	for (int i = (int)(countof(gp_VCon)-1); i >= 0; i--)
 	{
 		if (gp_VCon[i] && gp_VCon[i]->RCon())
@@ -2783,11 +2783,11 @@ HWND CVConGroup::DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const 
 			{
 				iFound = i;
 				t1 = timeGetTime();
-				
+
 				pRCon->OnServerStarted(hWndCon, nServerPID, dwKeybLayout);
-				
+
 				t2 = timeGetTime();
-				
+
 				hWndDC = pVCon->GetView();
 				hWndBack = pVCon->GetBack();
 
@@ -3146,7 +3146,7 @@ CRealConsole* CVConGroup::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppP
 				return pRCon;
 		}
 	}
-	
+
 	return NULL;
 }
 
@@ -3271,9 +3271,9 @@ bool CVConGroup::PaneActivateNext(bool abNext)
 	CVirtualConsole* pVCon = VCon.VCon();
 	CVConGroup* pActiveGroup = GetRootOfVCon(gp_VActive);
 	MArray<CVConGuard*> Panes;
-	
+
 	int nCount = pActiveGroup->GetGroupPanes(&Panes);
-	
+
 	if (nCount > 1)
 	{
 		CVirtualConsole* pVNext = NULL;
@@ -3301,7 +3301,7 @@ bool CVConGroup::PaneActivateNext(bool abNext)
 			}
 		}
 
-		
+
 		if (pVNext)
 		{
 			bOk = Activate(pVNext);
@@ -3623,7 +3623,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 
 				_ASSERTE(gp_VCon[i] == pVCon);
 				gp_VCon[i] = pVCon;
-				
+
 				if (!lbInBackground)
 				{
 					gp_VActive = pVCon;
@@ -3632,7 +3632,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 				{
 					_ASSERTE(gp_VActive==pOldActive);
 				}
-				
+
 				pVCon->InitGhost();
 
 				if (!lbInBackground)
@@ -3785,7 +3785,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				rcAddShift.bottom = nDeltaY;
 		}
 	}
-	
+
 	switch (tWhat)
 	{
 		//case CER_BACK: // switch (tWhat)
@@ -4973,7 +4973,7 @@ bool CVConGroup::isGroup(CVirtualConsole* apVCon, CVConGroup** rpRoot /*= NULL*/
 	int nGroupPanes = pGr->GetGroupPanes(NULL);
 	if (nGroupPanes <= 1)
 		return false;
-	
+
 	if (rpRoot)
 		*rpRoot = pGr;
 
@@ -4984,7 +4984,7 @@ bool CVConGroup::isGroup(CVirtualConsole* apVCon, CVConGroup** rpRoot /*= NULL*/
 		else
 			*rpActiveVCon = (CVirtualConsole*)pGr->mp_ActiveGroupVConPtr;
 	}
-	
+
 	return true;
 }
 
