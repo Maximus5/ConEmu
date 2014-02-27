@@ -3418,6 +3418,9 @@ wrap:
 
 int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
 {
+	// If neither hMacroInstance nor ghConEmuWnd was set - Macro will fails most likely
+	_ASSERTE(hMacroInstance!=NULL || ghConEmuWnd!=NULL);
+
 	HWND hCallWnd = hMacroInstance ? hMacroInstance : ghConWnd;
 
 	// Все что в asCmdArg - выполнить в Gui
