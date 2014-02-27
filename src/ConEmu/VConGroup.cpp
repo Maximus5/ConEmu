@@ -2802,86 +2802,106 @@ HWND CVConGroup::DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const 
 
 CVConGroup* CVConGroup::FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/)
 {
-	CVConGroup* pNext = this;
-	CVConGroup* pCmp = this;
+	CVConGroup* pNext = NULL;
+	int iMinDistance = 0;
+	MArray<CVConGuard*> Panes;
+	int nGroupPanes;
+	int iPrevX, iPrevY;
 
-	if (nHorz == 0 && nVert != 0)
+	_ASSERTE(this!=NULL && this->mp_Grp1==NULL && this->mp_Grp2==NULL && this->mp_Item);
+
+	if (!nHorz && !nVert)
 	{
-		if (pNext->mp_Parent->m_SplitType != RConStartArgs::eSplitVert)
-		{
-			// We need nearest vertical split, find it
-			while (pNext->mp_Parent && pNext->mp_Parent->mp_Parent && (pNext->mp_Parent->m_SplitType != RConStartArgs::eSplitVert))
-			{
-				pCmp = pNext;
-				pNext = pNext->mp_Parent;
-			}
-		}
-
-		if (pNext->mp_Parent && pNext->mp_Parent->m_SplitType == RConStartArgs::eSplitVert)
-		{
-			if (pNext == pNext->mp_Parent->mp_Grp1 && nVert > 0)
-			{
-				pNext = pNext->mp_Parent->mp_Grp2->FindNextPane(rcPrev, 0, 0);
-				goto wrap;
-			}
-			if (pNext == pNext->mp_Parent->mp_Grp2 && nVert < 0)
-			{
-				pNext = pNext->mp_Parent->mp_Grp1->FindNextPane(rcPrev, 0, 0);
-				goto wrap;
-			}
-		}
+		// Just find nearest opposite
+		if (!mp_Parent)
+			goto wrap;
+		// Look at parent split
+		if (mp_Parent->m_SplitType == RConStartArgs::eSplitVert)
+			// Panes are above and below splitter
+			nVert = (this == mp_Parent->mp_Grp1) ? 1 : -1;
+		else if (mp_Parent->m_SplitType == RConStartArgs::eSplitHorz)
+			// Panes are leftward and rightward of splitter
+			nHorz = (this == mp_Parent->mp_Grp1) ? 1 : -1;
+		else
+			goto wrap;
 	}
 
-	if (nVert == 0 && nHorz != 0)
-	{
-		if (pNext->mp_Parent->m_SplitType != RConStartArgs::eSplitHorz)
-		{
-			// We need nearest horizontal split, find it
-			while (pNext->mp_Parent && pNext->mp_Parent->mp_Parent && (pNext->mp_Parent->m_SplitType != RConStartArgs::eSplitHorz))
-			{
-				pCmp = pNext;
-				pNext = pNext->mp_Parent;
-			}
-		}
-
-		if (pNext->mp_Parent && pNext->mp_Parent->m_SplitType == RConStartArgs::eSplitHorz)
-		{
-			if (pNext == pNext->mp_Parent->mp_Grp1 && nHorz > 0)
-			{
-				pNext = pNext->mp_Parent->mp_Grp2->FindNextPane(rcPrev, 0, 0);
-				goto wrap;
-			}
-			if (pNext == pNext->mp_Parent->mp_Grp2 && nHorz < 0)
-			{
-				pNext = pNext->mp_Parent->mp_Grp1->FindNextPane(rcPrev, 0, 0);
-				goto wrap;
-			}
-		}
-	}
-
-
-	if (pNext && (pNext->mp_Grp1 && pNext->mp_Grp2))
-	{
-		int iCenterNeed = (pNext->m_SplitType == RConStartArgs::eSplitHorz) ? ((rcPrev.right+rcPrev.left)>>1) : ((rcPrev.bottom+rcPrev.top)>>1);
-		RECT rc1 = pNext->mp_Grp1->mrc_Full;
-		RECT rc2 = pNext->mp_Grp2->mrc_Full;
-		int iCenter1 = (pNext->m_SplitType == RConStartArgs::eSplitHorz) ? ((rc1.right+rc1.left)>>1) : ((rc1.bottom+rc1.top)>>1);
-		int iCenter2 = (pNext->m_SplitType == RConStartArgs::eSplitHorz) ? ((rc2.right+rc2.left)>>1) : ((rc2.bottom+rc2.top)>>1);
-
-		if (_abs(iCenter1-iCenterNeed) < _abs(iCenter2-iCenterNeed))
-			pNext = pNext->mp_Grp1->FindNextPane(rcPrev, 0, 0);
-		else if (pNext->mp_Grp2)
-			pNext = pNext->mp_Grp2->FindNextPane(rcPrev, 0, 0);
+	// Get all panes from this grand-group
+	nGroupPanes = GetRootGroup()->GetGroupPanes(&Panes);
+	if (nGroupPanes < 2)
 		goto wrap;
-	}
 
-	if (pNext && pNext->mp_Parent)
+	// Eval the center of our pane
+	iPrevX = ((rcPrev.right+rcPrev.left)>>1);
+	iPrevY = ((rcPrev.bottom+rcPrev.top)>>1);
+
+	for (int i = 0; i < nGroupPanes; i++)
 	{
-		pNext = (pNext->mp_Parent->mp_Grp1 == pNext) ? pNext->mp_Parent->mp_Grp2 : pNext->mp_Parent->mp_Grp1;
-		goto wrap;
+		CVConGroup* pGrp = (CVConGroup*)(Panes[i]->VCon()->mp_Group);
+		if (pGrp == this)
+			continue;
+		RECT rc = pGrp->mrc_Full;
+
+		// Drop conditions
+		if (nHorz && !nVert)
+		{
+			if (nHorz < 0)
+			{
+				// Must be on the left of our pane
+				if (rc.right > rcPrev.left)
+					continue;
+			}
+			else
+			{
+				// Must be on the right of our pane
+				if (rc.left < rcPrev.right)
+					continue;
+			}
+		}
+		else if (nVert && !nHorz)
+		{
+			if (nVert < 0)
+			{
+				// Must be above our pane
+				if (rc.bottom > rcPrev.top)
+					continue;
+			}
+			else
+			{
+				// Must be below our pane
+				if (rc.top < rcPrev.bottom)
+					continue;
+			}
+		}
+
+		// Drop if direction does not match {nHorz,nVert}
+		int iX = ((rc.right+rc.left)>>1);
+		int iY = ((rc.bottom+rc.top)>>1);
+		if ((nHorz < 0) && (iX > iPrevX))
+			continue;
+		if ((nHorz > 0) && (iX < iPrevX))
+			continue;
+		if ((nVert < 0) && (iY > iPrevY))
+			continue;
+		if ((nVert > 0) && (iY < iPrevY))
+			continue;
+
+		// Well, look at "distance"
+		int iDX = (iX - iPrevX);
+		int iDY = (iY - iPrevY);
+		int iDist = iDX*iDX + iDY*iDY;
+		// And find the nearest pane
+		if (!pNext || (iMinDistance > iDist))
+		{
+			pNext = pGrp;
+			iMinDistance = iDist;
+		}
 	}
 
 wrap:
+	FreePanesArray(Panes);
+	if (!pNext)
+		pNext = this;
 	return pNext;
 }
 
@@ -2905,7 +2925,8 @@ bool CVConGroup::ActivateNextPane(CVirtualConsole* apVCon, int nHorz /*= 0*/, in
 		}
 		else
 		{
-			_ASSERTE((pNext != pGrp) && (pNext->mp_Item));
+			//_ASSERTE(pNext != pGrp); -- that means, no pane in requested direction...
+			_ASSERTE(pNext->mp_Item);
 		}
 	}
 
