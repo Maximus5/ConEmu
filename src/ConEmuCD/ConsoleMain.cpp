@@ -3416,6 +3416,32 @@ wrap:
 	return iRc;
 }
 
+struct FindTopGuiOrConsoleArg
+{
+	HWND  hMacroInstance;
+	DWORD nPID;
+};
+
+BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
+{
+	FindTopGuiOrConsoleArg* p = (FindTopGuiOrConsoleArg*)lParam;
+	wchar_t szClass[MAX_PATH];
+	if (GetClassName(hWnd, szClass, countof(szClass)) < 1)
+		return TRUE; // continue search
+
+	if ((lstrcmp(szClass, VirtualConsoleClassMain) != 0) && !isConsoleClass(szClass))
+		return TRUE; // continue search
+
+	DWORD nTestPID = 0; GetWindowThreadProcessId(hWnd, &nTestPID);
+	if (nTestPID == p->nPID || !p->nPID)
+	{
+		p->hMacroInstance = hWnd;
+		return FALSE; // Found! stop search
+	}
+
+	return TRUE; // continue search
+}
+
 int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
 {
 	// If neither hMacroInstance nor ghConEmuWnd was set - Macro will fails most likely
@@ -3816,24 +3842,22 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				else
 				{
 					// Если тут передать "0" - то выполняем в первом попавшемся (наверное в верхнем окне ConEmu)
-					DWORD nPID = wcstoul(pszID+1, &pszEnd, 10);
-					HWND hFind = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
-					while (hFind)
-					{
-						DWORD nTestPID = 0; GetWindowThreadProcessId(hFind, &nTestPID);
-						if (nTestPID == nPID || !nPID)
-						{
-							hMacroInstance = hFind;
-							break;
-						}
-						hFind = FindWindowEx(NULL, hFind, VirtualConsoleClassMain, NULL);
-					}
+					FindTopGuiOrConsoleArg args = {NULL};
+					args.nPID = wcstoul(pszID, &pszEnd, 10);
+					EnumWindows(FindTopGuiOrConsole, (LPARAM)&args);
+					hMacroInstance = args.hMacroInstance;
 				}
 
+				// This may be VirtualConsoleClassMain or RealConsoleClass...
 				if (hMacroInstance)
 				{
-					DWORD nGuiPID = 0; GetWindowThreadProcessId(hMacroInstance, &nGuiPID);
-					AllowSetForegroundWindow(nGuiPID);
+					// Has no effect, if hMacroInstance == RealConsoleClass
+					wchar_t szClass[MAX_PATH];
+					if ((GetClassName(hMacroInstance, szClass, countof(szClass)) > 0) && (lstrcmp(szClass, VirtualConsoleClassMain) == 0))
+					{
+						DWORD nGuiPID = 0; GetWindowThreadProcessId(hMacroInstance, &nGuiPID);
+						AllowSetForegroundWindow(nGuiPID);
+					}
 				}
 			}
 			break;
