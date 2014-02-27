@@ -791,7 +791,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 
 		// в заголовке "чисто" запущенного фара появляются отладочные(?) сообщения
 		// по идее - не должны, т.к. все должно быть через мэппинг
-		_ASSERTEX(hPipe != NULL && hPipe != INVALID_HANDLE_VALUE);
+		// *** _ASSERTEX(hPipe != NULL && hPipe != INVALID_HANDLE_VALUE); - no need in assert, it was already shown
 		#ifdef CONEMU_MINIMAL
 		SetConsoleTitle(szErr);
 		#else
