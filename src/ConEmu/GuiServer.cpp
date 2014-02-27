@@ -589,6 +589,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				ppReply->GuiMacro.nSucceeded = 0;
 			}
 
+			lbRc = TRUE;
 			break;
 		} // CECMD_GUIMACRO
 
