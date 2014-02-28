@@ -10,3 +10,4 @@ EXPORTS
 	WriteText=WriteText@20
 	Commit=Commit@0
 	GetColorDialog=GetColorDialog@12
+	SetHookCallbacksExt=SetHookCallbacksExt@24

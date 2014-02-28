@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/UnicodeChars.h"
 #include "../ConEmu/version.h"
 #include "../ConEmuCD/ExitCodes.h"
+#include "../ConEmuHk/SetHook.h"
 #include "ConEmuDw.h"
 #include "resource.h"
 #ifdef _DEBUG
@@ -78,6 +79,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 HMODULE ghOurModule = NULL; // ConEmuDw.dll
 HWND    ghConWnd = NULL; // VirtualCon. инициализируется в CheckBuffers()
 
+HMODULE ghPluginModule = NULL;
+HookItemPreCallback_t PreWriteCallBack = NULL;
 
 /* extern для MAssert, Здесь НЕ используется */
 /* */       HWND ghConEmuWnd = NULL;      /* */
@@ -191,10 +194,23 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 	return TRUE;
 }
 
-#if defined(CRTSTARTUP)
-extern "C" {
-	BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
-};
+bool __stdcall SetHookCallbacksExt(const char* ProcName, const wchar_t* DllName, HMODULE hCallbackModule,
+                                HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack,
+                                HookItemExceptCallback_t ExceptCallBack)
+{
+	if (!ProcName || lstrcmpA(ProcName, "WriteConsoleOutputW") != 0 || !DllName || lstrcmp(DllName, L"kernel32.dll") != 0)
+	{
+		_ASSERTE(ProcName!=NULL && DllName!=NULL);
+		_ASSERTE(lstrcmpA(ProcName, "WriteConsoleOutputW") != 0);
+		_ASSERTE(lstrcmp(DllName, L"kernel32.dll") != 0);
+		return false;
+	}
+
+	ghPluginModule = hCallbackModule;
+	PreWriteCallBack = PreCallBack;
+
+	return true;
+}
 
 #if defined(CRTSTARTUP)
 extern "C"
@@ -1132,6 +1148,13 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 				pTrueColor++;
 		}
 		
+		if (PreWriteCallBack)
+		{
+			bool bMainThread = true;
+			SETARGS5(&lbRc, h, pcWriteBuf, &MyBufferSize, &MyBufferCoord, &rcWrite);
+			PreWriteCallBack(&args);
+		}
+
 		if (!WriteConsoleOutputW(h, pcWriteBuf, MyBufferSize, MyBufferCoord, &rcWrite))
 		{
 			lbRc = FALSE;

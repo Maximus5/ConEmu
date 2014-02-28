@@ -10,3 +10,4 @@ EXPORTS
 	WriteText
 	Commit
 	GetColorDialog
+	SetHookCallbacksExt

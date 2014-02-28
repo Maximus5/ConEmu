@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -84,6 +84,8 @@ BOOL gbHooksModuleLoaded = FALSE; // TRUE, если был вызов LoadLibrar
 SetHookCallbacks_t SetHookCallbacks = NULL;
 SetLoadLibraryCallback_t SetLoadLibraryCallback = NULL;
 SetFarHookMode_t SetFarHookMode = NULL;
+HMODULE ghExtConModule = NULL;
+SetHookCallbacks_t SetHookCallbacksExt = NULL;
 
 
 // Эту функцию нужно позвать из DllMain плагина
@@ -147,6 +149,15 @@ BOOL StartupHooks(HMODULE ahOurDll)
 		}
 	}
 
+	if (!ghExtConModule)
+	{
+		ghExtConModule = GetModuleHandle(WIN3264TEST(L"ExtendedConsole.dll","ExtendedConsole64.dll"));
+	}
+	if (ghExtConModule && !SetHookCallbacksExt)
+	{
+		SetHookCallbacksExt = (SetHookCallbacks_t)GetProcAddress(ghExtConModule, "SetHookCallbacksExt");
+	}
+
 	SetLoadLibraryCallback(ghPluginModule, OnLibraryLoaded, NULL/*OnLibraryUnLoaded*/);
 	SetHookCallbacks("FreeConsole",  kernel32, ghPluginModule, OnConsoleDetaching, NULL, NULL);
 	SetHookCallbacks("AllocConsole", kernel32, ghPluginModule, NULL, OnConsoleWasAttached, NULL);
@@ -156,6 +167,8 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	SetHookCallbacks("ReadConsoleInputW", kernel32, ghPluginModule, OnConsoleReadInput, OnConsoleReadInputPost, NULL);
 	SetHookCallbacks("WriteConsoleOutputA", kernel32, ghPluginModule, OnWriteConsoleOutput, NULL, NULL);
 	SetHookCallbacks("WriteConsoleOutputW", kernel32, ghPluginModule, OnWriteConsoleOutput, NULL, NULL);
+	if (SetHookCallbacksExt)
+		SetHookCallbacksExt("WriteConsoleOutputW", kernel32, ghPluginModule, OnWriteConsoleOutput, NULL, NULL);
 	SetHookCallbacks("GetNumberOfConsoleInputEvents", kernel32, ghPluginModule, NULL, OnGetNumberOfConsoleInputEventsPost, NULL);
 	SetHookCallbacks("ShellExecuteExW", shell32, ghPluginModule, NULL, NULL, OnShellExecuteExW_Except);
 	SetFarHookMode(&gFarMode);
@@ -181,6 +194,8 @@ void ShutdownHooks()
 		SetHookCallbacks("ReadConsoleInputW", kernel32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks("WriteConsoleOutputA", kernel32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks("WriteConsoleOutputW", kernel32, ghPluginModule, NULL, NULL, NULL);
+		if (SetHookCallbacksExt)
+			SetHookCallbacksExt("WriteConsoleOutputW", kernel32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks("GetNumberOfConsoleInputEvents", kernel32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks("ShellExecuteExW", shell32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks = NULL;
