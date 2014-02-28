@@ -12,6 +12,23 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.02.27
+[*] Don't unlock working directory until ConEmu initialization finished.
+    So, behavior of "-loadcfgfile" and "-savecfgfile" changed. If you
+    specify xml file without path, if will be searched in the working
+    (ConEmu.exe startup) directory, but not in the ConEmu.exe folder.
+[%] In some cases Tab labels was not updated with console titles.
+[*] Switch "-NoCloseConfirm" described in the About dialog.
+[*] Don't highlight row/col during any popup menus (system, tab, etc.)
+[%] Issue 1444: Put focus to left/right/top/bottom split was not worked as expected.
+[%] Result of "ConEmuC.exe -GuiMacro:0" was not printed to StdOut.
+[*] Don't try to export "ConEmuMacroResult" when "ConEmuC.exe -GuiMacro:0" was called.
+[%] Fix "ConEmuC.exe -GuiMacro:PID|HWND" to exec macro in the exact instance or tab/split.
+[*] Colorization test in "ConEmuC.exe /CHECKUNICODE".
+[%] Wrong startup directory was displayed in console if startup command fails.
+[*] Some internal changes.
+
+
 2014.02.25
 [*] Log Lock/Unlock/Logoff events.
 [*] GuiMacro. Keys("Combo1"[,"Combo2"[,...]])
