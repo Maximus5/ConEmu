@@ -2226,7 +2226,15 @@ void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=NULL*
 	{
 		_wcscpy_c(lpInfo, nCchMax, L"\nCurrent directory:\n");
 			_ASSERTE(nCchMax>=(MAX_PATH*2+32));
-		GetCurrentDirectory(MAX_PATH*2, lpInfo+lstrlen(lpInfo));
+		if (gpStartEnv && gpStartEnv->pszWorkDir)
+		{
+			_wcscat_c(lpInfo, nCchMax, gpStartEnv->pszWorkDir);
+		}
+		else
+		{
+			_ASSERTE(gpStartEnv && gpStartEnv->pszWorkDir);
+			GetCurrentDirectory(MAX_PATH*2, lpInfo+lstrlen(lpInfo));
+		}
 		_wcscat_c(lpInfo, nCchMax, L"\n");
 		_wprintf(lpInfo);
 		free(lpInfo);
