@@ -74,19 +74,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_READ_BUF 16384
 
-#if defined(__GNUC__)
-extern "C" {
-	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
-	//BOOL WINAPI GetTextAttributes(FarColor* Attributes);
-	//BOOL WINAPI SetTextAttributes(const FarColor* Attributes);
-	//BOOL WINAPI ClearExtraRegions(const FarColor* Color, int Mode);
-	//BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* ReadRegion);
-	//BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion);
-	//BOOL WINAPI Commit();
-	//int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent);
-};
-#endif
-
 
 HMODULE ghOurModule = NULL; // ConEmuDw.dll
 HWND    ghConWnd = NULL; // VirtualCon. инициализируется в CheckBuffers()
@@ -154,9 +141,12 @@ BOOL LoadFarVersion()
 }
 
 
+#if defined(__GNUC__)
+extern "C"
+#endif
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
-	switch(ul_reason_for_call)
+	switch (ul_reason_for_call)
 	{
 		case DLL_PROCESS_ATTACH:
 			{
@@ -206,6 +196,8 @@ extern "C" {
 	BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
 };
 
+#if defined(CRTSTARTUP)
+extern "C"
 BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 {
 	DllMain(hDll, dwReason, lpReserved);
