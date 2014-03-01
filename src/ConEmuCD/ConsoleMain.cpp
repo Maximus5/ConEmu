@@ -3455,7 +3455,13 @@ BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
 	if (GetClassName(hWnd, szClass, countof(szClass)) < 1)
 		return TRUE; // continue search
 
-	if ((lstrcmp(szClass, VirtualConsoleClassMain) != 0) && !isConsoleClass(szClass))
+	// If called "-GuiMacro:0" we need to find first GUI window!
+	bool bConClass = isConsoleClass(szClass);
+	if (!p->nPID && bConClass)
+		return TRUE;
+
+	bool bGuiClass = (lstrcmp(szClass, VirtualConsoleClassMain) == 0);
+	if (!bGuiClass && !bConClass)
 		return TRUE; // continue search
 
 	DWORD nTestPID = 0; GetWindowThreadProcessId(hWnd, &nTestPID);
@@ -3466,6 +3472,67 @@ BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
 	}
 
 	return TRUE; // continue search
+}
+
+void ArgGuiMacro(CmdArg& szArg, HWND& hMacroInstance)
+{
+	wchar_t szLog[200];
+	if (gpLogSize) gpLogSize->LogString(szArg);
+
+	// Могли указать PID или HWND требуемого инстанса
+	if (szArg[9] == L':' || szArg[9] == L'=')
+	{
+		wchar_t* pszID = szArg.ms_Arg+10;
+		if (*pszID == L'0') pszID ++;
+		wchar_t* pszEnd;
+		if ((pszID[0] == L'0' && (pszID[1] == L'x' || pszID[1] == L'X'))
+			|| (pszID[0] == L'x' || pszID[0] == L'X'))
+		{
+			hMacroInstance = (HWND)(DWORD_PTR)wcstoul(pszID[0] == L'0' ? (pszID+2) : (pszID+1), &pszEnd, 16);
+
+			if (gpLogSize)
+			{
+				_wsprintf(szLog, SKIPLEN(countof(szLog)) L"Exact instance requested, HWND=x%08X", (DWORD)(DWORD_PTR)hMacroInstance);
+				gpLogSize->LogString(szLog);
+			}
+		}
+		else
+		{
+			// Если тут передать "0" - то выполняем в первом попавшемся (наверное в верхнем окне ConEmu)
+			FindTopGuiOrConsoleArg args = {NULL};
+			args.nPID = wcstoul(pszID, &pszEnd, 10);
+			EnumWindows(FindTopGuiOrConsole, (LPARAM)&args);
+			hMacroInstance = args.hMacroInstance;
+
+			if (gpLogSize)
+			{
+				if (hMacroInstance && args.nPID)
+					_wsprintf(szLog, SKIPLEN(countof(szLog)) L"Exact PID=%u requested, instance found HWND=x%08X", args.nPID, (DWORD)(DWORD_PTR)hMacroInstance);
+				else if (hMacroInstance && !args.nPID)
+					_wsprintf(szLog, SKIPLEN(countof(szLog)) L"First found requested, instance found HWND=x%08X", (DWORD)(DWORD_PTR)hMacroInstance);
+				else
+					_wsprintf(szLog, SKIPLEN(countof(szLog)) L"No instances was found (requested PID=%u) GuiMacro will fails", args.nPID);
+				gpLogSize->LogString(szLog);
+			}
+		}
+
+		// This may be VirtualConsoleClassMain or RealConsoleClass...
+		if (hMacroInstance)
+		{
+			// Has no effect, if hMacroInstance == RealConsoleClass
+			wchar_t szClass[MAX_PATH] = L"";
+			if ((GetClassName(hMacroInstance, szClass, countof(szClass)) > 0) && (lstrcmp(szClass, VirtualConsoleClassMain) == 0))
+			{
+				DWORD nGuiPID = 0; GetWindowThreadProcessId(hMacroInstance, &nGuiPID);
+				AllowSetForegroundWindow(nGuiPID);
+			}
+			if (gpLogSize)
+			{
+				gpLogSize->LogString(L"Found instance class name: ", true, NULL, false);
+				gpLogSize->LogString(szClass, false, NULL, true);
+			}
+		}
+	}
 }
 
 int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
@@ -3853,39 +3920,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpni(szArg, L"/GUIMACRO", 9) == 0)
 		{
 			// Все что в lsCmdLine - выполнить в Gui
+			ArgGuiMacro(szArg, hMacroInstance);
 			eExecAction = ea_GuiMacro;
-			// Могли указать PID или HWND требуемого инстанса
-			if (szArg[9] == L':' || szArg[9] == L'=')
-			{
-				wchar_t* pszID = szArg.ms_Arg+10;
-				if (*pszID == L'0') pszID ++;
-				wchar_t* pszEnd;
-				if ((pszID[0] == L'0' && (pszID[1] == L'x' || pszID[1] == L'X'))
-					|| (pszID[0] == L'x' || pszID[0] == L'X'))
-				{
-					hMacroInstance = (HWND)(DWORD_PTR)wcstoul(pszID[0] == L'0' ? (pszID+2) : (pszID+1), &pszEnd, 16);
-				}
-				else
-				{
-					// Если тут передать "0" - то выполняем в первом попавшемся (наверное в верхнем окне ConEmu)
-					FindTopGuiOrConsoleArg args = {NULL};
-					args.nPID = wcstoul(pszID, &pszEnd, 10);
-					EnumWindows(FindTopGuiOrConsole, (LPARAM)&args);
-					hMacroInstance = args.hMacroInstance;
-				}
-
-				// This may be VirtualConsoleClassMain or RealConsoleClass...
-				if (hMacroInstance)
-				{
-					// Has no effect, if hMacroInstance == RealConsoleClass
-					wchar_t szClass[MAX_PATH];
-					if ((GetClassName(hMacroInstance, szClass, countof(szClass)) > 0) && (lstrcmp(szClass, VirtualConsoleClassMain) == 0))
-					{
-						DWORD nGuiPID = 0; GetWindowThreadProcessId(hMacroInstance, &nGuiPID);
-						AllowSetForegroundWindow(nGuiPID);
-					}
-				}
-			}
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/CHECKUNICODE")==0)
@@ -4243,7 +4279,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				//  lstrcpynW(gpSrv->szConsoleFontFile, szArg+4, MAX_PATH);
 			}
 		}
-		else if (wcsncmp(szArg, L"/LOG",4)==0) //-V112
+		else if (lstrcmpni(szArg, L"/LOG", 4) == 0) //-V112
 		{
 			int nLevel = 0;
 			if (szArg[4]==L'1') nLevel = 1; else if (szArg[4]>=L'2') nLevel = 2;
