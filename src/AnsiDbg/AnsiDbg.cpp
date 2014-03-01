@@ -43,7 +43,14 @@ int ProcessSrv(LPCTSTR asName)
 		return PrintOut("\n!!! CreateNamedPipe failed, code=%u !!!\n");
 	}
 
-	PrintOut("Waiting for client...\n");
+	char sInfo[300] = "Waiting for client '";
+#ifdef _UNICODE
+	WideCharToMultiByte(CP_OEMCP, 0, asName, -1, sInfo+lstrlenA(sInfo), 200, 0, 0);
+#else
+	lstrcat(sInfo, asName);
+#endif
+	lstrcatA(sInfo, "'...\n");
+	PrintOut(sInfo);
 	b = ConnectNamedPipe(hPipeIn, NULL);
 	if (!b)
 	{
@@ -78,6 +85,20 @@ const wchar_t gszAnalogues[32] =
 	9658, 9668, 8597, 8252,  182,  167, 9632, 8616, 8593, 8595, 8594, 8592, 8735, 8596, 9650, 9660
 };
 
+void SendAnsi(HANDLE hPipe, HANDLE hOut, LPCSTR asSeq)
+{
+	if (!asSeq || !*asSeq) return;
+	DWORD nWrite, nLen = lstrlenA(asSeq);
+	WriteFile(hPipe, asSeq, nLen, &nWrite, NULL);
+	if (*asSeq == 27)
+	{
+		WriteConsoleW(hOut, gszAnalogues+27, 1, &nWrite, NULL);
+		asSeq++; nLen--;
+	}
+	if (nLen)
+		WriteConsoleA(hOut, asSeq, nLen, &nWrite, NULL);
+}
+
 int ProcessInput(LPCTSTR asName)
 {
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
@@ -87,8 +108,25 @@ int ProcessInput(LPCTSTR asName)
 	DWORD nRead, nWrite;
 	INPUT_RECORD r;
 	BOOL b;
-	printf("Connecting to server...\n");
-	WaitNamedPipe(szName, 30000);
+
+	char sInfo[300] = "Connecting to server '";
+#ifdef _UNICODE
+	WideCharToMultiByte(CP_OEMCP, 0, asName, -1, sInfo+lstrlenA(sInfo), 200, 0, 0);
+#else
+	lstrcat(sInfo, asName);
+#endif
+	lstrcatA(sInfo, "'");
+	PrintOut(sInfo);
+
+	DWORD nStart = GetTickCount();
+	while ((GetTickCount() - nStart) < 30000)
+	{
+		if (WaitNamedPipe(szName, 500))
+			break;
+		printf(".");
+		Sleep(2000);
+	}
+
 	HANDLE hPipe = CreateFile(szName, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (!hPipe || hPipe == INVALID_HANDLE_VALUE)
 	{
@@ -96,7 +134,7 @@ int ProcessInput(LPCTSTR asName)
 		printf("\n!!! OpenPipe failed, code=%u !!!\n", nRead);
 		return nRead;
 	}
-	printf("Connected, press Alt+X to exit!\n");
+	printf("\nConnected! Alt+X - exit, Alt+L - clear, Alt+F - fill\n");
 
 	SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
 
@@ -106,16 +144,46 @@ int ProcessInput(LPCTSTR asName)
 		{
 			if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown)
 			{
+				switch (r.Event.KeyEvent.wVirtualKeyCode)
+				{
+				case VK_UP:
+					SendAnsi(hPipe, hOut, "\x1B[A"); continue;
+				case VK_DOWN:
+					SendAnsi(hPipe, hOut, "\x1B[B"); continue;
+				case VK_RIGHT:
+					SendAnsi(hPipe, hOut, "\x1B[C"); continue;
+				case VK_LEFT:
+					SendAnsi(hPipe, hOut, "\x1B[D"); continue;
+				case VK_HOME:
+					SendAnsi(hPipe, hOut, "\x1B[1G"); continue;
+				case VK_END:
+					SendAnsi(hPipe, hOut, "\x1B[9999T"); continue;
+				}
 				if (r.Event.KeyEvent.uChar.AsciiChar)
 				{
-					if ((r.Event.KeyEvent.dwControlKeyState & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED))
-						&& (r.Event.KeyEvent.uChar.AsciiChar == 'x' || r.Event.KeyEvent.uChar.AsciiChar == 'X'))
-					{
-						printf("\nExit session\n");
-						break;
-					}
 					if (r.Event.KeyEvent.dwControlKeyState & (RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED|LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED))
+					{
+						char szText[100];
+						switch (r.Event.KeyEvent.uChar.AsciiChar)
+						{
+						case 'x': case 'X':
+							printf("\nExit session\n");
+							gbExit = true;
+							break;
+						case 'l': case 'L':
+							SendAnsi(hPipe, hOut, "\x1B[2J"); SendAnsi(hPipe, hOut, "\x1B[1;1H");
+							break;
+						case 'f': case 'F':
+							for (int i = 1; i <= 25; i++)
+							{
+								wsprintfA(szText, "Line %u\tLine %u\tLine %u\tLine %u\tLine %u\tLine %u\tLine %u\tLine %u\r\n", i,i,i,i,i,i,i,i);
+								SendAnsi(hPipe, hOut, szText);
+							}
+							break;
+						}
 						continue;
+					}
+						
 
 					if (r.Event.KeyEvent.uChar.AsciiChar == 27)
 						WriteConsoleW(hOut, gszAnalogues+27, 1, &nWrite, NULL);
