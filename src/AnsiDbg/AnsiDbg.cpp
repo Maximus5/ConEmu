@@ -28,11 +28,48 @@ int PrintOut(LPCSTR asFormat)
 	return nErr;
 }
 
+CRITICAL_SECTION cs;
+HANDLE hInThread = NULL;
+
+DWORD WINAPI InputThread(LPVOID lpParameter)
+{
+	char ch; DWORD nRead = 0, nWrite;
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+	HANDLE hErr = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	while (!gbExit)
+	{
+		// Following allows to view what user (or terminal) is sending to input
+		if (ReadFile(hIn, &ch, 1, &nRead, NULL) && nRead)
+		{
+			EnterCriticalSection(&cs);
+			BOOL b = GetConsoleScreenBufferInfo(hErr, &csbi);
+			if (b) SetConsoleTextAttribute(hErr, 11);
+			if (ch == 27)
+				WriteFile(hErr, "\\e", 2, &nWrite, NULL);
+			else
+				WriteFile(hErr, &ch, 1, &nWrite, NULL);
+			if (b) SetConsoleTextAttribute(hErr, csbi.wAttributes);
+			LeaveCriticalSection(&cs);
+		}
+		else
+		{
+			Sleep(10);
+		}
+	}
+	return 0;
+}
+
+
+
 int ProcessSrv(LPCTSTR asName)
 {
 	HANDLE hPipeIn;
 	TCHAR szName[MAX_PATH] = _T("\\\\.\\pipe\\");
 	_tcscat(szName, asName);
+
+	DWORD  nThread;
+	hInThread = CreateThread(NULL, 0, InputThread, NULL, 0, &nThread);
 
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	BOOL b; DWORD nRead, nWrite; char c;
@@ -63,7 +100,9 @@ int ProcessSrv(LPCTSTR asName)
 		b = ReadFile(hPipeIn, &c, 1, &nRead, NULL);
 		if (b && nRead)
 		{
+			EnterCriticalSection(&cs);
 			b = WriteFile(hOut, &c, nRead, &nWrite, NULL);
+			LeaveCriticalSection(&cs);
 			if (!b || nWrite != nRead)
 			{
 				return PrintOut("\n!!! WriteFile(StdOut) failed, code=%u !!!\n");
@@ -89,14 +128,18 @@ void SendAnsi(HANDLE hPipe, HANDLE hOut, LPCSTR asSeq)
 {
 	if (!asSeq || !*asSeq) return;
 	DWORD nWrite, nLen = lstrlenA(asSeq);
-	WriteFile(hPipe, asSeq, nLen, &nWrite, NULL);
-	if (*asSeq == 27)
+	if (hPipe)
+		WriteFile(hPipe, asSeq, nLen, &nWrite, NULL);
+	if (hOut)
 	{
-		WriteConsoleW(hOut, gszAnalogues+27, 1, &nWrite, NULL);
-		asSeq++; nLen--;
+		if (*asSeq == 27)
+		{
+			WriteConsoleW(hOut, gszAnalogues+27, 1, &nWrite, NULL);
+			asSeq++; nLen--;
+		}
+		if (nLen)
+			WriteConsoleA(hOut, asSeq, nLen, &nWrite, NULL);
 	}
-	if (nLen)
-		WriteConsoleA(hOut, asSeq, nLen, &nWrite, NULL);
 }
 
 int ProcessInput(LPCTSTR asName)
@@ -157,7 +200,40 @@ int ProcessInput(LPCTSTR asName)
 				case VK_HOME:
 					SendAnsi(hPipe, hOut, "\x1B[1G"); continue;
 				case VK_END:
-					SendAnsi(hPipe, hOut, "\x1B[9999T"); continue;
+					if (r.Event.KeyEvent.dwControlKeyState & (RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
+						SendAnsi(hPipe, hOut, "\x1B[9999T");
+					else
+					{
+						CONSOLE_SCREEN_BUFFER_INFO csbi;
+						if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+						{
+							char chEsc[32]; wsprintfA(chEsc, "\x1B[%uG", csbi.dwSize.X);
+							SendAnsi(hPipe, hOut, chEsc);
+						}
+					}
+					continue;
+				case VK_PRIOR: // PgUp
+					SendAnsi(hPipe, hOut, "\x1B[S"); continue;
+				case VK_NEXT:
+					SendAnsi(hPipe, hOut, "\x1B[T"); continue;
+				case VK_DELETE:
+					if (r.Event.KeyEvent.dwControlKeyState & (RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
+						SendAnsi(hPipe, hOut, "\x1B[M");
+					else if (r.Event.KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED))
+						SendAnsi(hPipe, hOut, "\x1B[P");
+					else if (r.Event.KeyEvent.dwControlKeyState & (SHIFT_PRESSED))
+						SendAnsi(hPipe, hOut, "\x1B[X");
+					else
+						PrintOut("\nCtrl+Del - delete line, Alt+Del - delete char, Shift+Del - clear char\n");
+					continue;
+				case VK_INSERT:
+					if (r.Event.KeyEvent.dwControlKeyState & (RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
+						SendAnsi(hPipe, hOut, "\x1B[L");
+					else if (r.Event.KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED))
+						SendAnsi(hPipe, hOut, "\x1B[@");
+					else
+						PrintOut("\nCtrl+Ins - insert line, Alt+Ins - insert char\n");
+					continue;
 				}
 				if (r.Event.KeyEvent.uChar.AsciiChar)
 				{
@@ -180,6 +256,27 @@ int ProcessInput(LPCTSTR asName)
 								SendAnsi(hPipe, hOut, szText);
 							}
 							break;
+						case '1':
+							SendAnsi(hPipe, NULL, "\r\nRequest terminal primary DA: ");
+							SendAnsi(hPipe, hOut, "\x1B[c"); continue;
+						case '2':
+							SendAnsi(hPipe, NULL, "\r\nRequest terminal secondary DA: ");
+							SendAnsi(hPipe, hOut, "\x1B[>c"); continue;
+						case '3':
+							SendAnsi(hPipe, NULL, "\r\nRequest terminal status: ");
+							SendAnsi(hPipe, hOut, "\x1B[5n"); continue;
+						case '4':
+							SendAnsi(hPipe, NULL, "\r\nRequest cursor pos [row;col]: ");
+							SendAnsi(hPipe, hOut, "\x1B[6n"); continue;
+						case '5':
+							SendAnsi(hPipe, NULL, "\r\nRequest text area size [height;width]: ");
+							SendAnsi(hPipe, hOut, "\x1B[18t"); continue;
+						case '6':
+							SendAnsi(hPipe, NULL, "\r\nRequest screen area size [height;width]: ");
+							SendAnsi(hPipe, hOut, "\x1B[19t"); continue;
+						case '7':
+							SendAnsi(hPipe, NULL, "\r\nRequest terminal title: ");
+							SendAnsi(hPipe, hOut, "\x1B[21t"); continue;
 						}
 						continue;
 					}
@@ -214,15 +311,32 @@ int ProcessInput(LPCTSTR asName)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	if (argc == 3)
+	int iRc = 0;
+
+	InitializeCriticalSection(&cs);
+
+	if (argc == 3 && _tcscmp(argv[1], _T("-srv")) == 0)
 	{
-		if (_tcscmp(argv[1], _T("-srv")) == 0)
-			return ProcessSrv(argv[2]);
-		else if (_tcscmp(argv[1], _T("-in")) == 0)
-			return ProcessInput(argv[2]);
+		iRc = ProcessSrv(argv[2]);
+	}
+	else if (argc == 3 && _tcscmp(argv[1], _T("-in")) == 0)
+	{
+		iRc = ProcessInput(argv[2]);
+	}
+	else if (argc == 2 && _tcscmp(argv[1], _T("-read")) == 0)
+	{
+		iRc = InputThread(NULL);
+	}
+	else
+	{
+		printf("Invalid usage\n\tAnsiDbg -in <name>\n\tAnsiDbg -out <name>\n");
+		iRc = 100;
 	}
 
-	printf("Invalid usage\n\tAnsiDbg -in <name>\n\tAnsiDbg -out <name>\n");
-	return 100;
+	if (hInThread)
+	{
+		TerminateThread(hInThread, 1);
+	}
+	return iRc;
 }
 
