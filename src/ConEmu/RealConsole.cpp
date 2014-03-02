@@ -12970,6 +12970,11 @@ BOOL CRealConsole::GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID)
 
 	// Проверить, подходит ли asAppFileName к ожидаемому
 	LPCWSTR pszCmd = GetCmd();
+	// Strip from startup command: set, chcp, title, etc.
+	if (pszCmd)
+		ProcessSetEnvCmd(pszCmd, false);
+	// Now we can compare executable name
+	TODO("PortableApps!!! Запускаться может, например, CommandPromptPortable.exe, а стартовать cmd.exe");
 	if (pszCmd && *pszCmd && asAppFileName && *asAppFileName)
 	{
 		wchar_t szApp[MAX_PATH+1];
