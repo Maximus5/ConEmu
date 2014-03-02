@@ -4,8 +4,19 @@
 #include <windows.h>
 #include <stdio.h>
 #include <tchar.h>
+#include <TlHelp32.h>
 
 bool gbExit = false;
+CRITICAL_SECTION cs;
+HANDLE hInThread = NULL;
+HWND hMinTTY = NULL;
+
+const wchar_t gszAnalogues[32] =
+{
+	32, 9786, 9787, 9829, 9830, 9827, 9824, 8226, 9688, 9675, 9689, 9794, 9792, 9834, 9835, 9788,
+	9658, 9668, 8597, 8252,  182,  167, 9632, 8616, 8593, 8595, 8594, 8592, 8735, 8596, 9650, 9660
+};
+
 
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
@@ -28,8 +39,122 @@ int PrintOut(LPCSTR asFormat)
 	return nErr;
 }
 
-CRITICAL_SECTION cs;
-HANDLE hInThread = NULL;
+BOOL CALLBACK EnumMinTTY(HWND hwnd, LPARAM lParam)
+{
+	if (hMinTTY)
+		return FALSE;
+	LPDWORD pdw = (LPDWORD)lParam;
+	TCHAR szClass[100] = _T("");
+	if (GetClassName(hwnd, szClass, 100))
+	{
+		if (lstrcmp(szClass, _T("mintty")) == 0)
+		{
+			DWORD nPID, nTID = GetWindowThreadProcessId(hwnd, &nPID);
+			while (*pdw)
+			{
+				if (*pdw == nPID)
+				{
+					hMinTTY = hwnd;
+					return FALSE; // stop
+				}
+				pdw++;
+			}
+		}
+		else if (lstrcmp(szClass, _T("VirtualConsoleClass")) == 0)
+		{
+			EnumChildWindows(hwnd, EnumMinTTY, lParam);
+		}
+	}
+	return TRUE; // continue
+}
+
+HWND FindMinTTY()
+{
+	if (hMinTTY)
+		return hMinTTY;
+
+	DWORD dwParentID[256] = {GetCurrentProcessId()}; DWORD nParents = 1;
+	DWORD dwMinTTY[256] = {}; DWORD nMinTTYs = 0;
+	DWORD nCountMax = 256, nCount = 0;
+	LPPROCESSENTRY32 pi = (LPPROCESSENTRY32)malloc(nCountMax*sizeof(PROCESSENTRY32));
+
+	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (hSnap != INVALID_HANDLE_VALUE)
+	{
+		pi[0].dwSize = sizeof(*pi);
+		if (Process32First(hSnap, pi)) do
+		{
+			nCount++;
+			if (nCount == nCountMax)
+			{
+				DWORD nNew = nCountMax*2;
+				LPPROCESSENTRY32 piNew = (LPPROCESSENTRY32)realloc(pi, nNew*sizeof(PROCESSENTRY32));
+				if (!piNew)
+					break;
+				pi = piNew;
+				nCountMax = nNew;
+			}
+			pi[nCount].dwSize = sizeof(*pi);
+		} while (Process32Next(hSnap, pi+nCount));
+		CloseHandle(hSnap);
+
+		if (!nCount)
+			return NULL;
+
+		bool bMinTTY = false;
+		for (int n = (int)(nCount - 1); n >= 0; n--)
+		{
+			bool bParent = false;
+			for (DWORD p = 0; p < nParents; p++)
+			{
+				if (pi[n].th32ProcessID == dwParentID[p])
+				{
+					bParent = true;
+					dwParentID[nParents++] = pi[n].th32ParentProcessID;
+					if (nParents == 255)
+						break;
+				}
+			}
+		}
+		for (DWORD n = 0; n < nCount; n++)
+		{
+			if (lstrcmpi(pi[n].szExeFile, _T("mintty.exe")) == 0)
+			{
+				for (DWORD p = 0; p < nParents; p++)
+				{
+					if (dwParentID[p] == pi[n].th32ProcessID)
+					{
+						dwMinTTY[nMinTTYs++] = pi[n].th32ProcessID;
+						break;
+					}
+				}
+			}
+			if (nMinTTYs == 255)
+				break;
+		}
+
+		EnumWindows(EnumMinTTY, (LPARAM)dwMinTTY);
+	}
+	return hMinTTY;
+}
+
+void SendAnsi(HANDLE hPipe, HANDLE hOut, LPCSTR asSeq)
+{
+	if (!asSeq || !*asSeq) return;
+	DWORD nWrite, nLen = lstrlenA(asSeq);
+	if (hPipe)
+		WriteFile(hPipe, asSeq, nLen, &nWrite, NULL);
+	if (hOut)
+	{
+		if (*asSeq == 27)
+		{
+			WriteConsoleW(hOut, gszAnalogues+27, 1, &nWrite, NULL);
+			asSeq++; nLen--;
+		}
+		if (nLen)
+			WriteConsoleA(hOut, asSeq, nLen, &nWrite, NULL);
+	}
+}
 
 DWORD WINAPI InputThread(LPVOID lpParameter)
 {
@@ -44,12 +169,18 @@ DWORD WINAPI InputThread(LPVOID lpParameter)
 		{
 			EnterCriticalSection(&cs);
 			BOOL b = GetConsoleScreenBufferInfo(hErr, &csbi);
-			if (b) SetConsoleTextAttribute(hErr, 11);
+			if (b)
+				SetConsoleTextAttribute(hErr, 11);
+			else
+				SendAnsi(hErr, NULL, "\x1B[1;36m");
 			if (ch == 27)
 				WriteFile(hErr, "\\e", 2, &nWrite, NULL);
 			else
 				WriteFile(hErr, &ch, 1, &nWrite, NULL);
-			if (b) SetConsoleTextAttribute(hErr, csbi.wAttributes);
+			if (b)
+				SetConsoleTextAttribute(hErr, csbi.wAttributes);
+			else
+				SendAnsi(hErr, NULL, "\x1B[m");
 			LeaveCriticalSection(&cs);
 		}
 		else
@@ -62,14 +193,12 @@ DWORD WINAPI InputThread(LPVOID lpParameter)
 
 
 
-int ProcessSrv(LPCTSTR asName)
+DWORD WINAPI ProcessSrvThread(LPVOID lpParameter)
 {
+	LPCTSTR asName = (LPCTSTR)lpParameter;
 	HANDLE hPipeIn;
 	TCHAR szName[MAX_PATH] = _T("\\\\.\\pipe\\");
 	_tcscat(szName, asName);
-
-	DWORD  nThread;
-	hInThread = CreateThread(NULL, 0, InputThread, NULL, 0, &nThread);
 
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	BOOL b; DWORD nRead, nWrite; char c;
@@ -80,7 +209,8 @@ int ProcessSrv(LPCTSTR asName)
 		return PrintOut("\n!!! CreateNamedPipe failed, code=%u !!!\n");
 	}
 
-	char sInfo[300] = "Waiting for client '";
+	char sInfo[300] = "";
+	wsprintfA(sInfo, "Server started, PID=%u\nWaiting for client '", GetCurrentProcessId());
 #ifdef _UNICODE
 	WideCharToMultiByte(CP_OEMCP, 0, asName, -1, sInfo+lstrlenA(sInfo), 200, 0, 0);
 #else
@@ -101,45 +231,54 @@ int ProcessSrv(LPCTSTR asName)
 		if (b && nRead)
 		{
 			EnterCriticalSection(&cs);
-			b = WriteFile(hOut, &c, nRead, &nWrite, NULL);
+			switch (c)
+			{
+			case 1:
+			{
+				Sleep(200);
+				HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+				INPUT_RECORD ir = {KEY_EVENT};
+				ir.Event.KeyEvent.bKeyDown = TRUE;
+				ir.Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
+				ir.Event.KeyEvent.uChar.AsciiChar = '\r';
+				b = WriteConsoleInputA(hIn, &ir, 1, &nWrite);
+				nRead = GetLastError();
+				if (!b && FindMinTTY())
+				{
+					PostMessage(hMinTTY, WM_CHAR, '\r', 0);
+				}
+				b = TRUE; nRead = nWrite;
+				break;
+			}
+			default:
+				b = WriteFile(hOut, &c, nRead, &nWrite, NULL);
+			}
 			LeaveCriticalSection(&cs);
 			if (!b || nWrite != nRead)
 			{
-				return PrintOut("\n!!! WriteFile(StdOut) failed, code=%u !!!\n");
+				PrintOut("\n!!! WriteFile(StdOut) failed, code=%u !!!\n");
+				break;
 			}
 		}
 		else
 		{
 			nRead = GetLastError();
-			return PrintOut("\n!!! Pipe reading error, code=%u !!!\n");
+			PrintOut("\n!!! Pipe reading error, code=%u !!!\n");
+			break;
 		}
 	}
 
+	// CygWin/mintty hack to exit process
+	TerminateProcess(GetCurrentProcess(), 1);
 	return 0;
 }
 
-const wchar_t gszAnalogues[32] =
+int ProcessSrv(LPCTSTR asName)
 {
-	32, 9786, 9787, 9829, 9830, 9827, 9824, 8226, 9688, 9675, 9689, 9794, 9792, 9834, 9835, 9788,
-	9658, 9668, 8597, 8252,  182,  167, 9632, 8616, 8593, 8595, 8594, 8592, 8735, 8596, 9650, 9660
-};
-
-void SendAnsi(HANDLE hPipe, HANDLE hOut, LPCSTR asSeq)
-{
-	if (!asSeq || !*asSeq) return;
-	DWORD nWrite, nLen = lstrlenA(asSeq);
-	if (hPipe)
-		WriteFile(hPipe, asSeq, nLen, &nWrite, NULL);
-	if (hOut)
-	{
-		if (*asSeq == 27)
-		{
-			WriteConsoleW(hOut, gszAnalogues+27, 1, &nWrite, NULL);
-			asSeq++; nLen--;
-		}
-		if (nLen)
-			WriteConsoleA(hOut, asSeq, nLen, &nWrite, NULL);
-	}
+	// Under cygwin/mintty ReadFile(STD_INPUT_HANDLE) works only in the main thread
+	DWORD  nThread;
+	hInThread = CreateThread(NULL, 0, ProcessSrvThread, (LPVOID)asName, 0, &nThread);
+	return InputThread(NULL);
 }
 
 int ProcessInput(LPCTSTR asName)
@@ -152,7 +291,8 @@ int ProcessInput(LPCTSTR asName)
 	INPUT_RECORD r;
 	BOOL b;
 
-	char sInfo[300] = "Connecting to server '";
+	char sInfo[300] = "";
+	wsprintfA(sInfo, "Client started, PID=%u\nConnecting to server '", GetCurrentProcessId());
 #ifdef _UNICODE
 	WideCharToMultiByte(CP_OEMCP, 0, asName, -1, sInfo+lstrlenA(sInfo), 200, 0, 0);
 #else
@@ -257,26 +397,40 @@ int ProcessInput(LPCTSTR asName)
 							}
 							break;
 						case '1':
+							SendAnsi(NULL, hOut, "{Alt+1}");
 							SendAnsi(hPipe, NULL, "\r\nRequest terminal primary DA: ");
-							SendAnsi(hPipe, hOut, "\x1B[c"); continue;
+							SendAnsi(hPipe, hOut, "\x1B[c");
+							SendAnsi(hPipe, NULL, "\x01"); continue;
 						case '2':
+							SendAnsi(NULL, hOut, "{Alt+2}");
 							SendAnsi(hPipe, NULL, "\r\nRequest terminal secondary DA: ");
-							SendAnsi(hPipe, hOut, "\x1B[>c"); continue;
+							SendAnsi(hPipe, hOut, "\x1B[>c");
+							SendAnsi(hPipe, NULL, "\x01"); continue;
 						case '3':
+							SendAnsi(NULL, hOut, "{Alt+3}");
 							SendAnsi(hPipe, NULL, "\r\nRequest terminal status: ");
-							SendAnsi(hPipe, hOut, "\x1B[5n"); continue;
+							SendAnsi(hPipe, hOut, "\x1B[5n");
+							SendAnsi(hPipe, NULL, "\x01"); continue;
 						case '4':
+							SendAnsi(NULL, hOut, "{Alt+4}");
 							SendAnsi(hPipe, NULL, "\r\nRequest cursor pos [row;col]: ");
-							SendAnsi(hPipe, hOut, "\x1B[6n"); continue;
+							SendAnsi(hPipe, hOut, "\x1B[6n");
+							SendAnsi(hPipe, NULL, "\x01"); continue;
 						case '5':
+							SendAnsi(NULL, hOut, "{Alt+5}");
 							SendAnsi(hPipe, NULL, "\r\nRequest text area size [height;width]: ");
-							SendAnsi(hPipe, hOut, "\x1B[18t"); continue;
+							SendAnsi(hPipe, hOut, "\x1B[18t");
+							SendAnsi(hPipe, NULL, "\x01"); continue;
 						case '6':
+							SendAnsi(NULL, hOut, "{Alt+6}");
 							SendAnsi(hPipe, NULL, "\r\nRequest screen area size [height;width]: ");
-							SendAnsi(hPipe, hOut, "\x1B[19t"); continue;
+							SendAnsi(hPipe, hOut, "\x1B[19t");
+							SendAnsi(hPipe, NULL, "\x01"); continue;
 						case '7':
+							SendAnsi(NULL, hOut, "{Alt+7}");
 							SendAnsi(hPipe, NULL, "\r\nRequest terminal title: ");
-							SendAnsi(hPipe, hOut, "\x1B[21t"); continue;
+							SendAnsi(hPipe, hOut, "\x1B[21t");
+							SendAnsi(hPipe, NULL, "\x01"); continue;
 						}
 						continue;
 					}
