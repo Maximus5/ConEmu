@@ -15190,6 +15190,42 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			ptRealScreen.x, ptRealScreen.y);
 		DEBUGSTRMOUSEWHEEL(szDbg);
 		#endif
+
+		// Still not clear why, but when Wheel event is redirected to (inactive) mintty,
+		// we get series of broken Wheel events (wrong coordinates)
+		/*
+		16:52:50.071(gui.10984.8268) Wheel Dir:-120 LParam:{500,237} Real:{500,213}
+		16:52:50.072(gui.10984.8268) Wheel Dir:-120 LParam:{500,261} Real:{500,213}
+		16:52:50.073(gui.10984.8268) Wheel Dir:-120 LParam:{500,285} Real:{500,213}
+		16:52:50.075(gui.10984.8268) Wheel Dir:-120 LParam:{500,309} Real:{500,213}
+		16:52:50.076(gui.10984.8268) Wheel Dir:-120 LParam:{500,333} Real:{500,213}
+		16:52:50.077(gui.10984.8268) Wheel Dir:-120 LParam:{500,357} Real:{500,213}
+		16:52:50.078(gui.10984.8268) Wheel Dir:-120 LParam:{500,381} Real:{500,213}
+		16:52:50.079(gui.10984.8268) Wheel Dir:-120 LParam:{500,405} Real:{500,213}
+		*/
+		static bool bWasSendToChildGui = false;
+		if (bWasSendToChildGui)
+		{
+			bWasSendToChildGui = false;
+			if (((int)(short)HIWORD(lParam) - ptRealScreen.y) > 10)
+			{
+				LogString(L"Mouse event (wheel) skipped due to invalid coordinates (redirection to ChildGui detected)");
+				return 0;
+			}
+		}
+
+		CVConGuard VCon;
+		if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
+		{
+			HWND hGuiChild = VCon->RCon()->GuiWnd();
+			if (hGuiChild)
+			{
+				// Just resend it to child GUI
+				bWasSendToChildGui = true;
+				VCon->RCon()->PostConsoleMessage(hGuiChild, messg, wParam, lParam);
+				return 0;
+			}
+		}
 	}
 
 	// Коррекция координат или пропуск сообщений
