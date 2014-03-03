@@ -12,6 +12,17 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.03.02
+[%] Regression 131211. (Issue 158) ConEmu PanelView was not updated after panel change.
+[+] Internal. AnsiDebugger added to src folder.
+[%] Regression 140227. "-GuiMacro:0" was executed in the first tab but not an active one.
+[%] GUI child application fails to start inside ConEmu if ‘tab’ startup command
+    begins with "set", "chcp", "title" (processed by ConEmuC before starting shell).
+    Than, following GUI executable was started outside of ConEmu window.
+[*] More logging of Mouse Wheel events
+[%] Wheel over inactive mintty pane unexpectedly scrolls active pane below too.
+
+
 2014.02.27
 [*] Don't unlock working directory until ConEmu initialization finished.
     So, behavior of "-loadcfgfile" and "-savecfgfile" changed. If you
