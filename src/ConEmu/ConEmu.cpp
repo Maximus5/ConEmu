@@ -85,6 +85,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRMOUSEWHEEL(s) DEBUGSTR(s)
 #define DEBUGSTRRCLICK(s) //DEBUGSTR(s)
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRIME(s) //DEBUGSTR(s)
@@ -15159,19 +15160,43 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		return lRc;
 	#endif
 
+	#ifdef _DEBUG
+	wchar_t szDbg[200];
+	#endif
 
 	//2010-05-20 все-таки будем ориентироваться на lParam, потому что
 	//  только так ConEmuTh может передать корректные координаты
 	//POINT ptCur = {-1, -1}; GetCursorPos(&ptCur);
 	POINT ptCurClient = {(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)};
 	POINT ptCurScreen = ptCurClient;
+	// MouseWheel event must get SCREEN coordinates
+	if (messg == WM_MOUSEWHEEL || messg == WM_MOUSEHWHEEL)
+	{
+		POINT ptRealScreen; GetCursorPos(&ptRealScreen);
+
+		#ifdef _DEBUG
+		wchar_t szKeys[100] = L"";
+		if (wParam & MK_CONTROL)  wcscat_c(szKeys, L" Ctrl");
+		if (wParam & MK_LBUTTON)  wcscat_c(szKeys, L" LBtn");
+		if (wParam & MK_MBUTTON)  wcscat_c(szKeys, L" MBtn");
+		if (wParam & MK_RBUTTON)  wcscat_c(szKeys, L" RBtn");
+		if (wParam & MK_XBUTTON1) wcscat_c(szKeys, L" XBtn1");
+		if (wParam & MK_XBUTTON2) wcscat_c(szKeys, L" XBtn2");
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg))
+			L"%s Dir:%i%s LParam:{%i,%i} Real:{%i,%i}\n",
+			(messg == WM_MOUSEWHEEL) ? L"Wheel" : L"HWheel",
+			(int)(short)HIWORD(wParam), szKeys,
+			(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam),
+			ptRealScreen.x, ptRealScreen.y);
+		DEBUGSTRMOUSEWHEEL(szDbg);
+		#endif
+	}
 
 	// Коррекция координат или пропуск сообщений
 	bool isPrivate = false;
 	bool bContinue = PatchMouseEvent(messg, ptCurClient, ptCurScreen, wParam, isPrivate);
 
 #ifdef _DEBUG
-	wchar_t szDbg[128];
 	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI::Mouse %s at screen {%ix%i} x%08X%s\n",
 		(messg==WM_MOUSEMOVE) ? L"WM_MOUSEMOVE" :
 		(messg==WM_LBUTTONDOWN) ? L"WM_LBUTTONDOWN" :
