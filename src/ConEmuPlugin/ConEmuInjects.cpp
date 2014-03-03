@@ -151,7 +151,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 
 	if (!ghExtConModule)
 	{
-		ghExtConModule = GetModuleHandle(WIN3264TEST(L"ExtendedConsole.dll","ExtendedConsole64.dll"));
+		ghExtConModule = GetModuleHandle(WIN3264TEST(L"ExtendedConsole.dll",L"ExtendedConsole64.dll"));
 	}
 	if (ghExtConModule && !SetHookCallbacksExt)
 	{
