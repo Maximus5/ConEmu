@@ -230,7 +230,6 @@ DWORD WINAPI ProcessSrvThread(LPVOID lpParameter)
 	TCHAR szName[MAX_PATH] = _T("\\\\.\\pipe\\");
 	_tcscat(szName, asName);
 
-	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	BOOL b; DWORD nRead, nWrite; char c;
 
 	hPipeIn = CreateNamedPipe(szName, PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE, 1, 80, 80, 0, NULL);
@@ -257,6 +256,7 @@ DWORD WINAPI ProcessSrvThread(LPVOID lpParameter)
 
 	while (true)
 	{
+		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		b = ReadFile(hPipeIn, &c, 1, &nRead, NULL);
 		if (b && nRead)
 		{
@@ -276,6 +276,32 @@ DWORD WINAPI ProcessSrvThread(LPVOID lpParameter)
 				if (!b && FindMinTTY())
 				{
 					PostMessage(hMinTTY, WM_CHAR, '\r', 0);
+				}
+				b = TRUE; nRead = nWrite;
+				break;
+			}
+			case 2:
+			{
+				int width = 80, height = 25;
+				CONSOLE_SCREEN_BUFFER_INFO csbi;
+				if (GetConsoleScreenBufferInfo(hOut, &csbi))
+				{
+					width = max(csbi.dwSize.X,20);
+					height = max(25,(csbi.dwSize.Y-csbi.dwCursorPosition.Y-1));
+				}
+				char* szText = (char*)malloc(width+20);
+				for (int i = 1; i <= height; i++)
+				{
+					sprintf(szText, "Line %-4u ", i);
+					char* psz = szText + strlen(szText);
+					for (int j = 1; (psz - szText) < width; j++)
+					{
+						sprintf(psz, "Word %u ", j);
+						psz += strlen(psz);
+					}
+					psz = szText+width-1;
+					*(psz++) = L'\r'; *(psz++) = L'\n'; *psz = 0;
+					WriteFile(hOut, szText, psz - szText, &nWrite, NULL);
 				}
 				b = TRUE; nRead = nWrite;
 				break;
@@ -368,10 +394,14 @@ int ProcessInput(LPCTSTR asName)
 				case VK_LEFT:
 					SendAnsi(hPipe, hOut, "\x1B[D"); continue;
 				case VK_HOME:
-					SendAnsi(hPipe, hOut, "\x1B[1G"); continue;
+					if (r.Event.KeyEvent.dwControlKeyState & (RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
+						SendAnsi(hPipe, hOut, "\x1B[1;1H");
+					else
+						SendAnsi(hPipe, hOut, "\x1B[1G");
+					continue;
 				case VK_END:
 					if (r.Event.KeyEvent.dwControlKeyState & (RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
-						SendAnsi(hPipe, hOut, "\x1B[9999T");
+						SendAnsi(hPipe, hOut, "\x1B[9999;1H");
 					else
 					{
 						CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -383,9 +413,17 @@ int ProcessInput(LPCTSTR asName)
 					}
 					continue;
 				case VK_PRIOR: // PgUp
-					SendAnsi(hPipe, hOut, "\x1B[S"); continue;
-				case VK_NEXT:
-					SendAnsi(hPipe, hOut, "\x1B[T"); continue;
+					if (r.Event.KeyEvent.dwControlKeyState & (RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
+						SendAnsi(hPipe, hOut, "\x1B[9999S");
+					else
+						SendAnsi(hPipe, hOut, "\x1B[S");
+					continue;
+				case VK_NEXT: // PgDn
+					if (r.Event.KeyEvent.dwControlKeyState & (RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
+						SendAnsi(hPipe, hOut, "\x1B[9999T");
+					else
+						SendAnsi(hPipe, hOut, "\x1B[T");
+					continue;
 				case VK_DELETE:
 					if (r.Event.KeyEvent.dwControlKeyState & (RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
 						SendAnsi(hPipe, hOut, "\x1B[M");
@@ -432,47 +470,51 @@ int ProcessInput(LPCTSTR asName)
 							SendAnsi(hPipe, hOut, "\x1B[2J"); SendAnsi(hPipe, hOut, "\x1B[1;1H");
 							break;
 						case 'f': case 'F':
-							for (int i = 1; i <= 25; i++)
-							{
-								wsprintfA(szText, "Line %u\tLine %u\tLine %u\tLine %u\tLine %u\tLine %u\tLine %u\tLine %u\r\n", i,i,i,i,i,i,i,i);
-								SendAnsi(hPipe, hOut, szText);
-							}
+							SendAnsi(NULL, hOut, "\r\nFilling server console width text...\r\n");
+							SendAnsi(hPipe, NULL, "\x02");
 							break;
 						case '1':
 							SendAnsi(NULL, hOut, "{Alt+1}");
 							SendAnsi(hPipe, NULL, "\r\nRequest terminal primary DA: ");
 							SendAnsi(hPipe, hOut, "\x1B[c");
-							SendAnsi(hPipe, NULL, "\x01"); continue;
+							SendAnsi(hPipe, NULL, "\x01");
+							break;
 						case '2':
 							SendAnsi(NULL, hOut, "{Alt+2}");
 							SendAnsi(hPipe, NULL, "\r\nRequest terminal secondary DA: ");
 							SendAnsi(hPipe, hOut, "\x1B[>c");
-							SendAnsi(hPipe, NULL, "\x01"); continue;
+							SendAnsi(hPipe, NULL, "\x01");
+							break;
 						case '3':
 							SendAnsi(NULL, hOut, "{Alt+3}");
 							SendAnsi(hPipe, NULL, "\r\nRequest terminal status: ");
 							SendAnsi(hPipe, hOut, "\x1B[5n");
-							SendAnsi(hPipe, NULL, "\x01"); continue;
+							SendAnsi(hPipe, NULL, "\x01");
+							break;
 						case '4':
 							SendAnsi(NULL, hOut, "{Alt+4}");
 							SendAnsi(hPipe, NULL, "\r\nRequest cursor pos [row;col]: ");
 							SendAnsi(hPipe, hOut, "\x1B[6n");
-							SendAnsi(hPipe, NULL, "\x01"); continue;
+							SendAnsi(hPipe, NULL, "\x01");
+							break;
 						case '5':
 							SendAnsi(NULL, hOut, "{Alt+5}");
 							SendAnsi(hPipe, NULL, "\r\nRequest text area size [height;width]: ");
 							SendAnsi(hPipe, hOut, "\x1B[18t");
-							SendAnsi(hPipe, NULL, "\x01"); continue;
+							SendAnsi(hPipe, NULL, "\x01");
+							break;
 						case '6':
 							SendAnsi(NULL, hOut, "{Alt+6}");
 							SendAnsi(hPipe, NULL, "\r\nRequest screen area size [height;width]: ");
 							SendAnsi(hPipe, hOut, "\x1B[19t");
-							SendAnsi(hPipe, NULL, "\x01"); continue;
+							SendAnsi(hPipe, NULL, "\x01");
+							break;
 						case '7':
 							SendAnsi(NULL, hOut, "{Alt+7}");
 							SendAnsi(hPipe, NULL, "\r\nRequest terminal title: ");
 							SendAnsi(hPipe, hOut, "\x1B[21t");
-							SendAnsi(hPipe, NULL, "\x01"); continue;
+							SendAnsi(hPipe, NULL, "\x01");
+							break;
 						}
 						continue;
 					}
