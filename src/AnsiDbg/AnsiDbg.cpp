@@ -146,14 +146,44 @@ void SendAnsi(HANDLE hPipe, HANDLE hOut, LPCSTR asSeq)
 		WriteFile(hPipe, asSeq, nLen, &nWrite, NULL);
 	if (hOut)
 	{
-		if (*asSeq == 27)
+		LPCSTR pszNextEsc = strchr(asSeq, 27);
+		while (pszNextEsc)
 		{
+			if (pszNextEsc > asSeq)
+				WriteConsoleA(hOut, asSeq, (pszNextEsc - asSeq), &nWrite, NULL);
 			WriteConsoleW(hOut, gszAnalogues+27, 1, &nWrite, NULL);
-			asSeq++; nLen--;
+			asSeq = pszNextEsc + 1;
+			pszNextEsc = strchr(asSeq, 27);
 		}
-		if (nLen)
+		if (asSeq && *asSeq)
+		{
+			nLen = lstrlenA(asSeq);
 			WriteConsoleA(hOut, asSeq, nLen, &nWrite, NULL);
+		}
 	}
+}
+
+void SendFile(HANDLE hPipe, HANDLE hOut, LPCTSTR asFileName)
+{
+	TCHAR szPath[MAX_PATH] = _T("");
+	GetModuleFileName(NULL, szPath, MAX_PATH);
+	TCHAR* pszSlash = _tcsrchr(szPath, _T('\\'));
+	lstrcpy(pszSlash ? pszSlash+1 : szPath, asFileName);
+	HANDLE hFile = CreateFile(szPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		DWORD nWrite;
+		PrintOut("File was not found, code=%u\n");
+		WriteConsole(hOut, szPath, lstrlen(szPath), &nWrite, NULL);
+		return;
+	}
+	DWORD nSize = GetFileSize(hFile, NULL);
+	char* pszData = (char*)calloc(nSize+1,1);
+	if (nSize && pszData && ReadFile(hFile, pszData, nSize, &nSize, NULL))
+	{
+		SendAnsi(hPipe, hOut, pszData);
+	}
+	CloseHandle(hFile);
 }
 
 DWORD WINAPI InputThread(LPVOID lpParameter)
@@ -375,9 +405,21 @@ int ProcessInput(LPCTSTR asName)
 						PrintOut("\nCtrl+Ins - insert line, Alt+Ins - insert char\n");
 					continue;
 				}
+				if (r.Event.KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED))
+				{
+					switch (r.Event.KeyEvent.wVirtualKeyCode)
+					{
+					case '1':
+						SendFile(hPipe, hOut, _T("AnsiColors16.ans")); continue;
+					case '2':
+						SendFile(hPipe, hOut, _T("AnsiColors16t.ans")); continue;
+					case '3':
+						SendFile(hPipe, hOut, _T("AnsiColors256.ans")); continue;
+					}
+				}
 				if (r.Event.KeyEvent.uChar.AsciiChar)
 				{
-					if (r.Event.KeyEvent.dwControlKeyState & (RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED|LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED))
+					if (r.Event.KeyEvent.dwControlKeyState & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED))
 					{
 						char szText[100];
 						switch (r.Event.KeyEvent.uChar.AsciiChar)
