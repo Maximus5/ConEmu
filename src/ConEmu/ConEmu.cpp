@@ -18324,7 +18324,7 @@ UINT CConEmuMain::RegisterMessage(LPCSTR asLocal, LPCWSTR asGlobal)
 	return nMsg;
 }
 
-UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal)
+UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal)
 {
 	UINT nMsg = 0; LPCSTR pszMsg = NULL;
 	if (m__AppMsgs.GetNext(NULL, &nMsg, &pszMsg))
@@ -18338,7 +18338,7 @@ UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal)
 				break;
 		}
 	}
-	return RegisterMessage(asLocal);
+	return RegisterMessage(asLocal, asGlobal);
 }
 
 // Speed up selection modifier checks

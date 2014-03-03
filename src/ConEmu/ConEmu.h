@@ -549,8 +549,9 @@ class CConEmuMain :
 		void UpdateWinHookSettings();
 		void CtrlWinAltSpace();
 		void DeleteVConMainThread(CVirtualConsole* apVCon);
+		UINT GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
+	private:
 		UINT RegisterMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
-		UINT GetRegisteredMessage(LPCSTR asLocal);
 	protected:
 		friend class CConEmuCtrl;
 		friend class CRunQueue;

@@ -77,13 +77,13 @@ CConEmuChild::CConEmuChild()
 	mn_MsgVConTerminated = 0; // Set when destroing pended
 	if (!gn_MsgVConTerminated)
 		gn_MsgVConTerminated = gpConEmu->GetRegisteredMessage("VConTerminated");
-	mn_MsgTabChanged = gpConEmu->RegisterMessage("CONEMUTABCHANGED",CONEMUTABCHANGED);
-	mn_MsgPostFullPaint = gpConEmu->RegisterMessage("CConEmuChild::PostFullPaint");
-	mn_MsgSavePaneSnapshoot = gpConEmu->RegisterMessage("CConEmuChild::SavePaneSnapshoot");
-	mn_MsgDetachPosted = gpConEmu->RegisterMessage("CConEmuChild::Detach");
-	mn_MsgRestoreChildFocus = gpConEmu->RegisterMessage("CONEMUMSG_RESTORECHILDFOCUS",CONEMUMSG_RESTORECHILDFOCUS);
+	mn_MsgTabChanged = gpConEmu->GetRegisteredMessage("CONEMUTABCHANGED",CONEMUTABCHANGED);
+	mn_MsgPostFullPaint = gpConEmu->GetRegisteredMessage("CConEmuChild::PostFullPaint");
+	mn_MsgSavePaneSnapshoot = gpConEmu->GetRegisteredMessage("CConEmuChild::SavePaneSnapshoot");
+	mn_MsgDetachPosted = gpConEmu->GetRegisteredMessage("CConEmuChild::Detach");
+	mn_MsgRestoreChildFocus = gpConEmu->GetRegisteredMessage("CONEMUMSG_RESTORECHILDFOCUS",CONEMUMSG_RESTORECHILDFOCUS);
 	#ifdef _DEBUG
-	mn_MsgCreateDbgDlg = gpConEmu->RegisterMessage("CConEmuChild::MsgCreateDbgDlg");
+	mn_MsgCreateDbgDlg = gpConEmu->GetRegisteredMessage("CConEmuChild::MsgCreateDbgDlg");
 	hDlgTest = NULL;
 	#endif
 
