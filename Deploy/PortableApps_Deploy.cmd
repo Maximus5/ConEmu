@@ -2,6 +2,8 @@
 
 setlocal
 
+set ConEmuHttp=http://code.google.com/p/conemu-maximus5/wiki/ConEmu
+
 if "%~1" == "" (
 set /P BUILD_NO="Deploy build number: "
 ) else (
@@ -26,8 +28,11 @@ echo %AppPack7z%
 exit /B 1
 )
 
-if exist "%AppSetup%" rd /S /Q "%AppSetup%"
-if errorlevel 1 goto err
+call :do_del
+if exist "%AppSetup%" (
+call cecho "Failed to erase: %AppSetup%"
+goto err
+)
 
 set path
 xcopy.exe /E "%AppTempl%\*.*" "%AppSetup%\"
@@ -62,13 +67,27 @@ start "Portable" /MIN /WAIT "%~d0\Utils\Portable\PortableApps\PortableApps.comIn
 if errorlevel 1 goto err
 echo Installer created successfully
 
+if exist "%~dp0..\ConEmu-key\sign_any.bat" (
+call cecho /green "Signing..."
+call "%~dp0..\..\ConEmu-key\sign_any.bat" /d "ConEmu %BUILD_NO% & PortableApps.com" /du %ConEmuHttp% "%~dp0..\%inst_name%"
+if errorlevel 1 goto err
+)
+
 cd /d "%~dp0..\"
 move "%inst_name%" ..\ConEmu-Deploy\Setup\
 if errorlevel 1 goto err
 
+:do_del
+if NOT exist "%AppSetup%" goto :EOF
+call cecho /yellow "Erasing temp folder: %AppSetup%"
 rd /S /Q "%AppSetup%"
+if exist "%AppSetup%" (
+call csleep 1000
+goto do_del
+)
 
 goto :EOF
 
 :err
+call cecho "Failed to create PortableApps.com installer"
 pause
