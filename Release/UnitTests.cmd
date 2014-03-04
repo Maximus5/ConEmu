@@ -10,7 +10,7 @@ if NOT "%~1" == "" (
 set ConEmu
 
 cd /d "%~dp0"
-start ConEmu /basic /cmd cmd /k "%~0" in_gui
+start ConEmu /loadcfgfile "%~dp0UnitTests\UnitTests.xml" /cmd cmd /k "%~0" in_gui
 goto fin
 
 :clear_env
@@ -46,7 +46,7 @@ goto fin
 
 :tab3
 call RenameTab "Ansi"
-type "%ConEmuBaseDir%\Addons\AnsiColors256.ans"
+type "%ConEmuDir%\UnitTests\AnsiColors256.ans"
 pause
 333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333 3333333
 pause

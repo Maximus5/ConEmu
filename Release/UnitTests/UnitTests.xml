@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<key name="Software">
+	<key name="ConEmu">
+		<key name=".Vanilla">
+			<value name="TabConsole" type="string" data="%s"/>
+			<value name="SingleInstance" type="hex" data="00"/>
+			<value name="KeyboardHooks" type="hex" data="01"/>
+			<value name="UseInjects" type="hex" data="01"/>
+			<value name="Update.CheckOnStartup" type="hex" data="00"/>
+			<value name="Update.CheckHourly" type="hex" data="00"/>
+			<value name="Update.ConfirmDownload" type="hex" data="01"/>
+			<value name="Update.UseBuilds" type="hex" data="02"/>
+			<value name="SaveCmdHistory" type="hex" data="00"/>
+		</key>
+	</key>
+</key>
