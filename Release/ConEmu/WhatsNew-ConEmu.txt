@@ -12,6 +12,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.03.03
+[%] Issue 1490: Fix crash on ANSI scrolling sequences.
+[%] Issue 1491: Don't erase customized directories when updating ConEmu PortableApps.
+[%] Overflow of internally registered windows messages.
+[*] AnsiDbg. Send predefined *.ans files to srv by Ctrl+1/2/3.
+
+
 2014.03.02
 [%] Regression 131211. (Issue 158) ConEmu PanelView was not updated after panel change.
 [+] Internal. AnsiDebugger added to src folder.
