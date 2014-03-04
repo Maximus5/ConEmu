@@ -873,6 +873,16 @@ BEGIN
     CTEXT           "chars",stClipConfirmLimit,292,27,22,8
 END
 
+IDD_SPG_SETALIAS DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Set environment variables and aliases",gbSetAlias,4,1,319,229
+    EDITTEXT        tSetCommands,9,59,309,166,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
+    LTEXT           "Here you may set up your environment variables, default code page, and so on...\r\n---------------------\r\nset HOME=C:\\DropBox\\Home\r\nset PATH=%ConEmuDir%\\Tools;%PATH%\r\nchcp utf-8",stSetCommands,10,13,307,43
+END
+
 IDD_SPG_MARKCOPY DIALOGEX 0, 0, 328, 235
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
@@ -1667,6 +1677,10 @@ BEGIN
     END
 
     IDD_SPG_PASTE, DIALOG
+    BEGIN
+    END
+
+    IDD_SPG_SETALIAS, DIALOG
     BEGIN
     END
 

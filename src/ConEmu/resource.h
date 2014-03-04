@@ -51,6 +51,7 @@
 #define IDD_SPG_CONFIRM                 180
 #define IDD_SPG_HISTORY                 181
 #define IDD_SPG_BACK                    182
+#define IDD_SPG_SETALIAS                183
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_ATTACHDLG                   212
@@ -1164,6 +1165,9 @@
 #define tQuakeKeyFast                   2847
 #define cbQuakeKeyFast                  2848
 #define stPalettePreviewFast            2849
+#define gbSetAlias                      2850
+#define tSetCommands                    2851
+#define stSetCommands                   2852
 #define vkCdExplorerPath                3841
 #define IDC_STATIC                      -1
 
@@ -1173,7 +1177,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        227
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2850
+#define _APS_NEXT_CONTROL_VALUE         2853
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
