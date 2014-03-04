@@ -67,15 +67,20 @@ start "Portable" /MIN /WAIT "%~d0\Utils\Portable\PortableApps\PortableApps.comIn
 if errorlevel 1 goto err
 echo Installer created successfully
 
-if exist "%~dp0..\ConEmu-key\sign_any.bat" (
+if exist "%~dp0..\..\ConEmu-key\sign_any.bat" (
 call cecho /green "Signing..."
 call "%~dp0..\..\ConEmu-key\sign_any.bat" /d "ConEmu %BUILD_NO% & PortableApps.com" /du %ConEmuHttp% "%~dp0..\%inst_name%"
 if errorlevel 1 goto err
 )
 
+:do_move
 cd /d "%~dp0..\"
 move "%inst_name%" ..\ConEmu-Deploy\Setup\
-if errorlevel 1 goto err
+if errorlevel 1 (
+call cecho "Failed to move file: %inst_name%"
+pause
+goto do_move
+)
 
 :do_del
 if NOT exist "%AppSetup%" goto :EOF
