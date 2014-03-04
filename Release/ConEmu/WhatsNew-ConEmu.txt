@@ -12,11 +12,15 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
-2014.03.03
+2014.03.04
 [%] Issue 1490: Fix crash on ANSI scrolling sequences.
 [%] Issue 1491: Don't erase customized directories when updating ConEmu PortableApps.
 [%] Overflow of internally registered windows messages.
 [*] AnsiDbg. Send predefined *.ans files to srv by Ctrl+1/2/3.
+[*] Overwrite file confirmation in SaveAs dialog
+[*] ‘Import...’ button in the Settings dialog.
+    Note! Export AND Import settings (xml files) now works with
+    unnamed (.Vanilla) configuration to unify settings exchange.
 
 
 2014.03.02
