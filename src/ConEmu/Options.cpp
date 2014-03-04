@@ -2169,7 +2169,7 @@ void Settings::FreeProgresses()
 /* ************************************************************************ */
 /* ************************************************************************ */
 
-void Settings::LoadSettings(bool *rbNeedCreateVanilla)
+void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* apStorage /*= NULL*/)
 {
 	if (!gpConEmu)
 	{
@@ -2238,7 +2238,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 //-----------------------------------------------------------------------
 ///| Loading from reg/xml |//////////////////////////////////////////////
 //-----------------------------------------------------------------------
-	SettingsBase* reg = CreateSettings(NULL);
+	SettingsBase* reg = CreateSettings(apStorage);
 	if (!reg)
 	{
 		_ASSERTE(reg!=NULL);

@@ -1380,7 +1380,7 @@ struct Settings
 		//HotGuiMacro Macros[24];
 		
 	public:
-		void LoadSettings(bool *rbNeedCreateVanilla);
+		void LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* apStorage = NULL);
 		void InitSettings();
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadPalettes(SettingsBase* reg);
