@@ -1019,7 +1019,7 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent 
 	ofn.nMaxFile = countof(temp)-10;
 	ofn.lpstrTitle = asTitle ? asTitle : L"Choose file";
 	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-		| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|(bSaveNewFile ? 0 : OFN_FILEMUSTEXIST);
+		| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|(bSaveNewFile ? OFN_OVERWRITEPROMPT : OFN_FILEMUSTEXIST);
 
 	BOOL bRc = bSaveNewFile
 		? GetSaveFileName(&ofn)
