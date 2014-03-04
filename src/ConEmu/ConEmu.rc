@@ -168,7 +168,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Console size and Window position",IDC_STATIC,4,1,319,229
+    GROUPBOX        "Console size and Window position",IDC_STATIC,4,1,319,165
     EDITTEXT        tWndWidth,42,63,39,12,ES_AUTOHSCROLL
     EDITTEXT        tWndHeight,122,63,39,12,ES_AUTOHSCROLL
     CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,50,38,8
