@@ -2,9 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by ConEmu.rc
 //
-#ifndef IDC_STATIC
-#define IDC_STATIC                     -1
-#endif
+#define IDC_STATIC                      -1
 #define IDI_ICON1                       1
 #define IDI_ICON2                       2
 #define IDI_ICON3                       3
