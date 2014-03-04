@@ -576,18 +576,15 @@ BEGIN
     CONTROL         "List1",tvSetupCategories,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_SHOWSELALWAYS | WS_BORDER | WS_HSCROLL | WS_TABSTOP,4,19,90,232
     LTEXT           " ",tSetupPagePlace,95,19,326,234,WS_BORDER
     DEFPUSHBUTTON   "Save settings",bSaveSettings,351,258,70,14
-    PUSHBUTTON      "Reset",bResetSettings,235,258,51,14
-    PUSHBUTTON      "Reload",bReloadSettings,293,258,51,14
-    GROUPBOX        "Save settings to",IDC_STATIC,97,253,90,22,NOT WS_VISIBLE
-    CONTROL         "reg",rbSettingsReg,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,101,264,27,9
-    CONTROL         "xml",rbSettingsXml,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,129,264,27,9
-    CONTROL         "ini",rbSettingsIni,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,158,264,23,9
+    PUSHBUTTON      "Reset...",bResetSettings,164,258,51,14
+    PUSHBUTTON      "Reload...",bReloadSettings,222,258,51,14
     LTEXT           "Find:",stOptionSearch,5,5,17,8
     EDITTEXT        tOptionSearch,23,3,55,13,ES_AUTOHSCROLL
     PUSHBUTTON      ">",cbOptionSearch,79,2,15,14
     LTEXT           "Storage:",stStorage,106,5,29,8
     EDITTEXT        tStorage,141,3,227,13,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "Export...",cbExportConfig,371,2,50,14
+    PUSHBUTTON      "Import...",bImportSettings,279,258,50,14
 END
 
 IDD_SPG_INFO DIALOGEX 0, 0, 328, 224
@@ -1455,6 +1452,10 @@ BEGIN
     IDD_SPG_COLORS, DIALOG
     BEGIN
         BOTTOMMARGIN, 234
+    END
+
+    IDD_SETTINGS, DIALOG
+    BEGIN
     END
 
     IDD_SPG_INFO, DIALOG

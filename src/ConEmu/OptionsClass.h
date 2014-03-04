@@ -321,7 +321,9 @@ class CSettings
 	private:
 		static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh = false);
 	protected:
-		void OnResetOrReload(BOOL abResetOnly);
+		void OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage = NULL);
+		void ExportSettings();
+		void ImportSettings();
 		void SearchForControls();
 		static void InvalidateCtrl(HWND hCtrl, BOOL bErase);
 		// IDD_SETTINGS

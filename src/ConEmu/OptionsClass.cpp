@@ -8459,14 +8459,29 @@ void CSettings::OnClose()
 	gpConEmu->OnOurDialogClosed();
 }
 
-void CSettings::OnResetOrReload(BOOL abResetOnly)
+void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /*= NULL*/)
 {
-	BOOL lbWasPos = FALSE;
+	bool lbWasPos = false;
 	RECT rcWnd = {};
 	int nSel = -1;
 	
-	int nBtn = MsgBox(abResetOnly ? L"Confirm reset settings to defaults" : L"Confirm reload settings from xml/registry",
-		MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), ghOpWnd);
+	wchar_t* pszMsg = NULL;
+	LPCWSTR pszWarning = L"\n\nWarning!!!\nAll your current settings will be lost!";
+	if (pXmlStorage)
+	{
+		_ASSERTE(abResetOnly == false);
+		pszMsg = lstrmerge(L"Confirm import settings from file:\n", pXmlStorage->pszFile ? pXmlStorage->pszFile : L"???", pszWarning);
+	}
+	else if (abResetOnly)
+	{
+		pszMsg = lstrmerge(L"Confirm reset settings to defaults", pszWarning);
+	}
+	else
+	{
+		pszMsg = lstrmerge(L"Confirm reload settings from ", gpSet->Type, pszWarning);
+	}
+
+	int nBtn = MsgBox(pszMsg, MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), ghOpWnd);
 	if (nBtn != IDYES)
 		return;
 
@@ -8475,7 +8490,7 @@ void CSettings::OnResetOrReload(BOOL abResetOnly)
 	
 	if (ghOpWnd && IsWindow(ghOpWnd))
 	{
-		lbWasPos = TRUE;
+		lbWasPos = true;
 		nSel = TabCtrl_GetCurSel(GetDlgItem(ghOpWnd, tabMain));
 		GetWindowRect(ghOpWnd, &rcWnd);
 		DestroyWindow(ghOpWnd);
@@ -8492,7 +8507,7 @@ void CSettings::OnResetOrReload(BOOL abResetOnly)
 	if (!abResetOnly)
 	{
 		bool bNeedCreateVanilla = false;
-		gpSet->LoadSettings(&bNeedCreateVanilla);
+		gpSet->LoadSettings(&bNeedCreateVanilla, pXmlStorage);
 	}
 
 
@@ -8509,6 +8524,70 @@ void CSettings::OnResetOrReload(BOOL abResetOnly)
 
 	SetCursor(LoadCursor(NULL,IDC_ARROW));
 	gpConEmu->Taskbar_SetProgressState(TBPF_NOPROGRESS);
+
+	MsgBox(L"Don't forget to Save your new settings", MB_ICONINFORMATION, gpConEmu->GetDefaultTitle(), ghOpWnd);
+}
+
+void CSettings::ExportSettings()
+{
+	wchar_t *pszFile = SelectFile(L"Export settings", L"*.xml", ghOpWnd, L"XML files (*.xml)\0*.xml\0", false, false, true);
+	if (pszFile)
+	{
+		SetCursor(LoadCursor(NULL,IDC_WAIT));
+		gpConEmu->Taskbar_SetProgressState(TBPF_INDETERMINATE);
+
+		// Export using ".Vanilla" configuration!
+		wchar_t* pszSaveName = NULL;
+		if (ConfigName && *ConfigName)
+		{
+			pszSaveName = lstrdup(ConfigName);
+			SetConfigName(L"");
+		}
+
+		SettingsStorage XmlStorage = {CONEMU_CONFIGTYPE_XML};
+		XmlStorage.pszFile = pszFile;
+		gpSet->SaveSettings(FALSE, &XmlStorage);
+		SafeFree(pszFile);
+
+		// Restore configuration name if any
+		if (pszSaveName)
+		{
+			SetConfigName(pszSaveName);
+			SafeFree(pszSaveName);
+		}
+
+		SetCursor(LoadCursor(NULL,IDC_ARROW));
+		gpConEmu->Taskbar_SetProgressState(TBPF_NOPROGRESS);
+	}
+}
+
+void CSettings::ImportSettings()
+{
+	wchar_t *pszFile = SelectFile(L"Import settings", L"*.xml", ghOpWnd, L"XML files (*.xml)\0*.xml\0", false, false, false);
+	if (pszFile)
+	{
+		// Import using ".Vanilla" configuration!
+		wchar_t* pszSaveName = NULL;
+		if (ConfigName && *ConfigName)
+		{
+			pszSaveName = lstrdup(ConfigName);
+			SetConfigName(L"");
+		}
+
+		SettingsStorage XmlStorage = {CONEMU_CONFIGTYPE_XML};
+		XmlStorage.pszFile = pszFile;
+
+		OnResetOrReload(false, &XmlStorage);
+
+		// Restore configuration name if any
+		if (pszSaveName)
+		{
+			SetConfigName(pszSaveName);
+			SafeFree(pszSaveName);
+		}
+
+		SafeFree(pszFile);
+	}
 }
 
 INT_PTR CSettings::ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -8670,6 +8749,12 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 					case bReloadSettings:
 						gpSetCls->OnResetOrReload(LOWORD(wParam) == bResetSettings);
 						break;
+					case cbExportConfig:
+						gpSetCls->ExportSettings();
+						break;
+					case bImportSettings:
+						gpSetCls->ImportSettings();
+						break;
 
 					case cbOptionSearch:
 						gpSetCls->SearchForControls();
@@ -8684,19 +8769,6 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 						//	gpConEmu->mp_TabBar->Update();
 						//gpConEmu->OnPanelViewSettingsChanged();
 						SendMessage(ghOpWnd, WM_CLOSE, 0, 0);
-						break;
-
-					case cbExportConfig:
-						{
-							wchar_t *pszFile = SelectFile(L"Export configuration", L"*.xml", ghOpWnd, L"XML files (*.xml)\0*.xml\0", false, false, true);
-							if (pszFile)
-							{
-								SettingsStorage XmlStorage = {CONEMU_CONFIGTYPE_XML};
-								XmlStorage.pszFile = pszFile;
-								gpSet->SaveSettings(FALSE, &XmlStorage);
-								SafeFree(pszFile);
-							}
-						}
 						break;
 
 					default:
