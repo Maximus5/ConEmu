@@ -8988,45 +8988,7 @@ bool CConEmuMain::StartDebugActiveProcess()
 	if (!dwPID)
 		return false;
 
-	// Create process, with flag /Attach GetCurrentProcessId()
-	// Sleep for sometimes, try InitHWND(hConWnd); several times
-	WCHAR  szExe[0x400] = {0};
-	bool lbRc = false;
-	//DWORD nLen = 0;
-	PROCESS_INFORMATION pi = {NULL};
-	STARTUPINFO si = {sizeof(si)};
-	WARNING("Наверное лучше переделать на CreateCon...");
-	si.dwFlags |= STARTF_USESHOWWINDOW;
-	si.wShowWindow = SW_HIDE;
-	DWORD dwSelfPID = GetCurrentProcessId();
-	int W = pRCon->TextWidth();
-	int H = pRCon->TextHeight();
-	int nBits = GetProcessBits(dwPID);
-	LPCWSTR pszServer = (nBits == 64) ? ms_ConEmuC64Full : ms_ConEmuC32Full;
-	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%i /GHWND=%08X /BW=%i /BH=%i /BZ=%u /ROOT \"%s\" /DEBUGPID=%i ",
-		pszServer, dwSelfPID, (DWORD)ghWnd, W, H, LONGOUTPUTHEIGHT_MAX, pszServer, dwPID);
-
-	#ifdef _DEBUG
-	if (MessageBox(NULL, szExe, L"StartDebugLogConsole", MB_OKCANCEL|MB_SYSTEMMODAL) != IDOK)
-		return false;
-	#endif
-		
-	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL,
-		NULL, &si, &pi))
-	{
-		// Хорошо бы ошибку показать?
-		DWORD dwErr = GetLastError();
-		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create debugger console! ErrCode=0x%08X", dwErr);
-		MBoxA(szErr);
-	}
-	else
-	{
-		gbDebugLogStarted = TRUE;
-		SafeCloseHandle(pi.hProcess);
-		SafeCloseHandle(pi.hThread);
-		lbRc = true;
-	}
-
+	bool lbRc = pRCon->StartDebugger(sdt_DebugActiveProcess);
 	return lbRc;
 }
 
@@ -9040,40 +9002,7 @@ bool CConEmuMain::MemoryDumpActiveProcess()
 	if (!dwPID)
 		return false;
 
-	// Create process, with flag /Attach GetCurrentProcessId()
-	// Sleep for sometimes, try InitHWND(hConWnd); several times
-	WCHAR  szExe[0x400] = {0};
-	bool lbRc = false;
-	//DWORD nLen = 0;
-	PROCESS_INFORMATION pi = {NULL};
-	STARTUPINFO si = {sizeof(si)};
-	si.dwFlags |= STARTF_USESHOWWINDOW;
-	si.wShowWindow = SW_SHOWNORMAL;
-	int nBits = GetProcessBits(dwPID);
-	LPCWSTR pszServer = (nBits == 64) ? ms_ConEmuC64Full : ms_ConEmuC32Full;
-	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%i /DUMP", pszServer, dwPID);
-
-	//#ifdef _DEBUG
-	//if (MessageBox(NULL, szExe, L"StartDebugLogConsole", MB_OKCANCEL|MB_SYSTEMMODAL) != IDOK)
-	//	return;
-	//#endif
-		
-	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL,
-		NULL, &si, &pi))
-	{
-		// Хорошо бы ошибку показать?
-		DWORD dwErr = GetLastError();
-		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create debugger console! ErrCode=0x%08X", dwErr);
-		MBoxA(szErr);
-	}
-	else
-	{
-		gbDebugLogStarted = TRUE;
-		SafeCloseHandle(pi.hProcess);
-		SafeCloseHandle(pi.hThread);
-		lbRc = true;
-	}
-
+	bool lbRc = pRCon->StartDebugger(sdt_DumpMemory);
 	return lbRc;
 }
 

@@ -198,6 +198,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mh_PostMacroThread = NULL; mn_PostMacroThreadID = 0;
 	//mh_InputThread = NULL; mn_InputThreadID = 0;
 	mp_sei = NULL;
+	mp_sei_dbg = NULL;
 	mn_MainSrv_PID = mn_ConHost_PID = 0; mh_MainSrv = NULL; mb_MainSrv_Ready = false;
 	mn_CheckFreqLock = 0;
 	mp_ConHostSearch = NULL;
@@ -411,6 +412,12 @@ CRealConsole::~CRealConsole()
 	{
 		SafeCloseHandle(mp_sei->hProcess);
 		SafeFree(mp_sei);
+	}
+
+	if (mp_sei_dbg)
+	{
+		SafeCloseHandle(mp_sei_dbg->hProcess);
+		SafeFree(mp_sei_dbg);
 	}
 
 	m_RConServer.Stop(true);
@@ -3060,6 +3067,95 @@ LPCWSTR CRealConsole::GetStartupDir()
 	LPCWSTR lpszWorkDir = gpConEmu->WorkDir(pszStartupDir);
 
 	return lpszWorkDir;
+}
+
+bool CRealConsole::StartDebugger(StartDebugType sdt)
+{
+	DWORD dwPID = GetActivePID();
+	if (!dwPID)
+		return false;
+
+	//// Create process, with flag /Attach GetCurrentProcessId()
+	//// Sleep for sometimes, try InitHWND(hConWnd); several times
+
+	WCHAR  szExe[MAX_PATH*3] = L"";
+	bool lbRc = false;
+	PROCESS_INFORMATION pi = {NULL};
+	STARTUPINFO si = {sizeof(si)};
+
+	int nBits = GetProcessBits(dwPID);
+	LPCWSTR pszServer = (nBits == 64) ? gpConEmu->ms_ConEmuC64Full : gpConEmu->ms_ConEmuC32Full;
+
+	switch (sdt)
+	{
+	case sdt_DumpMemory:
+		{
+			si.dwFlags |= STARTF_USESHOWWINDOW;
+			si.wShowWindow = SW_SHOWNORMAL;
+			_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%i /DUMP", pszServer, dwPID);
+		} break;
+	case sdt_DebugActiveProcess:
+		{
+			TODO("Может лучше переделать на CreateCon?");
+			si.dwFlags |= STARTF_USESHOWWINDOW;
+			si.wShowWindow = SW_HIDE;
+			DWORD dwSelfPID = GetCurrentProcessId();
+			int W = TextWidth();
+			int H = TextHeight();
+			_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%i /GHWND=%08X /BW=%i /BH=%i /BZ=%u /ROOT \"%s\" /DEBUGPID=%i ",
+				pszServer, dwSelfPID, (DWORD)ghWnd, W, H, LONGOUTPUTHEIGHT_MAX, pszServer, dwPID);
+		} break;
+	default:
+		_ASSERTE(FALSE && "Unsupported debugger mode");
+		return false;
+	}
+
+#ifdef _DEBUG
+	// Для дампа - сразу, чтобы не тормозить процесс
+	if (sdt != sdt_DumpMemory)
+	{
+		if (MsgBox(szExe, MB_OKCANCEL|MB_SYSTEMMODAL, L"StartDebugLogConsole") != IDOK)
+			return false;
+	}
+#endif
+
+	// CreateOrRunAs needs to know how "original" process was started...
+	RConStartArgs Args;
+	Args.AssignFrom(&m_Args);
+	SafeFree(Args.pszSpecialCmd);
+
+	// If process was started under different credentials, most probably
+	// we need to ask user for password (we don't store passwords in memory for security reason)
+	if (((m_Args.RunAsAdministrator != crb_On) || gpConEmu->mb_IsUacAdmin)
+		&& (m_Args.pszUserName != NULL) && (m_Args.UseEmptyPassword != crb_On))
+	{
+		Args.pszSpecialCmd = lstrdup(szExe); // Informational
+
+		int nRc = gpConEmu->RecreateDlg(&Args);
+
+		if (nRc != IDC_START)
+			return false;
+	}
+
+
+	LPCWSTR pszWordDir = NULL;
+	DWORD dwLastErr = 0;
+
+	if (!CreateOrRunAs(this, Args, szExe, pszWordDir, si, pi, mp_sei_dbg, dwLastErr))
+	{
+		// Хорошо бы ошибку показать?
+		DWORD dwErr = GetLastError();
+		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create debugger console! ErrCode=0x%08X", dwErr);
+		MBoxA(szErr);
+	}
+	else
+	{
+		SafeCloseHandle(pi.hProcess);
+		SafeCloseHandle(pi.hThread);
+		lbRc = true;
+	}
+
+	return lbRc;
 }
 
 void CRealConsole::ResetVarsOnStart()
