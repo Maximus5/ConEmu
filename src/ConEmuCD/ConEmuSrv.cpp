@@ -1149,6 +1149,9 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 
 
+	// Проверка. Для дебаггера должен быть RM_UNDEFINED!
+	_ASSERTE(!(gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcess || gpSrv->DbgInfo.bDebugProcessTree) || gnRunMode == RM_UNDEFINED);
+
 	if (!gbAttachMode && !gpSrv->DbgInfo.bDebuggerActive)
 	{
 		DumpInitStatus("\nServerInit: ServerInitGuiTab");

@@ -3663,6 +3663,7 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle /*= false*/)
 		if (!*szDbg)
 		{
 			_ASSERTE(*szDbg && "Variables must be set already!");
+			break; // другие не проверять - лишние ассерты
 		}
 	}
 #endif
@@ -4416,7 +4417,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 		else if (lstrcmpni(szArg, L"/DEBUGPID=", 10)==0)
 		{
-			//gnRunMode = RM_SERVER; -- не будем ставить, RM_UNDEFINED будет признаком того, что просто хотят дамп
+			//gnRunMode = RM_SERVER; -- не будем ставить, RM_UNDEFINED будет признаком того, что просто хотят дебаггер
 			gbNoCreateProcess = gpSrv->DbgInfo.bDebugProcess = TRUE;
 			wchar_t* pszEnd = NULL;
 			//gpSrv->dwRootProcess = _wtol(szArg+10);
