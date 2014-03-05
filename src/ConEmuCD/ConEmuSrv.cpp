@@ -2175,7 +2175,7 @@ void CheckConEmuHwnd()
 	}
 }
 
-bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
+bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 {
 	bool bConnected = false;
 	DWORD nDupErrCode = 0;
@@ -2241,9 +2241,7 @@ bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
 	}
 	else
 	{
-		//ghConEmuWnd = hGui;
 		ghConEmuWnd = pOut->StartStopRet.hWnd;
-		hDcWnd = pOut->StartStopRet.hWndDc;
 		SetConEmuWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
 		gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
 		_ASSERTE(gpSrv->pConsoleMap != NULL); // мэппинг уже должен быть создан,
@@ -2319,7 +2317,7 @@ HWND Attach2Gui(DWORD nTimeout)
 	// Нить Refresh НЕ должна быть запущена, иначе в мэппинг могут попасть данные из консоли
 	// ДО того, как отработает ресайз (тот размер, который указал установить GUI при аттаче)
 	_ASSERTE(gpSrv->dwRefreshThread==0 || gpSrv->bWasDetached);
-	HWND hGui = NULL, hDcWnd = NULL;
+	HWND hGui = NULL;
 	//UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
 	BOOL bNeedStartGui = FALSE;
 	DWORD nStartedGuiPID = 0;
@@ -2575,13 +2573,17 @@ HWND Attach2Gui(DWORD nTimeout)
 	// другого процесса - шрифт все-равно поменять не получится
 	//BOOL lbNeedSetFont = TRUE;
 
+	_ASSERTE(ghConEmuWndDC==NULL);
+	ghConEmuWndDC = NULL;
+
 	// Если с первого раза не получится (GUI мог еще не загрузиться) пробуем еще
-	while (!hDcWnd && dwDelta <= nTimeout)
+	_ASSERTE(dwDelta < nTimeout); // Must runs at least once!
+	while (dwDelta <= nTimeout)
 	{
 		if (gpSrv->hGuiWnd)
 		{
-			if (TryConnect2Gui(gpSrv->hGuiWnd, hDcWnd, pIn) && hDcWnd)
-				break; // OK
+			// On success, it will set ghConEmuWndDC and others...
+			TryConnect2Gui(gpSrv->hGuiWnd, pIn);
 		}
 		else
 		{
@@ -2599,12 +2601,13 @@ HWND Attach2Gui(DWORD nTimeout)
 						continue;					
 				}
 
-				if (TryConnect2Gui(hFindGui, hDcWnd, pIn))
+				// On success, it will set ghConEmuWndDC and others...
+				if (TryConnect2Gui(hFindGui, pIn))
 					break; // OK
 			}
 		}
 
-		if (hDcWnd)
+		if (ghConEmuWndDC)
 			break;
 
 		dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
@@ -2616,7 +2619,7 @@ HWND Attach2Gui(DWORD nTimeout)
 		dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
 	}
 
-	return hDcWnd;
+	return ghConEmuWndDC;
 }
 
 
