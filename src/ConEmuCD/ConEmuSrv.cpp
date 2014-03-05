@@ -687,7 +687,7 @@ int ServerInitGuiTab()
 		}
 		else
 		{
-			ghConEmuWnd = pOut->StartStop.hWnd;
+			ghConEmuWnd = pOut->StartStopRet.hWnd;
 			SetConEmuWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
 			gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
 			
