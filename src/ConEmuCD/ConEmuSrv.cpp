@@ -613,15 +613,25 @@ int ServerInitGuiTab()
 	LogFunction("ServerInitGuiTab");
 
 	int iRc = 0;
-	DWORD dwRead = 0, dwErr = 0; BOOL lbCallRc = FALSE;
-	HWND hConEmuWnd = FindConEmuByPID();
+	struct {
+		HWND  hConEmuWnd;
+		DWORD dwErr;
+		BOOL  lbCallRc;
+		DWORD nInitTick;
+		DWORD nStartTick;
+		DWORD nEndTick;
+		DWORD nDelta;
+		DWORD nConnectDelta;
+	} vars = {
+		FindConEmuByPID()
+	};
 
-	if (hConEmuWnd == NULL)
+	if (vars.hConEmuWnd == NULL)
 	{
 		if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
 		{
 			// Если запускается сервер - то он должен смочь найти окно ConEmu в которое его просят
-			_ASSERTEX((hConEmuWnd!=NULL));
+			_ASSERTEX((vars.hConEmuWnd!=NULL));
 			return CERR_ATTACH_NO_GUIWND;
 		}
 		else
@@ -633,11 +643,11 @@ int ServerInitGuiTab()
 	{
 		//UINT nMsgSrvStarted = RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
 		//DWORD_PTR nRc = 0;
-		//SendMessageTimeout(hConEmuWnd, nMsgSrvStarted, (WPARAM)ghConWnd, gnSelfPID,
+		//SendMessageTimeout(vars.hConEmuWnd, nMsgSrvStarted, (WPARAM)ghConWnd, gnSelfPID,
 		//	SMTO_BLOCK, 500, &nRc);
 		_ASSERTE(ghConWnd!=NULL);
 		wchar_t szServerPipe[MAX_PATH];
-		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)hConEmuWnd); //-V205
+		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)vars.hConEmuWnd); //-V205
 		
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOP));
 		if (!pIn)
@@ -652,76 +662,71 @@ int ServerInitGuiTab()
 
 		CESERVER_REQ* pOut = NULL;
 
-		DWORD nInitTick = GetTickCount();
+		vars.nInitTick = GetTickCount();
 
 		while (true)
 		{
-			#ifdef _DEBUG
-			DWORD nStartTick = GetTickCount();
-			#endif
+			vars.nStartTick = GetTickCount();
 
 			/*lbCallRc = CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, EXECUTE_CONNECT_GUI_CALL_TIMEOUT);*/
 			pOut = ExecuteCmd(szServerPipe, pIn, EXECUTE_CONNECT_GUI_CALL_TIMEOUT, ghConWnd);
-			lbCallRc = (pOut != NULL);
+			vars.lbCallRc = (pOut != NULL);
 
-			DWORD dwErr = GetLastError(), nEndTick = GetTickCount();
-			DWORD nConnectDelta = nEndTick - nInitTick;
+			vars.dwErr = GetLastError(); vars.nEndTick = GetTickCount();
+			vars.nConnectDelta = vars.nEndTick - vars.nInitTick;
+			vars.nDelta = vars.nEndTick - vars.nStartTick;
 
 			#ifdef _DEBUG
-			DWORD nDelta = nEndTick - nStartTick;
-			if (lbCallRc && (nDelta >= EXECUTE_CMD_WARN_TIMEOUT))
+			if (vars.lbCallRc && (vars.nDelta >= EXECUTE_CMD_WARN_TIMEOUT))
 			{
 				if (!IsDebuggerPresent())
 				{
-					//_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT || (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP && nDelta <= EXECUTE_CMD_WARN_TIMEOUT2));
-					_ASSERTEX(nDelta <= EXECUTE_CMD_WARN_TIMEOUT);
+					//_ASSERTE(vars.nDelta <= EXECUTE_CMD_WARN_TIMEOUT || (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP && nDelta <= EXECUTE_CMD_WARN_TIMEOUT2));
+					_ASSERTEX(vars.nDelta <= EXECUTE_CMD_WARN_TIMEOUT);
 				}
 			}
 			#endif
 
-			if (lbCallRc || (nConnectDelta > EXECUTE_CONNECT_GUI_TIMEOUT))
+			if (vars.lbCallRc || (vars.nConnectDelta > EXECUTE_CONNECT_GUI_TIMEOUT))
 				break;
 
-			if (!lbCallRc)
+			if (!vars.lbCallRc)
 			{
-				_ASSERTE(lbCallRc && (dwErr==ERROR_FILE_NOT_FOUND) && "GUI was not initialized yet?");
+				_ASSERTE(vars.lbCallRc && (vars.dwErr==ERROR_FILE_NOT_FOUND) && "GUI was not initialized yet?");
 				Sleep(250);
 			}
-
-			UNREFERENCED_PARAMETER(dwErr);
 		}
 
 
-		if (!lbCallRc || !pOut || !pOut->StartStopRet.hWndDc || !pOut->StartStopRet.hWndBack)
+		// Этот блок if-else нужно вынести в отдельную функцию инициализции сервера (для аттача и обычный)
+		CESERVER_REQ_STARTSTOPRET* pStartStopRet = (pOut->DataSize() >= sizeof(CESERVER_REQ_STARTSTOPRET)) ? &pOut->StartStopRet : NULL;
+
+		if (!pStartStopRet || !pStartStopRet->hWnd || !pStartStopRet->hWndDc || !pStartStopRet->hWndBack)
 		{
-			dwErr = GetLastError();
+			vars.dwErr = GetLastError();
 
 			#ifdef _DEBUG
-			if (gbIsWine)
-			{
-				wchar_t szDbgMsg[512], szTitle[128];
-				GetModuleFileName(NULL, szDbgMsg, countof(szDbgMsg));
-				msprintf(szTitle, countof(szTitle), L"%s: PID=%u", PointToName(szDbgMsg), gnSelfPID);
-				msprintf(szDbgMsg, countof(szDbgMsg),
-					L"ExecuteCmd('%s',CECMD_SRVSTARTSTOP)\nFailed, code=%u, RC=%u, hWndDC=x%08X, hWndBack=x%08X",
-					szServerPipe, dwErr, lbCallRc,
-					pOut ? (DWORD)pOut->StartStopRet.hWndDc : 0,
-					pOut ? (DWORD)pOut->StartStopRet.hWndBack : 0);
-				MessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-			}
-			else
-			{
-				_ASSERTEX(lbCallRc && pOut && pOut->StartStopRet.hWndDc && pOut->StartStopRet.hWndBack);
-			}
-			SetLastError(dwErr);
+			wchar_t szDbgMsg[512], szTitle[128];
+			GetModuleFileName(NULL, szDbgMsg, countof(szDbgMsg));
+			msprintf(szTitle, countof(szTitle), L"%s: PID=%u", PointToName(szDbgMsg), gnSelfPID);
+			msprintf(szDbgMsg, countof(szDbgMsg),
+				L"ExecuteCmd('%s',%u)\nFailed, code=%u, pOut=%s, Size=%u, "
+				L"hWnd=x%08X, hWndDC=x%08X, hWndBack=x%08X",
+				szServerPipe, (pOut ? pOut->hdr.nCmd : 0),
+				vars.dwErr, (pOut ? L"OK" : L"NULL"), pOut->DataSize(),
+				pStartStopRet ? (DWORD)pStartStopRet->hWnd : 0,
+				pStartStopRet ? (DWORD)pStartStopRet->hWndDc : 0,
+				pStartStopRet ? (DWORD)pStartStopRet->hWndBack : 0);
+			MessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+			SetLastError(vars.dwErr);
 			#endif
 
 		}
-		else
+		else // Часть с "обычным" запуском сервера
 		{
-			ghConEmuWnd = pOut->StartStopRet.hWnd;
-			SetConEmuWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
-			gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
+			ghConEmuWnd = pStartStopRet->hWnd;
+			SetConEmuWindows(pStartStopRet->hWndDc, pStartStopRet->hWndBack);
+			gpSrv->dwGuiPID = pStartStopRet->dwPID;
 			
 			// Обновить настройки через GuiMapping
 			if (ghConEmuWnd)
@@ -2290,25 +2295,47 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 	UNREFERENCED_PARAMETER(nDupErrCode);
 
 	// Execute CECMD_ATTACH2GUI
-	wchar_t szPipe[64]; _wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEGUIPIPENAME, L".", (DWORD)hGui); //-V205
-	CESERVER_REQ *pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, ghConWnd);
+	wchar_t szServerPipe[64]; _wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)hGui); //-V205
+	CESERVER_REQ *pOut = ExecuteCmd(szServerPipe, pIn, GUIATTACH_TIMEOUT, ghConWnd);
 
-	if (!pOut)
+
+	// Этот блок if-else нужно вынести в отдельную функцию инициализции сервера (для аттача и обычный)
+	CESERVER_REQ_STARTSTOPRET* pStartStopRet = (pOut->DataSize() >= sizeof(CESERVER_REQ_STARTSTOPRET)) ? &pOut->StartStopRet : NULL;
+
+	if (!pStartStopRet || !pStartStopRet->hWnd || !pStartStopRet->hWndDc || !pStartStopRet->hWndBack)
 	{
-		_ASSERTE(pOut!=NULL);
+		DWORD dwErr = GetLastError();
+
+		#ifdef _DEBUG
+		wchar_t szDbgMsg[512], szTitle[128];
+		GetModuleFileName(NULL, szDbgMsg, countof(szDbgMsg));
+		msprintf(szTitle, countof(szTitle), L"%s: PID=%u", PointToName(szDbgMsg), gnSelfPID);
+		msprintf(szDbgMsg, countof(szDbgMsg),
+			L"ExecuteCmd('%s',%u)\nFailed, code=%u, pOut=%s, Size=%u, "
+			L"hWnd=x%08X, hWndDC=x%08X, hWndBack=x%08X",
+			szServerPipe, (pOut ? pOut->hdr.nCmd : 0),
+			dwErr, (pOut ? L"OK" : L"NULL"), pOut->DataSize(),
+			pStartStopRet ? (DWORD)pStartStopRet->hWnd : 0,
+			pStartStopRet ? (DWORD)pStartStopRet->hWndDc : 0,
+			pStartStopRet ? (DWORD)pStartStopRet->hWndBack : 0);
+		MessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+		SetLastError(dwErr);
+		#endif
+
 	}
-	else
+	else // Запуск сервера "с аттачем" (это может быть RunAsAdmin и т.п.)
 	{
-		ghConEmuWnd = pOut->StartStopRet.hWnd;
-		SetConEmuWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
-		gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
+		ghConEmuWnd = pStartStopRet->hWnd;
+		SetConEmuWindows(pStartStopRet->hWndDc, pStartStopRet->hWndBack);
+		gpSrv->dwGuiPID = pStartStopRet->dwPID;
+
 		_ASSERTE(gpSrv->pConsoleMap != NULL); // мэппинг уже должен быть создан,
 		_ASSERTE(gpSrv->pConsole != NULL); // и локальная копия тоже
-		//gpSrv->pConsole->info.nGuiPID = pOut->StartStopRet.dwPID;
+		//gpSrv->pConsole->info.nGuiPID = pStartStopRet->dwPID;
 		CESERVER_CONSOLE_MAPPING_HDR *pMap = gpSrv->pConsoleMap->Ptr();
 		if (pMap)
 		{
-			pMap->nGuiPID = pOut->StartStopRet.dwPID;
+			pMap->nGuiPID = pStartStopRet->dwPID;
 			pMap->hConEmuRoot = ghConEmuWnd;
 			pMap->hConEmuWndDc = ghConEmuWndDC;
 			pMap->hConEmuWndBack = ghConEmuWndBack;
@@ -2327,18 +2354,18 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 				apiShowWindow(ghConWnd, SW_HIDE);
 
 			// Установить шрифт в консоли
-			if (pOut->StartStopRet.Font.cbSize == sizeof(CESERVER_REQ_SETFONT))
+			if (pStartStopRet->Font.cbSize == sizeof(CESERVER_REQ_SETFONT))
 			{
-				lstrcpy(gpSrv->szConsoleFont, pOut->StartStopRet.Font.sFontName);
-				gpSrv->nConFontHeight = pOut->StartStopRet.Font.inSizeY;
-				gpSrv->nConFontWidth = pOut->StartStopRet.Font.inSizeX;
+				lstrcpy(gpSrv->szConsoleFont, pStartStopRet->Font.sFontName);
+				gpSrv->nConFontHeight = pStartStopRet->Font.inSizeY;
+				gpSrv->nConFontWidth = pStartStopRet->Font.inSizeX;
 				ServerInitFont();
 			}
 
-			COORD crNewSize = {(SHORT)pOut->StartStopRet.nWidth, (SHORT)pOut->StartStopRet.nHeight};
+			COORD crNewSize = {(SHORT)pStartStopRet->nWidth, (SHORT)pStartStopRet->nHeight};
 			//SMALL_RECT rcWnd = {0,pIn->StartStop.sbi.srWindow.Top};
 			SMALL_RECT rcWnd = {0};
-			SetConsoleSize((USHORT)pOut->StartStopRet.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
+			SetConsoleSize((USHORT)pStartStopRet->nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
 		}
 
 		// Установить переменную среды с дескриптором окна
@@ -2357,9 +2384,9 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 			//DisableAutoConfirmExit();
 			bConnected = false;
 		}
-
-		ExecuteFreeResult(pOut);
 	}
+
+	ExecuteFreeResult(pOut);
 
 	return bConnected;
 }
