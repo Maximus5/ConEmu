@@ -2528,6 +2528,8 @@ HWND Attach2Gui(DWORD nTimeout)
 	pIn->StartStop.dwAID = gpSrv->dwGuiAID;
 	//pIn->StartStop.dwInputTID = gpSrv->dwInputPipeThreadId;
 	pIn->StartStop.nSubSystem = gnImageSubsystem;
+	// Сразу передать текущий KeyboardLayout
+	IsKeyboardLayoutChanged(&pIn->StartStop.dwKeybLayout);
 
 	if (gbAttachFromFar)
 		pIn->StartStop.bRootIsCmdExe = FALSE;
