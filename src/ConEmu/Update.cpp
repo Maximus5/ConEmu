@@ -65,7 +65,7 @@ CConEmuUpdate::CConEmuUpdate()
 	mb_RequestTerminate = false;
 	mp_Set = NULL;
 	ms_LastErrorInfo = NULL;
-	mb_InShowLastError = false;
+	mn_InShowMsgBox = 0;
 	mp_LastErrorSC = new MSection;
 	mb_InetMode = false;
 	mb_DroppedMode = false;
@@ -276,7 +276,7 @@ void CConEmuUpdate::ShowLastError()
 {
 	if (ms_LastErrorInfo && *ms_LastErrorInfo)
 	{
-		mb_InShowLastError = true;
+		InterlockedIncrement(&mn_InShowMsgBox);
 
 		MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
 		wchar_t* pszError = ms_LastErrorInfo;
@@ -286,7 +286,7 @@ void CConEmuUpdate::ShowLastError()
 		MsgBox(pszError, MB_ICONINFORMATION, gpConEmu?gpConEmu->GetDefaultTitle():L"ConEmu Update");
 		SafeFree(pszError);
 
-		mb_InShowLastError = false;
+		InterlockedDecrement(&mn_InShowMsgBox);
 	}
 }
 
@@ -302,7 +302,7 @@ bool CConEmuUpdate::ShowConfirmation()
 
 	if (ms_LastErrorInfo && *ms_LastErrorInfo)
 	{
-		mb_InShowLastError = true;
+		InterlockedIncrement(&mn_InShowMsgBox);
 
 		MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
 		wchar_t* pszConfirm = ms_LastErrorInfo;
@@ -314,7 +314,7 @@ bool CConEmuUpdate::ShowConfirmation()
 
 		SafeFree(pszConfirm);
 
-		mb_InShowLastError = false;
+		InterlockedDecrement(&mn_InShowMsgBox);
 
 		lbConfirm = (iBtn == IDYES);
 	}
@@ -1383,7 +1383,7 @@ wrap:
 
 void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 {
-	if (mb_InShowLastError)
+	if (mn_InShowMsgBox > 0)
 		return; // Две ошибки сразу не показываем, а то зациклимся
 
 	MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
@@ -1649,8 +1649,8 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 
 bool CConEmuUpdate::QueryConfirmationInt(LPCWSTR asConfirmInfo)
 {
-	if (mb_InShowLastError || !gpConEmu)
-		return false; // Если отображается ошибк - не звать
+	if ((mn_InShowMsgBox > 0) || !gpConEmu)
+		return false; // Если отображается ошибка - не звать
 
 	bool lbConfirm;
 
@@ -1658,10 +1658,12 @@ bool CConEmuUpdate::QueryConfirmationInt(LPCWSTR asConfirmInfo)
 	{
 		Assert(!mb_InetMode && mb_ManualCallMode);
 
+		InterlockedIncrement(&mn_InShowMsgBox);
+
 		DontEnable de;
 		int iBtn = MessageBox(NULL, asConfirmInfo, ms_DefaultTitle, MB_ICONQUESTION|MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_YESNO);
 
-		mb_InShowLastError = false;
+		InterlockedDecrement(&mn_InShowMsgBox);
 
 		lbConfirm = (iBtn == IDYES);
 	}
