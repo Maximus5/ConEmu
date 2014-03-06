@@ -1764,6 +1764,11 @@ void CConEmuUpdate::WaitAllInstances()
 
 bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 {
+	bool bRc = false;
+	wchar_t* pszLib = NULL;
+	HMODULE lhDll = NULL;
+	DownloadCommand_t lDownloadCommand = NULL;
+
 	//  Already initialized?
 	if (hDll)
 	{
@@ -1775,15 +1780,14 @@ bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 			pUpd->ReportError(L"Failed to re-inialize gpInet, code=%u", nErr);
 			return false;
 		}
-		return true;
+		bRc = true;
+		goto wrap;
 	}
 
 	pUpd = apUpd;
 
-	bool bRc = false;
-	wchar_t* pszLib = lstrmerge(gpConEmu->ms_ConEmuBaseDir, WIN3264TEST(L"\\ConEmuCD.dll",L"\\ConEmuCD64.dll"));
-	HMODULE lhDll = pszLib ? LoadLibrary(pszLib) : NULL;
-	DownloadCommand_t lDownloadCommand = NULL;
+	pszLib = lstrmerge(gpConEmu->ms_ConEmuBaseDir, WIN3264TEST(L"\\ConEmuCD.dll",L"\\ConEmuCD64.dll"));
+	lhDll = pszLib ? LoadLibrary(pszLib) : NULL;
 	if (!lhDll)
 	{
 		_ASSERTE(lhDll!=NULL);
@@ -1814,11 +1818,13 @@ bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 	hDll = lhDll;
 	DownloadCommand = lDownloadCommand;
 
-	SetCallback(dc_ErrCallback, ErrorCallback, (LPARAM)apUpd);
-	SetCallback(dc_LogCallback, (gpSetCls && gpSetCls->isAdvLogging)?LogCallback:NULL, (LPARAM)apUpd);
-
 	bRc = true;
 wrap:
+	if (bRc)
+	{
+		SetCallback(dc_ErrCallback, ErrorCallback, (LPARAM)apUpd);
+		SetCallback(dc_LogCallback, (gpSetCls && gpSetCls->isAdvLogging)?LogCallback:NULL, (LPARAM)apUpd);
+	}
 	SafeFree(pszLib);
 	if (lhDll && !bRc)
 	{
