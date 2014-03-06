@@ -68,7 +68,7 @@ protected:
 	BOOL mb_ManualCallMode;
 	ConEmuUpdateSettings* mp_Set;
 
-	bool mb_InShowLastError;
+	long mn_InShowMsgBox;
 	wchar_t* ms_LastErrorInfo;
 	MSection* mp_LastErrorSC;
 
@@ -131,11 +131,13 @@ protected:
 	void RequestTerminate();
 	bool mb_RequestTerminate;
 	UpdateStep m_UpdateStep;
+	bool mb_NewVersionAvailable;
 	wchar_t ms_NewVersion[64], ms_CurVersion[64], ms_SkipVersion[64];
 	wchar_t ms_VerOnServer[100]; // Information about available server versions
 	wchar_t ms_CurVerInfo[100];  // Version + stable/preview/alpha
 	wchar_t ms_DefaultTitle[128];
-	bool QueryConfirmation(UpdateStep step, LPCWSTR asParm = NULL);
+	wchar_t* mpsz_ConfirmSource;
+	bool QueryConfirmation(UpdateStep step);
 	bool QueryConfirmationInt(LPCWSTR asConfirmInfo);
 	void WaitAllInstances();
 	bool Check7zipInstalled();
