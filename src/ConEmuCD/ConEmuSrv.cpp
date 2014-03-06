@@ -613,25 +613,16 @@ int ServerInitGuiTab()
 	LogFunction("ServerInitGuiTab");
 
 	int iRc = 0;
-	struct {
-		HWND  hConEmuWnd;
-		DWORD dwErr;
-		BOOL  lbCallRc;
-		DWORD nInitTick;
-		DWORD nStartTick;
-		DWORD nEndTick;
-		DWORD nDelta;
-		DWORD nConnectDelta;
-	} vars = {
-		FindConEmuByPID()
-	};
 
-	if (vars.hConEmuWnd == NULL)
+	ZeroStruct(gpSrv->ConnectInfo);
+	gpSrv->ConnectInfo.hGuiWnd = FindConEmuByPID();
+
+	if (gpSrv->ConnectInfo.hGuiWnd == NULL)
 	{
 		if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
 		{
 			// Если запускается сервер - то он должен смочь найти окно ConEmu в которое его просят
-			_ASSERTEX((vars.hConEmuWnd!=NULL));
+			_ASSERTEX((gpSrv->ConnectInfo.hGuiWnd!=NULL));
 			return CERR_ATTACH_NO_GUIWND;
 		}
 		else
@@ -641,13 +632,9 @@ int ServerInitGuiTab()
 	}
 	else
 	{
-		//UINT nMsgSrvStarted = RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
-		//DWORD_PTR nRc = 0;
-		//SendMessageTimeout(vars.hConEmuWnd, nMsgSrvStarted, (WPARAM)ghConWnd, gnSelfPID,
-		//	SMTO_BLOCK, 500, &nRc);
 		_ASSERTE(ghConWnd!=NULL);
 		wchar_t szServerPipe[MAX_PATH];
-		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)vars.hConEmuWnd); //-V205
+		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)gpSrv->ConnectInfo.hGuiWnd); //-V205
 		
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOP));
 		if (!pIn)
@@ -662,37 +649,37 @@ int ServerInitGuiTab()
 
 		CESERVER_REQ* pOut = NULL;
 
-		vars.nInitTick = GetTickCount();
+		gpSrv->ConnectInfo.nInitTick = GetTickCount();
 
 		while (true)
 		{
-			vars.nStartTick = GetTickCount();
+			gpSrv->ConnectInfo.nStartTick = GetTickCount();
 
-			/*lbCallRc = CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, EXECUTE_CONNECT_GUI_CALL_TIMEOUT);*/
 			pOut = ExecuteCmd(szServerPipe, pIn, EXECUTE_CONNECT_GUI_CALL_TIMEOUT, ghConWnd);
-			vars.lbCallRc = (pOut != NULL);
+			gpSrv->ConnectInfo.bCallRc = (pOut->DataSize() >= sizeof(CESERVER_REQ_STARTSTOPRET));
 
-			vars.dwErr = GetLastError(); vars.nEndTick = GetTickCount();
-			vars.nConnectDelta = vars.nEndTick - vars.nInitTick;
-			vars.nDelta = vars.nEndTick - vars.nStartTick;
+			gpSrv->ConnectInfo.nErr = GetLastError();
+			gpSrv->ConnectInfo.nEndTick = GetTickCount();
+			gpSrv->ConnectInfo.nConnectDelta = gpSrv->ConnectInfo.nEndTick - gpSrv->ConnectInfo.nInitTick;
+			gpSrv->ConnectInfo.nDelta = gpSrv->ConnectInfo.nEndTick - gpSrv->ConnectInfo.nStartTick;
 
 			#ifdef _DEBUG
-			if (vars.lbCallRc && (vars.nDelta >= EXECUTE_CMD_WARN_TIMEOUT))
+			if (gpSrv->ConnectInfo.bCallRc && (gpSrv->ConnectInfo.nDelta >= EXECUTE_CMD_WARN_TIMEOUT))
 			{
 				if (!IsDebuggerPresent())
 				{
-					//_ASSERTE(vars.nDelta <= EXECUTE_CMD_WARN_TIMEOUT || (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP && nDelta <= EXECUTE_CMD_WARN_TIMEOUT2));
-					_ASSERTEX(vars.nDelta <= EXECUTE_CMD_WARN_TIMEOUT);
+					//_ASSERTE(gpSrv->ConnectInfo.nDelta <= EXECUTE_CMD_WARN_TIMEOUT || (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP && nDelta <= EXECUTE_CMD_WARN_TIMEOUT2));
+					_ASSERTEX(gpSrv->ConnectInfo.nDelta <= EXECUTE_CMD_WARN_TIMEOUT);
 				}
 			}
 			#endif
 
-			if (vars.lbCallRc || (vars.nConnectDelta > EXECUTE_CONNECT_GUI_TIMEOUT))
+			if (gpSrv->ConnectInfo.bCallRc || (gpSrv->ConnectInfo.nConnectDelta > EXECUTE_CONNECT_GUI_TIMEOUT))
 				break;
 
-			if (!vars.lbCallRc)
+			if (!gpSrv->ConnectInfo.bCallRc)
 			{
-				_ASSERTE(vars.lbCallRc && (vars.dwErr==ERROR_FILE_NOT_FOUND) && "GUI was not initialized yet?");
+				_ASSERTE(gpSrv->ConnectInfo.bCallRc && (gpSrv->ConnectInfo.nErr==ERROR_FILE_NOT_FOUND) && "GUI was not initialized yet?");
 				Sleep(250);
 			}
 		}
@@ -703,7 +690,7 @@ int ServerInitGuiTab()
 
 		if (!pStartStopRet || !pStartStopRet->hWnd || !pStartStopRet->hWndDc || !pStartStopRet->hWndBack)
 		{
-			vars.dwErr = GetLastError();
+			gpSrv->ConnectInfo.nErr = GetLastError();
 
 			#ifdef _DEBUG
 			wchar_t szDbgMsg[512], szTitle[128];
@@ -713,12 +700,12 @@ int ServerInitGuiTab()
 				L"ExecuteCmd('%s',%u)\nFailed, code=%u, pOut=%s, Size=%u, "
 				L"hWnd=x%08X, hWndDC=x%08X, hWndBack=x%08X",
 				szServerPipe, (pOut ? pOut->hdr.nCmd : 0),
-				vars.dwErr, (pOut ? L"OK" : L"NULL"), pOut->DataSize(),
+				gpSrv->ConnectInfo.nErr, (pOut ? L"OK" : L"NULL"), pOut->DataSize(),
 				pStartStopRet ? (DWORD)pStartStopRet->hWnd : 0,
 				pStartStopRet ? (DWORD)pStartStopRet->hWndDc : 0,
 				pStartStopRet ? (DWORD)pStartStopRet->hWndBack : 0);
 			MessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-			SetLastError(vars.dwErr);
+			SetLastError(gpSrv->ConnectInfo.nErr);
 			#endif
 
 		}
@@ -2243,7 +2230,7 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 	bool bConnected = false;
 	DWORD nDupErrCode = 0;
 
-	_ASSERTE(pIn && pIn->hdr.nCmd==CECMD_ATTACH2GUI);
+	_ASSERTE(pIn && ((pIn->hdr.nCmd==CECMD_ATTACH2GUI && gbAttachMode) || (pIn->hdr.nCmd==CECMD_SRVSTARTSTOP && !gbAttachMode)));
 
 	//if (lbNeedSetFont) {
 	//	lbNeedSetFont = FALSE;

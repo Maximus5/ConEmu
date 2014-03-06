@@ -424,6 +424,13 @@ struct SrvInfo
 
 	CESERVER_REQ_PORTABLESTARTED Portable;
 
+	struct {
+		HWND  hGuiWnd;
+		BOOL  bCallRc;
+		DWORD nTryCount, nErr;
+		DWORD nInitTick, nStartTick, nEndTick, nDelta, nConnectDelta;
+	} ConnectInfo;
+
 	HANDLE hMainServer; DWORD dwMainServerPID;
 	HANDLE hServerStartedEvent;
 
