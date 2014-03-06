@@ -2228,7 +2228,6 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 	LogFunction("TryConnect2Gui");
 
 	bool bConnected = false;
-	DWORD nDupErrCode = 0;
 
 	_ASSERTE(pIn && ((pIn->hdr.nCmd==CECMD_ATTACH2GUI && gbAttachMode) || (pIn->hdr.nCmd==CECMD_SRVSTARTSTOP && !gbAttachMode)));
 
@@ -2239,47 +2238,49 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 	//    SetConsoleFontSizeTo(ghConWnd, gpSrv->nConFontHeight, gpSrv->nConFontWidth, gpSrv->szConsoleFont);
 	//    if (gpLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
 	//}
+
 	// Если GUI запущен не от имени админа - то он обломается при попытке
 	// открыть дескриптор процесса сервера. Нужно будет ему помочь.
-	pIn->StartStop.hServerProcessHandle = NULL;
-
-	if (pIn->StartStop.bUserIsAdmin || gbAttachMode)
+	if (pIn->hdr.nCmd == CECMD_ATTACH2GUI)
 	{
-		DWORD  nGuiPid = 0;
+		pIn->StartStop.hServerProcessHandle = NULL;
 
-		if (GetWindowThreadProcessId(hGui, &nGuiPid) && nGuiPid)
+		if (pIn->StartStop.bUserIsAdmin || gbAttachMode)
 		{
-			// Issue 791: Fails, when GUI started under different credentials (login) as server
-			HANDLE hGuiHandle = OpenProcess(PROCESS_DUP_HANDLE, FALSE, nGuiPid);
+			DWORD  nGuiPid = 0;
 
-			if (!hGuiHandle)
+			if (GetWindowThreadProcessId(hGui, &nGuiPid) && nGuiPid)
 			{
-				nDupErrCode = GetLastError();
-				_ASSERTE((hGuiHandle!=NULL) && "Failed to transfer server process handle to GUI");
-			}
-			else
-			{
-				HANDLE hDupHandle = NULL;
+				// Issue 791: Fails, when GUI started under different credentials (login) as server
+				HANDLE hGuiHandle = OpenProcess(PROCESS_DUP_HANDLE, FALSE, nGuiPid);
 
-				if (DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(),
-				                   hGuiHandle, &hDupHandle, MY_PROCESS_ALL_ACCESS/*PROCESS_QUERY_INFORMATION|SYNCHRONIZE*/,
-				                   FALSE, 0)
-				        && hDupHandle)
+				if (!hGuiHandle)
 				{
-					pIn->StartStop.hServerProcessHandle = (u64)hDupHandle;
+					gpSrv->ConnectInfo.nDupErrCode = GetLastError();
+					_ASSERTE((hGuiHandle!=NULL) && "Failed to transfer server process handle to GUI");
 				}
 				else
 				{
-					nDupErrCode = GetLastError();
-					_ASSERTE((hGuiHandle!=NULL) && "Failed to transfer server process handle to GUI");
-				}
+					HANDLE hDupHandle = NULL;
 
-				CloseHandle(hGuiHandle);
+					if (DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(),
+					                   hGuiHandle, &hDupHandle, MY_PROCESS_ALL_ACCESS/*PROCESS_QUERY_INFORMATION|SYNCHRONIZE*/,
+					                   FALSE, 0)
+					        && hDupHandle)
+					{
+						pIn->StartStop.hServerProcessHandle = (u64)hDupHandle;
+					}
+					else
+					{
+						gpSrv->ConnectInfo.nDupErrCode = GetLastError();
+						_ASSERTE((hGuiHandle!=NULL) && "Failed to transfer server process handle to GUI");
+					}
+
+					CloseHandle(hGuiHandle);
+				}
 			}
 		}
 	}
-
-	UNREFERENCED_PARAMETER(nDupErrCode);
 
 	// Execute CECMD_ATTACH2GUI
 	wchar_t szServerPipe[64]; _wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)hGui); //-V205

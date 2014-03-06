@@ -427,7 +427,7 @@ struct SrvInfo
 	struct {
 		HWND  hGuiWnd;
 		BOOL  bCallRc;
-		DWORD nTryCount, nErr;
+		DWORD nTryCount, nErr, nDupErrCode;
 		DWORD nInitTick, nStartTick, nEndTick, nDelta, nConnectDelta;
 	} ConnectInfo;
 
