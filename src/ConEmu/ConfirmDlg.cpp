@@ -90,8 +90,11 @@ HRESULT TaskDialog(TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioBut
 	{
 		if (!pTaskConfig->pfCallback)
 			pTaskConfig->pfCallback = TaskDlgCallback;
-		ghDlgPendingFrom = GetForegroundWindow();
+		if (hClassIconSm)
+			ghDlgPendingFrom = GetForegroundWindow();
+
 		hr = TaskDialogIndirect_f(pTaskConfig, pnButton, pnRadioButton, &bCheckBox);
+
 		ghDlgPendingFrom = NULL;
 	}
 
