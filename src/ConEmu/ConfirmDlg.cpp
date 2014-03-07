@@ -71,9 +71,10 @@ static HRESULT CALLBACK TaskDlgCallback(HWND hwnd, UINT uNotification, WPARAM wP
 typedef HRESULT (WINAPI* TaskDialogIndirect_t)(const TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioButton, BOOL *pfVerificationFlagChecked);
 static TaskDialogIndirect_t TaskDialogIndirect_f = NULL; //(TaskDialogIndirect_t)(hDll?GetProcAddress(hDll, "TaskDialogIndirect"):NULL);
 
-HRESULT TaskDialog(const TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioButton, BOOL *pfVerificationFlagChecked)
+HRESULT TaskDialog(TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioButton, bool *pfVerificationFlagChecked)
 {
 	HRESULT hr = E_UNEXPECTED;
+	BOOL bCheckBox = FALSE;
 
 	if (!TaskDialogIndirect_f)
 	{
@@ -87,10 +88,15 @@ HRESULT TaskDialog(const TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRa
 
 	if (TaskDialogIndirect_f)
 	{
+		if (!pTaskConfig->pfCallback)
+			pTaskConfig->pfCallback = TaskDlgCallback;
 		ghDlgPendingFrom = GetForegroundWindow();
-		hr = TaskDialogIndirect_f(pTaskConfig, pnButton, pnRadioButton, pfVerificationFlagChecked);
+		hr = TaskDialogIndirect_f(pTaskConfig, pnButton, pnRadioButton, &bCheckBox);
 		ghDlgPendingFrom = NULL;
 	}
+
+	if (pfVerificationFlagChecked)
+		*pfVerificationFlagChecked = (bCheckBox != FALSE);
 
 	return hr;
 }
@@ -207,21 +213,16 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		config.pButtons                     = buttons;
 		config.nDefaultButton               = IDYES;
 		config.pszFooter                    = szWWW;
-		config.pfCallback                   = TaskDlgCallback;
 		
 		//{
 		//	config.dwFlags |= TDF_VERIFICATION_FLAG_CHECKED;
 		//	config.pszVerificationText = L"Text on checkbox";
 		//}
 
-		BOOL lbCheckBox = TRUE;
-
-		HRESULT hr = TaskDialog(&config, &nButtonPressed, NULL, &lbCheckBox);
+		HRESULT hr = TaskDialog(&config, &nButtonPressed, NULL, NULL);
 
 		if (hr == S_OK)
 		{
-			//TODO: lbCheckBox?
-
 			switch (nButtonPressed)
 			{
 			case IDCANCEL: // user cancelled the dialog

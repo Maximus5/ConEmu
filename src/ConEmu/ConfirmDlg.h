@@ -161,4 +161,4 @@ typedef struct _TASKDIALOGCONFIG
 
 #endif
 
-HRESULT TaskDialog(const TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioButton, BOOL *pfVerificationFlagChecked);
+HRESULT TaskDialog(TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioButton, bool *pfVerificationFlagChecked);
