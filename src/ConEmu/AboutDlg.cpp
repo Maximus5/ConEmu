@@ -398,6 +398,15 @@ void ConEmuAbout::OnInfo_HomePage()
 	}
 }
 
+void ConEmuAbout::OnInfo_DownloadPage()
+{
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsDownlPage, NULL, NULL, SW_SHOWNORMAL);
+	if (shellRc <= 32)
+	{
+		DisplayLastError(L"ShellExecute failed", shellRc);
+	}
+}
+
 void ConEmuAbout::OnInfo_ReportBug()
 {
 	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsReportBug, NULL, NULL, SW_SHOWNORMAL);

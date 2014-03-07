@@ -89,6 +89,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 
 #define CEHOMEPAGE     L"http://conemu-maximus5.googlecode.com"
 #define CEHOMEPAGE_A    "http://conemu-maximus5.googlecode.com"
+#define CEDOWNLPAGE    L"http://www.fosshub.com/ConEmu.html"
 #define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/issues/entry"
 #define CEREPORTCRASH  L"http://code.google.com/p/conemu-maximus5/issues/entry"
 #define CEWHATSNEW     L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New"

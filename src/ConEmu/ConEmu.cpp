@@ -144,6 +144,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define CONEMU_ANIMATE_DURATION_MAX 5000
 
 const wchar_t* gsHomePage    = CEHOMEPAGE;    //L"http://conemu-maximus5.googlecode.com";
+const wchar_t* gsDownlPage   = CEDOWNLPAGE;   //L"http://www.fosshub.com/ConEmu.html";
 const wchar_t* gsReportBug   = CEREPORTBUG;   //L"http://code.google.com/p/conemu-maximus5/issues/entry";
 const wchar_t* gsReportCrash = CEREPORTCRASH; //L"http://code.google.com/p/conemu-maximus5/issues/entry";
 const wchar_t* gsWhatsNew    = CEWHATSNEW;    //L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";
