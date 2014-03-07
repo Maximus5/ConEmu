@@ -1516,6 +1516,8 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 
 	if (!bActiveHasProgress && nUpdateProgress >= 0)
 	{
+		if (nUpdateProgress <= UPD_PROGRESS_DOWNLOAD_START)
+			bWasIndeterminate = TRUE;
 		nProgress = max(nProgress, nUpdateProgress);
 	}
 

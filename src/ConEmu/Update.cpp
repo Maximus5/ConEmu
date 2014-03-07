@@ -1702,7 +1702,7 @@ short CConEmuUpdate::GetUpdateProgress()
 	case us_Check:
 		return mb_ManualCallMode ? 1 : -1;
 	case us_ConfirmDownload:
-		return 10;
+		return UPD_PROGRESS_CONFIRM_DOWNLOAD;
 	case us_Downloading:
 		if (mn_PackageSize > 0)
 		{
@@ -1711,13 +1711,13 @@ short CConEmuUpdate::GetUpdateProgress()
 				nValue = 0;
 			else if (nValue > 88)
 				nValue = 88;
-			return nValue+10;
+			return nValue+UPD_PROGRESS_DOWNLOAD_START;
 		}
-		return 10;
+		return UPD_PROGRESS_DOWNLOAD_START;
 	case us_ConfirmUpdate:
-		return 98;
+		return UPD_PROGRESS_CONFIRM_UPDATE;
 	case us_ExitAndUpdate:
-		return 99;
+		return UPD_PROGRESS_EXIT_AND_UPDATE;
 	}
 
 	return -1;
