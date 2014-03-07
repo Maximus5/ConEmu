@@ -37,13 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TrayIcon.h"
 #include "version.h"
 
-#ifdef __GNUC__
-typedef struct {
-    DWORD dwMajorVersion;
-    DWORD dwMinorVersion;
-} HTTP_VERSION_INFO, * LPHTTP_VERSION_INFO;
-#define INTERNET_OPTION_HTTP_VERSION 59
-#endif
 
 CConEmuUpdate* gpUpd = NULL;
 
