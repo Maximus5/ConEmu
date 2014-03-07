@@ -87,7 +87,7 @@ protected:
 
 	static DWORD WINAPI CheckThreadProc(LPVOID lpParameter);
 	DWORD CheckProcInt();
-	void GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&szServer)[100], wchar_t (&szInfo)[100]);
+	void GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&szServer)[100], wchar_t (&szServerRA)[100], wchar_t (&szInfo)[100]);
 
 	wchar_t* CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, HANDLE& hFile);
 	wchar_t* CreateBatchFile(LPCWSTR asPackage);
@@ -139,11 +139,14 @@ protected:
 	bool mb_NewVersionAvailable;
 	wchar_t ms_NewVersion[64], ms_CurVersion[64], ms_SkipVersion[64];
 	wchar_t ms_VerOnServer[100]; // Information about available server versions
+	wchar_t ms_VerOnServerRA[100]; // Information about available server versions (right aligned)
 	wchar_t ms_CurVerInfo[100];  // Version + stable/preview/alpha
 	wchar_t ms_DefaultTitle[128];
 	wchar_t* mpsz_ConfirmSource;
 	bool QueryConfirmation(UpdateStep step);
-	bool QueryConfirmationInt(LPCWSTR asConfirmInfo);
+	bool QueryConfirmationDownload();
+	bool QueryConfirmationUpdate();
+	void QueryConfirmationNoNewVer();
 	void WaitAllInstances();
 	bool Check7zipInstalled();
 	#if 0
