@@ -3768,7 +3768,7 @@ void LogFunctionCall(LPCSTR asFunc, LPCSTR asFile, int anLine)
 	if (!gbSuppressShowCall || gbSkipSuppressShowCall)
 	{
 		DWORD nErr = GetLastError();
-		char sFunc[128]; _wsprintfA(sFunc, SKIPLEN(countof(sFunc)) "Hook: %s\n", asFunc);
+		char sFunc[128]; _wsprintfA(sFunc, SKIPLEN(countof(sFunc)) "Hook[%u]: %s\n", GetCurrentThreadId(), asFunc);
 		DebugStringA(sFunc);
 		SetLastError(nErr);
 	}
