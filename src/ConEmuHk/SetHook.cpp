@@ -63,8 +63,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UserImp.h"
 #include "Ansi.h"
 
-//#include <WinInet.h>
-//#pragma comment(lib, "wininet.lib")
 
 #ifdef _DEBUG
 #define DebugString(x) //OutputDebugString(x)
@@ -73,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DebugString(x) //OutputDebugString(x)
 #define DebugStringA(x) //OutputDebugStringA(x)
 #endif
+
 
 HMODULE ghOurModule = NULL; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 DWORD   gnHookMainThreadId = 0;
@@ -3342,25 +3341,6 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 	if (lstrcmpi(lpFileName, L"kernel32.dll") == 0)
 		return module;
 
-	// Больше не требуется. Загрузка ExtendedConsole обработана выше
-#if 0
-	// Far 3 x64 все равно пытается загрузить L"ExtendedConsole.dll" вместо L"ExtendedConsole64.dll"
-	#ifdef _WIN64
-	if (!module)
-	{
-		DWORD dwErrCode = dwLoadErrCode;
-		//0x7E - module not found
-		//0xC1 - module не является приложением Win32.
-		if ((dwErrCode == ERROR_MOD_NOT_FOUND || dwErrCode == ERROR_BAD_EXE_FORMAT)
-			&& lpFileName && (lstrcmpiW(lpFileName, L"extendedconsole.dll") == 0))
-		{
-			module = ((OnLoadLibraryW_t)lpfn)(L"ExtendedConsole64.dll");
-		}
-	}
-	#endif
-#endif
-
-	
 	if (PrepareNewModule(module, NULL, lpFileName))
 	{
 		if (ph && ph->PostCallBack)
