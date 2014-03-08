@@ -439,6 +439,10 @@ void cmd_FarSetChanged(FAR_REQ_FARSETCHANGED *pFarSet)
 		// Уведомить об изменениях библиотеку хуков (ConEmuHk.dll)
 		SetFarHookMode(&gFarMode);
 	}
+	else
+	{
+		_ASSERTE(SetFarHookMode!=NULL);
+	}
 }
 
 BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)

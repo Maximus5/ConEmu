@@ -11138,11 +11138,6 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID /*= 0*/, FAR_REQ_FARSETCHANG
 {
 	if (!this) return;
 
-	// В консоли может быть активна и другая программа
-	DWORD dwFarPID = (mn_FarPID_PluginDetected == mn_FarPID) ? mn_FarPID : 0; // anFarPID ? anFarPID : GetFarPID();
-
-	if (!dwFarPID) return;
-
 	////int nLen = /*ComSpec\0*/ 8 + /*ComSpecC\0*/ 9 + 20 +  2*_tcslen(gpConEmu->ms_ConEmuExe);
 	//wchar_t szCMD[MAX_PATH+1];
 	////wchar_t szData[MAX_PATH*4+64];
@@ -11235,6 +11230,11 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID /*= 0*/, FAR_REQ_FARSETCHANG
 
 	if (rpSetEnvVar == NULL)
 	{
+		// В консоли может быть активна и другая программа
+		DWORD dwFarPID = (mn_FarPID_PluginDetected == mn_FarPID) ? mn_FarPID : 0; // anFarPID ? anFarPID : GetFarPID();
+
+		if (!dwFarPID) return;
+
 		// Выполнить в плагине
 		CConEmuPipe pipe(dwFarPID, 300);
 		int nSize = sizeof(FAR_REQ_FARSETCHANGED); //+2*(pszName - szData);

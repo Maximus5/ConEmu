@@ -5246,7 +5246,15 @@ void InitResources()
 			{
 				cmd_FarSetChanged(&pOut->FarSetChanged);
 			}
+			else
+			{
+				_ASSERTE(FALSE && "CECMD_RESOURCES failed (DataSize)");
+			}
 			ExecuteFreeResult(pOut);
+		}
+		else
+		{
+			_ASSERTE(pOut!=NULL && "CECMD_RESOURCES failed");
 		}
 
 		Free(pIn);

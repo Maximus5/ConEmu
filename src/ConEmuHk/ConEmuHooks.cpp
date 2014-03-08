@@ -913,6 +913,11 @@ void __stdcall SetFarHookMode(struct HookModeFar *apFarMode)
 	}
 	else
 	{
+		// При запуске Ctrl+Shift+W - фар как-то криво инитится... Ctrl+O не работает
+		#ifdef _DEBUG
+		char szInfo[100]; msprintf(szInfo, countof(szInfo), "SetFarHookMode. FarHookMode=%u, LongConsoleOutput=%u\n", apFarMode->bFarHookMode, apFarMode->bLongConsoleOutput);
+		OutputDebugStringA(szInfo);
+		#endif
 		memmove(&gFarMode, apFarMode, sizeof(gFarMode));
 	}
 }
