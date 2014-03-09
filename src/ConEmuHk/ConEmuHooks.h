@@ -129,9 +129,10 @@ extern WORD gnConsolePopupColors;
 extern int  gnPowerShellProgressValue;
 /* ************ Globals for powershell ************ */
 
-/* ************ Globals for bash ************ */
+/* ************ Globals for cygwin/msys ************ */
 extern bool gbIsBashProcess;
-/* ************ Globals for bash ************ */
+extern bool gbIsSshProcess;
+/* ************ Globals for cygwin/msys ************ */
 
 /* ************ Globals for ViM ************ */
 extern bool gbIsVimProcess;

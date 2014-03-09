@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"vim.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"ssh.exe"
 //	#define SHOW_EXE_TIMINGS
 //	#define SHOW_FIRST_ANSI_CALL
 #endif
@@ -691,6 +691,16 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		#if 0
 		if (lstrcmpi(pszName, L"isatty.exe") == 0)
 			StartPTY();
+		#endif
+	}
+	else if ((lstrcmpi(pszName, L"ssh.exe") == 0) || (lstrcmpi(pszName, L"ssh") == 0))
+	{
+		gbIsSshProcess = true;
+		#ifdef _DEBUG
+		ghDebugSshLibs = CreateEvent(NULL, FALSE, FALSE, NULL);
+		ghDebugSshLibsRc = CreateEvent(NULL, FALSE, FALSE, NULL);
+		ghDebugSshLibsCan = CreateEvent(NULL, FALSE, FALSE, NULL);
+		CreateThread(NULL, 0, DummyLibLoaderThread, NULL, 0, &gnDummyLibLoaderThreadTID);
 		#endif
 	}
 	else if ((lstrcmpi(pszName, L"hiew32.exe") == 0) || (lstrcmpi(pszName, L"hiew32") == 0))

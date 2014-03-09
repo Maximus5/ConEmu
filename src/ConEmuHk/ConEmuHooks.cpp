@@ -199,9 +199,10 @@ WORD gnConsolePopupColors = 0x003E;
 int  gnPowerShellProgressValue = -1;
 /* ************ Globals for powershell ************ */
 
-/* ************ Globals for bash ************ */
+/* ************ Globals for cygwin/msys ************ */
 bool gbIsBashProcess = false;
-/* ************ Globals for bash ************ */
+bool gbIsSshProcess = false;
+/* ************ Globals for cygwin/msys ************ */
 
 /* ************ Globals for ViM ************ */
 bool gbIsVimProcess = false;
