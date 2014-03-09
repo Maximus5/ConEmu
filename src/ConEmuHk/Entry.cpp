@@ -599,7 +599,7 @@ bool InitDefaultTerm()
 	return lbRc;
 }
 
-#ifdef _DEBUG
+#if 0
 
 //	There was report from user about ssh crash under ConEmu.
 //	Inspection of the crash dump shows
@@ -869,7 +869,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	else if ((lstrcmpi(pszName, L"ssh.exe") == 0) || (lstrcmpi(pszName, L"ssh") == 0))
 	{
 		gbIsSshProcess = true;
-		#ifdef _DEBUG
+		#if 0
 		ghDebugSshLibs = CreateEvent(NULL, FALSE, FALSE, NULL);
 		ghDebugSshLibsRc = CreateEvent(NULL, FALSE, FALSE, NULL);
 		ghDebugSshLibsCan = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -1727,7 +1727,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			gStartedThreads.Del(nTID);
 			ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", gnDllThreadCount);
 
-			#ifdef _DEBUG
+			#if 0
 			if (ghDebugSshLibsCan) SetEvent(ghDebugSshLibsCan);
 			#endif
 

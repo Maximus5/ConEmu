@@ -3286,6 +3286,7 @@ void CheckProcessModules(HMODULE hFromModule)
 #ifdef _DEBUG
 void OnLoadLibraryLog(LPCSTR lpLibraryA, LPCWSTR lpLibraryW)
 {
+	#if 0
 	if ((lpLibraryA && strncmp(lpLibraryA, "advapi32", 8)==0)
 		|| (lpLibraryW && wcsncmp(lpLibraryW, L"advapi32", 8)==0))
 	{
@@ -3296,6 +3297,7 @@ void OnLoadLibraryLog(LPCSTR lpLibraryA, LPCWSTR lpLibraryW)
 			WaitForSingleObject(ghDebugSshLibsRc, 1000);
 		}
 	}
+	#endif
 }
 #else
 #define OnLoadLibraryLog(lpLibraryA,lpLibraryW)
