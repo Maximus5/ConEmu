@@ -221,13 +221,13 @@ public:
 		return false;
 	};
 
-	void Del(const KEY_T& key)
+	bool Del(const KEY_T& key)
 	{
 		if (!mp_Items || !mn_MaxCount)
 		{
 			// -- если еще пустой - не важно
 			//_ASSERTE(mp_Items && mn_MaxCount && "MMap::Set - Storage must be allocated first");
-			return;
+			return false;
 		}
 		for (size_t i = 0; i < mn_MaxCount; i++)
 		{
@@ -236,8 +236,9 @@ public:
 				memset(&(mp_Items[i].key), 0, sizeof(mp_Items[i].key));
 				memset(&(mp_Items[i].val), 0, sizeof(mp_Items[i].val));
 				mp_Items[i].used = false;
-				return;
+				return true;
 			}
 		}
+		return false;
 	};
 };
