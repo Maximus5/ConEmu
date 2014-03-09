@@ -65,11 +65,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifdef _DEBUG
-#define DebugString(x) //OutputDebugString(x)
-#define DebugStringA(x) //OutputDebugStringA(x)
+	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
+	#define DebugString(x) if ((gnDllState != ds_DllProcessDetach) || gbIsSshProcess) OutputDebugString(x)
+	#define DebugStringA(x) if ((gnDllState != ds_DllProcessDetach) || gbIsSshProcess) OutputDebugStringA(x)
 #else
-#define DebugString(x) //OutputDebugString(x)
-#define DebugStringA(x) //OutputDebugStringA(x)
+	#define DebugString(x) //OutputDebugString(x)
+	#define DebugStringA(x) //OutputDebugStringA(x)
 #endif
 
 
@@ -1620,28 +1621,6 @@ bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, size_t cchNameMax)
 	//TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary.
 	lbFound = (IsHookedModule(ahModule, pszName, cchNameMax) != NULL);
 
-/*
-	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
-
-	if (snapshot != INVALID_HANDLE_VALUE)
-	{
-		MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
-
-		for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
-		{
-			if (module.hModule == ahModule)
-			{
-				if (pszName)
-					_wcscpyn_c(pszName, cchNameMax, module.szModule, cchNameMax);
-				lbFound = true;
-				break;
-			}
-		}
-
-		CloseHandle(snapshot);
-	}
-*/
-
 	return lbFound;
 }
 
@@ -2515,6 +2494,12 @@ DWORD GetMainThreadId(bool bUseCurrentAsMain)
 		}
 	}
 
+	#ifdef _DEBUG
+	char szInfo[100];
+	msprintf(szInfo, countof(szInfo), "GetMainThreadId()=%u, TID=%u\n", gnHookMainThreadId, GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+	#endif
+
 	_ASSERTE(gnHookMainThreadId!=0);
 	return gnHookMainThreadId;
 }
@@ -2600,19 +2585,26 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 	_ASSERTE(gnHookMainThreadId!=0);
 	HLOGEND();
 
+	wchar_t szInfo[MAX_PATH+2] = {};
+
 	// Если просили хукать только exe-шник
 	if (gbHookExecutableOnly)
 	{
-		wchar_t szExeName[MAX_PATH] = {};
-		GetModuleFileName(NULL, szExeName, countof(szExeName));
+		GetModuleFileName(NULL, szInfo, countof(szInfo)-2);
+		wcscat_c(szInfo, L"\n");
+		DebugString(szInfo);
 		// Go
-		DebugString(szExeName);
 		HLOG("SetAllHooks.SetHook(exe)",0);
-		SetHook(szExeName, hExecutable, abForceHooks);
+		SetHook(szInfo, hExecutable, abForceHooks);
 		HLOGEND();
 	}
 	else
 	{
+		#ifdef _DEBUG
+		msprintf(szInfo, countof(szInfo), L"!!! TH32CS_SNAPMODULE, TID=%u, SetAllHooks, hOurModule=" WIN3264TEST(L"0x%08X\n",L"0x%08X%08X\n"), GetCurrentThreadId(), WIN3264WSPRINT(ahOurDll));
+		DebugString(szInfo);
+		#endif
+
 		HLOG("SetAllHooks.CreateSnap",0);
 		// Начались замены во всех загруженных (linked) модулях
 		snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
@@ -2629,7 +2621,10 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 				HLOGEND();
 				if (module.hModule && !IsModuleExcluded(module.hModule, NULL, module.szModule))
 				{
-					DebugString(module.szModule);
+					lstrcpyn(szInfo, module.szModule, countof(szInfo)-2);
+					wcscat_c(szInfo, L"\n");
+					DebugString(szInfo);
+					// Go
 					HLOG1("SetAllHooks.SetHook",(DWORD)module.hModule);
 					SetHook(module.szModule, module.hModule/*, (module.hModule == hExecutable)*/, abForceHooks);
 					HLOGEND1();
@@ -2643,6 +2638,8 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 			HLOGEND();
 		}
 	}
+
+	DebugString(L"SetAllHooks finished\n");
 
 	return true;
 }
@@ -2923,17 +2920,28 @@ void __stdcall UnsetAllHooks()
 {
 	HMODULE hExecutable = GetModuleHandle(0);
 
+	wchar_t szInfo[MAX_PATH+2] = {};
+
 	// Если просили хукать только exe-шник
 	if (gbHookExecutableOnly)
 	{
-		wchar_t szExeName[MAX_PATH] = {};
-		GetModuleFileName(NULL, szExeName, countof(szExeName));
+		GetModuleFileName(NULL, szInfo, countof(szInfo)-2);
+		#ifdef _DEBUG
+		wcscat_c(szInfo, L"\n");
+		//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
+		DebugString(szInfo);
+		#endif
 		// Go
-		DebugString(szExeName);
 		UnsetHook(hExecutable);
 	}
 	else
 	{
+		#ifdef _DEBUG
+		//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
+		msprintf(szInfo, countof(szInfo), L"!!! TH32CS_SNAPMODULE, TID=%u, UnsetAllHooks\n", GetCurrentThreadId());
+		DebugString(szInfo);
+		#endif
+
 		//Warning: TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary.
 		HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
 
@@ -2947,8 +2955,13 @@ void __stdcall UnsetAllHooks()
 			{
 				if (module.hModule && !IsModuleExcluded(module.hModule, NULL, module.szModule))
 				{
+					lstrcpyn(szInfo, module.szModule, countof(szInfo)-2);
 					//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
-					DebugString(module.szModule);
+					#ifdef _DEBUG
+					wcscat_c(szInfo, L"\n");
+					DebugString(szInfo);
+					#endif
+					// Go
 					UnsetHook(module.hModule/*, (module.hModule == hExecutable)*/);
 				}
 			}
@@ -2956,6 +2969,10 @@ void __stdcall UnsetAllHooks()
 			CloseHandle(snapshot);
 		}
 	}
+
+	#ifdef _DEBUG
+	DebugStringA("UnsetAllHooks finished\n");
+	#endif
 }
 
 
@@ -3199,6 +3216,12 @@ void CheckProcessModules(HMODULE hFromModule)
 	}
 #endif
 
+#ifdef _DEBUG
+	char szDbgInfo[100];
+	msprintf(szDbgInfo, countof(szDbgInfo), "!!! TH32CS_SNAPMODULE, TID=%u, CheckProcessModules, hFromModule=" WIN3264TEST("0x%08X\n","0x%08X%08X\n"), GetCurrentThreadId(), WIN3264WSPRINT(hFromModule));
+	DebugStringA(szDbgInfo);
+#endif
+
 	WARNING("TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary!!!");
 	// Может, имеет смысл запустить фоновую нить, в которой проверить все загруженные модули?
 
@@ -3259,10 +3282,19 @@ void CheckProcessModules(HMODULE hFromModule)
 }
 #endif
 
+#ifdef _DEBUG
+void OnLoadLibraryLog(LPCSTR lpLibraryA, LPCWSTR lpLibraryW)
+{
+}
+#else
+#define OnLoadLibraryLog(lpLibraryA,lpLibraryW)
+#endif
+
 /* ************** */
 HMODULE WINAPI OnLoadLibraryAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const char* lpFileName)
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryA_t)(const char* lpFileName);
+	OnLoadLibraryLog(lpFileName,NULL);
 	HMODULE module = ((OnLoadLibraryA_t)lpfn)(lpFileName);
 	DWORD dwLoadErrCode = GetLastError();
 
@@ -3306,6 +3338,8 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
 	HMODULE module = NULL;
+
+	OnLoadLibraryLog(NULL,lpFileName);
 
 	// Спрятать ExtendedConsole.dll с глаз долой, в сервисную папку "ConEmu"
 	if (lpFileName 
@@ -3373,6 +3407,7 @@ HMODULE WINAPI OnLoadLibraryWExp(const wchar_t* lpFileName)
 HMODULE WINAPI OnLoadLibraryExAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const char* lpFileName, HANDLE hFile, DWORD dwFlags)
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryExA_t)(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
+	OnLoadLibraryLog(lpFileName,NULL);
 	HMODULE module = ((OnLoadLibraryExA_t)lpfn)(lpFileName, hFile, dwFlags);
 	DWORD dwLoadErrCode = GetLastError();
 
@@ -3411,6 +3446,7 @@ HMODULE WINAPI OnLoadLibraryExAExp(const char* lpFileName, HANDLE hFile, DWORD d
 HMODULE WINAPI OnLoadLibraryExWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags)
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryExW_t)(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
+	OnLoadLibraryLog(NULL,lpFileName);
 	HMODULE module = ((OnLoadLibraryExW_t)lpfn)(lpFileName, hFile, dwFlags);
 	DWORD dwLoadErrCode = GetLastError();
 

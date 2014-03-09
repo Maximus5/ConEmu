@@ -507,6 +507,12 @@ bool InitDefaultTerm()
 {
 	bool lbRc = true;
 
+	#ifdef _DEBUG
+	char szInfo[100];
+	msprintf(szInfo, countof(szInfo), "!!! TH32CS_SNAPMODULE, TID=%u, InitDefaultTerm\n", GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+	#endif
+
 	gpDefaultTermParm = (ConEmuGuiMapping*)calloc(sizeof(*gpDefaultTermParm),1);
 
 	CShellProc sp;
@@ -581,6 +587,10 @@ bool InitDefaultTerm()
 		}
 	}
 
+	#ifdef _DEBUG
+	OutputDebugStringA("InitDefaultTerm finished\n");
+	#endif
+
 	return lbRc;
 }
 
@@ -593,6 +603,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
 	const wchar_t* pszName = PointToName(szModule);
 	wchar_t szMsg[128];
+
+	// Process exe name must be known
+	_ASSERTEX(pszName);
 
 	// For reporting purposes. Users may define env.var and run program.
 	// When ConEmuHk.dll loaded in that process - it'll show msg box
@@ -640,6 +653,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 	#endif
 
+	// Must be extension?
+	_ASSERTEX(wcschr(pszName,L'.')!=NULL);
 
 	if ((lstrcmpi(pszName, L"powershell.exe") == 0) || (lstrcmpi(pszName, L"powershell") == 0))
 	{
