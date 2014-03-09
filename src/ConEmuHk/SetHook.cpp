@@ -76,6 +76,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 HMODULE ghOurModule = NULL; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 DWORD   gnHookMainThreadId = 0;
+MMap<DWORD,BOOL> gStartedThreads;
 
 extern HWND    ghConWnd;      // RealConsole
 

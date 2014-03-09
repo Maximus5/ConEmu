@@ -67,6 +67,7 @@ extern CEStartupEnv* gpStartEnv;
 #include "../common/ConEmuCheck.h"
 #include "../common/WinObjects.h"
 #include "../common/InQueue.h"
+#include "../common/MMap.h"
 
 //extern MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap;
 //extern CESERVER_CONSOLE_MAPPING_HDR* gpConInfo;

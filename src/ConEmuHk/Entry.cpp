@@ -162,6 +162,7 @@ extern void ShutdownHooks();
 extern void InitializeHookedModules();
 extern void FinalizeHookedModules();
 extern DWORD GetMainThreadId(bool bUseCurrentAsMain);
+extern MMap<DWORD,BOOL> gStartedThreads;
 extern HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, bool bRunAsAdmin, bool bForce);
 //HMODULE ghPsApi = NULL;
 #ifdef _DEBUG
@@ -1487,6 +1488,11 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			DLOG1_("DllMain.MainThreadId",ul_reason_for_call);
 			GetMainThreadId(bCurrentThreadIsMain); // Инициализировать gnHookMainThreadId
+			// In some cases we need to know thread IDs was started 'normally'
+			gStartedThreads.Init(128,true);
+			gStartedThreads.Set(gnHookMainThreadId,true);
+			if (!bCurrentThreadIsMain)
+				gStartedThreads.Set(GetCurrentThreadId(),true);
 			DLOGEND1();
 
 			DLOG1_("DllMain.InQueue",ul_reason_for_call);
@@ -1580,6 +1586,8 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		{
 			DLOG0("DllMain.DLL_THREAD_DETACH",ul_reason_for_call);
 
+			DWORD nTID = GetCurrentThreadId();
+
 			#ifdef SHOW_SHUTDOWN_STEPS
 			gnDbgPresent = 0;
 			ShutdownStep(L"DLL_THREAD_DETACH");
@@ -1588,7 +1596,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			if (gbHooksWasSet)
 				DoneHooksRegThread();
 			// DLL_PROCESS_DETACH зовется как выяснилось не всегда
-			if (gnHookMainThreadId && (GetCurrentThreadId() == gnHookMainThreadId) && !gbDllDeinitialized)
+			if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !gbDllDeinitialized)
 			{
 				gbDllDeinitialized = true;
 				DLOG1("DllMain.DllStop",ul_reason_for_call);
@@ -1597,6 +1605,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 				DLOGEND1();
 			}
 			gnDllThreadCount--;
+			gStartedThreads.Del(nTID);
 			ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", gnDllThreadCount);
 
 			#ifdef _DEBUG

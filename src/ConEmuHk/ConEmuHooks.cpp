@@ -152,6 +152,7 @@ extern DWORD gnLastShowExeTick;
 extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 extern DWORD   gnHookMainThreadId;
 extern BOOL    gbHooksTemporaryDisabled;
+extern MMap<DWORD,BOOL> gStartedThreads;
 //__declspec( thread )
 //static BOOL    gbInShellExecuteEx = FALSE;
 
@@ -358,6 +359,7 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 BOOL WINAPI OnVirtualProtect(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect);
 LPTOP_LEVEL_EXCEPTION_FILTER WINAPI OnSetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
 #endif
+HANDLE WINAPI OnCreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
 BOOL WINAPI OnChooseColorA(LPCHOOSECOLORA lpcc);
 BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc);
 //HWND WINAPI OnCreateWindowA(LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
@@ -607,6 +609,7 @@ bool InitHooksCommon()
 																kernel32},
 		//#endif
 		#endif
+		{(void*)OnCreateThread,			"CreateThread",			kernel32},
 
 		// Microsoft bug?
 		// http://code.google.com/p/conemu-maximus5/issues/detail?id=60
@@ -5600,6 +5603,22 @@ LPTOP_LEVEL_EXCEPTION_FILTER WINAPI OnSetUnhandledExceptionFilter(LPTOP_LEVEL_EX
 	return lpRc;
 }
 #endif
+
+// ssh (msysgit) crash issue. Need to know if thread was started by application but not remotely.
+HANDLE WINAPI OnCreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
+{
+	typedef HANDLE(WINAPI* OnCreateThread_t)(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
+	ORIGINALFAST(CreateThread);
+	DWORD nTemp = 0;
+	LPDWORD pThreadID = lpThreadId ? lpThreadId : &nTemp;
+
+	HANDLE hThread = F(CreateThread)(lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, pThreadID);
+
+	if (hThread)
+		gStartedThreads.Set(*pThreadID,true);
+
+	return hThread;
+}
 
 //110131 попробуем просто добвавить ее в ExcludedModules
 //// WinInet.dll
