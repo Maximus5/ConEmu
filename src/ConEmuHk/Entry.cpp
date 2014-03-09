@@ -594,6 +594,66 @@ bool InitDefaultTerm()
 	return lbRc;
 }
 
+#ifdef _DEBUG
+
+//	There was report from user about ssh crash under ConEmu.
+//	Inspection of the crash dump shows
+//	Unhandled exception at 0x6085E0E9 (msys-1.0.dll) in ssh.exe: 0xC0000005: Access violation reading location 0x00000000.
+//		6085E0E1  mov         eax,dword ptr ds:[6089E490h]
+//		6085E0E6  mov         ebp,esp
+//		6085E0E8  pop         ebp
+//		6085E0E9  mov         eax,dword ptr [eax]
+//
+//	And this happens (almost all time) only if ‘Inject ConEmuHk’ is ON and the following library is loaded too:
+//	C:\Program Files (x86)\Avecto\Privilege Guard Client\PGHook.dll
+//
+//	Some debugging shows that PGHook.dll was started (or starts?) background thread
+//	and exception occures when that thread exits, example stack:
+//	>	msys-1.0.dll!6085e0e9()	Unknown
+// 		[Frames below may be incorrect and/or missing, no symbols loaded for msys-1.0.dll]
+// 		ntdll.dll!_LdrxCallInitRoutine@16()
+// 		ntdll.dll!LdrpCallInitRoutine()
+// 		ntdll.dll!LdrShutdownThread()
+// 		ntdll.dll!_RtlExitUserThread@4()
+//
+//	Avecto is not available to download/testing, so I tries to ‘emulate’ the problem and was ‘succeeded’.
+//	* My test thread waits for Main thread, when is loads (LoadLibrary) the "advapi32"
+//	* Main thread (at the moment of loading "advapi32") waits for test thread when it starts to load (LoadLibrary) "comdlg32"
+//	* And when test thread exists - crash occures almost all times.
+//
+//	The test command that calls ssh was (example)
+//	  git clone git@github.com:Maximus5/FarPl.git
+//
+//	Seems like it can be any repository.
+//
+//	Simplifying, the following command can be runned (but "git clone ..." must be runned at least once)
+//	  ssh git@github.com "git-upload-pack 'git@github.com:Maximus5/FarPl.git'"
+//
+//	For my test case - possible workaround was setting and waiting for ghDebugSshLibsCan event.
+//	Comment below to raise a crash: //DWORD nWait = WaitForSingleObject(ghDebugSshLibsCan, 5000);
+
+DWORD gnDummyLibLoaderThreadTID = 0;
+HANDLE ghDebugSshLibs = NULL, ghDebugSshLibsRc = NULL, ghDebugSshLibsCan = NULL;
+DWORD WINAPI DummyLibLoaderThread(LPVOID /*apParm*/)
+{
+	char szInfo[100];
+	msprintf(szInfo, countof(szInfo), "DummyLibLoaderThread started, TID=%u\n", GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+
+	WaitForSingleObject(ghDebugSshLibs, 2000);
+	SetEvent(ghDebugSshLibsRc);
+
+	extern HMODULE WINAPI OnLoadLibraryW(const WCHAR* lpFileName);
+	OnLoadLibraryW(L"comdlg32.dll");
+
+	msprintf(szInfo, countof(szInfo), "DummyLibLoaderThread finished, TID=%u\n", GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+
+	DWORD nWait = WaitForSingleObject(ghDebugSshLibsCan, 5000);
+	return 0;
+}
+#endif
+
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
 	//DLOG0("DllStart",0);
@@ -1538,6 +1598,10 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			}
 			gnDllThreadCount--;
 			ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", gnDllThreadCount);
+
+			#ifdef _DEBUG
+			if (ghDebugSshLibsCan) SetEvent(ghDebugSshLibsCan);
+			#endif
 
 			DLOGEND();
 		}
