@@ -12,6 +12,25 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.03.10
+[+] Issue 1498: Prettify update confirmation dialogs.
+[*] Indeterminated taskbar status during update confirmation.
+[%] ConEmu's debugger was failed to start on elevated consoles.
+[%] Internet errors was not displayed sometimes during update.
+[%] Workaround for ssh crash when third-party thread terminated before ssh init finished.
+[+] Issue 1502: GuiMacro new window transparency functions.
+    SetOption AlphaValue <40..255>
+        same as Transparency 0 <40..255>
+    SetOption AlphaValueInactive <0..255>
+        same as Transparency 2 <0..255>
+    SetOption AlphaValueSeparate <0..1>
+        same as Transparency 4 <0..1>
+	Also, new mode in Transparency for inactive value relative change
+	    Transparency 3 <-255..+255>
+[*] Show actual (active/inactive) transparency value in status bar.
+[%] Issue 1042: Quake, return focus to window which was active before showing ConEmu.
+
+
 2014.03.04
 [%] Issue 1490: Fix crash on ANSI scrolling sequences.
 [%] Issue 1491: Don't erase customized directories when updating ConEmu PortableApps.
