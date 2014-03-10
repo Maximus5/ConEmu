@@ -2694,6 +2694,7 @@ LPWSTR ConEmuMacro::TransparencyHelper(int nCmd, int nValue)
 		gpSet->nTransparentInactive = newValue = max(MIN_INACTIVE_ALPHA_VALUE, min(MAX_ALPHA_VALUE, gpSet->nTransparentInactive+nValue));
 		break;
 	case 4:
+		// "AlphaValueSeparate"
 		oldValue = gpSet->isTransparentSeparate;
 		newValue = gpSet->isTransparentSeparate = (nValue != 0);
 		break;

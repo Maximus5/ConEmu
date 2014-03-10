@@ -281,6 +281,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"  - Rename tab (Type=0) or console title (Type=1)\r\n" \
 	L"SetOption(\"<Name>\",<Value>)\r\n" \
 	L"  - Name=one of allowed for changing ConEmu options\r\n" \
+	L"    \"AlphaValue\": set transparency level of active window\r\n" \
+	L"      Value: 40 .. 255 (255==Opaque)\r\n" \
+	L"    \"AlphaValueInactive\": set transparency level of inactive window\r\n" \
+	L"      Value: 0 .. 255 (255==Opaque)\r\n" \
+	L"    \"AlphaValueSeparate\": enable separate active/inactive transparency level\r\n" \
+	L"      Value: 0(disable) .. 1(enable)\r\n" \
 	L"    \"AlwaysOnTop\": place ConEmu window above all non-topmost windows\r\n" \
 	L"      Value: 2 - toggle, 1 - enable, 0 - disable\r\n" \
 	L"    \"bgImageDarker\": darkening of background image\r\n" \
@@ -322,6 +328,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"  - change ConEmu transparency level absolutely or relatively\r\n" \
 	L"    Cmd==0, Value=40..255 (255==Opaque)\r\n" \
 	L"    Cmd==1, Value=<relative inc/dec>\r\n" \
+	L"    Cmd==2, Value=0..255 (255==Opaque) - for inactive window\r\n" \
+	L"    Cmd==3, Value=<relative inc/dec> - for inactive window\r\n" \
+	L"    Cmd==4, Value=<0/1> - AlphaValueSeparate\r\n" \
 	L"Task(\"Name\"[,\"Dir\"])\r\n" \
 	L"  - start task with specified name\r\n" \
 	L"WindowFullscreen()\r\n" \
