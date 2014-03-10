@@ -176,6 +176,7 @@ namespace ConEmuMacro
 	LPWSTR Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Transparency
 	LPWSTR Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	LPWSTR TransparencyHelper(int nCmd, int nValue); // helper, это не макро-фукнция
 	// Fullscreen
 	LPWSTR WindowFullscreen(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Maximize
@@ -2148,6 +2149,21 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 		gpConEmu->OnAlwaysOnTop();
 		pszResult = lstrdup(L"OK");
 	}
+	else if (!lstrcmpi(pszName, L"AlphaValue"))
+	{
+		if (p->GetIntArg(1, nValue))
+			pszResult = TransparencyHelper(0, nValue);
+	}
+	else if (!lstrcmpi(pszName, L"AlphaValueInactive"))
+	{
+		if (p->GetIntArg(1, nValue))
+			pszResult = TransparencyHelper(2, nValue);
+	}
+	else if (!lstrcmpi(pszName, L"AlphaValueSeparate"))
+	{
+		if (p->GetIntArg(1, nValue))
+			pszResult = TransparencyHelper(4, nValue);
+	}
 	else
 	{
 		//TODO: More options on demand
@@ -2643,28 +2659,50 @@ LPWSTR ConEmuMacro::HighlightMouse(GuiMacro* p, CRealConsole* apRCon, bool abFro
 LPWSTR ConEmuMacro::Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nCmd, nValue;
-	if (!p->GetIntArg(0, nCmd) || !(nCmd == 0 || nCmd == 1))
+	if (!p->GetIntArg(0, nCmd) || !(nCmd >= 0 && nCmd <= 4))
 		return lstrdup(L"InvalidArg");
 	if (!p->GetIntArg(1, nValue))
 		return lstrdup(L"InvalidArg");
 
-	int newV = gpSet->nTransparent;
+	return TransparencyHelper(nCmd, nValue);
+}
+
+LPWSTR ConEmuMacro::TransparencyHelper(int nCmd, int nValue)
+{
+	int oldValue, newValue;
 
 	switch (nCmd)
 	{
 	case 0:
-		// Absolute value
-		newV = max(MIN_ALPHA_VALUE, min(MAX_ALPHA_VALUE, nValue));
+		// Absolute value, "AlphaValue" (active)
+		oldValue = gpSet->nTransparent;
+		gpSet->nTransparent = newValue = max(MIN_ALPHA_VALUE, min(MAX_ALPHA_VALUE, nValue));
 		break;
 	case 1:
-		// Relative value
-		newV = max(MIN_ALPHA_VALUE, min(MAX_ALPHA_VALUE, newV+nValue));
+		// Relative value, "AlphaValue" (active)
+		oldValue = gpSet->nTransparent;
+		gpSet->nTransparent = newValue = max(MIN_ALPHA_VALUE, min(MAX_ALPHA_VALUE, gpSet->nTransparent+nValue));
 		break;
+	case 2:
+		// Absolute value, "AlphaValueInactive" (inactive)
+		oldValue = gpSet->nTransparentInactive;
+		gpSet->nTransparentInactive = newValue = max(MIN_INACTIVE_ALPHA_VALUE, min(MAX_ALPHA_VALUE, nValue));
+		break;
+	case 3:
+		// Relative value, "AlphaValueInactive" (inactive)
+		oldValue = gpSet->nTransparentInactive;
+		gpSet->nTransparentInactive = newValue = max(MIN_INACTIVE_ALPHA_VALUE, min(MAX_ALPHA_VALUE, gpSet->nTransparentInactive+nValue));
+		break;
+	case 4:
+		oldValue = gpSet->isTransparentSeparate;
+		newValue = gpSet->isTransparentSeparate = (nValue != 0);
+		break;
+	default:
+		return lstrdup(L"InvalidArg");
 	}
 
-	if (newV != gpSet->nTransparent)
+	if (oldValue != newValue)
 	{
-		gpSet->nTransparent = newV;
 		gpConEmu->OnTransparent();
 	}
 
