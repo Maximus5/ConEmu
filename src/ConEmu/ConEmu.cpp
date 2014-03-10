@@ -100,8 +100,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
 #define DEBUGSTRMSG(s) //DEBUGSTR(s)
 #define DEBUGSTRMSG2(s) //DEBUGSTR(s)
-#define DEBUGSTRANIMATE(s) //DEBUGSTR(s)
-#define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
+#define DEBUGSTRANIMATE(s) DEBUGSTR(s)
+#define DEBUGSTRFOCUS(s) DEBUGSTR(s)
 #define DEBUGSTRSESS(s) DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
@@ -13407,26 +13407,18 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				DEBUGTEST(RECT rc2; ::GetWindowRect(ghWnd, &rc2));
 				DEBUGTEST(bVs1 = bVs2);
 
+				// 1. Если на таскбаре отображаются "табы", то после AnimateWindow(AW_HIDE) в Win8 иконка с таскбара не убирается
+				// 2. Issue 1042: Return focus to window which was active before showing ConEmu
+				StopForceShowFrame();
+				mn_QuakePercent = 1;
+				UpdateWindowRgn();
+				apiShowWindow(ghWnd, SW_SHOWNOACTIVATE);
+				apiShowWindow(ghWnd, SW_HIDE);
+
 				if (!bMinToTray && (cmd != sih_ShowHideTSA))
 				{
 					// Если в трей не скрываем - то окошко нужно "вернуть на таскбар"
-					StopForceShowFrame();
-					mn_QuakePercent = 1;
-					UpdateWindowRgn();
 					apiShowWindow(ghWnd, SW_SHOWNOACTIVATE);
-				}
-				// Если на таскбаре отображаются "табы",
-				// то после AnimateWindow(AW_HIDE) в Win8 иконка с таскбара не убирается
-				else if (gpSet->isTabsOnTaskBar())
-				{
-					if (gpSet->isWindowOnTaskBar())
-					{
-						StopForceShowFrame();
-						mn_QuakePercent = 1;
-						UpdateWindowRgn();
-						apiShowWindow(ghWnd, SW_SHOWNOACTIVATE);
-						apiShowWindow(ghWnd, SW_HIDE);
-					}
 				}
 
 			}
@@ -13477,34 +13469,34 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		{
 			if (gpSet->isQuakeStyle)
 			{
-				// Раз попали сюда - значит скрывать иконку с таскбара не хотят. Нужен изврат...
+				// No need. All magic was done with SW_SHOWNOACTIVATE and SW_HIDE
 
-				// Найти окно "под" нами
-				HWND hNext = NULL;
-				if (hCurForeground && !bIsForeground)
-				{
-					// Вернуть фокус туда где он был до наших ексерсизов
-					hNext = hCurForeground;
-				}
-				else
-				{
-					while ((hNext = FindWindowEx(NULL, hNext, NULL, NULL)) != NULL)
-					{
-						if (::IsWindowVisible(hNext))
-						{
-							// Доп условия, аналог Alt-Tab?
-							DWORD nStylesEx = GetWindowLong(hNext, GWL_EXSTYLE);
-							DEBUGTEST(DWORD nStyles = GetWindowLong(hNext, GWL_STYLE));
-							if (!(nStylesEx & WS_EX_TOOLWINDOW))
-							{
-								break;
-							}
-						}
-					}
-				}
-				// И задвинуть в зад
-				SetWindowPos(ghWnd, NULL, -32000, -32000, 0,0, SWP_NOZORDER|SWP_NOSIZE|SWP_NOACTIVATE);
-				apiSetForegroundWindow(hNext ? hNext : GetDesktopWindow());
+				//// Найти окно "под" нами
+				//HWND hNext = NULL;
+				//if (hCurForeground && !bIsForeground)
+				//{
+				//	// Вернуть фокус туда где он был до наших ексерсизов
+				//	hNext = hCurForeground;
+				//}
+				//else
+				//{
+				//	while ((hNext = FindWindowEx(NULL, hNext, NULL, NULL)) != NULL)
+				//	{
+				//		if (::IsWindowVisible(hNext))
+				//		{
+				//			// Доп условия, аналог Alt-Tab?
+				//			DWORD nStylesEx = GetWindowLong(hNext, GWL_EXSTYLE);
+				//			DEBUGTEST(DWORD nStyles = GetWindowLong(hNext, GWL_STYLE));
+				//			if (!(nStylesEx & WS_EX_TOOLWINDOW))
+				//			{
+				//				break;
+				//			}
+				//		}
+				//	}
+				//}
+				//// И задвинуть в зад
+				//SetWindowPos(ghWnd, NULL, -32000, -32000, 0,0, SWP_NOZORDER|SWP_NOSIZE|SWP_NOACTIVATE);
+				//apiSetForegroundWindow(hNext ? hNext : GetDesktopWindow());
 			}
 			else
 			{
