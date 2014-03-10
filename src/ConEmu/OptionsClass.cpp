@@ -1005,7 +1005,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 	if ((SingleInstanceArg == sgl_Default) && gpSet->isQuakeStyle)
 	{
-		_ASSERTE(SingleInstanceShowHide == sih_None);
+		_ASSERTE((SingleInstanceShowHide == sih_None) || (gpSet->isSingleInstance && (SingleInstanceShowHide == sih_ShowMinimize)));
 		SingleInstanceArg = sgl_Enabled;
 	}
 
