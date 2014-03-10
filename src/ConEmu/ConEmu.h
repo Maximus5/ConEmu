@@ -160,6 +160,7 @@ class CConEmuMain :
 		bool PreparePortableReg();
 		bool mb_UpdateJumpListOnStartup;
 		bool mb_FindBugMode;
+		UINT mn_LastTransparentValue;
 	private:
 		struct
 		{

@@ -1844,7 +1844,7 @@ void CStatus::OnKeyboardChanged()
 void CStatus::OnTransparency()
 {
 	_wsprintf(m_Values[csi_Transparency].sText, SKIPLEN(countof(m_Items[csi_Transparency].sText))
-		_T("%u%%%s%s"), (UINT)(gpSet->nTransparent >= 255) ? 100 : (gpSet->nTransparent * 100 / 255),
+		_T("%u%%%s%s"), (UINT)(gpConEmu->mn_LastTransparentValue >= 255) ? 100 : (gpConEmu->mn_LastTransparentValue * 100 / 255),
 		gpSet->isUserScreenTransparent ? L",USR" : L"",
 		L""); // TODO: ColorKey transparency
 	wcscpy_c(m_Values[csi_Transparency].szFormat, L"100%");

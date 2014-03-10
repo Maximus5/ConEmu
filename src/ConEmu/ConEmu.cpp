@@ -266,6 +266,7 @@ CConEmuMain::CConEmuMain()
 {
 	gpConEmu = this; // сразу!
 	mb_FindBugMode = false;
+	mn_LastTransparentValue = 255;
 
 	DEBUGTEST(mb_DestroySkippedInAssert=false);
 
@@ -17743,6 +17744,8 @@ void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*=
 	{
 		bForceLayered = true;
 	}
+
+	mn_LastTransparentValue = nAlpha;
 
 	TODO("EnableBlurBehind: tabs and toolbar must be rewritten, all parts of GUI must be drawn with Alpha channel");
 	#ifdef _DEBUG
