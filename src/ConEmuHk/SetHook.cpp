@@ -107,6 +107,48 @@ HMODULE ghKernelBase = NULL, ghKernel32 = NULL, ghUser32 = NULL, ghGdi32 = NULL,
 HMODULE* ghSysDll[] = {&ghKernelBase, &ghKernel32, &ghUser32, &ghGdi32, &ghShell32, &ghAdvapi32, &ghComdlg32};
 //!!!WARNING!!! Добавляя в этот список - не забыть добавить и в GetPreloadModules() !!!
 
+struct UNICODE_STRING
+{
+  USHORT Length;
+  USHORT MaximumLength;
+  PWSTR  Buffer;
+};
+enum LDR_DLL_NOTIFICATION_REASON
+{
+	LDR_DLL_NOTIFICATION_REASON_LOADED = 1,
+	LDR_DLL_NOTIFICATION_REASON_UNLOADED = 2,
+};
+struct LDR_DLL_LOADED_NOTIFICATION_DATA
+{
+    ULONG Flags;                    //Reserved.
+    const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
+    const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
+    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
+    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
+};
+struct LDR_DLL_UNLOADED_NOTIFICATION_DATA
+{
+    ULONG Flags;                    //Reserved.
+    const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
+    const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
+    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
+    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
+};
+union LDR_DLL_NOTIFICATION_DATA
+{
+    LDR_DLL_LOADED_NOTIFICATION_DATA Loaded;
+    LDR_DLL_UNLOADED_NOTIFICATION_DATA Unloaded;
+};
+typedef VOID (CALLBACK* PLDR_DLL_NOTIFICATION_FUNCTION)(ULONG NotificationReason, const LDR_DLL_NOTIFICATION_DATA* NotificationData, PVOID Context);
+VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFICATION_DATA* NotificationData, PVOID Context);
+typedef NTSTATUS (NTAPI* LdrRegisterDllNotification_t)(ULONG Flags, PLDR_DLL_NOTIFICATION_FUNCTION NotificationFunction, PVOID Context, PVOID *Cookie);
+typedef NTSTATUS (NTAPI* LdrUnregisterDllNotification_t)(PVOID Cookie);
+static LdrRegisterDllNotification_t LdrRegisterDllNotification = NULL;
+static LdrUnregisterDllNotification_t LdrUnregisterDllNotification = NULL;
+static PVOID gpLdrDllNotificationCookie = NULL;
+static NTSTATUS gnLdrDllNotificationState = (NTSTATUS)-1;
+static bool gbLdrDllNotificationUsed = false;
+
 // Forwards
 bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE);
 void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep);
@@ -577,11 +619,17 @@ bool InitHooksLibrary()
 		if (pProc/*need to be, ignore GCC warn*/) gnHookedFuncs++;
 	/* ************************ */
 	ADDFUNC((void*)OnGetProcAddress,		szGetProcAddress,		kernel32); // eGetProcAddress, ...
-	ADDFUNC((void*)OnLoadLibraryA,			szLoadLibraryA,			kernel32); // ...
+
+	// No need to hook these functions in Vista+
+	if (!gbLdrDllNotificationUsed)
+	{
+		ADDFUNC((void*)OnLoadLibraryA,		szLoadLibraryA,			kernel32); // ...
+		ADDFUNC((void*)OnLoadLibraryExA,	szLoadLibraryExA,		kernel32);
+		ADDFUNC((void*)OnLoadLibraryExW,	szLoadLibraryExW,		kernel32);
+		ADDFUNC((void*)OnFreeLibrary,		szFreeLibrary,			kernel32); // OnFreeLibrary тоже нужен!
+	}
+	// With only exception of LoadLibraryW - it handles "ExtendedConsole.dll" loading in Far 64
 	ADDFUNC((void*)OnLoadLibraryW,			szLoadLibraryW,			kernel32);
-	ADDFUNC((void*)OnLoadLibraryExA,		szLoadLibraryExA,		kernel32);
-	ADDFUNC((void*)OnLoadLibraryExW,		szLoadLibraryExW,		kernel32);
-	ADDFUNC((void*)OnFreeLibrary,			szFreeLibrary,			kernel32); // OnFreeLibrary тоже нужен!
 
 	#ifdef HOOK_ERROR_PROC
 	// Для отладки появления системных ошибок
@@ -779,6 +827,23 @@ bool __stdcall InitHooks(HookItem* apHooks)
 {
 	size_t i, j;
 	bool skip;
+
+	static bool bLdrWasChecked = false;
+	if (!bLdrWasChecked)
+	{
+		HMODULE hNtDll = GetModuleHandle(L"ntdll.dll");
+		if (hNtDll)
+		{
+			LdrRegisterDllNotification = (LdrRegisterDllNotification_t)GetProcAddress(hNtDll, "LdrRegisterDllNotification");
+			LdrUnregisterDllNotification = (LdrUnregisterDllNotification_t)GetProcAddress(hNtDll, "LdrUnregisterDllNotification");
+		}
+		if (LdrRegisterDllNotification && LdrUnregisterDllNotification)
+		{
+			gnLdrDllNotificationState = LdrRegisterDllNotification(0, LdrDllNotification, NULL, &gpLdrDllNotificationCookie);
+			gbLdrDllNotificationUsed = (gnLdrDllNotificationState == 0/*STATUS_SUCCESS*/);
+		}
+		bLdrWasChecked = true;
+	}
 
 #if 0
 	if (gbHooksSorted && apHooks)
@@ -2441,6 +2506,60 @@ DWORD GetMainThreadId(bool bUseCurrentAsMain)
 	return gnHookMainThreadId;
 }
 
+VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFICATION_DATA* NotificationData, PVOID Context)
+{
+	DWORD   dwSaveErrCode = GetLastError();
+	wchar_t szModule[MAX_PATH*2] = L"";
+	HMODULE hModule;
+	BOOL    bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
+
+    const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
+    const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
+
+	switch (NotificationReason)
+	{
+	case LDR_DLL_NOTIFICATION_REASON_LOADED:
+		FullDllName = NotificationData->Loaded.FullDllName;
+		BaseDllName = NotificationData->Loaded.BaseDllName;
+		hModule = (HMODULE)NotificationData->Loaded.DllBase;
+		break;
+	case LDR_DLL_NOTIFICATION_REASON_UNLOADED:
+		FullDllName = NotificationData->Unloaded.FullDllName;
+		BaseDllName = NotificationData->Unloaded.BaseDllName;
+		hModule = (HMODULE)NotificationData->Unloaded.DllBase;
+		break;
+	default:
+		return;
+	}
+
+	if (FullDllName && FullDllName->Buffer)
+		memmove(szModule, FullDllName->Buffer, min(sizeof(szModule)-2,FullDllName->Length));
+	else if (BaseDllName && BaseDllName->Buffer)
+		memmove(szModule, BaseDllName->Buffer, min(sizeof(szModule)-2,BaseDllName->Length));
+
+	switch (NotificationReason)
+	{
+	case LDR_DLL_NOTIFICATION_REASON_LOADED:
+		if (PrepareNewModule(hModule, NULL, szModule))
+		{
+			HookItem* ph = NULL;;
+			GetOriginalAddress((void*)(FARPROC)OnLoadLibraryW, (void*)(FARPROC)LoadLibraryW, FALSE, &ph);
+			if (ph && ph->PostCallBack)
+			{
+				SETARGS1(&hModule,szModule);
+				ph->PostCallBack(&args);
+			}
+		}
+		break;
+	case LDR_DLL_NOTIFICATION_REASON_UNLOADED:
+		UnprepareModule(hModule, szModule, 0);
+		UnprepareModule(hModule, szModule, 2);
+		break;
+	}
+
+	SetLastError(dwSaveErrCode);
+}
+
 // Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemuhk.dll
 // *aszExcludedModules - должны указывать на константные значения (program lifetime)
 bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules /*= NULL*/, BOOL abForceHooks)
@@ -2858,6 +2977,12 @@ void __stdcall UnsetAllHooks()
 	HMODULE hExecutable = GetModuleHandle(0);
 
 	wchar_t szInfo[MAX_PATH+2] = {};
+
+	if (gbLdrDllNotificationUsed)
+	{
+		_ASSERTEX(LdrUnregisterDllNotification!=NULL);
+		LdrUnregisterDllNotification(gpLdrDllNotificationCookie);
+	}
 
 	// Если просили хукать только exe-шник
 	if (gbHookExecutableOnly)
@@ -3309,7 +3434,7 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 		module = ((OnLoadLibraryW_t)lpfn)(lpFileName);
 	DWORD dwLoadErrCode = GetLastError();
 
-	if (gbHooksTemporaryDisabled)
+	if (gbHooksTemporaryDisabled || gbLdrDllNotificationUsed)
 		return module;
 
 	// Issue 1079: Almost hangs with PHP
