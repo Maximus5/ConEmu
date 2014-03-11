@@ -28,14 +28,14 @@ if not %PROCESSOR_ARCHITECTURE%==AMD64 goto x32
 
 rem First, try to use 64-bit ConEmuC
 if exist "%~dp0ConEmuC64.exe" (
-set ConEmuSrvPath=%~dp0ConEmuC64.exe
+set ConEmuSrvPath="%~dp0ConEmuC64.exe"
 goto run
 )
 
 :x32
 rem Let use 32-bit ConEmuC
 if exist "%~dp0ConEmuC.exe" (
-set ConEmuSrvPath=%~dp0ConEmuC.exe
+set ConEmuSrvPath="%~dp0ConEmuC.exe"
 goto run
 )
 
@@ -66,9 +66,9 @@ set ConEmuNewCon=-new_console:ac%SPLIT%
 
 if "%~1"=="" (
 rem There was no arguments, just start new ComSpec
-"%ConEmuSrvPath%" /c %ComSpec% %ConEmuNewCon%
+%ConEmuSrvPath% /c %ComSpec% %ConEmuNewCon%
 ) else (
 rem Start requested command
-"%ConEmuSrvPath%" /c %* %ConEmuNewCon%
+%ConEmuSrvPath% /c %* %ConEmuNewCon%
 )
 rem all done
