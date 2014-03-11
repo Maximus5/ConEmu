@@ -659,6 +659,32 @@ DWORD WINAPI DummyLibLoaderThread(LPVOID /*apParm*/)
 }
 #endif
 
+#if 0
+DWORD gnDummyLibLoaderCmdThreadTID = 0;
+DWORD WINAPI DummyLibLoaderCmdThread(LPVOID /*apParm*/)
+{
+	char szInfo[100];
+	msprintf(szInfo, countof(szInfo), "DummyLibLoaderCmdThread started, TID=%u\n", GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+
+	SetLastError(0);
+	HMODULE hLib = LoadLibraryW(L"comdlg88.dll");
+	DWORD dwErr = GetLastError(); SetLastError(0);
+	hLib = LoadLibraryW(L"comdlg32.dll");
+	dwErr = GetLastError(); SetLastError(0);
+	hLib = LoadLibraryW(L"comdlg32.dll");
+	dwErr = GetLastError(); SetLastError(0);
+	if (hLib) FreeLibrary(hLib);
+	dwErr = GetLastError(); SetLastError(0);
+	if (hLib) FreeLibrary(hLib);
+	dwErr = GetLastError(); SetLastError(0);
+
+	msprintf(szInfo, countof(szInfo), "DummyLibLoaderCmdThread finished, TID=%u\n", GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+	return 0;
+}
+#endif
+
 static long gnFixSshThreadsResumeOk = 0;
 void FixSshThreads(int iStep)
 {
@@ -851,6 +877,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	else if ((lstrcmpi(pszName, L"cmd.exe") == 0) || (lstrcmpi(pszName, L"cmd") == 0))
 	{
 		gbIsCmdProcess = true;
+		#if 0
+		CreateThread(NULL, 0, DummyLibLoaderCmdThread, NULL, 0, &gnDummyLibLoaderCmdThreadTID);
+		#endif
 	}
 	else if ((lstrcmpi(pszName, L"sh.exe") == 0) || (lstrcmpi(pszName, L"sh") == 0)
 		|| (lstrcmpi(pszName, L"bash.exe") == 0) || (lstrcmpi(pszName, L"bash") == 0)
