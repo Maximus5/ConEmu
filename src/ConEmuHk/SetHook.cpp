@@ -66,8 +66,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
-	#define DebugString(x) if ((gnDllState != ds_DllProcessDetach) || gbIsSshProcess) OutputDebugString(x)
-	#define DebugStringA(x) if ((gnDllState != ds_DllProcessDetach) || gbIsSshProcess) OutputDebugStringA(x)
+	#define DebugString(x) //if ((gnDllState != ds_DllProcessDetach) || gbIsSshProcess) OutputDebugString(x)
+	#define DebugStringA(x) //if ((gnDllState != ds_DllProcessDetach) || gbIsSshProcess) OutputDebugStringA(x)
 #else
 	#define DebugString(x) //OutputDebugString(x)
 	#define DebugStringA(x) //OutputDebugStringA(x)

@@ -133,8 +133,8 @@ extern DWORD gnLastShowExeTick;
 
 
 #ifdef _DEBUG
-#define DebugString(x) OutputDebugString(x)
-#define DebugStringConSize(x) OutputDebugString(x)
+#define DebugString(x) //OutputDebugString(x)
+#define DebugStringConSize(x) //OutputDebugString(x)
 #else
 #define DebugString(x) //OutputDebugString(x)
 #define DebugStringConSize(x)
