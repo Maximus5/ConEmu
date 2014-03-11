@@ -42,7 +42,7 @@ goto checkparm
 rem AutoUpdate in progress?
 if defined ConEmuInUpdate (
 echo ConEmu auto update in progress, Cmd_Autorun skipped
-goto :EOF
+goto fin
 )
 
 rem First, check ConEmuHWND variable, if it is absent - we are not in ConEmu
@@ -169,7 +169,7 @@ goto CheckRet
 if "%~1"=="/GHWND=NEW" set FORCE_NEW_WND=YES
 if "%~1"=="/NEW" set FORCE_NEW_WND=YES
 if "%FORCE_NEW_WND%"=="YES" set FORCE_NEW_WND_CMD="/GHWND=NEW"
-goto :EOF
+goto fin
 
 :CheckRet
 if errorlevel 2 echo ConEmu failed
@@ -177,3 +177,5 @@ if errorlevel 1 echo All done
 goto fin
 
 :fin
+rem Issue 1003: Non zero exit codes leads to problems in some applications...
+exit /B 0
