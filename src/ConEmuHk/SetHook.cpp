@@ -107,6 +107,10 @@ HMODULE ghKernelBase = NULL, ghKernel32 = NULL, ghUser32 = NULL, ghGdi32 = NULL,
 HMODULE* ghSysDll[] = {&ghKernelBase, &ghKernel32, &ghUser32, &ghGdi32, &ghShell32, &ghAdvapi32, &ghComdlg32};
 //!!!WARNING!!! Добавляя в этот список - не забыть добавить и в GetPreloadModules() !!!
 
+// Forwards
+bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE);
+void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep);
+
 
 //typedef LONG (WINAPI* RegCloseKey_t)(HKEY hKey);
 RegCloseKey_t RegCloseKey_f = NULL;
@@ -2982,7 +2986,7 @@ void CheckProcessModules(HMODULE hFromModule);
 //   что вызовет некорректные смещения функций,
 // а в Win64 смещения вообще должны быть 64битными, а структура модуля хранит только 32битные смещения
 
-bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE)
+bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot /*= FALSE*/)
 {
 	bool lbAllSysLoaded = true;
 	for (size_t s = 0; s < countof(ghSysDll); s++)
@@ -3513,36 +3517,39 @@ FARPROC WINAPI OnGetProcAddressExp(HMODULE hModule, LPCSTR lpProcName)
 }
 
 /* ************** */
-BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMODULE hModule)
+void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
 {
-	typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
-	BOOL lbRc = FALSE;
 	BOOL lbResource = LDR_IS_RESOURCE(hModule);
 	// lbResource получается TRUE например при вызовах из version.dll
-	//BOOL lbProcess = !lbResource;
 	wchar_t szModule[MAX_PATH*2]; szModule[0] = 0;
 
-	if (gbLogLibraries && !gbDllStopCalled)
+	if ((iStep == 0) && gbLogLibraries && !gbDllStopCalled)
 	{
 		CShellProc* sp = new CShellProc();
 		if (sp->LoadSrvMapping())
 		{
 			CESERVER_REQ* pIn = NULL;
-			szModule[0] = 0;
-			wchar_t szHandle[32] = {};
-			#ifdef _WIN64
-				msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X%08X>",
-					(DWORD)((((u64)hModule) & 0xFFFFFFFF00000000) >> 32), //-V112
-					(DWORD)(((u64)hModule) & 0xFFFFFFFF)); //-V112
-			#else
-				msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X>", (DWORD)hModule);
-			#endif
-			
-			// GetModuleFileName в некоторых случаях зависает O_O. Поэтому, запоминаем в локальном массиве имя загруженного ранее модуля
-			if (FindModuleFileName(hModule, szModule, countof(szModule)-lstrlen(szModule)-1))
-				wcscat_c(szModule, szHandle);
+			if (pszModule && *pszModule)
+			{
+				lstrcpyn(szModule, pszModule, countof(szModule));
+			}
 			else
-				wcscpy_c(szModule, szHandle+2);
+			{
+				wchar_t szHandle[32] = {};
+				#ifdef _WIN64
+					msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X%08X>",
+						(DWORD)((((u64)hModule) & 0xFFFFFFFF00000000) >> 32), //-V112
+						(DWORD)(((u64)hModule) & 0xFFFFFFFF)); //-V112
+				#else
+					msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X>", (DWORD)hModule);
+				#endif
+
+				// GetModuleFileName в некоторых случаях зависает O_O. Поэтому, запоминаем в локальном массиве имя загруженного ранее модуля
+				if (FindModuleFileName(hModule, szModule, countof(szModule)-lstrlen(szModule)-1))
+					wcscat_c(szModule, szHandle);
+				else
+					wcscpy_c(szModule, szHandle+2);
+			}
 
 			pIn = sp->NewCmdOnCreate(eFreeLibrary, NULL, szModule, NULL, NULL, NULL, NULL, NULL,
 				#ifdef _WIN64
@@ -3562,33 +3569,16 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMOD
 		delete sp;
 	}
 
-#ifdef _DEBUG
-	BOOL lbModulePre = IsModuleValid(hModule); // GetModuleFileName(hModule, szModule, countof(szModule));
-#endif
 
-	DWORD dwFreeErrCode = 0;
-
-	// for unlocking CS
-	{
-		//-- Locking is inadmissible. One FreeLibrary may cause another FreeLibrary in _different_ thread. 
-		//MSectionLock CS;
-		//if (gpHookCS->isLockedExclusive() || LockHooks(hModule, L"free", &CS))
-		{
-			lbRc = ((OnFreeLibrary_t)lpfn)(hModule);
-			dwFreeErrCode = GetLastError();
-		}
-		//else
-		//{
-		//	lbRc = FALSE;
-		//	dwFreeErrCode = E_UNEXPECTED;
-		//}
-	}
 
 	// Далее только если !LDR_IS_RESOURCE
-	if (lbRc && !lbResource && !gbDllStopCalled)
+	if ((iStep > 0) && !lbResource && !gbDllStopCalled)
 	{
 		// Попробуем определить, действительно ли модуль выгружен, или только счетчик уменьшился
-		BOOL lbModulePost = IsModuleValid(hModule); // GetModuleFileName(hModule, szModule, countof(szModule));
+		// iStep == 2 comes from LdrDllNotification(Unload)
+		// Похоже, что если библиотека была реально выгружена, то FreeLibrary выставляет SetLastError(ERROR_GEN_FAILURE)
+		// Актуально только для Win2k/XP так что не будем на это полагаться
+		BOOL lbModulePost = (iStep == 2) ? FALSE : IsModuleValid(hModule); // GetModuleFileName(hModule, szModule, countof(szModule));
 		#ifdef _DEBUG
 		DWORD dwErr = lbModulePost ? 0 : GetLastError();
 		#endif
@@ -3630,6 +3620,28 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMOD
 			FreeLoadedModule(hModule);
 		}
 	}
+}
+
+BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMODULE hModule)
+{
+	typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
+	BOOL lbRc = FALSE;
+	BOOL lbResource = LDR_IS_RESOURCE(hModule);
+	// lbResource получается TRUE например при вызовах из version.dll
+
+	UnprepareModule(hModule, NULL, 0);
+
+#ifdef _DEBUG
+	BOOL lbModulePre = IsModuleValid(hModule); // GetModuleFileName(hModule, szModule, countof(szModule));
+#endif
+
+	// Section locking is inadmissible. One FreeLibrary may cause another FreeLibrary in _different_ thread.
+	lbRc = ((OnFreeLibrary_t)lpfn)(hModule);
+	DWORD dwFreeErrCode = GetLastError();
+
+	// Далее только если !LDR_IS_RESOURCE
+	if (lbRc && !lbResource)
+		UnprepareModule(hModule, NULL, 1);
 
 	SetLastError(dwFreeErrCode);
 	return lbRc;
