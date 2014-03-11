@@ -172,7 +172,7 @@ void CheckLoadedModule(LPCWSTR asModule)
 			if ((*Checks[m].pModulePtr) != NULL)
 			{
 				_ASSERTEX(Checks[m].Funcs[countof(Checks[m].Funcs)-1].sFuncName == NULL);
-				
+
 				for (size_t f = 0; f < countof(Checks[m].Funcs) && Checks[m].Funcs[f].sFuncName; f++)
 				{
 					*Checks[m].Funcs[f].pFuncPtr = (void*)GetProcAddress(*Checks[m].pModulePtr, Checks[m].Funcs[f].sFuncName);
@@ -186,7 +186,7 @@ void FreeLoadedModule(HMODULE hModule)
 {
 	if (!hModule)
 		return;
-	
+
 	PreloadModules* Checks = NULL;
 	size_t nChecks = GetPreloadModules(&Checks);
 
@@ -194,16 +194,16 @@ void FreeLoadedModule(HMODULE hModule)
 	{
 		if ((*Checks[m].pModulePtr) != hModule)
 			continue;
-		
+
 		if (GetModuleHandle(Checks[m].sModule) == NULL)
 		{
 			// По идее, такого быть не должно, т.к. счетчик мы накрутили, библиотека не должна была выгрузиться
 			_ASSERTEX(*Checks[m].pModulePtr == NULL);
-			
+
 			*Checks[m].pModulePtr = NULL;
-			
+
 			_ASSERTEX(Checks[m].Funcs[countof(Checks[m].Funcs)-1].sFuncName == NULL);
-			
+
 			for (size_t f = 0; f < countof(Checks[m].Funcs) && Checks[m].Funcs[f].sFuncName; f++)
 			{
 				*Checks[m].Funcs[f].pFuncPtr = NULL;
@@ -328,7 +328,7 @@ HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchN
 		{
 			_ASSERTE(p->Hooked == 1 || p->Hooked == 2);
 			//lbHooked = true;
-			
+
 			// Если хотят узнать имя модуля (по hModule)
 			if (pszName && (cchNameMax > 0))
 				lstrcpyn(pszName, p->sModuleName, (int)cchNameMax);
@@ -359,7 +359,7 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 	if (!p)
 	{
 		EnterCriticalSection(gpHookedModulesSection);
-		
+
 		p = gpHookedModules;
 		while (p)
 		{
@@ -377,7 +377,7 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 			}
 			p = p->pNext;
 		}
-		
+
 		p = (HkModuleInfo*)calloc(sizeof(HkModuleInfo),1);
 		if (!p)
 		{
@@ -396,7 +396,7 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 			gpHookedModulesLast->pNext = p;
 			gpHookedModulesLast = p;
 		}
-		
+
 	done:
 		LeaveCriticalSection(gpHookedModulesSection);
 	}
@@ -449,18 +449,6 @@ HMODULE WINAPI OnLoadLibraryW(const WCHAR* lpFileName);
 HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
 HMODULE WINAPI OnLoadLibraryExW(const WCHAR* lpFileName, HANDLE hFile, DWORD dwFlags);
 BOOL WINAPI OnFreeLibrary(HMODULE hModule);
-
-#ifndef HOOKEXPADDRESSONLY
-HMODULE WINAPI OnLoadLibraryAExp(const char* lpFileName);
-HMODULE WINAPI OnLoadLibraryWExp(const WCHAR* lpFileName);
-HMODULE WINAPI OnLoadLibraryExAExp(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
-HMODULE WINAPI OnLoadLibraryExWExp(const WCHAR* lpFileName, HANDLE hFile, DWORD dwFlags);
-BOOL WINAPI OnFreeLibraryExp(HMODULE hModule);
-#endif
-
-//#ifdef HOOK_ANSI_SEQUENCES
-//BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-//#endif
 
 
 #ifdef HOOK_ERROR_PROC
@@ -521,23 +509,6 @@ const char *szSetLastError = "SetLastError";
 enum HookLibFuncs
 {
 	hlfGetProcAddress = 0,
-
-	#ifndef HOOKEXPADDRESSONLY
-	// попробуем обойтись только GetProcAddress (для UPX)
-	hlfLoadLibraryA,
-	hlfLoadLibraryW,
-	hlfLoadLibraryExA,
-	hlfLoadLibraryExW,
-	hlfFreeLibrary,
-	//#ifdef HOOK_ANSI_SEQUENCES
-	hlfWriteConsoleW,
-	//#endif
-	#endif
-
-	//#ifdef HOOK_ERROR_PROC
-	//eGetLastError,
-	//eSetLastError,
-	//#endif
 	hlfKernelLast,
 };
 
@@ -548,11 +519,6 @@ struct HookItemWork {
 	const char* Name;
 } gKernelFuncs[hlfKernelLast] = {};/* = {
 	{NULL, OnGetProcAddressExp, szGetProcAddress},
-	{NULL, OnLoadLibraryAExp, szLoadLibraryA},
-	{NULL, OnLoadLibraryWExp, szLoadLibraryW},
-	{NULL, OnLoadLibraryExAExp, szLoadLibraryExA},
-	{NULL, OnLoadLibraryExWExp, szLoadLibraryExW},
-	{NULL, OnFreeLibraryExp, szFreeLibrary},
 };*/
 
 void InitKernelFuncs()
@@ -566,23 +532,9 @@ void InitKernelFuncs()
 
 	WARNING("Захукать бы LdrGetProcAddressEx в ntdll.dll, но там нужно не просто экспорты менять, а ставить jmp на входе в функцию");
 	SETFUNC(ghKernel32/*(ghKernelBase?ghKernelBase:ghKernel32)*/, hlfGetProcAddress, OnGetProcAddressExp, szGetProcAddress);
-	#ifndef HOOKEXPADDRESSONLY
-	SETFUNC(ghKernel32, hlfLoadLibraryA, OnLoadLibraryAExp, szLoadLibraryA);
-	SETFUNC(ghKernel32, hlfLoadLibraryW, OnLoadLibraryWExp, szLoadLibraryW);
-	SETFUNC(ghKernel32, hlfLoadLibraryExA, OnLoadLibraryExAExp, szLoadLibraryExA);
-	SETFUNC(ghKernel32, hlfLoadLibraryExW, OnLoadLibraryExWExp, szLoadLibraryExW);
-	SETFUNC(ghKernel32, hlfFreeLibrary, OnFreeLibraryExp, szFreeLibrary);
-	//#ifdef HOOK_ANSI_SEQUENCES
-	SETFUNC(ghKernel32, hlfWriteConsoleW, OnWriteConsoleW, szWriteConsoleW);
-	//#endif
-	#endif
-	//#ifdef HOOK_ERROR_PROC
-	//SETFUNC(eGetLastError,
-	//SETFUNC(eSetLastError,
-	//#endif
 
-	// Индексы первых 6-и функций должны совпадать, т.к. там инфа по callback-ам
-#ifdef _DEBUG
+	// Индексы первых функций должны совпадать, т.к. там инфа по callback-ам
+	#ifdef _DEBUG
 	if (!gpHooks)
 	{
 		_ASSERTEX(gpHooks!=NULL);
@@ -594,7 +546,7 @@ void InitKernelFuncs()
 			_ASSERTEX(gpHooks[f].Name==gKernelFuncs[f].Name);
 		}
 	}
-#endif
+	#endif
 
 	#undef SETFUNC
 }
@@ -706,34 +658,14 @@ void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL 
 
 FARPROC WINAPI GetLoadLibraryW()
 {
-	#ifndef HOOKEXPADDRESSONLY
-	if (gKernelFuncs[hlfLoadLibraryW].OldAddress)
-	{
-		return (FARPROC)gKernelFuncs[hlfLoadLibraryW].OldAddress;
-	}
-	_ASSERTEX(gKernelFuncs[hlfLoadLibraryW].OldAddress!=NULL);
-	#endif
-
 	HookItem* ph;
 	return (FARPROC)GetOriginalAddress((void*)(FARPROC)OnLoadLibraryW, (void*)(FARPROC)LoadLibraryW, FALSE, &ph);
 }
 
 FARPROC WINAPI GetWriteConsoleW()
 {
-	#ifndef HOOKEXPADDRESSONLY
-	if (gKernelFuncs[hlfWriteConsoleW].OldAddress)
-	{
-		return (FARPROC)gKernelFuncs[hlfWriteConsoleW].OldAddress;
-	}
-	_ASSERTEX(gKernelFuncs[hlfWriteConsoleW].OldAddress!=NULL);
-	#endif
-
-	//#ifdef HOOK_ANSI_SEQUENCES
 	HookItem* ph;
 	return (FARPROC)GetOriginalAddress((void*)(FARPROC)CEAnsi::OnWriteConsoleW, (void*)(FARPROC)WriteConsoleW, FALSE, &ph);
-	//#else
-	//return (FARPROC)WriteConsoleW;
-	//#endif
 }
 
 CInFuncCall::CInFuncCall()
@@ -823,11 +755,11 @@ DWORD CalculateNameCRC32(const char *apszName)
 
 	// т.к. нас интересует только сравнение - последний XOR необязателен!
 	//nCRC32 = ( nCRC32 ^ 0xFFFFFFFF );
-	
+
 #else
 	// Этот "облегченный" алгоритм был расчитан на wchar_t
 	DWORD nDwordCount = (anNameLen+1) >> 1;
-	
+
 	DWORD nCRC32 = 0x7A3B91F4;
 	for (DWORD i = 0; i < nDwordCount; i++)
 		nCRC32 ^= ((LPDWORD)apszName)[i];
@@ -869,7 +801,7 @@ bool __stdcall InitHooks(HookItem* apHooks)
 		gpHooks = (HookItem*)calloc(sizeof(HookItem),MAX_HOOKED_PROCS);
 		if (!gpHooks)
 			return false;
-			
+
 		if (!InitHooksLibrary())
 			return false;
 	}
@@ -1016,7 +948,7 @@ bool __stdcall InitHooks(HookItem* apHooks)
 		}
 		*/
 	}
-	
+
 	return true;
 }
 
@@ -1530,7 +1462,7 @@ void __stdcall InitHooksSort()
 void ShutdownHooks()
 {
 	UnsetAllHooks();
-	
+
 	//// Завершить работу с реестром
 	//DoneHooksReg();
 
@@ -1543,7 +1475,7 @@ void ShutdownHooks()
 			*ghSysDll[s] = NULL;
 		}
 	}
-	
+
 	if (gpHookCS)
 	{
 		MSection *p = gpHookCS;
@@ -1746,7 +1678,7 @@ bool SetExportsSEH(HMODULE Module)
 	DWORD ExportDir = 0;
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
 	IMAGE_NT_HEADERS* nt_header = 0;
-	
+
 	if (dos_header->e_magic == IMAGE_DOS_SIGNATURE /*'ZM'*/)
 	{
 		nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
@@ -1755,7 +1687,7 @@ bool SetExportsSEH(HMODULE Module)
 			ExportDir = (DWORD)(nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
 		}
 	}
-	
+
 	if (ExportDir != 0)
 	{
 		IMAGE_SECTION_HEADER* section = (IMAGE_SECTION_HEADER*)IMAGE_FIRST_SECTION(nt_header);
@@ -1807,7 +1739,7 @@ bool SetExportsSEH(HMODULE Module)
 						{
 							gKernelFuncs[j].OldAddress = (FARPROC)ptrOldAddr;
 							INT_PTR NewShift = ((BYTE*)gKernelFuncs[j].NewAddress) - ((BYTE*)Module);
-							
+
 							#ifdef _WIN64
 							if (NewShift <= 0 || NewShift > (DWORD)-1)
 							{
@@ -1815,7 +1747,7 @@ bool SetExportsSEH(HMODULE Module)
 								break;
 							}
 							#endif
-							
+
 							Shift[nFnOrdn] = (DWORD)NewShift;
 							lbRc = true;
 
@@ -1854,7 +1786,7 @@ bool SetExports(HMODULE Module)
 		_ASSERTEX(IsModuleValid(Module));
 		return false;
 	}
-	
+
 	//InitKernelFuncs(); -- уже должно быть выполнено!
 	_ASSERTEX(gKernelFuncs[0].NewAddress!=NULL);
 
@@ -1862,7 +1794,7 @@ bool SetExports(HMODULE Module)
 	//_ASSERTEX(gpHooks[0].Name == szGetProcAddress && gpHooks[5].Name == szFreeLibrary);
 	//_ASSERTEX(gpHooks[1].Name == szLoadLibraryA && gpHooks[2].Name == szLoadLibraryW);
 	//_ASSERTEX(gpHooks[3].Name == szLoadLibraryExA && gpHooks[4].Name == szLoadLibraryExW);
-	
+
 	#ifdef _WIN64
 	if (((DWORD_PTR)Module) >= ((DWORD_PTR)ghOurModule))
 	{
@@ -1889,17 +1821,17 @@ bool SetExports(HMODULE Module)
 			GetModuleFileName(ghOurModule, pszMsg+lstrlen(pszMsg), MAX_PATH);
 			lstrcat(pszMsg, L"\n");
 			GetModuleFileName(Module, pszMsg+lstrlen(pszMsg), MAX_PATH);
-			
+
 			GuiMessageBox(NULL, pszMsg, szTitle, MB_OK|MB_ICONSTOP|MB_SYSTEMMODAL);
-			
+
 			free(pszMsg);
 		}
 		return false;
 	}
 	#endif
-	
+
 	bool lbRc = false;
-	
+
 	SAFETRY
 	{
 		// В отдельной функции, а то компилятор глюкавит (под отладчиком во всяком случае куда-то не туда прыгает)
@@ -1907,7 +1839,7 @@ bool SetExports(HMODULE Module)
 	} SAFECATCH {
 		lbRc = false;
 	}
-	
+
 	return lbRc;
 }
 
@@ -1928,15 +1860,15 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 
 	if (!Module)
 		Module = hExecutable;
-		
+
 	// Если он уже хукнут - не проверять больше ничего
 	HkModuleInfo* p = IsHookedModule(Module);
 	if (p)
 		return true;
-	
+
 	if (!IsModuleValid(Module))
 		return false;
-		
+
 	bool bExecutable = (Module == hExecutable);
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
 	IMAGE_NT_HEADERS* nt_header = NULL;
@@ -2014,7 +1946,7 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 	// в отдельной функции, т.к. __try
 	bHooked = SetHookChange(asModule, Module, abForceHooks, bFnNeedHook, p);
 	HLOGEND();
-	
+
 	#ifdef _DEBUG
 	if (bHooked)
 	{
@@ -2064,7 +1996,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 	char mod_name[MAX_PATH];
 
 	//_ASSERTEX(lstrcmpi(asModule, L"dsound.dll"));
-	
+
 	SAFETRY
 	{
 		HLOG0("SetHookPrep.Begin",ImportCount);
@@ -2165,10 +2097,10 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 						break;
 					}
 					#endif
-					
+
 					if (!thunk->u1.Function)
 						break;
-					
+
 					#ifndef USE_SEH
 					HLOG("SetHookPrep.lbBadThunkO",f);
 					BOOL lbBadThunkO = IsBadReadPtr(thunkO, sizeof(*thunkO));
@@ -2182,7 +2114,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 					const char* pszFuncName = NULL;
 					//ULONGLONG ordinalO = -1;
 
-					
+
 					// Получили адрес функции, и (на втором шаге) имя функции
 					// Теперь нужно подобрать (если есть) адрес перехвата
 					HookItem* ph = gpHooks;
@@ -2218,20 +2150,20 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 						for (size_t j = 0; ph->Name; ++j, ++ph)
 						{
 							_ASSERTEX(j<gnHookedFuncs && gnHookedFuncs<=MAX_HOOKED_PROCS);
-						
+
 							// Если не удалось определить оригинальный адрес процедуры (kernel32/WriteConsoleOutputW, и т.п.)
 							if (ph->OldAddress == NULL)
 							{
 								continue;
 							}
-							
+
 							// Если адрес импорта в модуле уже совпадает с адресом одной из наших функций
 							if (ph->NewAddress == (void*)thunk->u1.Function)
 							{
 								res = true; // это уже захучено
 								break;
 							}
-							
+
 							#ifdef _DEBUG
 							//const void* ptrNewAddress = ph->NewAddress;
 							//const void* ptrOldAddress = (void*)thunk->u1.Function;
@@ -2264,7 +2196,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 							&& !IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal))
 						{
 							pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
-							
+
 							#ifdef USE_SEH
 								pszFuncName = (LPCSTR)pOrdinalNameO->Name;
 							#else
@@ -2314,7 +2246,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 
 						HLOGEND1();
 					}
-						
+
 
 					if (jj >= 0)
 					{
@@ -2348,7 +2280,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 
 
 						_ASSERTE(sizeof(thunk->u1.Function)==sizeof(DWORD_PTR));
-						
+
 						if (thunk->u1.Function == (DWORD_PTR)ph->NewAddress)
 						{
 							// оказалось захучено в другой нити? такого быть не должно, блокируется секцией
@@ -2376,7 +2308,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 							#ifdef _DEBUG
 							lstrcpynA(p->Addresses[jj].sName, ph->Name, countof(p->Addresses[jj].sName));
 							#endif
-							
+
 							_ASSERTEX(p->nAdrUsed < countof(p->Addresses));
 							p->nAdrUsed++; //информационно
 						}
@@ -2402,7 +2334,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 		HLOGEND();
 	} SAFECATCH {
 	}
-	
+
 	return res;
 }
 
@@ -2412,7 +2344,7 @@ bool SetHookChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool (&b
 	size_t j = 0;
 	DWORD dwErr = (DWORD)-1;
 	_ASSERTEX(j<gnHookedFuncs && gnHookedFuncs<=MAX_HOOKED_PROCS);
-	
+
 	SAFETRY
 	{
 		while (j < gnHookedFuncs)
@@ -2437,23 +2369,23 @@ bool SetHookChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool (&b
 					else
 					{
 						bHooked = true;
-						
+
 						*p->Addresses[j].ppAdr = p->Addresses[j].pOur;
 						p->Addresses[j].bHooked = TRUE;
-						
+
 						VirtualProtect(p->Addresses[j].ppAdr, sizeof(*p->Addresses[j].ppAdr), old_protect, &old_protect);
 					}
 
 				}
 			}
-			
+
 			j++;
 		}
 	} SAFECATCH {
 		// Ошибка назначения
 		p->Addresses[j].pOur = 0;
 	}
-	
+
 	return bHooked;
 }
 
@@ -2659,7 +2591,7 @@ bool UnsetHookInt(HMODULE Module)
 		if (dos_header->e_magic == IMAGE_DOS_SIGNATURE /*'ZM'*/)
 		{
 			IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
-		
+
 			if (nt_header->Signature != 0x004550)
 				goto wrap;
 			else
@@ -2674,14 +2606,14 @@ bool UnsetHookInt(HMODULE Module)
 		}
 		else
 			goto wrap;
-		
+
 		// if wrong module or no import table
 		if (Module == INVALID_HANDLE_VALUE || !Import)
 			goto wrap;
-		
+
 		size_t i, s, nCount;
 		nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
-		
+
 		//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
 		for (s = 0; s <= 1; s++)
 		{
@@ -2689,38 +2621,38 @@ bool UnsetHookInt(HMODULE Module)
 			{
 				if (Import[i].Name == 0)
 					break;
-			
+
 				#ifdef _DEBUG
 				char* mod_name = (char*)Module + Import[i].Name;
 				#endif
 				DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
 				DWORD_PTR rvaIAT = Import[i].FirstThunk; //-V101
-			
+
 				if (rvaINT == 0)      // No Characteristics field?
 				{
 					// Yes! Gotta have a non-zero FirstThunk field then.
 					rvaINT = rvaIAT;
-			
+
 					if (rvaINT == 0)       // No FirstThunk field?  Ooops!!!
 					{
 						_ASSERTE(rvaINT!=0);
 						break;
 					}
 				}
-			
+
 				//PIMAGE_IMPORT_BY_NAME pOrdinalName = NULL, pOrdinalNameO = NULL;
 				PIMAGE_IMPORT_BY_NAME pOrdinalNameO = NULL;
 				//IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)((char*)Module + rvaINT);
 				//IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + rvaIAT);
 				IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaIAT, nt_header, (PBYTE)Module);
 				IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaINT, nt_header, (PBYTE)Module);
-			
+
 				if (!thunk ||  !thunkO)
 				{
 					_ASSERTE(thunk && thunkO);
 					continue;
 				}
-			
+
 				int f = 0;
 				for (f = 0 ;; thunk++, thunkO++, f++)
 				{
@@ -2750,7 +2682,7 @@ bool UnsetHookInt(HMODULE Module)
 						break;
 					}
 					#endif
-			
+
 					const char* pszFuncName = NULL;
 
 					// Имя функции проверяем на втором шаге
@@ -2771,26 +2703,26 @@ bool UnsetHookInt(HMODULE Module)
 								_ASSERTE(lbValidPtr);
 							}
 							#endif
-				
+
 							if (lbValidPtr)
 							{
 								//WARNING!!! Множественные вызовы IsBad???Ptr могут глючить и тормозить
 								lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
 								_ASSERTE(lbValidPtr);
-				
+
 								if (lbValidPtr)
 									pszFuncName = (LPCSTR)pOrdinalNameO->Name;
 							}
 						#endif
 					}
-			
+
 					int j;
-			
+
 					for (j = 0; gpHooks[j].Name; j++)
 					{
 						if (!gpHooks[j].OldAddress)
 							continue; // Эту функцию не обрабатывали (хотя должны были?)
-			
+
 						// Нужно найти функцию (thunk) в gpHooks через NewAddress или имя
 						if ((void*)thunk->u1.Function != gpHooks[j].NewAddress)
 						{
@@ -2803,11 +2735,11 @@ bool UnsetHookInt(HMODULE Module)
 								if (strcmp(pszFuncName, gpHooks[j].Name)!=0)
 									continue;
 							}
-			
+
 							// OldAddress уже может отличаться от оригинального экспорта библиотеки
 							// Это если функцию захукали уже после нас
 						}
-			
+
 						// Если мы дошли сюда - значит функция найдена (или по адресу или по имени)
 						// BugBug: в принципе, эту функцию мог захукать и другой модуль (уже после нас),
 						// но лучше вернуть оригинальную, чем потом свалиться
@@ -2853,7 +2785,7 @@ bool UnsetHook(HMODULE Module)
 	HkModuleInfo* p = IsHookedModule(Module);
 	bool bUnhooked = false;
 	DWORD dwErr = (DWORD)-1;
-	
+
 	if (!p)
 	{
 		// Хотя модуль и не обрабатывался нами, но может получиться, что у него переопределенные импорты
@@ -2868,7 +2800,7 @@ bool UnsetHook(HMODULE Module)
 			{
 				if (p->Addresses[i].pOur == 0)
 					continue; // Этот адрес поменять не смогли
-			
+
 				#ifdef _DEBUG
 				//Для проверки, а то при UnsetHook("cscapi.dll") почему-то возникла ошибка ERROR_INVALID_PARAMETER в VirtualProtect
 				CheckCallbackPtr(p->hModule, 1, (FARPROC*)&p->Addresses[i].ppAdr, TRUE);
@@ -2913,7 +2845,7 @@ bool UnsetHook(HMODULE Module)
 		free(szDbg);
 	}
 	#endif
-	
+
 	return bUnhooked;
 }
 
@@ -3186,7 +3118,7 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 				if (!pszNameW) pszNameW = asModuleW; else pszNameW++;
 				lstrcpyn(szModule, pszNameW, countof(szModule));
 			}
-			
+
 			lbModuleOk = true;
 			// Подмена импортируемых функций в module
 			SetHook(szModule, module, FALSE);
@@ -3338,14 +3270,6 @@ HMODULE WINAPI OnLoadLibraryA(const char* lpFileName)
 	return OnLoadLibraryAWork((FARPROC)F(LoadLibraryA), ph, bMainThread, lpFileName);
 }
 
-#ifndef HOOKEXPADDRESSONLY
-HMODULE WINAPI OnLoadLibraryAExp(const char* lpFileName)
-{
-	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
-	return OnLoadLibraryAWork(gKernelFuncs[hlfLoadLibraryA].OldAddress, gpHooks+hlfLoadLibraryA, bMainThread, lpFileName);
-}
-#endif
-
 /* ************** */
 HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const wchar_t* lpFileName)
 {
@@ -3376,7 +3300,7 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 		}
 		SafeFree(Info);
 	}
-	
+
 	if (!module)
 		module = ((OnLoadLibraryW_t)lpfn)(lpFileName);
 	DWORD dwLoadErrCode = GetLastError();
@@ -3407,14 +3331,6 @@ HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
 	ORIGINAL(LoadLibraryW);
 	return OnLoadLibraryWWork((FARPROC)F(LoadLibraryW), ph, bMainThread, lpFileName);
 }
-
-#ifndef HOOKEXPADDRESSONLY
-HMODULE WINAPI OnLoadLibraryWExp(const wchar_t* lpFileName)
-{
-	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
-	return OnLoadLibraryWWork(gKernelFuncs[hlfLoadLibraryW].OldAddress, gpHooks+hlfLoadLibraryW, bMainThread, lpFileName);
-}
-#endif
 
 /* ************** */
 HMODULE WINAPI OnLoadLibraryExAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const char* lpFileName, HANDLE hFile, DWORD dwFlags)
@@ -3447,14 +3363,6 @@ HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFl
 	return OnLoadLibraryExAWork((FARPROC)F(LoadLibraryExA), ph, bMainThread, lpFileName, hFile, dwFlags);
 }
 
-#ifndef HOOKEXPADDRESSONLY
-HMODULE WINAPI OnLoadLibraryExAExp(const char* lpFileName, HANDLE hFile, DWORD dwFlags)
-{
-	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
-	return OnLoadLibraryExAWork(gKernelFuncs[hlfLoadLibraryExA].OldAddress, gpHooks+hlfLoadLibraryExA, bMainThread, lpFileName, hFile, dwFlags);
-}
-#endif
-
 /* ************** */
 HMODULE WINAPI OnLoadLibraryExWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags)
 {
@@ -3485,14 +3393,6 @@ HMODULE WINAPI OnLoadLibraryExW(const wchar_t* lpFileName, HANDLE hFile, DWORD d
 	ORIGINAL(LoadLibraryExW);
 	return OnLoadLibraryExWWork((FARPROC)F(LoadLibraryExW), ph, bMainThread, lpFileName, hFile, dwFlags);
 }
-
-#ifndef HOOKEXPADDRESSONLY
-HMODULE WINAPI OnLoadLibraryExWExp(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags)
-{
-	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
-	return OnLoadLibraryExWWork(gKernelFuncs[hlfLoadLibraryExW].OldAddress, gpHooks+hlfLoadLibraryExW, bMainThread, lpFileName, hFile, dwFlags);
-}
-#endif
 
 /* ************** */
 FARPROC WINAPI OnGetProcAddressWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMODULE hModule, LPCSTR lpProcName)
@@ -3717,7 +3617,7 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMOD
 					}
 				}
 			}
-			
+
 			TODO("Тоже на цикл переделать, как в CheckLoadedModule");
 
 			if (gfOnLibraryUnLoaded)
@@ -3746,13 +3646,6 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 	ORIGINALFAST(FreeLibrary);
 	return OnFreeLibraryWork((FARPROC)F(FreeLibrary), ph, FALSE, hModule);
 }
-#ifndef HOOKEXPADDRESSONLY
-BOOL WINAPI OnFreeLibraryExp(HMODULE hModule)
-{
-	typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
-	return OnFreeLibraryWork(gKernelFuncs[hlfFreeLibrary].OldAddress, gpHooks+hlfFreeLibrary, FALSE, hModule);
-}
-#endif
 
 #ifdef HOOK_ERROR_PROC
 DWORD WINAPI OnGetLastError()
