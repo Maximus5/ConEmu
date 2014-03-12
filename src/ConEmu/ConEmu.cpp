@@ -7769,6 +7769,10 @@ void CConEmuMain::ExecuteProcessFinished(bool bOpt)
 
 void CConEmuMain::SetWindowIcon(LPCWSTR asNewIcon)
 {
+	// Don't change TITLE BAR icon after initialization finished
+	if (mn_StartupFinished == ss_Started)
+		return;
+
 	if (!asNewIcon || !*asNewIcon)
 		return;
 
