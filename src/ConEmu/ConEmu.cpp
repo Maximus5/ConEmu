@@ -10917,7 +10917,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	return 0;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/)
+wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/, wchar_t** ppszIcon /*= NULL*/)
 {
 	wchar_t* pszDataW = NULL;
 
@@ -10929,7 +10929,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDi
 	else if ((*asSource == TaskBracketLeft) || (lstrcmp(asSource, AutoStartTaskName) == 0))
 	{
 		// Имя задачи
-		pszDataW = LoadConsoleBatch_Task(asSource, ppszStartupDir);
+		pszDataW = LoadConsoleBatch_Task(asSource, ppszStartupDir, ppszIcon);
 	}
 	else if (*asSource == DropLnkPrefix)
 	{
@@ -11163,7 +11163,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 	return pszDataW;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/)
+wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/, wchar_t** ppszIcon /*= NULL*/)
 {
 	wchar_t* pszDataW = NULL;
 
@@ -11441,9 +11441,9 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			}
 			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && !gpConEmu->mb_StartDetached)
 			{
-				wchar_t* pszStartupDir = NULL;
+				RConStartArgs args;
 				// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
-				wchar_t* pszDataW = LoadConsoleBatch(pszCmd, &pszStartupDir);
+				wchar_t* pszDataW = LoadConsoleBatch(pszCmd, &args.pszStartupDir, &args.pszIconFile);
 				if (!pszDataW)
 				{
 					Destroy();
@@ -11451,14 +11451,13 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				}
 
 				// GO
-				if (!CreateConGroup(pszDataW, FALSE, pszStartupDir))
+				if (!CreateConGroup(pszDataW, FALSE, NULL/*ignored when 'args' specified*/, &args))
 				{
 					Destroy();
 					return;
 				}
 
 				SafeFree(pszDataW);
-				SafeFree(pszStartupDir);
 
 				//// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
 				//// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
