@@ -233,13 +233,39 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 	{
 		lbQMode = true;
 		psCmdLine++;
+		// ... /d "\"C:\ConEmu\ConEmuPortable.exe\" /Dir ...
+		bool bQuoteEscaped = (psCmdLine[0] == L'\\' && psCmdLine[1] == L'"');
 		pch = wcschr(psCmdLine, L'"');
 		if (pch && (pch > psCmdLine))
 		{
 			// To be correctly parsed something like this:
-			// reg.exe add "HKCU\command" /ve /t REG_EXPAND_SZ /d "\"C:\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f
-			while (pch && (*(pch-1) == L'\\'))
-				pch = wcschr(pch+1, L'"');
+			// reg.exe add "HKCU\MyCo" /ve /t REG_EXPAND_SZ /d "\"C:\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f
+			// But must not fails with ‘simple’ command like (no escapes in "C:\"):
+			// /dir "C:\" /icon "cmd.exe" /single
+
+			//while (pch && (*(pch-1) == L'\\'))
+			//	pch = wcschr(pch+1, L'"');
+			pch = wcspbrk(psCmdLine, L"\\\"");
+			while (pch)
+			{
+				// Escaped quotation?
+				if ((*pch == L'\\') && (*(pch+1) == L'"'))
+				{
+					// It's allowed when:
+					// a) at the beginning of the line (handled above, bQuoteEscaped);
+					// b) after space;
+					// c) when already was forced by bQuoteEscaped
+					if ((((pch - 1) >= psCmdLine) && (*(pch-1) == L' ')) || bQuoteEscaped)
+					{
+						bQuoteEscaped = true;
+						pch++; // Point to "
+					}
+				}
+				else if (*pch == L'"')
+					break;
+				// Next entry AFTER pch
+				pch = wcspbrk(pch+1, L"\\\"");
+			}
 		}
 
 		if (!pch) return CERR_CMDLINE;
