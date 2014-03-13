@@ -29,6 +29,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DROP_SETCP_ON_WIN2K3R2
 //#define SKIPHOOKLOG
 
+//#define USE_ONLY_INT_CHECK_PTR
+#undef USE_ONLY_INT_CHECK_PTR
+
 // Иначе не опередяется GetConsoleAliases (хотя он должен быть доступен в Win2k)
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
@@ -1912,7 +1915,7 @@ bool SetExports(HMODULE Module)
 	return lbRc;
 }
 
-bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExecutable, IMAGE_IMPORT_DESCRIPTOR* Import, size_t ImportCount, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p);
+bool SetHookPrep(LPCWSTR asModule, HMODULE Module, IMAGE_NT_HEADERS* nt_header, BOOL abForceHooks, bool bExecutable, IMAGE_IMPORT_DESCRIPTOR* Import, size_t ImportCount, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p);
 bool SetHookChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p);
 // Подменить Импортируемые функции в модуле (Module)
 //	если (abForceHooks == FALSE) то хуки не ставятся, если
@@ -2008,7 +2011,7 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 	INT_PTR nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
 	bool bFnNeedHook[MAX_HOOKED_PROCS] = {};
 	// в отдельной функции, т.к. __try
-	res = SetHookPrep(asModule, Module, abForceHooks, bExecutable, Import, nCount, bFnNeedHook, p);
+	res = SetHookPrep(asModule, Module, nt_header, abForceHooks, bExecutable, Import, nCount, bFnNeedHook, p);
 	HLOGEND();
 
 	HLOG("SetHook.Change",(DWORD)Module);
@@ -2049,7 +2052,59 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 	return res;
 }
 
-bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExecutable, IMAGE_IMPORT_DESCRIPTOR* Import, size_t ImportCount, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p)
+bool isBadModulePtr(const void *lp, UINT_PTR ucb, HMODULE Module, const IMAGE_NT_HEADERS* nt_header)
+{
+	bool bTestValid = (((LPBYTE)lp) >= ((LPBYTE)Module))
+		&& ((((LPBYTE)lp) + ucb) <= (((LPBYTE)Module) + nt_header->OptionalHeader.SizeOfImage));
+
+#ifdef USE_ONLY_INT_CHECK_PTR
+	bool bApiValid = bTestValid;
+#else
+	bool bApiValid = !IsBadReadPtr(lp, ucb);
+
+	#ifdef _DEBUG
+	static bool bFirstAssert = false;
+	if (bTestValid != bApiValid)
+	{
+		if (!bFirstAssert)
+		{
+			bFirstAssert = true;
+			_ASSERTE(bTestValid != bApiValid);
+		}
+	}
+	#endif
+#endif
+
+	return !bApiValid;
+}
+
+bool isBadModuleStringA(LPCSTR lpsz, UINT_PTR ucchMax, HMODULE Module, IMAGE_NT_HEADERS* nt_header)
+{
+	bool bTestStrValid = (((LPBYTE)lpsz) >= ((LPBYTE)Module))
+		&& ((((LPBYTE)lpsz) + ucchMax) <= (((LPBYTE)Module) + nt_header->OptionalHeader.SizeOfImage));
+
+#ifdef USE_ONLY_INT_CHECK_PTR
+	bool bApiStrValid = bTestStrValid;
+#else
+	bool bApiStrValid = !IsBadStringPtrA(lpsz, ucchMax);
+
+	#ifdef _DEBUG
+	static bool bFirstAssert = false;
+	if (bTestStrValid != bApiStrValid)
+	{
+		if (!bFirstAssert)
+		{
+			bFirstAssert = true;
+			_ASSERTE(bTestStrValid != bApiStrValid);
+		}
+	}
+	#endif
+#endif
+
+	return !bApiStrValid;
+}
+
+bool SetHookPrep(LPCWSTR asModule, HMODULE Module, IMAGE_NT_HEADERS* nt_header, BOOL abForceHooks, bool bExecutable, IMAGE_IMPORT_DESCRIPTOR* Import, size_t ImportCount, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p)
 {
 	bool res = false;
 	size_t i;
@@ -2159,7 +2214,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 					//         похоже, в этой длл кривая таблица импортов
 					#ifndef USE_SEH
 					HLOG("SetHookPrep.lbBadThunk",f);
-					BOOL lbBadThunk = IsBadReadPtr(thunk, sizeof(*thunk));
+					bool lbBadThunk = isBadModulePtr(thunk, sizeof(*thunk), Module, nt_header);
 					if (lbBadThunk)
 					{
 						_ASSERTEX(!lbBadThunk);
@@ -2172,7 +2227,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 
 					#ifndef USE_SEH
 					HLOG("SetHookPrep.lbBadThunkO",f);
-					BOOL lbBadThunkO = IsBadReadPtr(thunkO, sizeof(*thunkO));
+					bool lbBadThunkO = isBadModulePtr(thunkO, sizeof(*thunkO), Module, nt_header);
 					if (lbBadThunkO)
 					{
 						_ASSERTEX(!lbBadThunkO);
@@ -2271,12 +2326,12 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 							#else
 								HLOG("SetHookPrep.pOrdinalNameO",f);
 								//WARNING!!! Множественные вызовы IsBad???Ptr могут глючить и тормозить
-								BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
+								bool lbValidPtr = !isBadModulePtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME), Module, nt_header);
 								_ASSERTE(lbValidPtr);
 
 								if (lbValidPtr)
 								{
-									lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
+									lbValidPtr = !isBadModuleStringA((LPCSTR)pOrdinalNameO->Name, 10, Module, nt_header);
 									_ASSERTE(lbValidPtr);
 
 									if (lbValidPtr)
@@ -2708,12 +2763,13 @@ bool UnsetHookInt(HMODULE Module)
 	size_t Size = 0;
 	_ASSERTE(Module!=NULL);
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
+	IMAGE_NT_HEADERS* nt_header;
 
 	SAFETRY
 	{
 		if (dos_header->e_magic == IMAGE_DOS_SIGNATURE /*'ZM'*/)
 		{
-			IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
+			nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
 
 			if (nt_header->Signature != 0x004550)
 				goto wrap;
@@ -2786,7 +2842,7 @@ bool UnsetHookInt(HMODULE Module)
 					//111127 - ..\GIT\lib\perl5\site_perl\5.8.8\msys\auto\SVN\_Core\_Core.dll
 					//         похоже, в этой длл кривая таблица импортов
 					#ifndef USE_SEH
-					if (IsBadReadPtr(thunk, sizeof(IMAGE_THUNK_DATA)))
+					if (isBadModulePtr(thunk, sizeof(IMAGE_THUNK_DATA), Module, nt_header))
 					{
 						_ASSERTE(thunk && FALSE);
 						break;
@@ -2799,7 +2855,7 @@ bool UnsetHookInt(HMODULE Module)
 					}
 
 					#ifndef USE_SEH
-					if (IsBadReadPtr(thunkO, sizeof(IMAGE_THUNK_DATA)))
+					if (isBadModulePtr(thunkO, sizeof(IMAGE_THUNK_DATA), Module, nt_header))
 					{
 						_ASSERTE(thunkO && FALSE);
 						break;
@@ -2816,8 +2872,11 @@ bool UnsetHookInt(HMODULE Module)
 						#ifdef USE_SEH
 							pszFuncName = (LPCSTR)pOrdinalNameO->Name;
 						#else
+							#ifdef _DEBUG
+							bool bTestValid = (((LPBYTE)pOrdinalNameO) >= ((LPBYTE)Module)) && (((LPBYTE)pOrdinalNameO) <= (((LPBYTE)Module) + nt_header->OptionalHeader.SizeOfImage));
+							#endif
 							//WARNING!!! Множественные вызовы IsBad???Ptr могут глючить и тормозить
-							BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
+							bool lbValidPtr = !isBadModulePtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME), Module, nt_header);
 							#ifdef _DEBUG
 							static bool bFirstAssert = false;
 							if (!lbValidPtr && !bFirstAssert)
@@ -2830,7 +2889,7 @@ bool UnsetHookInt(HMODULE Module)
 							if (lbValidPtr)
 							{
 								//WARNING!!! Множественные вызовы IsBad???Ptr могут глючить и тормозить
-								lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
+								lbValidPtr = !isBadModuleStringA((LPCSTR)pOrdinalNameO->Name, 10, Module, nt_header);
 								_ASSERTE(lbValidPtr);
 
 								if (lbValidPtr)
