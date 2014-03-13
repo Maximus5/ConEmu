@@ -390,6 +390,8 @@ BOOL WINAPI OnSetConsoleTitleA(LPCSTR lpConsoleTitle);
 BOOL WINAPI OnSetConsoleTitleW(LPCWSTR lpConsoleTitle);
 BOOL WINAPI OnGetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
 BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
+VOID WINAPI Onmouse_event(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo);
+UINT WINAPI OnSendInput(UINT nInputs, LPINPUT pInputs, int cbSize);
 BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -736,6 +738,8 @@ bool InitHooksUser32()
 		//
 		{(void*)OnGetWindowPlacement,	"GetWindowPlacement",	user32},
 		{(void*)OnSetWindowPlacement,	"SetWindowPlacement",	user32},
+		{(void*)Onmouse_event,			"mouse_event",			user32},
+		{(void*)OnSendInput,			"SendInput",			user32},
 		{(void*)OnPostMessageA,			"PostMessageA",			user32},
 		{(void*)OnPostMessageW,			"PostMessageW",			user32},
 		{(void*)OnSendMessageA,			"SendMessageA",			user32},
@@ -2627,6 +2631,25 @@ BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 		lbRc = F(SetWindowPlacement)(hWnd, lpwndpl);
 
 	return lbRc;
+}
+
+VOID WINAPI Onmouse_event(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo)
+{
+	typedef VOID (WINAPI* Onmouse_event_t)(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo);
+	ORIGINALFASTEX(mouse_event,NULL);
+
+	F(mouse_event)(dwFlags, dx, dy, dwData, dwExtraInfo);
+}
+
+UINT WINAPI OnSendInput(UINT nInputs, LPINPUT pInputs, int cbSize)
+{
+	typedef UINT (WINAPI* OnSendInput_t)(UINT nInputs, LPINPUT pInputs, int cbSize);
+	ORIGINALFASTEX(SendInput,NULL);
+	UINT nRc;
+
+	nRc = F(SendInput)(nInputs, pInputs, cbSize);
+
+	return nRc;
 }
 
 bool CanSendMessage(HWND& hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT& lRc)
