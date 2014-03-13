@@ -476,10 +476,9 @@ CConEmuMain::CConEmuMain()
 
 	mpsz_ConEmuArgs = NULL;
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = ms_ConEmuWorkDir[0] = 0;
-	//ms_ConEmuCExe[0] = 
 	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
 	ms_ConEmuXml[0] = ms_ConEmuIni[0] = ms_ConEmuChm[0] = 0;
-	//ms_ConEmuCExeName[0] = 0;
+
 	wchar_t *pszSlash = NULL;
 
 	if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH) || !(pszSlash = wcsrchr(ms_ConEmuExe, L'\\')))

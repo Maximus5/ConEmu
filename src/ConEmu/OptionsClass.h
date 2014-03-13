@@ -264,9 +264,7 @@ class CSettings
 		void InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
 		BOOL RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
 		void RegisterFonts();
-	private:
-		void RegisterFontsInt(LPCWSTR asFromDir);
-		//void ApplyStartupOptions();
+		void RegisterFontsDir(LPCWSTR asFromDir);
 	public:
 		enum ShellIntegrType
 		{

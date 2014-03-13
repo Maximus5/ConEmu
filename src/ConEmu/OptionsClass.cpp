@@ -12954,7 +12954,8 @@ void CSettings::UnregisterTabs()
 	mb_TabHotKeyRegistered = FALSE;
 }
 
-// Если asFontFile НЕ NULL - значит его пользователь указал через /fontfile
+// asFontFile may come from: ConEmu /fontfile <path-to-font-file>
+// or from RegisterFontsDir when enumerating font folder...
 BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 {
 	// Обработка параметра /fontfile
@@ -13262,11 +13263,11 @@ void CSettings::RegisterFonts()
 		return; // Если поиск шрифтов не требуется
 
 	// Сначала - регистрация шрифтов в папке программы
-	RegisterFontsInt(gpConEmu->ms_ConEmuExeDir);
+	RegisterFontsDir(gpConEmu->ms_ConEmuExeDir);
 
 	// Если папка запуска отличается от папки программы
 	if (lstrcmpW(gpConEmu->ms_ConEmuExeDir, gpConEmu->ms_ConEmuBaseDir))
-		RegisterFontsInt(gpConEmu->ms_ConEmuBaseDir); // зарегистрировать шрифты и из базовой папки
+		RegisterFontsDir(gpConEmu->ms_ConEmuBaseDir); // зарегистрировать шрифты и из базовой папки
 
 	// Если папка запуска отличается от папки программы
 	if (lstrcmpiW(gpConEmu->ms_ConEmuExeDir, gpConEmu->WorkDir()))
@@ -13283,7 +13284,7 @@ void CSettings::RegisterFonts()
 		if (!lbSkipCurDir)
 		{
 			// зарегистрировать шрифты и из папки запуска
-			RegisterFontsInt(gpConEmu->WorkDir());
+			RegisterFontsDir(gpConEmu->WorkDir());
 		}
 	}
 
@@ -13291,12 +13292,18 @@ void CSettings::RegisterFonts()
 	// Это делается в InitFont
 }
 
-void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
+void CSettings::RegisterFontsDir(LPCWSTR asFromDir)
 {
+	if (!asFromDir || !*asFromDir)
+		return;
+
 	// Регистрация шрифтов в папке ConEmu
 	WIN32_FIND_DATA fnd;
-	wchar_t szFind[MAX_PATH*2]; wcscpy_c(szFind, asFromDir); // БЕЗ завершающего слеша!
+	wchar_t szFind[MAX_PATH*2]; wcscpy_c(szFind, asFromDir);
 	wchar_t* pszSlash = szFind + lstrlenW(szFind);
+	_ASSERTE(pszSlash > szFind);
+	if (*(pszSlash-1) == L'\\')
+		pszSlash--;
 	wcscpy_add(pszSlash, szFind, L"\\*.*");
 	HANDLE hFind = FindFirstFile(szFind, &fnd);
 

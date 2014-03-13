@@ -3712,7 +3712,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 				}
 				#endif
-				//Start ADD fontname; by Mors
+				// ADD fontname; by Mors
 				else if (!klstricmp(curCommand, _T("/fontfile")) && i + 1 < params)
 				{
 					bool bOk = false; TCHAR* pszFile = NULL;
@@ -3722,7 +3722,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					gpSetCls->RegisterFont(pszFile, TRUE);
 				}
-				//End ADD fontname; by Mors
+				// Register all fonts from specified directory
+				else if (!klstricmp(curCommand, _T("/fontdir")) && i + 1 < params)
+				{
+					bool bOk = false; TCHAR* pszDir = NULL;
+					if (!GetCfgParm(i, curCommand, bOk, pszDir, MAX_PATH))
+					{
+						return 100;
+					}
+					gpSetCls->RegisterFontsDir(pszDir);
+				}
 				else if (!klstricmp(curCommand, _T("/fs")))
 				{
 					WindowModeVal = rFullScreen; WindowPrm = true;

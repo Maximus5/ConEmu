@@ -71,7 +71,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/CT[0|1] - Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - cleartype.\r\n" \
 	L"/Font <fontname> - Specify the font name.\r\n" \
 	L"/Size <fontsize> - Specify the font size.\r\n" \
-	L"/FontFile <fontfilename> - Loads fonts from file.\r\n" \
+	L"/FontFile <fontfilename> - Loads font from file (multiple pairs allowed).\r\n" \
+	L"/FontDir <fontfolder> - Loads all fonts from folder (multiple pairs allowed).\r\n" \
 	L"/BufferHeight <lines> - Set console buffer height.\r\n" \
 	L"/Palette <name> - Choose named color palette.\r\n" \
 	L"/Log[1|2] - Used to create debug log files.\r\n" \
