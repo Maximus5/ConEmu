@@ -1137,18 +1137,19 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							// temp buffer
 							wchar_t* lpszTemp = NULL;
 
+							wchar_t** pptr = NULL;
+							switch (cOpt)
+							{
+							case L'd': pptr = &pszStartupDir; break;
+							case L't': pptr = &pszRenameTab; break;
+							case L'u': pptr = &lpszTemp; break;
+							case L'C': pptr = &pszIconFile; break;
+							case L'P': pptr = &pszPalette; break;
+							case L'W': pptr = &pszWallpaper; break;
+							}
+
 							if (pszEnd > pszTab)
 							{
-								wchar_t** pptr = NULL;
-								switch (cOpt)
-								{
-								case L'd': pptr = &pszStartupDir; break;
-								case L't': pptr = &pszRenameTab; break;
-								case L'u': pptr = &lpszTemp; break;
-								case L'C': pptr = &pszIconFile; break;
-								case L'P': pptr = &pszPalette; break;
-								case L'W': pptr = &pszWallpaper; break;
-								}
 								size_t cchLen = pszEnd - pszTab;
 								SafeFree(*pptr);
 								*pptr = (wchar_t*)malloc((cchLen+1)*sizeof(**pptr));
