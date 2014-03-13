@@ -11198,7 +11198,15 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 
 				if (pszIcon)
 				{
+					// Функция сама проверит - можно или нет менять иконку приложения
 					SetWindowIcon(pszIcon);
+					// Если просили - вернуть путь к иконке
+					if (ppszIcon && !*ppszIcon)
+					{
+						SafeFree(*ppszIcon);
+						*ppszIcon = pszIcon;
+						pszIcon = NULL;
+					}
 					SafeFree(pszIcon);
 				}
 			}
