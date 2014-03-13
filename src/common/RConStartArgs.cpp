@@ -78,11 +78,16 @@ void RConStartArgs::RunArgTests()
 		// Multiple commands
 		{L"set ConEmuReportExe=VIM.EXE & SH.EXE", {L"set", L"ConEmuReportExe=VIM.EXE", L"&", L"SH.EXE"}},
 		// Inside escaped arguments
-		{L"reg.exe add \"HKCU\\command\" /ve /t REG_EXPAND_SZ /d \"\\\"C:\\ConEmu\\ConEmuPortable.exe\\\" /Dir \\\"%V\\\" /cmd \\\"cmd.exe\\\" \\\"-new_console:nC:cmd.exe\\\" \\\"-cur_console:d:%V\\\"\" /f",
+		{L"reg.exe add \"HKCU\\MyCo\" /ve /t REG_EXPAND_SZ /d \"\\\"C:\\ConEmu\\ConEmuPortable.exe\\\" /Dir \\\"%V\\\" /cmd \\\"cmd.exe\\\" \\\"-new_console:nC:cmd.exe\\\" \\\"-cur_console:d:%V\\\"\" /f",
 			// Для наглядности:
-			// reg.exe add "HKCU\command" /ve /t REG_EXPAND_SZ
+			// reg.exe add "HKCU\MyCo" /ve /t REG_EXPAND_SZ
 			//    /d "\"C:\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f
-			{L"reg.exe", L"add", L"HKCU\\command", L"/ve", L"/t", L"REG_EXPAND_SZ", L"/d", L"\\\"C:\\ConEmu\\ConEmuPortable.exe\\\" /Dir \\\"%V\\\" /cmd \\\"cmd.exe\\\" \\\"-new_console:nC:cmd.exe\\\" \\\"-cur_console:d:%V\\\"", L"/f"}},
+			{L"reg.exe", L"add", L"HKCU\\MyCo", L"/ve", L"/t", L"REG_EXPAND_SZ", L"/d",
+			 L"\\\"C:\\ConEmu\\ConEmuPortable.exe\\\" /Dir \\\"%V\\\" /cmd \\\"cmd.exe\\\" \\\"-new_console:nC:cmd.exe\\\" \\\"-cur_console:d:%V\\\"",
+			 L"/f"}},
+		// After 'Inside escaped arguments' regression bug appears
+		{L"/dir \"C:\\\" /icon \"cmd.exe\" /single", {L"/dir", L"C:\\", L"/icon", L"cmd.exe", L"/single"}},
+		{L"cmd \"one.exe /dir \\\"C:\\\\\" /log\" \"two.exe /dir \\\"C:\\\" /log\" end", {L"cmd", L"one.exe /dir \\\"C:\\\\\" /log", L"two.exe /dir \\\"C:\\\" /log", L"end"}},
 		{NULL}
 	};
 	for (int i = 0; lsArgTest[i].pszWhole; i++)
