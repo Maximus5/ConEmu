@@ -1121,6 +1121,10 @@ BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 
 	if (hProcess == GetCurrentProcess())
 	{
+		// We need not to unset hooks (due to process will be force-killed below)
+		extern BOOL gbHooksWasSet;
+		gbHooksWasSet = FALSE;
+		// And terminate our threads
 		DllMain(ghOurModule, DLL_PROCESS_DETACH, NULL);
 	}
 
