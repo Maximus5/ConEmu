@@ -1787,8 +1787,10 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			#ifdef USEHOOKLOG
 			DLOGEND();
-			//HookLogger::RunAnalyzer();
-			//_ASSERTEX(FALSE && "Hooks terminated");
+			#ifdef USEHOOKLOGANALYZE
+			HookLogger::RunAnalyzer();
+			_ASSERTEX(FALSE && "Hooks terminated");
+			#endif
 			#endif
 		}
 		break; // DLL_PROCESS_DETACH

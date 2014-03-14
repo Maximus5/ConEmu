@@ -180,8 +180,14 @@ extern "C" {
 #ifdef _DEBUG
 	//#define USEHOOKLOG
 	#undef USEHOOKLOG
+	#ifdef USEHOOKLOG
+		#define USEHOOKLOGANALYZE
+	#else
+		#undef USEHOOKLOGANALYZE
+	#endif
 #else
 	#undef USEHOOKLOG
+	#undef USEHOOKLOGANALYZE
 #endif
 
 #ifdef USEHOOKLOG

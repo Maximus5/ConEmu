@@ -329,6 +329,7 @@ void InitializeHookedModules()
 }
 void FinalizeHookedModules()
 {
+	HLOG1("FinalizeHookedModules",0);
 	if (gpHookedModules)
 	{
 		if (gpHookedModulesSection)
@@ -352,6 +353,7 @@ void FinalizeHookedModules()
 		free(gpHookedModulesSection);
 		gpHookedModulesSection = NULL;
 	}
+	HLOGEND1();
 }
 HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchNameMax = 0)
 {
@@ -1533,12 +1535,15 @@ void __stdcall InitHooksSort()
 
 void ShutdownHooks()
 {
+	HLOG1("ShutdownHooks.UnsetAllHooks",0);
 	UnsetAllHooks();
+	HLOGEND1();
 
 	//// Завершить работу с реестром
 	//DoneHooksReg();
 
 	// Уменьшение счетчиков загрузок (а надо ли?)
+	HLOG1_("ShutdownHooks.FreeLibrary",1);
 	for (size_t s = 0; s < countof(ghSysDll); s++)
 	{
 		if (ghSysDll[s] && *ghSysDll[s])
@@ -1547,6 +1552,7 @@ void ShutdownHooks()
 			*ghSysDll[s] = NULL;
 		}
 	}
+	HLOGEND1();
 
 	if (gpHookCS)
 	{
@@ -2345,7 +2351,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, IMAGE_NT_HEADERS* nt_header, 
 							continue; // This import does not have "Function name"
 						}
 
-						HLOG2("SetHookPrep.FuncTree",f);
+						HLOG2("SetHookPrep.FindFunction",f);
 						ph = FindFunction(pszFuncName);
 						HLOGEND2();
 						if (!ph)
@@ -2882,7 +2888,7 @@ bool UnsetHookInt(HMODULE Module)
 							if (!lbValidPtr && !bFirstAssert)
 							{
 								bFirstAssert = true;
-								_ASSERTE(lbValidPtr);
+								//_ASSERTE(lbValidPtr);
 							}
 							#endif
 
@@ -2921,6 +2927,9 @@ bool UnsetHookInt(HMODULE Module)
 							// OldAddress уже может отличаться от оригинального экспорта библиотеки
 							// Это если функцию захукали уже после нас
 						}
+
+						// Может ли такое быть? Модуль был "захукан" без нашего ведома?
+						_ASSERTE(FALSE && "Unknown function replacement was found");
 
 						// Если мы дошли сюда - значит функция найдена (или по адресу или по имени)
 						// BugBug: в принципе, эту функцию мог захукать и другой модуль (уже после нас),
@@ -2972,12 +2981,15 @@ bool UnsetHook(HMODULE Module)
 	{
 		// Хотя модуль и не обрабатывался нами, но может получиться, что у него переопределенные импорты
 		// Зовем в отдельной функции, т.к. __try
+		HLOG1("UnsetHook.Int",0);
 		bUnhooked = UnsetHookInt(Module);
+		HLOGEND1();
 	}
 	else
 	{
 		if (p->Hooked == 1)
 		{
+			HLOG1("UnsetHook.Var",0);
 			for (size_t i = 0; i < MAX_HOOKED_PROCS; i++)
 			{
 				if (p->Addresses[i].pOur == 0)
@@ -3012,6 +3024,7 @@ bool UnsetHook(HMODULE Module)
 			}
 			// Хуки сняты
 			p->Hooked = 2;
+			HLOGEND1();
 		}
 	}
 

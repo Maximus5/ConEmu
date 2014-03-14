@@ -1047,7 +1047,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	print_timings(L"SetAllHooks");
 
 	// Теперь можно обработать модули
-	HLOG1_("SetAllHooks",0);
+	HLOG1("SetAllHooks",0);
 	bool lbRc = SetAllHooks(ahOurDll, NULL, TRUE);
 	HLOGEND1();
 
