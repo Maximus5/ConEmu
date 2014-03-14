@@ -3605,21 +3605,21 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin)
 							int i = xPos - 1;
 							_ASSERTEX(i >= 0);
 
-							if ((pwszLine[i] == ucSpace) || (pwszLine[i] == ucNoBreakSpace))
-							{
-								// Delete all spaces
-								iBSCount = 1;
-								while ((i-- > 0) && ((pwszLine[i] == ucSpace) || (pwszLine[i] == ucNoBreakSpace)))
-									iBSCount++;
-							}
-							else
-							{
-								// Delete all NON-spaces
-								iBSCount = 1;
-								wchar_t cBreaks[] = {ucSpace, ucNoBreakSpace, L'>', L']', L'$', L'.', L'\\', L'/', 0};
-								while ((i-- > 0) && !wcschr(cBreaks, pwszLine[i]))
-									iBSCount++;
-							}
+							iBSCount = 0;
+
+							// Only RIGHT brackets here to be sure that `(x86)` will be deleted including left bracket
+							wchar_t cBreaks[] = L"\x20\xA0>])}$.,/\\\"";
+
+							// Delete all `spaces` first
+							while ((i >= 0) && ((pwszLine[i] == ucSpace) || (pwszLine[i] == ucNoBreakSpace)))
+								iBSCount++, i--;
+							_ASSERTE(cBreaks[0]==ucSpace && cBreaks[1]==ucNoBreakSpace);
+							// delimiters
+							while ((i >= 0) && wcschr(cBreaks+2, pwszLine[i]))
+								iBSCount++, i--;
+							// and all `NON-spaces`
+							while ((i >= 0) && !wcschr(cBreaks, pwszLine[i]))
+								iBSCount++, i--;
 						}
 					}
 				}
