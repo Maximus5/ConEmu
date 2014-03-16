@@ -11810,15 +11810,23 @@ void CRealConsole::CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcG
 	//These shift values are used in "GuiAttach.cpp: CorrectGuiChildRect" too
 
 	int nX = 0, nY = 0, nY0 = 0;
-	if (anStyle & WS_THICKFRAME)
+	// SM_CXSIZEFRAME & SM_CYSIZEFRAME fails in Win7/WDM (smaller than real values)
+	int nTestSize = 100;
+	RECT rcTest = MakeRect(nTestSize,nTestSize);
+	if (AdjustWindowRectEx(&rcTest, anStyle, FALSE, anStyleEx))
+	{
+		nX = -rcTest.left;
+		nY = rcTest.bottom - nTestSize; // only frame size, not caption+frame
+	}
+	else if (anStyle & WS_THICKFRAME)
 	{
 		nX = GetSystemMetrics(SM_CXSIZEFRAME);
-		nY = GetSystemMetrics(SM_CXSIZEFRAME);
+		nY = GetSystemMetrics(SM_CYSIZEFRAME);
 	}
 	else if (anStyleEx & WS_EX_WINDOWEDGE)
 	{
 		nX = GetSystemMetrics(SM_CXFIXEDFRAME);
-		nY = GetSystemMetrics(SM_CXFIXEDFRAME);
+		nY = GetSystemMetrics(SM_CYFIXEDFRAME);
 	}
 	else if (anStyle & WS_DLGFRAME)
 	{
@@ -11833,7 +11841,7 @@ void CRealConsole::CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcG
 	else
 	{
 		nX = GetSystemMetrics(SM_CXFIXEDFRAME);
-		nY = GetSystemMetrics(SM_CXFIXEDFRAME);
+		nY = GetSystemMetrics(SM_CYFIXEDFRAME);
 	}
 	if ((anStyle & WS_CAPTION) && gpSet->isHideChildCaption)
 	{
