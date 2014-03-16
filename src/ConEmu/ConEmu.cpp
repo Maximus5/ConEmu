@@ -15375,16 +15375,6 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			return 0;
 	}
 
-	if (pRCon && pRCon->GuiWnd() && !pRCon->isBufferHeight())
-	{
-		// Эти сообщения нужно посылать специально, иначе не доходят
-		if ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL))
-		{
-			pRCon->PostConsoleMessage(pRCon->GuiWnd(), messg, wParam, lParam);
-		}
-		return 0;
-	}
-
 	if (pRCon && pRCon->isSelectionPresent()
 	        && ((wParam & MK_LBUTTON) || messg == WM_LBUTTONUP))
 	{

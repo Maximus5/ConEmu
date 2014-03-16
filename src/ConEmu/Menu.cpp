@@ -1397,8 +1397,6 @@ int CConEmuMenu::trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, 
 	if (!(uFlags & (TPM_HORIZONTAL|TPM_VERTICAL)))
 		uFlags |= TPM_HORIZONTAL;
 
-	//SetCursor(LoadCursor(NULL, IDC_ARROW));
-
 	int cmd = TrackPopupMenuEx(hMenu, uFlags, x, y, hWnd, &ex);
 
 	mn_TrackMenuPlace = prevPlace;
