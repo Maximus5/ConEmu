@@ -13206,6 +13206,8 @@ void CRealConsole::setGuiWnd(HWND ahGuiWnd)
 	if (ahGuiWnd)
 	{
 		hGuiWnd = ahGuiWnd;
+		//Useless, because ahGuiWnd is invisible yet and scrolling will be revealed in TrackMouse
+		//mp_VCon->HideScroll(TRUE);
 	}
 	else
 	{

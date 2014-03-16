@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1411,7 +1411,12 @@ BOOL CConEmuChild::TrackMouse()
 
 	BOOL lbOverVScroll = CheckMouseOverScroll();
 
-	if (gpSet->isAlwaysShowScrollbar == 1)
+	if (pVCon->RCon()->isGuiVisible())
+	{
+		if (mb_ScrollVisible || mb_Scroll2Visible)
+			HideScroll(TRUE);
+	}
+	else if (gpSet->isAlwaysShowScrollbar == 1)
 	{
 		// Если полоса прокрутки показывается всегда - то она и не прячется
 		if (!mb_ScrollVisible)
@@ -1783,7 +1788,9 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 	bool bTHide = false;
 	mb_ScrollAutoPopup = FALSE;
 
-	if (gpSet->isAlwaysShowScrollbar == 1)
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+
+	if ((gpSet->isAlwaysShowScrollbar == 1) && !pVCon->GuiWnd())
 	{
 		// Прокрутка всегда показывается! Скрывать нельзя!
 		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1};
