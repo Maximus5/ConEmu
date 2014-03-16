@@ -15195,8 +15195,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		CVConGuard VCon;
 		if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
 		{
-			HWND hGuiChild = VCon->RCon()->GuiWnd();
-			if (hGuiChild)
+			CRealConsole* pRCon = VCon->RCon();
+			HWND hGuiChild = pRCon->GuiWnd();
+			if (hGuiChild && !pRCon->isBufferHeight())
 			{
 				// Just resend it to child GUI
 				bWasSendToChildGui = true;
