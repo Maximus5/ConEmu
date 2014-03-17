@@ -724,7 +724,14 @@ void CRealConsole::SyncGui2Window(const RECT rcVConBack)
 
 		DWORD dwExStyle = GetWindowLong(hGuiWnd, GWL_EXSTYLE);
 		DWORD dwStyle = GetWindowLong(hGuiWnd, GWL_STYLE);
-		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui);
+		#if 0
+		HRGN hrgn = CreateRectRgn(0,0,0,0);
+		int RgnType = GetWindowRgn(hGuiWnd, hrgn);
+		#endif
+		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui, ms_GuiWndProcess);
+		#if 0
+		if (hrgn) DeleteObject(hrgn);
+		#endif
 		RECT rcCur = {};
 		GetWindowRect(hGuiWnd, &rcCur);
 		HWND hBack = mp_VCon->GetBack();
@@ -11741,7 +11748,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	In.AttachGuiApp.Styles.nStyle = anStyle;
 	In.AttachGuiApp.Styles.nStyleEx = anStyleEx;
 	ZeroStruct(In.AttachGuiApp.Styles.Shifts);
-	CorrectGuiChildRect(In.AttachGuiApp.Styles.nStyle, In.AttachGuiApp.Styles.nStyleEx, In.AttachGuiApp.Styles.Shifts);
+	CorrectGuiChildRect(In.AttachGuiApp.Styles.nStyle, In.AttachGuiApp.Styles.nStyleEx, In.AttachGuiApp.Styles.Shifts, ms_GuiWndProcess);
 	In.AttachGuiApp.nPID = anAppPID;
 	if (asAppFileName)
 		wcscpy_c(In.AttachGuiApp.sAppFileName, asAppFileName);
@@ -11803,11 +11810,21 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	}
 }
 
-void CRealConsole::CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
+bool CRealConsole::CanCutChildFrame(LPCWSTR pszExeName)
 {
-	//Chrome: Styles: 0x16FF0000, ExStyles: 0x00000100
+	if (!pszExeName || !*pszExeName)
+		return true;
+	if (lstrcmpi(pszExeName, L"chrome.exe") == 0)
+		return false;
+	return true;
+}
 
-	//These shift values are used in "GuiAttach.cpp: CorrectGuiChildRect" too
+void CRealConsole::CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui, LPCWSTR pszExeName)
+{
+	if (!CanCutChildFrame(pszExeName))
+	{
+		return;
+	}
 
 	int nX = 0, nY = 0, nY0 = 0;
 	// SM_CXSIZEFRAME & SM_CYSIZEFRAME fails in Win7/WDM (smaller than real values)

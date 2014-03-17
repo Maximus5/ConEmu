@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -867,6 +867,9 @@ void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 		{
 			pIn->GuiAppShifts.nStyle = anStyle;
 			pIn->GuiAppShifts.nStyleEx = anStyleEx;
+			wchar_t szOurExe[MAX_PATH*2] = L"";
+			GetModuleFileName(NULL, szOurExe, countof(szOurExe));
+			lstrcpyn(pIn->GuiAppShifts.szExeName, PointToName(szOurExe), countof(pIn->GuiAppShifts.szExeName));
 
 			wchar_t szGuiPipeName[128];
 			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);

@@ -305,7 +305,8 @@ class CRealConsole
 		BOOL    isGuiOverCon();
 		void    StoreGuiChildRect(LPRECT prcNewPos);
 		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
-		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui);
+		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui, LPCWSTR pszExeName);
+		static bool CanCutChildFrame(LPCWSTR pszExeName);
 
 		CRealConsole();
 		bool Construct(CVirtualConsole* apVCon, RConStartArgs *args);

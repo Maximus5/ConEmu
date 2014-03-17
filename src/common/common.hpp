@@ -1765,6 +1765,7 @@ struct GuiStylesAndShifts
 {
 	DWORD nStyle, nStyleEx;
 	RECT  Shifts;
+	WCHAR szExeName[MAX_PATH]; // name only, not path
 };
 
 // CECMD_ATTACHGUIAPP
