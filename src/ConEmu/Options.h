@@ -520,13 +520,16 @@ struct Settings
 
 			void ParseGuiArgs(wchar_t** pszDir, wchar_t** pszIcon) const
 			{
-				if (!pszGuiArgs)
+				if (!pszGuiArgs || !*pszGuiArgs)
 					return;
-				LPCWSTR pszArgs = pszGuiArgs;
+				LPCWSTR pszArgs = pszGuiArgs, pszOk = pszGuiArgs;
 				CmdArg szArg;
 				while (0 == NextArg(&pszArgs, szArg))
 				{
-					if (lstrcmpi(szArg, L"/dir") == 0 || lstrcmpi(szArg, L"-dir") == 0)
+					if (szArg.ms_Arg[0] == L'-')
+						szArg.ms_Arg[0] = L'/';
+
+					if (lstrcmpi(szArg, L"/dir") == 0)
 					{
 						if (0 != NextArg(&pszArgs, szArg))
 							break;
@@ -543,7 +546,7 @@ struct Settings
 							*pszDir = pszExpand ? pszExpand : lstrdup(szArg);
 						}
 					}
-					else if (lstrcmpi(szArg, L"/icon") == 0 || lstrcmpi(szArg, L"-icon") == 0)
+					else if (lstrcmpi(szArg, L"/icon") == 0)
 					{
 						if (0 != NextArg(&pszArgs, szArg))
 							break;
@@ -560,6 +563,23 @@ struct Settings
 							*pszIcon = pszExpand ? pszExpand : lstrdup(szArg);
 						}
 					}
+					else if (lstrcmpi(szArg, L"/single") == 0)
+					{
+						// Used in the other parts of code
+					}
+					else
+					{
+						break;
+					}
+
+					pszOk = pszArgs;
+				}
+				// Errors notification
+				if (pszOk && *pszOk)
+				{
+					wchar_t* pszErr = lstrmerge(L"Unsupported task parameters\r\nTask name: ", pszName, L"\r\nParameters: ", pszOk);
+					MsgBox(pszErr, MB_ICONSTOP);
+					SafeFree(pszErr);
 				}
 			};
 		};
