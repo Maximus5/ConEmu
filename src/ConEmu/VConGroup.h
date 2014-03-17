@@ -36,6 +36,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CVirtualConsole;
 class CVConGuard;
 
+enum EnumVConFlags
+{
+	evf_Active  = 1,
+	evf_Visible = 2,
+	evf_All     = 3,
+};
+typedef bool (*EnumVConProc)(CVirtualConsole* pVCon, LPARAM lParam);
+
 class CVConGroup : public CRefRelease
 {
 protected:
@@ -137,6 +145,8 @@ public:
 	static bool isVConHWND(HWND hChild, CVConGuard* rpVCon = NULL);
 	static bool isConsolePID(DWORD nPID);
 	static DWORD GetFarPID(BOOL abPluginRequired=FALSE);
+
+	static bool EnumVCon(EnumVConFlags what, EnumVConProc pfn, LPARAM lParam);
 
 	static int  GetActiveVCon(CVConGuard* pVCon = NULL, int* pAllCount = NULL);
 	static int  GetVConIndex(CVirtualConsole* apVCon);

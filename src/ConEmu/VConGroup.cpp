@@ -1447,6 +1447,33 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 	return iFound;
 }
 
+bool CVConGroup::EnumVCon(EnumVConFlags what, EnumVConProc pfn, LPARAM lParam)
+{
+	if (what < evf_Active || what > evf_All || pfn == NULL)
+		return false;
+
+	bool bProcessed = false;
+
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		CVConGuard VCon = gp_VCon[i];
+		CVirtualConsole* pVCon;
+		if ((pVCon = VCon.VCon()) != NULL)
+		{
+			if ((what == evf_Visible) && !pVCon->isVisible())
+				continue;
+			else if ((what == evf_Active ) && (pVCon != gp_VActive))
+				continue;
+
+			bProcessed = true;
+			if (!pfn(pVCon, lParam))
+				break;
+		}
+	}
+
+	return bProcessed;
+}
+
 // Возвращает индекс (0-based) активной консоли
 int CVConGroup::GetActiveVCon(CVConGuard* pVCon /*= NULL*/, int* pAllCount /*= NULL*/)
 {
