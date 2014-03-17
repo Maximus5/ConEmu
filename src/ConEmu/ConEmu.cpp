@@ -7376,47 +7376,83 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 
 		if (*pszLine)
 		{
-			while (pszLine[0] == L'/')
+			RConStartArgs args;
+
+			if (apDefArgs)
+				args.AssignFrom(apDefArgs);
+
+			if (apDefArgs && apDefArgs->pszStartupDir && *apDefArgs->pszStartupDir)
+				args.pszStartupDir = lstrdup(apDefArgs->pszStartupDir);
+			else if (asStartupDir && *asStartupDir)
+				args.pszStartupDir = lstrdup(asStartupDir);
+			else
+				SafeFree(args.pszStartupDir);
+
+			LPCWSTR pcszCmd = pszLine;
+			CmdArg szArg;
+			const int iNewConLen = lstrlen(L"-new_console");
+			while (NextArg(&pcszCmd, szArg) == 0)
 			{
-				if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
-				                               pszLine, 14, L"/bufferheight ", 14))
+				if (wcsncmp(szArg, L"-new_console", iNewConLen) == 0 || wcsncmp(szArg, L"-cur_console", iNewConLen) == 0)
+					break;
+
+				if (szArg.ms_Arg[0] != L'/')
+					break;
+
+				if (lstrcmpi(szArg, L"/bufferheight") == 0)
 				{
-					pszLine += 14;
-
-					while(*pszLine == L' ') pszLine++;
-
-					wchar_t* pszEnd = NULL;
-					long lBufHeight = wcstol(pszLine, &pszEnd, 10);
-					gpSetCls->SetArgBufferHeight(lBufHeight);
-
-					if (pszEnd) pszLine = pszEnd;
+					if (NextArg(&pcszCmd, szArg) == 0)
+					{
+						wchar_t* pszEnd = NULL;
+						args.nBufHeight = wcstol(szArg, &pszEnd, 10);
+						args.BufHeight = crb_On;
+						pszLine = (wchar_t*)pcszCmd; // OK
+						continue;
+					}
+				}
+				else if (lstrcmpi(szArg, L"/dir") == 0)
+				{
+					if (NextArg(&pcszCmd, szArg) == 0)
+					{
+						SafeFree(args.pszStartupDir);
+						args.pszStartupDir = lstrdup(szArg);
+						pszLine = (wchar_t*)pcszCmd; // OK
+						continue;
+					}
+				}
+				else if (lstrcmpi(szArg, L"/icon") == 0)
+				{
+					if (NextArg(&pcszCmd, szArg) == 0)
+					{
+						SafeFree(args.pszIconFile);
+						args.pszIconFile = lstrdup(szArg);
+						pszLine = (wchar_t*)pcszCmd; // OK
+						continue;
+					}
+				}
+				else if (lstrcmpi(szArg, L"/tab") == 0)
+				{
+					if (NextArg(&pcszCmd, szArg) == 0)
+					{
+						SafeFree(args.pszRenameTab);
+						args.pszRenameTab = lstrdup(szArg);
+						pszLine = (wchar_t*)pcszCmd; // OK
+						continue;
+					}
 				}
 
-				TODO("Когда появится ключ /mouse - добавить сюда обработку");
-
-				if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
-				                               pszLine, 5, L"/cmd ", 5))
-				{
-					pszLine += 5;
-				}
-
-				while (*pszLine == L' ') pszLine++;
+				wchar_t* pszErr = lstrmerge(L"Unsupported switch in task command:\r\n", pszLine);
+				int iBtn = MsgBox(pszErr, MB_ICONSTOP|MB_OKCANCEL, gpConEmu->GetDefaultTitle());
+				SafeFree(pszErr);
+				*pszLine = 0;
+				if (iBtn == IDCANCEL)
+					pszNewLine = NULL;
+				break;
 			}
 
 			if (*pszLine)
 			{
-				RConStartArgs args;
-				if (apDefArgs)
-					args.AssignFrom(apDefArgs);
-
 				args.pszSpecialCmd = lstrdup(pszLine);
-
-				if (apDefArgs && apDefArgs->pszStartupDir && *apDefArgs->pszStartupDir)
-					args.pszStartupDir = lstrdup(apDefArgs->pszStartupDir);
-				else if (asStartupDir && *asStartupDir)
-					args.pszStartupDir = lstrdup(asStartupDir);
-				else
-					SafeFree(args.pszStartupDir);
 
 				if (lbRunAdmin) // don't reset one that may come from apDefArgs
 					args.RunAsAdministrator = crb_On;
