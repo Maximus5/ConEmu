@@ -176,9 +176,10 @@ HANDLE ghLastConInHandle = NULL, ghLastNotConInHandle = NULL;
 
 
 /* ************ Globals for Far Hooks ************ */
-struct HookModeFar gFarMode = {sizeof(HookModeFar)};
+HookModeFar gFarMode = {sizeof(HookModeFar)};
+bool    gbIsFarProcess = false;
 InQueue gInQueue = {};
-HANDLE ghConsoleCursorChanged = NULL;
+HANDLE  ghConsoleCursorChanged = NULL;
 /* ************ Globals for Far Hooks ************ */
 
 

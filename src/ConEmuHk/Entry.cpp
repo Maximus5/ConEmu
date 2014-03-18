@@ -874,6 +874,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			}
 		}
 	}
+	else if ((lstrcmpi(pszName, L"far.exe") == 0) || (lstrcmpi(pszName, L"far64.exe") == 0) || (lstrcmpi(pszName, L"far32.exe") == 0))
+	{
+		gbIsFarProcess = true;
+	}
 	else if ((lstrcmpi(pszName, L"cmd.exe") == 0) || (lstrcmpi(pszName, L"cmd") == 0))
 	{
 		gbIsCmdProcess = true;

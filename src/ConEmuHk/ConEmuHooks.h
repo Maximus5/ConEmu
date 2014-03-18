@@ -110,6 +110,7 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin);
 BOOL OnExecutePromptCmd(LPCWSTR asCmd);
 
 /* ************ Globals for Far ************ */
+extern bool    gbIsFarProcess;
 extern InQueue gInQueue;
 /* ************ Globals for Far ************ */
 

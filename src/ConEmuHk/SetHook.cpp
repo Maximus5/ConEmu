@@ -634,7 +634,10 @@ bool InitHooksLibrary()
 		ADDFUNC((void*)OnFreeLibrary,		szFreeLibrary,			kernel32); // OnFreeLibrary тоже нужен!
 	}
 	// With only exception of LoadLibraryW - it handles "ExtendedConsole.dll" loading in Far 64
-	ADDFUNC((void*)OnLoadLibraryW,			szLoadLibraryW,			kernel32);
+	if (gbIsFarProcess)
+	{
+		ADDFUNC((void*)OnLoadLibraryW,			szLoadLibraryW,			kernel32);
+	}
 
 	#ifdef HOOK_ERROR_PROC
 	// Для отладки появления системных ошибок
@@ -709,7 +712,7 @@ void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL 
 		}
 	}
 
-	_ASSERT(FALSE); // сюда мы попадать не должны
+	_ASSERT(gbLdrDllNotificationUsed && !gbIsFarProcess); // сюда мы попадать не должны
 	return DefaultFunction;
 }
 
