@@ -153,6 +153,10 @@ extern bool gbIsHiewProcess;
 extern bool gbDosBoxProcess;
 /* ************ Globals for DosBox.EXE ************ */
 
+/* ************ Don't show VirtualAlloc errors ************ */
+extern bool gbSkipVirtualAllocErr;
+/* ************ Don't show VirtualAlloc errors ************ */
+
 /* ************ Globals for "Default terminal ************ */
 extern bool gbPrepareDefaultTerminal;
 extern bool gbIsNetVsHost;

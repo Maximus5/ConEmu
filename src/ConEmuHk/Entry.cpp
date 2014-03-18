@@ -939,6 +939,11 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		gbIsVStudio = true;
 	}
 
+	if ((lstrcmpi(pszName, L"chrome.exe") == 0) || (lstrcmpi(pszName, L"link.exe") == 0))
+	{
+		gbSkipVirtualAllocErr = true;
+	}
+
 	// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
 	// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
 	//HMODULE hKernel = ::GetModuleHandle(L"kernel32.dll");

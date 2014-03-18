@@ -223,6 +223,10 @@ bool gbIsHiewProcess = false;
 bool gbDosBoxProcess = false;
 /* ************ Globals for DosBox.EXE ************ */
 
+/* ************ Don't show VirtualAlloc errors ************ */
+bool gbSkipVirtualAllocErr = false;
+/* ************ Don't show VirtualAlloc errors ************ */
+
 /* ************ Globals for "Default terminal ************ */
 bool gbPrepareDefaultTerminal = false;
 bool gbIsNetVsHost = false;
@@ -5578,7 +5582,8 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 
 	#if defined(REPORT_VIRTUAL_ALLOC)
 		// clink use bunch of VirtualAlloc to try to find suitable memory location
-		bool bReport = !gbIsCmdProcess || (dwSize != 0x1000);
+		// Some processes raises that error too often (in debug)
+		bool bReport = (!gbIsCmdProcess || (dwSize != 0x1000)) && !gbSkipVirtualAllocErr;
 		int iBtn = bReport ? GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL|MB_ICONSTOP) : IDCANCEL;
 		if (iBtn == IDOK)
 		{
