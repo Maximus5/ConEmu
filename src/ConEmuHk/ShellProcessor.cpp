@@ -1587,14 +1587,14 @@ int CShellProc::PrepareExecuteParms(
 			return 0;
 		}
 
-		// Started from explorer - CREATE_SUSPENDED is set (why?)
+		// Started from explorer/taskmgr - CREATE_SUSPENDED is set (why?)
 		if (mb_WasSuspended && anCreateFlags)
 		{
 			_ASSERTE(anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED));
 			wchar_t szExecutable[MAX_PATH] = L"";
 			GetModuleFileName(NULL, szExecutable, countof(szExecutable));
 			LPCWSTR pszName = PointToName(szExecutable);
-			if (lstrcmpi(pszName, L"explorer.exe") == 0)
+			if (lstrcmpi(pszName, L"explorer.exe") == 0 || lstrcmpi(pszName, L"taskmgr.exe") == 0)
 			{
 				// Running from explorer?
 				bIgnoreSuspended = true;
