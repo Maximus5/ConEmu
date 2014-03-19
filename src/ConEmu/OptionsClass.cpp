@@ -8893,6 +8893,8 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 				gpSetCls->OnPage((LPNMHDR)wParam);
 			}
 
+			break;
+
 		case WM_ACTIVATE:
 
 			if (LOWORD(wParam) != 0)
