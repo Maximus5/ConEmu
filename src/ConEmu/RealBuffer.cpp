@@ -6054,7 +6054,7 @@ bool CRealBuffer::FindRangeStart(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out
 				crFrom.X += 2;
 				break;
 			}
-			else if (pChar[crFrom.X+1] != L'\\' && pChar[crFrom.X+1] != L'/')
+			else if (bUrlMode && pChar[crFrom.X+1] != L'\\' && pChar[crFrom.X+1] != L'/')
 			{
 				goto wrap; // Не оно
 			}
