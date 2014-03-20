@@ -264,28 +264,31 @@ class CRealConsole
 
 	private:
 		HWND    hConWnd;
-		HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
-		RECT    mrc_LastGuiWnd; // Screen coordinates!
-		HWND    mh_GuiWndFocusStore;
-		DWORD   mn_GuiAttachInputTID;
-		static  BOOL CALLBACK FindChildGuiWindowProc(HWND hwnd, LPARAM lParam);
-		DWORD   mn_GuiAttachFlags; // запоминается в SetGuiMode
-		BOOL    mb_GuiExternMode; // FALSE если захотели показать GUI приложение вне вкладки ConEmu (Ctrl-Win-Alt-Space)
-		bool    mb_GuiForceConView; // TRUE если просили спрятать GUI и показать VirtualConsole
-		RECT    rcPreGuiWndRect; // Положение окна ДО аттача
-		BOOL    mb_InGuiAttaching;
-		BOOL    mb_InSetFocus;
-		DWORD   mn_GuiWndStyle, mn_GuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
-		DWORD   mn_GuiWndPID;
-		wchar_t ms_GuiWndProcess[MAX_PATH];
 		BYTE    m_ConsoleKeyShortcuts;
 		BYTE    mn_TextColorIdx, mn_BackColorIdx, mn_PopTextColorIdx, mn_PopBackColorIdx;
 		void    PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx, BYTE& nPopTextColorIdx, BYTE& nPopBackColorIdx, bool bUpdateRegistry = false, HKEY hkConsole = NULL);
-		//HANDLE  hFileMapping;
-		//CESERVER_REQ_CONINFO* pConsoleData;
-		//void CloseMapping();
+	private:
+		// ChildGui related
+		struct {
+			HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
+			RECT    rcLastGuiWnd; // Screen coordinates!
+			HWND    hGuiWndFocusStore;
+			DWORD   nGuiAttachInputTID;
+			DWORD   nGuiAttachFlags; // запоминается в SetGuiMode
+			RECT    rcPreGuiWndRect; // Положение окна ДО аттача
+			bool    bGuiExternMode; // FALSE если захотели показать GUI приложение вне вкладки ConEmu (Ctrl-Win-Alt-Space)
+			bool    bGuiForceConView; // TRUE если просили спрятать GUI и показать VirtualConsole
+			bool    bInGuiAttaching;
+			bool    bInSetFocus;
+			DWORD   nGuiWndStyle, nGuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
+			DWORD   nGuiWndPID;
+			wchar_t szGuiWndProcess[MAX_PATH];
+			// some helpers
+			bool    isGuiWnd() { return (hGuiWnd && (hGuiWnd != (HWND)INVALID_HANDLE_VALUE)); };
+		} m_ChildGui;
 		void setGuiWndPID(DWORD anPID, LPCWSTR asProcessName);
 		void setGuiWnd(HWND ahGuiWnd);
+		static  BOOL CALLBACK FindChildGuiWindowProc(HWND hwnd, LPARAM lParam);
 
 	public:
 		HWND    ConWnd();  // HWND RealConsole

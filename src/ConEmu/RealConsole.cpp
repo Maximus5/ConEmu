@@ -285,18 +285,12 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_LastInvalidateTick = 0;
 
 	hConWnd = NULL;
-	hGuiWnd = mh_GuiWndFocusStore = NULL;
-	mb_GuiExternMode = FALSE;
-	mb_GuiForceConView = false;
-	mn_GuiAttachInputTID = 0;
-	mn_GuiWndStyle = mn_GuiWndStylEx = 0; mn_GuiAttachFlags = 0;
-	ZeroStruct(mrc_LastGuiWnd);
-	setGuiWndPID(0, NULL); // set mn_GuiWndPID to 0
-	mb_InGuiAttaching = FALSE;
+
+	ZeroStruct(m_ChildGui);
+	setGuiWndPID(0, NULL); // force set mn_GuiWndPID to 0
+
 	mn_InPostDeadChar = 0;
 
-	mb_InSetFocus = FALSE;
-	rcPreGuiWndRect = MakeRect(0,0);
 	//hFileMapping = NULL; pConsoleData = NULL;
 	mn_Focused = -1;
 	mn_LastVKeyPressed = 0;
@@ -703,13 +697,13 @@ void CRealConsole::SyncGui2Window(const RECT rcVConBack)
 	if (!this)
 		return;
 
-	if (hGuiWnd && !mb_GuiExternMode)
+	if (m_ChildGui.hGuiWnd && !m_ChildGui.bGuiExternMode)
 	{
-		if (!IsWindow(hGuiWnd))
+		if (!IsWindow(m_ChildGui.hGuiWnd))
 		{
 			// Странно это, по идее, приложение при закрытии окна должно было сообщить,
-			// что оно закрылось, hGuiWnd больше не валиден...
-			_ASSERTE(IsWindow(hGuiWnd));
+			// что оно закрылось, m_ChildGui.hGuiWnd больше не валиден...
+			_ASSERTE(IsWindow(m_ChildGui.hGuiWnd));
 			setGuiWnd(NULL);
 			return;
 		}
@@ -722,24 +716,24 @@ void CRealConsole::SyncGui2Window(const RECT rcVConBack)
 		RECT rcGui = rcVConBack;
 		OffsetRect(&rcGui, -rcGui.left, -rcGui.top);
 
-		DWORD dwExStyle = GetWindowLong(hGuiWnd, GWL_EXSTYLE);
-		DWORD dwStyle = GetWindowLong(hGuiWnd, GWL_STYLE);
+		DWORD dwExStyle = GetWindowLong(m_ChildGui.hGuiWnd, GWL_EXSTYLE);
+		DWORD dwStyle = GetWindowLong(m_ChildGui.hGuiWnd, GWL_STYLE);
 		#if 0
 		HRGN hrgn = CreateRectRgn(0,0,0,0);
-		int RgnType = GetWindowRgn(hGuiWnd, hrgn);
+		int RgnType = GetWindowRgn(m_ChildGui.hGuiWnd, hrgn);
 		#endif
-		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui, ms_GuiWndProcess);
+		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui, m_ChildGui.szGuiWndProcess);
 		#if 0
 		if (hrgn) DeleteObject(hrgn);
 		#endif
 		RECT rcCur = {};
-		GetWindowRect(hGuiWnd, &rcCur);
+		GetWindowRect(m_ChildGui.hGuiWnd, &rcCur);
 		HWND hBack = mp_VCon->GetBack();
 		MapWindowPoints(NULL, hBack, (LPPOINT)&rcCur, 2);
 		if (memcmp(&rcCur, &rcGui, sizeof(RECT)) != 0)
 		{
 			// Через команду пайпа, а то если он "под админом" будет Access denied
-			SetOtherWindowPos(hGuiWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+			SetOtherWindowPos(m_ChildGui.hGuiWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 				SWP_ASYNCWINDOWPOS|SWP_NOACTIVATE);
 		}
 		// Запомнить ЭКРАННЫЕ координаты, куда поставили окошко
@@ -792,7 +786,7 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	_ASSERTE(newCon.right>=MIN_CON_WIDTH && newCon.bottom>=MIN_CON_HEIGHT);
 
 	#if 0
-	if (hGuiWnd && !mb_GuiExternMode)
+	if (m_ChildGui.hGuiWnd && !m_ChildGui.bGuiExternMode)
 	{
 		_ASSERTE(FALSE && "Fails on DoubleView?");
 		SyncGui2Window(rcClient);
@@ -1528,7 +1522,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 	bool lbRc = false;
 
 	// Если GUI-режим - все посылаем в окно, в консоль ничего не нужно
-	if (hGuiWnd)
+	if (m_ChildGui.hGuiWnd)
 	{
 		if (piRec->EventType == KEY_EVENT)
 		{
@@ -1541,7 +1535,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 
 			if (wParam || lParam)
 			{
-				PostConsoleMessage(hGuiWnd, msg, wParam, lParam);
+				PostConsoleMessage(m_ChildGui.hGuiWnd, msg, wParam, lParam);
 			}
 		}
 
@@ -2478,9 +2472,9 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 
 
 			// Видимость гуй-клиента - это кнопка "буферного режима"
-			if (hGuiWnd && bActive)
+			if (m_ChildGui.hGuiWnd && bActive)
 			{
-				BOOL lbVisible = ::IsWindowVisible(hGuiWnd);
+				BOOL lbVisible = ::IsWindowVisible(m_ChildGui.hGuiWnd);
 				if (lbVisible != bGuiVisible)
 				{
 					// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
@@ -2489,8 +2483,8 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				}
 			}
 
-			if (hConWnd || hGuiWnd)  // Если знаем хэндл окна -
-				GetWindowText(hGuiWnd ? hGuiWnd : hConWnd, TitleCmp, countof(TitleCmp)-2);
+			if (hConWnd || m_ChildGui.hGuiWnd)  // Если знаем хэндл окна -
+				GetWindowText(m_ChildGui.isGuiWnd() ? m_ChildGui.hGuiWnd : hConWnd, TitleCmp, countof(TitleCmp)-2);
 
 			if (mb_ForceTitleChanged
 				|| lbForceUpdateProgress
@@ -3189,13 +3183,13 @@ void CRealConsole::ResetVarsOnStart()
 	ZeroStruct(m_ServerClosing);
 
 	hConWnd = NULL;
+
+	// setXXX для удобства
 	setGuiWnd(NULL);
-	mb_GuiExternMode = FALSE;
-	mb_GuiForceConView = false;
-	//mn_GuiApplicationPID = 0;
-	setGuiWndPID(0, NULL); // set mn_GuiWndPID to 0
-	mn_GuiWndStyle = mn_GuiWndStylEx = 0;
-	mn_GuiAttachFlags = 0;
+	setGuiWndPID(0, NULL); // set m_ChildGui.nGuiWndPID to 0
+	// ZeroStruct для четкости
+	ZeroStruct(m_ChildGui);
+
 	mb_WasForceTerminated = FALSE;
 }
 
@@ -4878,9 +4872,9 @@ void CRealConsole::PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted)
 
 	if (pStarted->nSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 	{
-		if (!hGuiWnd || !IsWindow(hGuiWnd))
+		if (!m_ChildGui.hGuiWnd || !IsWindow(m_ChildGui.hGuiWnd))
 		{
-			mb_GuiForceConView = true;
+			m_ChildGui.bGuiForceConView = true;
 			ShowWindow(GetView(), SW_SHOW);
 			mp_VCon->Invalidate();
 		}
@@ -5026,11 +5020,10 @@ BOOL CRealConsole::isGuiVisible()
 	if (!this)
 		return FALSE;
 
-	if (hGuiWnd)
+	if (m_ChildGui.isGuiWnd())
 	{
-		//return !::IsWindowVisible(hGuiWnd);
 		// IsWindowVisible не подходит, т.к. учитывает видимость и mh_WndDC
-		DWORD_PTR nStyle = GetWindowLongPtr(hGuiWnd, GWL_STYLE);
+		DWORD_PTR nStyle = GetWindowLongPtr(m_ChildGui.hGuiWnd, GWL_STYLE);
 		return (nStyle & WS_VISIBLE) != 0;
 	}
 	return FALSE;
@@ -5041,7 +5034,7 @@ BOOL CRealConsole::isGuiOverCon()
 	if (!this)
 		return FALSE;
 
-	if (hGuiWnd && !mb_GuiExternMode)
+	if (m_ChildGui.hGuiWnd && !m_ChildGui.bGuiExternMode)
 	{
 		return isGuiVisible();
 	}
@@ -5055,7 +5048,7 @@ BOOL CRealConsole::isBufferHeight()
 	if (!this)
 		return FALSE;
 
-	if (hGuiWnd)
+	if (m_ChildGui.hGuiWnd)
 	{
 		return !isGuiVisible();
 	}
@@ -5069,7 +5062,7 @@ BOOL CRealConsole::isAlternative()
 	if (!this)
 		return FALSE;
 
-	if (hGuiWnd)
+	if (m_ChildGui.hGuiWnd)
 		return FALSE;
 
 	return (mp_ABuf && (mp_ABuf != mp_RBuf));
@@ -5256,7 +5249,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			return;
 		}
 		// *** Not send to console ***
-		else if (hGuiWnd)
+		else if (m_ChildGui.isGuiWnd())
 		{
 			switch (messg)
 			{
@@ -5270,7 +5263,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 					if (messg==WM_KEYDOWN || messg==WM_SYSKEYDOWN)
 					{
 						mn_InPostDeadChar = messg;
-						PostConsoleMessage(hGuiWnd, pDeadCharMsg->message, pDeadCharMsg->wParam, pDeadCharMsg->lParam);
+						PostConsoleMessage(m_ChildGui.hGuiWnd, pDeadCharMsg->message, pDeadCharMsg->wParam, pDeadCharMsg->lParam);
 					}
 					else
 					{
@@ -5282,7 +5275,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 					_ASSERTE(pszChars[0] && (pszChars[1]==0 || (pszChars[1]==pszChars[0] && pszChars[2]==0)));
 					for (size_t i = 0; pszChars[i]; i++)
 					{
-						PostConsoleMessage(hGuiWnd, (mn_InPostDeadChar==WM_KEYDOWN) ? WM_CHAR : WM_SYSCHAR, (WPARAM)pszChars[i], lParam);
+						PostConsoleMessage(m_ChildGui.hGuiWnd, (mn_InPostDeadChar==WM_KEYDOWN) ? WM_CHAR : WM_SYSCHAR, (WPARAM)pszChars[i], lParam);
 					}
 					mn_InPostDeadChar = FALSE;
 				}
@@ -5302,7 +5295,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 						}
 					}
 
-					PostConsoleMessage(hGuiWnd, messg, wParam, lParam);
+					PostConsoleMessage(m_ChildGui.hGuiWnd, messg, wParam, lParam);
 				}
 				break;
 			case WM_CHAR:
@@ -5312,7 +5305,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				_ASSERTE(messg!=WM_CHAR && messg!=WM_SYSCHAR && messg!=WM_DEADCHAR);
 				break;
 			default:
-				PostConsoleMessage(hGuiWnd, messg, wParam, lParam);
+				PostConsoleMessage(m_ChildGui.hGuiWnd, messg, wParam, lParam);
 			}
 		}
 		else
@@ -5549,9 +5542,9 @@ void CRealConsole::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 		return;
 
 	// Do not run excess ops when routing our msg to GUI application
-	if (hGuiWnd)
+	if (m_ChildGui.isGuiWnd())
 	{
-		PostConsoleMessage(hGuiWnd, messg, wParam, lParam);
+		PostConsoleMessage(m_ChildGui.hGuiWnd, messg, wParam, lParam);
 		return;
 	}
 
@@ -6240,9 +6233,9 @@ DWORD CRealConsole::GetActivePID()
 	if (!this)
 		return 0;
 
-	if (hGuiWnd)
+	if (m_ChildGui.hGuiWnd)
 	{
-		return mn_GuiWndPID;
+		return m_ChildGui.nGuiWndPID;
 	}
 
 	DWORD nPID = GetFarPID();
@@ -6388,9 +6381,9 @@ int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName/*=NULL*/)
 	}
 
 	LPCWSTR pszName = NULL;
-	if (nPID == mn_GuiWndPID)
+	if (nPID == m_ChildGui.nGuiWndPID)
 	{
-		pszName = ms_GuiWndProcess;
+		pszName = m_ChildGui.szGuiWndProcess;
 	}
 	else
 	{
@@ -7065,7 +7058,7 @@ void CRealConsole::ShowConsoleOrGuiClient(int nMode) // -1 Toggle 0 - Hide 1 - S
 
 	// В GUI-режиме (putty, notepad, ...) CtrlWinAltSpace "переключает" привязку (делает detach/attach)
 	// Но только в том случае, если НЕ включен "буферный" режим (GUI скрыто, показан текст консоли сервера)
-	if (hGuiWnd && isGuiVisible())
+	if (m_ChildGui.hGuiWnd && isGuiVisible())
 	{
 		ShowGuiClientExt(nMode);
 	}
@@ -7077,33 +7070,32 @@ void CRealConsole::ShowConsoleOrGuiClient(int nMode) // -1 Toggle 0 - Hide 1 - S
 
 void CRealConsole::ShowGuiClientInt(bool bShow)
 {
-	if (bShow && hGuiWnd && IsWindow(hGuiWnd))
+	if (bShow && m_ChildGui.hGuiWnd && IsWindow(m_ChildGui.hGuiWnd))
 	{
-		mb_GuiForceConView = false;
-		ShowOtherWindow(hGuiWnd, SW_SHOW);
+		m_ChildGui.bGuiForceConView = false;
+		ShowOtherWindow(m_ChildGui.hGuiWnd, SW_SHOW);
 		ShowWindow(GetView(), SW_HIDE);
 	}
 	else
 	{
-		mb_GuiForceConView = true;
+		m_ChildGui.bGuiForceConView = true;
 		ShowWindow(GetView(), SW_SHOW);
-		if (hGuiWnd && IsWindow(hGuiWnd))
-			ShowOtherWindow(hGuiWnd, SW_HIDE);
+		if (m_ChildGui.hGuiWnd && IsWindow(m_ChildGui.hGuiWnd))
+			ShowOtherWindow(m_ChildGui.hGuiWnd, SW_HIDE);
 		mp_VCon->Invalidate();
 	}
 }
 
 void CRealConsole::ChildSystemMenu()
 {
-	if (!this || !hGuiWnd)
+	if (!this || !m_ChildGui.hGuiWnd)
 		return;
 
 	//Seems like we need to bring focus to ConEmu window before
 	SetForegroundWindow(ghWnd);
 	gpConEmu->setFocus();
 
-	//PostConsoleMessage(hGuiWnd, WM_SYSCOMMAND, SC_KEYMENU, 0);
-	HMENU hSysMenu = GetSystemMenu(hGuiWnd, FALSE);
+	HMENU hSysMenu = GetSystemMenu(m_ChildGui.hGuiWnd, FALSE);
 	if (hSysMenu)
 	{
 		POINT ptCur = {}; MapWindowPoints(mp_VCon->GetBack(), NULL, &ptCur, 1);
@@ -7111,7 +7103,7 @@ void CRealConsole::ChildSystemMenu()
 			ptCur.x, ptCur.y, ghWnd, NULL);
 		if (nCmd)
 		{
-			PostConsoleMessage(hGuiWnd, WM_SYSCOMMAND, nCmd, 0);
+			PostConsoleMessage(m_ChildGui.hGuiWnd, WM_SYSCOMMAND, nCmd, 0);
 		}
 	}
 }
@@ -7122,12 +7114,12 @@ void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 T
 
 	// В GUI-режиме (putty, notepad, ...) CtrlWinAltSpace "переключает" привязку (делает detach/attach)
 	// Но только в том случае, если НЕ включен "буферный" режим (GUI скрыто, показан текст консоли сервера)
-	if (!hGuiWnd)
+	if (!m_ChildGui.hGuiWnd)
 		return;
 
 	if (nMode == -1)
 	{
-		nMode = mb_GuiExternMode ? 0 : 1;
+		nMode = m_ChildGui.bGuiExternMode ? 0 : 1;
 	}
 
 	bool bPrev = gpConEmu->SetSkipOnFocus(true);
@@ -7136,16 +7128,16 @@ void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 T
 	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETGUIEXTERN, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETGUIEXTERN));
 	if (pIn)
 	{
-		AllowSetForegroundWindow(mn_GuiWndPID);
+		AllowSetForegroundWindow(m_ChildGui.nGuiWndPID);
 
 		//pIn->dwData[0] = (nMode == 0) ? FALSE : TRUE;
 		pIn->SetGuiExtern.bExtern = (nMode == 0) ? FALSE : TRUE;
 		pIn->SetGuiExtern.bDetach = bDetach;
 
-		CESERVER_REQ *pOut = ExecuteHkCmd(mn_GuiWndPID, pIn, ghWnd);
+		CESERVER_REQ *pOut = ExecuteHkCmd(m_ChildGui.nGuiWndPID, pIn, ghWnd);
 		if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
 		{
-			mb_GuiExternMode = pOut->dwData[0];
+			m_ChildGui.bGuiExternMode = (pOut->dwData[0] != 0);
 		}
 		ExecuteFreeResult(pOut);
 		ExecuteFreeResult(pIn);
@@ -7154,11 +7146,11 @@ void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 T
 		{
 			wchar_t sInfo[200];
 			_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"ShowGuiClientExtern: PID=%u, hGuiWnd=x%08X, bExtern=%i, bDetach=%u",
-				mn_GuiWndPID, (DWORD)hGuiWnd, nMode, bDetach);
+				m_ChildGui.nGuiWndPID, (DWORD)m_ChildGui.hGuiWnd, nMode, bDetach);
 	        gpConEmu->LogString(sInfo);
 		}
 
-		SetOtherWindowPos(hGuiWnd, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+		SetOtherWindowPos(m_ChildGui.hGuiWnd, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	}
 
 	gpConEmu->SetSkipOnFocus(bPrev);
@@ -8378,7 +8370,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	//	gpConEmu->Taskbar_SetShield(isAdministrator());
 	gpConEmu->Taskbar_UpdateOverlay();
 
-	if (hGuiWnd && !mb_GuiExternMode)
+	if (m_ChildGui.hGuiWnd && !m_ChildGui.bGuiExternMode)
 	{
 		// SyncConsole2Window, SyncGui2Window
 		gpConEmu->OnSize();
@@ -8463,7 +8455,7 @@ void CRealConsole::OnDeactivate(int nNewNum)
 	OnGuiFocused(FALSE);
 
 	if ((hFore == ghWnd) // фокус был в ConEmu
-		|| (hGuiWnd && (hFore == hGuiWnd))) // или в дочернем приложении
+		|| (m_ChildGui.isGuiWnd() && (hFore == m_ChildGui.hGuiWnd))) // или в дочернем приложении
 	{
 		gpConEmu->setFocus();
 	}
@@ -8474,7 +8466,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 	if (!this)
 		return;
 
-	if (mb_InSetFocus)
+	if (m_ChildGui.bInSetFocus)
 	{
 		#ifdef _DEBUG
 		wchar_t szInfo[128];
@@ -8486,13 +8478,13 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 		return;
 	}
 
-	mb_InSetFocus = TRUE;
+	m_ChildGui.bInSetFocus = true;
 
 	if (abFocus)
 	{
 		mp_VCon->OnTaskbarFocus();
 
-		if (hGuiWnd)
+		if (m_ChildGui.hGuiWnd)
 		{
 			if (abForceChild)
 			{
@@ -8500,13 +8492,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 				HWND hFore = getForegroundWindow();
 				DWORD nForePID = 0;
 				if (hFore) GetWindowThreadProcessId(hFore, &nForePID);
-				if (mn_GuiWndPID != nForePID /*|| abForceChild*/)
-				{
-					//SetOtherWindowFocus(hGuiWnd, FALSE/*use SetFocus*/);
-					//--SetFocus(hGuiWnd);
-					//PostConsoleMessage(hConWnd, WM_SETFOCUS, NULL, NULL);
-					//SetForegroundWindow(hGuiWnd);
-				}
+				// if (m_ChildGui.nGuiWndPID != nForePID) { }
 				#endif
 
 				GuiNotifyChildWindow();
@@ -8568,7 +8554,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 	DEBUGSTRALTSRV(L"--> Updating active was skipped\n");
 #endif
 
-	mb_InSetFocus = FALSE;
+	m_ChildGui.bInSetFocus = false;
 }
 
 // Обновить в сервере флаги Active & ThawRefreshThread,
@@ -9215,19 +9201,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	if (!this)
 		return false;
 
-	//if (hGuiWnd)
-	//{
-	//	if (tabIdx == 0)
-	//	{
-	//		pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
-	//		int nMaxLen = min(countof(TitleFull) , countof(pTab->Name));
-	//		GetWindowText(hGuiWnd, pTab->Name, nMaxLen);
-	//		return true;
-	//	}
-	//	return false;
-	//}
-
-	if (!mp_tabs || tabIdx<0 || tabIdx>=mn_tabsCount || hGuiWnd)
+	if (!mp_tabs || tabIdx<0 || tabIdx>=mn_tabsCount || m_ChildGui.hGuiWnd)
 	{
 		// На всякий случай, даже если табы не инициализированы, а просят первый -
 		// вернем просто заголовок консоли
@@ -9761,7 +9735,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 {
 	if (!this) return;
 
-	if (hGuiWnd && dwNewKeyboardLayout)
+	if (m_ChildGui.hGuiWnd && dwNewKeyboardLayout)
 	{
 		#ifdef _DEBUG
 		WCHAR szMsg[255];
@@ -9777,7 +9751,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 
 			DWORD dwTickStart = timeGetTime();
 
-			CESERVER_REQ *pOut = ExecuteHkCmd(mn_GuiWndPID, pIn, ghWnd);
+			CESERVER_REQ *pOut = ExecuteHkCmd(m_ChildGui.nGuiWndPID, pIn, ghWnd);
 
 			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteHkCmd", pOut);
 
@@ -10058,7 +10032,7 @@ bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation, bool bForceAsk /*= f
 		Parm.nConsoles = 1;
 		Parm.nOperations = (GetProgress(NULL,NULL)>=0) ? 1 : 0;
 		Parm.nUnsavedEditors = GetModifiedEditors();
-		Parm.asSingleConsole = asConfirmation ? asConfirmation : hGuiWnd ? gsCloseGui : gsCloseCon;
+		Parm.asSingleConsole = asConfirmation ? asConfirmation : m_ChildGui.isGuiWnd() ? gsCloseGui : gsCloseCon;
 		Parm.asSingleTitle = Title;
 
 		nBtn = ConfirmCloseConsoles(Parm);
@@ -10083,14 +10057,14 @@ void CRealConsole::CloseConsoleWindow(bool abConfirm)
 {
 	if (abConfirm)
 	{
-		if (!isCloseConfirmed(hGuiWnd ? gsCloseGui : gsCloseCon))
+		if (!isCloseConfirmed(m_ChildGui.isGuiWnd() ? gsCloseGui : gsCloseCon))
 			return;
 	}
 
 	mb_InCloseConsole = TRUE;
-	if (hGuiWnd)
+	if (m_ChildGui.isGuiWnd())
 	{
-		PostConsoleMessage(hGuiWnd, WM_CLOSE, 0, 0);
+		PostConsoleMessage(m_ChildGui.hGuiWnd, WM_CLOSE, 0, 0);
 	}
 	else
 	{
@@ -11318,13 +11292,13 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 {
 	if (!this) return NULL;
 
-	if (mn_GuiWndPID && !hGuiWnd)
+	if (m_ChildGui.nGuiWndPID && !m_ChildGui.hGuiWnd)
 	{
 		// Если GUI приложение запущено во вкладке, и аттач выполняется НЕ из ConEmuHk.dll
 		HWND hBack = mp_VCon->GetBack();
 		HWND hChild = NULL;
 		DEBUGTEST(DWORD nSelf = GetCurrentProcessId());
-		_ASSERTE(nSelf != mn_GuiWndPID);
+		_ASSERTE(nSelf != m_ChildGui.nGuiWndPID);
 
 		while ((hChild = FindWindowEx(hBack, hChild, NULL, NULL)) != NULL)
 		{
@@ -11336,7 +11310,7 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 
 			if (GetWindowThreadProcessId(hChild, &nChild))
 			{
-				if (nChild == mn_GuiWndPID)
+				if (nChild == m_ChildGui.nGuiWndPID)
 				{
 					break;
 				}
@@ -11348,7 +11322,7 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 			// Если создается диалог (подключение PuTTY например)
 			// то он тоже должен быть OnTop, иначе вообще виден не будет
 			struct FindChildGuiWindowArg arg = {};
-			arg.nPID = mn_GuiWndPID;
+			arg.nPID = m_ChildGui.nGuiWndPID;
 			EnumWindows(FindChildGuiWindowProc, (LPARAM)&arg);
 			if (arg.hDlg)
 			{
@@ -11365,7 +11339,7 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 		{
 			DWORD nStyle = ::GetWindowLong(hChild, GWL_STYLE), nStyleEx = ::GetWindowLong(hChild, GWL_EXSTYLE);
 			RECT rcChild; GetWindowRect(hChild, &rcChild);
-			SetGuiMode(mn_GuiAttachFlags|agaf_Self, hChild, nStyle, nStyleEx, ms_GuiWndProcess, mn_GuiWndPID, rcChild);
+			SetGuiMode(m_ChildGui.nGuiAttachFlags|agaf_Self, hChild, nStyle, nStyleEx, m_ChildGui.szGuiWndProcess, m_ChildGui.nGuiWndPID, rcChild);
 		}
 	}
 
@@ -11456,38 +11430,38 @@ HWND CRealConsole::GetView()
 // Если работаем в Gui-режиме (Notepad, Putty, ...)
 HWND CRealConsole::GuiWnd()
 {
-	if (!this)
+	if (!this || !m_ChildGui.isGuiWnd())
 		return NULL;
-	return hGuiWnd;
+	return m_ChildGui.hGuiWnd;
 }
 DWORD CRealConsole::GuiWndPID()
 {
-	if (!this || !hGuiWnd)
+	if (!this || !m_ChildGui.hGuiWnd)
 		return 0;
-	return mn_GuiWndPID;
+	return m_ChildGui.nGuiWndPID;
 }
 bool CRealConsole::isGuiForceConView()
 {
-	return mb_GuiForceConView;
+	return m_ChildGui.bGuiForceConView;
 }
 
 // При движении окна ConEmu - нужно подергать дочерние окошки
 // Иначе PuTTY глючит с обработкой мышки
 void CRealConsole::GuiNotifyChildWindow()
 {
-	if (!this || !hGuiWnd || mb_GuiExternMode)
+	if (!this || !m_ChildGui.hGuiWnd || m_ChildGui.bGuiExternMode)
 		return;
 
-	DEBUGTEST(BOOL bValid1 = IsWindow(hGuiWnd));
+	DEBUGTEST(BOOL bValid1 = IsWindow(m_ChildGui.hGuiWnd));
 
-	if (!IsWindowVisible(hGuiWnd))
+	if (!IsWindowVisible(m_ChildGui.hGuiWnd))
 		return;
 
 	RECT rcCur = {};
-	if (!GetWindowRect(hGuiWnd, &rcCur))
+	if (!GetWindowRect(m_ChildGui.hGuiWnd, &rcCur))
 		return;
 
-	if (memcmp(&mrc_LastGuiWnd, &rcCur, sizeof(rcCur)) == 0)
+	if (memcmp(&m_ChildGui.rcLastGuiWnd, &rcCur, sizeof(rcCur)) == 0)
 		return; // ConEmu не двигалось
 
 	StoreGuiChildRect(&rcCur); // Сразу запомнить
@@ -11495,12 +11469,12 @@ void CRealConsole::GuiNotifyChildWindow()
 	HWND hBack = mp_VCon->GetBack();
 	MapWindowPoints(NULL, hBack, (LPPOINT)&rcCur, 2);
 
-	DEBUGTEST(BOOL bValid2 = IsWindow(hGuiWnd));
+	DEBUGTEST(BOOL bValid2 = IsWindow(m_ChildGui.hGuiWnd));
 
-	SetOtherWindowPos(hGuiWnd, NULL, rcCur.left, rcCur.top, rcCur.right-rcCur.left+1, rcCur.bottom-rcCur.top+1, SWP_NOZORDER);
-	SetOtherWindowPos(hGuiWnd, NULL, rcCur.left, rcCur.top, rcCur.right-rcCur.left, rcCur.bottom-rcCur.top, SWP_NOZORDER);
+	SetOtherWindowPos(m_ChildGui.hGuiWnd, NULL, rcCur.left, rcCur.top, rcCur.right-rcCur.left+1, rcCur.bottom-rcCur.top+1, SWP_NOZORDER);
+	SetOtherWindowPos(m_ChildGui.hGuiWnd, NULL, rcCur.left, rcCur.top, rcCur.right-rcCur.left, rcCur.bottom-rcCur.top, SWP_NOZORDER);
 
-	DEBUGTEST(BOOL bValid3 = IsWindow(hGuiWnd));
+	DEBUGTEST(BOOL bValid3 = IsWindow(m_ChildGui.hGuiWnd));
 
 	//RECT rcChild = {};
 	//GetWindowRect(hGuiWnd, &rcChild);
@@ -11517,7 +11491,7 @@ void CRealConsole::GuiNotifyChildWindow()
 
 void CRealConsole::GuiWndFocusStore()
 {
-	if (!this || !hGuiWnd)
+	if (!this || !m_ChildGui.hGuiWnd)
 		return;
 
 	GUITHREADINFO gti = {sizeof(gti)};
@@ -11525,7 +11499,7 @@ void CRealConsole::GuiWndFocusStore()
 	DWORD nPID = 0, nGetPID = 0, nErr = 0;
 	BOOL bAttached = FALSE, bAttachCalled = FALSE;
 
-	DWORD nTID = GetWindowThreadProcessId(hGuiWnd, &nPID);
+	DWORD nTID = GetWindowThreadProcessId(m_ChildGui.hGuiWnd, &nPID);
 
 	DEBUGTEST(BOOL bGuiInfo = )
 	GetGUIThreadInfo(nTID, &gti);
@@ -11535,7 +11509,7 @@ void CRealConsole::GuiWndFocusStore()
 		GetWindowThreadProcessId(gti.hwndFocus, &nGetPID);
 		if (nGetPID != GetCurrentProcessId())
 		{
-			mh_GuiWndFocusStore = gti.hwndFocus;
+			m_ChildGui.hGuiWndFocusStore = gti.hwndFocus;
 
 			GuiWndFocusThread(gti.hwndFocus, bAttached, bAttachCalled, nErr);
 
@@ -11546,7 +11520,7 @@ void CRealConsole::GuiWndFocusStore()
 	if (gpSetCls->isAdvLogging)
 	{
 		wchar_t szInfo[100];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GuiWndFocusStore for PID=%u, hWnd=x%08X", nPID, (DWORD)mh_GuiWndFocusStore);
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GuiWndFocusStore for PID=%u, hWnd=x%08X", nPID, (DWORD)m_ChildGui.hGuiWndFocusStore);
 		gpConEmu->LogString(szInfo);
 	}
 }
@@ -11554,7 +11528,7 @@ void CRealConsole::GuiWndFocusStore()
 // Если (bForce == false) - то по "настройкам", юзер мог просить переключиться в ConEmu
 void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 {
-	if (!this || !hGuiWnd)
+	if (!this || !m_ChildGui.hGuiWnd)
 		return;
 
 	// Temp workaround for Issue 876: Ctrl+N and Win-Alt-Delete hotkey randomly break
@@ -11567,7 +11541,7 @@ void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 	BOOL bAttached = FALSE;
 	DWORD nErr = 0;
 
-	HWND hSetFocus = mh_GuiWndFocusStore ? mh_GuiWndFocusStore : hGuiWnd;
+	HWND hSetFocus = m_ChildGui.hGuiWndFocusStore ? m_ChildGui.hGuiWndFocusStore : m_ChildGui.hGuiWnd;
 
 	if (hSetFocus && IsWindow(hSetFocus))
 	{
@@ -11581,7 +11555,7 @@ void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 
 		wchar_t sInfo[200];
 		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"GuiWndFocusRestore to x%08X, hGuiWnd=x%08X, Attach=%s, Err=%u",
-			(DWORD)hSetFocus, (DWORD)hGuiWnd,
+			(DWORD)hSetFocus, (DWORD)m_ChildGui.hGuiWnd,
 			bAttachCalled ? (bAttached ? L"Called" : L"Failed") : L"Skipped", nErr);
 		DEBUGSTRFOCUS(sInfo);
         gpConEmu->LogString(sInfo);
@@ -11594,7 +11568,7 @@ void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 
 void CRealConsole::GuiWndFocusThread(HWND hSetFocus, BOOL& bAttached, BOOL& bAttachCalled, DWORD& nErr)
 {
-	if (!this || !hGuiWnd)
+	if (!this || !m_ChildGui.hGuiWnd)
 		return;
 
 	bAttached = FALSE;
@@ -11604,14 +11578,16 @@ void CRealConsole::GuiWndFocusThread(HWND hSetFocus, BOOL& bAttached, BOOL& bAtt
 
 	bAttachCalled = FALSE;
 	DWORD nTID = GetWindowThreadProcessId(hSetFocus, NULL);
-	if (nTID != mn_GuiAttachInputTID)
+	if (nTID != m_ChildGui.nGuiAttachInputTID)
 	{
 		// Надо, иначе не получится "передать" фокус в дочернее окно GUI приложения
 		bAttached = AttachThreadInput(nTID, nMainTID, TRUE);
+
 		if (!bAttached)
 			nErr = GetLastError();
 		else
-			mn_GuiAttachInputTID = nTID;
+			m_ChildGui.nGuiAttachInputTID = nTID;
+
 		bAttachCalled = TRUE;
 	}
 	else
@@ -11624,9 +11600,9 @@ void CRealConsole::GuiWndFocusThread(HWND hSetFocus, BOOL& bAttached, BOOL& bAtt
 // Вызывается после завершения вставки дочернего GUI-окна в ConEmu
 void CRealConsole::StoreGuiChildRect(LPRECT prcNewPos)
 {
-	if (!this || !hGuiWnd)
+	if (!this || !m_ChildGui.hGuiWnd)
 	{
-		_ASSERTE(this && hGuiWnd);
+		_ASSERTE(this && m_ChildGui.hGuiWnd);
 		return;
 	}
 
@@ -11638,17 +11614,17 @@ void CRealConsole::StoreGuiChildRect(LPRECT prcNewPos)
 	}
 	else
 	{
-		GetWindowRect(hGuiWnd, &rcChild);
+		GetWindowRect(m_ChildGui.hGuiWnd, &rcChild);
 	}
 
 	#ifdef _DEBUG
-	if (memcmp(&mrc_LastGuiWnd, &rcChild, sizeof(rcChild)) != 0)
+	if (memcmp(&m_ChildGui.rcLastGuiWnd, &rcChild, sizeof(rcChild)) != 0)
 	{
 		DEBUGSTRGUICHILDPOS(L"CRealConsole::StoreGuiChildRect");
 	}
 	#endif
 
-	mrc_LastGuiWnd = rcChild;
+	m_ChildGui.rcLastGuiWnd = rcChild;
 }
 
 void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev)
@@ -11659,14 +11635,14 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 		return;
 	}
 
-	if ((hGuiWnd != NULL) && !IsWindow(hGuiWnd))
+	if ((m_ChildGui.hGuiWnd != NULL) && !IsWindow(m_ChildGui.hGuiWnd))
 	{
 		setGuiWnd(NULL); // окно закрылось, открылось другое
 	}
 
-	if (hGuiWnd != NULL && hGuiWnd != ahGuiWnd)
+	if (m_ChildGui.hGuiWnd != NULL && m_ChildGui.hGuiWnd != ahGuiWnd)
 	{
-		Assert(hGuiWnd==NULL);
+		Assert(m_ChildGui.hGuiWnd==NULL);
 		return;
 	}
 
@@ -11729,27 +11705,25 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 
 	// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
 	// А может и три, если при вызове ShowWindow оказалось что SetParent пролетел (XmlNotepad)
-	if (hGuiWnd == NULL)
+	if (m_ChildGui.hGuiWnd == NULL)
 	{
-		rcPreGuiWndRect = arcPrev;
+		m_ChildGui.rcPreGuiWndRect = arcPrev;
 	}
 	// ahGuiWnd может быть на первом этапе, когда ConEmuHk уведомляет - запустился GUI процесс
-	_ASSERTE((hGuiWnd==NULL && ahGuiWnd==NULL) || (ahGuiWnd && IsWindow(ahGuiWnd))); // Проверить, чтобы мусор не пришел...
+	_ASSERTE((m_ChildGui.hGuiWnd==NULL && ahGuiWnd==NULL) || (ahGuiWnd && IsWindow(ahGuiWnd))); // Проверить, чтобы мусор не пришел...
 	setGuiWnd(ahGuiWnd);
 	GuiWndFocusStore();
-	mn_GuiAttachFlags = anFlags;
-	//mn_GuiApplicationPID = anAppPID;
-	//mn_GuiWndPID = anAppPID;
+	m_ChildGui.nGuiAttachFlags = anFlags;
 	setGuiWndPID(anAppPID, PointToName(asAppFileName)); // устанавливает mn_GuiWndPID
-	mn_GuiWndStyle = anStyle; mn_GuiWndStylEx = anStyleEx;
-	mb_GuiExternMode = FALSE;
+	m_ChildGui.nGuiWndStyle = anStyle; m_ChildGui.nGuiWndStylEx = anStyleEx;
+	m_ChildGui.bGuiExternMode = false;
 	ShowWindow(GetView(), SW_HIDE); // Остается видим только Back, в нем создается GuiClient
 
 #ifdef _DEBUG
 	mp_VCon->CreateDbgDlg();
 #endif
 
-	// Ставим после "hGuiWnd = ahGuiWnd", т.к. для гуй-приложений логика кнопки другая.
+	// Ставим после "m_ChildGui.hGuiWnd = ahGuiWnd", т.к. для гуй-приложений логика кнопки другая.
 	if (isActive())
 	{
 		// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
@@ -11769,7 +11743,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	In.AttachGuiApp.Styles.nStyle = anStyle;
 	In.AttachGuiApp.Styles.nStyleEx = anStyleEx;
 	ZeroStruct(In.AttachGuiApp.Styles.Shifts);
-	CorrectGuiChildRect(In.AttachGuiApp.Styles.nStyle, In.AttachGuiApp.Styles.nStyleEx, In.AttachGuiApp.Styles.Shifts, ms_GuiWndProcess);
+	CorrectGuiChildRect(In.AttachGuiApp.Styles.nStyle, In.AttachGuiApp.Styles.nStyleEx, In.AttachGuiApp.Styles.Shifts, m_ChildGui.szGuiWndProcess);
 	In.AttachGuiApp.nPID = anAppPID;
 	if (asAppFileName)
 		wcscpy_c(In.AttachGuiApp.sAppFileName, asAppFileName);
@@ -11782,9 +11756,9 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 
 	if (pOut) ExecuteFreeResult(pOut);
 
-	if (hGuiWnd)
+	if (m_ChildGui.hGuiWnd)
 	{
-		mb_InGuiAttaching = TRUE;
+		m_ChildGui.bInGuiAttaching = true;
 		HWND hDcWnd = mp_VCon->GetView();
 		RECT rcDC; ::GetWindowRect(hDcWnd, &rcDC);
 		MapWindowPoints(NULL, hDcWnd, (LPPOINT)&rcDC, 2);
@@ -11792,7 +11766,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 		ValidateRect(hDcWnd, &rcDC);
 
 		DWORD nPID = 0;
-		DWORD nTID = GetWindowThreadProcessId(hGuiWnd, &nPID);
+		DWORD nTID = GetWindowThreadProcessId(m_ChildGui.hGuiWnd, &nPID);
 		_ASSERTE(nPID == anAppPID);
 		AllowSetForegroundWindow(nPID);
 		UNREFERENCED_PARAMETER(nTID);
@@ -11806,8 +11780,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 
 		// Хм. Окошко еще не внедрено в ConEmu, смысл отдавать фокус в другое приложение?
 		// SetFocus не сработает - другой процесс
-		//SetOtherWindowFocus(hGuiWnd, TRUE/*use apiSetForegroundWindow*/);
-		apiSetForegroundWindow(hGuiWnd);
+		apiSetForegroundWindow(m_ChildGui.hGuiWnd);
 
 
 		// Запомнить будущие координаты
@@ -11821,7 +11794,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 		StoreGuiChildRect(&rcChild);
 
 
-		GetWindowText(hGuiWnd, Title, countof(Title)-2);
+		GetWindowText(m_ChildGui.hGuiWnd, Title, countof(Title)-2);
 		wcscpy_c(TitleFull, Title);
 		TitleAdmin[0] = 0;
 		mb_ForceTitleChanged = FALSE;
@@ -12496,7 +12469,7 @@ LPCWSTR CRealConsole::GetConStatus()
 		_ASSERTE(this);
 		return NULL;
 	}
-	if (hGuiWnd)
+	if (m_ChildGui.hGuiWnd)
 		return NULL;
 	return ms_ConStatus;
 }
@@ -12912,22 +12885,22 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 
 	LogString(L"CRealConsole::Detach", TRUE);
 
-	if (hGuiWnd)
+	if (m_ChildGui.hGuiWnd)
 	{
 		if (!bPosted)
 		{
 			if (MsgBox(L"Detach GUI application from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES)
 				return;
 
-			RECT rcGui = {}; //rcPreGuiWndRect;
-			GetWindowRect(hGuiWnd, &rcGui); // Логичнее все же оставить приложение в том же месте
-			rcPreGuiWndRect = rcGui;
+			RECT rcGui = {};
+			GetWindowRect(m_ChildGui.hGuiWnd, &rcGui); // Логичнее все же оставить приложение в том же месте а не ставить в m_ChildGui.rcPreGuiWndRect
+			m_ChildGui.rcPreGuiWndRect = rcGui;
 
 			ShowGuiClientExt(1, TRUE);
 
-			ShowOtherWindow(hGuiWnd, SW_HIDE, FALSE/*синхронно*/);
-			SetOtherWindowParent(hGuiWnd, NULL);
-			SetOtherWindowPos(hGuiWnd, HWND_NOTOPMOST, rcGui.left, rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top, SWP_SHOWWINDOW);
+			ShowOtherWindow(m_ChildGui.hGuiWnd, SW_HIDE, FALSE/*синхронно*/);
+			SetOtherWindowParent(m_ChildGui.hGuiWnd, NULL);
+			SetOtherWindowPos(m_ChildGui.hGuiWnd, HWND_NOTOPMOST, rcGui.left, rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top, SWP_SHOWWINDOW);
 
 			mp_VCon->PostDetach(bSendCloseConsole);
 			return;
@@ -12935,12 +12908,12 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 
 		//#ifdef _DEBUG
 		//WINDOWPLACEMENT wpl = {sizeof(wpl)};
-		//GetWindowPlacement(hGuiWnd, &wpl); // дает клиентские координаты
+		//GetWindowPlacement(m_ChildGui.hGuiWnd, &wpl); // дает клиентские координаты
 		//#endif
 
-		HWND lhGuiWnd = hGuiWnd;
-		//RECT rcGui = rcPreGuiWndRect;
-		//GetWindowRect(hGuiWnd, &rcGui); // Логичнее все же оставить приложение в том же месте
+		HWND lhGuiWnd = m_ChildGui.hGuiWnd;
+		//RECT rcGui = m_ChildGui.rcPreGuiWndRect;
+		//GetWindowRect(m_ChildGui.hGuiWnd, &rcGui); // Логичнее все же оставить приложение в том же месте
 
 		//ShowGuiClientExt(1, TRUE);
 
@@ -13251,29 +13224,29 @@ void CRealConsole::setGuiWnd(HWND ahGuiWnd)
 {
 	if (ahGuiWnd)
 	{
-		hGuiWnd = ahGuiWnd;
+		m_ChildGui.hGuiWnd = ahGuiWnd;
 		//Useless, because ahGuiWnd is invisible yet and scrolling will be revealed in TrackMouse
 		//mp_VCon->HideScroll(TRUE);
 	}
 	else
 	{
-		hGuiWnd = mh_GuiWndFocusStore = NULL;
+		m_ChildGui.hGuiWnd = m_ChildGui.hGuiWndFocusStore = NULL;
 	}
 }
 
 void CRealConsole::setGuiWndPID(DWORD anPID, LPCWSTR asProcessName)
 {
-	mn_GuiWndPID = anPID;
+	m_ChildGui.nGuiWndPID = anPID;
 
-	if (asProcessName != ms_GuiWndProcess)
+	if (asProcessName != m_ChildGui.szGuiWndProcess)
 	{
-		lstrcpyn(ms_GuiWndProcess, asProcessName ? asProcessName : L"", countof(ms_GuiWndProcess));
+		lstrcpyn(m_ChildGui.szGuiWndProcess, asProcessName ? asProcessName : L"", countof(m_ChildGui.szGuiWndProcess));
 	}
 
 	if (gpSetCls->isAdvLogging)
 	{
 		wchar_t szInfo[MAX_PATH+100];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"setGuiWndPID: PID=%u, '%s'", anPID, ms_GuiWndProcess);
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"setGuiWndPID: PID=%u, '%s'", anPID, m_ChildGui.szGuiWndProcess);
 		gpConEmu->LogString(szInfo);
 	}
 }
