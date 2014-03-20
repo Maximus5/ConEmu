@@ -242,13 +242,18 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 		}
 		else
 		{
+			const DWORD dwNormalSized = (WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX); // Some applications can 'disable' Maximize button but they are still 'resizeable'
+			const DWORD dwDlgSized = (WS_POPUP|WS_THICKFRAME);
+			const DWORD dwSizedMask = (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_POPUP|DS_MODALFRAME|WS_CHILDWINDOW);
+			const DWORD dwNoCaptionSized = (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX);
+			// Lets check
 			bool lbCanAttach =
-							// Обычное окно с заголовком
-							((dwStyle & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW)
-							// Диалог с ресайзом рамки
-							|| ((dwStyle & (WS_POPUP|WS_THICKFRAME)) == (WS_POPUP|WS_THICKFRAME))
-							// Обычное окно без заголовка
-							|| ((dwStyle & (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_POPUP|DS_MODALFRAME|WS_CHILDWINDOW)) == (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX)) 
+							// Обычное окно с заголовком (0x00CF0000 or 0x00CE0000)
+							((dwStyle & dwNormalSized) == dwNormalSized)
+							// Диалог с ресайзом рамки (0x80040000)
+							|| ((dwStyle & dwDlgSized) == dwDlgSized)
+							// Обычное окно без заголовка (0xC0070080 : 0x00070000)
+							|| ((dwStyle & dwSizedMask) == dwNoCaptionSized)
 							;
 			if (dwStyle & (DS_MODALFRAME|WS_CHILDWINDOW))
 				lbCanAttach = false;
