@@ -1923,7 +1923,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_PEEKREADINFO PeekReadInfo;
 		MyAssertInfo AssertInfo;
 		CESERVER_REQ_ATTACHGUIAPP AttachGuiApp;
-		struct GuiStylesAndShifts GuiAppShifts;
+		GuiStylesAndShifts GuiAppShifts;
 		CESERVER_REQ_SETFOCUS setFocus;
 		CESERVER_REQ_SETPARENT setParent;
 		CESERVER_REQ_SETGUIEXTERN SetGuiExtern;
