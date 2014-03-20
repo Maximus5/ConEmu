@@ -320,7 +320,7 @@ class CRealConsole
 		BOOL PreInit();
 		void DumpConsole(HANDLE ahFile);
 		bool LoadDumpConsole(LPCWSTR asDumpFile);
-		
+
 		RealBufferType GetActiveBufferType();
 		bool SetActiveBuffer(RealBufferType aBufferType);
 
@@ -562,7 +562,7 @@ class CRealConsole
 		void AdminDuplicate();
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
 		bool InCreateRoot();
-		bool InRecreate(); 
+		bool InRecreate();
 		BOOL GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID);
 		//LPCWSTR GetLngNameTime();
 		void ShowPropertiesDialog();
@@ -602,7 +602,7 @@ class CRealConsole
 		// Пайп консольного ввода
 		wchar_t ms_ConEmuCInput_Pipe[MAX_PATH];
 		HANDLE mh_ConInputPipe; // wsprintf(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID)
-		
+
 		BOOL mb_InCreateRoot;
 		BOOL mb_UseOnlyPipeInput;
 		TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_MainSrv_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
@@ -690,14 +690,14 @@ class CRealConsole
 		CRealBuffer* mp_SBuf; // Временный буфер (полный) для блокирования содержимого (выделение/прокрутка/поиск)
 		CRealBuffer* mp_ABuf; // Активный буфер консоли -- ссылка на один из mp_RBuf/mp_EBuf/mp_SBuf
 		bool mb_ABufChaged; // Сменился активный буфер, обновить консоль
-		
+
 		int mn_DefaultBufferHeight;
 		DWORD mn_LastInactiveRgnCheck;
 		#ifdef _DEBUG
 		BOOL mb_DebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
 		#endif
-		
-		
+
+
 		//BOOL mb_ThawRefreshThread;
 		struct ServerClosing
 		{
@@ -745,7 +745,7 @@ class CRealConsole
 
 		friend class CRealServer;
 		CRealServer m_RConServer;
-		
+
 		//void ApplyConsoleInfo(CESERVER_REQ* pInfo);
 		void SetHwnd(HWND ahConWnd, BOOL abForceApprove = FALSE);
 		WORD mn_LastVKeyPressed;
