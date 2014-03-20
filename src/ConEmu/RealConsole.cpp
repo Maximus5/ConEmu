@@ -4866,6 +4866,27 @@ void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
 	m_Term.Term = xTerm ? te_xterm : te_win32;
 }
 
+void CRealConsole::PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted)
+{
+	_ASSERTE(pStarted->hProcess == NULL && pStarted->nPID);
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"PortableStarted(nPID=%u, Subsystem=%u)", pStarted->nPID, pStarted->nSubsystem);
+		LogString(szInfo);
+	}
+
+	if (pStarted->nSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+	{
+		if (!hGuiWnd || !IsWindow(hGuiWnd))
+		{
+			mb_GuiForceConView = true;
+			ShowWindow(GetView(), SW_SHOW);
+			mp_VCon->Invalidate();
+		}
+	}
+}
+
 void CRealConsole::StopThread(BOOL abRecreating)
 {
 #ifdef _DEBUG

@@ -1427,6 +1427,18 @@ CESERVER_REQ* CRealServer::cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	return pOut;
 }
 
+CESERVER_REQ* CRealServer::cmdPortableStarted(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	DWORD nCmd = pIn->hdr.nCmd;
+	DEBUGSTRCMD(L"GUI recieved CECMD_PORTABLESTART\n");
+
+	// В свой процесс тоже засосать переменные, чтобы для новых табов применялись
+	mp_RCon->PortableStarted(&pIn->PortableStarted);
+
+	CESERVER_REQ* pOut = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR));
+	return pOut;
+}
+
 // Эта функция пайп не закрывает!
 //void CRealServer::ServerThreadCommand(HANDLE hPipe)
 BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
@@ -1534,6 +1546,9 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		break;
 	case CECMD_STARTXTERM:
 		pOut = pRSrv->cmdStartXTerm(pInst, pIn, nDataSize);
+		break;
+	case CECMD_PORTABLESTART:
+		pOut = pRSrv->cmdPortableStarted(pInst, pIn, nDataSize);
 		break;
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(pInst, pIn, nDataSize);

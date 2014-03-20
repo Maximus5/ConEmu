@@ -409,6 +409,8 @@ struct SrvInfo
 	DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
 	DWORD dwParentFarPID;
 
+	CESERVER_REQ_PORTABLESTARTED Portable;
+
 	HANDLE hMainServer; DWORD dwMainServerPID;
 	HANDLE hServerStartedEvent;
 

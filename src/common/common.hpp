@@ -387,6 +387,7 @@ const CECMD
 	//CECMD_DEFTERMSTARTED = 75, // Уведомить GUI, что инициализация хуков для Default Terminal была завершена -- не требуется, ConEmuC ждет успеха
 	CECMD_UPDCONMAPHDR   = 76, // AltServer не может менять CESERVER_CONSOLE_MAPPING_HDR во избежание конфликтов. Это делает только RM_MAINSERVER (req.ConInfo)
 	CECMD_SETCONSCRBUF   = 77, // CESERVER_REQ_SETCONSCRBUF - temporarily block active server reading thread to change console buffer size
+	CECMD_PORTABLESTART  = 78, // CESERVER_REQ_PORTABLESTARTED - used when XxxPortable.exe starts Xxx.exe (paf - kitty, tcc, etc.)
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1787,6 +1788,16 @@ struct CESERVER_REQ_ATTACHGUIAPP
 	wchar_t sAppFileName[MAX_PATH*2];
 };
 
+// CECMD_PORTABLESTART
+struct CESERVER_REQ_PORTABLESTARTED
+{
+	DWORD   nSubsystem;
+	DWORD   nImageBits;
+	HANDLE2 hProcess;
+	DWORD   nPID; // Для удобства
+	wchar_t sAppFileName[MAX_PATH];
+};
+
 // CECMD_SETFOCUS
 struct CESERVER_REQ_SETFOCUS
 {
@@ -1927,6 +1938,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_PEEKREADINFO PeekReadInfo;
 		MyAssertInfo AssertInfo;
 		CESERVER_REQ_ATTACHGUIAPP AttachGuiApp;
+		CESERVER_REQ_PORTABLESTARTED PortableStarted;
 		GuiStylesAndShifts GuiAppShifts;
 		CESERVER_REQ_SETFOCUS setFocus;
 		CESERVER_REQ_SETPARENT setParent;

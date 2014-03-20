@@ -1867,8 +1867,22 @@ int CShellProc::PrepareExecuteParms(
 		&& mb_isCurrentGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		&& ((anShowCmd == NULL) || (*anShowCmd != SW_HIDE)))
 	{
-		WARNING("Не забыть, что цеплять во вкладку нужно только если консоль запускается ВИДИМОЙ");
-		bForceNewConsole = true;
+		// 1. Цеплять во вкладку нужно только если консоль запускается ВИДИМОЙ
+		// 2. Если запускается, например, CommandPromptPortable.exe (GUI) то подцепить запускаемый CUI в уже существующую вкладку!
+		if (gbAttachGuiClient && !ghAttachGuiClient && (aCmd == eCreateProcess))
+		{
+			if (AttachServerConsole())
+			{
+				_ASSERTE(gnAttachPortableGuiCui==0);
+				gnAttachPortableGuiCui = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+				mb_NeedInjects = TRUE;
+				bForceNewConsole = false;
+			}
+		}
+		else
+		{
+			bForceNewConsole = true;
+		}
 	}
 	if (mb_isCurrentGuiClient && (bNewConsoleArg || bForceNewConsole) && !lbGuiApp)
 	{
@@ -1956,7 +1970,15 @@ int CShellProc::PrepareExecuteParms(
 	//lbGuiApp = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
 
 	if (lbGuiApp && !(bNewConsoleArg || bForceNewConsole || bVsNetHostRequested))
+	{
+		if (gbAttachGuiClient && !ghAttachGuiClient && (mn_ImageBits != 16) && (m_Args.InjectsDisable != crb_On))
+		{
+			_ASSERTE(gnAttachPortableGuiCui==0);
+			gnAttachPortableGuiCui = IMAGE_SUBSYSTEM_WINDOWS_GUI;
+			mb_NeedInjects = TRUE;
+		}
 		goto wrap; // гуй - не перехватывать (если только не указан "-new_console")
+	}
 
 	// Подставлять ConEmuC.exe нужно только для того, чтобы 
 	//	1. в фаре включить длинный буфер и запомнить длинный результат в консоли (ну и ConsoleAlias обработать)
@@ -2581,6 +2603,30 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 
 	if (abSucceeded)
 	{
+		if (gnAttachPortableGuiCui && gnServerPID)
+		{
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_PORTABLESTART, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PORTABLESTARTED));
+			if (pIn)
+			{
+				pIn->PortableStarted.nSubsystem = mn_ImageSubsystem;
+				pIn->PortableStarted.nImageBits = mn_ImageBits;
+				lstrcpyn(pIn->PortableStarted.sAppFileName, PointToName(ms_ExeTmp), countof(pIn->PortableStarted.sAppFileName));
+				pIn->PortableStarted.nPID = lpPI->dwProcessId;
+				HANDLE hServer = OpenProcess(PROCESS_DUP_HANDLE, FALSE, gnServerPID);
+				if (hServer)
+				{
+					HANDLE hDup = NULL;
+					DuplicateHandle(GetCurrentProcess(), lpPI->hProcess, hServer, &hDup, 0, FALSE, DUPLICATE_SAME_ACCESS);
+					pIn->PortableStarted.hProcess = hDup;
+					CloseHandle(hServer);
+				}
+
+				CESERVER_REQ* pOut = ExecuteSrvCmd(gnServerPID, pIn, NULL);
+				ExecuteFreeResult(pOut);
+				ExecuteFreeResult(pIn);
+			}
+		}
+
 		if (gbPrepareDefaultTerminal)
 		{
 			_ASSERTEX(!mb_NeedInjects);

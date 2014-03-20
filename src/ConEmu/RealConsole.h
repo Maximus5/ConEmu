@@ -391,6 +391,7 @@ class CRealConsole
 		void StopSignal();
 		void StopThread(BOOL abRecreating=FALSE);
 		void StartStopXTerm(DWORD nPID, bool xTerm);
+		void PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted);
 		bool InScroll();
 		BOOL isBufferHeight();
 		BOOL isAlternative();

@@ -6496,10 +6496,23 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		gpSrv->pnProcesses[0] = gnSelfPID;
 
 		HANDLE hRootProcess = gpSrv->hRootProcess;
+		DWORD  nRootPID = gpSrv->dwRootProcess;
 
 		if (hRootProcess)
 		{
-			if (WaitForSingleObject(hRootProcess, 0) == WAIT_OBJECT_0)
+			DWORD nRootWait = WaitForSingleObject(hRootProcess, 0);
+			// PortableApps?
+			if (nRootWait == WAIT_OBJECT_0)
+			{
+				if (gpSrv->Portable.hProcess)
+				{
+					nRootWait = WaitForSingleObject(gpSrv->Portable.hProcess, 0);
+					if (nRootWait == WAIT_TIMEOUT)
+						nRootPID = gpSrv->Portable.nPID;
+				}
+			}
+			// Ok, Check it
+			if (nRootWait == WAIT_OBJECT_0)
 			{
 				gpSrv->pnProcesses[1] = 0;
 				lbChanged = gpSrv->nProcessCount != 1;
@@ -6507,7 +6520,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 			}
 			else
 			{
-				gpSrv->pnProcesses[1] = gpSrv->dwRootProcess;
+				gpSrv->pnProcesses[1] = nRootPID;
 				lbChanged = gpSrv->nProcessCount != 2;
 				_ASSERTE(nExitQueryPlace == 0);
 				gpSrv->nProcessCount = 2;
@@ -8408,6 +8421,37 @@ BOOL cmd_SetConScrBuf(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_PortableStarted(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+
+	if (in.DataSize() == sizeof(gpSrv->Portable))
+	{
+		gpSrv->Portable = in.PortableStarted;
+		CheckProcessCount(TRUE);
+		// For example, CommandPromptPortable.exe starts cmd.exe
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_PORTABLESTART, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PORTABLESTARTED));
+		if (pIn)
+		{
+			pIn->PortableStarted = in.PortableStarted;
+			pIn->PortableStarted.hProcess = NULL; // hProcess is valid for our server only
+			CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+			ExecuteFreeResult(pOut);
+			ExecuteFreeResult(pIn);
+		}
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Invalid PortableStarted data");
+	}
+
+	size_t cbReplySize = sizeof(CESERVER_REQ_HDR);
+	*out = ExecuteNewCmd(CECMD_PORTABLESTART, cbReplySize);
+	lbRc = ((*out) != NULL);
+
+	return lbRc;
+}
+
 bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 {
 	bool lbProcessed = false;
@@ -8629,6 +8673,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 			{
 				lbRc = cmd_SetConScrBuf(in, out);
 			}
+		} break;
+		case CECMD_PORTABLESTART:
+		{
+			lbRc = cmd_PortableStarted(in, out);
 		} break;
 		default:
 		{
