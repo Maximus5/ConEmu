@@ -2020,7 +2020,7 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahPare
 		? ((ahParent == (HWND)-1) ? ghWnd :ahParent)
 		: NULL;
 
-	int nBtn = MessageBox(hParent, lpText, lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
+	int nBtn = MessageBox(hParent, lpText ? lpText : L"<NULL>", lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
 
 	ghDlgPendingFrom = NULL;
 
