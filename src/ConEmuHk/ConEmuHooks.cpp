@@ -4956,6 +4956,29 @@ BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuf
 	return lbRc;
 }
 
+bool AttachServerConsole()
+{
+	bool lbAttachRc = false;
+	DWORD nErrCode;
+	HWND hCurCon = GetRealConsoleWindow();
+	if (hCurCon == NULL && gnServerPID != 0)
+	{
+		// функция есть только в WinXP и выше
+		typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
+		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+		AttachConsole_t _AttachConsole = hKernel ? (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole") : NULL;
+		if (_AttachConsole)
+		{
+			lbAttachRc = _AttachConsole(gnServerPID);
+			if (!lbAttachRc)
+			{
+				nErrCode = GetLastError();
+				_ASSERTE(nErrCode==0 && lbAttachRc);
+			}
+		}
+	}
+	return lbAttachRc;
+}
 
 BOOL WINAPI OnAllocConsole(void)
 {
@@ -4981,26 +5004,9 @@ BOOL WINAPI OnAllocConsole(void)
 	// к родительской консоли (консоли серверного процесса)
 	if ((gbAttachGuiClient || ghAttachGuiClient) && !gbPrepareDefaultTerminal)
 	{
-		HWND hCurCon = GetRealConsoleWindow();
-		if (hCurCon == NULL && gnServerPID != 0)
+		if (AttachServerConsole())
 		{
-			// функция есть только в WinXP и выше
-			typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
-			hKernel = GetModuleHandle(L"kernel32.dll");
-			AttachConsole_t _AttachConsole = hKernel ? (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole") : NULL;
-			if (_AttachConsole)
-			{
-				lbAttachRc = _AttachConsole(gnServerPID);
-				if (lbAttachRc)
-				{
-					lbAllocated = TRUE; // Консоль уже есть, ничего не надо
-				}
-				else
-				{
-					nErrCode = GetLastError();
-					_ASSERTE(nErrCode==0 && lbAttachRc);
-				}
-			}
+			lbAllocated = TRUE; // Консоль уже есть, ничего не надо
 		}
 	}
 
