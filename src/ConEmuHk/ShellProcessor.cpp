@@ -2428,6 +2428,9 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	}
 
 	DWORD nShowCmd = (lpSI->dwFlags & STARTF_USESHOWWINDOW) ? lpSI->wShowWindow : SW_SHOWNORMAL;
+	// Console.exe starts cmd.exe with STARTF_USEPOSITION flag
+	if ((lpSI->dwFlags & STARTF_USEPOSITION) && (lpSI->dwX == 32767) && (lpSI->dwY == 32767))
+		nShowCmd = SW_HIDE; // Lets thing it is stating hidden
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
