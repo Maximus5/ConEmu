@@ -1861,6 +1861,8 @@ int CConEmuChild::IsDcLocked(RECT* CurrentConLockedRect)
 	return (nDelta <= LOCK_DC_RECT_TIMEOUT) ? 1 : 2;
 }
 
+// Это было сделано для обработки в хуках OnStretchDIBits
+// Плагин фара пытался рисовать прямо на канвасе VCon и безуспешно
 void CConEmuChild::LockDcRect(bool bLock, RECT* Rect)
 {
 	if (!bLock)
