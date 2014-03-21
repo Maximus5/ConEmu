@@ -169,7 +169,7 @@ BEGIN
 	rbScrollbarAuto         "Show scrollbar on mousehover or scroll position change"
 	rbScrollbarHide         "Don't show scrollbar"
 	rbScrollbarShow         "Always show scrollbar on the right edge of window"
-	rbStartLastTabs         "Auto save/restore (reopen) ConEmu tabs [not implemented yet]"
+	rbStartLastTabs         "Auto save/restore (reopen) ConEmu tabs"
 	rbStartNamedTask        "Starts ConEmu with several (one or more) tabs, commands located in ConEmu Settings, Tasks page"
 	rbStartSingleApp        "Starts ConEmu with single tab opened"
 	rbStartTasksFile        "Starts ConEmu with several (one or more) tabs, commands located in specified text file"
