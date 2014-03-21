@@ -2114,7 +2114,7 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 	UpdatePos(gpConEmu->wndX, gpConEmu->wndY, true);
 
 	checkRadioButton(hWnd2, rCascade, rFixed, gpSet->wndCascade ? rCascade : rFixed);
-
+	SetDlgItemText(ghOpWnd, rCascade, gpSet->isQuakeStyle ? L"Centered" : L"Cascade");
 
 	checkDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
 	TODO("Надо бы увеличить, но нужно сервер допиливать");
@@ -4844,7 +4844,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rFixed:
 			gpSet->wndCascade = (CB == rCascade);
 			if (gpSet->isQuakeStyle)
+			{
 				UpdatePosSizeEnabled(hWnd2);
+				EnableWindow(GetDlgItem(hWnd2, cbApplyPos), TRUE);
+			}
 			break;
 		case cbUseCurrentSizePos:
 			gpSet->isUseCurrentSizePos = IsChecked(hWnd2, cbUseCurrentSizePos);
