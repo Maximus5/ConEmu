@@ -2118,7 +2118,7 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
 	TODO("Надо бы увеличить, но нужно сервер допиливать");
-	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 4, 0);
+	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
 	SetDlgItemInt(hWnd2, tLongOutputHeight, gpSet->DefaultBufferHeight, FALSE);
 	//EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
 
