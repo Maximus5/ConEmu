@@ -30,8 +30,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _COMMON_HEADER_HPP_
 #define _COMMON_HEADER_HPP_
 
-// Версия интерфейса
-#define CESERVER_REQ_VER    135
+// Interface version
+#define CESERVER_REQ_VER    136
+
+// Max tabs/panes count
+#define MAX_CONSOLE_COUNT 30
 
 #include "defines.h"
 #include "ConEmuColors.h"

@@ -68,9 +68,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "kl_parts.h"
 #endif
 
-// Array sizes
-#define MAX_CONSOLE_COUNT 30
-
 
 #include "globals.h"
 #include "resource.h"
