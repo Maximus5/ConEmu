@@ -2407,6 +2407,8 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbSleepInBackground, gpSet->isSleepInBackground);
 
+	checkDlgButton(hWnd2, cbRetardInactivePanes, gpSet->isRetardInactivePanes);
+
 	checkDlgButton(hWnd2, cbVisible, gpSet->isConVisible);
 
 	checkDlgButton(hWnd2, cbUseInjects, gpSet->isUseInjects);
@@ -5505,6 +5507,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbSleepInBackground:
 			gpSet->isSleepInBackground = IsChecked(hWnd2, cbSleepInBackground);
+			CVConGroup::OnGuiFocused(TRUE);
+			break;
+		case cbRetardInactivePanes:
+			gpSet->isRetardInactivePanes = IsChecked(hWnd2, cbRetardInactivePanes);
 			CVConGroup::OnGuiFocused(TRUE);
 			break;
 		case cbMinimizeOnLoseFocus:

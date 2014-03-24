@@ -1055,8 +1055,8 @@ struct ConEmuGuiMapping
 	//BOOL     bSleepInBackg; // Sleep in background
 
 	BOOL     bGuiActive;    // Gui is In focus or Not
-	HWND2    hActiveCon;    // Active Real console HWND
-	DWORD    dwActiveTick;  // Tick, when hActiveCon/bGuiActive was changed
+	DWORD    dwActiveTick;  // Tick, when hActiveCons/bGuiActive was changed
+	HWND2    hActiveCons[MAX_CONSOLE_COUNT]; // Active or visible Real console HWND
 
 	/* Основной шрифт в GUI */
 	struct ConEmuMainFont MainFont;

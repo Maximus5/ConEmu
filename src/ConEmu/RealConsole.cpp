@@ -1921,7 +1921,8 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 		nEvents --;
 
 	DWORD  nWait = 0, nSrvWait = -1, nAcvWait = -1;
-	BOOL   bException = FALSE, bIconic = FALSE, /*bFirst = TRUE,*/ bActive = TRUE, bGuiVisible = FALSE;
+	BOOL   bException = FALSE, bIconic = FALSE, /*bFirst = TRUE,*/ bGuiVisible = FALSE;
+	bool   bActive = false, bVisible = false;
 	DWORD nElapse = max(10,gpSet->nMainTimerElapse);
 	DWORD nInactiveElapse = max(10,gpSet->nMainTimerInactiveElapse);
 	DWORD nLastFarPID = 0;
@@ -1938,11 +1939,13 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 	while (TRUE)
 	{
 		bActive = isActive();
+		bVisible = bActive || isVisible();
 		bIconic = gpConEmu->isIconic();
 
 		// в минимизированном/неактивном режиме - сократить расходы
-		nTimeout = bIconic ? max(1000,nInactiveElapse) : !bActive ? nInactiveElapse : nElapse;
-
+		nTimeout = bIconic ? max(1000,nInactiveElapse)
+			: !(gpSet->isRetardInactivePanes ? bActive : bVisible) ? nInactiveElapse
+			: nElapse;
 
 		if (bActive)
 			gpSetCls->Performance(tPerfInterval, TRUE); // считается по своему
@@ -2003,6 +2006,20 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 			UNREFERENCED_PARAMETER(nDbg);
 			#endif
 		}
+
+		// Обновить флаги после ожидания
+		if (!bActive)
+		{
+			bActive = isActive();
+			bVisible = bActive || isVisible();
+		}
+
+		#ifdef _DEBUG
+		if (mb_DebugLocked)
+		{
+			bActive = bVisible = false;
+		}
+		#endif
 
 		//if ((nWait == IDEVENT_SERVERPH) && (hEvents[IDEVENT_SERVERPH] != mh_MainSrv))
 		//{
@@ -2318,7 +2335,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				//if (!bAlive) {
 				//	bAlive = isAlive();
 				//}
-				if (isActive())
+				if (bActive)
 				{
 					WARNING("Тут нужно бы сравнивать с переменной, хранящейся в gpConEmu, а не в этом instance RCon!");
 #ifdef _DEBUG
@@ -2482,16 +2499,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				gpConEmu->CheckNeedUpdateTitle(GetTitle());
 			}
 
-			bool lbIsActive = isActive();
-			bool lbIsVisible = lbIsActive || isVisible();
-
-			#ifdef _DEBUG
-			if (mb_DebugLocked)
-				lbIsActive = false;
-			#endif
-
-			TODO("После DoubleView нужно будет заменить на IsVisible");
-			if (!lbIsVisible)
+			if (!bVisible)
 			{
 				if (lbForceUpdate)
 					mp_VCon->UpdateThumbnail();
@@ -2518,8 +2526,8 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 						lbNeedRedraw = false;
 					}
 				}
-				else if (lbIsVisible // где мигать курсором
-					&& gpSet->GetAppSettings(GetActiveAppSettingsId())->CursorBlink(lbIsActive)
+				else if (bVisible // где мигать курсором
+					&& gpSet->GetAppSettings(GetActiveAppSettingsId())->CursorBlink(bActive)
 					&& mb_RConStartedSuccess)
 				{
 					// Возможно, настало время мигнуть курсором?
@@ -8537,7 +8545,9 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 
 	//mb_UpdateServerActive = abActive;
 	bool bActiveNonSleep = false;
-	if (isActive())
+	bool bActive = isActive();
+	bool bVisible = bActive || isVisible();
+	if (gpSet->isRetardInactivePanes ? bActive : bVisible)
 	{
 		bActiveNonSleep = (!gpSet->isSleepInBackground || gpConEmu->isMeForeground(true, true));
 	}

@@ -548,6 +548,7 @@ void Settings::InitSettings()
 	isSnapToDesktopEdges = false;
 	isAlwaysOnTop = false;
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
+	isRetardInactivePanes = false; // не включать "засыпание в видимых-но-неактивных сплитах"
 	mb_MinimizeOnLoseFocus = false; // не "прятаться" при потере фокуса
 	RECT rcWork = {}; SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
 	if (gbIsWine)
@@ -2800,6 +2801,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"SnapToDesktopEdges", isSnapToDesktopEdges);
 		reg->Load(L"AlwaysOnTop", isAlwaysOnTop);
 		reg->Load(L"SleepInBackground", isSleepInBackground);
+		reg->Load(L"RetardInactivePanes", isRetardInactivePanes);
 		reg->Load(L"MinimizeOnLoseFocus", mb_MinimizeOnLoseFocus);
 
 		reg->Load(L"DisableFarFlashing", isDisableFarFlashing); if (isDisableFarFlashing>2) isDisableFarFlashing = 2;
@@ -3586,6 +3588,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"SnapToDesktopEdges", isSnapToDesktopEdges);
 		reg->Save(L"AlwaysOnTop", isAlwaysOnTop);
 		reg->Save(L"SleepInBackground", isSleepInBackground);
+		reg->Save(L"RetardInactivePanes", isRetardInactivePanes);
 		reg->Save(L"MinimizeOnLoseFocus", mb_MinimizeOnLoseFocus);
 		reg->Save(L"DisableFarFlashing", isDisableFarFlashing);
 		reg->Save(L"DisableAllFlashing", isDisableAllFlashing);

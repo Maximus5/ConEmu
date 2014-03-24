@@ -4209,7 +4209,22 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			gpSrv->nLastConsoleActiveTick = GetTickCount();
 		}
 
-		if ((ghConWnd == gpSrv->guiSettings.hActiveCon) || (gpSrv->guiSettings.hActiveCon == NULL) || bConsoleVisible)
+		bool bOurConActive = false, bOneConActive = false;
+		for (size_t i = 0; i < countof(gpSrv->guiSettings.hActiveCons); i++)
+		{
+			HWND h = gpSrv->guiSettings.hActiveCons[i];
+			if (h)
+			{
+				bOneConActive = true;
+				if (ghConWnd == h)
+				{
+					bOurConActive = true;
+					break;
+				}
+			}
+		}
+
+		if (bOurConActive || !bOneConActive || bConsoleVisible)
 			bNewActive = gpSrv->guiSettings.bGuiActive || !(gpSrv->guiSettings.Flags & CECF_SleepInBackg);
 		else
 			bNewActive = FALSE;

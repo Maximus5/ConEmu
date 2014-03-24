@@ -1335,6 +1335,8 @@ struct Settings
 		
 		//reg->Load(L"SleepInBackground", isSleepInBackground);
 		bool isSleepInBackground;
+		//reg->Load(L"RetardInactivePanes", isRetardInactivePanes);
+		bool isRetardInactivePanes;
 
 		//reg->Load(L"MinimizeOnLoseFocus", mb_MinimizeOnLoseFocus);
 		bool mb_MinimizeOnLoseFocus;
