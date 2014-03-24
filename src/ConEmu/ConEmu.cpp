@@ -13415,6 +13415,8 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			//gpConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"From DoMinimizeRestore(sih_Show)");
 		}
 
+		CVConGroup::EnumVCon(evf_Visible, CRealConsole::ThawMonitorThread, 0);
+
 		if (bIsIconic)
 			mp_Menu->SetRestoreFromMinimized(bPrevInRestore);
 	}

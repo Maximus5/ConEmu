@@ -2636,6 +2636,12 @@ void CRealConsole::SetMonitorThreadEvent()
 	SetEvent(mh_MonitorThreadEvent);
 }
 
+bool CRealConsole::ThawMonitorThread(CVirtualConsole* pVCon, LPARAM lParam)
+{
+	pVCon->RCon()->SetMonitorThreadEvent();
+	return true;
+}
+
 BOOL CRealConsole::StartMonitorThread()
 {
 	BOOL lbRc = FALSE;
