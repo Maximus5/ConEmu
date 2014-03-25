@@ -640,19 +640,19 @@ VOID CDownloader::InetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD d
 
             cookieHistory = *((InternetCookieHistory*)lpvStatusInformation);
             
-            if(cookieHistory.fAccepted)
+            if (cookieHistory.fAccepted)
             {
                 wcscat_c(sFormat, L": Cookie Accepted");
             }
-            if(cookieHistory.fLeashed)
+            if (cookieHistory.fLeashed)
             {
                 wcscat_c(sFormat, L": Cookie Leashed");
             }        
-            if(cookieHistory.fDowngraded)
+            if (cookieHistory.fDowngraded)
             {
                 wcscat_c(sFormat, L": Cookie Downgraded");
             }        
-            if(cookieHistory.fRejected)
+            if (cookieHistory.fRejected)
             {
                 wcscat_c(sFormat, L": Cookie Rejected");
             }

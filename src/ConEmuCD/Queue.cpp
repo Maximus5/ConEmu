@@ -415,7 +415,7 @@ BOOL WaitConsoleReady(BOOL abReqEmpty)
 
 				dwTick = GetTickCount(); dwDelta = dwTick - dwStartTick;
 			}
-			while((nCurInputCount > 0) && (dwDelta < MAX_INPUT_QUEUE_EMPTY_WAIT));
+			while ((nCurInputCount > 0) && (dwDelta < MAX_INPUT_QUEUE_EMPTY_WAIT));
 		}
 
 		if (WaitForSingleObject(ghQuitEvent, 0) == WAIT_OBJECT_0)
@@ -496,7 +496,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 			INPUT_RECORD* ppr = prNew;
 			INPUT_RECORD* pprMod = NULL;
 
-			for(UINT n = 0; n < nCount; n++)
+			for (UINT n = 0; n < nCount; n++)
 			{
 				*(ppr++) = pr[n];
 
@@ -509,7 +509,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 						pprMod = (ppr-1);
 						pprMod->Event.KeyEvent.wRepeatCount = 1;
 
-						for(UINT i = 1; i < nCurCount; i++)
+						for (UINT i = 1; i < nCurCount; i++)
 						{
 							*(ppr++) = *pprMod;
 						}
@@ -690,7 +690,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 			SetEvent(gpSrv->hInputWasRead);
 
 			#ifdef _DEBUG
-			for(DWORD j = 0; j < nInputCount; j++)
+			for (DWORD j = 0; j < nInputCount; j++)
 			{
 				if (ir[j].EventType == KEY_EVENT
 					&& (ir[j].Event.KeyEvent.wVirtualKeyCode == 'C' || ir[j].Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)

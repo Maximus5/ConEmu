@@ -142,7 +142,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 
 	// Копируем параметры в процесс
 	pRemoteDat = VirtualAllocEx(hProcess, NULL, sizeof(InfiltrateArg), MEM_COMMIT, PAGE_READWRITE);
-	if(!pRemoteDat)
+	if (!pRemoteDat)
 	{
 		iRc = -106;
 		goto wrap;
@@ -192,9 +192,9 @@ wrap:
 		FreeLibrary(hKernel);
 	if (hThread)
 		CloseHandle(hThread);
-	if(pRemoteProc)
+	if (pRemoteProc)
 		VirtualFreeEx(hProcess, (void*)pRemoteProc, cbCode, MEM_RELEASE);
-	if(pRemoteDat)
+	if (pRemoteDat)
 		VirtualFreeEx(hProcess, pRemoteDat, sizeof(InfiltrateArg), MEM_RELEASE);
 	return iRc;
 }

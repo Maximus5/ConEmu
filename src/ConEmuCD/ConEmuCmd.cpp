@@ -278,7 +278,7 @@ void ComspecDone(int aiRc)
 				xf_dump_chk();
 				wchar_t *pszNewName = pszPostAliases, *pszNewTarget, *pszNewLine;
 
-				while(pszNewName && *pszNewName)
+				while (pszNewName && *pszNewName)
 				{
 					pszNewLine = pszNewName + lstrlen(pszNewName);
 					pszNewTarget = wcschr(pszNewName, L'=');
