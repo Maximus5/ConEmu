@@ -6348,8 +6348,10 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 	#endif
 
 	bool bProcFound = false;
+	bool bConsoleOnly = (gpSrv->hRootProcessGui == NULL);
+	bool bMayBeConsolePaf = gpSrv->Portable.nPID && (gpSrv->Portable.nSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
 
-	if (pfnGetConsoleProcessList && (gpSrv->hRootProcessGui == NULL))
+	if (pfnGetConsoleProcessList && (bConsoleOnly || bMayBeConsolePaf))
 	{
 		WARNING("Переделать, как-то слишком сложно получается");
 		DWORD nCurCount = 0;
@@ -6361,7 +6363,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		#endif
 		lbChanged = (gpSrv->nProcessCount != nCurCount);
 
-		bProcFound = (nCurCount > 0);
+		bProcFound = bConsoleOnly && (nCurCount > 0);
 
 		if (nCurCount == 0)
 		{
@@ -6486,10 +6488,22 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 				MCHKHEAP;
 			}
 		}
+
+		if (!bProcFound && bMayBeConsolePaf && (nCurCount > 0) && gpSrv->pnProcesses)
+		{
+			for (DWORD i = 0; i < nCurCount; i++)
+			{
+				if (gpSrv->pnProcesses[i] == gpSrv->Portable.nPID)
+				{
+					// В консоли обнаружен процесс запущенный из ChildGui (e.g. CommandPromptPortable.exe -> cmd.exe)
+                    bProcFound = true;
+				}
+			}
+		}
 	}
 
-	// Wine related
-	//if (!pfnGetConsoleProcessList || gpSrv->hRootProcessGui)
+	// Wine related: GetConsoleProcessList may fails
+	// or ChildGui related: GUI app started in tab and (optionally) it starts another app (console or gui)
 	if (!bProcFound)
 	{
 		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
@@ -6498,9 +6512,9 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		HANDLE hRootProcess = gpSrv->hRootProcess;
 		DWORD  nRootPID = gpSrv->dwRootProcess;
 
-		if (hRootProcess)
+		if (hRootProcess || gpSrv->Portable.hProcess)
 		{
-			DWORD nRootWait = WaitForSingleObject(hRootProcess, 0);
+			DWORD nRootWait = hRootProcess ? WaitForSingleObject(hRootProcess, 0) : WAIT_OBJECT_0;
 			// PortableApps?
 			if (nRootWait == WAIT_OBJECT_0)
 			{
@@ -7726,7 +7740,7 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 	}
 	else
 	{
-		_ASSERTEX(in.AttachGuiApp.nPID == gpSrv->dwRootProcess && gpSrv->dwRootProcess && in.AttachGuiApp.nPID);
+		_ASSERTEX((in.AttachGuiApp.nPID == gpSrv->dwRootProcess || in.AttachGuiApp.nPID == gpSrv->Portable.nPID) && gpSrv->dwRootProcess && in.AttachGuiApp.nPID);
 
 		wchar_t szInfo[MAX_PATH*2];
 

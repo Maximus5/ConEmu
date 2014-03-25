@@ -4870,6 +4870,10 @@ void CRealConsole::PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted)
 		LogString(szInfo);
 	}
 
+	_ASSERTE(pStarted->hProcess == NULL); // Not valid for ConEmu process
+	m_ChildGui.paf = *pStarted;
+	m_ChildGui.paf.hProcess = NULL;
+
 	if (pStarted->nSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 	{
 		if (!m_ChildGui.hGuiWnd || !IsWindow(m_ChildGui.hGuiWnd))
@@ -13027,6 +13031,10 @@ BOOL CRealConsole::GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID)
 	// Если даже сервер еще не запущен
 	if (InCreateRoot())
 		return false;
+
+	// PortableApps launcher?
+	if (m_ChildGui.paf.nPID == anAppPID)
+		return true;
 
 	// Интересуют только клиентские процессы!
 	int nProcCount = GetProcesses(NULL, true);

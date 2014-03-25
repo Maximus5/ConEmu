@@ -283,6 +283,7 @@ class CRealConsole
 			DWORD   nGuiWndStyle, nGuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
 			DWORD   nGuiWndPID;
 			wchar_t szGuiWndProcess[MAX_PATH];
+			CESERVER_REQ_PORTABLESTARTED paf;
 			// some helpers
 			bool    isGuiWnd() { return (hGuiWnd && (hGuiWnd != (HWND)INVALID_HANDLE_VALUE)); };
 		} m_ChildGui;
