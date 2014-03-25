@@ -3088,7 +3088,10 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		}
 	}
 
-	if (con.bBufferHeight && ((m_Type != rbt_Primary) || !lbFarBufferSupported || !lbMouseSendAllowed || lbMouseOverScroll))
+	if (con.bBufferHeight
+		&& ((m_Type != rbt_Primary) || !lbFarBufferSupported || !lbMouseSendAllowed || lbMouseOverScroll
+			|| (((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL)) && isSelfSelectMode())
+			))
 	{
 		if (messg == WM_MOUSEWHEEL)
 		{
