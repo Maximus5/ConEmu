@@ -110,7 +110,7 @@ public:
 	BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll);
 	
 	COORD ScreenToBuffer(COORD crMouse);
-	COORD BufferToScreen(COORD crMouse, bool bVertOnly = false);
+	COORD BufferToScreen(COORD crMouse, bool bFixup = true, bool bVertOnly = false);
 	bool ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScreen);
 	bool ProcessFarHyperlink(bool bUpdateScreen);
 	ExpandTextRangeType GetLastTextRangeType();

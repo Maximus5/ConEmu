@@ -2553,7 +2553,7 @@ COORD CRealBuffer::ScreenToBuffer(COORD crMouse)
 	return crMouse;
 }
 
-COORD CRealBuffer::BufferToScreen(COORD crMouse, bool bVertOnly /*= false*/)
+COORD CRealBuffer::BufferToScreen(COORD crMouse, bool bFixup /*= true*/, bool bVertOnly /*= false*/)
 {
 	if (!this)
 		return crMouse;
@@ -2561,8 +2561,14 @@ COORD CRealBuffer::BufferToScreen(COORD crMouse, bool bVertOnly /*= false*/)
 	if (isScroll())
 	{
 		if (!bVertOnly)
-			crMouse.X = max(0,crMouse.X-con.m_sbi.srWindow.Left);
-		crMouse.Y = max(0,crMouse.Y-con.m_sbi.srWindow.Top);
+			crMouse.X = crMouse.X-con.m_sbi.srWindow.Left;
+		crMouse.Y = crMouse.Y-con.m_sbi.srWindow.Top;
+	}
+
+	if (bFixup)
+	{
+		crMouse.X = max(0,min(crMouse.X,GetTextWidth()-1));
+		crMouse.Y = max(0,min(crMouse.Y,GetTextHeight()-1));
 	}
 
 	return crMouse;
@@ -2641,7 +2647,7 @@ bool CRealBuffer::CanProcessHyperlink(const COORD& crMouse)
 	if (mp_RCon->isFar())
 	{
 		RECT rc;
-		COORD crMap = BufferToScreen(crMouse);
+		COORD crMap = BufferToScreen(crMouse, false, false);
 		if (isLeftPanel() && GetPanelRect(FALSE, &rc, TRUE, TRUE) && CoordInRect(crMap, rc))
 			return false;
 		if (isRightPanel() && GetPanelRect(TRUE, &rc, TRUE, TRUE) && CoordInRect(crMap, rc))
@@ -3880,8 +3886,8 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0x
 		// Сначала проверим, помещается ли "выделенная область" в "ВИДИМУЮ область"
 		if (m_Type == rbt_Primary)
 		{
-			COORD crStart = BufferToScreen(MakeCoord(con.m_sel.srSelection.Left, con.m_sel.srSelection.Top));
-			COORD crEnd = BufferToScreen(MakeCoord(con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom));
+			COORD crStart = BufferToScreen(MakeCoord(con.m_sel.srSelection.Left, con.m_sel.srSelection.Top), false);
+			COORD crEnd = BufferToScreen(MakeCoord(con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom), false);
 
 			int nTextWidth = this->GetTextWidth();
 			int nTextHeight = this->GetTextHeight();

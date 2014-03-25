@@ -14171,8 +14171,6 @@ void CConEmuMain::UpdateImeComposition()
 		pRCon->GetConsoleCursorInfo(&ci);
 		pRCon->GetConsoleScreenBufferInfo(&sbi);
 		COORD crVisual = pRCon->BufferToScreen(sbi.dwCursorPosition);
-		crVisual.X = max(0,min(crVisual.X,(int)pRCon->TextWidth()));
-		crVisual.Y = max(0,min(crVisual.Y,(int)pRCon->TextHeight()));
 		POINT ptCurPos = VCon->ConsoleToClient(crVisual.X, crVisual.Y);
 
 		MapWindowPoints(hView, ghWnd, &ptCurPos, 1);

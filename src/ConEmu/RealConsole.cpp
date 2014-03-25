@@ -3930,11 +3930,11 @@ COORD CRealConsole::ScreenToBuffer(COORD crMouse)
 	return mp_ABuf->ScreenToBuffer(crMouse);
 }
 
-COORD CRealConsole::BufferToScreen(COORD crMouse, bool bVertOnly /*= false*/)
+COORD CRealConsole::BufferToScreen(COORD crMouse, bool bFixup /*= true*/, bool bVertOnly /*= false*/)
 {
 	if (!this)
 		return crMouse;
-	return mp_ABuf->BufferToScreen(crMouse, bVertOnly);
+	return mp_ABuf->BufferToScreen(crMouse, bFixup, bVertOnly);
 }
 
 // x,y - экранные координаты
@@ -4208,7 +4208,7 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 			}
 			else
 			{
-				COORD crVisible = mp_ABuf->BufferToScreen(crMouse,true);
+				COORD crVisible = mp_ABuf->BufferToScreen(crMouse,false,true);
 				// Координата попадает в панель (включая правую/левую рамку)?
 				if (CoordInPanel(crVisible, TRUE))
 				{

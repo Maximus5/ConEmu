@@ -334,7 +334,7 @@ class CRealConsole
 		DWORD mn_FlushIn, mn_FlushOut;
 	public:
 		COORD ScreenToBuffer(COORD crMouse);
-		COORD BufferToScreen(COORD crMouse, bool bVertOnly = false);
+		COORD BufferToScreen(COORD crMouse, bool bFixup = true, bool bVertOnly = false);
 		bool PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME = false);
 		bool PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		bool DeleteWordKeyPress(bool bTestOnly = false);
