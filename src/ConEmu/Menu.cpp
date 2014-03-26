@@ -1754,7 +1754,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEPRCGROUP, MenuAccel(vkCloseGroupPrc,L"Kill active &processes"));
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEALLCON, MenuAccel(vkCloseAllCon,L"Close &all consoles"));
-		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATECONEXPT, MenuAccel(vkMultiClose,L"Close e&xcept active"));
+		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATECONEXPT, MenuAccel(vkCloseExceptCon,L"Close e&xcept active"));
 		AppendMenu(hMenu, MF_POPUP | MF_ENABLED, (UINT_PTR)hTerminate, L"Close or &kill");
 		AppendMenu(hMenu, MF_STRING | ((apVCon && apVCon->GuiWnd()) ? MF_ENABLED : 0),     IDM_CHILDSYSMENU,    MenuAccel(vkChildSystemMenu,L"Child system menu..."));
 		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
