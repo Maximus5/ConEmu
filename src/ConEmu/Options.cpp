@@ -5419,16 +5419,6 @@ void Settings::CheckHotkeyUnique()
 			ppHK1->GetDescription(szDescr1, countof(szDescr1), true);
 			ppHK2->GetDescription(szDescr2, countof(szDescr2), true);
 
-			//if (ppHK1->HkType == chk_Macro)
-			//	_wsprintf(szDescr1, SKIPLEN(countof(szDescr1)) L"Macro %02i", ppHK1->DescrLangID-vkGuMacro01+1);
-			//else if (!LoadString(g_hInstance, ppHK1->DescrLangID, szDescr1, countof(szDescr1)))
-			//	_wsprintf(szDescr1, SKIPLEN(countof(szDescr1)) L"%i", ppHK1->DescrLangID);
-
-			//if (ppHK2->HkType == chk_Macro)
-			//	_wsprintf(szDescr2, SKIPLEN(countof(szDescr2)) L"Macro %02i", ppHK2->DescrLangID-vkGuMacro01+1);
-			//else if (!LoadString(g_hInstance, ppHK2->DescrLangID, szDescr2, countof(szDescr2)))
-			//	_wsprintf(szDescr2, SKIPLEN(countof(szDescr2)) L"%i", ppHK2->DescrLangID);
-
 			ppHK1->GetHotkeyName(szKey);
 
 			int nAllLen = lstrlen(szDescr1) + lstrlen(szDescr2) + lstrlen(szKey) + 256;

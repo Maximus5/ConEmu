@@ -2837,7 +2837,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 			case chk_User:
 				wcscpy_c(szName, L"User"); break;
 			case chk_Macro:
-				_wsprintf(szName, SKIPLEN(countof(szName)) L"Macro %02i", ppHK->DescrLangID-vkGuMacro01+1); break;
+				_wsprintf(szName, SKIPLEN(countof(szName)) L"Macro %02i", ppHK->DescrLangID-vkGuiMacro01+1); break;
 			case chk_Modifier:
 			case chk_Modifier2:
 				wcscpy_c(szName, L"Modifier"); break;
