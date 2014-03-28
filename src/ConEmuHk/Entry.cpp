@@ -939,7 +939,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		gbIsVStudio = true;
 	}
 
-	if ((lstrcmpi(pszName, L"chrome.exe") == 0) || (lstrcmpi(pszName, L"link.exe") == 0))
+	if ((lstrcmpi(pszName, L"chrome.exe") == 0)
+		|| (lstrcmpi(pszName, L"firefox.exe") == 0)
+		|| (lstrcmpi(pszName, L"link.exe") == 0))
 	{
 		gbSkipVirtualAllocErr = true;
 	}
