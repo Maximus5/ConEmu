@@ -263,6 +263,13 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 			else if (dwExStyle & (WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_DLGMODALFRAME|WS_EX_MDICHILD))
 				lbCanAttach = false;
 
+			// Disable attach of some window classes
+			if (lbCanAttach && lpClassNameW && (((DWORD_PTR)lpClassNameW) & ~0xFFFF))
+			{
+				if (lstrcmpW(lpClassNameW, L"MozillaTempWindowClass") == 0)
+					lbCanAttach = false;
+			}
+
 			if (lbCanAttach)
 			{
 				// Родительское окно - ConEmu DC
