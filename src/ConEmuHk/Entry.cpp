@@ -1157,7 +1157,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(nSize);
 				ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
 				pIn->AttachGuiApp.nPID = GetCurrentProcessId();
-				GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
+				GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFilePathName, countof(pIn->AttachGuiApp.sAppFilePathName));
 				pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
 
 				wchar_t szGuiPipeName[128];

@@ -1785,7 +1785,7 @@ struct CESERVER_REQ_ATTACHGUIAPP
 	//DWORD nStyle, nStyleEx;
 	//BOOL  bHideCaption; // 
 	struct GuiStylesAndShifts Styles;
-	wchar_t sAppFileName[MAX_PATH*2];
+	wchar_t sAppFilePathName[MAX_PATH*2];
 };
 
 // CECMD_PORTABLESTART
@@ -1794,8 +1794,8 @@ struct CESERVER_REQ_PORTABLESTARTED
 	DWORD   nSubsystem;
 	DWORD   nImageBits;
 	HANDLE2 hProcess;
-	DWORD   nPID; // Для удобства
-	wchar_t sAppFileName[MAX_PATH];
+	DWORD   nPID;
+	wchar_t sAppFilePathName[MAX_PATH*2];
 };
 
 // CECMD_SETFOCUS

@@ -7748,7 +7748,7 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (gbAttachMode || (gpSrv->hRootProcessGui == NULL))
 		{
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GUI application (PID=%u) was attached to ConEmu:\n%s\n",
-				in.AttachGuiApp.nPID, in.AttachGuiApp.sAppFileName);
+				in.AttachGuiApp.nPID, in.AttachGuiApp.sAppFilePathName);
 			_wprintf(szInfo);
 		}
 

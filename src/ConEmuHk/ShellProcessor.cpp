@@ -2610,7 +2610,8 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			{
 				pIn->PortableStarted.nSubsystem = mn_ImageSubsystem;
 				pIn->PortableStarted.nImageBits = mn_ImageBits;
-				lstrcpyn(pIn->PortableStarted.sAppFileName, PointToName(ms_ExeTmp), countof(pIn->PortableStarted.sAppFileName));
+				_ASSERTE(wcschr(ms_ExeTmp,L'\\')!=NULL);
+				lstrcpyn(pIn->PortableStarted.sAppFilePathName, ms_ExeTmp, countof(pIn->PortableStarted.sAppFilePathName));
 				pIn->PortableStarted.nPID = lpPI->dwProcessId;
 				HANDLE hServer = OpenProcess(PROCESS_DUP_HANDLE, FALSE, gnServerPID);
 				if (hServer)

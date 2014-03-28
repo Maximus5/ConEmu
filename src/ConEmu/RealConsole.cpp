@@ -11748,7 +11748,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	CorrectGuiChildRect(In.AttachGuiApp.Styles.nStyle, In.AttachGuiApp.Styles.nStyleEx, In.AttachGuiApp.Styles.Shifts, m_ChildGui.szGuiWndProcess);
 	In.AttachGuiApp.nPID = anAppPID;
 	if (asAppFileName)
-		wcscpy_c(In.AttachGuiApp.sAppFileName, asAppFileName);
+		wcscpy_c(In.AttachGuiApp.sAppFilePathName, asAppFileName);
 
 	DWORD dwTickStart = timeGetTime();
 
