@@ -287,7 +287,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	hConWnd = NULL;
 
 	ZeroStruct(m_ChildGui);
-	setGuiWndPID(0, NULL); // force set mn_GuiWndPID to 0
+	setGuiWndPID(NULL, 0, NULL); // force set mn_GuiWndPID to 0
 
 	mn_InPostDeadChar = 0;
 
@@ -3185,8 +3185,7 @@ void CRealConsole::ResetVarsOnStart()
 	hConWnd = NULL;
 
 	// setXXX для удобства
-	setGuiWnd(NULL);
-	setGuiWndPID(0, NULL); // set m_ChildGui.nGuiWndPID to 0
+	setGuiWndPID(NULL, 0, NULL); // set m_ChildGui.nGuiWndPID to 0
 	// ZeroStruct для четкости
 	ZeroStruct(m_ChildGui);
 
@@ -11715,12 +11714,11 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	}
 	// ahGuiWnd может быть на первом этапе, когда ConEmuHk уведомляет - запустился GUI процесс
 	_ASSERTE((m_ChildGui.hGuiWnd==NULL && ahGuiWnd==NULL) || (ahGuiWnd && IsWindow(ahGuiWnd))); // Проверить, чтобы мусор не пришел...
-	setGuiWnd(ahGuiWnd);
-	GuiWndFocusStore();
 	m_ChildGui.nGuiAttachFlags = anFlags;
-	setGuiWndPID(anAppPID, PointToName(asAppFileName)); // устанавливает mn_GuiWndPID
+	setGuiWndPID(ahGuiWnd, anAppPID, PointToName(asAppFileName)); // устанавливает mn_GuiWndPID
 	m_ChildGui.nGuiWndStyle = anStyle; m_ChildGui.nGuiWndStylEx = anStyleEx;
 	m_ChildGui.bGuiExternMode = false;
+	GuiWndFocusStore();
 	ShowWindow(GetView(), SW_HIDE); // Остается видим только Back, в нем создается GuiClient
 
 #ifdef _DEBUG
@@ -12926,8 +12924,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 		//SetOtherWindowPos(lhGuiWnd, HWND_NOTOPMOST, rcGui.left, rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top, SWP_SHOWWINDOW);
 
 		// Сбросить переменные, чтобы гуй закрыть не пыталось
-		setGuiWnd(NULL);
-		setGuiWndPID(0, NULL);
+		setGuiWndPID(NULL, 0, NULL);
 		//mb_IsGuiApplication = FALSE;
 
 		//// Закрыть консоль
@@ -13230,9 +13227,20 @@ ExpandTextRangeType CRealConsole::GetLastTextRangeType()
 
 void CRealConsole::setGuiWnd(HWND ahGuiWnd)
 {
+	#ifdef _DEBUG
+	DWORD nPID = 0;
+	_ASSERTE(ahGuiWnd != (HWND)-1);
+	#endif
+
 	if (ahGuiWnd)
 	{
 		m_ChildGui.hGuiWnd = ahGuiWnd;
+
+		#ifdef _DEBUG
+		GetWindowThreadProcessId(ahGuiWnd, &nPID);
+		_ASSERTE(nPID == m_ChildGui.nGuiWndPID);
+		#endif
+
 		//Useless, because ahGuiWnd is invisible yet and scrolling will be revealed in TrackMouse
 		//mp_VCon->HideScroll(TRUE);
 	}
@@ -13242,7 +13250,7 @@ void CRealConsole::setGuiWnd(HWND ahGuiWnd)
 	}
 }
 
-void CRealConsole::setGuiWndPID(DWORD anPID, LPCWSTR asProcessName)
+void CRealConsole::setGuiWndPID(HWND ahGuiWnd, DWORD anPID, LPCWSTR asProcessName)
 {
 	m_ChildGui.nGuiWndPID = anPID;
 
@@ -13250,6 +13258,8 @@ void CRealConsole::setGuiWndPID(DWORD anPID, LPCWSTR asProcessName)
 	{
 		lstrcpyn(m_ChildGui.szGuiWndProcess, asProcessName ? asProcessName : L"", countof(m_ChildGui.szGuiWndProcess));
 	}
+
+	setGuiWnd(ahGuiWnd);
 
 	if (gpSetCls->isAdvLogging)
 	{

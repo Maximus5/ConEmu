@@ -287,7 +287,7 @@ class CRealConsole
 			// some helpers
 			bool    isGuiWnd() { return (hGuiWnd && (hGuiWnd != (HWND)INVALID_HANDLE_VALUE)); };
 		} m_ChildGui;
-		void setGuiWndPID(DWORD anPID, LPCWSTR asProcessName);
+		void setGuiWndPID(HWND ahGuiWnd, DWORD anPID, LPCWSTR asProcessName);
 		void setGuiWnd(HWND ahGuiWnd);
 		static  BOOL CALLBACK FindChildGuiWindowProc(HWND hwnd, LPARAM lParam);
 
