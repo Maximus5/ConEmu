@@ -12,6 +12,73 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.03.27
+[!] Console. Increase max buffer height to 32766 lines.
+[*] Issue1504. Parenthesis issue in csudo.cmd.
+[*] Ensure Cmd_Autorun.cmd always returns errorlevel==0.
+[*] Quotation marks changes in Cmd_Autorun.cmd (possible parenthesis issues?)
+[*] Use LdrDllNotification (Vista+). Might speed up hooks and set up hooks before DllMain called (LoadLibrary).
+[*] Ctrl+O Far macro was failed in some cases - Shell("new_console:b").
+[*] Issue1509. Arg parsing failed for '/dir "C:\" /single' (01ed281 regression).
+[*] Allow string arguments of -new_console to be resetted.
+    For example, you are running task with '/icon nice.ico' in Task parameters.
+    You may reset it in task commands if you are running several tabs at once:
+      cmd -new_console:C:
+      powershell -new_console:C:twice.ico
+[*] Hook mouse_event and SendInput API.
+[*] Allow '/icon' task parameter to change tab icon too.
+[*] Restrict '/icon' task parameter to change already started instance window icon.
+[*] New ConEmu.exe switch '/FontDir YourDir' allows to register fonts from several specified folders
+[*] Issue1258. Ctrl+BackSpace delete words to the left including spaces.
+    Actually, not only spaces are taken to account: >])}$.,/\"
+[*] About dialog '-new_console' fixes.
+[*] No need to unset hooks if our process is to be force killed by TerminateProcess (minor speed up).
+[*] Issue1512. Warn on invalid prefix-switch in task command.
+    Valid switches currently are
+      /bufferheight <lines>
+      /dir <workingdir>
+      /icon <tabicon>
+      /tab <tabtitle>
+[*] Warn on invalid switches in task parameters.
+    Valid switches currently are
+      /dir <WorkingDir>
+      /icon <ConEmuOrTabIcon>
+      /single
+[*] RClick on Close button - minimize to TSA again (02bf905 regression).
+[*] Don't hook LoadLibraryW if possible
+    Till now LoadLibrary will be hooked in:
+      a) Windows2k, WindowsXP - all processes
+      b) Far Manager (far.exe, far32.exe, far64.exe)
+[*] Vim xterm arrow key lags happen sometimes.
+    When Vim was switched to xterm mode, ConEmu sends corresponding
+    xterm ESC-sequences instead of simple VK_xxx keypresses.
+    Sometimes Vim don't catch whole sequence before any other event
+    occures. For example, you press Right arrow and Vim does nothing
+    before you just move mouse over console.
+[*] Issue1511. Url was not detected after 'port': http://example:8080/TestTest/test?test=test
+[*] Issue1516. Duplicate root failed for consoles started from TaskMgr via Default terminal feature.
+[*] Consider console is to be started hidden if start X/Y==32767 (Hooks).
+[*] Tooltip msg fix.
+[*] Quake settings. Name 'Cascade' as 'Centered', enable 'Apply' on change.
+[*] New option 'Retard inactive panes' on Features page.
+    There is already 'Sleep in background' option which retard ConEmu window and
+    its tabs when ConEmu is minimized/inactive.
+    New option 'Retard inactive panes', disabled by default, retard inactive
+    but visible split-panes in the active ConEmu window.
+[*] Issue1518. Remove delay before being able interact with quake style console after slide-down.
+[*] Wheel was not working while ConEmu's internal text selecting in Far.
+[*] Issue823. Out of screen (upper border) selected text was not copied to clipboard.
+[*] Fix wrong hotkey for menu item 'Close except active'.
+[*] Issue1100. Don't show our scrollbar while GuiChild is visible.
+[*] Allow RealConsole scrolling while GuiChild is hidden.
+[*] Fix position of ChildGui (cut more pixels of the child frame).
+[*] Fix position of ChildGui (chrome.exe, firefox.exe).
+[*] ChildGui. Some applications can 'disable' Maximize button but they are still 'resizeable'.
+[*] Issue1282. PortableApps. Seamless run of paf-applications, console like tcc.exe or GUI like KiTTY.
+[*] Tab icon was not initialized properly if executable file was not in %PATH%.
+[*] Many internal changes
+
+
 2014.03.10
 [+] Issue 1498: Prettify update confirmation dialogs.
 [*] Indeterminated taskbar status during update confirmation.
