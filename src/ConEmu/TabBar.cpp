@@ -290,11 +290,11 @@ void TabBarClass::Retrieve()
 	//}
 }
 
-int TabBarClass::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin)
+int TabBarClass::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir)
 {
 	if (!gpSet->isTabIcons)
 		return -1;
-	return m_TabIcons.CreateTabIcon(asIconDescr, bAdmin);
+	return m_TabIcons.CreateTabIcon(asIconDescr, bAdmin, asWorkDir);
 }
 
 // Добавляет закладку, или меняет (при необходимости) заголовок существующей

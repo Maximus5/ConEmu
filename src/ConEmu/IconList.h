@@ -50,7 +50,7 @@ public:
 	bool Initialize();
 
 	int GetTabIcon(bool bAdmin);
-	int CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin);
+	int CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
 
 	operator HIMAGELIST() const
 	{

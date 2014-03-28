@@ -111,7 +111,7 @@ int CIconList::GetTabIcon(bool bAdmin)
 	return iIconIdx;
 }
 
-int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin)
+int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir)
 {
 	if (bAdmin && !gpSet->isAdminShield())
 		bAdmin = false;
@@ -138,6 +138,13 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin)
 	wchar_t szTemp[MAX_PATH];
 	LPCWSTR pszLoadFile = pszExpanded ? pszExpanded : asIconDescr;
 	LPCWSTR lpszExt = (wchar_t*)PointToExt(pszLoadFile);
+
+	wchar_t szCurDir[MAX_PATH*2] = L"";
+	if (asWorkDir && *asWorkDir && GetCurrentDirectory(countof(szCurDir), szCurDir) && *szCurDir)
+	{
+		// Executable (or icon) file may be not availbale by %PATH%, let "cd" to it...
+		SetCurrentDirectory(asWorkDir);
+	}
 
 	if (!lpszExt)
 	{
@@ -202,6 +209,8 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin)
 	}
 
 wrap:
+	if (*szCurDir)
+		SetCurrentDirectory(szCurDir);
 	SafeFree(pszExpanded);
 	return iIconIdx;
 }

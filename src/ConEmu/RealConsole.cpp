@@ -6356,7 +6356,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 
 wrap:
 	// Load (or create) icon for new tab
-	mn_RootProcessIcon = gpConEmu->mp_TabBar->CreateTabIcon(pszIconFile, bAsAdmin);
+	mn_RootProcessIcon = gpConEmu->mp_TabBar->CreateTabIcon(pszIconFile, bAsAdmin, GetStartupDir());
 	// Fin
 	if (!*ms_RootProcessName)
 		mn_RootProcessIcon = -1;

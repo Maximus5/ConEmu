@@ -185,7 +185,7 @@ class TabBarClass
 		//void Update(ConEmuTab* tabs, int tabsCount);
 		bool GetRebarClientRect(RECT* rc);
 		void Update(BOOL abPosted=FALSE);
-		int CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin);
+		int CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
 		BOOL NeedPostUpdate();
 		void UpdatePosition();
 		void UpdateTabFont();
