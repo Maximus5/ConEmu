@@ -11810,8 +11810,11 @@ bool CRealConsole::CanCutChildFrame(LPCWSTR pszExeName)
 {
 	if (!pszExeName || !*pszExeName)
 		return true;
-	if (lstrcmpi(pszExeName, L"chrome.exe") == 0)
+	if (lstrcmpi(pszExeName, L"chrome.exe") == 0
+		|| lstrcmpi(pszExeName, L"firefox.exe") == 0)
+	{
 		return false;
+	}
 	return true;
 }
 
