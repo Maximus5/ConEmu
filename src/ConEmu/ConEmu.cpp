@@ -6869,6 +6869,65 @@ LRESULT CConEmuMain::OnQueryEndSession(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
+void CConEmuMain::SessionInfo::Log(WPARAM State, LPARAM SessionID)
+{
+	LONG i = _InterlockedIncrement(&g_evtidx);
+	EvtLog evt = {GetTickCount(), (DWORD)State, SessionID};
+	// Write a message at this index
+	g_evt[i & (SESSION_LOG_SIZE - 1)] = evt;
+}
+
+bool CConEmuMain::SessionInfo::Connected()
+{
+	return (wState!=7/*WTS_SESSION_LOCK*/);
+}
+
+void CConEmuMain::SessionInfo::SessionChanged(WPARAM State, LPARAM SessionID)
+{
+	wState = State;
+	lSessionID = SessionID;
+	Log(State, SessionID);
+}
+
+void CConEmuMain::SessionInfo::SetSessionNotification(bool bSwitch)
+{
+	if (((hWtsApi!=NULL) == bSwitch) || !IsWindowsXP)
+		return;
+
+	if (bSwitch)
+	{
+		wState = (WPARAM)-1;
+		lSessionID = (LPARAM)-1;
+
+		hWtsApi = LoadLibrary(L"Wtsapi32.dll");
+
+		pfnRegister = hWtsApi ? (WTSRegisterSessionNotification_t)GetProcAddress(hWtsApi, "WTSRegisterSessionNotification") : NULL;
+		pfnUnregister = hWtsApi ? (WTSUnRegisterSessionNotification_t)GetProcAddress(hWtsApi, "WTSUnRegisterSessionNotification") : NULL;
+
+		if (!pfnRegister || !pfnUnregister || !pfnRegister(ghWnd, 0/*NOTIFY_FOR_THIS_SESSION*/))
+		{
+			if (hWtsApi)
+			{
+				FreeLibrary(hWtsApi);
+				hWtsApi = NULL;
+			}
+			return;
+		}
+	}
+	else if (hWtsApi)
+	{
+		if (pfnUnregister && ghWnd)
+		{
+			pfnUnregister(ghWnd);
+			// Once
+			pfnUnregister = NULL;
+		}
+
+		// FreeLibrary(hWtsApi);
+		// hWtsApi = NULL;
+	}
+}
+
 LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	session.SessionChanged(wParam, lParam);
@@ -11674,6 +11733,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
 	LogString(L"CConEmuMain::OnDestroy()");
 
+	WARNING("Подозрение на зависание в некоторых случаях");
 	session.SetSessionNotification(false);
 
 	// Нужно проверить, вдруг окно закрылось без нашего ведома (InsideIntegration)
