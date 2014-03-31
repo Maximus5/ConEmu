@@ -2086,13 +2086,12 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 			if (!ReopenServerPipes())
 			{
 				// Try again?
-				mb_SwitchActiveServer = true;
+				SetSwitchActiveServer(true, eSetEvent, eDontChange);
 			}
 			else
 			{
 				// Done
-				mb_SwitchActiveServer = false;
-				SetEvent(mh_ActiveServerSwitched);
+				SetSwitchActiveServer(false, eDontChange, eSetEvent);
 			}
 		}
 
@@ -3173,10 +3172,35 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 	return lbRc;
 }
 
+void CRealConsole::SetSwitchActiveServer(bool bSwitch, CRealConsole::SwitchActiveServerEvt eCall, SwitchActiveServerEvt eResult)
+{
+	if (eResult == eResetEvent)
+		ResetEvent(mh_ActiveServerSwitched);
+
+	if (eCall == eResetEvent)
+		ResetEvent(mh_SwitchActiveServer);
+
+	#ifdef _DEBUG
+	if (bSwitch)
+		mb_SwitchActiveServer = true;
+	else
+	#endif
+	mb_SwitchActiveServer = bSwitch;
+
+	if (eResult == eSetEvent)
+		SetEvent(mh_ActiveServerSwitched);
+
+	if (eCall == eSetEvent)
+	{
+		_ASSERTE(bSwitch);
+		SetEvent(mh_SwitchActiveServer);
+	}
+}
+
 void CRealConsole::ResetVarsOnStart()
 {
 	mb_InCloseConsole = FALSE;
-	mb_SwitchActiveServer = false;
+	SetSwitchActiveServer(false, eResetEvent, eResetEvent);
 	//Drop flag after Restart console
 	mb_InPostCloseMacro = false;
 	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
@@ -6037,14 +6061,12 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 	if (!nAltServerPID && isServerClosing())
 	{
 		// Переоткрывать пайпы смысла нет, консоль закрывается
-		ResetEvent(mh_SwitchActiveServer);
-		mb_SwitchActiveServer = false;
+		SetSwitchActiveServer(false, eResetEvent, eDontChange);
 		bOk = true;
 	}
 	else
 	{
-		SetEvent(mh_SwitchActiveServer);
-		mb_SwitchActiveServer = true;
+		SetSwitchActiveServer(true, eSetEvent, eResetEvent);
 
 		HANDLE hWait[] = {mh_ActiveServerSwitched, mh_MonitorThread, mh_MainSrv, mh_TermEvent};
 		DWORD nWait = WAIT_TIMEOUT;
@@ -6068,7 +6090,7 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 		if (nWait == WAIT_OBJECT_0)
 		{
 			_ASSERTE(mb_SwitchActiveServer==false && "Must be dropped by MonitorThread");
-			mb_SwitchActiveServer = false;
+			SetSwitchActiveServer(false, eDontChange, eDontChange);
 		}
 		else
 		{

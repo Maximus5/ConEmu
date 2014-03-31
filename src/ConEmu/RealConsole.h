@@ -604,6 +604,8 @@ class CRealConsole
 		DWORD mn_AltSrv_PID;  //HANDLE mh_AltSrv;
 		HANDLE mh_SwitchActiveServer, mh_ActiveServerSwitched;
 		bool mb_SwitchActiveServer;
+		enum SwitchActiveServerEvt { eDontChange, eSetEvent, eResetEvent };
+		void SetSwitchActiveServer(bool bSwitch, SwitchActiveServerEvt eCall, SwitchActiveServerEvt eResult);
 		bool InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/);
 		bool ReopenServerPipes();
 
