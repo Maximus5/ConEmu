@@ -5464,7 +5464,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				checkDlgButton(hWnd2, cbUseClink, BST_UNCHECKED);
 				wchar_t szErrInfo[MAX_PATH+200];
 				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
-					L"Clink was not found in '%s\\clink'. Download and unpack clink files\nhttp://code.google.com/p/clink/\n\n"
+					L"Clink was not found in '%s\\clink'. Download and unpack clink files\nhttp://mridgers.github.io/clink/\n\n"
 					L"Note that you don't need to check 'Use clink'\nif you already have set up clink globally.",
 					gpConEmu->ms_ConEmuBaseDir);
 				MsgBox(szErrInfo, MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
@@ -5472,7 +5472,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
 		case cbClinkWebPage:
-			ShellExecute(NULL, L"open", L"http://code.google.com/p/clink", NULL, NULL, SW_SHOWNORMAL);
+			ShellExecute(NULL, L"open", L"http://mridgers.github.io/clink/", NULL, NULL, SW_SHOWNORMAL);
 			break;
 		case cbPortableRegistry:
 			#ifdef USEPORTABLEREGISTRY
