@@ -3139,7 +3139,7 @@ void CConEmuMain::Destroy()
 	}
 	else
 	{
-		LogString(L"-- Destroy skipped due to ghWnd");		
+		LogString(L"-- Destroy skipped due to ghWnd");
 	}
 }
 
@@ -3456,7 +3456,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 		//#if defined(CONEMU_TABBAR_EX)
 		//else if ((fdt >= fdt_Aero) && (wm == wmMaximized) && gpSet->isTabsInCaption)
 		//{
-		//	
+		//
 		//}
 		//#endif
 		else if (AdjustWindowRectEx(&rcTest, dwStyle, FALSE, dwStyleEx))
@@ -4133,7 +4133,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 						{
 							rc = rcNormal;
 
-							// Если после последней максимизации была изменена 
+							// Если после последней максимизации была изменена
 							// конфигурация мониторов - нужно поправить видимую область
 							if (((rc.right + 30) <= mi.rcWork.left)
 								|| ((rc.left + 30) >= mi.rcWork.right))
@@ -4191,7 +4191,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			//			{
 			//				rc = rcNormal;
 
-			//				// Если после последней максимизации была изменена 
+			//				// Если после последней максимизации была изменена
 			//				// конфигурация мониторов - нужно поправить видимую область
 			//				if (((rc.right + 30) <= work.left)
 			//					|| ((rc.left + 30) >= work.right))
@@ -4417,7 +4417,7 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 			if (isFullScreen() || isZoomed() || isIconic())
 				return;
 
-			//131023 Otherwise, after tiling (Win+Left) 
+			//131023 Otherwise, after tiling (Win+Left)
 			//       and Lose/Get focus (Alt+Tab,Alt+Tab)
 			//       StoreNormalRect will be called unexpectedly
 			// Don't call Estimate here? Avoid excess calculations?
@@ -4659,9 +4659,9 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpSetCls->checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
 	}
 
-	//ConEmuWindowMode nNewWindowMode = 
+	//ConEmuWindowMode nNewWindowMode =
 	//	IsChecked(hWnd2, rMaximized) ? wmMaximized :
-	//	IsChecked(hWnd2, rFullScreen) ? wmFullScreen : 
+	//	IsChecked(hWnd2, rFullScreen) ? wmFullScreen :
 	//	wmNormal;
 	if (nNewWindowMode == wmNotChanging || nNewWindowMode == wmCurrent)
 		nNewWindowMode = (ConEmuWindowMode)gpSet->_WindowMode;
@@ -4865,7 +4865,7 @@ bool CConEmuMain::SetTileMode(ConEmuWindowCommand Tile)
 			RECT rc = {}; GetWindowRect(ghWnd, &rc);
 			ConEmuWindowCommand NewTile = GetTileMode(true/*Estimate*/, &mi);
 			wchar_t szNewTile[32];
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"result of SetTileMode(%s) -> %u {%i,%i}-{%i,%i} x%08X -> %s {%i,%i}-{%i,%i}", 
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"result of SetTileMode(%s) -> %u {%i,%i}-{%i,%i} x%08X -> %s {%i,%i}-{%i,%i}",
 				 FormatTileMode(Tile,szName,countof(szName)),
 				 (UINT)bChange,
 				 rcNewWnd.left, rcNewWnd.top, rcNewWnd.right, rcNewWnd.bottom,
@@ -5200,7 +5200,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	if (inMode != wmNormal && inMode != wmMaximized && inMode != wmFullScreen)
 		inMode = wmNormal; // ошибка загрузки настроек?
 
-	if (!isMainThread()) 
+	if (!isMainThread())
 	{
 		PostMessage(ghWnd, mn_MsgSetWindowMode, inMode, 0);
 		return false;
@@ -5339,8 +5339,8 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 					DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 					if (dwStyle & WS_MAXIMIZE)
 						SetWindowStyle(dwStyle&~WS_MAXIMIZE);
-					SetWindowPos(ghWnd, HWND_TOP, 
-						rcNormal.left, rcNormal.top, 
+					SetWindowPos(ghWnd, HWND_TOP,
+						rcNormal.left, rcNormal.top,
 						rcNormal.right-rcNormal.left, rcNormal.bottom-rcNormal.top,
 						SWP_NOCOPYBITS|SWP_SHOWWINDOW);
 				}
@@ -5480,8 +5480,8 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 					DEBUGTEST(WINDOWPLACEMENT wpl2 = {sizeof(wpl2)}; GetWindowPlacement(ghWnd, &wpl2););
 					if (changeFromWindowMode == wmFullScreen)
 					{
-						setWindowPos(HWND_TOP, 
-							rcMax.left, rcMax.top, 
+						setWindowPos(HWND_TOP,
+							rcMax.left, rcMax.top,
 							rcMax.right-rcMax.left, rcMax.bottom-rcMax.top,
 							SWP_NOCOPYBITS|SWP_SHOWWINDOW);
 					}
@@ -5497,8 +5497,8 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 					SetWindowPlacement(ghWnd, &wpl);*/
 					DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 					SetWindowStyle(dwStyle|WS_MAXIMIZE);
-					SetWindowPos(ghWnd, HWND_TOP, 
-						rcMax.left, rcMax.top, 
+					SetWindowPos(ghWnd, HWND_TOP,
+						rcMax.left, rcMax.top,
 						rcMax.right-rcMax.left, rcMax.bottom-rcMax.top,
 						SWP_NOCOPYBITS|SWP_SHOWWINDOW);
 				}
@@ -6453,7 +6453,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	//if (WindowPosStackCount == 1)
 	//{
 	//	#ifdef _DEBUG
-	//	bool bNoMove = (p->flags & SWP_NOMOVE); 
+	//	bool bNoMove = (p->flags & SWP_NOMOVE);
 	//	bool bNoSize = (p->flags & SWP_NOSIZE);
 	//	#endif
 
@@ -6481,7 +6481,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 			if ((changeFromWindowMode == wmNotChanging) && isWindowNormal())
 			{
-				//131023 Otherwise, after tiling (Win+Left) 
+				//131023 Otherwise, after tiling (Win+Left)
 				//       and Lose/Get focus (Alt+Tab,Alt+Tab)
 				//       StoreNormalRect will be called unexpectedly
 				// Don't call Estimate here? Avoid excess calculations?
@@ -7092,7 +7092,7 @@ void CConEmuMain::OnActiveConWndStore(HWND hConWnd)
 	// причем он может быть как дочерним для ghWnd, так и отдельно
 	// висящим, и делающим вид, что оно дочернее для ghWnd.
 	if (ghWndWork && (ghWndWork != ghWnd))
-	{	
+	{
 		SetWindowLongPtr(ghWndWork, GWLP_USERDATA, (LONG_PTR)hConWnd);
 	}
 
@@ -7762,7 +7762,7 @@ void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
 //		DWORD dwErr = (lRc == FALSE) ? GetLastError() : 0;
 //
 //		pArg->bResult = lRc;
-//		pArg->dwErrCode = dwErr;		
+//		pArg->dwErrCode = dwErr;
 //
 //		if (lRc != FALSE)
 //		{
@@ -8531,7 +8531,7 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 	// Win+Esc by default
 	else if ((wParam == HOTKEY_SETFOCUSSWITCH_ID) || (wParam == HOTKEY_SETFOCUSGUI_ID) || (wParam == HOTKEY_SETFOCUSCHILD_ID))
 	{
-		SwitchGuiFocusOp FocusOp = 
+		SwitchGuiFocusOp FocusOp =
 			(wParam == HOTKEY_SETFOCUSSWITCH_ID) ? sgf_FocusSwitch :
 			(wParam == HOTKEY_SETFOCUSGUI_ID) ? sgf_FocusGui :
 			(wParam == HOTKEY_SETFOCUSCHILD_ID) ? sgf_FocusChild : sgf_None;
@@ -10346,7 +10346,7 @@ bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 		}
 	}
 
-	// 
+	//
 
 	// Смотря что просили
 	return bFolderIgnore ? mb_ConEmuAliveOwnedNoDir : mb_ConEmuAliveOwned;
@@ -11412,7 +11412,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		}
 
 		// Если в ключе [HKEY_CURRENT_USER\Console] будут левые значения - то в Win7 могут
-		// начаться страшные глюки :-) 
+		// начаться страшные глюки :-)
 		// например, консольное окно будет "дырявое" - рамка есть, а содержимого - нет :-P
 		gpSet->CheckConsoleSettings();
 
@@ -13168,7 +13168,7 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 	// 1. Функция вызывается при нажатии глобально регистрируемого хоткея
 	//    Win+C  -->  ShowHideType = sih_None
-	// 2. При вызове из другого приложения 
+	// 2. При вызове из другого приложения
 	//    аргумент /single  --> ShowHideType = sih_Show
 	// 3. При вызове из дрегого приложения
 	//    аргумент /showhide     --> ShowHideType = sih_ShowMinimize
@@ -14208,25 +14208,25 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_COMPOSITION: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			UpdateImeComposition();
-			//if (lParam & GCS_RESULTSTR) 
+			//if (lParam & GCS_RESULTSTR)
 			//{
 			//	HIMC hIMC = ImmGetContext(hWnd);
 			//	if (hIMC)
 			//	{
 			//		DWORD dwSize;
 			//		wchar_t* lpstr;
-			//		// Get the size of the result string. 
+			//		// Get the size of the result string.
 			//		dwSize = ImmGetCompositionString(hIMC, GCS_RESULTSTR, NULL, 0);
-			//		// increase buffer size for terminating null character,  
+			//		// increase buffer size for terminating null character,
 			//		dwSize += sizeof(wchar_t);
 			//		lpstr = (wchar_t*)calloc(dwSize,1);
 			//		if (lpstr)
 			//		{
-			//			// Get the result strings that is generated by IME into lpstr. 
+			//			// Get the result strings that is generated by IME into lpstr.
 			//			ImmGetCompositionString(hIMC, GCS_RESULTSTR, lpstr, dwSize);
 			//			DEBUGSTRIME(L"GCS_RESULTSTR: ");
 			//			DEBUGSTRIME(lpstr);
-			//			// add this string into text buffer of application 
+			//			// add this string into text buffer of application
 			//			free(lpstr);
 			//		}
 			//		ImmReleaseContext(hWnd, hIMC);
@@ -14296,7 +14296,7 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			DEBUGSTRIME(szDbgMsg);
 			break;
 		case WM_IME_SETCONTEXT:
-			// If the application draws the composition window, 
+			// If the application draws the composition window,
 			// the default IME window does not have to show its composition window.
 			// In this case, the application must clear the ISC_SHOWUICOMPOSITIONWINDOW
 			// value from the lParam parameter before passing the message to DefWindowProc
@@ -14732,7 +14732,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 		}
 	}
 
-	// LCIDToLocaleName(dwLayoutName, ...) 
+	// LCIDToLocaleName(dwLayoutName, ...)
 
 	// s - number of items in (switch)
 	for (s = 0; !lbFound && (s <= 5); s++)
@@ -16775,7 +16775,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	}
 
 	if (lParam == (LPARAM)-1)
-	{ 
+	{
 		RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 
 		if (!PtInRect(&rcWnd, ptCur))
