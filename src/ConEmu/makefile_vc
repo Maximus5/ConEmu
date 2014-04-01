@@ -367,11 +367,11 @@ $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
 CLEAN:
 	@echo Copying release files
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
-	@echo moving "$(OUTDIR)\$(OUTNAME).exe" to "$(RELEASEDIR)"
+	@echo moving `$(OUTDIR)\$(OUTNAME).exe` to `$(RELEASEDIR)`
 	@move "$(OUTDIR)\$(OUTNAME).exe" $(RELEASEDIR)
-	@echo moving "$(MAP)" to "$(RELEASEDIR)"
+	@echo moving `$(MAP)` to `$(RELEASEDIR)`
 	@move "$(MAP)" $(RELEASEDIR)
 !ifndef NO_RELEASE_PDB
-	@echo moving "$(PDB)" to "$(RELEASEDIR)\$(PDB_NAME)"
+	@echo moving `$(PDB)` to `$(RELEASEDIR)\$(PDB_NAME)`
 	@move "$(PDB)" "$(RELEASEDIR)\$(PDB_NAME)"
 !endif

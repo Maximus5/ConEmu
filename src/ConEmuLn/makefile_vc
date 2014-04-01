@@ -191,16 +191,16 @@ dirs:
 clean:
 	@echo Copying release files
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
-	@echo moving "$(DLLFULLNAME)" to "$(RELEASEDIR)"
+	@echo moving `$(DLLFULLNAME)` to `$(RELEASEDIR)`
 	@move $(DLLFULLNAME) $(RELEASEDIR)
 	@cd
 !ifdef DEBUG
-	@echo moving "$(PDB)" to "$(RELEASEDIR)"
+	@echo moving `$(PDB)` to `$(RELEASEDIR)`
 	@move $(PDB) $(RELEASEDIR)
 !else
     @if exist $(PDB) del $(PDB)
 !endif
-	@echo moving "$(MAP)" to "$(RELEASEDIR)"
+	@echo moving `$(MAP)` to `$(RELEASEDIR)`
 	@move $(MAP) $(RELEASEDIR)
 
 

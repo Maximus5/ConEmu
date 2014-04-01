@@ -179,10 +179,10 @@ $(OBJDIR)\ConEmuC.obj: ConEmuC.cpp
 CLEAN:
 	@echo Copying release files
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
-	@echo moving "$(OUTDIR)\$(OUTNAME).exe" to "$(RELEASEDIR)"
+	@echo moving `$(OUTDIR)\$(OUTNAME).exe` to `$(RELEASEDIR)`
 	@move "$(OUTDIR)\$(OUTNAME).exe" $(RELEASEDIR)
-	@echo moving "$(OUTDIR)\$(OUTNAME).pdb" to "$(RELEASEDIR)"
+	@echo moving `$(OUTDIR)\$(OUTNAME).pdb` to `$(RELEASEDIR)`
 	@move "$(OUTDIR)\$(OUTNAME).pdb" $(RELEASEDIR)
-	@echo moving "$(OUTDIR)\$(OUTNAME).map" to "$(RELEASEDIR)"
+	@echo moving `$(OUTDIR)\$(OUTNAME).map` to `$(RELEASEDIR)`
 	@move "$(OUTDIR)\$(OUTNAME).map" $(RELEASEDIR)
 
