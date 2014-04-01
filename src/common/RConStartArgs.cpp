@@ -50,6 +50,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DefaultSplitValue 500
 
 #ifdef _DEBUG
+
+// На этом - ассерт возникает в NextArg
+// L"C:\\Windows\\system32\\cmd.exe /c echo moving \"\"..\\_VCBUILD\\final.ConEmuCD.32W.vc9\\ConEmuCD.pdb\"\" to \"..\\..\\Release\\ConEmu\\ConEmuCD.pdb\""
+// L"\"C:\\Program Files\\Microsoft SDKs\\Windows\\v7.0\\bin\\rc.EXE\" /D__GNUC__ /l 0x409 /fo\"\"..\\_VCBUILD\\final.ConEmu.32W.vc9\\obj\\ConEmu.res\"\" /d NDEBUG ConEmu.rc"
+
+
 void RConStartArgs::RunArgTests()
 {
 	CmdArg s;

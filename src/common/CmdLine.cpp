@@ -100,7 +100,7 @@ LPCWSTR CmdArg::Set(LPCWSTR asNewValue, int anChars /*= -1*/)
 		int nNewLen = (anChars == -1) ? lstrlen(asNewValue) : anChars;
 		if (nNewLen <= 0)
 		{
-			_ASSERTE(FALSE && "Check, if caller really need to set empty string???");
+			//_ASSERTE(FALSE && "Check, if caller really need to set empty string???");
 			if (GetBuffer(1))
 				ms_Arg[0] = 0;
 		}
