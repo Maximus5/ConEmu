@@ -15229,6 +15229,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		DEBUGSTRMOUSEWHEEL(szDbg);
 		#endif
 
+
+		#if 0
 		// Still not clear why, but when Wheel event is redirected to (inactive) mintty,
 		// we get series of broken Wheel events (wrong coordinates)
 		/*
@@ -15251,6 +15253,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				return 0;
 			}
 		}
+		#endif
 
 		CVConGuard VCon;
 		if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
@@ -15260,7 +15263,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			if (hGuiChild && !pRCon->isBufferHeight())
 			{
 				// Just resend it to child GUI
+				#if 0
 				bWasSendToChildGui = true;
+				#endif
 				VCon->RCon()->PostConsoleMessage(hGuiChild, messg, wParam, lParam);
 				return 0;
 			}
