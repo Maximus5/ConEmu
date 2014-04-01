@@ -115,52 +115,54 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Font",IDC_STATIC,4,1,319,89
+    GROUPBOX        "Main console font",gbMainConFont,4,1,319,80
     COMBOBOX        tFontFace,10,13,129,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Auto size (fixed console size in cells)",cbFontAuto,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,29,145,8
-    RTEXT           "Size:",IDC_STATIC,145,15,20,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,33,140,8
+    RTEXT           "Size:",stFontSizeY,145,15,20,8
     COMBOBOX        tFontSizeY,169,13,30,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Width:",IDC_STATIC,201,15,26,8
+    RTEXT           "Width:",stFontSizeX,201,15,26,8
     COMBOBOX        tFontSizeX,231,13,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Font charset:",IDC_STATIC,12,43,48,8
-    COMBOBOX        tFontCharset,64,41,75,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Cell:",IDC_STATIC,263,15,19,8
+    RTEXT           "Font charset:",stFontCharset,170,60,57,8
+    COMBOBOX        tFontCharset,231,58,86,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Cell:",stFontSizeX3,263,15,19,8
     COMBOBOX        tFontSizeX3,287,13,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,29,31,8
-    CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,45,29,31,8
-    CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTO3STATE | WS_TABSTOP,91,29,56,8
-    CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,44,57,8
-    COMBOBOX        lbExtendFontBoldIdx,231,41,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbExtendFontItalicIdx,261,41,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbExtendFontNormalIdx,291,41,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Change pseudographics font",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,59,145,8
-    COMBOBOX        tFontFace2,169,71,101,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
-    CTEXT           "x",IDC_STATIC,275,72,8,8
-    COMBOBOX        tFontSizeX2,287,71,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Anti-aliasing",IDC_STATIC,10,57,154,28,WS_GROUP
-    CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,70,36,8
-    CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,57,70,47,8
-    CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,110,70,48,8
-    GROUPBOX        "",IDC_STATIC,4,95,319,98
+    CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,33,31,8
+    CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,44,33,31,8
+    CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTO3STATE | WS_TABSTOP,88,33,56,8
+    CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,210,86,77,8
+    COMBOBOX        lbExtendFontBoldIdx,210,98,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontItalicIdx,248,98,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontNormalIdx,286,98,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Change pseudographics font",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,86,145,8
+    COMBOBOX        tFontFace2,10,98,119,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Width:",stFontSizeX2,135,99,24,8
+    COMBOBOX        tFontSizeX2,163,98,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Anti-aliasing",gbAntiAliasing,10,47,154,28,WS_GROUP
+    CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,60,36,8
+    CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,57,60,47,8
+    CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,110,60,48,8
+    GROUPBOX        "",gbBgImage,4,132,319,98
     CONTROL         "Back&ground image (bmp, jpg, png, tif):",cbBgImage,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,95,139,8
-    LTEXT           "Path:",IDC_STATIC,10,109,18,8
-    EDITTEXT        tBgImage,34,107,261,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",bBgImage,299,107,16,12
-    LTEXT           "Darkening:",IDC_STATIC,10,144,36,8
-    CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,143,228,12
-    EDITTEXT        tDarker,285,143,30,12,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tBgImageColors,160,124,43,12,ES_AUTOHSCROLL
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,132,139,8
+    LTEXT           "Path:",stBgImage,10,146,18,8
+    EDITTEXT        tBgImage,34,144,261,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",bBgImage,299,144,16,12
+    LTEXT           "Darkening:",stDarker,10,181,36,8
+    CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,180,228,12
+    EDITTEXT        tDarker,285,180,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tBgImageColors,160,161,43,12,ES_AUTOHSCROLL
     CONTROL         "Allow background plugins (Far Manager)",cbBgAllowPlugin,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,161,144,10
-    RTEXT           "Placement:",stBgPlacement,205,126,45,8
-    COMBOBOX        lbBgPlacement,254,124,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Darkening:",IDC_STATIC,10,175,36,8,WS_DISABLED
-    CONTROL         "",slDarkerPlugin,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_DISABLED | WS_TABSTOP,52,174,228,12
-    EDITTEXT        tDarkerPlugin,285,174,30,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    CONTROL         "Transparent",rbBgReplaceTransparent,"Button",BS_AUTORADIOBUTTON | WS_DISABLED | WS_GROUP,10,126,59,8
-    CONTROL         "Replace color indexes",rbBgReplaceIndexes,"Button",BS_AUTORADIOBUTTON,70,126,86,8
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,198,144,10
+    RTEXT           "Placement:",stBgPlacement,205,163,45,8
+    COMBOBOX        lbBgPlacement,254,161,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Darkening:",stDarkerPlugin,10,212,36,8,WS_DISABLED
+    CONTROL         "",slDarkerPlugin,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_DISABLED | WS_TABSTOP,52,211,228,12
+    EDITTEXT        tDarkerPlugin,285,211,30,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    CONTROL         "Transparent",rbBgReplaceTransparent,"Button",BS_AUTORADIOBUTTON | WS_DISABLED | WS_GROUP,10,163,59,8
+    CONTROL         "Replace color indexes",rbBgReplaceIndexes,"Button",BS_AUTORADIOBUTTON,70,163,86,8
+    GROUPBOX        "",gbFixFarBorders,4,86,194,29
+    GROUPBOX        "",gbExtendFonts,204,86,119,29
 END
 
 IDD_SPG_WNDSIZEPOS DIALOGEX 0, 0, 328, 235

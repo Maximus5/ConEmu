@@ -995,6 +995,19 @@
 #define stDefaultTerminal               2663
 #define bImportSettings                 2664
 #define cbRetardInactivePanes           2665
+#define stFontCharset                   2666
+#define stFontSizeY                     2667
+#define stFontSizeX                     2668
+#define stFontSizeX3                    2669
+#define stFontSizeX2                    2670
+#define stBgImage                       2671
+#define stDarker                        2672
+#define stDarkerPlugin                  2673
+#define gbBgImage                       2674
+#define gbFixFarBorders                 2675
+#define gbExtendFonts                   2676
+#define gbAntiAliasing                  2677
+#define gbMainConFont                   2678
 
 // Next default values for new objects
 // 
@@ -1002,7 +1015,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        224
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2666
+#define _APS_NEXT_CONTROL_VALUE         2679
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
