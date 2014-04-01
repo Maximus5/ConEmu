@@ -427,16 +427,8 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			break;
 		case WM_CREATE:
 			break;
-		case WM_KEYDOWN:
-		case WM_KEYUP:
-		case WM_SYSKEYDOWN:
-		case WM_SYSKEYUP:
 		case WM_MOUSEWHEEL:
-		case WM_ACTIVATE:
-		case WM_ACTIVATEAPP:
-			//case WM_MOUSEACTIVATE:
-		case WM_KILLFOCUS:
-			//case WM_SETFOCUS:
+		case WM_MOUSEHWHEEL:
 		case WM_MOUSEMOVE:
 		case WM_RBUTTONDOWN:
 		case WM_RBUTTONUP:
@@ -450,6 +442,17 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		case WM_XBUTTONDOWN:
 		case WM_XBUTTONUP:
 		case WM_XBUTTONDBLCLK:
+			if (pVCon->RCon()->isGuiOverCon())
+				break;
+		case WM_KEYDOWN:
+		case WM_KEYUP:
+		case WM_SYSKEYDOWN:
+		case WM_SYSKEYUP:
+		case WM_ACTIVATE:
+		case WM_ACTIVATEAPP:
+			//case WM_MOUSEACTIVATE:
+		case WM_KILLFOCUS:
+			//case WM_SETFOCUS:
 		case WM_VSCROLL:
 			// Вся обработка в родителе
 			{
@@ -787,16 +790,8 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			_ASSERTE(hWnd == pVCon->mh_WndBack);
 			pVCon->OnPaintGaps();
 			break;
-		case WM_KEYDOWN:
-		case WM_KEYUP:
-		case WM_SYSKEYDOWN:
-		case WM_SYSKEYUP:
 		case WM_MOUSEWHEEL:
-		case WM_ACTIVATE:
-		case WM_ACTIVATEAPP:
-			//case WM_MOUSEACTIVATE:
-		case WM_KILLFOCUS:
-			//case WM_SETFOCUS:
+		case WM_MOUSEHWHEEL:
 		case WM_MOUSEMOVE:
 		case WM_RBUTTONDOWN:
 		case WM_RBUTTONUP:
@@ -810,6 +805,17 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 		case WM_XBUTTONDOWN:
 		case WM_XBUTTONUP:
 		case WM_XBUTTONDBLCLK:
+			if (pVCon->RCon()->isGuiOverCon())
+				break;
+		case WM_KEYDOWN:
+		case WM_KEYUP:
+		case WM_SYSKEYDOWN:
+		case WM_SYSKEYUP:
+		case WM_ACTIVATE:
+		case WM_ACTIVATEAPP:
+			//case WM_MOUSEACTIVATE:
+		case WM_KILLFOCUS:
+			//case WM_SETFOCUS:
 		case WM_VSCROLL:
 			// Вся обработка в родителе
 			{
