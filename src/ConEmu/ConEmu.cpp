@@ -15260,7 +15260,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 			CRealConsole* pRCon = VCon->RCon();
 			HWND hGuiChild = pRCon->GuiWnd();
-			if (hGuiChild && !pRCon->isBufferHeight())
+			if (hGuiChild && pRCon->isGuiOverCon())
 			{
 				// Just resend it to child GUI
 				#if 0
