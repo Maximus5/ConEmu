@@ -36,6 +36,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WinObjects.h"
 #include "ConEmuPipeMode.h"
 
+#ifdef _DEBUG
+#define DEBUGSTRCMD(s) //OutputDebugString(s)
+#else
+#define DEBUGSTRCMD(s)
+#endif
+
 // !!! Использовать только через функцию: LocalSecurity() !!!
 SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 u64 ghWorkingModule = 0;
@@ -771,12 +777,25 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 	wchar_t szErr[MAX_PATH*2]; szErr[0] = 0;
 	BOOL fSuccess = FALSE;
 	DWORD cbRead = 0, /*dwMode = 0,*/ dwErr = 0;
+	int nAllSize;
+	LPBYTE ptrData;
+	#ifdef _DEBUG
+	bool bIsAltSrvCmd;
+	wchar_t szDbgPrefix[64], szDbgResult[64], *pszDbgMsg = NULL;
+	#endif
 
 	if (!pIn || !szPipeName)
 	{
 		_ASSERTE(pIn && szPipeName);
-		return NULL;
+		pOut = NULL;
+		goto wrap;
 	}
+
+	#ifdef _DEBUG
+	_wsprintf(szDbgPrefix, SKIPLEN(countof(szDbgPrefix)) L">> ExecCmd: PID=%5u  TID=%5u  Cmd=%3u  ", GetCurrentProcessId(), GetCurrentThreadId(), pIn->hdr.nCmd);
+	pszDbgMsg = lstrmerge(szDbgPrefix, szPipeName, L"\n");
+	if (pszDbgMsg) { DEBUGSTRCMD(pszDbgMsg); free(pszDbgMsg); }
+	#endif
 
 	pIn->hdr.bAsync = bAsyncNoResult;
 
@@ -805,54 +824,13 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 		#endif
 
 		#endif
-		return NULL;
+
+		pOut = NULL;
+		goto wrap;
 	}
 
-	//// Try to open a named pipe; wait for it, if necessary.
-	//while (1)
-	//{
-	//	hPipe = CreateFile(
-	//		szPipeName,  // pipe name
-	//		GENERIC_READ |  // read and write access
-	//		GENERIC_WRITE,
-	//		0,              // no sharing
-	//		NULL,           // default security attributes
-	//		OPEN_EXISTING,  // opens existing pipe
-	//		0,              // default attributes
-	//		NULL);          // no template file
-	//
-	//	// Break if the pipe handle is valid.
-	//	if (hPipe != INVALID_HANDLE_VALUE)
-	//		break;
-	//
-	//	// Exit if an error other than ERROR_PIPE_BUSY occurs.
-	//	dwErr = GetLastError();
-	//	if (dwErr != ERROR_PIPE_BUSY)
-	//	{
-	//		return NULL;
-	//	}
-	//
-	//	// All pipe instances are busy, so wait for 1 second.
-	//	if (!WaitNamedPipe(szPipeName, nWaitPipe) )
-	//	{
-	//		return NULL;
-	//	}
-	//}
-	//
-	//// The pipe connected; change to message-read mode.
-	//dwMode = CE_PIPE_READMODE;
-	//fSuccess = SetNamedPipeHandleState(
-	//	hPipe,    // pipe handle
-	//	&dwMode,  // new pipe mode
-	//	NULL,     // don't set maximum bytes
-	//	NULL);    // don't set maximum time
-	//if (!fSuccess)
-	//{
-	//	CloseHandle(hPipe);
-	//	return NULL;
-	//}
 	#ifdef _DEBUG
-	bool bIsAltSrvCmd = (pIn->hdr.nCmd==CECMD_ALTBUFFER || pIn->hdr.nCmd==CECMD_ALTBUFFERSTATE || pIn->hdr.nCmd==CECMD_SETCONSCRBUF);
+	bIsAltSrvCmd = (pIn->hdr.nCmd==CECMD_ALTBUFFER || pIn->hdr.nCmd==CECMD_ALTBUFFERSTATE || pIn->hdr.nCmd==CECMD_SETCONSCRBUF);
 	_ASSERTE(pIn->hdr.nSrcThreadId==GetCurrentThreadId() || (bIsAltSrvCmd && pIn->hdr.nSrcPID!=GetCurrentProcessId()));
 	#endif
 
@@ -864,7 +842,9 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 		dwErr = GetLastError();
 		_ASSERTE(fSuccess && (cbRead == pIn->hdr.cbSize));
 		#endif
-		return NULL;
+
+		pOut = NULL;
+		goto wrap;
 	}
 	else
 	{
@@ -886,14 +866,18 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 		{
 			//_ASSERTE(fSuccess || (dwErr == ERROR_MORE_DATA));
 			CloseHandle(hPipe);
-			return NULL;
+
+			pOut = NULL;
+			goto wrap;
 		}
 	}
 
 	if (cbRead < sizeof(CESERVER_REQ_HDR))
 	{
 		CloseHandle(hPipe);
-		return NULL;
+
+		pOut = NULL;
+		goto wrap;
 	}
 
 	pOut = (CESERVER_REQ*)cbReadBuf; // temporary
@@ -906,28 +890,34 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 			_ASSERTE(pOut->hdr.cbSize == 0 || pOut->hdr.cbSize >= cbRead);
 			DEBUGSTR(L"!!! Wrong nSize received from GUI server !!!\n");
 		}
-		return NULL;
+
+		pOut = NULL;
+		goto wrap;
 	}
 
 	if (pOut->hdr.nVersion != CESERVER_REQ_VER)
 	{
 		CloseHandle(hPipe);
 		DEBUGSTR(L"!!! Wrong nVersion received from GUI server !!!\n");
-		return NULL;
+
+		pOut = NULL;
+		goto wrap;
 	}
 
-	int nAllSize = pOut->hdr.cbSize;
+	nAllSize = pOut->hdr.cbSize;
 	pOut = (CESERVER_REQ*)malloc(nAllSize);
 	_ASSERTE(pOut);
 
 	if (!pOut)
 	{
 		CloseHandle(hPipe);
-		return NULL;
+
+		_ASSERTE(pOut == NULL);
+		goto wrap;
 	}
 
 	memmove(pOut, cbReadBuf, cbRead);
-	LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
+	ptrData = ((LPBYTE)pOut)+cbRead;
 	nAllSize -= cbRead;
 
 	while (nAllSize>0)
@@ -945,7 +935,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 		               NULL);      // not overlapped
 
 		// Exit if an error other than ERROR_MORE_DATA occurs.
-		if (!fSuccess && (GetLastError() != ERROR_MORE_DATA))
+		if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA))
 			break;
 
 		ptrData += cbRead;
@@ -962,6 +952,17 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 			pOut = NULL;
 		}
 	}
+
+wrap:
+	#ifdef _DEBUG
+	if (pOut)
+		_wsprintf(szDbgResult, SKIPLEN(countof(szDbgResult)) L"- Data=%5u  Err=%u\n", pOut->DataSize(), dwErr);
+	else
+		lstrcpyn(szDbgResult, L"[NULL]\n", countof(szDbgResult));
+	pszDbgMsg = lstrmerge(szDbgPrefix, szDbgResult);
+	if (pszDbgMsg) { DEBUGSTRCMD(pszDbgMsg); free(pszDbgMsg); }
+	#endif
+
 	return pOut;
 }
 

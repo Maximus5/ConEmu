@@ -33,8 +33,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 	#define USEPIPELOG
 	//#undef USEPIPELOG
+	#include "common.hpp"
+	#define DEBUGSTRCMD(s) //OutputDebugStringW(s)
 #else
 	#undef USEPIPELOG
+	#define DEBUGSTRCMD(s)
 #endif
 
 #ifndef PIPEBUFSIZE
@@ -179,6 +182,10 @@ struct PipeServer
 			#ifdef _DEBUG
 			int nCreateCount, nConnectCount, nCallCount, nAnswCount;
 			SYSTEMTIME stLastCall, stLastEndCall;
+			#endif
+
+			#ifdef _DEBUG
+			wchar_t szDbgInfo[128];
 			#endif
 			
 			// Request (from client)
@@ -893,6 +900,29 @@ struct PipeServer
 			return fWriteSuccess;
 		}
 
+		#ifdef _DEBUG
+		void DebugDumpCommand(PipeInst* pPipe, CESERVER_REQ_HDR* ptrRequest)
+		{
+			if (ptrRequest->nVersion == CESERVER_REQ_VER)
+			{
+				if (ptrRequest->nCmd == CECMD_CONSOLEDATA)
+					return; // Skip this event
+				_wsprintf(pPipe->szDbgInfo, SKIPLEN(countof(pPipe->szDbgInfo))
+					L"<< CmdRecv: PID=%5u  TID=%5u  Cmd=%3u  DataSize=%u  FromPID=%u  FromTID=%u\n", GetCurrentProcessId(), GetCurrentThreadId(), ptrRequest->nCmd,
+					(UINT)(ptrRequest->cbSize - sizeof(*ptrRequest)),
+					ptrRequest->nSrcPID, ptrRequest->nSrcThreadId);
+				DEBUGSTRCMD(pPipe->szDbgInfo);
+			}
+			else
+			{
+				static bool bWarned = false; if (!bWarned)
+				{
+					bWarned = TRUE; _ASSERTE(FALSE && "Invalid packet version");
+				}
+			}
+		}
+		#endif
+
 		// Processing methods
 		DWORD PipeServerThread(PipeInst* pPipe)
 		{
@@ -1004,6 +1034,27 @@ struct PipeServer
 						}
 						
 						pPipe->bBreakConnection = false;
+
+						#ifdef _DEBUG
+						{
+							if (sizeof(*pPipe->ptrRequest) == sizeof(CESERVER_REQ))
+							{
+								DebugDumpCommand(pPipe, (CESERVER_REQ_HDR*)pPipe->ptrRequest);
+							}
+							else if (sizeof(*pPipe->ptrRequest) == sizeof(MSG64))
+							{
+								// Nothing to do yet
+								int iDbg = 0;
+							}
+							else
+							{
+								static bool bWarned = false; if (!bWarned)
+								{
+									bWarned = TRUE; _ASSERTE(FALSE && "Unknown size of packet");
+								}
+							}
+						}
+						#endif
 
 						if (mfn_PipeServerCommand(pPipe, pPipe->ptrRequest, /*OUT&*/pPipe->ptrReply,
 									/*OUT&*/pPipe->cbReplySize, /*OUT&*/pPipe->cbMaxReplySize, m_lParam))
