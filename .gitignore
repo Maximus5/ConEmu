@@ -27,6 +27,7 @@ _*.sln
 \!*.txt
 \!*.mht
 \!*.htm
+\!*.xlsx
 
 /gcc
 /MinGW
