@@ -7859,8 +7859,7 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 
 			if (gnRunMode == RM_ALTSERVER)
 			{
-				// Уведомить GUI, что альт.сервер снова в работе!
-				SendStarted();
+				// OK, GUI will be informed by RM_SERVER itself
 			}
 			else
 			{
