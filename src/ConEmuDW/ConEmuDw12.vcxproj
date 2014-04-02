@@ -392,6 +392,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
     <Midl>
@@ -419,6 +422,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -479,6 +485,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">
     <ClCompile>
@@ -503,6 +512,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">
     <Midl>
@@ -530,6 +542,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">
     <ClCompile>
@@ -554,6 +569,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">
     <Midl>
@@ -581,6 +599,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">
     <ClCompile>
@@ -605,6 +626,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">
     <Midl>
@@ -635,6 +659,9 @@
     <PostBuildEvent>
       <Command>copy $(TargetPath) \VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_PDB|Win32'">
     <ClCompile>
@@ -690,6 +717,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">
     <ClCompile>
@@ -746,6 +776,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">
     <ClCompile>
@@ -770,6 +803,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">
     <Midl>
@@ -797,6 +833,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">
     <ClCompile>
@@ -825,6 +864,9 @@
       <TargetMachine>MachineX86</TargetMachine>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
     <Midl>
@@ -857,6 +899,9 @@
     <PostBuildEvent>
       <Command>copy $(TargetDir)ExtendedConsole64.* T:\VCProject\FarPlugin\Far30\unicode_far\Release.64.vc\</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\common\ConEmuCheck.h" />

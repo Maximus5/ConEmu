@@ -405,6 +405,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;DeclareDPIAware.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">
     <Midl>
@@ -421,7 +424,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Shlwapi.lib;version.lib;gdiplus.lib;Winmm.lib;Netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -520,6 +523,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
     <Midl>
@@ -536,7 +542,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Shlwapi.lib;version.lib;gdiplus.lib;Winmm.lib;Netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -635,6 +641,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">
     <Midl>
@@ -651,7 +660,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Shlwapi.lib;version.lib;gdiplus.lib;Winmm.lib;Netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -687,6 +696,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">
     <Midl>
@@ -703,7 +715,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Shlwapi.lib;version.lib;gdiplus.lib;Winmm.lib;Netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -801,6 +813,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">
     <Midl>
@@ -817,7 +832,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Shlwapi.lib;version.lib;gdiplus.lib;Winmm.lib;Netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -858,6 +873,9 @@
     <PostBuildEvent>
       <Command />
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
     <Midl>
@@ -874,7 +892,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Shlwapi.lib;version.lib;gdiplus.lib;Winmm.lib;Netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>

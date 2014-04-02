@@ -393,6 +393,9 @@
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng" "$(TargetDir)"</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">
     <Midl>
@@ -420,6 +423,9 @@
       <ImportLibrary />
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -477,6 +483,9 @@
     <PostBuildEvent>
       <Command />
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">
     <ClCompile>
@@ -506,6 +515,9 @@ echo if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDi
 if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)ConEmuLn.*" C:\Utils\FAR170\Plugins\ConEmu\Lines\
 </Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
     <Midl>
@@ -531,6 +543,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">
     <ClCompile>
@@ -586,6 +601,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
     <PostBuildEvent>
       <Command>copy $(TargetPath) $(SolutionDir)..\Plugins\ConEmu\</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">
     <ClCompile>
@@ -611,6 +629,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng" "$(TargetDir)"</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">
     <Midl>
@@ -636,6 +657,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">
     <ClCompile>
@@ -661,6 +685,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng" "$(TargetDir)"</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">
     <Midl>
@@ -686,6 +713,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_PDB|Win32'">
     <ClCompile>
@@ -743,6 +773,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
     <PostBuildEvent>
       <Command />
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">
     <ClCompile>
@@ -768,6 +801,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng" "$(TargetDir)"</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">
     <Midl>
@@ -793,6 +829,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">
     <ClCompile>
@@ -819,6 +858,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng" "$(TargetDir)"</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
     <Midl>
@@ -844,6 +886,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ConEmuLn.cpp" />
