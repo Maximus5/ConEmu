@@ -1,7 +1,7 @@
 ﻿You may try «Clink» - bash style autocomplete
 Download and unpack files to this folder
 
-http://clink.googlecode.com
+http://mridgers.github.io/clink/
 
 Note! Clink distribution has subfolders.
 Files must be located in THIS folder exactly:
