@@ -130,10 +130,12 @@ BEGIN
     CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,33,31,8
     CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,44,33,31,8
     CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTO3STATE | WS_TABSTOP,88,33,56,8
+    GROUPBOX        "",gbExtendFonts,204,86,119,29
     CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,210,86,77,8
     COMBOBOX        lbExtendFontBoldIdx,210,98,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontItalicIdx,248,98,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontNormalIdx,286,98,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "",gbFixFarBorders,4,86,194,29
     CONTROL         "Change pseudographics font",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,86,145,8
     COMBOBOX        tFontFace2,10,98,119,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Width:",stFontSizeX2,135,99,24,8
@@ -161,8 +163,6 @@ BEGIN
     EDITTEXT        tDarkerPlugin,285,211,30,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     CONTROL         "Transparent",rbBgReplaceTransparent,"Button",BS_AUTORADIOBUTTON | WS_DISABLED | WS_GROUP,10,163,59,8
     CONTROL         "Replace color indexes",rbBgReplaceIndexes,"Button",BS_AUTORADIOBUTTON,70,163,86,8
-    GROUPBOX        "",gbFixFarBorders,4,86,194,29
-    GROUPBOX        "",gbExtendFonts,204,86,119,29
 END
 
 IDD_SPG_WNDSIZEPOS DIALOGEX 0, 0, 328, 235
