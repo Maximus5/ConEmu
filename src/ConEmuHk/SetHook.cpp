@@ -72,8 +72,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define DebugString(x) //if ((gnDllState != ds_DllProcessDetach) || gbIsSshProcess) OutputDebugString(x)
 	#define DebugStringA(x) //if ((gnDllState != ds_DllProcessDetach) || gbIsSshProcess) OutputDebugStringA(x)
 #else
-	#define DebugString(x) //OutputDebugString(x)
-	#define DebugStringA(x) //OutputDebugStringA(x)
+	#define DebugString(x)
+	#define DebugStringA(x)
 #endif
 
 
@@ -153,7 +153,7 @@ static NTSTATUS gnLdrDllNotificationState = (NTSTATUS)-1;
 static bool gbLdrDllNotificationUsed = false;
 
 // Forwards
-bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE);
+bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE, BOOL abForceHooks = FALSE);
 void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep);
 
 
@@ -634,7 +634,7 @@ bool InitHooksLibrary()
 		ADDFUNC((void*)OnFreeLibrary,		szFreeLibrary,			kernel32); // OnFreeLibrary тоже нужен!
 	}
 	// With only exception of LoadLibraryW - it handles "ExtendedConsole.dll" loading in Far 64
-	if (gbIsFarProcess)
+	if (gbIsFarProcess || !gbLdrDllNotificationUsed)
 	{
 		ADDFUNC((void*)OnLoadLibraryW,			szLoadLibraryW,			kernel32);
 	}
@@ -839,17 +839,34 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	static bool bLdrWasChecked = false;
 	if (!bLdrWasChecked)
 	{
-		HMODULE hNtDll = GetModuleHandle(L"ntdll.dll");
-		if (hNtDll)
+		#ifndef _WIN32_WINNT_WIN8
+		#define _WIN32_WINNT_WIN8 0x602
+		#endif
+		_ASSERTE(_WIN32_WINNT_WIN8==0x602);
+		OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN8), LOBYTE(_WIN32_WINNT_WIN8)};
+		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+		BOOL isAllowed = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+
+		// LdrDllNotification работает так как нам надо начиная с Windows 8
+		// В предыдущих версиях Windows нотификатор вызывается из LdrpFindOrMapDll
+		// ДО того, как были обработаны импорты функцией LdrpProcessStaticImports (а точнее LdrpSnapThunk)
+
+		if (isAllowed)
 		{
-			LdrRegisterDllNotification = (LdrRegisterDllNotification_t)GetProcAddress(hNtDll, "LdrRegisterDllNotification");
-			LdrUnregisterDllNotification = (LdrUnregisterDllNotification_t)GetProcAddress(hNtDll, "LdrUnregisterDllNotification");
+			HMODULE hNtDll = GetModuleHandle(L"ntdll.dll");
+			if (hNtDll)
+			{
+				LdrRegisterDllNotification = (LdrRegisterDllNotification_t)GetProcAddress(hNtDll, "LdrRegisterDllNotification");
+				LdrUnregisterDllNotification = (LdrUnregisterDllNotification_t)GetProcAddress(hNtDll, "LdrUnregisterDllNotification");
+
+				if (LdrRegisterDllNotification && LdrUnregisterDllNotification)
+				{
+					gnLdrDllNotificationState = LdrRegisterDllNotification(0, LdrDllNotification, NULL, &gpLdrDllNotificationCookie);
+					gbLdrDllNotificationUsed = (gnLdrDllNotificationState == 0/*STATUS_SUCCESS*/);
+				}
+			}
 		}
-		if (LdrRegisterDllNotification && LdrUnregisterDllNotification)
-		{
-			gnLdrDllNotificationState = LdrRegisterDllNotification(0, LdrDllNotification, NULL, &gpLdrDllNotificationCookie);
-			gbLdrDllNotificationUsed = (gnLdrDllNotificationState == 0/*STATUS_SUCCESS*/);
-		}
+
 		bLdrWasChecked = true;
 	}
 
@@ -2601,10 +2618,19 @@ VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFIC
 	else if (BaseDllName && BaseDllName->Buffer)
 		memmove(szModule, BaseDllName->Buffer, min(sizeof(szModule)-2,BaseDllName->Length));
 
+	#ifdef _DEBUG
+	wchar_t szDbgInfo[MAX_PATH*3];
+	_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"ConEmuHk: Ldr(%s) " WIN3264TEST(L"0x%08X",L"0x%08X%08X") L" '%s'\n",
+		(NotificationReason==LDR_DLL_NOTIFICATION_REASON_LOADED) ? L"Loaded" : L"Unload",
+		WIN3264WSPRINT(hModule),
+		szModule);
+	DebugString(szDbgInfo);
+	#endif
+
 	switch (NotificationReason)
 	{
 	case LDR_DLL_NOTIFICATION_REASON_LOADED:
-		if (PrepareNewModule(hModule, NULL, szModule))
+		if (PrepareNewModule(hModule, NULL, szModule, TRUE, TRUE))
 		{
 			HookItem* ph = NULL;;
 			GetOriginalAddress((void*)(FARPROC)OnLoadLibraryW, (void*)(FARPROC)LoadLibraryW, FALSE, &ph);
@@ -2931,8 +2957,16 @@ bool UnsetHookInt(HMODULE Module)
 							// Это если функцию захукали уже после нас
 						}
 
+						#ifdef _DEBUG
 						// Может ли такое быть? Модуль был "захукан" без нашего ведома?
-						_ASSERTE(FALSE && "Unknown function replacement was found");
+						// Наблюдается в Win2k8R2
+						static bool bWarned = false;
+						if (!bWarned)
+						{
+							bWarned = true;
+							_ASSERTE(FALSE && "Unknown function replacement was found (external hook?)");
+						}
+						#endif
 
 						// Если мы дошли сюда - значит функция найдена (или по адресу или по имени)
 						// BugBug: в принципе, эту функцию мог захукать и другой модуль (уже после нас),
@@ -3186,7 +3220,7 @@ void CheckProcessModules(HMODULE hFromModule);
 //   что вызовет некорректные смещения функций,
 // а в Win64 смещения вообще должны быть 64битными, а структура модуля хранит только 32битные смещения
 
-bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot /*= FALSE*/)
+bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot /*= FALSE*/, BOOL abForceHooks /*= FALSE*/)
 {
 	bool lbAllSysLoaded = true;
 	for (size_t s = 0; s < countof(ghSysDll); s++)
