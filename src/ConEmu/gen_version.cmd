@@ -42,6 +42,8 @@ if /I %MVV_3% GTR 31 goto err_parm
 
 set MVV_4=0
 set MVV_4a=%VR:~6,1%
+set MVV_git_def=#undef MVV_git
+if NOT "%~2"=="" goto git_ci
 if "%MVV_4a%"=="" goto run
 rem translate letter in build no into 4-d number
 set Found=N
@@ -55,6 +57,24 @@ if "%~1"=="%MVV_4a%" set Found=Y
 goto :EOF
 :inc_4
 goto :EOF
+
+:git_ci
+set MVV_git_def=#define MVV_git
+set /A MVV_4=%~2
+if errorlevel 1 (
+  echo Numeric minor-build-no was not specified for git commit [arg #2]
+  goto err_parm
+) else (
+  echo Minor build no for git commit: '%MVV_4%'
+)
+set MVV_4a=%~3
+if "%MVV_4a%"=="" (
+  echo git commit was not specified [arg #3]
+  goto err_parm
+) else (
+  echo git commit '%MVV_4a%'
+)
+goto run
 
 :run
 
@@ -74,15 +94,19 @@ goto :EOF
 @echo #define MVV_3 %MVV_3%
 @echo #define MVV_4 %MVV_4%
 @echo #define MVV_4a "%MVV_4a%"
+@echo %MVV_git_def%
 @echo //
 @echo #include "version_macro.h"
 @goto :EOF
 
 :usage
-echo Usage:   "%~nx0" ^<BuildNo^>
-echo Example: "%~nx0" ^<131113c^>
+echo Usage:   "%~nx0" ^<BuildNo^> [minor_for_git git_commit]
+echo Example: "%~nx0" 131113c
+echo Example: "%~nx0" 140404  21 4069b5f
+goto ex99
 :err_parm
-echo Bad version was specified: '%~1'
+echo Bad version was specified: '%*'
+:ex99
 exit /B 99
 goto :EOF
 

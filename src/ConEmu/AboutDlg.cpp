@@ -115,8 +115,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			#ifdef _DEBUG
 			pszDebug = L"[DEBUG] ";
 			#endif
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%02u%02u%02u%s %s%s)", 
-				(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), pszDebug, pszBits);
+			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%s %s%s)",
+				gpConEmu->ms_ConEmuBuild, pszDebug, pszBits);
 			SetWindowText(hDlg, szTitle);
 
 			if (hClassIcon)
@@ -311,13 +311,8 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 	if (!bOk)
 	{
 		WCHAR szTitle[255];
-		LPCWSTR pszBits = WIN3264TEST(L"x86",L"x64");
-		LPCWSTR pszDebug = L"";
-		#ifdef _DEBUG
-		pszDebug = L"[DEBUG] ";
-		#endif
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%02u%02u%02u%s %s%s)", 
-			(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), pszDebug, pszBits);
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%s %s%s)",
+			gpConEmu->ms_ConEmuBuild, RELEASEDEBUGTEST(L"",L"[DEBUG] "), WIN3264TEST(L"x86",L"x64"));
 		DontEnable de;
 		MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance,
 			pAbout,
@@ -488,7 +483,7 @@ void ConEmuAbout::LoadResources()
 	{
 		if (m_Btns[i].hBmp)
 			continue; // Already loaded
-		
+
 		m_Btns[i].ResId = Images[i].ResId;
 		m_Btns[i].nCtrlId = Images[i].nCtrlId;
 		m_Btns[i].pszUrl = (Images[i].nCtrlId == pLinkDonate) ? gsDonatePage : gsFlattrPage;

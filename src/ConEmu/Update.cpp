@@ -71,9 +71,13 @@ CConEmuUpdate::CConEmuUpdate()
 	mpsz_PendingPackageFile = mpsz_PendingBatchFile = NULL;
 	m_UpdateStep = us_NotStarted;
 	mb_NewVersionAvailable = false;
-	ms_NewVersion[0] = ms_CurVersion[0] = ms_SkipVersion[0] = 0;
+	ms_NewVersion[0] = ms_SkipVersion[0] = 0;
 	ms_VerOnServer[0] = ms_VerOnServerRA[0] = ms_CurVerInfo[0] = 0;
 	mpsz_ConfirmSource = NULL;
+
+	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
+	_wsprintf(ms_OurVersion, SKIPLEN(countof(ms_OurVersion)) L"%02u%02u%02u%s",
+		(MVV_1%100), MVV_2, MVV_3, szVer4);
 
 	lstrcpyn(ms_DefaultTitle, gpConEmu->GetDefaultTitle(), countof(ms_DefaultTitle));
 
@@ -540,9 +544,6 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 	// Сразу проверим, как нужно будет запускаться
 	bNeedRunElevation = NeedRunElevation();
 
-	_wsprintf(ms_CurVersion, SKIPLEN(countof(ms_CurVersion)) L"%02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
-	//ms_NewVersion
-
 	// StartLocalUpdate - запуск обновления из локального пакета
 
 	mb_InetMode = false;
@@ -623,7 +624,7 @@ void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&s
 	wchar_t szTest[64]; // Дописать stable/preview/alpha
 	bool bDetected = false, bNewer;
 
-	wcscpy_c(szInfo, ms_CurVersion);
+	wcscpy_c(szInfo, ms_OurVersion);
 
 	struct {
 		LPCWSTR szSect, szPref, szName;
@@ -641,7 +642,7 @@ void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&s
 		wcscat_c(szServer, Vers[i].szPref);
 		if (GetPrivateProfileString(Vers[i].szSect, L"version", L"", szTest, countof(szTest), pszUpdateVerLocation))
 		{
-			bNewer = (lstrcmp(szTest, ms_CurVersion) >= 0);
+			bNewer = (lstrcmp(szTest, ms_OurVersion) >= 0);
 			if (!bDetected && bNewer)
 			{
 				bDetected = true;
@@ -654,8 +655,8 @@ void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&s
 			wcscat_c(szServerRA, Vers[i].szName);
 			if (bNewer)
 			{
-				wcscat_c(szServer, (lstrcmp(szTest, ms_CurVersion) > 0) ? L" (newer)" : L" (equal)");
-				wcscat_c(szServerRA, (lstrcmp(szTest, ms_CurVersion) > 0) ? L" (newer)" : L" (equal)");
+				wcscat_c(szServer, (lstrcmp(szTest, ms_OurVersion) > 0) ? L" (newer)" : L" (equal)");
+				wcscat_c(szServerRA, (lstrcmp(szTest, ms_OurVersion) > 0) ? L" (newer)" : L" (equal)");
 			}
 			wcscat_c(szServerRA, L"\n");
 		}
@@ -714,8 +715,6 @@ DWORD CConEmuUpdate::CheckProcInt()
 		goto wrap;
 	}
 
-	_wsprintf(ms_CurVersion, SKIPLEN(countof(ms_CurVersion)) L"%02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
-
 	// Загрузить информацию о файлах обновления
 	if (IsLocalFile(pszUpdateVerLocationSet))
 	{
@@ -772,7 +771,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 	GetVersionsFromIni(pszUpdateVerLocation, ms_VerOnServer, ms_VerOnServerRA, ms_CurVerInfo);
 
-	if ((lstrcmpi(ms_NewVersion, ms_CurVersion) <= 0)
+	if ((lstrcmpi(ms_NewVersion, ms_OurVersion) <= 0)
 		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
 		|| (!mb_ManualCallMode && (lstrcmp(ms_NewVersion, ms_SkipVersion) == 0)))
 	{

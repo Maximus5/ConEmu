@@ -285,8 +285,8 @@ CStatus::CStatus()
 	wcscpy_c(m_Values[csi_Time].szFormat, L"00:00:00");
 
 	_ASSERTE(gpConEmu && *gpConEmu->ms_ConEmuBuild);
-	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L" %c %s%s", 
-		0x00AB/* « */, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"[32]",L"[64]"));
+	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L" %c %s[%u%s]",
+		0x00AB/* « */, gpConEmu->ms_ConEmuBuild, WIN3264TEST(32,64), RELEASEDEBUGTEST(L"","D"));
 }
 
 CStatus::~CStatus()
@@ -335,7 +335,7 @@ bool CStatus::LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMa
 		lstrcpyn(psz, (pszName && *pszName) ? pszName : L"???", 64);
 		int nCurLen = lstrlen(psz);
 		_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u"), nPID);
-		//_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u « %s%s"), 
+		//_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u « %s%s"),
 		//	nPID, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x86",L"x64"));
 		UNREFERENCED_PARAMETER(nCchLeft);
 		lbRc = true;
@@ -799,12 +799,12 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 
 			if (!i && szVerSize.cx > 0)
 			{
-				bDrawRC = DrawText(hDrawDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &rcText, 
+				bDrawRC = DrawText(hDrawDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &rcText,
 					DT_RIGHT|DT_NOPREFIX|DT_SINGLELINE|/*DT_VCENTER|*/DT_END_ELLIPSIS);
 				rcText.right -= szVerSize.cx;
 			}
 
-			bDrawRC = DrawText(hDrawDC, m_Items[i].sText, m_Items[i].nTextLen, &rcText, 
+			bDrawRC = DrawText(hDrawDC, m_Items[i].sText, m_Items[i].nTextLen, &rcText,
 				((m_Items[i].nID == csi_Info) ? DT_LEFT : DT_CENTER)
 				|DT_NOPREFIX|DT_SINGLELINE|/*DT_VCENTER|*/DT_END_ELLIPSIS);
 
@@ -961,7 +961,7 @@ void CStatus::OnTimer()
 	if (!gpSet->isStatusBarShow)
 		return;
 
-	// Если сейчас нет меню, и был показан hint для колонки - 
+	// Если сейчас нет меню, и был показан hint для колонки -
 	// проверить позицию мышки
 	if ((m_ClickedItemDesc != csi_Last) && !mb_InPopupMenu)
 	{
@@ -1253,7 +1253,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	//		ReleaseCapture();
 	//		mb_WasClick = false;
 	//		if (ms_ClickedItemDesc[0])
-	//		{	
+	//		{
 	//			ms_ClickedItemDesc[0] = 0;
 	//			UpdateStatusBar(true);
 	//		}
@@ -1605,7 +1605,7 @@ void CStatus::OnConsoleBufferChanged(CRealConsole* pRCon)
 	bool bIsScroll = pRCon ? pRCon->isBufferHeight() : false;
 	wchar_t cScroll = (gnOsVer>=0x0601/*Windows7*/) ? 0x2195 : L']'/*WinXP has not arrows*/; // Up/Down arrow
 
-	wcscpy_c(m_Values[csi_ActiveBuffer].sText, 
+	wcscpy_c(m_Values[csi_ActiveBuffer].sText,
 			(tBuffer == rbt_Primary) ? L"PRI" :
 			(tBuffer == rbt_Alternative) ? L"ALT" :
 			(tBuffer == rbt_Selection) ? L"SEL" :

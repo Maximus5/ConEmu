@@ -58,6 +58,7 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 	        PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
 	MiniDumpWriteDump_t MiniDumpWriteDump_f = NULL;
 	DWORD nSharingOption;
+	wchar_t szVer4[8] = L"";
 
 	SetCursor(LoadCursor(NULL, IDC_WAIT));
 
@@ -87,7 +88,8 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 	wcscat_c(dmpfile, L"ConEmuTrap");
 	CreateDirectory(dmpfile, NULL);
 	nLen = lstrlen(dmpfile);
-	_wsprintf(dmpfile+nLen, SKIPLEN(countof(dmpfile)-nLen) L"\\Trap-%02u%02u%02u%s-%u.dmp", MVV_1, MVV_2, MVV_3,_T(MVV_4a), GetCurrentProcessId());
+	lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
+	_wsprintf(dmpfile+nLen, SKIPLEN(countof(dmpfile)-nLen) L"\\Trap-%02u%02u%02u%s-%u.dmp", MVV_1, MVV_2, MVV_3, szVer4, GetCurrentProcessId());
 	
 	nSharingOption = /*FILE_SHARE_READ;
 	if (IsWindowsXP)

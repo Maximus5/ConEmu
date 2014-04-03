@@ -2453,7 +2453,7 @@ int CheckUnicodeFont()
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	_ASSERTE(nLen<=35); // ниже на 2 буфер множится
 
-	wchar_t szMinor[2] = {MVV_4a[0], 0};
+	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
 	//msprintf не умеет "%02u"
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 		L"ConEmu %02u%02u%02u%s %s\r\n"
@@ -2857,10 +2857,11 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 			LPCWSTR pszConEmuHk = WIN3264TEST(L"conemuhk.", L"conemuhk64.");
 			size_t nDllNameLen = lstrlen(pszConEmuHk);
 			// Out preferred module name
-			wchar_t szOurName[32] = {}, szVer[2] = {MVV_4a[0],0};
+			wchar_t szOurName[40] = {};
+			wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
 			_wsprintf(szOurName, SKIPLEN(countof(szOurName))
 				CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
-				WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szVer);
+				WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
 			CharLowerBuff(szOurName, lstrlen(szOurName));
 
 			// Go to enumeration

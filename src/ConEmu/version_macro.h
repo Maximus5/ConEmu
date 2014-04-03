@@ -2,6 +2,8 @@
 
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
+#define WSTRING2(x) L ## x
+#define WSTRING(x) WSTRING2(x)
 #define VERSION_NUMBERS2(a,b) a##b
 #define VERSION_NUMBERS(a,b) VERSION_NUMBERS2(a,b)
 
@@ -22,9 +24,17 @@
 //#endif
 
 #ifndef _DEBUG
-#define CONEMUVERS STRING(MVV_1) MVV_2s MVV_3s MVV_4a
+  #ifdef MVV_git
+    #define CONEMUVERS STRING(MVV_1) MVV_2s MVV_3s "-" MVV_4a
+  #else
+    #define CONEMUVERS STRING(MVV_1) MVV_2s MVV_3s MVV_4a
+  #endif
 #else
-#define CONEMUVERS STRING(MVV_1) MVV_2s MVV_3s "dbg"
+  #ifdef MVV_git
+    #define CONEMUVERS STRING(MVV_1) MVV_2s MVV_3s "-" MVV_4a "-D"
+  #else
+    #define CONEMUVERS STRING(MVV_1) MVV_2s MVV_3s MVV_4a "-D"
+  #endif
 #endif
 
 #ifdef __GNUC__

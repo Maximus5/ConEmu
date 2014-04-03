@@ -605,8 +605,9 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 			CreateDirectory(dmpfile, NULL);
 
 			INT_PTR nLen = lstrlen(dmpfile);
+			wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
 			_wsprintf(dmpfile+nLen, SKIPLEN(cchMaxDmpFile-nLen) L"\\Trap-%02u%02u%02u%s-%u.%s",
-				MVV_1, MVV_2, MVV_3,_T(MVV_4a), dwProcessId,
+				MVV_1, MVV_2, MVV_3,szMinor, dwProcessId,
 				bFull ? L"dmp" : L"mdmp");
 
 			bRc = true;

@@ -2651,11 +2651,15 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 
 	DWORD dwErr = (DWORD)-1;
 
-	wchar_t szVer[2] = {MVV_4a[0],0}, szConEmu[64];
 	wchar_t szLevel[16] = L"";
 	if (anLevel > 0)
 		_wsprintf(szLevel, SKIPLEN(countof(szLevel)) L"[%u]", anLevel);
-	_wsprintf(szConEmu, SKIPLEN(countof(szConEmu)) L"ConEmu %u%02u%02u%s[%s] log%s", MVV_1,MVV_2,MVV_3,szVer,WIN3264TEST(L"32",L"64"),szLevel);
+	wchar_t szVer4[8] = L"";
+	lstrcpyn(szVer4, WSTRING(MVV_4a), countof(szVer4));
+	wchar_t szConEmu[64];
+	_wsprintf(szConEmu, SKIPLEN(countof(szConEmu)) L"ConEmu %u%02u%02u%s%s[%s%s] log%s",
+		MVV_1, MVV_2, MVV_3, szVer4[0]&&szVer4[1]?L"-":L"", szVer4,
+		WIN3264TEST(L"32",L"64"), RELEASEDEBUGTEST(L"",L"D"), szLevel);
 
 	if (!ms_FilePathName)
 	{
@@ -2940,7 +2944,6 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 
 	HWND hConWnd = GetConsoleWindow();
 
-	//wchar_t cVer = MVV_4a[0];
 	_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\r\n"
 		L"\tOsVer: %u.%u.%u.x%u, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
 		L"\tCSDVersion: %s, ReactOS: %u (%s), Rsrv: %u\r\n"

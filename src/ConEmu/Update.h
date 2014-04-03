@@ -137,7 +137,7 @@ protected:
 	bool mb_RequestTerminate;
 	UpdateStep m_UpdateStep;
 	bool mb_NewVersionAvailable;
-	wchar_t ms_NewVersion[64], ms_CurVersion[64], ms_SkipVersion[64];
+	wchar_t ms_NewVersion[64], ms_OurVersion[64], ms_SkipVersion[64];
 	wchar_t ms_VerOnServer[100]; // Information about available server versions
 	wchar_t ms_VerOnServerRA[100]; // Information about available server versions (right aligned)
 	wchar_t ms_CurVerInfo[100];  // Version + stable/preview/alpha

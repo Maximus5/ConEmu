@@ -1225,7 +1225,8 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	// But there is one caveat: Task sheduler may be disable on PC!
 
 	wchar_t szUniqTaskName[128];
-	_wsprintf(szUniqTaskName, SKIPLEN(countof(szUniqTaskName)) L"ConEmu %02u%02u%02u%s starter ParentPID=%u", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), GetCurrentProcessId());
+	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
+	_wsprintf(szUniqTaskName, SKIPLEN(countof(szUniqTaskName)) L"ConEmu %02u%02u%02u%s starter ParentPID=%u", (MVV_1%100),MVV_2,MVV_3,szVer4, GetCurrentProcessId());
 
 	BSTR bsTaskName = SysAllocString(szUniqTaskName);
 	BSTR bsExecutablePath = SysAllocString(szExe);
