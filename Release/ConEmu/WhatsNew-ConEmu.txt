@@ -12,6 +12,15 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.04.03
+[%] Issue 1527: Regression 140327. PowerShell was not hooked.
+[%] Issue 1528: Infinite mouse messages ChildGui<-->ConEmu in some cases.
+[*] Settings Main page redesigned.
+[*] Change clink homepage url, update ConEmu\clink\Readme.txt.
+[*] Remove possible deadlock after closing AltServer.
+[*] Some internal changes.
+
+
 2014.03.27
 [!] Console. Increase max buffer height to 32766 lines.
 [*] Issue1504. Parenthesis issue in csudo.cmd.
