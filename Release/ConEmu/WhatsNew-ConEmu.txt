@@ -26,7 +26,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [*] Issue1504. Parenthesis issue in csudo.cmd.
 [*] Ensure Cmd_Autorun.cmd always returns errorlevel==0.
 [*] Quotation marks changes in Cmd_Autorun.cmd (possible parenthesis issues?)
-[*] Use LdrDllNotification (Vista+). Might speed up hooks and set up hooks before DllMain called (LoadLibrary).
+[*] Use LdrDllNotification (Win8+). Will set up hooks before DllMain called (LoadLibrary).
 [*] Ctrl+O Far macro was failed in some cases - Shell("new_console:b").
 [*] Issue1509. Arg parsing failed for '/dir "C:\" /single' (01ed281 regression).
 [*] Allow string arguments of -new_console to be resetted.
