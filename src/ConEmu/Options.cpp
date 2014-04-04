@@ -662,6 +662,7 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_HwndFore] = true;
 	isStatusColumnHidden[csi_HwndFocus] = true;
 	isStatusColumnHidden[csi_ConEmuPID] = true;
+	isStatusColumnHidden[csi_ConsoleSize] = true;
 	//isStatusColumnHidden[csi_CursorInfo] = true; -- show one info col instead of three cursor columns (by default)
 	isStatusColumnHidden[csi_CursorX] = true;
 	isStatusColumnHidden[csi_CursorY] = true;
