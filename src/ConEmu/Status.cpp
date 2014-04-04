@@ -1491,14 +1491,14 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 	if (bValid)
 	{
 		_wsprintf(m_Values[csi_ConsolePos].sText, SKIPLEN(countof(m_Values[csi_ConsolePos].sText)-1) L"(%i,%i)-(%i,%i)",
-			(int)psbi->srWindow.Left, (int)psbi->srWindow.Top, (int)psbi->srWindow.Right, (int)psbi->srWindow.Bottom);
+			(int)psbi->srWindow.Left+1, (int)psbi->srWindow.Top+1, (int)psbi->srWindow.Right+1, (int)psbi->srWindow.Bottom+1);
 		_wsprintf(m_Values[csi_ConsolePos].szFormat, SKIPLEN(countof(m_Values[csi_ConsolePos].szFormat)) L" (%i,%i)-(%i,%i) ",
-			(int)psbi->srWindow.Left, (int)psbi->srWindow.Top, (int)psbi->dwSize.X, (int)psbi->dwSize.Y);
+			(int)psbi->srWindow.Left+1, (int)psbi->srWindow.Top+1, (int)psbi->dwSize.X, (int)psbi->dwSize.Y);
 	}
 	else
 	{
 		wcscpy_c(m_Values[csi_ConsolePos].sText, L" ");
-		wcscpy_c(m_Values[csi_ConsolePos].szFormat, L"(0,0)-(199,199)"); // на самом деле может быть до 9999, но для уменьшения ширины - по умолчанию так
+		wcscpy_c(m_Values[csi_ConsolePos].szFormat, L"(0,0)-(199,199)"); // на самом деле может быть до 32766, но для уменьшения ширины - по умолчанию так
 	}
 
 	// csi_ConsoleSize:
@@ -1541,7 +1541,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	// csi_CursorX:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_CursorX].sText, SKIPLEN(countof(m_Values[csi_CursorX].sText)-1) _T("%i"), (int)pcr->X);
+		_wsprintf(m_Values[csi_CursorX].sText, SKIPLEN(countof(m_Values[csi_CursorX].sText)-1) _T("%i"), (int)pcr->X+1);
 		if (nMaxX)
 			_wsprintf(m_Values[csi_CursorX].szFormat, SKIPLEN(countof(m_Values[csi_CursorX].szFormat)) L" %i", nMaxX);
 	}
@@ -1554,7 +1554,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	// csi_CursorY:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_CursorY].sText, SKIPLEN(countof(m_Values[csi_CursorY].sText)-1) _T("%i"), (int)pcr->Y);
+		_wsprintf(m_Values[csi_CursorY].sText, SKIPLEN(countof(m_Values[csi_CursorY].sText)-1) _T("%i"), (int)pcr->Y+1);
 		if (nMaxY)
 			_wsprintf(m_Values[csi_CursorY].szFormat, SKIPLEN(countof(m_Values[csi_CursorY].szFormat)) L" %i", nMaxY);
 	}
@@ -1579,7 +1579,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	// csi_CursorInfo:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_CursorInfo].sText, SKIPLEN(countof(m_Values[csi_CursorInfo].sText)-1) _T("(%i,%i) %i%s"), (int)pcr->X, (int)pcr->Y, pci->dwSize, pci->bVisible ? L"V" : L"H");
+		_wsprintf(m_Values[csi_CursorInfo].sText, SKIPLEN(countof(m_Values[csi_CursorInfo].sText)-1) _T("(%i,%i) %i%s"), (int)pcr->X+1, (int)pcr->Y+1, pci->dwSize, pci->bVisible ? L"V" : L"H");
 		if (nMaxX && nMaxY)
 			_wsprintf(m_Values[csi_CursorInfo].szFormat, SKIPLEN(countof(m_Values[csi_CursorInfo].szFormat)) L" (%i,%i) 100V", nMaxX, nMaxY);
 	}

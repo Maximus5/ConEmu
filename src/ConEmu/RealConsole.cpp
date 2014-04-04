@@ -4383,11 +4383,11 @@ void CRealConsole::OnSelectionChanged()
 		bool bStreamMode = ((sel.dwFlags & CONSOLE_TEXT_SELECTION) != 0);
 		int  nCellsCount = mp_ABuf->GetSelectionCellsCount();
 
-		_wsprintf(szSelInfo, SKIPLEN(countof(szSelInfo)) L"%s selection {%i,%i}-{%i,%i} total %i chars",
-			bStreamMode ? L"Stream" : L"Block",
-			sel.srSelection.Left, sel.srSelection.Top,
-			sel.srSelection.Right, sel.srSelection.Bottom,
-			nCellsCount);
+		_wsprintf(szSelInfo, SKIPLEN(countof(szSelInfo)) L"%i chars {%i,%i}-{%i,%i} %s selection",
+			nCellsCount,
+			sel.srSelection.Left+1, sel.srSelection.Top+1,
+			sel.srSelection.Right+1, sel.srSelection.Bottom+1,
+			bStreamMode ? L"stream" : L"block");
 	}
 	SetConStatus(szSelInfo);
 }
