@@ -611,7 +611,9 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize, char* pszUtfLog /
 				{
 					// Теперь прикинуть, какой размер шрифта нам нужен
 					newSizeY = (nMinY / (dwSize.Y)) + 1;
-					newSizeX = (nMinX / (dwSize.X)) + 1;
+					// Win8. На базовых настройках разбиение консоли дважды по Ctrl+Shift+O
+					// дает ошибку - размер шрифта в третьей консоли оказывается недостаточным
+					newSizeX = (nMinX / (dwSize.X)) + 2;
 					if ((newSizeY > curSizeY) || (newSizeX > curSizeX))
 					{
 						calcSizeX = newSizeY * curSizeX / curSizeY;
