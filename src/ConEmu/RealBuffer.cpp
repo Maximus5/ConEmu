@@ -1958,10 +1958,9 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	wchar_t* lpChar = con.pConChar;
 	WORD* lpAttr = con.pConAttr;
 
-	if (mp_RCon->mb_ResetStatusOnConsoleReady)
+	if (mp_RCon->m_ConStatus.Options & CRealConsole::cso_ResetOnConsoleReady)
 	{
-		mp_RCon->mb_ResetStatusOnConsoleReady = false;
-		mp_RCon->ms_ConStatus[0] = 0;
+		ZeroStruct(mp_RCon->m_ConStatus);
 	}
 
 
@@ -5248,12 +5247,12 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	}
 
 	// Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
-	if (!gpSet->isStatusBarShow && mp_RCon->ms_ConStatus[0])
+	if (!gpSet->isStatusBarShow && mp_RCon->m_ConStatus.szText[0] && (mp_RCon->m_ConStatus.Options & CRealConsole::cso_Critical))
 	{
-		int nLen = _tcslen(mp_RCon->ms_ConStatus);
-		wmemcpy(pChar, mp_RCon->ms_ConStatus, nLen);
+		int nLen = _tcslen(mp_RCon->m_ConStatus.szText);
+		wmemcpy(pChar, mp_RCon->m_ConStatus.szText, nLen);
 
-		if (nWidth>nLen)
+		if (nWidth > nLen)
 			wmemset(pChar+nLen, L' ', nWidth-nLen);
 
 		//wmemset((wchar_t*)pAttr, 0x47, nWidth);

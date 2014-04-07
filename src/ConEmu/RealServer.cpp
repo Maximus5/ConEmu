@@ -289,7 +289,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	{
 		if (nStarted == sst_ServerStart)
 		{
-			mp_RCon->SetConStatus(L"Console server started...", true);
+			mp_RCon->SetConStatus(L"Console server started...", CRealConsole::cso_ResetOnConsoleReady|CRealConsole::cso_Critical);
 
 			// Активным должен быть реальный буфер
 			_ASSERTE(mp_RCon->mp_ABuf==mp_RCon->mp_RBuf);

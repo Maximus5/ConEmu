@@ -146,7 +146,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mp_Log = NULL;
 
 	MCHKHEAP;
-	SetConStatus(L"Initializing ConEmu (2)", true, true);
+	SetConStatus(L"Initializing ConEmu (2)", cso_ResetOnConsoleReady|cso_DontUpdate|cso_Critical);
 	//mp_VCon->mp_RCon = this;
 	HWND hView = apVCon->GetView();
 	if (!hView)
@@ -1811,7 +1811,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	bool bDetached = (pRCon->m_Args.Detached == crb_On) && !pRCon->mb_ProcessRestarted && !pRCon->mn_InRecreate;
 	bool lbChildProcessCreated = FALSE;
 
-	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...", true);
+	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...", cso_ResetOnConsoleReady|cso_Critical);
 
 	//pRCon->mb_WaitingRootStartup = TRUE;
 
@@ -2647,9 +2647,9 @@ BOOL CRealConsole::StartMonitorThread()
 	//_ASSERTE(mh_InputThread==NULL);
 	//_ASSERTE(mb_Detached || mh_MainSrv!=NULL); -- процесс теперь запускаем в MonitorThread
 	DWORD nCreateBegin = GetTickCount();
-	SetConStatus(L"Initializing ConEmu (4)", true);
+	SetConStatus(L"Initializing ConEmu (4)", cso_ResetOnConsoleReady|cso_Critical);
 	mh_MonitorThread = CreateThread(NULL, 0, MonitorThread, (LPVOID)this, 0, &mn_MonitorThreadID);
-	SetConStatus(L"Initializing ConEmu (5)", true);
+	SetConStatus(L"Initializing ConEmu (5)", cso_ResetOnConsoleReady|cso_Critical);
 	DWORD nCreateEnd = GetTickCount();
 	DWORD nThreadCreationTime = nCreateEnd - nCreateBegin;
 	if (nThreadCreationTime > 2500)
@@ -2889,7 +2889,7 @@ void CRealConsole::OnStartProcessAllowed()
 	if (!PreInit())
 	{
 		DEBUGSTRPROC(L"### RCon:PreInit failed\n");
-		SetConStatus(L"RCon:PreInit failed");
+		SetConStatus(L"RCon:PreInit failed", cso_Critical);
 
 		mb_StartResult = FALSE;
 		mb_NeedStartProcess = FALSE;
@@ -2906,7 +2906,7 @@ void CRealConsole::OnStartProcessAllowed()
 		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't start root process, ErrCode=0x%08X...", GetLastError());
 		DEBUGSTRPROC(L"### Can't start process\n");
 
-		SetConStatus(szErrInfo);
+		SetConStatus(szErrInfo, cso_Critical);
 
 		WARNING("Need to be checked, what happens on 'Run errors'");
 		return;
@@ -3228,7 +3228,7 @@ BOOL CRealConsole::StartProcess()
 	_ASSERTE(mn_MonitorThreadID!=0);
 
 	BOOL lbRc = FALSE;
-	SetConStatus(L"Preparing process startup line...", true);
+	SetConStatus(L"Preparing process startup line...", cso_ResetOnConsoleReady|cso_Critical);
 
 	SetConEmuEnvVarChild(mp_VCon->GetView(), mp_VCon->GetBack());
 	SetConEmuEnvVar(ghWnd);
@@ -3437,7 +3437,7 @@ BOOL CRealConsole::StartProcess()
 			_ASSERTE(mh_MainSrv==NULL);
 			SafeCloseHandle(mh_MainSrv);
 			_ASSERTE(isDetached());
-			SetConStatus(L"Restart console failed");
+			SetConStatus(L"Restart console failed", cso_Critical);
 		}
 
 		//Box("Cannot execute the command.");
@@ -3800,7 +3800,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 	if ((Args.RunAsAdministrator != crb_On) || gpConEmu->mb_IsUacAdmin)
 	{
 		LockSetForegroundWindow(LSFW_LOCK);
-		pRCon->SetConStatus(L"Starting root process...", true);
+		pRCon->SetConStatus(L"Starting root process...", cso_ResetOnConsoleReady|cso_Critical);
 
 		if (Args.pszUserName != NULL)
 		{
@@ -3907,7 +3907,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 			pp_sei->nShow = SW_SHOWNORMAL;
 
 			// GuiShellExecuteEx запускается в основном потоке, поэтому nCreateDuration здесь не считаем
-			pRCon->SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", true);
+			pRCon->SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", cso_ResetOnConsoleReady|cso_Critical);
 			//lbRc = gpConEmu->GuiShellExecuteEx(pp_sei, mp_VCon);
 
 			bool bPrevIgnore = gpConEmu->mb_IgnoreQuakeActivation;
@@ -5687,7 +5687,7 @@ void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 	// Окошко консоли скорее всего еще не инициализировано
 	if (hConWnd == NULL)
 	{
-		SetConStatus(L"Waiting for console server...", true);
+		SetConStatus(L"Waiting for console server...", cso_ResetOnConsoleReady|cso_Critical);
 		SetHwnd(ahConWnd);
 	}
 
@@ -7921,7 +7921,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	//}
 
 	CloseConfirmReset();
-	SetConStatus(L"Restarting process...");
+	SetConStatus(L"Restarting process...", cso_Critical);
 	return true;
 }
 
@@ -12481,10 +12481,10 @@ LPCWSTR CRealConsole::GetConStatus()
 	}
 	if (m_ChildGui.hGuiWnd)
 		return NULL;
-	return ms_ConStatus;
+	return m_ConStatus.szText;
 }
 
-void CRealConsole::SetConStatus(LPCWSTR asStatus, bool abResetOnConsoleReady /*= false*/, bool abDontUpdate /*= false*/)
+void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ Options /*= cso_Default*/)
 {
 	if (gpSetCls->isAdvLogging)
 	{
@@ -12498,12 +12498,16 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, bool abResetOnConsoleReady /*=
 		SafeFree(pszInfo);
 	}
 
-	lstrcpyn(ms_ConStatus, asStatus ? asStatus : L"", countof(ms_ConStatus));
-	mb_ResetStatusOnConsoleReady = abResetOnConsoleReady;
+	lstrcpyn(m_ConStatus.szText, asStatus ? asStatus : L"", countof(m_ConStatus.szText));
+	m_ConStatus.Options = Options;
 
-	lstrcpyn(CRealConsole::ms_LastRConStatus, ms_ConStatus, countof(CRealConsole::ms_LastRConStatus));
+	if (!gpSet->isStatusBarShow && !(Options & cso_Critical) && (asStatus && *asStatus))
+	{
+		// No need to force non-critical status messages to console (upper-left corner)
+		return;
+	}
 
-	if (!abDontUpdate && isActive(false))
+	if (!(Options & cso_DontUpdate) && isActive(false))
 	{
 		// Обновить статусную строку, если она показана
 		if (gpSet->isStatusBarShow)
@@ -12511,7 +12515,7 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, bool abResetOnConsoleReady /*=
 			// Перерисовать сразу
 			gpConEmu->mp_Status->UpdateStatusBar(true, true);
 		}
-		else if (!abDontUpdate && mp_VCon->GetView())
+		else if (!(Options & cso_DontUpdate) && mp_VCon->GetView())
 		{
 			mp_VCon->Update(true);
 		}

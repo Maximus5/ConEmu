@@ -295,6 +295,22 @@ class CRealConsole
 		static  BOOL CALLBACK FindChildGuiWindowProc(HWND hwnd, LPARAM lParam);
 
 	public:
+		enum ConStatusOption
+		{
+			cso_Default             = 0x0000,
+			cso_ResetOnConsoleReady = 0x0001,
+            cso_DontUpdate          = 0x0002, // Не нужно обновлять статусную строку сразу
+            cso_Critical            = 0x0004,
+		};
+		LPCWSTR GetConStatus();
+		void SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ Options = cso_Default);
+	private:
+		struct {
+			DWORD   Options; /*enum ConStatusOption*/
+			wchar_t szText[80];
+		} m_ConStatus;
+
+	public:
 		HWND    ConWnd();  // HWND RealConsole
 		HWND    GetView(); // HWND отрисовки
 
@@ -561,9 +577,6 @@ class CRealConsole
 	public:
 		BOOL IsConsoleThread();
 		void SetForceRead();
-		//DWORD WaitEndUpdate(DWORD dwTimeout=1000);
-		LPCWSTR GetConStatus();
-		void SetConStatus(LPCWSTR asStatus, bool abResetOnConsoleReady = false, bool abDontUpdate = false);
 		void UpdateCursorInfo();
 		bool isNeedCursorDraw();
 		void Detach(bool bPosted = false, bool bSendCloseConsole = false);
@@ -855,9 +868,6 @@ class CRealConsole
 		SHELLEXECUTEINFO *mp_sei, *mp_sei_dbg;
 		//
 		HWND FindPicViewFrom(HWND hFrom);
-		//
-		wchar_t ms_ConStatus[80];
-		bool mb_ResetStatusOnConsoleReady;
 		//
 		bool isCharBorderVertical(WCHAR inChar);
 		bool isCharBorderLeftVertical(WCHAR inChar);
