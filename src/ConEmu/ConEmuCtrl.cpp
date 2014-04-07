@@ -666,39 +666,6 @@ bool CConEmuCtrl::key_CTSVkTextStart(DWORD VkMod, bool TestOnly, const ConEmuHot
 	return true;
 }
 
-// System (predefined, fixed)
-// pRCon may be NULL
-bool CConEmuCtrl::key_About(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	if (TestOnly)
-		return true;
-	//KeyUp!
-	ConEmuAbout::OnInfo_About();
-	return true;
-}
-
-// System (predefined, fixed)
-// pRCon may be NULL
-bool CConEmuCtrl::key_Hotkeys(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	if (TestOnly)
-		return true;
-	//KeyUp!
-	CSettings::Dialog(IDD_SPG_KEYS);
-	return true;
-}
-
-// System (predefined, fixed)
-// pRCon may be NULL
-bool CConEmuCtrl::key_Settings(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	if (TestOnly)
-		return true;
-	//KeyUp!
-	gpConEmu->mp_Menu->OnSysCommand(ghWnd, ID_SETTINGS, 0);
-	return true;
-}
-
 // pRCon may be NULL
 bool CConEmuCtrl::key_SystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {

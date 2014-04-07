@@ -194,6 +194,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"CLI example: ConEmuC -GuiMacro Rename 0 PoSh\r\n" \
 	L"Read more online: http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
+	L"About([\"<Page>\"])\r\n" \
+	L"  - Show ‘About’ dialog with page activated, e.g. ‘About(\"-new_console\")’\r\n" \
 	L"Close(<What>[,<Flags>])\r\n" \
 	L"  - close current console (0), without confirmation (0,1),\r\n" \
 	L"    terminate active process (1), without confirmation (1,1)\r\n" \
@@ -294,6 +296,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"      Value: 0 .. 255\r\n" \
 	L"    \"QuakeAutoHide\": auto hide on focus lose, Quake mode\r\n" \
 	L"      Value: 2 - switch auto-hide, 1 - enable, 0 - disable\r\n" \
+	L"Settings([<PageResourceId>])\r\n" \
+	L"  - Show ‘Settings’ dialog with specified page activated (optionally)\r\n" \
+	L"      PageResourceId: integer DialogID from ‘resource.h’\r\n" \
 	L"Shell(\"<Verb>\",\"<File>\"[,\"<Parms>\"[,\"<Dir>\"[,<ShowCmd>]]])\r\n" \
 	L"  - Verb can be \"open\", \"print\" and so on, or special value \"new_console\",\r\n" \
 	L"     which starts File in the new tab of ConEmu window. Examples:\r\n" \

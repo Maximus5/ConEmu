@@ -1171,9 +1171,9 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkRDragKey,       chk_Modifier, NULL, L"DndRKey",         VK_LCONTROL},         // модификатор драга правой кнопкой
 		{vkWndDragKey,     chk_Modifier2,NULL, L"WndDragKey",      MakeHotKey(VK_LBUTTON,VK_CONTROL,VK_MENU), CConEmuCtrl::key_WinDragStart}, // модификатор таскания окна мышкой за любое место
 		// System (predefined, fixed)
-		{vkWinAltA,        chk_System, NULL, L"", MakeHotKey('A',VK_LWIN,VK_MENU), CConEmuCtrl::key_About, true/*OnKeyUp*/}, // Settings
-		{vkWinAltK,        chk_System, NULL, L"", MakeHotKey('K',VK_LWIN,VK_MENU), CConEmuCtrl::key_Hotkeys, true/*OnKeyUp*/}, // Settings
-		{vkWinAltP,        chk_System, NULL, L"", MakeHotKey('P',VK_LWIN,VK_MENU), CConEmuCtrl::key_Settings, true/*OnKeyUp*/}, // Settings
+		{vkWinAltA,        chk_System, NULL, L"", MakeHotKey('A',VK_LWIN,VK_MENU), CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, lstrdup(L"About()")}, // Settings
+		{vkWinAltK,        chk_System, NULL, L"", MakeHotKey('K',VK_LWIN,VK_MENU), CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, lstrdup(L"Settings(171)")}, // Settings -> Keys&Macro
+		{vkWinAltP,        chk_System, NULL, L"", MakeHotKey('P',VK_LWIN,VK_MENU), CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, lstrdup(L"Settings()")}, // Settings
 		{vkWinAltSpace,    chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_LWIN,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
 		{vkCtrlWinAltSpace,chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_CONTROL,VK_LWIN,VK_MENU), CConEmuCtrl::key_ShowRealConsole}, // Show real console
 		{vkCtrlWinEnter,   chk_System, NULL, L"", MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"WindowFullscreen()")},

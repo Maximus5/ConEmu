@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Macro.h"
 #include "VConGroup.h"
 #include "Menu.h"
+#include "AboutDlg.h"
 
 
 /* ********************************* */
@@ -121,6 +122,8 @@ namespace ConEmuMacro
 	/* ****** Macros functions ****** */
 	/* ****************************** */
 
+	// Диалог About(["Tab"])
+	LPWSTR About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Закрыть/прибить текущую консоль
 	LPWSTR Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
@@ -164,6 +167,8 @@ namespace ConEmuMacro
 	LPWSTR Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// SetOption("<Name>",<Value>)
 	LPWSTR SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Диалог Settings
+	LPWSTR Settings(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Shell (ShellExecute)
 	LPWSTR Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Split
@@ -196,6 +201,7 @@ namespace ConEmuMacro
 		bool NoThreadSafe;
 	} Functions[] = {
 		// List all functions
+		{About, {L"About"}},
 		{IsConEmu, {L"IsConEmu"}},
 		{Close, {L"Close"}},
 		{FindEditor, {L"FindEditor"}},
@@ -223,6 +229,7 @@ namespace ConEmuMacro
 		{Shell, {L"Shell", L"ShellExecute"}},
 		{Select, {L"Select"}},
 		{SetOption, {L"SetOption"}},
+		{Settings, {L"Settings"}},
 		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
 		{Task, {L"Task"}},
 		{Transparency, {L"Transparency"}},
@@ -1070,6 +1077,18 @@ wrap:
 	return rsString;
 }
 /* ***  Теперь - собственно макросы  *** */
+
+// Диалог About(["Tab"])
+LPWSTR ConEmuMacro::About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszPageName = NULL;
+	if (p->IsStrArg(0))
+		p->GetStrArg(0, pszPageName);
+
+	ConEmuAbout::OnInfo_About(pszPageName);
+
+	return lstrdup(L"OK");
+}
 
 // Проверка, есть ли ConEmu GUI. Функцию мог бы плагин и сам обработать,
 // но для "общности" возвращаем "Yes" здесь
@@ -2170,6 +2189,18 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 	}
 
 	return pszResult ? pszResult : lstrdup(L"UnknownOption");
+}
+
+// Диалог Settings
+LPWSTR ConEmuMacro::Settings(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	int IdShowPage = 0;
+	if (p->IsIntArg(0))
+		p->GetIntArg(0, IdShowPage);
+
+	CSettings::Dialog(IdShowPage);
+
+	return lstrdup(L"OK");
 }
 
 // ShellExecute
