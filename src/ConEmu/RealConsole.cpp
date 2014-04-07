@@ -120,8 +120,6 @@ WARNING("Часто после разблокирования компьютер
 static BOOL gbInSendConEvent = FALSE;
 
 
-wchar_t CRealConsole::ms_LastRConStatus[80] = {};
-
 const wchar_t gsCloseGui[] = L"Confirm closing active child window?";
 const wchar_t gsCloseCon[] = L"Confirm closing console?";
 //const wchar_t gsCloseAny[] = L"Confirm closing console?";
@@ -12409,21 +12407,6 @@ wrap:
 
 	return lbResult;
 }
-
-//void CRealConsole::CloseMapData()
-//{
-//	if (mp_ConsoleData) {
-//		UnmapViewOfFile(mp_ConsoleData);
-//		mp_ConsoleData = NULL;
-//		lstrcpy(ms_ConStatus, L"Console data was not opened!");
-//	}
-//	if (mh_FileMappingData) {
-//		CloseHandle(mh_FileMappingData);
-//		mh_FileMappingData = NULL;
-//	}
-//	mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = /*mn_LastFarReadIdx =*/ -1;
-//	mn_LastFarReadTick = 0;
-//}
 
 void CRealConsole::CloseFarMapData(MSectionLock* pCS)
 {

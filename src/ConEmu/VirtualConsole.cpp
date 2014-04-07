@@ -4601,8 +4601,6 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 			pszStarting = L"No consoles";
 		else if (this && mp_RCon)
 			pszStarting = mp_RCon->GetConStatus();
-		else if (CRealConsole::ms_LastRConStatus[0])
-			pszStarting = CRealConsole::ms_LastRConStatus;
 
 		if (pszStarting != NULL)
 		{

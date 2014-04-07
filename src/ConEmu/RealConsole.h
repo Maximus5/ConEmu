@@ -561,7 +561,6 @@ class CRealConsole
 		//DWORD WaitEndUpdate(DWORD dwTimeout=1000);
 		LPCWSTR GetConStatus();
 		void SetConStatus(LPCWSTR asStatus, bool abResetOnConsoleReady = false, bool abDontUpdate = false);
-		static wchar_t ms_LastRConStatus[80];
 		void UpdateCursorInfo();
 		bool isNeedCursorDraw();
 		void Detach(bool bPosted = false, bool bSendCloseConsole = false);

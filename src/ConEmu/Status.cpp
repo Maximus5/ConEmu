@@ -507,13 +507,6 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				{
 					lstrcpyn(m_Items[nDrawCount].sText, pszTmp, countof(m_Items[nDrawCount].sText));
 				}
-				/* -- вроде и так работает через pRCon->GetConStatus()
-				else if (pRCon && pRCon->isSelectionPresent())
-				{
-					CONSOLE_SELECTION_INFO sel = {};
-					pRCon->GetConsoleSelectionInfo(&sel);
-				}
-				*/
 				else if (pRCon)
 				{
 					if (!gpSet->isStatusColumnHidden[csi_ConsoleTitle])
