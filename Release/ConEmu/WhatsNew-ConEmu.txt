@@ -12,6 +12,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.04.04
+[*] Show 1-based console coordinates in the status bar (was 0-based).
+[*] Don't show size of the console visible rect by default in the status bar.
+[*] Win8. Failed to set console width less than 19 after Ctrl+Shift+O (in progress).
+
+
 2014.04.03
 [%] Issue 1527: Regression 140327. PowerShell was not hooked.
 [%] Issue 1528: Infinite mouse messages ChildGui<-->ConEmu in some cases.
