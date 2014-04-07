@@ -254,6 +254,9 @@ class CRealConsole
 #ifdef _DEBUG
 		friend class CVirtualConsole;
 #endif
+	protected:
+		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
+
 	public:
 
 		uint TextWidth();
@@ -586,8 +589,6 @@ class CRealConsole
 		bool mb_MonitorAssertTrap;
 
 	protected:
-		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
-
 		void SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv);
 		void SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/);
 		// Сервер и альтернативный сервер
