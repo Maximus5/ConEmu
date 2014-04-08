@@ -58,21 +58,24 @@ _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n")
 		L"       /CONPID=<PID> - 'soft' mode, don't inject ConEmuHk into <PID>\r\n" \
 		L"       /TRMPID=<PID> - called from *.vshost.exe when 'AllocConsole' just created\r\n" \
 		L"     /B{W|H|Z}       - define window width, height and buffer height\r\n" \
-_DBGHLP(L"     /BW=<WndX> /BH=<WndY> /BZ=<BufY>\r\n") \
-		L"     /F{N|W|H}    - define console font name, width, height\r\n" \
-_DBGHLP(L"     /FN=<ConFontName> /FH=<FontHeight> /FW=<FontWidth>\r\n") \
-		L"     /LOG[N]         - create (debug) log file, N is number from 0 to 3\r\n" \
-		L"     /GUIMACRO       - http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
-		L"     /IsConEmu       - returns 1 as errorlevel if running in ConEmu tab, 2 if not\r\n" \
+		L"     /F{N|W|H}       - define console font name, width, height\r\n" \
+		L"     /GuiMacro ...   - http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
+		L"     /Export[...]    - http://code.google.com/p/conemu-maximus5/wiki/ConEmuEnvironment#Export_variables\r\n" \
 		L"     /IsAnsi         - returns 1 as errorlevel if ANSI are processed, 2 if not\r\n" \
+		L"     /IsConEmu       - returns 1 as errorlevel if running in ConEmu tab, 2 if not\r\n" \
 		L"     /IsTerm         - returns 1 as errorlevel if running in telnet, 2 if not\r\n" \
+		L"     /Log[N]         - create (debug) log file, N is number from 0 to 3\r\n" \
+_DBGHLP(L"     -- following switches are visible in debug builds only--\r\n") \
+_DBGHLP(L"     /CHECKUNICODE -> print some colorized text with unicode characters\r\n") \
 _DBGHLP(L"     /CINMODE==<hex:gnConsoleModeFlags>\r\n") \
-_DBGHLP(L"     /HIDE -> gbForceHideConWnd=TRUE\r\n") \
-_DBGHLP(L"     /GID=<ConEmu.exe PID>\r\n") \
-_DBGHLP(L"     /GHWND=<ConEmu.exe HWND>\r\n") \
-_DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
-_DBGHLP(L"     /INJECT=PID{10}\r\n") \
 _DBGHLP(L"     /DOSBOX -> use DosBox\r\n") \
+_DBGHLP(L"     /FN=<ConFontName> /FH=<FontHeight> /FW=<FontWidth>\r\n") \
+_DBGHLP(L"     /GHWND=<ConEmu.exe HWND>\r\n") \
+_DBGHLP(L"     /GID=<ConEmu.exe PID>\r\n") \
+_DBGHLP(L"     /HIDE -> gbForceHideConWnd=TRUE\r\n") \
+_DBGHLP(L"     /INJECT=PID{10}\r\n") \
+_DBGHLP(L"     /PARSEARGS <Command line> -> printf NextArg's\r\n") \
+_DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
 		L"\r\n"
 
 #define pNewConsoleHelp \
