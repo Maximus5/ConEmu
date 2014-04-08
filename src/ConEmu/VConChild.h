@@ -121,13 +121,13 @@ class CConEmuChild
 		DWORD mn_LastPostRedrawTick;
 		BOOL  mb_IsPendingRedraw, mb_RedrawPosted;
 
-		CTimer m_TAutoCopy;
+		CTimer m_TAutoCopy; // TIMER_AUTOCOPY
 
 		BOOL mb_ScrollDisabled, mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup, mb_VTracking;
-		CTimer m_TScrollShow;
-		CTimer m_TScrollHide;
+		CTimer m_TScrollShow; // TIMER_SCROLL_SHOW
+		CTimer m_TScrollHide; // TIMER_SCROLL_HIDE
 		#ifndef SKIP_HIDE_TIMER
-		CTimer m_TScrollCheck;
+		CTimer m_TScrollCheck; // TIMER_SCROLL_CHECK
 		#endif
 
 		BYTE m_LastAlwaysShowScrollbar;
