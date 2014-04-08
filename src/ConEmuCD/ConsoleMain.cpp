@@ -2700,6 +2700,7 @@ enum ConEmuExecAction
 	ea_ExportGui,  // ea_ExportCon + ConEmu window
 	ea_ExportAll,  // export env.vars to all opened tabs of current ConEmu window
 	ea_Download,   // after "/download" switch may be unlimited pairs of {"url","file"},{"url","file"},...
+	ea_ParseArgs,  // debug test of NextArg function... print args to STDOUT
 };
 
 int DoInjectHooks(LPWSTR asCmdArg)
@@ -3443,6 +3444,20 @@ wrap:
 	return iRc;
 }
 
+int DoParseArgs(LPCWSTR asCmdLine)
+{
+	int i = 0;
+	CmdArg szArg;
+	while (NextArg(&asCmdLine, szArg) == 0)
+	{
+		_printf("%u: `", ++i);
+		_wprintf(szArg);
+		_printf("`\n");
+	}
+	_printf("Total arguments parsed: %u\n", i);
+	return i;
+}
+
 struct FindTopGuiOrConsoleArg
 {
 	HWND  hMacroInstance;
@@ -3622,6 +3637,11 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 	case ea_Download:
 		{
 			iRc = DoDownload(asCmdArg);
+			break;
+		}
+	case ea_ParseArgs:
+		{
+			iRc = DoParseArgs(asCmdArg);
 			break;
 		}
 	default:
@@ -3960,6 +3980,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpi(szArg, L"/IsAnsi")==0)
 		{
 			eStateCheck = ec_IsAnsi;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/ParseArgs")==0)
+		{
+			eExecAction = ea_ParseArgs;
 			break;
 		}
 		else if (wcscmp(szArg, L"/CONFIRM")==0)
