@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPAINTVCON(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRDESTROY(s) DEBUGSTR(s)
+#define DEBUGSTRTEXTSEL(s) DEBUGSTR(s)
 
 //#define SCROLLHIDE_TIMER_ID 1726
 #define TIMER_SCROLL_SHOW         3201
@@ -2065,11 +2066,13 @@ void CConEmuChild::SetAutoCopyTimer(bool bEnabled)
 {
 	if (bEnabled)
 	{
+		DEBUGSTRTEXTSEL(L"CConEmuChild::SetAutoCopyTimer(true)");
 		m_TAutoCopy.Stop();
 		m_TAutoCopy.Start(TIMER_AUTOCOPY_DELAY);
 	}
 	else
 	{
+		DEBUGSTRTEXTSEL(L"CConEmuChild::SetAutoCopyTimer(false)");
 		m_TAutoCopy.Stop();
 	}
 }

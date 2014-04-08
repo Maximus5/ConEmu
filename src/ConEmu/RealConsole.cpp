@@ -104,6 +104,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRFARPID(s) DEBUGSTR(s)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRSEL(s) DEBUGSTR(s)
+#define DEBUGSTRTEXTSEL(s) DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -15984,6 +15985,11 @@ void CRealConsole::AutoCopyTimer()
 {
 	if (gpSet->isCTSAutoCopy && isSelectionPresent())
 	{
+		DEBUGSTRTEXTSEL(L"CRealConsole::AutoCopyTimer() -> DoSelectionFinalize");
 		mp_ABuf->DoSelectionFinalize(true);
+	}
+	else
+	{
+		DEBUGSTRTEXTSEL(L"CRealConsole::AutoCopyTimer() -> skipped");
 	}
 }
