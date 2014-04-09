@@ -34,10 +34,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define USEPIPELOG
 	//#undef USEPIPELOG
 	#include "common.hpp"
-	#define DEBUGSTRCMD(s) //OutputDebugStringW(s)
+	#define DEBUGSTRPPCMD(s) //OutputDebugStringW(s)
 #else
 	#undef USEPIPELOG
-	#define DEBUGSTRCMD(s)
+	#define DEBUGSTRPPCMD(s)
 #endif
 
 #ifndef PIPEBUFSIZE
@@ -911,7 +911,7 @@ struct PipeServer
 					L"<< CmdRecv: PID=%5u  TID=%5u  Cmd=%3u  DataSize=%u  FromPID=%u  FromTID=%u\n", GetCurrentProcessId(), GetCurrentThreadId(), ptrRequest->nCmd,
 					(UINT)(ptrRequest->cbSize - sizeof(*ptrRequest)),
 					ptrRequest->nSrcPID, ptrRequest->nSrcThreadId);
-				DEBUGSTRCMD(pPipe->szDbgInfo);
+				DEBUGSTRPPCMD(pPipe->szDbgInfo);
 			}
 			else
 			{
