@@ -34,9 +34,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s) // ConEmuC: Recieved key... / ConEmuC: Recieved input
 #define DEBUGSTRINPUTEVENT(s) //DEBUGSTR(s) // SetEvent(gpSrv->hInputEvent)
 #define DEBUGLOGINPUT(s) //DEBUGSTR(s) // ConEmuC.MouseEvent(X=
-#define DEBUGSTRINPUTWRITE(s) DEBUGSTR(s) // *** ConEmuC.MouseEvent(X=
-#define DEBUGSTRINPUTWRITEALL(s) DEBUGSTR(s) // *** WriteConsoleInput(Write=
-#define DEBUGSTRINPUTWRITEFAIL(s) DEBUGSTR(s) // ### WriteConsoleInput(Write=
+#define DEBUGSTRINPUTWRITE(s) //DEBUGSTR(s) // *** ConEmuC.MouseEvent(X=
+#define DEBUGSTRINPUTWRITEALL(s) //DEBUGSTR(s) // *** WriteConsoleInput(Write=
+#define DEBUGSTRINPUTWRITEFAIL(s) //DEBUGSTR(s) // ### WriteConsoleInput(Write=
 
 #ifdef _DEBUG
 // Only for input_bug search purposes in Debug builds
@@ -574,10 +574,21 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 			#endif
 			break;
 		case KEY_EVENT:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg))
-				L"*** ConEmuC.KeybdEvent(%s, VK=%u, CH=%c)\n",
-				pr[i].Event.KeyEvent.bKeyDown ? L"Dn" : L"Up", pr[i].Event.KeyEvent.wVirtualKeyCode, pr[i].Event.KeyEvent.uChar.UnicodeChar);
-			DEBUGSTRINPUTWRITE(szDbg);
+			{
+				wchar_t szCh[3] = {pr[i].Event.KeyEvent.uChar.UnicodeChar};
+				switch (szCh[0])
+				{
+				case 8:  szCh[0] = L'\\'; szCh[1] = L'b'; break;
+				case 9:  szCh[0] = L'\\'; szCh[1] = L't'; break;
+				case 10: szCh[0] = L'\\'; szCh[1] = L'r'; break;
+				case 13: szCh[0] = L'\\'; szCh[1] = L'n'; break;
+				case 27: szCh[0] = L'\\'; szCh[1] = L'e'; break;
+				}
+				_wsprintf(szDbg, SKIPLEN(countof(szDbg))
+					L"*** ConEmuC.KeybdEvent(%s, VK=%u, CH=%s)\n",
+					pr[i].Event.KeyEvent.bKeyDown ? L"Dn" : L"Up", pr[i].Event.KeyEvent.wVirtualKeyCode, szCh);
+				DEBUGSTRINPUTWRITE(szDbg);
+			}
 			break;
 		}
 
