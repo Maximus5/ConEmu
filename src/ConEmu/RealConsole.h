@@ -573,6 +573,7 @@ class CRealConsole
 		bool isViewer();
 		bool isVisible();
 		bool isNtvdm();
+		bool isFixAndCenter(COORD* lpcrConSize = NULL);
 		//bool isPackets();
 		const RConStartArgs& GetArgs();
 		void SetPaletteName(LPCWSTR asPaletteName);

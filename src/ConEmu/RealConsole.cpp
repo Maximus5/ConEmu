@@ -12016,6 +12016,19 @@ bool CRealConsole::isNtvdm()
 	return false;
 }
 
+bool CRealConsole::isFixAndCenter(COORD* lpcrConSize /*= NULL*/)
+{
+	if (!isNtvdm())
+		return false;
+
+	COORD crConSize = mp_RBuf->GetDefaultNtvdmHeight();
+
+	if (lpcrConSize)
+		*lpcrConSize = crConSize;
+
+	return true;
+}
+
 const RConStartArgs& CRealConsole::GetArgs()
 {
 	return m_Args;

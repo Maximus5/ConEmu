@@ -4334,7 +4334,8 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		int nDeltaY = (rcCalcBack.bottom - rcCalcBack.top) - (rcCalcDC.bottom - rcCalcDC.top);
 
 		// Теперь сдвиги
-		if (gpSet->isTryToCenter && (gpConEmu->isZoomed() || gpConEmu->isFullScreen() || gpSet->isQuakeStyle))
+		if ((gpSet->isTryToCenter && (gpConEmu->isZoomed() || gpConEmu->isFullScreen() || gpSet->isQuakeStyle))
+			|| pVCon->RCon()->isNtvdm())
 		{
 			// считаем доп.сдвиги. ТОЧНО
 			if (nDeltaX > 0)
@@ -4349,7 +4350,8 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				rcAddShift.right = nDeltaX;
 		}
 
-		if (gpSet->isTryToCenter && (gpConEmu->isZoomed() || gpConEmu->isFullScreen()))
+		if ((gpSet->isTryToCenter && (gpConEmu->isZoomed() || gpConEmu->isFullScreen()))
+			|| pVCon->RCon()->isNtvdm())
 		{
 			if (nDeltaY > 0)
 			{
@@ -4386,6 +4388,15 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		case CER_CONSOLE_NTVDMOFF: // switch (tWhat)
 		{
 			_ASSERTE(tWhat!=CER_DC || (tFrom==CER_BACK || tFrom==CER_CONSOLE_CUR)); // CER_DC должен считаться от CER_BACK
+
+			// Заменить на isFixAndCenter
+			COORD crConFixSize = {};
+			if ((tWhat == CER_CONSOLE_CUR) && pVCon->RCon()->isFixAndCenter(&crConFixSize))
+			{
+				_ASSERTE(crConFixSize.X==80 && (crConFixSize.Y==25 || crConFixSize.Y==28 || crConFixSize.Y==43 || crConFixSize.Y==50));
+				rc = MakeRect(crConFixSize.X, crConFixSize.Y);
+				return rc;
+			}
 
 			if (tFrom == CER_MAINCLIENT)
 			{
@@ -4440,6 +4451,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			//if (rcShift.top || rcShift.bottom || )
 			//nShift = (gpSetCls->FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
 
+#if 0
 			// Если активен NTVDM.
 			if ((tWhat != CER_CONSOLE_NTVDMOFF)
 				&& (tWhat == CER_DC || tWhat == CER_CONSOLE_CUR)
@@ -4484,6 +4496,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 
 				CConEmuMain::AddMargins(rc, rcShift);
 			}
+#endif
 
 			// Учесть сплиты
 			if ((tWhat == CER_CONSOLE_ALL) && gp_VActive && isVConExists(0))
