@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
+#define DEBUGSTRSTATUS(s) DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRWHEEL(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
@@ -77,7 +78,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSTOP(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //LogFocusInfo(s)
 #define DEBUGSTRGUICHILDPOS(s) //DEBUGSTR(s)
-#define DEBUGSTRPROGRESS(s) DEBUGSTR(s)
+#define DEBUGSTRPROGRESS(s) //DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -12486,17 +12487,20 @@ LPCWSTR CRealConsole::GetConStatus()
 
 void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ Options /*= cso_Default*/)
 {
+	wchar_t szPrefix[128];
+	_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::SetConStatus, hView=x%08X: ", (DWORD)(DWORD_PTR)mp_VCon->GetView());
+	wchar_t* pszInfo = lstrmerge(szPrefix, (asStatus && *asStatus) ? asStatus : L"<Empty>");
+	DEBUGSTRSTATUS(pszInfo);
+
 	if (gpSetCls->isAdvLogging)
 	{
-		wchar_t szPrefix[128];
-		_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::SetConStatus, hView=x%08X: ", (DWORD)(DWORD_PTR)mp_VCon->GetView());
-		wchar_t* pszInfo = lstrmerge(szPrefix, (asStatus && *asStatus) ? asStatus : L"<Empty>");
 		if (mp_Log)
 			LogString(pszInfo, TRUE);
 		else
 			gpConEmu->LogString(pszInfo);
-		SafeFree(pszInfo);
 	}
+
+	SafeFree(pszInfo);
 
 	lstrcpyn(m_ConStatus.szText, asStatus ? asStatus : L"", countof(m_ConStatus.szText));
 	m_ConStatus.Options = Options;
