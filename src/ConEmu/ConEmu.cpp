@@ -288,9 +288,8 @@ CConEmuMain::CConEmuMain()
 	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
 	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L"%02u%02u%02u%s%s",
 		(MVV_1%100), MVV_2, MVV_3, szVer4[0]&&szVer4[1]?L"-":L"", szVer4);
-	wcscpy_c(ms_ConEmuDefTitle, L"ConEmu ");
-	wcscat_c(ms_ConEmuDefTitle, ms_ConEmuBuild);
-	wcscat_c(ms_ConEmuDefTitle, WIN3264TEST(L" [32]",L" [64]"));
+	_wsprintf(ms_ConEmuDefTitle, SKIPLEN(countof(ms_ConEmuDefTitle)) L"ConEmu %s [%i%s]",
+		ms_ConEmuBuild, WIN3264TEST(32,64), RELEASEDEBUGTEST(L"",L"D"));
 
 	mp_Menu = new CConEmuMenu;
 	mp_TabBar = NULL; /*m_Macro = NULL;*/ mp_Tip = NULL;

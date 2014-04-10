@@ -109,15 +109,12 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			LPCWSTR pszActivePage = (LPCWSTR)lParam;
 
-			WCHAR szTitle[255];
-			LPCWSTR pszBits = WIN3264TEST(L"x86",L"x64");
-			LPCWSTR pszDebug = L"";
-			#ifdef _DEBUG
-			pszDebug = L"[DEBUG] ";
-			#endif
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%s %s%s)",
-				gpConEmu->ms_ConEmuBuild, pszDebug, pszBits);
-			SetWindowText(hDlg, szTitle);
+			wchar_t* pszTitle = lstrmerge(gpConEmu->GetDefaultTitle(), L" About");
+			if (pszTitle)
+			{
+				SetWindowText(hDlg, pszTitle);
+				SafeFree(pszTitle);
+			}
 
 			if (hClassIcon)
 			{
@@ -310,15 +307,14 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 
 	if (!bOk)
 	{
-		WCHAR szTitle[255];
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%s %s%s)",
-			gpConEmu->ms_ConEmuBuild, RELEASEDEBUGTEST(L"",L"[DEBUG] "), WIN3264TEST(L"x86",L"x64"));
+		wchar_t* pszTitle = lstrmerge(gpConEmu->GetDefaultTitle(), L" About");
 		DontEnable de;
 		MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance,
 			pAbout,
-			szTitle,
+			pszTitle,
 			MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), 0, NULL, LANG_NEUTRAL
 		};
+		SafeFree(pszTitle);
 		// Use MessageBoxIndirect instead of MessageBox to show our icon instead of std ICONINFORMATION
 		MessageBoxIndirect(&mb);
 	}
