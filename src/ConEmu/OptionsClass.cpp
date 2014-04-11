@@ -903,6 +903,27 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, ConfigName);
 }
 
+bool CSettings::SetOption(LPCWSTR asName, int anValue)
+{
+	bool lbRc = true;
+
+	if (!lstrcmpi(asName, L"CursorBlink"))
+	{
+		gpSet->AppStd.CursorActive.isBlinking = (anValue != 0);
+		if (ghOpWnd && mh_Tabs[thi_Cursor])
+			checkDlgButton(mh_Tabs[thi_Cursor], cbCursorBlink, (anValue != 0));
+		// Может выполняться в фоновом потоке!
+		// При таком (ниже) запуске после старта курсор не отрисовывается в промпте
+		// -basic -cmd cmd /k conemuc -guimacro status 0 2 -guimacro setoption cursorblink 0 & dir
+	}
+	else
+	{
+		lbRc = false;
+	}
+
+	return lbRc;
+}
+
 void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine /*= NULL*/)
 {
 	// Обработать 32/64 (найти tcc.exe и т.п.)

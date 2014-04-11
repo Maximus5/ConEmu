@@ -2183,6 +2183,11 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 		if (p->GetIntArg(1, nValue))
 			pszResult = TransparencyHelper(4, nValue);
 	}
+	else if (!lstrcmpi(pszName, L"CursorBlink"))
+	{
+		if (p->GetIntArg(1, nValue))
+			pszResult = gpSetCls->SetOption(pszName, nValue) ? lstrdup(L"OK") : NULL;
+	}
 	else
 	{
 		//TODO: More options on demand
