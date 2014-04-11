@@ -4376,6 +4376,19 @@ void CRealConsole::OnSelectionChanged()
 	CONSOLE_SELECTION_INFO sel = {};
 	if (mp_ABuf->GetConsoleSelectionInfo(&sel))
 	{
+		#ifdef _DEBUG
+		static CONSOLE_SELECTION_INFO old_sel = {};
+		bool bChanged = false; static int iTheSame = 0;
+		if (memcmp(&old_sel, &sel, sizeof(sel)) != 0)
+		{
+			old_sel = sel; iTheSame = 0;
+		}
+		else
+		{
+			iTheSame++;
+		}
+		#endif
+
 		if (sel.dwFlags & CONSOLE_MOUSE_SELECTION)
 			mb_WasMouseSelection = true;
 
@@ -12494,6 +12507,13 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 	_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::SetConStatus, hView=x%08X: ", (DWORD)(DWORD_PTR)mp_VCon->GetView());
 	wchar_t* pszInfo = lstrmerge(szPrefix, *asStatus ? asStatus : L"<Empty>");
 	DEBUGSTRSTATUS(pszInfo);
+
+	#ifdef _DEBUG
+	if ((m_ConStatus.Options == Options) && (lstrcmp(m_ConStatus.szText, asStatus) == 0))
+	{
+		int iDbg = 0; // Nothing was changed?
+	}
+	#endif
 
 	if (gpSetCls->isAdvLogging)
 	{
