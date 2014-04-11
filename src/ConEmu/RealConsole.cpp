@@ -4361,7 +4361,7 @@ void CRealConsole::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*
 
 void CRealConsole::ExpandSelection(SHORT anX, SHORT anY)
 {
-	mp_ABuf->ExpandSelection(anX, anY);
+	mp_ABuf->ExpandSelection(anX, anY, mp_ABuf->isSelectionPresent());
 }
 
 void CRealConsole::DoSelectionStop()
@@ -4425,7 +4425,7 @@ bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0
 				pBuf = mp_ABuf;
 				pBuf->m_Type = rbt_Selection;
 				pBuf->StartSelection(TRUE, 0, 0);
-				pBuf->ExpandSelection(crEnd.X, crEnd.Y);
+				pBuf->ExpandSelection(crEnd.X, crEnd.Y, false);
 			}
 		}
 		else
