@@ -1211,7 +1211,7 @@ void CConEmuChild::CheckPostRedraw()
 	}
 }
 
-void CConEmuChild::Redraw()
+void CConEmuChild::Redraw(bool abRepaintNow /*= false*/)
 {
 	if (!this)
 	{
@@ -1255,6 +1255,15 @@ void CConEmuChild::Redraw()
 	//RedrawWindow(ghWnd, NULL, NULL,
 	//	RDW_INTERNALPAINT|RDW_NOERASE|RDW_UPDATENOW);
 	mb_RedrawPosted = FALSE; // Чтобы другие нити могли сделать еще пост
+
+	if (abRepaintNow)
+	{
+		RECT rcClient = {};
+		if (GetClientRect(mh_WndDC, &rcClient))
+		{
+			RedrawWindow(mh_WndDC, &rcClient, NULL, RDW_INTERNALPAINT|RDW_NOERASE|RDW_NOFRAME|RDW_UPDATENOW|RDW_VALIDATE);
+		}
+	}
 }
 
 // Вызывается из VConGroup::RepositionVCon
