@@ -12487,9 +12487,12 @@ LPCWSTR CRealConsole::GetConStatus()
 
 void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ Options /*= cso_Default*/)
 {
+	if (!asStatus)
+		asStatus = L"";
+
 	wchar_t szPrefix[128];
 	_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::SetConStatus, hView=x%08X: ", (DWORD)(DWORD_PTR)mp_VCon->GetView());
-	wchar_t* pszInfo = lstrmerge(szPrefix, (asStatus && *asStatus) ? asStatus : L"<Empty>");
+	wchar_t* pszInfo = lstrmerge(szPrefix, *asStatus ? asStatus : L"<Empty>");
 	DEBUGSTRSTATUS(pszInfo);
 
 	if (gpSetCls->isAdvLogging)
@@ -12502,7 +12505,7 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 
 	SafeFree(pszInfo);
 
-	lstrcpyn(m_ConStatus.szText, asStatus ? asStatus : L"", countof(m_ConStatus.szText));
+	lstrcpyn(m_ConStatus.szText, asStatus, countof(m_ConStatus.szText));
 	m_ConStatus.Options = Options;
 
 	if (!gpSet->isStatusBarShow && !(Options & cso_Critical) && (asStatus && *asStatus))
