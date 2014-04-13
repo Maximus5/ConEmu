@@ -12,6 +12,16 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.04.12
+[*] Issue 1532: Show only critical status messages in the top-left terminal corner.
+[*] Issue 1534: Use About() and Settings() GuiMacro for system hotkeys (Win+Alt+A, Win+Alt+P, Win+Alt+K)
+    System hotkeys are fixed by design. But user can use GuiMacro
+    to open About or Settings dialogs. Moreover, if you need to open
+    dialogs with special page activated (if you need some page often).
+[*] Add ConEmuEnvironment#Export_variables link to About dialog (Console tab).
+[*] Issue 1546: Mark/copy with mouse appears very slow in some cases.
+
+
 2014.04.04
 [*] Show 1-based console coordinates in the status bar (was 0-based).
 [*] Don't show size of the console visible rect by default in the status bar.
