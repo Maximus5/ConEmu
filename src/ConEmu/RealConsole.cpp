@@ -13303,7 +13303,9 @@ void CRealConsole::setGuiWndPID(HWND ahGuiWnd, DWORD anPID, LPCWSTR asProcessNam
 	if (gpSetCls->isAdvLogging)
 	{
 		wchar_t szInfo[MAX_PATH+100];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"setGuiWndPID: PID=%u, '%s'", anPID, m_ChildGui.szGuiWndProcess);
+		DWORD dwExStyle = ahGuiWnd ? GetWindowLong(ahGuiWnd, GWL_EXSTYLE) : 0;
+		DWORD dwStyle = ahGuiWnd ? GetWindowLong(ahGuiWnd, GWL_STYLE) : 0;
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"setGuiWndPID: PID=%u, HWND=x%08X, Style=x%08X, ExStyle=x%08X, '%s'", anPID, (DWORD)(DWORD_PTR)ahGuiWnd, dwStyle, dwExStyle, m_ChildGui.szGuiWndProcess);
 		gpConEmu->LogString(szInfo);
 	}
 }
