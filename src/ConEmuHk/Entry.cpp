@@ -1722,7 +1722,14 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			if (gbIsSshProcess && bCurrentThreadIsMain && (GetCurrentThreadId() == gnHookMainThreadId))
 			{
-				FixSshThreads(0);
+				// Original complain was about git/ssh (crashed with third-party PGHook.dll)
+				// Cygwin version of ssh almost completely fails with FixSshThreads
+				// Different forking technologies?
+				HMODULE hMsys = GetModuleHandle(L"msys-1.0.dll");
+				if (hMsys != NULL)
+				{
+					FixSshThreads(0);
+				}
 			}
 
 			DLOGEND();
