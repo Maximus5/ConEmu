@@ -1489,11 +1489,25 @@ int CShellProc::PrepareExecuteParms(
 	HANDLE hErr = lphStdErr ? *lphStdErr : NULL;
 	// В некоторых случаях - LongConsoleOutput бессмысленен
 	// ShellExecute(SW_HIDE) или CreateProcess(CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS,SW_HIDE)
-	BOOL bDetachedOrHidden = FALSE;
+	bool bDetachedOrHidden = false;
 	if (aCmd == eShellExecute)
-		bDetachedOrHidden = (!anShellFlags && anShowCmd && *anShowCmd == 0);
+	{
+		if (!anShellFlags && anShowCmd && *anShowCmd == 0)
+			bDetachedOrHidden = true;
+	}
 	else if (aCmd == eCreateProcess)
-		bDetachedOrHidden = (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS)) && anShowCmd && *anShowCmd == 0);
+	{
+		// Creating hidden
+		if (anShowCmd && *anShowCmd == 0)
+		{
+			// Historical (create process detached from parent console)
+			if (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS)))
+				bDetachedOrHidden = true;
+			// Detect creating "root" from mintty-like applications
+			else if ((gbAttachGuiClient || gbGuiClientAttached) && anCreateFlags && (*anCreateFlags & (CREATE_BREAKAWAY_FROM_JOB)))
+				bDetachedOrHidden = true;
+		}
+	}
 	BOOL bLongConsoleOutput = gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput && !bDetachedOrHidden;
 
 	// Current application is GUI subsystem run in ConEmu tab?
@@ -2449,10 +2463,21 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 		}
 	}
 
-	DWORD nShowCmd = (lpSI->dwFlags & STARTF_USESHOWWINDOW) ? lpSI->wShowWindow : SW_SHOWNORMAL;
+	// For example, mintty starts root using pipe redirection
+	bool bConsoleNoWindow = (lpSI->dwFlags & STARTF_USESTDHANDLES)
+		// or the caller need to run some process as "detached"
+		|| ((*anCreationFlags) & (DETACHED_PROCESS|CREATE_NO_WINDOW));
+
+	// Some "heuristics" - when created process may show its window? (Console or GUI)
+	DWORD nShowCmd = (lpSI->dwFlags & STARTF_USESHOWWINDOW)
+		? lpSI->wShowWindow
+		: ((gbAttachGuiClient || gbGuiClientAttached) && bConsoleNoWindow) ? 0
+		: SW_SHOWNORMAL;
+
 	// Console.exe starts cmd.exe with STARTF_USEPOSITION flag
 	if ((lpSI->dwFlags & STARTF_USEPOSITION) && (lpSI->dwX == 32767) && (lpSI->dwY == 32767))
 		nShowCmd = SW_HIDE; // Lets thing it is stating hidden
+
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
