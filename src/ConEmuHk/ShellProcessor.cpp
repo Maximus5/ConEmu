@@ -1874,7 +1874,7 @@ int CShellProc::PrepareExecuteParms(
 			if (AttachServerConsole())
 			{
 				_ASSERTE(gnAttachPortableGuiCui==0);
-				gnAttachPortableGuiCui = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+				gnAttachPortableGuiCui = (GuiCui)IMAGE_SUBSYSTEM_WINDOWS_CUI;
 				mb_NeedInjects = TRUE;
 				bForceNewConsole = false;
 			}
@@ -1974,7 +1974,7 @@ int CShellProc::PrepareExecuteParms(
 		if (gbAttachGuiClient && !ghAttachGuiClient && (mn_ImageBits != 16) && (m_Args.InjectsDisable != crb_On))
 		{
 			_ASSERTE(gnAttachPortableGuiCui==0);
-			gnAttachPortableGuiCui = IMAGE_SUBSYSTEM_WINDOWS_GUI;
+			gnAttachPortableGuiCui = (GuiCui)IMAGE_SUBSYSTEM_WINDOWS_GUI;
 			mb_NeedInjects = TRUE;
 		}
 		goto wrap; // гуй - не перехватывать (если только не указан "-new_console")
