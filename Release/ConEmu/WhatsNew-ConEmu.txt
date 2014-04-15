@@ -12,6 +12,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.04.14
+[%] Issue 1544: Cygwin ssh forking fails.
+
+
 2014.04.12
 [*] Issue 1532: Show only critical status messages in the top-left terminal corner.
 [*] Issue 1534: Use About() and Settings() GuiMacro for system hotkeys (Win+Alt+A, Win+Alt+P, Win+Alt+K)
