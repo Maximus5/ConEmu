@@ -3208,6 +3208,7 @@ LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, BOOL abInitial)
 	checkDlgButton(hWnd2, cbCTSDeleteLeftWord, gpSet->AppStd.isCTSDeleteLeftWord);
 
 	checkDlgButton(hWnd2, (gpSet->isCTSActMode==1)?rbCTSActAlways:rbCTSActBufferOnly, BST_CHECKED);
+	VkMod = gpSet->GetHotkeyById(vkCTSVkAct);
 	FillListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::KeysAct, VkMod);
 	FillListBoxByte(hWnd2, lbCTSRBtnAction, SettingsNS::ClipAct, gpSet->isCTSRBtnAction);
 	FillListBoxByte(hWnd2, lbCTSMBtnAction, SettingsNS::ClipAct, gpSet->isCTSMBtnAction);
