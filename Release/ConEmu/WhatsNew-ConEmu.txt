@@ -12,6 +12,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.04.16
+[*] Don't use hooks inside shell started from mintty (6b514d0 regression).
+[*] Issue 1553: Mouse button actions modifier was not saved (vkCTSVkAct).
+[*] Issue 1556: Ctrl+L not working in cygwin.
+
+
 2014.04.14
 [%] Issue 1544: Cygwin ssh forking fails.
 
