@@ -6166,17 +6166,33 @@ BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const 
 			if ((tmp.Right - tmp.Left + 1) != crLocked.X)
 			{
 				if (!bAbsolute)
-					tmp.Left = 0;
-				tmp.Right = tmp.Left + crLocked.X - 1;
-				lpConsoleWindow = &tmp;
+				{
+					WARNING("Need to be corrected!");
+					tmp.Left = tmp.Right = 0;
+				}
+				else
+				{
+					tmp.Right = tmp.Left + crLocked.X - 1;
+				}
 			}
+
 			if ((tmp.Bottom - tmp.Top + 1) != crLocked.Y)
 			{
 				if (!bAbsolute)
-					tmp.Top = 0;
-				tmp.Bottom = tmp.Top + crLocked.Y - 1;
-				lpConsoleWindow = &tmp;
+				{
+					WARNING("Need to be corrected!");
+					if (tmp.Top != tmp.Bottom)
+					{
+						tmp.Top = tmp.Bottom = 0;
+					}
+				}
+				else
+				{
+					tmp.Bottom = tmp.Top + crLocked.Y - 1;
+				}
 			}
+
+			lpConsoleWindow = &tmp;
 
 			#ifdef _DEBUG
 			msprintf(szDbgSize, countof(szDbgSize), L"---> IsVisibleRectLocked, lpConsoleWindow was patched {%ix%i}-{%ix%i}\n",
