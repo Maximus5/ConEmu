@@ -5712,7 +5712,7 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 
 		if (mn_Comspec4Ntvdm == 0)
 		{
-			mn_ProgramStatus &= ~CES_NTVDM;
+			SetProgramStatus(mn_ProgramStatus & ~CES_NTVDM);
 		}
 
 		//2010-02-26 убрал. может прийти с задержкой и только создать проблемы
@@ -5795,7 +5795,7 @@ void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 //				//}
 //
 //				//if (!(mn_ProgramStatus & CES_NTVDM))
-//				//	mn_ProgramStatus |= CES_NTVDM;
+//				//	SetProgramStatus(mn_ProgramStatus|CES_NTVDM);
 //
 //				//if (gOSVer.dwMajorVersion>5 || (gOSVer.dwMajorVersion==5 && gOSVer.dwMinorVersion>=1))
 //				//	mb_IgnoreCmdStop = TRUE;
