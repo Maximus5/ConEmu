@@ -213,7 +213,7 @@ int CTabBarClass::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 }
 
 // Добавляет закладку, или меняет (при необходимости) заголовок существующей
-void TabBarClass::AddTab(LPCWSTR text, int i, bool bAdmin, int iTabIcon)
+void CTabBarClass::AddTab(LPCWSTR text, int i, bool bAdmin, int iTabIcon)
 {
 	if (mh_Tabbar)
 	{

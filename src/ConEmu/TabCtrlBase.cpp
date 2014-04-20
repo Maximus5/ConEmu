@@ -179,18 +179,20 @@ void CTabPanelBase::InitTooltips(HWND hParent)
 
 CVirtualConsole* CTabPanelBase::FarSendChangeTab(int tabIndex)
 {
-	CVirtualConsole *pVCon = NULL;
+	CVConGuard VCon;
 	DWORD wndIndex = 0;
 	BOOL  bNeedActivate = FALSE, bChangeOk = FALSE;
 	ShowTabErrorInt(NULL, 0);
 
-	if (!mp_Owner->GetVConFromTab(tabIndex, &pVCon, &wndIndex))
+	if (!mp_Owner->GetVConFromTab(tabIndex, &VCon, &wndIndex))
 	{
 		if (mp_Owner->IsInSwitch())
 			mp_Owner->Update();  // показать реальное положение дел
 
 		return NULL;
 	}
+
+	CVirtualConsole *pVCon = VCon.VCon();
 
 	if (!gpConEmu->isActive(pVCon, false))
 		bNeedActivate = TRUE;

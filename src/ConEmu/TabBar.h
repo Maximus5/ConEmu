@@ -159,9 +159,7 @@ class CTabBarClass
 		void Deactivate(BOOL abPreSyncConsole=FALSE);
 		void RePaint();
 		bool GetRebarClientRect(RECT* rc);
-		void Update(BOOL abPosted=FALSE);
 		int CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
-		BOOL NeedPostUpdate();
 		void UpdatePosition();
 		void UpdateTabFont();
 		void Reposition();
