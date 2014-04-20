@@ -130,6 +130,7 @@ struct TabInfo
 	enum TabIdState Status;
 	CEFarWindowType Type; // enum of CEFarWindowType
 	
+	// Use "void" because that is not "guarded" pointer!
 	void/*CVirtualConsole*/* pVCon;
 	
 	//TabName Name;

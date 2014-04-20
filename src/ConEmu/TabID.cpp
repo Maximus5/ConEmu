@@ -202,7 +202,11 @@ bool CTabID::IsEqual(const CTabID* pTabId, bool abIgnoreWindowId /*= false*/)
 	// Невалидный таб (процесс был завершен)
 	if (Info.Status == tisEmpty || Info.Status == tisInvalid)
 		return false;
+	if (!CVConGroup::isValid((CVirtualConsole*)Info.pVCon))
+		return false;
 	if (pTabId->Info.Status == tisEmpty || pTabId->Info.Status == tisInvalid)
+		return false;
+	if (!CVConGroup::isValid((CVirtualConsole*)pTabId->Info.pVCon))
 		return false;
 
 	if (!abIgnoreWindowId)
@@ -211,7 +215,7 @@ bool CTabID::IsEqual(const CTabID* pTabId, bool abIgnoreWindowId /*= false*/)
 			return false;
 	}
 
-	return IsEqual( pTabId->Info.pVCon, pTabId->Name, pTabId->Info.Type, pTabId->Info.nPID,
+	return IsEqual( (CVirtualConsole*)pTabId->Info.pVCon, pTabId->Name, pTabId->Info.Type, pTabId->Info.nPID,
 					pTabId->Info.nViewEditID );
 
 	//if (pTabId->pVCon != this->pVCon)
