@@ -126,11 +126,13 @@ namespace ConEmuMacro
 	LPWSTR About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Закрыть/прибить текущую консоль
 	LPWSTR Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Copy (<What>)
+	LPWSTR Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
 	LPWSTR FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	LPWSTR FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon, bool abFromPlugin); // helper, это не макро-фукнция
+	LPWSTR FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+		LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon, bool abFromPlugin); // helper, это не макро-фукнция
 	// Flash
 	LPWSTR Flash(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Изменить имя основного шрифта. string
@@ -145,20 +147,18 @@ namespace ConEmuMacro
 	LPWSTR IsConsoleActive(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Проверка, видима ли RealConsole
 	LPWSTR IsRealVisible(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Keys("<Combo1>"[,"<Combo2>"[...]])
+	LPWSTR Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Menu(Type)
 	LPWSTR Menu(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
 	LPWSTR MsgBox(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	// Copy (<What>)
-	LPWSTR Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Palette([<Cmd>[,"<NewPalette>"]])
+	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Paste (<Cmd>[,"<Text>"])
 	LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// print("<Text>") - alias for Paste(2,"<Text>")
 	LPWSTR Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	// Keys("<Combo1>"[,"<Combo2>"[...]])
-	LPWSTR Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	// Palette([<Cmd>[,"<NewPalette>"]])
-	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Progress(<Type>[,<Value>])
 	LPWSTR Progress(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Rename(<Type>,"<Title>")
@@ -183,7 +183,7 @@ namespace ConEmuMacro
 	LPWSTR Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Transparency
 	LPWSTR Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	LPWSTR TransparencyHelper(int nCmd, int nValue); // helper, это не макро-фукнция
+		LPWSTR TransparencyHelper(int nCmd, int nValue); // helper, это не макро-фукнция
 	// Fullscreen
 	LPWSTR WindowFullscreen(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Maximize
@@ -204,40 +204,40 @@ namespace ConEmuMacro
 	} Functions[] = {
 		// List all functions
 		{About, {L"About"}},
-		{IsConEmu, {L"IsConEmu"}},
 		{Close, {L"Close"}},
+		{Copy, {L"Copy"}},
 		{FindEditor, {L"FindEditor"}},
-		{FindViewer, {L"FindViewer"}},
 		{FindFarWindow, {L"FindFarWindow"}},
+		{FindViewer, {L"FindViewer"}},
+		{Flash, {L"Flash", L"FlashWindow"}},
+		{FontSetName, {L"FontSetName"}},
+		{FontSetSize, {L"FontSetSize"}},
+		{HighlightMouse, {L"HighlightMouse"}},
+		{IsConEmu, {L"IsConEmu"}},
+		{IsConsoleActive, {L"IsConsoleActive"}},
+		{IsRealVisible, {L"IsRealVisible"}},
+		{Keys, {L"Keys"}},
+		{Menu, {L"Menu"}},
+		{MsgBox, {L"MsgBox"}},
+		{Palette, {L"Palette"}},
+		{Paste, {L"Paste"}},
+		{Print, {L"Print"}},
+		{Progress, {L"Progress"}},
+		{Rename, {L"Rename"}},
+		{Select, {L"Select"}},
+		{SetOption, {L"SetOption"}},
+		{Settings, {L"Settings"}},
+		{Shell, {L"Shell", L"ShellExecute"}},
+		{Sleep, {L"Sleep"}},
+		{Split, {L"Split", L"Splitter"}},
+		{Status, {L"Status", L"StatusBar", L"StatusControl"}, true},
+		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
+		{Task, {L"Task"}},
+		{Transparency, {L"Transparency"}},
 		{WindowFullscreen, {L"WindowFullscreen"}},
 		{WindowMaximize, {L"WindowMaximize"}},
 		{WindowMinimize, {L"WindowMinimize"}},
 		{WindowMode, {L"WindowMode"}},
-		{MsgBox, {L"MsgBox"}},
-		{Menu, {L"Menu"}},
-		{Flash, {L"Flash", L"FlashWindow"}},
-		{FontSetSize, {L"FontSetSize"}},
-		{FontSetName, {L"FontSetName"}},
-		{HighlightMouse, {L"HighlightMouse"}},
-		{IsRealVisible, {L"IsRealVisible"}},
-		{IsConsoleActive, {L"IsConsoleActive"}},
-		{Copy, {L"Copy"}},
-		{Paste, {L"Paste"}},
-		{Palette, {L"Palette"}},
-		{Print, {L"Print"}},
-		{Keys, {L"Keys"}},
-		{Progress, {L"Progress"}},
-		{Rename, {L"Rename"}},
-		{Shell, {L"Shell", L"ShellExecute"}},
-		{Select, {L"Select"}},
-		{SetOption, {L"SetOption"}},
-		{Settings, {L"Settings"}},
-		{Sleep, {L"Sleep"}},
-		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
-		{Task, {L"Task"}},
-		{Transparency, {L"Transparency"}},
-		{Status, {L"Status", L"StatusBar", L"StatusControl"}, true},
-		{Split, {L"Split", L"Splitter"}},
 		// End
 		{NULL}
 	};
