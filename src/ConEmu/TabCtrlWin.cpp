@@ -1,6 +1,6 @@
-
+п»ї
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -100,7 +100,6 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 				pos->cy = mn_TabHeight;
 				return 0;
 			}
-			//return 0;
 			break;
 		}
 		case WM_WINDOWPOSCHANGED:
@@ -130,7 +129,9 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 			break;
 		case WM_MOUSEMOVE:
-		case WM_LBUTTONDOWN: case WM_LBUTTONUP: case WM_LBUTTONDBLCLK:
+		case WM_LBUTTONDOWN:
+		case WM_LBUTTONUP:
+		case WM_LBUTTONDBLCLK:
 		/*case WM_RBUTTONDOWN:*/ case WM_RBUTTONUP: //case WM_RBUTTONDBLCLK:
 
 			if (((uMsg == WM_RBUTTONUP)
@@ -149,10 +150,10 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 						if ((gpSet->nTabBarDblClickAction == 2)
 							|| ((gpSet->nTabBarDblClickAction == 1) && gpSet->isCaptionHidden()))
 						{
-							// Чтобы клик случайно не провалился в консоль
+							// Р§С‚РѕР±С‹ РєР»РёРє СЃР»СѓС‡Р°Р№РЅРѕ РЅРµ РїСЂРѕРІР°Р»РёР»СЃСЏ РІ РєРѕРЅСЃРѕР»СЊ
 							gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
-							// Аналог AltF9
-							gpConEmu->OnAltF9(TRUE);
+							// РђРЅР°Р»РѕРі AltF9
+							gpConEmu->DoMaximizeRestore();
 						}
 						else if ((gpSet->nTabBarDblClickAction == 3)
 							|| ((gpSet->nTabBarDblClickAction == 1) && !gpSet->isCaptionHidden()))
@@ -210,8 +211,8 @@ LRESULT CTabPanelWin::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 				//if (mp_Owner->mb_ThemingEnabled) {
 				if (gpSetCls->CheckTheming())
 				{
-					pos->y = 2; // иначе в Win7 он смещается в {0x0} и снизу видна некрасивая полоса
-					pos->cy = mn_TabHeight -3; // на всякий случай
+					pos->y = 2; // РёРЅР°С‡Рµ РІ Win7 РѕРЅ СЃРјРµС‰Р°РµС‚СЃСЏ РІ {0x0} Рё СЃРЅРёР·Сѓ РІРёРґРЅР° РЅРµРєСЂР°СЃРёРІР°СЏ РїРѕР»РѕСЃР°
+					pos->cy = mn_TabHeight -3; // РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№
 				}
 				else
 				{
@@ -358,7 +359,7 @@ void CTabPanelWin::CreateRebar()
 	}
 	else
 	{
-		_ASSERTE(ghWnd!=NULL); // вроде ReBar для теста не создается.
+		_ASSERTE(ghWnd!=NULL); // РІСЂРѕРґРµ ReBar РґР»СЏ С‚РµСЃС‚Р° РЅРµ СЃРѕР·РґР°РµС‚СЃСЏ.
 	}
 
 	gpSetCls->CheckTheming();
@@ -374,7 +375,7 @@ void CTabPanelWin::CreateRebar()
 #if !defined(__GNUC__)
 #pragma warning (disable : 4312)
 #endif
-	// Надо
+	// РќР°РґРѕ
 	TabPanelWinMap map = {this}; //{ CTabPanelWin* object; HWND hWnd; WNDPROC defaultProc; };
 	map.defaultProc = (WNDPROC)SetWindowLongPtr(mh_Rebar, GWLP_WNDPROC, (LONG_PTR)_ReBarProc);
 	map.hWnd = mh_Rebar;
@@ -382,7 +383,7 @@ void CTabPanelWin::CreateRebar()
 
 
 	REBARINFO     rbi = {sizeof(REBARINFO)};
-	REBARBANDINFO rbBand = {80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+	REBARBANDINFO rbBand = {80}; // РЅРµ РёСЃРїРѕР»СЊР·СѓРµРј size, С‚.Рє. РїСЂРёС…РѕРґРёС‚ "РЅРѕРІС‹Р№" СЂР°Р·РјРµСЂ РёР· РІРёСЃС‚С‹ Рё РІ XP РѕР±Р»Р°РјС‹РІР°РµРјСЃСЏ
 
 	if (!SendMessage(mh_Rebar, RB_SETBARINFO, 0, (LPARAM)&rbi))
 	{
@@ -461,7 +462,7 @@ void CTabPanelWin::CreateRebar()
 	//else
 	//	m_Margins = MakeRect(0,mn_TabHeight,0,0);
 	//gpSet->UpdateMargins(m_Margins);
-	//_hwndTab = mh_Rebar; // пока...
+	//_hwndTab = mh_Rebar; // РїРѕРєР°...
 }
 
 HWND CTabPanelWin::CreateTabbar()
@@ -469,17 +470,17 @@ HWND CTabPanelWin::CreateTabbar()
 	gpSetCls->CheckTheming();
 
 	if (!mh_Rebar)
-		return NULL; // Табы создаются только как Band в ReBar
+		return NULL; // РўР°Р±С‹ СЃРѕР·РґР°СЋС‚СЃСЏ С‚РѕР»СЊРєРѕ РєР°Рє Band РІ ReBar
 
 	if (mh_Tabbar)
-		return mh_Tabbar; // Уже создали
+		return mh_Tabbar; // РЈР¶Рµ СЃРѕР·РґР°Р»Рё
 
 	//if (!m_TabIcons.IsInitialized())
 	//{
 	//	InitIconList();
 	//}
 
-	// Важно проверку делать после создания главного окна, иначе IsAppThemed будет возвращать FALSE
+	// Р’Р°Р¶РЅРѕ РїСЂРѕРІРµСЂРєСѓ РґРµР»Р°С‚СЊ РїРѕСЃР»Рµ СЃРѕР·РґР°РЅРёСЏ РіР»Р°РІРЅРѕРіРѕ РѕРєРЅР°, РёРЅР°С‡Рµ IsAppThemed Р±СѓРґРµС‚ РІРѕР·РІСЂР°С‰Р°С‚СЊ FALSE
 	BOOL bAppThemed = FALSE, bThemeActive = FALSE;
 	FAppThemed pfnThemed = NULL;
 	HMODULE hUxTheme = LoadLibrary(L"UxTheme.dll");
@@ -529,7 +530,7 @@ HWND CTabPanelWin::CreateTabbar()
 	//#pragma warning (disable : 4312)
 	//#endif
 
-	// Надо
+	// РќР°РґРѕ
 	TabPanelWinMap map = {this}; //{ CTabPanelWin* object; HWND hWnd; WNDPROC defaultProc; };
 	map.defaultProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)_TabProc);
 	map.hWnd = mh_Tabbar;
@@ -552,10 +553,10 @@ HWND CTabPanelWin::CreateTabbar()
 		InitTooltips(mh_Tabbar);
 	}
 
-	// Добавляет закладку, или меняет (при необходимости) заголовок существующей
+	// Р”РѕР±Р°РІР»СЏРµС‚ Р·Р°РєР»Р°РґРєСѓ, РёР»Рё РјРµРЅСЏРµС‚ (РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё) Р·Р°РіРѕР»РѕРІРѕРє СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµР№
 	//AddTab(gpConEmu->isFar() ? gpSet->szTabPanels : gpSet->pszTabConsole, 0);
 	AddTabInt(gpConEmu->GetLastTitle(), 0, gpConEmu->mb_IsUacAdmin);
-	// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
+	// РЅР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ СЃРјРµС‰РµРЅРёРµ РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё. Рў.Рµ. РЅР°С‡Р°Р»Рѕ - РёР· 0. РћСЃС‚Р°Р»СЊРЅРѕРµ РЅРµ РІР°Р¶РЅРѕ
 	rcClient = MakeRect(600, 400);
 	//rcClient = gpConEmu->GetGuiClientRect();
 	TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
@@ -568,10 +569,10 @@ HWND CTabPanelWin::CreateToolbar()
 	gpSetCls->CheckTheming();
 
 	if (!mh_Rebar || !gpSet->isMultiShowButtons)
-		return NULL; // нет табов - нет и тулбара
+		return NULL; // РЅРµС‚ С‚Р°Р±РѕРІ - РЅРµС‚ Рё С‚СѓР»Р±Р°СЂР°
 
 	if (mh_Toolbar)
-		return mh_Toolbar; // Уже создали
+		return mh_Toolbar; // РЈР¶Рµ СЃРѕР·РґР°Р»Рё
 
 	mh_Toolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL,
 	                            WS_CHILD|WS_VISIBLE|
@@ -610,7 +611,7 @@ HWND CTabPanelWin::CreateToolbar()
 	}
 
 	int nCopyBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
-	// Должен 37 возвращать
+	// Р”РѕР»Р¶РµРЅ 37 РІРѕР·РІСЂР°С‰Р°С‚СЊ
 	_ASSERTE(nCopyBmp == BID_TOOLBAR_LAST_IDX);
 	if (nCopyBmp < BID_TOOLBAR_LAST_IDX)
 		nCopyBmp = BID_TOOLBAR_LAST_IDX;
@@ -621,7 +622,7 @@ HWND CTabPanelWin::CreateToolbar()
 		bmp.nID = (UINT_PTR)CreateMappedBitmap(g_hInstance, IDB_SCROLL, 0, &colorMap, 1);
 	}
 	int nScrollBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
-	// Должен 38 возвращать
+	// Р”РѕР»Р¶РµРЅ 38 РІРѕР·РІСЂР°С‰Р°С‚СЊ
 	_ASSERTE(nScrollBmp == (BID_TOOLBAR_LAST_IDX+1));
 	if (nScrollBmp < (BID_TOOLBAR_LAST_IDX+1))
 		nScrollBmp = BID_TOOLBAR_LAST_IDX+1;
@@ -678,7 +679,7 @@ HWND CTabPanelWin::CreateToolbar()
 	return mh_Toolbar;
 }
 
-// Прямоугольник в клиентских координатах ghWnd!
+// РџСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє РІ РєР»РёРµРЅС‚СЃРєРёС… РєРѕРѕСЂРґРёРЅР°С‚Р°С… ghWnd!
 bool CTabPanelWin::GetRebarClientRect(RECT* rc)
 {
 	if (!mp_Owner->IsTabsShown())
@@ -757,7 +758,7 @@ bool CTabPanelWin::GetTabText(int nTabIdx, wchar_t* pszText, int cchTextMax)
 // -2 - out of control, -1 - out of tab-labels, 0+ - tab index 0-based
 int CTabPanelWin::GetTabFromPoint(POINT ptCur, bool bScreen /*= true*/)
 {
-	int iTabIndex = -2; // Вообще вне контрола
+	int iTabIndex = -2; // Р’РѕРѕР±С‰Рµ РІРЅРµ РєРѕРЅС‚СЂРѕР»Р°
 
 	if (IsTabbarCreated())
 	{
@@ -797,13 +798,13 @@ bool CTabPanelWin::GetToolBtnRect(int nCmd, RECT* rcBtnRect)
 		return false;
 	}
 	
-	SendMessage(mh_Toolbar, TB_GETRECT, nCmd/*например TID_CREATE_CON*/, (LPARAM)rcBtnRect);
+	SendMessage(mh_Toolbar, TB_GETRECT, nCmd/*РЅР°РїСЂРёРјРµСЂ TID_CREATE_CON*/, (LPARAM)rcBtnRect);
 	MapWindowPoints(mh_Toolbar, ghWnd, (LPPOINT)rcBtnRect, 2);
 
 	return true;
 }
 
-// Добавляет закладку, или меняет (при необходимости) заголовок существующей
+// Р”РѕР±Р°РІР»СЏРµС‚ Р·Р°РєР»Р°РґРєСѓ, РёР»Рё РјРµРЅСЏРµС‚ (РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё) Р·Р°РіРѕР»РѕРІРѕРє СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµР№
 void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin)
 {
 	if (!IsTabbarCreated())
@@ -812,11 +813,11 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin)
 	int iIconIdx = mp_Owner->GetTabIcon(bAdmin);
 
 	TCITEM tie;
-	// иконку обновляем всегда. она может измениться для таба
+	// РёРєРѕРЅРєСѓ РѕР±РЅРѕРІР»СЏРµРј РІСЃРµРіРґР°. РѕРЅР° РјРѕР¶РµС‚ РёР·РјРµРЅРёС‚СЊСЃСЏ РґР»СЏ С‚Р°Р±Р°
 	tie.mask = TCIF_TEXT | (mp_Owner->GetTabIcons() ? TCIF_IMAGE : 0);
 	tie.iImage = -1;
 	tie.pszText = (LPWSTR)text ;
-	tie.iImage = iIconIdx; // Пока иконка только одна - для табов со щитом
+	tie.iImage = iIconIdx; // РџРѕРєР° РёРєРѕРЅРєР° С‚РѕР»СЊРєРѕ РѕРґРЅР° - РґР»СЏ С‚Р°Р±РѕРІ СЃРѕ С‰РёС‚РѕРј
 	int nCurCount = GetItemCountInt();
 
 	if (i>=nCurCount)
@@ -825,12 +826,12 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin)
 	}
 	else
 	{
-		// Проверим, изменился ли текст
+		// РџСЂРѕРІРµСЂРёРј, РёР·РјРµРЅРёР»СЃСЏ Р»Рё С‚РµРєСЃС‚
 		wchar_t sOldTabName[CONEMUTABMAX];
 		if (!GetTabText(i, sOldTabName, countof(sOldTabName)) || !wcscmp(sOldTabName, text))
 			tie.mask &= ~TCIF_TEXT;
 
-		// Изменилась ли иконка
+		// РР·РјРµРЅРёР»Р°СЃСЊ Р»Рё РёРєРѕРЅРєР°
 		if (tie.mask & TCIF_IMAGE)
 		{
 			TCITEM told;
@@ -841,7 +842,7 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin)
 				tie.mask &= ~TCIF_IMAGE;
 		}
 
-		// "меняем" только если он реально меняется
+		// "РјРµРЅСЏРµРј" С‚РѕР»СЊРєРѕ РµСЃР»Рё РѕРЅ СЂРµР°Р»СЊРЅРѕ РјРµРЅСЏРµС‚СЃСЏ
 		if (tie.mask)
 			TabCtrl_SetItem(mh_Tabbar, i, &tie);
 	}
@@ -852,7 +853,7 @@ int CTabPanelWin::SelectTabInt(int i)
 	int iCurSel = GetCurSelInt();
 	mb_ChangeAllowed = true;
 
-	if (i != iCurSel)    // Меняем выделение, только если оно реально меняется
+	if (i != iCurSel)    // РњРµРЅСЏРµРј РІС‹РґРµР»РµРЅРёРµ, С‚РѕР»СЊРєРѕ РµСЃР»Рё РѕРЅРѕ СЂРµР°Р»СЊРЅРѕ РјРµРЅСЏРµС‚СЃСЏ
 	{
 		iCurSel = i;
 
@@ -889,7 +890,7 @@ void CTabPanelWin::ShowBar(bool bShow)
 {
 	RECT client = {};
 	if (bShow)
-		client = gpConEmu->GetGuiClientRect(); // нас интересует ширина окна
+		client = gpConEmu->GetGuiClientRect(); // РЅР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ С€РёСЂРёРЅР° РѕРєРЅР°
 	int nShow = bShow ? SW_SHOW : SW_HIDE;
 
 	if (mh_Rebar)
@@ -963,7 +964,7 @@ void CTabPanelWin::RepositionInt()
 			MoveWindow(mh_Rebar, 0, 0, client.right, mn_TabHeight, 1);
 		}
 
-		// Не будем пока трогать. Некрасиво табы рисуются. Нужно на OwnerDraw переходить.
+		// РќРµ Р±СѓРґРµРј РїРѕРєР° С‚СЂРѕРіР°С‚СЊ. РќРµРєСЂР°СЃРёРІРѕ С‚Р°Р±С‹ СЂРёСЃСѓСЋС‚СЃСЏ. РќСѓР¶РЅРѕ РЅР° OwnerDraw РїРµСЂРµС…РѕРґРёС‚СЊ.
 		#if 0
 		DWORD nCurStyle = GetWindowLong(mh_Tabbar, GWL_STYLE);
 		DWORD nNeedStyle = (gpSet->nTabsLocation == 1) ? (nCurStyle | TCS_BOTTOM) : (nCurStyle & ~TCS_BOTTOM);
@@ -1022,7 +1023,7 @@ void CTabPanelWin::UpdateToolbarPos()
 	{
 		SIZE sz;
 		SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-		// В Win2k имеет место быть глюк вычисления размера (разделители)
+		// Р’ Win2k РёРјРµРµС‚ РјРµСЃС‚Рѕ Р±С‹С‚СЊ РіР»СЋРє РІС‹С‡РёСЃР»РµРЅРёСЏ СЂР°Р·РјРµСЂР° (СЂР°Р·РґРµР»РёС‚РµР»Рё)
 		if ((gOSVer.dwMajorVersion == 5) && (gOSVer.dwMinorVersion == 0) && !gbIsWine)
 			sz.cx += 26;
 
@@ -1030,7 +1031,7 @@ void CTabPanelWin::UpdateToolbarPos()
 		{
 			if (sz.cx != mn_LastToolbarWidth)
 			{
-				REBARBANDINFO rbBand= {80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+				REBARBANDINFO rbBand= {80}; // РЅРµ РёСЃРїРѕР»СЊР·СѓРµРј size, С‚.Рє. РїСЂРёС…РѕРґРёС‚ "РЅРѕРІС‹Р№" СЂР°Р·РјРµСЂ РёР· РІРёСЃС‚С‹ Рё РІ XP РѕР±Р»Р°РјС‹РІР°РµРјСЃСЏ
 				rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILDSIZE;
 				// Set values unique to the band with the toolbar.
 				rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
@@ -1128,7 +1129,7 @@ void CTabPanelWin::OnCaptionHiddenChanged(bool bCaptionHidden)
 
 	//if (abUpdatePos)
 	{
-		//-- было 			//UpdateToolbarPos();
+		//-- Р±С‹Р»Рѕ 			//UpdateToolbarPos();
 		RepositionInt();
 	}
 }
@@ -1193,7 +1194,7 @@ void CTabPanelWin::OnConsoleActivatedInt(int nConNumber)
 	}
 
 	//UpdateToolConsoles(true);
-	////nConNumber = gpConEmu->ActiveConNum()+1; -- сюда пришел уже правильный номер!
+	////nConNumber = gpConEmu->ActiveConNum()+1; -- СЃСЋРґР° РїСЂРёС€РµР» СѓР¶Рµ РїСЂР°РІРёР»СЊРЅС‹Р№ РЅРѕРјРµСЂ!
 	//if (nConNumber>=1 && nConNumber<=MAX_CONSOLE_COUNT)
 	//{
 	//	SendMessage(mh_Toolbar, TB_CHECKBUTTON, nConNumber, 1);
@@ -1211,7 +1212,7 @@ void CTabPanelWin::ShowToolbar(bool bShow)
 	{
 		if (!IsToolbarCreated() && (CreateToolbar() != NULL))
 		{
-			REBARBANDINFO rbBand = {80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+			REBARBANDINFO rbBand = {80}; // РЅРµ РёСЃРїРѕР»СЊР·СѓРµРј size, С‚.Рє. РїСЂРёС…РѕРґРёС‚ "РЅРѕРІС‹Р№" СЂР°Р·РјРµСЂ РёР· РІРёСЃС‚С‹ Рё РІ XP РѕР±Р»Р°РјС‹РІР°РµРјСЃСЏ
 
 			rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE | RBBIM_COLORS;
 			rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
@@ -1244,7 +1245,7 @@ int CTabPanelWin::QueryTabbarHeight()
 {
 	if (!this) return 0;
 
-	// Нужно пересчитать высоту таба
+	// РќСѓР¶РЅРѕ РїРµСЂРµСЃС‡РёС‚Р°С‚СЊ РІС‹СЃРѕС‚Сѓ С‚Р°Р±Р°
 
 	//bool bDummyCreate = (hTabs == NULL);
 	//
@@ -1255,7 +1256,7 @@ int CTabPanelWin::QueryTabbarHeight()
 
 	if (mh_Tabbar)
 	{
-		// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
+		// РЅР°СЃ РёРЅС‚РµСЂРµСЃСѓРµС‚ СЃРјРµС‰РµРЅРёРµ РєР»РёРµРЅС‚СЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё. Рў.Рµ. РЅР°С‡Р°Р»Рѕ - РёР· 0. РћСЃС‚Р°Р»СЊРЅРѕРµ РЅРµ РІР°Р¶РЅРѕ
 		RECT rcClient = MakeRect(600, 400);
 		//rcClient = gpConEmu->GetGuiClientRect();
 		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
@@ -1263,7 +1264,7 @@ int CTabPanelWin::QueryTabbarHeight()
 	}
 	else
 	{
-		// Не будем создавать TabBar. Все равно вне окно ConEmu оценка получается неточной
+		// РќРµ Р±СѓРґРµРј СЃРѕР·РґР°РІР°С‚СЊ TabBar. Р’СЃРµ СЂР°РІРЅРѕ РІРЅРµ РѕРєРЅРѕ ConEmu РѕС†РµРЅРєР° РїРѕР»СѓС‡Р°РµС‚СЃСЏ РЅРµС‚РѕС‡РЅРѕР№
 		//_ASSERTE((hTabs!=NULL) && "Creating of a dummy tab control failed");
 		mn_TabHeight = gpSet->nTabFontHeight + 9;
 	}

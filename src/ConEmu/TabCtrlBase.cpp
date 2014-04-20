@@ -1,6 +1,6 @@
-
+п»ї
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -162,7 +162,7 @@ void CTabPanelBase::InitTooltips(HWND hParent)
 		SetWindowPos(mh_Balloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 		// Set up tool information.
 		// In this case, the "tool" is the entire parent window.
-		tiBalloon.cbSize = 44; // был sizeof(TOOLINFO);
+		tiBalloon.cbSize = 44; // Р±С‹Р» sizeof(TOOLINFO);
 		tiBalloon.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
 		tiBalloon.hwnd = hParent;
 		tiBalloon.hinst = g_hInstance;
@@ -187,7 +187,7 @@ CVirtualConsole* CTabPanelBase::FarSendChangeTab(int tabIndex)
 	if (!mp_Owner->GetVConFromTab(tabIndex, &pVCon, &wndIndex))
 	{
 		if (mp_Owner->IsInSwitch())
-			mp_Owner->Update();  // показать реальное положение дел
+			mp_Owner->Update();  // РїРѕРєР°Р·Р°С‚СЊ СЂРµР°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РґРµР»
 
 		return NULL;
 	}
@@ -201,7 +201,7 @@ CVirtualConsole* CTabPanelBase::FarSendChangeTab(int tabIndex)
 
 	if (!bChangeOk)
 	{
-		// Всплыть тултип с руганью - не смогли активировать
+		// Р’СЃРїР»С‹С‚СЊ С‚СѓР»С‚РёРї СЃ СЂСѓРіР°РЅСЊСЋ - РЅРµ СЃРјРѕРіР»Рё Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ
 		ShowTabErrorInt(L"This tab can't be activated now!", tabIndex);
 	}
 	else
@@ -210,18 +210,18 @@ CVirtualConsole* CTabPanelBase::FarSendChangeTab(int tabIndex)
 		_ASSERTE((nCallEnd - nCallStart) < ACTIVATE_TAB_CRITICAL);
 	}
 
-	// Чтобы лишнее не мелькало - активируем консоль
-	// ТОЛЬКО после смены таба (успешной или неудачной - неважно)
-	TODO("Не срабатывает. Новые данные из консоли получаются с задержкой и мелькает старое содержимое активируемой консоли");
+	// Р§С‚РѕР±С‹ Р»РёС€РЅРµРµ РЅРµ РјРµР»СЊРєР°Р»Рѕ - Р°РєС‚РёРІРёСЂСѓРµРј РєРѕРЅСЃРѕР»СЊ
+	// РўРћР›Р¬РљРћ РїРѕСЃР»Рµ СЃРјРµРЅС‹ С‚Р°Р±Р° (СѓСЃРїРµС€РЅРѕР№ РёР»Рё РЅРµСѓРґР°С‡РЅРѕР№ - РЅРµРІР°Р¶РЅРѕ)
+	TODO("РќРµ СЃСЂР°Р±Р°С‚С‹РІР°РµС‚. РќРѕРІС‹Рµ РґР°РЅРЅС‹Рµ РёР· РєРѕРЅСЃРѕР»Рё РїРѕР»СѓС‡Р°СЋС‚СЃСЏ СЃ Р·Р°РґРµСЂР¶РєРѕР№ Рё РјРµР»СЊРєР°РµС‚ СЃС‚Р°СЂРѕРµ СЃРѕРґРµСЂР¶РёРјРѕРµ Р°РєС‚РёРІРёСЂСѓРµРјРѕР№ РєРѕРЅСЃРѕР»Рё");
 
 	if (bNeedActivate)
 	{
 		if (!gpConEmu->Activate(pVCon))
 		{
 			if (mp_Owner->IsInSwitch())
-				mp_Owner->Update();  // показать реальное положение дел
+				mp_Owner->Update();  // РїРѕРєР°Р·Р°С‚СЊ СЂРµР°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РґРµР»
 
-			TODO("А текущий таб не слетит, если активировать не удалось?");
+			TODO("Рђ С‚РµРєСѓС‰РёР№ С‚Р°Р± РЅРµ СЃР»РµС‚РёС‚, РµСЃР»Рё Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ РЅРµ СѓРґР°Р»РѕСЃСЊ?");
 			return NULL;
 		}
 	}
@@ -231,7 +231,7 @@ CVirtualConsole* CTabPanelBase::FarSendChangeTab(int tabIndex)
 		pVCon = NULL;
 
 		if (mp_Owner->IsInSwitch())
-			mp_Owner->Update();  // показать реальное положение дел
+			mp_Owner->Update();  // РїРѕРєР°Р·Р°С‚СЊ СЂРµР°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РґРµР»
 	}
 
 	UNREFERENCED_PARAMETER(nCallStart);
