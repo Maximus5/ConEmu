@@ -1521,9 +1521,9 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 		if (!pRCon)
 			continue;
 
-		ConEmuTab tab;
+		CTab tab;
 		wchar_t szMark[6];
-		for (int T = 0; pRCon->GetTab(T, &tab); T++)
+		for (int T = 0; pRCon->GetTab(T, tab); T++)
 		{
 			if (cchCount >= cchMax)
 			{
@@ -1538,17 +1538,17 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 			}
 
 			pTabs[cchCount].ActiveConsole = (V == nActiveCon);
-			pTabs[cchCount].ActiveTab = (tab.Current != 0);
-			pTabs[cchCount].Disabled = ((tab.Type & fwt_Disabled) == fwt_Disabled);
+			pTabs[cchCount].ActiveTab = ((tab->Flags() & fwt_CurrentFarWnd) == fwt_CurrentFarWnd);
+			pTabs[cchCount].Disabled = ((tab->Flags() & fwt_Disabled) == fwt_Disabled);
 			pTabs[cchCount].ConsoleIdx = V;
 			pTabs[cchCount].TabIdx = T;
 
 			// Text
 			//wcscpy_c(szMark, tab.Modified ? L" * " : L"   ");
-			switch ((tab.Type & fwt_TypeMask))
+			switch (tab->Type())
 			{
 				case fwt_Editor:
-					wcscpy_c(szMark, tab.Modified ? L" * " : L" E "); break;
+					wcscpy_c(szMark, (tab->Flags() & fwt_ModifiedFarWnd) ? L" * " : L" E "); break;
 				case fwt_Viewer:
 					wcscpy_c(szMark, L" V "); break;
 				default:
@@ -1570,7 +1570,7 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 			}
 
 			int nCurLen = lstrlen(pTabs[cchCount].Title);
-			lstrcpyn(pTabs[cchCount].Title+nCurLen, tab.Name, countof(pTabs[cchCount].Title)-nCurLen);
+			lstrcpyn(pTabs[cchCount].Title+nCurLen, tab->Name.Ptr(), countof(pTabs[cchCount].Title)-nCurLen);
 
 			cchCount++;
 		}

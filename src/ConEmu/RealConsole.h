@@ -498,7 +498,6 @@ class CRealConsole
 		//	etr_FileAndLine = 2,
 		//};
 		//ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
-		void UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab);
 		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		BOOL IsConsoleDataChanged();
@@ -511,7 +510,7 @@ class CRealConsole
 		//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
 		BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 		void UpdateScrollInfo();
-		void SetTabs(ConEmuTab* tabs, int tabsCount);
+		void SetTabs(ConEmuTab* apTabs, int anTabsCount);
 		void DoRenameTab();
 		bool DuplicateRoot(bool bSkipMsg = false, bool bRunAsAdmin = false, LPCWSTR asNewConsole = NULL, LPCWSTR asApp = NULL, LPCWSTR asParm = NULL);
 		void RenameTab(LPCWSTR asNewTabText = NULL);
@@ -520,7 +519,7 @@ class CRealConsole
 		int GetRootProcessIcon();
 		int GetActiveTab();
 		CEFarWindowType GetActiveTabType();
-		bool GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
+		bool GetTab(int tabIdx, /*OUT*/ CTab& rTab);
 		int GetModifiedEditors();
 		BOOL ActivateFarWindow(int anWndIndex);
 		DWORD CanActivateFarWindow(int anWndIndex);
@@ -746,11 +745,17 @@ class CRealConsole
 		wchar_t ms_LastProcessName[MAX_PATH];
 		int mn_LastAppSettingsId;
 		//
-		ConEmuTab* mp_tabs;
-		wchar_t    ms_RenameFirstTab[MAX_RENAME_TAB_LEN/*128*/];
-		MSection   msc_Tabs;
-		int mn_tabsCount, mn_MaxTabs, mn_ActiveTab;
-		bool mb_TabsWasChanged;
+		struct _TabsInfo
+		{
+			wchar_t    ms_RenameFirstTab[MAX_RENAME_TAB_LEN/*128*/];
+			//MSection   msc_Tabs;
+			CTabStack m_Tabs;
+			//int mn_tabsCount, mn_MaxTabs, mn_ActiveTab;
+			int  mn_tabsCount; // Число текущих табов. Может отличаться (в меньшую сторону) от m_Tabs.GetCount()
+			int  mn_ActiveTab;
+			bool mb_TabsWasChanged;
+			bool mb_HasModalWindow; // Far Manager modal editor/viewer
+		} tabs;
 		void CheckPanelTitle();
 		//
 		//void ProcessAdd(DWORD addPID);
