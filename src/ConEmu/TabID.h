@@ -130,7 +130,7 @@ struct TabInfo
 	enum TabIdState Status;
 	CEFarWindowType Type; // enum of CEFarWindowType
 	
-	void/*CVirtualConsole*/* pVCon;
+	CVirtualConsole* pVCon;
 	
 	//TabName Name;
 
