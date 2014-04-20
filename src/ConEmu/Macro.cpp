@@ -171,6 +171,8 @@ namespace ConEmuMacro
 	LPWSTR Settings(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Shell (ShellExecute)
 	LPWSTR Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Sleep (ms)
+	LPWSTR Sleep(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Split
 	LPWSTR Split(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Status
@@ -230,6 +232,7 @@ namespace ConEmuMacro
 		{Select, {L"Select"}},
 		{SetOption, {L"SetOption"}},
 		{Settings, {L"Settings"}},
+		{Sleep, {L"Sleep"}},
 		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
 		{Task, {L"Task"}},
 		{Transparency, {L"Transparency"}},
@@ -2402,6 +2405,24 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 wrap:
 	SafeFree(pszBuf);
+	return pszRc ? pszRc : lstrdup(L"InvalidArg");
+}
+
+LPWSTR ConEmuMacro::Sleep(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszRc = NULL;
+	int ms = 0;
+	wchar_t szStatus[32];
+
+	// Max - 10sec to avoid hungs
+	if (p->GetIntArg(0, ms) && (ms > 0) && (ms < 10000))
+	{
+		_wsprintf(szStatus, SKIPLEN(countof(szStatus)) L"Sleeping %u ms", ms);
+		if (apRCon) apRCon->SetConStatus(szStatus, CRealConsole::cso_Critical);
+		::Sleep(ms);
+		if (apRCon) apRCon->SetConStatus(NULL);
+	}
+
 	return pszRc ? pszRc : lstrdup(L"InvalidArg");
 }
 

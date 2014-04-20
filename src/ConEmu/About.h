@@ -306,6 +306,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"        Shell(\"\",\"\",\"cmd.exe /k -new_console:b\"),\r\n" \
 	L"        Shell(\"new_console:b\",\"\",\"cmd.exe /k\")\r\n" \
 	L"        Shell(\"new_console:sV\")\r\n" \
+	L"Sleep(<Milliseconds>)\r\n" \
+	L"  - Milliseconds: max 10000 (10 seconds)\r\n" \
 	L"Split(<Cmd>,<Horz>,<Vert>)\r\n" \
 	L"  - Cmd=0, Horz=1..99, Vert=0: Duplicate active \"shell\" split to right\r\n" \
 	L"    Cmd=0, Horz=0, Vert=1..99: Duplicate active \"shell\" split to bottom\r\n" \
