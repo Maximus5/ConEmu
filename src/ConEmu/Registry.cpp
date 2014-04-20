@@ -506,6 +506,7 @@ bool SettingsXML::IsXmlAllowed()
 
 bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
 {
+	// That may occures if Basic settings and "Export" button was pressed
 	_ASSERTE(!gpConEmu->IsResetBasicSettings() || ((access & KEY_WRITE)!=KEY_WRITE));
 
 	bool lbRc = false;

@@ -1713,7 +1713,11 @@ LRESULT CSettings::OnInitDialog()
 		}
 	}
 
-	if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_REG) == 0)
+	if (isResetBasicSettings)
+	{
+		SetDlgItemText(ghOpWnd, tStorage, L"<Basic settings>");
+	}
+	else if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_REG) == 0)
 	{
 		wchar_t szStorage[MAX_PATH*2];
 		wcscpy_c(szStorage, L"HKEY_CURRENT_USER\\");
@@ -8577,7 +8581,9 @@ void CSettings::ExportSettings()
 
 		SettingsStorage XmlStorage = {CONEMU_CONFIGTYPE_XML};
 		XmlStorage.pszFile = pszFile;
+		bool bOld = isResetBasicSettings; isResetBasicSettings = false;
 		gpSet->SaveSettings(FALSE, &XmlStorage);
+		isResetBasicSettings = bOld;
 		SafeFree(pszFile);
 
 		// Restore configuration name if any
