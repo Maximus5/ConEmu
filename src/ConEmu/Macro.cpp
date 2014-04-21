@@ -2419,7 +2419,37 @@ LPWSTR ConEmuMacro::Sleep(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	{
 		_wsprintf(szStatus, SKIPLEN(countof(szStatus)) L"Sleeping %u ms", ms);
 		if (apRCon) apRCon->SetConStatus(szStatus, CRealConsole::cso_Critical);
-		::Sleep(ms);
+		DWORD dwStartTick = GetTickCount(), dwDelta, dwNow;
+		MSG Msg;
+		if (!gpConEmu->isMainThread())
+		{
+			::Sleep(ms);
+		}
+		else
+		{
+			while (true)
+			{
+				::Sleep(min(ms,5));
+				dwDelta = (dwNow = GetTickCount()) - dwStartTick;
+				// Too long waiting may be noticed as "hangs"
+				if (dwDelta < (DWORD)ms)
+				{
+					while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE))
+					{
+						if (!ProcessMessage(Msg))
+						{
+							return lstrdup(L"Terminated");
+						}
+						dwDelta = (dwNow = GetTickCount()) - dwStartTick;
+						if (dwDelta >= (DWORD)ms)
+							break;
+					}
+				}
+				// Sleep more?
+				if (dwDelta >= (DWORD)ms)
+					break;
+			}
+		}
 		if (apRCon) apRCon->SetConStatus(NULL);
 	}
 
