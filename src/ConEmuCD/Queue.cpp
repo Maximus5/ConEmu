@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -85,6 +85,18 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 				lbIngoreKey = lbProcessEvent = true;
 			else
 				lbProcessEvent = false;
+
+			#ifdef _DEBUG
+			bool bAlt = isPressed(VK_MENU), bShift = isPressed(VK_SHIFT), bCtrl = isPressed(VK_CONTROL);
+			if (bAlt || bShift || !bCtrl)
+			{
+				DEBUGSTR(L"  ---  CtrlC/CtrlBreak may fails because of bad Alt/Shift/Ctrl state!\n");
+			}
+			if (!lbProcessEvent)
+			{
+				DEBUGSTR(L"  ---  CtrlC/CtrlBreak may fails because of disabled ENABLE_PROCESSED_INPUT!\n");
+			}
+			#endif
 
 			if (lbProcessEvent)
 			{

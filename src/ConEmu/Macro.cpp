@@ -124,6 +124,8 @@ namespace ConEmuMacro
 
 	// Диалог About(["Tab"])
 	LPWSTR About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Break (0=CtrlC; 1=CtrlBreak)
+	LPWSTR Break(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Закрыть/прибить текущую консоль
 	LPWSTR Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Copy (<What>)
@@ -204,6 +206,7 @@ namespace ConEmuMacro
 	} Functions[] = {
 		// List all functions
 		{About, {L"About"}},
+		{Break, {L"Break"}},
 		{Close, {L"Close"}},
 		{Copy, {L"Copy"}},
 		{FindEditor, {L"FindEditor"}},
@@ -1125,6 +1128,23 @@ LPWSTR ConEmuMacro::IsConsoleActive(GuiMacro* p, CRealConsole* apRCon, bool abFr
 		pszResult = lstrdup(L"No");
 
 	return pszResult;
+}
+
+// Break (0=CtrlC; 1=CtrlBreak)
+LPWSTR ConEmuMacro::Break(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	bool bRc = false;
+	int nEvent = 0, nGroup = 0;
+
+	if (p->GetIntArg(0, nEvent))
+		p->GetIntArg(1, nGroup);
+
+	if ((nEvent == 0 || nEvent == 1) && apRCon)
+	{
+		bRc = apRCon->PostCtrlBreakEvent(nEvent, nGroup);
+	}
+
+	return bRc ? lstrdup(L"OK") : lstrdup(L"InvalidArg");
 }
 
 LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
