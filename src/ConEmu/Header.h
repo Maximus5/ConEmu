@@ -738,3 +738,6 @@ bool NextLine(const wchar_t*& pszFrom, wchar_t** pszLine);
 
 // pszWords - '|'separated
 void StripWords(wchar_t* pszText, const wchar_t* pszWords);
+
+// One message cycle step
+bool ProcessMessage(MSG& Msg);

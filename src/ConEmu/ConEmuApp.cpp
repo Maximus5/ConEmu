@@ -2196,15 +2196,12 @@ void MessageLoop()
 	MSG Msg = {NULL};
 	gbMessagingStarted = TRUE;
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	wchar_t szDbg[128];
-#endif
+	#endif
 
 	while (GetMessage(&Msg, NULL, 0, 0))
 	{
-		// Может быть некоторые дублирование с логированием в самих функциях
-		ConEmuMsgLogger::Log(Msg, ConEmuMsgLogger::msgCommon);
-
 		#ifdef _DEBUG
 		if (Msg.message == WM_TIMER)
 		{
@@ -2213,19 +2210,41 @@ void MessageLoop()
 		}
 		#endif
 
-		if (gpConEmu)
-		{
-			if (gpConEmu->isDialogMessage(Msg))
-				continue;
-			if ((Msg.message == WM_SYSCOMMAND) && gpConEmu->isSkipNcMessage(Msg))
-				continue;
-		}
-
-		TranslateMessage(&Msg);
-		DispatchMessage(&Msg);
+		if (!ProcessMessage(Msg))
+			break;
 	}
 
 	gbMessagingStarted = FALSE;
+}
+
+bool ProcessMessage(MSG& Msg)
+{
+	bool bRc = true;
+	static bool bQuitMsg = false;
+
+	if (Msg.message == WM_QUIT)
+	{
+		bQuitMsg = true;
+		bRc = false;
+		goto wrap;
+	}
+
+	// Может быть некоторые дублирование с логированием в самих функциях
+	ConEmuMsgLogger::Log(Msg, ConEmuMsgLogger::msgCommon);
+
+	if (gpConEmu)
+	{
+		if (gpConEmu->isDialogMessage(Msg))
+			goto wrap;
+		if ((Msg.message == WM_SYSCOMMAND) && gpConEmu->isSkipNcMessage(Msg))
+			goto wrap;
+	}
+
+	TranslateMessage(&Msg);
+	DispatchMessage(&Msg);
+
+wrap:
+	return bRc;
 }
 
 /* С командной строкой (GetCommandLineW) у нас засада */
