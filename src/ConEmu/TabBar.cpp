@@ -1736,8 +1736,6 @@ void CTabBarClass::AddStack(CTab& tab)
 			pTab = tab.AddRef();
 		m_TabStack.insert(0, pTab);
 	}
-
-	CheckStack();
 }
 
 BOOL CTabBarClass::CanActivateTab(int nTabIdx)

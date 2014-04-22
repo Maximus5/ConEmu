@@ -49,9 +49,9 @@ LPCWSTR TabName::Set(LPCWSTR asName)
 	nLen = asName ? lstrlenW(asName) : -1;
 	#endif
 
-	lstrcpynW(sz, asName ? asName : gpConEmu->GetDefaultTitle(), countof(sz));
+	lstrcpynW(sz, asName ? asName : L"", countof(sz));
 	
-	nLen = lstrlenW(sz);
+	nLen = lstrlenW(*sz ? sz : gpConEmu->GetDefaultTitle());
 	return sz;
 }
 void TabName::Release()
@@ -73,7 +73,8 @@ void TabName::Release()
 //}
 LPCWSTR TabName::Ptr() const
 {
-	_ASSERTE(*sz!=0);
+	if (!*sz)
+		return gpConEmu->GetDefaultTitle();
 	return sz;
 }
 int TabName::Length() const

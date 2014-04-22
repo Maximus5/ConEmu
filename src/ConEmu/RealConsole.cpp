@@ -9339,11 +9339,32 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 
 	if (tabIdx == 0)
 	{
+		
 		if (*tabs.ms_RenameFirstTab)
+		{
 			rTab->Info.Type |= fwt_Renamed;
+			rTab->Renamed.Set(tabs.ms_RenameFirstTab);
+		}
 		else
+		{
 			rTab->Info.Type &= ~fwt_Renamed;
-		rTab->Renamed.Set(tabs.ms_RenameFirstTab);
+		}
+
+		int iTabsCount = tabs.m_Tabs.GetCount();
+		// Если панель единственная - точно показываем заголовок консоли
+		if (((iTabsCount == 1) || !isFar()) && (rTab->Type() == fwt_Panels) && TitleFull[0])
+		{
+			rTab->Name.Set(TitleFull);
+		}
+		else if (isFar() && ms_PanelTitle[0])  // скорее всего - это Panels?
+		{
+			rTab->Name.Set(ms_PanelTitle);
+		}
+		else if (iTabsCount == 1 && TitleFull[0])  // Если панель единственная - точно показываем заголовок консоли
+		{
+			rTab->Name.Set(TitleFull);
+		}
+
 	}
 	else
 	{
