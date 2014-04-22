@@ -46,7 +46,7 @@ TabName::TabName(LPCWSTR asName)
 LPCWSTR TabName::Set(LPCWSTR asName)
 {
 	#ifdef _DEBUG
-	nLen = asName ? lstrlenW(asName) : 6;
+	nLen = asName ? lstrlenW(asName) : -1;
 	#endif
 
 	lstrcpynW(sz, asName ? asName : gpConEmu->GetDefaultTitle(), countof(sz));

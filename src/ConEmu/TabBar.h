@@ -96,7 +96,7 @@ class CTabBarClass
 		//bool _titleShouldChange;
 		void SelectTab(int i);
 		void UpdateToolbarPos();
-		void PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon);
+		//void PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon);
 		ConEmuTab m_Tab4Tip;
 		WCHAR  ms_TmpTabText[MAX_PATH];
 		BOOL CanActivateTab(int nTabIdx);
@@ -131,6 +131,7 @@ class CTabBarClass
 		// Tab stack
 		CTabStack m_Tabs; // Открытые табы
 		MArray<CTabID*> m_TabStack; // История табов (для переключения в Recent mode)
+		CTabID* mp_DummyTab; // Для показа чего-нибудь когда консолей вообще нет
 		//MArray<VConTabs> m_Tab2VCon;
 		//MArray<VConTabs> m_TabStack;
 		void CheckStack(); // Убьет из стека отсутствующих

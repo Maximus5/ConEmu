@@ -106,6 +106,7 @@ CTabBarClass::CTabBarClass()
 	mb_InKeySwitching = FALSE;
 	ms_TmpTabText[0] = 0;
 	mn_InUpdate = 0;
+	mp_DummyTab = new CTabID(NULL, NULL, fwt_Panels, 0, 0, 0);
 
 	mp_Rebar = new CTabPanelWin(this);
 }
@@ -113,6 +114,8 @@ CTabBarClass::CTabBarClass()
 CTabBarClass::~CTabBarClass()
 {
 	SafeDelete(mp_Rebar);
+
+	mp_DummyTab->Release();
 
 	// Освободить все табы
 	m_Tabs.ReleaseTabs(false);
@@ -440,7 +443,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 	if (mb_DisableRedraw)
 	{
-		_ASSERTE(mb_DisableRedraw); // Надо?
+		_ASSERTE(FALSE && "mb_DisableRedraw?"); // Надо?
 		return;
 	}
 
@@ -464,15 +467,11 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 	mn_InUpdate ++;
 
-	//ConEmuTab tab = {0};
 	MCHKHEAP
 	int V, I, tabIdx = 0, nCurTab = -1, rFrom, rFound;
 	BOOL bShowFarWindows = gpSet->bShowFarWindows;
-	CVirtualConsole* pVCon = NULL;
-	VConTabs vct = {NULL};
+
 	// Выполняться должно только в основной нити, так что CriticalSection не нужна
-	m_Tab2VCon.clear();
-	_ASSERTE(m_Tab2VCon.size()==0);
 
 	#ifdef _DEBUG
 	if (this != gpConEmu->mp_TabBar)
@@ -491,9 +490,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		int nTabs = CountActiveTabs(2);
 		if (nTabs > 1)
 		{
-			_ASSERTE(m_Tab2VCon.size()==0);
 			Activate();
-			_ASSERTE(m_Tab2VCon.size()==0);
 		}
 	}
 	else if (IsTabsActive() && gpSet->isTabs==2)
@@ -501,9 +498,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		int nTabs = CountActiveTabs(2);
 		if (nTabs <= 1)
 		{
-			_ASSERTE(m_Tab2VCon.size()==0);
 			Deactivate();
-			_ASSERTE(m_Tab2VCon.size()==0);
 		}
 	}
 
@@ -516,12 +511,11 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 	#endif
 
+
+	
 	MCHKHEAP
-	_ASSERTE(m_Tab2VCon.size()==0);
-
-
-
-
+	HANDLE hUpdate = m_Tabs.UpdateBegin();
+	_ASSERTE(hUpdate!=NULL);
 
 
 	/* ********************* */
@@ -536,7 +530,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			CVConGuard guard;
 			if (!CVConGroup::GetVCon(V, &guard))
 				continue;
-			pVCon = guard.VCon();
+			CVirtualConsole* pVCon = guard.VCon();
 
 			BOOL lbActive = gpConEmu->isActive(pVCon, false);
 
@@ -588,10 +582,6 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			for (I = rFrom; bAllWindows || !rFound; I++)
 			{
 				#ifdef _DEBUG
-					if (!I && !V)
-					{
-						_ASSERTE(m_Tab2VCon.size()==0);
-					}
 					if (this != gpConEmu->mp_TabBar)
 					{
 						_ASSERTE(this == gpConEmu->mp_TabBar);
@@ -607,7 +597,8 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 						continue;
 				}
 
-				if (!pRCon->GetTab(I, &tab))
+				CTab tab;
+				if (!pRCon->GetTab(I, tab))
 					break;
 
 
@@ -620,25 +611,27 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 				#endif
 
 
-				PrepareTab(&tab, pVCon);
+				WARNING("TabIcon, trim words?");
+				int iTabIcon = -1 /*PrepareTab(&tab, pVCon)*/;
+
+				#if 0
 				vct.pVCon = pVCon;
 				vct.nFarWindowId = I;
-
-
-				#ifdef _DEBUG
-					if (!I && !V)
-					{
-						_ASSERTE(m_Tab2VCon.size()==0);
-					}
 				#endif
 
 
-				AddTab2VCon(vct);
-				// Добавляет закладку, или меняет (при необходимости) заголовок существующей
-				mp_Rebar->AddTabInt(tab.Name, tabIdx, (tab.Type & fwt_Elevated)==fwt_Elevated);
+				m_Tabs.UpdateAppend(hUpdate, tab, FALSE);
 
-				if (lbActive && tab.Current)
+				// Физически (WinAPI) добавляет закладку, или меняет (при необходимости) заголовок существующей
+				mp_Rebar->AddTabInt(tab->Name.Ptr(), tabIdx, (tab->Flags() & fwt_Elevated)==fwt_Elevated, iTabIcon);
+
+				if (lbActive && (tab->Flags() & fwt_CurrentFarWnd))
+				{
+					// !!! RCon must return ONLY ONE active tab !!!
+					_ASSERTE(nCurTab == -1);
 					nCurTab = tabIdx;
+					AddStack(tab);
+				}
 
 				rFound++;
 				tabIdx++;
@@ -658,26 +651,22 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 	MCHKHEAP
 
-	// Must be at least one tab!
+	// Must be at least one tab ("ConEmu -Detached" for example)
 	if (tabIdx == 0)
 	{
-		ZeroStruct(tab);
-		PrepareTab(&tab, NULL);
-		wcscpy_c(tab.Name, gpConEmu->GetDefaultTitle());
-		vct.pVCon = NULL;
-		vct.nFarWindowId = 0;
-		AddTab2VCon(vct); //2009-06-14. Не было!
-		// Добавляет закладку, или меняет (при необходимости) заголовок существующей
-		mp_Rebar->AddTabInt(tab.Name, tabIdx, (tab.Type & fwt_Elevated)==fwt_Elevated);
+		m_Tabs.UpdateAppend(hUpdate, mp_DummyTab, FALSE);
+
+		// Физически (WinAPI) добавляет закладку, или меняет (при необходимости) заголовок существующей
+		mp_Rebar->AddTabInt(mp_DummyTab->Name.Ptr(), tabIdx, gpConEmu->mb_IsUacAdmin, -1);
+
 		nCurTab = tabIdx;
 		tabIdx++;
 	}
 
-	// Update последних выбранных
-	if ((nCurTab >= 0) && (nCurTab < m_Tab2VCon.size()))
-		AddStack(m_Tab2VCon[nCurTab]);
-	else
-		CheckStack(); // иначе просто проверим стек
+	m_Tabs.UpdateEnd(hUpdate, TRUE);
+
+	// Проверим стек последних выбранных
+	CheckStack();
 
 	// удалить лишние закладки (визуально)
 	int nCurCount = GetItemCount();
@@ -688,14 +677,17 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	DEBUGSTRTABS(szDbg);
 	#endif
 
-	for (I = tabIdx; I < nCurCount; I++)
+	if (mp_Rebar->IsTabbarCreated())
 	{
-		#ifdef _DEBUG
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"   Deleting tab=%i\n", I+1);
-		DEBUGSTRTABS(szDbg);
-		#endif
+		for (I = tabIdx; I < nCurCount; I++)
+		{
+			#ifdef _DEBUG
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"   Deleting tab=%i\n", I+1);
+			DEBUGSTRTABS(szDbg);
+			#endif
 
-		DeleteItem(tabIdx);
+			DeleteItem(tabIdx);
+		}
 	}
 
 	MCHKHEAP
@@ -728,6 +720,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 
 	MCHKHEAP
+	return; // Just for clearness
 }
 
 RECT CTabBarClass::GetMargins()
@@ -924,7 +917,9 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 		if (iPage >= 0)
 		{
 			// Если в табе нет "…" - тип не нужен
-			if (!wcschr(mp_Rebar->GetTabText(iPage, ms_TmpTabText, countof(ms_TmpTabText)), L'\x2026' /*"…"*/))
+			if (!mp_Rebar->GetTabText(iPage, ms_TmpTabText, countof(ms_TmpTabText)))
+				return 0;
+			if (!wcschr(ms_TmpTabText, L'\x2026' /*"…"*/))
 				return 0;
 
 			CVConGuard VCon;
@@ -1185,6 +1180,7 @@ int CTabBarClass::GetTabbarHeight()
 	return _tabHeight;
 }
 
+#if 0
 void CTabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 {
 #ifdef _DEBUG
@@ -1444,7 +1440,7 @@ void CTabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 
 	MCHKHEAP
 }
-
+#endif
 
 
 // Переключение табов
@@ -1453,7 +1449,16 @@ int CTabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 {
 	BOOL lbRecentMode = (gpSet->isTabs != 0) &&
 	                    (((abAltStyle == FALSE) ? gpSet->isTabRecent : !gpSet->isTabRecent));
+	int nNewSel = -1;
 	int nCurSel = GetCurSel();
+
+#if 1
+
+    WARNING("!!!CTabBarClass::GetNextTab!!!");
+	nNewSel = nCurSel;
+
+#else
+
 	int nCurCount = GetItemCount();
 	VConTabs cur = {NULL};
 
@@ -1472,7 +1477,6 @@ int CTabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 		cur = m_Tab2VCon[nCurSel];
 	}
 
-	int i, nNewSel = -1;
 	TODO("Добавить возможность переключаться а'ля RecentScreens");
 
 	if (abForward)
@@ -1585,6 +1589,7 @@ int CTabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 				nNewSel = i;
 		}
 	}
+#endif
 
 	return nNewSel;
 }
@@ -1677,7 +1682,7 @@ void CTabBarClass::CheckStack()
 
 		for (j = 0; j < m_TabStack.size(); ++j)
 		{
-			if (tab == m_TabStack[j])
+			if (tab.Tab() == m_TabStack[j])
 			{
 				lbExist = TRUE; break;
 			}
@@ -1704,7 +1709,7 @@ void CTabBarClass::AddStack(CTab& tab)
 
 		while (iter < m_TabStack.size())
 		{
-			if (m_TabStack[iter] == tab)
+			if (m_TabStack[iter] == tab.Tab())
 			{
 				if (iter == 0)
 				{
@@ -1737,13 +1742,13 @@ void CTabBarClass::AddStack(CTab& tab)
 
 BOOL CTabBarClass::CanActivateTab(int nTabIdx)
 {
-	CVirtualConsole *pVCon = NULL;
+	CVConGuard VCon;
 	DWORD wndIndex = 0;
 
-	if (!GetVConFromTab(nTabIdx, &pVCon, &wndIndex))
+	if (!GetVConFromTab(nTabIdx, &VCon, &wndIndex))
 		return FALSE;
 
-	if (!pVCon->RCon()->CanActivateFarWindow(wndIndex))
+	if (!VCon->RCon()->CanActivateFarWindow(wndIndex))
 		return FALSE;
 
 	return TRUE;
@@ -1809,7 +1814,7 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 
 	INT_PTR V, I;
 	int tabIdx = 0;
-	ConEmuTab tab = {0};
+
 	for (V = 0; V < MAX_CONSOLE_COUNT && nTab == -1; V++)
 	{
 		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
@@ -1828,12 +1833,15 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 
 		for (I = 0; TRUE; I++)
 		{
-			if (!pRCon->GetTab(I, &tab))
+			CTab tab;
+			if (!pRCon->GetTab(I, tab))
 				break;
-			if (tab.Type == (anType & fwt_TypeMask))
+
+			if (tab->Type() == (anType & fwt_TypeMask))
 			{
-				LPCWSTR pszName = PointToName(tab.Name);
-				if ((pszName && (lstrcmpi(pszName, asName) == 0)) || (lstrcmpi(tab.Name, asName) == 0))
+				LPCWSTR pszNamePtr = tab->Name.Ptr();
+				LPCWSTR pszName = PointToName(pszNamePtr);
+				if ((pszName && (lstrcmpi(pszName, asName) == 0)) || (pszNamePtr && (pszNamePtr != pszName) && (lstrcmpi(tab->Name.Ptr(), asName) == 0)))
 				{
 					nTab = tabIdx;
 					break;
@@ -1900,9 +1908,4 @@ bool CTabBarClass::Toolbar_GetBtnRect(int nCmd, RECT* rcBtnRect)
 		return false;
 	}
 	return mp_Rebar->GetToolBtnRect(nCmd, rcBtnRect);
-}
-
-LRESULT CTabBarClass::OnTimer(WPARAM wParam)
-{
-	return mp_Rebar->OnTimerInt(wParam);
 }
