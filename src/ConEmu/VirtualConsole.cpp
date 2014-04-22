@@ -593,42 +593,6 @@ int CVirtualConsole::GetActiveTab()
 	return mp_RCon->GetActiveTab();
 }
 
-#if 0
-bool CVirtualConsole::GetTab(int tabIdx, /*OUT*/ CTab* pTab)
-{
-	if (!this || !mp_RCon)
-	{
-		_ASSERTE(this && mp_RCon);
-		return false;
-	}
-
-	ConEmuTab tab = {};
-	if (!GetTab(tabIdx, &tab))
-		return false;
-
-	CTabID* id = new CTabID(this, *tab.Name ? tab.Name : gpConEmu->GetDefaultTitle(), tab.Type & fwt_TypeMask/*убить*/, 0/*anPID*/, tab.Pos/*anFarWindowID*/, tab.EditViewId, tab.Type);
-	pTab->Init(id);
-	//id->Release(); -- ???
-	return true;
-}
-
-bool CVirtualConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
-{
-	if (!this)
-	{
-		_ASSERTE(this!=NULL);
-		return false;
-	}
-	if (!mp_RCon)
-	{
-		pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
-		lstrcpyn(pTab->Name, gpConEmu->GetDefaultTitle(), countof(pTab->Name));
-		return true;
-	}
-	return mp_RCon->GetTab(tabIdx, pTab);
-}
-#endif
-
 void CVirtualConsole::PointersInit()
 {
 	mb_PointersAllocated = false;
