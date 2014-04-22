@@ -248,6 +248,7 @@ enum ExpandTextRangeType;
 struct ConEmuHotKey;
 
 #include "RealServer.h"
+#include "TabID.h"
 
 class CRealConsole
 {
