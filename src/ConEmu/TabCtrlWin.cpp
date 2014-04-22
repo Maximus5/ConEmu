@@ -777,10 +777,10 @@ bool CTabPanelWin::GetTabText(int nTabIdx, wchar_t* pszText, int cchTextMax)
 	item.pszText = pszText;
 	item.cchTextMax = cchTextMax;
 
+	pszText[0] = 0;
+
 	if (TabCtrl_GetItem(mh_Tabbar, nTabIdx, &item))
 		bRc = true;
-	else
-		pszText[0] = 0;
 
 	return bRc;
 }
