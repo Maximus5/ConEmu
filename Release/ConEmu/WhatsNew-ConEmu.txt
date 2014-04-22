@@ -12,6 +12,17 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.04.22
+[+] GuiMacro. Sleep(Milliseconds).
+    Because it is processed inside GUI process, Milliseconds are limited to 10000 (10 sec) max.
+[+] GuiMacro. Break() for Ctrl+C and Break(1) for Ctrl+Break.
+    However, these function may fails in some cases (in RealConsole for example).
+    Also, they are processed by Windows asynchronously, so you may need
+    to Sleep(ms) after them if your want to print("something") to console after.
+[%] Clipboard use optimization - RClick Paste may fails sometimes.
+[%] Fix hyperlinks underlining errors (c31f3cb regression).
+
+
 2014.04.16
 [*] Don't use hooks inside shell started from mintty (6b514d0 regression).
 [*] Issue 1553: Mouse button actions modifier was not saved (vkCTSVkAct).
