@@ -50,9 +50,9 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 
 
 /*
-200E    LEFT-TO-RIGHT MARK    
+200E    LEFT-TO-RIGHT MARK
     * commonly abbreviated LRM
-200F    RIGHT-TO-LEFT MARK    
+200F    RIGHT-TO-LEFT MARK
     * commonly abbreviated RLM
 */
 
@@ -357,10 +357,6 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 		Assert(gpConEmu->WndWidth.Value && gpConEmu->WndHeight.Value);
 	}
 
-	ZeroStruct(m_HighlightInfo);
-	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
-	m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
-
 	DEBUGTEST(mb_DebugDumpDC = false);
 
 	//if (gpSet->isShowBgImage)
@@ -393,7 +389,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	mp_RCon = new CRealConsole();
 	_ASSERTE(mp_RCon);
 	return mp_RCon->Construct(this, args);
-	
+
 	//if (gpSet->isTabsOnTaskBar())
 	//{
 	//	mp_Ghost = CTaskBarGhost::Create(this);
@@ -644,6 +640,9 @@ void CVirtualConsole::PointersInit()
 	pbLineChanged = pbBackIsPic = NULL;
 	pnBackRGB = NULL;
 	ZeroStruct(m_etr);
+	ZeroStruct(m_HighlightInfo);
+	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
+	m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
 }
 
 void CVirtualConsole::PointersFree()
@@ -667,6 +666,9 @@ void CVirtualConsole::PointersFree()
 	SafeFree(pbBackIsPic);
 	SafeFree(pnBackRGB);
 	ZeroStruct(m_etr);
+	ZeroStruct(m_HighlightInfo);
+	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
+	m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
 	HEAPVAL;
 	mb_PointersAllocated = false;
 }
@@ -725,6 +727,9 @@ void CVirtualConsole::PointersZero()
 	ZeroMemory(pnBackRGB, nMaxTextHeight*sizeof(*pnBackRGB));
 	HEAPVAL;
 	ZeroStruct(m_etr);
+	ZeroStruct(m_HighlightInfo);
+	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
+	m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
 }
 
 
@@ -895,7 +900,7 @@ bool CVirtualConsole::Dump(LPCWSTR asFile)
 {
 	if (!this || !mp_RCon)
 		return FALSE;
-	
+
 	// Она сделает снимок нашего буфера (hDC) в png файл
 	DumpImage((HDC)m_DC, NULL, m_DC.iWidth, m_DC.iHeight, asFile);
 
@@ -1074,7 +1079,7 @@ bool CVirtualConsole::isCharNonSpacing(wchar_t inChar)
 			}
 	}
 	return false;
-	
+
 	/*
 	wchar_t CharList[] = {0x135F, 0xFEFF, 0};
 	__asm {
@@ -1088,7 +1093,7 @@ bool CVirtualConsole::isCharSpace(wchar_t inChar)
 {
 	TODO("0x0020,0x00A0,0x1680,0x180E,0x2000,0x2001,0x2002,0x2003,0x2004,0x2005,0x2006,0x2007,0x2008,0x2009,0x200A,0x200b,0x200c,0x200d,0x205F,0x2060,0x3000,0xFEFF,0x00B7,0x237D,0x2420,0x2422,0x2423");
 	// Сюда пихаем все символы, которые можно отрисовать пустым фоном (как обычный пробел)
-	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0 
+	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0
 		/*|| (inChar>=0x2000 && inChar<=0x200F)
 		|| inChar == 0x2060 || inChar == 0x3000 || inChar == 0xFEFF*/);
 	return isSpace;
@@ -1606,7 +1611,7 @@ bool CVirtualConsole::CheckChangedTextAttr()
 	{
 		textChanged = 0!=memcmp(mpsz_ConChar, mpsz_ConCharSave, TextLen * sizeof(*mpsz_ConChar));
 		attrChanged = 0!=memcmp(mpn_ConAttrEx, mpn_ConAttrExSave, TextLen * sizeof(*mpn_ConAttrEx));
-		
+
 		if ((lbChanged = (textChanged || attrChanged)))
 		{
 			if (nLocked)
@@ -1864,7 +1869,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	bool bVisible = gpConEmu->isVisible(this);
 
 	// Highlight row/col under mouse cursor
-	if (bVisible && (isHighlightMouseRow() || isHighlightMouseCol()))
+	if (bVisible && isHighlightAny())
 	{
 		UpdateHighlights();
 	}
@@ -1944,6 +1949,11 @@ void CVirtualConsole::PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC,
 	}
 }
 
+bool CVirtualConsole::isHighlightAny()
+{
+	return (isHighlightHyperlink() || isHighlightMouseRow() || isHighlightMouseCol());
+}
+
 bool CVirtualConsole::isHighlightMouseRow()
 {
 	return m_HighlightInfo.mb_SelfSettings ? m_HighlightInfo.mb_HighlightRow : gpSet->isHighlightMouseRow;
@@ -1952,6 +1962,11 @@ bool CVirtualConsole::isHighlightMouseRow()
 bool CVirtualConsole::isHighlightMouseCol()
 {
 	return m_HighlightInfo.mb_SelfSettings ? m_HighlightInfo.mb_HighlightCol : gpSet->isHighlightMouseCol;
+}
+
+bool CVirtualConsole::isHighlightHyperlink()
+{
+	return (m_etr.etrLast != etr_None);
 }
 
 void CVirtualConsole::ChangeHighlightMouse(int nWhat, int nSwitch)
@@ -2007,6 +2022,12 @@ void CVirtualConsole::ChangeHighlightMouse(int nWhat, int nSwitch)
 // This is called from TrackMouse. It must NOT trigger more than one invalidate before next repaint
 bool CVirtualConsole::WasHighlightRowColChanged()
 {
+	if (isHighlightHyperlink() && (mp_RCon->isSelectionPresent() || !mp_RCon->IsFarHyperlinkAllowed(false)))
+	{
+		m_etr.etrLast = etr_None;
+		Invalidate();
+	}
+
 	// Invalidate already pended?
 	if (m_HighlightInfo.mb_ChangeDetected)
 		return false;
@@ -2063,16 +2084,26 @@ bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 
 void CVirtualConsole::UpdateHighlights()
 {
-	_ASSERTE(this && (isHighlightMouseRow() || isHighlightMouseCol()));
-	_ASSERTE(gpConEmu->isVisible(this));
-
 	ZeroStruct(m_HighlightInfo.mrc_LastRow);
 	ZeroStruct(m_HighlightInfo.mrc_LastCol);
+	ZeroStruct(m_HighlightInfo.mrc_LastHyperlink);
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
 
 	// During any popup menus (system, tab, etc.) don't highlight row/col
 	if (gpConEmu->isMenuActive())
 		return;
+
+	if (isHighlightMouseRow() || isHighlightMouseCol())
+		UpdateHighlightsRowCol();
+
+	if (isHighlightHyperlink())
+		UpdateHighlightsHyperlink();
+}
+
+void CVirtualConsole::UpdateHighlightsRowCol()
+{
+	_ASSERTE(this && (isHighlightMouseRow() || isHighlightMouseCol()));
+	_ASSERTE(gpConEmu->isVisible(this));
 
 	// Get COORDs (relative to upper-left visible pos)
 	COORD pos = {-1,-1};
@@ -2119,29 +2150,69 @@ void CVirtualConsole::UpdateHighlights()
 	DeleteObject(hBr);
 }
 
-void CVirtualConsole::UndoHighlights()
+void CVirtualConsole::UpdateHighlightsHyperlink()
 {
-	if (IsRectEmpty(&m_HighlightInfo.mrc_LastRow) && IsRectEmpty(&m_HighlightInfo.mrc_LastCol))
-		return;
+	_ASSERTE(this && isHighlightHyperlink());
 
 	HDC hPaintDC = (HDC)m_DC;
-	HBRUSH hBr = CreateSolidBrush(HILIGHT_PAT_COLOR);
+	HBRUSH hBr = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
 
-	if (!IsRectEmpty(&m_HighlightInfo.mrc_LastRow))
-	{
-		RECT rect = m_HighlightInfo.mrc_LastRow;
-		PatInvertRect(hPaintDC, rect, hPaintDC, false);
-	}
+	POINT ptStart = ConsoleToClient(m_etr.mcr_FileLineStart.X, m_etr.mcr_FileLineStart.Y);
+	_ASSERTE(m_etr.mcr_FileLineStart.Y == m_etr.mcr_FileLineEnd.Y); // May it extends to next line?
+	POINT ptEnd = ConsoleToClient(m_etr.mcr_FileLineEnd.X+1, m_etr.mcr_FileLineStart.Y);
+	// Height of "underline"?
+	int nHeight = nFontHeight / 10;
+	if (nHeight < 1) nHeight = 1;
+	// Just fill it (with color of the text?)
+	RECT rc = {ptStart.x, ptStart.y+nFontHeight-nHeight, ptEnd.x, ptEnd.y+nFontHeight};
 
-	if (!IsRectEmpty(&m_HighlightInfo.mrc_LastCol))
-	{
-		RECT rect = m_HighlightInfo.mrc_LastCol;
-		PatInvertRect(hPaintDC, rect, hPaintDC, false);
-	}
+	PatInvertRect(hPaintDC, rc, hPaintDC, true);
+	//FillRect((HDC)m_DC, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH));
+
+	m_HighlightInfo.mrc_LastHyperlink = rc;
 
 	SelectObject(hPaintDC, hOld);
-	DeleteObject(hBr);
+}
+
+void CVirtualConsole::UndoHighlights()
+{
+	if (!IsRectEmpty(&m_HighlightInfo.mrc_LastRow) || !IsRectEmpty(&m_HighlightInfo.mrc_LastCol))
+	{
+		HDC hPaintDC = (HDC)m_DC;
+		HBRUSH hBr = CreateSolidBrush(HILIGHT_PAT_COLOR);
+		HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
+
+		if (!IsRectEmpty(&m_HighlightInfo.mrc_LastRow))
+		{
+			RECT rect = m_HighlightInfo.mrc_LastRow;
+			PatInvertRect(hPaintDC, rect, hPaintDC, false);
+			ZeroStruct(m_HighlightInfo.mrc_LastRow);
+		}
+
+		if (!IsRectEmpty(&m_HighlightInfo.mrc_LastCol))
+		{
+			RECT rect = m_HighlightInfo.mrc_LastCol;
+			PatInvertRect(hPaintDC, rect, hPaintDC, false);
+			ZeroStruct(m_HighlightInfo.mrc_LastCol);
+		}
+
+		SelectObject(hPaintDC, hOld);
+		DeleteObject(hBr);
+	}
+
+	if (!IsRectEmpty(&m_HighlightInfo.mrc_LastHyperlink))
+	{
+		HDC hPaintDC = (HDC)m_DC;
+		HBRUSH hBr = (HBRUSH)GetStockObject(WHITE_BRUSH);
+		HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
+
+		RECT rect = m_HighlightInfo.mrc_LastHyperlink;
+		PatInvertRect(hPaintDC, rect, hPaintDC, true);
+		ZeroStruct(m_HighlightInfo.mrc_LastHyperlink);
+
+		SelectObject(hPaintDC, hOld);
+	}
 }
 
 bool CVirtualConsole::CheckTransparent()
@@ -3241,7 +3312,7 @@ void CVirtualConsole::UpdateText()
 			isUnicodeOrProgress = isUnicode || isProgress;
 
 			if (!isUnicodeOrProgress)
-			{ 
+			{
 				isNonSpacing = isCharNonSpacing(c);
 				isSpace = isCharSpace(c);
 			}
@@ -3928,24 +3999,11 @@ void CVirtualConsole::UpdateText()
 
 	free(nDX);
 
-	if (m_etr.etrLast != etr_None)
-	{
-		POINT ptStart = ConsoleToClient(m_etr.mcr_FileLineStart.X, m_etr.mcr_FileLineStart.Y);
-		_ASSERTE(m_etr.mcr_FileLineStart.Y == m_etr.mcr_FileLineEnd.Y); // May it extends to next line?
-		POINT ptEnd = ConsoleToClient(m_etr.mcr_FileLineEnd.X+1, m_etr.mcr_FileLineStart.Y);
-		// Height of "underline"?
-		int nHeight = nFontHeight / 10;
-		if (nHeight < 1) nHeight = 1;
-		// Just fill it (with color of the text?)
-		RECT rc = {ptStart.x, ptStart.y+nFontHeight, ptEnd.x, ptEnd.y+nFontHeight-nHeight};
-		PatInvertRect((HDC)m_DC, rc, (HDC)m_DC, true);
-		//FillRect((HDC)m_DC, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH));
-	}
-
 	// Screen updated, reset until next "UpdateHighlights()" call
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
 	ZeroStruct(m_HighlightInfo.mrc_LastRow);
 	ZeroStruct(m_HighlightInfo.mrc_LastCol);
+	ZeroStruct(m_HighlightInfo.mrc_LastHyperlink);
 
 	return;
 }
@@ -4363,10 +4421,10 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 LPVOID CVirtualConsole::Alloc(size_t nCount, size_t nSize)
 {
 	HEAPVAL;
-	
+
 	size_t nWhole = nCount * nSize;
 	LPVOID ptr = HeapAlloc(mh_Heap, HEAP_GENERATE_EXCEPTIONS|HEAP_ZERO_MEMORY, nWhole);
-	
+
 	//HEAPVAL;
 	return ptr;
 }
@@ -4400,7 +4458,7 @@ bool CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWid
 	}
 
 	bool bPaintRC = false;
-	
+
 	if ((HDC)m_DC)
 	{
 		SetStretchBltMode(hPaintDC, HALFTONE);
@@ -4418,7 +4476,7 @@ bool CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWid
 HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COLORREF *pColors /*= NULL*/)
 {
 	HBRUSH hBr = NULL;
-	
+
 	if (bGuiVisible)
 	{
 		hBr = GetSysColorBrush(COLOR_APPWORKSPACE);
@@ -4436,7 +4494,7 @@ HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COL
 		//#ifdef _DEBUG
 		//nBackColorIdx = 2; // Green
 		//#endif
-		
+
 		hBr = CreateSolidBrush(pColors[nBackColorIdx]);
 		rbNonSystem = (hBr != NULL);
 	}
@@ -4579,21 +4637,21 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 	LockDcRect(false);
 
 	COLORREF *pColors = GetColors();
-		
+
 	bool lbDelBrush = false;
 	HBRUSH hBr = CreateBackBrush(bGuiVisible, lbDelBrush, pColors);
-		
+
 	//#ifndef SKIP_ALL_FILLRECT
 	FillRect(hPaintDc, &rcClient, hBr);
 	//#endif
-		
+
 	TODO("Переделать на StatusBar, если gpSet->isStatusBarShow");
 	if (!bGuiVisible)
 	{
 		CEDC cePaintDc(hPaintDc);
 		CEFONT hOldF = cePaintDc.SelectObject(gpSetCls->mh_Font[0]);
 		LPCWSTR pszStarting = L"Initializing ConEmu.";
-			
+
 		// 120721 - если показана статусная строка - не будем писать в саму консоль?
 		if (gpSet->isStatusBarShow)
 			pszStarting = NULL;
@@ -4615,7 +4673,7 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 
 	if (lbDelBrush)
 		DeleteObject(hBr);
-			
+
 	if (mp_Ghost)
 		mp_Ghost->UpdateTabSnapshoot(TRUE); //CreateTabSnapshoot(hPaintDc, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
 }
@@ -6101,7 +6159,7 @@ void CVirtualConsole::SavePaneSnapshoot()
 		PostMessage(GetView(), mn_MsgSavePaneSnapshoot, 0, 0);
 		return;
 	}
-	
+
 	if (mp_Ghost /*&& !gbNoDblBuffer*/)
 	{
 		mp_Ghost->UpdateTabSnapshoot(); //CreateTabSnapshoot((HDC)m_DC, Width, Height, TRUE);
@@ -6114,7 +6172,7 @@ void CVirtualConsole::OnTaskbarSettingsChanged()
 	if (gpSet->isTabsOnTaskBar())
 	{
 		if (!mp_Ghost)
-			InitGhost();	
+			InitGhost();
 	}
 	else
 	{

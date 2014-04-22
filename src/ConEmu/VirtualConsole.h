@@ -120,11 +120,11 @@ class CVirtualConsole :
 		CEFONT  mh_FontByIndex[MAX_FONT_STYLES+1]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
 		HFONT   mh_UCharMapFont; SMALL_RECT mrc_UCharMap;
 		wchar_t ms_LastUCharMapFont[32];
-		
+
 		#ifdef _DEBUG
 		bool    mb_DebugDumpDC;
 		#endif
-		
+
 		bool    mb_ConDataChanged;
 		HRGN    mh_TransparentRgn;
 		//
@@ -394,6 +394,7 @@ class CVirtualConsole :
 			COORD m_Cur;
 			// store last paint coords
 			RECT  mrc_LastRow, mrc_LastCol;
+			RECT  mrc_LastHyperlink;
 			// true - if VCon visible and enabled in settings
 			bool  mb_Allowed;
 			// true - if Invalidate was called, but UpdateHighlights still not
@@ -403,11 +404,15 @@ class CVirtualConsole :
 			bool  mb_HighlightCol;
 		} m_HighlightInfo;
 		void UpdateHighlights();
+		void UpdateHighlightsRowCol();
+		void UpdateHighlightsHyperlink();
 		void UndoHighlights();
 		bool CalcHighlightRowCol(COORD* pcrPos);
 		bool WasHighlightRowColChanged();
+		bool isHighlightAny();
 		bool isHighlightMouseRow();
 		bool isHighlightMouseCol();
+		bool isHighlightHyperlink();
 	public:
 		void ChangeHighlightMouse(int nWhat, int nSwitch);
 	protected:
