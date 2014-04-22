@@ -731,6 +731,36 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 // DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024], LPWSTR pszComment = NULL);
 #include "../common/Dump.h"
 
+bool CopyToClipboard(LPCWSTR asText)
+{
+	if (!asText)
+		return false;
+
+	bool bCopied = false;
+
+	if (OpenClipboard(NULL))
+	{
+		DWORD cch = lstrlen(asText);
+		HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (cch + 1) * sizeof(*asText));
+		if (hglbCopy)
+		{
+			wchar_t* lptstrCopy = (wchar_t*)GlobalLock(hglbCopy);
+			if (lptstrCopy)
+			{
+				_wcscpy_c(lptstrCopy, cch+1, asText);
+				GlobalUnlock(hglbCopy);
+
+				EmptyClipboard();
+				bCopied = (SetClipboardData(CF_UNICODETEXT, hglbCopy) != NULL);
+			}
+		}
+
+		CloseClipboard();
+	}
+
+	return bCopied;
+}
+
 LPTOP_LEVEL_EXCEPTION_FILTER gpfnPrevExFilter = NULL;
 LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 {

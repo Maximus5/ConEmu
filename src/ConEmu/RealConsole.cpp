@@ -9903,12 +9903,13 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		HGLOBAL hglb = NULL;
 		LPCWSTR lptstr = NULL;
 		wchar_t szErr[128] = {}; DWORD nErrCode = 0;
+		bool lbOpened = false;
 
 		// из буфера обмена
-		if (!OpenClipboard(NULL))
+		if (!(lbOpened = MyOpenClipboard(L"GetClipboard")))
 		{
-			nErrCode = GetLastError();
-			wcscpy_c(szErr, L"Can't open Windows clipboard");
+			// Error already displayed
+			szErr[0] = 0;
 		}
 		else if ((hglb = GetClipboardData(CF_UNICODETEXT)) == NULL)
 		{
@@ -9930,7 +9931,10 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		}
 
 		// Done
-		CloseClipboard();
+		if (lbOpened)
+		{
+			MyCloseClipboard();
+		}
 
 		if (!pszBuf)
 		{

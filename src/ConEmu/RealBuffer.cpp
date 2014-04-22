@@ -3436,12 +3436,18 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 
 		// Только Copy. Делать Paste при наличии выделения - глупо. Так что только Copy.
 		bool bDoCopy = (bAction == 1) || (bAction == 3);
+		bool bClipOpen = bDoCopy ? MyOpenClipboard(L"Copy&Paste") : false;
 		bool bCopyOk = DoSelectionFinalize(bDoCopy);
 
 		if (bCopyOk && (bAction == 3))
 		{
 			// Immediately paste into console ('Auto' mode)?
 			mp_RCon->Paste(pm_OneLine);
+		}
+
+		if (bClipOpen)
+		{
+			MyCloseClipboard();
 		}
 
 		return true;
@@ -4342,16 +4348,11 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	}
 
 	// Открыть буфер обмена
-	while (!(lbRc = OpenClipboard(ghWnd)))
+	if (!(lbRc = MyOpenClipboard(L"SetClipboard")))
 	{
-		dwErr = GetLastError();
-
-		if (IDRETRY != DisplayLastError(L"OpenClipboard failed!", dwErr, MB_RETRYCANCEL|MB_ICONSTOP))
-		{
-			GlobalFree(hUnicode);
-			if (hHtml) GlobalFree(hHtml);
-			return false;
-		}
+		GlobalFree(hUnicode);
+		if (hHtml) GlobalFree(hHtml);
+		return false;
 	}
 
 	UINT i_CF_HTML = bUseHtml ? RegisterClipboardFormat(L"HTML Format") : 0;
@@ -4376,7 +4377,7 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 			&& (!i_CF_HTML || SetClipboardData(i_CF_HTML, hHtml));
 	}
 
-	lbRc = CloseClipboard();
+	MyCloseClipboard();
 
 	return Result;
 }
