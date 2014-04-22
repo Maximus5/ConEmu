@@ -42,38 +42,37 @@ public:
 	virtual ~CTabPanelWin();
 
 public:
-	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin);
-	virtual void CreateRebar();
-	virtual void DeleteItemInt(int I);
-	virtual bool IsCreated();
-	virtual bool IsTabbarCreated();
-	virtual bool IsTabbarNotify(LPNMHDR nmhdr);
-	virtual bool IsToolbarCreated();
-	virtual bool IsToolbarCommand(WPARAM wParam, LPARAM lParam);
-	virtual bool IsToolbarNotify(LPNMHDR nmhdr);
-	virtual int  GetCurSelInt();
-	virtual int  GetItemCountInt();
-	virtual bool GetTabBarClientRect(RECT* rcTab);
-	virtual int  GetTabFromPoint(POINT ptCur, bool bScreen = true);
-	virtual bool GetTabRect(int nTabIdx, RECT* rcTab); // Screen-coordinates!
-	virtual bool GetTabText(int nTabIdx, wchar_t* pszText, int cchTextMax);
-	virtual bool GetToolBtnChecked(ToolbarCommandIdx iCmd);
-	virtual bool GetToolBtnRect(int nCmd, RECT* rcBtnRect);
-	virtual bool GetRebarClientRect(RECT* rc);
-	virtual void InvalidateBar();
-	virtual void OnCaptionHiddenChanged(bool bCaptionHidden);
-	virtual void OnConsoleActivatedInt(int nConNumber);
-	virtual bool OnNotifyInt(LPNMHDR nmhdr, LRESULT& lResult);
-	virtual void OnWindowStateChanged(ConEmuWindowMode newMode);
-	virtual int  QueryTabbarHeight();
-	virtual void RePaintInt();
-	virtual void RepositionInt();
-	virtual int  SelectTabInt(int i);
-	virtual void SetTabbarFont(HFONT hFont);
-	virtual void SetToolBtnChecked(ToolbarCommandIdx iCmd, bool bChecked);
-	virtual void ShowBar(bool bShow);
-	virtual void ShowToolbar(bool bShow);
-
+	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) override;
+	virtual void CreateRebar() override;
+	virtual void DeleteItemInt(int I) override;
+	virtual bool IsCreated() override;
+	virtual bool IsTabbarCreated() override;
+	virtual bool IsTabbarNotify(LPNMHDR nmhdr) override;
+	virtual bool IsToolbarCreated() override;
+	virtual bool IsToolbarCommand(WPARAM wParam, LPARAM lParam) override;
+	virtual bool IsToolbarNotify(LPNMHDR nmhdr) override;
+	virtual int  GetCurSelInt() override;
+	virtual int  GetItemCountInt() override;
+	virtual bool GetTabBarClientRect(RECT* rcTab) override;
+	virtual int  GetTabFromPoint(POINT ptCur, bool bScreen = true, bool bOverTabHitTest = true) override;
+	virtual bool GetTabRect(int nTabIdx, RECT* rcTab) override; // Screen-coordinates!
+	virtual bool GetTabText(int nTabIdx, wchar_t* pszText, int cchTextMax) override;
+	virtual bool GetToolBtnChecked(ToolbarCommandIdx iCmd) override;
+	virtual bool GetToolBtnRect(int nCmd, RECT* rcBtnRect) override;
+	virtual bool GetRebarClientRect(RECT* rc) override;
+	virtual void InvalidateBar() override;
+	virtual void OnCaptionHiddenChanged(bool bCaptionHidden) override;
+	virtual void OnConsoleActivatedInt(int nConNumber) override;
+	virtual bool OnNotifyInt(LPNMHDR nmhdr, LRESULT& lResult) override;
+	virtual void OnWindowStateChanged(ConEmuWindowMode newMode) override;
+	virtual int  QueryTabbarHeight() override;
+	virtual void RePaintInt() override;
+	virtual void RepositionInt() override;
+	virtual int  SelectTabInt(int i) override;
+	virtual void SetTabbarFont(HFONT hFont) override;
+	virtual void SetToolBtnChecked(ToolbarCommandIdx iCmd, bool bChecked) override;
+	virtual void ShowBar(bool bShow) override;
+	virtual void ShowToolbar(bool bShow) override;
 private:
 	static LRESULT CALLBACK _TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, WNDPROC defaultProc);
@@ -89,5 +88,5 @@ private:
 	HWND CreateTabbar();
 	HWND CreateToolbar();
 	void UpdateToolbarPos();
-	LRESULT TabHitTest(bool abForce = false);
+	LRESULT TabHitTest(bool abForce = false, int* pnOverTabHit = NULL);
 };

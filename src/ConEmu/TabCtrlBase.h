@@ -52,7 +52,7 @@ public:
 	virtual ~CTabPanelBase();
 
 public:
-	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin) = 0;
+	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) = 0;
 	virtual void CreateRebar() = 0;
 	virtual void DeleteItemInt(int I) = 0;
 	virtual bool IsCreated() = 0;
@@ -64,7 +64,7 @@ public:
 	virtual int  GetCurSelInt() = 0;
 	virtual int  GetItemCountInt() = 0;
 	virtual bool GetTabBarClientRect(RECT* rcTab) = 0;
-	virtual int  GetTabFromPoint(POINT ptCur, bool bScreen = true) = 0;
+	virtual int  GetTabFromPoint(POINT ptCur, bool bScreen = true, bool bOverTabHitTest = true) = 0;
 	virtual bool GetTabRect(int nTabIdx, RECT* rcTab) = 0; // Screen-coordinates!
 	virtual bool GetTabText(int nTabIdx, wchar_t* pszText, int cchTextMax) = 0;
 	virtual bool GetToolBtnChecked(ToolbarCommandIdx iCmd) = 0;

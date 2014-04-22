@@ -90,6 +90,8 @@ LRESULT CALLBACK CTabPanelWin::_ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
 LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, WNDPROC defaultProc)
 {
+	int nOverTabHit = -1;
+
 	switch(uMsg)
 	{
 		case WM_WINDOWPOSCHANGING:
@@ -139,7 +141,7 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 					|| gpSet->isCaptionHidden())
 				&& gpSet->isTabs)
 			{
-				if (TabHitTest(true)==HTCAPTION)
+				if (TabHitTest(true, &nOverTabHit)==HTCAPTION)
 				{
 					POINT ptScr; GetCursorPos(&ptScr);
 					lParam = MAKELONG(ptScr.x,ptScr.y);
@@ -172,15 +174,36 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 					return lRc;
 				}
+				else if ((nOverTabHit >= 0) && ((uMsg == WM_LBUTTONDOWN) || (uMsg == WM_LBUTTONUP) || (uMsg == WM_RBUTTONDOWN) || (uMsg == WM_RBUTTONUP)))
+				{
+					if (uMsg == WM_LBUTTONDOWN)
+					{
+						int lnCurTab = GetCurSelInt();
+						if (lnCurTab != nOverTabHit)
+						{
+							FarSendChangeTab(nOverTabHit);
+							//mp_Owner->SelectTab(nOverTabHit);
+						}
+					}
+					else if (uMsg == WM_RBUTTONUP)
+					{
+						mp_Owner->OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+					}
+				}
 			}
 
 			break;
 
 		case WM_MBUTTONUP:
-			//if (uMsg == WM_MBUTTONUP)
+			if (gpSet->isCaptionHidden() && gpSet->isTabs)
 			{
-				gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+				if ((TabHitTest(true, &nOverTabHit) != HTCAPTION) && (nOverTabHit >= 0))
+				{
+					mp_Owner->OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+					break;
+				}
 			}
+			gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			break;
 	}
 
@@ -254,6 +277,7 @@ LRESULT CALLBACK CTabPanelWin::_ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 	return lRc;
 }
 
+// Window procedure for Toolbar (Multiconsole, BufferHeight, Min/Max, etc.)
 LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, WNDPROC defaultProc)
 {
 	switch(uMsg)
@@ -265,7 +289,7 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 			if (gpSet->isHideCaptionAlways() && gpSet->nToolbarAddSpace > 0)
 			{
-				SIZE sz;
+				SIZE sz = {0,0};
 
 				if (CallWindowProc(defaultProc, hwnd, TB_GETIDEALSIZE, 0, (LPARAM)&sz))
 				{
@@ -330,6 +354,13 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 				if ((nIdx == nTestIdxMin) || (nIdx == nTestIdxClose))
 				{
 					Icon.HideWindowToTray();
+					return 0;
+				}
+
+				LRESULT nTestIdxMax = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_MAXIMIZE, 0);
+				if (nIdx == nTestIdxMax)
+				{
+					gpConEmu->DoFullScreen();
 					return 0;
 				}
 
@@ -555,7 +586,7 @@ HWND CTabPanelWin::CreateTabbar()
 
 	// Добавляет закладку, или меняет (при необходимости) заголовок существующей
 	//AddTab(gpConEmu->isFar() ? gpSet->szTabPanels : gpSet->pszTabConsole, 0);
-	AddTabInt(gpConEmu->GetLastTitle(), 0, gpConEmu->mb_IsUacAdmin);
+	AddTabInt(gpConEmu->GetLastTitle(), 0, gpConEmu->mb_IsUacAdmin, -1);
 	// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
 	rcClient = MakeRect(600, 400);
 	//rcClient = gpConEmu->GetGuiClientRect();
@@ -756,30 +787,41 @@ bool CTabPanelWin::GetTabText(int nTabIdx, wchar_t* pszText, int cchTextMax)
 
 // Screen coordinates, if bScreen==true
 // -2 - out of control, -1 - out of tab-labels, 0+ - tab index 0-based
-int CTabPanelWin::GetTabFromPoint(POINT ptCur, bool bScreen /*= true*/)
+int CTabPanelWin::GetTabFromPoint(POINT ptCur, bool bScreen /*= true*/, bool bOverTabHitTest /*= true*/)
 {
 	int iTabIndex = -2; // Вообще вне контрола
 
 	if (IsTabbarCreated())
 	{
 		RECT rcWnd = {}; GetWindowRect(mh_Tabbar, &rcWnd);
-		TCHITTESTINFO tch = {ptCur};
+		RECT rcBar = {}; GetWindowRect(mh_Rebar, &rcBar);
+		// 130911 - Let allow switching tabs by clicking over tabs headers (may be useful with fullscreen)
+		RECT rcFull = {0, rcBar.top - rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top};
 
-		if (!bScreen)
+		TCHITTESTINFO tch = {ptCur};
+		if (bScreen)
 		{
-			MapWindowPoints(NULL, mh_Tabbar, (LPPOINT)&rcWnd, 2);
+			tch.pt.x -= rcWnd.left;
+			tch.pt.y -= rcWnd.top;
 		}
 
 		if (PtInRect(&rcWnd, tch.pt))
 		{
-			if (bScreen)
-			{
-				MapWindowPoints(NULL, mh_Tabbar, &tch.pt, 1);
-			}
-
 			LRESULT nTest = TabCtrl_HitTest(mh_Tabbar, &tch);
 
 			iTabIndex = (nTest <= -1) ? -1 : (int)nTest;
+
+			if (iTabIndex == -1 && bOverTabHitTest)
+			{
+				// Clicked over tab?
+				tch.pt.y = (rcWnd.bottom - rcWnd.top)/2;
+				nTest = SendMessage(mh_Tabbar, TCM_HITTEST, 0, (LPARAM)&tch);
+				if (nTest >= 0)
+				{
+					iTabIndex = (int)nTest;
+				}
+			}
+
 		}
 	}
 
@@ -805,7 +847,7 @@ bool CTabPanelWin::GetToolBtnRect(int nCmd, RECT* rcBtnRect)
 }
 
 // Добавляет закладку, или меняет (при необходимости) заголовок существующей
-void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin)
+void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon)
 {
 	if (!IsTabbarCreated())
 		return;
@@ -815,9 +857,8 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin)
 	TCITEM tie;
 	// иконку обновляем всегда. она может измениться для таба
 	tie.mask = TCIF_TEXT | (mp_Owner->GetTabIcons() ? TCIF_IMAGE : 0);
-	tie.iImage = -1;
 	tie.pszText = (LPWSTR)text ;
-	tie.iImage = iIconIdx; // Пока иконка только одна - для табов со щитом
+	tie.iImage = (iTabIcon > 0) ? iTabIcon : mp_Owner->GetTabIcon(bAdmin); // Пока иконка только одна - для табов со щитом
 	int nCurCount = GetItemCountInt();
 
 	if (i>=nCurCount)
@@ -1326,7 +1367,7 @@ void CTabPanelWin::RePaintInt()
 	UpdateWindow(mh_Rebar);
 }
 
-LRESULT CTabPanelWin::TabHitTest(bool abForce /*= false*/)
+LRESULT CTabPanelWin::TabHitTest(bool abForce /*= false*/, int* pnOverTabHit /*= NULL*/)
 {
 	if (gpSet->isTabs && (abForce || gpSet->isCaptionHidden()))
 	{
