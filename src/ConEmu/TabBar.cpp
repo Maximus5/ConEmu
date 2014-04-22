@@ -353,12 +353,8 @@ bool CTabBarClass::GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndI
 
 LRESULT CTabBarClass::OnTimer(WPARAM wParam)
 {
-	if (wParam == TIMER_FAILED_TABBAR_ID)
-	{
-		gpConEmu->SetKillTimer(false, TIMER_FAILED_TABBAR_ID, 0);
-		SendMessage(gpConEmu->mp_TabBar->mh_Balloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gpConEmu->mp_TabBar->tiBalloon);
-		SendMessage(gpConEmu->mp_TabBar->mh_TabTip, TTM_ACTIVATE, TRUE, 0);
-	}
+	if (mp_Rebar)
+		return mp_Rebar->OnTimerInt(wParam);
 	return 0;
 }
 
@@ -1019,7 +1015,8 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 }
 
-void CTabBarClass::OnMouse(int message, int x, int y, bool yCenter /*= false*/)
+// Вызывается, например, из CTabPanelWin::TabProc
+void CTabBarClass::OnMouse(int message, int x, int y)
 {
 	if (!this)
 		return;
@@ -1029,19 +1026,12 @@ void CTabBarClass::OnMouse(int message, int x, int y, bool yCenter /*= false*/)
 		return;
 	}
 
-	// After clicks above exact tab (Fullscreen or caption hidden)
-	if (yCenter)
-	{
-		RECT rcClient = {}; GetWindowRect(mh_Tabbar, &rcClient);
-		y = (rcClient.top + rcClient.bottom) >> 1;
-	}
-
 	if ((message == WM_MBUTTONUP)
 		|| (message == WM_RBUTTONUP)
 		|| ((message == WM_LBUTTONDBLCLK) && gpSet->nTabBtnDblClickAction))
 	{
-		TCHITTESTINFO htInfo = {{x,y}};
-		int iPage = mp_Rebar->GetTabFromPoint(htInfo.pt, false);
+		POINT pt = {x,y};
+		int iPage = mp_Rebar->GetTabFromPoint(pt, false);
 
 		if (iPage >= 0)
 		{
