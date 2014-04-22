@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //};
 
 #include "DwmHelper.h"
+#include "TabID.h"
 
 class CTabPanelBase;
 class CVConGuard;

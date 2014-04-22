@@ -905,7 +905,7 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 			OnChooseTabPopup();
 			break;
 		case TID_CREATE_CON:
-			gpConEmu->mp_Menu->OnNewConPopupMenu();
+			gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, isPressed(VK_SHIFT));
 			break;
 		}
 		return TBDDRET_DEFAULT;
@@ -914,7 +914,6 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 	if (nmhdr->code == TTN_GETDISPINFO && mp_Rebar->IsTabbarNotify(nmhdr))
 	{
 		LPNMTTDISPINFO pDisp = (LPNMTTDISPINFO)nmhdr;
-		CVirtualConsole *pVCon = NULL;
 		DWORD wndIndex = 0;
 		pDisp->hinst = NULL;
 		pDisp->szText[0] = 0;
@@ -925,16 +924,19 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 		if (iPage >= 0)
 		{
 			// Если в табе нет "…" - тип не нужен
-			if (!wcschr(GetTabText(iPage), L'\x2026' /*"…"*/))
+			if (!wcschr(mp_Rebar->GetTabText(iPage, ms_TmpTabText, countof(ms_TmpTabText)), L'\x2026' /*"…"*/))
 				return 0;
 
-			if (!GetVConFromTab(iPage, &pVCon, &wndIndex))
+			CVConGuard VCon;
+			if (!GetVConFromTab(iPage, &VCon, &wndIndex))
 				return 0;
 
-			if (!pVCon->RCon()->GetTab(wndIndex, &m_Tab4Tip))
+			CTab tab;
+			if (!VCon->RCon()->GetTab(wndIndex, tab))
 				return 0;
 
-			pDisp->lpszText = m_Tab4Tip.Name;
+			lstrcpyn(ms_TmpTabText, tab->Name.Ptr(), countof(ms_TmpTabText));
+			pDisp->lpszText = ms_TmpTabText;
 		}
 
 		return true;
@@ -965,7 +967,7 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	else if (wParam == TID_CREATE_CON)
 	{
 		if (gpConEmu->IsGesturesEnabled())
-			gpConEmu->mp_Menu->OnNewConPopupMenu();
+			gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, isPressed(VK_SHIFT));
 		else
 			gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 	}
@@ -1085,8 +1087,11 @@ void CTabBarClass::OnMouse(int message, int x, int y)
 			}
 		}
 	}
+	#ifdef _DEBUG
 	else if (message == WM_LBUTTONUP)
 	{
+		_ASSERTE(FALSE && "Must be processed in base/win class")
+		#if 0
 		TODO("Обработать клик НАД табами");
 		TCHITTESTINFO htInfo;
 		htInfo.pt.x = x;
@@ -1094,7 +1099,9 @@ void CTabBarClass::OnMouse(int message, int x, int y)
 		int iPage = TabCtrl_HitTest(mh_Tabbar, &htInfo);
 
 		int iDbg = 0;
+		#endif
 	}
+	#endif
 }
 
 void CTabBarClass::Invalidate()
@@ -1233,7 +1240,7 @@ void CTabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 		}
 
 		lstrcpyn(fileName, pTab->Name, countof(fileName));
-		if (gpSet->szTabSkipWords[0])
+		if (gpSet->pszTabSkipWords && *gpSet->pszTabSkipWords)
 		{
 			StripWords(fileName, gpSet->pszTabSkipWords);
 		}
