@@ -98,7 +98,6 @@ class CTabBarClass
 		void PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon);
 		ConEmuTab m_Tab4Tip;
 		WCHAR  ms_TmpTabText[MAX_PATH];
-		LPCWSTR GetTabText(int nTabIdx);
 		BOOL CanActivateTab(int nTabIdx);
 		BOOL mb_InKeySwitching;
 		int GetNextTab(BOOL abForward, BOOL abAltStyle=FALSE);

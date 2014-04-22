@@ -816,13 +816,6 @@ void CTabBarClass::Reposition()
 	mp_Rebar->RepositionInt();
 }
 
-LPCWSTR CTabBarClass::GetTabText(int nTabIdx)
-{
-	if (!mp_Rebar->GetTabText(nTabIdx, ms_TmpTabText, countof(ms_TmpTabText)))
-		return L"";
-	return ms_TmpTabText;
-}
-
 LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 {
 	if (!this)
@@ -1448,22 +1441,6 @@ void CTabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 
 
 // Переключение табов
-
-int CTabBarClass::GetIndexByTab(VConTabs tab)
-{
-	//int nIdx = -1;
-	int nCount = m_Tab2VCon.size();
-
-	for (int i = 0; i < nCount; i++)
-	{
-		if (m_Tab2VCon[i] == tab)
-		{
-			return i;
-		}
-	}
-
-	return -1;
-}
 
 int CTabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 {
