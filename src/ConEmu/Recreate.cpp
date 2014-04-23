@@ -308,7 +308,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				{
 					EnableWindow(GetDlgItem(hDlg, cbRunAsAdmin), FALSE);
 				}
-				else if (gOSVer.dwMajorVersion < 6)
+				else //if (gOSVer.dwMajorVersion < 6)
 				{
 					RecreateDlgProc(hDlg, WM_COMMAND, cbRunAsAdmin, 0);
 				}
