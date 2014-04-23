@@ -107,9 +107,9 @@ public:
 public:
 	LPCWSTR Set(LPCWSTR asName);
 	void Release();
-	//LPCWSTR MakeUpper();
 	LPCWSTR Ptr() const;
 	int Length() const;
+	bool Empty() const;
 };
 
 /* Internal information for Tab drawing */

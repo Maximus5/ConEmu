@@ -50,8 +50,8 @@ LPCWSTR TabName::Set(LPCWSTR asName)
 	#endif
 
 	lstrcpynW(sz, asName ? asName : L"", countof(sz));
-	
-	nLen = lstrlenW(*sz ? sz : gpConEmu->GetDefaultTitle());
+
+	nLen = lstrlenW(sz);
 	return sz;
 }
 void TabName::Release()
@@ -59,27 +59,17 @@ void TabName::Release()
 	sz[0] = 0;
 	nLen = 0;
 }
-//LPCWSTR TabName::MakeUpper()
-//{
-//	if (*sz)
-//	{
-//		CharUpperBuffW(sz, nLen);
-//	}
-//	else
-//	{
-//		_ASSERTE(*sz!=0);
-//	}
-//	return sz;
-//}
 LPCWSTR TabName::Ptr() const
 {
-	if (!*sz)
-		return gpConEmu->GetDefaultTitle();
 	return sz;
 }
 int TabName::Length() const
 {
 	return nLen;
+}
+bool TabName::Empty() const
+{
+	return (sz[0] != 0);
 }
 
 
