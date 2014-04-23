@@ -3427,7 +3427,7 @@ bool CVConGroup::ConActivate(int nCon)
 			if (gpSet->isMultiAutoCreate)
 			{
 				// Создать новую default-консоль
-				gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, FALSE, FALSE);
+				gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, FALSE);
 				return true; // создана новая консоль
 			}
 
@@ -3575,6 +3575,16 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 				pszSysCmd = vActive->RCon()->GetCmd(true);
 				if (pszSysCmd && *pszSysCmd && !args->pszStartupDir)
 					pszSysDir = vActive->RCon()->GetStartupDir();
+				// Run as admin?
+				if ((args->RunAsAdministrator == crb_Undefined)
+					&& (args->RunAsRestricted == crb_Undefined)
+					&& (args->pszUserName == NULL))
+				{
+					// That is specially processed because "As admin"
+					// may be set in the task with "*" prefix
+					if (vActive->RCon()->isAdministrator())
+						args->RunAsAdministrator = crb_On;
+				}
 			}
 			// Хм? Команда по умолчанию тогда.
 			if (!pszSysCmd || !*pszSysCmd)

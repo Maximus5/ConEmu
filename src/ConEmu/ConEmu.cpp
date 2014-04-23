@@ -8662,7 +8662,7 @@ void CConEmuMain::DeleteVConMainThread(CVirtualConsole* apVCon)
 // abRecreate: TRUE - пересоздать текущую, FALSE - создать новую
 // abConfirm:  TRUE - показать диалог подтверждения
 // abRunAs:    TRUE - под админом
-void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, BOOL abRunAs)
+void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs /*= crb_Undefined*/)
 {
 	FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
 	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
@@ -8680,7 +8680,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 	}
 
 	args.aRecreate = aRecreate;
-	args.RunAsAdministrator = abRunAs ? crb_On : crb_Off;
+	args.RunAsAdministrator = bRunAs;
 
 	WARNING("При переходе на новую обработку кнопок больше не нужно");
 	//if (!abConfirm && isPressed(VK_SHIFT))
@@ -8762,7 +8762,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 		CVConGuard VCon;
 		if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
 		{
-			args.RunAsAdministrator = (abRunAs || VCon->RCon()->isAdministrator()) ? crb_On : crb_Off;
+			args.RunAsAdministrator = ((bRunAs == crb_On) || VCon->RCon()->isAdministrator()) ? crb_On : crb_Undefined;
 
 			if (abConfirm)
 			{
