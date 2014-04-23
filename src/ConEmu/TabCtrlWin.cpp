@@ -805,7 +805,7 @@ int CTabPanelWin::GetTabFromPoint(POINT ptCur, bool bScreen /*= true*/, bool bOv
 			tch.pt.y -= rcWnd.top;
 		}
 
-		if (PtInRect(&rcWnd, tch.pt))
+		if (PtInRect(&rcFull, tch.pt))
 		{
 			LRESULT nTest = TabCtrl_HitTest(mh_Tabbar, &tch);
 
