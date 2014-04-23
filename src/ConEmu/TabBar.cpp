@@ -612,7 +612,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 
 				WARNING("TabIcon, trim words?");
-				int iTabIcon = -1 /*PrepareTab(&tab, pVCon)*/;
+				int iTabIcon = PrepareTab(tab, pVCon);
 
 				#if 0
 				vct.pVCon = pVCon;
@@ -623,7 +623,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 				m_Tabs.UpdateAppend(hUpdate, tab, FALSE);
 
 				// Физически (WinAPI) добавляет закладку, или меняет (при необходимости) заголовок существующей
-				mp_Rebar->AddTabInt(tab->Name.Ptr(), tabIdx, (tab->Flags() & fwt_Elevated)==fwt_Elevated, iTabIcon);
+				mp_Rebar->AddTabInt(tab->GetLabel(), tabIdx, (tab->Flags() & fwt_Elevated)==fwt_Elevated, iTabIcon);
 
 				if (lbActive && (tab->Flags() & fwt_CurrentFarWnd))
 				{
@@ -657,7 +657,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		m_Tabs.UpdateAppend(hUpdate, mp_DummyTab, FALSE);
 
 		// Физически (WinAPI) добавляет закладку, или меняет (при необходимости) заголовок существующей
-		mp_Rebar->AddTabInt(mp_DummyTab->Name.Ptr(), tabIdx, gpConEmu->mb_IsUacAdmin, -1);
+		mp_Rebar->AddTabInt(mp_DummyTab->GetName(), tabIdx, gpConEmu->mb_IsUacAdmin, -1);
 
 		nCurTab = tabIdx;
 		tabIdx++;
@@ -930,7 +930,7 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 			if (!VCon->RCon()->GetTab(wndIndex, tab))
 				return 0;
 
-			lstrcpyn(ms_TmpTabText, tab->Name.Ptr(), countof(ms_TmpTabText));
+			lstrcpyn(ms_TmpTabText, tab->GetName(), countof(ms_TmpTabText));
 			pDisp->lpszText = ms_TmpTabText;
 		}
 
@@ -1180,17 +1180,17 @@ int CTabBarClass::GetTabbarHeight()
 	return _tabHeight;
 }
 
-#if 0
-void CTabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
+int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 {
-#ifdef _DEBUG
+	int iTabIcon = -1;
 
+	#ifdef _DEBUG
 	if (this != gpConEmu->mp_TabBar)
 	{
 		_ASSERTE(this == gpConEmu->mp_TabBar);
 	}
+	#endif
 
-#endif
 	MCHKHEAP
 	// get file name
 	TCHAR dummy[MAX_PATH*2];
@@ -1205,37 +1205,21 @@ void CTabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	CRealConsole* pRCon = apVCon ? apVCon->RCon() : NULL;
 	bool bIsFar = pRCon ? pRCon->isFar() : false;
 
+	if (apVCon && (pTab->Info.nFarWindowID == 0))
+	{
+		iTabIcon = apVCon->RCon()->GetRootProcessIcon();
+	}
 
-	if (pTab->Name[0]==0 || (pTab->Type & 0xFF) == 1/*WTYPE_PANELS*/)
+	LPCWSTR pszTabName = pTab->GetName();
+
+	if (pTab->Name.Empty() || (pTab->Type() == fwt_Panels))
 	{
 		//_tcscpy(szFormat, _T("%s"));
 		lstrcpyn(szFormat, bIsFar ? gpSet->szTabPanels : gpSet->szTabConsole, countof(szFormat));
 		nMaxLen = gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
 
-		if (apVCon && gpConEmu->mb_IsUacAdmin)
-			pTab->Type |= fwt_Elevated;
+		lstrcpyn(fileName, pszTabName, countof(fileName));
 
-		if (pTab->Name[0] == 0)
-		{
-			// Это может случаться при инициализации GUI или закрытии консоли
-			#if 0
-			_ASSERTE(!bIsFar);
-
-			int nTabCount = GetItemCount();
-
-			if (nTabCount>0 && gpConEmu->ActiveCon()!=NULL)
-			{
-				//_ASSERTE(pTab->Name[0] != 0);
-				nTabCount = nTabCount;
-			}
-			#endif
-
-			//100930 - нельзя. GetLastTitle() вернет текущую консоль, а pTab может быть из любой консоли!
-			// -- _tcscpy(pTab->Name, gpConEmu->GetLastTitle()); //isFar() ? gpSet->szTabPanels : gpSet->pszTabConsole);
-			_tcscpy(pTab->Name, gpConEmu->GetDefaultTitle());
-		}
-
-		lstrcpyn(fileName, pTab->Name, countof(fileName));
 		if (gpSet->pszTabSkipWords && *gpSet->pszTabSkipWords)
 		{
 			StripWords(fileName, gpSet->pszTabSkipWords);
@@ -1251,20 +1235,21 @@ void CTabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	}
 	else
 	{
+		
 		LPTSTR tFileName = NULL;
-		if (GetFullPathName(pTab->Name, countof(dummy), dummy, &tFileName) && tFileName && *tFileName)
+		if (GetFullPathName(pszTabName, countof(dummy), dummy, &tFileName) && tFileName && *tFileName)
 			lstrcpyn(fileName, tFileName, countof(fileName));
 		else
-			lstrcpyn(fileName, pTab->Name, countof(fileName));
+			lstrcpyn(fileName, pszTabName, countof(fileName));
 
-		if ((pTab->Type & 0xFF) == 3/*WTYPE_EDITOR*/)
+		if (pTab->Type() == fwt_Editor)
 		{
-			if (pTab->Modified)
+			if (pTab->Flags() & fwt_ModifiedFarWnd)
 				lstrcpyn(szFormat, gpSet->szTabEditorModified, countof(szFormat));
 			else
 				lstrcpyn(szFormat, gpSet->szTabEditor, countof(szFormat));
 		}
-		else if ((pTab->Type & 0xFF) == 2/*WTYPE_VIEWER*/)
+		else if (pTab->Type() == fwt_Viewer)
 		{
 			lstrcpyn(szFormat, gpSet->szTabViewer, countof(szFormat));
 		}
@@ -1323,10 +1308,10 @@ void CTabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	////	_wsprintf(fileName, SKIPLEN(countof(fileName)) szFormat, tFileName, pTab->Pos);
 	//wcscpy(pTab->Name, fileName);
 	const TCHAR* pszFmt = szFormat;
-	TCHAR* pszDst = pTab->Name;
+	TCHAR* pszDst = dummy;
 	TCHAR* pszStart = pszDst;
-	TCHAR* pszEnd = pTab->Name + countof(pTab->Name) - 1; // в конце еще нужно зарезервировать место для '\0'
-
+	TCHAR* pszEnd = dummy + countof(dummy) - 1; // в конце еще нужно зарезервировать место для '\0'
+	
 	if (!pszFmt || !*pszFmt)
 	{
 		pszFmt = _T("%s");
@@ -1334,7 +1319,7 @@ void CTabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	*pszDst = 0;
 
 	bool bRenamedTab = false;
-	if (pTab->Type & fwt_Renamed)
+	if (pTab->Flags() & fwt_Renamed)
 	{
 		if (wcsstr(pszFmt, L"%s") == NULL)
 		{
@@ -1344,10 +1329,10 @@ void CTabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 				pszFmt = _T("%s");
 		}
 	}
-
+	
 	TCHAR szTmp[64];
-	bool  bAppendAdmin = gpSet->isAdminSuffix() && (pTab->Type & fwt_Elevated);
-
+	bool  bAppendAdmin = gpSet->isAdminSuffix() && (pTab->Flags() & fwt_Elevated);
+	
 	while (*pszFmt && pszDst < pszEnd)
 	{
 		if (*pszFmt == _T('%'))
@@ -1360,7 +1345,7 @@ void CTabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 					pszText = fileName;
 					break;
 				case _T('i'): case _T('I'):
-					_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%i"), pTab->Pos);
+					_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%i"), pTab->Info.nFarWindowID);
 					pszText = szTmp;
 					break;
 				case _T('p'): case _T('P'):
@@ -1438,9 +1423,12 @@ void CTabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 
 	*pszDst = 0;
 
-	MCHKHEAP
+	pTab->DrawInfo.Display.Set(dummy);
+	
+	MCHKHEAP;
+
+	return iTabIcon;
 }
-#endif
 
 
 // Переключение табов
@@ -1837,9 +1825,13 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 
 			if (tab->Type() == (anType & fwt_TypeMask))
 			{
+				// Тут GetName() использовать нельзя, т.к. оно может возвращать "переименованное пользователем"
+				// А здесь ищется конкретный редактор-вьювер фара (то есть нужно правильное полное имя-путь к файлу)
 				LPCWSTR pszNamePtr = tab->Name.Ptr();
 				LPCWSTR pszName = PointToName(pszNamePtr);
-				if ((pszName && (lstrcmpi(pszName, asName) == 0)) || (pszNamePtr && (pszNamePtr != pszName) && (lstrcmpi(tab->Name.Ptr(), asName) == 0)))
+				if (pszNamePtr
+					&& ((lstrcmpi(pszName, asName) == 0))
+						|| ((pszNamePtr != pszName) && (lstrcmpi(pszNamePtr, asName) == 0)))
 				{
 					nTab = tabIdx;
 					break;

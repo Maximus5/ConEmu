@@ -96,7 +96,7 @@ class CTabBarClass
 		//bool _titleShouldChange;
 		void SelectTab(int i);
 		void UpdateToolbarPos();
-		//void PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon);
+		int PrepareTab(CTab& pTab, CVirtualConsole *apVCon);
 		ConEmuTab m_Tab4Tip;
 		WCHAR  ms_TmpTabText[MAX_PATH];
 		BOOL CanActivateTab(int nTabIdx);
