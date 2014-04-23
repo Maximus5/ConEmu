@@ -129,11 +129,9 @@ struct TabInfo
 {
 	enum TabIdState Status;
 	CEFarWindowType Type; // enum of CEFarWindowType
-	
+
 	// Use "void" because that is not "guarded" pointer!
 	void/*CVirtualConsole*/* pVCon;
-	
-	//TabName Name;
 
 	int nPID; // ИД процесса, содержащего таб (актуально для редакторов/вьюверов)
 	int nFarWindowID; // ИД (а точнее просто 0-based index) окна в FAR. Panels==0, ViewerEditor>=1
@@ -151,29 +149,25 @@ public:
 	CTabID(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);
 public:
 	TabInfo Info;
-	CEFarWindowType Type() { return (Info.Type & fwt_TypeMask); }; // Не нужен вобщем-то
-	CEFarWindowType Flags() { return (Info.Type & ~fwt_TypeMask); }; // Не нужен вобщем-то
-	//enum TabIdState Status;
-	//int  Type; // TabType { etfPanels/etfEditor/etfViewer }
-	//UINT Flags; // enum of TabInfoFlags
-	//CVirtualConsole* pVCon;
-	
+	CEFarWindowType Type()  { return (Info.Type &  fwt_TypeMask); };
+	CEFarWindowType Flags() { return (Info.Type & ~fwt_TypeMask); };
+
+	// Имя и переименованое юзером
 	TabName Name, Renamed;
-	//TabName Upper; // для облегчения сравнения
-	
-	//int nPID; // ИД процесса, содержащего таб (актуально для редакторов/вьюверов)
-	//int nFarWindowID; // ИД (а точнее просто 0-based index) окна в FAR. Panels==0, ViewerEditor>=1
-	//int nViewEditID;  // а это нам нужно потому, что во вьюверах может быть открыто несколько копий одного файла
+	// С учетом возможного переименования
+	LPCWSTR GetName();
 
 	// Для внутреннего использования
 	TabDrawInfo DrawInfo;
+	LPCWSTR GetLabel();
 
+	// Methods
 	void Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);
 
 	bool IsEqual(const CTabID* pTabId, bool abIgnoreWindowId = false);
 	bool IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindowType anType, int anPID, int anViewEditID);
 	bool IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anViewEditID);
-	
+
 	void ReleaseDrawRegion();
 };
 
@@ -186,12 +180,12 @@ protected:
 public:
 	CTab() { mp_Tab = NULL; }
 	~CTab() { if (mp_Tab) mp_Tab->Release(); }
-	
+
 	void Init(CTabID* apTab) { if (mp_Tab) mp_Tab->Release(); if (apTab) apTab->AddRef(); mp_Tab = apTab; }
 	void Init(CTab& Tab) { Init(Tab.mp_Tab); }
-	
+
 	CTabID* operator -> () { return mp_Tab; }
-	
+
 	const CTabID* Tab() { return mp_Tab; }
 
 	CTabID* AddRef() { mp_Tab->AddRef(); return mp_Tab; }
@@ -204,7 +198,6 @@ protected:
 	int mn_MaxCount, mn_Used;
 protected:
 	MSection* mp_Section;
-	//MSectionLock* mp_UpdateLock;
 	int  mn_UpdatePos;
 	bool mb_FarUpdateMode;
 	void AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLock* pSC);
@@ -212,9 +205,7 @@ protected:
 public:
 	CTabStack();
 	~CTabStack();
-	
-	//const CTabID* CreateOrFind(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags);
-	
+
 	int GetCount();
 	bool GetTabInfoByIndex(int anIndex, /*OUT*/ TabInfo& rInfo);
 	bool GetTabByIndex(int anIndex, /*OUT*/ CTab& rTab);
@@ -224,7 +215,7 @@ public:
 	bool SetTabDrawRect(int anIndex, const RECT& rcTab);
 
 	void LockTabs(MSectionLock* pLock);
-	
+
 	HANDLE UpdateBegin();
 	bool UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);
 	void UpdateAppend(HANDLE hUpdate, CTab& Tab, BOOL abMoveFirst);

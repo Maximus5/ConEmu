@@ -98,6 +98,20 @@ CTabID::CTabID(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, 
 	//Upper.Init(asName);
 	//Upper.MakeUpper();
 }
+LPCWSTR CTabID::GetName()
+{
+	LPCWSTR pszName = ((Info.Type & fwt_Renamed) && (Renamed.Length() > 0)) ? Renamed.Ptr() : Name.Ptr();
+	if (!pszName || !*pszName)
+		pszName = gpConEmu->GetDefaultTitle();
+	return pszName;
+}
+LPCWSTR CTabID::GetLabel()
+{
+	LPCWSTR pszLabel = DrawInfo.Display.Ptr();
+	if (!pszLabel || !*pszLabel)
+		pszLabel = GetName();
+	return pszLabel;
+}
 void CTabID::Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID)
 {
 	//bExisted = true;
@@ -156,7 +170,7 @@ bool CTabID::IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindow
 	//	if (anFarWindowID != this->Info.nFarWindowID)
 	//		return false;
 	//}
-	
+
 	if ((anType & (fwt_TypeMask|fwt_CompareFlags)) != (this->Info.Type & (fwt_TypeMask|fwt_CompareFlags)))
 		return false;
 
@@ -297,16 +311,16 @@ CTabStack::~CTabStack()
 //const CTabID* CTabStack::CreateOrFind(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
 //{
 //	CTabID* pTab = NULL;
-//	
+//
 //	MSectionLock SC; SC.Lock(mp_Section);
-//	
+//
 //	if (mpp_Stack && mn_Used > 0)
 //	{
 //		TabName upr; upr.Init(asName); upr.Upper();
 //		for (int i = 0; i < mn_Used; i++)
 //		{
 //			if (!mpp_Stack[i]) continue;
-//			if (mpp_Stack[i]->IsEqual(apVCon, upr.Ptr(), anType, 
+//			if (mpp_Stack[i]->IsEqual(apVCon, upr.Ptr(), anType,
 //					anPID, anFarWindowID, anViewEditID, anFlags, true/*abIgnoreWindowId*/))
 //			{
 //				pTab = mpp_Stack[i];
@@ -326,9 +340,9 @@ CTabStack::~CTabStack()
 //	}
 //
 //	pTab = new CTabID(apVCon, asName, anType, anPID, anFarWindowID, anViewEditID, anFlags);
-//	
+//
 //	AppendInt(pTab, FALSE/*abMoveFirst*/, &SC);
-//	
+//
 //	return pTab;
 //}
 
@@ -341,7 +355,7 @@ void CTabStack::RequestSize(int anCount, MSectionLock* pSC)
 			+15
 		#endif
 			;
-		
+
 		CTabID** ppNew = (CTabID**)calloc(nNewMaxCount, sizeof(CTabID**));
 		if (mpp_Stack)
 		{
@@ -349,7 +363,7 @@ void CTabStack::RequestSize(int anCount, MSectionLock* pSC)
 				memmove(ppNew, mpp_Stack, sizeof(CTabID**)*mn_Used);
 			free(mpp_Stack);
 		}
-		
+
 		mpp_Stack = ppNew;
 		mn_MaxCount = nNewMaxCount;
 	}
@@ -359,11 +373,11 @@ void CTabStack::AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLock* pSC)
 {
 	// Сразу накрутить счетчик таба
 	pTab->AddRef();
-	
+
 	// Если требуется модификация списка
 	if (!mpp_Stack || (mn_Used == mn_MaxCount) || abMoveFirst)
 		pSC->RelockExclusive();
-	
+
 	if (!mpp_Stack || (mn_Used == mn_MaxCount))
 	{
 		RequestSize(mn_Used+1, pSC);
@@ -385,13 +399,13 @@ void CTabStack::AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLock* pSC)
 		//mpp_Stack = ppNew;
 		//mn_MaxCount = nNewMaxCount;
 	}
-	
+
 	if (abMoveFirst && mn_Used > 0)
 	{
 		memmove(mpp_Stack+1, mpp_Stack, mn_Used*sizeof(CTabID**));
 		mpp_Stack[0] = NULL;
 	}
-	
+
 	mpp_Stack[abMoveFirst ? 0 : mn_Used] = pTab;
 	mn_Used++;
 }
@@ -417,7 +431,7 @@ bool CTabStack::GetTabInfoByIndex(int anIndex, /*OUT*/ TabInfo& rInfo)
 bool CTabStack::GetTabByIndex(int anIndex, /*OUT*/ CTab& rTab)
 {
 	MSectionLock SC; SC.Lock(mp_Section);
-	
+
 	if (anIndex >= 0 && anIndex < mn_Used)
 	{
 		rTab.Init(mpp_Stack[anIndex]);
@@ -426,9 +440,9 @@ bool CTabStack::GetTabByIndex(int anIndex, /*OUT*/ CTab& rTab)
 	{
 		rTab.Init(NULL);
 	}
-	
+
 	SC.Unlock();
-	
+
 	return (rTab.Tab() != NULL);
 }
 int CTabStack::GetIndexByTab(const CTabID* pTab)
@@ -663,7 +677,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTab& Tab, BOOL abMoveFirst)
 void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 {
 	MSectionLock* pUpdateLock = (MSectionLock*)hUpdate;
-	
+
 	// Функция должна вызваться ТОЛЬКО между UpdateBegin & UpdateEnd
 	if (mn_UpdatePos < 0 || !pUpdateLock)
 	{
@@ -674,7 +688,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 
 	// Если таб в списке уже есть - то НИЧЕГО не делать (только переместить его в начало, если abActive)
 	// Если таб новый - добавить в список и вызвать AddRef для таба
-	
+
 	if (!pTab)
 	{
 		_ASSERTE(pTab != NULL);
@@ -714,7 +728,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 	{
 		if (nIndex == -1)
 		{
-			// Таба в списке еще нет, добавляем	
+			// Таба в списке еще нет, добавляем
 			AppendInt(pTab, abMoveFirst, pUpdateLock);
 		}
 		else if (abMoveFirst && nIndex > 0)
@@ -734,7 +748,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 //{
 //	bool lbExclusive = false;
 //	_ASSERTE(mp_MarkTemp!=NULL);
-//	
+//
 //	for (int i = 0; i < mn_Used; i++)
 //	{
 //		if (mpp_Stack[i])
@@ -762,7 +776,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 bool CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 {
 	MSectionLock* pUpdateLock = (MSectionLock*)hUpdate;
-	
+
 	// Функция должна вызваться ТОЛЬКО между UpdateBegin & UpdateEnd
 	if (mn_UpdatePos < 0)
 	{
@@ -838,10 +852,10 @@ void CTabStack::ReleaseTabs(BOOL abInvalidOnly /*= TRUE*/)
 		mpp_Stack[i] = NULL;
 		// Именно Release, т.к. ИД может быть использован в других стеках
 		p->Release();
-		
+
 		mn_Used--;
 
-		// Сдвинуть хвост, если есть	
+		// Сдвинуть хвост, если есть
 		if ((mn_Used > 1) && (i < (mn_Used-1)))
 		{
 			memmove(mpp_Stack+i, mpp_Stack+i+1, sizeof(CTabID**) * (mn_Used - i));
