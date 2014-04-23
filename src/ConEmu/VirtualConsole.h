@@ -395,14 +395,15 @@ class CVirtualConsole :
 			// store last paint coords
 			RECT  mrc_LastRow, mrc_LastCol;
 			RECT  mrc_LastHyperlink;
-			// true - if VCon visible and enabled in settings
-			bool  mb_Allowed;
+			// true - if VCon visible & enabled in settings & highlight exist
+			bool  mb_Exists;
 			// true - if Invalidate was called, but UpdateHighlights still not
 			bool  mb_ChangeDetected;
 			bool  mb_SelfSettings;
 			bool  mb_HighlightRow;
 			bool  mb_HighlightCol;
 		} m_HighlightInfo;
+		void ResetHighlightCoords();
 		void UpdateHighlights();
 		void UpdateHighlightsRowCol();
 		void UpdateHighlightsHyperlink();

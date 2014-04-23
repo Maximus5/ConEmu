@@ -639,10 +639,9 @@ void CVirtualConsole::PointersInit()
 	PolyText = NULL;
 	pbLineChanged = pbBackIsPic = NULL;
 	pnBackRGB = NULL;
-	ZeroStruct(m_etr);
+	// Row/Col highlights & Hyperlink underlining
 	ZeroStruct(m_HighlightInfo);
-	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
-	m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
+	ResetHighlightCoords();
 }
 
 void CVirtualConsole::PointersFree()
@@ -665,10 +664,8 @@ void CVirtualConsole::PointersFree()
 	SafeFree(pbLineChanged);
 	SafeFree(pbBackIsPic);
 	SafeFree(pnBackRGB);
-	ZeroStruct(m_etr);
-	ZeroStruct(m_HighlightInfo);
-	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
-	m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
+	// Row/Col highlights & Hyperlink underlining
+	ResetHighlightCoords();
 	HEAPVAL;
 	mb_PointersAllocated = false;
 }
@@ -726,10 +723,8 @@ void CVirtualConsole::PointersZero()
 	ZeroMemory(pbBackIsPic, nMaxTextHeight*sizeof(*pbBackIsPic));
 	ZeroMemory(pnBackRGB, nMaxTextHeight*sizeof(*pnBackRGB));
 	HEAPVAL;
-	ZeroStruct(m_etr);
-	ZeroStruct(m_HighlightInfo);
-	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
-	m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
+	// Row/Col highlights & Hyperlink underlining
+	ResetHighlightCoords();
 }
 
 
@@ -1949,6 +1944,16 @@ void CVirtualConsole::PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC,
 	}
 }
 
+void CVirtualConsole::ResetHighlightCoords()
+{
+	ZeroStruct(m_etr);
+	ZeroStruct(m_HighlightInfo.mrc_LastRow);
+	ZeroStruct(m_HighlightInfo.mrc_LastCol);
+	ZeroStruct(m_HighlightInfo.mrc_LastHyperlink);
+	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
+	m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
+}
+
 bool CVirtualConsole::isHighlightAny()
 {
 	return (isHighlightHyperlink() || isHighlightMouseRow() || isHighlightMouseCol());
@@ -2050,36 +2055,47 @@ bool CVirtualConsole::WasHighlightRowColChanged()
 bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 {
 	if (!(isHighlightMouseRow() || isHighlightMouseCol())
-		|| !gpConEmu->isMeForeground()
+		//|| !gpConEmu->isMeForeground() // show highlights even if ConEmu loose focus
 		|| !gpConEmu->isVisible(this))
 	{
-		m_HighlightInfo.mb_Allowed = false;
+		m_HighlightInfo.mb_Exists = false;
 		m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
 		return false;
 	}
 
 	// Get SCREEN coordinates
-	POINT ptCursor = {}; GetCursorPos(&ptCursor);
-	RECT  rcDC = {}; GetWindowRect(mh_WndDC, &rcDC);
-	if (!PtInRect(&rcDC, ptCursor))
+	bool  bExist = false;
+	BOOL  bCanChange = FALSE;
+	COORD pos = {-1,-1};
+	POINT ptCursor = {};
+	RECT  rcDC = {};
+
+	// But follow the cursor only when ConEmu is in foreground
+	if (!gpConEmu->isMenuActive() && gpConEmu->isMeForeground(false, false))
 	{
-		m_HighlightInfo.mb_Allowed = false;
-		m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
-		return false;
+		GetCursorPos(&ptCursor);
+		GetWindowRect(mh_WndDC, &rcDC);
+		bCanChange = PtInRect(&rcDC, ptCursor);
 	}
 
-	// Get COORDs (relative to upper-left visible pos)
-	COORD pos = ClientToConsole(ptCursor.x-rcDC.left, ptCursor.y-rcDC.top);
-	m_HighlightInfo.m_Cur = pos;
-	if (pos.X < 0 || pos.Y < 0)
+	if (!bCanChange)
 	{
-		m_HighlightInfo.mb_Allowed = false;
-		return false;
+		// Do not drop highlights when cursor is out of VCon. Annoying behavior with splits...
+		// So, return last detected (saved) state of highlights
+		bExist = m_HighlightInfo.mb_Exists;
+		pos = m_HighlightInfo.m_Cur;
 	}
-	m_HighlightInfo.mb_Allowed = true;
-	if (pcrPos)
+	else
+	{
+		// Get COORDs (relative to upper-left visible pos)
+		pos = ClientToConsole(ptCursor.x-rcDC.left, ptCursor.y-rcDC.top);
+		m_HighlightInfo.m_Cur = pos;
+		m_HighlightInfo.mb_Exists = bExist = (pos.X >= 0 && pos.Y >= 0);
+	}
+
+	if (bExist && pcrPos)
 		*pcrPos = pos;
-	return true;
+	return bExist;
 }
 
 void CVirtualConsole::UpdateHighlights()
