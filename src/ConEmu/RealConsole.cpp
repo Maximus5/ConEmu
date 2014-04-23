@@ -9337,34 +9337,10 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	if (!tabs.m_Tabs.GetTabByIndex(iGetTabIdx, rTab))
 		return false;
 
-	if (tabIdx == 0)
+	if ((tabIdx == 0) && (*tabs.ms_RenameFirstTab))
 	{
-		
-		if (*tabs.ms_RenameFirstTab)
-		{
-			rTab->Info.Type |= fwt_Renamed;
-			rTab->Renamed.Set(tabs.ms_RenameFirstTab);
-		}
-		else
-		{
-			rTab->Info.Type &= ~fwt_Renamed;
-		}
-
-		int iTabsCount = tabs.m_Tabs.GetCount();
-		// Если панель единственная - точно показываем заголовок консоли
-		if (((iTabsCount == 1) || !isFar()) && (rTab->Type() == fwt_Panels) && TitleFull[0])
-		{
-			rTab->Name.Set(TitleFull);
-		}
-		else if (isFar() && ms_PanelTitle[0])  // скорее всего - это Panels?
-		{
-			rTab->Name.Set(ms_PanelTitle);
-		}
-		else if (iTabsCount == 1 && TitleFull[0])  // Если панель единственная - точно показываем заголовок консоли
-		{
-			rTab->Name.Set(TitleFull);
-		}
-
+		rTab->Info.Type |= fwt_Renamed;
+		rTab->Renamed.Set(tabs.ms_RenameFirstTab);
 	}
 	else
 	{
@@ -10890,6 +10866,15 @@ void CRealConsole::OnTitleChanged()
 	}
 
 	wcscat_c(TitleFull, TitleCmp);
+
+	CTab panels;
+	if (tabs.m_Tabs.GetTabByIndex(0, panels))
+	if (panels->Type() == fwt_Panels)
+	{
+		panels->Name.Set(TitleFull);
+	}
+
+
 	// Обновляем на что нашли
 	setProgress(nNewProgress);
 
