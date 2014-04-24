@@ -1371,6 +1371,9 @@ void CTabPanelWin::RePaintInt()
 
 LRESULT CTabPanelWin::TabHitTest(bool abForce /*= false*/, int* pnOverTabHit /*= NULL*/)
 {
+	if (pnOverTabHit)
+		*pnOverTabHit = -1;
+
 	if (gpSet->isTabs && (abForce || gpSet->isCaptionHidden()))
 	{
 		if (mp_Owner->IsTabsShown())
@@ -1380,6 +1383,8 @@ LRESULT CTabPanelWin::TabHitTest(bool abForce /*= false*/, int* pnOverTabHit /*=
 			// -2 - out of control, -1 - out of tab-labels, 0+ - tab index 0-based
 			if (nTabIdx == -1)
 				return HTCAPTION;
+			if (pnOverTabHit)
+				*pnOverTabHit = nTabIdx;
 		}
 	}
 
