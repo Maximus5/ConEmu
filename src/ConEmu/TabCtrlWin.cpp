@@ -92,7 +92,7 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 {
 	int nOverTabHit = -1;
 
-	switch(uMsg)
+	switch (uMsg)
 	{
 		case WM_WINDOWPOSCHANGING:
 		{
@@ -134,14 +134,16 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		case WM_LBUTTONDOWN:
 		case WM_LBUTTONUP:
 		case WM_LBUTTONDBLCLK:
-		/*case WM_RBUTTONDOWN:*/ case WM_RBUTTONUP: //case WM_RBUTTONDBLCLK:
+		//case WM_RBUTTONDOWN:
+		case WM_RBUTTONUP:
+		//case WM_RBUTTONDBLCLK:
 
 			if (((uMsg == WM_RBUTTONUP)
 					|| ((uMsg == WM_LBUTTONDBLCLK) && gpSet->nTabBarDblClickAction)
 					|| gpSet->isCaptionHidden())
 				&& gpSet->isTabs)
 			{
-				if (TabHitTest(true, &nOverTabHit)==HTCAPTION)
+				if (TabHitTest(true, &nOverTabHit) == HTCAPTION)
 				{
 					POINT ptScr; GetCursorPos(&ptScr);
 					lParam = MAKELONG(ptScr.x,ptScr.y);
@@ -223,7 +225,7 @@ LRESULT CALLBACK CTabPanelWin::_TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 
 LRESULT CTabPanelWin::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, WNDPROC defaultProc)
 {
-	switch(uMsg)
+	switch (uMsg)
 	{
 		case WM_WINDOWPOSCHANGING:
 		{
@@ -280,7 +282,7 @@ LRESULT CALLBACK CTabPanelWin::_ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 // Window procedure for Toolbar (Multiconsole, BufferHeight, Min/Max, etc.)
 LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, WNDPROC defaultProc)
 {
-	switch(uMsg)
+	switch (uMsg)
 	{
 		case WM_WINDOWPOSCHANGING:
 		{
@@ -1377,9 +1379,7 @@ LRESULT CTabPanelWin::TabHitTest(bool abForce /*= false*/, int* pnOverTabHit /*=
 			int nTabIdx = GetTabFromPoint(ptCur);
 			// -2 - out of control, -1 - out of tab-labels, 0+ - tab index 0-based
 			if (nTabIdx == -1)
-			{
 				return HTCAPTION;
-			}
 		}
 	}
 
