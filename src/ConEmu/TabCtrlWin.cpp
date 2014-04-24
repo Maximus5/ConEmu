@@ -130,25 +130,22 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			}
 
 			break;
+
 		case WM_MOUSEMOVE:
 		case WM_LBUTTONDOWN:
 		case WM_LBUTTONUP:
 		case WM_LBUTTONDBLCLK:
-		//case WM_RBUTTONDOWN:
+		case WM_RBUTTONDOWN:
 		case WM_RBUTTONUP:
-		//case WM_RBUTTONDBLCLK:
-
-			if (((uMsg == WM_RBUTTONUP)
-					|| ((uMsg == WM_LBUTTONDBLCLK) && gpSet->nTabBarDblClickAction)
-					|| gpSet->isCaptionHidden())
-				&& gpSet->isTabs)
+		case WM_RBUTTONDBLCLK:
+		case WM_MBUTTONDOWN:
+		case WM_MBUTTONUP:
+		case WM_MBUTTONDBLCLK:
+		{
+			if (gpSet->isTabs)
 			{
 				if (TabHitTest(true, &nOverTabHit) == HTCAPTION)
 				{
-					POINT ptScr; GetCursorPos(&ptScr);
-					lParam = MAKELONG(ptScr.x,ptScr.y);
-					LRESULT lRc = 0;
-
 					if (uMsg == WM_LBUTTONDBLCLK)
 					{
 						if ((gpSet->nTabBarDblClickAction == 2)
@@ -167,16 +164,22 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 					}
 					else if (uMsg == WM_RBUTTONUP)
 					{
+						POINT ptScr; GetCursorPos(&ptScr);
 						gpConEmu->mp_Menu->ShowSysmenu(ptScr.x, ptScr.y/*-32000*/);
 					}
-					else if (gpConEmu->WindowMode == wmNormal)
+					else if ((gpConEmu->WindowMode == wmNormal) && gpSet->isCaptionHidden())
 					{
-						lRc = gpConEmu->WndProc(ghWnd, uMsg-(WM_MOUSEMOVE-WM_NCMOUSEMOVE), HTCAPTION, lParam);
+						POINT ptScr; GetCursorPos(&ptScr);
+						// WM_NC* messages needs screen coords in lParam
+						LPARAM lParamMain = MAKELONG(ptScr.x,ptScr.y);
+						gpConEmu->WndProc(ghWnd, uMsg-(WM_MOUSEMOVE-WM_NCMOUSEMOVE), HTCAPTION, lParamMain);
 					}
-
-					return lRc;
+					else if (uMsg == WM_MBUTTONUP)
+					{
+						gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+					}
 				}
-				else if ((nOverTabHit >= 0) && ((uMsg == WM_LBUTTONDOWN) || (uMsg == WM_LBUTTONUP) || (uMsg == WM_RBUTTONDOWN) || (uMsg == WM_RBUTTONUP)))
+				else if ((nOverTabHit >= 0) && (uMsg != WM_MOUSEMOVE))
 				{
 					if (uMsg == WM_LBUTTONDOWN)
 					{
@@ -184,29 +187,17 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 						if (lnCurTab != nOverTabHit)
 						{
 							FarSendChangeTab(nOverTabHit);
-							//mp_Owner->SelectTab(nOverTabHit);
 						}
 					}
-					else if (uMsg == WM_RBUTTONUP)
+					else if (uMsg > WM_LBUTTONUP)
 					{
 						mp_Owner->OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 					}
 				}
 			}
 
-			break;
-
-		case WM_MBUTTONUP:
-			if (gpSet->isCaptionHidden() && gpSet->isTabs)
-			{
-				if ((TabHitTest(true, &nOverTabHit) != HTCAPTION) && (nOverTabHit >= 0))
-				{
-					mp_Owner->OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-					break;
-				}
-			}
-			gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
-			break;
+			return 0;
+		} // End of mouse messages
 	}
 
 	return CallWindowProc(defaultProc, hwnd, uMsg, wParam, lParam);
