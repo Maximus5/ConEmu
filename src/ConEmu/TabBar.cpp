@@ -1423,6 +1423,11 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 
 	*pszDst = 0;
 
+	#ifdef _DEBUG
+	if (dummy[0] && *(pszDst-1) == L' ')
+		*pszDst = 0;
+	#endif
+
 	pTab->DrawInfo.Display.Set(dummy);
 	
 	MCHKHEAP;

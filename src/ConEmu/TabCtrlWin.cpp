@@ -864,6 +864,10 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon)
 		wchar_t sOldTabName[CONEMUTABMAX];
 		if (!GetTabText(i, sOldTabName, countof(sOldTabName)) || !wcscmp(sOldTabName, text))
 			tie.mask &= ~TCIF_TEXT;
+		#ifdef _DEBUG
+		else
+			tie.mask |= TCIF_TEXT;
+		#endif
 
 		// Изменилась ли иконка
 		if (tie.mask & TCIF_IMAGE)

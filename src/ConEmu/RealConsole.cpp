@@ -2540,6 +2540,12 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				}
 			}
 
+			#ifdef _DEBUG
+			int iDbg;
+			if (TitleCmp[0] == 0)
+				iDbg = 0;
+			#endif
+
 			if (mb_ForceTitleChanged
 				|| lbForceUpdateProgress
 				|| (TitleCmp[0] && wcscmp(Title, TitleCmp)))
