@@ -464,7 +464,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 				//MSectionLock SC; SC.Lock(csTabs, TRUE);
 				//SendTabs(gnCurTabCount, TRUE);
 				//SC.Unlock();
-				UpdateConEmuTabs(0,false,false);
+				UpdateConEmuTabs(true);
 				SetEvent(ghSetWndSendTabsEvent);
 				return hResult;
 			}
@@ -601,7 +601,7 @@ void OnMainThreadActivated()
 	if (gbRequestUpdateTabs && !IsMacroActive())
 	{
 		gbRequestUpdateTabs = gbNeedPostTabSend = FALSE;
-		UpdateConEmuTabs(0,false,false);
+		UpdateConEmuTabs(true);
 
 		if (gbClosingModalViewerEditor)
 		{
@@ -2693,7 +2693,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				DEBUGSTRCMD(L"Plugin: ACTL_COMMIT finished\n");
 
 				gbIgnoreUpdateTabs = FALSE;
-				UpdateConEmuTabs(0, false, false);
+				UpdateConEmuTabs(false);
 
 				DEBUGSTRCMD(L"Plugin: Tabs updated\n");
 			}
@@ -3666,7 +3666,7 @@ void CommonPluginStartup()
 	CheckResources(TRUE);
 
 	// Надо табы загрузить
-	UpdateConEmuTabs(0,false,false);
+	UpdateConEmuTabs(true);
 
 
 	// Пробежаться по всем загруженным в данный момент плагинам и дернуть в них "OnConEmuLoaded"
@@ -4340,7 +4340,7 @@ bool UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Par
 	return lbCh;
 }
 
-bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+bool UpdateConEmuTabs(bool abSendChanges)
 {
 	extern bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param);
 	bool lbCh;
@@ -4360,9 +4360,9 @@ bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Para
 		gpTabs->Tabs.CurrentIndex = -1; // для строгости
 
 	if (gFarVersion.dwVerMajor==1)
-		lbCh = UpdateConEmuTabsA(anEvent, losingFocus, editorSave, Param);
+		lbCh = UpdateConEmuTabsA(0, false, false, NULL);
 	else
-		lbCh = UpdateConEmuTabsW(anEvent, losingFocus, editorSave, Param);
+		lbCh = UpdateConEmuTabsW(0, false, false, NULL);
 
 	if (gpTabs)
 	{
@@ -4387,7 +4387,10 @@ bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Para
 
 		gnCurrentWindowType = gpTabs->Tabs.CurrentType;
 
-		SendTabs(gpTabs->Tabs.nTabCount, lbCh && (gnReqCommand==(DWORD)-1));
+		if (abSendChanges)
+		{
+			SendTabs(gpTabs->Tabs.nTabCount, lbCh && (gnReqCommand==(DWORD)-1));
+		}
 	}
 
 	if (lbCh && gpBgPlugin)

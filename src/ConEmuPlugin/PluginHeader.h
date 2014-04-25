@@ -176,7 +176,7 @@ void InitResources();
 void CloseTabs();
 
 HWND AtoH(WCHAR *Str, int Len);
-bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param=NULL);
+bool UpdateConEmuTabs(bool abSendChanges);
 
 BOOL LoadFarVersion();
 
