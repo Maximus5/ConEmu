@@ -524,6 +524,7 @@ class CRealConsole
 		int GetModifiedEditors();
 		BOOL ActivateFarWindow(int anWndIndex);
 		DWORD CanActivateFarWindow(int anWndIndex);
+		bool IsSwitchFarWindowAllowed();
 		void OnConsoleKeyboardLayout(DWORD dwNewLayout);
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
 		void CloseConsole(bool abForceTerminate, bool abConfirm, bool abAllowMacro = true);

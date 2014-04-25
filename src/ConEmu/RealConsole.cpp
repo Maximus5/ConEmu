@@ -3254,6 +3254,9 @@ void CRealConsole::ResetVarsOnStart()
 	ZeroStruct(m_ChildGui);
 
 	mb_WasForceTerminated = FALSE;
+
+	// Обновить закладки
+	SetTabs(NULL,1);
 }
 
 BOOL CRealConsole::StartProcess()
@@ -4931,7 +4934,7 @@ void CRealConsole::StopSignal()
 
 		// Чтобы при закрытии не было попытки активировать
 		// другую вкладку ЭТОЙ консоли
-		tabs.mn_tabsCount = 0;
+		_ASSERTE(IsSwitchFarWindowAllowed() == false);
 
 		// Очистка массива консолей и обновление вкладок
 		CConEmuChild::ProcessVConClosed(mp_VCon);
@@ -9628,9 +9631,18 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	return dwPID;
 }
 
-BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
+bool CRealConsole::IsSwitchFarWindowAllowed()
 {
 	if (!this)
+		return false;
+	if (mb_InCloseConsole)
+		return false;
+	return true;
+}
+
+BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
+{
+	if (!IsSwitchFarWindowAllowed())
 		return FALSE;
 
 	DWORD dwPID = CanActivateFarWindow(anWndIndex);
