@@ -2542,7 +2542,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 
 			if (mb_ForceTitleChanged
 				|| lbForceUpdateProgress
-				|| wcscmp(Title, TitleCmp))
+				|| (TitleCmp[0] && wcscmp(Title, TitleCmp)))
 			{
 				mb_ForceTitleChanged = FALSE;
 				OnTitleChanged();
