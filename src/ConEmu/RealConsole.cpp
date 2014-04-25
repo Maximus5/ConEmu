@@ -2184,6 +2184,12 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 			&& ((GetTickCount() - nConsoleStartTick) > PROCESS_WAIT_START_TIME))
 		{
 			rbChildProcessCreated = true;
+			#ifdef _DEBUG
+			if (gpConEmu->isScClosing())
+			{
+				_ASSERTE(FALSE && "Drop of mb_ScClosePending may cause assertion in CVConGroup::isVisible");
+			}
+			#endif
 			OnStartedSuccess();
 		}
 

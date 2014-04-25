@@ -10867,6 +10867,11 @@ void CConEmuMain::SetScClosePending(bool bFlag)
 	mb_ScClosePending = bFlag;
 }
 
+bool CConEmuMain::isScClosing()
+{
+	return mb_ScClosePending;
+}
+
 bool CConEmuMain::isCloseConfirmed()
 {
 	return (gpSet->isCloseConsoleConfirm && !DisableCloseConfirm) ? mb_ScClosePending : true;

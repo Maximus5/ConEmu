@@ -393,6 +393,7 @@ class CConEmuMain :
 		bool CanSetChildFocus();
 		void SetScClosePending(bool bFlag);
 		bool OnScClose();
+		bool isScClosing();
 	protected:
 		bool mb_ScClosePending; // Устанавливается в TRUE в CVConGroup::CloseQuery
 	protected:
