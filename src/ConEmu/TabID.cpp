@@ -617,9 +617,9 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 	}
 	else
 	{
-	// Теперь - поехали обновлять. Правила такие:
-	// 1. Новая вкладка в ФАР может появиться ТОЛЬКО в конце
-	// 2. Закрыта может быть любая вкладка
+		// Теперь - поехали обновлять. Правила такие:
+		// 1. Новая вкладка в ФАР может появиться ТОЛЬКО в конце
+		// 2. Закрыта может быть любая вкладка
 
 		pTab = NULL;
 		int i = 0;
@@ -627,40 +627,40 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 		{
 			if (mpp_Stack[i]->IsEqual(apVCon, asName, anType, anPID, anViewEditID))
 			{
-			// OK, таб совпадает
-			pTab = mpp_Stack[i];
+				// OK, таб совпадает
+				pTab = mpp_Stack[i];
 
-			// Закончили
-			break;
-		}
-		// таб был закрыт
+				// Закончили
+				break;
+			}
+			// таб был закрыт
 			bChanged = true;
-		mpp_Stack[i]->Info.Status = tisInvalid;
-		mpp_Stack[i]->Release();
-		mpp_Stack[i] = NULL;
-		i++;
-	}
+			mpp_Stack[i]->Info.Status = tisInvalid;
+			mpp_Stack[i]->Release();
+			mpp_Stack[i] = NULL;
+			i++;
+		}
 
-	// Если перед совпавшим найдены закрытые - следует сдвинуть список табов
-	if (i > mn_UpdatePos)
-	{
-		if ((i+1) < mn_Used)
+		// Если перед совпавшим найдены закрытые - следует сдвинуть список табов
+		if (i > mn_UpdatePos)
 		{
-			pUpdateLock->RelockExclusive();
-			// Все что между {mn_UpdatePos .. (i-1)} теперь уже забито NULL
-			memmove(mpp_Stack+mn_UpdatePos, mpp_Stack+i, (mn_Used - i) * sizeof(CTabID**));
+			if ((i+1) < mn_Used)
+			{
+				pUpdateLock->RelockExclusive();
+				// Все что между {mn_UpdatePos .. (i-1)} теперь уже забито NULL
+				memmove(mpp_Stack+mn_UpdatePos, mpp_Stack+i, (mn_Used - i) * sizeof(CTabID**));
 			}
 			mn_Used -= (i - mn_UpdatePos);
 			memset(mpp_Stack+mn_Used, 0, (i - mn_UpdatePos) * sizeof(CTabID**));
 		}
 
-	// Если таб новый
-	if (pTab == NULL)
-	{
-		// это новая вкладка, добавляемая в конец
+		// Если таб новый
+		if (pTab == NULL)
+		{
+			// это новая вкладка, добавляемая в конец
 			pTab = new CTabID(apVCon, asName, anType, anPID, anFarWindowID, anViewEditID);
-		_ASSERTE(mn_Used == mn_UpdatePos);
-		AppendInt(pTab, FALSE/*abMoveFirst*/, pUpdateLock);
+			_ASSERTE(mn_Used == mn_UpdatePos);
+			AppendInt(pTab, FALSE/*abMoveFirst*/, pUpdateLock);
 			bChanged = true;
 		}
 
