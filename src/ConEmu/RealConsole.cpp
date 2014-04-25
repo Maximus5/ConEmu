@@ -8844,6 +8844,22 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 		apTabs->Current = 1;
 		apTabs->Type = 1;
 		anTabsCount = 1;
+		if (!ms_DefTitle.IsEmpty())
+		{
+			lstrcpyn(apTabs->Name, ms_DefTitle.ms_Arg, countof(apTabs->Name));
+		}
+		else if (ms_RootProcessName[0])
+		{
+			// Если известно (должно бы уже) имя корневого процесса - показать его
+			lstrcpyn(apTabs->Name, ms_RootProcessName, countof(apTabs->Name));
+			wchar_t* pszDot = wcsrchr(apTabs->Name, L'.');
+			if (pszDot) // Leave file name only, no extension
+				*pszDot = 0;
+		}
+		else
+		{
+			_ASSERTE(FALSE && "RootProcessName or DefTitle must be known already!")
+		}
 	}
 
 	// Already must be
@@ -10923,7 +10939,11 @@ void CRealConsole::OnTitleChanged()
 
 	mp_VCon->OnTitleChanged(); // Обновить таб на таскбаре
 
-	gpConEmu->mp_TabBar->Update(); // сменить заголовок закладки?
+	// Только если табы уже инициализированы
+	if (tabs.mn_tabsCount > 0)
+	{
+		gpConEmu->mp_TabBar->Update(); // сменить заголовок закладки?
+	}
 }
 
 bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditViewCheck /*= false*/)
