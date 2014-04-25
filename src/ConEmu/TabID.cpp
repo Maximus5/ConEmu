@@ -102,7 +102,7 @@ LPCWSTR CTabID::GetName()
 {
 	LPCWSTR pszName = ((Info.Type & fwt_Renamed) && (Renamed.Length() > 0)) ? Renamed.Ptr() : Name.Ptr();
 	if (!pszName || !*pszName)
-		pszName = gpConEmu->GetDefaultTitle();
+		pszName = gpConEmu->GetDefaultTabLabel();
 	return pszName;
 }
 LPCWSTR CTabID::GetLabel()

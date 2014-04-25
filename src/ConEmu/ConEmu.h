@@ -583,7 +583,8 @@ class CConEmuMain :
 		DWORD GetFarPID(BOOL abPluginRequired=FALSE);
 
 	public:
-		LPCWSTR GetDefaultTitle(); // вернуть ms_ConEmuVer
+		LPCWSTR GetDefaultTitle(); // вернуть ms_ConEmuDefTitle
+		LPCWSTR GetDefaultTabLabel(); // L"ConEmu"
 		LPCTSTR GetLastTitle(bool abUseDefault=true);
 		LPCTSTR GetVConTitle(int nIdx);
 		void SetTitleTemplate(LPCWSTR asTemplate);

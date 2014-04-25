@@ -7754,6 +7754,11 @@ LPCWSTR CConEmuMain::GetDefaultTitle()
 	return ms_ConEmuDefTitle;
 }
 
+LPCWSTR CConEmuMain::GetDefaultTabLabel()
+{
+	return L"ConEmu";
+}
+
 void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
 {
 	lstrcpyn(TitleTemplate, asTemplate ? asTemplate : L"", countof(TitleTemplate));
